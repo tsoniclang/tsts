@@ -54,4 +54,37 @@ describe("program groundwork", () => {
     assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Duplicate identifier 'x'."]);
     assert.equal(result.emittedFiles.length, 0);
   });
+
+  it("expands relative import module specifiers into the program graph", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "import { value } from \"./dep\"; export const answer = value;"],
+      ["src/dep.ts", "export const value = 42;"],
+    ]);
+    const outputs = new Map<string, string>();
+    const host: CompilerHost = {
+      getCurrentDirectory: () => ".",
+      readFile: fileName => files.get(fileName),
+      writeFile: (fileName, text) => outputs.set(fileName, text),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/index.ts"], { outDir: "dist" }, host);
+    const result = emitProgram(program, host);
+
+    assert.equal(program.diagnostics.length, 0);
+    assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["src/index.ts", "src/dep.ts"]);
+    assert.deepEqual(result.emittedFiles.map(file => file.outputFileName), ["dist/src/index.js", "dist/src/dep.js"]);
+  });
+
+  it("diagnoses unresolved relative imports", () => {
+    const host: CompilerHost = {
+      readFile: fileName => fileName === "src/index.ts" ? "import { missing } from \"./missing\";" : undefined,
+    };
+
+    const program = createProgram(["src/index.ts"], {}, host);
+    const result = emitProgram(program, host);
+
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find module './missing'."]);
+    assert.equal(result.emittedFiles.length, 0);
+  });
 });

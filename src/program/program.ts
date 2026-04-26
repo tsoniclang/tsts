@@ -1,8 +1,8 @@
-import { extname, join, relative } from "node:path";
+import { dirname, extname, join, normalize, relative } from "node:path";
 import { bindSourceFile, type BindDiagnostic, type BindResult } from "../binder/index.js";
 import { printSourceFile } from "../emit-js/index.js";
 import { parseSourceFile } from "../parser/index.js";
-import type { SourceFile } from "../ast/index.js";
+import { isExportDeclaration, isImportDeclaration, isStringLiteral, type SourceFile } from "../ast/index.js";
 
 export interface CompilerOptions {
   readonly outDir?: string;
@@ -48,8 +48,17 @@ export interface EmitResult {
 export function createProgram(rootNames: readonly string[], options: CompilerOptions, host: CompilerHost): Program {
   const sourceFiles: ProgramSourceFile[] = [];
   const diagnostics: ProgramDiagnostic[] = [];
-  for (const rootName of rootNames) {
-    const sourceText = host.readFile(rootName);
+  const pending = [...rootNames];
+  const seen = new Set<string>();
+  const fileTextCache = new Map<string, string | undefined>();
+  while (pending.length > 0) {
+    const rootName = pending.shift()!;
+    const canonicalName = canonicalFileName(rootName, host);
+    if (seen.has(canonicalName)) {
+      continue;
+    }
+    seen.add(canonicalName);
+    const sourceText = readFileCached(rootName, host, fileTextCache);
     if (sourceText === undefined) {
       diagnostics.push({
         fileName: rootName,
@@ -60,6 +69,21 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
     const sourceFile = parseSourceFile(sourceText, { fileName: rootName });
     const bindResult = bindSourceFile(sourceFile);
     diagnostics.push(...bindResult.diagnostics.map(diagnostic => convertBindDiagnostic(rootName, diagnostic)));
+    for (const moduleSpecifier of sourceFileModuleSpecifiers(sourceFile)) {
+      const resolved = resolveModuleName(moduleSpecifier, rootName, host, fileTextCache);
+      if (resolved === undefined) {
+        if (isRelativeModuleName(moduleSpecifier)) {
+          diagnostics.push({
+            fileName: rootName,
+            message: `Cannot find module '${moduleSpecifier}'.`,
+          });
+        }
+        continue;
+      }
+      if (!seen.has(canonicalFileName(resolved, host))) {
+        pending.push(resolved);
+      }
+    }
     sourceFiles.push({
       fileName: rootName,
       sourceText,
@@ -80,7 +104,7 @@ export function emitProgram(program: Program, host?: Pick<CompilerHost, "writeFi
   if (diagnostics.length > 0) {
     return { emittedFiles: [], diagnostics };
   }
-  const emittedFiles = program.sourceFiles.map(sourceFile => {
+  const emittedFiles = program.sourceFiles.filter(sourceFile => !isDeclarationFileName(sourceFile.fileName)).map(sourceFile => {
     const outputFileName = outputFileNameFor(sourceFile.fileName, program.options, host);
     const text = printSourceFile(sourceFile.sourceFile);
     host?.writeFile?.(outputFileName, text);
@@ -91,6 +115,60 @@ export function emitProgram(program: Program, host?: Pick<CompilerHost, "writeFi
     };
   });
   return { emittedFiles, diagnostics };
+}
+
+function sourceFileModuleSpecifiers(sourceFile: SourceFile): readonly string[] {
+  const specifiers: string[] = [];
+  for (const statement of sourceFile.statements) {
+    if (isImportDeclaration(statement) && isStringLiteral(statement.moduleSpecifier)) {
+      specifiers.push(statement.moduleSpecifier.text);
+      continue;
+    }
+    if (isExportDeclaration(statement) && statement.moduleSpecifier !== undefined && isStringLiteral(statement.moduleSpecifier)) {
+      specifiers.push(statement.moduleSpecifier.text);
+    }
+  }
+  return specifiers;
+}
+
+function resolveModuleName(moduleSpecifier: string, containingFileName: string, host: CompilerHost, cache: Map<string, string | undefined>): string | undefined {
+  if (!isRelativeModuleName(moduleSpecifier)) {
+    return undefined;
+  }
+  const base = normalize(join(dirname(containingFileName), moduleSpecifier));
+  const candidates = moduleResolutionCandidates(base);
+  return candidates.find(candidate => readFileCached(candidate, host, cache) !== undefined);
+}
+
+function moduleResolutionCandidates(base: string): readonly string[] {
+  if (extname(base) !== "") {
+    return [base];
+  }
+  return [
+    `${base}.ts`,
+    `${base}.tsx`,
+    `${base}.d.ts`,
+    join(base, "index.ts"),
+    join(base, "index.tsx"),
+    join(base, "index.d.ts"),
+  ];
+}
+
+function isRelativeModuleName(moduleSpecifier: string): boolean {
+  return moduleSpecifier.startsWith("./") || moduleSpecifier.startsWith("../");
+}
+
+function readFileCached(fileName: string, host: CompilerHost, cache: Map<string, string | undefined>): string | undefined {
+  const key = canonicalFileName(fileName, host);
+  if (!cache.has(key)) {
+    cache.set(key, host.readFile(fileName));
+  }
+  return cache.get(key);
+}
+
+function canonicalFileName(fileName: string, host: Pick<CompilerHost, "useCaseSensitiveFileNames">): string {
+  const normalized = normalize(fileName);
+  return host.useCaseSensitiveFileNames?.() === false ? normalized.toLowerCase() : normalized;
 }
 
 function outputFileNameFor(inputFileName: string, options: CompilerOptions, host?: Pick<CompilerHost, "getCurrentDirectory">): string {
@@ -109,6 +187,10 @@ function replaceExtension(fileName: string, extension: string): string {
     return `${fileName}${extension}`;
   }
   return `${fileName.slice(0, -currentExtension.length)}${extension}`;
+}
+
+function isDeclarationFileName(fileName: string): boolean {
+  return fileName.endsWith(".d.ts");
 }
 
 function convertBindDiagnostic(fileName: string, diagnostic: BindDiagnostic): ProgramDiagnostic {
