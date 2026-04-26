@@ -1080,6 +1080,54 @@ function generateGuards(schema: AstSchema): string {
   return `${lines.join("\n")}\n`;
 }
 
+function nodeDataEncoding(schema: AstSchema, name: string, definition: NodeDefinition): "children" | "string" | "extended" {
+  if (name === "SourceFile") {
+    return "extended";
+  }
+  if (baseExtendsTransitive(schema, definition, "LiteralLikeNodeBase")) {
+    return baseExtendsTransitive(schema, definition, "LiteralExpressionBase") || baseExtendsTransitive(schema, definition, "TemplateLiteralLikeNodeBase")
+      ? "extended"
+      : "string";
+  }
+  if (runtimeMembers(schema, definition).some(member => member.name === "Text" && member.type === "string")) {
+    return "string";
+  }
+  return "children";
+}
+
+function generateMetadata(schema: AstSchema): string {
+  const lines: string[] = [generatedHeader("schema/tsgo/ast.json")];
+  lines.push("import { Kind } from \"./kind.js\";");
+  lines.push("");
+  lines.push("export const NodeDataEncoding = {");
+  lines.push("  children: \"children\",");
+  lines.push("  string: \"string\",");
+  lines.push("  extended: \"extended\",");
+  lines.push("} as const;");
+  lines.push("");
+  lines.push("export type NodeDataEncoding = typeof NodeDataEncoding[keyof typeof NodeDataEncoding];");
+  lines.push("");
+  lines.push("const childPropertiesByKind: (readonly string[] | undefined)[] = [];");
+  lines.push("const dataEncodingByKind: (NodeDataEncoding | undefined)[] = [];");
+  lines.push("");
+
+  for (const [name, definition] of Object.entries(schema.nodes.definitions)) {
+    const childProperties = runtimeMembers(schema, definition)
+      .filter(member => isNodeMember(schema, member))
+      .map(member => dataPropertyName(member.name));
+    const encoding = nodeDataEncoding(schema, name, definition);
+    for (const kindName of nodeKindCases(schema, name, definition)) {
+      lines.push(`childPropertiesByKind[Kind.${enumMemberName(kindName)}] = ${stableJson(childProperties)};`);
+      lines.push(`dataEncodingByKind[Kind.${enumMemberName(kindName)}] = NodeDataEncoding.${encoding};`);
+    }
+  }
+  lines.push("");
+  lines.push("export { childPropertiesByKind as ChildPropertiesByKind, dataEncodingByKind as DataEncodingByKind };");
+  lines.push("");
+
+  return `${lines.join("\n")}\n`;
+}
+
 function generateNodeTypes(schema: AstSchema): string {
   const lines: string[] = [generatedHeader("schema/tsgo/ast.json")];
   lines.push("import { Kind } from \"./kind.js\";");
@@ -1219,7 +1267,8 @@ async function main(): Promise<void> {
   await writeGenerated("src/ast/generated/factory.ts", generateFactory(schema));
   await writeGenerated("src/ast/generated/visitor.ts", generateVisitor(schema));
   await writeGenerated("src/ast/generated/is.ts", generateGuards(schema));
-  await writeGenerated("src/ast/index.ts", `${generatedHeader("schema/tsgo/ast.json")}export * from "./generated/kind.js";\nexport * from "./generated/schema.js";\nexport * from "./generated/types.js";\nexport * from "./generated/nodes.js";\nexport * from "./generated/factory.js";\nexport * from "./generated/visitor.js";\nexport * from "./generated/is.js";\n`);
+  await writeGenerated("src/ast/generated/metadata.ts", generateMetadata(schema));
+  await writeGenerated("src/ast/index.ts", `${generatedHeader("schema/tsgo/ast.json")}export * from "./generated/kind.js";\nexport * from "./generated/schema.js";\nexport * from "./generated/types.js";\nexport * from "./generated/nodes.js";\nexport * from "./generated/factory.js";\nexport * from "./generated/visitor.js";\nexport * from "./generated/is.js";\nexport * from "./generated/metadata.js";\n`);
 }
 
 await main();
