@@ -389,6 +389,8 @@ export enum Kind {
   LastTriviaToken = ConflictMarkerTrivia,
 }
 
+export { Kind as SyntaxKind };
+
 export const KindNames = [
   "Unknown",
   "EndOfFile",
