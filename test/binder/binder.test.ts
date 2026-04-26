@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { SymbolFlags, isFunctionDeclaration, isVariableStatement } from "../../src/ast/index.js";
+import {
+  SymbolFlags,
+  isClassDeclaration,
+  isFunctionDeclaration,
+  isInterfaceDeclaration,
+  isTypeAliasDeclaration,
+  isVariableStatement,
+} from "../../src/ast/index.js";
 import { bindSourceFile, getSymbol, lookupSymbol } from "../../src/binder/index.js";
 import { parseSourceFile } from "../../src/parser/index.js";
 
@@ -56,5 +63,24 @@ describe("TS-Go binder groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
     assert.equal(lookupSymbol(result.globals, "value")?.flags, SymbolFlags.Alias);
     assert.equal(lookupSymbol(result.globals, "renamed")?.flags, SymbolFlags.Alias);
+  });
+
+  it("binds class, interface, and type alias declarations with TS-Go symbol meanings", () => {
+    const sourceFile = parseSourceFile("class Box { value: string; } interface Named { value: string; } type Alias = Named;");
+    const result = bindSourceFile(sourceFile);
+
+    assert.equal(result.diagnostics.length, 0);
+    assert.equal(lookupSymbol(result.globals, "Box")?.flags, SymbolFlags.Class);
+    assert.equal(lookupSymbol(result.globals, "Named")?.flags, SymbolFlags.Interface);
+    assert.equal(lookupSymbol(result.globals, "Alias")?.flags, SymbolFlags.TypeAlias);
+
+    const classDeclaration = sourceFile.statements[0]!;
+    const interfaceDeclaration = sourceFile.statements[1]!;
+    const typeAliasDeclaration = sourceFile.statements[2]!;
+    assert.equal(isClassDeclaration(classDeclaration), true);
+    assert.equal(isInterfaceDeclaration(interfaceDeclaration), true);
+    assert.equal(isTypeAliasDeclaration(typeAliasDeclaration), true);
+    assert.notEqual(result.locals.get(classDeclaration), undefined);
+    assert.notEqual(result.locals.get(interfaceDeclaration), undefined);
   });
 });

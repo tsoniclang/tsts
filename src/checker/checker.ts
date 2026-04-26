@@ -3,17 +3,24 @@ import {
   isBinaryExpression,
   isBlock,
   isCallExpression,
+  isClassDeclaration,
+  isConstructorDeclaration,
   isExpressionStatement,
   isFunctionDeclaration,
   isIdentifier,
+  isIfStatement,
   isKeywordTypeNode,
+  isMethodDeclaration,
   isNumericLiteral,
   isParenthesizedExpression,
   isPropertyAccessExpression,
+  isPropertyDeclaration,
   isReturnStatement,
   isStringLiteral,
   isVariableStatement,
   type Block,
+  type ClassDeclaration,
+  type ClassElement,
   type Expression,
   type FunctionDeclaration,
   type SourceFile,
@@ -93,6 +100,18 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     checkFunctionDeclaration(statement, state, environment);
     return;
   }
+  if (isClassDeclaration(statement)) {
+    checkClassDeclaration(statement, state, environment);
+    return;
+  }
+  if (isIfStatement(statement)) {
+    inferExpression(statement.expression, state, environment);
+    checkStatement(statement.thenStatement, state, new Map(environment), expectedReturnType);
+    if (statement.elseStatement !== undefined) {
+      checkStatement(statement.elseStatement, state, new Map(environment), expectedReturnType);
+    }
+    return;
+  }
   if (isReturnStatement(statement)) {
     const actual = statement.expression === undefined ? voidType : inferExpression(statement.expression, state, environment);
     if (expectedReturnType !== undefined) {
@@ -106,6 +125,34 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isBlock(statement)) {
     checkBlock(statement, state, environment, expectedReturnType);
+  }
+}
+
+function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckState, environment: TypeEnvironment): void {
+  if (classDeclaration.name !== undefined) {
+    environment.set(classDeclaration.name.text, anyType);
+  }
+  const classEnvironment = new Map(environment);
+  for (const member of classDeclaration.members) {
+    checkClassElement(member, state, classEnvironment);
+  }
+}
+
+function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment): void {
+  if (isConstructorDeclaration(member) || isMethodDeclaration(member)) {
+    const memberEnvironment = new Map(environment);
+    for (const parameter of member.parameters) {
+      if (isIdentifier(parameter.name)) {
+        memberEnvironment.set(parameter.name.text, parameter.type === undefined ? unknownType : typeFromTypeNode(parameter.type));
+      }
+    }
+    if (member.body !== undefined) {
+      checkBlock(member.body, state, memberEnvironment, member.type === undefined ? undefined : typeFromTypeNode(member.type));
+    }
+    return;
+  }
+  if (isPropertyDeclaration(member) && member.initializer !== undefined) {
+    inferExpression(member.initializer, state, environment);
   }
 }
 

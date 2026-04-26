@@ -35,4 +35,11 @@ describe("checker groundwork", () => {
 
     assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), ["Type 'string' is not assignable to type 'number'."]);
   });
+
+  it("checks method and constructor bodies inside classes", () => {
+    const sourceFile = parseSourceFile("class Box { getValue(): number { return \"x\"; } }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string' is not assignable to type 'number'."]);
+  });
 });

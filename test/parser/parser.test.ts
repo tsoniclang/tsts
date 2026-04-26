@@ -7,18 +7,28 @@ import {
   isBinaryExpression,
   isBlock,
   isCallExpression,
+  isClassDeclaration,
+  isConstructorDeclaration,
   isExpressionStatement,
   isExportDeclaration,
   isFunctionDeclaration,
   isIdentifier,
   isImportDeclaration,
+  isInterfaceDeclaration,
   isKeywordTypeNode,
+  isMethodDeclaration,
+  isMethodSignatureDeclaration,
   isNamedExports,
   isNamedImports,
   isNumericLiteral,
   isParenthesizedExpression,
+  isPropertyDeclaration,
   isPropertyAccessExpression,
+  isPropertySignatureDeclaration,
   isReturnStatement,
+  isTypeAliasDeclaration,
+  isTypeLiteralNode,
+  isTypeReferenceNode,
   isVariableStatement,
 } from "../../src/ast/index.js";
 import { parseSourceFile } from "../../src/parser/index.js";
@@ -142,5 +152,58 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isPropertyAccessExpression(statement.expression.expression), true);
     if (!isPropertyAccessExpression(statement.expression.expression)) throw new Error("Expected property access");
     assert.equal(statement.expression.expression.name.text, "toFixed");
+  });
+
+  it("produces type aliases and type literal members with TS-Go declaration nodes", () => {
+    const sourceFile = parseSourceFile("export type Box<T> = { value: T; label?: string };");
+    const statement = sourceFile.statements[0]!;
+
+    assert.equal(isTypeAliasDeclaration(statement), true);
+    if (!isTypeAliasDeclaration(statement)) throw new Error("Expected type alias");
+    assert.equal(statement.modifiers?.[0]?.kind, Kind.ExportKeyword);
+    assert.equal(statement.name.text, "Box");
+    assert.equal(statement.typeParameters?.[0]?.name.text, "T");
+    assert.equal(isTypeLiteralNode(statement.type), true);
+    if (!isTypeLiteralNode(statement.type)) throw new Error("Expected type literal");
+    assert.equal(statement.type.members.length, 2);
+    assert.equal(isPropertySignatureDeclaration(statement.type.members[0]!), true);
+    assert.equal(isPropertySignatureDeclaration(statement.type.members[1]!), true);
+    if (!isPropertySignatureDeclaration(statement.type.members[1]!)) throw new Error("Expected property signature");
+    assert.equal(statement.type.members[1]!.postfixToken?.kind, Kind.QuestionToken);
+  });
+
+  it("produces interface declarations with heritage and method signatures", () => {
+    const sourceFile = parseSourceFile("interface Named extends Base<string> { id: number; rename(value: string): void; }");
+    const statement = sourceFile.statements[0]!;
+
+    assert.equal(isInterfaceDeclaration(statement), true);
+    if (!isInterfaceDeclaration(statement)) throw new Error("Expected interface");
+    assert.equal(statement.name.text, "Named");
+    assert.equal(statement.heritageClauses?.[0]?.token, Kind.ExtendsKeyword);
+    assert.equal(statement.heritageClauses?.[0]?.types[0]?.typeArguments?.[0]?.kind, Kind.StringKeyword);
+    assert.equal(isPropertySignatureDeclaration(statement.members[0]!), true);
+    assert.equal(isMethodSignatureDeclaration(statement.members[1]!), true);
+    if (!isMethodSignatureDeclaration(statement.members[1]!)) throw new Error("Expected method signature");
+    assert.equal(statement.members[1]!.parameters[0]?.name.kind, Kind.Identifier);
+    assert.equal(statement.members[1]!.type?.kind, Kind.VoidKeyword);
+  });
+
+  it("produces class declarations with heritage, constructor, methods, and properties", () => {
+    const sourceFile = parseSourceFile("export class Box<T> extends Base implements Named { value: T; constructor(value: T) { this.value = value; } getValue(): T { return this.value; } }");
+    const statement = sourceFile.statements[0]!;
+
+    assert.equal(isClassDeclaration(statement), true);
+    if (!isClassDeclaration(statement)) throw new Error("Expected class");
+    assert.equal(statement.name?.text, "Box");
+    assert.equal(statement.typeParameters?.[0]?.name.text, "T");
+    assert.equal(statement.heritageClauses?.[0]?.token, Kind.ExtendsKeyword);
+    assert.equal(statement.heritageClauses?.[1]?.token, Kind.ImplementsKeyword);
+    assert.equal(isPropertyDeclaration(statement.members[0]!), true);
+    assert.equal(isConstructorDeclaration(statement.members[1]!), true);
+    assert.equal(isMethodDeclaration(statement.members[2]!), true);
+    if (!isMethodDeclaration(statement.members[2]!)) throw new Error("Expected method");
+    assert.equal(isTypeReferenceNode(statement.members[2]!.type!), true);
+    if (!isTypeReferenceNode(statement.members[2]!.type!)) throw new Error("Expected type reference");
+    assert.equal(statement.members[2]!.type!.typeName.kind, Kind.Identifier);
   });
 });

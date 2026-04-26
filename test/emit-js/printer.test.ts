@@ -44,4 +44,34 @@ describe("JS emitter groundwork", () => {
   it("prints property access and call expressions", () => {
     assert.equal(printSourceFile(parseSourceFile("answer.toFixed(2);")), "answer.toFixed(2);");
   });
+
+  it("erases type-only declarations and emits class declarations", () => {
+    assert.equal(
+      printSourceFile(parseSourceFile("export type Box<T> = { value: T }; interface Named { value: string; } export class BoxImpl extends Base implements Named { value: string = \"x\"; constructor(value: string) { this.value = value; } getValue(): string { return this.value; } }")),
+      [
+        "export class BoxImpl extends Base {",
+        "  value = \"x\";",
+        "  constructor(value) {",
+        "    this.value = value;",
+        "  }",
+        "  getValue() {",
+        "    return this.value;",
+        "  }",
+        "}",
+      ].join("\n"),
+    );
+  });
+
+  it("prints if statements and object and array literals", () => {
+    assert.equal(
+      printSourceFile(parseSourceFile("if (ready) { const value = { name: \"ok\", items: [1, 2] }; } else { const value = null; }")),
+      [
+        "if (ready) {",
+        "  const value = { name: \"ok\", items: [1, 2] };",
+        "} else {",
+        "  const value = null;",
+        "}",
+      ].join("\n"),
+    );
+  });
 });

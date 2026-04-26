@@ -2,23 +2,29 @@ import {
   NodeFlags,
   SymbolFlags,
   isBlock,
+  isClassDeclaration,
   isFunctionDeclaration,
   isIdentifier,
   isImportDeclaration,
+  isInterfaceDeclaration,
   isNamedImports,
   isNamespaceImport,
   isParameterDeclaration,
   isSourceFile,
+  isTypeAliasDeclaration,
   isVariableStatement,
   type BindingName,
   type Block,
+  type ClassDeclaration,
   type FunctionDeclaration,
   type ImportClause,
   type ImportSpecifier,
+  type InterfaceDeclaration,
   type Node,
   type ParameterDeclaration,
   type SourceFile,
   type Statement,
+  type TypeAliasDeclaration,
   type VariableDeclaration,
   type VariableDeclarationList,
 } from "../ast/index.js";
@@ -102,6 +108,18 @@ function bindStatement(statement: Statement, state: BinderState, lexicalScope: S
     bindFunctionDeclaration(statement, state, lexicalScope);
     return;
   }
+  if (isClassDeclaration(statement)) {
+    bindClassDeclaration(statement, state, lexicalScope);
+    return;
+  }
+  if (isInterfaceDeclaration(statement)) {
+    bindInterfaceDeclaration(statement, state, lexicalScope);
+    return;
+  }
+  if (isTypeAliasDeclaration(statement)) {
+    bindTypeAliasDeclaration(statement, state, lexicalScope);
+    return;
+  }
   if (isBlock(statement)) {
     bindBlock(statement, state, functionScope);
   }
@@ -159,6 +177,45 @@ function bindFunctionDeclaration(functionDeclaration: FunctionDeclaration, state
   if (functionDeclaration.body !== undefined) {
     bindBlock(functionDeclaration.body, state, functionLocals);
   }
+}
+
+function bindClassDeclaration(classDeclaration: ClassDeclaration, state: BinderState, lexicalScope: SymbolTable): void {
+  if (classDeclaration.name !== undefined) {
+    declareSymbol(
+      lexicalScope,
+      classDeclaration.name.text,
+      classDeclaration,
+      SymbolFlags.Class,
+      SymbolFlags.ClassExcludes,
+      state,
+    );
+  }
+  const classMembers: SymbolTable = new Map();
+  state.locals.set(classDeclaration, classMembers);
+}
+
+function bindInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, state: BinderState, lexicalScope: SymbolTable): void {
+  declareSymbol(
+    lexicalScope,
+    interfaceDeclaration.name.text,
+    interfaceDeclaration,
+    SymbolFlags.Interface,
+    SymbolFlags.InterfaceExcludes,
+    state,
+  );
+  const interfaceMembers: SymbolTable = new Map();
+  state.locals.set(interfaceDeclaration, interfaceMembers);
+}
+
+function bindTypeAliasDeclaration(typeAliasDeclaration: TypeAliasDeclaration, state: BinderState, lexicalScope: SymbolTable): void {
+  declareSymbol(
+    lexicalScope,
+    typeAliasDeclaration.name.text,
+    typeAliasDeclaration,
+    SymbolFlags.TypeAlias,
+    SymbolFlags.TypeAliasExcludes,
+    state,
+  );
 }
 
 function bindParameter(parameter: ParameterDeclaration, functionLocals: SymbolTable, state: BinderState): void {
