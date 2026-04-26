@@ -87,4 +87,18 @@ describe("program groundwork", () => {
     assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find module './missing'."]);
     assert.equal(result.emittedFiles.length, 0);
   });
+
+  it("does not emit when semantic diagnostics are present", () => {
+    const outputs = new Map<string, string>();
+    const host: CompilerHost = {
+      readFile: fileName => fileName === "src/index.ts" ? "export function f(): number { return \"x\"; }" : undefined,
+      writeFile: (fileName, text) => outputs.set(fileName, text),
+    };
+
+    const program = createProgram(["src/index.ts"], {}, host);
+    const result = emitProgram(program, host);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string' is not assignable to type 'number'."]);
+    assert.equal(outputs.size, 0);
+  });
 });

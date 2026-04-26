@@ -56,6 +56,9 @@ export function checkSourceFile(sourceFile: SourceFile): CheckResult {
 
 export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
   const diagnostics: ProgramDiagnostic[] = [...program.diagnostics];
+  if (diagnostics.length > 0) {
+    return diagnostics;
+  }
   for (const sourceFile of program.sourceFiles) {
     const result = checkSourceFile(sourceFile.sourceFile);
     diagnostics.push(...result.diagnostics.map(diagnostic => ({

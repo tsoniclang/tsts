@@ -1,5 +1,6 @@
 import { dirname, extname, join, normalize, relative } from "node:path";
 import { bindSourceFile, type BindDiagnostic, type BindResult } from "../binder/index.js";
+import { checkSourceFile } from "../checker/index.js";
 import { printSourceFile } from "../emit-js/index.js";
 import { parseSourceFile } from "../parser/index.js";
 import { isExportDeclaration, isImportDeclaration, isStringLiteral, type SourceFile } from "../ast/index.js";
@@ -100,7 +101,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
 }
 
 export function emitProgram(program: Program, host?: Pick<CompilerHost, "writeFile" | "getCurrentDirectory">): EmitResult {
-  const diagnostics: ProgramDiagnostic[] = [...program.diagnostics];
+  const diagnostics = getProgramDiagnostics(program);
   if (diagnostics.length > 0) {
     return { emittedFiles: [], diagnostics };
   }
@@ -115,6 +116,21 @@ export function emitProgram(program: Program, host?: Pick<CompilerHost, "writeFi
     };
   });
   return { emittedFiles, diagnostics };
+}
+
+export function getProgramDiagnostics(program: Program): readonly ProgramDiagnostic[] {
+  const diagnostics: ProgramDiagnostic[] = [...program.diagnostics];
+  if (diagnostics.length > 0) {
+    return diagnostics;
+  }
+  for (const sourceFile of program.sourceFiles) {
+    const checkResult = checkSourceFile(sourceFile.sourceFile);
+    diagnostics.push(...checkResult.diagnostics.map(diagnostic => ({
+      fileName: sourceFile.fileName,
+      message: diagnostic.message,
+    })));
+  }
+  return diagnostics;
 }
 
 function sourceFileModuleSpecifiers(sourceFile: SourceFile): readonly string[] {
