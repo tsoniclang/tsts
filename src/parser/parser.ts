@@ -4,8 +4,10 @@ import {
   createArrowFunction,
   createArrayTypeNode,
   createArrayLiteralExpression,
+  createArrayBindingPattern,
   createAsExpression,
   createBinaryExpression,
+  createBindingElement,
   createBlock,
   createClassDeclaration,
   createConstructorDeclaration,
@@ -41,6 +43,7 @@ import {
   createNodeArray,
   createNumericLiteral,
   createObjectLiteralExpression,
+  createObjectBindingPattern,
   createParameterDeclaration,
   createParenthesizedExpression,
   createParenthesizedTypeNode,
@@ -71,6 +74,7 @@ import {
   type BinaryOperator,
   type BinaryOperatorToken,
   type BindingName,
+  type BindingElement,
   type Block,
   type ConciseBody,
   type ClassElement,
@@ -927,7 +931,46 @@ export class Parser {
   }
 
   #parseBindingName(): BindingName {
+    if (this.#current().kind === Kind.OpenBraceToken) {
+      return this.#parseObjectBindingPattern();
+    }
+    if (this.#current().kind === Kind.OpenBracketToken) {
+      return this.#parseArrayBindingPattern();
+    }
     return this.#parseIdentifier();
+  }
+
+  #parseObjectBindingPattern(): BindingName {
+    this.#expect(Kind.OpenBraceToken);
+    const elements: BindingElement[] = [];
+    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
+      const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
+      const firstName = this.#parsePropertyName();
+      const propertyName = this.#consumeOptional(Kind.ColonToken) ? firstName : undefined;
+      if (propertyName === undefined && firstName.kind !== Kind.Identifier) {
+        throw new ParseError("Expected identifier shorthand in binding pattern", this.#current());
+      }
+      const name = propertyName === undefined ? firstName as BindingName : this.#parseBindingName();
+      const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
+      elements.push(createBindingElement(dotDotDotToken, propertyName, name, initializer));
+      this.#consumeOptional(Kind.CommaToken);
+    }
+    this.#expect(Kind.CloseBraceToken);
+    return createObjectBindingPattern(createNodeArray(elements));
+  }
+
+  #parseArrayBindingPattern(): BindingName {
+    this.#expect(Kind.OpenBracketToken);
+    const elements: BindingElement[] = [];
+    while (this.#current().kind !== Kind.CloseBracketToken && this.#current().kind !== Kind.EndOfFile) {
+      const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
+      const name = this.#parseBindingName();
+      const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
+      elements.push(createBindingElement(dotDotDotToken, undefined, name, initializer));
+      this.#consumeOptional(Kind.CommaToken);
+    }
+    this.#expect(Kind.CloseBracketToken);
+    return createArrayBindingPattern(createNodeArray(elements));
   }
 
   #parsePropertyName(): PropertyName {

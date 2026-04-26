@@ -31,6 +31,7 @@ import {
   isNamespaceImport,
   isNewExpression,
   isNumericLiteral,
+  isObjectBindingPattern,
   isObjectLiteralExpression,
   isParenthesizedExpression,
   isPostfixUnaryExpression,
@@ -47,6 +48,8 @@ import {
   isVariableDeclarationList,
   isVariableStatement,
   isWhileStatement,
+  isArrayBindingPattern,
+  type BindingElement,
   type BinaryOperatorToken,
   type ArrowFunction,
   type ClassDeclaration,
@@ -485,7 +488,21 @@ function printBindingName(name: Node): string {
   if (isIdentifier(name)) {
     return name.text;
   }
+  if (isObjectBindingPattern(name)) {
+    return `{ ${name.elements.map(printBindingElement).join(", ")} }`;
+  }
+  if (isArrayBindingPattern(name)) {
+    return `[${name.elements.map(printBindingElement).join(", ")}]`;
+  }
   throw new Error(`Unsupported binding name kind ${Kind[name.kind]}`);
+}
+
+function printBindingElement(element: BindingElement): string {
+  const rest = element.dotDotDotToken === undefined ? "" : "...";
+  const propertyName = element.propertyName === undefined ? "" : `${printPropertyName(element.propertyName)}: `;
+  const name = element.name === undefined ? "" : printBindingName(element.name);
+  const initializer = element.initializer === undefined ? "" : ` = ${printExpression(element.initializer)}`;
+  return `${rest}${propertyName}${name}${initializer}`;
 }
 
 function printPropertyName(name: Node): string {

@@ -63,4 +63,11 @@ describe("checker groundwork", () => {
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'unknown' is not assignable to type 'number'."]);
   });
+
+  it("makes destructured binding names available to checked bodies", () => {
+    const sourceFile = parseSourceFile("function f({ value }: string): string { return value; }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.equal(result.diagnostics.length, 0);
+  });
 });

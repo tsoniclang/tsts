@@ -17,12 +17,14 @@ import {
   isForOfStatement,
   isForStatement,
   isFunctionDeclaration,
+  isArrayBindingPattern,
   isIdentifier,
   isIfStatement,
   isKeywordTypeNode,
   isMethodDeclaration,
   isMissingDeclaration,
   isNumericLiteral,
+  isObjectBindingPattern,
   isParenthesizedExpression,
   isPostfixUnaryExpression,
   isPrefixUnaryExpression,
@@ -37,6 +39,8 @@ import {
   isWhileStatement,
   type Block,
   type ArrowFunction,
+  type BindingElement,
+  type BindingName,
   type ClassDeclaration,
   type ClassElement,
   type ConciseBody,
@@ -110,9 +114,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
       if (declaredType !== undefined && initializerType !== undefined) {
         checkAssignable(initializerType, declaredType, state);
       }
-      if (isIdentifier(declaration.name)) {
-        environment.set(declaration.name.text, declaredType ?? initializerType ?? unknownType);
-      }
+      setBindingNameType(declaration.name, declaredType ?? initializerType ?? unknownType, environment);
     }
     return;
   }
@@ -193,9 +195,7 @@ function checkForInitializer(initializer: Extract<Statement, { readonly kind: Ki
       if (declaredType !== undefined && initializerType !== undefined) {
         checkAssignable(initializerType, declaredType, state);
       }
-      if (isIdentifier(declaration.name)) {
-        environment.set(declaration.name.text, declaredType ?? initializerType ?? unknownType);
-      }
+      setBindingNameType(declaration.name, declaredType ?? initializerType ?? unknownType, environment);
     }
     return;
   }
@@ -219,9 +219,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
   if (isConstructorDeclaration(member) || isMethodDeclaration(member)) {
     const memberEnvironment = new Map(environment);
     for (const parameter of member.parameters) {
-      if (isIdentifier(parameter.name)) {
-        memberEnvironment.set(parameter.name.text, parameter.type === undefined ? unknownType : typeFromTypeNode(parameter.type));
-      }
+      setBindingNameType(parameter.name, parameter.type === undefined ? unknownType : typeFromTypeNode(parameter.type), memberEnvironment);
     }
     if (member.body !== undefined) {
       checkBlock(member.body, state, memberEnvironment, member.type === undefined ? undefined : typeFromTypeNode(member.type));
@@ -239,9 +237,7 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
   }
   const functionEnvironment = new Map(environment);
   for (const parameter of functionDeclaration.parameters) {
-    if (isIdentifier(parameter.name)) {
-      functionEnvironment.set(parameter.name.text, parameter.type === undefined ? unknownType : typeFromTypeNode(parameter.type));
-    }
+    setBindingNameType(parameter.name, parameter.type === undefined ? unknownType : typeFromTypeNode(parameter.type), functionEnvironment);
   }
   if (functionDeclaration.body !== undefined) {
     checkBlock(functionDeclaration.body, state, functionEnvironment, functionDeclaration.type === undefined ? undefined : typeFromTypeNode(functionDeclaration.type));
@@ -324,9 +320,7 @@ function inferExpression(expression: Expression, state: CheckState, environment:
 function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, environment: TypeEnvironment): CheckedType {
   const arrowEnvironment = new Map(environment);
   for (const parameter of arrowFunction.parameters) {
-    if (isIdentifier(parameter.name)) {
-      arrowEnvironment.set(parameter.name.text, parameter.type === undefined ? unknownType : typeFromTypeNode(parameter.type));
-    }
+    setBindingNameType(parameter.name, parameter.type === undefined ? unknownType : typeFromTypeNode(parameter.type), arrowEnvironment);
   }
   const declaredReturnType = arrowFunction.type === undefined ? undefined : typeFromTypeNode(arrowFunction.type);
   const inferredReturnType = inferConciseBody(arrowFunction.body, state, arrowEnvironment, declaredReturnType);
@@ -360,6 +354,24 @@ function inferPropertyAccess(expression: Expression, propertyName: string, state
     return anyType;
   }
   return unknownType;
+}
+
+function setBindingNameType(name: BindingName, type: CheckedType, environment: TypeEnvironment): void {
+  if (isIdentifier(name)) {
+    environment.set(name.text, type);
+    return;
+  }
+  if (isObjectBindingPattern(name) || isArrayBindingPattern(name)) {
+    for (const element of name.elements) {
+      setBindingElementType(element, type, environment);
+    }
+  }
+}
+
+function setBindingElementType(element: BindingElement, type: CheckedType, environment: TypeEnvironment): void {
+  if (element.name !== undefined) {
+    setBindingNameType(element.name, type, environment);
+  }
 }
 
 function typeFromTypeNode(type: TypeNode): CheckedType {

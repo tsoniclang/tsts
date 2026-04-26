@@ -29,6 +29,7 @@ import {
   isNamedImports,
   isNewExpression,
   isNumericLiteral,
+  isObjectBindingPattern,
   isParenthesizedExpression,
   isPostfixUnaryExpression,
   isPrefixUnaryExpression,
@@ -41,6 +42,7 @@ import {
   isTypeReferenceNode,
   isVariableStatement,
   isWhileStatement,
+  isArrayBindingPattern,
 } from "../../src/ast/index.js";
 import { parseSourceFile } from "../../src/parser/index.js";
 
@@ -277,5 +279,23 @@ describe("TS-Go parser groundwork", () => {
     if (!isElementAccessExpression(firstArgument!)) throw new Error("Expected element access");
     assert.equal(isPostfixUnaryExpression(firstArgument.argumentExpression), true);
     assert.equal(isPrefixUnaryExpression(initializer.whenFalse), true);
+  });
+
+  it("produces object and array binding patterns in declarations and parameters", () => {
+    const sourceFile = parseSourceFile("const { id, name: label = \"x\", ...rest } = item; function f([first, second]: string[]) { return first; }");
+    const variableStatement = sourceFile.statements[0]!;
+    const functionStatement = sourceFile.statements[1]!;
+    if (!isVariableStatement(variableStatement)) throw new Error("Expected variable statement");
+    if (!isFunctionDeclaration(functionStatement)) throw new Error("Expected function statement");
+
+    const bindingName = variableStatement.declarationList.declarations[0]!.name;
+    assert.equal(isObjectBindingPattern(bindingName), true);
+    if (!isObjectBindingPattern(bindingName)) throw new Error("Expected object binding pattern");
+    assert.equal(bindingName.elements.length, 3);
+    assert.equal(bindingName.elements[1]!.propertyName?.kind, Kind.Identifier);
+    assert.equal(bindingName.elements[1]!.initializer?.kind, Kind.StringLiteral);
+    assert.equal(bindingName.elements[2]!.dotDotDotToken?.kind, Kind.DotDotDotToken);
+
+    assert.equal(isArrayBindingPattern(functionStatement.parameters[0]!.name), true);
   });
 });

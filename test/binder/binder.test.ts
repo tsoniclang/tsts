@@ -91,4 +91,19 @@ describe("TS-Go binder groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
     assert.equal(lookupSymbol(result.globals, "index")?.flags, SymbolFlags.BlockScopedVariable);
   });
+
+  it("binds names inside object and array binding patterns", () => {
+    const sourceFile = parseSourceFile("const { id, name: label, ...rest } = item; function f([first, second]: string[]) { return first; }");
+    const result = bindSourceFile(sourceFile);
+    const functionDeclaration = sourceFile.statements[1]!;
+    if (!isFunctionDeclaration(functionDeclaration)) throw new Error("Expected function declaration");
+    const functionLocals = result.locals.get(functionDeclaration);
+
+    assert.equal(result.diagnostics.length, 0);
+    assert.equal(lookupSymbol(result.globals, "id")?.flags, SymbolFlags.BlockScopedVariable);
+    assert.equal(lookupSymbol(result.globals, "label")?.flags, SymbolFlags.BlockScopedVariable);
+    assert.equal(lookupSymbol(result.globals, "rest")?.flags, SymbolFlags.BlockScopedVariable);
+    assert.equal(functionLocals?.get("first")?.flags, SymbolFlags.FunctionScopedVariable);
+    assert.equal(functionLocals?.get("second")?.flags, SymbolFlags.FunctionScopedVariable);
+  });
 });

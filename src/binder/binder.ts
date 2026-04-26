@@ -9,6 +9,8 @@ import {
   isForStatement,
   isFunctionDeclaration,
   isIdentifier,
+  isObjectBindingPattern,
+  isArrayBindingPattern,
   isImportDeclaration,
   isInterfaceDeclaration,
   isNamedImports,
@@ -19,6 +21,7 @@ import {
   isVariableStatement,
   isWhileStatement,
   type BindingName,
+  type BindingElement,
   type Block,
   type ClassDeclaration,
   type ForInitializer,
@@ -239,11 +242,7 @@ function bindTypeAliasDeclaration(typeAliasDeclaration: TypeAliasDeclaration, st
 }
 
 function bindParameter(parameter: ParameterDeclaration, functionLocals: SymbolTable, state: BinderState): void {
-  const name = bindingNameText(parameter.name, state);
-  if (name === undefined) {
-    return;
-  }
-  declareSymbol(functionLocals, name, parameter, SymbolFlags.FunctionScopedVariable, SymbolFlags.ParameterExcludes, state);
+  bindBindingName(parameter.name, parameter, functionLocals, SymbolFlags.FunctionScopedVariable, SymbolFlags.ParameterExcludes, state);
 }
 
 function bindVariableDeclarationList(declarationList: VariableDeclarationList, state: BinderState, lexicalScope: SymbolTable, functionScope: SymbolTable): void {
@@ -263,22 +262,26 @@ function bindForInitializer(initializer: ForInitializer | undefined, state: Bind
 }
 
 function bindVariableDeclaration(declaration: VariableDeclaration, targetScope: SymbolTable, flags: SymbolFlags, excludes: SymbolFlags, state: BinderState): void {
-  const name = bindingNameText(declaration.name, state);
-  if (name === undefined) {
-    return;
-  }
-  declareSymbol(targetScope, name, declaration, flags, excludes, state);
+  bindBindingName(declaration.name, declaration, targetScope, flags, excludes, state);
 }
 
-function bindingNameText(name: BindingName, state: BinderState): string | undefined {
+function bindBindingName(name: BindingName, declaration: Node, targetScope: SymbolTable, flags: SymbolFlags, excludes: SymbolFlags, state: BinderState): void {
   if (isIdentifier(name)) {
-    return name.text;
+    declareSymbol(targetScope, name.text, declaration, flags, excludes, state);
+    return;
   }
-  state.diagnostics.push({
-    message: `Unsupported binding name kind ${name.kind}`,
-    node: name,
-  });
-  return undefined;
+  if (isObjectBindingPattern(name) || isArrayBindingPattern(name)) {
+    for (const element of name.elements) {
+      bindBindingElement(element, targetScope, flags, excludes, state);
+    }
+    return;
+  }
+}
+
+function bindBindingElement(element: BindingElement, targetScope: SymbolTable, flags: SymbolFlags, excludes: SymbolFlags, state: BinderState): void {
+  if (element.name !== undefined) {
+    bindBindingName(element.name, element, targetScope, flags, excludes, state);
+  }
 }
 
 function declareSymbol(

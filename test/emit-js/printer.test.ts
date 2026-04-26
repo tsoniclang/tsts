@@ -111,4 +111,16 @@ describe("JS emitter groundwork", () => {
       ].join("\n"),
     );
   });
+
+  it("prints destructuring binding patterns with type erasure", () => {
+    assert.equal(
+      printSourceFile(parseSourceFile("const { id, name: label = \"x\", ...rest }: Shape = item; function f([first, second]: string[]) { return first; }")),
+      [
+        "const { id, name: label = \"x\", ...rest } = item;",
+        "function f([first, second]) {",
+        "  return first;",
+        "}",
+      ].join("\n"),
+    );
+  });
 });
