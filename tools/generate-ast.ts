@@ -436,6 +436,650 @@ function expandNodeAliasMembers(schema: AstSchema, alias: readonly string[], kin
   return alias.flatMap(typeName => resolveNodeAliasMember(schema, typeName, kindToNodeType).split(" | "));
 }
 
+function instantiationAliases(schema: AstSchema): Map<string, { readonly nodeName: string; readonly typeArgument: string }> {
+  const aliases = new Map<string, { readonly nodeName: string; readonly typeArgument: string }>();
+  for (const [nodeName, definition] of Object.entries(schema.nodes.definitions)) {
+    for (const [aliasName, typeArgument] of Object.entries(definition.instantiationAliases ?? {})) {
+      aliases.set(aliasName, { nodeName, typeArgument });
+    }
+  }
+  return aliases;
+}
+
+function findBaseField(schema: AstSchema, baseName: string, fieldName: string, seen = new Set<string>()): MemberDefinition | undefined {
+  if (seen.has(baseName)) {
+    return undefined;
+  }
+  seen.add(baseName);
+  const base = schema.bases[baseName];
+  if (base === undefined) {
+    return undefined;
+  }
+  const fields = base.fields ?? {};
+  for (const [name, field] of Object.entries(fields)) {
+    if (name === fieldName) {
+      return { ...field, name };
+    }
+  }
+  for (const inheritedBase of base.extends ?? []) {
+    const field = findBaseField(schema, inheritedBase, fieldName, seen);
+    if (field !== undefined) {
+      return field;
+    }
+  }
+  return undefined;
+}
+
+function resolveInheritedMember(schema: AstSchema, definition: NodeDefinition, member: MemberDefinition): MemberDefinition {
+  if (member.type !== undefined || member.inherited !== true) {
+    return member;
+  }
+  for (const baseName of definition.extends) {
+    const field = findBaseField(schema, baseName, member.name);
+    if (field !== undefined) {
+      if (field.type === undefined) {
+        return member;
+      }
+      const resolved: Record<string, unknown> = {
+        ...field,
+        ...member,
+        type: field.type,
+      };
+      if (member.list === undefined && field.list !== undefined) {
+        resolved.list = field.list;
+      }
+      if (member.optional === undefined && field.optional !== undefined) {
+        resolved.optional = field.optional;
+      }
+      if (member.visit === undefined && field.visit !== undefined) {
+        resolved.visit = field.visit;
+      }
+      if (member.typeGuard === undefined && field.typeGuard !== undefined) {
+        resolved.typeGuard = field.typeGuard;
+      }
+      if (member.noFactory === undefined && field.noFactory !== undefined) {
+        resolved.noFactory = field.noFactory;
+      }
+      if (member.noTS === undefined && field.noTS !== undefined) {
+        resolved.noTS = field.noTS;
+      }
+      if (member.goOnly === undefined && field.goOnly !== undefined) {
+        resolved.goOnly = field.goOnly;
+      }
+      return resolved as unknown as MemberDefinition;
+    }
+  }
+  return member;
+}
+
+function runtimeMembers(schema: AstSchema, definition: NodeDefinition): readonly MemberDefinition[] {
+  return (definition.members ?? [])
+    .map(member => resolveInheritedMember(schema, definition, member))
+    .filter(member => {
+      if (member.name === "Kind" || member.name === "kind") {
+        return false;
+      }
+      if (member.noTS === true || member.goOnly === true || member.noFactory === true) {
+        return false;
+      }
+      return member.type !== undefined;
+    });
+}
+
+function dataPropertyName(name: string): string {
+  return lowerFirst(name);
+}
+
+function parameterName(name: string): string {
+  const lowered = dataPropertyName(name);
+  return lowered === "arguments" ? "arguments_" : lowered;
+}
+
+function isPrimitiveTypeName(type: string): boolean {
+  switch (type) {
+    case "bool":
+    case "int":
+    case "string":
+    case "unknown":
+    case "any":
+    case "NodeFlags":
+    case "ModifierFlags":
+    case "TokenFlags":
+    case "CheckFlags":
+    case "FunctionFlags":
+    case "TransformFlags":
+      return true;
+    default:
+      return false;
+  }
+}
+
+function formatRuntimeType(schema: AstSchema, type: string | readonly string[] | undefined): string {
+  if (type === undefined) {
+    return "unknown";
+  }
+  if (isReadonlyArray(type)) {
+    return type.map(item => formatRuntimeType(schema, item)).join(" | ");
+  }
+  if (type.startsWith("SyntaxKind.")) {
+    return formatKindType(type);
+  }
+  if (type.startsWith("*")) {
+    return formatRuntimeType(schema, type.slice(1));
+  }
+  if (isPrimitiveTypeName(type)) {
+    return formatType(schema, type);
+  }
+  switch (type) {
+    case "Node":
+    case "NodeArray":
+    case "SourceFile":
+    case "Path":
+    case "Symbol":
+      return type;
+    default:
+      return `Ast.${type}`;
+  }
+}
+
+function formatRuntimeMemberType(schema: AstSchema, member: MemberDefinition): string {
+  const itemType = formatRuntimeType(schema, member.type);
+  switch (member.list) {
+    case "NodeList":
+    case "ModifierList":
+      return `NodeArray<${itemType}>`;
+    case "raw":
+      return `readonly ${itemType}[]`;
+    default:
+      return itemType;
+  }
+}
+
+function runtimeTypeParameters(schema: AstSchema, definition: NodeDefinition): string {
+  if (!definition.typeParameters?.length) {
+    return "";
+  }
+  const params = definition.typeParameters.map(param => {
+    const constraint = formatRuntimeType(schema, param.constraint);
+    const defaultType = param.default === undefined ? "" : ` = ${formatRuntimeType(schema, param.default)}`;
+    return `${param.name} extends ${constraint}${defaultType}`;
+  });
+  return `<${params.join(", ")}>`;
+}
+
+function kindNamesFromType(schema: AstSchema, type: string | readonly string[] | undefined, definition: NodeDefinition): string[] {
+  if (type === undefined) {
+    return [];
+  }
+  if (isReadonlyArray(type)) {
+    return type.flatMap(item => kindNamesFromType(schema, item, definition));
+  }
+  if (type.startsWith("SyntaxKind.")) {
+    return [type.slice("SyntaxKind.".length)];
+  }
+  const typeParameter = definition.typeParameters?.find(param => param.name === type);
+  if (typeParameter !== undefined) {
+    return kindNamesFromType(schema, typeParameter.constraint, definition);
+  }
+  const kindAlias = schema.kinds.aliases?.[type];
+  if (kindAlias !== undefined) {
+    return expandKindAlias(schema, kindAlias);
+  }
+  if (type === "Kind") {
+    return normalizeKinds(schema).map(kind => kind.name);
+  }
+  return [];
+}
+
+function concreteNodeEntries(schema: AstSchema): {
+  readonly name: string;
+  readonly returnType: string;
+  readonly kindType: string;
+  readonly definition: NodeDefinition;
+  readonly members: readonly MemberDefinition[];
+  readonly typeParameters: string;
+  readonly typeArguments: string;
+}[] {
+  const entries: {
+    readonly name: string;
+    readonly returnType: string;
+    readonly kindType: string;
+    readonly definition: NodeDefinition;
+    readonly members: readonly MemberDefinition[];
+    readonly typeParameters: string;
+    readonly typeArguments: string;
+  }[] = [];
+
+  for (const [name, definition] of Object.entries(schema.nodes.definitions)) {
+    if (definition.handWritten === true) {
+      continue;
+    }
+    if (isVariantNode(schema, name, definition)) {
+      const kindMember = definition.members?.find(member => member.name === "Kind" || member.name === "kind");
+      if (kindMember?.type === undefined || !isReadonlyArray(kindMember.type)) {
+        throw new Error(`Variant node ${name} does not declare a SyntaxKind union`);
+      }
+      for (const kindName of kindMember.type) {
+        const variantName = kindName.slice("SyntaxKind.".length);
+        entries.push({
+          name: variantName,
+          returnType: `Ast.${variantName}`,
+          kindType: formatKindType(variantName),
+          definition,
+          members: runtimeMembers(schema, definition),
+          typeParameters: "",
+          typeArguments: "",
+        });
+      }
+      continue;
+    }
+
+    const params = definition.typeParameters ?? [];
+    entries.push({
+      name,
+      returnType: `Ast.${name}${params.length > 0 ? `<${params.map(param => param.name).join(", ")}>` : ""}`,
+      kindType: kindType(schema, name, definition),
+      definition,
+      members: runtimeMembers(schema, definition),
+      typeParameters: runtimeTypeParameters(schema, definition),
+      typeArguments: params.length > 0 ? `<${params.map(param => param.name).join(", ")}>` : "",
+    });
+  }
+
+  return entries;
+}
+
+function generateFactory(schema: AstSchema): string {
+  const lines: string[] = [generatedHeader("schema/tsgo/ast.json")];
+  lines.push("import { Kind } from \"./kind.js\";");
+  lines.push("import { forEachChild } from \"./visitor.js\";");
+  lines.push("import type * as Ast from \"./nodes.js\";");
+  lines.push("import type { Node, NodeArray, Path, SourceFile, Symbol } from \"./types.js\";");
+  lines.push("");
+  lines.push("type NodeData = Record<string, unknown>;");
+  lines.push("");
+  lines.push("export class NodeObject implements Node {");
+  lines.push("  readonly kind: Kind;");
+  lines.push("  flags = 0;");
+  lines.push("  readonly pos: number;");
+  lines.push("  readonly end: number;");
+  lines.push("  parent: Node = undefined!;");
+  lines.push("  readonly jsDoc?: readonly Node[];");
+  lines.push("  readonly #data: NodeData;");
+  lines.push("");
+  lines.push("  constructor(kind: Kind, data: NodeData = {}, pos = -1, end = -1) {");
+  lines.push("    this.kind = kind;");
+  lines.push("    this.#data = data;");
+  lines.push("    this.pos = pos;");
+  lines.push("    this.end = end;");
+  lines.push("  }");
+  lines.push("");
+
+  const getterNames = new Set<string>();
+  for (const base of Object.values(schema.bases)) {
+    for (const [fieldName, field] of Object.entries(base.fields ?? {})) {
+      if (field.noTS !== true && field.goOnly !== true) {
+        getterNames.add(dataPropertyName(fieldName));
+      }
+    }
+  }
+  for (const definition of Object.values(schema.nodes.definitions)) {
+    for (const member of runtimeMembers(schema, definition)) {
+      getterNames.add(dataPropertyName(member.name));
+    }
+  }
+  for (const name of [
+    "fileName",
+    "path",
+    "languageVariant",
+    "scriptKind",
+    "isDeclarationFile",
+    "referencedFiles",
+    "typeReferenceDirectives",
+    "libReferenceDirectives",
+    "imports",
+    "moduleAugmentations",
+    "ambientModuleNames",
+    "externalModuleIndicator",
+    "tokenCache",
+  ]) {
+    getterNames.add(name);
+  }
+  for (const ownProperty of ["kind", "flags", "pos", "end", "parent", "jsDoc"]) {
+    getterNames.delete(ownProperty);
+  }
+  for (const getterName of [...getterNames].sort()) {
+    lines.push(`  get ${getterName}(): unknown { return this.#data[${JSON.stringify(getterName)}]; }`);
+  }
+  lines.push("");
+  lines.push("  forEachChild<T>(visitor: (node: Node) => T, visitArray?: (nodes: NodeArray<Node>) => T): T | undefined {");
+  lines.push("    return forEachChild(this, visitor, visitArray);");
+  lines.push("  }");
+  lines.push("");
+  lines.push("  getSourceFile(): SourceFile {");
+  lines.push("    let current: Node = this;");
+  lines.push("    while (current.parent !== undefined) {");
+  lines.push("      current = current.parent;");
+  lines.push("    }");
+  lines.push("    return current as SourceFile;");
+  lines.push("  }");
+  lines.push("}");
+  lines.push("");
+  lines.push("export function createNode<TNode extends Node>(kind: Kind, data: NodeData = {}, pos = -1, end = -1): TNode {");
+  lines.push("  return new NodeObject(kind, data, pos, end) as unknown as TNode;");
+  lines.push("}");
+  lines.push("");
+  lines.push("function isNodeArray<TNode extends Node>(array: readonly TNode[]): array is NodeArray<TNode> {");
+  lines.push("  return \"pos\" in array && \"end\" in array && \"transformFlags\" in array;");
+  lines.push("}");
+  lines.push("");
+  lines.push("export function createNodeArray<TNode extends Node>(elements: readonly TNode[], pos = -1, end = -1): NodeArray<TNode> {");
+  lines.push("  if (isNodeArray(elements)) {");
+  lines.push("    return elements;");
+  lines.push("  }");
+  lines.push("  const array = elements.slice() as unknown as TNode[] & { pos: number; end: number; transformFlags: number; hasTrailingComma?: boolean };");
+  lines.push("  array.pos = pos;");
+  lines.push("  array.end = end;");
+  lines.push("  array.transformFlags = 0;");
+  lines.push("  return array as unknown as NodeArray<TNode>;");
+  lines.push("}");
+  lines.push("");
+
+  for (const entry of concreteNodeEntries(schema)) {
+    const hasKindTypeParameter = entry.definition.typeParameters?.some(param => param.name === "TKind") === true;
+    const memberParams = entry.members.map(member => {
+      const type = formatRuntimeMemberType(schema, member);
+      const optionalType = member.optional === true ? `${type} | undefined` : type;
+      return `${parameterName(member.name)}: ${optionalType}`;
+    });
+    const params = hasKindTypeParameter ? ["kind: TKind", ...memberParams] : memberParams;
+    const kindExpression = hasKindTypeParameter ? "kind as Kind" : entry.kindType;
+    const dataEntries = entry.members.map(member => `${JSON.stringify(dataPropertyName(member.name))}: ${parameterName(member.name)}`);
+    const dataExpression = dataEntries.length === 0 ? "{}" : `{ ${dataEntries.join(", ")} }`;
+    lines.push(`export function create${entry.name}${entry.typeParameters}(${params.join(", ")}): ${entry.returnType} {`);
+    lines.push(`  return createNode<${entry.returnType}>(${kindExpression}, ${dataExpression});`);
+    lines.push("}");
+    lines.push("");
+    const updateParams = [`node: ${entry.returnType}`, ...memberParams];
+    lines.push(`export function update${entry.name}${entry.typeParameters}(${updateParams.join(", ")}): ${entry.returnType} {`);
+    if (entry.members.length === 0) {
+      lines.push("  return node;");
+    } else {
+      const comparisons = entry.members.map(member => `node.${dataPropertyName(member.name)} === ${parameterName(member.name)}`);
+      lines.push(`  if (${comparisons.join(" && ")}) {`);
+      lines.push("    return node;");
+      lines.push("  }");
+      const createArgs = hasKindTypeParameter ? ["node.kind", ...entry.members.map(member => parameterName(member.name))] : entry.members.map(member => parameterName(member.name));
+      lines.push(`  return create${entry.name}${entry.typeArguments}(${createArgs.join(", ")});`);
+    }
+    lines.push("}");
+    lines.push("");
+  }
+
+  lines.push("export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile): SourceFile {");
+  lines.push("  return createNode<SourceFile>(Kind.SourceFile, {");
+  lines.push("    fileName,");
+  lines.push("    path,");
+  lines.push("    text,");
+  lines.push("    statements,");
+  lines.push("    endOfFileToken,");
+  lines.push("    languageVariant: 0,");
+  lines.push("    scriptKind: 0,");
+  lines.push("    isDeclarationFile: false,");
+  lines.push("    referencedFiles: [],");
+  lines.push("    typeReferenceDirectives: [],");
+  lines.push("    libReferenceDirectives: [],");
+  lines.push("    imports: [],");
+  lines.push("    moduleAugmentations: [],");
+  lines.push("    ambientModuleNames: [],");
+  lines.push("    externalModuleIndicator: undefined,");
+  lines.push("  });");
+  lines.push("}");
+  lines.push("");
+  lines.push("export function updateSourceFile(node: SourceFile, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile): SourceFile {");
+  lines.push("  if (node.statements === statements && node.endOfFileToken === endOfFileToken) {");
+  lines.push("    return node;");
+  lines.push("  }");
+  lines.push("  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken);");
+  lines.push("  return updated;");
+  lines.push("}");
+  lines.push("");
+  lines.push("export function cloneNode<TNode extends Node>(node: TNode): TNode {");
+  lines.push("  const data: NodeData = {};");
+  for (const getterName of [...getterNames].sort()) {
+    lines.push(`  if ((node as { readonly ${getterName}?: unknown }).${getterName} !== undefined) data[${JSON.stringify(getterName)}] = (node as { readonly ${getterName}?: unknown }).${getterName};`);
+  }
+  lines.push("  const clone = createNode<TNode>(node.kind, data, node.pos, node.end);");
+  lines.push("  (clone as { flags: number }).flags = node.flags;");
+  lines.push("  return clone;");
+  lines.push("}");
+  lines.push("");
+
+  return `${lines.join("\n")}\n`;
+}
+
+function isNodeTypeName(schema: AstSchema, typeName: string, seen = new Set<string>()): boolean {
+  if (typeName.startsWith("*")) {
+    return isNodeTypeName(schema, typeName.slice(1), seen);
+  }
+  if (typeName.startsWith("SyntaxKind.") || isPrimitiveTypeName(typeName) || kindAliasNames(schema).has(typeName)) {
+    return false;
+  }
+  if (typeName === "Node" || typeName === "SourceFile" || Object.hasOwn(schema.nodes.definitions, typeName) || Object.hasOwn(schema.nodes.listAliases ?? {}, typeName)) {
+    return true;
+  }
+  if (instantiationAliases(schema).has(typeName)) {
+    return true;
+  }
+  if (seen.has(typeName)) {
+    return false;
+  }
+  seen.add(typeName);
+  const alias = schema.nodes.aliases[typeName];
+  if (alias === undefined) {
+    return false;
+  }
+  if (isBaseNodeAlias(alias)) {
+    return true;
+  }
+  return alias.some(member => isNodeTypeName(schema, member, seen));
+}
+
+function isNodeMember(schema: AstSchema, member: MemberDefinition): boolean {
+  if (member.type === undefined) {
+    return false;
+  }
+  if (isReadonlyArray(member.type)) {
+    return member.type.some(type => isNodeTypeName(schema, type));
+  }
+  return isNodeTypeName(schema, member.type);
+}
+
+function nodeKindCases(schema: AstSchema, name: string, definition: NodeDefinition): string[] {
+  if (definition.handWritten === true) {
+    return [name];
+  }
+  const kindMember = definition.members?.find(member => member.name === "Kind" || member.name === "kind");
+  if (kindMember?.type !== undefined) {
+    const kindNames = kindNamesFromType(schema, kindMember.type, definition);
+    if (kindNames.length > 0) {
+      return kindNames;
+    }
+  }
+  if (isVariantNode(schema, name, definition)) {
+    if (kindMember?.type !== undefined && isReadonlyArray(kindMember.type)) {
+      return kindMember.type.map(type => type.slice("SyntaxKind.".length));
+    }
+  }
+  const kindValues = isReadonlyArray(definition.kind) ? definition.kind : [definition.kind ?? name];
+  return kindValues.map(kind => kind.startsWith("SyntaxKind.") ? kind.slice("SyntaxKind.".length) : kind);
+}
+
+function generateVisitor(schema: AstSchema): string {
+  const lines: string[] = [generatedHeader("schema/tsgo/ast.json")];
+  lines.push("import { Kind } from \"./kind.js\";");
+  lines.push("import type { Node, NodeArray } from \"./types.js\";");
+  lines.push("");
+  lines.push("function visitNode<T>(node: Node | undefined, visitor: (node: Node) => T): T | undefined {");
+  lines.push("  return node === undefined ? undefined : visitor(node);");
+  lines.push("}");
+  lines.push("");
+  lines.push("function visitNodes<T>(nodes: NodeArray<Node> | undefined, visitor: (node: Node) => T, visitArray?: (nodes: NodeArray<Node>) => T): T | undefined {");
+  lines.push("  if (nodes === undefined) {");
+  lines.push("    return undefined;");
+  lines.push("  }");
+  lines.push("  const arrayResult = visitArray?.(nodes);");
+  lines.push("  if (arrayResult !== undefined) {");
+  lines.push("    return arrayResult;");
+  lines.push("  }");
+  lines.push("  for (const node of nodes) {");
+  lines.push("    const result = visitor(node);");
+  lines.push("    if (result !== undefined) {");
+  lines.push("      return result;");
+  lines.push("    }");
+  lines.push("  }");
+  lines.push("  return undefined;");
+  lines.push("}");
+  lines.push("");
+  lines.push("export function forEachChild<T>(node: Node, visitor: (node: Node) => T, visitArray?: (nodes: NodeArray<Node>) => T): T | undefined {");
+  lines.push("  switch (node.kind) {");
+
+  const entries = Object.entries(schema.nodes.definitions);
+  for (const [name, definition] of entries) {
+    const members = runtimeMembers(schema, definition).filter(member => isNodeMember(schema, member));
+    if (members.length === 0) {
+      continue;
+    }
+    for (const kindName of nodeKindCases(schema, name, definition)) {
+      lines.push(`    case Kind.${enumMemberName(kindName)}:`);
+    }
+    lines.push("      {");
+    lines.push("        const typedNode = node as unknown as Record<string, unknown>;");
+    for (const [index, member] of members.entries()) {
+      const propName = dataPropertyName(member.name);
+      const resultName = `childResult${index}`;
+      if (member.list === "NodeList" || member.list === "ModifierList" || member.list === "raw") {
+        lines.push(`        const ${resultName} = visitNodes(typedNode[${JSON.stringify(propName)}] as NodeArray<Node> | undefined, visitor, visitArray);`);
+      } else {
+        lines.push(`        const ${resultName} = visitNode(typedNode[${JSON.stringify(propName)}] as Node | undefined, visitor);`);
+      }
+      lines.push(`        if (${resultName} !== undefined) return ${resultName};`);
+    }
+    lines.push("        return undefined;");
+    lines.push("      }");
+  }
+
+  lines.push("    default:");
+  lines.push("      return undefined;");
+  lines.push("  }");
+  lines.push("}");
+  lines.push("");
+
+  return `${lines.join("\n")}\n`;
+}
+
+function guardKindCasesForType(schema: AstSchema, typeName: string, kindToNodeType: ReadonlyMap<string, string>, seen = new Set<string>()): string[] {
+  if (seen.has(typeName)) {
+    return [];
+  }
+  seen.add(typeName);
+  if (typeName === "Node") {
+    return normalizeKinds(schema).map(kind => kind.name);
+  }
+  if (typeName === "SourceFile") {
+    return ["SourceFile"];
+  }
+  const instantiationAlias = instantiationAliases(schema).get(typeName);
+  if (instantiationAlias !== undefined) {
+    return kindNamesFromType(schema, instantiationAlias.typeArgument, schema.nodes.definitions[instantiationAlias.nodeName]!);
+  }
+  if (concreteKindNames(schema).has(typeName) && kindToNodeType.has(typeName)) {
+    return [typeName];
+  }
+  const definition = schema.nodes.definitions[typeName];
+  if (definition !== undefined) {
+    return nodeKindCases(schema, typeName, definition);
+  }
+  const alias = schema.nodes.aliases[typeName];
+  if (alias !== undefined) {
+    if (isBaseNodeAlias(alias)) {
+      return Object.entries(schema.nodes.definitions)
+        .filter(([, definition]) => baseExtendsTransitive(schema, definition, alias.base))
+        .flatMap(([nodeName, definition]) => nodeKindCases(schema, nodeName, definition));
+    }
+    return alias.flatMap(member => guardKindCasesForType(schema, member, kindToNodeType, seen));
+  }
+  const kindAlias = schema.kinds.aliases?.[typeName];
+  if (kindAlias !== undefined) {
+    return expandKindAlias(schema, kindAlias).map(kindName => kindToNodeType.get(kindName)).filter((nodeType): nodeType is string => nodeType !== undefined).flatMap(nodeType => guardKindCasesForType(schema, nodeType, kindToNodeType, seen));
+  }
+  const nodeType = kindToNodeType.get(typeName);
+  return nodeType === undefined ? [] : guardKindCasesForType(schema, nodeType, kindToNodeType, seen);
+}
+
+function unique(values: readonly string[]): string[] {
+  return [...new Set(values)];
+}
+
+function generateGuards(schema: AstSchema): string {
+  const lines: string[] = [generatedHeader("schema/tsgo/ast.json")];
+  lines.push("import { Kind } from \"./kind.js\";");
+  lines.push("import type * as Ast from \"./nodes.js\";");
+  lines.push("import type { Node, SourceFile } from \"./types.js\";");
+  lines.push("");
+
+  const kindToNodeType = syntaxKindToNodeType(schema);
+  const emitted = new Set<string>();
+  const emitGuard = (name: string, type: string): void => {
+    if (emitted.has(name)) {
+      return;
+    }
+    emitted.add(name);
+    const cases = unique(guardKindCasesForType(schema, name, kindToNodeType));
+    if (cases.length === 0) {
+      lines.push(`export function is${name}(_node: Node): _node is ${type} {`);
+      lines.push("  return false;");
+      lines.push("}");
+      lines.push("");
+      return;
+    }
+    const condition = cases.map(kindName => `node.kind === Kind.${enumMemberName(kindName)}`).join(" || ");
+    lines.push(`export function is${name}(node: Node): node is ${type} {`);
+    lines.push(`  return ${condition};`);
+    lines.push("}");
+    lines.push("");
+  };
+
+  for (const [name, definition] of Object.entries(schema.nodes.definitions)) {
+    if (definition.handWritten === true && name === "SourceFile") {
+      emitGuard("SourceFile", "SourceFile");
+      continue;
+    }
+    if (isVariantNode(schema, name, definition)) {
+      const kindMember = definition.members?.find(member => member.name === "Kind" || member.name === "kind");
+      if (kindMember?.type !== undefined && isReadonlyArray(kindMember.type)) {
+        for (const kindName of kindMember.type) {
+          const variantName = kindName.slice("SyntaxKind.".length);
+          emitGuard(variantName, `Ast.${variantName}`);
+        }
+      }
+      emitGuard(name, `Ast.${name}`);
+      continue;
+    }
+    emitGuard(name, `Ast.${name}`);
+  }
+
+  for (const aliasName of instantiationAliases(schema).keys()) {
+    emitGuard(aliasName, `Ast.${aliasName}`);
+  }
+
+  for (const name of Object.keys(schema.nodes.aliases)) {
+    emitGuard(name, `Ast.${name}`);
+  }
+
+  return `${lines.join("\n")}\n`;
+}
+
 function generateNodeTypes(schema: AstSchema): string {
   const lines: string[] = [generatedHeader("schema/tsgo/ast.json")];
   lines.push("import { Kind } from \"./kind.js\";");
@@ -518,7 +1162,7 @@ function generateNodeTypes(schema: AstSchema): string {
       continue;
     }
     const members = Object.entries(schema.nodes.definitions)
-      .filter(([, definition]) => !definition.handWritten && !isVariantNode(schema, name, definition) && baseExtendsTransitive(schema, definition, alias.base))
+      .filter(([nodeName, definition]) => !definition.handWritten && !isVariantNode(schema, nodeName, definition) && baseExtendsTransitive(schema, definition, alias.base))
       .map(([nodeName]) => nodeName);
     if (members.length === 0) {
       lines.push(`export type ${name} = never;`);
@@ -572,7 +1216,10 @@ async function main(): Promise<void> {
   await writeGenerated("src/ast/generated/schema.ts", generateSchemaContract(schema));
   await writeGenerated("src/ast/generated/types.ts", generateRuntimeTypes());
   await writeGenerated("src/ast/generated/nodes.ts", generateNodeTypes(schema));
-  await writeGenerated("src/ast/index.ts", `${generatedHeader("schema/tsgo/ast.json")}export * from "./generated/kind.js";\nexport * from "./generated/schema.js";\nexport * from "./generated/types.js";\nexport * from "./generated/nodes.js";\n`);
+  await writeGenerated("src/ast/generated/factory.ts", generateFactory(schema));
+  await writeGenerated("src/ast/generated/visitor.ts", generateVisitor(schema));
+  await writeGenerated("src/ast/generated/is.ts", generateGuards(schema));
+  await writeGenerated("src/ast/index.ts", `${generatedHeader("schema/tsgo/ast.json")}export * from "./generated/kind.js";\nexport * from "./generated/schema.js";\nexport * from "./generated/types.js";\nexport * from "./generated/nodes.js";\nexport * from "./generated/factory.js";\nexport * from "./generated/visitor.js";\nexport * from "./generated/is.js";\n`);
 }
 
 await main();

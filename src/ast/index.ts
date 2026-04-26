@@ -4,3 +4,6 @@ export * from "./generated/kind.js";
 export * from "./generated/schema.js";
 export * from "./generated/types.js";
 export * from "./generated/nodes.js";
+export * from "./generated/factory.js";
+export * from "./generated/visitor.js";
+export * from "./generated/is.js";
