@@ -654,14 +654,32 @@ export function updateInterfaceDeclaration(node: Ast.InterfaceDeclaration, modif
 }
 
 export function createTypeAliasDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, type: Ast.TypeNode): Ast.TypeAliasDeclaration {
-  return createNode<Ast.TypeAliasDeclaration>(Kind.TypeAliasDeclaration | Kind.JSTypeAliasDeclaration, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "type": type });
+  return createNode<Ast.TypeAliasDeclaration>(Kind.TypeAliasDeclaration, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "type": type });
 }
 
 export function updateTypeAliasDeclaration(node: Ast.TypeAliasDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, type: Ast.TypeNode): Ast.TypeAliasDeclaration {
   if (node.modifiers === modifiers && node.name === name && node.typeParameters === typeParameters && node.type === type) {
     return node;
   }
-  return createTypeAliasDeclaration(modifiers, name, typeParameters, type);
+  switch (node.kind) {
+    case Kind.TypeAliasDeclaration:
+      return createTypeAliasDeclaration(modifiers, name, typeParameters, type);
+    case Kind.JSTypeAliasDeclaration:
+      return createJSTypeAliasDeclaration(modifiers, name, typeParameters, type);
+    default:
+      throw new Error(`Unexpected kind in updateTypeAliasDeclaration: ${Kind[node.kind]}`);
+  }
+}
+
+export function createJSTypeAliasDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, type: Ast.TypeNode): Ast.TypeAliasDeclaration {
+  return createNode<Ast.TypeAliasDeclaration>(Kind.JSTypeAliasDeclaration, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "type": type });
+}
+
+export function updateJSTypeAliasDeclaration(node: Ast.TypeAliasDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, type: Ast.TypeNode): Ast.TypeAliasDeclaration {
+  if (node.modifiers === modifiers && node.name === name && node.typeParameters === typeParameters && node.type === type) {
+    return node;
+  }
+  return createJSTypeAliasDeclaration(modifiers, name, typeParameters, type);
 }
 
 export function createEnumMember(name: Ast.PropertyName, initializer: Ast.Expression | undefined): Ast.EnumMember {
@@ -714,14 +732,32 @@ export function updateNotEmittedTypeElement(node: Ast.NotEmittedTypeElement): As
 }
 
 export function createImportDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, importClause: Ast.ImportClause | undefined, moduleSpecifier: Ast.Expression, attributes: Ast.ImportAttributes | undefined): Ast.ImportDeclaration {
-  return createNode<Ast.ImportDeclaration>(Kind.ImportDeclaration | Kind.JSImportDeclaration, { "modifiers": modifiers, "importClause": importClause, "moduleSpecifier": moduleSpecifier, "attributes": attributes });
+  return createNode<Ast.ImportDeclaration>(Kind.ImportDeclaration, { "modifiers": modifiers, "importClause": importClause, "moduleSpecifier": moduleSpecifier, "attributes": attributes });
 }
 
 export function updateImportDeclaration(node: Ast.ImportDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, importClause: Ast.ImportClause | undefined, moduleSpecifier: Ast.Expression, attributes: Ast.ImportAttributes | undefined): Ast.ImportDeclaration {
   if (node.modifiers === modifiers && node.importClause === importClause && node.moduleSpecifier === moduleSpecifier && node.attributes === attributes) {
     return node;
   }
-  return createImportDeclaration(modifiers, importClause, moduleSpecifier, attributes);
+  switch (node.kind) {
+    case Kind.ImportDeclaration:
+      return createImportDeclaration(modifiers, importClause, moduleSpecifier, attributes);
+    case Kind.JSImportDeclaration:
+      return createJSImportDeclaration(modifiers, importClause, moduleSpecifier, attributes);
+    default:
+      throw new Error(`Unexpected kind in updateImportDeclaration: ${Kind[node.kind]}`);
+  }
+}
+
+export function createJSImportDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, importClause: Ast.ImportClause | undefined, moduleSpecifier: Ast.Expression, attributes: Ast.ImportAttributes | undefined): Ast.ImportDeclaration {
+  return createNode<Ast.ImportDeclaration>(Kind.JSImportDeclaration, { "modifiers": modifiers, "importClause": importClause, "moduleSpecifier": moduleSpecifier, "attributes": attributes });
+}
+
+export function updateJSImportDeclaration(node: Ast.ImportDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, importClause: Ast.ImportClause | undefined, moduleSpecifier: Ast.Expression, attributes: Ast.ImportAttributes | undefined): Ast.ImportDeclaration {
+  if (node.modifiers === modifiers && node.importClause === importClause && node.moduleSpecifier === moduleSpecifier && node.attributes === attributes) {
+    return node;
+  }
+  return createJSImportDeclaration(modifiers, importClause, moduleSpecifier, attributes);
 }
 
 export function createExternalModuleReference(expression: Ast.Expression): Ast.ExternalModuleReference {

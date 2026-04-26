@@ -4,8 +4,13 @@ import {
   isBinaryExpression,
   isBlock,
   isExpressionStatement,
+  isExportDeclaration,
   isFunctionDeclaration,
   isIdentifier,
+  isImportDeclaration,
+  isNamedExports,
+  isNamedImports,
+  isNamespaceImport,
   isNumericLiteral,
   isParenthesizedExpression,
   isReturnStatement,
@@ -13,8 +18,15 @@ import {
   isVariableStatement,
   type BinaryOperatorToken,
   type Expression,
+  type ExportDeclaration,
   type FunctionDeclaration,
+  type ImportClause,
+  type ImportDeclaration,
+  type ImportSpecifier,
   type ModifierLike,
+  type ModuleExportName,
+  type NamedExportBindings,
+  type NamedImportBindings,
   type Node,
   type NodeArray,
   type ParameterDeclaration,
@@ -84,6 +96,12 @@ function printStatement(statement: Statement, context: PrintContext, depth: numb
   if (isVariableStatement(statement)) {
     return printVariableStatement(statement.modifiers, statement.declarationList);
   }
+  if (isImportDeclaration(statement)) {
+    return printImportDeclaration(statement);
+  }
+  if (isExportDeclaration(statement)) {
+    return printExportDeclaration(statement);
+  }
   if (isFunctionDeclaration(statement)) {
     return printFunctionDeclaration(statement, context, depth);
   }
@@ -94,6 +112,60 @@ function printStatement(statement: Statement, context: PrintContext, depth: numb
     return printBlock(statement.statements, context, depth);
   }
   throw new Error(`Unsupported statement kind ${Kind[statement.kind]}`);
+}
+
+function printImportDeclaration(importDeclaration: ImportDeclaration): string {
+  const moduleSpecifier = printExpression(importDeclaration.moduleSpecifier);
+  if (importDeclaration.importClause === undefined) {
+    return `import ${moduleSpecifier};`;
+  }
+  return `import ${printImportClause(importDeclaration.importClause)} from ${moduleSpecifier};`;
+}
+
+function printImportClause(importClause: ImportClause): string {
+  const parts: string[] = [];
+  if (importClause.name !== undefined) {
+    parts.push(importClause.name.text);
+  }
+  if (importClause.namedBindings !== undefined) {
+    parts.push(printNamedImportBindings(importClause.namedBindings));
+  }
+  return parts.join(", ");
+}
+
+function printNamedImportBindings(namedBindings: NamedImportBindings): string {
+  if (isNamespaceImport(namedBindings)) {
+    return `* as ${namedBindings.name.text}`;
+  }
+  if (isNamedImports(namedBindings)) {
+    return `{ ${namedBindings.elements.map(printImportSpecifier).join(", ")} }`;
+  }
+  throw new Error(`Unsupported named import bindings kind ${Kind[(namedBindings as Node).kind]}`);
+}
+
+function printImportSpecifier(specifier: ImportSpecifier): string {
+  if (specifier.propertyName === undefined) {
+    return specifier.name.text;
+  }
+  return `${printModuleExportName(specifier.propertyName)} as ${specifier.name.text}`;
+}
+
+function printExportDeclaration(exportDeclaration: ExportDeclaration): string {
+  const exportClause = exportDeclaration.exportClause === undefined ? "*" : printNamedExportBindings(exportDeclaration.exportClause);
+  const moduleSpecifier = exportDeclaration.moduleSpecifier === undefined ? "" : ` from ${printExpression(exportDeclaration.moduleSpecifier)}`;
+  return `export ${exportClause}${moduleSpecifier};`;
+}
+
+function printNamedExportBindings(namedBindings: NamedExportBindings): string {
+  if (isNamedExports(namedBindings)) {
+    return `{ ${namedBindings.elements.map(specifier => {
+      if (specifier.propertyName === undefined) {
+        return printModuleExportName(specifier.name);
+      }
+      return `${printModuleExportName(specifier.propertyName)} as ${printModuleExportName(specifier.name)}`;
+    }).join(", ")} }`;
+  }
+  throw new Error(`Unsupported named export bindings kind ${Kind[namedBindings.kind]}`);
 }
 
 function printVariableStatement(modifiers: NodeArray<ModifierLike> | undefined, declarationList: VariableDeclarationList): string {
@@ -160,6 +232,16 @@ function printModifier(modifier: ModifierLike): string {
     default:
       throw new Error(`Unsupported modifier kind ${Kind[modifier.kind]}`);
   }
+}
+
+function printModuleExportName(name: ModuleExportName): string {
+  if (isIdentifier(name)) {
+    return name.text;
+  }
+  if (isStringLiteral(name)) {
+    return JSON.stringify(name.text);
+  }
+  throw new Error(`Unsupported module export name kind ${Kind[(name as Node).kind]}`);
 }
 
 function printBindingName(name: Node): string {

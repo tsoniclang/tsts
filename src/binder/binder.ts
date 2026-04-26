@@ -4,12 +4,17 @@ import {
   isBlock,
   isFunctionDeclaration,
   isIdentifier,
+  isImportDeclaration,
+  isNamedImports,
+  isNamespaceImport,
   isParameterDeclaration,
   isSourceFile,
   isVariableStatement,
   type BindingName,
   type Block,
   type FunctionDeclaration,
+  type ImportClause,
+  type ImportSpecifier,
   type Node,
   type ParameterDeclaration,
   type SourceFile,
@@ -66,7 +71,7 @@ export function bindSourceFile(sourceFile: SourceFile): BindResult {
   };
 }
 
-export function lookupSymbol(symbols: SymbolTable, name: string, meaning: SymbolFlags = SymbolFlags.Value | SymbolFlags.Type | SymbolFlags.Namespace): BoundSymbol | undefined {
+export function lookupSymbol(symbols: SymbolTable, name: string, meaning: SymbolFlags = SymbolFlags.Value | SymbolFlags.Type | SymbolFlags.Namespace | SymbolFlags.Alias): BoundSymbol | undefined {
   const symbol = symbols.get(name);
   if (symbol === undefined) {
     return undefined;
@@ -89,6 +94,10 @@ function bindStatement(statement: Statement, state: BinderState, lexicalScope: S
     bindVariableDeclarationList(statement.declarationList, state, lexicalScope, functionScope);
     return;
   }
+  if (isImportDeclaration(statement)) {
+    bindImportClause(statement.importClause, lexicalScope, state);
+    return;
+  }
   if (isFunctionDeclaration(statement)) {
     bindFunctionDeclaration(statement, state, lexicalScope);
     return;
@@ -96,6 +105,32 @@ function bindStatement(statement: Statement, state: BinderState, lexicalScope: S
   if (isBlock(statement)) {
     bindBlock(statement, state, functionScope);
   }
+}
+
+function bindImportClause(importClause: ImportClause | undefined, lexicalScope: SymbolTable, state: BinderState): void {
+  if (importClause === undefined) {
+    return;
+  }
+  if (importClause.name !== undefined) {
+    declareSymbol(lexicalScope, importClause.name.text, importClause, SymbolFlags.Alias, SymbolFlags.AliasExcludes, state);
+  }
+  const namedBindings = importClause.namedBindings;
+  if (namedBindings === undefined) {
+    return;
+  }
+  if (isNamespaceImport(namedBindings)) {
+    declareSymbol(lexicalScope, namedBindings.name.text, namedBindings, SymbolFlags.Alias, SymbolFlags.AliasExcludes, state);
+    return;
+  }
+  if (isNamedImports(namedBindings)) {
+    for (const specifier of namedBindings.elements) {
+      bindImportSpecifier(specifier, lexicalScope, state);
+    }
+  }
+}
+
+function bindImportSpecifier(specifier: ImportSpecifier, lexicalScope: SymbolTable, state: BinderState): void {
+  declareSymbol(lexicalScope, specifier.name.text, specifier, SymbolFlags.Alias, SymbolFlags.AliasExcludes, state);
 }
 
 function bindBlock(block: Block, state: BinderState, functionScope: SymbolTable): void {

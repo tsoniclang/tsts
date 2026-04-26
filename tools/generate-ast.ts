@@ -633,8 +633,10 @@ function kindNamesFromType(schema: AstSchema, type: string | readonly string[] |
 
 function concreteNodeEntries(schema: AstSchema): {
   readonly name: string;
+  readonly definitionName: string;
   readonly returnType: string;
   readonly kindType: string;
+  readonly kindNames: readonly string[];
   readonly definition: NodeDefinition;
   readonly members: readonly MemberDefinition[];
   readonly typeParameters: string;
@@ -642,8 +644,10 @@ function concreteNodeEntries(schema: AstSchema): {
 }[] {
   const entries: {
     readonly name: string;
+    readonly definitionName: string;
     readonly returnType: string;
     readonly kindType: string;
+    readonly kindNames: readonly string[];
     readonly definition: NodeDefinition;
     readonly members: readonly MemberDefinition[];
     readonly typeParameters: string;
@@ -663,8 +667,10 @@ function concreteNodeEntries(schema: AstSchema): {
         const variantName = kindName.slice("SyntaxKind.".length);
         entries.push({
           name: variantName,
+          definitionName: name,
           returnType: `Ast.${variantName}`,
           kindType: formatKindType(variantName),
+          kindNames: [variantName],
           definition,
           members: runtimeMembers(schema, definition),
           typeParameters: "",
@@ -675,15 +681,22 @@ function concreteNodeEntries(schema: AstSchema): {
     }
 
     const params = definition.typeParameters ?? [];
-    entries.push({
-      name,
-      returnType: `Ast.${name}${params.length > 0 ? `<${params.map(param => param.name).join(", ")}>` : ""}`,
-      kindType: kindType(schema, name, definition),
-      definition,
-      members: runtimeMembers(schema, definition),
-      typeParameters: runtimeTypeParameters(schema, definition),
-      typeArguments: params.length > 0 ? `<${params.map(param => param.name).join(", ")}>` : "",
-    });
+    const kindNames = (isReadonlyArray(definition.kind) ? definition.kind : [definition.kind ?? name])
+      .map(kindName => kindName.startsWith("SyntaxKind.") ? kindName.slice("SyntaxKind.".length) : kindName);
+    const returnType = `Ast.${name}${params.length > 0 ? `<${params.map(param => param.name).join(", ")}>` : ""}`;
+    for (const [index, kindName] of kindNames.entries()) {
+      entries.push({
+        name: index === 0 ? name : kindName,
+        definitionName: name,
+        returnType,
+        kindType: formatKindType(kindName),
+        kindNames,
+        definition,
+        members: runtimeMembers(schema, definition),
+        typeParameters: runtimeTypeParameters(schema, definition),
+        typeArguments: params.length > 0 ? `<${params.map(param => param.name).join(", ")}>` : "",
+      });
+    }
   }
 
   return entries;
@@ -834,7 +847,18 @@ function generateFactory(schema: AstSchema): string {
       lines.push("    return node;");
       lines.push("  }");
       const createArgs = hasKindTypeParameter ? ["node.kind", ...entry.members.map(member => parameterName(member.name))] : entry.members.map(member => parameterName(member.name));
-      lines.push(`  return create${entry.name}${entry.typeArguments}(${createArgs.join(", ")});`);
+      if (entry.kindNames.length > 1 && entry.name === entry.definitionName) {
+        lines.push("  switch (node.kind) {");
+        for (const kindName of entry.kindNames) {
+          lines.push(`    case Kind.${enumMemberName(kindName)}:`);
+          lines.push(`      return create${kindName}${entry.typeArguments}(${createArgs.join(", ")});`);
+        }
+        lines.push("    default:");
+        lines.push(`      throw new Error(\`Unexpected kind in update${entry.name}: \${Kind[node.kind]}\`);`);
+        lines.push("  }");
+      } else {
+        lines.push(`  return create${entry.name}${entry.typeArguments}(${createArgs.join(", ")});`);
+      }
     }
     lines.push("}");
     lines.push("");

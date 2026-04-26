@@ -4,10 +4,18 @@ import {
   createArrayTypeNode,
   createBinaryExpression,
   createBlock,
+  createExportDeclaration,
+  createExportSpecifier,
   createExpressionStatement,
   createFunctionDeclaration,
   createIdentifier,
+  createImportClause,
+  createImportDeclaration,
+  createImportSpecifier,
   createKeywordTypeNode,
+  createNamedExports,
+  createNamedImports,
+  createNamespaceImport,
   createNodeArray,
   createNumericLiteral,
   createParameterDeclaration,
@@ -28,8 +36,11 @@ import {
   type Block,
   type Expression,
   type Identifier,
+  type ImportSpecifier,
   type KeywordTypeSyntaxKind,
   type ModifierLike,
+  type ModuleExportName,
+  type NamedImportBindings,
   type NodeArray,
   type ParameterDeclaration,
   type SourceFile,
@@ -131,6 +142,8 @@ export class Parser {
   #parseStatement(): Statement {
     const modifiers = this.#parseModifiers();
     switch (this.#current().kind) {
+      case Kind.ImportKeyword:
+        return this.#parseImportDeclaration(modifiers);
       case Kind.VarKeyword:
       case Kind.LetKeyword:
       case Kind.ConstKeyword:
@@ -143,6 +156,9 @@ export class Parser {
         }
         return this.#parseReturnStatement();
       case Kind.OpenBraceToken:
+        if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword)) {
+          return this.#parseExportDeclaration(modifiers);
+        }
         if (modifiers !== undefined) {
           throw new ParseError("Modifiers are not valid on blocks", this.#current());
         }
@@ -154,6 +170,69 @@ export class Parser {
     const expression = this.#parseExpression();
     this.#consumeOptional(Kind.SemicolonToken);
     return createExpressionStatement(expression);
+  }
+
+  #parseImportDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
+    this.#expect(Kind.ImportKeyword);
+    let importClause: ReturnType<typeof createImportClause> | undefined;
+    let moduleSpecifier: Expression;
+    if (this.#current().kind === Kind.StringLiteral) {
+      moduleSpecifier = this.#parseStringLiteralExpression();
+    } else {
+      importClause = this.#parseImportClause();
+      this.#expect(Kind.FromKeyword);
+      moduleSpecifier = this.#parseStringLiteralExpression();
+    }
+    this.#consumeOptional(Kind.SemicolonToken);
+    return createImportDeclaration(modifiers, importClause, moduleSpecifier, undefined);
+  }
+
+  #parseImportClause(): ReturnType<typeof createImportClause> {
+    let name: Identifier | undefined;
+    let namedBindings: NamedImportBindings | undefined;
+    if (this.#current().kind === Kind.Identifier) {
+      name = this.#parseIdentifier();
+      if (this.#consumeOptional(Kind.CommaToken)) {
+        namedBindings = this.#parseNamedImportBindings();
+      }
+    } else {
+      namedBindings = this.#parseNamedImportBindings();
+    }
+    return createImportClause(undefined, name, namedBindings);
+  }
+
+  #parseNamedImportBindings(): NamedImportBindings {
+    if (this.#consumeOptional(Kind.AsteriskToken)) {
+      this.#expect(Kind.AsKeyword);
+      return createNamespaceImport(this.#parseIdentifier());
+    }
+    this.#expect(Kind.OpenBraceToken);
+    const elements: ImportSpecifier[] = [];
+    while (this.#current().kind !== Kind.CloseBraceToken) {
+      const firstName = this.#parseModuleExportName();
+      const propertyName = this.#consumeOptional(Kind.AsKeyword) ? firstName : undefined;
+      const name = propertyName === undefined ? firstName : this.#parseIdentifier();
+      elements.push(createImportSpecifier(false, propertyName, name as Identifier));
+      this.#consumeOptional(Kind.CommaToken);
+    }
+    this.#expect(Kind.CloseBraceToken);
+    return createNamedImports(createNodeArray(elements));
+  }
+
+  #parseExportDeclaration(modifiers: NodeArray<ModifierLike>): Statement {
+    this.#expect(Kind.OpenBraceToken);
+    const elements: ReturnType<typeof createExportSpecifier>[] = [];
+    while (this.#current().kind !== Kind.CloseBraceToken) {
+      const firstName = this.#parseModuleExportName();
+      const propertyName = this.#consumeOptional(Kind.AsKeyword) ? firstName : undefined;
+      const name = propertyName === undefined ? firstName : this.#parseModuleExportName();
+      elements.push(createExportSpecifier(false, propertyName, name));
+      this.#consumeOptional(Kind.CommaToken);
+    }
+    this.#expect(Kind.CloseBraceToken);
+    const moduleSpecifier = this.#consumeOptional(Kind.FromKeyword) ? this.#parseStringLiteralExpression() : undefined;
+    this.#consumeOptional(Kind.SemicolonToken);
+    return createExportDeclaration(modifiers, false, createNamedExports(createNodeArray(elements)), moduleSpecifier, undefined);
   }
 
   #parseModifiers(): NodeArray<ModifierLike> | undefined {
@@ -297,6 +376,18 @@ export class Parser {
     }
   }
 
+  #parseStringLiteralExpression(): Expression {
+    const token = this.#expect(Kind.StringLiteral);
+    return createStringLiteral(unquote(token.text), 0);
+  }
+
+  #parseModuleExportName(): ModuleExportName {
+    if (this.#current().kind === Kind.StringLiteral) {
+      return this.#parseStringLiteralExpression() as ModuleExportName;
+    }
+    return this.#parseIdentifier();
+  }
+
   #parseBindingName(): BindingName {
     return this.#parseIdentifier();
   }
@@ -382,6 +473,10 @@ function unquote(text: string): string {
     return text;
   }
   return text.slice(1, -1);
+}
+
+function hasModifier(modifiers: NodeArray<ModifierLike>, kind: Kind): boolean {
+  return modifiers.some(modifier => modifier.kind === kind);
 }
 
 export function parseSourceFile(sourceText: string, options?: ParseSourceFileOptions): SourceFile {

@@ -7,9 +7,11 @@ import {
   createBinaryExpression,
   createExpressionStatement,
   createIdentifier,
+  createJSImportDeclaration,
   createNodeArray,
   createNumericLiteral,
   createSourceFile,
+  createStringLiteral,
   createToken,
   createVariableDeclaration,
   createVariableDeclarationList,
@@ -100,5 +102,14 @@ describe("TS-Go generated AST runtime", () => {
     assert.equal(declaration.parent, list);
     assert.equal(name.parent, declaration);
     assert.equal(declaration.initializer?.parent, declaration);
+  });
+
+  it("generates separate factories for TS-Go multi-kind node definitions", () => {
+    const moduleSpecifier = createStringLiteral("./dep", 0);
+    const importDeclaration = createJSImportDeclaration(undefined, undefined, moduleSpecifier, undefined);
+
+    assert.equal(importDeclaration.kind, Kind.JSImportDeclaration);
+    assert.equal(importDeclaration.moduleSpecifier, moduleSpecifier);
+    assert.equal(moduleSpecifier.parent, importDeclaration);
   });
 });

@@ -48,4 +48,13 @@ describe("TS-Go binder groundwork", () => {
     assert.deepEqual(blockScoped.diagnostics.map(diagnostic => diagnostic.message), ["Duplicate identifier 'x'."]);
     assert.equal(functionScoped.diagnostics.length, 0);
   });
+
+  it("binds imported names as aliases", () => {
+    const sourceFile = parseSourceFile("import value, { dep as renamed } from \"./dep\";");
+    const result = bindSourceFile(sourceFile);
+
+    assert.equal(result.diagnostics.length, 0);
+    assert.equal(lookupSymbol(result.globals, "value")?.flags, SymbolFlags.Alias);
+    assert.equal(lookupSymbol(result.globals, "renamed")?.flags, SymbolFlags.Alias);
+  });
 });

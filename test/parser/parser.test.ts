@@ -7,9 +7,13 @@ import {
   isBinaryExpression,
   isBlock,
   isExpressionStatement,
+  isExportDeclaration,
   isFunctionDeclaration,
   isIdentifier,
+  isImportDeclaration,
   isKeywordTypeNode,
+  isNamedExports,
+  isNamedImports,
   isNumericLiteral,
   isParenthesizedExpression,
   isReturnStatement,
@@ -102,5 +106,26 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isReturnStatement(returnStatement), true);
     if (!isReturnStatement(returnStatement)) throw new Error("Expected return statement");
     assert.equal(isBinaryExpression(returnStatement.expression!), true);
+  });
+
+  it("produces import and export declarations with named bindings", () => {
+    const sourceFile = parseSourceFile("import value, { dep as renamed } from \"./dep\"; export { renamed as value };");
+    const importDeclaration = sourceFile.statements[0]!;
+    const exportDeclaration = sourceFile.statements[1]!;
+
+    assert.equal(isImportDeclaration(importDeclaration), true);
+    if (!isImportDeclaration(importDeclaration)) throw new Error("Expected import declaration");
+    assert.equal(importDeclaration.importClause?.name?.text, "value");
+    assert.equal(isNamedImports(importDeclaration.importClause!.namedBindings!), true);
+    if (!isNamedImports(importDeclaration.importClause!.namedBindings!)) throw new Error("Expected named imports");
+    assert.equal(importDeclaration.importClause!.namedBindings.elements[0]!.propertyName?.text, "dep");
+    assert.equal(importDeclaration.importClause!.namedBindings.elements[0]!.name.text, "renamed");
+
+    assert.equal(isExportDeclaration(exportDeclaration), true);
+    if (!isExportDeclaration(exportDeclaration)) throw new Error("Expected export declaration");
+    assert.equal(isNamedExports(exportDeclaration.exportClause!), true);
+    if (!isNamedExports(exportDeclaration.exportClause!)) throw new Error("Expected named exports");
+    assert.equal(exportDeclaration.exportClause.elements[0]!.propertyName?.text, "renamed");
+    assert.equal(exportDeclaration.exportClause.elements[0]!.name.text, "value");
   });
 });
