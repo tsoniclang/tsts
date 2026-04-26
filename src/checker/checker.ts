@@ -1,5 +1,6 @@
 import {
   Kind,
+  isArrowFunction,
   isBinaryExpression,
   isBlock,
   isCallExpression,
@@ -19,8 +20,10 @@ import {
   isStringLiteral,
   isVariableStatement,
   type Block,
+  type ArrowFunction,
   type ClassDeclaration,
   type ClassElement,
+  type ConciseBody,
   type Expression,
   type FunctionDeclaration,
   type SourceFile,
@@ -188,6 +191,9 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   if (isParenthesizedExpression(expression)) {
     return inferExpression(expression.expression, state, environment);
   }
+  if (isArrowFunction(expression)) {
+    return inferArrowFunction(expression, state, environment);
+  }
   if (isBinaryExpression(expression)) {
     const left = inferExpression(expression.left, state, environment);
     const right = inferExpression(expression.right, state, environment);
@@ -213,6 +219,30 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return calleeType.kind === "function" ? calleeType.returnType : unknownType;
   }
   return unknownType;
+}
+
+function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, environment: TypeEnvironment): CheckedType {
+  const arrowEnvironment = new Map(environment);
+  for (const parameter of arrowFunction.parameters) {
+    if (isIdentifier(parameter.name)) {
+      arrowEnvironment.set(parameter.name.text, parameter.type === undefined ? unknownType : typeFromTypeNode(parameter.type));
+    }
+  }
+  const declaredReturnType = arrowFunction.type === undefined ? undefined : typeFromTypeNode(arrowFunction.type);
+  const inferredReturnType = inferConciseBody(arrowFunction.body, state, arrowEnvironment, declaredReturnType);
+  return { kind: "function", returnType: declaredReturnType ?? inferredReturnType };
+}
+
+function inferConciseBody(body: ConciseBody, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): CheckedType {
+  if (isBlock(body)) {
+    checkBlock(body, state, environment, expectedReturnType);
+    return expectedReturnType ?? unknownType;
+  }
+  const bodyType = inferExpression(body, state, environment);
+  if (expectedReturnType !== undefined) {
+    checkAssignable(bodyType, expectedReturnType, state);
+  }
+  return bodyType;
 }
 
 function inferPropertyAccess(expression: Expression, propertyName: string, state: CheckState, environment: TypeEnvironment): CheckedType {

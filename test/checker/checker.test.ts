@@ -42,4 +42,11 @@ describe("checker groundwork", () => {
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string' is not assignable to type 'number'."]);
   });
+
+  it("checks declared arrow function return types", () => {
+    const sourceFile = parseSourceFile("const f = (x: string): number => x;");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string' is not assignable to type 'number'."]);
+  });
 });

@@ -2,6 +2,7 @@ import {
   Kind,
   NodeFlags,
   isArrayLiteralExpression,
+  isArrowFunction,
   isBinaryExpression,
   isBlock,
   isCallExpression,
@@ -30,6 +31,7 @@ import {
   isTypeAliasDeclaration,
   isVariableStatement,
   type BinaryOperatorToken,
+  type ArrowFunction,
   type ClassDeclaration,
   type ClassElement,
   type ConstructorDeclaration,
@@ -469,10 +471,21 @@ function printExpression(expression: Expression): string {
   if (isCallExpression(expression)) {
     return `${printExpression(expression.expression)}(${expression.arguments.map(printExpression).join(", ")})`;
   }
+  if (isArrowFunction(expression)) {
+    return printArrowFunction(expression);
+  }
   if (isBinaryExpression(expression)) {
     return `${printExpression(expression.left)} ${printBinaryOperator(expression.operatorToken)} ${printExpression(expression.right)}`;
   }
   throw new Error(`Unsupported expression kind ${Kind[expression.kind]}`);
+}
+
+function printArrowFunction(arrowFunction: ArrowFunction): string {
+  const parameters = arrowFunction.parameters.length === 1
+    ? printParameterDeclaration(arrowFunction.parameters[0]!)
+    : `(${arrowFunction.parameters.map(printParameterDeclaration).join(", ")})`;
+  const body = isBlock(arrowFunction.body) ? printBlock(arrowFunction.body.statements, { newline: "\n", indentText: "  " }, 0) : printExpression(arrowFunction.body);
+  return `${parameters} => ${body}`;
 }
 
 function printObjectLiteralElement(element: ObjectLiteralElementLike): string {

@@ -1,6 +1,7 @@
 import {
   Kind,
   NodeFlags,
+  createArrowFunction,
   createArrayTypeNode,
   createArrayLiteralExpression,
   createBinaryExpression,
@@ -56,6 +57,7 @@ import {
   type BinaryOperatorToken,
   type BindingName,
   type Block,
+  type ConciseBody,
   type ClassElement,
   type Expression,
   type ExpressionWithTypeArguments,
@@ -562,6 +564,9 @@ export class Parser {
   }
 
   #parseExpression(precedence = 0): Expression {
+    if (precedence === 0 && this.#isArrowFunctionStart()) {
+      return this.#parseArrowFunction();
+    }
     let left = this.#parseLeftHandSideExpression();
     while (true) {
       const operatorToken = this.#current();
@@ -577,6 +582,73 @@ export class Parser {
       }
       left = createBinaryExpression(undefined, left, undefined, token as BinaryOperatorToken, right);
     }
+  }
+
+  #isArrowFunctionStart(): boolean {
+    if (this.#current().kind === Kind.Identifier && this.#tokens[this.#index + 1]?.kind === Kind.EqualsGreaterThanToken) {
+      return true;
+    }
+    if (this.#current().kind !== Kind.OpenParenToken) {
+      return false;
+    }
+    let depth = 0;
+    for (let index = this.#index; index < this.#tokens.length; index += 1) {
+      const kind = this.#tokens[index]!.kind;
+      if (kind === Kind.OpenParenToken) {
+        depth += 1;
+        continue;
+      }
+      if (kind === Kind.CloseParenToken) {
+        depth -= 1;
+        if (depth === 0) {
+          const nextKind = this.#tokens[index + 1]?.kind;
+          if (nextKind === Kind.EqualsGreaterThanToken) {
+            return true;
+          }
+          if (nextKind !== Kind.ColonToken) {
+            return false;
+          }
+          return this.#hasEqualsGreaterThanBeforeStatementBoundary(index + 2);
+        }
+      }
+    }
+    return false;
+  }
+
+  #hasEqualsGreaterThanBeforeStatementBoundary(startIndex: number): boolean {
+    for (let index = startIndex; index < this.#tokens.length; index += 1) {
+      const kind = this.#tokens[index]!.kind;
+      if (kind === Kind.EqualsGreaterThanToken) {
+        return true;
+      }
+      if (kind === Kind.SemicolonToken || kind === Kind.OpenBraceToken || kind === Kind.CloseBraceToken || kind === Kind.EndOfFile) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  #parseArrowFunction(): Expression {
+    const parameters: ParameterDeclaration[] = [];
+    let type: TypeNode | undefined;
+    if (this.#current().kind === Kind.Identifier) {
+      parameters.push(createParameterDeclaration(undefined, undefined, this.#parseIdentifier(), undefined, undefined, undefined));
+    } else {
+      this.#expect(Kind.OpenParenToken);
+      parameters.push(...this.#parseParameterList());
+      this.#expect(Kind.CloseParenToken);
+      type = this.#parseOptionalTypeAnnotation();
+    }
+    this.#expect(Kind.EqualsGreaterThanToken);
+    const body = this.#parseArrowBody();
+    return createArrowFunction(undefined, undefined, createNodeArray(parameters), type, createToken(Kind.EqualsGreaterThanToken), body);
+  }
+
+  #parseArrowBody(): ConciseBody {
+    if (this.#current().kind === Kind.OpenBraceToken) {
+      return this.#parseBlock();
+    }
+    return this.#parseExpression();
   }
 
   #parseLeftHandSideExpression(): Expression {

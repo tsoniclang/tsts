@@ -4,6 +4,7 @@ import {
   Kind,
   NodeFlags,
   forEachChild,
+  isArrowFunction,
   isBinaryExpression,
   isBlock,
   isCallExpression,
@@ -205,5 +206,19 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isTypeReferenceNode(statement.members[2]!.type!), true);
     if (!isTypeReferenceNode(statement.members[2]!.type!)) throw new Error("Expected type reference");
     assert.equal(statement.members[2]!.type!.typeName.kind, Kind.Identifier);
+  });
+
+  it("produces arrow functions with parameter and return type nodes", () => {
+    const sourceFile = parseSourceFile("const add = (a: number, b: number): number => a + b;");
+    const statement = sourceFile.statements[0]!;
+    if (!isVariableStatement(statement)) throw new Error("Expected variable statement");
+    const initializer = statement.declarationList.declarations[0]!.initializer;
+
+    assert.equal(isArrowFunction(initializer!), true);
+    if (!isArrowFunction(initializer!)) throw new Error("Expected arrow function");
+    assert.equal(initializer.parameters.length, 2);
+    assert.equal(initializer.parameters[0]!.type?.kind, Kind.NumberKeyword);
+    assert.equal(initializer.type?.kind, Kind.NumberKeyword);
+    assert.equal(isBinaryExpression(initializer.body), true);
   });
 });

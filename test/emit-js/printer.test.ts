@@ -74,4 +74,14 @@ describe("JS emitter groundwork", () => {
       ].join("\n"),
     );
   });
+
+  it("erases arrow function parameter and return types", () => {
+    assert.equal(
+      printSourceFile(parseSourceFile("const add = (a: number, b: number): number => a + b; const wrap = x => ({ value: x });")),
+      [
+        "const add = (a, b) => a + b;",
+        "const wrap = x => ({ value: x });",
+      ].join("\n"),
+    );
+  });
 });
