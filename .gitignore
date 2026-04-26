@@ -81,7 +81,6 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
-.output
 
 # Gatsby files
 .cache/
@@ -92,8 +91,9 @@ dist
 # vuepress build output
 .vuepress/dist
 
-# vuepress v2.x temp directory
+# vuepress v2.x temp and cache directory
 .temp
+.cache
 
 # Sveltekit cache directory
 .svelte-kit/
@@ -125,8 +125,32 @@ dist
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
-# pnpm
-.pnpm-store
+# VS Code settings
+.vscode/
+
+# Tsonic build artifacts
+.tsonic/
+out/
+*.cs
+!packages/runtime/**/*.cs
+!packages/emitter/testcases/**/*.cs
+
+# Runtime DLLs (copied from external runtime project for packaging)
+packages/cli/runtime/*.dll
+npm/tsonic/runtime/*.dll
+
+# Claude Code working directories
+.tests/
+.analysis/
+.todos/
+.tmp/
+
+# Plan-blue baselines
+.plan-blue-baselines/
+
+# .NET build artifacts
+**/bin/
+**/obj/
 
 # yarn v3
 .pnp.*
@@ -137,7 +161,41 @@ dist
 !.yarn/sdks
 !.yarn/versions
 
-# Vite files
+# Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
-.vite/
+
+.codespin/
+
+# Tsonic build output
+**/out/
+# Test fixture build artifacts
+test/fixtures/**/generated/
+test/fixtures/**/out/
+test/fixtures/**/package-lock.json
+
+# .NET build artifacts (per-project)
+packages/*/generated/bin/
+packages/*/generated/obj/
+
+# Optional: Uncomment to ignore generated C# files
+# packages/*/generated/**/*.cs
+
+# Output executables
+packages/*/out/
+packages/*/*.exe
+
+# Dependencies
+node_modules/
+
+# Internal tooling artifacts (restore scratch, caches)
+.tsonic/
+
+# Synthetic package fixtures intentionally model installed package layouts.
+!packages/frontend/test-fixtures/**/node_modules/
+!packages/frontend/test-fixtures/**/node_modules/**
+!packages/frontend/test-fixtures/**/.tsonic/
+!packages/frontend/test-fixtures/**/.tsonic/**
+!test/fixtures/source-package-*/packages/*/node_modules/
+!test/fixtures/source-package-*/packages/*/node_modules/**
+!test/fixtures/source-package-*/packages/*/node_modules/**/*.cs
