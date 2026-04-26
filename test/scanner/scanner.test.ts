@@ -46,6 +46,30 @@ describe("TS-Go scanner groundwork", () => {
     ]);
   });
 
+  it("treats a leading shebang as single-line trivia", () => {
+    assert.deepEqual(kindsOf("#!/usr/bin/env node\nconst answer = 42;"), [
+      Kind.ConstKeyword,
+      Kind.Identifier,
+      Kind.EqualsToken,
+      Kind.NumericLiteral,
+      Kind.SemicolonToken,
+      Kind.EndOfFile,
+    ]);
+    assert.deepEqual(scanAll("#!/usr/bin/env node\nconst answer = 42;", { skipTrivia: false }).map(token => token.kind), [
+      Kind.SingleLineCommentTrivia,
+      Kind.NewLineTrivia,
+      Kind.ConstKeyword,
+      Kind.WhitespaceTrivia,
+      Kind.Identifier,
+      Kind.WhitespaceTrivia,
+      Kind.EqualsToken,
+      Kind.WhitespaceTrivia,
+      Kind.NumericLiteral,
+      Kind.SemicolonToken,
+      Kind.EndOfFile,
+    ]);
+  });
+
   it("recognizes multi-character punctuators greedily", () => {
     assert.deepEqual(kindsOf("a ??= b === c >>>= d"), [
       Kind.Identifier,

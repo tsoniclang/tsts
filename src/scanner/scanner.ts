@@ -205,6 +205,14 @@ export class Scanner {
     const start = this.#position;
     const charCode = this.#text.charCodeAt(this.#position);
 
+    if (this.#position === 0 && this.#text.startsWith("#!", this.#position)) {
+      this.#position += 2;
+      while (this.#position < this.#text.length && !isLineBreak(this.#text.charCodeAt(this.#position))) {
+        this.#position += 1;
+      }
+      return this.#token(Kind.SingleLineCommentTrivia, start, this.#position);
+    }
+
     if (isLineBreak(charCode)) {
       if (charCode === 13 && this.#text.charCodeAt(this.#position + 1) === 10) {
         this.#position += 2;

@@ -55,6 +55,29 @@ describe("program groundwork", () => {
     assert.equal(result.emittedFiles.length, 0);
   });
 
+  it("records parse diagnostics per file without aborting the whole program", () => {
+    const files = new Map<string, string>([
+      ["broken.ts", "const = ;"],
+      ["ok.ts", "export const answer = 42;"],
+    ]);
+    const outputs = new Map<string, string>();
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      writeFile: (fileName, text) => outputs.set(fileName, text),
+    };
+
+    const program = createProgram(["broken.ts", "ok.ts"], {}, host);
+    const result = emitProgram(program, host);
+
+    assert.equal(program.sourceFiles.length, 1);
+    assert.equal(program.sourceFiles[0]!.fileName, "ok.ts");
+    assert.equal(program.diagnostics.length, 1);
+    assert.equal(program.diagnostics[0]!.fileName, "broken.ts");
+    assert.match(program.diagnostics[0]!.message, /Expected token Identifier/);
+    assert.equal(result.emittedFiles.length, 0);
+    assert.equal(outputs.size, 0);
+  });
+
   it("expands relative import module specifiers into the program graph", () => {
     const files = new Map<string, string>([
       ["src/index.ts", "import { value } from \"./dep\"; export const answer = value;"],

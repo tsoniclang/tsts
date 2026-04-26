@@ -83,6 +83,7 @@ import {
   type ForInitializer,
   type Identifier,
   type ImportSpecifier,
+  type ImportPhaseModifierSyntaxKind,
   type KeywordTypeSyntaxKind,
   type ModifierSyntaxKind,
   type ModifierLike,
@@ -277,6 +278,9 @@ export class Parser {
         }
         return this.#parseBlock();
     }
+    if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword) && this.#current().kind === Kind.AsteriskToken) {
+      return this.#parseExportDeclaration(modifiers);
+    }
     if (modifiers !== undefined) {
       throw new ParseError("Modifiers are not valid on expression statements", this.#current());
     }
@@ -301,9 +305,12 @@ export class Parser {
   }
 
   #parseImportClause(): ReturnType<typeof createImportClause> {
+    const phaseModifier = this.#current().kind === Kind.TypeKeyword || this.#current().kind === Kind.DeferKeyword
+      ? this.#advance().kind as ImportPhaseModifierSyntaxKind
+      : undefined;
     let name: Identifier | undefined;
     let namedBindings: NamedImportBindings | undefined;
-    if (this.#current().kind === Kind.Identifier) {
+    if (isIdentifierNameKind(this.#current().kind)) {
       name = this.#parseIdentifier();
       if (this.#consumeOptional(Kind.CommaToken)) {
         namedBindings = this.#parseNamedImportBindings();
@@ -311,7 +318,7 @@ export class Parser {
     } else {
       namedBindings = this.#parseNamedImportBindings();
     }
-    return createImportClause(undefined, name, namedBindings);
+    return createImportClause(phaseModifier, name, namedBindings);
   }
 
   #parseNamedImportBindings(): NamedImportBindings {
@@ -322,10 +329,11 @@ export class Parser {
     this.#expect(Kind.OpenBraceToken);
     const elements: ImportSpecifier[] = [];
     while (this.#current().kind !== Kind.CloseBraceToken) {
+      const isTypeOnly = this.#consumeOptional(Kind.TypeKeyword);
       const firstName = this.#parseModuleExportName();
       const propertyName = this.#consumeOptional(Kind.AsKeyword) ? firstName : undefined;
       const name = propertyName === undefined ? firstName : this.#parseIdentifier();
-      elements.push(createImportSpecifier(false, propertyName, name as Identifier));
+      elements.push(createImportSpecifier(isTypeOnly, propertyName, name as Identifier));
       this.#consumeOptional(Kind.CommaToken);
     }
     this.#expect(Kind.CloseBraceToken);
@@ -333,6 +341,11 @@ export class Parser {
   }
 
   #parseExportDeclaration(modifiers: NodeArray<ModifierLike>): Statement {
+    if (this.#consumeOptional(Kind.AsteriskToken)) {
+      const moduleSpecifier = this.#consumeOptional(Kind.FromKeyword) ? this.#parseStringLiteralExpression() : undefined;
+      this.#consumeOptional(Kind.SemicolonToken);
+      return createExportDeclaration(modifiers, false, undefined, moduleSpecifier, undefined);
+    }
     this.#expect(Kind.OpenBraceToken);
     const elements: ReturnType<typeof createExportSpecifier>[] = [];
     while (this.#current().kind !== Kind.CloseBraceToken) {
@@ -996,7 +1009,11 @@ export class Parser {
   }
 
   #parseIdentifier(): Identifier {
-    const token = this.#expect(Kind.Identifier);
+    const token = this.#current();
+    if (!isIdentifierNameKind(token.kind)) {
+      throw new ParseError(`Expected token ${Kind[Kind.Identifier]}`, token);
+    }
+    this.#advance();
     return createIdentifier(token.text);
   }
 
@@ -1049,7 +1066,7 @@ export class Parser {
       this.#advance();
       return createKeywordTypeNode(token.kind as KeywordTypeSyntaxKind);
     }
-    if (token.kind === Kind.Identifier) {
+    if (isIdentifierNameKind(token.kind)) {
       return createTypeReferenceNode(this.#parseIdentifier(), this.#parseOptionalTypeArguments());
     }
     throw new ParseError(`Unexpected type token ${Kind[token.kind]}`, token);
@@ -1098,6 +1115,10 @@ function unquote(text: string): string {
 
 function hasModifier(modifiers: NodeArray<ModifierLike>, kind: Kind): boolean {
   return modifiers.some(modifier => modifier.kind === kind);
+}
+
+function isIdentifierNameKind(kind: Kind): boolean {
+  return kind === Kind.Identifier || (kind >= Kind.FirstKeyword && kind <= Kind.LastKeyword);
 }
 
 export function parseSourceFile(sourceText: string, options?: ParseSourceFileOptions): SourceFile {

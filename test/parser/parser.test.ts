@@ -37,6 +37,7 @@ import {
   isPropertyAccessExpression,
   isPropertySignatureDeclaration,
   isReturnStatement,
+  isStringLiteral,
   isTypeAliasDeclaration,
   isTypeLiteralNode,
   isTypeReferenceNode,
@@ -152,6 +153,52 @@ describe("TS-Go parser groundwork", () => {
     if (!isNamedExports(exportDeclaration.exportClause!)) throw new Error("Expected named exports");
     assert.equal(exportDeclaration.exportClause.elements[0]!.propertyName?.text, "renamed");
     assert.equal(exportDeclaration.exportClause.elements[0]!.name.text, "value");
+  });
+
+  it("parses contextual import/export names and star re-exports", () => {
+    const sourceFile = parseSourceFile([
+      "import assert from \"node:assert/strict\";",
+      "import type { type RuntimeShape, default as fallback } from \"./runtime.js\";",
+      "export * from \"./generated/kind.js\";",
+    ].join("\n"));
+    const defaultImport = sourceFile.statements[0]!;
+    const typeImport = sourceFile.statements[1]!;
+    const starExport = sourceFile.statements[2]!;
+
+    assert.equal(isImportDeclaration(defaultImport), true);
+    if (!isImportDeclaration(defaultImport)) throw new Error("Expected default import");
+    assert.equal(defaultImport.importClause?.name?.text, "assert");
+
+    assert.equal(isImportDeclaration(typeImport), true);
+    if (!isImportDeclaration(typeImport)) throw new Error("Expected type import");
+    assert.equal(typeImport.importClause?.phaseModifier, Kind.TypeKeyword);
+    assert.equal(isNamedImports(typeImport.importClause!.namedBindings!), true);
+    if (!isNamedImports(typeImport.importClause!.namedBindings!)) throw new Error("Expected named imports");
+    assert.equal(typeImport.importClause!.namedBindings.elements[0]!.isTypeOnly, true);
+    assert.equal(typeImport.importClause!.namedBindings.elements[0]!.name.text, "RuntimeShape");
+    assert.equal(typeImport.importClause!.namedBindings.elements[1]!.propertyName?.text, "default");
+    assert.equal(typeImport.importClause!.namedBindings.elements[1]!.name.text, "fallback");
+
+    assert.equal(isExportDeclaration(starExport), true);
+    if (!isExportDeclaration(starExport)) throw new Error("Expected star export");
+    assert.equal(starExport.exportClause, undefined);
+    assert.equal(isStringLiteral(starExport.moduleSpecifier!), true);
+    if (!isStringLiteral(starExport.moduleSpecifier!)) throw new Error("Expected string literal module specifier");
+    assert.equal(starExport.moduleSpecifier.text, "./generated/kind.js");
+  });
+
+  it("parses const assertions as contextual type references", () => {
+    const sourceFile = parseSourceFile("const values = [1, 2] as const;");
+    const statement = sourceFile.statements[0]!;
+    if (!isVariableStatement(statement)) throw new Error("Expected variable statement");
+    const initializer = statement.declarationList.declarations[0]!.initializer;
+
+    assert.equal(isAsExpression(initializer!), true);
+    if (!isAsExpression(initializer!)) throw new Error("Expected as expression");
+    assert.equal(isTypeReferenceNode(initializer.type), true);
+    if (!isTypeReferenceNode(initializer.type)) throw new Error("Expected type reference");
+    assert.equal(initializer.type.typeName.kind, Kind.Identifier);
+    assert.equal(initializer.type.typeName.text, "const");
   });
 
   it("produces property access and call expression nodes", () => {

@@ -68,7 +68,16 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
       });
       continue;
     }
-    const sourceFile = parseSourceFile(sourceText, { fileName: rootName });
+    let sourceFile: SourceFile;
+    try {
+      sourceFile = parseSourceFile(sourceText, { fileName: rootName });
+    } catch (error) {
+      diagnostics.push({
+        fileName: rootName,
+        message: error instanceof Error ? error.message : String(error),
+      });
+      continue;
+    }
     const bindResult = bindSourceFile(sourceFile);
     diagnostics.push(...bindResult.diagnostics.map(diagnostic => convertBindDiagnostic(rootName, diagnostic)));
     for (const moduleSpecifier of sourceFileModuleSpecifiers(sourceFile)) {
