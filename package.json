@@ -1,0 +1,23 @@
+{
+  "name": "@tsonic/tsts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TypeScript-native TypeScript compiler targeting TS-Go contracts",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "generate": "tsx tools/generate-ast.ts",
+    "schema:check": "tsx tools/check-schema.ts",
+    "generated:check": "tsx tools/check-generated.ts",
+    "test": "tsx --test test/**/*.test.ts",
+    "verify": "npm run schema:check && npm run generate && npm run generated:check && npm run build && npm run test"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
+  }
+}
