@@ -4,7 +4,6 @@
 import { Kind } from "./kind.js";
 import type { Node, NodeArray, SourceFile, Symbol } from "./types.js";
 
-export type NodeFlags = number;
 export type ModifierFlags = number;
 export type TokenFlags = number;
 export type TransformFlags = number;

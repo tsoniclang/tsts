@@ -169,7 +169,31 @@ export class NodeObject implements Node {
 }
 
 export function createNode<TNode extends Node>(kind: Kind, data: NodeData = {}, pos = -1, end = -1): TNode {
-  return new NodeObject(kind, data, pos, end) as unknown as TNode;
+  const node = new NodeObject(kind, data, pos, end) as unknown as TNode;
+  const flags = data["flags"];
+  if (typeof flags === "number") {
+    (node as { flags: number }).flags = flags;
+  }
+  for (const value of Object.values(data)) {
+    attachParent(node, value);
+  }
+  return node;
+}
+
+function isNode(value: unknown): value is Node {
+  return typeof value === "object" && value !== null && "kind" in value && "flags" in value && "parent" in value;
+}
+
+function attachParent(parent: Node, value: unknown): void {
+  if (isNode(value)) {
+    (value as { parent: Node }).parent = parent;
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const element of value) {
+      attachParent(parent, element);
+    }
+  }
 }
 
 function isNodeArray<TNode extends Node>(array: readonly TNode[]): array is NodeArray<TNode> {

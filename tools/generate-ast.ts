@@ -766,7 +766,31 @@ function generateFactory(schema: AstSchema): string {
   lines.push("}");
   lines.push("");
   lines.push("export function createNode<TNode extends Node>(kind: Kind, data: NodeData = {}, pos = -1, end = -1): TNode {");
-  lines.push("  return new NodeObject(kind, data, pos, end) as unknown as TNode;");
+  lines.push("  const node = new NodeObject(kind, data, pos, end) as unknown as TNode;");
+  lines.push("  const flags = data[\"flags\"];");
+  lines.push("  if (typeof flags === \"number\") {");
+  lines.push("    (node as { flags: number }).flags = flags;");
+  lines.push("  }");
+  lines.push("  for (const value of Object.values(data)) {");
+  lines.push("    attachParent(node, value);");
+  lines.push("  }");
+  lines.push("  return node;");
+  lines.push("}");
+  lines.push("");
+  lines.push("function isNode(value: unknown): value is Node {");
+  lines.push("  return typeof value === \"object\" && value !== null && \"kind\" in value && \"flags\" in value && \"parent\" in value;");
+  lines.push("}");
+  lines.push("");
+  lines.push("function attachParent(parent: Node, value: unknown): void {");
+  lines.push("  if (isNode(value)) {");
+  lines.push("    (value as { parent: Node }).parent = parent;");
+  lines.push("    return;");
+  lines.push("  }");
+  lines.push("  if (Array.isArray(value)) {");
+  lines.push("    for (const element of value) {");
+  lines.push("      attachParent(parent, element);");
+  lines.push("    }");
+  lines.push("  }");
   lines.push("}");
   lines.push("");
   lines.push("function isNodeArray<TNode extends Node>(array: readonly TNode[]): array is NodeArray<TNode> {");
@@ -1133,7 +1157,6 @@ function generateNodeTypes(schema: AstSchema): string {
   lines.push("import { Kind } from \"./kind.js\";");
   lines.push("import type { Node, NodeArray, SourceFile, Symbol } from \"./types.js\";");
   lines.push("");
-  lines.push("export type NodeFlags = number;");
   lines.push("export type ModifierFlags = number;");
   lines.push("export type TokenFlags = number;");
   lines.push("export type TransformFlags = number;");
@@ -1268,7 +1291,7 @@ async function main(): Promise<void> {
   await writeGenerated("src/ast/generated/visitor.ts", generateVisitor(schema));
   await writeGenerated("src/ast/generated/is.ts", generateGuards(schema));
   await writeGenerated("src/ast/generated/metadata.ts", generateMetadata(schema));
-  await writeGenerated("src/ast/index.ts", `${generatedHeader("schema/tsgo/ast.json")}export * from "./generated/kind.js";\nexport * from "./generated/schema.js";\nexport * from "./generated/types.js";\nexport * from "./generated/nodes.js";\nexport * from "./generated/factory.js";\nexport * from "./generated/visitor.js";\nexport * from "./generated/is.js";\nexport * from "./generated/metadata.js";\n`);
+  await writeGenerated("src/ast/index.ts", `${generatedHeader("schema/tsgo/ast.json")}export * from "./flags.js";\nexport * from "./generated/kind.js";\nexport * from "./generated/schema.js";\nexport * from "./generated/types.js";\nexport * from "./generated/nodes.js";\nexport * from "./generated/factory.js";\nexport * from "./generated/visitor.js";\nexport * from "./generated/is.js";\nexport * from "./generated/metadata.js";\n`);
 }
 
 await main();

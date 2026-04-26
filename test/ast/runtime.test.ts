@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   Kind,
+  NodeFlags,
+  SymbolFlags,
   createBinaryExpression,
   createExpressionStatement,
   createIdentifier,
@@ -9,6 +11,8 @@ import {
   createNumericLiteral,
   createSourceFile,
   createToken,
+  createVariableDeclaration,
+  createVariableDeclarationList,
   forEachChild,
   isBinaryOperatorToken,
   isExpression,
@@ -71,5 +75,30 @@ describe("TS-Go generated AST runtime", () => {
     });
 
     assert.deepEqual(visited, [expression, endOfFileToken]);
+  });
+
+  it("preserves TS-Go node and symbol flag values", () => {
+    assert.equal(NodeFlags.Let, 1);
+    assert.equal(NodeFlags.Const, 2);
+    assert.equal(NodeFlags.BlockScoped, 7);
+    assert.equal(NodeFlags.AwaitUsing, 6);
+    assert.equal(NodeFlags.ContextFlags, 25_263_104);
+    assert.equal(SymbolFlags.FunctionScopedVariable, 1);
+    assert.equal(SymbolFlags.BlockScopedVariable, 2);
+    assert.equal(SymbolFlags.Value, 111_551);
+    assert.equal(SymbolFlags.Type, 788_968);
+    assert.equal(SymbolFlags.All, 1_073_741_823);
+  });
+
+  it("maps schema Flags members onto Node.flags and wires parent links generically", () => {
+    const name = createIdentifier("answer");
+    const declaration = createVariableDeclaration(name, undefined, undefined, createNumericLiteral("42", 0));
+    const declarations = createNodeArray([declaration]);
+    const list = createVariableDeclarationList(declarations, NodeFlags.Const);
+
+    assert.equal(list.flags, NodeFlags.Const);
+    assert.equal(declaration.parent, list);
+    assert.equal(name.parent, declaration);
+    assert.equal(declaration.initializer?.parent, declaration);
   });
 });

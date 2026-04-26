@@ -45,6 +45,8 @@ async function compareUpstreamIfAvailable(version: VersionInfo): Promise<void> {
     "ast.json": "_scripts/ast.json",
     "ast.schema.json": "_scripts/ast.schema.json",
     "protocol.ts": "_packages/native-preview/src/api/node/protocol.ts",
+    "nodeflags.go": "internal/ast/nodeflags.go",
+    "symbolflags.go": "internal/ast/symbolflags.go",
   };
 
   for (const [localName, upstreamRelative] of Object.entries(upstreamFiles)) {
