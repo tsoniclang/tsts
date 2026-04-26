@@ -3,14 +3,17 @@ import {
   NodeFlags,
   isArrayLiteralExpression,
   isArrowFunction,
+  isAsExpression,
   isBinaryExpression,
   isBlock,
   isBreakStatement,
   isCallExpression,
   isClassDeclaration,
+  isConditionalExpression,
   isContinueStatement,
   isConstructorDeclaration,
   isDoStatement,
+  isElementAccessExpression,
   isExpressionStatement,
   isExportDeclaration,
   isForInStatement,
@@ -26,14 +29,19 @@ import {
   isNamedExports,
   isNamedImports,
   isNamespaceImport,
+  isNewExpression,
   isNumericLiteral,
   isObjectLiteralExpression,
   isParenthesizedExpression,
+  isPostfixUnaryExpression,
+  isPrefixUnaryExpression,
   isPropertyAssignment,
   isPropertyAccessExpression,
   isPropertyDeclaration,
   isShorthandPropertyAssignment,
   isReturnStatement,
+  isSatisfiesExpression,
+  isSpreadElement,
   isStringLiteral,
   isTypeAliasDeclaration,
   isVariableDeclarationList,
@@ -111,6 +119,15 @@ const binaryOperatorText = new Map<Kind, string>([
   [Kind.AmpersandAmpersandEqualsToken, "&&="],
   [Kind.BarBarEqualsToken, "||="],
   [Kind.QuestionQuestionEqualsToken, "??="],
+]);
+
+const prefixUnaryOperatorText = new Map<Kind, string>([
+  [Kind.PlusToken, "+"],
+  [Kind.MinusToken, "-"],
+  [Kind.TildeToken, "~"],
+  [Kind.ExclamationToken, "!"],
+  [Kind.PlusPlusToken, "++"],
+  [Kind.MinusMinusToken, "--"],
 ]);
 
 export interface PrintOptions {
@@ -515,14 +532,37 @@ function printExpression(expression: Expression): string {
   if (isArrayLiteralExpression(expression)) {
     return `[${expression.elements.map(printExpression).join(", ")}]`;
   }
+  if (isSpreadElement(expression)) {
+    return `...${printExpression(expression.expression)}`;
+  }
   if (isObjectLiteralExpression(expression)) {
     return `{ ${expression.properties.map(printObjectLiteralElement).join(", ")} }`;
   }
   if (isPropertyAccessExpression(expression)) {
     return `${printExpression(expression.expression)}.${expression.name.text}`;
   }
+  if (isElementAccessExpression(expression)) {
+    return `${printExpression(expression.expression)}[${printExpression(expression.argumentExpression)}]`;
+  }
   if (isCallExpression(expression)) {
     return `${printExpression(expression.expression)}(${expression.arguments.map(printExpression).join(", ")})`;
+  }
+  if (isNewExpression(expression)) {
+    const typeArguments = "";
+    const argumentsText = expression.arguments === undefined ? "" : `(${expression.arguments.map(printExpression).join(", ")})`;
+    return `new ${printExpression(expression.expression)}${typeArguments}${argumentsText}`;
+  }
+  if (isPrefixUnaryExpression(expression)) {
+    return `${printPrefixUnaryOperator(expression.operator)}${printExpression(expression.operand)}`;
+  }
+  if (isPostfixUnaryExpression(expression)) {
+    return `${printExpression(expression.operand)}${expression.operator === Kind.PlusPlusToken ? "++" : "--"}`;
+  }
+  if (isAsExpression(expression) || isSatisfiesExpression(expression)) {
+    return printExpression(expression.expression);
+  }
+  if (isConditionalExpression(expression)) {
+    return `${printExpression(expression.condition)} ? ${printExpression(expression.whenTrue)} : ${printExpression(expression.whenFalse)}`;
   }
   if (isArrowFunction(expression)) {
     return printArrowFunction(expression);
@@ -559,6 +599,14 @@ function printBinaryOperator(operatorToken: BinaryOperatorToken): string {
   const text = binaryOperatorText.get(operatorToken.kind);
   if (text === undefined) {
     throw new Error(`Unsupported binary operator ${Kind[operatorToken.kind]}`);
+  }
+  return text;
+}
+
+function printPrefixUnaryOperator(operator: Kind): string {
+  const text = prefixUnaryOperatorText.get(operator);
+  if (text === undefined) {
+    throw new Error(`Unsupported prefix unary operator ${Kind[operator]}`);
   }
   return text;
 }

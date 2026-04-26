@@ -1,14 +1,17 @@
 import {
   Kind,
   isArrowFunction,
+  isAsExpression,
   isBinaryExpression,
   isBlock,
   isBreakStatement,
   isCallExpression,
   isClassDeclaration,
   isContinueStatement,
+  isConditionalExpression,
   isConstructorDeclaration,
   isDoStatement,
+  isElementAccessExpression,
   isExpressionStatement,
   isForInStatement,
   isForOfStatement,
@@ -21,9 +24,13 @@ import {
   isMissingDeclaration,
   isNumericLiteral,
   isParenthesizedExpression,
+  isPostfixUnaryExpression,
+  isPrefixUnaryExpression,
   isPropertyAccessExpression,
   isPropertyDeclaration,
   isReturnStatement,
+  isSatisfiesExpression,
+  isSpreadElement,
   isStringLiteral,
   isVariableStatement,
   isVariableDeclarationList,
@@ -66,6 +73,7 @@ const unknownType: CheckedType = { kind: "unknown" };
 const numberType: CheckedType = { kind: "number" };
 const stringType: CheckedType = { kind: "string" };
 const voidType: CheckedType = { kind: "void" };
+const booleanType: CheckedType = { kind: "boolean" };
 
 export function checkSourceFile(sourceFile: SourceFile): CheckResult {
   const state: CheckState = { diagnostics: [] };
@@ -257,6 +265,27 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   if (isParenthesizedExpression(expression)) {
     return inferExpression(expression.expression, state, environment);
   }
+  if (isPrefixUnaryExpression(expression)) {
+    inferExpression(expression.operand, state, environment);
+    return expression.operator === Kind.ExclamationToken ? booleanType : numberType;
+  }
+  if (isPostfixUnaryExpression(expression)) {
+    inferExpression(expression.operand, state, environment);
+    return numberType;
+  }
+  if (isSpreadElement(expression)) {
+    return inferExpression(expression.expression, state, environment);
+  }
+  if (isAsExpression(expression) || isSatisfiesExpression(expression)) {
+    inferExpression(expression.expression, state, environment);
+    return typeFromTypeNode(expression.type);
+  }
+  if (isConditionalExpression(expression)) {
+    inferExpression(expression.condition, state, environment);
+    const whenTrue = inferExpression(expression.whenTrue, state, environment);
+    const whenFalse = inferExpression(expression.whenFalse, state, environment);
+    return whenTrue.kind === whenFalse.kind ? whenTrue : unknownType;
+  }
   if (isArrowFunction(expression)) {
     return inferArrowFunction(expression, state, environment);
   }
@@ -273,6 +302,11 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   }
   if (isPropertyAccessExpression(expression)) {
     return inferPropertyAccess(expression.expression, expression.name.text, state, environment);
+  }
+  if (isElementAccessExpression(expression)) {
+    inferExpression(expression.expression, state, environment);
+    inferExpression(expression.argumentExpression, state, environment);
+    return unknownType;
   }
   if (isCallExpression(expression)) {
     const calleeType = inferExpression(expression.expression, state, environment);

@@ -4,6 +4,7 @@ import {
   createArrowFunction,
   createArrayTypeNode,
   createArrayLiteralExpression,
+  createAsExpression,
   createBinaryExpression,
   createBlock,
   createClassDeclaration,
@@ -14,7 +15,9 @@ import {
   createExpressionWithTypeArguments,
   createBreakStatement,
   createContinueStatement,
+  createConditionalExpression,
   createDoStatement,
+  createElementAccessExpression,
   createForInStatement,
   createForOfStatement,
   createForStatement,
@@ -34,19 +37,24 @@ import {
   createNamedExports,
   createNamedImports,
   createNamespaceImport,
+  createNewExpression,
   createNodeArray,
   createNumericLiteral,
   createObjectLiteralExpression,
   createParameterDeclaration,
   createParenthesizedExpression,
   createParenthesizedTypeNode,
+  createPostfixUnaryExpression,
   createPropertyAssignment,
   createPropertyAccessExpression,
   createPropertyDeclaration,
   createPropertySignatureDeclaration,
+  createPrefixUnaryExpression,
   createReturnStatement,
+  createSatisfiesExpression,
   createSemicolonClassElement,
   createShorthandPropertyAssignment,
+  createSpreadElement,
   createSourceFile,
   createStringLiteral,
   createToken,
@@ -665,12 +673,12 @@ export class Parser {
     if (precedence === 0 && this.#isArrowFunctionStart()) {
       return this.#parseArrowFunction();
     }
-    let left = this.#parseLeftHandSideExpression();
+    let left = this.#parseUnaryExpression();
     while (true) {
       const operatorToken = this.#current();
       const operatorPrecedence = binaryPrecedence.get(operatorToken.kind) ?? 0;
       if (operatorPrecedence <= precedence) {
-        return left;
+        break;
       }
       this.#advance();
       const right = this.#parseExpression(operatorPrecedence);
@@ -680,6 +688,19 @@ export class Parser {
       }
       left = createBinaryExpression(undefined, left, undefined, token as BinaryOperatorToken, right);
     }
+    while (this.#current().kind === Kind.AsKeyword || this.#current().kind === Kind.SatisfiesKeyword) {
+      const operator = this.#current().kind;
+      this.#advance();
+      const type = this.#parseType();
+      left = operator === Kind.AsKeyword ? createAsExpression(left, type) : createSatisfiesExpression(left, type);
+    }
+    if (precedence === 0 && this.#consumeOptional(Kind.QuestionToken)) {
+      const whenTrue = this.#parseExpression();
+      this.#expect(Kind.ColonToken);
+      const whenFalse = this.#parseExpression();
+      left = createConditionalExpression(left, createToken(Kind.QuestionToken), whenTrue, createToken(Kind.ColonToken), whenFalse);
+    }
+    return left;
   }
 
   #isArrowFunctionStart(): boolean {
@@ -749,8 +770,52 @@ export class Parser {
     return this.#parseExpression();
   }
 
+  #parseUnaryExpression(): Expression {
+    const token = this.#current();
+    switch (token.kind) {
+      case Kind.PlusToken:
+      case Kind.MinusToken:
+      case Kind.TildeToken:
+      case Kind.ExclamationToken:
+      case Kind.PlusPlusToken:
+      case Kind.MinusMinusToken:
+        this.#advance();
+        return createPrefixUnaryExpression(token.kind, this.#parseUnaryExpression());
+      case Kind.NewKeyword:
+        return this.#parseNewExpression();
+      default:
+        return this.#parsePostfixExpression();
+    }
+  }
+
+  #parsePostfixExpression(): Expression {
+    const expression = this.#parseLeftHandSideExpression();
+    if (this.#current().kind === Kind.PlusPlusToken || this.#current().kind === Kind.MinusMinusToken) {
+      const operator = this.#current().kind as Kind.PlusPlusToken | Kind.MinusMinusToken;
+      this.#advance();
+      return createPostfixUnaryExpression(expression, operator);
+    }
+    return expression;
+  }
+
+  #parseNewExpression(): Expression {
+    this.#expect(Kind.NewKeyword);
+    const expression = this.#parseHeritageExpression();
+    const typeArguments = this.#parseOptionalTypeArguments();
+    let arguments_: NodeArray<Expression> | undefined;
+    if (this.#consumeOptional(Kind.OpenParenToken)) {
+      arguments_ = createNodeArray(this.#parseArgumentList());
+      this.#expect(Kind.CloseParenToken);
+    }
+    return this.#parseMemberSuffixes(createNewExpression(expression, typeArguments, arguments_));
+  }
+
   #parseLeftHandSideExpression(): Expression {
-    let expression = this.#parsePrimaryExpression();
+    return this.#parseMemberSuffixes(this.#parsePrimaryExpression());
+  }
+
+  #parseMemberSuffixes(initialExpression: Expression): Expression {
+    let expression = initialExpression;
     while (true) {
       if (this.#consumeOptional(Kind.DotToken)) {
         expression = createPropertyAccessExpression(expression, undefined, this.#parseIdentifier(), NodeFlags.None);
@@ -759,6 +824,11 @@ export class Parser {
       if (this.#consumeOptional(Kind.OpenParenToken)) {
         expression = createCallExpression(expression, undefined, undefined, createNodeArray(this.#parseArgumentList()), NodeFlags.None);
         this.#expect(Kind.CloseParenToken);
+        continue;
+      }
+      if (this.#consumeOptional(Kind.OpenBracketToken)) {
+        expression = createElementAccessExpression(expression, undefined, this.#parseExpression(), NodeFlags.None);
+        this.#expect(Kind.CloseBracketToken);
         continue;
       }
       return expression;
@@ -771,9 +841,16 @@ export class Parser {
       return expressions;
     }
     do {
-      expressions.push(this.#parseExpression());
+      expressions.push(this.#parseArgumentExpression());
     } while (this.#consumeOptional(Kind.CommaToken));
     return expressions;
+  }
+
+  #parseArgumentExpression(): Expression {
+    if (this.#consumeOptional(Kind.DotDotDotToken)) {
+      return createSpreadElement(this.#parseExpression());
+    }
+    return this.#parseExpression();
   }
 
   #parsePrimaryExpression(): Expression {
@@ -814,7 +891,7 @@ export class Parser {
     this.#expect(Kind.OpenBracketToken);
     const elements: Expression[] = [];
     while (this.#current().kind !== Kind.CloseBracketToken && this.#current().kind !== Kind.EndOfFile) {
-      elements.push(this.#parseExpression());
+      elements.push(this.#parseArgumentExpression());
       this.#consumeOptional(Kind.CommaToken);
     }
     this.#expect(Kind.CloseBracketToken);

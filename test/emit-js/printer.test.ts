@@ -101,4 +101,14 @@ describe("JS emitter groundwork", () => {
       ].join("\n"),
     );
   });
+
+  it("prints access, unary, new, spread, and erased assertion expressions", () => {
+    assert.equal(
+      printSourceFile(parseSourceFile("const value = enabled ? new Box(items[index++], ...rest).value as number : -1; const ok = !failed;")),
+      [
+        "const value = enabled ? new Box(items[index++], ...rest).value : -1;",
+        "const ok = !failed;",
+      ].join("\n"),
+    );
+  });
 });

@@ -5,12 +5,15 @@ import {
   NodeFlags,
   forEachChild,
   isArrowFunction,
+  isAsExpression,
   isBinaryExpression,
   isBlock,
   isCallExpression,
   isClassDeclaration,
   isConstructorDeclaration,
   isContinueStatement,
+  isConditionalExpression,
+  isElementAccessExpression,
   isExpressionStatement,
   isForOfStatement,
   isForStatement,
@@ -24,8 +27,11 @@ import {
   isMethodSignatureDeclaration,
   isNamedExports,
   isNamedImports,
+  isNewExpression,
   isNumericLiteral,
   isParenthesizedExpression,
+  isPostfixUnaryExpression,
+  isPrefixUnaryExpression,
   isPropertyDeclaration,
   isPropertyAccessExpression,
   isPropertySignatureDeclaration,
@@ -249,5 +255,27 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isWhileStatement(whileStatement), true);
     if (!isWhileStatement(whileStatement)) throw new Error("Expected while statement");
     assert.equal(isIdentifier(whileStatement.expression), true);
+  });
+
+  it("produces core access, unary, new, and conditional expression nodes", () => {
+    const sourceFile = parseSourceFile("const value = enabled ? new Box(items[index++], ...rest).value as number : -1;");
+    const statement = sourceFile.statements[0]!;
+    if (!isVariableStatement(statement)) throw new Error("Expected variable statement");
+    const initializer = statement.declarationList.declarations[0]!.initializer;
+
+    assert.equal(isConditionalExpression(initializer!), true);
+    if (!isConditionalExpression(initializer!)) throw new Error("Expected conditional expression");
+    assert.equal(isIdentifier(initializer.condition), true);
+    assert.equal(isAsExpression(initializer.whenTrue), true);
+    if (!isAsExpression(initializer.whenTrue)) throw new Error("Expected as expression");
+    assert.equal(isPropertyAccessExpression(initializer.whenTrue.expression), true);
+    if (!isPropertyAccessExpression(initializer.whenTrue.expression)) throw new Error("Expected property access");
+    assert.equal(isNewExpression(initializer.whenTrue.expression.expression), true);
+    if (!isNewExpression(initializer.whenTrue.expression.expression)) throw new Error("Expected new expression");
+    const firstArgument = initializer.whenTrue.expression.expression.arguments?.[0];
+    assert.equal(isElementAccessExpression(firstArgument!), true);
+    if (!isElementAccessExpression(firstArgument!)) throw new Error("Expected element access");
+    assert.equal(isPostfixUnaryExpression(firstArgument.argumentExpression), true);
+    assert.equal(isPrefixUnaryExpression(initializer.whenFalse), true);
   });
 });
