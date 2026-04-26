@@ -4,4 +4,5 @@ export * from "./binder/index.js";
 export * from "./compiler/index.js";
 export * from "./emit-js/index.js";
 export * from "./parser/index.js";
+export * from "./program/index.js";
 export * from "./scanner/index.js";

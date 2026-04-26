@@ -1,16 +1,16 @@
 #!/usr/bin/env node
-import { readFile, writeFile } from "node:fs/promises";
-import { basename } from "node:path";
-import { compileSource } from "../compiler/index.js";
+import { createNodeCompilerHost, createProgram, emitProgram } from "../program/index.js";
 
 interface CliOptions {
-  readonly inputFile: string;
+  readonly inputFiles: readonly string[];
   readonly outFile?: string;
+  readonly outDir?: string;
 }
 
 function parseArgs(argv: readonly string[]): CliOptions {
-  let inputFile: string | undefined;
+  const inputFiles: string[] = [];
   let outFile: string | undefined;
+  let outDir: string | undefined;
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]!;
     if (arg === "--outFile") {
@@ -18,30 +18,49 @@ function parseArgs(argv: readonly string[]): CliOptions {
       index += 1;
       continue;
     }
+    if (arg === "--outDir") {
+      outDir = argv[index + 1];
+      index += 1;
+      continue;
+    }
     if (arg.startsWith("--")) {
       throw new Error(`Unsupported option ${arg}`);
     }
-    if (inputFile !== undefined) {
-      throw new Error(`Unexpected extra input ${arg}`);
-    }
-    inputFile = arg;
+    inputFiles.push(arg);
   }
-  if (inputFile === undefined) {
-    throw new Error("Usage: tsts <input.ts> [--outFile output.js]");
+  if (inputFiles.length === 0) {
+    throw new Error("Usage: tsts <input.ts> [...more.ts] [--outFile output.js] [--outDir dist]");
   }
-  return outFile === undefined ? { inputFile } : { inputFile, outFile };
+  if (outFile !== undefined && inputFiles.length !== 1) {
+    throw new Error("--outFile requires exactly one input file");
+  }
+  return {
+    inputFiles,
+    ...(outFile === undefined ? {} : { outFile }),
+    ...(outDir === undefined ? {} : { outDir }),
+  };
 }
 
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
-  const sourceText = await readFile(options.inputFile, "utf8");
-  const result = compileSource(sourceText, { fileName: basename(options.inputFile) });
-  if (options.outFile === undefined) {
-    process.stdout.write(result.javascript);
-    process.stdout.write("\n");
+  const host = createNodeCompilerHost();
+  const program = createProgram(options.inputFiles, options.outDir === undefined ? {} : { outDir: options.outDir }, host);
+  const result = emitProgram(program, options.outFile === undefined && options.outDir === undefined && options.inputFiles.length === 1 ? undefined : host);
+  if (result.diagnostics.length > 0) {
+    for (const diagnostic of result.diagnostics) {
+      process.stderr.write(`${diagnostic.fileName}: ${diagnostic.message}\n`);
+    }
+    process.exitCode = 1;
     return;
   }
-  await writeFile(options.outFile, `${result.javascript}\n`);
+  if (options.outFile !== undefined) {
+    host.writeFile!(options.outFile, `${result.emittedFiles[0]!.text}\n`);
+    return;
+  }
+  if (options.outDir === undefined && options.inputFiles.length === 1) {
+    process.stdout.write(result.emittedFiles[0]!.text);
+    process.stdout.write("\n");
+  }
 }
 
 await main().catch(error => {
