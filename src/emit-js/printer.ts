@@ -3,6 +3,7 @@ import {
   NodeFlags,
   isBinaryExpression,
   isBlock,
+  isCallExpression,
   isExpressionStatement,
   isExportDeclaration,
   isFunctionDeclaration,
@@ -13,6 +14,7 @@ import {
   isNamespaceImport,
   isNumericLiteral,
   isParenthesizedExpression,
+  isPropertyAccessExpression,
   isReturnStatement,
   isStringLiteral,
   isVariableStatement,
@@ -263,6 +265,12 @@ function printExpression(expression: Expression): string {
   }
   if (isParenthesizedExpression(expression)) {
     return `(${printExpression(expression.expression)})`;
+  }
+  if (isPropertyAccessExpression(expression)) {
+    return `${printExpression(expression.expression)}.${expression.name.text}`;
+  }
+  if (isCallExpression(expression)) {
+    return `${printExpression(expression.expression)}(${expression.arguments.map(printExpression).join(", ")})`;
   }
   if (isBinaryExpression(expression)) {
     return `${printExpression(expression.left)} ${printBinaryOperator(expression.operatorToken)} ${printExpression(expression.right)}`;

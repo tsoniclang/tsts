@@ -40,4 +40,8 @@ describe("JS emitter groundwork", () => {
       ].join("\n"),
     );
   });
+
+  it("prints property access and call expressions", () => {
+    assert.equal(printSourceFile(parseSourceFile("answer.toFixed(2);")), "answer.toFixed(2);");
+  });
 });

@@ -13,6 +13,7 @@ import {
   createImportDeclaration,
   createImportSpecifier,
   createKeywordTypeNode,
+  createCallExpression,
   createNamedExports,
   createNamedImports,
   createNamespaceImport,
@@ -20,6 +21,7 @@ import {
   createNumericLiteral,
   createParameterDeclaration,
   createParenthesizedExpression,
+  createPropertyAccessExpression,
   createReturnStatement,
   createSourceFile,
   createStringLiteral,
@@ -336,7 +338,7 @@ export class Parser {
   }
 
   #parseExpression(precedence = 0): Expression {
-    let left = this.#parsePrimaryExpression();
+    let left = this.#parseLeftHandSideExpression();
     while (true) {
       const operatorToken = this.#current();
       const operatorPrecedence = binaryPrecedence.get(operatorToken.kind) ?? 0;
@@ -351,6 +353,33 @@ export class Parser {
       }
       left = createBinaryExpression(undefined, left, undefined, token as BinaryOperatorToken, right);
     }
+  }
+
+  #parseLeftHandSideExpression(): Expression {
+    let expression = this.#parsePrimaryExpression();
+    while (true) {
+      if (this.#consumeOptional(Kind.DotToken)) {
+        expression = createPropertyAccessExpression(expression, undefined, this.#parseIdentifier(), NodeFlags.None);
+        continue;
+      }
+      if (this.#consumeOptional(Kind.OpenParenToken)) {
+        expression = createCallExpression(expression, undefined, undefined, createNodeArray(this.#parseArgumentList()), NodeFlags.None);
+        this.#expect(Kind.CloseParenToken);
+        continue;
+      }
+      return expression;
+    }
+  }
+
+  #parseArgumentList(): Expression[] {
+    const expressions: Expression[] = [];
+    if (this.#current().kind === Kind.CloseParenToken) {
+      return expressions;
+    }
+    do {
+      expressions.push(this.#parseExpression());
+    } while (this.#consumeOptional(Kind.CommaToken));
+    return expressions;
   }
 
   #parsePrimaryExpression(): Expression {

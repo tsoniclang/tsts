@@ -6,6 +6,7 @@ import {
   forEachChild,
   isBinaryExpression,
   isBlock,
+  isCallExpression,
   isExpressionStatement,
   isExportDeclaration,
   isFunctionDeclaration,
@@ -16,6 +17,7 @@ import {
   isNamedImports,
   isNumericLiteral,
   isParenthesizedExpression,
+  isPropertyAccessExpression,
   isReturnStatement,
   isVariableStatement,
 } from "../../src/ast/index.js";
@@ -127,5 +129,18 @@ describe("TS-Go parser groundwork", () => {
     if (!isNamedExports(exportDeclaration.exportClause!)) throw new Error("Expected named exports");
     assert.equal(exportDeclaration.exportClause.elements[0]!.propertyName?.text, "renamed");
     assert.equal(exportDeclaration.exportClause.elements[0]!.name.text, "value");
+  });
+
+  it("produces property access and call expression nodes", () => {
+    const sourceFile = parseSourceFile("answer.toFixed(2);");
+    const statement = sourceFile.statements[0]!;
+    if (!isExpressionStatement(statement)) throw new Error("Expected expression statement");
+
+    assert.equal(isCallExpression(statement.expression), true);
+    if (!isCallExpression(statement.expression)) throw new Error("Expected call expression");
+    assert.equal(statement.expression.arguments.length, 1);
+    assert.equal(isPropertyAccessExpression(statement.expression.expression), true);
+    if (!isPropertyAccessExpression(statement.expression.expression)) throw new Error("Expected property access");
+    assert.equal(statement.expression.expression.name.text, "toFixed");
   });
 });

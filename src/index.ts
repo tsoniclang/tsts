@@ -1,6 +1,7 @@
 export * from "./api/binary-ast/index.js";
 export * from "./ast/index.js";
 export * from "./binder/index.js";
+export * from "./checker/index.js";
 export * from "./compiler/index.js";
 export * from "./config/index.js";
 export * from "./emit-js/index.js";
