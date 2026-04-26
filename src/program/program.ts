@@ -11,6 +11,7 @@ export interface CompilerOptions {
 
 export interface CompilerHost {
   readFile(fileName: string): string | undefined;
+  readDirectory?(rootDir: string, extensions: readonly string[], excludes: readonly string[], includes: readonly string[]): readonly string[];
   writeFile?(fileName: string, text: string): void;
   getCurrentDirectory?(): string;
   useCaseSensitiveFileNames?(): boolean;

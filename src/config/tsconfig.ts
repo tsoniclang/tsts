@@ -24,17 +24,20 @@ interface RawTsConfig {
   readonly exclude?: unknown;
 }
 
-export function loadTsConfig(fileName: string, host: Pick<CompilerHost, "readFile">): TsConfigParseResult {
+const supportedRootExtensions = [".ts", ".tsx", ".d.ts"] as const;
+const defaultExcludePatterns = ["node_modules", "bower_components", "jspm_packages"] as const;
+
+export function loadTsConfig(fileName: string, host: Pick<CompilerHost, "readFile" | "readDirectory">): TsConfigParseResult {
   const text = host.readFile(fileName);
   if (text === undefined) {
     return {
       diagnostics: [{ fileName, message: `File not found: ${fileName}` }],
     };
   }
-  return parseTsConfigText(fileName, text);
+  return parseTsConfigText(fileName, text, host);
 }
 
-export function parseTsConfigText(fileName: string, text: string): TsConfigParseResult {
+export function parseTsConfigText(fileName: string, text: string, host?: Pick<CompilerHost, "readDirectory">): TsConfigParseResult {
   const diagnostics: TsConfigDiagnostic[] = [];
   let raw: unknown;
   try {
@@ -54,7 +57,7 @@ export function parseTsConfigText(fileName: string, text: string): TsConfigParse
 
   const baseDirectory = dirname(fileName);
   const options = parseCompilerOptions(fileName, raw.compilerOptions, diagnostics);
-  const rootNames = parseRootNames(fileName, baseDirectory, raw, diagnostics);
+  const rootNames = parseRootNames(fileName, baseDirectory, raw, options, diagnostics, host);
   if (diagnostics.length > 0) {
     return { diagnostics };
   }
@@ -84,7 +87,14 @@ function parseCompilerOptions(fileName: string, value: unknown, diagnostics: TsC
   return outDir === undefined ? {} : { outDir };
 }
 
-function parseRootNames(fileName: string, baseDirectory: string, raw: RawTsConfig, diagnostics: TsConfigDiagnostic[]): readonly string[] {
+function parseRootNames(
+  fileName: string,
+  baseDirectory: string,
+  raw: RawTsConfig,
+  options: CompilerOptions,
+  diagnostics: TsConfigDiagnostic[],
+  host: Pick<CompilerHost, "readDirectory"> | undefined,
+): readonly string[] {
   if (raw.files !== undefined) {
     if (!Array.isArray(raw.files) || raw.files.some(file => typeof file !== "string")) {
       diagnostics.push({ fileName, message: "files must be an array of strings" });
@@ -92,12 +102,34 @@ function parseRootNames(fileName: string, baseDirectory: string, raw: RawTsConfi
     }
     return raw.files.map(file => join(baseDirectory, file));
   }
-  if (raw.include !== undefined || raw.exclude !== undefined) {
-    diagnostics.push({ fileName, message: "include/exclude expansion is not implemented; use files for now" });
+  const include = parseStringArrayOption(fileName, "include", raw.include, diagnostics);
+  const exclude = parseStringArrayOption(fileName, "exclude", raw.exclude, diagnostics);
+  if (diagnostics.length > 0) {
     return [];
   }
-  diagnostics.push({ fileName, message: "tsconfig must specify files until include expansion is implemented" });
-  return [];
+  if (host?.readDirectory === undefined) {
+    diagnostics.push({ fileName, message: "include/exclude expansion requires CompilerHost.readDirectory" });
+    return [];
+  }
+  const includePatterns = include ?? ["**/*"];
+  const excludePatterns = [...defaultExcludePatterns, ...(options.outDir === undefined ? [] : [options.outDir]), ...(exclude ?? [])];
+  return host.readDirectory(baseDirectory, supportedRootExtensions, excludePatterns, includePatterns);
+}
+
+function parseStringArrayOption(
+  fileName: string,
+  optionName: "include" | "exclude",
+  value: unknown,
+  diagnostics: TsConfigDiagnostic[],
+): readonly string[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!Array.isArray(value) || value.some(element => typeof element !== "string")) {
+    diagnostics.push({ fileName, message: `${optionName} must be an array of strings` });
+    return undefined;
+  }
+  return value;
 }
 
 function stripJsonCommentsAndTrailingCommas(text: string): string {
