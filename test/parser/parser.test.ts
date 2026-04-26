@@ -2,12 +2,18 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   Kind,
+  NodeFlags,
   forEachChild,
   isBinaryExpression,
+  isBlock,
   isExpressionStatement,
+  isFunctionDeclaration,
   isIdentifier,
+  isKeywordTypeNode,
   isNumericLiteral,
   isParenthesizedExpression,
+  isReturnStatement,
+  isVariableStatement,
 } from "../../src/ast/index.js";
 import { parseSourceFile } from "../../src/parser/index.js";
 
@@ -60,5 +66,41 @@ describe("TS-Go parser groundwork", () => {
     });
 
     assert.deepEqual(visitedKinds, [Kind.ExpressionStatement, Kind.EndOfFile]);
+  });
+
+  it("produces TS-Go variable declaration lists with exact flags and typed initializers", () => {
+    const sourceFile = parseSourceFile("export const answer: number = 42;");
+    const statement = sourceFile.statements[0]!;
+
+    assert.equal(isVariableStatement(statement), true);
+    if (!isVariableStatement(statement)) throw new Error("Expected variable statement");
+    assert.equal(statement.modifiers?.[0]?.kind, Kind.ExportKeyword);
+    assert.equal(statement.declarationList.flags, NodeFlags.Const);
+
+    const declaration = statement.declarationList.declarations[0]!;
+    assert.equal(isIdentifier(declaration.name), true);
+    assert.equal(declaration.name.parent, declaration);
+    assert.equal(isKeywordTypeNode(declaration.type!), true);
+    assert.equal(declaration.type!.kind, Kind.NumberKeyword);
+    assert.equal(isNumericLiteral(declaration.initializer!), true);
+  });
+
+  it("produces function declarations with parameters, return types, and return statements", () => {
+    const sourceFile = parseSourceFile("function add(a: number, b: number): number { return a + b; }");
+    const statement = sourceFile.statements[0]!;
+
+    assert.equal(isFunctionDeclaration(statement), true);
+    if (!isFunctionDeclaration(statement)) throw new Error("Expected function declaration");
+    assert.equal(statement.name?.text, "add");
+    assert.equal(statement.parameters.length, 2);
+    assert.equal(statement.parameters[0]!.parent, statement);
+    assert.equal(statement.parameters[0]!.type?.kind, Kind.NumberKeyword);
+    assert.equal(statement.type?.kind, Kind.NumberKeyword);
+    assert.equal(isBlock(statement.body!), true);
+
+    const returnStatement = statement.body!.statements[0]!;
+    assert.equal(isReturnStatement(returnStatement), true);
+    if (!isReturnStatement(returnStatement)) throw new Error("Expected return statement");
+    assert.equal(isBinaryExpression(returnStatement.expression!), true);
   });
 });

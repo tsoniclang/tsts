@@ -15,4 +15,19 @@ describe("JS emitter groundwork", () => {
   it("prints string literals from AST text", () => {
     assert.equal(printSourceFile(parseSourceFile("'hello';")), "\"hello\";");
   });
+
+  it("erases type annotations from variable declarations", () => {
+    assert.equal(printSourceFile(parseSourceFile("export const answer: number = 42;")), "export const answer = 42;");
+  });
+
+  it("erases function parameter and return types", () => {
+    assert.equal(
+      printSourceFile(parseSourceFile("export function add(a: number, b: number): number { return a + b; }")),
+      [
+        "export function add(a, b) {",
+        "  return a + b;",
+        "}",
+      ].join("\n"),
+    );
+  });
 });

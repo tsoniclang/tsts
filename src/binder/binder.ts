@@ -1,0 +1,219 @@
+import {
+  NodeFlags,
+  SymbolFlags,
+  isBlock,
+  isFunctionDeclaration,
+  isIdentifier,
+  isParameterDeclaration,
+  isSourceFile,
+  isVariableStatement,
+  type BindingName,
+  type Block,
+  type FunctionDeclaration,
+  type Node,
+  type ParameterDeclaration,
+  type SourceFile,
+  type Statement,
+  type VariableDeclaration,
+  type VariableDeclarationList,
+} from "../ast/index.js";
+
+export type SymbolTable = Map<string, BoundSymbol>;
+
+export interface BoundSymbol {
+  readonly name: string;
+  flags: SymbolFlags;
+  readonly declarations: Node[];
+  valueDeclaration?: Node;
+  readonly members?: SymbolTable;
+  readonly exports?: SymbolTable;
+}
+
+export interface BindDiagnostic {
+  readonly message: string;
+  readonly node: Node;
+}
+
+export interface BindResult {
+  readonly sourceFile: SourceFile;
+  readonly globals: SymbolTable;
+  readonly locals: WeakMap<Node, SymbolTable>;
+  readonly symbols: WeakMap<Node, BoundSymbol>;
+  readonly diagnostics: readonly BindDiagnostic[];
+}
+
+interface BinderState {
+  readonly locals: WeakMap<Node, SymbolTable>;
+  readonly symbols: WeakMap<Node, BoundSymbol>;
+  readonly diagnostics: BindDiagnostic[];
+}
+
+export function bindSourceFile(sourceFile: SourceFile): BindResult {
+  const state: BinderState = {
+    locals: new WeakMap(),
+    symbols: new WeakMap(),
+    diagnostics: [],
+  };
+  const globals: SymbolTable = new Map();
+  state.locals.set(sourceFile, globals);
+  bindStatements(sourceFile.statements, state, globals, globals);
+  return {
+    sourceFile,
+    globals,
+    locals: state.locals,
+    symbols: state.symbols,
+    diagnostics: state.diagnostics,
+  };
+}
+
+export function lookupSymbol(symbols: SymbolTable, name: string, meaning: SymbolFlags = SymbolFlags.Value | SymbolFlags.Type | SymbolFlags.Namespace): BoundSymbol | undefined {
+  const symbol = symbols.get(name);
+  if (symbol === undefined) {
+    return undefined;
+  }
+  return (symbol.flags & meaning) === 0 ? undefined : symbol;
+}
+
+export function getSymbol(bindResult: BindResult, node: Node): BoundSymbol | undefined {
+  return bindResult.symbols.get(node);
+}
+
+function bindStatements(statements: readonly Statement[], state: BinderState, lexicalScope: SymbolTable, functionScope: SymbolTable): void {
+  for (const statement of statements) {
+    bindStatement(statement, state, lexicalScope, functionScope);
+  }
+}
+
+function bindStatement(statement: Statement, state: BinderState, lexicalScope: SymbolTable, functionScope: SymbolTable): void {
+  if (isVariableStatement(statement)) {
+    bindVariableDeclarationList(statement.declarationList, state, lexicalScope, functionScope);
+    return;
+  }
+  if (isFunctionDeclaration(statement)) {
+    bindFunctionDeclaration(statement, state, lexicalScope);
+    return;
+  }
+  if (isBlock(statement)) {
+    bindBlock(statement, state, functionScope);
+  }
+}
+
+function bindBlock(block: Block, state: BinderState, functionScope: SymbolTable): void {
+  const blockScope: SymbolTable = new Map();
+  state.locals.set(block, blockScope);
+  bindStatements(block.statements, state, blockScope, functionScope);
+}
+
+function bindFunctionDeclaration(functionDeclaration: FunctionDeclaration, state: BinderState, lexicalScope: SymbolTable): void {
+  if (functionDeclaration.name !== undefined) {
+    declareSymbol(
+      lexicalScope,
+      functionDeclaration.name.text,
+      functionDeclaration,
+      SymbolFlags.Function,
+      SymbolFlags.FunctionExcludes,
+      state,
+    );
+  }
+
+  const functionLocals: SymbolTable = new Map();
+  state.locals.set(functionDeclaration, functionLocals);
+  for (const parameter of functionDeclaration.parameters) {
+    bindParameter(parameter, functionLocals, state);
+  }
+  if (functionDeclaration.body !== undefined) {
+    bindBlock(functionDeclaration.body, state, functionLocals);
+  }
+}
+
+function bindParameter(parameter: ParameterDeclaration, functionLocals: SymbolTable, state: BinderState): void {
+  const name = bindingNameText(parameter.name, state);
+  if (name === undefined) {
+    return;
+  }
+  declareSymbol(functionLocals, name, parameter, SymbolFlags.FunctionScopedVariable, SymbolFlags.ParameterExcludes, state);
+}
+
+function bindVariableDeclarationList(declarationList: VariableDeclarationList, state: BinderState, lexicalScope: SymbolTable, functionScope: SymbolTable): void {
+  const blockScoped = (declarationList.flags & NodeFlags.BlockScoped) !== 0;
+  const targetScope = blockScoped ? lexicalScope : functionScope;
+  const flags = blockScoped ? SymbolFlags.BlockScopedVariable : SymbolFlags.FunctionScopedVariable;
+  const excludes = blockScoped ? SymbolFlags.BlockScopedVariableExcludes : SymbolFlags.FunctionScopedVariableExcludes;
+  for (const declaration of declarationList.declarations) {
+    bindVariableDeclaration(declaration, targetScope, flags, excludes, state);
+  }
+}
+
+function bindVariableDeclaration(declaration: VariableDeclaration, targetScope: SymbolTable, flags: SymbolFlags, excludes: SymbolFlags, state: BinderState): void {
+  const name = bindingNameText(declaration.name, state);
+  if (name === undefined) {
+    return;
+  }
+  declareSymbol(targetScope, name, declaration, flags, excludes, state);
+}
+
+function bindingNameText(name: BindingName, state: BinderState): string | undefined {
+  if (isIdentifier(name)) {
+    return name.text;
+  }
+  state.diagnostics.push({
+    message: `Unsupported binding name kind ${name.kind}`,
+    node: name,
+  });
+  return undefined;
+}
+
+function declareSymbol(
+  symbols: SymbolTable,
+  name: string,
+  declaration: Node,
+  includes: SymbolFlags,
+  excludes: SymbolFlags,
+  state: BinderState,
+): BoundSymbol {
+  const existing = symbols.get(name);
+  if (existing !== undefined) {
+    if ((existing.flags & excludes) !== 0) {
+      state.diagnostics.push({
+        message: `Duplicate identifier '${name}'.`,
+        node: declaration,
+      });
+    } else {
+      existing.flags |= includes;
+      existing.declarations.push(declaration);
+      if (existing.valueDeclaration === undefined && isValueDeclaration(includes)) {
+        existing.valueDeclaration = declaration;
+      }
+      state.symbols.set(declaration, existing);
+      return existing;
+    }
+  }
+
+  const symbol: BoundSymbol = {
+    name,
+    flags: includes,
+    declarations: [declaration],
+  };
+  if (isValueDeclaration(includes)) {
+    symbol.valueDeclaration = declaration;
+  }
+  symbols.set(name, symbol);
+  state.symbols.set(declaration, symbol);
+  return symbol;
+}
+
+function isValueDeclaration(flags: SymbolFlags): boolean {
+  return (flags & SymbolFlags.Value) !== 0;
+}
+
+export function assertBoundSourceFile(node: Node): asserts node is SourceFile {
+  if (!isSourceFile(node)) {
+    throw new Error("Expected SourceFile");
+  }
+}
+
+export function assertBoundParameter(node: Node): asserts node is ParameterDeclaration {
+  if (!isParameterDeclaration(node)) {
+    throw new Error("Expected ParameterDeclaration");
+  }
+}

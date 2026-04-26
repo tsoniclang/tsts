@@ -14,4 +14,17 @@ describe("compiler API", () => {
     assert.equal(result.javascript, "x + 1;");
     assert.equal(view.getUint32(offsetNodes + NODE_LEN, true), Kind.SourceFile);
   });
+
+  it("compiles typed declarations through AST and JavaScript emission", () => {
+    const result = compileSource("export function add(a: number, b: number): number { return a + b; }");
+
+    assert.equal(
+      result.javascript,
+      [
+        "export function add(a, b) {",
+        "  return a + b;",
+        "}",
+      ].join("\n"),
+    );
+  });
 });
