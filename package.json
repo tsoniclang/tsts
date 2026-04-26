@@ -4,6 +4,12 @@
   "private": true,
   "description": "TypeScript-native TypeScript compiler targeting TS-Go contracts",
   "type": "module",
+  "bin": {
+    "tsts": "./dist/src/cli/tsts.js"
+  },
+  "exports": {
+    ".": "./dist/src/index.js"
+  },
   "engines": {
     "node": ">=22.18"
   },
