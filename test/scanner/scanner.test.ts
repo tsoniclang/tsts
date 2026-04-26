@@ -82,4 +82,24 @@ describe("TS-Go scanner groundwork", () => {
       Kind.EndOfFile,
     ]);
   });
+
+  it("scans private identifiers, regular expressions, templates, and numeric separators", () => {
+    assert.deepEqual(kindsOf("#value"), [
+      Kind.PrivateIdentifier,
+      Kind.EndOfFile,
+    ]);
+    assert.deepEqual(kindsOf("const pattern = /abc/g; `hi ${name}` 25_263_104"), [
+      Kind.ConstKeyword,
+      Kind.Identifier,
+      Kind.EqualsToken,
+      Kind.RegularExpressionLiteral,
+      Kind.SemicolonToken,
+      Kind.TemplateHead,
+      Kind.Identifier,
+      Kind.CloseBraceToken,
+      Kind.TemplateTail,
+      Kind.NumericLiteral,
+      Kind.EndOfFile,
+    ]);
+  });
 });

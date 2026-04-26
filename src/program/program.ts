@@ -167,7 +167,17 @@ function resolveModuleName(moduleSpecifier: string, containingFileName: string, 
 }
 
 function moduleResolutionCandidates(base: string): readonly string[] {
-  if (extname(base) !== "") {
+  const extension = extname(base);
+  if (extension === ".js" || extension === ".jsx" || extension === ".mjs" || extension === ".cjs") {
+    const withoutJsExtension = base.slice(0, -extension.length);
+    return [
+      `${withoutJsExtension}.ts`,
+      `${withoutJsExtension}.tsx`,
+      `${withoutJsExtension}.d.ts`,
+      base,
+    ];
+  }
+  if (extension !== "") {
     return [base];
   }
   return [

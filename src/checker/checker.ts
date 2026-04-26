@@ -55,7 +55,7 @@ import type { Program, ProgramDiagnostic } from "../program/index.js";
 type PrimitiveTypeName = "any" | "boolean" | "number" | "string" | "unknown" | "void";
 
 type CheckedType =
-  | { readonly kind: PrimitiveTypeName }
+  | { readonly kind: PrimitiveTypeName | "unresolved" }
   | { readonly kind: "function"; readonly returnType: CheckedType };
 
 export interface CheckDiagnostic {
@@ -74,6 +74,7 @@ type TypeEnvironment = Map<string, CheckedType>;
 
 const anyType: CheckedType = { kind: "any" };
 const unknownType: CheckedType = { kind: "unknown" };
+const unresolvedType: CheckedType = { kind: "unresolved" };
 const numberType: CheckedType = { kind: "number" };
 const stringType: CheckedType = { kind: "string" };
 const voidType: CheckedType = { kind: "void" };
@@ -114,7 +115,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
       if (declaredType !== undefined && initializerType !== undefined) {
         checkAssignable(initializerType, declaredType, state);
       }
-      setBindingNameType(declaration.name, declaredType ?? initializerType ?? unknownType, environment);
+      setBindingNameType(declaration.name, declaredType ?? initializerType ?? unresolvedType, environment);
     }
     return;
   }
@@ -195,7 +196,7 @@ function checkForInitializer(initializer: Extract<Statement, { readonly kind: Ki
       if (declaredType !== undefined && initializerType !== undefined) {
         checkAssignable(initializerType, declaredType, state);
       }
-      setBindingNameType(declaration.name, declaredType ?? initializerType ?? unknownType, environment);
+      setBindingNameType(declaration.name, declaredType ?? initializerType ?? unresolvedType, environment);
     }
     return;
   }
@@ -219,7 +220,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
   if (isConstructorDeclaration(member) || isMethodDeclaration(member)) {
     const memberEnvironment = new Map(environment);
     for (const parameter of member.parameters) {
-      setBindingNameType(parameter.name, parameter.type === undefined ? unknownType : typeFromTypeNode(parameter.type), memberEnvironment);
+      setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type), memberEnvironment);
     }
     if (member.body !== undefined) {
       checkBlock(member.body, state, memberEnvironment, member.type === undefined ? undefined : typeFromTypeNode(member.type));
@@ -237,7 +238,7 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
   }
   const functionEnvironment = new Map(environment);
   for (const parameter of functionDeclaration.parameters) {
-    setBindingNameType(parameter.name, parameter.type === undefined ? unknownType : typeFromTypeNode(parameter.type), functionEnvironment);
+    setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type), functionEnvironment);
   }
   if (functionDeclaration.body !== undefined) {
     checkBlock(functionDeclaration.body, state, functionEnvironment, functionDeclaration.type === undefined ? undefined : typeFromTypeNode(functionDeclaration.type));
@@ -256,7 +257,7 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return stringType;
   }
   if (isIdentifier(expression)) {
-    return environment.get(expression.text) ?? unknownType;
+    return environment.get(expression.text) ?? unresolvedType;
   }
   if (isParenthesizedExpression(expression)) {
     return inferExpression(expression.expression, state, environment);
@@ -280,6 +281,12 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     inferExpression(expression.condition, state, environment);
     const whenTrue = inferExpression(expression.whenTrue, state, environment);
     const whenFalse = inferExpression(expression.whenFalse, state, environment);
+    if (whenTrue.kind === "any" || whenFalse.kind === "any") {
+      return anyType;
+    }
+    if (whenTrue.kind === "unresolved" || whenFalse.kind === "unresolved") {
+      return unresolvedType;
+    }
     return whenTrue.kind === whenFalse.kind ? whenTrue : unknownType;
   }
   if (isArrowFunction(expression)) {
@@ -288,13 +295,19 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   if (isBinaryExpression(expression)) {
     const left = inferExpression(expression.left, state, environment);
     const right = inferExpression(expression.right, state, environment);
+    if (isComparisonOperator(expression.operatorToken.kind) || expression.operatorToken.kind === Kind.AmpersandAmpersandToken || expression.operatorToken.kind === Kind.BarBarToken) {
+      return booleanType;
+    }
+    if (isAssignmentOperator(expression.operatorToken.kind)) {
+      return right;
+    }
     if (expression.operatorToken.kind === Kind.PlusToken && (left.kind === "string" || right.kind === "string")) {
       return stringType;
     }
     if (left.kind === "number" && right.kind === "number") {
       return numberType;
     }
-    return unknownType;
+    return unresolvedType;
   }
   if (isPropertyAccessExpression(expression)) {
     return inferPropertyAccess(expression.expression, expression.name.text, state, environment);
@@ -302,25 +315,25 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   if (isElementAccessExpression(expression)) {
     inferExpression(expression.expression, state, environment);
     inferExpression(expression.argumentExpression, state, environment);
-    return unknownType;
+    return unresolvedType;
   }
   if (isCallExpression(expression)) {
     const calleeType = inferExpression(expression.expression, state, environment);
     for (const argument of expression.arguments) {
       inferExpression(argument, state, environment);
     }
-    if (calleeType.kind === "any") {
+    if (calleeType.kind === "any" || calleeType.kind === "unknown" || calleeType.kind === "unresolved") {
       return anyType;
     }
-    return calleeType.kind === "function" ? calleeType.returnType : unknownType;
+    return calleeType.kind === "function" ? calleeType.returnType : unresolvedType;
   }
-  return unknownType;
+  return unresolvedType;
 }
 
 function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, environment: TypeEnvironment): CheckedType {
   const arrowEnvironment = new Map(environment);
   for (const parameter of arrowFunction.parameters) {
-    setBindingNameType(parameter.name, parameter.type === undefined ? unknownType : typeFromTypeNode(parameter.type), arrowEnvironment);
+    setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type), arrowEnvironment);
   }
   const declaredReturnType = arrowFunction.type === undefined ? undefined : typeFromTypeNode(arrowFunction.type);
   const inferredReturnType = inferConciseBody(arrowFunction.body, state, arrowEnvironment, declaredReturnType);
@@ -330,7 +343,7 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
 function inferConciseBody(body: ConciseBody, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): CheckedType {
   if (isBlock(body)) {
     checkBlock(body, state, environment, expectedReturnType);
-    return expectedReturnType ?? unknownType;
+    return expectedReturnType ?? unresolvedType;
   }
   const bodyType = inferExpression(body, state, environment);
   if (expectedReturnType !== undefined) {
@@ -347,13 +360,19 @@ function inferPropertyAccess(expression: Expression, propertyName: string, state
   if (receiverType.kind === "string" && propertyName === "length") {
     return numberType;
   }
-  if (receiverType.kind !== "any" && receiverType.kind !== "unknown" && receiverType.kind !== "function") {
+  if (receiverType.kind === "string" && stringMethodReturnTypes.has(propertyName)) {
+    return { kind: "function", returnType: stringMethodReturnTypes.get(propertyName)! };
+  }
+  if (receiverType.kind === "unknown" || receiverType.kind === "unresolved") {
+    return anyType;
+  }
+  if (receiverType.kind !== "any" && receiverType.kind !== "function") {
     state.diagnostics.push({
       message: `Property '${propertyName}' does not exist on type '${displayType(receiverType)}'.`,
     });
     return anyType;
   }
-  return unknownType;
+  return anyType;
 }
 
 function setBindingNameType(name: BindingName, type: CheckedType, environment: TypeEnvironment): void {
@@ -393,11 +412,11 @@ function typeFromTypeNode(type: TypeNode): CheckedType {
         return unknownType;
     }
   }
-  return unknownType;
+  return anyType;
 }
 
 function checkAssignable(actual: CheckedType, expected: CheckedType, state: CheckState): void {
-  if (expected.kind === "any" || actual.kind === "any" || expected.kind === "unknown") {
+  if (expected.kind === "any" || actual.kind === "any" || expected.kind === "unknown" || actual.kind === "unresolved") {
     return;
   }
   if (actual.kind !== expected.kind) {
@@ -407,6 +426,50 @@ function checkAssignable(actual: CheckedType, expected: CheckedType, state: Chec
   }
 }
 
+const stringMethodReturnTypes = new Map<string, CheckedType>([
+  ["endsWith", booleanType],
+  ["includes", booleanType],
+  ["match", anyType],
+  ["matchAll", anyType],
+  ["replace", stringType],
+  ["slice", stringType],
+  ["split", anyType],
+  ["startsWith", booleanType],
+  ["toLowerCase", stringType],
+]);
+
+function isComparisonOperator(kind: Kind): boolean {
+  return kind === Kind.EqualsEqualsToken
+    || kind === Kind.EqualsEqualsEqualsToken
+    || kind === Kind.ExclamationEqualsToken
+    || kind === Kind.ExclamationEqualsEqualsToken
+    || kind === Kind.LessThanToken
+    || kind === Kind.LessThanEqualsToken
+    || kind === Kind.GreaterThanToken
+    || kind === Kind.GreaterThanEqualsToken
+    || kind === Kind.InstanceOfKeyword
+    || kind === Kind.InKeyword;
+}
+
+function isAssignmentOperator(kind: Kind): boolean {
+  return kind === Kind.EqualsToken
+    || kind === Kind.PlusEqualsToken
+    || kind === Kind.MinusEqualsToken
+    || kind === Kind.AsteriskEqualsToken
+    || kind === Kind.AsteriskAsteriskEqualsToken
+    || kind === Kind.SlashEqualsToken
+    || kind === Kind.PercentEqualsToken
+    || kind === Kind.AmpersandEqualsToken
+    || kind === Kind.BarEqualsToken
+    || kind === Kind.CaretEqualsToken
+    || kind === Kind.LessThanLessThanEqualsToken
+    || kind === Kind.GreaterThanGreaterThanEqualsToken
+    || kind === Kind.GreaterThanGreaterThanGreaterThanEqualsToken
+    || kind === Kind.AmpersandAmpersandEqualsToken
+    || kind === Kind.BarBarEqualsToken
+    || kind === Kind.QuestionQuestionEqualsToken;
+}
+
 function displayType(type: CheckedType): string {
-  return type.kind === "function" ? "function" : type.kind;
+  return type.kind === "function" ? "function" : type.kind === "unresolved" ? "unknown" : type.kind;
 }

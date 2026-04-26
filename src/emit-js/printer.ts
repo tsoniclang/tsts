@@ -4,6 +4,8 @@ import {
   isArrayLiteralExpression,
   isArrowFunction,
   isAsExpression,
+  isAwaitExpression,
+  isBigIntLiteral,
   isBinaryExpression,
   isBlock,
   isBreakStatement,
@@ -12,15 +14,20 @@ import {
   isConditionalExpression,
   isContinueStatement,
   isConstructorDeclaration,
+  isComputedPropertyName,
+  isDeleteExpression,
   isDoStatement,
   isElementAccessExpression,
+  isEnumDeclaration,
   isExpressionStatement,
   isExportDeclaration,
+  isFunctionExpression,
   isForInStatement,
   isForOfStatement,
   isForStatement,
   isFunctionDeclaration,
   isHeritageClause,
+  isGetAccessorDeclaration,
   isIfStatement,
   isInterfaceDeclaration,
   isIdentifier,
@@ -30,23 +37,35 @@ import {
   isNamedImports,
   isNamespaceImport,
   isNewExpression,
+  isNoSubstitutionTemplateLiteral,
+  isNonNullExpression,
   isNumericLiteral,
   isObjectBindingPattern,
   isObjectLiteralExpression,
   isParenthesizedExpression,
   isPostfixUnaryExpression,
   isPrefixUnaryExpression,
+  isPrivateIdentifier,
   isPropertyAssignment,
   isPropertyAccessExpression,
   isPropertyDeclaration,
   isShorthandPropertyAssignment,
+  isSetAccessorDeclaration,
   isReturnStatement,
+  isRegularExpressionLiteral,
   isSatisfiesExpression,
   isSpreadElement,
+  isSpreadAssignment,
+  isSwitchStatement,
+  isTemplateExpression,
+  isThrowStatement,
   isStringLiteral,
+  isTryStatement,
   isTypeAliasDeclaration,
+  isTypeOfExpression,
   isVariableDeclarationList,
   isVariableStatement,
+  isVoidExpression,
   isWhileStatement,
   isArrayBindingPattern,
   type BindingElement,
@@ -55,6 +74,7 @@ import {
   type ClassDeclaration,
   type ClassElement,
   type ConstructorDeclaration,
+  type EnumDeclaration,
   type Expression,
   type ExportDeclaration,
   type ForInitializer,
@@ -180,6 +200,9 @@ function printStatement(statement: Statement, context: PrintContext, depth: numb
   if (isClassDeclaration(statement)) {
     return printClassDeclaration(statement, context, depth);
   }
+  if (isEnumDeclaration(statement)) {
+    return printEnumDeclaration(statement);
+  }
   if (isInterfaceDeclaration(statement) || isTypeAliasDeclaration(statement)) {
     return undefined;
   }
@@ -210,37 +233,63 @@ function printStatement(statement: Statement, context: PrintContext, depth: numb
   if (isReturnStatement(statement)) {
     return statement.expression === undefined ? "return;" : `return ${printExpression(statement.expression)};`;
   }
+  if (isThrowStatement(statement)) {
+    return `throw ${printExpression(statement.expression)};`;
+  }
+  if (isTryStatement(statement)) {
+    const catchClause = statement.catchClause === undefined ? "" : ` catch${statement.catchClause.variableDeclaration === undefined ? "" : ` (${printVariableDeclaration(statement.catchClause.variableDeclaration)})`} ${printBlock(statement.catchClause.block.statements, context, depth)}`;
+    const finallyBlock = statement.finallyBlock === undefined ? "" : ` finally ${printBlock(statement.finallyBlock.statements, context, depth)}`;
+    return `try ${printBlock(statement.tryBlock.statements, context, depth)}${catchClause}${finallyBlock}`;
+  }
+  if (isSwitchStatement(statement)) {
+    const childIndent = context.indentText.repeat(depth + 1);
+    const currentIndent = context.indentText.repeat(depth);
+    const clauses = statement.caseBlock.clauses.map(clause => {
+      const header = clause.kind === Kind.CaseClause ? `case ${printExpression(clause.expression)}:` : "default:";
+      const body = clause.statements.map(child => `${context.indentText.repeat(depth + 2)}${printStatement(child, context, depth + 2) ?? ""}`).join(context.newline);
+      return body.length === 0 ? `${childIndent}${header}` : `${childIndent}${header}${context.newline}${body}`;
+    }).join(context.newline);
+    return `switch (${printExpression(statement.expression)}) {${context.newline}${clauses}${context.newline}${currentIndent}}`;
+  }
   if (isBlock(statement)) {
     return printBlock(statement.statements, context, depth);
   }
   throw new Error(`Unsupported statement kind ${Kind[statement.kind]}`);
 }
 
-function printImportDeclaration(importDeclaration: ImportDeclaration): string {
+function printImportDeclaration(importDeclaration: ImportDeclaration): string | undefined {
   const moduleSpecifier = printExpression(importDeclaration.moduleSpecifier);
   if (importDeclaration.importClause === undefined) {
     return `import ${moduleSpecifier};`;
   }
-  return `import ${printImportClause(importDeclaration.importClause)} from ${moduleSpecifier};`;
+  const importClause = printImportClause(importDeclaration.importClause);
+  return importClause === undefined ? undefined : `import ${importClause} from ${moduleSpecifier};`;
 }
 
-function printImportClause(importClause: ImportClause): string {
+function printImportClause(importClause: ImportClause): string | undefined {
+  if (importClause.phaseModifier === Kind.TypeKeyword) {
+    return undefined;
+  }
   const parts: string[] = [];
   if (importClause.name !== undefined) {
     parts.push(importClause.name.text);
   }
   if (importClause.namedBindings !== undefined) {
-    parts.push(printNamedImportBindings(importClause.namedBindings));
+    const namedBindings = printNamedImportBindings(importClause.namedBindings);
+    if (namedBindings !== undefined) {
+      parts.push(namedBindings);
+    }
   }
-  return parts.join(", ");
+  return parts.length === 0 ? undefined : parts.join(", ");
 }
 
-function printNamedImportBindings(namedBindings: NamedImportBindings): string {
+function printNamedImportBindings(namedBindings: NamedImportBindings): string | undefined {
   if (isNamespaceImport(namedBindings)) {
     return `* as ${namedBindings.name.text}`;
   }
   if (isNamedImports(namedBindings)) {
-    return `{ ${namedBindings.elements.map(printImportSpecifier).join(", ")} }`;
+    const elements = namedBindings.elements.flatMap(specifier => specifier.isTypeOnly ? [] : [printImportSpecifier(specifier)]);
+    return elements.length === 0 ? undefined : `{ ${elements.join(", ")} }`;
   }
   throw new Error(`Unsupported named import bindings kind ${Kind[(namedBindings as Node).kind]}`);
 }
@@ -294,6 +343,38 @@ function printVariableDeclaration(declaration: VariableDeclaration): string {
   return declaration.initializer === undefined ? name : `${name} = ${printExpression(declaration.initializer)}`;
 }
 
+function printEnumDeclaration(enumDeclaration: EnumDeclaration): string {
+  const prefix = hasModifier(enumDeclaration.modifiers, Kind.ExportKeyword) ? "export " : "";
+  const enumName = enumDeclaration.name.text;
+  const memberNames = new Set(enumDeclaration.members.flatMap(member => isIdentifier(member.name) ? [member.name.text] : []));
+  let nextValue = 0;
+  const assignments = enumDeclaration.members.map(member => {
+    const name = printPropertyName(member.name);
+    const initializer = member.initializer === undefined ? `${nextValue}` : printEnumInitializer(member.initializer, enumName, memberNames);
+    if (member.initializer === undefined) {
+      nextValue += 1;
+    }
+    return `${enumName}[${enumName}[${JSON.stringify(name)}] = ${initializer}] = ${JSON.stringify(name)};`;
+  }).join(" ");
+  return `${prefix}var ${enumName};${assignments.length === 0 ? "" : `\n(function (${enumName}) { ${assignments} })(${enumName} || (${enumName} = {}));`}`;
+}
+
+function printEnumInitializer(expression: Expression, enumName: string, memberNames: Set<string>): string {
+  if (isIdentifier(expression) && memberNames.has(expression.text)) {
+    return `${enumName}.${expression.text}`;
+  }
+  if (isBinaryExpression(expression)) {
+    return `${printEnumInitializer(expression.left, enumName, memberNames)} ${printBinaryOperator(expression.operatorToken)} ${printEnumInitializer(expression.right, enumName, memberNames)}`;
+  }
+  if (isPrefixUnaryExpression(expression)) {
+    return `${printPrefixUnaryOperator(expression.operator)}${printEnumInitializer(expression.operand, enumName, memberNames)}`;
+  }
+  if (isParenthesizedExpression(expression)) {
+    return `(${printEnumInitializer(expression.expression, enumName, memberNames)})`;
+  }
+  return printExpression(expression);
+}
+
 function printFunctionDeclaration(functionDeclaration: FunctionDeclaration, context: PrintContext, depth: number): string {
   const prefix = printModifierPrefix(functionDeclaration.modifiers);
   const asterisk = functionDeclaration.asteriskToken === undefined ? "" : "*";
@@ -343,6 +424,17 @@ function printClassElement(member: ClassElement, context: PrintContext, depth: n
   }
   if (member.kind === Kind.MethodDeclaration) {
     return printMethodDeclaration(member as MethodDeclaration, context, depth);
+  }
+  if (isGetAccessorDeclaration(member)) {
+    const prefix = printMemberModifierPrefix(member.modifiers);
+    const body = member.body === undefined ? "{}" : printBlock(member.body.statements, context, depth);
+    return `${prefix}get ${printPropertyName(member.name)}() ${body}`;
+  }
+  if (isSetAccessorDeclaration(member)) {
+    const prefix = printMemberModifierPrefix(member.modifiers);
+    const parameters = member.parameters.map(printParameterDeclaration).join(", ");
+    const body = member.body === undefined ? "{}" : printBlock(member.body.statements, context, depth);
+    return `${prefix}set ${printPropertyName(member.name)}(${parameters}) ${body}`;
   }
   if (member.kind === Kind.SemicolonClassElement) {
     return ";";
@@ -421,9 +513,8 @@ function printBlock(statements: NodeArray<Statement>, context: PrintContext, dep
 
 function printParameterDeclaration(parameter: ParameterDeclaration): string {
   const rest = parameter.dotDotDotToken === undefined ? "" : "...";
-  const optional = parameter.questionToken === undefined ? "" : "?";
   const initializer = parameter.initializer === undefined ? "" : ` = ${printExpression(parameter.initializer)}`;
-  return `${rest}${printBindingName(parameter.name)}${optional}${initializer}`;
+  return `${rest}${printBindingName(parameter.name)}${initializer}`;
 }
 
 function printModifierPrefix(modifiers: NodeArray<ModifierLike> | undefined): string {
@@ -488,6 +579,9 @@ function printBindingName(name: Node): string {
   if (isIdentifier(name)) {
     return name.text;
   }
+  if (isPrivateIdentifier(name)) {
+    return name.text;
+  }
   if (isObjectBindingPattern(name)) {
     return `{ ${name.elements.map(printBindingElement).join(", ")} }`;
   }
@@ -509,11 +603,17 @@ function printPropertyName(name: Node): string {
   if (isIdentifier(name)) {
     return name.text;
   }
+  if (isPrivateIdentifier(name)) {
+    return name.text;
+  }
   if (isStringLiteral(name)) {
     return JSON.stringify(name.text);
   }
   if (isNumericLiteral(name)) {
     return name.text;
+  }
+  if (isComputedPropertyName(name)) {
+    return `[${printExpression(name.expression)}]`;
   }
   throw new Error(`Unsupported property name kind ${Kind[name.kind]}`);
 }
@@ -522,11 +622,26 @@ function printExpression(expression: Expression): string {
   if (isIdentifier(expression)) {
     return expression.text;
   }
+  if (isPrivateIdentifier(expression)) {
+    return expression.text;
+  }
   if (isNumericLiteral(expression)) {
+    return expression.text;
+  }
+  if (isBigIntLiteral(expression)) {
+    return expression.text;
+  }
+  if (isRegularExpressionLiteral(expression)) {
     return expression.text;
   }
   if (isStringLiteral(expression)) {
     return JSON.stringify(expression.text);
+  }
+  if (isNoSubstitutionTemplateLiteral(expression)) {
+    return `\`${expression.text}\``;
+  }
+  if (isTemplateExpression(expression)) {
+    return `\`${expression.head.text}${expression.templateSpans.map(span => `\${${printExpression(span.expression)}}${span.literal.text}`).join("")}\``;
   }
   if (expression.kind === Kind.TrueKeyword) {
     return "true";
@@ -556,13 +671,19 @@ function printExpression(expression: Expression): string {
     return `{ ${expression.properties.map(printObjectLiteralElement).join(", ")} }`;
   }
   if (isPropertyAccessExpression(expression)) {
-    return `${printExpression(expression.expression)}.${expression.name.text}`;
+    return `${printExpression(expression.expression)}${expression.questionDotToken === undefined ? "." : "?."}${expression.name.text}`;
   }
   if (isElementAccessExpression(expression)) {
-    return `${printExpression(expression.expression)}[${printExpression(expression.argumentExpression)}]`;
+    return `${printExpression(expression.expression)}${expression.questionDotToken === undefined ? "" : "?."}[${printExpression(expression.argumentExpression)}]`;
   }
   if (isCallExpression(expression)) {
-    return `${printExpression(expression.expression)}(${expression.arguments.map(printExpression).join(", ")})`;
+    return `${printExpression(expression.expression)}${expression.questionDotToken === undefined ? "" : "?."}(${expression.arguments.map(printExpression).join(", ")})`;
+  }
+  if (isFunctionExpression(expression)) {
+    const asterisk = expression.asteriskToken === undefined ? "" : "*";
+    const name = expression.name === undefined ? "" : ` ${expression.name.text}`;
+    const parameters = expression.parameters.map(printParameterDeclaration).join(", ");
+    return `function${asterisk}${name}(${parameters}) ${printBlock(expression.body.statements, { newline: "\n", indentText: "  " }, 0)}`;
   }
   if (isNewExpression(expression)) {
     const typeArguments = "";
@@ -572,8 +693,23 @@ function printExpression(expression: Expression): string {
   if (isPrefixUnaryExpression(expression)) {
     return `${printPrefixUnaryOperator(expression.operator)}${printExpression(expression.operand)}`;
   }
+  if (isDeleteExpression(expression)) {
+    return `delete ${printExpression(expression.expression)}`;
+  }
+  if (isTypeOfExpression(expression)) {
+    return `typeof ${printExpression(expression.expression)}`;
+  }
+  if (isVoidExpression(expression)) {
+    return `void ${printExpression(expression.expression)}`;
+  }
+  if (isAwaitExpression(expression)) {
+    return `await ${printExpression(expression.expression)}`;
+  }
   if (isPostfixUnaryExpression(expression)) {
     return `${printExpression(expression.operand)}${expression.operator === Kind.PlusPlusToken ? "++" : "--"}`;
+  }
+  if (isNonNullExpression(expression)) {
+    return printExpression(expression.expression);
   }
   if (isAsExpression(expression) || isSatisfiesExpression(expression)) {
     return printExpression(expression.expression);
@@ -604,6 +740,9 @@ function printObjectLiteralElement(element: ObjectLiteralElementLike): string {
   }
   if (isShorthandPropertyAssignment(element)) {
     return printPropertyName(element.name);
+  }
+  if (isSpreadAssignment(element)) {
+    return `...${printExpression(element.expression)}`;
   }
   throw new Error(`Unsupported object literal element kind ${Kind[element.kind]}`);
 }

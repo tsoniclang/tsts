@@ -99,6 +99,23 @@ describe("program groundwork", () => {
     assert.deepEqual(result.emittedFiles.map(file => file.outputFileName), ["dist/src/index.js", "dist/src/dep.js"]);
   });
 
+  it("resolves ESM .js specifiers to TypeScript source files", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "import { value } from \"./dep.js\"; export const answer = value;"],
+      ["src/dep.ts", "export const value = 42;"],
+    ]);
+    const host: CompilerHost = {
+      getCurrentDirectory: () => ".",
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/index.ts"], {}, host);
+
+    assert.equal(program.diagnostics.length, 0);
+    assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["src/index.ts", "src/dep.ts"]);
+  });
+
   it("diagnoses unresolved relative imports", () => {
     const host: CompilerHost = {
       readFile: fileName => fileName === "src/index.ts" ? "import { missing } from \"./missing\";" : undefined,

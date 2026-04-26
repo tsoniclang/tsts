@@ -134,13 +134,17 @@ function bindStatement(statement: Statement, state: BinderState, lexicalScope: S
     return;
   }
   if (isForStatement(statement)) {
-    bindForInitializer(statement.initializer, state, lexicalScope, functionScope);
-    bindStatement(statement.statement, state, lexicalScope, functionScope);
+    const loopScope: SymbolTable = new Map();
+    state.locals.set(statement, loopScope);
+    bindForInitializer(statement.initializer, state, loopScope, functionScope);
+    bindStatement(statement.statement, state, loopScope, functionScope);
     return;
   }
   if (isForInStatement(statement) || isForOfStatement(statement)) {
-    bindForInitializer(statement.initializer, state, lexicalScope, functionScope);
-    bindStatement(statement.statement, state, lexicalScope, functionScope);
+    const loopScope: SymbolTable = new Map();
+    state.locals.set(statement, loopScope);
+    bindForInitializer(statement.initializer, state, loopScope, functionScope);
+    bindStatement(statement.statement, state, loopScope, functionScope);
     return;
   }
   if (isBlock(statement)) {

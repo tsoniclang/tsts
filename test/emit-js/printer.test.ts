@@ -14,6 +14,7 @@ describe("JS emitter groundwork", () => {
 
   it("prints string literals from AST text", () => {
     assert.equal(printSourceFile(parseSourceFile("'hello';")), "\"hello\";");
+    assert.equal(printSourceFile(parseSourceFile("\"line\\nnext\";")), "\"line\\nnext\";");
   });
 
   it("erases type annotations from variable declarations", () => {
@@ -22,7 +23,7 @@ describe("JS emitter groundwork", () => {
 
   it("erases function parameter and return types", () => {
     assert.equal(
-      printSourceFile(parseSourceFile("export function add(a: number, b: number): number { return a + b; }")),
+      printSourceFile(parseSourceFile("export function add(a: number, b?: number): number { return a + b; }")),
       [
         "export function add(a, b) {",
         "  return a + b;",
@@ -41,8 +42,26 @@ describe("JS emitter groundwork", () => {
     );
   });
 
+  it("erases type-only imports and type-only named specifiers", () => {
+    assert.equal(
+      printSourceFile(parseSourceFile("import type { Node } from \"./types.js\"; import { Kind, type SourceFile } from \"./ast.js\";")),
+      "import { Kind } from \"./ast.js\";",
+    );
+  });
+
+  it("prints numeric enums with runtime forward and reverse mappings", () => {
+    assert.equal(
+      printSourceFile(parseSourceFile("export enum Flags { None = 0, A = 1 << 0, B = A << 1 }")),
+      [
+        "export var Flags;",
+        "(function (Flags) { Flags[Flags[\"None\"] = 0] = \"None\"; Flags[Flags[\"A\"] = 1 << 0] = \"A\"; Flags[Flags[\"B\"] = Flags.A << 1] = \"B\"; })(Flags || (Flags = {}));",
+      ].join("\n"),
+    );
+  });
+
   it("prints property access and call expressions", () => {
     assert.equal(printSourceFile(parseSourceFile("answer.toFixed(2);")), "answer.toFixed(2);");
+    assert.equal(printSourceFile(parseSourceFile("answer?.toFixed?.(2);")), "answer?.toFixed?.(2);");
   });
 
   it("erases type-only declarations and emits class declarations", () => {
@@ -119,6 +138,28 @@ describe("JS emitter groundwork", () => {
         "const { id, name: label = \"x\", ...rest } = item;",
         "function f([first, second]) {",
         "  return first;",
+        "}",
+      ].join("\n"),
+    );
+  });
+
+  it("prints private fields, templates, try/catch, switch, and throw statements", () => {
+    assert.equal(
+      printSourceFile(parseSourceFile("class Box { #value = `hi ${name}`; get value() { return this.#value!; } } try { throw new Error(/x/.source); } catch (error) { switch (error) { default: break; } }")),
+      [
+        "class Box {",
+        "  #value = `hi ${name}`;",
+        "  get value() {",
+        "    return this.#value;",
+        "  }",
+        "}",
+        "try {",
+        "  throw new Error(/x/.source);",
+        "} catch (error) {",
+        "  switch (error) {",
+        "    default:",
+        "      break;",
+        "  }",
         "}",
       ].join("\n"),
     );

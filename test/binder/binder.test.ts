@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   SymbolFlags,
   isClassDeclaration,
+  isForStatement,
   isFunctionDeclaration,
   isInterfaceDeclaration,
   isTypeAliasDeclaration,
@@ -84,12 +85,16 @@ describe("TS-Go binder groundwork", () => {
     assert.notEqual(result.locals.get(interfaceDeclaration), undefined);
   });
 
-  it("binds loop declaration initializers into the surrounding lexical scope", () => {
+  it("binds loop declaration initializers into the loop lexical scope", () => {
     const sourceFile = parseSourceFile("for (let index = 0; index < 1; index += 1) { const local = index; }");
     const result = bindSourceFile(sourceFile);
+    const forStatement = sourceFile.statements[0]!;
 
     assert.equal(result.diagnostics.length, 0);
-    assert.equal(lookupSymbol(result.globals, "index")?.flags, SymbolFlags.BlockScopedVariable);
+    assert.equal(lookupSymbol(result.globals, "index"), undefined);
+    assert.equal(isForStatement(forStatement), true);
+    if (!isForStatement(forStatement)) throw new Error("Expected for statement");
+    assert.equal(result.locals.get(forStatement)?.get("index")?.flags, SymbolFlags.BlockScopedVariable);
   });
 
   it("binds names inside object and array binding patterns", () => {

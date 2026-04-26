@@ -184,7 +184,10 @@ function isDigit(character: string): boolean {
 export class Scanner {
   readonly #text: string;
   readonly #skipTrivia: boolean;
+  readonly #templateExpressionBraceDepths: number[] = [];
   #position = 0;
+  #previousSignificantKind: Kind | undefined;
+  #pendingTemplateContinuation = false;
 
   constructor(text: string, options: ScannerOptions = {}) {
     this.#text = text;
@@ -195,13 +198,23 @@ export class Scanner {
     while (this.#position < this.#text.length) {
       const token = this.#scanToken();
       if (!this.#skipTrivia || !isTrivia(token.kind)) {
+        if (!isTrivia(token.kind) && token.kind !== Kind.EndOfFile) {
+          this.#previousSignificantKind = token.kind;
+        }
         return token;
       }
     }
-    return this.#token(Kind.EndOfFile, this.#position, this.#position);
+    const token = this.#token(Kind.EndOfFile, this.#position, this.#position);
+    this.#previousSignificantKind = token.kind;
+    return token;
   }
 
   #scanToken(): ScannedToken {
+    if (this.#pendingTemplateContinuation) {
+      this.#pendingTemplateContinuation = false;
+      return this.#scanTemplateContinuation();
+    }
+
     const start = this.#position;
     const charCode = this.#text.charCodeAt(this.#position);
 
@@ -262,8 +275,41 @@ export class Scanner {
       return this.#scanNumber();
     }
 
+    if (current === "#" && isIdentifierStart(this.#text[this.#position + 1] ?? "")) {
+      this.#position += 2;
+      while (this.#position < this.#text.length && isIdentifierPart(this.#text[this.#position]!)) {
+        this.#position += 1;
+      }
+      return this.#token(Kind.PrivateIdentifier, start, this.#position);
+    }
+
     if (isIdentifierStart(current)) {
       return this.#scanIdentifierOrKeyword();
+    }
+
+    if (current === "`") {
+      return this.#scanTemplateStart();
+    }
+
+    if (current === "/" && this.#canStartRegularExpression() && this.#text[this.#position + 1] !== "=") {
+      const regex = this.#tryScanRegularExpression();
+      if (regex !== undefined) {
+        return regex;
+      }
+    }
+
+    if (current === "{" && this.#templateExpressionBraceDepths.length > 0) {
+      this.#templateExpressionBraceDepths[this.#templateExpressionBraceDepths.length - 1]! += 1;
+    }
+
+    if (current === "}" && this.#templateExpressionBraceDepths.length > 0) {
+      const lastIndex = this.#templateExpressionBraceDepths.length - 1;
+      if (this.#templateExpressionBraceDepths[lastIndex]! === 0) {
+        this.#position += 1;
+        this.#pendingTemplateContinuation = true;
+        return this.#token(Kind.CloseBraceToken, start, this.#position);
+      }
+      this.#templateExpressionBraceDepths[lastIndex]! -= 1;
     }
 
     for (const [text, kind] of punctuators) {
@@ -289,14 +335,46 @@ export class Scanner {
 
   #scanNumber(): ScannedToken {
     const start = this.#position;
-    while (this.#position < this.#text.length && isDigit(this.#text[this.#position]!)) {
+    if (this.#text[this.#position] === "0") {
+      const radixMarker = this.#text[this.#position + 1]?.toLowerCase();
+      if (radixMarker === "x" || radixMarker === "b" || radixMarker === "o") {
+        this.#position += 2;
+        while (this.#position < this.#text.length && /[0-9a-fA-F_]/.test(this.#text[this.#position]!)) {
+          this.#position += 1;
+        }
+        if (this.#text[this.#position] === "n") {
+          this.#position += 1;
+          return this.#token(Kind.BigIntLiteral, start, this.#position);
+        }
+        return this.#token(Kind.NumericLiteral, start, this.#position);
+      }
+    }
+    while (this.#position < this.#text.length && isDecimalDigitOrSeparator(this.#text[this.#position]!)) {
       this.#position += 1;
     }
     if (this.#text[this.#position] === "." && isDigit(this.#text[this.#position + 1] ?? "")) {
       this.#position += 1;
-      while (this.#position < this.#text.length && isDigit(this.#text[this.#position]!)) {
+      while (this.#position < this.#text.length && isDecimalDigitOrSeparator(this.#text[this.#position]!)) {
         this.#position += 1;
       }
+    }
+    if ((this.#text[this.#position] === "e" || this.#text[this.#position] === "E") && /[+\-0-9]/.test(this.#text[this.#position + 1] ?? "")) {
+      const exponentStart = this.#position;
+      this.#position += 1;
+      if (this.#text[this.#position] === "+" || this.#text[this.#position] === "-") {
+        this.#position += 1;
+      }
+      if (!isDigit(this.#text[this.#position] ?? "")) {
+        this.#position = exponentStart;
+      } else {
+        while (this.#position < this.#text.length && isDecimalDigitOrSeparator(this.#text[this.#position]!)) {
+          this.#position += 1;
+        }
+      }
+    }
+    if (this.#text[this.#position] === "n") {
+      this.#position += 1;
+      return this.#token(Kind.BigIntLiteral, start, this.#position);
     }
     return this.#token(Kind.NumericLiteral, start, this.#position);
   }
@@ -321,9 +399,154 @@ export class Scanner {
     return this.#token(Kind.StringLiteral, start, this.#position);
   }
 
+  #scanTemplateStart(): ScannedToken {
+    const start = this.#position;
+    this.#position += 1;
+    while (this.#position < this.#text.length) {
+      const current = this.#text[this.#position]!;
+      if (current === "\\") {
+        this.#position += 2;
+        continue;
+      }
+      if (current === "`") {
+        this.#position += 1;
+        return this.#token(Kind.NoSubstitutionTemplateLiteral, start, this.#position);
+      }
+      if (current === "$" && this.#text[this.#position + 1] === "{") {
+        this.#position += 2;
+        this.#templateExpressionBraceDepths.push(0);
+        return this.#token(Kind.TemplateHead, start, this.#position);
+      }
+      this.#position += 1;
+    }
+    return this.#token(Kind.NoSubstitutionTemplateLiteral, start, this.#position);
+  }
+
+  #scanTemplateContinuation(): ScannedToken {
+    const start = this.#position - 1;
+    while (this.#position < this.#text.length) {
+      const current = this.#text[this.#position]!;
+      if (current === "\\") {
+        this.#position += 2;
+        continue;
+      }
+      if (current === "`") {
+        this.#position += 1;
+        this.#templateExpressionBraceDepths.pop();
+        return this.#token(Kind.TemplateTail, start, this.#position);
+      }
+      if (current === "$" && this.#text[this.#position + 1] === "{") {
+        this.#position += 2;
+        this.#templateExpressionBraceDepths[this.#templateExpressionBraceDepths.length - 1] = 0;
+        return this.#token(Kind.TemplateMiddle, start, this.#position);
+      }
+      this.#position += 1;
+    }
+    this.#templateExpressionBraceDepths.pop();
+    return this.#token(Kind.TemplateTail, start, this.#position);
+  }
+
+  #tryScanRegularExpression(): ScannedToken | undefined {
+    const start = this.#position;
+    this.#position += 1;
+    let inCharacterClass = false;
+    while (this.#position < this.#text.length) {
+      const current = this.#text[this.#position]!;
+      if (isLineBreak(current.charCodeAt(0))) {
+        this.#position = start;
+        return undefined;
+      }
+      if (current === "\\") {
+        this.#position += 2;
+        continue;
+      }
+      if (current === "[") {
+        inCharacterClass = true;
+        this.#position += 1;
+        continue;
+      }
+      if (current === "]") {
+        inCharacterClass = false;
+        this.#position += 1;
+        continue;
+      }
+      if (current === "/" && !inCharacterClass) {
+        this.#position += 1;
+        while (this.#position < this.#text.length && isIdentifierPart(this.#text[this.#position]!)) {
+          this.#position += 1;
+        }
+        return this.#token(Kind.RegularExpressionLiteral, start, this.#position);
+      }
+      this.#position += 1;
+    }
+    this.#position = start;
+    return undefined;
+  }
+
+  #canStartRegularExpression(): boolean {
+    switch (this.#previousSignificantKind) {
+      case undefined:
+      case Kind.OpenParenToken:
+      case Kind.OpenBraceToken:
+      case Kind.OpenBracketToken:
+      case Kind.CommaToken:
+      case Kind.SemicolonToken:
+      case Kind.ColonToken:
+      case Kind.QuestionToken:
+      case Kind.EqualsToken:
+      case Kind.EqualsGreaterThanToken:
+      case Kind.PlusToken:
+      case Kind.MinusToken:
+      case Kind.AsteriskToken:
+      case Kind.AsteriskAsteriskToken:
+      case Kind.SlashToken:
+      case Kind.PercentToken:
+      case Kind.AmpersandToken:
+      case Kind.BarToken:
+      case Kind.CaretToken:
+      case Kind.ExclamationToken:
+      case Kind.TildeToken:
+      case Kind.AmpersandAmpersandToken:
+      case Kind.BarBarToken:
+      case Kind.QuestionQuestionToken:
+      case Kind.ReturnKeyword:
+      case Kind.ThrowKeyword:
+      case Kind.CaseKeyword:
+      case Kind.DeleteKeyword:
+      case Kind.TypeOfKeyword:
+      case Kind.VoidKeyword:
+      case Kind.AwaitKeyword:
+        return true;
+      default:
+        return isAssignmentOperator(this.#previousSignificantKind);
+    }
+  }
+
   #token(kind: Kind, pos: number, end: number): ScannedToken {
     return { kind, pos, end, text: this.#text.slice(pos, end) };
   }
+}
+
+function isAssignmentOperator(kind: Kind): boolean {
+  return kind === Kind.PlusEqualsToken
+    || kind === Kind.MinusEqualsToken
+    || kind === Kind.AsteriskEqualsToken
+    || kind === Kind.AsteriskAsteriskEqualsToken
+    || kind === Kind.SlashEqualsToken
+    || kind === Kind.PercentEqualsToken
+    || kind === Kind.LessThanLessThanEqualsToken
+    || kind === Kind.GreaterThanGreaterThanEqualsToken
+    || kind === Kind.GreaterThanGreaterThanGreaterThanEqualsToken
+    || kind === Kind.AmpersandEqualsToken
+    || kind === Kind.BarEqualsToken
+    || kind === Kind.BarBarEqualsToken
+    || kind === Kind.AmpersandAmpersandEqualsToken
+    || kind === Kind.QuestionQuestionEqualsToken
+    || kind === Kind.CaretEqualsToken;
+}
+
+function isDecimalDigitOrSeparator(character: string): boolean {
+  return isDigit(character) || character === "_";
 }
 
 export function createScanner(text: string, options?: ScannerOptions): Scanner {

@@ -6,11 +6,21 @@ import {
   createArrayLiteralExpression,
   createArrayBindingPattern,
   createAsExpression,
+  createAwaitExpression,
+  createBigIntLiteral,
   createBinaryExpression,
   createBindingElement,
   createBlock,
+  createCaseBlock,
+  createCaseClause,
+  createCatchClause,
   createClassDeclaration,
+  createComputedPropertyName,
+  createConditionalTypeNode,
   createConstructorDeclaration,
+  createConstructorTypeNode,
+  createDeleteExpression,
+  createDefaultClause,
   createExportDeclaration,
   createExportSpecifier,
   createExpressionStatement,
@@ -20,26 +30,36 @@ import {
   createConditionalExpression,
   createDoStatement,
   createElementAccessExpression,
+  createEnumDeclaration,
+  createEnumMember,
   createForInStatement,
   createForOfStatement,
   createForStatement,
   createFunctionDeclaration,
+  createFunctionExpression,
+  createFunctionTypeNode,
+  createGetAccessorDeclaration,
   createHeritageClause,
   createIfStatement,
   createIdentifier,
+  createIndexedAccessTypeNode,
   createImportClause,
   createImportDeclaration,
   createImportSpecifier,
+  createIntersectionTypeNode,
   createInterfaceDeclaration,
   createKeywordTypeNode,
   createCallExpression,
   createKeywordExpression,
+  createLiteralTypeNode,
   createMethodDeclaration,
   createMethodSignatureDeclaration,
   createNamedExports,
   createNamedImports,
   createNamespaceImport,
   createNewExpression,
+  createNoSubstitutionTemplateLiteral,
+  createNonNullExpression,
   createNodeArray,
   createNumericLiteral,
   createObjectLiteralExpression,
@@ -52,23 +72,43 @@ import {
   createPropertyAccessExpression,
   createPropertyDeclaration,
   createPropertySignatureDeclaration,
+  createPrivateIdentifier,
   createPrefixUnaryExpression,
+  createQualifiedName,
+  createRegularExpressionLiteral,
   createReturnStatement,
   createSatisfiesExpression,
   createSemicolonClassElement,
+  createSetAccessorDeclaration,
   createShorthandPropertyAssignment,
   createSpreadElement,
+  createSpreadAssignment,
   createSourceFile,
   createStringLiteral,
+  createSwitchStatement,
+  createTemplateExpression,
+  createTemplateHead,
+  createTemplateMiddle,
+  createTemplateSpan,
+  createTemplateTail,
+  createThisTypeNode,
+  createThrowStatement,
   createToken,
   createTypeAliasDeclaration,
   createTypeLiteralNode,
+  createTypeOfExpression,
+  createTypeOperatorNode,
   createTypeParameterDeclaration,
+  createTypePredicateNode,
+  createTypeQueryNode,
   createTypeReferenceNode,
+  createTryStatement,
+  createTupleTypeNode,
   createUnionTypeNode,
   createVariableDeclaration,
   createVariableDeclarationList,
   createVariableStatement,
+  createVoidExpression,
   createWhileStatement,
   isBinaryOperatorToken,
   type BinaryOperator,
@@ -78,8 +118,10 @@ import {
   type Block,
   type ConciseBody,
   type ClassElement,
+  type CaseOrDefaultClause,
   type Expression,
   type ExpressionWithTypeArguments,
+  type EntityName,
   type ForInitializer,
   type Identifier,
   type ImportSpecifier,
@@ -93,12 +135,14 @@ import {
   type ObjectLiteralElementLike,
   type ParameterDeclaration,
   type ExclamationToken,
+  type PrivateIdentifier,
   type PropertyName,
   type QuestionToken,
   type SourceFile,
   type Statement,
   type TypeElement,
   type TypeNode,
+  type TemplateMiddleOrTail,
   type TypeParameterDeclaration,
   type VariableDeclaration,
 } from "../ast/index.js";
@@ -165,7 +209,6 @@ const binaryPrecedence = new Map<Kind, number>([
 const modifierKinds = new Set<Kind>([
   Kind.AbstractKeyword,
   Kind.ExportKeyword,
-  Kind.DefaultKeyword,
   Kind.AsyncKeyword,
   Kind.DeclareKeyword,
   Kind.PrivateKeyword,
@@ -219,6 +262,17 @@ export class Parser {
 
   #parseStatement(): Statement {
     const modifiers = this.#parseModifiers();
+    if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword) && this.#current().kind === Kind.DefaultKeyword) {
+      this.#advance();
+      const defaultModifiers = createNodeArray([...modifiers, createToken(Kind.DefaultKeyword) as ModifierLike]);
+      if (this.#current().kind === Kind.FunctionKeyword) {
+        return this.#parseFunctionDeclaration(defaultModifiers);
+      }
+      if (this.#current().kind === Kind.ClassKeyword) {
+        return this.#parseClassDeclaration(defaultModifiers);
+      }
+      throw new ParseError("Unsupported export default declaration", this.#current());
+    }
     switch (this.#current().kind) {
       case Kind.ImportKeyword:
         return this.#parseImportDeclaration(modifiers);
@@ -227,7 +281,12 @@ export class Parser {
       case Kind.InterfaceKeyword:
         return this.#parseInterfaceDeclaration(modifiers);
       case Kind.TypeKeyword:
-        return this.#parseTypeAliasDeclaration(modifiers);
+        if (this.#isTypeAliasDeclarationStart()) {
+          return this.#parseTypeAliasDeclaration(modifiers);
+        }
+        break;
+      case Kind.EnumKeyword:
+        return this.#parseEnumDeclaration(modifiers);
       case Kind.IfKeyword:
         if (modifiers !== undefined) {
           throw new ParseError("Modifiers are not valid on if statements", this.#current());
@@ -269,6 +328,21 @@ export class Parser {
           throw new ParseError("Modifiers are not valid on return statements", this.#current());
         }
         return this.#parseReturnStatement();
+      case Kind.ThrowKeyword:
+        if (modifiers !== undefined) {
+          throw new ParseError("Modifiers are not valid on throw statements", this.#current());
+        }
+        return this.#parseThrowStatement();
+      case Kind.TryKeyword:
+        if (modifiers !== undefined) {
+          throw new ParseError("Modifiers are not valid on try statements", this.#current());
+        }
+        return this.#parseTryStatement();
+      case Kind.SwitchKeyword:
+        if (modifiers !== undefined) {
+          throw new ParseError("Modifiers are not valid on switch statements", this.#current());
+        }
+        return this.#parseSwitchStatement();
       case Kind.OpenBraceToken:
         if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword)) {
           return this.#parseExportDeclaration(modifiers);
@@ -287,6 +361,10 @@ export class Parser {
     const expression = this.#parseExpression();
     this.#consumeOptional(Kind.SemicolonToken);
     return createExpressionStatement(expression);
+  }
+
+  #isTypeAliasDeclarationStart(): boolean {
+    return this.#current().kind === Kind.TypeKeyword && isIdentifierNameKind(this.#tokens[this.#index + 1]?.kind ?? Kind.Unknown);
   }
 
   #parseImportDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
@@ -363,11 +441,24 @@ export class Parser {
 
   #parseModifiers(): NodeArray<ModifierLike> | undefined {
     const modifiers: ModifierLike[] = [];
-    while (modifierKinds.has(this.#current().kind)) {
+    while (this.#isModifierAtCurrentPosition()) {
       modifiers.push(createToken(this.#current().kind as ModifierSyntaxKind) as ModifierLike);
       this.#advance();
     }
     return modifiers.length === 0 ? undefined : createNodeArray(modifiers);
+  }
+
+  #isModifierAtCurrentPosition(): boolean {
+    if (!modifierKinds.has(this.#current().kind)) {
+      return false;
+    }
+    const nextKind = this.#tokens[this.#index + 1]?.kind;
+    return nextKind !== Kind.QuestionToken
+      && nextKind !== Kind.ColonToken
+      && nextKind !== Kind.OpenParenToken
+      && nextKind !== Kind.SemicolonToken
+      && nextKind !== Kind.CommaToken
+      && nextKind !== Kind.CloseBraceToken;
   }
 
   #parseClassDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
@@ -409,6 +500,24 @@ export class Parser {
     const type = this.#parseType();
     this.#consumeOptional(Kind.SemicolonToken);
     return createTypeAliasDeclaration(modifiers, name, typeParameters, type);
+  }
+
+  #parseEnumDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
+    this.#expect(Kind.EnumKeyword);
+    const name = this.#parseIdentifier();
+    this.#expect(Kind.OpenBraceToken);
+    const members = [];
+    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
+      if (this.#consumeOptional(Kind.CommaToken)) {
+        continue;
+      }
+      const memberName = this.#parsePropertyName();
+      const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
+      members.push(createEnumMember(memberName, initializer));
+      this.#consumeOptional(Kind.CommaToken);
+    }
+    this.#expect(Kind.CloseBraceToken);
+    return createEnumDeclaration(modifiers, name, createNodeArray(members));
   }
 
   #parseIfStatement(): Statement {
@@ -501,6 +610,28 @@ export class Parser {
       return createConstructorDeclaration(modifiers, undefined, createNodeArray(parameters), undefined, body);
     }
 
+    if (this.#current().kind === Kind.GetKeyword && this.#tokens[this.#index + 1]?.kind !== Kind.OpenParenToken) {
+      this.#advance();
+      const name = this.#parsePropertyName();
+      this.#expect(Kind.OpenParenToken);
+      this.#expect(Kind.CloseParenToken);
+      const type = this.#parseOptionalTypeAnnotation();
+      const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
+      this.#consumeOptional(Kind.SemicolonToken);
+      return createGetAccessorDeclaration(modifiers, name, undefined, createNodeArray([]), type, body);
+    }
+
+    if (this.#current().kind === Kind.SetKeyword && this.#tokens[this.#index + 1]?.kind !== Kind.OpenParenToken) {
+      this.#advance();
+      const name = this.#parsePropertyName();
+      this.#expect(Kind.OpenParenToken);
+      const parameters = this.#parseParameterList();
+      this.#expect(Kind.CloseParenToken);
+      const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
+      this.#consumeOptional(Kind.SemicolonToken);
+      return createSetAccessorDeclaration(modifiers, name, undefined, createNodeArray(parameters), undefined, body);
+    }
+
     const name = this.#parsePropertyName();
     const postfixToken = this.#parseOptionalPostfixToken();
     if (this.#current().kind === Kind.OpenParenToken || this.#current().kind === Kind.LessThanToken) {
@@ -551,7 +682,7 @@ export class Parser {
       const defaultType = this.#consumeOptional(Kind.EqualsToken) ? this.#parseType() : undefined;
       typeParameters.push(createTypeParameterDeclaration(undefined, name, constraint, undefined, defaultType));
     } while (this.#consumeOptional(Kind.CommaToken));
-    this.#expect(Kind.GreaterThanToken);
+    this.#expectGreaterThan();
     return createNodeArray(typeParameters);
   }
 
@@ -591,7 +722,7 @@ export class Parser {
     do {
       typeArguments.push(this.#parseType());
     } while (this.#consumeOptional(Kind.CommaToken));
-    this.#expect(Kind.GreaterThanToken);
+    this.#expectGreaterThan();
     return createNodeArray(typeArguments);
   }
 
@@ -637,13 +768,14 @@ export class Parser {
   #parseFunctionDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
     this.#expect(Kind.FunctionKeyword);
     const asteriskToken = this.#consumeOptional(Kind.AsteriskToken) ? createToken(Kind.AsteriskToken) : undefined;
-    const name = this.#current().kind === Kind.Identifier ? this.#parseIdentifier() : undefined;
+    const name = isIdentifierNameKind(this.#current().kind) ? this.#parseIdentifier() : undefined;
+    const typeParameters = this.#parseOptionalTypeParameters();
     this.#expect(Kind.OpenParenToken);
     const parameters = this.#parseParameterList();
     this.#expect(Kind.CloseParenToken);
     const type = this.#parseOptionalTypeAnnotation();
     const body = this.#parseBlock();
-    return createFunctionDeclaration(modifiers, asteriskToken, name, undefined, createNodeArray(parameters), type, body);
+    return createFunctionDeclaration(modifiers, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body);
   }
 
   #parseParameterList(): ParameterDeclaration[] {
@@ -651,9 +783,12 @@ export class Parser {
     if (this.#current().kind === Kind.CloseParenToken) {
       return parameters;
     }
-    do {
+    while (true) {
       parameters.push(this.#parseParameterDeclaration());
-    } while (this.#consumeOptional(Kind.CommaToken));
+      if (!this.#consumeOptional(Kind.CommaToken) || this.#current().kind === Kind.CloseParenToken) {
+        break;
+      }
+    }
     return parameters;
   }
 
@@ -684,6 +819,72 @@ export class Parser {
       : this.#parseExpression();
     this.#consumeOptional(Kind.SemicolonToken);
     return createReturnStatement(expression);
+  }
+
+  #parseThrowStatement(): Statement {
+    this.#expect(Kind.ThrowKeyword);
+    const expression = this.#parseExpression();
+    this.#consumeOptional(Kind.SemicolonToken);
+    return createThrowStatement(expression);
+  }
+
+  #parseTryStatement(): Statement {
+    this.#expect(Kind.TryKeyword);
+    const tryBlock = this.#parseBlock();
+    const catchClause = this.#current().kind === Kind.CatchKeyword ? this.#parseCatchClause() : undefined;
+    const finallyBlock = this.#consumeOptional(Kind.FinallyKeyword) ? this.#parseBlock() : undefined;
+    if (catchClause === undefined && finallyBlock === undefined) {
+      throw new ParseError("Expected catch or finally clause", this.#current());
+    }
+    return createTryStatement(tryBlock, catchClause, finallyBlock);
+  }
+
+  #parseCatchClause(): ReturnType<typeof createCatchClause> {
+    this.#expect(Kind.CatchKeyword);
+    let variableDeclaration: VariableDeclaration | undefined;
+    if (this.#consumeOptional(Kind.OpenParenToken)) {
+      const name = this.#parseBindingName();
+      const type = this.#parseOptionalTypeAnnotation();
+      variableDeclaration = createVariableDeclaration(name, undefined, type, undefined);
+      this.#expect(Kind.CloseParenToken);
+    }
+    return createCatchClause(variableDeclaration, this.#parseBlock());
+  }
+
+  #parseSwitchStatement(): Statement {
+    this.#expect(Kind.SwitchKeyword);
+    this.#expect(Kind.OpenParenToken);
+    const expression = this.#parseExpression();
+    this.#expect(Kind.CloseParenToken);
+    this.#expect(Kind.OpenBraceToken);
+    const clauses: CaseOrDefaultClause[] = [];
+    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
+      if (this.#consumeOptional(Kind.CaseKeyword)) {
+        const caseExpression = this.#parseExpression();
+        this.#expect(Kind.ColonToken);
+        clauses.push(createCaseClause(caseExpression, createNodeArray(this.#parseCaseClauseStatements())));
+        continue;
+      }
+      if (this.#consumeOptional(Kind.DefaultKeyword)) {
+        this.#expect(Kind.ColonToken);
+        clauses.push(createDefaultClause(undefined as never, createNodeArray(this.#parseCaseClauseStatements())));
+        continue;
+      }
+      throw new ParseError("Expected case or default clause", this.#current());
+    }
+    this.#expect(Kind.CloseBraceToken);
+    return createSwitchStatement(expression, createCaseBlock(createNodeArray(clauses)));
+  }
+
+  #parseCaseClauseStatements(): Statement[] {
+    const statements: Statement[] = [];
+    while (this.#current().kind !== Kind.CaseKeyword
+      && this.#current().kind !== Kind.DefaultKeyword
+      && this.#current().kind !== Kind.CloseBraceToken
+      && this.#current().kind !== Kind.EndOfFile) {
+      statements.push(this.#parseStatement());
+    }
+    return statements;
   }
 
   #parseExpression(precedence = 0): Expression {
@@ -721,7 +922,7 @@ export class Parser {
   }
 
   #isArrowFunctionStart(): boolean {
-    if (this.#current().kind === Kind.Identifier && this.#tokens[this.#index + 1]?.kind === Kind.EqualsGreaterThanToken) {
+    if (isIdentifierNameKind(this.#current().kind) && this.#tokens[this.#index + 1]?.kind === Kind.EqualsGreaterThanToken) {
       return true;
     }
     if (this.#current().kind !== Kind.OpenParenToken) {
@@ -767,7 +968,7 @@ export class Parser {
   #parseArrowFunction(): Expression {
     const parameters: ParameterDeclaration[] = [];
     let type: TypeNode | undefined;
-    if (this.#current().kind === Kind.Identifier) {
+    if (isIdentifierNameKind(this.#current().kind)) {
       parameters.push(createParameterDeclaration(undefined, undefined, this.#parseIdentifier(), undefined, undefined, undefined));
     } else {
       this.#expect(Kind.OpenParenToken);
@@ -800,6 +1001,18 @@ export class Parser {
         return createPrefixUnaryExpression(token.kind, this.#parseUnaryExpression());
       case Kind.NewKeyword:
         return this.#parseNewExpression();
+      case Kind.DeleteKeyword:
+        this.#advance();
+        return createDeleteExpression(this.#parseUnaryExpression());
+      case Kind.TypeOfKeyword:
+        this.#advance();
+        return createTypeOfExpression(this.#parseUnaryExpression());
+      case Kind.VoidKeyword:
+        this.#advance();
+        return createVoidExpression(this.#parseUnaryExpression());
+      case Kind.AwaitKeyword:
+        this.#advance();
+        return createAwaitExpression(this.#parseUnaryExpression());
       default:
         return this.#parsePostfixExpression();
     }
@@ -834,8 +1047,20 @@ export class Parser {
   #parseMemberSuffixes(initialExpression: Expression): Expression {
     let expression = initialExpression;
     while (true) {
-      if (this.#consumeOptional(Kind.DotToken)) {
-        expression = createPropertyAccessExpression(expression, undefined, this.#parseIdentifier(), NodeFlags.None);
+      const questionDotToken = this.#consumeOptional(Kind.QuestionDotToken) ? createToken(Kind.QuestionDotToken) : undefined;
+      if (questionDotToken !== undefined && this.#current().kind !== Kind.OpenParenToken && this.#current().kind !== Kind.OpenBracketToken) {
+        expression = createPropertyAccessExpression(expression, questionDotToken, this.#parseMemberName(), NodeFlags.None);
+        continue;
+      }
+      if (questionDotToken === undefined && this.#consumeOptional(Kind.DotToken)) {
+        expression = createPropertyAccessExpression(expression, undefined, this.#parseMemberName(), NodeFlags.None);
+        continue;
+      }
+      const typeArguments = this.#tryParseCallTypeArguments();
+      if (questionDotToken !== undefined && this.#current().kind === Kind.OpenParenToken || typeArguments !== undefined && this.#current().kind === Kind.OpenParenToken) {
+        this.#expect(Kind.OpenParenToken);
+        expression = createCallExpression(expression, questionDotToken, typeArguments, createNodeArray(this.#parseArgumentList()), NodeFlags.None);
+        this.#expect(Kind.CloseParenToken);
         continue;
       }
       if (this.#consumeOptional(Kind.OpenParenToken)) {
@@ -843,13 +1068,39 @@ export class Parser {
         this.#expect(Kind.CloseParenToken);
         continue;
       }
-      if (this.#consumeOptional(Kind.OpenBracketToken)) {
-        expression = createElementAccessExpression(expression, undefined, this.#parseExpression(), NodeFlags.None);
+      if (questionDotToken !== undefined && this.#current().kind === Kind.OpenBracketToken || questionDotToken === undefined && this.#consumeOptional(Kind.OpenBracketToken)) {
+        if (questionDotToken !== undefined) {
+          this.#expect(Kind.OpenBracketToken);
+        }
+        expression = createElementAccessExpression(expression, questionDotToken, this.#parseExpression(), NodeFlags.None);
         this.#expect(Kind.CloseBracketToken);
+        continue;
+      }
+      if (questionDotToken !== undefined) {
+        throw new ParseError("Expected optional chain member", this.#current());
+      }
+      if (this.#consumeOptional(Kind.ExclamationToken)) {
+        expression = createNonNullExpression(expression, NodeFlags.None);
         continue;
       }
       return expression;
     }
+  }
+
+  #tryParseCallTypeArguments(): NodeArray<TypeNode> | undefined {
+    if (this.#current().kind !== Kind.LessThanToken) {
+      return undefined;
+    }
+    const startIndex = this.#index;
+    try {
+      const typeArguments = this.#parseOptionalTypeArguments();
+      if (typeArguments !== undefined && this.#current().kind === Kind.OpenParenToken) {
+        return typeArguments;
+      }
+    } catch {
+    }
+    this.#index = startIndex;
+    return undefined;
   }
 
   #parseArgumentList(): Expression[] {
@@ -857,9 +1108,12 @@ export class Parser {
     if (this.#current().kind === Kind.CloseParenToken) {
       return expressions;
     }
-    do {
+    while (true) {
       expressions.push(this.#parseArgumentExpression());
-    } while (this.#consumeOptional(Kind.CommaToken));
+      if (!this.#consumeOptional(Kind.CommaToken) || this.#current().kind === Kind.CloseParenToken) {
+        break;
+      }
+    }
     return expressions;
   }
 
@@ -880,6 +1134,9 @@ export class Parser {
       case Kind.Identifier:
         this.#advance();
         return createIdentifier(token.text);
+      case Kind.PrivateIdentifier:
+        this.#advance();
+        return createPrivateIdentifier(token.text);
       case Kind.FalseKeyword:
       case Kind.NullKeyword:
       case Kind.SuperKeyword:
@@ -890,9 +1147,22 @@ export class Parser {
       case Kind.NumericLiteral:
         this.#advance();
         return createNumericLiteral(token.text, 0);
+      case Kind.BigIntLiteral:
+        this.#advance();
+        return createBigIntLiteral(token.text, 0);
+      case Kind.RegularExpressionLiteral:
+        this.#advance();
+        return createRegularExpressionLiteral(token.text, 0);
       case Kind.StringLiteral:
         this.#advance();
         return createStringLiteral(unquote(token.text), 0);
+      case Kind.NoSubstitutionTemplateLiteral:
+        this.#advance();
+        return createNoSubstitutionTemplateLiteral(unquoteTemplate(token.text), 0);
+      case Kind.TemplateHead:
+        return this.#parseTemplateExpression();
+      case Kind.FunctionKeyword:
+        return this.#parseFunctionExpression();
       case Kind.OpenParenToken: {
         this.#advance();
         const expression = this.#parseExpression();
@@ -900,8 +1170,47 @@ export class Parser {
         return createParenthesizedExpression(expression);
       }
       default:
+        if (isContextualExpressionIdentifierKind(token.kind)) {
+          this.#advance();
+          return createIdentifier(token.text);
+        }
         throw new ParseError(`Unexpected token ${Kind[token.kind]}`, token);
     }
+  }
+
+  #parseFunctionExpression(): Expression {
+    this.#expect(Kind.FunctionKeyword);
+    const asteriskToken = this.#consumeOptional(Kind.AsteriskToken) ? createToken(Kind.AsteriskToken) : undefined;
+    const name = isIdentifierNameKind(this.#current().kind) ? this.#parseIdentifier() : undefined;
+    const typeParameters = this.#parseOptionalTypeParameters();
+    this.#expect(Kind.OpenParenToken);
+    const parameters = this.#parseParameterList();
+    this.#expect(Kind.CloseParenToken);
+    const type = this.#parseOptionalTypeAnnotation();
+    const body = this.#parseBlock();
+    return createFunctionExpression(undefined, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body);
+  }
+
+  #parseTemplateExpression(): Expression {
+    const headToken = this.#expect(Kind.TemplateHead);
+    const spans = [];
+    while (true) {
+      const expression = this.#parseExpression();
+      this.#expect(Kind.CloseBraceToken);
+      const literalToken = this.#current();
+      if (literalToken.kind !== Kind.TemplateMiddle && literalToken.kind !== Kind.TemplateTail) {
+        throw new ParseError("Expected template continuation", literalToken);
+      }
+      this.#advance();
+      const literal = literalToken.kind === Kind.TemplateMiddle
+        ? createTemplateMiddle(templateMiddleText(literalToken.text), templateMiddleText(literalToken.text), 0)
+        : createTemplateTail(templateTailText(literalToken.text), templateTailText(literalToken.text), 0);
+      spans.push(createTemplateSpan(expression, literal as TemplateMiddleOrTail));
+      if (literalToken.kind === Kind.TemplateTail) {
+        break;
+      }
+    }
+    return createTemplateExpression(createTemplateHead(templateHeadText(headToken.text), templateHeadText(headToken.text), 0), createNodeArray(spans));
   }
 
   #parseArrayLiteralExpression(): Expression {
@@ -919,6 +1228,11 @@ export class Parser {
     const openBrace = this.#expect(Kind.OpenBraceToken);
     const properties: ObjectLiteralElementLike[] = [];
     while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
+      if (this.#consumeOptional(Kind.DotDotDotToken)) {
+        properties.push(createSpreadAssignment(this.#parseExpression()));
+        this.#consumeOptional(Kind.CommaToken);
+        continue;
+      }
       const name = this.#parsePropertyName();
       if (this.#consumeOptional(Kind.ColonToken)) {
         properties.push(createPropertyAssignment(undefined, name, undefined, undefined as never, this.#parseExpression()));
@@ -976,6 +1290,10 @@ export class Parser {
     this.#expect(Kind.OpenBracketToken);
     const elements: BindingElement[] = [];
     while (this.#current().kind !== Kind.CloseBracketToken && this.#current().kind !== Kind.EndOfFile) {
+      if (this.#consumeOptional(Kind.CommaToken)) {
+        elements.push(createBindingElement(undefined, undefined, undefined, undefined));
+        continue;
+      }
       const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
       const name = this.#parseBindingName();
       const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
@@ -988,12 +1306,29 @@ export class Parser {
 
   #parsePropertyName(): PropertyName {
     const token = this.#current();
+    if (this.#consumeOptional(Kind.OpenBracketToken)) {
+      const expression = this.#parseExpression();
+      this.#expect(Kind.CloseBracketToken);
+      return createComputedPropertyName(expression);
+    }
     if (token.kind === Kind.StringLiteral) {
       return this.#parseStringLiteralExpression() as PropertyName;
     }
     if (token.kind === Kind.NumericLiteral) {
       this.#advance();
       return createNumericLiteral(token.text, 0) as PropertyName;
+    }
+    if (token.kind === Kind.PrivateIdentifier) {
+      this.#advance();
+      return createPrivateIdentifier(token.text);
+    }
+    return this.#parseIdentifier();
+  }
+
+  #parseMemberName(): Identifier | PrivateIdentifier {
+    if (this.#current().kind === Kind.PrivateIdentifier) {
+      const token = this.#advance();
+      return createPrivateIdentifier(token.text);
     }
     return this.#parseIdentifier();
   }
@@ -1025,30 +1360,98 @@ export class Parser {
   }
 
   #parseType(): TypeNode {
-    const types = [this.#parseArrayType()];
-    while (this.#consumeOptional(Kind.BarToken)) {
-      types.push(this.#parseArrayType());
+    const predicate = this.#tryParseTypePredicate();
+    if (predicate !== undefined) {
+      return predicate;
     }
-    return types.length === 1 ? types[0]! : createUnionTypeNode(createNodeArray(types));
+    const checkType = this.#parseUnionType();
+    if (this.#consumeOptional(Kind.ExtendsKeyword)) {
+      const extendsType = this.#parseType();
+      this.#expect(Kind.QuestionToken);
+      const trueType = this.#parseType();
+      this.#expect(Kind.ColonToken);
+      const falseType = this.#parseType();
+      return createConditionalTypeNode(checkType, extendsType, trueType, falseType);
+    }
+    return checkType;
   }
 
-  #parseArrayType(): TypeNode {
+  #parseUnionType(): TypeNode {
+    const hasLeadingBar = this.#consumeOptional(Kind.BarToken);
+    const types = [this.#parseIntersectionType()];
+    while (this.#consumeOptional(Kind.BarToken)) {
+      types.push(this.#parseIntersectionType());
+    }
+    return !hasLeadingBar && types.length === 1 ? types[0]! : createUnionTypeNode(createNodeArray(types));
+  }
+
+  #parseIntersectionType(): TypeNode {
+    const types = [this.#parsePostfixType()];
+    while (this.#consumeOptional(Kind.AmpersandToken)) {
+      types.push(this.#parsePostfixType());
+    }
+    return types.length === 1 ? types[0]! : createIntersectionTypeNode(createNodeArray(types));
+  }
+
+  #parsePostfixType(): TypeNode {
     let type = this.#parsePrimaryType();
-    while (this.#current().kind === Kind.OpenBracketToken && this.#tokens[this.#index + 1]?.kind === Kind.CloseBracketToken) {
+    while (this.#current().kind === Kind.OpenBracketToken) {
       this.#advance();
-      this.#advance();
-      type = createArrayTypeNode(type);
+      if (this.#consumeOptional(Kind.CloseBracketToken)) {
+        type = createArrayTypeNode(type);
+        continue;
+      }
+      const indexType = this.#parseType();
+      this.#expect(Kind.CloseBracketToken);
+      type = createIndexedAccessTypeNode(type, indexType);
     }
     return type;
   }
 
   #parsePrimaryType(): TypeNode {
     const token = this.#current();
+    if (token.kind === Kind.KeyOfKeyword || token.kind === Kind.ReadonlyKeyword || token.kind === Kind.UniqueKeyword) {
+      this.#advance();
+      return createTypeOperatorNode(token.kind as Kind.KeyOfKeyword | Kind.ReadonlyKeyword | Kind.UniqueKeyword, this.#parsePostfixType());
+    }
+    if (token.kind === Kind.TypeOfKeyword) {
+      this.#advance();
+      return createTypeQueryNode(this.#parseEntityName(), this.#parseOptionalTypeArguments());
+    }
+    if (token.kind === Kind.LessThanToken) {
+      return this.#parseFunctionTypeWithOptionalTypeParameters();
+    }
+    if (token.kind === Kind.ThisKeyword) {
+      this.#advance();
+      return createThisTypeNode();
+    }
     if (token.kind === Kind.OpenParenToken) {
+      const functionType = this.#tryParseFunctionType();
+      if (functionType !== undefined) {
+        return functionType;
+      }
       this.#advance();
       const type = this.#parseType();
       this.#expect(Kind.CloseParenToken);
       return createParenthesizedTypeNode(type);
+    }
+    if (token.kind === Kind.NewKeyword) {
+      this.#advance();
+      this.#expect(Kind.OpenParenToken);
+      const parameters = this.#parseParameterList();
+      this.#expect(Kind.CloseParenToken);
+      this.#expect(Kind.EqualsGreaterThanToken);
+      return createConstructorTypeNode(undefined, undefined, createNodeArray(parameters), this.#parseType());
+    }
+    if (token.kind === Kind.OpenBracketToken) {
+      this.#advance();
+      const elements: TypeNode[] = [];
+      while (this.#current().kind !== Kind.CloseBracketToken && this.#current().kind !== Kind.EndOfFile) {
+        elements.push(this.#parseType());
+        this.#consumeOptional(Kind.CommaToken);
+      }
+      this.#expect(Kind.CloseBracketToken);
+      return createTupleTypeNode(createNodeArray(elements));
     }
     if (token.kind === Kind.OpenBraceToken) {
       this.#advance();
@@ -1066,10 +1469,78 @@ export class Parser {
       this.#advance();
       return createKeywordTypeNode(token.kind as KeywordTypeSyntaxKind);
     }
+    if (token.kind === Kind.StringLiteral) {
+      return createLiteralTypeNode(this.#parseStringLiteralExpression());
+    }
+    if (token.kind === Kind.NumericLiteral) {
+      this.#advance();
+      return createLiteralTypeNode(createNumericLiteral(token.text, 0));
+    }
+    if (token.kind === Kind.TrueKeyword || token.kind === Kind.FalseKeyword || token.kind === Kind.NullKeyword) {
+      this.#advance();
+      return createLiteralTypeNode(createKeywordExpression(token.kind as Kind.TrueKeyword | Kind.FalseKeyword | Kind.NullKeyword));
+    }
     if (isIdentifierNameKind(token.kind)) {
-      return createTypeReferenceNode(this.#parseIdentifier(), this.#parseOptionalTypeArguments());
+      return createTypeReferenceNode(this.#parseEntityName(), this.#parseOptionalTypeArguments());
     }
     throw new ParseError(`Unexpected type token ${Kind[token.kind]}`, token);
+  }
+
+  #tryParseFunctionType(): TypeNode | undefined {
+    const startIndex = this.#index;
+    try {
+      this.#expect(Kind.OpenParenToken);
+      const parameters = this.#parseParameterList();
+      this.#expect(Kind.CloseParenToken);
+      if (!this.#consumeOptional(Kind.EqualsGreaterThanToken)) {
+        this.#index = startIndex;
+        return undefined;
+      }
+      return createFunctionTypeNode(undefined, createNodeArray(parameters), this.#parseType());
+    } catch {
+      this.#index = startIndex;
+      return undefined;
+    }
+  }
+
+  #parseFunctionTypeWithOptionalTypeParameters(): TypeNode {
+    const typeParameters = this.#parseOptionalTypeParameters();
+    this.#expect(Kind.OpenParenToken);
+    const parameters = this.#parseParameterList();
+    this.#expect(Kind.CloseParenToken);
+    this.#expect(Kind.EqualsGreaterThanToken);
+    return createFunctionTypeNode(typeParameters, createNodeArray(parameters), this.#parseType());
+  }
+
+  #tryParseTypePredicate(): TypeNode | undefined {
+    const startIndex = this.#index;
+    const assertsModifier = this.#consumeOptional(Kind.AssertsKeyword) ? createToken(Kind.AssertsKeyword) : undefined;
+    let parameterName: ReturnType<typeof createThisTypeNode> | Identifier;
+    if (this.#current().kind === Kind.ThisKeyword) {
+      this.#advance();
+      parameterName = createThisTypeNode();
+    } else if (isIdentifierNameKind(this.#current().kind)) {
+      parameterName = this.#parseIdentifier();
+    } else {
+      this.#index = startIndex;
+      return undefined;
+    }
+    if (!this.#consumeOptional(Kind.IsKeyword)) {
+      if (assertsModifier !== undefined) {
+        return createTypePredicateNode(assertsModifier, parameterName, undefined);
+      }
+      this.#index = startIndex;
+      return undefined;
+    }
+    return createTypePredicateNode(assertsModifier, parameterName, this.#parseType());
+  }
+
+  #parseEntityName(): EntityName {
+    let name: EntityName = this.#parseIdentifier();
+    while (this.#consumeOptional(Kind.DotToken)) {
+      name = createQualifiedName(name, this.#parseIdentifier());
+    }
+    return name;
   }
 
   #consumeOptional(kind: Kind): boolean {
@@ -1087,6 +1558,25 @@ export class Parser {
     }
     this.#advance();
     return token;
+  }
+
+  #expectGreaterThan(): ScannedToken {
+    const token = this.#current();
+    if (token.kind === Kind.GreaterThanToken) {
+      this.#advance();
+      return token;
+    }
+    if (token.kind === Kind.GreaterThanGreaterThanToken) {
+      const tokens = this.#tokens as ScannedToken[];
+      tokens[this.#index] = { kind: Kind.GreaterThanToken, pos: token.pos + 1, end: token.end, text: ">" };
+      return { kind: Kind.GreaterThanToken, pos: token.pos, end: token.pos + 1, text: ">" };
+    }
+    if (token.kind === Kind.GreaterThanGreaterThanGreaterThanToken) {
+      const tokens = this.#tokens as ScannedToken[];
+      tokens[this.#index] = { kind: Kind.GreaterThanGreaterThanToken, pos: token.pos + 1, end: token.end, text: ">>" };
+      return { kind: Kind.GreaterThanToken, pos: token.pos, end: token.pos + 1, text: ">" };
+    }
+    throw new ParseError(`Expected token ${Kind[Kind.GreaterThanToken]}`, token);
   }
 
   #current(): ScannedToken {
@@ -1110,7 +1600,46 @@ function unquote(text: string): string {
   if ((quote !== "\"" && quote !== "'") || text[text.length - 1] !== quote) {
     return text;
   }
-  return text.slice(1, -1);
+  return unescapeStringContent(text.slice(1, -1));
+}
+
+function unescapeStringContent(text: string): string {
+  return text.replace(/\\([\\'"`nrtbfv0])/g, (_match, escape: string) => {
+    switch (escape) {
+      case "n":
+        return "\n";
+      case "r":
+        return "\r";
+      case "t":
+        return "\t";
+      case "b":
+        return "\b";
+      case "f":
+        return "\f";
+      case "v":
+        return "\v";
+      case "0":
+        return "\0";
+      default:
+        return escape;
+    }
+  });
+}
+
+function unquoteTemplate(text: string): string {
+  return text.startsWith("`") && text.endsWith("`") ? text.slice(1, -1) : text;
+}
+
+function templateHeadText(text: string): string {
+  return text.startsWith("`") && text.endsWith("${") ? text.slice(1, -2) : text;
+}
+
+function templateMiddleText(text: string): string {
+  return text.startsWith("}") && text.endsWith("${") ? text.slice(1, -2) : text;
+}
+
+function templateTailText(text: string): string {
+  return text.startsWith("}") && text.endsWith("`") ? text.slice(1, -1) : text;
 }
 
 function hasModifier(modifiers: NodeArray<ModifierLike>, kind: Kind): boolean {
@@ -1119,6 +1648,17 @@ function hasModifier(modifiers: NodeArray<ModifierLike>, kind: Kind): boolean {
 
 function isIdentifierNameKind(kind: Kind): boolean {
   return kind === Kind.Identifier || (kind >= Kind.FirstKeyword && kind <= Kind.LastKeyword);
+}
+
+function isContextualExpressionIdentifierKind(kind: Kind): boolean {
+  return isIdentifierNameKind(kind)
+    && kind !== Kind.FalseKeyword
+    && kind !== Kind.NullKeyword
+    && kind !== Kind.SuperKeyword
+    && kind !== Kind.ThisKeyword
+    && kind !== Kind.TrueKeyword
+    && kind !== Kind.NewKeyword
+    && kind !== Kind.FunctionKeyword;
 }
 
 export function parseSourceFile(sourceText: string, options?: ParseSourceFileOptions): SourceFile {

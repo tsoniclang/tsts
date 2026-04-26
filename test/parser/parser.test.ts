@@ -14,6 +14,7 @@ import {
   isContinueStatement,
   isConditionalExpression,
   isElementAccessExpression,
+  isEnumDeclaration,
   isExpressionStatement,
   isForOfStatement,
   isForStatement,
@@ -33,6 +34,7 @@ import {
   isParenthesizedExpression,
   isPostfixUnaryExpression,
   isPrefixUnaryExpression,
+  isPrivateIdentifier,
   isPropertyDeclaration,
   isPropertyAccessExpression,
   isPropertySignatureDeclaration,
@@ -41,6 +43,7 @@ import {
   isTypeAliasDeclaration,
   isTypeLiteralNode,
   isTypeReferenceNode,
+  isTypePredicateNode,
   isVariableStatement,
   isWhileStatement,
   isArrayBindingPattern,
@@ -344,5 +347,40 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(bindingName.elements[2]!.dotDotDotToken?.kind, Kind.DotDotDotToken);
 
     assert.equal(isArrayBindingPattern(functionStatement.parameters[0]!.name), true);
+  });
+
+  it("parses TS-Go enum, private identifier, and type-predicate surfaces", () => {
+    const sourceFile = parseSourceFile([
+      "export enum Kind { Unknown = 0, Identifier }",
+      "class Box { #value: number = 1; getValue(): number { return this.#value; } }",
+      "function isBox(value: unknown): value is Box { return value instanceof Box; }",
+    ].join("\n"));
+    const enumDeclaration = sourceFile.statements[0]!;
+    const classDeclaration = sourceFile.statements[1]!;
+    const predicateFunction = sourceFile.statements[2]!;
+
+    assert.equal(isEnumDeclaration(enumDeclaration), true);
+    if (!isEnumDeclaration(enumDeclaration)) throw new Error("Expected enum declaration");
+    assert.equal(enumDeclaration.members[1]!.name.kind, Kind.Identifier);
+
+    assert.equal(isClassDeclaration(classDeclaration), true);
+    if (!isClassDeclaration(classDeclaration)) throw new Error("Expected class declaration");
+    assert.equal(isPropertyDeclaration(classDeclaration.members[0]!), true);
+    if (!isPropertyDeclaration(classDeclaration.members[0]!)) throw new Error("Expected property declaration");
+    assert.equal(isPrivateIdentifier(classDeclaration.members[0]!.name), true);
+
+    assert.equal(isFunctionDeclaration(predicateFunction), true);
+    if (!isFunctionDeclaration(predicateFunction)) throw new Error("Expected predicate function");
+    assert.equal(isTypePredicateNode(predicateFunction.type!), true);
+  });
+
+  it("parses generic function types, try/catch, switch, and throw statements", () => {
+    const sourceFile = parseSourceFile([
+      "type Equal<Actual, Expected> = (<T>() => T extends Actual ? 1 : 2) extends (<T>() => T extends Expected ? 1 : 2) ? true : false;",
+      "try { throw new Error(\"x\"); } catch (error) { switch (error) { default: break; } }",
+    ].join("\n"));
+
+    assert.equal(isTypeAliasDeclaration(sourceFile.statements[0]!), true);
+    assert.equal(sourceFile.statements[1]!.kind, Kind.TryStatement);
   });
 });
