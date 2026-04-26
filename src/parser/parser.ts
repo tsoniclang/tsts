@@ -12,6 +12,12 @@ import {
   createExportSpecifier,
   createExpressionStatement,
   createExpressionWithTypeArguments,
+  createBreakStatement,
+  createContinueStatement,
+  createDoStatement,
+  createForInStatement,
+  createForOfStatement,
+  createForStatement,
   createFunctionDeclaration,
   createHeritageClause,
   createIfStatement,
@@ -52,6 +58,7 @@ import {
   createVariableDeclaration,
   createVariableDeclarationList,
   createVariableStatement,
+  createWhileStatement,
   isBinaryOperatorToken,
   type BinaryOperator,
   type BinaryOperatorToken,
@@ -61,6 +68,7 @@ import {
   type ClassElement,
   type Expression,
   type ExpressionWithTypeArguments,
+  type ForInitializer,
   type Identifier,
   type ImportSpecifier,
   type KeywordTypeSyntaxKind,
@@ -212,6 +220,31 @@ export class Parser {
           throw new ParseError("Modifiers are not valid on if statements", this.#current());
         }
         return this.#parseIfStatement();
+      case Kind.WhileKeyword:
+        if (modifiers !== undefined) {
+          throw new ParseError("Modifiers are not valid on while statements", this.#current());
+        }
+        return this.#parseWhileStatement();
+      case Kind.DoKeyword:
+        if (modifiers !== undefined) {
+          throw new ParseError("Modifiers are not valid on do statements", this.#current());
+        }
+        return this.#parseDoStatement();
+      case Kind.ForKeyword:
+        if (modifiers !== undefined) {
+          throw new ParseError("Modifiers are not valid on for statements", this.#current());
+        }
+        return this.#parseForStatement();
+      case Kind.BreakKeyword:
+        if (modifiers !== undefined) {
+          throw new ParseError("Modifiers are not valid on break statements", this.#current());
+        }
+        return this.#parseBreakStatement();
+      case Kind.ContinueKeyword:
+        if (modifiers !== undefined) {
+          throw new ParseError("Modifiers are not valid on continue statements", this.#current());
+        }
+        return this.#parseContinueStatement();
       case Kind.VarKeyword:
       case Kind.LetKeyword:
       case Kind.ConstKeyword:
@@ -361,6 +394,71 @@ export class Parser {
     const thenStatement = this.#parseStatement();
     const elseStatement = this.#consumeOptional(Kind.ElseKeyword) ? this.#parseStatement() : undefined;
     return createIfStatement(expression, thenStatement, elseStatement);
+  }
+
+  #parseWhileStatement(): Statement {
+    this.#expect(Kind.WhileKeyword);
+    this.#expect(Kind.OpenParenToken);
+    const expression = this.#parseExpression();
+    this.#expect(Kind.CloseParenToken);
+    return createWhileStatement(expression, this.#parseStatement());
+  }
+
+  #parseDoStatement(): Statement {
+    this.#expect(Kind.DoKeyword);
+    const statement = this.#parseStatement();
+    this.#expect(Kind.WhileKeyword);
+    this.#expect(Kind.OpenParenToken);
+    const expression = this.#parseExpression();
+    this.#expect(Kind.CloseParenToken);
+    this.#consumeOptional(Kind.SemicolonToken);
+    return createDoStatement(statement, expression);
+  }
+
+  #parseForStatement(): Statement {
+    this.#expect(Kind.ForKeyword);
+    this.#expect(Kind.OpenParenToken);
+    const initializer = this.#parseForInitializer();
+    if (initializer !== undefined && (this.#current().kind === Kind.InKeyword || this.#current().kind === Kind.OfKeyword)) {
+      const token = this.#current().kind;
+      this.#advance();
+      const expression = this.#parseExpression();
+      this.#expect(Kind.CloseParenToken);
+      const statement = this.#parseStatement();
+      return token === Kind.InKeyword
+        ? createForInStatement(undefined, initializer, expression, statement)
+        : createForOfStatement(undefined, initializer, expression, statement);
+    }
+    this.#expect(Kind.SemicolonToken);
+    const condition = this.#current().kind === Kind.SemicolonToken ? undefined : this.#parseExpression();
+    this.#expect(Kind.SemicolonToken);
+    const incrementor = this.#current().kind === Kind.CloseParenToken ? undefined : this.#parseExpression();
+    this.#expect(Kind.CloseParenToken);
+    return createForStatement(initializer, condition, incrementor, this.#parseStatement());
+  }
+
+  #parseForInitializer(): ForInitializer | undefined {
+    if (this.#current().kind === Kind.SemicolonToken) {
+      return undefined;
+    }
+    if (this.#current().kind === Kind.VarKeyword || this.#current().kind === Kind.LetKeyword || this.#current().kind === Kind.ConstKeyword) {
+      return this.#parseVariableDeclarationList();
+    }
+    return this.#parseExpression();
+  }
+
+  #parseBreakStatement(): Statement {
+    this.#expect(Kind.BreakKeyword);
+    const label = this.#current().kind === Kind.Identifier ? this.#parseIdentifier() : undefined;
+    this.#consumeOptional(Kind.SemicolonToken);
+    return createBreakStatement(label);
+  }
+
+  #parseContinueStatement(): Statement {
+    this.#expect(Kind.ContinueKeyword);
+    const label = this.#current().kind === Kind.Identifier ? this.#parseIdentifier() : undefined;
+    this.#consumeOptional(Kind.SemicolonToken);
+    return createContinueStatement(label);
   }
 
   #parseClassElement(): ClassElement {

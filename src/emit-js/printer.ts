@@ -5,17 +5,24 @@ import {
   isArrowFunction,
   isBinaryExpression,
   isBlock,
+  isBreakStatement,
   isCallExpression,
   isClassDeclaration,
+  isContinueStatement,
   isConstructorDeclaration,
+  isDoStatement,
   isExpressionStatement,
   isExportDeclaration,
+  isForInStatement,
+  isForOfStatement,
+  isForStatement,
   isFunctionDeclaration,
   isHeritageClause,
   isIfStatement,
   isInterfaceDeclaration,
   isIdentifier,
   isImportDeclaration,
+  isMissingDeclaration,
   isNamedExports,
   isNamedImports,
   isNamespaceImport,
@@ -29,7 +36,9 @@ import {
   isReturnStatement,
   isStringLiteral,
   isTypeAliasDeclaration,
+  isVariableDeclarationList,
   isVariableStatement,
+  isWhileStatement,
   type BinaryOperatorToken,
   type ArrowFunction,
   type ClassDeclaration,
@@ -37,6 +46,7 @@ import {
   type ConstructorDeclaration,
   type Expression,
   type ExportDeclaration,
+  type ForInitializer,
   type FunctionDeclaration,
   type HeritageClause,
   type ImportClause,
@@ -56,6 +66,7 @@ import {
   type Statement,
   type VariableDeclaration,
   type VariableDeclarationList,
+  type WhileStatement,
 } from "../ast/index.js";
 
 const binaryOperatorText = new Map<Kind, string>([
@@ -155,6 +166,27 @@ function printStatement(statement: Statement, context: PrintContext, depth: numb
   if (isIfStatement(statement)) {
     return printIfStatement(statement, context, depth);
   }
+  if (isWhileStatement(statement)) {
+    return printWhileStatement(statement, context, depth);
+  }
+  if (isDoStatement(statement)) {
+    return `do ${printEmbeddedStatement(statement.statement, context, depth)} while (${printExpression(statement.expression)});`;
+  }
+  if (isForStatement(statement)) {
+    return `for (${printForInitializer(statement.initializer)}; ${statement.condition === undefined ? "" : printExpression(statement.condition)}; ${statement.incrementor === undefined ? "" : printExpression(statement.incrementor)}) ${printEmbeddedStatement(statement.statement, context, depth)}`;
+  }
+  if (isForInStatement(statement)) {
+    return `for (${printForInitializer(statement.initializer)} in ${printExpression(statement.expression)}) ${printEmbeddedStatement(statement.statement, context, depth)}`;
+  }
+  if (isForOfStatement(statement)) {
+    return `for (${printForInitializer(statement.initializer)} of ${printExpression(statement.expression)}) ${printEmbeddedStatement(statement.statement, context, depth)}`;
+  }
+  if (isBreakStatement(statement)) {
+    return statement.label === undefined ? "break;" : `break ${statement.label.text};`;
+  }
+  if (isContinueStatement(statement)) {
+    return statement.label === undefined ? "continue;" : `continue ${statement.label.text};`;
+  }
   if (isReturnStatement(statement)) {
     return statement.expression === undefined ? "return;" : `return ${printExpression(statement.expression)};`;
   }
@@ -220,7 +252,11 @@ function printNamedExportBindings(namedBindings: NamedExportBindings): string {
 
 function printVariableStatement(modifiers: NodeArray<ModifierLike> | undefined, declarationList: VariableDeclarationList): string {
   const prefix = printModifierPrefix(modifiers);
-  return `${prefix}${printVariableDeclarationKind(declarationList)} ${declarationList.declarations.map(printVariableDeclaration).join(", ")};`;
+  return `${prefix}${printVariableDeclarationList(declarationList)};`;
+}
+
+function printVariableDeclarationList(declarationList: VariableDeclarationList): string {
+  return `${printVariableDeclarationKind(declarationList)} ${declarationList.declarations.map(printVariableDeclaration).join(", ")}`;
 }
 
 function printVariableDeclarationKind(declarationList: VariableDeclarationList): string {
@@ -320,6 +356,23 @@ function printIfStatement(ifStatement: Extract<Statement, { readonly kind: Kind.
   const thenStatement = printEmbeddedStatement(ifStatement.thenStatement, context, depth);
   const elseStatement = ifStatement.elseStatement === undefined ? "" : ` else ${printEmbeddedStatement(ifStatement.elseStatement, context, depth)}`;
   return `if (${printExpression(ifStatement.expression)}) ${thenStatement}${elseStatement}`;
+}
+
+function printWhileStatement(whileStatement: WhileStatement, context: PrintContext, depth: number): string {
+  return `while (${printExpression(whileStatement.expression)}) ${printEmbeddedStatement(whileStatement.statement, context, depth)}`;
+}
+
+function printForInitializer(initializer: ForInitializer | undefined): string {
+  if (initializer === undefined) {
+    return "";
+  }
+  if (isVariableDeclarationList(initializer)) {
+    return printVariableDeclarationList(initializer);
+  }
+  if (isMissingDeclaration(initializer)) {
+    return "";
+  }
+  return printExpression(initializer);
 }
 
 function printEmbeddedStatement(statement: Statement, context: PrintContext, depth: number): string {

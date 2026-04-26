@@ -49,4 +49,11 @@ describe("checker groundwork", () => {
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string' is not assignable to type 'number'."]);
   });
+
+  it("checks loop initializer declarations and loop bodies", () => {
+    const sourceFile = parseSourceFile("function f(): number { for (const item: string of items) { return item; } return 1; }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string' is not assignable to type 'number'."]);
+  });
 });

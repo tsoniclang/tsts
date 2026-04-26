@@ -1257,7 +1257,7 @@ function generateNodeTypes(schema: AstSchema): string {
       continue;
     }
     const members = Object.entries(schema.nodes.definitions)
-      .filter(([nodeName, definition]) => !definition.handWritten && !isVariantNode(schema, nodeName, definition) && baseExtendsTransitive(schema, definition, alias.base))
+      .filter(([, definition]) => !definition.handWritten && baseExtendsTransitive(schema, definition, alias.base))
       .map(([nodeName]) => nodeName);
     if (members.length === 0) {
       lines.push(`export type ${name} = never;`);

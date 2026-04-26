@@ -10,7 +10,10 @@ import {
   isCallExpression,
   isClassDeclaration,
   isConstructorDeclaration,
+  isContinueStatement,
   isExpressionStatement,
+  isForOfStatement,
+  isForStatement,
   isExportDeclaration,
   isFunctionDeclaration,
   isIdentifier,
@@ -31,6 +34,7 @@ import {
   isTypeLiteralNode,
   isTypeReferenceNode,
   isVariableStatement,
+  isWhileStatement,
 } from "../../src/ast/index.js";
 import { parseSourceFile } from "../../src/parser/index.js";
 
@@ -220,5 +224,30 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(initializer.parameters[0]!.type?.kind, Kind.NumberKeyword);
     assert.equal(initializer.type?.kind, Kind.NumberKeyword);
     assert.equal(isBinaryExpression(initializer.body), true);
+  });
+
+  it("produces loop statements with TS-Go initializer and body nodes", () => {
+    const sourceFile = parseSourceFile("for (let index = 0; index < 3; index += 1) { continue; } for (const item of items) { item; } while (ready) { ready; }");
+    const forStatement = sourceFile.statements[0]!;
+    const forOfStatement = sourceFile.statements[1]!;
+    const whileStatement = sourceFile.statements[2]!;
+
+    assert.equal(isForStatement(forStatement), true);
+    if (!isForStatement(forStatement)) throw new Error("Expected for statement");
+    assert.equal(forStatement.initializer?.kind, Kind.VariableDeclarationList);
+    assert.equal(isBinaryExpression(forStatement.condition!), true);
+    assert.equal(isBinaryExpression(forStatement.incrementor!), true);
+    assert.equal(isBlock(forStatement.statement), true);
+    if (!isBlock(forStatement.statement)) throw new Error("Expected for block");
+    assert.equal(isContinueStatement(forStatement.statement.statements[0]!), true);
+
+    assert.equal(isForOfStatement(forOfStatement), true);
+    if (!isForOfStatement(forOfStatement)) throw new Error("Expected for-of statement");
+    assert.equal(forOfStatement.initializer.kind, Kind.VariableDeclarationList);
+    assert.equal(isIdentifier(forOfStatement.expression), true);
+
+    assert.equal(isWhileStatement(whileStatement), true);
+    if (!isWhileStatement(whileStatement)) throw new Error("Expected while statement");
+    assert.equal(isIdentifier(whileStatement.expression), true);
   });
 });

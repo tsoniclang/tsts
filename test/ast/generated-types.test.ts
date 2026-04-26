@@ -46,6 +46,11 @@ describe("TS-Go generated AST type surface", () => {
     assertType<Equal<BindingPattern["kind"], Kind.ObjectBindingPattern | Kind.ArrayBindingPattern>>();
   });
 
+  it("includes multi-kind statement implementations in base-derived node aliases", () => {
+    assertType<Equal<Extract<Statement, { readonly kind: Kind.ForInStatement }>["kind"], Kind.ForInStatement>>();
+    assertType<Equal<Extract<Statement, { readonly kind: Kind.ForOfStatement }>["kind"], Kind.ForOfStatement>>();
+  });
+
   it("keeps hand-written SourceFile and schema-generated node fields aligned", () => {
     assertType<Equal<SourceFile["statements"], NodeArray<Statement>>>();
     assertType<Equal<ParameterDeclaration["kind"], Kind.Parameter>>();

@@ -3,15 +3,22 @@ import {
   isArrowFunction,
   isBinaryExpression,
   isBlock,
+  isBreakStatement,
   isCallExpression,
   isClassDeclaration,
+  isContinueStatement,
   isConstructorDeclaration,
+  isDoStatement,
   isExpressionStatement,
+  isForInStatement,
+  isForOfStatement,
+  isForStatement,
   isFunctionDeclaration,
   isIdentifier,
   isIfStatement,
   isKeywordTypeNode,
   isMethodDeclaration,
+  isMissingDeclaration,
   isNumericLiteral,
   isParenthesizedExpression,
   isPropertyAccessExpression,
@@ -19,6 +26,8 @@ import {
   isReturnStatement,
   isStringLiteral,
   isVariableStatement,
+  isVariableDeclarationList,
+  isWhileStatement,
   type Block,
   type ArrowFunction,
   type ClassDeclaration,
@@ -115,6 +124,40 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     }
     return;
   }
+  if (isWhileStatement(statement)) {
+    inferExpression(statement.expression, state, environment);
+    checkStatement(statement.statement, state, new Map(environment), expectedReturnType);
+    return;
+  }
+  if (isDoStatement(statement)) {
+    checkStatement(statement.statement, state, new Map(environment), expectedReturnType);
+    inferExpression(statement.expression, state, environment);
+    return;
+  }
+  if (isForStatement(statement)) {
+    const loopEnvironment = new Map(environment);
+    if (statement.initializer !== undefined) {
+      checkForInitializer(statement.initializer, state, loopEnvironment);
+    }
+    if (statement.condition !== undefined) {
+      inferExpression(statement.condition, state, loopEnvironment);
+    }
+    if (statement.incrementor !== undefined) {
+      inferExpression(statement.incrementor, state, loopEnvironment);
+    }
+    checkStatement(statement.statement, state, loopEnvironment, expectedReturnType);
+    return;
+  }
+  if (isForInStatement(statement) || isForOfStatement(statement)) {
+    const loopEnvironment = new Map(environment);
+    checkForInitializer(statement.initializer, state, loopEnvironment);
+    inferExpression(statement.expression, state, loopEnvironment);
+    checkStatement(statement.statement, state, loopEnvironment, expectedReturnType);
+    return;
+  }
+  if (isBreakStatement(statement) || isContinueStatement(statement)) {
+    return;
+  }
   if (isReturnStatement(statement)) {
     const actual = statement.expression === undefined ? voidType : inferExpression(statement.expression, state, environment);
     if (expectedReturnType !== undefined) {
@@ -129,6 +172,29 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   if (isBlock(statement)) {
     checkBlock(statement, state, environment, expectedReturnType);
   }
+}
+
+function checkForInitializer(initializer: Extract<Statement, { readonly kind: Kind.ForStatement }>["initializer"] | Extract<Statement, { readonly kind: Kind.ForInStatement }>["initializer"], state: CheckState, environment: TypeEnvironment): void {
+  if (initializer === undefined) {
+    return;
+  }
+  if (isVariableDeclarationList(initializer)) {
+    for (const declaration of initializer.declarations) {
+      const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type);
+      const initializerType = declaration.initializer === undefined ? undefined : inferExpression(declaration.initializer, state, environment);
+      if (declaredType !== undefined && initializerType !== undefined) {
+        checkAssignable(initializerType, declaredType, state);
+      }
+      if (isIdentifier(declaration.name)) {
+        environment.set(declaration.name.text, declaredType ?? initializerType ?? unknownType);
+      }
+    }
+    return;
+  }
+  if (isMissingDeclaration(initializer)) {
+    return;
+  }
+  inferExpression(initializer, state, environment);
 }
 
 function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckState, environment: TypeEnvironment): void {

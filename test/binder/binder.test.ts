@@ -83,4 +83,12 @@ describe("TS-Go binder groundwork", () => {
     assert.notEqual(result.locals.get(classDeclaration), undefined);
     assert.notEqual(result.locals.get(interfaceDeclaration), undefined);
   });
+
+  it("binds loop declaration initializers into the surrounding lexical scope", () => {
+    const sourceFile = parseSourceFile("for (let index = 0; index < 1; index += 1) { const local = index; }");
+    const result = bindSourceFile(sourceFile);
+
+    assert.equal(result.diagnostics.length, 0);
+    assert.equal(lookupSymbol(result.globals, "index")?.flags, SymbolFlags.BlockScopedVariable);
+  });
 });

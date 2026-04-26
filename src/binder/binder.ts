@@ -3,6 +3,10 @@ import {
   SymbolFlags,
   isBlock,
   isClassDeclaration,
+  isDoStatement,
+  isForInStatement,
+  isForOfStatement,
+  isForStatement,
   isFunctionDeclaration,
   isIdentifier,
   isImportDeclaration,
@@ -13,9 +17,11 @@ import {
   isSourceFile,
   isTypeAliasDeclaration,
   isVariableStatement,
+  isWhileStatement,
   type BindingName,
   type Block,
   type ClassDeclaration,
+  type ForInitializer,
   type FunctionDeclaration,
   type ImportClause,
   type ImportSpecifier,
@@ -118,6 +124,20 @@ function bindStatement(statement: Statement, state: BinderState, lexicalScope: S
   }
   if (isTypeAliasDeclaration(statement)) {
     bindTypeAliasDeclaration(statement, state, lexicalScope);
+    return;
+  }
+  if (isWhileStatement(statement) || isDoStatement(statement)) {
+    bindStatement(statement.statement, state, lexicalScope, functionScope);
+    return;
+  }
+  if (isForStatement(statement)) {
+    bindForInitializer(statement.initializer, state, lexicalScope, functionScope);
+    bindStatement(statement.statement, state, lexicalScope, functionScope);
+    return;
+  }
+  if (isForInStatement(statement) || isForOfStatement(statement)) {
+    bindForInitializer(statement.initializer, state, lexicalScope, functionScope);
+    bindStatement(statement.statement, state, lexicalScope, functionScope);
     return;
   }
   if (isBlock(statement)) {
@@ -233,6 +253,12 @@ function bindVariableDeclarationList(declarationList: VariableDeclarationList, s
   const excludes = blockScoped ? SymbolFlags.BlockScopedVariableExcludes : SymbolFlags.FunctionScopedVariableExcludes;
   for (const declaration of declarationList.declarations) {
     bindVariableDeclaration(declaration, targetScope, flags, excludes, state);
+  }
+}
+
+function bindForInitializer(initializer: ForInitializer | undefined, state: BinderState, lexicalScope: SymbolTable, functionScope: SymbolTable): void {
+  if (initializer !== undefined && "declarations" in initializer) {
+    bindVariableDeclarationList(initializer, state, lexicalScope, functionScope);
   }
 }
 

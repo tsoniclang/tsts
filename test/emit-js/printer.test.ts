@@ -84,4 +84,21 @@ describe("JS emitter groundwork", () => {
       ].join("\n"),
     );
   });
+
+  it("prints loop statements with type-erased initializers", () => {
+    assert.equal(
+      printSourceFile(parseSourceFile("for (let index: number = 0; index < 2; index += 1) { continue; } for (const item of items) { item; } while (ready) { break; }")),
+      [
+        "for (let index = 0; index < 2; index += 1) {",
+        "  continue;",
+        "}",
+        "for (const item of items) {",
+        "  item;",
+        "}",
+        "while (ready) {",
+        "  break;",
+        "}",
+      ].join("\n"),
+    );
+  });
 });
