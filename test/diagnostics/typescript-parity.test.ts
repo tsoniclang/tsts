@@ -57,4 +57,10 @@ describe("differential TypeScript diagnostic parity", () => {
 
     assert.deepEqual(tstsDiagnostics(sourceText), upstreamTypeScriptDiagnostics(sourceText));
   });
+
+  it("matches upstream TypeScript diagnostics for explicit generic function instantiation", () => {
+    const sourceText = "function identity<T>(item: T): T { return item; } const n: number = identity<string>(\"x\");";
+
+    assert.deepEqual(tstsDiagnostics(sourceText), upstreamTypeScriptDiagnostics(sourceText));
+  });
 });
