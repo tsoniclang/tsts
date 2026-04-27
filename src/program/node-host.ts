@@ -1,13 +1,14 @@
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 import type { CompilerHost } from "./program.js";
+import { decodeSourceText } from "./source-text.js";
 
 export function createNodeCompilerHost(currentDirectory = process.cwd()): CompilerHost {
   return {
     getCurrentDirectory: () => currentDirectory,
     readFile: fileName => {
       try {
-        return readFileSync(fileName, "utf8");
+        return decodeSourceText(readFileSync(fileName));
       } catch (error) {
         if (isNotFoundError(error)) {
           return undefined;

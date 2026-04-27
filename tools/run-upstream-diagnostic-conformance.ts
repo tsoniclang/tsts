@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative } from "node:path";
 import * as ts from "typescript";
-import { createProgram, getProgramDiagnostics, type CompilerHost, type CompilerOptions, type ModuleKindName, type ModuleResolutionKindName, type ProgramDiagnostic, type RemovedCompilerOptionName } from "../src/program/index.js";
+import { createProgram, decodeSourceText, getProgramDiagnostics, type CompilerHost, type CompilerOptions, type ModuleKindName, type ModuleResolutionKindName, type ProgramDiagnostic, type RemovedCompilerOptionName } from "../src/program/index.js";
 
 interface CaseFile {
   readonly fileName: string;
@@ -146,7 +146,7 @@ async function discoverCases(options: Options): Promise<readonly CompilerCase[]>
   const selected = options.limit === undefined ? names : names.slice(0, options.limit);
   const cases = await Promise.all(selected.map(async name => {
     const path = join(directory, name);
-    return expandBaselineVariants(parseCompilerCase(name, path, await readFile(path, "utf8")), baselineFiles);
+    return expandBaselineVariants(parseCompilerCase(name, path, decodeSourceText(await readFile(path))), baselineFiles);
   }));
   return cases.flat();
 }
@@ -638,7 +638,7 @@ function readDiskFileIfPresent(fileName: string): string | undefined {
   if (!existsSync(fileName)) {
     return undefined;
   }
-  return readFileSync(fileName, "utf8");
+  return decodeSourceText(readFileSync(fileName));
 }
 
 function normalizeProgramDiagnostic(diagnostic: ProgramDiagnostic): ComparableDiagnostic {
