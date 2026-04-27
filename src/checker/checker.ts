@@ -418,6 +418,9 @@ function propertyNameText(name: PropertyName): string | undefined {
 }
 
 function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment): void {
+  if (hasModifier(member, Kind.ConstKeyword)) {
+    state.diagnostics.push(createDiagnostic(1248, "const"));
+  }
   if (isConstructorDeclaration(member) || isMethodDeclaration(member)) {
     const memberEnvironment = new Map(environment);
     checkSignatureParameters(member.parameters, state, memberEnvironment, isMethodDeclaration(member) || member.body === undefined);
@@ -708,7 +711,11 @@ function requiresReturnValue(type: CheckedType): boolean {
 }
 
 function hasDeclareModifier(node: { readonly modifiers?: readonly { readonly kind: Kind }[] }): boolean {
-  return node.modifiers?.some(modifier => modifier.kind === Kind.DeclareKeyword) === true;
+  return hasModifier(node, Kind.DeclareKeyword);
+}
+
+function hasModifier(node: object, kind: Kind): boolean {
+  return (node as { readonly modifiers?: readonly { readonly kind: Kind }[] }).modifiers?.some(modifier => modifier.kind === kind) === true;
 }
 
 function checkParameterPropertyModifiers(parameter: ParameterDeclaration, state: CheckState): void {

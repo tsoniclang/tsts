@@ -516,6 +516,10 @@ export class Parser {
       && nextKind !== Kind.CloseBraceToken;
   }
 
+  #hasLineBreakBetween(left: ScannedToken, right: ScannedToken): boolean {
+    return /[\r\n\u2028\u2029]/.test(this.#sourceText.slice(left.end, right.pos));
+  }
+
   #parseClassDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
     this.#expect(Kind.ClassKeyword);
     const name = isIdentifierNameKind(this.#current().kind) ? this.#parseIdentifier() : undefined;
@@ -676,7 +680,11 @@ export class Parser {
     if (this.#consumeOptional(Kind.SemicolonToken)) {
       return createSemicolonClassElement();
     }
-    const modifiers = this.#parseModifiers();
+    let modifiers = this.#parseModifiers();
+    const nextToken = this.#tokens[this.#index + 1];
+    if (this.#current().kind === Kind.ConstKeyword && nextToken !== undefined && isIdentifierNameKind(nextToken.kind) && !this.#hasLineBreakBetween(this.#current(), nextToken)) {
+      modifiers = createNodeArray([...(modifiers ?? []), createToken(this.#advance().kind as ModifierSyntaxKind) as ModifierLike]);
+    }
     if (this.#current().kind === Kind.ConstructorKeyword) {
       this.#advance();
       this.#expect(Kind.OpenParenToken);

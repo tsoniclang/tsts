@@ -112,6 +112,14 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2414]);
   });
 
+  it("reports const modifiers on class members", () => {
+    const sourceFile = parseSourceFile("class AtomicNumbers { static const H = 1; }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["A class member cannot have the 'const' keyword."]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1248]);
+  });
+
   it("reports function overload declarations without matching implementations", () => {
     const sourceFile = parseSourceFile("function foo(); function bar() { } function baz();");
     const result = checkSourceFile(sourceFile);
