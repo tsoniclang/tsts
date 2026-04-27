@@ -24,6 +24,7 @@ import {
   createConstructorTypeNode,
   createDeleteExpression,
   createDefaultClause,
+  createExportAssignment,
   createExportDeclaration,
   createExportSpecifier,
   createExpressionStatement,
@@ -61,6 +62,8 @@ import {
   createLiteralTypeNode,
   createMethodDeclaration,
   createMethodSignatureDeclaration,
+  createModuleBlock,
+  createModuleDeclaration,
   createNamedExports,
   createNamedImports,
   createNamespaceImport,
@@ -138,6 +141,7 @@ import {
   type ModifierSyntaxKind,
   type ModifierLike,
   type ModuleExportName,
+  type ModuleName,
   type ModuleReference,
   type NamedImportBindings,
   type NodeArray,
@@ -292,6 +296,10 @@ export class Parser {
         return this.#parseClassDeclaration(modifiers);
       case Kind.InterfaceKeyword:
         return this.#parseInterfaceDeclaration(modifiers);
+      case Kind.ModuleKeyword:
+      case Kind.NamespaceKeyword:
+      case Kind.GlobalKeyword:
+        return this.#parseModuleDeclaration(modifiers);
       case Kind.TypeKeyword:
         if (this.#isTypeAliasDeclarationStart()) {
           return this.#parseTypeAliasDeclaration(modifiers);
@@ -366,6 +374,9 @@ export class Parser {
     }
     if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword) && this.#current().kind === Kind.AsteriskToken) {
       return this.#parseExportDeclaration(modifiers);
+    }
+    if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword) && this.#current().kind === Kind.EqualsToken) {
+      return this.#parseExportAssignment(modifiers);
     }
     if (modifiers !== undefined) {
       throw new ParseError("Modifiers are not valid on expression statements", this.#current());
@@ -476,6 +487,13 @@ export class Parser {
     return createExportDeclaration(modifiers, false, createNamedExports(createNodeArray(elements)), moduleSpecifier, undefined);
   }
 
+  #parseExportAssignment(modifiers: NodeArray<ModifierLike>): Statement {
+    this.#expect(Kind.EqualsToken);
+    const expression = this.#parseExpression();
+    this.#consumeOptional(Kind.SemicolonToken);
+    return createExportAssignment(modifiers, true, undefined as never, expression);
+  }
+
   #parseModifiers(): NodeArray<ModifierLike> | undefined {
     const modifiers: ModifierLike[] = [];
     while (this.#isModifierAtCurrentPosition()) {
@@ -510,6 +528,28 @@ export class Parser {
     }
     this.#expect(Kind.CloseBraceToken);
     return createClassDeclaration(modifiers, name, typeParameters, heritageClauses, createNodeArray(members));
+  }
+
+  #parseModuleDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
+    const keywordToken = this.#current();
+    const keyword = keywordToken.kind === Kind.NamespaceKeyword ? Kind.NamespaceKeyword : Kind.ModuleKeyword;
+    let name: ModuleName;
+    if (keywordToken.kind === Kind.GlobalKeyword) {
+      this.#advance();
+      name = createIdentifier("global");
+    } else {
+      this.#advance();
+      name = this.#current().kind === Kind.StringLiteral
+        ? this.#parseStringLiteralExpression() as ModuleName
+        : this.#parseIdentifier();
+    }
+    this.#expect(Kind.OpenBraceToken);
+    const statements: Statement[] = [];
+    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
+      statements.push(this.#parseStatement());
+    }
+    this.#expect(Kind.CloseBraceToken);
+    return createModuleDeclaration(modifiers, keyword, name, createModuleBlock(createNodeArray(statements)));
   }
 
   #parseInterfaceDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
@@ -750,10 +790,13 @@ export class Parser {
     }
     const typeParameters: TypeParameterDeclaration[] = [];
     do {
+      const modifiers = this.#current().kind === Kind.ConstKeyword
+        ? createNodeArray([createToken(this.#advance().kind as ModifierSyntaxKind) as ModifierLike])
+        : undefined;
       const name = this.#parseIdentifier();
       const constraint = this.#consumeOptional(Kind.ExtendsKeyword) ? this.#parseType() : undefined;
       const defaultType = this.#consumeOptional(Kind.EqualsToken) ? this.#parseType() : undefined;
-      typeParameters.push(createTypeParameterDeclaration(undefined, name, constraint, undefined, defaultType));
+      typeParameters.push(createTypeParameterDeclaration(modifiers, name, constraint, undefined, defaultType));
     } while (this.#consumeOptional(Kind.CommaToken));
     this.#expectGreaterThan();
     return createNodeArray(typeParameters);
@@ -847,7 +890,10 @@ export class Parser {
     const parameters = this.#parseParameterList();
     this.#expect(Kind.CloseParenToken);
     const type = this.#parseOptionalTypeAnnotation();
-    const body = this.#parseBlock();
+    const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
+    if (body === undefined) {
+      this.#consumeOptional(Kind.SemicolonToken);
+    }
     return createFunctionDeclaration(modifiers, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body);
   }
 
@@ -1361,7 +1407,15 @@ export class Parser {
       if (this.#consumeOptional(Kind.ColonToken)) {
         properties.push(createPropertyAssignment(undefined, name, undefined, undefined as never, this.#parseExpression()));
       } else {
-        properties.push(createShorthandPropertyAssignment(undefined, name, undefined, undefined as never, undefined, undefined));
+        const objectAssignmentInitializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
+        properties.push(createShorthandPropertyAssignment(
+          undefined,
+          name,
+          undefined,
+          undefined as never,
+          objectAssignmentInitializer === undefined ? undefined : createToken(Kind.EqualsToken) as never,
+          objectAssignmentInitializer,
+        ));
       }
       this.#consumeOptional(Kind.CommaToken);
     }

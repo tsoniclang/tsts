@@ -18,6 +18,7 @@ import {
   isElementAccessExpression,
   isEmptyStatement,
   isEnumDeclaration,
+  isExportAssignment,
   isExpressionStatement,
   isForOfStatement,
   isForStatement,
@@ -31,11 +32,13 @@ import {
   isKeywordTypeNode,
   isMethodDeclaration,
   isMethodSignatureDeclaration,
+  isModuleDeclaration,
   isNamedExports,
   isNamedImports,
   isNewExpression,
   isNumericLiteral,
   isObjectBindingPattern,
+  isObjectLiteralExpression,
   isParenthesizedExpression,
   isPostfixUnaryExpression,
   isPrefixUnaryExpression,
@@ -44,6 +47,7 @@ import {
   isPropertyAccessExpression,
   isPropertySignatureDeclaration,
   isReturnStatement,
+  isShorthandPropertyAssignment,
   isStringLiteral,
   isTypeAliasDeclaration,
   isTypeAssertion,
@@ -460,6 +464,39 @@ describe("TS-Go parser groundwork", () => {
     if (!isIndexSignatureDeclaration(statement.type.members[1]!)) throw new Error("Expected index signature");
     assert.equal(statement.type.members[1]!.parameters[0]!.name.kind, Kind.Identifier);
     assert.equal(statement.type.members[1]!.parameters[0]!.type?.kind, Kind.StringKeyword);
+  });
+
+  it("parses ambient declarations, module blocks, const type parameters, and destructuring assignment defaults", () => {
+    const sourceFile = parseSourceFile([
+      "export function foo();",
+      "declare global { var expectedCondition: \"import\"; }",
+      "declare module \"knex\" { namespace Knex { function newFunc(): Interface; } }",
+      "export = knex;",
+      "declare function make<const T extends { value: unknown }>(arg: T): T;",
+      "({ x = class { static #z = 2; } } = {} as any);",
+    ].join("\n"));
+
+    assert.equal(isFunctionDeclaration(sourceFile.statements[0]!), true);
+    if (!isFunctionDeclaration(sourceFile.statements[0]!)) throw new Error("Expected ambient function");
+    assert.equal(sourceFile.statements[0]!.body, undefined);
+
+    assert.equal(isModuleDeclaration(sourceFile.statements[1]!), true);
+    assert.equal(isModuleDeclaration(sourceFile.statements[2]!), true);
+    assert.equal(isExportAssignment(sourceFile.statements[3]!), true);
+
+    assert.equal(isFunctionDeclaration(sourceFile.statements[4]!), true);
+    if (!isFunctionDeclaration(sourceFile.statements[4]!)) throw new Error("Expected const generic function");
+    assert.equal(sourceFile.statements[4]!.typeParameters?.[0]?.modifiers?.[0]?.kind, Kind.ConstKeyword);
+
+    assert.equal(isExpressionStatement(sourceFile.statements[5]!), true);
+    if (!isExpressionStatement(sourceFile.statements[5]!) || !isParenthesizedExpression(sourceFile.statements[5]!.expression)) throw new Error("Expected parenthesized assignment");
+    const assignment = sourceFile.statements[5]!.expression.expression;
+    assert.equal(isBinaryExpression(assignment), true);
+    if (!isBinaryExpression(assignment) || !isObjectLiteralExpression(assignment.left)) throw new Error("Expected object literal assignment");
+    const firstProperty = assignment.left.properties[0]!;
+    assert.equal(isShorthandPropertyAssignment(firstProperty), true);
+    if (!isShorthandPropertyAssignment(firstProperty)) throw new Error("Expected shorthand assignment");
+    assert.equal(isClassExpression(firstProperty.objectAssignmentInitializer!), true);
   });
 
   it("preserves parameter property modifiers for checker diagnostics", () => {

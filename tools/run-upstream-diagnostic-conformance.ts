@@ -97,7 +97,7 @@ function suiteDirectory(suite: Options["suite"]): string {
 }
 
 function isSupportedCaseFile(fileName: string): boolean {
-  return [".ts", ".tsx", ".js", ".jsx"].includes(extname(fileName).toLowerCase());
+  return [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"].includes(extname(fileName).toLowerCase());
 }
 
 async function discoverCases(options: Options): Promise<readonly CompilerCase[]> {
