@@ -1129,6 +1129,35 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string[]' cannot be used as an index type."]);
   });
 
+  it("reports invalid indexed-access type index types", () => {
+    const sourceFile = parseSourceFile("type Bad = any[[]];");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2538]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type '[]' cannot be used as an index type."]);
+  });
+
+  it("accepts literal indexed-access type indexes", () => {
+    const sourceFile = parseSourceFile("type Picked = { value: number }[\"value\"]; const value: Picked = 1;");
+    const result = checkSourceFile(sourceFile);
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
+  it("contextually types tuple return array literals", () => {
+    const sourceFile = parseSourceFile("function f(): [boolean, string, number] { let x: any, y: any, z: any; return [z, y, x]; }");
+    const result = checkSourceFile(sourceFile, { strict: true });
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
+  it("allows array-to-tuple assertions when element types overlap", () => {
+    const sourceFile = parseSourceFile("function f(): [any, any, any] { let result = []; return <[any, any, any]>result; }");
+    const result = checkSourceFile(sourceFile, { strict: true });
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
   it("relates mutable arrays and array subclasses to readonly arrays through element types", () => {
     const sourceFile = parseSourceFile([
       "class A { a!: string; }",

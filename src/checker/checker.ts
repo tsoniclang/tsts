@@ -47,6 +47,7 @@ import {
   isKeywordExpression,
   isKeywordTypeNode,
   isIndexSignatureDeclaration,
+  isIndexedAccessTypeNode,
   isJSDoc,
   isJSDocParameterTag,
   isJSDocReturnTag,
@@ -60,6 +61,7 @@ import {
   isMissingDeclaration,
   isModuleBlock,
   isModuleDeclaration,
+  isNamedTupleMember,
   isNamedImports,
   isNamedExports,
   isNamespaceImport,
@@ -69,6 +71,7 @@ import {
   isNoSubstitutionTemplateLiteral,
   isObjectLiteralExpression,
   isObjectBindingPattern,
+  isOptionalTypeNode,
   isParenthesizedTypeNode,
   isParenthesizedExpression,
   isParameterDeclaration,
@@ -81,6 +84,7 @@ import {
   isPrivateIdentifier,
   isQualifiedName,
   isReturnStatement,
+  isRestTypeNode,
   isSatisfiesExpression,
   isSetAccessorDeclaration,
   isShorthandPropertyAssignment,
@@ -96,6 +100,7 @@ import {
   isTypePredicateNode,
   isTypeQueryNode,
   isTypeReferenceNode,
+  isTupleTypeNode,
   isVariableStatement,
   isVariableDeclaration,
   isVariableDeclarationList,
@@ -804,7 +809,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     if (!state.insideFunction) {
       state.diagnostics.push(createDiagnostic(1108));
     }
-    const actual = statement.expression === undefined ? voidType : inferExpression(statement.expression, state, environment);
+    const actual = statement.expression === undefined ? voidType : inferExpressionWithContext(statement.expression, state, environment, expectedReturnType);
     if (expectedReturnType !== undefined) {
       checkAssignable(actual, expectedReturnType, state);
     }
@@ -2967,6 +2972,10 @@ function inferExpressionWithContext(expression: Expression, state: CheckState, e
     return inferObjectLiteral(expression, state, environment, contextualType);
   }
   if (isArrayLiteralExpression(expression)) {
+    const contextualTuple = contextualTupleType(contextualType);
+    if (contextualTuple !== undefined) {
+      return inferTupleLiteral(expression.elements, state, environment, contextualTuple);
+    }
     const contextualElementType = contextualArrayElementType(contextualType);
     if (contextualElementType !== undefined) {
       return inferArrayLiteral(expression.elements, state, environment, contextualElementType, contextualType);
@@ -2992,6 +3001,16 @@ function inferIntrinsicCall(expression: Extract<Expression, { readonly kind: Kin
     return booleanType;
   }
   return anyType;
+}
+
+function contextualTupleType(contextualType: CheckedType | undefined): Extract<CheckedType, { readonly kind: "tuple" }> | undefined {
+  if (contextualType === undefined) {
+    return undefined;
+  }
+  if (contextualType.kind === "typeAliasInstance") {
+    return contextualTupleType(contextualType.target);
+  }
+  return contextualType.kind === "tuple" ? contextualType : undefined;
 }
 
 function inferArrayFromCall(expression: Extract<Expression, { readonly kind: Kind.CallExpression }>, state: CheckState, environment: TypeEnvironment): CheckedType {
@@ -3805,6 +3824,38 @@ function interfaceElementAccessType(members: InterfaceMembers, argument: Express
   return members.numberIndexType ?? members.stringIndexType ?? unresolvedType;
 }
 
+function indexedAccessType(objectType: CheckedType, indexType: CheckedType): CheckedType {
+  if (objectType.kind === "typeAliasInstance") {
+    return indexedAccessType(objectType.target, indexType);
+  }
+  if (indexType.kind === "typeAliasInstance") {
+    return indexedAccessType(objectType, indexType.target);
+  }
+  if (objectType.kind === "any" || objectType.kind === "unknown" || objectType.kind === "unresolved" || indexType.kind === "any" || indexType.kind === "unresolved") {
+    return anyType;
+  }
+  if ((objectType.kind === "array" || objectType.kind === "readonlyArray" || objectType.kind === "arrayLike") && (indexType.kind === "number" || indexType.kind === "numberLiteral")) {
+    return objectType.elementType;
+  }
+  if (objectType.kind === "tuple" && indexType.kind === "numberLiteral") {
+    const element = objectType.elements[Number(indexType.value)];
+    return element?.type ?? objectType.restElementType ?? undefinedType;
+  }
+  if (objectType.kind === "object" && indexType.kind === "stringLiteral") {
+    return objectType.properties.get(indexType.value) ?? unresolvedType;
+  }
+  if (objectType.kind === "interface" && indexType.kind === "stringLiteral") {
+    return objectType.members.properties.get(indexType.value) ?? objectType.members.stringIndexType ?? objectType.members.numberIndexType ?? unresolvedType;
+  }
+  if (objectType.kind === "union") {
+    return unionType(objectType.types.map(member => indexedAccessType(member, indexType)));
+  }
+  if (indexType.kind === "union") {
+    return unionType(indexType.types.map(member => indexedAccessType(objectType, member)));
+  }
+  return anyType;
+}
+
 function invalidElementAccessIndexType(type: CheckedType): CheckedType | undefined {
   if (type.kind === "unassignedVariable") {
     return invalidElementAccessIndexType(type.type);
@@ -3824,7 +3875,7 @@ function invalidElementAccessIndexType(type: CheckedType): CheckedType | undefin
   if (type.kind === "union") {
     return type.types.find(member => invalidElementAccessIndexType(member) !== undefined);
   }
-  if (type.kind === "any" || type.kind === "never" || type.kind === "number" || type.kind === "string" || type.kind === "unresolved") {
+  if (type.kind === "any" || type.kind === "never" || type.kind === "number" || type.kind === "numberLiteral" || type.kind === "string" || type.kind === "stringLiteral" || type.kind === "unresolved") {
     return undefined;
   }
   return type;
@@ -4214,6 +4265,19 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
   if (isArrayTypeNode(type)) {
     return { kind: "array", elementType: typeFromTypeNode(type.elementType, environment, state) };
   }
+  if (isIndexedAccessTypeNode(type)) {
+    const objectType = typeFromTypeNode(type.objectType, environment, state);
+    const indexType = typeFromTypeNode(type.indexType, environment, state);
+    const invalidIndexType = invalidElementAccessIndexType(indexType);
+    if (invalidIndexType !== undefined) {
+      state?.diagnostics.push(createDiagnostic(2538, displayType(invalidIndexType)));
+      return anyType;
+    }
+    return indexedAccessType(objectType, indexType);
+  }
+  if (isTupleTypeNode(type)) {
+    return tupleTypeFromTypeNode(type.elements, environment, state);
+  }
   if (isUnionTypeNode(type)) {
     return unionType(type.types.map(unionMember => typeFromTypeNode(unionMember, environment, state)));
   }
@@ -4316,6 +4380,70 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
     return bound === undefined ? anyType : instantiateTypeQuery(bound, typeArguments);
   }
   return anyType;
+}
+
+function tupleTypeFromTypeNode(elements: NodeArray<TypeNode>, environment: TypeEnvironment, state?: CheckState): CheckedType {
+  const tupleElements: TupleElementType[] = [];
+  let restElementType: CheckedType | undefined;
+  for (const element of elements) {
+    const tupleElement = tupleElementTypeFromTypeNode(element, environment, state);
+    if (tupleElement.rest) {
+      restElementType = tupleElement.type;
+    } else {
+      tupleElements.push(tupleElement.name === undefined
+        ? { type: tupleElement.type, optional: tupleElement.optional }
+        : { name: tupleElement.name, type: tupleElement.type, optional: tupleElement.optional });
+    }
+  }
+  return restElementType === undefined ? { kind: "tuple", elements: tupleElements } : { kind: "tuple", elements: tupleElements, restElementType };
+}
+
+function tupleElementTypeFromTypeNode(element: TypeNode, environment: TypeEnvironment, state?: CheckState): TupleElementType & { readonly rest: boolean } {
+  if (isNamedTupleMember(element)) {
+    if (element.dotDotDotToken !== undefined) {
+      return {
+        name: element.name.text,
+        type: tupleRestElementType(typeFromTypeNode(element.type, environment, state)),
+        optional: element.questionToken !== undefined,
+        rest: true,
+      };
+    }
+    return {
+      name: element.name.text,
+      type: typeFromTypeNode(element.type, environment, state),
+      optional: element.questionToken !== undefined,
+      rest: false,
+    };
+  }
+  if (isRestTypeNode(element)) {
+    return {
+      type: tupleRestElementType(typeFromTypeNode(element.type, environment, state)),
+      optional: false,
+      rest: true,
+    };
+  }
+  if (isOptionalTypeNode(element)) {
+    return {
+      type: typeFromTypeNode(element.type, environment, state),
+      optional: true,
+      rest: false,
+    };
+  }
+  return {
+    type: typeFromTypeNode(element, environment, state),
+    optional: false,
+    rest: false,
+  };
+}
+
+function tupleRestElementType(type: CheckedType): CheckedType {
+  if (type.kind === "array" || type.kind === "readonlyArray") {
+    return type.elementType;
+  }
+  if (type.kind === "typeAliasInstance") {
+    return tupleRestElementType(type.target);
+  }
+  return type;
 }
 
 function typePredicateType(type: TypePredicateNode, environment: TypeEnvironment, state: CheckState | undefined): CheckedType {
@@ -4672,7 +4800,20 @@ function typesSufficientlyOverlap(source: CheckedType, target: CheckedType, opti
   if (target.kind === "union") {
     return target.types.some(type => typesSufficientlyOverlap(source, type, options));
   }
+  if (source.kind === "tuple" && target.kind === "array") {
+    return tupleSufficientlyOverlapsArray(source, target.elementType, options);
+  }
+  if (source.kind === "array" && target.kind === "tuple") {
+    return tupleSufficientlyOverlapsArray(target, source.elementType, options);
+  }
   return isAssignableTo(source, target, options) || isAssignableTo(target, source, options);
+}
+
+function tupleSufficientlyOverlapsArray(tuple: Extract<CheckedType, { readonly kind: "tuple" }>, arrayElementType: CheckedType, options: CompilerOptions): boolean {
+  if (tuple.restElementType !== undefined && typesSufficientlyOverlap(tuple.restElementType, arrayElementType, options)) {
+    return true;
+  }
+  return tuple.elements.some(element => typesSufficientlyOverlap(element.type, arrayElementType, options));
 }
 
 function requiresReturnValue(type: CheckedType): boolean {
@@ -4859,6 +5000,19 @@ function inferArrayLiteral(elements: readonly Expression[], state: CheckState, e
   }
   const first = elementTypes[0]!;
   return { kind: "array", elementType: elementTypes.every(type => isSameType(type, first)) ? first : unionType(elementTypes) };
+}
+
+function inferTupleLiteral(elements: readonly Expression[], state: CheckState, environment: TypeEnvironment, contextualTuple: Extract<CheckedType, { readonly kind: "tuple" }>): CheckedType {
+  return {
+    kind: "tuple",
+    elements: elements.map((element, index) => {
+      const contextualElementType = contextualTuple.elements[index]?.type ?? contextualTuple.restElementType;
+      return {
+        type: inferExpressionWithContext(element, state, environment, contextualElementType),
+        optional: false,
+      };
+    }),
+  };
 }
 
 function typeContainsTypeParameter(type: CheckedType): boolean {
