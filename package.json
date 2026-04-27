@@ -18,6 +18,7 @@
     "generate": "tsx tools/generate-ast.ts && tsx tools/generate-diagnostics.ts",
     "schema:check": "tsx tools/check-schema.ts && tsx tools/check-typescript-diagnostics.ts",
     "generated:check": "tsx tools/check-generated.ts",
+    "conformance:diagnostics": "tsx tools/run-upstream-diagnostic-conformance.ts",
     "test": "tsx --test test/**/*.test.ts",
     "verify": "npm run schema:check && npm run generate && npm run generated:check && npm run build && npm run test"
   },
