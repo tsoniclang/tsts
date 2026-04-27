@@ -29,14 +29,28 @@ describe("checker groundwork", () => {
 
   it("checks JSX tag names, intrinsic fallback, and embedded expressions", () => {
     const sourceFile = parseSourceFile("const x = 1; const view = <div>{missing}<Component /></div>;", { fileName: "view.tsx" });
-    const result = checkSourceFile(sourceFile, { jsx: "react" });
+    const result = checkSourceFile(sourceFile, { jsx: "preserve" });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.",
       "Cannot find name 'missing'.",
       "Cannot find name 'Component'.",
+      "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.",
     ]);
-    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [7026, 2304, 2304]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [7026, 2304, 2304, 7026]);
+  });
+
+  it("reports missing JSX runtime dependencies by emit mode", () => {
+    const sourceFile = parseSourceFile("const view = <div />;", { fileName: "view.tsx" });
+
+    assert.deepEqual(checkSourceFile(sourceFile, { jsx: "react" }).diagnostics.map(diagnostic => diagnostic.message), [
+      "This JSX tag requires 'React' to be in scope, but it could not be found.",
+      "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.",
+    ]);
+    assert.deepEqual(checkSourceFile(sourceFile, { jsx: "react-jsx" }).diagnostics.map(diagnostic => diagnostic.message), [
+      "This JSX tag requires the module path 'react/jsx-runtime' to exist, but none could be found. Make sure you have types for the appropriate package installed.",
+      "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.",
+    ]);
   });
 
   it("reports missing JSX mode without cascading JSX semantic diagnostics", () => {

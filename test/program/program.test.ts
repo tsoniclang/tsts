@@ -175,6 +175,69 @@ describe("program groundwork", () => {
     ]);
   });
 
+  it("merges declare-global augmentations from external modules into program globals", () => {
+    const files = new Map<string, string>([
+      [
+        "index.tsx",
+        [
+          "declare global {",
+          "  function __make(params: object): any;",
+          "}",
+          "declare var __foot: any;",
+          "const thing = <__foot />;",
+          "export {};",
+        ].join("\n"),
+      ],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["index.tsx"], { jsx: "react", jsxFactory: "__make", module: "commonjs" }, host);
+
+    assert.deepEqual(getProgramDiagnostics(program), []);
+  });
+
+  it("resolves automatic JSX runtime modules as implicit dependencies without import diagnostics", () => {
+    const files = new Map<string, string>([
+      ["src/file.tsx", "export const view = <div />;"],
+      ["src/node_modules/@types/react/jsx-runtime.d.ts", "import './';"],
+      ["src/node_modules/@types/react/index.d.ts", "declare namespace JSX { interface IntrinsicElements { [x: string]: any; } }"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/file.tsx"], { jsx: "react-jsx" }, host);
+
+    assert.equal(program.diagnostics.length, 0);
+    assert.deepEqual(program.sourceFiles.map(file => file.fileName), [
+      "src/file.tsx",
+      "src/node_modules/@types/react/jsx-runtime.d.ts",
+      "src/node_modules/@types/react/index.d.ts",
+    ]);
+    assert.deepEqual(getProgramDiagnostics(program), []);
+  });
+
+  it("prebinds ambient namespaces for self references and function namespace merges", () => {
+    const files = new Map<string, string>([
+      ["src/db.d.ts", "declare namespace Db { export import Types = Db; } export = Db;"],
+      ["src/moment.d.ts", "declare function moment(): moment.Moment; declare namespace moment { interface Moment { valueOf(): number; } } export = moment;"],
+      ["src/app.ts", "import * as Db from './db'; import moment = require('./moment'); const value = moment().valueOf();"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/app.ts"], { module: "commonjs" }, host);
+
+    assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["src/app.ts", "src/db.d.ts", "src/moment.d.ts"]);
+    assert.deepEqual(getProgramDiagnostics(program), []);
+  });
+
   it("resolves non-relative modules through baseUrl before package lookup", () => {
     const files = new Map<string, string>([
       ["/proj/component/file.ts", "import { CharCode } from \"defs/cc\"; export const value = CharCode.A;"],

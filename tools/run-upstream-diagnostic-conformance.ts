@@ -44,6 +44,10 @@ interface CaseCompilerOptions extends CompilerOptions {
   readonly noUncheckedSideEffectImports?: boolean;
   readonly declaration?: boolean;
   readonly jsx?: ts.JsxEmit;
+  readonly jsxFactory?: string;
+  readonly jsxFragmentFactory?: string;
+  readonly jsxImportSource?: string;
+  readonly reactNamespace?: string;
 }
 
 interface ComparableDiagnostic {
@@ -253,6 +257,16 @@ function parseBaselineCompilerOptions(baselineFileName: string): CaseCompilerOpt
       options = { ...options, target: parseScriptTarget(value) };
     } else if (key === "module" && value !== undefined) {
       options = { ...options, module: parseModuleKind(value) };
+    } else if (key === "jsx" && value !== undefined) {
+      options = { ...options, jsx: parseJsxEmit(value) };
+    } else if (key === "jsxfactory" && value !== undefined) {
+      options = { ...options, jsxFactory: value };
+    } else if (key === "jsxfragmentfactory" && value !== undefined) {
+      options = { ...options, jsxFragmentFactory: value };
+    } else if (key === "jsximportsource" && value !== undefined) {
+      options = { ...options, jsxImportSource: value };
+    } else if (key === "reactnamespace" && value !== undefined) {
+      options = { ...options, reactNamespace: value };
     } else if (key === "allowsyntheticdefaultimports" && value !== undefined) {
       options = { ...options, allowSyntheticDefaultImports: parseBoolean(value) };
     } else if (key === "alwaysstrict" && value !== undefined) {
@@ -374,6 +388,18 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
       case "jsx":
         options = { ...options, jsx: parseJsxEmit(value) };
         break;
+      case "jsxfactory":
+        options = { ...options, jsxFactory: value };
+        break;
+      case "jsxfragmentfactory":
+        options = { ...options, jsxFragmentFactory: value };
+        break;
+      case "jsximportsource":
+        options = { ...options, jsxImportSource: value };
+        break;
+      case "reactnamespace":
+        options = { ...options, reactNamespace: value };
+        break;
       default:
         break;
     }
@@ -434,7 +460,7 @@ function parseModuleKind(value: string): ModuleKindName {
 }
 
 function parseJsxEmit(value: string): ts.JsxEmit {
-  const normalized = value.toLowerCase();
+  const normalized = value.toLowerCase().replace(/[-_]/g, "");
   const jsx: Record<string, ts.JsxEmit> = {
     none: ts.JsxEmit.None,
     preserve: ts.JsxEmit.Preserve,

@@ -845,7 +845,7 @@ function globalEnvironmentForProgram(program: Program): TypeEnvironment {
       continue;
     }
     for (const statement of sourceFile.sourceFile.statements) {
-      if (isModuleDeclaration(statement) && ambientModuleSpecifier(statement) === undefined && hasDeclareModifier(statement)) {
+      if (isModuleDeclaration(statement) && isGlobalAugmentationDeclaration(statement)) {
         checkModuleDeclaration(statement, checkStateForSourceFile(sourceFile.sourceFile, program.options), environment, undefined, true);
       }
     }
@@ -1350,6 +1350,11 @@ function prebindStatementDeclarations(statements: readonly Statement[], state: C
       bindEnumDeclaration(statement, emptyCheckState(state.options), environment, ambient || hasDeclareModifier(statement));
     }
   }
+  for (const statement of statements) {
+    if (isModuleDeclaration(statement) && moduleDeclarationName(statement) !== undefined && (ambient || hasDeclareModifier(statement))) {
+      checkModuleDeclaration(statement, emptyCheckState(state.options), environment, undefined, true);
+    }
+  }
 }
 
 function prebindFunctionOverloadDeclarations(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, ambient: boolean): FunctionOverloadInfo | undefined {
@@ -1534,6 +1539,12 @@ function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly
   if (isMissingModuleDeclarationName(moduleDeclaration)) {
     state.diagnostics.push(createDiagnostic(moduleDeclaration.keyword === Kind.ModuleKeyword ? 2591 : 2304, moduleDeclaration.keyword === Kind.ModuleKeyword ? "module" : "namespace"));
   }
+  if (isGlobalAugmentationDeclaration(moduleDeclaration)) {
+    if (isModuleBlock(moduleDeclaration.body)) {
+      checkStatements(moduleDeclaration.body.statements, state, environment, expectedReturnType, true);
+    }
+    return;
+  }
   if (isGlobalAmbientExternalModuleDeclaration(moduleDeclaration) && isStringLiteral(moduleDeclaration.name) && isRelativeModuleName(moduleDeclaration.name.text)) {
     state.diagnostics.push(createDiagnostic(2436));
   }
@@ -1547,6 +1558,13 @@ function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly
   const moduleName = moduleDeclarationName(moduleDeclaration);
   const namespaceEnvironment = cloneTypeEnvironment(environment);
   const moduleBodyAmbient = ambient || hasDeclareModifier(moduleDeclaration);
+  if (moduleName !== undefined) {
+    const existingNamespace = namespaceMeaning(environment.get(moduleName) ?? anyType);
+    namespaceEnvironment.set(
+      moduleName,
+      mergeNamespaceType(namespaceEnvironment.get(moduleName), { kind: "namespace", name: moduleName, exports: new Map(existingNamespace?.exports ?? []) }),
+    );
+  }
   if (isModuleBlock(moduleDeclaration.body)) {
     if (!moduleBodyAmbient) {
       checkNamespaceValueDeclarationDuplicates(moduleDeclaration.body.statements, state);
@@ -1628,6 +1646,14 @@ function isGlobalAmbientExternalModuleDeclaration(moduleDeclaration: Extract<Sta
     && isStringLiteral(moduleDeclaration.name)
     && isSourceFile(moduleDeclaration.parent)
     && !sourceFileIsExternalModule(moduleDeclaration.parent);
+}
+
+function isGlobalAugmentationDeclaration(moduleDeclaration: Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>): boolean {
+  return hasDeclareModifier(moduleDeclaration)
+    && isIdentifier(moduleDeclaration.name)
+    && moduleDeclaration.name.text === "global"
+    && isSourceFile(moduleDeclaration.parent)
+    && sourceFileIsExternalModule(moduleDeclaration.parent);
 }
 
 function isAmbientExternalModuleRelativeImportOrExport(statement: Statement): boolean {
@@ -4315,6 +4341,9 @@ function inferJsxElement(expression: JsxElement, state: CheckState, environment:
   for (const child of expression.children) {
     checkJsxChild(child, jsxEnabled, state, environment);
   }
+  if (jsxEnabled) {
+    checkJsxClosingTagName(expression.closingElement.tagName, state, environment);
+  }
   return anyType;
 }
 
@@ -4327,6 +4356,9 @@ function inferJsxSelfClosingElement(expression: JsxSelfClosingElement, state: Ch
 
 function inferJsxFragment(expression: JsxFragment, state: CheckState, environment: TypeEnvironment): CheckedType {
   const jsxEnabled = checkJsxUsage(state);
+  if (jsxEnabled) {
+    checkJsxRuntime(state, environment);
+  }
   for (const child of expression.children) {
     checkJsxChild(child, jsxEnabled, state, environment);
   }
@@ -4339,6 +4371,44 @@ function checkJsxUsage(state: CheckState): boolean {
   }
   state.diagnostics.push(createDiagnostic(17004));
   return false;
+}
+
+function checkJsxRuntime(state: CheckState, environment: TypeEnvironment): void {
+  const runtime = jsxRuntimeRequirement(state.options);
+  if (runtime === undefined) {
+    return;
+  }
+  if (runtime.kind === "factory") {
+    const factoryBinding = environment.get(runtime.name);
+    if (factoryBinding === undefined || valueMeaning(factoryBinding) === undefined) {
+      state.diagnostics.push(createDiagnostic(2874, runtime.name));
+    }
+    return;
+  }
+  if (state.resolveExternalModule?.(runtime.modulePath) === undefined) {
+    state.diagnostics.push(createDiagnostic(jsxRuntimeModuleDiagnosticCode(state.options), runtime.modulePath));
+  }
+}
+
+function jsxRuntimeRequirement(options: CompilerOptions): { readonly kind: "factory"; readonly name: string } | { readonly kind: "module"; readonly modulePath: string } | undefined {
+  if (options.jsx === 2 || options.jsx === "react") {
+    return { kind: "factory", name: jsxFactoryBaseName(options.jsxFactory ?? options.reactNamespace ?? "React") };
+  }
+  if (options.jsx === 4 || options.jsx === "react-jsx") {
+    return { kind: "module", modulePath: `${options.jsxImportSource ?? "react"}/jsx-runtime` };
+  }
+  if (options.jsx === 5 || options.jsx === "react-jsxdev") {
+    return { kind: "module", modulePath: `${options.jsxImportSource ?? "react"}/jsx-dev-runtime` };
+  }
+  return undefined;
+}
+
+function jsxFactoryBaseName(factoryName: string): string {
+  return factoryName.split(".")[0] ?? factoryName;
+}
+
+function jsxRuntimeModuleDiagnosticCode(options: CompilerOptions): 2792 | 2875 {
+  return options.module === "amd" || options.module === "system" ? 2792 : 2875;
 }
 
 function checkJsxChild(child: JsxChild, jsxEnabled: boolean, state: CheckState, environment: TypeEnvironment): void {
@@ -4362,6 +4432,7 @@ function checkJsxChild(child: JsxChild, jsxEnabled: boolean, state: CheckState, 
 }
 
 function checkJsxOpeningLike(tagName: JsxTagNameExpression, attributes: readonly JsxAttributeLike[], state: CheckState, environment: TypeEnvironment): void {
+  checkJsxRuntime(state, environment);
   checkJsxTagName(tagName, state, environment);
   for (const attribute of attributes) {
     if (attribute.kind === Kind.JsxSpreadAttribute) {
@@ -4387,6 +4458,12 @@ function checkJsxTagName(tagName: JsxTagNameExpression, state: CheckState, envir
   }
   if (isPropertyAccessExpression(tagName)) {
     inferExpression(tagName, state, environment);
+  }
+}
+
+function checkJsxClosingTagName(tagName: JsxTagNameExpression, state: CheckState, environment: TypeEnvironment): void {
+  if (isIdentifier(tagName) && isIntrinsicJsxTagName(tagName.text) && jsxIntrinsicElementsType(environment) === undefined) {
+    state.diagnostics.push(createDiagnostic(7026, "IntrinsicElements"));
   }
 }
 

@@ -3,7 +3,7 @@ import { bindSourceFile, type BindDiagnostic, type BindResult } from "../binder/
 import { checkProgram } from "../checker/index.js";
 import { printSourceFile } from "../emit-js/index.js";
 import { parseSourceFileWithDiagnostics } from "../parser/index.js";
-import { Kind, isExportAssignment, isExportDeclaration, isExternalModuleReference, isImportDeclaration, isImportEqualsDeclaration, isModuleDeclaration, isStringLiteral, type SourceFile } from "../ast/index.js";
+import { Kind, forEachChild, isExportAssignment, isExportDeclaration, isExternalModuleReference, isImportDeclaration, isImportEqualsDeclaration, isModuleDeclaration, isStringLiteral, type Node, type SourceFile } from "../ast/index.js";
 import { createDiagnosticAt, type DiagnosticCategory, type DiagnosticCode } from "../diagnostics/index.js";
 
 export interface CompilerOptions {
@@ -25,6 +25,10 @@ export interface CompilerOptions {
   readonly noUncheckedSideEffectImports?: boolean;
   readonly declaration?: boolean;
   readonly jsx?: unknown;
+  readonly jsxFactory?: string;
+  readonly jsxFragmentFactory?: string;
+  readonly jsxImportSource?: string;
+  readonly reactNamespace?: string;
 }
 
 export type ScriptTargetName = "es3" | "es5" | "es2015" | "es2016" | "es2017" | "es2018" | "es2019" | "es2020" | "es2021" | "es2022" | "es2023" | "es2024" | "esnext";
@@ -127,6 +131,15 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
     moduleAugmentations.push(...sourceFileModuleAugmentationSpecifiers(sourceFile).map(moduleSpecifier => ({ fileName: rootName, moduleSpecifier })));
     diagnostics.push(...sourceFileAmbientModuleGrammarDiagnostics(rootName, sourceFile));
     const resolvedModules: ResolvedModule[] = [];
+    const recordResolvedModule = (moduleSpecifier: string, resolved: ModuleResolution): void => {
+      if (resolved.fileName === undefined) {
+        return;
+      }
+      resolvedModules.push({ specifier: moduleSpecifier, fileName: resolved.fileName });
+      if (!seen.has(canonicalFileName(resolved.fileName, host))) {
+        pending.push(resolved.fileName);
+      }
+    };
     for (const moduleReference of sourceFileModuleReferences(sourceFile)) {
       const resolved = resolveModuleName(moduleReference.moduleSpecifier, rootName, options, host, fileTextCache);
       if (!resolved.found) {
@@ -134,12 +147,12 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
         continue;
       }
       diagnostics.push(...moduleResolutionDiagnostics(rootName, moduleReference.moduleSpecifier, resolved, options));
-      if (resolved.fileName !== undefined && !seen.has(canonicalFileName(resolved.fileName, host))) {
-        resolvedModules.push({ specifier: moduleReference.moduleSpecifier, fileName: resolved.fileName });
-        pending.push(resolved.fileName);
-      }
-      if (resolved.fileName !== undefined && seen.has(canonicalFileName(resolved.fileName, host))) {
-        resolvedModules.push({ specifier: moduleReference.moduleSpecifier, fileName: resolved.fileName });
+      recordResolvedModule(moduleReference.moduleSpecifier, resolved);
+    }
+    for (const moduleReference of sourceFileImplicitModuleReferences(sourceFile, options)) {
+      const resolved = resolveModuleName(moduleReference.moduleSpecifier, rootName, options, host, fileTextCache);
+      if (resolved.found) {
+        recordResolvedModule(moduleReference.moduleSpecifier, resolved);
       }
     }
     sourceFiles.push({
@@ -211,6 +224,32 @@ function sourceFileModuleReferences(sourceFile: SourceFile): readonly SourceFile
   const references: SourceFileModuleReference[] = [];
   collectModuleReferences(sourceFile.statements, references);
   return references;
+}
+
+function sourceFileImplicitModuleReferences(sourceFile: SourceFile, options: CompilerOptions): readonly SourceFileModuleReference[] {
+  const runtimeModule = automaticJsxRuntimeModule(options);
+  if (runtimeModule === undefined || !sourceFileContainsJsx(sourceFile)) {
+    return [];
+  }
+  return [{ moduleSpecifier: runtimeModule, sideEffectOnly: false }];
+}
+
+function automaticJsxRuntimeModule(options: CompilerOptions): string | undefined {
+  const importSource = options.jsxImportSource ?? "react";
+  if (options.jsx === 4 || options.jsx === "react-jsx") {
+    return `${importSource}/jsx-runtime`;
+  }
+  if (options.jsx === 5 || options.jsx === "react-jsxdev") {
+    return `${importSource}/jsx-dev-runtime`;
+  }
+  return undefined;
+}
+
+function sourceFileContainsJsx(node: Node): boolean {
+  if (node.kind === Kind.JsxElement || node.kind === Kind.JsxSelfClosingElement || node.kind === Kind.JsxFragment) {
+    return true;
+  }
+  return forEachChild(node, child => sourceFileContainsJsx(child) ? true : undefined) === true;
 }
 
 function collectModuleReferences(statements: readonly SourceFile["statements"][number][], references: SourceFileModuleReference[]): void {
@@ -341,6 +380,10 @@ function resolveModuleName(moduleSpecifier: string, containingFileName: string, 
     if (resolvedPackageFile !== undefined) {
       return { found: true, fileName: resolvedPackageFile };
     }
+    const resolvedTypesPackageFile = typePackageResolutionCandidates(moduleSpecifier, containingFileName, options, host, cache).find(candidate => readFileCached(candidate, host, cache) !== undefined);
+    if (resolvedTypesPackageFile !== undefined) {
+      return { found: true, fileName: resolvedTypesPackageFile };
+    }
     return { found: false };
   }
   return { found: false };
@@ -431,6 +474,37 @@ function packageResolutionCandidates(moduleSpecifier: string, containingFileName
       join(base, "index.d.cts"),
     ];
   });
+}
+
+function typePackageResolutionCandidates(moduleSpecifier: string, containingFileName: string, options: CompilerOptions, host: CompilerHost, cache: Map<string, string | undefined>): readonly string[] {
+  const typePackage = typePackageNameAndSubpath(moduleSpecifier);
+  if (typePackage === undefined) {
+    return [];
+  }
+  return nodeModulesSearchDirectories(dirname(containingFileName)).flatMap(nodeModulesDirectory => {
+    const packageDirectory = join(nodeModulesDirectory, "@types", typePackage.packageName);
+    const subpathBase = typePackage.subpath === "" ? packageDirectory : join(packageDirectory, typePackage.subpath);
+    return [
+      ...moduleResolutionCandidates(subpathBase, options),
+      ...(typePackage.subpath === "" ? packageJsonResolutionCandidates(packageDirectory, options, host, cache) : []),
+    ];
+  });
+}
+
+function typePackageNameAndSubpath(moduleSpecifier: string): { readonly packageName: string; readonly subpath: string } | undefined {
+  const parts = moduleSpecifier.split("/");
+  if (parts.length === 0 || parts[0] === "") {
+    return undefined;
+  }
+  if (parts[0]?.startsWith("@") === true) {
+    const scope = parts[0].slice(1);
+    const packageName = parts[1];
+    if (packageName === undefined) {
+      return undefined;
+    }
+    return { packageName: `${scope}__${packageName}`, subpath: parts.slice(2).join("/") };
+  }
+  return { packageName: parts[0]!, subpath: parts.slice(1).join("/") };
 }
 
 function nodeModulesSearchDirectories(startDirectory: string): readonly string[] {
