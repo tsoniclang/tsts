@@ -35,6 +35,8 @@ interface CaseCompilerOptions extends CompilerOptions {
   readonly moduleResolution?: ModuleResolutionKindName;
   readonly strict?: boolean;
   readonly noImplicitAny?: boolean;
+  readonly noUnusedLocals?: boolean;
+  readonly noUnusedParameters?: boolean;
   readonly strictNullChecks?: boolean;
   readonly strictPropertyInitialization?: boolean;
   readonly exactOptionalPropertyTypes?: boolean;
@@ -291,6 +293,10 @@ function parseBaselineCompilerOptions(baselineFileName: string): CaseCompilerOpt
       options = { ...options, strict: parseBoolean(value) };
     } else if (key === "noimplicitany" && value !== undefined) {
       options = { ...options, noImplicitAny: parseBoolean(value) };
+    } else if (key === "nounusedlocals" && value !== undefined) {
+      options = { ...options, noUnusedLocals: parseBoolean(value) };
+    } else if (key === "nounusedparameters" && value !== undefined) {
+      options = { ...options, noUnusedParameters: parseBoolean(value) };
     } else if (key === "strictnullchecks" && value !== undefined) {
       options = { ...options, strictNullChecks: parseBoolean(value) };
     } else if (key === "strictpropertyinitialization" && value !== undefined) {
@@ -425,6 +431,12 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
         break;
       case "noimplicitany":
         options = { ...options, noImplicitAny: parseBoolean(value) };
+        break;
+      case "nounusedlocals":
+        options = { ...options, noUnusedLocals: parseBoolean(value) };
+        break;
+      case "nounusedparameters":
+        options = { ...options, noUnusedParameters: parseBoolean(value) };
         break;
       case "strictnullchecks":
         options = { ...options, strictNullChecks: parseBoolean(value) };

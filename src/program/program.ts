@@ -16,6 +16,8 @@ export interface CompilerOptions {
   readonly moduleResolution?: ModuleResolutionKindName;
   readonly strict?: boolean;
   readonly noImplicitAny?: boolean;
+  readonly noUnusedLocals?: boolean;
+  readonly noUnusedParameters?: boolean;
   readonly strictNullChecks?: boolean;
   readonly strictPropertyInitialization?: boolean;
   readonly exactOptionalPropertyTypes?: boolean;
