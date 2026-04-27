@@ -928,6 +928,24 @@ describe("checker groundwork", () => {
       "new WeakSet();",
       "new WeakRef({});",
       "new FinalizationRegistry(() => undefined);",
+      "isFinite(Infinity);",
+      "isNaN(NaN);",
+      "parseFloat(\"1\");",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("models globalThis as the standard global value namespace", () => {
+    const sourceFile = parseSourceFile([
+      "const finite = globalThis.isFinite;",
+      "const nan: typeof globalThis.isNaN = isNaN;",
+      "const symbol = globalThis.Symbol;",
+      "const value: number = globalThis.NaN + globalThis.Infinity;",
+      "nan(value);",
+      "finite(value);",
+      "symbol;",
     ].join("\n"));
     const result = checkSourceFile(sourceFile);
 

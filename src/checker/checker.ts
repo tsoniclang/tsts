@@ -972,13 +972,23 @@ function standardGlobalEnvironment(): TypeEnvironment {
     ["WeakMap", anyType],
     ["WeakRef", anyType],
     ["WeakSet", anyType],
+    ["Infinity", numberType],
+    ["NaN", numberType],
+    ["isFinite", standardGlobalFunction("isFinite", [numberType], booleanType)],
+    ["isNaN", standardGlobalFunction("isNaN", [numberType], booleanType)],
+    ["parseFloat", standardGlobalFunction("parseFloat", [stringType], numberType)],
     ["parseInt", standardGlobalFunction("parseInt", [stringType], numberType)],
     ["undefined", undefinedType],
   ];
   for (const name of typedArrayGlobalNames) {
     entries.push([name, anyType]);
   }
-  return new Map(entries);
+  const environment: TypeEnvironment = new Map(entries);
+  const globalThisExports = new Map(environment);
+  const globalThisNamespace: CheckedType = { kind: "namespace", name: "globalThis", exports: globalThisExports };
+  globalThisExports.set("globalThis", globalThisNamespace);
+  environment.set("globalThis", globalThisNamespace);
+  return environment;
 }
 
 function collectReExports(statement: Extract<Statement, { readonly kind: Kind.ExportDeclaration }>, reexported: ModuleExportInfo | undefined, exports: Map<string, CheckedType>): void {
