@@ -163,34 +163,15 @@ function parseCompilerCase(name: string, path: string, text: string): CompilerCa
   };
 }
 
-function upstreamDiagnostics(testCase: CompilerCase): readonly ComparableDiagnostic[] {
-  const fileMap = new Map(testCase.files.map(file => [normalizeFileName(file.fileName), file.text]));
-  const rootNames = testCase.rootNames.map(normalizeFileName);
-  const compilerOptions = { ...defaultCompilerOptions, ...testCase.compilerOptions };
-  const host = ts.createCompilerHost(compilerOptions);
-  const defaultFileExists = host.fileExists.bind(host);
-  const defaultReadFile = host.readFile.bind(host);
-  const defaultGetSourceFile = host.getSourceFile.bind(host);
-  host.fileExists = name => fileMap.has(normalizeFileName(name)) || defaultFileExists(name);
-  host.readFile = name => fileMap.get(normalizeFileName(name)) ?? defaultReadFile(name);
-  host.getSourceFile = (name, languageVersion) => {
-    const text = fileMap.get(normalizeFileName(name));
-    return text === undefined ? defaultGetSourceFile(name, languageVersion) : ts.createSourceFile(name, text, languageVersion, true);
-  };
-
-  const program = ts.createProgram(rootNames, compilerOptions, host);
-  return ts.getPreEmitDiagnostics(program)
-    .filter(diagnostic => diagnostic.file === undefined || fileMap.has(normalizeFileName(diagnostic.file.fileName)))
-    .map(diagnostic => ({
-      code: diagnostic.code,
-      fileName: diagnostic.file === undefined ? undefined : normalizeFileName(diagnostic.file.fileName),
-      message: ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
-    }))
-    .sort(compareDiagnostics);
+async function typescriptBaselineDiagnostics(testCase: CompilerCase): Promise<readonly ComparableDiagnostic[]> {
+  return baselineDiagnostics(join("test", "upstream", "typescript", "baselines", "reference", "compiler", `${caseBaseName(testCase.name)}.errors.txt`));
 }
 
 async function tsgoBaselineDiagnostics(testCase: CompilerCase): Promise<readonly ComparableDiagnostic[]> {
-  const errorsFile = join("test", "upstream", "tsgo", "baselines", "reference", "compiler", `${caseBaseName(testCase.name)}.errors.txt`);
+  return baselineDiagnostics(join("test", "upstream", "tsgo", "baselines", "reference", "compiler", `${caseBaseName(testCase.name)}.errors.txt`));
+}
+
+async function baselineDiagnostics(errorsFile: string): Promise<readonly ComparableDiagnostic[]> {
   if (!existsSync(errorsFile)) {
     return [];
   }
@@ -394,7 +375,17 @@ function classifyFailure(upstream: readonly ComparableDiagnostic[], actual: read
 }
 
 function equalDiagnostics(upstream: readonly ComparableDiagnostic[], actual: readonly ComparableDiagnostic[]): boolean {
-  return JSON.stringify(upstream) === JSON.stringify(actual);
+  if (upstream.length !== actual.length) {
+    return false;
+  }
+  for (let index = 0; index < upstream.length; index += 1) {
+    const expected = upstream[index]!;
+    const observed = actual[index]!;
+    if (expected.code !== observed.code || expected.fileName !== observed.fileName || expected.message !== observed.message) {
+      return false;
+    }
+  }
+  return true;
 }
 
 async function main(): Promise<void> {
@@ -408,7 +399,7 @@ async function main(): Promise<void> {
     let actual: readonly ComparableDiagnostic[] = [];
     let error: unknown;
     try {
-      upstream = options.suite === "tsgo" ? await tsgoBaselineDiagnostics(testCase) : upstreamDiagnostics(testCase);
+      upstream = options.suite === "tsgo" ? await tsgoBaselineDiagnostics(testCase) : await typescriptBaselineDiagnostics(testCase);
       actual = tstsDiagnostics(testCase);
     } catch (caught) {
       error = caught;

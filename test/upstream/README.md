@@ -1,6 +1,6 @@
 Vendored upstream compiler conformance inputs.
 
-These files are copied as source inputs only. The conformance runner compares the diagnostics produced by the installed TypeScript API against `tsts` for the same cases; it does not trust or import upstream baseline output.
+These files are copied as source inputs plus pinned diagnostic baselines. The conformance runner treats upstream `.errors.txt` baselines as the oracle instead of re-deriving expected diagnostics with the installed TypeScript API, because the official compiler suite depends on harness virtual-file semantics that are not equivalent to a raw `ts.createProgram` call.
 
 Pinned upstream sources:
 
@@ -10,6 +10,7 @@ Pinned upstream sources:
 Directories:
 
 - `typescript/compiler`: copied from TypeScript `tests/cases/compiler`
+- `typescript/baselines/reference/compiler`: copied from TypeScript `tests/baselines/reference/*.errors.txt`
 - `tsgo/compiler`: copied from TS-Go `testdata/tests/cases/compiler`
 - `tsgo/baselines/reference/compiler`: copied from TS-Go `testdata/baselines/reference/compiler`
 
