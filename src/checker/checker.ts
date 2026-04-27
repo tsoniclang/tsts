@@ -121,6 +121,7 @@ import {
   type TypeAliasDeclaration,
   type TypeNode,
   type TypePredicateNode,
+  type TypeReferenceNode,
   type VariableDeclaration,
 } from "../ast/index.js";
 import { createDiagnostic, type Diagnostic } from "../diagnostics/index.js";
@@ -2560,7 +2561,11 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   }
   if (isElementAccessExpression(expression)) {
     const receiver = inferExpression(expression.expression, state, environment);
-    inferExpression(expression.argumentExpression, state, environment);
+    const argumentType = inferExpression(expression.argumentExpression, state, environment);
+    const invalidIndexType = invalidElementAccessIndexType(argumentType);
+    if (invalidIndexType !== undefined) {
+      state.diagnostics.push(createDiagnostic(2538, displayType(invalidIndexType)));
+    }
     if (receiver.kind === "array") {
       return receiver.elementType;
     }
@@ -3262,6 +3267,31 @@ function interfaceElementAccessType(members: InterfaceMembers, argument: Express
   return members.numberIndexType ?? members.stringIndexType ?? unresolvedType;
 }
 
+function invalidElementAccessIndexType(type: CheckedType): CheckedType | undefined {
+  if (type.kind === "unassignedVariable") {
+    return invalidElementAccessIndexType(type.type);
+  }
+  if (type.kind === "valueOnly") {
+    return invalidElementAccessIndexType(type.type);
+  }
+  if (type.kind === "valueAndType") {
+    return invalidElementAccessIndexType(type.value);
+  }
+  if (type.kind === "typeAliasInstance") {
+    return invalidElementAccessIndexType(type.target);
+  }
+  if (type.kind === "nonNullable") {
+    return invalidElementAccessIndexType(nonNullableType(type.target));
+  }
+  if (type.kind === "union") {
+    return type.types.find(member => invalidElementAccessIndexType(member) !== undefined);
+  }
+  if (type.kind === "any" || type.kind === "never" || type.kind === "number" || type.kind === "string" || type.kind === "unresolved") {
+    return undefined;
+  }
+  return type;
+}
+
 function diagnoseThisPropertyAccess(receiverType: Extract<CheckedType, { readonly kind: "thisClass" }>, propertyName: string, state: CheckState): void {
   if (receiverType.mode !== "method" && receiverType.abstractProperties.has(propertyName)) {
     state.diagnostics.push(createDiagnostic(2715, propertyName, receiverType.abstractPropertyDeclaringClasses.get(propertyName) ?? receiverType.className));
@@ -3573,20 +3603,35 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
   }
   if (isTypeReferenceNode(type)) {
     const name = entityNameText(type.typeName);
-    if (name === "Array" && type.typeArguments?.[0] !== undefined) {
-      return { kind: "array", elementType: typeFromTypeNode(type.typeArguments[0], environment, state) };
+    if (name === "Array") {
+      if (!hasTypeArgumentArity(type, "Array<T>", 1, state)) {
+        return { kind: "array", elementType: anyType };
+      }
+      return { kind: "array", elementType: typeFromTypeNode(type.typeArguments![0]!, environment, state) };
     }
-    if (name === "ArrayLike" && type.typeArguments?.[0] !== undefined) {
-      return { kind: "arrayLike", elementType: typeFromTypeNode(type.typeArguments[0], environment, state) };
+    if (name === "ArrayLike") {
+      if (!hasTypeArgumentArity(type, "ArrayLike<T>", 1, state)) {
+        return { kind: "arrayLike", elementType: anyType };
+      }
+      return { kind: "arrayLike", elementType: typeFromTypeNode(type.typeArguments![0]!, environment, state) };
     }
-    if (name === "Iterable" && type.typeArguments?.[0] !== undefined) {
-      return { kind: "iterable", elementType: typeFromTypeNode(type.typeArguments[0], environment, state) };
+    if (name === "Iterable") {
+      if (!hasTypeArgumentArity(type, "Iterable<T>", 1, state)) {
+        return { kind: "iterable", elementType: anyType };
+      }
+      return { kind: "iterable", elementType: typeFromTypeNode(type.typeArguments![0]!, environment, state) };
     }
-    if (name === "Set" && type.typeArguments?.[0] !== undefined) {
-      return { kind: "set", elementType: typeFromTypeNode(type.typeArguments[0], environment, state) };
+    if (name === "Set") {
+      if (!hasTypeArgumentArity(type, "Set<T>", 1, state)) {
+        return { kind: "set", elementType: anyType };
+      }
+      return { kind: "set", elementType: typeFromTypeNode(type.typeArguments![0]!, environment, state) };
     }
-    if (name === "NonNullable" && type.typeArguments?.[0] !== undefined) {
-      return { kind: "nonNullable", target: typeFromTypeNode(type.typeArguments[0], environment, state) };
+    if (name === "NonNullable") {
+      if (!hasTypeArgumentArity(type, "NonNullable<T>", 1, state)) {
+        return { kind: "nonNullable", target: anyType };
+      }
+      return { kind: "nonNullable", target: typeFromTypeNode(type.typeArguments![0]!, environment, state) };
     }
     const resolved = resolveEntityName(type.typeName, environment, state, "type");
     if (resolved !== undefined) {
@@ -3595,11 +3640,18 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
     if (name === "IArguments") {
       return iArgumentsType;
     }
-    if (name === "Record" && type.typeArguments?.[0] !== undefined && type.typeArguments[1] !== undefined) {
+    if (name === "Record") {
+      if (!hasTypeArgumentArity(type, "Record<K, T>", 2, state)) {
+        return {
+          kind: "record",
+          keyType: anyType,
+          valueType: anyType,
+        };
+      }
       return {
         kind: "record",
-        keyType: typeFromTypeNode(type.typeArguments[0], environment, state),
-        valueType: typeFromTypeNode(type.typeArguments[1], environment, state),
+        keyType: typeFromTypeNode(type.typeArguments![0]!, environment, state),
+        valueType: typeFromTypeNode(type.typeArguments![1]!, environment, state),
       };
     }
     return anyType;
@@ -3623,6 +3675,15 @@ function typePredicateType(type: TypePredicateNode, environment: TypeEnvironment
     assertedType: type.type === undefined ? unknownType : typeFromTypeNode(type.type, environment, state),
     asserts: type.assertsModifier !== undefined,
   };
+}
+
+function hasTypeArgumentArity(type: TypeReferenceNode, displayName: string, required: number, state: CheckState | undefined): boolean {
+  const actual = type.typeArguments?.length ?? 0;
+  if (actual === required) {
+    return true;
+  }
+  state?.diagnostics.push(createDiagnostic(2314, displayName, String(required)));
+  return false;
 }
 
 function literalTypeNodeType(type: Extract<TypeNode, { readonly kind: Kind.LiteralType }>): CheckedType {

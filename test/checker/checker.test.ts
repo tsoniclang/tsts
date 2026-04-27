@@ -977,4 +977,23 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2715]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Abstract property 'value' in class 'Base' cannot be accessed in the constructor."]);
   });
+
+  it("reports omitted type arguments for built-in generic type references", () => {
+    const sourceFile = parseSourceFile("function f(items: Array, values: Record) { }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2314, 2314]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Generic type 'Array<T>' requires 1 type argument(s).",
+      "Generic type 'Record<K, T>' requires 2 type argument(s).",
+    ]);
+  });
+
+  it("reports invalid element access index types through union members", () => {
+    const sourceFile = parseSourceFile("declare const keys: (string | string[])[]; declare const values: number[]; values[keys[0]];");
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2538]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string[]' cannot be used as an index type."]);
+  });
 });
