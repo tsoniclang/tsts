@@ -173,6 +173,7 @@ type CheckedType =
   | { readonly kind: "arrayLike"; readonly elementType: CheckedType }
   | { readonly kind: "arrayIterator"; readonly elementType: CheckedType }
   | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType; readonly parameterNames?: readonly string[]; readonly restParameterIndex?: number; readonly minArgumentCount?: number; readonly maxArgumentCount?: number; readonly overloads?: readonly CheckedFunctionType[]; readonly construct?: boolean }
+  | { readonly kind: "functionDeclaration"; readonly name: string; readonly type: CheckedFunctionType }
   | { readonly kind: "globalObject" }
   | { readonly kind: "intrinsicConstructor"; readonly intrinsic: "Set" }
   | { readonly kind: "intrinsicFunction"; readonly intrinsic: "Array.from" | "Array.isArray" | "ArrayBuffer.isView" }
@@ -314,6 +315,14 @@ const emptyTypeSubstitutions: ReadonlyMap<string, CheckedType> = new Map();
 
 function standardFunctionType(parameters: readonly CheckedType[], returnType: CheckedType, options: Omit<CheckedFunctionType, "kind" | "typeParameters" | "parameters" | "returnType"> = {}): CheckedFunctionType {
   return { kind: "function", typeParameters: [], parameters, ...options, returnType };
+}
+
+function functionDeclarationBinding(name: string, type: CheckedFunctionType): Extract<CheckedType, { readonly kind: "functionDeclaration" }> {
+  return { kind: "functionDeclaration", name, type };
+}
+
+function standardGlobalFunction(name: string, parameters: readonly CheckedType[], returnType: CheckedType, options: Omit<CheckedFunctionType, "kind" | "typeParameters" | "parameters" | "returnType"> = {}): CheckedType {
+  return functionDeclarationBinding(name, standardFunctionType(parameters, returnType, options));
 }
 
 function standardInterfaceType(
@@ -790,6 +799,7 @@ function standardGlobalEnvironment(): TypeEnvironment {
       optionalProperties: new Set(),
       methodProperties: new Set(["debug", "error", "info", "log", "warn"]),
     }],
+    ["eval", standardGlobalFunction("eval", [stringType], anyType, { minArgumentCount: 0, maxArgumentCount: 1 })],
     ["Iterable", anyType],
     ["IterableIterator", { kind: "arrayIterator", elementType: anyType }],
     ["Math", {
@@ -849,7 +859,7 @@ function standardGlobalEnvironment(): TypeEnvironment {
     ["WeakMap", anyType],
     ["WeakRef", anyType],
     ["WeakSet", anyType],
-    ["parseInt", { kind: "function", typeParameters: [], parameters: [stringType], returnType: numberType }],
+    ["parseInt", standardGlobalFunction("parseInt", [stringType], numberType)],
     ["undefined", undefinedType],
   ];
   for (const name of typedArrayGlobalNames) {
@@ -1178,7 +1188,7 @@ function prebindFunctionOverloadDeclarations(statements: readonly Statement[], s
     const surfaceType = implementation === undefined
       ? overloadTypes[0]!
       : functionDeclarationType(implementation, environment, signatureState);
-    environment.set(statement.name.text, { ...surfaceType, overloads: overloadTypes });
+    environment.set(statement.name.text, functionDeclarationBinding(statement.name.text, { ...surfaceType, overloads: overloadTypes }));
     if (implementation !== undefined) {
       implementations.add(implementation);
       for (const overload of overloads) {
@@ -1633,6 +1643,9 @@ function valueMeaning(type: CheckedType): CheckedType | undefined {
   if (type.kind === "valueOnly") {
     return type.type;
   }
+  if (type.kind === "functionDeclaration") {
+    return type.type;
+  }
   if (type.kind === "interface" || type.kind === "typeAlias" || type.kind === "typeParameter") {
     return undefined;
   }
@@ -1647,6 +1660,9 @@ function typeMeaning(type: CheckedType): CheckedType | undefined {
     return type.type;
   }
   if (type.kind === "valueOnly") {
+    return undefined;
+  }
+  if (type.kind === "functionDeclaration") {
     return undefined;
   }
   if (type.kind === "interface" || type.kind === "typeAlias" || type.kind === "typeParameter" || type.kind === "classConstructor") {
@@ -3296,9 +3312,9 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
       ...(overloads === undefined ? {} : { overloads }),
     };
     if (functionDeclaration.body !== undefined || overloads === undefined) {
-      environment.set(functionDeclaration.name.text, functionType);
+      environment.set(functionDeclaration.name.text, functionDeclarationBinding(functionDeclaration.name.text, functionType));
     }
-    functionEnvironment.set(functionDeclaration.name.text, functionType);
+    functionEnvironment.set(functionDeclaration.name.text, functionDeclarationBinding(functionDeclaration.name.text, functionType));
   }
   seedArgumentsObject(functionEnvironment);
   for (let index = 0; index < functionDeclaration.parameters.length; index += 1) {
@@ -3592,6 +3608,9 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     if (bound?.kind === "valueAndType") {
       return bound.value;
     }
+    if (bound?.kind === "functionDeclaration") {
+      return bound.type;
+    }
     if (bound?.kind === "namespaceAndType") {
       const namespaceValue = namespaceValueMeaning(bound.namespace);
       if (namespaceValue !== undefined) {
@@ -3685,6 +3704,9 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     const left = inferExpression(expression.left, state, environment);
     const right = inferExpression(expression.right, state, environment);
     if (expression.operatorToken.kind === Kind.CommaToken) {
+      if (state.options.allowUnreachableCode !== true && isSideEffectFreeExpression(expression.left) && !isIndirectCallCommaExpression(expression)) {
+        state.diagnostics.push(createDiagnostic(2695));
+      }
       return right;
     }
     if (expression.operatorToken.kind === Kind.BarBarToken) {
@@ -4020,6 +4042,9 @@ function callableFunctionType(type: CheckedType | undefined): CheckedFunctionTyp
   }
   if (type.kind === "function") {
     return type;
+  }
+  if (type.kind === "functionDeclaration") {
+    return type.type;
   }
   if (type.kind === "object" && type.callSignatures !== undefined) {
     return callableFromCallSignatures(type.callSignatures);
@@ -4571,9 +4596,80 @@ function inferAssignmentExpression(expression: Extract<Expression, { readonly ki
   return right;
 }
 
+function isSideEffectFreeExpression(expression: Expression): boolean {
+  const unwrapped = skipParenthesizedExpression(expression);
+  switch (unwrapped.kind) {
+    case Kind.Identifier:
+    case Kind.StringLiteral:
+    case Kind.RegularExpressionLiteral:
+    case Kind.TaggedTemplateExpression:
+    case Kind.TemplateExpression:
+    case Kind.NoSubstitutionTemplateLiteral:
+    case Kind.NumericLiteral:
+    case Kind.BigIntLiteral:
+    case Kind.TrueKeyword:
+    case Kind.FalseKeyword:
+    case Kind.NullKeyword:
+    case Kind.FunctionExpression:
+    case Kind.ClassExpression:
+    case Kind.ArrowFunction:
+    case Kind.ArrayLiteralExpression:
+    case Kind.ObjectLiteralExpression:
+    case Kind.TypeOfExpression:
+    case Kind.NonNullExpression:
+    case Kind.JsxSelfClosingElement:
+    case Kind.JsxElement:
+      return true;
+    case Kind.ConditionalExpression:
+      return isSideEffectFreeExpression(unwrapped.whenTrue) && isSideEffectFreeExpression(unwrapped.whenFalse);
+    case Kind.BinaryExpression:
+      return !isAssignmentOperator(unwrapped.operatorToken.kind)
+        && isSideEffectFreeExpression(unwrapped.left)
+        && isSideEffectFreeExpression(unwrapped.right);
+    case Kind.PrefixUnaryExpression:
+      return unwrapped.operator === Kind.ExclamationToken
+        || unwrapped.operator === Kind.PlusToken
+        || unwrapped.operator === Kind.MinusToken
+        || unwrapped.operator === Kind.TildeToken;
+    case Kind.PostfixUnaryExpression:
+      return false;
+    default:
+      return false;
+  }
+}
+
+function skipParenthesizedExpression(expression: Expression): Expression {
+  let current = expression;
+  while (isParenthesizedExpression(current)) {
+    current = current.expression;
+  }
+  return current;
+}
+
+function isIndirectCallCommaExpression(expression: Extract<Expression, { readonly kind: Kind.BinaryExpression }>): boolean {
+  const parent = expression.parent;
+  if (parent === undefined || !isParenthesizedExpression(parent)) {
+    return false;
+  }
+  const grandParent = parent.parent;
+  if (grandParent === undefined) {
+    return false;
+  }
+  return isNumericLiteral(expression.left)
+    && expression.left.text === "0"
+    && (
+      isCallExpression(grandParent) && grandParent.expression === parent
+      || isTaggedTemplateExpression(grandParent)
+    )
+    && (isPropertyAccessExpression(expression.right) || isElementAccessExpression(expression.right) || isIdentifier(expression.right) && expression.right.text === "eval");
+}
+
 function assignmentTargetType(expression: Expression, environment: TypeEnvironment): CheckedType | undefined {
   if (isIdentifier(expression)) {
     const target = environment.get(expression.text);
+    if (target?.kind === "functionDeclaration") {
+      return undefined;
+    }
     return target?.kind === "unassignedVariable" ? target.type : target;
   }
   if (isParenthesizedExpression(expression)) {
@@ -4590,6 +4686,9 @@ function checkAssignmentTargetReference(expression: Expression, state: CheckStat
   if (isIdentifier(expression)) {
     checkStrictModeIdentifier(expression.text, state, false);
     const target = environment.get(expression.text);
+    if (target?.kind === "functionDeclaration") {
+      state.diagnostics.push(createDiagnostic(2630, expression.text));
+    }
     if (isClassValue(target)) {
       state.diagnostics.push(createDiagnostic(2629, expression.text));
     }
@@ -4664,6 +4763,9 @@ function checkPropertyAssignmentTarget(expression: Expression, propertyName: str
 function assignExpressionTarget(expression: Expression, assignedType: CheckedType, state: CheckState, environment: TypeEnvironment): void {
   if (isIdentifier(expression)) {
     const existing = environment.get(expression.text);
+    if (existing?.kind === "functionDeclaration") {
+      return;
+    }
     if (isClassValue(existing) || isEnumValue(existing) || isPlainNamespace(existing)) {
       return;
     }
@@ -4825,7 +4927,7 @@ function inferPropertyAccess(expression: Expression, optionalChain: boolean, pro
   if (receiverType.kind === "unknown" || receiverType.kind === "unresolved") {
     return anyType;
   }
-  if (receiverType.kind !== "any" && receiverType.kind !== "function") {
+  if (receiverType.kind !== "any" && receiverType.kind !== "function" && receiverType.kind !== "functionDeclaration") {
     diagnoseMissingPropertyAccess(receiverType, propertyName, state);
     return anyType;
   }
@@ -4919,6 +5021,9 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
     return propertyAccessType(receiverType.value, propertyName, environment);
   }
   if (receiverType.kind === "valueOnly") {
+    return propertyAccessType(receiverType.type, propertyName, environment);
+  }
+  if (receiverType.kind === "functionDeclaration") {
     return propertyAccessType(receiverType.type, propertyName, environment);
   }
   if (receiverType.kind === "namespaceAndType") {
@@ -6039,6 +6144,9 @@ function instantiateTypeQuery(type: CheckedType, typeArguments: readonly Checked
   }
   if (type.kind === "function") {
     return instantiateFunctionType(type, typeArguments);
+  }
+  if (type.kind === "functionDeclaration") {
+    return instantiateTypeQuery(type.type, typeArguments);
   }
   if (type.kind === "intersection") {
     return { kind: "intersection", types: type.types.map(member => instantiateTypeQuery(member, typeArguments)) };
@@ -7164,6 +7272,12 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
   if (expected.kind === "valueAndType") {
     return isAssignableTo(actual, expected.value, options);
   }
+  if (actual.kind === "functionDeclaration") {
+    return isAssignableTo(actual.type, expected, options);
+  }
+  if (expected.kind === "functionDeclaration") {
+    return isAssignableTo(actual, expected.type, options);
+  }
   if (actual.kind === "namespaceAndType") {
     return isAssignableTo(actual.type, expected, options);
   }
@@ -8034,6 +8148,9 @@ function displayType(type: CheckedType): string {
     const typeParameters = type.typeParameters.length === 0 ? "" : `<${type.typeParameters.join(", ")}>`;
     const prefix = type.construct === true ? "new " : "";
     return `${prefix}${typeParameters}(${type.parameters.map((parameter, index) => `${type.parameterNames?.[index] ?? `arg${index}`}: ${displayType(parameter)}`).join(", ")}) => ${displayType(type.returnType)}`;
+  }
+  if (type.kind === "functionDeclaration") {
+    return displayType(type.type);
   }
   if (type.kind === "intersection") {
     return type.types.map(member => member.kind === "function" ? `(${displayType(member)})` : displayType(member)).join(" & ");

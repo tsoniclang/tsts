@@ -39,6 +39,7 @@ interface CaseCompilerOptions extends CompilerOptions {
   readonly checkJs?: boolean;
   readonly allowSyntheticDefaultImports?: boolean;
   readonly alwaysStrict?: boolean;
+  readonly allowUnreachableCode?: boolean;
   readonly esModuleInterop?: boolean;
   readonly noUncheckedSideEffectImports?: boolean;
   readonly declaration?: boolean;
@@ -354,6 +355,9 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
         break;
       case "allowsyntheticdefaultimports":
         options = { ...options, allowSyntheticDefaultImports: parseBoolean(value) };
+        break;
+      case "allowunreachablecode":
+        options = { ...options, allowUnreachableCode: parseBoolean(value) };
         break;
       case "alwaysstrict":
         options = { ...options, alwaysStrict: parseBoolean(value) };

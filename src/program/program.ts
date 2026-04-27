@@ -20,6 +20,7 @@ export interface CompilerOptions {
   readonly downlevelIteration?: boolean;
   readonly allowSyntheticDefaultImports?: boolean;
   readonly alwaysStrict?: boolean;
+  readonly allowUnreachableCode?: boolean;
   readonly esModuleInterop?: boolean;
   readonly noUncheckedSideEffectImports?: boolean;
   readonly declaration?: boolean;

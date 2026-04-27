@@ -1022,11 +1022,24 @@ describe("checker groundwork", () => {
     const sourceFile = parseSourceFile("function foo() { arguments = 10; eval = 20; }");
     const result = checkSourceFile(sourceFile, { alwaysStrict: true });
 
-    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1100, 2322, 1100]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1100, 2322, 1100, 2630]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "Invalid use of 'arguments' in strict mode.",
       "Type 'number' is not assignable to type 'IArguments'.",
       "Invalid use of 'eval' in strict mode.",
+      "Cannot assign to 'eval' because it is a function.",
+    ]);
+  });
+
+  it("reports assignment to function declarations without leaking that fact through function-typed variables", () => {
+    const sourceFile = parseSourceFile("function f() {} f = 1; const g = f; g = 1; parseInt = 1;");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2630, 2322, 2630]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Cannot assign to 'f' because it is a function.",
+      "Type 'number' is not assignable to type '() => unknown'.",
+      "Cannot assign to 'parseInt' because it is a function.",
     ]);
   });
 
@@ -1566,5 +1579,25 @@ describe("checker groundwork", () => {
     const result = checkSourceFile(sourceFile);
 
     assert.equal(result.diagnostics.length, 0);
+  });
+
+  it("reports side-effect-free comma operator left operands", () => {
+    const sourceFile = parseSourceFile([
+      "declare function effect(): void;",
+      "(1, 2);",
+      "((true ? 1 : 2), 3);",
+      "(effect(), 4);",
+      "(0, eval)(\"1\");",
+      "(void 0, 5);",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { allowUnreachableCode: false });
+    const suppressed = checkSourceFile(sourceFile, { allowUnreachableCode: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2695, 2695]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Left side of comma operator is unused and has no side effects.",
+      "Left side of comma operator is unused and has no side effects.",
+    ]);
+    assert.equal(suppressed.diagnostics.length, 0);
   });
 });
