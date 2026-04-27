@@ -178,7 +178,7 @@ interface TupleElementType {
 
 type CheckedType =
   | { readonly kind: PrimitiveTypeName | "unresolved" }
-  | { readonly kind: "array"; readonly elementType: CheckedType }
+  | { readonly kind: "array"; readonly elementType: CheckedType; readonly evolving?: boolean }
   | { readonly kind: "readonlyArray"; readonly elementType: CheckedType }
   | { readonly kind: "builtinConstructor"; readonly name: string; readonly instanceType: CheckedType; readonly constructorParameters: readonly CheckedType[]; readonly staticProperties: ReadonlyMap<string, CheckedType> }
   | { readonly kind: "classInstance"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeArguments: readonly CheckedType[]; readonly members: ClassMemberNames; readonly arrayBaseElementType?: CheckedType }
@@ -190,7 +190,7 @@ type CheckedType =
   | { readonly kind: "functionDeclaration"; readonly name: string; readonly type: CheckedFunctionType }
   | { readonly kind: "globalObject" }
   | { readonly kind: "intrinsicConstructor"; readonly intrinsic: "Set" }
-  | { readonly kind: "intrinsicFunction"; readonly intrinsic: "Array.from" | "Array.isArray" | "ArrayBuffer.isView" }
+  | { readonly kind: "intrinsicFunction"; readonly intrinsic: "Array.from" | "Array.isArray" | "Array.of" | "ArrayBuffer.isView" | "Object.assign" | "Object.freeze" }
   | { readonly kind: "interface"; readonly name: string; readonly members: InterfaceMembers; readonly typeArguments?: readonly CheckedType[] }
   | { readonly kind: "intersection"; readonly types: readonly CheckedType[] }
   | { readonly kind: "iterable"; readonly elementType: CheckedType }
@@ -367,6 +367,24 @@ function standardGlobalFunction(name: string, parameters: readonly CheckedType[]
   return functionDeclarationBinding(name, standardFunctionType(parameters, returnType, options));
 }
 
+function standardVariadicAnyFunction(returnType: CheckedType = anyType): CheckedFunctionType {
+  return standardFunctionType([anyType], returnType, { restParameterIndex: 0, minArgumentCount: 0 });
+}
+
+function standardNamespace(name: string, exports: readonly (readonly [string, CheckedType])[]): CheckedType {
+  return { kind: "namespace", name, exports: new Map(exports) };
+}
+
+function standardObject(properties: readonly (readonly [string, CheckedType])[], methodProperties: readonly string[] = []): Extract<CheckedType, { readonly kind: "object" }> {
+  return {
+    kind: "object",
+    properties: new Map(properties),
+    readonlyProperties: new Set(),
+    optionalProperties: new Set(),
+    methodProperties: new Set(methodProperties),
+  };
+}
+
 function standardInterfaceType(
   name: string,
   properties: ReadonlyMap<string, CheckedType>,
@@ -515,6 +533,20 @@ const iArgumentsType: CheckedType = {
     numberIndexType: anyType,
   },
 };
+const jsonStringifyReplacerFunctionType = standardFunctionType([stringType, anyType], anyType, { parameterNames: ["key", "value"] });
+const jsonStringifySpaceType = unionType([stringType, numberType, undefinedType]);
+const jsonStringifyFunctionType = standardFunctionType(
+  [anyType, jsonStringifyReplacerFunctionType, jsonStringifySpaceType],
+  unionType([stringType, undefinedType]),
+  {
+    minArgumentCount: 1,
+    maxArgumentCount: 3,
+    overloads: [
+      standardFunctionType([anyType, jsonStringifyReplacerFunctionType, jsonStringifySpaceType], unionType([stringType, undefinedType]), { minArgumentCount: 1, maxArgumentCount: 3 }),
+      standardFunctionType([anyType, unionType([{ kind: "array", elementType: unionType([stringType, numberType]) }, nullType, undefinedType]), jsonStringifySpaceType], unionType([stringType, undefinedType]), { minArgumentCount: 1, maxArgumentCount: 3 }),
+    ],
+  },
+);
 const typedArrayGlobalNames = [
   "BigInt64Array",
   "BigUint64Array",
@@ -537,6 +569,7 @@ const ambientTypeNames = new Set([
   "Array",
   "ArrayIterator",
   "ArrayLike",
+  "AsyncIterator",
   "BigInt",
   "Boolean",
   "CallableFunction",
@@ -549,6 +582,7 @@ const ambientTypeNames = new Set([
   "IArguments",
   "InstanceType",
   "IterableIterator",
+  "Iterator",
   "Map",
   "NewableFunction",
   "NonNullable",
@@ -562,6 +596,7 @@ const ambientTypeNames = new Set([
   "PropertyKey",
   "Readonly",
   "ReadonlyArray",
+  "ReadonlyMap",
   "Record",
   "RegExp",
   "RegExpExecArray",
@@ -892,7 +927,20 @@ function missingRequiredGlobalTypeDiagnostics(program: Program, environment: Typ
 
 function standardGlobalEnvironment(): TypeEnvironment {
   const entries: Array<readonly [string, CheckedType]> = [
-    ["Array", { kind: "valueAndType", value: { kind: "object", properties: new Map([["from", { kind: "intrinsicFunction", intrinsic: "Array.from" }], ["fromAsync", anyType], ["isArray", { kind: "intrinsicFunction", intrinsic: "Array.isArray" }]]), readonlyProperties: new Set(), optionalProperties: new Set(), methodProperties: new Set() }, type: anyType }],
+    ["Array", {
+      kind: "valueAndType",
+      value: standardObject([
+        ["from", { kind: "intrinsicFunction", intrinsic: "Array.from" }],
+        ["fromAsync", anyType],
+        ["isArray", { kind: "intrinsicFunction", intrinsic: "Array.isArray" }],
+        ["of", { kind: "intrinsicFunction", intrinsic: "Array.of" }],
+        ["prototype", standardObject([
+          ["slice", standardFunctionType([numberType, numberType], { kind: "array", elementType: anyType }, { minArgumentCount: 0, maxArgumentCount: 2 })],
+        ], ["slice"])],
+        ["toString", standardFunctionType([], stringType)],
+      ], ["from", "fromAsync", "isArray", "of", "toString"]),
+      type: anyType,
+    }],
     ["ArrayBuffer", { kind: "valueAndType", value: { kind: "object", properties: new Map([["isView", { kind: "intrinsicFunction", intrinsic: "ArrayBuffer.isView" }]]), readonlyProperties: new Set(), optionalProperties: new Set(), methodProperties: new Set() }, type: anyType }],
     ["ArrayBufferView", anyType],
     ["BigInt", anyType],
@@ -913,8 +961,16 @@ function standardGlobalEnvironment(): TypeEnvironment {
       methodProperties: new Set(["debug", "error", "info", "log", "warn"]),
     }],
     ["eval", standardGlobalFunction("eval", [stringType], anyType, { minArgumentCount: 0, maxArgumentCount: 1 })],
+    ["AsyncIterator", anyType],
     ["Iterable", anyType],
     ["IterableIterator", { kind: "arrayIterator", elementType: anyType }],
+    ["Iterator", anyType],
+    ["Intl", anyType],
+    ["JSON", standardNamespace("JSON", [
+      ["parse", standardFunctionType([stringType], anyType, { minArgumentCount: 1, maxArgumentCount: 2 })],
+      ["stringify", jsonStringifyFunctionType],
+    ])],
+    ["Map", anyType],
     ["Math", {
       kind: "namespace",
       name: "Math",
@@ -932,21 +988,39 @@ function standardGlobalEnvironment(): TypeEnvironment {
         ["asin", standardFunctionType([numberType], numberType)],
         ["atan", standardFunctionType([numberType], numberType)],
         ["atan2", standardFunctionType([numberType, numberType], numberType)],
+        ["acosh", standardFunctionType([numberType], numberType)],
+        ["asinh", standardFunctionType([numberType], numberType)],
+        ["atanh", standardFunctionType([numberType], numberType)],
+        ["cbrt", standardFunctionType([numberType], numberType)],
         ["ceil", standardFunctionType([numberType], numberType)],
+        ["clz32", standardFunctionType([numberType], numberType)],
         ["cos", standardFunctionType([numberType], numberType)],
+        ["cosh", standardFunctionType([numberType], numberType)],
         ["exp", standardFunctionType([numberType], numberType)],
+        ["expm1", standardFunctionType([numberType], numberType)],
         ["floor", standardFunctionType([numberType], numberType)],
+        ["fround", standardFunctionType([numberType], numberType)],
+        ["hypot", standardFunctionType([numberType], numberType, { restParameterIndex: 0, minArgumentCount: 0 })],
+        ["imul", standardFunctionType([numberType, numberType], numberType)],
         ["log", standardFunctionType([numberType], numberType)],
+        ["log10", standardFunctionType([numberType], numberType)],
+        ["log1p", standardFunctionType([numberType], numberType)],
+        ["log2", standardFunctionType([numberType], numberType)],
         ["max", standardFunctionType([numberType], numberType, { restParameterIndex: 0, minArgumentCount: 0 })],
         ["min", standardFunctionType([numberType], numberType, { restParameterIndex: 0, minArgumentCount: 0 })],
         ["pow", standardFunctionType([numberType, numberType], numberType)],
         ["random", { kind: "function", typeParameters: [], parameters: [], returnType: numberType }],
         ["round", standardFunctionType([numberType], numberType)],
+        ["sign", standardFunctionType([numberType], numberType)],
         ["sin", standardFunctionType([numberType], numberType)],
+        ["sinh", standardFunctionType([numberType], numberType)],
         ["sqrt", { kind: "function", typeParameters: [], parameters: [numberType], returnType: numberType }],
         ["tan", standardFunctionType([numberType], numberType)],
+        ["tanh", standardFunctionType([numberType], numberType)],
+        ["trunc", standardFunctionType([numberType], numberType)],
       ]),
     }],
+    ["Proxy", anyType],
     ["Promise", anyType],
     ["Number", { kind: "valueAndType", value: anyType, type: boxedNumberType }],
     ["Object", {
@@ -956,8 +1030,18 @@ function standardGlobalEnvironment(): TypeEnvironment {
         name: "Object",
         instanceType: globalObjectType,
         constructorParameters: [anyType],
-        staticProperties: new Map([
+        staticProperties: new Map<string, CheckedType>([
+          ["assign", { kind: "intrinsicFunction", intrinsic: "Object.assign" }],
           ["create", { kind: "function", typeParameters: [], parameters: [globalObjectType], parameterNames: ["o"], minArgumentCount: 1, maxArgumentCount: 1, returnType: anyType }],
+          ["defineProperty", { kind: "function", typeParameters: ["T"], parameters: [{ kind: "typeParameter", name: "T" }, anyType, anyType], parameterNames: ["o", "p", "attributes"], minArgumentCount: 3, maxArgumentCount: 3, returnType: { kind: "typeParameter", name: "T" } }],
+          ["entries", standardFunctionType([globalObjectType], { kind: "array", elementType: { kind: "tuple", elements: [{ type: stringType, optional: false }, { type: anyType, optional: false }] } })],
+          ["freeze", { kind: "intrinsicFunction", intrinsic: "Object.freeze" }],
+          ["fromEntries", standardFunctionType([anyType], { kind: "object", properties: new Map(), readonlyProperties: new Set(), optionalProperties: new Set(), methodProperties: new Set(), stringIndexType: anyType }, { minArgumentCount: 1, maxArgumentCount: 1 })],
+          ["getOwnPropertySymbols", standardFunctionType([globalObjectType], { kind: "array", elementType: anyType })],
+          ["is", standardFunctionType([anyType, anyType], booleanType)],
+          ["keys", standardFunctionType([globalObjectType], { kind: "array", elementType: stringType })],
+          ["setPrototypeOf", standardFunctionType([globalObjectType, unionType([globalObjectType, nullType])], globalObjectType)],
+          ["values", standardFunctionType([globalObjectType], { kind: "array", elementType: anyType })],
         ]),
       },
       type: globalObjectType,
@@ -965,10 +1049,38 @@ function standardGlobalEnvironment(): TypeEnvironment {
     ["RegExp", { kind: "valueAndType", value: { kind: "builtinConstructor", name: "RegExp", instanceType: regexpInterfaceType, constructorParameters: [stringType], staticProperties: new Map() }, type: regexpInterfaceType }],
     ["RegExpExecArray", regExpExecArrayType],
     ["RegExpMatchArray", regExpMatchArrayType],
+    ["Reflect", standardNamespace("Reflect", [
+      ["apply", standardVariadicAnyFunction()],
+      ["construct", standardVariadicAnyFunction()],
+      ["defineProperty", standardFunctionType([globalObjectType, anyType, anyType], booleanType)],
+      ["deleteProperty", standardFunctionType([globalObjectType, anyType], booleanType)],
+      ["get", standardVariadicAnyFunction()],
+      ["getOwnPropertyDescriptor", standardVariadicAnyFunction()],
+      ["getPrototypeOf", standardFunctionType([globalObjectType], anyType)],
+      ["isExtensible", standardFunctionType([globalObjectType], booleanType)],
+      ["ownKeys", standardFunctionType([globalObjectType], { kind: "array", elementType: anyType })],
+      ["preventExtensions", standardFunctionType([globalObjectType], booleanType)],
+      ["set", standardVariadicAnyFunction(booleanType)],
+      ["setPrototypeOf", standardFunctionType([globalObjectType, unionType([globalObjectType, nullType])], booleanType)],
+    ])],
     ["Set", { kind: "intrinsicConstructor", intrinsic: "Set" }],
-    ["String", { kind: "valueAndType", value: { kind: "builtinConstructor", name: "String", instanceType: boxedStringType, constructorParameters: [anyType], staticProperties: new Map() }, type: boxedStringType }],
+    ["String", {
+      kind: "valueAndType",
+      value: {
+        kind: "builtinConstructor",
+        name: "String",
+        instanceType: boxedStringType,
+        constructorParameters: [anyType],
+        staticProperties: new Map([
+          ["fromCodePoint", standardFunctionType([numberType], stringType, { restParameterIndex: 0, minArgumentCount: 0 })],
+          ["raw", standardFunctionType([templateStringsArrayType, anyType], stringType, { restParameterIndex: 1, minArgumentCount: 1 })],
+        ]),
+      },
+      type: boxedStringType,
+    }],
     ["Symbol", anyType],
     ["TemplateStringsArray", templateStringsArrayType],
+    ["URLSearchParams", anyType],
     ["WeakMap", anyType],
     ["WeakRef", anyType],
     ["WeakSet", anyType],
@@ -4658,11 +4770,21 @@ function inferIntrinsicCall(expression: Extract<Expression, { readonly kind: Kin
     }
     return booleanType;
   }
+  if (calleeType.intrinsic === "Array.of") {
+    const argumentTypes = expression.arguments.map(argument => inferExpression(argument, state, environment));
+    return { kind: "array", elementType: argumentTypes.length === 0 ? anyType : unionType(argumentTypes) };
+  }
   if (calleeType.intrinsic === "ArrayBuffer.isView") {
     for (const argument of expression.arguments) {
       inferExpression(argument, state, environment);
     }
     return booleanType;
+  }
+  if (calleeType.intrinsic === "Object.assign") {
+    return inferObjectAssignCall(expression, state, environment);
+  }
+  if (calleeType.intrinsic === "Object.freeze") {
+    return inferObjectFreezeCall(expression, state, environment);
   }
   return anyType;
 }
@@ -4701,6 +4823,50 @@ function inferArrayFromCall(expression: Extract<Expression, { readonly kind: Kin
     ? (mapperType.returnType.kind === "typePredicate" ? booleanType : mapperType.returnType)
     : anyType;
   return { kind: "array", elementType: mappedElementType };
+}
+
+function inferObjectAssignCall(expression: Extract<Expression, { readonly kind: Kind.CallExpression }>, state: CheckState, environment: TypeEnvironment): CheckedType {
+  const argumentTypes = expression.arguments.map(argument => inferExpression(argument, state, environment));
+  if (argumentTypes.length === 0) {
+    return anyType;
+  }
+  if (argumentTypes.some(type => type.kind === "any" || type.kind === "unknown" || type.kind === "unresolved")) {
+    return anyType;
+  }
+  return argumentTypes.length === 1 ? argumentTypes[0]! : { kind: "intersection", types: argumentTypes };
+}
+
+function inferObjectFreezeCall(expression: Extract<Expression, { readonly kind: Kind.CallExpression }>, state: CheckState, environment: TypeEnvironment): CheckedType {
+  const [target, ...rest] = expression.arguments;
+  if (target === undefined) {
+    return anyType;
+  }
+  const targetType = inferExpression(target, state, environment);
+  for (const argument of rest) {
+    inferExpression(argument, state, environment);
+  }
+  const frozenType = isObjectLiteralExpression(target) ? constAssertionFlowType(target, environment) ?? targetType : targetType;
+  return readonlyViewType(frozenType);
+}
+
+function readonlyViewType(type: CheckedType): CheckedType {
+  if (type.kind === "array") {
+    return { kind: "readonlyArray", elementType: type.elementType };
+  }
+  if (type.kind === "tuple") {
+    const elementTypes = [...type.elements.map(element => element.type), ...(type.restElementType === undefined ? [] : [type.restElementType])];
+    return { kind: "readonlyArray", elementType: unionType(elementTypes.length === 0 ? [neverType] : elementTypes) };
+  }
+  if (type.kind === "object") {
+    return { ...type, readonlyProperties: new Set([...type.readonlyProperties, ...type.properties.keys()]) };
+  }
+  if (type.kind === "typeAliasInstance") {
+    return { ...type, target: readonlyViewType(type.target) };
+  }
+  if (type.kind === "union") {
+    return unionType(type.types.map(readonlyViewType));
+  }
+  return type;
 }
 
 function collectionElementType(type: CheckedType): CheckedType {
@@ -5363,6 +5529,12 @@ function assignmentTargetType(expression: Expression, environment: TypeEnvironme
     const receiverType = inferExpression(expression.expression, emptyCheckState(), environment);
     return propertyAssignmentTargetType(receiverType, expression.name.text, environment);
   }
+  if (isElementAccessExpression(expression)) {
+    const receiverType = accessorReadType(inferExpression(expression.expression, emptyCheckState(), environment));
+    const argumentRuntimeType = inferExpression(expression.argumentExpression, emptyCheckState(), environment);
+    const argumentType = literalExpressionNarrowType(expression.argumentExpression) ?? argumentRuntimeType;
+    return indexedAccessType(receiverType, argumentType);
+  }
   return undefined;
 }
 
@@ -5384,8 +5556,12 @@ function checkAssignmentTargetReference(expression: Expression, state: CheckStat
     return;
   }
   if (isElementAccessExpression(expression)) {
-    inferExpression(expression.expression, state, environment);
-    inferExpression(expression.argumentExpression, state, environment);
+    const receiverType = accessorReadType(inferExpression(expression.expression, state, environment));
+    const argumentRuntimeType = inferExpression(expression.argumentExpression, state, environment);
+    const argumentType = literalExpressionNarrowType(expression.argumentExpression) ?? argumentRuntimeType;
+    if (readonlyElementTarget(receiverType, argumentType)) {
+      state.diagnostics.push(createDiagnostic(2542, displayType(receiverType)));
+    }
     return;
   }
   if (isObjectLiteralExpression(expression) || isArrayLiteralExpression(expression)) {
@@ -5470,6 +5646,10 @@ function checkPropertyAssignmentTarget(expression: Expression, propertyName: str
     state.diagnostics.push(createDiagnostic(2540, propertyName));
     return;
   }
+  if (readonlyObjectPropertyTarget(receiverType, propertyName)) {
+    state.diagnostics.push(createDiagnostic(2540, propertyName));
+    return;
+  }
   if (receiverType.kind === "thisClass") {
     diagnoseThisPropertyAccess(receiverType, propertyName, state);
     if (targetType === undefined && diagnoseMissingProperty) {
@@ -5480,6 +5660,48 @@ function checkPropertyAssignmentTarget(expression: Expression, propertyName: str
   if (receiverType.kind === "classInstance" && receiverType.members.readonlyProperties.has(propertyName)) {
     state.diagnostics.push(createDiagnostic(2540, propertyName));
   }
+}
+
+function readonlyObjectPropertyTarget(receiverType: CheckedType, propertyName: string): boolean {
+  if (receiverType.kind === "object") {
+    return receiverType.readonlyProperties.has(propertyName);
+  }
+  if (receiverType.kind === "typeAliasInstance") {
+    return readonlyObjectPropertyTarget(receiverType.target, propertyName);
+  }
+  if (receiverType.kind === "union") {
+    return receiverType.types.some(type => readonlyObjectPropertyTarget(type, propertyName));
+  }
+  if (receiverType.kind === "intersection") {
+    return receiverType.types.some(type => readonlyObjectPropertyTarget(type, propertyName));
+  }
+  return false;
+}
+
+function readonlyElementTarget(receiverType: CheckedType, argumentType: CheckedType): boolean {
+  if (receiverType.kind === "typeAliasInstance") {
+    return readonlyElementTarget(receiverType.target, argumentType);
+  }
+  if (receiverType.kind === "union") {
+    return receiverType.types.some(type => readonlyElementTarget(type, argumentType));
+  }
+  if (receiverType.kind !== "readonlyArray") {
+    return false;
+  }
+  return argumentType.kind === "number" || argumentType.kind === "numberLiteral";
+}
+
+function readonlyClassInstancePropertyTarget(receiverType: CheckedType, propertyName: string): boolean {
+  if (receiverType.kind === "classInstance") {
+    return receiverType.members.readonlyProperties.has(propertyName);
+  }
+  if (receiverType.kind === "typeAliasInstance") {
+    return readonlyClassInstancePropertyTarget(receiverType.target, propertyName);
+  }
+  if (receiverType.kind === "union") {
+    return receiverType.types.some(type => readonlyClassInstancePropertyTarget(type, propertyName));
+  }
+  return false;
 }
 
 function assignExpressionTarget(expression: Expression, assignedType: CheckedType, state: CheckState, environment: TypeEnvironment): void {
@@ -5508,6 +5730,10 @@ function assignExpressionTarget(expression: Expression, assignedType: CheckedTyp
     return;
   }
   if (isPropertyAccessExpression(expression)) {
+    const receiverType = inferExpression(expression.expression, emptyCheckState(), environment);
+    if (readonlyObjectPropertyTarget(receiverType, expression.name.text) || readonlyClassInstancePropertyTarget(receiverType, expression.name.text)) {
+      return;
+    }
     const targetType = assignmentTargetType(expression, environment);
     if (targetType !== undefined) {
       checkAssignable(assignedType, targetType, state);
@@ -5515,6 +5741,36 @@ function assignExpressionTarget(expression: Expression, assignedType: CheckedTyp
     }
     assignJavaScriptExpandoProperty(expression.expression, expression.name.text, assignedType, state, environment);
   }
+  if (isElementAccessExpression(expression)) {
+    if (evolveArrayElementAssignment(expression, assignedType, environment)) {
+      return;
+    }
+    const targetType = assignmentTargetType(expression, environment);
+    if (targetType !== undefined) {
+      checkAssignable(assignedType, targetType, state);
+    }
+  }
+}
+
+function evolveArrayElementAssignment(expression: Extract<Expression, { readonly kind: Kind.ElementAccessExpression }>, assignedType: CheckedType, environment: TypeEnvironment): boolean {
+  const bindingName = elementAccessArrayBindingName(expression.expression);
+  if (bindingName === undefined) {
+    return false;
+  }
+  const current = environment.get(bindingName);
+  if (current?.kind !== "array" || current.evolving !== true) {
+    return false;
+  }
+  const elementType = current.elementType.kind === "never" ? assignedType : unionType([current.elementType, assignedType]);
+  environment.set(bindingName, { ...current, elementType });
+  return true;
+}
+
+function elementAccessArrayBindingName(expression: Expression): string | undefined {
+  if (isParenthesizedExpression(expression)) {
+    return elementAccessArrayBindingName(expression.expression);
+  }
+  return isIdentifier(expression) ? expression.text : undefined;
 }
 
 function assignJavaScriptExpandoProperty(receiverExpression: Expression, propertyName: string, assignedType: CheckedType, state: CheckState, environment: TypeEnvironment): void {
@@ -7756,7 +8012,7 @@ function inferArrayLiteral(elements: readonly Expression[], state: CheckState, e
     if (contextualArrayType !== undefined) {
       return contextualArrayType;
     }
-    return { kind: "array", elementType: strictOptionValue(state.options, "noImplicitAny") ? neverType : anyType };
+    return { kind: "array", elementType: strictOptionValue(state.options, "noImplicitAny") ? neverType : anyType, evolving: true };
   }
   const elementTypes = elements.map(element => inferExpressionWithContext(element, state, environment, contextualElementType));
   if (contextualElementType !== undefined && !typeContainsTypeParameter(contextualElementType)) {
@@ -8023,7 +8279,7 @@ function substituteTypeWithContext(type: CheckedType, substitutions: ReadonlyMap
     return cached;
   }
   if (type.kind === "array") {
-    const result: CheckedType = { kind: "array", elementType: substituteTypeWithContext(type.elementType, substitutions, context) };
+    const result: CheckedType = { kind: "array", elementType: substituteTypeWithContext(type.elementType, substitutions, context), ...(type.evolving === undefined ? {} : { evolving: type.evolving }) };
     context.types.set(type, result);
     return result;
   }
@@ -8838,19 +9094,35 @@ function uniqueInOrder<T>(values: readonly T[]): readonly T[] {
 }
 
 const stringMethodReturnTypes = new Map<string, CheckedType>([
+  ["anchor", stringType],
+  ["big", stringType],
+  ["blink", stringType],
+  ["bold", stringType],
   ["charAt", stringType],
   ["charCodeAt", numberType],
+  ["codePointAt", unionType([numberType, undefinedType])],
   ["endsWith", booleanType],
+  ["fixed", stringType],
+  ["fontcolor", stringType],
+  ["fontsize", stringType],
   ["includes", booleanType],
   ["indexOf", numberType],
+  ["italics", stringType],
   ["lastIndexOf", numberType],
+  ["link", stringType],
   ["match", anyType],
   ["matchAll", anyType],
+  ["normalize", stringType],
   ["replace", stringType],
+  ["repeat", stringType],
   ["search", numberType],
   ["slice", stringType],
+  ["small", stringType],
   ["split", anyType],
   ["startsWith", booleanType],
+  ["strike", stringType],
+  ["sub", stringType],
+  ["sup", stringType],
   ["substring", stringType],
   ["toLowerCase", stringType],
   ["toUpperCase", stringType],

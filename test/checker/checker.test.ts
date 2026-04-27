@@ -931,8 +931,51 @@ describe("checker groundwork", () => {
       "isFinite(Infinity);",
       "isNaN(NaN);",
       "parseFloat(\"1\");",
+      "Reflect.apply(() => undefined, undefined, []);",
+      "Object.keys({ a: 1 });",
+      "Object.assign({ a: 1 }, { b: \"x\" }).b;",
+      "Array.of(1, 2, 3).push(4);",
+      "\"x\".codePointAt(0);",
+      "\"x\".normalize().repeat(2);",
+      "String.fromCodePoint(65);",
+      "String.raw`x`;",
+      "JSON.stringify({ value: 1 });",
+      "new Map();",
     ].join("\n"));
     const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("models Object.freeze as a readonly view of arrays and objects", () => {
+    const sourceFile = parseSourceFile([
+      "const objectValue = Object.freeze({ count: 1 });",
+      "const arrayValue = Object.freeze([1]);",
+      "const count: number = objectValue.count;",
+      "objectValue.count = 2;",
+      "arrayValue[0] = 2;",
+      "count;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2540, 2542]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Cannot assign to 'count' because it is a read-only property.",
+      "Index signature in type 'readonly number[]' only permits reading.",
+    ]);
+  });
+
+  it("checks element assignment target types", () => {
+    const sourceFile = parseSourceFile("const values = [1]; values[0] = \"x\";");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string' is not assignable to type 'number'."]);
+  });
+
+  it("evolves empty array element types through indexed assignments", () => {
+    const sourceFile = parseSourceFile("let values = []; values[0] = { foo: 'x' }; values[1] = { foo: 'y' }; values[0].foo.toUpperCase();");
+    const result = checkSourceFile(sourceFile, { noImplicitAny: true });
 
     assert.deepEqual(result.diagnostics, []);
   });
