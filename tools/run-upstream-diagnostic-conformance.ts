@@ -41,6 +41,7 @@ interface CaseCompilerOptions extends CompilerOptions {
   readonly alwaysStrict?: boolean;
   readonly esModuleInterop?: boolean;
   readonly noUncheckedSideEffectImports?: boolean;
+  readonly declaration?: boolean;
   readonly jsx?: ts.JsxEmit;
 }
 
@@ -362,6 +363,9 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
         break;
       case "nouncheckedsideeffectimports":
         options = { ...options, noUncheckedSideEffectImports: parseBoolean(value) };
+        break;
+      case "declaration":
+        options = { ...options, declaration: parseBoolean(value) };
         break;
       case "jsx":
         options = { ...options, jsx: parseJsxEmit(value) };

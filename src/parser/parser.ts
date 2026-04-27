@@ -954,8 +954,9 @@ export class Parser {
     const name = this.#parseIdentifier();
     const parameterType = this.#parseOptionalTypeAnnotation();
     this.#expect(Kind.CloseBracketToken);
-    this.#expect(Kind.ColonToken);
-    const type = this.#parseType();
+    const type = this.#consumeOptional(Kind.ColonToken)
+      ? this.#parseType()
+      : createKeywordTypeNode(Kind.AnyKeyword);
     this.#consumeOptional(Kind.SemicolonToken);
     this.#consumeOptional(Kind.CommaToken);
     return createIndexSignatureDeclaration(
