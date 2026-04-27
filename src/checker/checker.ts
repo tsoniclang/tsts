@@ -167,7 +167,7 @@ type CheckedType =
   | { readonly kind: "accessorProperty"; readonly type: CheckedType }
   | { readonly kind: "arrayLike"; readonly elementType: CheckedType }
   | { readonly kind: "arrayIterator"; readonly elementType: CheckedType }
-  | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType; readonly parameterNames?: readonly string[]; readonly restParameterIndex?: number; readonly minArgumentCount?: number; readonly maxArgumentCount?: number }
+  | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType; readonly parameterNames?: readonly string[]; readonly restParameterIndex?: number; readonly minArgumentCount?: number; readonly maxArgumentCount?: number; readonly overloads?: readonly CheckedFunctionType[] }
   | { readonly kind: "intrinsicConstructor"; readonly intrinsic: "Set" }
   | { readonly kind: "intrinsicFunction"; readonly intrinsic: "Array.from" | "Array.isArray" | "ArrayBuffer.isView" }
   | { readonly kind: "interface"; readonly name: string; readonly members: InterfaceMembers }
@@ -214,6 +214,7 @@ interface CheckState {
   readonly insideFunction: boolean;
   readonly iterationDepth: number;
   readonly resolveExternalModule?: (moduleSpecifier: string) => CheckedType | undefined;
+  readonly functionOverloadInfo?: FunctionOverloadInfo;
 }
 
 type TypeEnvironment = Map<string, CheckedType>;
@@ -248,6 +249,11 @@ interface InterfaceMembers {
 interface ModuleExportInfo {
   readonly exports: ReadonlyMap<string, CheckedType>;
   readonly exportEquals?: CheckedType;
+}
+
+interface FunctionOverloadInfo {
+  readonly declarationsWithImplementation: ReadonlySet<FunctionDeclaration>;
+  readonly implementations: ReadonlySet<FunctionDeclaration>;
 }
 
 const anyType: CheckedType = { kind: "any" };
@@ -691,13 +697,15 @@ function ambientModuleExports(statements: readonly Statement[], environment: Typ
 
 function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, reportAmbientStatementDiagnostic = true): void {
   prebindStatementDeclarations(statements, state, environment, ambient);
+  const functionOverloadInfo = prebindFunctionOverloadDeclarations(statements, state, environment, ambient);
+  const statementState = functionOverloadInfo === undefined ? state : { ...state, functionOverloadInfo };
   checkFunctionDeclarationOverloads(statements, state, ambient);
   if (ambient && reportAmbientStatementDiagnostic && statements.some(isStatementDisallowedInAmbientContext)) {
     state.diagnostics.push(createDiagnostic(1036));
   }
   const statementListHasExportedElements = statements.some(statement => isExportedElement(statement));
   for (const statement of statements) {
-    checkStatement(statement, state, environment, expectedReturnType, ambient, statementListHasExportedElements);
+    checkStatement(statement, statementState, environment, expectedReturnType, ambient, statementListHasExportedElements);
   }
 }
 
@@ -900,6 +908,98 @@ function prebindStatementDeclarations(statements: readonly Statement[], state: C
   }
 }
 
+function prebindFunctionOverloadDeclarations(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, ambient: boolean): FunctionOverloadInfo | undefined {
+  const declarationsWithImplementation = new Set<FunctionDeclaration>();
+  const implementations = new Set<FunctionDeclaration>();
+  for (let index = 0; index < statements.length; index += 1) {
+    const statement = statements[index]!;
+    if (!isFunctionDeclaration(statement) || statement.name === undefined) {
+      continue;
+    }
+    const group = consecutiveFunctionDeclarations(statements, index, statement.name.text);
+    if (group.length <= 1) {
+      continue;
+    }
+    index += group.length - 1;
+    const overloads = group.filter(declaration => declaration.body === undefined);
+    if (overloads.length === 0) {
+      continue;
+    }
+    const implementation = group.find(declaration => declaration.body !== undefined);
+    const ambientGroup = ambient || group.every(declaration => hasDeclareModifier(declaration));
+    if (implementation === undefined && !ambientGroup) {
+      continue;
+    }
+    const signatureState = emptyCheckState(state.options);
+    const overloadTypes = overloads.map(overload => functionDeclarationType(overload, environment, signatureState));
+    const surfaceType = implementation === undefined
+      ? overloadTypes[0]!
+      : functionDeclarationType(implementation, environment, signatureState);
+    environment.set(statement.name.text, { ...surfaceType, overloads: overloadTypes });
+    if (implementation !== undefined) {
+      implementations.add(implementation);
+      for (const overload of overloads) {
+        declarationsWithImplementation.add(overload);
+      }
+      diagnoseImplementationSignatureCompatibility(overloadTypes, surfaceType, state);
+    }
+  }
+  if (declarationsWithImplementation.size === 0 && implementations.size === 0) {
+    return undefined;
+  }
+  return { declarationsWithImplementation, implementations };
+}
+
+function consecutiveFunctionDeclarations(statements: readonly Statement[], startIndex: number, name: string): readonly FunctionDeclaration[] {
+  const declarations: FunctionDeclaration[] = [];
+  for (let index = startIndex; index < statements.length; index += 1) {
+    const statement = statements[index]!;
+    if (!isFunctionDeclaration(statement) || statement.name?.text !== name) {
+      break;
+    }
+    declarations.push(statement);
+  }
+  return declarations;
+}
+
+function diagnoseImplementationSignatureCompatibility(overloads: readonly CheckedFunctionType[], implementation: CheckedFunctionType, state: CheckState): void {
+  const reported = new Set<string>();
+  for (const overload of overloads) {
+    if (functionOverloadCompatibleWithImplementation(overload, implementation, state.options)) {
+      continue;
+    }
+    const key = functionSignatureKey(overload);
+    if (reported.has(key)) {
+      continue;
+    }
+    reported.add(key);
+    state.diagnostics.push(createDiagnostic(2394));
+  }
+}
+
+function functionOverloadCompatibleWithImplementation(overload: CheckedFunctionType, implementation: CheckedFunctionType, options: CompilerOptions): boolean {
+  if ((implementation.minArgumentCount ?? 0) > (overload.minArgumentCount ?? 0)) {
+    return false;
+  }
+  for (let index = 0; index < implementation.parameters.length && index < overload.parameters.length; index += 1) {
+    const overloadParameter = functionParameterTypeAt(overload, index);
+    const implementationParameter = functionParameterTypeAt(implementation, index);
+    if (overloadParameter === undefined || implementationParameter === undefined) {
+      continue;
+    }
+    if (!isAssignableTo(overloadParameter, implementationParameter, options)) {
+      return false;
+    }
+  }
+  return implementation.returnType.kind === "unresolved"
+    || overload.returnType.kind === "unresolved"
+    || isAssignableTo(overload.returnType, implementation.returnType, options);
+}
+
+function functionSignatureKey(functionType: CheckedFunctionType): string {
+  return `${functionType.parameters.map(displayType).join(",")}=>${displayType(functionType.returnType)}`;
+}
+
 function bindTypeAliasDeclaration(statement: TypeAliasDeclaration, state: CheckState, environment: TypeEnvironment): void {
   const aliasEnvironment = new Map(environment);
   const typeParameters = statement.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
@@ -963,6 +1063,9 @@ function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly
   const namespaceEnvironment = new Map(environment);
   const moduleBodyAmbient = ambient || hasDeclareModifier(moduleDeclaration);
   if (isModuleBlock(moduleDeclaration.body)) {
+    if (!moduleBodyAmbient) {
+      checkNamespaceValueDeclarationDuplicates(moduleDeclaration.body.statements, state);
+    }
     checkStatements(moduleDeclaration.body.statements, state, namespaceEnvironment, expectedReturnType, moduleBodyAmbient);
   } else if (isModuleDeclaration(moduleDeclaration.body)) {
     checkModuleDeclaration(moduleDeclaration.body, state, namespaceEnvironment, expectedReturnType, moduleBodyAmbient);
@@ -993,6 +1096,42 @@ function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly
   }
   const namespaceType: Extract<CheckedType, { readonly kind: "namespace" }> = { kind: "namespace", name: moduleName, exports };
   environment.set(moduleName, mergeNamespaceType(environment.get(moduleName), namespaceType));
+}
+
+function checkNamespaceValueDeclarationDuplicates(statements: readonly Statement[], state: CheckState): void {
+  const variableNames = new Set<string>();
+  const functionNames = new Set<string>();
+  for (const statement of statements) {
+    if (isVariableStatement(statement)) {
+      for (const name of statement.declarationList.declarations.flatMap(declaration => bindingNameExportNames(declaration.name))) {
+        variableNames.add(name);
+      }
+    }
+    if (isFunctionDeclaration(statement) && statement.name !== undefined) {
+      functionNames.add(statement.name.text);
+    }
+  }
+  const duplicates = new Set([...variableNames].filter(name => functionNames.has(name)));
+  if (duplicates.size === 0) {
+    return;
+  }
+  for (const statement of statements) {
+    for (const name of namespaceValueDeclarationNames(statement)) {
+      if (duplicates.has(name)) {
+        state.diagnostics.push(createDiagnostic(2300, name));
+      }
+    }
+  }
+}
+
+function namespaceValueDeclarationNames(statement: Statement): readonly string[] {
+  if (isVariableStatement(statement)) {
+    return statement.declarationList.declarations.flatMap(declaration => bindingNameExportNames(declaration.name));
+  }
+  if (isFunctionDeclaration(statement) && statement.name !== undefined) {
+    return [statement.name.text];
+  }
+  return [];
 }
 
 function isGlobalAmbientExternalModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>): boolean {
@@ -1324,12 +1463,13 @@ function checkVariableDeclaration(declaration: VariableDeclaration, state: Check
     diagnoseAbstractThisDestructuring(declaration.name, declaration.initializer, state, environment);
   }
   checkStrictModeBindingName(declaration.name, state, ambient);
-  setBindingNameType(declaration.name, variableDeclarationBindingType(declaration, declaredType, initializerType, environment, ambient), environment);
+  setBindingNameType(declaration.name, variableDeclarationBindingType(declaration, declaredType, initializerType, environment, ambient, state.options), environment);
 }
 
-function variableDeclarationBindingType(declaration: VariableDeclaration, declaredType: CheckedType | undefined, initializerType: CheckedType | undefined, environment: TypeEnvironment, ambient: boolean): CheckedType {
+function variableDeclarationBindingType(declaration: VariableDeclaration, declaredType: CheckedType | undefined, initializerType: CheckedType | undefined, environment: TypeEnvironment, ambient: boolean, options: CompilerOptions): CheckedType {
   if (
     !ambient
+    && strictOptionValue(options, "strictNullChecks")
     && initializerType === undefined
     && declaration.type !== undefined
     && declaredType !== undefined
@@ -2358,6 +2498,7 @@ function thisClassType(classMembers: ClassMemberNames, mode: Extract<CheckedType
 function checkUninitializedProperty(member: Extract<ClassElement, { readonly kind: Kind.PropertyDeclaration }>, state: CheckState, ambient: boolean): void {
   if (
     ambient
+    || !strictOptionValue(state.options, "strictNullChecks")
     || member.type === undefined
     || member.initializer !== undefined
     || hasModifier(member, Kind.StaticKeyword)
@@ -2579,6 +2720,27 @@ function attachJSDocIfMissing(target: Node, source: Node): void {
   });
 }
 
+function functionDeclarationType(functionDeclaration: FunctionDeclaration, environment: TypeEnvironment, state: CheckState): CheckedFunctionType {
+  const functionEnvironment = createFunctionEnvironment(environment);
+  const typeParameters = effectiveTypeParameterNames(functionDeclaration.typeParameters, functionDeclaration);
+  addTypeParametersToEnvironment(typeParameters, functionEnvironment);
+  const jsDocParameterTypes = jsDocParameterTypeMap(functionDeclaration, functionEnvironment, state);
+  const parameterTypes = functionDeclaration.parameters.map(parameter => parameter.type === undefined ? jsDocParameterType(parameter, jsDocParameterTypes) ?? anyType : typeFromTypeNode(parameter.type, functionEnvironment, state));
+  const returnType = functionDeclaration.type === undefined
+    ? jsDocReturnType(functionDeclaration, functionEnvironment, state)
+    : bindTypePredicateParameterIndex(typeFromTypeNode(functionDeclaration.type, functionEnvironment, state), functionDeclaration.parameters);
+  return {
+    kind: "function",
+    typeParameters,
+    parameters: parameterTypes,
+    parameterNames: parameterDisplayNames(functionDeclaration.parameters),
+    ...signatureRestParameterIndex(functionDeclaration.parameters),
+    ...signatureMinArgumentCount(functionDeclaration.parameters, state),
+    ...signatureMaxArgumentCount(functionDeclaration.parameters, state, functionDeclaration.body),
+    returnType: returnType ?? unresolvedType,
+  };
+}
+
 function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
   if (functionDeclaration.type !== undefined) {
     checkJavaScriptTypeAnnotation(state);
@@ -2591,14 +2753,17 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
   const returnType = functionDeclaration.type === undefined
     ? jsDocReturnType(functionDeclaration, functionEnvironment, state)
     : bindTypePredicateParameterIndex(typeFromTypeNode(functionDeclaration.type, functionEnvironment, state), functionDeclaration.parameters);
-  if (!ambient && functionDeclaration.body === undefined && functionDeclaration.type === undefined && returnType === undefined) {
+  const isImplementedOverloadDeclaration = state.functionOverloadInfo?.declarationsWithImplementation.has(functionDeclaration) === true;
+  if (!ambient && functionDeclaration.body === undefined && functionDeclaration.type === undefined && returnType === undefined && !isImplementedOverloadDeclaration) {
     state.diagnostics.push(createDiagnostic(7010, functionDeclaration.name?.text ?? "(Missing)", "any"));
   }
   if (functionDeclaration.name !== undefined) {
     checkStrictModeIdentifier(functionDeclaration.name.text, state, ambient);
   }
   if (functionDeclaration.name !== undefined) {
-    const functionType: CheckedType = {
+    const existingFunctionType = callableFunctionType(environment.get(functionDeclaration.name.text));
+    const overloads = existingFunctionType?.overloads;
+    const functionType: CheckedFunctionType = {
       kind: "function",
       typeParameters,
       parameters: parameterTypes,
@@ -2607,8 +2772,11 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
       ...signatureMinArgumentCount(functionDeclaration.parameters, state),
       ...signatureMaxArgumentCount(functionDeclaration.parameters, state, functionDeclaration.body),
       returnType: returnType ?? unresolvedType,
+      ...(overloads === undefined ? {} : { overloads }),
     };
-    environment.set(functionDeclaration.name.text, functionType);
+    if (functionDeclaration.body !== undefined || overloads === undefined) {
+      environment.set(functionDeclaration.name.text, functionType);
+    }
     functionEnvironment.set(functionDeclaration.name.text, functionType);
   }
   seedArgumentsObject(functionEnvironment);
@@ -2996,18 +3164,20 @@ function inferExpression(expression: Expression, state: CheckState, environment:
       return inferIntrinsicCall(expression, calleeType, state, environment);
     }
     const calleeFunction = callableFunctionType(calleeType);
+    const contextualCalleeFunction = callContextFunctionType(calleeFunction);
     const argumentTypes = expression.arguments.map((argument, index) => inferExpressionWithContext(
       argument,
       state,
       environment,
-      calleeFunction === undefined ? undefined : functionParameterTypeAt(calleeFunction, index),
+      contextualCalleeFunction === undefined ? undefined : functionParameterTypeAt(contextualCalleeFunction, index),
     ));
     if (calleeType.kind === "any" || calleeType.kind === "unknown" || calleeType.kind === "unresolved") {
       return anyType;
     }
     if (calleeFunction !== undefined) {
       const typeArguments = expression.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? [];
-      const instantiatedFunction = instantiateFunctionTypeForCall(calleeFunction, typeArguments, argumentTypes);
+      const callFunction = resolveCallFunctionType(calleeFunction, typeArguments, argumentTypes, state);
+      const instantiatedFunction = instantiateFunctionTypeForCall(callFunction, typeArguments, argumentTypes);
       checkCallArguments(argumentTypes, instantiatedFunction, state);
       return instantiatedFunction.returnType.kind === "typePredicate" ? booleanType : instantiatedFunction.returnType;
     }
@@ -3190,6 +3360,23 @@ function callableFunctionType(type: CheckedType | undefined): CheckedFunctionTyp
     return callableFunctionType(nonNullableType(type.target));
   }
   return undefined;
+}
+
+function callContextFunctionType(functionType: CheckedFunctionType | undefined): CheckedFunctionType | undefined {
+  return functionType?.overloads?.[0] ?? functionType;
+}
+
+function resolveCallFunctionType(functionType: CheckedFunctionType, explicitTypeArguments: readonly CheckedType[], argumentTypes: readonly CheckedType[], state: CheckState): CheckedFunctionType {
+  if (functionType.overloads === undefined || functionType.overloads.length === 0) {
+    return functionType;
+  }
+  for (const overload of functionType.overloads) {
+    const instantiatedOverload = instantiateFunctionTypeForCall(overload, explicitTypeArguments, argumentTypes);
+    if (callArgumentsAssignable(argumentTypes, instantiatedOverload, state.options)) {
+      return overload;
+    }
+  }
+  return functionType.overloads[0]!;
 }
 
 function narrowedEnvironmentForCondition(expression: Expression, state: CheckState, environment: TypeEnvironment): TypeEnvironment {
@@ -4965,6 +5152,28 @@ function checkCallArguments(argumentTypes: readonly CheckedType[], functionType:
   }
 }
 
+function callArgumentsAssignable(argumentTypes: readonly CheckedType[], functionType: CheckedFunctionType, options: CompilerOptions): boolean {
+  const minArgumentCount = functionType.minArgumentCount ?? 0;
+  const maxArgumentCount = functionType.maxArgumentCount;
+  if (argumentTypes.length < minArgumentCount || (maxArgumentCount !== undefined && argumentTypes.length > maxArgumentCount)) {
+    return false;
+  }
+  for (let index = 0; index < argumentTypes.length; index += 1) {
+    const argumentType = argumentTypes[index]!;
+    const parameterType = functionParameterTypeAt(functionType, index);
+    if (parameterType === undefined) {
+      continue;
+    }
+    if (parameterType.kind === "any" || argumentType.kind === "any" || parameterType.kind === "unknown" || parameterType.kind === "unresolved" || argumentType.kind === "unresolved") {
+      continue;
+    }
+    if (!isAssignableTo(argumentType, parameterType, options)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function checkFixedCallArguments(argumentTypes: readonly CheckedType[], parameterTypes: readonly CheckedType[], state: CheckState): void {
   for (let index = 0; index < parameterTypes.length && index < argumentTypes.length; index += 1) {
     const argumentType = argumentTypes[index]!;
@@ -5239,7 +5448,9 @@ function typeContainsTypeParameter(type: CheckedType): boolean {
     return typeContainsTypeParameter(type.elementType);
   }
   if (type.kind === "function") {
-    return type.parameters.some(typeContainsTypeParameter) || typeContainsTypeParameter(type.returnType);
+    return type.parameters.some(typeContainsTypeParameter)
+      || typeContainsTypeParameter(type.returnType)
+      || type.overloads?.some(typeContainsTypeParameter) === true;
   }
   if (type.kind === "tuple") {
     return type.elements.some(element => typeContainsTypeParameter(element.type))
@@ -5334,6 +5545,7 @@ function instantiateFunctionTypeForCall(functionType: Extract<CheckedType, { rea
     ...(functionType.restParameterIndex === undefined ? {} : { restParameterIndex: functionType.restParameterIndex }),
     ...(functionType.minArgumentCount === undefined ? {} : { minArgumentCount: functionType.minArgumentCount }),
     ...(functionType.maxArgumentCount === undefined ? {} : { maxArgumentCount: functionType.maxArgumentCount }),
+    ...(functionType.overloads === undefined ? {} : { overloads: functionType.overloads.map(overload => substituteType(overload, substitutions) as CheckedFunctionType) }),
     returnType: substituteType(functionType.returnType, substitutions),
   };
 }
@@ -5489,6 +5701,7 @@ function substituteType(type: CheckedType, substitutions: ReadonlyMap<string, Ch
       ...(type.restParameterIndex === undefined ? {} : { restParameterIndex: type.restParameterIndex }),
       ...(type.minArgumentCount === undefined ? {} : { minArgumentCount: type.minArgumentCount }),
       ...(type.maxArgumentCount === undefined ? {} : { maxArgumentCount: type.maxArgumentCount }),
+      ...(type.overloads === undefined ? {} : { overloads: type.overloads.map(overload => substituteType(overload, substitutions) as CheckedFunctionType) }),
       returnType: substituteType(type.returnType, substitutions),
     };
   }

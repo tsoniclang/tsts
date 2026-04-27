@@ -213,6 +213,39 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2389, 2391, 7010, 7010]);
   });
 
+  it("resolves calls against overload signatures instead of implementation arity", () => {
+    const sourceFile = parseSourceFile([
+      "function pick(value: string, mode): number;",
+      "function pick(value: string, flag): string;",
+      "function pick(value: any): any { return value; }",
+      "const bad: string = pick('x', null);",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'number' is not assignable to type 'string'."]);
+  });
+
+  it("reports implementation signatures that require more arguments than overloads", () => {
+    const sourceFile = parseSourceFile("function f(value: any); function f(value: any); function f(value: any, required: number) { }");
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2394]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["This overload signature is not compatible with its implementation signature."]);
+  });
+
+  it("reports namespace var-function value declaration collisions without rejecting var redeclarations", () => {
+    const duplicate = checkSourceFile(parseSourceFile("namespace N { var f; function f() {} }"), { strict: false });
+    const redeclaration = checkSourceFile(parseSourceFile("namespace N { var x; var x; }"), { strict: false });
+
+    assert.deepEqual(duplicate.diagnostics.map(diagnostic => diagnostic.code), [2300, 2300]);
+    assert.deepEqual(duplicate.diagnostics.map(diagnostic => diagnostic.message), [
+      "Duplicate identifier 'f'.",
+      "Duplicate identifier 'f'.",
+    ]);
+    assert.equal(redeclaration.diagnostics.length, 0);
+  });
+
   it("reports export-equals conflicts with exported declarations", () => {
     const sourceFile = parseSourceFile("export class C { } export = B;");
     const result = checkSourceFile(sourceFile);
@@ -448,6 +481,13 @@ describe("checker groundwork", () => {
       "Variable 'shape' is used before being assigned.",
     ]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2454, 2454]);
+  });
+
+  it("disables definite-assignment diagnostics when strict null checks are off", () => {
+    const sourceFile = parseSourceFile("class C { value: number; } var item: C; item;");
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.equal(result.diagnostics.length, 0);
   });
 
   it("marks simple assignment targets as assigned without reading the target first", () => {
