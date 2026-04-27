@@ -87,11 +87,17 @@ function parseCompilerOptions(fileName: string, value: unknown, diagnostics: TsC
   const allowSyntheticDefaultImports = parseBooleanCompilerOption(fileName, "allowSyntheticDefaultImports", value.allowSyntheticDefaultImports, diagnostics);
   const alwaysStrict = parseBooleanCompilerOption(fileName, "alwaysStrict", value.alwaysStrict, diagnostics);
   const esModuleInterop = parseBooleanCompilerOption(fileName, "esModuleInterop", value.esModuleInterop, diagnostics);
+  const noUncheckedSideEffectImports = parseBooleanCompilerOption(fileName, "noUncheckedSideEffectImports", value.noUncheckedSideEffectImports, diagnostics);
+  const strict = parseBooleanCompilerOption(fileName, "strict", value.strict, diagnostics);
+  const noImplicitAny = parseBooleanCompilerOption(fileName, "noImplicitAny", value.noImplicitAny, diagnostics);
   return {
     ...(outDir === undefined ? {} : { outDir }),
     ...(allowSyntheticDefaultImports === undefined ? {} : { allowSyntheticDefaultImports }),
     ...(alwaysStrict === undefined ? {} : { alwaysStrict }),
     ...(esModuleInterop === undefined ? {} : { esModuleInterop }),
+    ...(noUncheckedSideEffectImports === undefined ? {} : { noUncheckedSideEffectImports }),
+    ...(strict === undefined ? {} : { strict }),
+    ...(noImplicitAny === undefined ? {} : { noImplicitAny }),
   };
 }
 

@@ -9,11 +9,17 @@ interface CaseFile {
   readonly text: string;
 }
 
+interface CaseLink {
+  readonly from: string;
+  readonly to: string;
+}
+
 interface CompilerCase {
   readonly name: string;
   readonly path: string;
   readonly files: readonly CaseFile[];
   readonly rootNames: readonly string[];
+  readonly links: readonly CaseLink[];
   readonly compilerOptions: CaseCompilerOptions;
   readonly noTypesAndSymbols: boolean;
   readonly baselineFile: string | undefined;
@@ -33,6 +39,7 @@ interface CaseCompilerOptions extends CompilerOptions {
   readonly allowSyntheticDefaultImports?: boolean;
   readonly alwaysStrict?: boolean;
   readonly esModuleInterop?: boolean;
+  readonly noUncheckedSideEffectImports?: boolean;
   readonly jsx?: ts.JsxEmit;
 }
 
@@ -141,11 +148,16 @@ async function discoverCases(options: Options): Promise<readonly CompilerCase[]>
 
 function parseCompilerCase(name: string, path: string, text: string): CompilerCase {
   const fileSections: CaseFile[] = [];
+  const links: CaseLink[] = [];
   const compilerOptions = parseCompilerOptions(text);
   let currentFileName: string | undefined;
   let currentText: string[] = [];
 
   for (const line of text.split(/\r?\n/)) {
+    const link = line.match(/^\s*\/\/\s*@link:\s*(.+?)\s*->\s*(.+?)\s*$/i);
+    if (link !== null) {
+      links.push({ from: normalizeFileName(link[1]!), to: normalizeFileName(link[2]!) });
+    }
     const filename = line.match(/^\s*\/\/\s*@filename:\s*(.+?)\s*$/i)?.[1];
     if (filename !== undefined) {
       if (currentFileName !== undefined) {
@@ -173,6 +185,7 @@ function parseCompilerCase(name: string, path: string, text: string): CompilerCa
       noTypesAndSymbols: parseNoTypesAndSymbols(text),
       files: fileSections,
       rootNames,
+      links,
       baselineFile: undefined,
     };
   }
@@ -184,6 +197,7 @@ function parseCompilerCase(name: string, path: string, text: string): CompilerCa
     noTypesAndSymbols: parseNoTypesAndSymbols(text),
     files: [{ fileName: name, text }],
     rootNames: [name],
+    links,
     baselineFile: undefined,
   };
 }
@@ -243,6 +257,8 @@ function parseBaselineCompilerOptions(baselineFileName: string): CaseCompilerOpt
       options = { ...options, alwaysStrict: parseBoolean(value) };
     } else if (key === "esmoduleinterop" && value !== undefined) {
       options = { ...options, esModuleInterop: parseBoolean(value) };
+    } else if (key === "nouncheckedsideeffectimports" && value !== undefined) {
+      options = { ...options, noUncheckedSideEffectImports: parseBoolean(value) };
     }
   }
   return options;
@@ -334,6 +350,9 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
       case "esmoduleinterop":
         options = { ...options, esModuleInterop: parseBoolean(value) };
         break;
+      case "nouncheckedsideeffectimports":
+        options = { ...options, noUncheckedSideEffectImports: parseBoolean(value) };
+        break;
       case "jsx":
         options = { ...options, jsx: parseJsxEmit(value) };
         break;
@@ -417,8 +436,10 @@ function tstsDiagnostics(testCase: CompilerCase): readonly ComparableDiagnostic[
   const host: CompilerHost = {
     readFile: fileName => {
       const normalized = normalizeFileName(fileName);
+      const linked = resolveLinkedFileName(normalized, testCase.links);
+      const linkedText = linked === undefined ? undefined : fileMap.get(linked) ?? readDiskFileIfPresent(linked);
       const diskText = readPackageJsonFromDiskIfPresent(normalized);
-      return diskText ?? fileMap.get(normalized) ?? readDiskFileIfPresent(normalized);
+      return linkedText ?? diskText ?? fileMap.get(normalized) ?? readDiskFileIfPresent(normalized);
     },
     useCaseSensitiveFileNames: () => true,
   };
@@ -427,6 +448,15 @@ function tstsDiagnostics(testCase: CompilerCase): readonly ComparableDiagnostic[
     .map(normalizeProgramDiagnostic)
     .filter(diagnostic => diagnostic.fileName === undefined || fileMap.has(diagnostic.fileName))
     .sort(compareDiagnostics);
+}
+
+function resolveLinkedFileName(fileName: string, links: readonly CaseLink[]): string | undefined {
+  for (const link of links) {
+    if (fileName === link.to || fileName.startsWith(`${link.to}/`)) {
+      return `${link.from}${fileName.slice(link.to.length)}`;
+    }
+  }
+  return undefined;
 }
 
 function readPackageJsonFromDiskIfPresent(fileName: string): string | undefined {

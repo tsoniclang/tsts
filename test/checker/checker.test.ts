@@ -619,4 +619,38 @@ describe("checker groundwork", () => {
       "Invalid use of 'eval' in strict mode.",
     ]);
   });
+
+  it("reports ambient initializers and non-constant ambient enum members", () => {
+    const sourceFile = parseSourceFile("declare const value = 1; declare enum E { A = 1, B = Math.random() }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1039, 1066]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Initializers are not allowed in ambient contexts.",
+      "In ambient enum declarations member initializer must be constant expression.",
+    ]);
+  });
+
+  it("uses contextual object method types and preserved generic alias display for assignments", () => {
+    const sourceFile = parseSourceFile([
+      "type WatchHandler<T> = (value: T) => void;",
+      "interface Shape { data2: WatchHandler<any>; }",
+      "const shape: Shape = {",
+      "  data(value) { this.data2 = 1; },",
+      "  data2(value) { }",
+      "};",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'number' is not assignable to type 'WatchHandler<any>'." ]);
+  });
+
+  it("checks calls against inferred generic parameter substitutions", () => {
+    const sourceFile = parseSourceFile("function id<T>(value: T): T { return value; } const ok: number = id(1); const bad: string = id(1);");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'number' is not assignable to type 'string'."]);
+  });
 });

@@ -66,6 +66,7 @@ import {
   createModuleDeclaration,
   createNamedExports,
   createNamedImports,
+  createNamespaceExportDeclaration,
   createNamespaceImport,
   createNewExpression,
   createNoSubstitutionTemplateLiteral,
@@ -399,6 +400,9 @@ export class Parser {
     if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword) && this.#current().kind === Kind.AsteriskToken) {
       return this.#parseExportDeclaration(modifiers);
     }
+    if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword) && this.#current().kind === Kind.AsKeyword) {
+      return this.#parseExportDeclaration(modifiers);
+    }
     if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword) && this.#current().kind === Kind.EqualsToken) {
       return this.#parseExportAssignment(modifiers);
     }
@@ -491,6 +495,12 @@ export class Parser {
   }
 
   #parseExportDeclaration(modifiers: NodeArray<ModifierLike>): Statement {
+    if (this.#consumeOptional(Kind.AsKeyword)) {
+      this.#expect(Kind.NamespaceKeyword);
+      const name = this.#parseIdentifier();
+      this.#consumeOptional(Kind.SemicolonToken);
+      return createNamespaceExportDeclaration(modifiers, name);
+    }
     if (this.#consumeOptional(Kind.AsteriskToken)) {
       const moduleSpecifier = this.#consumeOptional(Kind.FromKeyword) ? this.#parseStringLiteralExpression() : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
@@ -1514,7 +1524,16 @@ export class Parser {
         continue;
       }
       const name = this.#parsePropertyName();
-      if (this.#consumeOptional(Kind.ColonToken)) {
+      const postfixToken = this.#parseOptionalPostfixToken();
+      if (this.#current().kind === Kind.OpenParenToken || this.#current().kind === Kind.LessThanToken) {
+        const typeParameters = this.#parseOptionalTypeParameters();
+        this.#expect(Kind.OpenParenToken);
+        const parameters = this.#parseParameterList();
+        this.#expect(Kind.CloseParenToken);
+        const type = this.#parseOptionalTypeAnnotation();
+        const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
+        properties.push(createMethodDeclaration(undefined, undefined, name, postfixToken, typeParameters, createNodeArray(parameters), type, body));
+      } else if (this.#consumeOptional(Kind.ColonToken)) {
         properties.push(createPropertyAssignment(undefined, name, undefined, undefined as never, this.#parseExpression()));
       } else {
         const objectAssignmentInitializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;

@@ -622,4 +622,20 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
     assert.deepEqual(result.sourceFile.statements.map(statement => statement.kind), [Kind.ExpressionStatement, Kind.FunctionDeclaration]);
   });
+
+  it("parses object literal methods and UMD namespace exports", () => {
+    const result = parseSourceFileWithDiagnostics([
+      "export as namespace Foo;",
+      "const obj = {",
+      "  data(value) { return value; },",
+      "};",
+    ].join("\n"));
+
+    assert.equal(result.diagnostics.length, 0);
+    assert.equal(result.sourceFile.statements[0]!.kind, Kind.NamespaceExportDeclaration);
+    const variable = result.sourceFile.statements[1]!;
+    assert.equal(isVariableStatement(variable), true);
+    if (!isVariableStatement(variable) || !isObjectLiteralExpression(variable.declarationList.declarations[0]!.initializer!)) throw new Error("Expected object literal initializer");
+    assert.equal(isMethodDeclaration(variable.declarationList.declarations[0]!.initializer.properties[0]!), true);
+  });
 });

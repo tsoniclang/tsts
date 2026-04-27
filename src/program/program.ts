@@ -3,16 +3,19 @@ import { bindSourceFile, type BindDiagnostic, type BindResult } from "../binder/
 import { checkProgram } from "../checker/index.js";
 import { printSourceFile } from "../emit-js/index.js";
 import { parseSourceFileWithDiagnostics } from "../parser/index.js";
-import { isExportDeclaration, isExternalModuleReference, isImportDeclaration, isImportEqualsDeclaration, isModuleDeclaration, isStringLiteral, type SourceFile } from "../ast/index.js";
+import { Kind, isExportAssignment, isExportDeclaration, isExternalModuleReference, isImportDeclaration, isImportEqualsDeclaration, isModuleDeclaration, isStringLiteral, type SourceFile } from "../ast/index.js";
 import { createDiagnosticAt, type DiagnosticCategory, type DiagnosticCode } from "../diagnostics/index.js";
 
 export interface CompilerOptions {
   readonly outDir?: string;
   readonly target?: ScriptTargetName;
   readonly module?: ModuleKindName;
+  readonly strict?: boolean;
+  readonly noImplicitAny?: boolean;
   readonly allowSyntheticDefaultImports?: boolean;
   readonly alwaysStrict?: boolean;
   readonly esModuleInterop?: boolean;
+  readonly noUncheckedSideEffectImports?: boolean;
 }
 
 export type ScriptTargetName = "es3" | "es5" | "es2015" | "es2016" | "es2017" | "es2018" | "es2019" | "es2020" | "es2021" | "es2022" | "es2023" | "es2024" | "esnext";
@@ -69,7 +72,8 @@ export interface EmitResult {
 export function createProgram(rootNames: readonly string[], options: CompilerOptions, host: CompilerHost): Program {
   const sourceFiles: ProgramSourceFile[] = [];
   const diagnostics: ProgramDiagnostic[] = [];
-  const unresolvedModules: { readonly fileName: string; readonly moduleSpecifier: string }[] = [];
+  const unresolvedModules: { readonly fileName: string; readonly moduleSpecifier: string; readonly sideEffectOnly: boolean }[] = [];
+  const moduleAugmentations: { readonly fileName: string; readonly moduleSpecifier: string }[] = [];
   const ambientModules = new Set<string>();
   const pending = [...rootNames];
   const seen = new Set<string>();
@@ -110,19 +114,20 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
     for (const moduleSpecifier of sourceFileAmbientModuleSpecifiers(sourceFile)) {
       ambientModules.add(moduleSpecifier);
     }
+    moduleAugmentations.push(...sourceFileModuleAugmentationSpecifiers(sourceFile).map(moduleSpecifier => ({ fileName: rootName, moduleSpecifier })));
     const resolvedModules: ResolvedModule[] = [];
-    for (const moduleSpecifier of sourceFileModuleSpecifiers(sourceFile)) {
-      const resolved = resolveModuleName(moduleSpecifier, rootName, host, fileTextCache);
+    for (const moduleReference of sourceFileModuleReferences(sourceFile)) {
+      const resolved = resolveModuleName(moduleReference.moduleSpecifier, rootName, host, fileTextCache);
       if (!resolved.found) {
-        unresolvedModules.push({ fileName: rootName, moduleSpecifier });
+        unresolvedModules.push({ fileName: rootName, moduleSpecifier: moduleReference.moduleSpecifier, sideEffectOnly: moduleReference.sideEffectOnly });
         continue;
       }
       if (resolved.fileName !== undefined && !seen.has(canonicalFileName(resolved.fileName, host))) {
-        resolvedModules.push({ specifier: moduleSpecifier, fileName: resolved.fileName });
+        resolvedModules.push({ specifier: moduleReference.moduleSpecifier, fileName: resolved.fileName });
         pending.push(resolved.fileName);
       }
       if (resolved.fileName !== undefined && seen.has(canonicalFileName(resolved.fileName, host))) {
-        resolvedModules.push({ specifier: moduleSpecifier, fileName: resolved.fileName });
+        resolvedModules.push({ specifier: moduleReference.moduleSpecifier, fileName: resolved.fileName });
       }
     }
     sourceFiles.push({
@@ -141,13 +146,21 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
       ...diagnostics,
       ...unresolvedModules
         .filter(unresolved => !ambientModules.has(unresolved.moduleSpecifier))
-        .map(unresolved => programDiagnostic(unresolved.fileName, unresolvedModuleDiagnosticCode(unresolved.moduleSpecifier, options), unresolved.moduleSpecifier)),
+        .filter(unresolved => !unresolved.sideEffectOnly || options.noUncheckedSideEffectImports === true)
+        .map(unresolved => programDiagnostic(unresolved.fileName, unresolvedModuleDiagnosticCode(unresolved, options), unresolved.moduleSpecifier)),
+      ...moduleAugmentations
+        .filter(augmentation => !ambientModules.has(augmentation.moduleSpecifier))
+        .filter(augmentation => !resolveModuleName(augmentation.moduleSpecifier, augmentation.fileName, host, fileTextCache).found)
+        .map(augmentation => programDiagnostic(augmentation.fileName, 2664, augmentation.moduleSpecifier)),
     ],
   };
 }
 
-function unresolvedModuleDiagnosticCode(moduleSpecifier: string, options: CompilerOptions): DiagnosticCode {
-  return !isRelativeModuleName(moduleSpecifier) && options.module === "system" ? 2792 : 2307;
+function unresolvedModuleDiagnosticCode(unresolved: { readonly moduleSpecifier: string; readonly sideEffectOnly: boolean }, options: CompilerOptions): DiagnosticCode {
+  if (unresolved.sideEffectOnly && options.noUncheckedSideEffectImports === true) {
+    return 2882;
+  }
+  return !isRelativeModuleName(unresolved.moduleSpecifier) && options.module === "system" ? 2792 : 2307;
 }
 
 export function emitProgram(program: Program, host?: Pick<CompilerHost, "writeFile" | "getCurrentDirectory">): EmitResult {
@@ -172,15 +185,20 @@ export function getProgramDiagnostics(program: Program): readonly ProgramDiagnos
   return checkProgram(program);
 }
 
-function sourceFileModuleSpecifiers(sourceFile: SourceFile): readonly string[] {
-  const specifiers: string[] = [];
+interface SourceFileModuleReference {
+  readonly moduleSpecifier: string;
+  readonly sideEffectOnly: boolean;
+}
+
+function sourceFileModuleReferences(sourceFile: SourceFile): readonly SourceFileModuleReference[] {
+  const references: SourceFileModuleReference[] = [];
   for (const statement of sourceFile.statements) {
     if (isImportDeclaration(statement) && isStringLiteral(statement.moduleSpecifier)) {
-      specifiers.push(statement.moduleSpecifier.text);
+      references.push({ moduleSpecifier: statement.moduleSpecifier.text, sideEffectOnly: statement.importClause === undefined });
       continue;
     }
     if (isExportDeclaration(statement) && statement.moduleSpecifier !== undefined && isStringLiteral(statement.moduleSpecifier)) {
-      specifiers.push(statement.moduleSpecifier.text);
+      references.push({ moduleSpecifier: statement.moduleSpecifier.text, sideEffectOnly: false });
       continue;
     }
     if (
@@ -188,13 +206,16 @@ function sourceFileModuleSpecifiers(sourceFile: SourceFile): readonly string[] {
       && isExternalModuleReference(statement.moduleReference)
       && isStringLiteral(statement.moduleReference.expression)
     ) {
-      specifiers.push(statement.moduleReference.expression.text);
+      references.push({ moduleSpecifier: statement.moduleReference.expression.text, sideEffectOnly: false });
     }
   }
-  return specifiers;
+  return references;
 }
 
 function sourceFileAmbientModuleSpecifiers(sourceFile: SourceFile): readonly string[] {
+  if (sourceFileIsExternalModule(sourceFile)) {
+    return [];
+  }
   const specifiers: string[] = [];
   for (const statement of sourceFile.statements) {
     if (isModuleDeclaration(statement) && isStringLiteral(statement.name)) {
@@ -204,6 +225,33 @@ function sourceFileAmbientModuleSpecifiers(sourceFile: SourceFile): readonly str
   return specifiers;
 }
 
+function sourceFileModuleAugmentationSpecifiers(sourceFile: SourceFile): readonly string[] {
+  if (!sourceFileIsExternalModule(sourceFile)) {
+    return [];
+  }
+  const specifiers: string[] = [];
+  for (const statement of sourceFile.statements) {
+    if (isModuleDeclaration(statement) && isStringLiteral(statement.name)) {
+      specifiers.push(statement.name.text);
+    }
+  }
+  return specifiers;
+}
+
+function sourceFileIsExternalModule(sourceFile: SourceFile): boolean {
+  return sourceFile.statements.some(statement =>
+    isImportDeclaration(statement)
+    || isImportEqualsDeclaration(statement)
+    || isExportDeclaration(statement)
+    || isExportAssignment(statement)
+    || hasModifier(statement, Kind.ExportKeyword)
+  );
+}
+
+function hasModifier(node: object, kind: Kind): boolean {
+  return (node as { readonly modifiers?: readonly { readonly kind: Kind }[] }).modifiers?.some(modifier => modifier.kind === kind) === true;
+}
+
 interface ModuleResolution {
   readonly found: boolean;
   readonly fileName?: string;
@@ -211,7 +259,7 @@ interface ModuleResolution {
 
 function resolveModuleName(moduleSpecifier: string, containingFileName: string, host: CompilerHost, cache: Map<string, string | undefined>): ModuleResolution {
   if (!isRelativeModuleName(moduleSpecifier)) {
-    const resolvedPackageFile = packageResolutionCandidates(moduleSpecifier, host, cache).find(candidate => readFileCached(candidate, host, cache) !== undefined);
+    const resolvedPackageFile = packageResolutionCandidates(moduleSpecifier, containingFileName, host, cache).find(candidate => readFileCached(candidate, host, cache) !== undefined);
     if (resolvedPackageFile !== undefined) {
       return { found: true, fileName: resolvedPackageFile };
     }
@@ -255,25 +303,42 @@ function moduleResolutionCandidates(base: string): readonly string[] {
   ];
 }
 
-function packageResolutionCandidates(moduleSpecifier: string, host: CompilerHost, cache: Map<string, string | undefined>): readonly string[] {
-  const base = join("node_modules", moduleSpecifier);
-  return [
-    ...packageJsonResolutionCandidates(base, host, cache),
-    `${base}.ts`,
-    `${base}.tsx`,
-    `${base}.mts`,
-    `${base}.cts`,
-    `${base}.d.ts`,
-    `${base}.d.mts`,
-    `${base}.d.cts`,
-    join(base, "index.ts"),
-    join(base, "index.tsx"),
-    join(base, "index.mts"),
-    join(base, "index.cts"),
-    join(base, "index.d.ts"),
-    join(base, "index.d.mts"),
-    join(base, "index.d.cts"),
-  ];
+function packageResolutionCandidates(moduleSpecifier: string, containingFileName: string, host: CompilerHost, cache: Map<string, string | undefined>): readonly string[] {
+  return nodeModulesSearchDirectories(dirname(containingFileName)).flatMap(nodeModulesDirectory => {
+    const base = join(nodeModulesDirectory, moduleSpecifier);
+    return [
+      ...packageJsonResolutionCandidates(base, host, cache),
+      `${base}.ts`,
+      `${base}.tsx`,
+      `${base}.mts`,
+      `${base}.cts`,
+      `${base}.d.ts`,
+      `${base}.d.mts`,
+      `${base}.d.cts`,
+      join(base, "index.ts"),
+      join(base, "index.tsx"),
+      join(base, "index.mts"),
+      join(base, "index.cts"),
+      join(base, "index.d.ts"),
+      join(base, "index.d.mts"),
+      join(base, "index.d.cts"),
+    ];
+  });
+}
+
+function nodeModulesSearchDirectories(startDirectory: string): readonly string[] {
+  const directories: string[] = [];
+  let current = normalize(startDirectory || ".");
+  while (true) {
+    directories.push(join(current, "node_modules"));
+    const parent = dirname(current);
+    if (parent === current || parent === ".") {
+      break;
+    }
+    current = parent;
+  }
+  directories.push("node_modules");
+  return [...new Set(directories)];
 }
 
 function packageJsonResolutionCandidates(packageDirectory: string, host: CompilerHost, cache: Map<string, string | undefined>): readonly string[] {
@@ -292,7 +357,7 @@ function packageJsonResolutionCandidates(packageDirectory: string, host: Compile
     return [];
   }
 
-  const candidates: string[] = [];
+  const candidates: string[] = [...packageExportsResolutionCandidates(packageDirectory, packageMetadata.exports)];
   for (const fieldName of ["types", "typings", "main"] as const) {
     const fieldValue = packageMetadata[fieldName];
     if (typeof fieldValue === "string") {
@@ -300,6 +365,34 @@ function packageJsonResolutionCandidates(packageDirectory: string, host: Compile
     }
   }
   return candidates;
+}
+
+function packageExportsResolutionCandidates(packageDirectory: string, exportsField: unknown): readonly string[] {
+  return packageExportsTargets(exportsField).flatMap(target => moduleResolutionCandidates(packageFieldTarget(packageDirectory, target)));
+}
+
+function packageExportsTargets(exportsField: unknown): readonly string[] {
+  if (typeof exportsField === "string") {
+    return [exportsField];
+  }
+  if (!isRecord(exportsField)) {
+    return [];
+  }
+  const rootExport = exportsField["."];
+  if (typeof rootExport === "string") {
+    return [rootExport];
+  }
+  if (!isRecord(rootExport)) {
+    return [];
+  }
+  const targets: string[] = [];
+  for (const condition of ["types", "typings", "import", "require", "default"] as const) {
+    const target = rootExport[condition];
+    if (typeof target === "string") {
+      targets.push(target);
+    }
+  }
+  return targets;
 }
 
 function packageFieldTarget(packageDirectory: string, fieldValue: string): string {

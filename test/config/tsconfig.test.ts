@@ -10,6 +10,9 @@ describe("tsconfig groundwork", () => {
         // deterministic JSONC support
         "compilerOptions": {
           "outDir": "dist",
+          "strict": true,
+          "noImplicitAny": false,
+          "noUncheckedSideEffectImports": true,
         },
         "files": [
           "src/add.ts",
@@ -20,7 +23,7 @@ describe("tsconfig groundwork", () => {
 
     assert.equal(result.diagnostics.length, 0);
     assert.deepEqual(result.config?.rootNames, ["project/src/add.ts", "project/src/value.ts"]);
-    assert.deepEqual(result.config?.options, { outDir: "dist" });
+    assert.deepEqual(result.config?.options, { outDir: "dist", strict: true, noImplicitAny: false, noUncheckedSideEffectImports: true });
   });
 
   it("loads configs through the compiler host", () => {

@@ -153,6 +153,38 @@ describe("program groundwork", () => {
     ]);
   });
 
+  it("resolves package exports from the containing file and suppresses unchecked side-effect imports by default", () => {
+    const files = new Map<string, string>([
+      ["packages/app/src/index.ts", "import { value } from \"pkg\"; import \"missing-side-effect\"; export const answer = value;"],
+      ["packages/app/node_modules/pkg/package.json", "{\"name\":\"pkg\",\"exports\":{\".\":{\"types\":\"./dist/index.d.ts\",\"default\":\"./dist/index.js\"}}}"],
+      ["packages/app/node_modules/pkg/dist/index.d.ts", "export const value: number;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["packages/app/src/index.ts"], {}, host);
+
+    assert.equal(program.diagnostics.length, 0);
+    assert.deepEqual(program.sourceFiles.map(file => file.fileName), [
+      "packages/app/src/index.ts",
+      "packages/app/node_modules/pkg/dist/index.d.ts",
+    ]);
+  });
+
+  it("uses the side-effect import diagnostic when unchecked side-effect imports are enabled", () => {
+    const host: CompilerHost = {
+      readFile: fileName => fileName === "src/index.ts" ? "import \"missing-side-effect\";" : undefined,
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/index.ts"], { noUncheckedSideEffectImports: true }, host);
+
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2882]);
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find module or type declarations for side-effect import of 'missing-side-effect'."]);
+  });
+
   it("resolves external import-equals module references through the program graph", () => {
     const files = new Map<string, string>([
       ["src/index.ts", "import pkg = require(\"pkg\"); export const answer = pkg.value;"],
@@ -194,6 +226,18 @@ describe("program groundwork", () => {
 
     assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find module 'missing-pkg' or its corresponding type declarations."]);
     assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2307]);
+  });
+
+  it("diagnoses unresolved external module augmentations without treating them as ambient modules", () => {
+    const host: CompilerHost = {
+      readFile: fileName => fileName === "src/index.ts" ? "export {}; declare module \"missing\" { export interface Shape { value: string; } }" : undefined,
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/index.ts"], {}, host);
+
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2664]);
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Invalid module name in augmentation, module 'missing' cannot be found."]);
   });
 
   it("uses the System-module unresolved package diagnostic", () => {
