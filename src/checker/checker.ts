@@ -44,6 +44,7 @@ import {
   isKeywordTypeNode,
   isIndexSignatureDeclaration,
   isLabeledStatement,
+  isLiteralTypeNode,
   isMappedTypeNode,
   isMethodDeclaration,
   isMethodSignatureDeclaration,
@@ -77,10 +78,11 @@ import {
   isSpreadElement,
   isStringLiteral,
   isTypeAssertion,
-  isTypeReferenceNode,
   isTypeAliasDeclaration,
   isTypeLiteralNode,
+  isTypePredicateNode,
   isTypeQueryNode,
+  isTypeReferenceNode,
   isVariableStatement,
   isVariableDeclarationList,
   isUnionTypeNode,
@@ -114,6 +116,7 @@ import {
   type TypeElement,
   type TypeAliasDeclaration,
   type TypeNode,
+  type TypePredicateNode,
   type VariableDeclaration,
 } from "../ast/index.js";
 import { createDiagnostic, type Diagnostic } from "../diagnostics/index.js";
@@ -127,18 +130,25 @@ type CheckedType =
   | { readonly kind: "classInstance"; readonly name: string; readonly typeArguments: readonly CheckedType[]; readonly members: ClassMemberNames }
   | { readonly kind: "classConstructor"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeArguments: readonly CheckedType[]; readonly abstract: boolean; readonly members: ClassMemberNames }
   | { readonly kind: "accessorProperty"; readonly type: CheckedType }
+  | { readonly kind: "arrayLike"; readonly elementType: CheckedType }
   | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType }
+  | { readonly kind: "intrinsicConstructor"; readonly intrinsic: "Set" }
+  | { readonly kind: "intrinsicFunction"; readonly intrinsic: "Array.from" | "Array.isArray" | "ArrayBuffer.isView" }
   | { readonly kind: "interface"; readonly name: string; readonly members: InterfaceMembers }
   | { readonly kind: "intersection"; readonly types: readonly CheckedType[] }
+  | { readonly kind: "iterable"; readonly elementType: CheckedType }
   | { readonly kind: "moduleNamespace"; readonly moduleSpecifier: string; readonly diagnosticName: string; readonly exports: ReadonlyMap<string, CheckedType>; readonly exportEquals?: CheckedType }
   | { readonly kind: "namespace"; readonly name: string; readonly exports: ReadonlyMap<string, CheckedType>; readonly enumLike?: boolean }
   | { readonly kind: "namespaceAndType"; readonly namespace: Extract<CheckedType, { readonly kind: "namespace" }>; readonly type: CheckedType }
+  | { readonly kind: "nonNullable"; readonly target: CheckedType }
   | { readonly kind: "object"; readonly properties: ReadonlyMap<string, CheckedType>; readonly readonlyProperties: ReadonlySet<string> }
   | { readonly kind: "record"; readonly keyType: CheckedType; readonly valueType: CheckedType }
   | { readonly kind: "thisClass"; readonly className: string; readonly abstractProperties: ReadonlySet<string>; readonly abstractPropertyDeclaringClasses: ReadonlyMap<string, string>; readonly uninitializedProperties: ReadonlySet<string>; readonly mode: "constructor" | "fieldInitializer" }
   | { readonly kind: "typeAlias"; readonly name: string; readonly typeParameters: readonly string[]; readonly target: CheckedType; readonly preserveDisplay: boolean }
   | { readonly kind: "typeAliasInstance"; readonly name: string; readonly typeArguments: readonly CheckedType[]; readonly target: CheckedType }
   | { readonly kind: "typeParameter"; readonly name: string }
+  | { readonly kind: "set"; readonly elementType: CheckedType }
+  | { readonly kind: "typePredicate"; readonly parameterName: string; readonly assertedType: CheckedType; readonly asserts: boolean; readonly parameterIndex?: number }
   | { readonly kind: "union"; readonly types: readonly CheckedType[] }
   | { readonly kind: "unassignedVariable"; readonly name: string; readonly type: CheckedType }
   | { readonly kind: "unqualifiedStaticMember"; readonly className: string; readonly memberName: string }
@@ -404,7 +414,7 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
         collectReExports(statement, reexported, exports);
         continue;
       }
-      collectModuleExport(statement, exports);
+      collectModuleExport(statement, exports, environment);
       if (isExportAssignment(statement) && !statement.isExportEquals && isIdentifier(statement.expression)) {
         const exported = environment.get(statement.expression.text);
         if (exported !== undefined) {
@@ -482,8 +492,8 @@ function globalEnvironmentForProgram(program: Program): TypeEnvironment {
 
 function standardGlobalEnvironment(): TypeEnvironment {
   const entries: Array<readonly [string, CheckedType]> = [
-    ["Array", anyType],
-    ["ArrayBuffer", anyType],
+    ["Array", { kind: "valueAndType", value: { kind: "object", properties: new Map([["from", { kind: "intrinsicFunction", intrinsic: "Array.from" }], ["fromAsync", anyType], ["isArray", { kind: "intrinsicFunction", intrinsic: "Array.isArray" }]]), readonlyProperties: new Set() }, type: anyType }],
+    ["ArrayBuffer", { kind: "valueAndType", value: { kind: "object", properties: new Map([["isView", { kind: "intrinsicFunction", intrinsic: "ArrayBuffer.isView" }]]), readonlyProperties: new Set() }, type: anyType }],
     ["ArrayBufferView", anyType],
     ["BigInt", anyType],
     ["Date", anyType],
@@ -498,7 +508,7 @@ function standardGlobalEnvironment(): TypeEnvironment {
       ]),
     }],
     ["Promise", anyType],
-    ["Set", anyType],
+    ["Set", { kind: "intrinsicConstructor", intrinsic: "Set" }],
     ["Symbol", anyType],
     ["WeakMap", anyType],
     ["WeakRef", anyType],
@@ -531,7 +541,7 @@ function collectReExports(statement: Extract<Statement, { readonly kind: Kind.Ex
   }
 }
 
-function collectModuleExport(statement: Statement, exports: Map<string, CheckedType>): void {
+function collectModuleExport(statement: Statement, exports: Map<string, CheckedType>, environment: TypeEnvironment): void {
   if (isExportAssignment(statement) && !statement.isExportEquals) {
     mergeModuleExport(exports, "default", { kind: "valueOnly", name: "default", type: anyType });
     return;
@@ -540,7 +550,7 @@ function collectModuleExport(statement: Statement, exports: Map<string, CheckedT
     for (const element of statement.exportClause.elements) {
       const exportedName = moduleExportNameText(element.name);
       const localName = element.propertyName === undefined ? exportedName : moduleExportNameText(element.propertyName);
-      mergeModuleExport(exports, exportedName, { kind: "valueOnly", name: localName, type: anyType });
+      mergeModuleExport(exports, exportedName, environment.get(localName) ?? { kind: "valueOnly", name: localName, type: anyType });
     }
     return;
   }
@@ -648,7 +658,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isIfStatement(statement)) {
     inferExpression(statement.expression, state, environment);
-    checkStatement(statement.thenStatement, state, new Map(environment), expectedReturnType, ambient, false);
+    checkStatement(statement.thenStatement, state, narrowedEnvironmentForCondition(statement.expression, environment), expectedReturnType, ambient, false);
     if (statement.elseStatement !== undefined) {
       checkStatement(statement.elseStatement, state, new Map(environment), expectedReturnType, ambient, false);
     }
@@ -722,6 +732,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isExpressionStatement(statement)) {
     inferExpression(statement.expression, state, environment);
+    applyAssertionCallNarrowing(statement.expression, environment);
     return;
   }
   if (isBlock(statement)) {
@@ -1764,11 +1775,12 @@ function methodSignatureType(method: MethodSignatureDeclaration, environment: Ty
   const signatureEnvironment = new Map(environment);
   const typeParameters = method.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
   addTypeParametersToEnvironment(typeParameters, signatureEnvironment);
+  const returnType = method.type === undefined ? unresolvedType : bindTypePredicateParameterIndex(typeFromTypeNode(method.type, signatureEnvironment, state), method.parameters);
   return {
     kind: "function",
     typeParameters,
     parameters: method.parameters.map(parameter => parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, signatureEnvironment, state)),
-    returnType: method.type === undefined ? unresolvedType : typeFromTypeNode(method.type, signatureEnvironment, state),
+    returnType,
   };
 }
 
@@ -2135,7 +2147,7 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
   const typeParameters = functionDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
   addTypeParametersToEnvironment(typeParameters, functionEnvironment);
   const parameterTypes = functionDeclaration.parameters.map(parameter => parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, functionEnvironment, state));
-  const returnType = functionDeclaration.type === undefined ? undefined : typeFromTypeNode(functionDeclaration.type, functionEnvironment, state);
+  const returnType = functionDeclaration.type === undefined ? undefined : bindTypePredicateParameterIndex(typeFromTypeNode(functionDeclaration.type, functionEnvironment, state), functionDeclaration.parameters);
   if (!ambient && functionDeclaration.body === undefined && functionDeclaration.type === undefined) {
     state.diagnostics.push(createDiagnostic(7010, functionDeclaration.name?.text ?? "(Missing)", "any"));
   }
@@ -2335,6 +2347,9 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     if (receiver.kind === "array") {
       return receiver.elementType;
     }
+    if (receiver.kind === "arrayLike") {
+      return receiver.elementType;
+    }
     if (receiver.kind === "interface") {
       return interfaceElementAccessType(receiver.members, expression.argumentExpression);
     }
@@ -2358,6 +2373,9 @@ function inferExpression(expression: Expression, state: CheckState, environment:
       }
     }
     const calleeType = inferExpression(expression.expression, state, environment);
+    if (calleeType.kind === "intrinsicFunction") {
+      return inferIntrinsicCall(expression, calleeType, state, environment);
+    }
     const argumentTypes = expression.arguments.map((argument, index) => inferExpressionWithContext(
       argument,
       state,
@@ -2373,7 +2391,8 @@ function inferExpression(expression: Expression, state: CheckState, environment:
       for (let index = 0; index < instantiatedParameters.length && index < argumentTypes.length; index += 1) {
         checkAssignable(argumentTypes[index]!, instantiatedParameters[index]!, state);
       }
-      return instantiateFunctionReturnType(calleeType, typeArguments, argumentTypes);
+      const returnType = instantiateFunctionReturnType(calleeType, typeArguments, argumentTypes);
+      return returnType.kind === "typePredicate" ? booleanType : returnType;
     }
     if (calleeType.kind === "accessorProperty") {
       state.diagnostics.push(createDiagnostic(6234));
@@ -2388,6 +2407,9 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     }
     for (const argument of expression.arguments ?? []) {
       inferExpression(argument, state, environment);
+    }
+    if (constructorType.kind === "intrinsicConstructor" && constructorType.intrinsic === "Set") {
+      return { kind: "set", elementType: expression.typeArguments?.[0] === undefined ? anyType : typeFromTypeNode(expression.typeArguments[0], environment, state) };
     }
     return constructorType.kind === "classConstructor"
       ? { kind: "classInstance", name: constructorType.name, typeArguments: constructorType.typeArguments, members: constructorType.members }
@@ -2404,6 +2426,229 @@ function inferExpressionWithContext(expression: Expression, state: CheckState, e
     return inferObjectLiteral(expression, state, environment, contextualType);
   }
   return inferExpression(expression, state, environment);
+}
+
+function inferIntrinsicCall(expression: Extract<Expression, { readonly kind: Kind.CallExpression }>, calleeType: Extract<CheckedType, { readonly kind: "intrinsicFunction" }>, state: CheckState, environment: TypeEnvironment): CheckedType {
+  if (calleeType.intrinsic === "Array.from") {
+    return inferArrayFromCall(expression, state, environment);
+  }
+  if (calleeType.intrinsic === "Array.isArray") {
+    for (const argument of expression.arguments) {
+      inferExpression(argument, state, environment);
+    }
+    return booleanType;
+  }
+  if (calleeType.intrinsic === "ArrayBuffer.isView") {
+    for (const argument of expression.arguments) {
+      inferExpression(argument, state, environment);
+    }
+    return booleanType;
+  }
+  return anyType;
+}
+
+function inferArrayFromCall(expression: Extract<Expression, { readonly kind: Kind.CallExpression }>, state: CheckState, environment: TypeEnvironment): CheckedType {
+  const sourceArgument = expression.arguments[0];
+  if (sourceArgument === undefined) {
+    return { kind: "array", elementType: anyType };
+  }
+  const sourceType = inferExpression(sourceArgument, state, environment);
+  const sourceElementType = collectionElementType(sourceType);
+  const mapperArgument = expression.arguments[1];
+  if (mapperArgument === undefined) {
+    return { kind: "array", elementType: sourceElementType };
+  }
+  const mapperType = inferExpressionWithContext(mapperArgument, state, environment, {
+    kind: "function",
+    typeParameters: [],
+    parameters: [sourceElementType, numberType],
+    returnType: anyType,
+  });
+  for (const argument of expression.arguments.slice(2)) {
+    inferExpression(argument, state, environment);
+  }
+  const mappedElementType = mapperType.kind === "function"
+    ? (mapperType.returnType.kind === "typePredicate" ? booleanType : mapperType.returnType)
+    : anyType;
+  return { kind: "array", elementType: mappedElementType };
+}
+
+function collectionElementType(type: CheckedType): CheckedType {
+  if (type.kind === "unassignedVariable") {
+    return collectionElementType(type.type);
+  }
+  if (type.kind === "array" || type.kind === "arrayLike" || type.kind === "iterable" || type.kind === "set") {
+    return type.elementType;
+  }
+  if (type.kind === "union") {
+    return unionType(type.types.map(collectionElementType));
+  }
+  if (type.kind === "any" || type.kind === "unknown" || type.kind === "unresolved") {
+    return anyType;
+  }
+  return anyType;
+}
+
+function narrowedEnvironmentForCondition(expression: Expression, environment: TypeEnvironment): TypeEnvironment {
+  const narrowed = new Map(environment);
+  applyConditionNarrowing(expression, environment, narrowed);
+  return narrowed;
+}
+
+function applyConditionNarrowing(expression: Expression, source: TypeEnvironment, target: TypeEnvironment): void {
+  if (isParenthesizedExpression(expression)) {
+    applyConditionNarrowing(expression.expression, source, target);
+    return;
+  }
+  if (isBinaryExpression(expression) && expression.operatorToken.kind === Kind.AmpersandAmpersandToken) {
+    applyConditionNarrowing(expression.left, source, target);
+    applyConditionNarrowing(expression.right, target, target);
+    return;
+  }
+  if (!isCallExpression(expression)) {
+    return;
+  }
+  applyDirectPredicateCallNarrowing(expression, source, target);
+  applyArrayEveryPredicateNarrowing(expression, source, target);
+}
+
+function applyDirectPredicateCallNarrowing(expression: Extract<Expression, { readonly kind: Kind.CallExpression }>, source: TypeEnvironment, target: TypeEnvironment): void {
+  const predicate = predicateFromCallExpression(expression, source);
+  if (predicate?.parameterIndex === undefined) {
+    return;
+  }
+  const argument = expression.arguments[predicate.parameterIndex];
+  if (argument !== undefined) {
+    narrowExpressionBinding(argument, predicate.assertedType, source, target);
+  }
+}
+
+function applyAssertionCallNarrowing(expression: Expression, environment: TypeEnvironment): void {
+  if (!isCallExpression(expression)) {
+    return;
+  }
+  const predicate = predicateFromCallExpression(expression, environment);
+  if (predicate?.asserts !== true || predicate.parameterIndex === undefined) {
+    return;
+  }
+  const argument = expression.arguments[predicate.parameterIndex];
+  if (argument !== undefined) {
+    narrowExpressionBinding(argument, predicate.assertedType, environment, environment);
+  }
+}
+
+function applyArrayEveryPredicateNarrowing(expression: Extract<Expression, { readonly kind: Kind.CallExpression }>, source: TypeEnvironment, target: TypeEnvironment): void {
+  if (!isPropertyAccessExpression(expression.expression) || expression.expression.name.text !== "every") {
+    return;
+  }
+  const receiver = expression.expression.expression;
+  const receiverType = expressionFlowType(receiver, source);
+  if (receiverType?.kind !== "array") {
+    return;
+  }
+  const callbackType = expression.arguments[0] === undefined ? undefined : expressionFlowType(expression.arguments[0], source);
+  if (callbackType?.kind !== "function" || callbackType.returnType.kind !== "typePredicate") {
+    return;
+  }
+  narrowExpressionBinding(receiver, { kind: "array", elementType: callbackType.returnType.assertedType }, source, target);
+}
+
+function predicateFromCallExpression(expression: Extract<Expression, { readonly kind: Kind.CallExpression }>, environment: TypeEnvironment): Extract<CheckedType, { readonly kind: "typePredicate" }> | undefined {
+  const calleeType = expressionFlowType(expression.expression, environment);
+  if (calleeType?.kind === "function") {
+    const argumentTypes = expression.arguments.map(argument => expressionFlowType(argument, environment) ?? anyType);
+    const returnType = instantiateFunctionReturnType(calleeType, [], argumentTypes);
+    return returnType.kind === "typePredicate" ? returnType : undefined;
+  }
+  if (calleeType?.kind === "intrinsicFunction" && calleeType.intrinsic === "ArrayBuffer.isView") {
+    return { kind: "typePredicate", parameterName: "arg0", parameterIndex: 0, assertedType: anyType, asserts: false };
+  }
+  if (calleeType?.kind === "intrinsicFunction" && calleeType.intrinsic === "Array.isArray") {
+    return { kind: "typePredicate", parameterName: "arg0", parameterIndex: 0, assertedType: { kind: "array", elementType: anyType }, asserts: false };
+  }
+  return undefined;
+}
+
+function narrowExpressionBinding(expression: Expression, assertedType: CheckedType, source: TypeEnvironment, target: TypeEnvironment): void {
+  if (isParenthesizedExpression(expression)) {
+    narrowExpressionBinding(expression.expression, assertedType, source, target);
+    return;
+  }
+  if (!isIdentifier(expression)) {
+    return;
+  }
+  const current = source.get(expression.text);
+  if (current !== undefined) {
+    target.set(expression.text, narrowType(current, assertedType));
+  }
+}
+
+function narrowType(current: CheckedType, assertedType: CheckedType): CheckedType {
+  if (current.kind === "unassignedVariable") {
+    return narrowType(current.type, assertedType);
+  }
+  if (current.kind === "valueAndType") {
+    return { ...current, value: narrowType(current.value, assertedType) };
+  }
+  if (current.kind === "typeAliasInstance") {
+    return { ...current, target: narrowType(current.target, assertedType) };
+  }
+  if (current.kind === "nonNullable") {
+    return narrowType(nonNullableType(current.target), assertedType);
+  }
+  if (assertedType.kind === "nonNullable") {
+    return narrowType(current, nonNullableType(assertedType.target));
+  }
+  if (current.kind === "array" && assertedType.kind === "array") {
+    return { kind: "array", elementType: narrowType(current.elementType, assertedType.elementType) };
+  }
+  if (current.kind === "union") {
+    const narrowedMembers = current.types.filter(type => typesSufficientlyOverlap(type, assertedType));
+    return narrowedMembers.length === 0 ? current : unionType(narrowedMembers.map(type => narrowType(type, assertedType)));
+  }
+  if (current.kind === "any" || current.kind === "unknown" || current.kind === "unresolved") {
+    return assertedType;
+  }
+  if (isAssignableTo(assertedType, current)) {
+    return assertedType;
+  }
+  if (isAssignableTo(current, assertedType)) {
+    return current;
+  }
+  return current;
+}
+
+function expressionFlowType(expression: Expression, environment: TypeEnvironment): CheckedType | undefined {
+  if (isParenthesizedExpression(expression)) {
+    return expressionFlowType(expression.expression, environment);
+  }
+  if (isIdentifier(expression)) {
+    const bound = environment.get(expression.text);
+    if (bound?.kind === "valueAndType") {
+      return bound.value;
+    }
+    if (bound?.kind === "namespaceAndType") {
+      return namespaceValueMeaning(bound.namespace) ?? bound.namespace;
+    }
+    return bound;
+  }
+  if (isPropertyAccessExpression(expression)) {
+    const receiverType = expressionFlowType(expression.expression, environment);
+    return receiverType === undefined ? undefined : propertyAccessType(receiverType, expression.name.text, environment);
+  }
+  if (isCallExpression(expression)) {
+    const calleeType = expressionFlowType(expression.expression, environment);
+    if (calleeType?.kind === "intrinsicFunction" && calleeType.intrinsic === "Array.from") {
+      const sourceType = expression.arguments[0] === undefined ? anyType : expressionFlowType(expression.arguments[0], environment) ?? anyType;
+      return { kind: "array", elementType: collectionElementType(sourceType) };
+    }
+    if (calleeType?.kind === "function") {
+      const argumentTypes = expression.arguments.map(argument => expressionFlowType(argument, environment) ?? anyType);
+      const returnType = instantiateFunctionReturnType(calleeType, [], argumentTypes);
+      return returnType.kind === "typePredicate" ? booleanType : returnType;
+    }
+  }
+  return undefined;
 }
 
 function diagnoseAlwaysFalsyExpression(expression: Expression, state: CheckState): void {
@@ -2539,7 +2784,7 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
     checkStrictModeBindingName(parameter.name, state, false);
     setBindingNameType(parameter.name, parameterType, arrowEnvironment);
   }
-  const declaredReturnType = arrowFunction.type === undefined ? undefined : typeFromTypeNode(arrowFunction.type, arrowEnvironment, state);
+  const declaredReturnType = arrowFunction.type === undefined ? undefined : bindTypePredicateParameterIndex(typeFromTypeNode(arrowFunction.type, arrowEnvironment, state), arrowFunction.parameters);
   const inferredReturnType = inferConciseBody(arrowFunction.body, state, arrowEnvironment, declaredReturnType);
   return {
     kind: "function",
@@ -2635,6 +2880,12 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
   if (receiverType.kind === "array") {
     return arrayPropertyAccessType(receiverType, propertyName, environment);
   }
+  if (receiverType.kind === "arrayLike") {
+    return propertyName === "length" ? numberType : undefined;
+  }
+  if (receiverType.kind === "set" && propertyName === "values") {
+    return { kind: "function", typeParameters: [], parameters: [], returnType: { kind: "iterable", elementType: receiverType.elementType } };
+  }
   return undefined;
 }
 
@@ -2650,6 +2901,9 @@ function arrayPropertyAccessType(receiverType: Extract<CheckedType, { readonly k
 }
 
 function arrayMethodReturnType(receiverType: Extract<CheckedType, { readonly kind: "array" }>, propertyName: string): CheckedType | undefined {
+  if (propertyName === "values") {
+    return { kind: "iterable", elementType: receiverType.elementType };
+  }
   const fixedReturnType = arrayMethodReturnTypes.get(propertyName);
   if (fixedReturnType !== undefined) {
     return fixedReturnType;
@@ -2873,7 +3127,7 @@ function methodDeclarationType(method: MethodDeclaration, environment: TypeEnvir
   const typeParameters = method.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
   addTypeParametersToEnvironment(typeParameters, signatureEnvironment);
   const parameters = method.parameters.map(parameter => parameter.type === undefined ? anyType : typeFromTypeNode(parameter.type, signatureEnvironment, state));
-  const returnType = method.type === undefined ? methodBodyReturnType(method.body) : typeFromTypeNode(method.type, signatureEnvironment, state);
+  const returnType = method.type === undefined ? methodBodyReturnType(method.body) : bindTypePredicateParameterIndex(typeFromTypeNode(method.type, signatureEnvironment, state), method.parameters);
   return { kind: "function", typeParameters, parameters, returnType };
 }
 
@@ -2980,10 +3234,13 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
     return { kind: "array", elementType: typeFromTypeNode(type.elementType, environment, state) };
   }
   if (isUnionTypeNode(type)) {
-    return { kind: "union", types: type.types.map(unionMember => typeFromTypeNode(unionMember, environment, state)) };
+    return unionType(type.types.map(unionMember => typeFromTypeNode(unionMember, environment, state)));
   }
   if (isIntersectionTypeNode(type)) {
     return { kind: "intersection", types: type.types.map(intersectionMember => typeFromTypeNode(intersectionMember, environment, state)) };
+  }
+  if (isLiteralTypeNode(type)) {
+    return literalTypeNodeType(type);
   }
   if (isTypeLiteralNode(type)) {
     return typeLiteralType(type.members, state ?? emptyCheckState(), environment);
@@ -2999,15 +3256,30 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
     const typeParameters = type.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
     addTypeParametersToEnvironment(typeParameters, signatureEnvironment);
     const parameterTypes = checkSignatureParameters(type.parameters, state ?? emptyCheckState(), signatureEnvironment, true);
-    const returnType = type.type === undefined ? unresolvedType : typeFromTypeNode(type.type, signatureEnvironment, state);
+    const returnType = type.type === undefined ? unresolvedType : bindTypePredicateParameterIndex(typeFromTypeNode(type.type, signatureEnvironment, state), type.parameters);
     return { kind: "function", typeParameters, parameters: parameterTypes, returnType };
   }
   if (isTypeReferenceNode(type)) {
+    const name = entityNameText(type.typeName);
+    if (name === "Array" && type.typeArguments?.[0] !== undefined) {
+      return { kind: "array", elementType: typeFromTypeNode(type.typeArguments[0], environment, state) };
+    }
+    if (name === "ArrayLike" && type.typeArguments?.[0] !== undefined) {
+      return { kind: "arrayLike", elementType: typeFromTypeNode(type.typeArguments[0], environment, state) };
+    }
+    if (name === "Iterable" && type.typeArguments?.[0] !== undefined) {
+      return { kind: "iterable", elementType: typeFromTypeNode(type.typeArguments[0], environment, state) };
+    }
+    if (name === "Set" && type.typeArguments?.[0] !== undefined) {
+      return { kind: "set", elementType: typeFromTypeNode(type.typeArguments[0], environment, state) };
+    }
+    if (name === "NonNullable" && type.typeArguments?.[0] !== undefined) {
+      return { kind: "nonNullable", target: typeFromTypeNode(type.typeArguments[0], environment, state) };
+    }
     const resolved = resolveEntityName(type.typeName, environment, state, "type");
     if (resolved !== undefined) {
       return typeFromResolvedEntity(resolved, entityNameText(type.typeName), state, type.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? []);
     }
-    const name = entityNameText(type.typeName);
     if (name === "IArguments") {
       return iArgumentsType;
     }
@@ -3018,10 +3290,10 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
         valueType: typeFromTypeNode(type.typeArguments[1], environment, state),
       };
     }
-    if (name === "Array" && type.typeArguments?.[0] !== undefined) {
-      return { kind: "array", elementType: typeFromTypeNode(type.typeArguments[0], environment, state) };
-    }
     return anyType;
+  }
+  if (isTypePredicateNode(type)) {
+    return typePredicateType(type, environment, state);
   }
   if (isTypeQueryNode(type)) {
     const bound = resolveTypeQueryName(type.exprName, environment, state);
@@ -3029,6 +3301,49 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
     return bound === undefined ? anyType : instantiateTypeQuery(bound, typeArguments);
   }
   return anyType;
+}
+
+function typePredicateType(type: TypePredicateNode, environment: TypeEnvironment, state: CheckState | undefined): CheckedType {
+  const parameterName = type.parameterName.kind === Kind.ThisType ? "this" : type.parameterName.text;
+  return {
+    kind: "typePredicate",
+    parameterName,
+    assertedType: type.type === undefined ? unknownType : typeFromTypeNode(type.type, environment, state),
+    asserts: type.assertsModifier !== undefined,
+  };
+}
+
+function literalTypeNodeType(type: Extract<TypeNode, { readonly kind: Kind.LiteralType }>): CheckedType {
+  const literal = type.literal;
+  if (isStringLiteral(literal) || isNoSubstitutionTemplateLiteral(literal)) {
+    return stringType;
+  }
+  if (isNumericLiteral(literal)) {
+    return numberType;
+  }
+  if (isBigIntLiteral(literal)) {
+    return anyType;
+  }
+  if (isPrefixUnaryExpression(literal) && (literal.operator === Kind.MinusToken || literal.operator === Kind.PlusToken) && isNumericLiteral(literal.operand)) {
+    return numberType;
+  }
+  if (isKeywordExpression(literal)) {
+    if (literal.kind === Kind.NullKeyword) {
+      return nullType;
+    }
+    if (literal.kind === Kind.TrueKeyword || literal.kind === Kind.FalseKeyword) {
+      return booleanType;
+    }
+  }
+  return anyType;
+}
+
+function bindTypePredicateParameterIndex(type: CheckedType, parameters: readonly ParameterDeclaration[]): CheckedType {
+  if (type.kind !== "typePredicate" || type.parameterIndex !== undefined || type.parameterName === "this") {
+    return type;
+  }
+  const parameterIndex = parameters.findIndex(parameter => isIdentifier(parameter.name) && parameter.name.text === type.parameterName);
+  return parameterIndex === -1 ? type : { ...type, parameterIndex };
 }
 
 function resolveTypeQueryName(typeName: EntityName, environment: TypeEnvironment, state: CheckState | undefined): CheckedType | undefined {
@@ -3291,6 +3606,9 @@ function typesSufficientlyOverlap(source: CheckedType, target: CheckedType): boo
 }
 
 function requiresReturnValue(type: CheckedType): boolean {
+  if (type.kind === "typePredicate") {
+    return !type.asserts;
+  }
   return type.kind !== "any" && type.kind !== "unknown" && type.kind !== "unresolved" && type.kind !== "undefined" && type.kind !== "void";
 }
 
@@ -3345,8 +3663,28 @@ function inferArrayLiteral(elements: readonly Expression[], state: CheckState, e
 
 function unionType(types: readonly CheckedType[]): CheckedType {
   const flattened = types.flatMap(type => type.kind === "union" ? type.types : [type]);
+  if (flattened.some(type => type.kind === "any")) {
+    return anyType;
+  }
+  if (flattened.some(type => type.kind === "unknown")) {
+    return unknownType;
+  }
   const unique = uniqueTypes(flattened);
   return unique.length === 1 ? unique[0]! : { kind: "union", types: unique };
+}
+
+function nonNullableType(type: CheckedType): CheckedType {
+  if (type.kind === "union") {
+    const members = type.types.filter(member => member.kind !== "null" && member.kind !== "undefined");
+    return members.length === 0 ? unresolvedType : unionType(members);
+  }
+  if (type.kind === "null" || type.kind === "undefined") {
+    return unresolvedType;
+  }
+  if (type.kind === "nonNullable") {
+    return nonNullableType(type.target);
+  }
+  return type;
 }
 
 function instantiateFunctionReturnType(functionType: Extract<CheckedType, { readonly kind: "function" }>, explicitTypeArguments: readonly CheckedType[], argumentTypes: readonly CheckedType[]): CheckedType {
@@ -3390,6 +3728,9 @@ function inferTypeParameterSubstitutions(parameter: CheckedType, argument: Check
   if (parameter.kind === "array" && argument.kind === "array") {
     inferTypeParameterSubstitutions(parameter.elementType, argument.elementType, substitutions);
   }
+  if ((parameter.kind === "arrayLike" || parameter.kind === "iterable" || parameter.kind === "set") && parameter.kind === argument.kind) {
+    inferTypeParameterSubstitutions(parameter.elementType, argument.elementType, substitutions);
+  }
 }
 
 function substituteType(type: CheckedType, substitutions: ReadonlyMap<string, CheckedType>): CheckedType {
@@ -3398,6 +3739,21 @@ function substituteType(type: CheckedType, substitutions: ReadonlyMap<string, Ch
   }
   if (type.kind === "array") {
     return { kind: "array", elementType: substituteType(type.elementType, substitutions) };
+  }
+  if (type.kind === "arrayLike") {
+    return { kind: "arrayLike", elementType: substituteType(type.elementType, substitutions) };
+  }
+  if (type.kind === "iterable") {
+    return { kind: "iterable", elementType: substituteType(type.elementType, substitutions) };
+  }
+  if (type.kind === "set") {
+    return { kind: "set", elementType: substituteType(type.elementType, substitutions) };
+  }
+  if (type.kind === "nonNullable") {
+    return nonNullableType(substituteType(type.target, substitutions));
+  }
+  if (type.kind === "typePredicate") {
+    return { ...type, assertedType: substituteType(type.assertedType, substitutions) };
   }
   if (type.kind === "union") {
     return { kind: "union", types: type.types.map(unionType => substituteType(unionType, substitutions)) };
@@ -3464,6 +3820,12 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
   if (expected.kind === "namespaceAndType") {
     return isAssignableTo(actual, expected.type);
   }
+  if (actual.kind === "nonNullable") {
+    return isAssignableTo(nonNullableType(actual.target), expected);
+  }
+  if (expected.kind === "nonNullable") {
+    return isAssignableTo(actual, nonNullableType(expected.target));
+  }
   if (actual.kind === "typeAliasInstance") {
     return isAssignableTo(actual.target, expected);
   }
@@ -3473,7 +3835,7 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
   if (actual.kind === "any" || expected.kind === "any") {
     return true;
   }
-  if (actual.kind === expected.kind && actual.kind !== "array" && actual.kind !== "classConstructor" && actual.kind !== "classInstance" && actual.kind !== "function" && actual.kind !== "interface" && actual.kind !== "intersection" && actual.kind !== "namespace" && actual.kind !== "record" && actual.kind !== "thisClass" && actual.kind !== "typeAlias" && actual.kind !== "typeParameter" && actual.kind !== "union") {
+  if (actual.kind === expected.kind && actual.kind !== "array" && actual.kind !== "arrayLike" && actual.kind !== "classConstructor" && actual.kind !== "classInstance" && actual.kind !== "function" && actual.kind !== "interface" && actual.kind !== "intersection" && actual.kind !== "iterable" && actual.kind !== "namespace" && actual.kind !== "record" && actual.kind !== "set" && actual.kind !== "thisClass" && actual.kind !== "typeAlias" && actual.kind !== "typeParameter" && actual.kind !== "typePredicate" && actual.kind !== "union") {
     return true;
   }
   if (actual.kind === "classConstructor" && expected.kind === "classConstructor") {
@@ -3490,6 +3852,10 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
   }
   if (actual.kind === "object" && expected.kind === "record") {
     return [...actual.properties.values()].every(actualPropertyType => isAssignableTo(actualPropertyType, expected.valueType));
+  }
+  if (actual.kind === "object" && expected.kind === "arrayLike") {
+    const lengthType = actual.properties.get("length");
+    return lengthType !== undefined && isAssignableTo(lengthType, numberType);
   }
   if (actual.kind === "record" && expected.kind === "record") {
     return isAssignableTo(actual.keyType, expected.keyType) && isAssignableTo(actual.valueType, expected.valueType);
@@ -3521,10 +3887,34 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
   if (actual.kind === "array" && expected.kind === "array") {
     return isAssignableTo(actual.elementType, expected.elementType);
   }
+  if (actual.kind === "array" && (expected.kind === "arrayLike" || expected.kind === "iterable")) {
+    return isAssignableTo(actual.elementType, expected.elementType);
+  }
+  if (actual.kind === "arrayLike" && expected.kind === "arrayLike") {
+    return isAssignableTo(actual.elementType, expected.elementType);
+  }
+  if (actual.kind === "iterable" && expected.kind === "iterable") {
+    return isAssignableTo(actual.elementType, expected.elementType);
+  }
+  if (actual.kind === "set" && expected.kind === "iterable") {
+    return isAssignableTo(actual.elementType, expected.elementType);
+  }
+  if (actual.kind === "set" && expected.kind === "set") {
+    return isAssignableTo(actual.elementType, expected.elementType);
+  }
   if (actual.kind === "function" && expected.kind === "function") {
     return actual.parameters.length <= expected.parameters.length
       && actual.parameters.every((actualParameter, index) => isAssignableTo(expected.parameters[index]!, actualParameter))
       && isAssignableTo(actual.returnType, expected.returnType);
+  }
+  if (actual.kind === "boolean" && expected.kind === "typePredicate") {
+    return true;
+  }
+  if (actual.kind === "typePredicate" && expected.kind === "boolean") {
+    return true;
+  }
+  if (actual.kind === "typePredicate" && expected.kind === "typePredicate") {
+    return actual.parameterIndex === expected.parameterIndex && isAssignableTo(actual.assertedType, expected.assertedType);
   }
   if (actual.kind === "union") {
     return actual.types.every(type => isAssignableTo(type, expected));
@@ -3614,6 +4004,7 @@ const stringMethodReturnTypes = new Map<string, CheckedType>([
   ["split", anyType],
   ["startsWith", booleanType],
   ["toLowerCase", stringType],
+  ["trim", stringType],
 ]);
 
 const arrayMethodReturnTypes = new Map<string, CheckedType>([
@@ -3696,8 +4087,23 @@ function displayType(type: CheckedType): string {
   if (type.kind === "array") {
     return `${displayType(type.elementType)}[]`;
   }
+  if (type.kind === "arrayLike") {
+    return `ArrayLike<${displayType(type.elementType)}>`;
+  }
+  if (type.kind === "iterable") {
+    return `Iterable<${displayType(type.elementType)}>`;
+  }
+  if (type.kind === "set") {
+    return `Set<${displayType(type.elementType)}>`;
+  }
   if (type.kind === "typeParameter") {
     return type.name;
+  }
+  if (type.kind === "typePredicate") {
+    return `${type.parameterName} is ${displayType(type.assertedType)}`;
+  }
+  if (type.kind === "intrinsicConstructor" || type.kind === "intrinsicFunction") {
+    return type.intrinsic;
   }
   if (type.kind === "classConstructor") {
     if (type.typeParameters.length > 0 || type.typeArguments.length > 0) {
@@ -3718,6 +4124,9 @@ function displayType(type: CheckedType): string {
   }
   if (type.kind === "namespace") {
     return type.name;
+  }
+  if (type.kind === "nonNullable") {
+    return displayType(nonNullableType(type.target));
   }
   if (type.kind === "object") {
     const entries = [...type.properties.entries()].map(([name, propertyType]) => {

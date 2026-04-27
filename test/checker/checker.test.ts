@@ -557,6 +557,46 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics, []);
   });
 
+  it("narrows variables and arrays through type-predicate calls", () => {
+    const sourceFile = parseSourceFile([
+      "const isString = (value: unknown): value is string => typeof value === \"string\";",
+      "function assertNonNullable<T>(value: T): asserts value is NonNullable<T> {}",
+      "let value: string | number = \"x\";",
+      "if (isString(value)) {",
+      "  value.slice(0);",
+      "}",
+      "let nullable: string | null = \"x\";",
+      "assertNonNullable(nullable);",
+      "nullable.trim();",
+      "const values: (string | number)[] = [\"x\"];",
+      "if (values.every(isString)) {",
+      "  values[0].slice(0);",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("infers Array.from element types from iterable and array-like sources", () => {
+    const sourceFile = parseSourceFile([
+      "interface A { a: string; }",
+      "interface B { b: string; }",
+      "const inputA: A[] = [];",
+      "const inputALike: ArrayLike<A> = { length: 0 };",
+      "const inputASet = new Set<A>();",
+      "const ok1: A[] = Array.from(inputA);",
+      "const ok2: A[] = Array.from(inputA.values());",
+      "const ok3: A[] = Array.from(inputALike);",
+      "const ok4: A[] = Array.from(inputASet);",
+      "const bad1: B[] = Array.from(inputA);",
+      "const bad2: B[] = Array.from(inputALike);",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322, 2322]);
+  });
+
   it("resolves ambient module export-equals aliases for named imports", () => {
     const host: CompilerHost = {
       readFile: fileName => {
