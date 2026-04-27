@@ -1035,10 +1035,10 @@ describe("checker groundwork", () => {
     const sourceFile = parseSourceFile("function f() {} f = 1; const g = f; g = 1; parseInt = 1;");
     const result = checkSourceFile(sourceFile);
 
-    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2630, 2322, 2630]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2630, 2588, 2630]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "Cannot assign to 'f' because it is a function.",
-      "Type 'number' is not assignable to type '() => unknown'.",
+      "Cannot assign to 'g' because it is a constant.",
       "Cannot assign to 'parseInt' because it is a function.",
     ]);
   });
@@ -1083,6 +1083,46 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "The operand of an increment or decrement operator must be a variable or a property access.",
       "The operand of an increment or decrement operator must be a variable or a property access.",
+    ]);
+  });
+
+  it("reports writes to const bindings through assignments, updates, and destructuring", () => {
+    const sourceFile = parseSourceFile([
+      "declare const maybe: number | undefined;",
+      "const x = 1;",
+      "const { y } = { y: 2 };",
+      "maybe!++;",
+      "x = 2;",
+      "++x;",
+      "y = 3;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2588, 2588, 2588, 2588]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Cannot assign to 'maybe' because it is a constant.",
+      "Cannot assign to 'x' because it is a constant.",
+      "Cannot assign to 'x' because it is a constant.",
+      "Cannot assign to 'y' because it is a constant.",
+    ]);
+  });
+
+  it("requires non-ambient const declarations to have initializers outside for-in and for-of", () => {
+    const sourceFile = parseSourceFile([
+      "const a;",
+      "const b: number;",
+      "for (const key in {}) {}",
+      "for (const value of []) {}",
+      "for (const index; index < 1;) {}",
+      "declare const ambient;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1155, 1155, 1155]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "'const' declarations must be initialized.",
+      "'const' declarations must be initialized.",
+      "'const' declarations must be initialized.",
     ]);
   });
 

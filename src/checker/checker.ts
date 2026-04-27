@@ -234,10 +234,12 @@ interface BindingCorrelation {
 }
 
 const environmentCorrelations = new WeakMap<TypeEnvironment, readonly BindingCorrelation[]>();
+const readonlyEnvironmentBindings = new WeakMap<TypeEnvironment, ReadonlySet<string>>();
 
 function cloneTypeEnvironment(environment: TypeEnvironment): TypeEnvironment {
   const cloned = new Map(environment);
   copyEnvironmentCorrelations(environment, cloned);
+  copyReadonlyEnvironmentBindings(environment, cloned);
   return cloned;
 }
 
@@ -251,6 +253,32 @@ function copyEnvironmentCorrelations(source: TypeEnvironment, target: TypeEnviro
 function addEnvironmentCorrelation(environment: TypeEnvironment, correlation: BindingCorrelation): void {
   const existing = environmentCorrelations.get(environment) ?? [];
   environmentCorrelations.set(environment, [...existing, correlation]);
+}
+
+function copyReadonlyEnvironmentBindings(source: TypeEnvironment, target: TypeEnvironment): void {
+  const readonlyBindings = readonlyEnvironmentBindings.get(source);
+  if (readonlyBindings !== undefined) {
+    readonlyEnvironmentBindings.set(target, new Set(readonlyBindings));
+  }
+}
+
+function setEnvironmentBindingReadonly(environment: TypeEnvironment, name: string, readonly: boolean): void {
+  const existing = readonlyEnvironmentBindings.get(environment);
+  if (readonly) {
+    if (existing === undefined) {
+      readonlyEnvironmentBindings.set(environment, new Set([name]));
+      return;
+    }
+    (existing as Set<string>).add(name);
+    return;
+  }
+  if (existing !== undefined) {
+    (existing as Set<string>).delete(name);
+  }
+}
+
+function isReadonlyEnvironmentBinding(environment: TypeEnvironment, name: string): boolean {
+  return readonlyEnvironmentBindings.get(environment)?.has(name) === true;
 }
 
 interface ClassMemberNames {
@@ -1774,9 +1802,12 @@ function checkVariableDeclaration(declaration: VariableDeclaration, state: Check
   if (declaration.initializer !== undefined) {
     diagnoseAbstractThisDestructuring(declaration.name, declaration.initializer, state, environment);
   }
+  if (!ambient && isConstVariableDeclaration(declaration) && declaration.initializer === undefined && !isForInOrOfDeclaration(declaration)) {
+    state.diagnostics.push(createDiagnostic(1155, "const"));
+  }
   checkStrictModeBindingName(declaration.name, state, ambient);
   const bindingType = variableDeclarationBindingType(declaration, declaredType, initializerType, environment, ambient, state.options);
-  setBindingNameType(declaration.name, bindingType, environment);
+  setBindingNameType(declaration.name, bindingType, environment, isConstVariableDeclaration(declaration));
   if (initializerType !== undefined) {
     registerObjectBindingCorrelation(declaration.name, initializerType, environment);
   }
@@ -1891,6 +1922,14 @@ function checkAmbientVariableInitializer(declaration: VariableDeclaration, state
 
 function isConstVariableDeclaration(declaration: VariableDeclaration): boolean {
   return isVariableDeclarationList(declaration.parent) && (declaration.parent.flags & NodeFlags.Const) !== 0;
+}
+
+function isForInOrOfDeclaration(declaration: VariableDeclaration): boolean {
+  const declarationList = declaration.parent;
+  if (!isVariableDeclarationList(declarationList)) {
+    return false;
+  }
+  return isForInStatement(declarationList.parent) || isForOfStatement(declarationList.parent);
 }
 
 function isAmbientConstInitializer(expression: Expression, environment: TypeEnvironment): boolean {
@@ -3454,6 +3493,7 @@ function createFunctionEnvironment(environment: TypeEnvironment): TypeEnvironmen
     functionEnvironment.set(name, removeCapturedDefiniteAssignmentState(type));
   }
   copyEnvironmentCorrelations(environment, functionEnvironment);
+  copyReadonlyEnvironmentBindings(environment, functionEnvironment);
   return functionEnvironment;
 }
 
@@ -4672,7 +4712,7 @@ function isIndirectCallCommaExpression(expression: Extract<Expression, { readonl
 function assignmentTargetType(expression: Expression, environment: TypeEnvironment): CheckedType | undefined {
   if (isIdentifier(expression)) {
     const target = environment.get(expression.text);
-    if (target?.kind === "functionDeclaration") {
+    if (target?.kind === "functionDeclaration" || target !== undefined && isReadonlyEnvironmentBinding(environment, expression.text)) {
       return undefined;
     }
     return target?.kind === "unassignedVariable" ? target.type : target;
@@ -4743,6 +4783,9 @@ function checkUpdateTargetReference(expression: Expression, state: CheckState, e
 function checkIdentifierWriteTarget(expression: Identifier, state: CheckState, environment: TypeEnvironment): void {
   checkStrictModeIdentifier(expression.text, state, false);
   const target = environment.get(expression.text);
+  if (target !== undefined && isReadonlyEnvironmentBinding(environment, expression.text)) {
+    state.diagnostics.push(createDiagnostic(2588, expression.text));
+  }
   if (target?.kind === "functionDeclaration") {
     state.diagnostics.push(createDiagnostic(2630, expression.text));
   }
@@ -4800,6 +4843,9 @@ function assignExpressionTarget(expression: Expression, assignedType: CheckedTyp
   if (isIdentifier(expression)) {
     const existing = environment.get(expression.text);
     if (existing?.kind === "functionDeclaration") {
+      return;
+    }
+    if (isReadonlyEnvironmentBinding(environment, expression.text)) {
       return;
     }
     if (isClassValue(existing) || isEnumValue(existing) || isPlainNamespace(existing)) {
@@ -5416,21 +5462,22 @@ function diagnoseThisPropertyAccess(receiverType: Extract<CheckedType, { readonl
   }
 }
 
-function setBindingNameType(name: BindingName, type: CheckedType, environment: TypeEnvironment): void {
+function setBindingNameType(name: BindingName, type: CheckedType, environment: TypeEnvironment, readonly = false): void {
   if (isIdentifier(name)) {
     environment.set(name.text, type);
+    setEnvironmentBindingReadonly(environment, name.text, readonly);
     return;
   }
   if (isObjectBindingPattern(name)) {
     for (const element of name.elements) {
-      setBindingElementType(element, objectBindingElementType(type, element), environment);
+      setBindingElementType(element, objectBindingElementType(type, element), environment, readonly);
     }
     return;
   }
   if (isArrayBindingPattern(name)) {
     for (const element of name.elements) {
       const elementType = arrayBindingElementType(type);
-      setBindingElementType(element, element.dotDotDotToken === undefined ? elementType : { kind: "array", elementType }, environment);
+      setBindingElementType(element, element.dotDotDotToken === undefined ? elementType : { kind: "array", elementType }, environment, readonly);
     }
   }
 }
@@ -5555,9 +5602,9 @@ function checkStrictModeReservedIdentifierExpression(name: string, state: CheckS
   }
 }
 
-function setBindingElementType(element: BindingElement, type: CheckedType, environment: TypeEnvironment): void {
+function setBindingElementType(element: BindingElement, type: CheckedType, environment: TypeEnvironment, readonly = false): void {
   if (element.name !== undefined) {
-    setBindingNameType(element.name, type, environment);
+    setBindingNameType(element.name, type, environment, readonly);
   }
 }
 
