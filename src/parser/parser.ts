@@ -299,6 +299,11 @@ export class Parser {
 
   #parseStatement(): Statement {
     const modifiers = this.#parseModifiers();
+    if (this.#current().kind === Kind.ConstKeyword && this.#tokens[this.#index + 1]?.kind === Kind.EnumKeyword) {
+      const constModifier = createToken(this.#advance().kind as ModifierSyntaxKind) as ModifierLike;
+      const enumModifiers = createNodeArray([...(modifiers ?? []), constModifier]);
+      return this.#parseEnumDeclaration(enumModifiers);
+    }
     if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword) && this.#current().kind === Kind.DefaultKeyword) {
       this.#advance();
       const defaultModifiers = createNodeArray([...modifiers, createToken(Kind.DefaultKeyword) as ModifierLike]);
@@ -328,7 +333,10 @@ export class Parser {
       case Kind.ModuleKeyword:
       case Kind.NamespaceKeyword:
       case Kind.GlobalKeyword:
-        return this.#parseModuleDeclaration(modifiers);
+        if (this.#isModuleDeclarationStart()) {
+          return this.#parseModuleDeclaration(modifiers);
+        }
+        break;
       case Kind.TypeKeyword:
         if (this.#isTypeAliasDeclarationStart()) {
           return this.#parseTypeAliasDeclaration(modifiers);
@@ -573,7 +581,7 @@ export class Parser {
 
   #parseClassDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
     this.#expect(Kind.ClassKeyword);
-    const name = isIdentifierNameKind(this.#current().kind) ? this.#parseIdentifier() : undefined;
+    const name = this.#isClassNameStart() ? this.#parseIdentifier() : undefined;
     const typeParameters = this.#parseOptionalTypeParameters();
     const heritageClauses = this.#parseHeritageClauses();
     this.#expect(Kind.OpenBraceToken);
@@ -615,6 +623,18 @@ export class Parser {
       body = createModuleDeclaration(undefined, keyword, names[index]!, body);
     }
     return createModuleDeclaration(modifiers, keyword, names[0]!, body);
+  }
+
+  #isModuleDeclarationStart(): boolean {
+    const current = this.#current();
+    const next = this.#tokens[this.#index + 1];
+    if (next === undefined || this.#hasLineBreakBetween(current, next)) {
+      return false;
+    }
+    if (current.kind === Kind.GlobalKeyword) {
+      return next.kind === Kind.OpenBraceToken || next.kind === Kind.ExportKeyword || isIdentifierNameKind(next.kind);
+    }
+    return next.kind === Kind.StringLiteral || isIdentifierNameKind(next.kind);
   }
 
   #parseInterfaceDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
@@ -958,7 +978,7 @@ export class Parser {
   }
 
   #parseExpressionWithTypeArguments(): ExpressionWithTypeArguments {
-    const expression = this.#parseHeritageExpression();
+    const expression = this.#parseLeftHandSideExpression();
     const typeArguments = this.#parseOptionalTypeArguments();
     return createExpressionWithTypeArguments(expression, typeArguments);
   }
@@ -1493,7 +1513,7 @@ export class Parser {
 
   #parseClassExpression(): Expression {
     this.#expect(Kind.ClassKeyword);
-    const name = isIdentifierNameKind(this.#current().kind) ? this.#parseIdentifier() : undefined;
+    const name = this.#isClassNameStart() ? this.#parseIdentifier() : undefined;
     const typeParameters = this.#parseOptionalTypeParameters();
     const heritageClauses = this.#parseHeritageClauses();
     this.#expect(Kind.OpenBraceToken);
@@ -1503,6 +1523,14 @@ export class Parser {
     }
     this.#expect(Kind.CloseBraceToken);
     return createClassExpression(undefined, name, typeParameters, heritageClauses, createNodeArray(members));
+  }
+
+  #isClassNameStart(): boolean {
+    const kind = this.#current().kind;
+    return isIdentifierNameKind(kind)
+      && kind !== Kind.ExtendsKeyword
+      && kind !== Kind.ImplementsKeyword
+      && kind !== Kind.OpenBraceToken;
   }
 
   #parseTemplateExpression(): Expression {

@@ -15,6 +15,7 @@ import {
   isConstructorDeclaration,
   isContinueStatement,
   isConditionalExpression,
+  isConstructSignatureDeclaration,
   isElementAccessExpression,
   isEmptyStatement,
   isEnumDeclaration,
@@ -431,7 +432,7 @@ describe("TS-Go parser groundwork", () => {
 
   it("parses TS-Go enum, private identifier, and type-predicate surfaces", () => {
     const sourceFile = parseSourceFile([
-      "export enum Kind { Unknown = 0, Identifier }",
+      "export const enum Kind { Unknown = 0, Identifier }",
       "class Box { #value: number = 1; getValue(): number { return this.#value; } }",
       "function isBox(value: unknown): value is Box { return value instanceof Box; }",
     ].join("\n"));
@@ -441,6 +442,8 @@ describe("TS-Go parser groundwork", () => {
 
     assert.equal(isEnumDeclaration(enumDeclaration), true);
     if (!isEnumDeclaration(enumDeclaration)) throw new Error("Expected enum declaration");
+    assert.equal(enumDeclaration.modifiers?.[0]?.kind, Kind.ExportKeyword);
+    assert.equal(enumDeclaration.modifiers?.[1]?.kind, Kind.ConstKeyword);
     assert.equal(enumDeclaration.members[1]!.name.kind, Kind.Identifier);
 
     assert.equal(isClassDeclaration(classDeclaration), true);
@@ -470,6 +473,8 @@ describe("TS-Go parser groundwork", () => {
       "interface Callable<T> {",
       "  (value: T): T;",
       "  <U>(value: T): U;",
+      "  new (...args: any[]): T;",
+      "  new <U>(value: T): U;",
       "}",
     ].join("\n"));
 
@@ -478,6 +483,39 @@ describe("TS-Go parser groundwork", () => {
     if (!isInterfaceDeclaration(sourceFile.statements[1]!)) throw new Error("Expected interface");
     assert.equal(isCallSignatureDeclaration(sourceFile.statements[1]!.members[0]!), true);
     assert.equal(isCallSignatureDeclaration(sourceFile.statements[1]!.members[1]!), true);
+    assert.equal(isConstructSignatureDeclaration(sourceFile.statements[1]!.members[2]!), true);
+    assert.equal(isConstructSignatureDeclaration(sourceFile.statements[1]!.members[3]!), true);
+  });
+
+  it("parses class heritage clauses using TS-Go left-hand-side expressions", () => {
+    const sourceFile = parseSourceFile([
+      "class Derived extends mixin(Base) implements Named<string> {",
+      "}",
+      "const DerivedExpression = class extends factory.create(Base) {",
+      "};",
+    ].join("\n"));
+
+    const classDeclaration = sourceFile.statements[0]!;
+    if (!isClassDeclaration(classDeclaration)) throw new Error("Expected class declaration");
+    assert.equal(classDeclaration.heritageClauses?.[0]?.token, Kind.ExtendsKeyword);
+    assert.equal(isCallExpression(classDeclaration.heritageClauses?.[0]?.types[0]?.expression!), true);
+    assert.equal(classDeclaration.heritageClauses?.[1]?.token, Kind.ImplementsKeyword);
+    assert.equal(classDeclaration.heritageClauses?.[1]?.types[0]?.typeArguments?.[0]?.kind, Kind.StringKeyword);
+
+    const classExpressionStatement = sourceFile.statements[1]!;
+    if (!isVariableStatement(classExpressionStatement)) throw new Error("Expected variable statement");
+    const initializer = classExpressionStatement.declarationList.declarations[0]?.initializer;
+    if (!isClassExpression(initializer!)) throw new Error("Expected class expression");
+    assert.equal(isCallExpression(initializer.heritageClauses?.[0]?.types[0]?.expression!), true);
+  });
+
+  it("keeps contextual module names as expressions when declaration lookahead fails", () => {
+    const sourceFile = parseSourceFile("module.exports = value;");
+    const statement = sourceFile.statements[0]!;
+
+    assert.equal(isExpressionStatement(statement), true);
+    if (!isExpressionStatement(statement)) throw new Error("Expected expression statement");
+    assert.equal(isBinaryExpression(statement.expression), true);
   });
 
   it("parses empty statements inside blocks without corrupting following expressions", () => {

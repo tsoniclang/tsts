@@ -120,6 +120,20 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1248]);
   });
 
+  it("scopes generic parameters for class methods and type-literal signatures", () => {
+    const sourceFile = parseSourceFile([
+      "declare class BaseClass {",
+      "  static extends<A>(a: A): new () => A & BaseClass;",
+      "}",
+      "type Maker = {",
+      "  new <T>(value: T): T;",
+      "};",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
   it("reports function overload declarations without matching implementations", () => {
     const sourceFile = parseSourceFile("function foo(); function bar() { } function baz();");
     const result = checkSourceFile(sourceFile);

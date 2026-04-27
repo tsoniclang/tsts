@@ -1870,6 +1870,9 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     if (isConstructorDeclaration(member) && classMembers.className !== undefined) {
       memberEnvironment.set("this", thisClassType(classMembers, "constructor"));
     }
+    if (isMethodDeclaration(member)) {
+      addTypeParametersToEnvironment(member.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], memberEnvironment);
+    }
     seedUnqualifiedClassMemberDiagnostics(memberEnvironment, classMembers, isMethodDeclaration(member) && hasModifier(member, Kind.StaticKeyword));
     checkSignatureParameters(member.parameters, state, memberEnvironment, isMethodDeclaration(member) || member.body === undefined, ambient);
     if (member.body !== undefined) {
@@ -2011,9 +2014,11 @@ function checkAbstractMemberModifiers(member: ClassElement, state: CheckState, c
 function checkTypeElements(members: readonly TypeElement[], state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
   for (const member of members) {
     if (isCallSignatureDeclaration(member) || isConstructSignatureDeclaration(member)) {
-      checkSignatureParameters(member.parameters, state, environment, true);
+      const signatureEnvironment = new Map(environment);
+      addTypeParametersToEnvironment(member.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], signatureEnvironment);
+      checkSignatureParameters(member.parameters, state, signatureEnvironment, true);
       if (member.type !== undefined) {
-        typeFromTypeNode(member.type, environment, state);
+        typeFromTypeNode(member.type, signatureEnvironment, state);
       }
       if (isConstructSignatureDeclaration(member) && member.type === undefined) {
         state.diagnostics.push(createDiagnostic(7013));
