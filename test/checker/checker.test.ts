@@ -1105,6 +1105,17 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("reports duplicate default clauses once per switch statement", () => {
+    const sourceFile = parseSourceFile("switch (value) { default: break; case 1: break; default: break; default: break; }");
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2304, 1113]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Cannot find name 'value'.",
+      "A 'default' clause cannot appear more than once in a 'switch' statement.",
+    ]);
+  });
+
   it("reports invalid update operands while accepting outer assertion expressions", () => {
     const sourceFile = parseSourceFile([
       "let a = 1;",

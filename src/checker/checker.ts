@@ -1117,6 +1117,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isSwitchStatement(statement)) {
     inferExpression(statement.expression, state, environment);
+    checkSwitchDefaultClauses(statement, state);
     for (let clauseIndex = 0; clauseIndex < statement.caseBlock.clauses.length; clauseIndex += 1) {
       const clause = statement.caseBlock.clauses[clauseIndex]!;
       if (clause.kind === Kind.CaseClause) {
@@ -1179,6 +1180,20 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isBlock(statement)) {
     checkBlock(statement, state, environment, expectedReturnType);
+  }
+}
+
+function checkSwitchDefaultClauses(statement: Extract<Statement, { readonly kind: Kind.SwitchStatement }>, state: CheckState): void {
+  let seenDefault = false;
+  for (const clause of statement.caseBlock.clauses) {
+    if (clause.kind !== Kind.DefaultClause) {
+      continue;
+    }
+    if (seenDefault) {
+      state.diagnostics.push(createDiagnostic(1113));
+      return;
+    }
+    seenDefault = true;
   }
 }
 
