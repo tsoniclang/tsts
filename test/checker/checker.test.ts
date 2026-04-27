@@ -946,4 +946,35 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'number' is not assignable to type 'string'."]);
   });
+
+  it("contextually types function expression callback parameters from array methods", () => {
+    const sourceFile = parseSourceFile("class Ship { isSunk = false; } class Board { ships: Ship[] = []; allShipsSunk() { return this.ships.every(function (value) { return value.isSunk; }); } }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("checks rest call arguments against the rest element type", () => {
+    const sourceFile = parseSourceFile("function panic(value: string[], ...rest: string[]) { } panic([], 'one', 'two'); panic([], 1);");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2345]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Argument of type 'number' is not assignable to parameter of type 'string'."]);
+  });
+
+  it("assigns non-nullish structural values to empty object-like targets", () => {
+    const sourceFile = parseSourceFile("interface Empty { } function accept(value: Empty) { } accept([]); accept(1); accept(null);");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2345]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Argument of type 'null' is not assignable to parameter of type 'Empty'."]);
+  });
+
+  it("does not reject abstract instance property access from ordinary methods", () => {
+    const sourceFile = parseSourceFile("abstract class Base { abstract value: string; method() { return this.value; } constructor() { this.value; } }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2715]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Abstract property 'value' in class 'Base' cannot be accessed in the constructor."]);
+  });
 });
