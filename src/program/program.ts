@@ -71,6 +71,8 @@ export interface ProgramSourceFile {
 export interface ResolvedModule {
   readonly specifier: string;
   readonly fileName: string;
+  readonly untyped?: boolean;
+  readonly blockedByResolutionDiagnostic?: boolean;
 }
 
 export interface ProgramDiagnostic {
@@ -116,7 +118,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
       continue;
     }
     seen.add(canonicalName);
-    if (isJavaScriptFileName(rootName) && options.allowJs !== true) {
+    if (isJavaScriptFileName(rootName) && !shouldAllowJavaScript(options)) {
       diagnostics.push(optionDiagnostic(6504, rootName));
       continue;
     }
@@ -157,8 +159,13 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
       if (resolved.fileName === undefined) {
         return;
       }
-      resolvedModules.push({ specifier: moduleSpecifier, fileName: resolved.fileName });
-      if (!seen.has(canonicalFileName(resolved.fileName, host))) {
+      resolvedModules.push({
+        specifier: moduleSpecifier,
+        fileName: resolved.fileName,
+        ...(resolved.untyped === true ? { untyped: true } : {}),
+        ...(resolved.blockedByResolutionDiagnostic === true ? { blockedByResolutionDiagnostic: true } : {}),
+      });
+      if (resolved.untyped !== true && !seen.has(canonicalFileName(resolved.fileName, host))) {
         pending.push(resolved.fileName);
       }
     };
@@ -218,7 +225,7 @@ function compilerOptionsDiagnostics(options: CompilerOptions): readonly ProgramD
   if (shouldReportDeprecated6Option(options)) {
     diagnostics.push(...deprecatedCompilerOptionsDiagnostics(options));
   }
-  if (options.checkJs === true && options.allowJs !== true) {
+  if (options.checkJs === true && options.allowJs === false) {
     diagnostics.push(optionDiagnostic(5052, "checkJs", "allowJs"));
   }
   if (options.outFile !== undefined && options.noEmit !== true && options.emitDeclarationOnly !== true && !moduleKindSupportsOutFile(options.module)) {
@@ -352,6 +359,10 @@ function isIdentifierText(value: string): boolean {
 
 function isJavaScriptFileName(fileName: string): boolean {
   return fileName.endsWith(".js") || fileName.endsWith(".jsx") || fileName.endsWith(".mjs") || fileName.endsWith(".cjs");
+}
+
+function shouldAllowJavaScript(options: CompilerOptions): boolean {
+  return options.allowJs === true || (options.checkJs === true && options.allowJs !== false);
 }
 
 function amdModuleDirectiveDiagnostics(fileName: string, sourceText: string): readonly ProgramDiagnostic[] {
@@ -525,6 +536,8 @@ function hasModifier(node: object, kind: Kind): boolean {
 interface ModuleResolution {
   readonly found: boolean;
   readonly fileName?: string;
+  readonly untyped?: boolean;
+  readonly blockedByResolutionDiagnostic?: boolean;
 }
 
 function resolveModuleName(moduleSpecifier: string, containingFileName: string, options: CompilerOptions, host: CompilerHost, cache: Map<string, string | undefined>): ModuleResolution {
@@ -532,23 +545,23 @@ function resolveModuleName(moduleSpecifier: string, containingFileName: string, 
     const base = isAbsoluteModuleName(moduleSpecifier) ? normalize(moduleSpecifier) : normalize(join(dirname(containingFileName), moduleSpecifier));
     const candidates = moduleResolutionCandidates(base, options);
     const fileName = candidates.find(candidate => readFileCached(candidate, host, cache) !== undefined);
-    return fileName === undefined ? { found: false } : { found: true, fileName };
+    return moduleResolutionResult(fileName, options);
   }
   if (!isRelativeModuleName(moduleSpecifier)) {
     const baseUrl = moduleResolutionBaseUrl(options, host);
     if (baseUrl !== undefined) {
       const resolvedBaseUrlFile = moduleResolutionCandidates(normalize(join(baseUrl, moduleSpecifier)), options).find(candidate => readFileCached(candidate, host, cache) !== undefined);
       if (resolvedBaseUrlFile !== undefined) {
-        return { found: true, fileName: resolvedBaseUrlFile };
+        return moduleResolutionResult(resolvedBaseUrlFile, options);
       }
     }
     const resolvedPackageFile = packageResolutionCandidates(moduleSpecifier, containingFileName, options, host, cache).find(candidate => readFileCached(candidate, host, cache) !== undefined);
     if (resolvedPackageFile !== undefined) {
-      return { found: true, fileName: resolvedPackageFile };
+      return moduleResolutionResult(resolvedPackageFile, options);
     }
     const resolvedTypesPackageFile = typePackageResolutionCandidates(moduleSpecifier, containingFileName, options, host, cache).find(candidate => readFileCached(candidate, host, cache) !== undefined);
     if (resolvedTypesPackageFile !== undefined) {
-      return { found: true, fileName: resolvedTypesPackageFile };
+      return moduleResolutionResult(resolvedTypesPackageFile, options);
     }
     return { found: false };
   }
@@ -556,10 +569,36 @@ function resolveModuleName(moduleSpecifier: string, containingFileName: string, 
 }
 
 function moduleResolutionDiagnostics(containingFileName: string, moduleSpecifier: string, resolution: ModuleResolution, options: CompilerOptions): readonly ProgramDiagnostic[] {
-  if (resolution.fileName === undefined || options.jsx !== undefined || !isJsxSourceFileName(resolution.fileName)) {
+  if (resolution.fileName === undefined) {
     return [];
   }
-  return [programDiagnostic(containingFileName, 6142, moduleSpecifier, resolution.fileName)];
+  if (isUnsupportedJsxResolution(resolution.fileName, options)) {
+    return [programDiagnostic(containingFileName, 6142, moduleSpecifier, resolution.fileName)];
+  }
+  if (resolution.untyped === true && options.noImplicitAny === true) {
+    return [programDiagnostic(containingFileName, 7016, moduleSpecifier, resolution.fileName)];
+  }
+  return [];
+}
+
+function moduleResolutionResult(fileName: string | undefined, options: CompilerOptions): ModuleResolution {
+  if (fileName === undefined) {
+    return { found: false };
+  }
+  return {
+    found: true,
+    fileName,
+    ...(isUntypedJavaScriptResolution(fileName, options) ? { untyped: true } : {}),
+    ...(isUnsupportedJsxResolution(fileName, options) ? { blockedByResolutionDiagnostic: true } : {}),
+  };
+}
+
+function isUntypedJavaScriptResolution(fileName: string, options: CompilerOptions): boolean {
+  return isJavaScriptFileName(fileName) && !shouldAllowJavaScript(options);
+}
+
+function isUnsupportedJsxResolution(fileName: string, options: CompilerOptions): boolean {
+  return options.jsx === undefined && isJsxSourceFileName(fileName);
 }
 
 function moduleResolutionBaseUrl(options: CompilerOptions, host: CompilerHost): string | undefined {
@@ -583,22 +622,6 @@ function moduleResolutionCandidates(base: string, options: CompilerOptions): rea
   if (extension !== "") {
     return [base];
   }
-  const jsCandidates = options.allowJs === true
-    ? [
-        `${base}.js`,
-        `${base}.jsx`,
-        `${base}.mjs`,
-        `${base}.cjs`,
-      ]
-    : [];
-  const indexJsCandidates = options.allowJs === true
-    ? [
-        join(base, "index.js"),
-        join(base, "index.jsx"),
-        join(base, "index.mjs"),
-        join(base, "index.cjs"),
-      ]
-    : [];
   return [
     `${base}.ts`,
     `${base}.tsx`,
@@ -607,7 +630,10 @@ function moduleResolutionCandidates(base: string, options: CompilerOptions): rea
     `${base}.d.ts`,
     `${base}.d.mts`,
     `${base}.d.cts`,
-    ...jsCandidates,
+    `${base}.js`,
+    `${base}.jsx`,
+    `${base}.mjs`,
+    `${base}.cjs`,
     join(base, "index.ts"),
     join(base, "index.tsx"),
     join(base, "index.mts"),
@@ -615,7 +641,10 @@ function moduleResolutionCandidates(base: string, options: CompilerOptions): rea
     join(base, "index.d.ts"),
     join(base, "index.d.mts"),
     join(base, "index.d.cts"),
-    ...indexJsCandidates,
+    join(base, "index.js"),
+    join(base, "index.jsx"),
+    join(base, "index.mjs"),
+    join(base, "index.cjs"),
   ];
 }
 
@@ -624,20 +653,7 @@ function packageResolutionCandidates(moduleSpecifier: string, containingFileName
     const base = join(nodeModulesDirectory, moduleSpecifier);
     return [
       ...packageJsonResolutionCandidates(base, options, host, cache),
-      `${base}.ts`,
-      `${base}.tsx`,
-      `${base}.mts`,
-      `${base}.cts`,
-      `${base}.d.ts`,
-      `${base}.d.mts`,
-      `${base}.d.cts`,
-      join(base, "index.ts"),
-      join(base, "index.tsx"),
-      join(base, "index.mts"),
-      join(base, "index.cts"),
-      join(base, "index.d.ts"),
-      join(base, "index.d.mts"),
-      join(base, "index.d.cts"),
+      ...moduleResolutionCandidates(base, options),
     ];
   });
 }

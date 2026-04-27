@@ -118,6 +118,65 @@ describe("program groundwork", () => {
     assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["src/index.ts", "src/dep.ts"]);
   });
 
+  it("resolves JavaScript dependencies as untyped modules when JavaScript input is disabled", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "import { value } from \"./dep\"; export const answer = value;"],
+      ["src/dep.js", "export const value = 42;"],
+    ]);
+    const host: CompilerHost = {
+      getCurrentDirectory: () => ".",
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/index.ts"], {}, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics, []);
+    assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["src/index.ts"]);
+    assert.deepEqual(program.sourceFiles[0]!.resolvedModules, [{ specifier: "./dep", fileName: "src/dep.js", untyped: true }]);
+  });
+
+  it("reports noImplicitAny for JavaScript dependencies without declaration files", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "import * as dep from \"./dep\"; export const answer = dep.value;"],
+      ["src/dep.js", "export const value = 42;"],
+    ]);
+    const host: CompilerHost = {
+      getCurrentDirectory: () => ".",
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/index.ts"], { noImplicitAny: true }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [7016]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Could not find a declaration file for module './dep'. 'src/dep.js' implicitly has an 'any' type.",
+    ]);
+    assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["src/index.ts"]);
+  });
+
+  it("resolves JavaScript package entrypoints as untyped modules without named-export diagnostics", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "import { value } from \"pkg\"; export const answer = value;"],
+      ["node_modules/pkg/package.json", "{\"name\":\"pkg\",\"exports\":\"./index.js\"}"],
+      ["node_modules/pkg/index.js", "export const value = 42;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/index.ts"], {}, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics, []);
+    assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["src/index.ts"]);
+    assert.deepEqual(program.sourceFiles[0]!.resolvedModules, [{ specifier: "pkg", fileName: "node_modules/pkg/index.js", untyped: true }]);
+  });
+
   it("resolves absolute JS imports with allowJs and reports JSX option diagnostics without blocking checks", () => {
     const files = new Map<string, string>([
       ["/foo.jsx", "const Foo = () => (<div>foo</div>); export default Foo;"],
@@ -138,6 +197,26 @@ describe("program groundwork", () => {
       "Cannot use JSX unless the '--jsx' flag is provided.",
       "Cannot use JSX unless the '--jsx' flag is provided.",
     ]);
+  });
+
+  it("does not cascade import-shape diagnostics from JSX-disabled module resolutions", () => {
+    const files = new Map<string, string>([
+      ["/view.tsx", ""],
+      ["/index.ts", "import View from \"./view\"; export const current = View;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["/index.ts"], {}, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [6142]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Module './view' was resolved to '/view.tsx', but '--jsx' is not set.",
+    ]);
+    assert.deepEqual(program.sourceFiles[0]!.resolvedModules, [{ specifier: "./view", fileName: "/view.tsx", blockedByResolutionDiagnostic: true }]);
   });
 
   it("diagnoses unresolved relative imports", () => {
@@ -370,7 +449,7 @@ describe("program groundwork", () => {
       useCaseSensitiveFileNames: () => true,
     };
 
-    const program = createProgram(["src/file.js"], { checkJs: true }, host);
+    const program = createProgram(["src/file.js"], { allowJs: false, checkJs: true }, host);
     const diagnostics = getProgramDiagnostics(program);
 
     assert.deepEqual(program.sourceFiles, []);
@@ -380,6 +459,23 @@ describe("program groundwork", () => {
       "Option 'checkJs' cannot be specified without specifying option 'allowJs'.",
       "File 'src/file.js' is a JavaScript file. Did you mean to enable the 'allowJs' option?",
     ]);
+  });
+
+  it("uses checkJs as an explicit JavaScript input enablement", () => {
+    const files = new Map<string, string>([
+      ["src/file.js", "const value = missing;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/file.js"], { checkJs: true }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["src/file.js"]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [2304]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), ["Cannot find name 'missing'."]);
   });
 
   it("reports module option constraints without blocking semantic checks", () => {

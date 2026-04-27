@@ -181,14 +181,13 @@ function parseCompilerCase(name: string, path: string, text: string): CompilerCa
   }
 
   if (fileSections.length > 0) {
-    const rootNames = fileSections.filter(file => isSupportedCaseFile(file.fileName)).map(file => file.fileName);
     return {
       name,
       path,
       compilerOptions,
       noTypesAndSymbols: parseNoTypesAndSymbols(text),
       files: fileSections,
-      rootNames,
+      rootNames: caseRootNames(fileSections, compilerOptions),
       links,
       baselineFile: undefined,
     };
@@ -204,6 +203,31 @@ function parseCompilerCase(name: string, path: string, text: string): CompilerCa
     links,
     baselineFile: undefined,
   };
+}
+
+function caseRootNames(files: readonly CaseFile[], compilerOptions: CaseCompilerOptions): readonly string[] {
+  const supportedFiles = files.filter(file => isSupportedCaseFile(file.fileName));
+  const nonDependencyFiles = supportedFiles.filter(file => !isNodeModulesPath(file.fileName));
+  const rootableFiles = nonDependencyFiles.some(file => isTypeScriptCaseFile(file.fileName))
+    ? nonDependencyFiles.filter(file => isTypeScriptCaseFile(file.fileName) || shouldRootJavaScriptCaseFile(file.fileName, compilerOptions))
+    : nonDependencyFiles;
+  return rootableFiles.map(file => file.fileName);
+}
+
+function shouldRootJavaScriptCaseFile(fileName: string, compilerOptions: CaseCompilerOptions): boolean {
+  return isJavaScriptCaseFile(fileName) && (compilerOptions.allowJs !== undefined || compilerOptions.checkJs === true);
+}
+
+function isTypeScriptCaseFile(fileName: string): boolean {
+  return [".ts", ".tsx", ".mts", ".cts"].includes(extname(fileName).toLowerCase());
+}
+
+function isJavaScriptCaseFile(fileName: string): boolean {
+  return [".js", ".jsx", ".mjs", ".cjs"].includes(extname(fileName).toLowerCase());
+}
+
+function isNodeModulesPath(fileName: string): boolean {
+  return normalizeFileName(fileName).split("/").includes("node_modules");
 }
 
 async function discoverBaselineFiles(suite: Options["suite"]): Promise<readonly string[]> {

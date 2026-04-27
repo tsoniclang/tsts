@@ -164,7 +164,7 @@ import {
   type VariableDeclaration,
 } from "../ast/index.js";
 import { createDiagnostic, type Diagnostic } from "../diagnostics/index.js";
-import type { CompilerOptions, Program, ProgramDiagnostic } from "../program/index.js";
+import type { CompilerOptions, Program, ProgramDiagnostic, ResolvedModule } from "../program/index.js";
 
 type PrimitiveTypeName = "any" | "boolean" | "never" | "null" | "number" | "string" | "undefined" | "unknown" | "void";
 
@@ -734,6 +734,9 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
       ...(exportInfo.exportEquals === undefined ? {} : { exportEquals: exportInfo.exportEquals }),
     };
   };
+  const resolvedModuleType = (moduleSpecifier: string, resolvedModule: ResolvedModule): CheckedType => {
+    return resolvedModule.untyped === true || resolvedModule.blockedByResolutionDiagnostic === true ? anyType : moduleNamespaceForResolvedFile(moduleSpecifier, resolvedModule.fileName);
+  };
   const moduleExportInfo = (fileName: string): ModuleExportInfo => {
     const cached = exportCache.get(fileName);
     if (cached !== undefined) {
@@ -749,9 +752,9 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
     const exportState: CheckState = {
       ...emptyCheckState(program.options),
       resolveExternalModule: moduleSpecifier => {
-        const resolvedFileName = sourceFile.resolvedModules.find(module => module.specifier === moduleSpecifier)?.fileName;
-        if (resolvedFileName !== undefined) {
-          return moduleNamespaceForResolvedFile(moduleSpecifier, resolvedFileName);
+        const resolvedModule = sourceFile.resolvedModules.find(module => module.specifier === moduleSpecifier);
+        if (resolvedModule !== undefined) {
+          return resolvedModuleType(moduleSpecifier, resolvedModule);
         }
         if (ambientModules.has(moduleSpecifier)) {
           const ambientExports = ambientModuleExportInfo(moduleSpecifier);
@@ -772,8 +775,8 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
     for (const statement of sourceFile.sourceFile.statements) {
       if (isExportDeclaration(statement) && statement.moduleSpecifier !== undefined && isStringLiteral(statement.moduleSpecifier)) {
         const moduleSpecifier = statement.moduleSpecifier;
-        const reexportedFileName = sourceFile.resolvedModules.find(module => module.specifier === moduleSpecifier.text)?.fileName;
-        const reexported = reexportedFileName === undefined ? undefined : moduleExportInfo(reexportedFileName);
+        const reexportedModule = sourceFile.resolvedModules.find(module => module.specifier === moduleSpecifier.text);
+        const reexported = reexportedModule === undefined || reexportedModule.untyped === true || reexportedModule.blockedByResolutionDiagnostic === true ? undefined : moduleExportInfo(reexportedModule.fileName);
         collectReExports(statement, reexported, exports);
         continue;
       }
@@ -819,9 +822,9 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
   };
   return (containingFileName, moduleSpecifier) => {
     const sourceFile = sourceFiles.get(containingFileName);
-    const resolvedFileName = sourceFile?.resolvedModules.find(module => module.specifier === moduleSpecifier)?.fileName;
-    if (resolvedFileName !== undefined) {
-      return moduleNamespaceForResolvedFile(moduleSpecifier, resolvedFileName);
+    const resolvedModule = sourceFile?.resolvedModules.find(module => module.specifier === moduleSpecifier);
+    if (resolvedModule !== undefined) {
+      return resolvedModuleType(moduleSpecifier, resolvedModule);
     }
     if (ambientModules.has(moduleSpecifier)) {
       const ambientExports = ambientModuleExportInfo(moduleSpecifier);
