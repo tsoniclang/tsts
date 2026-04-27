@@ -63,4 +63,10 @@ describe("differential TypeScript diagnostic parity", () => {
 
     assert.deepEqual(tstsDiagnostics(sourceText), upstreamTypeScriptDiagnostics(sourceText));
   });
+
+  it("matches upstream TypeScript diagnostics for arrow parameter property modifiers", () => {
+    const sourceText = "const f = (public value: string) => value;";
+
+    assert.deepEqual(tstsDiagnostics(sourceText), upstreamTypeScriptDiagnostics(sourceText));
+  });
 });

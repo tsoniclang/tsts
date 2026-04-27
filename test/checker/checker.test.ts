@@ -43,6 +43,14 @@ describe("checker groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
   });
 
+  it("reports parameter property modifiers outside constructor implementations", () => {
+    const sourceFile = parseSourceFile("const f = (public value: string) => value;");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["A parameter property is only allowed in a constructor implementation."]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2369]);
+  });
+
   it("checks every source file in a program", () => {
     const host: CompilerHost = {
       readFile: fileName => fileName === "src/index.ts" ? "export function f(): number { return \"x\"; }" : undefined,

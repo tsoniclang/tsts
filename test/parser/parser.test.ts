@@ -412,4 +412,16 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isEmptyStatement(statement.body!.statements[0]!), true);
     assert.equal(isExpressionStatement(statement.body!.statements[1]!), true);
   });
+
+  it("preserves parameter property modifiers for checker diagnostics", () => {
+    const sourceFile = parseSourceFile("const f = (public value: string) => value;");
+    const statement = sourceFile.statements[0]!;
+
+    assert.equal(isVariableStatement(statement), true);
+    if (!isVariableStatement(statement)) throw new Error("Expected variable statement");
+    const initializer = statement.declarationList.declarations[0]!.initializer;
+    assert.equal(isArrowFunction(initializer!), true);
+    if (!isArrowFunction(initializer!)) throw new Error("Expected arrow function");
+    assert.equal(initializer.parameters[0]!.modifiers?.[0]?.kind, Kind.PublicKeyword);
+  });
 });

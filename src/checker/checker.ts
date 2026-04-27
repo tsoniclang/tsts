@@ -51,6 +51,7 @@ import {
   type EntityName,
   type Expression,
   type FunctionDeclaration,
+  type ParameterDeclaration,
   type SourceFile,
   type Statement,
   type TypeNode,
@@ -230,6 +231,9 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
   if (isConstructorDeclaration(member) || isMethodDeclaration(member)) {
     const memberEnvironment = new Map(environment);
     for (const parameter of member.parameters) {
+      if (isMethodDeclaration(member)) {
+        checkParameterPropertyModifiers(parameter, state);
+      }
       setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, memberEnvironment), memberEnvironment);
     }
     if (member.body !== undefined) {
@@ -260,6 +264,7 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
   }
   for (let index = 0; index < functionDeclaration.parameters.length; index += 1) {
     const parameter = functionDeclaration.parameters[index]!;
+    checkParameterPropertyModifiers(parameter, state);
     setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
   }
   if (functionDeclaration.body !== undefined) {
@@ -359,6 +364,7 @@ function inferExpression(expression: Expression, state: CheckState, environment:
 function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, environment: TypeEnvironment): CheckedType {
   const arrowEnvironment = new Map(environment);
   for (const parameter of arrowFunction.parameters) {
+    checkParameterPropertyModifiers(parameter, state);
     setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, arrowEnvironment), arrowEnvironment);
   }
   const declaredReturnType = arrowFunction.type === undefined ? undefined : typeFromTypeNode(arrowFunction.type, arrowEnvironment);
@@ -459,6 +465,12 @@ function checkAssignable(actual: CheckedType, expected: CheckedType, state: Chec
   }
   if (!isAssignableTo(actual, expected)) {
     state.diagnostics.push(createDiagnostic(2322, displayType(actual), displayType(expected)));
+  }
+}
+
+function checkParameterPropertyModifiers(parameter: ParameterDeclaration, state: CheckState): void {
+  if (parameter.modifiers?.some(modifier => modifier.kind === Kind.PublicKeyword || modifier.kind === Kind.PrivateKeyword || modifier.kind === Kind.ProtectedKeyword || modifier.kind === Kind.ReadonlyKeyword) === true) {
+    state.diagnostics.push(createDiagnostic(2369));
   }
 }
 

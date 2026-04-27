@@ -848,12 +848,13 @@ export class Parser {
   }
 
   #parseParameterDeclaration(): ParameterDeclaration {
+    const modifiers = this.#parseModifiers();
     const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
     const name = this.#parseBindingName();
     const questionToken = this.#consumeOptional(Kind.QuestionToken) ? createToken(Kind.QuestionToken) : undefined;
     const type = this.#parseOptionalTypeAnnotation();
     const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
-    return createParameterDeclaration(undefined, dotDotDotToken, name, questionToken, type, initializer);
+    return createParameterDeclaration(modifiers, dotDotDotToken, name, questionToken, type, initializer);
   }
 
   #parseBlock(): Block {
