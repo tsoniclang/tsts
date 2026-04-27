@@ -357,4 +357,11 @@ describe("checker groundwork", () => {
       "Properties with the 'accessor' modifier are only available when targeting ECMAScript 2015 and higher.",
     ]);
   });
+
+  it("treats public class instances as structurally assignable through inherited members", () => {
+    const sourceFile = parseSourceFile("class A { value = 1; } class B extends A { } function f(): A { return new B(); }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.equal(result.diagnostics.length, 0);
+  });
 });

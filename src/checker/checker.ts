@@ -577,8 +577,8 @@ function inheritedClassMembers(classDeclaration: ClassDeclaration, environment: 
 }
 
 function collectClassMemberNames(classDeclaration: ClassDeclaration, inherited: ClassMemberNames | undefined, environment: TypeEnvironment): ClassMemberNames {
-  const instance = new Set<string>();
-  const staticMembers = new Set<string>();
+  const instance = new Set(inherited?.instance ?? []);
+  const staticMembers = new Set(inherited?.static ?? []);
   const abstractMembers = new Map(inherited?.abstractMembers ?? []);
   const abstractProperties = new Set(inherited?.abstractProperties ?? []);
   const abstractPropertyDeclaringClasses = new Map(inherited?.abstractPropertyDeclaringClasses ?? []);
@@ -1856,7 +1856,7 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
     return actual.name === expected.name && actual.abstract === expected.abstract;
   }
   if (actual.kind === "classInstance" && expected.kind === "classInstance") {
-    return actual.name === expected.name;
+    return actual.name === expected.name || classMembersAssignableTo(actual.members, expected.members);
   }
   if (actual.kind === "object" && expected.kind === "object") {
     return [...expected.properties.entries()].every(([name, expectedPropertyType]) => {
@@ -1888,6 +1888,20 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
     return actual.name === expected.name;
   }
   return false;
+}
+
+function classMembersAssignableTo(actual: ClassMemberNames, expected: ClassMemberNames): boolean {
+  for (const expectedMember of expected.instance) {
+    if (!actual.instance.has(expectedMember)) {
+      return false;
+    }
+    const expectedPropertyType = expected.propertyTypes.get(expectedMember);
+    const actualPropertyType = actual.propertyTypes.get(expectedMember);
+    if (expectedPropertyType !== undefined && actualPropertyType !== undefined && !isAssignableTo(actualPropertyType, expectedPropertyType)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function uniqueTypes(types: readonly CheckedType[]): readonly CheckedType[] {
