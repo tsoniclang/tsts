@@ -15,6 +15,7 @@ import {
   createCaseClause,
   createCatchClause,
   createClassDeclaration,
+  createClassExpression,
   createComputedPropertyName,
   createConditionalTypeNode,
   createConstructorDeclaration,
@@ -45,6 +46,7 @@ import {
   createHeritageClause,
   createIfStatement,
   createIdentifier,
+  createIndexSignatureDeclaration,
   createIndexedAccessTypeNode,
   createImportClause,
   createImportDeclaration,
@@ -100,6 +102,7 @@ import {
   createThrowStatement,
   createToken,
   createTypeAliasDeclaration,
+  createTypeAssertion,
   createTypeLiteralNode,
   createTypeOfExpression,
   createTypeOperatorNode,
@@ -497,7 +500,7 @@ export class Parser {
 
   #parseClassDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
     this.#expect(Kind.ClassKeyword);
-    const name = this.#current().kind === Kind.Identifier ? this.#parseIdentifier() : undefined;
+    const name = isIdentifierNameKind(this.#current().kind) ? this.#parseIdentifier() : undefined;
     const typeParameters = this.#parseOptionalTypeParameters();
     const heritageClauses = this.#parseHeritageClauses();
     this.#expect(Kind.OpenBraceToken);
@@ -687,6 +690,21 @@ export class Parser {
 
   #parseTypeElement(): TypeElement {
     const modifiers = this.#parseModifiers();
+    if (this.#current().kind === Kind.OpenBracketToken) {
+      this.#advance();
+      const name = this.#parseIdentifier();
+      const parameterType = this.#parseOptionalTypeAnnotation();
+      this.#expect(Kind.CloseBracketToken);
+      this.#expect(Kind.ColonToken);
+      const type = this.#parseType();
+      this.#consumeOptional(Kind.SemicolonToken);
+      this.#consumeOptional(Kind.CommaToken);
+      return createIndexSignatureDeclaration(
+        modifiers,
+        createNodeArray([createParameterDeclaration(undefined, undefined, name, undefined, parameterType, undefined)]),
+        type,
+      );
+    }
     if (this.#current().kind === Kind.OpenParenToken || this.#current().kind === Kind.LessThanToken) {
       const typeParameters = this.#parseOptionalTypeParameters();
       this.#expect(Kind.OpenParenToken);
@@ -944,7 +962,7 @@ export class Parser {
   }
 
   #parseExpression(precedence = 0): Expression {
-    if (precedence === 0 && this.#isArrowFunctionStart()) {
+    if (this.#isArrowFunctionStart()) {
       return this.#parseArrowFunction();
     }
     let left = this.#parseUnaryExpression();
@@ -978,6 +996,9 @@ export class Parser {
   }
 
   #isArrowFunctionStart(): boolean {
+    if (this.#current().kind === Kind.LessThanToken) {
+      return this.#isGenericArrowFunctionStart();
+    }
     if (isIdentifierNameKind(this.#current().kind) && this.#tokens[this.#index + 1]?.kind === Kind.EqualsGreaterThanToken) {
       return true;
     }
@@ -1008,6 +1029,27 @@ export class Parser {
     return false;
   }
 
+  #isGenericArrowFunctionStart(): boolean {
+    const startIndex = this.#index;
+    try {
+      const typeParameters = this.#parseOptionalTypeParameters();
+      if (typeParameters === undefined) {
+        this.#index = startIndex;
+        return false;
+      }
+      this.#expect(Kind.OpenParenToken);
+      this.#parseParameterList();
+      this.#expect(Kind.CloseParenToken);
+      this.#parseOptionalTypeAnnotation();
+      const isArrow = this.#current().kind === Kind.EqualsGreaterThanToken;
+      this.#index = startIndex;
+      return isArrow;
+    } catch {
+      this.#index = startIndex;
+      return false;
+    }
+  }
+
   #hasEqualsGreaterThanBeforeStatementBoundary(startIndex: number): boolean {
     for (let index = startIndex; index < this.#tokens.length; index += 1) {
       const kind = this.#tokens[index]!.kind;
@@ -1023,8 +1065,9 @@ export class Parser {
 
   #parseArrowFunction(): Expression {
     const parameters: ParameterDeclaration[] = [];
+    const typeParameters = this.#parseOptionalTypeParameters();
     let type: TypeNode | undefined;
-    if (isIdentifierNameKind(this.#current().kind)) {
+    if (typeParameters === undefined && isIdentifierNameKind(this.#current().kind)) {
       parameters.push(createParameterDeclaration(undefined, undefined, this.#parseIdentifier(), undefined, undefined, undefined));
     } else {
       this.#expect(Kind.OpenParenToken);
@@ -1034,7 +1077,7 @@ export class Parser {
     }
     this.#expect(Kind.EqualsGreaterThanToken);
     const body = this.#parseArrowBody();
-    return createArrowFunction(undefined, undefined, createNodeArray(parameters), type, createToken(Kind.EqualsGreaterThanToken), body);
+    return createArrowFunction(undefined, typeParameters, createNodeArray(parameters), type, createToken(Kind.EqualsGreaterThanToken), body);
   }
 
   #parseArrowBody(): ConciseBody {
@@ -1069,9 +1112,18 @@ export class Parser {
       case Kind.AwaitKeyword:
         this.#advance();
         return createAwaitExpression(this.#parseUnaryExpression());
+      case Kind.LessThanToken:
+        return this.#parseTypeAssertionExpression();
       default:
         return this.#parsePostfixExpression();
     }
+  }
+
+  #parseTypeAssertionExpression(): Expression {
+    this.#expect(Kind.LessThanToken);
+    const type = this.#parseType();
+    this.#expectGreaterThan();
+    return createTypeAssertion(type, this.#parseUnaryExpression());
   }
 
   #parsePostfixExpression(): Expression {
@@ -1219,6 +1271,8 @@ export class Parser {
         return this.#parseTemplateExpression();
       case Kind.FunctionKeyword:
         return this.#parseFunctionExpression();
+      case Kind.ClassKeyword:
+        return this.#parseClassExpression();
       case Kind.OpenParenToken: {
         this.#advance();
         const expression = this.#parseExpression();
@@ -1245,6 +1299,20 @@ export class Parser {
     const type = this.#parseOptionalTypeAnnotation();
     const body = this.#parseBlock();
     return createFunctionExpression(undefined, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body);
+  }
+
+  #parseClassExpression(): Expression {
+    this.#expect(Kind.ClassKeyword);
+    const name = isIdentifierNameKind(this.#current().kind) ? this.#parseIdentifier() : undefined;
+    const typeParameters = this.#parseOptionalTypeParameters();
+    const heritageClauses = this.#parseHeritageClauses();
+    this.#expect(Kind.OpenBraceToken);
+    const members: ClassElement[] = [];
+    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
+      members.push(this.#parseClassElement());
+    }
+    this.#expect(Kind.CloseBraceToken);
+    return createClassExpression(undefined, name, typeParameters, heritageClauses, createNodeArray(members));
   }
 
   #parseTemplateExpression(): Expression {

@@ -11,6 +11,7 @@ import {
   isCallExpression,
   isCallSignatureDeclaration,
   isClassDeclaration,
+  isClassExpression,
   isConstructorDeclaration,
   isContinueStatement,
   isConditionalExpression,
@@ -23,6 +24,7 @@ import {
   isExportDeclaration,
   isFunctionDeclaration,
   isIdentifier,
+  isIndexSignatureDeclaration,
   isImportDeclaration,
   isImportEqualsDeclaration,
   isInterfaceDeclaration,
@@ -44,6 +46,7 @@ import {
   isReturnStatement,
   isStringLiteral,
   isTypeAliasDeclaration,
+  isTypeAssertion,
   isTypeLiteralNode,
   isTypeReferenceNode,
   isTypePredicateNode,
@@ -411,6 +414,52 @@ describe("TS-Go parser groundwork", () => {
     if (!isFunctionDeclaration(statement)) throw new Error("Expected function");
     assert.equal(isEmptyStatement(statement.body!.statements[0]!), true);
     assert.equal(isExpressionStatement(statement.body!.statements[1]!), true);
+  });
+
+  it("parses assignment-position arrows, generic arrows, type assertions, and class expressions", () => {
+    const sourceFile = parseSourceFile([
+      "host.createProgram = (rootNames: ReadonlyArray<string> | undefined, options) => options;",
+      "const fn = <K extends T>(): K => <K>value;",
+      "const klass = class Box { static #foo = 1; [key] = value; };",
+    ].join("\n"));
+    const assignedArrow = sourceFile.statements[0]!;
+    const genericArrow = sourceFile.statements[1]!;
+    const classExpression = sourceFile.statements[2]!;
+
+    assert.equal(isExpressionStatement(assignedArrow), true);
+    if (!isExpressionStatement(assignedArrow) || !isBinaryExpression(assignedArrow.expression)) throw new Error("Expected assignment expression");
+    assert.equal(isArrowFunction(assignedArrow.expression.right), true);
+
+    assert.equal(isVariableStatement(genericArrow), true);
+    if (!isVariableStatement(genericArrow)) throw new Error("Expected generic arrow variable");
+    const initializer = genericArrow.declarationList.declarations[0]!.initializer;
+    assert.equal(isArrowFunction(initializer!), true);
+    if (!isArrowFunction(initializer!)) throw new Error("Expected generic arrow");
+    assert.equal(initializer.typeParameters?.[0]?.name.text, "K");
+    assert.equal(isTypeAssertion(initializer.body), true);
+
+    assert.equal(isVariableStatement(classExpression), true);
+    if (!isVariableStatement(classExpression)) throw new Error("Expected class expression variable");
+    const classInitializer = classExpression.declarationList.declarations[0]!.initializer;
+    assert.equal(isClassExpression(classInitializer!), true);
+    if (!isClassExpression(classInitializer!)) throw new Error("Expected class expression");
+    assert.equal(classInitializer.members.length, 2);
+    assert.equal(isPropertyDeclaration(classInitializer.members[0]!), true);
+    if (!isPropertyDeclaration(classInitializer.members[0]!)) throw new Error("Expected private property");
+    assert.equal(isPrivateIdentifier(classInitializer.members[0]!.name), true);
+  });
+
+  it("parses type literal index signatures", () => {
+    const sourceFile = parseSourceFile("type Dict = { description?: string, [key: string]: string | undefined };");
+    const statement = sourceFile.statements[0]!;
+
+    assert.equal(isTypeAliasDeclaration(statement), true);
+    if (!isTypeAliasDeclaration(statement) || !isTypeLiteralNode(statement.type)) throw new Error("Expected type literal alias");
+    assert.equal(isPropertySignatureDeclaration(statement.type.members[0]!), true);
+    assert.equal(isIndexSignatureDeclaration(statement.type.members[1]!), true);
+    if (!isIndexSignatureDeclaration(statement.type.members[1]!)) throw new Error("Expected index signature");
+    assert.equal(statement.type.members[1]!.parameters[0]!.name.kind, Kind.Identifier);
+    assert.equal(statement.type.members[1]!.parameters[0]!.type?.kind, Kind.StringKeyword);
   });
 
   it("preserves parameter property modifiers for checker diagnostics", () => {
