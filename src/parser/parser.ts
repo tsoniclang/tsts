@@ -74,6 +74,7 @@ import {
   createMappedTypeNode,
   createMethodDeclaration,
   createMethodSignatureDeclaration,
+  createMetaProperty,
   createModuleBlock,
   createModuleDeclaration,
   createNamedExports,
@@ -375,7 +376,10 @@ export class Parser {
     }
     switch (this.#current().kind) {
       case Kind.ImportKeyword:
-        return this.#parseImportDeclaration(modifiers);
+        if (this.#isImportDeclarationStart()) {
+          return this.#parseImportDeclaration(modifiers);
+        }
+        break;
       case Kind.SemicolonToken:
         this.#advance();
         return createEmptyStatement();
@@ -523,6 +527,15 @@ export class Parser {
     const offset = this.#current().kind === Kind.TypeKeyword ? 1 : 0;
     return isIdentifierNameKind(this.#tokens[this.#index + offset]?.kind ?? Kind.Unknown)
       && this.#tokens[this.#index + offset + 1]?.kind === Kind.EqualsToken;
+  }
+
+  #isImportDeclarationStart(): boolean {
+    const nextKind = this.#tokens[this.#index + 1]?.kind ?? Kind.Unknown;
+    return nextKind === Kind.DeferKeyword
+      || nextKind === Kind.StringLiteral
+      || nextKind === Kind.AsteriskToken
+      || nextKind === Kind.OpenBraceToken
+      || isIdentifierNameKind(nextKind);
   }
 
   #parseModuleReference(): ModuleReference {
@@ -1903,12 +1916,16 @@ export class Parser {
         this.#advance();
         return createPrivateIdentifier(token.text);
       case Kind.FalseKeyword:
+      case Kind.ImportKeyword:
       case Kind.NullKeyword:
       case Kind.SuperKeyword:
       case Kind.ThisKeyword:
       case Kind.TrueKeyword:
         this.#advance();
-        return createKeywordExpression(token.kind as Kind.FalseKeyword | Kind.NullKeyword | Kind.SuperKeyword | Kind.ThisKeyword | Kind.TrueKeyword);
+        if (token.kind === Kind.ImportKeyword && this.#consumeOptional(Kind.DotToken)) {
+          return createMetaProperty(Kind.ImportKeyword, this.#parseIdentifier());
+        }
+        return createKeywordExpression(token.kind as Kind.FalseKeyword | Kind.ImportKeyword | Kind.NullKeyword | Kind.SuperKeyword | Kind.ThisKeyword | Kind.TrueKeyword);
       case Kind.NumericLiteral:
         this.#advance();
         return createNumericLiteral(token.text, 0);

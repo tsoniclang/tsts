@@ -76,7 +76,10 @@ import {
   isWithStatement,
   isWhileStatement,
   isArrayBindingPattern,
+  isAwaitExpression,
   isYieldExpression,
+  isKeywordExpression,
+  isMetaProperty,
 } from "../../src/ast/index.js";
 import { parseSourceFile, parseSourceFileWithDiagnostics } from "../../src/parser/index.js";
 
@@ -621,6 +624,44 @@ describe("TS-Go parser groundwork", () => {
     const forAwait = result.sourceFile.statements[2]!;
     if (!isForOfStatement(forAwait)) throw new Error("Expected for-await statement");
     assert.equal(forAwait.awaitModifier?.kind, Kind.AwaitKeyword);
+  });
+
+  it("parses statement-start dynamic import as an expression", () => {
+    const result = parseSourceFileWithDiagnostics([
+      "async function* foo() {",
+      "  import((await import(yield \"foo\")).default);",
+      "  import.meta;",
+      "}",
+    ].join("\n"));
+
+    assert.deepEqual(result.diagnostics, []);
+    const declaration = result.sourceFile.statements[0]!;
+    assert.equal(isFunctionDeclaration(declaration), true);
+    if (!isFunctionDeclaration(declaration) || declaration.body === undefined) throw new Error("Expected async generator declaration");
+
+    const importStatement = declaration.body.statements[0]!;
+    assert.equal(isExpressionStatement(importStatement), true);
+    if (!isExpressionStatement(importStatement) || !isCallExpression(importStatement.expression)) {
+      throw new Error("Expected dynamic import call expression");
+    }
+    assert.equal(isKeywordExpression(importStatement.expression.expression), true);
+    assert.equal(importStatement.expression.expression.kind, Kind.ImportKeyword);
+
+    const argument = importStatement.expression.arguments[0]!;
+    assert.equal(isPropertyAccessExpression(argument), true);
+    if (!isPropertyAccessExpression(argument) || !isParenthesizedExpression(argument.expression)) {
+      throw new Error("Expected property access over awaited dynamic import");
+    }
+    const awaitedImport = argument.expression.expression;
+    assert.equal(isAwaitExpression(awaitedImport), true);
+    if (!isAwaitExpression(awaitedImport)) {
+      throw new Error("Expected awaited dynamic import argument");
+    }
+
+    const metaStatement = declaration.body.statements[1]!;
+    assert.equal(isExpressionStatement(metaStatement), true);
+    if (!isExpressionStatement(metaStatement)) throw new Error("Expected import.meta statement");
+    assert.equal(isMetaProperty(metaStatement.expression), true);
   });
 
   it("produces loop statements with TS-Go initializer and body nodes", () => {
