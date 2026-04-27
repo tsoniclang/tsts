@@ -691,6 +691,9 @@ export class Parser {
     if (this.#current().kind === Kind.ConstKeyword && nextToken !== undefined && isIdentifierNameKind(nextToken.kind) && !this.#hasLineBreakBetween(this.#current(), nextToken)) {
       modifiers = createNodeArray([...(modifiers ?? []), createToken(this.#advance().kind as ModifierSyntaxKind) as ModifierLike]);
     }
+    if (this.#isIndexSignatureStart()) {
+      return this.#parseIndexSignature(modifiers);
+    }
     if (this.#current().kind === Kind.ConstructorKeyword) {
       this.#advance();
       this.#expect(Kind.OpenParenToken);
@@ -749,19 +752,7 @@ export class Parser {
   #parseTypeElement(): TypeElement {
     const modifiers = this.#parseModifiers();
     if (this.#current().kind === Kind.OpenBracketToken) {
-      this.#advance();
-      const name = this.#parseIdentifier();
-      const parameterType = this.#parseOptionalTypeAnnotation();
-      this.#expect(Kind.CloseBracketToken);
-      this.#expect(Kind.ColonToken);
-      const type = this.#parseType();
-      this.#consumeOptional(Kind.SemicolonToken);
-      this.#consumeOptional(Kind.CommaToken);
-      return createIndexSignatureDeclaration(
-        modifiers,
-        createNodeArray([createParameterDeclaration(undefined, undefined, name, undefined, parameterType, undefined)]),
-        type,
-      );
+      return this.#parseIndexSignature(modifiers);
     }
     if (this.#current().kind === Kind.OpenParenToken || this.#current().kind === Kind.LessThanToken) {
       const typeParameters = this.#parseOptionalTypeParameters();
@@ -826,6 +817,31 @@ export class Parser {
     this.#consumeOptional(Kind.SemicolonToken);
     this.#consumeOptional(Kind.CommaToken);
     return createPropertySignatureDeclaration(modifiers, name, postfixToken, type as never, undefined as never);
+  }
+
+  #isIndexSignatureStart(): boolean {
+    const name = this.#tokens[this.#index + 1];
+    const colon = this.#tokens[this.#index + 2];
+    return this.#current().kind === Kind.OpenBracketToken
+      && name !== undefined
+      && isIdentifierNameKind(name.kind)
+      && colon?.kind === Kind.ColonToken;
+  }
+
+  #parseIndexSignature(modifiers: NodeArray<ModifierLike> | undefined): ReturnType<typeof createIndexSignatureDeclaration> {
+    this.#expect(Kind.OpenBracketToken);
+    const name = this.#parseIdentifier();
+    const parameterType = this.#parseOptionalTypeAnnotation();
+    this.#expect(Kind.CloseBracketToken);
+    this.#expect(Kind.ColonToken);
+    const type = this.#parseType();
+    this.#consumeOptional(Kind.SemicolonToken);
+    this.#consumeOptional(Kind.CommaToken);
+    return createIndexSignatureDeclaration(
+      modifiers,
+      createNodeArray([createParameterDeclaration(undefined, undefined, name, undefined, parameterType, undefined)]),
+      type,
+    );
   }
 
   #parseOptionalTypeParameters(): NodeArray<TypeParameterDeclaration> | undefined {

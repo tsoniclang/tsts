@@ -531,6 +531,16 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(statement.type.members[1]!.parameters[0]!.type?.kind, Kind.StringKeyword);
   });
 
+  it("parses class index signatures without consuming following members", () => {
+    const sourceFile = parseSourceFile("class N { [idx: string]: Shape; x: Shape; }");
+    const statement = sourceFile.statements[0]!;
+
+    assert.equal(isClassDeclaration(statement), true);
+    if (!isClassDeclaration(statement)) throw new Error("Expected class declaration");
+    assert.equal(isIndexSignatureDeclaration(statement.members[0]!), true);
+    assert.equal(isPropertyDeclaration(statement.members[1]!), true);
+  });
+
   it("parses ambient declarations, module blocks, const type parameters, and destructuring assignment defaults", () => {
     const sourceFile = parseSourceFile([
       "export function foo();",
