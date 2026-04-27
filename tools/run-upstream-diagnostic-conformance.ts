@@ -185,6 +185,35 @@ function upstreamDiagnostics(testCase: CompilerCase): readonly ComparableDiagnos
     .sort(compareDiagnostics);
 }
 
+async function tsgoBaselineDiagnostics(testCase: CompilerCase): Promise<readonly ComparableDiagnostic[]> {
+  const errorsFile = join("test", "upstream", "tsgo", "baselines", "reference", "compiler", `${caseBaseName(testCase.name)}.errors.txt`);
+  if (!existsSync(errorsFile)) {
+    return [];
+  }
+  const text = await readFile(errorsFile, "utf8");
+  const diagnostics: ComparableDiagnostic[] = [];
+  for (const line of text.split(/\r?\n/)) {
+    const match = line.match(/^(.*)\(\d+,\d+\): error TS(\d+): (.*)$/);
+    if (match === null) {
+      if (line.startsWith("==== ")) {
+        break;
+      }
+      continue;
+    }
+    diagnostics.push({
+      fileName: normalizeFileName(match[1]!),
+      code: Number(match[2]),
+      message: match[3]!,
+    });
+  }
+  return diagnostics.sort(compareDiagnostics);
+}
+
+function caseBaseName(name: string): string {
+  const extension = extname(name);
+  return extension === "" ? name : name.slice(0, -extension.length);
+}
+
 function parseCompilerOptions(text: string): ts.CompilerOptions {
   const options: ts.CompilerOptions = {};
   for (const line of text.split(/\r?\n/)) {
@@ -355,7 +384,7 @@ async function main(): Promise<void> {
     let actual: readonly ComparableDiagnostic[] = [];
     let error: unknown;
     try {
-      upstream = upstreamDiagnostics(testCase);
+      upstream = options.suite === "tsgo" ? await tsgoBaselineDiagnostics(testCase) : upstreamDiagnostics(testCase);
       actual = tstsDiagnostics(testCase);
     } catch (caught) {
       error = caught;

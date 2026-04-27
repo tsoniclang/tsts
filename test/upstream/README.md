@@ -11,6 +11,7 @@ Directories:
 
 - `typescript/compiler`: copied from TypeScript `tests/cases/compiler`
 - `tsgo/compiler`: copied from TS-Go `testdata/tests/cases/compiler`
+- `tsgo/baselines/reference/compiler`: copied from TS-Go `testdata/baselines/reference/compiler`
 
 Refresh rule:
 
