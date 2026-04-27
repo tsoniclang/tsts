@@ -1220,6 +1220,27 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("reports lexical and type declarations in unbraced statement bodies", () => {
+    const sourceFile = parseSourceFile([
+      "declare const flag: boolean;",
+      "if (flag) const c = 0; else let l = 0;",
+      "while (flag) label: const nested = 0;",
+      "do type Alias = string; while (flag);",
+      "if (flag) interface Shape { value: string; }",
+      "if (flag) { const ok = 0; type Ok = string; interface Fine { value: string; } }",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1156, 1156, 1156, 1156, 1156]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "'const' declarations can only be declared inside a block.",
+      "'let' declarations can only be declared inside a block.",
+      "'const' declarations can only be declared inside a block.",
+      "'type' declarations can only be declared inside a block.",
+      "'interface' declarations can only be declared inside a block.",
+    ]);
+  });
+
   it("reports missing shorthand property values with the shorthand diagnostic", () => {
     const sourceFile = parseSourceFile("const make = () => ({ arguments });");
     const result = checkSourceFile(sourceFile, { strict: false });

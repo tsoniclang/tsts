@@ -1025,7 +1025,7 @@ function checkStatements(statements: readonly Statement[], state: CheckState, en
   }
 }
 
-function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, statementListHasExportedElements: boolean, ambientStatementDiagnosticReported = false): void {
+function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, statementListHasExportedElements: boolean, ambientStatementDiagnosticReported = false, singleStatementContext = false): void {
   if (isImportDeclaration(statement)) {
     bindImportDeclaration(statement, state, environment);
     return;
@@ -1036,6 +1036,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isVariableStatement(statement)) {
     checkJavaScriptDeclareModifier(statement, state);
+    checkSingleStatementDeclaration(statement, state, singleStatementContext);
     for (const declaration of statement.declarationList.declarations) {
       checkVariableDeclaration(declaration, state, environment, ambient || hasDeclareModifier(statement));
     }
@@ -1057,10 +1058,12 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isInterfaceDeclaration(statement)) {
+    checkSingleStatementDeclaration(statement, state, singleStatementContext);
     checkInterfaceDeclaration(statement, state, environment);
     return;
   }
   if (isTypeAliasDeclaration(statement)) {
+    checkSingleStatementDeclaration(statement, state, singleStatementContext);
     bindTypeAliasDeclaration(statement, state, environment);
     return;
   }
@@ -1075,19 +1078,19 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isIfStatement(statement)) {
     inferExpression(statement.expression, state, environment);
-    checkStatement(statement.thenStatement, state, narrowedEnvironmentForCondition(statement.expression, state, environment), expectedReturnType, ambient, false);
+    checkStatement(statement.thenStatement, state, narrowedEnvironmentForCondition(statement.expression, state, environment), expectedReturnType, ambient, false, false, true);
     if (statement.elseStatement !== undefined) {
-      checkStatement(statement.elseStatement, state, cloneTypeEnvironment(environment), expectedReturnType, ambient, false);
+      checkStatement(statement.elseStatement, state, cloneTypeEnvironment(environment), expectedReturnType, ambient, false, false, true);
     }
     return;
   }
   if (isWhileStatement(statement)) {
     inferExpression(statement.expression, state, environment);
-    checkStatement(statement.statement, enterIteration(state), cloneTypeEnvironment(environment), expectedReturnType, ambient, false);
+    checkStatement(statement.statement, enterIteration(state), cloneTypeEnvironment(environment), expectedReturnType, ambient, false, false, true);
     return;
   }
   if (isDoStatement(statement)) {
-    checkStatement(statement.statement, enterIteration(state), cloneTypeEnvironment(environment), expectedReturnType, ambient, false);
+    checkStatement(statement.statement, enterIteration(state), cloneTypeEnvironment(environment), expectedReturnType, ambient, false, false, true);
     inferExpression(statement.expression, state, environment);
     return;
   }
@@ -1102,7 +1105,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     if (statement.incrementor !== undefined) {
       inferExpression(statement.incrementor, state, loopEnvironment);
     }
-    checkStatement(statement.statement, enterIteration(state), loopEnvironment, expectedReturnType, ambient, false);
+    checkStatement(statement.statement, enterIteration(state), loopEnvironment, expectedReturnType, ambient, false, false, true);
     return;
   }
   if (isForInStatement(statement) || isForOfStatement(statement)) {
@@ -1112,7 +1115,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     if (isForOfStatement(statement)) {
       checkIterationInputType(iteratedType, state, "forOf");
     }
-    checkStatement(statement.statement, enterIteration(state), loopEnvironment, expectedReturnType, ambient, false);
+    checkStatement(statement.statement, enterIteration(state), loopEnvironment, expectedReturnType, ambient, false, false, true);
     return;
   }
   if (isSwitchStatement(statement)) {
@@ -1170,7 +1173,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     if (state.strictMode && isVariableStatement(statement.statement)) {
       state.diagnostics.push(createDiagnostic(1344));
     }
-    checkStatement(statement.statement, state, environment, expectedReturnType, ambient, false);
+    checkStatement(statement.statement, state, environment, expectedReturnType, ambient, false, false, singleStatementContext);
     return;
   }
   if (isExpressionStatement(statement)) {
@@ -1181,6 +1184,34 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   if (isBlock(statement)) {
     checkBlock(statement, state, environment, expectedReturnType);
   }
+}
+
+function checkSingleStatementDeclaration(statement: Statement, state: CheckState, singleStatementContext: boolean): void {
+  if (!singleStatementContext) {
+    return;
+  }
+  const declarationKind = singleStatementDeclarationKind(statement);
+  if (declarationKind !== undefined) {
+    state.diagnostics.push(createDiagnostic(1156, declarationKind));
+  }
+}
+
+function singleStatementDeclarationKind(statement: Statement): string | undefined {
+  if (isVariableStatement(statement)) {
+    if ((statement.declarationList.flags & NodeFlags.Const) !== 0) {
+      return "const";
+    }
+    if ((statement.declarationList.flags & NodeFlags.Let) !== 0) {
+      return "let";
+    }
+  }
+  if (isInterfaceDeclaration(statement)) {
+    return "interface";
+  }
+  if (isTypeAliasDeclaration(statement)) {
+    return "type";
+  }
+  return undefined;
 }
 
 function checkSwitchDefaultClauses(statement: Extract<Statement, { readonly kind: Kind.SwitchStatement }>, state: CheckState): void {
