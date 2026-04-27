@@ -198,6 +198,12 @@ export class ParseError extends Error {
   }
 }
 
+interface SpeculationState {
+  readonly index: number;
+  readonly diagnosticCount: number;
+  readonly tokens: readonly ScannedToken[];
+}
+
 const binaryPrecedence = new Map<Kind, number>([
   [Kind.AsteriskAsteriskToken, 14],
   [Kind.AsteriskToken, 13],
@@ -1439,8 +1445,7 @@ export class Parser {
   }
 
   #tryParseParenthesizedArrowHead(): boolean | undefined {
-    const startIndex = this.#index;
-    const diagnosticCount = this.#diagnostics.length;
+    const state = this.#beginSpeculation();
     try {
       this.#expect(Kind.OpenParenToken);
       const parameters = this.#parseParameterList();
@@ -1452,15 +1457,13 @@ export class Parser {
       const hasReturnType = this.#current().kind === Kind.ColonToken;
       this.#parseOptionalTypeAnnotation();
       const nextKind = this.#current().kind;
-      this.#index = startIndex;
-      this.#diagnostics.length = diagnosticCount;
+      this.#rewindSpeculation(state);
       return nextKind === Kind.EqualsGreaterThanToken
         || nextKind === Kind.OpenBraceToken
         || hasReturnType
         || hasTypedParameter;
     } catch {
-      this.#index = startIndex;
-      this.#diagnostics.length = diagnosticCount;
+      this.#rewindSpeculation(state);
       return undefined;
     }
   }
@@ -1481,13 +1484,11 @@ export class Parser {
   }
 
   #isGenericArrowFunctionStart(): boolean {
-    const startIndex = this.#index;
-    const diagnosticCount = this.#diagnostics.length;
+    const state = this.#beginSpeculation();
     try {
       const typeParameters = this.#parseOptionalTypeParameters();
       if (typeParameters === undefined) {
-        this.#index = startIndex;
-        this.#diagnostics.length = diagnosticCount;
+        this.#rewindSpeculation(state);
         return false;
       }
       this.#expect(Kind.OpenParenToken);
@@ -1495,12 +1496,10 @@ export class Parser {
       this.#expect(Kind.CloseParenToken);
       this.#parseOptionalTypeAnnotation();
       const isArrow = this.#current().kind === Kind.EqualsGreaterThanToken;
-      this.#index = startIndex;
-      this.#diagnostics.length = diagnosticCount;
+      this.#rewindSpeculation(state);
       return isArrow;
     } catch {
-      this.#index = startIndex;
-      this.#diagnostics.length = diagnosticCount;
+      this.#rewindSpeculation(state);
       return false;
     }
   }
@@ -1781,7 +1780,7 @@ export class Parser {
     if (this.#current().kind !== Kind.LessThanToken) {
       return undefined;
     }
-    const startIndex = this.#index;
+    const state = this.#beginSpeculation();
     try {
       const typeArguments = this.#parseOptionalTypeArguments();
       if (typeArguments !== undefined && this.#current().kind === Kind.OpenParenToken) {
@@ -1789,7 +1788,7 @@ export class Parser {
       }
     } catch {
     }
-    this.#index = startIndex;
+    this.#rewindSpeculation(state);
     return undefined;
   }
 
@@ -2455,18 +2454,18 @@ export class Parser {
   }
 
   #tryParseFunctionType(): TypeNode | undefined {
-    const startIndex = this.#index;
+    const state = this.#beginSpeculation();
     try {
       this.#expect(Kind.OpenParenToken);
       const parameters = this.#parseParameterList();
       this.#expect(Kind.CloseParenToken);
       if (!this.#consumeOptional(Kind.EqualsGreaterThanToken)) {
-        this.#index = startIndex;
+        this.#rewindSpeculation(state);
         return undefined;
       }
       return createFunctionTypeNode(undefined, createNodeArray(parameters), this.#parseType());
     } catch {
-      this.#index = startIndex;
+      this.#rewindSpeculation(state);
       return undefined;
     }
   }
@@ -2491,7 +2490,7 @@ export class Parser {
   }
 
   #tryParseTypePredicate(): TypeNode | undefined {
-    const startIndex = this.#index;
+    const state = this.#beginSpeculation();
     const assertsModifier = this.#consumeOptional(Kind.AssertsKeyword) ? createToken(Kind.AssertsKeyword) : undefined;
     let parameterName: ReturnType<typeof createThisTypeNode> | Identifier;
     if (this.#current().kind === Kind.ThisKeyword) {
@@ -2500,14 +2499,14 @@ export class Parser {
     } else if (isIdentifierNameKind(this.#current().kind)) {
       parameterName = this.#parseIdentifier();
     } else {
-      this.#index = startIndex;
+      this.#rewindSpeculation(state);
       return undefined;
     }
     if (!this.#consumeOptional(Kind.IsKeyword)) {
       if (assertsModifier !== undefined) {
         return createTypePredicateNode(assertsModifier, parameterName, undefined);
       }
-      this.#index = startIndex;
+      this.#rewindSpeculation(state);
       return undefined;
     }
     return createTypePredicateNode(assertsModifier, parameterName, this.#parseType());
@@ -2616,6 +2615,21 @@ export class Parser {
 
   #current(): ScannedToken {
     return this.#tokens[this.#index]!;
+  }
+
+  #beginSpeculation(): SpeculationState {
+    return {
+      index: this.#index,
+      diagnosticCount: this.#diagnostics.length,
+      tokens: [...this.#tokens],
+    };
+  }
+
+  #rewindSpeculation(state: SpeculationState): void {
+    this.#index = state.index;
+    this.#diagnostics.length = state.diagnosticCount;
+    const tokens = this.#tokens as ScannedToken[];
+    tokens.splice(0, tokens.length, ...state.tokens);
   }
 
   #advance(): ScannedToken {

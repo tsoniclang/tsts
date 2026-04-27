@@ -464,8 +464,11 @@ describe("TS-Go parser groundwork", () => {
   });
 
   it("produces interface declarations with heritage and method signatures", () => {
-    const sourceFile = parseSourceFile("interface Named extends Base<string> { id: number; rename(value: string): void; }");
+    const result = parseSourceFileWithDiagnostics("interface Named extends Base<string> { id: number; rename(value: string): void; } interface Wrapped<T> extends Base<Array<T>> { map<U>(value: U): Array<U>; }");
+    assert.deepEqual(result.diagnostics, []);
+    const sourceFile = result.sourceFile;
     const statement = sourceFile.statements[0]!;
+    const nestedGeneric = sourceFile.statements[1]!;
 
     assert.equal(isInterfaceDeclaration(statement), true);
     if (!isInterfaceDeclaration(statement)) throw new Error("Expected interface");
@@ -477,6 +480,10 @@ describe("TS-Go parser groundwork", () => {
     if (!isMethodSignatureDeclaration(statement.members[1]!)) throw new Error("Expected method signature");
     assert.equal(statement.members[1]!.parameters[0]?.name.kind, Kind.Identifier);
     assert.equal(statement.members[1]!.type?.kind, Kind.VoidKeyword);
+    assert.equal(isInterfaceDeclaration(nestedGeneric), true);
+    if (!isInterfaceDeclaration(nestedGeneric)) throw new Error("Expected nested generic interface");
+    assert.equal(nestedGeneric.heritageClauses?.[0]?.types[0]?.typeArguments?.[0]?.kind, Kind.TypeReference);
+    assert.equal(isMethodSignatureDeclaration(nestedGeneric.members[0]!), true);
   });
 
   it("produces class declarations with heritage, constructor, methods, and properties", () => {
