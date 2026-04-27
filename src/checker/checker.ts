@@ -69,6 +69,7 @@ import {
   isNamespaceImport,
   isNamespaceExportDeclaration,
   isNewExpression,
+  isNonNullExpression,
   isNumericLiteral,
   isNoSubstitutionTemplateLiteral,
   isObjectLiteralExpression,
@@ -3637,10 +3638,14 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return inferExpression(expression.expression, state, environment);
   }
   if (isPrefixUnaryExpression(expression)) {
+    if (expression.operator === Kind.PlusPlusToken || expression.operator === Kind.MinusMinusToken) {
+      checkUpdateTargetReference(expression.operand, state, environment);
+    }
     inferExpression(expression.operand, state, environment);
     return expression.operator === Kind.ExclamationToken ? booleanType : numberType;
   }
   if (isPostfixUnaryExpression(expression)) {
+    checkUpdateTargetReference(expression.operand, state, environment);
     inferExpression(expression.operand, state, environment);
     return numberType;
   }
@@ -4684,23 +4689,14 @@ function assignmentTargetType(expression: Expression, environment: TypeEnvironme
 
 function checkAssignmentTargetReference(expression: Expression, state: CheckState, environment: TypeEnvironment): void {
   if (isIdentifier(expression)) {
-    checkStrictModeIdentifier(expression.text, state, false);
-    const target = environment.get(expression.text);
-    if (target?.kind === "functionDeclaration") {
-      state.diagnostics.push(createDiagnostic(2630, expression.text));
-    }
-    if (isClassValue(target)) {
-      state.diagnostics.push(createDiagnostic(2629, expression.text));
-    }
-    if (isEnumValue(target)) {
-      state.diagnostics.push(createDiagnostic(2628, expression.text));
-    }
-    if (isPlainNamespace(target)) {
-      state.diagnostics.push(createDiagnostic(2708, expression.text));
-    }
+    checkIdentifierWriteTarget(expression, state, environment);
     return;
   }
   if (isParenthesizedExpression(expression)) {
+    checkAssignmentTargetReference(expression.expression, state, environment);
+    return;
+  }
+  if (isNonNullExpression(expression) || isAsExpression(expression) || isTypeAssertion(expression) || isSatisfiesExpression(expression)) {
     checkAssignmentTargetReference(expression.expression, state, environment);
     return;
   }
@@ -4719,6 +4715,46 @@ function checkAssignmentTargetReference(expression: Expression, state: CheckStat
   }
   inferExpression(expression, state, environment);
   state.diagnostics.push(createDiagnostic(2364));
+}
+
+function checkUpdateTargetReference(expression: Expression, state: CheckState, environment: TypeEnvironment): void {
+  if (isIdentifier(expression)) {
+    checkIdentifierWriteTarget(expression, state, environment);
+    return;
+  }
+  if (isParenthesizedExpression(expression)) {
+    checkUpdateTargetReference(expression.expression, state, environment);
+    return;
+  }
+  if (isNonNullExpression(expression) || isAsExpression(expression) || isTypeAssertion(expression) || isSatisfiesExpression(expression)) {
+    checkUpdateTargetReference(expression.expression, state, environment);
+    return;
+  }
+  if (isPropertyAccessExpression(expression)) {
+    checkPropertyAssignmentTarget(expression.expression, expression.name.text, state, environment);
+    return;
+  }
+  if (isElementAccessExpression(expression)) {
+    return;
+  }
+  state.diagnostics.push(createDiagnostic(2357));
+}
+
+function checkIdentifierWriteTarget(expression: Identifier, state: CheckState, environment: TypeEnvironment): void {
+  checkStrictModeIdentifier(expression.text, state, false);
+  const target = environment.get(expression.text);
+  if (target?.kind === "functionDeclaration") {
+    state.diagnostics.push(createDiagnostic(2630, expression.text));
+  }
+  if (isClassValue(target)) {
+    state.diagnostics.push(createDiagnostic(2629, expression.text));
+  }
+  if (isEnumValue(target)) {
+    state.diagnostics.push(createDiagnostic(2628, expression.text));
+  }
+  if (isPlainNamespace(target)) {
+    state.diagnostics.push(createDiagnostic(2708, expression.text));
+  }
 }
 
 function isClassValue(type: CheckedType | undefined): boolean {

@@ -1043,6 +1043,49 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("reports strict-mode update targets named arguments or eval", () => {
+    const sourceFile = parseSourceFile([
+      "\"use strict\"",
+      "++eval;",
+      "--eval;",
+      "++arguments;",
+      "--arguments;",
+      "eval++;",
+      "eval--;",
+      "arguments++;",
+      "arguments--;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [
+      1100, 2630,
+      1100, 2630,
+      1100, 2304,
+      1100, 2304,
+      1100, 2630,
+      1100, 2630,
+      1100, 2304,
+      1100, 2304,
+    ]);
+  });
+
+  it("reports invalid update operands while accepting outer assertion expressions", () => {
+    const sourceFile = parseSourceFile([
+      "let a = 1;",
+      "(a satisfies number)++;",
+      "a!++;",
+      "(1 + 2)++;",
+      "++(1 + 2);",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2357, 2357]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "The operand of an increment or decrement operator must be a variable or a property access.",
+      "The operand of an increment or decrement operator must be a variable or a property access.",
+    ]);
+  });
+
   it("reports missing shorthand property values with the shorthand diagnostic", () => {
     const sourceFile = parseSourceFile("const make = () => ({ arguments });");
     const result = checkSourceFile(sourceFile, { strict: false });

@@ -1697,7 +1697,7 @@ export class Parser {
 
   #parsePostfixExpression(): Expression {
     const expression = this.#parseLeftHandSideExpression();
-    if (this.#current().kind === Kind.PlusPlusToken || this.#current().kind === Kind.MinusMinusToken) {
+    if (!this.#lineBreakBeforeCurrentToken() && (this.#current().kind === Kind.PlusPlusToken || this.#current().kind === Kind.MinusMinusToken)) {
       const operator = this.#current().kind as Kind.PlusPlusToken | Kind.MinusMinusToken;
       this.#advance();
       return createPostfixUnaryExpression(expression, operator);

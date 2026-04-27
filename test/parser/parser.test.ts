@@ -913,10 +913,12 @@ describe("TS-Go parser groundwork", () => {
     const result = parseSourceFileWithDiagnostics([
       "\"use strict\"",
       "function f() { return 1; }",
+      "value",
+      "++counter;",
     ].join("\n"));
 
     assert.equal(result.diagnostics.length, 0);
-    assert.deepEqual(result.sourceFile.statements.map(statement => statement.kind), [Kind.ExpressionStatement, Kind.FunctionDeclaration]);
+    assert.deepEqual(result.sourceFile.statements.map(statement => statement.kind), [Kind.ExpressionStatement, Kind.FunctionDeclaration, Kind.ExpressionStatement, Kind.ExpressionStatement]);
   });
 
   it("parses object literal methods and UMD namespace exports", () => {
