@@ -605,6 +605,24 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics, []);
   });
 
+  it("narrows unions through asserted discriminant property access", () => {
+    const sourceFile = parseSourceFile([
+      "interface Cat { type: 'cat'; canMeow: true; }",
+      "interface Dog { type: 'dog'; canBark: true; }",
+      "type Animal = Cat | Dog;",
+      "declare function assertEqual<T>(value: any, type: T): asserts value is T;",
+      "const animal = { type: 'cat', canMeow: true } as Animal;",
+      "assertEqual(animal.type, 'cat' as const);",
+      "animal.canMeow;",
+      "const maybeAnimal = { type: 'cat', canMeow: true } as Animal | undefined;",
+      "assertEqual(maybeAnimal?.type, 'cat' as const);",
+      "maybeAnimal.canMeow;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: true });
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
   it("infers Array.from element types from iterable and array-like sources", () => {
     const sourceFile = parseSourceFile([
       "interface A { a: string; }",

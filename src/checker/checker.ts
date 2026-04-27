@@ -171,6 +171,9 @@ type CheckedType =
   | { readonly kind: "typeAliasInstance"; readonly name: string; readonly typeArguments: readonly CheckedType[]; readonly target: CheckedType }
   | { readonly kind: "typeParameter"; readonly name: string }
   | { readonly kind: "set"; readonly elementType: CheckedType }
+  | { readonly kind: "booleanLiteral"; readonly value: boolean }
+  | { readonly kind: "numberLiteral"; readonly value: string }
+  | { readonly kind: "stringLiteral"; readonly value: string }
   | { readonly kind: "tuple"; readonly elements: readonly TupleElementType[]; readonly restElementType?: CheckedType }
   | { readonly kind: "typePredicate"; readonly parameterName: string; readonly assertedType: CheckedType; readonly asserts: boolean; readonly parameterIndex?: number }
   | { readonly kind: "union"; readonly types: readonly CheckedType[] }
@@ -2703,7 +2706,7 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return unresolvedType;
   }
   if (isPropertyAccessExpression(expression)) {
-    return inferPropertyAccess(expression.expression, expression.name.text, state, environment);
+    return inferPropertyAccess(expression.expression, expression.questionDotToken !== undefined, expression.name.text, state, environment);
   }
   if (isElementAccessExpression(expression)) {
     const receiver = inferExpression(expression.expression, state, environment);
@@ -2981,6 +2984,13 @@ function narrowExpressionBinding(expression: Expression, assertedType: CheckedTy
     narrowExpressionBinding(expression.expression, assertedType, options, source, target);
     return;
   }
+  if (isPropertyAccessExpression(expression) && isIdentifier(expression.expression)) {
+    const current = source.get(expression.expression.text);
+    if (current !== undefined) {
+      target.set(expression.expression.text, narrowTypeByDiscriminantProperty(current, expression.name.text, assertedType, options));
+    }
+    return;
+  }
   if (!isIdentifier(expression)) {
     return;
   }
@@ -2988,6 +2998,32 @@ function narrowExpressionBinding(expression: Expression, assertedType: CheckedTy
   if (current !== undefined) {
     target.set(expression.text, narrowType(current, assertedType, options));
   }
+}
+
+function narrowTypeByDiscriminantProperty(current: CheckedType, propertyName: string, assertedType: CheckedType, options: CompilerOptions): CheckedType {
+  if (current.kind === "unassignedVariable") {
+    return narrowTypeByDiscriminantProperty(current.type, propertyName, assertedType, options);
+  }
+  if (current.kind === "valueAndType") {
+    return { ...current, value: narrowTypeByDiscriminantProperty(current.value, propertyName, assertedType, options) };
+  }
+  if (current.kind === "typeAliasInstance") {
+    return { ...current, target: narrowTypeByDiscriminantProperty(current.target, propertyName, assertedType, options) };
+  }
+  if (current.kind === "nonNullable") {
+    return narrowTypeByDiscriminantProperty(nonNullableType(current.target), propertyName, assertedType, options);
+  }
+  if (current.kind !== "union") {
+    return current;
+  }
+  const narrowedMembers = current.types.filter(member => {
+    if (member.kind === "null" || member.kind === "undefined") {
+      return false;
+    }
+    const propertyType = propertyAccessType(member, propertyName);
+    return propertyType !== undefined && typesSufficientlyOverlap(propertyType, assertedType, options);
+  });
+  return narrowedMembers.length === 0 ? current : unionType(narrowedMembers);
 }
 
 function narrowType(current: CheckedType, assertedType: CheckedType, options: CompilerOptions): CheckedType {
@@ -3029,6 +3065,15 @@ function expressionFlowType(expression: Expression, environment: TypeEnvironment
   if (isParenthesizedExpression(expression)) {
     return expressionFlowType(expression.expression, environment);
   }
+  if (isAsExpression(expression) || isTypeAssertion(expression)) {
+    if (isConstTypeReference(expression.type)) {
+      return constAssertionFlowType(expression.expression, environment);
+    }
+    return typeFromTypeNode(expression.type, environment);
+  }
+  if (isSatisfiesExpression(expression)) {
+    return expressionFlowType(expression.expression, environment);
+  }
   if (isIdentifier(expression)) {
     const bound = environment.get(expression.text);
     if (bound?.kind === "valueAndType") {
@@ -3041,7 +3086,14 @@ function expressionFlowType(expression: Expression, environment: TypeEnvironment
   }
   if (isPropertyAccessExpression(expression)) {
     const receiverType = expressionFlowType(expression.expression, environment);
-    return receiverType === undefined ? undefined : propertyAccessType(receiverType, expression.name.text, environment);
+    if (receiverType === undefined) {
+      return undefined;
+    }
+    if (expression.questionDotToken !== undefined) {
+      const propertyType = propertyAccessType(nonNullableType(receiverType), expression.name.text, environment);
+      return propertyType === undefined ? undefined : unionType([propertyType, undefinedType]);
+    }
+    return propertyAccessType(receiverType, expression.name.text, environment);
   }
   if (isCallExpression(expression)) {
     const calleeType = expressionFlowType(expression.expression, environment);
@@ -3077,9 +3129,115 @@ function isAlwaysFalsyExpression(expression: Expression): boolean {
 
 function inferAssertionExpression(expression: AssertionExpression, state: CheckState, environment: TypeEnvironment): CheckedType {
   const actualType = inferExpression(expression.expression, state, environment);
+  if (isConstTypeReference(expression.type)) {
+    return constAssertionType(expression.expression, actualType, state, environment);
+  }
   const targetType = typeFromTypeNode(expression.type, environment, state);
   checkAssertionComparable(actualType, targetType, state);
   return targetType;
+}
+
+function isConstTypeReference(type: TypeNode): boolean {
+  return isTypeReferenceNode(type)
+    && type.typeArguments === undefined
+    && isIdentifier(type.typeName)
+    && type.typeName.text === "const";
+}
+
+function constAssertionType(expression: Expression, actualType: CheckedType, state: CheckState, environment: TypeEnvironment): CheckedType {
+  if (isParenthesizedExpression(expression)) {
+    return constAssertionType(expression.expression, actualType, state, environment);
+  }
+  if (isStringLiteral(expression) || isNoSubstitutionTemplateLiteral(expression)) {
+    return { kind: "stringLiteral", value: expression.text };
+  }
+  if (isNumericLiteral(expression)) {
+    return { kind: "numberLiteral", value: expression.text };
+  }
+  if (isKeywordExpression(expression) && (expression.kind === Kind.TrueKeyword || expression.kind === Kind.FalseKeyword)) {
+    return { kind: "booleanLiteral", value: expression.kind === Kind.TrueKeyword };
+  }
+  if (isArrayLiteralExpression(expression)) {
+    return {
+      kind: "tuple",
+      elements: expression.elements.map(element => ({
+        type: constAssertionType(element, inferExpression(element, state, environment), state, environment),
+        optional: false,
+      })),
+    };
+  }
+  if (isObjectLiteralExpression(expression)) {
+    const properties = new Map<string, CheckedType>();
+    for (const property of expression.properties) {
+      if (isPropertyAssignment(property)) {
+        const name = propertyNameText(property.name);
+        if (name !== undefined) {
+          properties.set(name, constAssertionType(property.initializer, inferExpression(property.initializer, state, environment), state, environment));
+        }
+      } else if (isShorthandPropertyAssignment(property) && isIdentifier(property.name)) {
+        properties.set(property.name.text, environment.get(property.name.text) ?? anyType);
+      }
+    }
+    return { kind: "object", properties, readonlyProperties: new Set(properties.keys()) };
+  }
+  if (isValidConstAssertionExpression(expression)) {
+    return actualType;
+  }
+  state.diagnostics.push(createDiagnostic(1355));
+  return actualType;
+}
+
+function isValidConstAssertionExpression(expression: Expression): boolean {
+  if (isParenthesizedExpression(expression)) {
+    return isValidConstAssertionExpression(expression.expression);
+  }
+  return isStringLiteral(expression)
+    || isNoSubstitutionTemplateLiteral(expression)
+    || isNumericLiteral(expression)
+    || isArrayLiteralExpression(expression)
+    || isObjectLiteralExpression(expression)
+    || isPropertyAccessExpression(expression)
+    || (isElementAccessExpression(expression) && isStringLiteral(expression.argumentExpression))
+    || (isKeywordExpression(expression) && (expression.kind === Kind.TrueKeyword || expression.kind === Kind.FalseKeyword));
+}
+
+function constAssertionFlowType(expression: Expression, environment: TypeEnvironment): CheckedType | undefined {
+  if (isParenthesizedExpression(expression)) {
+    return constAssertionFlowType(expression.expression, environment);
+  }
+  if (isStringLiteral(expression) || isNoSubstitutionTemplateLiteral(expression)) {
+    return { kind: "stringLiteral", value: expression.text };
+  }
+  if (isNumericLiteral(expression)) {
+    return { kind: "numberLiteral", value: expression.text };
+  }
+  if (isKeywordExpression(expression) && (expression.kind === Kind.TrueKeyword || expression.kind === Kind.FalseKeyword)) {
+    return { kind: "booleanLiteral", value: expression.kind === Kind.TrueKeyword };
+  }
+  if (isArrayLiteralExpression(expression)) {
+    return {
+      kind: "tuple",
+      elements: expression.elements.map(element => ({
+        type: constAssertionFlowType(element, environment) ?? anyType,
+        optional: false,
+      })),
+    };
+  }
+  if (isObjectLiteralExpression(expression)) {
+    const properties = new Map<string, CheckedType>();
+    for (const property of expression.properties) {
+      if (isPropertyAssignment(property)) {
+        const name = propertyNameText(property.name);
+        if (name !== undefined) {
+          properties.set(name, constAssertionFlowType(property.initializer, environment) ?? anyType);
+        }
+      } else if (isShorthandPropertyAssignment(property) && isIdentifier(property.name)) {
+        properties.set(property.name.text, environment.get(property.name.text) ?? anyType);
+      }
+    }
+    return { kind: "object", properties, readonlyProperties: new Set(properties.keys()) };
+  }
+  return expressionFlowType(expression, environment);
 }
 
 function inferAssignmentExpression(expression: Extract<Expression, { readonly kind: Kind.BinaryExpression }>, state: CheckState, environment: TypeEnvironment): CheckedType {
@@ -3244,8 +3402,15 @@ function inferConciseBody(body: ConciseBody, state: CheckState, environment: Typ
   return bodyType;
 }
 
-function inferPropertyAccess(expression: Expression, propertyName: string, state: CheckState, environment: TypeEnvironment): CheckedType {
+function inferPropertyAccess(expression: Expression, optionalChain: boolean, propertyName: string, state: CheckState, environment: TypeEnvironment): CheckedType {
   const receiverType = inferExpression(expression, state, environment);
+  if (optionalChain) {
+    const nonNullReceiverType = nonNullableType(receiverType);
+    const propertyType = propertyAccessType(nonNullReceiverType, propertyName, environment);
+    if (propertyType !== undefined) {
+      return unionType([propertyType, undefinedType]);
+    }
+  }
   if (receiverType.kind === "thisClass") {
     diagnoseThisPropertyAccess(receiverType, propertyName, state);
     return propertyAccessType(receiverType, propertyName, environment) ?? anyType;
@@ -3309,6 +3474,15 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
   }
   if (receiverType.kind === "function" && propertyName === "apply") {
     return functionApplyType(receiverType);
+  }
+  if (receiverType.kind === "stringLiteral") {
+    return propertyAccessType(stringType, propertyName, environment);
+  }
+  if (receiverType.kind === "numberLiteral") {
+    return propertyAccessType(numberType, propertyName, environment);
+  }
+  if (receiverType.kind === "booleanLiteral") {
+    return propertyAccessType(booleanType, propertyName, environment);
   }
   if (receiverType.kind === "number" && propertyName === "toFixed") {
     return { kind: "function", typeParameters: [], parameters: [], returnType: stringType };
@@ -4002,10 +4176,10 @@ function hasTypeArgumentArity(type: TypeReferenceNode, displayName: string, requ
 function literalTypeNodeType(type: Extract<TypeNode, { readonly kind: Kind.LiteralType }>): CheckedType {
   const literal = type.literal;
   if (isStringLiteral(literal) || isNoSubstitutionTemplateLiteral(literal)) {
-    return stringType;
+    return { kind: "stringLiteral", value: literal.text };
   }
   if (isNumericLiteral(literal)) {
-    return numberType;
+    return { kind: "numberLiteral", value: literal.text };
   }
   if (isBigIntLiteral(literal)) {
     return anyType;
@@ -4018,7 +4192,7 @@ function literalTypeNodeType(type: Extract<TypeNode, { readonly kind: Kind.Liter
       return nullType;
     }
     if (literal.kind === Kind.TrueKeyword || literal.kind === Kind.FalseKeyword) {
-      return booleanType;
+      return { kind: "booleanLiteral", value: literal.kind === Kind.TrueKeyword };
     }
   }
   return anyType;
@@ -4850,6 +5024,24 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
   if (!strictOptionValue(options, "strictNullChecks") && (actual.kind === "null" || actual.kind === "undefined")) {
     return true;
   }
+  if (actual.kind === "stringLiteral") {
+    return expected.kind === "string" || (expected.kind === "stringLiteral" && actual.value === expected.value);
+  }
+  if (expected.kind === "stringLiteral") {
+    return false;
+  }
+  if (actual.kind === "numberLiteral") {
+    return expected.kind === "number" || (expected.kind === "numberLiteral" && actual.value === expected.value);
+  }
+  if (expected.kind === "numberLiteral") {
+    return false;
+  }
+  if (actual.kind === "booleanLiteral") {
+    return expected.kind === "boolean" || (expected.kind === "booleanLiteral" && actual.value === expected.value);
+  }
+  if (expected.kind === "booleanLiteral") {
+    return false;
+  }
   if (isEmptyObjectLikeType(expected)) {
     if (actual.kind === "union") {
       return actual.types.every(type => isAssignableTo(type, expected, options));
@@ -4870,6 +5062,12 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
       const actualPropertyType = actual.properties.get(name);
       return actualPropertyType !== undefined && isAssignableTo(actualPropertyType, expectedPropertyType, options);
     });
+  }
+  if (actual.kind === "interface" && expected.kind === "object") {
+    return objectPropertiesAssignableTo(actual.members.properties, expected.properties, options);
+  }
+  if (actual.kind === "classInstance" && expected.kind === "object") {
+    return objectPropertiesAssignableTo(actual.members.propertyTypes, expected.properties, options);
   }
   if (actual.kind === "object" && expected.kind === "record") {
     return [...actual.properties.values()].every(actualPropertyType => isAssignableTo(actualPropertyType, expected.valueType, options));
@@ -5238,7 +5436,7 @@ function isStringLikeOperandType(type: CheckedType): boolean {
   if (type.kind === "union") {
     return type.types.every(isStringLikeOperandType);
   }
-  return type.kind === "string";
+  return type.kind === "string" || type.kind === "stringLiteral";
 }
 
 function isNumberLikeOperandType(type: CheckedType): boolean {
@@ -5260,7 +5458,7 @@ function isNumberLikeOperandType(type: CheckedType): boolean {
   if (type.kind === "union") {
     return type.types.every(isNumberLikeOperandType);
   }
-  return type.kind === "number";
+  return type.kind === "number" || type.kind === "numberLiteral";
 }
 
 function isNumericArithmeticOperator(kind: Kind): boolean {
@@ -5336,6 +5534,15 @@ function displayType(type: CheckedType): string {
   }
   if (type.kind === "set") {
     return `Set<${displayType(type.elementType)}>`;
+  }
+  if (type.kind === "stringLiteral") {
+    return JSON.stringify(type.value);
+  }
+  if (type.kind === "numberLiteral") {
+    return type.value;
+  }
+  if (type.kind === "booleanLiteral") {
+    return type.value ? "true" : "false";
   }
   if (type.kind === "tuple") {
     return displayTupleType(type);
