@@ -15,6 +15,7 @@ interface CompilerCase {
   readonly files: readonly CaseFile[];
   readonly rootNames: readonly string[];
   readonly compilerOptions: ts.CompilerOptions;
+  readonly baselineFile: string | undefined;
 }
 
 interface ComparableDiagnostic {
@@ -106,16 +107,18 @@ async function discoverCases(options: Options): Promise<readonly CompilerCase[]>
   if (!existsSync(directory)) {
     throw new Error(`Upstream ${options.suite} compiler test directory does not exist: ${directory}`);
   }
+  const baselineFiles = await discoverBaselineFiles(options.suite);
 
   const names = (await readdir(directory))
     .filter(name => isSupportedCaseFile(name))
     .filter(name => options.filter === undefined || name.includes(options.filter))
     .sort();
   const selected = options.limit === undefined ? names : names.slice(0, options.limit);
-  return Promise.all(selected.map(async name => {
+  const cases = await Promise.all(selected.map(async name => {
     const path = join(directory, name);
-    return parseCompilerCase(name, path, await readFile(path, "utf8"));
+    return expandBaselineVariants(parseCompilerCase(name, path, await readFile(path, "utf8")), baselineFiles);
   }));
+  return cases.flat();
 }
 
 function parseCompilerCase(name: string, path: string, text: string): CompilerCase {
@@ -151,6 +154,7 @@ function parseCompilerCase(name: string, path: string, text: string): CompilerCa
       compilerOptions,
       files: fileSections,
       rootNames,
+      baselineFile: undefined,
     };
   }
 
@@ -160,15 +164,54 @@ function parseCompilerCase(name: string, path: string, text: string): CompilerCa
     compilerOptions,
     files: [{ fileName: name, text }],
     rootNames: [name],
+    baselineFile: undefined,
   };
 }
 
+async function discoverBaselineFiles(suite: Options["suite"]): Promise<readonly string[]> {
+  const directory = baselineDirectory(suite);
+  if (!existsSync(directory)) {
+    return [];
+  }
+  return (await readdir(directory)).filter(name => name.endsWith(".errors.txt")).sort();
+}
+
+function baselineDirectory(suite: Options["suite"]): string {
+  return join("test", "upstream", suite, "baselines", "reference", "compiler");
+}
+
+function expandBaselineVariants(testCase: CompilerCase, baselineFiles: readonly string[]): readonly CompilerCase[] {
+  const baseName = caseBaseName(testCase.name);
+  const matchingBaselines = baselineFiles.filter(fileName => {
+    if (!fileName.startsWith(baseName)) {
+      return false;
+    }
+    if (fileName === `${baseName}.errors.txt`) {
+      return true;
+    }
+    const suffix = fileName.slice(baseName.length);
+    return suffix.startsWith("(") || suffix.startsWith(".");
+  });
+  if (matchingBaselines.length === 0) {
+    return [testCase];
+  }
+  return matchingBaselines.map(baselineFileName => ({
+    ...testCase,
+    name: `${baselineFileName.slice(0, -".errors.txt".length)}${extname(testCase.name)}`,
+    baselineFile: baselineFileName,
+  }));
+}
+
 async function typescriptBaselineDiagnostics(testCase: CompilerCase): Promise<readonly ComparableDiagnostic[]> {
-  return baselineDiagnostics(join("test", "upstream", "typescript", "baselines", "reference", "compiler", `${caseBaseName(testCase.name)}.errors.txt`));
+  return baselineDiagnostics(baselinePath("typescript", testCase));
 }
 
 async function tsgoBaselineDiagnostics(testCase: CompilerCase): Promise<readonly ComparableDiagnostic[]> {
-  return baselineDiagnostics(join("test", "upstream", "tsgo", "baselines", "reference", "compiler", `${caseBaseName(testCase.name)}.errors.txt`));
+  return baselineDiagnostics(baselinePath("tsgo", testCase));
+}
+
+function baselinePath(suite: Options["suite"], testCase: CompilerCase): string {
+  return join(baselineDirectory(suite), testCase.baselineFile ?? `${caseBaseName(testCase.name)}.errors.txt`);
 }
 
 async function baselineDiagnostics(errorsFile: string): Promise<readonly ComparableDiagnostic[]> {
