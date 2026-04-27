@@ -932,8 +932,9 @@ describe("checker groundwork", () => {
     ].join("\n"));
     const result = checkSourceFile(sourceFile);
 
-    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [7006, 2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2353, 7006, 2322]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Object literal may only specify known properties, and 'data' does not exist in type 'Shape'.",
       "Parameter 'value' implicitly has an 'any' type.",
       "Type 'number' is not assignable to type 'WatchHandler<any>'.",
     ]);
@@ -995,5 +996,96 @@ describe("checker groundwork", () => {
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2538]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string[]' cannot be used as an index type."]);
+  });
+
+  it("relates mutable arrays and array subclasses to readonly arrays through element types", () => {
+    const sourceFile = parseSourceFile([
+      "class A { a!: string; }",
+      "class B extends A { b!: string; }",
+      "class C<T> extends Array<T> { c!: string; }",
+      "declare let ara: A[];",
+      "declare let arb: B[];",
+      "declare let cra: C<A>;",
+      "declare let crb: C<B>;",
+      "declare let rra: ReadonlyArray<A>;",
+      "declare let rrb: ReadonlyArray<B>;",
+      "rra = ara;",
+      "rrb = arb;",
+      "rra = arb;",
+      "rrb = ara;",
+      "rra = cra;",
+      "rra = crb;",
+      "rrb = crb;",
+      "rrb = cra;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322, 2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type 'A[]' is not assignable to type 'readonly B[]'.",
+      "Type 'C<A>' is not assignable to type 'readonly B[]'.",
+    ]);
+  });
+
+  it("does not assign readonly arrays to mutable array targets", () => {
+    const sourceFile = parseSourceFile("declare let readonlyValues: ReadonlyArray<number>; declare let mutableValues: number[]; mutableValues = readonlyValues;");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'readonly number[]' is not assignable to type 'number[]'."]);
+  });
+
+  it("compares object property sets structurally instead of accepting every object kind", () => {
+    const sourceFile = parseSourceFile([
+      "const invalid = <{ id: number }[]>[{ foo: 's' }];",
+      "const valid = <{ id: number }[]>[{ foo: 's' }, {}];",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2352]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Conversion of type '{ foo: string; }[]' to type '{ id: number; }[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.",
+    ]);
+  });
+
+  it("reports too few call arguments using required parameter count", () => {
+    const sourceFile = parseSourceFile("function f(a: string, b: number, { c }: { c: boolean }) { } function g(a: string, b?: number, c?: boolean) { } f('', 0); g('');");
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2554]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Expected 3 arguments, but got 2."]);
+  });
+
+  it("treats unannotated JavaScript parameters as optional call arguments", () => {
+    const host: CompilerHost = {
+      readFile: fileName => {
+        if (fileName === "foo.js") {
+          return "function f(a, b, c) { return arguments.length; }";
+        }
+        return fileName === "bar.ts" ? "f(); f(1); f(1, 2); f(1, 2, 3);" : undefined;
+      },
+    };
+    const program = createProgram(["foo.js", "bar.ts"], { allowJs: true, checkJs: true, strict: true }, host);
+    const diagnostics = checkProgram(program);
+
+    assert.equal(diagnostics.length, 0);
+  });
+
+  it("does not report implicit any for unannotated JavaScript parameters", () => {
+    const sourceFile = parseSourceFile("function f(a, b) { return a || b; }", { fileName: "foo.js" });
+    const result = checkSourceFile(sourceFile, { allowJs: true, checkJs: true, strict: true, noImplicitAny: true });
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
+  it("contextually checks array literal object elements for excess properties", () => {
+    const sourceFile = parseSourceFile("class Action { id!: number; } var actions: Action[] = [{ id: 2, name: 'extra' }]; var shapes: { id: number }[] = [{ id: 3, trueness: false }];");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2353, 2353]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Object literal may only specify known properties, and 'name' does not exist in type 'Action'.",
+      "Object literal may only specify known properties, and 'trueness' does not exist in type '{ id: number; }'.",
+    ]);
   });
 });

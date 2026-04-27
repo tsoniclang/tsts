@@ -14,6 +14,8 @@ export interface CompilerOptions {
   readonly strict?: boolean;
   readonly noImplicitAny?: boolean;
   readonly strictNullChecks?: boolean;
+  readonly allowJs?: boolean;
+  readonly checkJs?: boolean;
   readonly allowSyntheticDefaultImports?: boolean;
   readonly alwaysStrict?: boolean;
   readonly esModuleInterop?: boolean;
