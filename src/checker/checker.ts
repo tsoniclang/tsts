@@ -1417,9 +1417,9 @@ function bindingElementPropertyNames(element: BindingElement): readonly string[]
 function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
   const classIsAbstract = hasModifier(classDeclaration, Kind.AbstractKeyword);
   const inheritedMembers = inheritedClassMembers(classDeclaration, environment);
-  const classMembers = collectClassMemberNames(classDeclaration, inheritedMembers, environment);
   const classEnvironment = new Map(environment);
   addTypeParametersToEnvironment(classDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], classEnvironment);
+  const classMembers = collectClassMemberNames(classDeclaration, inheritedMembers, classEnvironment, state.options);
   if (classDeclaration.name !== undefined) {
     if (invalidClassNames.has(classDeclaration.name.text)) {
       state.diagnostics.push(createDiagnostic(2414, classDeclaration.name.text));
@@ -1536,7 +1536,7 @@ function isConstantEnumBinaryOperator(kind: Kind): boolean {
     || kind === Kind.CaretToken;
 }
 
-function collectClassMemberNames(classDeclaration: ClassDeclaration, inherited: ClassMemberNames | undefined, environment: TypeEnvironment): ClassMemberNames {
+function collectClassMemberNames(classDeclaration: ClassDeclaration, inherited: ClassMemberNames | undefined, environment: TypeEnvironment, options: CompilerOptions): ClassMemberNames {
   const instance = new Set(inherited?.instance ?? []);
   const staticMembers = new Set(inherited?.static ?? []);
   const abstractMembers = new Map(inherited?.abstractMembers ?? []);
@@ -1616,6 +1616,10 @@ function collectClassMemberNames(classDeclaration: ClassDeclaration, inherited: 
         readonlyProperties.delete(name);
         uninitializedProperties.delete(name);
       } else if (isMethodDeclaration(member)) {
+        if (classDeclaration.name !== undefined) {
+          propertyDeclaringClasses.set(name, classDeclaration.name.text);
+        }
+        propertyTypes.set(name, methodDeclarationType(member, environment, emptyCheckState(options)));
         if (hasModifier(member, Kind.AbstractKeyword)) {
           if (classDeclaration.name !== undefined) {
             abstractMembers.set(name, classDeclaration.name.text);
