@@ -348,6 +348,23 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics, []);
   });
 
+  it("checks JavaScript class type annotations while reporting JavaScript-only syntax errors", () => {
+    const sourceFile = parseSourceFile([
+      "class Foo {",
+      "  constructor() {",
+      "    this.prop = {};",
+      "  }",
+      "  declare prop: string;",
+      "  method() {",
+      "    this.prop.foo;",
+      "  }",
+      "}",
+    ].join("\n"), { fileName: "input.js" });
+    const result = checkSourceFile(sourceFile, { allowJs: true, checkJs: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322, 8009, 8010, 2339]);
+  });
+
   it("checks loop initializer declarations and loop bodies", () => {
     const sourceFile = parseSourceFile("function f(items: string[]): number { for (const item: string of items) { return item; } return 1; }");
     const result = checkSourceFile(sourceFile);
@@ -1085,7 +1102,7 @@ describe("checker groundwork", () => {
   });
 
   it("checks Function.apply argument arrays against parameter tuples", () => {
-    const sourceFile = parseSourceFile("function f(value) { arguments; } function g(args: IArguments) { f.apply(null, args); }", { fileName: "foo.js" });
+    const sourceFile = parseSourceFile("function f(value) { arguments; } /** @param {IArguments} args */ function g(args) { f.apply(null, args); }", { fileName: "foo.js" });
     const result = checkSourceFile(sourceFile, { allowJs: true, checkJs: true, strict: false });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2345]);

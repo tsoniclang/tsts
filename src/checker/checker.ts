@@ -711,20 +711,24 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isVariableStatement(statement)) {
+    checkJavaScriptDeclareModifier(statement, state);
     for (const declaration of statement.declarationList.declarations) {
       checkVariableDeclaration(declaration, state, environment, ambient || hasDeclareModifier(statement));
     }
     return;
   }
   if (isFunctionDeclaration(statement)) {
+    checkJavaScriptDeclareModifier(statement, state);
     checkFunctionDeclaration(statement, state, environment, ambient || hasDeclareModifier(statement));
     return;
   }
   if (isClassDeclaration(statement)) {
+    checkJavaScriptDeclareModifier(statement, state);
     checkClassDeclaration(statement, state, environment, ambient || hasDeclareModifier(statement));
     return;
   }
   if (isEnumDeclaration(statement)) {
+    checkJavaScriptDeclareModifier(statement, state);
     checkEnumDeclaration(statement, state, environment, ambient || hasDeclareModifier(statement));
     return;
   }
@@ -737,6 +741,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isModuleDeclaration(statement)) {
+    checkJavaScriptDeclareModifier(statement, state);
     checkModuleDeclaration(statement, state, environment, expectedReturnType, ambient);
     return;
   }
@@ -1298,6 +1303,9 @@ function checkForInitializer(initializer: Extract<Statement, { readonly kind: Ki
 }
 
 function checkVariableDeclaration(declaration: VariableDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
+  if (declaration.type !== undefined) {
+    checkJavaScriptTypeAnnotation(state);
+  }
   const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type, environment, state);
   if (declaration.initializer !== undefined) {
     attachJSDocIfMissing(declaration.initializer, declaration);
@@ -1692,7 +1700,7 @@ function collectClassMemberNames(classDeclaration: ClassLikeDeclaration, inherit
           readonlyProperties.delete(name);
         }
         getAccessorProperties.delete(name);
-        if (member.initializer === undefined) {
+        if (member.initializer === undefined && !hasDeclareModifier(member)) {
           uninitializedProperties.add(name);
         } else {
           uninitializedProperties.delete(name);
@@ -2097,6 +2105,7 @@ function propertyNameDiagnosticText(name: PropertyName): string | undefined {
 }
 
 function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment, ambient: boolean, classIsAbstract: boolean, classMembers: ClassMemberNames, inheritedMembers: ClassMemberNames | undefined, accessorContextTypes: ReadonlyMap<string, AccessorContextTypes>): void {
+  checkJavaScriptDeclareModifier(member, state);
   if (hasModifier(member, Kind.ConstKeyword)) {
     state.diagnostics.push(createDiagnostic(1248, "const"));
   }
@@ -2124,6 +2133,9 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
       if (ambient) {
         state.diagnostics.push(createDiagnostic(1183));
       }
+      if (member.type !== undefined) {
+        checkJavaScriptTypeAnnotation(state);
+      }
       const returnType = member.type === undefined ? undefined : typeFromTypeNode(member.type, memberEnvironment, state);
       checkBlock(member.body, enterFunction(state), memberEnvironment, returnType);
       checkFunctionReturnCompleteness(member.body, returnType, state);
@@ -2140,6 +2152,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     checkAutoAccessorTarget(member, state, ambient);
     checkInheritedPropertyOverride(member, state, environment, classMembers, inheritedMembers);
     if (member.type !== undefined) {
+      checkJavaScriptTypeAnnotation(state);
       typeFromTypeNode(member.type, environment, state);
     }
     const initializerEnvironment = new Map(environment);
@@ -2155,6 +2168,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     checkAutoAccessorTarget(member, state, ambient);
     checkInheritedPropertyOverride(member, state, environment, classMembers, inheritedMembers);
     if (member.type !== undefined) {
+      checkJavaScriptTypeAnnotation(state);
       typeFromTypeNode(member.type, environment, state);
     }
   }
@@ -2270,6 +2284,7 @@ function checkUninitializedProperty(member: Extract<ClassElement, { readonly kin
     || member.initializer !== undefined
     || hasModifier(member, Kind.StaticKeyword)
     || hasModifier(member, Kind.AbstractKeyword)
+    || hasDeclareModifier(member)
     || (member as { readonly postfixToken?: { readonly kind: Kind } }).postfixToken?.kind === Kind.ExclamationToken
     || (member as { readonly postfixToken?: { readonly kind: Kind } }).postfixToken?.kind === Kind.QuestionToken
   ) {
@@ -2330,6 +2345,9 @@ function checkAccessorDeclaration(accessor: GetAccessorDeclaration | SetAccessor
       state.diagnostics.push(createDiagnostic(1054));
     }
     checkSignatureParameters(accessor.parameters, state, accessorEnvironment, true);
+    if (accessor.type !== undefined) {
+      checkJavaScriptTypeAnnotation(state);
+    }
     const returnType = accessor.type === undefined ? contextualAccessorType : typeFromTypeNode(accessor.type, accessorEnvironment, state);
     checkAccessorBody(accessor, state, accessorEnvironment, ambient, returnType);
     return;
@@ -2348,10 +2366,14 @@ function checkAccessorDeclaration(accessor: GetAccessorDeclaration | SetAccessor
     if (parameter.dotDotDotToken !== undefined) {
       state.diagnostics.push(createDiagnostic(1053));
     }
+    if (parameter.type !== undefined) {
+      checkJavaScriptTypeAnnotation(state);
+    }
     const parameterType = parameter.type === undefined ? contextualAccessorType ?? unresolvedType : typeFromTypeNode(parameter.type, accessorEnvironment, state);
     setBindingNameType(parameter.name, parameterType, accessorEnvironment);
   }
   if (accessor.type !== undefined) {
+    checkJavaScriptTypeAnnotation(state);
     state.diagnostics.push(createDiagnostic(1095));
     typeFromTypeNode(accessor.type, accessorEnvironment, state);
   }
@@ -2375,6 +2397,9 @@ function checkSignatureParameters(parameters: readonly ParameterDeclaration[], s
   return parameters.map((parameter, parameterIndex) => {
     if (disallowParameterProperties) {
       checkParameterPropertyModifiers(parameter, state);
+    }
+    if (parameter.type !== undefined) {
+      checkJavaScriptTypeAnnotation(state);
     }
     const contextualParameterType = contextualParameterTypes[parameterIndex];
     checkImplicitAnyParameter(parameter, state, contextualParameterType);
@@ -2477,6 +2502,9 @@ function attachJSDocIfMissing(target: Node, source: Node): void {
 }
 
 function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
+  if (functionDeclaration.type !== undefined) {
+    checkJavaScriptTypeAnnotation(state);
+  }
   const functionEnvironment = createFunctionEnvironment(environment);
   const typeParameters = effectiveTypeParameterNames(functionDeclaration.typeParameters, functionDeclaration);
   addTypeParametersToEnvironment(typeParameters, functionEnvironment);
@@ -2509,6 +2537,9 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
   for (let index = 0; index < functionDeclaration.parameters.length; index += 1) {
     const parameter = functionDeclaration.parameters[index]!;
     checkParameterPropertyModifiers(parameter, state);
+    if (parameter.type !== undefined) {
+      checkJavaScriptTypeAnnotation(state);
+    }
     checkImplicitAnyParameter(parameter, state, jsDocParameterType(parameter, jsDocParameterTypes));
     checkStrictModeBindingName(parameter.name, state, ambient);
     setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
@@ -2523,6 +2554,9 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
 }
 
 function inferFunctionExpression(functionExpression: FunctionExpression, state: CheckState, environment: TypeEnvironment, contextualParameterTypes: readonly CheckedType[] = [], contextualReturnType?: CheckedType): CheckedFunctionType {
+  if (functionExpression.type !== undefined) {
+    checkJavaScriptTypeAnnotation(state);
+  }
   const functionEnvironment = createFunctionEnvironment(environment);
   const typeParameters = effectiveTypeParameterNames(functionExpression.typeParameters, functionExpression);
   addTypeParametersToEnvironment(typeParameters, functionEnvironment);
@@ -2548,6 +2582,9 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
   for (let index = 0; index < functionExpression.parameters.length; index += 1) {
     const parameter = functionExpression.parameters[index]!;
     checkParameterPropertyModifiers(parameter, state);
+    if (parameter.type !== undefined) {
+      checkJavaScriptTypeAnnotation(state);
+    }
     checkImplicitAnyParameter(parameter, state, jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[index]);
     checkStrictModeBindingName(parameter.name, state, false);
     setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
@@ -3442,6 +3479,10 @@ function assignmentTargetType(expression: Expression, environment: TypeEnvironme
   if (isParenthesizedExpression(expression)) {
     return assignmentTargetType(expression.expression, environment);
   }
+  if (isPropertyAccessExpression(expression)) {
+    const receiverType = inferExpression(expression.expression, emptyCheckState(), environment);
+    return propertyAssignmentTargetType(receiverType, expression.name.text, environment);
+  }
   return undefined;
 }
 
@@ -3507,14 +3548,16 @@ function assignExpressionTarget(expression: Expression, assignedType: CheckedTyp
     return;
   }
   if (isPropertyAccessExpression(expression)) {
-    const receiverType = inferExpression(expression.expression, state, environment);
-    if (receiverType.kind === "object") {
-      const targetType = receiverType.properties.get(expression.name.text);
-      if (targetType !== undefined) {
-        checkAssignable(assignedType, targetType, state);
-      }
+    const targetType = assignmentTargetType(expression, environment);
+    if (targetType !== undefined) {
+      checkAssignable(assignedType, targetType, state);
     }
   }
+}
+
+function propertyAssignmentTargetType(receiverType: CheckedType, propertyName: string, environment: TypeEnvironment): CheckedType | undefined {
+  const propertyType = propertyAccessType(receiverType, propertyName, environment);
+  return propertyType?.kind === "accessorProperty" ? propertyType.type : propertyType;
 }
 
 function assignmentOperatorReadsTarget(kind: Kind): boolean {
@@ -3531,6 +3574,9 @@ function assignmentOperatorDefinitelyAssignsTarget(kind: Kind): boolean {
 }
 
 function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, environment: TypeEnvironment, contextualParameterTypes: readonly CheckedType[] = [], contextualReturnType?: CheckedType): CheckedType {
+  if (arrowFunction.type !== undefined) {
+    checkJavaScriptTypeAnnotation(state);
+  }
   const arrowEnvironment = createFunctionEnvironment(environment);
   suppressImmediateThisDiagnostics(arrowEnvironment);
   const typeParameters = effectiveTypeParameterNames(arrowFunction.typeParameters, arrowFunction);
@@ -3539,6 +3585,9 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
   for (let parameterIndex = 0; parameterIndex < arrowFunction.parameters.length; parameterIndex += 1) {
     const parameter = arrowFunction.parameters[parameterIndex]!;
     checkParameterPropertyModifiers(parameter, state);
+    if (parameter.type !== undefined) {
+      checkJavaScriptTypeAnnotation(state);
+    }
     const contextualParameterType = contextualParameterTypes[parameterIndex];
     const jsDocType = jsDocParameterType(parameter, jsDocParameterTypes);
     checkImplicitAnyParameter(parameter, state, jsDocType ?? contextualParameterType);
@@ -4843,8 +4892,20 @@ function isAbstractConstructorType(type: CheckedType): boolean {
   return false;
 }
 
-function hasDeclareModifier(node: { readonly modifiers?: readonly { readonly kind: Kind }[] }): boolean {
+function hasDeclareModifier(node: object): boolean {
   return hasModifier(node, Kind.DeclareKeyword);
+}
+
+function checkJavaScriptDeclareModifier(node: object, state: CheckState): void {
+  if (state.isJavaScriptFile && hasDeclareModifier(node)) {
+    state.diagnostics.push(createDiagnostic(8009, "declare"));
+  }
+}
+
+function checkJavaScriptTypeAnnotation(state: CheckState): void {
+  if (state.isJavaScriptFile) {
+    state.diagnostics.push(createDiagnostic(8010));
+  }
 }
 
 function hasDefaultModifier(node: { readonly modifiers?: readonly { readonly kind: Kind }[] }): boolean {
@@ -5902,6 +5963,9 @@ function displayType(type: CheckedType): string {
       const readonly = type.readonlyProperties.has(name) ? "readonly " : "";
       return `${readonly}${name}: ${displayType(propertyType)};`;
     });
+    if (entries.length === 0) {
+      return "{}";
+    }
     return `{ ${entries.join(" ")} }`;
   }
   if (type.kind === "record") {
