@@ -577,19 +577,35 @@ const ambientTypeNames = new Set([
   "WeakSet",
   ...typedArrayGlobalNames,
 ]);
+const requiredCoreGlobalTypeNames = [
+  "Array",
+  "Boolean",
+  "CallableFunction",
+  "Function",
+  "IArguments",
+  "NewableFunction",
+  "Number",
+  "Object",
+  "RegExp",
+  "String",
+] as const;
 
 export function checkSourceFile(sourceFile: SourceFile, options: CompilerOptions = {}): CheckResult {
   const state = checkStateForSourceFile(sourceFile, options);
-  checkStatements(sourceFile.statements, state, standardGlobalEnvironment(), undefined, isDeclarationFile(sourceFile));
+  checkStatements(sourceFile.statements, state, baseGlobalEnvironment(options), undefined, isDeclarationFile(sourceFile));
   return { diagnostics: reportableCheckDiagnostics(state) };
 }
 
 export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
   const diagnostics: ProgramDiagnostic[] = [...program.diagnostics];
   if (diagnostics.some(diagnostic => diagnostic.code === undefined || !nonBlockingProgramDiagnosticCodes.has(diagnostic.code))) {
+    if (program.options.noLib === true) {
+      diagnostics.push(...missingRequiredGlobalTypeDiagnostics(program, globalEnvironmentForProgram(program)));
+    }
     return diagnostics;
   }
   const globalEnvironment = globalEnvironmentForProgram(program);
+  diagnostics.push(...missingRequiredGlobalTypeDiagnostics(program, globalEnvironment));
   const moduleResolver = programModuleResolver(program, globalEnvironment);
   for (const sourceFile of program.sourceFiles) {
     const state: CheckState = {
@@ -631,7 +647,7 @@ function shouldReportAllCheckDiagnostics(state: CheckState): boolean {
   return !state.isJavaScriptFile || state.options.checkJs === true;
 }
 
-const nonBlockingProgramDiagnosticCodes = new Set<number>([1003, 1005, 1011, 1068, 1109, 1127, 1128, 1200, 1359, 1434, 1437, 1440, 1490, 5052, 5059, 5067, 5101, 5102, 5107, 5110, 6082, 6142, 6504, 18035]);
+const nonBlockingProgramDiagnosticCodes = new Set<number>([1003, 1005, 1011, 1068, 1109, 1127, 1128, 1200, 1359, 1434, 1437, 1440, 1490, 2318, 5052, 5059, 5067, 5101, 5102, 5107, 5110, 6082, 6142, 6504, 18035]);
 const plainJavaScriptCheckDiagnosticCodes = new Set<number>([
   1100,
   1101,
@@ -841,7 +857,7 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
 }
 
 function globalEnvironmentForProgram(program: Program): TypeEnvironment {
-  const environment: TypeEnvironment = standardGlobalEnvironment();
+  const environment: TypeEnvironment = baseGlobalEnvironment(program.options);
   for (const sourceFile of program.sourceFiles) {
     if (!sourceFileIsExternalModule(sourceFile.sourceFile)) {
       checkStatements(sourceFile.sourceFile.statements, checkStateForSourceFile(sourceFile.sourceFile, program.options), environment, undefined, isDeclarationFile(sourceFile.sourceFile));
@@ -854,6 +870,24 @@ function globalEnvironmentForProgram(program: Program): TypeEnvironment {
     }
   }
   return environment;
+}
+
+function baseGlobalEnvironment(options: CompilerOptions): TypeEnvironment {
+  return options.noLib === true ? new Map() : standardGlobalEnvironment();
+}
+
+function missingRequiredGlobalTypeDiagnostics(program: Program, environment: TypeEnvironment): readonly ProgramDiagnostic[] {
+  if (program.options.noLib !== true) {
+    return [];
+  }
+  const diagnostics: ProgramDiagnostic[] = [];
+  for (const typeName of requiredCoreGlobalTypeNames) {
+    const bound = environment.get(typeName);
+    if (bound === undefined || typeMeaning(bound) === undefined) {
+      diagnostics.push(createDiagnostic(2318, typeName));
+    }
+  }
+  return diagnostics;
 }
 
 function standardGlobalEnvironment(): TypeEnvironment {

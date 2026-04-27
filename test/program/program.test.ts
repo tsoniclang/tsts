@@ -219,6 +219,62 @@ describe("program groundwork", () => {
     assert.deepEqual(program.sourceFiles[0]!.resolvedModules, [{ specifier: "./view", fileName: "/view.tsx", blockedByResolutionDiagnostic: true }]);
   });
 
+  it("reports missing noLib core global types from the program global environment", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "declare const values: Array<number>;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+    };
+
+    const program = createProgram(["src/index.ts"], { noLib: true }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.filter(diagnostic => diagnostic.code === 2318).map(diagnostic => diagnostic.message), [
+      "Cannot find global type 'Array'.",
+      "Cannot find global type 'Boolean'.",
+      "Cannot find global type 'CallableFunction'.",
+      "Cannot find global type 'Function'.",
+      "Cannot find global type 'IArguments'.",
+      "Cannot find global type 'NewableFunction'.",
+      "Cannot find global type 'Number'.",
+      "Cannot find global type 'Object'.",
+      "Cannot find global type 'RegExp'.",
+      "Cannot find global type 'String'.",
+    ]);
+    assert.equal(diagnostics.some(diagnostic => diagnostic.code === 2304 && diagnostic.message.includes("'Array'")), false);
+  });
+
+  it("continues noLib global diagnostics after lib/noLib option conflicts", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "declare const value: number;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+    };
+
+    const program = createProgram(["src/index.ts"], { lib: ["es5"], noLib: true }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.equal(diagnostics.some(diagnostic => diagnostic.code === 5053), true);
+    assert.equal(diagnostics.some(diagnostic => diagnostic.code === 2318 && diagnostic.message.includes("'Array'")), true);
+  });
+
+  it("uses source-owned noLib global type declarations before reporting TS2318", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "interface Array<T> { length: number }"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+    };
+
+    const program = createProgram(["src/index.ts"], { noLib: true }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.equal(diagnostics.some(diagnostic => diagnostic.code === 2318 && diagnostic.message.includes("'Array'")), false);
+    assert.equal(diagnostics.some(diagnostic => diagnostic.code === 2318 && diagnostic.message.includes("'Boolean'")), true);
+  });
+
   it("diagnoses unresolved relative imports", () => {
     const host: CompilerHost = {
       readFile: fileName => fileName === "src/index.ts" ? "import { missing } from \"./missing\";" : undefined,
