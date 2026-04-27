@@ -112,6 +112,30 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2414]);
   });
 
+  it("reports function overload declarations without matching implementations", () => {
+    const sourceFile = parseSourceFile("function foo(); function bar() { } function baz();");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Function implementation name must be 'foo'.",
+      "Function implementation is missing or not immediately following the declaration.",
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2389, 2391]);
+  });
+
+  it("reports invalid interface names and parameter properties in type signatures", () => {
+    const sourceFile = parseSourceFile("interface string { new (public x); } function f(value: (private x) => void): () => number { }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Interface name cannot be 'string'.",
+      "A parameter property is only allowed in a constructor implementation.",
+      "A parameter property is only allowed in a constructor implementation.",
+      "A function whose declared type is neither 'undefined', 'void', nor 'any' must return a value.",
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2427, 2369, 2369, 2355]);
+  });
+
   it("checks declared arrow function return types", () => {
     const sourceFile = parseSourceFile("const f = (x: string): number => x;");
     const result = checkSourceFile(sourceFile);
