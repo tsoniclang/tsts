@@ -18,6 +18,7 @@ import {
   isConstructSignatureDeclaration,
   isDoStatement,
   isElementAccessExpression,
+  isExternalModuleReference,
   isExportAssignment,
   isExpressionStatement,
   isForInStatement,
@@ -106,6 +107,7 @@ type CheckedType =
   | { readonly kind: "accessorProperty"; readonly type: CheckedType }
   | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType }
   | { readonly kind: "interface"; readonly name: string; readonly members: InterfaceMembers }
+  | { readonly kind: "moduleNamespace"; readonly moduleSpecifier: string; readonly diagnosticName: string }
   | { readonly kind: "object"; readonly properties: ReadonlyMap<string, CheckedType>; readonly readonlyProperties: ReadonlySet<string> }
   | { readonly kind: "thisClass"; readonly className: string; readonly abstractProperties: ReadonlySet<string>; readonly abstractPropertyDeclaringClasses: ReadonlyMap<string, string>; readonly uninitializedProperties: ReadonlySet<string>; readonly mode: "constructor" | "fieldInitializer" }
   | { readonly kind: "typeAlias"; readonly target: CheckedType }
@@ -238,7 +240,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isImportEqualsDeclaration(statement)) {
-    environment.set(statement.name.text, anyType);
+    environment.set(statement.name.text, importEqualsDeclarationType(statement, environment));
     return;
   }
   if (isVariableStatement(statement)) {
@@ -331,6 +333,23 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   if (isBlock(statement)) {
     checkBlock(statement, state, environment, expectedReturnType);
   }
+}
+
+function importEqualsDeclarationType(statement: Extract<Statement, { readonly kind: Kind.ImportEqualsDeclaration }>, environment: TypeEnvironment): CheckedType {
+  if (isExternalModuleReference(statement.moduleReference) && isStringLiteral(statement.moduleReference.expression)) {
+    const moduleSpecifier = statement.moduleReference.expression.text;
+    return { kind: "moduleNamespace", moduleSpecifier, diagnosticName: moduleNamespaceDiagnosticName(moduleSpecifier) };
+  }
+  if (isIdentifier(statement.moduleReference) || isQualifiedName(statement.moduleReference)) {
+    const name = entityNameText(statement.moduleReference);
+    return name === undefined ? anyType : environment.get(name) ?? anyType;
+  }
+  return anyType;
+}
+
+function moduleNamespaceDiagnosticName(moduleSpecifier: string): string {
+  const withoutRelativePrefix = moduleSpecifier.replace(/^\.?\//, "");
+  return withoutRelativePrefix.replace(/\.(?:[cm]?[jt]sx?|d\.[cm]?ts)$/, "");
 }
 
 function checkExportAssignment(statement: Extract<Statement, { readonly kind: Kind.ExportAssignment }>, state: CheckState, environment: TypeEnvironment, statementListHasExportedElements: boolean): void {
@@ -1558,6 +1577,9 @@ function inferPropertyAccess(expression: Expression, propertyName: string, state
     state.diagnostics.push(createDiagnostic(2339, propertyName, displayType(receiverType)));
     return anyType;
   }
+  if (receiverType.kind === "moduleNamespace") {
+    return anyType;
+  }
   if (receiverType.kind === "number" && propertyName === "toFixed") {
     return { kind: "function", typeParameters: [], parameters: [], returnType: stringType };
   }
@@ -1794,7 +1816,7 @@ function emptyCheckState(): CheckState {
 }
 
 function checkAssignable(actual: CheckedType, expected: CheckedType, state: CheckState): void {
-  if (expected.kind === "any" || actual.kind === "any" || expected.kind === "unknown" || actual.kind === "unresolved") {
+  if (expected.kind === "any" || actual.kind === "any" || expected.kind === "unknown" || expected.kind === "unresolved" || actual.kind === "unresolved") {
     return;
   }
   if (!isAssignableTo(actual, expected)) {
@@ -1935,6 +1957,9 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
   }
   if (actual.kind === "interface" && expected.kind === "interface") {
     return actual.name === expected.name;
+  }
+  if (actual.kind === "moduleNamespace" && expected.kind === "moduleNamespace") {
+    return actual.moduleSpecifier === expected.moduleSpecifier;
   }
   if (actual.kind === "thisClass" && expected.kind === "thisClass") {
     return actual.className === expected.className;
@@ -2081,6 +2106,9 @@ function displayType(type: CheckedType): string {
   }
   if (type.kind === "interface") {
     return type.name;
+  }
+  if (type.kind === "moduleNamespace") {
+    return `typeof import("${type.diagnosticName}")`;
   }
   if (type.kind === "object") {
     const entries = [...type.properties.entries()].map(([name, propertyType]) => {

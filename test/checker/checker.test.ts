@@ -377,4 +377,32 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2430]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Interface 'Bad' incorrectly extends interface 'Base'."]);
   });
+
+  it("preserves external import-equals module namespace values for assignment diagnostics", () => {
+    const sourceFile = parseSourceFile([
+      "import moduleA = require(\"./moduleA\");",
+      "var x = moduleA;",
+      "x = 1;",
+      "var y = 1;",
+      "y = moduleA;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322, 2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type 'number' is not assignable to type 'typeof import(\"moduleA\")'.",
+      "Type 'typeof import(\"moduleA\")' is not assignable to type 'number'.",
+    ]);
+  });
+
+  it("does not emit cascading assignment diagnostics when the target type is unresolved", () => {
+    const sourceFile = parseSourceFile([
+      "let x: Missing;",
+      "x = 1;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2304]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find name 'Missing'."]);
+  });
 });
