@@ -187,11 +187,11 @@ type CheckedType =
   | { readonly kind: "namespaceAndType"; readonly namespace: Extract<CheckedType, { readonly kind: "namespace" }>; readonly type: CheckedType }
   | { readonly kind: "nonNullable"; readonly target: CheckedType }
   | { readonly kind: "object"; readonly properties: ReadonlyMap<string, CheckedType>; readonly readonlyProperties: ReadonlySet<string>; readonly optionalProperties: ReadonlySet<string>; readonly methodProperties: ReadonlySet<string>; readonly callSignatures?: readonly CheckedFunctionType[]; readonly stringIndexType?: CheckedType; readonly numberIndexType?: CheckedType; readonly contextualDiagnostics?: boolean }
-  | { readonly kind: "record"; readonly keyType: CheckedType; readonly valueType: CheckedType }
+  | { readonly kind: "record"; readonly keyType: CheckedType; readonly valueType: CheckedType; readonly mappedArraySource?: CheckedType }
   | { readonly kind: "thisClass"; readonly className: string; readonly members: ClassMemberNames; readonly abstractProperties: ReadonlySet<string>; readonly abstractPropertyDeclaringClasses: ReadonlyMap<string, string>; readonly uninitializedProperties: ReadonlySet<string>; readonly mode: "constructor" | "fieldInitializer" | "method" }
   | { readonly kind: "typeAlias"; readonly name: string; readonly typeParameters: readonly string[]; readonly target: CheckedType; readonly preserveDisplay: boolean; readonly requiresExplicitDeclarationAnnotation: boolean }
   | { readonly kind: "typeAliasInstance"; readonly name: string; readonly typeArguments: readonly CheckedType[]; readonly target: CheckedType; readonly requiresExplicitDeclarationAnnotation: boolean }
-  | { readonly kind: "typeParameter"; readonly name: string }
+  | { readonly kind: "typeParameter"; readonly name: string; readonly constraint?: CheckedType }
   | { readonly kind: "set"; readonly elementType: CheckedType }
   | { readonly kind: "booleanLiteral"; readonly value: boolean }
   | { readonly kind: "numberLiteral"; readonly value: string }
@@ -1435,6 +1435,7 @@ function bindTypeAliasDeclaration(statement: TypeAliasDeclaration, state: CheckS
   const aliasEnvironment = cloneTypeEnvironment(environment);
   const typeParameters = statement.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
   addTypeParametersToEnvironment(typeParameters, aliasEnvironment);
+  addTypeParameterConstraintsToEnvironment(statement.typeParameters, aliasEnvironment);
   environment.set(statement.name.text, {
     kind: "typeAlias",
     name: statement.name.text,
@@ -2183,6 +2184,7 @@ function checkClassLike(classDeclaration: ClassLikeDeclaration, state: CheckStat
   const inheritedMembers = inheritedClassMembers(classDeclaration, environment);
   const classEnvironment = cloneTypeEnvironment(environment);
   addTypeParametersToEnvironment(classDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], classEnvironment);
+  addTypeParameterConstraintsToEnvironment(classDeclaration.typeParameters, classEnvironment);
   const classMembers = collectClassMemberNames(classDeclaration, inheritedMembers, classEnvironment, state.options);
   const constructorAssignedProperties = collectConstructorAssignedThisProperties(classDeclaration.members);
   const classType: CheckedType = {
@@ -2758,12 +2760,14 @@ function checkInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, s
   bindInterfaceDeclaration(interfaceDeclaration, state, environment);
   const interfaceEnvironment = cloneTypeEnvironment(environment);
   addTypeParametersToEnvironment(interfaceDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], interfaceEnvironment);
+  addTypeParameterConstraintsToEnvironment(interfaceDeclaration.typeParameters, interfaceEnvironment);
   checkTypeElements(interfaceDeclaration.members, state, interfaceEnvironment, true);
 }
 
 function bindInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, state: CheckState, environment: TypeEnvironment): void {
   const interfaceEnvironment = cloneTypeEnvironment(environment);
   addTypeParametersToEnvironment(interfaceDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], interfaceEnvironment);
+  addTypeParameterConstraintsToEnvironment(interfaceDeclaration.typeParameters, interfaceEnvironment);
   const inheritedInterfaces = inheritedInterfaceMembers(interfaceDeclaration, environment);
   const members = collectInterfaceMembers(interfaceDeclaration, inheritedInterfaces, state, interfaceEnvironment);
   environment.set(interfaceDeclaration.name.text, mergeTypeNamespace(environment.get(interfaceDeclaration.name.text), { kind: "interface", name: interfaceDeclaration.name.text, members }));
@@ -2801,7 +2805,7 @@ function collectInterfaceMembers(interfaceDeclaration: InterfaceDeclaration, inh
     if (isMethodSignatureDeclaration(member)) {
       const name = propertyNameText(member.name);
       if (name !== undefined) {
-        ownProperties.set(name, methodSignatureType(member, environment, state));
+        ownProperties.set(name, signatureDeclarationType(member, environment, state, false));
         ownMethodProperties.add(name);
         if (member.postfixToken?.kind === Kind.QuestionToken) {
           ownOptionalProperties.add(name);
@@ -2880,14 +2884,11 @@ function collectInterfaceMembers(interfaceDeclaration: InterfaceDeclaration, inh
   };
 }
 
-function methodSignatureType(method: MethodSignatureDeclaration, environment: TypeEnvironment, state: CheckState): CheckedType {
-  return signatureDeclarationType(method, environment, state);
-}
-
 function signatureDeclarationType(signature: Pick<MethodSignatureDeclaration, "typeParameters" | "parameters" | "type">, environment: TypeEnvironment, state: CheckState, reportDiagnostics = true, construct = false): CheckedFunctionType {
   const signatureEnvironment = cloneTypeEnvironment(environment);
   const typeParameters = signature.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
   addTypeParametersToEnvironment(typeParameters, signatureEnvironment);
+  addTypeParameterConstraintsToEnvironment(signature.typeParameters, signatureEnvironment);
   const diagnosticState = reportDiagnostics ? state : undefined;
   const returnType = signature.type === undefined ? anyType : bindTypePredicateParameterIndex(typeFromTypeNode(signature.type, signatureEnvironment, diagnosticState), signature.parameters);
   return {
@@ -3032,6 +3033,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     }
     if (isMethodDeclaration(member)) {
       addTypeParametersToEnvironment(member.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], memberEnvironment);
+      addTypeParameterConstraintsToEnvironment(member.typeParameters, memberEnvironment);
     }
     seedUnqualifiedClassMemberDiagnostics(memberEnvironment, classMembers, isMethodDeclaration(member) && hasModifier(member, Kind.StaticKeyword));
     checkSignatureParameters(member.parameters, state, memberEnvironment, isMethodDeclaration(member) || member.body === undefined, ambient);
@@ -3265,6 +3267,7 @@ function checkTypeElements(members: readonly TypeElement[], state: CheckState, e
     if (isCallSignatureDeclaration(member) || isConstructSignatureDeclaration(member)) {
       const signatureEnvironment = cloneTypeEnvironment(environment);
       addTypeParametersToEnvironment(member.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], signatureEnvironment);
+      addTypeParameterConstraintsToEnvironment(member.typeParameters, signatureEnvironment);
       checkSignatureParameters(member.parameters, state, signatureEnvironment, true);
       if (member.type !== undefined) {
         typeFromTypeNode(member.type, signatureEnvironment, state);
@@ -3277,6 +3280,13 @@ function checkTypeElements(members: readonly TypeElement[], state: CheckState, e
       continue;
     }
     if (isMethodSignatureDeclaration(member)) {
+      const signatureEnvironment = cloneTypeEnvironment(environment);
+      addTypeParametersToEnvironment(member.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], signatureEnvironment);
+      addTypeParameterConstraintsToEnvironment(member.typeParameters, signatureEnvironment);
+      checkSignatureParameters(member.parameters, state, signatureEnvironment, true);
+      if (member.type !== undefined) {
+        typeFromTypeNode(member.type, signatureEnvironment, state);
+      }
       if (member.type === undefined && strictOptionValue(state.options, "noImplicitAny")) {
         state.diagnostics.push(createDiagnostic(7010, propertyNameText(member.name) ?? "(Missing)", "any"));
       }
@@ -3361,6 +3371,7 @@ function checkAccessorDeclaration(accessor: GetAccessorDeclaration | SetAccessor
       checkJavaScriptTypeAnnotation(state);
     }
     const parameterType = parameterTypeFromDeclaration(parameter, accessorEnvironment, state, contextualAccessorType ?? unresolvedType);
+    checkRestParameterArrayType(parameter, parameterType, state);
     setBindingNameType(parameter.name, parameterType, accessorEnvironment);
   }
   if (accessor.type !== undefined) {
@@ -3394,6 +3405,7 @@ function checkSignatureParameters(parameters: readonly ParameterDeclaration[], s
     const contextualParameterType = contextualParameterTypes[parameterIndex];
     checkImplicitAnyParameter(parameter, state, contextualParameterType);
     const parameterType = parameterTypeFromDeclaration(parameter, environment, state, contextualParameterType);
+    checkRestParameterArrayType(parameter, parameterType, state);
     checkStrictModeBindingName(parameter.name, state, ambient);
     setBindingNameType(parameter.name, parameterType, environment);
     if (parameter.initializer !== undefined) {
@@ -3410,6 +3422,22 @@ function parameterDisplayNames(parameters: readonly ParameterDeclaration[]): rea
 function addTypeParametersToEnvironment(typeParameters: readonly string[], environment: TypeEnvironment): void {
   for (const typeParameter of typeParameters) {
     environment.set(typeParameter, { kind: "typeParameter", name: typeParameter });
+  }
+}
+
+function addTypeParameterConstraintsToEnvironment(typeParameters: NodeArray<TypeParameterDeclaration> | undefined, environment: TypeEnvironment): void {
+  if (typeParameters === undefined) {
+    return;
+  }
+  for (const typeParameter of typeParameters) {
+    if (typeParameter.constraint === undefined) {
+      continue;
+    }
+    environment.set(typeParameter.name.text, {
+      kind: "typeParameter",
+      name: typeParameter.name.text,
+      constraint: typeFromTypeNode(typeParameter.constraint, environment, undefined),
+    });
   }
 }
 
@@ -3495,6 +3523,7 @@ function functionDeclarationType(functionDeclaration: FunctionDeclaration, envir
   const functionEnvironment = createFunctionEnvironment(environment);
   const typeParameters = effectiveTypeParameterNames(functionDeclaration.typeParameters, functionDeclaration);
   addTypeParametersToEnvironment(typeParameters, functionEnvironment);
+  addTypeParameterConstraintsToEnvironment(functionDeclaration.typeParameters, functionEnvironment);
   const jsDocParameterTypes = jsDocParameterTypeMap(functionDeclaration, functionEnvironment, state);
   const parameterTypes = functionDeclaration.parameters.map(parameter => parameterTypeFromDeclaration(parameter, functionEnvironment, state, jsDocParameterType(parameter, jsDocParameterTypes)));
   const returnType = functionDeclaration.type === undefined
@@ -3519,6 +3548,7 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
   const functionEnvironment = createFunctionEnvironment(environment);
   const typeParameters = effectiveTypeParameterNames(functionDeclaration.typeParameters, functionDeclaration);
   addTypeParametersToEnvironment(typeParameters, functionEnvironment);
+  addTypeParameterConstraintsToEnvironment(functionDeclaration.typeParameters, functionEnvironment);
   const jsDocParameterTypes = jsDocParameterTypeMap(functionDeclaration, functionEnvironment, state);
   const parameterTypes = functionDeclaration.parameters.map(parameter => parameterTypeFromDeclaration(parameter, functionEnvironment, state, jsDocParameterType(parameter, jsDocParameterTypes)));
   const returnType = functionDeclaration.type === undefined
@@ -3559,6 +3589,7 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
       checkJavaScriptTypeAnnotation(state);
     }
     checkImplicitAnyParameter(parameter, state, jsDocParameterType(parameter, jsDocParameterTypes));
+    checkRestParameterArrayType(parameter, parameterTypes[index] ?? unresolvedType, state);
     checkStrictModeBindingName(parameter.name, state, ambient);
     setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
     if (parameter.initializer !== undefined) {
@@ -3632,6 +3663,7 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
   const functionEnvironment = createFunctionEnvironment(environment);
   const typeParameters = effectiveTypeParameterNames(functionExpression.typeParameters, functionExpression);
   addTypeParametersToEnvironment(typeParameters, functionEnvironment);
+  addTypeParameterConstraintsToEnvironment(functionExpression.typeParameters, functionEnvironment);
   const jsDocParameterTypes = jsDocParameterTypeMap(functionExpression, functionEnvironment, state);
   const parameterTypes = functionExpression.parameters.map((parameter, parameterIndex) => parameterTypeFromDeclaration(parameter, functionEnvironment, state, jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[parameterIndex]));
   const jsDocDeclaredReturnType = jsDocReturnType(functionExpression, functionEnvironment, state);
@@ -3645,6 +3677,7 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
       checkJavaScriptTypeAnnotation(state);
     }
     checkImplicitAnyParameter(parameter, state, jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[index]);
+    checkRestParameterArrayType(parameter, parameterTypes[index] ?? unresolvedType, state);
     checkStrictModeBindingName(parameter.name, state, false);
     setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
     if (parameter.initializer !== undefined) {
@@ -5118,6 +5151,7 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
   suppressImmediateThisDiagnostics(arrowEnvironment);
   const typeParameters = effectiveTypeParameterNames(arrowFunction.typeParameters, arrowFunction);
   addTypeParametersToEnvironment(typeParameters, arrowEnvironment);
+  addTypeParameterConstraintsToEnvironment(arrowFunction.typeParameters, arrowEnvironment);
   const jsDocParameterTypes = jsDocParameterTypeMap(arrowFunction, arrowEnvironment, state);
   const parameterTypes = arrowFunction.parameters.map((parameter, parameterIndex) => parameterTypeFromDeclaration(parameter, arrowEnvironment, state, jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[parameterIndex]));
   checkParameterListGrammar(arrowFunction.parameters, state);
@@ -5131,6 +5165,7 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
     const jsDocType = jsDocParameterType(parameter, jsDocParameterTypes);
     checkImplicitAnyParameter(parameter, state, jsDocType ?? contextualParameterType);
     const parameterType = parameterTypes[parameterIndex] ?? unresolvedType;
+    checkRestParameterArrayType(parameter, parameterType, state);
     checkStrictModeBindingName(parameter.name, state, false);
     setBindingNameType(parameter.name, parameterType, arrowEnvironment);
     if (parameter.initializer !== undefined) {
@@ -5639,6 +5674,9 @@ function invalidElementAccessIndexType(type: CheckedType): CheckedType | undefin
   if (type.kind === "typeAliasInstance") {
     return invalidElementAccessIndexType(type.target);
   }
+  if (type.kind === "typeParameter") {
+    return type.constraint === undefined ? undefined : invalidElementAccessIndexType(type.constraint);
+  }
   if (type.kind === "nonNullable") {
     return invalidElementAccessIndexType(nonNullableType(type.target));
   }
@@ -5988,6 +6026,7 @@ function methodDeclarationType(method: MethodDeclaration, environment: TypeEnvir
   const signatureEnvironment = cloneTypeEnvironment(environment);
   const typeParameters = method.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
   addTypeParametersToEnvironment(typeParameters, signatureEnvironment);
+  addTypeParameterConstraintsToEnvironment(method.typeParameters, signatureEnvironment);
   const parameters = method.parameters.map(parameter => parameterTypeFromDeclaration(parameter, signatureEnvironment, state));
   const returnType = method.type === undefined ? methodBodyReturnType(method.body, state.options, signatureEnvironment) : bindTypePredicateParameterIndex(typeFromTypeNode(method.type, signatureEnvironment, state), method.parameters);
   return { kind: "function", typeParameters, parameters, parameterNames: parameterDisplayNames(method.parameters), ...signatureRestParameterIndex(method.parameters), ...signatureMinArgumentCount(method.parameters, state), ...signatureMaxArgumentCount(method.parameters, state, method.body), returnType };
@@ -6018,6 +6057,7 @@ function checkObjectLiteralMethod(method: MethodDeclaration, state: CheckState, 
   seedArgumentsObject(methodEnvironment);
   const typeParameters = method.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
   addTypeParametersToEnvironment(typeParameters, methodEnvironment);
+  addTypeParameterConstraintsToEnvironment(method.typeParameters, methodEnvironment);
   const contextualFunction = callableFunctionType(contextualType);
   checkSignatureParameters(method.parameters, state, methodEnvironment, true, false, contextualFunction?.parameters ?? []);
   if (method.body !== undefined) {
@@ -6152,6 +6192,7 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
     const signatureEnvironment = cloneTypeEnvironment(environment);
     const typeParameters = type.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
     addTypeParametersToEnvironment(typeParameters, signatureEnvironment);
+    addTypeParameterConstraintsToEnvironment(type.typeParameters, signatureEnvironment);
     const parameterTypes = checkSignatureParameters(type.parameters, state ?? emptyCheckState(), signatureEnvironment, true);
     const returnType = type.type === undefined ? unresolvedType : bindTypePredicateParameterIndex(typeFromTypeNode(type.type, signatureEnvironment, state), type.parameters);
     return { kind: "function", typeParameters, parameters: parameterTypes, parameterNames: parameterDisplayNames(type.parameters), ...signatureRestParameterIndex(type.parameters), ...signatureMinArgumentCount(type.parameters, state ?? emptyCheckState()), ...signatureMaxArgumentCount(type.parameters, state ?? emptyCheckState()), returnType, ...(isConstructorTypeNode(type) ? { construct: true } : {}) };
@@ -6698,7 +6739,7 @@ function typeLiteralType(members: readonly TypeElement[], state: CheckState, env
     if (isMethodSignatureDeclaration(member)) {
       const name = propertyNameText(member.name);
       if (name !== undefined) {
-        properties.set(name, methodSignatureType(member, environment, state));
+        properties.set(name, signatureDeclarationType(member, environment, state, false));
         methodProperties.add(name);
         if (member.postfixToken?.kind === Kind.QuestionToken) {
           optionalProperties.add(name);
@@ -6746,7 +6787,7 @@ function propertySignatureDeclaredType(member: PropertySignatureDeclaration, env
 function mappedType(type: Extract<TypeNode, { readonly kind: Kind.MappedType }>, state: CheckState, environment: TypeEnvironment): CheckedType {
   const mappedEnvironment = cloneTypeEnvironment(environment);
   const keyType = type.typeParameter.constraint === undefined ? anyType : typeFromTypeNode(type.typeParameter.constraint, environment, state);
-  mappedEnvironment.set(type.typeParameter.name.text, { kind: "typeParameter", name: type.typeParameter.name.text });
+  mappedEnvironment.set(type.typeParameter.name.text, { kind: "typeParameter", name: type.typeParameter.name.text, constraint: keyType });
   if (type.nameType !== undefined) {
     typeFromTypeNode(type.nameType, mappedEnvironment, state);
   }
@@ -6756,7 +6797,20 @@ function mappedType(type: Extract<TypeNode, { readonly kind: Kind.MappedType }>,
     }
     return { kind: "record", keyType, valueType: anyType };
   }
-  return { kind: "record", keyType, valueType: typeFromTypeNode(type.type, mappedEnvironment, state) };
+  const mappedArraySource = mappedArraySourceType(type.typeParameter.constraint, environment, state);
+  return {
+    kind: "record",
+    keyType,
+    valueType: typeFromTypeNode(type.type, mappedEnvironment, state),
+    ...(mappedArraySource === undefined ? {} : { mappedArraySource }),
+  };
+}
+
+function mappedArraySourceType(constraint: TypeNode | undefined, environment: TypeEnvironment, state: CheckState): CheckedType | undefined {
+  if (constraint?.kind !== Kind.TypeOperator || constraint.operator !== Kind.KeyOfKeyword) {
+    return undefined;
+  }
+  return typeFromTypeNode(constraint.type, environment, state);
 }
 
 function accessorType(accessor: GetAccessorDeclaration | SetAccessorDeclaration, environment: TypeEnvironment, state: CheckState): CheckedType {
@@ -7079,6 +7133,40 @@ function checkImplicitAnyParameter(parameter: ParameterDeclaration, state: Check
     : createDiagnostic(7019, parameter.name.text));
 }
 
+function checkRestParameterArrayType(parameter: ParameterDeclaration, parameterType: CheckedType, state: CheckState): void {
+  if (parameter.dotDotDotToken === undefined || parameter.type === undefined || isObjectBindingPattern(parameter.name) || isArrayBindingPattern(parameter.name)) {
+    return;
+  }
+  if (parameter.questionToken !== undefined || !isRestParameterArrayType(parameterType)) {
+    state.diagnostics.push(createDiagnostic(2370));
+  }
+}
+
+function isRestParameterArrayType(type: CheckedType): boolean {
+  if (type.kind === "any" || type.kind === "never" || type.kind === "array" || type.kind === "readonlyArray" || type.kind === "tuple") {
+    return true;
+  }
+  if (type.kind === "typeAlias") {
+    return isRestParameterArrayType(type.target);
+  }
+  if (type.kind === "typeAliasInstance") {
+    return isRestParameterArrayType(type.target);
+  }
+  if (type.kind === "typeParameter") {
+    return type.constraint !== undefined && isRestParameterArrayType(type.constraint);
+  }
+  if (type.kind === "record") {
+    return type.mappedArraySource !== undefined && isRestParameterArrayType(type.mappedArraySource);
+  }
+  if (type.kind === "union") {
+    return type.types.every(isRestParameterArrayType);
+  }
+  if (type.kind === "intersection") {
+    return type.types.some(isRestParameterArrayType);
+  }
+  return false;
+}
+
 function parameterTypeFromDeclaration(parameter: ParameterDeclaration, environment: TypeEnvironment, state: CheckState | undefined, contextualType?: CheckedType): CheckedType {
   if (parameter.type !== undefined) {
     return typeFromTypeNode(parameter.type, environment, state);
@@ -7288,7 +7376,9 @@ function typeContainsTypeParameter(type: CheckedType): boolean {
     return typeContainsTypeParameter(type.target);
   }
   if (type.kind === "record") {
-    return typeContainsTypeParameter(type.keyType) || typeContainsTypeParameter(type.valueType);
+    return typeContainsTypeParameter(type.keyType)
+      || typeContainsTypeParameter(type.valueType)
+      || (type.mappedArraySource !== undefined && typeContainsTypeParameter(type.mappedArraySource));
   }
   if (type.kind === "typePredicate") {
     return typeContainsTypeParameter(type.assertedType);
@@ -7606,6 +7696,16 @@ function substituteTypeWithContext(type: CheckedType, substitutions: ReadonlyMap
       typeArguments: type.typeArguments.map(typeArgument => substituteTypeWithContext(typeArgument, substitutions, context)),
       target: substituteTypeWithContext(type.target, substitutions, context),
     });
+    return result;
+  }
+  if (type.kind === "record") {
+    const result: CheckedType = {
+      kind: "record",
+      keyType: substituteTypeWithContext(type.keyType, substitutions, context),
+      valueType: substituteTypeWithContext(type.valueType, substitutions, context),
+      ...(type.mappedArraySource === undefined ? {} : { mappedArraySource: substituteTypeWithContext(type.mappedArraySource, substitutions, context) }),
+    };
+    context.types.set(type, result);
     return result;
   }
   context.types.set(type, type);

@@ -149,7 +149,7 @@ describe("checker groundwork", () => {
   it("reports parameter list grammar for rest and optional ordering", () => {
     const sourceFile = parseSourceFile([
       "function restNotLast(...x: number[], y: number) {}",
-      "function restOptional(...x?: number[]) {}",
+      "function restOptional(...x?) {}",
       "function restInitializer(...x = []) {}",
       "function restImplicitAny(...x) { x.push(1); }",
       "function optionalAndInitializer(x?: number = 1) {}",
@@ -159,14 +159,40 @@ describe("checker groundwork", () => {
     ].join("\n"));
     const result = checkSourceFile(sourceFile);
 
-    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1014, 1047, 1048, 7019, 1015, 1016]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1014, 1047, 7019, 1048, 7019, 1015, 1016]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "A rest parameter must be last in a parameter list.",
       "A rest parameter cannot be optional.",
+      "Rest parameter 'x' implicitly has an 'any[]' type.",
       "A rest parameter cannot have an initializer.",
       "Rest parameter 'x' implicitly has an 'any[]' type.",
       "Parameter cannot have question mark and initializer.",
       "A required parameter cannot follow an optional parameter.",
+    ]);
+  });
+
+  it("reports rest parameter array type requirements generically", () => {
+    const sourceFile = parseSourceFile([
+      "type UnionArray = number[] | string[];",
+      "type MappedArray<T> = { [K in keyof T]: T[K] };",
+      "interface UserArray extends Array<any> {}",
+      "function nonArray(...x: number) {}",
+      "function optionalTyped(...x?: string[]) {}",
+      "function directArray(...x: number[]) {}",
+      "function tupleArray(...x: [number, string]) {}",
+      "function unionArray(...x: UnionArray) {}",
+      "function constrained<Args extends unknown[]>(...x: Args) {}",
+      "function mappedConstrained<Args extends [number] | [string]>(...x: MappedArray<Args>) {}",
+      "function userArraySubtype(...x: UserArray) {}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2370, 1047, 2370, 2370]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "A rest parameter must be of an array type.",
+      "A rest parameter cannot be optional.",
+      "A rest parameter must be of an array type.",
+      "A rest parameter must be of an array type.",
     ]);
   });
 
