@@ -168,6 +168,30 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("tracks abstract constructors and abstract class members generically", () => {
+    const sourceFile = parseSourceFile([
+      "abstract class Base { abstract value: string; abstract get current(): string; abstract method(): void; }",
+      "class Bad { abstract value: string; abstract method(): void; }",
+      "abstract class WithBody { abstract get current() { return \"x\"; } abstract method() { } abstract value = \"x\"; }",
+      "new Base();",
+      "type Ctor = typeof Base;",
+      "declare const ctor: Ctor;",
+      "new ctor();",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1253, 1244, 1318, 1245, 1267, 2511, 2511]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Abstract properties can only appear within an abstract class.",
+      "Abstract methods can only appear within an abstract class.",
+      "An abstract accessor cannot have an implementation.",
+      "Method 'method' cannot have an implementation because it is marked abstract.",
+      "Property 'value' cannot have an initializer because it is marked abstract.",
+      "Cannot create an instance of an abstract class.",
+      "Cannot create an instance of an abstract class.",
+    ]);
+  });
+
   it("reports invalid interface names and parameter properties in type signatures", () => {
     const sourceFile = parseSourceFile("interface string { new (public x); } function f(value: (private x) => void): () => number { }");
     const result = checkSourceFile(sourceFile);
