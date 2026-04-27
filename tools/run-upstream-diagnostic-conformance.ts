@@ -255,6 +255,10 @@ function parseBaselineCompilerOptions(baselineFileName: string): CaseCompilerOpt
       options = { ...options, allowSyntheticDefaultImports: parseBoolean(value) };
     } else if (key === "alwaysstrict" && value !== undefined) {
       options = { ...options, alwaysStrict: parseBoolean(value) };
+    } else if (key === "nolib" && value !== undefined) {
+      options = { ...options, noLib: parseBoolean(value) };
+    } else if (key === "downleveliteration" && value !== undefined) {
+      options = { ...options, downlevelIteration: parseBoolean(value) };
     } else if (key === "esmoduleinterop" && value !== undefined) {
       options = { ...options, esModuleInterop: parseBoolean(value) };
     } else if (key === "nouncheckedsideeffectimports" && value !== undefined) {
@@ -343,6 +347,9 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
         break;
       case "checkjs":
         options = { ...options, checkJs: parseBoolean(value) };
+        break;
+      case "downleveliteration":
+        options = { ...options, downlevelIteration: parseBoolean(value) };
         break;
       case "allowsyntheticdefaultimports":
         options = { ...options, allowSyntheticDefaultImports: parseBoolean(value) };

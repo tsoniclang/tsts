@@ -1078,6 +1078,45 @@ describe("checker groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
   });
 
+  it("checks for-of iterability against target and array/string rules", () => {
+    const sourceFile = parseSourceFile([
+      "declare const args: IArguments;",
+      "declare const value: number;",
+      "declare const obj: { foo: string };",
+      "function f() {",
+      "  for (const item of args) { item; }",
+      "  for (const item of value) { item; }",
+      "  for (const item of obj) { item; }",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { target: "es5" });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2802, 2495, 2495]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type 'IArguments' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.",
+      "Type 'number' is not an array type or a string type.",
+      "Type '{ foo: string; }' is not an array type or a string type.",
+    ]);
+  });
+
+  it("checks destructuring and spread iterability through the shared iteration rule", () => {
+    const sourceFile = parseSourceFile([
+      "declare const args: IArguments;",
+      "declare const numbers: Iterable<number>;",
+      "function f() {",
+      "  const [first] = args;",
+      "  ((...items: number[]) => items)(...numbers);",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { target: "es5" });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2802, 2802]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type 'IArguments' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.",
+      "Type 'Iterable<number>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.",
+    ]);
+  });
+
   it("contextually checks array literal object elements for excess properties", () => {
     const sourceFile = parseSourceFile("class Action { id!: number; } var actions: Action[] = [{ id: 2, name: 'extra' }]; var shapes: { id: number }[] = [{ id: 3, trueness: false }];");
     const result = checkSourceFile(sourceFile);

@@ -137,6 +137,7 @@ type CheckedType =
   | { readonly kind: "classConstructor"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeArguments: readonly CheckedType[]; readonly constructorParameters: readonly CheckedType[]; readonly abstract: boolean; readonly members: ClassMemberNames; readonly arrayBaseElementType?: CheckedType }
   | { readonly kind: "accessorProperty"; readonly type: CheckedType }
   | { readonly kind: "arrayLike"; readonly elementType: CheckedType }
+  | { readonly kind: "arrayIterator"; readonly elementType: CheckedType }
   | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType; readonly parameterNames?: readonly string[]; readonly restParameterIndex?: number; readonly minArgumentCount?: number }
   | { readonly kind: "intrinsicConstructor"; readonly intrinsic: "Set" }
   | { readonly kind: "intrinsicFunction"; readonly intrinsic: "Array.from" | "Array.isArray" | "ArrayBuffer.isView" }
@@ -269,6 +270,7 @@ const typedArrayGlobalNames = [
 const invalidClassNames = new Set(["any", "bigint", "boolean", "never", "number", "object", "string", "symbol", "undefined", "unknown", "void"]);
 const ambientTypeNames = new Set([
   "Array",
+  "ArrayIterator",
   "ArrayLike",
   "BigInt",
   "Boolean",
@@ -741,7 +743,10 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   if (isForInStatement(statement) || isForOfStatement(statement)) {
     const loopEnvironment = new Map(environment);
     checkForInitializer(statement.initializer, state, loopEnvironment, true);
-    inferExpression(statement.expression, state, loopEnvironment);
+    const iteratedType = inferExpression(statement.expression, state, loopEnvironment);
+    if (isForOfStatement(statement)) {
+      checkIterationInputType(iteratedType, state, "forOf");
+    }
     checkStatement(statement.statement, enterIteration(state), loopEnvironment, expectedReturnType, ambient, false);
     return;
   }
@@ -1252,6 +1257,9 @@ function checkVariableDeclaration(declaration: VariableDeclaration, state: Check
   }
   if (declaredType !== undefined && initializerType !== undefined) {
     checkAssignable(initializerType, declaredType, state);
+  }
+  if (initializerType !== undefined && isArrayBindingPattern(declaration.name)) {
+    checkIterationInputType(initializerType, state, "destructuring");
   }
   if (declaration.initializer !== undefined) {
     diagnoseAbstractThisDestructuring(declaration.name, declaration.initializer, state, environment);
@@ -2092,6 +2100,43 @@ function targetSupportsAccessors(target: CompilerOptions["target"]): boolean {
   return target !== "es3" && target !== "es5";
 }
 
+function targetSupportsUplevelIteration(target: CompilerOptions["target"]): boolean {
+  return targetOrder(target) >= targetOrder("es2015");
+}
+
+function targetOrder(target: CompilerOptions["target"]): number {
+  switch (target) {
+    case "es3":
+      return 3;
+    case "es5":
+      return 5;
+    case "es2015":
+      return 2015;
+    case "es2016":
+      return 2016;
+    case "es2017":
+      return 2017;
+    case "es2018":
+      return 2018;
+    case "es2019":
+      return 2019;
+    case "es2020":
+      return 2020;
+    case "es2021":
+      return 2021;
+    case "es2022":
+      return 2022;
+    case "es2023":
+      return 2023;
+    case "es2024":
+      return 2024;
+    case "esnext":
+      return Number.MAX_SAFE_INTEGER;
+    default:
+      return 3;
+  }
+}
+
 function checkInheritedPropertyOverride(member: ClassElement, state: CheckState, environment: TypeEnvironment, classMembers: ClassMemberNames, inheritedMembers: ClassMemberNames | undefined): void {
   if (inheritedMembers === undefined || hasModifier(member, Kind.AbstractKeyword)) {
     return;
@@ -2514,7 +2559,8 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return numberType;
   }
   if (isSpreadElement(expression)) {
-    return inferExpression(expression.expression, state, environment);
+    const spreadType = inferExpression(expression.expression, state, environment);
+    return checkIterationInputType(spreadType, state, "spread") ? unresolvedType : spreadType;
   }
   if (isAwaitExpression(expression)) {
     inferExpression(expression.expression, state, environment);
@@ -2604,6 +2650,9 @@ function inferExpression(expression: Expression, state: CheckState, environment:
       return receiver.elementType;
     }
     if (receiver.kind === "interface") {
+      if (isIArgumentsType(receiver) && isSymbolIteratorExpression(expression.argumentExpression)) {
+        return { kind: "function", typeParameters: [], parameters: [], returnType: { kind: "arrayIterator", elementType: anyType } };
+      }
       return interfaceElementAccessType(receiver.members, expression.argumentExpression);
     }
     if ((receiver.kind === "namespace" || receiver.kind === "moduleNamespace") && isStringLiteral(expression.argumentExpression)) {
@@ -2743,7 +2792,7 @@ function collectionElementType(type: CheckedType): CheckedType {
   if (type.kind === "unassignedVariable") {
     return collectionElementType(type.type);
   }
-  if (type.kind === "array" || type.kind === "arrayLike" || type.kind === "iterable" || type.kind === "set") {
+  if (type.kind === "array" || type.kind === "readonlyArray" || type.kind === "arrayLike" || type.kind === "arrayIterator" || type.kind === "iterable" || type.kind === "set") {
     return type.elementType;
   }
   if (type.kind === "union") {
@@ -3376,10 +3425,64 @@ function arrayBindingElementType(type: CheckedType): CheckedType {
   if (type.kind === "array") {
     return type.elementType;
   }
+  if (type.kind === "readonlyArray" || type.kind === "arrayLike" || type.kind === "arrayIterator" || type.kind === "iterable" || type.kind === "set") {
+    return type.elementType;
+  }
+  if (type.kind === "interface" && isIArgumentsType(type)) {
+    return anyType;
+  }
   if (type.kind === "any" || type.kind === "unknown" || type.kind === "unresolved") {
     return anyType;
   }
   return anyType;
+}
+
+function checkIterationInputType(type: CheckedType, state: CheckState, use: "forOf" | "spread" | "destructuring"): boolean {
+  if (state.options.noLib === true) {
+    return false;
+  }
+  const normalized = type.kind === "typeAliasInstance" ? type.target : type;
+  if (normalized.kind === "any" || normalized.kind === "unknown" || normalized.kind === "unresolved" || normalized.kind === "never") {
+    return false;
+  }
+  if (normalized.kind === "array" || normalized.kind === "readonlyArray") {
+    return false;
+  }
+  if (normalized.kind === "string") {
+    if (use === "spread" && !targetSupportsUplevelIteration(state.options.target) && state.options.downlevelIteration !== true) {
+      state.diagnostics.push(createDiagnostic(2802, displayType(normalized)));
+      return true;
+    }
+    return false;
+  }
+  if (iterationRequiresUplevelSupport(normalized)) {
+    if (!targetSupportsUplevelIteration(state.options.target) && state.options.downlevelIteration !== true) {
+      state.diagnostics.push(createDiagnostic(2802, displayType(normalized)));
+      return true;
+    }
+    return false;
+  }
+  if (use === "forOf") {
+    state.diagnostics.push(createDiagnostic(2495, displayType(normalized)));
+    return true;
+  }
+  return false;
+}
+
+function iterationRequiresUplevelSupport(type: CheckedType): boolean {
+  return type.kind === "arrayIterator"
+    || type.kind === "iterable"
+    || type.kind === "set"
+    || type.kind === "arrayLike"
+    || (type.kind === "interface" && isIArgumentsType(type));
+}
+
+function isIArgumentsType(type: CheckedType): boolean {
+  return type.kind === "interface" && type.name === "IArguments";
+}
+
+function isSymbolIteratorExpression(expression: Expression): boolean {
+  return isPropertyAccessExpression(expression) && isIdentifier(expression.expression) && expression.expression.text === "Symbol" && expression.name.text === "iterator";
 }
 
 function bindingElementPropertyName(element: BindingElement): string | undefined {
@@ -3697,6 +3800,12 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
         return { kind: "arrayLike", elementType: anyType };
       }
       return { kind: "arrayLike", elementType: typeFromTypeNode(type.typeArguments![0]!, environment, state) };
+    }
+    if (name === "ArrayIterator") {
+      if (!hasTypeArgumentArity(type, "ArrayIterator<T>", 1, state)) {
+        return { kind: "arrayIterator", elementType: anyType };
+      }
+      return { kind: "arrayIterator", elementType: typeFromTypeNode(type.typeArguments![0]!, environment, state) };
     }
     if (name === "ReadonlyArray") {
       if (!hasTypeArgumentArity(type, "ReadonlyArray<T>", 1, state)) {
@@ -4209,7 +4318,7 @@ function typeContainsTypeParameter(type: CheckedType): boolean {
   if (type.kind === "typeParameter") {
     return true;
   }
-  if (type.kind === "array" || type.kind === "readonlyArray" || type.kind === "arrayLike" || type.kind === "iterable" || type.kind === "set") {
+  if (type.kind === "array" || type.kind === "readonlyArray" || type.kind === "arrayLike" || type.kind === "arrayIterator" || type.kind === "iterable" || type.kind === "set") {
     return typeContainsTypeParameter(type.elementType);
   }
   if (type.kind === "function") {
@@ -4335,7 +4444,7 @@ function functionParameterTypeAt(functionType: Extract<CheckedType, { readonly k
 }
 
 function restArgumentElementType(restParameterType: CheckedType): CheckedType {
-  if (restParameterType.kind === "array" || restParameterType.kind === "readonlyArray" || restParameterType.kind === "arrayLike" || restParameterType.kind === "iterable" || restParameterType.kind === "set") {
+  if (restParameterType.kind === "array" || restParameterType.kind === "readonlyArray" || restParameterType.kind === "arrayLike" || restParameterType.kind === "arrayIterator" || restParameterType.kind === "iterable" || restParameterType.kind === "set") {
     return restParameterType.elementType;
   }
   if (restParameterType.kind === "typeAliasInstance") {
@@ -4386,7 +4495,7 @@ function inferTypeParameterSubstitutions(parameter: CheckedType, argument: Check
       inferTypeParameterSubstitutions(parameter.elementType, argumentElementType, substitutions);
     }
   }
-  if ((parameter.kind === "arrayLike" || parameter.kind === "iterable" || parameter.kind === "set") && parameter.kind === argument.kind) {
+  if ((parameter.kind === "arrayLike" || parameter.kind === "arrayIterator" || parameter.kind === "iterable" || parameter.kind === "set") && parameter.kind === argument.kind) {
     inferTypeParameterSubstitutions(parameter.elementType, argument.elementType, substitutions);
   }
 }
@@ -4403,6 +4512,9 @@ function substituteType(type: CheckedType, substitutions: ReadonlyMap<string, Ch
   }
   if (type.kind === "arrayLike") {
     return { kind: "arrayLike", elementType: substituteType(type.elementType, substitutions) };
+  }
+  if (type.kind === "arrayIterator") {
+    return { kind: "arrayIterator", elementType: substituteType(type.elementType, substitutions) };
   }
   if (type.kind === "iterable") {
     return { kind: "iterable", elementType: substituteType(type.elementType, substitutions) };
@@ -4514,7 +4626,7 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
     }
     return actual.kind !== "null" && actual.kind !== "undefined";
   }
-  if (actual.kind === expected.kind && actual.kind !== "array" && actual.kind !== "readonlyArray" && actual.kind !== "arrayLike" && actual.kind !== "classConstructor" && actual.kind !== "classInstance" && actual.kind !== "function" && actual.kind !== "interface" && actual.kind !== "intersection" && actual.kind !== "iterable" && actual.kind !== "namespace" && actual.kind !== "object" && actual.kind !== "record" && actual.kind !== "set" && actual.kind !== "thisClass" && actual.kind !== "typeAlias" && actual.kind !== "typeParameter" && actual.kind !== "typePredicate" && actual.kind !== "union") {
+  if (actual.kind === expected.kind && actual.kind !== "array" && actual.kind !== "readonlyArray" && actual.kind !== "arrayLike" && actual.kind !== "arrayIterator" && actual.kind !== "classConstructor" && actual.kind !== "classInstance" && actual.kind !== "function" && actual.kind !== "interface" && actual.kind !== "intersection" && actual.kind !== "iterable" && actual.kind !== "namespace" && actual.kind !== "object" && actual.kind !== "record" && actual.kind !== "set" && actual.kind !== "thisClass" && actual.kind !== "typeAlias" && actual.kind !== "typeParameter" && actual.kind !== "typePredicate" && actual.kind !== "union") {
     return true;
   }
   if (actual.kind === "classConstructor" && expected.kind === "classConstructor") {
@@ -4591,6 +4703,9 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
     return isAssignableTo(actual.arrayBaseElementType, expected.elementType, options);
   }
   if (actual.kind === "arrayLike" && expected.kind === "arrayLike") {
+    return isAssignableTo(actual.elementType, expected.elementType, options);
+  }
+  if (actual.kind === "arrayIterator" && (expected.kind === "arrayIterator" || expected.kind === "iterable")) {
     return isAssignableTo(actual.elementType, expected.elementType, options);
   }
   if (actual.kind === "iterable" && expected.kind === "iterable") {
@@ -4949,6 +5064,9 @@ function displayType(type: CheckedType): string {
   }
   if (type.kind === "arrayLike") {
     return `ArrayLike<${displayType(type.elementType)}>`;
+  }
+  if (type.kind === "arrayIterator") {
+    return `ArrayIterator<${displayType(type.elementType)}>`;
   }
   if (type.kind === "iterable") {
     return `Iterable<${displayType(type.elementType)}>`;
