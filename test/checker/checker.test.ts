@@ -1141,6 +1141,22 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'number' is not assignable to type 'string'."]);
   });
 
+  it("lazily substitutes instantiated class member property types", () => {
+    const sourceFile = parseSourceFile([
+      "class Box<T> { value!: T; get(): T { return this.value; } }",
+      "const box = new Box<string>();",
+      "const fromProperty: number = box.value;",
+      "const fromMethod: number = box.get();",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322, 2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type 'string' is not assignable to type 'number'.",
+      "Type 'string' is not assignable to type 'number'.",
+    ]);
+  });
+
   it("contextually types function expression callback parameters from array methods", () => {
     const sourceFile = parseSourceFile("class Ship { isSunk = false; } class Board { ships: Ship[] = []; allShipsSunk() { return this.ships.every(function (value) { return value.isSunk; }); } }");
     const result = checkSourceFile(sourceFile);

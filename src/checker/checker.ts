@@ -166,7 +166,7 @@ type CheckedType =
   | { readonly kind: "array"; readonly elementType: CheckedType }
   | { readonly kind: "readonlyArray"; readonly elementType: CheckedType }
   | { readonly kind: "builtinConstructor"; readonly name: string; readonly instanceType: CheckedType; readonly constructorParameters: readonly CheckedType[]; readonly staticProperties: ReadonlyMap<string, CheckedType> }
-  | { readonly kind: "classInstance"; readonly name: string; readonly typeArguments: readonly CheckedType[]; readonly members: ClassMemberNames; readonly arrayBaseElementType?: CheckedType }
+  | { readonly kind: "classInstance"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeArguments: readonly CheckedType[]; readonly members: ClassMemberNames; readonly arrayBaseElementType?: CheckedType }
   | { readonly kind: "classConstructor"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeArguments: readonly CheckedType[]; readonly constructorParameters: readonly CheckedType[]; readonly abstract: boolean; readonly members: ClassMemberNames; readonly baseType?: CheckedType; readonly arrayBaseElementType?: CheckedType }
   | { readonly kind: "accessorProperty"; readonly type: CheckedType }
   | { readonly kind: "arrayLike"; readonly elementType: CheckedType }
@@ -281,6 +281,11 @@ interface InterfaceMembers {
   readonly numberIndexType?: CheckedType;
 }
 
+interface SubstitutionContext {
+  readonly types: WeakMap<object, CheckedType>;
+  readonly interfaceMembers: WeakMap<InterfaceMembers, InterfaceMembers>;
+}
+
 interface ModuleExportInfo {
   readonly exports: ReadonlyMap<string, CheckedType>;
   readonly exportEquals?: CheckedType;
@@ -303,6 +308,7 @@ const booleanType: CheckedType = { kind: "boolean" };
 const undefinedType: CheckedType = { kind: "undefined" };
 const globalObjectType: CheckedType = { kind: "globalObject" };
 const emptyStringSet: ReadonlySet<string> = new Set();
+const emptyTypeSubstitutions: ReadonlyMap<string, CheckedType> = new Map();
 const boxedNumberType: CheckedType = {
   kind: "interface",
   name: "Number",
@@ -3670,7 +3676,14 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     }
     if (instantiatedConstructorType.kind === "classConstructor") {
       checkFixedCallArguments(argumentTypes, instantiatedConstructorType.constructorParameters, state);
-      return { kind: "classInstance", name: instantiatedConstructorType.name, typeArguments: instantiatedConstructorType.typeArguments, members: instantiatedConstructorType.members, ...optionalArrayBaseElementType(instantiatedConstructorType.arrayBaseElementType) };
+      return {
+        kind: "classInstance",
+        name: instantiatedConstructorType.name,
+        typeParameters: instantiatedConstructorType.typeParameters,
+        typeArguments: instantiatedConstructorType.typeArguments,
+        members: instantiatedConstructorType.members,
+        ...optionalArrayBaseElementType(instantiatedConstructorType.arrayBaseElementType),
+      };
     }
     return anyType;
   }
@@ -4734,7 +4747,7 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
     return propertyTypes.every(type => type !== undefined) ? unionType(propertyTypes) : undefined;
   }
   if (receiverType.kind === "classInstance") {
-    const propertyType = receiverType.members.propertyTypes.get(propertyName);
+    const propertyType = classInstancePropertyType(receiverType, propertyName);
     if (propertyType !== undefined) {
       return receiverType.members.getAccessorProperties.has(propertyName) ? { kind: "accessorProperty", type: propertyType } : propertyType;
     }
@@ -4749,7 +4762,14 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
   }
   if (receiverType.kind === "classConstructor") {
     if (propertyName === "prototype") {
-      return { kind: "classInstance", name: receiverType.name, typeArguments: receiverType.typeArguments, members: receiverType.members, ...optionalArrayBaseElementType(receiverType.arrayBaseElementType) };
+      return {
+        kind: "classInstance",
+        name: receiverType.name,
+        typeParameters: receiverType.typeParameters,
+        typeArguments: receiverType.typeArguments,
+        members: receiverType.members,
+        ...optionalArrayBaseElementType(receiverType.arrayBaseElementType),
+      };
     }
     return receiverType.members.static.has(propertyName) ? anyType : undefined;
   }
@@ -5320,7 +5340,7 @@ function contextualObjectPropertyType(contextualType: CheckedType | undefined, p
     return contextualType.members.properties.get(propertyName) ?? contextualType.members.stringIndexType ?? contextualType.members.numberIndexType;
   }
   if (contextualType.kind === "classInstance") {
-    return contextualType.members.propertyTypes.get(propertyName);
+    return classInstancePropertyType(contextualType, propertyName);
   }
   return undefined;
 }
@@ -5806,11 +5826,14 @@ function instantiateClassConstructorForNew(type: Extract<CheckedType, { readonly
 }
 
 function instantiateClassConstructorWithSubstitutions(type: Extract<CheckedType, { readonly kind: "classConstructor" }>, substitutions: ReadonlyMap<string, CheckedType>): Extract<CheckedType, { readonly kind: "classConstructor" }> {
+  const typeArguments = type.typeParameters.length > 0
+    ? type.typeParameters.map((typeParameter, index) => substitutions.get(typeParameter) ?? substituteType(type.typeArguments[index] ?? anyType, substitutions))
+    : type.typeArguments.map(typeArgument => substituteType(typeArgument, substitutions));
   return {
     ...type,
-    typeArguments: type.typeParameters.map(typeParameter => substitutions.get(typeParameter) ?? anyType),
+    typeArguments,
     constructorParameters: type.constructorParameters.map(parameter => substituteType(parameter, substitutions)),
-    members: substituteClassMemberNames(type.members, substitutions),
+    members: type.members,
     ...optionalBaseType(type.baseType === undefined ? undefined : substituteType(type.baseType, substitutions)),
     ...optionalArrayBaseElementType(type.arrayBaseElementType === undefined ? undefined : substituteType(type.arrayBaseElementType, substitutions)),
   };
@@ -5845,6 +5868,46 @@ function classTypeSubstitutions(type: Extract<CheckedType, { readonly kind: "cla
   return substitutions;
 }
 
+function classConstructorTypeArgumentSubstitutions(type: Extract<CheckedType, { readonly kind: "classConstructor" }>): ReadonlyMap<string, CheckedType> {
+  return type.typeParameters.length === 0 ? emptyTypeSubstitutions : classTypeSubstitutions(type, type.typeArguments);
+}
+
+function classInstanceTypeArgumentSubstitutions(type: Extract<CheckedType, { readonly kind: "classInstance" }>): ReadonlyMap<string, CheckedType> {
+  if (type.typeParameters.length === 0) {
+    return emptyTypeSubstitutions;
+  }
+  const substitutions = new Map<string, CheckedType>();
+  for (let index = 0; index < type.typeParameters.length; index += 1) {
+    substitutions.set(type.typeParameters[index]!, type.typeArguments[index] ?? anyType);
+  }
+  return substitutions;
+}
+
+function substituteTypeIfNeeded(type: CheckedType, substitutions: ReadonlyMap<string, CheckedType>): CheckedType {
+  return substitutions.size === 0 ? type : substituteType(type, substitutions);
+}
+
+function classInstancePropertyType(type: Extract<CheckedType, { readonly kind: "classInstance" }>, propertyName: string): CheckedType | undefined {
+  const propertyType = type.members.propertyTypes.get(propertyName);
+  return propertyType === undefined ? undefined : substituteTypeIfNeeded(propertyType, classInstanceTypeArgumentSubstitutions(type));
+}
+
+function classInstancePropertyTypes(type: Extract<CheckedType, { readonly kind: "classInstance" }>): ReadonlyMap<string, CheckedType> {
+  const substitutions = classInstanceTypeArgumentSubstitutions(type);
+  if (substitutions.size === 0) {
+    return type.members.propertyTypes;
+  }
+  return new Map([...type.members.propertyTypes.entries()].map(([name, propertyType]) => [name, substituteType(propertyType, substitutions)]));
+}
+
+function classConstructorPropertyTypes(type: Extract<CheckedType, { readonly kind: "classConstructor" }>): ReadonlyMap<string, CheckedType> {
+  const substitutions = classConstructorTypeArgumentSubstitutions(type);
+  if (substitutions.size === 0) {
+    return type.members.propertyTypes;
+  }
+  return new Map([...type.members.propertyTypes.entries()].map(([name, propertyType]) => [name, substituteType(propertyType, substitutions)]));
+}
+
 function interfaceTypeSubstitutions(type: Extract<CheckedType, { readonly kind: "interface" }>, typeArguments: readonly CheckedType[]): ReadonlyMap<string, CheckedType> {
   const substitutions = new Map<string, CheckedType>();
   for (let index = 0; index < type.members.typeParameters.length; index += 1) {
@@ -5858,11 +5921,7 @@ function instantiateInterfaceType(type: Extract<CheckedType, { readonly kind: "i
     return type;
   }
   const substitutions = interfaceTypeSubstitutions(type, typeArguments);
-  return {
-    ...type,
-    typeArguments: type.members.typeParameters.map(typeParameter => substitutions.get(typeParameter) ?? anyType),
-    members: substituteInterfaceMembers(type.members, substitutions),
-  };
+  return substituteType(type, substitutions) as Extract<CheckedType, { readonly kind: "interface" }>;
 }
 
 function typeFromResolvedEntity(type: CheckedType, diagnosticName: string | undefined, state: CheckState | undefined, typeArguments: readonly CheckedType[] = []): CheckedType {
@@ -5901,7 +5960,14 @@ function typeFromResolvedEntity(type: CheckedType, diagnosticName: string | unde
   }
   if (type.kind === "classConstructor") {
     const instantiated = instantiateClassConstructor(type, typeArguments);
-    return { kind: "classInstance", name: instantiated.name, typeArguments: instantiated.typeArguments, members: instantiated.members, ...optionalArrayBaseElementType(instantiated.arrayBaseElementType) };
+    return {
+      kind: "classInstance",
+      name: instantiated.name,
+      typeParameters: instantiated.typeParameters,
+      typeArguments: instantiated.typeArguments,
+      members: instantiated.members,
+      ...optionalArrayBaseElementType(instantiated.arrayBaseElementType),
+    };
   }
   if (type.kind === "interface") {
     return instantiateInterfaceType(type, typeArguments);
@@ -6458,7 +6524,8 @@ function typeContainsTypeParameter(type: CheckedType): boolean {
   }
   if (type.kind === "classInstance" || type.kind === "classConstructor") {
     return type.typeArguments.some(typeContainsTypeParameter)
-      || [...type.members.propertyTypes.values()].some(typeContainsTypeParameter)
+      || (type.kind === "classConstructor" && type.constructorParameters.some(typeContainsTypeParameter))
+      || (type.kind === "classConstructor" && type.baseType !== undefined && typeContainsTypeParameter(type.baseType))
       || (type.arrayBaseElementType !== undefined && typeContainsTypeParameter(type.arrayBaseElementType));
   }
   if (type.kind === "builtinConstructor") {
@@ -6642,124 +6709,181 @@ function inferTypeParameterSubstitutions(parameter: CheckedType, argument: Check
 }
 
 function substituteType(type: CheckedType, substitutions: ReadonlyMap<string, CheckedType>): CheckedType {
+  if (substitutions.size === 0) {
+    return type;
+  }
+  return substituteTypeWithContext(type, substitutions, {
+    types: new WeakMap<object, CheckedType>(),
+    interfaceMembers: new WeakMap<InterfaceMembers, InterfaceMembers>(),
+  });
+}
+
+function substituteTypeWithContext(type: CheckedType, substitutions: ReadonlyMap<string, CheckedType>, context: SubstitutionContext): CheckedType {
   if (type.kind === "typeParameter") {
     return substitutions.get(type.name) ?? type;
   }
+  const cached = context.types.get(type);
+  if (cached !== undefined) {
+    return cached;
+  }
   if (type.kind === "array") {
-    return { kind: "array", elementType: substituteType(type.elementType, substitutions) };
+    const result: CheckedType = { kind: "array", elementType: substituteTypeWithContext(type.elementType, substitutions, context) };
+    context.types.set(type, result);
+    return result;
   }
   if (type.kind === "readonlyArray") {
-    return { kind: "readonlyArray", elementType: substituteType(type.elementType, substitutions) };
+    const result: CheckedType = { kind: "readonlyArray", elementType: substituteTypeWithContext(type.elementType, substitutions, context) };
+    context.types.set(type, result);
+    return result;
   }
   if (type.kind === "arrayLike") {
-    return { kind: "arrayLike", elementType: substituteType(type.elementType, substitutions) };
+    const result: CheckedType = { kind: "arrayLike", elementType: substituteTypeWithContext(type.elementType, substitutions, context) };
+    context.types.set(type, result);
+    return result;
   }
   if (type.kind === "arrayIterator") {
-    return { kind: "arrayIterator", elementType: substituteType(type.elementType, substitutions) };
+    const result: CheckedType = { kind: "arrayIterator", elementType: substituteTypeWithContext(type.elementType, substitutions, context) };
+    context.types.set(type, result);
+    return result;
   }
   if (type.kind === "iterable") {
-    return { kind: "iterable", elementType: substituteType(type.elementType, substitutions) };
+    const result: CheckedType = { kind: "iterable", elementType: substituteTypeWithContext(type.elementType, substitutions, context) };
+    context.types.set(type, result);
+    return result;
   }
   if (type.kind === "set") {
-    return { kind: "set", elementType: substituteType(type.elementType, substitutions) };
+    const result: CheckedType = { kind: "set", elementType: substituteTypeWithContext(type.elementType, substitutions, context) };
+    context.types.set(type, result);
+    return result;
   }
   if (type.kind === "tuple") {
-    return {
+    const result: CheckedType = {
       kind: "tuple",
-      elements: type.elements.map(element => ({ ...element, type: substituteType(element.type, substitutions) })),
-      ...(type.restElementType === undefined ? {} : { restElementType: substituteType(type.restElementType, substitutions) }),
+      elements: type.elements.map(element => ({ ...element, type: substituteTypeWithContext(element.type, substitutions, context) })),
+      ...(type.restElementType === undefined ? {} : { restElementType: substituteTypeWithContext(type.restElementType, substitutions, context) }),
     };
+    context.types.set(type, result);
+    return result;
   }
   if (type.kind === "nonNullable") {
-    return nonNullableType(substituteType(type.target, substitutions));
+    const result = nonNullableType(substituteTypeWithContext(type.target, substitutions, context));
+    context.types.set(type, result);
+    return result;
   }
   if (type.kind === "typePredicate") {
-    return { ...type, assertedType: substituteType(type.assertedType, substitutions) };
+    const result: CheckedType = { ...type, assertedType: substituteTypeWithContext(type.assertedType, substitutions, context) };
+    context.types.set(type, result);
+    return result;
   }
   if (type.kind === "union") {
-    return { kind: "union", types: type.types.map(unionType => substituteType(unionType, substitutions)) };
+    const result: CheckedType = { kind: "union", types: type.types.map(unionType => substituteTypeWithContext(unionType, substitutions, context)) };
+    context.types.set(type, result);
+    return result;
   }
   if (type.kind === "intersection") {
-    return { kind: "intersection", types: type.types.map(intersectionType => substituteType(intersectionType, substitutions)) };
+    const result: CheckedType = { kind: "intersection", types: type.types.map(intersectionType => substituteTypeWithContext(intersectionType, substitutions, context)) };
+    context.types.set(type, result);
+    return result;
   }
   if (type.kind === "object") {
-    return {
-      kind: "object",
-      properties: new Map([...type.properties.entries()].map(([name, propertyType]) => [name, substituteType(propertyType, substitutions)])),
+    const result: CheckedType = { ...type };
+    context.types.set(type, result);
+    Object.assign(result, {
+      properties: new Map([...type.properties.entries()].map(([name, propertyType]) => [name, substituteTypeWithContext(propertyType, substitutions, context)])),
       readonlyProperties: type.readonlyProperties,
       optionalProperties: type.optionalProperties,
       methodProperties: type.methodProperties,
-      ...(type.callSignatures === undefined ? {} : { callSignatures: type.callSignatures.map(signature => substituteType(signature, substitutions) as CheckedFunctionType) }),
-      ...(type.stringIndexType === undefined ? {} : { stringIndexType: substituteType(type.stringIndexType, substitutions) }),
-      ...(type.numberIndexType === undefined ? {} : { numberIndexType: substituteType(type.numberIndexType, substitutions) }),
+      ...(type.callSignatures === undefined ? {} : { callSignatures: type.callSignatures.map(signature => substituteTypeWithContext(signature, substitutions, context) as CheckedFunctionType) }),
+      ...(type.stringIndexType === undefined ? {} : { stringIndexType: substituteTypeWithContext(type.stringIndexType, substitutions, context) }),
+      ...(type.numberIndexType === undefined ? {} : { numberIndexType: substituteTypeWithContext(type.numberIndexType, substitutions, context) }),
       ...(type.contextualDiagnostics === undefined ? {} : { contextualDiagnostics: type.contextualDiagnostics }),
-    };
+    });
+    return result;
   }
   if (type.kind === "interface") {
-    return {
-      ...type,
-      ...(type.typeArguments === undefined ? {} : { typeArguments: type.typeArguments.map(typeArgument => substituteType(typeArgument, substitutions)) }),
-      members: substituteInterfaceMembers(type.members, substitutions),
-    };
+    const result: CheckedType = { ...type };
+    context.types.set(type, result);
+    Object.assign(result, {
+      ...(type.typeArguments === undefined ? {} : { typeArguments: type.typeArguments.map(typeArgument => substituteTypeWithContext(typeArgument, substitutions, context)) }),
+      members: substituteInterfaceMembers(type.members, substitutions, context),
+    });
+    return result;
   }
   if (type.kind === "classConstructor") {
     const typeArguments = type.typeParameters.length > 0
-      ? type.typeParameters.map((typeParameter, index) => substitutions.get(typeParameter) ?? substituteType(type.typeArguments[index] ?? anyType, substitutions))
-      : type.typeArguments.map(typeArgument => substituteType(typeArgument, substitutions));
-    return { ...type, typeArguments, constructorParameters: type.constructorParameters.map(parameter => substituteType(parameter, substitutions)), members: substituteClassMemberNames(type.members, substitutions), ...optionalBaseType(type.baseType === undefined ? undefined : substituteType(type.baseType, substitutions)), ...optionalArrayBaseElementType(type.arrayBaseElementType === undefined ? undefined : substituteType(type.arrayBaseElementType, substitutions)) };
+      ? type.typeParameters.map((typeParameter, index) => substitutions.get(typeParameter) ?? substituteTypeWithContext(type.typeArguments[index] ?? anyType, substitutions, context))
+      : type.typeArguments.map(typeArgument => substituteTypeWithContext(typeArgument, substitutions, context));
+    const result: CheckedType = { ...type, typeArguments };
+    context.types.set(type, result);
+    Object.assign(result, {
+      constructorParameters: type.constructorParameters.map(parameter => substituteTypeWithContext(parameter, substitutions, context)),
+      members: type.members,
+      ...optionalBaseType(type.baseType === undefined ? undefined : substituteTypeWithContext(type.baseType, substitutions, context)),
+      ...optionalArrayBaseElementType(type.arrayBaseElementType === undefined ? undefined : substituteTypeWithContext(type.arrayBaseElementType, substitutions, context)),
+    });
+    return result;
   }
   if (type.kind === "classInstance") {
-    return { ...type, typeArguments: type.typeArguments.map(typeArgument => substituteType(typeArgument, substitutions)), members: substituteClassMemberNames(type.members, substitutions), ...optionalArrayBaseElementType(type.arrayBaseElementType === undefined ? undefined : substituteType(type.arrayBaseElementType, substitutions)) };
+    const result: CheckedType = { ...type, typeArguments: type.typeArguments.map(typeArgument => substituteTypeWithContext(typeArgument, substitutions, context)) };
+    context.types.set(type, result);
+    Object.assign(result, {
+      members: type.members,
+      ...optionalArrayBaseElementType(type.arrayBaseElementType === undefined ? undefined : substituteTypeWithContext(type.arrayBaseElementType, substitutions, context)),
+    });
+    return result;
   }
   if (type.kind === "builtinConstructor") {
-    return {
-      ...type,
-      instanceType: substituteType(type.instanceType, substitutions),
-      constructorParameters: type.constructorParameters.map(parameter => substituteType(parameter, substitutions)),
-      staticProperties: new Map([...type.staticProperties.entries()].map(([name, propertyType]) => [name, substituteType(propertyType, substitutions)])),
-    };
+    const result: CheckedType = { ...type };
+    context.types.set(type, result);
+    Object.assign(result, {
+      instanceType: substituteTypeWithContext(type.instanceType, substitutions, context),
+      constructorParameters: type.constructorParameters.map(parameter => substituteTypeWithContext(parameter, substitutions, context)),
+      staticProperties: new Map([...type.staticProperties.entries()].map(([name, propertyType]) => [name, substituteTypeWithContext(propertyType, substitutions, context)])),
+    });
+    return result;
   }
   if (type.kind === "function") {
-    return {
-      kind: "function",
-      typeParameters: type.typeParameters,
-      parameters: type.parameters.map(parameter => substituteType(parameter, substitutions)),
+    const result: CheckedType = { ...type };
+    context.types.set(type, result);
+    Object.assign(result, {
+      parameters: type.parameters.map(parameter => substituteTypeWithContext(parameter, substitutions, context)),
       ...(type.parameterNames === undefined ? {} : { parameterNames: type.parameterNames }),
       ...(type.restParameterIndex === undefined ? {} : { restParameterIndex: type.restParameterIndex }),
       ...(type.minArgumentCount === undefined ? {} : { minArgumentCount: type.minArgumentCount }),
       ...(type.maxArgumentCount === undefined ? {} : { maxArgumentCount: type.maxArgumentCount }),
       ...(type.construct === undefined ? {} : { construct: type.construct }),
-      ...(type.overloads === undefined ? {} : { overloads: type.overloads.map(overload => substituteType(overload, substitutions) as CheckedFunctionType) }),
-      returnType: substituteType(type.returnType, substitutions),
-    };
+      ...(type.overloads === undefined ? {} : { overloads: type.overloads.map(overload => substituteTypeWithContext(overload, substitutions, context) as CheckedFunctionType) }),
+      returnType: substituteTypeWithContext(type.returnType, substitutions, context),
+    });
+    return result;
   }
   if (type.kind === "typeAliasInstance") {
-    return {
-      kind: "typeAliasInstance",
-      name: type.name,
-      typeArguments: type.typeArguments.map(typeArgument => substituteType(typeArgument, substitutions)),
-      target: substituteType(type.target, substitutions),
-      requiresExplicitDeclarationAnnotation: type.requiresExplicitDeclarationAnnotation,
-    };
+    const result: CheckedType = { ...type };
+    context.types.set(type, result);
+    Object.assign(result, {
+      typeArguments: type.typeArguments.map(typeArgument => substituteTypeWithContext(typeArgument, substitutions, context)),
+      target: substituteTypeWithContext(type.target, substitutions, context),
+    });
+    return result;
   }
+  context.types.set(type, type);
   return type;
 }
 
-function substituteInterfaceMembers(members: InterfaceMembers, substitutions: ReadonlyMap<string, CheckedType>): InterfaceMembers {
-  return {
-    ...members,
-    properties: new Map([...members.properties.entries()].map(([name, propertyType]) => [name, substituteType(propertyType, substitutions)])),
-    callSignatures: members.callSignatures.map(signature => substituteType(signature, substitutions) as CheckedFunctionType),
-    ...(members.stringIndexType === undefined ? {} : { stringIndexType: substituteType(members.stringIndexType, substitutions) }),
-    ...(members.numberIndexType === undefined ? {} : { numberIndexType: substituteType(members.numberIndexType, substitutions) }),
-  };
-}
-
-function substituteClassMemberNames(members: ClassMemberNames, substitutions: ReadonlyMap<string, CheckedType>): ClassMemberNames {
-  return {
-    ...members,
-    propertyTypes: new Map([...members.propertyTypes.entries()].map(([name, propertyType]) => [name, substituteType(propertyType, substitutions)])),
-  };
+function substituteInterfaceMembers(members: InterfaceMembers, substitutions: ReadonlyMap<string, CheckedType>, context: SubstitutionContext): InterfaceMembers {
+  const cached = context.interfaceMembers.get(members);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const result: InterfaceMembers = { ...members };
+  context.interfaceMembers.set(members, result);
+  Object.assign(result, {
+    properties: new Map([...members.properties.entries()].map(([name, propertyType]) => [name, substituteTypeWithContext(propertyType, substitutions, context)])),
+    callSignatures: members.callSignatures.map(signature => substituteTypeWithContext(signature, substitutions, context) as CheckedFunctionType),
+    ...(members.stringIndexType === undefined ? {} : { stringIndexType: substituteTypeWithContext(members.stringIndexType, substitutions, context) }),
+    ...(members.numberIndexType === undefined ? {} : { numberIndexType: substituteTypeWithContext(members.numberIndexType, substitutions, context) }),
+  });
+  return result;
 }
 
 function isAssignableTo(actual: CheckedType, expected: CheckedType, options: CompilerOptions = {}): boolean {
@@ -6854,15 +6978,15 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
     return classConstructorsAssignableTo(actual, expected, options);
   }
   if (actual.kind === "classInstance" && expected.kind === "classInstance") {
-    return actual.name === expected.name ? typeArgumentsAssignableTo(actual.typeArguments, expected.typeArguments, options) : classMembersAssignableTo(actual.members, expected.members, options);
+    return classInstancesAssignableTo(actual, expected, options);
   }
   if (actual.kind === "object" && expected.kind === "classInstance") {
     return expected.members.nominalProperties.size === 0
-      && objectPropertiesAssignableTo(actual.properties, expected.members.propertyTypes, options, expected.members.optionalProperties);
+      && objectPropertiesAssignableTo(actual.properties, classInstancePropertyTypes(expected), options, expected.members.optionalProperties);
   }
   if (actual.kind === "interface" && expected.kind === "classInstance") {
     return expected.members.nominalProperties.size === 0
-      && objectPropertiesAssignableTo(actual.members.properties, expected.members.propertyTypes, options, expected.members.optionalProperties);
+      && objectPropertiesAssignableTo(actual.members.properties, classInstancePropertyTypes(expected), options, expected.members.optionalProperties);
   }
   if (actual.kind === "object" && expected.kind === "object") {
     return objectPropertiesAssignableTo(actual.properties, expected.properties, options, expected.optionalProperties)
@@ -6887,7 +7011,7 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
       && indexSignaturesAssignableTo(actual.members.stringIndexType, actual.members.numberIndexType, expected.stringIndexType, expected.numberIndexType, options);
   }
   if (actual.kind === "classInstance" && expected.kind === "object") {
-    return objectPropertiesAssignableTo(actual.members.propertyTypes, expected.properties, options, expected.optionalProperties)
+    return objectPropertiesAssignableTo(classInstancePropertyTypes(actual), expected.properties, options, expected.optionalProperties)
       && callSignaturesAssignableTo([], expected.callSignatures ?? [], options)
       && indexSignaturesAssignableTo(undefined, undefined, expected.stringIndexType, expected.numberIndexType, options);
   }
@@ -6908,7 +7032,7 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
     return objectPropertiesAssignableToInterface(actual.members.properties, actual.members.callSignatures, expected.members, options, actual.members.stringIndexType, actual.members.numberIndexType, true);
   }
   if (actual.kind === "classInstance" && expected.kind === "interface") {
-    return objectPropertiesAssignableToInterface(actual.members.propertyTypes, [], expected.members, options, undefined, undefined, true);
+    return objectPropertiesAssignableToInterface(classInstancePropertyTypes(actual), [], expected.members, options, undefined, undefined, true);
   }
   if (actual.kind === "function" && expected.kind === "object") {
     return objectPropertiesAssignableTo(new Map(), expected.properties, options, expected.optionalProperties)
@@ -7260,7 +7384,7 @@ function typeArgumentsAssignableTo(actual: readonly CheckedType[], expected: rea
   return actual.every((type, index) => isAssignableTo(type, expected[index]!, options) && isAssignableTo(expected[index]!, type, options));
 }
 
-function classMembersAssignableTo(actual: ClassMemberNames, expected: ClassMemberNames, options: CompilerOptions = {}): boolean {
+function classMembersAssignableTo(actual: ClassMemberNames, expected: ClassMemberNames, options: CompilerOptions = {}, actualPropertyTypes: ReadonlyMap<string, CheckedType> = actual.propertyTypes, expectedPropertyTypes: ReadonlyMap<string, CheckedType> = expected.propertyTypes): boolean {
   if (expected.nominalProperties.size > 0) {
     return false;
   }
@@ -7271,13 +7395,20 @@ function classMembersAssignableTo(actual: ClassMemberNames, expected: ClassMembe
       }
       return false;
     }
-    const expectedPropertyType = expected.propertyTypes.get(expectedMember);
-    const actualPropertyType = actual.propertyTypes.get(expectedMember);
+    const expectedPropertyType = expectedPropertyTypes.get(expectedMember);
+    const actualPropertyType = actualPropertyTypes.get(expectedMember);
     if (expectedPropertyType !== undefined && actualPropertyType !== undefined && !isAssignableTo(actualPropertyType, expectedPropertyType, options)) {
       return false;
     }
   }
   return true;
+}
+
+function classInstancesAssignableTo(actual: Extract<CheckedType, { readonly kind: "classInstance" }>, expected: Extract<CheckedType, { readonly kind: "classInstance" }>, options: CompilerOptions = {}): boolean {
+  if (actual.name === expected.name) {
+    return typeArgumentsAssignableTo(actual.typeArguments, expected.typeArguments, options);
+  }
+  return classMembersAssignableTo(actual.members, expected.members, options, classInstancePropertyTypes(actual), classInstancePropertyTypes(expected));
 }
 
 function classConstructorsAssignableTo(actual: Extract<CheckedType, { readonly kind: "classConstructor" }>, expected: Extract<CheckedType, { readonly kind: "classConstructor" }>, options: CompilerOptions = {}): boolean {
@@ -7287,7 +7418,7 @@ function classConstructorsAssignableTo(actual: Extract<CheckedType, { readonly k
   if (actual.abstract && !expected.abstract) {
     return false;
   }
-  return classMembersAssignableTo(actual.members, expected.members, options) && staticClassMembersAssignableTo(actual.members, expected.members);
+  return classMembersAssignableTo(actual.members, expected.members, options, classConstructorPropertyTypes(actual), classConstructorPropertyTypes(expected)) && staticClassMembersAssignableTo(actual.members, expected.members);
 }
 
 function staticClassMembersAssignableTo(actual: ClassMemberNames, expected: ClassMemberNames): boolean {
