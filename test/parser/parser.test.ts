@@ -12,6 +12,7 @@ import {
   isCallSignatureDeclaration,
   isClassDeclaration,
   isClassExpression,
+  isClassStaticBlockDeclaration,
   isConstructorDeclaration,
   isContinueStatement,
   isConditionalTypeNode,
@@ -657,6 +658,18 @@ describe("TS-Go parser groundwork", () => {
     if (!isClassDeclaration(statement)) throw new Error("Expected class declaration");
     assert.equal(isIndexSignatureDeclaration(statement.members[0]!), true);
     assert.equal(isPropertyDeclaration(statement.members[1]!), true);
+  });
+
+  it("parses class static blocks as TS-Go class elements", () => {
+    const sourceFile = parseSourceFile("class C { static { value = 1; } static field = 2; }");
+    const statement = sourceFile.statements[0]!;
+
+    assert.equal(isClassDeclaration(statement), true);
+    if (!isClassDeclaration(statement)) throw new Error("Expected class declaration");
+    assert.equal(isClassStaticBlockDeclaration(statement.members[0]!), true);
+    assert.equal(isPropertyDeclaration(statement.members[1]!), true);
+    if (!isPropertyDeclaration(statement.members[1]!)) throw new Error("Expected static property");
+    assert.equal(statement.members[1]!.modifiers?.[0]?.kind, Kind.StaticKeyword);
   });
 
   it("parses ambient declarations, module blocks, const type parameters, and destructuring assignment defaults", () => {

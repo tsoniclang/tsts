@@ -11,6 +11,7 @@ import {
   isBreakStatement,
   isCallExpression,
   isClassDeclaration,
+  isClassStaticBlockDeclaration,
   isConditionalExpression,
   isContinueStatement,
   isConstructorDeclaration,
@@ -428,6 +429,9 @@ function printClassElement(member: ClassElement, context: PrintContext, depth: n
   }
   if (isPropertyDeclaration(member)) {
     return printPropertyDeclaration(member);
+  }
+  if (isClassStaticBlockDeclaration(member)) {
+    return `static ${printBlock(member.body.statements, context, depth)}`;
   }
   if (member.kind === Kind.MethodDeclaration) {
     return printMethodDeclaration(member as MethodDeclaration, context, depth);

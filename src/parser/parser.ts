@@ -16,6 +16,7 @@ import {
   createCatchClause,
   createClassDeclaration,
   createClassExpression,
+  createClassStaticBlockDeclaration,
   createComputedPropertyName,
   createConditionalTypeNode,
   createConstructorDeclaration,
@@ -557,20 +558,23 @@ export class Parser {
     return createExportAssignment(modifiers, true, undefined as never, expression);
   }
 
-  #parseModifiers(): NodeArray<ModifierLike> | undefined {
+  #parseModifiers(options: { readonly stopOnStartOfClassStaticBlock?: boolean } = {}): NodeArray<ModifierLike> | undefined {
     const modifiers: ModifierLike[] = [];
-    while (this.#isModifierAtCurrentPosition()) {
+    while (this.#isModifierAtCurrentPosition(options)) {
       modifiers.push(createToken(this.#current().kind as ModifierSyntaxKind) as ModifierLike);
       this.#advance();
     }
     return modifiers.length === 0 ? undefined : createNodeArray(modifiers);
   }
 
-  #isModifierAtCurrentPosition(): boolean {
+  #isModifierAtCurrentPosition(options: { readonly stopOnStartOfClassStaticBlock?: boolean } = {}): boolean {
     if (!modifierKinds.has(this.#current().kind)) {
       return false;
     }
     const nextKind = this.#tokens[this.#index + 1]?.kind;
+    if (options.stopOnStartOfClassStaticBlock === true && this.#current().kind === Kind.StaticKeyword && nextKind === Kind.OpenBraceToken) {
+      return false;
+    }
     return nextKind !== Kind.QuestionToken
       && nextKind !== Kind.ColonToken
       && nextKind !== Kind.OpenParenToken
@@ -786,10 +790,14 @@ export class Parser {
     if (this.#consumeOptional(Kind.SemicolonToken)) {
       return createSemicolonClassElement();
     }
-    let modifiers = this.#parseModifiers();
+    let modifiers = this.#parseModifiers({ stopOnStartOfClassStaticBlock: true });
     const nextToken = this.#tokens[this.#index + 1];
     if (this.#current().kind === Kind.ConstKeyword && nextToken !== undefined && isIdentifierNameKind(nextToken.kind) && !this.#hasLineBreakBetween(this.#current(), nextToken)) {
       modifiers = createNodeArray([...(modifiers ?? []), createToken(this.#advance().kind as ModifierSyntaxKind) as ModifierLike]);
+    }
+    if (this.#current().kind === Kind.StaticKeyword && nextToken?.kind === Kind.OpenBraceToken) {
+      this.#advance();
+      return createClassStaticBlockDeclaration(modifiers, this.#parseBlock());
     }
     if (this.#current().kind === Kind.VarKeyword || this.#current().kind === Kind.LetKeyword) {
       return this.#parseInvalidClassVariableElement(modifiers);
@@ -1420,7 +1428,7 @@ export class Parser {
 
   #parseNewExpression(): Expression {
     this.#expect(Kind.NewKeyword);
-    const expression = this.#parseHeritageExpression();
+    const expression = this.#parseNewTargetExpression();
     const typeArguments = this.#parseOptionalTypeArguments();
     let arguments_: NodeArray<Expression> | undefined;
     if (this.#consumeOptional(Kind.OpenParenToken)) {
@@ -1428,6 +1436,26 @@ export class Parser {
       this.#expect(Kind.CloseParenToken);
     }
     return this.#parseMemberSuffixes(createNewExpression(expression, typeArguments, arguments_));
+  }
+
+  #parseNewTargetExpression(): Expression {
+    let expression = this.#current().kind === Kind.ClassKeyword ? this.#parseClassExpression() : this.#parsePrimaryExpression();
+    while (true) {
+      if (this.#consumeOptional(Kind.DotToken)) {
+        expression = createPropertyAccessExpression(expression, undefined, this.#parseMemberName(), NodeFlags.None);
+        continue;
+      }
+      if (this.#consumeOptional(Kind.OpenBracketToken)) {
+        expression = createElementAccessExpression(expression, undefined, this.#parseExpression(), NodeFlags.None);
+        this.#expect(Kind.CloseBracketToken);
+        continue;
+      }
+      if (this.#consumeOptional(Kind.ExclamationToken)) {
+        expression = createNonNullExpression(expression, NodeFlags.None);
+        continue;
+      }
+      return expression;
+    }
   }
 
   #parseLeftHandSideExpression(): Expression {

@@ -320,7 +320,7 @@ describe("checker groundwork", () => {
       "const invalid = <IHasValue>null;",
       "const valid = { value: \"x\", extra: 1 } as IHasValue;",
     ].join("\n"));
-    const result = checkSourceFile(sourceFile);
+    const result = checkSourceFile(sourceFile, { strict: true });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2352]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
@@ -600,7 +600,7 @@ describe("checker groundwork", () => {
       "  values[0].slice(0);",
       "}",
     ].join("\n"));
-    const result = checkSourceFile(sourceFile);
+    const result = checkSourceFile(sourceFile, { strict: true });
 
     assert.deepEqual(result.diagnostics, []);
   });
@@ -902,6 +902,27 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("forbids arguments in class field initializers and static blocks while allowing nested functions", () => {
+    const sourceFile = parseSourceFile([
+      "function outer() {",
+      "  return class T {",
+      "    a = arguments;",
+      "    b = () => arguments;",
+      "    c = function () { return arguments; };",
+      "    static { arguments; function f() { return arguments; } }",
+      "  };",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { target: "es2015", strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2815, 2815, 2815]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "'arguments' cannot be referenced in property initializers or class static initialization blocks.",
+      "'arguments' cannot be referenced in property initializers or class static initialization blocks.",
+      "'arguments' cannot be referenced in property initializers or class static initialization blocks.",
+    ]);
+  });
+
   it("accepts TypeScript constant ambient const initializers and literal enum references", () => {
     const sourceFile = parseSourceFile([
       "declare namespace Foo {",
@@ -963,7 +984,7 @@ describe("checker groundwork", () => {
       "  data2(value) { }",
       "};",
     ].join("\n"));
-    const result = checkSourceFile(sourceFile);
+    const result = checkSourceFile(sourceFile, { noImplicitAny: true });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2353, 7006, 2322]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
@@ -1008,7 +1029,7 @@ describe("checker groundwork", () => {
 
   it("assigns non-nullish structural values to empty object-like targets", () => {
     const sourceFile = parseSourceFile("interface Empty { } function accept(value: Empty) { } accept([]); accept(1); accept(null);");
-    const result = checkSourceFile(sourceFile);
+    const result = checkSourceFile(sourceFile, { strict: true });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2345]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Argument of type 'null' is not assignable to parameter of type 'Empty'."]);

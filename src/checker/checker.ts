@@ -14,6 +14,8 @@ import {
   isCallExpression,
   isCallSignatureDeclaration,
   isClassDeclaration,
+  isClassExpression,
+  isClassStaticBlockDeclaration,
   isComputedPropertyName,
   isContinueStatement,
   isConditionalExpression,
@@ -102,6 +104,7 @@ import {
   type BindingName,
   type ClassDeclaration,
   type ClassElement,
+  type ClassExpression,
   type ConciseBody,
   type ConstructorDeclaration,
   type EntityName,
@@ -133,6 +136,8 @@ import { createDiagnostic, type Diagnostic } from "../diagnostics/index.js";
 import type { CompilerOptions, Program, ProgramDiagnostic } from "../program/index.js";
 
 type PrimitiveTypeName = "any" | "boolean" | "never" | "null" | "number" | "string" | "undefined" | "unknown" | "void";
+
+type ClassLikeDeclaration = ClassDeclaration | ClassExpression;
 
 interface TupleElementType {
   readonly name?: string;
@@ -189,6 +194,7 @@ interface CheckState {
   readonly isJavaScriptFile: boolean;
   readonly strictMode: boolean;
   readonly strictModeReason: "class" | "module" | "strict" | undefined;
+  readonly argumentsForbiddenInClassInitializerOrStaticBlock: boolean;
   readonly insideFunction: boolean;
   readonly iterationDepth: number;
   readonly resolveExternalModule?: (moduleSpecifier: string) => CheckedType | undefined;
@@ -341,6 +347,7 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
       isJavaScriptFile: isJavaScriptFileName(sourceFile.fileName),
       strictMode: sourceFileStrictMode(sourceFile.sourceFile, program.options),
       strictModeReason: sourceFileStrictModeReason(sourceFile.sourceFile, program.options),
+      argumentsForbiddenInClassInitializerOrStaticBlock: false,
       insideFunction: false,
       iterationDepth: 0,
       resolveExternalModule: moduleSpecifier => moduleResolver(sourceFile.fileName, moduleSpecifier),
@@ -367,6 +374,7 @@ function checkStateForSourceFile(sourceFile: SourceFile, options: CompilerOption
     isJavaScriptFile: isJavaScriptFileName(sourceFile.fileName),
     strictMode: sourceFileStrictMode(sourceFile, options),
     strictModeReason: sourceFileStrictModeReason(sourceFile, options),
+    argumentsForbiddenInClassInitializerOrStaticBlock: false,
     insideFunction: false,
     iterationDepth: 0,
   };
@@ -722,7 +730,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isIfStatement(statement)) {
     inferExpression(statement.expression, state, environment);
-    checkStatement(statement.thenStatement, state, narrowedEnvironmentForCondition(statement.expression, environment), expectedReturnType, ambient, false);
+    checkStatement(statement.thenStatement, state, narrowedEnvironmentForCondition(statement.expression, state, environment), expectedReturnType, ambient, false);
     if (statement.elseStatement !== undefined) {
       checkStatement(statement.elseStatement, state, new Map(environment), expectedReturnType, ambient, false);
     }
@@ -813,7 +821,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isExpressionStatement(statement)) {
     inferExpression(statement.expression, state, environment);
-    applyAssertionCallNarrowing(statement.expression, environment);
+    applyAssertionCallNarrowing(statement.expression, state, environment);
     return;
   }
   if (isBlock(statement)) {
@@ -841,11 +849,19 @@ function enterIteration(state: CheckState): CheckState {
 }
 
 function enterFunction(state: CheckState): CheckState {
+  return { ...state, argumentsForbiddenInClassInitializerOrStaticBlock: false, insideFunction: true, iterationDepth: 0 };
+}
+
+function enterArrowFunction(state: CheckState): CheckState {
   return { ...state, insideFunction: true, iterationDepth: 0 };
 }
 
 function enterClassBody(state: CheckState): CheckState {
   return { ...state, strictMode: true, strictModeReason: "class" };
+}
+
+function enterClassInitializerOrStaticBlock(state: CheckState): CheckState {
+  return { ...state, argumentsForbiddenInClassInitializerOrStaticBlock: true };
 }
 
 function prebindStatementDeclarations(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
@@ -1448,25 +1464,37 @@ function bindingElementPropertyNames(element: BindingElement): readonly string[]
 }
 
 function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
+  checkClassLike(classDeclaration, state, environment, ambient, true);
+}
+
+function inferClassExpression(classExpression: ClassExpression, state: CheckState, environment: TypeEnvironment): CheckedType {
+  return checkClassLike(classExpression, state, environment, false, false);
+}
+
+function checkClassLike(classDeclaration: ClassLikeDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean, bindOuterName: boolean): CheckedType {
   const classIsAbstract = hasModifier(classDeclaration, Kind.AbstractKeyword);
   const inheritedMembers = inheritedClassMembers(classDeclaration, environment);
   const classEnvironment = new Map(environment);
   addTypeParametersToEnvironment(classDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], classEnvironment);
   const classMembers = collectClassMemberNames(classDeclaration, inheritedMembers, classEnvironment, state.options);
+  const classType: CheckedType = {
+    kind: "classConstructor",
+    name: classDeclaration.name?.text ?? "(anonymous class)",
+    typeParameters: classDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [],
+    typeArguments: [],
+    constructorParameters: classConstructorParameterTypes(classDeclaration, classEnvironment),
+    abstract: classIsAbstract,
+    members: classMembers,
+    ...classArrayBaseElementType(classDeclaration, classEnvironment, state),
+  };
   if (classDeclaration.name !== undefined) {
     if (invalidClassNames.has(classDeclaration.name.text)) {
       state.diagnostics.push(createDiagnostic(2414, classDeclaration.name.text));
     }
-    environment.set(classDeclaration.name.text, {
-      kind: "classConstructor",
-      name: classDeclaration.name.text,
-      typeParameters: classDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [],
-      typeArguments: [],
-      constructorParameters: classConstructorParameterTypes(classDeclaration, classEnvironment),
-      abstract: classIsAbstract,
-      members: classMembers,
-      ...classArrayBaseElementType(classDeclaration, classEnvironment, state),
-    });
+    classEnvironment.set(classDeclaration.name.text, classType);
+    if (bindOuterName) {
+      environment.set(classDeclaration.name.text, classType);
+    }
   }
   checkMissingAbstractMembers(classDeclaration, state, classIsAbstract, inheritedMembers, classMembers);
   checkAccessorAbstractPairs(classDeclaration.members, state);
@@ -1478,9 +1506,10 @@ function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckS
   for (const member of classDeclaration.members) {
     checkClassElement(member, classBodyState, classEnvironment, ambient, classIsAbstract, classMembers, inheritedMembers, accessorContextTypes);
   }
+  return classType;
 }
 
-function inheritedClassMembers(classDeclaration: ClassDeclaration, environment: TypeEnvironment): ClassMemberNames | undefined {
+function inheritedClassMembers(classDeclaration: ClassLikeDeclaration, environment: TypeEnvironment): ClassMemberNames | undefined {
   for (const clause of classDeclaration.heritageClauses ?? []) {
     if (clause.token !== Kind.ExtendsKeyword) {
       continue;
@@ -1491,7 +1520,7 @@ function inheritedClassMembers(classDeclaration: ClassDeclaration, environment: 
   return undefined;
 }
 
-function classConstructorParameterTypes(classDeclaration: ClassDeclaration, environment: TypeEnvironment): readonly CheckedType[] {
+function classConstructorParameterTypes(classDeclaration: ClassLikeDeclaration, environment: TypeEnvironment): readonly CheckedType[] {
   const constructor = classDeclaration.members.find(isConstructorDeclaration);
   if (constructor === undefined) {
     return [];
@@ -1499,7 +1528,7 @@ function classConstructorParameterTypes(classDeclaration: ClassDeclaration, envi
   return constructor.parameters.map(parameter => parameter.type === undefined ? anyType : typeFromTypeNode(parameter.type, environment));
 }
 
-function classArrayBaseElementType(classDeclaration: ClassDeclaration, environment: TypeEnvironment, state: CheckState): { readonly arrayBaseElementType: CheckedType } | Record<string, never> {
+function classArrayBaseElementType(classDeclaration: ClassLikeDeclaration, environment: TypeEnvironment, state: CheckState): { readonly arrayBaseElementType: CheckedType } | Record<string, never> {
   for (const clause of classDeclaration.heritageClauses ?? []) {
     if (clause.token !== Kind.ExtendsKeyword) {
       continue;
@@ -1590,7 +1619,7 @@ function isConstantEnumBinaryOperator(kind: Kind): boolean {
     || kind === Kind.CaretToken;
 }
 
-function collectClassMemberNames(classDeclaration: ClassDeclaration, inherited: ClassMemberNames | undefined, environment: TypeEnvironment, options: CompilerOptions): ClassMemberNames {
+function collectClassMemberNames(classDeclaration: ClassLikeDeclaration, inherited: ClassMemberNames | undefined, environment: TypeEnvironment, options: CompilerOptions): ClassMemberNames {
   const instance = new Set(inherited?.instance ?? []);
   const staticMembers = new Set(inherited?.static ?? []);
   const abstractMembers = new Map(inherited?.abstractMembers ?? []);
@@ -1711,7 +1740,7 @@ function isAbstractPropertyLike(member: ClassElement): boolean {
     && (isPropertyDeclaration(member) || isGetAccessorDeclaration(member) || isSetAccessorDeclaration(member));
 }
 
-function checkMissingAbstractMembers(classDeclaration: ClassDeclaration, state: CheckState, classIsAbstract: boolean, inherited: ClassMemberNames | undefined, classMembers: ClassMemberNames): void {
+function checkMissingAbstractMembers(classDeclaration: ClassLikeDeclaration, state: CheckState, classIsAbstract: boolean, inherited: ClassMemberNames | undefined, classMembers: ClassMemberNames): void {
   if (classIsAbstract || inherited === undefined || classDeclaration.name === undefined) {
     return;
   }
@@ -2069,6 +2098,10 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     }
     return;
   }
+  if (isClassStaticBlockDeclaration(member)) {
+    checkBlock(member.body, enterClassInitializerOrStaticBlock(state), new Map(environment), undefined);
+    return;
+  }
   if (isPropertyDeclaration(member) && member.initializer !== undefined) {
     checkAbstractMemberModifiers(member, state, classIsAbstract, propertyNameText(member.name), true);
     checkUninitializedProperty(member, state, ambient);
@@ -2081,7 +2114,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     if (classMembers.className !== undefined) {
       initializerEnvironment.set("this", thisClassType(classMembers, "fieldInitializer"));
     }
-    inferExpression(member.initializer, state, initializerEnvironment);
+    inferExpression(member.initializer, enterClassInitializerOrStaticBlock(state), initializerEnvironment);
     return;
   }
   if (isPropertyDeclaration(member)) {
@@ -2316,6 +2349,9 @@ function checkSignatureParameters(parameters: readonly ParameterDeclaration[], s
     const parameterType = parameter.type === undefined ? contextualParameterType ?? anyType : typeFromTypeNode(parameter.type, environment, state);
     checkStrictModeBindingName(parameter.name, state, ambient);
     setBindingNameType(parameter.name, parameterType, environment);
+    if (parameter.initializer !== undefined) {
+      inferExpression(parameter.initializer, enterFunction(state), environment);
+    }
     return parameterType;
   });
 }
@@ -2363,6 +2399,9 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
     checkImplicitAnyParameter(parameter, state);
     checkStrictModeBindingName(parameter.name, state, ambient);
     setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
+    if (parameter.initializer !== undefined) {
+      inferExpression(parameter.initializer, enterFunction(state), functionEnvironment);
+    }
   }
   if (functionDeclaration.body !== undefined) {
     checkBlock(functionDeclaration.body, enterFunction(state), functionEnvironment, returnType);
@@ -2397,6 +2436,9 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
     checkImplicitAnyParameter(parameter, state, contextualParameterTypes[index]);
     checkStrictModeBindingName(parameter.name, state, false);
     setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
+    if (parameter.initializer !== undefined) {
+      inferExpression(parameter.initializer, enterFunction(state), functionEnvironment);
+    }
   }
   const expectedReturnType = declaredReturnType ?? contextualReturnType;
   checkBlock(functionExpression.body, enterFunction(state), functionEnvironment, expectedReturnType);
@@ -2535,6 +2577,10 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return anyType;
   }
   if (isIdentifier(expression)) {
+    if (expression.text === "arguments" && state.argumentsForbiddenInClassInitializerOrStaticBlock) {
+      state.diagnostics.push(createDiagnostic(2815));
+      return iArgumentsType;
+    }
     const bound = environment.get(expression.text);
     if (bound === undefined) {
       if (expression.text !== "") {
@@ -2606,6 +2652,9 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   }
   if (isObjectLiteralExpression(expression)) {
     return inferObjectLiteral(expression, state, environment);
+  }
+  if (isClassExpression(expression)) {
+    return inferClassExpression(expression, state, environment);
   }
   if (isConditionalExpression(expression)) {
     inferExpression(expression.condition, state, environment);
@@ -2846,41 +2895,41 @@ function callableFunctionType(type: CheckedType | undefined): CheckedFunctionTyp
   return undefined;
 }
 
-function narrowedEnvironmentForCondition(expression: Expression, environment: TypeEnvironment): TypeEnvironment {
+function narrowedEnvironmentForCondition(expression: Expression, state: CheckState, environment: TypeEnvironment): TypeEnvironment {
   const narrowed = new Map(environment);
-  applyConditionNarrowing(expression, environment, narrowed);
+  applyConditionNarrowing(expression, state, environment, narrowed);
   return narrowed;
 }
 
-function applyConditionNarrowing(expression: Expression, source: TypeEnvironment, target: TypeEnvironment): void {
+function applyConditionNarrowing(expression: Expression, state: CheckState, source: TypeEnvironment, target: TypeEnvironment): void {
   if (isParenthesizedExpression(expression)) {
-    applyConditionNarrowing(expression.expression, source, target);
+    applyConditionNarrowing(expression.expression, state, source, target);
     return;
   }
   if (isBinaryExpression(expression) && expression.operatorToken.kind === Kind.AmpersandAmpersandToken) {
-    applyConditionNarrowing(expression.left, source, target);
-    applyConditionNarrowing(expression.right, target, target);
+    applyConditionNarrowing(expression.left, state, source, target);
+    applyConditionNarrowing(expression.right, state, target, target);
     return;
   }
   if (!isCallExpression(expression)) {
     return;
   }
-  applyDirectPredicateCallNarrowing(expression, source, target);
-  applyArrayEveryPredicateNarrowing(expression, source, target);
+  applyDirectPredicateCallNarrowing(expression, state, source, target);
+  applyArrayEveryPredicateNarrowing(expression, state, source, target);
 }
 
-function applyDirectPredicateCallNarrowing(expression: Extract<Expression, { readonly kind: Kind.CallExpression }>, source: TypeEnvironment, target: TypeEnvironment): void {
+function applyDirectPredicateCallNarrowing(expression: Extract<Expression, { readonly kind: Kind.CallExpression }>, state: CheckState, source: TypeEnvironment, target: TypeEnvironment): void {
   const predicate = predicateFromCallExpression(expression, source);
   if (predicate?.parameterIndex === undefined) {
     return;
   }
   const argument = expression.arguments[predicate.parameterIndex];
   if (argument !== undefined) {
-    narrowExpressionBinding(argument, predicate.assertedType, source, target);
+    narrowExpressionBinding(argument, predicate.assertedType, state.options, source, target);
   }
 }
 
-function applyAssertionCallNarrowing(expression: Expression, environment: TypeEnvironment): void {
+function applyAssertionCallNarrowing(expression: Expression, state: CheckState, environment: TypeEnvironment): void {
   if (!isCallExpression(expression)) {
     return;
   }
@@ -2890,11 +2939,11 @@ function applyAssertionCallNarrowing(expression: Expression, environment: TypeEn
   }
   const argument = expression.arguments[predicate.parameterIndex];
   if (argument !== undefined) {
-    narrowExpressionBinding(argument, predicate.assertedType, environment, environment);
+    narrowExpressionBinding(argument, predicate.assertedType, state.options, environment, environment);
   }
 }
 
-function applyArrayEveryPredicateNarrowing(expression: Extract<Expression, { readonly kind: Kind.CallExpression }>, source: TypeEnvironment, target: TypeEnvironment): void {
+function applyArrayEveryPredicateNarrowing(expression: Extract<Expression, { readonly kind: Kind.CallExpression }>, state: CheckState, source: TypeEnvironment, target: TypeEnvironment): void {
   if (!isPropertyAccessExpression(expression.expression) || expression.expression.name.text !== "every") {
     return;
   }
@@ -2907,7 +2956,7 @@ function applyArrayEveryPredicateNarrowing(expression: Extract<Expression, { rea
   if (callbackType?.kind !== "function" || callbackType.returnType.kind !== "typePredicate") {
     return;
   }
-  narrowExpressionBinding(receiver, { kind: "array", elementType: callbackType.returnType.assertedType }, source, target);
+  narrowExpressionBinding(receiver, { kind: "array", elementType: callbackType.returnType.assertedType }, state.options, source, target);
 }
 
 function predicateFromCallExpression(expression: Extract<Expression, { readonly kind: Kind.CallExpression }>, environment: TypeEnvironment): Extract<CheckedType, { readonly kind: "typePredicate" }> | undefined {
@@ -2927,9 +2976,9 @@ function predicateFromCallExpression(expression: Extract<Expression, { readonly 
   return undefined;
 }
 
-function narrowExpressionBinding(expression: Expression, assertedType: CheckedType, source: TypeEnvironment, target: TypeEnvironment): void {
+function narrowExpressionBinding(expression: Expression, assertedType: CheckedType, options: CompilerOptions, source: TypeEnvironment, target: TypeEnvironment): void {
   if (isParenthesizedExpression(expression)) {
-    narrowExpressionBinding(expression.expression, assertedType, source, target);
+    narrowExpressionBinding(expression.expression, assertedType, options, source, target);
     return;
   }
   if (!isIdentifier(expression)) {
@@ -2937,37 +2986,37 @@ function narrowExpressionBinding(expression: Expression, assertedType: CheckedTy
   }
   const current = source.get(expression.text);
   if (current !== undefined) {
-    target.set(expression.text, narrowType(current, assertedType));
+    target.set(expression.text, narrowType(current, assertedType, options));
   }
 }
 
-function narrowType(current: CheckedType, assertedType: CheckedType): CheckedType {
+function narrowType(current: CheckedType, assertedType: CheckedType, options: CompilerOptions): CheckedType {
   if (current.kind === "unassignedVariable") {
-    return narrowType(current.type, assertedType);
+    return narrowType(current.type, assertedType, options);
   }
   if (current.kind === "valueAndType") {
-    return { ...current, value: narrowType(current.value, assertedType) };
+    return { ...current, value: narrowType(current.value, assertedType, options) };
   }
   if (current.kind === "typeAliasInstance") {
-    return { ...current, target: narrowType(current.target, assertedType) };
+    return { ...current, target: narrowType(current.target, assertedType, options) };
   }
   if (current.kind === "nonNullable") {
-    return narrowType(nonNullableType(current.target), assertedType);
+    return narrowType(nonNullableType(current.target), assertedType, options);
   }
   if (assertedType.kind === "nonNullable") {
-    return narrowType(current, nonNullableType(assertedType.target));
+    return narrowType(current, nonNullableType(assertedType.target), options);
   }
   if (current.kind === "array" && assertedType.kind === "array") {
-    return { kind: "array", elementType: narrowType(current.elementType, assertedType.elementType) };
+    return { kind: "array", elementType: narrowType(current.elementType, assertedType.elementType, options) };
   }
   if (current.kind === "union") {
-    const narrowedMembers = current.types.filter(type => typesSufficientlyOverlap(type, assertedType));
-    return narrowedMembers.length === 0 ? current : unionType(narrowedMembers.map(type => narrowType(type, assertedType)));
+    const narrowedMembers = current.types.filter(type => typesSufficientlyOverlap(type, assertedType, options));
+    return narrowedMembers.length === 0 ? current : unionType(narrowedMembers.map(type => narrowType(type, assertedType, options)));
   }
   if (current.kind === "any" || current.kind === "unknown" || current.kind === "unresolved") {
     return assertedType;
   }
-  if (isAssignableTo(assertedType, current)) {
+  if (isAssignableTo(assertedType, current, options)) {
     return assertedType;
   }
   if (isAssignableTo(current, assertedType)) {
@@ -3157,6 +3206,9 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
     const parameterType = parameter.type === undefined ? contextualParameterType ?? anyType : typeFromTypeNode(parameter.type, arrowEnvironment, state);
     checkStrictModeBindingName(parameter.name, state, false);
     setBindingNameType(parameter.name, parameterType, arrowEnvironment);
+    if (parameter.initializer !== undefined) {
+      inferExpression(parameter.initializer, state, arrowEnvironment);
+    }
   }
   const declaredReturnType = arrowFunction.type === undefined ? undefined : bindTypePredicateParameterIndex(typeFromTypeNode(arrowFunction.type, arrowEnvironment, state), arrowFunction.parameters);
   const expectedReturnType = declaredReturnType ?? contextualReturnType;
@@ -3181,7 +3233,7 @@ function suppressImmediateThisDiagnostics(environment: TypeEnvironment): void {
 
 function inferConciseBody(body: ConciseBody, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): CheckedType {
   if (isBlock(body)) {
-    checkBlock(body, enterFunction(state), environment, expectedReturnType);
+    checkBlock(body, enterArrowFunction(state), environment, expectedReturnType);
     checkFunctionReturnCompleteness(body, expectedReturnType, state);
     return expectedReturnType ?? unresolvedType;
   }
@@ -4159,7 +4211,7 @@ function resolveEntityNamespace(typeName: EntityName, environment: TypeEnvironme
 }
 
 function emptyCheckState(options: CompilerOptions = {}): CheckState {
-  return { diagnostics: [], options, isJavaScriptFile: false, strictMode: false, strictModeReason: undefined, insideFunction: false, iterationDepth: 0 };
+  return { diagnostics: [], options, isJavaScriptFile: false, strictMode: false, strictModeReason: undefined, argumentsForbiddenInClassInitializerOrStaticBlock: false, insideFunction: false, iterationDepth: 0 };
 }
 
 function typeLiteralType(members: readonly TypeElement[], state: CheckState, environment: TypeEnvironment): CheckedType {
@@ -4346,7 +4398,7 @@ function checkImplicitAnyParameter(parameter: ParameterDeclaration, state: Check
   if (state.isJavaScriptFile && state.options.checkJs !== true && !hasParameterPropertyModifier) {
     return;
   }
-  if ((!strictOptionValue(state.options, "noImplicitAny") && !hasParameterPropertyModifier) || parameter.type !== undefined || !isIdentifier(parameter.name)) {
+  if ((!strictOptionValue(state.options, "noImplicitAny") && !hasParameterPropertyModifier) || parameter.type !== undefined || parameter.initializer !== undefined || !isIdentifier(parameter.name)) {
     return;
   }
   state.diagnostics.push(createDiagnostic(7006, parameter.name.text, "any"));
