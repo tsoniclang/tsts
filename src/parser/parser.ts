@@ -2735,7 +2735,8 @@ function collectJSDocByTokenStart(sourceText: string, fileName: string): Map<num
 function parseJSDocComment(commentText: string, fileName: string): Node {
   const body = cleanJSDocComment(commentText);
   const tags: JSDocTag[] = [];
-  for (const match of body.matchAll(/@template\s+([A-Za-z_$][\w$]*(?:\s*,\s*[A-Za-z_$][\w$]*)*)/gu)) {
+  const jsDocIdentifier = String.raw`[\p{ID_Start}_$][\p{ID_Continue}\u200c\u200d_$]*`;
+  for (const match of body.matchAll(new RegExp(String.raw`@template\s+(${jsDocIdentifier}(?:\s*,\s*${jsDocIdentifier})*)`, "gu"))) {
     const typeParameters = match[1]!.split(/\s*,\s*/u)
       .filter(name => name.length > 0)
       .map(name => createTypeParameterDeclaration(undefined, createIdentifier(name), undefined, undefined, undefined));
@@ -2743,7 +2744,7 @@ function parseJSDocComment(commentText: string, fileName: string): Node {
       tags.push(createJSDocTemplateTag(createIdentifier("template"), undefined as never, createNodeArray(typeParameters), undefined));
     }
   }
-  for (const match of body.matchAll(/@param\s*\{([^}]*)\}\s*([A-Za-z_$][\w$]*)/gu)) {
+  for (const match of body.matchAll(new RegExp(String.raw`@param\s*\{([^}]*)\}\s*(${jsDocIdentifier})`, "gu"))) {
     tags.push(createJSDocParameterTag(
       createIdentifier("param"),
       createIdentifier(match[2]!),

@@ -310,12 +310,14 @@ const boxedNumberType: CheckedType = {
     name: "Number",
     typeParameters: [],
     properties: new Map<string, CheckedType>([
+      ["toExponential", { kind: "function", typeParameters: [], parameters: [], returnType: stringType }],
       ["toFixed", { kind: "function", typeParameters: [], parameters: [], returnType: stringType }],
+      ["toPrecision", { kind: "function", typeParameters: [], parameters: [], returnType: stringType }],
       ["toString", { kind: "function", typeParameters: [], parameters: [], returnType: stringType }],
       ["valueOf", { kind: "function", typeParameters: [], parameters: [], returnType: numberType }],
     ]),
     optionalProperties: new Set(),
-    methodProperties: new Set(["toFixed", "toString", "valueOf"]),
+    methodProperties: new Set(["toExponential", "toFixed", "toPrecision", "toString", "valueOf"]),
     callSignatures: [],
   },
 };
@@ -684,6 +686,19 @@ function standardGlobalEnvironment(): TypeEnvironment {
     ["Date", anyType],
     ["Error", { kind: "valueAndType", value: { kind: "builtinConstructor", name: "Error", instanceType: errorInterfaceType, constructorParameters: [stringType], staticProperties: new Map() }, type: errorInterfaceType }],
     ["FinalizationRegistry", anyType],
+    ["console", {
+      kind: "object",
+      properties: new Map([
+        ["debug", { kind: "function", typeParameters: [], parameters: [anyType], restParameterIndex: 0, returnType: voidType }],
+        ["error", { kind: "function", typeParameters: [], parameters: [anyType], restParameterIndex: 0, returnType: voidType }],
+        ["info", { kind: "function", typeParameters: [], parameters: [anyType], restParameterIndex: 0, returnType: voidType }],
+        ["log", { kind: "function", typeParameters: [], parameters: [anyType], restParameterIndex: 0, returnType: voidType }],
+        ["warn", { kind: "function", typeParameters: [], parameters: [anyType], restParameterIndex: 0, returnType: voidType }],
+      ]),
+      readonlyProperties: new Set(),
+      optionalProperties: new Set(),
+      methodProperties: new Set(["debug", "error", "info", "log", "warn"]),
+    }],
     ["Iterable", anyType],
     ["Math", {
       kind: "namespace",
@@ -760,7 +775,7 @@ function collectModuleExport(statement: Statement, exports: Map<string, CheckedT
     return;
   }
   if (isInterfaceDeclaration(statement)) {
-    mergeModuleExport(exports, "default", statement.name === undefined ? anyType : { kind: "interface", name: statement.name.text, members: { name: statement.name.text, typeParameters: [], properties: new Map(), optionalProperties: new Set(), methodProperties: new Set(), callSignatures: [] } });
+    mergeModuleExport(exports, "default", statement.name === undefined ? anyType : environment.get(statement.name.text) ?? anyType);
     return;
   }
   if (isClassDeclaration(statement) || isFunctionDeclaration(statement)) {
@@ -4756,8 +4771,8 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
   if (receiverType.kind === "booleanLiteral") {
     return propertyAccessType(booleanType, propertyName, environment);
   }
-  if (receiverType.kind === "number" && propertyName === "toFixed") {
-    return { kind: "function", typeParameters: [], parameters: [], returnType: stringType };
+  if (receiverType.kind === "number" && numberMethodReturnTypes.has(propertyName)) {
+    return { kind: "function", typeParameters: [], parameters: [], returnType: numberMethodReturnTypes.get(propertyName)! };
   }
   if (receiverType.kind === "string" && propertyName === "length") {
     return numberType;
@@ -7306,6 +7321,14 @@ const stringMethodReturnTypes = new Map<string, CheckedType>([
   ["startsWith", booleanType],
   ["toLowerCase", stringType],
   ["trim", stringType],
+]);
+
+const numberMethodReturnTypes = new Map<string, CheckedType>([
+  ["toExponential", stringType],
+  ["toFixed", stringType],
+  ["toPrecision", stringType],
+  ["toString", stringType],
+  ["valueOf", numberType],
 ]);
 
 const arrayMethodReturnTypes = new Map<string, CheckedType>([

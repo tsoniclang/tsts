@@ -170,10 +170,16 @@ function isWhitespace(charCode: number): boolean {
 }
 
 function isIdentifierStart(character: string): boolean {
+  if (character.length === 0) {
+    return false;
+  }
   return character === "$" || character === "_" || /^\p{ID_Start}$/u.test(character);
 }
 
 function isIdentifierPart(character: string): boolean {
+  if (character.length === 0) {
+    return false;
+  }
   return character === "$" || character === "\u200c" || character === "\u200d" || /^\p{ID_Continue}$/u.test(character);
 }
 
@@ -266,7 +272,7 @@ export class Scanner {
       return this.#token(Kind.MultiLineCommentTrivia, start, this.#position);
     }
 
-    const current = this.#text[this.#position]!;
+    const current = this.#codePointAt(this.#position);
     if (current === "\"" || current === "'") {
       return this.#scanString(current);
     }
@@ -275,15 +281,24 @@ export class Scanner {
       return this.#scanNumber();
     }
 
-    if (current === "#" && isIdentifierStart(this.#text[this.#position + 1] ?? "")) {
-      this.#position += 2;
-      while (this.#position < this.#text.length && isIdentifierPart(this.#text[this.#position]!)) {
+    if (current === "#") {
+      const escapedStart = this.#tryPeekIdentifierEscape(this.#position + 1);
+      if (escapedStart !== undefined && isIdentifierStart(escapedStart.character)) {
         this.#position += 1;
+        return this.#scanPrivateIdentifierWithEscapes(start);
       }
-      return this.#token(Kind.PrivateIdentifier, start, this.#position);
+      const next = this.#codePointAt(this.#position + 1);
+      if (isIdentifierStart(next)) {
+        this.#position += 1 + next.length;
+        while (this.#position < this.#text.length && isIdentifierPart(this.#codePointAt(this.#position))) {
+          this.#position += this.#codePointAt(this.#position).length;
+        }
+        return this.#token(Kind.PrivateIdentifier, start, this.#position);
+      }
     }
 
-    if (isIdentifierStart(current)) {
+    const escapedStart = this.#tryPeekIdentifierEscape(this.#position);
+    if ((escapedStart !== undefined && isIdentifierStart(escapedStart.character)) || isIdentifierStart(current)) {
       return this.#scanIdentifierOrKeyword();
     }
 
@@ -325,12 +340,101 @@ export class Scanner {
 
   #scanIdentifierOrKeyword(): ScannedToken {
     const start = this.#position;
-    this.#position += 1;
-    while (this.#position < this.#text.length && isIdentifierPart(this.#text[this.#position]!)) {
-      this.#position += 1;
+    const escapedStart = this.#tryPeekIdentifierEscape(this.#position);
+    if (escapedStart !== undefined && isIdentifierStart(escapedStart.character)) {
+      const text = this.#scanIdentifierTextWithEscapes(true);
+      return this.#token(Kind.Identifier, start, this.#position, text);
+    }
+    this.#position += this.#codePointAt(this.#position).length;
+    let hasEscape = false;
+    while (this.#position < this.#text.length) {
+      const escaped = this.#tryPeekIdentifierEscape(this.#position);
+      if (escaped !== undefined && isIdentifierPart(escaped.character)) {
+        hasEscape = true;
+        const text = this.#text.slice(start, this.#position) + this.#scanIdentifierTextWithEscapes(false);
+        return this.#token(Kind.Identifier, start, this.#position, text);
+      }
+      const current = this.#codePointAt(this.#position);
+      if (!isIdentifierPart(current)) {
+        break;
+      }
+      this.#position += current.length;
     }
     const text = this.#text.slice(start, this.#position);
-    return this.#token(keywordKinds.get(text) ?? Kind.Identifier, start, this.#position);
+    return this.#token(hasEscape ? Kind.Identifier : keywordKinds.get(text) ?? Kind.Identifier, start, this.#position, text);
+  }
+
+  #scanPrivateIdentifierWithEscapes(start: number): ScannedToken {
+    const text = `#${this.#scanIdentifierTextWithEscapes(true)}`;
+    return this.#token(Kind.PrivateIdentifier, start, this.#position, text);
+  }
+
+  #scanIdentifierTextWithEscapes(requireStartOnFirst: boolean): string {
+    let text = "";
+    while (this.#position < this.#text.length) {
+      const escaped = this.#tryScanIdentifierEscape(this.#position);
+      const first = text.length === 0;
+      if (escaped !== undefined && (first && requireStartOnFirst ? isIdentifierStart(escaped.character) : isIdentifierPart(escaped.character))) {
+        text += escaped.character;
+        continue;
+      }
+      const current = this.#codePointAt(this.#position);
+      const valid = first && requireStartOnFirst ? isIdentifierStart(current) : isIdentifierPart(current);
+      if (!valid) {
+        break;
+      }
+      text += current;
+      this.#position += current.length;
+    }
+    return text;
+  }
+
+  #tryPeekIdentifierEscape(position: number): { readonly character: string; readonly end: number } | undefined {
+    const currentPosition = this.#position;
+    const escaped = this.#tryScanIdentifierEscape(position);
+    this.#position = currentPosition;
+    return escaped;
+  }
+
+  #tryScanIdentifierEscape(position: number): { readonly character: string; readonly end: number } | undefined {
+    if (this.#text[position] !== "\\" || this.#text[position + 1] !== "u") {
+      return undefined;
+    }
+    let escapeEnd = position + 2;
+    let codePointText = "";
+    if (this.#text[escapeEnd] === "{") {
+      escapeEnd += 1;
+      const digitsStart = escapeEnd;
+      while (escapeEnd < this.#text.length && /[0-9a-fA-F]/.test(this.#text[escapeEnd]!)) {
+        escapeEnd += 1;
+      }
+      if (escapeEnd === digitsStart || this.#text[escapeEnd] !== "}") {
+        return undefined;
+      }
+      codePointText = this.#text.slice(digitsStart, escapeEnd);
+      escapeEnd += 1;
+    } else {
+      codePointText = this.#text.slice(escapeEnd, escapeEnd + 4);
+      if (!/^[0-9a-fA-F]{4}$/.test(codePointText)) {
+        return undefined;
+      }
+      escapeEnd += 4;
+    }
+    const codePoint = Number.parseInt(codePointText, 16);
+    if (!Number.isFinite(codePoint) || codePoint < 0 || codePoint > 0x10FFFF) {
+      return undefined;
+    }
+    const character = String.fromCodePoint(codePoint);
+    this.#position = escapeEnd;
+    return { character, end: escapeEnd };
+  }
+
+  #codePointAt(position: number): string {
+    if (position >= this.#text.length) {
+      return "";
+    }
+    const codePoint = this.#text.codePointAt(position);
+    return codePoint === undefined ? "" : String.fromCodePoint(codePoint);
   }
 
   #scanNumber(): ScannedToken {
@@ -522,8 +626,8 @@ export class Scanner {
     }
   }
 
-  #token(kind: Kind, pos: number, end: number): ScannedToken {
-    return { kind, pos, end, text: this.#text.slice(pos, end) };
+  #token(kind: Kind, pos: number, end: number, text = this.#text.slice(pos, end)): ScannedToken {
+    return { kind, pos, end, text };
   }
 }
 

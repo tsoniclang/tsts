@@ -18,6 +18,7 @@ import {
   isParameterDeclaration,
   isSourceFile,
   isTypeAliasDeclaration,
+  isVariableDeclarationList,
   isVariableStatement,
   isWhileStatement,
   type BindingName,
@@ -260,7 +261,7 @@ function bindVariableDeclarationList(declarationList: VariableDeclarationList, s
 }
 
 function bindForInitializer(initializer: ForInitializer | undefined, state: BinderState, lexicalScope: SymbolTable, functionScope: SymbolTable): void {
-  if (initializer !== undefined && "declarations" in initializer) {
+  if (initializer !== undefined && isVariableDeclarationList(initializer)) {
     bindVariableDeclarationList(initializer, state, lexicalScope, functionScope);
   }
 }
