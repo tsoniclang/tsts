@@ -220,8 +220,9 @@ describe("checker groundwork", () => {
     ].join("\n"));
     const result = checkSourceFile(sourceFile);
 
-    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2304, 2304]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2355, 2304, 2304]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "A function whose declared type is neither 'undefined', 'void', nor 'any' must return a value.",
       "Cannot find name 'Missing'.",
       "Cannot find name 'Missing'.",
     ]);
@@ -245,7 +246,21 @@ describe("checker groundwork", () => {
     const sourceFile = parseSourceFile("function f(flag: boolean): number { return flag ? \"x\" as string : 1; }");
     const result = checkSourceFile(sourceFile);
 
-    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'unknown' is not assignable to type 'number'."]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string | number' is not assignable to type 'number'."]);
+  });
+
+  it("checks assertion overlap against resolved interface targets", () => {
+    const sourceFile = parseSourceFile([
+      "interface IHasValue { value: string; }",
+      "const invalid = <IHasValue>null;",
+      "const valid = { value: \"x\", extra: 1 } as IHasValue;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2352]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Conversion of type 'null' to type 'IHasValue' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.",
+    ]);
   });
 
   it("makes destructured binding names available to checked bodies", () => {
@@ -393,6 +408,29 @@ describe("checker groundwork", () => {
       "Type 'number' is not assignable to type 'typeof import(\"moduleA\")'.",
       "Type 'typeof import(\"moduleA\")' is not assignable to type 'number'.",
     ]);
+  });
+
+  it("uses resolved program module exports for namespace-import structural assignment", () => {
+    const host: CompilerHost = {
+      readFile: fileName => {
+        if (fileName === "main.ts") {
+          return [
+            "import moduleA = require(\"./moduleA\");",
+            "interface IHasVisualizationModel { VisualizationModel: any; }",
+            "const value: IHasVisualizationModel = moduleA;",
+          ].join("\n");
+        }
+        if (fileName === "moduleA.ts") {
+          return "export class VisualizationModel { }";
+        }
+        return undefined;
+      },
+      useCaseSensitiveFileNames: () => true,
+    };
+    const program = createProgram(["main.ts"], { module: "commonjs" }, host);
+    const diagnostics = checkProgram(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), []);
   });
 
   it("does not emit cascading assignment diagnostics when the target type is unresolved", () => {

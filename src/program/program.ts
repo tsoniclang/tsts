@@ -1,6 +1,6 @@
 import { dirname, extname, isAbsolute, join, normalize, relative } from "node:path";
 import { bindSourceFile, type BindDiagnostic, type BindResult } from "../binder/index.js";
-import { checkSourceFile } from "../checker/index.js";
+import { checkProgram } from "../checker/index.js";
 import { printSourceFile } from "../emit-js/index.js";
 import { parseSourceFile } from "../parser/index.js";
 import { isExportDeclaration, isExternalModuleReference, isImportDeclaration, isImportEqualsDeclaration, isStringLiteral, type SourceFile } from "../ast/index.js";
@@ -28,6 +28,12 @@ export interface ProgramSourceFile {
   readonly sourceText: string;
   readonly sourceFile: SourceFile;
   readonly bindResult: BindResult;
+  readonly resolvedModules: readonly ResolvedModule[];
+}
+
+export interface ResolvedModule {
+  readonly specifier: string;
+  readonly fileName: string;
 }
 
 export interface ProgramDiagnostic {
@@ -87,6 +93,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
     }
     const bindResult = bindSourceFile(sourceFile);
     diagnostics.push(...bindResult.diagnostics.map(diagnostic => convertBindDiagnostic(rootName, diagnostic)));
+    const resolvedModules: ResolvedModule[] = [];
     for (const moduleSpecifier of sourceFileModuleSpecifiers(sourceFile)) {
       const resolved = resolveModuleName(moduleSpecifier, rootName, host, fileTextCache);
       if (!resolved.found) {
@@ -94,7 +101,11 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
         continue;
       }
       if (resolved.fileName !== undefined && !seen.has(canonicalFileName(resolved.fileName, host))) {
+        resolvedModules.push({ specifier: moduleSpecifier, fileName: resolved.fileName });
         pending.push(resolved.fileName);
+      }
+      if (resolved.fileName !== undefined && seen.has(canonicalFileName(resolved.fileName, host))) {
+        resolvedModules.push({ specifier: moduleSpecifier, fileName: resolved.fileName });
       }
     }
     sourceFiles.push({
@@ -102,6 +113,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
       sourceText,
       sourceFile,
       bindResult,
+      resolvedModules,
     });
   }
   return {
@@ -135,22 +147,7 @@ export function emitProgram(program: Program, host?: Pick<CompilerHost, "writeFi
 }
 
 export function getProgramDiagnostics(program: Program): readonly ProgramDiagnostic[] {
-  const diagnostics: ProgramDiagnostic[] = [...program.diagnostics];
-  if (diagnostics.length > 0) {
-    return diagnostics;
-  }
-  for (const sourceFile of program.sourceFiles) {
-    const checkResult = checkSourceFile(sourceFile.sourceFile, program.options);
-    diagnostics.push(...checkResult.diagnostics.map(diagnostic => ({
-      fileName: sourceFile.fileName,
-      code: diagnostic.code,
-      category: diagnostic.category,
-      key: diagnostic.key,
-      messageText: diagnostic.messageText,
-      message: diagnostic.message,
-    })));
-  }
-  return diagnostics;
+  return checkProgram(program);
 }
 
 function sourceFileModuleSpecifiers(sourceFile: SourceFile): readonly string[] {
