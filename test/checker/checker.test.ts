@@ -533,10 +533,24 @@ describe("checker groundwork", () => {
       "new Promise(() => undefined);",
       "new Set();",
       "Symbol();",
+      "BigInt(1);",
       "new WeakMap();",
       "new WeakSet();",
       "new WeakRef({});",
       "new FinalizationRegistry(() => undefined);",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("uses declared Array interface augmentations as array apparent members", () => {
+    const sourceFile = parseSourceFile([
+      "interface Array<T> {",
+      "  split(parts: number): T[][];",
+      "}",
+      "const values = [\"x\"];",
+      "const chunks: string[][] = values.split(2);",
     ].join("\n"));
     const result = checkSourceFile(sourceFile);
 

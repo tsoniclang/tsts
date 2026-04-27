@@ -14,6 +14,7 @@ import {
   isClassExpression,
   isConstructorDeclaration,
   isContinueStatement,
+  isConditionalTypeNode,
   isConditionalExpression,
   isConstructSignatureDeclaration,
   isElementAccessExpression,
@@ -55,12 +56,14 @@ import {
   isPropertyAccessExpression,
   isPropertySignatureDeclaration,
   isReturnStatement,
+  isRestTypeNode,
   isSetAccessorDeclaration,
   isShorthandPropertyAssignment,
   isStringLiteral,
   isTypeAliasDeclaration,
   isTypeAssertion,
   isTypeLiteralNode,
+  isTupleTypeNode,
   isTypeReferenceNode,
   isTypePredicateNode,
   isVariableStatement,
@@ -286,6 +289,27 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(statement.type.typeParameter.constraint?.kind, Kind.TypeOperator);
     assert.equal(statement.type.questionToken?.kind, Kind.QuestionToken);
     assert.equal(statement.type.type?.kind, Kind.IndexedAccessType);
+  });
+
+  it("parses tuple rest elements and infer conditional types", () => {
+    const sourceFile = parseSourceFile("type Logic<T> = [\"and\", ...T[]] | (T extends ReadonlyArray<infer U> ? U : T);");
+    const statement = sourceFile.statements[0]!;
+
+    assert.equal(isTypeAliasDeclaration(statement), true);
+    if (!isTypeAliasDeclaration(statement)) throw new Error("Expected type alias");
+    assert.equal(statement.type.kind, Kind.UnionType);
+    if (statement.type.kind !== Kind.UnionType) throw new Error("Expected union type");
+    const tuple = statement.type.types[0]!;
+    assert.equal(isTupleTypeNode(tuple), true);
+    if (!isTupleTypeNode(tuple)) throw new Error("Expected tuple type");
+    assert.equal(isRestTypeNode(tuple.elements[1]!), true);
+    const conditionalWrapper = statement.type.types[1]!;
+    assert.equal(conditionalWrapper.kind, Kind.ParenthesizedType);
+    if (conditionalWrapper.kind !== Kind.ParenthesizedType) throw new Error("Expected parenthesized conditional type");
+    const conditional = conditionalWrapper.type;
+    assert.equal(isConditionalTypeNode(conditional), true);
+    if (!isConditionalTypeNode(conditional)) throw new Error("Expected conditional type");
+    assert.equal(conditional.extendsType.kind, Kind.TypeReference);
   });
 
   it("parses accessor declarations in class, object, and type-member contexts", () => {

@@ -185,6 +185,7 @@ interface AccessorContextTypes {
 
 interface InterfaceMembers {
   readonly name: string;
+  readonly typeParameters: readonly string[];
   readonly properties: ReadonlyMap<string, CheckedType>;
   readonly stringIndexType?: CheckedType;
   readonly numberIndexType?: CheckedType;
@@ -209,6 +210,7 @@ const iArgumentsType: CheckedType = {
   name: "IArguments",
   members: {
     name: "IArguments",
+    typeParameters: [],
     properties: new Map([
       ["length", numberType],
       ["callee", anyType],
@@ -235,6 +237,7 @@ const invalidClassNames = new Set(["any", "bigint", "boolean", "never", "number"
 const ambientTypeNames = new Set([
   "Array",
   "ArrayLike",
+  "BigInt",
   "Boolean",
   "CallableFunction",
   "ConstructorParameters",
@@ -482,6 +485,7 @@ function standardGlobalEnvironment(): TypeEnvironment {
     ["Array", anyType],
     ["ArrayBuffer", anyType],
     ["ArrayBufferView", anyType],
+    ["BigInt", anyType],
     ["Date", anyType],
     ["Error", anyType],
     ["FinalizationRegistry", anyType],
@@ -544,7 +548,7 @@ function collectModuleExport(statement: Statement, exports: Map<string, CheckedT
     return;
   }
   if (isInterfaceDeclaration(statement)) {
-    mergeModuleExport(exports, "default", statement.name === undefined ? anyType : { kind: "interface", name: statement.name.text, members: { name: statement.name.text, properties: new Map() } });
+    mergeModuleExport(exports, "default", statement.name === undefined ? anyType : { kind: "interface", name: statement.name.text, members: { name: statement.name.text, typeParameters: [], properties: new Map() } });
     return;
   }
   if (isClassDeclaration(statement) || isFunctionDeclaration(statement)) {
@@ -1749,6 +1753,7 @@ function collectInterfaceMembers(interfaceDeclaration: InterfaceDeclaration, inh
   }
   return {
     name: interfaceDeclaration.name.text,
+    typeParameters: interfaceDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [],
     properties: mergedProperties,
     ...(stringIndexType === undefined ? {} : { stringIndexType }),
     ...(numberIndexType === undefined ? {} : { numberIndexType }),
@@ -2568,7 +2573,7 @@ function inferPropertyAccess(expression: Expression, propertyName: string, state
     diagnoseThisPropertyAccess(receiverType, propertyName, state);
     return anyType;
   }
-  const propertyType = propertyAccessType(receiverType, propertyName);
+  const propertyType = propertyAccessType(receiverType, propertyName, environment);
   if (propertyType !== undefined) {
     return propertyType;
   }
@@ -2582,21 +2587,21 @@ function inferPropertyAccess(expression: Expression, propertyName: string, state
   return anyType;
 }
 
-function propertyAccessType(receiverType: CheckedType, propertyName: string): CheckedType | undefined {
+function propertyAccessType(receiverType: CheckedType, propertyName: string, environment?: TypeEnvironment): CheckedType | undefined {
   if (receiverType.kind === "valueAndType") {
-    return propertyAccessType(receiverType.value, propertyName);
+    return propertyAccessType(receiverType.value, propertyName, environment);
   }
   if (receiverType.kind === "valueOnly") {
-    return propertyAccessType(receiverType.type, propertyName);
+    return propertyAccessType(receiverType.type, propertyName, environment);
   }
   if (receiverType.kind === "namespaceAndType") {
-    return propertyAccessType(receiverType.namespace, propertyName) ?? propertyAccessType(receiverType.type, propertyName);
+    return propertyAccessType(receiverType.namespace, propertyName, environment) ?? propertyAccessType(receiverType.type, propertyName, environment);
   }
   if (receiverType.kind === "typeAliasInstance") {
-    return propertyAccessType(receiverType.target, propertyName);
+    return propertyAccessType(receiverType.target, propertyName, environment);
   }
   if (receiverType.kind === "union") {
-    const propertyTypes = receiverType.types.map(type => propertyAccessType(type, propertyName));
+    const propertyTypes = receiverType.types.map(type => propertyAccessType(type, propertyName, environment));
     return propertyTypes.every(type => type !== undefined) ? unionType(propertyTypes) : undefined;
   }
   if (receiverType.kind === "classInstance") {
@@ -2628,17 +2633,20 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string): Ch
     return { kind: "function", typeParameters: [], parameters: [], returnType: stringMethodReturnTypes.get(propertyName)! };
   }
   if (receiverType.kind === "array") {
-    return arrayPropertyAccessType(receiverType, propertyName);
+    return arrayPropertyAccessType(receiverType, propertyName, environment);
   }
   return undefined;
 }
 
-function arrayPropertyAccessType(receiverType: Extract<CheckedType, { readonly kind: "array" }>, propertyName: string): CheckedType | undefined {
+function arrayPropertyAccessType(receiverType: Extract<CheckedType, { readonly kind: "array" }>, propertyName: string, environment?: TypeEnvironment): CheckedType | undefined {
   if (propertyName === "length") {
     return numberType;
   }
   const returnType = arrayMethodReturnType(receiverType, propertyName);
-  return returnType === undefined ? undefined : { kind: "function", typeParameters: [], parameters: [], returnType };
+  if (returnType !== undefined) {
+    return { kind: "function", typeParameters: [], parameters: [], returnType };
+  }
+  return arrayInterfacePropertyType(environment, receiverType, propertyName);
 }
 
 function arrayMethodReturnType(receiverType: Extract<CheckedType, { readonly kind: "array" }>, propertyName: string): CheckedType | undefined {
@@ -2654,6 +2662,32 @@ function arrayMethodReturnType(receiverType: Extract<CheckedType, { readonly kin
   }
   if (arrayArrayMethodNames.has(propertyName)) {
     return { kind: "array", elementType: receiverType.elementType };
+  }
+  return undefined;
+}
+
+function arrayInterfacePropertyType(environment: TypeEnvironment | undefined, receiverType: Extract<CheckedType, { readonly kind: "array" }>, propertyName: string): CheckedType | undefined {
+  const arrayInterface = interfaceMeaning(environment?.get("Array"));
+  const propertyType = arrayInterface?.members.properties.get(propertyName);
+  if (arrayInterface === undefined || propertyType === undefined) {
+    return undefined;
+  }
+  const substitutions = new Map<string, CheckedType>();
+  for (let index = 0; index < arrayInterface.members.typeParameters.length; index += 1) {
+    substitutions.set(arrayInterface.members.typeParameters[index]!, index === 0 ? receiverType.elementType : anyType);
+  }
+  return substituteType(propertyType, substitutions);
+}
+
+function interfaceMeaning(type: CheckedType | undefined): Extract<CheckedType, { readonly kind: "interface" }> | undefined {
+  if (type?.kind === "interface") {
+    return type;
+  }
+  if (type?.kind === "namespaceAndType") {
+    return interfaceMeaning(type.type);
+  }
+  if (type?.kind === "valueAndType") {
+    return interfaceMeaning(type.type);
   }
   return undefined;
 }

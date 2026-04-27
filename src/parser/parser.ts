@@ -47,6 +47,7 @@ import {
   createGetAccessorDeclaration,
   createHeritageClause,
   createIfStatement,
+  createInferTypeNode,
   createIdentifier,
   createIndexSignatureDeclaration,
   createIndexedAccessTypeNode,
@@ -91,6 +92,7 @@ import {
   createQualifiedName,
   createRegularExpressionLiteral,
   createReturnStatement,
+  createRestTypeNode,
   createSatisfiesExpression,
   createSemicolonClassElement,
   createSetAccessorDeclaration,
@@ -1949,6 +1951,10 @@ export class Parser {
       this.#advance();
       return createTypeQueryNode(this.#parseEntityName(), this.#parseOptionalTypeArguments());
     }
+    if (token.kind === Kind.InferKeyword) {
+      this.#advance();
+      return createInferTypeNode(this.#parseInferTypeParameter());
+    }
     if (token.kind === Kind.LessThanToken) {
       return this.#parseFunctionTypeWithOptionalTypeParameters();
     }
@@ -1978,7 +1984,7 @@ export class Parser {
       this.#advance();
       const elements: TypeNode[] = [];
       while (this.#current().kind !== Kind.CloseBracketToken && this.#current().kind !== Kind.EndOfFile) {
-        elements.push(this.#parseType());
+        elements.push(this.#parseTupleElementType());
         this.#consumeOptional(Kind.CommaToken);
       }
       this.#expect(Kind.CloseBracketToken);
@@ -2010,6 +2016,12 @@ export class Parser {
       this.#advance();
       return createLiteralTypeNode(createNumericLiteral(token.text, 0));
     }
+    if ((token.kind === Kind.MinusToken || token.kind === Kind.PlusToken) && this.#tokens[this.#index + 1]?.kind === Kind.NumericLiteral) {
+      const operator = this.#advance().kind as Kind.MinusToken | Kind.PlusToken;
+      const literal = this.#current();
+      this.#advance();
+      return createLiteralTypeNode(createPrefixUnaryExpression(operator, createNumericLiteral(literal.text, 0)));
+    }
     if (token.kind === Kind.TrueKeyword || token.kind === Kind.FalseKeyword || token.kind === Kind.NullKeyword) {
       this.#advance();
       return createLiteralTypeNode(createKeywordExpression(token.kind as Kind.TrueKeyword | Kind.FalseKeyword | Kind.NullKeyword));
@@ -2018,6 +2030,19 @@ export class Parser {
       return createTypeReferenceNode(this.#parseEntityName(), this.#parseOptionalTypeArguments());
     }
     throw new ParseError(`Unexpected type token ${Kind[token.kind]}`, token);
+  }
+
+  #parseTupleElementType(): TypeNode {
+    if (this.#consumeOptional(Kind.DotDotDotToken)) {
+      return createRestTypeNode(this.#parseType());
+    }
+    return this.#parseType();
+  }
+
+  #parseInferTypeParameter(): TypeParameterDeclaration {
+    const name = this.#parseIdentifier();
+    const constraint = this.#consumeOptional(Kind.ExtendsKeyword) ? this.#parseType() : undefined;
+    return createTypeParameterDeclaration(undefined, name, constraint, undefined, undefined);
   }
 
   #isMappedTypeStart(): boolean {
