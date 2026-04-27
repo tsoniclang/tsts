@@ -24,6 +24,7 @@ import {
   isForStatement,
   isExportDeclaration,
   isFunctionDeclaration,
+  isGetAccessorDeclaration,
   isIdentifier,
   isIndexSignatureDeclaration,
   isImportDeclaration,
@@ -47,6 +48,7 @@ import {
   isPropertyAccessExpression,
   isPropertySignatureDeclaration,
   isReturnStatement,
+  isSetAccessorDeclaration,
   isShorthandPropertyAssignment,
   isStringLiteral,
   isTypeAliasDeclaration,
@@ -243,6 +245,38 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isPropertySignatureDeclaration(statement.type.members[1]!), true);
     if (!isPropertySignatureDeclaration(statement.type.members[1]!)) throw new Error("Expected property signature");
     assert.equal(statement.type.members[1]!.postfixToken?.kind, Kind.QuestionToken);
+  });
+
+  it("parses accessor declarations in class, object, and type-member contexts", () => {
+    const sourceFile = parseSourceFile([
+      "class C { get value(): string { return \"x\"; } set value(public next = \"x\"): number { } }",
+      "const obj = { get value() { return 1; }, set value(...next) { } };",
+      "type Shape = { get value() { return 1; }; set value(next) { } };",
+    ].join("\n"));
+
+    const classDeclaration = sourceFile.statements[0]!;
+    assert.equal(isClassDeclaration(classDeclaration), true);
+    if (!isClassDeclaration(classDeclaration)) throw new Error("Expected class declaration");
+    assert.equal(isGetAccessorDeclaration(classDeclaration.members[0]!), true);
+    assert.equal(isSetAccessorDeclaration(classDeclaration.members[1]!), true);
+    if (!isSetAccessorDeclaration(classDeclaration.members[1]!)) throw new Error("Expected set accessor");
+    assert.equal(classDeclaration.members[1]!.parameters[0]!.modifiers?.[0]?.kind, Kind.PublicKeyword);
+    assert.equal(classDeclaration.members[1]!.parameters[0]!.initializer?.kind, Kind.StringLiteral);
+    assert.equal(classDeclaration.members[1]!.type?.kind, Kind.NumberKeyword);
+
+    const objectStatement = sourceFile.statements[1]!;
+    if (!isVariableStatement(objectStatement)) throw new Error("Expected object variable");
+    const objectInitializer = objectStatement.declarationList.declarations[0]!.initializer;
+    assert.equal(isObjectLiteralExpression(objectInitializer!), true);
+    if (!isObjectLiteralExpression(objectInitializer!)) throw new Error("Expected object literal");
+    assert.equal(isGetAccessorDeclaration(objectInitializer.properties[0]!), true);
+    assert.equal(isSetAccessorDeclaration(objectInitializer.properties[1]!), true);
+
+    const typeAlias = sourceFile.statements[2]!;
+    assert.equal(isTypeAliasDeclaration(typeAlias), true);
+    if (!isTypeAliasDeclaration(typeAlias) || !isTypeLiteralNode(typeAlias.type)) throw new Error("Expected type literal");
+    assert.equal(isGetAccessorDeclaration(typeAlias.type.members[0]!), true);
+    assert.equal(isSetAccessorDeclaration(typeAlias.type.members[1]!), true);
   });
 
   it("produces interface declarations with heritage and method signatures", () => {

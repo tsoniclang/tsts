@@ -142,6 +142,32 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2304, 2309]);
   });
 
+  it("reports accessor signature and ambient-body diagnostics generically", () => {
+    const sourceFile = parseSourceFile([
+      "class C {",
+      "  get value(arg: string): number { return 1; }",
+      "  set value(public next = \"x\"): number { }",
+      "  set rest(...values) { }",
+      "}",
+      "declare class Ambient { get value() { return 1; } }",
+      "type Shape = { set value(next) { } };",
+      "const obj = { get broken() };",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1054, 2369, 1052, 1095, 1053, 1183, 1183, 1005]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "A 'get' accessor cannot have parameters.",
+      "A parameter property is only allowed in a constructor implementation.",
+      "A 'set' accessor parameter cannot have an initializer.",
+      "A 'set' accessor cannot have a return type annotation.",
+      "A 'set' accessor cannot have rest parameter.",
+      "An implementation cannot be declared in ambient contexts.",
+      "An implementation cannot be declared in ambient contexts.",
+      "'{' expected.",
+    ]);
+  });
+
   it("reports invalid interface names and parameter properties in type signatures", () => {
     const sourceFile = parseSourceFile("interface string { new (public x); } function f(value: (private x) => void): () => number { }");
     const result = checkSourceFile(sourceFile);

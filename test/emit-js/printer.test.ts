@@ -94,6 +94,19 @@ describe("JS emitter groundwork", () => {
     );
   });
 
+  it("prints object literal accessors with type erasure", () => {
+    assert.equal(
+      printSourceFile(parseSourceFile("const obj = { get value(): number { return 1; }, set value(next: number) { this.next = next; } };")),
+      [
+        "const obj = { get value() {",
+        "  return 1;",
+        "}, set value(next) {",
+        "  this.next = next;",
+        "} };",
+      ].join("\n"),
+    );
+  });
+
   it("erases arrow function parameter and return types", () => {
     assert.equal(
       printSourceFile(parseSourceFile("const add = (a: number, b: number): number => a + b; const wrap = x => ({ value: x });")),

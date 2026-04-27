@@ -25,6 +25,7 @@ import {
   isForStatement,
   isFunctionDeclaration,
   isFunctionTypeNode,
+  isGetAccessorDeclaration,
   isArrayBindingPattern,
   isIdentifier,
   isIfStatement,
@@ -36,6 +37,7 @@ import {
   isModuleDeclaration,
   isNumericLiteral,
   isNoSubstitutionTemplateLiteral,
+  isObjectLiteralExpression,
   isObjectBindingPattern,
   isParenthesizedExpression,
   isPostfixUnaryExpression,
@@ -46,9 +48,12 @@ import {
   isQualifiedName,
   isReturnStatement,
   isSatisfiesExpression,
+  isSetAccessorDeclaration,
   isSpreadElement,
   isStringLiteral,
   isTypeReferenceNode,
+  isTypeAliasDeclaration,
+  isTypeLiteralNode,
   isVariableStatement,
   isVariableDeclarationList,
   isWhileStatement,
@@ -63,12 +68,15 @@ import {
   type EntityName,
   type Expression,
   type FunctionDeclaration,
+  type GetAccessorDeclaration,
   type InterfaceDeclaration,
   type MethodDeclaration,
   type ParameterDeclaration,
   type PropertyName,
+  type SetAccessorDeclaration,
   type SourceFile,
   type Statement,
+  type TypeElement,
   type TypeNode,
 } from "../ast/index.js";
 import { createDiagnostic, type Diagnostic } from "../diagnostics/index.js";
@@ -158,6 +166,11 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isInterfaceDeclaration(statement)) {
     checkInterfaceDeclaration(statement, state, environment);
+    return;
+  }
+  if (isTypeAliasDeclaration(statement)) {
+    typeFromTypeNode(statement.type, environment, state);
+    environment.set(statement.name.text, anyType);
     return;
   }
   if (isModuleDeclaration(statement)) {
@@ -323,7 +336,7 @@ function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckS
     checkClassMemberOverloads(classDeclaration.members, state);
   }
   for (const member of classDeclaration.members) {
-    checkClassElement(member, state, classEnvironment);
+    checkClassElement(member, state, classEnvironment, ambient);
   }
 }
 
@@ -331,14 +344,7 @@ function checkInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, s
   if (invalidClassNames.has(interfaceDeclaration.name.text)) {
     state.diagnostics.push(createDiagnostic(2427, interfaceDeclaration.name.text));
   }
-  for (const member of interfaceDeclaration.members) {
-    if (isCallSignatureDeclaration(member) || isConstructSignatureDeclaration(member)) {
-      checkSignatureParameters(member.parameters, state, environment, true);
-      if (member.type !== undefined) {
-        typeFromTypeNode(member.type, environment, state);
-      }
-    }
-  }
+  checkTypeElements(interfaceDeclaration.members, state, environment, true);
 }
 
 type OverloadGroup =
@@ -434,14 +440,21 @@ function propertyNameText(name: PropertyName): string | undefined {
   return undefined;
 }
 
-function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment): void {
+function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
   if (hasModifier(member, Kind.ConstKeyword)) {
     state.diagnostics.push(createDiagnostic(1248, "const"));
+  }
+  if (isGetAccessorDeclaration(member) || isSetAccessorDeclaration(member)) {
+    checkAccessorDeclaration(member, state, environment, ambient);
+    return;
   }
   if (isConstructorDeclaration(member) || isMethodDeclaration(member)) {
     const memberEnvironment = new Map(environment);
     checkSignatureParameters(member.parameters, state, memberEnvironment, isMethodDeclaration(member) || member.body === undefined);
     if (member.body !== undefined) {
+      if (ambient) {
+        state.diagnostics.push(createDiagnostic(1183));
+      }
       const returnType = member.type === undefined ? undefined : typeFromTypeNode(member.type, memberEnvironment, state);
       checkBlock(member.body, state, memberEnvironment, returnType);
     }
@@ -453,6 +466,69 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     }
     inferExpression(member.initializer, state, environment);
   }
+}
+
+function checkTypeElements(members: readonly TypeElement[], state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
+  for (const member of members) {
+    if (isCallSignatureDeclaration(member) || isConstructSignatureDeclaration(member)) {
+      checkSignatureParameters(member.parameters, state, environment, true);
+      if (member.type !== undefined) {
+        typeFromTypeNode(member.type, environment, state);
+      }
+      continue;
+    }
+    if (isGetAccessorDeclaration(member) || isSetAccessorDeclaration(member)) {
+      checkAccessorDeclaration(member, state, environment, ambient);
+    }
+  }
+}
+
+function checkAccessorDeclaration(accessor: GetAccessorDeclaration | SetAccessorDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
+  const accessorEnvironment = new Map(environment);
+  if (accessor.typeParameters !== undefined && accessor.typeParameters.length > 0) {
+    state.diagnostics.push(createDiagnostic(1094));
+  }
+  if (isGetAccessorDeclaration(accessor)) {
+    if (accessor.parameters.length > 0) {
+      state.diagnostics.push(createDiagnostic(1054));
+    }
+    checkSignatureParameters(accessor.parameters, state, accessorEnvironment, true);
+    const returnType = accessor.type === undefined ? undefined : typeFromTypeNode(accessor.type, accessorEnvironment, state);
+    checkAccessorBody(accessor, state, accessorEnvironment, ambient, returnType);
+    return;
+  }
+  if (accessor.parameters.length !== 1) {
+    state.diagnostics.push(createDiagnostic(1049));
+  }
+  for (const parameter of accessor.parameters) {
+    checkParameterPropertyModifiers(parameter, state);
+    if (parameter.questionToken !== undefined) {
+      state.diagnostics.push(createDiagnostic(1051));
+    }
+    if (parameter.initializer !== undefined) {
+      state.diagnostics.push(createDiagnostic(1052));
+    }
+    if (parameter.dotDotDotToken !== undefined) {
+      state.diagnostics.push(createDiagnostic(1053));
+    }
+    const parameterType = parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, accessorEnvironment, state);
+    setBindingNameType(parameter.name, parameterType, accessorEnvironment);
+  }
+  if (accessor.type !== undefined) {
+    state.diagnostics.push(createDiagnostic(1095));
+    typeFromTypeNode(accessor.type, accessorEnvironment, state);
+  }
+  checkAccessorBody(accessor, state, accessorEnvironment, ambient, undefined);
+}
+
+function checkAccessorBody(accessor: GetAccessorDeclaration | SetAccessorDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean, expectedReturnType: CheckedType | undefined): void {
+  if (accessor.body === undefined) {
+    return;
+  }
+  if (ambient) {
+    state.diagnostics.push(createDiagnostic(1183));
+  }
+  checkBlock(accessor.body, state, environment, expectedReturnType);
 }
 
 function checkSignatureParameters(parameters: readonly ParameterDeclaration[], state: CheckState, environment: TypeEnvironment, disallowParameterProperties: boolean): readonly CheckedType[] {
@@ -549,6 +625,17 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   }
   if (isArrayLiteralExpression(expression)) {
     return inferArrayLiteral(expression.elements, state, environment);
+  }
+  if (isObjectLiteralExpression(expression)) {
+    for (const property of expression.properties) {
+      if (isGetAccessorDeclaration(property) || isSetAccessorDeclaration(property)) {
+        if (property.body === undefined) {
+          state.diagnostics.push(createDiagnostic(1005, "{"));
+        }
+        checkAccessorDeclaration(property, state, environment, false);
+      }
+    }
+    return anyType;
   }
   if (isConditionalExpression(expression)) {
     inferExpression(expression.condition, state, environment);
@@ -693,6 +780,10 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
   }
   if (isArrayTypeNode(type)) {
     return { kind: "array", elementType: typeFromTypeNode(type.elementType, environment, state) };
+  }
+  if (isTypeLiteralNode(type)) {
+    checkTypeElements(type.members, state ?? { diagnostics: [] }, environment, true);
+    return anyType;
   }
   if (isFunctionTypeNode(type) || isConstructorTypeNode(type)) {
     const signatureEnvironment = new Map(environment);

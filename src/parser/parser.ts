@@ -695,26 +695,30 @@ export class Parser {
       return createConstructorDeclaration(modifiers, undefined, createNodeArray(parameters), undefined, body);
     }
 
-    if (this.#current().kind === Kind.GetKeyword && this.#tokens[this.#index + 1]?.kind !== Kind.OpenParenToken) {
+    if (this.#isAccessorDeclarationStart(Kind.GetKeyword)) {
       this.#advance();
       const name = this.#parsePropertyName();
+      const typeParameters = this.#parseOptionalTypeParameters();
       this.#expect(Kind.OpenParenToken);
+      const parameters = this.#parseParameterList();
       this.#expect(Kind.CloseParenToken);
       const type = this.#parseOptionalTypeAnnotation();
       const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
-      return createGetAccessorDeclaration(modifiers, name, undefined, createNodeArray([]), type, body);
+      return createGetAccessorDeclaration(modifiers, name, typeParameters, createNodeArray(parameters), type, body);
     }
 
-    if (this.#current().kind === Kind.SetKeyword && this.#tokens[this.#index + 1]?.kind !== Kind.OpenParenToken) {
+    if (this.#isAccessorDeclarationStart(Kind.SetKeyword)) {
       this.#advance();
       const name = this.#parsePropertyName();
+      const typeParameters = this.#parseOptionalTypeParameters();
       this.#expect(Kind.OpenParenToken);
       const parameters = this.#parseParameterList();
       this.#expect(Kind.CloseParenToken);
+      const type = this.#parseOptionalTypeAnnotation();
       const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
-      return createSetAccessorDeclaration(modifiers, name, undefined, createNodeArray(parameters), undefined, body);
+      return createSetAccessorDeclaration(modifiers, name, typeParameters, createNodeArray(parameters), type, body);
     }
 
     const name = this.#parsePropertyName();
@@ -773,6 +777,32 @@ export class Parser {
       this.#consumeOptional(Kind.SemicolonToken);
       this.#consumeOptional(Kind.CommaToken);
       return createConstructSignatureDeclaration(typeParameters, createNodeArray(parameters), type);
+    }
+    if (this.#isAccessorDeclarationStart(Kind.GetKeyword)) {
+      this.#advance();
+      const name = this.#parsePropertyName();
+      const typeParameters = this.#parseOptionalTypeParameters();
+      this.#expect(Kind.OpenParenToken);
+      const parameters = this.#parseParameterList();
+      this.#expect(Kind.CloseParenToken);
+      const type = this.#parseOptionalTypeAnnotation();
+      const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
+      this.#consumeOptional(Kind.SemicolonToken);
+      this.#consumeOptional(Kind.CommaToken);
+      return createGetAccessorDeclaration(modifiers, name, typeParameters, createNodeArray(parameters), type, body);
+    }
+    if (this.#isAccessorDeclarationStart(Kind.SetKeyword)) {
+      this.#advance();
+      const name = this.#parsePropertyName();
+      const typeParameters = this.#parseOptionalTypeParameters();
+      this.#expect(Kind.OpenParenToken);
+      const parameters = this.#parseParameterList();
+      this.#expect(Kind.CloseParenToken);
+      const type = this.#parseOptionalTypeAnnotation();
+      const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
+      this.#consumeOptional(Kind.SemicolonToken);
+      this.#consumeOptional(Kind.CommaToken);
+      return createSetAccessorDeclaration(modifiers, name, typeParameters, createNodeArray(parameters), type, body);
     }
     const name = this.#parsePropertyName();
     const postfixToken = this.#parseOptionalPostfixToken();
@@ -1414,6 +1444,32 @@ export class Parser {
         this.#consumeOptional(Kind.CommaToken);
         continue;
       }
+      if (this.#isAccessorDeclarationStart(Kind.GetKeyword)) {
+        this.#advance();
+        const name = this.#parsePropertyName();
+        const typeParameters = this.#parseOptionalTypeParameters();
+        this.#expect(Kind.OpenParenToken);
+        const parameters = this.#parseParameterList();
+        this.#expect(Kind.CloseParenToken);
+        const type = this.#parseOptionalTypeAnnotation();
+        const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
+        properties.push(createGetAccessorDeclaration(undefined, name, typeParameters, createNodeArray(parameters), type, body));
+        this.#consumeOptional(Kind.CommaToken);
+        continue;
+      }
+      if (this.#isAccessorDeclarationStart(Kind.SetKeyword)) {
+        this.#advance();
+        const name = this.#parsePropertyName();
+        const typeParameters = this.#parseOptionalTypeParameters();
+        this.#expect(Kind.OpenParenToken);
+        const parameters = this.#parseParameterList();
+        this.#expect(Kind.CloseParenToken);
+        const type = this.#parseOptionalTypeAnnotation();
+        const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
+        properties.push(createSetAccessorDeclaration(undefined, name, typeParameters, createNodeArray(parameters), type, body));
+        this.#consumeOptional(Kind.CommaToken);
+        continue;
+      }
       const name = this.#parsePropertyName();
       if (this.#consumeOptional(Kind.ColonToken)) {
         properties.push(createPropertyAssignment(undefined, name, undefined, undefined as never, this.#parseExpression()));
@@ -1432,6 +1488,17 @@ export class Parser {
     }
     const closeBrace = this.#expect(Kind.CloseBraceToken);
     return createObjectLiteralExpression(createNodeArray(properties), this.#sourceText.slice(openBrace.pos, closeBrace.end).includes("\n"));
+  }
+
+  #isAccessorDeclarationStart(kind: Kind.GetKeyword | Kind.SetKeyword): boolean {
+    if (this.#current().kind !== kind) {
+      return false;
+    }
+    const nextToken = this.#tokens[this.#index + 1];
+    if (nextToken === undefined || nextToken.kind === Kind.OpenParenToken) {
+      return false;
+    }
+    return isPropertyNameStart(nextToken.kind);
   }
 
   #parseStringLiteralExpression(): Expression {
@@ -1837,6 +1904,14 @@ function hasModifier(modifiers: NodeArray<ModifierLike>, kind: Kind): boolean {
 
 function isIdentifierNameKind(kind: Kind): boolean {
   return kind === Kind.Identifier || (kind >= Kind.FirstKeyword && kind <= Kind.LastKeyword);
+}
+
+function isPropertyNameStart(kind: Kind): boolean {
+  return isIdentifierNameKind(kind)
+    || kind === Kind.StringLiteral
+    || kind === Kind.NumericLiteral
+    || kind === Kind.PrivateIdentifier
+    || kind === Kind.OpenBracketToken;
 }
 
 function isContextualExpressionIdentifierKind(kind: Kind): boolean {

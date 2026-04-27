@@ -744,6 +744,15 @@ function printObjectLiteralElement(element: ObjectLiteralElementLike): string {
   if (isSpreadAssignment(element)) {
     return `...${printExpression(element.expression)}`;
   }
+  if (isGetAccessorDeclaration(element)) {
+    const body = element.body === undefined ? "{}" : printBlock(element.body.statements, { newline: "\n", indentText: "  " }, 0);
+    return `get ${printPropertyName(element.name)}() ${body}`;
+  }
+  if (isSetAccessorDeclaration(element)) {
+    const parameters = element.parameters.map(printParameterDeclaration).join(", ");
+    const body = element.body === undefined ? "{}" : printBlock(element.body.statements, { newline: "\n", indentText: "  " }, 0);
+    return `set ${printPropertyName(element.name)}(${parameters}) ${body}`;
+  }
   throw new Error(`Unsupported object literal element kind ${Kind[element.kind]}`);
 }
 
