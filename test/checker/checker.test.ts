@@ -510,6 +510,41 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("keeps export-equals namespace and interface meanings without inventing a value", () => {
+    const host: CompilerHost = {
+      readFile: fileName => {
+        if (fileName === "types.d.ts") {
+          return [
+            "declare module \"foo\" {",
+            "  namespace B {",
+            "    export interface A { }",
+            "  }",
+            "  interface B {",
+            "    bar(name: string): B.A;",
+            "  }",
+            "  export = B;",
+            "}",
+          ].join("\n");
+        }
+        if (fileName === "index.ts") {
+          return [
+            "import foo = require(\"foo\");",
+            "declare var z: foo;",
+            "z.bar(\"hello\");",
+            "var x: foo.A = foo.bar(\"hello\");",
+          ].join("\n");
+        }
+        return undefined;
+      },
+      useCaseSensitiveFileNames: () => true,
+    };
+    const program = createProgram(["types.d.ts", "index.ts"], { module: "commonjs" }, host);
+    const diagnostics = checkProgram(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [2708]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), ["Cannot use namespace 'foo' as a value."]);
+  });
+
   it("does not emit cascading assignment diagnostics when the target type is unresolved", () => {
     const sourceFile = parseSourceFile([
       "let x: Missing;",

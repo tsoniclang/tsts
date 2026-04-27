@@ -113,8 +113,9 @@ type CheckedType =
   | { readonly kind: "accessorProperty"; readonly type: CheckedType }
   | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType }
   | { readonly kind: "interface"; readonly name: string; readonly members: InterfaceMembers }
-  | { readonly kind: "moduleNamespace"; readonly moduleSpecifier: string; readonly diagnosticName: string; readonly exports: ReadonlyMap<string, CheckedType> }
+  | { readonly kind: "moduleNamespace"; readonly moduleSpecifier: string; readonly diagnosticName: string; readonly exports: ReadonlyMap<string, CheckedType>; readonly exportEquals?: CheckedType }
   | { readonly kind: "namespace"; readonly name: string; readonly exports: ReadonlyMap<string, CheckedType> }
+  | { readonly kind: "namespaceAndType"; readonly namespace: Extract<CheckedType, { readonly kind: "namespace" }>; readonly type: CheckedType }
   | { readonly kind: "object"; readonly properties: ReadonlyMap<string, CheckedType>; readonly readonlyProperties: ReadonlySet<string> }
   | { readonly kind: "thisClass"; readonly className: string; readonly abstractProperties: ReadonlySet<string>; readonly abstractPropertyDeclaringClasses: ReadonlyMap<string, string>; readonly uninitializedProperties: ReadonlySet<string>; readonly mode: "constructor" | "fieldInitializer" }
   | { readonly kind: "typeAlias"; readonly target: CheckedType }
@@ -162,6 +163,11 @@ interface AccessorContextTypes {
 interface InterfaceMembers {
   readonly name: string;
   readonly properties: ReadonlyMap<string, CheckedType>;
+}
+
+interface ModuleExportInfo {
+  readonly exports: ReadonlyMap<string, CheckedType>;
+  readonly exportEquals?: CheckedType;
 }
 
 const anyType: CheckedType = { kind: "any" };
@@ -256,7 +262,7 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
     }
   }
   const exportCache = new Map<string, ReadonlyMap<string, CheckedType>>();
-  const ambientExportCache = new Map<string, ReadonlyMap<string, CheckedType>>();
+  const ambientExportCache = new Map<string, ModuleExportInfo>();
   const moduleNamespaceForResolvedFile = (moduleSpecifier: string, resolvedFileName: string): CheckedType => ({
     kind: "moduleNamespace",
     moduleSpecifier,
@@ -286,20 +292,20 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
     }
     return exports;
   };
-  const ambientModuleExportTypes = (moduleSpecifier: string): ReadonlyMap<string, CheckedType> => {
+  const ambientModuleExportInfo = (moduleSpecifier: string): ModuleExportInfo => {
     const cached = ambientExportCache.get(moduleSpecifier);
     if (cached !== undefined) {
       return cached;
     }
     const moduleDeclaration = ambientModules.get(moduleSpecifier);
     if (moduleDeclaration === undefined || !isModuleBlock(moduleDeclaration.body)) {
-      return new Map();
+      return { exports: new Map() };
     }
     const moduleEnvironment = new Map(globalEnvironment);
     checkStatements(moduleDeclaration.body.statements, emptyCheckState(), moduleEnvironment, undefined, true);
-    const exports = ambientModuleExports(moduleDeclaration.body.statements, moduleEnvironment);
-    ambientExportCache.set(moduleSpecifier, exports);
-    return exports;
+    const info = ambientModuleExports(moduleDeclaration.body.statements, moduleEnvironment);
+    ambientExportCache.set(moduleSpecifier, info);
+    return info;
   };
   return (containingFileName, moduleSpecifier) => {
     const sourceFile = sourceFiles.get(containingFileName);
@@ -308,12 +314,14 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
       return moduleNamespaceForResolvedFile(moduleSpecifier, resolvedFileName);
     }
     if (ambientModules.has(moduleSpecifier)) {
-      return {
+      const ambientExports = ambientModuleExportInfo(moduleSpecifier);
+      const namespace: CheckedType = {
         kind: "moduleNamespace",
         moduleSpecifier,
         diagnosticName: moduleNamespaceDiagnosticName(moduleSpecifier),
-        exports: ambientModuleExportTypes(moduleSpecifier),
+        exports: ambientExports.exports,
       };
+      return ambientExports.exportEquals === undefined ? namespace : { ...namespace, exportEquals: ambientExports.exportEquals };
     }
     return undefined;
   };
@@ -361,17 +369,21 @@ function mergeModuleExport(exports: Map<string, CheckedType>, name: string, type
   exports.set(name, mergeBinding(existing, type, anyType));
 }
 
-function ambientModuleExports(statements: readonly Statement[], environment: TypeEnvironment): ReadonlyMap<string, CheckedType> {
+function ambientModuleExports(statements: readonly Statement[], environment: TypeEnvironment): ModuleExportInfo {
   for (const statement of statements) {
     if (isExportAssignment(statement) && statement.isExportEquals) {
       const exported = isIdentifier(statement.expression) ? environment.get(statement.expression.text) : undefined;
-      if (exported?.kind === "namespace" || exported?.kind === "moduleNamespace") {
-        return exported.exports;
+      const namespace = exported === undefined ? undefined : namespaceMeaning(exported);
+      if (namespace !== undefined) {
+        return { exports: namespace.exports, exportEquals: exported! };
+      }
+      if (exported?.kind === "moduleNamespace") {
+        return { exports: exported.exports, exportEquals: exported.exportEquals ?? exported };
       }
       if (exported?.kind === "object") {
-        return exported.properties;
+        return { exports: exported.properties, exportEquals: exported };
       }
-      return new Map();
+      return exported === undefined ? { exports: new Map() } : { exports: new Map(), exportEquals: exported };
     }
   }
   const exports = new Map<string, CheckedType>();
@@ -385,7 +397,7 @@ function ambientModuleExports(statements: readonly Statement[], environment: Typ
       exports.set(exportName, exportType ?? anyType);
     }
   }
-  return exports;
+  return { exports };
 }
 
 function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean): void {
@@ -434,7 +446,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isExportAssignment(statement)) {
-    checkExportAssignment(statement, state, environment, statementListHasExportedElements);
+    checkExportAssignment(statement, state, environment, statementListHasExportedElements, ambient);
     return;
   }
   if (isIfStatement(statement)) {
@@ -498,7 +510,8 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
 function importEqualsDeclarationType(statement: Extract<Statement, { readonly kind: Kind.ImportEqualsDeclaration }>, state: CheckState, environment: TypeEnvironment): CheckedType {
   if (isExternalModuleReference(statement.moduleReference) && isStringLiteral(statement.moduleReference.expression)) {
     const moduleSpecifier = statement.moduleReference.expression.text;
-    return state.resolveExternalModule?.(moduleSpecifier) ?? { kind: "moduleNamespace", moduleSpecifier, diagnosticName: moduleNamespaceDiagnosticName(moduleSpecifier), exports: new Map() };
+    const resolved = state.resolveExternalModule?.(moduleSpecifier);
+    return resolved?.kind === "moduleNamespace" ? resolved.exportEquals ?? resolved : resolved ?? { kind: "moduleNamespace", moduleSpecifier, diagnosticName: moduleNamespaceDiagnosticName(moduleSpecifier), exports: new Map() };
   }
   if (isIdentifier(statement.moduleReference) || isQualifiedName(statement.moduleReference)) {
     return resolveEntityName(statement.moduleReference, environment, state, "namespace") ?? anyType;
@@ -511,11 +524,13 @@ function moduleNamespaceDiagnosticName(moduleSpecifier: string): string {
   return withoutRelativePrefix.replace(/\.(?:[cm]?[jt]sx?|d\.[cm]?ts)$/, "");
 }
 
-function checkExportAssignment(statement: Extract<Statement, { readonly kind: Kind.ExportAssignment }>, state: CheckState, environment: TypeEnvironment, statementListHasExportedElements: boolean): void {
-  if (isIdentifier(statement.expression) && !environment.has(statement.expression.text)) {
-    state.diagnostics.push(createDiagnostic(2304, statement.expression.text));
-  } else {
-    inferExpression(statement.expression, state, environment);
+function checkExportAssignment(statement: Extract<Statement, { readonly kind: Kind.ExportAssignment }>, state: CheckState, environment: TypeEnvironment, statementListHasExportedElements: boolean, ambient: boolean): void {
+  if (!ambient || !statement.isExportEquals) {
+    if (isIdentifier(statement.expression) && !environment.has(statement.expression.text)) {
+      state.diagnostics.push(createDiagnostic(2304, statement.expression.text));
+    } else {
+      inferExpression(statement.expression, state, environment);
+    }
   }
   if (statement.isExportEquals && statementListHasExportedElements) {
     state.diagnostics.push(createDiagnostic(2309));
@@ -545,7 +560,8 @@ function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly
       exports.set(exportName, qualifyNamespaceExport(exportType, `${moduleName}.${exportName}`));
     }
   }
-  environment.set(moduleName, { kind: "namespace", name: moduleName, exports });
+  const namespaceType: Extract<CheckedType, { readonly kind: "namespace" }> = { kind: "namespace", name: moduleName, exports };
+  environment.set(moduleName, mergeNamespaceType(environment.get(moduleName), namespaceType));
 }
 
 function qualifyNamespaceExport(type: CheckedType, qualifiedName: string): CheckedType {
@@ -637,9 +653,27 @@ function mergeBinding(existing: CheckedType | undefined, next: CheckedType, inco
   return isSameType(existing, next) ? existing : incompatible;
 }
 
+function mergeNamespaceType(existing: CheckedType | undefined, namespace: Extract<CheckedType, { readonly kind: "namespace" }>): CheckedType {
+  if (existing?.kind === "namespaceAndType") {
+    return { kind: "namespaceAndType", namespace, type: existing.type };
+  }
+  const existingType = existing === undefined || existing.kind === "namespace" ? undefined : typeMeaning(existing);
+  return existingType === undefined ? namespace : { kind: "namespaceAndType", namespace, type: existingType };
+}
+
+function mergeTypeNamespace(existing: CheckedType | undefined, type: CheckedType): CheckedType {
+  if (existing?.kind === "namespaceAndType") {
+    return { kind: "namespaceAndType", namespace: existing.namespace, type };
+  }
+  return existing?.kind === "namespace" ? { kind: "namespaceAndType", namespace: existing, type } : type;
+}
+
 function valueMeaning(type: CheckedType): CheckedType | undefined {
   if (type.kind === "valueAndType") {
     return type.value;
+  }
+  if (type.kind === "namespaceAndType") {
+    return namespaceValueMeaning(type.namespace);
   }
   if (type.kind === "valueOnly") {
     return type.type;
@@ -654,6 +688,9 @@ function typeMeaning(type: CheckedType): CheckedType | undefined {
   if (type.kind === "valueAndType") {
     return type.type;
   }
+  if (type.kind === "namespaceAndType") {
+    return type.type;
+  }
   if (type.kind === "valueOnly") {
     return undefined;
   }
@@ -661,6 +698,20 @@ function typeMeaning(type: CheckedType): CheckedType | undefined {
     return type;
   }
   return undefined;
+}
+
+function namespaceMeaning(type: CheckedType): Extract<CheckedType, { readonly kind: "namespace" }> | undefined {
+  if (type.kind === "namespace") {
+    return type;
+  }
+  if (type.kind === "namespaceAndType") {
+    return type.namespace;
+  }
+  return undefined;
+}
+
+function namespaceValueMeaning(namespace: Extract<CheckedType, { readonly kind: "namespace" }>): CheckedType | undefined {
+  return [...namespace.exports.values()].some(exported => valueMeaning(exported) !== undefined) ? namespace : undefined;
 }
 
 function checkFunctionDeclarationOverloads(statements: readonly Statement[], state: CheckState, ambient: boolean): void {
@@ -1116,7 +1167,7 @@ function checkInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, s
   addTypeParametersToEnvironment(interfaceDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], interfaceEnvironment);
   const inheritedInterfaces = inheritedInterfaceMembers(interfaceDeclaration, environment);
   const members = collectInterfaceMembers(interfaceDeclaration, inheritedInterfaces, state, interfaceEnvironment);
-  environment.set(interfaceDeclaration.name.text, { kind: "interface", name: interfaceDeclaration.name.text, members });
+  environment.set(interfaceDeclaration.name.text, mergeTypeNamespace(environment.get(interfaceDeclaration.name.text), { kind: "interface", name: interfaceDeclaration.name.text, members }));
   checkTypeElements(interfaceDeclaration.members, state, interfaceEnvironment, true);
 }
 
@@ -1615,6 +1666,14 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     if (bound?.kind === "valueAndType") {
       return bound.value;
     }
+    if (bound?.kind === "namespaceAndType") {
+      const namespaceValue = namespaceValueMeaning(bound.namespace);
+      if (namespaceValue !== undefined) {
+        return namespaceValue;
+      }
+      state.diagnostics.push(createDiagnostic(2708, expression.text));
+      return anyType;
+    }
     if (bound?.kind === "unqualifiedStaticMember") {
       state.diagnostics.push(createDiagnostic(2662, bound.memberName, bound.className));
       return unresolvedType;
@@ -1930,6 +1989,14 @@ function inferPropertyAccess(expression: Expression, propertyName: string, state
     state.diagnostics.push(createDiagnostic(2339, propertyName, displayType(receiverType)));
     return anyType;
   }
+  if (receiverType.kind === "interface") {
+    const propertyType = receiverType.members.properties.get(propertyName);
+    if (propertyType !== undefined) {
+      return propertyType;
+    }
+    state.diagnostics.push(createDiagnostic(2339, propertyName, displayType(receiverType)));
+    return anyType;
+  }
   if (receiverType.kind === "moduleNamespace") {
     return receiverType.exports.get(propertyName) ?? anyType;
   }
@@ -2161,6 +2228,9 @@ function typeFromResolvedEntity(type: CheckedType, diagnosticName: string | unde
   if (type.kind === "valueAndType") {
     return typeFromResolvedEntity(type.type, diagnosticName, state);
   }
+  if (type.kind === "namespaceAndType") {
+    return typeFromResolvedEntity(type.type, diagnosticName, state);
+  }
   if (type.kind === "typeAlias") {
     return type.target;
   }
@@ -2203,6 +2273,9 @@ function resolveEntityNamespace(typeName: EntityName, environment: TypeEnvironme
   const resolved = resolveEntityName(typeName, environment, state, "namespace");
   if (resolved?.kind === "namespace") {
     return resolved;
+  }
+  if (resolved?.kind === "namespaceAndType") {
+    return resolved.namespace;
   }
   const namespaceName = entityNameText(typeName);
   if (namespaceName !== undefined && resolved !== undefined) {
@@ -2419,6 +2492,12 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
   }
   if (expected.kind === "valueAndType") {
     return isAssignableTo(actual, expected.value);
+  }
+  if (actual.kind === "namespaceAndType") {
+    return isAssignableTo(actual.type, expected);
+  }
+  if (expected.kind === "namespaceAndType") {
+    return isAssignableTo(actual, expected.type);
   }
   if (actual.kind === "any" || expected.kind === "any") {
     return true;
@@ -2642,6 +2721,9 @@ function displayType(type: CheckedType): string {
   }
   if (type.kind === "valueAndType") {
     return displayType(type.value);
+  }
+  if (type.kind === "namespaceAndType") {
+    return type.namespace.name;
   }
   if (type.kind === "unqualifiedStaticMember" || type.kind === "unqualifiedInstanceMember") {
     return "unknown";
