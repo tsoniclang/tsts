@@ -60,6 +60,7 @@ import {
   isSpreadElement,
   isSpreadAssignment,
   isSwitchStatement,
+  isTaggedTemplateExpression,
   isTemplateExpression,
   isThrowStatement,
   isStringLiteral,
@@ -99,6 +100,7 @@ import {
   type PropertyDeclaration,
   type SourceFile,
   type Statement,
+  type TemplateLiteral,
   type VariableDeclaration,
   type VariableDeclarationList,
   type WhileStatement,
@@ -654,7 +656,10 @@ function printExpression(expression: Expression): string {
     return `\`${expression.text}\``;
   }
   if (isTemplateExpression(expression)) {
-    return `\`${expression.head.text}${expression.templateSpans.map(span => `\${${printExpression(span.expression)}}${span.literal.text}`).join("")}\``;
+    return printTemplateLiteral(expression);
+  }
+  if (isTaggedTemplateExpression(expression)) {
+    return `${printExpression(expression.tag)}${expression.questionDotToken === undefined ? "" : "?."}${printTemplateLiteral(expression.template)}`;
   }
   if (expression.kind === Kind.TrueKeyword) {
     return "true";
@@ -742,6 +747,13 @@ function printExpression(expression: Expression): string {
     return `${printExpression(expression.left)} ${printBinaryOperator(expression.operatorToken)} ${printExpression(expression.right)}`;
   }
   throw new Error(`Unsupported expression kind ${Kind[expression.kind]}`);
+}
+
+function printTemplateLiteral(template: TemplateLiteral): string {
+  if (isNoSubstitutionTemplateLiteral(template)) {
+    return `\`${template.text}\``;
+  }
+  return `\`${template.head.text}${template.templateSpans.map(span => `\${${printExpression(span.expression)}}${span.literal.text}`).join("")}\``;
 }
 
 function printArrowFunction(arrowFunction: ArrowFunction): string {

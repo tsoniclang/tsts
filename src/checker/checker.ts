@@ -94,6 +94,7 @@ import {
   isSpreadElement,
   isStringLiteral,
   isSwitchStatement,
+  isTaggedTemplateExpression,
   isThrowStatement,
   isTypeAssertion,
   isTypeAliasDeclaration,
@@ -3658,6 +3659,30 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     }
     return unresolvedType;
   }
+  if (isTaggedTemplateExpression(expression)) {
+    const substitutionTypes = expression.template.kind === Kind.TemplateExpression
+      ? expression.template.templateSpans.map(span => inferExpression(span.expression, state, environment))
+      : [];
+    const tagType = inferExpression(expression.tag, state, environment);
+    if (tagType.kind === "any" || tagType.kind === "unknown" || tagType.kind === "unresolved") {
+      return anyType;
+    }
+    const tagFunction = callableFunctionType(tagType);
+    if (tagFunction !== undefined) {
+      const typeArguments = expression.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? [];
+      checkCallTypeArgumentArity(tagFunction, typeArguments.length, state);
+      const argumentTypes = [anyType, ...substitutionTypes];
+      const callFunction = resolveCallFunctionType(tagFunction, typeArguments, argumentTypes, state);
+      const instantiatedFunction = instantiateFunctionTypeForCall(callFunction, typeArguments, argumentTypes);
+      if (!callHasMatchingOverload(tagFunction, typeArguments, argumentTypes, state.options)) {
+        state.diagnostics.push(createDiagnostic(2769));
+      } else {
+        checkCallArguments(argumentTypes, instantiatedFunction, state);
+      }
+      return instantiatedFunction.returnType.kind === "typePredicate" ? booleanType : instantiatedFunction.returnType;
+    }
+    return unresolvedType;
+  }
   if (isNewExpression(expression)) {
     const constructorType = inferExpression(expression.expression, state, environment);
     if (isAbstractConstructorType(constructorType)) {
@@ -4246,6 +4271,17 @@ function expressionFlowType(expression: Expression, environment: TypeEnvironment
     if (calleeFunction !== undefined) {
       const argumentTypes = expression.arguments.map(argument => expressionFlowType(argument, environment) ?? anyType);
       const returnType = instantiateFunctionReturnType(calleeFunction, [], argumentTypes);
+      return returnType.kind === "typePredicate" ? booleanType : returnType;
+    }
+  }
+  if (isTaggedTemplateExpression(expression)) {
+    const tagType = expressionFlowType(expression.tag, environment);
+    const tagFunction = callableFunctionType(tagType);
+    if (tagFunction !== undefined) {
+      const substitutionTypes = expression.template.kind === Kind.TemplateExpression
+        ? expression.template.templateSpans.map(span => expressionFlowType(span.expression, environment) ?? anyType)
+        : [];
+      const returnType = instantiateFunctionReturnType(tagFunction, [], [anyType, ...substitutionTypes]);
       return returnType.kind === "typePredicate" ? booleanType : returnType;
     }
   }
@@ -5506,6 +5542,11 @@ function expressionContainsMissingSelfProperty(expression: Expression, aliases: 
   if (isCallExpression(expression)) {
     return expressionContainsMissingSelfProperty(expression.expression, aliases, selfType)
       || expression.arguments.some(argument => expressionContainsMissingSelfProperty(argument, aliases, selfType));
+  }
+  if (isTaggedTemplateExpression(expression)) {
+    return expressionContainsMissingSelfProperty(expression.tag, aliases, selfType)
+      || (expression.template.kind === Kind.TemplateExpression
+        && expression.template.templateSpans.some(span => expressionContainsMissingSelfProperty(span.expression, aliases, selfType)));
   }
   if (isBinaryExpression(expression)) {
     return expressionContainsMissingSelfProperty(expression.left, aliases, selfType)

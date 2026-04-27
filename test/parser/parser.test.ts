@@ -63,6 +63,7 @@ import {
   isShorthandPropertyAssignment,
   isSatisfiesExpression,
   isStringLiteral,
+  isTaggedTemplateExpression,
   isTypeAliasDeclaration,
   isTypeAssertion,
   isTypeLiteralNode,
@@ -932,6 +933,27 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isVariableStatement(variable), true);
     if (!isVariableStatement(variable) || !isObjectLiteralExpression(variable.declarationList.declarations[0]!.initializer!)) throw new Error("Expected object literal initializer");
     assert.equal(isMethodDeclaration(variable.declarationList.declarations[0]!.initializer.properties[0]!), true);
+  });
+
+  it("parses tagged template expressions as TS-Go member expressions", () => {
+    const sourceFile = parseSourceFile([
+      "tag`plain`;",
+      "tag<T>`value ${item}`.prop;",
+    ].join("\n"));
+
+    const plainStatement = sourceFile.statements[0]!;
+    assert.equal(isExpressionStatement(plainStatement), true);
+    if (!isExpressionStatement(plainStatement)) throw new Error("Expected tagged template expression statement");
+    assert.equal(isTaggedTemplateExpression(plainStatement.expression), true);
+
+    const propertyStatement = sourceFile.statements[1]!;
+    assert.equal(isExpressionStatement(propertyStatement), true);
+    if (!isExpressionStatement(propertyStatement) || !isPropertyAccessExpression(propertyStatement.expression)) {
+      throw new Error("Expected property access on tagged template expression");
+    }
+    assert.equal(isTaggedTemplateExpression(propertyStatement.expression.expression), true);
+    if (!isTaggedTemplateExpression(propertyStatement.expression.expression)) throw new Error("Expected tagged template receiver");
+    assert.equal(propertyStatement.expression.expression.typeArguments?.length, 1);
   });
 
   it("parses TS-Go ambient namespace chains and statement forms without corrupting following syntax", () => {

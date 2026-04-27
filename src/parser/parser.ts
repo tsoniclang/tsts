@@ -110,6 +110,7 @@ import {
   createSourceFile,
   createStringLiteral,
   createSwitchStatement,
+  createTaggedTemplateExpression,
   createTemplateExpression,
   createTemplateHead,
   createTemplateMiddle,
@@ -178,6 +179,7 @@ import {
   type TypeAliasDeclaration,
   type TypeNode,
   type TemplateMiddleOrTail,
+  type TemplateLiteral,
   type TypeParameterDeclaration,
   type VariableDeclaration,
 } from "../ast/index.js";
@@ -1743,7 +1745,7 @@ export class Parser {
     let expression = initialExpression;
     while (true) {
       const questionDotToken = this.#consumeOptional(Kind.QuestionDotToken) ? createToken(Kind.QuestionDotToken) : undefined;
-      if (questionDotToken !== undefined && this.#current().kind !== Kind.OpenParenToken && this.#current().kind !== Kind.OpenBracketToken) {
+      if (questionDotToken !== undefined && this.#current().kind !== Kind.OpenParenToken && this.#current().kind !== Kind.OpenBracketToken && !isTemplateLiteralStart(this.#current().kind)) {
         expression = createPropertyAccessExpression(expression, questionDotToken, this.#parseMemberName(), NodeFlags.None);
         continue;
       }
@@ -1752,6 +1754,10 @@ export class Parser {
         continue;
       }
       const typeArguments = this.#tryParseCallTypeArguments();
+      if (isTemplateLiteralStart(this.#current().kind)) {
+        expression = createTaggedTemplateExpression(expression, questionDotToken as never, typeArguments, this.#parseTemplateLiteral(), NodeFlags.None);
+        continue;
+      }
       if (questionDotToken !== undefined && this.#current().kind === Kind.OpenParenToken || typeArguments !== undefined && this.#current().kind === Kind.OpenParenToken) {
         this.#expect(Kind.OpenParenToken);
         expression = createCallExpression(expression, questionDotToken, typeArguments, createNodeArray(this.#parseArgumentList()), NodeFlags.None);
@@ -1789,7 +1795,7 @@ export class Parser {
     const state = this.#beginSpeculation();
     try {
       const typeArguments = this.#parseOptionalTypeArguments();
-      if (typeArguments !== undefined && this.#current().kind === Kind.OpenParenToken) {
+      if (typeArguments !== undefined && (this.#current().kind === Kind.OpenParenToken || isTemplateLiteralStart(this.#current().kind))) {
         return typeArguments;
       }
     } catch {
@@ -1852,10 +1858,8 @@ export class Parser {
         this.#advance();
         return createStringLiteral(unquote(token.text), 0);
       case Kind.NoSubstitutionTemplateLiteral:
-        this.#advance();
-        return createNoSubstitutionTemplateLiteral(unquoteTemplate(token.text), 0);
       case Kind.TemplateHead:
-        return this.#parseTemplateExpression();
+        return this.#parseTemplateLiteral();
       case Kind.FunctionKeyword:
         return this.#parseFunctionExpression();
       case Kind.AsyncKeyword:
@@ -1974,6 +1978,18 @@ export class Parser {
       }
     }
     return createTemplateExpression(createTemplateHead(templateHeadText(headToken.text), templateHeadText(headToken.text), 0), createNodeArray(spans));
+  }
+
+  #parseTemplateLiteral(): TemplateLiteral {
+    const token = this.#current();
+    if (token.kind === Kind.NoSubstitutionTemplateLiteral) {
+      this.#advance();
+      return createNoSubstitutionTemplateLiteral(unquoteTemplate(token.text), 0);
+    }
+    if (token.kind === Kind.TemplateHead) {
+      return this.#parseTemplateExpression() as TemplateLiteral;
+    }
+    throw new ParseError("Expected template literal", token);
   }
 
   #parseArrayLiteralExpression(): Expression {
@@ -2903,6 +2919,10 @@ function isAsciiDigit(character: string): boolean {
 
 function isOctalDigit(character: string): boolean {
   return character >= "0" && character <= "7";
+}
+
+function isTemplateLiteralStart(kind: Kind): boolean {
+  return kind === Kind.NoSubstitutionTemplateLiteral || kind === Kind.TemplateHead;
 }
 
 function unquote(text: string): string {
