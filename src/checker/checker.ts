@@ -1658,6 +1658,23 @@ function collectClassMemberNames(classDeclaration: ClassLikeDeclaration, inherit
   const readonlyProperties = new Set(inherited?.readonlyProperties ?? []);
   const uninitializedProperties = new Set(inherited?.uninitializedProperties ?? []);
   for (const member of classDeclaration.members) {
+    if (isConstructorDeclaration(member)) {
+      collectParameterProperties(
+        member,
+        classDeclaration,
+        environment,
+        instance,
+        abstractMembers,
+        abstractProperties,
+        abstractPropertyDeclaringClasses,
+        propertyDeclaringClasses,
+        propertyTypes,
+        getAccessorProperties,
+        readonlyProperties,
+        uninitializedProperties,
+      );
+      continue;
+    }
     const name = classElementName(member);
     if (name === undefined) {
       continue;
@@ -1753,6 +1770,67 @@ function collectClassMemberNames(classDeclaration: ClassLikeDeclaration, inherit
     readonlyProperties,
     uninitializedProperties,
   };
+}
+
+function collectParameterProperties(
+  constructor: ConstructorDeclaration,
+  classDeclaration: ClassLikeDeclaration,
+  environment: TypeEnvironment,
+  instance: Set<string>,
+  abstractMembers: Map<string, string>,
+  abstractProperties: Set<string>,
+  abstractPropertyDeclaringClasses: Map<string, string>,
+  propertyDeclaringClasses: Map<string, string>,
+  propertyTypes: Map<string, CheckedType>,
+  getAccessorProperties: Set<string>,
+  readonlyProperties: Set<string>,
+  uninitializedProperties: Set<string>,
+): void {
+  for (const parameter of constructor.parameters) {
+    const name = parameterPropertyMemberName(parameter);
+    if (name === undefined) {
+      continue;
+    }
+    instance.add(name);
+    abstractMembers.delete(name);
+    abstractProperties.delete(name);
+    abstractPropertyDeclaringClasses.delete(name);
+    getAccessorProperties.delete(name);
+    uninitializedProperties.delete(name);
+    if (classDeclaration.name !== undefined) {
+      propertyDeclaringClasses.set(name, classDeclaration.name.text);
+    }
+    const parameterType = parameterPropertyType(parameter, environment);
+    if (parameterType !== undefined) {
+      propertyTypes.set(name, parameterType);
+    }
+    if (hasModifier(parameter, Kind.ReadonlyKeyword)) {
+      readonlyProperties.add(name);
+    } else {
+      readonlyProperties.delete(name);
+    }
+  }
+}
+
+function parameterPropertyMemberName(parameter: ParameterDeclaration): string | undefined {
+  if (!isIdentifier(parameter.name) || !isParameterProperty(parameter)) {
+    return undefined;
+  }
+  return parameter.name.text;
+}
+
+function isParameterProperty(parameter: ParameterDeclaration): boolean {
+  return parameter.modifiers?.some(modifier => modifier.kind === Kind.PublicKeyword || modifier.kind === Kind.PrivateKeyword || modifier.kind === Kind.ProtectedKeyword || modifier.kind === Kind.ReadonlyKeyword) === true;
+}
+
+function parameterPropertyType(parameter: ParameterDeclaration, environment: TypeEnvironment): CheckedType | undefined {
+  if (parameter.type !== undefined) {
+    return typeFromTypeNode(parameter.type, environment);
+  }
+  if (parameter.initializer === undefined) {
+    return undefined;
+  }
+  return literalExpressionType(parameter.initializer);
 }
 
 function classElementName(member: ClassElement): string | undefined {
@@ -3644,8 +3722,13 @@ function inferPropertyAccess(expression: Expression, optionalChain: boolean, pro
     }
   }
   if (receiverType.kind === "thisClass") {
+    const propertyType = propertyAccessType(receiverType, propertyName, environment);
     diagnoseThisPropertyAccess(receiverType, propertyName, state);
-    return propertyAccessType(receiverType, propertyName, environment) ?? anyType;
+    if (propertyType !== undefined) {
+      return propertyType;
+    }
+    diagnoseMissingPropertyAccess(receiverType, propertyName, state);
+    return anyType;
   }
   const propertyType = propertyAccessType(receiverType, propertyName, environment);
   if (propertyType !== undefined) {
@@ -3655,10 +3738,82 @@ function inferPropertyAccess(expression: Expression, optionalChain: boolean, pro
     return anyType;
   }
   if (receiverType.kind !== "any" && receiverType.kind !== "function") {
-    state.diagnostics.push(createDiagnostic(2339, propertyName, displayType(receiverType)));
+    diagnoseMissingPropertyAccess(receiverType, propertyName, state);
     return anyType;
   }
   return anyType;
+}
+
+function diagnoseMissingPropertyAccess(receiverType: CheckedType, propertyName: string, state: CheckState): void {
+  const suggestion = suggestedPropertyName(receiverType, propertyName);
+  if (suggestion !== undefined) {
+    state.diagnostics.push(createDiagnostic(2551, propertyName, displayType(receiverType), suggestion));
+    return;
+  }
+  state.diagnostics.push(createDiagnostic(2339, propertyName, displayType(receiverType)));
+}
+
+function suggestedPropertyName(receiverType: CheckedType, propertyName: string): string | undefined {
+  const candidates = propertyAccessCandidateNames(receiverType);
+  let bestName: string | undefined;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (const candidate of candidates) {
+    if (candidate === propertyName || candidate.length === 0) {
+      continue;
+    }
+    const distance = editDistance(propertyName, candidate);
+    if (distance < bestDistance || (distance === bestDistance && (bestName === undefined || candidate < bestName))) {
+      bestName = candidate;
+      bestDistance = distance;
+    }
+  }
+  if (bestName === undefined || bestDistance > propertySuggestionDistanceLimit(propertyName)) {
+    return undefined;
+  }
+  return bestName;
+}
+
+function propertyAccessCandidateNames(receiverType: CheckedType): readonly string[] {
+  if (receiverType.kind === "thisClass" || receiverType.kind === "classInstance") {
+    return [...uniqueInOrder([...receiverType.members.propertyTypes.keys(), ...receiverType.members.instance])].sort();
+  }
+  if (receiverType.kind === "interface") {
+    return [...receiverType.members.properties.keys()].sort();
+  }
+  if (receiverType.kind === "object") {
+    return [...receiverType.properties.keys()].sort();
+  }
+  if (receiverType.kind === "typeAliasInstance" || receiverType.kind === "typeAlias") {
+    return propertyAccessCandidateNames(receiverType.target);
+  }
+  return [];
+}
+
+function propertySuggestionDistanceLimit(propertyName: string): number {
+  if (propertyName.length <= 3) {
+    return 1;
+  }
+  if (propertyName.length <= 8) {
+    return 2;
+  }
+  return 3;
+}
+
+function editDistance(left: string, right: string): number {
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  for (let leftIndex = 0; leftIndex < left.length; leftIndex += 1) {
+    const current = [leftIndex + 1];
+    for (let rightIndex = 0; rightIndex < right.length; rightIndex += 1) {
+      const substitutionCost = left[leftIndex] === right[rightIndex] ? 0 : 1;
+      current[rightIndex + 1] = Math.min(
+        current[rightIndex]! + 1,
+        previous[rightIndex + 1]! + 1,
+        previous[rightIndex]! + substitutionCost,
+      );
+    }
+    previous.splice(0, previous.length, ...current);
+  }
+  return previous[right.length]!;
 }
 
 function propertyAccessType(receiverType: CheckedType, propertyName: string, environment?: TypeEnvironment): CheckedType | undefined {
@@ -4921,7 +5076,7 @@ function hasModifier(node: object, kind: Kind): boolean {
 }
 
 function checkParameterPropertyModifiers(parameter: ParameterDeclaration, state: CheckState): void {
-  if (parameter.modifiers?.some(modifier => modifier.kind === Kind.PublicKeyword || modifier.kind === Kind.PrivateKeyword || modifier.kind === Kind.ProtectedKeyword || modifier.kind === Kind.ReadonlyKeyword) === true) {
+  if (isParameterProperty(parameter)) {
     state.diagnostics.push(createDiagnostic(2369));
   }
 }
@@ -4931,7 +5086,7 @@ function strictOptionValue(options: CompilerOptions, optionName: "noImplicitAny"
 }
 
 function checkImplicitAnyParameter(parameter: ParameterDeclaration, state: CheckState, contextualType?: CheckedType): void {
-  const hasParameterPropertyModifier = parameter.modifiers?.some(modifier => modifier.kind === Kind.PublicKeyword || modifier.kind === Kind.PrivateKeyword || modifier.kind === Kind.ProtectedKeyword || modifier.kind === Kind.ReadonlyKeyword) === true;
+  const hasParameterPropertyModifier = isParameterProperty(parameter);
   if (contextualType !== undefined && !hasParameterPropertyModifier) {
     return;
   }

@@ -20,6 +20,21 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2339]);
   });
 
+  it("reports missing this-property access with deterministic class-member suggestions", () => {
+    const sourceFile = parseSourceFile("class B { methodB() { this.methodA; this.methodB; } }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Property 'methodA' does not exist on type 'B'. Did you mean 'methodB'?"]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2551]);
+  });
+
+  it("treats constructor parameter properties as initialized instance members", () => {
+    const sourceFile = parseSourceFile("class Point { constructor(public x: number, readonly y: number) {} toString() { return this.x.toFixed() + this.y.toFixed(); } }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
   it("reports return type assignability failures", () => {
     const sourceFile = parseSourceFile("function f(): number { return \"not a number\"; }");
     const result = checkSourceFile(sourceFile);
