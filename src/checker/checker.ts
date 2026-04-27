@@ -3600,6 +3600,9 @@ function resolveEntityName(typeName: EntityName, environment: TypeEnvironment, s
     if (bound === undefined && meaning === "namespace") {
       state?.diagnostics.push(createDiagnostic(2503, typeName.text));
     }
+    if (bound !== undefined && meaning === "namespace" && namespaceMeaning(bound) === undefined && typeMeaning(bound) === undefined) {
+      state?.diagnostics.push(createDiagnostic(2503, typeName.text));
+    }
     return bound;
   }
   const namespace = resolveEntityNamespace(typeName.left, environment, state);

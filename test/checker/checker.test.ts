@@ -511,6 +511,14 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("reports value-only globals as invalid import-equals namespace targets", () => {
+    const sourceFile = parseSourceFile("import alias = undefined;");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2503]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find namespace 'undefined'."]);
+  });
+
   it("uses resolved program module exports for namespace-import structural assignment", () => {
     const host: CompilerHost = {
       readFile: fileName => {
