@@ -127,8 +127,10 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "Function implementation name must be 'foo'.",
       "Function implementation is missing or not immediately following the declaration.",
+      "'foo', which lacks return-type annotation, implicitly has an 'any' return type.",
+      "'baz', which lacks return-type annotation, implicitly has an 'any' return type.",
     ]);
-    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2389, 2391]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2389, 2391, 7010, 7010]);
   });
 
   it("reports export-equals conflicts with exported declarations", () => {
@@ -199,10 +201,13 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "Interface name cannot be 'string'.",
       "A parameter property is only allowed in a constructor implementation.",
+      "Parameter 'x' implicitly has an 'any' type.",
+      "Construct signature, which lacks return-type annotation, implicitly has an 'any' return type.",
       "A parameter property is only allowed in a constructor implementation.",
+      "Parameter 'x' implicitly has an 'any' type.",
       "A function whose declared type is neither 'undefined', 'void', nor 'any' must return a value.",
     ]);
-    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2427, 2369, 2369, 2355]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2427, 2369, 7006, 7013, 2369, 7006, 2355]);
   });
 
   it("reports unresolved type references while honoring declared and imported types", () => {

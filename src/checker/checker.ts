@@ -590,6 +590,9 @@ function checkTypeElements(members: readonly TypeElement[], state: CheckState, e
       if (member.type !== undefined) {
         typeFromTypeNode(member.type, environment, state);
       }
+      if (isConstructSignatureDeclaration(member) && member.type === undefined) {
+        state.diagnostics.push(createDiagnostic(7013));
+      }
       continue;
     }
     if (isGetAccessorDeclaration(member) || isSetAccessorDeclaration(member)) {
@@ -651,6 +654,7 @@ function checkSignatureParameters(parameters: readonly ParameterDeclaration[], s
     if (disallowParameterProperties) {
       checkParameterPropertyModifiers(parameter, state);
     }
+    checkImplicitAnyParameter(parameter, state);
     const parameterType = parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, environment, state);
     setBindingNameType(parameter.name, parameterType, environment);
     return parameterType;
@@ -669,6 +673,9 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
   addTypeParametersToEnvironment(typeParameters, functionEnvironment);
   const parameterTypes = functionDeclaration.parameters.map(parameter => parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, functionEnvironment, state));
   const returnType = functionDeclaration.type === undefined ? undefined : typeFromTypeNode(functionDeclaration.type, functionEnvironment, state);
+  if (functionDeclaration.body === undefined && functionDeclaration.type === undefined) {
+    state.diagnostics.push(createDiagnostic(7010, functionDeclaration.name?.text ?? "(Missing)", "any"));
+  }
   if (functionDeclaration.name !== undefined) {
     environment.set(functionDeclaration.name.text, {
       kind: "function",
@@ -680,6 +687,7 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
   for (let index = 0; index < functionDeclaration.parameters.length; index += 1) {
     const parameter = functionDeclaration.parameters[index]!;
     checkParameterPropertyModifiers(parameter, state);
+    checkImplicitAnyParameter(parameter, state);
     setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
   }
   if (functionDeclaration.body !== undefined) {
@@ -1008,6 +1016,13 @@ function checkParameterPropertyModifiers(parameter: ParameterDeclaration, state:
   if (parameter.modifiers?.some(modifier => modifier.kind === Kind.PublicKeyword || modifier.kind === Kind.PrivateKeyword || modifier.kind === Kind.ProtectedKeyword || modifier.kind === Kind.ReadonlyKeyword) === true) {
     state.diagnostics.push(createDiagnostic(2369));
   }
+}
+
+function checkImplicitAnyParameter(parameter: ParameterDeclaration, state: CheckState): void {
+  if (parameter.type !== undefined || !isIdentifier(parameter.name)) {
+    return;
+  }
+  state.diagnostics.push(createDiagnostic(7006, parameter.name.text, "any"));
 }
 
 function inferArrayLiteral(elements: readonly Expression[], state: CheckState, environment: TypeEnvironment): CheckedType {
