@@ -379,7 +379,8 @@ async function main(): Promise<void> {
   const cases = await discoverCases(options);
   const results: CaseResult[] = [];
 
-  for (const testCase of cases) {
+  for (let caseIndex = 0; caseIndex < cases.length; caseIndex += 1) {
+    const testCase = cases[caseIndex]!;
     let upstream: readonly ComparableDiagnostic[] = [];
     let actual: readonly ComparableDiagnostic[] = [];
     let error: unknown;
@@ -400,12 +401,51 @@ async function main(): Promise<void> {
       actual,
       error: error instanceof Error ? error.message : error === undefined ? undefined : String(error),
     });
+    process.stdout.write(`${JSON.stringify({
+      index: caseIndex + 1,
+      total: cases.length,
+      name: testCase.name,
+      status: passed ? "passed" : "failed",
+      rootCause,
+      upstreamDiagnostics: upstream.length,
+      actualDiagnostics: actual.length,
+    })}\n`);
+    if ((caseIndex + 1) % 25 === 0) {
+      await writeSummary(options, results, cases.length);
+    }
   }
 
+  const summary = await writeSummary(options, results, cases.length);
+  process.stdout.write(`${JSON.stringify({
+    suite: summary.suite,
+    total: summary.total,
+    completed: summary.completed,
+    passed: summary.passed,
+    failed: summary.failed,
+    byRootCause: summary.byRootCause,
+    outFile: options.outFile,
+  }, null, 2)}\n`);
+
+  if (summary.failed > 0 && !options.allowFailures) {
+    process.exitCode = 1;
+  }
+}
+
+async function writeSummary(options: Options, results: readonly CaseResult[], totalCases: number): Promise<{
+  readonly suite: Options["suite"];
+  readonly filter: string | undefined;
+  readonly total: number;
+  readonly completed: number;
+  readonly passed: number;
+  readonly failed: number;
+  readonly byRootCause: Record<string, number>;
+  readonly results: readonly CaseResult[];
+}> {
   const summary = {
     suite: options.suite,
     filter: options.filter,
-    total: results.length,
+    total: totalCases,
+    completed: results.length,
     passed: results.filter(result => result.status === "passed").length,
     failed: results.filter(result => result.status === "failed").length,
     byRootCause: Object.fromEntries([...new Set(results.map(result => result.rootCause))].sort().map(rootCause => [
@@ -417,18 +457,7 @@ async function main(): Promise<void> {
 
   await mkdir(dirname(options.outFile), { recursive: true });
   await writeFile(options.outFile, `${JSON.stringify(summary, null, 2)}\n`);
-  process.stdout.write(`${JSON.stringify({
-    suite: summary.suite,
-    total: summary.total,
-    passed: summary.passed,
-    failed: summary.failed,
-    byRootCause: summary.byRootCause,
-    outFile: options.outFile,
-  }, null, 2)}\n`);
-
-  if (summary.failed > 0 && !options.allowFailures) {
-    process.exitCode = 1;
-  }
+  return summary;
 }
 
 await main();
