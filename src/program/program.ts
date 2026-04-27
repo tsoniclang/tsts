@@ -2,7 +2,7 @@ import { dirname, extname, isAbsolute, join, normalize, relative } from "node:pa
 import { bindSourceFile, type BindDiagnostic, type BindResult } from "../binder/index.js";
 import { checkProgram } from "../checker/index.js";
 import { printSourceFile } from "../emit-js/index.js";
-import { parseSourceFile } from "../parser/index.js";
+import { parseSourceFileWithDiagnostics } from "../parser/index.js";
 import { isExportDeclaration, isExternalModuleReference, isImportDeclaration, isImportEqualsDeclaration, isModuleDeclaration, isStringLiteral, type SourceFile } from "../ast/index.js";
 import { createDiagnosticAt, type DiagnosticCategory, type DiagnosticCode } from "../diagnostics/index.js";
 
@@ -85,7 +85,16 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
     }
     let sourceFile: SourceFile;
     try {
-      sourceFile = parseSourceFile(sourceText, { fileName: rootName });
+      const parseResult = parseSourceFileWithDiagnostics(sourceText, { fileName: rootName });
+      sourceFile = parseResult.sourceFile;
+      diagnostics.push(...parseResult.diagnostics.map(diagnostic => ({
+        fileName: rootName,
+        code: diagnostic.code,
+        category: diagnostic.category,
+        key: diagnostic.key,
+        messageText: diagnostic.messageText,
+        message: diagnostic.message,
+      })));
     } catch (error) {
       diagnostics.push({
         fileName: rootName,

@@ -230,7 +230,7 @@ export function checkSourceFile(sourceFile: SourceFile, options: CompilerOptions
 
 export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
   const diagnostics: ProgramDiagnostic[] = [...program.diagnostics];
-  if (diagnostics.length > 0) {
+  if (diagnostics.some(diagnostic => diagnostic.code === undefined || !syntaxDiagnosticCodes.has(diagnostic.code))) {
     return diagnostics;
   }
   const globalEnvironment = globalAmbientEnvironment(program);
@@ -253,6 +253,8 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
   }
   return diagnostics;
 }
+
+const syntaxDiagnosticCodes = new Set<number>([1003, 1005, 1068, 1127, 1128, 1359, 1434, 1440, 1490]);
 
 function programModuleResolver(program: Program, globalEnvironment: TypeEnvironment): (containingFileName: string, moduleSpecifier: string) => CheckedType | undefined {
   const sourceFiles = new Map(program.sourceFiles.map(sourceFile => [sourceFile.fileName, sourceFile]));
@@ -504,7 +506,10 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isExpressionStatement(statement)) {
-    inferExpression(statement.expression, state, environment);
+    const expressionType = inferExpression(statement.expression, state, environment);
+    if (isIdentifier(statement.expression) && statement.expression.text !== "" && expressionType.kind === "unresolved") {
+      state.diagnostics.push(createDiagnostic(2304, statement.expression.text));
+    }
     return;
   }
   if (isBlock(statement)) {
@@ -2329,6 +2334,9 @@ function typeFromResolvedEntity(type: CheckedType, diagnosticName: string | unde
 
 function resolveEntityName(typeName: EntityName, environment: TypeEnvironment, state: CheckState | undefined, meaning: "type" | "namespace"): CheckedType | undefined {
   if (isIdentifier(typeName)) {
+    if (typeName.text === "") {
+      return undefined;
+    }
     const bound = environment.get(typeName.text);
     if (bound === undefined && meaning === "type" && !ambientTypeNames.has(typeName.text)) {
       state?.diagnostics.push(createDiagnostic(2304, typeName.text));

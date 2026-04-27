@@ -159,6 +159,7 @@ import {
   type TypeParameterDeclaration,
   type VariableDeclaration,
 } from "../ast/index.js";
+import { createDiagnosticAt, type Diagnostic, type DiagnosticCode } from "../diagnostics/index.js";
 import { scanAll, type ScannedToken } from "../scanner/index.js";
 
 export interface ParseSourceFileOptions {
@@ -252,18 +253,30 @@ export class Parser {
   readonly #sourceText: string;
   readonly #fileName: string;
   readonly #tokens: readonly ScannedToken[];
+  readonly #diagnostics: Diagnostic[] = [];
   #index = 0;
 
   constructor(sourceText: string, options: ParseSourceFileOptions = {}) {
     this.#sourceText = sourceText;
     this.#fileName = options.fileName ?? "input.ts";
     this.#tokens = scanAll(sourceText);
+    if (sourceText.includes("\uFFFD")) {
+      this.#addDiagnosticAt(0, 0, 1490);
+    }
   }
 
   parseSourceFile(): SourceFile {
     const statements: Statement[] = [];
     while (this.#current().kind !== Kind.EndOfFile) {
-      statements.push(this.#parseStatement());
+      try {
+        statements.push(this.#parseStatement());
+      } catch (error) {
+        if (!(error instanceof ParseError)) {
+          throw error;
+        }
+        this.#addDiagnosticForUnexpectedToken(error.token);
+        this.#advance();
+      }
     }
     return createSourceFile(
       this.#fileName,
@@ -272,6 +285,11 @@ export class Parser {
       createNodeArray(statements),
       createToken(Kind.EndOfFile),
     );
+  }
+
+  parseSourceFileWithDiagnostics(): ParseResult {
+    const sourceFile = this.parseSourceFile();
+    return { sourceFile, diagnostics: [...this.#diagnostics] };
   }
 
   #parseStatement(): Statement {
@@ -388,7 +406,7 @@ export class Parser {
       throw new ParseError("Modifiers are not valid on expression statements", this.#current());
     }
     const expression = this.#parseExpression();
-    this.#consumeOptional(Kind.SemicolonToken);
+    this.#consumeStatementTerminator(expression);
     return createExpressionStatement(expression);
   }
 
@@ -433,7 +451,7 @@ export class Parser {
       this.#expect(Kind.CloseParenToken);
       return createExternalModuleReference(expression);
     }
-    return this.#parseEntityName();
+    return this.#parseEntityName(false);
   }
 
   #parseImportClause(): ReturnType<typeof createImportClause> {
@@ -690,6 +708,9 @@ export class Parser {
     const nextToken = this.#tokens[this.#index + 1];
     if (this.#current().kind === Kind.ConstKeyword && nextToken !== undefined && isIdentifierNameKind(nextToken.kind) && !this.#hasLineBreakBetween(this.#current(), nextToken)) {
       modifiers = createNodeArray([...(modifiers ?? []), createToken(this.#advance().kind as ModifierSyntaxKind) as ModifierLike]);
+    }
+    if (this.#current().kind === Kind.VarKeyword || this.#current().kind === Kind.LetKeyword) {
+      return this.#parseInvalidClassVariableElement(modifiers);
     }
     if (this.#isIndexSignatureStart()) {
       return this.#parseIndexSignature(modifiers);
@@ -1813,12 +1834,32 @@ export class Parser {
     return createTypePredicateNode(assertsModifier, parameterName, this.#parseType());
   }
 
-  #parseEntityName(): EntityName {
-    let name: EntityName = this.#parseIdentifier();
+  #parseEntityName(allowReservedWords = true): EntityName {
+    let name: EntityName = this.#parseEntityNameIdentifier(allowReservedWords);
     while (this.#consumeOptional(Kind.DotToken)) {
-      name = createQualifiedName(name, this.#parseIdentifier());
+      name = createQualifiedName(name, this.#parseEntityNameIdentifier(allowReservedWords));
     }
     return name;
+  }
+
+  #parseEntityNameIdentifier(allowReservedWords: boolean): Identifier {
+    if (allowReservedWords) {
+      return this.#parseIdentifier();
+    }
+    const token = this.#current();
+    if (!isIdentifierNameKind(token.kind) || isReservedIdentifierNameKind(token.kind)) {
+      if (token.kind === Kind.NullKeyword) {
+        this.#addDiagnosticAtToken(token, 1359, token.text);
+      } else {
+        this.#addDiagnosticAtToken(token, 1003);
+      }
+      if (token.kind !== Kind.SemicolonToken && token.kind !== Kind.EndOfFile) {
+        this.#advance();
+      }
+      return createIdentifier("");
+    }
+    this.#advance();
+    return createIdentifier(token.text);
   }
 
   #consumeOptional(kind: Kind): boolean {
@@ -1867,6 +1908,89 @@ export class Parser {
       this.#index += 1;
     }
     return token;
+  }
+
+  #consumeStatementTerminator(expression: Expression): void {
+    if (this.#consumeOptional(Kind.SemicolonToken)
+      || this.#current().kind === Kind.CloseBraceToken
+      || this.#current().kind === Kind.EndOfFile) {
+      return;
+    }
+    if (expression.kind === Kind.Identifier) {
+      this.#addDiagnosticAtToken(expression, 1434);
+    }
+    if (this.#current().kind === Kind.AtToken || this.#current().kind === Kind.Unknown) {
+      this.#addDiagnosticAtToken(this.#current(), 1127);
+    }
+    this.#addDiagnosticAtToken(this.#current(), 1128);
+    while (this.#current().kind !== Kind.SemicolonToken
+      && this.#current().kind !== Kind.CloseBraceToken
+      && this.#current().kind !== Kind.EndOfFile) {
+      this.#advance();
+    }
+    this.#consumeOptional(Kind.SemicolonToken);
+  }
+
+  #parseInvalidClassVariableElement(modifiers: NodeArray<ModifierLike> | undefined): ClassElement {
+    const keyword = this.#current();
+    this.#addDiagnosticAtToken(keyword, modifiers === undefined ? 1068 : 1440);
+    this.#advance();
+    if (this.#current().kind === Kind.ConstructorKeyword && this.#tokens[this.#index + 1]?.kind === Kind.OpenParenToken) {
+      this.#advance();
+      this.#expect(Kind.OpenParenToken);
+      this.#expect(Kind.CloseParenToken);
+      this.#addDiagnosticAtToken(this.#current(), 1005, ",");
+      this.#addDiagnosticAtToken(this.#current(), 1005, "=>");
+      if (this.#current().kind === Kind.OpenBraceToken) {
+        this.#skipBalancedBlock();
+      }
+      this.#addDiagnosticAtToken(this.#current(), 1128);
+      return createSemicolonClassElement();
+    }
+    while (this.#current().kind !== Kind.SemicolonToken
+      && this.#current().kind !== Kind.CloseBraceToken
+      && this.#current().kind !== Kind.EndOfFile) {
+      this.#advance();
+    }
+    this.#consumeOptional(Kind.SemicolonToken);
+    return createSemicolonClassElement();
+  }
+
+  #skipBalancedBlock(): void {
+    if (!this.#consumeOptional(Kind.OpenBraceToken)) {
+      return;
+    }
+    let depth = 1;
+    while (depth > 0 && this.#current().kind !== Kind.EndOfFile) {
+      if (this.#current().kind === Kind.OpenBraceToken) {
+        depth += 1;
+      } else if (this.#current().kind === Kind.CloseBraceToken) {
+        depth -= 1;
+      }
+      this.#advance();
+    }
+  }
+
+  #addDiagnosticForUnexpectedToken(token: ScannedToken): void {
+    if (token.kind === Kind.AtToken || token.kind === Kind.Unknown) {
+      this.#addDiagnosticAtToken(token, 1127);
+    }
+    this.#addDiagnosticAtToken(token, 1128);
+  }
+
+  #addDiagnosticAtToken(token: ScannedToken | { readonly pos?: number; readonly end?: number }, code: DiagnosticCode, ...args: readonly string[]): void {
+    const start = token.pos ?? 0;
+    const end = token.end ?? start;
+    this.#addDiagnosticAt(start, Math.max(0, end - start), code, ...args);
+  }
+
+  #addDiagnosticAt(start: number, length: number, code: DiagnosticCode, ...args: readonly string[]): void {
+    const message = createDiagnosticAt({ fileName: this.#fileName, start, length }, code, ...args);
+    const previous = this.#diagnostics.at(-1);
+    if (previous?.start === start && previous.code === code && previous.message === message.message) {
+      return;
+    }
+    this.#diagnostics.push(message);
   }
 }
 
@@ -1928,6 +2052,14 @@ function isIdentifierNameKind(kind: Kind): boolean {
   return kind === Kind.Identifier || (kind >= Kind.FirstKeyword && kind <= Kind.LastKeyword);
 }
 
+function isReservedIdentifierNameKind(kind: Kind): boolean {
+  return kind === Kind.FalseKeyword
+    || kind === Kind.NullKeyword
+    || kind === Kind.SuperKeyword
+    || kind === Kind.ThisKeyword
+    || kind === Kind.TrueKeyword;
+}
+
 function isPropertyNameStart(kind: Kind): boolean {
   return isIdentifierNameKind(kind)
     || kind === Kind.StringLiteral
@@ -1949,4 +2081,13 @@ function isContextualExpressionIdentifierKind(kind: Kind): boolean {
 
 export function parseSourceFile(sourceText: string, options?: ParseSourceFileOptions): SourceFile {
   return new Parser(sourceText, options).parseSourceFile();
+}
+
+export interface ParseResult {
+  readonly sourceFile: SourceFile;
+  readonly diagnostics: readonly Diagnostic[];
+}
+
+export function parseSourceFileWithDiagnostics(sourceText: string, options?: ParseSourceFileOptions): ParseResult {
+  return new Parser(sourceText, options).parseSourceFileWithDiagnostics();
 }

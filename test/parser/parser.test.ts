@@ -60,7 +60,7 @@ import {
   isWhileStatement,
   isArrayBindingPattern,
 } from "../../src/ast/index.js";
-import { parseSourceFile } from "../../src/parser/index.js";
+import { parseSourceFile, parseSourceFileWithDiagnostics } from "../../src/parser/index.js";
 
 describe("TS-Go parser groundwork", () => {
   it("produces a SourceFile with expression statements", () => {
@@ -589,5 +589,27 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isArrowFunction(initializer!), true);
     if (!isArrowFunction(initializer!)) throw new Error("Expected arrow function");
     assert.equal(initializer.parameters[0]!.modifiers?.[0]?.kind, Kind.PublicKeyword);
+  });
+
+  it("recovers import-equals module references with TypeScript syntax diagnostics", () => {
+    const result = parseSourceFileWithDiagnostics([
+      "import n = 5;",
+      "import q = null;",
+      "import r = undefined;",
+    ].join("\n"));
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1003, 1359]);
+    assert.equal(result.sourceFile.statements.every(isImportEqualsDeclaration), true);
+  });
+
+  it("recovers variable-style class member errors without inventing const-property diagnostics", () => {
+    const result = parseSourceFileWithDiagnostics([
+      "class C {",
+      "  public const var export foo = 10;",
+      "  var constructor() { }",
+      "}",
+    ].join("\n"));
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1440, 1068, 1005, 1005, 1128]);
   });
 });

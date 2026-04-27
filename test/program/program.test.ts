@@ -71,11 +71,11 @@ describe("program groundwork", () => {
     const program = createProgram(["broken.ts", "ok.ts"], {}, host);
     const result = emitProgram(program, host);
 
-    assert.equal(program.sourceFiles.length, 1);
-    assert.equal(program.sourceFiles[0]!.fileName, "ok.ts");
+    assert.deepEqual(program.sourceFiles.map(sourceFile => sourceFile.fileName), ["broken.ts", "ok.ts"]);
     assert.equal(program.diagnostics.length, 1);
     assert.equal(program.diagnostics[0]!.fileName, "broken.ts");
-    assert.match(program.diagnostics[0]!.message, /Expected token Identifier/);
+    assert.equal(program.diagnostics[0]!.code, 1128);
+    assert.equal(program.diagnostics[0]!.message, "Declaration or statement expected.");
     assert.equal(result.emittedFiles.length, 0);
     assert.equal(outputs.size, 0);
   });
@@ -205,6 +205,17 @@ describe("program groundwork", () => {
 
     assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find module 'missing-pkg'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?"]);
     assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2792]);
+  });
+
+  it("continues semantic checking after syntax diagnostics from recoverable parse errors", () => {
+    const host: CompilerHost = {
+      readFile: fileName => fileName === "src/index.ts" ? "G@\uFFFD" : undefined,
+    };
+
+    const program = createProgram(["src/index.ts"], {}, host);
+    const diagnostics = emitProgram(program, host).diagnostics;
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [1490, 1434, 1127, 1128, 2304]);
   });
 
   it("does not emit when semantic diagnostics are present", () => {
