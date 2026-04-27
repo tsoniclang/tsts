@@ -254,4 +254,33 @@ describe("checker groundwork", () => {
 
     assert.equal(result.diagnostics.length, 0);
   });
+
+  it("reports typed variable reads before assignment", () => {
+    const sourceFile = parseSourceFile("interface Shape { value: number; } let value: number; var shape: Shape; const first = value; const second = shape;");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Variable 'value' is used before being assigned.",
+      "Variable 'shape' is used before being assigned.",
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2454, 2454]);
+  });
+
+  it("marks simple assignment targets as assigned without reading the target first", () => {
+    const sourceFile = parseSourceFile("let value: number; value = 1; const copy: number = value;");
+    const result = checkSourceFile(sourceFile);
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
+  it("still reads compound assignment targets before assignment", () => {
+    const sourceFile = parseSourceFile("let value: number; value += 1; const copy = value;");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Variable 'value' is used before being assigned.",
+      "Variable 'value' is used before being assigned.",
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2454, 2454]);
+  });
 });

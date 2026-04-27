@@ -86,20 +86,23 @@ import {
   type Statement,
   type TypeElement,
   type TypeNode,
+  type VariableDeclaration,
 } from "../ast/index.js";
 import { createDiagnostic, type Diagnostic } from "../diagnostics/index.js";
 import type { Program, ProgramDiagnostic } from "../program/index.js";
 
-type PrimitiveTypeName = "any" | "boolean" | "number" | "string" | "unknown" | "void";
+type PrimitiveTypeName = "any" | "boolean" | "number" | "string" | "undefined" | "unknown" | "void";
 
 type CheckedType =
   | { readonly kind: PrimitiveTypeName | "unresolved" }
   | { readonly kind: "array"; readonly elementType: CheckedType }
   | { readonly kind: "classConstructor"; readonly name: string; readonly abstract: boolean }
   | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType }
+  | { readonly kind: "interface"; readonly name: string }
   | { readonly kind: "typeAlias"; readonly target: CheckedType }
   | { readonly kind: "typeParameter"; readonly name: string }
   | { readonly kind: "union"; readonly types: readonly CheckedType[] }
+  | { readonly kind: "unassignedVariable"; readonly name: string; readonly type: CheckedType }
   | { readonly kind: "unqualifiedStaticMember"; readonly className: string; readonly memberName: string }
   | { readonly kind: "unqualifiedInstanceMember"; readonly memberName: string };
 
@@ -128,6 +131,7 @@ const numberType: CheckedType = { kind: "number" };
 const stringType: CheckedType = { kind: "string" };
 const voidType: CheckedType = { kind: "void" };
 const booleanType: CheckedType = { kind: "boolean" };
+const undefinedType: CheckedType = { kind: "undefined" };
 const invalidClassNames = new Set(["any", "bigint", "boolean", "never", "number", "object", "string", "symbol", "undefined", "unknown", "void"]);
 const ambientTypeNames = new Set([
   "Array",
@@ -211,12 +215,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isVariableStatement(statement)) {
     for (const declaration of statement.declarationList.declarations) {
-      const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type, environment, state);
-      const initializerType = declaration.initializer === undefined ? undefined : inferExpression(declaration.initializer, state, environment);
-      if (declaredType !== undefined && initializerType !== undefined) {
-        checkAssignable(initializerType, declaredType, state);
-      }
-      setBindingNameType(declaration.name, declaredType ?? initializerType ?? unresolvedType, environment);
+      checkVariableDeclaration(declaration, state, environment, ambient || hasDeclareModifier(statement));
     }
     return;
   }
@@ -282,7 +281,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isForInStatement(statement) || isForOfStatement(statement)) {
     const loopEnvironment = new Map(environment);
-    checkForInitializer(statement.initializer, state, loopEnvironment);
+    checkForInitializer(statement.initializer, state, loopEnvironment, true);
     inferExpression(statement.expression, state, loopEnvironment);
     checkStatement(statement.statement, state, loopEnvironment, expectedReturnType, ambient, false);
     return;
@@ -387,18 +386,13 @@ function diagnosePendingFunctionOverloads(pendingNames: string[], state: CheckSt
   pendingNames.length = 0;
 }
 
-function checkForInitializer(initializer: Extract<Statement, { readonly kind: Kind.ForStatement }>["initializer"] | Extract<Statement, { readonly kind: Kind.ForInStatement }>["initializer"], state: CheckState, environment: TypeEnvironment): void {
+function checkForInitializer(initializer: Extract<Statement, { readonly kind: Kind.ForStatement }>["initializer"] | Extract<Statement, { readonly kind: Kind.ForInStatement }>["initializer"], state: CheckState, environment: TypeEnvironment, assumeAssigned = false): void {
   if (initializer === undefined) {
     return;
   }
   if (isVariableDeclarationList(initializer)) {
     for (const declaration of initializer.declarations) {
-      const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type, environment, state);
-      const initializerType = declaration.initializer === undefined ? undefined : inferExpression(declaration.initializer, state, environment);
-      if (declaredType !== undefined && initializerType !== undefined) {
-        checkAssignable(initializerType, declaredType, state);
-      }
-      setBindingNameType(declaration.name, declaredType ?? initializerType ?? unresolvedType, environment);
+      checkVariableDeclaration(declaration, state, environment, assumeAssigned);
     }
     return;
   }
@@ -406,6 +400,61 @@ function checkForInitializer(initializer: Extract<Statement, { readonly kind: Ki
     return;
   }
   inferExpression(initializer, state, environment);
+}
+
+function checkVariableDeclaration(declaration: VariableDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
+  const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type, environment, state);
+  const initializerType = declaration.initializer === undefined ? undefined : inferExpression(declaration.initializer, state, environment);
+  if (declaredType !== undefined && initializerType !== undefined) {
+    checkAssignable(initializerType, declaredType, state);
+  }
+  setBindingNameType(declaration.name, variableDeclarationBindingType(declaration, declaredType, initializerType, environment, ambient), environment);
+}
+
+function variableDeclarationBindingType(declaration: VariableDeclaration, declaredType: CheckedType | undefined, initializerType: CheckedType | undefined, environment: TypeEnvironment, ambient: boolean): CheckedType {
+  if (
+    !ambient
+    && initializerType === undefined
+    && declaration.type !== undefined
+    && declaredType !== undefined
+    && declaration.exclamationToken === undefined
+    && isIdentifier(declaration.name)
+    && typeNodeRequiresDefiniteAssignment(declaration.type, environment)
+  ) {
+    return { kind: "unassignedVariable", name: declaration.name.text, type: declaredType };
+  }
+  return declaredType ?? initializerType ?? unresolvedType;
+}
+
+function typeNodeRequiresDefiniteAssignment(type: TypeNode, environment: TypeEnvironment): boolean {
+  if (isKeywordTypeNode(type)) {
+    return type.kind !== Kind.AnyKeyword
+      && type.kind !== Kind.UnknownKeyword
+      && type.kind !== Kind.VoidKeyword
+      && type.kind !== Kind.UndefinedKeyword;
+  }
+  if (isUnionTypeNode(type)) {
+    return type.types.every(unionMember => typeNodeRequiresDefiniteAssignment(unionMember, environment));
+  }
+  if (isTypeReferenceNode(type)) {
+    const name = entityNameText(type.typeName);
+    const bound = name === undefined ? undefined : environment.get(name);
+    return bound?.kind === "typeAlias" ? checkedTypeRequiresDefiniteAssignment(bound.target) : true;
+  }
+  return true;
+}
+
+function checkedTypeRequiresDefiniteAssignment(type: CheckedType): boolean {
+  if (type.kind === "any" || type.kind === "unknown" || type.kind === "unresolved" || type.kind === "undefined" || type.kind === "void") {
+    return false;
+  }
+  if (type.kind === "typeAlias") {
+    return checkedTypeRequiresDefiniteAssignment(type.target);
+  }
+  if (type.kind === "union") {
+    return type.types.every(checkedTypeRequiresDefiniteAssignment);
+  }
+  return true;
 }
 
 function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
@@ -455,7 +504,7 @@ function checkInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, s
   if (invalidClassNames.has(interfaceDeclaration.name.text)) {
     state.diagnostics.push(createDiagnostic(2427, interfaceDeclaration.name.text));
   }
-  environment.set(interfaceDeclaration.name.text, { kind: "typeAlias", target: anyType });
+  environment.set(interfaceDeclaration.name.text, { kind: "interface", name: interfaceDeclaration.name.text });
   const interfaceEnvironment = new Map(environment);
   addTypeParametersToEnvironment(interfaceDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], interfaceEnvironment);
   checkTypeElements(interfaceDeclaration.members, state, interfaceEnvironment, true);
@@ -808,6 +857,10 @@ function inferExpression(expression: Expression, state: CheckState, environment:
       state.diagnostics.push(createDiagnostic(2304, bound.memberName));
       return unresolvedType;
     }
+    if (bound?.kind === "unassignedVariable") {
+      state.diagnostics.push(createDiagnostic(2454, bound.name));
+      return bound.type;
+    }
     return bound ?? unresolvedType;
   }
   if (isParenthesizedExpression(expression)) {
@@ -858,13 +911,13 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return inferArrowFunction(expression, state, environment);
   }
   if (isBinaryExpression(expression)) {
+    if (isAssignmentOperator(expression.operatorToken.kind)) {
+      return inferAssignmentExpression(expression, state, environment);
+    }
     const left = inferExpression(expression.left, state, environment);
     const right = inferExpression(expression.right, state, environment);
     if (isComparisonOperator(expression.operatorToken.kind) || expression.operatorToken.kind === Kind.AmpersandAmpersandToken || expression.operatorToken.kind === Kind.BarBarToken) {
       return booleanType;
-    }
-    if (isAssignmentOperator(expression.operatorToken.kind)) {
-      return right;
     }
     if (expression.operatorToken.kind === Kind.PlusToken && (left.kind === "string" || right.kind === "string")) {
       return stringType;
@@ -915,6 +968,70 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return anyType;
   }
   return unresolvedType;
+}
+
+function inferAssignmentExpression(expression: Extract<Expression, { readonly kind: Kind.BinaryExpression }>, state: CheckState, environment: TypeEnvironment): CheckedType {
+  const operator = expression.operatorToken.kind;
+  if (assignmentOperatorReadsTarget(operator)) {
+    inferExpression(expression.left, state, environment);
+  } else {
+    checkAssignmentTargetReference(expression.left, state, environment);
+  }
+  const right = inferExpression(expression.right, state, environment);
+  if (assignmentOperatorDefinitelyAssignsTarget(operator)) {
+    assignExpressionTarget(expression.left, right, state, environment);
+  }
+  return right;
+}
+
+function checkAssignmentTargetReference(expression: Expression, state: CheckState, environment: TypeEnvironment): void {
+  if (isIdentifier(expression)) {
+    return;
+  }
+  if (isParenthesizedExpression(expression)) {
+    checkAssignmentTargetReference(expression.expression, state, environment);
+    return;
+  }
+  if (isPropertyAccessExpression(expression)) {
+    inferExpression(expression.expression, state, environment);
+    return;
+  }
+  if (isElementAccessExpression(expression)) {
+    inferExpression(expression.expression, state, environment);
+    inferExpression(expression.argumentExpression, state, environment);
+    return;
+  }
+  inferExpression(expression, state, environment);
+}
+
+function assignExpressionTarget(expression: Expression, assignedType: CheckedType, state: CheckState, environment: TypeEnvironment): void {
+  if (isIdentifier(expression)) {
+    const existing = environment.get(expression.text);
+    const targetType = existing?.kind === "unassignedVariable" ? existing.type : existing;
+    if (targetType !== undefined) {
+      checkAssignable(assignedType, targetType, state);
+      environment.set(expression.text, targetType);
+      return;
+    }
+    environment.set(expression.text, assignedType);
+    return;
+  }
+  if (isParenthesizedExpression(expression)) {
+    assignExpressionTarget(expression.expression, assignedType, state, environment);
+  }
+}
+
+function assignmentOperatorReadsTarget(kind: Kind): boolean {
+  return kind !== Kind.EqualsToken
+    && kind !== Kind.AmpersandAmpersandEqualsToken
+    && kind !== Kind.BarBarEqualsToken
+    && kind !== Kind.QuestionQuestionEqualsToken;
+}
+
+function assignmentOperatorDefinitelyAssignsTarget(kind: Kind): boolean {
+  return kind === Kind.EqualsToken
+    || kind === Kind.BarBarEqualsToken
+    || kind === Kind.QuestionQuestionEqualsToken;
 }
 
 function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, environment: TypeEnvironment, contextualParameterTypes: readonly CheckedType[] = []): CheckedType {
@@ -1003,6 +1120,8 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
         return numberType;
       case Kind.StringKeyword:
         return stringType;
+      case Kind.UndefinedKeyword:
+        return undefinedType;
       case Kind.VoidKeyword:
         return voidType;
       case Kind.UnknownKeyword:
@@ -1036,6 +1155,9 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
     if (bound?.kind === "typeAlias") {
       return bound.target;
     }
+    if (bound?.kind === "interface") {
+      return anyType;
+    }
     if (bound !== undefined) {
       return anyType;
     }
@@ -1065,7 +1187,7 @@ function checkAssignable(actual: CheckedType, expected: CheckedType, state: Chec
 }
 
 function requiresReturnValue(type: CheckedType): boolean {
-  return type.kind !== "any" && type.kind !== "unknown" && type.kind !== "unresolved" && type.kind !== "void";
+  return type.kind !== "any" && type.kind !== "unknown" && type.kind !== "unresolved" && type.kind !== "undefined" && type.kind !== "void";
 }
 
 function isAbstractConstructorType(type: CheckedType): boolean {
@@ -1165,17 +1287,31 @@ function substituteType(type: CheckedType, substitutions: ReadonlyMap<string, Ch
 }
 
 function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
+  if (actual.kind === "unassignedVariable") {
+    return isAssignableTo(actual.type, expected);
+  }
+  if (expected.kind === "unassignedVariable") {
+    return isAssignableTo(actual, expected.type);
+  }
   if (actual.kind === "any" || expected.kind === "any") {
     return true;
   }
-  if (actual.kind === expected.kind && actual.kind !== "array" && actual.kind !== "classConstructor" && actual.kind !== "function" && actual.kind !== "typeAlias" && actual.kind !== "typeParameter" && actual.kind !== "union") {
+  if (actual.kind === expected.kind && actual.kind !== "array" && actual.kind !== "classConstructor" && actual.kind !== "function" && actual.kind !== "interface" && actual.kind !== "typeAlias" && actual.kind !== "typeParameter" && actual.kind !== "union") {
     return true;
   }
   if (actual.kind === "classConstructor" && expected.kind === "classConstructor") {
     return actual.name === expected.name && actual.abstract === expected.abstract;
   }
+  if (actual.kind === "interface" && expected.kind === "interface") {
+    return actual.name === expected.name;
+  }
   if (actual.kind === "array" && expected.kind === "array") {
     return isAssignableTo(actual.elementType, expected.elementType);
+  }
+  if (actual.kind === "function" && expected.kind === "function") {
+    return actual.parameters.length <= expected.parameters.length
+      && actual.parameters.every((actualParameter, index) => isAssignableTo(expected.parameters[index]!, actualParameter))
+      && isAssignableTo(actual.returnType, expected.returnType);
   }
   if (actual.kind === "union") {
     return actual.types.every(type => isAssignableTo(type, expected));
@@ -1289,11 +1425,17 @@ function displayType(type: CheckedType): string {
   if (type.kind === "classConstructor") {
     return `typeof ${type.name}`;
   }
+  if (type.kind === "interface") {
+    return type.name;
+  }
   if (type.kind === "typeAlias") {
     return displayType(type.target);
   }
   if (type.kind === "union") {
     return type.types.map(displayType).join(" | ");
+  }
+  if (type.kind === "unassignedVariable") {
+    return displayType(type.type);
   }
   if (type.kind === "unqualifiedStaticMember" || type.kind === "unqualifiedInstanceMember") {
     return "unknown";
