@@ -2147,6 +2147,7 @@ function inferClassExpression(classExpression: ClassExpression, state: CheckStat
 
 function checkClassLike(classDeclaration: ClassLikeDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean, bindOuterName: boolean): CheckedType {
   const classIsAbstract = hasModifier(classDeclaration, Kind.AbstractKeyword);
+  checkClassHeritageClauses(classDeclaration, state);
   const inheritedMembers = inheritedClassMembers(classDeclaration, environment);
   const classEnvironment = cloneTypeEnvironment(environment);
   addTypeParametersToEnvironment(classDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], classEnvironment);
@@ -2183,6 +2184,23 @@ function checkClassLike(classDeclaration: ClassLikeDeclaration, state: CheckStat
     checkClassElement(member, classBodyState, classEnvironment, ambient, classIsAbstract, classMembers, inheritedMembers, accessorContextTypes, constructorAssignedProperties);
   }
   return classType;
+}
+
+function checkClassHeritageClauses(classDeclaration: ClassLikeDeclaration, state: CheckState): void {
+  let seenExtends = false;
+  for (const clause of classDeclaration.heritageClauses ?? []) {
+    if (clause.token !== Kind.ExtendsKeyword) {
+      continue;
+    }
+    if (seenExtends) {
+      state.diagnostics.push(createDiagnostic(1172));
+      continue;
+    }
+    seenExtends = true;
+    if (clause.types.length > 1) {
+      state.diagnostics.push(createDiagnostic(1174));
+    }
+  }
 }
 
 function classBaseType(classDeclaration: ClassLikeDeclaration, environment: TypeEnvironment): { readonly baseType: CheckedType } | Record<string, never> {

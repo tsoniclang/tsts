@@ -1116,6 +1116,23 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("reports invalid class heritage clauses without rejecting valid interface heritage lists", () => {
+    const sourceFile = parseSourceFile([
+      "class A {}",
+      "class B {}",
+      "class C extends A, B {}",
+      "class D extends A extends B {}",
+      "interface I extends A, B {}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1174, 1172]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Classes can only extend a single class.",
+      "'extends' clause already seen.",
+    ]);
+  });
+
   it("reports invalid update operands while accepting outer assertion expressions", () => {
     const sourceFile = parseSourceFile([
       "let a = 1;",
