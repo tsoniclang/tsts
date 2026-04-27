@@ -91,6 +91,9 @@ function parseCompilerOptions(fileName: string, value: unknown, diagnostics: TsC
   const noUncheckedSideEffectImports = parseBooleanCompilerOption(fileName, "noUncheckedSideEffectImports", value.noUncheckedSideEffectImports, diagnostics);
   const strict = parseBooleanCompilerOption(fileName, "strict", value.strict, diagnostics);
   const noImplicitAny = parseBooleanCompilerOption(fileName, "noImplicitAny", value.noImplicitAny, diagnostics);
+  const strictNullChecks = parseBooleanCompilerOption(fileName, "strictNullChecks", value.strictNullChecks, diagnostics);
+  const strictPropertyInitialization = parseBooleanCompilerOption(fileName, "strictPropertyInitialization", value.strictPropertyInitialization, diagnostics);
+  const exactOptionalPropertyTypes = parseBooleanCompilerOption(fileName, "exactOptionalPropertyTypes", value.exactOptionalPropertyTypes, diagnostics);
   return {
     ...(outDir === undefined ? {} : { outDir }),
     ...(allowSyntheticDefaultImports === undefined ? {} : { allowSyntheticDefaultImports }),
@@ -100,6 +103,9 @@ function parseCompilerOptions(fileName: string, value: unknown, diagnostics: TsC
     ...(noUncheckedSideEffectImports === undefined ? {} : { noUncheckedSideEffectImports }),
     ...(strict === undefined ? {} : { strict }),
     ...(noImplicitAny === undefined ? {} : { noImplicitAny }),
+    ...(strictNullChecks === undefined ? {} : { strictNullChecks }),
+    ...(strictPropertyInitialization === undefined ? {} : { strictPropertyInitialization }),
+    ...(exactOptionalPropertyTypes === undefined ? {} : { exactOptionalPropertyTypes }),
   };
 }
 

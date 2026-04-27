@@ -260,6 +260,28 @@ describe("program groundwork", () => {
     assert.equal(diagnostics.some(diagnostic => diagnostic.code === 2318 && diagnostic.message.includes("'Array'")), true);
   });
 
+  it("reports strict option dependencies from explicit strict-family options", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "class C { value: number; }"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+    };
+
+    const program = createProgram(["src/index.ts"], {
+      strict: false,
+      strictPropertyInitialization: true,
+      exactOptionalPropertyTypes: true,
+    }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [5052, 5052]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Option 'strictPropertyInitialization' cannot be specified without specifying option 'strictNullChecks'.",
+      "Option 'exactOptionalPropertyTypes' cannot be specified without specifying option 'strictNullChecks'.",
+    ]);
+  });
+
   it("uses source-owned noLib global type declarations before reporting TS2318", () => {
     const files = new Map<string, string>([
       ["src/index.ts", "interface Array<T> { length: number }"],

@@ -36,6 +36,7 @@ interface CaseCompilerOptions extends CompilerOptions {
   readonly strict?: boolean;
   readonly noImplicitAny?: boolean;
   readonly strictNullChecks?: boolean;
+  readonly strictPropertyInitialization?: boolean;
   readonly exactOptionalPropertyTypes?: boolean;
   readonly noLib?: boolean;
   readonly allowJs?: boolean;
@@ -286,6 +287,16 @@ function parseBaselineCompilerOptions(baselineFileName: string): CaseCompilerOpt
       options = { ...options, module: parseModuleKind(value) };
     } else if (key === "moduleresolution" && value !== undefined) {
       options = { ...options, moduleResolution: parseModuleResolutionKind(value) };
+    } else if (key === "strict" && value !== undefined) {
+      options = { ...options, strict: parseBoolean(value) };
+    } else if (key === "noimplicitany" && value !== undefined) {
+      options = { ...options, noImplicitAny: parseBoolean(value) };
+    } else if (key === "strictnullchecks" && value !== undefined) {
+      options = { ...options, strictNullChecks: parseBoolean(value) };
+    } else if (key === "strictpropertyinitialization" && value !== undefined) {
+      options = { ...options, strictPropertyInitialization: parseBoolean(value) };
+    } else if (key === "exactoptionalpropertytypes" && value !== undefined) {
+      options = { ...options, exactOptionalPropertyTypes: parseBoolean(value) };
     } else if (key === "jsx" && value !== undefined) {
       options = { ...options, jsx: parseJsxEmit(value) };
     } else if (key === "jsxfactory" && value !== undefined) {
@@ -300,6 +311,12 @@ function parseBaselineCompilerOptions(baselineFileName: string): CaseCompilerOpt
       options = { ...options, allowSyntheticDefaultImports: parseBoolean(value) };
     } else if (key === "alwaysstrict" && value !== undefined) {
       options = { ...options, alwaysStrict: parseBoolean(value) };
+    } else if (key === "allowjs" && value !== undefined) {
+      options = { ...options, allowJs: parseBoolean(value) };
+    } else if (key === "checkjs" && value !== undefined) {
+      options = { ...options, checkJs: parseBoolean(value) };
+    } else if (key === "allowunreachablecode" && value !== undefined) {
+      options = { ...options, allowUnreachableCode: parseBoolean(value) };
     } else if (key === "noemit" && value !== undefined) {
       options = { ...options, noEmit: parseBoolean(value) };
     } else if (key === "nolib" && value !== undefined) {
@@ -411,6 +428,9 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
         break;
       case "strictnullchecks":
         options = { ...options, strictNullChecks: parseBoolean(value) };
+        break;
+      case "strictpropertyinitialization":
+        options = { ...options, strictPropertyInitialization: parseBoolean(value) };
         break;
       case "exactoptionalpropertytypes":
         options = { ...options, exactOptionalPropertyTypes: parseBoolean(value) };

@@ -695,6 +695,13 @@ describe("checker groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
   });
 
+  it("disables definite-assignment diagnostics when strict property initialization is explicitly off", () => {
+    const sourceFile = parseSourceFile("class C { value: number; }");
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true, strictPropertyInitialization: false });
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
   it("marks simple assignment targets as assigned without reading the target first", () => {
     const sourceFile = parseSourceFile("let value: number; value = 1; const copy: number = value;");
     const result = checkSourceFile(sourceFile);

@@ -3389,6 +3389,7 @@ function checkUninitializedProperty(member: Extract<ClassElement, { readonly kin
   if (
     ambient
     || !strictOptionValue(state.options, "strictNullChecks")
+    || !strictOptionValue(state.options, "strictPropertyInitialization")
     || member.type === undefined
     || member.initializer !== undefined
     || hasModifier(member, Kind.StaticKeyword)
@@ -7550,7 +7551,7 @@ function invalidParameterModifierName(kind: Kind): string | undefined {
   }
 }
 
-function strictOptionValue(options: CompilerOptions, optionName: "noImplicitAny" | "strictNullChecks"): boolean {
+function strictOptionValue(options: CompilerOptions, optionName: "noImplicitAny" | "strictNullChecks" | "strictPropertyInitialization" | "exactOptionalPropertyTypes"): boolean {
   return options[optionName] === undefined ? options.strict !== false : options[optionName] === true;
 }
 

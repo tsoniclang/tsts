@@ -12,6 +12,9 @@ describe("tsconfig groundwork", () => {
           "outDir": "dist",
           "strict": true,
           "noImplicitAny": false,
+          "strictNullChecks": true,
+          "strictPropertyInitialization": false,
+          "exactOptionalPropertyTypes": true,
           "noUncheckedSideEffectImports": true,
         },
         "files": [
@@ -23,7 +26,15 @@ describe("tsconfig groundwork", () => {
 
     assert.equal(result.diagnostics.length, 0);
     assert.deepEqual(result.config?.rootNames, ["project/src/add.ts", "project/src/value.ts"]);
-    assert.deepEqual(result.config?.options, { outDir: "dist", strict: true, noImplicitAny: false, noUncheckedSideEffectImports: true });
+    assert.deepEqual(result.config?.options, {
+      outDir: "dist",
+      strict: true,
+      noImplicitAny: false,
+      strictNullChecks: true,
+      strictPropertyInitialization: false,
+      exactOptionalPropertyTypes: true,
+      noUncheckedSideEffectImports: true,
+    });
   });
 
   it("loads configs through the compiler host", () => {

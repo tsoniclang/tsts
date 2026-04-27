@@ -17,6 +17,8 @@ export interface CompilerOptions {
   readonly strict?: boolean;
   readonly noImplicitAny?: boolean;
   readonly strictNullChecks?: boolean;
+  readonly strictPropertyInitialization?: boolean;
+  readonly exactOptionalPropertyTypes?: boolean;
   readonly noLib?: boolean;
   readonly allowJs?: boolean;
   readonly checkJs?: boolean;
@@ -228,6 +230,12 @@ function compilerOptionsDiagnostics(options: CompilerOptions): readonly ProgramD
   if (options.checkJs === true && options.allowJs === false) {
     diagnostics.push(optionDiagnostic(5052, "checkJs", "allowJs"));
   }
+  if (options.strictPropertyInitialization === true && !strictCompilerOptionValue(options, "strictNullChecks")) {
+    diagnostics.push(optionDiagnostic(5052, "strictPropertyInitialization", "strictNullChecks"));
+  }
+  if (options.exactOptionalPropertyTypes === true && !strictCompilerOptionValue(options, "strictNullChecks")) {
+    diagnostics.push(optionDiagnostic(5052, "exactOptionalPropertyTypes", "strictNullChecks"));
+  }
   if (options.outFile !== undefined && options.noEmit !== true && options.emitDeclarationOnly !== true && !moduleKindSupportsOutFile(options.module)) {
     diagnostics.push(optionDiagnostic(6082, "outFile"));
   }
@@ -253,6 +261,10 @@ function compilerOptionsDiagnostics(options: CompilerOptions): readonly ProgramD
     diagnostics.push(optionDiagnostic(18035, options.jsxFragmentFactory));
   }
   return diagnostics;
+}
+
+function strictCompilerOptionValue(options: CompilerOptions, optionName: "noImplicitAny" | "strictNullChecks" | "strictPropertyInitialization" | "exactOptionalPropertyTypes"): boolean {
+  return options[optionName] === undefined ? options.strict !== false : options[optionName] === true;
 }
 
 function moduleKindSupportsOutFile(moduleKind: ModuleKindName | undefined): boolean {
