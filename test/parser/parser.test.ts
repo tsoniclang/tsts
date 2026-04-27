@@ -35,6 +35,7 @@ import {
   isInterfaceDeclaration,
   isKeywordTypeNode,
   isLabeledStatement,
+  isMappedTypeNode,
   isMethodDeclaration,
   isMethodSignatureDeclaration,
   isModuleBlock,
@@ -268,6 +269,21 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isPropertySignatureDeclaration(statement.type.members[1]!), true);
     if (!isPropertySignatureDeclaration(statement.type.members[1]!)) throw new Error("Expected property signature");
     assert.equal(statement.type.members[1]!.postfixToken?.kind, Kind.QuestionToken);
+  });
+
+  it("parses mapped types with TS-Go modifier and type-parameter structure", () => {
+    const sourceFile = parseSourceFile("type Box<T> = { readonly [P in keyof T]?: T[P]; };");
+    const statement = sourceFile.statements[0]!;
+
+    assert.equal(isTypeAliasDeclaration(statement), true);
+    if (!isTypeAliasDeclaration(statement)) throw new Error("Expected type alias");
+    assert.equal(isMappedTypeNode(statement.type), true);
+    if (!isMappedTypeNode(statement.type)) throw new Error("Expected mapped type");
+    assert.equal(statement.type.readonlyToken?.kind, Kind.ReadonlyKeyword);
+    assert.equal(statement.type.typeParameter.name.text, "P");
+    assert.equal(statement.type.typeParameter.constraint?.kind, Kind.TypeOperator);
+    assert.equal(statement.type.questionToken?.kind, Kind.QuestionToken);
+    assert.equal(statement.type.type?.kind, Kind.IndexedAccessType);
   });
 
   it("parses accessor declarations in class, object, and type-member contexts", () => {

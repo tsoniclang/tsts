@@ -134,6 +134,14 @@ describe("checker groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
   });
 
+  it("reports implicit any template types in mapped types", () => {
+    const sourceFile = parseSourceFile("type Foo = { [P in \"bar\"] };");
+    const result = checkSourceFile(sourceFile, { noImplicitAny: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [7039]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Mapped object type implicitly has an 'any' template type."]);
+  });
+
   it("reports function overload declarations without matching implementations", () => {
     const sourceFile = parseSourceFile("function foo(); function bar() { } function baz();");
     const result = checkSourceFile(sourceFile);

@@ -26,6 +26,7 @@ interface CompilerCase {
 }
 
 interface CaseCompilerOptions extends CompilerOptions {
+  readonly baseUrl?: string;
   readonly noEmit?: boolean;
   readonly ignoreDeprecations?: string;
   readonly module?: ModuleKindName;
@@ -319,6 +320,9 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
         break;
       case "module":
         options = { ...options, module: parseModuleKind(value) };
+        break;
+      case "baseurl":
+        options = { ...options, baseUrl: value };
         break;
       case "strict":
         options = { ...options, strict: parseBoolean(value) };

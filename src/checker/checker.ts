@@ -43,6 +43,7 @@ import {
   isKeywordTypeNode,
   isIndexSignatureDeclaration,
   isLabeledStatement,
+  isMappedTypeNode,
   isMethodDeclaration,
   isMethodSignatureDeclaration,
   isMissingDeclaration,
@@ -875,7 +876,7 @@ function ambientModuleSpecifier(statement: Statement): string | undefined {
 }
 
 function namespaceExportName(statement: Statement): string | undefined {
-  if (isClassDeclaration(statement) || isFunctionDeclaration(statement) || isInterfaceDeclaration(statement) || isTypeAliasDeclaration(statement)) {
+  if (isClassDeclaration(statement) || isFunctionDeclaration(statement) || isInterfaceDeclaration(statement) || isTypeAliasDeclaration(statement) || isEnumDeclaration(statement)) {
     return statement.name?.text;
   }
   if (isModuleDeclaration(statement)) {
@@ -2859,6 +2860,9 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
   if (isTypeLiteralNode(type)) {
     return typeLiteralType(type.members, state ?? emptyCheckState(), environment);
   }
+  if (isMappedTypeNode(type)) {
+    return mappedType(type, state ?? emptyCheckState(), environment);
+  }
   if (isParenthesizedTypeNode(type)) {
     return typeFromTypeNode(type.type, environment, state);
   }
@@ -3105,6 +3109,22 @@ function typeLiteralType(members: readonly TypeElement[], state: CheckState, env
     }
   }
   return { kind: "object", properties, readonlyProperties };
+}
+
+function mappedType(type: Extract<TypeNode, { readonly kind: Kind.MappedType }>, state: CheckState, environment: TypeEnvironment): CheckedType {
+  const mappedEnvironment = new Map(environment);
+  const keyType = type.typeParameter.constraint === undefined ? anyType : typeFromTypeNode(type.typeParameter.constraint, environment, state);
+  mappedEnvironment.set(type.typeParameter.name.text, { kind: "typeParameter", name: type.typeParameter.name.text });
+  if (type.nameType !== undefined) {
+    typeFromTypeNode(type.nameType, mappedEnvironment, state);
+  }
+  if (type.type === undefined) {
+    if (state.options.noImplicitAny === true || state.options.strict === true) {
+      state.diagnostics.push(createDiagnostic(7039));
+    }
+    return { kind: "record", keyType, valueType: anyType };
+  }
+  return { kind: "record", keyType, valueType: typeFromTypeNode(type.type, mappedEnvironment, state) };
 }
 
 function accessorType(accessor: GetAccessorDeclaration | SetAccessorDeclaration, environment: TypeEnvironment, state: CheckState): CheckedType {

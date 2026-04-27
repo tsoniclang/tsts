@@ -62,6 +62,7 @@ import {
   createCallExpression,
   createKeywordExpression,
   createLiteralTypeNode,
+  createMappedTypeNode,
   createMethodDeclaration,
   createMethodSignatureDeclaration,
   createModuleBlock,
@@ -1850,6 +1851,9 @@ export class Parser {
       return createTupleTypeNode(createNodeArray(elements));
     }
     if (token.kind === Kind.OpenBraceToken) {
+      if (this.#isMappedTypeStart()) {
+        return this.#parseMappedType();
+      }
       this.#advance();
       const members: TypeElement[] = [];
       while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
@@ -1880,6 +1884,67 @@ export class Parser {
       return createTypeReferenceNode(this.#parseEntityName(), this.#parseOptionalTypeArguments());
     }
     throw new ParseError(`Unexpected type token ${Kind[token.kind]}`, token);
+  }
+
+  #isMappedTypeStart(): boolean {
+    if (this.#current().kind !== Kind.OpenBraceToken) {
+      return false;
+    }
+    let index = this.#index + 1;
+    const first = this.#tokens[index]?.kind;
+    if (first === Kind.PlusToken || first === Kind.MinusToken) {
+      index += 1;
+      if (this.#tokens[index]?.kind !== Kind.ReadonlyKeyword) {
+        return false;
+      }
+      index += 1;
+    } else if (first === Kind.ReadonlyKeyword) {
+      index += 1;
+    }
+    return this.#tokens[index]?.kind === Kind.OpenBracketToken
+      && isIdentifierNameKind(this.#tokens[index + 1]?.kind ?? Kind.Unknown)
+      && this.#tokens[index + 2]?.kind === Kind.InKeyword;
+  }
+
+  #parseMappedType(): TypeNode {
+    this.#expect(Kind.OpenBraceToken);
+    const readonlyToken = this.#parseMappedTypeModifier(Kind.ReadonlyKeyword);
+    this.#expect(Kind.OpenBracketToken);
+    const typeParameter = this.#parseMappedTypeParameter();
+    const nameType = this.#consumeOptional(Kind.AsKeyword) ? this.#parseType() : undefined;
+    this.#expect(Kind.CloseBracketToken);
+    const questionToken = this.#parseMappedTypeModifier(Kind.QuestionToken);
+    const type = this.#parseOptionalTypeAnnotation();
+    this.#consumeOptional(Kind.SemicolonToken);
+    const members: TypeElement[] = [];
+    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
+      if (this.#consumeOptional(Kind.SemicolonToken) || this.#consumeOptional(Kind.CommaToken)) {
+        continue;
+      }
+      members.push(this.#parseTypeElement());
+    }
+    this.#expect(Kind.CloseBraceToken);
+    return createMappedTypeNode(readonlyToken, typeParameter, nameType, questionToken, type, members.length === 0 ? undefined : createNodeArray(members));
+  }
+
+  #parseMappedTypeModifier(expectedToken: Kind.ReadonlyKeyword): ReturnType<typeof createToken<Kind.ReadonlyKeyword | Kind.PlusToken | Kind.MinusToken>> | undefined;
+  #parseMappedTypeModifier(expectedToken: Kind.QuestionToken): ReturnType<typeof createToken<Kind.QuestionToken | Kind.PlusToken | Kind.MinusToken>> | undefined;
+  #parseMappedTypeModifier(expectedToken: Kind.ReadonlyKeyword | Kind.QuestionToken): ReturnType<typeof createToken<Kind.ReadonlyKeyword | Kind.QuestionToken | Kind.PlusToken | Kind.MinusToken>> | undefined {
+    if (this.#current().kind === expectedToken) {
+      return createToken(this.#advance().kind as Kind.ReadonlyKeyword | Kind.QuestionToken);
+    }
+    if (this.#current().kind !== Kind.PlusToken && this.#current().kind !== Kind.MinusToken) {
+      return undefined;
+    }
+    const token = createToken(this.#advance().kind as Kind.PlusToken | Kind.MinusToken);
+    this.#expect(expectedToken);
+    return token;
+  }
+
+  #parseMappedTypeParameter(): TypeParameterDeclaration {
+    const name = this.#parseIdentifier();
+    this.#expect(Kind.InKeyword);
+    return createTypeParameterDeclaration(undefined, name, this.#parseType(), undefined, undefined);
   }
 
   #tryParseFunctionType(): TypeNode | undefined {

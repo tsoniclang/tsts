@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { createProgram, emitProgram, type CompilerHost } from "../../src/program/index.js";
+import { createProgram, emitProgram, getProgramDiagnostics, type CompilerHost } from "../../src/program/index.js";
 
 describe("program groundwork", () => {
   it("loads multiple root files through a compiler host and emits JavaScript outputs", () => {
@@ -153,6 +153,24 @@ describe("program groundwork", () => {
     ]);
   });
 
+  it("resolves non-relative modules through baseUrl before package lookup", () => {
+    const files = new Map<string, string>([
+      ["/proj/component/file.ts", "import { CharCode } from \"defs/cc\"; export const value = CharCode.A;"],
+      ["/proj/defs/cc.ts", "export const enum CharCode { A, B }"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      getCurrentDirectory: () => "/proj",
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["/proj/component/file.ts"], { baseUrl: "/proj" }, host);
+
+    assert.equal(program.diagnostics.length, 0);
+    assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["/proj/component/file.ts", "/proj/defs/cc.ts"]);
+    assert.equal(getProgramDiagnostics(program).length, 0);
+  });
+
   it("resolves package exports from the containing file and suppresses unchecked side-effect imports by default", () => {
     const files = new Map<string, string>([
       ["packages/app/src/index.ts", "import { value } from \"pkg\"; import \"missing-side-effect\"; export const answer = value;"],
@@ -249,6 +267,20 @@ describe("program groundwork", () => {
 
     assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find module 'missing-pkg'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?"]);
     assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2792]);
+  });
+
+  it("uses the AMD-module unresolved import diagnostic for relative and package specifiers", () => {
+    const host: CompilerHost = {
+      readFile: fileName => fileName === "src/index.ts" ? "import { local } from \"./missing\"; import { pkg } from \"missing-pkg\";" : undefined,
+    };
+
+    const program = createProgram(["src/index.ts"], { module: "amd" }, host);
+
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2792, 2792]);
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), [
+      "Cannot find module './missing'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?",
+      "Cannot find module 'missing-pkg'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?",
+    ]);
   });
 
   it("continues semantic checking after syntax diagnostics from recoverable parse errors", () => {

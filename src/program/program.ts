@@ -8,6 +8,7 @@ import { createDiagnosticAt, type DiagnosticCategory, type DiagnosticCode } from
 
 export interface CompilerOptions {
   readonly outDir?: string;
+  readonly baseUrl?: string;
   readonly target?: ScriptTargetName;
   readonly module?: ModuleKindName;
   readonly strict?: boolean;
@@ -118,7 +119,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
     diagnostics.push(...sourceFileAmbientModuleGrammarDiagnostics(rootName, sourceFile));
     const resolvedModules: ResolvedModule[] = [];
     for (const moduleReference of sourceFileModuleReferences(sourceFile)) {
-      const resolved = resolveModuleName(moduleReference.moduleSpecifier, rootName, host, fileTextCache);
+      const resolved = resolveModuleName(moduleReference.moduleSpecifier, rootName, options, host, fileTextCache);
       if (!resolved.found) {
         unresolvedModules.push({ fileName: rootName, moduleSpecifier: moduleReference.moduleSpecifier, sideEffectOnly: moduleReference.sideEffectOnly });
         continue;
@@ -151,7 +152,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
         .map(unresolved => programDiagnostic(unresolved.fileName, unresolvedModuleDiagnosticCode(unresolved, options), unresolved.moduleSpecifier)),
       ...moduleAugmentations
         .filter(augmentation => !ambientModules.has(augmentation.moduleSpecifier))
-        .filter(augmentation => !resolveModuleName(augmentation.moduleSpecifier, augmentation.fileName, host, fileTextCache).found)
+        .filter(augmentation => !resolveModuleName(augmentation.moduleSpecifier, augmentation.fileName, options, host, fileTextCache).found)
         .map(augmentation => programDiagnostic(augmentation.fileName, 2664, augmentation.moduleSpecifier)),
     ],
   };
@@ -161,7 +162,7 @@ function unresolvedModuleDiagnosticCode(unresolved: { readonly moduleSpecifier: 
   if (unresolved.sideEffectOnly && options.noUncheckedSideEffectImports === true) {
     return 2882;
   }
-  return !isRelativeModuleName(unresolved.moduleSpecifier) && options.module === "system" ? 2792 : 2307;
+  return (options.module === "amd" || options.module === "system") ? 2792 : 2307;
 }
 
 export function emitProgram(program: Program, host?: Pick<CompilerHost, "writeFile" | "getCurrentDirectory">): EmitResult {
@@ -306,8 +307,15 @@ interface ModuleResolution {
   readonly fileName?: string;
 }
 
-function resolveModuleName(moduleSpecifier: string, containingFileName: string, host: CompilerHost, cache: Map<string, string | undefined>): ModuleResolution {
+function resolveModuleName(moduleSpecifier: string, containingFileName: string, options: CompilerOptions, host: CompilerHost, cache: Map<string, string | undefined>): ModuleResolution {
   if (!isRelativeModuleName(moduleSpecifier)) {
+    const baseUrl = moduleResolutionBaseUrl(options, host);
+    if (baseUrl !== undefined) {
+      const resolvedBaseUrlFile = moduleResolutionCandidates(normalize(join(baseUrl, moduleSpecifier))).find(candidate => readFileCached(candidate, host, cache) !== undefined);
+      if (resolvedBaseUrlFile !== undefined) {
+        return { found: true, fileName: resolvedBaseUrlFile };
+      }
+    }
     const resolvedPackageFile = packageResolutionCandidates(moduleSpecifier, containingFileName, host, cache).find(candidate => readFileCached(candidate, host, cache) !== undefined);
     if (resolvedPackageFile !== undefined) {
       return { found: true, fileName: resolvedPackageFile };
@@ -318,6 +326,13 @@ function resolveModuleName(moduleSpecifier: string, containingFileName: string, 
   const candidates = moduleResolutionCandidates(base);
   const fileName = candidates.find(candidate => readFileCached(candidate, host, cache) !== undefined);
   return fileName === undefined ? { found: false } : { found: true, fileName };
+}
+
+function moduleResolutionBaseUrl(options: CompilerOptions, host: CompilerHost): string | undefined {
+  if (options.baseUrl === undefined) {
+    return undefined;
+  }
+  return normalize(isAbsolute(options.baseUrl) ? options.baseUrl : join(host.getCurrentDirectory?.() ?? ".", options.baseUrl));
 }
 
 function moduleResolutionCandidates(base: string): readonly string[] {
