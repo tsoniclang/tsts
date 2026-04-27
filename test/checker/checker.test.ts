@@ -469,6 +469,18 @@ describe("checker groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
   });
 
+  it("treats subclass constructor values as structurally assignable through inherited instance members", () => {
+    const sourceFile = parseSourceFile([
+      "class Model { someData = ''; }",
+      "class VisualizationModel extends Model {}",
+      "interface HasVisualizationModel { VisualizationModel: typeof Model; }",
+      "const value: HasVisualizationModel = { VisualizationModel };",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
   it("reports incompatible named interface members while allowing extra call signatures", () => {
     const sourceFile = parseSourceFile([
       "interface Base { f(): string; }",
@@ -504,8 +516,9 @@ describe("checker groundwork", () => {
       readFile: fileName => {
         if (fileName === "main.ts") {
           return [
+            "import Backbone = require(\"./base\");",
             "import moduleA = require(\"./moduleA\");",
-            "interface IHasVisualizationModel { VisualizationModel: any; }",
+            "interface IHasVisualizationModel { VisualizationModel: typeof Backbone.Model; }",
             "interface IHasTypedVisualizationModel { VisualizationModel: typeof moduleA.VisualizationModel; }",
             "const value: IHasVisualizationModel = moduleA;",
             "const typedValue: IHasTypedVisualizationModel = moduleA;",
@@ -513,8 +526,14 @@ describe("checker groundwork", () => {
             "const moduleLike: typeof moduleA = reverse;",
           ].join("\n");
         }
+        if (fileName === "base.ts") {
+          return "export class Model { someData = ''; }";
+        }
         if (fileName === "moduleA.ts") {
-          return "export class VisualizationModel { }";
+          return [
+            "import Backbone = require(\"./base\");",
+            "export class VisualizationModel extends Backbone.Model { }",
+          ].join("\n");
         }
         return undefined;
       },

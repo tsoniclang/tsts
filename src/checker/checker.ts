@@ -418,7 +418,27 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
     const pending: ModuleExportInfo = { exports: new Map() };
     exportCache.set(fileName, pending);
     const environment = new Map(globalEnvironment);
-    checkStatements(sourceFile.sourceFile.statements, emptyCheckState(program.options), environment, undefined, isDeclarationFile(sourceFile.sourceFile));
+    const exportState: CheckState = {
+      ...emptyCheckState(program.options),
+      resolveExternalModule: moduleSpecifier => {
+        const resolvedFileName = sourceFile.resolvedModules.find(module => module.specifier === moduleSpecifier)?.fileName;
+        if (resolvedFileName !== undefined) {
+          return moduleNamespaceForResolvedFile(moduleSpecifier, resolvedFileName);
+        }
+        if (ambientModules.has(moduleSpecifier)) {
+          const ambientExports = ambientModuleExportInfo(moduleSpecifier);
+          const namespace: CheckedType = {
+            kind: "moduleNamespace",
+            moduleSpecifier,
+            diagnosticName: moduleNamespaceDiagnosticName(moduleSpecifier),
+            exports: ambientExports.exports,
+          };
+          return ambientExports.exportEquals === undefined ? namespace : { ...namespace, exportEquals: ambientExports.exportEquals };
+        }
+        return undefined;
+      },
+    };
+    checkStatements(sourceFile.sourceFile.statements, exportState, environment, undefined, isDeclarationFile(sourceFile.sourceFile));
     const exports = new Map<string, CheckedType>();
     let exportEquals: CheckedType | undefined;
     for (const statement of sourceFile.sourceFile.statements) {
@@ -1410,9 +1430,27 @@ function inheritedClassMembers(classDeclaration: ClassDeclaration, environment: 
     if (clause.token !== Kind.ExtendsKeyword) {
       continue;
     }
-    const baseName = clause.types[0] === undefined ? undefined : expressionNameText(clause.types[0].expression);
-    const baseType = baseName === undefined ? undefined : environment.get(baseName);
+    const baseType = clause.types[0] === undefined ? undefined : resolveExpressionValue(clause.types[0].expression, environment);
     return baseType?.kind === "classConstructor" ? baseType.members : undefined;
+  }
+  return undefined;
+}
+
+function resolveExpressionValue(expression: Expression, environment: TypeEnvironment): CheckedType | undefined {
+  if (isIdentifier(expression)) {
+    const bound = environment.get(expression.text);
+    return bound === undefined ? undefined : valueMeaning(bound);
+  }
+  if (isPropertyAccessExpression(expression)) {
+    const receiver = resolveExpressionValue(expression.expression, environment);
+    if (receiver === undefined) {
+      return undefined;
+    }
+    const property = propertyAccessType(receiver, expression.name.text, environment);
+    return property === undefined ? undefined : valueMeaning(property);
+  }
+  if (isParenthesizedExpression(expression)) {
+    return resolveExpressionValue(expression.expression, environment);
   }
   return undefined;
 }
@@ -3915,7 +3953,7 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
     return true;
   }
   if (actual.kind === "classConstructor" && expected.kind === "classConstructor") {
-    return actual.name === expected.name && actual.abstract === expected.abstract && typeArgumentsAssignableTo(actual.typeArguments, expected.typeArguments);
+    return classConstructorsAssignableTo(actual, expected);
   }
   if (actual.kind === "classInstance" && expected.kind === "classInstance") {
     return actual.name === expected.name ? typeArgumentsAssignableTo(actual.typeArguments, expected.typeArguments) : classMembersAssignableTo(actual.members, expected.members);
@@ -4038,6 +4076,25 @@ function classMembersAssignableTo(actual: ClassMemberNames, expected: ClassMembe
     const expectedPropertyType = expected.propertyTypes.get(expectedMember);
     const actualPropertyType = actual.propertyTypes.get(expectedMember);
     if (expectedPropertyType !== undefined && actualPropertyType !== undefined && !isAssignableTo(actualPropertyType, expectedPropertyType)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function classConstructorsAssignableTo(actual: Extract<CheckedType, { readonly kind: "classConstructor" }>, expected: Extract<CheckedType, { readonly kind: "classConstructor" }>): boolean {
+  if (actual.name === expected.name) {
+    return actual.abstract === expected.abstract && typeArgumentsAssignableTo(actual.typeArguments, expected.typeArguments);
+  }
+  if (actual.abstract && !expected.abstract) {
+    return false;
+  }
+  return classMembersAssignableTo(actual.members, expected.members) && staticClassMembersAssignableTo(actual.members, expected.members);
+}
+
+function staticClassMembersAssignableTo(actual: ClassMemberNames, expected: ClassMemberNames): boolean {
+  for (const expectedMember of expected.static) {
+    if (!actual.static.has(expectedMember)) {
       return false;
     }
   }
