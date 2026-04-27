@@ -303,4 +303,26 @@ describe("checker groundwork", () => {
     ]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2715, 2715, 2729, 2715]);
   });
+
+  it("checks inherited abstract property contracts and readonly assignment targets", () => {
+    const sourceFile = parseSourceFile([
+      "abstract class Base { abstract value: number; abstract method(): void; }",
+      "class Wrong extends Base { value = \"x\"; method() { } }",
+      "class Missing extends Base { }",
+      "abstract class AccessorPair { abstract get item(): string; set item(value: string) { } }",
+      "class ReadonlyBox { readonly value = \"x\"; }",
+      "const box = new ReadonlyBox();",
+      "box.value = \"y\";",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2416, 2654, 2676, 2676, 2540]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Property 'value' in type 'Wrong' is not assignable to the same property in base type 'Base'.",
+      "Non-abstract class 'Missing' is missing implementations for the following members of 'Base': 'value', 'method'.",
+      "Accessors must both be abstract or non-abstract.",
+      "Accessors must both be abstract or non-abstract.",
+      "Cannot assign to 'value' because it is a read-only property.",
+    ]);
+  });
 });

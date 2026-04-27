@@ -100,6 +100,7 @@ type CheckedType =
   | { readonly kind: PrimitiveTypeName | "unresolved" }
   | { readonly kind: "array"; readonly elementType: CheckedType }
   | { readonly kind: "classConstructor"; readonly name: string; readonly abstract: boolean; readonly members: ClassMemberNames }
+  | { readonly kind: "classInstance"; readonly name: string; readonly members: ClassMemberNames }
   | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType }
   | { readonly kind: "interface"; readonly name: string }
   | { readonly kind: "thisClass"; readonly className: string; readonly abstractProperties: ReadonlySet<string>; readonly abstractPropertyDeclaringClasses: ReadonlyMap<string, string>; readonly uninitializedProperties: ReadonlySet<string>; readonly mode: "constructor" | "fieldInitializer" }
@@ -126,8 +127,12 @@ interface ClassMemberNames {
   readonly className: string | undefined;
   readonly instance: ReadonlySet<string>;
   readonly static: ReadonlySet<string>;
+  readonly abstractMembers: ReadonlyMap<string, string>;
   readonly abstractProperties: ReadonlySet<string>;
   readonly abstractPropertyDeclaringClasses: ReadonlyMap<string, string>;
+  readonly propertyDeclaringClasses: ReadonlyMap<string, string>;
+  readonly propertyTypes: ReadonlyMap<string, CheckedType>;
+  readonly readonlyProperties: ReadonlySet<string>;
   readonly uninitializedProperties: ReadonlySet<string>;
 }
 
@@ -529,20 +534,23 @@ function bindingElementPropertyNames(element: BindingElement): readonly string[]
 
 function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
   const classIsAbstract = hasModifier(classDeclaration, Kind.AbstractKeyword);
-  const classMembers = collectClassMemberNames(classDeclaration, inheritedClassMembers(classDeclaration, environment));
+  const inheritedMembers = inheritedClassMembers(classDeclaration, environment);
+  const classMembers = collectClassMemberNames(classDeclaration, inheritedMembers, environment);
   if (classDeclaration.name !== undefined) {
     if (invalidClassNames.has(classDeclaration.name.text)) {
       state.diagnostics.push(createDiagnostic(2414, classDeclaration.name.text));
     }
     environment.set(classDeclaration.name.text, { kind: "classConstructor", name: classDeclaration.name.text, abstract: classIsAbstract, members: classMembers });
   }
+  checkMissingAbstractMembers(classDeclaration, state, classIsAbstract, inheritedMembers, classMembers);
+  checkAccessorAbstractPairs(classDeclaration.members, state);
   const classEnvironment = new Map(environment);
   addTypeParametersToEnvironment(classDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], classEnvironment);
   if (!ambient) {
     checkClassMemberOverloads(classDeclaration.members, state);
   }
   for (const member of classDeclaration.members) {
-    checkClassElement(member, state, classEnvironment, ambient, classIsAbstract, classMembers);
+    checkClassElement(member, state, classEnvironment, ambient, classIsAbstract, classMembers, inheritedMembers);
   }
 }
 
@@ -558,11 +566,15 @@ function inheritedClassMembers(classDeclaration: ClassDeclaration, environment: 
   return undefined;
 }
 
-function collectClassMemberNames(classDeclaration: ClassDeclaration, inherited: ClassMemberNames | undefined): ClassMemberNames {
+function collectClassMemberNames(classDeclaration: ClassDeclaration, inherited: ClassMemberNames | undefined, environment: TypeEnvironment): ClassMemberNames {
   const instance = new Set<string>();
   const staticMembers = new Set<string>();
+  const abstractMembers = new Map(inherited?.abstractMembers ?? []);
   const abstractProperties = new Set(inherited?.abstractProperties ?? []);
   const abstractPropertyDeclaringClasses = new Map(inherited?.abstractPropertyDeclaringClasses ?? []);
+  const propertyDeclaringClasses = new Map(inherited?.propertyDeclaringClasses ?? []);
+  const propertyTypes = new Map(inherited?.propertyTypes ?? []);
+  const readonlyProperties = new Set(inherited?.readonlyProperties ?? []);
   const uninitializedProperties = new Set(inherited?.uninitializedProperties ?? []);
   for (const member of classDeclaration.members) {
     const name = classElementName(member);
@@ -574,27 +586,83 @@ function collectClassMemberNames(classDeclaration: ClassDeclaration, inherited: 
     } else {
       instance.add(name);
       if (isAbstractPropertyLike(member)) {
+        if (classDeclaration.name !== undefined) {
+          abstractMembers.set(name, classDeclaration.name.text);
+          propertyDeclaringClasses.set(name, classDeclaration.name.text);
+        }
         abstractProperties.add(name);
         if (classDeclaration.name !== undefined) {
           abstractPropertyDeclaringClasses.set(name, classDeclaration.name.text);
         }
+        const memberType = classMemberPropertyType(member, environment);
+        if (memberType !== undefined) {
+          propertyTypes.set(name, memberType);
+        }
         uninitializedProperties.add(name);
+        if (hasModifier(member, Kind.ReadonlyKeyword)) {
+          readonlyProperties.add(name);
+        }
       } else if (isPropertyDeclaration(member)) {
+        abstractMembers.delete(name);
         abstractProperties.delete(name);
         abstractPropertyDeclaringClasses.delete(name);
+        if (classDeclaration.name !== undefined) {
+          propertyDeclaringClasses.set(name, classDeclaration.name.text);
+        }
+        const memberType = classMemberPropertyType(member, environment);
+        if (memberType !== undefined) {
+          propertyTypes.set(name, memberType);
+        }
+        if (hasModifier(member, Kind.ReadonlyKeyword)) {
+          readonlyProperties.add(name);
+        } else {
+          readonlyProperties.delete(name);
+        }
         if (member.initializer === undefined) {
           uninitializedProperties.add(name);
         } else {
           uninitializedProperties.delete(name);
         }
       } else if (isGetAccessorDeclaration(member) || isSetAccessorDeclaration(member)) {
+        if (!hasModifier(member, Kind.AbstractKeyword)) {
+          abstractMembers.delete(name);
+        } else if (classDeclaration.name !== undefined) {
+          abstractMembers.set(name, classDeclaration.name.text);
+        }
         abstractProperties.delete(name);
         abstractPropertyDeclaringClasses.delete(name);
+        if (classDeclaration.name !== undefined) {
+          propertyDeclaringClasses.set(name, classDeclaration.name.text);
+        }
+        const memberType = classMemberPropertyType(member, environment);
+        if (memberType !== undefined) {
+          propertyTypes.set(name, memberType);
+        }
+        readonlyProperties.delete(name);
         uninitializedProperties.delete(name);
+      } else if (isMethodDeclaration(member)) {
+        if (hasModifier(member, Kind.AbstractKeyword)) {
+          if (classDeclaration.name !== undefined) {
+            abstractMembers.set(name, classDeclaration.name.text);
+          }
+        } else {
+          abstractMembers.delete(name);
+        }
       }
     }
   }
-  return { className: classDeclaration.name?.text, instance, static: staticMembers, abstractProperties, abstractPropertyDeclaringClasses, uninitializedProperties };
+  return {
+    className: classDeclaration.name?.text,
+    instance,
+    static: staticMembers,
+    abstractMembers,
+    abstractProperties,
+    abstractPropertyDeclaringClasses,
+    propertyDeclaringClasses,
+    propertyTypes,
+    readonlyProperties,
+    uninitializedProperties,
+  };
 }
 
 function classElementName(member: ClassElement): string | undefined {
@@ -607,6 +675,91 @@ function classElementName(member: ClassElement): string | undefined {
 function isAbstractPropertyLike(member: ClassElement): boolean {
   return hasModifier(member, Kind.AbstractKeyword)
     && (isPropertyDeclaration(member) || isGetAccessorDeclaration(member) || isSetAccessorDeclaration(member));
+}
+
+function checkMissingAbstractMembers(classDeclaration: ClassDeclaration, state: CheckState, classIsAbstract: boolean, inherited: ClassMemberNames | undefined, classMembers: ClassMemberNames): void {
+  if (classIsAbstract || inherited === undefined || classDeclaration.name === undefined) {
+    return;
+  }
+  const missing = [...classMembers.abstractMembers.entries()]
+    .filter(([, declaringClass]) => declaringClass !== classDeclaration.name!.text);
+  if (missing.length === 0) {
+    return;
+  }
+  const baseClassName = missing[0]![1];
+  const memberList = missing.map(([memberName]) => `'${memberName}'`).join(", ");
+  state.diagnostics.push(createDiagnostic(2654, classDeclaration.name.text, baseClassName, memberList));
+}
+
+function checkAccessorAbstractPairs(members: readonly ClassElement[], state: CheckState): void {
+  const accessors = new Map<string, { get?: GetAccessorDeclaration; set?: SetAccessorDeclaration }>();
+  for (const member of members) {
+    if (!isGetAccessorDeclaration(member) && !isSetAccessorDeclaration(member)) {
+      continue;
+    }
+    const name = propertyNameText(member.name);
+    if (name === undefined) {
+      continue;
+    }
+    const existing = accessors.get(name) ?? {};
+    if (isGetAccessorDeclaration(member)) {
+      existing.get = member;
+    } else {
+      existing.set = member;
+    }
+    accessors.set(name, existing);
+  }
+  for (const pair of accessors.values()) {
+    if (pair.get === undefined || pair.set === undefined) {
+      continue;
+    }
+    if (hasModifier(pair.get, Kind.AbstractKeyword) !== hasModifier(pair.set, Kind.AbstractKeyword)) {
+      state.diagnostics.push(createDiagnostic(2676));
+      state.diagnostics.push(createDiagnostic(2676));
+    }
+  }
+}
+
+function classMemberPropertyType(member: ClassElement, environment: TypeEnvironment, state?: CheckState): CheckedType | undefined {
+  if (isPropertyDeclaration(member)) {
+    if (member.type !== undefined) {
+      return typeFromTypeNode(member.type, environment, state);
+    }
+    return member.initializer === undefined ? undefined : literalExpressionType(member.initializer);
+  }
+  if (isGetAccessorDeclaration(member)) {
+    if (member.type !== undefined) {
+      return typeFromTypeNode(member.type, environment, state);
+    }
+    return member.body === undefined ? undefined : getterBodyReturnType(member.body);
+  }
+  if (isSetAccessorDeclaration(member)) {
+    const parameter = member.parameters[0];
+    return parameter?.type === undefined ? undefined : typeFromTypeNode(parameter.type, environment, state);
+  }
+  return undefined;
+}
+
+function literalExpressionType(expression: Expression): CheckedType | undefined {
+  if (isStringLiteral(expression) || isNoSubstitutionTemplateLiteral(expression)) {
+    return stringType;
+  }
+  if (isNumericLiteral(expression)) {
+    return numberType;
+  }
+  if (isKeywordExpression(expression) && (expression.kind === Kind.TrueKeyword || expression.kind === Kind.FalseKeyword)) {
+    return booleanType;
+  }
+  return undefined;
+}
+
+function getterBodyReturnType(body: Block): CheckedType | undefined {
+  for (const statement of body.statements) {
+    if (isReturnStatement(statement) && statement.expression !== undefined) {
+      return literalExpressionType(statement.expression);
+    }
+  }
+  return undefined;
 }
 
 function checkInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, state: CheckState, environment: TypeEnvironment): void {
@@ -726,12 +879,13 @@ function propertyNameDiagnosticText(name: PropertyName): string | undefined {
   return undefined;
 }
 
-function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment, ambient: boolean, classIsAbstract: boolean, classMembers: ClassMemberNames): void {
+function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment, ambient: boolean, classIsAbstract: boolean, classMembers: ClassMemberNames, inheritedMembers: ClassMemberNames | undefined): void {
   if (hasModifier(member, Kind.ConstKeyword)) {
     state.diagnostics.push(createDiagnostic(1248, "const"));
   }
   if (isGetAccessorDeclaration(member) || isSetAccessorDeclaration(member)) {
     checkAbstractMemberModifiers(member, state, classIsAbstract, propertyNameText(member.name), true);
+    checkInheritedPropertyOverride(member, state, environment, classMembers, inheritedMembers);
     checkAccessorDeclaration(member, state, environment, ambient);
     return;
   }
@@ -757,6 +911,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
   if (isPropertyDeclaration(member) && member.initializer !== undefined) {
     checkAbstractMemberModifiers(member, state, classIsAbstract, propertyNameText(member.name), true);
     checkUninitializedProperty(member, state, ambient);
+    checkInheritedPropertyOverride(member, state, environment, classMembers, inheritedMembers);
     if (member.type !== undefined) {
       typeFromTypeNode(member.type, environment, state);
     }
@@ -770,10 +925,27 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
   if (isPropertyDeclaration(member)) {
     checkAbstractMemberModifiers(member, state, classIsAbstract, propertyNameText(member.name), true);
     checkUninitializedProperty(member, state, ambient);
+    checkInheritedPropertyOverride(member, state, environment, classMembers, inheritedMembers);
     if (member.type !== undefined) {
       typeFromTypeNode(member.type, environment, state);
     }
   }
+}
+
+function checkInheritedPropertyOverride(member: ClassElement, state: CheckState, environment: TypeEnvironment, classMembers: ClassMemberNames, inheritedMembers: ClassMemberNames | undefined): void {
+  if (inheritedMembers === undefined || hasModifier(member, Kind.AbstractKeyword)) {
+    return;
+  }
+  const name = classElementName(member);
+  if (name === undefined) {
+    return;
+  }
+  const expectedType = inheritedMembers.propertyTypes.get(name);
+  const actualType = classMemberPropertyType(member, environment, state);
+  if (expectedType === undefined || actualType === undefined || isAssignableTo(actualType, expectedType)) {
+    return;
+  }
+  state.diagnostics.push(createDiagnostic(2416, name, classMembers.className ?? "", inheritedMembers.propertyDeclaringClasses.get(name) ?? inheritedMembers.className ?? ""));
 }
 
 function seedUnqualifiedClassMemberDiagnostics(environment: TypeEnvironment, classMembers: ClassMemberNames, staticMethod: boolean): void {
@@ -896,6 +1068,9 @@ function checkAccessorDeclaration(accessor: GetAccessorDeclaration | SetAccessor
 
 function checkAccessorBody(accessor: GetAccessorDeclaration | SetAccessorDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean, expectedReturnType: CheckedType | undefined): void {
   if (accessor.body === undefined) {
+    if (!ambient && !hasModifier(accessor, Kind.AbstractKeyword)) {
+      state.diagnostics.push(createDiagnostic(1005, "{"));
+    }
     return;
   }
   if (ambient) {
@@ -1033,9 +1208,6 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   if (isObjectLiteralExpression(expression)) {
     for (const property of expression.properties) {
       if (isGetAccessorDeclaration(property) || isSetAccessorDeclaration(property)) {
-        if (property.body === undefined) {
-          state.diagnostics.push(createDiagnostic(1005, "{"));
-        }
         checkAccessorDeclaration(property, state, environment, false);
       }
     }
@@ -1113,7 +1285,9 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     for (const argument of expression.arguments ?? []) {
       inferExpression(argument, state, environment);
     }
-    return anyType;
+    return constructorType.kind === "classConstructor"
+      ? { kind: "classInstance", name: constructorType.name, members: constructorType.members }
+      : anyType;
   }
   return unresolvedType;
 }
@@ -1142,7 +1316,7 @@ function checkAssignmentTargetReference(expression: Expression, state: CheckStat
     return;
   }
   if (isPropertyAccessExpression(expression)) {
-    inferPropertyAccess(expression.expression, expression.name.text, state, environment);
+    checkPropertyAssignmentTarget(expression.expression, expression.name.text, state, environment);
     return;
   }
   if (isElementAccessExpression(expression)) {
@@ -1151,6 +1325,17 @@ function checkAssignmentTargetReference(expression: Expression, state: CheckStat
     return;
   }
   inferExpression(expression, state, environment);
+}
+
+function checkPropertyAssignmentTarget(expression: Expression, propertyName: string, state: CheckState, environment: TypeEnvironment): void {
+  const receiverType = inferExpression(expression, state, environment);
+  if (receiverType.kind === "thisClass") {
+    diagnoseThisPropertyAccess(receiverType, propertyName, state);
+    return;
+  }
+  if (receiverType.kind === "classInstance" && receiverType.members.readonlyProperties.has(propertyName)) {
+    state.diagnostics.push(createDiagnostic(2540, propertyName));
+  }
 }
 
 function assignExpressionTarget(expression: Expression, assignedType: CheckedType, state: CheckState, environment: TypeEnvironment): void {
@@ -1224,6 +1409,9 @@ function inferPropertyAccess(expression: Expression, propertyName: string, state
   const receiverType = inferExpression(expression, state, environment);
   if (receiverType.kind === "thisClass") {
     diagnoseThisPropertyAccess(receiverType, propertyName, state);
+    return anyType;
+  }
+  if (receiverType.kind === "classInstance") {
     return anyType;
   }
   if (receiverType.kind === "number" && propertyName === "toFixed") {
@@ -1465,11 +1653,14 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
   if (actual.kind === "any" || expected.kind === "any") {
     return true;
   }
-  if (actual.kind === expected.kind && actual.kind !== "array" && actual.kind !== "classConstructor" && actual.kind !== "function" && actual.kind !== "interface" && actual.kind !== "thisClass" && actual.kind !== "typeAlias" && actual.kind !== "typeParameter" && actual.kind !== "union") {
+  if (actual.kind === expected.kind && actual.kind !== "array" && actual.kind !== "classConstructor" && actual.kind !== "classInstance" && actual.kind !== "function" && actual.kind !== "interface" && actual.kind !== "thisClass" && actual.kind !== "typeAlias" && actual.kind !== "typeParameter" && actual.kind !== "union") {
     return true;
   }
   if (actual.kind === "classConstructor" && expected.kind === "classConstructor") {
     return actual.name === expected.name && actual.abstract === expected.abstract;
+  }
+  if (actual.kind === "classInstance" && expected.kind === "classInstance") {
+    return actual.name === expected.name;
   }
   if (actual.kind === "interface" && expected.kind === "interface") {
     return actual.name === expected.name;
@@ -1596,6 +1787,9 @@ function displayType(type: CheckedType): string {
   }
   if (type.kind === "classConstructor") {
     return `typeof ${type.name}`;
+  }
+  if (type.kind === "classInstance") {
+    return type.name;
   }
   if (type.kind === "interface") {
     return type.name;
