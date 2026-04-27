@@ -1358,32 +1358,84 @@ export class Parser {
     if (this.#current().kind !== Kind.OpenParenToken) {
       return false;
     }
-    const parenthesized = this.#tryParseParenthesizedArrowHead();
-    if (parenthesized !== undefined) {
-      return parenthesized;
+    const parenthesizedState = this.#parenthesizedArrowStartState();
+    if (parenthesizedState === "true") {
+      return true;
     }
+    if (parenthesizedState === "false") {
+      return false;
+    }
+    const parenthesized = this.#tryParseParenthesizedArrowHead();
+    return parenthesized ?? false;
+  }
+
+  #parenthesizedArrowStartState(): "true" | "false" | "unknown" {
+    const second = this.#tokens[this.#index + 1]?.kind;
+    if (second === Kind.CloseParenToken) {
+      const third = this.#tokens[this.#index + 2]?.kind;
+      return third === Kind.EqualsGreaterThanToken || third === Kind.ColonToken || third === Kind.OpenBraceToken
+        ? "true"
+        : "false";
+    }
+    if (second === Kind.OpenBracketToken || second === Kind.OpenBraceToken) {
+      return this.#matchingParenCanContinueArrow() ? "unknown" : "false";
+    }
+    if (second === Kind.DotDotDotToken) {
+      return "true";
+    }
+    if (second !== undefined && modifierKinds.has(second) && second !== Kind.AsyncKeyword && isIdentifierNameKind(this.#tokens[this.#index + 2]?.kind ?? Kind.Unknown)) {
+      return this.#tokens[this.#index + 3]?.kind === Kind.AsKeyword ? "false" : "true";
+    }
+    if (!isIdentifierNameKind(second ?? Kind.Unknown) && second !== Kind.ThisKeyword) {
+      return "false";
+    }
+    const third = this.#tokens[this.#index + 2]?.kind;
+    if (third === Kind.ColonToken) {
+      return "true";
+    }
+    if (third === Kind.QuestionToken) {
+      const fourth = this.#tokens[this.#index + 3]?.kind;
+      return fourth === Kind.ColonToken || fourth === Kind.CommaToken || fourth === Kind.EqualsToken || fourth === Kind.CloseParenToken
+        ? "true"
+        : "false";
+    }
+    if (third === Kind.CommaToken || third === Kind.EqualsToken || third === Kind.CloseParenToken) {
+      return this.#matchingParenCanContinueArrow() ? "unknown" : "false";
+    }
+    return "false";
+  }
+
+  #matchingParenCanContinueArrow(): boolean {
+    const closeParenIndex = this.#findMatchingParenIndex(this.#index);
+    if (closeParenIndex === undefined) {
+      return false;
+    }
+    const nextKind = this.#tokens[closeParenIndex + 1]?.kind;
+    if (nextKind === Kind.EqualsGreaterThanToken || nextKind === Kind.OpenBraceToken) {
+      return true;
+    }
+    if (nextKind !== Kind.ColonToken) {
+      return false;
+    }
+    return this.#hasEqualsGreaterThanBeforeStatementBoundary(closeParenIndex + 2);
+  }
+
+  #findMatchingParenIndex(openParenIndex: number): number | undefined {
     let depth = 0;
-    for (let index = this.#index; index < this.#tokens.length; index += 1) {
+    for (let index = openParenIndex; index < this.#tokens.length; index += 1) {
       const kind = this.#tokens[index]!.kind;
       if (kind === Kind.OpenParenToken) {
         depth += 1;
-        continue;
-      }
-      if (kind === Kind.CloseParenToken) {
+      } else if (kind === Kind.CloseParenToken) {
         depth -= 1;
         if (depth === 0) {
-          const nextKind = this.#tokens[index + 1]?.kind;
-          if (nextKind === Kind.EqualsGreaterThanToken || nextKind === Kind.OpenBraceToken) {
-            return true;
-          }
-          if (nextKind !== Kind.ColonToken) {
-            return false;
-          }
-          return this.#hasEqualsGreaterThanBeforeStatementBoundary(index + 2);
+          return index;
         }
+      } else if (kind === Kind.EndOfFile) {
+        return undefined;
       }
     }
-    return false;
+    return undefined;
   }
 
   #tryParseParenthesizedArrowHead(): boolean | undefined {

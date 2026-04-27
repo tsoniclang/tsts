@@ -446,7 +446,7 @@ const ambientTypeNames = new Set([
 export function checkSourceFile(sourceFile: SourceFile, options: CompilerOptions = {}): CheckResult {
   const state = checkStateForSourceFile(sourceFile, options);
   checkStatements(sourceFile.statements, state, standardGlobalEnvironment(), undefined, isDeclarationFile(sourceFile));
-  return { diagnostics: state.diagnostics };
+  return { diagnostics: shouldReportSemanticDiagnostics(state) ? state.diagnostics : [] };
 }
 
 export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
@@ -469,16 +469,22 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
       resolveExternalModule: moduleSpecifier => moduleResolver(sourceFile.fileName, moduleSpecifier),
     };
     checkStatements(sourceFile.sourceFile.statements, state, cloneTypeEnvironment(globalEnvironment), undefined, isDeclarationFile(sourceFile.sourceFile));
-    diagnostics.push(...state.diagnostics.map(diagnostic => ({
-      fileName: sourceFile.fileName,
-      code: diagnostic.code,
-      category: diagnostic.category,
-      key: diagnostic.key,
-      messageText: diagnostic.messageText,
-      message: diagnostic.message,
-    })));
+    if (shouldReportSemanticDiagnostics(state)) {
+      diagnostics.push(...state.diagnostics.map(diagnostic => ({
+        fileName: sourceFile.fileName,
+        code: diagnostic.code,
+        category: diagnostic.category,
+        key: diagnostic.key,
+        messageText: diagnostic.messageText,
+        message: diagnostic.message,
+      })));
+    }
   }
   return diagnostics;
+}
+
+function shouldReportSemanticDiagnostics(state: CheckState): boolean {
+  return !state.isJavaScriptFile || state.options.checkJs === true;
 }
 
 const syntaxDiagnosticCodes = new Set<number>([1003, 1005, 1068, 1109, 1127, 1128, 1200, 1359, 1434, 1437, 1440, 1490]);
@@ -6307,20 +6313,26 @@ function bodyContainsOwnArgumentsReference(body: Block | undefined): boolean {
 }
 
 function nodeContainsOwnArgumentsReference(node: Node): boolean {
-  if (isIdentifier(node) && isArgumentsValueReference(node)) {
-    return true;
-  }
-  if (startsNewNonArrowArgumentsScope(node)) {
-    return false;
-  }
-  return node.forEachChild(child => nodeContainsOwnArgumentsReference(child) ? true : undefined, children => {
-    for (const child of children) {
-      if (nodeContainsOwnArgumentsReference(child)) {
-        return true;
-      }
+  const stack: Node[] = [node];
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+    if (isIdentifier(current) && isArgumentsValueReference(current)) {
+      return true;
     }
-    return undefined;
-  }) === true;
+    if (startsNewNonArrowArgumentsScope(current)) {
+      continue;
+    }
+    current.forEachChild(child => {
+      stack.push(child);
+      return undefined;
+    }, children => {
+      for (let index = children.length - 1; index >= 0; index -= 1) {
+        stack.push(children[index]!);
+      }
+      return undefined;
+    });
+  }
+  return false;
 }
 
 function isArgumentsValueReference(identifier: Identifier): boolean {

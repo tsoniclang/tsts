@@ -142,6 +142,21 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(computedInitializer.argumentExpression.operatorToken.kind, Kind.CommaToken);
   });
 
+  it("keeps deeply parenthesized assignment expressions out of arrow-head speculation", () => {
+    let expression = "x";
+    for (let index = 0; index < 120; index += 1) {
+      expression = `(x = ${expression} + ${index} | 0)`;
+    }
+
+    const sourceFile = parseSourceFile(`function f() { ${expression}; }`);
+    const statement = sourceFile.statements[0]!;
+    if (!isFunctionDeclaration(statement) || statement.body === undefined) {
+      throw new Error("Expected parsed function declaration");
+    }
+    assert.equal(statement.body.statements.length, 1);
+    assert.equal(isExpressionStatement(statement.body.statements[0]!), true);
+  });
+
   it("round-trips parenthesized expressions as explicit AST nodes", () => {
     const sourceFile = parseSourceFile("(a + 1);");
     const statement = sourceFile.statements[0]!;

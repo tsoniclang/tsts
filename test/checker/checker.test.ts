@@ -1315,6 +1315,25 @@ describe("checker groundwork", () => {
     assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), ["Expected 0-1 arguments, but got 3."]);
   });
 
+  it("checks JavaScript argument ownership through deeply nested expressions iteratively", () => {
+    let expression = "x";
+    for (let index = 0; index < 160; index += 1) {
+      expression = `(x = ${expression} + ${index} | 0)`;
+    }
+    const host: CompilerHost = {
+      readFile: fileName => {
+        if (fileName === "foo.js") {
+          return `function f(x) { ${expression}; return x; }`;
+        }
+        return fileName === "bar.ts" ? "f(1, 2, 3);" : undefined;
+      },
+    };
+    const program = createProgram(["foo.js", "bar.ts"], { allowJs: true, checkJs: true, strict: false }, host);
+    const diagnostics = checkProgram(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [2554]);
+  });
+
   it("treats unannotated JavaScript parameters as optional call arguments", () => {
     const host: CompilerHost = {
       readFile: fileName => {
@@ -1341,6 +1360,21 @@ describe("checker groundwork", () => {
       "Parameter 'b' implicitly has an 'any' type.",
     ]);
     assert.equal(unchecked.diagnostics.length, 0);
+  });
+
+  it("suppresses unchecked JavaScript semantic diagnostics while keeping program symbols", () => {
+    const host: CompilerHost = {
+      readFile: fileName => {
+        if (fileName === "foo.js") {
+          return "function f(x) { return missing + x; }";
+        }
+        return fileName === "bar.ts" ? "f(1, 2);" : undefined;
+      },
+    };
+    const program = createProgram(["foo.js", "bar.ts"], { allowJs: true, checkJs: false, strict: false }, host);
+    const diagnostics = checkProgram(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [2554]);
   });
 
   it("checks for-of iterability against target and array/string rules", () => {
