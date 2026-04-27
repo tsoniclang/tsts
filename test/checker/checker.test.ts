@@ -364,4 +364,17 @@ describe("checker groundwork", () => {
 
     assert.equal(result.diagnostics.length, 0);
   });
+
+  it("reports incompatible named interface members while allowing extra call signatures", () => {
+    const sourceFile = parseSourceFile([
+      "interface Base { f(): string; }",
+      "interface Bad extends Base { f(key: string): string; }",
+      "interface Callable { (): string; }",
+      "interface MoreCallable extends Callable { (key: string): string; }",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2430]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Interface 'Bad' incorrectly extends interface 'Base'."]);
+  });
 });

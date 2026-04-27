@@ -35,6 +35,7 @@ import {
   isKeywordExpression,
   isKeywordTypeNode,
   isMethodDeclaration,
+  isMethodSignatureDeclaration,
   isMissingDeclaration,
   isModuleBlock,
   isModuleDeclaration,
@@ -81,6 +82,7 @@ import {
   type GetAccessorDeclaration,
   type ImportDeclaration,
   type InterfaceDeclaration,
+  type MethodSignatureDeclaration,
   type MethodDeclaration,
   type ParameterDeclaration,
   type PropertyName,
@@ -103,7 +105,7 @@ type CheckedType =
   | { readonly kind: "classInstance"; readonly name: string; readonly members: ClassMemberNames }
   | { readonly kind: "accessorProperty"; readonly type: CheckedType }
   | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType }
-  | { readonly kind: "interface"; readonly name: string }
+  | { readonly kind: "interface"; readonly name: string; readonly members: InterfaceMembers }
   | { readonly kind: "object"; readonly properties: ReadonlyMap<string, CheckedType>; readonly readonlyProperties: ReadonlySet<string> }
   | { readonly kind: "thisClass"; readonly className: string; readonly abstractProperties: ReadonlySet<string>; readonly abstractPropertyDeclaringClasses: ReadonlyMap<string, string>; readonly uninitializedProperties: ReadonlySet<string>; readonly mode: "constructor" | "fieldInitializer" }
   | { readonly kind: "typeAlias"; readonly target: CheckedType }
@@ -143,6 +145,11 @@ interface ClassMemberNames {
 interface AccessorContextTypes {
   readonly getterType?: CheckedType;
   readonly setterType?: CheckedType;
+}
+
+interface InterfaceMembers {
+  readonly name: string;
+  readonly properties: ReadonlyMap<string, CheckedType>;
 }
 
 const anyType: CheckedType = { kind: "any" };
@@ -805,10 +812,72 @@ function checkInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, s
   if (invalidClassNames.has(interfaceDeclaration.name.text)) {
     state.diagnostics.push(createDiagnostic(2427, interfaceDeclaration.name.text));
   }
-  environment.set(interfaceDeclaration.name.text, { kind: "interface", name: interfaceDeclaration.name.text });
   const interfaceEnvironment = new Map(environment);
   addTypeParametersToEnvironment(interfaceDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], interfaceEnvironment);
+  const inheritedInterfaces = inheritedInterfaceMembers(interfaceDeclaration, environment);
+  const members = collectInterfaceMembers(interfaceDeclaration, inheritedInterfaces, state, interfaceEnvironment);
+  environment.set(interfaceDeclaration.name.text, { kind: "interface", name: interfaceDeclaration.name.text, members });
   checkTypeElements(interfaceDeclaration.members, state, interfaceEnvironment, true);
+}
+
+function inheritedInterfaceMembers(interfaceDeclaration: InterfaceDeclaration, environment: TypeEnvironment): readonly InterfaceMembers[] {
+  const inherited: InterfaceMembers[] = [];
+  for (const clause of interfaceDeclaration.heritageClauses ?? []) {
+    if (clause.token !== Kind.ExtendsKeyword) {
+      continue;
+    }
+    for (const heritageType of clause.types) {
+      const baseName = expressionNameText(heritageType.expression);
+      const baseType = baseName === undefined ? undefined : environment.get(baseName);
+      if (baseType?.kind === "interface") {
+        inherited.push(baseType.members);
+      }
+    }
+  }
+  return inherited;
+}
+
+function collectInterfaceMembers(interfaceDeclaration: InterfaceDeclaration, inheritedInterfaces: readonly InterfaceMembers[], state: CheckState, environment: TypeEnvironment): InterfaceMembers {
+  const ownProperties = new Map<string, CheckedType>();
+  for (const member of interfaceDeclaration.members) {
+    if (!isMethodSignatureDeclaration(member)) {
+      continue;
+    }
+    const name = propertyNameText(member.name);
+    if (name !== undefined) {
+      ownProperties.set(name, methodSignatureType(member, environment, state));
+    }
+  }
+  for (const baseInterface of inheritedInterfaces) {
+    for (const [name, basePropertyType] of baseInterface.properties.entries()) {
+      const ownPropertyType = ownProperties.get(name);
+      if (ownPropertyType !== undefined && !isAssignableTo(ownPropertyType, basePropertyType)) {
+        state.diagnostics.push(createDiagnostic(2430, interfaceDeclaration.name.text, baseInterface.name));
+      }
+    }
+  }
+  const mergedProperties = new Map<string, CheckedType>();
+  for (const baseInterface of inheritedInterfaces) {
+    for (const [name, type] of baseInterface.properties.entries()) {
+      mergedProperties.set(name, type);
+    }
+  }
+  for (const [name, type] of ownProperties.entries()) {
+    mergedProperties.set(name, type);
+  }
+  return { name: interfaceDeclaration.name.text, properties: mergedProperties };
+}
+
+function methodSignatureType(method: MethodSignatureDeclaration, environment: TypeEnvironment, state: CheckState): CheckedType {
+  const signatureEnvironment = new Map(environment);
+  const typeParameters = method.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
+  addTypeParametersToEnvironment(typeParameters, signatureEnvironment);
+  return {
+    kind: "function",
+    typeParameters,
+    parameters: method.parameters.map(parameter => parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, signatureEnvironment, state)),
+    returnType: method.type === undefined ? unresolvedType : typeFromTypeNode(method.type, signatureEnvironment, state),
+  };
 }
 
 type OverloadGroup =
