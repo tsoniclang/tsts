@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative } from "node:path";
 import * as ts from "typescript";
@@ -13,6 +13,7 @@ interface CompilerCase {
   readonly name: string;
   readonly path: string;
   readonly files: readonly CaseFile[];
+  readonly rootNames: readonly string[];
   readonly compilerOptions: ts.CompilerOptions;
 }
 
@@ -143,11 +144,13 @@ function parseCompilerCase(name: string, path: string, text: string): CompilerCa
   }
 
   if (fileSections.length > 0) {
+    const rootNames = fileSections.filter(file => isSupportedCaseFile(file.fileName)).map(file => file.fileName);
     return {
       name,
       path,
       compilerOptions,
-      files: fileSections.filter(file => isSupportedCaseFile(file.fileName)),
+      files: fileSections,
+      rootNames,
     };
   }
 
@@ -156,12 +159,13 @@ function parseCompilerCase(name: string, path: string, text: string): CompilerCa
     path,
     compilerOptions,
     files: [{ fileName: name, text }],
+    rootNames: [name],
   };
 }
 
 function upstreamDiagnostics(testCase: CompilerCase): readonly ComparableDiagnostic[] {
   const fileMap = new Map(testCase.files.map(file => [normalizeFileName(file.fileName), file.text]));
-  const rootNames = [...fileMap.keys()];
+  const rootNames = testCase.rootNames.map(normalizeFileName);
   const compilerOptions = { ...defaultCompilerOptions, ...testCase.compilerOptions };
   const host = ts.createCompilerHost(compilerOptions);
   const defaultFileExists = host.fileExists.bind(host);
@@ -323,13 +327,32 @@ function parseJsxEmit(value: string): ts.JsxEmit {
 function tstsDiagnostics(testCase: CompilerCase): readonly ComparableDiagnostic[] {
   const fileMap = new Map(testCase.files.map(file => [normalizeFileName(file.fileName), file.text]));
   const host: CompilerHost = {
-    readFile: fileName => fileMap.get(normalizeFileName(fileName)),
+    readFile: fileName => {
+      const normalized = normalizeFileName(fileName);
+      const diskText = readPackageJsonFromDiskIfPresent(normalized);
+      return diskText ?? fileMap.get(normalized) ?? readDiskFileIfPresent(normalized);
+    },
     useCaseSensitiveFileNames: () => true,
   };
-  const program = createProgram([...fileMap.keys()], {}, host);
+  const program = createProgram(testCase.rootNames.map(normalizeFileName), {}, host);
   return getProgramDiagnostics(program)
     .map(normalizeProgramDiagnostic)
+    .filter(diagnostic => diagnostic.fileName === undefined || fileMap.has(diagnostic.fileName))
     .sort(compareDiagnostics);
+}
+
+function readPackageJsonFromDiskIfPresent(fileName: string): string | undefined {
+  if (!fileName.endsWith("/package.json")) {
+    return undefined;
+  }
+  return readDiskFileIfPresent(fileName);
+}
+
+function readDiskFileIfPresent(fileName: string): string | undefined {
+  if (!existsSync(fileName)) {
+    return undefined;
+  }
+  return readFileSync(fileName, "utf8");
 }
 
 function normalizeProgramDiagnostic(diagnostic: ProgramDiagnostic): ComparableDiagnostic {

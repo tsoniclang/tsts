@@ -1,9 +1,9 @@
-import { dirname, extname, join, normalize, relative } from "node:path";
+import { dirname, extname, isAbsolute, join, normalize, relative } from "node:path";
 import { bindSourceFile, type BindDiagnostic, type BindResult } from "../binder/index.js";
 import { checkSourceFile } from "../checker/index.js";
 import { printSourceFile } from "../emit-js/index.js";
 import { parseSourceFile } from "../parser/index.js";
-import { isExportDeclaration, isImportDeclaration, isStringLiteral, type SourceFile } from "../ast/index.js";
+import { isExportDeclaration, isExternalModuleReference, isImportDeclaration, isImportEqualsDeclaration, isStringLiteral, type SourceFile } from "../ast/index.js";
 import { createDiagnosticAt, type DiagnosticCategory, type DiagnosticCode } from "../diagnostics/index.js";
 
 export interface CompilerOptions {
@@ -84,14 +84,12 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
     diagnostics.push(...bindResult.diagnostics.map(diagnostic => convertBindDiagnostic(rootName, diagnostic)));
     for (const moduleSpecifier of sourceFileModuleSpecifiers(sourceFile)) {
       const resolved = resolveModuleName(moduleSpecifier, rootName, host, fileTextCache);
-      if (resolved === undefined) {
-        if (isRelativeModuleName(moduleSpecifier)) {
-          diagnostics.push(programDiagnostic(rootName, 2307, moduleSpecifier));
-        }
+      if (!resolved.found) {
+        diagnostics.push(programDiagnostic(rootName, 2307, moduleSpecifier));
         continue;
       }
-      if (!seen.has(canonicalFileName(resolved, host))) {
-        pending.push(resolved);
+      if (resolved.fileName !== undefined && !seen.has(canonicalFileName(resolved.fileName, host))) {
+        pending.push(resolved.fileName);
       }
     }
     sourceFiles.push({
@@ -155,18 +153,36 @@ function sourceFileModuleSpecifiers(sourceFile: SourceFile): readonly string[] {
     }
     if (isExportDeclaration(statement) && statement.moduleSpecifier !== undefined && isStringLiteral(statement.moduleSpecifier)) {
       specifiers.push(statement.moduleSpecifier.text);
+      continue;
+    }
+    if (
+      isImportEqualsDeclaration(statement)
+      && isExternalModuleReference(statement.moduleReference)
+      && isStringLiteral(statement.moduleReference.expression)
+    ) {
+      specifiers.push(statement.moduleReference.expression.text);
     }
   }
   return specifiers;
 }
 
-function resolveModuleName(moduleSpecifier: string, containingFileName: string, host: CompilerHost, cache: Map<string, string | undefined>): string | undefined {
+interface ModuleResolution {
+  readonly found: boolean;
+  readonly fileName?: string;
+}
+
+function resolveModuleName(moduleSpecifier: string, containingFileName: string, host: CompilerHost, cache: Map<string, string | undefined>): ModuleResolution {
   if (!isRelativeModuleName(moduleSpecifier)) {
-    return undefined;
+    const resolvedPackageFile = packageResolutionCandidates(moduleSpecifier, host, cache).find(candidate => readFileCached(candidate, host, cache) !== undefined);
+    if (resolvedPackageFile !== undefined) {
+      return { found: true, fileName: resolvedPackageFile };
+    }
+    return { found: false };
   }
   const base = normalize(join(dirname(containingFileName), moduleSpecifier));
   const candidates = moduleResolutionCandidates(base);
-  return candidates.find(candidate => readFileCached(candidate, host, cache) !== undefined);
+  const fileName = candidates.find(candidate => readFileCached(candidate, host, cache) !== undefined);
+  return fileName === undefined ? { found: false } : { found: true, fileName };
 }
 
 function moduleResolutionCandidates(base: string): readonly string[] {
@@ -186,11 +202,74 @@ function moduleResolutionCandidates(base: string): readonly string[] {
   return [
     `${base}.ts`,
     `${base}.tsx`,
+    `${base}.mts`,
+    `${base}.cts`,
     `${base}.d.ts`,
+    `${base}.d.mts`,
+    `${base}.d.cts`,
     join(base, "index.ts"),
     join(base, "index.tsx"),
+    join(base, "index.mts"),
+    join(base, "index.cts"),
     join(base, "index.d.ts"),
+    join(base, "index.d.mts"),
+    join(base, "index.d.cts"),
   ];
+}
+
+function packageResolutionCandidates(moduleSpecifier: string, host: CompilerHost, cache: Map<string, string | undefined>): readonly string[] {
+  const base = join("node_modules", moduleSpecifier);
+  return [
+    ...packageJsonResolutionCandidates(base, host, cache),
+    `${base}.ts`,
+    `${base}.tsx`,
+    `${base}.mts`,
+    `${base}.cts`,
+    `${base}.d.ts`,
+    `${base}.d.mts`,
+    `${base}.d.cts`,
+    join(base, "index.ts"),
+    join(base, "index.tsx"),
+    join(base, "index.mts"),
+    join(base, "index.cts"),
+    join(base, "index.d.ts"),
+    join(base, "index.d.mts"),
+    join(base, "index.d.cts"),
+  ];
+}
+
+function packageJsonResolutionCandidates(packageDirectory: string, host: CompilerHost, cache: Map<string, string | undefined>): readonly string[] {
+  const packageJsonText = readFileCached(join(packageDirectory, "package.json"), host, cache);
+  if (packageJsonText === undefined) {
+    return [];
+  }
+
+  let packageMetadata: unknown;
+  try {
+    packageMetadata = JSON.parse(packageJsonText);
+  } catch {
+    return [];
+  }
+  if (!isRecord(packageMetadata)) {
+    return [];
+  }
+
+  const candidates: string[] = [];
+  for (const fieldName of ["types", "typings", "main"] as const) {
+    const fieldValue = packageMetadata[fieldName];
+    if (typeof fieldValue === "string") {
+      candidates.push(...moduleResolutionCandidates(packageFieldTarget(packageDirectory, fieldValue)));
+    }
+  }
+  return candidates;
+}
+
+function packageFieldTarget(packageDirectory: string, fieldValue: string): string {
+  return normalize(isAbsolute(fieldValue) ? fieldValue : join(packageDirectory, fieldValue));
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function isRelativeModuleName(moduleSpecifier: string): boolean {

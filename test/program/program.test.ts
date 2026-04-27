@@ -131,6 +131,71 @@ describe("program groundwork", () => {
     assert.equal(result.emittedFiles.length, 0);
   });
 
+  it("resolves package module specifiers through node_modules declaration entrypoints and metadata", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "import { value } from \"pkg\"; import { named } from \"typed-pkg\"; export const answer = value + named;"],
+      ["node_modules/pkg/index.d.ts", "export const value: number;"],
+      ["node_modules/typed-pkg/package.json", "{\"name\":\"typed-pkg\",\"typings\":\"./types/main.d.ts\"}"],
+      ["node_modules/typed-pkg/types/main.d.ts", "export const named: number;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/index.ts"], {}, host);
+
+    assert.equal(program.diagnostics.length, 0);
+    assert.deepEqual(program.sourceFiles.map(file => file.fileName), [
+      "src/index.ts",
+      "node_modules/pkg/index.d.ts",
+      "node_modules/typed-pkg/types/main.d.ts",
+    ]);
+  });
+
+  it("resolves external import-equals module references through the program graph", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "import pkg = require(\"pkg\"); export const answer = pkg.value;"],
+      ["node_modules/pkg/index.d.ts", "export const value: number;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/index.ts"], {}, host);
+
+    assert.equal(program.diagnostics.length, 0);
+    assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["src/index.ts", "node_modules/pkg/index.d.ts"]);
+  });
+
+  it("does not treat package metadata without a resolvable entrypoint as a module", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "import { missing } from \"metadata-only\";"],
+      ["node_modules/metadata-only/package.json", "{\"name\":\"metadata-only\",\"types\":\"./missing.d.ts\"}"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/index.ts"], {}, host);
+
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find module 'metadata-only' or its corresponding type declarations."]);
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2307]);
+  });
+
+  it("diagnoses unresolved package module specifiers", () => {
+    const host: CompilerHost = {
+      readFile: fileName => fileName === "src/index.ts" ? "import { missing } from \"missing-pkg\";" : undefined,
+    };
+
+    const program = createProgram(["src/index.ts"], {}, host);
+
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find module 'missing-pkg' or its corresponding type declarations."]);
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2307]);
+  });
+
   it("does not emit when semantic diagnostics are present", () => {
     const outputs = new Map<string, string>();
     const host: CompilerHost = {
