@@ -82,6 +82,36 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string' is not assignable to type 'number'."]);
   });
 
+  it("reports class overload declarations without immediately following implementations", () => {
+    const sourceFile = parseSourceFile("class C { foo(); constructor(); }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Constructor implementation is missing.",
+      "Function implementation is missing or not immediately following the declaration.",
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2390, 2391]);
+  });
+
+  it("reports class overload implementations with mismatched names", () => {
+    const sourceFile = parseSourceFile("class C { \"foo\"(); \"bar\"() { } 0(); 1() { } }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Function implementation name must be '\"foo\"'.",
+      "Function implementation name must be '0'.",
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2389, 2389]);
+  });
+
+  it("reports primitive type keywords used as class names", () => {
+    const sourceFile = parseSourceFile("class any { }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Class name cannot be 'any'."]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2414]);
+  });
+
   it("checks declared arrow function return types", () => {
     const sourceFile = parseSourceFile("const f = (x: string): number => x;");
     const result = checkSourceFile(sourceFile);

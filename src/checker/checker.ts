@@ -9,6 +9,7 @@ import {
   isBreakStatement,
   isCallExpression,
   isClassDeclaration,
+  isComputedPropertyName,
   isContinueStatement,
   isConditionalExpression,
   isConstructorDeclaration,
@@ -26,12 +27,14 @@ import {
   isMethodDeclaration,
   isMissingDeclaration,
   isNumericLiteral,
+  isNoSubstitutionTemplateLiteral,
   isObjectBindingPattern,
   isParenthesizedExpression,
   isPostfixUnaryExpression,
   isPrefixUnaryExpression,
   isPropertyAccessExpression,
   isPropertyDeclaration,
+  isPrivateIdentifier,
   isQualifiedName,
   isReturnStatement,
   isSatisfiesExpression,
@@ -48,10 +51,13 @@ import {
   type ClassDeclaration,
   type ClassElement,
   type ConciseBody,
+  type ConstructorDeclaration,
   type EntityName,
   type Expression,
   type FunctionDeclaration,
+  type MethodDeclaration,
   type ParameterDeclaration,
+  type PropertyName,
   type SourceFile,
   type Statement,
   type TypeNode,
@@ -86,6 +92,7 @@ const numberType: CheckedType = { kind: "number" };
 const stringType: CheckedType = { kind: "string" };
 const voidType: CheckedType = { kind: "void" };
 const booleanType: CheckedType = { kind: "boolean" };
+const invalidClassNames = new Set(["any", "bigint", "boolean", "never", "number", "object", "string", "symbol", "undefined", "unknown", "void"]);
 
 export function checkSourceFile(sourceFile: SourceFile): CheckResult {
   const state: CheckState = { diagnostics: [] };
@@ -219,12 +226,108 @@ function checkForInitializer(initializer: Extract<Statement, { readonly kind: Ki
 
 function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckState, environment: TypeEnvironment): void {
   if (classDeclaration.name !== undefined) {
+    if (invalidClassNames.has(classDeclaration.name.text)) {
+      state.diagnostics.push(createDiagnostic(2414, classDeclaration.name.text));
+    }
     environment.set(classDeclaration.name.text, anyType);
   }
   const classEnvironment = new Map(environment);
+  checkClassMemberOverloads(classDeclaration.members, state);
   for (const member of classDeclaration.members) {
     checkClassElement(member, state, classEnvironment);
   }
+}
+
+type OverloadGroup =
+  | { readonly kind: "constructor" }
+  | { readonly kind: "method"; readonly name: string };
+
+function checkClassMemberOverloads(members: readonly ClassElement[], state: CheckState): void {
+  const pendingGroups: OverloadGroup[] = [];
+  for (const member of members) {
+    if (isConstructorDeclaration(member) || isMethodDeclaration(member)) {
+      const group = classMemberOverloadGroup(member);
+      if (member.body === undefined) {
+        if (group !== undefined) {
+          pendingGroups.push(group);
+        }
+        continue;
+      }
+      checkClassMemberImplementationOverloads(group, pendingGroups, state);
+      continue;
+    }
+    diagnosePendingOverloadGroups(pendingGroups, state);
+  }
+  diagnosePendingOverloadGroups(pendingGroups, state);
+}
+
+function classMemberOverloadGroup(member: ConstructorDeclaration | MethodDeclaration): OverloadGroup | undefined {
+  if (isConstructorDeclaration(member)) {
+    return { kind: "constructor" };
+  }
+  const name = propertyNameText(member.name);
+  return name === undefined ? undefined : { kind: "method", name };
+}
+
+function checkClassMemberImplementationOverloads(implementationGroup: OverloadGroup | undefined, pendingGroups: OverloadGroup[], state: CheckState): void {
+  if (pendingGroups.length === 0 || implementationGroup === undefined) {
+    return;
+  }
+  const immediateGroup = pendingGroups[pendingGroups.length - 1]!;
+  if (implementationGroup.kind === "constructor" && immediateGroup.kind === "constructor") {
+    removeTrailingMatchingOverloadGroups(pendingGroups, implementationGroup);
+    return;
+  }
+  if (implementationGroup.kind === "method" && immediateGroup.kind === "method") {
+    if (implementationGroup.name === immediateGroup.name) {
+      removeTrailingMatchingOverloadGroups(pendingGroups, implementationGroup);
+    } else {
+      state.diagnostics.push(createDiagnostic(2389, immediateGroup.name));
+      removeTrailingMatchingOverloadGroups(pendingGroups, immediateGroup);
+    }
+    diagnosePendingOverloadGroups(pendingGroups, state);
+    return;
+  }
+  diagnosePendingOverloadGroups(pendingGroups, state);
+}
+
+function removeTrailingMatchingOverloadGroups(pendingGroups: OverloadGroup[], resolvedGroup: OverloadGroup): void {
+  while (pendingGroups.length > 0 && sameOverloadGroup(pendingGroups[pendingGroups.length - 1]!, resolvedGroup)) {
+    pendingGroups.pop();
+  }
+}
+
+function sameOverloadGroup(left: OverloadGroup, right: OverloadGroup): boolean {
+  return left.kind === right.kind && (left.kind === "constructor" || right.kind === "constructor" || left.name === right.name);
+}
+
+function diagnosePendingOverloadGroups(pendingGroups: OverloadGroup[], state: CheckState): void {
+  if (pendingGroups.length === 0) {
+    return;
+  }
+  if (pendingGroups.some(group => group.kind === "constructor")) {
+    state.diagnostics.push(createDiagnostic(2390));
+  }
+  if (pendingGroups.some(group => group.kind === "method")) {
+    state.diagnostics.push(createDiagnostic(2391));
+  }
+  pendingGroups.length = 0;
+}
+
+function propertyNameText(name: PropertyName): string | undefined {
+  if (isIdentifier(name) || isNumericLiteral(name)) {
+    return name.text;
+  }
+  if (isStringLiteral(name) || isNoSubstitutionTemplateLiteral(name)) {
+    return `"${name.text}"`;
+  }
+  if (isPrivateIdentifier(name)) {
+    return name.text.startsWith("#") ? name.text : `#${name.text}`;
+  }
+  if (isComputedPropertyName(name)) {
+    return undefined;
+  }
+  return undefined;
 }
 
 function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment): void {
