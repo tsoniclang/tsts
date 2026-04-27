@@ -142,6 +142,13 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Mapped object type implicitly has an 'any' template type."]);
   });
 
+  it("scopes generic arrow type parameters through parameters and return types", () => {
+    const sourceFile = parseSourceFile("const box = { id: async <T>(value: T): Promise<T> => value, sync: <T>(value: T): T => value };");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
   it("reports function overload declarations without matching implementations", () => {
     const sourceFile = parseSourceFile("function foo(); function bar() { } function baz();");
     const result = checkSourceFile(sourceFile);

@@ -171,7 +171,7 @@ describe("program groundwork", () => {
     assert.equal(getProgramDiagnostics(program).length, 0);
   });
 
-  it("resolves package exports from the containing file and suppresses unchecked side-effect imports by default", () => {
+  it("resolves package exports from the containing file and suppresses disabled unchecked side-effect imports", () => {
     const files = new Map<string, string>([
       ["packages/app/src/index.ts", "import { value } from \"pkg\"; import \"missing-side-effect\"; export const answer = value;"],
       ["packages/app/node_modules/pkg/package.json", "{\"name\":\"pkg\",\"exports\":{\".\":{\"types\":\"./dist/index.d.ts\",\"default\":\"./dist/index.js\"}}}"],
@@ -182,7 +182,7 @@ describe("program groundwork", () => {
       useCaseSensitiveFileNames: () => true,
     };
 
-    const program = createProgram(["packages/app/src/index.ts"], {}, host);
+    const program = createProgram(["packages/app/src/index.ts"], { noUncheckedSideEffectImports: false }, host);
 
     assert.equal(program.diagnostics.length, 0);
     assert.deepEqual(program.sourceFiles.map(file => file.fileName), [
@@ -191,13 +191,13 @@ describe("program groundwork", () => {
     ]);
   });
 
-  it("uses the side-effect import diagnostic when unchecked side-effect imports are enabled", () => {
+  it("uses the side-effect import diagnostic by default for TypeScript 6", () => {
     const host: CompilerHost = {
       readFile: fileName => fileName === "src/index.ts" ? "import \"missing-side-effect\";" : undefined,
       useCaseSensitiveFileNames: () => true,
     };
 
-    const program = createProgram(["src/index.ts"], { noUncheckedSideEffectImports: true }, host);
+    const program = createProgram(["src/index.ts"], {}, host);
 
     assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2882]);
     assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find module or type declarations for side-effect import of 'missing-side-effect'."]);

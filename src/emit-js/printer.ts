@@ -33,6 +33,7 @@ import {
   isInterfaceDeclaration,
   isIdentifier,
   isImportDeclaration,
+  isMethodDeclaration,
   isMissingDeclaration,
   isNamedExports,
   isNamedImports,
@@ -69,6 +70,7 @@ import {
   isVoidExpression,
   isWhileStatement,
   isArrayBindingPattern,
+  isYieldExpression,
   type BindingElement,
   type BinaryOperatorToken,
   type ArrowFunction,
@@ -226,7 +228,8 @@ function printStatement(statement: Statement, context: PrintContext, depth: numb
     return `for (${printForInitializer(statement.initializer)} in ${printExpression(statement.expression)}) ${printEmbeddedStatement(statement.statement, context, depth)}`;
   }
   if (isForOfStatement(statement)) {
-    return `for (${printForInitializer(statement.initializer)} of ${printExpression(statement.expression)}) ${printEmbeddedStatement(statement.statement, context, depth)}`;
+    const awaitText = statement.awaitModifier === undefined ? "" : " await";
+    return `for${awaitText} (${printForInitializer(statement.initializer)} of ${printExpression(statement.expression)}) ${printEmbeddedStatement(statement.statement, context, depth)}`;
   }
   if (isBreakStatement(statement)) {
     return statement.label === undefined ? "break;" : `break ${statement.label.text};`;
@@ -454,9 +457,10 @@ function printConstructorDeclaration(constructorDeclaration: ConstructorDeclarat
 
 function printMethodDeclaration(methodDeclaration: MethodDeclaration, context: PrintContext, depth: number): string {
   const prefix = printMemberModifierPrefix(methodDeclaration.modifiers);
+  const asterisk = methodDeclaration.asteriskToken === undefined ? "" : "*";
   const parameters = methodDeclaration.parameters.map(printParameterDeclaration).join(", ");
   const body = methodDeclaration.body === undefined ? "{}" : printBlock(methodDeclaration.body.statements, context, depth);
-  return `${prefix}${printPropertyName(methodDeclaration.name)}(${parameters}) ${body}`;
+  return `${prefix}${asterisk}${printPropertyName(methodDeclaration.name)}(${parameters}) ${body}`;
 }
 
 function printPropertyDeclaration(propertyDeclaration: PropertyDeclaration): string | undefined {
@@ -684,10 +688,11 @@ function printExpression(expression: Expression): string {
     return `${printExpression(expression.expression)}${expression.questionDotToken === undefined ? "" : "?."}(${expression.arguments.map(printExpression).join(", ")})`;
   }
   if (isFunctionExpression(expression)) {
+    const prefix = printDeclarationModifierPrefix(expression.modifiers);
     const asterisk = expression.asteriskToken === undefined ? "" : "*";
     const name = expression.name === undefined ? "" : ` ${expression.name.text}`;
     const parameters = expression.parameters.map(printParameterDeclaration).join(", ");
-    return `function${asterisk}${name}(${parameters}) ${printBlock(expression.body.statements, { newline: "\n", indentText: "  " }, 0)}`;
+    return `${prefix}function${asterisk}${name}(${parameters}) ${printBlock(expression.body.statements, { newline: "\n", indentText: "  " }, 0)}`;
   }
   if (isNewExpression(expression)) {
     const typeArguments = "";
@@ -708,6 +713,10 @@ function printExpression(expression: Expression): string {
   }
   if (isAwaitExpression(expression)) {
     return `await ${printExpression(expression.expression)}`;
+  }
+  if (isYieldExpression(expression)) {
+    const asterisk = expression.asteriskToken === undefined ? "" : "* ";
+    return expression.expression === undefined ? "yield" : `yield ${asterisk}${printExpression(expression.expression)}`;
   }
   if (isPostfixUnaryExpression(expression)) {
     return `${printExpression(expression.operand)}${expression.operator === Kind.PlusPlusToken ? "++" : "--"}`;
@@ -731,11 +740,12 @@ function printExpression(expression: Expression): string {
 }
 
 function printArrowFunction(arrowFunction: ArrowFunction): string {
+  const prefix = printDeclarationModifierPrefix(arrowFunction.modifiers);
   const parameters = arrowFunction.parameters.length === 1
     ? printParameterDeclaration(arrowFunction.parameters[0]!)
     : `(${arrowFunction.parameters.map(printParameterDeclaration).join(", ")})`;
   const body = isBlock(arrowFunction.body) ? printBlock(arrowFunction.body.statements, { newline: "\n", indentText: "  " }, 0) : printExpression(arrowFunction.body);
-  return `${parameters} => ${body}`;
+  return `${prefix}${parameters} => ${body}`;
 }
 
 function printObjectLiteralElement(element: ObjectLiteralElementLike): string {
@@ -757,7 +767,10 @@ function printObjectLiteralElement(element: ObjectLiteralElementLike): string {
     const body = element.body === undefined ? "{}" : printBlock(element.body.statements, { newline: "\n", indentText: "  " }, 0);
     return `set ${printPropertyName(element.name)}(${parameters}) ${body}`;
   }
-  throw new Error(`Unsupported object literal element kind ${Kind[element.kind]}`);
+  if (isMethodDeclaration(element)) {
+    return printMethodDeclaration(element, { newline: "\n", indentText: "  " }, 0);
+  }
+  throw new Error(`Unsupported object literal element kind ${Kind[(element as { readonly kind: Kind }).kind]}`);
 }
 
 function hasModifier(modifiers: NodeArray<ModifierLike> | undefined, kind: Kind): boolean {

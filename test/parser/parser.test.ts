@@ -50,6 +50,7 @@ import {
   isPostfixUnaryExpression,
   isPrefixUnaryExpression,
   isPrivateIdentifier,
+  isPropertyAssignment,
   isPropertyDeclaration,
   isPropertyAccessExpression,
   isPropertySignatureDeclaration,
@@ -66,6 +67,7 @@ import {
   isWithStatement,
   isWhileStatement,
   isArrayBindingPattern,
+  isYieldExpression,
 } from "../../src/ast/index.js";
 import { parseSourceFile, parseSourceFileWithDiagnostics } from "../../src/parser/index.js";
 
@@ -379,6 +381,39 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(initializer.parameters[0]!.type?.kind, Kind.NumberKeyword);
     assert.equal(initializer.type?.kind, Kind.NumberKeyword);
     assert.equal(isBinaryExpression(initializer.body), true);
+  });
+
+  it("parses async generic arrows, async generators, yield, and for-await statements", () => {
+    const result = parseSourceFileWithDiagnostics([
+      "const fn = () => ({",
+      "  test: async <T = undefined>(value: T): Promise<T> => value,",
+      "  extraValue: () => {},",
+      "});",
+      "async function * asyncGen(n) { yield n; }",
+      "for await (const value of asyncGen(1)) { value; }",
+    ].join("\n"));
+
+    assert.deepEqual(result.diagnostics, []);
+    const fnStatement = result.sourceFile.statements[0]!;
+    if (!isVariableStatement(fnStatement) || !isArrowFunction(fnStatement.declarationList.declarations[0]!.initializer!)) throw new Error("Expected arrow function variable");
+    const objectBody = fnStatement.declarationList.declarations[0]!.initializer.body;
+    if (!isParenthesizedExpression(objectBody) || !isObjectLiteralExpression(objectBody.expression)) throw new Error("Expected parenthesized object literal arrow body");
+    const testProperty = objectBody.expression.properties[0]!;
+    if (!isPropertyAssignment(testProperty) || !isArrowFunction(testProperty.initializer)) throw new Error("Expected async arrow property initializer");
+    assert.equal(testProperty.initializer.modifiers?.[0]?.kind, Kind.AsyncKeyword);
+    assert.equal(testProperty.initializer.typeParameters?.[0]?.name.text, "T");
+
+    const generator = result.sourceFile.statements[1]!;
+    if (!isFunctionDeclaration(generator) || generator.body === undefined) throw new Error("Expected async generator declaration");
+    assert.equal(generator.modifiers?.[0]?.kind, Kind.AsyncKeyword);
+    assert.equal(generator.asteriskToken?.kind, Kind.AsteriskToken);
+    const yieldStatement = generator.body.statements[0]!;
+    if (!isExpressionStatement(yieldStatement)) throw new Error("Expected yield expression statement");
+    assert.equal(isYieldExpression(yieldStatement.expression), true);
+
+    const forAwait = result.sourceFile.statements[2]!;
+    if (!isForOfStatement(forAwait)) throw new Error("Expected for-await statement");
+    assert.equal(forAwait.awaitModifier?.kind, Kind.AwaitKeyword);
   });
 
   it("produces loop statements with TS-Go initializer and body nodes", () => {

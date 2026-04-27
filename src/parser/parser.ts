@@ -126,6 +126,7 @@ import {
   createVoidExpression,
   createWhileStatement,
   createWithStatement,
+  createYieldExpression,
   isBinaryOperatorToken,
   type BinaryOperator,
   type BinaryOperatorToken,
@@ -714,6 +715,7 @@ export class Parser {
 
   #parseForStatement(): Statement {
     this.#expect(Kind.ForKeyword);
+    const awaitModifier = this.#consumeOptional(Kind.AwaitKeyword) ? createToken(Kind.AwaitKeyword) : undefined;
     this.#expect(Kind.OpenParenToken);
     const initializer = this.#parseForInitializer();
     if (initializer !== undefined && (this.#current().kind === Kind.InKeyword || this.#current().kind === Kind.OfKeyword)) {
@@ -724,7 +726,7 @@ export class Parser {
       const statement = this.#parseStatement();
       return token === Kind.InKeyword
         ? createForInStatement(undefined, initializer, expression, statement)
-        : createForOfStatement(undefined, initializer, expression, statement);
+        : createForOfStatement(awaitModifier, initializer, expression, statement);
     }
     this.#expect(Kind.SemicolonToken);
     const condition = this.#current().kind === Kind.SemicolonToken ? undefined : this.#parseExpression();
@@ -1207,6 +1209,9 @@ export class Parser {
   }
 
   #isArrowFunctionStart(): boolean {
+    if (this.#current().kind === Kind.AsyncKeyword) {
+      return this.#isAsyncArrowFunctionStart();
+    }
     if (this.#current().kind === Kind.LessThanToken) {
       return this.#isGenericArrowFunctionStart();
     }
@@ -1238,6 +1243,21 @@ export class Parser {
       }
     }
     return false;
+  }
+
+  #isAsyncArrowFunctionStart(): boolean {
+    const next = this.#tokens[this.#index + 1];
+    if (next === undefined || this.#hasLineBreakBetween(this.#current(), next)) {
+      return false;
+    }
+    if (isIdentifierNameKind(next.kind) && this.#tokens[this.#index + 2]?.kind === Kind.EqualsGreaterThanToken) {
+      return true;
+    }
+    const startIndex = this.#index;
+    this.#index += 1;
+    const isArrow = this.#isArrowFunctionStart();
+    this.#index = startIndex;
+    return isArrow;
   }
 
   #isGenericArrowFunctionStart(): boolean {
@@ -1275,6 +1295,9 @@ export class Parser {
   }
 
   #parseArrowFunction(): Expression {
+    const modifiers = this.#consumeOptional(Kind.AsyncKeyword)
+      ? createNodeArray([createToken(Kind.AsyncKeyword) as ModifierLike])
+      : undefined;
     const parameters: ParameterDeclaration[] = [];
     const typeParameters = this.#parseOptionalTypeParameters();
     let type: TypeNode | undefined;
@@ -1288,7 +1311,7 @@ export class Parser {
     }
     this.#expect(Kind.EqualsGreaterThanToken);
     const body = this.#parseArrowBody();
-    return createArrowFunction(undefined, typeParameters, createNodeArray(parameters), type, createToken(Kind.EqualsGreaterThanToken), body);
+    return createArrowFunction(modifiers, typeParameters, createNodeArray(parameters), type, createToken(Kind.EqualsGreaterThanToken), body);
   }
 
   #parseArrowBody(): ConciseBody {
@@ -1323,6 +1346,8 @@ export class Parser {
       case Kind.AwaitKeyword:
         this.#advance();
         return createAwaitExpression(this.#parseUnaryExpression());
+      case Kind.YieldKeyword:
+        return this.#parseYieldExpression();
       case Kind.LessThanToken:
         return this.#parseTypeAssertionExpression();
       default:
@@ -1335,6 +1360,50 @@ export class Parser {
     const type = this.#parseType();
     this.#expectGreaterThan();
     return createTypeAssertion(type, this.#parseUnaryExpression());
+  }
+
+  #parseYieldExpression(): Expression {
+    const yieldToken = this.#expect(Kind.YieldKeyword);
+    const next = this.#current();
+    if (this.#hasLineBreakBetween(yieldToken, next) || (!this.#isStartOfExpression(next.kind) && next.kind !== Kind.AsteriskToken)) {
+      return createYieldExpression(undefined, undefined);
+    }
+    const asteriskToken = this.#consumeOptional(Kind.AsteriskToken) ? createToken(Kind.AsteriskToken) : undefined;
+    return createYieldExpression(asteriskToken, this.#parseExpression());
+  }
+
+  #isStartOfExpression(kind: Kind): boolean {
+    return kind === Kind.OpenParenToken
+      || kind === Kind.OpenBracketToken
+      || kind === Kind.OpenBraceToken
+      || kind === Kind.LessThanToken
+      || kind === Kind.FunctionKeyword
+      || kind === Kind.ClassKeyword
+      || kind === Kind.NewKeyword
+      || kind === Kind.DeleteKeyword
+      || kind === Kind.TypeOfKeyword
+      || kind === Kind.VoidKeyword
+      || kind === Kind.AwaitKeyword
+      || kind === Kind.YieldKeyword
+      || kind === Kind.ThisKeyword
+      || kind === Kind.SuperKeyword
+      || kind === Kind.NullKeyword
+      || kind === Kind.TrueKeyword
+      || kind === Kind.FalseKeyword
+      || kind === Kind.StringLiteral
+      || kind === Kind.NumericLiteral
+      || kind === Kind.BigIntLiteral
+      || kind === Kind.RegularExpressionLiteral
+      || kind === Kind.NoSubstitutionTemplateLiteral
+      || kind === Kind.TemplateHead
+      || kind === Kind.PrivateIdentifier
+      || kind === Kind.PlusToken
+      || kind === Kind.MinusToken
+      || kind === Kind.TildeToken
+      || kind === Kind.ExclamationToken
+      || kind === Kind.PlusPlusToken
+      || kind === Kind.MinusMinusToken
+      || isIdentifierNameKind(kind);
   }
 
   #parsePostfixExpression(): Expression {
@@ -1482,6 +1551,12 @@ export class Parser {
         return this.#parseTemplateExpression();
       case Kind.FunctionKeyword:
         return this.#parseFunctionExpression();
+      case Kind.AsyncKeyword:
+        if (this.#nextTokenIsFunctionKeywordOnSameLine()) {
+          return this.#parseFunctionExpression();
+        }
+        this.#advance();
+        return createIdentifier(token.text);
       case Kind.ClassKeyword:
         return this.#parseClassExpression();
       case Kind.OpenParenToken: {
@@ -1500,6 +1575,7 @@ export class Parser {
   }
 
   #parseFunctionExpression(): Expression {
+    const modifiers = this.#parseModifiers();
     this.#expect(Kind.FunctionKeyword);
     const asteriskToken = this.#consumeOptional(Kind.AsteriskToken) ? createToken(Kind.AsteriskToken) : undefined;
     const name = isIdentifierNameKind(this.#current().kind) ? this.#parseIdentifier() : undefined;
@@ -1509,7 +1585,12 @@ export class Parser {
     this.#expect(Kind.CloseParenToken);
     const type = this.#parseOptionalTypeAnnotation();
     const body = this.#parseBlock();
-    return createFunctionExpression(undefined, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body);
+    return createFunctionExpression(modifiers, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body);
+  }
+
+  #nextTokenIsFunctionKeywordOnSameLine(): boolean {
+    const next = this.#tokens[this.#index + 1];
+    return next !== undefined && next.kind === Kind.FunctionKeyword && !this.#hasLineBreakBetween(this.#current(), next);
   }
 
   #parseClassExpression(): Expression {
@@ -1602,22 +1683,24 @@ export class Parser {
         this.#consumeOptional(Kind.CommaToken);
         continue;
       }
+      const modifiers = this.#parseObjectLiteralModifiers();
+      const asteriskToken = this.#consumeOptional(Kind.AsteriskToken) ? createToken(Kind.AsteriskToken) : undefined;
       const name = this.#parsePropertyName();
       const postfixToken = this.#parseOptionalPostfixToken();
-      if (this.#current().kind === Kind.OpenParenToken || this.#current().kind === Kind.LessThanToken) {
+      if (asteriskToken !== undefined || this.#current().kind === Kind.OpenParenToken || this.#current().kind === Kind.LessThanToken) {
         const typeParameters = this.#parseOptionalTypeParameters();
         this.#expect(Kind.OpenParenToken);
         const parameters = this.#parseParameterList();
         this.#expect(Kind.CloseParenToken);
         const type = this.#parseOptionalTypeAnnotation();
         const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
-        properties.push(createMethodDeclaration(undefined, undefined, name, postfixToken, typeParameters, createNodeArray(parameters), type, body));
+        properties.push(createMethodDeclaration(modifiers, asteriskToken, name, postfixToken, typeParameters, createNodeArray(parameters), type, body));
       } else if (this.#consumeOptional(Kind.ColonToken)) {
-        properties.push(createPropertyAssignment(undefined, name, undefined, undefined as never, this.#parseExpression()));
+        properties.push(createPropertyAssignment(modifiers, name, undefined, undefined as never, this.#parseExpression()));
       } else {
         const objectAssignmentInitializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
         properties.push(createShorthandPropertyAssignment(
-          undefined,
+          modifiers,
           name,
           undefined,
           undefined as never,
@@ -1629,6 +1712,57 @@ export class Parser {
     }
     const closeBrace = this.#expect(Kind.CloseBraceToken);
     return createObjectLiteralExpression(createNodeArray(properties), this.#sourceText.slice(openBrace.pos, closeBrace.end).includes("\n"));
+  }
+
+  #parseObjectLiteralModifiers(): NodeArray<ModifierLike> | undefined {
+    if (!this.#isObjectLiteralAsyncMethodStart()) {
+      return undefined;
+    }
+    return createNodeArray([createToken(this.#advance().kind as ModifierSyntaxKind) as ModifierLike]);
+  }
+
+  #isObjectLiteralAsyncMethodStart(): boolean {
+    if (this.#current().kind !== Kind.AsyncKeyword) {
+      return false;
+    }
+    const next = this.#tokens[this.#index + 1];
+    if (next === undefined || this.#hasLineBreakBetween(this.#current(), next)) {
+      return false;
+    }
+    if (next.kind === Kind.AsteriskToken) {
+      return true;
+    }
+    const afterNameIndex = this.#propertyNameLookaheadEnd(this.#index + 1);
+    const afterNameKind = afterNameIndex === undefined ? undefined : this.#tokens[afterNameIndex]?.kind;
+    return afterNameKind === Kind.OpenParenToken || afterNameKind === Kind.LessThanToken;
+  }
+
+  #propertyNameLookaheadEnd(index: number): number | undefined {
+    const kind = this.#tokens[index]?.kind;
+    if (kind === undefined) {
+      return undefined;
+    }
+    if (isIdentifierNameKind(kind) || kind === Kind.StringLiteral || kind === Kind.NumericLiteral || kind === Kind.PrivateIdentifier) {
+      return index + 1;
+    }
+    if (kind !== Kind.OpenBracketToken) {
+      return undefined;
+    }
+    let depth = 0;
+    for (let currentIndex = index; currentIndex < this.#tokens.length; currentIndex += 1) {
+      const currentKind = this.#tokens[currentIndex]!.kind;
+      if (currentKind === Kind.OpenBracketToken) {
+        depth += 1;
+      } else if (currentKind === Kind.CloseBracketToken) {
+        depth -= 1;
+        if (depth === 0) {
+          return currentIndex + 1;
+        }
+      } else if (currentKind === Kind.EndOfFile) {
+        return undefined;
+      }
+    }
+    return undefined;
   }
 
   #isAccessorDeclarationStart(kind: Kind.GetKeyword | Kind.SetKeyword): boolean {

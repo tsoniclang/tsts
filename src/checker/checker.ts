@@ -1,6 +1,7 @@
 import {
   Kind,
   NodeFlags,
+  isAwaitExpression,
   isArrowFunction,
   isAsExpression,
   isArrayLiteralExpression,
@@ -85,6 +86,7 @@ import {
   isUnionTypeNode,
   isWhileStatement,
   isWithStatement,
+  isYieldExpression,
   type Block,
   type ArrowFunction,
   type AssertionExpression,
@@ -2233,6 +2235,16 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   if (isSpreadElement(expression)) {
     return inferExpression(expression.expression, state, environment);
   }
+  if (isAwaitExpression(expression)) {
+    inferExpression(expression.expression, state, environment);
+    return anyType;
+  }
+  if (isYieldExpression(expression)) {
+    if (expression.expression !== undefined) {
+      inferExpression(expression.expression, state, environment);
+    }
+    return anyType;
+  }
   if (isAsExpression(expression) || isTypeAssertion(expression)) {
     return inferAssertionExpression(expression, state, environment);
   }
@@ -2493,6 +2505,8 @@ function assignmentOperatorDefinitelyAssignsTarget(kind: Kind): boolean {
 function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, environment: TypeEnvironment, contextualParameterTypes: readonly CheckedType[] = []): CheckedType {
   const arrowEnvironment = new Map(environment);
   suppressImmediateThisDiagnostics(arrowEnvironment);
+  const typeParameters = arrowFunction.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
+  addTypeParametersToEnvironment(typeParameters, arrowEnvironment);
   for (let parameterIndex = 0; parameterIndex < arrowFunction.parameters.length; parameterIndex += 1) {
     const parameter = arrowFunction.parameters[parameterIndex]!;
     checkParameterPropertyModifiers(parameter, state);
@@ -2504,7 +2518,7 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
   const inferredReturnType = inferConciseBody(arrowFunction.body, state, arrowEnvironment, declaredReturnType);
   return {
     kind: "function",
-    typeParameters: [],
+    typeParameters,
     parameters: arrowFunction.parameters.map((parameter, parameterIndex) => parameter.type === undefined ? contextualParameterTypes[parameterIndex] ?? unresolvedType : typeFromTypeNode(parameter.type, arrowEnvironment, state)),
     returnType: declaredReturnType ?? inferredReturnType,
   };

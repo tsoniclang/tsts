@@ -148,7 +148,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
       ...diagnostics,
       ...unresolvedModules
         .filter(unresolved => !ambientModules.has(unresolved.moduleSpecifier))
-        .filter(unresolved => !unresolved.sideEffectOnly || options.noUncheckedSideEffectImports === true)
+        .filter(unresolved => !unresolved.sideEffectOnly || options.noUncheckedSideEffectImports !== false)
         .map(unresolved => programDiagnostic(unresolved.fileName, unresolvedModuleDiagnosticCode(unresolved, options), unresolved.moduleSpecifier)),
       ...moduleAugmentations
         .filter(augmentation => !ambientModules.has(augmentation.moduleSpecifier))
@@ -159,7 +159,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
 }
 
 function unresolvedModuleDiagnosticCode(unresolved: { readonly moduleSpecifier: string; readonly sideEffectOnly: boolean }, options: CompilerOptions): DiagnosticCode {
-  if (unresolved.sideEffectOnly && options.noUncheckedSideEffectImports === true) {
+  if (unresolved.sideEffectOnly && options.noUncheckedSideEffectImports !== false) {
     return 2882;
   }
   return (options.module === "amd" || options.module === "system") ? 2792 : 2307;
