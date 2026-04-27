@@ -57,6 +57,42 @@ describe("checker groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
   });
 
+  it("resolves standard array members through union receivers", () => {
+    const sourceFile = parseSourceFile("function f(items: string[] | number[]): void { items.splice(1, 1); items.toLocaleString(); }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
+  it("recognizes ES array and typed-array library surfaces generically", () => {
+    const sourceFile = parseSourceFile([
+      "function f(items: number[]): void {",
+      "  items.flat();",
+      "  items.flatMap(value => [value]);",
+      "  items.values();",
+      "  items.toLocaleString(\"en-US\");",
+      "}",
+      "new Int8Array(3).toLocaleString();",
+      "new Uint8Array(3).toLocaleString();",
+      "new Float64Array(3).toLocaleString();",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
+  it("binds destructuring elements from contextual object and array types", () => {
+    const sourceFile = parseSourceFile([
+      "interface Box { value: string; }",
+      "const fromObject = ({ value }: Box): string => value;",
+      "const fromArray = ([value]: string[]): string => value;",
+      "const fromImplicitAny = ({ value }): string => value;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
   it("reports parameter property modifiers outside constructor implementations", () => {
     const sourceFile = parseSourceFile("const f = (public value: string) => value;");
     const result = checkSourceFile(sourceFile);

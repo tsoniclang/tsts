@@ -216,6 +216,21 @@ const iArgumentsType: CheckedType = {
     numberIndexType: anyType,
   },
 };
+const typedArrayGlobalNames = [
+  "BigInt64Array",
+  "BigUint64Array",
+  "DataView",
+  "Float16Array",
+  "Float32Array",
+  "Float64Array",
+  "Int8Array",
+  "Int16Array",
+  "Int32Array",
+  "Uint8Array",
+  "Uint8ClampedArray",
+  "Uint16Array",
+  "Uint32Array",
+] as const;
 const invalidClassNames = new Set(["any", "bigint", "boolean", "never", "number", "object", "string", "symbol", "undefined", "unknown", "void"]);
 const ambientTypeNames = new Set([
   "Array",
@@ -253,6 +268,7 @@ const ambientTypeNames = new Set([
   "ThisType",
   "WeakMap",
   "WeakSet",
+  ...typedArrayGlobalNames,
 ]);
 
 export function checkSourceFile(sourceFile: SourceFile, options: CompilerOptions = {}): CheckResult {
@@ -462,7 +478,7 @@ function globalEnvironmentForProgram(program: Program): TypeEnvironment {
 }
 
 function standardGlobalEnvironment(): TypeEnvironment {
-  return new Map([
+  const entries: Array<readonly [string, CheckedType]> = [
     ["Array", anyType],
     ["ArrayBuffer", anyType],
     ["ArrayBufferView", anyType],
@@ -485,7 +501,11 @@ function standardGlobalEnvironment(): TypeEnvironment {
     ["WeakSet", anyType],
     ["parseInt", { kind: "function", typeParameters: [], parameters: [stringType], returnType: numberType }],
     ["undefined", undefinedType],
-  ]);
+  ];
+  for (const name of typedArrayGlobalNames) {
+    entries.push([name, anyType]);
+  }
+  return new Map(entries);
 }
 
 function collectReExports(statement: Extract<Statement, { readonly kind: Kind.ExportDeclaration }>, reexported: ModuleExportInfo | undefined, exports: Map<string, CheckedType>): void {
@@ -2548,59 +2568,9 @@ function inferPropertyAccess(expression: Expression, propertyName: string, state
     diagnoseThisPropertyAccess(receiverType, propertyName, state);
     return anyType;
   }
-  if (receiverType.kind === "classInstance") {
-    const propertyType = receiverType.members.propertyTypes.get(propertyName);
-    if (propertyType !== undefined) {
-      return receiverType.members.getAccessorProperties.has(propertyName) ? { kind: "accessorProperty", type: propertyType } : propertyType;
-    }
-    return anyType;
-  }
-  if (receiverType.kind === "object") {
-    const propertyType = receiverType.properties.get(propertyName);
-    if (propertyType !== undefined) {
-      return propertyType;
-    }
-    state.diagnostics.push(createDiagnostic(2339, propertyName, displayType(receiverType)));
-    return anyType;
-  }
-  if (receiverType.kind === "interface") {
-    const propertyType = receiverType.members.properties.get(propertyName);
-    if (propertyType !== undefined) {
-      return propertyType;
-    }
-    state.diagnostics.push(createDiagnostic(2339, propertyName, displayType(receiverType)));
-    return anyType;
-  }
-  if (receiverType.kind === "moduleNamespace") {
-    const propertyType = receiverType.exports.get(propertyName);
-    if (propertyType !== undefined) {
-      return propertyType;
-    }
-    state.diagnostics.push(createDiagnostic(2339, propertyName, displayType(receiverType)));
-    return anyType;
-  }
-  if (receiverType.kind === "namespace") {
-    const propertyType = receiverType.exports.get(propertyName);
-    if (propertyType !== undefined) {
-      return propertyType;
-    }
-    state.diagnostics.push(createDiagnostic(2339, propertyName, displayType(receiverType)));
-    return anyType;
-  }
-  if (receiverType.kind === "number" && propertyName === "toFixed") {
-    return { kind: "function", typeParameters: [], parameters: [], returnType: stringType };
-  }
-  if (receiverType.kind === "string" && propertyName === "length") {
-    return numberType;
-  }
-  if (receiverType.kind === "array" && propertyName === "length") {
-    return numberType;
-  }
-  if (receiverType.kind === "array" && arrayMethodReturnTypes.has(propertyName)) {
-    return { kind: "function", typeParameters: [], parameters: [], returnType: arrayMethodReturnTypes.get(propertyName)! };
-  }
-  if (receiverType.kind === "string" && stringMethodReturnTypes.has(propertyName)) {
-    return { kind: "function", typeParameters: [], parameters: [], returnType: stringMethodReturnTypes.get(propertyName)! };
+  const propertyType = propertyAccessType(receiverType, propertyName);
+  if (propertyType !== undefined) {
+    return propertyType;
   }
   if (receiverType.kind === "unknown" || receiverType.kind === "unresolved") {
     return anyType;
@@ -2610,6 +2580,82 @@ function inferPropertyAccess(expression: Expression, propertyName: string, state
     return anyType;
   }
   return anyType;
+}
+
+function propertyAccessType(receiverType: CheckedType, propertyName: string): CheckedType | undefined {
+  if (receiverType.kind === "valueAndType") {
+    return propertyAccessType(receiverType.value, propertyName);
+  }
+  if (receiverType.kind === "valueOnly") {
+    return propertyAccessType(receiverType.type, propertyName);
+  }
+  if (receiverType.kind === "namespaceAndType") {
+    return propertyAccessType(receiverType.namespace, propertyName) ?? propertyAccessType(receiverType.type, propertyName);
+  }
+  if (receiverType.kind === "typeAliasInstance") {
+    return propertyAccessType(receiverType.target, propertyName);
+  }
+  if (receiverType.kind === "union") {
+    const propertyTypes = receiverType.types.map(type => propertyAccessType(type, propertyName));
+    return propertyTypes.every(type => type !== undefined) ? unionType(propertyTypes) : undefined;
+  }
+  if (receiverType.kind === "classInstance") {
+    const propertyType = receiverType.members.propertyTypes.get(propertyName);
+    if (propertyType !== undefined) {
+      return receiverType.members.getAccessorProperties.has(propertyName) ? { kind: "accessorProperty", type: propertyType } : propertyType;
+    }
+    return receiverType.members.instance.has(propertyName) ? anyType : undefined;
+  }
+  if (receiverType.kind === "classConstructor") {
+    return receiverType.members.static.has(propertyName) ? anyType : undefined;
+  }
+  if (receiverType.kind === "object") {
+    return receiverType.properties.get(propertyName);
+  }
+  if (receiverType.kind === "interface") {
+    return receiverType.members.properties.get(propertyName) ?? receiverType.members.stringIndexType ?? receiverType.members.numberIndexType;
+  }
+  if (receiverType.kind === "moduleNamespace" || receiverType.kind === "namespace") {
+    return receiverType.exports.get(propertyName);
+  }
+  if (receiverType.kind === "number" && propertyName === "toFixed") {
+    return { kind: "function", typeParameters: [], parameters: [], returnType: stringType };
+  }
+  if (receiverType.kind === "string" && propertyName === "length") {
+    return numberType;
+  }
+  if (receiverType.kind === "string" && stringMethodReturnTypes.has(propertyName)) {
+    return { kind: "function", typeParameters: [], parameters: [], returnType: stringMethodReturnTypes.get(propertyName)! };
+  }
+  if (receiverType.kind === "array") {
+    return arrayPropertyAccessType(receiverType, propertyName);
+  }
+  return undefined;
+}
+
+function arrayPropertyAccessType(receiverType: Extract<CheckedType, { readonly kind: "array" }>, propertyName: string): CheckedType | undefined {
+  if (propertyName === "length") {
+    return numberType;
+  }
+  const returnType = arrayMethodReturnType(receiverType, propertyName);
+  return returnType === undefined ? undefined : { kind: "function", typeParameters: [], parameters: [], returnType };
+}
+
+function arrayMethodReturnType(receiverType: Extract<CheckedType, { readonly kind: "array" }>, propertyName: string): CheckedType | undefined {
+  const fixedReturnType = arrayMethodReturnTypes.get(propertyName);
+  if (fixedReturnType !== undefined) {
+    return fixedReturnType;
+  }
+  if (arrayElementMethodNames.has(propertyName)) {
+    return receiverType.elementType;
+  }
+  if (arraySelfMethodNames.has(propertyName)) {
+    return receiverType;
+  }
+  if (arrayArrayMethodNames.has(propertyName)) {
+    return { kind: "array", elementType: receiverType.elementType };
+  }
+  return undefined;
 }
 
 function interfaceElementAccessType(members: InterfaceMembers, argument: Expression): CheckedType {
@@ -2636,11 +2682,45 @@ function setBindingNameType(name: BindingName, type: CheckedType, environment: T
     environment.set(name.text, type);
     return;
   }
-  if (isObjectBindingPattern(name) || isArrayBindingPattern(name)) {
+  if (isObjectBindingPattern(name)) {
     for (const element of name.elements) {
-      setBindingElementType(element, type, environment);
+      setBindingElementType(element, objectBindingElementType(type, element), environment);
+    }
+    return;
+  }
+  if (isArrayBindingPattern(name)) {
+    for (const element of name.elements) {
+      setBindingElementType(element, arrayBindingElementType(type), environment);
     }
   }
+}
+
+function objectBindingElementType(type: CheckedType, element: BindingElement): CheckedType {
+  const propertyName = bindingElementPropertyName(element);
+  if (propertyName === undefined) {
+    return anyType;
+  }
+  if (type.kind === "any" || type.kind === "unknown" || type.kind === "unresolved") {
+    return anyType;
+  }
+  return propertyAccessType(type, propertyName) ?? anyType;
+}
+
+function arrayBindingElementType(type: CheckedType): CheckedType {
+  if (type.kind === "array") {
+    return type.elementType;
+  }
+  if (type.kind === "any" || type.kind === "unknown" || type.kind === "unresolved") {
+    return anyType;
+  }
+  return anyType;
+}
+
+function bindingElementPropertyName(element: BindingElement): string | undefined {
+  if (element.propertyName !== undefined) {
+    return propertyNameDiagnosticText(element.propertyName);
+  }
+  return element.name !== undefined && isIdentifier(element.name) ? element.name.text : undefined;
 }
 
 function checkStrictModeBindingName(name: BindingName, state: CheckState, ambient: boolean): void {
@@ -3503,21 +3583,39 @@ const stringMethodReturnTypes = new Map<string, CheckedType>([
 ]);
 
 const arrayMethodReturnTypes = new Map<string, CheckedType>([
-  ["concat", { kind: "array", elementType: anyType }],
+  ["at", anyType],
+  ["entries", anyType],
   ["every", booleanType],
-  ["filter", { kind: "array", elementType: anyType }],
   ["find", anyType],
+  ["findIndex", numberType],
+  ["findLast", anyType],
+  ["findLastIndex", numberType],
+  ["flat", { kind: "array", elementType: anyType }],
+  ["flatMap", { kind: "array", elementType: anyType }],
   ["forEach", voidType],
   ["includes", booleanType],
   ["indexOf", numberType],
   ["join", stringType],
+  ["keys", anyType],
+  ["lastIndexOf", numberType],
   ["map", { kind: "array", elementType: anyType }],
-  ["pop", anyType],
   ["push", numberType],
   ["reduce", anyType],
-  ["slice", { kind: "array", elementType: anyType }],
+  ["reduceRight", anyType],
   ["some", booleanType],
+  ["toLocaleString", stringType],
+  ["toReversed", { kind: "array", elementType: anyType }],
+  ["toSorted", { kind: "array", elementType: anyType }],
+  ["toSpliced", { kind: "array", elementType: anyType }],
+  ["toString", stringType],
+  ["unshift", numberType],
+  ["values", anyType],
+  ["with", { kind: "array", elementType: anyType }],
 ]);
+
+const arrayElementMethodNames = new Set(["pop", "shift"]);
+const arraySelfMethodNames = new Set(["copyWithin", "fill", "reverse", "sort"]);
+const arrayArrayMethodNames = new Set(["concat", "filter", "slice", "splice"]);
 
 function isComparisonOperator(kind: Kind): boolean {
   return kind === Kind.EqualsEqualsToken
