@@ -23,6 +23,7 @@ import {
   isEnumDeclaration,
   isExportAssignment,
   isExpressionStatement,
+  isExpressionWithTypeArguments,
   isDebuggerStatement,
   isDecorator,
   isForInStatement,
@@ -213,7 +214,7 @@ describe("TS-Go parser groundwork", () => {
   });
 
   it("produces TS-Go variable declaration lists with exact flags and typed initializers", () => {
-    const sourceFile = parseSourceFile("export const answer: number = 42;");
+    const sourceFile = parseSourceFile("export const answer: number = 42; let assigned!: string;");
     const statement = sourceFile.statements[0]!;
 
     assert.equal(isVariableStatement(statement), true);
@@ -227,6 +228,13 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isKeywordTypeNode(declaration.type!), true);
     assert.equal(declaration.type!.kind, Kind.NumberKeyword);
     assert.equal(isNumericLiteral(declaration.initializer!), true);
+
+    const definiteAssignmentStatement = sourceFile.statements[1]!;
+    assert.equal(isVariableStatement(definiteAssignmentStatement), true);
+    if (!isVariableStatement(definiteAssignmentStatement)) throw new Error("Expected definite assignment variable statement");
+    assert.equal(definiteAssignmentStatement.declarationList.flags, NodeFlags.Let);
+    assert.equal(definiteAssignmentStatement.declarationList.declarations[0]!.exclamationToken?.kind, Kind.ExclamationToken);
+    assert.equal(definiteAssignmentStatement.declarationList.declarations[0]!.type?.kind, Kind.StringKeyword);
   });
 
   it("produces function declarations with parameters, return types, and return statements", () => {
@@ -524,7 +532,7 @@ describe("TS-Go parser groundwork", () => {
   });
 
   it("produces interface declarations with heritage and method signatures", () => {
-    const result = parseSourceFileWithDiagnostics("interface Named extends Base<string> { id: number; rename(value: string): void; } interface Wrapped<T> extends Base<Array<T>> { map<U>(value: U): Array<U>; }");
+    const result = parseSourceFileWithDiagnostics("interface Named extends Base<string>, Other<number> { id: number; rename(value: string): void; } interface Wrapped<T> extends Base<Array<T>> { map<U>(value: U): Array<U>; }");
     assert.deepEqual(result.diagnostics, []);
     const sourceFile = result.sourceFile;
     const statement = sourceFile.statements[0]!;
@@ -534,7 +542,10 @@ describe("TS-Go parser groundwork", () => {
     if (!isInterfaceDeclaration(statement)) throw new Error("Expected interface");
     assert.equal(statement.name.text, "Named");
     assert.equal(statement.heritageClauses?.[0]?.token, Kind.ExtendsKeyword);
+    assert.equal(statement.heritageClauses?.[0]?.types.length, 2);
+    assert.equal(isExpressionWithTypeArguments(statement.heritageClauses![0]!.types[0]!.expression), false);
     assert.equal(statement.heritageClauses?.[0]?.types[0]?.typeArguments?.[0]?.kind, Kind.StringKeyword);
+    assert.equal(statement.heritageClauses?.[0]?.types[1]?.typeArguments?.[0]?.kind, Kind.NumberKeyword);
     assert.equal(isPropertySignatureDeclaration(statement.members[0]!), true);
     assert.equal(isMethodSignatureDeclaration(statement.members[1]!), true);
     if (!isMethodSignatureDeclaration(statement.members[1]!)) throw new Error("Expected method signature");
@@ -1021,6 +1032,39 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isTaggedTemplateExpression(propertyStatement.expression.expression), true);
     if (!isTaggedTemplateExpression(propertyStatement.expression.expression)) throw new Error("Expected tagged template receiver");
     assert.equal(propertyStatement.expression.expression.typeArguments?.length, 1);
+  });
+
+  it("parses instantiation expressions as TS-Go expression-with-type-arguments", () => {
+    const result = parseSourceFileWithDiagnostics([
+      "getValue<number> = () => 1234;",
+      "getValue<string>();",
+      "getValue<boolean>.prop;",
+    ].join("\n"));
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1477]);
+    const assignment = result.sourceFile.statements[0]!;
+    assert.equal(isExpressionStatement(assignment), true);
+    if (!isExpressionStatement(assignment) || !isBinaryExpression(assignment.expression)) {
+      throw new Error("Expected assignment expression statement");
+    }
+    assert.equal(isExpressionWithTypeArguments(assignment.expression.left), true);
+    if (!isExpressionWithTypeArguments(assignment.expression.left)) throw new Error("Expected instantiation expression assignment target");
+    assert.equal(assignment.expression.left.typeArguments?.length, 1);
+
+    const call = result.sourceFile.statements[1]!;
+    assert.equal(isExpressionStatement(call), true);
+    if (!isExpressionStatement(call) || !isCallExpression(call.expression)) {
+      throw new Error("Expected call expression statement");
+    }
+    assert.equal(call.expression.typeArguments?.length, 1);
+    assert.equal(isExpressionWithTypeArguments(call.expression.expression), false);
+
+    const property = result.sourceFile.statements[2]!;
+    assert.equal(isExpressionStatement(property), true);
+    if (!isExpressionStatement(property) || !isPropertyAccessExpression(property.expression)) {
+      throw new Error("Expected property access expression statement");
+    }
+    assert.equal(isExpressionWithTypeArguments(property.expression.expression), true);
   });
 
   it("parses TS-Go ambient namespace chains and statement forms without corrupting following syntax", () => {

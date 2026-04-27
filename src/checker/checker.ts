@@ -31,6 +31,7 @@ import {
   isExportDeclaration,
   isExportAssignment,
   isExpressionStatement,
+  isExpressionWithTypeArguments,
   isForInStatement,
   isForOfStatement,
   isForStatement,
@@ -3902,6 +3903,12 @@ function inferExpression(expression: Expression, state: CheckState, environment:
       return bound.type;
     }
     return bound;
+  }
+  if (isExpressionWithTypeArguments(expression)) {
+    for (const typeArgument of expression.typeArguments ?? []) {
+      typeFromTypeNode(typeArgument, environment, state);
+    }
+    return inferExpression(expression.expression, state, environment);
   }
   if (isParenthesizedExpression(expression)) {
     return inferExpression(expression.expression, state, environment);

@@ -1111,6 +1111,9 @@ export class Parser {
 
   #parseExpressionWithTypeArguments(): ExpressionWithTypeArguments {
     const expression = this.#parseLeftHandSideExpression();
+    if (expression.kind === Kind.ExpressionWithTypeArguments) {
+      return expression;
+    }
     const typeArguments = this.#parseOptionalTypeArguments();
     return createExpressionWithTypeArguments(expression, typeArguments);
   }
@@ -1206,9 +1209,10 @@ export class Parser {
 
   #parseVariableDeclaration(): VariableDeclaration {
     const name = this.#parseBindingName();
+    const exclamationToken = this.#consumeOptional(Kind.ExclamationToken) ? createToken(Kind.ExclamationToken) : undefined;
     const type = this.#parseOptionalTypeAnnotation();
     const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
-    return createVariableDeclaration(name, undefined, type, initializer);
+    return createVariableDeclaration(name, exclamationToken, type, initializer);
   }
 
   #parseFunctionDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
@@ -1785,10 +1789,13 @@ export class Parser {
         continue;
       }
       if (questionDotToken === undefined && this.#consumeOptional(Kind.DotToken)) {
+        if (expression.kind === Kind.ExpressionWithTypeArguments) {
+          this.#addDiagnosticAtToken(this.#tokens[this.#index - 1]!, 1477);
+        }
         expression = createPropertyAccessExpression(expression, undefined, this.#parseMemberName(), NodeFlags.None);
         continue;
       }
-      const typeArguments = this.#tryParseCallTypeArguments();
+      const typeArguments = this.#tryParseTypeArgumentsInExpression();
       if (isTemplateLiteralStart(this.#current().kind)) {
         expression = createTaggedTemplateExpression(expression, questionDotToken as never, typeArguments, this.#parseTemplateLiteral(), NodeFlags.None);
         continue;
@@ -1802,6 +1809,10 @@ export class Parser {
       if (this.#consumeOptional(Kind.OpenParenToken)) {
         expression = createCallExpression(expression, undefined, undefined, createNodeArray(this.#parseArgumentList()), NodeFlags.None);
         this.#expect(Kind.CloseParenToken);
+        continue;
+      }
+      if (typeArguments !== undefined) {
+        expression = createExpressionWithTypeArguments(expression, typeArguments);
         continue;
       }
       if (questionDotToken !== undefined && this.#current().kind === Kind.OpenBracketToken || questionDotToken === undefined && this.#consumeOptional(Kind.OpenBracketToken)) {
@@ -1823,20 +1834,38 @@ export class Parser {
     }
   }
 
-  #tryParseCallTypeArguments(): NodeArray<TypeNode> | undefined {
+  #tryParseTypeArgumentsInExpression(): NodeArray<TypeNode> | undefined {
     if (this.#current().kind !== Kind.LessThanToken) {
       return undefined;
     }
     const state = this.#beginSpeculation();
     try {
       const typeArguments = this.#parseOptionalTypeArguments();
-      if (typeArguments !== undefined && (this.#current().kind === Kind.OpenParenToken || isTemplateLiteralStart(this.#current().kind))) {
+      if (typeArguments !== undefined && this.#canFollowTypeArgumentsInExpression()) {
         return typeArguments;
       }
     } catch {
     }
     this.#rewindSpeculation(state);
     return undefined;
+  }
+
+  #canFollowTypeArgumentsInExpression(): boolean {
+    switch (this.#current().kind) {
+      case Kind.OpenParenToken:
+      case Kind.NoSubstitutionTemplateLiteral:
+      case Kind.TemplateHead:
+        return true;
+      case Kind.LessThanToken:
+      case Kind.GreaterThanToken:
+      case Kind.PlusToken:
+      case Kind.MinusToken:
+        return false;
+      default:
+        return this.#lineBreakBeforeCurrentToken()
+          || binaryPrecedence.has(this.#current().kind)
+          || !this.#isStartOfExpression(this.#current().kind);
+    }
   }
 
   #parseArgumentList(): Expression[] {
