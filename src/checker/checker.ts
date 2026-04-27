@@ -567,7 +567,7 @@ const ambientTypeNames = new Set([
 export function checkSourceFile(sourceFile: SourceFile, options: CompilerOptions = {}): CheckResult {
   const state = checkStateForSourceFile(sourceFile, options);
   checkStatements(sourceFile.statements, state, standardGlobalEnvironment(), undefined, isDeclarationFile(sourceFile));
-  return { diagnostics: shouldReportSemanticDiagnostics(state) ? state.diagnostics : [] };
+  return { diagnostics: reportableCheckDiagnostics(state) };
 }
 
 export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
@@ -591,8 +591,9 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
       resolveExternalModule: moduleSpecifier => moduleResolver(sourceFile.fileName, moduleSpecifier),
     };
     checkStatements(sourceFile.sourceFile.statements, state, cloneTypeEnvironment(globalEnvironment), undefined, isDeclarationFile(sourceFile.sourceFile));
-    if (shouldReportSemanticDiagnostics(state)) {
-      diagnostics.push(...state.diagnostics.map(diagnostic => ({
+    const checkDiagnostics = reportableCheckDiagnostics(state);
+    if (checkDiagnostics.length > 0) {
+      diagnostics.push(...checkDiagnostics.map(diagnostic => ({
         fileName: sourceFile.fileName,
         code: diagnostic.code,
         category: diagnostic.category,
@@ -605,11 +606,43 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
   return diagnostics;
 }
 
-function shouldReportSemanticDiagnostics(state: CheckState): boolean {
+function reportableCheckDiagnostics(state: CheckState): readonly CheckDiagnostic[] {
+  if (shouldReportAllCheckDiagnostics(state)) {
+    return state.diagnostics;
+  }
+  return state.diagnostics.filter(diagnostic => plainJavaScriptCheckDiagnosticCodes.has(diagnostic.code));
+}
+
+function shouldReportAllCheckDiagnostics(state: CheckState): boolean {
   return !state.isJavaScriptFile || state.options.checkJs === true;
 }
 
 const syntaxDiagnosticCodes = new Set<number>([1003, 1005, 1068, 1109, 1127, 1128, 1200, 1359, 1434, 1437, 1440, 1490]);
+const plainJavaScriptCheckDiagnosticCodes = new Set<number>([
+  1100,
+  1101,
+  1104,
+  1105,
+  1107,
+  1114,
+  1115,
+  1116,
+  1155,
+  1183,
+  1210,
+  1212,
+  1215,
+  1244,
+  1245,
+  1248,
+  1253,
+  1267,
+  1268,
+  1318,
+  1344,
+  1355,
+  18045,
+]);
 
 function checkStateForSourceFile(sourceFile: SourceFile, options: CompilerOptions): CheckState {
   return {

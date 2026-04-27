@@ -1511,6 +1511,22 @@ describe("checker groundwork", () => {
     assert.equal(unchecked.diagnostics.length, 0);
   });
 
+  it("reports plain JavaScript grammar diagnostics while suppressing unchecked type diagnostics", () => {
+    const sourceFile = parseSourceFile([
+      "break;",
+      "continue;",
+      "class A { method() { const arguments = missing; } }",
+    ].join("\n"), { fileName: "foo.js" });
+    const result = checkSourceFile(sourceFile, { allowJs: true, checkJs: false, strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1105, 1104, 1210]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "A 'break' statement can only be used within an enclosing iteration or switch statement.",
+      "A 'continue' statement can only be used within an enclosing iteration statement.",
+      "Code contained in a class is evaluated in JavaScript's strict mode which does not allow this use of 'arguments'. For more information, see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode.",
+    ]);
+  });
+
   it("suppresses unchecked JavaScript semantic diagnostics while keeping program symbols", () => {
     const host: CompilerHost = {
       readFile: fileName => {
