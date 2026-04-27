@@ -13,6 +13,7 @@ interface CompilerCase {
   readonly name: string;
   readonly path: string;
   readonly files: readonly CaseFile[];
+  readonly compilerOptions: ts.CompilerOptions;
 }
 
 interface ComparableDiagnostic {
@@ -119,6 +120,7 @@ async function discoverCases(options: Options): Promise<readonly CompilerCase[]>
 
 function parseCompilerCase(name: string, path: string, text: string): CompilerCase {
   const fileSections: CaseFile[] = [];
+  const compilerOptions = parseCompilerOptions(text);
   let currentFileName: string | undefined;
   let currentText: string[] = [];
 
@@ -145,6 +147,7 @@ function parseCompilerCase(name: string, path: string, text: string): CompilerCa
     return {
       name,
       path,
+      compilerOptions,
       files: fileSections.filter(file => file.fileName.endsWith(".ts") || file.fileName.endsWith(".tsx")),
     };
   }
@@ -152,6 +155,7 @@ function parseCompilerCase(name: string, path: string, text: string): CompilerCa
   return {
     name,
     path,
+    compilerOptions,
     files: [{ fileName: name, text }],
   };
 }
@@ -159,7 +163,8 @@ function parseCompilerCase(name: string, path: string, text: string): CompilerCa
 function upstreamDiagnostics(testCase: CompilerCase): readonly ComparableDiagnostic[] {
   const fileMap = new Map(testCase.files.map(file => [normalizeFileName(file.fileName), file.text]));
   const rootNames = [...fileMap.keys()];
-  const host = ts.createCompilerHost(defaultCompilerOptions);
+  const compilerOptions = { ...defaultCompilerOptions, ...testCase.compilerOptions };
+  const host = ts.createCompilerHost(compilerOptions);
   const defaultFileExists = host.fileExists.bind(host);
   const defaultReadFile = host.readFile.bind(host);
   const defaultGetSourceFile = host.getSourceFile.bind(host);
@@ -170,7 +175,7 @@ function upstreamDiagnostics(testCase: CompilerCase): readonly ComparableDiagnos
     return text === undefined ? defaultGetSourceFile(name, languageVersion) : ts.createSourceFile(name, text, languageVersion, true);
   };
 
-  const program = ts.createProgram(rootNames, defaultCompilerOptions, host);
+  const program = ts.createProgram(rootNames, compilerOptions, host);
   return ts.getPreEmitDiagnostics(program)
     .filter(diagnostic => diagnostic.file === undefined || fileMap.has(normalizeFileName(diagnostic.file.fileName)))
     .map(diagnostic => ({
@@ -179,6 +184,112 @@ function upstreamDiagnostics(testCase: CompilerCase): readonly ComparableDiagnos
       message: ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
     }))
     .sort(compareDiagnostics);
+}
+
+function parseCompilerOptions(text: string): ts.CompilerOptions {
+  const options: ts.CompilerOptions = {};
+  for (const line of text.split(/\r?\n/)) {
+    const match = line.match(/^\s*\/\/\s*@([A-Za-z0-9_]+)(?::\s*(.*?))?\s*$/);
+    if (match === null) {
+      continue;
+    }
+    const name = match[1]!.toLowerCase();
+    const value = match[2]?.trim() ?? "true";
+    switch (name) {
+      case "target":
+        options.target = parseScriptTarget(value);
+        break;
+      case "module":
+        options.module = parseModuleKind(value);
+        break;
+      case "strict":
+        options.strict = parseBoolean(value);
+        break;
+      case "noimplicitany":
+        options.noImplicitAny = parseBoolean(value);
+        break;
+      case "strictnullchecks":
+        options.strictNullChecks = parseBoolean(value);
+        break;
+      case "exactoptionalpropertytypes":
+        options.exactOptionalPropertyTypes = parseBoolean(value);
+        break;
+      case "nolib":
+        options.noLib = parseBoolean(value);
+        break;
+      case "allowjs":
+        options.allowJs = parseBoolean(value);
+        break;
+      case "checkjs":
+        options.checkJs = parseBoolean(value);
+        break;
+      case "jsx":
+        options.jsx = parseJsxEmit(value);
+        break;
+      default:
+        break;
+    }
+  }
+  return options;
+}
+
+function parseBoolean(value: string): boolean {
+  return value.toLowerCase() !== "false";
+}
+
+function parseScriptTarget(value: string): ts.ScriptTarget {
+  const normalized = value.toLowerCase();
+  const targets: Record<string, ts.ScriptTarget> = {
+    es3: ts.ScriptTarget.ES3,
+    es5: ts.ScriptTarget.ES5,
+    es6: ts.ScriptTarget.ES2015,
+    es2015: ts.ScriptTarget.ES2015,
+    es2016: ts.ScriptTarget.ES2016,
+    es2017: ts.ScriptTarget.ES2017,
+    es2018: ts.ScriptTarget.ES2018,
+    es2019: ts.ScriptTarget.ES2019,
+    es2020: ts.ScriptTarget.ES2020,
+    es2021: ts.ScriptTarget.ES2021,
+    es2022: ts.ScriptTarget.ES2022,
+    es2023: ts.ScriptTarget.ES2023,
+    es2024: ts.ScriptTarget.ES2024,
+    esnext: ts.ScriptTarget.ESNext,
+  };
+  return targets[normalized] ?? defaultCompilerOptions.target!;
+}
+
+function parseModuleKind(value: string): ts.ModuleKind {
+  const normalized = value.toLowerCase();
+  const modules: Record<string, ts.ModuleKind> = {
+    none: ts.ModuleKind.None,
+    commonjs: ts.ModuleKind.CommonJS,
+    amd: ts.ModuleKind.AMD,
+    system: ts.ModuleKind.System,
+    umd: ts.ModuleKind.UMD,
+    es6: ts.ModuleKind.ES2015,
+    es2015: ts.ModuleKind.ES2015,
+    es2020: ts.ModuleKind.ES2020,
+    es2022: ts.ModuleKind.ES2022,
+    esnext: ts.ModuleKind.ESNext,
+    node16: ts.ModuleKind.Node16,
+    node18: ts.ModuleKind.Node18,
+    nodenext: ts.ModuleKind.NodeNext,
+    preserve: ts.ModuleKind.Preserve,
+  };
+  return modules[normalized] ?? defaultCompilerOptions.module!;
+}
+
+function parseJsxEmit(value: string): ts.JsxEmit {
+  const normalized = value.toLowerCase();
+  const jsx: Record<string, ts.JsxEmit> = {
+    none: ts.JsxEmit.None,
+    preserve: ts.JsxEmit.Preserve,
+    react: ts.JsxEmit.React,
+    reactnative: ts.JsxEmit.ReactNative,
+    reactjsx: ts.JsxEmit.ReactJSX,
+    reactjsxdev: ts.JsxEmit.ReactJSXDev,
+  };
+  return jsx[normalized] ?? ts.JsxEmit.None;
 }
 
 function tstsDiagnostics(testCase: CompilerCase): readonly ComparableDiagnostic[] {
