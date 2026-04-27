@@ -886,6 +886,26 @@ describe("TS-Go parser groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1440, 1068, 1005, 1005, 1128]);
   });
 
+  it("reports legacy octal literals and invalid string-like escapes before semantic checking", () => {
+    const result = parseSourceFileWithDiagnostics([
+      "00;",
+      "08;",
+      "\"\\5\";",
+      "\"\\8\";",
+      "`0${05}`;",
+      "`${0}\\55`;",
+    ].join("\n"));
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => [diagnostic.code, diagnostic.message]), [
+      [1121, "Octal literals are not allowed. Use the syntax '0o0'."],
+      [1489, "Decimals with leading zeros are not allowed."],
+      [1487, "Octal escape sequences are not allowed. Use the syntax '\\x05'."],
+      [1488, "Escape sequence '\\8' is not allowed."],
+      [1121, "Octal literals are not allowed. Use the syntax '0o5'."],
+      [1487, "Octal escape sequences are not allowed. Use the syntax '\\x2d'."],
+    ]);
+  });
+
   it("treats a line break as an automatic statement terminator", () => {
     const result = parseSourceFileWithDiagnostics([
       "\"use strict\"",

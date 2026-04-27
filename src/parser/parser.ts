@@ -312,6 +312,7 @@ export class Parser {
     this.#fileName = options.fileName ?? "input.ts";
     this.#tokens = scanAll(sourceText);
     this.#jsDocByTokenStart = collectJSDocByTokenStart(sourceText, this.#fileName);
+    this.#validateLexicalDiagnostics();
     if (sourceText.includes("\uFFFD")) {
       this.#addDiagnosticAt(0, 0, 1490);
     }
@@ -2723,6 +2724,57 @@ export class Parser {
     this.#addDiagnosticAtToken(token, 1128);
   }
 
+  #validateLexicalDiagnostics(): void {
+    for (const token of this.#tokens) {
+      if (token.kind === Kind.NumericLiteral || token.kind === Kind.BigIntLiteral) {
+        this.#validateNumericLiteralToken(token);
+        continue;
+      }
+      if (
+        token.kind === Kind.StringLiteral
+        || token.kind === Kind.NoSubstitutionTemplateLiteral
+        || token.kind === Kind.TemplateHead
+        || token.kind === Kind.TemplateMiddle
+        || token.kind === Kind.TemplateTail
+      ) {
+        this.#validateStringLikeEscapeSequences(token);
+      }
+    }
+  }
+
+  #validateNumericLiteralToken(token: ScannedToken): void {
+    const diagnostic = legacyOctalNumericLiteralDiagnostic(token.text);
+    if (diagnostic === undefined) {
+      return;
+    }
+    if (diagnostic.code === 1121) {
+      this.#addDiagnosticAt(token.pos, diagnostic.length, diagnostic.code, diagnostic.replacement);
+      return;
+    }
+    this.#addDiagnosticAt(token.pos, diagnostic.length, diagnostic.code);
+  }
+
+  #validateStringLikeEscapeSequences(token: ScannedToken): void {
+    const bounds = stringLikeEscapeScanBounds(token);
+    if (bounds === undefined) {
+      return;
+    }
+    let index = bounds.start;
+    while (index < bounds.end) {
+      if (token.text[index] !== "\\") {
+        index += 1;
+        continue;
+      }
+      const diagnostic = invalidEscapeSequenceDiagnostic(token.text, index, bounds.end);
+      if (diagnostic !== undefined) {
+        this.#addDiagnosticAt(token.pos + index, diagnostic.length, diagnostic.code, diagnostic.replacement);
+        index += diagnostic.length;
+        continue;
+      }
+      index += 2;
+    }
+  }
+
   #addDiagnosticAtToken(token: ScannedToken | { readonly pos?: number; readonly end?: number }, code: DiagnosticCode, ...args: readonly string[]): void {
     const start = token.pos ?? 0;
     const end = token.end ?? start;
@@ -2737,6 +2789,113 @@ export class Parser {
     }
     this.#diagnostics.push(message);
   }
+}
+
+type LegacyOctalNumericDiagnostic = LegacyOctalLiteralDiagnostic | LeadingZeroDecimalDiagnostic;
+
+interface LegacyOctalLiteralDiagnostic {
+  readonly code: 1121;
+  readonly length: number;
+  readonly replacement: string;
+}
+
+interface LeadingZeroDecimalDiagnostic {
+  readonly code: 1489;
+  readonly length: number;
+}
+
+interface InvalidEscapeDiagnostic {
+  readonly code: 1487 | 1488;
+  readonly length: number;
+  readonly replacement: string;
+}
+
+interface EscapeScanBounds {
+  readonly start: number;
+  readonly end: number;
+}
+
+function legacyOctalNumericLiteralDiagnostic(text: string): LegacyOctalNumericDiagnostic | undefined {
+  const literalText = text.endsWith("n") ? text.slice(0, -1) : text;
+  if (literalText.length < 2 || literalText[0] !== "0") {
+    return undefined;
+  }
+  const secondCharacter = literalText[1]!;
+  if (!isAsciiDigit(secondCharacter)) {
+    return undefined;
+  }
+
+  const leadingDigits = literalText.match(/^0[0-9]*/)?.[0];
+  if (leadingDigits === undefined || leadingDigits.length < 2) {
+    return undefined;
+  }
+  if (/[89]/.test(leadingDigits)) {
+    return { code: 1489, length: leadingDigits.length };
+  }
+
+  const octalDigits = leadingDigits.replace(/^0+/, "") || "0";
+  return { code: 1121, length: leadingDigits.length, replacement: `0o${octalDigits}` };
+}
+
+function stringLikeEscapeScanBounds(token: ScannedToken): EscapeScanBounds | undefined {
+  switch (token.kind) {
+    case Kind.StringLiteral: {
+      if (token.text.length < 2) {
+        return undefined;
+      }
+      const quote = token.text[0]!;
+      const hasClosingQuote = (quote === "\"" || quote === "'") && token.text.endsWith(quote);
+      return { start: 1, end: hasClosingQuote ? token.text.length - 1 : token.text.length };
+    }
+    case Kind.NoSubstitutionTemplateLiteral:
+      return { start: 1, end: token.text.endsWith("`") ? token.text.length - 1 : token.text.length };
+    case Kind.TemplateHead:
+      return { start: 1, end: token.text.endsWith("${") ? token.text.length - 2 : token.text.length };
+    case Kind.TemplateMiddle:
+      return { start: token.text.startsWith("}") ? 1 : 0, end: token.text.endsWith("${") ? token.text.length - 2 : token.text.length };
+    case Kind.TemplateTail:
+      return { start: token.text.startsWith("}") ? 1 : 0, end: token.text.endsWith("`") ? token.text.length - 1 : token.text.length };
+    default:
+      return undefined;
+  }
+}
+
+function invalidEscapeSequenceDiagnostic(text: string, backslashIndex: number, end: number): InvalidEscapeDiagnostic | undefined {
+  const escapedCharacter = text[backslashIndex + 1];
+  if (escapedCharacter === undefined || backslashIndex + 1 >= end) {
+    return undefined;
+  }
+  if (escapedCharacter === "8" || escapedCharacter === "9") {
+    return { code: 1488, length: 2, replacement: `\\${escapedCharacter}` };
+  }
+  if (!isOctalDigit(escapedCharacter)) {
+    return undefined;
+  }
+  if (escapedCharacter === "0" && !isAsciiDigit(text[backslashIndex + 2] ?? "")) {
+    return undefined;
+  }
+
+  const octalDigitLimit = escapedCharacter >= "4" ? 2 : 3;
+  let digits = escapedCharacter;
+  while (
+    digits.length < octalDigitLimit
+    && backslashIndex + 1 + digits.length < end
+    && isOctalDigit(text[backslashIndex + 1 + digits.length]!)
+  ) {
+    digits += text[backslashIndex + 1 + digits.length]!;
+  }
+
+  const value = Number.parseInt(digits, 8);
+  const replacement = `\\x${value.toString(16).padStart(2, "0")}`;
+  return { code: 1487, length: 1 + digits.length, replacement };
+}
+
+function isAsciiDigit(character: string): boolean {
+  return character >= "0" && character <= "9";
+}
+
+function isOctalDigit(character: string): boolean {
+  return character >= "0" && character <= "7";
 }
 
 function unquote(text: string): string {
