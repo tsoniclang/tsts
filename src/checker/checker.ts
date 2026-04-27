@@ -586,7 +586,7 @@ export function checkSourceFile(sourceFile: SourceFile, options: CompilerOptions
 
 export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
   const diagnostics: ProgramDiagnostic[] = [...program.diagnostics];
-  if (diagnostics.some(diagnostic => diagnostic.code === undefined || !syntaxDiagnosticCodes.has(diagnostic.code))) {
+  if (diagnostics.some(diagnostic => diagnostic.code === undefined || !nonBlockingProgramDiagnosticCodes.has(diagnostic.code))) {
     return diagnostics;
   }
   const globalEnvironment = globalEnvironmentForProgram(program);
@@ -631,7 +631,7 @@ function shouldReportAllCheckDiagnostics(state: CheckState): boolean {
   return !state.isJavaScriptFile || state.options.checkJs === true;
 }
 
-const syntaxDiagnosticCodes = new Set<number>([1003, 1005, 1011, 1068, 1109, 1127, 1128, 1200, 1359, 1434, 1437, 1440, 1490]);
+const nonBlockingProgramDiagnosticCodes = new Set<number>([1003, 1005, 1011, 1068, 1109, 1127, 1128, 1200, 1359, 1434, 1437, 1440, 1490, 6142]);
 const plainJavaScriptCheckDiagnosticCodes = new Set<number>([
   1100,
   1101,
@@ -4308,28 +4308,42 @@ function inferExpression(expression: Expression, state: CheckState, environment:
 }
 
 function inferJsxElement(expression: JsxElement, state: CheckState, environment: TypeEnvironment): CheckedType {
-  checkJsxOpeningLike(expression.openingElement.tagName, expression.openingElement.attributes.properties, state, environment);
+  const jsxEnabled = checkJsxUsage(state);
+  if (jsxEnabled) {
+    checkJsxOpeningLike(expression.openingElement.tagName, expression.openingElement.attributes.properties, state, environment);
+  }
   for (const child of expression.children) {
-    checkJsxChild(child, state, environment);
+    checkJsxChild(child, jsxEnabled, state, environment);
   }
   return anyType;
 }
 
 function inferJsxSelfClosingElement(expression: JsxSelfClosingElement, state: CheckState, environment: TypeEnvironment): CheckedType {
-  checkJsxOpeningLike(expression.tagName, expression.attributes.properties, state, environment);
-  return anyType;
-}
-
-function inferJsxFragment(expression: JsxFragment, state: CheckState, environment: TypeEnvironment): CheckedType {
-  for (const child of expression.children) {
-    checkJsxChild(child, state, environment);
+  if (checkJsxUsage(state)) {
+    checkJsxOpeningLike(expression.tagName, expression.attributes.properties, state, environment);
   }
   return anyType;
 }
 
-function checkJsxChild(child: JsxChild, state: CheckState, environment: TypeEnvironment): void {
+function inferJsxFragment(expression: JsxFragment, state: CheckState, environment: TypeEnvironment): CheckedType {
+  const jsxEnabled = checkJsxUsage(state);
+  for (const child of expression.children) {
+    checkJsxChild(child, jsxEnabled, state, environment);
+  }
+  return anyType;
+}
+
+function checkJsxUsage(state: CheckState): boolean {
+  if (state.options.jsx !== undefined) {
+    return true;
+  }
+  state.diagnostics.push(createDiagnostic(17004));
+  return false;
+}
+
+function checkJsxChild(child: JsxChild, jsxEnabled: boolean, state: CheckState, environment: TypeEnvironment): void {
   if (isJsxExpression(child)) {
-    if (child.expression !== undefined) {
+    if (jsxEnabled && child.expression !== undefined) {
       inferExpression(child.expression, state, environment);
     }
     return;
@@ -4348,9 +4362,6 @@ function checkJsxChild(child: JsxChild, state: CheckState, environment: TypeEnvi
 }
 
 function checkJsxOpeningLike(tagName: JsxTagNameExpression, attributes: readonly JsxAttributeLike[], state: CheckState, environment: TypeEnvironment): void {
-  if (state.options.jsx === undefined) {
-    state.diagnostics.push(createDiagnostic(17004));
-  }
   checkJsxTagName(tagName, state, environment);
   for (const attribute of attributes) {
     if (attribute.kind === Kind.JsxSpreadAttribute) {

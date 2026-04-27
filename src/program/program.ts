@@ -133,6 +133,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
         unresolvedModules.push({ fileName: rootName, moduleSpecifier: moduleReference.moduleSpecifier, sideEffectOnly: moduleReference.sideEffectOnly });
         continue;
       }
+      diagnostics.push(...moduleResolutionDiagnostics(rootName, moduleReference.moduleSpecifier, resolved, options));
       if (resolved.fileName !== undefined && !seen.has(canonicalFileName(resolved.fileName, host))) {
         resolvedModules.push({ specifier: moduleReference.moduleSpecifier, fileName: resolved.fileName });
         pending.push(resolved.fileName);
@@ -322,24 +323,34 @@ interface ModuleResolution {
 }
 
 function resolveModuleName(moduleSpecifier: string, containingFileName: string, options: CompilerOptions, host: CompilerHost, cache: Map<string, string | undefined>): ModuleResolution {
+  if (isPathLikeModuleName(moduleSpecifier)) {
+    const base = isAbsoluteModuleName(moduleSpecifier) ? normalize(moduleSpecifier) : normalize(join(dirname(containingFileName), moduleSpecifier));
+    const candidates = moduleResolutionCandidates(base, options);
+    const fileName = candidates.find(candidate => readFileCached(candidate, host, cache) !== undefined);
+    return fileName === undefined ? { found: false } : { found: true, fileName };
+  }
   if (!isRelativeModuleName(moduleSpecifier)) {
     const baseUrl = moduleResolutionBaseUrl(options, host);
     if (baseUrl !== undefined) {
-      const resolvedBaseUrlFile = moduleResolutionCandidates(normalize(join(baseUrl, moduleSpecifier))).find(candidate => readFileCached(candidate, host, cache) !== undefined);
+      const resolvedBaseUrlFile = moduleResolutionCandidates(normalize(join(baseUrl, moduleSpecifier)), options).find(candidate => readFileCached(candidate, host, cache) !== undefined);
       if (resolvedBaseUrlFile !== undefined) {
         return { found: true, fileName: resolvedBaseUrlFile };
       }
     }
-    const resolvedPackageFile = packageResolutionCandidates(moduleSpecifier, containingFileName, host, cache).find(candidate => readFileCached(candidate, host, cache) !== undefined);
+    const resolvedPackageFile = packageResolutionCandidates(moduleSpecifier, containingFileName, options, host, cache).find(candidate => readFileCached(candidate, host, cache) !== undefined);
     if (resolvedPackageFile !== undefined) {
       return { found: true, fileName: resolvedPackageFile };
     }
     return { found: false };
   }
-  const base = normalize(join(dirname(containingFileName), moduleSpecifier));
-  const candidates = moduleResolutionCandidates(base);
-  const fileName = candidates.find(candidate => readFileCached(candidate, host, cache) !== undefined);
-  return fileName === undefined ? { found: false } : { found: true, fileName };
+  return { found: false };
+}
+
+function moduleResolutionDiagnostics(containingFileName: string, moduleSpecifier: string, resolution: ModuleResolution, options: CompilerOptions): readonly ProgramDiagnostic[] {
+  if (resolution.fileName === undefined || options.jsx !== undefined || !isJsxSourceFileName(resolution.fileName)) {
+    return [];
+  }
+  return [programDiagnostic(containingFileName, 6142, moduleSpecifier, resolution.fileName)];
 }
 
 function moduleResolutionBaseUrl(options: CompilerOptions, host: CompilerHost): string | undefined {
@@ -349,7 +360,7 @@ function moduleResolutionBaseUrl(options: CompilerOptions, host: CompilerHost): 
   return normalize(isAbsolute(options.baseUrl) ? options.baseUrl : join(host.getCurrentDirectory?.() ?? ".", options.baseUrl));
 }
 
-function moduleResolutionCandidates(base: string): readonly string[] {
+function moduleResolutionCandidates(base: string, options: CompilerOptions): readonly string[] {
   const extension = extname(base);
   if (extension === ".js" || extension === ".jsx" || extension === ".mjs" || extension === ".cjs") {
     const withoutJsExtension = base.slice(0, -extension.length);
@@ -363,6 +374,22 @@ function moduleResolutionCandidates(base: string): readonly string[] {
   if (extension !== "") {
     return [base];
   }
+  const jsCandidates = options.allowJs === true
+    ? [
+        `${base}.js`,
+        `${base}.jsx`,
+        `${base}.mjs`,
+        `${base}.cjs`,
+      ]
+    : [];
+  const indexJsCandidates = options.allowJs === true
+    ? [
+        join(base, "index.js"),
+        join(base, "index.jsx"),
+        join(base, "index.mjs"),
+        join(base, "index.cjs"),
+      ]
+    : [];
   return [
     `${base}.ts`,
     `${base}.tsx`,
@@ -371,6 +398,7 @@ function moduleResolutionCandidates(base: string): readonly string[] {
     `${base}.d.ts`,
     `${base}.d.mts`,
     `${base}.d.cts`,
+    ...jsCandidates,
     join(base, "index.ts"),
     join(base, "index.tsx"),
     join(base, "index.mts"),
@@ -378,14 +406,15 @@ function moduleResolutionCandidates(base: string): readonly string[] {
     join(base, "index.d.ts"),
     join(base, "index.d.mts"),
     join(base, "index.d.cts"),
+    ...indexJsCandidates,
   ];
 }
 
-function packageResolutionCandidates(moduleSpecifier: string, containingFileName: string, host: CompilerHost, cache: Map<string, string | undefined>): readonly string[] {
+function packageResolutionCandidates(moduleSpecifier: string, containingFileName: string, options: CompilerOptions, host: CompilerHost, cache: Map<string, string | undefined>): readonly string[] {
   return nodeModulesSearchDirectories(dirname(containingFileName)).flatMap(nodeModulesDirectory => {
     const base = join(nodeModulesDirectory, moduleSpecifier);
     return [
-      ...packageJsonResolutionCandidates(base, host, cache),
+      ...packageJsonResolutionCandidates(base, options, host, cache),
       `${base}.ts`,
       `${base}.tsx`,
       `${base}.mts`,
@@ -419,7 +448,7 @@ function nodeModulesSearchDirectories(startDirectory: string): readonly string[]
   return [...new Set(directories)];
 }
 
-function packageJsonResolutionCandidates(packageDirectory: string, host: CompilerHost, cache: Map<string, string | undefined>): readonly string[] {
+function packageJsonResolutionCandidates(packageDirectory: string, options: CompilerOptions, host: CompilerHost, cache: Map<string, string | undefined>): readonly string[] {
   const packageJsonText = readFileCached(join(packageDirectory, "package.json"), host, cache);
   if (packageJsonText === undefined) {
     return [];
@@ -435,18 +464,18 @@ function packageJsonResolutionCandidates(packageDirectory: string, host: Compile
     return [];
   }
 
-  const candidates: string[] = [...packageExportsResolutionCandidates(packageDirectory, packageMetadata.exports)];
+  const candidates: string[] = [...packageExportsResolutionCandidates(packageDirectory, packageMetadata.exports, options)];
   for (const fieldName of ["types", "typings", "main"] as const) {
     const fieldValue = packageMetadata[fieldName];
     if (typeof fieldValue === "string") {
-      candidates.push(...moduleResolutionCandidates(packageFieldTarget(packageDirectory, fieldValue)));
+      candidates.push(...moduleResolutionCandidates(packageFieldTarget(packageDirectory, fieldValue), options));
     }
   }
   return candidates;
 }
 
-function packageExportsResolutionCandidates(packageDirectory: string, exportsField: unknown): readonly string[] {
-  return packageExportsTargets(exportsField).flatMap(target => moduleResolutionCandidates(packageFieldTarget(packageDirectory, target)));
+function packageExportsResolutionCandidates(packageDirectory: string, exportsField: unknown, options: CompilerOptions): readonly string[] {
+  return packageExportsTargets(exportsField).flatMap(target => moduleResolutionCandidates(packageFieldTarget(packageDirectory, target), options));
 }
 
 function packageExportsTargets(exportsField: unknown): readonly string[] {
@@ -483,6 +512,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isRelativeModuleName(moduleSpecifier: string): boolean {
   return moduleSpecifier.startsWith("./") || moduleSpecifier.startsWith("../") || moduleSpecifier.startsWith(".\\") || moduleSpecifier.startsWith("..\\");
+}
+
+function isAbsoluteModuleName(moduleSpecifier: string): boolean {
+  return isAbsolute(moduleSpecifier) || /^[A-Za-z]:[\\/]/u.test(moduleSpecifier);
+}
+
+function isPathLikeModuleName(moduleSpecifier: string): boolean {
+  return isRelativeModuleName(moduleSpecifier) || isAbsoluteModuleName(moduleSpecifier);
+}
+
+function isJsxSourceFileName(fileName: string): boolean {
+  return fileName.endsWith(".tsx") || fileName.endsWith(".jsx");
 }
 
 function readFileCached(fileName: string, host: CompilerHost, cache: Map<string, string | undefined>): string | undefined {

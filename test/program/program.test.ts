@@ -118,6 +118,28 @@ describe("program groundwork", () => {
     assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["src/index.ts", "src/dep.ts"]);
   });
 
+  it("resolves absolute JS imports with allowJs and reports JSX option diagnostics without blocking checks", () => {
+    const files = new Map<string, string>([
+      ["/foo.jsx", "const Foo = () => (<div>foo</div>); export default Foo;"],
+      ["/bar.jsx", "import Foo from \"/foo\"; const a = <Foo />;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["/bar.jsx"], { allowJs: true, checkJs: true }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["/bar.jsx", "/foo.jsx"]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [6142, 17004, 17004]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Module '/foo' was resolved to '/foo.jsx', but '--jsx' is not set.",
+      "Cannot use JSX unless the '--jsx' flag is provided.",
+      "Cannot use JSX unless the '--jsx' flag is provided.",
+    ]);
+  });
+
   it("diagnoses unresolved relative imports", () => {
     const host: CompilerHost = {
       readFile: fileName => fileName === "src/index.ts" ? "import { missing } from \"./missing\";" : undefined,

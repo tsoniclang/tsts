@@ -29,16 +29,25 @@ describe("checker groundwork", () => {
 
   it("checks JSX tag names, intrinsic fallback, and embedded expressions", () => {
     const sourceFile = parseSourceFile("const x = 1; const view = <div>{missing}<Component /></div>;", { fileName: "view.tsx" });
+    const result = checkSourceFile(sourceFile, { jsx: "react" });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.",
+      "Cannot find name 'missing'.",
+      "Cannot find name 'Component'.",
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [7026, 2304, 2304]);
+  });
+
+  it("reports missing JSX mode without cascading JSX semantic diagnostics", () => {
+    const sourceFile = parseSourceFile("const view = <div>{missing}<Component /></div>;", { fileName: "view.tsx" });
     const result = checkSourceFile(sourceFile);
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "Cannot use JSX unless the '--jsx' flag is provided.",
-      "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.",
-      "Cannot find name 'missing'.",
       "Cannot use JSX unless the '--jsx' flag is provided.",
-      "Cannot find name 'Component'.",
     ]);
-    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [17004, 7026, 2304, 17004, 2304]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [17004, 17004]);
   });
 
   it("reports missing this-property access with deterministic class-member suggestions", () => {
