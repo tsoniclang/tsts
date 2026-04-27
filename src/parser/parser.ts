@@ -56,6 +56,7 @@ import {
   createImportDeclaration,
   createImportEqualsDeclaration,
   createImportSpecifier,
+  createImportTypeNode,
   createIntersectionTypeNode,
   createInterfaceDeclaration,
   createJSDoc,
@@ -236,6 +237,25 @@ const binaryPrecedence = new Map<Kind, number>([
   [Kind.AmpersandAmpersandEqualsToken, 3],
   [Kind.BarBarEqualsToken, 3],
   [Kind.QuestionQuestionEqualsToken, 3],
+]);
+
+const assignmentOperatorKinds = new Set<Kind>([
+  Kind.EqualsToken,
+  Kind.PlusEqualsToken,
+  Kind.MinusEqualsToken,
+  Kind.AsteriskEqualsToken,
+  Kind.AsteriskAsteriskEqualsToken,
+  Kind.SlashEqualsToken,
+  Kind.PercentEqualsToken,
+  Kind.AmpersandEqualsToken,
+  Kind.BarEqualsToken,
+  Kind.CaretEqualsToken,
+  Kind.LessThanLessThanEqualsToken,
+  Kind.GreaterThanGreaterThanEqualsToken,
+  Kind.GreaterThanGreaterThanGreaterThanEqualsToken,
+  Kind.AmpersandAmpersandEqualsToken,
+  Kind.BarBarEqualsToken,
+  Kind.QuestionQuestionEqualsToken,
 ]);
 
 const modifierKinds = new Set<Kind>([
@@ -585,6 +605,14 @@ export class Parser {
     if (options.stopOnStartOfClassStaticBlock === true && this.#current().kind === Kind.StaticKeyword && nextKind === Kind.OpenBraceToken) {
       return false;
     }
+    if ((this.#current().kind === Kind.AbstractKeyword
+      || this.#current().kind === Kind.PrivateKeyword
+      || this.#current().kind === Kind.ProtectedKeyword
+      || this.#current().kind === Kind.PublicKeyword)
+      && this.#tokens[this.#index + 1] !== undefined
+      && this.#hasLineBreakBetween(this.#current(), this.#tokens[this.#index + 1]!)) {
+      return false;
+    }
     return nextKind !== Kind.QuestionToken
       && nextKind !== Kind.ColonToken
       && nextKind !== Kind.OpenParenToken
@@ -620,7 +648,10 @@ export class Parser {
       names.push(createIdentifier("global"));
     } else {
       this.#advance();
-      if (this.#current().kind === Kind.StringLiteral) {
+      if (this.#current().kind === Kind.OpenBraceToken) {
+        this.#addDiagnosticAtToken(this.#current(), 1437);
+        names.push(createIdentifier(""));
+      } else if (this.#current().kind === Kind.StringLiteral) {
         names.push(this.#parseStringLiteralExpression() as ModuleName);
       } else {
         names.push(this.#parseIdentifier());
@@ -652,7 +683,7 @@ export class Parser {
     if (current.kind === Kind.GlobalKeyword) {
       return next.kind === Kind.OpenBraceToken || next.kind === Kind.ExportKeyword || isIdentifierNameKind(next.kind);
     }
-    return next.kind === Kind.StringLiteral || isIdentifierNameKind(next.kind);
+    return next.kind === Kind.OpenBraceToken || next.kind === Kind.StringLiteral || isIdentifierNameKind(next.kind);
   }
 
   #parseInterfaceDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
@@ -983,7 +1014,7 @@ export class Parser {
         break;
       }
     } while (this.#current().kind !== Kind.GreaterThanToken);
-    this.#expectGreaterThan();
+    this.#parseExpectedGreaterThan();
     return createNodeArray(typeParameters);
   }
 
@@ -1033,6 +1064,9 @@ export class Parser {
     if (jsDoc !== undefined) {
       this.#attachJSDocToFirstDeclaration(declarationList.declarations, jsDoc);
     }
+    if (this.#recoverVariableStatementTerminator()) {
+      return createVariableStatement(modifiers, declarationList);
+    }
     this.#consumeOptional(Kind.SemicolonToken);
     return createVariableStatement(modifiers, declarationList);
   }
@@ -1040,10 +1074,40 @@ export class Parser {
   #parseVariableDeclarationList(): ReturnType<typeof createVariableDeclarationList> {
     const flags = this.#parseVariableDeclarationListFlags();
     const declarations: VariableDeclaration[] = [];
-    do {
+    while (true) {
       declarations.push(this.#parseVariableDeclaration());
-    } while (this.#consumeOptional(Kind.CommaToken));
+      if (this.#consumeOptional(Kind.CommaToken)) {
+        continue;
+      }
+      if (this.#current().kind === Kind.ColonToken && this.#isBindingNameStart(this.#tokens[this.#index + 1]?.kind ?? Kind.Unknown)) {
+        this.#advance();
+        this.#addDiagnosticAtToken(this.#current(), 1005, ",");
+        continue;
+      }
+      if (this.#isBindingNameStart(this.#current().kind) && !this.#lineBreakBeforeCurrentToken()) {
+        this.#addDiagnosticAtToken(this.#current(), 1005, ",");
+        continue;
+      }
+      break;
+    }
     return createVariableDeclarationList(createNodeArray(declarations), flags);
+  }
+
+  #recoverVariableStatementTerminator(): boolean {
+    if (this.#current().kind === Kind.CloseParenToken && this.#tokens[this.#index + 1]?.kind === Kind.EqualsGreaterThanToken) {
+      this.#advance();
+    }
+    if (this.#current().kind !== Kind.EqualsGreaterThanToken) {
+      return false;
+    }
+    this.#addDiagnosticAtToken(this.#current(), 1005, ";");
+    while (this.#current().kind !== Kind.SemicolonToken
+      && this.#current().kind !== Kind.CloseBraceToken
+      && this.#current().kind !== Kind.EndOfFile) {
+      this.#advance();
+    }
+    this.#consumeOptional(Kind.SemicolonToken);
+    return true;
   }
 
   #parseVariableDeclarationListFlags(): number {
@@ -1124,7 +1188,10 @@ export class Parser {
 
   #parseReturnStatement(): Statement {
     this.#expect(Kind.ReturnKeyword);
-    const expression = this.#current().kind === Kind.SemicolonToken || this.#current().kind === Kind.CloseBraceToken
+    const expression = this.#current().kind === Kind.SemicolonToken
+      || this.#current().kind === Kind.CloseBraceToken
+      || this.#current().kind === Kind.EndOfFile
+      || this.#lineBreakBeforeCurrentToken()
       ? undefined
       : this.#parseExpression();
     this.#consumeOptional(Kind.SemicolonToken);
@@ -1197,8 +1264,8 @@ export class Parser {
     return statements;
   }
 
-  #parseExpression(precedence = 0, stopAtInKeyword = false): Expression {
-    if (this.#isArrowFunctionStart()) {
+  #parseExpression(precedence = 0, stopAtInKeyword = false, allowArrowFunction = true): Expression {
+    if (allowArrowFunction && this.#isArrowFunctionStart()) {
       return this.#parseArrowFunction();
     }
     let left = this.#parseUnaryExpression();
@@ -1212,7 +1279,7 @@ export class Parser {
         break;
       }
       this.#advance();
-      const right = this.#parseExpression(operatorPrecedence, stopAtInKeyword);
+      const right = this.#parseExpression(operatorPrecedence, stopAtInKeyword, assignmentOperatorKinds.has(operatorToken.kind));
       const token = createToken(operatorToken.kind as BinaryOperator);
       if (!isBinaryOperatorToken(token)) {
         throw new ParseError("Expected binary operator", operatorToken);
@@ -1247,6 +1314,10 @@ export class Parser {
     if (this.#current().kind !== Kind.OpenParenToken) {
       return false;
     }
+    const parenthesized = this.#tryParseParenthesizedArrowHead();
+    if (parenthesized !== undefined) {
+      return parenthesized;
+    }
     let depth = 0;
     for (let index = this.#index; index < this.#tokens.length; index += 1) {
       const kind = this.#tokens[index]!.kind;
@@ -1258,7 +1329,7 @@ export class Parser {
         depth -= 1;
         if (depth === 0) {
           const nextKind = this.#tokens[index + 1]?.kind;
-          if (nextKind === Kind.EqualsGreaterThanToken) {
+          if (nextKind === Kind.EqualsGreaterThanToken || nextKind === Kind.OpenBraceToken) {
             return true;
           }
           if (nextKind !== Kind.ColonToken) {
@@ -1269,6 +1340,33 @@ export class Parser {
       }
     }
     return false;
+  }
+
+  #tryParseParenthesizedArrowHead(): boolean | undefined {
+    const startIndex = this.#index;
+    const diagnosticCount = this.#diagnostics.length;
+    try {
+      this.#expect(Kind.OpenParenToken);
+      const parameters = this.#parseParameterList();
+      this.#expect(Kind.CloseParenToken);
+      const hasTypedParameter = parameters.some(parameter => parameter.type !== undefined
+        || parameter.questionToken !== undefined
+        || parameter.dotDotDotToken !== undefined
+        || parameter.modifiers !== undefined);
+      const hasReturnType = this.#current().kind === Kind.ColonToken;
+      this.#parseOptionalTypeAnnotation();
+      const nextKind = this.#current().kind;
+      this.#index = startIndex;
+      this.#diagnostics.length = diagnosticCount;
+      return nextKind === Kind.EqualsGreaterThanToken
+        || nextKind === Kind.OpenBraceToken
+        || hasReturnType
+        || hasTypedParameter;
+    } catch {
+      this.#index = startIndex;
+      this.#diagnostics.length = diagnosticCount;
+      return undefined;
+    }
   }
 
   #isAsyncArrowFunctionStart(): boolean {
@@ -1288,10 +1386,12 @@ export class Parser {
 
   #isGenericArrowFunctionStart(): boolean {
     const startIndex = this.#index;
+    const diagnosticCount = this.#diagnostics.length;
     try {
       const typeParameters = this.#parseOptionalTypeParameters();
       if (typeParameters === undefined) {
         this.#index = startIndex;
+        this.#diagnostics.length = diagnosticCount;
         return false;
       }
       this.#expect(Kind.OpenParenToken);
@@ -1300,9 +1400,11 @@ export class Parser {
       this.#parseOptionalTypeAnnotation();
       const isArrow = this.#current().kind === Kind.EqualsGreaterThanToken;
       this.#index = startIndex;
+      this.#diagnostics.length = diagnosticCount;
       return isArrow;
     } catch {
       this.#index = startIndex;
+      this.#diagnostics.length = diagnosticCount;
       return false;
     }
   }
@@ -1336,16 +1438,61 @@ export class Parser {
       this.#expect(Kind.CloseParenToken);
       type = this.#parseOptionalTypeAnnotation();
     }
-    this.#expect(Kind.EqualsGreaterThanToken);
-    const body = this.#parseArrowBody();
+    const hadArrow = this.#parseExpectedArrowToken();
+    const body = hadArrow || this.#current().kind === Kind.OpenBraceToken
+      ? this.#parseArrowBody()
+      : createIdentifier("");
     return this.#withJSDoc(createArrowFunction(modifiers, typeParameters, createNodeArray(parameters), type, createToken(Kind.EqualsGreaterThanToken), body), jsDoc);
+  }
+
+  #parseExpectedArrowToken(): boolean {
+    if (this.#current().kind !== Kind.EqualsGreaterThanToken) {
+      this.#addDiagnosticAtToken(this.#current(), 1005, "=>");
+      return false;
+    }
+    if (this.#lineBreakBeforeCurrentToken()) {
+      this.#addDiagnosticAtToken(this.#current(), 1200);
+    }
+    this.#advance();
+    return true;
   }
 
   #parseArrowBody(): ConciseBody {
     if (this.#current().kind === Kind.OpenBraceToken) {
       return this.#parseBlock();
     }
+    if (this.#isStartOfNonExpressionStatement(this.#current().kind)) {
+      this.#addDiagnosticAtToken(this.#current(), 1005, "{");
+      const statement = this.#parseStatement();
+      this.#consumeOptional(Kind.CloseBraceToken);
+      return createBlock(createNodeArray([statement]), true);
+    }
+    if (this.#current().kind === Kind.SemicolonToken || this.#current().kind === Kind.CloseBraceToken || this.#current().kind === Kind.EndOfFile) {
+      this.#addDiagnosticAtToken(this.#current(), 1109);
+      if (this.#current().kind === Kind.CloseBraceToken && this.#tokens[this.#index + 1]?.kind === Kind.SemicolonToken) {
+        this.#advance();
+      }
+      return createIdentifier("");
+    }
     return this.#parseExpression();
+  }
+
+  #isStartOfNonExpressionStatement(kind: Kind): boolean {
+    return kind === Kind.VarKeyword
+      || kind === Kind.LetKeyword
+      || kind === Kind.ConstKeyword
+      || kind === Kind.IfKeyword
+      || kind === Kind.WhileKeyword
+      || kind === Kind.DoKeyword
+      || kind === Kind.ForKeyword
+      || kind === Kind.BreakKeyword
+      || kind === Kind.ContinueKeyword
+      || kind === Kind.DebuggerKeyword
+      || kind === Kind.ReturnKeyword
+      || kind === Kind.ThrowKeyword
+      || kind === Kind.WithKeyword
+      || kind === Kind.TryKeyword
+      || kind === Kind.SwitchKeyword;
   }
 
   #parseUnaryExpression(): Expression {
@@ -1620,8 +1767,10 @@ export class Parser {
         return this.#parseClassExpression();
       case Kind.OpenParenToken: {
         this.#advance();
-        const expression = this.#parseExpression();
-        this.#expect(Kind.CloseParenToken);
+        const expression = this.#current().kind === Kind.CloseParenToken
+          ? this.#parseMissingExpression()
+          : this.#parseExpression();
+        this.#parseExpectedCloseParen();
         return createParenthesizedExpression(expression);
       }
       default:
@@ -1629,8 +1778,27 @@ export class Parser {
           this.#advance();
           return createIdentifier(token.text);
         }
+        if (binaryPrecedence.has(token.kind)) {
+          this.#addDiagnosticAtToken(token, 1109);
+          return createIdentifier("");
+        }
         throw new ParseError(`Unexpected token ${Kind[token.kind]}`, token);
     }
+  }
+
+  #parseExpectedCloseParen(): ScannedToken {
+    const token = this.#current();
+    if (token.kind === Kind.CloseParenToken) {
+      this.#advance();
+      return token;
+    }
+    this.#addDiagnosticAtToken(token, 1005, ")");
+    return { kind: Kind.CloseParenToken, pos: token.pos, end: token.pos, text: ")" };
+  }
+
+  #parseMissingExpression(): Expression {
+    this.#addDiagnosticAtToken(this.#current(), 1109);
+    return createIdentifier("");
   }
 
   #parseFunctionExpression(): Expression {
@@ -1857,6 +2025,12 @@ export class Parser {
     return this.#parseIdentifier();
   }
 
+  #isBindingNameStart(kind: Kind): boolean {
+    return kind === Kind.OpenBraceToken
+      || kind === Kind.OpenBracketToken
+      || (kind !== Kind.InKeyword && kind !== Kind.OfKeyword && isIdentifierNameKind(kind));
+  }
+
   #parseObjectBindingPattern(): BindingName {
     this.#expect(Kind.OpenBraceToken);
     const elements: BindingElement[] = [];
@@ -2006,7 +2180,13 @@ export class Parser {
     }
     if (token.kind === Kind.TypeOfKeyword) {
       this.#advance();
+      if (this.#current().kind === Kind.ImportKeyword && this.#tokens[this.#index + 1]?.kind === Kind.OpenParenToken) {
+        return this.#parseImportTypeNode(true);
+      }
       return createTypeQueryNode(this.#parseEntityName(), this.#parseOptionalTypeArguments());
+    }
+    if (token.kind === Kind.ImportKeyword && this.#tokens[this.#index + 1]?.kind === Kind.OpenParenToken) {
+      return this.#parseImportTypeNode(false);
     }
     if (token.kind === Kind.InferKeyword) {
       this.#advance();
@@ -2189,6 +2369,16 @@ export class Parser {
     return createFunctionTypeNode(typeParameters, createNodeArray(parameters), this.#parseType());
   }
 
+  #parseImportTypeNode(isTypeOf: boolean): TypeNode {
+    this.#expect(Kind.ImportKeyword);
+    this.#expect(Kind.OpenParenToken);
+    const argument = createLiteralTypeNode(this.#parseStringLiteralExpression());
+    this.#expect(Kind.CloseParenToken);
+    const qualifier = this.#consumeOptional(Kind.DotToken) ? this.#parseEntityName() : undefined;
+    const typeArguments = this.#parseOptionalTypeArguments();
+    return createImportTypeNode(isTypeOf, argument, undefined, qualifier, typeArguments);
+  }
+
   #tryParseTypePredicate(): TypeNode | undefined {
     const startIndex = this.#index;
     const assertsModifier = this.#consumeOptional(Kind.AssertsKeyword) ? createToken(Kind.AssertsKeyword) : undefined;
@@ -2301,6 +2491,16 @@ export class Parser {
       return { kind: Kind.GreaterThanToken, pos: token.pos, end: token.pos + 1, text: ">" };
     }
     throw new ParseError(`Expected token ${Kind[Kind.GreaterThanToken]}`, token);
+  }
+
+  #parseExpectedGreaterThan(): ScannedToken {
+    try {
+      return this.#expectGreaterThan();
+    } catch {
+      const token = this.#current();
+      this.#addDiagnosticAtToken(token, 1005, ">");
+      return { kind: Kind.GreaterThanToken, pos: token.pos, end: token.pos, text: ">" };
+    }
   }
 
   #current(): ScannedToken {

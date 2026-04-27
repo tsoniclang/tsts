@@ -109,6 +109,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
         messageText: diagnostic.messageText,
         message: diagnostic.message,
       })));
+      diagnostics.push(...amdModuleDirectiveDiagnostics(rootName, sourceText));
     } catch (error) {
       diagnostics.push({
         fileName: rootName,
@@ -169,6 +170,11 @@ function unresolvedModuleDiagnosticCode(unresolved: { readonly moduleSpecifier: 
     return 2882;
   }
   return (options.module === "amd" || options.module === "system") ? 2792 : 2307;
+}
+
+function amdModuleDirectiveDiagnostics(fileName: string, sourceText: string): readonly ProgramDiagnostic[] {
+  const directives = [...sourceText.matchAll(/\/\/\/\s*<amd-module\b[^>]*\bname\s*=\s*(['\"])[^'\"]+\1[^>]*>/g)];
+  return directives.length > 1 ? [programDiagnostic(fileName, 2458)] : [];
 }
 
 export function emitProgram(program: Program, host?: Pick<CompilerHost, "writeFile" | "getCurrentDirectory">): EmitResult {
