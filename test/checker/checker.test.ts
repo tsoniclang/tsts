@@ -597,6 +597,63 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322, 2322]);
   });
 
+  it("reports class value assignment targets for compound assignments", () => {
+    const sourceFile = parseSourceFile([
+      "class f {}",
+      "f += '';",
+      "f -= 1;",
+      "f *= 1;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2629, 2629, 2629]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Cannot assign to 'f' because it is a class.",
+      "Cannot assign to 'f' because it is a class.",
+      "Cannot assign to 'f' because it is a class.",
+    ]);
+  });
+
+  it("checks binary arithmetic operands against primitive numeric facts", () => {
+    const boxedNumberSource = parseSourceFile([
+      "var x: Number;",
+      "var y: Number;",
+      "var z = x + y;",
+      "var z2 = x - y;",
+      "var z3 = x * y;",
+      "var z4 = x / y;",
+    ].join("\n"));
+    const genericSource = parseSourceFile([
+      "var obj = function f<T>(a: T, b: T) {",
+      "  var z1 = a + b;",
+      "  var z2 = a - b;",
+      "};",
+    ].join("\n"));
+    const boxedResult = checkSourceFile(boxedNumberSource);
+    const genericResult = checkSourceFile(genericSource);
+
+    assert.deepEqual(boxedResult.diagnostics.map(diagnostic => diagnostic.code), [
+      2454, 2454, 2365,
+      2454, 2454, 2362, 2363,
+      2454, 2454, 2362, 2363,
+      2454, 2454, 2362, 2363,
+    ]);
+    assert.deepEqual(genericResult.diagnostics.map(diagnostic => diagnostic.code), [2365, 2362, 2363]);
+  });
+
+  it("does not leak outer definite-assignment state into nested function bodies", () => {
+    const sourceFile = parseSourceFile([
+      "function outer(): void {",
+      "  let value: number;",
+      "  (() => value);",
+      "  (function () { value; });",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
   it("resolves ambient module export-equals aliases for named imports", () => {
     const host: CompilerHost = {
       readFile: fileName => {

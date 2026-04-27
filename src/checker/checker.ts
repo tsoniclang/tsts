@@ -31,6 +31,7 @@ import {
   isForOfStatement,
   isForStatement,
   isFunctionDeclaration,
+  isFunctionExpression,
   isFunctionTypeNode,
   isGetAccessorDeclaration,
   isArrayBindingPattern,
@@ -102,6 +103,7 @@ import {
   type EnumDeclaration,
   type Expression,
   type FunctionDeclaration,
+  type FunctionExpression,
   type GetAccessorDeclaration,
   type ImportDeclaration,
   type ImportSpecifier,
@@ -215,6 +217,19 @@ const stringType: CheckedType = { kind: "string" };
 const voidType: CheckedType = { kind: "void" };
 const booleanType: CheckedType = { kind: "boolean" };
 const undefinedType: CheckedType = { kind: "undefined" };
+const boxedNumberType: CheckedType = {
+  kind: "interface",
+  name: "Number",
+  members: {
+    name: "Number",
+    typeParameters: [],
+    properties: new Map([
+      ["toFixed", { kind: "function", typeParameters: [], parameters: [], returnType: stringType }],
+      ["toString", { kind: "function", typeParameters: [], parameters: [], returnType: stringType }],
+      ["valueOf", { kind: "function", typeParameters: [], parameters: [], returnType: numberType }],
+    ]),
+  },
+};
 const iArgumentsType: CheckedType = {
   kind: "interface",
   name: "IArguments",
@@ -508,6 +523,7 @@ function standardGlobalEnvironment(): TypeEnvironment {
       ]),
     }],
     ["Promise", anyType],
+    ["Number", { kind: "valueAndType", value: anyType, type: boxedNumberType }],
     ["Set", { kind: "intrinsicConstructor", intrinsic: "Set" }],
     ["Symbol", anyType],
     ["WeakMap", anyType],
@@ -1905,7 +1921,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     if (isMethodDeclaration(member)) {
       checkAbstractMemberModifiers(member, state, classIsAbstract, propertyNameText(member.name), false);
     }
-    const memberEnvironment = new Map(environment);
+    const memberEnvironment = createFunctionEnvironment(environment);
     seedArgumentsObject(memberEnvironment);
     if (isConstructorDeclaration(member) && classMembers.className !== undefined) {
       memberEnvironment.set("this", thisClassType(classMembers, "constructor"));
@@ -2072,7 +2088,7 @@ function checkTypeElements(members: readonly TypeElement[], state: CheckState, e
 }
 
 function checkAccessorDeclaration(accessor: GetAccessorDeclaration | SetAccessorDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean, contextualAccessorType?: CheckedType): void {
-  const accessorEnvironment = new Map(environment);
+  const accessorEnvironment = createFunctionEnvironment(environment);
   seedArgumentsObject(accessorEnvironment);
   if (accessor.typeParameters !== undefined && accessor.typeParameters.length > 0) {
     state.diagnostics.push(createDiagnostic(1094));
@@ -2143,7 +2159,7 @@ function addTypeParametersToEnvironment(typeParameters: readonly string[], envir
 }
 
 function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
-  const functionEnvironment = new Map(environment);
+  const functionEnvironment = createFunctionEnvironment(environment);
   const typeParameters = functionDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
   addTypeParametersToEnvironment(typeParameters, functionEnvironment);
   const parameterTypes = functionDeclaration.parameters.map(parameter => parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, functionEnvironment, state));
@@ -2178,12 +2194,55 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
   }
 }
 
+function inferFunctionExpression(functionExpression: FunctionExpression, state: CheckState, environment: TypeEnvironment): CheckedType {
+  const functionEnvironment = createFunctionEnvironment(environment);
+  const typeParameters = functionExpression.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
+  addTypeParametersToEnvironment(typeParameters, functionEnvironment);
+  const parameterTypes = functionExpression.parameters.map(parameter => parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, functionEnvironment, state));
+  const declaredReturnType = functionExpression.type === undefined ? undefined : bindTypePredicateParameterIndex(typeFromTypeNode(functionExpression.type, functionEnvironment, state), functionExpression.parameters);
+  const functionType: CheckedType = {
+    kind: "function",
+    typeParameters,
+    parameters: parameterTypes,
+    returnType: declaredReturnType ?? methodBodyReturnType(functionExpression.body),
+  };
+  if (functionExpression.name !== undefined) {
+    checkStrictModeIdentifier(functionExpression.name.text, state, false);
+    functionEnvironment.set(functionExpression.name.text, functionType);
+  }
+  seedArgumentsObject(functionEnvironment);
+  for (let index = 0; index < functionExpression.parameters.length; index += 1) {
+    const parameter = functionExpression.parameters[index]!;
+    checkParameterPropertyModifiers(parameter, state);
+    checkImplicitAnyParameter(parameter, state);
+    checkStrictModeBindingName(parameter.name, state, false);
+    setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
+  }
+  checkBlock(functionExpression.body, enterFunction(state), functionEnvironment, declaredReturnType);
+  if (declaredReturnType !== undefined && requiresReturnValue(declaredReturnType) && !blockContainsReturn(functionExpression.body)) {
+    state.diagnostics.push(createDiagnostic(2355));
+  }
+  return functionType;
+}
+
 function checkBlock(block: Block, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): void {
   checkStatements(block.statements, state, new Map(environment), expectedReturnType, false);
 }
 
 function seedArgumentsObject(environment: TypeEnvironment): void {
   environment.set("arguments", iArgumentsType);
+}
+
+function createFunctionEnvironment(environment: TypeEnvironment): TypeEnvironment {
+  const functionEnvironment = new Map<string, CheckedType>();
+  for (const [name, type] of environment.entries()) {
+    functionEnvironment.set(name, removeCapturedDefiniteAssignmentState(type));
+  }
+  return functionEnvironment;
+}
+
+function removeCapturedDefiniteAssignmentState(type: CheckedType): CheckedType {
+  return type.kind === "unassignedVariable" ? type.type : type;
 }
 
 function blockContainsReturn(block: Block): boolean {
@@ -2313,6 +2372,9 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   if (isArrowFunction(expression)) {
     return inferArrowFunction(expression, state, environment);
   }
+  if (isFunctionExpression(expression)) {
+    return inferFunctionExpression(expression, state, environment);
+  }
   if (isBinaryExpression(expression)) {
     if (isAssignmentOperator(expression.operatorToken.kind)) {
       return inferAssignmentExpression(expression, state, environment);
@@ -2330,10 +2392,12 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     if (isComparisonOperator(expression.operatorToken.kind)) {
       return booleanType;
     }
-    if (expression.operatorToken.kind === Kind.PlusToken && (left.kind === "string" || right.kind === "string")) {
-      return stringType;
+    if (expression.operatorToken.kind === Kind.PlusToken) {
+      return inferPlusExpressionType(left, right, state);
     }
-    if (left.kind === "number" && right.kind === "number") {
+    if (isNumericArithmeticOperator(expression.operatorToken.kind)) {
+      checkArithmeticOperandType(left, state, 2362);
+      checkArithmeticOperandType(right, state, 2363);
       return numberType;
     }
     return unresolvedType;
@@ -2678,9 +2742,8 @@ function inferAssignmentExpression(expression: Extract<Expression, { readonly ki
   const operator = expression.operatorToken.kind;
   if (assignmentOperatorReadsTarget(operator)) {
     inferExpression(expression.left, state, environment);
-  } else {
-    checkAssignmentTargetReference(expression.left, state, environment);
   }
+  checkAssignmentTargetReference(expression.left, state, environment);
   const targetType = assignmentTargetType(expression.left, environment);
   const right = inferExpressionWithContext(expression.right, state, environment, targetType);
   diagnoseAbstractThisDestructuring(expression.left, expression.right, state, environment);
@@ -2703,6 +2766,9 @@ function assignmentTargetType(expression: Expression, environment: TypeEnvironme
 
 function checkAssignmentTargetReference(expression: Expression, state: CheckState, environment: TypeEnvironment): void {
   if (isIdentifier(expression)) {
+    if (isClassValue(environment.get(expression.text))) {
+      state.diagnostics.push(createDiagnostic(2629, expression.text));
+    }
     return;
   }
   if (isParenthesizedExpression(expression)) {
@@ -2719,6 +2785,16 @@ function checkAssignmentTargetReference(expression: Expression, state: CheckStat
     return;
   }
   inferExpression(expression, state, environment);
+}
+
+function isClassValue(type: CheckedType | undefined): boolean {
+  if (type?.kind === "classConstructor") {
+    return true;
+  }
+  if (type?.kind === "valueAndType") {
+    return isClassValue(type.value);
+  }
+  return false;
 }
 
 function checkPropertyAssignmentTarget(expression: Expression, propertyName: string, state: CheckState, environment: TypeEnvironment): void {
@@ -2773,7 +2849,7 @@ function assignmentOperatorDefinitelyAssignsTarget(kind: Kind): boolean {
 }
 
 function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, environment: TypeEnvironment, contextualParameterTypes: readonly CheckedType[] = []): CheckedType {
-  const arrowEnvironment = new Map(environment);
+  const arrowEnvironment = createFunctionEnvironment(environment);
   suppressImmediateThisDiagnostics(arrowEnvironment);
   const typeParameters = arrowFunction.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
   addTypeParametersToEnvironment(typeParameters, arrowEnvironment);
@@ -3142,7 +3218,7 @@ function methodBodyReturnType(body: Block | undefined): CheckedType {
 }
 
 function checkObjectLiteralMethod(method: MethodDeclaration, state: CheckState, environment: TypeEnvironment): void {
-  const methodEnvironment = new Map(environment);
+  const methodEnvironment = createFunctionEnvironment(environment);
   seedArgumentsObject(methodEnvironment);
   const typeParameters = method.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
   addTypeParametersToEnvironment(typeParameters, methodEnvironment);
@@ -4041,6 +4117,130 @@ const arrayMethodReturnTypes = new Map<string, CheckedType>([
 const arrayElementMethodNames = new Set(["pop", "shift"]);
 const arraySelfMethodNames = new Set(["copyWithin", "fill", "reverse", "sort"]);
 const arrayArrayMethodNames = new Set(["concat", "filter", "slice", "splice"]);
+
+function inferPlusExpressionType(left: CheckedType, right: CheckedType, state: CheckState): CheckedType {
+  if (isUnresolvedOperandType(left) || isUnresolvedOperandType(right)) {
+    return unresolvedType;
+  }
+  if (isStringLikeOperandType(left) || isStringLikeOperandType(right)) {
+    return stringType;
+  }
+  if (isAnyOperandType(left) || isAnyOperandType(right)) {
+    return anyType;
+  }
+  if (isNumberLikeOperandType(left) && isNumberLikeOperandType(right)) {
+    return numberType;
+  }
+  state.diagnostics.push(createDiagnostic(2365, "+", displayType(left), displayType(right)));
+  return anyType;
+}
+
+function checkArithmeticOperandType(type: CheckedType, state: CheckState, diagnosticCode: 2362 | 2363): boolean {
+  if (isUnresolvedOperandType(type)) {
+    return false;
+  }
+  if (isAnyOperandType(type) || isNumberLikeOperandType(type)) {
+    return true;
+  }
+  state.diagnostics.push(createDiagnostic(diagnosticCode));
+  return false;
+}
+
+function isAnyOperandType(type: CheckedType): boolean {
+  if (type.kind === "unassignedVariable") {
+    return isAnyOperandType(type.type);
+  }
+  if (type.kind === "valueOnly") {
+    return isAnyOperandType(type.type);
+  }
+  if (type.kind === "valueAndType") {
+    return isAnyOperandType(type.value);
+  }
+  if (type.kind === "typeAliasInstance") {
+    return isAnyOperandType(type.target);
+  }
+  if (type.kind === "nonNullable") {
+    return isAnyOperandType(nonNullableType(type.target));
+  }
+  return type.kind === "any";
+}
+
+function isUnresolvedOperandType(type: CheckedType): boolean {
+  if (type.kind === "unassignedVariable") {
+    return isUnresolvedOperandType(type.type);
+  }
+  if (type.kind === "valueOnly") {
+    return isUnresolvedOperandType(type.type);
+  }
+  if (type.kind === "valueAndType") {
+    return isUnresolvedOperandType(type.value);
+  }
+  if (type.kind === "typeAliasInstance") {
+    return isUnresolvedOperandType(type.target);
+  }
+  if (type.kind === "nonNullable") {
+    return isUnresolvedOperandType(nonNullableType(type.target));
+  }
+  return type.kind === "unresolved";
+}
+
+function isStringLikeOperandType(type: CheckedType): boolean {
+  if (type.kind === "unassignedVariable") {
+    return isStringLikeOperandType(type.type);
+  }
+  if (type.kind === "valueOnly") {
+    return isStringLikeOperandType(type.type);
+  }
+  if (type.kind === "valueAndType") {
+    return isStringLikeOperandType(type.value);
+  }
+  if (type.kind === "typeAliasInstance") {
+    return isStringLikeOperandType(type.target);
+  }
+  if (type.kind === "nonNullable") {
+    return isStringLikeOperandType(nonNullableType(type.target));
+  }
+  if (type.kind === "union") {
+    return type.types.every(isStringLikeOperandType);
+  }
+  return type.kind === "string";
+}
+
+function isNumberLikeOperandType(type: CheckedType): boolean {
+  if (type.kind === "unassignedVariable") {
+    return isNumberLikeOperandType(type.type);
+  }
+  if (type.kind === "valueOnly") {
+    return isNumberLikeOperandType(type.type);
+  }
+  if (type.kind === "valueAndType") {
+    return isNumberLikeOperandType(type.value);
+  }
+  if (type.kind === "typeAliasInstance") {
+    return isNumberLikeOperandType(type.target);
+  }
+  if (type.kind === "nonNullable") {
+    return isNumberLikeOperandType(nonNullableType(type.target));
+  }
+  if (type.kind === "union") {
+    return type.types.every(isNumberLikeOperandType);
+  }
+  return type.kind === "number";
+}
+
+function isNumericArithmeticOperator(kind: Kind): boolean {
+  return kind === Kind.MinusToken
+    || kind === Kind.AsteriskToken
+    || kind === Kind.AsteriskAsteriskToken
+    || kind === Kind.SlashToken
+    || kind === Kind.PercentToken
+    || kind === Kind.LessThanLessThanToken
+    || kind === Kind.GreaterThanGreaterThanToken
+    || kind === Kind.GreaterThanGreaterThanGreaterThanToken
+    || kind === Kind.AmpersandToken
+    || kind === Kind.BarToken
+    || kind === Kind.CaretToken;
+}
 
 function isComparisonOperator(kind: Kind): boolean {
   return kind === Kind.EqualsEqualsToken
