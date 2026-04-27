@@ -84,7 +84,26 @@ function parseCompilerOptions(fileName: string, value: unknown, diagnostics: TsC
     diagnostics.push({ fileName, message: "compilerOptions.outDir must be a string" });
     return {};
   }
-  return outDir === undefined ? {} : { outDir };
+  const allowSyntheticDefaultImports = parseBooleanCompilerOption(fileName, "allowSyntheticDefaultImports", value.allowSyntheticDefaultImports, diagnostics);
+  const alwaysStrict = parseBooleanCompilerOption(fileName, "alwaysStrict", value.alwaysStrict, diagnostics);
+  const esModuleInterop = parseBooleanCompilerOption(fileName, "esModuleInterop", value.esModuleInterop, diagnostics);
+  return {
+    ...(outDir === undefined ? {} : { outDir }),
+    ...(allowSyntheticDefaultImports === undefined ? {} : { allowSyntheticDefaultImports }),
+    ...(alwaysStrict === undefined ? {} : { alwaysStrict }),
+    ...(esModuleInterop === undefined ? {} : { esModuleInterop }),
+  };
+}
+
+function parseBooleanCompilerOption(fileName: string, optionName: string, value: unknown, diagnostics: TsConfigDiagnostic[]): boolean | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value !== "boolean") {
+    diagnostics.push({ fileName, message: `compilerOptions.${optionName} must be a boolean` });
+    return undefined;
+  }
+  return value;
 }
 
 function parseRootNames(

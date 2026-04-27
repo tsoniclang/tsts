@@ -30,6 +30,9 @@ interface CaseCompilerOptions extends CompilerOptions {
   readonly noLib?: boolean;
   readonly allowJs?: boolean;
   readonly checkJs?: boolean;
+  readonly allowSyntheticDefaultImports?: boolean;
+  readonly alwaysStrict?: boolean;
+  readonly esModuleInterop?: boolean;
   readonly jsx?: ts.JsxEmit;
 }
 
@@ -234,6 +237,12 @@ function parseBaselineCompilerOptions(baselineFileName: string): CaseCompilerOpt
       options = { ...options, target: parseScriptTarget(value) };
     } else if (key === "module" && value !== undefined) {
       options = { ...options, module: parseModuleKind(value) };
+    } else if (key === "allowsyntheticdefaultimports" && value !== undefined) {
+      options = { ...options, allowSyntheticDefaultImports: parseBoolean(value) };
+    } else if (key === "alwaysstrict" && value !== undefined) {
+      options = { ...options, alwaysStrict: parseBoolean(value) };
+    } else if (key === "esmoduleinterop" && value !== undefined) {
+      options = { ...options, esModuleInterop: parseBoolean(value) };
     }
   }
   return options;
@@ -315,6 +324,15 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
         break;
       case "checkjs":
         options = { ...options, checkJs: parseBoolean(value) };
+        break;
+      case "allowsyntheticdefaultimports":
+        options = { ...options, allowSyntheticDefaultImports: parseBoolean(value) };
+        break;
+      case "alwaysstrict":
+        options = { ...options, alwaysStrict: parseBoolean(value) };
+        break;
+      case "esmoduleinterop":
+        options = { ...options, esModuleInterop: parseBoolean(value) };
         break;
       case "jsx":
         options = { ...options, jsx: parseJsxEmit(value) };

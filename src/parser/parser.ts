@@ -1912,6 +1912,7 @@ export class Parser {
 
   #consumeStatementTerminator(expression: Expression): void {
     if (this.#consumeOptional(Kind.SemicolonToken)
+      || this.#lineBreakBeforeCurrentToken()
       || this.#current().kind === Kind.CloseBraceToken
       || this.#current().kind === Kind.EndOfFile) {
       return;
@@ -1929,6 +1930,15 @@ export class Parser {
       this.#advance();
     }
     this.#consumeOptional(Kind.SemicolonToken);
+  }
+
+  #lineBreakBeforeCurrentToken(): boolean {
+    const previous = this.#tokens[this.#index - 1];
+    const current = this.#current();
+    if (previous === undefined || current.kind === Kind.EndOfFile) {
+      return false;
+    }
+    return /[\r\n\u2028\u2029]/u.test(this.#sourceText.slice(previous.end, current.pos));
   }
 
   #parseInvalidClassVariableElement(modifiers: NodeArray<ModifierLike> | undefined): ClassElement {

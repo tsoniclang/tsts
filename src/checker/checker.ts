@@ -140,6 +140,8 @@ export interface CheckResult {
 interface CheckState {
   readonly diagnostics: CheckDiagnostic[];
   readonly options: CompilerOptions;
+  readonly strictMode: boolean;
+  readonly strictModeReason: "module" | "strict" | undefined;
   readonly resolveExternalModule?: (moduleSpecifier: string) => CheckedType | undefined;
 }
 
@@ -223,8 +225,8 @@ const ambientTypeNames = new Set([
 ]);
 
 export function checkSourceFile(sourceFile: SourceFile, options: CompilerOptions = {}): CheckResult {
-  const state: CheckState = { diagnostics: [], options };
-  checkStatements(sourceFile.statements, state, new Map(), undefined, false);
+  const state = checkStateForSourceFile(sourceFile, options);
+  checkStatements(sourceFile.statements, state, new Map(), undefined, isDeclarationFile(sourceFile));
   return { diagnostics: state.diagnostics };
 }
 
@@ -239,9 +241,11 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
     const state: CheckState = {
       diagnostics: [],
       options: program.options,
+      strictMode: sourceFileStrictMode(sourceFile.sourceFile, program.options),
+      strictModeReason: sourceFileStrictModeReason(sourceFile.sourceFile, program.options),
       resolveExternalModule: moduleSpecifier => moduleResolver(sourceFile.fileName, moduleSpecifier),
     };
-    checkStatements(sourceFile.sourceFile.statements, state, new Map(globalEnvironment), undefined, false);
+    checkStatements(sourceFile.sourceFile.statements, state, new Map(globalEnvironment), undefined, isDeclarationFile(sourceFile.sourceFile));
     diagnostics.push(...state.diagnostics.map(diagnostic => ({
       fileName: sourceFile.fileName,
       code: diagnostic.code,
@@ -256,6 +260,46 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
 
 const syntaxDiagnosticCodes = new Set<number>([1003, 1005, 1068, 1127, 1128, 1359, 1434, 1440, 1490]);
 
+function checkStateForSourceFile(sourceFile: SourceFile, options: CompilerOptions): CheckState {
+  return {
+    diagnostics: [],
+    options,
+    strictMode: sourceFileStrictMode(sourceFile, options),
+    strictModeReason: sourceFileStrictModeReason(sourceFile, options),
+  };
+}
+
+function sourceFileStrictMode(sourceFile: SourceFile, options: CompilerOptions): boolean {
+  return options.alwaysStrict === true || sourceFileHasUseStrictPrologue(sourceFile) || sourceFileIsExternalModule(sourceFile);
+}
+
+function sourceFileStrictModeReason(sourceFile: SourceFile, options: CompilerOptions): "module" | "strict" | undefined {
+  if (sourceFileIsExternalModule(sourceFile)) {
+    return "module";
+  }
+  return options.alwaysStrict === true || sourceFileHasUseStrictPrologue(sourceFile) ? "strict" : undefined;
+}
+
+function sourceFileHasUseStrictPrologue(sourceFile: SourceFile): boolean {
+  for (const statement of sourceFile.statements) {
+    if (!isExpressionStatement(statement) || !isStringLiteral(statement.expression)) {
+      return false;
+    }
+    if (statement.expression.text === "use strict") {
+      return true;
+    }
+  }
+  return false;
+}
+
+function sourceFileIsExternalModule(sourceFile: SourceFile): boolean {
+  return sourceFile.statements.some(statement => isImportDeclaration(statement) || isImportEqualsDeclaration(statement) || isExportDeclaration(statement) || isExportAssignment(statement) || isExportedElement(statement));
+}
+
+function isDeclarationFile(sourceFile: SourceFile): boolean {
+  return sourceFile.isDeclarationFile || sourceFile.fileName.endsWith(".d.ts") || sourceFile.fileName.endsWith(".d.mts") || sourceFile.fileName.endsWith(".d.cts");
+}
+
 function programModuleResolver(program: Program, globalEnvironment: TypeEnvironment): (containingFileName: string, moduleSpecifier: string) => CheckedType | undefined {
   const sourceFiles = new Map(program.sourceFiles.map(sourceFile => [sourceFile.fileName, sourceFile]));
   const ambientModules = new Map<string, Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>>();
@@ -267,36 +311,58 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
       }
     }
   }
-  const exportCache = new Map<string, ReadonlyMap<string, CheckedType>>();
+  const exportCache = new Map<string, ModuleExportInfo>();
   const ambientExportCache = new Map<string, ModuleExportInfo>();
-  const moduleNamespaceForResolvedFile = (moduleSpecifier: string, resolvedFileName: string): CheckedType => ({
-    kind: "moduleNamespace",
-    moduleSpecifier,
-    diagnosticName: moduleNamespaceDiagnosticName(moduleSpecifier),
-    exports: moduleExportTypes(resolvedFileName),
-  });
-  const moduleExportTypes = (fileName: string): ReadonlyMap<string, CheckedType> => {
+  const moduleNamespaceForResolvedFile = (moduleSpecifier: string, resolvedFileName: string): CheckedType => {
+    const exportInfo = moduleExportInfo(resolvedFileName);
+    return {
+      kind: "moduleNamespace",
+      moduleSpecifier,
+      diagnosticName: moduleNamespaceDiagnosticName(moduleSpecifier),
+      exports: exportInfo.exports,
+      ...(exportInfo.exportEquals === undefined ? {} : { exportEquals: exportInfo.exportEquals }),
+    };
+  };
+  const moduleExportInfo = (fileName: string): ModuleExportInfo => {
     const cached = exportCache.get(fileName);
     if (cached !== undefined) {
       return cached;
     }
     const sourceFile = sourceFiles.get(fileName);
     if (sourceFile === undefined) {
-      return new Map();
+      return { exports: new Map() };
     }
+    const pending: ModuleExportInfo = { exports: new Map() };
+    exportCache.set(fileName, pending);
+    const environment = new Map(globalEnvironment);
+    checkStatements(sourceFile.sourceFile.statements, emptyCheckState(program.options), environment, undefined, isDeclarationFile(sourceFile.sourceFile));
     const exports = new Map<string, CheckedType>();
-    exportCache.set(fileName, exports);
+    let exportEquals: CheckedType | undefined;
     for (const statement of sourceFile.sourceFile.statements) {
       collectModuleExport(statement, exports);
+      if (isExportAssignment(statement) && !statement.isExportEquals && isIdentifier(statement.expression)) {
+        const exported = environment.get(statement.expression.text);
+        if (exported !== undefined) {
+          mergeModuleExport(exports, "default", exported);
+        }
+      }
+      if (isExportAssignment(statement) && statement.isExportEquals) {
+        exportEquals = isIdentifier(statement.expression) ? environment.get(statement.expression.text) ?? anyType : anyType;
+        continue;
+      }
       if (!isExportedElement(statement)) {
         continue;
       }
-      const exportName = namespaceExportName(statement);
-      if (exportName !== undefined) {
-        exports.set(exportName, anyType);
+      for (const exportName of namespaceExportNames(statement)) {
+        const exportType = environment.get(exportName);
+        if (exportType !== undefined) {
+          exports.set(exportName, exportType);
+        }
       }
     }
-    return exports;
+    const info = exportEquals === undefined ? { exports } : { exports, exportEquals };
+    exportCache.set(fileName, info);
+    return info;
   };
   const ambientModuleExportInfo = (moduleSpecifier: string): ModuleExportInfo => {
     const cached = ambientExportCache.get(moduleSpecifier);
@@ -397,9 +463,8 @@ function ambientModuleExports(statements: readonly Statement[], environment: Typ
     if (!isExportedElement(statement)) {
       continue;
     }
-    const exportName = namespaceExportName(statement);
-    const exportType = exportName === undefined ? undefined : environment.get(exportName);
-    if (exportName !== undefined) {
+    for (const exportName of namespaceExportNames(statement)) {
+      const exportType = environment.get(exportName);
       exports.set(exportName, exportType ?? anyType);
     }
   }
@@ -430,7 +495,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isFunctionDeclaration(statement)) {
-    checkFunctionDeclaration(statement, state, environment);
+    checkFunctionDeclaration(statement, state, environment, ambient || hasDeclareModifier(statement));
     return;
   }
   if (isClassDeclaration(statement)) {
@@ -564,10 +629,11 @@ function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly
     if (!moduleBodyAmbient && !isExportedElement(statement)) {
       continue;
     }
-    const exportName = namespaceExportName(statement);
-    const exportType = exportName === undefined ? undefined : namespaceEnvironment.get(exportName);
-    if (exportName !== undefined && exportType !== undefined) {
-      exports.set(exportName, qualifyNamespaceExport(exportType, `${moduleName}.${exportName}`));
+    for (const exportName of namespaceExportNames(statement)) {
+      const exportType = namespaceEnvironment.get(exportName);
+      if (exportType !== undefined) {
+        exports.set(exportName, qualifyNamespaceExport(exportType, `${moduleName}.${exportName}`));
+      }
     }
   }
   const namespaceType: Extract<CheckedType, { readonly kind: "namespace" }> = { kind: "namespace", name: moduleName, exports };
@@ -606,10 +672,28 @@ function namespaceExportName(statement: Statement): string | undefined {
   return undefined;
 }
 
+function namespaceExportNames(statement: Statement): readonly string[] {
+  if (isVariableStatement(statement)) {
+    return statement.declarationList.declarations.flatMap(declaration => bindingNameExportNames(declaration.name));
+  }
+  const name = namespaceExportName(statement);
+  return name === undefined ? [] : [name];
+}
+
+function bindingNameExportNames(name: BindingName): readonly string[] {
+  if (isIdentifier(name)) {
+    return [name.text];
+  }
+  if (isObjectBindingPattern(name) || isArrayBindingPattern(name)) {
+    return name.elements.flatMap(element => element.name === undefined ? [] : bindingNameExportNames(element.name));
+  }
+  return [];
+}
+
 function bindImportDeclaration(statement: ImportDeclaration, state: CheckState, environment: TypeEnvironment): void {
   const moduleType = importDeclarationModuleType(statement, state);
   if (statement.importClause?.name !== undefined) {
-    mergeEnvironmentBinding(environment, statement.importClause.name.text, moduleType?.exports.get("default") ?? anyType);
+    mergeEnvironmentBinding(environment, statement.importClause.name.text, defaultImportType(statement, moduleType, state));
   }
   const namedBindings = statement.importClause?.namedBindings;
   if (namedBindings === undefined) {
@@ -621,7 +705,7 @@ function bindImportDeclaration(statement: ImportDeclaration, state: CheckState, 
   }
   if (isNamedImports(namedBindings)) {
     for (const specifier of namedBindings.elements) {
-      mergeEnvironmentBinding(environment, specifier.name.text, namedImportType(specifier, moduleType));
+      mergeEnvironmentBinding(environment, specifier.name.text, namedImportType(statement, specifier, moduleType, state));
     }
   }
 }
@@ -634,13 +718,65 @@ function importDeclarationModuleType(statement: ImportDeclaration, state: CheckS
   return resolved?.kind === "moduleNamespace" ? resolved : undefined;
 }
 
-function namedImportType(specifier: ImportSpecifier, moduleType: Extract<CheckedType, { readonly kind: "moduleNamespace" }> | undefined): CheckedType {
+function defaultImportType(statement: ImportDeclaration, moduleType: Extract<CheckedType, { readonly kind: "moduleNamespace" }> | undefined, state: CheckState): CheckedType {
+  if (moduleType === undefined) {
+    return anyType;
+  }
+  const explicitDefault = moduleType.exports.get("default");
+  if (explicitDefault !== undefined) {
+    return explicitDefault;
+  }
+  const syntheticDefault = syntheticDefaultImportType(moduleType);
+  if (allowSyntheticDefaultImports(state.options) && syntheticDefault !== undefined) {
+    return syntheticDefault;
+  }
+  const moduleName = quotedModuleDiagnosticName(moduleType.diagnosticName);
+  if (moduleType.exportEquals !== undefined) {
+    state.diagnostics.push(createDiagnostic(1259, moduleName, "esModuleInterop"));
+    return moduleType.exportEquals;
+  }
+  state.diagnostics.push(createDiagnostic(1192, moduleName));
+  return anyType;
+}
+
+function namedImportType(statement: ImportDeclaration, specifier: ImportSpecifier, moduleType: Extract<CheckedType, { readonly kind: "moduleNamespace" }> | undefined, state: CheckState): CheckedType {
   const importedName = specifier.propertyName === undefined ? specifier.name.text : moduleExportNameText(specifier.propertyName);
-  return moduleType?.exports.get(importedName) ?? anyType;
+  const imported = moduleType?.exports.get(importedName);
+  if (imported !== undefined) {
+    return imported;
+  }
+  if (importedName === "default" && moduleType !== undefined && allowSyntheticDefaultImports(state.options)) {
+    const syntheticDefault = syntheticDefaultImportType(moduleType);
+    if (syntheticDefault !== undefined) {
+      return syntheticDefault;
+    }
+  }
+  if (moduleType !== undefined) {
+    state.diagnostics.push(createDiagnostic(2305, quotedModuleSpecifier(statement), importedName));
+  }
+  return anyType;
 }
 
 function moduleExportNameText(name: { readonly text: string }): string {
   return name.text;
+}
+
+function allowSyntheticDefaultImports(options: CompilerOptions): boolean {
+  return options.allowSyntheticDefaultImports === true
+    || options.esModuleInterop === true
+    || (options.allowSyntheticDefaultImports === undefined && options.module === "system");
+}
+
+function syntheticDefaultImportType(moduleType: Extract<CheckedType, { readonly kind: "moduleNamespace" }>): CheckedType | undefined {
+  return moduleType.exportEquals ?? moduleType;
+}
+
+function quotedModuleSpecifier(statement: ImportDeclaration): string {
+  return isStringLiteral(statement.moduleSpecifier) ? quotedModuleDiagnosticName(statement.moduleSpecifier.text) : "\"\"";
+}
+
+function quotedModuleDiagnosticName(moduleName: string): string {
+  return `"${moduleName}"`;
 }
 
 function mergeEnvironmentBinding(environment: TypeEnvironment, name: string, type: CheckedType): void {
@@ -800,6 +936,7 @@ function checkVariableDeclaration(declaration: VariableDeclaration, state: Check
   if (declaration.initializer !== undefined) {
     diagnoseAbstractThisDestructuring(declaration.name, declaration.initializer, state, environment);
   }
+  checkStrictModeBindingName(declaration.name, state, ambient);
   setBindingNameType(declaration.name, variableDeclarationBindingType(declaration, declaredType, initializerType, environment, ambient), environment);
 }
 
@@ -1380,7 +1517,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
       memberEnvironment.set("this", thisClassType(classMembers, "constructor"));
     }
     seedUnqualifiedClassMemberDiagnostics(memberEnvironment, classMembers, isMethodDeclaration(member) && hasModifier(member, Kind.StaticKeyword));
-    checkSignatureParameters(member.parameters, state, memberEnvironment, isMethodDeclaration(member) || member.body === undefined);
+    checkSignatureParameters(member.parameters, state, memberEnvironment, isMethodDeclaration(member) || member.body === undefined, ambient);
     if (member.body !== undefined) {
       if (ambient) {
         state.diagnostics.push(createDiagnostic(1183));
@@ -1586,13 +1723,14 @@ function checkAccessorBody(accessor: GetAccessorDeclaration | SetAccessorDeclara
   checkBlock(accessor.body, state, environment, expectedReturnType);
 }
 
-function checkSignatureParameters(parameters: readonly ParameterDeclaration[], state: CheckState, environment: TypeEnvironment, disallowParameterProperties: boolean): readonly CheckedType[] {
+function checkSignatureParameters(parameters: readonly ParameterDeclaration[], state: CheckState, environment: TypeEnvironment, disallowParameterProperties: boolean, ambient = false): readonly CheckedType[] {
   return parameters.map(parameter => {
     if (disallowParameterProperties) {
       checkParameterPropertyModifiers(parameter, state);
     }
     checkImplicitAnyParameter(parameter, state);
     const parameterType = parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, environment, state);
+    checkStrictModeBindingName(parameter.name, state, ambient);
     setBindingNameType(parameter.name, parameterType, environment);
     return parameterType;
   });
@@ -1604,14 +1742,17 @@ function addTypeParametersToEnvironment(typeParameters: readonly string[], envir
   }
 }
 
-function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, state: CheckState, environment: TypeEnvironment): void {
+function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
   const functionEnvironment = new Map(environment);
   const typeParameters = functionDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
   addTypeParametersToEnvironment(typeParameters, functionEnvironment);
   const parameterTypes = functionDeclaration.parameters.map(parameter => parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, functionEnvironment, state));
   const returnType = functionDeclaration.type === undefined ? undefined : typeFromTypeNode(functionDeclaration.type, functionEnvironment, state);
-  if (functionDeclaration.body === undefined && functionDeclaration.type === undefined) {
+  if (!ambient && functionDeclaration.body === undefined && functionDeclaration.type === undefined) {
     state.diagnostics.push(createDiagnostic(7010, functionDeclaration.name?.text ?? "(Missing)", "any"));
+  }
+  if (functionDeclaration.name !== undefined) {
+    checkStrictModeIdentifier(functionDeclaration.name.text, state, ambient);
   }
   if (functionDeclaration.name !== undefined) {
     environment.set(functionDeclaration.name.text, {
@@ -1625,6 +1766,7 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
     const parameter = functionDeclaration.parameters[index]!;
     checkParameterPropertyModifiers(parameter, state);
     checkImplicitAnyParameter(parameter, state);
+    checkStrictModeBindingName(parameter.name, state, ambient);
     setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
   }
   if (functionDeclaration.body !== undefined) {
@@ -1951,6 +2093,7 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
     const parameter = arrowFunction.parameters[parameterIndex]!;
     checkParameterPropertyModifiers(parameter, state);
     const parameterType = parameter.type === undefined ? contextualParameterTypes[parameterIndex] ?? unresolvedType : typeFromTypeNode(parameter.type, arrowEnvironment, state);
+    checkStrictModeBindingName(parameter.name, state, false);
     setBindingNameType(parameter.name, parameterType, arrowEnvironment);
   }
   const declaredReturnType = arrowFunction.type === undefined ? undefined : typeFromTypeNode(arrowFunction.type, arrowEnvironment, state);
@@ -2015,10 +2158,20 @@ function inferPropertyAccess(expression: Expression, propertyName: string, state
     return anyType;
   }
   if (receiverType.kind === "moduleNamespace") {
-    return receiverType.exports.get(propertyName) ?? anyType;
+    const propertyType = receiverType.exports.get(propertyName);
+    if (propertyType !== undefined) {
+      return propertyType;
+    }
+    state.diagnostics.push(createDiagnostic(2339, propertyName, displayType(receiverType)));
+    return anyType;
   }
   if (receiverType.kind === "namespace") {
-    return receiverType.exports.get(propertyName) ?? anyType;
+    const propertyType = receiverType.exports.get(propertyName);
+    if (propertyType !== undefined) {
+      return propertyType;
+    }
+    state.diagnostics.push(createDiagnostic(2339, propertyName, displayType(receiverType)));
+    return anyType;
   }
   if (receiverType.kind === "number" && propertyName === "toFixed") {
     return { kind: "function", typeParameters: [], parameters: [], returnType: stringType };
@@ -2064,6 +2217,30 @@ function setBindingNameType(name: BindingName, type: CheckedType, environment: T
       setBindingElementType(element, type, environment);
     }
   }
+}
+
+function checkStrictModeBindingName(name: BindingName, state: CheckState, ambient: boolean): void {
+  if (ambient || !state.strictMode) {
+    return;
+  }
+  if (isIdentifier(name)) {
+    checkStrictModeIdentifier(name.text, state, ambient);
+    return;
+  }
+  if (isObjectBindingPattern(name) || isArrayBindingPattern(name)) {
+    for (const element of name.elements) {
+      if (element.name !== undefined) {
+        checkStrictModeBindingName(element.name, state, ambient);
+      }
+    }
+  }
+}
+
+function checkStrictModeIdentifier(name: string, state: CheckState, ambient: boolean): void {
+  if (ambient || !state.strictMode || (name !== "arguments" && name !== "eval")) {
+    return;
+  }
+  state.diagnostics.push(createDiagnostic(state.strictModeReason === "module" ? 1215 : 1100, name));
 }
 
 function setBindingElementType(element: BindingElement, type: CheckedType, environment: TypeEnvironment): void {
@@ -2373,8 +2550,8 @@ function resolveEntityNamespace(typeName: EntityName, environment: TypeEnvironme
   return undefined;
 }
 
-function emptyCheckState(): CheckState {
-  return { diagnostics: [], options: {} };
+function emptyCheckState(options: CompilerOptions = {}): CheckState {
+  return { diagnostics: [], options, strictMode: false, strictModeReason: undefined };
 }
 
 function typeLiteralType(members: readonly TypeElement[], state: CheckState, environment: TypeEnvironment): CheckedType {

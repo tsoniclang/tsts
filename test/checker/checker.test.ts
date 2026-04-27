@@ -608,4 +608,15 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2304]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find name 'b'."]);
   });
+
+  it("reports strict-mode eval and arguments bindings from compiler options", () => {
+    const sourceFile = parseSourceFile("function f() { var arguments = []; const eval = 1; }");
+    const result = checkSourceFile(sourceFile, { alwaysStrict: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1100, 1100]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Invalid use of 'arguments' in strict mode.",
+      "Invalid use of 'eval' in strict mode.",
+    ]);
+  });
 });

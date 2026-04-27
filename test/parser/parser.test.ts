@@ -612,4 +612,14 @@ describe("TS-Go parser groundwork", () => {
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1440, 1068, 1005, 1005, 1128]);
   });
+
+  it("treats a line break as an automatic statement terminator", () => {
+    const result = parseSourceFileWithDiagnostics([
+      "\"use strict\"",
+      "function f() { return 1; }",
+    ].join("\n"));
+
+    assert.equal(result.diagnostics.length, 0);
+    assert.deepEqual(result.sourceFile.statements.map(statement => statement.kind), [Kind.ExpressionStatement, Kind.FunctionDeclaration]);
+  });
 });

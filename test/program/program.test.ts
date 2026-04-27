@@ -232,4 +232,36 @@ describe("program groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
     assert.equal(outputs.size, 0);
   });
+
+  it("uses ambient declaration-file exports for synthetic default imports", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "import { default as pkg } from \"./pkg\"; pkg.foo();"],
+      ["src/pkg.d.ts", "export function foo(): void;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/index.ts"], { module: "system" }, host);
+
+    assert.equal(program.diagnostics.length, 0);
+    assert.deepEqual(emitProgram(program, host).diagnostics, []);
+  });
+
+  it("diagnoses default imports when synthetic defaults are explicitly disabled", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "import Foo from \"./pkg\";"],
+      ["src/pkg.ts", "export class Foo { member: string; }"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/index.ts"], { module: "system", allowSyntheticDefaultImports: false }, host);
+    const diagnostics = emitProgram(program, host).diagnostics;
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [1192, 2564]);
+  });
 });
