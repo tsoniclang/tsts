@@ -684,10 +684,10 @@ function ambientModuleExports(statements: readonly Statement[], environment: Typ
   return { exports };
 }
 
-function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean): void {
+function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, reportAmbientStatementDiagnostic = true): void {
   prebindStatementDeclarations(statements, state, environment, ambient);
   checkFunctionDeclarationOverloads(statements, state, ambient);
-  if (ambient && statements.some(isStatementDisallowedInAmbientContext)) {
+  if (ambient && reportAmbientStatementDiagnostic && statements.some(isStatementDisallowedInAmbientContext)) {
     state.diagnostics.push(createDiagnostic(1036));
   }
   const statementListHasExportedElements = statements.some(statement => isExportedElement(statement));
@@ -787,7 +787,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
       if (clause.kind === Kind.CaseClause) {
         inferExpression(clause.expression, state, environment);
       }
-      checkStatements(clause.statements, state, new Map(environment), expectedReturnType, ambient);
+      checkStatements(clause.statements, state, new Map(environment), expectedReturnType, ambient, false);
     }
     return;
   }
@@ -1853,6 +1853,19 @@ function literalExpressionType(expression: Expression): CheckedType | undefined 
   return undefined;
 }
 
+function literalExpressionNarrowType(expression: Expression): CheckedType | undefined {
+  if (isStringLiteral(expression) || isNoSubstitutionTemplateLiteral(expression)) {
+    return { kind: "stringLiteral", value: expression.text };
+  }
+  if (isNumericLiteral(expression)) {
+    return { kind: "numberLiteral", value: expression.text };
+  }
+  if (isKeywordExpression(expression) && (expression.kind === Kind.TrueKeyword || expression.kind === Kind.FalseKeyword)) {
+    return { kind: "booleanLiteral", value: expression.kind === Kind.TrueKeyword };
+  }
+  return undefined;
+}
+
 function getterBodyReturnType(body: Block): CheckedType | undefined {
   for (const statement of body.statements) {
     if (isReturnStatement(statement) && statement.expression !== undefined) {
@@ -2504,7 +2517,7 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
   }
 }
 
-function inferFunctionExpression(functionExpression: FunctionExpression, state: CheckState, environment: TypeEnvironment, contextualParameterTypes: readonly CheckedType[] = [], contextualReturnType?: CheckedType): CheckedType {
+function inferFunctionExpression(functionExpression: FunctionExpression, state: CheckState, environment: TypeEnvironment, contextualParameterTypes: readonly CheckedType[] = [], contextualReturnType?: CheckedType): CheckedFunctionType {
   const functionEnvironment = createFunctionEnvironment(environment);
   const typeParameters = effectiveTypeParameterNames(functionExpression.typeParameters, functionExpression);
   addTypeParametersToEnvironment(typeParameters, functionEnvironment);
@@ -2728,7 +2741,8 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   }
   if (isSpreadElement(expression)) {
     const spreadType = inferExpression(expression.expression, state, environment);
-    return checkIterationInputType(spreadType, state, "spread") ? unresolvedType : spreadType;
+    const iterationType = literalExpressionNarrowType(expression.expression) ?? spreadType;
+    return checkIterationInputType(iterationType, state, "spread") ? unresolvedType : spreadType;
   }
   if (isAwaitExpression(expression)) {
     inferExpression(expression.expression, state, environment);
@@ -2845,6 +2859,18 @@ function inferExpression(expression: Expression, state: CheckState, environment:
         }
       }
     }
+    const functionExpressionCallee = callExpressionFunctionExpressionCallee(expression.expression);
+    if (functionExpressionCallee !== undefined) {
+      const argumentTypes = expression.arguments.map(argument => inferExpression(argument, state, environment));
+      const calleeFunction = inferFunctionExpression(
+        functionExpressionCallee,
+        state,
+        environment,
+        contextualParameterTypesFromCallArguments(functionExpressionCallee.parameters, argumentTypes),
+      );
+      checkCallArguments(argumentTypes, calleeFunction, state);
+      return calleeFunction.returnType.kind === "typePredicate" ? booleanType : calleeFunction.returnType;
+    }
     const calleeType = inferExpression(expression.expression, state, environment);
     if (calleeType.kind === "intrinsicFunction") {
       return inferIntrinsicCall(expression, calleeType, state, environment);
@@ -2892,6 +2918,30 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return anyType;
   }
   return unresolvedType;
+}
+
+function callExpressionFunctionExpressionCallee(expression: Expression): FunctionExpression | undefined {
+  if (isParenthesizedExpression(expression)) {
+    return callExpressionFunctionExpressionCallee(expression.expression);
+  }
+  return isFunctionExpression(expression) ? expression : undefined;
+}
+
+function contextualParameterTypesFromCallArguments(parameters: readonly ParameterDeclaration[], argumentTypes: readonly CheckedType[]): readonly CheckedType[] {
+  const contextualParameterTypes: CheckedType[] = [];
+  const restIndex = parameters.findIndex(parameter => parameter.dotDotDotToken !== undefined);
+  const fixedParameterCount = restIndex === -1 ? parameters.length : restIndex;
+  for (let index = 0; index < fixedParameterCount; index += 1) {
+    const argumentType = argumentTypes[index];
+    if (argumentType !== undefined) {
+      contextualParameterTypes[index] = argumentType;
+    }
+  }
+  if (restIndex !== -1) {
+    const restTypes = argumentTypes.slice(restIndex);
+    contextualParameterTypes[restIndex] = restTypes.length === 0 ? { kind: "array", elementType: anyType } : { kind: "array", elementType: unionType(restTypes) };
+  }
+  return contextualParameterTypes;
 }
 
 function inferJSDocAnnotatedExpression(expression: Expression, state: CheckState, environment: TypeEnvironment): void {
@@ -3846,7 +3896,7 @@ function checkIterationInputType(type: CheckedType, state: CheckState, use: "for
   if (normalized.kind === "array" || normalized.kind === "readonlyArray") {
     return false;
   }
-  if (normalized.kind === "string") {
+  if (normalized.kind === "string" || normalized.kind === "stringLiteral") {
     if (use === "spread" && !targetSupportsUplevelIteration(state.options.target) && state.options.downlevelIteration !== true) {
       state.diagnostics.push(createDiagnostic(2802, displayType(normalized)));
       return true;

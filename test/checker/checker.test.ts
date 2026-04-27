@@ -1026,6 +1026,7 @@ describe("checker groundwork", () => {
       "  return;",
       "  with ({}) { }",
       "  label: var item;",
+      "  switch (item) { case 1: break; default: break; }",
       "}",
     ].join("\n"));
     const result = checkSourceFile(sourceFile, { alwaysStrict: true });
