@@ -20,6 +20,7 @@ import {
   isClassStaticBlockDeclaration,
   isComputedPropertyName,
   isContinueStatement,
+  isConditionalTypeNode,
   isConditionalExpression,
   isConstructorDeclaration,
   isConstructorTypeNode,
@@ -52,11 +53,18 @@ import {
   isKeywordTypeNode,
   isIndexSignatureDeclaration,
   isIndexedAccessTypeNode,
+  isInferTypeNode,
   isJSDoc,
   isJSDocParameterTag,
   isJSDocReturnTag,
   isJSDocTemplateTag,
+  isJSDocAllType,
+  isJSDocNonNullableType,
+  isJSDocNullableType,
+  isJSDocOptionalType,
+  isJSDocTypeExpression,
   isJSDocTypeTag,
+  isJSDocVariadicType,
   isJsxElement,
   isJsxExpression,
   isJsxFragment,
@@ -248,13 +256,14 @@ interface CheckState {
 
 type TypeEnvironment = Map<string, CheckedType>;
 
-type UnusedDeclarationKind = "local" | "parameter" | "type";
+type UnusedDeclarationKind = "local" | "parameter" | "type" | "typeParameter";
 
 interface UnusedDeclarationEntry {
   readonly name: string;
   readonly node: Node;
   readonly kind: UnusedDeclarationKind;
   readonly exempt?: boolean;
+  readonly mergeKey?: string;
   group?: UnusedDeclarationGroup;
   used: boolean;
 }
@@ -266,7 +275,7 @@ interface UnusedDeclarationTracker {
 }
 
 interface UnusedDeclarationGroup {
-  readonly kind: "import" | "objectBinding" | "variableDeclarationList";
+  readonly kind: "import" | "objectBinding" | "typeParameterList" | "variableDeclarationList";
   readonly node: Node;
   readonly entries: UnusedDeclarationEntry[];
 }
@@ -314,8 +323,8 @@ function copyEnvironmentUnusedDeclarations(source: TypeEnvironment, target: Type
   }
 }
 
-function registerUnusedDeclaration(name: string, node: Node, kind: UnusedDeclarationKind, state: CheckState, environment: TypeEnvironment, exempt = false): UnusedDeclarationEntry | undefined {
-  const entry = registerUnusedDeclarationEntry(name, node, kind, state, exempt);
+function registerUnusedDeclaration(name: string, node: Node, kind: UnusedDeclarationKind, state: CheckState, environment: TypeEnvironment, exempt = false, mergeKey?: string): UnusedDeclarationEntry | undefined {
+  const entry = registerUnusedDeclarationEntry(name, node, kind, state, exempt, mergeKey);
   if (entry === undefined) {
     return undefined;
   }
@@ -328,12 +337,12 @@ function registerUnusedDeclaration(name: string, node: Node, kind: UnusedDeclara
   return entry;
 }
 
-function registerUnusedDeclarationEntry(name: string, node: Node, kind: UnusedDeclarationKind, state: CheckState, exempt = false): UnusedDeclarationEntry | undefined {
+function registerUnusedDeclarationEntry(name: string, node: Node, kind: UnusedDeclarationKind, state: CheckState, exempt = false, mergeKey?: string): UnusedDeclarationEntry | undefined {
   if (!shouldTrackUnusedDeclaration(kind, state)) {
     return undefined;
   }
   const existingEntry = state.unusedDeclarations.nodes.get(node);
-  const entry: UnusedDeclarationEntry = existingEntry ?? { name, node, kind, exempt, used: false };
+  const entry: UnusedDeclarationEntry = existingEntry ?? { name, node, kind, exempt, ...(mergeKey === undefined ? {} : { mergeKey }), used: false };
   if (existingEntry === undefined) {
     state.unusedDeclarations.nodes.set(node, entry);
     state.unusedDeclarations.entries.push(entry);
@@ -393,6 +402,9 @@ function bindingNameIsUnusedExempt(name: Identifier, node: Node, kind: UnusedDec
   if (kind === "parameter") {
     return name.text.startsWith("_") && !objectBindingElementUsesShorthandName(node);
   }
+  if (kind === "typeParameter") {
+    return name.text.startsWith("_");
+  }
   if (kind === "local") {
     return name.text === "_" && forInOrOfDeclarationNameIs(node, name)
       || name.text === "_" && isVariableDeclaration(node)
@@ -434,7 +446,7 @@ function isThisParameterDeclaration(parameter: ParameterDeclaration): boolean {
 }
 
 function shouldTrackUnusedDeclaration(kind: UnusedDeclarationKind, state: CheckState): boolean {
-  if (kind === "parameter") {
+  if (kind === "parameter" || kind === "typeParameter") {
     return state.options.noUnusedParameters === true;
   }
   return state.options.noUnusedLocals === true && (state.externalModule || state.localScopeDepth > 0);
@@ -461,6 +473,7 @@ function markClassMemberUsed(name: string, state: CheckState): void {
 
 function reportUnusedDeclarations(state: CheckState): void {
   const suppressedEntries = new Set<UnusedDeclarationEntry>();
+  suppressMergedTypeParameterEntries(state, suppressedEntries);
   for (const group of state.unusedDeclarations.groups) {
     if (group.kind !== "variableDeclarationList") {
       continue;
@@ -494,6 +507,13 @@ function reportUnusedDeclarations(state: CheckState): void {
       for (const entry of group.entries) {
         suppressedEntries.add(entry);
       }
+      continue;
+    }
+    if (group.kind === "typeParameterList" && group.entries.length > 1) {
+      state.diagnostics.push(createDiagnostic(6205));
+      for (const entry of group.entries) {
+        suppressedEntries.add(entry);
+      }
     }
   }
   for (const entry of state.unusedDeclarations.entries) {
@@ -503,6 +523,35 @@ function reportUnusedDeclarations(state: CheckState): void {
     state.diagnostics.push(entry.kind === "type"
       ? createDiagnostic(6196, entry.name)
       : createDiagnostic(6133, entry.name));
+  }
+}
+
+function suppressMergedTypeParameterEntries(state: CheckState, suppressedEntries: Set<UnusedDeclarationEntry>): void {
+  const entriesByMergeKey = new Map<string, UnusedDeclarationEntry[]>();
+  for (const entry of state.unusedDeclarations.entries) {
+    if (entry.kind !== "typeParameter" || entry.mergeKey === undefined) {
+      continue;
+    }
+    const entries = entriesByMergeKey.get(entry.mergeKey) ?? [];
+    entries.push(entry);
+    entriesByMergeKey.set(entry.mergeKey, entries);
+  }
+  for (const entries of entriesByMergeKey.values()) {
+    if (entries.length <= 1) {
+      continue;
+    }
+    const representative = entries.find(entry => entry.exempt !== true) ?? entries[0]!;
+    if (entries.some(entry => entry.used || entry.exempt === true)) {
+      for (const entry of entries) {
+        suppressedEntries.add(entry);
+      }
+      continue;
+    }
+    for (const entry of entries) {
+      if (entry !== representative) {
+        suppressedEntries.add(entry);
+      }
+    }
   }
 }
 
@@ -534,6 +583,10 @@ function removeUnusedDeclarationGroup(group: UnusedDeclarationGroup, state: Chec
 
 function enterUnusedDeclaration(state: CheckState, entry: UnusedDeclarationEntry | undefined): CheckState {
   return entry === undefined ? state : { ...state, activeUnusedDeclarations: new Set([...state.activeUnusedDeclarations, entry]) };
+}
+
+function stateWithoutReportedDiagnostics(state: CheckState | undefined): CheckState | undefined {
+  return state === undefined ? undefined : { ...state, diagnostics: [] };
 }
 
 function setEnvironmentBindingReadonly(environment: TypeEnvironment, name: string, readonly: boolean): void {
@@ -2001,8 +2054,7 @@ function bindTypeAliasDeclaration(statement: TypeAliasDeclaration, state: CheckS
   const unusedEntry = declarationIsExported(statement) ? undefined : registerUnusedDeclaration(statement.name.text, statement, "type", state, environment);
   const aliasState = enterUnusedDeclaration(state, unusedEntry);
   const aliasEnvironment = cloneTypeEnvironment(environment);
-  const typeParameters = statement.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
-  addTypeParametersToEnvironment(typeParameters, aliasEnvironment);
+  const typeParameters = addTypeParameterDeclarationsToEnvironment(statement.typeParameters ?? [], aliasEnvironment, aliasState);
   addTypeParameterConstraintsToEnvironment(statement.typeParameters, aliasEnvironment, aliasState);
   environment.set(statement.name.text, {
     kind: "typeAlias",
@@ -2880,8 +2932,15 @@ function classConstructorTypeDetailsFromDeclaration(classDeclaration: ClassLikeD
   readonly classMembers: ClassMemberNames;
 } {
   const classEnvironment = cloneTypeEnvironment(environment);
-  const typeParameters = classDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
-  addTypeParametersToEnvironment(typeParameters, classEnvironment);
+  const className = classDeclaration.name?.text;
+  const typeParameterDeclarations = effectiveTypeParameterDeclarations(classDeclaration.typeParameters, classDeclaration);
+  const typeParameters = addTypeParameterDeclarationsToEnvironment(
+    typeParameterDeclarations,
+    classEnvironment,
+    state,
+    className === undefined ? undefined : { declarationName: className, mergeKeyPrefix: `type:${className}`, skipWhenMergedInterfaceExists: true },
+  );
+  addJSDocTypeParameterGroups(classDeclaration, state);
   addTypeParameterConstraintsToEnvironment(classDeclaration.typeParameters, classEnvironment, state);
   const classMembers = collectClassMemberNames(classDeclaration, inheritedMembers, classEnvironment, state.options);
   const classType: Extract<CheckedType, { readonly kind: "classConstructor" }> = {
@@ -3593,7 +3652,10 @@ function checkInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, s
   }
   bindInterfaceDeclaration(interfaceDeclaration, state, environment);
   const interfaceEnvironment = cloneTypeEnvironment(environment);
-  addTypeParametersToEnvironment(interfaceDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], interfaceEnvironment);
+  addTypeParameterDeclarationsToEnvironment(interfaceDeclaration.typeParameters ?? [], interfaceEnvironment, state, {
+    declarationName: interfaceDeclaration.name.text,
+    mergeKeyPrefix: `type:${interfaceDeclaration.name.text}`,
+  });
   addTypeParameterConstraintsToEnvironment(interfaceDeclaration.typeParameters, interfaceEnvironment, state);
   checkTypeElements(interfaceDeclaration.members, state, interfaceEnvironment, true);
 }
@@ -3602,7 +3664,10 @@ function bindInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, st
   const unusedEntry = declarationIsExported(interfaceDeclaration) ? undefined : registerUnusedDeclaration(interfaceDeclaration.name.text, interfaceDeclaration, "type", state, environment);
   const interfaceState = enterUnusedDeclaration(state, unusedEntry);
   const interfaceEnvironment = cloneTypeEnvironment(environment);
-  addTypeParametersToEnvironment(interfaceDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], interfaceEnvironment);
+  addTypeParameterDeclarationsToEnvironment(interfaceDeclaration.typeParameters ?? [], interfaceEnvironment, interfaceState, {
+    declarationName: interfaceDeclaration.name.text,
+    mergeKeyPrefix: `type:${interfaceDeclaration.name.text}`,
+  });
   addTypeParameterConstraintsToEnvironment(interfaceDeclaration.typeParameters, interfaceEnvironment, interfaceState);
   const inheritedInterfaces = inheritedInterfaceMembers(interfaceDeclaration, environment, interfaceState);
   const members = collectInterfaceMembers(interfaceDeclaration, inheritedInterfaces, interfaceState, interfaceEnvironment);
@@ -3745,8 +3810,7 @@ function collectInterfaceMembers(interfaceDeclaration: InterfaceDeclaration, inh
 
 function signatureDeclarationType(signature: Pick<MethodSignatureDeclaration, "typeParameters" | "parameters" | "type">, environment: TypeEnvironment, state: CheckState, reportDiagnostics = true, construct = false): CheckedFunctionType {
   const signatureEnvironment = cloneTypeEnvironment(environment);
-  const typeParameters = signature.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
-  addTypeParametersToEnvironment(typeParameters, signatureEnvironment);
+  const typeParameters = addTypeParameterDeclarationsToEnvironment(signature.typeParameters ?? [], signatureEnvironment, state);
   const diagnosticState = reportDiagnostics ? state : undefined;
   addTypeParameterConstraintsToEnvironment(signature.typeParameters, signatureEnvironment, diagnosticState);
   const returnType = signature.type === undefined ? anyType : bindTypePredicateParameterIndex(typeFromTypeNode(signature.type, signatureEnvironment, diagnosticState), signature.parameters);
@@ -3891,7 +3955,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
       memberEnvironment.set("this", thisClassType(classMembers, isConstructorDeclaration(member) ? "constructor" : "method"));
     }
     if (isMethodDeclaration(member)) {
-      addTypeParametersToEnvironment(member.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], memberEnvironment);
+      addTypeParameterDeclarationsToEnvironment(member.typeParameters ?? [], memberEnvironment, state);
       addTypeParameterConstraintsToEnvironment(member.typeParameters, memberEnvironment, state);
     }
     seedUnqualifiedClassMemberDiagnostics(memberEnvironment, classMembers, isMethodDeclaration(member) && hasModifier(member, Kind.StaticKeyword));
@@ -4131,7 +4195,7 @@ function checkTypeElements(members: readonly TypeElement[], state: CheckState, e
     }
     if (isCallSignatureDeclaration(member) || isConstructSignatureDeclaration(member)) {
       const signatureEnvironment = cloneTypeEnvironment(environment);
-      addTypeParametersToEnvironment(member.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], signatureEnvironment);
+      addTypeParameterDeclarationsToEnvironment(member.typeParameters ?? [], signatureEnvironment, state);
       addTypeParameterConstraintsToEnvironment(member.typeParameters, signatureEnvironment, state);
       checkSignatureParameters(member.parameters, state, signatureEnvironment, true);
       if (member.type !== undefined) {
@@ -4146,7 +4210,7 @@ function checkTypeElements(members: readonly TypeElement[], state: CheckState, e
     }
     if (isMethodSignatureDeclaration(member)) {
       const signatureEnvironment = cloneTypeEnvironment(environment);
-      addTypeParametersToEnvironment(member.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], signatureEnvironment);
+      addTypeParameterDeclarationsToEnvironment(member.typeParameters ?? [], signatureEnvironment, state);
       addTypeParameterConstraintsToEnvironment(member.typeParameters, signatureEnvironment, state);
       checkSignatureParameters(member.parameters, state, signatureEnvironment, true);
       if (member.type !== undefined) {
@@ -4292,6 +4356,128 @@ function addTypeParametersToEnvironment(typeParameters: readonly string[], envir
   }
 }
 
+interface TypeParameterOwnerInfo {
+  readonly declarationName: string;
+  readonly mergeKeyPrefix?: string;
+  readonly skipWhenMergedClassExists?: boolean;
+  readonly skipWhenMergedInterfaceExists?: boolean;
+}
+
+function addTypeParameterDeclarationsToEnvironment(typeParameters: readonly TypeParameterDeclaration[], environment: TypeEnvironment, state?: CheckState, ownerInfo?: TypeParameterOwnerInfo): readonly string[] {
+  const names = typeParameters.map(typeParameter => typeParameter.name.text);
+  addTypeParametersToEnvironment(names, environment);
+  if (state !== undefined
+    && (ownerInfo?.skipWhenMergedClassExists !== true || !mergedDeclarationHasClassValue(environment.get(ownerInfo.declarationName)))
+    && (ownerInfo?.skipWhenMergedInterfaceExists !== true || !mergedDeclarationHasInterfaceType(environment.get(ownerInfo.declarationName)))) {
+    for (let index = 0; index < typeParameters.length; index += 1) {
+      const typeParameter = typeParameters[index]!;
+      const mergeKey = ownerInfo?.mergeKeyPrefix === undefined ? undefined : `${ownerInfo.mergeKeyPrefix}:${index}`;
+      const entry = registerUnusedDeclaration(typeParameter.name.text, typeParameter, "typeParameter", state, environment, typeParameter.name.text.startsWith("_"), mergeKey);
+      if (entry !== undefined && ownerInfo !== undefined && mergedDeclarationReferencesTypeParameter(environment.get(ownerInfo.declarationName), typeParameter.name.text)) {
+        entry.used = true;
+      }
+    }
+  }
+  return names;
+}
+
+function mergedDeclarationHasClassValue(type: CheckedType | undefined): boolean {
+  const value = type === undefined ? undefined : valueMeaning(type);
+  return value?.kind === "classConstructor";
+}
+
+function mergedDeclarationHasInterfaceType(type: CheckedType | undefined): boolean {
+  return interfaceMeaning(type) !== undefined;
+}
+
+function mergedDeclarationReferencesTypeParameter(type: CheckedType | undefined, name: string): boolean {
+  if (type === undefined) {
+    return false;
+  }
+  return checkedTypeReferencesTypeParameter(type, name, new Set());
+}
+
+function checkedTypeReferencesTypeParameter(type: CheckedType, name: string, seen: Set<CheckedType>): boolean {
+  if (seen.has(type)) {
+    return false;
+  }
+  seen.add(type);
+  switch (type.kind) {
+    case "typeParameter":
+      return type.name === name || (type.constraint !== undefined && checkedTypeReferencesTypeParameter(type.constraint, name, seen));
+    case "array":
+    case "readonlyArray":
+    case "arrayLike":
+    case "arrayIterator":
+    case "iterable":
+    case "set":
+      return checkedTypeReferencesTypeParameter(type.elementType, name, seen);
+    case "nonNullable":
+    case "typeAliasInstance":
+      return checkedTypeReferencesTypeParameter(type.target, name, seen);
+    case "typeAlias":
+      return checkedTypeReferencesTypeParameter(type.target, name, seen);
+    case "union":
+    case "intersection":
+      return type.types.some(member => checkedTypeReferencesTypeParameter(member, name, seen));
+    case "tuple":
+      return type.elements.some(element => checkedTypeReferencesTypeParameter(element.type, name, seen))
+        || (type.restElementType !== undefined && checkedTypeReferencesTypeParameter(type.restElementType, name, seen));
+    case "record":
+      return checkedTypeReferencesTypeParameter(type.keyType, name, seen)
+        || checkedTypeReferencesTypeParameter(type.valueType, name, seen)
+        || (type.mappedArraySource !== undefined && checkedTypeReferencesTypeParameter(type.mappedArraySource, name, seen));
+    case "function":
+      return type.parameters.some(parameter => checkedTypeReferencesTypeParameter(parameter, name, seen))
+        || checkedTypeReferencesTypeParameter(type.returnType, name, seen)
+        || type.overloads?.some(overload => checkedTypeReferencesTypeParameter(overload, name, seen)) === true;
+    case "functionDeclaration":
+      return checkedTypeReferencesTypeParameter(type.type, name, seen);
+    case "interface":
+      return interfaceMembersReferenceTypeParameter(type.members, name, seen)
+        || type.typeArguments?.some(typeArgument => checkedTypeReferencesTypeParameter(typeArgument, name, seen)) === true;
+    case "classConstructor":
+    case "classInstance":
+      return type.typeArguments.some(typeArgument => checkedTypeReferencesTypeParameter(typeArgument, name, seen))
+        || classMembersReferenceTypeParameter(type.members, name, seen)
+        || (type.arrayBaseElementType !== undefined && checkedTypeReferencesTypeParameter(type.arrayBaseElementType, name, seen))
+        || (type.kind === "classConstructor" && (type.constructorParameters.some(parameter => checkedTypeReferencesTypeParameter(parameter, name, seen))
+          || (type.baseType !== undefined && checkedTypeReferencesTypeParameter(type.baseType, name, seen))));
+    case "object":
+      return [...type.properties.values()].some(property => checkedTypeReferencesTypeParameter(property, name, seen))
+        || type.callSignatures?.some(signature => checkedTypeReferencesTypeParameter(signature, name, seen)) === true
+        || (type.stringIndexType !== undefined && checkedTypeReferencesTypeParameter(type.stringIndexType, name, seen))
+        || (type.numberIndexType !== undefined && checkedTypeReferencesTypeParameter(type.numberIndexType, name, seen));
+    case "namespace":
+      return [...type.exports.values()].some(exported => checkedTypeReferencesTypeParameter(exported, name, seen));
+    case "namespaceAndType":
+      return checkedTypeReferencesTypeParameter(type.namespace, name, seen) || checkedTypeReferencesTypeParameter(type.type, name, seen);
+    case "valueAndType":
+      return checkedTypeReferencesTypeParameter(type.value, name, seen) || checkedTypeReferencesTypeParameter(type.type, name, seen);
+    case "valueOnly":
+    case "accessorProperty":
+    case "unassignedVariable":
+      return checkedTypeReferencesTypeParameter(type.type, name, seen);
+    case "builtinConstructor":
+      return checkedTypeReferencesTypeParameter(type.instanceType, name, seen)
+        || type.constructorParameters.some(parameter => checkedTypeReferencesTypeParameter(parameter, name, seen))
+        || [...type.staticProperties.values()].some(property => checkedTypeReferencesTypeParameter(property, name, seen));
+    default:
+      return false;
+  }
+}
+
+function interfaceMembersReferenceTypeParameter(members: InterfaceMembers, name: string, seen: Set<CheckedType>): boolean {
+  return [...members.properties.values()].some(property => checkedTypeReferencesTypeParameter(property, name, seen))
+    || members.callSignatures.some(signature => checkedTypeReferencesTypeParameter(signature, name, seen))
+    || (members.stringIndexType !== undefined && checkedTypeReferencesTypeParameter(members.stringIndexType, name, seen))
+    || (members.numberIndexType !== undefined && checkedTypeReferencesTypeParameter(members.numberIndexType, name, seen));
+}
+
+function classMembersReferenceTypeParameter(members: ClassMemberNames, name: string, seen: Set<CheckedType>): boolean {
+  return [...members.propertyTypes.values()].some(property => checkedTypeReferencesTypeParameter(property, name, seen));
+}
+
 function removeUnusedDeclarationBinding(environment: TypeEnvironment, name: string): void {
   environmentUnusedDeclarations.get(environment)?.delete(name);
 }
@@ -4301,32 +4487,72 @@ function addTypeParameterConstraintsToEnvironment(typeParameters: NodeArray<Type
     return;
   }
   for (const typeParameter of typeParameters) {
-    if (typeParameter.constraint === undefined) {
-      continue;
-    }
-    environment.set(typeParameter.name.text, {
-      kind: "typeParameter",
-      name: typeParameter.name.text,
-      constraint: typeFromTypeNode(typeParameter.constraint, environment, state),
-    });
+    addTypeParameterConstraintToEnvironment(typeParameter, environment, state);
   }
+}
+
+function addTypeParameterConstraintToEnvironment(typeParameter: TypeParameterDeclaration, environment: TypeEnvironment, state?: CheckState): void {
+  if (typeParameter.constraint === undefined) {
+    return;
+  }
+  const unusedEntry = state?.unusedDeclarations.nodes.get(typeParameter);
+  const constraintState = state === undefined || unusedEntry === undefined ? state : enterUnusedDeclaration(state, unusedEntry);
+  environment.set(typeParameter.name.text, {
+    kind: "typeParameter",
+    name: typeParameter.name.text,
+    constraint: typeFromTypeNode(typeParameter.constraint, environment, constraintState),
+  });
 }
 
 function effectiveTypeParameterNames(explicitTypeParameters: NodeArray<TypeParameterDeclaration> | undefined, jsDocOwner: Node): readonly string[] {
-  return uniqueInOrder([
-    ...(explicitTypeParameters?.map(typeParameter => typeParameter.name.text) ?? []),
-    ...jsDocTypeParameterNames(jsDocOwner),
-  ]);
+  return effectiveTypeParameterDeclarations(explicitTypeParameters, jsDocOwner).map(typeParameter => typeParameter.name.text);
+}
+
+function effectiveTypeParameterDeclarations(explicitTypeParameters: NodeArray<TypeParameterDeclaration> | undefined, jsDocOwner: Node): readonly TypeParameterDeclaration[] {
+  const seen = new Set<string>();
+  const uniqueTypeParameters: TypeParameterDeclaration[] = [];
+  for (const typeParameter of [
+    ...(explicitTypeParameters ?? []),
+    ...jsDocTypeParameterDeclarations(jsDocOwner),
+  ]) {
+    if (seen.has(typeParameter.name.text)) {
+      continue;
+    }
+    seen.add(typeParameter.name.text);
+    uniqueTypeParameters.push(typeParameter);
+  }
+  return uniqueTypeParameters;
+}
+
+function jsDocTypeParameterDeclarations(node: Node): readonly TypeParameterDeclaration[] {
+  const typeParameters: TypeParameterDeclaration[] = [];
+  for (const tag of jsDocTags(node)) {
+    if (isJSDocTemplateTag(tag)) {
+      typeParameters.push(...tag.typeParameters);
+    }
+  }
+  return typeParameters;
 }
 
 function jsDocTypeParameterNames(node: Node): readonly string[] {
-  const names: string[] = [];
+  return uniqueInOrder([
+    ...jsDocTypeParameterDeclarations(node).map(typeParameter => typeParameter.name.text),
+  ]);
+}
+
+function addJSDocTypeParameterGroups(node: Node, state: CheckState): void {
   for (const tag of jsDocTags(node)) {
-    if (isJSDocTemplateTag(tag)) {
-      names.push(...tag.typeParameters.map(typeParameter => typeParameter.name.text));
+    if (!isJSDocTemplateTag(tag) || tag.typeParameters.length < 2 || state.unusedDeclarations.groups.some(group => group.kind === "typeParameterList" && group.node === tag)) {
+      continue;
+    }
+    const group = createUnusedDeclarationGroup("typeParameterList", tag, state);
+    for (const typeParameter of tag.typeParameters) {
+      addUnusedDeclarationToGroup(group, state.unusedDeclarations.nodes.get(typeParameter));
+    }
+    if (group.entries.length < 2) {
+      removeUnusedDeclarationGroup(group, state);
     }
   }
-  return names;
 }
 
 function jsDocParameterTypeMap(node: Node, environment: TypeEnvironment, state: CheckState): ReadonlyMap<string, CheckedType> {
@@ -4392,8 +4618,9 @@ function attachJSDocIfMissing(target: Node, source: Node): void {
 
 function functionDeclarationType(functionDeclaration: FunctionDeclaration, environment: TypeEnvironment, state: CheckState): CheckedFunctionType {
   const functionEnvironment = createFunctionEnvironment(environment);
-  const typeParameters = effectiveTypeParameterNames(functionDeclaration.typeParameters, functionDeclaration);
-  addTypeParametersToEnvironment(typeParameters, functionEnvironment);
+  const typeParameterDeclarations = effectiveTypeParameterDeclarations(functionDeclaration.typeParameters, functionDeclaration);
+  const typeParameters = addTypeParameterDeclarationsToEnvironment(typeParameterDeclarations, functionEnvironment, state);
+  addJSDocTypeParameterGroups(functionDeclaration, state);
   addTypeParameterConstraintsToEnvironment(functionDeclaration.typeParameters, functionEnvironment, state);
   const jsDocParameterTypes = jsDocParameterTypeMap(functionDeclaration, functionEnvironment, state);
   const parameterTypes = functionDeclaration.parameters.map(parameter => parameterTypeFromDeclaration(parameter, functionEnvironment, state, jsDocParameterType(parameter, jsDocParameterTypes)));
@@ -4420,8 +4647,9 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
     checkJavaScriptTypeAnnotation(state);
   }
   const functionEnvironment = createFunctionEnvironment(environment);
-  const typeParameters = effectiveTypeParameterNames(functionDeclaration.typeParameters, functionDeclaration);
-  addTypeParametersToEnvironment(typeParameters, functionEnvironment);
+  const typeParameterDeclarations = effectiveTypeParameterDeclarations(functionDeclaration.typeParameters, functionDeclaration);
+  const typeParameters = addTypeParameterDeclarationsToEnvironment(typeParameterDeclarations, functionEnvironment, state);
+  addJSDocTypeParameterGroups(functionDeclaration, state);
   addTypeParameterConstraintsToEnvironment(functionDeclaration.typeParameters, functionEnvironment, state);
   const jsDocParameterTypes = jsDocParameterTypeMap(functionDeclaration, functionEnvironment, state);
   const parameterTypes = functionDeclaration.parameters.map(parameter => parameterTypeFromDeclaration(parameter, functionEnvironment, state, jsDocParameterType(parameter, jsDocParameterTypes)));
@@ -4537,8 +4765,9 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
     checkJavaScriptTypeAnnotation(state);
   }
   const functionEnvironment = createFunctionEnvironment(environment);
-  const typeParameters = effectiveTypeParameterNames(functionExpression.typeParameters, functionExpression);
-  addTypeParametersToEnvironment(typeParameters, functionEnvironment);
+  const typeParameterDeclarations = effectiveTypeParameterDeclarations(functionExpression.typeParameters, functionExpression);
+  const typeParameters = addTypeParameterDeclarationsToEnvironment(typeParameterDeclarations, functionEnvironment, state);
+  addJSDocTypeParameterGroups(functionExpression, state);
   addTypeParameterConstraintsToEnvironment(functionExpression.typeParameters, functionEnvironment, state);
   const jsDocParameterTypes = jsDocParameterTypeMap(functionExpression, functionEnvironment, state);
   const parameterTypes = functionExpression.parameters.map((parameter, parameterIndex) => parameterTypeFromDeclaration(parameter, functionEnvironment, state, jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[parameterIndex]));
@@ -6427,8 +6656,9 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
   }
   const arrowEnvironment = createFunctionEnvironment(environment);
   suppressImmediateThisDiagnostics(arrowEnvironment);
-  const typeParameters = effectiveTypeParameterNames(arrowFunction.typeParameters, arrowFunction);
-  addTypeParametersToEnvironment(typeParameters, arrowEnvironment);
+  const typeParameterDeclarations = effectiveTypeParameterDeclarations(arrowFunction.typeParameters, arrowFunction);
+  const typeParameters = addTypeParameterDeclarationsToEnvironment(typeParameterDeclarations, arrowEnvironment, state);
+  addJSDocTypeParameterGroups(arrowFunction, state);
   addTypeParameterConstraintsToEnvironment(arrowFunction.typeParameters, arrowEnvironment, state);
   const jsDocParameterTypes = jsDocParameterTypeMap(arrowFunction, arrowEnvironment, state);
   const parameterTypes = arrowFunction.parameters.map((parameter, parameterIndex) => parameterTypeFromDeclaration(parameter, arrowEnvironment, state, jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[parameterIndex]));
@@ -7382,8 +7612,7 @@ function removeUndefinedType(type: CheckedType): CheckedType {
 
 function methodDeclarationType(method: MethodDeclaration, environment: TypeEnvironment, state: CheckState): CheckedType {
   const signatureEnvironment = cloneTypeEnvironment(environment);
-  const typeParameters = method.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
-  addTypeParametersToEnvironment(typeParameters, signatureEnvironment);
+  const typeParameters = addTypeParameterDeclarationsToEnvironment(method.typeParameters ?? [], signatureEnvironment, state);
   addTypeParameterConstraintsToEnvironment(method.typeParameters, signatureEnvironment, state);
   const parameters = method.parameters.map(parameter => parameterTypeFromDeclaration(parameter, signatureEnvironment, state));
   const returnType = method.type === undefined ? methodBodyReturnType(method.body, state.options, signatureEnvironment) : bindTypePredicateParameterIndex(typeFromTypeNode(method.type, signatureEnvironment, state), method.parameters);
@@ -7413,8 +7642,7 @@ function returnExpressionType(expression: Expression, options?: CompilerOptions,
 function checkObjectLiteralMethod(method: MethodDeclaration, state: CheckState, environment: TypeEnvironment, contextualType?: CheckedType): void {
   const methodEnvironment = createFunctionEnvironment(environment);
   seedArgumentsObject(methodEnvironment);
-  const typeParameters = method.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
-  addTypeParametersToEnvironment(typeParameters, methodEnvironment);
+  addTypeParameterDeclarationsToEnvironment(method.typeParameters ?? [], methodEnvironment, state);
   addTypeParameterConstraintsToEnvironment(method.typeParameters, methodEnvironment, state);
   const contextualFunction = callableFunctionType(contextualType);
   checkSignatureParameters(method.parameters, state, methodEnvironment, true, false, contextualFunction?.parameters ?? []);
@@ -7543,13 +7771,28 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
   if (isMappedTypeNode(type)) {
     return mappedType(type, state ?? emptyCheckState(), environment);
   }
+  if (isConditionalTypeNode(type)) {
+    const conditionalEnvironment = cloneTypeEnvironment(environment);
+    const traversalState = stateWithoutReportedDiagnostics(state);
+    addTypeParameterDeclarationsToEnvironment(inferTypeParameterDeclarations(type.extendsType), conditionalEnvironment, traversalState);
+    addRestInferTypeParameterConstraints(type.extendsType, conditionalEnvironment);
+    typeFromTypeNode(type.checkType, environment, traversalState);
+    typeFromTypeNode(type.extendsType, conditionalEnvironment, traversalState);
+    typeFromTypeNode(type.trueType, conditionalEnvironment, traversalState);
+    typeFromTypeNode(type.falseType, environment, traversalState);
+    return anyType;
+  }
+  if (isInferTypeNode(type)) {
+    addTypeParameterDeclarationsToEnvironment([type.typeParameter], environment, state);
+    addTypeParameterConstraintToEnvironment(type.typeParameter, environment, state);
+    return environment.get(type.typeParameter.name.text) ?? { kind: "typeParameter", name: type.typeParameter.name.text };
+  }
   if (isParenthesizedTypeNode(type)) {
     return typeFromTypeNode(type.type, environment, state);
   }
   if (isFunctionTypeNode(type) || isConstructorTypeNode(type)) {
     const signatureEnvironment = cloneTypeEnvironment(environment);
-    const typeParameters = type.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
-    addTypeParametersToEnvironment(typeParameters, signatureEnvironment);
+    const typeParameters = addTypeParameterDeclarationsToEnvironment(type.typeParameters ?? [], signatureEnvironment, state);
     addTypeParameterConstraintsToEnvironment(type.typeParameters, signatureEnvironment, state);
     const parameterTypes = checkSignatureParameters(type.parameters, state ?? emptyCheckState(), signatureEnvironment, true);
     const returnType = type.type === undefined ? unresolvedType : bindTypePredicateParameterIndex(typeFromTypeNode(type.type, signatureEnvironment, state), type.parameters);
@@ -7648,7 +7891,61 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
   if (isImportTypeNode(type)) {
     return anyType;
   }
+  if (isJSDocTypeExpression(type) || isJSDocNonNullableType(type) || isJSDocNullableType(type) || isJSDocOptionalType(type) || isJSDocVariadicType(type)) {
+    return typeFromTypeNode(type.type, environment, state);
+  }
+  if (isJSDocAllType(type)) {
+    return anyType;
+  }
   return anyType;
+}
+
+function inferTypeParameterDeclarations(type: TypeNode): readonly TypeParameterDeclaration[] {
+  const declarations: TypeParameterDeclaration[] = [];
+  collectInferTypeParameterDeclarations(type, declarations, true);
+  return declarations;
+}
+
+function addRestInferTypeParameterConstraints(type: TypeNode, environment: TypeEnvironment): void {
+  for (const typeParameter of restInferTypeParameterDeclarations(type)) {
+    const existingType = environment.get(typeParameter.name.text);
+    if (existingType?.kind === "typeParameter" && existingType.constraint === undefined) {
+      environment.set(typeParameter.name.text, { ...existingType, constraint: { kind: "array", elementType: anyType } });
+    }
+  }
+}
+
+function restInferTypeParameterDeclarations(type: TypeNode): readonly TypeParameterDeclaration[] {
+  const declarations: TypeParameterDeclaration[] = [];
+  collectRestInferTypeParameterDeclarations(type, declarations, true);
+  return declarations;
+}
+
+function collectRestInferTypeParameterDeclarations(node: Node, declarations: TypeParameterDeclaration[], root = false): void {
+  if (!root && isConditionalTypeNode(node)) {
+    return;
+  }
+  if (isParameterDeclaration(node) && node.dotDotDotToken !== undefined && node.type !== undefined) {
+    collectInferTypeParameterDeclarations(node.type, declarations, true);
+    return;
+  }
+  forEachChild(node, child => {
+    collectRestInferTypeParameterDeclarations(child, declarations);
+    return undefined;
+  });
+}
+
+function collectInferTypeParameterDeclarations(node: Node, declarations: TypeParameterDeclaration[], root = false): void {
+  if (!root && isConditionalTypeNode(node)) {
+    return;
+  }
+  if (isInferTypeNode(node)) {
+    declarations.push(node.typeParameter);
+  }
+  forEachChild(node, child => {
+    collectInferTypeParameterDeclarations(child, declarations);
+    return undefined;
+  });
 }
 
 function tupleTypeFromTypeNode(elements: NodeArray<TypeNode>, environment: TypeEnvironment, state?: CheckState): CheckedType {
@@ -8532,9 +8829,29 @@ function checkRestParameterArrayType(parameter: ParameterDeclaration, parameterT
   if (parameter.dotDotDotToken === undefined || parameter.type === undefined || isObjectBindingPattern(parameter.name) || isArrayBindingPattern(parameter.name)) {
     return;
   }
+  if (typeNodeContainsInferType(parameter.type)) {
+    return;
+  }
   if (parameter.questionToken !== undefined || !isRestParameterArrayType(parameterType)) {
     state.diagnostics.push(createDiagnostic(2370));
   }
+}
+
+function typeNodeContainsInferType(type: TypeNode): boolean {
+  let found = false;
+  const visit = (node: Node): undefined => {
+    if (found) {
+      return undefined;
+    }
+    if (isInferTypeNode(node)) {
+      found = true;
+      return undefined;
+    }
+    forEachChild(node, visit);
+    return undefined;
+  };
+  visit(type);
+  return found;
 }
 
 function isRestParameterArrayType(type: CheckedType): boolean {

@@ -705,6 +705,7 @@ export class Parser {
   }
 
   #parseClassDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
+    const jsDoc = this.#consumeJSDocBeforeCurrentToken();
     this.#expect(Kind.ClassKeyword);
     const name = this.#isClassNameStart() ? this.#parseIdentifier() : undefined;
     const typeParameters = this.#parseOptionalTypeParameters();
@@ -715,7 +716,7 @@ export class Parser {
       members.push(this.#parseClassElement());
     }
     this.#expect(Kind.CloseBraceToken);
-    return createClassDeclaration(modifiers, name, typeParameters, heritageClauses, createNodeArray(members));
+    return this.#withJSDoc(createClassDeclaration(modifiers, name, typeParameters, heritageClauses, createNodeArray(members)), jsDoc);
   }
 
   #parseModuleDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
@@ -2246,6 +2247,7 @@ export class Parser {
   }
 
   #parseClassExpression(modifiers: NodeArray<ModifierLike> | undefined = undefined): Expression {
+    const jsDoc = this.#consumeJSDocBeforeCurrentToken();
     this.#expect(Kind.ClassKeyword);
     const name = this.#isClassNameStart() ? this.#parseIdentifier() : undefined;
     const typeParameters = this.#parseOptionalTypeParameters();
@@ -2256,7 +2258,7 @@ export class Parser {
       members.push(this.#parseClassElement());
     }
     this.#expect(Kind.CloseBraceToken);
-    return createClassExpression(modifiers, name, typeParameters, heritageClauses, createNodeArray(members));
+    return this.#withJSDoc(createClassExpression(modifiers, name, typeParameters, heritageClauses, createNodeArray(members)), jsDoc);
   }
 
   #isClassNameStart(): boolean {
