@@ -220,6 +220,8 @@ const binaryPrecedence = new Map<Kind, number>([
   [Kind.GreaterThanEqualsToken, 10],
   [Kind.InstanceOfKeyword, 10],
   [Kind.InKeyword, 10],
+  [Kind.AsKeyword, 10],
+  [Kind.SatisfiesKeyword, 10],
   [Kind.EqualsEqualsToken, 9],
   [Kind.EqualsEqualsEqualsToken, 9],
   [Kind.ExclamationEqualsToken, 9],
@@ -1315,6 +1317,15 @@ export class Parser {
       if (operatorPrecedence <= precedence) {
         break;
       }
+      if (operatorToken.kind === Kind.AsKeyword || operatorToken.kind === Kind.SatisfiesKeyword) {
+        if (this.#lineBreakBeforeCurrentToken()) {
+          break;
+        }
+        this.#advance();
+        const type = this.#parseType();
+        left = operatorToken.kind === Kind.AsKeyword ? createAsExpression(left, type) : createSatisfiesExpression(left, type);
+        continue;
+      }
       this.#advance();
       const right = this.#parseExpression(operatorPrecedence, stopAtInKeyword, assignmentOperatorKinds.has(operatorToken.kind));
       const token = createToken(operatorToken.kind as BinaryOperator);
@@ -1322,12 +1333,6 @@ export class Parser {
         throw new ParseError("Expected binary operator", operatorToken);
       }
       left = createBinaryExpression(undefined, left, undefined, token as BinaryOperatorToken, right);
-    }
-    while (this.#current().kind === Kind.AsKeyword || this.#current().kind === Kind.SatisfiesKeyword) {
-      const operator = this.#current().kind;
-      this.#advance();
-      const type = this.#parseType();
-      left = operator === Kind.AsKeyword ? createAsExpression(left, type) : createSatisfiesExpression(left, type);
     }
     if (precedence === 0 && this.#consumeOptional(Kind.QuestionToken)) {
       const whenTrue = this.#parseExpression();

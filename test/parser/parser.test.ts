@@ -61,6 +61,7 @@ import {
   isRestTypeNode,
   isSetAccessorDeclaration,
   isShorthandPropertyAssignment,
+  isSatisfiesExpression,
   isStringLiteral,
   isTypeAliasDeclaration,
   isTypeAssertion,
@@ -103,6 +104,36 @@ describe("TS-Go parser groundwork", () => {
     if (!isBinaryExpression(statement.expression.right)) throw new Error("unreachable");
     assert.equal(statement.expression.right.operatorToken.kind, Kind.AsteriskToken);
     assert.equal(isNumericLiteral(statement.expression.right.right), true);
+  });
+
+  it("parses assertions and satisfies with relational precedence", () => {
+    const sourceFile = parseSourceFile([
+      "state as any && state;",
+      "total + delta as number;",
+      "value satisfies Shape || fallback;",
+    ].join("\n"));
+
+    const assertionAnd = sourceFile.statements[0]!;
+    if (!isExpressionStatement(assertionAnd) || !isBinaryExpression(assertionAnd.expression)) {
+      throw new Error("Expected assertion logical expression");
+    }
+    assert.equal(assertionAnd.expression.operatorToken.kind, Kind.AmpersandAmpersandToken);
+    assert.equal(isAsExpression(assertionAnd.expression.left), true);
+
+    const additiveAssertion = sourceFile.statements[1]!;
+    if (!isExpressionStatement(additiveAssertion) || !isAsExpression(additiveAssertion.expression)) {
+      throw new Error("Expected additive assertion expression");
+    }
+    assert.equal(isBinaryExpression(additiveAssertion.expression.expression), true);
+    if (!isBinaryExpression(additiveAssertion.expression.expression)) throw new Error("Expected additive expression under assertion");
+    assert.equal(additiveAssertion.expression.expression.operatorToken.kind, Kind.PlusToken);
+
+    const satisfiesOr = sourceFile.statements[2]!;
+    if (!isExpressionStatement(satisfiesOr) || !isBinaryExpression(satisfiesOr.expression)) {
+      throw new Error("Expected satisfies logical expression");
+    }
+    assert.equal(satisfiesOr.expression.operatorToken.kind, Kind.BarBarToken);
+    assert.equal(isSatisfiesExpression(satisfiesOr.expression.left), true);
   });
 
   it("parses comma expressions only in expression grammar contexts", () => {
