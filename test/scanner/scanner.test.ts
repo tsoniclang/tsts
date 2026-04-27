@@ -83,6 +83,19 @@ describe("TS-Go scanner groundwork", () => {
     ]);
   });
 
+  it("keeps less-than before block comments as a standalone token", () => {
+    assert.deepEqual(kindsOf("class C</**doc*/ T> {}"), [
+      Kind.ClassKeyword,
+      Kind.Identifier,
+      Kind.LessThanToken,
+      Kind.Identifier,
+      Kind.GreaterThanToken,
+      Kind.OpenBraceToken,
+      Kind.CloseBraceToken,
+      Kind.EndOfFile,
+    ]);
+  });
+
   it("scans private identifiers, regular expressions, templates, and numeric separators", () => {
     assert.deepEqual(kindsOf("#value"), [
       Kind.PrivateIdentifier,

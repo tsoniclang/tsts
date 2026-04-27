@@ -1078,6 +1078,24 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(secondStatement.expression.text, "any");
   });
 
+  it("parses JSX elements and fragments in TSX files", () => {
+    const result = parseSourceFileWithDiagnostics("const view = <div id=\"x\">hello {name}<span /></div>; const fragment = <>{view}</>;", { fileName: "sample.tsx" });
+
+    assert.deepEqual(result.diagnostics, []);
+    assert.deepEqual(result.sourceFile.statements.map(statement => statement.kind), [Kind.VariableStatement, Kind.VariableStatement]);
+    const firstStatement = result.sourceFile.statements[0]!;
+    const secondStatement = result.sourceFile.statements[1]!;
+    if (firstStatement.kind !== Kind.VariableStatement || secondStatement.kind !== Kind.VariableStatement) throw new Error("Expected variable statements");
+    const element = firstStatement.declarationList.declarations[0]!.initializer;
+    const fragment = secondStatement.declarationList.declarations[0]!.initializer;
+    assert.equal(element?.kind, Kind.JsxElement);
+    assert.equal(fragment?.kind, Kind.JsxFragment);
+    if (element?.kind !== Kind.JsxElement || fragment?.kind !== Kind.JsxFragment) throw new Error("Expected JSX nodes");
+    assert.equal(element.openingElement.tagName.kind, Kind.Identifier);
+    assert.equal(element.children.map(child => child.kind).join(","), [Kind.JsxText, Kind.JsxExpression, Kind.JsxSelfClosingElement].join(","));
+    assert.equal(fragment.children.map(child => child.kind).join(","), String(Kind.JsxExpression));
+  });
+
   it("parses object literal methods and UMD namespace exports", () => {
     const result = parseSourceFileWithDiagnostics([
       "export as namespace Foo;",

@@ -56,6 +56,10 @@ import {
   isJSDocReturnTag,
   isJSDocTemplateTag,
   isJSDocTypeTag,
+  isJsxElement,
+  isJsxExpression,
+  isJsxFragment,
+  isJsxSelfClosingElement,
   isLabeledStatement,
   isLiteralTypeNode,
   isMappedTypeNode,
@@ -135,6 +139,12 @@ import {
   type InterfaceDeclaration,
   type Identifier,
   type IndexSignatureDeclaration,
+  type JsxAttributeLike,
+  type JsxChild,
+  type JsxElement,
+  type JsxFragment,
+  type JsxSelfClosingElement,
+  type JsxTagNameExpression,
   type MethodSignatureDeclaration,
   type MethodDeclaration,
   type Node,
@@ -4078,6 +4088,15 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   if (isObjectLiteralExpression(expression)) {
     return inferObjectLiteral(expression, state, environment);
   }
+  if (isJsxElement(expression)) {
+    return inferJsxElement(expression, state, environment);
+  }
+  if (isJsxSelfClosingElement(expression)) {
+    return inferJsxSelfClosingElement(expression, state, environment);
+  }
+  if (isJsxFragment(expression)) {
+    return inferJsxFragment(expression, state, environment);
+  }
   if (isClassExpression(expression)) {
     return inferClassExpression(expression, state, environment);
   }
@@ -4286,6 +4305,88 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return anyType;
   }
   return unresolvedType;
+}
+
+function inferJsxElement(expression: JsxElement, state: CheckState, environment: TypeEnvironment): CheckedType {
+  checkJsxOpeningLike(expression.openingElement.tagName, expression.openingElement.attributes.properties, state, environment);
+  for (const child of expression.children) {
+    checkJsxChild(child, state, environment);
+  }
+  return anyType;
+}
+
+function inferJsxSelfClosingElement(expression: JsxSelfClosingElement, state: CheckState, environment: TypeEnvironment): CheckedType {
+  checkJsxOpeningLike(expression.tagName, expression.attributes.properties, state, environment);
+  return anyType;
+}
+
+function inferJsxFragment(expression: JsxFragment, state: CheckState, environment: TypeEnvironment): CheckedType {
+  for (const child of expression.children) {
+    checkJsxChild(child, state, environment);
+  }
+  return anyType;
+}
+
+function checkJsxChild(child: JsxChild, state: CheckState, environment: TypeEnvironment): void {
+  if (isJsxExpression(child)) {
+    if (child.expression !== undefined) {
+      inferExpression(child.expression, state, environment);
+    }
+    return;
+  }
+  if (isJsxElement(child)) {
+    inferJsxElement(child, state, environment);
+    return;
+  }
+  if (isJsxSelfClosingElement(child)) {
+    inferJsxSelfClosingElement(child, state, environment);
+    return;
+  }
+  if (isJsxFragment(child)) {
+    inferJsxFragment(child, state, environment);
+  }
+}
+
+function checkJsxOpeningLike(tagName: JsxTagNameExpression, attributes: readonly JsxAttributeLike[], state: CheckState, environment: TypeEnvironment): void {
+  if (state.options.jsx === undefined) {
+    state.diagnostics.push(createDiagnostic(17004));
+  }
+  checkJsxTagName(tagName, state, environment);
+  for (const attribute of attributes) {
+    if (attribute.kind === Kind.JsxSpreadAttribute) {
+      inferExpression(attribute.expression, state, environment);
+      continue;
+    }
+    if (attribute.initializer !== undefined && isJsxExpression(attribute.initializer) && attribute.initializer.expression !== undefined) {
+      inferExpression(attribute.initializer.expression, state, environment);
+    }
+  }
+}
+
+function checkJsxTagName(tagName: JsxTagNameExpression, state: CheckState, environment: TypeEnvironment): void {
+  if (isIdentifier(tagName)) {
+    if (isIntrinsicJsxTagName(tagName.text)) {
+      if (jsxIntrinsicElementsType(environment) === undefined) {
+        state.diagnostics.push(createDiagnostic(7026, "IntrinsicElements"));
+      }
+      return;
+    }
+    inferExpression(tagName, state, environment);
+    return;
+  }
+  if (isPropertyAccessExpression(tagName)) {
+    inferExpression(tagName, state, environment);
+  }
+}
+
+function isIntrinsicJsxTagName(name: string): boolean {
+  return /^[a-z]/u.test(name);
+}
+
+function jsxIntrinsicElementsType(environment: TypeEnvironment): CheckedType | undefined {
+  const jsxNamespace = namespaceMeaning(environment.get("JSX") ?? unresolvedType);
+  const intrinsicElements = jsxNamespace?.exports.get("IntrinsicElements");
+  return intrinsicElements === undefined ? undefined : typeMeaning(intrinsicElements);
 }
 
 function callExpressionFunctionExpressionCallee(expression: Expression): FunctionExpression | undefined {

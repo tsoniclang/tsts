@@ -65,6 +65,19 @@ import {
   createJSDocReturnTag,
   createJSDocTemplateTag,
   createJSDocTypeTag,
+  createJsxAttribute,
+  createJsxAttributes,
+  createJsxClosingElement,
+  createJsxClosingFragment,
+  createJsxElement,
+  createJsxExpression,
+  createJsxFragment,
+  createJsxNamespacedName,
+  createJsxOpeningElement,
+  createJsxOpeningFragment,
+  createJsxSelfClosingElement,
+  createJsxSpreadAttribute,
+  createJsxText,
   createExternalModuleReference,
   createKeywordTypeNode,
   createLabeledStatement,
@@ -159,6 +172,12 @@ import {
   type ImportSpecifier,
   type ImportPhaseModifierSyntaxKind,
   type JSDocTag,
+  type JsxAttributeLike,
+  type JsxAttributeName,
+  type JsxAttributeValue,
+  type JsxChild,
+  type JsxOpeningElement,
+  type JsxTagNameExpression,
   type KeywordTypeSyntaxKind,
   type LeftHandSideExpression,
   type ModifierSyntaxKind,
@@ -308,6 +327,7 @@ const keywordTypeKinds = new Set<Kind>([
 export class Parser {
   readonly #sourceText: string;
   readonly #fileName: string;
+  readonly #jsxMode: boolean;
   readonly #tokens: readonly ScannedToken[];
   readonly #jsDocByTokenStart: Map<number, readonly Node[]>;
   readonly #diagnostics: Diagnostic[] = [];
@@ -316,6 +336,7 @@ export class Parser {
   constructor(sourceText: string, options: ParseSourceFileOptions = {}) {
     this.#sourceText = sourceText;
     this.#fileName = options.fileName ?? "input.ts";
+    this.#jsxMode = isJsxFileName(this.#fileName);
     this.#tokens = scanAll(sourceText);
     this.#jsDocByTokenStart = collectJSDocByTokenStart(sourceText, this.#fileName);
     this.#validateLexicalDiagnostics();
@@ -1687,7 +1708,9 @@ export class Parser {
         expression = this.#parseYieldExpression();
         break;
       case Kind.LessThanToken:
-        expression = this.#parseTypeAssertionExpression();
+        expression = this.#jsxMode && this.#nextTokenStartsJsxElement()
+          ? this.#parseJsxElementOrSelfClosingElementOrFragment()
+          : this.#parseTypeAssertionExpression();
         break;
       default:
         expression = this.#parsePostfixExpression();
@@ -1969,6 +1992,11 @@ export class Parser {
         this.#parseExpectedCloseParen();
         return createParenthesizedExpression(expression);
       }
+      case Kind.LessThanToken:
+        if (this.#jsxMode && this.#nextTokenStartsJsxElement()) {
+          return this.#parseJsxElementOrSelfClosingElementOrFragment();
+        }
+        throw new ParseError(`Unexpected token ${Kind[token.kind]}`, token);
       default:
         if (isContextualExpressionIdentifierKind(token.kind)) {
           this.#advance();
@@ -1980,6 +2008,198 @@ export class Parser {
         }
         throw new ParseError(`Unexpected token ${Kind[token.kind]}`, token);
     }
+  }
+
+  #nextTokenStartsJsxElement(): boolean {
+    const nextKind = this.#tokens[this.#index + 1]?.kind;
+    return nextKind === Kind.GreaterThanToken || isIdentifierNameKind(nextKind ?? Kind.Unknown);
+  }
+
+  #parseJsxElementOrSelfClosingElementOrFragment(): Expression {
+    this.#expect(Kind.LessThanToken);
+    if (this.#current().kind === Kind.GreaterThanToken) {
+      this.#advance();
+      const openingFragment = createJsxOpeningFragment();
+      const children = this.#parseJsxChildren();
+      const closingFragment = this.#parseJsxClosingFragment();
+      return createJsxFragment(openingFragment, createNodeArray(children), closingFragment);
+    }
+
+    const tagName = this.#parseJsxElementName();
+    const typeArguments = this.#parseOptionalTypeArguments();
+    const attributes = createJsxAttributes(createNodeArray(this.#parseJsxAttributes()));
+    if (this.#consumeOptional(Kind.GreaterThanToken)) {
+      const openingElement = createJsxOpeningElement(tagName, typeArguments, attributes);
+      const children = this.#parseJsxChildren();
+      const closingElement = this.#parseJsxClosingElement(openingElement);
+      return createJsxElement(openingElement, createNodeArray(children), closingElement);
+    }
+
+    this.#expect(Kind.SlashToken);
+    this.#expect(Kind.GreaterThanToken);
+    return createJsxSelfClosingElement(tagName, typeArguments, attributes);
+  }
+
+  #parseJsxChildren(): JsxChild[] {
+    const children: JsxChild[] = [];
+    while (this.#current().kind !== Kind.EndOfFile && !this.#isJsxClosingStart()) {
+      if (this.#current().kind === Kind.LessThanToken && this.#nextTokenStartsJsxElement()) {
+        children.push(this.#parseJsxElementOrSelfClosingElementOrFragment() as JsxChild);
+        continue;
+      }
+      if (this.#current().kind === Kind.OpenBraceToken) {
+        children.push(this.#parseJsxExpression(false));
+        continue;
+      }
+      const text = this.#parseJsxText();
+      if (text !== undefined) {
+        children.push(text);
+        continue;
+      }
+      break;
+    }
+    return children;
+  }
+
+  #parseJsxText(): JsxChild | undefined {
+    if (this.#current().kind === Kind.EndOfFile || this.#current().kind === Kind.LessThanToken || this.#isJsxClosingStart() || this.#current().kind === Kind.OpenBraceToken) {
+      return undefined;
+    }
+    const start = this.#current().pos;
+    let end = this.#current().end;
+    while (this.#current().kind !== Kind.EndOfFile && this.#current().kind !== Kind.LessThanToken && !this.#isJsxClosingStart() && this.#current().kind !== Kind.OpenBraceToken) {
+      end = this.#advance().end;
+    }
+    const text = this.#sourceText.slice(start, end);
+    return createJsxText(text, /^[\s]*$/u.test(text));
+  }
+
+  #parseJsxExpression(inAttributeInitializer: boolean): ReturnType<typeof createJsxExpression> {
+    this.#expect(Kind.OpenBraceToken);
+    const dotDotDotToken = !inAttributeInitializer && this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
+    const expression = this.#current().kind === Kind.CloseBraceToken ? undefined : this.#parseExpression();
+    if (inAttributeInitializer && expression === undefined) {
+      this.#addDiagnosticAtToken(this.#current(), 17000);
+    }
+    this.#expect(Kind.CloseBraceToken);
+    return createJsxExpression(dotDotDotToken, expression);
+  }
+
+  #parseJsxClosingElement(openingElement: JsxOpeningElement): ReturnType<typeof createJsxClosingElement> {
+    if (!this.#consumeJsxClosingStart()) {
+      this.#addDiagnosticAtToken(openingElement.tagName, 17008, jsxTagNameText(openingElement.tagName));
+      return createJsxClosingElement(openingElement.tagName);
+    }
+    const tagName = this.#parseJsxElementName();
+    this.#expect(Kind.GreaterThanToken);
+    if (jsxTagNameText(tagName) !== jsxTagNameText(openingElement.tagName)) {
+      this.#addDiagnosticAtToken(tagName, 17008, jsxTagNameText(openingElement.tagName));
+    }
+    return createJsxClosingElement(tagName);
+  }
+
+  #parseJsxClosingFragment(): ReturnType<typeof createJsxClosingFragment> {
+    this.#expectJsxClosingStart();
+    this.#expect(Kind.GreaterThanToken);
+    return createJsxClosingFragment();
+  }
+
+  #isJsxClosingStart(): boolean {
+    return this.#current().kind === Kind.LessThanSlashToken
+      || (this.#current().kind === Kind.LessThanToken && this.#tokens[this.#index + 1]?.kind === Kind.SlashToken);
+  }
+
+  #consumeJsxClosingStart(): boolean {
+    if (this.#current().kind === Kind.LessThanSlashToken) {
+      this.#advance();
+      return true;
+    }
+    if (this.#current().kind === Kind.LessThanToken && this.#tokens[this.#index + 1]?.kind === Kind.SlashToken) {
+      this.#advance();
+      this.#advance();
+      return true;
+    }
+    return false;
+  }
+
+  #expectJsxClosingStart(): void {
+    if (!this.#consumeJsxClosingStart()) {
+      this.#expect(Kind.LessThanToken);
+      this.#expect(Kind.SlashToken);
+    }
+  }
+
+  #parseJsxElementName(): JsxTagNameExpression {
+    const initialExpression = this.#parseJsxTagName();
+    if (initialExpression.kind === Kind.JsxNamespacedName) {
+      return initialExpression;
+    }
+    let expression = initialExpression;
+    while (this.#consumeOptional(Kind.DotToken)) {
+      expression = createPropertyAccessExpression(expression, undefined, this.#parseJsxIdentifier(), NodeFlags.None);
+    }
+    return expression as JsxTagNameExpression;
+  }
+
+  #parseJsxTagName(): JsxTagNameExpression {
+    const isThis = this.#current().kind === Kind.ThisKeyword;
+    const tagName = this.#parseJsxIdentifier();
+    if (this.#consumeOptional(Kind.ColonToken)) {
+      return createJsxNamespacedName(tagName, this.#parseJsxIdentifier());
+    }
+    return isThis ? createKeywordExpression(Kind.ThisKeyword) : tagName;
+  }
+
+  #parseJsxAttributes(): JsxAttributeLike[] {
+    const attributes: JsxAttributeLike[] = [];
+    while (this.#current().kind !== Kind.GreaterThanToken && this.#current().kind !== Kind.SlashToken && this.#current().kind !== Kind.EndOfFile) {
+      attributes.push(this.#parseJsxAttribute());
+    }
+    return attributes;
+  }
+
+  #parseJsxAttribute(): JsxAttributeLike {
+    if (this.#current().kind === Kind.OpenBraceToken) {
+      this.#advance();
+      this.#expect(Kind.DotDotDotToken);
+      const expression = this.#parseExpression();
+      this.#expect(Kind.CloseBraceToken);
+      return createJsxSpreadAttribute(expression);
+    }
+    const name = this.#parseJsxAttributeName();
+    const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseJsxAttributeValue() : undefined;
+    return createJsxAttribute(name, initializer);
+  }
+
+  #parseJsxAttributeName(): JsxAttributeName {
+    const name = this.#parseJsxIdentifier();
+    if (this.#consumeOptional(Kind.ColonToken)) {
+      return createJsxNamespacedName(name, this.#parseJsxIdentifier());
+    }
+    return name;
+  }
+
+  #parseJsxIdentifier(): Identifier {
+    let text = this.#parseIdentifier().text;
+    while (this.#current().kind === Kind.MinusToken && isIdentifierNameKind(this.#tokens[this.#index + 1]?.kind ?? Kind.Unknown)) {
+      text += this.#advance().text;
+      text += this.#parseIdentifier().text;
+    }
+    return createIdentifier(text);
+  }
+
+  #parseJsxAttributeValue(): JsxAttributeValue | undefined {
+    if (this.#current().kind === Kind.StringLiteral) {
+      return this.#parseStringLiteralExpression() as JsxAttributeValue;
+    }
+    if (this.#current().kind === Kind.OpenBraceToken) {
+      return this.#parseJsxExpression(true);
+    }
+    if (this.#current().kind === Kind.LessThanToken && this.#nextTokenStartsJsxElement()) {
+      return this.#parseJsxElementOrSelfClosingElementOrFragment() as JsxAttributeValue;
+    }
+    this.#addDiagnosticAtToken(this.#current(), 17000);
+    return undefined;
   }
 
   #parseExpectedCloseParen(): ScannedToken {
@@ -3135,6 +3355,24 @@ function isContextualExpressionIdentifierKind(kind: Kind): boolean {
     && kind !== Kind.TrueKeyword
     && kind !== Kind.NewKeyword
     && kind !== Kind.FunctionKeyword;
+}
+
+function isJsxFileName(fileName: string): boolean {
+  return /\.(?:jsx|tsx)$/iu.test(fileName);
+}
+
+function jsxTagNameText(tagName: JsxTagNameExpression): string {
+  if (tagName.kind === Kind.Identifier) {
+    return tagName.text;
+  }
+  if (tagName.kind === Kind.JsxNamespacedName) {
+    return `${tagName.namespace.text}:${tagName.name.text}`;
+  }
+  if (tagName.kind === Kind.PropertyAccessExpression) {
+    const propertyAccess = tagName as Extract<JsxTagNameExpression, { readonly kind: Kind.PropertyAccessExpression }>;
+    return `${jsxTagNameText(propertyAccess.expression as JsxTagNameExpression)}.${propertyAccess.name.text}`;
+  }
+  return "this";
 }
 
 function collectJSDocByTokenStart(sourceText: string, fileName: string): Map<number, readonly Node[]> {

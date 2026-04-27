@@ -24,6 +24,7 @@ export interface CompilerOptions {
   readonly esModuleInterop?: boolean;
   readonly noUncheckedSideEffectImports?: boolean;
   readonly declaration?: boolean;
+  readonly jsx?: unknown;
 }
 
 export type ScriptTargetName = "es3" | "es5" | "es2015" | "es2016" | "es2017" | "es2018" | "es2019" | "es2020" | "es2021" | "es2022" | "es2023" | "es2024" | "esnext";
