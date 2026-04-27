@@ -981,16 +981,18 @@ function checkStatements(statements: readonly Statement[], state: CheckState, en
   const functionOverloadInfo = prebindFunctionOverloadDeclarations(statements, state, environment, ambient);
   const statementState = functionOverloadInfo === undefined ? state : { ...state, functionOverloadInfo };
   checkFunctionDeclarationOverloads(statements, state, ambient);
+  let ambientDiagnosticStatement: Statement | undefined;
   if (ambient && reportAmbientStatementDiagnostic && statements.some(isStatementDisallowedInAmbientContext)) {
     state.diagnostics.push(createDiagnostic(1036));
+    ambientDiagnosticStatement = statements.find(isStatementDisallowedInAmbientContext);
   }
   const statementListHasExportedElements = statements.some(statement => isExportedElement(statement));
   for (const statement of statements) {
-    checkStatement(statement, statementState, environment, expectedReturnType, ambient, statementListHasExportedElements);
+    checkStatement(statement, statementState, environment, expectedReturnType, ambient, statementListHasExportedElements, statement === ambientDiagnosticStatement);
   }
 }
 
-function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, statementListHasExportedElements: boolean): void {
+function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, statementListHasExportedElements: boolean, ambientStatementDiagnosticReported = false): void {
   if (isImportDeclaration(statement)) {
     bindImportDeclaration(statement, state, environment);
     return;
@@ -1092,12 +1094,18 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isContinueStatement(statement)) {
-    if (state.iterationDepth === 0) {
-      state.diagnostics.push(createDiagnostic(1104));
+    if (!ambientStatementDiagnosticReported) {
+      checkBreakOrContinueStatement(statement, state);
     }
     return;
   }
-  if (isBreakStatement(statement) || isDebuggerStatement(statement)) {
+  if (isBreakStatement(statement)) {
+    if (!ambientStatementDiagnosticReported) {
+      checkBreakOrContinueStatement(statement, state);
+    }
+    return;
+  }
+  if (isDebuggerStatement(statement)) {
     return;
   }
   if (isReturnStatement(statement)) {
@@ -1124,6 +1132,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isLabeledStatement(statement)) {
+    checkDuplicateLabel(statement, state);
     if (state.strictMode && isVariableStatement(statement.statement)) {
       state.diagnostics.push(createDiagnostic(1344));
     }
@@ -1138,6 +1147,66 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   if (isBlock(statement)) {
     checkBlock(statement, state, environment, expectedReturnType);
   }
+}
+
+function checkBreakOrContinueStatement(statement: Extract<Statement, { readonly kind: Kind.BreakStatement | Kind.ContinueStatement }>, state: CheckState): void {
+  const targetLabel = statement.label?.text;
+  let current: Node | undefined = statement;
+  while (current !== undefined) {
+    if (current !== statement && isFunctionOrStaticBlockJumpBoundary(current)) {
+      state.diagnostics.push(createDiagnostic(1107));
+      return;
+    }
+    if (isLabeledStatement(current) && targetLabel !== undefined && current.label.text === targetLabel) {
+      if (isContinueStatement(statement) && !isIterationStatement(current.statement, true)) {
+        state.diagnostics.push(createDiagnostic(1115));
+      }
+      return;
+    }
+    if (isSwitchStatement(current) && isBreakStatement(statement) && targetLabel === undefined) {
+      return;
+    }
+    if (targetLabel === undefined && isIterationStatement(current, false)) {
+      return;
+    }
+    current = current.parent;
+  }
+
+  if (targetLabel !== undefined) {
+    state.diagnostics.push(createDiagnostic(isBreakStatement(statement) ? 1116 : 1115));
+    return;
+  }
+  state.diagnostics.push(createDiagnostic(isBreakStatement(statement) ? 1105 : 1104));
+}
+
+function checkDuplicateLabel(statement: Extract<Statement, { readonly kind: Kind.LabeledStatement }>, state: CheckState): void {
+  const label = statement.label.text;
+  let current: Node | undefined = statement.parent;
+  while (current !== undefined && !isFunctionOrStaticBlockJumpBoundary(current)) {
+    if (isLabeledStatement(current) && current.label.text === label) {
+      state.diagnostics.push(createDiagnostic(1114, label));
+      return;
+    }
+    current = current.parent;
+  }
+}
+
+function isIterationStatement(node: Node, lookInLabeledStatements: boolean): boolean {
+  if (isWhileStatement(node) || isDoStatement(node) || isForStatement(node) || isForInStatement(node) || isForOfStatement(node)) {
+    return true;
+  }
+  return lookInLabeledStatements && isLabeledStatement(node) && isIterationStatement(node.statement, true);
+}
+
+function isFunctionOrStaticBlockJumpBoundary(node: Node): boolean {
+  return isFunctionDeclaration(node)
+    || isFunctionExpression(node)
+    || isArrowFunction(node)
+    || isMethodDeclaration(node)
+    || isConstructorDeclaration(node)
+    || isGetAccessorDeclaration(node)
+    || isSetAccessorDeclaration(node)
+    || isClassStaticBlockDeclaration(node);
 }
 
 function isStatementDisallowedInAmbientContext(statement: Statement): boolean {

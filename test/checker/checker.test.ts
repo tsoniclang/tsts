@@ -1069,6 +1069,42 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("checks break and continue targets through enclosing statements and function boundaries", () => {
+    const sourceFile = parseSourceFile([
+      "break;",
+      "continue;",
+      "while (true) { break; continue; }",
+      "switch (1) { default: break; }",
+      "target: while (true) { break target; continue target; }",
+      "block: { continue block; }",
+      "break missing;",
+      "outer: while (true) { function nested() { break outer; } }",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1105, 1104, 1115, 1116, 1107]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "A 'break' statement can only be used within an enclosing iteration or switch statement.",
+      "A 'continue' statement can only be used within an enclosing iteration statement.",
+      "A 'continue' statement can only jump to a label of an enclosing iteration statement.",
+      "A 'break' statement can only jump to a label of an enclosing statement.",
+      "Jump target cannot cross function boundary.",
+    ]);
+  });
+
+  it("reports duplicate labels inside one function boundary", () => {
+    const sourceFile = parseSourceFile([
+      "label: { label: while (true) { break label; } }",
+      "label2: function nested() { label2: while (true) { break label2; } }",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1114]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Duplicate label 'label'.",
+    ]);
+  });
+
   it("reports invalid update operands while accepting outer assertion expressions", () => {
     const sourceFile = parseSourceFile([
       "let a = 1;",
@@ -1190,6 +1226,7 @@ describe("checker groundwork", () => {
   it("reports ambient runtime statements with TS-Go statement context diagnostics", () => {
     const sourceFile = parseSourceFile([
       "declare namespace M {",
+      "  break;",
       "  continue;",
       "  return;",
       "  with ({}) { }",
