@@ -64,6 +64,7 @@ import {
   isSatisfiesExpression,
   isStringLiteral,
   isTaggedTemplateExpression,
+  isTemplateLiteralTypeNode,
   isTypeAliasDeclaration,
   isTypeAssertion,
   isTypeLiteralNode,
@@ -447,6 +448,33 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isConditionalTypeNode(conditional), true);
     if (!isConditionalTypeNode(conditional)) throw new Error("Expected conditional type");
     assert.equal(conditional.extendsType.kind, Kind.TypeReference);
+  });
+
+  it("parses template literal types with TS-Go span structure", () => {
+    const sourceFile = parseSourceFile([
+      "type Simple = `plain`;",
+      "type Branded<T> = T extends `${'a' & { a: 1 }}-${number}` ? 1 : 2;",
+    ].join("\n"));
+
+    const simple = sourceFile.statements[0]!;
+    assert.equal(isTypeAliasDeclaration(simple), true);
+    if (!isTypeAliasDeclaration(simple)) throw new Error("Expected simple template literal type alias");
+    assert.equal(simple.type.kind, Kind.LiteralType);
+
+    const branded = sourceFile.statements[1]!;
+    assert.equal(isTypeAliasDeclaration(branded), true);
+    if (!isTypeAliasDeclaration(branded)) throw new Error("Expected branded template literal type alias");
+    assert.equal(isConditionalTypeNode(branded.type), true);
+    if (!isConditionalTypeNode(branded.type)) throw new Error("Expected conditional template literal type");
+    assert.equal(isTemplateLiteralTypeNode(branded.type.extendsType), true);
+    if (!isTemplateLiteralTypeNode(branded.type.extendsType)) throw new Error("Expected template literal extends type");
+    assert.equal(branded.type.extendsType.head.text, "");
+    assert.equal(branded.type.extendsType.templateSpans.length, 2);
+    assert.equal(branded.type.extendsType.templateSpans[0]!.type.kind, Kind.IntersectionType);
+    assert.equal(branded.type.extendsType.templateSpans[0]!.literal.kind, Kind.TemplateMiddle);
+    assert.equal(branded.type.extendsType.templateSpans[0]!.literal.text, "-");
+    assert.equal(branded.type.extendsType.templateSpans[1]!.type.kind, Kind.NumberKeyword);
+    assert.equal(branded.type.extendsType.templateSpans[1]!.literal.kind, Kind.TemplateTail);
   });
 
   it("parses accessor declarations in class, object, and type-member contexts", () => {

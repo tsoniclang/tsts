@@ -113,6 +113,8 @@ import {
   createTaggedTemplateExpression,
   createTemplateExpression,
   createTemplateHead,
+  createTemplateLiteralTypeNode,
+  createTemplateLiteralTypeSpan,
   createTemplateMiddle,
   createTemplateSpan,
   createTemplateTail,
@@ -180,6 +182,7 @@ import {
   type TypeNode,
   type TemplateMiddleOrTail,
   type TemplateLiteral,
+  type TemplateLiteralTypeSpan,
   type TypeParameterDeclaration,
   type VariableDeclaration,
 } from "../ast/index.js";
@@ -2413,9 +2416,20 @@ export class Parser {
     if (token.kind === Kind.StringLiteral) {
       return createLiteralTypeNode(this.#parseStringLiteralExpression());
     }
+    if (token.kind === Kind.NoSubstitutionTemplateLiteral) {
+      this.#advance();
+      return createLiteralTypeNode(createNoSubstitutionTemplateLiteral(unquoteTemplate(token.text), 0));
+    }
+    if (token.kind === Kind.TemplateHead) {
+      return this.#parseTemplateType();
+    }
     if (token.kind === Kind.NumericLiteral) {
       this.#advance();
       return createLiteralTypeNode(createNumericLiteral(token.text, 0));
+    }
+    if (token.kind === Kind.BigIntLiteral) {
+      this.#advance();
+      return createLiteralTypeNode(createBigIntLiteral(token.text, 0));
     }
     if ((token.kind === Kind.MinusToken || token.kind === Kind.PlusToken) && this.#tokens[this.#index + 1]?.kind === Kind.NumericLiteral) {
       const operator = this.#advance().kind as Kind.MinusToken | Kind.PlusToken;
@@ -2431,6 +2445,28 @@ export class Parser {
       return createTypeReferenceNode(this.#parseEntityName(), this.#parseOptionalTypeArguments());
     }
     throw new ParseError(`Unexpected type token ${Kind[token.kind]}`, token);
+  }
+
+  #parseTemplateType(): TypeNode {
+    const headToken = this.#expect(Kind.TemplateHead);
+    const spans: TemplateLiteralTypeSpan[] = [];
+    while (true) {
+      const type = this.#parseType();
+      this.#expect(Kind.CloseBraceToken);
+      const literalToken = this.#current();
+      if (literalToken.kind !== Kind.TemplateMiddle && literalToken.kind !== Kind.TemplateTail) {
+        throw new ParseError("Expected template type continuation", literalToken);
+      }
+      this.#advance();
+      const literal = literalToken.kind === Kind.TemplateMiddle
+        ? createTemplateMiddle(templateMiddleText(literalToken.text), templateMiddleText(literalToken.text), 0)
+        : createTemplateTail(templateTailText(literalToken.text), templateTailText(literalToken.text), 0);
+      spans.push(createTemplateLiteralTypeSpan(type, literal as TemplateMiddleOrTail));
+      if (literalToken.kind === Kind.TemplateTail) {
+        break;
+      }
+    }
+    return createTemplateLiteralTypeNode(createTemplateHead(templateHeadText(headToken.text), templateHeadText(headToken.text), 0), createNodeArray(spans));
   }
 
   #parseTupleElementType(): TypeNode {
