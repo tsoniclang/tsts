@@ -405,4 +405,31 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2304]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find name 'Missing'."]);
   });
+
+  it("resolves internal namespace aliases through exported namespace members", () => {
+    const sourceFile = parseSourceFile([
+      "namespace foo {",
+      "  export class Provide { }",
+      "  export namespace bar { export namespace baz { export class boo { } } }",
+      "}",
+      "import provide = foo;",
+      "import booz = foo.bar.baz;",
+      "var p = new provide.Provide();",
+      "var p1: provide.Provide;",
+      "var p2: foo.Provide;",
+      "var p3: booz.bar;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2694]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Namespace 'foo.bar.baz' has no exported member 'bar'."]);
+  });
+
+  it("reports unresolved property receivers without cascading property diagnostics", () => {
+    const sourceFile = parseSourceFile("var d = b.q3;");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2304]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find name 'b'."]);
+  });
 });
