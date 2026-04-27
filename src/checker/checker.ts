@@ -85,6 +85,7 @@ import {
   type FunctionDeclaration,
   type GetAccessorDeclaration,
   type ImportDeclaration,
+  type ImportSpecifier,
   type InterfaceDeclaration,
   type MethodSignatureDeclaration,
   type MethodDeclaration,
@@ -218,14 +219,15 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
   if (diagnostics.length > 0) {
     return diagnostics;
   }
-  const moduleResolver = programModuleResolver(program);
+  const globalEnvironment = globalAmbientEnvironment(program);
+  const moduleResolver = programModuleResolver(program, globalEnvironment);
   for (const sourceFile of program.sourceFiles) {
     const state: CheckState = {
       diagnostics: [],
       options: program.options,
       resolveExternalModule: moduleSpecifier => moduleResolver(sourceFile.fileName, moduleSpecifier),
     };
-    checkStatements(sourceFile.sourceFile.statements, state, new Map(), undefined, false);
+    checkStatements(sourceFile.sourceFile.statements, state, new Map(globalEnvironment), undefined, false);
     diagnostics.push(...state.diagnostics.map(diagnostic => ({
       fileName: sourceFile.fileName,
       code: diagnostic.code,
@@ -238,9 +240,19 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
   return diagnostics;
 }
 
-function programModuleResolver(program: Program): (containingFileName: string, moduleSpecifier: string) => CheckedType | undefined {
+function programModuleResolver(program: Program, globalEnvironment: TypeEnvironment): (containingFileName: string, moduleSpecifier: string) => CheckedType | undefined {
   const sourceFiles = new Map(program.sourceFiles.map(sourceFile => [sourceFile.fileName, sourceFile]));
+  const ambientModules = new Map<string, Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>>();
+  for (const sourceFile of program.sourceFiles) {
+    for (const statement of sourceFile.sourceFile.statements) {
+      const specifier = ambientModuleSpecifier(statement);
+      if (specifier !== undefined) {
+        ambientModules.set(specifier, statement as Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>);
+      }
+    }
+  }
   const exportCache = new Map<string, ReadonlyMap<string, CheckedType>>();
+  const ambientExportCache = new Map<string, ReadonlyMap<string, CheckedType>>();
   const moduleNamespaceForResolvedFile = (moduleSpecifier: string, resolvedFileName: string): CheckedType => ({
     kind: "moduleNamespace",
     moduleSpecifier,
@@ -269,11 +281,76 @@ function programModuleResolver(program: Program): (containingFileName: string, m
     }
     return exports;
   };
+  const ambientModuleExportTypes = (moduleSpecifier: string): ReadonlyMap<string, CheckedType> => {
+    const cached = ambientExportCache.get(moduleSpecifier);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const moduleDeclaration = ambientModules.get(moduleSpecifier);
+    if (moduleDeclaration === undefined || !isModuleBlock(moduleDeclaration.body)) {
+      return new Map();
+    }
+    const moduleEnvironment = new Map(globalEnvironment);
+    checkStatements(moduleDeclaration.body.statements, emptyCheckState(), moduleEnvironment, undefined, true);
+    const exports = ambientModuleExports(moduleDeclaration.body.statements, moduleEnvironment);
+    ambientExportCache.set(moduleSpecifier, exports);
+    return exports;
+  };
   return (containingFileName, moduleSpecifier) => {
     const sourceFile = sourceFiles.get(containingFileName);
     const resolvedFileName = sourceFile?.resolvedModules.find(module => module.specifier === moduleSpecifier)?.fileName;
-    return resolvedFileName === undefined ? undefined : moduleNamespaceForResolvedFile(moduleSpecifier, resolvedFileName);
+    if (resolvedFileName !== undefined) {
+      return moduleNamespaceForResolvedFile(moduleSpecifier, resolvedFileName);
+    }
+    if (ambientModules.has(moduleSpecifier)) {
+      return {
+        kind: "moduleNamespace",
+        moduleSpecifier,
+        diagnosticName: moduleNamespaceDiagnosticName(moduleSpecifier),
+        exports: ambientModuleExportTypes(moduleSpecifier),
+      };
+    }
+    return undefined;
   };
+}
+
+function globalAmbientEnvironment(program: Program): TypeEnvironment {
+  const environment: TypeEnvironment = new Map();
+  for (const sourceFile of program.sourceFiles) {
+    for (const statement of sourceFile.sourceFile.statements) {
+      if (isModuleDeclaration(statement) && ambientModuleSpecifier(statement) === undefined && hasDeclareModifier(statement)) {
+        checkModuleDeclaration(statement, emptyCheckState(), environment, undefined, true);
+      }
+    }
+  }
+  return environment;
+}
+
+function ambientModuleExports(statements: readonly Statement[], environment: TypeEnvironment): ReadonlyMap<string, CheckedType> {
+  for (const statement of statements) {
+    if (isExportAssignment(statement) && statement.isExportEquals) {
+      const exported = isIdentifier(statement.expression) ? environment.get(statement.expression.text) : undefined;
+      if (exported?.kind === "namespace" || exported?.kind === "moduleNamespace") {
+        return exported.exports;
+      }
+      if (exported?.kind === "object") {
+        return exported.properties;
+      }
+      return new Map();
+    }
+  }
+  const exports = new Map<string, CheckedType>();
+  for (const statement of statements) {
+    if (!isExportedElement(statement)) {
+      continue;
+    }
+    const exportName = namespaceExportName(statement);
+    const exportType = exportName === undefined ? undefined : environment.get(exportName);
+    if (exportName !== undefined) {
+      exports.set(exportName, exportType ?? anyType);
+    }
+  }
+  return exports;
 }
 
 function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean): void {
@@ -286,7 +363,7 @@ function checkStatements(statements: readonly Statement[], state: CheckState, en
 
 function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, statementListHasExportedElements: boolean): void {
   if (isImportDeclaration(statement)) {
-    bindImportDeclaration(statement, environment);
+    bindImportDeclaration(statement, state, environment);
     return;
   }
   if (isImportEqualsDeclaration(statement)) {
@@ -416,14 +493,15 @@ function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly
   }
   const moduleName = moduleDeclarationName(moduleDeclaration);
   const namespaceEnvironment = new Map(environment);
-  checkStatements(moduleDeclaration.body.statements, state, namespaceEnvironment, expectedReturnType, ambient || hasDeclareModifier(moduleDeclaration));
+  const moduleBodyAmbient = ambient || hasDeclareModifier(moduleDeclaration);
+  checkStatements(moduleDeclaration.body.statements, state, namespaceEnvironment, expectedReturnType, moduleBodyAmbient);
   if (moduleName === undefined) {
     return;
   }
   const existing = environment.get(moduleName);
   const exports = new Map(existing?.kind === "namespace" ? existing.exports : []);
   for (const statement of moduleDeclaration.body.statements) {
-    if (!isExportedElement(statement)) {
+    if (!moduleBodyAmbient && !isExportedElement(statement)) {
       continue;
     }
     const exportName = namespaceExportName(statement);
@@ -450,6 +528,10 @@ function moduleDeclarationName(moduleDeclaration: Extract<Statement, { readonly 
   return isIdentifier(moduleDeclaration.name) ? moduleDeclaration.name.text : undefined;
 }
 
+function ambientModuleSpecifier(statement: Statement): string | undefined {
+  return isModuleDeclaration(statement) && isStringLiteral(statement.name) ? statement.name.text : undefined;
+}
+
 function namespaceExportName(statement: Statement): string | undefined {
   if (isClassDeclaration(statement) || isFunctionDeclaration(statement) || isInterfaceDeclaration(statement) || isTypeAliasDeclaration(statement)) {
     return statement.name?.text;
@@ -463,23 +545,41 @@ function namespaceExportName(statement: Statement): string | undefined {
   return undefined;
 }
 
-function bindImportDeclaration(statement: ImportDeclaration, environment: TypeEnvironment): void {
+function bindImportDeclaration(statement: ImportDeclaration, state: CheckState, environment: TypeEnvironment): void {
+  const moduleType = importDeclarationModuleType(statement, state);
   if (statement.importClause?.name !== undefined) {
-    environment.set(statement.importClause.name.text, anyType);
+    environment.set(statement.importClause.name.text, moduleType?.exports.get("default") ?? anyType);
   }
   const namedBindings = statement.importClause?.namedBindings;
   if (namedBindings === undefined) {
     return;
   }
   if (isNamespaceImport(namedBindings)) {
-    environment.set(namedBindings.name.text, anyType);
+    environment.set(namedBindings.name.text, moduleType ?? anyType);
     return;
   }
   if (isNamedImports(namedBindings)) {
     for (const specifier of namedBindings.elements) {
-      environment.set(specifier.name.text, anyType);
+      environment.set(specifier.name.text, namedImportType(specifier, moduleType));
     }
   }
+}
+
+function importDeclarationModuleType(statement: ImportDeclaration, state: CheckState): Extract<CheckedType, { readonly kind: "moduleNamespace" }> | undefined {
+  if (statement.moduleSpecifier === undefined || !isStringLiteral(statement.moduleSpecifier)) {
+    return undefined;
+  }
+  const resolved = state.resolveExternalModule?.(statement.moduleSpecifier.text);
+  return resolved?.kind === "moduleNamespace" ? resolved : undefined;
+}
+
+function namedImportType(specifier: ImportSpecifier, moduleType: Extract<CheckedType, { readonly kind: "moduleNamespace" }> | undefined): CheckedType {
+  const importedName = specifier.propertyName === undefined ? specifier.name.text : moduleExportNameText(specifier.propertyName);
+  return moduleType?.exports.get(importedName) ?? anyType;
+}
+
+function moduleExportNameText(name: NonNullable<ImportSpecifier["propertyName"]> | ImportSpecifier["name"]): string {
+  return isStringLiteral(name) ? name.text : name.text;
 }
 
 function checkFunctionDeclarationOverloads(statements: readonly Statement[], state: CheckState, ambient: boolean): void {
@@ -2388,7 +2488,7 @@ function displayType(type: CheckedType): string {
     return displayType(type.type);
   }
   if (type.kind === "function") {
-    return "function";
+    return `(${type.parameters.map((parameter, index) => `arg${index}: ${displayType(parameter)}`).join(", ")}) => ${displayType(type.returnType)}`;
   }
   if (type.kind === "array") {
     return `${displayType(type.elementType)}[]`;

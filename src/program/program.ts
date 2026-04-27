@@ -3,7 +3,7 @@ import { bindSourceFile, type BindDiagnostic, type BindResult } from "../binder/
 import { checkProgram } from "../checker/index.js";
 import { printSourceFile } from "../emit-js/index.js";
 import { parseSourceFile } from "../parser/index.js";
-import { isExportDeclaration, isExternalModuleReference, isImportDeclaration, isImportEqualsDeclaration, isStringLiteral, type SourceFile } from "../ast/index.js";
+import { isExportDeclaration, isExternalModuleReference, isImportDeclaration, isImportEqualsDeclaration, isModuleDeclaration, isStringLiteral, type SourceFile } from "../ast/index.js";
 import { createDiagnosticAt, type DiagnosticCategory, type DiagnosticCode } from "../diagnostics/index.js";
 
 export interface CompilerOptions {
@@ -66,6 +66,8 @@ export interface EmitResult {
 export function createProgram(rootNames: readonly string[], options: CompilerOptions, host: CompilerHost): Program {
   const sourceFiles: ProgramSourceFile[] = [];
   const diagnostics: ProgramDiagnostic[] = [];
+  const unresolvedModules: { readonly fileName: string; readonly moduleSpecifier: string }[] = [];
+  const ambientModules = new Set<string>();
   const pending = [...rootNames];
   const seen = new Set<string>();
   const fileTextCache = new Map<string, string | undefined>();
@@ -93,11 +95,14 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
     }
     const bindResult = bindSourceFile(sourceFile);
     diagnostics.push(...bindResult.diagnostics.map(diagnostic => convertBindDiagnostic(rootName, diagnostic)));
+    for (const moduleSpecifier of sourceFileAmbientModuleSpecifiers(sourceFile)) {
+      ambientModules.add(moduleSpecifier);
+    }
     const resolvedModules: ResolvedModule[] = [];
     for (const moduleSpecifier of sourceFileModuleSpecifiers(sourceFile)) {
       const resolved = resolveModuleName(moduleSpecifier, rootName, host, fileTextCache);
       if (!resolved.found) {
-        diagnostics.push(programDiagnostic(rootName, unresolvedModuleDiagnosticCode(moduleSpecifier, options), moduleSpecifier));
+        unresolvedModules.push({ fileName: rootName, moduleSpecifier });
         continue;
       }
       if (resolved.fileName !== undefined && !seen.has(canonicalFileName(resolved.fileName, host))) {
@@ -120,7 +125,12 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
     rootNames: [...rootNames],
     options,
     sourceFiles,
-    diagnostics,
+    diagnostics: [
+      ...diagnostics,
+      ...unresolvedModules
+        .filter(unresolved => !ambientModules.has(unresolved.moduleSpecifier))
+        .map(unresolved => programDiagnostic(unresolved.fileName, unresolvedModuleDiagnosticCode(unresolved.moduleSpecifier, options), unresolved.moduleSpecifier)),
+    ],
   };
 }
 
@@ -167,6 +177,16 @@ function sourceFileModuleSpecifiers(sourceFile: SourceFile): readonly string[] {
       && isStringLiteral(statement.moduleReference.expression)
     ) {
       specifiers.push(statement.moduleReference.expression.text);
+    }
+  }
+  return specifiers;
+}
+
+function sourceFileAmbientModuleSpecifiers(sourceFile: SourceFile): readonly string[] {
+  const specifiers: string[] = [];
+  for (const statement of sourceFile.statements) {
+    if (isModuleDeclaration(statement) && isStringLiteral(statement.name)) {
+      specifiers.push(statement.name.text);
     }
   }
   return specifiers;

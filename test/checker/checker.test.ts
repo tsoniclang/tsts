@@ -433,6 +433,40 @@ describe("checker groundwork", () => {
     assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), []);
   });
 
+  it("resolves ambient module export-equals aliases for named imports", () => {
+    const host: CompilerHost = {
+      readFile: fileName => {
+        if (fileName === "demo.d.ts") {
+          return [
+            "declare namespace demoNS {",
+            "  function f(): void;",
+            "}",
+            "declare module \"demoModule\" {",
+            "  import alias = demoNS;",
+            "  export = alias;",
+            "}",
+          ].join("\n");
+        }
+        if (fileName === "user.ts") {
+          return [
+            "import { f } from \"demoModule\";",
+            "let x1: string = demoNS.f;",
+            "let x2: string = f;",
+          ].join("\n");
+        }
+        return undefined;
+      },
+      useCaseSensitiveFileNames: () => true,
+    };
+    const program = createProgram(["demo.d.ts", "user.ts"], { module: "commonjs" }, host);
+    const diagnostics = checkProgram(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Type '() => void' is not assignable to type 'string'.",
+      "Type '() => void' is not assignable to type 'string'.",
+    ]);
+  });
+
   it("does not emit cascading assignment diagnostics when the target type is unresolved", () => {
     const sourceFile = parseSourceFile([
       "let x: Missing;",
