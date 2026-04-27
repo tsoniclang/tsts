@@ -9,11 +9,13 @@ import {
   isBinaryExpression,
   isBlock,
   isCallExpression,
+  isCallSignatureDeclaration,
   isClassDeclaration,
   isConstructorDeclaration,
   isContinueStatement,
   isConditionalExpression,
   isElementAccessExpression,
+  isEmptyStatement,
   isEnumDeclaration,
   isExpressionStatement,
   isForOfStatement,
@@ -22,6 +24,7 @@ import {
   isFunctionDeclaration,
   isIdentifier,
   isImportDeclaration,
+  isImportEqualsDeclaration,
   isInterfaceDeclaration,
   isKeywordTypeNode,
   isMethodDeclaration,
@@ -382,5 +385,31 @@ describe("TS-Go parser groundwork", () => {
 
     assert.equal(isTypeAliasDeclaration(sourceFile.statements[0]!), true);
     assert.equal(sourceFile.statements[1]!.kind, Kind.TryStatement);
+  });
+
+  it("parses import equals declarations and type-literal call signatures", () => {
+    const sourceFile = parseSourceFile([
+      "import ts = require(\"typescript\");",
+      "interface Callable<T> {",
+      "  (value: T): T;",
+      "  <U>(value: T): U;",
+      "}",
+    ].join("\n"));
+
+    assert.equal(isImportEqualsDeclaration(sourceFile.statements[0]!), true);
+    assert.equal(isInterfaceDeclaration(sourceFile.statements[1]!), true);
+    if (!isInterfaceDeclaration(sourceFile.statements[1]!)) throw new Error("Expected interface");
+    assert.equal(isCallSignatureDeclaration(sourceFile.statements[1]!.members[0]!), true);
+    assert.equal(isCallSignatureDeclaration(sourceFile.statements[1]!.members[1]!), true);
+  });
+
+  it("parses empty statements inside blocks without corrupting following expressions", () => {
+    const sourceFile = parseSourceFile("function f() { ;(() => value)(); }");
+    const statement = sourceFile.statements[0]!;
+
+    assert.equal(isFunctionDeclaration(statement), true);
+    if (!isFunctionDeclaration(statement)) throw new Error("Expected function");
+    assert.equal(isEmptyStatement(statement.body!.statements[0]!), true);
+    assert.equal(isExpressionStatement(statement.body!.statements[1]!), true);
   });
 });

@@ -18,6 +18,8 @@ import {
   createComputedPropertyName,
   createConditionalTypeNode,
   createConstructorDeclaration,
+  createCallSignatureDeclaration,
+  createConstructSignatureDeclaration,
   createConstructorTypeNode,
   createDeleteExpression,
   createDefaultClause,
@@ -30,6 +32,7 @@ import {
   createConditionalExpression,
   createDoStatement,
   createElementAccessExpression,
+  createEmptyStatement,
   createEnumDeclaration,
   createEnumMember,
   createForInStatement,
@@ -45,9 +48,11 @@ import {
   createIndexedAccessTypeNode,
   createImportClause,
   createImportDeclaration,
+  createImportEqualsDeclaration,
   createImportSpecifier,
   createIntersectionTypeNode,
   createInterfaceDeclaration,
+  createExternalModuleReference,
   createKeywordTypeNode,
   createCallExpression,
   createKeywordExpression,
@@ -130,6 +135,7 @@ import {
   type ModifierSyntaxKind,
   type ModifierLike,
   type ModuleExportName,
+  type ModuleReference,
   type NamedImportBindings,
   type NodeArray,
   type ObjectLiteralElementLike,
@@ -276,6 +282,9 @@ export class Parser {
     switch (this.#current().kind) {
       case Kind.ImportKeyword:
         return this.#parseImportDeclaration(modifiers);
+      case Kind.SemicolonToken:
+        this.#advance();
+        return createEmptyStatement();
       case Kind.ClassKeyword:
         return this.#parseClassDeclaration(modifiers);
       case Kind.InterfaceKeyword:
@@ -369,6 +378,14 @@ export class Parser {
 
   #parseImportDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
     this.#expect(Kind.ImportKeyword);
+    if (this.#isImportEqualsDeclarationRestStart()) {
+      const isTypeOnly = this.#consumeOptional(Kind.TypeKeyword);
+      const name = this.#parseIdentifier();
+      this.#expect(Kind.EqualsToken);
+      const moduleReference = this.#parseModuleReference();
+      this.#consumeOptional(Kind.SemicolonToken);
+      return createImportEqualsDeclaration(modifiers, isTypeOnly, name, moduleReference);
+    }
     let importClause: ReturnType<typeof createImportClause> | undefined;
     let moduleSpecifier: Expression;
     if (this.#current().kind === Kind.StringLiteral) {
@@ -380,6 +397,23 @@ export class Parser {
     }
     this.#consumeOptional(Kind.SemicolonToken);
     return createImportDeclaration(modifiers, importClause, moduleSpecifier, undefined);
+  }
+
+  #isImportEqualsDeclarationRestStart(): boolean {
+    const offset = this.#current().kind === Kind.TypeKeyword ? 1 : 0;
+    return isIdentifierNameKind(this.#tokens[this.#index + offset]?.kind ?? Kind.Unknown)
+      && this.#tokens[this.#index + offset + 1]?.kind === Kind.EqualsToken;
+  }
+
+  #parseModuleReference(): ModuleReference {
+    if (isIdentifierNameKind(this.#current().kind) && this.#current().text === "require" && this.#tokens[this.#index + 1]?.kind === Kind.OpenParenToken) {
+      this.#advance();
+      this.#expect(Kind.OpenParenToken);
+      const expression = this.#parseStringLiteralExpression();
+      this.#expect(Kind.CloseParenToken);
+      return createExternalModuleReference(expression);
+    }
+    return this.#parseEntityName();
   }
 
   #parseImportClause(): ReturnType<typeof createImportClause> {
@@ -653,6 +687,27 @@ export class Parser {
 
   #parseTypeElement(): TypeElement {
     const modifiers = this.#parseModifiers();
+    if (this.#current().kind === Kind.OpenParenToken || this.#current().kind === Kind.LessThanToken) {
+      const typeParameters = this.#parseOptionalTypeParameters();
+      this.#expect(Kind.OpenParenToken);
+      const parameters = this.#parseParameterList();
+      this.#expect(Kind.CloseParenToken);
+      const type = this.#parseOptionalTypeAnnotation();
+      this.#consumeOptional(Kind.SemicolonToken);
+      this.#consumeOptional(Kind.CommaToken);
+      return createCallSignatureDeclaration(typeParameters, createNodeArray(parameters), type);
+    }
+    if (this.#current().kind === Kind.NewKeyword) {
+      this.#advance();
+      const typeParameters = this.#parseOptionalTypeParameters();
+      this.#expect(Kind.OpenParenToken);
+      const parameters = this.#parseParameterList();
+      this.#expect(Kind.CloseParenToken);
+      const type = this.#parseOptionalTypeAnnotation();
+      this.#consumeOptional(Kind.SemicolonToken);
+      this.#consumeOptional(Kind.CommaToken);
+      return createConstructSignatureDeclaration(typeParameters, createNodeArray(parameters), type);
+    }
     const name = this.#parsePropertyName();
     const postfixToken = this.#parseOptionalPostfixToken();
     if (this.#current().kind === Kind.OpenParenToken || this.#current().kind === Kind.LessThanToken) {
