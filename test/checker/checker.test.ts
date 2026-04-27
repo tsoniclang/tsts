@@ -1056,6 +1056,33 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Expected 3 arguments, but got 2."]);
   });
 
+  it("reports too many call arguments using maximum parameter count", () => {
+    const sourceFile = parseSourceFile("function f(a: string) { } function g(a?: string, b?: number) { } f('', 0); g('', 1, true);");
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2554, 2554]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Expected 1 arguments, but got 2.",
+      "Expected 0-2 arguments, but got 3.",
+    ]);
+  });
+
+  it("reports too many JavaScript call arguments unless the function owns arguments", () => {
+    const host: CompilerHost = {
+      readFile: fileName => {
+        if (fileName === "foo.js") {
+          return "function f(x) { function nested() { return arguments.length; } return x; }";
+        }
+        return fileName === "bar.ts" ? "f(1, 2, 3);" : undefined;
+      },
+    };
+    const program = createProgram(["foo.js", "bar.ts"], { allowJs: true, checkJs: true, strict: true }, host);
+    const diagnostics = checkProgram(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [2554]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), ["Expected 0-1 arguments, but got 3."]);
+  });
+
   it("treats unannotated JavaScript parameters as optional call arguments", () => {
     const host: CompilerHost = {
       readFile: fileName => {

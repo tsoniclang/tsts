@@ -7,6 +7,7 @@ import {
   isArrayLiteralExpression,
   isArrayTypeNode,
   isBigIntLiteral,
+  isBindingElement,
   isBinaryExpression,
   isBlock,
   isBreakStatement,
@@ -63,6 +64,7 @@ import {
   isObjectBindingPattern,
   isParenthesizedTypeNode,
   isParenthesizedExpression,
+  isParameterDeclaration,
   isPostfixUnaryExpression,
   isPrefixUnaryExpression,
   isPropertyAssignment,
@@ -87,6 +89,7 @@ import {
   isTypeQueryNode,
   isTypeReferenceNode,
   isVariableStatement,
+  isVariableDeclaration,
   isVariableDeclarationList,
   isUnionTypeNode,
   isWhileStatement,
@@ -110,8 +113,10 @@ import {
   type ImportDeclaration,
   type ImportSpecifier,
   type InterfaceDeclaration,
+  type Identifier,
   type MethodSignatureDeclaration,
   type MethodDeclaration,
+  type Node,
   type ParameterDeclaration,
   type PropertyName,
   type SetAccessorDeclaration,
@@ -138,7 +143,7 @@ type CheckedType =
   | { readonly kind: "accessorProperty"; readonly type: CheckedType }
   | { readonly kind: "arrayLike"; readonly elementType: CheckedType }
   | { readonly kind: "arrayIterator"; readonly elementType: CheckedType }
-  | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType; readonly parameterNames?: readonly string[]; readonly restParameterIndex?: number; readonly minArgumentCount?: number }
+  | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType; readonly parameterNames?: readonly string[]; readonly restParameterIndex?: number; readonly minArgumentCount?: number; readonly maxArgumentCount?: number }
   | { readonly kind: "intrinsicConstructor"; readonly intrinsic: "Set" }
   | { readonly kind: "intrinsicFunction"; readonly intrinsic: "Array.from" | "Array.isArray" | "ArrayBuffer.isView" }
   | { readonly kind: "interface"; readonly name: string; readonly members: InterfaceMembers }
@@ -1906,6 +1911,7 @@ function methodSignatureType(method: MethodSignatureDeclaration, environment: Ty
     parameterNames: parameterDisplayNames(method.parameters),
     ...signatureRestParameterIndex(method.parameters),
     ...signatureMinArgumentCount(method.parameters, state),
+    ...signatureMaxArgumentCount(method.parameters, state),
     returnType,
   };
 }
@@ -2332,6 +2338,7 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
       parameterNames: parameterDisplayNames(functionDeclaration.parameters),
       ...signatureRestParameterIndex(functionDeclaration.parameters),
       ...signatureMinArgumentCount(functionDeclaration.parameters, state),
+      ...signatureMaxArgumentCount(functionDeclaration.parameters, state, functionDeclaration.body),
       returnType: returnType ?? unresolvedType,
     };
     environment.set(functionDeclaration.name.text, functionType);
@@ -2364,6 +2371,7 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
     parameterNames: parameterDisplayNames(functionExpression.parameters),
     ...signatureRestParameterIndex(functionExpression.parameters),
     ...signatureMinArgumentCount(functionExpression.parameters, state),
+    ...signatureMaxArgumentCount(functionExpression.parameters, state, functionExpression.body),
     returnType: declaredReturnType ?? contextualReturnType ?? methodBodyReturnType(functionExpression.body),
   };
   if (functionExpression.name !== undefined) {
@@ -3147,6 +3155,7 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
     parameterNames: parameterDisplayNames(arrowFunction.parameters),
     ...signatureRestParameterIndex(arrowFunction.parameters),
     ...signatureMinArgumentCount(arrowFunction.parameters, state),
+    ...signatureMaxArgumentCount(arrowFunction.parameters, state),
     returnType: expectedReturnType ?? inferredReturnType,
   };
 }
@@ -3652,7 +3661,7 @@ function methodDeclarationType(method: MethodDeclaration, environment: TypeEnvir
   addTypeParametersToEnvironment(typeParameters, signatureEnvironment);
   const parameters = method.parameters.map(parameter => parameter.type === undefined ? anyType : typeFromTypeNode(parameter.type, signatureEnvironment, state));
   const returnType = method.type === undefined ? methodBodyReturnType(method.body) : bindTypePredicateParameterIndex(typeFromTypeNode(method.type, signatureEnvironment, state), method.parameters);
-  return { kind: "function", typeParameters, parameters, parameterNames: parameterDisplayNames(method.parameters), ...signatureRestParameterIndex(method.parameters), ...signatureMinArgumentCount(method.parameters, state), returnType };
+  return { kind: "function", typeParameters, parameters, parameterNames: parameterDisplayNames(method.parameters), ...signatureRestParameterIndex(method.parameters), ...signatureMinArgumentCount(method.parameters, state), ...signatureMaxArgumentCount(method.parameters, state, method.body), returnType };
 }
 
 function methodBodyReturnType(body: Block | undefined): CheckedType {
@@ -3785,7 +3794,7 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
     addTypeParametersToEnvironment(typeParameters, signatureEnvironment);
     const parameterTypes = checkSignatureParameters(type.parameters, state ?? emptyCheckState(), signatureEnvironment, true);
     const returnType = type.type === undefined ? unresolvedType : bindTypePredicateParameterIndex(typeFromTypeNode(type.type, signatureEnvironment, state), type.parameters);
-    return { kind: "function", typeParameters, parameters: parameterTypes, parameterNames: parameterDisplayNames(type.parameters), ...signatureRestParameterIndex(type.parameters), ...signatureMinArgumentCount(type.parameters, state ?? emptyCheckState()), returnType };
+    return { kind: "function", typeParameters, parameters: parameterTypes, parameterNames: parameterDisplayNames(type.parameters), ...signatureRestParameterIndex(type.parameters), ...signatureMinArgumentCount(type.parameters, state ?? emptyCheckState()), ...signatureMaxArgumentCount(type.parameters, state ?? emptyCheckState()), returnType };
   }
   if (isTypeReferenceNode(type)) {
     const name = entityNameText(type.typeName);
@@ -3995,7 +4004,9 @@ function instantiateFunctionType(type: Extract<CheckedType, { readonly kind: "fu
     typeParameters: [],
     parameters: type.parameters.map(parameter => substituteType(parameter, substitutions)),
     ...(type.parameterNames === undefined ? {} : { parameterNames: type.parameterNames }),
+    ...(type.restParameterIndex === undefined ? {} : { restParameterIndex: type.restParameterIndex }),
     ...(type.minArgumentCount === undefined ? {} : { minArgumentCount: type.minArgumentCount }),
+    ...(type.maxArgumentCount === undefined ? {} : { maxArgumentCount: type.maxArgumentCount }),
     returnType: substituteType(type.returnType, substitutions),
   };
 }
@@ -4156,8 +4167,10 @@ function accessorType(accessor: GetAccessorDeclaration | SetAccessorDeclaration,
 }
 
 function checkCallArguments(argumentTypes: readonly CheckedType[], functionType: Extract<CheckedType, { readonly kind: "function" }>, state: CheckState): void {
-  if (argumentTypes.length < (functionType.minArgumentCount ?? 0)) {
-    state.diagnostics.push(createDiagnostic(2554, String(functionType.minArgumentCount ?? 0), String(argumentTypes.length)));
+  const minArgumentCount = functionType.minArgumentCount ?? 0;
+  const maxArgumentCount = functionType.maxArgumentCount;
+  if (argumentTypes.length < minArgumentCount || (maxArgumentCount !== undefined && argumentTypes.length > maxArgumentCount)) {
+    state.diagnostics.push(createDiagnostic(2554, displayArgumentCountRange(minArgumentCount, maxArgumentCount), String(argumentTypes.length)));
     return;
   }
   for (let index = 0; index < argumentTypes.length; index += 1) {
@@ -4299,6 +4312,96 @@ function signatureMinArgumentCount(parameters: readonly ParameterDeclaration[], 
   return minArgumentCount === 0 ? {} : { minArgumentCount };
 }
 
+function signatureMaxArgumentCount(parameters: readonly ParameterDeclaration[], state: CheckState, body?: Block): { readonly maxArgumentCount: number } | Record<string, never> {
+  if (parameters.some(parameter => parameter.dotDotDotToken !== undefined)) {
+    return {};
+  }
+  if (state.isJavaScriptFile && bodyContainsOwnArgumentsReference(body)) {
+    return {};
+  }
+  return { maxArgumentCount: parameters.length };
+}
+
+function bodyContainsOwnArgumentsReference(body: Block | undefined): boolean {
+  if (body === undefined) {
+    return false;
+  }
+  return nodeContainsOwnArgumentsReference(body);
+}
+
+function nodeContainsOwnArgumentsReference(node: Node): boolean {
+  if (isIdentifier(node) && isArgumentsValueReference(node)) {
+    return true;
+  }
+  if (startsNewNonArrowArgumentsScope(node)) {
+    return false;
+  }
+  return node.forEachChild(child => nodeContainsOwnArgumentsReference(child) ? true : undefined, children => {
+    for (const child of children) {
+      if (nodeContainsOwnArgumentsReference(child)) {
+        return true;
+      }
+    }
+    return undefined;
+  }) === true;
+}
+
+function isArgumentsValueReference(identifier: Identifier): boolean {
+  if (identifier.text !== "arguments") {
+    return false;
+  }
+  const parent = identifier.parent;
+  if (parent === undefined) {
+    return true;
+  }
+  if (isPropertyAccessExpression(parent) && parent.name === identifier) {
+    return false;
+  }
+  if (isPropertyAssignment(parent) && parent.name === identifier) {
+    return false;
+  }
+  if (isParameterDeclaration(parent) && parent.name === identifier) {
+    return false;
+  }
+  if (isVariableDeclaration(parent) && parent.name === identifier) {
+    return false;
+  }
+  if (isBindingElement(parent) && (parent.name === identifier || parent.propertyName === identifier)) {
+    return false;
+  }
+  if ((isFunctionDeclaration(parent) || isClassDeclaration(parent) || isInterfaceDeclaration(parent) || isTypeAliasDeclaration(parent)) && parent.name === identifier) {
+    return false;
+  }
+  if ((isMethodDeclaration(parent) || isMethodSignatureDeclaration(parent) || isPropertySignatureDeclaration(parent) || isGetAccessorDeclaration(parent) || isSetAccessorDeclaration(parent)) && parent.name === identifier) {
+    return false;
+  }
+  if (isQualifiedName(parent) && parent.right === identifier) {
+    return false;
+  }
+  if (isLabeledStatement(parent) && parent.label === identifier) {
+    return false;
+  }
+  return true;
+}
+
+function startsNewNonArrowArgumentsScope(node: Node): boolean {
+  return node.kind === Kind.FunctionDeclaration
+    || node.kind === Kind.FunctionExpression
+    || node.kind === Kind.MethodDeclaration
+    || node.kind === Kind.Constructor
+    || node.kind === Kind.GetAccessor
+    || node.kind === Kind.SetAccessor
+    || node.kind === Kind.ClassDeclaration
+    || node.kind === Kind.ClassExpression;
+}
+
+function displayArgumentCountRange(minArgumentCount: number, maxArgumentCount: number | undefined): string {
+  if (maxArgumentCount === undefined || minArgumentCount === maxArgumentCount) {
+    return String(minArgumentCount);
+  }
+  return `${minArgumentCount}-${maxArgumentCount}`;
+}
+
 function inferArrayLiteral(elements: readonly Expression[], state: CheckState, environment: TypeEnvironment, contextualElementType?: CheckedType, contextualArrayType?: CheckedType): CheckedType {
   if (elements.length === 0) {
     if (contextualArrayType !== undefined) {
@@ -4412,6 +4515,7 @@ function instantiateFunctionTypeForCall(functionType: Extract<CheckedType, { rea
     ...(functionType.parameterNames === undefined ? {} : { parameterNames: functionType.parameterNames }),
     ...(functionType.restParameterIndex === undefined ? {} : { restParameterIndex: functionType.restParameterIndex }),
     ...(functionType.minArgumentCount === undefined ? {} : { minArgumentCount: functionType.minArgumentCount }),
+    ...(functionType.maxArgumentCount === undefined ? {} : { maxArgumentCount: functionType.maxArgumentCount }),
     returnType: substituteType(functionType.returnType, substitutions),
   };
 }
@@ -4551,6 +4655,7 @@ function substituteType(type: CheckedType, substitutions: ReadonlyMap<string, Ch
       ...(type.parameterNames === undefined ? {} : { parameterNames: type.parameterNames }),
       ...(type.restParameterIndex === undefined ? {} : { restParameterIndex: type.restParameterIndex }),
       ...(type.minArgumentCount === undefined ? {} : { minArgumentCount: type.minArgumentCount }),
+      ...(type.maxArgumentCount === undefined ? {} : { maxArgumentCount: type.maxArgumentCount }),
       returnType: substituteType(type.returnType, substitutions),
     };
   }
