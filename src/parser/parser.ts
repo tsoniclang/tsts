@@ -58,6 +58,11 @@ import {
   createImportSpecifier,
   createIntersectionTypeNode,
   createInterfaceDeclaration,
+  createJSDoc,
+  createJSDocParameterTag,
+  createJSDocReturnTag,
+  createJSDocTemplateTag,
+  createJSDocTypeTag,
   createExternalModuleReference,
   createKeywordTypeNode,
   createLabeledStatement,
@@ -146,6 +151,7 @@ import {
   type Identifier,
   type ImportSpecifier,
   type ImportPhaseModifierSyntaxKind,
+  type JSDocTag,
   type KeywordTypeSyntaxKind,
   type ModifierSyntaxKind,
   type ModifierLike,
@@ -154,6 +160,7 @@ import {
   type ModuleName,
   type ModuleReference,
   type NamedImportBindings,
+  type Node,
   type NodeArray,
   type ObjectLiteralElementLike,
   type ParameterDeclaration,
@@ -164,6 +171,7 @@ import {
   type SourceFile,
   type Statement,
   type TypeElement,
+  type TypeAliasDeclaration,
   type TypeNode,
   type TemplateMiddleOrTail,
   type TypeParameterDeclaration,
@@ -263,6 +271,7 @@ export class Parser {
   readonly #sourceText: string;
   readonly #fileName: string;
   readonly #tokens: readonly ScannedToken[];
+  readonly #jsDocByTokenStart: Map<number, readonly Node[]>;
   readonly #diagnostics: Diagnostic[] = [];
   #index = 0;
 
@@ -270,6 +279,7 @@ export class Parser {
     this.#sourceText = sourceText;
     this.#fileName = options.fileName ?? "input.ts";
     this.#tokens = scanAll(sourceText);
+    this.#jsDocByTokenStart = collectJSDocByTokenStart(sourceText, this.#fileName);
     if (sourceText.includes("\uFFFD")) {
       this.#addDiagnosticAt(0, 0, 1490);
     }
@@ -1017,7 +1027,11 @@ export class Parser {
   }
 
   #parseVariableStatement(modifiers: NodeArray<ModifierLike> | undefined): Statement {
+    const jsDoc = this.#consumeJSDocBeforeCurrentToken();
     const declarationList = this.#parseVariableDeclarationList();
+    if (jsDoc !== undefined) {
+      this.#attachJSDocToFirstDeclaration(declarationList.declarations, jsDoc);
+    }
     this.#consumeOptional(Kind.SemicolonToken);
     return createVariableStatement(modifiers, declarationList);
   }
@@ -1056,6 +1070,7 @@ export class Parser {
   }
 
   #parseFunctionDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
+    const jsDoc = this.#consumeJSDocBeforeCurrentToken();
     this.#expect(Kind.FunctionKeyword);
     const asteriskToken = this.#consumeOptional(Kind.AsteriskToken) ? createToken(Kind.AsteriskToken) : undefined;
     const name = isIdentifierNameKind(this.#current().kind) ? this.#parseIdentifier() : undefined;
@@ -1068,7 +1083,7 @@ export class Parser {
     if (body === undefined) {
       this.#consumeOptional(Kind.SemicolonToken);
     }
-    return createFunctionDeclaration(modifiers, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body);
+    return this.#withJSDoc(createFunctionDeclaration(modifiers, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body), jsDoc);
   }
 
   #parseParameterList(): ParameterDeclaration[] {
@@ -1305,6 +1320,7 @@ export class Parser {
   }
 
   #parseArrowFunction(): Expression {
+    const jsDoc = this.#consumeJSDocBeforeCurrentToken();
     const modifiers = this.#consumeOptional(Kind.AsyncKeyword)
       ? createNodeArray([createToken(Kind.AsyncKeyword) as ModifierLike])
       : undefined;
@@ -1321,7 +1337,7 @@ export class Parser {
     }
     this.#expect(Kind.EqualsGreaterThanToken);
     const body = this.#parseArrowBody();
-    return createArrowFunction(modifiers, typeParameters, createNodeArray(parameters), type, createToken(Kind.EqualsGreaterThanToken), body);
+    return this.#withJSDoc(createArrowFunction(modifiers, typeParameters, createNodeArray(parameters), type, createToken(Kind.EqualsGreaterThanToken), body), jsDoc);
   }
 
   #parseArrowBody(): ConciseBody {
@@ -1332,7 +1348,9 @@ export class Parser {
   }
 
   #parseUnaryExpression(): Expression {
+    const jsDoc = this.#consumeJSDocBeforeCurrentToken();
     const token = this.#current();
+    let expression: Expression;
     switch (token.kind) {
       case Kind.PlusToken:
       case Kind.MinusToken:
@@ -1341,28 +1359,38 @@ export class Parser {
       case Kind.PlusPlusToken:
       case Kind.MinusMinusToken:
         this.#advance();
-        return createPrefixUnaryExpression(token.kind, this.#parseUnaryExpression());
+        expression = createPrefixUnaryExpression(token.kind, this.#parseUnaryExpression());
+        break;
       case Kind.NewKeyword:
-        return this.#parseNewExpression();
+        expression = this.#parseNewExpression();
+        break;
       case Kind.DeleteKeyword:
         this.#advance();
-        return createDeleteExpression(this.#parseUnaryExpression());
+        expression = createDeleteExpression(this.#parseUnaryExpression());
+        break;
       case Kind.TypeOfKeyword:
         this.#advance();
-        return createTypeOfExpression(this.#parseUnaryExpression());
+        expression = createTypeOfExpression(this.#parseUnaryExpression());
+        break;
       case Kind.VoidKeyword:
         this.#advance();
-        return createVoidExpression(this.#parseUnaryExpression());
+        expression = createVoidExpression(this.#parseUnaryExpression());
+        break;
       case Kind.AwaitKeyword:
         this.#advance();
-        return createAwaitExpression(this.#parseUnaryExpression());
+        expression = createAwaitExpression(this.#parseUnaryExpression());
+        break;
       case Kind.YieldKeyword:
-        return this.#parseYieldExpression();
+        expression = this.#parseYieldExpression();
+        break;
       case Kind.LessThanToken:
-        return this.#parseTypeAssertionExpression();
+        expression = this.#parseTypeAssertionExpression();
+        break;
       default:
-        return this.#parsePostfixExpression();
+        expression = this.#parsePostfixExpression();
+        break;
     }
+    return this.#withJSDoc(expression, jsDoc);
   }
 
   #parseTypeAssertionExpression(): Expression {
@@ -2219,6 +2247,33 @@ export class Parser {
     return true;
   }
 
+  #consumeJSDocBeforeCurrentToken(): readonly Node[] | undefined {
+    const token = this.#current();
+    const jsDoc = this.#jsDocByTokenStart.get(token.pos);
+    if (jsDoc !== undefined) {
+      this.#jsDocByTokenStart.delete(token.pos);
+    }
+    return jsDoc;
+  }
+
+  #withJSDoc<TNode extends Node>(node: TNode, jsDoc: readonly Node[] | undefined): TNode {
+    if (jsDoc !== undefined && jsDoc.length > 0) {
+      Object.defineProperty(node, "jsDoc", {
+        configurable: true,
+        enumerable: true,
+        value: jsDoc,
+      });
+    }
+    return node;
+  }
+
+  #attachJSDocToFirstDeclaration(declarations: readonly VariableDeclaration[], jsDoc: readonly Node[]): void {
+    const declaration = declarations[0];
+    if (declaration !== undefined) {
+      this.#withJSDoc(declaration, jsDoc);
+    }
+  }
+
   #expect(kind: Kind): ScannedToken {
     const token = this.#current();
     if (token.kind !== kind) {
@@ -2436,6 +2491,114 @@ function isContextualExpressionIdentifierKind(kind: Kind): boolean {
     && kind !== Kind.TrueKeyword
     && kind !== Kind.NewKeyword
     && kind !== Kind.FunctionKeyword;
+}
+
+function collectJSDocByTokenStart(sourceText: string, fileName: string): Map<number, readonly Node[]> {
+  const tokens = scanAll(sourceText, { skipTrivia: false });
+  const jsDocByTokenStart = new Map<number, readonly Node[]>();
+  let pendingComments: string[] = [];
+  let lineBreaksAfterPending = 0;
+  for (const token of tokens) {
+    if (token.kind === Kind.MultiLineCommentTrivia && token.text.startsWith("/**") && !token.text.startsWith("/***")) {
+      pendingComments.push(token.text);
+      lineBreaksAfterPending = 0;
+      continue;
+    }
+    if (token.kind === Kind.WhitespaceTrivia) {
+      continue;
+    }
+    if (token.kind === Kind.NewLineTrivia) {
+      if (pendingComments.length > 0) {
+        lineBreaksAfterPending += 1;
+        if (lineBreaksAfterPending > 1) {
+          pendingComments = [];
+          lineBreaksAfterPending = 0;
+        }
+      }
+      continue;
+    }
+    if (token.kind === Kind.SingleLineCommentTrivia || token.kind === Kind.MultiLineCommentTrivia) {
+      pendingComments = [];
+      lineBreaksAfterPending = 0;
+      continue;
+    }
+    if (pendingComments.length > 0) {
+      jsDocByTokenStart.set(token.pos, pendingComments.map(comment => parseJSDocComment(comment, fileName)));
+      pendingComments = [];
+      lineBreaksAfterPending = 0;
+    }
+  }
+  return jsDocByTokenStart;
+}
+
+function parseJSDocComment(commentText: string, fileName: string): Node {
+  const body = cleanJSDocComment(commentText);
+  const tags: JSDocTag[] = [];
+  for (const match of body.matchAll(/@template\s+([A-Za-z_$][\w$]*(?:\s*,\s*[A-Za-z_$][\w$]*)*)/gu)) {
+    const typeParameters = match[1]!.split(/\s*,\s*/u)
+      .filter(name => name.length > 0)
+      .map(name => createTypeParameterDeclaration(undefined, createIdentifier(name), undefined, undefined, undefined));
+    if (typeParameters.length > 0) {
+      tags.push(createJSDocTemplateTag(createIdentifier("template"), undefined as never, createNodeArray(typeParameters), undefined));
+    }
+  }
+  for (const match of body.matchAll(/@param\s*\{([^}]*)\}\s*([A-Za-z_$][\w$]*)/gu)) {
+    tags.push(createJSDocParameterTag(
+      createIdentifier("param"),
+      createIdentifier(match[2]!),
+      false,
+      parseJSDocType(match[1]!, fileName),
+      false,
+      undefined,
+    ));
+  }
+  for (const match of body.matchAll(/@returns?\s*\{([^}]*)\}/gu)) {
+    tags.push(createJSDocReturnTag(createIdentifier("returns"), parseJSDocType(match[1]!, fileName), undefined));
+  }
+  for (const match of body.matchAll(/@type\s*\{([^}]*)\}/gu)) {
+    tags.push(createJSDocTypeTag(createIdentifier("type"), parseJSDocType(match[1]!, fileName), undefined));
+  }
+  return createJSDoc(createNodeArray([]), tags.length === 0 ? undefined : createNodeArray(tags));
+}
+
+function cleanJSDocComment(commentText: string): string {
+  return commentText
+    .replace(/^\/\*\*/u, "")
+    .replace(/\*\/$/u, "")
+    .split(/\r\n?|\n|\u2028|\u2029/u)
+    .map(line => line.replace(/^\s*\*\s?/u, ""))
+    .join("\n");
+}
+
+function parseJSDocType(typeText: string, fileName: string): TypeNode {
+  const normalized = normalizeJSDocType(typeText);
+  try {
+    const sourceFile = new Parser(`type __JSDoc = ${normalized};`, { fileName }).parseSourceFile();
+    const statement = sourceFile.statements[0] as TypeAliasDeclaration | undefined;
+    if (statement?.kind === Kind.TypeAliasDeclaration) {
+      return statement.type;
+    }
+  } catch {
+    return createKeywordTypeNode(Kind.AnyKeyword);
+  }
+  return createKeywordTypeNode(Kind.AnyKeyword);
+}
+
+function normalizeJSDocType(typeText: string): string {
+  let text = typeText.trim();
+  if (text === "*") {
+    return "any";
+  }
+  if (text.endsWith("=")) {
+    text = `${text.slice(0, -1).trim()} | undefined`;
+  }
+  if (text.startsWith("?")) {
+    text = `${text.slice(1).trim()} | null`;
+  }
+  if (text.startsWith("!")) {
+    text = text.slice(1).trim();
+  }
+  return text;
 }
 
 export function parseSourceFile(sourceText: string, options?: ParseSourceFileOptions): SourceFile {

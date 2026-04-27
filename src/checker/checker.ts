@@ -47,6 +47,11 @@ import {
   isKeywordExpression,
   isKeywordTypeNode,
   isIndexSignatureDeclaration,
+  isJSDoc,
+  isJSDocParameterTag,
+  isJSDocReturnTag,
+  isJSDocTemplateTag,
+  isJSDocTypeTag,
   isLabeledStatement,
   isLiteralTypeNode,
   isMappedTypeNode,
@@ -87,6 +92,7 @@ import {
   isTypeAssertion,
   isTypeAliasDeclaration,
   isTypeLiteralNode,
+  isTypeNode,
   isTypePredicateNode,
   isTypeQueryNode,
   isTypeReferenceNode,
@@ -120,6 +126,7 @@ import {
   type MethodSignatureDeclaration,
   type MethodDeclaration,
   type Node,
+  type NodeArray,
   type ParameterDeclaration,
   type PropertyName,
   type SetAccessorDeclaration,
@@ -128,6 +135,7 @@ import {
   type TypeElement,
   type TypeAliasDeclaration,
   type TypeNode,
+  type TypeParameterDeclaration,
   type TypePredicateNode,
   type TypeReferenceNode,
   type VariableDeclaration,
@@ -1286,6 +1294,9 @@ function checkForInitializer(initializer: Extract<Statement, { readonly kind: Ki
 
 function checkVariableDeclaration(declaration: VariableDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
   const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type, environment, state);
+  if (declaration.initializer !== undefined) {
+    attachJSDocIfMissing(declaration.initializer, declaration);
+  }
   const initializerType = declaration.initializer === undefined ? undefined : inferExpressionWithContext(declaration.initializer, state, environment, declaredType);
   if (ambient && declaration.initializer !== undefined) {
     checkAmbientVariableInitializer(declaration, state, environment);
@@ -2369,13 +2380,94 @@ function addTypeParametersToEnvironment(typeParameters: readonly string[], envir
   }
 }
 
+function effectiveTypeParameterNames(explicitTypeParameters: NodeArray<TypeParameterDeclaration> | undefined, jsDocOwner: Node): readonly string[] {
+  return uniqueInOrder([
+    ...(explicitTypeParameters?.map(typeParameter => typeParameter.name.text) ?? []),
+    ...jsDocTypeParameterNames(jsDocOwner),
+  ]);
+}
+
+function jsDocTypeParameterNames(node: Node): readonly string[] {
+  const names: string[] = [];
+  for (const tag of jsDocTags(node)) {
+    if (isJSDocTemplateTag(tag)) {
+      names.push(...tag.typeParameters.map(typeParameter => typeParameter.name.text));
+    }
+  }
+  return names;
+}
+
+function jsDocParameterTypeMap(node: Node, environment: TypeEnvironment, state: CheckState): ReadonlyMap<string, CheckedType> {
+  const parameterTypes = new Map<string, CheckedType>();
+  for (const tag of jsDocTags(node)) {
+    if (!isJSDocParameterTag(tag) || tag.typeExpression === undefined) {
+      continue;
+    }
+    const name = entityNameText(tag.name);
+    if (name !== undefined) {
+      parameterTypes.set(name, typeFromTypeNode(tag.typeExpression, environment, state));
+    }
+  }
+  return parameterTypes;
+}
+
+function jsDocReturnType(node: Node, environment: TypeEnvironment, state: CheckState): CheckedType | undefined {
+  for (const tag of jsDocTags(node)) {
+    if (isJSDocReturnTag(tag) && tag.typeExpression !== undefined) {
+      return typeFromTypeNode(tag.typeExpression, environment, state);
+    }
+  }
+  return undefined;
+}
+
+function jsDocTypeTagType(node: Node, environment: TypeEnvironment, state: CheckState): CheckedType | undefined {
+  for (const tag of jsDocTags(node)) {
+    if (isJSDocTypeTag(tag) && isTypeNode(tag.typeExpression)) {
+      return typeFromTypeNode(tag.typeExpression, environment, state);
+    }
+  }
+  return undefined;
+}
+
+function jsDocTags(node: Node): readonly Node[] {
+  const tags: Node[] = [];
+  for (const jsDoc of node.jsDoc ?? []) {
+    if (isJSDoc(jsDoc) && jsDoc.tags !== undefined) {
+      tags.push(...jsDoc.tags);
+    }
+  }
+  return tags;
+}
+
+function jsDocParameterType(parameter: ParameterDeclaration, parameterTypes: ReadonlyMap<string, CheckedType>): CheckedType | undefined {
+  if (!isIdentifier(parameter.name)) {
+    return undefined;
+  }
+  return parameterTypes.get(parameter.name.text);
+}
+
+function attachJSDocIfMissing(target: Node, source: Node): void {
+  const jsDoc = source.jsDoc;
+  if ((target.jsDoc?.length ?? 0) > 0 || jsDoc === undefined || jsDoc.length === 0) {
+    return;
+  }
+  Object.defineProperty(target, "jsDoc", {
+    configurable: true,
+    enumerable: true,
+    value: jsDoc,
+  });
+}
+
 function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
   const functionEnvironment = createFunctionEnvironment(environment);
-  const typeParameters = functionDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
+  const typeParameters = effectiveTypeParameterNames(functionDeclaration.typeParameters, functionDeclaration);
   addTypeParametersToEnvironment(typeParameters, functionEnvironment);
-  const parameterTypes = functionDeclaration.parameters.map(parameter => parameter.type === undefined ? anyType : typeFromTypeNode(parameter.type, functionEnvironment, state));
-  const returnType = functionDeclaration.type === undefined ? undefined : bindTypePredicateParameterIndex(typeFromTypeNode(functionDeclaration.type, functionEnvironment, state), functionDeclaration.parameters);
-  if (!ambient && functionDeclaration.body === undefined && functionDeclaration.type === undefined) {
+  const jsDocParameterTypes = jsDocParameterTypeMap(functionDeclaration, functionEnvironment, state);
+  const parameterTypes = functionDeclaration.parameters.map(parameter => parameter.type === undefined ? jsDocParameterType(parameter, jsDocParameterTypes) ?? anyType : typeFromTypeNode(parameter.type, functionEnvironment, state));
+  const returnType = functionDeclaration.type === undefined
+    ? jsDocReturnType(functionDeclaration, functionEnvironment, state)
+    : bindTypePredicateParameterIndex(typeFromTypeNode(functionDeclaration.type, functionEnvironment, state), functionDeclaration.parameters);
+  if (!ambient && functionDeclaration.body === undefined && functionDeclaration.type === undefined && returnType === undefined) {
     state.diagnostics.push(createDiagnostic(7010, functionDeclaration.name?.text ?? "(Missing)", "any"));
   }
   if (functionDeclaration.name !== undefined) {
@@ -2399,7 +2491,7 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
   for (let index = 0; index < functionDeclaration.parameters.length; index += 1) {
     const parameter = functionDeclaration.parameters[index]!;
     checkParameterPropertyModifiers(parameter, state);
-    checkImplicitAnyParameter(parameter, state);
+    checkImplicitAnyParameter(parameter, state, jsDocParameterType(parameter, jsDocParameterTypes));
     checkStrictModeBindingName(parameter.name, state, ambient);
     setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
     if (parameter.initializer !== undefined) {
@@ -2414,10 +2506,12 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
 
 function inferFunctionExpression(functionExpression: FunctionExpression, state: CheckState, environment: TypeEnvironment, contextualParameterTypes: readonly CheckedType[] = [], contextualReturnType?: CheckedType): CheckedType {
   const functionEnvironment = createFunctionEnvironment(environment);
-  const typeParameters = functionExpression.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
+  const typeParameters = effectiveTypeParameterNames(functionExpression.typeParameters, functionExpression);
   addTypeParametersToEnvironment(typeParameters, functionEnvironment);
-  const parameterTypes = functionExpression.parameters.map((parameter, parameterIndex) => parameter.type === undefined ? contextualParameterTypes[parameterIndex] ?? anyType : typeFromTypeNode(parameter.type, functionEnvironment, state));
-  const declaredReturnType = functionExpression.type === undefined ? undefined : bindTypePredicateParameterIndex(typeFromTypeNode(functionExpression.type, functionEnvironment, state), functionExpression.parameters);
+  const jsDocParameterTypes = jsDocParameterTypeMap(functionExpression, functionEnvironment, state);
+  const parameterTypes = functionExpression.parameters.map((parameter, parameterIndex) => parameter.type === undefined ? jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[parameterIndex] ?? anyType : typeFromTypeNode(parameter.type, functionEnvironment, state));
+  const jsDocDeclaredReturnType = jsDocReturnType(functionExpression, functionEnvironment, state);
+  const declaredReturnType = functionExpression.type === undefined ? jsDocDeclaredReturnType : bindTypePredicateParameterIndex(typeFromTypeNode(functionExpression.type, functionEnvironment, state), functionExpression.parameters);
   const functionType: CheckedType = {
     kind: "function",
     typeParameters,
@@ -2436,7 +2530,7 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
   for (let index = 0; index < functionExpression.parameters.length; index += 1) {
     const parameter = functionExpression.parameters[index]!;
     checkParameterPropertyModifiers(parameter, state);
-    checkImplicitAnyParameter(parameter, state, contextualParameterTypes[index]);
+    checkImplicitAnyParameter(parameter, state, jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[index]);
     checkStrictModeBindingName(parameter.name, state, false);
     setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
     if (parameter.initializer !== undefined) {
@@ -2561,6 +2655,11 @@ function clauseSuffixDefinitelyTerminates(clauses: readonly Extract<Statement, {
 }
 
 function inferExpression(expression: Expression, state: CheckState, environment: TypeEnvironment): CheckedType {
+  const jsDocType = jsDocTypeTagType(expression, environment, state);
+  if (jsDocType !== undefined) {
+    inferJSDocAnnotatedExpression(expression, state, environment);
+    return jsDocType;
+  }
   if (isNumericLiteral(expression)) {
     return numberType;
   }
@@ -2793,6 +2892,17 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return anyType;
   }
   return unresolvedType;
+}
+
+function inferJSDocAnnotatedExpression(expression: Expression, state: CheckState, environment: TypeEnvironment): void {
+  if (isParenthesizedExpression(expression)) {
+    inferExpression(expression.expression, state, environment);
+    return;
+  }
+  if (isAsExpression(expression) || isTypeAssertion(expression) || isSatisfiesExpression(expression)) {
+    inferExpression(expression.expression, state, environment);
+    return;
+  }
 }
 
 function inferExpressionWithContext(expression: Expression, state: CheckState, environment: TypeEnvironment, contextualType: CheckedType | undefined): CheckedType {
@@ -3354,27 +3464,31 @@ function assignmentOperatorDefinitelyAssignsTarget(kind: Kind): boolean {
 function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, environment: TypeEnvironment, contextualParameterTypes: readonly CheckedType[] = [], contextualReturnType?: CheckedType): CheckedType {
   const arrowEnvironment = createFunctionEnvironment(environment);
   suppressImmediateThisDiagnostics(arrowEnvironment);
-  const typeParameters = arrowFunction.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
+  const typeParameters = effectiveTypeParameterNames(arrowFunction.typeParameters, arrowFunction);
   addTypeParametersToEnvironment(typeParameters, arrowEnvironment);
+  const jsDocParameterTypes = jsDocParameterTypeMap(arrowFunction, arrowEnvironment, state);
   for (let parameterIndex = 0; parameterIndex < arrowFunction.parameters.length; parameterIndex += 1) {
     const parameter = arrowFunction.parameters[parameterIndex]!;
     checkParameterPropertyModifiers(parameter, state);
     const contextualParameterType = contextualParameterTypes[parameterIndex];
-    checkImplicitAnyParameter(parameter, state, contextualParameterType);
-    const parameterType = parameter.type === undefined ? contextualParameterType ?? anyType : typeFromTypeNode(parameter.type, arrowEnvironment, state);
+    const jsDocType = jsDocParameterType(parameter, jsDocParameterTypes);
+    checkImplicitAnyParameter(parameter, state, jsDocType ?? contextualParameterType);
+    const parameterType = parameter.type === undefined ? jsDocType ?? contextualParameterType ?? anyType : typeFromTypeNode(parameter.type, arrowEnvironment, state);
     checkStrictModeBindingName(parameter.name, state, false);
     setBindingNameType(parameter.name, parameterType, arrowEnvironment);
     if (parameter.initializer !== undefined) {
       inferExpression(parameter.initializer, state, arrowEnvironment);
     }
   }
-  const declaredReturnType = arrowFunction.type === undefined ? undefined : bindTypePredicateParameterIndex(typeFromTypeNode(arrowFunction.type, arrowEnvironment, state), arrowFunction.parameters);
+  const declaredReturnType = arrowFunction.type === undefined
+    ? jsDocReturnType(arrowFunction, arrowEnvironment, state)
+    : bindTypePredicateParameterIndex(typeFromTypeNode(arrowFunction.type, arrowEnvironment, state), arrowFunction.parameters);
   const expectedReturnType = declaredReturnType ?? contextualReturnType;
   const inferredReturnType = inferConciseBody(arrowFunction.body, state, arrowEnvironment, expectedReturnType);
   return {
     kind: "function",
     typeParameters,
-    parameters: arrowFunction.parameters.map((parameter, parameterIndex) => parameter.type === undefined ? contextualParameterTypes[parameterIndex] ?? anyType : typeFromTypeNode(parameter.type, arrowEnvironment, state)),
+    parameters: arrowFunction.parameters.map((parameter, parameterIndex) => parameter.type === undefined ? jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[parameterIndex] ?? anyType : typeFromTypeNode(parameter.type, arrowEnvironment, state)),
     parameterNames: parameterDisplayNames(arrowFunction.parameters),
     ...signatureRestParameterIndex(arrowFunction.parameters),
     ...signatureMinArgumentCount(arrowFunction.parameters, state),

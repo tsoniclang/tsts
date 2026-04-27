@@ -300,6 +300,54 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string' is not assignable to type 'number'."]);
   });
 
+  it("types JavaScript arrow signatures from JSDoc generics", () => {
+    const sourceFile = parseSourceFile([
+      "/**",
+      " * @template T",
+      " * @param {T|undefined} value value or not",
+      " * @returns {T} result value",
+      " */",
+      "const clone = value => /** @type {T} */({ ...value });",
+    ].join("\n"), { fileName: "sample.js" });
+    const result = checkSourceFile(sourceFile, { strict: true, allowJs: true, checkJs: true });
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("checks JavaScript JSDoc arrow return casts against declared returns", () => {
+    const sourceFile = parseSourceFile([
+      "/**",
+      " * @template T",
+      " * @param {T|undefined} value value or not",
+      " * @returns {T} result value",
+      " */",
+      "const bad = value => /** @type {string} */({ ...value });",
+    ].join("\n"), { fileName: "sample.js" });
+    const result = checkSourceFile(sourceFile, { strict: true, allowJs: true, checkJs: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string' is not assignable to type 'T'."]);
+  });
+
+  it("uses JSDoc parameter and return tags on JavaScript callback arrows", () => {
+    const sourceFile = parseSourceFile([
+      "/**",
+      " * @param {any} v",
+      " */",
+      "function identity(v) { return v; }",
+      "const x = identity(",
+      "  /**",
+      "   * @param {number} param",
+      "   * @returns {number=}",
+      "   */",
+      "  param => param",
+      ");",
+    ].join("\n"), { fileName: "sample.js" });
+    const result = checkSourceFile(sourceFile, { strict: true, allowJs: true, checkJs: true });
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
   it("checks loop initializer declarations and loop bodies", () => {
     const sourceFile = parseSourceFile("function f(items: string[]): number { for (const item: string of items) { return item; } return 1; }");
     const result = checkSourceFile(sourceFile);
