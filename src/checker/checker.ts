@@ -18,6 +18,7 @@ import {
   isConstructSignatureDeclaration,
   isDoStatement,
   isElementAccessExpression,
+  isExportAssignment,
   isExpressionStatement,
   isForInStatement,
   isForOfStatement,
@@ -129,12 +130,13 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
 
 function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean): void {
   checkFunctionDeclarationOverloads(statements, state, ambient);
+  const statementListHasExportedElements = statements.some(statement => isExportedElement(statement));
   for (const statement of statements) {
-    checkStatement(statement, state, environment, expectedReturnType, ambient);
+    checkStatement(statement, state, environment, expectedReturnType, ambient, statementListHasExportedElements);
   }
 }
 
-function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean): void {
+function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, statementListHasExportedElements: boolean): void {
   if (isVariableStatement(statement)) {
     for (const declaration of statement.declarationList.declarations) {
       const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type, environment, state);
@@ -164,21 +166,25 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     }
     return;
   }
+  if (isExportAssignment(statement)) {
+    checkExportAssignment(statement, state, environment, statementListHasExportedElements);
+    return;
+  }
   if (isIfStatement(statement)) {
     inferExpression(statement.expression, state, environment);
-    checkStatement(statement.thenStatement, state, new Map(environment), expectedReturnType, ambient);
+    checkStatement(statement.thenStatement, state, new Map(environment), expectedReturnType, ambient, false);
     if (statement.elseStatement !== undefined) {
-      checkStatement(statement.elseStatement, state, new Map(environment), expectedReturnType, ambient);
+      checkStatement(statement.elseStatement, state, new Map(environment), expectedReturnType, ambient, false);
     }
     return;
   }
   if (isWhileStatement(statement)) {
     inferExpression(statement.expression, state, environment);
-    checkStatement(statement.statement, state, new Map(environment), expectedReturnType, ambient);
+    checkStatement(statement.statement, state, new Map(environment), expectedReturnType, ambient, false);
     return;
   }
   if (isDoStatement(statement)) {
-    checkStatement(statement.statement, state, new Map(environment), expectedReturnType, ambient);
+    checkStatement(statement.statement, state, new Map(environment), expectedReturnType, ambient, false);
     inferExpression(statement.expression, state, environment);
     return;
   }
@@ -193,14 +199,14 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     if (statement.incrementor !== undefined) {
       inferExpression(statement.incrementor, state, loopEnvironment);
     }
-    checkStatement(statement.statement, state, loopEnvironment, expectedReturnType, ambient);
+    checkStatement(statement.statement, state, loopEnvironment, expectedReturnType, ambient, false);
     return;
   }
   if (isForInStatement(statement) || isForOfStatement(statement)) {
     const loopEnvironment = new Map(environment);
     checkForInitializer(statement.initializer, state, loopEnvironment);
     inferExpression(statement.expression, state, loopEnvironment);
-    checkStatement(statement.statement, state, loopEnvironment, expectedReturnType, ambient);
+    checkStatement(statement.statement, state, loopEnvironment, expectedReturnType, ambient, false);
     return;
   }
   if (isBreakStatement(statement) || isContinueStatement(statement)) {
@@ -219,6 +225,17 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isBlock(statement)) {
     checkBlock(statement, state, environment, expectedReturnType);
+  }
+}
+
+function checkExportAssignment(statement: Extract<Statement, { readonly kind: Kind.ExportAssignment }>, state: CheckState, environment: TypeEnvironment, statementListHasExportedElements: boolean): void {
+  if (isIdentifier(statement.expression) && !environment.has(statement.expression.text)) {
+    state.diagnostics.push(createDiagnostic(2304, statement.expression.text));
+  } else {
+    inferExpression(statement.expression, state, environment);
+  }
+  if (statement.isExportEquals && statementListHasExportedElements) {
+    state.diagnostics.push(createDiagnostic(2309));
   }
 }
 
@@ -712,6 +729,10 @@ function requiresReturnValue(type: CheckedType): boolean {
 
 function hasDeclareModifier(node: { readonly modifiers?: readonly { readonly kind: Kind }[] }): boolean {
   return hasModifier(node, Kind.DeclareKeyword);
+}
+
+function isExportedElement(statement: Statement): boolean {
+  return !isExportAssignment(statement) && hasModifier(statement, Kind.ExportKeyword);
 }
 
 function hasModifier(node: object, kind: Kind): boolean {

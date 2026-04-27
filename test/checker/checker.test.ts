@@ -131,6 +131,17 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2389, 2391]);
   });
 
+  it("reports export-equals conflicts with exported declarations", () => {
+    const sourceFile = parseSourceFile("export class C { } export = B;");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Cannot find name 'B'.",
+      "An export assignment cannot be used in a module with other exported elements.",
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2304, 2309]);
+  });
+
   it("reports invalid interface names and parameter properties in type signatures", () => {
     const sourceFile = parseSourceFile("interface string { new (public x); } function f(value: (private x) => void): () => number { }");
     const result = checkSourceFile(sourceFile);
