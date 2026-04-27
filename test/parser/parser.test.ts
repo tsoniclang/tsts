@@ -24,6 +24,7 @@ import {
   isExportAssignment,
   isExpressionStatement,
   isDebuggerStatement,
+  isDecorator,
   isForInStatement,
   isForOfStatement,
   isForStatement,
@@ -230,6 +231,57 @@ describe("TS-Go parser groundwork", () => {
     if (!isInterfaceDeclaration(declaration)) throw new Error("Expected default interface declaration");
     assert.equal(declaration.modifiers?.[0]?.kind, Kind.ExportKeyword);
     assert.equal(declaration.modifiers?.[1]?.kind, Kind.DefaultKeyword);
+  });
+
+  it("parses TS-Go decorator modifier nodes on declarations, members, parameters, and object elements", () => {
+    const sourceFile = parseSourceFile([
+      "@sealed export default class C {",
+      "  @field accessor value: string;",
+      "  @logged method(@arg input: string) { }",
+      "}",
+      "const ExpressionClass = @sealed class { };",
+      "const obj = { @logged method() { }, @field get value() { return 1; } };",
+    ].join("\n"));
+
+    const classDeclaration = sourceFile.statements[0]!;
+    assert.equal(isClassDeclaration(classDeclaration), true);
+    if (!isClassDeclaration(classDeclaration)) throw new Error("Expected decorated class declaration");
+    assert.equal(isDecorator(classDeclaration.modifiers?.[0]!), true);
+    assert.equal(classDeclaration.modifiers?.[1]?.kind, Kind.ExportKeyword);
+    assert.equal(classDeclaration.modifiers?.[2]?.kind, Kind.DefaultKeyword);
+
+    const property = classDeclaration.members[0]!;
+    assert.equal(isPropertyDeclaration(property), true);
+    if (!isPropertyDeclaration(property)) throw new Error("Expected decorated class property");
+    assert.equal(isDecorator(property.modifiers?.[0]!), true);
+    assert.equal(property.modifiers?.[1]?.kind, Kind.AccessorKeyword);
+
+    const method = classDeclaration.members[1]!;
+    assert.equal(isMethodDeclaration(method), true);
+    if (!isMethodDeclaration(method)) throw new Error("Expected decorated class method");
+    assert.equal(isDecorator(method.modifiers?.[0]!), true);
+    assert.equal(isDecorator(method.parameters[0]!.modifiers?.[0]!), true);
+
+    const classExpressionStatement = sourceFile.statements[1]!;
+    if (!isVariableStatement(classExpressionStatement)) throw new Error("Expected class expression variable");
+    const classExpression = classExpressionStatement.declarationList.declarations[0]!.initializer;
+    assert.equal(isClassExpression(classExpression!), true);
+    if (!isClassExpression(classExpression!)) throw new Error("Expected decorated class expression");
+    assert.equal(isDecorator(classExpression.modifiers?.[0]!), true);
+
+    const objectStatement = sourceFile.statements[2]!;
+    if (!isVariableStatement(objectStatement)) throw new Error("Expected object variable");
+    const objectExpression = objectStatement.declarationList.declarations[0]!.initializer;
+    assert.equal(isObjectLiteralExpression(objectExpression!), true);
+    if (!isObjectLiteralExpression(objectExpression!)) throw new Error("Expected object expression");
+    assert.equal(isMethodDeclaration(objectExpression.properties[0]!), true);
+    const objectMethod = objectExpression.properties[0]!;
+    if (!isMethodDeclaration(objectMethod)) throw new Error("Expected decorated object method");
+    assert.equal(isDecorator(objectMethod.modifiers?.[0]!), true);
+    assert.equal(isGetAccessorDeclaration(objectExpression.properties[1]!), true);
+    const objectAccessor = objectExpression.properties[1]!;
+    if (!isGetAccessorDeclaration(objectAccessor)) throw new Error("Expected decorated object accessor");
+    assert.equal(isDecorator(objectAccessor.modifiers?.[0]!), true);
   });
 
   it("parses const assertions as contextual type references", () => {
