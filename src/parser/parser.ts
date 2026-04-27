@@ -355,7 +355,7 @@ export class Parser {
       if (this.#current().kind === Kind.InterfaceKeyword) {
         return this.#parseInterfaceDeclaration(defaultModifiers);
       }
-      const expression = this.#parseExpression();
+      const expression = this.#parseCommaExpression();
       this.#consumeOptional(Kind.SemicolonToken);
       return createExportAssignment(defaultModifiers, false, undefined as never, expression);
     }
@@ -473,7 +473,7 @@ export class Parser {
     if (this.#current().kind === Kind.Identifier && this.#tokens[this.#index + 1]?.kind === Kind.ColonToken) {
       return this.#parseLabeledStatement();
     }
-    const expression = this.#parseExpression();
+    const expression = this.#parseCommaExpression();
     this.#consumeStatementTerminator(expression);
     return createExpressionStatement(expression);
   }
@@ -587,7 +587,7 @@ export class Parser {
 
   #parseExportAssignment(modifiers: NodeArray<ModifierLike>): Statement {
     this.#expect(Kind.EqualsToken);
-    const expression = this.#parseExpression();
+    const expression = this.#parseCommaExpression();
     this.#consumeOptional(Kind.SemicolonToken);
     return createExportAssignment(modifiers, true, undefined as never, expression);
   }
@@ -765,7 +765,7 @@ export class Parser {
   #parseIfStatement(): Statement {
     this.#expect(Kind.IfKeyword);
     this.#expect(Kind.OpenParenToken);
-    const expression = this.#parseExpression();
+    const expression = this.#parseCommaExpression();
     this.#expect(Kind.CloseParenToken);
     const thenStatement = this.#parseStatement();
     const elseStatement = this.#consumeOptional(Kind.ElseKeyword) ? this.#parseStatement() : undefined;
@@ -775,7 +775,7 @@ export class Parser {
   #parseWhileStatement(): Statement {
     this.#expect(Kind.WhileKeyword);
     this.#expect(Kind.OpenParenToken);
-    const expression = this.#parseExpression();
+    const expression = this.#parseCommaExpression();
     this.#expect(Kind.CloseParenToken);
     return createWhileStatement(expression, this.#parseStatement());
   }
@@ -785,7 +785,7 @@ export class Parser {
     const statement = this.#parseStatement();
     this.#expect(Kind.WhileKeyword);
     this.#expect(Kind.OpenParenToken);
-    const expression = this.#parseExpression();
+    const expression = this.#parseCommaExpression();
     this.#expect(Kind.CloseParenToken);
     this.#consumeOptional(Kind.SemicolonToken);
     return createDoStatement(statement, expression);
@@ -799,7 +799,7 @@ export class Parser {
     if (initializer !== undefined && (this.#current().kind === Kind.InKeyword || this.#current().kind === Kind.OfKeyword)) {
       const token = this.#current().kind;
       this.#advance();
-      const expression = this.#parseExpression();
+      const expression = this.#parseCommaExpression();
       this.#expect(Kind.CloseParenToken);
       const statement = this.#parseStatement();
       return token === Kind.InKeyword
@@ -807,9 +807,9 @@ export class Parser {
         : createForOfStatement(awaitModifier, initializer, expression, statement);
     }
     this.#expect(Kind.SemicolonToken);
-    const condition = this.#current().kind === Kind.SemicolonToken ? undefined : this.#parseExpression();
+    const condition = this.#current().kind === Kind.SemicolonToken ? undefined : this.#parseCommaExpression();
     this.#expect(Kind.SemicolonToken);
-    const incrementor = this.#current().kind === Kind.CloseParenToken ? undefined : this.#parseExpression();
+    const incrementor = this.#current().kind === Kind.CloseParenToken ? undefined : this.#parseCommaExpression();
     this.#expect(Kind.CloseParenToken);
     return createForStatement(initializer, condition, incrementor, this.#parseStatement());
   }
@@ -821,7 +821,7 @@ export class Parser {
     if (this.#current().kind === Kind.VarKeyword || this.#current().kind === Kind.LetKeyword || this.#current().kind === Kind.ConstKeyword) {
       return this.#parseVariableDeclarationList();
     }
-    return this.#parseExpression(0, true);
+    return this.#parseCommaExpression(true);
   }
 
   #parseBreakStatement(): Statement {
@@ -847,7 +847,7 @@ export class Parser {
   #parseWithStatement(): Statement {
     this.#expect(Kind.WithKeyword);
     this.#expect(Kind.OpenParenToken);
-    const expression = this.#parseExpression();
+    const expression = this.#parseCommaExpression();
     this.#expect(Kind.CloseParenToken);
     return createWithStatement(expression, this.#parseStatement());
   }
@@ -1224,14 +1224,14 @@ export class Parser {
       || this.#current().kind === Kind.EndOfFile
       || this.#lineBreakBeforeCurrentToken()
       ? undefined
-      : this.#parseExpression();
+      : this.#parseCommaExpression();
     this.#consumeOptional(Kind.SemicolonToken);
     return createReturnStatement(expression);
   }
 
   #parseThrowStatement(): Statement {
     this.#expect(Kind.ThrowKeyword);
-    const expression = this.#parseExpression();
+    const expression = this.#parseCommaExpression();
     this.#consumeOptional(Kind.SemicolonToken);
     return createThrowStatement(expression);
   }
@@ -1262,13 +1262,13 @@ export class Parser {
   #parseSwitchStatement(): Statement {
     this.#expect(Kind.SwitchKeyword);
     this.#expect(Kind.OpenParenToken);
-    const expression = this.#parseExpression();
+    const expression = this.#parseCommaExpression();
     this.#expect(Kind.CloseParenToken);
     this.#expect(Kind.OpenBraceToken);
     const clauses: CaseOrDefaultClause[] = [];
     while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
       if (this.#consumeOptional(Kind.CaseKeyword)) {
-        const caseExpression = this.#parseExpression();
+        const caseExpression = this.#parseCommaExpression();
         this.#expect(Kind.ColonToken);
         clauses.push(createCaseClause(caseExpression, createNodeArray(this.#parseCaseClauseStatements())));
         continue;
@@ -1328,6 +1328,19 @@ export class Parser {
       this.#expect(Kind.ColonToken);
       const whenFalse = this.#parseExpression();
       left = createConditionalExpression(left, createToken(Kind.QuestionToken), whenTrue, createToken(Kind.ColonToken), whenFalse);
+    }
+    return left;
+  }
+
+  #parseCommaExpression(stopAtInKeyword = false, allowArrowFunction = true): Expression {
+    let left = this.#parseExpression(0, stopAtInKeyword, allowArrowFunction);
+    while (this.#current().kind === Kind.CommaToken) {
+      const commaToken = createToken(this.#advance().kind as BinaryOperator);
+      if (!isBinaryOperatorToken(commaToken)) {
+        throw new ParseError("Expected comma operator", this.#current());
+      }
+      const right = this.#parseExpression(0, stopAtInKeyword, allowArrowFunction);
+      left = createBinaryExpression(undefined, left, undefined, commaToken as BinaryOperatorToken, right);
     }
     return left;
   }
@@ -1653,7 +1666,7 @@ export class Parser {
         continue;
       }
       if (this.#consumeOptional(Kind.OpenBracketToken)) {
-        expression = createElementAccessExpression(expression, undefined, this.#parseExpression(), NodeFlags.None);
+        expression = createElementAccessExpression(expression, undefined, this.#parseCommaExpression(), NodeFlags.None);
         this.#expect(Kind.CloseBracketToken);
         continue;
       }
@@ -1697,7 +1710,7 @@ export class Parser {
         if (questionDotToken !== undefined) {
           this.#expect(Kind.OpenBracketToken);
         }
-        expression = createElementAccessExpression(expression, questionDotToken, this.#parseExpression(), NodeFlags.None);
+        expression = createElementAccessExpression(expression, questionDotToken, this.#parseCommaExpression(), NodeFlags.None);
         this.#expect(Kind.CloseBracketToken);
         continue;
       }
@@ -1802,7 +1815,7 @@ export class Parser {
         this.#advance();
         const expression = this.#current().kind === Kind.CloseParenToken
           ? this.#parseMissingExpression()
-          : this.#parseExpression();
+          : this.#parseCommaExpression();
         this.#parseExpectedCloseParen();
         return createParenthesizedExpression(expression);
       }
@@ -1888,7 +1901,7 @@ export class Parser {
     const headToken = this.#expect(Kind.TemplateHead);
     const spans = [];
     while (true) {
-      const expression = this.#parseExpression();
+      const expression = this.#parseCommaExpression();
       this.#expect(Kind.CloseBraceToken);
       const literalToken = this.#current();
       if (literalToken.kind !== Kind.TemplateMiddle && literalToken.kind !== Kind.TemplateTail) {
@@ -2117,7 +2130,7 @@ export class Parser {
   #parsePropertyName(): PropertyName {
     const token = this.#current();
     if (this.#consumeOptional(Kind.OpenBracketToken)) {
-      const expression = this.#parseExpression();
+      const expression = this.#parseCommaExpression();
       this.#expect(Kind.CloseBracketToken);
       return createComputedPropertyName(expression);
     }

@@ -3523,6 +3523,9 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     }
     const left = inferExpression(expression.left, state, environment);
     const right = inferExpression(expression.right, state, environment);
+    if (expression.operatorToken.kind === Kind.CommaToken) {
+      return right;
+    }
     if (expression.operatorToken.kind === Kind.BarBarToken) {
       diagnoseAlwaysFalsyExpression(expression.left, state);
       return isAlwaysFalsyExpression(expression.left) ? right : unionType([left, right]);

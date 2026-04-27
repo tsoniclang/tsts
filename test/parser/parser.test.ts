@@ -105,6 +105,43 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isNumericLiteral(statement.expression.right.right), true);
   });
 
+  it("parses comma expressions only in expression grammar contexts", () => {
+    const sourceFile = parseSourceFile([
+      "a, b, c;",
+      "let x = 1, y = 2;",
+      "call(a, b);",
+      "const computed = obj[a, b];",
+    ].join("\n"));
+
+    const commaStatement = sourceFile.statements[0]!;
+    if (!isExpressionStatement(commaStatement) || !isBinaryExpression(commaStatement.expression)) {
+      throw new Error("Expected comma expression statement");
+    }
+    assert.equal(commaStatement.expression.operatorToken.kind, Kind.CommaToken);
+    assert.equal(isBinaryExpression(commaStatement.expression.left), true);
+    assert.equal(isIdentifier(commaStatement.expression.right), true);
+
+    const variableStatement = sourceFile.statements[1]!;
+    if (!isVariableStatement(variableStatement)) throw new Error("Expected variable statement");
+    assert.equal(variableStatement.declarationList.declarations.length, 2);
+    assert.equal(isNumericLiteral(variableStatement.declarationList.declarations[0]!.initializer!), true);
+    assert.equal(isNumericLiteral(variableStatement.declarationList.declarations[1]!.initializer!), true);
+
+    const callStatement = sourceFile.statements[2]!;
+    if (!isExpressionStatement(callStatement) || !isCallExpression(callStatement.expression)) {
+      throw new Error("Expected call expression statement");
+    }
+    assert.equal(callStatement.expression.arguments.length, 2);
+
+    const computedStatement = sourceFile.statements[3]!;
+    if (!isVariableStatement(computedStatement)) throw new Error("Expected computed access variable");
+    const computedInitializer = computedStatement.declarationList.declarations[0]!.initializer;
+    if (!isElementAccessExpression(computedInitializer!)) throw new Error("Expected element access expression");
+    assert.equal(isBinaryExpression(computedInitializer.argumentExpression), true);
+    if (!isBinaryExpression(computedInitializer.argumentExpression)) throw new Error("Expected comma element access argument");
+    assert.equal(computedInitializer.argumentExpression.operatorToken.kind, Kind.CommaToken);
+  });
+
   it("round-trips parenthesized expressions as explicit AST nodes", () => {
     const sourceFile = parseSourceFile("(a + 1);");
     const statement = sourceFile.statements[0]!;

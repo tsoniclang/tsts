@@ -146,6 +146,7 @@ const binaryOperatorText = new Map<Kind, string>([
   [Kind.AmpersandAmpersandEqualsToken, "&&="],
   [Kind.BarBarEqualsToken, "||="],
   [Kind.QuestionQuestionEqualsToken, "??="],
+  [Kind.CommaToken, ","],
 ]);
 
 const prefixUnaryOperatorText = new Map<Kind, string>([
