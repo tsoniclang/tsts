@@ -467,6 +467,49 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("keeps default imports with merged value and type meanings distinct", () => {
+    const host: CompilerHost = {
+      readFile: fileName => {
+        if (fileName === "b.ts") {
+          return [
+            "export const zzz = 123;",
+            "export default zzz;",
+          ].join("\n");
+        }
+        if (fileName === "a.ts") {
+          return [
+            "export default interface zzz {",
+            "  x: string;",
+            "}",
+            "import zzz from \"./b\";",
+            "const x: zzz = { x: \"\" };",
+            "zzz;",
+            "export { zzz as default };",
+          ].join("\n");
+        }
+        if (fileName === "index.ts") {
+          return [
+            "import zzz from \"./a\";",
+            "const x: zzz = { x: \"\" };",
+            "zzz;",
+            "import originalZZZ from \"./b\";",
+            "originalZZZ;",
+            "const y: originalZZZ = x;",
+          ].join("\n");
+        }
+        return undefined;
+      },
+      useCaseSensitiveFileNames: () => true,
+    };
+    const program = createProgram(["index.ts"], {}, host);
+    const diagnostics = checkProgram(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [2749]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "'originalZZZ' refers to a value, but is being used as a type here. Did you mean 'typeof originalZZZ'?",
+    ]);
+  });
+
   it("does not emit cascading assignment diagnostics when the target type is unresolved", () => {
     const sourceFile = parseSourceFile([
       "let x: Missing;",
