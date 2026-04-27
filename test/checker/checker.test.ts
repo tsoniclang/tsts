@@ -20,11 +20,50 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2339]);
   });
 
+  it("treats any-bearing intersections as any for property access", () => {
+    const sourceFile = parseSourceFile("function f(value: any & any) { return value.anchorRef; }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
   it("reports missing this-property access with deterministic class-member suggestions", () => {
     const sourceFile = parseSourceFile("class B { methodB() { this.methodA; this.methodB; } }");
     const result = checkSourceFile(sourceFile);
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Property 'methodA' does not exist on type 'B'. Did you mean 'methodB'?"]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2551]);
+  });
+
+  it("reports missing property assignment targets and lexical arrow this reads", () => {
+    const sourceFile = parseSourceFile("class A { m() { this.foo = 1; const f = () => this.foo; } }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Property 'foo' does not exist on type 'A'.",
+      "Property 'foo' does not exist on type 'A'.",
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2339, 2339]);
+  });
+
+  it("uses TS-Go spelling distance thresholds for property suggestions", () => {
+    const sourceFile = parseSourceFile("class A { baz() {} methodB() {} m() { this.bar; this.methodA; this.methodB; } }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Property 'bar' does not exist on type 'A'.",
+      "Property 'methodA' does not exist on type 'A'. Did you mean 'methodB'?",
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2339, 2551]);
+  });
+
+  it("keeps the closest spelling suggestion before lexical tie-breaking", () => {
+    const sourceFile = parseSourceFile("class A { MethodA() {} AethodA() {} m() { this.methodA; } }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Property 'methodA' does not exist on type 'A'. Did you mean 'MethodA'?",
+    ]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2551]);
   });
 
@@ -715,6 +754,25 @@ describe("checker groundwork", () => {
     const result = checkSourceFile(sourceFile);
 
     assert.equal(result.diagnostics.length, 0);
+  });
+
+  it("checks implemented interface contracts and derived constructor super ordering", () => {
+    const sourceFile = parseSourceFile([
+      "interface I { x; }",
+      "class B { }",
+      "class C extends B implements I {",
+      "  constructor() { this.x; }",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Class 'C' incorrectly implements interface 'I'.",
+      "Constructors for derived classes must contain a 'super' call.",
+      "'super' must be called before accessing 'this' in the constructor of a derived class.",
+      "Property 'x' does not exist on type 'C'.",
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2420, 2377, 17009, 2339]);
   });
 
   it("reports incompatible named interface members while allowing extra call signatures", () => {

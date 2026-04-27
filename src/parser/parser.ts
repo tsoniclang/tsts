@@ -2794,6 +2794,11 @@ export class Parser {
     if (expression.kind === Kind.Identifier) {
       this.#addDiagnosticAtToken(expression, 1434);
     }
+    if (this.#current().kind === Kind.ColonToken) {
+      this.#addDiagnosticAtToken(this.#current(), 1005, ";");
+      this.#advance();
+      return;
+    }
     if (this.#current().kind === Kind.AtToken || this.#current().kind === Kind.Unknown) {
       this.#addDiagnosticAtToken(this.#current(), 1127);
     }

@@ -126,6 +126,7 @@ import {
   type EntityName,
   type EnumDeclaration,
   type Expression,
+  type ExpressionWithTypeArguments,
   type FunctionDeclaration,
   type FunctionExpression,
   type GetAccessorDeclaration,
@@ -2209,6 +2210,8 @@ function checkClassLike(classDeclaration: ClassLikeDeclaration, state: CheckStat
       environment.set(classDeclaration.name.text, mergeClassBinding(environment.get(classDeclaration.name.text), classType));
     }
   }
+  checkClassImplementedInterfaces(classDeclaration, classType, state, classEnvironment);
+  checkDerivedConstructorSuperCalls(classDeclaration, classType, state);
   checkMissingAbstractMembers(classDeclaration, state, classIsAbstract, inheritedMembers, classMembers);
   checkAccessorAbstractPairs(classDeclaration.members, state);
   const accessorContextTypes = collectAccessorContextTypes(classDeclaration.members, classEnvironment);
@@ -2247,6 +2250,120 @@ function classBaseType(classDeclaration: ClassLikeDeclaration, environment: Type
     return { baseType: inferExpression(clause.types[0].expression, emptyCheckState(), environment) };
   }
   return {};
+}
+
+function checkClassImplementedInterfaces(classDeclaration: ClassLikeDeclaration, classType: Extract<CheckedType, { readonly kind: "classConstructor" }>, state: CheckState, environment: TypeEnvironment): void {
+  const className = classDeclaration.name?.text ?? "(anonymous class)";
+  for (const clause of classDeclaration.heritageClauses ?? []) {
+    if (clause.token !== Kind.ImplementsKeyword) {
+      continue;
+    }
+    for (const heritageType of clause.types) {
+      const implementedType = implementedInterfaceType(heritageType, environment, state);
+      if (implementedType !== undefined && classMissingImplementedInterfaceProperties(classConstructorInstanceType(classType), implementedType).length > 0) {
+        state.diagnostics.push(createDiagnostic(2420, className, implementedType.name));
+      }
+    }
+  }
+}
+
+function classMissingImplementedInterfaceProperties(classInstance: Extract<CheckedType, { readonly kind: "classInstance" }>, implementedType: Extract<CheckedType, { readonly kind: "interface" }>): readonly string[] {
+  const missing: string[] = [];
+  for (const propertyName of implementedType.members.properties.keys()) {
+    if (implementedType.members.optionalProperties.has(propertyName)) {
+      continue;
+    }
+    if (propertyAccessType(classInstance, propertyName) === undefined) {
+      missing.push(propertyName);
+    }
+  }
+  return missing;
+}
+
+function implementedInterfaceType(heritageType: ExpressionWithTypeArguments, environment: TypeEnvironment, state: CheckState): Extract<CheckedType, { readonly kind: "interface" }> | undefined {
+  const typeName = expressionNameText(heritageType.expression);
+  const type = typeName === undefined ? undefined : typeMeaning(environment.get(typeName) ?? unresolvedType);
+  if (type?.kind !== "interface") {
+    return undefined;
+  }
+  if (heritageType.typeArguments === undefined || heritageType.typeArguments.length === 0) {
+    return type;
+  }
+  return instantiateInterfaceType(type, heritageType.typeArguments.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)));
+}
+
+function checkDerivedConstructorSuperCalls(classDeclaration: ClassLikeDeclaration, classType: Extract<CheckedType, { readonly kind: "classConstructor" }>, state: CheckState): void {
+  if (classType.baseType === undefined) {
+    return;
+  }
+  for (const member of classDeclaration.members) {
+    if (!isConstructorDeclaration(member) || member.body === undefined) {
+      continue;
+    }
+    if (!constructorBodyContainsSuperCall(member.body)) {
+      state.diagnostics.push(createDiagnostic(2377));
+    }
+    diagnoseThisBeforeSuper(member.body, state);
+  }
+}
+
+function constructorBodyContainsSuperCall(body: Block): boolean {
+  return body.statements.some(statement => constructorNodeContainsSuperCall(statement));
+}
+
+function constructorNodeContainsSuperCall(node: Node): boolean {
+  if (isNestedThisOrSuperBoundary(node)) {
+    return false;
+  }
+  if (isCallExpression(node) && isSuperExpression(node.expression)) {
+    return true;
+  }
+  return forEachChild(node, child => constructorNodeContainsSuperCall(child) ? true : undefined) === true;
+}
+
+type ThisBeforeSuperResult = "continue" | "super";
+
+function diagnoseThisBeforeSuper(body: Block, state: CheckState): void {
+  for (const statement of body.statements) {
+    if (diagnoseThisBeforeSuperInNode(statement, state) === "super") {
+      return;
+    }
+  }
+}
+
+function diagnoseThisBeforeSuperInNode(node: Node, state: CheckState): ThisBeforeSuperResult {
+  if (isNestedThisOrSuperBoundary(node)) {
+    return "continue";
+  }
+  if (isCallExpression(node) && isSuperExpression(node.expression)) {
+    for (const argument of node.arguments ?? []) {
+      diagnoseThisBeforeSuperInNode(argument, state);
+    }
+    return "super";
+  }
+  if (isThisExpression(node)) {
+    state.diagnostics.push(createDiagnostic(17009));
+  }
+  return forEachChild(node, child => {
+    const result = diagnoseThisBeforeSuperInNode(child, state);
+    return result === "super" ? result : undefined;
+  }) ?? "continue";
+}
+
+function isThisExpression(node: Node): boolean {
+  return isKeywordExpression(node) && node.kind === Kind.ThisKeyword;
+}
+
+function isSuperExpression(node: Node): boolean {
+  return isKeywordExpression(node) && node.kind === Kind.SuperKeyword;
+}
+
+function isNestedThisOrSuperBoundary(node: Node): boolean {
+  return isFunctionDeclaration(node)
+    || isFunctionExpression(node)
+    || isArrowFunction(node)
+    || isClassDeclaration(node)
+    || isClassExpression(node);
 }
 
 function inheritedClassMembers(classDeclaration: ClassLikeDeclaration, environment: TypeEnvironment): ClassMemberNames | undefined {
@@ -4869,10 +4986,11 @@ function constAssertionFlowType(expression: Expression, environment: TypeEnviron
 
 function inferAssignmentExpression(expression: Extract<Expression, { readonly kind: Kind.BinaryExpression }>, state: CheckState, environment: TypeEnvironment): CheckedType {
   const operator = expression.operatorToken.kind;
-  if (assignmentOperatorReadsTarget(operator)) {
+  const targetWasRead = assignmentOperatorReadsTarget(operator);
+  if (targetWasRead) {
     inferExpression(expression.left, state, environment);
   }
-  checkAssignmentTargetReference(expression.left, state, environment);
+  checkAssignmentTargetReference(expression.left, state, environment, !targetWasRead);
   const targetType = assignmentTargetType(expression.left, environment);
   const right = inferExpressionWithContext(expression.right, state, environment, targetType);
   diagnoseAbstractThisDestructuring(expression.left, expression.right, state, environment);
@@ -4968,21 +5086,21 @@ function assignmentTargetType(expression: Expression, environment: TypeEnvironme
   return undefined;
 }
 
-function checkAssignmentTargetReference(expression: Expression, state: CheckState, environment: TypeEnvironment): void {
+function checkAssignmentTargetReference(expression: Expression, state: CheckState, environment: TypeEnvironment, diagnoseMissingProperty = true): void {
   if (isIdentifier(expression)) {
     checkIdentifierWriteTarget(expression, state, environment);
     return;
   }
   if (isParenthesizedExpression(expression)) {
-    checkAssignmentTargetReference(expression.expression, state, environment);
+    checkAssignmentTargetReference(expression.expression, state, environment, diagnoseMissingProperty);
     return;
   }
   if (isNonNullExpression(expression) || isAsExpression(expression) || isTypeAssertion(expression) || isSatisfiesExpression(expression)) {
-    checkAssignmentTargetReference(expression.expression, state, environment);
+    checkAssignmentTargetReference(expression.expression, state, environment, diagnoseMissingProperty);
     return;
   }
   if (isPropertyAccessExpression(expression)) {
-    checkPropertyAssignmentTarget(expression.expression, expression.name.text, state, environment);
+    checkPropertyAssignmentTarget(expression.expression, expression.name.text, state, environment, diagnoseMissingProperty);
     return;
   }
   if (isElementAccessExpression(expression)) {
@@ -5012,7 +5130,7 @@ function checkUpdateTargetReference(expression: Expression, state: CheckState, e
     return;
   }
   if (isPropertyAccessExpression(expression)) {
-    checkPropertyAssignmentTarget(expression.expression, expression.name.text, state, environment);
+    checkPropertyAssignmentTarget(expression.expression, expression.name.text, state, environment, true);
     return;
   }
   if (isElementAccessExpression(expression)) {
@@ -5065,14 +5183,18 @@ function isPlainNamespace(type: CheckedType | undefined): boolean {
   return type?.kind === "namespace" && type.enumLike !== true;
 }
 
-function checkPropertyAssignmentTarget(expression: Expression, propertyName: string, state: CheckState, environment: TypeEnvironment): void {
+function checkPropertyAssignmentTarget(expression: Expression, propertyName: string, state: CheckState, environment: TypeEnvironment, diagnoseMissingProperty: boolean): void {
   const receiverType = inferExpression(expression, state, environment);
+  const targetType = propertyAssignmentTargetType(receiverType, propertyName, environment);
   if (receiverType.kind === "namespace" && receiverType.enumLike === true && receiverType.exports.has(propertyName)) {
     state.diagnostics.push(createDiagnostic(2540, propertyName));
     return;
   }
   if (receiverType.kind === "thisClass") {
     diagnoseThisPropertyAccess(receiverType, propertyName, state);
+    if (targetType === undefined && diagnoseMissingProperty) {
+      diagnoseMissingPropertyAccess(receiverType, propertyName, state);
+    }
     return;
   }
   if (receiverType.kind === "classInstance" && receiverType.members.readonlyProperties.has(propertyName)) {
@@ -5201,8 +5323,9 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
 }
 
 function suppressImmediateThisDiagnostics(environment: TypeEnvironment): void {
-  if (environment.get("this")?.kind === "thisClass") {
-    environment.set("this", anyType);
+  const thisType = environment.get("this");
+  if (thisType?.kind === "thisClass") {
+    environment.set("this", { ...thisType, mode: "method" });
   }
 }
 
@@ -5275,21 +5398,32 @@ function diagnoseMissingPropertyAccess(receiverType: CheckedType, propertyName: 
 }
 
 function suggestedPropertyName(receiverType: CheckedType, propertyName: string): string | undefined {
-  const candidates = propertyAccessCandidateNames(receiverType);
+  return spellingSuggestion(propertyName, propertyAccessCandidateNames(receiverType));
+}
+
+function spellingSuggestion(name: string, candidates: readonly string[]): string | undefined {
+  const maximumLengthDifference = Math.max(2, Math.trunc(name.length * 0.34));
+  let bestDistance = Math.floor(name.length * 0.4) + 0.9;
   let bestName: string | undefined;
-  let bestDistance = Number.POSITIVE_INFINITY;
   for (const candidate of candidates) {
-    if (candidate === propertyName || candidate.length === 0) {
+    const maxLength = Math.max(candidate.length, name.length);
+    const minLength = Math.min(candidate.length, name.length);
+    if (candidate.length === 0 || maxLength - minLength > maximumLengthDifference || candidate === name) {
       continue;
     }
-    const distance = editDistance(propertyName, candidate);
-    if (distance < bestDistance || (distance === bestDistance && (bestName === undefined || candidate < bestName))) {
+    if (candidate.length < 3 && candidate.toLowerCase() !== name.toLowerCase()) {
+      continue;
+    }
+    const distance = levenshteinWithMax(name, candidate, bestDistance);
+    if (distance === undefined) {
+      continue;
+    }
+    if (distance < bestDistance) {
       bestName = candidate;
       bestDistance = distance;
+    } else if (distance === bestDistance && (bestName === undefined || candidate < bestName)) {
+      bestName = candidate;
     }
-  }
-  if (bestName === undefined || bestDistance > propertySuggestionDistanceLimit(propertyName)) {
-    return undefined;
   }
   return bestName;
 }
@@ -5313,31 +5447,40 @@ function propertyAccessCandidateNames(receiverType: CheckedType): readonly strin
   return [];
 }
 
-function propertySuggestionDistanceLimit(propertyName: string): number {
-  if (propertyName.length <= 3) {
-    return 1;
-  }
-  if (propertyName.length <= 8) {
-    return 2;
-  }
-  return 3;
-}
-
-function editDistance(left: string, right: string): number {
-  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
-  for (let leftIndex = 0; leftIndex < left.length; leftIndex += 1) {
-    const current = [leftIndex + 1];
-    for (let rightIndex = 0; rightIndex < right.length; rightIndex += 1) {
-      const substitutionCost = left[leftIndex] === right[rightIndex] ? 0 : 1;
-      current[rightIndex + 1] = Math.min(
-        current[rightIndex]! + 1,
-        previous[rightIndex + 1]! + 1,
-        previous[rightIndex]! + substitutionCost,
-      );
+function levenshteinWithMax(left: string, right: string, maxValue: number): number | undefined {
+  let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  let current = Array.from({ length: right.length + 1 }, () => 0);
+  const sentinel = maxValue + 0.01;
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    const leftCharacter = left[leftIndex - 1]!;
+    const minRightIndex = Math.max(Math.ceil(leftIndex - maxValue), 1);
+    const maxRightIndex = Math.min(Math.floor(maxValue + leftIndex), right.length);
+    let columnMinimum = leftIndex;
+    current[0] = columnMinimum;
+    for (let rightIndex = 1; rightIndex < minRightIndex; rightIndex += 1) {
+      current[rightIndex] = sentinel;
     }
-    previous.splice(0, previous.length, ...current);
+    for (let rightIndex = minRightIndex; rightIndex <= maxRightIndex; rightIndex += 1) {
+      const rightCharacter = right[rightIndex - 1]!;
+      const substitutionDistance = leftCharacter.toLowerCase() === rightCharacter.toLowerCase()
+        ? previous[rightIndex - 1]! + 0.1
+        : previous[rightIndex - 1]! + 2;
+      const distance = leftCharacter === rightCharacter
+        ? previous[rightIndex - 1]!
+        : Math.min(previous[rightIndex]! + 1, current[rightIndex - 1]! + 1, substitutionDistance);
+      current[rightIndex] = distance;
+      columnMinimum = Math.min(columnMinimum, distance);
+    }
+    for (let rightIndex = maxRightIndex + 1; rightIndex <= right.length; rightIndex += 1) {
+      current[rightIndex] = sentinel;
+    }
+    if (columnMinimum > maxValue) {
+      return undefined;
+    }
+    [previous, current] = [current, previous];
   }
-  return previous[right.length]!;
+  const result = previous[right.length]!;
+  return result > maxValue ? undefined : result;
 }
 
 function propertyAccessType(receiverType: CheckedType, propertyName: string, environment?: TypeEnvironment): CheckedType | undefined {
@@ -5362,6 +5505,19 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
   if (receiverType.kind === "union") {
     const propertyTypes = receiverType.types.map(type => propertyAccessType(type, propertyName, environment));
     return propertyTypes.every(type => type !== undefined) ? unionType(propertyTypes) : undefined;
+  }
+  if (receiverType.kind === "intersection") {
+    if (receiverType.types.some(type => type.kind === "any")) {
+      return anyType;
+    }
+    const propertyTypes = receiverType.types.flatMap(type => {
+      const propertyType = propertyAccessType(type, propertyName, environment);
+      return propertyType === undefined ? [] : [propertyType];
+    });
+    if (propertyTypes.length === 0) {
+      return undefined;
+    }
+    return propertyTypes.length === 1 ? propertyTypes[0]! : { kind: "intersection", types: propertyTypes };
   }
   if (receiverType.kind === "classInstance") {
     const propertyType = classInstancePropertyType(receiverType, propertyName);

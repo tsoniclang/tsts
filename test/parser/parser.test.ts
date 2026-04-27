@@ -1060,6 +1060,24 @@ describe("TS-Go parser groundwork", () => {
     assert.deepEqual(result.sourceFile.statements.map(statement => statement.kind), [Kind.ExpressionStatement, Kind.FunctionDeclaration, Kind.ExpressionStatement, Kind.ExpressionStatement]);
   });
 
+  it("recovers colon after non-label expression statements as a missing semicolon", () => {
+    const result = parseSourceFileWithDiagnostics("this.foo: any;");
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1005]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["';' expected."]);
+    assert.deepEqual(result.sourceFile.statements.map(statement => statement.kind), [Kind.ExpressionStatement, Kind.ExpressionStatement]);
+    const firstStatement = result.sourceFile.statements[0]!;
+    const secondStatement = result.sourceFile.statements[1]!;
+    assert.equal(isExpressionStatement(firstStatement), true);
+    assert.equal(isExpressionStatement(secondStatement), true);
+    if (!isExpressionStatement(firstStatement) || !isExpressionStatement(secondStatement)) throw new Error("Expected expression statements");
+    assert.equal(isPropertyAccessExpression(firstStatement.expression), true);
+    assert.equal(isIdentifier(secondStatement.expression), true);
+    if (!isPropertyAccessExpression(firstStatement.expression) || !isIdentifier(secondStatement.expression)) throw new Error("Expected recovered expressions");
+    assert.equal(firstStatement.expression.name.text, "foo");
+    assert.equal(secondStatement.expression.text, "any");
+  });
+
   it("parses object literal methods and UMD namespace exports", () => {
     const result = parseSourceFileWithDiagnostics([
       "export as namespace Foo;",
