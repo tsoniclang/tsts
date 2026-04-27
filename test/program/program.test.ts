@@ -36,7 +36,8 @@ describe("program groundwork", () => {
     const program = createProgram(["missing.ts"], {}, host);
     const result = emitProgram(program, host);
 
-    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["File not found: missing.ts"]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["File 'missing.ts' not found."]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [6053]);
     assert.equal(outputs.size, 0);
   });
 
@@ -52,6 +53,7 @@ describe("program groundwork", () => {
     const result = emitProgram(program, host);
 
     assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Duplicate identifier 'x'."]);
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2300]);
     assert.equal(result.emittedFiles.length, 0);
   });
 
@@ -124,7 +126,8 @@ describe("program groundwork", () => {
     const program = createProgram(["src/index.ts"], {}, host);
     const result = emitProgram(program, host);
 
-    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find module './missing'."]);
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find module './missing' or its corresponding type declarations."]);
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2307]);
     assert.equal(result.emittedFiles.length, 0);
   });
 
@@ -139,6 +142,7 @@ describe("program groundwork", () => {
     const result = emitProgram(program, host);
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string' is not assignable to type 'number'."]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
     assert.equal(outputs.size, 0);
   });
 });

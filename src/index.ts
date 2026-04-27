@@ -4,6 +4,7 @@ export * from "./binder/index.js";
 export * from "./checker/index.js";
 export * from "./compiler/index.js";
 export * from "./config/index.js";
+export * from "./diagnostics/index.js";
 export * from "./emit-js/index.js";
 export * from "./parser/index.js";
 export * from "./program/index.js";

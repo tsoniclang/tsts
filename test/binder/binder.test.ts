@@ -54,6 +54,7 @@ describe("TS-Go binder groundwork", () => {
     const functionScoped = bindSourceFile(parseSourceFile("var y; var y;"));
 
     assert.deepEqual(blockScoped.diagnostics.map(diagnostic => diagnostic.message), ["Duplicate identifier 'x'."]);
+    assert.deepEqual(blockScoped.diagnostics.map(diagnostic => diagnostic.code), [2300]);
     assert.equal(functionScoped.diagnostics.length, 0);
   });
 

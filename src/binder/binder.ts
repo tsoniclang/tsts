@@ -37,6 +37,7 @@ import {
   type VariableDeclaration,
   type VariableDeclarationList,
 } from "../ast/index.js";
+import { createDiagnostic, type Diagnostic } from "../diagnostics/index.js";
 
 export type SymbolTable = Map<string, BoundSymbol>;
 
@@ -49,8 +50,7 @@ export interface BoundSymbol {
   readonly exports?: SymbolTable;
 }
 
-export interface BindDiagnostic {
-  readonly message: string;
+export interface BindDiagnostic extends Diagnostic {
   readonly node: Node;
 }
 
@@ -300,7 +300,7 @@ function declareSymbol(
   if (existing !== undefined) {
     if ((existing.flags & excludes) !== 0) {
       state.diagnostics.push({
-        message: `Duplicate identifier '${name}'.`,
+        ...createDiagnostic(2300, name),
         node: declaration,
       });
     } else {

@@ -4,6 +4,7 @@ import { checkSourceFile } from "../checker/index.js";
 import { printSourceFile } from "../emit-js/index.js";
 import { parseSourceFile } from "../parser/index.js";
 import { isExportDeclaration, isImportDeclaration, isStringLiteral, type SourceFile } from "../ast/index.js";
+import { createDiagnosticAt, type DiagnosticCategory, type DiagnosticCode } from "../diagnostics/index.js";
 
 export interface CompilerOptions {
   readonly outDir?: string;
@@ -26,6 +27,10 @@ export interface ProgramSourceFile {
 
 export interface ProgramDiagnostic {
   readonly fileName: string;
+  readonly code?: DiagnosticCode;
+  readonly category?: DiagnosticCategory;
+  readonly key?: string;
+  readonly messageText?: string;
   readonly message: string;
 }
 
@@ -62,10 +67,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
     seen.add(canonicalName);
     const sourceText = readFileCached(rootName, host, fileTextCache);
     if (sourceText === undefined) {
-      diagnostics.push({
-        fileName: rootName,
-        message: `File not found: ${rootName}`,
-      });
+      diagnostics.push(programDiagnostic(rootName, 6053, rootName));
       continue;
     }
     let sourceFile: SourceFile;
@@ -84,10 +86,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
       const resolved = resolveModuleName(moduleSpecifier, rootName, host, fileTextCache);
       if (resolved === undefined) {
         if (isRelativeModuleName(moduleSpecifier)) {
-          diagnostics.push({
-            fileName: rootName,
-            message: `Cannot find module '${moduleSpecifier}'.`,
-          });
+          diagnostics.push(programDiagnostic(rootName, 2307, moduleSpecifier));
         }
         continue;
       }
@@ -137,6 +136,10 @@ export function getProgramDiagnostics(program: Program): readonly ProgramDiagnos
     const checkResult = checkSourceFile(sourceFile.sourceFile);
     diagnostics.push(...checkResult.diagnostics.map(diagnostic => ({
       fileName: sourceFile.fileName,
+      code: diagnostic.code,
+      category: diagnostic.category,
+      key: diagnostic.key,
+      messageText: diagnostic.messageText,
       message: diagnostic.message,
     })));
   }
@@ -232,6 +235,22 @@ function isDeclarationFileName(fileName: string): boolean {
 function convertBindDiagnostic(fileName: string, diagnostic: BindDiagnostic): ProgramDiagnostic {
   return {
     fileName,
+    code: diagnostic.code,
+    category: diagnostic.category,
+    key: diagnostic.key,
+    messageText: diagnostic.messageText,
+    message: diagnostic.message,
+  };
+}
+
+function programDiagnostic(fileName: string, code: DiagnosticCode, ...args: readonly string[]): ProgramDiagnostic {
+  const diagnostic = createDiagnosticAt({ fileName }, code, ...args);
+  return {
+    fileName,
+    code: diagnostic.code,
+    category: diagnostic.category,
+    key: diagnostic.key,
+    messageText: diagnostic.messageText,
     message: diagnostic.message,
   };
 }

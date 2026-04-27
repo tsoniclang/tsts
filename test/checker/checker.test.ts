@@ -17,6 +17,7 @@ describe("checker groundwork", () => {
     const result = checkSourceFile(sourceFile);
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Property 'toFixed' does not exist on type 'string'."]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2339]);
   });
 
   it("reports return type assignability failures", () => {
@@ -24,6 +25,7 @@ describe("checker groundwork", () => {
     const result = checkSourceFile(sourceFile);
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string' is not assignable to type 'number'."]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
   });
 
   it("checks every source file in a program", () => {

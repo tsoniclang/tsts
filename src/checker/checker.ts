@@ -50,6 +50,7 @@ import {
   type Statement,
   type TypeNode,
 } from "../ast/index.js";
+import { createDiagnostic, type Diagnostic } from "../diagnostics/index.js";
 import type { Program, ProgramDiagnostic } from "../program/index.js";
 
 type PrimitiveTypeName = "any" | "boolean" | "number" | "string" | "unknown" | "void";
@@ -58,9 +59,7 @@ type CheckedType =
   | { readonly kind: PrimitiveTypeName | "unresolved" }
   | { readonly kind: "function"; readonly returnType: CheckedType };
 
-export interface CheckDiagnostic {
-  readonly message: string;
-}
+export type CheckDiagnostic = Diagnostic;
 
 export interface CheckResult {
   readonly diagnostics: readonly CheckDiagnostic[];
@@ -95,6 +94,10 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
     const result = checkSourceFile(sourceFile.sourceFile);
     diagnostics.push(...result.diagnostics.map(diagnostic => ({
       fileName: sourceFile.fileName,
+      code: diagnostic.code,
+      category: diagnostic.category,
+      key: diagnostic.key,
+      messageText: diagnostic.messageText,
       message: diagnostic.message,
     })));
   }
@@ -367,9 +370,7 @@ function inferPropertyAccess(expression: Expression, propertyName: string, state
     return anyType;
   }
   if (receiverType.kind !== "any" && receiverType.kind !== "function") {
-    state.diagnostics.push({
-      message: `Property '${propertyName}' does not exist on type '${displayType(receiverType)}'.`,
-    });
+    state.diagnostics.push(createDiagnostic(2339, propertyName, displayType(receiverType)));
     return anyType;
   }
   return anyType;
@@ -420,9 +421,7 @@ function checkAssignable(actual: CheckedType, expected: CheckedType, state: Chec
     return;
   }
   if (actual.kind !== expected.kind) {
-    state.diagnostics.push({
-      message: `Type '${displayType(actual)}' is not assignable to type '${displayType(expected)}'.`,
-    });
+    state.diagnostics.push(createDiagnostic(2322, displayType(actual), displayType(expected)));
   }
 }
 
