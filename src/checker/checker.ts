@@ -2546,12 +2546,12 @@ function methodSignatureType(method: MethodSignatureDeclaration, environment: Ty
   return signatureDeclarationType(method, environment, state);
 }
 
-function signatureDeclarationType(signature: Pick<MethodSignatureDeclaration, "typeParameters" | "parameters" | "type">, environment: TypeEnvironment, state: CheckState, reportDiagnostics = true): CheckedFunctionType {
+function signatureDeclarationType(signature: Pick<MethodSignatureDeclaration, "typeParameters" | "parameters" | "type">, environment: TypeEnvironment, state: CheckState, reportDiagnostics = true, construct = false): CheckedFunctionType {
   const signatureEnvironment = cloneTypeEnvironment(environment);
   const typeParameters = signature.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
   addTypeParametersToEnvironment(typeParameters, signatureEnvironment);
   const diagnosticState = reportDiagnostics ? state : undefined;
-  const returnType = signature.type === undefined ? unresolvedType : bindTypePredicateParameterIndex(typeFromTypeNode(signature.type, signatureEnvironment, diagnosticState), signature.parameters);
+  const returnType = signature.type === undefined ? anyType : bindTypePredicateParameterIndex(typeFromTypeNode(signature.type, signatureEnvironment, diagnosticState), signature.parameters);
   return {
     kind: "function",
     typeParameters,
@@ -2561,6 +2561,7 @@ function signatureDeclarationType(signature: Pick<MethodSignatureDeclaration, "t
     ...signatureMinArgumentCount(signature.parameters, state),
     ...signatureMaxArgumentCount(signature.parameters, state),
     returnType,
+    ...(construct ? { construct: true } : {}),
   };
 }
 
@@ -2926,8 +2927,16 @@ function checkTypeElements(members: readonly TypeElement[], state: CheckState, e
       if (member.type !== undefined) {
         typeFromTypeNode(member.type, signatureEnvironment, state);
       }
-      if (isConstructSignatureDeclaration(member) && member.type === undefined) {
+      if (isConstructSignatureDeclaration(member) && member.type === undefined && strictOptionValue(state.options, "noImplicitAny")) {
         state.diagnostics.push(createDiagnostic(7013));
+      } else if (isCallSignatureDeclaration(member) && member.type === undefined && strictOptionValue(state.options, "noImplicitAny")) {
+        state.diagnostics.push(createDiagnostic(7020));
+      }
+      continue;
+    }
+    if (isMethodSignatureDeclaration(member)) {
+      if (member.type === undefined && strictOptionValue(state.options, "noImplicitAny")) {
+        state.diagnostics.push(createDiagnostic(7010, propertyNameText(member.name) ?? "(Missing)", "any"));
       }
       continue;
     }
@@ -3870,11 +3879,12 @@ function callableFunctionType(type: CheckedType | undefined): CheckedFunctionTyp
 }
 
 function callableFromCallSignatures(signatures: readonly CheckedFunctionType[]): CheckedFunctionType | undefined {
-  const [first, ...overloads] = signatures;
+  const callSignatures = signatures.filter(signature => signature.construct !== true);
+  const [first, ...overloads] = callSignatures;
   if (first === undefined) {
     return undefined;
   }
-  return overloads.length === 0 ? first : { ...first, overloads: signatures };
+  return overloads.length === 0 ? first : { ...first, overloads: callSignatures };
 }
 
 function callContextFunctionType(functionType: CheckedFunctionType | undefined): CheckedFunctionType | undefined {
@@ -4791,6 +4801,9 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
   if (receiverType.kind === "function" && propertyName === "apply") {
     return functionApplyType(receiverType);
   }
+  if (receiverType.kind === "function" && propertyName === "call") {
+    return functionCallType(receiverType);
+  }
   if (receiverType.kind === "stringLiteral") {
     return propertyAccessType(stringType, propertyName, environment);
   }
@@ -4831,6 +4844,33 @@ function functionApplyType(functionType: CheckedFunctionType): CheckedFunctionTy
     maxArgumentCount: 2,
     returnType: functionType.returnType,
   };
+}
+
+function functionCallType(functionType: CheckedFunctionType): CheckedFunctionType {
+  return {
+    kind: "function",
+    typeParameters: [],
+    parameters: [anyType, ...functionType.parameters],
+    parameterNames: ["thisArg", ...(functionType.parameterNames ?? functionType.parameters.map((_parameter, index) => `arg${index}`))],
+    minArgumentCount: (functionType.minArgumentCount ?? functionType.parameters.length) + 1,
+    ...(functionType.maxArgumentCount === undefined ? {} : { maxArgumentCount: functionType.maxArgumentCount + 1 }),
+    returnType: functionType.returnType,
+  };
+}
+
+function functionApparentProperties(): ReadonlyMap<string, CheckedType> {
+  const variadicFunctionMember: CheckedFunctionType = {
+    kind: "function",
+    typeParameters: [],
+    parameters: [anyType],
+    restParameterIndex: 0,
+    minArgumentCount: 0,
+    returnType: anyType,
+  };
+  return new Map([
+    ["apply", variadicFunctionMember],
+    ["call", variadicFunctionMember],
+  ]);
 }
 
 function functionApplyArgumentArrayType(functionType: CheckedFunctionType): CheckedType {
@@ -5921,7 +5961,11 @@ function instantiateInterfaceType(type: Extract<CheckedType, { readonly kind: "i
     return type;
   }
   const substitutions = interfaceTypeSubstitutions(type, typeArguments);
-  return substituteType(type, substitutions) as Extract<CheckedType, { readonly kind: "interface" }>;
+  const instantiated = substituteType(type, substitutions) as Extract<CheckedType, { readonly kind: "interface" }>;
+  return {
+    ...instantiated,
+    typeArguments: type.members.typeParameters.map(typeParameter => substitutions.get(typeParameter) ?? anyType),
+  };
 }
 
 function typeFromResolvedEntity(type: CheckedType, diagnosticName: string | undefined, state: CheckState | undefined, typeArguments: readonly CheckedType[] = []): CheckedType {
@@ -6038,6 +6082,10 @@ function typeLiteralType(members: readonly TypeElement[], state: CheckState, env
   for (const member of members) {
     if (isCallSignatureDeclaration(member)) {
       callSignatures.push(signatureDeclarationType(member, environment, state, false));
+      continue;
+    }
+    if (isConstructSignatureDeclaration(member)) {
+      callSignatures.push(signatureDeclarationType(member, environment, state, false, true));
       continue;
     }
     if (isPropertySignatureDeclaration(member)) {
@@ -7000,7 +7048,12 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
     return typePropertiesAssignableTo(actual, expected.properties, options, expected.optionalProperties);
   }
   if (actual.kind === "classConstructor" && expected.kind === "object") {
-    return typePropertiesAssignableTo(actual, expected.properties, options, expected.optionalProperties);
+    return typePropertiesAssignableTo(actual, expected.properties, options, expected.optionalProperties)
+      && callSignaturesAssignableTo([classConstructorConstructSignature(actual)], expected.callSignatures ?? [], options);
+  }
+  if (actual.kind === "classConstructor" && expected.kind === "interface") {
+    return typePropertiesAssignableTo(actual, expected.members.properties, options, expected.members.optionalProperties)
+      && callSignaturesAssignableTo([classConstructorConstructSignature(actual)], expected.members.callSignatures, options);
   }
   if ((actual.kind === "array" || actual.kind === "readonlyArray") && expected.kind === "interface") {
     return typePropertiesAssignableTo(actual, expected.members.properties, options, expected.members.optionalProperties);
@@ -7008,7 +7061,7 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
   if (actual.kind === "interface" && expected.kind === "object") {
     return objectPropertiesAssignableTo(actual.members.properties, expected.properties, options, expected.optionalProperties)
       && callSignaturesAssignableTo(actual.members.callSignatures, expected.callSignatures ?? [], options)
-      && indexSignaturesAssignableTo(actual.members.stringIndexType, actual.members.numberIndexType, expected.stringIndexType, expected.numberIndexType, options);
+      && interfaceIndexSignaturesAssignableToObject(actual.members, expected.stringIndexType, expected.numberIndexType, options);
   }
   if (actual.kind === "classInstance" && expected.kind === "object") {
     return objectPropertiesAssignableTo(classInstancePropertyTypes(actual), expected.properties, options, expected.optionalProperties)
@@ -7035,11 +7088,11 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
     return objectPropertiesAssignableToInterface(classInstancePropertyTypes(actual), [], expected.members, options, undefined, undefined, true);
   }
   if (actual.kind === "function" && expected.kind === "object") {
-    return objectPropertiesAssignableTo(new Map(), expected.properties, options, expected.optionalProperties)
+    return objectPropertiesAssignableTo(functionApparentProperties(), expected.properties, options, expected.optionalProperties)
       && callSignaturesAssignableTo([actual], expected.callSignatures ?? [], options);
   }
   if (actual.kind === "function" && expected.kind === "interface") {
-    return objectPropertiesAssignableToInterface(new Map(), [actual], expected.members, options);
+    return objectPropertiesAssignableToInterface(functionApparentProperties(), [actual], expected.members, options);
   }
   if (actual.kind === "moduleNamespace" && expected.kind === "moduleNamespace") {
     return actual.moduleSpecifier === expected.moduleSpecifier;
@@ -7104,6 +7157,9 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
   if (actual.kind === "function" && expected.kind === "function") {
     return functionTypeAssignableTo(actual, expected, options);
   }
+  if (actual.kind === "classConstructor" && expected.kind === "function" && expected.construct === true) {
+    return functionTypeAssignableTo(classConstructorConstructSignature(actual), expected, options);
+  }
   if (actual.kind === "boolean" && expected.kind === "typePredicate") {
     return true;
   }
@@ -7165,9 +7221,33 @@ function functionTypeAssignableTo(actual: CheckedFunctionType, expected: Checked
 }
 
 function functionSignatureAssignableTo(actual: CheckedFunctionType, expected: CheckedFunctionType, options: CompilerOptions = {}): boolean {
+  if ((actual.construct === true) !== (expected.construct === true)) {
+    return false;
+  }
   return actual.parameters.length <= expected.parameters.length
     && actual.parameters.every((actualParameter, index) => isAssignableTo(expected.parameters[index]!, actualParameter, options))
     && (expected.returnType.kind === "void" || isAssignableTo(actual.returnType, expected.returnType, options));
+}
+
+function classConstructorConstructSignature(type: Extract<CheckedType, { readonly kind: "classConstructor" }>): CheckedFunctionType {
+  return {
+    kind: "function",
+    typeParameters: type.typeParameters,
+    parameters: type.constructorParameters,
+    returnType: classConstructorInstanceType(type),
+    construct: true,
+  };
+}
+
+function classConstructorInstanceType(type: Extract<CheckedType, { readonly kind: "classConstructor" }>): Extract<CheckedType, { readonly kind: "classInstance" }> {
+  return {
+    kind: "classInstance",
+    name: type.name,
+    typeParameters: type.typeParameters,
+    typeArguments: type.typeArguments.length > 0 ? type.typeArguments : type.typeParameters.map(typeParameter => ({ kind: "typeParameter", name: typeParameter })),
+    members: type.members,
+    ...optionalArrayBaseElementType(type.arrayBaseElementType),
+  };
 }
 
 function isEmptyObjectLikeType(type: CheckedType): boolean {
@@ -7231,6 +7311,28 @@ function indexSignaturesAssignableTo(actualStringIndexType: CheckedType | undefi
     return false;
   }
   if (expectedNumberIndexType !== undefined && (actualNumberIndexType === undefined || !isAssignableTo(actualNumberIndexType, expectedNumberIndexType, options))) {
+    return false;
+  }
+  return true;
+}
+
+function interfaceIndexSignaturesAssignableToObject(actual: InterfaceMembers, expectedStringIndexType: CheckedType | undefined, expectedNumberIndexType: CheckedType | undefined, options: CompilerOptions = {}): boolean {
+  if (expectedStringIndexType !== undefined) {
+    if (actual.stringIndexType !== undefined) {
+      if (!isAssignableTo(actual.stringIndexType, expectedStringIndexType, options)) {
+        return false;
+      }
+    } else if (!objectPropertiesAssignableToIndexSignatures(actual.properties, expectedStringIndexType, undefined, options)) {
+      return false;
+    }
+  }
+  if (expectedNumberIndexType !== undefined) {
+    if (actual.numberIndexType !== undefined) {
+      return isAssignableTo(actual.numberIndexType, expectedNumberIndexType, options);
+    }
+    if (actual.stringIndexType !== undefined) {
+      return isAssignableTo(actual.stringIndexType, expectedNumberIndexType, options);
+    }
     return false;
   }
   return true;
@@ -7418,7 +7520,9 @@ function classConstructorsAssignableTo(actual: Extract<CheckedType, { readonly k
   if (actual.abstract && !expected.abstract) {
     return false;
   }
-  return classMembersAssignableTo(actual.members, expected.members, options, classConstructorPropertyTypes(actual), classConstructorPropertyTypes(expected)) && staticClassMembersAssignableTo(actual.members, expected.members);
+  return functionSignatureAssignableTo(classConstructorConstructSignature(actual), classConstructorConstructSignature(expected), options)
+    && classMembersAssignableTo(actual.members, expected.members, options, classConstructorPropertyTypes(actual), classConstructorPropertyTypes(expected))
+    && staticClassMembersAssignableTo(actual.members, expected.members);
 }
 
 function staticClassMembersAssignableTo(actual: ClassMemberNames, expected: ClassMemberNames): boolean {
@@ -7790,6 +7894,9 @@ function displayType(type: CheckedType): string {
       ...(type.stringIndexType === undefined ? [] : [`[index: string]: ${displayType(type.stringIndexType)};`]),
       ...(type.numberIndexType === undefined ? [] : [`[index: number]: ${displayType(type.numberIndexType)};`]),
     ];
+    if (type.properties.size === 0 && indexSignatures.length === 0 && type.callSignatures?.length === 1) {
+      return displayType(type.callSignatures[0]!);
+    }
     const entries = [...type.properties.entries()].map(([name, propertyType]) => {
       const readonly = type.readonlyProperties.has(name) ? "readonly " : "";
       const optional = type.optionalProperties.has(name) ? "?" : "";
@@ -7839,7 +7946,8 @@ function displayType(type: CheckedType): string {
 
 function displayCallSignatureType(type: CheckedFunctionType): string {
   const typeParameters = type.typeParameters.length === 0 ? "" : `<${type.typeParameters.join(", ")}>`;
-  return `${typeParameters}(${type.parameters.map((parameter, index) => `${type.parameterNames?.[index] ?? `arg${index}`}: ${displayType(parameter)}`).join(", ")}): ${displayType(type.returnType)};`;
+  const prefix = type.construct === true ? "new " : "";
+  return `${prefix}${typeParameters}(${type.parameters.map((parameter, index) => `${type.parameterNames?.[index] ?? `arg${index}`}: ${displayType(parameter)}`).join(", ")}): ${displayType(type.returnType)};`;
 }
 
 function displayMethodSignature(name: string, optional: string, type: CheckedFunctionType): string {

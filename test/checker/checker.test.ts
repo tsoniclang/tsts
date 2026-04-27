@@ -1442,4 +1442,83 @@ describe("checker groundwork", () => {
       "Object literal may only specify known properties, and 'trueness' does not exist in type '{ id: number; }'.",
     ]);
   });
+
+  it("preserves instantiated interface type arguments in diagnostics", () => {
+    const sourceFile = parseSourceFile([
+      "interface Pair<T, U> { first: T; second?: U; }",
+      "const pair: Pair<number, string> = { first: 1, second: 'x' };",
+      "const target: { second: number } = pair;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type 'Pair<number, string>' is not assignable to type '{ second: number; }'.",
+    ]);
+  });
+
+  it("displays single call and construct signature object types as signatures", () => {
+    const sourceFile = parseSourceFile([
+      "interface Pair<T, U> { first: T; }",
+      "declare const pair: Pair<number, string>;",
+      "let callTarget: { <TValue>(value: TValue): TValue };",
+      "let constructTarget: { new <TValue>(value: TValue); };",
+      "callTarget = pair;",
+      "constructTarget = pair;",
+    ].join("\n"), { fileName: "signatures.ts" });
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322, 2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type 'Pair<number, string>' is not assignable to type '<TValue>(value: TValue) => TValue'.",
+      "Type 'Pair<number, string>' is not assignable to type 'new <TValue>(value: TValue) => any'.",
+    ]);
+  });
+
+  it("checks class constructor values against construct signatures", () => {
+    const sourceFile = parseSourceFile([
+      "class Base { }",
+      "class NeedsArgument extends Base { constructor(value: number) { super(); } }",
+      "const direct: { new(): NeedsArgument } = NeedsArgument;",
+      "const baseConstructor: typeof Base = NeedsArgument;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322, 2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type 'typeof NeedsArgument' is not assignable to type 'new () => NeedsArgument'.",
+      "Type 'typeof NeedsArgument' is not assignable to type 'typeof Base'.",
+    ]);
+  });
+
+  it("uses function apparent call and apply members for structural assignment", () => {
+    const sourceFile = parseSourceFile([
+      "interface Callable { call(value: any); }",
+      "interface Applicable { apply(value: any); }",
+      "declare function f(): void;",
+      "const callable: Callable = f;",
+      "const applicable: Applicable = f;",
+    ].join("\n"), { fileName: "function-members.ts" });
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
+  it("requires declared interface index support for numeric index targets", () => {
+    const sourceFile = parseSourceFile([
+      "interface Named { one: number; }",
+      "interface StringIndexed { [key: string]: number; one: number; }",
+      "declare const named: Named;",
+      "declare const stringIndexed: StringIndexed;",
+      "let anyStringIndex: { [key: string]: any } = named;",
+      "let numberIndex: { [index: number]: number } = named;",
+      "let numberIndexFromStringIndex: { [index: number]: number } = stringIndexed;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type 'Named' is not assignable to type '{ [index: number]: number; }'.",
+    ]);
+  });
 });
