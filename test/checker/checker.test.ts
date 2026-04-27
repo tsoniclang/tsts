@@ -146,6 +146,30 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("reports parameter list grammar for rest and optional ordering", () => {
+    const sourceFile = parseSourceFile([
+      "function restNotLast(...x: number[], y: number) {}",
+      "function restOptional(...x?: number[]) {}",
+      "function restInitializer(...x = []) {}",
+      "function restImplicitAny(...x) { x.push(1); }",
+      "function optionalAndInitializer(x?: number = 1) {}",
+      "function requiredAfterOptional(x?: number, y: number) {}",
+      "function requiredAfterDefault(x = 1, y: number) {}",
+      "function restLast(x?: number, y = 1, ...z: number[]) {}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1014, 1047, 1048, 7019, 1015, 1016]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "A rest parameter must be last in a parameter list.",
+      "A rest parameter cannot be optional.",
+      "A rest parameter cannot have an initializer.",
+      "Rest parameter 'x' implicitly has an 'any[]' type.",
+      "Parameter cannot have question mark and initializer.",
+      "A required parameter cannot follow an optional parameter.",
+    ]);
+  });
+
   it("checks every source file in a program", () => {
     const host: CompilerHost = {
       readFile: fileName => fileName === "src/index.ts" ? "export function f(): number { return \"x\"; }" : undefined,

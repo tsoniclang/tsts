@@ -2260,7 +2260,7 @@ function classConstructorParameterTypes(classDeclaration: ClassLikeDeclaration, 
   if (constructor === undefined) {
     return [];
   }
-  return constructor.parameters.map(parameter => parameter.type === undefined ? anyType : typeFromTypeNode(parameter.type, environment));
+  return constructor.parameters.map(parameter => parameterTypeFromDeclaration(parameter, environment, undefined));
 }
 
 function classArrayBaseElementType(classDeclaration: ClassLikeDeclaration, environment: TypeEnvironment, state: CheckState): { readonly arrayBaseElementType: CheckedType } | Record<string, never> {
@@ -2892,7 +2892,7 @@ function signatureDeclarationType(signature: Pick<MethodSignatureDeclaration, "t
   return {
     kind: "function",
     typeParameters,
-    parameters: signature.parameters.map(parameter => parameter.type === undefined ? anyType : typeFromTypeNode(parameter.type, signatureEnvironment, diagnosticState)),
+    parameters: signature.parameters.map(parameter => parameterTypeFromDeclaration(parameter, signatureEnvironment, diagnosticState)),
     parameterNames: parameterDisplayNames(signature.parameters),
     ...signatureRestParameterIndex(signature.parameters),
     ...signatureMinArgumentCount(signature.parameters, state),
@@ -3331,7 +3331,7 @@ function checkAccessorDeclaration(accessor: GetAccessorDeclaration | SetAccessor
     if (parameter.type !== undefined) {
       checkJavaScriptTypeAnnotation(state);
     }
-    const parameterType = parameter.type === undefined ? contextualAccessorType ?? unresolvedType : typeFromTypeNode(parameter.type, accessorEnvironment, state);
+    const parameterType = parameterTypeFromDeclaration(parameter, accessorEnvironment, state, contextualAccessorType ?? unresolvedType);
     setBindingNameType(parameter.name, parameterType, accessorEnvironment);
   }
   if (accessor.type !== undefined) {
@@ -3356,6 +3356,7 @@ function checkAccessorBody(accessor: GetAccessorDeclaration | SetAccessorDeclara
 }
 
 function checkSignatureParameters(parameters: readonly ParameterDeclaration[], state: CheckState, environment: TypeEnvironment, disallowParameterProperties: boolean, ambient = false, contextualParameterTypes: readonly CheckedType[] = []): readonly CheckedType[] {
+  checkParameterListGrammar(parameters, state);
   return parameters.map((parameter, parameterIndex) => {
     checkParameterModifiers(parameter, state, !disallowParameterProperties);
     if (parameter.type !== undefined) {
@@ -3363,7 +3364,7 @@ function checkSignatureParameters(parameters: readonly ParameterDeclaration[], s
     }
     const contextualParameterType = contextualParameterTypes[parameterIndex];
     checkImplicitAnyParameter(parameter, state, contextualParameterType);
-    const parameterType = parameter.type === undefined ? contextualParameterType ?? anyType : typeFromTypeNode(parameter.type, environment, state);
+    const parameterType = parameterTypeFromDeclaration(parameter, environment, state, contextualParameterType);
     checkStrictModeBindingName(parameter.name, state, ambient);
     setBindingNameType(parameter.name, parameterType, environment);
     if (parameter.initializer !== undefined) {
@@ -3466,7 +3467,7 @@ function functionDeclarationType(functionDeclaration: FunctionDeclaration, envir
   const typeParameters = effectiveTypeParameterNames(functionDeclaration.typeParameters, functionDeclaration);
   addTypeParametersToEnvironment(typeParameters, functionEnvironment);
   const jsDocParameterTypes = jsDocParameterTypeMap(functionDeclaration, functionEnvironment, state);
-  const parameterTypes = functionDeclaration.parameters.map(parameter => parameter.type === undefined ? jsDocParameterType(parameter, jsDocParameterTypes) ?? anyType : typeFromTypeNode(parameter.type, functionEnvironment, state));
+  const parameterTypes = functionDeclaration.parameters.map(parameter => parameterTypeFromDeclaration(parameter, functionEnvironment, state, jsDocParameterType(parameter, jsDocParameterTypes)));
   const returnType = functionDeclaration.type === undefined
     ? jsDocReturnType(functionDeclaration, functionEnvironment, state)
     : bindTypePredicateParameterIndex(typeFromTypeNode(functionDeclaration.type, functionEnvironment, state), functionDeclaration.parameters);
@@ -3490,7 +3491,7 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
   const typeParameters = effectiveTypeParameterNames(functionDeclaration.typeParameters, functionDeclaration);
   addTypeParametersToEnvironment(typeParameters, functionEnvironment);
   const jsDocParameterTypes = jsDocParameterTypeMap(functionDeclaration, functionEnvironment, state);
-  const parameterTypes = functionDeclaration.parameters.map(parameter => parameter.type === undefined ? jsDocParameterType(parameter, jsDocParameterTypes) ?? anyType : typeFromTypeNode(parameter.type, functionEnvironment, state));
+  const parameterTypes = functionDeclaration.parameters.map(parameter => parameterTypeFromDeclaration(parameter, functionEnvironment, state, jsDocParameterType(parameter, jsDocParameterTypes)));
   const returnType = functionDeclaration.type === undefined
     ? jsDocReturnType(functionDeclaration, functionEnvironment, state)
     : bindTypePredicateParameterIndex(typeFromTypeNode(functionDeclaration.type, functionEnvironment, state), functionDeclaration.parameters);
@@ -3521,6 +3522,7 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
     functionEnvironment.set(functionDeclaration.name.text, functionDeclarationBinding(functionDeclaration.name.text, functionType));
   }
   seedArgumentsObject(functionEnvironment);
+  checkParameterListGrammar(functionDeclaration.parameters, state);
   for (let index = 0; index < functionDeclaration.parameters.length; index += 1) {
     const parameter = functionDeclaration.parameters[index]!;
     checkParameterModifiers(parameter, state, false);
@@ -3602,10 +3604,11 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
   const typeParameters = effectiveTypeParameterNames(functionExpression.typeParameters, functionExpression);
   addTypeParametersToEnvironment(typeParameters, functionEnvironment);
   const jsDocParameterTypes = jsDocParameterTypeMap(functionExpression, functionEnvironment, state);
-  const parameterTypes = functionExpression.parameters.map((parameter, parameterIndex) => parameter.type === undefined ? jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[parameterIndex] ?? anyType : typeFromTypeNode(parameter.type, functionEnvironment, state));
+  const parameterTypes = functionExpression.parameters.map((parameter, parameterIndex) => parameterTypeFromDeclaration(parameter, functionEnvironment, state, jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[parameterIndex]));
   const jsDocDeclaredReturnType = jsDocReturnType(functionExpression, functionEnvironment, state);
   const declaredReturnType = functionExpression.type === undefined ? jsDocDeclaredReturnType : bindTypePredicateParameterIndex(typeFromTypeNode(functionExpression.type, functionEnvironment, state), functionExpression.parameters);
   seedArgumentsObject(functionEnvironment);
+  checkParameterListGrammar(functionExpression.parameters, state);
   for (let index = 0; index < functionExpression.parameters.length; index += 1) {
     const parameter = functionExpression.parameters[index]!;
     checkParameterModifiers(parameter, state, false);
@@ -5087,6 +5090,8 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
   const typeParameters = effectiveTypeParameterNames(arrowFunction.typeParameters, arrowFunction);
   addTypeParametersToEnvironment(typeParameters, arrowEnvironment);
   const jsDocParameterTypes = jsDocParameterTypeMap(arrowFunction, arrowEnvironment, state);
+  const parameterTypes = arrowFunction.parameters.map((parameter, parameterIndex) => parameterTypeFromDeclaration(parameter, arrowEnvironment, state, jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[parameterIndex]));
+  checkParameterListGrammar(arrowFunction.parameters, state);
   for (let parameterIndex = 0; parameterIndex < arrowFunction.parameters.length; parameterIndex += 1) {
     const parameter = arrowFunction.parameters[parameterIndex]!;
     checkParameterModifiers(parameter, state, false);
@@ -5096,7 +5101,7 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
     const contextualParameterType = contextualParameterTypes[parameterIndex];
     const jsDocType = jsDocParameterType(parameter, jsDocParameterTypes);
     checkImplicitAnyParameter(parameter, state, jsDocType ?? contextualParameterType);
-    const parameterType = parameter.type === undefined ? jsDocType ?? contextualParameterType ?? anyType : typeFromTypeNode(parameter.type, arrowEnvironment, state);
+    const parameterType = parameterTypes[parameterIndex] ?? unresolvedType;
     checkStrictModeBindingName(parameter.name, state, false);
     setBindingNameType(parameter.name, parameterType, arrowEnvironment);
     if (parameter.initializer !== undefined) {
@@ -5110,7 +5115,7 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
   return {
     kind: "function",
     typeParameters,
-    parameters: arrowFunction.parameters.map((parameter, parameterIndex) => parameter.type === undefined ? jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[parameterIndex] ?? anyType : typeFromTypeNode(parameter.type, arrowEnvironment, state)),
+    parameters: parameterTypes,
     parameterNames: parameterDisplayNames(arrowFunction.parameters),
     ...signatureRestParameterIndex(arrowFunction.parameters),
     ...signatureMinArgumentCount(arrowFunction.parameters, state),
@@ -5954,7 +5959,7 @@ function methodDeclarationType(method: MethodDeclaration, environment: TypeEnvir
   const signatureEnvironment = cloneTypeEnvironment(environment);
   const typeParameters = method.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
   addTypeParametersToEnvironment(typeParameters, signatureEnvironment);
-  const parameters = method.parameters.map(parameter => parameter.type === undefined ? anyType : typeFromTypeNode(parameter.type, signatureEnvironment, state));
+  const parameters = method.parameters.map(parameter => parameterTypeFromDeclaration(parameter, signatureEnvironment, state));
   const returnType = method.type === undefined ? methodBodyReturnType(method.body, state.options, signatureEnvironment) : bindTypePredicateParameterIndex(typeFromTypeNode(method.type, signatureEnvironment, state), method.parameters);
   return { kind: "function", typeParameters, parameters, parameterNames: parameterDisplayNames(method.parameters), ...signatureRestParameterIndex(method.parameters), ...signatureMinArgumentCount(method.parameters, state), ...signatureMaxArgumentCount(method.parameters, state, method.body), returnType };
 }
@@ -6938,6 +6943,42 @@ function checkParameterModifiers(parameter: ParameterDeclaration, state: CheckSt
   }
 }
 
+function checkParameterListGrammar(parameters: readonly ParameterDeclaration[], state: CheckState): void {
+  let sawOptionalParameter = false;
+  let reportedQuestionInitializer = false;
+  for (let index = 0; index < parameters.length; index += 1) {
+    const parameter = parameters[index]!;
+    const hasRest = parameter.dotDotDotToken !== undefined;
+    if (hasRest && index < parameters.length - 1) {
+      state.diagnostics.push(createDiagnostic(1014));
+    }
+    if (hasRest && parameter.questionToken !== undefined) {
+      state.diagnostics.push(createDiagnostic(1047));
+    }
+    if (hasRest && parameter.initializer !== undefined) {
+      state.diagnostics.push(createDiagnostic(1048));
+    }
+    if (!reportedQuestionInitializer && parameter.questionToken !== undefined && parameter.initializer !== undefined) {
+      state.diagnostics.push(createDiagnostic(1015));
+      reportedQuestionInitializer = true;
+    }
+    if (sawOptionalParameter && isRequiredParameter(parameter)) {
+      state.diagnostics.push(createDiagnostic(1016));
+    }
+    if (isOptionalParameter(parameter)) {
+      sawOptionalParameter = true;
+    }
+  }
+}
+
+function isOptionalParameter(parameter: ParameterDeclaration): boolean {
+  return parameter.questionToken !== undefined;
+}
+
+function isRequiredParameter(parameter: ParameterDeclaration): boolean {
+  return parameter.questionToken === undefined && parameter.initializer === undefined && parameter.dotDotDotToken === undefined;
+}
+
 function checkParameterModifierGrammar(parameter: ParameterDeclaration, state: CheckState): void {
   let sawAccessibilityModifier = false;
   for (const modifier of parameter.modifiers ?? []) {
@@ -7004,7 +7045,19 @@ function checkImplicitAnyParameter(parameter: ParameterDeclaration, state: Check
   if ((!strictOptionValue(state.options, "noImplicitAny") && !hasParameterPropertyModifier) || parameter.type !== undefined || parameter.initializer !== undefined || !isIdentifier(parameter.name)) {
     return;
   }
-  state.diagnostics.push(createDiagnostic(7006, parameter.name.text, "any"));
+  state.diagnostics.push(parameter.dotDotDotToken === undefined
+    ? createDiagnostic(7006, parameter.name.text, "any")
+    : createDiagnostic(7019, parameter.name.text));
+}
+
+function parameterTypeFromDeclaration(parameter: ParameterDeclaration, environment: TypeEnvironment, state: CheckState | undefined, contextualType?: CheckedType): CheckedType {
+  if (parameter.type !== undefined) {
+    return typeFromTypeNode(parameter.type, environment, state);
+  }
+  if (contextualType !== undefined) {
+    return contextualType;
+  }
+  return parameter.dotDotDotToken === undefined ? anyType : { kind: "array", elementType: anyType };
 }
 
 function signatureRestParameterIndex(parameters: readonly ParameterDeclaration[]): { readonly restParameterIndex: number } | Record<string, never> {
