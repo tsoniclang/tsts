@@ -13,6 +13,7 @@ export interface CompilerOptions {
   readonly module?: ModuleKindName;
   readonly strict?: boolean;
   readonly noImplicitAny?: boolean;
+  readonly strictNullChecks?: boolean;
   readonly allowSyntheticDefaultImports?: boolean;
   readonly alwaysStrict?: boolean;
   readonly esModuleInterop?: boolean;

@@ -932,8 +932,11 @@ describe("checker groundwork", () => {
     ].join("\n"));
     const result = checkSourceFile(sourceFile);
 
-    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
-    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'number' is not assignable to type 'WatchHandler<any>'." ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [7006, 2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Parameter 'value' implicitly has an 'any' type.",
+      "Type 'number' is not assignable to type 'WatchHandler<any>'.",
+    ]);
   });
 
   it("checks calls against inferred generic parameter substitutions", () => {

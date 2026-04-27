@@ -72,7 +72,6 @@ const defaultCompilerOptions: CaseCompilerOptions = {
   module: "esnext",
   noEmit: true,
   ignoreDeprecations: "6.0",
-  strict: false,
   target: "es2024",
 };
 
