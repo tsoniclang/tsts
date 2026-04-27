@@ -236,7 +236,7 @@ describe("checker groundwork", () => {
   });
 
   it("checks loop initializer declarations and loop bodies", () => {
-    const sourceFile = parseSourceFile("function f(): number { for (const item: string of items) { return item; } return 1; }");
+    const sourceFile = parseSourceFile("function f(items: string[]): number { for (const item: string of items) { return item; } return 1; }");
     const result = checkSourceFile(sourceFile);
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'string' is not assignable to type 'number'."]);
@@ -441,7 +441,9 @@ describe("checker groundwork", () => {
           return [
             "import moduleA = require(\"./moduleA\");",
             "interface IHasVisualizationModel { VisualizationModel: any; }",
+            "interface IHasTypedVisualizationModel { VisualizationModel: typeof moduleA.VisualizationModel; }",
             "const value: IHasVisualizationModel = moduleA;",
+            "const typedValue: IHasTypedVisualizationModel = moduleA;",
             "declare const reverse: IHasVisualizationModel;",
             "const moduleLike: typeof moduleA = reverse;",
           ].join("\n");
@@ -457,6 +459,23 @@ describe("checker groundwork", () => {
     const diagnostics = checkProgram(program);
 
     assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), []);
+  });
+
+  it("recognizes standard global values before reporting unresolved expression names", () => {
+    const sourceFile = parseSourceFile([
+      "parseInt(\"1\");",
+      "new Array();",
+      "new Promise(() => undefined);",
+      "new Set();",
+      "Symbol();",
+      "new WeakMap();",
+      "new WeakSet();",
+      "new WeakRef({});",
+      "new FinalizationRegistry(() => undefined);",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
   });
 
   it("resolves ambient module export-equals aliases for named imports", () => {
@@ -618,6 +637,33 @@ describe("checker groundwork", () => {
       "Invalid use of 'arguments' in strict mode.",
       "Invalid use of 'eval' in strict mode.",
     ]);
+  });
+
+  it("binds arguments only in non-arrow function bodies and type-queries unresolved outer uses", () => {
+    const sourceFile = parseSourceFile([
+      "function f() {",
+      "  const length: number = arguments.length;",
+      "  const item = arguments[0];",
+      "  (() => arguments)();",
+      "}",
+      "(() => arguments)();",
+      "interface I { method(args: typeof arguments): void; }",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2304, 2304]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Cannot find name 'arguments'.",
+      "Cannot find name 'arguments'.",
+    ]);
+  });
+
+  it("uses the function-scoped arguments object instead of outer variables", () => {
+    const sourceFile = parseSourceFile("var arguments = 10; function foo(a) { arguments = 10; }");
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'number' is not assignable to type 'IArguments'."]);
   });
 
   it("accepts TypeScript constant ambient const initializers and literal enum references", () => {
