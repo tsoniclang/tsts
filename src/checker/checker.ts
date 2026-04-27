@@ -32,6 +32,7 @@ import {
   isImportDeclaration,
   isImportEqualsDeclaration,
   isInterfaceDeclaration,
+  isKeywordExpression,
   isKeywordTypeNode,
   isMethodDeclaration,
   isMissingDeclaration,
@@ -47,6 +48,7 @@ import {
   isParenthesizedExpression,
   isPostfixUnaryExpression,
   isPrefixUnaryExpression,
+  isPropertyAssignment,
   isPropertyAccessExpression,
   isPropertyDeclaration,
   isPrivateIdentifier,
@@ -54,6 +56,7 @@ import {
   isReturnStatement,
   isSatisfiesExpression,
   isSetAccessorDeclaration,
+  isShorthandPropertyAssignment,
   isSpreadElement,
   isStringLiteral,
   isTypeReferenceNode,
@@ -96,9 +99,10 @@ type PrimitiveTypeName = "any" | "boolean" | "number" | "string" | "undefined" |
 type CheckedType =
   | { readonly kind: PrimitiveTypeName | "unresolved" }
   | { readonly kind: "array"; readonly elementType: CheckedType }
-  | { readonly kind: "classConstructor"; readonly name: string; readonly abstract: boolean }
+  | { readonly kind: "classConstructor"; readonly name: string; readonly abstract: boolean; readonly members: ClassMemberNames }
   | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType }
   | { readonly kind: "interface"; readonly name: string }
+  | { readonly kind: "thisClass"; readonly className: string; readonly abstractProperties: ReadonlySet<string>; readonly abstractPropertyDeclaringClasses: ReadonlyMap<string, string>; readonly uninitializedProperties: ReadonlySet<string>; readonly mode: "constructor" | "fieldInitializer" }
   | { readonly kind: "typeAlias"; readonly target: CheckedType }
   | { readonly kind: "typeParameter"; readonly name: string }
   | { readonly kind: "union"; readonly types: readonly CheckedType[] }
@@ -122,6 +126,9 @@ interface ClassMemberNames {
   readonly className: string | undefined;
   readonly instance: ReadonlySet<string>;
   readonly static: ReadonlySet<string>;
+  readonly abstractProperties: ReadonlySet<string>;
+  readonly abstractPropertyDeclaringClasses: ReadonlyMap<string, string>;
+  readonly uninitializedProperties: ReadonlySet<string>;
 }
 
 const anyType: CheckedType = { kind: "any" };
@@ -408,6 +415,9 @@ function checkVariableDeclaration(declaration: VariableDeclaration, state: Check
   if (declaredType !== undefined && initializerType !== undefined) {
     checkAssignable(initializerType, declaredType, state);
   }
+  if (declaration.initializer !== undefined) {
+    diagnoseAbstractThisDestructuring(declaration.name, declaration.initializer, state, environment);
+  }
   setBindingNameType(declaration.name, variableDeclarationBindingType(declaration, declaredType, initializerType, environment, ambient), environment);
 }
 
@@ -457,14 +467,74 @@ function checkedTypeRequiresDefiniteAssignment(type: CheckedType): boolean {
   return true;
 }
 
+function diagnoseAbstractThisDestructuring(target: BindingName | Expression, initializer: Expression, state: CheckState, environment: TypeEnvironment): void {
+  const thisType = thisTypeFromExpression(initializer, environment);
+  if (thisType === undefined || thisType.mode !== "constructor") {
+    return;
+  }
+  for (const propertyName of destructuredPropertyNames(target)) {
+    if (thisType.abstractProperties.has(propertyName)) {
+      state.diagnostics.push(createDiagnostic(2715, propertyName, thisType.abstractPropertyDeclaringClasses.get(propertyName) ?? thisType.className));
+    }
+  }
+}
+
+function thisTypeFromExpression(expression: Expression, environment: TypeEnvironment): Extract<CheckedType, { readonly kind: "thisClass" }> | undefined {
+  if (isParenthesizedExpression(expression)) {
+    return thisTypeFromExpression(expression.expression, environment);
+  }
+  if (!isKeywordExpression(expression) || expression.kind !== Kind.ThisKeyword) {
+    return undefined;
+  }
+  const type = environment.get("this");
+  return type?.kind === "thisClass" ? type : undefined;
+}
+
+function destructuredPropertyNames(target: BindingName | Expression): readonly string[] {
+  if (isObjectBindingPattern(target)) {
+    return target.elements.flatMap(element => bindingElementPropertyNames(element));
+  }
+  if (isParenthesizedExpression(target)) {
+    return destructuredPropertyNames(target.expression);
+  }
+  if (isObjectLiteralExpression(target)) {
+    return target.properties.flatMap(property => {
+      if (isShorthandPropertyAssignment(property)) {
+        const propertyName = propertyNameDiagnosticText(property.name);
+        return propertyName === undefined ? [] : [propertyName];
+      }
+      if (isPropertyAssignment(property)) {
+        const propertyName = propertyNameDiagnosticText(property.name);
+        return propertyName === undefined ? [] : [propertyName];
+      }
+      return [];
+    });
+  }
+  return [];
+}
+
+function bindingElementPropertyNames(element: BindingElement): readonly string[] {
+  if (element.propertyName !== undefined) {
+    const propertyName = propertyNameDiagnosticText(element.propertyName);
+    return propertyName === undefined ? [] : [propertyName];
+  }
+  if (element.name === undefined) {
+    return [];
+  }
+  if (isIdentifier(element.name)) {
+    return [element.name.text];
+  }
+  return destructuredPropertyNames(element.name);
+}
+
 function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
   const classIsAbstract = hasModifier(classDeclaration, Kind.AbstractKeyword);
-  const classMembers = collectClassMemberNames(classDeclaration);
+  const classMembers = collectClassMemberNames(classDeclaration, inheritedClassMembers(classDeclaration, environment));
   if (classDeclaration.name !== undefined) {
     if (invalidClassNames.has(classDeclaration.name.text)) {
       state.diagnostics.push(createDiagnostic(2414, classDeclaration.name.text));
     }
-    environment.set(classDeclaration.name.text, { kind: "classConstructor", name: classDeclaration.name.text, abstract: classIsAbstract });
+    environment.set(classDeclaration.name.text, { kind: "classConstructor", name: classDeclaration.name.text, abstract: classIsAbstract, members: classMembers });
   }
   const classEnvironment = new Map(environment);
   addTypeParametersToEnvironment(classDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], classEnvironment);
@@ -476,9 +546,24 @@ function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckS
   }
 }
 
-function collectClassMemberNames(classDeclaration: ClassDeclaration): ClassMemberNames {
+function inheritedClassMembers(classDeclaration: ClassDeclaration, environment: TypeEnvironment): ClassMemberNames | undefined {
+  for (const clause of classDeclaration.heritageClauses ?? []) {
+    if (clause.token !== Kind.ExtendsKeyword) {
+      continue;
+    }
+    const baseName = clause.types[0] === undefined ? undefined : expressionNameText(clause.types[0].expression);
+    const baseType = baseName === undefined ? undefined : environment.get(baseName);
+    return baseType?.kind === "classConstructor" ? baseType.members : undefined;
+  }
+  return undefined;
+}
+
+function collectClassMemberNames(classDeclaration: ClassDeclaration, inherited: ClassMemberNames | undefined): ClassMemberNames {
   const instance = new Set<string>();
   const staticMembers = new Set<string>();
+  const abstractProperties = new Set(inherited?.abstractProperties ?? []);
+  const abstractPropertyDeclaringClasses = new Map(inherited?.abstractPropertyDeclaringClasses ?? []);
+  const uninitializedProperties = new Set(inherited?.uninitializedProperties ?? []);
   for (const member of classDeclaration.members) {
     const name = classElementName(member);
     if (name === undefined) {
@@ -488,9 +573,28 @@ function collectClassMemberNames(classDeclaration: ClassDeclaration): ClassMembe
       staticMembers.add(name);
     } else {
       instance.add(name);
+      if (isAbstractPropertyLike(member)) {
+        abstractProperties.add(name);
+        if (classDeclaration.name !== undefined) {
+          abstractPropertyDeclaringClasses.set(name, classDeclaration.name.text);
+        }
+        uninitializedProperties.add(name);
+      } else if (isPropertyDeclaration(member)) {
+        abstractProperties.delete(name);
+        abstractPropertyDeclaringClasses.delete(name);
+        if (member.initializer === undefined) {
+          uninitializedProperties.add(name);
+        } else {
+          uninitializedProperties.delete(name);
+        }
+      } else if (isGetAccessorDeclaration(member) || isSetAccessorDeclaration(member)) {
+        abstractProperties.delete(name);
+        abstractPropertyDeclaringClasses.delete(name);
+        uninitializedProperties.delete(name);
+      }
     }
   }
-  return { className: classDeclaration.name?.text, instance, static: staticMembers };
+  return { className: classDeclaration.name?.text, instance, static: staticMembers, abstractProperties, abstractPropertyDeclaringClasses, uninitializedProperties };
 }
 
 function classElementName(member: ClassElement): string | undefined {
@@ -498,6 +602,11 @@ function classElementName(member: ClassElement): string | undefined {
     return propertyNameText(member.name);
   }
   return undefined;
+}
+
+function isAbstractPropertyLike(member: ClassElement): boolean {
+  return hasModifier(member, Kind.AbstractKeyword)
+    && (isPropertyDeclaration(member) || isGetAccessorDeclaration(member) || isSetAccessorDeclaration(member));
 }
 
 function checkInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, state: CheckState, environment: TypeEnvironment): void {
@@ -607,6 +716,16 @@ function propertyNameText(name: PropertyName): string | undefined {
   return undefined;
 }
 
+function propertyNameDiagnosticText(name: PropertyName): string | undefined {
+  if (isIdentifier(name) || isNumericLiteral(name) || isStringLiteral(name) || isNoSubstitutionTemplateLiteral(name)) {
+    return name.text;
+  }
+  if (isPrivateIdentifier(name)) {
+    return name.text.startsWith("#") ? name.text : `#${name.text}`;
+  }
+  return undefined;
+}
+
 function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment, ambient: boolean, classIsAbstract: boolean, classMembers: ClassMemberNames): void {
   if (hasModifier(member, Kind.ConstKeyword)) {
     state.diagnostics.push(createDiagnostic(1248, "const"));
@@ -621,6 +740,9 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
       checkAbstractMemberModifiers(member, state, classIsAbstract, propertyNameText(member.name), false);
     }
     const memberEnvironment = new Map(environment);
+    if (isConstructorDeclaration(member) && classMembers.className !== undefined) {
+      memberEnvironment.set("this", thisClassType(classMembers, "constructor"));
+    }
     seedUnqualifiedClassMemberDiagnostics(memberEnvironment, classMembers, isMethodDeclaration(member) && hasModifier(member, Kind.StaticKeyword));
     checkSignatureParameters(member.parameters, state, memberEnvironment, isMethodDeclaration(member) || member.body === undefined);
     if (member.body !== undefined) {
@@ -638,7 +760,11 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     if (member.type !== undefined) {
       typeFromTypeNode(member.type, environment, state);
     }
-    inferExpression(member.initializer, state, environment);
+    const initializerEnvironment = new Map(environment);
+    if (classMembers.className !== undefined) {
+      initializerEnvironment.set("this", thisClassType(classMembers, "fieldInitializer"));
+    }
+    inferExpression(member.initializer, state, initializerEnvironment);
     return;
   }
   if (isPropertyDeclaration(member)) {
@@ -663,6 +789,17 @@ function seedUnqualifiedClassMemberDiagnostics(environment: TypeEnvironment, cla
   for (const memberName of classMembers.static) {
     environment.set(memberName, { kind: "unqualifiedStaticMember", className: classMembers.className, memberName });
   }
+}
+
+function thisClassType(classMembers: ClassMemberNames, mode: Extract<CheckedType, { readonly kind: "thisClass" }>["mode"]): CheckedType {
+  return {
+    kind: "thisClass",
+    className: classMembers.className ?? "",
+    abstractProperties: classMembers.abstractProperties,
+    abstractPropertyDeclaringClasses: classMembers.abstractPropertyDeclaringClasses,
+    uninitializedProperties: classMembers.uninitializedProperties,
+    mode,
+  };
 }
 
 function checkUninitializedProperty(member: Extract<ClassElement, { readonly kind: Kind.PropertyDeclaration }>, state: CheckState, ambient: boolean): void {
@@ -847,6 +984,15 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   if (isStringLiteral(expression)) {
     return stringType;
   }
+  if (isKeywordExpression(expression)) {
+    if (expression.kind === Kind.TrueKeyword || expression.kind === Kind.FalseKeyword) {
+      return booleanType;
+    }
+    if (expression.kind === Kind.ThisKeyword) {
+      return environment.get("this") ?? anyType;
+    }
+    return anyType;
+  }
   if (isIdentifier(expression)) {
     const bound = environment.get(expression.text);
     if (bound?.kind === "unqualifiedStaticMember") {
@@ -937,14 +1083,16 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   }
   if (isCallExpression(expression)) {
     if (isPropertyAccessExpression(expression.expression)) {
-      const receiverType = inferExpression(expression.expression.expression, state, environment);
       const firstArgument = expression.arguments[0];
-      if (receiverType.kind === "array" && expression.expression.name.text === "map" && firstArgument !== undefined && isArrowFunction(firstArgument)) {
-        inferArrowFunction(firstArgument, state, environment, [receiverType.elementType]);
-        for (const argument of expression.arguments.slice(1)) {
-          inferExpression(argument, state, environment);
+      if (expression.expression.name.text === "map" && firstArgument !== undefined && isArrowFunction(firstArgument)) {
+        const receiverType = inferExpression(expression.expression.expression, state, environment);
+        if (receiverType.kind === "array") {
+          inferArrowFunction(firstArgument, state, environment, [receiverType.elementType]);
+          for (const argument of expression.arguments.slice(1)) {
+            inferExpression(argument, state, environment);
+          }
+          return { kind: "array", elementType: anyType };
         }
-        return { kind: "array", elementType: anyType };
       }
     }
     const calleeType = inferExpression(expression.expression, state, environment);
@@ -953,7 +1101,7 @@ function inferExpression(expression: Expression, state: CheckState, environment:
       return anyType;
     }
     if (calleeType.kind === "function") {
-    return instantiateFunctionReturnType(calleeType, expression.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? [], argumentTypes);
+      return instantiateFunctionReturnType(calleeType, expression.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? [], argumentTypes);
     }
     return unresolvedType;
   }
@@ -978,6 +1126,7 @@ function inferAssignmentExpression(expression: Extract<Expression, { readonly ki
     checkAssignmentTargetReference(expression.left, state, environment);
   }
   const right = inferExpression(expression.right, state, environment);
+  diagnoseAbstractThisDestructuring(expression.left, expression.right, state, environment);
   if (assignmentOperatorDefinitelyAssignsTarget(operator)) {
     assignExpressionTarget(expression.left, right, state, environment);
   }
@@ -993,7 +1142,7 @@ function checkAssignmentTargetReference(expression: Expression, state: CheckStat
     return;
   }
   if (isPropertyAccessExpression(expression)) {
-    inferExpression(expression.expression, state, environment);
+    inferPropertyAccess(expression.expression, expression.name.text, state, environment);
     return;
   }
   if (isElementAccessExpression(expression)) {
@@ -1036,6 +1185,7 @@ function assignmentOperatorDefinitelyAssignsTarget(kind: Kind): boolean {
 
 function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, environment: TypeEnvironment, contextualParameterTypes: readonly CheckedType[] = []): CheckedType {
   const arrowEnvironment = new Map(environment);
+  suppressImmediateThisDiagnostics(arrowEnvironment);
   for (let parameterIndex = 0; parameterIndex < arrowFunction.parameters.length; parameterIndex += 1) {
     const parameter = arrowFunction.parameters[parameterIndex]!;
     checkParameterPropertyModifiers(parameter, state);
@@ -1052,6 +1202,12 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
   };
 }
 
+function suppressImmediateThisDiagnostics(environment: TypeEnvironment): void {
+  if (environment.get("this")?.kind === "thisClass") {
+    environment.set("this", anyType);
+  }
+}
+
 function inferConciseBody(body: ConciseBody, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): CheckedType {
   if (isBlock(body)) {
     checkBlock(body, state, environment, expectedReturnType);
@@ -1066,6 +1222,10 @@ function inferConciseBody(body: ConciseBody, state: CheckState, environment: Typ
 
 function inferPropertyAccess(expression: Expression, propertyName: string, state: CheckState, environment: TypeEnvironment): CheckedType {
   const receiverType = inferExpression(expression, state, environment);
+  if (receiverType.kind === "thisClass") {
+    diagnoseThisPropertyAccess(receiverType, propertyName, state);
+    return anyType;
+  }
   if (receiverType.kind === "number" && propertyName === "toFixed") {
     return { kind: "function", typeParameters: [], parameters: [], returnType: stringType };
   }
@@ -1089,6 +1249,15 @@ function inferPropertyAccess(expression: Expression, propertyName: string, state
     return anyType;
   }
   return anyType;
+}
+
+function diagnoseThisPropertyAccess(receiverType: Extract<CheckedType, { readonly kind: "thisClass" }>, propertyName: string, state: CheckState): void {
+  if (receiverType.abstractProperties.has(propertyName)) {
+    state.diagnostics.push(createDiagnostic(2715, propertyName, receiverType.abstractPropertyDeclaringClasses.get(propertyName) ?? receiverType.className));
+  }
+  if (receiverType.mode === "fieldInitializer" && receiverType.uninitializedProperties.has(propertyName)) {
+    state.diagnostics.push(createDiagnostic(2729, propertyName));
+  }
 }
 
 function setBindingNameType(name: BindingName, type: CheckedType, environment: TypeEnvironment): void {
@@ -1296,7 +1465,7 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
   if (actual.kind === "any" || expected.kind === "any") {
     return true;
   }
-  if (actual.kind === expected.kind && actual.kind !== "array" && actual.kind !== "classConstructor" && actual.kind !== "function" && actual.kind !== "interface" && actual.kind !== "typeAlias" && actual.kind !== "typeParameter" && actual.kind !== "union") {
+  if (actual.kind === expected.kind && actual.kind !== "array" && actual.kind !== "classConstructor" && actual.kind !== "function" && actual.kind !== "interface" && actual.kind !== "thisClass" && actual.kind !== "typeAlias" && actual.kind !== "typeParameter" && actual.kind !== "union") {
     return true;
   }
   if (actual.kind === "classConstructor" && expected.kind === "classConstructor") {
@@ -1304,6 +1473,9 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
   }
   if (actual.kind === "interface" && expected.kind === "interface") {
     return actual.name === expected.name;
+  }
+  if (actual.kind === "thisClass" && expected.kind === "thisClass") {
+    return actual.className === expected.className;
   }
   if (actual.kind === "array" && expected.kind === "array") {
     return isAssignableTo(actual.elementType, expected.elementType);
@@ -1428,6 +1600,9 @@ function displayType(type: CheckedType): string {
   if (type.kind === "interface") {
     return type.name;
   }
+  if (type.kind === "thisClass") {
+    return type.className;
+  }
   if (type.kind === "typeAlias") {
     return displayType(type.target);
   }
@@ -1450,6 +1625,17 @@ function entityNameText(typeName: EntityName): string | undefined {
   if (isQualifiedName(typeName)) {
     const left = entityNameText(typeName.left);
     return left === undefined ? typeName.right.text : `${left}.${typeName.right.text}`;
+  }
+  return undefined;
+}
+
+function expressionNameText(expression: Expression): string | undefined {
+  if (isIdentifier(expression)) {
+    return expression.text;
+  }
+  if (isPropertyAccessExpression(expression)) {
+    const left = expressionNameText(expression.expression);
+    return left === undefined ? expression.name.text : `${left}.${expression.name.text}`;
   }
   return undefined;
 }

@@ -283,4 +283,24 @@ describe("checker groundwork", () => {
     ]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2454, 2454]);
   });
+
+  it("reports direct abstract property access through this before concrete initialization", () => {
+    const sourceFile = parseSourceFile([
+      "abstract class Base {",
+      "  constructor() { this.value; const deferred = () => this.value; }",
+      "  abstract value: string;",
+      "  field = this.value;",
+      "}",
+      "abstract class Derived extends Base { constructor() { super(); this.value; } }",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Abstract property 'value' in class 'Base' cannot be accessed in the constructor.",
+      "Abstract property 'value' in class 'Base' cannot be accessed in the constructor.",
+      "Property 'value' is used before its initialization.",
+      "Abstract property 'value' in class 'Base' cannot be accessed in the constructor.",
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2715, 2715, 2729, 2715]);
+  });
 });
