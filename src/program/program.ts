@@ -8,7 +8,10 @@ import { createDiagnosticAt, type DiagnosticCategory, type DiagnosticCode } from
 
 export interface CompilerOptions {
   readonly outDir?: string;
+  readonly target?: ScriptTargetName;
 }
+
+export type ScriptTargetName = "es3" | "es5" | "es2015" | "es2016" | "es2017" | "es2018" | "es2019" | "es2020" | "es2021" | "es2022" | "es2023" | "es2024" | "esnext";
 
 export interface CompilerHost {
   readFile(fileName: string): string | undefined;
@@ -131,7 +134,7 @@ export function getProgramDiagnostics(program: Program): readonly ProgramDiagnos
     return diagnostics;
   }
   for (const sourceFile of program.sourceFiles) {
-    const checkResult = checkSourceFile(sourceFile.sourceFile);
+    const checkResult = checkSourceFile(sourceFile.sourceFile, program.options);
     diagnostics.push(...checkResult.diagnostics.map(diagnostic => ({
       fileName: sourceFile.fileName,
       code: diagnostic.code,

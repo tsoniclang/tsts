@@ -221,6 +221,7 @@ const binaryPrecedence = new Map<Kind, number>([
 
 const modifierKinds = new Set<Kind>([
   Kind.AbstractKeyword,
+  Kind.AccessorKeyword,
   Kind.ExportKeyword,
   Kind.AsyncKeyword,
   Kind.DeclareKeyword,

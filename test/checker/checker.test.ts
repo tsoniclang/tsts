@@ -325,4 +325,36 @@ describe("checker groundwork", () => {
       "Cannot assign to 'value' because it is a read-only property.",
     ]);
   });
+
+  it("checks accessor property calls, paired accessor types, object-literal self access, and ES5 auto-accessor targets", () => {
+    const sourceFile = parseSourceFile([
+      "class Box { get value(): number { return 1; } }",
+      "function read(box: Box) { box.value(); }",
+      "class Pair {",
+      "  set item(value: number) { }",
+      "  get item() { return \"x\"; }",
+      "  get name(): string { return \"x\"; }",
+      "  set name(next) { next = 1; }",
+      "}",
+      "const obj = {",
+      "  get primaryPath() {",
+      "    const self = this;",
+      "    return self.collection.schema.primaryPath;",
+      "  }",
+      "};",
+      "class Auto { accessor value: string; }",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { target: "es5" });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [6234, 2322, 2322, 7023, 2339, 2564, 18045]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "This expression is not callable because it is a 'get' accessor. Did you mean to use it without '()'?",
+      "Type 'string' is not assignable to type 'number'.",
+      "Type 'number' is not assignable to type 'string'.",
+      "'primaryPath' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.",
+      "Property 'collection' does not exist on type '{ readonly primaryPath: any; }'.",
+      "Property 'value' has no initializer and is not definitely assigned in the constructor.",
+      "Properties with the 'accessor' modifier are only available when targeting ECMAScript 2015 and higher.",
+    ]);
+  });
 });

@@ -267,6 +267,7 @@ describe("TS-Go parser groundwork", () => {
   it("parses accessor declarations in class, object, and type-member contexts", () => {
     const sourceFile = parseSourceFile([
       "class C { get value(): string { return \"x\"; } set value(public next = \"x\"): number { } }",
+      "class Auto { accessor value: string; accessor named = 1; accessor: number; }",
       "const obj = { get value() { return 1; }, set value(...next) { } };",
       "type Shape = { get value() { return 1; }; set value(next) { } };",
     ].join("\n"));
@@ -281,7 +282,20 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(classDeclaration.members[1]!.parameters[0]!.initializer?.kind, Kind.StringLiteral);
     assert.equal(classDeclaration.members[1]!.type?.kind, Kind.NumberKeyword);
 
-    const objectStatement = sourceFile.statements[1]!;
+    const autoAccessorDeclaration = sourceFile.statements[1]!;
+    assert.equal(isClassDeclaration(autoAccessorDeclaration), true);
+    if (!isClassDeclaration(autoAccessorDeclaration)) throw new Error("Expected auto accessor class");
+    assert.equal(autoAccessorDeclaration.members.length, 3);
+    assert.equal(isPropertyDeclaration(autoAccessorDeclaration.members[0]!), true);
+    const autoAccessorMember = autoAccessorDeclaration.members[0]!;
+    if (!isPropertyDeclaration(autoAccessorMember)) throw new Error("Expected auto accessor property");
+    assert.equal(autoAccessorMember.modifiers?.[0]?.kind, Kind.AccessorKeyword);
+    assert.equal(isPropertyDeclaration(autoAccessorDeclaration.members[2]!), true);
+    const contextualAccessorProperty = autoAccessorDeclaration.members[2]!;
+    if (!isPropertyDeclaration(contextualAccessorProperty)) throw new Error("Expected contextual accessor property");
+    assert.equal(contextualAccessorProperty.modifiers, undefined);
+
+    const objectStatement = sourceFile.statements[2]!;
     if (!isVariableStatement(objectStatement)) throw new Error("Expected object variable");
     const objectInitializer = objectStatement.declarationList.declarations[0]!.initializer;
     assert.equal(isObjectLiteralExpression(objectInitializer!), true);
@@ -289,7 +303,7 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isGetAccessorDeclaration(objectInitializer.properties[0]!), true);
     assert.equal(isSetAccessorDeclaration(objectInitializer.properties[1]!), true);
 
-    const typeAlias = sourceFile.statements[2]!;
+    const typeAlias = sourceFile.statements[3]!;
     assert.equal(isTypeAliasDeclaration(typeAlias), true);
     if (!isTypeAliasDeclaration(typeAlias) || !isTypeLiteralNode(typeAlias.type)) throw new Error("Expected type literal");
     assert.equal(isGetAccessorDeclaration(typeAlias.type.members[0]!), true);
