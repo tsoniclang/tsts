@@ -21,5 +21,8 @@
     "src/**/*.ts",
     "tools/**/*.ts",
     "test/**/*.ts"
+  ],
+  "exclude": [
+    "test/upstream/**/*"
   ]
 }

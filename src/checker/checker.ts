@@ -392,6 +392,12 @@ function inferPropertyAccess(expression: Expression, propertyName: string, state
   if (receiverType.kind === "string" && propertyName === "length") {
     return numberType;
   }
+  if (receiverType.kind === "array" && propertyName === "length") {
+    return numberType;
+  }
+  if (receiverType.kind === "array" && arrayMethodReturnTypes.has(propertyName)) {
+    return { kind: "function", typeParameters: [], parameters: [], returnType: arrayMethodReturnTypes.get(propertyName)! };
+  }
   if (receiverType.kind === "string" && stringMethodReturnTypes.has(propertyName)) {
     return { kind: "function", typeParameters: [], parameters: [], returnType: stringMethodReturnTypes.get(propertyName)! };
   }
@@ -559,6 +565,11 @@ const stringMethodReturnTypes = new Map<string, CheckedType>([
   ["split", anyType],
   ["startsWith", booleanType],
   ["toLowerCase", stringType],
+]);
+
+const arrayMethodReturnTypes = new Map<string, CheckedType>([
+  ["forEach", voidType],
+  ["map", { kind: "array", elementType: anyType }],
 ]);
 
 function isComparisonOperator(kind: Kind): boolean {

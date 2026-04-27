@@ -43,6 +43,13 @@ describe("checker groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
   });
 
+  it("accepts core array member access and method calls on typed arrays", () => {
+    const sourceFile = parseSourceFile("function f(items: string[]): number { items.forEach(item => item.toLowerCase()); return items.map(item => item).length; }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
   it("reports parameter property modifiers outside constructor implementations", () => {
     const sourceFile = parseSourceFile("const f = (public value: string) => value;");
     const result = checkSourceFile(sourceFile);

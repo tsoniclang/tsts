@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
-import { basename, dirname, join, relative } from "node:path";
+import { dirname, extname, join, relative } from "node:path";
 import * as ts from "typescript";
 import { createProgram, getProgramDiagnostics, type CompilerHost, type ProgramDiagnostic } from "../src/program/index.js";
 
@@ -93,12 +93,11 @@ function parseSuite(value: string | undefined): Options["suite"] {
 }
 
 function suiteDirectory(suite: Options["suite"]): string {
-  if (suite === "typescript") {
-    const repo = process.env.TYPESCRIPT_REPO ?? "/home/jester/repos/microsoft/TypeScript";
-    return join(repo, "tests/cases/compiler");
-  }
-  const repo = process.env.TSGO_REPO ?? "/home/jester/repos/microsoft/typescript-go";
-  return join(repo, "testdata/tests/cases/compiler");
+  return join("test", "upstream", suite, "compiler");
+}
+
+function isSupportedCaseFile(fileName: string): boolean {
+  return [".ts", ".tsx", ".js", ".jsx"].includes(extname(fileName).toLowerCase());
 }
 
 async function discoverCases(options: Options): Promise<readonly CompilerCase[]> {
@@ -108,7 +107,7 @@ async function discoverCases(options: Options): Promise<readonly CompilerCase[]>
   }
 
   const names = (await readdir(directory))
-    .filter(name => name.endsWith(".ts") || name.endsWith(".tsx"))
+    .filter(name => isSupportedCaseFile(name))
     .filter(name => options.filter === undefined || name.includes(options.filter))
     .sort();
   const selected = options.limit === undefined ? names : names.slice(0, options.limit);
@@ -148,7 +147,7 @@ function parseCompilerCase(name: string, path: string, text: string): CompilerCa
       name,
       path,
       compilerOptions,
-      files: fileSections.filter(file => file.fileName.endsWith(".ts") || file.fileName.endsWith(".tsx")),
+      files: fileSections.filter(file => isSupportedCaseFile(file.fileName)),
     };
   }
 
