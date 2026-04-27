@@ -116,6 +116,36 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2369]);
   });
 
+  it("reports parameter modifier grammar before parameter property checks", () => {
+    const sourceFile = parseSourceFile([
+      "class StaticOnly { constructor(static value: number) {} }",
+      "class PublicStatic { constructor(public static value: number) {} }",
+      "class DuplicatePublic { constructor(public public value: number) {} }",
+      "class MixedAccessibility { constructor(private public value: number) {} }",
+      "class ExportedParameter { constructor(export value: number) {} }",
+      "class DeclaredParameter { constructor(declare value: number) {} }",
+      "function f(async value: number) {}",
+      "class BindingPattern { constructor(public { value }: { value: string }) {} }",
+      "class RestParameter { constructor(public ...values: string[]) {} }",
+      "const outside = (public value: string) => value;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1090, 1090, 1028, 1028, 1090, 1090, 1090, 1187, 1317, 2369]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "'static' modifier cannot appear on a parameter.",
+      "'static' modifier cannot appear on a parameter.",
+      "Accessibility modifier already seen.",
+      "Accessibility modifier already seen.",
+      "'export' modifier cannot appear on a parameter.",
+      "'declare' modifier cannot appear on a parameter.",
+      "'async' modifier cannot appear on a parameter.",
+      "A parameter property may not be declared using a binding pattern.",
+      "A parameter property cannot be declared using a rest parameter.",
+      "A parameter property is only allowed in a constructor implementation.",
+    ]);
+  });
+
   it("checks every source file in a program", () => {
     const host: CompilerHost = {
       readFile: fileName => fileName === "src/index.ts" ? "export function f(): number { return \"x\"; }" : undefined,

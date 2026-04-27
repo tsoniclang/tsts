@@ -3287,7 +3287,7 @@ function checkAccessorDeclaration(accessor: GetAccessorDeclaration | SetAccessor
     state.diagnostics.push(createDiagnostic(1049));
   }
   for (const parameter of accessor.parameters) {
-    checkParameterPropertyModifiers(parameter, state);
+    checkParameterModifiers(parameter, state, false);
     if (parameter.questionToken !== undefined) {
       state.diagnostics.push(createDiagnostic(1051));
     }
@@ -3326,9 +3326,7 @@ function checkAccessorBody(accessor: GetAccessorDeclaration | SetAccessorDeclara
 
 function checkSignatureParameters(parameters: readonly ParameterDeclaration[], state: CheckState, environment: TypeEnvironment, disallowParameterProperties: boolean, ambient = false, contextualParameterTypes: readonly CheckedType[] = []): readonly CheckedType[] {
   return parameters.map((parameter, parameterIndex) => {
-    if (disallowParameterProperties) {
-      checkParameterPropertyModifiers(parameter, state);
-    }
+    checkParameterModifiers(parameter, state, !disallowParameterProperties);
     if (parameter.type !== undefined) {
       checkJavaScriptTypeAnnotation(state);
     }
@@ -3494,7 +3492,7 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
   seedArgumentsObject(functionEnvironment);
   for (let index = 0; index < functionDeclaration.parameters.length; index += 1) {
     const parameter = functionDeclaration.parameters[index]!;
-    checkParameterPropertyModifiers(parameter, state);
+    checkParameterModifiers(parameter, state, false);
     if (parameter.type !== undefined) {
       checkJavaScriptTypeAnnotation(state);
     }
@@ -3579,7 +3577,7 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
   seedArgumentsObject(functionEnvironment);
   for (let index = 0; index < functionExpression.parameters.length; index += 1) {
     const parameter = functionExpression.parameters[index]!;
-    checkParameterPropertyModifiers(parameter, state);
+    checkParameterModifiers(parameter, state, false);
     if (parameter.type !== undefined) {
       checkJavaScriptTypeAnnotation(state);
     }
@@ -5060,7 +5058,7 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
   const jsDocParameterTypes = jsDocParameterTypeMap(arrowFunction, arrowEnvironment, state);
   for (let parameterIndex = 0; parameterIndex < arrowFunction.parameters.length; parameterIndex += 1) {
     const parameter = arrowFunction.parameters[parameterIndex]!;
-    checkParameterPropertyModifiers(parameter, state);
+    checkParameterModifiers(parameter, state, false);
     if (parameter.type !== undefined) {
       checkJavaScriptTypeAnnotation(state);
     }
@@ -6902,9 +6900,61 @@ function hasModifier(node: object, kind: Kind): boolean {
   return (node as { readonly modifiers?: readonly { readonly kind: Kind }[] }).modifiers?.some(modifier => modifier.kind === kind) === true;
 }
 
-function checkParameterPropertyModifiers(parameter: ParameterDeclaration, state: CheckState): void {
-  if (isParameterProperty(parameter)) {
+function checkParameterModifiers(parameter: ParameterDeclaration, state: CheckState, allowParameterProperties: boolean): void {
+  checkParameterModifierGrammar(parameter, state);
+  if (!allowParameterProperties && isParameterProperty(parameter)) {
     state.diagnostics.push(createDiagnostic(2369));
+  }
+}
+
+function checkParameterModifierGrammar(parameter: ParameterDeclaration, state: CheckState): void {
+  let sawAccessibilityModifier = false;
+  for (const modifier of parameter.modifiers ?? []) {
+    if (modifier.kind === Kind.Decorator) {
+      continue;
+    }
+    if (isAccessibilityModifierKind(modifier.kind)) {
+      if (sawAccessibilityModifier) {
+        state.diagnostics.push(createDiagnostic(1028));
+        return;
+      }
+      sawAccessibilityModifier = true;
+      continue;
+    }
+    const modifierName = invalidParameterModifierName(modifier.kind);
+    if (modifierName !== undefined) {
+      state.diagnostics.push(createDiagnostic(1090, modifierName));
+      return;
+    }
+  }
+  if (!isParameterProperty(parameter)) {
+    return;
+  }
+  if (!isIdentifier(parameter.name)) {
+    state.diagnostics.push(createDiagnostic(1187));
+    return;
+  }
+  if (parameter.dotDotDotToken !== undefined) {
+    state.diagnostics.push(createDiagnostic(1317));
+  }
+}
+
+function isAccessibilityModifierKind(kind: Kind): boolean {
+  return kind === Kind.PublicKeyword || kind === Kind.PrivateKeyword || kind === Kind.ProtectedKeyword;
+}
+
+function invalidParameterModifierName(kind: Kind): string | undefined {
+  switch (kind) {
+    case Kind.AsyncKeyword:
+      return "async";
+    case Kind.DeclareKeyword:
+      return "declare";
+    case Kind.ExportKeyword:
+      return "export";
+    case Kind.StaticKeyword:
+      return "static";
+    default:
+      return undefined;
   }
 }
 
