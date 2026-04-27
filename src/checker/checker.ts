@@ -1,9 +1,11 @@
 import {
   Kind,
+  NodeFlags,
   isArrowFunction,
   isAsExpression,
   isArrayLiteralExpression,
   isArrayTypeNode,
+  isBigIntLiteral,
   isBinaryExpression,
   isBlock,
   isBreakStatement,
@@ -16,6 +18,7 @@ import {
   isConstructorDeclaration,
   isConstructorTypeNode,
   isConstructSignatureDeclaration,
+  isDebuggerStatement,
   isDoStatement,
   isElementAccessExpression,
   isEnumDeclaration,
@@ -38,6 +41,7 @@ import {
   isIntersectionTypeNode,
   isKeywordExpression,
   isKeywordTypeNode,
+  isLabeledStatement,
   isMethodDeclaration,
   isMethodSignatureDeclaration,
   isMissingDeclaration,
@@ -46,6 +50,7 @@ import {
   isNamedImports,
   isNamedExports,
   isNamespaceImport,
+  isNamespaceExportDeclaration,
   isNewExpression,
   isNumericLiteral,
   isNoSubstitutionTemplateLiteral,
@@ -65,6 +70,7 @@ import {
   isSatisfiesExpression,
   isSetAccessorDeclaration,
   isShorthandPropertyAssignment,
+  isSourceFile,
   isSpreadElement,
   isStringLiteral,
   isTypeAssertion,
@@ -76,6 +82,7 @@ import {
   isVariableDeclarationList,
   isUnionTypeNode,
   isWhileStatement,
+  isWithStatement,
   type Block,
   type ArrowFunction,
   type AssertionExpression,
@@ -120,7 +127,7 @@ type CheckedType =
   | { readonly kind: "interface"; readonly name: string; readonly members: InterfaceMembers }
   | { readonly kind: "intersection"; readonly types: readonly CheckedType[] }
   | { readonly kind: "moduleNamespace"; readonly moduleSpecifier: string; readonly diagnosticName: string; readonly exports: ReadonlyMap<string, CheckedType>; readonly exportEquals?: CheckedType }
-  | { readonly kind: "namespace"; readonly name: string; readonly exports: ReadonlyMap<string, CheckedType> }
+  | { readonly kind: "namespace"; readonly name: string; readonly exports: ReadonlyMap<string, CheckedType>; readonly enumLike?: boolean }
   | { readonly kind: "namespaceAndType"; readonly namespace: Extract<CheckedType, { readonly kind: "namespace" }>; readonly type: CheckedType }
   | { readonly kind: "object"; readonly properties: ReadonlyMap<string, CheckedType>; readonly readonlyProperties: ReadonlySet<string> }
   | { readonly kind: "record"; readonly keyType: CheckedType; readonly valueType: CheckedType }
@@ -146,6 +153,8 @@ interface CheckState {
   readonly options: CompilerOptions;
   readonly strictMode: boolean;
   readonly strictModeReason: "module" | "strict" | undefined;
+  readonly insideFunction: boolean;
+  readonly iterationDepth: number;
   readonly resolveExternalModule?: (moduleSpecifier: string) => CheckedType | undefined;
 }
 
@@ -247,6 +256,8 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
       options: program.options,
       strictMode: sourceFileStrictMode(sourceFile.sourceFile, program.options),
       strictModeReason: sourceFileStrictModeReason(sourceFile.sourceFile, program.options),
+      insideFunction: false,
+      iterationDepth: 0,
       resolveExternalModule: moduleSpecifier => moduleResolver(sourceFile.fileName, moduleSpecifier),
     };
     checkStatements(sourceFile.sourceFile.statements, state, new Map(globalEnvironment), undefined, isDeclarationFile(sourceFile.sourceFile));
@@ -270,6 +281,8 @@ function checkStateForSourceFile(sourceFile: SourceFile, options: CompilerOption
     options,
     strictMode: sourceFileStrictMode(sourceFile, options),
     strictModeReason: sourceFileStrictModeReason(sourceFile, options),
+    insideFunction: false,
+    iterationDepth: 0,
   };
 }
 
@@ -302,6 +315,10 @@ function sourceFileIsExternalModule(sourceFile: SourceFile): boolean {
 
 function isDeclarationFile(sourceFile: SourceFile): boolean {
   return sourceFile.isDeclarationFile || sourceFile.fileName.endsWith(".d.ts") || sourceFile.fileName.endsWith(".d.mts") || sourceFile.fileName.endsWith(".d.cts");
+}
+
+function isRelativeModuleName(moduleSpecifier: string): boolean {
+  return moduleSpecifier.startsWith("./") || moduleSpecifier.startsWith("../") || moduleSpecifier.startsWith(".\\") || moduleSpecifier.startsWith("..\\");
 }
 
 function programModuleResolver(program: Program, globalEnvironment: TypeEnvironment): (containingFileName: string, moduleSpecifier: string) => CheckedType | undefined {
@@ -520,6 +537,9 @@ function ambientModuleExports(statements: readonly Statement[], environment: Typ
 function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean): void {
   prebindStatementDeclarations(statements, state, environment, ambient);
   checkFunctionDeclarationOverloads(statements, state, ambient);
+  if (ambient && statements.some(isStatementDisallowedInAmbientContext)) {
+    state.diagnostics.push(createDiagnostic(1036));
+  }
   const statementListHasExportedElements = statements.some(statement => isExportedElement(statement));
   for (const statement of statements) {
     checkStatement(statement, state, environment, expectedReturnType, ambient, statementListHasExportedElements);
@@ -579,11 +599,11 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isWhileStatement(statement)) {
     inferExpression(statement.expression, state, environment);
-    checkStatement(statement.statement, state, new Map(environment), expectedReturnType, ambient, false);
+    checkStatement(statement.statement, enterIteration(state), new Map(environment), expectedReturnType, ambient, false);
     return;
   }
   if (isDoStatement(statement)) {
-    checkStatement(statement.statement, state, new Map(environment), expectedReturnType, ambient, false);
+    checkStatement(statement.statement, enterIteration(state), new Map(environment), expectedReturnType, ambient, false);
     inferExpression(statement.expression, state, environment);
     return;
   }
@@ -598,24 +618,49 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     if (statement.incrementor !== undefined) {
       inferExpression(statement.incrementor, state, loopEnvironment);
     }
-    checkStatement(statement.statement, state, loopEnvironment, expectedReturnType, ambient, false);
+    checkStatement(statement.statement, enterIteration(state), loopEnvironment, expectedReturnType, ambient, false);
     return;
   }
   if (isForInStatement(statement) || isForOfStatement(statement)) {
     const loopEnvironment = new Map(environment);
     checkForInitializer(statement.initializer, state, loopEnvironment, true);
     inferExpression(statement.expression, state, loopEnvironment);
-    checkStatement(statement.statement, state, loopEnvironment, expectedReturnType, ambient, false);
+    checkStatement(statement.statement, enterIteration(state), loopEnvironment, expectedReturnType, ambient, false);
     return;
   }
-  if (isBreakStatement(statement) || isContinueStatement(statement)) {
+  if (isContinueStatement(statement)) {
+    if (state.iterationDepth === 0) {
+      state.diagnostics.push(createDiagnostic(1104));
+    }
+    return;
+  }
+  if (isBreakStatement(statement) || isDebuggerStatement(statement)) {
     return;
   }
   if (isReturnStatement(statement)) {
+    if (!state.insideFunction) {
+      state.diagnostics.push(createDiagnostic(1108));
+    }
     const actual = statement.expression === undefined ? voidType : inferExpression(statement.expression, state, environment);
     if (expectedReturnType !== undefined) {
       checkAssignable(actual, expectedReturnType, state);
     }
+    return;
+  }
+  if (isWithStatement(statement)) {
+    if (state.strictMode) {
+      state.diagnostics.push(createDiagnostic(1101));
+    }
+    state.diagnostics.push(createDiagnostic(2410));
+    inferExpression(statement.expression, state, environment);
+    checkStatement(statement.statement, state, new Map(environment), expectedReturnType, ambient, false);
+    return;
+  }
+  if (isLabeledStatement(statement)) {
+    if (state.strictMode && isVariableStatement(statement.statement)) {
+      state.diagnostics.push(createDiagnostic(1344));
+    }
+    checkStatement(statement.statement, state, environment, expectedReturnType, ambient, false);
     return;
   }
   if (isExpressionStatement(statement)) {
@@ -628,6 +673,29 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   if (isBlock(statement)) {
     checkBlock(statement, state, environment, expectedReturnType);
   }
+}
+
+function isStatementDisallowedInAmbientContext(statement: Statement): boolean {
+  return !isImportDeclaration(statement)
+    && !isImportEqualsDeclaration(statement)
+    && !isVariableStatement(statement)
+    && !isFunctionDeclaration(statement)
+    && !isClassDeclaration(statement)
+    && !isEnumDeclaration(statement)
+    && !isInterfaceDeclaration(statement)
+    && !isTypeAliasDeclaration(statement)
+    && !isModuleDeclaration(statement)
+    && !isNamespaceExportDeclaration(statement)
+    && !isExportDeclaration(statement)
+    && !isExportAssignment(statement);
+}
+
+function enterIteration(state: CheckState): CheckState {
+  return { ...state, iterationDepth: state.iterationDepth + 1 };
+}
+
+function enterFunction(state: CheckState): CheckState {
+  return { ...state, insideFunction: true, iterationDepth: 0 };
 }
 
 function prebindStatementDeclarations(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
@@ -694,31 +762,70 @@ function isEntityNameExpression(expression: Expression): boolean {
 }
 
 function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean): void {
-  if (!isModuleBlock(moduleDeclaration.body)) {
-    return;
+  if (isGlobalAmbientExternalModuleDeclaration(moduleDeclaration) && isStringLiteral(moduleDeclaration.name) && isRelativeModuleName(moduleDeclaration.name.text)) {
+    state.diagnostics.push(createDiagnostic(2436));
+  }
+  if (isGlobalAmbientExternalModuleDeclaration(moduleDeclaration) && isModuleBlock(moduleDeclaration.body)) {
+    for (const statement of moduleDeclaration.body.statements) {
+      if (isAmbientExternalModuleRelativeImportOrExport(statement)) {
+        state.diagnostics.push(createDiagnostic(2439));
+      }
+    }
   }
   const moduleName = moduleDeclarationName(moduleDeclaration);
   const namespaceEnvironment = new Map(environment);
   const moduleBodyAmbient = ambient || hasDeclareModifier(moduleDeclaration);
-  checkStatements(moduleDeclaration.body.statements, state, namespaceEnvironment, expectedReturnType, moduleBodyAmbient);
+  if (isModuleBlock(moduleDeclaration.body)) {
+    checkStatements(moduleDeclaration.body.statements, state, namespaceEnvironment, expectedReturnType, moduleBodyAmbient);
+  } else if (isModuleDeclaration(moduleDeclaration.body)) {
+    checkModuleDeclaration(moduleDeclaration.body, state, namespaceEnvironment, expectedReturnType, moduleBodyAmbient);
+  }
   if (moduleName === undefined) {
     return;
   }
   const existing = environment.get(moduleName);
   const exports = new Map(existing?.kind === "namespace" ? existing.exports : []);
-  for (const statement of moduleDeclaration.body.statements) {
-    if (!moduleBodyAmbient && !isExportedElement(statement)) {
-      continue;
-    }
-    for (const exportName of namespaceExportNames(statement)) {
-      const exportType = namespaceEnvironment.get(exportName);
-      if (exportType !== undefined) {
-        exports.set(exportName, qualifyNamespaceExport(exportType, `${moduleName}.${exportName}`));
+  if (isModuleBlock(moduleDeclaration.body)) {
+    for (const statement of moduleDeclaration.body.statements) {
+      if (!moduleBodyAmbient && !isExportedElement(statement)) {
+        continue;
       }
+      for (const exportName of namespaceExportNames(statement)) {
+        const exportType = namespaceEnvironment.get(exportName);
+        if (exportType !== undefined) {
+          exports.set(exportName, qualifyNamespaceExport(exportType, `${moduleName}.${exportName}`));
+        }
+      }
+    }
+  } else if (isModuleDeclaration(moduleDeclaration.body)) {
+    const exportName = moduleDeclarationName(moduleDeclaration.body);
+    const exportType = exportName === undefined ? undefined : namespaceEnvironment.get(exportName);
+    if (exportName !== undefined && exportType !== undefined) {
+      exports.set(exportName, qualifyNamespaceExport(exportType, `${moduleName}.${exportName}`));
     }
   }
   const namespaceType: Extract<CheckedType, { readonly kind: "namespace" }> = { kind: "namespace", name: moduleName, exports };
   environment.set(moduleName, mergeNamespaceType(environment.get(moduleName), namespaceType));
+}
+
+function isGlobalAmbientExternalModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>): boolean {
+  return hasDeclareModifier(moduleDeclaration)
+    && isStringLiteral(moduleDeclaration.name)
+    && isSourceFile(moduleDeclaration.parent)
+    && !sourceFileIsExternalModule(moduleDeclaration.parent);
+}
+
+function isAmbientExternalModuleRelativeImportOrExport(statement: Statement): boolean {
+  if (isImportDeclaration(statement) && isStringLiteral(statement.moduleSpecifier)) {
+    return isRelativeModuleName(statement.moduleSpecifier.text);
+  }
+  if (isExportDeclaration(statement) && statement.moduleSpecifier !== undefined && isStringLiteral(statement.moduleSpecifier)) {
+    return isRelativeModuleName(statement.moduleSpecifier.text);
+  }
+  return isImportEqualsDeclaration(statement)
+    && isExternalModuleReference(statement.moduleReference)
+    && isStringLiteral(statement.moduleReference.expression)
+    && isRelativeModuleName(statement.moduleReference.expression.text);
 }
 
 function qualifyNamespaceExport(type: CheckedType, qualifiedName: string): CheckedType {
@@ -729,7 +836,7 @@ function qualifyNamespaceExport(type: CheckedType, qualifiedName: string): Check
   for (const [name, exported] of type.exports.entries()) {
     exports.set(name, qualifyNamespaceExport(exported, `${qualifiedName}.${name}`));
   }
-  return { kind: "namespace", name: qualifiedName, exports };
+  return { kind: "namespace", name: qualifiedName, exports, ...(type.enumLike === true ? { enumLike: true } : {}) };
 }
 
 function moduleDeclarationName(moduleDeclaration: Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>): string | undefined {
@@ -1012,7 +1119,7 @@ function checkVariableDeclaration(declaration: VariableDeclaration, state: Check
   const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type, environment, state);
   const initializerType = declaration.initializer === undefined ? undefined : inferExpressionWithContext(declaration.initializer, state, environment, declaredType);
   if (ambient && declaration.initializer !== undefined) {
-    state.diagnostics.push(createDiagnostic(1039));
+    checkAmbientVariableInitializer(declaration, state, environment);
   }
   if (declaredType !== undefined && initializerType !== undefined) {
     checkAssignable(initializerType, declaredType, state);
@@ -1080,6 +1187,63 @@ function diagnoseAbstractThisDestructuring(target: BindingName | Expression, ini
       state.diagnostics.push(createDiagnostic(2715, propertyName, thisType.abstractPropertyDeclaringClasses.get(propertyName) ?? thisType.className));
     }
   }
+}
+
+function checkAmbientVariableInitializer(declaration: VariableDeclaration, state: CheckState, environment: TypeEnvironment): void {
+  if (declaration.initializer === undefined) {
+    return;
+  }
+  if (isConstVariableDeclaration(declaration) && declaration.type === undefined) {
+    if (!isAmbientConstInitializer(declaration.initializer, environment)) {
+      state.diagnostics.push(createDiagnostic(1254));
+    }
+    return;
+  }
+  state.diagnostics.push(createDiagnostic(1039));
+}
+
+function isConstVariableDeclaration(declaration: VariableDeclaration): boolean {
+  return isVariableDeclarationList(declaration.parent) && (declaration.parent.flags & NodeFlags.Const) !== 0;
+}
+
+function isAmbientConstInitializer(expression: Expression, environment: TypeEnvironment): boolean {
+  if (isNumericLiteral(expression) || isStringLiteral(expression) || isNoSubstitutionTemplateLiteral(expression) || isBigIntLiteral(expression)) {
+    return true;
+  }
+  if (isKeywordExpression(expression) && (expression.kind === Kind.TrueKeyword || expression.kind === Kind.FalseKeyword)) {
+    return true;
+  }
+  return isSimpleLiteralEnumReference(expression, environment);
+}
+
+function isSimpleLiteralEnumReference(expression: Expression, environment: TypeEnvironment): boolean {
+  if (isPropertyAccessExpression(expression)) {
+    return isEnumLikeEntityExpression(expression.expression, environment);
+  }
+  return isElementAccessExpression(expression)
+    && expression.argumentExpression !== undefined
+    && isStringOrNumberLikeLiteralExpression(expression.argumentExpression)
+    && isEnumLikeEntityExpression(expression.expression, environment);
+}
+
+function isStringOrNumberLikeLiteralExpression(expression: Expression): boolean {
+  return isStringLiteral(expression) || isNumericLiteral(expression) || isNoSubstitutionTemplateLiteral(expression);
+}
+
+function isEnumLikeEntityExpression(expression: Expression, environment: TypeEnvironment): boolean {
+  return namespaceFromEntityExpression(expression, environment)?.enumLike === true;
+}
+
+function namespaceFromEntityExpression(expression: Expression, environment: TypeEnvironment): Extract<CheckedType, { readonly kind: "namespace" }> | undefined {
+  if (isIdentifier(expression)) {
+    return namespaceMeaning(environment.get(expression.text) ?? unresolvedType);
+  }
+  if (isPropertyAccessExpression(expression)) {
+    const namespace = namespaceFromEntityExpression(expression.expression, environment);
+    const exported = namespace?.exports.get(expression.name.text);
+    return namespaceMeaning(exported ?? unresolvedType);
+  }
+  return undefined;
 }
 
 function thisTypeFromExpression(expression: Expression, environment: TypeEnvironment): Extract<CheckedType, { readonly kind: "thisClass" }> | undefined {
@@ -1191,6 +1355,7 @@ function bindEnumDeclaration(enumDeclaration: EnumDeclaration, state: CheckState
     kind: "namespace",
     name: enumDeclaration.name.text,
     exports,
+    enumLike: true,
   }));
 }
 
@@ -1665,7 +1830,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
         state.diagnostics.push(createDiagnostic(1183));
       }
       const returnType = member.type === undefined ? undefined : typeFromTypeNode(member.type, memberEnvironment, state);
-      checkBlock(member.body, state, memberEnvironment, returnType);
+      checkBlock(member.body, enterFunction(state), memberEnvironment, returnType);
     }
     return;
   }
@@ -1862,7 +2027,7 @@ function checkAccessorBody(accessor: GetAccessorDeclaration | SetAccessorDeclara
   if (ambient) {
     state.diagnostics.push(createDiagnostic(1183));
   }
-  checkBlock(accessor.body, state, environment, expectedReturnType);
+  checkBlock(accessor.body, enterFunction(state), environment, expectedReturnType);
 }
 
 function checkSignatureParameters(parameters: readonly ParameterDeclaration[], state: CheckState, environment: TypeEnvironment, disallowParameterProperties: boolean, ambient = false): readonly CheckedType[] {
@@ -1912,7 +2077,7 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
     setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
   }
   if (functionDeclaration.body !== undefined) {
-    checkBlock(functionDeclaration.body, state, functionEnvironment, returnType);
+    checkBlock(functionDeclaration.body, enterFunction(state), functionEnvironment, returnType);
     if (returnType !== undefined && requiresReturnValue(returnType) && !blockContainsReturn(functionDeclaration.body)) {
       state.diagnostics.push(createDiagnostic(2355));
     }
@@ -2285,7 +2450,7 @@ function suppressImmediateThisDiagnostics(environment: TypeEnvironment): void {
 
 function inferConciseBody(body: ConciseBody, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): CheckedType {
   if (isBlock(body)) {
-    checkBlock(body, state, environment, expectedReturnType);
+    checkBlock(body, enterFunction(state), environment, expectedReturnType);
     return expectedReturnType ?? unresolvedType;
   }
   const bodyType = inferExpression(body, state, environment);
@@ -2527,7 +2692,7 @@ function checkObjectLiteralMethod(method: MethodDeclaration, state: CheckState, 
   checkSignatureParameters(method.parameters, state, methodEnvironment, true);
   if (method.body !== undefined) {
     const expectedReturnType = method.type === undefined ? undefined : typeFromTypeNode(method.type, methodEnvironment, state);
-    checkBlock(method.body, state, methodEnvironment, expectedReturnType);
+    checkBlock(method.body, enterFunction(state), methodEnvironment, expectedReturnType);
   }
 }
 
@@ -2789,7 +2954,7 @@ function resolveEntityNamespace(typeName: EntityName, environment: TypeEnvironme
 }
 
 function emptyCheckState(options: CompilerOptions = {}): CheckState {
-  return { diagnostics: [], options, strictMode: false, strictModeReason: undefined };
+  return { diagnostics: [], options, strictMode: false, strictModeReason: undefined, insideFunction: false, iterationDepth: 0 };
 }
 
 function typeLiteralType(members: readonly TypeElement[], state: CheckState, environment: TypeEnvironment): CheckedType {

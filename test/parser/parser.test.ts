@@ -20,6 +20,8 @@ import {
   isEnumDeclaration,
   isExportAssignment,
   isExpressionStatement,
+  isDebuggerStatement,
+  isForInStatement,
   isForOfStatement,
   isForStatement,
   isExportDeclaration,
@@ -31,8 +33,10 @@ import {
   isImportEqualsDeclaration,
   isInterfaceDeclaration,
   isKeywordTypeNode,
+  isLabeledStatement,
   isMethodDeclaration,
   isMethodSignatureDeclaration,
+  isModuleBlock,
   isModuleDeclaration,
   isNamedExports,
   isNamedImports,
@@ -57,6 +61,7 @@ import {
   isTypeReferenceNode,
   isTypePredicateNode,
   isVariableStatement,
+  isWithStatement,
   isWhileStatement,
   isArrayBindingPattern,
 } from "../../src/ast/index.js";
@@ -637,5 +642,44 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isVariableStatement(variable), true);
     if (!isVariableStatement(variable) || !isObjectLiteralExpression(variable.declarationList.declarations[0]!.initializer!)) throw new Error("Expected object literal initializer");
     assert.equal(isMethodDeclaration(variable.declarationList.declarations[0]!.initializer.properties[0]!), true);
+  });
+
+  it("parses TS-Go ambient namespace chains and statement forms without corrupting following syntax", () => {
+    const result = parseSourceFileWithDiagnostics([
+      "declare namespace Foo.Bar { export var value; };",
+      "debugger;",
+      "with (scope) { value; }",
+      "label: var item;",
+      "for (item in source) { continue; }",
+    ].join("\n"));
+
+    assert.deepEqual(result.diagnostics, []);
+    assert.deepEqual(result.sourceFile.statements.map(statement => statement.kind), [
+      Kind.ModuleDeclaration,
+      Kind.DebuggerStatement,
+      Kind.WithStatement,
+      Kind.LabeledStatement,
+      Kind.ForInStatement,
+    ]);
+
+    const namespaceDeclaration = result.sourceFile.statements[0]!;
+    assert.equal(isModuleDeclaration(namespaceDeclaration), true);
+    if (!isModuleDeclaration(namespaceDeclaration)) throw new Error("Expected namespace declaration");
+    assert.equal(isIdentifier(namespaceDeclaration.name), true);
+    if (!isIdentifier(namespaceDeclaration.name)) throw new Error("Expected namespace identifier");
+    assert.equal(namespaceDeclaration.name.text, "Foo");
+    assert.equal(isModuleDeclaration(namespaceDeclaration.body), true);
+    if (!isModuleDeclaration(namespaceDeclaration.body)) throw new Error("Expected nested namespace declaration");
+    assert.equal(isIdentifier(namespaceDeclaration.body.name), true);
+    if (!isIdentifier(namespaceDeclaration.body.name)) throw new Error("Expected nested namespace identifier");
+    assert.equal(namespaceDeclaration.body.name.text, "Bar");
+    assert.equal(isModuleBlock(namespaceDeclaration.body.body), true);
+    if (!isModuleBlock(namespaceDeclaration.body.body)) throw new Error("Expected nested namespace block");
+    assert.equal(namespaceDeclaration.body.body.statements.length, 1);
+
+    assert.equal(isDebuggerStatement(result.sourceFile.statements[1]!), true);
+    assert.equal(isWithStatement(result.sourceFile.statements[2]!), true);
+    assert.equal(isLabeledStatement(result.sourceFile.statements[3]!), true);
+    assert.equal(isForInStatement(result.sourceFile.statements[4]!), true);
   });
 });

@@ -32,6 +32,7 @@ import {
   createBreakStatement,
   createContinueStatement,
   createConditionalExpression,
+  createDebuggerStatement,
   createDoStatement,
   createElementAccessExpression,
   createEmptyStatement,
@@ -57,6 +58,7 @@ import {
   createInterfaceDeclaration,
   createExternalModuleReference,
   createKeywordTypeNode,
+  createLabeledStatement,
   createCallExpression,
   createKeywordExpression,
   createLiteralTypeNode,
@@ -122,6 +124,7 @@ import {
   createVariableStatement,
   createVoidExpression,
   createWhileStatement,
+  createWithStatement,
   isBinaryOperatorToken,
   type BinaryOperator,
   type BinaryOperatorToken,
@@ -141,6 +144,7 @@ import {
   type KeywordTypeSyntaxKind,
   type ModifierSyntaxKind,
   type ModifierLike,
+  type ModuleBody,
   type ModuleExportName,
   type ModuleName,
   type ModuleReference,
@@ -362,6 +366,11 @@ export class Parser {
           throw new ParseError("Modifiers are not valid on continue statements", this.#current());
         }
         return this.#parseContinueStatement();
+      case Kind.DebuggerKeyword:
+        if (modifiers !== undefined) {
+          throw new ParseError("Modifiers are not valid on debugger statements", this.#current());
+        }
+        return this.#parseDebuggerStatement();
       case Kind.VarKeyword:
       case Kind.LetKeyword:
       case Kind.ConstKeyword:
@@ -378,6 +387,11 @@ export class Parser {
           throw new ParseError("Modifiers are not valid on throw statements", this.#current());
         }
         return this.#parseThrowStatement();
+      case Kind.WithKeyword:
+        if (modifiers !== undefined) {
+          throw new ParseError("Modifiers are not valid on with statements", this.#current());
+        }
+        return this.#parseWithStatement();
       case Kind.TryKeyword:
         if (modifiers !== undefined) {
           throw new ParseError("Modifiers are not valid on try statements", this.#current());
@@ -408,6 +422,9 @@ export class Parser {
     }
     if (modifiers !== undefined) {
       throw new ParseError("Modifiers are not valid on expression statements", this.#current());
+    }
+    if (this.#current().kind === Kind.Identifier && this.#tokens[this.#index + 1]?.kind === Kind.ColonToken) {
+      return this.#parseLabeledStatement();
     }
     const expression = this.#parseExpression();
     this.#consumeStatementTerminator(expression);
@@ -571,15 +588,20 @@ export class Parser {
   #parseModuleDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
     const keywordToken = this.#current();
     const keyword = keywordToken.kind === Kind.NamespaceKeyword ? Kind.NamespaceKeyword : Kind.ModuleKeyword;
-    let name: ModuleName;
+    const names: ModuleName[] = [];
     if (keywordToken.kind === Kind.GlobalKeyword) {
       this.#advance();
-      name = createIdentifier("global");
+      names.push(createIdentifier("global"));
     } else {
       this.#advance();
-      name = this.#current().kind === Kind.StringLiteral
-        ? this.#parseStringLiteralExpression() as ModuleName
-        : this.#parseIdentifier();
+      if (this.#current().kind === Kind.StringLiteral) {
+        names.push(this.#parseStringLiteralExpression() as ModuleName);
+      } else {
+        names.push(this.#parseIdentifier());
+        while (this.#consumeOptional(Kind.DotToken)) {
+          names.push(this.#parseIdentifier());
+        }
+      }
     }
     this.#expect(Kind.OpenBraceToken);
     const statements: Statement[] = [];
@@ -587,7 +609,12 @@ export class Parser {
       statements.push(this.#parseStatement());
     }
     this.#expect(Kind.CloseBraceToken);
-    return createModuleDeclaration(modifiers, keyword, name, createModuleBlock(createNodeArray(statements)));
+    this.#consumeOptional(Kind.SemicolonToken);
+    let body: ModuleBody = createModuleBlock(createNodeArray(statements));
+    for (let index = names.length - 1; index > 0; index -= 1) {
+      body = createModuleDeclaration(undefined, keyword, names[index]!, body);
+    }
+    return createModuleDeclaration(modifiers, keyword, names[0]!, body);
   }
 
   #parseInterfaceDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
@@ -693,7 +720,7 @@ export class Parser {
     if (this.#current().kind === Kind.VarKeyword || this.#current().kind === Kind.LetKeyword || this.#current().kind === Kind.ConstKeyword) {
       return this.#parseVariableDeclarationList();
     }
-    return this.#parseExpression();
+    return this.#parseExpression(0, true);
   }
 
   #parseBreakStatement(): Statement {
@@ -708,6 +735,26 @@ export class Parser {
     const label = this.#current().kind === Kind.Identifier ? this.#parseIdentifier() : undefined;
     this.#consumeOptional(Kind.SemicolonToken);
     return createContinueStatement(label);
+  }
+
+  #parseDebuggerStatement(): Statement {
+    this.#expect(Kind.DebuggerKeyword);
+    this.#consumeOptional(Kind.SemicolonToken);
+    return createDebuggerStatement();
+  }
+
+  #parseWithStatement(): Statement {
+    this.#expect(Kind.WithKeyword);
+    this.#expect(Kind.OpenParenToken);
+    const expression = this.#parseExpression();
+    this.#expect(Kind.CloseParenToken);
+    return createWithStatement(expression, this.#parseStatement());
+  }
+
+  #parseLabeledStatement(): Statement {
+    const label = this.#parseIdentifier();
+    this.#expect(Kind.ColonToken);
+    return createLabeledStatement(label, this.#parseStatement());
   }
 
   #parseClassElement(): ClassElement {
@@ -1101,19 +1148,22 @@ export class Parser {
     return statements;
   }
 
-  #parseExpression(precedence = 0): Expression {
+  #parseExpression(precedence = 0, stopAtInKeyword = false): Expression {
     if (this.#isArrowFunctionStart()) {
       return this.#parseArrowFunction();
     }
     let left = this.#parseUnaryExpression();
     while (true) {
       const operatorToken = this.#current();
+      if (stopAtInKeyword && operatorToken.kind === Kind.InKeyword) {
+        break;
+      }
       const operatorPrecedence = binaryPrecedence.get(operatorToken.kind) ?? 0;
       if (operatorPrecedence <= precedence) {
         break;
       }
       this.#advance();
-      const right = this.#parseExpression(operatorPrecedence);
+      const right = this.#parseExpression(operatorPrecedence, stopAtInKeyword);
       const token = createToken(operatorToken.kind as BinaryOperator);
       if (!isBinaryOperatorToken(token)) {
         throw new ParseError("Expected binary operator", operatorToken);

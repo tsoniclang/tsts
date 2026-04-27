@@ -620,14 +620,55 @@ describe("checker groundwork", () => {
     ]);
   });
 
-  it("reports ambient initializers and non-constant ambient enum members", () => {
-    const sourceFile = parseSourceFile("declare const value = 1; declare enum E { A = 1, B = Math.random() }");
+  it("accepts TypeScript constant ambient const initializers and literal enum references", () => {
+    const sourceFile = parseSourceFile([
+      "declare namespace Foo {",
+      "  enum Bar { a = `1`, b = '2', c = '3' }",
+      "  export const a = 'string';",
+      "  export const b = `template`; ",
+      "  export const c = 1;",
+      "  export const d = true;",
+      "  export const e = Bar.a;",
+      "  export const f = Bar['b'];",
+      "  export const g = Bar[`c`];",
+      "}",
+    ].join("\n"));
     const result = checkSourceFile(sourceFile);
 
-    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1039, 1066]);
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("reports invalid ambient initializers and non-constant ambient enum members", () => {
+    const sourceFile = parseSourceFile("declare let value = 1; declare const invalid = 1 + 2; declare enum E { A = 1, B = Math.random() }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1039, 1254, 1066]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "Initializers are not allowed in ambient contexts.",
+      "A 'const' initializer in an ambient context must be a string or numeric literal or literal enum reference.",
       "In ambient enum declarations member initializer must be constant expression.",
+    ]);
+  });
+
+  it("reports ambient runtime statements with TS-Go statement context diagnostics", () => {
+    const sourceFile = parseSourceFile([
+      "declare namespace M {",
+      "  continue;",
+      "  return;",
+      "  with ({}) { }",
+      "  label: var item;",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { alwaysStrict: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1036, 1104, 1108, 1101, 2410, 1344]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Statements are not allowed in ambient contexts.",
+      "A 'continue' statement can only be used within an enclosing iteration statement.",
+      "A 'return' statement can only be used within a function body.",
+      "'with' statements are not allowed in strict mode.",
+      "The 'with' statement is not supported. All symbols in a 'with' block will have type 'any'.",
+      "A label is not allowed here.",
     ]);
   });
 

@@ -115,6 +115,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
       ambientModules.add(moduleSpecifier);
     }
     moduleAugmentations.push(...sourceFileModuleAugmentationSpecifiers(sourceFile).map(moduleSpecifier => ({ fileName: rootName, moduleSpecifier })));
+    diagnostics.push(...sourceFileAmbientModuleGrammarDiagnostics(rootName, sourceFile));
     const resolvedModules: ResolvedModule[] = [];
     for (const moduleReference of sourceFileModuleReferences(sourceFile)) {
       const resolved = resolveModuleName(moduleReference.moduleSpecifier, rootName, host, fileTextCache);
@@ -192,7 +193,12 @@ interface SourceFileModuleReference {
 
 function sourceFileModuleReferences(sourceFile: SourceFile): readonly SourceFileModuleReference[] {
   const references: SourceFileModuleReference[] = [];
-  for (const statement of sourceFile.statements) {
+  collectModuleReferences(sourceFile.statements, references);
+  return references;
+}
+
+function collectModuleReferences(statements: readonly SourceFile["statements"][number][], references: SourceFileModuleReference[]): void {
+  for (const statement of statements) {
     if (isImportDeclaration(statement) && isStringLiteral(statement.moduleSpecifier)) {
       references.push({ moduleSpecifier: statement.moduleSpecifier.text, sideEffectOnly: statement.importClause === undefined });
       continue;
@@ -208,8 +214,10 @@ function sourceFileModuleReferences(sourceFile: SourceFile): readonly SourceFile
     ) {
       references.push({ moduleSpecifier: statement.moduleReference.expression.text, sideEffectOnly: false });
     }
+    if (isModuleDeclaration(statement) && statement.body?.kind === Kind.ModuleBlock) {
+      collectModuleReferences(statement.body.statements, references);
+    }
   }
-  return references;
 }
 
 function sourceFileAmbientModuleSpecifiers(sourceFile: SourceFile): readonly string[] {
@@ -223,6 +231,47 @@ function sourceFileAmbientModuleSpecifiers(sourceFile: SourceFile): readonly str
     }
   }
   return specifiers;
+}
+
+function sourceFileAmbientModuleGrammarDiagnostics(fileName: string, sourceFile: SourceFile): readonly ProgramDiagnostic[] {
+  if (sourceFileIsExternalModule(sourceFile)) {
+    return [];
+  }
+  const diagnostics: ProgramDiagnostic[] = [];
+  for (const statement of sourceFile.statements) {
+    if (!isGlobalAmbientExternalModuleDeclaration(statement)) {
+      continue;
+    }
+    if (isRelativeModuleName(statement.name.text)) {
+      diagnostics.push(programDiagnostic(fileName, 2436));
+    }
+    if (statement.body?.kind !== Kind.ModuleBlock) {
+      continue;
+    }
+    for (const bodyStatement of statement.body.statements) {
+      if (isAmbientExternalModuleRelativeImportOrExport(bodyStatement)) {
+        diagnostics.push(programDiagnostic(fileName, 2439));
+      }
+    }
+  }
+  return diagnostics;
+}
+
+function isGlobalAmbientExternalModuleDeclaration(statement: SourceFile["statements"][number]): statement is Extract<SourceFile["statements"][number], { readonly kind: Kind.ModuleDeclaration }> & { readonly name: { readonly text: string } } {
+  return isModuleDeclaration(statement) && isStringLiteral(statement.name) && hasModifier(statement, Kind.DeclareKeyword);
+}
+
+function isAmbientExternalModuleRelativeImportOrExport(statement: SourceFile["statements"][number]): boolean {
+  if (isImportDeclaration(statement) && isStringLiteral(statement.moduleSpecifier)) {
+    return isRelativeModuleName(statement.moduleSpecifier.text);
+  }
+  if (isExportDeclaration(statement) && statement.moduleSpecifier !== undefined && isStringLiteral(statement.moduleSpecifier)) {
+    return isRelativeModuleName(statement.moduleSpecifier.text);
+  }
+  return isImportEqualsDeclaration(statement)
+    && isExternalModuleReference(statement.moduleReference)
+    && isStringLiteral(statement.moduleReference.expression)
+    && isRelativeModuleName(statement.moduleReference.expression.text);
 }
 
 function sourceFileModuleAugmentationSpecifiers(sourceFile: SourceFile): readonly string[] {
@@ -404,7 +453,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isRelativeModuleName(moduleSpecifier: string): boolean {
-  return moduleSpecifier.startsWith("./") || moduleSpecifier.startsWith("../");
+  return moduleSpecifier.startsWith("./") || moduleSpecifier.startsWith("../") || moduleSpecifier.startsWith(".\\") || moduleSpecifier.startsWith("..\\");
 }
 
 function readFileCached(fileName: string, host: CompilerHost, cache: Map<string, string | undefined>): string | undefined {

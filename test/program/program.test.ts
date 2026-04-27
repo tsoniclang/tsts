@@ -308,4 +308,31 @@ describe("program groundwork", () => {
 
     assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [1192, 2564]);
   });
+
+  it("diagnoses relative ambient module names and nested relative ambient imports", () => {
+    const files = new Map<string, string>([
+      [
+        "ambient.d.ts",
+        [
+          "declare module \"./relative\" { var forward: string; }",
+          "declare module \".\\\\relative\" { var backslash: string; }",
+          "declare module \"Outer\" { import sub = require(\"./SubModule\"); }",
+        ].join("\n"),
+      ],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["ambient.d.ts"], {}, host);
+
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2436, 2436, 2439, 2307]);
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), [
+      "Ambient module declaration cannot specify relative module name.",
+      "Ambient module declaration cannot specify relative module name.",
+      "Import or export declaration in an ambient module declaration cannot reference module through relative module name.",
+      "Cannot find module './SubModule' or its corresponding type declarations.",
+    ]);
+  });
 });
