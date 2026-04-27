@@ -99,7 +99,9 @@ type CheckedType =
   | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType }
   | { readonly kind: "typeAlias"; readonly target: CheckedType }
   | { readonly kind: "typeParameter"; readonly name: string }
-  | { readonly kind: "union"; readonly types: readonly CheckedType[] };
+  | { readonly kind: "union"; readonly types: readonly CheckedType[] }
+  | { readonly kind: "unqualifiedStaticMember"; readonly className: string; readonly memberName: string }
+  | { readonly kind: "unqualifiedInstanceMember"; readonly memberName: string };
 
 export type CheckDiagnostic = Diagnostic;
 
@@ -112,6 +114,12 @@ interface CheckState {
 }
 
 type TypeEnvironment = Map<string, CheckedType>;
+
+interface ClassMemberNames {
+  readonly className: string | undefined;
+  readonly instance: ReadonlySet<string>;
+  readonly static: ReadonlySet<string>;
+}
 
 const anyType: CheckedType = { kind: "any" };
 const unknownType: CheckedType = { kind: "unknown" };
@@ -402,6 +410,7 @@ function checkForInitializer(initializer: Extract<Statement, { readonly kind: Ki
 
 function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
   const classIsAbstract = hasModifier(classDeclaration, Kind.AbstractKeyword);
+  const classMembers = collectClassMemberNames(classDeclaration);
   if (classDeclaration.name !== undefined) {
     if (invalidClassNames.has(classDeclaration.name.text)) {
       state.diagnostics.push(createDiagnostic(2414, classDeclaration.name.text));
@@ -414,8 +423,32 @@ function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckS
     checkClassMemberOverloads(classDeclaration.members, state);
   }
   for (const member of classDeclaration.members) {
-    checkClassElement(member, state, classEnvironment, ambient, classIsAbstract);
+    checkClassElement(member, state, classEnvironment, ambient, classIsAbstract, classMembers);
   }
+}
+
+function collectClassMemberNames(classDeclaration: ClassDeclaration): ClassMemberNames {
+  const instance = new Set<string>();
+  const staticMembers = new Set<string>();
+  for (const member of classDeclaration.members) {
+    const name = classElementName(member);
+    if (name === undefined) {
+      continue;
+    }
+    if (hasModifier(member, Kind.StaticKeyword)) {
+      staticMembers.add(name);
+    } else {
+      instance.add(name);
+    }
+  }
+  return { className: classDeclaration.name?.text, instance, static: staticMembers };
+}
+
+function classElementName(member: ClassElement): string | undefined {
+  if (isMethodDeclaration(member) || isPropertyDeclaration(member) || isGetAccessorDeclaration(member) || isSetAccessorDeclaration(member)) {
+    return propertyNameText(member.name);
+  }
+  return undefined;
 }
 
 function checkInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, state: CheckState, environment: TypeEnvironment): void {
@@ -525,7 +558,7 @@ function propertyNameText(name: PropertyName): string | undefined {
   return undefined;
 }
 
-function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment, ambient: boolean, classIsAbstract: boolean): void {
+function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment, ambient: boolean, classIsAbstract: boolean, classMembers: ClassMemberNames): void {
   if (hasModifier(member, Kind.ConstKeyword)) {
     state.diagnostics.push(createDiagnostic(1248, "const"));
   }
@@ -539,6 +572,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
       checkAbstractMemberModifiers(member, state, classIsAbstract, propertyNameText(member.name), false);
     }
     const memberEnvironment = new Map(environment);
+    seedUnqualifiedClassMemberDiagnostics(memberEnvironment, classMembers, isMethodDeclaration(member) && hasModifier(member, Kind.StaticKeyword));
     checkSignatureParameters(member.parameters, state, memberEnvironment, isMethodDeclaration(member) || member.body === undefined);
     if (member.body !== undefined) {
       if (ambient) {
@@ -551,6 +585,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
   }
   if (isPropertyDeclaration(member) && member.initializer !== undefined) {
     checkAbstractMemberModifiers(member, state, classIsAbstract, propertyNameText(member.name), true);
+    checkUninitializedProperty(member, state, ambient);
     if (member.type !== undefined) {
       typeFromTypeNode(member.type, environment, state);
     }
@@ -559,9 +594,43 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
   }
   if (isPropertyDeclaration(member)) {
     checkAbstractMemberModifiers(member, state, classIsAbstract, propertyNameText(member.name), true);
+    checkUninitializedProperty(member, state, ambient);
     if (member.type !== undefined) {
       typeFromTypeNode(member.type, environment, state);
     }
+  }
+}
+
+function seedUnqualifiedClassMemberDiagnostics(environment: TypeEnvironment, classMembers: ClassMemberNames, staticMethod: boolean): void {
+  if (staticMethod) {
+    for (const memberName of classMembers.instance) {
+      environment.set(memberName, { kind: "unqualifiedInstanceMember", memberName });
+    }
+    return;
+  }
+  if (classMembers.className === undefined) {
+    return;
+  }
+  for (const memberName of classMembers.static) {
+    environment.set(memberName, { kind: "unqualifiedStaticMember", className: classMembers.className, memberName });
+  }
+}
+
+function checkUninitializedProperty(member: Extract<ClassElement, { readonly kind: Kind.PropertyDeclaration }>, state: CheckState, ambient: boolean): void {
+  if (
+    ambient
+    || member.type === undefined
+    || member.initializer !== undefined
+    || hasModifier(member, Kind.StaticKeyword)
+    || hasModifier(member, Kind.AbstractKeyword)
+    || (member as { readonly postfixToken?: { readonly kind: Kind } }).postfixToken?.kind === Kind.ExclamationToken
+    || (member as { readonly postfixToken?: { readonly kind: Kind } }).postfixToken?.kind === Kind.QuestionToken
+  ) {
+    return;
+  }
+  const name = propertyNameText(member.name);
+  if (name !== undefined) {
+    state.diagnostics.push(createDiagnostic(2564, name));
   }
 }
 
@@ -730,7 +799,16 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return stringType;
   }
   if (isIdentifier(expression)) {
-    return environment.get(expression.text) ?? unresolvedType;
+    const bound = environment.get(expression.text);
+    if (bound?.kind === "unqualifiedStaticMember") {
+      state.diagnostics.push(createDiagnostic(2662, bound.memberName, bound.className));
+      return unresolvedType;
+    }
+    if (bound?.kind === "unqualifiedInstanceMember") {
+      state.diagnostics.push(createDiagnostic(2304, bound.memberName));
+      return unresolvedType;
+    }
+    return bound ?? unresolvedType;
   }
   if (isParenthesizedExpression(expression)) {
     return inferExpression(expression.expression, state, environment);
@@ -1216,6 +1294,9 @@ function displayType(type: CheckedType): string {
   }
   if (type.kind === "union") {
     return type.types.map(displayType).join(" | ");
+  }
+  if (type.kind === "unqualifiedStaticMember" || type.kind === "unqualifiedInstanceMember") {
+    return "unknown";
   }
   return type.kind === "unresolved" ? "unknown" : type.kind;
 }
