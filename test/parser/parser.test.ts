@@ -407,6 +407,28 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(statement.expression.expression.name.text, "toFixed");
   });
 
+  it("recovers empty element access with TS-Go diagnostics", () => {
+    const result = parseSourceFileWithDiagnostics("number[]; new Z[];");
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1011, 1011]);
+    const accessStatement = result.sourceFile.statements[0]!;
+    assert.equal(isExpressionStatement(accessStatement), true);
+    if (!isExpressionStatement(accessStatement) || !isElementAccessExpression(accessStatement.expression)) {
+      throw new Error("Expected empty element access expression");
+    }
+    const accessArgument = accessStatement.expression.argumentExpression;
+    assert.equal(isIdentifier(accessArgument), true);
+    if (!isIdentifier(accessArgument)) throw new Error("Expected synthetic missing element-access argument");
+    assert.equal(accessArgument.text, "");
+
+    const newStatement = result.sourceFile.statements[1]!;
+    assert.equal(isExpressionStatement(newStatement), true);
+    if (!isExpressionStatement(newStatement) || !isNewExpression(newStatement.expression)) {
+      throw new Error("Expected new expression with empty element access target");
+    }
+    assert.equal(isElementAccessExpression(newStatement.expression.expression), true);
+  });
+
   it("produces type aliases and type literal members with TS-Go declaration nodes", () => {
     const sourceFile = parseSourceFile("export type Box<T> = { value: T; label?: string };");
     const statement = sourceFile.statements[0]!;

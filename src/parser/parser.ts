@@ -1777,7 +1777,7 @@ export class Parser {
         continue;
       }
       if (this.#consumeOptional(Kind.OpenBracketToken)) {
-        expression = createElementAccessExpression(expression, undefined, this.#parseCommaExpression(), NodeFlags.None);
+        expression = createElementAccessExpression(expression, undefined, this.#parseElementAccessArgument(), NodeFlags.None);
         this.#expect(Kind.CloseBracketToken);
         continue;
       }
@@ -1832,7 +1832,7 @@ export class Parser {
         if (questionDotToken !== undefined) {
           this.#expect(Kind.OpenBracketToken);
         }
-        expression = createElementAccessExpression(expression, questionDotToken, this.#parseCommaExpression(), NodeFlags.None);
+        expression = createElementAccessExpression(expression, questionDotToken, this.#parseElementAccessArgument(), NodeFlags.None);
         this.#expect(Kind.CloseBracketToken);
         continue;
       }
@@ -1845,6 +1845,14 @@ export class Parser {
       }
       return expression;
     }
+  }
+
+  #parseElementAccessArgument(): Expression {
+    if (this.#current().kind === Kind.CloseBracketToken) {
+      this.#addDiagnosticAtToken(this.#current(), 1011);
+      return createIdentifier("");
+    }
+    return this.#parseCommaExpression();
   }
 
   #tryParseTypeArgumentsInExpression(): NodeArray<TypeNode> | undefined {

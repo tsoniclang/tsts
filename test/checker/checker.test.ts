@@ -267,6 +267,18 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2414]);
   });
 
+  it("reports primitive type keywords used as values", () => {
+    const sourceFile = parseSourceFile("number; string; any; undefined;");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "'number' only refers to a type, but is being used as a value here.",
+      "'string' only refers to a type, but is being used as a value here.",
+      "'any' only refers to a type, but is being used as a value here.",
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2693, 2693, 2693]);
+  });
+
   it("reports const modifiers on class members", () => {
     const sourceFile = parseSourceFile("class AtomicNumbers { static const H = 1; }");
     const result = checkSourceFile(sourceFile);

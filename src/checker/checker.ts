@@ -520,6 +520,7 @@ const typedArrayGlobalNames = [
   "Uint32Array",
 ] as const;
 const invalidClassNames = new Set(["any", "bigint", "boolean", "never", "number", "object", "string", "symbol", "undefined", "unknown", "void"]);
+const typeOnlyKeywordValueNames = new Set(["any", "bigint", "boolean", "never", "number", "object", "string", "symbol", "unknown", "void"]);
 const strictModeReservedIdentifierNames = new Set(["private", "protected", "public"]);
 const ambientTypeNames = new Set([
   "Array",
@@ -619,7 +620,7 @@ function shouldReportAllCheckDiagnostics(state: CheckState): boolean {
   return !state.isJavaScriptFile || state.options.checkJs === true;
 }
 
-const syntaxDiagnosticCodes = new Set<number>([1003, 1005, 1068, 1109, 1127, 1128, 1200, 1359, 1434, 1437, 1440, 1490]);
+const syntaxDiagnosticCodes = new Set<number>([1003, 1005, 1011, 1068, 1109, 1127, 1128, 1200, 1359, 1434, 1437, 1440, 1490]);
 const plainJavaScriptCheckDiagnosticCodes = new Set<number>([
   1100,
   1101,
@@ -3871,6 +3872,10 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     const bound = environment.get(expression.text);
     if (bound === undefined) {
       if (expression.text !== "") {
+        if (typeOnlyKeywordValueNames.has(expression.text)) {
+          state.diagnostics.push(createDiagnostic(2693, expression.text));
+          return unresolvedType;
+        }
         checkStrictModeReservedIdentifierExpression(expression.text, state);
         state.diagnostics.push(createDiagnostic(2304, expression.text));
       }

@@ -294,6 +294,17 @@ describe("program groundwork", () => {
     assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [1490, 1434, 1127, 1128, 2304]);
   });
 
+  it("continues semantic checking after empty element access syntax diagnostics", () => {
+    const host: CompilerHost = {
+      readFile: fileName => fileName === "src/index.ts" ? "var results = number[];" : undefined,
+    };
+
+    const program = createProgram(["src/index.ts"], {}, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [1011, 2693]);
+  });
+
   it("does not emit when semantic diagnostics are present", () => {
     const outputs = new Map<string, string>();
     const host: CompilerHost = {
