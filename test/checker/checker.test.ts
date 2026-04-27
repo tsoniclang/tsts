@@ -263,6 +263,30 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("checks assertion overlap through generic alias instantiation expressions", () => {
+    const sourceFile = parseSourceFile([
+      "class ErrImpl<E> { e!: E; }",
+      "declare const Err: typeof ErrImpl & (<T>() => T);",
+      "type ErrAlias<U> = typeof Err<U>;",
+      "declare const e: ErrAlias<number>;",
+      "e as ErrAlias<string>;",
+      "declare class Class<T> { x: T; }",
+      "declare function fn<T>(): T;",
+      "type ClassAlias<T> = typeof Class<T>;",
+      "type FnAlias<T> = typeof fn<T>;",
+      "type Wat<T> = ClassAlias<T> & FnAlias<T>;",
+      "declare const wat: Wat<number>;",
+      "wat as Wat<string>;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2352, 2352]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Conversion of type '{ new (): ErrImpl<number>; prototype: ErrImpl<any>; } & (() => number)' to type '{ new (): ErrImpl<string>; prototype: ErrImpl<any>; } & (() => string)' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.",
+      "Conversion of type 'Wat<number>' to type 'Wat<string>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.",
+    ]);
+  });
+
   it("makes destructured binding names available to checked bodies", () => {
     const sourceFile = parseSourceFile("function f({ value }: string): string { return value; }");
     const result = checkSourceFile(sourceFile);
@@ -418,6 +442,8 @@ describe("checker groundwork", () => {
             "import moduleA = require(\"./moduleA\");",
             "interface IHasVisualizationModel { VisualizationModel: any; }",
             "const value: IHasVisualizationModel = moduleA;",
+            "declare const reverse: IHasVisualizationModel;",
+            "const moduleLike: typeof moduleA = reverse;",
           ].join("\n");
         }
         if (fileName === "moduleA.ts") {

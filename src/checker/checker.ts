@@ -34,6 +34,7 @@ import {
   isImportDeclaration,
   isImportEqualsDeclaration,
   isInterfaceDeclaration,
+  isIntersectionTypeNode,
   isKeywordExpression,
   isKeywordTypeNode,
   isMethodDeclaration,
@@ -49,6 +50,7 @@ import {
   isNoSubstitutionTemplateLiteral,
   isObjectLiteralExpression,
   isObjectBindingPattern,
+  isParenthesizedTypeNode,
   isParenthesizedExpression,
   isPostfixUnaryExpression,
   isPrefixUnaryExpression,
@@ -108,17 +110,19 @@ type PrimitiveTypeName = "any" | "boolean" | "null" | "number" | "string" | "und
 type CheckedType =
   | { readonly kind: PrimitiveTypeName | "unresolved" }
   | { readonly kind: "array"; readonly elementType: CheckedType }
-  | { readonly kind: "classConstructor"; readonly name: string; readonly abstract: boolean; readonly members: ClassMemberNames }
-  | { readonly kind: "classInstance"; readonly name: string; readonly members: ClassMemberNames }
+  | { readonly kind: "classInstance"; readonly name: string; readonly typeArguments: readonly CheckedType[]; readonly members: ClassMemberNames }
+  | { readonly kind: "classConstructor"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeArguments: readonly CheckedType[]; readonly abstract: boolean; readonly members: ClassMemberNames }
   | { readonly kind: "accessorProperty"; readonly type: CheckedType }
   | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType }
   | { readonly kind: "interface"; readonly name: string; readonly members: InterfaceMembers }
+  | { readonly kind: "intersection"; readonly types: readonly CheckedType[] }
   | { readonly kind: "moduleNamespace"; readonly moduleSpecifier: string; readonly diagnosticName: string; readonly exports: ReadonlyMap<string, CheckedType>; readonly exportEquals?: CheckedType }
   | { readonly kind: "namespace"; readonly name: string; readonly exports: ReadonlyMap<string, CheckedType> }
   | { readonly kind: "namespaceAndType"; readonly namespace: Extract<CheckedType, { readonly kind: "namespace" }>; readonly type: CheckedType }
   | { readonly kind: "object"; readonly properties: ReadonlyMap<string, CheckedType>; readonly readonlyProperties: ReadonlySet<string> }
   | { readonly kind: "thisClass"; readonly className: string; readonly abstractProperties: ReadonlySet<string>; readonly abstractPropertyDeclaringClasses: ReadonlyMap<string, string>; readonly uninitializedProperties: ReadonlySet<string>; readonly mode: "constructor" | "fieldInitializer" }
-  | { readonly kind: "typeAlias"; readonly target: CheckedType }
+  | { readonly kind: "typeAlias"; readonly name: string; readonly typeParameters: readonly string[]; readonly target: CheckedType; readonly preserveDisplay: boolean }
+  | { readonly kind: "typeAliasInstance"; readonly name: string; readonly typeArguments: readonly CheckedType[]; readonly target: CheckedType }
   | { readonly kind: "typeParameter"; readonly name: string }
   | { readonly kind: "union"; readonly types: readonly CheckedType[] }
   | { readonly kind: "unassignedVariable"; readonly name: string; readonly type: CheckedType }
@@ -437,8 +441,9 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isTypeAliasDeclaration(statement)) {
     const aliasEnvironment = new Map(environment);
-    addTypeParametersToEnvironment(statement.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], aliasEnvironment);
-    environment.set(statement.name.text, { kind: "typeAlias", target: typeFromTypeNode(statement.type, aliasEnvironment, state) });
+    const typeParameters = statement.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
+    addTypeParametersToEnvironment(typeParameters, aliasEnvironment);
+    environment.set(statement.name.text, { kind: "typeAlias", name: statement.name.text, typeParameters, target: typeFromTypeNode(statement.type, aliasEnvironment, state), preserveDisplay: isIntersectionTypeNode(statement.type) });
     return;
   }
   if (isModuleDeclaration(statement)) {
@@ -907,7 +912,14 @@ function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckS
     if (invalidClassNames.has(classDeclaration.name.text)) {
       state.diagnostics.push(createDiagnostic(2414, classDeclaration.name.text));
     }
-    environment.set(classDeclaration.name.text, { kind: "classConstructor", name: classDeclaration.name.text, abstract: classIsAbstract, members: classMembers });
+    environment.set(classDeclaration.name.text, {
+      kind: "classConstructor",
+      name: classDeclaration.name.text,
+      typeParameters: classDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [],
+      typeArguments: [],
+      abstract: classIsAbstract,
+      members: classMembers,
+    });
   }
   checkMissingAbstractMembers(classDeclaration, state, classIsAbstract, inheritedMembers, classMembers);
   checkAccessorAbstractPairs(classDeclaration.members, state);
@@ -1803,7 +1815,7 @@ function inferExpression(expression: Expression, state: CheckState, environment:
       inferExpression(argument, state, environment);
     }
     return constructorType.kind === "classConstructor"
-      ? { kind: "classInstance", name: constructorType.name, members: constructorType.members }
+      ? { kind: "classInstance", name: constructorType.name, typeArguments: constructorType.typeArguments, members: constructorType.members }
       : anyType;
   }
   return unresolvedType;
@@ -2189,19 +2201,27 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
   if (isUnionTypeNode(type)) {
     return { kind: "union", types: type.types.map(unionMember => typeFromTypeNode(unionMember, environment, state)) };
   }
+  if (isIntersectionTypeNode(type)) {
+    return { kind: "intersection", types: type.types.map(intersectionMember => typeFromTypeNode(intersectionMember, environment, state)) };
+  }
   if (isTypeLiteralNode(type)) {
     return typeLiteralType(type.members, state ?? emptyCheckState(), environment);
   }
+  if (isParenthesizedTypeNode(type)) {
+    return typeFromTypeNode(type.type, environment, state);
+  }
   if (isFunctionTypeNode(type) || isConstructorTypeNode(type)) {
     const signatureEnvironment = new Map(environment);
+    const typeParameters = type.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
+    addTypeParametersToEnvironment(typeParameters, signatureEnvironment);
     const parameterTypes = checkSignatureParameters(type.parameters, state ?? emptyCheckState(), signatureEnvironment, true);
     const returnType = type.type === undefined ? unresolvedType : typeFromTypeNode(type.type, signatureEnvironment, state);
-    return { kind: "function", typeParameters: type.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], parameters: parameterTypes, returnType };
+    return { kind: "function", typeParameters, parameters: parameterTypes, returnType };
   }
   if (isTypeReferenceNode(type)) {
     const resolved = resolveEntityName(type.typeName, environment, state, "type");
     if (resolved !== undefined) {
-      return typeFromResolvedEntity(resolved, entityNameText(type.typeName), state);
+      return typeFromResolvedEntity(resolved, entityNameText(type.typeName), state, type.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? []);
     }
     const name = entityNameText(type.typeName);
     if (name === "Array" && type.typeArguments?.[0] !== undefined) {
@@ -2212,12 +2232,61 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
   if (isTypeQueryNode(type)) {
     const name = entityNameText(type.exprName);
     const bound = name === undefined ? undefined : environment.get(name);
-    return bound?.kind === "classConstructor" ? bound : anyType;
+    const typeArguments = type.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? [];
+    return bound === undefined ? anyType : instantiateTypeQuery(bound, typeArguments);
   }
   return anyType;
 }
 
-function typeFromResolvedEntity(type: CheckedType, diagnosticName: string | undefined, state: CheckState | undefined): CheckedType {
+function instantiateTypeQuery(type: CheckedType, typeArguments: readonly CheckedType[]): CheckedType {
+  if (type.kind === "valueAndType") {
+    return instantiateTypeQuery(type.value, typeArguments);
+  }
+  if (type.kind === "classConstructor") {
+    return instantiateClassConstructor(type, typeArguments);
+  }
+  if (type.kind === "function") {
+    return instantiateFunctionType(type, typeArguments);
+  }
+  if (type.kind === "intersection") {
+    return { kind: "intersection", types: type.types.map(member => instantiateTypeQuery(member, typeArguments)) };
+  }
+  return type;
+}
+
+function instantiateClassConstructor(type: Extract<CheckedType, { readonly kind: "classConstructor" }>, typeArguments: readonly CheckedType[]): Extract<CheckedType, { readonly kind: "classConstructor" }> {
+  const substitutions = classTypeSubstitutions(type, typeArguments);
+  return {
+    ...type,
+    typeArguments: type.typeParameters.map(typeParameter => substitutions.get(typeParameter) ?? anyType),
+  };
+}
+
+function instantiateFunctionType(type: Extract<CheckedType, { readonly kind: "function" }>, typeArguments: readonly CheckedType[]): CheckedType {
+  if (type.typeParameters.length === 0) {
+    return type;
+  }
+  const substitutions = new Map<string, CheckedType>();
+  for (let index = 0; index < type.typeParameters.length; index += 1) {
+    substitutions.set(type.typeParameters[index]!, typeArguments[index] ?? anyType);
+  }
+  return {
+    kind: "function",
+    typeParameters: [],
+    parameters: type.parameters.map(parameter => substituteType(parameter, substitutions)),
+    returnType: substituteType(type.returnType, substitutions),
+  };
+}
+
+function classTypeSubstitutions(type: Extract<CheckedType, { readonly kind: "classConstructor" }>, typeArguments: readonly CheckedType[]): ReadonlyMap<string, CheckedType> {
+  const substitutions = new Map<string, CheckedType>();
+  for (let index = 0; index < type.typeParameters.length; index += 1) {
+    substitutions.set(type.typeParameters[index]!, typeArguments[index] ?? anyType);
+  }
+  return substitutions;
+}
+
+function typeFromResolvedEntity(type: CheckedType, diagnosticName: string | undefined, state: CheckState | undefined, typeArguments: readonly CheckedType[] = []): CheckedType {
   if (type.kind === "typeParameter") {
     return type;
   }
@@ -2226,16 +2295,28 @@ function typeFromResolvedEntity(type: CheckedType, diagnosticName: string | unde
     return unresolvedType;
   }
   if (type.kind === "valueAndType") {
-    return typeFromResolvedEntity(type.type, diagnosticName, state);
+    return typeFromResolvedEntity(type.type, diagnosticName, state, typeArguments);
   }
   if (type.kind === "namespaceAndType") {
-    return typeFromResolvedEntity(type.type, diagnosticName, state);
+    return typeFromResolvedEntity(type.type, diagnosticName, state, typeArguments);
   }
   if (type.kind === "typeAlias") {
-    return type.target;
+    const substitutions = new Map<string, CheckedType>();
+    for (let index = 0; index < type.typeParameters.length; index += 1) {
+      substitutions.set(type.typeParameters[index]!, typeArguments[index] ?? anyType);
+    }
+    const target = substituteType(type.target, substitutions);
+    if (type.typeParameters.length > 0 && type.preserveDisplay) {
+      return { kind: "typeAliasInstance", name: type.name, typeArguments: type.typeParameters.map(typeParameter => substitutions.get(typeParameter) ?? anyType), target };
+    }
+    return target;
+  }
+  if (type.kind === "typeAliasInstance") {
+    return type;
   }
   if (type.kind === "classConstructor") {
-    return { kind: "classInstance", name: type.name, members: type.members };
+    const instantiated = instantiateClassConstructor(type, typeArguments);
+    return { kind: "classInstance", name: instantiated.name, typeArguments: instantiated.typeArguments, members: instantiated.members };
   }
   if (type.kind === "interface") {
     return type;
@@ -2457,12 +2538,32 @@ function substituteType(type: CheckedType, substitutions: ReadonlyMap<string, Ch
   if (type.kind === "union") {
     return { kind: "union", types: type.types.map(unionType => substituteType(unionType, substitutions)) };
   }
+  if (type.kind === "intersection") {
+    return { kind: "intersection", types: type.types.map(intersectionType => substituteType(intersectionType, substitutions)) };
+  }
+  if (type.kind === "classConstructor") {
+    const typeArguments = type.typeParameters.length > 0
+      ? type.typeParameters.map((typeParameter, index) => substitutions.get(typeParameter) ?? substituteType(type.typeArguments[index] ?? anyType, substitutions))
+      : type.typeArguments.map(typeArgument => substituteType(typeArgument, substitutions));
+    return { ...type, typeArguments };
+  }
+  if (type.kind === "classInstance") {
+    return { ...type, typeArguments: type.typeArguments.map(typeArgument => substituteType(typeArgument, substitutions)) };
+  }
   if (type.kind === "function") {
     return {
       kind: "function",
       typeParameters: type.typeParameters,
       parameters: type.parameters.map(parameter => substituteType(parameter, substitutions)),
       returnType: substituteType(type.returnType, substitutions),
+    };
+  }
+  if (type.kind === "typeAliasInstance") {
+    return {
+      kind: "typeAliasInstance",
+      name: type.name,
+      typeArguments: type.typeArguments.map(typeArgument => substituteType(typeArgument, substitutions)),
+      target: substituteType(type.target, substitutions),
     };
   }
   return type;
@@ -2499,17 +2600,23 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
   if (expected.kind === "namespaceAndType") {
     return isAssignableTo(actual, expected.type);
   }
+  if (actual.kind === "typeAliasInstance") {
+    return isAssignableTo(actual.target, expected);
+  }
+  if (expected.kind === "typeAliasInstance") {
+    return isAssignableTo(actual, expected.target);
+  }
   if (actual.kind === "any" || expected.kind === "any") {
     return true;
   }
-  if (actual.kind === expected.kind && actual.kind !== "array" && actual.kind !== "classConstructor" && actual.kind !== "classInstance" && actual.kind !== "function" && actual.kind !== "interface" && actual.kind !== "namespace" && actual.kind !== "thisClass" && actual.kind !== "typeAlias" && actual.kind !== "typeParameter" && actual.kind !== "union") {
+  if (actual.kind === expected.kind && actual.kind !== "array" && actual.kind !== "classConstructor" && actual.kind !== "classInstance" && actual.kind !== "function" && actual.kind !== "interface" && actual.kind !== "intersection" && actual.kind !== "namespace" && actual.kind !== "thisClass" && actual.kind !== "typeAlias" && actual.kind !== "typeParameter" && actual.kind !== "union") {
     return true;
   }
   if (actual.kind === "classConstructor" && expected.kind === "classConstructor") {
-    return actual.name === expected.name && actual.abstract === expected.abstract;
+    return actual.name === expected.name && actual.abstract === expected.abstract && typeArgumentsAssignableTo(actual.typeArguments, expected.typeArguments);
   }
   if (actual.kind === "classInstance" && expected.kind === "classInstance") {
-    return actual.name === expected.name || classMembersAssignableTo(actual.members, expected.members);
+    return actual.name === expected.name ? typeArgumentsAssignableTo(actual.typeArguments, expected.typeArguments) : classMembersAssignableTo(actual.members, expected.members);
   }
   if (actual.kind === "object" && expected.kind === "object") {
     return [...expected.properties.entries()].every(([name, expectedPropertyType]) => {
@@ -2532,6 +2639,9 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
   if (actual.kind === "moduleNamespace" && expected.kind === "interface") {
     return objectPropertiesAssignableTo(actual.exports, expected.members.properties);
   }
+  if (actual.kind === "interface" && expected.kind === "moduleNamespace") {
+    return objectPropertiesAssignableTo(actual.members.properties, expected.exports);
+  }
   if (actual.kind === "namespace" && expected.kind === "namespace") {
     return actual.name === expected.name;
   }
@@ -2552,6 +2662,15 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
   if (expected.kind === "union") {
     return expected.types.some(type => isAssignableTo(actual, type));
   }
+  if (actual.kind === "intersection" && expected.kind === "intersection") {
+    return actual.types.length === expected.types.length && actual.types.every((type, index) => isAssignableTo(type, expected.types[index]!));
+  }
+  if (actual.kind === "intersection") {
+    return actual.types.every(type => isAssignableTo(type, expected));
+  }
+  if (expected.kind === "intersection") {
+    return expected.types.every(type => isAssignableTo(actual, type));
+  }
   if (actual.kind === "typeParameter" && expected.kind === "typeParameter") {
     return actual.name === expected.name;
   }
@@ -2566,6 +2685,13 @@ function objectPropertiesAssignableTo(actual: ReadonlyMap<string, CheckedType>, 
     }
   }
   return true;
+}
+
+function typeArgumentsAssignableTo(actual: readonly CheckedType[], expected: readonly CheckedType[]): boolean {
+  if (actual.length !== expected.length) {
+    return actual.length === 0 || expected.length === 0;
+  }
+  return actual.every((type, index) => isAssignableTo(type, expected[index]!) && isAssignableTo(expected[index]!, type));
 }
 
 function classMembersAssignableTo(actual: ClassMemberNames, expected: ClassMemberNames): boolean {
@@ -2676,6 +2802,9 @@ function displayType(type: CheckedType): string {
   if (type.kind === "function") {
     return `(${type.parameters.map((parameter, index) => `arg${index}: ${displayType(parameter)}`).join(", ")}) => ${displayType(type.returnType)}`;
   }
+  if (type.kind === "intersection") {
+    return type.types.map(member => member.kind === "function" ? `(${displayType(member)})` : displayType(member)).join(" & ");
+  }
   if (type.kind === "array") {
     return `${displayType(type.elementType)}[]`;
   }
@@ -2683,10 +2812,15 @@ function displayType(type: CheckedType): string {
     return type.name;
   }
   if (type.kind === "classConstructor") {
+    if (type.typeParameters.length > 0 || type.typeArguments.length > 0) {
+      const instanceType = displayGenericNamedType(type.name, type.typeArguments.length > 0 ? type.typeArguments : type.typeParameters.map(() => anyType));
+      const prototypeType = displayGenericNamedType(type.name, type.typeParameters.map(() => anyType));
+      return `{ new (): ${instanceType}; prototype: ${prototypeType}; }`;
+    }
     return `typeof ${type.name}`;
   }
   if (type.kind === "classInstance") {
-    return type.name;
+    return displayGenericNamedType(type.name, type.typeArguments);
   }
   if (type.kind === "interface") {
     return type.name;
@@ -2710,6 +2844,9 @@ function displayType(type: CheckedType): string {
   if (type.kind === "typeAlias") {
     return displayType(type.target);
   }
+  if (type.kind === "typeAliasInstance") {
+    return displayGenericNamedType(type.name, type.typeArguments);
+  }
   if (type.kind === "union") {
     return type.types.map(displayType).join(" | ");
   }
@@ -2729,6 +2866,10 @@ function displayType(type: CheckedType): string {
     return "unknown";
   }
   return type.kind === "unresolved" ? "unknown" : type.kind;
+}
+
+function displayGenericNamedType(name: string, typeArguments: readonly CheckedType[]): string {
+  return typeArguments.length === 0 ? name : `${name}<${typeArguments.map(displayType).join(", ")}>`;
 }
 
 function entityNameText(typeName: EntityName): string | undefined {
