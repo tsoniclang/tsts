@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative } from "node:path";
 import * as ts from "typescript";
-import { createProgram, getProgramDiagnostics, type CompilerHost, type CompilerOptions, type ProgramDiagnostic } from "../src/program/index.js";
+import { createProgram, getProgramDiagnostics, type CompilerHost, type CompilerOptions, type ModuleKindName, type ProgramDiagnostic } from "../src/program/index.js";
 
 interface CaseFile {
   readonly fileName: string;
@@ -22,7 +22,7 @@ interface CompilerCase {
 interface CaseCompilerOptions extends CompilerOptions {
   readonly noEmit?: boolean;
   readonly ignoreDeprecations?: string;
-  readonly module?: ts.ModuleKind;
+  readonly module?: ModuleKindName;
   readonly strict?: boolean;
   readonly noImplicitAny?: boolean;
   readonly strictNullChecks?: boolean;
@@ -58,7 +58,7 @@ interface Options {
 }
 
 const defaultCompilerOptions: CaseCompilerOptions = {
-  module: ts.ModuleKind.ESNext,
+  module: "esnext",
   noEmit: true,
   ignoreDeprecations: "6.0",
   strict: false,
@@ -357,25 +357,25 @@ function parseScriptTarget(value: string): NonNullable<CompilerOptions["target"]
   return targets.has(normalized as NonNullable<CompilerOptions["target"]>) ? normalized as NonNullable<CompilerOptions["target"]> : "es2024";
 }
 
-function parseModuleKind(value: string): ts.ModuleKind {
+function parseModuleKind(value: string): ModuleKindName {
   const normalized = value.toLowerCase();
-  const modules: Record<string, ts.ModuleKind> = {
-    none: ts.ModuleKind.None,
-    commonjs: ts.ModuleKind.CommonJS,
-    amd: ts.ModuleKind.AMD,
-    system: ts.ModuleKind.System,
-    umd: ts.ModuleKind.UMD,
-    es6: ts.ModuleKind.ES2015,
-    es2015: ts.ModuleKind.ES2015,
-    es2020: ts.ModuleKind.ES2020,
-    es2022: ts.ModuleKind.ES2022,
-    esnext: ts.ModuleKind.ESNext,
-    node16: ts.ModuleKind.Node16,
-    node18: ts.ModuleKind.Node18,
-    nodenext: ts.ModuleKind.NodeNext,
-    preserve: ts.ModuleKind.Preserve,
+  const modules: Record<string, ModuleKindName> = {
+    none: "none",
+    commonjs: "commonjs",
+    amd: "amd",
+    system: "system",
+    umd: "umd",
+    es6: "es2015",
+    es2015: "es2015",
+    es2020: "es2020",
+    es2022: "es2022",
+    esnext: "esnext",
+    node16: "node16",
+    node18: "node18",
+    nodenext: "nodenext",
+    preserve: "preserve",
   };
-  return modules[normalized] ?? defaultCompilerOptions.module!;
+  return modules[normalized] ?? "esnext";
 }
 
 function parseJsxEmit(value: string): ts.JsxEmit {

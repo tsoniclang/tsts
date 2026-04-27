@@ -196,6 +196,17 @@ describe("program groundwork", () => {
     assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2307]);
   });
 
+  it("uses the System-module unresolved package diagnostic", () => {
+    const host: CompilerHost = {
+      readFile: fileName => fileName === "src/index.ts" ? "import { missing } from \"missing-pkg\";" : undefined,
+    };
+
+    const program = createProgram(["src/index.ts"], { module: "system" }, host);
+
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find module 'missing-pkg'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?"]);
+    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2792]);
+  });
+
   it("does not emit when semantic diagnostics are present", () => {
     const outputs = new Map<string, string>();
     const host: CompilerHost = {

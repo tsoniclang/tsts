@@ -9,9 +9,11 @@ import { createDiagnosticAt, type DiagnosticCategory, type DiagnosticCode } from
 export interface CompilerOptions {
   readonly outDir?: string;
   readonly target?: ScriptTargetName;
+  readonly module?: ModuleKindName;
 }
 
 export type ScriptTargetName = "es3" | "es5" | "es2015" | "es2016" | "es2017" | "es2018" | "es2019" | "es2020" | "es2021" | "es2022" | "es2023" | "es2024" | "esnext";
+export type ModuleKindName = "none" | "commonjs" | "amd" | "system" | "umd" | "es2015" | "es2020" | "es2022" | "esnext" | "node16" | "node18" | "nodenext" | "preserve";
 
 export interface CompilerHost {
   readFile(fileName: string): string | undefined;
@@ -88,7 +90,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
     for (const moduleSpecifier of sourceFileModuleSpecifiers(sourceFile)) {
       const resolved = resolveModuleName(moduleSpecifier, rootName, host, fileTextCache);
       if (!resolved.found) {
-        diagnostics.push(programDiagnostic(rootName, 2307, moduleSpecifier));
+        diagnostics.push(programDiagnostic(rootName, unresolvedModuleDiagnosticCode(moduleSpecifier, options), moduleSpecifier));
         continue;
       }
       if (resolved.fileName !== undefined && !seen.has(canonicalFileName(resolved.fileName, host))) {
@@ -108,6 +110,10 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
     sourceFiles,
     diagnostics,
   };
+}
+
+function unresolvedModuleDiagnosticCode(moduleSpecifier: string, options: CompilerOptions): DiagnosticCode {
+  return !isRelativeModuleName(moduleSpecifier) && options.module === "system" ? 2792 : 2307;
 }
 
 export function emitProgram(program: Program, host?: Pick<CompilerHost, "writeFile" | "getCurrentDirectory">): EmitResult {
