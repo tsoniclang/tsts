@@ -631,7 +631,7 @@ function shouldReportAllCheckDiagnostics(state: CheckState): boolean {
   return !state.isJavaScriptFile || state.options.checkJs === true;
 }
 
-const nonBlockingProgramDiagnosticCodes = new Set<number>([1003, 1005, 1011, 1068, 1109, 1127, 1128, 1200, 1359, 1434, 1437, 1440, 1490, 6142]);
+const nonBlockingProgramDiagnosticCodes = new Set<number>([1003, 1005, 1011, 1068, 1109, 1127, 1128, 1200, 1359, 1434, 1437, 1440, 1490, 5052, 5059, 5067, 5101, 5102, 5107, 5110, 6082, 6142, 6504, 18035]);
 const plainJavaScriptCheckDiagnosticCodes = new Set<number>([
   1100,
   1101,
@@ -4358,6 +4358,7 @@ function inferJsxFragment(expression: JsxFragment, state: CheckState, environmen
   const jsxEnabled = checkJsxUsage(state);
   if (jsxEnabled) {
     checkJsxRuntime(state, environment);
+    checkJsxFragmentFactory(state, environment);
   }
   for (const child of expression.children) {
     checkJsxChild(child, jsxEnabled, state, environment);
@@ -4390,9 +4391,25 @@ function checkJsxRuntime(state: CheckState, environment: TypeEnvironment): void 
   }
 }
 
+function checkJsxFragmentFactory(state: CheckState, environment: TypeEnvironment): void {
+  const fragmentFactory = jsxFragmentFactoryRequirement(state.options);
+  if (fragmentFactory === undefined) {
+    return;
+  }
+  if (fragmentFactory.kind === "missing-option") {
+    state.diagnostics.push(createDiagnostic(17016));
+    return;
+  }
+  const factoryBinding = environment.get(fragmentFactory.name);
+  if (factoryBinding === undefined || valueMeaning(factoryBinding) === undefined) {
+    state.diagnostics.push(createDiagnostic(2879, fragmentFactory.name));
+  }
+}
+
 function jsxRuntimeRequirement(options: CompilerOptions): { readonly kind: "factory"; readonly name: string } | { readonly kind: "module"; readonly modulePath: string } | undefined {
   if (options.jsx === 2 || options.jsx === "react") {
-    return { kind: "factory", name: jsxFactoryBaseName(options.jsxFactory ?? options.reactNamespace ?? "React") };
+    const jsxFactory = options.jsxFactory !== undefined && isQualifiedNameText(options.jsxFactory) ? options.jsxFactory : undefined;
+    return { kind: "factory", name: jsxFactoryBaseName(jsxFactory ?? options.reactNamespace ?? "React") };
   }
   if (options.jsx === 4 || options.jsx === "react-jsx") {
     return { kind: "module", modulePath: `${options.jsxImportSource ?? "react"}/jsx-runtime` };
@@ -4403,8 +4420,30 @@ function jsxRuntimeRequirement(options: CompilerOptions): { readonly kind: "fact
   return undefined;
 }
 
+function jsxFragmentFactoryRequirement(options: CompilerOptions): { readonly kind: "factory"; readonly name: string } | { readonly kind: "missing-option" } | undefined {
+  if (options.jsx !== 2 && options.jsx !== "react") {
+    return undefined;
+  }
+  if (options.jsxFactory !== undefined && options.jsxFragmentFactory === undefined) {
+    return { kind: "missing-option" };
+  }
+  if (options.jsxFragmentFactory !== undefined && !isQualifiedNameText(options.jsxFragmentFactory)) {
+    return undefined;
+  }
+  const fragmentFactory = options.jsxFragmentFactory ?? options.reactNamespace ?? "React";
+  return { kind: "factory", name: jsxFactoryBaseName(fragmentFactory) };
+}
+
 function jsxFactoryBaseName(factoryName: string): string {
   return factoryName.split(".")[0] ?? factoryName;
+}
+
+function isQualifiedNameText(value: string): boolean {
+  return value.split(".").every(isIdentifierText);
+}
+
+function isIdentifierText(value: string): boolean {
+  return /^[$_\p{ID_Start}][$_\u200c\u200d\p{ID_Continue}]*$/u.test(value);
 }
 
 function jsxRuntimeModuleDiagnosticCode(options: CompilerOptions): 2792 | 2875 {
@@ -4448,7 +4487,7 @@ function checkJsxOpeningLike(tagName: JsxTagNameExpression, attributes: readonly
 function checkJsxTagName(tagName: JsxTagNameExpression, state: CheckState, environment: TypeEnvironment): void {
   if (isIdentifier(tagName)) {
     if (isIntrinsicJsxTagName(tagName.text)) {
-      if (jsxIntrinsicElementsType(environment) === undefined) {
+      if (shouldCheckJsxIntrinsicElements(state.options) && jsxIntrinsicElementsType(environment) === undefined) {
         state.diagnostics.push(createDiagnostic(7026, "IntrinsicElements"));
       }
       return;
@@ -4462,9 +4501,13 @@ function checkJsxTagName(tagName: JsxTagNameExpression, state: CheckState, envir
 }
 
 function checkJsxClosingTagName(tagName: JsxTagNameExpression, state: CheckState, environment: TypeEnvironment): void {
-  if (isIdentifier(tagName) && isIntrinsicJsxTagName(tagName.text) && jsxIntrinsicElementsType(environment) === undefined) {
+  if (isIdentifier(tagName) && isIntrinsicJsxTagName(tagName.text) && shouldCheckJsxIntrinsicElements(state.options) && jsxIntrinsicElementsType(environment) === undefined) {
     state.diagnostics.push(createDiagnostic(7026, "IntrinsicElements"));
   }
+}
+
+function shouldCheckJsxIntrinsicElements(options: CompilerOptions): boolean {
+  return options.jsxFactory === undefined || isQualifiedNameText(options.jsxFactory);
 }
 
 function isIntrinsicJsxTagName(name: string): boolean {
@@ -8731,15 +8774,22 @@ function uniqueInOrder<T>(values: readonly T[]): readonly T[] {
 }
 
 const stringMethodReturnTypes = new Map<string, CheckedType>([
+  ["charAt", stringType],
+  ["charCodeAt", numberType],
   ["endsWith", booleanType],
   ["includes", booleanType],
+  ["indexOf", numberType],
+  ["lastIndexOf", numberType],
   ["match", anyType],
   ["matchAll", anyType],
   ["replace", stringType],
+  ["search", numberType],
   ["slice", stringType],
   ["split", anyType],
   ["startsWith", booleanType],
+  ["substring", stringType],
   ["toLowerCase", stringType],
+  ["toUpperCase", stringType],
   ["trim", stringType],
 ]);
 

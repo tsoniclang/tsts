@@ -221,6 +221,212 @@ describe("program groundwork", () => {
     assert.deepEqual(getProgramDiagnostics(program), []);
   });
 
+  it("reports invalid JSX compiler option diagnostics without blocking semantic checks", () => {
+    const files = new Map<string, string>([
+      ["src/file.tsx", "const view = <div />;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/file.tsx"], { jsx: "react", reactNamespace: "not-valid" }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [5059, 2874, 7026]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.fileName), [undefined, "src/file.tsx", "src/file.tsx"]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Invalid value for '--reactNamespace'. 'not-valid' is not a valid identifier.",
+      "This JSX tag requires 'not-valid' to be in scope, but it could not be found.",
+      "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.",
+    ]);
+  });
+
+  it("treats conflicting JSX compiler options as blocking option diagnostics", () => {
+    const files = new Map<string, string>([
+      ["src/file.tsx", "const view = <div />;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/file.tsx"], { jsx: "react", jsxFactory: "h", reactNamespace: "React" }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [5053]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.fileName), [undefined]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Option 'reactNamespace' cannot be specified with option 'jsxFactory'.",
+    ]);
+  });
+
+  it("suppresses dependent fragment factory diagnostics when the fragment factory option is invalid", () => {
+    const files = new Map<string, string>([
+      ["src/file.tsx", "declare var h: any; const view = <></>;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/file.tsx"], { jsx: "react", jsxFactory: "h", jsxFragmentFactory: "not valid" }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [18035]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.fileName), [undefined]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Invalid value for 'jsxFragmentFactory'. 'not valid' is not a valid identifier or qualified-name.",
+    ]);
+  });
+
+  it("reports deprecated compiler options without blocking semantic checks", () => {
+    const files = new Map<string, string>([
+      ["src/file.ts", "const value = missing;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/file.ts"], {
+      outFile: "bundle.js",
+      downlevelIteration: true,
+      baseUrl: "src",
+      module: "amd",
+      target: "es5",
+      moduleResolution: "classic",
+      esModuleInterop: false,
+      allowSyntheticDefaultImports: false,
+    }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [5101, 5101, 5101, 5107, 5107, 5107, 5107, 5107, 2304]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.fileName), [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, "src/file.ts"]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Option 'outFile' is deprecated and will stop functioning in TypeScript 7.0. Specify compilerOption '\"ignoreDeprecations\": \"6.0\"' to silence this error.",
+      "Option 'downlevelIteration' is deprecated and will stop functioning in TypeScript 7.0. Specify compilerOption '\"ignoreDeprecations\": \"6.0\"' to silence this error.",
+      "Option 'baseUrl' is deprecated and will stop functioning in TypeScript 7.0. Specify compilerOption '\"ignoreDeprecations\": \"6.0\"' to silence this error.",
+      "Option 'module=AMD' is deprecated and will stop functioning in TypeScript 7.0. Specify compilerOption '\"ignoreDeprecations\": \"6.0\"' to silence this error.",
+      "Option 'target=ES5' is deprecated and will stop functioning in TypeScript 7.0. Specify compilerOption '\"ignoreDeprecations\": \"6.0\"' to silence this error.",
+      "Option 'moduleResolution=classic' is deprecated and will stop functioning in TypeScript 7.0. Specify compilerOption '\"ignoreDeprecations\": \"6.0\"' to silence this error.",
+      "Option 'esModuleInterop=false' is deprecated and will stop functioning in TypeScript 7.0. Specify compilerOption '\"ignoreDeprecations\": \"6.0\"' to silence this error.",
+      "Option 'allowSyntheticDefaultImports=false' is deprecated and will stop functioning in TypeScript 7.0. Specify compilerOption '\"ignoreDeprecations\": \"6.0\"' to silence this error.",
+      "Cannot find name 'missing'.",
+    ]);
+  });
+
+  it("honors ignoreDeprecations for current TypeScript 6 deprecations", () => {
+    const files = new Map<string, string>([
+      ["src/file.ts", "const value = missing;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/file.ts"], {
+      outFile: "bundle.js",
+      module: "system",
+      target: "es5",
+      ignoreDeprecations: "6.0",
+    }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [2304]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), ["Cannot find name 'missing'."]);
+  });
+
+  it("reports removed compiler options without blocking semantic checks", () => {
+    const files = new Map<string, string>([
+      ["src/file.ts", "const value = missing;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/file.ts"], {
+      removedOptions: ["noImplicitUseStrict", "preserveValueImports", "out"],
+    }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [5102, 5102, 5102, 2304]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.fileName), [undefined, undefined, undefined, "src/file.ts"]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Option 'noImplicitUseStrict' has been removed. Please remove it from your configuration.",
+      "Option 'preserveValueImports' has been removed. Please remove it from your configuration.",
+      "Option 'out' has been removed. Please remove it from your configuration.",
+      "Cannot find name 'missing'.",
+    ]);
+  });
+
+  it("reports JavaScript root files when allowJs is not enabled", () => {
+    const files = new Map<string, string>([
+      ["src/file.js", "const value = missing;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/file.js"], { checkJs: true }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(program.sourceFiles, []);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [5052, 6504]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.fileName), [undefined, undefined]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Option 'checkJs' cannot be specified without specifying option 'allowJs'.",
+      "File 'src/file.js' is a JavaScript file. Did you mean to enable the 'allowJs' option?",
+    ]);
+  });
+
+  it("reports module option constraints without blocking semantic checks", () => {
+    const files = new Map<string, string>([
+      ["src/file.ts", "const value = missing;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/file.ts"], {
+      outFile: "bundle.js",
+      module: "commonjs",
+      moduleResolution: "nodenext",
+      ignoreDeprecations: "6.0",
+    }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [6082, 5110, 2304]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.fileName), [undefined, undefined, "src/file.ts"]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Only 'amd' and 'system' modules are supported alongside --outFile.",
+      "Option 'module' must be set to 'NodeNext' when option 'moduleResolution' is set to 'NodeNext'.",
+      "Cannot find name 'missing'.",
+    ]);
+  });
+
+  it("does not report outFile module restrictions when emit is disabled", () => {
+    const files = new Map<string, string>([
+      ["src/file.ts", "export const value = 1;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/file.ts"], {
+      outFile: "bundle.js",
+      module: "commonjs",
+      noEmit: true,
+      ignoreDeprecations: "6.0",
+    }, host);
+
+    assert.deepEqual(getProgramDiagnostics(program), []);
+  });
+
   it("prebinds ambient namespaces for self references and function namespace merges", () => {
     const files = new Map<string, string>([
       ["src/db.d.ts", "declare namespace Db { export import Types = Db; } export = Db;"],
@@ -249,7 +455,7 @@ describe("program groundwork", () => {
       useCaseSensitiveFileNames: () => true,
     };
 
-    const program = createProgram(["/proj/component/file.ts"], { baseUrl: "/proj" }, host);
+    const program = createProgram(["/proj/component/file.ts"], { baseUrl: "/proj", ignoreDeprecations: "6.0" }, host);
 
     assert.equal(program.diagnostics.length, 0);
     assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["/proj/component/file.ts", "/proj/defs/cc.ts"]);
@@ -348,7 +554,7 @@ describe("program groundwork", () => {
       readFile: fileName => fileName === "src/index.ts" ? "import { missing } from \"missing-pkg\";" : undefined,
     };
 
-    const program = createProgram(["src/index.ts"], { module: "system" }, host);
+    const program = createProgram(["src/index.ts"], { module: "system", ignoreDeprecations: "6.0" }, host);
 
     assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find module 'missing-pkg'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?"]);
     assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2792]);
@@ -359,7 +565,7 @@ describe("program groundwork", () => {
       readFile: fileName => fileName === "src/index.ts" ? "import { local } from \"./missing\"; import { pkg } from \"missing-pkg\";" : undefined,
     };
 
-    const program = createProgram(["src/index.ts"], { module: "amd" }, host);
+    const program = createProgram(["src/index.ts"], { module: "amd", ignoreDeprecations: "6.0" }, host);
 
     assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2792, 2792]);
     assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), [
@@ -415,7 +621,7 @@ describe("program groundwork", () => {
       useCaseSensitiveFileNames: () => true,
     };
 
-    const program = createProgram(["src/index.ts"], { module: "system" }, host);
+    const program = createProgram(["src/index.ts"], { module: "system", ignoreDeprecations: "6.0" }, host);
 
     assert.equal(program.diagnostics.length, 0);
     assert.deepEqual(emitProgram(program, host).diagnostics, []);
@@ -431,7 +637,7 @@ describe("program groundwork", () => {
       useCaseSensitiveFileNames: () => true,
     };
 
-    const program = createProgram(["src/index.ts"], { module: "system", allowSyntheticDefaultImports: false }, host);
+    const program = createProgram(["src/index.ts"], { module: "system", allowSyntheticDefaultImports: false, ignoreDeprecations: "6.0" }, host);
     const diagnostics = emitProgram(program, host).diagnostics;
 
     assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [1192, 2564]);

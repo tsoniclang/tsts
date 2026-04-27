@@ -53,6 +53,19 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("reports classic JSX fragment factory requirements", () => {
+    const sourceFile = parseSourceFile("const view = <></>;", { fileName: "view.tsx" });
+
+    assert.deepEqual(checkSourceFile(sourceFile, { jsx: "react", jsxFactory: "h" }).diagnostics.map(diagnostic => diagnostic.message), [
+      "This JSX tag requires 'h' to be in scope, but it could not be found.",
+      "The 'jsxFragmentFactory' compiler option must be provided to use JSX fragments with the 'jsxFactory' compiler option.",
+    ]);
+    assert.deepEqual(checkSourceFile(sourceFile, { jsx: "react" }).diagnostics.map(diagnostic => diagnostic.message), [
+      "This JSX tag requires 'React' to be in scope, but it could not be found.",
+      "Using JSX fragments requires fragment factory 'React' to be in scope, but it could not be found.",
+    ]);
+  });
+
   it("reports missing JSX mode without cascading JSX semantic diagnostics", () => {
     const sourceFile = parseSourceFile("const view = <div>{missing}<Component /></div>;", { fileName: "view.tsx" });
     const result = checkSourceFile(sourceFile);

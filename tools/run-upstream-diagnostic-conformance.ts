@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative } from "node:path";
 import * as ts from "typescript";
-import { createProgram, getProgramDiagnostics, type CompilerHost, type CompilerOptions, type ModuleKindName, type ProgramDiagnostic } from "../src/program/index.js";
+import { createProgram, getProgramDiagnostics, type CompilerHost, type CompilerOptions, type ModuleKindName, type ModuleResolutionKindName, type ProgramDiagnostic, type RemovedCompilerOptionName } from "../src/program/index.js";
 
 interface CaseFile {
   readonly fileName: string;
@@ -28,8 +28,11 @@ interface CompilerCase {
 interface CaseCompilerOptions extends CompilerOptions {
   readonly baseUrl?: string;
   readonly noEmit?: boolean;
+  readonly emitDeclarationOnly?: boolean;
   readonly ignoreDeprecations?: string;
+  readonly lib?: readonly string[];
   readonly module?: ModuleKindName;
+  readonly moduleResolution?: ModuleResolutionKindName;
   readonly strict?: boolean;
   readonly noImplicitAny?: boolean;
   readonly strictNullChecks?: boolean;
@@ -43,11 +46,13 @@ interface CaseCompilerOptions extends CompilerOptions {
   readonly esModuleInterop?: boolean;
   readonly noUncheckedSideEffectImports?: boolean;
   readonly declaration?: boolean;
+  readonly outFile?: string;
   readonly jsx?: ts.JsxEmit;
   readonly jsxFactory?: string;
   readonly jsxFragmentFactory?: string;
   readonly jsxImportSource?: string;
   readonly reactNamespace?: string;
+  readonly removedOptions?: readonly RemovedCompilerOptionName[];
 }
 
 interface ComparableDiagnostic {
@@ -73,13 +78,6 @@ interface Options {
   readonly allowFailures: boolean;
   readonly outFile: string;
 }
-
-const defaultCompilerOptions: CaseCompilerOptions = {
-  module: "esnext",
-  noEmit: true,
-  ignoreDeprecations: "6.0",
-  target: "es2024",
-};
 
 function parseArgs(args: readonly string[]): Options {
   let suite: Options["suite"] = "typescript";
@@ -253,10 +251,17 @@ function parseBaselineCompilerOptions(baselineFileName: string): CaseCompilerOpt
     const [rawKey, rawValue] = part.split("=");
     const key = rawKey?.trim().toLowerCase();
     const value = rawValue?.trim();
+    const removedOption = key === undefined ? undefined : removedCompilerOptionName(key);
+    if (removedOption !== undefined) {
+      options = withRemovedOption(options, removedOption);
+      continue;
+    }
     if (key === "target" && value !== undefined) {
       options = { ...options, target: parseScriptTarget(value) };
     } else if (key === "module" && value !== undefined) {
       options = { ...options, module: parseModuleKind(value) };
+    } else if (key === "moduleresolution" && value !== undefined) {
+      options = { ...options, moduleResolution: parseModuleResolutionKind(value) };
     } else if (key === "jsx" && value !== undefined) {
       options = { ...options, jsx: parseJsxEmit(value) };
     } else if (key === "jsxfactory" && value !== undefined) {
@@ -271,14 +276,22 @@ function parseBaselineCompilerOptions(baselineFileName: string): CaseCompilerOpt
       options = { ...options, allowSyntheticDefaultImports: parseBoolean(value) };
     } else if (key === "alwaysstrict" && value !== undefined) {
       options = { ...options, alwaysStrict: parseBoolean(value) };
+    } else if (key === "noemit" && value !== undefined) {
+      options = { ...options, noEmit: parseBoolean(value) };
     } else if (key === "nolib" && value !== undefined) {
       options = { ...options, noLib: parseBoolean(value) };
+    } else if (key === "lib" && value !== undefined) {
+      options = { ...options, lib: parseList(value) };
     } else if (key === "downleveliteration" && value !== undefined) {
       options = { ...options, downlevelIteration: parseBoolean(value) };
     } else if (key === "esmoduleinterop" && value !== undefined) {
       options = { ...options, esModuleInterop: parseBoolean(value) };
+    } else if (key === "outfile" && value !== undefined) {
+      options = { ...options, outFile: value };
     } else if (key === "nouncheckedsideeffectimports" && value !== undefined) {
       options = { ...options, noUncheckedSideEffectImports: parseBoolean(value) };
+    } else if (key === "emitdeclarationonly" && value !== undefined) {
+      options = { ...options, emitDeclarationOnly: parseBoolean(value) };
     }
   }
   return options;
@@ -305,6 +318,15 @@ async function baselineDiagnostics(errorsFile: string): Promise<readonly Compara
   for (const line of text.split(/\r?\n/)) {
     const match = line.match(/^(.*)\(\d+,\d+\): error TS(\d+): (.*)$/);
     if (match === null) {
+      const globalMatch = line.match(/^error TS(\d+): (.*)$/);
+      if (globalMatch !== null) {
+        diagnostics.push({
+          fileName: undefined,
+          code: Number(globalMatch[1]),
+          message: globalMatch[2]!,
+        });
+        continue;
+      }
       if (line.startsWith("==== ")) {
         break;
       }
@@ -333,6 +355,11 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
     }
     const name = match[1]!.toLowerCase();
     const value = match[2]?.trim() ?? "true";
+    const removedOption = removedCompilerOptionName(name);
+    if (removedOption !== undefined) {
+      options = withRemovedOption(options, removedOption);
+      continue;
+    }
     switch (name) {
       case "target":
         options = { ...options, target: parseScriptTarget(value) };
@@ -340,8 +367,17 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
       case "module":
         options = { ...options, module: parseModuleKind(value) };
         break;
+      case "moduleresolution":
+        options = { ...options, moduleResolution: parseModuleResolutionKind(value) };
+        break;
       case "baseurl":
         options = { ...options, baseUrl: value };
+        break;
+      case "lib":
+        options = { ...options, lib: parseList(value) };
+        break;
+      case "ignoredeprecations":
+        options = { ...options, ignoreDeprecations: value };
         break;
       case "strict":
         options = { ...options, strict: parseBoolean(value) };
@@ -376,6 +412,9 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
       case "alwaysstrict":
         options = { ...options, alwaysStrict: parseBoolean(value) };
         break;
+      case "noemit":
+        options = { ...options, noEmit: parseBoolean(value) };
+        break;
       case "esmoduleinterop":
         options = { ...options, esModuleInterop: parseBoolean(value) };
         break;
@@ -384,6 +423,12 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
         break;
       case "declaration":
         options = { ...options, declaration: parseBoolean(value) };
+        break;
+      case "emitdeclarationonly":
+        options = { ...options, emitDeclarationOnly: parseBoolean(value) };
+        break;
+      case "outfile":
+        options = { ...options, outFile: value };
         break;
       case "jsx":
         options = { ...options, jsx: parseJsxEmit(value) };
@@ -415,6 +460,10 @@ function parseBoolean(value: string): boolean {
   return value.toLowerCase() !== "false";
 }
 
+function parseList(value: string): readonly string[] {
+  return value.split(",").map(part => part.trim()).filter(part => part.length > 0);
+}
+
 function parseScriptTarget(value: string): NonNullable<CompilerOptions["target"]> {
   const normalized = value.toLowerCase().split(",")[0]!.trim();
   const targets = new Set<NonNullable<CompilerOptions["target"]>>([
@@ -439,7 +488,7 @@ function parseScriptTarget(value: string): NonNullable<CompilerOptions["target"]
 }
 
 function parseModuleKind(value: string): ModuleKindName {
-  const normalized = value.toLowerCase();
+  const normalized = value.toLowerCase().split(",")[0]!.trim();
   const modules: Record<string, ModuleKindName> = {
     none: "none",
     commonjs: "commonjs",
@@ -453,10 +502,43 @@ function parseModuleKind(value: string): ModuleKindName {
     esnext: "esnext",
     node16: "node16",
     node18: "node18",
+    node20: "node20",
     nodenext: "nodenext",
     preserve: "preserve",
   };
   return modules[normalized] ?? "esnext";
+}
+
+function parseModuleResolutionKind(value: string): ModuleResolutionKindName {
+  const normalized = value.toLowerCase().split(",")[0]!.trim();
+  const resolutions: Record<string, ModuleResolutionKindName> = {
+    classic: "classic",
+    node: "node10",
+    node10: "node10",
+    node16: "node16",
+    nodenext: "nodenext",
+    bundler: "bundler",
+  };
+  return resolutions[normalized] ?? "node10";
+}
+
+function removedCompilerOptionName(name: string): RemovedCompilerOptionName | undefined {
+  const removedOptions: Record<string, RemovedCompilerOptionName> = {
+    charset: "charset",
+    importsnotusedasvalues: "importsNotUsedAsValues",
+    keyofstringsonly: "keyofStringsOnly",
+    noimplicitusestrict: "noImplicitUseStrict",
+    nostrictgenericchecks: "noStrictGenericChecks",
+    out: "out",
+    preservevalueimports: "preserveValueImports",
+    suppressexcesspropertyerrors: "suppressExcessPropertyErrors",
+    suppressimplicitanyindexerrors: "suppressImplicitAnyIndexErrors",
+  };
+  return removedOptions[name];
+}
+
+function withRemovedOption(options: CaseCompilerOptions, optionName: RemovedCompilerOptionName): CaseCompilerOptions {
+  return { ...options, removedOptions: [...options.removedOptions ?? [], optionName] };
 }
 
 function parseJsxEmit(value: string): ts.JsxEmit {
@@ -473,9 +555,6 @@ function parseJsxEmit(value: string): ts.JsxEmit {
 }
 
 function tstsDiagnostics(testCase: CompilerCase): readonly ComparableDiagnostic[] {
-  if (testCase.noTypesAndSymbols) {
-    return [];
-  }
   const fileMap = new Map(testCase.files.map(file => [normalizeFileName(file.fileName), file.text]));
   const host: CompilerHost = {
     readFile: fileName => {
@@ -488,7 +567,8 @@ function tstsDiagnostics(testCase: CompilerCase): readonly ComparableDiagnostic[
     useCaseSensitiveFileNames: () => true,
   };
   const program = createProgram(testCase.rootNames.map(normalizeFileName), testCase.compilerOptions, host);
-  return getProgramDiagnostics(program)
+  const diagnostics = testCase.noTypesAndSymbols ? program.diagnostics : getProgramDiagnostics(program);
+  return diagnostics
     .map(normalizeProgramDiagnostic)
     .filter(diagnostic => diagnostic.fileName === undefined || fileMap.has(diagnostic.fileName))
     .sort(compareDiagnostics);
@@ -520,7 +600,7 @@ function readDiskFileIfPresent(fileName: string): string | undefined {
 function normalizeProgramDiagnostic(diagnostic: ProgramDiagnostic): ComparableDiagnostic {
   return {
     code: diagnostic.code,
-    fileName: normalizeFileName(diagnostic.fileName),
+    fileName: diagnostic.fileName === undefined ? undefined : normalizeFileName(diagnostic.fileName),
     message: diagnostic.message,
   };
 }

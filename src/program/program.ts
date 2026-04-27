@@ -4,13 +4,16 @@ import { checkProgram } from "../checker/index.js";
 import { printSourceFile } from "../emit-js/index.js";
 import { parseSourceFileWithDiagnostics } from "../parser/index.js";
 import { Kind, forEachChild, isExportAssignment, isExportDeclaration, isExternalModuleReference, isImportDeclaration, isImportEqualsDeclaration, isModuleDeclaration, isStringLiteral, type Node, type SourceFile } from "../ast/index.js";
-import { createDiagnosticAt, type DiagnosticCategory, type DiagnosticCode } from "../diagnostics/index.js";
+import { createDiagnostic, createDiagnosticAt, type DiagnosticCategory, type DiagnosticCode } from "../diagnostics/index.js";
 
 export interface CompilerOptions {
   readonly outDir?: string;
+  readonly outFile?: string;
   readonly baseUrl?: string;
+  readonly lib?: readonly string[];
   readonly target?: ScriptTargetName;
   readonly module?: ModuleKindName;
+  readonly moduleResolution?: ModuleResolutionKindName;
   readonly strict?: boolean;
   readonly noImplicitAny?: boolean;
   readonly strictNullChecks?: boolean;
@@ -23,16 +26,31 @@ export interface CompilerOptions {
   readonly allowUnreachableCode?: boolean;
   readonly esModuleInterop?: boolean;
   readonly noUncheckedSideEffectImports?: boolean;
+  readonly noEmit?: boolean;
   readonly declaration?: boolean;
+  readonly emitDeclarationOnly?: boolean;
   readonly jsx?: unknown;
   readonly jsxFactory?: string;
   readonly jsxFragmentFactory?: string;
   readonly jsxImportSource?: string;
   readonly reactNamespace?: string;
+  readonly ignoreDeprecations?: string;
+  readonly removedOptions?: readonly RemovedCompilerOptionName[];
 }
 
 export type ScriptTargetName = "es3" | "es5" | "es2015" | "es2016" | "es2017" | "es2018" | "es2019" | "es2020" | "es2021" | "es2022" | "es2023" | "es2024" | "esnext";
-export type ModuleKindName = "none" | "commonjs" | "amd" | "system" | "umd" | "es2015" | "es2020" | "es2022" | "esnext" | "node16" | "node18" | "nodenext" | "preserve";
+export type ModuleKindName = "none" | "commonjs" | "amd" | "system" | "umd" | "es2015" | "es2020" | "es2022" | "esnext" | "node16" | "node18" | "node20" | "nodenext" | "preserve";
+export type ModuleResolutionKindName = "classic" | "node10" | "node16" | "nodenext" | "bundler";
+export type RemovedCompilerOptionName =
+  | "charset"
+  | "importsNotUsedAsValues"
+  | "keyofStringsOnly"
+  | "noImplicitUseStrict"
+  | "noStrictGenericChecks"
+  | "out"
+  | "preserveValueImports"
+  | "suppressExcessPropertyErrors"
+  | "suppressImplicitAnyIndexErrors";
 
 export interface CompilerHost {
   readFile(fileName: string): string | undefined;
@@ -56,7 +74,7 @@ export interface ResolvedModule {
 }
 
 export interface ProgramDiagnostic {
-  readonly fileName: string;
+  readonly fileName?: string;
   readonly code?: DiagnosticCode;
   readonly category?: DiagnosticCategory;
   readonly key?: string;
@@ -84,7 +102,7 @@ export interface EmitResult {
 
 export function createProgram(rootNames: readonly string[], options: CompilerOptions, host: CompilerHost): Program {
   const sourceFiles: ProgramSourceFile[] = [];
-  const diagnostics: ProgramDiagnostic[] = [];
+  const diagnostics: ProgramDiagnostic[] = [...compilerOptionsDiagnostics(options)];
   const unresolvedModules: { readonly fileName: string; readonly moduleSpecifier: string; readonly sideEffectOnly: boolean }[] = [];
   const moduleAugmentations: { readonly fileName: string; readonly moduleSpecifier: string }[] = [];
   const ambientModules = new Set<string>();
@@ -98,6 +116,10 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
       continue;
     }
     seen.add(canonicalName);
+    if (isJavaScriptFileName(rootName) && options.allowJs !== true) {
+      diagnostics.push(optionDiagnostic(6504, rootName));
+      continue;
+    }
     const sourceText = readFileCached(rootName, host, fileTextCache);
     if (sourceText === undefined) {
       diagnostics.push(programDiagnostic(rootName, 6053, rootName));
@@ -186,6 +208,150 @@ function unresolvedModuleDiagnosticCode(unresolved: { readonly moduleSpecifier: 
     return 2882;
   }
   return (options.module === "amd" || options.module === "system") ? 2792 : 2307;
+}
+
+function compilerOptionsDiagnostics(options: CompilerOptions): readonly ProgramDiagnostic[] {
+  const diagnostics: ProgramDiagnostic[] = [];
+  for (const removedOption of options.removedOptions ?? []) {
+    diagnostics.push(optionDiagnostic(5102, removedOption));
+  }
+  if (shouldReportDeprecated6Option(options)) {
+    diagnostics.push(...deprecatedCompilerOptionsDiagnostics(options));
+  }
+  if (options.checkJs === true && options.allowJs !== true) {
+    diagnostics.push(optionDiagnostic(5052, "checkJs", "allowJs"));
+  }
+  if (options.outFile !== undefined && options.noEmit !== true && options.emitDeclarationOnly !== true && !moduleKindSupportsOutFile(options.module)) {
+    diagnostics.push(optionDiagnostic(6082, "outFile"));
+  }
+  if (options.moduleResolution === "node16" && options.module !== "node16") {
+    diagnostics.push(optionDiagnostic(5110, "Node16", "Node16"));
+  }
+  if (options.moduleResolution === "nodenext" && options.module !== "nodenext") {
+    diagnostics.push(optionDiagnostic(5110, "NodeNext", "NodeNext"));
+  }
+  if (options.lib !== undefined && options.noLib === true) {
+    diagnostics.push(optionDiagnostic(5053, "lib", "noLib"));
+  }
+  if (options.reactNamespace !== undefined && options.jsxFactory !== undefined) {
+    diagnostics.push(optionDiagnostic(5053, "reactNamespace", "jsxFactory"));
+  }
+  if (options.reactNamespace !== undefined && !isIdentifierText(options.reactNamespace)) {
+    diagnostics.push(optionDiagnostic(5059, options.reactNamespace));
+  }
+  if (options.jsxFactory !== undefined && !isQualifiedNameText(options.jsxFactory)) {
+    diagnostics.push(optionDiagnostic(5067, options.jsxFactory));
+  }
+  if (options.jsxFragmentFactory !== undefined && !isQualifiedNameText(options.jsxFragmentFactory)) {
+    diagnostics.push(optionDiagnostic(18035, options.jsxFragmentFactory));
+  }
+  return diagnostics;
+}
+
+function moduleKindSupportsOutFile(moduleKind: ModuleKindName | undefined): boolean {
+  return moduleKind === undefined || moduleKind === "none" || moduleKind === "amd" || moduleKind === "system";
+}
+
+function shouldReportDeprecated6Option(options: CompilerOptions): boolean {
+  return options.ignoreDeprecations === undefined || compareVersionText(options.ignoreDeprecations, "6.0") < 0;
+}
+
+function deprecatedCompilerOptionsDiagnostics(options: CompilerOptions): readonly ProgramDiagnostic[] {
+  const diagnostics: ProgramDiagnostic[] = [];
+  if (options.outFile !== undefined) {
+    diagnostics.push(deprecatedCompilerOptionDiagnostic("outFile"));
+  }
+  if (options.downlevelIteration !== undefined) {
+    diagnostics.push(deprecatedCompilerOptionDiagnostic("downlevelIteration"));
+  }
+  if (options.baseUrl !== undefined) {
+    diagnostics.push(deprecatedCompilerOptionDiagnostic("baseUrl"));
+  }
+  const moduleValue = deprecatedModuleOptionValue(options.module);
+  if (moduleValue !== undefined) {
+    diagnostics.push(deprecatedCompilerOptionValueDiagnostic("module", moduleValue));
+  }
+  if (options.target === "es3" || options.target === "es5") {
+    diagnostics.push(deprecatedCompilerOptionValueDiagnostic("target", scriptTargetDisplayName(options.target)));
+  }
+  if (options.moduleResolution === "classic" || options.moduleResolution === "node10") {
+    diagnostics.push(deprecatedCompilerOptionValueDiagnostic("moduleResolution", options.moduleResolution));
+  }
+  if (options.esModuleInterop === false) {
+    diagnostics.push(deprecatedCompilerOptionValueDiagnostic("esModuleInterop", "false"));
+  }
+  if (options.allowSyntheticDefaultImports === false) {
+    diagnostics.push(deprecatedCompilerOptionValueDiagnostic("allowSyntheticDefaultImports", "false"));
+  }
+  return diagnostics;
+}
+
+function deprecatedCompilerOptionDiagnostic(optionName: string): ProgramDiagnostic {
+  return optionDiagnostic(5101, optionName, "7.0", "6.0");
+}
+
+function deprecatedCompilerOptionValueDiagnostic(optionName: string, optionValue: string): ProgramDiagnostic {
+  return optionDiagnostic(5107, optionName, optionValue, "7.0", "6.0");
+}
+
+function deprecatedModuleOptionValue(moduleKind: ModuleKindName | undefined): string | undefined {
+  switch (moduleKind) {
+    case "none":
+      return "None";
+    case "amd":
+      return "AMD";
+    case "system":
+      return "System";
+    case "umd":
+      return "UMD";
+    default:
+      return undefined;
+  }
+}
+
+function scriptTargetDisplayName(target: ScriptTargetName): string {
+  return target.toUpperCase();
+}
+
+function compareVersionText(left: string, right: string): number {
+  const leftParts = parseVersionText(left);
+  const rightParts = parseVersionText(right);
+  const length = Math.max(leftParts.length, rightParts.length);
+  for (let index = 0; index < length; index += 1) {
+    const leftPart = leftParts[index] ?? 0;
+    const rightPart = rightParts[index] ?? 0;
+    if (leftPart !== rightPart) {
+      return leftPart - rightPart;
+    }
+  }
+  return 0;
+}
+
+function parseVersionText(value: string): readonly number[] {
+  return value.split(".").map(part => Number.parseInt(part, 10)).map(part => Number.isNaN(part) ? 0 : part);
+}
+
+function optionDiagnostic(code: DiagnosticCode, ...args: readonly string[]): ProgramDiagnostic {
+  const diagnostic = createDiagnostic(code, ...args);
+  return {
+    code: diagnostic.code,
+    category: diagnostic.category,
+    key: diagnostic.key,
+    messageText: diagnostic.messageText,
+    message: diagnostic.message,
+  };
+}
+
+function isQualifiedNameText(value: string): boolean {
+  return value.split(".").every(isIdentifierText);
+}
+
+function isIdentifierText(value: string): boolean {
+  return /^[$_\p{ID_Start}][$_\u200c\u200d\p{ID_Continue}]*$/u.test(value);
+}
+
+function isJavaScriptFileName(fileName: string): boolean {
+  return fileName.endsWith(".js") || fileName.endsWith(".jsx") || fileName.endsWith(".mjs") || fileName.endsWith(".cjs");
 }
 
 function amdModuleDirectiveDiagnostics(fileName: string, sourceText: string): readonly ProgramDiagnostic[] {
