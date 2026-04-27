@@ -539,6 +539,9 @@ function substituteType(type: CheckedType, substitutions: ReadonlyMap<string, Ch
 }
 
 function isAssignableTo(actual: CheckedType, expected: CheckedType): boolean {
+  if (actual.kind === "any" || expected.kind === "any") {
+    return true;
+  }
   if (actual.kind === expected.kind && actual.kind !== "array" && actual.kind !== "function" && actual.kind !== "typeParameter") {
     return true;
   }
@@ -568,8 +571,20 @@ const stringMethodReturnTypes = new Map<string, CheckedType>([
 ]);
 
 const arrayMethodReturnTypes = new Map<string, CheckedType>([
+  ["concat", { kind: "array", elementType: anyType }],
+  ["every", booleanType],
+  ["filter", { kind: "array", elementType: anyType }],
+  ["find", anyType],
   ["forEach", voidType],
+  ["includes", booleanType],
+  ["indexOf", numberType],
+  ["join", stringType],
   ["map", { kind: "array", elementType: anyType }],
+  ["pop", anyType],
+  ["push", numberType],
+  ["reduce", anyType],
+  ["slice", { kind: "array", elementType: anyType }],
+  ["some", booleanType],
 ]);
 
 function isComparisonOperator(kind: Kind): boolean {

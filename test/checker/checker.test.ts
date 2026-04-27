@@ -50,6 +50,13 @@ describe("checker groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
   });
 
+  it("treats empty any arrays and core mutating array methods as standard Array surface", () => {
+    const sourceFile = parseSourceFile("function f(): string[] { const items: string[] = []; items.push(\"x\"); return items.reduce((result, item) => result.concat(item), []); }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
   it("reports parameter property modifiers outside constructor implementations", () => {
     const sourceFile = parseSourceFile("const f = (public value: string) => value;");
     const result = checkSourceFile(sourceFile);
