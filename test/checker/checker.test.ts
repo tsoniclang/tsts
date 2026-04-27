@@ -205,6 +205,23 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2427, 2369, 2369, 2355]);
   });
 
+  it("reports unresolved type references while honoring declared and imported types", () => {
+    const sourceFile = parseSourceFile([
+      "import { External } from \"./external\";",
+      "interface Local { value: string; }",
+      "type Alias = Local;",
+      "function f(arg: External): Alias { }",
+      "function g(arg: Missing): Missing { }",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2304, 2304]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Cannot find name 'Missing'.",
+      "Cannot find name 'Missing'.",
+    ]);
+  });
+
   it("checks declared arrow function return types", () => {
     const sourceFile = parseSourceFile("const f = (x: string): number => x;");
     const result = checkSourceFile(sourceFile);

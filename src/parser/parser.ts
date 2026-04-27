@@ -284,7 +284,12 @@ export class Parser {
       if (this.#current().kind === Kind.ClassKeyword) {
         return this.#parseClassDeclaration(defaultModifiers);
       }
-      throw new ParseError("Unsupported export default declaration", this.#current());
+      if (this.#current().kind === Kind.InterfaceKeyword) {
+        return this.#parseInterfaceDeclaration(defaultModifiers);
+      }
+      const expression = this.#parseExpression();
+      this.#consumeOptional(Kind.SemicolonToken);
+      return createExportAssignment(defaultModifiers, false, undefined as never, expression);
     }
     switch (this.#current().kind) {
       case Kind.ImportKeyword:

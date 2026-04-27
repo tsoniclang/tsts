@@ -29,12 +29,16 @@ import {
   isArrayBindingPattern,
   isIdentifier,
   isIfStatement,
+  isImportDeclaration,
+  isImportEqualsDeclaration,
   isInterfaceDeclaration,
   isKeywordTypeNode,
   isMethodDeclaration,
   isMissingDeclaration,
   isModuleBlock,
   isModuleDeclaration,
+  isNamedImports,
+  isNamespaceImport,
   isNewExpression,
   isNumericLiteral,
   isNoSubstitutionTemplateLiteral,
@@ -72,6 +76,7 @@ import {
   type Expression,
   type FunctionDeclaration,
   type GetAccessorDeclaration,
+  type ImportDeclaration,
   type InterfaceDeclaration,
   type MethodDeclaration,
   type ParameterDeclaration,
@@ -116,6 +121,43 @@ const stringType: CheckedType = { kind: "string" };
 const voidType: CheckedType = { kind: "void" };
 const booleanType: CheckedType = { kind: "boolean" };
 const invalidClassNames = new Set(["any", "bigint", "boolean", "never", "number", "object", "string", "symbol", "undefined", "unknown", "void"]);
+const ambientTypeNames = new Set([
+  "Array",
+  "ArrayLike",
+  "Boolean",
+  "CallableFunction",
+  "ConstructorParameters",
+  "Date",
+  "Error",
+  "Exclude",
+  "Extract",
+  "Function",
+  "IArguments",
+  "InstanceType",
+  "Map",
+  "NewableFunction",
+  "NonNullable",
+  "Number",
+  "Object",
+  "Omit",
+  "Parameters",
+  "Partial",
+  "Pick",
+  "Promise",
+  "PropertyKey",
+  "Readonly",
+  "ReadonlyArray",
+  "Record",
+  "RegExp",
+  "Required",
+  "ReturnType",
+  "Set",
+  "String",
+  "Symbol",
+  "ThisType",
+  "WeakMap",
+  "WeakSet",
+]);
 
 export function checkSourceFile(sourceFile: SourceFile): CheckResult {
   const state: CheckState = { diagnostics: [] };
@@ -151,6 +193,14 @@ function checkStatements(statements: readonly Statement[], state: CheckState, en
 }
 
 function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, statementListHasExportedElements: boolean): void {
+  if (isImportDeclaration(statement)) {
+    bindImportDeclaration(statement, environment);
+    return;
+  }
+  if (isImportEqualsDeclaration(statement)) {
+    environment.set(statement.name.text, anyType);
+    return;
+  }
   if (isVariableStatement(statement)) {
     for (const declaration of statement.declarationList.declarations) {
       const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type, environment, state);
@@ -175,7 +225,9 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isTypeAliasDeclaration(statement)) {
-    environment.set(statement.name.text, { kind: "typeAlias", target: typeFromTypeNode(statement.type, environment, state) });
+    const aliasEnvironment = new Map(environment);
+    addTypeParametersToEnvironment(statement.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], aliasEnvironment);
+    environment.set(statement.name.text, { kind: "typeAlias", target: typeFromTypeNode(statement.type, aliasEnvironment, state) });
     return;
   }
   if (isModuleDeclaration(statement)) {
@@ -254,6 +306,25 @@ function checkExportAssignment(statement: Extract<Statement, { readonly kind: Ki
   }
   if (statement.isExportEquals && statementListHasExportedElements) {
     state.diagnostics.push(createDiagnostic(2309));
+  }
+}
+
+function bindImportDeclaration(statement: ImportDeclaration, environment: TypeEnvironment): void {
+  if (statement.importClause?.name !== undefined) {
+    environment.set(statement.importClause.name.text, anyType);
+  }
+  const namedBindings = statement.importClause?.namedBindings;
+  if (namedBindings === undefined) {
+    return;
+  }
+  if (isNamespaceImport(namedBindings)) {
+    environment.set(namedBindings.name.text, anyType);
+    return;
+  }
+  if (isNamedImports(namedBindings)) {
+    for (const specifier of namedBindings.elements) {
+      environment.set(specifier.name.text, anyType);
+    }
   }
 }
 
@@ -338,6 +409,7 @@ function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckS
     environment.set(classDeclaration.name.text, { kind: "classConstructor", name: classDeclaration.name.text, abstract: classIsAbstract });
   }
   const classEnvironment = new Map(environment);
+  addTypeParametersToEnvironment(classDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], classEnvironment);
   if (!ambient) {
     checkClassMemberOverloads(classDeclaration.members, state);
   }
@@ -350,7 +422,10 @@ function checkInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, s
   if (invalidClassNames.has(interfaceDeclaration.name.text)) {
     state.diagnostics.push(createDiagnostic(2427, interfaceDeclaration.name.text));
   }
-  checkTypeElements(interfaceDeclaration.members, state, environment, true);
+  environment.set(interfaceDeclaration.name.text, { kind: "typeAlias", target: anyType });
+  const interfaceEnvironment = new Map(environment);
+  addTypeParametersToEnvironment(interfaceDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [], interfaceEnvironment);
+  checkTypeElements(interfaceDeclaration.members, state, interfaceEnvironment, true);
 }
 
 type OverloadGroup =
@@ -582,12 +657,16 @@ function checkSignatureParameters(parameters: readonly ParameterDeclaration[], s
   });
 }
 
+function addTypeParametersToEnvironment(typeParameters: readonly string[], environment: TypeEnvironment): void {
+  for (const typeParameter of typeParameters) {
+    environment.set(typeParameter, { kind: "typeParameter", name: typeParameter });
+  }
+}
+
 function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, state: CheckState, environment: TypeEnvironment): void {
   const functionEnvironment = new Map(environment);
   const typeParameters = functionDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
-  for (const typeParameter of typeParameters) {
-    functionEnvironment.set(typeParameter, { kind: "typeParameter", name: typeParameter });
-  }
+  addTypeParametersToEnvironment(typeParameters, functionEnvironment);
   const parameterTypes = functionDeclaration.parameters.map(parameter => parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, functionEnvironment, state));
   const returnType = functionDeclaration.type === undefined ? undefined : typeFromTypeNode(functionDeclaration.type, functionEnvironment, state);
   if (functionDeclaration.name !== undefined) {
@@ -871,8 +950,14 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
     if (bound?.kind === "typeAlias") {
       return bound.target;
     }
+    if (bound !== undefined) {
+      return anyType;
+    }
     if (name === "Array" && type.typeArguments?.[0] !== undefined) {
       return { kind: "array", elementType: typeFromTypeNode(type.typeArguments[0], environment, state) };
+    }
+    if (name !== undefined && !name.includes(".") && !ambientTypeNames.has(name) && state !== undefined) {
+      state.diagnostics.push(createDiagnostic(2304, name));
     }
     return anyType;
   }

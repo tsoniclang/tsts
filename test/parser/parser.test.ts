@@ -202,6 +202,23 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(starExport.moduleSpecifier.text, "./generated/kind.js");
   });
 
+  it("parses default export assignments and declarations", () => {
+    const sourceFile = parseSourceFile("export default value; export default interface Shape { value: string; }");
+    const assignment = sourceFile.statements[0]!;
+    const declaration = sourceFile.statements[1]!;
+
+    assert.equal(isExportAssignment(assignment), true);
+    if (!isExportAssignment(assignment)) throw new Error("Expected export assignment");
+    assert.equal(assignment.isExportEquals, false);
+    assert.equal(assignment.modifiers?.[0]?.kind, Kind.ExportKeyword);
+    assert.equal(assignment.modifiers?.[1]?.kind, Kind.DefaultKeyword);
+
+    assert.equal(isInterfaceDeclaration(declaration), true);
+    if (!isInterfaceDeclaration(declaration)) throw new Error("Expected default interface declaration");
+    assert.equal(declaration.modifiers?.[0]?.kind, Kind.ExportKeyword);
+    assert.equal(declaration.modifiers?.[1]?.kind, Kind.DefaultKeyword);
+  });
+
   it("parses const assertions as contextual type references", () => {
     const sourceFile = parseSourceFile("const values = [1, 2] as const;");
     const statement = sourceFile.statements[0]!;

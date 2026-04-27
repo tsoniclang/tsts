@@ -34,10 +34,11 @@ describe("JS emitter groundwork", () => {
 
   it("prints import and export declarations", () => {
     assert.equal(
-      printSourceFile(parseSourceFile("import value, { dep as renamed } from \"./dep\"; export { renamed as value };")),
+      printSourceFile(parseSourceFile("import value, { dep as renamed } from \"./dep\"; export { renamed as value }; export default value;")),
       [
         "import value, { dep as renamed } from \"./dep\";",
         "export { renamed as value };",
+        "export default value;",
       ].join("\n"),
     );
   });

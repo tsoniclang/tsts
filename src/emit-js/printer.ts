@@ -20,6 +20,7 @@ import {
   isElementAccessExpression,
   isEnumDeclaration,
   isExpressionStatement,
+  isExportAssignment,
   isExportDeclaration,
   isFunctionExpression,
   isForInStatement,
@@ -193,6 +194,9 @@ function printStatement(statement: Statement, context: PrintContext, depth: numb
   }
   if (isExportDeclaration(statement)) {
     return printExportDeclaration(statement);
+  }
+  if (isExportAssignment(statement)) {
+    return statement.isExportEquals ? undefined : `export default ${printExpression(statement.expression)};`;
   }
   if (isFunctionDeclaration(statement)) {
     return printFunctionDeclaration(statement, context, depth);
