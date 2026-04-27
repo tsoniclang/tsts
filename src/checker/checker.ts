@@ -4187,8 +4187,8 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     if (isAssignmentOperator(expression.operatorToken.kind)) {
       return inferAssignmentExpression(expression, state, environment);
     }
-    const left = inferExpression(expression.left, state, environment);
-    const right = inferExpression(expression.right, state, environment);
+    const left = looseNullishUnionType(inferExpression(expression.left, state, environment), state.options);
+    const right = looseNullishUnionType(inferExpression(expression.right, state, environment), state.options);
     if (expression.operatorToken.kind === Kind.CommaToken) {
       if (state.options.allowUnreachableCode !== true && isSideEffectFreeExpression(expression.left) && !isIndirectCallCommaExpression(expression)) {
         state.diagnostics.push(createDiagnostic(2695));
@@ -5616,8 +5616,9 @@ function inferConciseBody(body: ConciseBody, state: CheckState, environment: Typ
 
 function inferPropertyAccess(expression: Expression, optionalChain: boolean, propertyName: string, state: CheckState, environment: TypeEnvironment): CheckedType {
   const receiverType = inferExpression(expression, state, environment);
+  const accessibleReceiverType = looseNullishUnionType(receiverType, state.options);
   if (optionalChain) {
-    const nonNullReceiverType = nonNullableType(receiverType);
+    const nonNullReceiverType = nonNullableType(accessibleReceiverType);
     const propertyType = propertyAccessType(nonNullReceiverType, propertyName, environment);
     if (propertyType !== undefined) {
       return unionType([propertyType, undefinedType]);
@@ -5640,18 +5641,33 @@ function inferPropertyAccess(expression: Expression, optionalChain: boolean, pro
       return propertyType;
     }
   }
-  const propertyType = propertyAccessType(receiverType, propertyName, environment);
+  const propertyType = propertyAccessType(accessibleReceiverType, propertyName, environment);
   if (propertyType !== undefined) {
     return propertyType;
   }
-  if (receiverType.kind === "unknown" || receiverType.kind === "unresolved") {
+  if (accessibleReceiverType.kind === "unknown" || accessibleReceiverType.kind === "unresolved") {
     return anyType;
   }
-  if (receiverType.kind !== "any" && receiverType.kind !== "function" && receiverType.kind !== "functionDeclaration") {
-    diagnoseMissingPropertyAccess(receiverType, propertyName, state);
+  if (accessibleReceiverType.kind !== "any" && accessibleReceiverType.kind !== "function" && accessibleReceiverType.kind !== "functionDeclaration") {
+    diagnoseMissingPropertyAccess(accessibleReceiverType, propertyName, state);
     return anyType;
   }
   return anyType;
+}
+
+function looseNullishUnionType(type: CheckedType, options: CompilerOptions): CheckedType {
+  if (strictOptionValue(options, "strictNullChecks")) {
+    return type;
+  }
+  if (type.kind === "union") {
+    const nonNullishMembers = type.types.filter(member => member.kind !== "null" && member.kind !== "undefined");
+    return nonNullishMembers.length === 0 ? type : unionType(nonNullishMembers);
+  }
+  if (type.kind === "typeAliasInstance") {
+    const target = looseNullishUnionType(type.target, options);
+    return target === type.target ? type : { ...type, target };
+  }
+  return type;
 }
 
 function unionContainsUndefined(type: CheckedType): boolean {

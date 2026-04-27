@@ -702,6 +702,18 @@ describe("checker groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
   });
 
+  it("uses non-nullish union members for property and operator checks when strict null checks are off", () => {
+    const sourceFile = parseSourceFile([
+      "let text: string | undefined;",
+      "let count: number | undefined;",
+      "text.length;",
+      "count + 1;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strictNullChecks: false });
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
   it("marks simple assignment targets as assigned without reading the target first", () => {
     const sourceFile = parseSourceFile("let value: number; value = 1; const copy: number = value;");
     const result = checkSourceFile(sourceFile);
