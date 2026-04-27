@@ -842,6 +842,17 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("reports class-body strict eval and arguments bindings with the class diagnostic", () => {
+    const sourceFile = parseSourceFile("class C { method() { const arguments = 1; const eval = 2; } }");
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1210, 1210]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Code contained in a class is evaluated in JavaScript's strict mode which does not allow this use of 'arguments'. For more information, see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode.",
+      "Code contained in a class is evaluated in JavaScript's strict mode which does not allow this use of 'eval'. For more information, see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode.",
+    ]);
+  });
+
   it("binds arguments only in non-arrow function bodies and type-queries unresolved outer uses", () => {
     const sourceFile = parseSourceFile([
       "function f() {",
@@ -867,6 +878,28 @@ describe("checker groundwork", () => {
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'number' is not assignable to type 'IArguments'."]);
+  });
+
+  it("reports strict-mode assignment targets named arguments or eval", () => {
+    const sourceFile = parseSourceFile("function foo() { arguments = 10; eval = 20; }");
+    const result = checkSourceFile(sourceFile, { alwaysStrict: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1100, 2322, 1100]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Invalid use of 'arguments' in strict mode.",
+      "Type 'number' is not assignable to type 'IArguments'.",
+      "Invalid use of 'eval' in strict mode.",
+    ]);
+  });
+
+  it("reports missing shorthand property values with the shorthand diagnostic", () => {
+    const sourceFile = parseSourceFile("const make = () => ({ arguments });");
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [18004]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "No value exists in scope for the shorthand property 'arguments'. Either declare one or provide an initializer.",
+    ]);
   });
 
   it("accepts TypeScript constant ambient const initializers and literal enum references", () => {
@@ -961,6 +994,16 @@ describe("checker groundwork", () => {
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2345]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Argument of type 'number' is not assignable to parameter of type 'string'."]);
+  });
+
+  it("checks Function.apply argument arrays against parameter tuples", () => {
+    const sourceFile = parseSourceFile("function f(value) { arguments; } function g(args: IArguments) { f.apply(null, args); }", { fileName: "foo.js" });
+    const result = checkSourceFile(sourceFile, { allowJs: true, checkJs: true, strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2345]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Argument of type 'IArguments' is not assignable to parameter of type '[value?: any, ...any[]]'.",
+    ]);
   });
 
   it("assigns non-nullish structural values to empty object-like targets", () => {
@@ -1076,7 +1119,7 @@ describe("checker groundwork", () => {
         return fileName === "bar.ts" ? "f(1, 2, 3);" : undefined;
       },
     };
-    const program = createProgram(["foo.js", "bar.ts"], { allowJs: true, checkJs: true, strict: true }, host);
+    const program = createProgram(["foo.js", "bar.ts"], { allowJs: true, checkJs: true, strict: false }, host);
     const diagnostics = checkProgram(program);
 
     assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [2554]);
@@ -1092,17 +1135,23 @@ describe("checker groundwork", () => {
         return fileName === "bar.ts" ? "f(); f(1); f(1, 2); f(1, 2, 3);" : undefined;
       },
     };
-    const program = createProgram(["foo.js", "bar.ts"], { allowJs: true, checkJs: true, strict: true }, host);
+    const program = createProgram(["foo.js", "bar.ts"], { allowJs: true, checkJs: true, strict: false }, host);
     const diagnostics = checkProgram(program);
 
     assert.equal(diagnostics.length, 0);
   });
 
-  it("does not report implicit any for unannotated JavaScript parameters", () => {
+  it("reports JavaScript implicit any parameters only when checkJs participates", () => {
     const sourceFile = parseSourceFile("function f(a, b) { return a || b; }", { fileName: "foo.js" });
-    const result = checkSourceFile(sourceFile, { allowJs: true, checkJs: true, strict: true, noImplicitAny: true });
+    const checked = checkSourceFile(sourceFile, { allowJs: true, checkJs: true, strict: true, noImplicitAny: true });
+    const unchecked = checkSourceFile(sourceFile, { allowJs: true, checkJs: false, strict: true, noImplicitAny: true });
 
-    assert.equal(result.diagnostics.length, 0);
+    assert.deepEqual(checked.diagnostics.map(diagnostic => diagnostic.code), [7006, 7006]);
+    assert.deepEqual(checked.diagnostics.map(diagnostic => diagnostic.message), [
+      "Parameter 'a' implicitly has an 'any' type.",
+      "Parameter 'b' implicitly has an 'any' type.",
+    ]);
+    assert.equal(unchecked.diagnostics.length, 0);
   });
 
   it("checks for-of iterability against target and array/string rules", () => {

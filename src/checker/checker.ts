@@ -134,6 +134,12 @@ import type { CompilerOptions, Program, ProgramDiagnostic } from "../program/ind
 
 type PrimitiveTypeName = "any" | "boolean" | "never" | "null" | "number" | "string" | "undefined" | "unknown" | "void";
 
+interface TupleElementType {
+  readonly name?: string;
+  readonly type: CheckedType;
+  readonly optional: boolean;
+}
+
 type CheckedType =
   | { readonly kind: PrimitiveTypeName | "unresolved" }
   | { readonly kind: "array"; readonly elementType: CheckedType }
@@ -160,6 +166,7 @@ type CheckedType =
   | { readonly kind: "typeAliasInstance"; readonly name: string; readonly typeArguments: readonly CheckedType[]; readonly target: CheckedType }
   | { readonly kind: "typeParameter"; readonly name: string }
   | { readonly kind: "set"; readonly elementType: CheckedType }
+  | { readonly kind: "tuple"; readonly elements: readonly TupleElementType[]; readonly restElementType?: CheckedType }
   | { readonly kind: "typePredicate"; readonly parameterName: string; readonly assertedType: CheckedType; readonly asserts: boolean; readonly parameterIndex?: number }
   | { readonly kind: "union"; readonly types: readonly CheckedType[] }
   | { readonly kind: "unassignedVariable"; readonly name: string; readonly type: CheckedType }
@@ -181,7 +188,7 @@ interface CheckState {
   readonly options: CompilerOptions;
   readonly isJavaScriptFile: boolean;
   readonly strictMode: boolean;
-  readonly strictModeReason: "module" | "strict" | undefined;
+  readonly strictModeReason: "class" | "module" | "strict" | undefined;
   readonly insideFunction: boolean;
   readonly iterationDepth: number;
   readonly resolveExternalModule?: (moduleSpecifier: string) => CheckedType | undefined;
@@ -837,6 +844,10 @@ function enterFunction(state: CheckState): CheckState {
   return { ...state, insideFunction: true, iterationDepth: 0 };
 }
 
+function enterClassBody(state: CheckState): CheckState {
+  return { ...state, strictMode: true, strictModeReason: "class" };
+}
+
 function prebindStatementDeclarations(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
   for (const statement of statements) {
     if (isTypeAliasDeclaration(statement)) {
@@ -1463,8 +1474,9 @@ function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckS
   if (!ambient) {
     checkClassMemberOverloads(classDeclaration.members, state);
   }
+  const classBodyState = enterClassBody(state);
   for (const member of classDeclaration.members) {
-    checkClassElement(member, state, classEnvironment, ambient, classIsAbstract, classMembers, inheritedMembers, accessorContextTypes);
+    checkClassElement(member, classBodyState, classEnvironment, ambient, classIsAbstract, classMembers, inheritedMembers, accessorContextTypes);
   }
 }
 
@@ -3049,6 +3061,7 @@ function assignmentTargetType(expression: Expression, environment: TypeEnvironme
 
 function checkAssignmentTargetReference(expression: Expression, state: CheckState, environment: TypeEnvironment): void {
   if (isIdentifier(expression)) {
+    checkStrictModeIdentifier(expression.text, state, false);
     if (isClassValue(environment.get(expression.text))) {
       state.diagnostics.push(createDiagnostic(2629, expression.text));
     }
@@ -3242,6 +3255,9 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
   if (receiverType.kind === "moduleNamespace" || receiverType.kind === "namespace") {
     return receiverType.exports.get(propertyName);
   }
+  if (receiverType.kind === "function" && propertyName === "apply") {
+    return functionApplyType(receiverType);
+  }
   if (receiverType.kind === "number" && propertyName === "toFixed") {
     return { kind: "function", typeParameters: [], parameters: [], returnType: stringType };
   }
@@ -3261,6 +3277,39 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
     return { kind: "function", typeParameters: [], parameters: [], returnType: { kind: "iterable", elementType: receiverType.elementType } };
   }
   return undefined;
+}
+
+function functionApplyType(functionType: CheckedFunctionType): CheckedFunctionType {
+  return {
+    kind: "function",
+    typeParameters: [],
+    parameters: [anyType, functionApplyArgumentArrayType(functionType)],
+    parameterNames: ["thisArg", "argArray"],
+    minArgumentCount: 1,
+    maxArgumentCount: 2,
+    returnType: functionType.returnType,
+  };
+}
+
+function functionApplyArgumentArrayType(functionType: CheckedFunctionType): CheckedType {
+  const restParameterIndex = functionType.restParameterIndex;
+  const fixedParameterCount = restParameterIndex ?? functionType.parameters.length;
+  const minArgumentCount = functionType.minArgumentCount ?? 0;
+  const elements: TupleElementType[] = [];
+  for (let index = 0; index < fixedParameterCount; index += 1) {
+    elements.push({
+      ...(functionType.parameterNames?.[index] === undefined ? {} : { name: functionType.parameterNames[index] }),
+      type: functionType.parameters[index] ?? anyType,
+      optional: index >= minArgumentCount,
+    });
+  }
+  if (restParameterIndex !== undefined) {
+    return { kind: "tuple", elements, restElementType: restArgumentElementType(functionType.parameters[restParameterIndex] ?? anyType) };
+  }
+  if (functionType.maxArgumentCount === undefined) {
+    return { kind: "tuple", elements, restElementType: anyType };
+  }
+  return { kind: "tuple", elements };
 }
 
 function arrayPropertyAccessType(receiverType: Extract<CheckedType, { readonly kind: "array" | "readonlyArray" }>, propertyName: string, environment?: TypeEnvironment): CheckedType | undefined {
@@ -3522,7 +3571,8 @@ function checkStrictModeIdentifier(name: string, state: CheckState, ambient: boo
   if (ambient || !state.strictMode || (name !== "arguments" && name !== "eval")) {
     return;
   }
-  state.diagnostics.push(createDiagnostic(state.strictModeReason === "module" ? 1215 : 1100, name));
+  const code = state.strictModeReason === "class" ? 1210 : state.strictModeReason === "module" ? 1215 : 1100;
+  state.diagnostics.push(createDiagnostic(code, name));
 }
 
 function setBindingElementType(element: BindingElement, type: CheckedType, environment: TypeEnvironment): void {
@@ -3547,7 +3597,7 @@ function inferObjectLiteral(expression: Extract<Expression, { readonly kind: Kin
       const name = propertyNameDiagnosticText(property.name);
       if (name !== undefined) {
         checkExcessObjectLiteralProperty(name, contextualType, state);
-        properties.set(name, environment.get(name) ?? anyType);
+        properties.set(name, environment.get(name) ?? unresolvedType);
       }
       continue;
     }
@@ -3579,7 +3629,11 @@ function inferObjectLiteral(expression: Extract<Expression, { readonly kind: Kin
     }
     if (isShorthandPropertyAssignment(property)) {
       if (isIdentifier(property.name)) {
-        inferExpression(property.name, state, environment);
+        if (environment.has(property.name.text)) {
+          inferExpression(property.name, state, environment);
+        } else {
+          state.diagnostics.push(createDiagnostic(18004, property.name.text));
+        }
       }
       continue;
     }
@@ -4289,7 +4343,7 @@ function checkImplicitAnyParameter(parameter: ParameterDeclaration, state: Check
   if (contextualType !== undefined && !hasParameterPropertyModifier) {
     return;
   }
-  if (state.isJavaScriptFile && !hasParameterPropertyModifier) {
+  if (state.isJavaScriptFile && state.options.checkJs !== true && !hasParameterPropertyModifier) {
     return;
   }
   if ((!strictOptionValue(state.options, "noImplicitAny") && !hasParameterPropertyModifier) || parameter.type !== undefined || !isIdentifier(parameter.name)) {
@@ -4426,6 +4480,10 @@ function typeContainsTypeParameter(type: CheckedType): boolean {
   }
   if (type.kind === "function") {
     return type.parameters.some(typeContainsTypeParameter) || typeContainsTypeParameter(type.returnType);
+  }
+  if (type.kind === "tuple") {
+    return type.elements.some(element => typeContainsTypeParameter(element.type))
+      || (type.restElementType !== undefined && typeContainsTypeParameter(type.restElementType));
   }
   if (type.kind === "object") {
     return [...type.properties.values()].some(typeContainsTypeParameter);
@@ -4602,6 +4660,14 @@ function inferTypeParameterSubstitutions(parameter: CheckedType, argument: Check
   if ((parameter.kind === "arrayLike" || parameter.kind === "arrayIterator" || parameter.kind === "iterable" || parameter.kind === "set") && parameter.kind === argument.kind) {
     inferTypeParameterSubstitutions(parameter.elementType, argument.elementType, substitutions);
   }
+  if (parameter.kind === "tuple" && argument.kind === "tuple") {
+    for (let index = 0; index < parameter.elements.length && index < argument.elements.length; index += 1) {
+      inferTypeParameterSubstitutions(parameter.elements[index]!.type, argument.elements[index]!.type, substitutions);
+    }
+    if (parameter.restElementType !== undefined && argument.restElementType !== undefined) {
+      inferTypeParameterSubstitutions(parameter.restElementType, argument.restElementType, substitutions);
+    }
+  }
 }
 
 function substituteType(type: CheckedType, substitutions: ReadonlyMap<string, CheckedType>): CheckedType {
@@ -4625,6 +4691,13 @@ function substituteType(type: CheckedType, substitutions: ReadonlyMap<string, Ch
   }
   if (type.kind === "set") {
     return { kind: "set", elementType: substituteType(type.elementType, substitutions) };
+  }
+  if (type.kind === "tuple") {
+    return {
+      kind: "tuple",
+      elements: type.elements.map(element => ({ ...element, type: substituteType(element.type, substitutions) })),
+      ...(type.restElementType === undefined ? {} : { restElementType: substituteType(type.restElementType, substitutions) }),
+    };
   }
   if (type.kind === "nonNullable") {
     return nonNullableType(substituteType(type.target, substitutions));
@@ -4731,7 +4804,7 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
     }
     return actual.kind !== "null" && actual.kind !== "undefined";
   }
-  if (actual.kind === expected.kind && actual.kind !== "array" && actual.kind !== "readonlyArray" && actual.kind !== "arrayLike" && actual.kind !== "arrayIterator" && actual.kind !== "classConstructor" && actual.kind !== "classInstance" && actual.kind !== "function" && actual.kind !== "interface" && actual.kind !== "intersection" && actual.kind !== "iterable" && actual.kind !== "namespace" && actual.kind !== "object" && actual.kind !== "record" && actual.kind !== "set" && actual.kind !== "thisClass" && actual.kind !== "typeAlias" && actual.kind !== "typeParameter" && actual.kind !== "typePredicate" && actual.kind !== "union") {
+  if (actual.kind === expected.kind && actual.kind !== "array" && actual.kind !== "readonlyArray" && actual.kind !== "arrayLike" && actual.kind !== "arrayIterator" && actual.kind !== "classConstructor" && actual.kind !== "classInstance" && actual.kind !== "function" && actual.kind !== "interface" && actual.kind !== "intersection" && actual.kind !== "iterable" && actual.kind !== "namespace" && actual.kind !== "object" && actual.kind !== "record" && actual.kind !== "set" && actual.kind !== "thisClass" && actual.kind !== "tuple" && actual.kind !== "typeAlias" && actual.kind !== "typeParameter" && actual.kind !== "typePredicate" && actual.kind !== "union") {
     return true;
   }
   if (actual.kind === "classConstructor" && expected.kind === "classConstructor") {
@@ -4822,6 +4895,9 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
   if (actual.kind === "set" && expected.kind === "set") {
     return isAssignableTo(actual.elementType, expected.elementType, options);
   }
+  if (actual.kind === "tuple" && expected.kind === "tuple") {
+    return tupleAssignableTo(actual, expected, options);
+  }
   if (actual.kind === "function" && expected.kind === "function") {
     return actual.parameters.length <= expected.parameters.length
       && actual.parameters.every((actualParameter, index) => isAssignableTo(expected.parameters[index]!, actualParameter, options))
@@ -4874,6 +4950,36 @@ function objectPropertiesAssignableTo(actual: ReadonlyMap<string, CheckedType>, 
     const actualPropertyType = actual.get(name);
     if (actualPropertyType === undefined || !isAssignableTo(actualPropertyType, expectedPropertyType, options)) {
       return false;
+    }
+  }
+  return true;
+}
+
+function tupleAssignableTo(actual: Extract<CheckedType, { readonly kind: "tuple" }>, expected: Extract<CheckedType, { readonly kind: "tuple" }>, options: CompilerOptions = {}): boolean {
+  const requiredExpectedCount = expected.elements.filter(element => !element.optional).length;
+  if (actual.elements.length < requiredExpectedCount) {
+    return false;
+  }
+  if (expected.restElementType === undefined && actual.elements.length > expected.elements.length) {
+    return false;
+  }
+  for (let index = 0; index < expected.elements.length; index += 1) {
+    const actualElement = actual.elements[index];
+    if (actualElement === undefined) {
+      if (!expected.elements[index]!.optional) {
+        return false;
+      }
+      continue;
+    }
+    if (!isAssignableTo(actualElement.type, expected.elements[index]!.type, options)) {
+      return false;
+    }
+  }
+  if (expected.restElementType !== undefined) {
+    for (const actualElement of actual.elements.slice(expected.elements.length)) {
+      if (!isAssignableTo(actualElement.type, expected.restElementType, options)) {
+        return false;
+      }
     }
   }
   return true;
@@ -5179,6 +5285,9 @@ function displayType(type: CheckedType): string {
   if (type.kind === "set") {
     return `Set<${displayType(type.elementType)}>`;
   }
+  if (type.kind === "tuple") {
+    return displayTupleType(type);
+  }
   if (type.kind === "typeParameter") {
     return type.name;
   }
@@ -5249,6 +5358,17 @@ function displayType(type: CheckedType): string {
     return "unknown";
   }
   return type.kind === "unresolved" ? "unknown" : type.kind;
+}
+
+function displayTupleType(type: Extract<CheckedType, { readonly kind: "tuple" }>): string {
+  const elements = type.elements.map(element => {
+    const label = element.name === undefined ? "" : `${element.name}${element.optional ? "?" : ""}: `;
+    return `${label}${displayType(element.type)}`;
+  });
+  if (type.restElementType !== undefined) {
+    elements.push(`...${displayType(type.restElementType)}[]`);
+  }
+  return `[${elements.join(", ")}]`;
 }
 
 function displayGenericNamedType(name: string, typeArguments: readonly CheckedType[]): string {
