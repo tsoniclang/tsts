@@ -473,6 +473,7 @@ describe("TS-Go parser groundwork", () => {
       "declare module \"knex\" { namespace Knex { function newFunc(): Interface; } }",
       "export = knex;",
       "declare function make<const T extends { value: unknown }>(arg: T): T;",
+      "class Box<T,> { value?: T; }",
       "({ x = class { static #z = 2; } } = {} as any);",
     ].join("\n"));
 
@@ -488,9 +489,13 @@ describe("TS-Go parser groundwork", () => {
     if (!isFunctionDeclaration(sourceFile.statements[4]!)) throw new Error("Expected const generic function");
     assert.equal(sourceFile.statements[4]!.typeParameters?.[0]?.modifiers?.[0]?.kind, Kind.ConstKeyword);
 
-    assert.equal(isExpressionStatement(sourceFile.statements[5]!), true);
-    if (!isExpressionStatement(sourceFile.statements[5]!) || !isParenthesizedExpression(sourceFile.statements[5]!.expression)) throw new Error("Expected parenthesized assignment");
-    const assignment = sourceFile.statements[5]!.expression.expression;
+    assert.equal(isClassDeclaration(sourceFile.statements[5]!), true);
+    if (!isClassDeclaration(sourceFile.statements[5]!)) throw new Error("Expected class declaration");
+    assert.equal(sourceFile.statements[5]!.typeParameters?.[0]?.name.text, "T");
+
+    assert.equal(isExpressionStatement(sourceFile.statements[6]!), true);
+    if (!isExpressionStatement(sourceFile.statements[6]!) || !isParenthesizedExpression(sourceFile.statements[6]!.expression)) throw new Error("Expected parenthesized assignment");
+    const assignment = sourceFile.statements[6]!.expression.expression;
     assert.equal(isBinaryExpression(assignment), true);
     if (!isBinaryExpression(assignment) || !isObjectLiteralExpression(assignment.left)) throw new Error("Expected object literal assignment");
     const firstProperty = assignment.left.properties[0]!;

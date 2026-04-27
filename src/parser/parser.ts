@@ -797,7 +797,10 @@ export class Parser {
       const constraint = this.#consumeOptional(Kind.ExtendsKeyword) ? this.#parseType() : undefined;
       const defaultType = this.#consumeOptional(Kind.EqualsToken) ? this.#parseType() : undefined;
       typeParameters.push(createTypeParameterDeclaration(modifiers, name, constraint, undefined, defaultType));
-    } while (this.#consumeOptional(Kind.CommaToken));
+      if (!this.#consumeOptional(Kind.CommaToken)) {
+        break;
+      }
+    } while (this.#current().kind !== Kind.GreaterThanToken);
     this.#expectGreaterThan();
     return createNodeArray(typeParameters);
   }
