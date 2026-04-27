@@ -803,6 +803,43 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isPropertyDeclaration(statement.members[1]!), true);
   });
 
+  it("distinguishes index signatures from computed properties in member lists", () => {
+    const sourceFile = parseSourceFile([
+      "type T = { [x]: string; [key: string]: string; [...rest]: string; };",
+      "class C { [x]: string; [key: string]: string; [...rest]: string; }",
+    ].join("\n"));
+    const typeStatement = sourceFile.statements[0]!;
+    const classStatement = sourceFile.statements[1]!;
+
+    assert.equal(isTypeAliasDeclaration(typeStatement), true);
+    if (!isTypeAliasDeclaration(typeStatement) || !isTypeLiteralNode(typeStatement.type)) throw new Error("Expected type literal");
+    assert.equal(isPropertySignatureDeclaration(typeStatement.type.members[0]!), true);
+    assert.equal(isIndexSignatureDeclaration(typeStatement.type.members[1]!), true);
+    assert.equal(isIndexSignatureDeclaration(typeStatement.type.members[2]!), true);
+    if (!isIndexSignatureDeclaration(typeStatement.type.members[2]!)) throw new Error("Expected rest index signature");
+    assert.equal(typeStatement.type.members[2]!.parameters[0]!.dotDotDotToken?.kind, Kind.DotDotDotToken);
+
+    assert.equal(isClassDeclaration(classStatement), true);
+    if (!isClassDeclaration(classStatement)) throw new Error("Expected class");
+    assert.equal(isPropertyDeclaration(classStatement.members[0]!), true);
+    assert.equal(isIndexSignatureDeclaration(classStatement.members[1]!), true);
+    assert.equal(isIndexSignatureDeclaration(classStatement.members[2]!), true);
+  });
+
+  it("reports missing index-signature value types while preserving AST shape", () => {
+    const result = parseSourceFileWithDiagnostics("type T = { [key: string]; }; class C { [idx: number]; }");
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1021, 1021]);
+    const typeStatement = result.sourceFile.statements[0]!;
+    const classStatement = result.sourceFile.statements[1]!;
+    assert.equal(isTypeAliasDeclaration(typeStatement), true);
+    if (!isTypeAliasDeclaration(typeStatement) || !isTypeLiteralNode(typeStatement.type)) throw new Error("Expected type literal");
+    assert.equal(isIndexSignatureDeclaration(typeStatement.type.members[0]!), true);
+    assert.equal(isClassDeclaration(classStatement), true);
+    if (!isClassDeclaration(classStatement)) throw new Error("Expected class");
+    assert.equal(isIndexSignatureDeclaration(classStatement.members[0]!), true);
+  });
+
   it("parses class static blocks as TS-Go class elements", () => {
     const sourceFile = parseSourceFile("class C { static { value = 1; } static field = 2; }");
     const statement = sourceFile.statements[0]!;

@@ -945,7 +945,7 @@ export class Parser {
 
   #parseTypeElement(): TypeElement {
     const modifiers = this.#parseModifiers();
-    if (this.#current().kind === Kind.OpenBracketToken) {
+    if (this.#isIndexSignatureStart()) {
       return this.#parseIndexSignature(modifiers);
     }
     if (this.#current().kind === Kind.OpenParenToken || this.#current().kind === Kind.LessThanToken) {
@@ -1015,28 +1015,60 @@ export class Parser {
 
   #isIndexSignatureStart(): boolean {
     const name = this.#tokens[this.#index + 1];
-    const colon = this.#tokens[this.#index + 2];
-    return this.#current().kind === Kind.OpenBracketToken
-      && name !== undefined
-      && isIdentifierNameKind(name.kind)
-      && colon?.kind === Kind.ColonToken;
+    if (this.#current().kind !== Kind.OpenBracketToken || name === undefined) {
+      return false;
+    }
+    if (name.kind === Kind.CloseBracketToken || name.kind === Kind.DotDotDotToken) {
+      return true;
+    }
+    if (!isIdentifierNameKind(name.kind)) {
+      return false;
+    }
+    const next = this.#tokens[this.#index + 2];
+    if (next?.kind === Kind.ColonToken || next?.kind === Kind.CommaToken) {
+      return true;
+    }
+    return next?.kind === Kind.QuestionToken && this.#tokens[this.#index + 3]?.kind === Kind.ColonToken;
   }
 
   #parseIndexSignature(modifiers: NodeArray<ModifierLike> | undefined): ReturnType<typeof createIndexSignatureDeclaration> {
-    this.#expect(Kind.OpenBracketToken);
-    const name = this.#parseIdentifier();
-    const parameterType = this.#parseOptionalTypeAnnotation();
+    const openBracket = this.#expect(Kind.OpenBracketToken);
+    const parameters: ParameterDeclaration[] = [];
+    if (this.#current().kind !== Kind.CloseBracketToken) {
+      while (true) {
+        parameters.push(this.#parseParameterDeclaration());
+        if (!this.#consumeOptional(Kind.CommaToken) || this.#current().kind === Kind.CloseBracketToken) {
+          break;
+        }
+      }
+    }
     this.#expect(Kind.CloseBracketToken);
-    const type = this.#consumeOptional(Kind.ColonToken)
-      ? this.#parseType()
-      : createKeywordTypeNode(Kind.AnyKeyword);
+    const hasTypeAnnotation = this.#consumeOptional(Kind.ColonToken);
+    if (!hasTypeAnnotation && this.#shouldReportMissingIndexSignatureType(parameters)) {
+      this.#addDiagnosticAtToken(openBracket, 1021);
+    }
+    const type = hasTypeAnnotation ? this.#parseType() : createKeywordTypeNode(Kind.AnyKeyword);
     this.#consumeOptional(Kind.SemicolonToken);
     this.#consumeOptional(Kind.CommaToken);
     return createIndexSignatureDeclaration(
       modifiers,
-      createNodeArray([createParameterDeclaration(undefined, undefined, name, undefined, parameterType, undefined)]),
+      createNodeArray(parameters),
       type,
     );
+  }
+
+  #shouldReportMissingIndexSignatureType(parameters: readonly ParameterDeclaration[]): boolean {
+    if (parameters.length !== 1) {
+      return false;
+    }
+    const parameter = parameters[0]!;
+    if (parameter.dotDotDotToken !== undefined || parameter.questionToken !== undefined) {
+      return false;
+    }
+    return parameter.type?.kind === Kind.StringKeyword
+      || parameter.type?.kind === Kind.NumberKeyword
+      || parameter.type?.kind === Kind.SymbolKeyword
+      || parameter.type?.kind === Kind.TemplateLiteralType;
   }
 
   #parseOptionalTypeParameters(): NodeArray<TypeParameterDeclaration> | undefined {

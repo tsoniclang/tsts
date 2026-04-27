@@ -132,6 +132,7 @@ import {
   type ImportSpecifier,
   type InterfaceDeclaration,
   type Identifier,
+  type IndexSignatureDeclaration,
   type MethodSignatureDeclaration,
   type MethodDeclaration,
   type Node,
@@ -3054,6 +3055,10 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     checkBlock(member.body, enterClassInitializerOrStaticBlock(state), cloneTypeEnvironment(environment), undefined);
     return;
   }
+  if (isIndexSignatureDeclaration(member)) {
+    checkIndexSignatureDeclaration(member, state, environment);
+    return;
+  }
   if (isPropertyDeclaration(member) && member.initializer !== undefined) {
     checkAbstractMemberModifiers(member, state, classIsAbstract, propertyNameText(member.name), true);
     checkUninitializedProperty(member, state, ambient, constructorAssignedProperties);
@@ -3254,10 +3259,7 @@ function checkAbstractMemberModifiers(member: ClassElement, state: CheckState, c
 function checkTypeElements(members: readonly TypeElement[], state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
   for (const member of members) {
     if (isIndexSignatureDeclaration(member)) {
-      checkIndexSignatureParameterType(member.parameters[0]?.type, state);
-      if (member.type !== undefined) {
-        typeFromTypeNode(member.type, environment, state);
-      }
+      checkIndexSignatureDeclaration(member, state, environment);
       continue;
     }
     if (isCallSignatureDeclaration(member) || isConstructSignatureDeclaration(member)) {
@@ -3283,6 +3285,33 @@ function checkTypeElements(members: readonly TypeElement[], state: CheckState, e
     if (isGetAccessorDeclaration(member) || isSetAccessorDeclaration(member)) {
       checkAccessorDeclaration(member, state, environment, ambient);
     }
+  }
+}
+
+function checkIndexSignatureDeclaration(member: IndexSignatureDeclaration, state: CheckState, environment: TypeEnvironment): void {
+  if (member.parameters.length !== 1) {
+    state.diagnostics.push(createDiagnostic(1096));
+    checkIndexSignatureValueType(member, environment, state);
+    return;
+  }
+  const parameter = member.parameters[0]!;
+  if (parameter.dotDotDotToken !== undefined) {
+    state.diagnostics.push(createDiagnostic(1017));
+    checkIndexSignatureValueType(member, environment, state);
+    return;
+  }
+  if (parameter.questionToken !== undefined) {
+    state.diagnostics.push(createDiagnostic(1019));
+    checkIndexSignatureValueType(member, environment, state);
+    return;
+  }
+  checkIndexSignatureParameterType(parameter.type, state);
+  checkIndexSignatureValueType(member, environment, state);
+}
+
+function checkIndexSignatureValueType(member: IndexSignatureDeclaration, environment: TypeEnvironment, state: CheckState): void {
+  if (member.type !== undefined) {
+    typeFromTypeNode(member.type, environment, state);
   }
 }
 

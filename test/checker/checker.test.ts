@@ -170,6 +170,30 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("reports index signature parameter grammar generically", () => {
+    const sourceFile = parseSourceFile([
+      "interface I {",
+      "  [optional?: string]: string;",
+      "  [...rest: string[]]: string;",
+      "  [left: string, right: string]: string;",
+      "  [bad: Date]: string;",
+      "}",
+      "class C {",
+      "  [...rest]: string;",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1019, 1017, 1096, 1268, 1017]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "An index signature parameter cannot have a question mark.",
+      "An index signature cannot have a rest parameter.",
+      "An index signature must have exactly one parameter.",
+      "An index signature parameter type must be 'string', 'number', 'symbol', or a template literal type.",
+      "An index signature cannot have a rest parameter.",
+    ]);
+  });
+
   it("checks every source file in a program", () => {
     const host: CompilerHost = {
       readFile: fileName => fileName === "src/index.ts" ? "export function f(): number { return \"x\"; }" : undefined,
