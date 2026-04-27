@@ -2725,9 +2725,11 @@ export class Parser {
   }
 
   #validateLexicalDiagnostics(): void {
+    let previousToken: ScannedToken | undefined;
     for (const token of this.#tokens) {
       if (token.kind === Kind.NumericLiteral || token.kind === Kind.BigIntLiteral) {
-        this.#validateNumericLiteralToken(token);
+        this.#validateNumericLiteralToken(token, previousToken);
+        previousToken = token;
         continue;
       }
       if (
@@ -2739,15 +2741,20 @@ export class Parser {
       ) {
         this.#validateStringLikeEscapeSequences(token);
       }
+      previousToken = token;
     }
   }
 
-  #validateNumericLiteralToken(token: ScannedToken): void {
+  #validateNumericLiteralToken(token: ScannedToken, previousToken: ScannedToken | undefined): void {
     const diagnostic = legacyOctalNumericLiteralDiagnostic(token.text);
     if (diagnostic === undefined) {
       return;
     }
     if (diagnostic.code === 1121) {
+      if (previousToken?.kind === Kind.MinusToken) {
+        this.#addDiagnosticAt(previousToken.pos, token.pos - previousToken.pos + diagnostic.length, diagnostic.code, `-${diagnostic.replacement}`);
+        return;
+      }
       this.#addDiagnosticAt(token.pos, diagnostic.length, diagnostic.code, diagnostic.replacement);
       return;
     }
