@@ -219,6 +219,7 @@ interface CheckState {
   readonly argumentsForbiddenInClassInitializerOrStaticBlock: boolean;
   readonly insideFunction: boolean;
   readonly iterationDepth: number;
+  readonly yieldType: CheckedType | undefined;
   readonly resolveExternalModule?: (moduleSpecifier: string) => CheckedType | undefined;
   readonly functionOverloadInfo?: FunctionOverloadInfo;
 }
@@ -310,6 +311,37 @@ const undefinedType: CheckedType = { kind: "undefined" };
 const globalObjectType: CheckedType = { kind: "globalObject" };
 const emptyStringSet: ReadonlySet<string> = new Set();
 const emptyTypeSubstitutions: ReadonlyMap<string, CheckedType> = new Map();
+
+function standardFunctionType(parameters: readonly CheckedType[], returnType: CheckedType, options: Omit<CheckedFunctionType, "kind" | "typeParameters" | "parameters" | "returnType"> = {}): CheckedFunctionType {
+  return { kind: "function", typeParameters: [], parameters, ...options, returnType };
+}
+
+function standardInterfaceType(
+  name: string,
+  properties: ReadonlyMap<string, CheckedType>,
+  options: {
+    readonly optionalProperties?: ReadonlySet<string>;
+    readonly methodProperties?: ReadonlySet<string>;
+    readonly stringIndexType?: CheckedType;
+    readonly numberIndexType?: CheckedType;
+  } = {},
+): CheckedType {
+  return {
+    kind: "interface",
+    name,
+    members: {
+      name,
+      typeParameters: [],
+      properties,
+      optionalProperties: options.optionalProperties ?? emptyStringSet,
+      methodProperties: options.methodProperties ?? emptyStringSet,
+      callSignatures: [],
+      ...(options.stringIndexType === undefined ? {} : { stringIndexType: options.stringIndexType }),
+      ...(options.numberIndexType === undefined ? {} : { numberIndexType: options.numberIndexType }),
+    },
+  };
+}
+
 const boxedNumberType: CheckedType = {
   kind: "interface",
   name: "Number",
@@ -359,6 +391,46 @@ const errorInterfaceType: CheckedType = {
     callSignatures: [],
   },
 };
+const stringDictionaryType: CheckedType = {
+  kind: "object",
+  properties: new Map(),
+  readonlyProperties: new Set(),
+  optionalProperties: new Set(),
+  methodProperties: new Set(),
+  stringIndexType: stringType,
+};
+const optionalStringDictionaryType = unionType([stringDictionaryType, undefinedType]);
+const stringArraySliceType = standardFunctionType([numberType, numberType], { kind: "array", elementType: stringType }, { minArgumentCount: 0, maxArgumentCount: 2 });
+const templateStringsArrayType = standardInterfaceType("TemplateStringsArray", new Map<string, CheckedType>([
+  ["length", numberType],
+  ["raw", { kind: "readonlyArray", elementType: stringType }],
+]), {
+  numberIndexType: stringType,
+});
+const regExpMatchArrayType = standardInterfaceType("RegExpMatchArray", new Map<string, CheckedType>([
+  ["length", numberType],
+  ["0", stringType],
+  ["index", unionType([numberType, undefinedType])],
+  ["input", unionType([stringType, undefinedType])],
+  ["groups", optionalStringDictionaryType],
+  ["slice", stringArraySliceType],
+]), {
+  optionalProperties: new Set(["index", "input", "groups"]),
+  methodProperties: new Set(["slice"]),
+  numberIndexType: stringType,
+});
+const regExpExecArrayType = standardInterfaceType("RegExpExecArray", new Map<string, CheckedType>([
+  ["length", numberType],
+  ["0", stringType],
+  ["index", numberType],
+  ["input", stringType],
+  ["groups", optionalStringDictionaryType],
+  ["slice", stringArraySliceType],
+]), {
+  optionalProperties: new Set(["groups"]),
+  methodProperties: new Set(["slice"]),
+  numberIndexType: stringType,
+});
 const regexpInterfaceType: CheckedType = {
   kind: "interface",
   name: "RegExp",
@@ -366,7 +438,7 @@ const regexpInterfaceType: CheckedType = {
     name: "RegExp",
     typeParameters: [],
     properties: new Map<string, CheckedType>([
-      ["exec", { kind: "function", typeParameters: [], parameters: [stringType], parameterNames: ["string"], returnType: anyType }],
+      ["exec", standardFunctionType([stringType], unionType([regExpExecArrayType, nullType]), { parameterNames: ["string"] })],
       ["test", { kind: "function", typeParameters: [], parameters: [stringType], parameterNames: ["string"], returnType: booleanType }],
       ["source", stringType],
       ["global", booleanType],
@@ -424,6 +496,7 @@ const ambientTypeNames = new Set([
   "Function",
   "IArguments",
   "InstanceType",
+  "IterableIterator",
   "Map",
   "NewableFunction",
   "NonNullable",
@@ -439,11 +512,14 @@ const ambientTypeNames = new Set([
   "ReadonlyArray",
   "Record",
   "RegExp",
+  "RegExpExecArray",
+  "RegExpMatchArray",
   "Required",
   "ReturnType",
   "Set",
   "String",
   "Symbol",
+  "TemplateStringsArray",
   "ThisType",
   "WeakMap",
   "WeakSet",
@@ -473,6 +549,7 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
       argumentsForbiddenInClassInitializerOrStaticBlock: false,
       insideFunction: false,
       iterationDepth: 0,
+      yieldType: undefined,
       resolveExternalModule: moduleSpecifier => moduleResolver(sourceFile.fileName, moduleSpecifier),
     };
     checkStatements(sourceFile.sourceFile.statements, state, cloneTypeEnvironment(globalEnvironment), undefined, isDeclarationFile(sourceFile.sourceFile));
@@ -506,6 +583,7 @@ function checkStateForSourceFile(sourceFile: SourceFile, options: CompilerOption
     argumentsForbiddenInClassInitializerOrStaticBlock: false,
     insideFunction: false,
     iterationDepth: 0,
+    yieldType: undefined,
   };
 }
 
@@ -713,12 +791,37 @@ function standardGlobalEnvironment(): TypeEnvironment {
       methodProperties: new Set(["debug", "error", "info", "log", "warn"]),
     }],
     ["Iterable", anyType],
+    ["IterableIterator", { kind: "arrayIterator", elementType: anyType }],
     ["Math", {
       kind: "namespace",
       name: "Math",
       exports: new Map([
+        ["E", numberType],
+        ["LN10", numberType],
+        ["LN2", numberType],
+        ["LOG10E", numberType],
+        ["LOG2E", numberType],
+        ["PI", numberType],
+        ["SQRT1_2", numberType],
+        ["SQRT2", numberType],
+        ["abs", standardFunctionType([numberType], numberType)],
+        ["acos", standardFunctionType([numberType], numberType)],
+        ["asin", standardFunctionType([numberType], numberType)],
+        ["atan", standardFunctionType([numberType], numberType)],
+        ["atan2", standardFunctionType([numberType, numberType], numberType)],
+        ["ceil", standardFunctionType([numberType], numberType)],
+        ["cos", standardFunctionType([numberType], numberType)],
+        ["exp", standardFunctionType([numberType], numberType)],
+        ["floor", standardFunctionType([numberType], numberType)],
+        ["log", standardFunctionType([numberType], numberType)],
+        ["max", standardFunctionType([numberType], numberType, { restParameterIndex: 0, minArgumentCount: 0 })],
+        ["min", standardFunctionType([numberType], numberType, { restParameterIndex: 0, minArgumentCount: 0 })],
+        ["pow", standardFunctionType([numberType, numberType], numberType)],
         ["random", { kind: "function", typeParameters: [], parameters: [], returnType: numberType }],
+        ["round", standardFunctionType([numberType], numberType)],
+        ["sin", standardFunctionType([numberType], numberType)],
         ["sqrt", { kind: "function", typeParameters: [], parameters: [numberType], returnType: numberType }],
+        ["tan", standardFunctionType([numberType], numberType)],
       ]),
     }],
     ["Promise", anyType],
@@ -737,9 +840,12 @@ function standardGlobalEnvironment(): TypeEnvironment {
       type: globalObjectType,
     }],
     ["RegExp", { kind: "valueAndType", value: { kind: "builtinConstructor", name: "RegExp", instanceType: regexpInterfaceType, constructorParameters: [stringType], staticProperties: new Map() }, type: regexpInterfaceType }],
+    ["RegExpExecArray", regExpExecArrayType],
+    ["RegExpMatchArray", regExpMatchArrayType],
     ["Set", { kind: "intrinsicConstructor", intrinsic: "Set" }],
     ["String", { kind: "valueAndType", value: { kind: "builtinConstructor", name: "String", instanceType: boxedStringType, constructorParameters: [anyType], staticProperties: new Map() }, type: boxedStringType }],
     ["Symbol", anyType],
+    ["TemplateStringsArray", templateStringsArrayType],
     ["WeakMap", anyType],
     ["WeakRef", anyType],
     ["WeakSet", anyType],
@@ -1014,12 +1120,12 @@ function enterIteration(state: CheckState): CheckState {
   return { ...state, iterationDepth: state.iterationDepth + 1 };
 }
 
-function enterFunction(state: CheckState): CheckState {
-  return { ...state, argumentsForbiddenInClassInitializerOrStaticBlock: false, insideFunction: true, iterationDepth: 0 };
+function enterFunction(state: CheckState, yieldType?: CheckedType): CheckState {
+  return { ...state, argumentsForbiddenInClassInitializerOrStaticBlock: false, insideFunction: true, iterationDepth: 0, yieldType };
 }
 
 function enterArrowFunction(state: CheckState): CheckState {
-  return { ...state, insideFunction: true, iterationDepth: 0 };
+  return { ...state, insideFunction: true, iterationDepth: 0, yieldType: undefined };
 }
 
 function enterClassBody(state: CheckState): CheckState {
@@ -1509,6 +1615,14 @@ function mergeTypeNamespace(existing: CheckedType | undefined, type: CheckedType
   return existing?.kind === "namespace" ? { kind: "namespaceAndType", namespace: existing, type } : type;
 }
 
+function mergeClassBinding(existing: CheckedType | undefined, classType: Extract<CheckedType, { readonly kind: "classConstructor" }>): CheckedType {
+  const existingType = existing === undefined ? undefined : typeMeaning(existing);
+  if (existingType?.kind === "interface" && valueMeaning(existing!) === undefined) {
+    return { kind: "valueAndType", value: classType, type: existingType };
+  }
+  return classType;
+}
+
 function valueMeaning(type: CheckedType): CheckedType | undefined {
   if (type.kind === "valueAndType") {
     return type.value;
@@ -1882,7 +1996,7 @@ function checkClassLike(classDeclaration: ClassLikeDeclaration, state: CheckStat
     }
     classEnvironment.set(classDeclaration.name.text, classType);
     if (bindOuterName) {
-      environment.set(classDeclaration.name.text, classType);
+      environment.set(classDeclaration.name.text, mergeClassBinding(environment.get(classDeclaration.name.text), classType));
     }
   }
   checkMissingAbstractMembers(classDeclaration, state, classIsAbstract, inheritedMembers, classMembers);
@@ -2706,8 +2820,11 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
         checkJavaScriptTypeAnnotation(state);
       }
       const returnType = member.type === undefined ? undefined : typeFromTypeNode(member.type, memberEnvironment, state);
-      checkBlock(member.body, enterFunction(state), memberEnvironment, returnType);
-      checkFunctionReturnCompleteness(member.body, returnType, state);
+      const yieldType = isMethodDeclaration(member) && member.asteriskToken !== undefined ? generatorYieldType(returnType) : undefined;
+      checkBlock(member.body, enterFunction(state, yieldType), memberEnvironment, isMethodDeclaration(member) && member.asteriskToken !== undefined ? undefined : returnType);
+      if (!isMethodDeclaration(member) || member.asteriskToken === undefined) {
+        checkFunctionReturnCompleteness(member.body, returnType, state);
+      }
     }
     return;
   }
@@ -3198,8 +3315,11 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
     }
   }
   if (functionDeclaration.body !== undefined) {
-    checkBlock(functionDeclaration.body, enterFunction(state), functionEnvironment, returnType);
-    checkFunctionReturnCompleteness(functionDeclaration.body, returnType, state);
+    const yieldType = functionDeclaration.asteriskToken === undefined ? undefined : generatorYieldType(returnType);
+    checkBlock(functionDeclaration.body, enterFunction(state, yieldType), functionEnvironment, functionDeclaration.asteriskToken === undefined ? returnType : undefined);
+    if (functionDeclaration.asteriskToken === undefined) {
+      checkFunctionReturnCompleteness(functionDeclaration.body, returnType, state);
+    }
     checkDeclarationEmitInferredReturnType(functionDeclaration, state, functionEnvironment);
   }
 }
@@ -3295,8 +3415,9 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
     checkStrictModeIdentifier(functionExpression.name.text, state, false);
     functionEnvironment.set(functionExpression.name.text, functionType);
   }
-  checkBlock(functionExpression.body, enterFunction(state), functionEnvironment, declaredReturnType);
-  if (declaredReturnType !== undefined) {
+  const yieldType = functionExpression.asteriskToken === undefined ? undefined : generatorYieldType(declaredReturnType);
+  checkBlock(functionExpression.body, enterFunction(state, yieldType), functionEnvironment, functionExpression.asteriskToken === undefined ? declaredReturnType : undefined);
+  if (declaredReturnType !== undefined && functionExpression.asteriskToken === undefined) {
     checkFunctionReturnCompleteness(functionExpression.body, declaredReturnType, state);
   }
   return functionType;
@@ -3343,6 +3464,23 @@ function checkFunctionReturnCompleteness(body: Block, returnType: CheckedType | 
   if (!returnTypeAllowsImplicitUndefined(returnType) && !blockDefinitelyTerminates(body)) {
     state.diagnostics.push(createDiagnostic(2366));
   }
+}
+
+function generatorYieldType(returnType: CheckedType | undefined): CheckedType | undefined {
+  if (returnType === undefined) {
+    return undefined;
+  }
+  if (returnType.kind === "typeAliasInstance") {
+    return generatorYieldType(returnType.target);
+  }
+  if (returnType.kind === "arrayIterator" || returnType.kind === "iterable") {
+    return returnType.elementType;
+  }
+  if (returnType.kind === "union") {
+    const yieldTypes = returnType.types.map(generatorYieldType).filter((type): type is CheckedType => type !== undefined);
+    return yieldTypes.length === 0 ? undefined : unionType(yieldTypes);
+  }
+  return undefined;
 }
 
 function blockContainsReturn(block: Block): boolean {
@@ -3497,8 +3635,9 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return anyType;
   }
   if (isYieldExpression(expression)) {
-    if (expression.expression !== undefined) {
-      inferExpression(expression.expression, state, environment);
+    const yieldedType = expression.expression === undefined ? undefinedType : inferExpression(expression.expression, state, environment);
+    if (state.yieldType !== undefined && expression.asteriskToken === undefined) {
+      checkAssignable(yieldedType, state.yieldType, state);
     }
     return anyType;
   }
@@ -5497,8 +5636,9 @@ function checkObjectLiteralMethod(method: MethodDeclaration, state: CheckState, 
   checkSignatureParameters(method.parameters, state, methodEnvironment, true, false, contextualFunction?.parameters ?? []);
   if (method.body !== undefined) {
     const declaredReturnType = method.type === undefined ? undefined : typeFromTypeNode(method.type, methodEnvironment, state);
-    checkBlock(method.body, enterFunction(state), methodEnvironment, declaredReturnType);
-    if (declaredReturnType !== undefined) {
+    const yieldType = method.asteriskToken === undefined ? undefined : generatorYieldType(declaredReturnType);
+    checkBlock(method.body, enterFunction(state, yieldType), methodEnvironment, method.asteriskToken === undefined ? declaredReturnType : undefined);
+    if (declaredReturnType !== undefined && method.asteriskToken === undefined) {
       checkFunctionReturnCompleteness(method.body, declaredReturnType, state);
     }
   }
@@ -5662,6 +5802,12 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
       }
       return { kind: "iterable", elementType: typeFromTypeNode(type.typeArguments![0]!, environment, state) };
     }
+    if (name === "IterableIterator") {
+      if (!hasTypeArgumentCountInRange(type, "IterableIterator<T, TReturn, TNext>", 1, 3, state)) {
+        return { kind: "arrayIterator", elementType: anyType };
+      }
+      return { kind: "arrayIterator", elementType: typeFromTypeNode(type.typeArguments![0]!, environment, state) };
+    }
     if (name === "Set") {
       if (!hasTypeArgumentArity(type, "Set<T>", 1, state)) {
         return { kind: "set", elementType: anyType };
@@ -5680,6 +5826,15 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
     }
     if (name === "IArguments") {
       return iArgumentsType;
+    }
+    if (name === "TemplateStringsArray") {
+      return templateStringsArrayType;
+    }
+    if (name === "RegExpExecArray") {
+      return regExpExecArrayType;
+    }
+    if (name === "RegExpMatchArray") {
+      return regExpMatchArrayType;
     }
     if (name === "Record") {
       if (!hasTypeArgumentArity(type, "Record<K, T>", 2, state)) {
@@ -5791,6 +5946,15 @@ function hasTypeArgumentArity(type: TypeReferenceNode, displayName: string, requ
     return true;
   }
   state?.diagnostics.push(createDiagnostic(2314, displayName, String(required)));
+  return false;
+}
+
+function hasTypeArgumentCountInRange(type: TypeReferenceNode, displayName: string, minimum: number, maximum: number, state: CheckState | undefined): boolean {
+  const actual = type.typeArguments?.length ?? 0;
+  if (actual >= minimum && actual <= maximum) {
+    return true;
+  }
+  state?.diagnostics.push(createDiagnostic(2707, displayName, String(minimum), String(maximum)));
   return false;
 }
 
@@ -6108,7 +6272,7 @@ function resolveEntityNamespace(typeName: EntityName, environment: TypeEnvironme
 }
 
 function emptyCheckState(options: CompilerOptions = {}): CheckState {
-  return { diagnostics: [], options, isJavaScriptFile: false, strictMode: false, strictModeReason: undefined, argumentsForbiddenInClassInitializerOrStaticBlock: false, insideFunction: false, iterationDepth: 0 };
+  return { diagnostics: [], options, isJavaScriptFile: false, strictMode: false, strictModeReason: undefined, argumentsForbiddenInClassInitializerOrStaticBlock: false, insideFunction: false, iterationDepth: 0, yieldType: undefined };
 }
 
 function typeLiteralType(members: readonly TypeElement[], state: CheckState, environment: TypeEnvironment): CheckedType {
@@ -7071,14 +7235,14 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
   }
   if (actual.kind === "object" && expected.kind === "classInstance") {
     return expected.members.nominalProperties.size === 0
-      && objectPropertiesAssignableTo(actual.properties, classInstancePropertyTypes(expected), options, expected.members.optionalProperties);
+      && objectPropertiesAssignableTo(actual.properties, classInstancePropertyTypes(expected), options, expected.members.optionalProperties, actual.optionalProperties);
   }
   if (actual.kind === "interface" && expected.kind === "classInstance") {
     return expected.members.nominalProperties.size === 0
-      && objectPropertiesAssignableTo(actual.members.properties, classInstancePropertyTypes(expected), options, expected.members.optionalProperties);
+      && objectPropertiesAssignableTo(actual.members.properties, classInstancePropertyTypes(expected), options, expected.members.optionalProperties, actual.members.optionalProperties);
   }
   if (actual.kind === "object" && expected.kind === "object") {
-    return objectPropertiesAssignableTo(actual.properties, expected.properties, options, expected.optionalProperties)
+    return objectPropertiesAssignableTo(actual.properties, expected.properties, options, expected.optionalProperties, actual.optionalProperties)
       && callSignaturesAssignableTo(actual.callSignatures ?? [], expected.callSignatures ?? [], options)
       && objectPropertiesAssignableToIndexSignatures(actual.properties, expected.stringIndexType, expected.numberIndexType, options);
   }
@@ -7100,12 +7264,12 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
     return typePropertiesAssignableTo(actual, expected.members.properties, options, expected.members.optionalProperties);
   }
   if (actual.kind === "interface" && expected.kind === "object") {
-    return objectPropertiesAssignableTo(actual.members.properties, expected.properties, options, expected.optionalProperties)
+    return objectPropertiesAssignableTo(actual.members.properties, expected.properties, options, expected.optionalProperties, actual.members.optionalProperties)
       && callSignaturesAssignableTo(actual.members.callSignatures, expected.callSignatures ?? [], options)
       && interfaceIndexSignaturesAssignableToObject(actual.members, expected.stringIndexType, expected.numberIndexType, options);
   }
   if (actual.kind === "classInstance" && expected.kind === "object") {
-    return objectPropertiesAssignableTo(classInstancePropertyTypes(actual), expected.properties, options, expected.optionalProperties)
+    return objectPropertiesAssignableTo(classInstancePropertyTypes(actual), expected.properties, options, expected.optionalProperties, actual.members.optionalProperties)
       && callSignaturesAssignableTo([], expected.callSignatures ?? [], options)
       && indexSignaturesAssignableTo(undefined, undefined, expected.stringIndexType, expected.numberIndexType, options);
   }
@@ -7120,13 +7284,13 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
     return isAssignableTo(actual.keyType, expected.keyType, options) && isAssignableTo(actual.valueType, expected.valueType, options);
   }
   if (actual.kind === "object" && expected.kind === "interface") {
-    return objectPropertiesAssignableToInterface(actual.properties, actual.callSignatures ?? [], expected.members, options);
+    return objectPropertiesAssignableToInterface(actual.properties, actual.callSignatures ?? [], expected.members, options, actual.optionalProperties);
   }
   if (actual.kind === "interface" && expected.kind === "interface") {
-    return objectPropertiesAssignableToInterface(actual.members.properties, actual.members.callSignatures, expected.members, options, actual.members.stringIndexType, actual.members.numberIndexType, true);
+    return objectPropertiesAssignableToInterface(actual.members.properties, actual.members.callSignatures, expected.members, options, actual.members.optionalProperties, actual.members.stringIndexType, actual.members.numberIndexType, true);
   }
   if (actual.kind === "classInstance" && expected.kind === "interface") {
-    return objectPropertiesAssignableToInterface(classInstancePropertyTypes(actual), [], expected.members, options, undefined, undefined, true);
+    return objectPropertiesAssignableToInterface(classInstancePropertyTypes(actual), [], expected.members, options, actual.members.optionalProperties, undefined, undefined, true);
   }
   if (actual.kind === "function" && expected.kind === "object") {
     return objectPropertiesAssignableTo(functionApparentProperties(), expected.properties, options, expected.optionalProperties)
@@ -7139,7 +7303,7 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
     return actual.moduleSpecifier === expected.moduleSpecifier;
   }
   if (actual.kind === "moduleNamespace" && expected.kind === "interface") {
-    return objectPropertiesAssignableToInterface(actual.exports, [], expected.members, options, undefined, undefined, true);
+    return objectPropertiesAssignableToInterface(actual.exports, [], expected.members, options, emptyStringSet, undefined, undefined, true);
   }
   if (actual.kind === "interface" && expected.kind === "moduleNamespace") {
     return objectPropertiesAssignableTo(actual.members.properties, expected.exports, options);
@@ -7307,13 +7471,22 @@ function isEmptyObjectLikeType(type: CheckedType): boolean {
   return false;
 }
 
-function objectPropertiesAssignableTo(actual: ReadonlyMap<string, CheckedType>, expected: ReadonlyMap<string, CheckedType>, options: CompilerOptions = {}, optionalExpected: ReadonlySet<string> = emptyStringSet): boolean {
+function objectPropertiesAssignableTo(
+  actual: ReadonlyMap<string, CheckedType>,
+  expected: ReadonlyMap<string, CheckedType>,
+  options: CompilerOptions = {},
+  optionalExpected: ReadonlySet<string> = emptyStringSet,
+  optionalActual: ReadonlySet<string> = emptyStringSet,
+): boolean {
   for (const [name, expectedPropertyType] of expected.entries()) {
     const actualPropertyType = actual.get(name);
     if (actualPropertyType === undefined) {
       if (optionalExpected.has(name)) {
         continue;
       }
+      return false;
+    }
+    if (optionalActual.has(name) && !optionalExpected.has(name)) {
       return false;
     }
     if (!isAssignableTo(actualPropertyType, expectedPropertyType, options)) {
@@ -7328,11 +7501,12 @@ function objectPropertiesAssignableToInterface(
   actualCallSignatures: readonly CheckedFunctionType[],
   expected: InterfaceMembers,
   options: CompilerOptions = {},
+  actualOptionalProperties: ReadonlySet<string> = emptyStringSet,
   actualStringIndexType?: CheckedType,
   actualNumberIndexType?: CheckedType,
   requireActualIndexSignatures = false,
 ): boolean {
-  if (!objectPropertiesAssignableTo(actual, expected.properties, options, expected.optionalProperties)) {
+  if (!objectPropertiesAssignableTo(actual, expected.properties, options, expected.optionalProperties, actualOptionalProperties)) {
     return false;
   }
   if (!callSignaturesAssignableTo(actualCallSignatures, expected.callSignatures, options)) {
@@ -7536,6 +7710,9 @@ function classMembersAssignableTo(actual: ClassMemberNames, expected: ClassMembe
       if (expected.optionalProperties.has(expectedMember)) {
         continue;
       }
+      return false;
+    }
+    if (actual.optionalProperties.has(expectedMember) && !expected.optionalProperties.has(expectedMember)) {
       return false;
     }
     const expectedPropertyType = expectedPropertyTypes.get(expectedMember);

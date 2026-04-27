@@ -1521,4 +1521,50 @@ describe("checker groundwork", () => {
       "Type 'Named' is not assignable to type '{ [index: number]: number; }'.",
     ]);
   });
+
+  it("models standard TemplateStringsArray merging with source classes", () => {
+    const sourceFile = parseSourceFile([
+      "class TemplateStringsArray {}",
+      "function f(value: TemplateStringsArray): void {}",
+      "f({});",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2345]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Argument of type '{}' is not assignable to parameter of type 'TemplateStringsArray'.",
+    ]);
+  });
+
+  it("models RegExp match and exec array library surfaces", () => {
+    const sourceFile = parseSourceFile([
+      "function f(matchResult: RegExpMatchArray, execResult: RegExpExecArray): void {",
+      "  execResult.slice();",
+      "  execResult = matchResult;",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type 'RegExpMatchArray' is not assignable to type 'RegExpExecArray'.",
+    ]);
+  });
+
+  it("checks generator yields against IterableIterator element types", () => {
+    const sourceFile = parseSourceFile("function* f(): IterableIterator<number> { yield; yield 1; }");
+    const result = checkSourceFile(sourceFile, { target: "es2015", strict: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type 'undefined' is not assignable to type 'number'.",
+    ]);
+  });
+
+  it("models ES5 Math as a standard namespace surface", () => {
+    const sourceFile = parseSourceFile("const value = Math.pow(Math.floor(Math.PI), 2) + Math.abs(-1);");
+    const result = checkSourceFile(sourceFile);
+
+    assert.equal(result.diagnostics.length, 0);
+  });
 });
