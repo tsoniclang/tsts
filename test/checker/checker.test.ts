@@ -480,6 +480,29 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2389, 2389]);
   });
 
+  it("reports block function modifier and implementation grammar", () => {
+    const sourceFile = parseSourceFile([
+      "{",
+      "  declare function f() { }",
+      "  export function f() { }",
+      "  declare export function f() { }",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1184, 1184, 1184, 2393, 2393, 2393, 1183, 1183]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Modifiers cannot appear here.",
+      "Modifiers cannot appear here.",
+      "Modifiers cannot appear here.",
+      "Duplicate function implementation.",
+      "Duplicate function implementation.",
+      "Duplicate function implementation.",
+      "An implementation cannot be declared in ambient contexts.",
+      "An implementation cannot be declared in ambient contexts.",
+    ]);
+  });
+
   it("reports primitive type keywords used as class names", () => {
     const sourceFile = parseSourceFile("class any { }");
     const result = checkSourceFile(sourceFile);

@@ -2529,6 +2529,7 @@ function ambientModuleExports(statements: readonly Statement[], environment: Typ
 
 function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, reportAmbientStatementDiagnostic = true): void {
   prebindStatementDeclarations(statements, state, environment, ambient);
+  checkStatementModifierGrammar(statements, state);
   checkHoistedAndBlockScopedDeclarationDuplicates(statements, state);
   if (statementListIsVarScopeRoot(statements)) {
     checkHoistedDeclarationConflictsInVarScope(statements, state);
@@ -2746,6 +2747,46 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   if (isBlock(statement)) {
     checkBlock(statement, state, environment, expectedReturnType);
   }
+}
+
+function checkStatementModifierGrammar(statements: readonly Statement[], state: CheckState): void {
+  for (const statement of statements) {
+    if (firstIllegalStatementModifier(statement) !== undefined) {
+      state.diagnostics.push(createDiagnostic(1184));
+    }
+  }
+}
+
+function firstIllegalStatementModifier(statement: Statement): { readonly kind: Kind } | undefined {
+  const modifiers = (statement as { readonly modifiers?: readonly { readonly kind: Kind }[] }).modifiers;
+  if (modifiers === undefined) {
+    return undefined;
+  }
+  const parent = statement.parent;
+  if (parent === undefined || isSourceFile(parent) || isModuleBlock(parent)) {
+    return undefined;
+  }
+  if (isFunctionDeclaration(statement)) {
+    return firstModifierExcept(modifiers, Kind.AsyncKeyword);
+  }
+  if (isClassDeclaration(statement)) {
+    return firstModifierExcept(modifiers, Kind.AbstractKeyword);
+  }
+  if (isEnumDeclaration(statement)) {
+    return firstModifierExcept(modifiers, Kind.ConstKeyword);
+  }
+  if (isInterfaceDeclaration(statement) || isTypeAliasDeclaration(statement)) {
+    return firstModifier(modifiers);
+  }
+  return undefined;
+}
+
+function firstModifierExcept(modifiers: readonly { readonly kind: Kind }[], allowedKind: Kind): { readonly kind: Kind } | undefined {
+  return modifiers.find(modifier => !isDecorator(modifier as Node) && modifier.kind !== allowedKind);
+}
+
+function firstModifier(modifiers: readonly { readonly kind: Kind }[]): { readonly kind: Kind } | undefined {
+  return modifiers.find(modifier => !isDecorator(modifier as Node));
 }
 
 function checkSingleStatementDeclaration(statement: Statement, state: CheckState, singleStatementContext: boolean): void {
@@ -4394,6 +4435,7 @@ function checkFunctionDeclarationOverloads(statements: readonly Statement[], sta
   if (ambient) {
     return;
   }
+  checkDuplicateFunctionImplementations(statements, state);
   const pendingNames: string[] = [];
   for (const statement of statements) {
     if (isFunctionDeclaration(statement) && statement.name !== undefined) {
@@ -4411,6 +4453,30 @@ function checkFunctionDeclarationOverloads(statements: readonly Statement[], sta
     diagnosePendingFunctionOverloads(pendingNames, state);
   }
   diagnosePendingFunctionOverloads(pendingNames, state);
+}
+
+function checkDuplicateFunctionImplementations(statements: readonly Statement[], state: CheckState): void {
+  const declarationsByName = new Map<string, FunctionDeclaration[]>();
+  for (const statement of statements) {
+    if (!isFunctionDeclaration(statement) || statement.name === undefined) {
+      continue;
+    }
+    const declarations = declarationsByName.get(statement.name.text);
+    if (declarations === undefined) {
+      declarationsByName.set(statement.name.text, [statement]);
+    } else {
+      declarations.push(statement);
+    }
+  }
+  for (const declarations of declarationsByName.values()) {
+    const implementationCount = declarations.filter(declaration => declaration.body !== undefined).length;
+    if (implementationCount <= 1) {
+      continue;
+    }
+    for (const declaration of declarations) {
+      state.diagnostics.push(createDiagnostic(2393));
+    }
+  }
 }
 
 function checkFunctionImplementationOverloads(implementationName: string, pendingNames: string[], state: CheckState): void {
@@ -7290,6 +7356,9 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
     }
   }
   if (functionDeclaration.body !== undefined) {
+    if (ambient) {
+      state.diagnostics.push(createDiagnostic(1183));
+    }
     const yieldType = functionDeclaration.asteriskToken === undefined ? undefined : generatorYieldType(returnType);
     const expectedBodyReturnType = asyncFunctionBodyExpectedReturnType(returnType, isAsync);
     checkBlock(functionDeclaration.body, enterUnusedDeclaration(enterFunctionBodyWithAwaitContext(state, functionDeclaration.body, yieldType, isAsync), unusedEntry), functionEnvironment, functionDeclaration.asteriskToken === undefined ? expectedBodyReturnType : undefined);
