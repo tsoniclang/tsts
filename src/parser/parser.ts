@@ -279,6 +279,7 @@ const binaryPrecedence = new Map<Kind, number>([
   [Kind.BarBarEqualsToken, 3],
   [Kind.QuestionQuestionEqualsToken, 3],
 ]);
+const conditionalPrecedence = 2;
 
 const assignmentOperatorKinds = new Set<Kind>([
   Kind.EqualsToken,
@@ -1507,7 +1508,7 @@ export class Parser {
       }
       left = createBinaryExpression(undefined, left, undefined, token as BinaryOperatorToken, right);
     }
-    if (precedence === 0 && this.#consumeOptional(Kind.QuestionToken)) {
+    if (precedence <= conditionalPrecedence && this.#consumeOptional(Kind.QuestionToken)) {
       const whenTrue = this.#parseExpression();
       this.#expect(Kind.ColonToken);
       const whenFalse = this.#parseExpression();

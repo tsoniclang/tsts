@@ -1153,6 +1153,50 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322, 2322]);
   });
 
+  it("accepts optional property reads assigned back to optional properties", () => {
+    const sourceFile = parseSourceFile([
+      "interface Host { realpath?(path: string): string; }",
+      "interface System { realpath?(path: string): string; }",
+      "declare const sys: System;",
+      "const host: Host = { realpath: sys.realpath };",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("keeps optional structural property checks precise for generic inference", () => {
+    const sourceFile = parseSourceFile([
+      "type Thing = 'a' | 'b';",
+      "function f(options: SelectOptions<Thing>, onChange: (status: Thing | null) => void): void {",
+      "  select({ options, onChange });",
+      "}",
+      "declare function select<KeyT extends string>(props: SelectProps<KeyT>): void;",
+      "type SelectProps<KeyT extends string> = {",
+      "  options?: SelectOptions<KeyT>;",
+      "  onChange: (key: KeyT) => void;",
+      "};",
+      "type SelectOptions<KeyT extends string> = Array<{ key: KeyT }> | Array<KeyT>;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: true });
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("widens unannotated loose-nullish initializers to any", () => {
+    const sourceFile = parseSourceFile([
+      "namespace N {",
+      "  export var diagnosticWriter = null;",
+      "  export function alert(output: string) {",
+      "    if (diagnosticWriter) diagnosticWriter.Alert(output);",
+      "  }",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strictNullChecks: false });
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
   it("marks simple assignment targets as assigned without reading the target first", () => {
     const sourceFile = parseSourceFile("let value: number; value = 1; const copy: number = value;");
     const result = checkSourceFile(sourceFile);
@@ -1840,6 +1884,13 @@ describe("checker groundwork", () => {
     assert.deepEqual(genericResult.diagnostics.map(diagnostic => diagnostic.code), [2365, 2362, 2363]);
   });
 
+  it("checks deeply left-associated eager binary expressions without recursive overflow", () => {
+    const sourceFile = parseSourceFile(`${Array.from({ length: 2_000 }, (_, index) => String(index)).join(" + ")};`);
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
   it("does not leak outer definite-assignment state into nested function bodies", () => {
     const sourceFile = parseSourceFile([
       "function outer(): void {",
@@ -2349,6 +2400,88 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("reports uncalled non-nullable function conditions", () => {
+    const sourceFile = parseSourceFile([
+      "function basic(required: () => boolean, optional?: () => boolean) {",
+      "  if (required) {}",
+      "  if (optional) {}",
+      "  if (!!required) {}",
+      "  if (required()) {}",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2774]);
+  });
+
+  it("keeps optional parameter signatures distinct from parameter variable reads", () => {
+    const sourceFile = parseSourceFile([
+      "function foo(a?: string) {",
+      "  if (a) a.toUpperCase();",
+      "}",
+      "foo(1);",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Argument of type 'number' is not assignable to parameter of type 'string'.",
+    ]);
+  });
+
+  it("normalizes boolean literal unions in type predicate returns", () => {
+    const sourceFile = parseSourceFile([
+      "function isDefined<T>(value: T | undefined | null | void): value is T {",
+      "  return value !== undefined && value !== null;",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("suppresses uncalled function conditions when the same value is used in the condition body", () => {
+    const sourceFile = parseSourceFile([
+      "declare function consume(callback: () => void): void;",
+      "declare function consumeShadow(callback: (test: () => void) => void): void;",
+      "function outer() {",
+      "  function test() { return true; }",
+      "  if (test) {}",
+      "  if (test) { const fn = test; }",
+      "  if (test) { test(); }",
+      "  if (test) { consume(() => { test(); }); }",
+      "  if (test) { consumeShadow(test => { test(); }); }",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2774, 2774]);
+  });
+
+  it("matches uncalled function body usage by full property receiver", () => {
+    const sourceFile = parseSourceFile([
+      "interface Stats { isDirectory(): boolean; }",
+      "interface Nested { stats: Stats; }",
+      "function property(a: Nested, b: Nested) {",
+      "  if (a.stats.isDirectory) {}",
+      "  if (a.stats.isDirectory) { b.stats.isDirectory(); }",
+      "  if (a.stats.isDirectory) { a.stats.isDirectory(); }",
+      "  const chained = a.stats.isDirectory && a.stats.isDirectory();",
+      "}",
+      "class Foo {",
+      "  maybeIsUser?: () => boolean;",
+      "  isUser() { return true; }",
+      "  test() {",
+      "    if (this.isUser) {}",
+      "    if (this.maybeIsUser) {}",
+      "    if (this.isUser) { this.isUser(); }",
+      "  }",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2774, 2774, 2774]);
+  });
+
   it("reports writes to const bindings through assignments, updates, and destructuring", () => {
     const sourceFile = parseSourceFile([
       "declare const maybe: number | undefined;",
@@ -2794,6 +2927,20 @@ describe("checker groundwork", () => {
       "Parameter 'b' implicitly has an 'any' type.",
     ]);
     assert.equal(unchecked.diagnostics.length, 0);
+  });
+
+  it("declares JavaScript CommonJS module variables only after a CommonJS indicator", () => {
+    const sourceFile = parseSourceFile([
+      "function fn() {}",
+      "if (typeof module === 'object' && module.exports) {",
+      "  module.exports = fn;",
+      "}",
+      "exports.named = fn;",
+      "Object.defineProperty(exports, 'defined', { value: fn });",
+    ].join("\n"), { fileName: "foo.js" });
+    const result = checkSourceFile(sourceFile, { allowJs: true, checkJs: true, strict: true });
+
+    assert.deepEqual(result.diagnostics, []);
   });
 
   it("reports plain JavaScript grammar diagnostics while suppressing unchecked type diagnostics", () => {

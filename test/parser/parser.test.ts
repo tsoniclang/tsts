@@ -141,6 +141,18 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(exponentStatement.expression.right.operatorToken.kind, Kind.AsteriskAsteriskToken);
   });
 
+  it("parses conditional expressions as assignment right-hand sides", () => {
+    const sourceFile = parseSourceFile("titleRotation = condition ? 180 : 0;");
+    const statement = sourceFile.statements[0]!;
+
+    if (!isExpressionStatement(statement) || !isBinaryExpression(statement.expression)) {
+      throw new Error("Expected assignment expression statement");
+    }
+    assert.equal(statement.expression.operatorToken.kind, Kind.EqualsToken);
+    assert.equal(isIdentifier(statement.expression.left), true);
+    assert.equal(isConditionalExpression(statement.expression.right), true);
+  });
+
   it("parses assertions and satisfies with relational precedence", () => {
     const sourceFile = parseSourceFile([
       "state as any && state;",
