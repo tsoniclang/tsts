@@ -2575,11 +2575,18 @@ function checkStatements(statements: readonly Statement[], state: CheckState, en
 }
 
 function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, statementListHasExportedElements: boolean, ambientStatementDiagnosticReported = false, singleStatementContext = false): void {
+  const moduleElementContextIsValid = statementIsInModuleElementContext(statement);
   if (isImportDeclaration(statement)) {
+    if (checkModuleElementContext(statement, state)) {
+      return;
+    }
     bindImportDeclaration(statement, state, environment);
     return;
   }
   if (isImportEqualsDeclaration(statement)) {
+    if (checkModuleElementContext(statement, state)) {
+      return;
+    }
     checkStrictModeIdentifier(statement.name.text, state, ambient);
     environment.set(statement.name.text, importEqualsDeclarationType(statement, state, environment));
     registerUnusedDeclaration(statement.name.text, statement, "local", state, environment);
@@ -2630,16 +2637,23 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isModuleDeclaration(statement)) {
+    checkModuleElementContext(statement, state);
     checkJavaScriptDeclareModifier(statement, state);
     checkModuleDeclaration(statement, state, environment, expectedReturnType, ambient);
     return;
   }
   if (isExportDeclaration(statement)) {
+    if (checkModuleElementContext(statement, state)) {
+      return;
+    }
     checkExportDeclaration(statement, state, environment);
     return;
   }
   if (isExportAssignment(statement)) {
-    checkExportAssignment(statement, state, environment, statementListHasExportedElements, ambient);
+    if (checkModuleElementContext(statement, state)) {
+      return;
+    }
+    checkExportAssignment(statement, state, environment, statementListHasExportedElements && moduleElementContextIsValid, ambient);
     return;
   }
   if (isIfStatement(statement)) {
@@ -2753,7 +2767,6 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     }
     state.diagnostics.push(createDiagnostic(2410));
     inferExpression(statement.expression, state, environment);
-    checkStatement(statement.statement, state, cloneTypeEnvironment(environment), expectedReturnType, ambient, false);
     return;
   }
   if (isLabeledStatement(statement)) {
@@ -2812,6 +2825,43 @@ function firstModifierExcept(modifiers: readonly { readonly kind: Kind }[], allo
 
 function firstModifier(modifiers: readonly { readonly kind: Kind }[]): { readonly kind: Kind } | undefined {
   return modifiers.find(modifier => !isDecorator(modifier as Node));
+}
+
+function checkModuleElementContext(statement: Statement, state: CheckState): boolean {
+  if (statementIsInModuleElementContext(statement)) {
+    return false;
+  }
+  if (isImportDeclaration(statement) || isImportEqualsDeclaration(statement)) {
+    state.diagnostics.push(createDiagnostic(state.isJavaScriptFile ? 1473 : 1232));
+    return true;
+  }
+  if (isExportDeclaration(statement)) {
+    state.diagnostics.push(createDiagnostic(1233));
+    return true;
+  }
+  if (isExportAssignment(statement)) {
+    state.diagnostics.push(createDiagnostic(statement.isExportEquals ? 1231 : 1258));
+    return true;
+  }
+  if (isModuleDeclaration(statement)) {
+    state.diagnostics.push(createDiagnostic(moduleDeclarationIsAmbientExternalModule(statement) ? 1234 : 1235));
+    return true;
+  }
+  return false;
+}
+
+function statementIsInModuleElementContext(statement: Statement): boolean {
+  const parent = statement.parent;
+  return parent !== undefined && (isSourceFile(parent) || isModuleBlock(parent) || isModuleDeclaration(parent));
+}
+
+function statementIsInSourceFile(statement: Statement): boolean {
+  const parent = statement.parent;
+  return parent !== undefined && isSourceFile(parent);
+}
+
+function moduleDeclarationIsAmbientExternalModule(moduleDeclaration: Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>): boolean {
+  return isStringLiteral(moduleDeclaration.name) && hasDeclareModifier(moduleDeclaration);
 }
 
 type UnreachableCause = "throw" | "other";
@@ -3688,6 +3738,9 @@ function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly
   }
   if (isGlobalAmbientExternalModuleDeclaration(moduleDeclaration) && isStringLiteral(moduleDeclaration.name) && isRelativeModuleName(moduleDeclaration.name.text)) {
     state.diagnostics.push(createDiagnostic(2436));
+  }
+  if (moduleDeclarationIsAmbientExternalModule(moduleDeclaration) && statementIsInModuleElementContext(moduleDeclaration) && !statementIsInSourceFile(moduleDeclaration)) {
+    state.diagnostics.push(createDiagnostic(2435));
   }
   if (isGlobalAmbientExternalModuleDeclaration(moduleDeclaration) && isModuleBlock(moduleDeclaration.body)) {
     for (const statement of moduleDeclaration.body.statements) {

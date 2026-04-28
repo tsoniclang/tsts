@@ -503,6 +503,40 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("reports misplaced module elements from statement context", () => {
+    const sourceFile = parseSourceFile([
+      "{",
+      "  namespace M { }",
+      "  declare module \"ambient\" { }",
+      "  export = M;",
+      "  export * from \"ambient\";",
+      "  export default M;",
+      "  import I = M;",
+      "  import \"ambient\";",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1235, 1234, 1231, 1233, 1258, 1232, 1232]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "A namespace declaration is only allowed at the top level of a namespace or module.",
+      "An ambient module declaration is only allowed at the top level in a file.",
+      "An export assignment must be at the top level of a file or module declaration.",
+      "An export declaration can only be used at the top level of a namespace or module.",
+      "A default export must be at the top level of a file or module declaration.",
+      "An import declaration can only be used at the top level of a namespace or module.",
+      "An import declaration can only be used at the top level of a namespace or module.",
+    ]);
+  });
+
+  it("uses JavaScript import context grammar and nested ambient module grammar", () => {
+    const javascriptFile = parseSourceFile("function container() { import \"fs\"; }", { fileName: "check.js" });
+    const nestedAmbientModule = parseSourceFile("namespace Outer { declare module \"nested\" { } }");
+
+    assert.deepEqual(checkSourceFile(javascriptFile, { checkJs: true }).diagnostics.map(diagnostic => diagnostic.code), [1473]);
+    assert.deepEqual(checkSourceFile(nestedAmbientModule).diagnostics.map(diagnostic => diagnostic.code), [2435]);
+  });
+
   it("reports primitive type keywords used as class names", () => {
     const sourceFile = parseSourceFile("class any { }");
     const result = checkSourceFile(sourceFile);
