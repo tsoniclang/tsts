@@ -300,10 +300,15 @@ function declareSymbol(
   const existing = symbols.get(name);
   if (existing !== undefined) {
     if ((existing.flags & excludes) !== 0) {
-      state.diagnostics.push({
-        ...createDiagnostic(2300, name),
-        node: declaration,
-      });
+      if (!checkerOwnsDuplicateBindingDiagnostic(existing.flags, includes)) {
+        state.diagnostics.push({
+          ...createDiagnostic(2300, name),
+          node: declaration,
+        });
+      } else {
+        state.symbols.set(declaration, existing);
+        return existing;
+      }
     } else {
       existing.flags |= includes;
       existing.declarations.push(declaration);
@@ -326,6 +331,21 @@ function declareSymbol(
   symbols.set(name, symbol);
   state.symbols.set(declaration, symbol);
   return symbol;
+}
+
+function checkerOwnsDuplicateBindingDiagnostic(existingFlags: SymbolFlags, nextFlags: SymbolFlags): boolean {
+  const existingIsBlockScoped = (existingFlags & SymbolFlags.BlockScopedVariable) !== 0;
+  const nextIsBlockScoped = (nextFlags & SymbolFlags.BlockScopedVariable) !== 0;
+  const existingIsFunctionScopedVariable = (existingFlags & SymbolFlags.FunctionScopedVariable) !== 0;
+  const nextIsFunctionScopedVariable = (nextFlags & SymbolFlags.FunctionScopedVariable) !== 0;
+  const existingIsFunction = (existingFlags & SymbolFlags.Function) !== 0;
+  const nextIsFunction = (nextFlags & SymbolFlags.Function) !== 0;
+  const existingIsHoistedValue = existingIsFunctionScopedVariable || existingIsFunction;
+  const nextIsHoistedValue = nextIsFunctionScopedVariable || nextIsFunction;
+  return (existingIsBlockScoped && (nextIsBlockScoped || nextIsHoistedValue))
+    || (nextIsBlockScoped && existingIsHoistedValue)
+    || (existingIsFunctionScopedVariable && nextIsFunction)
+    || (existingIsFunction && nextIsFunctionScopedVariable);
 }
 
 function isValueDeclaration(flags: SymbolFlags): boolean {

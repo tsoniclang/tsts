@@ -49,12 +49,11 @@ describe("TS-Go binder groundwork", () => {
     assert.equal(functionLocals?.has("local"), false);
   });
 
-  it("diagnoses duplicate block-scoped declarations without rejecting valid var redeclarations", () => {
+  it("leaves duplicate block-scoped declaration diagnostics to semantic checking without rejecting valid var redeclarations", () => {
     const blockScoped = bindSourceFile(parseSourceFile("let x; const x = 1;"));
     const functionScoped = bindSourceFile(parseSourceFile("var y; var y;"));
 
-    assert.deepEqual(blockScoped.diagnostics.map(diagnostic => diagnostic.message), ["Duplicate identifier 'x'."]);
-    assert.deepEqual(blockScoped.diagnostics.map(diagnostic => diagnostic.code), [2300]);
+    assert.equal(blockScoped.diagnostics.length, 0);
     assert.equal(functionScoped.diagnostics.length, 0);
   });
 

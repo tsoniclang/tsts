@@ -633,6 +633,74 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1117, 1117, 1117, 1117]);
   });
 
+  it("reports duplicate block-scoped bindings with redeclaration diagnostics per declaration", () => {
+    const sourceFile = parseSourceFile([
+      "let top = 1;",
+      "const top = 2;",
+      "switch (0) {",
+      "  default:",
+      "    let inCase = 1;",
+      "    let inCase = 2;",
+      "}",
+      "try {",
+      "  const inTry = 1;",
+      "  const inTry = 2;",
+      "} catch (err) {",
+      "  let inCatch = 1;",
+      "  let inCatch = 2;",
+      "}",
+      "function f() {",
+      "  let local = 1;",
+      "  let local = 2;",
+      "}",
+      "function nested() {",
+      "  let lifted;",
+      "  {",
+      "    var lifted;",
+      "  }",
+      "}",
+      "let looped;",
+      "for (var looped; ;) {",
+      "  break;",
+      "}",
+      "function constWrite() {",
+      "  const fixed = 1;",
+      "  {",
+      "    var fixed = 2;",
+      "  }",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [
+      2451, 2451,
+      2451, 2451,
+      2451, 2451,
+      2451, 2451,
+      2451, 2451,
+      2451, 2451,
+      2451, 2451,
+      2481,
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Cannot redeclare block-scoped variable 'top'.",
+      "Cannot redeclare block-scoped variable 'top'.",
+      "Cannot redeclare block-scoped variable 'looped'.",
+      "Cannot redeclare block-scoped variable 'looped'.",
+      "Cannot redeclare block-scoped variable 'inCase'.",
+      "Cannot redeclare block-scoped variable 'inCase'.",
+      "Cannot redeclare block-scoped variable 'inTry'.",
+      "Cannot redeclare block-scoped variable 'inTry'.",
+      "Cannot redeclare block-scoped variable 'inCatch'.",
+      "Cannot redeclare block-scoped variable 'inCatch'.",
+      "Cannot redeclare block-scoped variable 'local'.",
+      "Cannot redeclare block-scoped variable 'local'.",
+      "Cannot redeclare block-scoped variable 'lifted'.",
+      "Cannot redeclare block-scoped variable 'lifted'.",
+      "Cannot initialize outer scoped variable 'fixed' in the same scope as block scoped declaration 'fixed'.",
+    ]);
+  });
+
   it("widens enum member literals for mutable variable bindings and readonly enum writes", () => {
     const sourceFile = parseSourceFile([
       "enum Choice { A, B }",

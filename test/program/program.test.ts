@@ -41,7 +41,7 @@ describe("program groundwork", () => {
     assert.equal(outputs.size, 0);
   });
 
-  it("promotes bind diagnostics to program diagnostics before emit", () => {
+  it("reports semantic duplicate block-scoped declarations before emit", () => {
     const host: CompilerHost = {
       readFile: () => "let x; const x = 1;",
       writeFile: () => {
@@ -52,9 +52,32 @@ describe("program groundwork", () => {
     const program = createProgram(["input.ts"], {}, host);
     const result = emitProgram(program, host);
 
-    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.message), ["Duplicate identifier 'x'."]);
-    assert.deepEqual(program.diagnostics.map(diagnostic => diagnostic.code), [2300]);
+    assert.deepEqual(program.diagnostics, []);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Cannot redeclare block-scoped variable 'x'.",
+      "Cannot redeclare block-scoped variable 'x'.",
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2451, 2451]);
     assert.equal(result.emittedFiles.length, 0);
+  });
+
+  it("reports global script block-scoped duplicates across root files", () => {
+    const files = new Map<string, string>([
+      ["file1.ts", "let shared = 1;"],
+      ["file2.ts", "const shared = 2;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["file1.ts", "file2.ts"], {}, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => [diagnostic.fileName, diagnostic.code, diagnostic.message]), [
+      ["file1.ts", 2451, "Cannot redeclare block-scoped variable 'shared'."],
+      ["file2.ts", 2451, "Cannot redeclare block-scoped variable 'shared'."],
+    ]);
   });
 
   it("records parse diagnostics per file without aborting the whole program", () => {

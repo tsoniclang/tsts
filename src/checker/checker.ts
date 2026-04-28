@@ -181,6 +181,7 @@ import {
   type TypePredicateNode,
   type TypeReferenceNode,
   type VariableDeclaration,
+  type VariableDeclarationList,
 } from "../ast/index.js";
 import { createDiagnostic, type Diagnostic } from "../diagnostics/index.js";
 import type { CompilerOptions, Program, ProgramDiagnostic, ResolvedModule } from "../program/index.js";
@@ -1536,6 +1537,7 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
     }
     const globalEnvironment = globalEnvironmentForProgram(program);
     diagnostics.push(...missingRequiredGlobalTypeDiagnostics(program, globalEnvironment));
+    diagnostics.push(...globalScriptDeclarationDuplicateDiagnostics(program));
     const moduleResolver = programModuleResolver(program, globalEnvironment);
     for (const sourceFile of program.sourceFiles) {
       const state: CheckState = {
@@ -1576,6 +1578,85 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
   } finally {
     clearAssignabilityRelationState();
   }
+}
+
+interface GlobalScriptDeclarationRecord {
+  readonly fileName: string;
+  readonly name: string;
+  readonly kind: "block" | "class" | "const" | "function" | "var";
+}
+
+function globalScriptDeclarationDuplicateDiagnostics(program: Program): readonly ProgramDiagnostic[] {
+  const declarationsByName = new Map<string, GlobalScriptDeclarationRecord[]>();
+  for (const sourceFile of program.sourceFiles) {
+    if (sourceFileIsExternalModule(sourceFile.sourceFile)) {
+      continue;
+    }
+    for (const record of globalScriptDeclarationRecords(sourceFile.fileName, sourceFile.sourceFile.statements)) {
+      const declarations = declarationsByName.get(record.name);
+      if (declarations === undefined) {
+        declarationsByName.set(record.name, [record]);
+      } else {
+        declarations.push(record);
+      }
+    }
+  }
+
+  const diagnostics: ProgramDiagnostic[] = [];
+  for (const [name, declarations] of declarationsByName) {
+    if (new Set(declarations.map(declaration => declaration.fileName)).size <= 1) {
+      continue;
+    }
+    if (declarations.some(declaration => declaration.kind === "class")) {
+      continue;
+    }
+    const blockScopedDeclarations = declarations.filter(declaration => declaration.kind === "block" || declaration.kind === "const");
+    if (blockScopedDeclarations.length <= 0) {
+      continue;
+    }
+    const hoistedDeclarations = declarations.filter(declaration => declaration.kind === "var" || declaration.kind === "function");
+    if (blockScopedDeclarations.length > 1 || hoistedDeclarations.length > 0) {
+      for (const declaration of [...blockScopedDeclarations, ...hoistedDeclarations]) {
+        diagnostics.push(createProgramCheckDiagnostic(declaration.fileName, 2451, name));
+      }
+    }
+  }
+  return diagnostics;
+}
+
+function globalScriptDeclarationRecords(fileName: string, statements: readonly Statement[]): readonly GlobalScriptDeclarationRecord[] {
+  const records: GlobalScriptDeclarationRecord[] = [];
+  for (const statement of statements) {
+    if (isVariableStatement(statement)) {
+      const kind = variableStatementIsConst(statement)
+        ? "const"
+        : variableStatementIsLexical(statement) ? "block" : "var";
+      for (const name of statement.declarationList.declarations.flatMap(declaration => bindingNameExportNames(declaration.name))) {
+        records.push({ fileName, name, kind });
+      }
+      continue;
+    }
+    if (isFunctionDeclaration(statement) && statement.name !== undefined) {
+      records.push({ fileName, name: statement.name.text, kind: "function" });
+      continue;
+    }
+    if (isClassDeclaration(statement) && statement.name !== undefined) {
+      records.push({ fileName, name: statement.name.text, kind: "class" });
+    }
+  }
+  return records;
+}
+
+function createProgramCheckDiagnostic(fileName: string, code: 2300 | 2451, name: string): ProgramDiagnostic {
+  const diagnostic = createDiagnostic(code, name);
+  return {
+    fileName,
+    code: diagnostic.code,
+    category: diagnostic.category,
+    key: diagnostic.key,
+    messageText: diagnostic.messageText,
+    message: diagnostic.message,
+  };
 }
 
 function reportableCheckDiagnostics(state: CheckState): readonly CheckDiagnostic[] {
@@ -1676,11 +1757,16 @@ function statementsHaveUseStrictPrologue(statements: readonly Statement[]): bool
 }
 
 function sourceFileIsExternalModule(sourceFile: SourceFile): boolean {
-  return sourceFile.statements.some(statement => isImportDeclaration(statement) || isImportEqualsDeclaration(statement) || isExportDeclaration(statement) || isExportAssignment(statement) || isExportedElement(statement));
+  return sourceFileExtensionImpliesExternalModule(sourceFile.fileName)
+    || sourceFile.statements.some(statement => isImportDeclaration(statement) || isImportEqualsDeclaration(statement) || isExportDeclaration(statement) || isExportAssignment(statement) || isExportedElement(statement));
 }
 
 function isDeclarationFile(sourceFile: SourceFile): boolean {
   return sourceFile.isDeclarationFile || sourceFile.fileName.endsWith(".d.ts") || sourceFile.fileName.endsWith(".d.mts") || sourceFile.fileName.endsWith(".d.cts");
+}
+
+function sourceFileExtensionImpliesExternalModule(fileName: string): boolean {
+  return /\.(?:c|m)(?:js|ts)$/i.test(fileName);
 }
 
 function isJavaScriptFileName(fileName: string): boolean {
@@ -2227,6 +2313,9 @@ function ambientModuleExports(statements: readonly Statement[], environment: Typ
 function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, reportAmbientStatementDiagnostic = true): void {
   prebindStatementDeclarations(statements, state, environment, ambient);
   checkHoistedAndBlockScopedDeclarationDuplicates(statements, state);
+  if (statementListIsVarScopeRoot(statements)) {
+    checkHoistedDeclarationConflictsInVarScope(statements, state);
+  }
   const functionOverloadInfo = prebindFunctionOverloadDeclarations(statements, state, environment, ambient);
   const statementState = functionOverloadInfo === undefined ? state : { ...state, functionOverloadInfo };
   checkFunctionDeclarationOverloads(statements, state, ambient);
@@ -3097,14 +3186,57 @@ function checkNamespaceValueDeclarationDuplicates(statements: readonly Statement
 function checkHoistedAndBlockScopedDeclarationDuplicates(statements: readonly Statement[], state: CheckState): void {
   const hoistedDeclarations = new Map<string, number>();
   const blockScopedDeclarations = new Map<string, number>();
+  const constDeclarations = new Map<string, number>();
+  const functionDeclarations = new Map<string, number>();
+  const declarationOrder = new Map<string, ("block" | "const" | "function" | "var")[]>();
   for (const statement of statements) {
     if (isVariableStatement(statement)) {
-      const target = variableStatementIsLexical(statement) ? blockScopedDeclarations : hoistedDeclarations;
-      addBindingNameCounts(target, statement.declarationList.declarations.flatMap(declaration => bindingNameExportNames(declaration.name)));
+      const names = statement.declarationList.declarations.flatMap(declaration => bindingNameExportNames(declaration.name));
+      if (variableStatementIsLexical(statement)) {
+        addBindingNameCounts(blockScopedDeclarations, names);
+        addDeclarationOrder(declarationOrder, names, variableStatementIsConst(statement) ? "const" : "block");
+        if (variableStatementIsConst(statement)) {
+          addBindingNameCounts(constDeclarations, names);
+        }
+      } else {
+        addBindingNameCounts(hoistedDeclarations, names);
+        addDeclarationOrder(declarationOrder, names, "var");
+      }
       continue;
     }
-    if (state.strictMode && !statementListBelongsToModuleBlock(statements) && isFunctionDeclaration(statement) && statement.name !== undefined) {
-      addBindingNameCounts(blockScopedDeclarations, [statement.name.text]);
+    if (isFunctionDeclaration(statement) && statement.name !== undefined) {
+      addBindingNameCounts(functionDeclarations, [statement.name.text]);
+      addDeclarationOrder(declarationOrder, [statement.name.text], "function");
+    }
+  }
+  for (const [name, blockScopedCount] of blockScopedDeclarations) {
+    if (blockScopedCount <= 1) {
+      continue;
+    }
+    for (let index = 0; index < blockScopedCount; index += 1) {
+      state.diagnostics.push(createDiagnostic(2451, name));
+    }
+  }
+  if (state.strictMode && !statementListBelongsToModuleBlock(statements)) {
+    for (const [name, functionCount] of functionDeclarations) {
+      const blockScopedCount = blockScopedDeclarations.get(name) ?? 0;
+      if (blockScopedCount === 0 || (hoistedDeclarations.get(name) ?? 0) > 0) {
+        continue;
+      }
+      for (let index = 0; index < blockScopedCount + functionCount; index += 1) {
+        state.diagnostics.push(createDiagnostic(2451, name));
+      }
+    }
+  }
+  if (!statementListBelongsToModuleBlock(statements)) {
+    for (const [name, functionCount] of functionDeclarations) {
+      const hoistedCount = hoistedDeclarations.get(name) ?? 0;
+      if (hoistedCount === 0 || (blockScopedDeclarations.get(name) ?? 0) > 0) {
+        continue;
+      }
+      for (let index = 0; index < hoistedCount + functionCount; index += 1) {
+        state.diagnostics.push(createDiagnostic(2300, name));
+      }
     }
   }
   for (const [name, hoistedCount] of hoistedDeclarations) {
@@ -3112,20 +3244,310 @@ function checkHoistedAndBlockScopedDeclarationDuplicates(statements: readonly St
     if (blockScopedCount === 0) {
       continue;
     }
-    const diagnosticCount = state.localScopeDepth === 0 ? Math.min(hoistedCount, blockScopedCount) : hoistedCount + blockScopedCount;
+    const functionCount = functionDeclarations.get(name) ?? 0;
+    if (functionCount > 0 && statementListBelongsToModuleBlock(statements)) {
+      continue;
+    }
+    if (state.localScopeDepth > 0 && (constDeclarations.get(name) ?? 0) > 0 && functionCount === 0) {
+      for (let index = 0; index < hoistedCount; index += 1) {
+        state.diagnostics.push(createDiagnostic(2481, name, name));
+      }
+      continue;
+    }
+    const order = declarationOrder.get(name) ?? [];
+    const code = functionCount > 0 || order[0] === "var" ? 2300 : 2451;
+    const diagnosticCount = hoistedCount + blockScopedCount + functionCount;
     for (let index = 0; index < diagnosticCount; index += 1) {
-      state.diagnostics.push(createDiagnostic(2300, name));
+      state.diagnostics.push(createDiagnostic(code, name));
     }
   }
+}
+
+type BlockScopedDeclarationKind = "let" | "const";
+type HoistedDeclarationOrigin = "forInitializer" | "variableStatement";
+
+interface DeclarationConflictScope {
+  readonly id: number;
+  readonly parent: DeclarationConflictScope | undefined;
+  readonly blockScopedDeclarations: Map<string, BlockScopedDeclarationRecord[]>;
+  readonly functionDeclarationNames: Set<string>;
+}
+
+interface BlockScopedDeclarationRecord {
+  readonly id: number;
+  readonly name: string;
+  readonly kind: BlockScopedDeclarationKind;
+  readonly declaration: VariableDeclaration;
+  readonly scope: DeclarationConflictScope;
+}
+
+interface HoistedDeclarationRecord {
+  readonly id: number;
+  readonly name: string;
+  readonly declaration: VariableDeclaration;
+  readonly hasInitializer: boolean;
+  readonly origin: HoistedDeclarationOrigin;
+  readonly scope: DeclarationConflictScope;
+}
+
+interface DeclarationConflictCollection {
+  nextScopeId: number;
+  nextDeclarationId: number;
+  readonly hoistedDeclarations: HoistedDeclarationRecord[];
+}
+
+function statementListIsVarScopeRoot(statements: readonly Statement[]): boolean {
+  const parent = statements[0]?.parent;
+  if (parent === undefined) {
+    return false;
+  }
+  return isSourceFile(parent)
+    || isModuleBlock(parent)
+    || (isBlock(parent) && parent.parent !== undefined && isFunctionOrStaticBlockJumpBoundary(parent.parent));
+}
+
+function checkHoistedDeclarationConflictsInVarScope(statements: readonly Statement[], state: CheckState): void {
+  const collection: DeclarationConflictCollection = {
+    nextScopeId: 1,
+    nextDeclarationId: 1,
+    hoistedDeclarations: [],
+  };
+  const rootScope = createDeclarationConflictScope(undefined, collection);
+  collectDeclarationConflictFacts(statements, rootScope, collection);
+  reportHoistedDeclarationConflicts(collection.hoistedDeclarations, state);
+}
+
+function createDeclarationConflictScope(parent: DeclarationConflictScope | undefined, collection: DeclarationConflictCollection): DeclarationConflictScope {
+  return {
+    id: collection.nextScopeId++,
+    parent,
+    blockScopedDeclarations: new Map(),
+    functionDeclarationNames: new Set(),
+  };
+}
+
+function collectDeclarationConflictFacts(statements: readonly Statement[], scope: DeclarationConflictScope, collection: DeclarationConflictCollection): void {
+  for (const statement of statements) {
+    collectStatementDeclarationConflictFacts(statement, scope, collection);
+  }
+}
+
+function collectStatementDeclarationConflictFacts(statement: Statement, scope: DeclarationConflictScope, collection: DeclarationConflictCollection): void {
+  if (isVariableStatement(statement)) {
+    collectVariableDeclarationListConflictFacts(statement.declarationList, scope, collection, "variableStatement");
+    return;
+  }
+  if (isFunctionDeclaration(statement)) {
+    if (statement.name !== undefined) {
+      scope.functionDeclarationNames.add(statement.name.text);
+    }
+    return;
+  }
+  if (isBlock(statement)) {
+    collectDeclarationConflictFacts(statement.statements, createDeclarationConflictScope(scope, collection), collection);
+    return;
+  }
+  if (isForStatement(statement)) {
+    const bodyScope = collectForInitializerDeclarationConflictFacts(statement.initializer, scope, collection);
+    collectStatementDeclarationConflictFacts(statement.statement, bodyScope, collection);
+    return;
+  }
+  if (isForInStatement(statement) || isForOfStatement(statement)) {
+    const bodyScope = collectForInitializerDeclarationConflictFacts(statement.initializer, scope, collection);
+    collectStatementDeclarationConflictFacts(statement.statement, bodyScope, collection);
+    return;
+  }
+  if (isIfStatement(statement)) {
+    collectStatementDeclarationConflictFacts(statement.thenStatement, scope, collection);
+    if (statement.elseStatement !== undefined) {
+      collectStatementDeclarationConflictFacts(statement.elseStatement, scope, collection);
+    }
+    return;
+  }
+  if (isWhileStatement(statement) || isDoStatement(statement)) {
+    collectStatementDeclarationConflictFacts(statement.statement, scope, collection);
+    return;
+  }
+  if (isLabeledStatement(statement) || isWithStatement(statement)) {
+    collectStatementDeclarationConflictFacts(statement.statement, scope, collection);
+    return;
+  }
+  if (isSwitchStatement(statement)) {
+    const switchScope = createDeclarationConflictScope(scope, collection);
+    for (const clause of statement.caseBlock.clauses) {
+      collectDeclarationConflictFacts(clause.statements, switchScope, collection);
+    }
+    return;
+  }
+  if (isTryStatement(statement)) {
+    collectDeclarationConflictFacts(statement.tryBlock.statements, createDeclarationConflictScope(scope, collection), collection);
+    if (statement.catchClause !== undefined) {
+      collectDeclarationConflictFacts(statement.catchClause.block.statements, createDeclarationConflictScope(scope, collection), collection);
+    }
+    if (statement.finallyBlock !== undefined) {
+      collectDeclarationConflictFacts(statement.finallyBlock.statements, createDeclarationConflictScope(scope, collection), collection);
+    }
+  }
+}
+
+function collectForInitializerDeclarationConflictFacts(initializer: Extract<Statement, { readonly kind: Kind.ForStatement | Kind.ForInStatement | Kind.ForOfStatement }>["initializer"], scope: DeclarationConflictScope, collection: DeclarationConflictCollection): DeclarationConflictScope {
+  if (initializer === undefined || !isVariableDeclarationList(initializer)) {
+    return scope;
+  }
+  if (!variableDeclarationListIsLexical(initializer)) {
+    collectVariableDeclarationListConflictFacts(initializer, scope, collection, "forInitializer");
+    return scope;
+  }
+  const forScope = createDeclarationConflictScope(scope, collection);
+  collectVariableDeclarationListConflictFacts(initializer, forScope, collection, "forInitializer");
+  return forScope;
+}
+
+function collectVariableDeclarationListConflictFacts(declarationList: VariableDeclarationList, scope: DeclarationConflictScope, collection: DeclarationConflictCollection, origin: HoistedDeclarationOrigin): void {
+  const kind = variableDeclarationListBlockScopedKind(declarationList);
+  for (const declaration of declarationList.declarations) {
+    const names = bindingNameExportNames(declaration.name);
+    if (kind !== undefined) {
+      addBlockScopedDeclarationConflictRecords(scope, declaration, names, kind, collection);
+    } else {
+      addHoistedDeclarationConflictRecords(scope, declaration, names, origin, collection);
+    }
+  }
+}
+
+function addBlockScopedDeclarationConflictRecords(scope: DeclarationConflictScope, declaration: VariableDeclaration, names: readonly string[], kind: BlockScopedDeclarationKind, collection: DeclarationConflictCollection): void {
+  for (const name of names) {
+    const record: BlockScopedDeclarationRecord = {
+      id: collection.nextDeclarationId++,
+      name,
+      kind,
+      declaration,
+      scope,
+    };
+    const declarations = scope.blockScopedDeclarations.get(name);
+    if (declarations === undefined) {
+      scope.blockScopedDeclarations.set(name, [record]);
+    } else {
+      declarations.push(record);
+    }
+  }
+}
+
+function addHoistedDeclarationConflictRecords(scope: DeclarationConflictScope, declaration: VariableDeclaration, names: readonly string[], origin: HoistedDeclarationOrigin, collection: DeclarationConflictCollection): void {
+  for (const name of names) {
+    collection.hoistedDeclarations.push({
+      id: collection.nextDeclarationId++,
+      name,
+      declaration,
+      hasInitializer: declaration.initializer !== undefined,
+      origin,
+      scope,
+    });
+  }
+}
+
+function reportHoistedDeclarationConflicts(hoistedDeclarations: readonly HoistedDeclarationRecord[], state: CheckState): void {
+  const reportedDeclarationDiagnostics = new Set<string>();
+  for (const hoistedDeclaration of hoistedDeclarations) {
+    const conflict = nearestHoistedBlockScopedConflict(hoistedDeclaration);
+    if (conflict === undefined) {
+      continue;
+    }
+    if (conflict.scope.functionDeclarationNames.has(hoistedDeclaration.name)) {
+      reportDeclarationConflictDiagnostics(
+        [hoistedDeclaration, ...conflict.declarations],
+        2300,
+        hoistedDeclaration.name,
+        state,
+        reportedDeclarationDiagnostics,
+      );
+      continue;
+    }
+    for (const blockScopedDeclaration of conflict.declarations) {
+      if (blockScopedDeclaration.kind === "const" && hoistedDeclaration.hasInitializer) {
+        const key = declarationDiagnosticKey(hoistedDeclaration.id, 2481, hoistedDeclaration.name);
+        if (!reportedDeclarationDiagnostics.has(key)) {
+          reportedDeclarationDiagnostics.add(key);
+          state.diagnostics.push(createDiagnostic(2481, hoistedDeclaration.name, hoistedDeclaration.name));
+        }
+      } else {
+        reportDeclarationConflictDiagnostics(
+          [blockScopedDeclaration, hoistedDeclaration],
+          2451,
+          hoistedDeclaration.name,
+          state,
+          reportedDeclarationDiagnostics,
+        );
+      }
+    }
+  }
+}
+
+function nearestHoistedBlockScopedConflict(hoistedDeclaration: HoistedDeclarationRecord): { readonly scope: DeclarationConflictScope; readonly declarations: readonly BlockScopedDeclarationRecord[] } | undefined {
+  let scope: DeclarationConflictScope | undefined = hoistedDeclaration.scope;
+  while (scope !== undefined) {
+    const declarations = scope.blockScopedDeclarations.get(hoistedDeclaration.name);
+    if (declarations !== undefined && declarations.length > 0) {
+      if (hoistedDeclaration.origin !== "variableStatement" || scope.id !== hoistedDeclaration.scope.id) {
+        return { scope, declarations };
+      }
+    }
+    scope = scope.parent;
+  }
+  return undefined;
+}
+
+function reportDeclarationConflictDiagnostics(declarations: readonly { readonly id: number }[], code: 2300 | 2451, name: string, state: CheckState, reportedDeclarationDiagnostics: Set<string>): void {
+  for (const declaration of declarations) {
+    const key = declarationDiagnosticKey(declaration.id, code, name);
+    if (reportedDeclarationDiagnostics.has(key)) {
+      continue;
+    }
+    reportedDeclarationDiagnostics.add(key);
+    state.diagnostics.push(createDiagnostic(code, name));
+  }
+}
+
+function declarationDiagnosticKey(declarationId: number, code: number, name: string): string {
+  return `${declarationId}:${code}:${name}`;
 }
 
 function variableStatementIsLexical(statement: Extract<Statement, { readonly kind: Kind.VariableStatement }>): boolean {
   return (statement.declarationList.flags & (NodeFlags.Let | NodeFlags.Const)) !== 0;
 }
 
+function variableStatementIsConst(statement: Extract<Statement, { readonly kind: Kind.VariableStatement }>): boolean {
+  return (statement.declarationList.flags & NodeFlags.Const) !== 0;
+}
+
+function variableDeclarationListIsLexical(declarationList: VariableDeclarationList): boolean {
+  return variableDeclarationListBlockScopedKind(declarationList) !== undefined;
+}
+
+function variableDeclarationListBlockScopedKind(declarationList: VariableDeclarationList): BlockScopedDeclarationKind | undefined {
+  if ((declarationList.flags & NodeFlags.Const) !== 0) {
+    return "const";
+  }
+  if ((declarationList.flags & NodeFlags.Let) !== 0) {
+    return "let";
+  }
+  return undefined;
+}
+
 function addBindingNameCounts(counts: Map<string, number>, names: readonly string[]): void {
   for (const name of names) {
     counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
+}
+
+function addDeclarationOrder(order: Map<string, ("block" | "const" | "function" | "var")[]>, names: readonly string[], kind: "block" | "const" | "function" | "var"): void {
+  for (const name of names) {
+    const entries = order.get(name);
+    if (entries === undefined) {
+      order.set(name, [kind]);
+    } else {
+      entries.push(kind);
+    }
   }
 }
 

@@ -547,13 +547,18 @@ function sourceFileModuleAugmentationSpecifiers(sourceFile: SourceFile): readonl
 }
 
 function sourceFileIsExternalModule(sourceFile: SourceFile): boolean {
-  return sourceFile.statements.some(statement =>
-    isImportDeclaration(statement)
-    || isImportEqualsDeclaration(statement)
-    || isExportDeclaration(statement)
-    || isExportAssignment(statement)
-    || hasModifier(statement, Kind.ExportKeyword)
-  );
+  return sourceFileExtensionImpliesExternalModule(sourceFile.fileName)
+    || sourceFile.statements.some(statement =>
+      isImportDeclaration(statement)
+      || isImportEqualsDeclaration(statement)
+      || isExportDeclaration(statement)
+      || isExportAssignment(statement)
+      || hasModifier(statement, Kind.ExportKeyword)
+    );
+}
+
+function sourceFileExtensionImpliesExternalModule(fileName: string): boolean {
+  return /\.(?:c|m)(?:js|ts)$/i.test(fileName);
 }
 
 function hasModifier(node: object, kind: Kind): boolean {
