@@ -167,6 +167,7 @@ import {
   type ModuleBody,
   type Node,
   type NodeArray,
+  type ObjectLiteralElementLike,
   type ParameterDeclaration,
   type PropertyName,
   type PropertySignatureDeclaration,
@@ -302,6 +303,8 @@ interface BindingCorrelation {
 
 const environmentCorrelations = new WeakMap<TypeEnvironment, readonly BindingCorrelation[]>();
 const readonlyEnvironmentBindings = new WeakMap<TypeEnvironment, ReadonlySet<string>>();
+const declaredEnvironmentBindingTypes = new WeakMap<TypeEnvironment, ReadonlyMap<string, CheckedType>>();
+const wideningLiteralEnvironmentBindings = new WeakMap<TypeEnvironment, ReadonlySet<string>>();
 const environmentUnusedDeclarations = new WeakMap<TypeEnvironment, Map<string, UnusedDeclarationEntry>>();
 const activeTypeParameterConstraintDeclarations = new WeakMap<object, ReadonlySet<string>>();
 interface InterfaceTypeCacheEntry<T> {
@@ -319,6 +322,8 @@ function cloneTypeEnvironment(environment: TypeEnvironment): TypeEnvironment {
   const cloned = new Map(environment);
   copyEnvironmentCorrelations(environment, cloned);
   copyReadonlyEnvironmentBindings(environment, cloned);
+  copyDeclaredEnvironmentBindingTypes(environment, cloned);
+  copyWideningLiteralEnvironmentBindings(environment, cloned);
   copyEnvironmentUnusedDeclarations(environment, cloned);
   return cloned;
 }
@@ -327,6 +332,8 @@ function cloneTypeEnvironmentForSpeculation(environment: TypeEnvironment): TypeE
   const cloned = new Map(environment);
   copyEnvironmentCorrelations(environment, cloned);
   copyReadonlyEnvironmentBindings(environment, cloned);
+  copyDeclaredEnvironmentBindingTypes(environment, cloned);
+  copyWideningLiteralEnvironmentBindings(environment, cloned);
   return cloned;
 }
 
@@ -346,6 +353,20 @@ function copyReadonlyEnvironmentBindings(source: TypeEnvironment, target: TypeEn
   const readonlyBindings = readonlyEnvironmentBindings.get(source);
   if (readonlyBindings !== undefined) {
     readonlyEnvironmentBindings.set(target, new Set(readonlyBindings));
+  }
+}
+
+function copyDeclaredEnvironmentBindingTypes(source: TypeEnvironment, target: TypeEnvironment): void {
+  const declaredBindings = declaredEnvironmentBindingTypes.get(source);
+  if (declaredBindings !== undefined) {
+    declaredEnvironmentBindingTypes.set(target, new Map(declaredBindings));
+  }
+}
+
+function copyWideningLiteralEnvironmentBindings(source: TypeEnvironment, target: TypeEnvironment): void {
+  const wideningBindings = wideningLiteralEnvironmentBindings.get(source);
+  if (wideningBindings !== undefined) {
+    wideningLiteralEnvironmentBindings.set(target, new Set(wideningBindings));
   }
 }
 
@@ -650,6 +671,49 @@ function setEnvironmentBindingReadonly(environment: TypeEnvironment, name: strin
 
 function isReadonlyEnvironmentBinding(environment: TypeEnvironment, name: string): boolean {
   return readonlyEnvironmentBindings.get(environment)?.has(name) === true;
+}
+
+function setDeclaredEnvironmentBindingType(environment: TypeEnvironment, name: string, type: CheckedType): void {
+  const existing = declaredEnvironmentBindingTypes.get(environment);
+  if (existing === undefined) {
+    declaredEnvironmentBindingTypes.set(environment, new Map([[name, type]]));
+    return;
+  }
+  (existing as Map<string, CheckedType>).set(name, type);
+}
+
+function declaredEnvironmentBindingType(environment: TypeEnvironment, name: string): CheckedType | undefined {
+  return declaredEnvironmentBindingTypes.get(environment)?.get(name);
+}
+
+function environmentAssignmentTargetType(type: CheckedType | undefined): CheckedType | undefined {
+  return type?.kind === "unassignedVariable" ? type.type : type;
+}
+
+function setEnvironmentBindingWideningLiteral(environment: TypeEnvironment, name: string, widening: boolean): void {
+  const existing = wideningLiteralEnvironmentBindings.get(environment);
+  if (widening) {
+    if (existing === undefined) {
+      wideningLiteralEnvironmentBindings.set(environment, new Set([name]));
+      return;
+    }
+    (existing as Set<string>).add(name);
+    return;
+  }
+  if (existing !== undefined) {
+    (existing as Set<string>).delete(name);
+  }
+}
+
+function isWideningLiteralEnvironmentBinding(environment: TypeEnvironment, name: string): boolean {
+  return wideningLiteralEnvironmentBindings.get(environment)?.has(name) === true;
+}
+
+function setScopedEnvironmentValue(environment: TypeEnvironment, name: string, type: CheckedType, readonly = false): void {
+  environment.set(name, type);
+  setEnvironmentBindingReadonly(environment, name, readonly);
+  setDeclaredEnvironmentBindingType(environment, name, type);
+  setEnvironmentBindingWideningLiteral(environment, name, false);
 }
 
 interface ClassMemberNames {
@@ -3564,7 +3628,14 @@ function checkVariableDeclaration(declaration: VariableDeclaration, state: Check
   checkStrictModeBindingName(declaration.name, state, ambient);
   checkLetNameInLexicalDeclaration(declaration, state);
   const bindingType = variableDeclarationBindingType(declaration, declaredType, initializerType, environment, ambient, state.options);
+  const bindingHasWideningLiteral = declaredType === undefined
+    && declaration.initializer !== undefined
+    && isConstVariableDeclaration(declaration)
+    && expressionHasWideningLiteral(declaration.initializer, environment);
   setBindingNameType(declaration.name, bindingType, environment, isConstVariableDeclaration(declaration), false, state);
+  if (isIdentifier(declaration.name)) {
+    setEnvironmentBindingWideningLiteral(environment, declaration.name.text, bindingHasWideningLiteral);
+  }
   if ((!ambient || isForInOrOfDeclaration(declaration)) && !isCatchClauseDeclaration(declaration) && !declarationIsExported(declaration)) {
     registerUnusedBindingName(declaration.name, declaration, "local", state, environment);
   }
@@ -3609,10 +3680,11 @@ function objectBindingCorrelationBindings(name: BindingName): ReadonlyMap<string
 }
 
 function variableDeclarationBindingType(declaration: VariableDeclaration, declaredType: CheckedType | undefined, initializerType: CheckedType | undefined, environment: TypeEnvironment, ambient: boolean, options: CompilerOptions): CheckedType {
+  const bindingInitializerType = variableDeclarationInitializerBindingType(declaration, declaredType, initializerType, environment);
   if (
     !ambient
     && strictOptionValue(options, "strictNullChecks")
-    && initializerType === undefined
+    && bindingInitializerType === undefined
     && declaration.type !== undefined
     && declaredType !== undefined
     && declaration.exclamationToken === undefined
@@ -3621,7 +3693,89 @@ function variableDeclarationBindingType(declaration: VariableDeclaration, declar
   ) {
     return { kind: "unassignedVariable", name: declaration.name.text, type: declaredType };
   }
-  return declaredType ?? initializerType ?? unresolvedType;
+  return declaredType ?? bindingInitializerType ?? unresolvedType;
+}
+
+function variableDeclarationInitializerBindingType(declaration: VariableDeclaration, declaredType: CheckedType | undefined, initializerType: CheckedType | undefined, environment: TypeEnvironment): CheckedType | undefined {
+  if (declaredType !== undefined || declaration.initializer === undefined) {
+    return initializerType;
+  }
+  if (isConstVariableDeclaration(declaration)) {
+    return constantExpressionLiteralType(declaration.initializer, environment) ?? initializerType;
+  }
+  if (expressionHasConstAssertion(declaration.initializer)) {
+    return initializerType;
+  }
+  return initializerType !== undefined && expressionHasWideningLiteral(declaration.initializer, environment)
+    ? widenLiteralBindingType(initializerType)
+    : initializerType;
+}
+
+function expressionHasConstAssertion(expression: Expression): boolean {
+  if (isParenthesizedExpression(expression) || isSatisfiesExpression(expression)) {
+    return expressionHasConstAssertion(expression.expression);
+  }
+  return (isAsExpression(expression) || isTypeAssertion(expression)) && isConstTypeReference(expression.type);
+}
+
+function expressionHasWideningLiteral(expression: Expression, environment: TypeEnvironment): boolean {
+  if (isParenthesizedExpression(expression) || isSatisfiesExpression(expression)) {
+    return expressionHasWideningLiteral(expression.expression, environment);
+  }
+  if (isAsExpression(expression) || isTypeAssertion(expression)) {
+    return !isConstTypeReference(expression.type) && expressionHasWideningLiteral(expression.expression, environment);
+  }
+  if (isStringLiteral(expression) || isNoSubstitutionTemplateLiteral(expression) || isNumericLiteral(expression) || isBigIntLiteral(expression)) {
+    return true;
+  }
+  if (isKeywordExpression(expression) && (expression.kind === Kind.TrueKeyword || expression.kind === Kind.FalseKeyword)) {
+    return true;
+  }
+  if (isPrefixUnaryExpression(expression) && constantNumericExpressionValue(expression) !== undefined) {
+    return true;
+  }
+  if (isIdentifier(expression)) {
+    return isWideningLiteralEnvironmentBinding(environment, expression.text);
+  }
+  if (isPropertyAccessExpression(expression)) {
+    return enumMemberAccessExpressionIsWideningLiteral(expression.expression, expression.name.text, environment);
+  }
+  if (isElementAccessExpression(expression) && expression.argumentExpression !== undefined) {
+    const propertyName = constantPropertyExpressionNameText(expression.argumentExpression, environment);
+    return propertyName !== undefined && enumMemberAccessExpressionIsWideningLiteral(expression.expression, propertyName, environment);
+  }
+  if (isConditionalExpression(expression)) {
+    return expressionHasWideningLiteral(expression.whenTrue, environment) || expressionHasWideningLiteral(expression.whenFalse, environment);
+  }
+  return false;
+}
+
+function enumMemberAccessExpressionIsWideningLiteral(receiver: Expression, propertyName: string, environment: TypeEnvironment): boolean {
+  const receiverType = expressionFlowType(receiver, environment);
+  const namespace = namespaceMeaning(receiverType ?? unresolvedType);
+  return namespace?.enumLike === true && namespace.exports.has(propertyName);
+}
+
+function widenLiteralBindingType(type: CheckedType): CheckedType {
+  if (type.kind === "stringLiteral") {
+    return stringType;
+  }
+  if (type.kind === "numberLiteral") {
+    return numberType;
+  }
+  if (type.kind === "booleanLiteral") {
+    return booleanType;
+  }
+  if (type.kind === "union") {
+    return unionType(type.types.map(widenLiteralBindingType));
+  }
+  if (type.kind === "typeAliasInstance") {
+    return { ...type, target: widenLiteralBindingType(type.target) };
+  }
+  if (type.kind === "nonNullable") {
+    return { kind: "nonNullable", target: widenLiteralBindingType(type.target) };
+  }
+  return type;
 }
 
 function typeNodeRequiresDefiniteAssignment(type: TypeNode, environment: TypeEnvironment): boolean {
@@ -4191,11 +4345,14 @@ function checkEnumDeclaration(enumDeclaration: EnumDeclaration, state: CheckStat
 
 function bindEnumDeclaration(enumDeclaration: EnumDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
   const exports = new Map<string, CheckedType>();
+  let nextAutoNumber: number | undefined = 0;
   for (const member of enumDeclaration.members) {
     const name = propertyNameText(member.name);
+    const memberValue = enumMemberConstantValue(member.initializer, nextAutoNumber);
     if (name !== undefined) {
-      exports.set(name, enumMemberType(member.initializer));
+      exports.set(name, enumMemberType(memberValue));
     }
+    nextAutoNumber = memberValue?.kind === "number" && Number.isFinite(memberValue.value) ? memberValue.value + 1 : undefined;
     if (ambient && member.initializer !== undefined && !isConstantEnumInitializer(member.initializer)) {
       state.diagnostics.push(createDiagnostic(1066));
     }
@@ -4208,17 +4365,29 @@ function bindEnumDeclaration(enumDeclaration: EnumDeclaration, state: CheckState
   }));
 }
 
-function enumMemberType(initializer: Expression | undefined): CheckedType {
-  if (initializer === undefined) {
-    return numberType;
+type EnumMemberConstantValue =
+  | { readonly kind: "number"; readonly value: number }
+  | { readonly kind: "string"; readonly value: string };
+
+function enumMemberType(value: EnumMemberConstantValue | undefined): CheckedType {
+  if (value?.kind === "string") {
+    return { kind: "stringLiteral", value: value.value };
   }
-  if (isStringLiteral(initializer) || isNoSubstitutionTemplateLiteral(initializer)) {
-    return { kind: "stringLiteral", value: initializer.text };
-  }
-  if (isNumericLiteral(initializer)) {
-    return { kind: "numberLiteral", value: initializer.text };
+  if (value?.kind === "number") {
+    return { kind: "numberLiteral", value: String(value.value) };
   }
   return numberType;
+}
+
+function enumMemberConstantValue(initializer: Expression | undefined, autoNumber: number | undefined): EnumMemberConstantValue | undefined {
+  if (initializer === undefined) {
+    return autoNumber === undefined ? undefined : { kind: "number", value: autoNumber };
+  }
+  if (isStringLiteral(initializer) || isNoSubstitutionTemplateLiteral(initializer)) {
+    return { kind: "string", value: initializer.text };
+  }
+  const numericValue = constantNumericExpressionValue(initializer);
+  return numericValue === undefined ? undefined : { kind: "number", value: numericValue };
 }
 
 function isConstantEnumInitializer(expression: Expression): boolean {
@@ -4642,6 +4811,108 @@ function literalExpressionNarrowType(expression: Expression): CheckedType | unde
     return { kind: "booleanLiteral", value: expression.kind === Kind.TrueKeyword };
   }
   return undefined;
+}
+
+function constantExpressionLiteralType(expression: Expression, environment: TypeEnvironment): CheckedType | undefined {
+  if (isParenthesizedExpression(expression)) {
+    return constantExpressionLiteralType(expression.expression, environment);
+  }
+  const literalType = literalExpressionNarrowType(expression);
+  if (literalType !== undefined) {
+    return literalType;
+  }
+  const numericValue = constantNumericExpressionValue(expression);
+  if (numericValue !== undefined) {
+    return { kind: "numberLiteral", value: String(numericValue) };
+  }
+  const flowType = expressionFlowType(expression, environment);
+  return literalTypeFromCheckedType(flowType);
+}
+
+function literalTypeFromCheckedType(type: CheckedType | undefined): CheckedType | undefined {
+  if (type === undefined) {
+    return undefined;
+  }
+  if (type.kind === "accessorProperty" || type.kind === "valueOnly" || type.kind === "unassignedVariable") {
+    return literalTypeFromCheckedType(type.type);
+  }
+  if (type.kind === "valueAndType") {
+    return literalTypeFromCheckedType(type.value);
+  }
+  if (type.kind === "typeAliasInstance") {
+    return literalTypeFromCheckedType(type.target);
+  }
+  if (type.kind === "nonNullable") {
+    return literalTypeFromCheckedType(nonNullableType(type.target));
+  }
+  return type.kind === "stringLiteral" || type.kind === "numberLiteral" || type.kind === "booleanLiteral" ? type : undefined;
+}
+
+function constantNumericExpressionValue(expression: Expression): number | undefined {
+  if (isParenthesizedExpression(expression)) {
+    return constantNumericExpressionValue(expression.expression);
+  }
+  if (isNumericLiteral(expression)) {
+    return numericLiteralValue(expression.text);
+  }
+  if (isPrefixUnaryExpression(expression)) {
+    const operand = constantNumericExpressionValue(expression.operand);
+    if (operand === undefined) {
+      return undefined;
+    }
+    if (expression.operator === Kind.PlusToken) {
+      return operand;
+    }
+    if (expression.operator === Kind.MinusToken) {
+      return -operand;
+    }
+    if (expression.operator === Kind.TildeToken) {
+      return ~operand;
+    }
+    return undefined;
+  }
+  if (isBinaryExpression(expression) && isConstantEnumBinaryOperator(expression.operatorToken.kind)) {
+    const left = constantNumericExpressionValue(expression.left);
+    const right = constantNumericExpressionValue(expression.right);
+    if (left === undefined || right === undefined) {
+      return undefined;
+    }
+    return constantNumericBinaryExpressionValue(left, right, expression.operatorToken.kind);
+  }
+  return undefined;
+}
+
+function constantNumericBinaryExpressionValue(left: number, right: number, operator: Kind): number | undefined {
+  switch (operator) {
+    case Kind.PlusToken:
+      return left + right;
+    case Kind.MinusToken:
+      return left - right;
+    case Kind.AsteriskToken:
+      return left * right;
+    case Kind.SlashToken:
+      return left / right;
+    case Kind.PercentToken:
+      return left % right;
+    case Kind.LessThanLessThanToken:
+      return left << right;
+    case Kind.GreaterThanGreaterThanToken:
+      return left >> right;
+    case Kind.GreaterThanGreaterThanGreaterThanToken:
+      return left >>> right;
+    case Kind.AmpersandToken:
+      return left & right;
+    case Kind.BarToken:
+      return left | right;
+    case Kind.CaretToken:
+      return left ^ right;
+    default:
+      return undefined;
+  }
+}
+
+function numericLiteralValue(text: string): number {
+  return Number(text.replace(/_/g, ""));
 }
 
 function getterBodyReturnType(body: Block, options?: CompilerOptions, environment?: TypeEnvironment): CheckedType | undefined {
@@ -6114,7 +6385,7 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
   };
   if (functionExpression.name !== undefined) {
     checkStrictModeIdentifier(functionExpression.name.text, state, false);
-    functionEnvironment.set(functionExpression.name.text, functionType);
+    setScopedEnvironmentValue(functionEnvironment, functionExpression.name.text, functionType);
   }
   const yieldType = functionExpression.asteriskToken === undefined ? undefined : generatorYieldType(declaredReturnType);
   checkBlock(functionExpression.body, enterFunctionBodyWithAwaitContext(state, functionExpression.body, yieldType, isAsync), functionEnvironment, functionExpression.asteriskToken === undefined ? expectedReturnType : undefined);
@@ -6129,7 +6400,7 @@ function checkBlock(block: Block, state: CheckState, environment: TypeEnvironmen
 }
 
 function seedArgumentsObject(environment: TypeEnvironment): void {
-  environment.set("arguments", iArgumentsType);
+  setScopedEnvironmentValue(environment, "arguments", iArgumentsType);
 }
 
 function createFunctionEnvironment(environment: TypeEnvironment): TypeEnvironment {
@@ -6139,6 +6410,8 @@ function createFunctionEnvironment(environment: TypeEnvironment): TypeEnvironmen
   }
   copyEnvironmentCorrelations(environment, functionEnvironment);
   copyReadonlyEnvironmentBindings(environment, functionEnvironment);
+  copyDeclaredEnvironmentBindingTypes(environment, functionEnvironment);
+  copyWideningLiteralEnvironmentBindings(environment, functionEnvironment);
   copyEnvironmentUnusedDeclarations(environment, functionEnvironment);
   return functionEnvironment;
 }
@@ -8378,7 +8651,7 @@ function assignmentTargetType(expression: Expression, environment: TypeEnvironme
     if (target?.kind === "functionDeclaration" || target !== undefined && isReadonlyEnvironmentBinding(environment, expression.text)) {
       return undefined;
     }
-    return target?.kind === "unassignedVariable" ? target.type : target;
+    return environmentAssignmentTargetType(declaredEnvironmentBindingType(environment, expression.text) ?? target);
   }
   if (isParenthesizedExpression(expression)) {
     return assignmentTargetType(expression.expression, environment);
@@ -8855,7 +9128,7 @@ function assignExpressionTarget(expression: Expression, assignedType: CheckedTyp
     if (isClassValue(existing) || isEnumValue(existing) || isPlainNamespace(existing)) {
       return;
     }
-    const targetType = existing?.kind === "unassignedVariable" ? existing.type : existing;
+    const targetType = environmentAssignmentTargetType(declaredEnvironmentBindingType(environment, expression.text) ?? existing);
     if (targetType !== undefined) {
       checkAssignable(assignedType, targetType, state);
       environment.set(expression.text, targetType);
@@ -8873,7 +9146,8 @@ function assignExpressionTarget(expression: Expression, assignedType: CheckedTyp
     if (readonlyObjectPropertyTarget(receiverType, expression.name.text)
       || readonlyInterfacePropertyTarget(receiverType, expression.name.text)
       || readonlyClassInstancePropertyTarget(receiverType, expression.name.text)
-      || readonlyClassConstructorFunctionPropertyTarget(receiverType, expression.name.text, environment)) {
+      || readonlyClassConstructorFunctionPropertyTarget(receiverType, expression.name.text, environment)
+      || readonlyNamespaceDeleteTarget(receiverType, expression.name.text)) {
       return;
     }
     const targetType = assignmentTargetType(expression, environment);
@@ -9839,6 +10113,7 @@ function setBindingNameType(name: BindingName, type: CheckedType, environment: T
       : type;
     environment.set(name.text, binding);
     setEnvironmentBindingReadonly(environment, name.text, readonly);
+    setDeclaredEnvironmentBindingType(environment, name.text, binding);
     return;
   }
   if (isObjectBindingPattern(name)) {
@@ -10093,6 +10368,7 @@ function inferObjectLiteral(expression: Extract<Expression, { readonly kind: Kin
   const properties = new Map<string, CheckedType>();
   const readonlyProperties = new Set<string>();
   let contextualDiagnostics = false;
+  checkObjectLiteralDuplicateProperties(expression.properties, state, environment);
   for (const property of expression.properties) {
     checkInvalidBigIntPropertyName(property, state);
     checkComputedPropertyNameType(property, state, environment);
@@ -10169,6 +10445,115 @@ function inferObjectLiteral(expression: Extract<Expression, { readonly kind: Kin
     }
   }
   return objectType;
+}
+
+interface ObjectLiteralDuplicateEntry {
+  dataCount: number;
+  getCount: number;
+  setCount: number;
+  accessorCount: number;
+  duplicateAccessor: boolean;
+}
+
+function checkObjectLiteralDuplicateProperties(properties: NodeArray<ObjectLiteralElementLike>, state: CheckState, environment: TypeEnvironment): void {
+  const entries = new Map<string, ObjectLiteralDuplicateEntry>();
+  for (const property of properties) {
+    const name = objectLiteralDuplicatePropertyName(property, environment);
+    if (name === undefined) {
+      continue;
+    }
+    const entry = entries.get(name) ?? { dataCount: 0, getCount: 0, setCount: 0, accessorCount: 0, duplicateAccessor: false };
+    if (isGetAccessorDeclaration(property) || isSetAccessorDeclaration(property)) {
+      if (entry.dataCount > 0) {
+        state.diagnostics.push(createDiagnostic(1117));
+      }
+      if ((isGetAccessorDeclaration(property) ? entry.getCount : entry.setCount) > 0) {
+        state.diagnostics.push(createDiagnostic(1118));
+        entry.duplicateAccessor = true;
+      }
+      if (isGetAccessorDeclaration(property)) {
+        entry.getCount += 1;
+      } else {
+        entry.setCount += 1;
+      }
+      entry.accessorCount += 1;
+      entries.set(name, entry);
+      continue;
+    }
+    if (entry.dataCount > 0 || entry.accessorCount > 0) {
+      state.diagnostics.push(createDiagnostic(1117));
+    }
+    entry.dataCount += 1;
+    entries.set(name, entry);
+  }
+  for (const [name, entry] of entries.entries()) {
+    if (!entry.duplicateAccessor) {
+      continue;
+    }
+    for (let index = 0; index < entry.accessorCount; index += 1) {
+      state.diagnostics.push(createDiagnostic(2300, name));
+    }
+  }
+}
+
+function objectLiteralDuplicatePropertyName(property: ObjectLiteralElementLike, environment: TypeEnvironment): string | undefined {
+  if (isSpreadAssignment(property)) {
+    return undefined;
+  }
+  const name = nodePropertyName(property);
+  return name === undefined ? undefined : constantPropertyNameText(name, environment);
+}
+
+function constantPropertyNameText(name: PropertyName, environment: TypeEnvironment): string | undefined {
+  if (isIdentifier(name)) {
+    return name.text;
+  }
+  if (isStringLiteral(name) || isNoSubstitutionTemplateLiteral(name)) {
+    return name.text;
+  }
+  if (isNumericLiteral(name)) {
+    return numericPropertyNameText(name.text);
+  }
+  if (!isComputedPropertyName(name)) {
+    return undefined;
+  }
+  return constantPropertyExpressionNameText(name.expression, environment);
+}
+
+function constantPropertyExpressionNameText(expression: Expression, environment: TypeEnvironment): string | undefined {
+  if (isParenthesizedExpression(expression)) {
+    return constantPropertyExpressionNameText(expression.expression, environment);
+  }
+  if (isStringLiteral(expression) || isNoSubstitutionTemplateLiteral(expression)) {
+    return expression.text;
+  }
+  if (isNumericLiteral(expression)) {
+    return numericPropertyNameText(expression.text);
+  }
+  if (isPrefixUnaryExpression(expression) && (expression.operator === Kind.PlusToken || expression.operator === Kind.MinusToken) && isNumericLiteral(expression.operand)) {
+    const value = numericPropertyNameNumber(expression.operand.text);
+    return Number.isNaN(value) ? undefined : String(expression.operator === Kind.MinusToken ? -value : value);
+  }
+  return constantPropertyNameFromType(constantExpressionLiteralType(expression, environment));
+}
+
+function constantPropertyNameFromType(type: CheckedType | undefined): string | undefined {
+  if (type?.kind === "stringLiteral") {
+    return type.value;
+  }
+  if (type?.kind === "numberLiteral") {
+    return numericPropertyNameText(type.value);
+  }
+  return undefined;
+}
+
+function numericPropertyNameText(text: string): string {
+  const value = numericPropertyNameNumber(text);
+  return Number.isNaN(value) ? text : String(value);
+}
+
+function numericPropertyNameNumber(text: string): number {
+  return numericLiteralValue(text);
 }
 
 function checkExcessObjectLiteralProperty(propertyName: string, contextualType: CheckedType | undefined, state: CheckState): boolean {

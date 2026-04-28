@@ -570,6 +570,87 @@ describe("checker groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
   });
 
+  it("reports duplicate object-literal property names through canonical constant keys", () => {
+    const sourceFile = parseSourceFile([
+      "const first = {",
+      "  a: 1,",
+      "  a: 2,",
+      "  \\u0061: 3,",
+      "  nested: { c: 1, \"c\": 2 },",
+      "};",
+      "const computed = {",
+      "  1: 1,",
+      "  [1]: 2,",
+      "  [+1]: 3,",
+      "  ['+1']: 4,",
+      "  [+1]: 5,",
+      "  '-1': 6,",
+      "  [-1]: 7,",
+      "};",
+      "const accessors = {",
+      "  get value() { return 1; },",
+      "  set value(next: number) {},",
+      "  get value() { return 2; },",
+      "};",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1117, 1117, 1117, 1117, 1117, 1117, 1117, 1118, 2300, 2300, 2300]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "An object literal cannot have multiple properties with the same name.",
+      "An object literal cannot have multiple properties with the same name.",
+      "An object literal cannot have multiple properties with the same name.",
+      "An object literal cannot have multiple properties with the same name.",
+      "An object literal cannot have multiple properties with the same name.",
+      "An object literal cannot have multiple properties with the same name.",
+      "An object literal cannot have multiple properties with the same name.",
+      "An object literal cannot have multiple get/set accessors with the same name.",
+      "Duplicate identifier 'value'.",
+      "Duplicate identifier 'value'.",
+      "Duplicate identifier 'value'.",
+    ]);
+  });
+
+  it("resolves duplicate computed object-literal keys from const and enum literals", () => {
+    const sourceFile = parseSourceFile([
+      "const n = 1;",
+      "const s = 's';",
+      "enum E1 { A = 'ENUM_KEY' }",
+      "enum E2 { B }",
+      "const referenced = {",
+      "  [n]: 1,",
+      "  [n]: 2,",
+      "  [s]: 1,",
+      "  [s]: 2,",
+      "  [E1.A]: 1,",
+      "  [E1.A]: 2,",
+      "  [E2.B]: 1,",
+      "  [E2.B]: 2,",
+      "};",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1117, 1117, 1117, 1117]);
+  });
+
+  it("widens enum member literals for mutable variable bindings and readonly enum writes", () => {
+    const sourceFile = parseSourceFile([
+      "enum Choice { A, B }",
+      "let mutable = Choice.A;",
+      "mutable = Choice.B;",
+      "const exact = Choice.A;",
+      "let widened = exact;",
+      "widened = Choice.B;",
+      "Choice.A = Choice.B;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2540]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Cannot assign to 'A' because it is a read-only property.",
+    ]);
+  });
+
   it("reports export-equals conflicts with exported declarations", () => {
     const sourceFile = parseSourceFile("export class C { } export = B;");
     const result = checkSourceFile(sourceFile);
