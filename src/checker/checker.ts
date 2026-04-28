@@ -8690,10 +8690,12 @@ function inferObjectLiteral(expression: Extract<Expression, { readonly kind: Kin
       const name = propertyNameDiagnosticText(property.name);
       if (name !== undefined) {
         contextualDiagnostics = checkExcessObjectLiteralProperty(name, contextualType, state) || contextualDiagnostics;
-        const expectedPropertyType = contextualObjectPropertyInitializerType(contextualType, name);
-        const propertyType = inferExpressionWithContext(property.initializer, state, environment, expectedPropertyType);
-        if (expectedPropertyType !== undefined && !isAssignableTo(propertyType, expectedPropertyType, state.options)) {
-          checkAssignable(propertyType, expectedPropertyType, state);
+        const expectedInitializerType = contextualObjectPropertyInitializerType(contextualType, name);
+        const expectedAssignmentType = contextualObjectPropertyType(contextualType, name);
+        const propertyType = inferExpressionWithContext(property.initializer, state, environment, expectedInitializerType);
+        const expectedCheckType = optionalPropertyAssignmentCheckType(propertyType, expectedInitializerType, expectedAssignmentType);
+        if (expectedCheckType !== undefined && !isAssignableTo(propertyType, expectedCheckType, state.options)) {
+          checkAssignable(propertyType, expectedCheckType, state);
           contextualDiagnostics = true;
         }
         properties.set(name, propertyType);
@@ -8849,6 +8851,16 @@ function contextualObjectPropertyIsOptional(contextualType: CheckedType | undefi
     return contextualType.members.optionalProperties.has(propertyName);
   }
   return false;
+}
+
+function optionalPropertyAssignmentCheckType(actualType: CheckedType, initializerType: CheckedType | undefined, assignmentType: CheckedType | undefined): CheckedType | undefined {
+  if (assignmentType === undefined) {
+    return initializerType;
+  }
+  if (initializerType === undefined) {
+    return assignmentType;
+  }
+  return actualType.kind === "null" || actualType.kind === "undefined" ? assignmentType : initializerType;
 }
 
 function removeUndefinedType(type: CheckedType): CheckedType {
@@ -10700,66 +10712,71 @@ function inferTupleLiteral(elements: readonly Expression[], state: CheckState, e
   };
 }
 
-function typeContainsTypeParameter(type: CheckedType): boolean {
+function typeContainsTypeParameter(type: CheckedType, seen: Set<CheckedType> = new Set()): boolean {
+  if (seen.has(type)) {
+    return false;
+  }
   if (type.kind === "typeParameter") {
     return true;
   }
+  seen.add(type);
   if (type.kind === "array" || type.kind === "readonlyArray" || type.kind === "arrayLike" || type.kind === "arrayIterator" || type.kind === "iterable" || type.kind === "set") {
-    return typeContainsTypeParameter(type.elementType);
+    return typeContainsTypeParameter(type.elementType, seen);
   }
   if (type.kind === "function") {
-    return type.parameters.some(typeContainsTypeParameter)
-      || typeContainsTypeParameter(type.returnType)
-      || type.overloads?.some(typeContainsTypeParameter) === true;
+    return type.parameters.some(parameter => typeContainsTypeParameter(parameter, seen))
+      || typeContainsTypeParameter(type.returnType, seen)
+      || type.overloads?.some(overload => typeContainsTypeParameter(overload, seen)) === true;
   }
   if (type.kind === "tuple") {
-    return type.elements.some(element => typeContainsTypeParameter(element.type))
-      || (type.restElementType !== undefined && typeContainsTypeParameter(type.restElementType));
+    return type.elements.some(element => typeContainsTypeParameter(element.type, seen))
+      || (type.restElementType !== undefined && typeContainsTypeParameter(type.restElementType, seen));
   }
   if (type.kind === "object") {
-    return [...type.properties.values()].some(typeContainsTypeParameter)
-      || type.callSignatures?.some(typeContainsTypeParameter) === true
-      || (type.stringIndexType !== undefined && typeContainsTypeParameter(type.stringIndexType))
-      || (type.numberIndexType !== undefined && typeContainsTypeParameter(type.numberIndexType));
+    return [...type.properties.values()].some(propertyType => typeContainsTypeParameter(propertyType, seen))
+      || type.callSignatures?.some(signature => typeContainsTypeParameter(signature, seen)) === true
+      || (type.stringIndexType !== undefined && typeContainsTypeParameter(type.stringIndexType, seen))
+      || (type.numberIndexType !== undefined && typeContainsTypeParameter(type.numberIndexType, seen));
   }
   if (type.kind === "interface") {
     const stringIndexType = interfaceStringIndexType(type);
     const numberIndexType = interfaceNumberIndexType(type);
-    return [...interfacePropertyTypes(type).values()].some(typeContainsTypeParameter)
-      || interfaceCallSignatures(type).some(typeContainsTypeParameter)
-      || (stringIndexType !== undefined && typeContainsTypeParameter(stringIndexType))
-      || (numberIndexType !== undefined && typeContainsTypeParameter(numberIndexType));
+    return type.typeArguments?.some(typeArgument => typeContainsTypeParameter(typeArgument, seen)) === true
+      || [...interfacePropertyTypes(type).values()].some(propertyType => typeContainsTypeParameter(propertyType, seen))
+      || interfaceCallSignatures(type).some(signature => typeContainsTypeParameter(signature, seen))
+      || (stringIndexType !== undefined && typeContainsTypeParameter(stringIndexType, seen))
+      || (numberIndexType !== undefined && typeContainsTypeParameter(numberIndexType, seen));
   }
   if (type.kind === "classInstance" || type.kind === "classConstructor") {
-    return type.typeArguments.some(typeContainsTypeParameter)
-      || (type.kind === "classConstructor" && type.constructorParameters.some(typeContainsTypeParameter))
-      || (type.kind === "classConstructor" && type.baseType !== undefined && typeContainsTypeParameter(type.baseType))
-      || (type.arrayBaseElementType !== undefined && typeContainsTypeParameter(type.arrayBaseElementType));
+    return type.typeArguments.some(typeArgument => typeContainsTypeParameter(typeArgument, seen))
+      || (type.kind === "classConstructor" && type.constructorParameters.some(parameter => typeContainsTypeParameter(parameter, seen)))
+      || (type.kind === "classConstructor" && type.baseType !== undefined && typeContainsTypeParameter(type.baseType, seen))
+      || (type.arrayBaseElementType !== undefined && typeContainsTypeParameter(type.arrayBaseElementType, seen));
   }
   if (type.kind === "builtinConstructor") {
-    return typeContainsTypeParameter(type.instanceType)
-      || type.constructorParameters.some(typeContainsTypeParameter)
-      || [...type.staticProperties.values()].some(typeContainsTypeParameter);
+    return typeContainsTypeParameter(type.instanceType, seen)
+      || type.constructorParameters.some(parameter => typeContainsTypeParameter(parameter, seen))
+      || [...type.staticProperties.values()].some(propertyType => typeContainsTypeParameter(propertyType, seen));
   }
   if (type.kind === "union" || type.kind === "intersection") {
-    return type.types.some(typeContainsTypeParameter);
+    return type.types.some(member => typeContainsTypeParameter(member, seen));
   }
   if (type.kind === "typeAlias") {
-    return typeContainsTypeParameter(type.target);
+    return typeContainsTypeParameter(type.target, seen);
   }
   if (type.kind === "typeAliasInstance") {
-    return type.typeArguments.some(typeContainsTypeParameter) || typeContainsTypeParameter(type.target);
+    return type.typeArguments.some(typeArgument => typeContainsTypeParameter(typeArgument, seen)) || typeContainsTypeParameter(type.target, seen);
   }
   if (type.kind === "nonNullable") {
-    return typeContainsTypeParameter(type.target);
+    return typeContainsTypeParameter(type.target, seen);
   }
   if (type.kind === "record") {
-    return typeContainsTypeParameter(type.keyType)
-      || typeContainsTypeParameter(type.valueType)
-      || (type.mappedArraySource !== undefined && typeContainsTypeParameter(type.mappedArraySource));
+    return typeContainsTypeParameter(type.keyType, seen)
+      || typeContainsTypeParameter(type.valueType, seen)
+      || (type.mappedArraySource !== undefined && typeContainsTypeParameter(type.mappedArraySource, seen));
   }
   if (type.kind === "typePredicate") {
-    return typeContainsTypeParameter(type.assertedType);
+    return typeContainsTypeParameter(type.assertedType, seen);
   }
   return false;
 }

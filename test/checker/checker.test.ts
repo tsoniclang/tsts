@@ -714,6 +714,36 @@ describe("checker groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
   });
 
+  it("checks recursive optional object-literal properties without widening away undefined", () => {
+    const sourceFile = parseSourceFile([
+      "interface Interval { begin: number; }",
+      "interface Node { interval: Interval; children?: Node[]; }",
+      "var nodes: Node[] = [{ interval: { begin: 0 }, children: null }];",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type 'null' is not assignable to type 'Node[] | undefined'.",
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
+  });
+
+  it("checks present optional properties against the declared initializer type for non-nullish values", () => {
+    const sourceFile = parseSourceFile([
+      "interface Box { name?: string; }",
+      "interface Style { cb?: () => string[]; }",
+      "const box: Box = { name: false };",
+      "const style: Style = { cb: () => [null] };",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type 'boolean' is not assignable to type 'string'.",
+      "Type '() => null[]' is not assignable to type '() => string[]'.",
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322, 2322]);
+  });
+
   it("marks simple assignment targets as assigned without reading the target first", () => {
     const sourceFile = parseSourceFile("let value: number; value = 1; const copy: number = value;");
     const result = checkSourceFile(sourceFile);
