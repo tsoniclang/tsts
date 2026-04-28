@@ -189,6 +189,12 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
       diagnostics.push(...moduleResolutionDiagnostics(rootName, moduleReference.moduleSpecifier, resolved, options));
       recordResolvedModule(moduleReference.moduleSpecifier, resolved);
     }
+    for (const moduleReference of sourceFileModuleAugmentationSpecifiers(sourceFile)) {
+      const resolved = resolveModuleName(moduleReference, rootName, options, host, fileTextCache);
+      if (resolved.found) {
+        recordResolvedModule(moduleReference, resolved);
+      }
+    }
     for (const moduleReference of sourceFileImplicitModuleReferences(sourceFile, options)) {
       const resolved = resolveModuleName(moduleReference.moduleSpecifier, rootName, options, host, fileTextCache);
       if (resolved.found) {

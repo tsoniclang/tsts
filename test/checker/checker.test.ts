@@ -662,6 +662,22 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1117, 1117, 1117, 1117]);
   });
 
+  it("contextually types object-literal members through constant computed property names", () => {
+    const sourceFile = parseSourceFile([
+      "declare function literalKey(): 'value';",
+      "declare function accept(callbacks: { value: (text: string) => void }): void;",
+      "accept({ [literalKey()]: text => text.toFixed() });",
+      "accept({ [literalKey()](text) { return text.toFixed(); } });",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: true, target: "es2015" });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2339, 2339]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Property 'toFixed' does not exist on type 'string'.",
+      "Property 'toFixed' does not exist on type 'string'.",
+    ]);
+  });
+
   it("reports duplicate block-scoped bindings with redeclaration diagnostics per declaration", () => {
     const sourceFile = parseSourceFile([
       "let top = 1;",
@@ -1352,6 +1368,14 @@ describe("checker groundwork", () => {
     const result = checkSourceFile(sourceFile);
 
     assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("reports interface type-parameter constraint diagnostics once", () => {
+    const sourceFile = parseSourceFile("class Foo<T> {} interface Box<T extends Foo<{ x: V }>> {}");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2304]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find name 'V'."]);
   });
 
   it("relates tuple, mapped-array, and constrained array carriers through element types", () => {
@@ -2540,6 +2564,30 @@ describe("checker groundwork", () => {
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2345]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Argument of type 'number' is not assignable to parameter of type 'string'."]);
+  });
+
+  it("checks spread call arguments using the spread element type", () => {
+    const sourceFile = parseSourceFile([
+      "interface NodeArray<T extends Node> extends ReadonlyArray<T> {}",
+      "interface Node {",
+      "  forEachChild<T>(cbNode: (node: Node) => T | undefined, cbNodeArray?: (nodes: NodeArray<Node>) => T | undefined): T | undefined;",
+      "}",
+      "declare function toArray<T>(value: T | T[]): T[];",
+      "declare function toArray<T>(value: T | readonly T[]): readonly T[];",
+      "function flatMapChildren<T>(node: Node, cb: (child: Node) => readonly T[] | T | undefined): readonly T[] {",
+      "  const result: T[] = [];",
+      "  node.forEachChild(child => {",
+      "    const value = cb(child);",
+      "    if (value !== undefined) {",
+      "      result.push(...toArray(value));",
+      "    }",
+      "  });",
+      "  return result;",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: true });
+
+    assert.deepEqual(result.diagnostics, []);
   });
 
   it("checks Function.apply argument arrays against parameter tuples", () => {
