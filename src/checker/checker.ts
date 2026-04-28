@@ -118,6 +118,7 @@ import {
   isTypeAliasDeclaration,
   isTypeLiteralNode,
   isTypeNode,
+  isTypeOfExpression,
   isTypePredicateNode,
   isTypeQueryNode,
   isTypeReferenceNode,
@@ -126,6 +127,7 @@ import {
   isVariableDeclaration,
   isVariableDeclarationList,
   isUnionTypeNode,
+  isVoidExpression,
   isWhileStatement,
   isWithStatement,
   isYieldExpression,
@@ -153,6 +155,7 @@ import {
   type Identifier,
   type IndexSignatureDeclaration,
   type JsxAttributeLike,
+  type JsxAttributeName,
   type JsxChild,
   type JsxElement,
   type JsxFragment,
@@ -2087,7 +2090,8 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isIfStatement(statement)) {
-    inferExpression(statement.expression, state, environment);
+    const conditionType = inferExpression(statement.expression, state, environment);
+    diagnoseSyntacticTruthyFalsyExpression(statement.expression, conditionType, state, environment);
     checkStatement(statement.thenStatement, state, narrowedEnvironmentForCondition(statement.expression, state, environment), expectedReturnType, ambient, false, false, true);
     if (statement.elseStatement !== undefined) {
       checkStatement(statement.elseStatement, state, cloneTypeEnvironment(environment), expectedReturnType, ambient, false, false, true);
@@ -2095,13 +2099,15 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isWhileStatement(statement)) {
-    inferExpression(statement.expression, state, environment);
+    const conditionType = inferExpression(statement.expression, state, environment);
+    diagnoseSyntacticTruthyFalsyExpression(statement.expression, conditionType, state, environment);
     checkStatement(statement.statement, enterIteration(state), cloneTypeEnvironment(environment), expectedReturnType, ambient, false, false, true);
     return;
   }
   if (isDoStatement(statement)) {
     checkStatement(statement.statement, enterIteration(state), cloneTypeEnvironment(environment), expectedReturnType, ambient, false, false, true);
-    inferExpression(statement.expression, state, environment);
+    const conditionType = inferExpression(statement.expression, state, environment);
+    diagnoseSyntacticTruthyFalsyExpression(statement.expression, conditionType, state, environment);
     return;
   }
   if (isForStatement(statement)) {
@@ -2110,7 +2116,8 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
       checkForInitializer(statement.initializer, state, loopEnvironment);
     }
     if (statement.condition !== undefined) {
-      inferExpression(statement.condition, state, loopEnvironment);
+      const conditionType = inferExpression(statement.condition, state, loopEnvironment);
+      diagnoseSyntacticTruthyFalsyExpression(statement.condition, conditionType, state, loopEnvironment);
     }
     if (statement.incrementor !== undefined) {
       inferExpression(statement.incrementor, state, loopEnvironment);
@@ -6018,11 +6025,22 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     checkDeleteExpression(expression, state, environment);
     return booleanType;
   }
+  if (isTypeOfExpression(expression)) {
+    inferExpression(expression.expression, state, environment);
+    return stringType;
+  }
+  if (isVoidExpression(expression)) {
+    inferExpression(expression.expression, state, environment);
+    return undefinedType;
+  }
   if (isPrefixUnaryExpression(expression)) {
     if (expression.operator === Kind.PlusPlusToken || expression.operator === Kind.MinusMinusToken) {
       checkUpdateTargetReference(expression.operand, state, environment);
     }
-    inferExpression(expression.operand, state, environment);
+    const operandType = inferExpression(expression.operand, state, environment);
+    if (expression.operator === Kind.ExclamationToken) {
+      diagnoseSyntacticTruthyFalsyExpression(expression.operand, operandType, state, environment);
+    }
     return expression.operator === Kind.ExclamationToken ? booleanType : numberType;
   }
   if (isPostfixUnaryExpression(expression)) {
@@ -6075,8 +6093,8 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return inferClassExpression(expression, state, environment);
   }
   if (isConditionalExpression(expression)) {
-    inferExpression(expression.condition, state, environment);
-    diagnoseAlwaysFalsyExpression(expression.condition, state);
+    const conditionType = inferExpression(expression.condition, state, environment);
+    diagnoseSyntacticTruthyFalsyExpression(expression.condition, conditionType, state, environment);
     const whenTrue = inferExpression(expression.whenTrue, state, environment);
     const whenFalse = inferExpression(expression.whenFalse, state, environment);
     if (whenTrue.kind === "any" || whenFalse.kind === "any") {
@@ -6097,22 +6115,39 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     if (isAssignmentOperator(expression.operatorToken.kind)) {
       return inferAssignmentExpression(expression, state, environment);
     }
-    const left = looseNullishUnionType(inferExpression(expression.left, state, environment), state.options);
-    const right = looseNullishUnionType(inferExpression(expression.right, state, environment), state.options);
+    const rawLeft = inferExpression(expression.left, state, environment);
+    const left = looseNullishUnionType(rawLeft, state.options);
     if (expression.operatorToken.kind === Kind.CommaToken) {
+      const right = looseNullishUnionType(inferExpression(expression.right, state, environment), state.options);
       if (state.options.allowUnreachableCode !== true && isSideEffectFreeExpression(expression.left) && !isIndirectCallCommaExpression(expression)) {
         state.diagnostics.push(createDiagnostic(2695));
       }
       return right;
     }
     if (expression.operatorToken.kind === Kind.BarBarToken) {
-      diagnoseAlwaysFalsyExpression(expression.left, state);
-      return isAlwaysFalsyExpression(expression.left) ? right : unionType([left, right]);
+      diagnoseSyntacticTruthyFalsyExpression(expression.left, rawLeft, state, environment);
+      const right = looseNullishUnionType(inferExpression(expression.right, state, environment), state.options);
+      return isAlwaysFalsyExpression(expression.left, environment) ? right : unionType([left, right]);
     }
     if (expression.operatorToken.kind === Kind.AmpersandAmpersandToken) {
-      diagnoseAlwaysFalsyExpression(expression.left, state);
-      return isAlwaysFalsyExpression(expression.left) ? left : unionType([left, right]);
+      diagnoseSyntacticTruthyFalsyExpression(expression.left, rawLeft, state, environment);
+      const right = looseNullishUnionType(inferExpression(expression.right, state, environment), state.options);
+      return isAlwaysFalsyExpression(expression.left, environment) ? left : unionType([left, right]);
     }
+    if (expression.operatorToken.kind === Kind.QuestionQuestionToken) {
+      diagnoseNullishCoalescingLeft(expression.left, state, environment);
+      const right = looseNullishUnionType(inferExpression(expression.right, state, environment), state.options);
+      const nullishness = syntacticNullishness(expression.left, environment);
+      if (nullishness === "always") {
+        return right;
+      }
+      if (nullishness === "never") {
+        return left;
+      }
+      const nonNullishLeft = nonNullableType(left);
+      return nonNullishLeft.kind === "never" ? right : unionType([nonNullishLeft, right]);
+    }
+    const right = looseNullishUnionType(inferExpression(expression.right, state, environment), state.options);
     if (isComparisonOperator(expression.operatorToken.kind)) {
       return booleanType;
     }
@@ -6495,32 +6530,152 @@ function checkJsxChild(child: JsxChild, jsxEnabled: boolean, state: CheckState, 
 function checkJsxOpeningLike(tagName: JsxTagNameExpression, attributes: readonly JsxAttributeLike[], state: CheckState, environment: TypeEnvironment): void {
   markJsxFactoryIdentifierUsed(state, environment);
   checkJsxRuntime(state, environment);
-  checkJsxTagName(tagName, state, environment);
+  const tagType = checkJsxTagName(tagName, state, environment);
+  const propsType = jsxComponentPropsType(tagName, tagType);
+  const contextualPropsType = propsType === undefined ? undefined : contextualJsxAttributesType(propsType, attributes, state, environment);
   for (const attribute of attributes) {
     if (attribute.kind === Kind.JsxSpreadAttribute) {
       inferExpression(attribute.expression, state, environment);
       continue;
     }
-    if (attribute.initializer !== undefined && isJsxExpression(attribute.initializer) && attribute.initializer.expression !== undefined) {
-      inferExpression(attribute.initializer.expression, state, environment);
+    const attributeName = jsxAttributeNameText(attribute.name);
+    const contextualAttributeType = attributeName === undefined
+      ? undefined
+      : contextualObjectPropertyInitializerType(contextualPropsType, attributeName);
+    if (attribute.initializer === undefined) {
+      continue;
     }
+    if (isJsxExpression(attribute.initializer)) {
+      if (attribute.initializer.expression !== undefined) {
+        inferExpressionWithContext(attribute.initializer.expression, state, environment, contextualAttributeType);
+      }
+      continue;
+    }
+    inferExpressionWithContext(attribute.initializer, state, environment, contextualAttributeType);
   }
 }
 
-function checkJsxTagName(tagName: JsxTagNameExpression, state: CheckState, environment: TypeEnvironment): void {
+function checkJsxTagName(tagName: JsxTagNameExpression, state: CheckState, environment: TypeEnvironment): CheckedType | undefined {
   if (isIdentifier(tagName)) {
     if (isIntrinsicJsxTagName(tagName.text)) {
       if (shouldCheckJsxIntrinsicElements(state.options) && jsxIntrinsicElementsType(environment) === undefined) {
         state.diagnostics.push(createDiagnostic(7026, "IntrinsicElements"));
       }
-      return;
+      return undefined;
     }
-    inferExpression(tagName, state, environment);
-    return;
+    return inferExpression(tagName, state, environment);
   }
   if (isPropertyAccessExpression(tagName)) {
-    inferExpression(tagName, state, environment);
+    return inferExpression(tagName, state, environment);
   }
+  return undefined;
+}
+
+function jsxComponentPropsType(tagName: JsxTagNameExpression, tagType: CheckedType | undefined): CheckedType | undefined {
+  if (isIdentifier(tagName) && isIntrinsicJsxTagName(tagName.text)) {
+    return undefined;
+  }
+  const callFunction = callableFunctionType(tagType);
+  return callFunction === undefined ? undefined : functionParameterTypeAt(contextualFunctionTypeForExpression(callFunction) ?? callFunction, 0);
+}
+
+function contextualJsxAttributesType(contextualType: CheckedType, attributes: readonly JsxAttributeLike[], state: CheckState, environment: TypeEnvironment): CheckedType {
+  if (contextualType.kind === "typeAliasInstance") {
+    return contextualJsxAttributesType(contextualType.target, attributes, state, environment);
+  }
+  if (contextualType.kind !== "union") {
+    return contextualType;
+  }
+  const candidates = contextualType.types.filter(candidate => jsxAttributesCompatibleWithContext(candidate, attributes, state, environment));
+  if (candidates.length === 1) {
+    return candidates[0]!;
+  }
+  return candidates.length === 0 ? contextualType : unionType(candidates);
+}
+
+function jsxAttributesCompatibleWithContext(contextualType: CheckedType, attributes: readonly JsxAttributeLike[], state: CheckState, environment: TypeEnvironment): boolean {
+  const attributeTypes = jsxKnownAttributeTypes(attributes, state, environment);
+  for (const [name, actualType] of attributeTypes.entries()) {
+    const expectedType = contextualObjectPropertyAssignmentType(contextualType, name);
+    if (expectedType !== undefined && !isAssignableTo(actualType, expectedType, state.options)) {
+      return false;
+    }
+  }
+  for (const [name, propertyType] of contextualObjectPropertyEntries(contextualType)) {
+    if (!attributeTypes.has(name) && !contextualObjectPropertyIsOptional(contextualType, name) && isLiteralDiscriminantType(propertyType)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function jsxKnownAttributeTypes(attributes: readonly JsxAttributeLike[], state: CheckState, environment: TypeEnvironment): ReadonlyMap<string, CheckedType> {
+  const properties = new Map<string, CheckedType>();
+  for (const attribute of attributes) {
+    if (attribute.kind === Kind.JsxSpreadAttribute) {
+      continue;
+    }
+    const name = jsxAttributeNameText(attribute.name);
+    if (name === undefined) {
+      continue;
+    }
+    const type = jsxAttributeLiteralType(attribute, state, environment);
+    if (type !== undefined) {
+      properties.set(name, type);
+    }
+  }
+  return properties;
+}
+
+function jsxAttributeNameText(name: JsxAttributeName): string | undefined {
+  return isIdentifier(name) ? name.text : undefined;
+}
+
+function jsxAttributeLiteralType(attribute: Extract<JsxAttributeLike, { readonly kind: Kind.JsxAttribute }>, state: CheckState, environment: TypeEnvironment): CheckedType | undefined {
+  if (attribute.initializer === undefined) {
+    return { kind: "booleanLiteral", value: true };
+  }
+  if (isStringLiteral(attribute.initializer)) {
+    return { kind: "stringLiteral", value: attribute.initializer.text };
+  }
+  if (isJsxExpression(attribute.initializer) && attribute.initializer.expression !== undefined) {
+    if (isIdentifier(attribute.initializer.expression) && attribute.initializer.expression.text === "undefined" && environment.get("undefined") === undefinedType) {
+      return undefinedType;
+    }
+    return literalExpressionNarrowType(attribute.initializer.expression);
+  }
+  return undefined;
+}
+
+function contextualObjectPropertyAssignmentType(contextualType: CheckedType, propertyName: string): CheckedType | undefined {
+  const propertyType = contextualObjectPropertyType(contextualType, propertyName);
+  if (propertyType === undefined || !contextualObjectPropertyIsOptional(contextualType, propertyName)) {
+    return propertyType;
+  }
+  return unionType([propertyType, undefinedType]);
+}
+
+function contextualObjectPropertyEntries(contextualType: CheckedType): ReadonlyMap<string, CheckedType> {
+  if (contextualType.kind === "typeAliasInstance") {
+    return contextualObjectPropertyEntries(contextualType.target);
+  }
+  if (contextualType.kind === "object") {
+    return contextualType.properties;
+  }
+  if (contextualType.kind === "interface") {
+    return interfacePropertyTypes(contextualType);
+  }
+  if (contextualType.kind === "classInstance") {
+    return contextualType.members.propertyTypes;
+  }
+  return new Map();
+}
+
+function isLiteralDiscriminantType(type: CheckedType): boolean {
+  if (type.kind === "typeAliasInstance") {
+    return isLiteralDiscriminantType(type.target);
+  }
+  return type.kind === "stringLiteral" || type.kind === "numberLiteral" || type.kind === "booleanLiteral";
 }
 
 function checkJsxClosingTagName(tagName: JsxTagNameExpression, state: CheckState, environment: TypeEnvironment): void {
@@ -7520,20 +7675,155 @@ function expressionFlowType(expression: Expression, environment: TypeEnvironment
   return undefined;
 }
 
-function diagnoseAlwaysFalsyExpression(expression: Expression, state: CheckState): void {
-  if (isAlwaysFalsyExpression(expression)) {
+type SyntacticTruthiness = "truthy" | "falsy" | "unknown";
+type SyntacticNullishness = "always" | "never" | "sometimes";
+
+function diagnoseSyntacticTruthyFalsyExpression(expression: Expression, expressionType: CheckedType, state: CheckState, environment: TypeEnvironment): void {
+  if (isVoidTruthinessType(expressionType)) {
+    state.diagnostics.push(createDiagnostic(1345));
+    return;
+  }
+  const truthiness = syntacticTruthiness(expression, environment);
+  if (truthiness === "truthy") {
+    state.diagnostics.push(createDiagnostic(2872));
+  } else if (truthiness === "falsy") {
     state.diagnostics.push(createDiagnostic(2873));
   }
 }
 
-function isAlwaysFalsyExpression(expression: Expression): boolean {
-  if (isParenthesizedExpression(expression)) {
-    return isAlwaysFalsyExpression(expression.expression);
+function diagnoseNullishCoalescingLeft(expression: Expression, state: CheckState, environment: TypeEnvironment): void {
+  const nullishness = syntacticNullishness(expression, environment);
+  if (nullishness === "always") {
+    state.diagnostics.push(createDiagnostic(2871));
+  } else if (nullishness === "never") {
+    state.diagnostics.push(createDiagnostic(2869));
   }
-  if (isAsExpression(expression) || isTypeAssertion(expression) || isSatisfiesExpression(expression)) {
-    return isAlwaysFalsyExpression(expression.expression);
+}
+
+function isAlwaysFalsyExpression(expression: Expression, environment: TypeEnvironment): boolean {
+  return syntacticTruthiness(expression, environment) === "falsy";
+}
+
+function isVoidTruthinessType(type: CheckedType): boolean {
+  if (type.kind === "typeAliasInstance") {
+    return isVoidTruthinessType(type.target);
   }
-  return isKeywordExpression(expression) && expression.kind === Kind.NullKeyword;
+  return type.kind === "void";
+}
+
+function syntacticTruthiness(expression: Expression, environment: TypeEnvironment): SyntacticTruthiness {
+  const unwrapped = unwrapSyntacticPredicateExpression(expression);
+  if (isKeywordExpression(unwrapped)) {
+    if (unwrapped.kind === Kind.NullKeyword) {
+      return "falsy";
+    }
+    if (unwrapped.kind === Kind.TrueKeyword || unwrapped.kind === Kind.FalseKeyword) {
+      return "unknown";
+    }
+  }
+  if (isIdentifier(unwrapped) && unwrapped.text === "undefined" && environment.get("undefined") === undefinedType) {
+    return "falsy";
+  }
+  if (isVoidExpression(unwrapped)) {
+    return "falsy";
+  }
+  if (isStringLiteral(unwrapped) || isNoSubstitutionTemplateLiteral(unwrapped)) {
+    return unwrapped.text.length === 0 ? "falsy" : "truthy";
+  }
+  if (isNumericLiteral(unwrapped)) {
+    const value = Number(unwrapped.text.replaceAll("_", ""));
+    return value === 0 || value === 1 || Number.isNaN(value) ? "unknown" : "truthy";
+  }
+  if (isConditionalExpression(unwrapped)) {
+    return combineConditionalTruthiness(
+      syntacticTruthiness(unwrapped.whenTrue, environment),
+      syntacticTruthiness(unwrapped.whenFalse, environment),
+    );
+  }
+  if (isBigIntLiteral(unwrapped)
+    || unwrapped.kind === Kind.RegularExpressionLiteral
+    || unwrapped.kind === Kind.ArrayLiteralExpression
+    || unwrapped.kind === Kind.ObjectLiteralExpression
+    || unwrapped.kind === Kind.ClassExpression
+    || unwrapped.kind === Kind.FunctionExpression
+    || unwrapped.kind === Kind.ArrowFunction
+    || unwrapped.kind === Kind.JsxElement
+    || unwrapped.kind === Kind.JsxSelfClosingElement
+    || unwrapped.kind === Kind.TemplateExpression) {
+    return "truthy";
+  }
+  return "unknown";
+}
+
+function combineConditionalTruthiness(whenTrue: SyntacticTruthiness, whenFalse: SyntacticTruthiness): SyntacticTruthiness {
+  return whenTrue === whenFalse ? whenTrue : "unknown";
+}
+
+function syntacticNullishness(expression: Expression, environment: TypeEnvironment): SyntacticNullishness {
+  const unwrapped = unwrapSyntacticPredicateExpression(expression);
+  if (isBinaryExpression(unwrapped)) {
+    switch (unwrapped.operatorToken.kind) {
+      case Kind.BarBarToken:
+      case Kind.BarBarEqualsToken:
+      case Kind.AmpersandAmpersandToken:
+      case Kind.AmpersandAmpersandEqualsToken:
+        return "sometimes";
+      case Kind.CommaToken:
+      case Kind.EqualsToken:
+      case Kind.QuestionQuestionToken:
+      case Kind.QuestionQuestionEqualsToken:
+        return syntacticNullishness(unwrapped.right, environment);
+      default:
+        return "never";
+    }
+  }
+  if (isConditionalExpression(unwrapped)) {
+    return combineConditionalNullishness(
+      syntacticNullishness(unwrapped.whenTrue, environment),
+      syntacticNullishness(unwrapped.whenFalse, environment),
+    );
+  }
+  if (isKeywordExpression(unwrapped) && unwrapped.kind === Kind.NullKeyword) {
+    return "always";
+  }
+  if (isIdentifier(unwrapped)) {
+    return unwrapped.text === "undefined" && environment.get("undefined") === undefinedType ? "always" : "sometimes";
+  }
+  switch (unwrapped.kind) {
+    case Kind.AwaitExpression:
+    case Kind.CallExpression:
+    case Kind.TaggedTemplateExpression:
+    case Kind.ElementAccessExpression:
+    case Kind.MetaProperty:
+    case Kind.NewExpression:
+    case Kind.PropertyAccessExpression:
+    case Kind.YieldExpression:
+    case Kind.ThisKeyword:
+      return "sometimes";
+    default:
+      return "never";
+  }
+}
+
+function unwrapSyntacticPredicateExpression(expression: Expression): Expression {
+  let current = expression;
+  while (isParenthesizedExpression(current) || isAsExpression(current) || isTypeAssertion(current) || isSatisfiesExpression(current) || isNonNullExpression(current)) {
+    current = current.expression;
+  }
+  return current;
+}
+
+function combineConditionalNullishness(whenTrue: SyntacticNullishness, whenFalse: SyntacticNullishness): SyntacticNullishness {
+  if (whenTrue === "always" && whenFalse === "always") {
+    return "always";
+  }
+  if (whenTrue === "never" && whenFalse === "never") {
+    return "never";
+  }
+  if ((whenTrue === "always" && whenFalse === "never") || (whenTrue === "never" && whenFalse === "always")) {
+    return "sometimes";
+  }
+  return "sometimes";
 }
 
 function inferAssertionExpression(expression: AssertionExpression, state: CheckState, environment: TypeEnvironment): CheckedType {

@@ -40,6 +40,22 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [7026, 2304, 2304, 7026]);
   });
 
+  it("contextually types JSX attributes from function component props", () => {
+    const sourceFile = parseSourceFile([
+      "namespace JSX { export interface Element {} }",
+      "type Yes = { disc: true; cb: (value: string) => void; };",
+      "type No = { disc?: false; cb: (value: number) => void; };",
+      "declare function Comp(props: Yes | No): JSX.Element;",
+      "void (<Comp disc cb={value => parseInt(value)} />);",
+      "void (<Comp disc={false} cb={value => value.toFixed()} />);",
+      "void (<Comp disc={undefined} cb={value => value.toFixed()} />);",
+      "void (<Comp cb={value => value.toFixed()} />);",
+    ].join("\n"), { fileName: "view.tsx" });
+    const result = checkSourceFile(sourceFile, { jsx: "preserve", noImplicitAny: true, strictNullChecks: true });
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
   it("reports missing JSX runtime dependencies by emit mode", () => {
     const sourceFile = parseSourceFile("const view = <div />;", { fileName: "view.tsx" });
 
@@ -1823,6 +1839,52 @@ describe("checker groundwork", () => {
     const result = checkSourceFile(sourceFile, { strictNullChecks: true });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2704, 2540]);
+  });
+
+  it("checks syntactic truthiness and nullish coalescing predicates", () => {
+    const sourceFile = parseSourceFile([
+      "declare const maybe: string | undefined;",
+      "if (void 0) {}",
+      "if (\"\") {}",
+      "if (\"x\") {}",
+      "if (/x/) {}",
+      "if (2) {}",
+      "if (undefined) {}",
+      "function shadow(undefined: number) {",
+      "  if (undefined) {}",
+      "}",
+      "function returnsVoid(): void {}",
+      "if (returnsVoid()) {}",
+      "if (maybe ? '' : null) {}",
+      "if (maybe ? 'x' : []) {}",
+      "const fallback = (maybe ?? \"fallback\") ?? \"never\";",
+      "const always = (maybe ? undefined : null) ?? \"always\";",
+      "const sometimes = (maybe ? undefined : 1) ?? \"ok\";",
+      "const arithmetic = (1 + 2) ?? \"never\";",
+      "const numeric = 0 ?? \"never\";",
+      "const invertedNull = !null;",
+      "const invertedObject = !{};",
+      "const doubleBoolean = !!true;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [
+      2873,
+      2873,
+      2872,
+      2872,
+      2872,
+      2873,
+      1345,
+      2873,
+      2872,
+      2869,
+      2871,
+      2869,
+      2869,
+      2873,
+      2872,
+    ]);
   });
 
   it("reports writes to const bindings through assignments, updates, and destructuring", () => {
