@@ -279,6 +279,65 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("reports bigint property names and computed-property key types generically", () => {
+    const sourceFile = parseSourceFile([
+      "const bigNum: bigint = 0n;",
+      "const value = { 1n: 123, [2n]: 456, [bigNum]: 789 };",
+      "interface I { 3n: string; }",
+      "class C { 4n = 0; }",
+      "const c: C = { \"4n\": \"still empty because bigint class members are invalid\" };",
+      "declare const target: number[];",
+      "target[1n];",
+      "const arr = [1, 2, 3] as const;",
+      "const { 0n: item } = arr;",
+      "interface H { \"3n\": string; }",
+      "const h: H = { 3n: \"bad\" };",
+      "const h2: H = { \"3n\": \"ok\" };",
+      "class L { \"5n\" = 0; }",
+      "const l: L = { 5n: \"bad\" };",
+      "const l2: L = { \"5n\": \"badType\" };",
+      "type Q = 6n | 7n | 8n;",
+      "type T = { [t in Q]: string };",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1539, 2464, 2464, 1539, 1539, 2538, 2538, 1539, 2741, 1539, 2741, 2322, 2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "A 'bigint' literal cannot be used as a property name.",
+      "A computed property name must be of type 'string', 'number', 'symbol', or 'any'.",
+      "A computed property name must be of type 'string', 'number', 'symbol', or 'any'.",
+      "A 'bigint' literal cannot be used as a property name.",
+      "A 'bigint' literal cannot be used as a property name.",
+      "Type 'bigint' cannot be used as an index type.",
+      "Type 'bigint' cannot be used as an index type.",
+      "A 'bigint' literal cannot be used as a property name.",
+      "Property '\"3n\"' is missing in type '{}' but required in type 'H'.",
+      "A 'bigint' literal cannot be used as a property name.",
+      "Property '\"5n\"' is missing in type '{}' but required in type 'L'.",
+      "Type 'string' is not assignable to type 'number'.",
+      "Type 'bigint' is not assignable to type 'string | number | symbol'.",
+    ]);
+  });
+
+  it("keeps computed property key validation namespace-accurate", () => {
+    const sourceFile = parseSourceFile([
+      "declare const O: unique symbol;",
+      "declare class Bar<O> { [O]: number; }",
+      "declare function foo2<T extends { [P in keyof T & string as Capitalize<P>]: V }, V extends string>(a: T): T;",
+      "export const r2 = foo2({A: \"a\"});",
+      "function bar(props: { x?: string; y?: string }) {",
+      "  const { x = \"\", y = \"\" } = props;",
+      "  return { [x]: 1, [y]: 2 };",
+      "}",
+      "const bigintMath = 1n + (2n % 1n < 0n ? -1n : 0n);",
+      "declare const ns: any;",
+      "const anyBigintMath = ns / 1000n + 0n;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: true, target: "es2020" });
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
   it("reports parameter list grammar for rest and optional ordering", () => {
     const sourceFile = parseSourceFile([
       "function restNotLast(...x: number[], y: number) {}",
@@ -493,6 +552,22 @@ describe("checker groundwork", () => {
       "Duplicate identifier 'f'.",
     ]);
     assert.equal(redeclaration.diagnostics.length, 0);
+  });
+
+  it("keeps ambient namespace variable exports callable when their interface type is declared later", () => {
+    const sourceFile = parseSourceFile([
+      "declare namespace ko {",
+      "  export var observableArray: KnockoutObservableArrayStatic;",
+      "}",
+      "interface KnockoutObservableArrayStatic {",
+      "  <T>(value?: T[]): T[];",
+      "}",
+      "const values = ko.observableArray<string>();",
+      "const first: string = values[0];",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.equal(result.diagnostics.length, 0);
   });
 
   it("reports export-equals conflicts with exported declarations", () => {

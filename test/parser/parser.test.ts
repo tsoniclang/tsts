@@ -6,6 +6,7 @@ import {
   forEachChild,
   isArrowFunction,
   isAsExpression,
+  isBigIntLiteral,
   isBinaryExpression,
   isBlock,
   isCallExpression,
@@ -13,6 +14,7 @@ import {
   isClassDeclaration,
   isClassExpression,
   isClassStaticBlockDeclaration,
+  isComputedPropertyName,
   isConstructorDeclaration,
   isContinueStatement,
   isConditionalTypeNode,
@@ -189,6 +191,35 @@ describe("TS-Go parser groundwork", () => {
       assert.equal(isAsExpression(initializer.expression), true);
       assert.equal(isArrowFunction(initializer.expression), false);
     }
+  });
+
+  it("parses bigint literals as property names for checker diagnostics", () => {
+    const result = parseSourceFileWithDiagnostics([
+      "const value = { 1n: 123, [2n]: 456 };",
+      "interface I { 3n: string; }",
+      "class C { 4n = 0; }",
+    ].join("\n"));
+
+    assert.deepEqual(result.diagnostics, []);
+    const objectStatement = result.sourceFile.statements[0]!;
+    if (!isVariableStatement(objectStatement)) throw new Error("Expected variable statement");
+    const initializer = objectStatement.declarationList.declarations[0]!.initializer;
+    if (!isObjectLiteralExpression(initializer!)) throw new Error("Expected object literal");
+    const literalProperty = initializer.properties[0]!;
+    if (!isPropertyAssignment(literalProperty)) throw new Error("Expected property assignment");
+    assert.equal(isBigIntLiteral(literalProperty.name), true);
+    const computedProperty = initializer.properties[1]!;
+    if (!isPropertyAssignment(computedProperty)) throw new Error("Expected computed property assignment");
+    assert.equal(isComputedPropertyName(computedProperty.name), true);
+    if (!isComputedPropertyName(computedProperty.name)) throw new Error("Expected computed property name");
+    assert.equal(isBigIntLiteral(computedProperty.name.expression), true);
+  });
+
+  it("recovers bigint-like property access without declaration cascades", () => {
+    const result = parseSourceFileWithDiagnostics("g.2n;");
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1353, 1434]);
+    assert.equal(result.sourceFile.statements.length, 2);
   });
 
   it("parses comma expressions only in expression grammar contexts", () => {

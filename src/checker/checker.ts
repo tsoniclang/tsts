@@ -98,6 +98,7 @@ import {
   isPropertyAssignment,
   isPropertyAccessExpression,
   isPropertyDeclaration,
+  isPropertyName,
   isPropertySignatureDeclaration,
   isPrivateIdentifier,
   isQualifiedName,
@@ -183,7 +184,7 @@ import {
 import { createDiagnostic, type Diagnostic } from "../diagnostics/index.js";
 import type { CompilerOptions, Program, ProgramDiagnostic, ResolvedModule } from "../program/index.js";
 
-type PrimitiveTypeName = "any" | "boolean" | "never" | "null" | "number" | "string" | "undefined" | "unknown" | "void";
+type PrimitiveTypeName = "any" | "bigint" | "boolean" | "never" | "null" | "number" | "string" | "symbol" | "undefined" | "unknown" | "void";
 
 type ClassLikeDeclaration = ClassDeclaration | ClassExpression;
 
@@ -712,6 +713,8 @@ const neverType: CheckedType = { kind: "never" };
 const nullType: CheckedType = { kind: "null" };
 const numberType: CheckedType = { kind: "number" };
 const stringType: CheckedType = { kind: "string" };
+const bigintType: CheckedType = { kind: "bigint" };
+const symbolType: CheckedType = { kind: "symbol" };
 const voidType: CheckedType = { kind: "void" };
 const booleanType: CheckedType = { kind: "boolean" };
 const undefinedType: CheckedType = { kind: "undefined" };
@@ -2583,6 +2586,11 @@ function prebindStatementDeclarations(statements: readonly Statement[], state: C
     }
   }
   for (const statement of statements) {
+    if (isVariableStatement(statement) && (ambient || hasDeclareModifier(statement))) {
+      prebindAmbientVariableStatement(statement, state, environment);
+    }
+  }
+  for (const statement of statements) {
     if (isInterfaceDeclaration(statement)) {
       bindInterfaceDeclaration(statement, emptyCheckState(state.options), environment);
     } else if (isEnumDeclaration(statement)) {
@@ -2634,6 +2642,19 @@ function prebindClassDeclaration(classDeclaration: ClassDeclaration, state: Chec
   if (!ambient && !declarationIsExported(classDeclaration)) {
     registerUnusedDeclaration(classDeclaration.name.text, classDeclaration, "type", state, environment);
   }
+}
+
+function prebindAmbientVariableStatement(statement: Extract<Statement, { readonly kind: Kind.VariableStatement }>, state: CheckState, environment: TypeEnvironment): void {
+  for (const declaration of statement.declarationList.declarations) {
+    const declaredType = declaration.type === undefined ? anyType : prebindDeclaredType(declaration.type, state, environment);
+    setBindingNameType(declaration.name, declaredType, environment, isConstVariableDeclaration(declaration));
+  }
+}
+
+function prebindDeclaredType(type: TypeNode, state: CheckState, environment: TypeEnvironment): CheckedType {
+  const diagnosticState = emptyCheckState(state.options);
+  const declaredType = typeFromTypeNode(type, environment, diagnosticState);
+  return diagnosticState.diagnostics.length === 0 ? declaredType : unresolvedType;
 }
 
 function prebindModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
@@ -3329,7 +3350,7 @@ function mergeNamespaceType(existing: CheckedType | undefined, namespace: Extrac
     return { kind: "namespaceAndType", namespace, type: existing.type };
   }
   const existingNonNamespace = existing === undefined || existing.kind === "namespace" ? undefined : existing;
-  const existingMeaning = existingNonNamespace === undefined ? undefined : typeMeaning(existingNonNamespace) ?? valueMeaning(existingNonNamespace);
+  const existingMeaning = existingNonNamespace === undefined ? undefined : typeMeaning(existingNonNamespace) ?? declarationMergeValueMeaning(existingNonNamespace);
   return existingMeaning === undefined ? namespace : { kind: "namespaceAndType", namespace, type: existingMeaning };
 }
 
@@ -3376,8 +3397,13 @@ function mergeTypeDeclarationBinding(existing: CheckedType | undefined, type: Ch
   if (existing?.kind === "namespace") {
     return { kind: "namespaceAndType", namespace: existing, type };
   }
-  const existingValue = existing === undefined ? undefined : valueMeaning(existing);
+  const existingValue = existing === undefined ? undefined : declarationMergeValueMeaning(existing);
   return existingValue === undefined ? type : { kind: "valueAndType", value: existingValue, type };
+}
+
+function declarationMergeValueMeaning(type: CheckedType): CheckedType | undefined {
+  const value = valueMeaning(type);
+  return value?.kind === "unresolved" ? undefined : value;
 }
 
 function valueMeaning(type: CheckedType): CheckedType | undefined {
@@ -3538,7 +3564,7 @@ function checkVariableDeclaration(declaration: VariableDeclaration, state: Check
   checkStrictModeBindingName(declaration.name, state, ambient);
   checkLetNameInLexicalDeclaration(declaration, state);
   const bindingType = variableDeclarationBindingType(declaration, declaredType, initializerType, environment, ambient, state.options);
-  setBindingNameType(declaration.name, bindingType, environment, isConstVariableDeclaration(declaration));
+  setBindingNameType(declaration.name, bindingType, environment, isConstVariableDeclaration(declaration), false, state);
   if ((!ambient || isForInOrOfDeclaration(declaration)) && !isCatchClauseDeclaration(declaration) && !declarationIsExported(declaration)) {
     registerUnusedBindingName(declaration.name, declaration, "local", state, environment);
   }
@@ -4593,6 +4619,9 @@ function literalExpressionType(expression: Expression): CheckedType | undefined 
   if (isNumericLiteral(expression)) {
     return numberType;
   }
+  if (isBigIntLiteral(expression)) {
+    return bigintType;
+  }
   if (isKeywordExpression(expression) && (expression.kind === Kind.TrueKeyword || expression.kind === Kind.FalseKeyword)) {
     return booleanType;
   }
@@ -4605,6 +4634,9 @@ function literalExpressionNarrowType(expression: Expression): CheckedType | unde
   }
   if (isNumericLiteral(expression)) {
     return { kind: "numberLiteral", value: expression.text };
+  }
+  if (isBigIntLiteral(expression)) {
+    return bigintType;
   }
   if (isKeywordExpression(expression) && (expression.kind === Kind.TrueKeyword || expression.kind === Kind.FalseKeyword)) {
     return { kind: "booleanLiteral", value: expression.kind === Kind.TrueKeyword };
@@ -4994,7 +5026,7 @@ function signatureDeclarationType(signature: Pick<MethodSignatureDeclaration, "t
 
 type OverloadGroup =
   | { readonly kind: "constructor" }
-  | { readonly kind: "method"; readonly name: string };
+  | { readonly kind: "method"; readonly name: string; readonly displayName: string };
 
 function checkClassMemberOverloads(members: readonly ClassElement[], state: CheckState): void {
   const pendingGroups: OverloadGroup[] = [];
@@ -5024,7 +5056,7 @@ function classMemberOverloadGroup(member: ConstructorDeclaration | MethodDeclara
     return { kind: "constructor" };
   }
   const name = propertyNameText(member.name);
-  return name === undefined ? undefined : { kind: "method", name };
+  return name === undefined ? undefined : { kind: "method", name, displayName: propertyNameDisplayText(member.name) ?? displayPropertyName(name) };
 }
 
 function checkClassMemberImplementationOverloads(implementationGroup: OverloadGroup | undefined, pendingGroups: OverloadGroup[], state: CheckState): void {
@@ -5040,7 +5072,7 @@ function checkClassMemberImplementationOverloads(implementationGroup: OverloadGr
     if (implementationGroup.name === immediateGroup.name) {
       removeTrailingMatchingOverloadGroups(pendingGroups, implementationGroup);
     } else {
-      state.diagnostics.push(createDiagnostic(2389, immediateGroup.name));
+      state.diagnostics.push(createDiagnostic(2389, immediateGroup.displayName));
       removeTrailingMatchingOverloadGroups(pendingGroups, immediateGroup);
     }
     diagnosePendingOverloadGroups(pendingGroups, state);
@@ -5078,7 +5110,7 @@ function propertyNameText(name: PropertyName): string | undefined {
     return name.text;
   }
   if (isStringLiteral(name) || isNoSubstitutionTemplateLiteral(name)) {
-    return `"${name.text}"`;
+    return name.text;
   }
   if (isPrivateIdentifier(name)) {
     return name.text.startsWith("#") ? name.text : `#${name.text}`;
@@ -5099,11 +5131,81 @@ function propertyNameDiagnosticText(name: PropertyName): string | undefined {
   return undefined;
 }
 
+function propertyNameDisplayText(name: PropertyName): string | undefined {
+  if (isIdentifier(name) || isNumericLiteral(name)) {
+    return name.text;
+  }
+  if (isStringLiteral(name) || isNoSubstitutionTemplateLiteral(name)) {
+    return JSON.stringify(name.text);
+  }
+  if (isPrivateIdentifier(name)) {
+    return name.text.startsWith("#") ? name.text : `#${name.text}`;
+  }
+  return undefined;
+}
+
+function checkInvalidBigIntPropertyName(node: Node, state: CheckState): boolean {
+  const name = nodePropertyName(node);
+  if (name === undefined || !isBigIntLiteral(name)) {
+    return false;
+  }
+  state.diagnostics.push(createDiagnostic(1539));
+  return true;
+}
+
+function checkComputedPropertyNameType(node: Node, state: CheckState, environment: TypeEnvironment): boolean {
+  const name = nodePropertyName(node);
+  if (name === undefined || !isComputedPropertyName(name)) {
+    return false;
+  }
+  const expressionType = literalExpressionNarrowType(name.expression) ?? inferExpression(name.expression, state, environment);
+  if (computedPropertyNameTypeIsValid(expressionType)) {
+    return false;
+  }
+  state.diagnostics.push(createDiagnostic(2464));
+  return true;
+}
+
+function nodePropertyName(node: Node): PropertyName | undefined {
+  const candidate = (node as { readonly name?: unknown }).name;
+  if (candidate === undefined || typeof candidate !== "object" || candidate === null || !("kind" in candidate)) {
+    return undefined;
+  }
+  return isPropertyName(candidate as Node) ? candidate as PropertyName : undefined;
+}
+
+function computedPropertyNameTypeIsValid(type: CheckedType): boolean {
+  if (type.kind === "unassignedVariable" || type.kind === "valueOnly" || type.kind === "accessorProperty") {
+    return computedPropertyNameTypeIsValid(type.type);
+  }
+  if (type.kind === "valueAndType") {
+    return computedPropertyNameTypeIsValid(type.value);
+  }
+  if (type.kind === "typeAliasInstance") {
+    return computedPropertyNameTypeIsValid(type.target);
+  }
+  if (type.kind === "nonNullable") {
+    return computedPropertyNameTypeIsValid(nonNullableType(type.target));
+  }
+  if (type.kind === "union") {
+    return type.types.every(computedPropertyNameTypeIsValid);
+  }
+  return type.kind === "any"
+    || type.kind === "number"
+    || type.kind === "numberLiteral"
+    || type.kind === "string"
+    || type.kind === "stringLiteral"
+    || type.kind === "symbol"
+    || type.kind === "unresolved";
+}
+
 function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment, ambient: boolean, classIsAbstract: boolean, classMembers: ClassMemberNames, inheritedMembers: ClassMemberNames | undefined, accessorContextTypes: ReadonlyMap<string, AccessorContextTypes>, constructorAssignedProperties: ReadonlySet<string>): void {
   if (checkDecoratorGrammar(member, state)) {
     return;
   }
   checkJavaScriptDeclareModifier(member, state);
+  checkInvalidBigIntPropertyName(member, state);
+  checkComputedPropertyNameType(member, state, environment);
   if (hasModifier(member, Kind.ConstKeyword)) {
     state.diagnostics.push(createDiagnostic(1248, "const"));
   }
@@ -5365,6 +5467,8 @@ function checkAbstractMemberModifiers(member: ClassElement, state: CheckState, c
 
 function checkTypeElements(members: readonly TypeElement[], state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
   for (const member of members) {
+    checkInvalidBigIntPropertyName(member, state);
+    checkComputedPropertyNameType(member, state, environment);
     if (isIndexSignatureDeclaration(member)) {
       checkIndexSignatureDeclaration(member, state, environment);
       continue;
@@ -5477,7 +5581,7 @@ function checkAccessorDeclaration(accessor: GetAccessorDeclaration | SetAccessor
     }
     const parameterType = parameterTypeFromDeclaration(parameter, accessorEnvironment, state, contextualAccessorType ?? unresolvedType);
     checkRestParameterArrayType(parameter, parameterType, state);
-    setBindingNameType(parameter.name, parameterType, accessorEnvironment);
+    setBindingNameType(parameter.name, parameterType, accessorEnvironment, false, false, state);
     registerUnusedParameter(parameter, state, accessorEnvironment, ambient || accessor.body === undefined);
   }
   if (accessor.type !== undefined) {
@@ -5516,7 +5620,7 @@ function checkSignatureParameters(parameters: readonly ParameterDeclaration[], s
     checkRestParameterArrayType(parameter, parameterType, state);
     checkStrictModeBindingName(parameter.name, state, ambient);
     if (bindParameters !== "none") {
-      setBindingNameType(parameter.name, parameterType, environment, false, bindParameters === "valueOnly");
+      setBindingNameType(parameter.name, parameterType, environment, false, bindParameters === "valueOnly", state);
     }
     if (parameter.initializer !== undefined) {
       inferExpression(parameter.initializer, enterParameterInitializer(state, parameterInitializerAwaitContext), environment);
@@ -5532,7 +5636,7 @@ function parameterDisplayNames(parameters: readonly ParameterDeclaration[]): rea
 function addTypeParametersToEnvironment(typeParameters: readonly string[], environment: TypeEnvironment): void {
   for (const typeParameter of typeParameters) {
     removeUnusedDeclarationBinding(environment, typeParameter);
-    environment.set(typeParameter, { kind: "typeParameter", name: typeParameter });
+    environment.set(typeParameter, mergeTypeDeclarationBinding(environment.get(typeParameter), { kind: "typeParameter", name: typeParameter }));
   }
 }
 
@@ -5696,11 +5800,11 @@ function addTypeParameterConstraintToEnvironment(typeParameter: TypeParameterDec
   const unusedEntry = state?.unusedDeclarations.nodes.get(typeParameter);
   const constraintState = state === undefined || unusedEntry === undefined ? state : enterUnusedDeclaration(state, unusedEntry);
   const constraint = typeFromTypeNode(typeParameter.constraint, environment, constraintState);
-  environment.set(typeParameter.name.text, {
+  environment.set(typeParameter.name.text, mergeTypeDeclarationBinding(environment.get(typeParameter.name.text), {
     kind: "typeParameter",
     name: typeParameter.name.text,
     constraint,
-  });
+  }));
   return constraint;
 }
 
@@ -5897,7 +6001,7 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
     checkImplicitAnyParameter(parameter, state, functionEnvironment, jsDocParameterType(parameter, jsDocParameterTypes));
     checkRestParameterArrayType(parameter, parameterTypes[index] ?? unresolvedType, state);
     checkStrictModeBindingName(parameter.name, state, ambient);
-    setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
+    setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment, false, false, state);
     registerUnusedParameter(parameter, state, functionEnvironment, ambient || functionDeclaration.body === undefined);
     if (parameter.initializer !== undefined) {
       inferExpression(parameter.initializer, enterParameterInitializer(state, isAsync), functionEnvironment);
@@ -5989,7 +6093,7 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
     checkImplicitAnyParameter(parameter, state, functionEnvironment, jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[index]);
     checkRestParameterArrayType(parameter, parameterTypes[index] ?? unresolvedType, state);
     checkStrictModeBindingName(parameter.name, state, false);
-    setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
+    setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment, false, false, state);
     registerUnusedParameter(parameter, state, functionEnvironment, functionExpression.body === undefined);
     if (parameter.initializer !== undefined) {
       inferExpression(parameter.initializer, enterParameterInitializer(state, isAsync), functionEnvironment);
@@ -6160,6 +6264,9 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   if (isNumericLiteral(expression)) {
     return numberType;
   }
+  if (isBigIntLiteral(expression)) {
+    return bigintType;
+  }
   if (isStringLiteral(expression)) {
     return stringType;
   }
@@ -6260,6 +6367,9 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     const operandType = inferExpression(expression.operand, state, environment);
     if (expression.operator === Kind.ExclamationToken) {
       diagnoseSyntacticTruthyFalsyExpression(expression.operand, operandType, state, environment);
+    }
+    if (expression.operator === Kind.MinusToken && isBigIntLikeOperandType(operandType)) {
+      return bigintType;
     }
     return expression.operator === Kind.ExclamationToken ? booleanType : numberType;
   }
@@ -6375,8 +6485,14 @@ function inferExpression(expression: Expression, state: CheckState, environment:
       return inferPlusExpressionType(left, right, state);
     }
     if (isNumericArithmeticOperator(expression.operatorToken.kind)) {
-      checkArithmeticOperandType(left, state, 2362);
-      checkArithmeticOperandType(right, state, 2363);
+      const validLeft = checkArithmeticOperandType(left, state, 2362);
+      const validRight = checkArithmeticOperandType(right, state, 2363);
+      if (isAnyOperandType(left) || isAnyOperandType(right)) {
+        return anyType;
+      }
+      if (validLeft && validRight && isBigIntLikeOperandType(left) && isBigIntLikeOperandType(right)) {
+        return bigintType;
+      }
       return numberType;
     }
     return unresolvedType;
@@ -8931,7 +9047,7 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
     const parameterType = parameterTypes[parameterIndex] ?? unresolvedType;
     checkRestParameterArrayType(parameter, parameterType, state);
     checkStrictModeBindingName(parameter.name, state, false);
-    setBindingNameType(parameter.name, parameterType, arrowEnvironment);
+    setBindingNameType(parameter.name, parameterType, arrowEnvironment, false, false, state);
     registerUnusedParameter(parameter, state, arrowEnvironment, false);
     if (parameter.initializer !== undefined) {
       inferExpression(parameter.initializer, enterArrowParameterInitializer(state, isAsync), arrowEnvironment);
@@ -9010,6 +9126,9 @@ function inferPropertyAccess(expression: Expression, optionalChain: boolean, pro
   if (propertyType !== undefined) {
     return propertyType;
   }
+  if (isAnyLikeType(accessibleReceiverType)) {
+    return anyType;
+  }
   if (accessibleReceiverType.kind === "unknown" || accessibleReceiverType.kind === "unresolved") {
     return anyType;
   }
@@ -9033,6 +9152,25 @@ function valuelessNamespaceMeaningName(type: CheckedType): string | undefined {
     return namespaceValueMeaning(type.namespace) === undefined && valueMeaning(type.type) === undefined ? type.namespace.name : undefined;
   }
   return undefined;
+}
+
+function isAnyLikeType(type: CheckedType): boolean {
+  if (type.kind === "unassignedVariable") {
+    return isAnyLikeType(type.type);
+  }
+  if (type.kind === "valueOnly") {
+    return isAnyLikeType(type.type);
+  }
+  if (type.kind === "valueAndType") {
+    return isAnyLikeType(type.value);
+  }
+  if (type.kind === "typeAliasInstance") {
+    return isAnyLikeType(type.target);
+  }
+  if (type.kind === "nonNullable") {
+    return isAnyLikeType(nonNullableType(type.target));
+  }
+  return type.kind === "any";
 }
 
 function inferPropertyAccessReceiver(expression: Expression, state: CheckState, environment: TypeEnvironment): CheckedType {
@@ -9679,7 +9817,7 @@ function invalidElementAccessIndexType(type: CheckedType): CheckedType | undefin
   if (type.kind === "union") {
     return type.types.find(member => invalidElementAccessIndexType(member) !== undefined);
   }
-  if (type.kind === "any" || type.kind === "never" || type.kind === "number" || type.kind === "numberLiteral" || type.kind === "string" || type.kind === "stringLiteral" || type.kind === "unresolved") {
+  if (type.kind === "any" || type.kind === "never" || type.kind === "number" || type.kind === "numberLiteral" || type.kind === "string" || type.kind === "stringLiteral" || type.kind === "symbol" || type.kind === "unresolved") {
     return undefined;
   }
   return type;
@@ -9694,7 +9832,7 @@ function diagnoseThisPropertyAccess(receiverType: Extract<CheckedType, { readonl
   }
 }
 
-function setBindingNameType(name: BindingName, type: CheckedType, environment: TypeEnvironment, readonly = false, valueOnly = false): void {
+function setBindingNameType(name: BindingName, type: CheckedType, environment: TypeEnvironment, readonly = false, valueOnly = false, state?: CheckState): void {
   if (isIdentifier(name)) {
     const binding: CheckedType = valueOnly
       ? mergeValueDeclarationBinding(environment.get(name.text), { kind: "valueOnly", name: name.text, type })
@@ -9705,19 +9843,23 @@ function setBindingNameType(name: BindingName, type: CheckedType, environment: T
   }
   if (isObjectBindingPattern(name)) {
     for (const element of name.elements) {
-      setBindingElementType(element, objectBindingElementType(type, element), environment, readonly, valueOnly);
+      setBindingElementType(element, objectBindingElementType(type, element, state), environment, readonly, valueOnly, state);
     }
     return;
   }
   if (isArrayBindingPattern(name)) {
     for (const element of name.elements) {
       const elementType = arrayBindingElementType(type);
-      setBindingElementType(element, element.dotDotDotToken === undefined ? elementType : { kind: "array", elementType }, environment, readonly, valueOnly);
+      setBindingElementType(element, element.dotDotDotToken === undefined ? elementType : { kind: "array", elementType }, environment, readonly, valueOnly, state);
     }
   }
 }
 
-function objectBindingElementType(type: CheckedType, element: BindingElement): CheckedType {
+function objectBindingElementType(type: CheckedType, element: BindingElement, state?: CheckState): CheckedType {
+  const invalidIndexType = invalidObjectBindingPropertyIndexType(type, element);
+  if (invalidIndexType !== undefined) {
+    state?.diagnostics.push(createDiagnostic(2538, displayType(invalidIndexType)));
+  }
   const propertyName = bindingElementPropertyName(element);
   if (propertyName === undefined) {
     return anyType;
@@ -9726,6 +9868,35 @@ function objectBindingElementType(type: CheckedType, element: BindingElement): C
     return anyType;
   }
   return propertyAccessType(type, propertyName) ?? anyType;
+}
+
+function invalidObjectBindingPropertyIndexType(sourceType: CheckedType, element: BindingElement): CheckedType | undefined {
+  if (element.propertyName === undefined || !isBigIntLiteral(element.propertyName)) {
+    return undefined;
+  }
+  if (objectBindingSourceSuppressesInvalidBigIntIndex(sourceType)) {
+    return undefined;
+  }
+  return bigintType;
+}
+
+function objectBindingSourceSuppressesInvalidBigIntIndex(type: CheckedType): boolean {
+  if (type.kind === "typeAliasInstance") {
+    return objectBindingSourceSuppressesInvalidBigIntIndex(type.target);
+  }
+  if (type.kind === "any" || type.kind === "never" || type.kind === "unresolved") {
+    return true;
+  }
+  if (type.kind === "object") {
+    return type.stringIndexType !== undefined;
+  }
+  if (type.kind === "interface") {
+    return interfaceStringIndexType(type) !== undefined;
+  }
+  if (type.kind === "union") {
+    return type.types.every(objectBindingSourceSuppressesInvalidBigIntIndex);
+  }
+  return false;
 }
 
 function arrayBindingElementType(type: CheckedType): CheckedType {
@@ -9903,10 +10074,19 @@ function futureReservedIdentifiersDisallowed(state: CheckState): boolean {
   return state.strictMode || targetOrder(state.options.target) >= targetOrder("es2015");
 }
 
-function setBindingElementType(element: BindingElement, type: CheckedType, environment: TypeEnvironment, readonly = false, valueOnly = false): void {
+function setBindingElementType(element: BindingElement, type: CheckedType, environment: TypeEnvironment, readonly = false, valueOnly = false, state?: CheckState): void {
   if (element.name !== undefined) {
-    setBindingNameType(element.name, type, environment, readonly, valueOnly);
+    setBindingNameType(element.name, bindingElementAssignedType(element, type, environment, state), environment, readonly, valueOnly, state);
   }
+}
+
+function bindingElementAssignedType(element: BindingElement, type: CheckedType, environment: TypeEnvironment, state?: CheckState): CheckedType {
+  if (element.initializer === undefined || state === undefined) {
+    return type;
+  }
+  const defaultedType = removeUndefinedType(type);
+  const initializerType = inferExpressionWithContext(element.initializer, state, environment, defaultedType);
+  return unionType([defaultedType, initializerType]);
 }
 
 function inferObjectLiteral(expression: Extract<Expression, { readonly kind: Kind.ObjectLiteralExpression }>, state: CheckState, environment: TypeEnvironment, contextualType?: CheckedType): CheckedType {
@@ -9914,6 +10094,8 @@ function inferObjectLiteral(expression: Extract<Expression, { readonly kind: Kin
   const readonlyProperties = new Set<string>();
   let contextualDiagnostics = false;
   for (const property of expression.properties) {
+    checkInvalidBigIntPropertyName(property, state);
+    checkComputedPropertyNameType(property, state, environment);
     if (isPropertyAssignment(property)) {
       const name = propertyNameDiagnosticText(property.name);
       if (name !== undefined) {
@@ -10027,6 +10209,9 @@ function contextualObjectAllowsProperty(contextualType: CheckedType, propertyNam
       || numberIndexType !== undefined;
   }
   if (contextualType.kind === "classInstance") {
+    if (classInstancePropertyTypes(contextualType).size === 0 && contextualType.members.instance.size === 0) {
+      return true;
+    }
     return contextualType.members.propertyTypes.has(propertyName);
   }
   return true;
@@ -10229,6 +10414,10 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
         return neverType;
       case Kind.NumberKeyword:
         return numberType;
+      case Kind.BigIntKeyword:
+        return bigintType;
+      case Kind.SymbolKeyword:
+        return symbolType;
       case Kind.StringKeyword:
         return stringType;
       case Kind.UndefinedKeyword:
@@ -10604,7 +10793,7 @@ function literalTypeNodeType(type: Extract<TypeNode, { readonly kind: Kind.Liter
     return { kind: "numberLiteral", value: literal.text };
   }
   if (isBigIntLiteral(literal)) {
-    return anyType;
+    return bigintType;
   }
   if (isPrefixUnaryExpression(literal) && (literal.operator === Kind.MinusToken || literal.operator === Kind.PlusToken) && isNumericLiteral(literal.operand)) {
     return numberType;
@@ -10661,7 +10850,7 @@ function reportUnresolvedTypeReferencesInNode(node: Node, environment: TypeEnvir
       const parameterType = parameter.type === undefined
         ? anyType
         : typeFromTypeNode(parameter.type, signatureEnvironment, stateWithoutReportedDiagnostics(state));
-      setBindingNameType(parameter.name, parameterType, signatureEnvironment, false, true);
+      setBindingNameType(parameter.name, parameterType, signatureEnvironment, false, true, state);
     }
     if (node.type !== undefined) {
       reportUnresolvedTypeReferencesInTypeNode(node.type, signatureEnvironment, state);
@@ -11336,6 +11525,10 @@ function propertySignatureDeclaredType(member: PropertySignatureDeclaration, env
 function mappedType(type: Extract<TypeNode, { readonly kind: Kind.MappedType }>, state: CheckState, environment: TypeEnvironment): CheckedType {
   const mappedEnvironment = cloneTypeEnvironment(environment);
   const keyType = type.typeParameter.constraint === undefined ? anyType : typeFromTypeNode(type.typeParameter.constraint, environment, state);
+  const invalidKeyType = invalidPropertyKeyType(keyType);
+  if (invalidKeyType !== undefined) {
+    state.diagnostics.push(createDiagnostic(2322, displayType(invalidKeyType), displayType(propertyKeyType())));
+  }
   mappedEnvironment.set(type.typeParameter.name.text, { kind: "typeParameter", name: type.typeParameter.name.text, constraint: keyType });
   if (type.nameType !== undefined) {
     typeFromTypeNode(type.nameType, mappedEnvironment, state);
@@ -11353,6 +11546,38 @@ function mappedType(type: Extract<TypeNode, { readonly kind: Kind.MappedType }>,
     valueType: typeFromTypeNode(type.type, mappedEnvironment, state),
     ...(mappedArraySource === undefined ? {} : { mappedArraySource }),
   };
+}
+
+function propertyKeyType(): CheckedType {
+  return unionType([stringType, numberType, symbolType]);
+}
+
+function invalidPropertyKeyType(type: CheckedType): CheckedType | undefined {
+  if (type.kind === "unassignedVariable" || type.kind === "valueOnly" || type.kind === "accessorProperty") {
+    return invalidPropertyKeyType(type.type);
+  }
+  if (type.kind === "valueAndType") {
+    return invalidPropertyKeyType(type.value);
+  }
+  if (type.kind === "typeAliasInstance") {
+    return invalidPropertyKeyType(type.target);
+  }
+  if (type.kind === "typeParameter") {
+    return type.constraint === undefined ? undefined : invalidPropertyKeyType(type.constraint);
+  }
+  if (type.kind === "nonNullable") {
+    return invalidPropertyKeyType(nonNullableType(type.target));
+  }
+  if (type.kind === "union") {
+    return type.types.find(member => invalidPropertyKeyType(member) !== undefined);
+  }
+  if (type.kind === "intersection") {
+    return type.types.some(member => invalidPropertyKeyType(member) === undefined) ? undefined : type;
+  }
+  if (type.kind === "any" || type.kind === "never" || type.kind === "number" || type.kind === "numberLiteral" || type.kind === "string" || type.kind === "stringLiteral" || type.kind === "symbol" || type.kind === "unresolved") {
+    return undefined;
+  }
+  return type;
 }
 
 function partialUtilityType(type: CheckedType): CheckedType {
@@ -11530,12 +11755,12 @@ function assignabilityDiagnostic(actual: CheckedType, expected: CheckedType): Di
     const actualDisplay = displayType(actual);
     const expectedDisplay = displayType(expected);
     if (missingProperties.length === 1) {
-      return createDiagnostic(2741, missingProperties[0]!, actualDisplay, expectedDisplay);
+      return createDiagnostic(2741, displayPropertyName(missingProperties[0]!), actualDisplay, expectedDisplay);
     }
     if (missingProperties.length <= 3) {
-      return createDiagnostic(2739, actualDisplay, expectedDisplay, missingProperties.join(", "));
+      return createDiagnostic(2739, actualDisplay, expectedDisplay, missingProperties.map(displayPropertyName).join(", "));
     }
-    return createDiagnostic(2740, actualDisplay, expectedDisplay, missingProperties.slice(0, 4).join(", "), String(missingProperties.length - 4));
+    return createDiagnostic(2740, actualDisplay, expectedDisplay, missingProperties.slice(0, 4).map(displayPropertyName).join(", "), String(missingProperties.length - 4));
   }
   return createDiagnostic(2322, displayType(actual), displayType(expected));
 }
@@ -13376,7 +13601,7 @@ function isFastSameType(left: CheckedType, right: CheckedType, seen: Set<string>
     if (left.kind === "stringLiteral" && right.kind === "stringLiteral" || left.kind === "numberLiteral" && right.kind === "numberLiteral" || left.kind === "booleanLiteral" && right.kind === "booleanLiteral") {
       return left.value === right.value;
     }
-    return left.kind === right.kind && (left.kind === "any" || left.kind === "unknown" || left.kind === "never" || left.kind === "null" || left.kind === "undefined" || left.kind === "void" || left.kind === "number" || left.kind === "string" || left.kind === "boolean" || left.kind === "globalObject" || left.kind === "thisType");
+    return left.kind === right.kind && (left.kind === "any" || left.kind === "unknown" || left.kind === "never" || left.kind === "null" || left.kind === "undefined" || left.kind === "void" || left.kind === "number" || left.kind === "bigint" || left.kind === "string" || left.kind === "symbol" || left.kind === "boolean" || left.kind === "globalObject" || left.kind === "thisType");
   } finally {
     seen.delete(pairKey);
   }
@@ -13866,6 +14091,9 @@ function inferPlusExpressionType(left: CheckedType, right: CheckedType, state: C
   if (isNumberLikeOperandType(left) && isNumberLikeOperandType(right)) {
     return numberType;
   }
+  if (isBigIntLikeOperandType(left) && isBigIntLikeOperandType(right)) {
+    return bigintType;
+  }
   state.diagnostics.push(createDiagnostic(2365, "+", displayType(left), displayType(right)));
   return anyType;
 }
@@ -13874,7 +14102,7 @@ function checkArithmeticOperandType(type: CheckedType, state: CheckState, diagno
   if (isUnresolvedOperandType(type)) {
     return false;
   }
-  if (isAnyOperandType(type) || isNumberLikeOperandType(type)) {
+  if (isAnyOperandType(type) || isNumberLikeOperandType(type) || isBigIntLikeOperandType(type)) {
     return true;
   }
   state.diagnostics.push(createDiagnostic(diagnosticCode));
@@ -13961,6 +14189,28 @@ function isNumberLikeOperandType(type: CheckedType): boolean {
     return type.types.every(isNumberLikeOperandType);
   }
   return type.kind === "number" || type.kind === "numberLiteral";
+}
+
+function isBigIntLikeOperandType(type: CheckedType): boolean {
+  if (type.kind === "unassignedVariable") {
+    return isBigIntLikeOperandType(type.type);
+  }
+  if (type.kind === "valueOnly") {
+    return isBigIntLikeOperandType(type.type);
+  }
+  if (type.kind === "valueAndType") {
+    return isBigIntLikeOperandType(type.value);
+  }
+  if (type.kind === "typeAliasInstance") {
+    return isBigIntLikeOperandType(type.target);
+  }
+  if (type.kind === "nonNullable") {
+    return isBigIntLikeOperandType(nonNullableType(type.target));
+  }
+  if (type.kind === "union") {
+    return type.types.every(isBigIntLikeOperandType);
+  }
+  return type.kind === "bigint";
 }
 
 function isNumericArithmeticOperator(kind: Kind): boolean {
@@ -14111,9 +14361,9 @@ function displayType(type: CheckedType): string {
       const readonly = type.readonlyProperties.has(name) ? "readonly " : "";
       const optional = type.optionalProperties.has(name) ? "?" : "";
       if (type.methodProperties.has(name) && propertyType.kind === "function") {
-        return `${readonly}${displayMethodSignature(name, optional, propertyType)}`;
+        return `${readonly}${displayMethodSignature(displayPropertyName(name), optional, propertyType)}`;
       }
-      return `${readonly}${name}${optional}: ${displayType(propertyType)};`;
+      return `${readonly}${displayPropertyName(name)}${optional}: ${displayType(propertyType)};`;
     });
     const members = [...callSignatures, ...indexSignatures, ...entries];
     if (members.length === 0) {
@@ -14169,6 +14419,10 @@ function displayCallSignatureType(type: CheckedFunctionType): string {
 function displayMethodSignature(name: string, optional: string, type: CheckedFunctionType): string {
   const typeParameters = type.typeParameters.length === 0 ? "" : `<${type.typeParameters.join(", ")}>`;
   return `${name}${optional}${typeParameters}(${type.parameters.map((parameter, index) => `${type.parameterNames?.[index] ?? `arg${index}`}: ${displayType(parameter)}`).join(", ")}): ${displayType(type.returnType)};`;
+}
+
+function displayPropertyName(name: string): string {
+  return isIdentifierText(name) || isArrayIndexPropertyName(name) ? name : JSON.stringify(name);
 }
 
 function displayTupleType(type: Extract<CheckedType, { readonly kind: "tuple" }>): string {

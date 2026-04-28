@@ -2560,7 +2560,7 @@ export class Parser {
     if (kind === undefined) {
       return undefined;
     }
-    if (isIdentifierNameKind(kind) || kind === Kind.StringLiteral || kind === Kind.NumericLiteral || kind === Kind.PrivateIdentifier) {
+    if (isIdentifierNameKind(kind) || kind === Kind.StringLiteral || kind === Kind.NumericLiteral || kind === Kind.BigIntLiteral || kind === Kind.PrivateIdentifier) {
       return index + 1;
     }
     if (kind !== Kind.OpenBracketToken) {
@@ -2672,6 +2672,10 @@ export class Parser {
     if (token.kind === Kind.NumericLiteral) {
       this.#advance();
       return createNumericLiteral(token.text, 0) as PropertyName;
+    }
+    if (token.kind === Kind.BigIntLiteral) {
+      this.#advance();
+      return createBigIntLiteral(token.text, 0) as PropertyName;
     }
     if (token.kind === Kind.PrivateIdentifier) {
       this.#advance();
@@ -3284,6 +3288,10 @@ export class Parser {
     }
     if (expression.kind === Kind.Identifier) {
       this.#addDiagnosticAtToken(expression, 1434);
+      const current = this.#current();
+      if ((current.kind === Kind.NumericLiteral || current.kind === Kind.BigIntLiteral) && current.text.startsWith(".")) {
+        return;
+      }
     }
     if (this.#current().kind === Kind.ColonToken) {
       this.#addDiagnosticAtToken(this.#current(), 1005, ";");
@@ -3694,6 +3702,7 @@ function isPropertyNameStart(kind: Kind): boolean {
   return isIdentifierNameKind(kind)
     || kind === Kind.StringLiteral
     || kind === Kind.NumericLiteral
+    || kind === Kind.BigIntLiteral
     || kind === Kind.PrivateIdentifier
     || kind === Kind.OpenBracketToken;
 }
