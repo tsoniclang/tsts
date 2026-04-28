@@ -184,6 +184,7 @@ import {
   type TypeReferenceNode,
   type VariableDeclaration,
   type VariableDeclarationList,
+  type WithStatement,
 } from "../ast/index.js";
 import { createDiagnostic, type Diagnostic } from "../diagnostics/index.js";
 import type { CompilerOptions, Program, ProgramDiagnostic, ResolvedModule } from "../program/index.js";
@@ -1814,10 +1815,16 @@ function checkStateForSourceFile(sourceFile: SourceFile, options: CompilerOption
 }
 
 function sourceFileStrictMode(sourceFile: SourceFile, options: CompilerOptions): boolean {
+  if (isDeclarationFile(sourceFile)) {
+    return false;
+  }
   return alwaysStrictOptionValue(options) || sourceFileHasUseStrictPrologue(sourceFile) || sourceFileIsExternalModule(sourceFile);
 }
 
 function sourceFileStrictModeReason(sourceFile: SourceFile, options: CompilerOptions): "module" | "strict" | undefined {
+  if (isDeclarationFile(sourceFile)) {
+    return undefined;
+  }
   if (sourceFileIsExternalModule(sourceFile)) {
     return "module";
   }
@@ -1825,7 +1832,7 @@ function sourceFileStrictModeReason(sourceFile: SourceFile, options: CompilerOpt
 }
 
 function alwaysStrictOptionValue(options: CompilerOptions): boolean {
-  return options.alwaysStrict === true || (options.strict === true && options.alwaysStrict !== false);
+  return options.alwaysStrict !== false;
 }
 
 function sourceFileHasUseStrictPrologue(sourceFile: SourceFile): boolean {
@@ -2587,7 +2594,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     if (checkModuleElementContext(statement, state)) {
       return;
     }
-    checkStrictModeIdentifier(statement.name.text, state, ambient);
+    checkStrictModeDeclarationIdentifier(statement.name.text, state, ambient);
     environment.set(statement.name.text, importEqualsDeclarationType(statement, state, environment));
     registerUnusedDeclaration(statement.name.text, statement, "local", state, environment);
     return;
@@ -2762,11 +2769,9 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isWithStatement(statement)) {
-    if (state.strictMode) {
-      state.diagnostics.push(createDiagnostic(1101));
-    }
-    state.diagnostics.push(createDiagnostic(2410));
+    checkWithStatementGrammar(statement, state);
     inferExpression(statement.expression, state, environment);
+    checkStrictModeGrammarInSkippedWithBody(statement.statement, state);
     return;
   }
   if (isLabeledStatement(statement)) {
@@ -2784,6 +2789,68 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isBlock(statement)) {
     checkBlock(statement, state, environment, expectedReturnType);
+  }
+}
+
+function checkWithStatementGrammar(statement: WithStatement, state: CheckState): void {
+  if (state.strictMode) {
+    state.diagnostics.push(createDiagnostic(1101));
+  }
+  if (state.awaitContext) {
+    state.diagnostics.push(createDiagnostic(1300));
+  }
+  state.diagnostics.push(createDiagnostic(2410));
+}
+
+function checkStrictModeGrammarInSkippedWithBody(statement: Statement, state: CheckState): void {
+  if (!state.strictMode) {
+    return;
+  }
+  if (isWithStatement(statement)) {
+    state.diagnostics.push(createDiagnostic(1101));
+    checkStrictModeGrammarInSkippedWithBody(statement.statement, state);
+    return;
+  }
+  if (isBlock(statement)) {
+    for (const child of statement.statements) {
+      checkStrictModeGrammarInSkippedWithBody(child, state);
+    }
+    return;
+  }
+  if (isLabeledStatement(statement)) {
+    if (isVariableStatement(statement.statement)) {
+      state.diagnostics.push(createDiagnostic(1344));
+    }
+    checkStrictModeGrammarInSkippedWithBody(statement.statement, state);
+    return;
+  }
+  if (isIfStatement(statement)) {
+    checkStrictModeGrammarInSkippedWithBody(statement.thenStatement, state);
+    if (statement.elseStatement !== undefined) {
+      checkStrictModeGrammarInSkippedWithBody(statement.elseStatement, state);
+    }
+    return;
+  }
+  if (isWhileStatement(statement) || isDoStatement(statement) || isForStatement(statement) || isForInStatement(statement) || isForOfStatement(statement)) {
+    checkStrictModeGrammarInSkippedWithBody(statement.statement, state);
+    return;
+  }
+  if (isSwitchStatement(statement)) {
+    for (const clause of statement.caseBlock.clauses) {
+      for (const child of clause.statements) {
+        checkStrictModeGrammarInSkippedWithBody(child, state);
+      }
+    }
+    return;
+  }
+  if (isTryStatement(statement)) {
+    checkStrictModeGrammarInSkippedWithBody(statement.tryBlock, state);
+    if (statement.catchClause !== undefined) {
+      checkStrictModeGrammarInSkippedWithBody(statement.catchClause.block, state);
+    }
+    if (statement.finallyBlock !== undefined) {
+      checkStrictModeGrammarInSkippedWithBody(statement.finallyBlock, state);
+    }
   }
 }
 
@@ -3574,7 +3641,7 @@ function functionSignatureKey(functionType: CheckedFunctionType): string {
 }
 
 function bindTypeAliasDeclaration(statement: TypeAliasDeclaration, state: CheckState, environment: TypeEnvironment): void {
-  checkStrictModeIdentifier(statement.name.text, state, false);
+  checkStrictModeDeclarationIdentifier(statement.name.text, state, false);
   const unusedEntry = declarationIsExported(statement) ? undefined : registerUnusedDeclaration(statement.name.text, statement, "type", state, environment);
   const aliasState = enterUnusedDeclaration(state, unusedEntry);
   const typeParameters = statement.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
@@ -3751,7 +3818,7 @@ function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly
   }
   const moduleName = moduleDeclarationName(moduleDeclaration);
   if (isIdentifier(moduleDeclaration.name)) {
-    checkStrictModeIdentifier(moduleDeclaration.name.text, state, ambient);
+    checkStrictModeDeclarationIdentifier(moduleDeclaration.name.text, state, ambient);
   }
   const unusedEntry = moduleName === undefined || ambient || hasDeclareModifier(moduleDeclaration) || declarationIsExported(moduleDeclaration)
     ? undefined
@@ -5191,7 +5258,7 @@ function checkClassLike(classDeclaration: ClassLikeDeclaration, state: CheckStat
   const classStrictState = enterClassBody(state);
   const classIsAbstract = hasModifier(classDeclaration, Kind.AbstractKeyword);
   if (classDeclaration.name !== undefined) {
-    checkStrictModeIdentifier(classDeclaration.name.text, classStrictState, ambient);
+    checkStrictModeDeclarationIdentifier(classDeclaration.name.text, classStrictState, ambient);
   }
   checkClassHeritageClauses(classDeclaration, state);
   const inheritedMembers = inheritedClassMembers(classDeclaration, environment);
@@ -5583,7 +5650,7 @@ function resolveExpressionValue(expression: Expression, environment: TypeEnviron
 }
 
 function checkEnumDeclaration(enumDeclaration: EnumDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
-  checkStrictModeIdentifier(enumDeclaration.name.text, state, ambient);
+  checkStrictModeDeclarationIdentifier(enumDeclaration.name.text, state, ambient);
   if (!ambient && !declarationIsExported(enumDeclaration)) {
     registerUnusedDeclaration(enumDeclaration.name.text, enumDeclaration, "type", state, environment);
   }
@@ -6172,7 +6239,7 @@ function getterBodyReturnType(body: Block, options?: CompilerOptions, environmen
 }
 
 function checkInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, state: CheckState, environment: TypeEnvironment): void {
-  checkStrictModeIdentifier(interfaceDeclaration.name.text, state, false);
+  checkStrictModeDeclarationIdentifier(interfaceDeclaration.name.text, state, false);
   if (invalidClassNames.has(interfaceDeclaration.name.text)) {
     state.diagnostics.push(createDiagnostic(2427, interfaceDeclaration.name.text));
   }
@@ -7265,7 +7332,7 @@ function addTypeParameterDeclarationsToEnvironment(typeParameters: readonly Type
     && (ownerInfo?.skipWhenMergedInterfaceExists !== true || !mergedDeclarationHasInterfaceType(environment.get(ownerInfo.declarationName)))) {
     for (let index = 0; index < typeParameters.length; index += 1) {
       const typeParameter = typeParameters[index]!;
-      checkStrictModeIdentifier(typeParameter.name.text, state, false);
+      checkStrictModeDeclarationIdentifier(typeParameter.name.text, state, false);
       const mergeKey = ownerInfo?.mergeKeyPrefix === undefined ? undefined : `${ownerInfo.mergeKeyPrefix}:${index}`;
       const entry = registerUnusedDeclaration(typeParameter.name.text, typeParameter, "typeParameter", state, environment, typeParameter.name.text.startsWith("_"), mergeKey);
       if (entry !== undefined && ownerInfo !== undefined && mergedDeclarationReferencesTypeParameter(environment.get(ownerInfo.declarationName), typeParameter.name.text)) {
@@ -12618,6 +12685,18 @@ function checkStrictModeIdentifier(name: string, state: CheckState, ambient: boo
   }
   const diagnosticCode = state.strictMode
     ? strictModeIdentifierDiagnosticCode(name, state)
+    : nonStrictReservedIdentifierDiagnosticCode(name, state);
+  if (diagnosticCode !== undefined) {
+    state.diagnostics.push(createDiagnostic(diagnosticCode, name));
+  }
+}
+
+function checkStrictModeDeclarationIdentifier(name: string, state: CheckState, ambient: boolean): void {
+  if (ambient || name === "") {
+    return;
+  }
+  const diagnosticCode = state.strictMode
+    ? strictModeFutureReservedIdentifierDiagnosticCode(name, state)
     : nonStrictReservedIdentifierDiagnosticCode(name, state);
   if (diagnosticCode !== undefined) {
     state.diagnostics.push(createDiagnostic(diagnosticCode, name));

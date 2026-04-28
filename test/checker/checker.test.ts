@@ -1074,7 +1074,7 @@ describe("checker groundwork", () => {
 
   it("reports implicit any and initializer diagnostics for untyped destructuring declarations", () => {
     const sourceFile = parseSourceFile([
-      "function f([a], { b }, [c = undefined], { d = null }) {}",
+      "function fn([a], { b }, [c = undefined], { d = null }) {}",
       "let [e], { f };",
       "declare var { g };",
       "let [h] = [undefined];",
@@ -2145,6 +2145,39 @@ describe("checker groundwork", () => {
       "Invalid use of 'arguments' in strict mode.",
       "Invalid use of 'eval' in strict mode.",
     ]);
+  });
+
+  it("allows eval and arguments for strict type-only and nominal declaration names", () => {
+    const cases = [
+      "interface arguments {}",
+      "interface eval {}",
+      "type arguments = number;",
+      "type eval = string;",
+      "class arguments {}",
+      "class eval {}",
+      "enum arguments {}",
+      "enum eval {}",
+      "namespace arguments {}",
+      "namespace eval {}",
+      "function f<arguments, eval>() {}",
+      "namespace Ns {} import arguments = Ns;",
+    ];
+
+    for (const source of cases) {
+      const result = checkSourceFile(parseSourceFile(source), { alwaysStrict: true });
+      assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [], source);
+    }
+  });
+
+  it("treats source files as always-strict unless explicitly disabled", () => {
+    const defaultStrict = checkSourceFile(parseSourceFile("declare const value: any; with (value) {}"));
+    assert.deepEqual(defaultStrict.diagnostics.map(diagnostic => diagnostic.code), [1101, 2410]);
+
+    const explicitlyDisabled = checkSourceFile(parseSourceFile("declare const value: any; with (value) {}"), { alwaysStrict: false });
+    assert.deepEqual(explicitlyDisabled.diagnostics.map(diagnostic => diagnostic.code), [2410]);
+
+    const asyncWith = checkSourceFile(parseSourceFile("declare const value: any; async function f() { with (value) { with (value) {} } }"));
+    assert.deepEqual(asyncWith.diagnostics.map(diagnostic => diagnostic.code), [1101, 1300, 2410, 1101]);
   });
 
   it("reports future-reserved identifiers through the shared strict-mode identifier rule", () => {
