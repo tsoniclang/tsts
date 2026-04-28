@@ -30,6 +30,7 @@ export interface CompilerOptions {
   readonly allowSyntheticDefaultImports?: boolean;
   readonly alwaysStrict?: boolean;
   readonly allowUnreachableCode?: boolean;
+  readonly preserveConstEnums?: boolean;
   readonly esModuleInterop?: boolean;
   readonly noUncheckedSideEffectImports?: boolean;
   readonly noEmit?: boolean;

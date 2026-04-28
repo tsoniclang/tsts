@@ -325,6 +325,8 @@ function parseBaselineCompilerOptions(baselineFileName: string): CaseCompilerOpt
       options = { ...options, checkJs: parseBoolean(value) };
     } else if (key === "allowunreachablecode" && value !== undefined) {
       options = { ...options, allowUnreachableCode: parseBoolean(value) };
+    } else if (key === "preserveconstenums" && value !== undefined) {
+      options = { ...options, preserveConstEnums: parseBoolean(value) };
     } else if (key === "noemit" && value !== undefined) {
       options = { ...options, noEmit: parseBoolean(value) };
     } else if (key === "nolib" && value !== undefined) {
@@ -474,6 +476,9 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
         break;
       case "allowunreachablecode":
         options = { ...options, allowUnreachableCode: parseBoolean(value) };
+        break;
+      case "preserveconstenums":
+        options = { ...options, preserveConstEnums: parseBoolean(value) };
         break;
       case "alwaysstrict":
         options = { ...options, alwaysStrict: parseBoolean(value) };

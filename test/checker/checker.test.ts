@@ -3216,4 +3216,35 @@ describe("checker groundwork", () => {
     ]);
     assert.equal(suppressed.diagnostics.length, 0);
   });
+
+  it("reports unreachable executable statements after terminating flow", () => {
+    const sourceFile = parseSourceFile([
+      "function f(value: boolean): void {",
+      "  if (value) {",
+      "    return;",
+      "    value = false;",
+      "  } else {",
+      "    throw new Error();",
+      "    const afterThrow = 1;",
+      "  }",
+      "}",
+      "for (;;) {",
+      "  break;",
+      "}",
+      "for (;;) {",
+      "  continue;",
+      "}",
+      "const afterLoop = 1;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { allowUnreachableCode: false });
+    const suppressed = checkSourceFile(sourceFile, { allowUnreachableCode: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [7027, 7027, 7027]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Unreachable code detected.",
+      "Unreachable code detected.",
+      "Unreachable code detected.",
+    ]);
+    assert.equal(suppressed.diagnostics.length, 0);
+  });
 });

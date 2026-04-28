@@ -266,6 +266,7 @@ interface CheckState {
   readonly insideClassStaticBlock: boolean;
   readonly insideParameterInitializer: boolean;
   readonly ambientContext: boolean;
+  readonly suppressUnreachableDiagnostics: boolean;
   readonly iterationDepth: number;
   readonly yieldType: CheckedType | undefined;
   readonly externalModule: boolean;
@@ -1612,6 +1613,7 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
         insideClassStaticBlock: false,
         insideParameterInitializer: false,
         ambientContext: false,
+        suppressUnreachableDiagnostics: false,
         iterationDepth: 0,
         yieldType: undefined,
         externalModule: sourceFileIsExternalModule(sourceFile.sourceFile),
@@ -1800,6 +1802,7 @@ function checkStateForSourceFile(sourceFile: SourceFile, options: CompilerOption
     insideClassStaticBlock: false,
     insideParameterInitializer: false,
     ambientContext: false,
+    suppressUnreachableDiagnostics: false,
     iterationDepth: 0,
     yieldType: undefined,
     externalModule: sourceFileIsExternalModule(sourceFile),
@@ -2544,8 +2547,30 @@ function checkStatements(statements: readonly Statement[], state: CheckState, en
     ambientDiagnosticStatement = statements.find(isStatementDisallowedInAmbientContext);
   }
   const statementListHasExportedElements = statements.some(statement => isExportAssignmentConflictingExportedElement(statement));
+  let reachable = true;
+  let unreachableDiagnosticReported = false;
+  let unreachableCause: UnreachableCause | undefined;
   for (const statement of statements) {
-    checkStatement(statement, statementState, environment, expectedReturnType, ambient, statementListHasExportedElements, statement === ambientDiagnosticStatement);
+    const statementIsUnreachable = !reachable;
+    if (statementIsUnreachable && isFunctionDeclaration(statement)) {
+      unreachableDiagnosticReported = false;
+    }
+    const activeState = statementIsUnreachable && statementPropagatesUnreachableSuppression(statement)
+      ? enterSuppressedUnreachableDiagnostics(statementState)
+      : statementState;
+    if (statementIsUnreachable && !unreachableDiagnosticReported && shouldReportUnreachableStatement(statement, state, unreachableCause)) {
+      state.diagnostics.push(createDiagnostic(7027));
+      unreachableDiagnosticReported = true;
+    }
+    checkStatement(statement, activeState, environment, expectedReturnType, ambient, statementListHasExportedElements, statement === ambientDiagnosticStatement);
+    if (reachable) {
+      const termination = statementListTermination(statement);
+      if (termination !== undefined) {
+        reachable = false;
+        unreachableDiagnosticReported = false;
+        unreachableCause = termination.cause;
+      }
+    }
   }
 }
 
@@ -2789,6 +2814,195 @@ function firstModifier(modifiers: readonly { readonly kind: Kind }[]): { readonl
   return modifiers.find(modifier => !isDecorator(modifier as Node));
 }
 
+type UnreachableCause = "throw" | "other";
+
+interface StatementListTermination {
+  readonly cause: UnreachableCause;
+}
+
+function enterSuppressedUnreachableDiagnostics(state: CheckState): CheckState {
+  return state.suppressUnreachableDiagnostics ? state : { ...state, suppressUnreachableDiagnostics: true };
+}
+
+function shouldReportUnreachableStatement(statement: Statement, state: CheckState, cause: UnreachableCause | undefined): boolean {
+  return state.options.allowUnreachableCode === false
+    && !state.suppressUnreachableDiagnostics
+    && !(cause === "throw" && isExpressionStatement(statement))
+    && statementHasReachabilityDiagnosticTarget(statement, state);
+}
+
+function statementPropagatesUnreachableSuppression(statement: Statement): boolean {
+  return !isFunctionDeclaration(statement);
+}
+
+function statementHasReachabilityDiagnosticTarget(statement: Statement, state: CheckState): boolean {
+  if (isImportDeclaration(statement) || isImportEqualsDeclaration(statement) || isExportDeclaration(statement)) {
+    return false;
+  }
+  if (isInterfaceDeclaration(statement) || isTypeAliasDeclaration(statement) || isFunctionDeclaration(statement)) {
+    return false;
+  }
+  if (isVariableStatement(statement)) {
+    return (statement.declarationList.flags & (NodeFlags.Let | NodeFlags.Const)) !== 0
+      || statement.declarationList.declarations.some(declaration => declaration.initializer !== undefined);
+  }
+  if (isEnumDeclaration(statement)) {
+    return !hasModifier(statement, Kind.ConstKeyword) || state.options.preserveConstEnums === true;
+  }
+  if (isModuleDeclaration(statement)) {
+    return moduleDeclarationHasReachabilityDiagnosticTarget(statement, state);
+  }
+  return true;
+}
+
+function moduleDeclarationHasReachabilityDiagnosticTarget(statement: Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>, state: CheckState): boolean {
+  if (statement.body === undefined) {
+    return false;
+  }
+  if (isModuleBlock(statement.body)) {
+    return statement.body.statements.some(child => statementHasReachabilityDiagnosticTarget(child, state));
+  }
+  return moduleDeclarationHasReachabilityDiagnosticTarget(statement.body, state);
+}
+
+function statementListTermination(statement: Statement): StatementListTermination | undefined {
+  if (isThrowStatement(statement)) {
+    return { cause: "throw" };
+  }
+  if (isReturnStatement(statement) || isBreakStatement(statement) || isContinueStatement(statement)) {
+    return { cause: "other" };
+  }
+  if (isBlock(statement)) {
+    return statementListTerminates(statement.statements);
+  }
+  if (isIfStatement(statement)) {
+    if (conditionIsSyntacticTrue(statement.expression)) {
+      return statementListTermination(statement.thenStatement);
+    }
+    if (conditionIsSyntacticFalse(statement.expression)) {
+      return statement.elseStatement === undefined ? undefined : statementListTermination(statement.elseStatement);
+    }
+    if (statement.elseStatement === undefined) {
+      return undefined;
+    }
+    const thenTermination = statementListTermination(statement.thenStatement);
+    const elseTermination = statementListTermination(statement.elseStatement);
+    return thenTermination !== undefined && elseTermination !== undefined
+      ? { cause: thenTermination.cause === "throw" && elseTermination.cause === "throw" ? "throw" : "other" }
+      : undefined;
+  }
+  if (isSwitchStatement(statement)) {
+    return switchDefinitelyTerminates(statement) ? { cause: "other" } : undefined;
+  }
+  if (isLabeledStatement(statement)) {
+    return statementListTerminationWithLabel(statement.statement, statement.label.text);
+  }
+  if (isWhileStatement(statement)) {
+    return expressionIsSyntacticTrue(statement.expression) && !statementCanBreakOut(statement.statement) ? { cause: "other" } : undefined;
+  }
+  if (isDoStatement(statement)) {
+    return expressionIsSyntacticTrue(statement.expression) && !statementCanBreakOut(statement.statement) ? { cause: "other" } : undefined;
+  }
+  if (isForStatement(statement)) {
+    return (statement.condition === undefined || expressionIsSyntacticTrue(statement.condition)) && !statementCanBreakOut(statement.statement) ? { cause: "other" } : undefined;
+  }
+  if (isTryStatement(statement)) {
+    if (statement.finallyBlock !== undefined) {
+      const finallyTermination = statementListTerminates(statement.finallyBlock.statements);
+      if (finallyTermination !== undefined) {
+        return finallyTermination;
+      }
+    }
+    if (statement.catchClause === undefined) {
+      return undefined;
+    }
+    const tryTermination = statementListTerminates(statement.tryBlock.statements);
+    const catchTermination = statementListTerminates(statement.catchClause.block.statements);
+    return tryTermination !== undefined && catchTermination !== undefined
+      ? { cause: tryTermination.cause === "throw" && catchTermination.cause === "throw" ? "throw" : "other" }
+      : undefined;
+  }
+  return undefined;
+}
+
+function statementListTerminationWithLabel(statement: Statement, label: string): StatementListTermination | undefined {
+  if (isWhileStatement(statement)) {
+    return expressionIsSyntacticTrue(statement.expression) && !statementCanBreakOut(statement.statement, label) ? { cause: "other" } : undefined;
+  }
+  if (isDoStatement(statement)) {
+    return expressionIsSyntacticTrue(statement.expression) && !statementCanBreakOut(statement.statement, label) ? { cause: "other" } : undefined;
+  }
+  if (isForStatement(statement)) {
+    return (statement.condition === undefined || expressionIsSyntacticTrue(statement.condition)) && !statementCanBreakOut(statement.statement, label) ? { cause: "other" } : undefined;
+  }
+  return statementListTermination(statement);
+}
+
+function statementListTerminates(statements: readonly Statement[]): StatementListTermination | undefined {
+  for (const statement of statements) {
+    const termination = statementListTermination(statement);
+    if (termination !== undefined) {
+      return termination;
+    }
+  }
+  return undefined;
+}
+
+function expressionIsSyntacticTrue(expression: Expression): boolean {
+  const unwrapped = isParenthesizedExpression(expression) ? expression.expression : expression;
+  return isKeywordExpression(unwrapped) && unwrapped.kind === Kind.TrueKeyword;
+}
+
+function conditionIsSyntacticTrue(expression: Expression): boolean {
+  return expressionIsSyntacticTrue(expression);
+}
+
+function conditionIsSyntacticFalse(expression: Expression): boolean {
+  const unwrapped = isParenthesizedExpression(expression) ? expression.expression : expression;
+  return isKeywordExpression(unwrapped) && unwrapped.kind === Kind.FalseKeyword;
+}
+
+function statementCanBreakOut(statement: Statement, targetLabel?: string): boolean {
+  if (isBreakStatement(statement)) {
+    return targetLabel === undefined ? statement.label === undefined : statement.label?.text === targetLabel;
+  }
+  if (isFunctionDeclaration(statement) || isClassDeclaration(statement)) {
+    return false;
+  }
+  if (isBlock(statement)) {
+    return statementsCanBreakOut(statement.statements, targetLabel);
+  }
+  if (isIfStatement(statement)) {
+    return statementCanBreakOut(statement.thenStatement, targetLabel)
+      || (statement.elseStatement !== undefined && statementCanBreakOut(statement.elseStatement, targetLabel));
+  }
+  if (isLabeledStatement(statement)) {
+    return statementCanBreakOut(statement.statement, targetLabel);
+  }
+  if (isTryStatement(statement)) {
+    return statementsCanBreakOut(statement.tryBlock.statements, targetLabel)
+      || (statement.catchClause !== undefined && statementsCanBreakOut(statement.catchClause.block.statements, targetLabel))
+      || (statement.finallyBlock !== undefined && statementsCanBreakOut(statement.finallyBlock.statements, targetLabel));
+  }
+  if (isSwitchStatement(statement)) {
+    if (targetLabel === undefined) {
+      return false;
+    }
+    return statement.caseBlock.clauses.some(clause => statementsCanBreakOut(clause.statements, targetLabel));
+  }
+  if (isWhileStatement(statement) || isDoStatement(statement) || isForStatement(statement) || isForInStatement(statement) || isForOfStatement(statement)) {
+    if (targetLabel === undefined) {
+      return false;
+    }
+    return statementCanBreakOut(statement.statement, targetLabel);
+  }
+  return false;
+}
+
+function statementsCanBreakOut(statements: readonly Statement[], targetLabel?: string): boolean {
+  return statements.some(statement => statementCanBreakOut(statement, targetLabel));
+}
+
 function checkSingleStatementDeclaration(statement: Statement, state: CheckState, singleStatementContext: boolean): void {
   if (!singleStatementContext) {
     return;
@@ -2931,6 +3145,7 @@ function enterFunctionWithAwaitContext(state: CheckState, yieldType: CheckedType
     insideClassInitializer: false,
     insideClassStaticBlock: false,
     insideParameterInitializer: false,
+    suppressUnreachableDiagnostics: false,
     iterationDepth: 0,
     yieldType,
   };
@@ -2955,6 +3170,7 @@ function enterArrowFunction(state: CheckState, awaitContext = false): CheckState
     insideClassInitializer: false,
     insideClassStaticBlock: false,
     insideParameterInitializer: false,
+    suppressUnreachableDiagnostics: false,
     iterationDepth: 0,
     yieldType: undefined,
   };
@@ -2973,6 +3189,7 @@ function enterClassInitializerOrStaticBlock(state: CheckState, staticBlock = fal
     insideClassInitializer: !staticBlock,
     insideClassStaticBlock: staticBlock,
     insideParameterInitializer: false,
+    suppressUnreachableDiagnostics: false,
     yieldType: undefined,
   };
 }
@@ -13994,6 +14211,7 @@ function emptyCheckState(options: CompilerOptions = {}): CheckState {
     insideClassStaticBlock: false,
     insideParameterInitializer: false,
     ambientContext: false,
+    suppressUnreachableDiagnostics: false,
     iterationDepth: 0,
     yieldType: undefined,
     externalModule: false,
