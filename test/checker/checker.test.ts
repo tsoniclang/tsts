@@ -764,6 +764,31 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("treats exported namespace const bindings as readonly properties", () => {
+    const sourceFile = parseSourceFile([
+      "namespace M {",
+      "  export const x = 0;",
+      "  export let y = 0;",
+      "}",
+      "M.x = 1;",
+      "M.x += 2;",
+      "M.x++;",
+      "++M.x;",
+      "M['x'] = 3;",
+      "M.y = 4;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2540, 2540, 2540, 2540, 2540]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Cannot assign to 'x' because it is a read-only property.",
+      "Cannot assign to 'x' because it is a read-only property.",
+      "Cannot assign to 'x' because it is a read-only property.",
+      "Cannot assign to 'x' because it is a read-only property.",
+      "Cannot assign to 'x' because it is a read-only property.",
+    ]);
+  });
+
   it("reports export-equals conflicts with exported declarations", () => {
     const sourceFile = parseSourceFile("export class C { } export = B;");
     const result = checkSourceFile(sourceFile);

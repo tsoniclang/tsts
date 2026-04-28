@@ -220,7 +220,7 @@ type CheckedType =
   | { readonly kind: "keyof"; readonly target: CheckedType }
   | { readonly kind: "iterable"; readonly elementType: CheckedType }
   | { readonly kind: "moduleNamespace"; readonly moduleSpecifier: string; readonly diagnosticName: string; readonly exports: ReadonlyMap<string, CheckedType>; readonly exportEquals?: CheckedType }
-  | { readonly kind: "namespace"; readonly name: string; readonly exports: ReadonlyMap<string, CheckedType>; readonly enumLike?: boolean }
+  | { readonly kind: "namespace"; readonly name: string; readonly exports: ReadonlyMap<string, CheckedType>; readonly enumLike?: boolean; readonly readonlyExports?: ReadonlySet<string> }
   | { readonly kind: "namespaceAndType"; readonly namespace: Extract<CheckedType, { readonly kind: "namespace" }>; readonly type: CheckedType }
   | { readonly kind: "nonNullable"; readonly target: CheckedType }
   | { readonly kind: "object"; readonly properties: ReadonlyMap<string, CheckedType>; readonly readonlyProperties: ReadonlySet<string>; readonly optionalProperties: ReadonlySet<string>; readonly methodProperties: ReadonlySet<string>; readonly callSignatures?: readonly CheckedFunctionType[]; readonly stringIndexType?: CheckedType; readonly numberIndexType?: CheckedType; readonly symbolIndexType?: CheckedType; readonly contextualDiagnostics?: boolean }
@@ -833,8 +833,13 @@ function standardVariadicAnyFunction(returnType: CheckedType = anyType): Checked
   return standardFunctionType([anyType], returnType, { restParameterIndex: 0, minArgumentCount: 0 });
 }
 
-function standardNamespace(name: string, exports: readonly (readonly [string, CheckedType])[]): CheckedType {
-  return { kind: "namespace", name, exports: new Map(exports) };
+function standardNamespace(name: string, exports: readonly (readonly [string, CheckedType])[], readonlyExports: readonly string[] = []): CheckedType {
+  return { kind: "namespace", name, exports: new Map(exports), ...optionalReadonlyNamespaceExports(readonlyExports) };
+}
+
+function optionalReadonlyNamespaceExports(readonlyExports: Iterable<string> | undefined): { readonly readonlyExports?: ReadonlySet<string> } {
+  const exports = readonlyExports === undefined ? [] : [...readonlyExports];
+  return exports.length === 0 ? {} : { readonlyExports: new Set(exports) };
 }
 
 function standardObject(properties: readonly (readonly [string, CheckedType])[], methodProperties: readonly string[] = []): Extract<CheckedType, { readonly kind: "object" }> {
@@ -3126,7 +3131,7 @@ function prebindModuleDeclaration(moduleDeclaration: Extract<Statement, { readon
   seedNamespaceExports(namespaceEnvironment, existingNamespace);
   namespaceEnvironment.set(
     moduleName,
-    mergeNamespaceType(namespaceEnvironment.get(moduleName), { kind: "namespace", name: moduleName, exports: new Map(existingNamespace?.exports ?? []) }),
+    mergeNamespaceType(namespaceEnvironment.get(moduleName), { kind: "namespace", name: moduleName, exports: new Map(existingNamespace?.exports ?? []), ...optionalReadonlyNamespaceExports(existingNamespace?.readonlyExports) }),
   );
   const silentState = emptyCheckState(state.options);
   if (isModuleBlock(moduleDeclaration.body)) {
@@ -3136,6 +3141,7 @@ function prebindModuleDeclaration(moduleDeclaration: Extract<Statement, { readon
   }
   const existingExports = namespaceMeaning(environment.get(moduleName) ?? anyType)?.exports;
   const exports = new Map(existingExports ?? []);
+  const readonlyExports = new Set(existingNamespace?.readonlyExports ?? []);
   if (isModuleBlock(moduleDeclaration.body)) {
     for (const statement of moduleDeclaration.body.statements) {
       if (!moduleBodyAmbient && !isExportedElement(statement)) {
@@ -3145,6 +3151,9 @@ function prebindModuleDeclaration(moduleDeclaration: Extract<Statement, { readon
         const exportType = namespaceEnvironment.get(exportName);
         if (exportType !== undefined) {
           mergeModuleExport(exports, exportName, qualifyNamespaceExport(exportType, `${moduleName}.${exportName}`));
+          if (isReadonlyEnvironmentBinding(namespaceEnvironment, exportName)) {
+            readonlyExports.add(exportName);
+          }
         }
       }
     }
@@ -3153,9 +3162,12 @@ function prebindModuleDeclaration(moduleDeclaration: Extract<Statement, { readon
     const exportType = exportName === undefined ? undefined : namespaceEnvironment.get(exportName);
     if (exportName !== undefined && exportType !== undefined) {
       mergeModuleExport(exports, exportName, qualifyNamespaceExport(exportType, `${moduleName}.${exportName}`));
+      if (isReadonlyEnvironmentBinding(namespaceEnvironment, exportName)) {
+        readonlyExports.add(exportName);
+      }
     }
   }
-  environment.set(moduleName, mergeNamespaceType(environment.get(moduleName), { kind: "namespace", name: moduleName, exports }));
+  environment.set(moduleName, mergeNamespaceType(environment.get(moduleName), { kind: "namespace", name: moduleName, exports, ...optionalReadonlyNamespaceExports(readonlyExports) }));
 }
 
 function prebindFunctionOverloadDeclarations(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, ambient: boolean): FunctionOverloadInfo | undefined {
@@ -3442,7 +3454,7 @@ function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly
     seedNamespaceExports(namespaceEnvironment, existingNamespace);
     namespaceEnvironment.set(
       moduleName,
-      mergeNamespaceType(namespaceEnvironment.get(moduleName), { kind: "namespace", name: moduleName, exports: new Map(existingNamespace?.exports ?? []) }),
+      mergeNamespaceType(namespaceEnvironment.get(moduleName), { kind: "namespace", name: moduleName, exports: new Map(existingNamespace?.exports ?? []), ...optionalReadonlyNamespaceExports(existingNamespace?.readonlyExports) }),
     );
   }
   if (isModuleBlock(moduleDeclaration.body)) {
@@ -3457,7 +3469,9 @@ function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly
     return;
   }
   const existing = environment.get(moduleName);
-  const exports = new Map(namespaceMeaning(existing ?? anyType)?.exports ?? []);
+  const existingNamespace = namespaceMeaning(existing ?? anyType);
+  const exports = new Map(existingNamespace?.exports ?? []);
+  const readonlyExports = new Set(existingNamespace?.readonlyExports ?? []);
   if (isModuleBlock(moduleDeclaration.body)) {
     for (const statement of moduleDeclaration.body.statements) {
       if (!moduleBodyAmbient && !isExportedElement(statement)) {
@@ -3467,6 +3481,9 @@ function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly
         const exportType = namespaceEnvironment.get(exportName);
         if (exportType !== undefined) {
           mergeModuleExport(exports, exportName, qualifyNamespaceExport(exportType, `${moduleName}.${exportName}`));
+          if (isReadonlyEnvironmentBinding(namespaceEnvironment, exportName)) {
+            readonlyExports.add(exportName);
+          }
         }
       }
     }
@@ -3475,9 +3492,12 @@ function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly
     const exportType = exportName === undefined ? undefined : namespaceEnvironment.get(exportName);
     if (exportName !== undefined && exportType !== undefined) {
       mergeModuleExport(exports, exportName, qualifyNamespaceExport(exportType, `${moduleName}.${exportName}`));
+      if (isReadonlyEnvironmentBinding(namespaceEnvironment, exportName)) {
+        readonlyExports.add(exportName);
+      }
     }
   }
-  const namespaceType: Extract<CheckedType, { readonly kind: "namespace" }> = { kind: "namespace", name: moduleName, exports };
+  const namespaceType: Extract<CheckedType, { readonly kind: "namespace" }> = { kind: "namespace", name: moduleName, exports, ...optionalReadonlyNamespaceExports(readonlyExports) };
   environment.set(moduleName, mergeNamespaceType(environment.get(moduleName), namespaceType));
 }
 
@@ -3930,7 +3950,7 @@ function qualifyNamespaceExport(type: CheckedType, qualifiedName: string): Check
   for (const [name, exported] of type.exports.entries()) {
     exports.set(name, qualifyNamespaceExport(exported, `${qualifiedName}.${name}`));
   }
-  return { kind: "namespace", name: qualifiedName, exports, ...(type.enumLike === true ? { enumLike: true } : {}) };
+  return { kind: "namespace", name: qualifiedName, exports, ...(type.enumLike === true ? { enumLike: true } : {}), ...optionalReadonlyNamespaceExports(type.readonlyExports) };
 }
 
 function moduleDeclarationName(moduleDeclaration: Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>): string | undefined {
@@ -4366,6 +4386,7 @@ function seedNamespaceExports(environment: TypeEnvironment, namespace: Extract<C
   }
   for (const [name, exported] of namespace.exports.entries()) {
     environment.set(name, exported);
+    setEnvironmentBindingReadonly(environment, name, namespace.enumLike === true || namespace.readonlyExports?.has(name) === true);
   }
 }
 
@@ -10188,7 +10209,7 @@ function inferAssignmentExpression(expression: Extract<Expression, { readonly ki
   if (targetWasRead) {
     inferExpression(expression.left, state, environment);
   }
-  checkAssignmentTargetReference(expression.left, state, environment, !targetWasRead);
+  checkAssignmentTargetReference(expression.left, state, environment, !targetWasRead, !targetWasRead);
   const targetType = assignmentTargetType(expression.left, environment);
   const right = inferExpressionWithContext(expression.right, state, environment, targetType);
   diagnoseAbstractThisDestructuring(expression.left, expression.right, state, environment);
@@ -10279,28 +10300,34 @@ function assignmentTargetType(expression: Expression, environment: TypeEnvironme
   }
   if (isPropertyAccessExpression(expression)) {
     const receiverType = inferExpression(expression.expression, emptyCheckState(), environment);
+    if (readonlyPropertyWriteTarget(receiverType, expression.name.text, environment)) {
+      return undefined;
+    }
     return propertyAssignmentTargetType(receiverType, expression.name.text, environment);
   }
   if (isElementAccessExpression(expression)) {
     const receiverType = accessorReadType(inferExpression(expression.expression, emptyCheckState(), environment));
     const argumentRuntimeType = inferExpression(expression.argumentExpression, emptyCheckState(), environment);
     const argumentType = literalExpressionNarrowType(expression.argumentExpression) ?? argumentRuntimeType;
+    if (argumentType.kind === "stringLiteral" && readonlyPropertyWriteTarget(receiverType, argumentType.value, environment)) {
+      return undefined;
+    }
     return indexedAccessType(receiverType, argumentType);
   }
   return undefined;
 }
 
-function checkAssignmentTargetReference(expression: Expression, state: CheckState, environment: TypeEnvironment, diagnoseMissingProperty = true): void {
+function checkAssignmentTargetReference(expression: Expression, state: CheckState, environment: TypeEnvironment, diagnoseMissingProperty = true, reportReadDiagnostics = true): void {
   if (isIdentifier(expression)) {
     checkIdentifierWriteTarget(expression, state, environment);
     return;
   }
   if (isParenthesizedExpression(expression)) {
-    checkAssignmentTargetReference(expression.expression, state, environment, diagnoseMissingProperty);
+    checkAssignmentTargetReference(expression.expression, state, environment, diagnoseMissingProperty, reportReadDiagnostics);
     return;
   }
   if (isNonNullExpression(expression) || isAsExpression(expression) || isTypeAssertion(expression) || isSatisfiesExpression(expression)) {
-    checkAssignmentTargetReference(expression.expression, state, environment, diagnoseMissingProperty);
+    checkAssignmentTargetReference(expression.expression, state, environment, diagnoseMissingProperty, reportReadDiagnostics);
     return;
   }
   if (isPropertyAccessExpression(expression)) {
@@ -10308,43 +10335,38 @@ function checkAssignmentTargetReference(expression: Expression, state: CheckStat
     return;
   }
   if (isElementAccessExpression(expression)) {
-    const receiverType = accessorReadType(inferExpression(expression.expression, state, environment));
-    const argumentRuntimeType = inferExpression(expression.argumentExpression, state, environment);
-    const argumentType = literalExpressionNarrowType(expression.argumentExpression) ?? argumentRuntimeType;
-    if (readonlyElementTarget(receiverType, argumentType)) {
-      state.diagnostics.push(createDiagnostic(2542, displayType(receiverType)));
-    }
+    checkElementAccessWriteTarget(expression, state, environment, reportReadDiagnostics);
     return;
   }
   if (isArrayLiteralExpression(expression)) {
-    checkArrayLiteralAssignmentTarget(expression, state, environment, diagnoseMissingProperty);
+    checkArrayLiteralAssignmentTarget(expression, state, environment, diagnoseMissingProperty, reportReadDiagnostics);
     return;
   }
   if (isObjectLiteralExpression(expression)) {
-    checkObjectLiteralAssignmentTarget(expression, state, environment, diagnoseMissingProperty);
+    checkObjectLiteralAssignmentTarget(expression, state, environment, diagnoseMissingProperty, reportReadDiagnostics);
     return;
   }
   inferExpression(expression, state, environment);
   state.diagnostics.push(createDiagnostic(2364));
 }
 
-function checkArrayLiteralAssignmentTarget(expression: Extract<Expression, { readonly kind: Kind.ArrayLiteralExpression }>, state: CheckState, environment: TypeEnvironment, diagnoseMissingProperty: boolean): void {
+function checkArrayLiteralAssignmentTarget(expression: Extract<Expression, { readonly kind: Kind.ArrayLiteralExpression }>, state: CheckState, environment: TypeEnvironment, diagnoseMissingProperty: boolean, reportReadDiagnostics: boolean): void {
   for (const element of expression.elements) {
     if (element.kind === Kind.OmittedExpression) {
       continue;
     }
     if (isSpreadElement(element)) {
-      checkAssignmentTargetReference(element.expression, state, environment, diagnoseMissingProperty);
+      checkAssignmentTargetReference(element.expression, state, environment, diagnoseMissingProperty, reportReadDiagnostics);
       continue;
     }
-    checkAssignmentTargetReference(element, state, environment, diagnoseMissingProperty);
+    checkAssignmentTargetReference(element, state, environment, diagnoseMissingProperty, reportReadDiagnostics);
   }
 }
 
-function checkObjectLiteralAssignmentTarget(expression: Extract<Expression, { readonly kind: Kind.ObjectLiteralExpression }>, state: CheckState, environment: TypeEnvironment, diagnoseMissingProperty: boolean): void {
+function checkObjectLiteralAssignmentTarget(expression: Extract<Expression, { readonly kind: Kind.ObjectLiteralExpression }>, state: CheckState, environment: TypeEnvironment, diagnoseMissingProperty: boolean, reportReadDiagnostics: boolean): void {
   for (const property of expression.properties) {
     if (isPropertyAssignment(property)) {
-      checkAssignmentTargetReference(property.initializer, state, environment, diagnoseMissingProperty);
+      checkAssignmentTargetReference(property.initializer, state, environment, diagnoseMissingProperty, reportReadDiagnostics);
       continue;
     }
     if (isShorthandPropertyAssignment(property) && isIdentifier(property.name)) {
@@ -10362,7 +10384,7 @@ function checkObjectLiteralAssignmentTarget(expression: Extract<Expression, { re
       continue;
     }
     if (isSpreadAssignment(property)) {
-      checkAssignmentTargetReference(property.expression, state, environment, diagnoseMissingProperty);
+      checkAssignmentTargetReference(property.expression, state, environment, diagnoseMissingProperty, reportReadDiagnostics);
     }
   }
 }
@@ -10385,9 +10407,27 @@ function checkUpdateTargetReference(expression: Expression, state: CheckState, e
     return;
   }
   if (isElementAccessExpression(expression)) {
+    checkElementAccessWriteTarget(expression, state, environment, false);
     return;
   }
   state.diagnostics.push(createDiagnostic(2357));
+}
+
+function checkElementAccessWriteTarget(expression: Extract<Expression, { readonly kind: Kind.ElementAccessExpression }>, state: CheckState, environment: TypeEnvironment, reportReadDiagnostics: boolean): void {
+  const readState = reportReadDiagnostics ? state : stateWithoutReportedDiagnostics(state) ?? state;
+  const receiverType = accessorReadType(inferExpression(expression.expression, readState, environment));
+  const argumentRuntimeType = inferExpression(expression.argumentExpression, readState, environment);
+  const argumentType = literalExpressionNarrowType(expression.argumentExpression) ?? argumentRuntimeType;
+  if (readonlyElementTarget(receiverType, argumentType)) {
+    state.diagnostics.push(createDiagnostic(2542, displayType(receiverType)));
+    return;
+  }
+  if (argumentType.kind !== "stringLiteral") {
+    return;
+  }
+  if (readonlyPropertyWriteTarget(receiverType, argumentType.value, environment)) {
+    state.diagnostics.push(createDiagnostic(2540, argumentType.value));
+  }
 }
 
 type DeleteTargetOptionality = "optional" | "required" | "index" | "missing" | "unknown";
@@ -10438,20 +10478,14 @@ function deleteTargetReadonly(expression: Expression, state: CheckState, environ
   const silentState = stateWithoutReportedDiagnostics(state) ?? state;
   if (isPropertyAccessExpression(expression)) {
     const receiverType = accessorReadType(inferExpression(expression.expression, silentState, environment));
-    return readonlyObjectPropertyTarget(receiverType, expression.name.text)
-      || readonlyClassInstancePropertyTarget(receiverType, expression.name.text)
-      || readonlyInterfacePropertyTarget(receiverType, expression.name.text)
-      || readonlyClassConstructorFunctionPropertyTarget(receiverType, expression.name.text, environment)
-      || readonlyNamespaceDeleteTarget(receiverType, expression.name.text);
+    return readonlyPropertyWriteTarget(receiverType, expression.name.text, environment);
   }
   if (isElementAccessExpression(expression)) {
     const receiverType = accessorReadType(inferExpression(expression.expression, silentState, environment));
     const argumentRuntimeType = inferExpression(expression.argumentExpression, silentState, environment);
     const argumentType = literalExpressionNarrowType(expression.argumentExpression) ?? argumentRuntimeType;
     return readonlyElementTarget(receiverType, argumentType)
-      || argumentType.kind === "stringLiteral" && readonlyInterfacePropertyTarget(receiverType, argumentType.value)
-      || argumentType.kind === "stringLiteral" && readonlyClassConstructorFunctionPropertyTarget(receiverType, argumentType.value, environment)
-      || argumentType.kind === "stringLiteral" && readonlyNamespaceDeleteTarget(receiverType, argumentType.value);
+      || argumentType.kind === "stringLiteral" && readonlyPropertyWriteTarget(receiverType, argumentType.value, environment);
   }
   return false;
 }
@@ -10464,7 +10498,8 @@ function readonlyNamespaceDeleteTarget(receiverType: CheckedType, propertyName: 
     return readonlyNamespaceDeleteTarget(receiverType.namespace, propertyName) || readonlyNamespaceDeleteTarget(receiverType.type, propertyName);
   }
   if (receiverType.kind === "namespace") {
-    return receiverType.enumLike === true && receiverType.exports.has(propertyName);
+    return receiverType.exports.has(propertyName)
+      && (receiverType.enumLike === true || receiverType.readonlyExports?.has(propertyName) === true);
   }
   if (receiverType.kind === "moduleNamespace") {
     return receiverType.exports.has(propertyName);
@@ -10651,13 +10686,7 @@ function isPlainNamespace(type: CheckedType | undefined): boolean {
 function checkPropertyAssignmentTarget(expression: Expression, propertyName: string, state: CheckState, environment: TypeEnvironment, diagnoseMissingProperty: boolean): void {
   const receiverType = inferExpression(expression, state, environment);
   const targetType = propertyAssignmentTargetType(receiverType, propertyName, environment);
-  if (receiverType.kind === "namespace" && receiverType.enumLike === true && receiverType.exports.has(propertyName)) {
-    state.diagnostics.push(createDiagnostic(2540, propertyName));
-    return;
-  }
-  if (readonlyObjectPropertyTarget(receiverType, propertyName)
-    || readonlyInterfacePropertyTarget(receiverType, propertyName)
-    || readonlyClassConstructorFunctionPropertyTarget(receiverType, propertyName, environment)) {
+  if (readonlyPropertyWriteTarget(receiverType, propertyName, environment)) {
     state.diagnostics.push(createDiagnostic(2540, propertyName));
     return;
   }
@@ -10671,6 +10700,14 @@ function checkPropertyAssignmentTarget(expression: Expression, propertyName: str
   if (receiverType.kind === "classInstance" && receiverType.members.readonlyProperties.has(propertyName)) {
     state.diagnostics.push(createDiagnostic(2540, propertyName));
   }
+}
+
+function readonlyPropertyWriteTarget(receiverType: CheckedType, propertyName: string, environment: TypeEnvironment): boolean {
+  return readonlyObjectPropertyTarget(receiverType, propertyName)
+    || readonlyClassInstancePropertyTarget(receiverType, propertyName)
+    || readonlyInterfacePropertyTarget(receiverType, propertyName)
+    || readonlyClassConstructorFunctionPropertyTarget(receiverType, propertyName, environment)
+    || readonlyNamespaceDeleteTarget(receiverType, propertyName);
 }
 
 function readonlyObjectPropertyTarget(receiverType: CheckedType, propertyName: string): boolean {
@@ -10774,11 +10811,7 @@ function assignExpressionTarget(expression: Expression, assignedType: CheckedTyp
   }
   if (isPropertyAccessExpression(expression)) {
     const receiverType = inferExpression(expression.expression, emptyCheckState(), environment);
-    if (readonlyObjectPropertyTarget(receiverType, expression.name.text)
-      || readonlyInterfacePropertyTarget(receiverType, expression.name.text)
-      || readonlyClassInstancePropertyTarget(receiverType, expression.name.text)
-      || readonlyClassConstructorFunctionPropertyTarget(receiverType, expression.name.text, environment)
-      || readonlyNamespaceDeleteTarget(receiverType, expression.name.text)) {
+    if (readonlyPropertyWriteTarget(receiverType, expression.name.text, environment)) {
       return;
     }
     const targetType = assignmentTargetType(expression, environment);
@@ -10800,6 +10833,9 @@ function assignExpressionTarget(expression: Expression, assignedType: CheckedTyp
       if (targetType !== undefined) {
         checkAssignable(assignedType, targetType, state);
       }
+      return;
+    }
+    if (argumentType.kind === "stringLiteral" && readonlyPropertyWriteTarget(receiverType, argumentType.value, environment)) {
       return;
     }
     const targetType = assignmentTargetType(expression, environment);
