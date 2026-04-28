@@ -222,6 +222,7 @@ type CheckedType =
   | { readonly kind: "thisClass"; readonly className: string; readonly members: ClassMemberNames; readonly abstractProperties: ReadonlySet<string>; readonly abstractPropertyDeclaringClasses: ReadonlyMap<string, string>; readonly uninitializedProperties: ReadonlySet<string>; readonly mode: "constructor" | "fieldInitializer" | "method" }
   | { readonly kind: "typeAlias"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeParameterConstraints?: readonly (CheckedType | undefined)[]; readonly declaration?: TypeAliasDeclaration; readonly target: CheckedType; readonly preserveDisplay: boolean; readonly requiresExplicitDeclarationAnnotation: boolean }
   | { readonly kind: "typeAliasInstance"; readonly name: string; readonly typeArguments: readonly CheckedType[]; readonly target: CheckedType; readonly requiresExplicitDeclarationAnnotation: boolean }
+  | { readonly kind: "typeOnly"; readonly name: string; readonly type: CheckedType }
   | { readonly kind: "typeParameter"; readonly name: string; readonly constraint?: CheckedType }
   | { readonly kind: "set"; readonly elementType: CheckedType }
   | { readonly kind: "booleanLiteral"; readonly value: boolean }
@@ -734,6 +735,21 @@ function standardGlobalFunction(name: string, parameters: readonly CheckedType[]
   return functionDeclarationBinding(name, standardFunctionType(parameters, returnType, options));
 }
 
+function standardTypeAlias(name: string, typeParameters: readonly string[] = [], target: CheckedType = anyType): Extract<CheckedType, { readonly kind: "typeAlias" }> {
+  return {
+    kind: "typeAlias",
+    name,
+    typeParameters,
+    target,
+    preserveDisplay: false,
+    requiresExplicitDeclarationAnnotation: false,
+  };
+}
+
+function standardTypeOnly(name: string, type: CheckedType): Extract<CheckedType, { readonly kind: "typeOnly" }> {
+  return { kind: "typeOnly", name, type };
+}
+
 function standardVariadicAnyFunction(returnType: CheckedType = anyType): CheckedFunctionType {
   return standardFunctionType([anyType], returnType, { restParameterIndex: 0, minArgumentCount: 0 });
 }
@@ -819,6 +835,59 @@ const genericPromiseInterfaceType = standardInterfaceType("Promise", new Map<str
 const genericAsyncGeneratorInterfaceType = standardInterfaceType("AsyncGenerator", new Map(), {
   typeParameters: ["T", "TReturn", "TNext"],
 }) as Extract<CheckedType, { readonly kind: "interface" }>;
+const genericGeneratorInterfaceType = standardInterfaceType("Generator", new Map(), {
+  typeParameters: ["T", "TReturn", "TNext"],
+}) as Extract<CheckedType, { readonly kind: "interface" }>;
+const genericAsyncIterableInterfaceType = standardInterfaceType("AsyncIterable", new Map(), {
+  typeParameters: ["T"],
+}) as Extract<CheckedType, { readonly kind: "interface" }>;
+const genericIteratorResultType = standardTypeAlias("IteratorResult", ["T", "TReturn"]);
+const flatArrayType = standardTypeAlias("FlatArray", ["Arr", "Depth"]);
+const decoratorTypeNames = ["ClassDecorator", "MethodDecorator", "ParameterDecorator", "PropertyDecorator"] as const;
+const coreAmbientInterfaceTypeNames = ["PropertyDescriptor"] as const;
+const hostAmbientInterfaceTypeNames = [
+  "AddEventListenerOptions",
+  "Document",
+  "Event",
+  "EventListenerOrEventListenerObject",
+  "EventTarget",
+  "File",
+  "FormData",
+  "HTMLAnchorElement",
+  "HTMLButtonElement",
+  "HTMLDivElement",
+  "HTMLElement",
+  "HTMLElementTagNameMap",
+  "HTMLInputElement",
+  "Node",
+  "ResizeObserver",
+  "ResizeObserverEntry",
+  "SVGRectElement",
+  "Window",
+  "WindowEventMap",
+  "Worker",
+] as const;
+const hostValueInterfaceTypeNames = new Set<string>([
+  "Document",
+  "Event",
+  "EventTarget",
+  "File",
+  "FormData",
+  "HTMLAnchorElement",
+  "HTMLButtonElement",
+  "HTMLDivElement",
+  "HTMLElement",
+  "HTMLInputElement",
+  "Node",
+  "ResizeObserver",
+  "SVGRectElement",
+  "Worker",
+]);
+
+function standardAmbientInterfaceBinding(name: string): CheckedType {
+  const type = standardInterfaceType(name, new Map()) as Extract<CheckedType, { readonly kind: "interface" }>;
+  return hostValueInterfaceTypeNames.has(name) ? { kind: "valueAndType", value: anyType, type } : standardTypeOnly(name, type);
+}
 
 function promiseType(fulfilledType: CheckedType): Extract<CheckedType, { readonly kind: "interface" }> {
   return instantiateInterfaceType(genericPromiseInterfaceType, [fulfilledType]);
@@ -861,6 +930,25 @@ const boxedStringType: CheckedType = {
       ["length", numberType],
       ["toString", { kind: "function", typeParameters: [], parameters: [], returnType: stringType }],
       ["valueOf", { kind: "function", typeParameters: [], parameters: [], returnType: stringType }],
+    ]),
+    readonlyProperties: new Set(),
+    optionalProperties: new Set(),
+    methodProperties: new Set(["toString", "valueOf"]),
+    callSignatures: [],
+    inheritedTypes: [],
+    inheritedClassTypes: [],
+  },
+};
+const boxedBooleanType: CheckedType = {
+  kind: "interface",
+  name: "Boolean",
+  members: {
+    name: "Boolean",
+    typeParameters: [],
+    version: 0,
+    properties: new Map<string, CheckedType>([
+      ["toString", { kind: "function", typeParameters: [], parameters: [], returnType: stringType }],
+      ["valueOf", { kind: "function", typeParameters: [], parameters: [], returnType: booleanType }],
     ]),
     readonlyProperties: new Set(),
     optionalProperties: new Set(),
@@ -1287,6 +1375,8 @@ const ambientTypeNames = new Set([
   "ArrayIterator",
   "ArrayLike",
   "Awaited",
+  "AsyncGenerator",
+  "AsyncIterable",
   "AsyncIterator",
   "BigInt",
   "Boolean",
@@ -1296,9 +1386,12 @@ const ambientTypeNames = new Set([
   "Error",
   "Exclude",
   "Extract",
+  "FlatArray",
   "Function",
+  "Generator",
   "IArguments",
   "InstanceType",
+  "IteratorResult",
   "IterableIterator",
   "Iterator",
   "Map",
@@ -1334,6 +1427,9 @@ const ambientTypeNames = new Set([
   "Uppercase",
   "WeakMap",
   "WeakSet",
+  ...coreAmbientInterfaceTypeNames,
+  ...decoratorTypeNames,
+  ...hostAmbientInterfaceTypeNames,
   ...typedArrayGlobalNames,
 ]);
 const requiredCoreGlobalTypeNames = [
@@ -1566,6 +1662,9 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
     const pending: ModuleExportInfo = { exports: new Map() };
     exportCache.set(fileName, pending);
     const environment = cloneTypeEnvironment(globalEnvironment);
+    if (sourceFileIsExternalModule(sourceFile.sourceFile)) {
+      shadowStatementLocalDeclarationNames(environment, sourceFile.sourceFile.statements);
+    }
     const exportState: CheckState = {
       ...emptyCheckState(program.options),
       resolveExternalModule: moduleSpecifier => {
@@ -1633,6 +1732,7 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
       return { exports: new Map() };
     }
     const moduleEnvironment = cloneTypeEnvironment(globalEnvironment);
+    shadowStatementLocalDeclarationNames(moduleEnvironment, moduleDeclaration.body.statements);
     checkStatements(moduleDeclaration.body.statements, emptyCheckState(), moduleEnvironment, undefined, true);
     const info = ambientModuleExports(moduleDeclaration.body.statements, moduleEnvironment);
     ambientExportCache.set(moduleSpecifier, info);
@@ -1675,7 +1775,7 @@ function globalEnvironmentForProgram(program: Program): TypeEnvironment {
 }
 
 function baseGlobalEnvironment(options: CompilerOptions): TypeEnvironment {
-  return options.noLib === true ? new Map() : standardGlobalEnvironment();
+  return options.noLib === true ? new Map() : standardGlobalEnvironment(options);
 }
 
 function missingRequiredGlobalTypeDiagnostics(program: Program, environment: TypeEnvironment): readonly ProgramDiagnostic[] {
@@ -1692,7 +1792,7 @@ function missingRequiredGlobalTypeDiagnostics(program: Program, environment: Typ
   return diagnostics;
 }
 
-function standardGlobalEnvironment(): TypeEnvironment {
+function standardGlobalEnvironment(options: CompilerOptions): TypeEnvironment {
   const entries: Array<readonly [string, CheckedType]> = [
     ["Array", {
       kind: "valueAndType",
@@ -1714,6 +1814,7 @@ function standardGlobalEnvironment(): TypeEnvironment {
     ["ArrayBuffer", { kind: "valueAndType", value: { kind: "object", properties: new Map([["isView", { kind: "intrinsicFunction", intrinsic: "ArrayBuffer.isView" }]]), readonlyProperties: new Set(), optionalProperties: new Set(), methodProperties: new Set() }, type: anyType }],
     ["ArrayBufferView", anyType],
     ["BigInt", anyType],
+    ["Boolean", { kind: "valueAndType", value: standardFunctionType([anyType], booleanType, { minArgumentCount: 0, maxArgumentCount: 1 }), type: boxedBooleanType }],
     ["Date", anyType],
     ["Element", standardInterfaceType("Element", new Map())],
     ["Error", { kind: "valueAndType", value: { kind: "builtinConstructor", name: "Error", instanceType: errorInterfaceType, constructorParameters: [stringType], staticProperties: new Map() }, type: errorInterfaceType }],
@@ -1735,11 +1836,15 @@ function standardGlobalEnvironment(): TypeEnvironment {
       methodProperties: new Set(["debug", "error", "info", "log", "warn"]),
     }],
     ["eval", standardGlobalFunction("eval", [stringType], anyType, { minArgumentCount: 0, maxArgumentCount: 1 })],
-    ["AsyncGenerator", genericAsyncGeneratorInterfaceType],
+    ["AsyncGenerator", standardTypeOnly("AsyncGenerator", genericAsyncGeneratorInterfaceType)],
+    ["AsyncIterable", standardTypeOnly("AsyncIterable", genericAsyncIterableInterfaceType)],
     ["AsyncIterator", anyType],
+    ["FlatArray", standardTypeOnly("FlatArray", flatArrayType)],
+    ["Generator", standardTypeOnly("Generator", genericGeneratorInterfaceType)],
     ["Iterable", anyType],
     ["IterableIterator", { kind: "arrayIterator", elementType: anyType }],
     ["Iterator", anyType],
+    ["IteratorResult", standardTypeOnly("IteratorResult", genericIteratorResultType)],
     ["Intl", anyType],
     ["JSON", standardNamespace("JSON", [
       ["parse", standardFunctionType([stringType], anyType, { minArgumentCount: 1, maxArgumentCount: 2 })],
@@ -1883,6 +1988,25 @@ function standardGlobalEnvironment(): TypeEnvironment {
     ["parseInt", standardGlobalFunction("parseInt", [stringType], numberType)],
     ["undefined", undefinedType],
   ];
+  if (standardLibraryIncludesHostGlobals(options)) {
+    entries.push(["setTimeout", standardGlobalFunction("setTimeout", [unionType([stringType, standardVariadicAnyFunction(voidType)]), numberType, anyType], numberType, { minArgumentCount: 1, restParameterIndex: 2 })]);
+    entries.push(["clearTimeout", standardGlobalFunction("clearTimeout", [anyType], voidType, { minArgumentCount: 0, maxArgumentCount: 1 })]);
+    entries.push(["self", anyType]);
+  }
+  if (standardLibraryIncludesDomGlobals(options)) {
+    entries.push(["window", anyType]);
+  }
+  for (const name of coreAmbientInterfaceTypeNames) {
+    entries.push([name, standardTypeOnly(name, standardInterfaceType(name, new Map()))]);
+  }
+  for (const name of decoratorTypeNames) {
+    entries.push([name, standardTypeOnly(name, standardTypeAlias(name))]);
+  }
+  if (standardLibraryIncludesHostGlobals(options)) {
+    for (const name of hostAmbientInterfaceTypeNames) {
+      entries.push([name, standardAmbientInterfaceBinding(name)]);
+    }
+  }
   for (const name of typedArrayGlobalNames) {
     entries.push([name, anyType]);
   }
@@ -1892,6 +2016,35 @@ function standardGlobalEnvironment(): TypeEnvironment {
   globalThisExports.set("globalThis", globalThisNamespace);
   environment.set("globalThis", globalThisNamespace);
   return environment;
+}
+
+function standardLibraryIncludesHostGlobals(options: CompilerOptions): boolean {
+  return standardLibraryIncludesDomGlobals(options) || standardLibraryIncludesWebWorkerGlobals(options);
+}
+
+function standardLibraryIncludesDomGlobals(options: CompilerOptions): boolean {
+  if (options.lib === undefined) {
+    return true;
+  }
+  return options.lib.map(normalizeLibraryName).some(name => name === "dom" || name.startsWith("dom."));
+}
+
+function standardLibraryIncludesWebWorkerGlobals(options: CompilerOptions): boolean {
+  if (options.lib === undefined) {
+    return false;
+  }
+  return options.lib.map(normalizeLibraryName).some(name => name === "webworker" || name.startsWith("webworker."));
+}
+
+function normalizeLibraryName(name: string): string {
+  let normalized = name.toLowerCase();
+  if (normalized.startsWith("lib.")) {
+    normalized = normalized.slice("lib.".length);
+  }
+  if (normalized.endsWith(".d.ts")) {
+    normalized = normalized.slice(0, -".d.ts".length);
+  }
+  return normalized;
 }
 
 function collectReExports(statement: Extract<Statement, { readonly kind: Kind.ExportDeclaration }>, reexported: ModuleExportInfo | undefined, exports: Map<string, CheckedType>): void {
@@ -2976,17 +3129,47 @@ function namespaceExportNames(statement: Statement): readonly string[] {
 
 function shadowNamespaceLocalDeclarationNames(environment: TypeEnvironment, body: ModuleBody): void {
   if (isModuleBlock(body)) {
-    for (const statement of body.statements) {
-      for (const name of namespaceExportNames(statement)) {
-        environment.delete(name);
-      }
-    }
+    shadowStatementLocalDeclarationNames(environment, body.statements);
     return;
   }
   const name = moduleDeclarationName(body);
   if (name !== undefined) {
     environment.delete(name);
   }
+}
+
+function shadowStatementLocalDeclarationNames(environment: TypeEnvironment, statements: readonly Statement[]): void {
+  for (const statement of statements) {
+    for (const name of statementLocalDeclarationNames(statement)) {
+      environment.delete(name);
+    }
+  }
+}
+
+function statementLocalDeclarationNames(statement: Statement): readonly string[] {
+  if (isImportDeclaration(statement)) {
+    return importDeclarationBindingNames(statement);
+  }
+  return namespaceExportNames(statement);
+}
+
+function importDeclarationBindingNames(statement: ImportDeclaration): readonly string[] {
+  const names: string[] = [];
+  if (statement.importClause?.name !== undefined) {
+    names.push(statement.importClause.name.text);
+  }
+  const namedBindings = statement.importClause?.namedBindings;
+  if (namedBindings === undefined) {
+    return names;
+  }
+  if (isNamespaceImport(namedBindings)) {
+    names.push(namedBindings.name.text);
+    return names;
+  }
+  if (isNamedImports(namedBindings)) {
+    names.push(...namedBindings.elements.map(specifier => specifier.name.text));
+  }
+  return names;
 }
 
 function bindingNameExportNames(name: BindingName): readonly string[] {
@@ -3003,7 +3186,7 @@ function bindImportDeclaration(statement: ImportDeclaration, state: CheckState, 
   const moduleType = importDeclarationModuleType(statement, state);
   const importGroup = createUnusedDeclarationGroup("import", statement, state);
   if (statement.importClause?.name !== undefined) {
-    mergeEnvironmentBinding(environment, statement.importClause.name.text, defaultImportType(statement, moduleType, state));
+    bindImportName(statement.importClause.name.text, defaultImportType(statement, moduleType, state), environment);
     addUnusedDeclarationToGroup(importGroup, registerUnusedDeclaration(statement.importClause.name.text, statement.importClause.name, "local", state, environment));
   }
   const namedBindings = statement.importClause?.namedBindings;
@@ -3023,13 +3206,33 @@ function bindImportDeclaration(statement: ImportDeclaration, state: CheckState, 
   }
   if (isNamedImports(namedBindings)) {
     for (const specifier of namedBindings.elements) {
-      mergeEnvironmentBinding(environment, specifier.name.text, namedImportType(statement, specifier, moduleType, state));
+      bindImportName(specifier.name.text, namedImportType(statement, specifier, moduleType, state), environment);
       addUnusedDeclarationToGroup(importGroup, registerUnusedDeclaration(specifier.name.text, specifier.name, "local", state, environment));
     }
   }
   if (importGroup.entries.length < 2) {
     removeUnusedDeclarationGroup(importGroup, state);
   }
+}
+
+function bindImportName(name: string, imported: CheckedType, environment: TypeEnvironment): void {
+  environment.set(name, mergeImportBinding(environment.get(name), imported));
+}
+
+function mergeImportBinding(existing: CheckedType | undefined, imported: CheckedType): CheckedType {
+  if (namespaceMeaning(imported) !== undefined) {
+    return imported;
+  }
+  const importedValue = valueMeaning(imported);
+  const importedType = typeMeaning(imported);
+  const existingType = existing === undefined ? undefined : typeMeaning(existing);
+  if (importedValue !== undefined && importedType === undefined && existingType !== undefined) {
+    return { kind: "valueAndType", value: importedValue, type: existingType };
+  }
+  if (importedValue !== undefined && importedType !== undefined) {
+    return { kind: "valueAndType", value: importedValue, type: importedType };
+  }
+  return imported;
 }
 
 function importDeclarationModuleType(statement: ImportDeclaration, state: CheckState): Extract<CheckedType, { readonly kind: "moduleNamespace" }> | undefined {
@@ -3190,7 +3393,7 @@ function valueMeaning(type: CheckedType): CheckedType | undefined {
   if (type.kind === "functionDeclaration") {
     return type.type;
   }
-  if (type.kind === "interface" || type.kind === "typeAlias" || type.kind === "intrinsicTypeAlias" || type.kind === "typeParameter") {
+  if (type.kind === "interface" || type.kind === "typeAlias" || type.kind === "intrinsicTypeAlias" || type.kind === "typeOnly" || type.kind === "typeParameter") {
     return undefined;
   }
   return type;
@@ -3208,6 +3411,9 @@ function typeMeaning(type: CheckedType): CheckedType | undefined {
   }
   if (type.kind === "functionDeclaration") {
     return undefined;
+  }
+  if (type.kind === "typeOnly") {
+    return type.type;
   }
   if (type.kind === "interface" || type.kind === "typeAlias" || type.kind === "intrinsicTypeAlias" || type.kind === "typeParameter" || type.kind === "classConstructor") {
     return type;
@@ -5997,6 +6203,10 @@ function inferExpression(expression: Expression, state: CheckState, environment:
       }
       state.diagnostics.push(createDiagnostic(2708, expression.text));
       return anyType;
+    }
+    if (bound?.kind === "typeOnly") {
+      state.diagnostics.push(createDiagnostic(2693, expression.text));
+      return unresolvedType;
     }
     if (bound?.kind === "unqualifiedStaticMember") {
       state.diagnostics.push(createDiagnostic(2662, bound.memberName, bound.className));
@@ -10883,6 +11093,9 @@ function typeFromResolvedEntity(type: CheckedType, diagnosticName: string | unde
   if (type.kind === "typeParameter") {
     return type;
   }
+  if (type.kind === "typeOnly") {
+    return typeFromResolvedEntity(type.type, diagnosticName ?? type.name, state, typeArguments);
+  }
   if (type.kind === "valueOnly") {
     state?.diagnostics.push(createDiagnostic(2749, diagnosticName ?? type.name));
     return unresolvedType;
@@ -12685,7 +12898,9 @@ function isAssignableToRelated(actual: CheckedType, expected: CheckedType, optio
     if (expected.kind === "union") {
       return expected.types.some(type => isAssignableTo(actual, type, options));
     }
-    return expected.kind === "boolean" || (expected.kind === "booleanLiteral" && actual.value === expected.value);
+    return expected.kind === "boolean"
+      || (expected.kind === "booleanLiteral" && actual.value === expected.value)
+      || (expected.kind === "interface" && expected.name === "Boolean");
   }
   if (expected.kind === "booleanLiteral") {
     return false;
@@ -12742,6 +12957,9 @@ function isAssignableToRelated(actual: CheckedType, expected: CheckedType, optio
     return true;
   }
   if (actual.kind === "number" && expected.kind === "interface" && expected.name === "Number") {
+    return true;
+  }
+  if (actual.kind === "boolean" && expected.kind === "interface" && expected.name === "Boolean") {
     return true;
   }
   if ((actual.kind === "array" || actual.kind === "readonlyArray") && expected.kind === "interface") {
@@ -13778,6 +13996,9 @@ function displayType(type: CheckedType): string {
   }
   if (type.kind === "typeAliasInstance") {
     return displayGenericNamedType(type.name, type.typeArguments);
+  }
+  if (type.kind === "typeOnly") {
+    return displayType(type.type);
   }
   if (type.kind === "union") {
     return type.types.map(displayType).join(" | ");

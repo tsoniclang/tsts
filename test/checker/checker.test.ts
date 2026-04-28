@@ -1197,6 +1197,50 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics, []);
   });
 
+  it("recognizes standard ambient library type and value surfaces", () => {
+    const sourceFile = parseSourceFile([
+      "declare const generator: Generator<string, void, unknown>;",
+      "declare const iteratorResult: IteratorResult<number>;",
+      "declare const asyncIterable: AsyncIterable<string>;",
+      "declare const descriptor: PropertyDescriptor;",
+      "declare const methodDecorator: MethodDecorator;",
+      "declare const parameterDecorator: ParameterDecorator;",
+      "declare const flattened: FlatArray<string[], 0>;",
+      "declare const node: Node;",
+      "declare const file: File;",
+      "declare const form: FormData;",
+      "declare const svg: SVGRectElement;",
+      "declare const worker: Worker;",
+      "declare const element: HTMLElement;",
+      "const bool: boolean = Boolean(1);",
+      "const boxedBool: Boolean = true;",
+      "setTimeout(() => undefined, 0);",
+      "window;",
+      "self;",
+      "generator; iteratorResult; asyncIterable; descriptor; methodDecorator; parameterDecorator;",
+      "flattened; node; file; form; svg; worker; element; bool; boxedBool;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("reports standard type-only library bindings used as values", () => {
+    const sourceFile = parseSourceFile([
+      "Generator;",
+      "IteratorResult;",
+      "PropertyDescriptor;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2693, 2693, 2693]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "'Generator' only refers to a type, but is being used as a value here.",
+      "'IteratorResult' only refers to a type, but is being used as a value here.",
+      "'PropertyDescriptor' only refers to a type, but is being used as a value here.",
+    ]);
+  });
+
   it("keeps Temporal interfaces precise enough for missing-property checks", () => {
     const sourceFile = parseSourceFile([
       "const instant = Temporal.Instant.from(\"2020-01-01T00:00Z\");",

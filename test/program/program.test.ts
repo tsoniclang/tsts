@@ -297,6 +297,89 @@ describe("program groundwork", () => {
     assert.equal(diagnostics.some(diagnostic => diagnostic.code === 2318 && diagnostic.message.includes("'Boolean'")), true);
   });
 
+  it("does not inject host library globals when lib is explicit core-only", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "setTimeout(() => undefined, 0); window; self;"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+    };
+
+    const program = createProgram(["src/index.ts"], { lib: ["es5"] }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [2304, 2304, 2304]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Cannot find name 'setTimeout'.",
+      "Cannot find name 'window'.",
+      "Cannot find name 'self'.",
+    ]);
+  });
+
+  it("lets imports shadow standard global type names", () => {
+    const files = new Map<string, string>([
+      [
+        "src/types.d.ts",
+        [
+          "declare module \"Boolean/Boolean\" {",
+          "  export type Boolean = 1 | 0;",
+          "}",
+        ].join("\n"),
+      ],
+      [
+        "src/index.ts",
+        [
+          "import { Boolean } from \"Boolean/Boolean\";",
+          "type At<strict extends Boolean = 1> = { 1: string; 0: number }[strict];",
+          "declare const value: At;",
+          "value;",
+        ].join("\n"),
+      ],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/types.d.ts", "src/index.ts"], {}, host);
+
+    assert.deepEqual(getProgramDiagnostics(program), []);
+  });
+
+  it("preserves namespace and type meanings on imported namespace-interface merges", () => {
+    const files = new Map<string, string>([
+      [
+        "src/translation.ts",
+        [
+          "export interface Translation {",
+          "  translationKey: Translation.TranslationKeyEnum;",
+          "}",
+          "export namespace Translation {",
+          "  export type TranslationKeyEnum = \"translation1\" | \"translation2\";",
+          "  export const TranslationKeyEnum = { Translation1: \"translation1\" as TranslationKeyEnum };",
+          "}",
+        ].join("\n"),
+      ],
+      [
+        "src/index.ts",
+        [
+          "import { Translation } from \"./translation\";",
+          "import TranslationKeyEnum = Translation.TranslationKeyEnum;",
+          "const value: TranslationKeyEnum = TranslationKeyEnum.Translation1;",
+          "value;",
+        ].join("\n"),
+      ],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/index.ts"], { module: "commonjs" }, host);
+
+    assert.deepEqual(getProgramDiagnostics(program), []);
+  });
+
   it("diagnoses unresolved relative imports", () => {
     const host: CompilerHost = {
       readFile: fileName => fileName === "src/index.ts" ? "import { missing } from \"./missing\";" : undefined,
