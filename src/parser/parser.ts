@@ -1394,7 +1394,12 @@ export class Parser {
     if (this.#consumeOptional(Kind.OpenParenToken)) {
       const name = this.#parseBindingName();
       const type = this.#parseOptionalTypeAnnotation();
-      variableDeclaration = createVariableDeclaration(name, undefined, type, undefined);
+      let initializer: Expression | undefined;
+      if (this.#consumeOptional(Kind.EqualsToken)) {
+        this.#addDiagnosticAtToken(this.#current(), 1197);
+        initializer = this.#parseExpression();
+      }
+      variableDeclaration = createVariableDeclaration(name, undefined, type, initializer);
       this.#expect(Kind.CloseParenToken);
     }
     return createCatchClause(variableDeclaration, this.#parseBlock());

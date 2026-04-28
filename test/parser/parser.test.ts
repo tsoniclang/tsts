@@ -70,6 +70,7 @@ import {
   isTypeAssertion,
   isTypeLiteralNode,
   isTupleTypeNode,
+  isTryStatement,
   isTypeReferenceNode,
   isTypePredicateNode,
   isVariableStatement,
@@ -786,6 +787,18 @@ describe("TS-Go parser groundwork", () => {
 
     assert.equal(isTypeAliasDeclaration(sourceFile.statements[0]!), true);
     assert.equal(sourceFile.statements[1]!.kind, Kind.TryStatement);
+  });
+
+  it("recovers catch clause initializers without corrupting the catch body", () => {
+    const result = parseSourceFileWithDiagnostics("try {\n}\ncatch (e = 1) {\n  e;\n}");
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1197]);
+    const statement = result.sourceFile.statements[0]!;
+    assert.equal(isTryStatement(statement), true);
+    if (!isTryStatement(statement)) throw new Error("Expected try statement");
+    assert.equal(statement.catchClause?.variableDeclaration?.name.kind, Kind.Identifier);
+    assert.equal(isNumericLiteral(statement.catchClause?.variableDeclaration?.initializer!), true);
+    assert.equal(statement.catchClause?.block.statements.length, 1);
   });
 
   it("parses import equals declarations and type-literal call signatures", () => {
