@@ -243,6 +243,10 @@ interface CheckState {
   readonly strictModeReason: "class" | "module" | "strict" | undefined;
   readonly argumentsForbiddenInClassInitializerOrStaticBlock: boolean;
   readonly insideFunction: boolean;
+  readonly awaitContext: boolean;
+  readonly insideClassInitializer: boolean;
+  readonly insideClassStaticBlock: boolean;
+  readonly insideParameterInitializer: boolean;
   readonly iterationDepth: number;
   readonly yieldType: CheckedType | undefined;
   readonly externalModule: boolean;
@@ -970,6 +974,10 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
       strictModeReason: sourceFileStrictModeReason(sourceFile.sourceFile, program.options),
       argumentsForbiddenInClassInitializerOrStaticBlock: false,
       insideFunction: false,
+      awaitContext: false,
+      insideClassInitializer: false,
+      insideClassStaticBlock: false,
+      insideParameterInitializer: false,
       iterationDepth: 0,
       yieldType: undefined,
       externalModule: sourceFileIsExternalModule(sourceFile.sourceFile),
@@ -1042,6 +1050,10 @@ function checkStateForSourceFile(sourceFile: SourceFile, options: CompilerOption
     strictModeReason: sourceFileStrictModeReason(sourceFile, options),
     argumentsForbiddenInClassInitializerOrStaticBlock: false,
     insideFunction: false,
+    awaitContext: false,
+    insideClassInitializer: false,
+    insideClassStaticBlock: false,
+    insideParameterInitializer: false,
     iterationDepth: 0,
     yieldType: undefined,
     externalModule: sourceFileIsExternalModule(sourceFile),
@@ -1627,6 +1639,9 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isForInStatement(statement) || isForOfStatement(statement)) {
     const loopEnvironment = cloneTypeEnvironment(environment);
+    if (isForOfStatement(statement) && statement.awaitModifier !== undefined) {
+      checkForAwaitStatementGrammar(statement, state);
+    }
     checkForInitializer(statement.initializer, state, loopEnvironment, true);
     const iteratedType = inferExpression(statement.expression, state, loopEnvironment);
     if (isForOfStatement(statement)) {
@@ -1843,19 +1858,65 @@ function enterLocalScope(state: CheckState): CheckState {
 }
 
 function enterFunction(state: CheckState, yieldType?: CheckedType): CheckState {
-  return { ...state, argumentsForbiddenInClassInitializerOrStaticBlock: false, insideFunction: true, iterationDepth: 0, yieldType };
+  return enterFunctionWithAwaitContext(state, yieldType, false);
 }
 
-function enterArrowFunction(state: CheckState): CheckState {
-  return { ...state, insideFunction: true, iterationDepth: 0, yieldType: undefined };
+function enterFunctionWithAwaitContext(state: CheckState, yieldType: CheckedType | undefined, awaitContext: boolean): CheckState {
+  return {
+    ...state,
+    argumentsForbiddenInClassInitializerOrStaticBlock: false,
+    insideFunction: true,
+    awaitContext,
+    insideClassInitializer: false,
+    insideClassStaticBlock: false,
+    insideParameterInitializer: false,
+    iterationDepth: 0,
+    yieldType,
+  };
+}
+
+function enterArrowFunction(state: CheckState, awaitContext = false): CheckState {
+  return {
+    ...state,
+    insideFunction: true,
+    awaitContext,
+    insideClassInitializer: false,
+    insideClassStaticBlock: false,
+    insideParameterInitializer: false,
+    iterationDepth: 0,
+    yieldType: undefined,
+  };
 }
 
 function enterClassBody(state: CheckState): CheckState {
   return { ...state, strictMode: true, strictModeReason: "class" };
 }
 
-function enterClassInitializerOrStaticBlock(state: CheckState): CheckState {
-  return { ...state, argumentsForbiddenInClassInitializerOrStaticBlock: true };
+function enterClassInitializerOrStaticBlock(state: CheckState, staticBlock = false): CheckState {
+  return {
+    ...state,
+    argumentsForbiddenInClassInitializerOrStaticBlock: true,
+    insideFunction: false,
+    awaitContext: false,
+    insideClassInitializer: !staticBlock,
+    insideClassStaticBlock: staticBlock,
+    insideParameterInitializer: false,
+    yieldType: undefined,
+  };
+}
+
+function enterParameterInitializer(state: CheckState, awaitContext: boolean): CheckState {
+  return {
+    ...enterFunctionWithAwaitContext(state, undefined, awaitContext),
+    insideParameterInitializer: true,
+  };
+}
+
+function enterArrowParameterInitializer(state: CheckState, awaitContext: boolean): CheckState {
+  return {
+    ...enterArrowFunction(state, awaitContext),
+    insideParameterInitializer: true,
+  };
 }
 
 function prebindStatementDeclarations(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
@@ -3959,7 +4020,8 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
       addTypeParameterConstraintsToEnvironment(member.typeParameters, memberEnvironment, state);
     }
     seedUnqualifiedClassMemberDiagnostics(memberEnvironment, classMembers, isMethodDeclaration(member) && hasModifier(member, Kind.StaticKeyword));
-    checkSignatureParameters(member.parameters, state, memberEnvironment, isMethodDeclaration(member) || member.body === undefined, ambient);
+    const memberAwaitContext = isMethodDeclaration(member) && hasModifier(member, Kind.AsyncKeyword);
+    checkSignatureParameters(member.parameters, state, memberEnvironment, isMethodDeclaration(member) || member.body === undefined, ambient, [], memberAwaitContext);
     if (member.body !== undefined) {
       for (const parameter of member.parameters) {
         registerUnusedParameter(parameter, state, memberEnvironment, ambient);
@@ -3974,7 +4036,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
       }
       const returnType = member.type === undefined ? undefined : typeFromTypeNode(member.type, memberEnvironment, state);
       const yieldType = isMethodDeclaration(member) && member.asteriskToken !== undefined ? generatorYieldType(returnType) : undefined;
-      checkBlock(member.body, enterFunction(state, yieldType), memberEnvironment, isMethodDeclaration(member) && member.asteriskToken !== undefined ? undefined : returnType);
+      checkBlock(member.body, enterFunctionWithAwaitContext(state, yieldType, memberAwaitContext), memberEnvironment, isMethodDeclaration(member) && member.asteriskToken !== undefined ? undefined : returnType);
       if (!isMethodDeclaration(member) || member.asteriskToken === undefined) {
         checkFunctionReturnCompleteness(member.body, returnType, state);
       }
@@ -3982,7 +4044,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     return;
   }
   if (isClassStaticBlockDeclaration(member)) {
-    checkBlock(member.body, enterClassInitializerOrStaticBlock(state), cloneTypeEnvironment(environment), undefined);
+    checkBlock(member.body, enterClassInitializerOrStaticBlock(state, true), cloneTypeEnvironment(environment), undefined);
     return;
   }
   if (isIndexSignatureDeclaration(member)) {
@@ -4325,7 +4387,7 @@ function checkAccessorBody(accessor: GetAccessorDeclaration | SetAccessorDeclara
   checkBlock(accessor.body, enterFunction(state), environment, expectedReturnType);
 }
 
-function checkSignatureParameters(parameters: readonly ParameterDeclaration[], state: CheckState, environment: TypeEnvironment, disallowParameterProperties: boolean, ambient = false, contextualParameterTypes: readonly CheckedType[] = []): readonly CheckedType[] {
+function checkSignatureParameters(parameters: readonly ParameterDeclaration[], state: CheckState, environment: TypeEnvironment, disallowParameterProperties: boolean, ambient = false, contextualParameterTypes: readonly CheckedType[] = [], parameterInitializerAwaitContext = false): readonly CheckedType[] {
   checkParameterListGrammar(parameters, state);
   return parameters.map((parameter, parameterIndex) => {
     checkParameterModifiers(parameter, state, !disallowParameterProperties);
@@ -4339,7 +4401,7 @@ function checkSignatureParameters(parameters: readonly ParameterDeclaration[], s
     checkStrictModeBindingName(parameter.name, state, ambient);
     setBindingNameType(parameter.name, parameterType, environment);
     if (parameter.initializer !== undefined) {
-      inferExpression(parameter.initializer, enterFunction(state), environment);
+      inferExpression(parameter.initializer, enterParameterInitializer(state, parameterInitializerAwaitContext), environment);
     }
     return parameterType;
   });
@@ -4640,6 +4702,7 @@ function functionDeclarationType(functionDeclaration: FunctionDeclaration, envir
 }
 
 function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
+  const isAsync = hasModifier(functionDeclaration, Kind.AsyncKeyword);
   const unusedEntry = functionDeclaration.name === undefined || ambient || declarationIsExported(functionDeclaration)
     ? undefined
     : registerUnusedDeclaration(functionDeclaration.name.text, functionDeclaration, "local", state, environment);
@@ -4697,12 +4760,12 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
     setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
     registerUnusedParameter(parameter, state, functionEnvironment, ambient || functionDeclaration.body === undefined);
     if (parameter.initializer !== undefined) {
-      inferExpression(parameter.initializer, enterFunction(state), functionEnvironment);
+      inferExpression(parameter.initializer, enterParameterInitializer(state, isAsync), functionEnvironment);
     }
   }
   if (functionDeclaration.body !== undefined) {
     const yieldType = functionDeclaration.asteriskToken === undefined ? undefined : generatorYieldType(returnType);
-    checkBlock(functionDeclaration.body, enterUnusedDeclaration(enterFunction(state, yieldType), unusedEntry), functionEnvironment, functionDeclaration.asteriskToken === undefined ? returnType : undefined);
+    checkBlock(functionDeclaration.body, enterUnusedDeclaration(enterFunctionWithAwaitContext(state, yieldType, isAsync), unusedEntry), functionEnvironment, functionDeclaration.asteriskToken === undefined ? returnType : undefined);
     if (functionDeclaration.asteriskToken === undefined) {
       checkFunctionReturnCompleteness(functionDeclaration.body, returnType, state);
     }
@@ -4761,6 +4824,7 @@ function typeRequiresExplicitDeclarationAnnotation(type: CheckedType): boolean {
 }
 
 function inferFunctionExpression(functionExpression: FunctionExpression, state: CheckState, environment: TypeEnvironment, contextualParameterTypes: readonly CheckedType[] = [], contextualReturnType?: CheckedType): CheckedFunctionType {
+  const isAsync = hasModifier(functionExpression, Kind.AsyncKeyword);
   if (functionExpression.type !== undefined) {
     checkJavaScriptTypeAnnotation(state);
   }
@@ -4787,7 +4851,7 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
     setBindingNameType(parameter.name, parameterTypes[index] ?? unresolvedType, functionEnvironment);
     registerUnusedParameter(parameter, state, functionEnvironment, functionExpression.body === undefined);
     if (parameter.initializer !== undefined) {
-      inferExpression(parameter.initializer, enterFunction(state), functionEnvironment);
+      inferExpression(parameter.initializer, enterParameterInitializer(state, isAsync), functionEnvironment);
     }
   }
   const expectedReturnType = declaredReturnType ?? contextualReturnType;
@@ -4807,7 +4871,7 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
     functionEnvironment.set(functionExpression.name.text, functionType);
   }
   const yieldType = functionExpression.asteriskToken === undefined ? undefined : generatorYieldType(declaredReturnType);
-  checkBlock(functionExpression.body, enterFunction(state, yieldType), functionEnvironment, functionExpression.asteriskToken === undefined ? declaredReturnType : undefined);
+  checkBlock(functionExpression.body, enterFunctionWithAwaitContext(state, yieldType, isAsync), functionEnvironment, functionExpression.asteriskToken === undefined ? declaredReturnType : undefined);
   if (declaredReturnType !== undefined && functionExpression.asteriskToken === undefined) {
     checkFunctionReturnCompleteness(functionExpression.body, declaredReturnType, state);
   }
@@ -4981,6 +5045,10 @@ function inferExpression(expression: Expression, state: CheckState, environment:
           state.diagnostics.push(createDiagnostic(2693, expression.text));
           return unresolvedType;
         }
+        if (expression.text === "await" && state.insideFunction && !state.awaitContext) {
+          state.diagnostics.push(createDiagnostic(2311, expression.text));
+          return unresolvedType;
+        }
         checkStrictModeReservedIdentifierExpression(expression.text, state);
         state.diagnostics.push(createDiagnostic(2304, expression.text));
       }
@@ -5042,6 +5110,7 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return checkIterationInputType(iterationType, state, "spread") ? unresolvedType : spreadType;
   }
   if (isAwaitExpression(expression)) {
+    checkAwaitExpressionGrammar(expression, state);
     inferExpression(expression.expression, state, environment);
     return anyType;
   }
@@ -5285,6 +5354,64 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   }
   return unresolvedType;
 }
+
+function checkAwaitExpressionGrammar(expression: Extract<Expression, { readonly kind: Kind.AwaitExpression }>, state: CheckState): void {
+  if (state.insideClassStaticBlock) {
+    state.diagnostics.push(createDiagnostic(18037));
+  } else if (!awaitContextAllowsAwaitExpression(expression, state)) {
+    checkAwaitLikeTopLevelOrFunctionGrammar(state, 1308, 1375, 1378);
+  }
+  if (state.insideParameterInitializer) {
+    state.diagnostics.push(createDiagnostic(2524));
+  }
+}
+
+function checkForAwaitStatementGrammar(_statement: Extract<Statement, { readonly kind: Kind.ForOfStatement }>, state: CheckState): void {
+  if (state.insideClassStaticBlock) {
+    state.diagnostics.push(createDiagnostic(18038));
+    return;
+  }
+  if (state.awaitContext) {
+    return;
+  }
+  checkAwaitLikeTopLevelOrFunctionGrammar(state, 1103, 1431, 1432);
+}
+
+function awaitContextAllowsAwaitExpression(expression: Expression, state: CheckState): boolean {
+  return state.awaitContext || (expression.flags & NodeFlags.AwaitContext) !== 0;
+}
+
+function checkAwaitLikeTopLevelOrFunctionGrammar(state: CheckState, nonAsyncCode: 1103 | 1308, nonModuleCode: 1375 | 1431, invalidTopLevelCode: 1378 | 1432): void {
+  if (!isTopLevelAwaitLikeContext(state)) {
+    state.diagnostics.push(createDiagnostic(nonAsyncCode));
+    return;
+  }
+  if (!state.externalModule) {
+    state.diagnostics.push(createDiagnostic(nonModuleCode));
+  }
+  if (!compilerOptionsAllowTopLevelAwait(state.options)) {
+    state.diagnostics.push(createDiagnostic(invalidTopLevelCode));
+  }
+}
+
+function isTopLevelAwaitLikeContext(state: CheckState): boolean {
+  return !state.insideFunction && !state.insideClassInitializer && !state.insideClassStaticBlock;
+}
+
+function compilerOptionsAllowTopLevelAwait(options: CompilerOptions): boolean {
+  return (options.module === undefined || topLevelAwaitModuleKinds.has(options.module)) && targetOrder(options.target) >= targetOrder("es2017");
+}
+
+const topLevelAwaitModuleKinds = new Set<CompilerOptions["module"]>([
+  "es2022",
+  "esnext",
+  "system",
+  "node16",
+  "node18",
+  "node20",
+  "nodenext",
+  "preserve",
+]);
 
 function inferJsxElement(expression: JsxElement, state: CheckState, environment: TypeEnvironment): CheckedType {
   const jsxEnabled = checkJsxUsage(state);
@@ -6651,6 +6778,7 @@ function assignmentOperatorDefinitelyAssignsTarget(kind: Kind): boolean {
 }
 
 function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, environment: TypeEnvironment, contextualParameterTypes: readonly CheckedType[] = [], contextualReturnType?: CheckedType): CheckedType {
+  const isAsync = hasModifier(arrowFunction, Kind.AsyncKeyword);
   if (arrowFunction.type !== undefined) {
     checkJavaScriptTypeAnnotation(state);
   }
@@ -6678,13 +6806,13 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
     setBindingNameType(parameter.name, parameterType, arrowEnvironment);
     registerUnusedParameter(parameter, state, arrowEnvironment, false);
     if (parameter.initializer !== undefined) {
-      inferExpression(parameter.initializer, state, arrowEnvironment);
+      inferExpression(parameter.initializer, enterArrowParameterInitializer(state, isAsync), arrowEnvironment);
     }
   }
   const declaredReturnType = arrowFunction.type === undefined
     ? jsDocReturnType(arrowFunction, arrowEnvironment, state)
     : bindTypePredicateParameterIndex(typeFromTypeNode(arrowFunction.type, arrowEnvironment, state), arrowFunction.parameters);
-  const inferredReturnType = inferConciseBody(arrowFunction.body, state, arrowEnvironment, declaredReturnType, declaredReturnType !== undefined);
+  const inferredReturnType = inferConciseBody(arrowFunction.body, enterArrowFunction(state, isAsync), arrowEnvironment, declaredReturnType, declaredReturnType !== undefined);
   return {
     kind: "function",
     typeParameters,
@@ -6706,7 +6834,7 @@ function suppressImmediateThisDiagnostics(environment: TypeEnvironment): void {
 
 function inferConciseBody(body: ConciseBody, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, requireReturnCompleteness: boolean): CheckedType {
   if (isBlock(body)) {
-    checkBlock(body, enterArrowFunction(state), environment, expectedReturnType);
+    checkBlock(body, state, environment, expectedReturnType);
     if (requireReturnCompleteness && expectedReturnType !== undefined) {
       checkFunctionReturnCompleteness(body, expectedReturnType, state);
     }
@@ -7640,16 +7768,17 @@ function returnExpressionType(expression: Expression, options?: CompilerOptions,
 }
 
 function checkObjectLiteralMethod(method: MethodDeclaration, state: CheckState, environment: TypeEnvironment, contextualType?: CheckedType): void {
+  const isAsync = hasModifier(method, Kind.AsyncKeyword);
   const methodEnvironment = createFunctionEnvironment(environment);
   seedArgumentsObject(methodEnvironment);
   addTypeParameterDeclarationsToEnvironment(method.typeParameters ?? [], methodEnvironment, state);
   addTypeParameterConstraintsToEnvironment(method.typeParameters, methodEnvironment, state);
   const contextualFunction = callableFunctionType(contextualType);
-  checkSignatureParameters(method.parameters, state, methodEnvironment, true, false, contextualFunction?.parameters ?? []);
+  checkSignatureParameters(method.parameters, state, methodEnvironment, true, false, contextualFunction?.parameters ?? [], isAsync);
   if (method.body !== undefined) {
     const declaredReturnType = method.type === undefined ? undefined : typeFromTypeNode(method.type, methodEnvironment, state);
     const yieldType = method.asteriskToken === undefined ? undefined : generatorYieldType(declaredReturnType);
-    checkBlock(method.body, enterFunction(state, yieldType), methodEnvironment, method.asteriskToken === undefined ? declaredReturnType : undefined);
+    checkBlock(method.body, enterFunctionWithAwaitContext(state, yieldType, isAsync), methodEnvironment, method.asteriskToken === undefined ? declaredReturnType : undefined);
     if (declaredReturnType !== undefined && method.asteriskToken === undefined) {
       checkFunctionReturnCompleteness(method.body, declaredReturnType, state);
     }
@@ -8370,6 +8499,10 @@ function emptyCheckState(options: CompilerOptions = {}): CheckState {
     strictModeReason: undefined,
     argumentsForbiddenInClassInitializerOrStaticBlock: false,
     insideFunction: false,
+    awaitContext: false,
+    insideClassInitializer: false,
+    insideClassStaticBlock: false,
+    insideParameterInitializer: false,
     iterationDepth: 0,
     yieldType: undefined,
     externalModule: false,
