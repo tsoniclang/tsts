@@ -1204,4 +1204,28 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isLabeledStatement(result.sourceFile.statements[3]!), true);
     assert.equal(isForInStatement(result.sourceFile.statements[4]!), true);
   });
+
+  it("parses decimal numeric literal forms without statement recovery cascades", () => {
+    const result = parseSourceFileWithDiagnostics([
+      "const half = Math.random() < .5;",
+      "const trailing = 1.;",
+      "const exponent = 1.e2;",
+      "const signedExponent = 1e+2;",
+    ].join("\n"));
+
+    assert.deepEqual(result.diagnostics, []);
+    assert.equal(result.sourceFile.statements.length, 4);
+  });
+
+  it("reports TypeScript numeric literal lexical diagnostics", () => {
+    const result = parseSourceFileWithDiagnostics("1e; 1e+; 1e2n; 1.0n; .5n;");
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [
+      1124,
+      1124,
+      1352,
+      1353,
+      1353,
+    ]);
+  });
 });

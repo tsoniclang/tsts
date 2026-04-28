@@ -3167,6 +3167,14 @@ export class Parser {
   }
 
   #validateNumericLiteralToken(token: ScannedToken, previousToken: ScannedToken | undefined): void {
+    const missingExponentDigit = missingExponentDigitDiagnostic(token.text);
+    if (missingExponentDigit !== undefined) {
+      this.#addDiagnosticAt(token.pos + missingExponentDigit.offset, 0, 1124);
+    }
+    const invalidBigInt = invalidBigIntLiteralDiagnostic(token.text);
+    if (invalidBigInt !== undefined) {
+      this.#addDiagnosticAt(token.pos, token.text.length, invalidBigInt.code);
+    }
     const diagnostic = legacyOctalNumericLiteralDiagnostic(token.text);
     if (diagnostic === undefined) {
       return;
@@ -3232,6 +3240,14 @@ interface LeadingZeroDecimalDiagnostic {
   readonly length: number;
 }
 
+interface MissingExponentDigitDiagnostic {
+  readonly offset: number;
+}
+
+interface InvalidBigIntLiteralDiagnostic {
+  readonly code: 1352 | 1353;
+}
+
 interface InvalidEscapeDiagnostic {
   readonly code: 1487 | 1488;
   readonly length: number;
@@ -3263,6 +3279,35 @@ function legacyOctalNumericLiteralDiagnostic(text: string): LegacyOctalNumericDi
 
   const octalDigits = leadingDigits.replace(/^0+/, "") || "0";
   return { code: 1121, length: leadingDigits.length, replacement: `0o${octalDigits}` };
+}
+
+function missingExponentDigitDiagnostic(text: string): MissingExponentDigitDiagnostic | undefined {
+  const literalText = text.endsWith("n") ? text.slice(0, -1) : text;
+  if (isRadixNumericLiteralText(literalText)) {
+    return undefined;
+  }
+  return /[eE][+-]?$/.test(literalText) ? { offset: literalText.length } : undefined;
+}
+
+function invalidBigIntLiteralDiagnostic(text: string): InvalidBigIntLiteralDiagnostic | undefined {
+  if (!text.endsWith("n")) {
+    return undefined;
+  }
+  const literalText = text.slice(0, -1);
+  if (isRadixNumericLiteralText(literalText)) {
+    return undefined;
+  }
+  if (literalText.includes(".")) {
+    return { code: 1353 };
+  }
+  if (/[eE]/.test(literalText)) {
+    return { code: 1352 };
+  }
+  return undefined;
+}
+
+function isRadixNumericLiteralText(text: string): boolean {
+  return /^0[xob]/i.test(text);
 }
 
 function stringLikeEscapeScanBounds(token: ScannedToken): EscapeScanBounds | undefined {

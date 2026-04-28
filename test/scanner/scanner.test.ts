@@ -115,4 +115,37 @@ describe("TS-Go scanner groundwork", () => {
       Kind.EndOfFile,
     ]);
   });
+
+  it("scans decimal numeric literal forms as single tokens", () => {
+    assert.deepEqual(textsOf("Math.random() < .5; 1.; 1.e2; 1e+2; 1.0n;"), [
+      "Math",
+      ".",
+      "random",
+      "(",
+      ")",
+      "<",
+      ".5",
+      ";",
+      "1.",
+      ";",
+      "1.e2",
+      ";",
+      "1e+2",
+      ";",
+      "1.0n",
+      ";",
+      "",
+    ]);
+    assert.deepEqual(kindsOf("1n; 1.0n; 1e2n; .5n;"), [
+      Kind.BigIntLiteral,
+      Kind.SemicolonToken,
+      Kind.NumericLiteral,
+      Kind.SemicolonToken,
+      Kind.NumericLiteral,
+      Kind.SemicolonToken,
+      Kind.NumericLiteral,
+      Kind.SemicolonToken,
+      Kind.EndOfFile,
+    ]);
+  });
 });

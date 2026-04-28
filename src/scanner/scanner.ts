@@ -277,7 +277,7 @@ export class Scanner {
       return this.#scanString(current);
     }
 
-    if (isDigit(current)) {
+    if (isDigit(current) || current === "." && isDigit(this.#text[this.#position + 1] ?? "")) {
       return this.#scanNumber();
     }
 
@@ -439,7 +439,14 @@ export class Scanner {
 
   #scanNumber(): ScannedToken {
     const start = this.#position;
-    if (this.#text[this.#position] === "0") {
+    let hasDecimalPointOrExponent = false;
+    if (this.#text[this.#position] === ".") {
+      hasDecimalPointOrExponent = true;
+      this.#position += 1;
+      while (this.#position < this.#text.length && isDecimalDigitOrSeparator(this.#text[this.#position]!)) {
+        this.#position += 1;
+      }
+    } else if (this.#text[this.#position] === "0") {
       const radixMarker = this.#text[this.#position + 1]?.toLowerCase();
       if (radixMarker === "x" || radixMarker === "b" || radixMarker === "o") {
         this.#position += 2;
@@ -452,33 +459,34 @@ export class Scanner {
         }
         return this.#token(Kind.NumericLiteral, start, this.#position);
       }
+      while (this.#position < this.#text.length && isDecimalDigitOrSeparator(this.#text[this.#position]!)) {
+        this.#position += 1;
+      }
+    } else {
+      while (this.#position < this.#text.length && isDecimalDigitOrSeparator(this.#text[this.#position]!)) {
+        this.#position += 1;
+      }
     }
-    while (this.#position < this.#text.length && isDecimalDigitOrSeparator(this.#text[this.#position]!)) {
-      this.#position += 1;
-    }
-    if (this.#text[this.#position] === "." && isDigit(this.#text[this.#position + 1] ?? "")) {
+    if (this.#text[this.#position] === ".") {
+      hasDecimalPointOrExponent = true;
       this.#position += 1;
       while (this.#position < this.#text.length && isDecimalDigitOrSeparator(this.#text[this.#position]!)) {
         this.#position += 1;
       }
     }
-    if ((this.#text[this.#position] === "e" || this.#text[this.#position] === "E") && /[+\-0-9]/.test(this.#text[this.#position + 1] ?? "")) {
-      const exponentStart = this.#position;
+    if (this.#text[this.#position] === "e" || this.#text[this.#position] === "E") {
+      hasDecimalPointOrExponent = true;
       this.#position += 1;
       if (this.#text[this.#position] === "+" || this.#text[this.#position] === "-") {
         this.#position += 1;
       }
-      if (!isDigit(this.#text[this.#position] ?? "")) {
-        this.#position = exponentStart;
-      } else {
-        while (this.#position < this.#text.length && isDecimalDigitOrSeparator(this.#text[this.#position]!)) {
-          this.#position += 1;
-        }
+      while (this.#position < this.#text.length && isDecimalDigitOrSeparator(this.#text[this.#position]!)) {
+        this.#position += 1;
       }
     }
     if (this.#text[this.#position] === "n") {
       this.#position += 1;
-      return this.#token(Kind.BigIntLiteral, start, this.#position);
+      return this.#token(hasDecimalPointOrExponent ? Kind.NumericLiteral : Kind.BigIntLiteral, start, this.#position);
     }
     return this.#token(Kind.NumericLiteral, start, this.#position);
   }
