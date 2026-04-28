@@ -770,6 +770,17 @@ describe("program groundwork", () => {
     assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [1011, 2693]);
   });
 
+  it("continues semantic checking after recovered type-argument and numeric literal diagnostics", () => {
+    const host: CompilerHost = {
+      readFile: fileName => fileName === "src/index.ts" ? "Foo<a,,b>(); 1e; missing;" : undefined,
+    };
+
+    const program = createProgram(["src/index.ts"], {}, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [1124, 1110, 2304, 2304, 2304, 2304]);
+  });
+
   it("does not emit when semantic diagnostics are present", () => {
     const outputs = new Map<string, string>();
     const host: CompilerHost = {

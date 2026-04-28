@@ -1151,10 +1151,24 @@ export class Parser {
       const types: ExpressionWithTypeArguments[] = [];
       do {
         types.push(this.#parseExpressionWithTypeArguments());
-      } while (this.#consumeOptional(Kind.CommaToken));
+        if (!this.#consumeOptional(Kind.CommaToken)) {
+          break;
+        }
+        if (this.#currentTokenEndsHeritageTypeList()) {
+          this.#addDiagnosticAtToken(this.#tokens[this.#index - 1]!, 1009);
+          break;
+        }
+      } while (true);
       clauses.push(createHeritageClause(token, createNodeArray(types)));
     }
     return clauses.length === 0 ? undefined : createNodeArray(clauses);
+  }
+
+  #currentTokenEndsHeritageTypeList(): boolean {
+    return this.#current().kind === Kind.OpenBraceToken
+      || this.#current().kind === Kind.ExtendsKeyword
+      || this.#current().kind === Kind.ImplementsKeyword
+      || this.#current().kind === Kind.EndOfFile;
   }
 
   #parseExpressionWithTypeArguments(): ExpressionWithTypeArguments {
@@ -1179,11 +1193,39 @@ export class Parser {
       return undefined;
     }
     const typeArguments: TypeNode[] = [];
-    do {
+    if (this.#currentTokenEndsTypeArgumentList()) {
+      this.#addDiagnosticAtToken(this.#current(), 1099);
+      this.#expectGreaterThan();
+      return createNodeArray(typeArguments);
+    }
+    while (this.#current().kind !== Kind.EndOfFile) {
+      if (this.#current().kind === Kind.CommaToken) {
+        this.#addDiagnosticAtToken(this.#current(), 1110);
+        typeArguments.push(this.#parseMissingType());
+        this.#advance();
+        continue;
+      }
       typeArguments.push(this.#parseType());
-    } while (this.#consumeOptional(Kind.CommaToken));
+      if (!this.#consumeOptional(Kind.CommaToken)) {
+        break;
+      }
+      if (this.#currentTokenEndsTypeArgumentList()) {
+        this.#addDiagnosticAtToken(this.#tokens[this.#index - 1]!, 1009);
+        break;
+      }
+    }
     this.#expectGreaterThan();
     return createNodeArray(typeArguments);
+  }
+
+  #parseMissingType(): TypeNode {
+    return createTypeReferenceNode(createIdentifier(""), undefined);
+  }
+
+  #currentTokenEndsTypeArgumentList(): boolean {
+    return this.#current().kind === Kind.GreaterThanToken
+      || this.#current().kind === Kind.GreaterThanGreaterThanToken
+      || this.#current().kind === Kind.GreaterThanGreaterThanGreaterThanToken;
   }
 
   #parseVariableStatement(modifiers: NodeArray<ModifierLike> | undefined): Statement {

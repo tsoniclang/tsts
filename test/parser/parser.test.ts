@@ -830,6 +830,18 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isCallExpression(initializer.heritageClauses?.[0]?.types[0]?.expression!), true);
   });
 
+  it("recovers trailing separators in class heritage clauses without corrupting class bodies", () => {
+    const result = parseSourceFileWithDiagnostics("class Base { value: number } class Derived extends Base, { item: string }");
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1009]);
+    const derived = result.sourceFile.statements[1]!;
+    assert.equal(isClassDeclaration(derived), true);
+    if (!isClassDeclaration(derived)) throw new Error("Expected recovered class declaration");
+    assert.equal(derived.heritageClauses?.[0]?.types.length, 1);
+    assert.equal(derived.members.length, 1);
+    assert.equal(isPropertyDeclaration(derived.members[0]!), true);
+  });
+
   it("keeps contextual module names as expressions when declaration lookahead fails", () => {
     const sourceFile = parseSourceFile("module.exports = value;");
     const statement = sourceFile.statements[0]!;
@@ -1164,6 +1176,31 @@ describe("TS-Go parser groundwork", () => {
       throw new Error("Expected property access expression statement");
     }
     assert.equal(isExpressionWithTypeArguments(property.expression.expression), true);
+  });
+
+  it("recovers malformed type argument lists without leaving expression parsing", () => {
+    const result = parseSourceFileWithDiagnostics([
+      "Foo<a,,b>();",
+      "Foo<>();",
+      "type T = Array<string,>;",
+    ].join("\n"));
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1110, 1099, 1009]);
+
+    const call = result.sourceFile.statements[0]!;
+    assert.equal(isExpressionStatement(call), true);
+    if (!isExpressionStatement(call) || !isCallExpression(call.expression)) {
+      throw new Error("Expected malformed generic call to remain a call expression");
+    }
+    assert.equal(call.expression.typeArguments?.length, 3);
+    assert.equal(call.expression.arguments.length, 0);
+
+    const emptyCall = result.sourceFile.statements[1]!;
+    assert.equal(isExpressionStatement(emptyCall), true);
+    if (!isExpressionStatement(emptyCall) || !isCallExpression(emptyCall.expression)) {
+      throw new Error("Expected empty generic call to remain a call expression");
+    }
+    assert.equal(emptyCall.expression.typeArguments?.length, 0);
   });
 
   it("parses TS-Go ambient namespace chains and statement forms without corrupting following syntax", () => {

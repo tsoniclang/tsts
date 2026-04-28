@@ -1062,7 +1062,7 @@ function shouldReportAllCheckDiagnostics(state: CheckState): boolean {
   return !state.isJavaScriptFile || state.options.checkJs === true;
 }
 
-const nonBlockingProgramDiagnosticCodes = new Set<number>([1003, 1005, 1011, 1068, 1109, 1127, 1128, 1200, 1359, 1434, 1437, 1440, 1490, 2318, 5052, 5059, 5067, 5101, 5102, 5107, 5110, 6082, 6142, 6504, 18035]);
+const nonBlockingProgramDiagnosticCodes = new Set<number>([1003, 1005, 1009, 1011, 1068, 1099, 1109, 1110, 1124, 1127, 1128, 1200, 1352, 1353, 1359, 1434, 1437, 1440, 1490, 2318, 5052, 5059, 5067, 5101, 5102, 5107, 5110, 6082, 6142, 6504, 18035]);
 const plainJavaScriptCheckDiagnosticCodes = new Set<number>([
   1100,
   1101,
@@ -5300,6 +5300,7 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return unresolvedType;
   }
   if (isCallExpression(expression)) {
+    const explicitTypeArguments = expression.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? [];
     if (isPropertyAccessExpression(expression.expression)) {
       const firstArgument = expression.arguments[0];
       if (expression.expression.name.text === "map" && firstArgument !== undefined && isArrowFunction(firstArgument)) {
@@ -5341,7 +5342,7 @@ function inferExpression(expression: Expression, state: CheckState, environment:
       return anyType;
     }
     if (calleeFunction !== undefined) {
-      const typeArguments = expression.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? [];
+      const typeArguments = explicitTypeArguments;
       checkCallTypeArgumentArity(calleeFunction, typeArguments.length, state);
       const callFunction = resolveCallFunctionType(calleeFunction, typeArguments, argumentTypes, state);
       const instantiatedFunction = instantiateFunctionTypeForCall(callFunction, typeArguments, argumentTypes);
