@@ -428,6 +428,31 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isDecorator(objectAccessor.modifiers?.[0]!), true);
   });
 
+  it("keeps computed member names out of decorator element access", () => {
+    const sourceFile = parseSourceFile([
+      "class Example {",
+      "  @x [\"property\"]: string;",
+      "  @x [foo()]() {}",
+      "}",
+    ].join("\n"));
+    const statement = sourceFile.statements[0]!;
+
+    assert.equal(isClassDeclaration(statement), true);
+    if (!isClassDeclaration(statement)) throw new Error("Expected class declaration");
+
+    const property = statement.members[0]!;
+    assert.equal(isPropertyDeclaration(property), true);
+    if (!isPropertyDeclaration(property)) throw new Error("Expected computed property");
+    assert.equal(isDecorator(property.modifiers?.[0]!), true);
+    assert.equal(property.name.kind, Kind.ComputedPropertyName);
+
+    const method = statement.members[1]!;
+    assert.equal(isMethodDeclaration(method), true);
+    if (!isMethodDeclaration(method)) throw new Error("Expected computed method");
+    assert.equal(isDecorator(method.modifiers?.[0]!), true);
+    assert.equal(method.name.kind, Kind.ComputedPropertyName);
+  });
+
   it("parses const assertions as contextual type references", () => {
     const sourceFile = parseSourceFile("const values = [1, 2] as const;");
     const statement = sourceFile.statements[0]!;

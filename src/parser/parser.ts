@@ -340,6 +340,7 @@ export class Parser {
   #index = 0;
   #awaitContext = false;
   #awaitContextMarksNodes = false;
+  #decoratorContext = false;
 
   constructor(sourceText: string, options: ParseSourceFileOptions = {}) {
     this.#sourceText = sourceText;
@@ -685,7 +686,7 @@ export class Parser {
 
   #parseDecorator(): ModifierLike {
     this.#expect(Kind.AtToken);
-    const expression = this.#parseLeftHandSideExpression();
+    const expression = this.#withDecoratorContext(() => this.#parseLeftHandSideExpression());
     return createDecorator(expression as LeftHandSideExpression);
   }
 
@@ -1942,7 +1943,7 @@ export class Parser {
         expression = createExpressionWithTypeArguments(expression, typeArguments);
         continue;
       }
-      if (questionDotToken !== undefined && this.#current().kind === Kind.OpenBracketToken || questionDotToken === undefined && this.#consumeOptional(Kind.OpenBracketToken)) {
+      if (questionDotToken !== undefined && this.#current().kind === Kind.OpenBracketToken || questionDotToken === undefined && !this.#decoratorContext && this.#consumeOptional(Kind.OpenBracketToken)) {
         if (questionDotToken !== undefined) {
           this.#expect(Kind.OpenBracketToken);
         }
@@ -2370,6 +2371,16 @@ export class Parser {
       (node as { flags: number }).flags |= NodeFlags.AwaitContext;
     }
     return node;
+  }
+
+  #withDecoratorContext<T>(callback: () => T): T {
+    const previousDecoratorContext = this.#decoratorContext;
+    this.#decoratorContext = true;
+    try {
+      return callback();
+    } finally {
+      this.#decoratorContext = previousDecoratorContext;
+    }
   }
 
   #isAwaitExpressionStart(): boolean {
