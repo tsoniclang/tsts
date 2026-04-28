@@ -319,6 +319,19 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("reports BigInt literals below ES2020 while preserving ambient initializer exemptions", () => {
+    const sourceFile = parseSourceFile([
+      "declare const ambient = 1n;",
+      "const regular = 2n;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { target: "es2019" });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2737]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "BigInt literals are not available when targeting lower than ES2020.",
+    ]);
+  });
+
   it("keeps computed property key validation namespace-accurate", () => {
     const sourceFile = parseSourceFile([
       "declare const O: unique symbol;",

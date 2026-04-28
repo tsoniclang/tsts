@@ -260,6 +260,7 @@ interface CheckState {
   readonly insideClassInitializer: boolean;
   readonly insideClassStaticBlock: boolean;
   readonly insideParameterInitializer: boolean;
+  readonly ambientContext: boolean;
   readonly iterationDepth: number;
   readonly yieldType: CheckedType | undefined;
   readonly externalModule: boolean;
@@ -1552,6 +1553,7 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
         insideClassInitializer: false,
         insideClassStaticBlock: false,
         insideParameterInitializer: false,
+        ambientContext: false,
         iterationDepth: 0,
         yieldType: undefined,
         externalModule: sourceFileIsExternalModule(sourceFile.sourceFile),
@@ -1712,6 +1714,7 @@ function checkStateForSourceFile(sourceFile: SourceFile, options: CompilerOption
     insideClassInitializer: false,
     insideClassStaticBlock: false,
     insideParameterInitializer: false,
+    ambientContext: false,
     iterationDepth: 0,
     yieldType: undefined,
     externalModule: sourceFileIsExternalModule(sourceFile),
@@ -2317,7 +2320,8 @@ function checkStatements(statements: readonly Statement[], state: CheckState, en
     checkHoistedDeclarationConflictsInVarScope(statements, state);
   }
   const functionOverloadInfo = prebindFunctionOverloadDeclarations(statements, state, environment, ambient);
-  const statementState = functionOverloadInfo === undefined ? state : { ...state, functionOverloadInfo };
+  const ambientState = enterAmbientContext(state, ambient);
+  const statementState = functionOverloadInfo === undefined ? ambientState : { ...ambientState, functionOverloadInfo };
   checkFunctionDeclarationOverloads(statements, state, ambient);
   let ambientDiagnosticStatement: Statement | undefined;
   if (ambient && reportAmbientStatementDiagnostic && statements.some(isStatementDisallowedInAmbientContext)) {
@@ -2652,6 +2656,10 @@ function enterIteration(state: CheckState): CheckState {
 
 function enterLocalScope(state: CheckState): CheckState {
   return { ...state, localScopeDepth: state.localScopeDepth + 1 };
+}
+
+function enterAmbientContext(state: CheckState, ambient = true): CheckState {
+  return state.ambientContext === ambient ? state : { ...state, ambientContext: ambient };
 }
 
 function enterFunction(state: CheckState, yieldType?: CheckedType): CheckState {
@@ -4031,7 +4039,8 @@ function checkVariableDeclaration(declaration: VariableDeclaration, state: Check
   if (declaration.initializer !== undefined) {
     attachJSDocIfMissing(declaration.initializer, declaration);
   }
-  const initializerType = declaration.initializer === undefined ? undefined : inferExpressionWithContext(declaration.initializer, state, environment, declaredType);
+  const initializerState = enterAmbientContext(state, ambient);
+  const initializerType = declaration.initializer === undefined ? undefined : inferExpressionWithContext(declaration.initializer, initializerState, environment, declaredType);
   if (ambient && declaration.initializer !== undefined) {
     checkAmbientVariableInitializer(declaration, state, environment);
   }
@@ -6015,6 +6024,10 @@ function targetSupportsUplevelIteration(target: CompilerOptions["target"]): bool
   return targetOrder(target) >= targetOrder("es2015");
 }
 
+function targetSupportsBigIntLiteral(target: CompilerOptions["target"]): boolean {
+  return target === undefined || targetOrder(target) >= targetOrder("es2020");
+}
+
 function targetOrder(target: CompilerOptions["target"]): number {
   switch (target) {
     case "es3":
@@ -6960,6 +6973,7 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return numberType;
   }
   if (isBigIntLiteral(expression)) {
+    checkBigIntLiteralTarget(expression, state);
     return bigintType;
   }
   if (isStringLiteral(expression)) {
@@ -7359,6 +7373,12 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     return anyType;
   }
   return unresolvedType;
+}
+
+function checkBigIntLiteralTarget(_expression: Extract<Expression, { readonly kind: Kind.BigIntLiteral }>, state: CheckState): void {
+  if (!state.ambientContext && !targetSupportsBigIntLiteral(state.options.target)) {
+    state.diagnostics.push(createDiagnostic(2737));
+  }
 }
 
 function checkAwaitExpressionGrammar(expression: Extract<Expression, { readonly kind: Kind.AwaitExpression }>, state: CheckState): void {
@@ -12241,6 +12261,7 @@ function emptyCheckState(options: CompilerOptions = {}): CheckState {
     insideClassInitializer: false,
     insideClassStaticBlock: false,
     insideParameterInitializer: false,
+    ambientContext: false,
     iterationDepth: 0,
     yieldType: undefined,
     externalModule: false,
