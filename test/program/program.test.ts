@@ -80,6 +80,25 @@ describe("program groundwork", () => {
     ]);
   });
 
+  it("reports outFile global script use before later file lexical declarations", () => {
+    const files = new Map<string, string>([
+      ["file1.ts", "later; Future;"],
+      ["file2.ts", "let later = 1; class Future {}"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["file1.ts", "file2.ts"], { outFile: "out.js", ignoreDeprecations: "6.0" }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => [diagnostic.fileName, diagnostic.code, diagnostic.message]), [
+      ["file1.ts", 2448, "Block-scoped variable 'later' used before its declaration."],
+      ["file1.ts", 2449, "Class 'Future' used before its declaration."],
+    ]);
+  });
+
   it("records parse diagnostics per file without aborting the whole program", () => {
     const files = new Map<string, string>([
       ["broken.ts", "const = ;"],

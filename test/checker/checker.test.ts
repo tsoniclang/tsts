@@ -279,6 +279,22 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("uses standard decorator grammar when legacy decorators are explicitly off", () => {
+    const sourceFile = parseSourceFile([
+      "declare const dec: any;",
+      "class C {",
+      "  @dec(C) method(@dec(C) value: any) {}",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { experimentalDecorators: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2449, 1206]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Class 'C' used before its declaration.",
+      "Decorators are not valid here.",
+    ]);
+  });
+
   it("reports bigint property names and computed-property key types generically", () => {
     const sourceFile = parseSourceFile([
       "const bigNum: bigint = 0n;",
@@ -992,6 +1008,69 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2454, 2454]);
   });
 
+  it("reports temporal dead zone reads for future lexical and class declarations", () => {
+    const sourceFile = parseSourceFile([
+      "x; let x = 1;",
+      "class B extends A {}",
+      "class A {}",
+      "function f() { return later; }",
+      "const g = () => later;",
+      "class Fields { value = later; method() { return later; } static { later; } }",
+      "writeOnly = 1; let writeOnly: number;",
+      "let outer = 1; { outer; let outer = 2; }",
+      "let later = 1;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: true, target: "es2015" });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2448, 2454, 2449, 2448, 2454, 2448, 2448, 2454]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Block-scoped variable 'x' used before its declaration.",
+      "Variable 'x' is used before being assigned.",
+      "Class 'A' used before its declaration.",
+      "Block-scoped variable 'later' used before its declaration.",
+      "Variable 'later' is used before being assigned.",
+      "Block-scoped variable 'writeOnly' used before its declaration.",
+      "Block-scoped variable 'outer' used before its declaration.",
+      "Variable 'outer' is used before being assigned.",
+    ]);
+  });
+
+  it("uses TypeScript computed-name temporal-dead-zone contexts", () => {
+    const sourceFile = parseSourceFile([
+      "class FieldName { [field] = 1; }",
+      "class MethodName { [method]() {} get [accessor]() { return 1; } }",
+      "interface Shape { [typeKey]: number; }",
+      "declare class Ambient { [ambientKey]: number; }",
+      "const object = { [objectKey]() { return 1; } };",
+      "let field = 'field';",
+      "let method = 'method';",
+      "let accessor = 'accessor';",
+      "let typeKey = 'typeKey';",
+      "let ambientKey = 'ambientKey';",
+      "let objectKey = 'objectKey';",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: true, target: "es2015" });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2448]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Block-scoped variable 'field' used before its declaration.",
+    ]);
+  });
+
+  it("uses export-assignment temporal-dead-zone rules", () => {
+    const classSource = parseSourceFile("export = Foo; class Foo {}");
+    const variableSource = parseSourceFile("export = value; let value: number;");
+    const defaultSource = parseSourceFile("export default Foo; class Foo {}");
+
+    assert.deepEqual(checkSourceFile(classSource, { module: "commonjs", strict: true }).diagnostics, []);
+    assert.deepEqual(checkSourceFile(variableSource, { module: "commonjs", strict: true }).diagnostics.map(diagnostic => [diagnostic.code, diagnostic.message]), [
+      [2454, "Variable 'value' is used before being assigned."],
+    ]);
+    assert.deepEqual(checkSourceFile(defaultSource, { module: "commonjs", strict: true }).diagnostics.map(diagnostic => [diagnostic.code, diagnostic.message]), [
+      [2449, "Class 'Foo' used before its declaration."],
+    ]);
+  });
+
   it("disables definite-assignment diagnostics when strict null checks are off", () => {
     const sourceFile = parseSourceFile("class C { value: number; } var item: C; item;");
     const result = checkSourceFile(sourceFile, { strict: false });
@@ -1004,6 +1083,16 @@ describe("checker groundwork", () => {
     const result = checkSourceFile(sourceFile, { strictNullChecks: true, strictPropertyInitialization: false });
 
     assert.equal(result.diagnostics.length, 0);
+  });
+
+  it("does not require initialization for any or undefined-bearing property types", () => {
+    const sourceFile = parseSourceFile("class C { anything: any; optional: string | undefined; required: number; }");
+    const result = checkSourceFile(sourceFile, { strict: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2564]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Property 'required' has no initializer and is not definitely assigned in the constructor.",
+    ]);
   });
 
   it("uses non-nullish union members for property and operator checks when strict null checks are off", () => {
@@ -1084,6 +1173,23 @@ describe("checker groundwork", () => {
       "Abstract property 'value' in class 'Base' cannot be accessed in the constructor.",
     ]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2715, 2715, 2729, 2715]);
+  });
+
+  it("reports class field initializer reads before later field initialization", () => {
+    const sourceFile = parseSourceFile([
+      "class Base { x = 0; }",
+      "class Derived extends Base { old = this.x; x = 1; }",
+      "class Plain { before = this.x; x = 1; late = this.y; y = 2; }",
+      "class StaticOrder { static first = StaticOrder.second; static second = 1; static ok = StaticOrder.first; }",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: true, target: "es2015" });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2729, 2729, 2729]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Property 'x' is used before its initialization.",
+      "Property 'y' is used before its initialization.",
+      "Property 'second' is used before its initialization.",
+    ]);
   });
 
   it("checks inherited abstract property contracts and readonly assignment targets", () => {

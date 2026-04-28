@@ -333,6 +333,8 @@ function parseBaselineCompilerOptions(baselineFileName: string): CaseCompilerOpt
       options = { ...options, lib: parseList(value) };
     } else if (key === "downleveliteration" && value !== undefined) {
       options = { ...options, downlevelIteration: parseBoolean(value) };
+    } else if (key === "experimentaldecorators" && value !== undefined) {
+      options = { ...options, experimentalDecorators: parseBoolean(value) };
     } else if (key === "esmoduleinterop" && value !== undefined) {
       options = { ...options, esModuleInterop: parseBoolean(value) };
     } else if (key === "outfile" && value !== undefined) {
@@ -632,7 +634,7 @@ function tstsDiagnostics(testCase: CompilerCase): readonly ComparableDiagnostic[
     useCaseSensitiveFileNames: () => true,
   };
   const program = createProgram(testCase.rootNames.map(normalizeFileName), testCase.compilerOptions, host);
-  const diagnostics = testCase.noTypesAndSymbols ? program.diagnostics : getProgramDiagnostics(program);
+  const diagnostics = getProgramDiagnostics(program);
   return diagnostics
     .map(normalizeProgramDiagnostic)
     .filter(diagnostic => diagnostic.fileName === undefined || fileMap.has(diagnostic.fileName))
