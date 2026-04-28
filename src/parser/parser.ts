@@ -92,11 +92,15 @@ import {
   createModuleDeclaration,
   createNamedExports,
   createNamedImports,
+  createNamedTupleMember,
   createNamespaceExportDeclaration,
   createNamespaceImport,
   createNewExpression,
+  createOptionalTypeNode,
   createNoSubstitutionTemplateLiteral,
   createNonNullExpression,
+  createJSDocNonNullableType,
+  createJSDocNullableType,
   createNodeArray,
   createNumericLiteral,
   createObjectLiteralExpression,
@@ -2723,15 +2727,31 @@ export class Parser {
 
   #parsePostfixType(): TypeNode {
     let type = this.#parsePrimaryType();
-    while (this.#current().kind === Kind.OpenBracketToken) {
-      this.#advance();
-      if (this.#consumeOptional(Kind.CloseBracketToken)) {
-        type = createArrayTypeNode(type);
+    while (!this.#lineBreakBeforeCurrentToken()) {
+      if (this.#consumeOptional(Kind.ExclamationToken)) {
+        type = createJSDocNonNullableType(type);
         continue;
       }
-      const indexType = this.#parseType();
-      this.#expect(Kind.CloseBracketToken);
-      type = createIndexedAccessTypeNode(type, indexType);
+      if (this.#current().kind === Kind.QuestionToken) {
+        if (this.#nextTokenStartsType()) {
+          return type;
+        }
+        this.#advance();
+        type = createJSDocNullableType(type);
+        continue;
+      }
+      if (this.#current().kind === Kind.OpenBracketToken) {
+        this.#advance();
+        if (this.#consumeOptional(Kind.CloseBracketToken)) {
+          type = createArrayTypeNode(type);
+          continue;
+        }
+        const indexType = this.#parseType();
+        this.#expect(Kind.CloseBracketToken);
+        type = createIndexedAccessTypeNode(type, indexType);
+        continue;
+      }
+      return type;
     }
     return type;
   }
@@ -2867,10 +2887,115 @@ export class Parser {
   }
 
   #parseTupleElementType(): TypeNode {
+    if (this.#isNamedTupleElementStart()) {
+      const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
+      const name = this.#parseIdentifier();
+      const questionToken = this.#consumeOptional(Kind.QuestionToken) ? createToken(Kind.QuestionToken) : undefined;
+      this.#expect(Kind.ColonToken);
+      return createNamedTupleMember(dotDotDotToken, name, questionToken, this.#parseTupleElementType());
+    }
     if (this.#consumeOptional(Kind.DotDotDotToken)) {
       return createRestTypeNode(this.#parseType());
     }
-    return this.#parseType();
+    const type = this.#parseType();
+    if (type.kind === Kind.JSDocNullableType && type.pos === type.type.pos) {
+      return createOptionalTypeNode(type.type);
+    }
+    return type;
+  }
+
+  #isNamedTupleElementStart(): boolean {
+    let index = this.#index;
+    if (this.#tokens[index]?.kind === Kind.DotDotDotToken) {
+      index += 1;
+    }
+    if (!isIdentifierNameKind(this.#tokens[index]?.kind ?? Kind.Unknown)) {
+      return false;
+    }
+    const nextKind = this.#tokens[index + 1]?.kind;
+    return nextKind === Kind.ColonToken
+      || nextKind === Kind.QuestionToken && this.#tokens[index + 2]?.kind === Kind.ColonToken;
+  }
+
+  #nextTokenStartsType(): boolean {
+    const state = this.#beginSpeculation();
+    this.#advance();
+    const starts = this.#isStartOfType(false);
+    this.#rewindSpeculation(state);
+    return starts;
+  }
+
+  #isStartOfType(inStartOfParameter: boolean): boolean {
+    switch (this.#current().kind) {
+      case Kind.AnyKeyword:
+      case Kind.UnknownKeyword:
+      case Kind.StringKeyword:
+      case Kind.NumberKeyword:
+      case Kind.BigIntKeyword:
+      case Kind.BooleanKeyword:
+      case Kind.ReadonlyKeyword:
+      case Kind.SymbolKeyword:
+      case Kind.UniqueKeyword:
+      case Kind.VoidKeyword:
+      case Kind.UndefinedKeyword:
+      case Kind.NullKeyword:
+      case Kind.ThisKeyword:
+      case Kind.TypeOfKeyword:
+      case Kind.NeverKeyword:
+      case Kind.OpenBraceToken:
+      case Kind.OpenBracketToken:
+      case Kind.LessThanToken:
+      case Kind.BarToken:
+      case Kind.AmpersandToken:
+      case Kind.NewKeyword:
+      case Kind.StringLiteral:
+      case Kind.NumericLiteral:
+      case Kind.BigIntLiteral:
+      case Kind.TrueKeyword:
+      case Kind.FalseKeyword:
+      case Kind.ObjectKeyword:
+      case Kind.AsteriskToken:
+      case Kind.QuestionToken:
+      case Kind.ExclamationToken:
+      case Kind.DotDotDotToken:
+      case Kind.InferKeyword:
+      case Kind.ImportKeyword:
+      case Kind.AssertsKeyword:
+      case Kind.NoSubstitutionTemplateLiteral:
+      case Kind.TemplateHead:
+        return true;
+      case Kind.FunctionKeyword:
+        return !inStartOfParameter;
+      case Kind.MinusToken:
+        return !inStartOfParameter && this.#tokenAtIsNumericOrBigIntLiteral(this.#index + 1);
+      case Kind.OpenParenToken:
+        return !inStartOfParameter && this.#nextIsParenthesizedOrFunctionType();
+      default:
+        return isIdentifierNameKind(this.#current().kind);
+    }
+  }
+
+  #nextIsParenthesizedOrFunctionType(): boolean {
+    const state = this.#beginSpeculation();
+    this.#advance();
+    const starts = this.#current().kind === Kind.CloseParenToken
+      || this.#isStartOfParameter(false)
+      || this.#isStartOfType(false);
+    this.#rewindSpeculation(state);
+    return starts;
+  }
+
+  #isStartOfParameter(isJSDocParameter: boolean): boolean {
+    return this.#current().kind === Kind.DotDotDotToken
+      || this.#isBindingNameStart(this.#current().kind)
+      || modifierKinds.has(this.#current().kind)
+      || this.#current().kind === Kind.AtToken
+      || this.#isStartOfType(!isJSDocParameter);
+  }
+
+  #tokenAtIsNumericOrBigIntLiteral(index: number): boolean {
+    const kind = this.#tokens[index]?.kind;
+    return kind === Kind.NumericLiteral || kind === Kind.BigIntLiteral;
   }
 
   #parseInferTypeParameter(): TypeParameterDeclaration {

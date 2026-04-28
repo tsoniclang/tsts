@@ -81,6 +81,8 @@ import {
   isYieldExpression,
   isKeywordExpression,
   isMetaProperty,
+  isNamedTupleMember,
+  isOptionalTypeNode,
 } from "../../src/ast/index.js";
 import { parseSourceFile, parseSourceFileWithDiagnostics } from "../../src/parser/index.js";
 
@@ -527,6 +529,41 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isConditionalTypeNode(conditional), true);
     if (!isConditionalTypeNode(conditional)) throw new Error("Expected conditional type");
     assert.equal(conditional.extendsType.kind, Kind.TypeReference);
+  });
+
+  it("parses TS-Go named and optional tuple elements", () => {
+    const sourceFile = parseSourceFile("type T = [first: string, second?: number, ...rest: boolean[], Date?];");
+    const statement = sourceFile.statements[0]!;
+
+    assert.equal(isTypeAliasDeclaration(statement), true);
+    if (!isTypeAliasDeclaration(statement)) throw new Error("Expected type alias");
+    assert.equal(isTupleTypeNode(statement.type), true);
+    if (!isTupleTypeNode(statement.type)) throw new Error("Expected tuple type");
+
+    const first = statement.type.elements[0]!;
+    assert.equal(isNamedTupleMember(first), true);
+    if (!isNamedTupleMember(first)) throw new Error("Expected first named tuple member");
+    assert.equal(first.name.text, "first");
+    assert.equal(first.questionToken, undefined);
+    assert.equal(first.type.kind, Kind.StringKeyword);
+
+    const second = statement.type.elements[1]!;
+    assert.equal(isNamedTupleMember(second), true);
+    if (!isNamedTupleMember(second)) throw new Error("Expected optional named tuple member");
+    assert.equal(second.name.text, "second");
+    assert.equal(second.questionToken?.kind, Kind.QuestionToken);
+    assert.equal(second.type.kind, Kind.NumberKeyword);
+
+    const rest = statement.type.elements[2]!;
+    assert.equal(isNamedTupleMember(rest), true);
+    if (!isNamedTupleMember(rest)) throw new Error("Expected named rest tuple member");
+    assert.equal(rest.dotDotDotToken?.kind, Kind.DotDotDotToken);
+    assert.equal(rest.name.text, "rest");
+
+    const optional = statement.type.elements[3]!;
+    assert.equal(isOptionalTypeNode(optional), true);
+    if (!isOptionalTypeNode(optional)) throw new Error("Expected optional tuple element");
+    assert.equal(optional.type.kind, Kind.TypeReference);
   });
 
   it("parses template literal types with TS-Go span structure", () => {
