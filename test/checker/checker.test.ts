@@ -857,6 +857,202 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Interface 'Bad' incorrectly extends interface 'Base'."]);
   });
 
+  it("validates recursive interface returns against the completed current interface shape", () => {
+    const sourceFile = parseSourceFile([
+      "interface Collection<K, V> {",
+      "  map<M>(): Collection<K, M>;",
+      "  toSeq(): Seq<K, V>;",
+      "}",
+      "interface Seq<K, V> extends Collection<K, V> {}",
+      "interface N1<T> extends Collection<void, T> {",
+      "  map<M>(): N1<M>;",
+      "}",
+      "interface N2<T> extends N1<T> {",
+      "  map<M>(): N2<M>;",
+      "  toSeq(): N2<T>;",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("resolves local generic type references before intrinsic container aliases", () => {
+    const sourceFile = parseSourceFile([
+      "declare namespace Immutable {",
+      "  export interface Collection<T> {",
+      "    map<M>(): Collection<M>;",
+      "  }",
+      "  export namespace Set {}",
+      "  export interface Set<T> extends Collection<T> {",
+      "    map<M>(): Set<M>;",
+      "  }",
+      "  export namespace OrderedSet {}",
+      "  export interface OrderedSet<T> extends Set<T> {",
+      "    map<M>(): OrderedSet<M>;",
+      "  }",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("validates recursive and later type-parameter constraints with complete substitutions", () => {
+    const sourceFile = parseSourceFile([
+      "type Expect<TActual extends TExpected, TExpected> = TActual;",
+      "type Bit = 0 | 1;",
+      "type Flip<A extends Bit> = A extends 1 ? 0 : 1;",
+      "type And<A extends Bit, B extends Bit> = A extends 1 ? B : 0;",
+      "interface Recursive<T extends Recursive<T>> { next(): T; }",
+      "type ValidLater = Expect<Flip<1>, Bit>;",
+      "type ValidConditional<A extends Bit> = And<Flip<A>, 1>;",
+      "type ValidRecursive<T extends Recursive<T>> = T;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("relates tuple, mapped-array, and constrained array carriers through element types", () => {
+    const sourceFile = parseSourceFile([
+      "type Identity<T> = { [K in keyof T]: T[K] };",
+      "type Fn<Args extends any[]> = (...args: Args) => void;",
+      "type TupleFn = Fn<[string]>;",
+      "type MappedTupleFn<Args extends [number] | [string]> = Fn<Identity<Args>>;",
+      "declare const one: TupleFn;",
+      "declare const mapped: MappedTupleFn<[number]>;",
+      "one('x');",
+      "mapped(1);",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("uses constrained type-parameter members and interface-inherited classes generically", () => {
+    const sourceFile = parseSourceFile([
+      "class Message { id!: number; }",
+      "interface MessageList<T extends Message> extends Message { methodOnMessageList(): T[]; }",
+      "function acceptMessage(value: Message) {}",
+      "function read<T extends Message, U extends MessageList<T>>(value: U) {",
+      "  acceptMessage(value);",
+      "  return value.methodOnMessageList()[0].id.toFixed() + value.id.toFixed();",
+      "}",
+      "type IdOf<T extends { id: number }> = T['id'];",
+      "const id: IdOf<{ id: number }> = 1;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("preserves interface method overloads during member collection", () => {
+    const sourceFile = parseSourceFile([
+      "interface Reducer<T> {",
+      "  reduce(callbackfn: (previousValue: T, currentValue: T) => T): T;",
+      "  reduce<U>(callbackfn: (previousValue: U, currentValue: T) => U, initialValue: U): U;",
+      "}",
+      "declare const values: Reducer<number>;",
+      "const sum: number = values.reduce((left, right) => left + right);",
+      "const text: string = values.reduce((left, right) => left + right.toFixed(), '');",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("contextually types overloaded and generic callback parameters from resolved call signatures", () => {
+    const sourceFile = parseSourceFile([
+      "interface Foo {",
+      "  getFoo(n: number): void;",
+      "  getFoo(s: string): void;",
+      "}",
+      "declare const foo: Foo;",
+      "foo.getFoo = value => { value; };",
+      "class GenericClass<T> { payload!: T; }",
+      "declare const genericObject: GenericClass<{ greeting: string }>;",
+      "function genericFunction<T>(object: GenericClass<T>, callback: (payload: T) => void) { callback(object.payload); }",
+      "genericFunction(genericObject, ({ greeting }) => { greeting.toLocaleLowerCase(); });",
+      "class Collection<T> { add(value: T) {} }",
+      "interface Utils { mapReduce<T, U, V>(c: Collection<T>, mapper: (value: T) => U, reducer: (value: U) => V): Collection<V>; }",
+      "declare const utils: Utils;",
+      "declare const collection: Collection<string>;",
+      "utils.mapReduce(collection, value => value.length, value => new Date(value));",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("keeps value parameter names from shadowing type parameters in type signatures", () => {
+    const sourceFile = parseSourceFile([
+      "type Wrapper<T> = { value: T };",
+      "type Maker<F> = (F: { value: F }) => Wrapper<F>;",
+      "declare const maker: Maker<string>;",
+      "const value: string = maker({ value: 'x' }).value;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("binds type-signature parameters as values without type-meaning shadowing", () => {
+    const sourceFile = parseSourceFile([
+      "type FromDestructuring = ({ a: text }: { a: string }) => typeof text;",
+      "type FromInterface = { ({ count: value }: { count: number }): typeof value; };",
+      "type Maker<F> = (F: { value: F }) => F;",
+      "declare const readText: FromDestructuring;",
+      "declare const readValue: FromInterface;",
+      "declare const maker: Maker<string>;",
+      "const text: string = readText({ a: 'x' });",
+      "const value: number = readValue({ count: 1 });",
+      "const made: string = maker({ value: 'x' });",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("relates generic signatures, nominal subclasses, intersections, namespaces, and enum literals", () => {
+    const sourceFile = parseSourceFile([
+      "type Id = <T>(value: T) => T;",
+      "const id: Id = <T>(value: T): T => value;",
+      "const stringId: (value: string) => string = id;",
+      "class Base { private marker!: number; }",
+      "class Derived extends Base {}",
+      "const base: Base = new Derived();",
+      "type A = { a: string };",
+      "type B = { b: string };",
+      "declare const both: A & B;",
+      "const onlyA: A = both;",
+      "namespace M { export class C { value = 1; } }",
+      "const namespaceValue: number = new M.C().value;",
+      "enum E { A = 'a' }",
+      "type StringBox<T extends string> = T;",
+      "type EnumMember = StringBox<E.A>;",
+      "const text: string = stringId('x');",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("does not treat distinct constrained type parameters as assertion-overlapping", () => {
+    const sourceFile = parseSourceFile([
+      "class Base {}",
+      "function convert<T extends Base, U extends Base>(value: U): T {",
+      "  return value as T;",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2352]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Conversion of type 'U' to type 'T' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.",
+    ]);
+  });
+
   it("preserves external import-equals module namespace values for assignment diagnostics", () => {
     const sourceFile = parseSourceFile([
       "import moduleA = require(\"./moduleA\");",
@@ -1284,6 +1480,25 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("reports future-reserved identifiers through the shared strict-mode identifier rule", () => {
+    const valueAndFunction = checkSourceFile(parseSourceFile("var let = 10; let = 30; function package() {}"), { alwaysStrict: true });
+    assert.deepEqual(valueAndFunction.diagnostics.map(diagnostic => diagnostic.code), [1212, 1212, 1212]);
+
+    const lexicalLet = checkSourceFile(parseSourceFile("let x = 1, let = 2;"), { alwaysStrict: true });
+    assert.deepEqual(lexicalLet.diagnostics.map(diagnostic => diagnostic.code), [1212, 2480]);
+
+    const typeReference = checkSourceFile(parseSourceFile("function f(x: private.package.x) {}"), { alwaysStrict: true });
+    assert.deepEqual(typeReference.diagnostics.map(diagnostic => diagnostic.code), [1212, 2503]);
+  });
+
+  it("uses class strict-mode diagnostics for reserved identifiers owned by class syntax", () => {
+    const classExpression = checkSourceFile(parseSourceFile("var public = 1; var myClass = class package extends public {}"), { alwaysStrict: true });
+    assert.deepEqual(classExpression.diagnostics.map(diagnostic => diagnostic.code), [1212, 1213, 1213, 2507]);
+
+    const implementedInterface = checkSourceFile(parseSourceFile("interface public { } class E implements public { }"), { alwaysStrict: true });
+    assert.deepEqual(implementedInterface.diagnostics.map(diagnostic => diagnostic.code), [1212, 1213]);
+  });
+
   it("reports class-body strict eval and arguments bindings with the class diagnostic", () => {
     const sourceFile = parseSourceFile("class C { method() { const arguments = 1; const eval = 2; } }");
     const result = checkSourceFile(sourceFile, { strict: false });
@@ -1316,7 +1531,7 @@ describe("checker groundwork", () => {
 
   it("uses the function-scoped arguments object instead of outer variables", () => {
     const sourceFile = parseSourceFile("var arguments = 10; function foo(a) { arguments = 10; }");
-    const result = checkSourceFile(sourceFile, { strict: false });
+    const result = checkSourceFile(sourceFile, { strict: false, alwaysStrict: false });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'number' is not assignable to type 'IArguments'."]);
@@ -1503,7 +1718,7 @@ describe("checker groundwork", () => {
       "if (flag) interface Shape { value: string; }",
       "if (flag) { const ok = 0; type Ok = string; interface Fine { value: string; } }",
     ].join("\n"));
-    const result = checkSourceFile(sourceFile);
+    const result = checkSourceFile(sourceFile, { alwaysStrict: false });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1156, 1156, 1156, 1156, 1156]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [

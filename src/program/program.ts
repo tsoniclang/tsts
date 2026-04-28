@@ -61,6 +61,7 @@ export interface CompilerHost {
   readDirectory?(rootDir: string, extensions: readonly string[], excludes: readonly string[], includes: readonly string[]): readonly string[];
   writeFile?(fileName: string, text: string): void;
   getCurrentDirectory?(): string;
+  realpath?(fileName: string): string;
   useCaseSensitiveFileNames?(): boolean;
 }
 
@@ -114,6 +115,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
   const ambientModules = new Set<string>();
   const pending = [...rootNames];
   const seen = new Set<string>();
+  const canonicalSourceFileNames = new Map<string, string>();
   const fileTextCache = new Map<string, string | undefined>();
   while (pending.length > 0) {
     const rootName = pending.shift()!;
@@ -122,6 +124,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
       continue;
     }
     seen.add(canonicalName);
+    canonicalSourceFileNames.set(canonicalName, rootName);
     if (isJavaScriptFileName(rootName) && !shouldAllowJavaScript(options)) {
       diagnostics.push(optionDiagnostic(6504, rootName));
       continue;
@@ -163,13 +166,15 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
       if (resolved.fileName === undefined) {
         return;
       }
+      const canonicalResolvedName = canonicalFileName(resolved.fileName, host);
+      const resolvedFileName = canonicalSourceFileNames.get(canonicalResolvedName) ?? resolved.fileName;
       resolvedModules.push({
         specifier: moduleSpecifier,
-        fileName: resolved.fileName,
+        fileName: resolvedFileName,
         ...(resolved.untyped === true ? { untyped: true } : {}),
         ...(resolved.blockedByResolutionDiagnostic === true ? { blockedByResolutionDiagnostic: true } : {}),
       });
-      if (resolved.untyped !== true && !seen.has(canonicalFileName(resolved.fileName, host))) {
+      if (resolved.untyped !== true && !seen.has(canonicalResolvedName)) {
         pending.push(resolved.fileName);
       }
     };
@@ -663,7 +668,8 @@ function moduleResolutionCandidates(base: string, options: CompilerOptions): rea
 }
 
 function packageResolutionCandidates(moduleSpecifier: string, containingFileName: string, options: CompilerOptions, host: CompilerHost, cache: Map<string, string | undefined>): readonly string[] {
-  return nodeModulesSearchDirectories(dirname(containingFileName)).flatMap(nodeModulesDirectory => {
+  const containingRealPath = normalize(host.realpath?.(containingFileName) ?? containingFileName);
+  return nodeModulesSearchDirectories(dirname(containingRealPath)).flatMap(nodeModulesDirectory => {
     const base = join(nodeModulesDirectory, moduleSpecifier);
     return [
       ...packageJsonResolutionCandidates(base, options, host, cache),
@@ -677,7 +683,8 @@ function typePackageResolutionCandidates(moduleSpecifier: string, containingFile
   if (typePackage === undefined) {
     return [];
   }
-  return nodeModulesSearchDirectories(dirname(containingFileName)).flatMap(nodeModulesDirectory => {
+  const containingRealPath = normalize(host.realpath?.(containingFileName) ?? containingFileName);
+  return nodeModulesSearchDirectories(dirname(containingRealPath)).flatMap(nodeModulesDirectory => {
     const packageDirectory = join(nodeModulesDirectory, "@types", typePackage.packageName);
     const subpathBase = typePackage.subpath === "" ? packageDirectory : join(packageDirectory, typePackage.subpath);
     return [

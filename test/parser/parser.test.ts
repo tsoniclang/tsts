@@ -113,6 +113,30 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isNumericLiteral(statement.expression.right.right), true);
   });
 
+  it("parses assignment and exponentiation operators as right-associative", () => {
+    const sourceFile = parseSourceFile("a = b = c; x ** y ** z;");
+
+    const assignmentStatement = sourceFile.statements[0]!;
+    if (!isExpressionStatement(assignmentStatement) || !isBinaryExpression(assignmentStatement.expression)) {
+      throw new Error("Expected assignment expression statement");
+    }
+    assert.equal(assignmentStatement.expression.operatorToken.kind, Kind.EqualsToken);
+    assert.equal(isIdentifier(assignmentStatement.expression.left), true);
+    assert.equal(isBinaryExpression(assignmentStatement.expression.right), true);
+    if (!isBinaryExpression(assignmentStatement.expression.right)) throw new Error("unreachable");
+    assert.equal(assignmentStatement.expression.right.operatorToken.kind, Kind.EqualsToken);
+
+    const exponentStatement = sourceFile.statements[1]!;
+    if (!isExpressionStatement(exponentStatement) || !isBinaryExpression(exponentStatement.expression)) {
+      throw new Error("Expected exponentiation expression statement");
+    }
+    assert.equal(exponentStatement.expression.operatorToken.kind, Kind.AsteriskAsteriskToken);
+    assert.equal(isIdentifier(exponentStatement.expression.left), true);
+    assert.equal(isBinaryExpression(exponentStatement.expression.right), true);
+    if (!isBinaryExpression(exponentStatement.expression.right)) throw new Error("unreachable");
+    assert.equal(exponentStatement.expression.right.operatorToken.kind, Kind.AsteriskAsteriskToken);
+  });
+
   it("parses assertions and satisfies with relational precedence", () => {
     const sourceFile = parseSourceFile([
       "state as any && state;",
@@ -239,6 +263,27 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(definiteAssignmentStatement.declarationList.flags, NodeFlags.Let);
     assert.equal(definiteAssignmentStatement.declarationList.declarations[0]!.exclamationToken?.kind, Kind.ExclamationToken);
     assert.equal(definiteAssignmentStatement.declarationList.declarations[0]!.type?.kind, Kind.StringKeyword);
+  });
+
+  it("uses TS-Go let-declaration lookahead instead of treating every let token as a declaration", () => {
+    const sourceFile = parseSourceFile("let = 30; let\na; for (let = 0; let < 1; let++) { }");
+
+    const assignmentStatement = sourceFile.statements[0]!;
+    assert.equal(isExpressionStatement(assignmentStatement), true);
+    if (!isExpressionStatement(assignmentStatement) || !isBinaryExpression(assignmentStatement.expression)) throw new Error("Expected let assignment expression statement");
+    assert.equal(isIdentifier(assignmentStatement.expression.left), true);
+    assert.equal(assignmentStatement.expression.operatorToken.kind, Kind.EqualsToken);
+
+    const declarationStatement = sourceFile.statements[1]!;
+    assert.equal(isVariableStatement(declarationStatement), true);
+    if (!isVariableStatement(declarationStatement)) throw new Error("Expected let declaration after line-break-insensitive lookahead");
+    assert.equal(declarationStatement.declarationList.flags, NodeFlags.Let);
+    assert.equal((declarationStatement.declarationList.declarations[0]!.name as { readonly text?: string }).text, "a");
+
+    const forStatement = sourceFile.statements[2]!;
+    assert.equal(isForStatement(forStatement), true);
+    if (!isForStatement(forStatement)) throw new Error("Expected for statement");
+    assert.equal(isBinaryExpression(forStatement.initializer!), true);
   });
 
   it("produces function declarations with parameters, return types, and return statements", () => {
@@ -1027,6 +1072,27 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isArrowFunction(initializer!), true);
     if (!isArrowFunction(initializer!)) throw new Error("Expected arrow function");
     assert.equal(initializer.parameters[0]!.modifiers?.[0]?.kind, Kind.PublicKeyword);
+  });
+
+  it("keeps modifier-looking parameter names as bindings before commas and closing parens", () => {
+    const result = parseSourceFileWithDiagnostics("interface I { m(package, protected); } class C { constructor(private, public, static) { private = public = static; } }");
+
+    assert.deepEqual(result.diagnostics, []);
+    const interfaceDeclaration = result.sourceFile.statements[0]!;
+    assert.equal(isInterfaceDeclaration(interfaceDeclaration), true);
+    if (!isInterfaceDeclaration(interfaceDeclaration)) throw new Error("Expected interface declaration");
+    const method = interfaceDeclaration.members[0]!;
+    assert.equal(isMethodSignatureDeclaration(method), true);
+    if (!isMethodSignatureDeclaration(method)) throw new Error("Expected method signature");
+    assert.deepEqual(method.parameters.map(parameter => (parameter.name as { readonly text?: string }).text), ["package", "protected"]);
+
+    const classDeclaration = result.sourceFile.statements[1]!;
+    assert.equal(isClassDeclaration(classDeclaration), true);
+    if (!isClassDeclaration(classDeclaration)) throw new Error("Expected class declaration");
+    const constructor = classDeclaration.members[0]!;
+    assert.equal(isConstructorDeclaration(constructor), true);
+    if (!isConstructorDeclaration(constructor)) throw new Error("Expected constructor");
+    assert.deepEqual(constructor.parameters.map(parameter => (parameter.name as { readonly text?: string }).text), ["private", "public", "static"]);
   });
 
   it("recovers import-equals module references with TypeScript syntax diagnostics", () => {

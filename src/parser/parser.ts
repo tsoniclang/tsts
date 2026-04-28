@@ -470,9 +470,13 @@ export class Parser {
         }
         return this.#parseDebuggerStatement();
       case Kind.VarKeyword:
-      case Kind.LetKeyword:
       case Kind.ConstKeyword:
         return this.#parseVariableStatement(modifiers);
+      case Kind.LetKeyword:
+        if (this.#isLetDeclaration()) {
+          return this.#parseVariableStatement(modifiers);
+        }
+        break;
       case Kind.FunctionKeyword:
         return this.#parseFunctionDeclaration(modifiers);
       case Kind.ReturnKeyword:
@@ -531,6 +535,13 @@ export class Parser {
 
   #isTypeAliasDeclarationStart(): boolean {
     return this.#current().kind === Kind.TypeKeyword && isIdentifierNameKind(this.#tokens[this.#index + 1]?.kind ?? Kind.Unknown);
+  }
+
+  #isLetDeclaration(): boolean {
+    const nextKind = this.#tokens[this.#index + 1]?.kind ?? Kind.Unknown;
+    return nextKind === Kind.OpenBraceToken
+      || nextKind === Kind.OpenBracketToken
+      || isBindingIdentifierKind(nextKind);
   }
 
   #parseImportDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
@@ -685,6 +696,9 @@ export class Parser {
     if (options.stopOnStartOfClassStaticBlock === true && this.#current().kind === Kind.StaticKeyword && nextKind === Kind.OpenBraceToken) {
       return false;
     }
+    if (this.#current().kind === Kind.ExportKeyword && nextKind === Kind.EqualsToken) {
+      return true;
+    }
     if ((this.#current().kind === Kind.AbstractKeyword
       || this.#current().kind === Kind.PrivateKeyword
       || this.#current().kind === Kind.ProtectedKeyword
@@ -695,10 +709,13 @@ export class Parser {
     }
     return nextKind !== Kind.QuestionToken
       && nextKind !== Kind.ColonToken
+      && nextKind !== Kind.DotToken
       && nextKind !== Kind.OpenParenToken
       && nextKind !== Kind.SemicolonToken
       && nextKind !== Kind.CommaToken
-      && nextKind !== Kind.CloseBraceToken;
+      && nextKind !== Kind.CloseParenToken
+      && nextKind !== Kind.CloseBraceToken
+      && !assignmentOperatorKinds.has(nextKind ?? Kind.Unknown);
   }
 
   #canDefaultKeywordBeModifier(): boolean {
@@ -879,7 +896,7 @@ export class Parser {
     if (this.#current().kind === Kind.SemicolonToken) {
       return undefined;
     }
-    if (this.#current().kind === Kind.VarKeyword || this.#current().kind === Kind.LetKeyword || this.#current().kind === Kind.ConstKeyword) {
+    if (this.#current().kind === Kind.VarKeyword || this.#current().kind === Kind.ConstKeyword || this.#current().kind === Kind.LetKeyword && this.#isLetDeclaration()) {
       return this.#parseVariableDeclarationList();
     }
     return this.#parseCommaExpression(true);
@@ -1465,7 +1482,8 @@ export class Parser {
         continue;
       }
       this.#advance();
-      const right = this.#parseExpression(operatorPrecedence, stopAtInKeyword, assignmentOperatorKinds.has(operatorToken.kind));
+      const rightPrecedence = isRightAssociativeBinaryOperator(operatorToken.kind) ? operatorPrecedence - 1 : operatorPrecedence;
+      const right = this.#parseExpression(rightPrecedence, stopAtInKeyword, assignmentOperatorKinds.has(operatorToken.kind));
       const token = createToken(operatorToken.kind as BinaryOperator);
       if (!isBinaryOperatorToken(token)) {
         throw new ParseError("Expected binary operator", operatorToken);
@@ -3496,6 +3514,14 @@ function sourceFileHasExternalModuleSyntax(sourceFile: SourceFile): boolean {
 
 function isIdentifierNameKind(kind: Kind): boolean {
   return kind === Kind.Identifier || (kind >= Kind.FirstKeyword && kind <= Kind.LastKeyword);
+}
+
+function isBindingIdentifierKind(kind: Kind): boolean {
+  return kind === Kind.Identifier || kind > Kind.LastReservedWord;
+}
+
+function isRightAssociativeBinaryOperator(kind: Kind): boolean {
+  return kind === Kind.AsteriskAsteriskToken || assignmentOperatorKinds.has(kind);
 }
 
 function isIdentifierOrKeywordOrLiteralKind(kind: Kind): boolean {

@@ -656,6 +656,32 @@ describe("program groundwork", () => {
     ]);
   });
 
+  it("resolves package dependencies from the realpath of symlinked declaration files", () => {
+    const files = new Map<string, string>([
+      ["/repo/app/src/index.ts", "import { MetadataAccessor } from \"@scope/pkg2\"; const value: MetadataAccessor = new MetadataAccessor();"],
+      ["/repo/app/node_modules/@scope/pkg2/index.d.ts", "export { MetadataAccessor } from \"@scope/pkg1\";"],
+      ["/repo/pkg2/node_modules/@scope/pkg1/index.d.ts", "export declare class MetadataAccessor {}"],
+    ]);
+    const realpaths = new Map<string, string>([
+      ["/repo/app/node_modules/@scope/pkg2/index.d.ts", "/repo/pkg2/index.d.ts"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      realpath: fileName => realpaths.get(fileName) ?? fileName,
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["/repo/app/src/index.ts"], {}, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(program.sourceFiles.map(file => file.fileName), [
+      "/repo/app/src/index.ts",
+      "/repo/app/node_modules/@scope/pkg2/index.d.ts",
+      "/repo/pkg2/node_modules/@scope/pkg1/index.d.ts",
+    ]);
+    assert.deepEqual(diagnostics, []);
+  });
+
   it("uses the side-effect import diagnostic by default for TypeScript 6", () => {
     const host: CompilerHost = {
       readFile: fileName => fileName === "src/index.ts" ? "import \"missing-side-effect\";" : undefined,

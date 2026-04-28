@@ -620,6 +620,7 @@ function tstsDiagnostics(testCase: CompilerCase): readonly ComparableDiagnostic[
       const diskText = readPackageJsonFromDiskIfPresent(normalized);
       return linkedText ?? diskText ?? fileMap.get(normalized) ?? readDiskFileIfPresent(normalized);
     },
+    realpath: fileName => resolveLinkedFileName(normalizeFileName(fileName), testCase.links) ?? normalizeFileName(fileName),
     useCaseSensitiveFileNames: () => true,
   };
   const program = createProgram(testCase.rootNames.map(normalizeFileName), testCase.compilerOptions, host);
@@ -630,10 +631,14 @@ function tstsDiagnostics(testCase: CompilerCase): readonly ComparableDiagnostic[
     .sort(compareDiagnostics);
 }
 
-function resolveLinkedFileName(fileName: string, links: readonly CaseLink[]): string | undefined {
+function resolveLinkedFileName(fileName: string, links: readonly CaseLink[], seen: ReadonlySet<string> = new Set()): string | undefined {
+  if (seen.has(fileName)) {
+    return undefined;
+  }
   for (const link of links) {
     if (fileName === link.to || fileName.startsWith(`${link.to}/`)) {
-      return `${link.from}${fileName.slice(link.to.length)}`;
+      const resolved = `${link.from}${fileName.slice(link.to.length)}`;
+      return resolveLinkedFileName(resolved, links, new Set([...seen, fileName])) ?? resolved;
     }
   }
   return undefined;

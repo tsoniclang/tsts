@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 import type { CompilerHost } from "./program.js";
 import { decodeSourceText } from "./source-text.js";
@@ -42,6 +42,16 @@ export function createNodeCompilerHost(currentDirectory = process.cwd()): Compil
     writeFile: (fileName, text) => {
       mkdirSync(dirname(fileName), { recursive: true });
       writeFileSync(fileName, text);
+    },
+    realpath: fileName => {
+      try {
+        return realpathSync.native(fileName);
+      } catch (error) {
+        if (isNotFoundError(error)) {
+          return fileName;
+        }
+        throw error;
+      }
     },
     useCaseSensitiveFileNames: () => process.platform !== "win32",
   };
