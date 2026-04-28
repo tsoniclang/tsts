@@ -1725,6 +1725,106 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("checks delete operands, property optionality, indexes, namespaces, and nested ordering", () => {
+    const sourceFile = parseSourceFile([
+      "\"use strict\";",
+      "interface Foo {",
+      "  a: number;",
+      "  b: number | undefined;",
+      "  c: number | null;",
+      "  d?: number;",
+      "  e: unknown;",
+      "  f: any;",
+      "  g: never;",
+      "}",
+      "interface ByString { [key: string]: number; }",
+      "type ByRecord = Record<string, number>;",
+      "declare const foo: Foo;",
+      "declare const byString: ByString;",
+      "declare const byRecord: ByRecord;",
+      "namespace M { export var n: boolean; }",
+      "enum E { A }",
+      "delete foo.a;",
+      "delete foo.b;",
+      "delete foo.c;",
+      "delete foo.d;",
+      "delete foo.e;",
+      "delete foo.f;",
+      "delete foo.g;",
+      "delete foo.missing;",
+      "delete byString.anything;",
+      "delete byRecord.anything;",
+      "delete M.n;",
+      "delete E.A;",
+      "delete E[\"A\"];",
+      "delete foo;",
+      "delete delete foo;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: true, exactOptionalPropertyTypes: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [
+      2790,
+      2790,
+      2339,
+      2790,
+      2704,
+      2704,
+      1102,
+      2703,
+      2703,
+      1102,
+      2703,
+    ]);
+  });
+
+  it("uses exactOptionalPropertyTypes only when explicitly enabled for delete optionality", () => {
+    const sourceFile = parseSourceFile([
+      "interface Foo {",
+      "  a: number;",
+      "  b: number | undefined;",
+      "  c?: number;",
+      "  d?: number | undefined;",
+      "}",
+      "declare const foo: Foo;",
+      "delete foo.a;",
+      "delete foo.b;",
+      "delete foo.c;",
+      "delete foo.d;",
+    ].join("\n"));
+
+    assert.deepEqual(checkSourceFile(sourceFile, { strictNullChecks: true, exactOptionalPropertyTypes: false }).diagnostics.map(diagnostic => diagnostic.code), [2790]);
+    assert.deepEqual(checkSourceFile(sourceFile, { strictNullChecks: true, exactOptionalPropertyTypes: true }).diagnostics.map(diagnostic => diagnostic.code), [2790, 2790]);
+  });
+
+  it("models Partial<T> as an optionalized object surface", () => {
+    const sourceFile = parseSourceFile([
+      "interface Foo {",
+      "  a: number;",
+      "  b?: string;",
+      "}",
+      "declare const partial: Partial<Foo>;",
+      "delete partial.a;",
+      "delete partial.b;",
+      "delete partial.missing;",
+      "const value: number = partial.a;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2339, 2322]);
+  });
+
+  it("uses declared Function interface properties as class-constructor apparent members", () => {
+    const sourceFile = parseSourceFile([
+      "interface Function { readonly name: string; }",
+      "class Foo {}",
+      "delete Foo.name;",
+      "Foo.name = \"Bar\";",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2704, 2540]);
+  });
+
   it("reports writes to const bindings through assignments, updates, and destructuring", () => {
     const sourceFile = parseSourceFile([
       "declare const maybe: number | undefined;",

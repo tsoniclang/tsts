@@ -271,6 +271,9 @@ function compilerOptionsDiagnostics(options: CompilerOptions): readonly ProgramD
 }
 
 function strictCompilerOptionValue(options: CompilerOptions, optionName: "noImplicitAny" | "strictNullChecks" | "strictPropertyInitialization" | "exactOptionalPropertyTypes"): boolean {
+  if (optionName === "exactOptionalPropertyTypes") {
+    return options.exactOptionalPropertyTypes === true;
+  }
   return options[optionName] === undefined ? options.strict !== false : options[optionName] === true;
 }
 

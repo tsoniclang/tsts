@@ -26,6 +26,7 @@ import {
   isConstructorTypeNode,
   isConstructSignatureDeclaration,
   isDebuggerStatement,
+  isDeleteExpression,
   isDoStatement,
   isElementAccessExpression,
   isEnumDeclaration,
@@ -138,6 +139,7 @@ import {
   type ClassExpression,
   type ConciseBody,
   type ConstructorDeclaration,
+  type DeleteExpression,
   type EntityName,
   type EnumDeclaration,
   type Expression,
@@ -674,6 +676,7 @@ interface InterfaceMembers {
   readonly origin?: InterfaceMembers;
   readonly version: number;
   readonly properties: ReadonlyMap<string, CheckedType>;
+  readonly readonlyProperties: ReadonlySet<string>;
   readonly optionalProperties: ReadonlySet<string>;
   readonly methodProperties: ReadonlySet<string>;
   readonly callSignatures: readonly CheckedFunctionType[];
@@ -751,6 +754,7 @@ function standardInterfaceType(
   properties: ReadonlyMap<string, CheckedType>,
   options: {
     readonly typeParameters?: readonly string[];
+    readonly readonlyProperties?: ReadonlySet<string>;
     readonly optionalProperties?: ReadonlySet<string>;
     readonly methodProperties?: ReadonlySet<string>;
     readonly stringIndexType?: CheckedType;
@@ -765,6 +769,7 @@ function standardInterfaceType(
       typeParameters: options.typeParameters ?? [],
       version: 0,
       properties,
+      readonlyProperties: options.readonlyProperties ?? emptyStringSet,
       optionalProperties: options.optionalProperties ?? emptyStringSet,
       methodProperties: options.methodProperties ?? emptyStringSet,
       callSignatures: [],
@@ -834,6 +839,7 @@ const boxedNumberType: CheckedType = {
       ["toString", { kind: "function", typeParameters: [], parameters: [], returnType: stringType }],
       ["valueOf", { kind: "function", typeParameters: [], parameters: [], returnType: numberType }],
     ]),
+    readonlyProperties: new Set(),
     optionalProperties: new Set(),
     methodProperties: new Set(["toExponential", "toFixed", "toPrecision", "toString", "valueOf"]),
     callSignatures: [],
@@ -853,6 +859,7 @@ const boxedStringType: CheckedType = {
       ["toString", { kind: "function", typeParameters: [], parameters: [], returnType: stringType }],
       ["valueOf", { kind: "function", typeParameters: [], parameters: [], returnType: stringType }],
     ]),
+    readonlyProperties: new Set(),
     optionalProperties: new Set(),
     methodProperties: new Set(["toString", "valueOf"]),
     callSignatures: [],
@@ -871,6 +878,7 @@ const errorInterfaceType: CheckedType = {
       ["name", stringType],
       ["message", stringType],
     ]),
+    readonlyProperties: new Set(),
     optionalProperties: new Set(),
     methodProperties: new Set(),
     callSignatures: [],
@@ -931,6 +939,7 @@ const regexpInterfaceType: CheckedType = {
       ["source", stringType],
       ["global", booleanType],
     ]),
+    readonlyProperties: new Set(),
     optionalProperties: new Set(),
     methodProperties: new Set(["exec", "test"]),
     callSignatures: [],
@@ -949,6 +958,7 @@ const iArgumentsType: CheckedType = {
       ["length", numberType],
       ["callee", anyType],
     ]),
+    readonlyProperties: new Set(),
     optionalProperties: new Set(),
     methodProperties: new Set(),
     callSignatures: [],
@@ -4430,6 +4440,7 @@ function bindInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, st
       declaration: interfaceDeclaration,
       version: 0,
       properties: new Map(),
+      readonlyProperties: new Set(),
       optionalProperties: new Set(),
       methodProperties: new Set(),
       callSignatures: [],
@@ -4442,6 +4453,7 @@ function bindInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, st
     declaration: interfaceDeclaration,
     version: placeholderMembers.version + 1,
     properties: new Map(),
+    readonlyProperties: new Set(),
     optionalProperties: new Set(),
     methodProperties: new Set(),
     callSignatures: [],
@@ -4551,6 +4563,7 @@ function heritageExpressionNamespace(expression: Expression, environment: TypeEn
 
 function collectInterfaceMembers(interfaceDeclaration: InterfaceDeclaration, inheritedInterfaces: readonly Extract<CheckedType, { readonly kind: "interface" }>[], inheritedClasses: readonly Extract<CheckedType, { readonly kind: "classInstance" }>[], state: CheckState, environment: TypeEnvironment, typeParameterConstraints: readonly (CheckedType | undefined)[], currentMembers?: InterfaceMembers): InterfaceMembers {
   const ownProperties = new Map<string, CheckedType>();
+  const ownReadonlyProperties = new Set<string>();
   const ownOptionalProperties = new Set<string>();
   const ownMethodProperties = new Set<string>();
   const ownCallSignatures: CheckedFunctionType[] = [];
@@ -4587,6 +4600,9 @@ function collectInterfaceMembers(interfaceDeclaration: InterfaceDeclaration, inh
       const name = propertyNameText(member.name);
       if (name !== undefined) {
         ownProperties.set(name, propertySignatureDeclaredType(member, environment, state));
+        if (hasModifier(member, Kind.ReadonlyKeyword)) {
+          ownReadonlyProperties.add(name);
+        }
         if (member.postfixToken?.kind === Kind.QuestionToken) {
           ownOptionalProperties.add(name);
         }
@@ -4594,6 +4610,7 @@ function collectInterfaceMembers(interfaceDeclaration: InterfaceDeclaration, inh
     }
   }
   const mergedProperties = new Map<string, CheckedType>();
+  const mergedReadonlyProperties = new Set<string>();
   const mergedOptionalProperties = new Set<string>();
   const mergedMethodProperties = new Set<string>();
   const mergedCallSignatures: CheckedFunctionType[] = [];
@@ -4604,10 +4621,16 @@ function collectInterfaceMembers(interfaceDeclaration: InterfaceDeclaration, inh
     for (const name of baseClass.members.optionalProperties) {
       mergedOptionalProperties.add(name);
     }
+    for (const name of baseClass.members.readonlyProperties) {
+      mergedReadonlyProperties.add(name);
+    }
   }
   for (const baseInterface of inheritedInterfaces) {
     for (const [name, type] of interfacePropertyTypes(baseInterface).entries()) {
       mergedProperties.set(name, type);
+    }
+    for (const name of baseInterface.members.readonlyProperties) {
+      mergedReadonlyProperties.add(name);
     }
     for (const name of baseInterface.members.optionalProperties) {
       mergedOptionalProperties.add(name);
@@ -4621,6 +4644,11 @@ function collectInterfaceMembers(interfaceDeclaration: InterfaceDeclaration, inh
   }
   for (const [name, type] of ownProperties.entries()) {
     mergedProperties.set(name, type);
+    if (ownReadonlyProperties.has(name)) {
+      mergedReadonlyProperties.add(name);
+    } else {
+      mergedReadonlyProperties.delete(name);
+    }
     if (ownOptionalProperties.has(name)) {
       mergedOptionalProperties.add(name);
     } else {
@@ -4639,6 +4667,7 @@ function collectInterfaceMembers(interfaceDeclaration: InterfaceDeclaration, inh
     declaration: interfaceDeclaration,
     version: 0,
     properties: mergedProperties,
+    readonlyProperties: mergedReadonlyProperties,
     optionalProperties: mergedOptionalProperties,
     methodProperties: mergedMethodProperties,
     callSignatures: [...mergedCallSignatures, ...ownCallSignatures],
@@ -5984,6 +6013,10 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   }
   if (isParenthesizedExpression(expression)) {
     return inferExpression(expression.expression, state, environment);
+  }
+  if (isDeleteExpression(expression)) {
+    checkDeleteExpression(expression, state, environment);
+    return booleanType;
   }
   if (isPrefixUnaryExpression(expression)) {
     if (expression.operator === Kind.PlusPlusToken || expression.operator === Kind.MinusMinusToken) {
@@ -7837,6 +7870,210 @@ function checkUpdateTargetReference(expression: Expression, state: CheckState, e
   state.diagnostics.push(createDiagnostic(2357));
 }
 
+type DeleteTargetOptionality = "optional" | "required" | "index" | "missing" | "unknown";
+
+function checkDeleteExpression(expression: DeleteExpression, state: CheckState, environment: TypeEnvironment): void {
+  const target = skipParenthesizedExpression(expression.expression);
+  if (isIdentifier(target)) {
+    state.diagnostics.push(createDiagnostic(1102));
+  }
+  if (!isPropertyAccessExpression(target) && !isElementAccessExpression(target)) {
+    state.diagnostics.push(createDiagnostic(2703));
+    inferExpression(expression.expression, state, environment);
+    return;
+  }
+  const propertyType = inferExpression(target, state, environment);
+  const optionality = deleteTargetOptionality(target, state, environment);
+  if (deleteTargetReadonly(target, state, environment)) {
+    state.diagnostics.push(createDiagnostic(2704));
+    return;
+  }
+  if (!strictOptionValue(state.options, "strictNullChecks") || deletePropertyMayBeDeleted(optionality, propertyType, state.options)) {
+    return;
+  }
+  state.diagnostics.push(createDiagnostic(2790));
+}
+
+function deleteTargetOptionality(expression: Expression, state: CheckState, environment: TypeEnvironment): DeleteTargetOptionality {
+  const silentState = stateWithoutReportedDiagnostics(state) ?? state;
+  if (isPropertyAccessExpression(expression)) {
+    const receiverType = accessorReadType(inferExpression(expression.expression, silentState, environment));
+    return propertyDeleteOptionality(receiverType, expression.name.text, environment);
+  }
+  if (isElementAccessExpression(expression)) {
+    const receiverType = accessorReadType(inferExpression(expression.expression, silentState, environment));
+    const argumentRuntimeType = inferExpression(expression.argumentExpression, silentState, environment);
+    const argumentType = literalExpressionNarrowType(expression.argumentExpression) ?? argumentRuntimeType;
+    if (argumentType.kind === "stringLiteral") {
+      return propertyDeleteOptionality(receiverType, argumentType.value, environment);
+    }
+    if (receiverHasIndexDeleteTarget(receiverType, argumentType)) {
+      return "index";
+    }
+  }
+  return "unknown";
+}
+
+function deleteTargetReadonly(expression: Expression, state: CheckState, environment: TypeEnvironment): boolean {
+  const silentState = stateWithoutReportedDiagnostics(state) ?? state;
+  if (isPropertyAccessExpression(expression)) {
+    const receiverType = accessorReadType(inferExpression(expression.expression, silentState, environment));
+    return readonlyObjectPropertyTarget(receiverType, expression.name.text)
+      || readonlyClassInstancePropertyTarget(receiverType, expression.name.text)
+      || readonlyInterfacePropertyTarget(receiverType, expression.name.text)
+      || readonlyClassConstructorFunctionPropertyTarget(receiverType, expression.name.text, environment)
+      || readonlyNamespaceDeleteTarget(receiverType, expression.name.text);
+  }
+  if (isElementAccessExpression(expression)) {
+    const receiverType = accessorReadType(inferExpression(expression.expression, silentState, environment));
+    const argumentRuntimeType = inferExpression(expression.argumentExpression, silentState, environment);
+    const argumentType = literalExpressionNarrowType(expression.argumentExpression) ?? argumentRuntimeType;
+    return readonlyElementTarget(receiverType, argumentType)
+      || argumentType.kind === "stringLiteral" && readonlyInterfacePropertyTarget(receiverType, argumentType.value)
+      || argumentType.kind === "stringLiteral" && readonlyClassConstructorFunctionPropertyTarget(receiverType, argumentType.value, environment)
+      || argumentType.kind === "stringLiteral" && readonlyNamespaceDeleteTarget(receiverType, argumentType.value);
+  }
+  return false;
+}
+
+function readonlyNamespaceDeleteTarget(receiverType: CheckedType, propertyName: string): boolean {
+  if (receiverType.kind === "typeAliasInstance") {
+    return readonlyNamespaceDeleteTarget(receiverType.target, propertyName);
+  }
+  if (receiverType.kind === "namespaceAndType") {
+    return readonlyNamespaceDeleteTarget(receiverType.namespace, propertyName) || readonlyNamespaceDeleteTarget(receiverType.type, propertyName);
+  }
+  if (receiverType.kind === "namespace") {
+    return receiverType.enumLike === true && receiverType.exports.has(propertyName);
+  }
+  if (receiverType.kind === "moduleNamespace") {
+    return receiverType.exports.has(propertyName);
+  }
+  if (receiverType.kind === "union" || receiverType.kind === "intersection") {
+    return receiverType.types.some(type => readonlyNamespaceDeleteTarget(type, propertyName));
+  }
+  return false;
+}
+
+function deletePropertyMayBeDeleted(optionality: DeleteTargetOptionality, propertyType: CheckedType, options: CompilerOptions): boolean {
+  if (optionality === "optional" || optionality === "index" || optionality === "missing") {
+    return true;
+  }
+  if (deleteTypeIsAlwaysOptional(propertyType)) {
+    return true;
+  }
+  return !strictOptionValue(options, "exactOptionalPropertyTypes") && typeContainsUndefinedForDelete(propertyType);
+}
+
+function propertyDeleteOptionality(receiverType: CheckedType, propertyName: string, environment?: TypeEnvironment): DeleteTargetOptionality {
+  if (receiverType.kind === "typeAliasInstance") {
+    return propertyDeleteOptionality(receiverType.target, propertyName, environment);
+  }
+  if (receiverType.kind === "valueAndType") {
+    return propertyDeleteOptionality(receiverType.value, propertyName, environment);
+  }
+  if (receiverType.kind === "namespaceAndType") {
+    const namespaceOptionality = propertyDeleteOptionality(receiverType.namespace, propertyName, environment);
+    return namespaceOptionality === "missing" ? propertyDeleteOptionality(receiverType.type, propertyName, environment) : namespaceOptionality;
+  }
+  if (receiverType.kind === "object") {
+    if (receiverType.properties.has(propertyName)) {
+      return receiverType.optionalProperties.has(propertyName) ? "optional" : "required";
+    }
+    return receiverType.stringIndexType !== undefined || receiverType.numberIndexType !== undefined ? "index" : "missing";
+  }
+  if (receiverType.kind === "interface") {
+    if (receiverType.members.properties.has(propertyName)) {
+      return receiverType.members.optionalProperties.has(propertyName) ? "optional" : "required";
+    }
+    return interfaceIndexPropertyType(receiverType) !== undefined ? "index" : "missing";
+  }
+  if (receiverType.kind === "classInstance" || receiverType.kind === "classConstructor" || receiverType.kind === "thisClass") {
+    if (receiverType.members.propertyTypes.has(propertyName)) {
+      return receiverType.members.optionalProperties.has(propertyName) ? "optional" : "required";
+    }
+    if (receiverType.kind === "classConstructor" && functionInterfacePropertyType(environment, propertyName) !== undefined) {
+      return "required";
+    }
+    return "missing";
+  }
+  if (receiverType.kind === "record") {
+    return "index";
+  }
+  if (receiverType.kind === "namespace" || receiverType.kind === "moduleNamespace") {
+    return receiverType.exports.has(propertyName) ? "required" : "missing";
+  }
+  if (receiverType.kind === "union") {
+    return combineDeleteOptionality(receiverType.types.map(type => propertyDeleteOptionality(type, propertyName, environment)));
+  }
+  if (receiverType.kind === "intersection") {
+    return combineDeleteOptionality(receiverType.types.map(type => propertyDeleteOptionality(type, propertyName, environment)));
+  }
+  if (receiverType.kind === "any" || receiverType.kind === "unknown" || receiverType.kind === "unresolved") {
+    return "unknown";
+  }
+  return "missing";
+}
+
+function combineDeleteOptionality(optionality: readonly DeleteTargetOptionality[]): DeleteTargetOptionality {
+  if (optionality.length === 0) {
+    return "unknown";
+  }
+  if (optionality.some(member => member === "required")) {
+    return "required";
+  }
+  if (optionality.every(member => member === "missing")) {
+    return "missing";
+  }
+  if (optionality.every(member => member === "optional" || member === "index" || member === "missing")) {
+    return "optional";
+  }
+  return "unknown";
+}
+
+function receiverHasIndexDeleteTarget(receiverType: CheckedType, argumentType: CheckedType): boolean {
+  if (receiverType.kind === "typeAliasInstance") {
+    return receiverHasIndexDeleteTarget(receiverType.target, argumentType);
+  }
+  if (receiverType.kind === "namespaceAndType") {
+    return receiverHasIndexDeleteTarget(receiverType.namespace, argumentType) || receiverHasIndexDeleteTarget(receiverType.type, argumentType);
+  }
+  if (receiverType.kind === "object") {
+    return (receiverType.stringIndexType !== undefined && (argumentType.kind === "string" || argumentType.kind === "stringLiteral" || argumentType.kind === "number" || argumentType.kind === "numberLiteral"))
+      || (receiverType.numberIndexType !== undefined && (argumentType.kind === "number" || argumentType.kind === "numberLiteral"));
+  }
+  if (receiverType.kind === "interface") {
+    return interfaceIndexPropertyType(receiverType) !== undefined;
+  }
+  if (receiverType.kind === "record") {
+    return recordIndexedAccessType(receiverType, argumentType) !== undefined;
+  }
+  if (receiverType.kind === "union") {
+    return receiverType.types.every(type => receiverHasIndexDeleteTarget(type, argumentType));
+  }
+  return false;
+}
+
+function deleteTypeIsAlwaysOptional(type: CheckedType): boolean {
+  if (type.kind === "typeAliasInstance") {
+    return deleteTypeIsAlwaysOptional(type.target);
+  }
+  if (type.kind === "union") {
+    return type.types.some(deleteTypeIsAlwaysOptional);
+  }
+  return type.kind === "any" || type.kind === "unknown" || type.kind === "unresolved" || type.kind === "never";
+}
+
+function typeContainsUndefinedForDelete(type: CheckedType): boolean {
+  if (type.kind === "typeAliasInstance") {
+    return typeContainsUndefinedForDelete(type.target);
+  }
+  if (type.kind === "union") {
+    return type.types.some(typeContainsUndefinedForDelete);
+  }
+  return type.kind === "undefined";
+}
+
 function checkIdentifierWriteTarget(expression: Identifier, state: CheckState, environment: TypeEnvironment): void {
   checkStrictModeIdentifier(expression.text, state, false);
   const target = environment.get(expression.text);
@@ -7888,7 +8125,9 @@ function checkPropertyAssignmentTarget(expression: Expression, propertyName: str
     state.diagnostics.push(createDiagnostic(2540, propertyName));
     return;
   }
-  if (readonlyObjectPropertyTarget(receiverType, propertyName)) {
+  if (readonlyObjectPropertyTarget(receiverType, propertyName)
+    || readonlyInterfacePropertyTarget(receiverType, propertyName)
+    || readonlyClassConstructorFunctionPropertyTarget(receiverType, propertyName, environment)) {
     state.diagnostics.push(createDiagnostic(2540, propertyName));
     return;
   }
@@ -7920,6 +8159,22 @@ function readonlyObjectPropertyTarget(receiverType: CheckedType, propertyName: s
   return false;
 }
 
+function readonlyInterfacePropertyTarget(receiverType: CheckedType, propertyName: string): boolean {
+  if (receiverType.kind === "interface") {
+    return receiverType.members.readonlyProperties.has(propertyName);
+  }
+  if (receiverType.kind === "typeAliasInstance") {
+    return readonlyInterfacePropertyTarget(receiverType.target, propertyName);
+  }
+  if (receiverType.kind === "valueAndType" || receiverType.kind === "valueOnly" || receiverType.kind === "accessorProperty") {
+    return readonlyInterfacePropertyTarget(receiverType.type, propertyName);
+  }
+  if (receiverType.kind === "union" || receiverType.kind === "intersection") {
+    return receiverType.types.some(type => readonlyInterfacePropertyTarget(type, propertyName));
+  }
+  return false;
+}
+
 function readonlyElementTarget(receiverType: CheckedType, argumentType: CheckedType): boolean {
   if (receiverType.kind === "typeAliasInstance") {
     return readonlyElementTarget(receiverType.target, argumentType);
@@ -7931,6 +8186,22 @@ function readonlyElementTarget(receiverType: CheckedType, argumentType: CheckedT
     return false;
   }
   return argumentType.kind === "number" || argumentType.kind === "numberLiteral";
+}
+
+function readonlyClassConstructorFunctionPropertyTarget(receiverType: CheckedType, propertyName: string, environment: TypeEnvironment): boolean {
+  if (receiverType.kind === "classConstructor") {
+    return functionInterfaceReadonlyProperty(environment, propertyName);
+  }
+  if (receiverType.kind === "typeAliasInstance") {
+    return readonlyClassConstructorFunctionPropertyTarget(receiverType.target, propertyName, environment);
+  }
+  if (receiverType.kind === "valueAndType" || receiverType.kind === "valueOnly" || receiverType.kind === "accessorProperty") {
+    return readonlyClassConstructorFunctionPropertyTarget(receiverType.type, propertyName, environment);
+  }
+  if (receiverType.kind === "union" || receiverType.kind === "intersection") {
+    return receiverType.types.some(type => readonlyClassConstructorFunctionPropertyTarget(type, propertyName, environment));
+  }
+  return false;
 }
 
 function readonlyClassInstancePropertyTarget(receiverType: CheckedType, propertyName: string): boolean {
@@ -7973,7 +8244,10 @@ function assignExpressionTarget(expression: Expression, assignedType: CheckedTyp
   }
   if (isPropertyAccessExpression(expression)) {
     const receiverType = inferExpression(expression.expression, emptyCheckState(), environment);
-    if (readonlyObjectPropertyTarget(receiverType, expression.name.text) || readonlyClassInstancePropertyTarget(receiverType, expression.name.text)) {
+    if (readonlyObjectPropertyTarget(receiverType, expression.name.text)
+      || readonlyInterfacePropertyTarget(receiverType, expression.name.text)
+      || readonlyClassInstancePropertyTarget(receiverType, expression.name.text)
+      || readonlyClassConstructorFunctionPropertyTarget(receiverType, expression.name.text, environment)) {
       return;
     }
     const targetType = assignmentTargetType(expression, environment);
@@ -8452,7 +8726,7 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
         ...optionalArrayBaseElementType(receiverType.arrayBaseElementType),
       };
     }
-    return receiverType.members.static.has(propertyName) ? anyType : undefined;
+    return receiverType.members.static.has(propertyName) ? anyType : functionInterfacePropertyType(environment, propertyName);
   }
   if (receiverType.kind === "builtinConstructor") {
     if (propertyName === "prototype") {
@@ -8545,6 +8819,16 @@ function functionApparentProperties(): ReadonlyMap<string, CheckedType> {
     ["apply", variadicFunctionMember],
     ["call", variadicFunctionMember],
   ]);
+}
+
+function functionInterfacePropertyType(environment: TypeEnvironment | undefined, propertyName: string): CheckedType | undefined {
+  const functionInterface = interfaceMeaning(environment?.get("Function"));
+  return functionInterface === undefined ? undefined : interfacePropertyType(functionInterface, propertyName);
+}
+
+function functionInterfaceReadonlyProperty(environment: TypeEnvironment | undefined, propertyName: string): boolean {
+  const functionInterface = interfaceMeaning(environment?.get("Function"));
+  return functionInterface?.members.readonlyProperties.has(propertyName) === true;
 }
 
 function functionApplyArgumentArrayType(functionType: CheckedFunctionType): CheckedType {
@@ -9559,6 +9843,19 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
       }
       return { kind: "nonNullable", target: typeArguments[0] ?? anyType };
     }
+    if (name === "Partial") {
+      if (!hasTypeArgumentArity(type, "Partial<T>", 1, state)) {
+        return anyType;
+      }
+      const typeArgument = typeArguments[0] ?? anyType;
+      return {
+        kind: "typeAliasInstance",
+        name: "Partial",
+        typeArguments: [typeArgument],
+        target: partialUtilityType(typeArgument),
+        requiresExplicitDeclarationAnnotation: false,
+      };
+    }
     if (resolved !== undefined) {
       if (resolved.kind === "intrinsicTypeAlias" && resolved.name === "Awaited") {
         if (!hasTypeArgumentArity(type, "Awaited<T>", 1, state)) {
@@ -9629,6 +9926,7 @@ function shouldUseResolvedTypeReference(name: string | undefined, resolved: Chec
     || name === "IterableIterator"
     || name === "Set"
     || name === "NonNullable"
+    || name === "Partial"
     || name === "Record")
     && resolvedType.kind === "any") {
     return false;
@@ -10533,6 +10831,65 @@ function mappedType(type: Extract<TypeNode, { readonly kind: Kind.MappedType }>,
   };
 }
 
+function partialUtilityType(type: CheckedType): CheckedType {
+  if (type.kind === "typeAliasInstance") {
+    return partialUtilityType(type.target);
+  }
+  if (type.kind === "valueAndType" || type.kind === "valueOnly" || type.kind === "accessorProperty") {
+    return partialUtilityType(type.type);
+  }
+  if (type.kind === "interface") {
+    const properties = optionalizedPropertyMap(interfacePropertyTypes(type));
+    return {
+      kind: "object",
+      properties,
+      readonlyProperties: type.members.readonlyProperties,
+      optionalProperties: new Set(properties.keys()),
+      methodProperties: type.members.methodProperties,
+      ...(type.members.stringIndexType === undefined ? {} : { stringIndexType: optionalizedPropertyType(interfaceStringIndexType(type) ?? type.members.stringIndexType) }),
+      ...(type.members.numberIndexType === undefined ? {} : { numberIndexType: optionalizedPropertyType(interfaceNumberIndexType(type) ?? type.members.numberIndexType) }),
+    };
+  }
+  if (type.kind === "object") {
+    const properties = optionalizedPropertyMap(type.properties);
+    return {
+      kind: "object",
+      properties,
+      readonlyProperties: type.readonlyProperties,
+      optionalProperties: new Set(properties.keys()),
+      methodProperties: type.methodProperties,
+      ...(type.callSignatures === undefined ? {} : { callSignatures: type.callSignatures }),
+      ...(type.stringIndexType === undefined ? {} : { stringIndexType: optionalizedPropertyType(type.stringIndexType) }),
+      ...(type.numberIndexType === undefined ? {} : { numberIndexType: optionalizedPropertyType(type.numberIndexType) }),
+    };
+  }
+  if (type.kind === "classInstance") {
+    const properties = optionalizedPropertyMap(classInstancePropertyTypes(type));
+    return {
+      kind: "object",
+      properties,
+      readonlyProperties: type.members.readonlyProperties,
+      optionalProperties: new Set(properties.keys()),
+      methodProperties: new Set(),
+    };
+  }
+  if (type.kind === "union") {
+    return unionType(type.types.map(partialUtilityType));
+  }
+  if (type.kind === "intersection") {
+    return { kind: "intersection", types: type.types.map(partialUtilityType) };
+  }
+  return anyType;
+}
+
+function optionalizedPropertyMap(properties: ReadonlyMap<string, CheckedType>): ReadonlyMap<string, CheckedType> {
+  return new Map([...properties.entries()].map(([name, propertyType]) => [name, optionalizedPropertyType(propertyType)]));
+}
+
+function optionalizedPropertyType(type: CheckedType): CheckedType {
+  return unionType([type, undefinedType]);
+}
+
 function mappedArraySourceType(constraint: TypeNode | undefined, environment: TypeEnvironment, state: CheckState): CheckedType | undefined {
   if (constraint?.kind !== Kind.TypeOperator || constraint.operator !== Kind.KeyOfKeyword) {
     return undefined;
@@ -10862,6 +11219,9 @@ function invalidParameterModifierName(kind: Kind): string | undefined {
 }
 
 function strictOptionValue(options: CompilerOptions, optionName: "noImplicitAny" | "strictNullChecks" | "strictPropertyInitialization" | "exactOptionalPropertyTypes"): boolean {
+  if (optionName === "exactOptionalPropertyTypes") {
+    return options.exactOptionalPropertyTypes === true;
+  }
   return options[optionName] === undefined ? options.strict !== false : options[optionName] === true;
 }
 
