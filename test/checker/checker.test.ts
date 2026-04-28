@@ -29,7 +29,7 @@ describe("checker groundwork", () => {
 
   it("checks JSX tag names, intrinsic fallback, and embedded expressions", () => {
     const sourceFile = parseSourceFile("const x = 1; const view = <div>{missing}<Component /></div>;", { fileName: "view.tsx" });
-    const result = checkSourceFile(sourceFile, { jsx: "preserve" });
+    const result = checkSourceFile(sourceFile, { jsx: "preserve", noImplicitAny: true });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.",
@@ -59,11 +59,11 @@ describe("checker groundwork", () => {
   it("reports missing JSX runtime dependencies by emit mode", () => {
     const sourceFile = parseSourceFile("const view = <div />;", { fileName: "view.tsx" });
 
-    assert.deepEqual(checkSourceFile(sourceFile, { jsx: "react" }).diagnostics.map(diagnostic => diagnostic.message), [
+    assert.deepEqual(checkSourceFile(sourceFile, { jsx: "react", noImplicitAny: true }).diagnostics.map(diagnostic => diagnostic.message), [
       "This JSX tag requires 'React' to be in scope, but it could not be found.",
       "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.",
     ]);
-    assert.deepEqual(checkSourceFile(sourceFile, { jsx: "react-jsx" }).diagnostics.map(diagnostic => diagnostic.message), [
+    assert.deepEqual(checkSourceFile(sourceFile, { jsx: "react-jsx", noImplicitAny: true }).diagnostics.map(diagnostic => diagnostic.message), [
       "This JSX tag requires the module path 'react/jsx-runtime' to exist, but none could be found. Make sure you have types for the appropriate package installed.",
       "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.",
     ]);
@@ -206,7 +206,7 @@ describe("checker groundwork", () => {
       "interface Box { value: string; }",
       "const fromObject = ({ value }: Box): string => value;",
       "const fromArray = ([value]: string[]): string => value;",
-      "const fromImplicitAny = ({ value }): string => value;",
+      "const fromContextual: (arg: { value: string }) => string = ({ value }) => value;",
     ].join("\n"));
     const result = checkSourceFile(sourceFile);
 
@@ -362,7 +362,7 @@ describe("checker groundwork", () => {
       "function requiredAfterDefault(x = 1, y: number) {}",
       "function restLast(x?: number, y = 1, ...z: number[]) {}",
     ].join("\n"));
-    const result = checkSourceFile(sourceFile);
+    const result = checkSourceFile(sourceFile, { noImplicitAny: true });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1014, 1047, 7019, 1048, 7019, 1015, 1016]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
@@ -523,7 +523,7 @@ describe("checker groundwork", () => {
 
   it("reports function overload declarations without matching implementations", () => {
     const sourceFile = parseSourceFile("function foo(); function bar() { } function baz();");
-    const result = checkSourceFile(sourceFile);
+    const result = checkSourceFile(sourceFile, { noImplicitAny: true });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "Function implementation name must be 'foo'.",
@@ -795,7 +795,7 @@ describe("checker groundwork", () => {
 
   it("reports invalid interface names and parameter properties in type signatures", () => {
     const sourceFile = parseSourceFile("interface string { new (public x); } function f(value: (private x) => void): () => number { }");
-    const result = checkSourceFile(sourceFile);
+    const result = checkSourceFile(sourceFile, { noImplicitAny: true });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "Interface name cannot be 'string'.",
@@ -958,9 +958,32 @@ describe("checker groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
   });
 
+  it("reports implicit any and initializer diagnostics for untyped destructuring declarations", () => {
+    const sourceFile = parseSourceFile([
+      "function f([a], { b }, [c = undefined], { d = null }) {}",
+      "let [e], { f };",
+      "declare var { g };",
+      "let [h] = [undefined];",
+      "type MissingMember = { i };",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { noImplicitAny: true, target: "es2015" });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [7031, 7031, 1182, 7031, 1182, 7031, 7031, 7008]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Binding element 'a' implicitly has an 'any' type.",
+      "Binding element 'b' implicitly has an 'any' type.",
+      "A destructuring declaration must have an initializer.",
+      "Binding element 'e' implicitly has an 'any' type.",
+      "A destructuring declaration must have an initializer.",
+      "Binding element 'f' implicitly has an 'any' type.",
+      "Binding element 'g' implicitly has an 'any' type.",
+      "Member 'i' implicitly has an 'any' type.",
+    ]);
+  });
+
   it("reports typed variable reads before assignment", () => {
     const sourceFile = parseSourceFile("interface Shape { value: number; } let value: number; var shape: Shape; const first = value; const second = shape;");
-    const result = checkSourceFile(sourceFile);
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "Variable 'value' is used before being assigned.",
@@ -1001,7 +1024,7 @@ describe("checker groundwork", () => {
       "interface Node { interval: Interval; children?: Node[]; }",
       "var nodes: Node[] = [{ interval: { begin: 0 }, children: null }];",
     ].join("\n"));
-    const result = checkSourceFile(sourceFile);
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "Type 'null' is not assignable to type 'Node[] | undefined'.",
@@ -1016,7 +1039,7 @@ describe("checker groundwork", () => {
       "const box: Box = { name: false };",
       "const style: Style = { cb: () => [null] };",
     ].join("\n"));
-    const result = checkSourceFile(sourceFile);
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "Type 'boolean' is not assignable to type 'string'.",
@@ -1034,7 +1057,7 @@ describe("checker groundwork", () => {
 
   it("still reads compound assignment targets before assignment", () => {
     const sourceFile = parseSourceFile("let value: number; value += 1; const copy = value;");
-    const result = checkSourceFile(sourceFile);
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "Variable 'value' is used before being assigned.",
@@ -1103,7 +1126,7 @@ describe("checker groundwork", () => {
       "};",
       "class Auto { accessor value: string; }",
     ].join("\n"));
-    const result = checkSourceFile(sourceFile, { target: "es5" });
+    const result = checkSourceFile(sourceFile, { target: "es5", strictNullChecks: true, strictPropertyInitialization: true });
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [6234, 2322, 2322, 7023, 2339, 2564, 18045]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
@@ -1138,7 +1161,7 @@ describe("checker groundwork", () => {
 
   it("checks implemented interface contracts and derived constructor super ordering", () => {
     const sourceFile = parseSourceFile([
-      "interface I { x; }",
+      "interface I { x: string; }",
       "class B { }",
       "class C extends B implements I {",
       "  constructor() { this.x; }",
@@ -1675,7 +1698,7 @@ describe("checker groundwork", () => {
       "  var z2 = a - b;",
       "};",
     ].join("\n"));
-    const boxedResult = checkSourceFile(boxedNumberSource);
+    const boxedResult = checkSourceFile(boxedNumberSource, { strictNullChecks: true });
     const genericResult = checkSourceFile(genericSource);
 
     assert.deepEqual(boxedResult.diagnostics.map(diagnostic => diagnostic.code), [

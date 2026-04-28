@@ -510,7 +510,7 @@ describe("program groundwork", () => {
       useCaseSensitiveFileNames: () => true,
     };
 
-    const program = createProgram(["src/file.tsx"], { jsx: "react", reactNamespace: "not-valid" }, host);
+    const program = createProgram(["src/file.tsx"], { jsx: "react", reactNamespace: "not-valid", noImplicitAny: true }, host);
     const diagnostics = getProgramDiagnostics(program);
 
     assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [5059, 2874, 7026]);
@@ -971,7 +971,7 @@ describe("program groundwork", () => {
       useCaseSensitiveFileNames: () => true,
     };
 
-    const program = createProgram(["src/index.ts"], { module: "system", allowSyntheticDefaultImports: false, ignoreDeprecations: "6.0" }, host);
+    const program = createProgram(["src/index.ts"], { module: "system", allowSyntheticDefaultImports: false, ignoreDeprecations: "6.0", strictNullChecks: true, strictPropertyInitialization: true }, host);
     const diagnostics = emitProgram(program, host).diagnostics;
 
     assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [1192, 2564]);

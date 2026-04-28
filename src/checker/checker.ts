@@ -4056,6 +4056,8 @@ function checkVariableDeclaration(declaration: VariableDeclaration, state: Check
   if (!ambient && isConstVariableDeclaration(declaration) && declaration.initializer === undefined && !isForInOrOfDeclaration(declaration)) {
     state.diagnostics.push(createDiagnostic(1155, "const"));
   }
+  checkDestructuringDeclarationInitializer(declaration, state, ambient);
+  checkImplicitAnyBindingPatternDeclaration(declaration, declaredType, initializerType, state);
   checkStrictModeBindingName(declaration.name, state, ambient);
   checkLetNameInLexicalDeclaration(declaration, state);
   const bindingType = variableDeclarationBindingType(declaration, declaredType, initializerType, environment, ambient, state.options);
@@ -4267,6 +4269,20 @@ function checkAmbientVariableInitializer(declaration: VariableDeclaration, state
 
 function isConstVariableDeclaration(declaration: VariableDeclaration): boolean {
   return isVariableDeclarationList(declaration.parent) && (declaration.parent.flags & NodeFlags.Const) !== 0;
+}
+
+function checkDestructuringDeclarationInitializer(declaration: VariableDeclaration, state: CheckState, ambient: boolean): void {
+  if (ambient || declaration.initializer !== undefined || isForInOrOfDeclaration(declaration) || isCatchClauseDeclaration(declaration) || isIdentifier(declaration.name)) {
+    return;
+  }
+  state.diagnostics.push(createDiagnostic(1182));
+}
+
+function checkImplicitAnyBindingPatternDeclaration(declaration: VariableDeclaration, declaredType: CheckedType | undefined, initializerType: CheckedType | undefined, state: CheckState): void {
+  if (!strictOptionValue(state.options, "noImplicitAny") || isForInOrOfDeclaration(declaration) || isCatchClauseDeclaration(declaration) || isIdentifier(declaration.name) || declaration.type !== undefined || declaredType !== undefined || declaration.initializer !== undefined || initializerType !== undefined) {
+    return;
+  }
+  checkImplicitAnyBindingPattern(declaration.name, state);
 }
 
 function isForInOrOfDeclaration(declaration: VariableDeclaration): boolean {
@@ -12346,6 +12362,12 @@ function typeLiteralType(members: readonly TypeElement[], state: CheckState, env
 }
 
 function propertySignatureDeclaredType(member: PropertySignatureDeclaration, environment: TypeEnvironment, state: CheckState): CheckedType {
+  if (member.type === undefined && strictOptionValue(state.options, "noImplicitAny")) {
+    const name = propertyNameDiagnosticText(member.name);
+    if (name !== undefined) {
+      state.diagnostics.push(createDiagnostic(7008, name, "any"));
+    }
+  }
   const declaredType = member.type === undefined ? anyType : typeFromTypeNode(member.type, environment, state);
   return member.postfixToken?.kind === Kind.QuestionToken ? unionType([declaredType, undefinedType]) : declaredType;
 }
@@ -12928,7 +12950,13 @@ function checkImplicitAnyParameter(parameter: ParameterDeclaration, state: Check
   if (state.isJavaScriptFile && state.options.checkJs !== true && !hasParameterPropertyModifier) {
     return;
   }
-  if ((!strictOptionValue(state.options, "noImplicitAny") && !hasParameterPropertyModifier) || parameter.type !== undefined || parameter.initializer !== undefined || !isIdentifier(parameter.name)) {
+  if ((!strictOptionValue(state.options, "noImplicitAny") && !hasParameterPropertyModifier) || parameter.type !== undefined || parameter.initializer !== undefined) {
+    return;
+  }
+  if (!isIdentifier(parameter.name)) {
+    if (shouldReportImplicitAnyBindingPatternParameter(parameter)) {
+      checkImplicitAnyBindingPattern(parameter.name, state);
+    }
     return;
   }
   const signatureTypeName = implicitAnySignatureParameterTypeName(parameter, parameter.name, environment);
@@ -12940,6 +12968,41 @@ function checkImplicitAnyParameter(parameter: ParameterDeclaration, state: Check
   state.diagnostics.push(parameter.dotDotDotToken === undefined
     ? createDiagnostic(7006, parameter.name.text, "any")
     : createDiagnostic(7019, parameter.name.text));
+}
+
+function shouldReportImplicitAnyBindingPatternParameter(parameter: ParameterDeclaration): boolean {
+  const parent = parameter.parent;
+  return parent !== undefined
+    && (isFunctionDeclaration(parent)
+      || isConstructorDeclaration(parent)
+      || (isMethodDeclaration(parent) && parent.body !== undefined)
+      || isCallSignatureDeclaration(parent)
+      || isConstructSignatureDeclaration(parent)
+      || isMethodSignatureDeclaration(parent)
+      || isFunctionTypeNode(parent)
+      || isConstructorTypeNode(parent));
+}
+
+function checkImplicitAnyBindingPattern(name: BindingName, state: CheckState): void {
+  if (isIdentifier(name)) {
+    return;
+  }
+  if (isObjectBindingPattern(name) || isArrayBindingPattern(name)) {
+    for (const element of name.elements) {
+      checkImplicitAnyBindingElement(element, state);
+    }
+  }
+}
+
+function checkImplicitAnyBindingElement(element: BindingElement, state: CheckState): void {
+  if (element.initializer !== undefined || element.name === undefined) {
+    return;
+  }
+  if (isIdentifier(element.name)) {
+    state.diagnostics.push(createDiagnostic(7031, element.name.text, "any"));
+    return;
+  }
+  checkImplicitAnyBindingPattern(element.name, state);
 }
 
 function implicitAnySignatureParameterTypeName(parameter: ParameterDeclaration, name: Identifier, environment: TypeEnvironment): string | undefined {
