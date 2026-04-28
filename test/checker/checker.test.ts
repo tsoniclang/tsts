@@ -1167,10 +1167,36 @@ describe("checker groundwork", () => {
       "String.raw`x`;",
       "JSON.stringify({ value: 1 });",
       "new Map();",
+      "const instant: Temporal.Instant = Temporal.Instant.from(\"2020-01-01T00:00Z\");",
+      "Temporal.Now.instant().add(Temporal.Duration.from({ hours: 1 }));",
+      "new Temporal.ZonedDateTime(0n, \"UTC\");",
+      "instant.toZonedDateTimeISO(\"UTC\").toPlainDate();",
+      "const monthsByDays: Record<number, Temporal.PlainDate[]> = {};",
+      "const date = Temporal.Now.plainDateISO().with({ month: 1 });",
+      "monthsByDays[date.daysInMonth] = (monthsByDays[date.daysInMonth] || []).concat(date);",
+      "monthsByDays[30].map(date => date.toLocaleString(\"en\", { month: \"long\" }));",
     ].join("\n"));
     const result = checkSourceFile(sourceFile);
 
     assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("keeps Temporal interfaces precise enough for missing-property checks", () => {
+    const sourceFile = parseSourceFile([
+      "const instant = Temporal.Instant.from(\"2020-01-01T00:00Z\");",
+      "instant.epochNanoseconds;",
+      "instant.year;",
+      "const monthDay = Temporal.PlainMonthDay.from(\"08-24\");",
+      "monthDay.monthCode;",
+      "monthDay.month;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2339, 2339]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Property 'year' does not exist on type 'Instant'.",
+      "Property 'month' does not exist on type 'PlainMonthDay'.",
+    ]);
   });
 
   it("models Object.freeze as a readonly view of arrays and objects", () => {
@@ -1886,6 +1912,19 @@ describe("checker groundwork", () => {
       "Type 'string' is not assignable to type 'number'.",
       "Type 'string' is not assignable to type 'number'.",
     ]);
+  });
+
+  it("substitutes inherited generic class member property types from heritage type arguments", () => {
+    const sourceFile = parseSourceFile([
+      "class Item { name = ''; }",
+      "class Base<T extends Item> { byKey!: { [key: string]: T }; }",
+      "class View extends Base<Item> {",
+      "  fill(item: Item) { this.byKey['dummy'] = item; }",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
   });
 
   it("contextually types function expression callback parameters from array methods", () => {

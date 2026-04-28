@@ -971,6 +971,286 @@ const jsonStringifyFunctionType = standardFunctionType(
     ],
   },
 );
+const temporalDurationType = standardInterfaceType("Duration", new Map<string, CheckedType>([
+  ["years", numberType],
+  ["months", numberType],
+  ["weeks", numberType],
+  ["days", numberType],
+  ["hours", numberType],
+  ["minutes", numberType],
+  ["seconds", numberType],
+  ["milliseconds", numberType],
+  ["microseconds", numberType],
+  ["nanoseconds", numberType],
+  ["sign", numberType],
+  ["blank", booleanType],
+]), { methodProperties: emptyStringSet }) as Extract<CheckedType, { readonly kind: "interface" }>;
+const temporalPlainTimeType = standardInterfaceType("PlainTime", new Map<string, CheckedType>([
+  ["hour", numberType],
+  ["minute", numberType],
+  ["second", numberType],
+  ["millisecond", numberType],
+  ["microsecond", numberType],
+  ["nanosecond", numberType],
+]), { methodProperties: emptyStringSet }) as Extract<CheckedType, { readonly kind: "interface" }>;
+const temporalPlainDateType = standardInterfaceType("PlainDate", new Map<string, CheckedType>([
+  ["calendarId", stringType],
+  ["era", unionType([stringType, undefinedType])],
+  ["eraYear", unionType([numberType, undefinedType])],
+  ["year", numberType],
+  ["month", numberType],
+  ["monthCode", stringType],
+  ["day", numberType],
+  ["dayOfWeek", numberType],
+  ["dayOfYear", numberType],
+  ["weekOfYear", unionType([numberType, undefinedType])],
+  ["yearOfWeek", unionType([numberType, undefinedType])],
+  ["daysInWeek", numberType],
+  ["daysInMonth", numberType],
+  ["daysInYear", numberType],
+  ["monthsInYear", numberType],
+  ["inLeapYear", booleanType],
+]), { methodProperties: emptyStringSet }) as Extract<CheckedType, { readonly kind: "interface" }>;
+const temporalPlainDateTimeType = standardInterfaceType("PlainDateTime", new Map<string, CheckedType>([
+  ["calendarId", stringType],
+  ["era", unionType([stringType, undefinedType])],
+  ["eraYear", unionType([numberType, undefinedType])],
+  ["year", numberType],
+  ["month", numberType],
+  ["monthCode", stringType],
+  ["day", numberType],
+  ["hour", numberType],
+  ["minute", numberType],
+  ["second", numberType],
+  ["millisecond", numberType],
+  ["microsecond", numberType],
+  ["nanosecond", numberType],
+  ["dayOfWeek", numberType],
+  ["dayOfYear", numberType],
+  ["weekOfYear", unionType([numberType, undefinedType])],
+  ["yearOfWeek", unionType([numberType, undefinedType])],
+  ["daysInWeek", numberType],
+  ["daysInMonth", numberType],
+  ["daysInYear", numberType],
+  ["monthsInYear", numberType],
+  ["inLeapYear", booleanType],
+]), { methodProperties: emptyStringSet }) as Extract<CheckedType, { readonly kind: "interface" }>;
+const temporalZonedDateTimeType = standardInterfaceType("ZonedDateTime", new Map<string, CheckedType>([
+  ["calendarId", stringType],
+  ["timeZoneId", stringType],
+  ["era", unionType([stringType, undefinedType])],
+  ["eraYear", unionType([numberType, undefinedType])],
+  ["year", numberType],
+  ["month", numberType],
+  ["monthCode", stringType],
+  ["day", numberType],
+  ["hour", numberType],
+  ["minute", numberType],
+  ["second", numberType],
+  ["millisecond", numberType],
+  ["microsecond", numberType],
+  ["nanosecond", numberType],
+  ["epochMilliseconds", numberType],
+  ["epochNanoseconds", anyType],
+  ["dayOfWeek", numberType],
+  ["dayOfYear", numberType],
+  ["weekOfYear", unionType([numberType, undefinedType])],
+  ["yearOfWeek", unionType([numberType, undefinedType])],
+  ["hoursInDay", numberType],
+  ["daysInWeek", numberType],
+  ["daysInMonth", numberType],
+  ["daysInYear", numberType],
+  ["monthsInYear", numberType],
+  ["inLeapYear", booleanType],
+  ["offsetNanoseconds", numberType],
+  ["offset", stringType],
+]), { methodProperties: emptyStringSet }) as Extract<CheckedType, { readonly kind: "interface" }>;
+const temporalInstantType = standardInterfaceType("Instant", new Map<string, CheckedType>([
+  ["epochMilliseconds", numberType],
+  ["epochNanoseconds", anyType],
+]), { methodProperties: emptyStringSet }) as Extract<CheckedType, { readonly kind: "interface" }>;
+const temporalPlainYearMonthType = standardInterfaceType("PlainYearMonth", new Map<string, CheckedType>([
+  ["calendarId", stringType],
+  ["era", unionType([stringType, undefinedType])],
+  ["eraYear", unionType([numberType, undefinedType])],
+  ["year", numberType],
+  ["month", numberType],
+  ["monthCode", stringType],
+  ["daysInYear", numberType],
+  ["daysInMonth", numberType],
+  ["monthsInYear", numberType],
+  ["inLeapYear", booleanType],
+]), { methodProperties: emptyStringSet }) as Extract<CheckedType, { readonly kind: "interface" }>;
+const temporalPlainMonthDayType = standardInterfaceType("PlainMonthDay", new Map<string, CheckedType>([
+  ["calendarId", stringType],
+  ["monthCode", stringType],
+  ["day", numberType],
+]), { methodProperties: emptyStringSet }) as Extract<CheckedType, { readonly kind: "interface" }>;
+
+function temporalFunction(returnType: CheckedType): CheckedFunctionType {
+  return standardVariadicAnyFunction(returnType);
+}
+
+function addTemporalMethods(type: Extract<CheckedType, { readonly kind: "interface" }>, methods: readonly (readonly [string, CheckedType])[]): void {
+  const properties = type.members.properties as Map<string, CheckedType>;
+  const methodProperties = type.members.methodProperties as Set<string>;
+  for (const [name, returnType] of methods) {
+    properties.set(name, temporalFunction(returnType));
+    methodProperties.add(name);
+  }
+}
+
+addTemporalMethods(temporalDurationType, [
+  ["with", temporalDurationType],
+  ["negated", temporalDurationType],
+  ["abs", temporalDurationType],
+  ["add", temporalDurationType],
+  ["subtract", temporalDurationType],
+  ["round", temporalDurationType],
+  ["total", numberType],
+  ["toString", stringType],
+  ["toLocaleString", stringType],
+  ["toJSON", stringType],
+  ["valueOf", neverType],
+]);
+addTemporalMethods(temporalPlainTimeType, [
+  ["add", temporalPlainTimeType],
+  ["subtract", temporalPlainTimeType],
+  ["with", temporalPlainTimeType],
+  ["until", temporalDurationType],
+  ["since", temporalDurationType],
+  ["equals", booleanType],
+  ["round", temporalPlainTimeType],
+  ["toString", stringType],
+  ["toLocaleString", stringType],
+  ["toJSON", stringType],
+  ["valueOf", neverType],
+]);
+addTemporalMethods(temporalPlainDateType, [
+  ["toPlainYearMonth", temporalPlainYearMonthType],
+  ["toPlainMonthDay", temporalPlainMonthDayType],
+  ["add", temporalPlainDateType],
+  ["subtract", temporalPlainDateType],
+  ["with", temporalPlainDateType],
+  ["withCalendar", temporalPlainDateType],
+  ["until", temporalDurationType],
+  ["since", temporalDurationType],
+  ["equals", booleanType],
+  ["toPlainDateTime", temporalPlainDateTimeType],
+  ["toZonedDateTime", temporalZonedDateTimeType],
+  ["toString", stringType],
+  ["toLocaleString", stringType],
+  ["toJSON", stringType],
+  ["valueOf", neverType],
+]);
+addTemporalMethods(temporalPlainDateTimeType, [
+  ["with", temporalPlainDateTimeType],
+  ["withPlainTime", temporalPlainDateTimeType],
+  ["withCalendar", temporalPlainDateTimeType],
+  ["add", temporalPlainDateTimeType],
+  ["subtract", temporalPlainDateTimeType],
+  ["until", temporalDurationType],
+  ["since", temporalDurationType],
+  ["round", temporalPlainDateTimeType],
+  ["equals", booleanType],
+  ["toString", stringType],
+  ["toLocaleString", stringType],
+  ["toJSON", stringType],
+  ["valueOf", neverType],
+  ["toZonedDateTime", temporalZonedDateTimeType],
+  ["toPlainDate", temporalPlainDateType],
+  ["toPlainTime", temporalPlainTimeType],
+]);
+addTemporalMethods(temporalZonedDateTimeType, [
+  ["with", temporalZonedDateTimeType],
+  ["withPlainTime", temporalZonedDateTimeType],
+  ["withTimeZone", temporalZonedDateTimeType],
+  ["withCalendar", temporalZonedDateTimeType],
+  ["add", temporalZonedDateTimeType],
+  ["subtract", temporalZonedDateTimeType],
+  ["until", temporalDurationType],
+  ["since", temporalDurationType],
+  ["round", temporalZonedDateTimeType],
+  ["equals", booleanType],
+  ["toString", stringType],
+  ["toLocaleString", stringType],
+  ["toJSON", stringType],
+  ["valueOf", neverType],
+  ["startOfDay", temporalZonedDateTimeType],
+  ["getTimeZoneTransition", unionType([temporalZonedDateTimeType, nullType])],
+  ["toInstant", temporalInstantType],
+  ["toPlainDate", temporalPlainDateType],
+  ["toPlainTime", temporalPlainTimeType],
+  ["toPlainDateTime", temporalPlainDateTimeType],
+]);
+addTemporalMethods(temporalInstantType, [
+  ["add", temporalInstantType],
+  ["subtract", temporalInstantType],
+  ["until", temporalDurationType],
+  ["since", temporalDurationType],
+  ["round", temporalInstantType],
+  ["equals", booleanType],
+  ["toString", stringType],
+  ["toLocaleString", stringType],
+  ["toJSON", stringType],
+  ["valueOf", neverType],
+  ["toZonedDateTimeISO", temporalZonedDateTimeType],
+]);
+addTemporalMethods(temporalPlainYearMonthType, [
+  ["with", temporalPlainYearMonthType],
+  ["add", temporalPlainYearMonthType],
+  ["subtract", temporalPlainYearMonthType],
+  ["until", temporalDurationType],
+  ["since", temporalDurationType],
+  ["equals", booleanType],
+  ["toString", stringType],
+  ["toLocaleString", stringType],
+  ["toJSON", stringType],
+  ["valueOf", neverType],
+  ["toPlainDate", temporalPlainDateType],
+]);
+addTemporalMethods(temporalPlainMonthDayType, [
+  ["with", temporalPlainMonthDayType],
+  ["equals", booleanType],
+  ["toString", stringType],
+  ["toLocaleString", stringType],
+  ["toJSON", stringType],
+  ["valueOf", neverType],
+  ["toPlainDate", temporalPlainDateType],
+]);
+
+function temporalConstructor(name: string, instanceType: CheckedType, constructorParameterCount: number, staticMethods: readonly string[]): CheckedType {
+  return {
+    kind: "valueAndType",
+    value: {
+      kind: "builtinConstructor",
+      name,
+      instanceType,
+      constructorParameters: Array.from({ length: constructorParameterCount }, () => anyType),
+      staticProperties: new Map(staticMethods.map(method => [method, temporalFunction(method === "compare" ? numberType : instanceType)])),
+    },
+    type: instanceType,
+  };
+}
+
+const temporalNamespaceType = standardNamespace("Temporal", [
+  ["Duration", temporalConstructor("Duration", temporalDurationType, 10, ["from", "compare"])],
+  ["Instant", temporalConstructor("Instant", temporalInstantType, 1, ["from", "fromEpochMilliseconds", "fromEpochNanoseconds", "compare"])],
+  ["Now", standardNamespace("Now", [
+    ["timeZoneId", temporalFunction(stringType)],
+    ["instant", temporalFunction(temporalInstantType)],
+    ["plainDateTimeISO", temporalFunction(temporalPlainDateTimeType)],
+    ["zonedDateTimeISO", temporalFunction(temporalZonedDateTimeType)],
+    ["plainDateISO", temporalFunction(temporalPlainDateType)],
+    ["plainTimeISO", temporalFunction(temporalPlainTimeType)],
+  ])],
+  ["PlainDate", temporalConstructor("PlainDate", temporalPlainDateType, 4, ["from", "compare"])],
+  ["PlainDateTime", temporalConstructor("PlainDateTime", temporalPlainDateTimeType, 10, ["from", "compare"])],
+  ["PlainMonthDay", temporalConstructor("PlainMonthDay", temporalPlainMonthDayType, 4, ["from"])],
+  ["PlainTime", temporalConstructor("PlainTime", temporalPlainTimeType, 6, ["from", "compare"])],
+  ["PlainYearMonth", temporalConstructor("PlainYearMonth", temporalPlainYearMonthType, 4, ["from", "compare"])],
+  ["ZonedDateTime", temporalConstructor("ZonedDateTime", temporalZonedDateTimeType, 3, ["from", "compare"])],
+]);
 const typedArrayGlobalNames = [
   "BigInt64Array",
   "BigUint64Array",
@@ -1036,6 +1316,7 @@ const ambientTypeNames = new Set([
   "ThisType",
   "Capitalize",
   "Lowercase",
+  "Temporal",
   "Uncapitalize",
   "Uppercase",
   "WeakMap",
@@ -1560,6 +1841,7 @@ function standardGlobalEnvironment(): TypeEnvironment {
       ["setPrototypeOf", standardFunctionType([globalObjectType, unionType([globalObjectType, nullType])], booleanType)],
     ])],
     ["Set", { kind: "intrinsicConstructor", intrinsic: "Set" }],
+    ["Temporal", temporalNamespaceType],
     ["String", {
       kind: "valueAndType",
       value: {
@@ -3566,14 +3848,41 @@ function isNestedThisOrSuperBoundary(node: Node): boolean {
 }
 
 function inheritedClassMembers(classDeclaration: ClassLikeDeclaration, environment: TypeEnvironment): ClassMemberNames | undefined {
+  const heritageEnvironment = classDeclaration.typeParameters === undefined
+    ? environment
+    : cloneTypeEnvironment(environment);
+  if (heritageEnvironment !== environment) {
+    addTypeParametersToEnvironment(effectiveTypeParameterNames(classDeclaration.typeParameters, classDeclaration), heritageEnvironment);
+  }
   for (const clause of classDeclaration.heritageClauses ?? []) {
     if (clause.token !== Kind.ExtendsKeyword) {
       continue;
     }
-    const baseType = clause.types[0] === undefined ? undefined : resolveExpressionValue(clause.types[0].expression, environment);
-    return baseType?.kind === "classConstructor" ? baseType.members : undefined;
+    const baseHeritageType = clause.types[0];
+    if (baseHeritageType === undefined) {
+      return undefined;
+    }
+    const baseType = resolveExpressionValue(baseHeritageType.expression, heritageEnvironment);
+    if (baseType?.kind !== "classConstructor") {
+      return undefined;
+    }
+    const typeArguments = baseHeritageType.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, heritageEnvironment)) ?? [];
+    if (typeArguments.some(typeContainsUnresolved)) {
+      return baseType.members;
+    }
+    return typeArguments.length === 0 ? baseType.members : substituteClassMembers(baseType.members, classTypeSubstitutions(baseType, typeArguments));
   }
   return undefined;
+}
+
+function substituteClassMembers(members: ClassMemberNames, substitutions: ReadonlyMap<string, CheckedType>): ClassMemberNames {
+  if (substitutions.size === 0) {
+    return members;
+  }
+  return {
+    ...members,
+    propertyTypes: new Map([...members.propertyTypes.entries()].map(([name, propertyType]) => [name, substituteType(propertyType, substitutions)])),
+  };
 }
 
 function classConstructorParameterTypes(classDeclaration: ClassLikeDeclaration, environment: TypeEnvironment): readonly CheckedType[] {
@@ -5810,6 +6119,10 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     }
     if ((receiver.kind === "namespace" || receiver.kind === "moduleNamespace") && isStringLiteral(expression.argumentExpression)) {
       return receiver.exports.get(expression.argumentExpression.text) ?? unresolvedType;
+    }
+    const expressionAccessType = expressionElementAccessType(receiver, argumentType);
+    if (expressionAccessType !== undefined) {
+      return expressionAccessType;
     }
     if (receiver.kind === "tuple" || receiver.kind === "union") {
       return indexedAccessType(receiver, argumentType);
@@ -8150,6 +8463,9 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
   if (receiverType.kind === "object") {
     return receiverType.properties.get(propertyName) ?? receiverType.stringIndexType ?? receiverType.numberIndexType;
   }
+  if (receiverType.kind === "record") {
+    return recordPropertyAccessType(receiverType, propertyName);
+  }
   if (receiverType.kind === "interface") {
     return interfacePropertyType(receiverType, propertyName);
   }
@@ -8409,10 +8725,16 @@ function indexedAccessType(objectType: CheckedType, indexType: CheckedType): Che
     return element?.type ?? objectType.restElementType ?? undefinedType;
   }
   if (objectType.kind === "object" && indexType.kind === "stringLiteral") {
-    return objectType.properties.get(indexType.value) ?? unresolvedType;
+    return objectType.properties.get(indexType.value) ?? objectType.stringIndexType ?? unresolvedType;
+  }
+  if (objectType.kind === "object" && (indexType.kind === "number" || indexType.kind === "numberLiteral")) {
+    return objectType.numberIndexType ?? objectType.stringIndexType ?? anyType;
   }
   if (objectType.kind === "interface" && indexType.kind === "stringLiteral") {
     return interfacePropertyType(objectType, indexType.value) ?? unresolvedType;
+  }
+  if (objectType.kind === "record") {
+    return recordIndexedAccessType(objectType, indexType) ?? anyType;
   }
   if (objectType.kind === "union") {
     return unionType(objectType.types.map(member => indexedAccessType(member, indexType)));
@@ -8421,6 +8743,107 @@ function indexedAccessType(objectType: CheckedType, indexType: CheckedType): Che
     return unionType(indexType.types.map(member => indexedAccessType(objectType, member)));
   }
   return anyType;
+}
+
+function expressionElementAccessType(receiverType: CheckedType, indexType: CheckedType): CheckedType | undefined {
+  if (receiverType.kind === "typeAliasInstance") {
+    return expressionElementAccessType(receiverType.target, indexType);
+  }
+  if (receiverType.kind === "object" && (receiverType.stringIndexType !== undefined || receiverType.numberIndexType !== undefined)) {
+    return indexedAccessType(receiverType, indexType);
+  }
+  if (receiverType.kind === "record") {
+    return recordExpressionElementAccessType(receiverType, indexType);
+  }
+  return undefined;
+}
+
+function recordIndexedAccessType(type: Extract<CheckedType, { readonly kind: "record" }>, indexType: CheckedType): CheckedType | undefined {
+  if (indexType.kind === "typeAliasInstance") {
+    return recordIndexedAccessType(type, indexType.target);
+  }
+  if (indexType.kind === "typeParameter") {
+    return undefined;
+  }
+  if (indexType.kind === "union") {
+    const memberTypes = indexType.types.map(member => recordIndexedAccessType(type, member));
+    return memberTypes.every((member): member is CheckedType => member !== undefined) ? unionType(memberTypes) : undefined;
+  }
+  return recordKeyAcceptsIndex(type.keyType, indexType) ? type.valueType : undefined;
+}
+
+function recordKeyAcceptsIndex(keyType: CheckedType, indexType: CheckedType): boolean {
+  if (keyType.kind === "typeAliasInstance") {
+    return recordKeyAcceptsIndex(keyType.target, indexType);
+  }
+  if (indexType.kind === "typeAliasInstance") {
+    return recordKeyAcceptsIndex(keyType, indexType.target);
+  }
+  if (keyType.kind === "union") {
+    return keyType.types.some(member => recordKeyAcceptsIndex(member, indexType));
+  }
+  if (keyType.kind === "any" || indexType.kind === "any" || indexType.kind === "unresolved") {
+    return true;
+  }
+  if (keyType.kind === "string") {
+    return indexType.kind === "string" || indexType.kind === "stringLiteral" || indexType.kind === "number" || indexType.kind === "numberLiteral";
+  }
+  if (keyType.kind === "number") {
+    return indexType.kind === "number" || indexType.kind === "numberLiteral";
+  }
+  if (keyType.kind === "stringLiteral") {
+    return indexType.kind === "stringLiteral" && indexType.value === keyType.value;
+  }
+  if (keyType.kind === "numberLiteral") {
+    return indexType.kind === "numberLiteral" && indexType.value === keyType.value;
+  }
+  return false;
+}
+
+function typeContainsNullish(type: CheckedType): boolean {
+  if (type.kind === "typeAliasInstance") {
+    return typeContainsNullish(type.target);
+  }
+  if (type.kind === "union") {
+    return type.types.some(typeContainsNullish);
+  }
+  return type.kind === "null" || type.kind === "undefined";
+}
+
+function typeContainsUnresolved(type: CheckedType): boolean {
+  if (type.kind === "typeAliasInstance") {
+    return typeContainsUnresolved(type.target);
+  }
+  if (type.kind === "union" || type.kind === "intersection") {
+    return type.types.some(typeContainsUnresolved);
+  }
+  if (type.kind === "object") {
+    return [...type.properties.values()].some(typeContainsUnresolved)
+      || (type.stringIndexType !== undefined && typeContainsUnresolved(type.stringIndexType))
+      || (type.numberIndexType !== undefined && typeContainsUnresolved(type.numberIndexType));
+  }
+  if (type.kind === "record") {
+    return typeContainsUnresolved(type.keyType) || typeContainsUnresolved(type.valueType);
+  }
+  if (type.kind === "array" || type.kind === "readonlyArray" || type.kind === "arrayLike" || type.kind === "arrayIterator" || type.kind === "iterable" || type.kind === "set") {
+    return typeContainsUnresolved(type.elementType);
+  }
+  if (type.kind === "tuple") {
+    return type.elements.some(element => typeContainsUnresolved(element.type))
+      || (type.restElementType !== undefined && typeContainsUnresolved(type.restElementType));
+  }
+  return type.kind === "unresolved";
+}
+
+function recordExpressionElementAccessType(type: Extract<CheckedType, { readonly kind: "record" }>, indexType: CheckedType): CheckedType | undefined {
+  if (typeContainsNullish(type.valueType)) {
+    return undefined;
+  }
+  return recordIndexedAccessType(type, indexType);
+}
+
+function recordPropertyAccessType(type: Extract<CheckedType, { readonly kind: "record" }>, propertyName: string): CheckedType | undefined {
+  return recordIndexedAccessType(type, { kind: "stringLiteral", value: propertyName });
 }
 
 function diagnoseTupleOutOfRangeAccess(objectType: CheckedType, indexType: CheckedType, state: CheckState): void {
