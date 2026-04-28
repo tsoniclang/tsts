@@ -96,6 +96,8 @@ function parseCompilerOptions(fileName: string, value: unknown, diagnostics: TsC
   const strictNullChecks = parseBooleanCompilerOption(fileName, "strictNullChecks", value.strictNullChecks, diagnostics);
   const strictPropertyInitialization = parseBooleanCompilerOption(fileName, "strictPropertyInitialization", value.strictPropertyInitialization, diagnostics);
   const exactOptionalPropertyTypes = parseBooleanCompilerOption(fileName, "exactOptionalPropertyTypes", value.exactOptionalPropertyTypes, diagnostics);
+  const experimentalDecorators = parseBooleanCompilerOption(fileName, "experimentalDecorators", value.experimentalDecorators, diagnostics);
+  const emitDecoratorMetadata = parseBooleanCompilerOption(fileName, "emitDecoratorMetadata", value.emitDecoratorMetadata, diagnostics);
   return {
     ...(outDir === undefined ? {} : { outDir }),
     ...(allowSyntheticDefaultImports === undefined ? {} : { allowSyntheticDefaultImports }),
@@ -110,6 +112,8 @@ function parseCompilerOptions(fileName: string, value: unknown, diagnostics: TsC
     ...(strictNullChecks === undefined ? {} : { strictNullChecks }),
     ...(strictPropertyInitialization === undefined ? {} : { strictPropertyInitialization }),
     ...(exactOptionalPropertyTypes === undefined ? {} : { exactOptionalPropertyTypes }),
+    ...(experimentalDecorators === undefined ? {} : { experimentalDecorators }),
+    ...(emitDecoratorMetadata === undefined ? {} : { emitDecoratorMetadata }),
   };
 }
 

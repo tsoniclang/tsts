@@ -43,6 +43,8 @@ interface CaseCompilerOptions extends CompilerOptions {
   readonly noLib?: boolean;
   readonly allowJs?: boolean;
   readonly checkJs?: boolean;
+  readonly experimentalDecorators?: boolean;
+  readonly emitDecoratorMetadata?: boolean;
   readonly allowSyntheticDefaultImports?: boolean;
   readonly alwaysStrict?: boolean;
   readonly allowUnreachableCode?: boolean;
@@ -458,6 +460,12 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
         break;
       case "downleveliteration":
         options = { ...options, downlevelIteration: parseBoolean(value) };
+        break;
+      case "experimentaldecorators":
+        options = { ...options, experimentalDecorators: parseBoolean(value) };
+        break;
+      case "emitdecoratormetadata":
+        options = { ...options, emitDecoratorMetadata: parseBoolean(value) };
         break;
       case "allowsyntheticdefaultimports":
         options = { ...options, allowSyntheticDefaultImports: parseBoolean(value) };

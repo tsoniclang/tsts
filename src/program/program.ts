@@ -25,6 +25,8 @@ export interface CompilerOptions {
   readonly allowJs?: boolean;
   readonly checkJs?: boolean;
   readonly downlevelIteration?: boolean;
+  readonly experimentalDecorators?: boolean;
+  readonly emitDecoratorMetadata?: boolean;
   readonly allowSyntheticDefaultImports?: boolean;
   readonly alwaysStrict?: boolean;
   readonly allowUnreachableCode?: boolean;
@@ -242,6 +244,9 @@ function compilerOptionsDiagnostics(options: CompilerOptions): readonly ProgramD
   }
   if (options.exactOptionalPropertyTypes === true && !strictCompilerOptionValue(options, "strictNullChecks")) {
     diagnostics.push(optionDiagnostic(5052, "exactOptionalPropertyTypes", "strictNullChecks"));
+  }
+  if (options.emitDecoratorMetadata === true && options.experimentalDecorators !== true) {
+    diagnostics.push(optionDiagnostic(5052, "emitDecoratorMetadata", "experimentalDecorators"));
   }
   if (options.outFile !== undefined && options.noEmit !== true && options.emitDeclarationOnly !== true && !moduleKindSupportsOutFile(options.module)) {
     diagnostics.push(optionDiagnostic(6082, "outFile"));

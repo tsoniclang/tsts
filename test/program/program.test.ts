@@ -282,6 +282,23 @@ describe("program groundwork", () => {
     ]);
   });
 
+  it("reports decorator metadata dependency on legacy decorators", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "class C {}"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+    };
+
+    const program = createProgram(["src/index.ts"], { emitDecoratorMetadata: true }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [5052]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Option 'emitDecoratorMetadata' cannot be specified without specifying option 'experimentalDecorators'.",
+    ]);
+  });
+
   it("uses source-owned noLib global type declarations before reporting TS2318", () => {
     const files = new Map<string, string>([
       ["src/index.ts", "interface Array<T> { length: number }"],

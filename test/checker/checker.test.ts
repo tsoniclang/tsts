@@ -251,6 +251,34 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("reports computed class-field names and decorator targets through TS-Go grammar rules", () => {
+    const sourceFile = parseSourceFile([
+      "function x(_target: object, _key: PropertyKey) {}",
+      "function foo(): string { return 'field'; }",
+      "const fieldName: string = 'fieldName';",
+      "class Declared {",
+      "  [foo()]: any;",
+      "  [fieldName]: any;",
+      "  ['literal']: any;",
+      "  [-1]: any;",
+      "}",
+      "void class Expression {",
+      "  @x ['literal']: any;",
+      "  @x [foo()]() {}",
+      "  @x [foo()]: any;",
+      "};",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { experimentalDecorators: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1166, 1206, 1206, 1206]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "A computed property name in a class property declaration must have a simple literal type or a 'unique symbol' type.",
+      "Decorators are not valid here.",
+      "Decorators are not valid here.",
+      "Decorators are not valid here.",
+    ]);
+  });
+
   it("reports parameter list grammar for rest and optional ordering", () => {
     const sourceFile = parseSourceFile([
       "function restNotLast(...x: number[], y: number) {}",

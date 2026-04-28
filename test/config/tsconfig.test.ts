@@ -15,6 +15,8 @@ describe("tsconfig groundwork", () => {
           "strictNullChecks": true,
           "strictPropertyInitialization": false,
           "exactOptionalPropertyTypes": true,
+          "experimentalDecorators": true,
+          "emitDecoratorMetadata": true,
           "noUncheckedSideEffectImports": true,
         },
         "files": [
@@ -33,6 +35,8 @@ describe("tsconfig groundwork", () => {
       strictNullChecks: true,
       strictPropertyInitialization: false,
       exactOptionalPropertyTypes: true,
+      experimentalDecorators: true,
+      emitDecoratorMetadata: true,
       noUncheckedSideEffectImports: true,
     });
   });

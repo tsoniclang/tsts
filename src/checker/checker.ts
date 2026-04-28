@@ -3767,6 +3767,7 @@ function inferClassExpression(classExpression: ClassExpression, state: CheckStat
 }
 
 function checkClassLike(classDeclaration: ClassLikeDeclaration, state: CheckState, environment: TypeEnvironment, ambient: boolean, bindOuterName: boolean): CheckedType {
+  checkDecoratorGrammar(classDeclaration, state);
   const unusedEntry = bindOuterName && classDeclaration.name !== undefined && !ambient && !declarationIsExported(classDeclaration)
     ? registerUnusedDeclaration(classDeclaration.name.text, classDeclaration, "type", state, environment)
     : undefined;
@@ -5099,6 +5100,9 @@ function propertyNameDiagnosticText(name: PropertyName): string | undefined {
 }
 
 function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment, ambient: boolean, classIsAbstract: boolean, classMembers: ClassMemberNames, inheritedMembers: ClassMemberNames | undefined, accessorContextTypes: ReadonlyMap<string, AccessorContextTypes>, constructorAssignedProperties: ReadonlySet<string>): void {
+  if (checkDecoratorGrammar(member, state)) {
+    return;
+  }
   checkJavaScriptDeclareModifier(member, state);
   if (hasModifier(member, Kind.ConstKeyword)) {
     state.diagnostics.push(createDiagnostic(1248, "const"));
@@ -5156,6 +5160,9 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     return;
   }
   if (isPropertyDeclaration(member) && member.initializer !== undefined) {
+    if (checkClassPropertyComputedName(member, state)) {
+      return;
+    }
     checkAbstractMemberModifiers(member, state, classIsAbstract, propertyNameText(member.name), true);
     checkUninitializedProperty(member, state, ambient, constructorAssignedProperties);
     checkAutoAccessorTarget(member, state, ambient);
@@ -5172,6 +5179,9 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     return;
   }
   if (isPropertyDeclaration(member)) {
+    if (checkClassPropertyComputedName(member, state)) {
+      return;
+    }
     checkAbstractMemberModifiers(member, state, classIsAbstract, propertyNameText(member.name), true);
     checkUninitializedProperty(member, state, ambient, constructorAssignedProperties);
     checkAutoAccessorTarget(member, state, ambient);
@@ -11627,7 +11637,122 @@ function hasModifier(node: object, kind: Kind): boolean {
   return (node as { readonly modifiers?: readonly { readonly kind: Kind }[] }).modifiers?.some(modifier => modifier.kind === kind) === true;
 }
 
+function checkDecoratorGrammar(node: Node, state: CheckState): boolean {
+  if (!hasModifier(node, Kind.Decorator)) {
+    return false;
+  }
+  if (nodeCanBeDecorated(state.options.experimentalDecorators === true, node)) {
+    return false;
+  }
+  if (isMethodDeclaration(node) && node.body === undefined) {
+    state.diagnostics.push(createDiagnostic(1249));
+  } else {
+    state.diagnostics.push(createDiagnostic(1206));
+  }
+  return true;
+}
+
+function nodeCanBeDecorated(useLegacyDecorators: boolean, node: Node): boolean {
+  if (useLegacyDecorators && nodeHasPrivateName(node)) {
+    return false;
+  }
+  const parent = node.parent;
+  const grandparent = parent?.parent;
+  if (isClassDeclaration(node)) {
+    return true;
+  }
+  if (isClassExpression(node)) {
+    return !useLegacyDecorators;
+  }
+  if (isPropertyDeclaration(node)) {
+    if (parent === undefined || (!isClassDeclaration(parent) && !isClassExpression(parent))) {
+      return false;
+    }
+    return useLegacyDecorators
+      ? isClassDeclaration(parent)
+      : !hasModifier(node, Kind.AbstractKeyword) && !hasDeclareModifier(node);
+  }
+  if (isGetAccessorDeclaration(node) || isSetAccessorDeclaration(node) || isMethodDeclaration(node)) {
+    if (parent === undefined || (!isClassDeclaration(parent) && !isClassExpression(parent))) {
+      return false;
+    }
+    return node.body !== undefined && (useLegacyDecorators ? isClassDeclaration(parent) : true);
+  }
+  if (isParameterDeclaration(node)) {
+    if (!useLegacyDecorators || parent === undefined || grandparent === undefined || isThisParameterDeclaration(node)) {
+      return false;
+    }
+    return (isConstructorDeclaration(parent) || isMethodDeclaration(parent) || isSetAccessorDeclaration(parent))
+      && parent.body !== undefined
+      && isClassDeclaration(grandparent);
+  }
+  return false;
+}
+
+function nodeHasPrivateName(node: Node): boolean {
+  if ((isMethodDeclaration(node) || isPropertyDeclaration(node) || isGetAccessorDeclaration(node) || isSetAccessorDeclaration(node)) && isPrivateIdentifier(node.name)) {
+    return true;
+  }
+  return false;
+}
+
+function checkClassPropertyComputedName(member: Extract<ClassElement, { readonly kind: Kind.PropertyDeclaration }>, state: CheckState): boolean {
+  return checkGrammarForInvalidDynamicName(member.name, 1166, state);
+}
+
+function checkGrammarForInvalidDynamicName(name: PropertyName, diagnosticCode: 1166, state: CheckState): boolean {
+  if (!isNonBindableDynamicName(name)) {
+    return false;
+  }
+  const expression = dynamicNameExpression(name);
+  if (expression !== undefined && isEntityNameExpression(expression)) {
+    return false;
+  }
+  state.diagnostics.push(createDiagnostic(diagnosticCode));
+  return true;
+}
+
+function isNonBindableDynamicName(name: PropertyName): boolean {
+  return isDynamicName(name) && !isLateBindableName(name);
+}
+
+function isDynamicName(name: PropertyName): boolean {
+  if (!isComputedPropertyName(name)) {
+    return false;
+  }
+  const expression = name.expression;
+  return !isStringOrNumericLiteralLike(expression) && !isSignedNumericLiteral(expression);
+}
+
+function isLateBindableName(name: PropertyName): boolean {
+  if (!isComputedPropertyName(name) || !isEntityNameExpression(name.expression)) {
+    return false;
+  }
+  return isTypeUsableAsPropertyName(literalExpressionNarrowType(name.expression) ?? unresolvedType);
+}
+
+function dynamicNameExpression(name: PropertyName): Expression | undefined {
+  return isComputedPropertyName(name) ? name.expression : undefined;
+}
+
+function isStringOrNumericLiteralLike(expression: Expression): boolean {
+  return isStringLiteral(expression) || isNoSubstitutionTemplateLiteral(expression) || isNumericLiteral(expression);
+}
+
+function isSignedNumericLiteral(expression: Expression): boolean {
+  return isPrefixUnaryExpression(expression)
+    && (expression.operator === Kind.PlusToken || expression.operator === Kind.MinusToken)
+    && isNumericLiteral(expression.operand);
+}
+
+function isTypeUsableAsPropertyName(type: CheckedType): boolean {
+  return type.kind === "stringLiteral" || type.kind === "numberLiteral";
+}
+
 function checkParameterModifiers(parameter: ParameterDeclaration, state: CheckState, allowParameterProperties: boolean): void {
+  if (checkDecoratorGrammar(parameter, state)) {
+    return;
+  }
   checkParameterModifierGrammar(parameter, state);
   if (!allowParameterProperties && isParameterProperty(parameter)) {
     state.diagnostics.push(createDiagnostic(2369));
