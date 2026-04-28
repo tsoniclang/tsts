@@ -2875,6 +2875,43 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("checks declared generic type reference arity with defaults", () => {
+    const sourceFile = parseSourceFile([
+      "interface Box<T> { value: T }",
+      "interface Pair<T, U = string> { first: T; second: U }",
+      "type Alias<T> = T;",
+      "type AliasPair<T, U = string> = T | U;",
+      "class Holder<T> { value!: T }",
+      "class DefaultHolder<T = string> { value!: T }",
+      "let a: Box;",
+      "let b: Box<string, number>;",
+      "let c: Pair;",
+      "let d: Pair<number, string, boolean>;",
+      "let e: Alias;",
+      "let f: AliasPair<number, string, boolean>;",
+      "let g: Holder;",
+      "let h: Holder<number, string>;",
+      "let i: DefaultHolder;",
+      "class ImplementsBox implements Box { value!: string }",
+      "interface ExtendsBox extends Box {}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2314, 2314, 2707, 2707, 2314, 2707, 2314, 2314, 2314, 2314]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Generic type 'Box<T>' requires 1 type argument(s).",
+      "Generic type 'Box<T>' requires 1 type argument(s).",
+      "Generic type 'Pair<T, U>' requires between 1 and 2 type arguments.",
+      "Generic type 'Pair<T, U>' requires between 1 and 2 type arguments.",
+      "Generic type 'Alias' requires 1 type argument(s).",
+      "Generic type 'AliasPair' requires between 1 and 2 type arguments.",
+      "Generic type 'Holder<T>' requires 1 type argument(s).",
+      "Generic type 'Holder<T>' requires 1 type argument(s).",
+      "Generic type 'Box<T>' requires 1 type argument(s).",
+      "Generic type 'Box<T>' requires 1 type argument(s).",
+    ]);
+  });
+
   it("reports invalid element access index types through union members", () => {
     const sourceFile = parseSourceFile("declare const keys: (string | string[])[]; declare const values: number[]; values[keys[0]];");
     const result = checkSourceFile(sourceFile, { strict: false });

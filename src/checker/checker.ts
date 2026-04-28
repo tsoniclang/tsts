@@ -205,7 +205,7 @@ type CheckedType =
   | { readonly kind: "readonlyArray"; readonly elementType: CheckedType }
   | { readonly kind: "builtinConstructor"; readonly name: string; readonly instanceType: CheckedType; readonly constructorParameters: readonly CheckedType[]; readonly staticProperties: ReadonlyMap<string, CheckedType> }
   | { readonly kind: "classInstance"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeArguments: readonly CheckedType[]; readonly typeParameterConstraints?: readonly (CheckedType | undefined)[]; readonly members: ClassMemberNames; readonly baseType?: CheckedType; readonly arrayBaseElementType?: CheckedType }
-  | { readonly kind: "classConstructor"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeArguments: readonly CheckedType[]; readonly typeParameterConstraints?: readonly (CheckedType | undefined)[]; readonly constructorParameters: readonly CheckedType[]; readonly abstract: boolean; readonly members: ClassMemberNames; readonly baseType?: CheckedType; readonly arrayBaseElementType?: CheckedType; readonly uninitializedStaticProperties?: ReadonlySet<string> }
+  | { readonly kind: "classConstructor"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeArguments: readonly CheckedType[]; readonly typeParameterConstraints?: readonly (CheckedType | undefined)[]; readonly typeParameterDefaults?: readonly (CheckedType | undefined)[]; readonly constructorParameters: readonly CheckedType[]; readonly abstract: boolean; readonly members: ClassMemberNames; readonly baseType?: CheckedType; readonly arrayBaseElementType?: CheckedType; readonly uninitializedStaticProperties?: ReadonlySet<string> }
   | { readonly kind: "accessorProperty"; readonly type: CheckedType }
   | { readonly kind: "arrayLike"; readonly elementType: CheckedType }
   | { readonly kind: "arrayIterator"; readonly elementType: CheckedType }
@@ -228,7 +228,7 @@ type CheckedType =
   | { readonly kind: "record"; readonly keyType: CheckedType; readonly valueType: CheckedType; readonly keyParameter?: string; readonly optional?: boolean; readonly sourceConstraint?: CheckedType; readonly mappedArraySource?: CheckedType }
   | { readonly kind: "thisType" }
   | { readonly kind: "thisClass"; readonly className: string; readonly members: ClassMemberNames; readonly abstractProperties: ReadonlySet<string>; readonly abstractPropertyDeclaringClasses: ReadonlyMap<string, string>; readonly uninitializedProperties: ReadonlySet<string>; readonly mode: "constructor" | "fieldInitializer" | "method" }
-  | { readonly kind: "typeAlias"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeParameterConstraints?: readonly (CheckedType | undefined)[]; readonly declaration?: TypeAliasDeclaration; readonly target: CheckedType; readonly preserveDisplay: boolean; readonly requiresExplicitDeclarationAnnotation: boolean }
+  | { readonly kind: "typeAlias"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeParameterConstraints?: readonly (CheckedType | undefined)[]; readonly typeParameterDefaults?: readonly (CheckedType | undefined)[]; readonly declaration?: TypeAliasDeclaration; readonly target: CheckedType; readonly preserveDisplay: boolean; readonly requiresExplicitDeclarationAnnotation: boolean }
   | { readonly kind: "typeAliasInstance"; readonly name: string; readonly typeArguments: readonly CheckedType[]; readonly target: CheckedType; readonly requiresExplicitDeclarationAnnotation: boolean }
   | { readonly kind: "typeOnly"; readonly name: string; readonly type: CheckedType }
   | { readonly kind: "typeParameter"; readonly name: string; readonly constraint?: CheckedType }
@@ -753,6 +753,7 @@ interface InterfaceMembers {
   readonly name: string;
   readonly typeParameters: readonly string[];
   readonly typeParameterConstraints?: readonly (CheckedType | undefined)[];
+  readonly typeParameterDefaults?: readonly (CheckedType | undefined)[];
   readonly declaration?: InterfaceDeclaration;
   readonly origin?: InterfaceMembers;
   readonly version: number;
@@ -816,11 +817,12 @@ function standardGlobalFunction(name: string, parameters: readonly CheckedType[]
   return functionDeclarationBinding(name, standardFunctionType(parameters, returnType, options));
 }
 
-function standardTypeAlias(name: string, typeParameters: readonly string[] = [], target: CheckedType = anyType): Extract<CheckedType, { readonly kind: "typeAlias" }> {
+function standardTypeAlias(name: string, typeParameters: readonly string[] = [], target: CheckedType = anyType, typeParameterDefaults?: readonly (CheckedType | undefined)[]): Extract<CheckedType, { readonly kind: "typeAlias" }> {
   return {
     kind: "typeAlias",
     name,
     typeParameters,
+    ...(typeParameterDefaults === undefined ? {} : { typeParameterDefaults }),
     target,
     preserveDisplay: false,
     requiresExplicitDeclarationAnnotation: false,
@@ -859,9 +861,11 @@ function standardInterfaceType(
   properties: ReadonlyMap<string, CheckedType>,
   options: {
     readonly typeParameters?: readonly string[];
+    readonly typeParameterDefaults?: readonly (CheckedType | undefined)[];
     readonly readonlyProperties?: ReadonlySet<string>;
     readonly optionalProperties?: ReadonlySet<string>;
     readonly methodProperties?: ReadonlySet<string>;
+    readonly callSignatures?: readonly CheckedFunctionType[];
     readonly stringIndexType?: CheckedType;
     readonly numberIndexType?: CheckedType;
     readonly symbolIndexType?: CheckedType;
@@ -873,12 +877,13 @@ function standardInterfaceType(
     members: {
       name,
       typeParameters: options.typeParameters ?? [],
+      ...(options.typeParameterDefaults === undefined ? {} : { typeParameterDefaults: options.typeParameterDefaults }),
       version: 0,
       properties,
       readonlyProperties: options.readonlyProperties ?? emptyStringSet,
       optionalProperties: options.optionalProperties ?? emptyStringSet,
       methodProperties: options.methodProperties ?? emptyStringSet,
-      callSignatures: [],
+      callSignatures: options.callSignatures ?? [],
       inheritedTypes: [],
       inheritedClassTypes: [],
       ...(options.stringIndexType === undefined ? {} : { stringIndexType: options.stringIndexType }),
@@ -922,14 +927,17 @@ const genericPromiseInterfaceType = standardInterfaceType("Promise", new Map<str
 }) as Extract<CheckedType, { readonly kind: "interface" }>;
 const genericAsyncGeneratorInterfaceType = standardInterfaceType("AsyncGenerator", new Map(), {
   typeParameters: ["T", "TReturn", "TNext"],
+  typeParameterDefaults: [unknownType, anyType, anyType],
 }) as Extract<CheckedType, { readonly kind: "interface" }>;
 const genericGeneratorInterfaceType = standardInterfaceType("Generator", new Map(), {
   typeParameters: ["T", "TReturn", "TNext"],
+  typeParameterDefaults: [unknownType, anyType, anyType],
 }) as Extract<CheckedType, { readonly kind: "interface" }>;
 const genericAsyncIterableInterfaceType = standardInterfaceType("AsyncIterable", new Map(), {
-  typeParameters: ["T"],
+  typeParameters: ["T", "TReturn", "TNext"],
+  typeParameterDefaults: [undefined, anyType, anyType],
 }) as Extract<CheckedType, { readonly kind: "interface" }>;
-const genericIteratorResultType = standardTypeAlias("IteratorResult", ["T", "TReturn"]);
+const genericIteratorResultType = standardTypeAlias("IteratorResult", ["T", "TReturn"], anyType, [undefined, anyType]);
 const standardConsoleObjectType = standardObject([
   ["debug", { kind: "function", typeParameters: [], parameters: [anyType], restParameterIndex: 0, returnType: voidType }],
   ["error", { kind: "function", typeParameters: [], parameters: [anyType], restParameterIndex: 0, returnType: voidType }],
@@ -3661,14 +3669,16 @@ function bindTypeAliasDeclaration(statement: TypeAliasDeclaration, state: CheckS
   environment.set(statement.name.text, mergeTypeNamespace(environment.get(statement.name.text), aliasType));
   const aliasEnvironment = cloneTypeEnvironment(environment);
   addTypeParameterDeclarationsToEnvironment(statement.typeParameters ?? [], aliasEnvironment, aliasState);
-  const { typeParameterConstraints, target } = withActiveTypeParameterConstraintDeclaration(statement, typeParameters, () => ({
+  const { typeParameterConstraints, typeParameterDefaults, target } = withActiveTypeParameterConstraintDeclaration(statement, typeParameters, () => ({
     typeParameterConstraints: addTypeParameterConstraintsToEnvironment(statement.typeParameters, aliasEnvironment, aliasState),
+    typeParameterDefaults: addTypeParameterDefaultsToEnvironment(statement.typeParameters, aliasEnvironment, aliasState),
     target: typeFromTypeNode(statement.type, aliasEnvironment, aliasState),
   }));
   Object.assign(aliasType, {
     name: statement.name.text,
     typeParameters,
     typeParameterConstraints,
+    typeParameterDefaults,
     declaration: statement,
     target,
     preserveDisplay: isIntersectionTypeNode(statement.type) || isFunctionTypeNode(statement.type),
@@ -4669,10 +4679,35 @@ function mergedInterfaceMembers(left: InterfaceMembers, right: InterfaceMembers)
     callSignatures: [...left.callSignatures, ...right.callSignatures],
     inheritedTypes: uniqueInterfaceTypes([...left.inheritedTypes, ...right.inheritedTypes]),
     inheritedClassTypes: uniqueClassInstanceTypes([...left.inheritedClassTypes, ...right.inheritedClassTypes]),
+    ...mergedTypeParameterDefaults(left.typeParameters, left.typeParameterDefaults, right.typeParameters, right.typeParameterDefaults),
     ...((right.stringIndexType ?? left.stringIndexType) === undefined ? {} : { stringIndexType: (right.stringIndexType ?? left.stringIndexType)! }),
     ...((right.numberIndexType ?? left.numberIndexType) === undefined ? {} : { numberIndexType: (right.numberIndexType ?? left.numberIndexType)! }),
     ...((right.symbolIndexType ?? left.symbolIndexType) === undefined ? {} : { symbolIndexType: (right.symbolIndexType ?? left.symbolIndexType)! }),
   };
+}
+
+function mergedTypeParameterDefaults(
+  primaryTypeParameters: readonly string[],
+  primaryDefaults: readonly (CheckedType | undefined)[] | undefined,
+  fallbackTypeParameters: readonly string[],
+  fallbackDefaults: readonly (CheckedType | undefined)[] | undefined,
+): { readonly typeParameterDefaults?: readonly (CheckedType | undefined)[] } {
+  if (fallbackDefaults === undefined || primaryTypeParameters.length !== fallbackTypeParameters.length) {
+    return primaryDefaults === undefined ? {} : { typeParameterDefaults: primaryDefaults };
+  }
+  const substitutions = new Map<string, CheckedType>();
+  for (let index = 0; index < fallbackTypeParameters.length; index += 1) {
+    substitutions.set(fallbackTypeParameters[index]!, { kind: "typeParameter", name: primaryTypeParameters[index]! });
+  }
+  const merged = primaryTypeParameters.map((_, index) => {
+    const primaryDefault = primaryDefaults?.[index];
+    if (primaryDefault !== undefined) {
+      return primaryDefault;
+    }
+    const fallbackDefault = fallbackDefaults[index];
+    return fallbackDefault === undefined ? undefined : substituteTypeIfNeeded(fallbackDefault, substitutions);
+  });
+  return { typeParameterDefaults: merged };
 }
 
 function uniqueInterfaceTypes(types: readonly Extract<CheckedType, { readonly kind: "interface" }>[]): readonly Extract<CheckedType, { readonly kind: "interface" }>[] {
@@ -5312,6 +5347,8 @@ function classConstructorTypeDetailsFromDeclaration(classDeclaration: ClassLikeD
   );
   addJSDocTypeParameterGroups(classDeclaration, state);
   const typeParameterConstraints = addTypeParameterConstraintsToEnvironment(classDeclaration.typeParameters, classEnvironment, state);
+  const declaredTypeParameterDefaults = addTypeParameterDefaultsToEnvironment(classDeclaration.typeParameters, classEnvironment, state);
+  const typeParameterDefaults = mergedClassInterfaceTypeParameterDefaults(className, typeParameters, declaredTypeParameterDefaults, environment);
   const classMembers = collectClassMemberNames(classDeclaration, inheritedMembers, classEnvironment, state.options);
   const classType: Extract<CheckedType, { readonly kind: "classConstructor" }> = {
     kind: "classConstructor",
@@ -5319,6 +5356,7 @@ function classConstructorTypeDetailsFromDeclaration(classDeclaration: ClassLikeD
     typeParameters,
     typeArguments: [],
     typeParameterConstraints,
+    typeParameterDefaults,
     constructorParameters: classConstructorParameterTypes(classDeclaration, classEnvironment),
     abstract: hasModifier(classDeclaration, Kind.AbstractKeyword),
     members: classMembers,
@@ -5326,6 +5364,14 @@ function classConstructorTypeDetailsFromDeclaration(classDeclaration: ClassLikeD
     ...classArrayBaseElementType(classDeclaration, classEnvironment, state),
   };
   return { classType, classEnvironment, classMembers };
+}
+
+function mergedClassInterfaceTypeParameterDefaults(className: string | undefined, typeParameters: readonly string[], classDefaults: readonly (CheckedType | undefined)[], environment: TypeEnvironment): readonly (CheckedType | undefined)[] {
+  if (className === undefined) {
+    return classDefaults;
+  }
+  const mergedInterface = interfaceMeaning(environment.get(className));
+  return mergedTypeParameterDefaults(typeParameters, classDefaults, mergedInterface?.members.typeParameters ?? [], mergedInterface?.members.typeParameterDefaults).typeParameterDefaults ?? classDefaults;
 }
 
 function registerUnusedClassMembers(members: readonly ClassElement[], state: CheckState, ambient: boolean): ReadonlyMap<string, UnusedDeclarationEntry> | undefined {
@@ -5393,8 +5439,8 @@ function classBaseType(classDeclaration: ClassLikeDeclaration, environment: Type
     const heritageType = clause.types[0];
     const baseExpressionType = inferExpression(heritageType.expression, state, environment);
     const typeArguments = heritageType.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? [];
-    const baseType = baseExpressionType.kind === "classConstructor" && typeArguments.length > 0
-      ? instantiateClassConstructor(baseExpressionType, typeArguments)
+    const baseType = baseExpressionType.kind === "classConstructor"
+      ? instantiateClassConstructorTypeReference(baseExpressionType, expressionNameText(heritageType.expression), state.isJavaScriptFile ? undefined : state, typeArguments, { checkConstraints: false })
       : baseExpressionType;
     if (!classDeclarationExtendsStandardArray(classDeclaration) && !isClassBaseConstructorType(baseType)) {
       state.diagnostics.push(createDiagnostic(2507, displayType(baseType)));
@@ -5480,13 +5526,14 @@ function classMissingImplementedInterfaceProperties(classInstance: Extract<Check
 
 function implementedInterfaceType(heritageType: ExpressionWithTypeArguments, environment: TypeEnvironment, state: CheckState): Extract<CheckedType, { readonly kind: "interface" }> | undefined {
   const type = typeMeaning(heritageExpressionType(heritageType.expression, environment, state) ?? unresolvedType);
-  if (type?.kind !== "interface") {
+  if (type === undefined) {
     return undefined;
   }
-  if (heritageType.typeArguments === undefined || heritageType.typeArguments.length === 0) {
-    return type;
-  }
-  return instantiateInterfaceType(type, heritageType.typeArguments.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)));
+  const typeArguments = heritageType.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? [];
+  const instantiated = type.kind === "interface"
+    ? instantiateInterfaceTypeReference(type, expressionNameText(heritageType.expression), state, typeArguments, { checkConstraints: false })
+    : typeFromResolvedEntity(type, expressionNameText(heritageType.expression), state, typeArguments);
+  return instantiated.kind === "interface" ? instantiated : undefined;
 }
 
 function checkDerivedConstructorSuperCalls(classDeclaration: ClassLikeDeclaration, classType: Extract<CheckedType, { readonly kind: "classConstructor" }>, state: CheckState): void {
@@ -5584,7 +5631,11 @@ function inheritedClassMembers(classDeclaration: ClassLikeDeclaration, environme
     if (baseType?.kind !== "classConstructor") {
       return undefined;
     }
-    const typeArguments = baseHeritageType.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, heritageEnvironment)) ?? [];
+    const typeArguments = completeGenericTypeReferenceArguments(
+      baseHeritageType.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, heritageEnvironment)) ?? [],
+      baseType.typeParameters,
+      baseType.typeParameterDefaults,
+    );
     if (typeArguments.some(typeContainsUnresolved)) {
       return baseType.members;
     }
@@ -6302,19 +6353,21 @@ function bindInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, st
     declarationName: interfaceDeclaration.name.text,
     mergeKeyPrefix: `type:${interfaceDeclaration.name.text}`,
   });
-  const { typeParameterConstraints, inheritedInterfaces, inheritedClasses } = withActiveTypeParameterConstraintDeclaration(interfaceDeclaration, typeParameters, () => ({
+  const { typeParameterConstraints, typeParameterDefaults, inheritedInterfaces, inheritedClasses } = withActiveTypeParameterConstraintDeclaration(interfaceDeclaration, typeParameters, () => ({
     typeParameterConstraints: addTypeParameterConstraintsToEnvironment(interfaceDeclaration.typeParameters, interfaceEnvironment, interfaceState),
+    typeParameterDefaults: addTypeParameterDefaultsToEnvironment(interfaceDeclaration.typeParameters, interfaceEnvironment, interfaceState),
     inheritedInterfaces: inheritedInterfaceTypes(interfaceDeclaration, interfaceEnvironment, interfaceState),
     inheritedClasses: inheritedClassTypes(interfaceDeclaration, interfaceEnvironment, interfaceState),
   }));
   Object.assign(placeholderMembers, {
     typeParameterConstraints,
+    typeParameterDefaults,
     inheritedTypes: inheritedInterfaces,
     inheritedClassTypes: inheritedClasses,
     version: placeholderMembers.version + 1,
   });
   interfaceEnvironment.set(interfaceDeclaration.name.text, mergeTypeNamespace(interfaceEnvironment.get(interfaceDeclaration.name.text), placeholderType));
-  const members = collectInterfaceMembers(interfaceDeclaration, inheritedInterfaces, inheritedClasses, interfaceState, interfaceEnvironment, typeParameterConstraints, placeholderMembers);
+  const members = collectInterfaceMembers(interfaceDeclaration, inheritedInterfaces, inheritedClasses, interfaceState, interfaceEnvironment, typeParameterConstraints, typeParameterDefaults, placeholderMembers);
   if (members !== placeholderMembers) {
     Object.assign(placeholderMembers, members, { version: placeholderMembers.version + 1 });
   }
@@ -6329,12 +6382,40 @@ function inheritedInterfaceTypes(interfaceDeclaration: InterfaceDeclaration, env
     }
     for (const heritageType of clause.types) {
       const baseType = typeMeaning(heritageExpressionType(heritageType.expression, environment, state) ?? unresolvedType);
-      if (baseType?.kind === "interface") {
-        inherited.push(instantiateInterfaceType(baseType, heritageType.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? []));
+      if (baseType !== undefined && baseType.kind !== "classConstructor") {
+        const typeArguments = heritageType.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? [];
+        const instantiated = baseType.kind === "interface"
+          ? instantiateInterfaceTypeReference(baseType, expressionNameText(heritageType.expression), state, typeArguments, { checkConstraints: false })
+          : typeFromResolvedEntity(baseType, expressionNameText(heritageType.expression), state, typeArguments);
+        const inheritedType = interfaceHeritageMemberType(instantiated, expressionNameText(heritageType.expression) ?? displayType(instantiated));
+        if (inheritedType !== undefined) {
+          inherited.push(inheritedType);
+        }
       }
     }
   }
   return inherited;
+}
+
+function interfaceHeritageMemberType(type: CheckedType, name: string): Extract<CheckedType, { readonly kind: "interface" }> | undefined {
+  if (type.kind === "interface") {
+    return type;
+  }
+  if (type.kind === "typeAliasInstance") {
+    return interfaceHeritageMemberType(type.target, type.name);
+  }
+  if (type.kind === "object") {
+    return standardInterfaceType(name, type.properties, {
+      readonlyProperties: type.readonlyProperties,
+      optionalProperties: type.optionalProperties,
+      methodProperties: type.methodProperties,
+      ...(type.callSignatures === undefined ? {} : { callSignatures: type.callSignatures }),
+      ...(type.stringIndexType === undefined ? {} : { stringIndexType: type.stringIndexType }),
+      ...(type.numberIndexType === undefined ? {} : { numberIndexType: type.numberIndexType }),
+      ...(type.symbolIndexType === undefined ? {} : { symbolIndexType: type.symbolIndexType }),
+    }) as Extract<CheckedType, { readonly kind: "interface" }>;
+  }
+  return undefined;
 }
 
 function inheritedClassTypes(interfaceDeclaration: InterfaceDeclaration, environment: TypeEnvironment, state?: CheckState): readonly Extract<CheckedType, { readonly kind: "classInstance" }>[] {
@@ -6346,7 +6427,13 @@ function inheritedClassTypes(interfaceDeclaration: InterfaceDeclaration, environ
     for (const heritageType of clause.types) {
       const baseType = typeMeaning(heritageExpressionType(heritageType.expression, environment, state) ?? unresolvedType);
       if (baseType?.kind === "classConstructor") {
-        const instantiated = instantiateClassConstructor(baseType, heritageType.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? []);
+        const instantiated = instantiateClassConstructorTypeReference(
+          baseType,
+          expressionNameText(heritageType.expression),
+          state,
+          heritageType.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? [],
+          { checkConstraints: false },
+        );
         inherited.push(classConstructorInstanceType(instantiated));
       }
     }
@@ -6392,7 +6479,7 @@ function heritageExpressionNamespace(expression: Expression, environment: TypeEn
   return undefined;
 }
 
-function collectInterfaceMembers(interfaceDeclaration: InterfaceDeclaration, inheritedInterfaces: readonly Extract<CheckedType, { readonly kind: "interface" }>[], inheritedClasses: readonly Extract<CheckedType, { readonly kind: "classInstance" }>[], state: CheckState, environment: TypeEnvironment, typeParameterConstraints: readonly (CheckedType | undefined)[], currentMembers?: InterfaceMembers): InterfaceMembers {
+function collectInterfaceMembers(interfaceDeclaration: InterfaceDeclaration, inheritedInterfaces: readonly Extract<CheckedType, { readonly kind: "interface" }>[], inheritedClasses: readonly Extract<CheckedType, { readonly kind: "classInstance" }>[], state: CheckState, environment: TypeEnvironment, typeParameterConstraints: readonly (CheckedType | undefined)[], typeParameterDefaults: readonly (CheckedType | undefined)[], currentMembers?: InterfaceMembers): InterfaceMembers {
   const ownProperties = new Map<string, CheckedType>();
   const ownReadonlyProperties = new Set<string>();
   const ownOptionalProperties = new Set<string>();
@@ -6499,6 +6586,7 @@ function collectInterfaceMembers(interfaceDeclaration: InterfaceDeclaration, inh
     name: interfaceDeclaration.name.text,
     typeParameters: interfaceDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [],
     typeParameterConstraints,
+    typeParameterDefaults,
     declaration: interfaceDeclaration,
     version: 0,
     properties: mergedProperties,
@@ -7462,6 +7550,13 @@ function addTypeParameterConstraintsToEnvironment(typeParameters: NodeArray<Type
     return provisionalConstraints;
   }
   return typeParameters.map(typeParameter => addTypeParameterConstraintToEnvironment(typeParameter, environment, state));
+}
+
+function addTypeParameterDefaultsToEnvironment(typeParameters: NodeArray<TypeParameterDeclaration> | undefined, environment: TypeEnvironment, state?: CheckState): readonly (CheckedType | undefined)[] {
+  if (typeParameters === undefined) {
+    return [];
+  }
+  return typeParameters.map(typeParameter => typeParameter.defaultType === undefined ? undefined : typeFromTypeNode(typeParameter.defaultType, environment, state));
 }
 
 function withActiveTypeParameterConstraintDeclaration<T>(declaration: Node, typeParameters: readonly string[], action: () => T): T {
@@ -13670,6 +13765,78 @@ function hasTypeArgumentCountInRange(type: TypeReferenceNode, displayName: strin
   return false;
 }
 
+function checkGenericTypeReferenceArity(name: string, typeParameters: readonly string[], typeParameterDefaults: readonly (CheckedType | undefined)[] | undefined, includeTypeParametersInDisplay: boolean, actual: number, state: CheckState | undefined): boolean {
+  if (typeParameters.length === 0) {
+    return true;
+  }
+  const minimum = minimumTypeArgumentCount(typeParameters, typeParameterDefaults);
+  const maximum = typeParameters.length;
+  if (actual >= minimum && actual <= maximum) {
+    return true;
+  }
+  const displayName = includeTypeParametersInDisplay ? displayGenericParameterName(name, typeParameters) : name;
+  if (minimum === maximum) {
+    state?.diagnostics.push(createDiagnostic(2314, displayName, String(maximum)));
+  } else {
+    state?.diagnostics.push(createDiagnostic(2707, displayName, String(minimum), String(maximum)));
+  }
+  return false;
+}
+
+function minimumTypeArgumentCount(typeParameters: readonly string[], typeParameterDefaults: readonly (CheckedType | undefined)[] | undefined): number {
+  const firstDefault = typeParameterDefaults?.findIndex(defaultType => defaultType !== undefined) ?? -1;
+  return firstDefault === -1 ? typeParameters.length : firstDefault;
+}
+
+function completeGenericTypeReferenceArguments(typeArguments: readonly CheckedType[], typeParameters: readonly string[], typeParameterDefaults: readonly (CheckedType | undefined)[] | undefined): readonly CheckedType[] {
+  if (typeParameters.length === 0) {
+    return [];
+  }
+  const substitutions = new Map<string, CheckedType>();
+  const completed: CheckedType[] = [];
+  for (let index = 0; index < typeParameters.length; index += 1) {
+    const defaultType = typeParameterDefaults?.[index];
+    const typeArgument = typeArguments[index] ?? (defaultType === undefined ? anyType : substituteTypeIfNeeded(defaultType, substitutions));
+    substitutions.set(typeParameters[index]!, typeArgument);
+    completed.push(typeArgument);
+  }
+  return completed;
+}
+
+function displayGenericParameterName(name: string, typeParameters: readonly string[]): string {
+  return `${name}<${typeParameters.join(", ")}>`;
+}
+
+function instantiateClassConstructorTypeReference(
+  type: Extract<CheckedType, { readonly kind: "classConstructor" }>,
+  diagnosticName: string | undefined,
+  state: CheckState | undefined,
+  typeArguments: readonly CheckedType[],
+  options: { readonly checkConstraints?: boolean } = {},
+): Extract<CheckedType, { readonly kind: "classConstructor" }> {
+  const completedTypeArguments = completeGenericTypeReferenceArguments(typeArguments, type.typeParameters, type.typeParameterDefaults);
+  checkGenericTypeReferenceArity(diagnosticName ?? type.name, type.typeParameters, type.typeParameterDefaults, true, typeArguments.length, state);
+  if (options.checkConstraints !== false) {
+    checkTypeArgumentConstraints(completedTypeArguments, type.typeParameters, type.typeParameterConstraints, state);
+  }
+  return instantiateClassConstructor(type, completedTypeArguments);
+}
+
+function instantiateInterfaceTypeReference(
+  type: Extract<CheckedType, { readonly kind: "interface" }>,
+  diagnosticName: string | undefined,
+  state: CheckState | undefined,
+  typeArguments: readonly CheckedType[],
+  options: { readonly checkConstraints?: boolean } = {},
+): Extract<CheckedType, { readonly kind: "interface" }> {
+  const completedTypeArguments = completeGenericTypeReferenceArguments(typeArguments, type.members.typeParameters, type.members.typeParameterDefaults);
+  checkGenericTypeReferenceArity(diagnosticName ?? type.name, type.members.typeParameters, type.members.typeParameterDefaults, true, typeArguments.length, state);
+  if (options.checkConstraints !== false && !shouldDeferActiveSelfTypeArgumentConstraintCheck(type, completedTypeArguments)) {
+    checkTypeArgumentConstraints(completedTypeArguments, type.members.typeParameters, type.members.typeParameterConstraints, state);
+  }
+  return instantiateInterfaceType(type, completedTypeArguments);
+}
+
 function literalTypeNodeType(type: Extract<TypeNode, { readonly kind: Kind.LiteralType }>): CheckedType {
   const literal = type.literal;
   if (isStringLiteral(literal) || isNoSubstitutionTemplateLiteral(literal)) {
@@ -14225,12 +14392,14 @@ function typeFromResolvedEntity(type: CheckedType, diagnosticName: string | unde
     return typeFromResolvedEntity(type.type, diagnosticName, state, typeArguments);
   }
   if (type.kind === "typeAlias") {
-    if (!shouldDeferActiveSelfTypeArgumentConstraintCheck(type, typeArguments)) {
-      checkTypeArgumentConstraints(typeArguments, type.typeParameters, type.typeParameterConstraints, state);
+    const completedTypeArguments = completeGenericTypeReferenceArguments(typeArguments, type.typeParameters, type.typeParameterDefaults);
+    checkGenericTypeReferenceArity(diagnosticName ?? type.name, type.typeParameters, type.typeParameterDefaults, false, typeArguments.length, state);
+    if (!shouldDeferActiveSelfTypeArgumentConstraintCheck(type, completedTypeArguments)) {
+      checkTypeArgumentConstraints(completedTypeArguments, type.typeParameters, type.typeParameterConstraints, state);
     }
     const substitutions = new Map<string, CheckedType>();
     for (let index = 0; index < type.typeParameters.length; index += 1) {
-      substitutions.set(type.typeParameters[index]!, typeArguments[index] ?? anyType);
+      substitutions.set(type.typeParameters[index]!, completedTypeArguments[index] ?? anyType);
     }
     const target = substituteType(type.target, substitutions);
     if (type.preserveDisplay || type.requiresExplicitDeclarationAnnotation) {
@@ -14251,8 +14420,7 @@ function typeFromResolvedEntity(type: CheckedType, diagnosticName: string | unde
     return anyType;
   }
   if (type.kind === "classConstructor") {
-    checkTypeArgumentConstraints(typeArguments, type.typeParameters, type.typeParameterConstraints, state);
-    const instantiated = instantiateClassConstructor(type, typeArguments);
+    const instantiated = instantiateClassConstructorTypeReference(type, diagnosticName, state, typeArguments);
     return {
       kind: "classInstance",
       name: instantiated.name,
@@ -14264,10 +14432,7 @@ function typeFromResolvedEntity(type: CheckedType, diagnosticName: string | unde
     };
   }
   if (type.kind === "interface") {
-    if (!shouldDeferActiveSelfTypeArgumentConstraintCheck(type, typeArguments)) {
-      checkTypeArgumentConstraints(typeArguments, type.members.typeParameters, type.members.typeParameterConstraints, state);
-    }
-    return instantiateInterfaceType(type, typeArguments);
+    return instantiateInterfaceTypeReference(type, diagnosticName, state, typeArguments);
   }
   if (type.kind === "namespace") {
     return anyType;
@@ -16291,6 +16456,7 @@ function substituteTypeWithContext(type: CheckedType, substitutions: ReadonlyMap
     context.types.set(type, result);
     Object.assign(result, {
       constructorParameters: type.constructorParameters.map(parameter => substituteTypeWithContext(parameter, substitutions, context)),
+      ...(type.typeParameterDefaults === undefined ? {} : { typeParameterDefaults: type.typeParameterDefaults.map(defaultType => defaultType === undefined ? undefined : substituteTypeWithContext(defaultType, substitutions, context)) }),
       members: type.members,
       ...optionalBaseType(type.baseType === undefined ? undefined : substituteTypeWithContext(type.baseType, substitutions, context)),
       ...optionalArrayBaseElementType(type.arrayBaseElementType === undefined ? undefined : substituteTypeWithContext(type.arrayBaseElementType, substitutions, context)),
@@ -16379,6 +16545,7 @@ function substituteInterfaceMembers(members: InterfaceMembers, substitutions: Re
   context.interfaceMembers.set(members, result);
   Object.assign(result, {
     ...(members.typeParameterConstraints === undefined ? {} : { typeParameterConstraints: members.typeParameterConstraints.map(constraint => constraint === undefined ? undefined : substituteTypeWithContext(constraint, substitutions, context)) }),
+    ...(members.typeParameterDefaults === undefined ? {} : { typeParameterDefaults: members.typeParameterDefaults.map(defaultType => defaultType === undefined ? undefined : substituteTypeWithContext(defaultType, substitutions, context)) }),
     properties: new Map([...members.properties.entries()].map(([name, propertyType]) => [name, substituteTypeWithContext(propertyType, substitutions, context)])),
     callSignatures: members.callSignatures.map(signature => substituteTypeWithContext(signature, substitutions, context) as CheckedFunctionType),
     inheritedTypes: members.inheritedTypes.map(inheritedType => substituteTypeWithContext(inheritedType, substitutions, context) as Extract<CheckedType, { readonly kind: "interface" }>),
