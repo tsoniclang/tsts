@@ -9807,7 +9807,7 @@ function bindingElementPropertyName(element: BindingElement): string | undefined
 }
 
 function checkStrictModeBindingName(name: BindingName, state: CheckState, ambient: boolean): void {
-  if (ambient || !futureReservedIdentifiersDisallowed(state)) {
+  if (ambient || !futureReservedIdentifiersDisallowed(state) || nodeOrAncestorHasParseError(name)) {
     return;
   }
   if (isIdentifier(name)) {
@@ -9821,6 +9821,17 @@ function checkStrictModeBindingName(name: BindingName, state: CheckState, ambien
       }
     }
   }
+}
+
+function nodeOrAncestorHasParseError(node: Node): boolean {
+  let current: Node | undefined = node;
+  while (current !== undefined && !isSourceFile(current)) {
+    if ((current.flags & NodeFlags.ThisNodeHasError) !== 0) {
+      return true;
+    }
+    current = current.parent;
+  }
+  return false;
 }
 
 function checkLetNameInLexicalDeclaration(declaration: VariableDeclaration, state: CheckState): void {
@@ -11764,6 +11775,9 @@ function checkParameterListGrammar(parameters: readonly ParameterDeclaration[], 
   let reportedQuestionInitializer = false;
   for (let index = 0; index < parameters.length; index += 1) {
     const parameter = parameters[index]!;
+    if (nodeOrAncestorHasParseError(parameter)) {
+      continue;
+    }
     const hasRest = parameter.dotDotDotToken !== undefined;
     if (hasRest && index < parameters.length - 1) {
       state.diagnostics.push(createDiagnostic(1014));

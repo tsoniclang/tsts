@@ -169,6 +169,28 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isSatisfiesExpression(satisfiesOr.expression.left), true);
   });
 
+  it("keeps modifier-looking parenthesized casts out of arrow-head recovery", () => {
+    const result = parseSourceFileWithDiagnostics([
+      "let readonly: any;",
+      "let override: any;",
+      "let out: any;",
+      "let declare: any;",
+      "export const a = (readonly as number);",
+      "export const b = (override as number);",
+      "export const c = (out as number);",
+      "export const d = (declare as number);",
+    ].join("\n"));
+
+    assert.deepEqual(result.diagnostics, []);
+    for (const statement of result.sourceFile.statements.slice(4)) {
+      if (!isVariableStatement(statement)) throw new Error("Expected variable statement");
+      const initializer = statement.declarationList.declarations[0]!.initializer;
+      if (!isParenthesizedExpression(initializer!)) throw new Error("Expected parenthesized expression");
+      assert.equal(isAsExpression(initializer.expression), true);
+      assert.equal(isArrowFunction(initializer.expression), false);
+    }
+  });
+
   it("parses comma expressions only in expression grammar contexts", () => {
     const sourceFile = parseSourceFile([
       "a, b, c;",
@@ -1155,6 +1177,24 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isConstructorDeclaration(constructor), true);
     if (!isConstructorDeclaration(constructor)) throw new Error("Expected constructor");
     assert.deepEqual(constructor.parameters.map(parameter => (parameter.name as { readonly text?: string }).text), ["private", "public", "static"]);
+  });
+
+  it("recovers missing commas between parameters without dropping the owning declaration", () => {
+    const result = parseSourceFileWithDiagnostics("class C { constructor(...public rest: string[]) {} } function f(a b: string) {}");
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1005, 1005]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["',' expected.", "',' expected."]);
+    const classDeclaration = result.sourceFile.statements[0]!;
+    assert.equal(isClassDeclaration(classDeclaration), true);
+    if (!isClassDeclaration(classDeclaration)) throw new Error("Expected class declaration");
+    const constructor = classDeclaration.members[0]!;
+    assert.equal(isConstructorDeclaration(constructor), true);
+    if (!isConstructorDeclaration(constructor)) throw new Error("Expected constructor");
+    assert.deepEqual(constructor.parameters.map(parameter => (parameter.name as { readonly text?: string }).text), ["public", "rest"]);
+    const functionDeclaration = result.sourceFile.statements[1]!;
+    assert.equal(isFunctionDeclaration(functionDeclaration), true);
+    if (!isFunctionDeclaration(functionDeclaration)) throw new Error("Expected function declaration");
+    assert.deepEqual(functionDeclaration.parameters.map(parameter => (parameter.name as { readonly text?: string }).text), ["a", "b"]);
   });
 
   it("recovers import-equals module references with TypeScript syntax diagnostics", () => {

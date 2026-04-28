@@ -1351,8 +1351,20 @@ export class Parser {
       return parameters;
     }
     while (true) {
-      parameters.push(this.#parseParameterDeclaration());
-      if (!this.#consumeOptional(Kind.CommaToken) || this.#current().kind === Kind.CloseParenToken) {
+      const parameter = this.#parseParameterDeclaration();
+      parameters.push(parameter);
+      if (this.#current().kind === Kind.CloseParenToken || this.#current().kind === Kind.EndOfFile) {
+        break;
+      }
+      if (this.#consumeOptional(Kind.CommaToken)) {
+        if (this.#current().kind === Kind.CloseParenToken) {
+          break;
+        }
+        continue;
+      }
+      (parameter as { flags: number }).flags |= NodeFlags.ThisNodeHasError | NodeFlags.ThisNodeOrAnySubNodesHasError;
+      this.#addDiagnosticAtToken(this.#current(), 1005, ",");
+      if (!this.#isStartOfParameter(false)) {
         break;
       }
     }
@@ -1555,13 +1567,13 @@ export class Parser {
     if (second === Kind.DotDotDotToken) {
       return "true";
     }
-    if (second !== undefined && modifierKinds.has(second) && second !== Kind.AsyncKeyword && isIdentifierNameKind(this.#tokens[this.#index + 2]?.kind ?? Kind.Unknown)) {
-      return this.#tokens[this.#index + 3]?.kind === Kind.AsKeyword ? "false" : "true";
+    const third = this.#tokens[this.#index + 2]?.kind;
+    if (second !== undefined && modifierKinds.has(second) && second !== Kind.AsyncKeyword && isIdentifierNameKind(third ?? Kind.Unknown)) {
+      return third === Kind.AsKeyword ? "false" : "true";
     }
     if (!isIdentifierNameKind(second ?? Kind.Unknown) && second !== Kind.ThisKeyword) {
       return "false";
     }
-    const third = this.#tokens[this.#index + 2]?.kind;
     if (third === Kind.ColonToken) {
       return "true";
     }
