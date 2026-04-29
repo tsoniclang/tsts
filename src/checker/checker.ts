@@ -12318,7 +12318,11 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
         ...optionalArrayBaseElementType(receiverType.arrayBaseElementType),
       };
     }
-    return receiverType.members.static.has(propertyName) ? anyType : functionInterfacePropertyType(environment, propertyName);
+    if (receiverType.members.static.has(propertyName)) {
+      return anyType;
+    }
+    const inheritedStaticProperty = classConstructorBaseStaticPropertyType(receiverType.baseType, propertyName, environment);
+    return inheritedStaticProperty ?? functionInterfacePropertyType(environment, propertyName);
   }
   if (receiverType.kind === "builtinConstructor") {
     if (propertyName === "prototype") {
@@ -12484,6 +12488,55 @@ function functionInterfacePropertyType(environment: TypeEnvironment | undefined,
 function functionInterfaceReadonlyProperty(environment: TypeEnvironment | undefined, propertyName: string): boolean {
   const functionInterface = interfaceMeaning(environment?.get("Function"));
   return functionInterface?.members.readonlyProperties.has(propertyName) === true;
+}
+
+function classConstructorBaseStaticPropertyType(baseType: CheckedType | undefined, propertyName: string, environment: TypeEnvironment | undefined, seen: Set<string> = new Set()): CheckedType | undefined {
+  if (baseType === undefined) {
+    return undefined;
+  }
+  const relationKey = assignabilityTypeKey(baseType);
+  if (seen.has(relationKey)) {
+    return undefined;
+  }
+  seen.add(relationKey);
+  try {
+    if (baseType.kind === "typeAliasInstance" || baseType.kind === "typeAlias") {
+      return classConstructorBaseStaticPropertyType(baseType.target, propertyName, environment, seen);
+    }
+    if (baseType.kind === "valueAndType" || baseType.kind === "valueOnly" || baseType.kind === "accessorProperty" || baseType.kind === "temporalDeadZone" || baseType.kind === "unassignedVariable") {
+      return classConstructorBaseStaticPropertyType(baseType.type, propertyName, environment, seen);
+    }
+    if (baseType.kind === "nonNullable") {
+      return classConstructorBaseStaticPropertyType(nonNullableType(baseType.target), propertyName, environment, seen);
+    }
+    if (baseType.kind === "classConstructor") {
+      return propertyAccessType(baseType, propertyName, environment);
+    }
+    if (baseType.kind === "interface") {
+      return interfacePropertyType(baseType, propertyName);
+    }
+    if (baseType.kind === "object") {
+      return baseType.properties.get(propertyName) ?? baseType.stringIndexType ?? baseType.numberIndexType;
+    }
+    if (baseType.kind === "intersection") {
+      const propertyTypes = baseType.types.flatMap(type => {
+        const propertyType = classConstructorBaseStaticPropertyType(type, propertyName, environment, seen);
+        return propertyType === undefined ? [] : [propertyType];
+      });
+      return propertyTypes.length === 0
+        ? undefined
+        : propertyTypes.length === 1
+          ? propertyTypes[0]
+          : { kind: "intersection", types: propertyTypes };
+    }
+    if (baseType.kind === "union") {
+      const propertyTypes = baseType.types.map(type => classConstructorBaseStaticPropertyType(type, propertyName, environment, seen));
+      return propertyTypes.every((type): type is CheckedType => type !== undefined) ? unionType(propertyTypes) : undefined;
+    }
+    return undefined;
+  } finally {
+    seen.delete(relationKey);
+  }
 }
 
 function functionApplyArgumentArrayType(functionType: CheckedFunctionType): CheckedType {

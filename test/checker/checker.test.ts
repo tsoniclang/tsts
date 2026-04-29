@@ -1407,6 +1407,27 @@ describe("checker groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
   });
 
+  it("treats subclass constructor values as structurally assignable through inherited static interface members", () => {
+    const sourceFile = parseSourceFile([
+      "interface Tag<Id, Value> {",
+      "  readonly Service: Value;",
+      "  readonly Identifier: Id;",
+      "}",
+      "interface TagClass<Self, Id extends string, Value> extends Tag<Self, Value> {",
+      "  new(): { readonly Id: Id; readonly Type: Value; };",
+      "  readonly key: Id;",
+      "}",
+      "declare function makeTag<const Id extends string>(id: Id): <Self, Value>() => TagClass<Self, Id, Value>;",
+      "class Foo extends makeTag('Foo')<Foo, { fn: (value: string) => void }>() {}",
+      "declare function acceptsTag<Id, Value>(tag: Tag<Id, Value>): Value;",
+      "const service = acceptsTag(Foo);",
+      "service.fn('ok');",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: true });
+
+    assert.equal(result.diagnostics.length, 0);
+  });
+
   it("checks implemented interface contracts and derived constructor super ordering", () => {
     const sourceFile = parseSourceFile([
       "interface I { x: string; }",
