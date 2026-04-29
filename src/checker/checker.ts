@@ -171,6 +171,7 @@ import {
   type NodeArray,
   type ObjectLiteralElementLike,
   type ParameterDeclaration,
+  type PropertyDeclaration,
   type PropertyName,
   type PropertySignatureDeclaration,
   type ReturnStatement,
@@ -5561,9 +5562,11 @@ function checkClassLike(classDeclaration: ClassLikeDeclaration, state: CheckStat
   checkDerivedConstructorSuperCalls(classDeclaration, classType, state);
   checkMissingAbstractMembers(classDeclaration, state, classIsAbstract, inheritedMembers, classMembers);
   checkAccessorAbstractPairs(classDeclaration.members, state);
+  checkClassElementDuplicateNames(classDeclaration.members, state, classEnvironment);
+  checkClassDuplicatePropertyTypeConflicts(classDeclaration.members, state, classEnvironment);
   const accessorContextTypes = collectAccessorContextTypes(classDeclaration.members, classEnvironment);
   if (!ambient) {
-    checkClassMemberOverloads(classDeclaration.members, state);
+    checkClassMemberOverloads(classDeclaration.members, state, classEnvironment);
   }
   const classUnusedMembers = registerUnusedClassMembers(classDeclaration.members, state, ambient);
   const classBodyState = {
@@ -6307,6 +6310,263 @@ function classElementName(member: ClassElement): string | undefined {
   return undefined;
 }
 
+type ClassElementDuplicateKind = "property" | "method" | "get" | "set";
+
+interface ClassElementDuplicateEntry {
+  readonly name: string;
+  readonly diagnosticName: string;
+  readonly kind: ClassElementDuplicateKind;
+}
+
+function checkClassElementDuplicateNames(members: readonly ClassElement[], state: CheckState, environment: TypeEnvironment): void {
+  const entriesByName = new Map<string, ClassElementDuplicateEntry[]>();
+  for (const member of members) {
+    const entry = classElementDuplicateEntry(member, environment);
+    if (entry === undefined) {
+      continue;
+    }
+    const scope = hasModifier(member, Kind.StaticKeyword) ? "static" : "instance";
+    const key = `${scope}\0${entry.name}`;
+    const entries = entriesByName.get(key);
+    if (entries === undefined) {
+      entriesByName.set(key, [entry]);
+    } else {
+      entries.push(entry);
+    }
+  }
+  for (const entries of entriesByName.values()) {
+    for (const diagnosticName of classElementDuplicateDiagnosticNames(entries)) {
+      state.diagnostics.push(createDiagnostic(2300, diagnosticName));
+    }
+  }
+}
+
+function classElementDuplicateEntry(member: ClassElement, environment: TypeEnvironment): ClassElementDuplicateEntry | undefined {
+  if (isPropertyDeclaration(member)) {
+    return classElementDuplicateEntryWithKind(member.name, "property", environment);
+  }
+  if (isMethodDeclaration(member)) {
+    return classElementDuplicateEntryWithKind(member.name, "method", environment);
+  }
+  if (isGetAccessorDeclaration(member)) {
+    return classElementDuplicateEntryWithKind(member.name, "get", environment);
+  }
+  if (isSetAccessorDeclaration(member)) {
+    return classElementDuplicateEntryWithKind(member.name, "set", environment);
+  }
+  return undefined;
+}
+
+function classElementDuplicateEntryWithKind(nameNode: PropertyName, kind: ClassElementDuplicateKind, environment: TypeEnvironment): ClassElementDuplicateEntry | undefined {
+  const name = constantPropertyNameText(nameNode, environment) ?? propertyNameText(nameNode);
+  if (name === undefined) {
+    return undefined;
+  }
+  return { name, diagnosticName: propertyNameDiagnosticSourceText(nameNode), kind };
+}
+
+function propertyNameDiagnosticSourceText(name: PropertyName): string {
+  if (isIdentifier(name) || isNumericLiteral(name)) {
+    return name.text;
+  }
+  if (isStringLiteral(name) || isNoSubstitutionTemplateLiteral(name)) {
+    return sourceTextForNode(name) ?? `'${name.text}'`;
+  }
+  if (isComputedPropertyName(name)) {
+    return sourceTextForNode(name) ?? computedPropertyNameDiagnosticText(name);
+  }
+  if (isPrivateIdentifier(name)) {
+    return name.text.startsWith("#") ? name.text : `#${name.text}`;
+  }
+  return propertyNameText(name) ?? "";
+}
+
+function computedPropertyNameDiagnosticText(name: Extract<PropertyName, { readonly kind: Kind.ComputedPropertyName }>): string {
+  const expression = name.expression;
+  if (isStringLiteral(expression) || isNoSubstitutionTemplateLiteral(expression)) {
+    return `["${expression.text}"]`;
+  }
+  if (isNumericLiteral(expression) || isIdentifier(expression)) {
+    return `[${expression.text}]`;
+  }
+  return "[]";
+}
+
+function sourceTextForNode(node: Node): string | undefined {
+  if (node.pos < 0 || node.end < node.pos) {
+    return undefined;
+  }
+  const sourceFile = node.getSourceFile();
+  return sourceFile.text.slice(node.pos, node.end).trim();
+}
+
+function classElementDuplicateDiagnosticNames(entries: readonly ClassElementDuplicateEntry[]): readonly string[] {
+  const properties = entries.filter(entry => entry.kind === "property");
+  const methods = entries.filter(entry => entry.kind === "method");
+  const accessors = entries.filter(entry => entry.kind === "get" || entry.kind === "set");
+  if (methods.length > 0 && (properties.length > 0 || accessors.length > 0)) {
+    if (methods.length === 1 && accessors.length === 0 && entries[0]?.kind === "method") {
+      return properties.map(entry => entry.diagnosticName);
+    }
+    return entries.map(entry => entry.diagnosticName);
+  }
+  if (accessors.length > 0 && properties.length > 0) {
+    return classAccessorPropertyDuplicateDiagnosticNames(entries);
+  }
+  if (hasDuplicateAccessorKind(accessors)) {
+    return accessors.map(entry => entry.diagnosticName);
+  }
+  if (properties.length > 1) {
+    return properties.slice(1).map(entry => entry.diagnosticName);
+  }
+  return [];
+}
+
+function classAccessorPropertyDuplicateDiagnosticNames(entries: readonly ClassElementDuplicateEntry[]): readonly string[] {
+  const firstPropertyIndex = entries.findIndex(entry => entry.kind === "property");
+  const accessorsBeforeFirstProperty = entries.slice(0, firstPropertyIndex).filter(entry => entry.kind === "get" || entry.kind === "set");
+  const accessorsAfterFirstProperty = entries.slice(firstPropertyIndex + 1).some(entry => entry.kind === "get" || entry.kind === "set");
+  const startsWithCompleteAccessorPair = accessorsBeforeFirstProperty.length === 2
+    && accessorsBeforeFirstProperty.some(entry => entry.kind === "get")
+    && accessorsBeforeFirstProperty.some(entry => entry.kind === "set")
+    && !hasDuplicateAccessorKind(accessorsBeforeFirstProperty);
+  if (startsWithCompleteAccessorPair && !accessorsAfterFirstProperty) {
+    return entries.slice(firstPropertyIndex).filter(entry => entry.kind === "property").map(entry => entry.diagnosticName);
+  }
+  return entries.map(entry => entry.diagnosticName);
+}
+
+function hasDuplicateAccessorKind(entries: readonly ClassElementDuplicateEntry[]): boolean {
+  return entries.filter(entry => entry.kind === "get").length > 1
+    || entries.filter(entry => entry.kind === "set").length > 1;
+}
+
+interface ClassDuplicatePropertyTypeEntry {
+  readonly type: CheckedType;
+}
+
+function checkClassDuplicatePropertyTypeConflicts(members: readonly ClassElement[], state: CheckState, environment: TypeEnvironment): void {
+  const entries = new Map<string, ClassDuplicatePropertyTypeEntry>();
+  for (const member of members) {
+    if (!isPropertyDeclaration(member) && !isMethodDeclaration(member) && !isGetAccessorDeclaration(member) && !isSetAccessorDeclaration(member)) {
+      continue;
+    }
+    const name = constantPropertyNameText(member.name, environment) ?? propertyNameText(member.name);
+    if (name === undefined) {
+      continue;
+    }
+    const key = `${hasModifier(member, Kind.StaticKeyword) ? "static" : "instance"}\0${name}`;
+    const memberType = classDuplicatePropertyMemberType(member, environment, state.options);
+    const existing = entries.get(key);
+    if (isPropertyDeclaration(member) && existing !== undefined && !classDuplicatePropertyTypesMatch(existing.type, memberType)) {
+      state.diagnostics.push(createDiagnostic(2717, propertyNameDiagnosticSourceText(member.name), displayType(existing.type), displayType(memberType)));
+    }
+    if (existing === undefined) {
+      entries.set(key, { type: memberType });
+    }
+  }
+}
+
+function classDuplicatePropertyMemberType(member: PropertyDeclaration | MethodDeclaration | GetAccessorDeclaration | SetAccessorDeclaration, environment: TypeEnvironment, options: CompilerOptions): CheckedType {
+  if (isMethodDeclaration(member)) {
+    return methodDeclarationType(member, environment, emptyCheckState(options));
+  }
+  return classMemberPropertyType(member, environment, emptyCheckState(options)) ?? anyType;
+}
+
+function classDuplicatePropertyTypesMatch(left: CheckedType, right: CheckedType, seen: Set<string> = new Set()): boolean {
+  if (isFastSameType(left, right)) {
+    return true;
+  }
+  if (left.kind === "typeAliasInstance") {
+    return classDuplicatePropertyTypesMatch(left.target, right, seen);
+  }
+  if (right.kind === "typeAliasInstance") {
+    return classDuplicatePropertyTypesMatch(left, right.target, seen);
+  }
+  if (left.kind === "accessorProperty" || left.kind === "valueOnly" || left.kind === "unassignedVariable") {
+    return classDuplicatePropertyTypesMatch(left.type, right, seen);
+  }
+  if (right.kind === "accessorProperty" || right.kind === "valueOnly" || right.kind === "unassignedVariable") {
+    return classDuplicatePropertyTypesMatch(left, right.type, seen);
+  }
+  if (left.kind === "nonNullable") {
+    return classDuplicatePropertyTypesMatch(nonNullableType(left.target), right, seen);
+  }
+  if (right.kind === "nonNullable") {
+    return classDuplicatePropertyTypesMatch(left, nonNullableType(right.target), seen);
+  }
+  if (left.kind !== right.kind) {
+    return false;
+  }
+  const pairKey = `${assignabilityObjectId(left)}:${assignabilityObjectId(right)}`;
+  if (seen.has(pairKey)) {
+    return true;
+  }
+  seen.add(pairKey);
+  try {
+    if (left.kind === "function" && right.kind === "function") {
+      return left.typeParameters.length === right.typeParameters.length
+        && left.parameters.length === right.parameters.length
+        && left.parameters.every((parameter, index) => classDuplicatePropertyTypesMatch(parameter, right.parameters[index]!, seen))
+        && classDuplicatePropertyTypesMatch(left.returnType, right.returnType, seen)
+        && left.restParameterIndex === right.restParameterIndex
+        && left.minArgumentCount === right.minArgumentCount
+        && left.maxArgumentCount === right.maxArgumentCount
+        && left.construct === right.construct;
+    }
+    if (left.kind === "union" && right.kind === "union" || left.kind === "intersection" && right.kind === "intersection") {
+      return left.types.length === right.types.length
+        && left.types.every((member, index) => classDuplicatePropertyTypesMatch(member, right.types[index]!, seen));
+    }
+    if (left.kind === "tuple" && right.kind === "tuple") {
+      return left.elements.length === right.elements.length
+        && left.elements.every((element, index) => {
+          const rightElement = right.elements[index]!;
+          return element.optional === rightElement.optional && classDuplicatePropertyTypesMatch(element.type, rightElement.type, seen);
+        })
+        && (
+          left.restElementType === undefined && right.restElementType === undefined
+          || left.restElementType !== undefined && right.restElementType !== undefined && classDuplicatePropertyTypesMatch(left.restElementType, right.restElementType, seen)
+        );
+    }
+    if (left.kind === "object" && right.kind === "object") {
+      return sameStringSet(left.readonlyProperties, right.readonlyProperties)
+        && sameStringSet(left.optionalProperties, right.optionalProperties)
+        && sameStringSet(left.methodProperties, right.methodProperties)
+        && samePropertyTypeMap(left.properties, right.properties, seen)
+        && optionalClassDuplicatePropertyTypesMatch(left.stringIndexType, right.stringIndexType, seen)
+        && optionalClassDuplicatePropertyTypesMatch(left.numberIndexType, right.numberIndexType, seen)
+        && optionalClassDuplicatePropertyTypesMatch(left.symbolIndexType, right.symbolIndexType, seen);
+    }
+    return false;
+  } finally {
+    seen.delete(pairKey);
+  }
+}
+
+function samePropertyTypeMap(left: ReadonlyMap<string, CheckedType>, right: ReadonlyMap<string, CheckedType>, seen: Set<string>): boolean {
+  if (left.size !== right.size) {
+    return false;
+  }
+  for (const [name, leftType] of left) {
+    const rightType = right.get(name);
+    if (rightType === undefined || !classDuplicatePropertyTypesMatch(leftType, rightType, seen)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function sameStringSet(left: ReadonlySet<string>, right: ReadonlySet<string>): boolean {
+  return left.size === right.size && [...left].every(value => right.has(value));
+}
+
+function optionalClassDuplicatePropertyTypesMatch(left: CheckedType | undefined, right: CheckedType | undefined, seen: Set<string>): boolean {
+  return left === undefined && right === undefined
+    || left !== undefined && right !== undefined && classDuplicatePropertyTypesMatch(left, right, seen);
+}
+
 function isAbstractPropertyLike(member: ClassElement): boolean {
   return hasModifier(member, Kind.AbstractKeyword)
     && (isPropertyDeclaration(member) || isGetAccessorDeclaration(member) || isSetAccessorDeclaration(member));
@@ -6970,7 +7230,8 @@ type OverloadGroup =
   | { readonly kind: "constructor" }
   | { readonly kind: "method"; readonly name: string; readonly displayName: string };
 
-function checkClassMemberOverloads(members: readonly ClassElement[], state: CheckState): void {
+function checkClassMemberOverloads(members: readonly ClassElement[], state: CheckState, environment: TypeEnvironment): void {
+  checkDuplicateClassImplementations(members, state, environment);
   const pendingGroups: OverloadGroup[] = [];
   for (const member of members) {
     if (isConstructorDeclaration(member) || isMethodDeclaration(member)) {
@@ -6991,6 +7252,58 @@ function checkClassMemberOverloads(members: readonly ClassElement[], state: Chec
     diagnosePendingOverloadGroups(pendingGroups, state);
   }
   diagnosePendingOverloadGroups(pendingGroups, state);
+}
+
+function checkDuplicateClassImplementations(members: readonly ClassElement[], state: CheckState, environment: TypeEnvironment): void {
+  const constructors = members.filter(isConstructorDeclaration);
+  const constructorImplementationCount = constructors.filter(member => member.body !== undefined).length;
+  if (constructorImplementationCount > 1) {
+    for (const _constructor of constructors) {
+      state.diagnostics.push(createDiagnostic(2392));
+    }
+  }
+
+  const methodsByName = new Map<string, MethodDeclaration[]>();
+  for (const member of members) {
+    if (!isMethodDeclaration(member)) {
+      continue;
+    }
+    const entry = classElementDuplicateEntryWithKind(member.name, "method", environment);
+    if (entry === undefined) {
+      continue;
+    }
+    const key = `${hasModifier(member, Kind.StaticKeyword) ? "static" : "instance"}\0${entry.name}`;
+    const methods = methodsByName.get(key);
+    if (methods === undefined) {
+      methodsByName.set(key, [member]);
+    } else {
+      methods.push(member);
+    }
+  }
+  for (const methods of methodsByName.values()) {
+    const implementationCount = methods.filter(method => method.body !== undefined).length;
+    if (implementationCount <= 1 || classMethodNameHasNonMethodMember(methods[0]!, members, environment)) {
+      continue;
+    }
+    for (const _method of methods) {
+      state.diagnostics.push(createDiagnostic(2393));
+    }
+  }
+}
+
+function classMethodNameHasNonMethodMember(method: MethodDeclaration, members: readonly ClassElement[], environment: TypeEnvironment): boolean {
+  const name = constantPropertyNameText(method.name, environment) ?? propertyNameText(method.name);
+  if (name === undefined) {
+    return false;
+  }
+  const staticMember = hasModifier(method, Kind.StaticKeyword);
+  return members.some(member => {
+    if (member === method || isConstructorDeclaration(member) || isMethodDeclaration(member) || hasModifier(member, Kind.StaticKeyword) !== staticMember) {
+      return false;
+    }
+    const entry = classElementDuplicateEntry(member, environment);
+    return entry?.name === name;
+  });
 }
 
 function classMemberOverloadGroup(member: ConstructorDeclaration | MethodDeclaration): OverloadGroup | undefined {

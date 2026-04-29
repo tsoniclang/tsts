@@ -580,6 +580,92 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2389, 2389]);
   });
 
+  it("reports duplicate class members with TypeScript class grouping rules", () => {
+    const sourceFile = parseSourceFile([
+      "const key = 'q';",
+      "class C {",
+      "  a;",
+      "  a;",
+      "  b() {}",
+      "  b() {}",
+      "  x;",
+      "  get x() { return 1; }",
+      "  set x(value) {}",
+      "  get y() { return 1; }",
+      "  set y(value) {}",
+      "  y = 1;",
+      "  z() {}",
+      "  get z() { return 1; }",
+      "  set z(value) {}",
+      "  static s;",
+      "  s;",
+      "  overloaded(value: string): void;",
+      "  overloaded(value: number): void;",
+      "  overloaded(value: string | number) {}",
+      "  get pair() { return 1; }",
+      "  set pair(value) {}",
+      "  [key];",
+      "  q;",
+      "}",
+      "class D { constructor(); constructor() {} constructor() {} }",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [
+      2300,
+      2300,
+      2300,
+      2300,
+      2300,
+      2300,
+      2300,
+      2300,
+      2300,
+      2393,
+      2393,
+      2392,
+      2392,
+      2392,
+    ]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Duplicate identifier 'a'.",
+      "Duplicate identifier 'x'.",
+      "Duplicate identifier 'x'.",
+      "Duplicate identifier 'x'.",
+      "Duplicate identifier 'y'.",
+      "Duplicate identifier 'z'.",
+      "Duplicate identifier 'z'.",
+      "Duplicate identifier 'z'.",
+      "Duplicate identifier 'q'.",
+      "Duplicate function implementation.",
+      "Duplicate function implementation.",
+      "Multiple constructor implementations are not allowed.",
+      "Multiple constructor implementations are not allowed.",
+      "Multiple constructor implementations are not allowed.",
+    ]);
+  });
+
+  it("reports subsequent class property type conflicts against the first property-like declaration", () => {
+    const sourceFile = parseSourceFile([
+      "class C {",
+      "  a(): number { return 0; }",
+      "  a: number;",
+      "  c: number;",
+      "  c: string;",
+      "  get x() { return 1; }",
+      "  set x(value: number) {}",
+      "  x;",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.filter(diagnostic => diagnostic.code === 2717).map(diagnostic => diagnostic.message), [
+      "Subsequent property declarations must have the same type.  Property 'a' must be of type '() => number', but here has type 'number'.",
+      "Subsequent property declarations must have the same type.  Property 'c' must be of type 'number', but here has type 'string'.",
+      "Subsequent property declarations must have the same type.  Property 'x' must be of type 'number', but here has type 'any'.",
+    ]);
+  });
+
   it("reports block function modifier and implementation grammar", () => {
     const sourceFile = parseSourceFile([
       "{",
