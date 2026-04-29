@@ -192,6 +192,7 @@ import { createDiagnostic, type Diagnostic } from "../diagnostics/index.js";
 import type { CompilerOptions, Program, ProgramDiagnostic, ResolvedModule } from "../program/index.js";
 
 type PrimitiveTypeName = "any" | "bigint" | "boolean" | "never" | "null" | "number" | "string" | "symbol" | "undefined" | "unknown" | "void";
+type StandardLibraryName = "es2015" | "es2016" | "es2017" | "es2018" | "es2019" | "es2020" | "es2021" | "es2022" | "es2023" | "es2024" | "esnext";
 
 type ClassLikeDeclaration = ClassDeclaration | ClassExpression;
 type TypeParameterVariance = "covariant" | "contravariant" | "invariant" | "bivariant" | "independent";
@@ -202,7 +203,7 @@ interface TupleElementType {
   readonly optional: boolean;
 }
 
-type CheckedType = { readonly contextualDiagnostics?: boolean } & (
+type CheckedType = { readonly contextualDiagnostics?: boolean; readonly requiredLibrary?: StandardLibraryName; readonly libraryDiagnosticTypeName?: string } & (
   | { readonly kind: PrimitiveTypeName | "unresolved" }
   | { readonly kind: "array"; readonly elementType: CheckedType; readonly evolving?: boolean }
   | { readonly kind: "readonlyArray"; readonly elementType: CheckedType }
@@ -901,6 +902,27 @@ function standardFunctionType(parameters: readonly CheckedType[], returnType: Ch
   return { kind: "function", typeParameters: [], parameters, ...options, returnType };
 }
 
+function withRequiredLibrary<T extends CheckedType>(type: T, requiredLibrary: StandardLibraryName): T {
+  return { ...type, requiredLibrary } as T;
+}
+
+function withLibraryDiagnosticTypeName<T extends CheckedType>(type: T, libraryDiagnosticTypeName: string): T {
+  return { ...type, libraryDiagnosticTypeName } as T;
+}
+
+function preserveRequiredLibrary<T extends CheckedType>(type: T, source: CheckedType): T {
+  return source.requiredLibrary === undefined ? type : withRequiredLibrary(type, source.requiredLibrary);
+}
+
+function preserveTypeMetadata<T extends CheckedType>(type: T, source: CheckedType): T {
+  return {
+    ...type,
+    ...(source.contextualDiagnostics === undefined ? {} : { contextualDiagnostics: source.contextualDiagnostics }),
+    ...(source.requiredLibrary === undefined ? {} : { requiredLibrary: source.requiredLibrary }),
+    ...(source.libraryDiagnosticTypeName === undefined ? {} : { libraryDiagnosticTypeName: source.libraryDiagnosticTypeName }),
+  } as T;
+}
+
 function functionDeclarationBinding(name: string, type: CheckedFunctionType): Extract<CheckedType, { readonly kind: "functionDeclaration" }> {
   return { kind: "functionDeclaration", name, type };
 }
@@ -933,12 +955,12 @@ function standardArrayConstructorValue(): CheckedType {
   const arrayTypeParameter: CheckedType = { kind: "typeParameter", name: "T" };
   const typedArrayReturn: CheckedType = { kind: "array", elementType: arrayTypeParameter };
   const anyArrayReturn: CheckedType = { kind: "array", elementType: anyType };
-  return {
+  return withLibraryDiagnosticTypeName({
     ...standardObject([
-      ["from", { kind: "intrinsicFunction", intrinsic: "Array.from" }],
-      ["fromAsync", anyType],
+      ["from", withRequiredLibrary({ kind: "intrinsicFunction", intrinsic: "Array.from" }, "es2015")],
+      ["fromAsync", withRequiredLibrary(anyType, "es2024")],
       ["isArray", { kind: "intrinsicFunction", intrinsic: "Array.isArray" }],
-      ["of", { kind: "intrinsicFunction", intrinsic: "Array.of" }],
+      ["of", withRequiredLibrary({ kind: "intrinsicFunction", intrinsic: "Array.of" }, "es2015")],
       ["prototype", standardObject([
         ["slice", standardFunctionType([numberType, numberType], { kind: "array", elementType: anyType }, { minArgumentCount: 0, maxArgumentCount: 2 })],
       ], ["slice"])],
@@ -952,7 +974,7 @@ function standardArrayConstructorValue(): CheckedType {
       { kind: "function", typeParameters: ["T"], parameters: [numberType], parameterNames: ["arrayLength"], minArgumentCount: 1, maxArgumentCount: 1, returnType: typedArrayReturn },
       { kind: "function", typeParameters: ["T"], parameters: [arrayTypeParameter], restParameterIndex: 0, minArgumentCount: 0, returnType: typedArrayReturn },
     ],
-  };
+  }, "ArrayConstructor");
 }
 
 function standardNamespace(name: string, exports: readonly (readonly [string, CheckedType])[], readonlyExports: readonly string[] = []): CheckedType {
@@ -1073,7 +1095,7 @@ const genericPromiseLikeInterfaceType = standardInterfaceType("PromiseLike", new
 const genericPromiseInterfaceType = standardInterfaceType("Promise", new Map<string, CheckedType>([
   ["then", promiseThenType],
   ["catch", standardFunctionType([unionType([standardFunctionType([anyType], anyType, { parameterNames: ["reason"], minArgumentCount: 1, maxArgumentCount: 1 }), nullType, undefinedType])], anyType, { parameterNames: ["onrejected"], minArgumentCount: 0, maxArgumentCount: 1 })],
-  ["finally", standardFunctionType([standardFunctionType([], voidType)], anyType, { parameterNames: ["onfinally"], minArgumentCount: 0, maxArgumentCount: 1 })],
+  ["finally", withRequiredLibrary(standardFunctionType([standardFunctionType([], voidType)], anyType, { parameterNames: ["onfinally"], minArgumentCount: 0, maxArgumentCount: 1 }), "es2018")],
 ]), {
   typeParameters: ["T"],
   methodProperties: new Set(["then", "catch", "finally"]),
@@ -1285,7 +1307,7 @@ const regExpMatchArrayType = standardInterfaceType("RegExpMatchArray", new Map<s
   ["0", stringType],
   ["index", unionType([numberType, undefinedType])],
   ["input", unionType([stringType, undefinedType])],
-  ["groups", optionalStringDictionaryType],
+  ["groups", withRequiredLibrary(optionalStringDictionaryType, "es2018")],
   ["slice", stringArraySliceType],
 ]), {
   optionalProperties: new Set(["index", "input", "groups"]),
@@ -1297,7 +1319,7 @@ const regExpExecArrayType = standardInterfaceType("RegExpExecArray", new Map<str
   ["0", stringType],
   ["index", numberType],
   ["input", stringType],
-  ["groups", optionalStringDictionaryType],
+  ["groups", withRequiredLibrary(optionalStringDictionaryType, "es2018")],
   ["slice", stringArraySliceType],
 ]), {
   optionalProperties: new Set(["groups"]),
@@ -1316,6 +1338,10 @@ const regexpInterfaceType: CheckedType = {
       ["test", { kind: "function", typeParameters: [], parameters: [stringType], parameterNames: ["string"], returnType: booleanType }],
       ["source", stringType],
       ["global", booleanType],
+      ["flags", withRequiredLibrary(stringType, "es2015")],
+      ["sticky", withRequiredLibrary(booleanType, "es2015")],
+      ["unicode", withRequiredLibrary(booleanType, "es2015")],
+      ["dotAll", withRequiredLibrary(booleanType, "es2018")],
     ]),
     readonlyProperties: new Set(),
     optionalProperties: new Set(),
@@ -1654,6 +1680,299 @@ const typedArrayGlobalNames = [
   "Uint16Array",
   "Uint32Array",
 ] as const;
+
+type TypedArrayGlobalName = typeof typedArrayGlobalNames[number];
+
+function standardTypedArrayBinding(name: TypedArrayGlobalName): CheckedType {
+  const elementType = typedArrayElementType(name);
+  const properties = new Map<string, CheckedType>([
+    ["BYTES_PER_ELEMENT", numberType],
+    ["buffer", anyType],
+    ["byteLength", numberType],
+    ["byteOffset", numberType],
+    ["length", numberType],
+    ["at", withRequiredLibrary(standardFunctionType([numberType], unionType([elementType, undefinedType]), { parameterNames: ["index"], minArgumentCount: 1, maxArgumentCount: 1 }), "es2022")],
+    ["every", standardFunctionType([typedArrayPredicateFunctionType(elementType)], booleanType, { parameterNames: ["predicate"], minArgumentCount: 1, maxArgumentCount: 2 })],
+    ["find", withRequiredLibrary(standardFunctionType([typedArrayPredicateFunctionType(elementType)], unionType([elementType, undefinedType]), { parameterNames: ["predicate"], minArgumentCount: 1, maxArgumentCount: 2 }), "es2015")],
+    ["findIndex", withRequiredLibrary(standardFunctionType([typedArrayPredicateFunctionType(elementType)], numberType, { parameterNames: ["predicate"], minArgumentCount: 1, maxArgumentCount: 2 }), "es2015")],
+    ["findLast", withRequiredLibrary(standardFunctionType([typedArrayPredicateFunctionType(elementType)], unionType([elementType, undefinedType]), { parameterNames: ["predicate"], minArgumentCount: 1, maxArgumentCount: 2 }), "es2023")],
+    ["findLastIndex", withRequiredLibrary(standardFunctionType([typedArrayPredicateFunctionType(elementType)], numberType, { parameterNames: ["predicate"], minArgumentCount: 1, maxArgumentCount: 2 }), "es2023")],
+    ["forEach", standardFunctionType([typedArrayPredicateFunctionType(elementType)], voidType, { parameterNames: ["callbackfn"], minArgumentCount: 1, maxArgumentCount: 2 })],
+    ["includes", withRequiredLibrary(standardFunctionType([elementType, numberType], booleanType, { parameterNames: ["searchElement", "fromIndex"], minArgumentCount: 1, maxArgumentCount: 2 }), "es2016")],
+    ["indexOf", standardFunctionType([elementType, numberType], numberType, { parameterNames: ["searchElement", "fromIndex"], minArgumentCount: 1, maxArgumentCount: 2 })],
+    ["join", standardFunctionType([stringType], stringType, { parameterNames: ["separator"], minArgumentCount: 0, maxArgumentCount: 1 })],
+    ["lastIndexOf", standardFunctionType([elementType, numberType], numberType, { parameterNames: ["searchElement", "fromIndex"], minArgumentCount: 1, maxArgumentCount: 2 })],
+    ["reduce", standardVariadicAnyFunction(anyType)],
+    ["reduceRight", standardVariadicAnyFunction(anyType)],
+    ["set", standardFunctionType([anyType, numberType], voidType, { parameterNames: ["array", "offset"], minArgumentCount: 1, maxArgumentCount: 2 })],
+    ["some", standardFunctionType([typedArrayPredicateFunctionType(elementType)], booleanType, { parameterNames: ["predicate"], minArgumentCount: 1, maxArgumentCount: 2 })],
+    ["toLocaleString", standardFunctionType([stringType, anyType], stringType, { minArgumentCount: 0, maxArgumentCount: 2 })],
+    ["toString", standardFunctionType([], stringType)],
+  ]);
+  const instanceType = withLibraryDiagnosticTypeName(standardInterfaceType(name, properties, {
+    methodProperties: new Set([
+      "at",
+      "copyWithin",
+      "every",
+      "fill",
+      "filter",
+      "find",
+      "findIndex",
+      "findLast",
+      "findLastIndex",
+      "forEach",
+      "includes",
+      "indexOf",
+      "join",
+      "lastIndexOf",
+      "map",
+      "reduce",
+      "reduceRight",
+      "reverse",
+      "set",
+      "slice",
+      "some",
+      "sort",
+      "subarray",
+      "toLocaleString",
+      "toReversed",
+      "toSorted",
+      "toString",
+      "valueOf",
+      "with",
+    ]),
+  }), `${name}<ArrayBuffer>`);
+  properties.set("copyWithin", standardFunctionType([numberType, numberType, numberType], instanceType, { parameterNames: ["target", "start", "end"], minArgumentCount: 2, maxArgumentCount: 3 }));
+  properties.set("fill", standardFunctionType([elementType, numberType, numberType], instanceType, { parameterNames: ["value", "start", "end"], minArgumentCount: 1, maxArgumentCount: 3 }));
+  properties.set("filter", standardFunctionType([typedArrayPredicateFunctionType(elementType)], instanceType, { parameterNames: ["predicate"], minArgumentCount: 1, maxArgumentCount: 2 }));
+  properties.set("map", standardFunctionType([typedArrayPredicateFunctionType(elementType)], instanceType, { parameterNames: ["callbackfn"], minArgumentCount: 1, maxArgumentCount: 2 }));
+  properties.set("reverse", standardFunctionType([], instanceType, { minArgumentCount: 0, maxArgumentCount: 0 }));
+  properties.set("slice", standardFunctionType([numberType, numberType], instanceType, { parameterNames: ["start", "end"], minArgumentCount: 0, maxArgumentCount: 2 }));
+  properties.set("sort", standardFunctionType([standardFunctionType([elementType, elementType], numberType, { minArgumentCount: 2, maxArgumentCount: 2 })], instanceType, { parameterNames: ["compareFn"], minArgumentCount: 0, maxArgumentCount: 1 }));
+  properties.set("subarray", standardFunctionType([numberType, numberType], instanceType, { parameterNames: ["begin", "end"], minArgumentCount: 0, maxArgumentCount: 2 }));
+  properties.set("toReversed", withRequiredLibrary(standardFunctionType([], instanceType, { minArgumentCount: 0, maxArgumentCount: 0 }), "es2023"));
+  properties.set("toSorted", withRequiredLibrary(standardFunctionType([standardFunctionType([elementType, elementType], numberType, { minArgumentCount: 2, maxArgumentCount: 2 })], instanceType, { minArgumentCount: 0, maxArgumentCount: 1 }), "es2023"));
+  properties.set("valueOf", standardFunctionType([], instanceType, { minArgumentCount: 0, maxArgumentCount: 0 }));
+  properties.set("with", withRequiredLibrary(standardFunctionType([numberType, elementType], instanceType, { parameterNames: ["index", "value"], minArgumentCount: 2, maxArgumentCount: 2 }), "es2023"));
+  return {
+    kind: "valueAndType",
+    value: withLibraryDiagnosticTypeName({
+      kind: "builtinConstructor",
+      name,
+      instanceType,
+      constructorParameters: [],
+      staticProperties: new Map<string, CheckedType>([
+        ["BYTES_PER_ELEMENT", numberType],
+        ["from", standardVariadicAnyFunction(instanceType)],
+        ["of", standardVariadicAnyFunction(instanceType)],
+      ]),
+    }, `${name}Constructor`),
+    type: instanceType,
+    ...typedArrayRequiredLibrary(name),
+  };
+}
+
+function typedArrayElementType(name: TypedArrayGlobalName): CheckedType {
+  return name === "BigInt64Array" || name === "BigUint64Array" ? bigintType : numberType;
+}
+
+function typedArrayPredicateFunctionType(elementType: CheckedType): CheckedFunctionType {
+  return standardFunctionType([elementType, numberType, anyType], anyType, {
+    parameterNames: ["value", "index", "array"],
+    minArgumentCount: 1,
+    maxArgumentCount: 3,
+  });
+}
+
+function typedArrayRequiredLibrary(name: TypedArrayGlobalName): { readonly requiredLibrary?: StandardLibraryName } {
+  if (name === "BigInt64Array" || name === "BigUint64Array") {
+    return { requiredLibrary: "es2020" };
+  }
+  if (name === "Float16Array") {
+    return { requiredLibrary: "esnext" };
+  }
+  return {};
+}
+
+function standardDateBinding(): CheckedType {
+  const instanceType = standardInterfaceType("Date", new Map<string, CheckedType>([
+    ["constructor", standardFunctionInterfaceType],
+    ["getDate", standardFunctionType([], numberType)],
+    ["getDay", standardFunctionType([], numberType)],
+    ["getFullYear", standardFunctionType([], numberType)],
+    ["getHours", standardFunctionType([], numberType)],
+    ["getMilliseconds", standardFunctionType([], numberType)],
+    ["getMinutes", standardFunctionType([], numberType)],
+    ["getMonth", standardFunctionType([], numberType)],
+    ["getSeconds", standardFunctionType([], numberType)],
+    ["getTime", standardFunctionType([], numberType)],
+    ["getTimezoneOffset", standardFunctionType([], numberType)],
+    ["getUTCDate", standardFunctionType([], numberType)],
+    ["getUTCDay", standardFunctionType([], numberType)],
+    ["getUTCFullYear", standardFunctionType([], numberType)],
+    ["getUTCHours", standardFunctionType([], numberType)],
+    ["getUTCMilliseconds", standardFunctionType([], numberType)],
+    ["getUTCMinutes", standardFunctionType([], numberType)],
+    ["getUTCMonth", standardFunctionType([], numberType)],
+    ["getUTCSeconds", standardFunctionType([], numberType)],
+    ["setDate", standardFunctionType([numberType], numberType, { minArgumentCount: 1, maxArgumentCount: 1 })],
+    ["setFullYear", standardFunctionType([numberType, numberType, numberType], numberType, { minArgumentCount: 1, maxArgumentCount: 3 })],
+    ["setHours", standardFunctionType([numberType, numberType, numberType, numberType], numberType, { minArgumentCount: 1, maxArgumentCount: 4 })],
+    ["setMilliseconds", standardFunctionType([numberType], numberType, { minArgumentCount: 1, maxArgumentCount: 1 })],
+    ["setMinutes", standardFunctionType([numberType, numberType, numberType], numberType, { minArgumentCount: 1, maxArgumentCount: 3 })],
+    ["setMonth", standardFunctionType([numberType, numberType], numberType, { minArgumentCount: 1, maxArgumentCount: 2 })],
+    ["setSeconds", standardFunctionType([numberType, numberType], numberType, { minArgumentCount: 1, maxArgumentCount: 2 })],
+    ["setTime", standardFunctionType([numberType], numberType, { minArgumentCount: 1, maxArgumentCount: 1 })],
+    ["setUTCDate", standardFunctionType([numberType], numberType, { minArgumentCount: 1, maxArgumentCount: 1 })],
+    ["setUTCFullYear", standardFunctionType([numberType, numberType, numberType], numberType, { minArgumentCount: 1, maxArgumentCount: 3 })],
+    ["setUTCHours", standardFunctionType([numberType, numberType, numberType, numberType], numberType, { minArgumentCount: 1, maxArgumentCount: 4 })],
+    ["setUTCMilliseconds", standardFunctionType([numberType], numberType, { minArgumentCount: 1, maxArgumentCount: 1 })],
+    ["setUTCMinutes", standardFunctionType([numberType, numberType, numberType], numberType, { minArgumentCount: 1, maxArgumentCount: 3 })],
+    ["setUTCMonth", standardFunctionType([numberType, numberType], numberType, { minArgumentCount: 1, maxArgumentCount: 2 })],
+    ["setUTCSeconds", standardFunctionType([numberType, numberType], numberType, { minArgumentCount: 1, maxArgumentCount: 2 })],
+    ["toDateString", standardFunctionType([], stringType)],
+    ["toISOString", standardFunctionType([], stringType)],
+    ["toJSON", standardFunctionType([anyType], stringType, { minArgumentCount: 0, maxArgumentCount: 1 })],
+    ["toLocaleDateString", standardFunctionType([stringType, anyType], stringType, { minArgumentCount: 0, maxArgumentCount: 2 })],
+    ["toLocaleString", standardFunctionType([stringType, anyType], stringType, { minArgumentCount: 0, maxArgumentCount: 2 })],
+    ["toLocaleTimeString", standardFunctionType([stringType, anyType], stringType, { minArgumentCount: 0, maxArgumentCount: 2 })],
+    ["toString", standardFunctionType([], stringType)],
+    ["toTimeString", standardFunctionType([], stringType)],
+    ["toTemporalInstant", withRequiredLibrary(standardFunctionType([], temporalInstantType, { minArgumentCount: 0, maxArgumentCount: 0 }), "esnext")],
+    ["toUTCString", standardFunctionType([], stringType)],
+    ["valueOf", standardFunctionType([], numberType)],
+  ]), {
+    methodProperties: new Set([
+      "getDate",
+      "getDay",
+      "getFullYear",
+      "getHours",
+      "getMilliseconds",
+      "getMinutes",
+      "getMonth",
+      "getSeconds",
+      "getTime",
+      "getTimezoneOffset",
+      "getUTCDate",
+      "getUTCDay",
+      "getUTCFullYear",
+      "getUTCHours",
+      "getUTCMilliseconds",
+      "getUTCMinutes",
+      "getUTCMonth",
+      "getUTCSeconds",
+      "setDate",
+      "setFullYear",
+      "setHours",
+      "setMilliseconds",
+      "setMinutes",
+      "setMonth",
+      "setSeconds",
+      "setTime",
+      "setUTCDate",
+      "setUTCFullYear",
+      "setUTCHours",
+      "setUTCMilliseconds",
+      "setUTCMinutes",
+      "setUTCMonth",
+      "setUTCSeconds",
+      "toDateString",
+      "toISOString",
+      "toJSON",
+      "toLocaleDateString",
+      "toLocaleString",
+      "toLocaleTimeString",
+      "toString",
+      "toTimeString",
+      "toTemporalInstant",
+      "toUTCString",
+      "valueOf",
+    ]),
+  });
+  return {
+    kind: "valueAndType",
+    value: withLibraryDiagnosticTypeName({
+      kind: "builtinConstructor",
+      name: "Date",
+      instanceType,
+      constructorParameters: [],
+      staticProperties: new Map<string, CheckedType>([
+        ["now", standardFunctionType([], numberType, { minArgumentCount: 0, maxArgumentCount: 0 })],
+        ["parse", standardFunctionType([stringType], numberType, { minArgumentCount: 1, maxArgumentCount: 1 })],
+        ["UTC", standardVariadicAnyFunction(numberType)],
+      ]),
+    }, "DateConstructor"),
+    type: instanceType,
+  };
+}
+
+function standardSymbolConstructorInterfaceType(): Extract<CheckedType, { readonly kind: "interface" }> {
+  return withLibraryDiagnosticTypeName(standardInterfaceType("SymbolConstructor", new Map<string, CheckedType>([
+    ["prototype", symbolType],
+    ["for", standardFunctionType([stringType], symbolType, { parameterNames: ["key"], minArgumentCount: 1, maxArgumentCount: 1 })],
+    ["keyFor", standardFunctionType([symbolType], unionType([stringType, undefinedType]), { parameterNames: ["sym"], minArgumentCount: 1, maxArgumentCount: 1 })],
+    ["iterator", symbolType],
+    ["hasInstance", symbolType],
+    ["isConcatSpreadable", symbolType],
+    ["match", symbolType],
+    ["replace", symbolType],
+    ["search", symbolType],
+    ["species", symbolType],
+    ["split", symbolType],
+    ["toPrimitive", symbolType],
+    ["toStringTag", symbolType],
+    ["unscopables", symbolType],
+    ["asyncIterator", symbolType],
+    ["matchAll", withRequiredLibrary(symbolType, "es2020")],
+    ["dispose", withRequiredLibrary(symbolType, "esnext")],
+    ["asyncDispose", withRequiredLibrary(symbolType, "esnext")],
+  ]), {
+    readonlyProperties: new Set([
+      "prototype",
+      "iterator",
+      "hasInstance",
+      "isConcatSpreadable",
+      "match",
+      "replace",
+      "search",
+      "species",
+      "split",
+      "toPrimitive",
+      "toStringTag",
+      "unscopables",
+      "asyncIterator",
+      "matchAll",
+      "dispose",
+      "asyncDispose",
+    ]),
+    methodProperties: new Set(["for", "keyFor"]),
+    callSignatures: [standardFunctionType([unionType([stringType, numberType])], symbolType, { parameterNames: ["description"], minArgumentCount: 0, maxArgumentCount: 1 })],
+  }), "SymbolConstructor") as Extract<CheckedType, { readonly kind: "interface" }>;
+}
+
+function standardIntlNamespace(): CheckedType {
+  const dateTimeFormatType = standardInterfaceType("DateTimeFormat", new Map<string, CheckedType>([
+    ["formatToParts", withRequiredLibrary(standardFunctionType([], { kind: "array", elementType: anyType }, { minArgumentCount: 0, maxArgumentCount: 0 }), "es2017")],
+  ]), {
+    methodProperties: new Set(["formatToParts"]),
+  });
+  const numberFormatType = standardInterfaceType("NumberFormat", new Map<string, CheckedType>([
+    ["formatToParts", withRequiredLibrary(standardFunctionType([numberType], { kind: "array", elementType: anyType }, { minArgumentCount: 0, maxArgumentCount: 1 }), "es2018")],
+  ]), {
+    methodProperties: new Set(["formatToParts"]),
+  });
+  const pluralRulesType = standardInterfaceType("PluralRules", new Map<string, CheckedType>([
+    ["select", standardFunctionType([numberType], stringType, { minArgumentCount: 1, maxArgumentCount: 1 })],
+  ]), {
+    methodProperties: new Set(["select"]),
+  });
+  return withLibraryDiagnosticTypeName(standardNamespace("Intl", [
+    ["DateTimeFormat", withLibraryDiagnosticTypeName({ kind: "builtinConstructor", name: "DateTimeFormat", instanceType: dateTimeFormatType, constructorParameters: [stringType], staticProperties: new Map() }, "DateTimeFormatConstructor")],
+    ["NumberFormat", withLibraryDiagnosticTypeName({ kind: "builtinConstructor", name: "NumberFormat", instanceType: numberFormatType, constructorParameters: [stringType], staticProperties: new Map() }, "NumberFormatConstructor")],
+    ["PluralRules", withRequiredLibrary(withLibraryDiagnosticTypeName({ kind: "builtinConstructor", name: "PluralRules", instanceType: pluralRulesType, constructorParameters: [stringType], staticProperties: new Map() }, "PluralRulesConstructor"), "es2018")],
+  ]), "typeof Intl");
+}
+
 const invalidClassNames = new Set(["any", "bigint", "boolean", "never", "number", "object", "string", "symbol", "undefined", "unknown", "void"]);
 const typeOnlyKeywordValueNames = new Set(["any", "bigint", "boolean", "never", "number", "object", "string", "symbol", "unknown", "void"]);
 const strictModeFutureReservedIdentifierNames = new Set(["implements", "interface", "let", "package", "private", "protected", "public", "static", "yield"]);
@@ -1664,6 +1983,7 @@ const ambientTypeNames = new Set([
   "Awaited",
   "AsyncGenerator",
   "AsyncIterable",
+  "AsyncIterableIterator",
   "AsyncIterator",
   "BigInt",
   "Boolean",
@@ -2342,34 +2662,37 @@ function standardGlobalEnvironment(options: CompilerOptions): TypeEnvironment {
       value: standardArrayConstructorValue(),
       type: anyType,
     }],
-    ["ArrayBuffer", { kind: "valueAndType", value: { kind: "object", properties: new Map([["isView", { kind: "intrinsicFunction", intrinsic: "ArrayBuffer.isView" }]]), readonlyProperties: new Set(), optionalProperties: new Set(), methodProperties: new Set() }, type: anyType }],
+    ["ArrayBuffer", withRequiredLibrary({ kind: "valueAndType", value: withLibraryDiagnosticTypeName({ kind: "object", properties: new Map([["isView", { kind: "intrinsicFunction", intrinsic: "ArrayBuffer.isView" }]]), readonlyProperties: new Set(), optionalProperties: new Set(), methodProperties: new Set() }, "ArrayBufferConstructor"), type: withLibraryDiagnosticTypeName(standardInterfaceType("ArrayBuffer", new Map()), "ArrayBuffer") }, "es2015")],
     ["ArrayBufferView", anyType],
-    ["BigInt", anyType],
+    ["Atomics", withRequiredLibrary(anyType, "es2017")],
+    ["BigInt", withRequiredLibrary(anyType, "es2020")],
     ["Boolean", { kind: "valueAndType", value: standardFunctionType([anyType], booleanType, { minArgumentCount: 0, maxArgumentCount: 1 }), type: boxedBooleanType }],
-    ["Date", anyType],
+    ["Date", standardDateBinding()],
     ["Element", standardInterfaceType("Element", new Map())],
     ["Error", { kind: "valueAndType", value: { kind: "builtinConstructor", name: "Error", instanceType: errorInterfaceType, constructorParameters: [stringType], staticProperties: new Map() }, type: errorInterfaceType }],
     ["URIError", { kind: "valueAndType", value: { kind: "builtinConstructor", name: "URIError", instanceType: errorInterfaceType, constructorParameters: [stringType], staticProperties: new Map() }, type: errorInterfaceType }],
-    ["FinalizationRegistry", anyType],
+    ["FinalizationRegistry", withRequiredLibrary(anyType, "es2021")],
     ["document", anyType],
     ["Function", { kind: "valueAndType", value: anyType, type: standardFunctionInterfaceType }],
     ["console", standardConsoleObjectType],
     ["eval", standardGlobalFunction("eval", [stringType], anyType, { minArgumentCount: 0, maxArgumentCount: 1 })],
-    ["AsyncGenerator", standardTypeOnly("AsyncGenerator", genericAsyncGeneratorInterfaceType)],
-    ["AsyncIterable", standardTypeOnly("AsyncIterable", genericAsyncIterableInterfaceType)],
-    ["AsyncIterator", anyType],
+    ["AsyncGenerator", withRequiredLibrary(standardTypeOnly("AsyncGenerator", genericAsyncGeneratorInterfaceType), "es2018")],
+    ["AsyncGeneratorFunction", withRequiredLibrary(anyType, "es2018")],
+    ["AsyncIterable", options.lib === undefined ? standardTypeOnly("AsyncIterable", genericAsyncIterableInterfaceType) : withRequiredLibrary(standardTypeOnly("AsyncIterable", genericAsyncIterableInterfaceType), "es2018")],
+    ["AsyncIterableIterator", options.lib === undefined ? standardTypeOnly("AsyncIterableIterator", anyType) : withRequiredLibrary(standardTypeOnly("AsyncIterableIterator", anyType), "es2018")],
+    ["AsyncIterator", options.lib === undefined ? anyType : withRequiredLibrary(anyType, "es2018")],
     ["FlatArray", standardTypeOnly("FlatArray", flatArrayType)],
     ["Generator", standardTypeOnly("Generator", genericGeneratorInterfaceType)],
     ["Iterable", anyType],
     ["IterableIterator", { kind: "arrayIterator", elementType: anyType }],
     ["Iterator", anyType],
     ["IteratorResult", standardTypeOnly("IteratorResult", genericIteratorResultType)],
-    ["Intl", anyType],
+    ["Intl", standardIntlNamespace()],
     ["JSON", standardNamespace("JSON", [
       ["parse", standardFunctionType([stringType], anyType, { minArgumentCount: 1, maxArgumentCount: 2 })],
       ["stringify", jsonStringifyFunctionType],
     ])],
-    ["Map", anyType],
+    ["Map", withRequiredLibrary(anyType, "es2015")],
     ["Math", {
       kind: "namespace",
       name: "Math",
@@ -2387,83 +2710,89 @@ function standardGlobalEnvironment(options: CompilerOptions): TypeEnvironment {
         ["asin", standardFunctionType([numberType], numberType)],
         ["atan", standardFunctionType([numberType], numberType)],
         ["atan2", standardFunctionType([numberType, numberType], numberType)],
-        ["acosh", standardFunctionType([numberType], numberType)],
-        ["asinh", standardFunctionType([numberType], numberType)],
-        ["atanh", standardFunctionType([numberType], numberType)],
-        ["cbrt", standardFunctionType([numberType], numberType)],
+        ["acosh", withRequiredLibrary(standardFunctionType([numberType], numberType), "es2015")],
+        ["asinh", withRequiredLibrary(standardFunctionType([numberType], numberType), "es2015")],
+        ["atanh", withRequiredLibrary(standardFunctionType([numberType], numberType), "es2015")],
+        ["cbrt", withRequiredLibrary(standardFunctionType([numberType], numberType), "es2015")],
         ["ceil", standardFunctionType([numberType], numberType)],
-        ["clz32", standardFunctionType([numberType], numberType)],
+        ["clz32", withRequiredLibrary(standardFunctionType([numberType], numberType), "es2015")],
         ["cos", standardFunctionType([numberType], numberType)],
-        ["cosh", standardFunctionType([numberType], numberType)],
+        ["cosh", withRequiredLibrary(standardFunctionType([numberType], numberType), "es2015")],
         ["exp", standardFunctionType([numberType], numberType)],
-        ["expm1", standardFunctionType([numberType], numberType)],
+        ["expm1", withRequiredLibrary(standardFunctionType([numberType], numberType), "es2015")],
         ["floor", standardFunctionType([numberType], numberType)],
-        ["fround", standardFunctionType([numberType], numberType)],
-        ["hypot", standardFunctionType([numberType], numberType, { restParameterIndex: 0, minArgumentCount: 0 })],
-        ["imul", standardFunctionType([numberType, numberType], numberType)],
+        ["fround", withRequiredLibrary(standardFunctionType([numberType], numberType), "es2015")],
+        ["hypot", withRequiredLibrary(standardFunctionType([numberType], numberType, { restParameterIndex: 0, minArgumentCount: 0 }), "es2015")],
+        ["imul", withRequiredLibrary(standardFunctionType([numberType, numberType], numberType), "es2015")],
         ["log", standardFunctionType([numberType], numberType)],
-        ["log10", standardFunctionType([numberType], numberType)],
-        ["log1p", standardFunctionType([numberType], numberType)],
-        ["log2", standardFunctionType([numberType], numberType)],
+        ["log10", withRequiredLibrary(standardFunctionType([numberType], numberType), "es2015")],
+        ["log1p", withRequiredLibrary(standardFunctionType([numberType], numberType), "es2015")],
+        ["log2", withRequiredLibrary(standardFunctionType([numberType], numberType), "es2015")],
         ["max", standardFunctionType([numberType], numberType, { restParameterIndex: 0, minArgumentCount: 0 })],
         ["min", standardFunctionType([numberType], numberType, { restParameterIndex: 0, minArgumentCount: 0 })],
         ["pow", standardFunctionType([numberType, numberType], numberType)],
         ["random", { kind: "function", typeParameters: [], parameters: [], returnType: numberType }],
         ["round", standardFunctionType([numberType], numberType)],
-        ["sign", standardFunctionType([numberType], numberType)],
+        ["sign", withRequiredLibrary(standardFunctionType([numberType], numberType), "es2015")],
         ["sin", standardFunctionType([numberType], numberType)],
-        ["sinh", standardFunctionType([numberType], numberType)],
+        ["sinh", withRequiredLibrary(standardFunctionType([numberType], numberType), "es2015")],
         ["sqrt", { kind: "function", typeParameters: [], parameters: [numberType], returnType: numberType }],
         ["tan", standardFunctionType([numberType], numberType)],
-        ["tanh", standardFunctionType([numberType], numberType)],
-        ["trunc", standardFunctionType([numberType], numberType)],
+        ["tanh", withRequiredLibrary(standardFunctionType([numberType], numberType), "es2015")],
+        ["trunc", withRequiredLibrary(standardFunctionType([numberType], numberType), "es2015")],
       ]),
     }],
-    ["Proxy", anyType],
-    ["Promise", {
+    ["Promise", withRequiredLibrary({
       kind: "valueAndType",
-      value: standardObject([
-        ["all", { kind: "intrinsicFunction", intrinsic: "Promise.all" }],
-        ["allSettled", standardFunctionType([anyType], anyType, { parameterNames: ["values"], minArgumentCount: 1, maxArgumentCount: 1 })],
-        ["any", standardFunctionType([anyType], anyType, { parameterNames: ["values"], minArgumentCount: 1, maxArgumentCount: 1 })],
-        ["race", standardFunctionType([anyType], anyType, { parameterNames: ["values"], minArgumentCount: 1, maxArgumentCount: 1 })],
-        ["reject", standardFunctionType([anyType], anyType, { parameterNames: ["reason"], minArgumentCount: 0, maxArgumentCount: 1 })],
-        ["resolve", { kind: "intrinsicFunction", intrinsic: "Promise.resolve" }],
-        ["try", standardFunctionType([standardFunctionType([], anyType)], anyType, { parameterNames: ["callback"], minArgumentCount: 1, maxArgumentCount: 1 })],
-        ["withResolvers", { kind: "function", typeParameters: ["T"], parameters: [], returnType: anyType }],
-      ], ["all", "allSettled", "any", "race", "reject", "resolve", "try", "withResolvers"]),
+      value: withLibraryDiagnosticTypeName({
+        kind: "builtinConstructor",
+        name: "Promise",
+        instanceType: promiseType(unknownType),
+        constructorParameters: [standardFunctionType([promiseResolveCallbackType, promiseRejectCallbackType], voidType, { parameterNames: ["resolve", "reject"], minArgumentCount: 1, maxArgumentCount: 2 })],
+        staticProperties: new Map<string, CheckedType>([
+          ["all", withRequiredLibrary({ kind: "intrinsicFunction", intrinsic: "Promise.all" }, "es2015")],
+          ["allSettled", withRequiredLibrary(standardFunctionType([anyType], anyType, { parameterNames: ["values"], minArgumentCount: 1, maxArgumentCount: 1 }), "es2020")],
+          ["any", withRequiredLibrary(standardFunctionType([anyType], anyType, { parameterNames: ["values"], minArgumentCount: 1, maxArgumentCount: 1 }), "es2021")],
+          ["race", withRequiredLibrary(standardFunctionType([anyType], anyType, { parameterNames: ["values"], minArgumentCount: 1, maxArgumentCount: 1 }), "es2015")],
+          ["reject", withRequiredLibrary(standardFunctionType([anyType], anyType, { parameterNames: ["reason"], minArgumentCount: 0, maxArgumentCount: 1 }), "es2015")],
+          ["resolve", withRequiredLibrary({ kind: "intrinsicFunction", intrinsic: "Promise.resolve" }, "es2015")],
+          ["try", withRequiredLibrary(standardFunctionType([standardFunctionType([], anyType)], anyType, { parameterNames: ["callback"], minArgumentCount: 1, maxArgumentCount: 1 }), "esnext")],
+          ["withResolvers", withRequiredLibrary({ kind: "function", typeParameters: ["T"], parameters: [], returnType: anyType }, "es2024")],
+        ]),
+      }, "PromiseConstructor"),
       type: genericPromiseInterfaceType,
-    }],
+    }, "es2015")],
     ["PromiseLike", genericPromiseLikeInterfaceType],
     ["Awaited", { kind: "intrinsicTypeAlias", name: "Awaited" }],
     ["Number", { kind: "valueAndType", value: anyType, type: boxedNumberType }],
     ["Object", {
       kind: "valueAndType",
-      value: {
+      value: withLibraryDiagnosticTypeName({
         kind: "builtinConstructor",
         name: "Object",
         instanceType: globalObjectType,
         constructorParameters: [anyType],
         staticProperties: new Map<string, CheckedType>([
-          ["assign", { kind: "intrinsicFunction", intrinsic: "Object.assign" }],
+          ["assign", withRequiredLibrary({ kind: "intrinsicFunction", intrinsic: "Object.assign" }, "es2015")],
           ["create", { kind: "function", typeParameters: [], parameters: [globalObjectType], parameterNames: ["o"], minArgumentCount: 1, maxArgumentCount: 1, returnType: anyType }],
           ["defineProperty", { kind: "function", typeParameters: ["T"], parameters: [{ kind: "typeParameter", name: "T" }, anyType, anyType], parameterNames: ["o", "p", "attributes"], minArgumentCount: 3, maxArgumentCount: 3, returnType: { kind: "typeParameter", name: "T" } }],
-          ["entries", standardFunctionType([globalObjectType], { kind: "array", elementType: { kind: "tuple", elements: [{ type: stringType, optional: false }, { type: anyType, optional: false }] } })],
+          ["entries", withRequiredLibrary(standardFunctionType([globalObjectType], { kind: "array", elementType: { kind: "tuple", elements: [{ type: stringType, optional: false }, { type: anyType, optional: false }] } }), "es2017")],
           ["freeze", { kind: "intrinsicFunction", intrinsic: "Object.freeze" }],
-          ["fromEntries", standardFunctionType([anyType], { kind: "object", properties: new Map(), readonlyProperties: new Set(), optionalProperties: new Set(), methodProperties: new Set(), stringIndexType: anyType }, { minArgumentCount: 1, maxArgumentCount: 1 })],
-          ["getOwnPropertySymbols", standardFunctionType([globalObjectType], { kind: "array", elementType: anyType })],
-          ["is", standardFunctionType([anyType, anyType], booleanType)],
+          ["fromEntries", withRequiredLibrary(standardFunctionType([anyType], { kind: "object", properties: new Map(), readonlyProperties: new Set(), optionalProperties: new Set(), methodProperties: new Set(), stringIndexType: anyType }, { minArgumentCount: 1, maxArgumentCount: 1 }), "es2019")],
+          ["getOwnPropertyDescriptors", withRequiredLibrary(standardFunctionType([globalObjectType], anyType), "es2017")],
+          ["getOwnPropertySymbols", withRequiredLibrary(standardFunctionType([globalObjectType], { kind: "array", elementType: anyType }), "es2015")],
+          ["is", withRequiredLibrary(standardFunctionType([anyType, anyType], booleanType), "es2015")],
           ["keys", standardFunctionType([globalObjectType], { kind: "array", elementType: stringType })],
-          ["setPrototypeOf", standardFunctionType([globalObjectType, unionType([globalObjectType, nullType])], globalObjectType)],
-          ["values", standardFunctionType([globalObjectType], { kind: "array", elementType: anyType })],
+          ["setPrototypeOf", withRequiredLibrary(standardFunctionType([globalObjectType, unionType([globalObjectType, nullType])], globalObjectType), "es2015")],
+          ["values", withRequiredLibrary(standardFunctionType([globalObjectType], { kind: "array", elementType: anyType }), "es2017")],
         ]),
-      },
+      }, "ObjectConstructor"),
       type: globalObjectType,
     }],
-    ["RegExp", { kind: "valueAndType", value: { kind: "builtinConstructor", name: "RegExp", instanceType: regexpInterfaceType, constructorParameters: [stringType], staticProperties: new Map() }, type: regexpInterfaceType }],
+    ["RegExp", { kind: "valueAndType", value: withLibraryDiagnosticTypeName({ kind: "builtinConstructor", name: "RegExp", instanceType: regexpInterfaceType, constructorParameters: [stringType], staticProperties: new Map() }, "RegExpConstructor"), type: regexpInterfaceType }],
     ["RegExpExecArray", regExpExecArrayType],
     ["RegExpMatchArray", regExpMatchArrayType],
-    ["Reflect", standardNamespace("Reflect", [
+    ["Reflect", withRequiredLibrary(standardNamespace("Reflect", [
       ["apply", standardVariadicAnyFunction()],
       ["construct", standardVariadicAnyFunction()],
       ["defineProperty", standardFunctionType([globalObjectType, anyType, anyType], booleanType)],
@@ -2476,8 +2805,9 @@ function standardGlobalEnvironment(options: CompilerOptions): TypeEnvironment {
       ["preventExtensions", standardFunctionType([globalObjectType], booleanType)],
       ["set", standardVariadicAnyFunction(booleanType)],
       ["setPrototypeOf", standardFunctionType([globalObjectType, unionType([globalObjectType, nullType])], booleanType)],
-    ])],
-    ["Set", { kind: "intrinsicConstructor", intrinsic: "Set" }],
+    ]), "es2015")],
+    ["Set", withRequiredLibrary({ kind: "intrinsicConstructor", intrinsic: "Set" }, "es2015")],
+    ["SharedArrayBuffer", withRequiredLibrary(anyType, "es2017")],
     ["Temporal", temporalNamespaceType],
     ["String", {
       kind: "valueAndType",
@@ -2487,18 +2817,18 @@ function standardGlobalEnvironment(options: CompilerOptions): TypeEnvironment {
         instanceType: boxedStringType,
         constructorParameters: [anyType],
         staticProperties: new Map([
-          ["fromCodePoint", standardFunctionType([numberType], stringType, { restParameterIndex: 0, minArgumentCount: 0 })],
-          ["raw", standardFunctionType([templateStringsArrayType, anyType], stringType, { restParameterIndex: 1, minArgumentCount: 1 })],
+          ["fromCodePoint", withRequiredLibrary(standardFunctionType([numberType], stringType, { restParameterIndex: 0, minArgumentCount: 0 }), "es2015")],
+          ["raw", withRequiredLibrary(standardFunctionType([templateStringsArrayType, anyType], stringType, { restParameterIndex: 1, minArgumentCount: 1 }), "es2015")],
         ]),
+        libraryDiagnosticTypeName: "StringConstructor",
       },
       type: boxedStringType,
     }],
-    ["Symbol", standardFunctionType([stringType], symbolType, { minArgumentCount: 0, maxArgumentCount: 1 })],
     ["TemplateStringsArray", templateStringsArrayType],
     ["URLSearchParams", anyType],
-    ["WeakMap", anyType],
-    ["WeakRef", anyType],
-    ["WeakSet", anyType],
+    ["WeakMap", withRequiredLibrary(anyType, "es2015")],
+    ["WeakRef", withRequiredLibrary(anyType, "es2021")],
+    ["WeakSet", withRequiredLibrary(anyType, "es2015")],
     ["Infinity", numberType],
     ["NaN", numberType],
     ["isFinite", standardGlobalFunction("isFinite", [numberType], booleanType)],
@@ -2527,10 +2857,38 @@ function standardGlobalEnvironment(options: CompilerOptions): TypeEnvironment {
       entries.push([name, standardAmbientInterfaceBinding(name)]);
     }
   }
+  if (standardLibraryDeclares(options, "es2015.proxy")) {
+    entries.push(["Proxy", {
+      kind: "valueAndType",
+      value: withLibraryDiagnosticTypeName({
+        kind: "builtinConstructor",
+        name: "Proxy",
+        instanceType: anyType,
+        constructorParameters: [globalObjectType, globalObjectType],
+        staticProperties: new Map<string, CheckedType>([
+          ["revocable", standardFunctionType([globalObjectType, globalObjectType], anyType, { minArgumentCount: 2, maxArgumentCount: 2 })],
+        ]),
+      }, "ProxyConstructor"),
+      type: anyType,
+    }]);
+  }
   for (const name of typedArrayGlobalNames) {
-    entries.push([name, anyType]);
+    entries.push([name, name === "DataView" ? anyType : standardTypedArrayBinding(name)]);
   }
   const environment: TypeEnvironment = new Map(entries.map(([name, type]) => [name, freshStandardEnvironmentType(type)]));
+  const symbolConstructorType = standardSymbolConstructorInterfaceType();
+  environment.set("SymbolConstructor", standardTypeOnly("SymbolConstructor", symbolConstructorType));
+  environment.set("Symbol", {
+    kind: "valueAndType",
+    value: withRequiredLibrary(symbolConstructorType, "es2015"),
+    type: standardInterfaceType("Symbol", new Map<string, CheckedType>([
+      ["toString", standardFunctionType([], stringType, { minArgumentCount: 0, maxArgumentCount: 0 })],
+      ["valueOf", standardFunctionType([], symbolType, { minArgumentCount: 0, maxArgumentCount: 0 })],
+      ["description", withRequiredLibrary(unionType([stringType, undefinedType]), "es2019")],
+    ]), {
+      methodProperties: new Set(["toString", "valueOf"]),
+    }),
+  });
   const globalThisExports = new Map(environment);
   const globalThisNamespace: CheckedType = { kind: "namespace", name: "globalThis", exports: globalThisExports };
   globalThisExports.set("globalThis", globalThisNamespace);
@@ -2639,6 +2997,81 @@ function normalizeLibraryName(name: string): string {
     normalized = normalized.slice(0, -".d.ts".length);
   }
   return normalized;
+}
+
+function libraryDiagnosticsEnabled(options: CompilerOptions): boolean {
+  return options.lib !== undefined || options.target !== undefined;
+}
+
+function standardLibraryIncludesRequiredLibrary(options: CompilerOptions, requiredLibrary: StandardLibraryName): boolean {
+  if (!libraryDiagnosticsEnabled(options)) {
+    return true;
+  }
+  if (options.lib !== undefined) {
+    return options.lib.map(normalizeLibraryName).some(libraryName => libraryNameIncludesRequiredLibrary(libraryName, requiredLibrary));
+  }
+  return Math.max(targetOrder(options.target), 2015) >= standardLibraryOrder(requiredLibrary);
+}
+
+function standardLibraryDeclares(options: CompilerOptions, declarationLibrary: string): boolean {
+  const normalizedDeclarationLibrary = normalizeLibraryName(declarationLibrary);
+  if (options.lib !== undefined) {
+    return options.lib.map(normalizeLibraryName).some(libraryName => libraryNameDeclares(libraryName, normalizedDeclarationLibrary));
+  }
+  const declarationOrder = fullStandardLibraryOrder(normalizedDeclarationLibrary) ?? featureStandardLibraryOrder(normalizedDeclarationLibrary);
+  return declarationOrder === undefined || Math.max(targetOrder(options.target), 2015) >= declarationOrder;
+}
+
+function libraryNameDeclares(libraryName: string, declarationLibrary: string): boolean {
+  if (libraryName === "esnext") {
+    return true;
+  }
+  if (libraryName === declarationLibrary) {
+    return true;
+  }
+  const libraryOrder = fullStandardLibraryOrder(libraryName);
+  const declarationOrder = fullStandardLibraryOrder(declarationLibrary) ?? featureStandardLibraryOrder(declarationLibrary);
+  if (libraryOrder !== undefined && declarationOrder !== undefined) {
+    return libraryOrder >= declarationOrder;
+  }
+  return libraryName.startsWith(`${declarationLibrary}.`);
+}
+
+function libraryNameIncludesRequiredLibrary(libraryName: string, requiredLibrary: StandardLibraryName): boolean {
+  if (libraryName === "esnext") {
+    return true;
+  }
+  if (requiredLibrary === "esnext") {
+    return libraryName === "esnext" || libraryName.startsWith("esnext.");
+  }
+  const libraryOrder = fullStandardLibraryOrder(libraryName);
+  if (libraryOrder !== undefined) {
+    return libraryOrder >= standardLibraryOrder(requiredLibrary);
+  }
+  return libraryName.startsWith(`${requiredLibrary}.`);
+}
+
+function fullStandardLibraryOrder(libraryName: string): number | undefined {
+  if (libraryName === "es6") {
+    return 2015;
+  }
+  if (libraryName === "es7") {
+    return 2016;
+  }
+  const match = /^es(\d{4})$/.exec(libraryName);
+  return match === null ? undefined : Number(match[1]);
+}
+
+function featureStandardLibraryOrder(libraryName: string): number | undefined {
+  if (libraryName.startsWith("esnext.")) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+  const match = /^es(\d{4})\./.exec(libraryName);
+  return match === null ? undefined : Number(match[1]);
+}
+
+function standardLibraryOrder(libraryName: StandardLibraryName): number {
+  return libraryName === "esnext" ? Number.MAX_SAFE_INTEGER : Number(libraryName.slice(2));
 }
 
 function collectReExports(statement: Extract<Statement, { readonly kind: Kind.ExportDeclaration }>, reexported: ModuleExportInfo | undefined, exports: Map<string, CheckedType>): void {
@@ -10244,6 +10677,10 @@ function inferExpression(expression: Expression, state: CheckState, environment:
   if (isStringLiteral(expression)) {
     return stringType;
   }
+  if (expression.kind === Kind.RegularExpressionLiteral) {
+    checkRegularExpressionLiteralTarget(expression, state);
+    return regexpInterfaceType;
+  }
   if (isKeywordExpression(expression)) {
     if (expression.kind === Kind.TrueKeyword || expression.kind === Kind.FalseKeyword) {
       return booleanType;
@@ -10280,6 +10717,7 @@ function inferExpression(expression: Expression, state: CheckState, environment:
       }
       return unresolvedType;
     }
+    const hasRequiredLibraryDiagnostic = diagnoseRequiredLibraryForValue(expression.text, bound, state);
     markDeclarationUsed(expression.text, state, environment);
     const temporalDeadZone = temporalDeadZoneValue(bound);
     if (temporalDeadZone !== undefined) {
@@ -10293,7 +10731,8 @@ function inferExpression(expression: Expression, state: CheckState, environment:
       return temporalDeadZone.type;
     }
     if (bound?.kind === "valueAndType") {
-      return readIdentifierValue(bound.value, state);
+      const value = readIdentifierValue(bound.value, state);
+      return hasRequiredLibraryDiagnostic ? withContextualDiagnostics(value) : value;
     }
     if (bound?.kind === "functionDeclaration") {
       return bound.type;
@@ -10309,7 +10748,8 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     }
     if (bound?.kind === "valueOnly") {
       const valueTemporalDeadZone = temporalDeadZoneValue(bound.type);
-      return readIdentifierValue(bound.type, state);
+      const value = readIdentifierValue(bound.type, state);
+      return hasRequiredLibraryDiagnostic ? withContextualDiagnostics(value) : value;
     }
     if (bound?.kind === "typeOnly") {
       state.diagnostics.push(createDiagnostic(2693, expression.text));
@@ -10327,7 +10767,7 @@ function inferExpression(expression: Expression, state: CheckState, environment:
       state.diagnostics.push(createDiagnostic(2454, bound.name));
       return bound.type;
     }
-    return bound;
+    return hasRequiredLibraryDiagnostic ? withContextualDiagnostics(bound) : bound;
   }
   if (isExpressionWithTypeArguments(expression)) {
     for (const typeArgument of expression.typeArguments ?? []) {
@@ -10699,6 +11139,15 @@ function readIdentifierValue(type: CheckedType, state: CheckState): CheckedType 
 function checkBigIntLiteralTarget(_expression: Extract<Expression, { readonly kind: Kind.BigIntLiteral }>, state: CheckState): void {
   if (!state.ambientContext && !targetSupportsBigIntLiteral(state.options.target)) {
     state.diagnostics.push(createDiagnostic(2737));
+  }
+}
+
+function checkRegularExpressionLiteralTarget(expression: Extract<Expression, { readonly kind: Kind.RegularExpressionLiteral }>, state: CheckState): void {
+  if (state.ambientContext || targetOrder(state.options.target) >= targetOrder("es2018")) {
+    return;
+  }
+  for (const _match of expression.text.matchAll(/\(\?<[^=!]/g)) {
+    state.diagnostics.push(createDiagnostic(1503));
   }
 }
 
@@ -11256,7 +11705,7 @@ function inferExpressionWithContext(expression: Expression, state: CheckState, e
     return inferObjectLiteral(expression, state, environment, normalizedContextualType);
   }
   if (isArrayLiteralExpression(expression)) {
-    const contextualTuple = contextualTupleType(normalizedContextualType);
+    const contextualTuple = contextualTupleTypeForArrayLiteral(expression.elements, normalizedContextualType, state.options);
     if (contextualTuple !== undefined) {
       return inferTupleLiteral(expression.elements, state, environment, contextualTuple);
     }
@@ -11381,6 +11830,50 @@ function contextualTupleType(contextualType: CheckedType | undefined): Extract<C
     return tupleMembers.length === 1 ? tupleMembers[0] : undefined;
   }
   return contextualType.kind === "tuple" ? contextualType : undefined;
+}
+
+function contextualTupleTypeForArrayLiteral(elements: readonly Expression[], contextualType: CheckedType | undefined, options: CompilerOptions): Extract<CheckedType, { readonly kind: "tuple" }> | undefined {
+  if (contextualType?.kind === "typeAliasInstance") {
+    return contextualTupleTypeForArrayLiteral(elements, contextualType.target, options);
+  }
+  if (contextualType?.kind !== "union") {
+    return contextualTupleType(contextualType);
+  }
+  const tupleMembers = contextualType.types
+    .map(member => contextualTupleType(member))
+    .filter((member): member is Extract<CheckedType, { readonly kind: "tuple" }> => member !== undefined);
+  const compatibleMembers = tupleMembers.filter(member => tupleContextAcceptsArrayLiteral(elements, member, options));
+  return compatibleMembers.length === 1 ? compatibleMembers[0] : contextualTupleType(contextualType);
+}
+
+function tupleContextAcceptsArrayLiteral(elements: readonly Expression[], tupleType: Extract<CheckedType, { readonly kind: "tuple" }>, options: CompilerOptions): boolean {
+  if (tupleType.restElementType === undefined && elements.length !== tupleType.elements.length) {
+    return false;
+  }
+  if (tupleType.restElementType !== undefined && elements.length < tupleType.elements.filter(element => !element.optional).length) {
+    return false;
+  }
+  for (let index = 0; index < elements.length; index += 1) {
+    const contextualElementType = tupleType.elements[index]?.type ?? tupleType.restElementType;
+    if (contextualElementType === undefined) {
+      return false;
+    }
+    const literalType = arrayLiteralContextCandidateType(elements[index]!);
+    if (literalType !== undefined && !contextualTypeAcceptsLiteral(literalType, contextualElementType, options)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function arrayLiteralContextCandidateType(expression: Expression): CheckedType | undefined {
+  if (isIdentifier(expression) && expression.text === "undefined") {
+    return undefinedType;
+  }
+  if (isKeywordExpression(expression) && expression.kind === Kind.NullKeyword) {
+    return nullType;
+  }
+  return literalExpressionNarrowType(expression);
 }
 
 function inferArrayFromCall(expression: Extract<Expression, { readonly kind: Kind.CallExpression }>, state: CheckState, environment: TypeEnvironment): CheckedType {
@@ -14063,7 +14556,9 @@ function inferPropertyAccess(expression: Expression, optionalChain: boolean, pro
     const nonNullReceiverType = nonNullableType(accessibleReceiverType);
     const propertyType = propertyAccessReadType(nonNullReceiverType, propertyName, state.options, environment);
     if (propertyType !== undefined) {
-      return unionType([propertyType, undefinedType]);
+      return diagnoseTargetLibraryPropertyAccess(nonNullReceiverType, expression, propertyName, propertyType, state)
+        ? withContextualDiagnostics(unionType([propertyType, undefinedType]))
+        : unionType([propertyType, undefinedType]);
     }
   }
   if (receiverType.kind === "thisClass") {
@@ -14074,7 +14569,9 @@ function inferPropertyAccess(expression: Expression, optionalChain: boolean, pro
       return flowedPropertyType;
     }
     if (propertyType !== undefined) {
-      return propertyType;
+      return diagnoseTargetLibraryPropertyAccess(receiverType, expression, propertyName, propertyType, state)
+        ? withContextualDiagnostics(propertyType)
+        : propertyType;
     }
     diagnoseMissingPropertyAccess(receiverType, propertyName, state);
     return anyType;
@@ -14087,7 +14584,9 @@ function inferPropertyAccess(expression: Expression, optionalChain: boolean, pro
     const propertyType = propertyAccessReadType(nonNullReceiverType, propertyName, state.options, environment);
     if (propertyType !== undefined) {
       state.diagnostics.push(createDiagnostic(18048, expressionNameText(expression) ?? propertyName));
-      return propertyType;
+      return diagnoseTargetLibraryPropertyAccess(nonNullReceiverType, expression, propertyName, propertyType, state)
+        ? withContextualDiagnostics(propertyType)
+        : propertyType;
     }
   }
   if (flowedPropertyType !== undefined) {
@@ -14095,7 +14594,9 @@ function inferPropertyAccess(expression: Expression, optionalChain: boolean, pro
   }
   const propertyType = propertyAccessReadType(accessibleReceiverType, propertyName, state.options, environment);
   if (propertyType !== undefined) {
-    return propertyType;
+    return diagnoseTargetLibraryPropertyAccess(accessibleReceiverType, expression, propertyName, propertyType, state)
+      ? withContextualDiagnostics(propertyType)
+      : propertyType;
   }
   if (isAnyLikeType(accessibleReceiverType)) {
     return anyType;
@@ -14188,6 +14689,110 @@ function diagnoseMissingPropertyAccess(receiverType: CheckedType, propertyName: 
     return;
   }
   state.diagnostics.push(createDiagnostic(2339, propertyName, displayType(receiverType)));
+}
+
+function diagnoseTargetLibraryPropertyAccess(receiverType: CheckedType, receiverExpression: Expression, propertyName: string, propertyType: CheckedType, state: CheckState): boolean {
+  if (typeHasContextualDiagnostics(receiverType)) {
+    return false;
+  }
+  const requiredLibrary = propertyType.requiredLibrary ?? generatedPropertyRequiredLibrary(receiverType, propertyName);
+  if (requiredLibrary === undefined || standardLibraryIncludesRequiredLibrary(state.options, requiredLibrary)) {
+    return false;
+  }
+  state.diagnostics.push(createDiagnostic(2550, propertyName, targetLibraryDiagnosticDisplayType(receiverType, receiverExpression), requiredLibrary));
+  return true;
+}
+
+function diagnoseRequiredLibraryForValue(name: string, bound: CheckedType, state: CheckState | undefined): boolean {
+  const value = valueMeaning(bound);
+  const requiredLibrary = value?.requiredLibrary ?? bound.requiredLibrary;
+  if (state === undefined || requiredLibrary === undefined || standardLibraryIncludesRequiredLibrary(state.options, requiredLibrary)) {
+    return false;
+  }
+  state.diagnostics.push(typeMeaning(bound) === undefined ? createDiagnostic(2583, name, requiredLibrary) : createDiagnostic(2585, name));
+  return true;
+}
+
+function diagnoseRequiredLibraryForTypeReference(name: string, bound: CheckedType, state: CheckState | undefined): void {
+  const type = typeMeaning(bound);
+  const requiredLibrary = type?.requiredLibrary ?? bound.requiredLibrary;
+  if (state === undefined || requiredLibrary === undefined || standardLibraryIncludesRequiredLibrary(state.options, requiredLibrary)) {
+    return;
+  }
+  state.diagnostics.push(createDiagnostic(2583, name, requiredLibrary));
+}
+
+function targetLibraryDiagnosticDisplayType(type: CheckedType, expression?: Expression): string {
+  if (expression !== undefined && isStringLiteral(expression)) {
+    return JSON.stringify(expression.text);
+  }
+  if (expression !== undefined && isArrayLiteralExpression(expression) && expression.elements.length === 0) {
+    return "undefined[]";
+  }
+  if (type.libraryDiagnosticTypeName !== undefined) {
+    return type.libraryDiagnosticTypeName;
+  }
+  if (type.kind === "valueAndType") {
+    return targetLibraryDiagnosticDisplayType(type.value, expression);
+  }
+  if (type.kind === "valueOnly") {
+    return targetLibraryDiagnosticDisplayType(type.type, expression);
+  }
+  if (type.kind === "accessorProperty") {
+    return targetLibraryDiagnosticDisplayType(type.type, expression);
+  }
+  if (type.kind === "typeAliasInstance" || type.kind === "typeAlias") {
+    return targetLibraryDiagnosticDisplayType(type.target, expression);
+  }
+  if (type.kind === "nonNullable") {
+    return targetLibraryDiagnosticDisplayType(nonNullableType(type.target), expression);
+  }
+  return displayType(type);
+}
+
+function generatedPropertyRequiredLibrary(receiverType: CheckedType, propertyName: string): StandardLibraryName | undefined {
+  if (receiverType.kind === "temporalDeadZone" || receiverType.kind === "unassignedVariable" || receiverType.kind === "accessorProperty" || receiverType.kind === "valueOnly") {
+    return generatedPropertyRequiredLibrary(receiverType.type, propertyName);
+  }
+  if (receiverType.kind === "valueAndType") {
+    return generatedPropertyRequiredLibrary(receiverType.value, propertyName);
+  }
+  if (receiverType.kind === "namespaceAndType") {
+    return maxRequiredLibrary([
+      generatedPropertyRequiredLibrary(receiverType.namespace, propertyName),
+      generatedPropertyRequiredLibrary(receiverType.type, propertyName),
+    ]);
+  }
+  if (receiverType.kind === "typeAliasInstance" || receiverType.kind === "typeAlias") {
+    return generatedPropertyRequiredLibrary(receiverType.target, propertyName);
+  }
+  if (receiverType.kind === "nonNullable") {
+    return generatedPropertyRequiredLibrary(nonNullableType(receiverType.target), propertyName);
+  }
+  if (receiverType.kind === "string" || receiverType.kind === "stringLiteral") {
+    return stringPropertyRequiredLibraries.get(propertyName);
+  }
+  if (receiverType.kind === "symbol") {
+    return propertyName === "description" ? "es2019" : undefined;
+  }
+  if (receiverType.kind === "array" || receiverType.kind === "readonlyArray") {
+    return arrayPropertyRequiredLibraries.get(propertyName);
+  }
+  if (receiverType.kind === "union") {
+    return maxRequiredLibrary(receiverType.types.map(member => generatedPropertyRequiredLibrary(member, propertyName)));
+  }
+  if (receiverType.kind === "intersection") {
+    return maxRequiredLibrary(receiverType.types.map(member => generatedPropertyRequiredLibrary(member, propertyName)));
+  }
+  return undefined;
+}
+
+function maxRequiredLibrary(libraries: readonly (StandardLibraryName | undefined)[]): StandardLibraryName | undefined {
+  const available = libraries.filter((library): library is StandardLibraryName => library !== undefined);
+  if (available.length === 0) {
+    return undefined;
+  }
+  return available.reduce((left, right) => standardLibraryOrder(left) >= standardLibraryOrder(right) ? left : right);
 }
 
 function suggestedPropertyName(receiverType: CheckedType, propertyName: string): string | undefined {
@@ -14418,10 +15023,12 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
     return numberType;
   }
   if (receiverType.kind === "string" && stringMethodReturnTypes.has(propertyName)) {
-    return { kind: "function", typeParameters: [], parameters: [], returnType: stringMethodReturnTypes.get(propertyName)! };
+    const methodType: CheckedFunctionType = { kind: "function", typeParameters: [], parameters: [], returnType: stringMethodReturnTypes.get(propertyName)! };
+    const requiredLibrary = stringPropertyRequiredLibraries.get(propertyName);
+    return requiredLibrary === undefined ? methodType : withRequiredLibrary(methodType, requiredLibrary);
   }
   if (receiverType.kind === "symbol" && propertyName === "description") {
-    return unionType([stringType, undefinedType]);
+    return withRequiredLibrary(unionType([stringType, undefinedType]), "es2019");
   }
   if (receiverType.kind === "array" || receiverType.kind === "readonlyArray") {
     return arrayPropertyAccessType(receiverType, propertyName, environment);
@@ -14443,9 +15050,10 @@ function propertyAccessReadType(receiverType: CheckedType, propertyName: string,
   if (propertyType === undefined) {
     return undefined;
   }
-  return strictOptionValue(options, "strictNullChecks") && propertyReadIsOptional(receiverType, propertyName, environment)
-    ? unionType([propertyType, undefinedType])
-    : propertyType;
+  if (strictOptionValue(options, "strictNullChecks") && propertyReadIsOptional(receiverType, propertyName, environment)) {
+    return preserveRequiredLibrary(unionType([propertyType, undefinedType]), propertyType);
+  }
+  return propertyType;
 }
 
 function propertyReadIsOptional(receiverType: CheckedType, propertyName: string, environment?: TypeEnvironment): boolean {
@@ -14631,7 +15239,7 @@ function arrayMethodType(receiverType: Extract<CheckedType, { readonly kind: "ar
     return undefined;
   }
   const callbackParameters = arrayCallbackParameterTypes(receiverType, propertyName);
-  return {
+  const methodType: CheckedFunctionType = {
     kind: "function",
     typeParameters: [],
     parameters: callbackParameters === undefined
@@ -14640,6 +15248,8 @@ function arrayMethodType(receiverType: Extract<CheckedType, { readonly kind: "ar
     ...(callbackParameters === undefined ? {} : { minArgumentCount: propertyName === "sort" ? 0 : 1, maxArgumentCount: propertyName === "sort" ? 1 : 2 }),
     returnType,
   };
+  const requiredLibrary = arrayPropertyRequiredLibraries.get(propertyName);
+  return requiredLibrary === undefined ? methodType : withRequiredLibrary(methodType, requiredLibrary);
 }
 
 function arrayConcatMethodType(receiverType: Extract<CheckedType, { readonly kind: "array" | "readonlyArray" }>): CheckedFunctionType {
@@ -17300,6 +17910,7 @@ function resolveEntityName(typeName: EntityName, environment: TypeEnvironment, s
       return { kind: "errorTypeParameter", name: typeName.text };
     }
     if (bound !== undefined) {
+      diagnoseRequiredLibraryForTypeReference(typeName.text, bound, state);
       markDeclarationUsed(typeName.text, state, environment);
     }
     return bound;
@@ -17945,6 +18556,9 @@ function callTypeArgumentDisplayRange(signatures: readonly CheckedFunctionType[]
 }
 
 function checkCallArguments(argumentTypes: readonly CheckedType[], functionType: Extract<CheckedType, { readonly kind: "function" }>, state: CheckState): void {
+  if (typeHasContextualDiagnostics(functionType)) {
+    return;
+  }
   const minArgumentCount = functionType.minArgumentCount ?? 0;
   const maxArgumentCount = functionType.maxArgumentCount;
   if (!callArgumentCountAssignable(argumentTypes.length, functionType)) {
@@ -19531,7 +20145,7 @@ function instantiateFunctionReturnType(functionType: Extract<CheckedType, { read
 
 function instantiateFunctionTypeForCall(functionType: Extract<CheckedType, { readonly kind: "function" }>, explicitTypeArguments: readonly CheckedType[], argumentTypes: readonly CheckedType[]): Extract<CheckedType, { readonly kind: "function" }> {
   const substitutions = functionTypeCallSubstitutions(functionType, explicitTypeArguments, argumentTypes);
-  return {
+  return preserveTypeMetadata({
     kind: "function",
     typeParameters: functionType.typeParameters.length === 0 ? [] : functionType.typeParameters,
     ...(functionType.typeParameterConstraints === undefined ? {} : { typeParameterConstraints: functionType.typeParameterConstraints }),
@@ -19546,7 +20160,7 @@ function instantiateFunctionTypeForCall(functionType: Extract<CheckedType, { rea
     ...(functionType.thisParameterType === undefined ? {} : { thisParameterType: substituteType(functionType.thisParameterType, substitutions) }),
     ...(functionType.overloads === undefined ? {} : { overloads: functionType.overloads.map(overload => substituteType(overload, substitutions) as CheckedFunctionType) }),
     returnType: substituteType(functionType.returnType, substitutions),
-  };
+  }, functionType);
 }
 
 function functionTypeCallSubstitutions(functionType: Extract<CheckedType, { readonly kind: "function" }>, explicitTypeArguments: readonly CheckedType[], argumentTypes: readonly CheckedType[]): ReadonlyMap<string, CheckedType> {
@@ -21996,6 +22610,7 @@ function uniqueInOrder<T>(values: readonly T[]): readonly T[] {
 
 const stringMethodReturnTypes = new Map<string, CheckedType>([
   ["anchor", stringType],
+  ["at", unionType([stringType, undefinedType])],
   ["big", stringType],
   ["blink", stringType],
   ["bold", stringType],
@@ -22012,10 +22627,13 @@ const stringMethodReturnTypes = new Map<string, CheckedType>([
   ["lastIndexOf", numberType],
   ["localeCompare", numberType],
   ["link", stringType],
-  ["match", anyType],
+  ["match", unionType([regExpMatchArrayType, nullType])],
   ["matchAll", anyType],
   ["normalize", stringType],
+  ["padEnd", stringType],
+  ["padStart", stringType],
   ["replace", stringType],
+  ["replaceAll", stringType],
   ["repeat", stringType],
   ["search", numberType],
   ["slice", stringType],
@@ -22033,7 +22651,29 @@ const stringMethodReturnTypes = new Map<string, CheckedType>([
   ["toString", stringType],
   ["toUpperCase", stringType],
   ["trim", stringType],
+  ["trimEnd", stringType],
+  ["trimLeft", stringType],
+  ["trimRight", stringType],
+  ["trimStart", stringType],
   ["valueOf", stringType],
+]);
+
+const stringPropertyRequiredLibraries = new Map<string, StandardLibraryName>([
+  ["at", "es2022"],
+  ["codePointAt", "es2015"],
+  ["endsWith", "es2015"],
+  ["includes", "es2015"],
+  ["normalize", "es2015"],
+  ["padEnd", "es2017"],
+  ["padStart", "es2017"],
+  ["repeat", "es2015"],
+  ["replaceAll", "es2021"],
+  ["startsWith", "es2015"],
+  ["trimEnd", "es2019"],
+  ["trimLeft", "es2019"],
+  ["trimRight", "es2019"],
+  ["trimStart", "es2019"],
+  ["matchAll", "es2020"],
 ]);
 
 const numberMethodReturnTypes = new Map<string, CheckedType>([
@@ -22073,6 +22713,26 @@ const arrayMethodReturnTypes = new Map<string, CheckedType>([
   ["unshift", numberType],
   ["values", anyType],
   ["with", { kind: "array", elementType: anyType }],
+]);
+
+const arrayPropertyRequiredLibraries = new Map<string, StandardLibraryName>([
+  ["at", "es2022"],
+  ["copyWithin", "es2015"],
+  ["entries", "es2015"],
+  ["fill", "es2015"],
+  ["find", "es2015"],
+  ["findIndex", "es2015"],
+  ["findLast", "es2023"],
+  ["findLastIndex", "es2023"],
+  ["flat", "es2019"],
+  ["flatMap", "es2019"],
+  ["includes", "es2016"],
+  ["keys", "es2015"],
+  ["toReversed", "es2023"],
+  ["toSorted", "es2023"],
+  ["toSpliced", "es2023"],
+  ["values", "es2015"],
+  ["with", "es2023"],
 ]);
 
 const arrayElementMethodNames = new Set(["pop", "shift"]);

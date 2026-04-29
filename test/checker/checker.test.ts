@@ -20,6 +20,49 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2339]);
   });
 
+  it("reports target-library diagnostics for standard properties newer than the configured lib", () => {
+    const sourceFile = parseSourceFile([
+      "['x'].includes('y');",
+      "'x'.padStart(2);",
+      "Object.fromEntries([]);",
+      "Promise.any([]);",
+      "[1].at(0);",
+      "[1].findLast(x => x > 0);",
+      "new Int8Array().at(0);",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { target: "es2015", lib: ["es2015"] });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2550, 2550, 2550, 2550, 2550, 2550, 2550]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Property 'includes' does not exist on type 'string[]'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2016' or later.",
+      "Property 'padStart' does not exist on type '\"x\"'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2017' or later.",
+      "Property 'fromEntries' does not exist on type 'ObjectConstructor'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2019' or later.",
+      "Property 'any' does not exist on type 'PromiseConstructor'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2021' or later.",
+      "Property 'at' does not exist on type 'number[]'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2022' or later.",
+      "Property 'findLast' does not exist on type 'number[]'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2023' or later.",
+      "Property 'at' does not exist on type 'Int8Array<ArrayBuffer>'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2022' or later.",
+    ]);
+  });
+
+  it("reports target-library diagnostics for standard globals newer than the configured lib", () => {
+    const sourceFile = parseSourceFile([
+      "new Map();",
+      "Atomics;",
+      "let g: AsyncGenerator<any>;",
+      "BigInt(1);",
+      "new SharedArrayBuffer(1);",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { target: "es2015", lib: ["es2015"] });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2583, 2583, 2583, 2583]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Cannot find name 'Atomics'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2017' or later.",
+      "Cannot find name 'AsyncGenerator'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2018' or later.",
+      "Cannot find name 'BigInt'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2020' or later.",
+      "Cannot find name 'SharedArrayBuffer'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2017' or later.",
+    ]);
+  });
+
   it("binds function-scoped var declarations before nested closure checking", () => {
     const sourceFile = parseSourceFile("function f() { var inner: any = (function() { return inner; })(); }");
     const result = checkSourceFile(sourceFile, { strictNullChecks: true });
