@@ -42,6 +42,116 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find name 'local'."]);
   });
 
+  it("fills omitted function type arguments from defaults", () => {
+    const sourceFile = parseSourceFile([
+      "interface A { a: number; }",
+      "interface B { b: string; }",
+      "declare function pair<T, U = B>(left: T, right: U): U;",
+      "const result = pair<A>({ a: 1 }, { b: 'ok' });",
+      "result.b;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("uses prior explicit function type arguments when substituting later defaults", () => {
+    const sourceFile = parseSourceFile([
+      "declare function accepts<T, U = T>(value: U): void;",
+      "accepts<number>('x');",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2345]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Argument of type 'string' is not assignable to parameter of type 'number'."]);
+  });
+
+  it("reports function type argument ranges with defaulted trailing parameters", () => {
+    const sourceFile = parseSourceFile("declare function f<T, U, V = number>(): void; f<1>();");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2558]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Expected 2-3 type arguments, but got 1."]);
+  });
+
+  it("checks type parameter default constraints and declaration order", () => {
+    const sourceFile = parseSourceFile([
+      "declare function invalidConstraint<T extends string = number>(): void;",
+      "declare function invalidReference<T = U, U = string>(): void;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2344, 2744]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type 'number' does not satisfy the constraint 'string'.",
+      "Type parameter defaults can only reference previously declared type parameters.",
+    ]);
+  });
+
+  it("checks type parameter defaults against constraints after substituting the default itself", () => {
+    const sourceFile = parseSourceFile([
+      "interface Settable<T, V> { set(value: V): T; }",
+      "class Identity<V> implements Settable<Identity<V>, V> {",
+      "  set(value: V): Identity<V> { return new Identity<V>(); }",
+      "}",
+      "interface Test<V, T extends Settable<T, V> = Identity<V>> {}",
+      "let test: Test<number>;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("does not report explicit type-argument constraint diagnostics for inferred calls", () => {
+    const sourceFile = parseSourceFile([
+      "interface I<T> { <U extends T>(value: U): U; }",
+      "declare const callable: I<string>;",
+      "const value: string = callable(\"\");",
+      "declare function preserve<T extends { value: \"1\" | \"2\" }>(value: T): T;",
+      "const preserved: string = preserve({ value: \"1\" }).value;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("merges interfaces when later declarations provide omitted defaults", () => {
+    const sourceFile = parseSourceFile([
+      "interface Box { fixed: string; }",
+      "interface Box<T = number> { value: T; }",
+      "declare const generic: Box<boolean>;",
+      "const fixed: string = generic.fixed;",
+      "const value: boolean = generic.value;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("reports circular generic owner defaults without cascading through that default", () => {
+    const sourceFile = parseSourceFile("interface SelfReference<T = SelfReference> {}");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2716]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type parameter 'T' has a circular default."]);
+  });
+
+  it("carries generic construct-signature return types through derived new expressions", () => {
+    const sourceFile = parseSourceFile([
+      "interface Base {}",
+      "interface BaseConstructor { new <T = { a: number }>(value: T): Base & T; }",
+      "declare const Base: BaseConstructor;",
+      "declare class Derived extends Base {}",
+      "const derived = new Derived({ a: 1 });",
+      "const value: number = derived.a;",
+      "const assigned: { a: number } = derived;",
+      "type Keys = keyof Derived;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
   it("preserves outer namespace meanings when local declarations only add a type meaning", () => {
     const sourceFile = parseSourceFile([
       "declare namespace Express { export interface Request { id: number; } }",
