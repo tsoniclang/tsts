@@ -20,6 +20,28 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2339]);
   });
 
+  it("binds function-scoped var declarations before nested closure checking", () => {
+    const sourceFile = parseSourceFile("function f() { var inner: any = (function() { return inner; })(); }");
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("hoists block-contained var declarations to the function scope", () => {
+    const sourceFile = parseSourceFile("function f() { { var hoisted = { value: 1 }; } return hoisted.value.toFixed(); }");
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("does not leak function-local var declarations across nested function boundaries", () => {
+    const sourceFile = parseSourceFile("function f() { function inner() { var local = 1; } return local; }");
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2304]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find name 'local'."]);
+  });
+
   it("treats any-bearing intersections as any for property access", () => {
     const sourceFile = parseSourceFile("function f(value: any & any) { return value.anchorRef; }");
     const result = checkSourceFile(sourceFile);

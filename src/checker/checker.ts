@@ -3639,6 +3639,9 @@ function prebindStatementDeclarations(statements: readonly Statement[], state: C
       prebindClassDeclaration(statement, state, environment, ambient || hasDeclareModifier(statement));
     }
   }
+  if (!ambient && statementListIsVarScopeRoot(statements)) {
+    prebindFunctionScopedVariableDeclarations(statements, state, environment);
+  }
   for (const statement of statements) {
     if (isVariableStatement(statement) && !ambient && !hasDeclareModifier(statement) && variableStatementIsLexical(statement)) {
       prebindLexicalVariableDeclarationList(statement.declarationList, state, environment);
@@ -3677,6 +3680,116 @@ function prebindClassDeclaration(classDeclaration: ClassDeclaration, state: Chec
     }));
   if (!ambient && !declarationIsExported(classDeclaration)) {
     registerUnusedDeclaration(classDeclaration.name.text, classDeclaration, "type", state, environment);
+  }
+}
+
+function prebindFunctionScopedVariableDeclarations(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment): void {
+  const declarations: VariableDeclaration[] = [];
+  collectFunctionScopedVariableDeclarations(statements, declarations);
+  for (const declaration of declarations) {
+    prebindFunctionScopedVariableBindingName(declaration.name, functionScopedVariableInitialPreboundType(declaration, state, environment), environment);
+  }
+  for (const declaration of declarations) {
+    prebindFunctionScopedVariableBindingName(declaration.name, functionScopedVariablePreboundType(declaration, state, environment), environment);
+  }
+}
+
+function collectFunctionScopedVariableDeclarations(statements: readonly Statement[], declarations: VariableDeclaration[]): void {
+  for (const statement of statements) {
+    collectFunctionScopedVariableDeclarationsFromStatement(statement, declarations);
+  }
+}
+
+function collectFunctionScopedVariableDeclarationsFromStatement(statement: Statement, declarations: VariableDeclaration[]): void {
+  if (isVariableStatement(statement)) {
+    collectFunctionScopedVariableDeclarationsFromList(statement.declarationList, declarations);
+    return;
+  }
+  if (isFunctionDeclaration(statement) || isClassDeclaration(statement) || isModuleDeclaration(statement)) {
+    return;
+  }
+  if (isBlock(statement)) {
+    collectFunctionScopedVariableDeclarations(statement.statements, declarations);
+    return;
+  }
+  if (isForStatement(statement)) {
+    collectFunctionScopedVariableDeclarationsFromForInitializer(statement.initializer, declarations);
+    collectFunctionScopedVariableDeclarationsFromStatement(statement.statement, declarations);
+    return;
+  }
+  if (isForInStatement(statement) || isForOfStatement(statement)) {
+    collectFunctionScopedVariableDeclarationsFromForInitializer(statement.initializer, declarations);
+    collectFunctionScopedVariableDeclarationsFromStatement(statement.statement, declarations);
+    return;
+  }
+  if (isIfStatement(statement)) {
+    collectFunctionScopedVariableDeclarationsFromStatement(statement.thenStatement, declarations);
+    if (statement.elseStatement !== undefined) {
+      collectFunctionScopedVariableDeclarationsFromStatement(statement.elseStatement, declarations);
+    }
+    return;
+  }
+  if (isWhileStatement(statement) || isDoStatement(statement) || isLabeledStatement(statement) || isWithStatement(statement)) {
+    collectFunctionScopedVariableDeclarationsFromStatement(statement.statement, declarations);
+    return;
+  }
+  if (isSwitchStatement(statement)) {
+    for (const clause of statement.caseBlock.clauses) {
+      collectFunctionScopedVariableDeclarations(clause.statements, declarations);
+    }
+    return;
+  }
+  if (isTryStatement(statement)) {
+    collectFunctionScopedVariableDeclarations(statement.tryBlock.statements, declarations);
+    if (statement.catchClause !== undefined) {
+      collectFunctionScopedVariableDeclarations(statement.catchClause.block.statements, declarations);
+    }
+    if (statement.finallyBlock !== undefined) {
+      collectFunctionScopedVariableDeclarations(statement.finallyBlock.statements, declarations);
+    }
+  }
+}
+
+function collectFunctionScopedVariableDeclarationsFromForInitializer(initializer: Extract<Statement, { readonly kind: Kind.ForStatement | Kind.ForInStatement | Kind.ForOfStatement }>["initializer"], declarations: VariableDeclaration[]): void {
+  if (initializer !== undefined && isVariableDeclarationList(initializer)) {
+    collectFunctionScopedVariableDeclarationsFromList(initializer, declarations);
+  }
+}
+
+function collectFunctionScopedVariableDeclarationsFromList(declarationList: VariableDeclarationList, declarations: VariableDeclaration[]): void {
+  if (variableDeclarationListIsLexical(declarationList)) {
+    return;
+  }
+  declarations.push(...declarationList.declarations);
+}
+
+function functionScopedVariableInitialPreboundType(declaration: VariableDeclaration, state: CheckState, environment: TypeEnvironment): CheckedType {
+  return declaration.type === undefined ? unresolvedType : prebindDeclaredType(declaration.type, state, environment);
+}
+
+function functionScopedVariablePreboundType(declaration: VariableDeclaration, state: CheckState, environment: TypeEnvironment): CheckedType {
+  if (declaration.type !== undefined) {
+    return prebindDeclaredType(declaration.type, state, environment);
+  }
+  if (declaration.initializer === undefined) {
+    return unresolvedType;
+  }
+  const diagnosticState = emptyCheckState(state.options);
+  const initializerType = inferExpression(declaration.initializer, diagnosticState, environment);
+  return variableDeclarationInitializerBindingType(declaration, undefined, initializerType, environment, state.options) ?? unresolvedType;
+}
+
+function prebindFunctionScopedVariableBindingName(name: BindingName, type: CheckedType, environment: TypeEnvironment): void {
+  if (isIdentifier(name)) {
+    environment.set(name.text, mergeValueDeclarationBinding(environment.get(name.text), type));
+    return;
+  }
+  if (isObjectBindingPattern(name) || isArrayBindingPattern(name)) {
+    for (const element of name.elements) {
+      if (element.name !== undefined) {
+        prebindFunctionScopedVariableBindingName(element.name, type, environment);
+      }
+    }
   }
 }
 
