@@ -92,6 +92,7 @@ function parseCompilerOptions(fileName: string, value: unknown, diagnostics: TsC
   const noUncheckedSideEffectImports = parseBooleanCompilerOption(fileName, "noUncheckedSideEffectImports", value.noUncheckedSideEffectImports, diagnostics);
   const strict = parseBooleanCompilerOption(fileName, "strict", value.strict, diagnostics);
   const noImplicitAny = parseBooleanCompilerOption(fileName, "noImplicitAny", value.noImplicitAny, diagnostics);
+  const noImplicitReturns = parseBooleanCompilerOption(fileName, "noImplicitReturns", value.noImplicitReturns, diagnostics);
   const noUnusedLocals = parseBooleanCompilerOption(fileName, "noUnusedLocals", value.noUnusedLocals, diagnostics);
   const noUnusedParameters = parseBooleanCompilerOption(fileName, "noUnusedParameters", value.noUnusedParameters, diagnostics);
   const strictNullChecks = parseBooleanCompilerOption(fileName, "strictNullChecks", value.strictNullChecks, diagnostics);
@@ -109,6 +110,7 @@ function parseCompilerOptions(fileName: string, value: unknown, diagnostics: TsC
     ...(noUncheckedSideEffectImports === undefined ? {} : { noUncheckedSideEffectImports }),
     ...(strict === undefined ? {} : { strict }),
     ...(noImplicitAny === undefined ? {} : { noImplicitAny }),
+    ...(noImplicitReturns === undefined ? {} : { noImplicitReturns }),
     ...(noUnusedLocals === undefined ? {} : { noUnusedLocals }),
     ...(noUnusedParameters === undefined ? {} : { noUnusedParameters }),
     ...(strictNullChecks === undefined ? {} : { strictNullChecks }),

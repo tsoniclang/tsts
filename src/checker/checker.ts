@@ -173,6 +173,7 @@ import {
   type ParameterDeclaration,
   type PropertyName,
   type PropertySignatureDeclaration,
+  type ReturnStatement,
   type SetAccessorDeclaration,
   type SourceFile,
   type Statement,
@@ -268,6 +269,7 @@ interface CheckState {
   readonly insideParameterInitializer: boolean;
   readonly ambientContext: boolean;
   readonly suppressUnreachableDiagnostics: boolean;
+  readonly currentFunctionHasImplicitReturn: boolean | undefined;
   readonly iterationDepth: number;
   readonly yieldType: CheckedType | undefined;
   readonly externalModule: boolean;
@@ -315,8 +317,10 @@ const environmentCorrelations = new WeakMap<TypeEnvironment, readonly BindingCor
 const readonlyEnvironmentBindings = new WeakMap<TypeEnvironment, ReadonlySet<string>>();
 const declaredEnvironmentBindingTypes = new WeakMap<TypeEnvironment, ReadonlyMap<string, CheckedType>>();
 const wideningLiteralEnvironmentBindings = new WeakMap<TypeEnvironment, ReadonlySet<string>>();
+const environmentPropertyFlowTypes = new WeakMap<TypeEnvironment, Map<string, CheckedType>>();
 const environmentUnusedDeclarations = new WeakMap<TypeEnvironment, Map<string, UnusedDeclarationEntry>>();
 const activeTypeParameterConstraintDeclarations = new WeakMap<object, ReadonlySet<string>>();
+const propertyFlowPathSeparator = "\0";
 interface InterfaceTypeCacheEntry<T> {
   readonly members: InterfaceMembers;
   readonly version: number;
@@ -335,6 +339,7 @@ function cloneTypeEnvironment(environment: TypeEnvironment): TypeEnvironment {
   copyReadonlyEnvironmentBindings(environment, cloned);
   copyDeclaredEnvironmentBindingTypes(environment, cloned);
   copyWideningLiteralEnvironmentBindings(environment, cloned);
+  copyEnvironmentPropertyFlowTypes(environment, cloned);
   copyEnvironmentUnusedDeclarations(environment, cloned);
   return cloned;
 }
@@ -345,6 +350,7 @@ function cloneTypeEnvironmentForSpeculation(environment: TypeEnvironment): TypeE
   copyReadonlyEnvironmentBindings(environment, cloned);
   copyDeclaredEnvironmentBindingTypes(environment, cloned);
   copyWideningLiteralEnvironmentBindings(environment, cloned);
+  copyEnvironmentPropertyFlowTypes(environment, cloned);
   return cloned;
 }
 
@@ -358,6 +364,13 @@ function copyEnvironmentCorrelations(source: TypeEnvironment, target: TypeEnviro
 function addEnvironmentCorrelation(environment: TypeEnvironment, correlation: BindingCorrelation): void {
   const existing = environmentCorrelations.get(environment) ?? [];
   environmentCorrelations.set(environment, [...existing, correlation]);
+}
+
+function copyEnvironmentPropertyFlowTypes(source: TypeEnvironment, target: TypeEnvironment): void {
+  const propertyFlowTypes = environmentPropertyFlowTypes.get(source);
+  if (propertyFlowTypes !== undefined) {
+    environmentPropertyFlowTypes.set(target, new Map(propertyFlowTypes));
+  }
 }
 
 function copyReadonlyEnvironmentBindings(source: TypeEnvironment, target: TypeEnvironment): void {
@@ -700,6 +713,22 @@ function declaredEnvironmentBindingType(environment: TypeEnvironment, name: stri
 
 function environmentAssignmentTargetType(type: CheckedType | undefined): CheckedType | undefined {
   return type?.kind === "unassignedVariable" || type?.kind === "temporalDeadZone" ? type.type : type;
+}
+
+function assignmentFlowType(assignedType: CheckedType, targetType: CheckedType, options: CompilerOptions): CheckedType {
+  if (!isAssignableTo(assignedType, targetType, options)) {
+    return targetType;
+  }
+  if (targetType.kind === "typeAliasInstance") {
+    return assignmentFlowType(assignedType, targetType.target, options);
+  }
+  if (targetType.kind === "union") {
+    return narrowType(targetType, assignedType, options);
+  }
+  if (targetType.kind === "boolean" && assignedType.kind === "booleanLiteral") {
+    return assignedType;
+  }
+  return targetType;
 }
 
 function setEnvironmentBindingWideningLiteral(environment: TypeEnvironment, name: string, widening: boolean): void {
@@ -1656,6 +1685,7 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
         insideParameterInitializer: false,
         ambientContext: false,
         suppressUnreachableDiagnostics: false,
+        currentFunctionHasImplicitReturn: undefined,
         iterationDepth: 0,
         yieldType: undefined,
         externalModule: sourceFileIsExternalModule(sourceFile.sourceFile),
@@ -1845,6 +1875,7 @@ function checkStateForSourceFile(sourceFile: SourceFile, options: CompilerOption
     insideParameterInitializer: false,
     ambientContext: false,
     suppressUnreachableDiagnostics: false,
+    currentFunctionHasImplicitReturn: undefined,
     iterationDepth: 0,
     yieldType: undefined,
     externalModule: sourceFileIsExternalModule(sourceFile),
@@ -2708,16 +2739,23 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     const conditionType = inferExpression(statement.expression, state, environment);
     diagnoseSyntacticTruthyFalsyExpression(statement.expression, conditionType, state, environment);
     diagnoseUncalledFunctionCondition(statement.expression, conditionType, state, environment, statement.thenStatement, false);
-    checkStatement(statement.thenStatement, state, narrowedEnvironmentForCondition(statement.expression, state, environment), expectedReturnType, ambient, false, false, true);
+    const conditionIsTrue = conditionIsSyntacticTrue(statement.expression);
+    const conditionIsFalse = conditionIsSyntacticFalse(statement.expression);
+    const thenState = conditionIsFalse ? unreachableEmbeddedStatementState(statement.thenStatement, state) : state;
+    checkStatement(statement.thenStatement, thenState, narrowedEnvironmentForCondition(statement.expression, state, environment), expectedReturnType, ambient, false, false, true);
     if (statement.elseStatement !== undefined) {
-      checkStatement(statement.elseStatement, state, narrowedEnvironmentForNegatedCondition(statement.expression, state, environment), expectedReturnType, ambient, false, false, true);
+      const elseState = conditionIsTrue ? unreachableEmbeddedStatementState(statement.elseStatement, state) : state;
+      checkStatement(statement.elseStatement, elseState, narrowedEnvironmentForNegatedCondition(statement.expression, state, environment), expectedReturnType, ambient, false, false, true);
     }
     return;
   }
   if (isWhileStatement(statement)) {
     const conditionType = inferExpression(statement.expression, state, environment);
     diagnoseSyntacticTruthyFalsyExpression(statement.expression, conditionType, state, environment);
-    checkStatement(statement.statement, enterIteration(state), cloneTypeEnvironment(environment), expectedReturnType, ambient, false, false, true);
+    const bodyState = conditionIsSyntacticFalse(statement.expression)
+      ? unreachableEmbeddedStatementState(statement.statement, enterIteration(state))
+      : enterIteration(state);
+    checkStatement(statement.statement, bodyState, cloneTypeEnvironment(environment), expectedReturnType, ambient, false, false, true);
     return;
   }
   if (isDoStatement(statement)) {
@@ -2738,7 +2776,10 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     if (statement.incrementor !== undefined) {
       inferExpression(statement.incrementor, state, loopEnvironment);
     }
-    checkStatement(statement.statement, enterIteration(state), loopEnvironment, expectedReturnType, ambient, false, false, true);
+    const bodyState = statement.condition !== undefined && conditionIsSyntacticFalse(statement.condition)
+      ? unreachableEmbeddedStatementState(statement.statement, enterIteration(state))
+      : enterIteration(state);
+    checkStatement(statement.statement, bodyState, loopEnvironment, expectedReturnType, ambient, false, false, true);
     return;
   }
   if (isForInStatement(statement) || isForOfStatement(statement)) {
@@ -2787,7 +2828,15 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     }
     const actual = statement.expression === undefined ? voidType : inferExpressionWithContext(statement.expression, state, environment, expectedReturnType);
     if (expectedReturnType !== undefined) {
-      checkAssignable(actual, expectedReturnType, state);
+      if (strictOptionValue(state.options, "strictNullChecks") || statement.expression !== undefined || expectedReturnType.kind === "never") {
+        checkAssignable(actual, expectedReturnType, state);
+      } else if (
+        state.options.noImplicitReturns === true
+        && state.currentFunctionHasImplicitReturn === false
+        && !returnTypeIsUndefinedVoidOrAnyForNoImplicit(expectedReturnType)
+      ) {
+        state.diagnostics.push(createDiagnostic(7030));
+      }
     }
     return;
   }
@@ -2796,16 +2845,19 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isTryStatement(statement)) {
-    checkBlock(statement.tryBlock, state, environment, expectedReturnType);
+    const tryEnvironment = checkBlockInEnvironment(statement.tryBlock, state, environment, expectedReturnType);
     if (statement.catchClause !== undefined) {
       const catchEnvironment = cloneTypeEnvironment(environment);
       if (statement.catchClause.variableDeclaration !== undefined) {
         checkVariableDeclaration(statement.catchClause.variableDeclaration, state, catchEnvironment, false);
       }
-      checkBlock(statement.catchClause.block, state, catchEnvironment, expectedReturnType);
+      checkBlockInEnvironment(statement.catchClause.block, state, catchEnvironment, expectedReturnType);
     }
     if (statement.finallyBlock !== undefined) {
       checkBlock(statement.finallyBlock, state, environment, expectedReturnType);
+    }
+    if (statement.catchClause === undefined && (statement.finallyBlock === undefined || statementListTerminates(statement.finallyBlock.statements) === undefined) && statementListTerminates(statement.tryBlock.statements) === undefined) {
+      copyOuterFlowTypes(tryEnvironment, environment);
     }
     return;
   }
@@ -2989,6 +3041,13 @@ function shouldReportUnreachableStatement(statement: Statement, state: CheckStat
     && statementHasReachabilityDiagnosticTarget(statement, state);
 }
 
+function unreachableEmbeddedStatementState(statement: Statement, state: CheckState): CheckState {
+  if (shouldReportUnreachableStatement(statement, state, "other")) {
+    state.diagnostics.push(createDiagnostic(7027));
+  }
+  return statementPropagatesUnreachableSuppression(statement) ? enterSuppressedUnreachableDiagnostics(state) : state;
+}
+
 function statementPropagatesUnreachableSuppression(statement: Statement): boolean {
   return !isFunctionDeclaration(statement);
 }
@@ -3071,10 +3130,10 @@ function statementListTermination(statement: Statement): StatementListTerminatio
         return finallyTermination;
       }
     }
-    if (statement.catchClause === undefined) {
-      return undefined;
-    }
     const tryTermination = statementListTerminates(statement.tryBlock.statements);
+    if (statement.catchClause === undefined) {
+      return tryTermination;
+    }
     const catchTermination = statementListTerminates(statement.catchClause.block.statements);
     return tryTermination !== undefined && catchTermination !== undefined
       ? { cause: tryTermination.cause === "throw" && catchTermination.cause === "throw" ? "throw" : "other" }
@@ -3085,13 +3144,16 @@ function statementListTermination(statement: Statement): StatementListTerminatio
 
 function statementListTerminationWithLabel(statement: Statement, label: string): StatementListTermination | undefined {
   if (isWhileStatement(statement)) {
-    return expressionIsSyntacticTrue(statement.expression) && !statementCanBreakOut(statement.statement, label) ? { cause: "other" } : undefined;
+    return expressionIsSyntacticTrue(statement.expression) && !statementCanBreakOut(statement.statement) && !statementCanBreakOut(statement.statement, label) ? { cause: "other" } : undefined;
   }
   if (isDoStatement(statement)) {
-    return expressionIsSyntacticTrue(statement.expression) && !statementCanBreakOut(statement.statement, label) ? { cause: "other" } : undefined;
+    return expressionIsSyntacticTrue(statement.expression) && !statementCanBreakOut(statement.statement) && !statementCanBreakOut(statement.statement, label) ? { cause: "other" } : undefined;
   }
   if (isForStatement(statement)) {
-    return (statement.condition === undefined || expressionIsSyntacticTrue(statement.condition)) && !statementCanBreakOut(statement.statement, label) ? { cause: "other" } : undefined;
+    return (statement.condition === undefined || expressionIsSyntacticTrue(statement.condition)) && !statementCanBreakOut(statement.statement) && !statementCanBreakOut(statement.statement, label) ? { cause: "other" } : undefined;
+  }
+  if (statementCanBreakOut(statement, label)) {
+    return undefined;
   }
   return statementListTermination(statement);
 }
@@ -3304,13 +3366,14 @@ function enterFunctionWithAwaitContext(state: CheckState, yieldType: CheckedType
     insideClassStaticBlock: false,
     insideParameterInitializer: false,
     suppressUnreachableDiagnostics: false,
+    currentFunctionHasImplicitReturn: undefined,
     iterationDepth: 0,
     yieldType,
   };
 }
 
 function enterFunctionBodyWithAwaitContext(state: CheckState, body: Block, yieldType: CheckedType | undefined, awaitContext: boolean): CheckState {
-  const functionState = enterFunctionWithAwaitContext(state, yieldType, awaitContext);
+  const functionState = { ...enterFunctionWithAwaitContext(state, yieldType, awaitContext), currentFunctionHasImplicitReturn: functionHasImplicitReturn(body) };
   return blockHasUseStrictPrologue(body) && !functionState.strictMode
     ? { ...functionState, strictMode: true, strictModeReason: "strict" }
     : functionState;
@@ -3329,6 +3392,7 @@ function enterArrowFunction(state: CheckState, awaitContext = false): CheckState
     insideClassStaticBlock: false,
     insideParameterInitializer: false,
     suppressUnreachableDiagnostics: false,
+    currentFunctionHasImplicitReturn: undefined,
     iterationDepth: 0,
     yieldType: undefined,
   };
@@ -3348,6 +3412,7 @@ function enterClassInitializerOrStaticBlock(state: CheckState, staticBlock = fal
     insideClassStaticBlock: staticBlock,
     insideParameterInitializer: false,
     suppressUnreachableDiagnostics: false,
+    currentFunctionHasImplicitReturn: undefined,
     yieldType: undefined,
   };
 }
@@ -6980,8 +7045,13 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
       const yieldType = isMethodDeclaration(member) && member.asteriskToken !== undefined ? generatorYieldType(returnType) : undefined;
       const expectedBodyReturnType = asyncFunctionBodyExpectedReturnType(returnType, memberAwaitContext);
       checkBlock(member.body, enterFunctionBodyWithAwaitContext(state, member.body, yieldType, memberAwaitContext), memberEnvironment, isMethodDeclaration(member) && member.asteriskToken !== undefined ? undefined : expectedBodyReturnType);
-      if (!isMethodDeclaration(member) || member.asteriskToken === undefined) {
-        checkFunctionReturnCompleteness(member.body, asyncFunctionCompletenessReturnType(returnType, memberAwaitContext), state);
+      if (isMethodDeclaration(member) && member.asteriskToken === undefined) {
+        checkFunctionReturnCompleteness(
+          member.body,
+          returnType === undefined ? methodBodyReturnType(member.body, state.options, memberEnvironment) : asyncFunctionCompletenessReturnType(returnType, memberAwaitContext),
+          state,
+          returnType !== undefined,
+        );
       }
     }
     return;
@@ -7844,7 +7914,12 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
     const expectedBodyReturnType = asyncFunctionBodyExpectedReturnType(returnType, isAsync);
     checkBlock(functionDeclaration.body, enterUnusedDeclaration(enterFunctionBodyWithAwaitContext(state, functionDeclaration.body, yieldType, isAsync), unusedEntry), functionEnvironment, functionDeclaration.asteriskToken === undefined ? expectedBodyReturnType : undefined);
     if (functionDeclaration.asteriskToken === undefined) {
-      checkFunctionReturnCompleteness(functionDeclaration.body, asyncFunctionCompletenessReturnType(returnType, isAsync), state);
+      checkFunctionReturnCompleteness(
+        functionDeclaration.body,
+        returnType === undefined ? methodBodyReturnType(functionDeclaration.body, state.options, functionEnvironment) : asyncFunctionCompletenessReturnType(returnType, isAsync),
+        state,
+        returnType !== undefined,
+      );
     }
     checkDeclarationEmitInferredReturnType(functionDeclaration, state, functionEnvironment);
   }
@@ -7921,7 +7996,12 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
   addJSDocTypeParameterGroups(functionExpression, state);
   const typeParameterConstraints = addTypeParameterConstraintsToEnvironment(functionExpression.typeParameters, functionEnvironment, state);
   const jsDocParameterTypes = jsDocParameterTypeMap(functionExpression, functionEnvironment, state);
-  const parameterTypes = functionExpression.parameters.map((parameter, parameterIndex) => parameterTypeFromDeclaration(parameter, functionEnvironment, state, jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[parameterIndex]));
+  const parameterTypes = functionExpression.parameters.map((parameter, parameterIndex) => parameterTypeFromDeclaration(
+    parameter,
+    functionEnvironment,
+    state,
+    jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualFunctionParameterType(functionExpression.parameters, parameterIndex, contextualFunction, contextualParameterTypes[parameterIndex]),
+  ));
   const jsDocDeclaredReturnType = jsDocReturnType(functionExpression, functionEnvironment, state);
   const declaredReturnType = functionExpression.type === undefined ? jsDocDeclaredReturnType : bindTypePredicateParameterIndex(typeFromTypeNode(functionExpression.type, functionEnvironment, state), functionExpression.parameters);
   seedArgumentsObject(functionEnvironment);
@@ -7932,7 +8012,8 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
     if (parameter.type !== undefined) {
       checkJavaScriptTypeAnnotation(state);
     }
-    checkImplicitAnyParameter(parameter, state, functionEnvironment, jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[index]);
+    const contextualParameterType = contextualFunctionParameterType(functionExpression.parameters, index, contextualFunction, contextualParameterTypes[index]);
+    checkImplicitAnyParameter(parameter, state, functionEnvironment, jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterType);
     checkRestParameterArrayType(parameter, parameterTypes[index] ?? unresolvedType, state);
     checkStrictModeBindingName(parameter.name, state, false);
     setBindingNameType(parameter.name, parameterBindingTypeFromDeclaration(parameter, parameterTypes[index] ?? unresolvedType, state, contextualParameterIsOptional(contextualFunction, index)), functionEnvironment, false, false, state);
@@ -7960,14 +8041,39 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
   }
   const yieldType = functionExpression.asteriskToken === undefined ? undefined : generatorYieldType(declaredReturnType);
   checkBlock(functionExpression.body, enterFunctionBodyWithAwaitContext(state, functionExpression.body, yieldType, isAsync), functionEnvironment, functionExpression.asteriskToken === undefined && declaredReturnType !== undefined ? expectedReturnType : undefined);
-  if (declaredReturnType !== undefined && functionExpression.asteriskToken === undefined) {
-    checkFunctionReturnCompleteness(functionExpression.body, asyncFunctionCompletenessReturnType(declaredReturnType, isAsync), state);
+  if (functionExpression.asteriskToken === undefined) {
+    checkFunctionReturnCompleteness(
+      functionExpression.body,
+      declaredReturnType === undefined ? inferredReturnType : asyncFunctionCompletenessReturnType(declaredReturnType, isAsync),
+      state,
+      declaredReturnType !== undefined,
+    );
   }
   return functionType;
 }
 
 function checkBlock(block: Block, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): void {
-  checkStatements(block.statements, enterLocalScope(state), cloneTypeEnvironment(environment), expectedReturnType, false);
+  checkBlockInEnvironment(block, state, environment, expectedReturnType);
+}
+
+function checkBlockInEnvironment(block: Block, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): TypeEnvironment {
+  const blockEnvironment = cloneTypeEnvironment(environment);
+  checkStatements(block.statements, enterLocalScope(state), blockEnvironment, expectedReturnType, false);
+  return blockEnvironment;
+}
+
+function copyOuterFlowTypes(source: TypeEnvironment, target: TypeEnvironment): void {
+  for (const [name, type] of source.entries()) {
+    if (target.has(name) && !isReadonlyEnvironmentBinding(target, name)) {
+      target.set(name, type);
+    }
+  }
+  const sourcePropertyFlowTypes = environmentPropertyFlowTypes.get(source);
+  if (sourcePropertyFlowTypes === undefined) {
+    environmentPropertyFlowTypes.delete(target);
+    return;
+  }
+  environmentPropertyFlowTypes.set(target, new Map(sourcePropertyFlowTypes));
 }
 
 function seedArgumentsObject(environment: TypeEnvironment): void {
@@ -8044,25 +8150,40 @@ function temporalDeadZoneValue(type: CheckedType): Extract<CheckedType, { readon
   return undefined;
 }
 
-function checkFunctionReturnCompleteness(body: Block, returnType: CheckedType | undefined, state: CheckState): void {
+function checkFunctionReturnCompleteness(body: Block, returnType: CheckedType | undefined, state: CheckState, declaredReturnType = true): void {
   if (returnType === undefined) {
     return;
   }
+  const hasImplicitReturn = functionHasImplicitReturn(body);
   if (returnType.kind === "never") {
-    if (!blockDefinitelyTerminates(body)) {
+    if (hasImplicitReturn) {
       state.diagnostics.push(createDiagnostic(2534));
     }
     return;
   }
-  if (!requiresReturnValue(returnType)) {
+  if (declaredReturnType && returnTypeIsExemptFromDeclaredCompleteness(returnType)) {
     return;
   }
-  if (!blockContainsReturn(body) && !blockDefinitelyTerminates(body)) {
+  if (!hasImplicitReturn) {
+    if (!declaredReturnType) {
+      checkImplicitReturnsWithoutExpression(body, returnType, state);
+    }
+    return;
+  }
+  const hasExplicitReturn = blockContainsReturn(body);
+  if (declaredReturnType && !hasExplicitReturn) {
     state.diagnostics.push(createDiagnostic(2355));
     return;
   }
-  if (!returnTypeAllowsImplicitUndefined(returnType, state.options) && !blockDefinitelyTerminates(body)) {
+  if (declaredReturnType && !returnTypeAllowsImplicitUndefined(returnType, state.options)) {
     state.diagnostics.push(createDiagnostic(2366));
+    return;
+  }
+  if (state.options.noImplicitReturns === true) {
+    if (!declaredReturnType && (!hasExplicitReturn || returnTypeIsUndefinedVoidOrAnyForNoImplicit(returnType))) {
+      return;
+    }
+    state.diagnostics.push(createDiagnostic(7030));
   }
 }
 
@@ -8087,6 +8208,10 @@ function blockContainsReturn(block: Block): boolean {
   return block.statements.some(statementContainsReturn);
 }
 
+function functionHasImplicitReturn(body: Block): boolean {
+  return statementListTerminates(body.statements) === undefined;
+}
+
 function statementContainsReturn(statement: Statement): boolean {
   if (isReturnStatement(statement)) {
     return true;
@@ -8108,32 +8233,87 @@ function statementContainsReturn(statement: Statement): boolean {
   if (isWhileStatement(statement) || isDoStatement(statement) || isForStatement(statement) || isForInStatement(statement) || isForOfStatement(statement)) {
     return statementContainsReturn(statement.statement);
   }
+  if (isLabeledStatement(statement) || isWithStatement(statement)) {
+    return statementContainsReturn(statement.statement);
+  }
   return false;
 }
 
-function blockDefinitelyTerminates(block: Block): boolean {
-  return block.statements.some(statementDefinitelyTerminates);
+function checkImplicitReturnsWithoutExpression(body: Block, returnType: CheckedType, state: CheckState): void {
+  if (state.options.noImplicitReturns !== true || functionHasImplicitReturn(body) || returnTypeIsUndefinedVoidOrAnyForNoImplicit(returnType)) {
+    return;
+  }
+  for (const statement of returnStatementsInBlock(body)) {
+    if (statement.expression === undefined) {
+      state.diagnostics.push(createDiagnostic(7030));
+    }
+  }
+}
+
+function returnStatementsInBlock(block: Block): readonly ReturnStatement[] {
+  const statements: ReturnStatement[] = [];
+  for (const statement of block.statements) {
+    appendReturnStatements(statement, statements);
+  }
+  return statements;
+}
+
+function appendReturnStatements(statement: Statement, statements: ReturnStatement[]): void {
+  if (isReturnStatement(statement)) {
+    statements.push(statement);
+    return;
+  }
+  if (isFunctionDeclaration(statement) || isClassDeclaration(statement) || isModuleDeclaration(statement)) {
+    return;
+  }
+  if (isBlock(statement)) {
+    for (const child of statement.statements) {
+      appendReturnStatements(child, statements);
+    }
+    return;
+  }
+  if (isIfStatement(statement)) {
+    appendReturnStatements(statement.thenStatement, statements);
+    if (statement.elseStatement !== undefined) {
+      appendReturnStatements(statement.elseStatement, statements);
+    }
+    return;
+  }
+  if (isSwitchStatement(statement)) {
+    for (const clause of statement.caseBlock.clauses) {
+      for (const child of clause.statements) {
+        appendReturnStatements(child, statements);
+      }
+    }
+    return;
+  }
+  if (isTryStatement(statement)) {
+    for (const child of statement.tryBlock.statements) {
+      appendReturnStatements(child, statements);
+    }
+    if (statement.catchClause !== undefined) {
+      for (const child of statement.catchClause.block.statements) {
+        appendReturnStatements(child, statements);
+      }
+    }
+    if (statement.finallyBlock !== undefined) {
+      for (const child of statement.finallyBlock.statements) {
+        appendReturnStatements(child, statements);
+      }
+    }
+    return;
+  }
+  if (isLabeledStatement(statement)) {
+    appendReturnStatements(statement.statement, statements);
+    return;
+  }
+  if (isWhileStatement(statement) || isDoStatement(statement) || isForStatement(statement) || isForInStatement(statement) || isForOfStatement(statement) || isWithStatement(statement)) {
+    appendReturnStatements(statement.statement, statements);
+  }
 }
 
 function statementDefinitelyTerminates(statement: Statement): boolean {
-  if (isReturnStatement(statement) || isThrowStatement(statement)) {
-    return true;
-  }
-  if (isBlock(statement)) {
-    return blockDefinitelyTerminates(statement);
-  }
-  if (isIfStatement(statement)) {
-    return statement.elseStatement !== undefined
-      && statementDefinitelyTerminates(statement.thenStatement)
-      && statementDefinitelyTerminates(statement.elseStatement);
-  }
-  if (isSwitchStatement(statement)) {
-    return switchDefinitelyTerminates(statement);
-  }
-  if (isLabeledStatement(statement)) {
-    return statementDefinitelyTerminates(statement.statement);
-  }
-  return false;
+  return statementListTermination(statement) !== undefined;
 }
 
 function switchDefinitelyTerminates(statement: Extract<Statement, { readonly kind: Kind.SwitchStatement }>): boolean {
@@ -8432,7 +8612,7 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     checkTypeArgumentConstraints(typeArguments, calleeFunction.typeParameters, calleeFunction.typeParameterConstraints, state);
     const instantiatedFunction = instantiateFunctionTypeForCall(calleeFunction, typeArguments, argumentTypes);
     checkCallArguments(argumentTypes, instantiatedFunction, state);
-    return instantiatedFunction.returnType.kind === "typePredicate" ? booleanType : instantiatedFunction.returnType;
+    return typePredicateRuntimeReturnType(instantiatedFunction.returnType);
     }
     const calleeType = inferExpression(expression.expression, state, environment);
     if (calleeType.kind === "intrinsicFunction") {
@@ -8460,7 +8640,7 @@ function inferExpression(expression: Expression, state: CheckState, environment:
       } else {
         checkCallArguments(argumentTypes, instantiatedFunction, state);
       }
-      return instantiatedFunction.returnType.kind === "typePredicate" ? booleanType : instantiatedFunction.returnType;
+      return typePredicateRuntimeReturnType(instantiatedFunction.returnType);
     }
     if (calleeType.kind === "accessorProperty") {
       state.diagnostics.push(createDiagnostic(6234));
@@ -8490,7 +8670,7 @@ function inferExpression(expression: Expression, state: CheckState, environment:
       } else {
         checkCallArguments(argumentTypes, instantiatedFunction, state);
       }
-      return instantiatedFunction.returnType.kind === "typePredicate" ? booleanType : instantiatedFunction.returnType;
+      return typePredicateRuntimeReturnType(instantiatedFunction.returnType);
     }
     return unresolvedType;
   }
@@ -9210,9 +9390,7 @@ function inferArrayFromCall(expression: Extract<Expression, { readonly kind: Kin
   for (const argument of expression.arguments.slice(2)) {
     inferExpression(argument, state, environment);
   }
-  const mappedElementType = mapperType.kind === "function"
-    ? (mapperType.returnType.kind === "typePredicate" ? booleanType : mapperType.returnType)
-    : anyType;
+  const mappedElementType = mapperType.kind === "function" ? typePredicateRuntimeReturnType(mapperType.returnType) : anyType;
   return { kind: "array", elementType: mappedElementType };
 }
 
@@ -9859,6 +10037,10 @@ function applyConditionNarrowing(expression: Expression, state: CheckState, sour
     applyConditionNarrowing(expression.right, state, target, target);
     return;
   }
+  if (isBinaryExpression(expression) && isEqualityOperator(expression.operatorToken.kind)) {
+    applyEqualityConditionNarrowing(expression, expression.operatorToken.kind === Kind.ExclamationEqualsToken || expression.operatorToken.kind === Kind.ExclamationEqualsEqualsToken, state, source, target);
+    return;
+  }
   if (isBinaryExpression(expression) && expression.operatorToken.kind === Kind.InstanceOfKeyword) {
     applyInstanceOfNarrowing(expression, state, source, target);
     return;
@@ -9877,6 +10059,127 @@ function applyNegatedConditionNarrowing(expression: Expression, state: CheckStat
   }
   if (isBinaryExpression(expression) && expression.operatorToken.kind === Kind.InstanceOfKeyword) {
     applyNegatedInstanceOfNarrowing(expression, state, source, target);
+    return;
+  }
+  if (isBinaryExpression(expression) && isEqualityOperator(expression.operatorToken.kind)) {
+    applyEqualityConditionNarrowing(expression, expression.operatorToken.kind === Kind.EqualsEqualsToken || expression.operatorToken.kind === Kind.EqualsEqualsEqualsToken, state, source, target);
+  }
+}
+
+function isEqualityOperator(kind: Kind): boolean {
+  return kind === Kind.EqualsEqualsToken
+    || kind === Kind.EqualsEqualsEqualsToken
+    || kind === Kind.ExclamationEqualsToken
+    || kind === Kind.ExclamationEqualsEqualsToken;
+}
+
+function applyEqualityConditionNarrowing(expression: Extract<Expression, { readonly kind: Kind.BinaryExpression }>, excludeMatchedType: boolean, state: CheckState, source: TypeEnvironment, target: TypeEnvironment): void {
+  const leftNullish = nullishComparisonType(expression.left, source);
+  const rightNullish = nullishComparisonType(expression.right, source);
+  if (leftNullish !== undefined) {
+    narrowExpressionByEquality(expression.right, leftNullish, excludeMatchedType, state, source, target);
+  }
+  if (rightNullish !== undefined) {
+    narrowExpressionByEquality(expression.left, rightNullish, excludeMatchedType, state, source, target);
+  }
+}
+
+function nullishComparisonType(expression: Expression, environment: TypeEnvironment): CheckedType | undefined {
+  if (isParenthesizedExpression(expression)) {
+    return nullishComparisonType(expression.expression, environment);
+  }
+  if (isKeywordExpression(expression) && expression.kind === Kind.NullKeyword) {
+    return nullType;
+  }
+  const flowType = expressionFlowType(expression, environment);
+  return flowType?.kind === "undefined" ? undefinedType : undefined;
+}
+
+function narrowExpressionByEquality(expression: Expression, matchedType: CheckedType, excludeMatchedType: boolean, state: CheckState, source: TypeEnvironment, target: TypeEnvironment): void {
+  if (isParenthesizedExpression(expression)) {
+    narrowExpressionByEquality(expression.expression, matchedType, excludeMatchedType, state, source, target);
+    return;
+  }
+  const transform = (current: CheckedType): CheckedType => excludeMatchedType
+    ? excludeTypes(current, [matchedType], state.options)
+    : narrowType(current, matchedType, state.options);
+  narrowExpressionFlowType(expression, transform, source, target);
+}
+
+function narrowExpressionFlowType(expression: Expression, transform: (current: CheckedType) => CheckedType, source: TypeEnvironment, target: TypeEnvironment): void {
+  if (isIdentifier(expression)) {
+    const current = source.get(expression.text);
+    if (current !== undefined) {
+      target.set(expression.text, transform(current));
+    }
+    return;
+  }
+  if (!isPropertyAccessExpression(expression)) {
+    return;
+  }
+  const key = expression.questionDotToken === undefined ? propertyFlowKeyForExpression(expression) : undefined;
+  const current = key === undefined ? undefined : expressionFlowType(expression, source);
+  if (key === undefined || current === undefined) {
+    return;
+  }
+  setEnvironmentPropertyFlowType(target, key, transform(current));
+}
+
+function propertyFlowKeyForExpression(expression: Expression): string | undefined {
+  if (isParenthesizedExpression(expression)) {
+    return propertyFlowKeyForExpression(expression.expression);
+  }
+  if (isIdentifier(expression)) {
+    return expression.text;
+  }
+  if (isKeywordExpression(expression)) {
+    return expression.kind === Kind.ThisKeyword ? "this" : undefined;
+  }
+  if (isPropertyAccessExpression(expression) && expression.questionDotToken === undefined) {
+    const receiverKey = propertyFlowKeyForExpression(expression.expression);
+    return receiverKey === undefined ? undefined : propertyFlowPath(receiverKey, expression.name.text);
+  }
+  return undefined;
+}
+
+function propertyAccessFlowKey(receiver: Expression, propertyName: string): string | undefined {
+  const receiverKey = propertyFlowKeyForExpression(receiver);
+  return receiverKey === undefined ? undefined : propertyFlowPath(receiverKey, propertyName);
+}
+
+function propertyFlowPath(receiverKey: string, propertyName: string): string {
+  return `${receiverKey}${propertyFlowPathSeparator}${propertyName}`;
+}
+
+function environmentPropertyFlowType(environment: TypeEnvironment, key: string | undefined): CheckedType | undefined {
+  return key === undefined ? undefined : environmentPropertyFlowTypes.get(environment)?.get(key);
+}
+
+function setEnvironmentPropertyFlowType(environment: TypeEnvironment, key: string, type: CheckedType): void {
+  const propertyFlowTypes = environmentPropertyFlowTypes.get(environment);
+  if (propertyFlowTypes !== undefined) {
+    propertyFlowTypes.set(key, type);
+    return;
+  }
+  environmentPropertyFlowTypes.set(environment, new Map([[key, type]]));
+}
+
+function deleteEnvironmentPropertyFlowTree(environment: TypeEnvironment, key: string | undefined): void {
+  if (key === undefined) {
+    return;
+  }
+  const propertyFlowTypes = environmentPropertyFlowTypes.get(environment);
+  if (propertyFlowTypes === undefined) {
+    return;
+  }
+  const childPrefix = `${key}${propertyFlowPathSeparator}`;
+  for (const existingKey of [...propertyFlowTypes.keys()]) {
+    if (existingKey === key || existingKey.startsWith(childPrefix)) {
+      propertyFlowTypes.delete(existingKey);
+    }
+  }
+  if (propertyFlowTypes.size === 0) {
+    environmentPropertyFlowTypes.delete(environment);
   }
 }
 
@@ -10093,6 +10396,12 @@ function expressionFlowType(expression: Expression, environment: TypeEnvironment
     return environment.get("this");
   }
   if (isPropertyAccessExpression(expression)) {
+    const flowedType = expression.questionDotToken === undefined
+      ? environmentPropertyFlowType(environment, propertyFlowKeyForExpression(expression))
+      : undefined;
+    if (flowedType !== undefined) {
+      return flowedType;
+    }
     const receiverType = expressionFlowType(expression.expression, environment, options);
     if (receiverType === undefined) {
       return undefined;
@@ -10113,7 +10422,7 @@ function expressionFlowType(expression: Expression, environment: TypeEnvironment
     if (calleeFunction !== undefined) {
       const argumentTypes = expression.arguments.map(argument => expressionFlowType(argument, environment, options) ?? anyType);
       const returnType = instantiateFunctionReturnType(calleeFunction, [], argumentTypes);
-      return returnType.kind === "typePredicate" ? booleanType : returnType;
+      return typePredicateRuntimeReturnType(returnType);
     }
   }
   if (isTaggedTemplateExpression(expression)) {
@@ -10124,7 +10433,7 @@ function expressionFlowType(expression: Expression, environment: TypeEnvironment
         ? expression.template.templateSpans.map(span => expressionFlowType(span.expression, environment, options) ?? anyType)
         : [];
       const returnType = instantiateFunctionReturnType(tagFunction, [], [anyType, ...substitutionTypes]);
-      return returnType.kind === "typePredicate" ? booleanType : returnType;
+      return typePredicateRuntimeReturnType(returnType);
     }
   }
   return undefined;
@@ -11354,10 +11663,12 @@ function assignExpressionTarget(expression: Expression, assignedType: CheckedTyp
     const targetType = environmentAssignmentTargetType(declaredEnvironmentBindingType(environment, expression.text) ?? existing);
     if (targetType !== undefined) {
       checkAssignable(assignedType, targetType, state);
-      environment.set(expression.text, targetType);
+      environment.set(expression.text, assignmentFlowType(assignedType, targetType, state.options));
+      deleteEnvironmentPropertyFlowTree(environment, expression.text);
       return;
     }
     environment.set(expression.text, assignedType);
+    deleteEnvironmentPropertyFlowTree(environment, expression.text);
     return;
   }
   if (isParenthesizedExpression(expression)) {
@@ -11372,8 +11683,10 @@ function assignExpressionTarget(expression: Expression, assignedType: CheckedTyp
     const targetType = assignmentTargetType(expression, environment);
     if (targetType !== undefined) {
       checkAssignable(assignedType, targetType, state);
+      recordPropertyAssignmentFlow(expression, assignedType, targetType, state, environment);
       return;
     }
+    deleteEnvironmentPropertyFlowTree(environment, propertyFlowKeyForExpression(expression));
     assignJavaScriptExpandoProperty(expression.expression, expression.name.text, assignedType, state, environment);
   }
   if (isElementAccessExpression(expression)) {
@@ -11405,6 +11718,15 @@ function assignExpressionTarget(expression: Expression, assignedType: CheckedTyp
   }
   if (isObjectLiteralExpression(expression)) {
     assignObjectLiteralTarget(expression, assignedType, state, environment);
+  }
+}
+
+function recordPropertyAssignmentFlow(expression: Extract<Expression, { readonly kind: Kind.PropertyAccessExpression }>, assignedType: CheckedType, targetType: CheckedType, state: CheckState, environment: TypeEnvironment): void {
+  const key = propertyFlowKeyForExpression(expression);
+  deleteEnvironmentPropertyFlowTree(environment, key);
+  const flowType = assignmentFlowType(assignedType, targetType, state.options);
+  if (key !== undefined && flowType !== targetType) {
+    setEnvironmentPropertyFlowType(environment, key, flowType);
   }
 }
 
@@ -11541,7 +11863,12 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
   addJSDocTypeParameterGroups(arrowFunction, state);
   const typeParameterConstraints = addTypeParameterConstraintsToEnvironment(arrowFunction.typeParameters, arrowEnvironment, state);
   const jsDocParameterTypes = jsDocParameterTypeMap(arrowFunction, arrowEnvironment, state);
-  const parameterTypes = arrowFunction.parameters.map((parameter, parameterIndex) => parameterTypeFromDeclaration(parameter, arrowEnvironment, state, jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterTypes[parameterIndex]));
+  const parameterTypes = arrowFunction.parameters.map((parameter, parameterIndex) => parameterTypeFromDeclaration(
+    parameter,
+    arrowEnvironment,
+    state,
+    jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualFunctionParameterType(arrowFunction.parameters, parameterIndex, contextualFunction, contextualParameterTypes[parameterIndex]),
+  ));
   checkParameterListGrammar(arrowFunction.parameters, state);
   for (let parameterIndex = 0; parameterIndex < arrowFunction.parameters.length; parameterIndex += 1) {
     const parameter = arrowFunction.parameters[parameterIndex]!;
@@ -11549,7 +11876,7 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
     if (parameter.type !== undefined) {
       checkJavaScriptTypeAnnotation(state);
     }
-    const contextualParameterType = contextualParameterTypes[parameterIndex];
+    const contextualParameterType = contextualFunctionParameterType(arrowFunction.parameters, parameterIndex, contextualFunction, contextualParameterTypes[parameterIndex]);
     const jsDocType = jsDocParameterType(parameter, jsDocParameterTypes);
     checkImplicitAnyParameter(parameter, state, arrowEnvironment, jsDocType ?? contextualParameterType);
     const parameterType = parameterTypes[parameterIndex] ?? unresolvedType;
@@ -11617,11 +11944,14 @@ function removeUninitializedStaticProperties(type: CheckedType): CheckedType {
 
 function inferConciseBody(body: ConciseBody, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, checkExpectedReturnType: boolean, requireReturnCompleteness: boolean, completenessReturnType = expectedReturnType): CheckedType {
   if (isBlock(body)) {
-    checkBlock(body, state, environment, checkExpectedReturnType ? expectedReturnType : undefined);
+    checkBlock(body, { ...state, currentFunctionHasImplicitReturn: functionHasImplicitReturn(body) }, environment, checkExpectedReturnType ? expectedReturnType : undefined);
+    const inferredReturnType = methodBodyReturnType(body, state.options, environment);
     if (requireReturnCompleteness && completenessReturnType !== undefined) {
       checkFunctionReturnCompleteness(body, completenessReturnType, state);
+    } else {
+      checkFunctionReturnCompleteness(body, inferredReturnType, state, false);
     }
-    return methodBodyReturnType(body, state.options, environment);
+    return inferredReturnType;
   }
   const bodyType = inferExpression(body, state, environment);
   if (expectedReturnType !== undefined && checkExpectedReturnType) {
@@ -11639,6 +11969,7 @@ function inferConciseBody(body: ConciseBody, state: CheckState, environment: Typ
 function inferPropertyAccess(expression: Expression, optionalChain: boolean, propertyName: string, state: CheckState, environment: TypeEnvironment): CheckedType {
   const receiverType = inferPropertyAccessReceiver(expression, state, environment);
   const accessibleReceiverType = looseNullishUnionType(receiverType, state.options);
+  const flowedPropertyType = optionalChain ? undefined : environmentPropertyFlowType(environment, propertyAccessFlowKey(expression, propertyName));
   if (optionalChain) {
     const nonNullReceiverType = nonNullableType(accessibleReceiverType);
     const propertyType = propertyAccessReadType(nonNullReceiverType, propertyName, state.options, environment);
@@ -11650,6 +11981,9 @@ function inferPropertyAccess(expression: Expression, optionalChain: boolean, pro
     markClassMemberUsed(propertyName, state);
     const propertyType = propertyAccessReadType(receiverType, propertyName, state.options, environment);
     diagnoseThisPropertyAccess(receiverType, propertyName, state);
+    if (flowedPropertyType !== undefined) {
+      return flowedPropertyType;
+    }
     if (propertyType !== undefined) {
       return propertyType;
     }
@@ -11666,6 +12000,9 @@ function inferPropertyAccess(expression: Expression, optionalChain: boolean, pro
       state.diagnostics.push(createDiagnostic(18048, expressionNameText(expression) ?? propertyName));
       return propertyType;
     }
+  }
+  if (flowedPropertyType !== undefined) {
+    return flowedPropertyType;
   }
   const propertyType = propertyAccessReadType(accessibleReceiverType, propertyName, state.options, environment);
   if (propertyType !== undefined) {
@@ -13328,10 +13665,15 @@ function methodBodyReturnType(body: Block | undefined, options?: CompilerOptions
   if (body === undefined) {
     return unresolvedType;
   }
-  const returns = body.statements
-    .filter(isReturnStatement)
-    .map(statement => statement.expression === undefined ? voidType : returnExpressionType(statement.expression, options, environment));
-  return returns.length === 0 ? voidType : unionType(returns);
+  const returns = returnStatementsInBlock(body)
+    .filter(statement => statement.expression !== undefined)
+    .map(statement => returnExpressionType(statement.expression!, options, environment));
+  if (returns.length === 0) {
+    return voidType;
+  }
+  return strictOptionValue(options ?? {}, "strictNullChecks") && functionHasImplicitReturn(body)
+    ? unionType([...returns, undefinedType])
+    : unionType(returns);
 }
 
 function returnExpressionType(expression: Expression, options?: CompilerOptions, environment?: TypeEnvironment): CheckedType {
@@ -13357,8 +13699,13 @@ function checkObjectLiteralMethod(method: MethodDeclaration, state: CheckState, 
     const yieldType = method.asteriskToken === undefined ? undefined : generatorYieldType(declaredReturnType);
     const expectedBodyReturnType = asyncFunctionBodyExpectedReturnType(declaredReturnType, isAsync);
     checkBlock(method.body, enterFunctionBodyWithAwaitContext(state, method.body, yieldType, isAsync), methodEnvironment, method.asteriskToken === undefined ? expectedBodyReturnType : undefined);
-    if (declaredReturnType !== undefined && method.asteriskToken === undefined) {
-      checkFunctionReturnCompleteness(method.body, asyncFunctionCompletenessReturnType(declaredReturnType, isAsync), state);
+    if (method.asteriskToken === undefined) {
+      checkFunctionReturnCompleteness(
+        method.body,
+        declaredReturnType === undefined ? methodBodyReturnType(method.body, state.options, methodEnvironment) : asyncFunctionCompletenessReturnType(declaredReturnType, isAsync),
+        state,
+        declaredReturnType !== undefined,
+      );
     }
   }
 }
@@ -14568,6 +14915,7 @@ function emptyCheckState(options: CompilerOptions = {}): CheckState {
     insideParameterInitializer: false,
     ambientContext: false,
     suppressUnreachableDiagnostics: false,
+    currentFunctionHasImplicitReturn: undefined,
     iterationDepth: 0,
     yieldType: undefined,
     externalModule: false,
@@ -15107,11 +15455,28 @@ function tupleSufficientlyOverlapsArray(tuple: Extract<CheckedType, { readonly k
   return tuple.elements.some(element => typesSufficientlyOverlap(element.type, arrayElementType, options));
 }
 
-function requiresReturnValue(type: CheckedType): boolean {
-  if (type.kind === "typePredicate") {
-    return !type.asserts;
+function returnTypeIsExemptFromDeclaredCompleteness(type: CheckedType): boolean {
+  if (type.kind === "typeAliasInstance") {
+    return returnTypeIsExemptFromDeclaredCompleteness(type.target);
   }
-  return type.kind !== "any" && type.kind !== "unresolved" && type.kind !== "undefined" && type.kind !== "void";
+  if (type.kind === "union") {
+    return type.types.some(member => member.kind === "void")
+      || type.types.some(member => member.kind === "any")
+      || type.types.every(member => member.kind === "undefined");
+  }
+  return type.kind === "any" || type.kind === "unresolved" || type.kind === "undefined" || type.kind === "void" || type.kind === "typePredicate" && type.asserts;
+}
+
+function returnTypeIsUndefinedVoidOrAnyForNoImplicit(type: CheckedType): boolean {
+  if (type.kind === "typeAliasInstance") {
+    return returnTypeIsUndefinedVoidOrAnyForNoImplicit(type.target);
+  }
+  if (type.kind === "union") {
+    return type.types.some(member => member.kind === "void")
+      || type.types.some(member => member.kind === "any")
+      || type.types.every(member => member.kind === "undefined");
+  }
+  return type.kind === "any" || type.kind === "unresolved" || type.kind === "undefined" || type.kind === "void" || type.kind === "typePredicate" && type.asserts;
 }
 
 function returnTypeAllowsImplicitUndefined(type: CheckedType, options: CompilerOptions = {}): boolean {
@@ -15124,7 +15489,11 @@ function returnTypeAllowsImplicitUndefined(type: CheckedType, options: CompilerO
   if (type.kind === "union") {
     return type.types.some(member => returnTypeAllowsImplicitUndefined(member, options));
   }
-  return type.kind === "any" || type.kind === "unresolved" || type.kind === "undefined" || type.kind === "void";
+  return type.kind === "any" || type.kind === "unknown" || type.kind === "unresolved" || type.kind === "undefined" || type.kind === "void" || type.kind === "typePredicate" && type.asserts;
+}
+
+function typePredicateRuntimeReturnType(type: CheckedType): CheckedType {
+  return type.kind === "typePredicate" ? (type.asserts ? voidType : booleanType) : type;
 }
 
 function isAbstractConstructorType(type: CheckedType): boolean {
@@ -15609,6 +15978,21 @@ function contextualParameterIsOptional(functionType: CheckedFunctionType | undef
     return false;
   }
   return parameterIndex >= (functionType.minArgumentCount ?? 0);
+}
+
+function contextualFunctionParameterType(parameters: readonly ParameterDeclaration[], parameterIndex: number, functionType: CheckedFunctionType | undefined, fallback: CheckedType | undefined): CheckedType | undefined {
+  const parameter = parameters[parameterIndex];
+  if (functionType === undefined || parameter === undefined) {
+    return fallback;
+  }
+  if (parameter.dotDotDotToken !== undefined) {
+    if (functionType.restParameterIndex !== undefined && parameterIndex >= functionType.restParameterIndex) {
+      return functionType.parameters[functionType.restParameterIndex] ?? fallback;
+    }
+    const restTypes = functionType.parameters.slice(parameterIndex);
+    return restTypes.length === 0 ? fallback : { kind: "array", elementType: unionType(restTypes) };
+  }
+  return functionParameterTypeAt(functionType, parameterIndex) ?? fallback;
 }
 
 function signatureRestParameterIndex(parameters: readonly ParameterDeclaration[]): { readonly restParameterIndex: number } | Record<string, never> {
@@ -17191,6 +17575,9 @@ function isAssignableToRelated(actual: CheckedType, expected: CheckedType, optio
   if (actual.kind === "never") {
     return true;
   }
+  if (actual.kind === "undefined" && expected.kind === "void") {
+    return true;
+  }
   if (!strictOptionValue(options, "strictNullChecks") && (actual.kind === "null" || actual.kind === "undefined")) {
     return true;
   }
@@ -17423,14 +17810,16 @@ function isAssignableToRelated(actual: CheckedType, expected: CheckedType, optio
   if (actual.kind === "classConstructor" && expected.kind === "function" && expected.construct === true) {
     return functionTypeAssignableTo(classConstructorConstructSignature(actual), expected, options);
   }
-  if (actual.kind === "boolean" && expected.kind === "typePredicate") {
-    return true;
-  }
-  if (actual.kind === "typePredicate" && expected.kind === "boolean") {
-    return true;
-  }
   if (actual.kind === "typePredicate" && expected.kind === "typePredicate") {
-    return actual.parameterIndex === expected.parameterIndex && isAssignableTo(actual.assertedType, expected.assertedType, options);
+    return (actual.asserts === expected.asserts || expected.asserts && !actual.asserts)
+      && actual.parameterIndex === expected.parameterIndex
+      && isAssignableTo(actual.assertedType, expected.assertedType, options);
+  }
+  if (expected.kind === "typePredicate") {
+    return isAssignableTo(actual, typePredicateRuntimeReturnType(expected), options);
+  }
+  if (actual.kind === "typePredicate") {
+    return isAssignableTo(typePredicateRuntimeReturnType(actual), expected, options);
   }
   if (actual.kind === "typeParameter" && expected.kind === "typeParameter") {
     return actual.name === expected.name
