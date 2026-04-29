@@ -2740,6 +2740,7 @@ function checkStatements(statements: readonly Statement[], state: CheckState, en
       unreachableDiagnosticReported = true;
     }
     checkStatement(statement, activeState, environment, expectedReturnType, ambient, statementListHasExportedElements, statement === ambientDiagnosticStatement, false, checkExpectedReturnType);
+    applyFallthroughNarrowing(statement, statementState, environment);
     if (reachable) {
       const termination = statementListTermination(statement);
       if (termination !== undefined) {
@@ -2749,6 +2750,21 @@ function checkStatements(statements: readonly Statement[], state: CheckState, en
       }
     }
   }
+}
+
+function applyFallthroughNarrowing(statement: Statement, state: CheckState, environment: TypeEnvironment): void {
+  if (!isIfStatement(statement)) {
+    return;
+  }
+  const thenTerminates = statementListTermination(statement.thenStatement) !== undefined;
+  const elseTerminates = statement.elseStatement !== undefined && statementListTermination(statement.elseStatement) !== undefined;
+  if (thenTerminates === elseTerminates) {
+    return;
+  }
+  const narrowed = thenTerminates
+    ? narrowedEnvironmentForNegatedCondition(statement.expression, state, environment)
+    : narrowedEnvironmentForCondition(statement.expression, state, environment);
+  copyFallthroughFlowTypes(narrowed, environment);
 }
 
 function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, statementListHasExportedElements: boolean, ambientStatementDiagnosticReported = false, singleStatementContext = false, checkExpectedReturnType = expectedReturnType !== undefined): void {
@@ -7258,6 +7274,11 @@ function inheritedInterfaceTypes(interfaceDeclaration: InterfaceDeclaration, env
       continue;
     }
     for (const heritageType of clause.types) {
+      const intrinsicType = intrinsicInterfaceHeritageType(heritageType, environment, state);
+      if (intrinsicType !== undefined) {
+        inherited.push(intrinsicType);
+        continue;
+      }
       const baseType = typeMeaning(heritageExpressionType(heritageType.expression, environment, state) ?? unresolvedType);
       if (baseType !== undefined && baseType.kind !== "classConstructor") {
         const typeArguments = heritageType.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? [];
@@ -7272,6 +7293,46 @@ function inheritedInterfaceTypes(interfaceDeclaration: InterfaceDeclaration, env
     }
   }
   return inherited;
+}
+
+function intrinsicInterfaceHeritageType(heritageType: ExpressionWithTypeArguments, environment: TypeEnvironment, state?: CheckState): Extract<CheckedType, { readonly kind: "interface" }> | undefined {
+  const name = expressionNameText(heritageType.expression);
+  if (name !== "Array" && name !== "ReadonlyArray") {
+    return undefined;
+  }
+  const typeArguments = heritageType.typeArguments?.map(typeArgument => typeFromTypeNode(typeArgument, environment, state)) ?? [];
+  if (!hasTypeArgumentArity(heritageType, `${name}<T>`, 1, state)) {
+    return arrayCarrierInterfaceType(name, { kind: name === "ReadonlyArray" ? "readonlyArray" : "array", elementType: anyType });
+  }
+  return arrayCarrierInterfaceType(name, { kind: name === "ReadonlyArray" ? "readonlyArray" : "array", elementType: typeArguments[0] ?? anyType });
+}
+
+function arrayCarrierInterfaceType(name: "Array" | "ReadonlyArray", receiverType: Extract<CheckedType, { readonly kind: "array" | "readonlyArray" }>): Extract<CheckedType, { readonly kind: "interface" }> {
+  const properties = new Map<string, CheckedType>([["length", numberType]]);
+  const methodProperties = new Set<string>();
+  for (const methodName of arrayInterfaceMethodNames()) {
+    const methodType = arrayMethodType(receiverType, methodName);
+    if (methodType !== undefined) {
+      properties.set(methodName, methodType);
+      methodProperties.add(methodName);
+    }
+  }
+  return standardInterfaceType(name, properties, {
+    readonlyProperties: new Set(["length"]),
+    methodProperties,
+    numberIndexType: receiverType.elementType,
+  }) as Extract<CheckedType, { readonly kind: "interface" }>;
+}
+
+function arrayInterfaceMethodNames(): readonly string[] {
+  return uniqueInOrder([
+    ...arrayMethodReturnTypes.keys(),
+    ...arrayElementMethodNames,
+    ...arraySelfMethodNames,
+    ...arrayArrayMethodNames,
+    ...mutableArrayMethodNames,
+    "concat",
+  ]);
 }
 
 function interfaceHeritageMemberType(type: CheckedType, name: string): Extract<CheckedType, { readonly kind: "interface" }> | undefined {
@@ -9283,6 +9344,19 @@ function copyOuterFlowTypes(source: TypeEnvironment, target: TypeEnvironment): v
       target.set(name, type);
     }
   }
+  copyPropertyFlowTypes(source, target);
+}
+
+function copyFallthroughFlowTypes(source: TypeEnvironment, target: TypeEnvironment): void {
+  for (const [name, type] of source.entries()) {
+    if (target.has(name)) {
+      target.set(name, type);
+    }
+  }
+  copyPropertyFlowTypes(source, target);
+}
+
+function copyPropertyFlowTypes(source: TypeEnvironment, target: TypeEnvironment): void {
   const sourcePropertyFlowTypes = environmentPropertyFlowTypes.get(source);
   if (sourcePropertyFlowTypes === undefined) {
     environmentPropertyFlowTypes.delete(target);
@@ -11285,11 +11359,19 @@ function applyConditionNarrowing(expression: Expression, state: CheckState, sour
     applyConditionNarrowing(expression.expression, state, source, target);
     return;
   }
+  if (isPrefixUnaryExpression(expression) && expression.operator === Kind.ExclamationToken) {
+    applyNegatedConditionNarrowing(expression.operand, state, source, target);
+    return;
+  }
   if (isIdentifier(expression)) {
     const current = source.get(expression.text);
     if (current !== undefined) {
       target.set(expression.text, truthyType(current));
     }
+    return;
+  }
+  if (isPropertyAccessExpression(expression) && expression.questionDotToken === undefined) {
+    narrowExpressionFlowType(expression, truthyType, source, target);
     return;
   }
   if (isBinaryExpression(expression) && expression.operatorToken.kind === Kind.AmpersandAmpersandToken) {
@@ -11315,6 +11397,21 @@ function applyConditionNarrowing(expression: Expression, state: CheckState, sour
 function applyNegatedConditionNarrowing(expression: Expression, state: CheckState, source: TypeEnvironment, target: TypeEnvironment): void {
   if (isParenthesizedExpression(expression)) {
     applyNegatedConditionNarrowing(expression.expression, state, source, target);
+    return;
+  }
+  if (isPrefixUnaryExpression(expression) && expression.operator === Kind.ExclamationToken) {
+    applyConditionNarrowing(expression.operand, state, source, target);
+    return;
+  }
+  if (isIdentifier(expression)) {
+    const current = source.get(expression.text);
+    if (current !== undefined) {
+      target.set(expression.text, falsyType(current));
+    }
+    return;
+  }
+  if (isPropertyAccessExpression(expression) && expression.questionDotToken === undefined) {
+    narrowExpressionFlowType(expression, falsyType, source, target);
     return;
   }
   if (isBinaryExpression(expression) && expression.operatorToken.kind === Kind.InstanceOfKeyword) {
@@ -15614,7 +15711,7 @@ function typePredicateType(type: TypePredicateNode, environment: TypeEnvironment
   };
 }
 
-function hasTypeArgumentArity(type: TypeReferenceNode, displayName: string, required: number, state: CheckState | undefined): boolean {
+function hasTypeArgumentArity(type: { readonly typeArguments?: readonly TypeNode[] }, displayName: string, required: number, state: CheckState | undefined): boolean {
   const actual = type.typeArguments?.length ?? 0;
   if (actual === required) {
     return true;
@@ -20882,6 +20979,7 @@ const stringMethodReturnTypes = new Map<string, CheckedType>([
   ["startsWith", booleanType],
   ["strike", stringType],
   ["sub", stringType],
+  ["substr", stringType],
   ["sup", stringType],
   ["substring", stringType],
   ["toLocaleLowerCase", stringType],

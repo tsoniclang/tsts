@@ -284,6 +284,17 @@ describe("checker groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
   });
 
+  it("inherits readonly array members through interface heritage", () => {
+    const sourceFile = parseSourceFile([
+      "interface NodeArray<T> extends ReadonlyArray<T> { pos: number; end: number; }",
+      "declare const parameters: NodeArray<string>; ",
+      "const lengths: number[] = parameters.map(parameter => parameter.length);",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
   it("recognizes ES array and typed-array library surfaces generically", () => {
     const sourceFile = parseSourceFile([
       "function f(items: number[]): void {",
@@ -1993,6 +2004,7 @@ describe("checker groundwork", () => {
       "\"x\".codePointAt(0);",
       "\"x\".normalize().repeat(2);",
       "String.fromCodePoint(65);",
+      "\"file.ts\".substr(4, 2);",
       "String.raw`x`;",
       "JSON.stringify({ value: 1 });",
       "new Map();",
@@ -2835,6 +2847,59 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
       "Argument of type 'number' is not assignable to parameter of type 'string'.",
     ]);
+  });
+
+  it("narrows optional property reads through truthy conditions and terminating guards", () => {
+    const sourceFile = parseSourceFile([
+      "interface FileInfo { fileName: string; }",
+      "interface Diagnostic { file?: FileInfo; }",
+      "function direct(diagnostic: Diagnostic): string {",
+      "  if (diagnostic.file) {",
+      "    return diagnostic.file.fileName;",
+      "  }",
+      "  return \"\";",
+      "}",
+      "function guardedReturn(diagnostic: Diagnostic): string {",
+      "  if (!diagnostic.file) {",
+      "    return \"\";",
+      "  }",
+      "  return diagnostic.file.fileName;",
+      "}",
+      "function guardedContinue(items: Diagnostic[]): void {",
+      "  for (const diagnostic of items) {",
+      "    if (!diagnostic.file) {",
+      "      continue;",
+      "    }",
+      "    diagnostic.file.fileName;",
+      "  }",
+      "}",
+      "function guardedConst(path: string | undefined): string {",
+      "  const configPath = path;",
+      "  if (!configPath) {",
+      "    throw new Error(\"missing\");",
+      "  }",
+      "  return configPath;",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("carries property truthiness through logical-and conditions", () => {
+    const sourceFile = parseSourceFile([
+      "interface Statement { kind: number; }",
+      "interface IfStatement { elseStatement?: Statement; }",
+      "declare function report(statement: Statement): void;",
+      "function check(ifStatement: IfStatement): void {",
+      "  if (ifStatement.elseStatement && ifStatement.elseStatement.kind !== 1) {",
+      "    report(ifStatement.elseStatement);",
+      "  }",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
+
+    assert.deepEqual(result.diagnostics, []);
   });
 
   it("normalizes boolean literal unions in type predicate returns", () => {
