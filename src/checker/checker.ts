@@ -2026,6 +2026,7 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
   const sourceFiles = new Map(program.sourceFiles.map(sourceFile => [sourceFile.fileName, sourceFile]));
   const ambientModules = new Map<string, Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>>();
   const moduleAugmentations = new Map<string, Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>[]>();
+  const ambientModuleAugmentations = new Map<string, Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>[]>();
   for (const sourceFile of program.sourceFiles) {
     const externalModule = sourceFileIsExternalModule(sourceFile.sourceFile);
     for (const statement of sourceFile.sourceFile.statements) {
@@ -2042,6 +2043,10 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
         const declarations = moduleAugmentations.get(resolvedModule.fileName) ?? [];
         declarations.push(statement as Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>);
         moduleAugmentations.set(resolvedModule.fileName, declarations);
+      } else {
+        const declarations = ambientModuleAugmentations.get(specifier) ?? [];
+        declarations.push(statement as Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>);
+        ambientModuleAugmentations.set(specifier, declarations);
       }
     }
   }
@@ -2178,11 +2183,7 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
     }
     return declarations;
   };
-  const applyModuleAugmentations = (fileName: string, exports: Map<string, CheckedType>): void => {
-    const declarations = augmentationDeclarationsForFile(fileName);
-    if (declarations.length === 0) {
-      return;
-    }
+  const applyModuleAugmentationDeclarations = (declarations: readonly Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>[], exports: Map<string, CheckedType>): void => {
     for (const declaration of declarations) {
       if (!isModuleBlock(declaration.body)) {
         continue;
@@ -2198,6 +2199,13 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
       }
     }
   };
+  const applyModuleAugmentations = (fileName: string, exports: Map<string, CheckedType>): void => {
+    const declarations = augmentationDeclarationsForFile(fileName);
+    if (declarations.length === 0) {
+      return;
+    }
+    applyModuleAugmentationDeclarations(declarations, exports);
+  };
   const ambientModuleExportInfo = (moduleSpecifier: string): ModuleExportInfo => {
     const cached = ambientExportCache.get(moduleSpecifier);
     if (cached !== undefined) {
@@ -2211,8 +2219,16 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
     shadowStatementLocalDeclarationNames(moduleEnvironment, moduleDeclaration.body.statements);
     checkStatements(moduleDeclaration.body.statements, emptyCheckState(), moduleEnvironment, undefined, true);
     const info = ambientModuleExports(moduleDeclaration.body.statements, moduleEnvironment);
-    ambientExportCache.set(moduleSpecifier, info);
-    return info;
+    const declarations = ambientModuleAugmentations.get(moduleSpecifier) ?? [];
+    if (declarations.length === 0) {
+      ambientExportCache.set(moduleSpecifier, info);
+      return info;
+    }
+    const exports = new Map(info.exports);
+    applyModuleAugmentationDeclarations(declarations, exports);
+    const augmentedInfo: ModuleExportInfo = { ...info, exports };
+    ambientExportCache.set(moduleSpecifier, augmentedInfo);
+    return augmentedInfo;
   };
   return (containingFileName, moduleSpecifier) => {
     const sourceFile = sourceFiles.get(containingFileName);
@@ -5067,10 +5083,36 @@ function shadowNamespaceLocalDeclarationNames(environment: TypeEnvironment, body
 
 function shadowStatementLocalDeclarationNames(environment: TypeEnvironment, statements: readonly Statement[]): void {
   for (const statement of statements) {
+    if (isInterfaceDeclaration(statement) || isTypeAliasDeclaration(statement)) {
+      shadowTypeOnlyLocalDeclarationName(environment, statement.name.text);
+      continue;
+    }
     for (const name of statementLocalDeclarationNames(statement)) {
-      environment.delete(name);
+      shadowAllLocalDeclarationMeanings(environment, name);
     }
   }
+}
+
+function shadowAllLocalDeclarationMeanings(environment: TypeEnvironment, name: string): void {
+  environment.delete(name);
+}
+
+function shadowTypeOnlyLocalDeclarationName(environment: TypeEnvironment, name: string): void {
+  const existing = environment.get(name);
+  if (existing === undefined) {
+    return;
+  }
+  const namespace = namespaceMeaning(existing);
+  if (namespace !== undefined) {
+    environment.set(name, namespace);
+    return;
+  }
+  const value = valueMeaning(existing);
+  if (value !== undefined) {
+    environment.set(name, typeMeaning(value) === undefined ? value : { kind: "valueOnly", name, type: value });
+    return;
+  }
+  environment.delete(name);
 }
 
 function statementLocalDeclarationNames(statement: Statement): readonly string[] {

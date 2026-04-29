@@ -42,6 +42,22 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Cannot find name 'local'."]);
   });
 
+  it("preserves outer namespace meanings when local declarations only add a type meaning", () => {
+    const sourceFile = parseSourceFile([
+      "declare namespace Express { export interface Request { id: number; } }",
+      "declare namespace e {",
+      "  interface Express {}",
+      "  interface Request extends Express.Request {}",
+      "}",
+      "let req: e.Request;",
+      "const id = req.id;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strictNullChecks: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2454]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Variable 'req' is used before being assigned."]);
+  });
+
   it("treats any-bearing intersections as any for property access", () => {
     const sourceFile = parseSourceFile("function f(value: any & any) { return value.anchorRef; }");
     const result = checkSourceFile(sourceFile);

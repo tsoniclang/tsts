@@ -227,6 +227,45 @@ describe("program groundwork", () => {
     ]);
   });
 
+  it("applies external module augmentations to ambient module exports", () => {
+    const files = new Map<string, string>([
+      ["express.d.ts", [
+        "declare namespace Express {",
+        "  export interface Request {}",
+        "}",
+        "declare module \"express\" {",
+        "  namespace e {",
+        "    interface Request extends Express.Request {}",
+        "  }",
+        "  export = e;",
+        "}",
+      ].join("\n")],
+      ["augmentation.ts", [
+        "import * as e from \"express\";",
+        "declare module \"express\" {",
+        "  interface Request { id: number; }",
+        "}",
+      ].join("\n")],
+      ["consumer.ts", [
+        "import { Request } from \"express\";",
+        "import \"./augmentation\";",
+        "let req: Request;",
+        "const id = req.id;",
+      ].join("\n")],
+    ]);
+    const host: CompilerHost = {
+      getCurrentDirectory: () => ".",
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["express.d.ts", "augmentation.ts", "consumer.ts"], { module: "commonjs", target: "es2015" }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [2454]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), ["Variable 'req' is used before being assigned."]);
+  });
+
   it("resolves ESM .js specifiers to TypeScript source files", () => {
     const files = new Map<string, string>([
       ["src/index.ts", "import { value } from \"./dep.js\"; export const answer = value;"],
