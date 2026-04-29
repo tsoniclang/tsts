@@ -163,6 +163,82 @@ describe("checker groundwork", () => {
     assert.equal(result.diagnostics.length, 0);
   });
 
+  it("validates explicit variance annotations against the declared generic surface", () => {
+    const sourceFile = parseSourceFile([
+      "interface Controller<out T> {",
+      "  createAnimal: () => T;",
+      "  run: (animal: T) => void;",
+      "}",
+      "interface Animal { run(): void; }",
+      "class Dog implements Animal { run() {}; bark() {}; }",
+      "interface AnimalContainer<T> { controller: Controller<T>; }",
+      "declare let ca: AnimalContainer<Animal>;",
+      "declare let cd: AnimalContainer<Dog>;",
+      "ca = cd;",
+      "cd = ca;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2636, 2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type 'Controller<sub-T>' is not assignable to type 'Controller<super-T>' as implied by variance annotation.",
+      "Type 'AnimalContainer<Animal>' is not assignable to type 'AnimalContainer<Dog>'.",
+    ]);
+  });
+
+  it("restricts type-alias variance annotations to object-like alias declarations", () => {
+    const sourceFile = parseSourceFile([
+      "type Identity<out T> = T;",
+      "type Box<out T> = { value: T };",
+      "type Consumer<out T> = (value: T) => void;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2637, 2636]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Variance annotations are only supported in type aliases for object, function, constructor, and mapped types.",
+      "Type 'Consumer<sub-T>' is not assignable to type 'Consumer<super-T>' as implied by variance annotation.",
+    ]);
+  });
+
+  it("reports in and out modifiers outside class interface and type-alias type parameters", () => {
+    const sourceFile = parseSourceFile([
+      "declare function f<in T>(value: T): void;",
+      "type Repeated<in out in T> = { value: T };",
+      "type Ordered<out in T> = { value: T };",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [1274, 1030, 1029]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "'in' modifier can only appear on a type parameter of a class, interface or type alias",
+      "'in' modifier already seen.",
+      "'in' modifier must precede 'out' modifier.",
+    ]);
+  });
+
+  it("reports unused type parameters that shadow their generic owner name", () => {
+    const sourceFile = parseSourceFile("type T<T> = {};");
+    const result = checkSourceFile(sourceFile, { noUnusedParameters: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [6133]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["'T' is declared but its value is never read."]);
+  });
+
+  it("terminates recursive callback signature comparison through aliases", () => {
+    const sourceFile = parseSourceFile([
+      "interface Foo<T> { (bar: Bar<T>): void };",
+      "type Bar<T> = (foo: Foo<T>) => Foo<T>;",
+      "declare function foo<T>(bar: Bar<T>): void;",
+      "declare var bar: Bar<{}>;",
+      "bar = foo;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { target: "es2015" });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type '<T>(bar: Bar<T>) => void' is not assignable to type 'Bar<{}>'."]);
+  });
+
   it("accepts core array member access and method calls on typed arrays", () => {
     const sourceFile = parseSourceFile("function f(items: string[]): number { items.forEach(item => item.toLowerCase()); return items.map(item => item).length; }");
     const result = checkSourceFile(sourceFile);

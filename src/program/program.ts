@@ -19,6 +19,7 @@ export interface CompilerOptions {
   readonly noImplicitReturns?: boolean;
   readonly noUnusedLocals?: boolean;
   readonly noUnusedParameters?: boolean;
+  readonly strictFunctionTypes?: boolean;
   readonly strictNullChecks?: boolean;
   readonly strictPropertyInitialization?: boolean;
   readonly exactOptionalPropertyTypes?: boolean;

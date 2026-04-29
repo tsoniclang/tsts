@@ -193,6 +193,7 @@ import type { CompilerOptions, Program, ProgramDiagnostic, ResolvedModule } from
 type PrimitiveTypeName = "any" | "bigint" | "boolean" | "never" | "null" | "number" | "string" | "symbol" | "undefined" | "unknown" | "void";
 
 type ClassLikeDeclaration = ClassDeclaration | ClassExpression;
+type TypeParameterVariance = "covariant" | "contravariant" | "invariant" | "bivariant" | "independent";
 
 interface TupleElementType {
   readonly name?: string;
@@ -205,18 +206,18 @@ type CheckedType =
   | { readonly kind: "array"; readonly elementType: CheckedType; readonly evolving?: boolean }
   | { readonly kind: "readonlyArray"; readonly elementType: CheckedType }
   | { readonly kind: "builtinConstructor"; readonly name: string; readonly instanceType: CheckedType; readonly constructorParameters: readonly CheckedType[]; readonly staticProperties: ReadonlyMap<string, CheckedType> }
-  | { readonly kind: "classInstance"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeArguments: readonly CheckedType[]; readonly typeParameterConstraints?: readonly (CheckedType | undefined)[]; readonly members: ClassMemberNames; readonly baseType?: CheckedType; readonly arrayBaseElementType?: CheckedType }
-  | { readonly kind: "classConstructor"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeArguments: readonly CheckedType[]; readonly typeParameterConstraints?: readonly (CheckedType | undefined)[]; readonly typeParameterDefaults?: readonly (CheckedType | undefined)[]; readonly constructorParameters: readonly CheckedType[]; readonly abstract: boolean; readonly members: ClassMemberNames; readonly baseType?: CheckedType; readonly arrayBaseElementType?: CheckedType; readonly uninitializedStaticProperties?: ReadonlySet<string> }
+  | { readonly kind: "classInstance"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeArguments: readonly CheckedType[]; readonly typeParameterConstraints?: readonly (CheckedType | undefined)[]; readonly typeParameterVariances?: readonly (TypeParameterVariance | undefined)[]; readonly members: ClassMemberNames; readonly baseType?: CheckedType; readonly arrayBaseElementType?: CheckedType; readonly varianceMarker?: true }
+  | { readonly kind: "classConstructor"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeArguments: readonly CheckedType[]; readonly typeParameterConstraints?: readonly (CheckedType | undefined)[]; readonly typeParameterDefaults?: readonly (CheckedType | undefined)[]; readonly typeParameterVariances?: readonly (TypeParameterVariance | undefined)[]; readonly constructorParameters: readonly CheckedType[]; readonly abstract: boolean; readonly members: ClassMemberNames; readonly baseType?: CheckedType; readonly arrayBaseElementType?: CheckedType; readonly uninitializedStaticProperties?: ReadonlySet<string>; readonly varianceMarker?: true }
   | { readonly kind: "accessorProperty"; readonly type: CheckedType }
   | { readonly kind: "arrayLike"; readonly elementType: CheckedType }
   | { readonly kind: "arrayIterator"; readonly elementType: CheckedType }
-  | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly typeParameterConstraints?: readonly (CheckedType | undefined)[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType; readonly parameterNames?: readonly string[]; readonly restParameterIndex?: number; readonly minArgumentCount?: number; readonly maxArgumentCount?: number; readonly overloads?: readonly CheckedFunctionType[]; readonly construct?: boolean }
+  | { readonly kind: "function"; readonly typeParameters: readonly string[]; readonly typeParameterConstraints?: readonly (CheckedType | undefined)[]; readonly parameters: readonly CheckedType[]; readonly returnType: CheckedType; readonly parameterNames?: readonly string[]; readonly restParameterIndex?: number; readonly minArgumentCount?: number; readonly declaredMinArgumentCount?: number; readonly maxArgumentCount?: number; readonly overloads?: readonly CheckedFunctionType[]; readonly construct?: boolean; readonly thisParameterType?: CheckedType }
   | { readonly kind: "functionDeclaration"; readonly name: string; readonly type: CheckedFunctionType }
   | { readonly kind: "globalObject" }
   | { readonly kind: "intrinsicConstructor"; readonly intrinsic: "Set" }
   | { readonly kind: "intrinsicFunction"; readonly intrinsic: "Array.from" | "Array.isArray" | "Array.of" | "ArrayBuffer.isView" | "Object.assign" | "Object.freeze" | "Promise.all" | "Promise.resolve" }
   | { readonly kind: "intrinsicTypeAlias"; readonly name: "Awaited" }
-  | { readonly kind: "interface"; readonly name: string; readonly members: InterfaceMembers; readonly typeArguments?: readonly CheckedType[] }
+  | { readonly kind: "interface"; readonly name: string; readonly members: InterfaceMembers; readonly typeArguments?: readonly CheckedType[]; readonly varianceMarker?: true }
   | { readonly kind: "intersection"; readonly types: readonly CheckedType[] }
   | { readonly kind: "indexedAccess"; readonly objectType: CheckedType; readonly indexType: CheckedType }
   | { readonly kind: "keyof"; readonly target: CheckedType }
@@ -229,8 +230,8 @@ type CheckedType =
   | { readonly kind: "record"; readonly keyType: CheckedType; readonly valueType: CheckedType; readonly keyParameter?: string; readonly optional?: boolean; readonly sourceConstraint?: CheckedType; readonly mappedArraySource?: CheckedType }
   | { readonly kind: "thisType" }
   | { readonly kind: "thisClass"; readonly className: string; readonly members: ClassMemberNames; readonly abstractProperties: ReadonlySet<string>; readonly abstractPropertyDeclaringClasses: ReadonlyMap<string, string>; readonly uninitializedProperties: ReadonlySet<string>; readonly mode: "constructor" | "fieldInitializer" | "method" }
-  | { readonly kind: "typeAlias"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeParameterConstraints?: readonly (CheckedType | undefined)[]; readonly typeParameterDefaults?: readonly (CheckedType | undefined)[]; readonly declaration?: TypeAliasDeclaration; readonly target: CheckedType; readonly preserveDisplay: boolean; readonly requiresExplicitDeclarationAnnotation: boolean }
-  | { readonly kind: "typeAliasInstance"; readonly name: string; readonly typeArguments: readonly CheckedType[]; readonly target: CheckedType; readonly requiresExplicitDeclarationAnnotation: boolean }
+  | { readonly kind: "typeAlias"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeParameterConstraints?: readonly (CheckedType | undefined)[]; readonly typeParameterDefaults?: readonly (CheckedType | undefined)[]; readonly typeParameterVariances?: readonly (TypeParameterVariance | undefined)[]; readonly declaration?: TypeAliasDeclaration; readonly target: CheckedType; readonly preserveDisplay: boolean; readonly requiresExplicitDeclarationAnnotation: boolean }
+  | { readonly kind: "typeAliasInstance"; readonly name: string; readonly typeArguments: readonly CheckedType[]; readonly target: CheckedType; readonly requiresExplicitDeclarationAnnotation: boolean; readonly typeParameterVariances?: readonly (TypeParameterVariance | undefined)[]; readonly declaration?: TypeAliasDeclaration; readonly source?: Extract<CheckedType, { readonly kind: "typeAlias" }>; readonly varianceMarker?: true }
   | { readonly kind: "typeOnly"; readonly name: string; readonly type: CheckedType }
   | { readonly kind: "typeParameter"; readonly name: string; readonly constraint?: CheckedType }
   | { readonly kind: "temporalDeadZone"; readonly name: string; readonly declarationKind: "blockScopedVariable" | "class"; readonly type: CheckedType; readonly useBeforeAssigned: boolean }
@@ -277,6 +278,7 @@ interface CheckState {
   readonly unusedDeclarations: UnusedDeclarationTracker;
   readonly activeUnusedDeclarations: ReadonlySet<UnusedDeclarationEntry>;
   readonly reportedUncalledFunctionConditionNodes: WeakSet<Node>;
+  readonly reportedTypeParameterModifierGrammar: WeakSet<TypeParameterDeclaration>;
   readonly classUnusedMembers?: ReadonlyMap<string, UnusedDeclarationEntry>;
   readonly resolveExternalModule?: (moduleSpecifier: string) => CheckedType | undefined;
   readonly functionOverloadInfo?: FunctionOverloadInfo;
@@ -664,7 +666,7 @@ function enterUnusedDeclaration(state: CheckState, entry: UnusedDeclarationEntry
 }
 
 function stateWithoutReportedDiagnostics(state: CheckState | undefined): CheckState | undefined {
-  return state === undefined ? undefined : { ...state, diagnostics: [], reportedUncalledFunctionConditionNodes: new WeakSet() };
+  return state === undefined ? undefined : { ...state, diagnostics: [], reportedUncalledFunctionConditionNodes: new WeakSet(), reportedTypeParameterModifierGrammar: new WeakSet() };
 }
 
 function speculativeCheckState(state: CheckState): CheckState {
@@ -674,6 +676,7 @@ function speculativeCheckState(state: CheckState): CheckState {
     unusedDeclarations: { entries: [], groups: [], nodes: new Map() },
     activeUnusedDeclarations: new Set(),
     reportedUncalledFunctionConditionNodes: new WeakSet(),
+    reportedTypeParameterModifierGrammar: new WeakSet(),
   };
   delete (result as { classUnusedMembers?: ReadonlyMap<string, UnusedDeclarationEntry> }).classUnusedMembers;
   return result;
@@ -783,6 +786,7 @@ interface InterfaceMembers {
   readonly typeParameters: readonly string[];
   readonly typeParameterConstraints?: readonly (CheckedType | undefined)[];
   readonly typeParameterDefaults?: readonly (CheckedType | undefined)[];
+  readonly typeParameterVariances?: readonly (TypeParameterVariance | undefined)[];
   readonly declaration?: InterfaceDeclaration;
   readonly origin?: InterfaceMembers;
   readonly version: number;
@@ -891,6 +895,7 @@ function standardInterfaceType(
   options: {
     readonly typeParameters?: readonly string[];
     readonly typeParameterDefaults?: readonly (CheckedType | undefined)[];
+    readonly typeParameterVariances?: readonly (TypeParameterVariance | undefined)[];
     readonly readonlyProperties?: ReadonlySet<string>;
     readonly optionalProperties?: ReadonlySet<string>;
     readonly methodProperties?: ReadonlySet<string>;
@@ -907,6 +912,7 @@ function standardInterfaceType(
       name,
       typeParameters: options.typeParameters ?? [],
       ...(options.typeParameterDefaults === undefined ? {} : { typeParameterDefaults: options.typeParameterDefaults }),
+      ...(options.typeParameterVariances === undefined ? {} : { typeParameterVariances: options.typeParameterVariances }),
       version: 0,
       properties,
       readonlyProperties: options.readonlyProperties ?? emptyStringSet,
@@ -1693,6 +1699,7 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
         unusedDeclarations: { entries: [], groups: [], nodes: new Map() },
         activeUnusedDeclarations: new Set(),
         reportedUncalledFunctionConditionNodes: new WeakSet(),
+        reportedTypeParameterModifierGrammar: new WeakSet(),
         resolveExternalModule: moduleSpecifier => moduleResolver(sourceFile.fileName, moduleSpecifier),
       };
       const fileEnvironment = cloneTypeEnvironment(globalEnvironment);
@@ -1883,6 +1890,7 @@ function checkStateForSourceFile(sourceFile: SourceFile, options: CompilerOption
     unusedDeclarations: { entries: [], groups: [], nodes: new Map() },
     activeUnusedDeclarations: new Set(),
     reportedUncalledFunctionConditionNodes: new WeakSet(),
+    reportedTypeParameterModifierGrammar: new WeakSet(),
   };
 }
 
@@ -3751,6 +3759,8 @@ function bindTypeAliasDeclaration(statement: TypeAliasDeclaration, state: CheckS
   const unusedEntry = declarationIsExported(statement) ? undefined : registerUnusedDeclaration(statement.name.text, statement, "type", state, environment);
   const aliasState = enterUnusedDeclaration(state, unusedEntry);
   const typeParameters = statement.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
+  const rawVariances = typeParameterVariances(statement.typeParameters);
+  const variances = rawVariances === undefined || !typeAliasTargetSupportsVarianceAnnotations(statement.type) ? undefined : rawVariances;
   const existingBinding = environment.get(statement.name.text);
   const existingType = existingBinding === undefined ? undefined : typeMeaning(existingBinding);
   const aliasType: Extract<CheckedType, { readonly kind: "typeAlias" }> = existingType?.kind === "typeAlias" && existingType.declaration === statement
@@ -3759,14 +3769,19 @@ function bindTypeAliasDeclaration(statement: TypeAliasDeclaration, state: CheckS
       kind: "typeAlias",
       name: statement.name.text,
       typeParameters,
+      ...(variances === undefined ? {} : { typeParameterVariances: variances }),
       declaration: statement,
       target: anyType,
-      preserveDisplay: isIntersectionTypeNode(statement.type) || isFunctionTypeNode(statement.type),
+      preserveDisplay: typeAliasShouldPreserveDisplay(statement, rawVariances),
       requiresExplicitDeclarationAnnotation: typeAliasRequiresExplicitDeclarationAnnotation(statement),
     };
   environment.set(statement.name.text, mergeTypeNamespace(environment.get(statement.name.text), aliasType));
   const aliasEnvironment = cloneTypeEnvironment(environment);
-  addTypeParameterDeclarationsToEnvironment(statement.typeParameters ?? [], aliasEnvironment, aliasState);
+  addTypeParameterDeclarationsToEnvironment(statement.typeParameters ?? [], aliasEnvironment, aliasState, {
+    declarationName: statement.name.text,
+    mergeKeyPrefix: `type:${statement.name.text}`,
+    allowVarianceModifiers: true,
+  });
   const { typeParameterConstraints, typeParameterDefaults, target } = withActiveTypeParameterConstraintDeclaration(statement, typeParameters, () => ({
     typeParameterConstraints: addTypeParameterConstraintsToEnvironment(statement.typeParameters, aliasEnvironment, aliasState),
     typeParameterDefaults: addTypeParameterDefaultsToEnvironment(statement.typeParameters, aliasEnvironment, aliasState),
@@ -3777,17 +3792,136 @@ function bindTypeAliasDeclaration(statement: TypeAliasDeclaration, state: CheckS
     typeParameters,
     typeParameterConstraints,
     typeParameterDefaults,
+    ...(variances === undefined ? {} : { typeParameterVariances: variances }),
     declaration: statement,
     target,
-    preserveDisplay: isIntersectionTypeNode(statement.type) || isFunctionTypeNode(statement.type),
+    preserveDisplay: typeAliasShouldPreserveDisplay(statement, rawVariances, target),
     requiresExplicitDeclarationAnnotation: typeAliasRequiresExplicitDeclarationAnnotation(statement),
   });
+  if (aliasType.declaration !== undefined) {
+    varianceMeasurements.delete(aliasType.declaration);
+  }
   environment.set(statement.name.text, mergeTypeNamespace(environment.get(statement.name.text), aliasType));
+  checkTypeAliasVarianceAnnotations(statement, aliasType, state);
 }
 
 function typeAliasRequiresExplicitDeclarationAnnotation(statement: TypeAliasDeclaration): boolean {
   return typeNodeReferencesName(statement.type, statement.name.text)
     && typeNodeHasNonTrivialSerializationCycle(statement.type);
+}
+
+function typeAliasShouldPreserveDisplay(statement: TypeAliasDeclaration, variances: readonly (TypeParameterVariance | undefined)[] | undefined, target?: CheckedType): boolean {
+  return isIntersectionTypeNode(statement.type)
+    || isFunctionTypeNode(statement.type)
+    || isTypeLiteralNode(statement.type)
+    || isMappedTypeNode(statement.type)
+    || variances !== undefined && target !== undefined && typeAliasVarianceDisplayTarget(target);
+}
+
+function typeAliasVarianceDisplayTarget(type: CheckedType): boolean {
+  const target = type.kind === "typeAliasInstance" ? type.target : type;
+  return target.kind === "object"
+    || target.kind === "record"
+    || target.kind === "function"
+    || target.kind === "interface"
+    || target.kind === "classInstance"
+    || target.kind === "classConstructor";
+}
+
+function checkTypeAliasVarianceAnnotations(statement: TypeAliasDeclaration, aliasType: Extract<CheckedType, { readonly kind: "typeAlias" }>, state: CheckState): void {
+  const typeParameters = statement.typeParameters ?? [];
+  const variances = typeParameterVariances(statement.typeParameters);
+  if (typeParameters.length === 0 || variances === undefined) {
+    return;
+  }
+  if (!typeAliasTargetSupportsVarianceAnnotations(statement.type)) {
+    for (const typeParameter of typeParameters) {
+      if (typeParameterVariance(typeParameter) !== undefined) {
+        state.diagnostics.push(createDiagnostic(2637));
+      }
+    }
+    return;
+  }
+  checkGenericDeclarationVarianceAnnotations(statement.typeParameters, aliasType, state);
+}
+
+function typeAliasTargetSupportsVarianceAnnotations(type: TypeNode): boolean {
+  if (isParenthesizedTypeNode(type)) {
+    return typeAliasTargetSupportsVarianceAnnotations(type.type);
+  }
+  return isTypeLiteralNode(type) || isFunctionTypeNode(type) || isConstructorTypeNode(type) || isMappedTypeNode(type);
+}
+
+function checkGenericDeclarationVarianceAnnotations(typeParameters: NodeArray<TypeParameterDeclaration> | undefined, type: CheckedType, state: CheckState): void {
+  if (typeParameters === undefined) {
+    return;
+  }
+  for (let index = 0; index < typeParameters.length; index += 1) {
+    const variance = typeParameterVariance(typeParameters[index]!);
+    if (variance === undefined || variance === "invariant") {
+      continue;
+    }
+    const markerPair = varianceMarkerPair(typeParameters[index]!.name.text);
+    const sourceMarker = variance === "covariant" ? markerPair.sub : markerPair.super;
+    const targetMarker = variance === "covariant" ? markerPair.super : markerPair.sub;
+    const source = createVarianceMarkerInstantiation(type, index, sourceMarker);
+    const target = createVarianceMarkerInstantiation(type, index, targetMarker);
+    varianceValidationDepth += 1;
+    try {
+      if (!isAssignableTo(source, target, state.options)) {
+        state.diagnostics.push(createDiagnostic(2636, displayType(source), displayType(target)));
+      }
+    } finally {
+      varianceValidationDepth -= 1;
+    }
+  }
+}
+
+function varianceMarkerPair(name: string): { readonly super: Extract<CheckedType, { readonly kind: "typeParameter" }>; readonly sub: Extract<CheckedType, { readonly kind: "typeParameter" }> } {
+  const superType: Extract<CheckedType, { readonly kind: "typeParameter" }> = { kind: "typeParameter", name: `super-${name}` };
+  return {
+    super: superType,
+    sub: { kind: "typeParameter", name: `sub-${name}`, constraint: superType },
+  };
+}
+
+function createVarianceMarkerInstantiation(type: CheckedType, typeParameterIndex: number, marker: CheckedType): CheckedType {
+  if (type.kind === "typeAlias") {
+    const typeArguments = markerTypeArguments(type.typeParameters, typeParameterIndex, marker);
+    const substitutions = new Map<string, CheckedType>();
+    for (let index = 0; index < type.typeParameters.length; index += 1) {
+      substitutions.set(type.typeParameters[index]!, typeArguments[index] ?? anyType);
+    }
+    return {
+      kind: "typeAliasInstance",
+      name: type.name,
+      typeArguments,
+      target: substituteType(type.target, substitutions),
+      requiresExplicitDeclarationAnnotation: type.requiresExplicitDeclarationAnnotation,
+      ...(type.typeParameterVariances === undefined ? {} : { typeParameterVariances: type.typeParameterVariances }),
+      ...(type.declaration === undefined ? {} : { declaration: type.declaration }),
+      source: type,
+      varianceMarker: true,
+    };
+  }
+  if (type.kind === "interface") {
+    return {
+      ...instantiateInterfaceType(type, markerTypeArguments(type.members.typeParameters, typeParameterIndex, marker)),
+      varianceMarker: true,
+    };
+  }
+  if (type.kind === "classConstructor") {
+    const constructorType: Extract<CheckedType, { readonly kind: "classConstructor" }> = {
+      ...instantiateClassConstructor(type, markerTypeArguments(type.typeParameters, typeParameterIndex, marker)),
+      varianceMarker: true,
+    };
+    return { ...classConstructorInstanceType(constructorType), varianceMarker: true };
+  }
+  return type;
+}
+
+function markerTypeArguments(typeParameters: readonly string[], typeParameterIndex: number, marker: CheckedType): readonly CheckedType[] {
+  return typeParameters.map((typeParameter, index) => index === typeParameterIndex ? marker : typeParameterType(typeParameter));
 }
 
 function typeNodeReferencesName(type: TypeNode, name: string): boolean {
@@ -5438,6 +5572,7 @@ function checkClassLike(classDeclaration: ClassLikeDeclaration, state: CheckStat
   for (const member of classDeclaration.members) {
     checkClassElement(member, enterUnusedDeclaration(classBodyState, unusedClassMemberEntry(member, classUnusedMembers)), classEnvironment, ambient, classIsAbstract, classMembers, inheritedMembers, accessorContextTypes, constructorAssignedProperties, classDeclaration.members);
   }
+  checkGenericDeclarationVarianceAnnotations(classDeclaration.typeParameters, classType, state);
   return classType;
 }
 
@@ -5457,11 +5592,12 @@ function classConstructorTypeDetailsFromDeclaration(classDeclaration: ClassLikeD
     typeParameterDeclarations,
     classEnvironment,
     state,
-    className === undefined ? undefined : { declarationName: className, mergeKeyPrefix: `type:${className}`, skipWhenMergedInterfaceExists: true },
+    className === undefined ? undefined : { declarationName: className, mergeKeyPrefix: `type:${className}`, skipWhenMergedInterfaceExists: true, allowVarianceModifiers: true },
   );
   addJSDocTypeParameterGroups(classDeclaration, state);
   const typeParameterConstraints = addTypeParameterConstraintsToEnvironment(classDeclaration.typeParameters, classEnvironment, state);
   const declaredTypeParameterDefaults = addTypeParameterDefaultsToEnvironment(classDeclaration.typeParameters, classEnvironment, state);
+  const variances = typeParameterVariances(classDeclaration.typeParameters);
   const typeParameterDefaults = mergedClassInterfaceTypeParameterDefaults(className, typeParameters, declaredTypeParameterDefaults, environment);
   const classMembers = collectClassMemberNames(classDeclaration, inheritedMembers, classEnvironment, state.options);
   const classType: Extract<CheckedType, { readonly kind: "classConstructor" }> = {
@@ -5471,6 +5607,7 @@ function classConstructorTypeDetailsFromDeclaration(classDeclaration: ClassLikeD
     typeArguments: [],
     typeParameterConstraints,
     typeParameterDefaults,
+    ...(variances === undefined ? {} : { typeParameterVariances: variances }),
     constructorParameters: classConstructorParameterTypes(classDeclaration, classEnvironment),
     abstract: hasModifier(classDeclaration, Kind.AbstractKeyword),
     members: classMembers,
@@ -6413,6 +6550,7 @@ function checkInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, s
   addTypeParameterDeclarationsToEnvironment(interfaceDeclaration.typeParameters ?? [], interfaceEnvironment, state, {
     declarationName: interfaceDeclaration.name.text,
     mergeKeyPrefix: `type:${interfaceDeclaration.name.text}`,
+    allowVarianceModifiers: true,
   });
   withActiveTypeParameterConstraintDeclaration(
     interfaceDeclaration,
@@ -6420,12 +6558,17 @@ function checkInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, s
     () => addTypeParameterConstraintsToEnvironment(interfaceDeclaration.typeParameters, interfaceEnvironment),
   );
   checkTypeElements(interfaceDeclaration.members, state, interfaceEnvironment, true);
+  const interfaceType = interfaceMeaning(environment.get(interfaceDeclaration.name.text));
+  if (interfaceType !== undefined) {
+    checkGenericDeclarationVarianceAnnotations(interfaceDeclaration.typeParameters, interfaceType, state);
+  }
 }
 
 function bindInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, state: CheckState, environment: TypeEnvironment): void {
   const unusedEntry = declarationIsExported(interfaceDeclaration) ? undefined : registerUnusedDeclaration(interfaceDeclaration.name.text, interfaceDeclaration, "type", state, environment);
   const interfaceState = enterUnusedDeclaration(state, unusedEntry);
   const typeParameters = interfaceDeclaration.typeParameters?.map(typeParameter => typeParameter.name.text) ?? [];
+  const variances = typeParameterVariances(interfaceDeclaration.typeParameters);
   const existingBinding = environment.get(interfaceDeclaration.name.text);
   const existingInterface = existingBinding === undefined ? undefined : typeMeaning(existingBinding);
   const placeholderMembers: InterfaceMembers = existingInterface?.kind === "interface" && existingInterface.members.declaration === interfaceDeclaration
@@ -6433,6 +6576,7 @@ function bindInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, st
     : {
       name: interfaceDeclaration.name.text,
       typeParameters,
+      ...(variances === undefined ? {} : { typeParameterVariances: variances }),
       declaration: interfaceDeclaration,
       version: 0,
       properties: new Map(),
@@ -6446,6 +6590,7 @@ function bindInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, st
   Object.assign(placeholderMembers, {
     name: interfaceDeclaration.name.text,
     typeParameters,
+    ...(variances === undefined ? {} : { typeParameterVariances: variances }),
     declaration: interfaceDeclaration,
     version: placeholderMembers.version + 1,
     properties: new Map(),
@@ -6466,6 +6611,7 @@ function bindInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, st
   addTypeParameterDeclarationsToEnvironment(interfaceDeclaration.typeParameters ?? [], interfaceEnvironment, interfaceState, {
     declarationName: interfaceDeclaration.name.text,
     mergeKeyPrefix: `type:${interfaceDeclaration.name.text}`,
+    allowVarianceModifiers: true,
   });
   const { typeParameterConstraints, typeParameterDefaults, inheritedInterfaces, inheritedClasses } = withActiveTypeParameterConstraintDeclaration(interfaceDeclaration, typeParameters, () => ({
     typeParameterConstraints: addTypeParameterConstraintsToEnvironment(interfaceDeclaration.typeParameters, interfaceEnvironment, interfaceState),
@@ -6485,6 +6631,7 @@ function bindInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, st
   if (members !== placeholderMembers) {
     Object.assign(placeholderMembers, members, { version: placeholderMembers.version + 1 });
   }
+  varianceMeasurements.delete(placeholderMembers.origin ?? placeholderMembers);
   environment.set(interfaceDeclaration.name.text, mergeTypeNamespace(environment.get(interfaceDeclaration.name.text), placeholderType));
 }
 
@@ -6806,11 +6953,13 @@ function signatureDeclarationType(signature: Pick<MethodSignatureDeclaration, "t
     kind: "function",
     typeParameters,
     typeParameterConstraints,
-    parameters,
-    parameterNames: parameterDisplayNames(signature.parameters),
-    ...signatureRestParameterIndex(signature.parameters),
-    ...signatureMinArgumentCount(signature.parameters, state),
-    ...signatureMaxArgumentCount(signature.parameters, state),
+    parameters: callableParameterTypes(signature.parameters, parameters),
+    parameterNames: callableParameterDisplayNames(signature.parameters),
+    ...signatureThisParameterType(signature.parameters, parameters),
+    ...callableSignatureRestParameterIndex(signature.parameters),
+    ...callableSignatureMinArgumentCount(signature.parameters, state),
+    ...callableSignatureDeclaredMinArgumentCount(signature.parameters, state),
+    ...callableSignatureMaxArgumentCount(signature.parameters, state),
     returnType,
     ...(construct ? { construct: true } : {}),
   };
@@ -7497,7 +7646,8 @@ function checkSignatureParameters(parameters: readonly ParameterDeclaration[], s
     if (parameter.type !== undefined) {
       checkJavaScriptTypeAnnotation(state);
     }
-    const contextualParameterType = contextualParameterTypes[parameterIndex];
+    const contextualIndex = callableParameterIndex(parameters, parameterIndex);
+    const contextualParameterType = contextualIndex === undefined ? undefined : contextualParameterTypes[contextualIndex];
     checkImplicitAnyParameter(parameter, state, environment, contextualParameterType);
     const parameterType = parameterTypeFromDeclaration(parameter, environment, state, contextualParameterType);
     checkRestParameterArrayType(parameter, parameterType, state);
@@ -7517,6 +7667,37 @@ function parameterDisplayNames(parameters: readonly ParameterDeclaration[]): rea
   return parameters.map((parameter, index) => isIdentifier(parameter.name) ? parameter.name.text : `arg${index}`);
 }
 
+function callableParameterDeclarations(parameters: readonly ParameterDeclaration[]): readonly ParameterDeclaration[] {
+  return parameters.filter(parameter => !isThisParameterDeclaration(parameter));
+}
+
+function callableParameterIndex(parameters: readonly ParameterDeclaration[], parameterIndex: number): number | undefined {
+  const parameter = parameters[parameterIndex];
+  if (parameter === undefined || isThisParameterDeclaration(parameter)) {
+    return undefined;
+  }
+  let callableIndex = 0;
+  for (let index = 0; index < parameterIndex; index += 1) {
+    if (!isThisParameterDeclaration(parameters[index]!)) {
+      callableIndex += 1;
+    }
+  }
+  return callableIndex;
+}
+
+function callableParameterTypes(parameters: readonly ParameterDeclaration[], parameterTypes: readonly CheckedType[]): readonly CheckedType[] {
+  return parameterTypes.filter((_parameterType, index) => !isThisParameterDeclaration(parameters[index]!));
+}
+
+function callableParameterDisplayNames(parameters: readonly ParameterDeclaration[]): readonly string[] {
+  return parameterDisplayNames(callableParameterDeclarations(parameters));
+}
+
+function signatureThisParameterType(parameters: readonly ParameterDeclaration[], parameterTypes: readonly CheckedType[]): { readonly thisParameterType: CheckedType } | Record<string, never> {
+  const thisParameterIndex = parameters.findIndex(isThisParameterDeclaration);
+  return thisParameterIndex === -1 || parameterTypes[thisParameterIndex] === undefined ? {} : { thisParameterType: parameterTypes[thisParameterIndex]! };
+}
+
 function addTypeParametersToEnvironment(typeParameters: readonly string[], environment: TypeEnvironment): void {
   for (const typeParameter of typeParameters) {
     removeUnusedDeclarationBinding(environment, typeParameter);
@@ -7529,25 +7710,88 @@ interface TypeParameterOwnerInfo {
   readonly mergeKeyPrefix?: string;
   readonly skipWhenMergedClassExists?: boolean;
   readonly skipWhenMergedInterfaceExists?: boolean;
+  readonly allowVarianceModifiers?: boolean;
 }
 
 function addTypeParameterDeclarationsToEnvironment(typeParameters: readonly TypeParameterDeclaration[], environment: TypeEnvironment, state?: CheckState, ownerInfo?: TypeParameterOwnerInfo): readonly string[] {
   const names = typeParameters.map(typeParameter => typeParameter.name.text);
+  const ownerBinding = ownerInfo === undefined ? undefined : environment.get(ownerInfo.declarationName);
   addTypeParametersToEnvironment(names, environment);
   if (state !== undefined
-    && (ownerInfo?.skipWhenMergedClassExists !== true || !mergedDeclarationHasClassValue(environment.get(ownerInfo.declarationName)))
-    && (ownerInfo?.skipWhenMergedInterfaceExists !== true || !mergedDeclarationHasInterfaceType(environment.get(ownerInfo.declarationName)))) {
+    && (ownerInfo?.skipWhenMergedClassExists !== true || !mergedDeclarationHasClassValue(ownerBinding))
+    && (ownerInfo?.skipWhenMergedInterfaceExists !== true || !mergedDeclarationHasInterfaceType(ownerBinding))) {
     for (let index = 0; index < typeParameters.length; index += 1) {
       const typeParameter = typeParameters[index]!;
+      checkTypeParameterModifierGrammar(typeParameter, state, ownerInfo?.allowVarianceModifiers === true);
       checkStrictModeDeclarationIdentifier(typeParameter.name.text, state, false);
       const mergeKey = ownerInfo?.mergeKeyPrefix === undefined ? undefined : `${ownerInfo.mergeKeyPrefix}:${index}`;
       const entry = registerUnusedDeclaration(typeParameter.name.text, typeParameter, "typeParameter", state, environment, typeParameter.name.text.startsWith("_"), mergeKey);
-      if (entry !== undefined && ownerInfo !== undefined && mergedDeclarationReferencesTypeParameter(environment.get(ownerInfo.declarationName), typeParameter.name.text)) {
+      if (entry !== undefined && ownerInfo !== undefined && mergedDeclarationReferencesTypeParameter(ownerBinding, typeParameter.name.text)) {
         entry.used = true;
       }
     }
   }
   return names;
+}
+
+function checkTypeParameterModifierGrammar(typeParameter: TypeParameterDeclaration, state: CheckState, allowVarianceModifiers: boolean): void {
+  if (state.reportedTypeParameterModifierGrammar.has(typeParameter)) {
+    return;
+  }
+  state.reportedTypeParameterModifierGrammar.add(typeParameter);
+  let sawIn = false;
+  let sawOut = false;
+  for (const modifier of typeParameter.modifiers ?? []) {
+    if (modifier.kind === Kind.InKeyword) {
+      if (!allowVarianceModifiers) {
+        state.diagnostics.push(createDiagnostic(1274, "in"));
+        continue;
+      }
+      if (sawIn) {
+        state.diagnostics.push(createDiagnostic(1030, "in"));
+        continue;
+      }
+      if (sawOut) {
+        state.diagnostics.push(createDiagnostic(1029, "in", "out"));
+      }
+      sawIn = true;
+      continue;
+    }
+    if (modifier.kind === Kind.OutKeyword) {
+      if (!allowVarianceModifiers) {
+        state.diagnostics.push(createDiagnostic(1274, "out"));
+        continue;
+      }
+      if (sawOut) {
+        state.diagnostics.push(createDiagnostic(1030, "out"));
+        continue;
+      }
+      sawOut = true;
+    }
+  }
+}
+
+function typeParameterVariances(typeParameters: readonly TypeParameterDeclaration[] | undefined): readonly (TypeParameterVariance | undefined)[] | undefined {
+  if (typeParameters === undefined) {
+    return undefined;
+  }
+  const variances = typeParameters.map(typeParameter => typeParameterVariance(typeParameter));
+  return variances.some(variance => variance !== undefined) ? variances : undefined;
+}
+
+function typeParameterVariance(typeParameter: TypeParameterDeclaration): TypeParameterVariance | undefined {
+  const hasIn = hasModifier(typeParameter, Kind.InKeyword);
+  const hasOut = hasModifier(typeParameter, Kind.OutKeyword);
+  if (hasIn && hasOut) {
+    return "invariant";
+  }
+  if (hasIn) {
+    return "contravariant";
+  }
+  if (hasOut) {
+    return "covariant";
+  }
+  return undefined;
 }
 
 function mergedDeclarationHasClassValue(type: CheckedType | undefined): boolean {
@@ -7834,11 +8078,13 @@ function functionDeclarationType(functionDeclaration: FunctionDeclaration, envir
     kind: "function",
     typeParameters,
     typeParameterConstraints,
-    parameters: parameterTypes,
-    parameterNames: parameterDisplayNames(functionDeclaration.parameters),
-    ...signatureRestParameterIndex(functionDeclaration.parameters),
-    ...signatureMinArgumentCount(functionDeclaration.parameters, state),
-    ...signatureMaxArgumentCount(functionDeclaration.parameters, state, functionDeclaration.body),
+    parameters: callableParameterTypes(functionDeclaration.parameters, parameterTypes),
+    parameterNames: callableParameterDisplayNames(functionDeclaration.parameters),
+    ...signatureThisParameterType(functionDeclaration.parameters, parameterTypes),
+    ...callableSignatureRestParameterIndex(functionDeclaration.parameters),
+    ...callableSignatureMinArgumentCount(functionDeclaration.parameters, state),
+    ...callableSignatureDeclaredMinArgumentCount(functionDeclaration.parameters, state),
+    ...callableSignatureMaxArgumentCount(functionDeclaration.parameters, state, functionDeclaration.body),
     returnType: returnType ?? unresolvedType,
   };
 }
@@ -7875,11 +8121,13 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
       kind: "function",
       typeParameters,
       typeParameterConstraints,
-      parameters: parameterTypes,
-      parameterNames: parameterDisplayNames(functionDeclaration.parameters),
-      ...signatureRestParameterIndex(functionDeclaration.parameters),
-      ...signatureMinArgumentCount(functionDeclaration.parameters, state),
-      ...signatureMaxArgumentCount(functionDeclaration.parameters, state, functionDeclaration.body),
+      parameters: callableParameterTypes(functionDeclaration.parameters, parameterTypes),
+      parameterNames: callableParameterDisplayNames(functionDeclaration.parameters),
+      ...signatureThisParameterType(functionDeclaration.parameters, parameterTypes),
+      ...callableSignatureRestParameterIndex(functionDeclaration.parameters),
+      ...callableSignatureMinArgumentCount(functionDeclaration.parameters, state),
+      ...callableSignatureDeclaredMinArgumentCount(functionDeclaration.parameters, state),
+      ...callableSignatureMaxArgumentCount(functionDeclaration.parameters, state, functionDeclaration.body),
       returnType: returnType ?? unresolvedType,
       ...(overloads === undefined ? {} : { overloads }),
     };
@@ -8016,7 +8264,7 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
     checkImplicitAnyParameter(parameter, state, functionEnvironment, jsDocParameterType(parameter, jsDocParameterTypes) ?? contextualParameterType);
     checkRestParameterArrayType(parameter, parameterTypes[index] ?? unresolvedType, state);
     checkStrictModeBindingName(parameter.name, state, false);
-    setBindingNameType(parameter.name, parameterBindingTypeFromDeclaration(parameter, parameterTypes[index] ?? unresolvedType, state, contextualParameterIsOptional(contextualFunction, index)), functionEnvironment, false, false, state);
+    setBindingNameType(parameter.name, parameterBindingTypeFromDeclaration(parameter, parameterTypes[index] ?? unresolvedType, state, contextualParameterIsOptional(contextualFunction, index, functionExpression.parameters)), functionEnvironment, false, false, state);
     registerUnusedParameter(parameter, state, functionEnvironment, functionExpression.body === undefined);
     if (parameter.initializer !== undefined) {
       inferExpression(parameter.initializer, enterParameterInitializer(state, isAsync), functionEnvironment);
@@ -8030,11 +8278,13 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
     kind: "function",
     typeParameters,
     typeParameterConstraints,
-    parameters: parameterTypes,
-    parameterNames: parameterDisplayNames(functionExpression.parameters),
-    ...signatureRestParameterIndex(functionExpression.parameters),
-    ...signatureMinArgumentCount(functionExpression.parameters, state, contextualFunction),
-    ...signatureMaxArgumentCount(functionExpression.parameters, state, functionExpression.body),
+    parameters: callableParameterTypes(functionExpression.parameters, parameterTypes),
+    parameterNames: callableParameterDisplayNames(functionExpression.parameters),
+    ...signatureThisParameterType(functionExpression.parameters, parameterTypes),
+    ...callableSignatureRestParameterIndex(functionExpression.parameters),
+    ...callableSignatureMinArgumentCount(functionExpression.parameters, state, contextualFunction),
+    ...callableSignatureDeclaredMinArgumentCount(functionExpression.parameters, state),
+    ...callableSignatureMaxArgumentCount(functionExpression.parameters, state, functionExpression.body),
     returnType: effectiveReturnType,
   };
   if (functionExpression.name !== undefined) {
@@ -11928,7 +12178,7 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
     const parameterType = parameterTypes[parameterIndex] ?? unresolvedType;
     checkRestParameterArrayType(parameter, parameterType, state);
     checkStrictModeBindingName(parameter.name, state, false);
-    setBindingNameType(parameter.name, parameterBindingTypeFromDeclaration(parameter, parameterType, state, contextualParameterIsOptional(contextualFunction, parameterIndex)), arrowEnvironment, false, false, state);
+    setBindingNameType(parameter.name, parameterBindingTypeFromDeclaration(parameter, parameterType, state, contextualParameterIsOptional(contextualFunction, parameterIndex, arrowFunction.parameters)), arrowEnvironment, false, false, state);
     registerUnusedParameter(parameter, state, arrowEnvironment, false);
     if (parameter.initializer !== undefined) {
       inferExpression(parameter.initializer, enterArrowParameterInitializer(state, isAsync), arrowEnvironment);
@@ -11947,11 +12197,13 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
     kind: "function",
     typeParameters,
     typeParameterConstraints,
-    parameters: parameterTypes,
-    parameterNames: parameterDisplayNames(arrowFunction.parameters),
-    ...signatureRestParameterIndex(arrowFunction.parameters),
-    ...signatureMinArgumentCount(arrowFunction.parameters, state, contextualFunction),
-    ...signatureMaxArgumentCount(arrowFunction.parameters, state),
+    parameters: callableParameterTypes(arrowFunction.parameters, parameterTypes),
+    parameterNames: callableParameterDisplayNames(arrowFunction.parameters),
+    ...signatureThisParameterType(arrowFunction.parameters, parameterTypes),
+    ...callableSignatureRestParameterIndex(arrowFunction.parameters),
+    ...callableSignatureMinArgumentCount(arrowFunction.parameters, state, contextualFunction),
+    ...callableSignatureDeclaredMinArgumentCount(arrowFunction.parameters, state),
+    ...callableSignatureMaxArgumentCount(arrowFunction.parameters, state),
     returnType: effectiveReturnType,
   };
 }
@@ -13805,7 +14057,18 @@ function methodDeclarationType(method: MethodDeclaration, environment: TypeEnvir
   addTypeParameterConstraintsToEnvironment(method.typeParameters, signatureEnvironment, state);
   const parameters = method.parameters.map(parameter => parameterTypeFromDeclaration(parameter, signatureEnvironment, state));
   const returnType = method.type === undefined ? methodBodyReturnType(method.body, state.options, signatureEnvironment) : bindTypePredicateParameterIndex(typeFromTypeNode(method.type, signatureEnvironment, state), method.parameters);
-  return { kind: "function", typeParameters, parameters, parameterNames: parameterDisplayNames(method.parameters), ...signatureRestParameterIndex(method.parameters), ...signatureMinArgumentCount(method.parameters, state), ...signatureMaxArgumentCount(method.parameters, state, method.body), returnType };
+  return {
+    kind: "function",
+    typeParameters,
+    parameters: callableParameterTypes(method.parameters, parameters),
+    parameterNames: callableParameterDisplayNames(method.parameters),
+    ...signatureThisParameterType(method.parameters, parameters),
+    ...callableSignatureRestParameterIndex(method.parameters),
+    ...callableSignatureMinArgumentCount(method.parameters, state),
+    ...callableSignatureDeclaredMinArgumentCount(method.parameters, state),
+    ...callableSignatureMaxArgumentCount(method.parameters, state, method.body),
+    returnType,
+  };
 }
 
 function methodBodyReturnType(body: Block | undefined, options?: CompilerOptions, environment?: TypeEnvironment, contextualReturnType?: CheckedType): CheckedType {
@@ -14026,7 +14289,20 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
     const typeParameterConstraints = addTypeParameterConstraintsToEnvironment(type.typeParameters, signatureEnvironment, state);
     const parameterTypes = checkSignatureParameters(type.parameters, state ?? emptyCheckState(), signatureEnvironment, true, false, [], false, "valueOnly");
     const returnType = type.type === undefined ? unresolvedType : bindTypePredicateParameterIndex(typeFromTypeNode(type.type, signatureEnvironment, state), type.parameters);
-    return { kind: "function", typeParameters, typeParameterConstraints, parameters: parameterTypes, parameterNames: parameterDisplayNames(type.parameters), ...signatureRestParameterIndex(type.parameters), ...signatureMinArgumentCount(type.parameters, state ?? emptyCheckState()), ...signatureMaxArgumentCount(type.parameters, state ?? emptyCheckState()), returnType, ...(isConstructorTypeNode(type) ? { construct: true } : {}) };
+    return {
+      kind: "function",
+      typeParameters,
+      typeParameterConstraints,
+      parameters: callableParameterTypes(type.parameters, parameterTypes),
+      parameterNames: callableParameterDisplayNames(type.parameters),
+      ...signatureThisParameterType(type.parameters, parameterTypes),
+      ...callableSignatureRestParameterIndex(type.parameters),
+      ...callableSignatureMinArgumentCount(type.parameters, state ?? emptyCheckState()),
+      ...callableSignatureDeclaredMinArgumentCount(type.parameters, state ?? emptyCheckState()),
+      ...callableSignatureMaxArgumentCount(type.parameters, state ?? emptyCheckState()),
+      returnType,
+      ...(isConstructorTypeNode(type) ? { construct: true } : {}),
+    };
   }
   if (isTypeReferenceNode(type)) {
     const name = entityNameText(type.typeName);
@@ -14501,7 +14777,11 @@ function bindTypePredicateParameterIndex(type: CheckedType, parameters: readonly
     return type;
   }
   const parameterIndex = parameters.findIndex(parameter => isIdentifier(parameter.name) && parameter.name.text === type.parameterName);
-  return parameterIndex === -1 ? type : { ...type, parameterIndex };
+  if (parameterIndex === -1) {
+    return type;
+  }
+  const callableIndex = callableParameterIndex(parameters, parameterIndex);
+  return callableIndex === undefined ? type : { ...type, parameterIndex: callableIndex };
 }
 
 function resolveTypeQueryName(typeName: EntityName, environment: TypeEnvironment, state: CheckState | undefined): CheckedType | undefined {
@@ -14884,6 +15164,7 @@ function typeReferencesAnyTypeParameter(type: CheckedType, names: ReadonlySet<st
     case "function":
       return type.parameters.some(parameter => typeReferencesAnyTypeParameter(parameter, names, seen))
         || typeReferencesAnyTypeParameter(type.returnType, names, seen)
+        || (type.thisParameterType !== undefined && typeReferencesAnyTypeParameter(type.thisParameterType, names, seen))
         || type.overloads?.some(overload => typeReferencesAnyTypeParameter(overload, names, seen)) === true;
     case "functionDeclaration":
       return typeReferencesAnyTypeParameter(type.type, names, seen);
@@ -14963,6 +15244,9 @@ function typeFromResolvedEntity(type: CheckedType, diagnosticName: string | unde
         name: type.name,
         typeArguments: type.typeParameters.map(typeParameter => substitutions.get(typeParameter) ?? anyType),
         target,
+        ...(type.typeParameterVariances === undefined ? {} : { typeParameterVariances: type.typeParameterVariances }),
+        ...(type.declaration === undefined ? {} : { declaration: type.declaration }),
+        source: type,
         requiresExplicitDeclarationAnnotation: type.requiresExplicitDeclarationAnnotation,
       };
     }
@@ -14982,6 +15266,7 @@ function typeFromResolvedEntity(type: CheckedType, diagnosticName: string | unde
       typeParameters: instantiated.typeParameters,
       typeArguments: instantiated.typeArguments,
       ...(instantiated.typeParameterConstraints === undefined ? {} : { typeParameterConstraints: instantiated.typeParameterConstraints }),
+      ...(instantiated.typeParameterVariances === undefined ? {} : { typeParameterVariances: instantiated.typeParameterVariances }),
       members: instantiated.members,
       ...optionalArrayBaseElementType(instantiated.arrayBaseElementType),
     };
@@ -15072,6 +15357,7 @@ function emptyCheckState(options: CompilerOptions = {}): CheckState {
     unusedDeclarations: { entries: [], groups: [], nodes: new Map() },
     activeUnusedDeclarations: new Set(),
     reportedUncalledFunctionConditionNodes: new WeakSet(),
+    reportedTypeParameterModifierGrammar: new WeakSet(),
   };
 }
 
@@ -15941,6 +16227,10 @@ function strictOptionValue(options: CompilerOptions, optionName: "noImplicitAny"
   return options[optionName] === undefined ? options.strict !== false : options[optionName] === true;
 }
 
+function strictFunctionTypesOptionValue(options: CompilerOptions): boolean {
+  return options.strictFunctionTypes === undefined ? options.strict === true : options.strictFunctionTypes === true;
+}
+
 function checkImplicitAnyParameter(parameter: ParameterDeclaration, state: CheckState, environment: TypeEnvironment, contextualType?: CheckedType): void {
   const hasParameterPropertyModifier = isParameterProperty(parameter);
   if (contextualType !== undefined && !hasParameterPropertyModifier) {
@@ -16122,11 +16412,12 @@ function parameterBindingTypeFromDeclaration(parameter: ParameterDeclaration, de
   return declaredParameterType;
 }
 
-function contextualParameterIsOptional(functionType: CheckedFunctionType | undefined, parameterIndex: number): boolean {
-  if (functionType === undefined || functionType.restParameterIndex !== undefined && parameterIndex >= functionType.restParameterIndex) {
+function contextualParameterIsOptional(functionType: CheckedFunctionType | undefined, parameterIndex: number, parameters?: readonly ParameterDeclaration[]): boolean {
+  const callableIndex = parameters === undefined ? parameterIndex : callableParameterIndex(parameters, parameterIndex);
+  if (functionType === undefined || callableIndex === undefined || functionType.restParameterIndex !== undefined && callableIndex >= functionType.restParameterIndex) {
     return false;
   }
-  return parameterIndex >= (functionType.minArgumentCount ?? 0);
+  return callableIndex >= (functionType.minArgumentCount ?? 0);
 }
 
 function contextualFunctionParameterType(parameters: readonly ParameterDeclaration[], parameterIndex: number, functionType: CheckedFunctionType | undefined, fallback: CheckedType | undefined): CheckedType | undefined {
@@ -16134,19 +16425,27 @@ function contextualFunctionParameterType(parameters: readonly ParameterDeclarati
   if (functionType === undefined || parameter === undefined) {
     return fallback;
   }
+  const callableIndex = callableParameterIndex(parameters, parameterIndex);
+  if (callableIndex === undefined) {
+    return fallback;
+  }
   if (parameter.dotDotDotToken !== undefined) {
-    if (functionType.restParameterIndex !== undefined && parameterIndex >= functionType.restParameterIndex) {
+    if (functionType.restParameterIndex !== undefined && callableIndex >= functionType.restParameterIndex) {
       return functionType.parameters[functionType.restParameterIndex] ?? fallback;
     }
-    const restTypes = functionType.parameters.slice(parameterIndex);
+    const restTypes = functionType.parameters.slice(callableIndex);
     return restTypes.length === 0 ? fallback : { kind: "array", elementType: unionType(restTypes) };
   }
-  return functionParameterTypeAt(functionType, parameterIndex) ?? fallback;
+  return functionParameterTypeAt(functionType, callableIndex) ?? fallback;
 }
 
 function signatureRestParameterIndex(parameters: readonly ParameterDeclaration[]): { readonly restParameterIndex: number } | Record<string, never> {
   const restParameterIndex = parameters.findIndex(parameter => parameter.dotDotDotToken !== undefined);
   return restParameterIndex === -1 ? {} : { restParameterIndex };
+}
+
+function callableSignatureRestParameterIndex(parameters: readonly ParameterDeclaration[]): { readonly restParameterIndex: number } | Record<string, never> {
+  return signatureRestParameterIndex(callableParameterDeclarations(parameters));
 }
 
 function signatureMinArgumentCount(parameters: readonly ParameterDeclaration[], state: CheckState, contextualFunction?: CheckedFunctionType): { readonly minArgumentCount: number } | Record<string, never> {
@@ -16161,6 +16460,23 @@ function signatureMinArgumentCount(parameters: readonly ParameterDeclaration[], 
   return minArgumentCount === 0 ? {} : { minArgumentCount };
 }
 
+function callableSignatureMinArgumentCount(parameters: readonly ParameterDeclaration[], state: CheckState, contextualFunction?: CheckedFunctionType): { readonly minArgumentCount: number } | Record<string, never> {
+  return signatureMinArgumentCount(callableParameterDeclarations(parameters), state, contextualFunction);
+}
+
+function signatureDeclaredMinArgumentCount(parameters: readonly ParameterDeclaration[], state: CheckState): { readonly declaredMinArgumentCount: number } | Record<string, never> {
+  if (state.isJavaScriptFile) {
+    return {};
+  }
+  const optionalIndex = parameters.findIndex(parameter => parameter.questionToken !== undefined || parameter.initializer !== undefined || parameter.dotDotDotToken !== undefined);
+  const declaredMinArgumentCount = optionalIndex === -1 ? parameters.length : optionalIndex;
+  return declaredMinArgumentCount === 0 ? {} : { declaredMinArgumentCount };
+}
+
+function callableSignatureDeclaredMinArgumentCount(parameters: readonly ParameterDeclaration[], state: CheckState): { readonly declaredMinArgumentCount: number } | Record<string, never> {
+  return signatureDeclaredMinArgumentCount(callableParameterDeclarations(parameters), state);
+}
+
 function signatureMaxArgumentCount(parameters: readonly ParameterDeclaration[], state: CheckState, body?: Block): { readonly maxArgumentCount: number } | Record<string, never> {
   if (parameters.some(parameter => parameter.dotDotDotToken !== undefined)) {
     return {};
@@ -16169,6 +16485,10 @@ function signatureMaxArgumentCount(parameters: readonly ParameterDeclaration[], 
     return {};
   }
   return { maxArgumentCount: parameters.length };
+}
+
+function callableSignatureMaxArgumentCount(parameters: readonly ParameterDeclaration[], state: CheckState, body?: Block): { readonly maxArgumentCount: number } | Record<string, never> {
+  return signatureMaxArgumentCount(callableParameterDeclarations(parameters), state, body);
 }
 
 function bodyContainsOwnArgumentsReference(body: Block | undefined): boolean {
@@ -16585,8 +16905,10 @@ function instantiateFunctionTypeForCall(functionType: Extract<CheckedType, { rea
     ...(functionType.parameterNames === undefined ? {} : { parameterNames: functionType.parameterNames }),
     ...(functionType.restParameterIndex === undefined ? {} : { restParameterIndex: functionType.restParameterIndex }),
     ...(functionType.minArgumentCount === undefined ? {} : { minArgumentCount: functionType.minArgumentCount }),
+    ...(functionType.declaredMinArgumentCount === undefined ? {} : { declaredMinArgumentCount: functionType.declaredMinArgumentCount }),
     ...(functionType.maxArgumentCount === undefined ? {} : { maxArgumentCount: functionType.maxArgumentCount }),
     ...(functionType.construct === undefined ? {} : { construct: functionType.construct }),
+    ...(functionType.thisParameterType === undefined ? {} : { thisParameterType: substituteType(functionType.thisParameterType, substitutions) }),
     ...(functionType.overloads === undefined ? {} : { overloads: functionType.overloads.map(overload => substituteType(overload, substitutions) as CheckedFunctionType) }),
     returnType: substituteType(functionType.returnType, substitutions),
   };
@@ -17086,8 +17408,10 @@ function substituteTypeWithContext(type: CheckedType, substitutions: ReadonlyMap
       ...(type.parameterNames === undefined ? {} : { parameterNames: type.parameterNames }),
       ...(type.restParameterIndex === undefined ? {} : { restParameterIndex: type.restParameterIndex }),
       ...(type.minArgumentCount === undefined ? {} : { minArgumentCount: type.minArgumentCount }),
+      ...(type.declaredMinArgumentCount === undefined ? {} : { declaredMinArgumentCount: type.declaredMinArgumentCount }),
       ...(type.maxArgumentCount === undefined ? {} : { maxArgumentCount: type.maxArgumentCount }),
       ...(type.construct === undefined ? {} : { construct: type.construct }),
+      ...(type.thisParameterType === undefined ? {} : { thisParameterType: substituteTypeWithContext(type.thisParameterType, substitutions, context) }),
       ...(type.overloads === undefined ? {} : { overloads: type.overloads.map(overload => substituteTypeWithContext(overload, substitutions, context) as CheckedFunctionType) }),
       returnType: substituteTypeWithContext(type.returnType, substitutions, context),
     });
@@ -17160,6 +17484,10 @@ var functionSignatureRelationResults: Map<string, boolean> | undefined;
 var nextAssignabilityTypeId: number | undefined;
 var assignabilityRelationDepth = 0;
 var assignabilityBatchDepth = 0;
+var varianceValidationDepth = 0;
+var varianceMeasurementRelationDepth = 0;
+const varianceMeasurements = new WeakMap<object, { strictFunction?: readonly TypeParameterVariance[]; bivariantFunction?: readonly TypeParameterVariance[] }>();
+const activeVarianceMeasurements = new Set<object>();
 
 function resetAssignabilityRelationState(): void {
   assignabilityTypeIds = new WeakMap();
@@ -17215,6 +17543,7 @@ function assignabilityRelationKey(actual: CheckedType, expected: CheckedType, op
     assignabilityTypeKey(expected),
     strictOptionValue(options, "strictNullChecks") ? "strictNull" : "looseNull",
     strictOptionValue(options, "exactOptionalPropertyTypes") ? "exactOptional" : "looseOptional",
+    strictFunctionTypesOptionValue(options) ? "strictFunction" : "bivariantFunction",
   ].join(":");
 }
 
@@ -17224,6 +17553,7 @@ function assignabilityRecursionRelationKey(actual: CheckedType, expected: Checke
     assignabilityRecursionTypeKey(expected),
     strictOptionValue(options, "strictNullChecks") ? "strictNull" : "looseNull",
     strictOptionValue(options, "exactOptionalPropertyTypes") ? "exactOptional" : "looseOptional",
+    strictFunctionTypesOptionValue(options) ? "strictFunction" : "bivariantFunction",
   ].join(":");
 }
 
@@ -17247,7 +17577,7 @@ function assignabilityRecursionTypeKey(type: CheckedType): string {
     return `${type.kind}:${assignabilityObjectId(type.members)}:${type.name}`;
   }
   if (type.kind === "typeAliasInstance") {
-    return `typeAliasInstance:${type.name}`;
+    return `typeAliasInstance:${type.declaration === undefined ? type.name : assignabilityObjectId(type.declaration)}`;
   }
   if (type.kind === "array" || type.kind === "readonlyArray" || type.kind === "arrayLike" || type.kind === "arrayIterator" || type.kind === "iterable" || type.kind === "set") {
     return type.kind;
@@ -17329,7 +17659,7 @@ function assignabilityTypeKey(type: CheckedType, seen: Set<CheckedType> = new Se
     return `classConstructor:${assignabilityObjectId(type.members)}:${type.name}<${type.typeArguments.map(typeArgument => assignabilityTypeKey(typeArgument, seen)).join(",")}>`;
   }
   if (type.kind === "typeAliasInstance") {
-    return `typeAliasInstance:${type.name}<${type.typeArguments.map(typeArgument => assignabilityTypeKey(typeArgument, seen)).join(",")}>`;
+    return `typeAliasInstance:${type.declaration === undefined ? type.name : assignabilityObjectId(type.declaration)}<${type.typeArguments.map(typeArgument => assignabilityTypeKey(typeArgument, seen)).join(",")}>`;
   }
   if (type.kind === "array" || type.kind === "readonlyArray" || type.kind === "arrayLike" || type.kind === "arrayIterator" || type.kind === "iterable" || type.kind === "set") {
     return `${type.kind}<${assignabilityTypeKey(type.elementType, seen)}>`;
@@ -17438,17 +17768,26 @@ function isAssignableToWithActiveRelation(actual: CheckedType, expected: Checked
   }
   activeAssignabilityRelations ??= new Set();
   const activeRelationKey = assignabilityRecursionRelationKey(actual, expected, options);
-  if (activeAssignabilityRelations.has(activeRelationKey)) {
+  const activeRelation = activeAssignabilityRelations.has(activeRelationKey);
+  if (activeRelation && !(varianceMeasurementRelationDepth > 0 && (typeHasVarianceMarker(actual) || typeHasVarianceMarker(expected)))) {
     return true;
   }
-  activeAssignabilityRelations.add(activeRelationKey);
+  if (!activeRelation) {
+    activeAssignabilityRelations.add(activeRelationKey);
+  }
   try {
     const result = isAssignableToRelated(actual, expected, options);
     assignabilityRelationResults.set(relationKey, result);
     return result;
   } finally {
-    activeAssignabilityRelations.delete(activeRelationKey);
+    if (!activeRelation) {
+      activeAssignabilityRelations.delete(activeRelationKey);
+    }
   }
+}
+
+function typeHasVarianceMarker(type: CheckedType): boolean {
+  return (type.kind === "interface" || type.kind === "classConstructor" || type.kind === "classInstance" || type.kind === "typeAliasInstance") && type.varianceMarker === true;
 }
 
 function interfaceTypeExtendsInterface(actual: Extract<CheckedType, { readonly kind: "interface" }>, expected: Extract<CheckedType, { readonly kind: "interface" }>, seen: Set<string> = new Set()): boolean {
@@ -17495,6 +17834,217 @@ function sameInterfaceInstantiation(left: Extract<CheckedType, { readonly kind: 
   return (left.members.origin ?? left.members) === (right.members.origin ?? right.members)
     && leftArguments.length === rightArguments.length
     && leftArguments.every((typeArgument, index) => isFastSameType(typeArgument, rightArguments[index]!));
+}
+
+function typeAliasInstancesAssignableByExplicitVariance(actual: Extract<CheckedType, { readonly kind: "typeAliasInstance" }>, expected: Extract<CheckedType, { readonly kind: "typeAliasInstance" }>, options: CompilerOptions): boolean | undefined {
+  if (varianceValidationDepth > 0 || actual.varianceMarker === true || expected.varianceMarker === true) {
+    return undefined;
+  }
+  if (actual.declaration === undefined || actual.declaration !== expected.declaration) {
+    return undefined;
+  }
+  if (activeVarianceMeasurements.has(actual.declaration)) {
+    return true;
+  }
+  const variances = effectiveTypeAliasVariances(actual, options);
+  return variances === undefined ? undefined : typeArgumentsAssignableTo(actual.typeArguments, expected.typeArguments, options, variances);
+}
+
+function interfaceTypesAssignableByExplicitVariance(actual: Extract<CheckedType, { readonly kind: "interface" }>, expected: Extract<CheckedType, { readonly kind: "interface" }>, options: CompilerOptions): boolean | undefined {
+  if (varianceValidationDepth > 0 || actual.varianceMarker === true || expected.varianceMarker === true) {
+    return undefined;
+  }
+  if (!sameInterfaceOrigin(actual, expected)) {
+    return undefined;
+  }
+  const identity = actual.members.origin ?? actual.members;
+  if (activeVarianceMeasurements.has(identity)) {
+    return true;
+  }
+  const variances = effectiveInterfaceVariances(actual, options);
+  return variances === undefined ? undefined : typeArgumentsAssignableTo(actual.typeArguments ?? [], expected.typeArguments ?? [], options, variances);
+}
+
+function effectiveTypeAliasVariances(type: Extract<CheckedType, { readonly kind: "typeAliasInstance" }>, options: CompilerOptions): readonly TypeParameterVariance[] | undefined {
+  if (type.declaration === undefined || type.source === undefined) {
+    return undefined;
+  }
+  if (type.typeParameterVariances === undefined && typeHasUnreliableVarianceIndexedAccess(type.source.target, new Set(type.source.typeParameters))) {
+    return undefined;
+  }
+  return mergeExplicitAndMeasuredVariances(
+    type.typeParameterVariances,
+    measuredVariances(type.declaration, type.source.typeParameters.length, (index, marker) => createVarianceMarkerInstantiation(type.source!, index, marker), options),
+  );
+}
+
+function effectiveInterfaceVariances(type: Extract<CheckedType, { readonly kind: "interface" }>, options: CompilerOptions): readonly TypeParameterVariance[] | undefined {
+  const identity = type.members.origin ?? type.members;
+  if (type.members.typeParameterVariances === undefined && interfaceHasUnreliableVarianceIndexedAccess(type.members)) {
+    return undefined;
+  }
+  return mergeExplicitAndMeasuredVariances(
+    type.members.typeParameterVariances,
+    measuredVariances(identity, type.members.typeParameters.length, (index, marker) => createVarianceMarkerInstantiation(type, index, marker), options),
+  );
+}
+
+function effectiveClassVariances(type: Extract<CheckedType, { readonly kind: "classConstructor" | "classInstance" }>, options: CompilerOptions): readonly TypeParameterVariance[] | undefined {
+  if (type.typeParameterVariances === undefined && classHasUnreliableVarianceIndexedAccess(type)) {
+    return undefined;
+  }
+  return mergeExplicitAndMeasuredVariances(
+    type.typeParameterVariances,
+    measuredVariances(type.members, type.typeParameters.length, (index, marker) => createVarianceMarkerInstantiation(type.kind === "classInstance" ? classConstructorShellFromInstance(type) : type, index, marker), options),
+  );
+}
+
+function interfaceHasUnreliableVarianceIndexedAccess(members: InterfaceMembers): boolean {
+  const names = new Set(members.typeParameters);
+  return [...members.properties.values()].some(type => typeHasUnreliableVarianceIndexedAccess(type, names))
+    || members.callSignatures.some(signature => typeHasUnreliableVarianceIndexedAccess(signature, names))
+    || (members.stringIndexType !== undefined && typeHasUnreliableVarianceIndexedAccess(members.stringIndexType, names))
+    || (members.numberIndexType !== undefined && typeHasUnreliableVarianceIndexedAccess(members.numberIndexType, names))
+    || (members.symbolIndexType !== undefined && typeHasUnreliableVarianceIndexedAccess(members.symbolIndexType, names));
+}
+
+function classHasUnreliableVarianceIndexedAccess(type: Extract<CheckedType, { readonly kind: "classConstructor" | "classInstance" }>): boolean {
+  const names = new Set(type.typeParameters);
+  return [...type.members.propertyTypes.values()].some(propertyType => typeHasUnreliableVarianceIndexedAccess(propertyType, names))
+    || (type.kind === "classConstructor" && type.constructorParameters.some(parameter => typeHasUnreliableVarianceIndexedAccess(parameter, names)));
+}
+
+function typeHasUnreliableVarianceIndexedAccess(type: CheckedType, names: ReadonlySet<string>, seen: Set<CheckedType> = new Set()): boolean {
+  if (seen.has(type)) {
+    return false;
+  }
+  seen.add(type);
+  switch (type.kind) {
+    case "indexedAccess":
+      return typeReferencesAnyTypeParameter(type.objectType, names)
+        || typeReferencesAnyTypeParameter(type.indexType, names)
+        || typeHasUnreliableVarianceIndexedAccess(type.objectType, names, seen)
+        || typeHasUnreliableVarianceIndexedAccess(type.indexType, names, seen);
+    case "array":
+    case "readonlyArray":
+    case "arrayLike":
+    case "arrayIterator":
+    case "iterable":
+    case "set":
+      return typeHasUnreliableVarianceIndexedAccess(type.elementType, names, seen);
+    case "tuple":
+      return type.elements.some(element => typeHasUnreliableVarianceIndexedAccess(element.type, names, seen))
+        || (type.restElementType !== undefined && typeHasUnreliableVarianceIndexedAccess(type.restElementType, names, seen));
+    case "union":
+    case "intersection":
+      return type.types.some(member => typeHasUnreliableVarianceIndexedAccess(member, names, seen));
+    case "keyof":
+    case "nonNullable":
+    case "typeAliasInstance":
+      return typeHasUnreliableVarianceIndexedAccess(type.kind === "typeAliasInstance" ? type.target : type.target, names, seen);
+    case "object":
+      return [...type.properties.values()].some(property => typeHasUnreliableVarianceIndexedAccess(property, names, seen))
+        || type.callSignatures?.some(signature => typeHasUnreliableVarianceIndexedAccess(signature, names, seen)) === true
+        || (type.stringIndexType !== undefined && typeHasUnreliableVarianceIndexedAccess(type.stringIndexType, names, seen))
+        || (type.numberIndexType !== undefined && typeHasUnreliableVarianceIndexedAccess(type.numberIndexType, names, seen))
+        || (type.symbolIndexType !== undefined && typeHasUnreliableVarianceIndexedAccess(type.symbolIndexType, names, seen));
+    case "record":
+      return typeHasUnreliableVarianceIndexedAccess(type.keyType, names, seen)
+        || typeHasUnreliableVarianceIndexedAccess(type.valueType, names, seen);
+    case "function":
+      return type.parameters.some(parameter => typeHasUnreliableVarianceIndexedAccess(parameter, names, seen))
+        || typeHasUnreliableVarianceIndexedAccess(type.returnType, names, seen)
+        || (type.thisParameterType !== undefined && typeHasUnreliableVarianceIndexedAccess(type.thisParameterType, names, seen))
+        || type.overloads?.some(overload => typeHasUnreliableVarianceIndexedAccess(overload, names, seen)) === true;
+    case "interface":
+      return type.typeArguments?.some(typeArgument => typeHasUnreliableVarianceIndexedAccess(typeArgument, names, seen)) === true;
+    case "classConstructor":
+    case "classInstance":
+      return type.typeArguments.some(typeArgument => typeHasUnreliableVarianceIndexedAccess(typeArgument, names, seen));
+    default:
+      return false;
+  }
+}
+
+function mergeExplicitAndMeasuredVariances(explicit: readonly (TypeParameterVariance | undefined)[] | undefined, measured: readonly TypeParameterVariance[] | undefined): readonly TypeParameterVariance[] | undefined {
+  if (explicit === undefined) {
+    return measured;
+  }
+  if (measured === undefined) {
+    return explicit.map(variance => variance ?? "covariant");
+  }
+  return explicit.map((variance, index) => variance ?? measured[index] ?? "covariant");
+}
+
+function measuredVariances(identity: object, arity: number, createMarkerInstantiation: (index: number, marker: CheckedType) => CheckedType, options: CompilerOptions): readonly TypeParameterVariance[] | undefined {
+  if (arity === 0) {
+    return [];
+  }
+  const cacheKey = strictFunctionTypesOptionValue(options) ? "strictFunction" : "bivariantFunction";
+  const cached = varianceMeasurements.get(identity)?.[cacheKey];
+  if (cached !== undefined) {
+    return cached;
+  }
+  if (activeVarianceMeasurements.has(identity)) {
+    return undefined;
+  }
+  activeVarianceMeasurements.add(identity);
+  try {
+    const variances = Array.from({ length: arity }, (_value, index) => measureVariance(index, createMarkerInstantiation, options));
+    const entry = varianceMeasurements.get(identity) ?? {};
+    entry[cacheKey] = variances;
+    varianceMeasurements.set(identity, entry);
+    return variances;
+  } finally {
+    activeVarianceMeasurements.delete(identity);
+  }
+}
+
+function measureVariance(index: number, createMarkerInstantiation: (index: number, marker: CheckedType) => CheckedType, options: CompilerOptions): TypeParameterVariance {
+  const markerPair = varianceMarkerPair(`T${index}`);
+  const typeWithSub = createMarkerInstantiation(index, markerPair.sub);
+  const typeWithSuper = createMarkerInstantiation(index, markerPair.super);
+  const typeWithOther = createMarkerInstantiation(index, { kind: "typeParameter", name: `other-T${index}` });
+  varianceMeasurementRelationDepth += 1;
+  let covariant: boolean;
+  let contravariant: boolean;
+  let independent: boolean;
+  try {
+    covariant = isAssignableTo(typeWithSub, typeWithSuper, options);
+    contravariant = isAssignableTo(typeWithSuper, typeWithSub, options);
+    independent = covariant && contravariant && isAssignableTo(typeWithOther, typeWithSuper, options);
+  } finally {
+    varianceMeasurementRelationDepth -= 1;
+  }
+  if (independent) {
+    return "independent";
+  }
+  if (covariant && contravariant) {
+    return "bivariant";
+  }
+  if (covariant) {
+    return "covariant";
+  }
+  if (contravariant) {
+    return "contravariant";
+  }
+  return "invariant";
+}
+
+function classConstructorShellFromInstance(type: Extract<CheckedType, { readonly kind: "classInstance" }>): Extract<CheckedType, { readonly kind: "classConstructor" }> {
+  return {
+    kind: "classConstructor",
+    name: type.name,
+    typeParameters: type.typeParameters,
+    typeArguments: type.typeArguments,
+    ...(type.typeParameterConstraints === undefined ? {} : { typeParameterConstraints: type.typeParameterConstraints }),
+    ...(type.typeParameterVariances === undefined ? {} : { typeParameterVariances: type.typeParameterVariances }),
+    constructorParameters: [],
+    abstract: false,
+    members: type.members,
+    ...optionalBaseType(type.baseType),
+    ...optionalArrayBaseElementType(type.arrayBaseElementType),
+  };
 }
 
 function namespaceAndValueAssignableTo(actual: Extract<CheckedType, { readonly kind: "namespaceAndType" }>, expected: CheckedType, options: CompilerOptions): boolean | undefined {
@@ -17653,6 +18203,12 @@ function isAssignableToRelated(actual: CheckedType, expected: CheckedType, optio
   }
   if (expected.kind === "nonNullable") {
     return isAssignableTo(actual, nonNullableType(expected.target), options);
+  }
+  if (actual.kind === "typeAliasInstance" && expected.kind === "typeAliasInstance") {
+    const varianceResult = typeAliasInstancesAssignableByExplicitVariance(actual, expected, options);
+    if (varianceResult !== undefined) {
+      return varianceResult;
+    }
   }
   if (actual.kind === "typeAliasInstance") {
     return isAssignableTo(actual.target, expected, options);
@@ -17878,6 +18434,10 @@ function isAssignableToRelated(actual: CheckedType, expected: CheckedType, optio
     return objectPropertiesAssignableToInterfaceType(actual.properties, actual.callSignatures ?? [], expected, options, actual.optionalProperties);
   }
   if (actual.kind === "interface" && expected.kind === "interface") {
+    const varianceResult = interfaceTypesAssignableByExplicitVariance(actual, expected, options);
+    if (varianceResult !== undefined) {
+      return varianceResult;
+    }
     if (interfaceTypeExtendsInterface(actual, expected)) {
       return true;
     }
@@ -18025,6 +18585,7 @@ function functionSignatureAssignableTo(actual: CheckedFunctionType, expected: Ch
     assignabilityObjectId(expected),
     strictOptionValue(options, "strictNullChecks") ? "strictNull" : "looseNull",
     strictOptionValue(options, "exactOptionalPropertyTypes") ? "exactOptional" : "looseOptional",
+    strictFunctionTypesOptionValue(options) ? "strictFunction" : "bivariantFunction",
   ].join(":");
   functionSignatureRelationResults ??= new Map();
   const cached = functionSignatureRelationResults.get(relationKey);
@@ -18032,17 +18593,43 @@ function functionSignatureAssignableTo(actual: CheckedFunctionType, expected: Ch
     return cached;
   }
   activeFunctionSignatureRelations ??= new Set();
-  if (activeFunctionSignatureRelations.has(relationKey)) {
+  const activeRelationKey = functionSignatureRecursionRelationKey(actual, expected, options);
+  if (activeFunctionSignatureRelations.has(activeRelationKey)) {
     return true;
   }
-  activeFunctionSignatureRelations.add(relationKey);
+  activeFunctionSignatureRelations.add(activeRelationKey);
   try {
     const result = functionSignatureAssignableToRelated(actual, expected, options);
     functionSignatureRelationResults.set(relationKey, result);
     return result;
   } finally {
-    activeFunctionSignatureRelations.delete(relationKey);
+    activeFunctionSignatureRelations.delete(activeRelationKey);
   }
+}
+
+function functionSignatureRecursionRelationKey(actual: CheckedFunctionType, expected: CheckedFunctionType, options: CompilerOptions): string {
+  return [
+    functionSignatureRecursionKey(actual),
+    functionSignatureRecursionKey(expected),
+    strictOptionValue(options, "strictNullChecks") ? "strictNull" : "looseNull",
+    strictOptionValue(options, "exactOptionalPropertyTypes") ? "exactOptional" : "looseOptional",
+    strictFunctionTypesOptionValue(options) ? "strictFunction" : "bivariantFunction",
+  ].join(":");
+}
+
+function functionSignatureRecursionKey(signature: CheckedFunctionType): string {
+  return [
+    signature.construct === true ? "construct" : "call",
+    signature.typeParameters.length,
+    signature.parameters.length,
+    signature.restParameterIndex ?? "",
+    signature.minArgumentCount ?? "",
+    signature.declaredMinArgumentCount ?? "",
+    signature.maxArgumentCount ?? "",
+    signature.thisParameterType === undefined ? "" : assignabilityRecursionTypeKey(signature.thisParameterType),
+    signature.parameters.map(parameter => assignabilityRecursionTypeKey(parameter)).join(","),
+    assignabilityRecursionTypeKey(signature.returnType),
+  ].join("|");
 }
 
 function functionSignatureAssignableToRelated(actual: CheckedFunctionType, expected: CheckedFunctionType, options: CompilerOptions = {}): boolean {
@@ -18060,19 +18647,48 @@ function functionSignatureAssignableToRelated(actual: CheckedFunctionType, expec
     return functionSignatureAssignableToRelated({ ...actual, typeParameters: [], typeParameterConstraints: [] }, { ...normalizedExpected, typeParameters: [], typeParameterConstraints: [] }, options);
   }
   if (actual.typeParameters.length > 0 && expected.typeParameters.length === 0) {
-    return functionSignatureAssignableToRelated(instantiateGenericSignatureForExpected(actual, expected), expected, options);
+    return functionSignatureAssignableToRelated(instantiateGenericSignatureForExpected(actual, expected, options), expected, options);
   }
-  const result = actual.parameters.length <= expected.parameters.length
+  if (actual.thisParameterType !== undefined && expected.thisParameterType !== undefined && !functionParameterTypeAssignableTo(actual.thisParameterType, expected.thisParameterType, options)) {
+    return false;
+  }
+  const result = functionSourceParameterCountAssignable(actual, expected)
     && actual.parameters.every((_actualParameter, index) => {
       const expectedParameter = effectiveFunctionParameterTypeAt(expected, index);
       const actualParameter = effectiveFunctionParameterTypeAt(actual, index);
       return expectedParameter === undefined
         || actualParameter === undefined
         || isFastSameType(expectedParameter, actualParameter)
-        || isAssignableTo(expectedParameter, actualParameter, options);
+        || functionParameterTypesAssignableTo(actualParameter, expectedParameter, options);
     })
     && (expected.returnType.kind === "void" || isFastSameType(actual.returnType, expected.returnType) || isAssignableTo(actual.returnType, expected.returnType, options));
   return result;
+}
+
+function functionSourceParameterCountAssignable(actual: CheckedFunctionType, expected: CheckedFunctionType): boolean {
+  if (expected.restParameterIndex !== undefined) {
+    return true;
+  }
+  return (actual.declaredMinArgumentCount ?? actual.minArgumentCount ?? actual.parameters.length) <= expected.parameters.length;
+}
+
+function functionParameterTypesAssignableTo(actual: CheckedType, expected: CheckedType, options: CompilerOptions): boolean {
+  const actualCallback = singleCallSignatureType(nonNullishType(actual));
+  const expectedCallback = singleCallSignatureType(nonNullishType(expected));
+  if (actualCallback !== undefined && expectedCallback !== undefined && actualCallback.returnType.kind !== "typePredicate" && expectedCallback.returnType.kind !== "typePredicate") {
+    return functionSignatureAssignableTo(expectedCallback, actualCallback, { ...options, strictFunctionTypes: true });
+  }
+  return functionParameterTypeAssignableTo(actual, expected, options);
+}
+
+function singleCallSignatureType(type: CheckedType): CheckedFunctionType | undefined {
+  const signature = callableFunctionType(type);
+  return signature === undefined || signature.overloads !== undefined && signature.overloads.length > 0 ? undefined : signature;
+}
+
+function functionParameterTypeAssignableTo(actual: CheckedType, expected: CheckedType, options: CompilerOptions): boolean {
+  return isAssignableTo(expected, actual, options)
+    || !strictFunctionTypesOptionValue(options) && isAssignableTo(actual, expected, options);
 }
 
 function normalizeExpectedGenericSignature(expected: CheckedFunctionType, actual: CheckedFunctionType): CheckedFunctionType {
@@ -18113,17 +18729,27 @@ function genericSignatureConstraintsCompatible(actual: CheckedFunctionType, expe
   return true;
 }
 
-function instantiateGenericSignatureForExpected(actual: CheckedFunctionType, expected: CheckedFunctionType): CheckedFunctionType {
+function instantiateGenericSignatureForExpected(actual: CheckedFunctionType, expected: CheckedFunctionType, options: CompilerOptions): CheckedFunctionType {
   const substitutions = new Map<string, CheckedType>();
   const targetTypeParameters = new Set(actual.typeParameters);
   inferTypeParameterSubstitutions(actual.returnType, expected.returnType, substitutions, targetTypeParameters);
   for (let index = 0; index < actual.parameters.length && index < expected.parameters.length; index += 1) {
     inferTypeParameterSubstitutions(actual.parameters[index]!, expected.parameters[index]!, substitutions, targetTypeParameters);
   }
-  for (const typeParameter of actual.typeParameters) {
-    if (!substitutions.has(typeParameter)) {
-      substitutions.set(typeParameter, anyType);
+  for (let index = 0; index < actual.typeParameters.length; index += 1) {
+    const typeParameter = actual.typeParameters[index]!;
+    if (substitutions.has(typeParameter)) {
+      const candidate = substitutions.get(typeParameter)!;
+      const constraint = actual.typeParameterConstraints?.[index];
+      if (constraint !== undefined) {
+        const substitutedConstraint = substituteTypeIfNeeded(constraint, substitutions);
+        if (!typeArgumentSatisfiesConstraint(candidate, substitutedConstraint, options)) {
+          substitutions.set(typeParameter, substitutedConstraint);
+        }
+      }
+      continue;
     }
+    substitutions.set(typeParameter, actual.typeParameterConstraints?.[index] === undefined ? anyType : substituteTypeIfNeeded(actual.typeParameterConstraints[index]!, substitutions));
   }
   return {
     ...actual,
@@ -18214,9 +18840,11 @@ function classConstructorInstanceType(type: Extract<CheckedType, { readonly kind
     typeParameters: type.typeParameters,
     typeArguments: type.typeArguments.length > 0 ? type.typeArguments : type.typeParameters.map((typeParameter, index) => typeParameterType(typeParameter, type.typeParameterConstraints?.[index])),
     ...(type.typeParameterConstraints === undefined ? {} : { typeParameterConstraints: type.typeParameterConstraints }),
+    ...(type.typeParameterVariances === undefined ? {} : { typeParameterVariances: type.typeParameterVariances }),
     members: type.members,
     ...optionalBaseType(classConstructorBaseInstanceType(type.baseType)),
     ...optionalArrayBaseElementType(type.arrayBaseElementType),
+    ...(type.varianceMarker === undefined ? {} : { varianceMarker: type.varianceMarker }),
   };
 }
 
@@ -18486,11 +19114,27 @@ function tupleAssignableTo(actual: Extract<CheckedType, { readonly kind: "tuple"
   return true;
 }
 
-function typeArgumentsAssignableTo(actual: readonly CheckedType[], expected: readonly CheckedType[], options: CompilerOptions = {}): boolean {
+function typeArgumentsAssignableTo(actual: readonly CheckedType[], expected: readonly CheckedType[], options: CompilerOptions = {}, variances?: readonly (TypeParameterVariance | undefined)[]): boolean {
   if (actual.length !== expected.length) {
     return actual.length === 0 || expected.length === 0;
   }
-  return actual.every((type, index) => isAssignableTo(type, expected[index]!, options));
+  return actual.every((type, index) => typeArgumentAssignableTo(type, expected[index]!, options, variances?.[index]));
+}
+
+function typeArgumentAssignableTo(actual: CheckedType, expected: CheckedType, options: CompilerOptions, variance: TypeParameterVariance | undefined): boolean {
+  if (variance === "contravariant") {
+    return isAssignableTo(expected, actual, options);
+  }
+  if (variance === "invariant") {
+    return isAssignableTo(actual, expected, options) && isAssignableTo(expected, actual, options);
+  }
+  if (variance === "bivariant") {
+    return isAssignableTo(expected, actual, options) || isAssignableTo(actual, expected, options);
+  }
+  if (variance === "independent") {
+    return true;
+  }
+  return isAssignableTo(actual, expected, options);
 }
 
 function classMembersAssignableTo(actual: ClassMemberNames, expected: ClassMemberNames, options: CompilerOptions = {}, actualPropertyTypes: ReadonlyMap<string, CheckedType> = actual.propertyTypes, expectedPropertyTypes: ReadonlyMap<string, CheckedType> = expected.propertyTypes): boolean {
@@ -18524,8 +19168,11 @@ function classMembersAssignableTo(actual: ClassMemberNames, expected: ClassMembe
 }
 
 function classInstancesAssignableTo(actual: Extract<CheckedType, { readonly kind: "classInstance" }>, expected: Extract<CheckedType, { readonly kind: "classInstance" }>, options: CompilerOptions = {}): boolean {
-  if (actual.name === expected.name) {
-    return typeArgumentsAssignableTo(actual.typeArguments, expected.typeArguments, options);
+  if (actual.name === expected.name && actual.varianceMarker !== true && expected.varianceMarker !== true) {
+    if (activeVarianceMeasurements.has(actual.members)) {
+      return true;
+    }
+    return typeArgumentsAssignableTo(actual.typeArguments, expected.typeArguments, options, effectiveClassVariances(actual, options));
   }
   if (actual.baseType !== undefined && isAssignableTo(actual.baseType, expected, options)) {
     return true;
@@ -18534,8 +19181,11 @@ function classInstancesAssignableTo(actual: Extract<CheckedType, { readonly kind
 }
 
 function classConstructorsAssignableTo(actual: Extract<CheckedType, { readonly kind: "classConstructor" }>, expected: Extract<CheckedType, { readonly kind: "classConstructor" }>, options: CompilerOptions = {}): boolean {
-  if (actual.name === expected.name) {
-    return actual.abstract === expected.abstract && typeArgumentsAssignableTo(actual.typeArguments, expected.typeArguments, options);
+  if (actual.name === expected.name && actual.varianceMarker !== true && expected.varianceMarker !== true) {
+    if (activeVarianceMeasurements.has(actual.members)) {
+      return true;
+    }
+    return actual.abstract === expected.abstract && typeArgumentsAssignableTo(actual.typeArguments, expected.typeArguments, options, effectiveClassVariances(actual, options));
   }
   if (actual.abstract && !expected.abstract) {
     return false;
@@ -18885,9 +19535,9 @@ function displayType(type: CheckedType): string {
     if (type.overloads !== undefined && type.overloads.length > 0) {
       return `{ ${type.overloads.map(displayCallSignatureType).join(" ")} }`;
     }
-    const typeParameters = type.typeParameters.length === 0 ? "" : `<${type.typeParameters.join(", ")}>`;
+    const typeParameters = displayFunctionTypeParameters(type);
     const prefix = type.construct === true ? "new " : "";
-    return `${prefix}${typeParameters}(${type.parameters.map((parameter, index) => `${type.parameterNames?.[index] ?? `arg${index}`}: ${displayType(parameter)}`).join(", ")}) => ${displayType(type.returnType)}`;
+    return `${prefix}${typeParameters}(${displayFunctionParameters(type).join(", ")}) => ${displayType(type.returnType)}`;
   }
   if (type.kind === "functionDeclaration") {
     return displayType(type.type);
@@ -19039,14 +19689,31 @@ function displayType(type: CheckedType): string {
 }
 
 function displayCallSignatureType(type: CheckedFunctionType): string {
-  const typeParameters = type.typeParameters.length === 0 ? "" : `<${type.typeParameters.join(", ")}>`;
+  const typeParameters = displayFunctionTypeParameters(type);
   const prefix = type.construct === true ? "new " : "";
-  return `${prefix}${typeParameters}(${type.parameters.map((parameter, index) => `${type.parameterNames?.[index] ?? `arg${index}`}: ${displayType(parameter)}`).join(", ")}): ${displayType(type.returnType)};`;
+  return `${prefix}${typeParameters}(${displayFunctionParameters(type).join(", ")}): ${displayType(type.returnType)};`;
 }
 
 function displayMethodSignature(name: string, optional: string, type: CheckedFunctionType): string {
-  const typeParameters = type.typeParameters.length === 0 ? "" : `<${type.typeParameters.join(", ")}>`;
-  return `${name}${optional}${typeParameters}(${type.parameters.map((parameter, index) => `${type.parameterNames?.[index] ?? `arg${index}`}: ${displayType(parameter)}`).join(", ")}): ${displayType(type.returnType)};`;
+  const typeParameters = displayFunctionTypeParameters(type);
+  return `${name}${optional}${typeParameters}(${displayFunctionParameters(type).join(", ")}): ${displayType(type.returnType)};`;
+}
+
+function displayFunctionParameters(type: CheckedFunctionType): readonly string[] {
+  return [
+    ...(type.thisParameterType === undefined ? [] : [`this: ${displayType(type.thisParameterType)}`]),
+    ...type.parameters.map((parameter, index) => `${type.parameterNames?.[index] ?? `arg${index}`}: ${displayType(parameter)}`),
+  ];
+}
+
+function displayFunctionTypeParameters(type: CheckedFunctionType): string {
+  if (type.typeParameters.length === 0) {
+    return "";
+  }
+  return `<${type.typeParameters.map((typeParameter, index) => {
+    const constraint = type.typeParameterConstraints?.[index];
+    return constraint === undefined ? typeParameter : `${typeParameter} extends ${displayType(constraint)}`;
+  }).join(", ")}>`;
 }
 
 function displayPropertyName(name: string): string {

@@ -38,6 +38,7 @@ interface CaseCompilerOptions extends CompilerOptions {
   readonly noImplicitReturns?: boolean;
   readonly noUnusedLocals?: boolean;
   readonly noUnusedParameters?: boolean;
+  readonly strictFunctionTypes?: boolean;
   readonly strictNullChecks?: boolean;
   readonly strictPropertyInitialization?: boolean;
   readonly exactOptionalPropertyTypes?: boolean;
@@ -302,6 +303,8 @@ function parseBaselineCompilerOptions(baselineFileName: string): CaseCompilerOpt
       options = { ...options, noUnusedLocals: parseBoolean(value) };
     } else if (key === "nounusedparameters" && value !== undefined) {
       options = { ...options, noUnusedParameters: parseBoolean(value) };
+    } else if (key === "strictfunctiontypes" && value !== undefined) {
+      options = { ...options, strictFunctionTypes: parseBoolean(value) };
     } else if (key === "strictnullchecks" && value !== undefined) {
       options = { ...options, strictNullChecks: parseBoolean(value) };
     } else if (key === "strictpropertyinitialization" && value !== undefined) {
@@ -449,6 +452,9 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
         break;
       case "nounusedparameters":
         options = { ...options, noUnusedParameters: parseBoolean(value) };
+        break;
+      case "strictfunctiontypes":
+        options = { ...options, strictFunctionTypes: parseBoolean(value) };
         break;
       case "strictnullchecks":
         options = { ...options, strictNullChecks: parseBoolean(value) };
