@@ -3645,4 +3645,27 @@ describe("checker groundwork", () => {
     ]);
     assert.equal(suppressed.diagnostics.length, 0);
   });
+
+  it("rejects class type parameters throughout static member type scopes", () => {
+    const sourceFile = parseSourceFile([
+      "class Box<T> {",
+      "  static value: T;",
+      "  static method(argument: T): T { return argument; }",
+      "  static field = (argument: T) => argument;",
+      "  static expression = function (argument: T) { return argument; };",
+      "  static shadow<T>(argument: T): T { return argument; }",
+      "  static functionType: <T>(argument: T) => T;",
+      "}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2302, 2302, 2302, 2302, 2302]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Static members cannot reference class type parameters.",
+      "Static members cannot reference class type parameters.",
+      "Static members cannot reference class type parameters.",
+      "Static members cannot reference class type parameters.",
+      "Static members cannot reference class type parameters.",
+    ]);
+  });
 });

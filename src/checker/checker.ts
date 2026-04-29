@@ -235,6 +235,7 @@ type CheckedType = { readonly contextualDiagnostics?: boolean } & (
   | { readonly kind: "typeAliasInstance"; readonly name: string; readonly typeArguments: readonly CheckedType[]; readonly target: CheckedType; readonly requiresExplicitDeclarationAnnotation: boolean; readonly typeParameterVariances?: readonly (TypeParameterVariance | undefined)[]; readonly declaration?: TypeAliasDeclaration; readonly source?: Extract<CheckedType, { readonly kind: "typeAlias" }>; readonly varianceMarker?: true }
   | { readonly kind: "typeOnly"; readonly name: string; readonly type: CheckedType }
   | { readonly kind: "typeParameter"; readonly name: string; readonly constraint?: CheckedType }
+  | { readonly kind: "errorTypeParameter"; readonly name: string }
   | { readonly kind: "temporalDeadZone"; readonly name: string; readonly declarationKind: "blockScopedVariable" | "class"; readonly type: CheckedType; readonly useBeforeAssigned: boolean }
   | { readonly kind: "set"; readonly elementType: CheckedType }
   | { readonly kind: "booleanLiteral"; readonly value: boolean }
@@ -336,6 +337,7 @@ const wideningLiteralEnvironmentBindings = new WeakMap<TypeEnvironment, Readonly
 const environmentPropertyFlowTypes = new WeakMap<TypeEnvironment, Map<string, CheckedType>>();
 const environmentUnusedDeclarations = new WeakMap<TypeEnvironment, Map<string, UnusedDeclarationEntry>>();
 const classOrInterfaceTypeParameterDeclarations = new WeakMap<TypeEnvironment, Map<string, ClassOrInterfaceTypeParameterEntry[]>>();
+const forbiddenClassTypeParameterBindings = new WeakMap<TypeEnvironment, ReadonlyMap<string, CheckedType>>();
 const activeTypeParameterConstraintDeclarations = new WeakMap<object, ReadonlySet<string>>();
 const propertyFlowPathSeparator = "\0";
 interface InterfaceTypeCacheEntry<T> {
@@ -358,6 +360,7 @@ function cloneTypeEnvironment(environment: TypeEnvironment): TypeEnvironment {
   copyWideningLiteralEnvironmentBindings(environment, cloned);
   copyEnvironmentPropertyFlowTypes(environment, cloned);
   copyEnvironmentUnusedDeclarations(environment, cloned);
+  copyForbiddenClassTypeParameterBindings(environment, cloned);
   return cloned;
 }
 
@@ -368,6 +371,7 @@ function cloneTypeEnvironmentForSpeculation(environment: TypeEnvironment): TypeE
   copyDeclaredEnvironmentBindingTypes(environment, cloned);
   copyWideningLiteralEnvironmentBindings(environment, cloned);
   copyEnvironmentPropertyFlowTypes(environment, cloned);
+  copyForbiddenClassTypeParameterBindings(environment, cloned);
   return cloned;
 }
 
@@ -415,6 +419,13 @@ function copyEnvironmentUnusedDeclarations(source: TypeEnvironment, target: Type
   const unusedDeclarations = environmentUnusedDeclarations.get(source);
   if (unusedDeclarations !== undefined) {
     environmentUnusedDeclarations.set(target, new Map(unusedDeclarations));
+  }
+}
+
+function copyForbiddenClassTypeParameterBindings(source: TypeEnvironment, target: TypeEnvironment): void {
+  const forbidden = forbiddenClassTypeParameterBindings.get(source);
+  if (forbidden !== undefined) {
+    forbiddenClassTypeParameterBindings.set(target, new Map(forbidden));
   }
 }
 
@@ -5020,7 +5031,7 @@ function valueMeaning(type: CheckedType, seen: Set<CheckedType> = new Set()): Ch
     if (type.kind === "functionDeclaration") {
       return type.type;
     }
-    if (type.kind === "interface" || type.kind === "typeAlias" || type.kind === "intrinsicTypeAlias" || type.kind === "typeOnly" || type.kind === "typeParameter") {
+    if (type.kind === "interface" || type.kind === "typeAlias" || type.kind === "intrinsicTypeAlias" || type.kind === "typeOnly" || type.kind === "typeParameter" || type.kind === "errorTypeParameter") {
       return undefined;
     }
     return type;
@@ -5045,7 +5056,7 @@ function typeMeaning(type: CheckedType): CheckedType | undefined {
   if (type.kind === "typeOnly") {
     return type.type;
   }
-  if (type.kind === "interface" || type.kind === "typeAlias" || type.kind === "intrinsicTypeAlias" || type.kind === "typeParameter" || type.kind === "classConstructor") {
+  if (type.kind === "interface" || type.kind === "typeAlias" || type.kind === "intrinsicTypeAlias" || type.kind === "typeParameter" || type.kind === "errorTypeParameter" || type.kind === "classConstructor") {
     return type;
   }
   return undefined;
@@ -5604,10 +5615,37 @@ function checkClassLike(classDeclaration: ClassLikeDeclaration, state: CheckStat
     ...(classUnusedMembers === undefined ? {} : { classUnusedMembers }),
   };
   for (const member of classDeclaration.members) {
-    checkClassElement(member, enterUnusedDeclaration(classBodyState, unusedClassMemberEntry(member, classUnusedMembers)), classEnvironment, ambient, classIsAbstract, classMembers, inheritedMembers, accessorContextTypes, constructorAssignedProperties, classDeclaration.members);
+    checkClassElement(member, enterUnusedDeclaration(classBodyState, unusedClassMemberEntry(member, classUnusedMembers)), classEnvironment, classType.typeParameters, ambient, classIsAbstract, classMembers, inheritedMembers, accessorContextTypes, constructorAssignedProperties, classDeclaration.members);
   }
   checkGenericDeclarationVarianceAnnotations(classDeclaration.typeParameters, classType, state);
   return classType;
+}
+
+function classElementScopeEnvironment(member: ClassElement, environment: TypeEnvironment, classTypeParameters: readonly string[]): TypeEnvironment {
+  return classElementHasStaticScope(member) ? staticClassMemberEnvironment(environment, classTypeParameters) : environment;
+}
+
+function classElementHasStaticScope(member: ClassElement): boolean {
+  return isClassStaticBlockDeclaration(member) || hasModifier(member, Kind.StaticKeyword);
+}
+
+function staticClassMemberEnvironment(environment: TypeEnvironment, classTypeParameters: readonly string[]): TypeEnvironment {
+  if (classTypeParameters.length === 0) {
+    return environment;
+  }
+  const forbidden = new Map<string, CheckedType>();
+  for (const typeParameter of classTypeParameters) {
+    const binding = environment.get(typeParameter);
+    if (binding !== undefined) {
+      forbidden.set(typeParameter, binding);
+    }
+  }
+  if (forbidden.size === 0) {
+    return environment;
+  }
+  const staticEnvironment = cloneTypeEnvironment(environment);
+  forbiddenClassTypeParameterBindings.set(staticEnvironment, forbidden);
+  return staticEnvironment;
 }
 
 function classConstructorTypeFromDeclaration(classDeclaration: ClassLikeDeclaration, inheritedMembers: ClassMemberNames | undefined, environment: TypeEnvironment, state: CheckState): Extract<CheckedType, { readonly kind: "classConstructor" }> {
@@ -7504,7 +7542,8 @@ function computedPropertyNameTypeIsValid(type: CheckedType): boolean {
     || type.kind === "unresolved";
 }
 
-function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment, ambient: boolean, classIsAbstract: boolean, classMembers: ClassMemberNames, inheritedMembers: ClassMemberNames | undefined, accessorContextTypes: ReadonlyMap<string, AccessorContextTypes>, constructorAssignedProperties: ReadonlySet<string>, allMembers: readonly ClassElement[]): void {
+function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment, classTypeParameters: readonly string[], ambient: boolean, classIsAbstract: boolean, classMembers: ClassMemberNames, inheritedMembers: ClassMemberNames | undefined, accessorContextTypes: ReadonlyMap<string, AccessorContextTypes>, constructorAssignedProperties: ReadonlySet<string>, allMembers: readonly ClassElement[]): void {
+  const memberScopeEnvironment = classElementScopeEnvironment(member, environment, classTypeParameters);
   const decoratorEnvironment = classMemberDecoratorEnvironment(environment, classMembers.className);
   const decoratorGrammarInvalid = checkDecoratorGrammar(member, state);
   if (!decoratorGrammarInvalid) {
@@ -7515,21 +7554,21 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
   }
   checkJavaScriptDeclareModifier(member, state);
   checkInvalidBigIntPropertyName(member, state);
-    checkComputedPropertyNameType(member, state, classElementComputedNameEnvironment(member, environment, ambient));
+  checkComputedPropertyNameType(member, state, classElementComputedNameEnvironment(member, memberScopeEnvironment, ambient));
   if (hasModifier(member, Kind.ConstKeyword)) {
     state.diagnostics.push(createDiagnostic(1248, "const"));
   }
   if (isGetAccessorDeclaration(member) || isSetAccessorDeclaration(member)) {
     checkAbstractMemberModifiers(member, state, classIsAbstract, propertyNameText(member.name), true);
     checkInheritedPropertyOverride(member, state, environment, classMembers, inheritedMembers);
-    checkAccessorDeclaration(member, state, environment, ambient, accessorContextType(member, accessorContextTypes));
+    checkAccessorDeclaration(member, state, memberScopeEnvironment, ambient, accessorContextType(member, accessorContextTypes));
     return;
   }
   if (isConstructorDeclaration(member) || isMethodDeclaration(member)) {
     if (isMethodDeclaration(member)) {
       checkAbstractMemberModifiers(member, state, classIsAbstract, propertyNameText(member.name), false);
     }
-    const memberEnvironment = createFunctionEnvironment(environment);
+    const memberEnvironment = createFunctionEnvironment(memberScopeEnvironment);
     seedArgumentsObject(memberEnvironment);
     if (classMembers.className !== undefined && !hasModifier(member, Kind.StaticKeyword)) {
       memberEnvironment.set("this", thisClassType(classMembers, isConstructorDeclaration(member) ? "constructor" : "method"));
@@ -7542,6 +7581,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     const memberAwaitContext = isMethodDeclaration(member) && hasModifier(member, Kind.AsyncKeyword);
     checkDecoratedParameters(member.parameters, state, decoratorEnvironment);
     checkSignatureParameters(member.parameters, state, memberEnvironment, isMethodDeclaration(member) || member.body === undefined, ambient, [], memberAwaitContext);
+    const declaredReturnType = member.type === undefined ? undefined : typeFromTypeNode(member.type, memberEnvironment, state);
     if (member.body !== undefined) {
       for (const parameter of member.parameters) {
         registerUnusedParameter(parameter, state, memberEnvironment, ambient);
@@ -7554,7 +7594,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
       if (member.type !== undefined) {
         checkJavaScriptTypeAnnotation(state);
       }
-      const returnType = member.type === undefined ? undefined : typeFromTypeNode(member.type, memberEnvironment, state);
+      const returnType = declaredReturnType;
       const yieldType = isMethodDeclaration(member) && member.asteriskToken !== undefined ? generatorYieldType(returnType) : undefined;
       const expectedBodyReturnType = asyncFunctionBodyExpectedReturnType(returnType, memberAwaitContext);
       checkBlock(member.body, enterFunctionBodyWithAwaitContext(state, member.body, yieldType, memberAwaitContext), memberEnvironment, isMethodDeclaration(member) && member.asteriskToken !== undefined ? undefined : expectedBodyReturnType);
@@ -7570,11 +7610,11 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     return;
   }
   if (isClassStaticBlockDeclaration(member)) {
-    checkBlock(member.body, enterClassInitializerOrStaticBlock(state, true), cloneTypeEnvironment(environment), undefined);
+    checkBlock(member.body, enterClassInitializerOrStaticBlock(state, true), cloneTypeEnvironment(memberScopeEnvironment), undefined);
     return;
   }
   if (isIndexSignatureDeclaration(member)) {
-    checkIndexSignatureDeclaration(member, state, environment);
+    checkIndexSignatureDeclaration(member, state, memberScopeEnvironment);
     return;
   }
   if (isPropertyDeclaration(member) && member.initializer !== undefined) {
@@ -7587,11 +7627,11 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     checkInheritedPropertyOverride(member, state, environment, classMembers, inheritedMembers);
     if (member.type !== undefined) {
       checkJavaScriptTypeAnnotation(state);
-      typeFromTypeNode(member.type, environment, state);
+      typeFromTypeNode(member.type, memberScopeEnvironment, state);
     }
     const initializerEnvironment = hasModifier(member, Kind.StaticKeyword)
-      ? cloneTypeEnvironment(environment)
-      : createFunctionEnvironment(environment);
+      ? cloneTypeEnvironment(memberScopeEnvironment)
+      : createFunctionEnvironment(memberScopeEnvironment);
     const staticInitializerProperties = hasModifier(member, Kind.StaticKeyword)
       ? futureClassFieldUninitializedProperties(member, classMembers, inheritedMembers, allMembers, true)
       : new Set<string>();
@@ -7624,7 +7664,7 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
     checkInheritedPropertyOverride(member, state, environment, classMembers, inheritedMembers);
     if (member.type !== undefined) {
       checkJavaScriptTypeAnnotation(state);
-      typeFromTypeNode(member.type, environment, state);
+      typeFromTypeNode(member.type, memberScopeEnvironment, state);
     }
   }
 }
@@ -8874,6 +8914,7 @@ function createFunctionEnvironment(environment: TypeEnvironment): TypeEnvironmen
   copyDeclaredEnvironmentBindingTypes(environment, functionEnvironment);
   copyWideningLiteralEnvironmentBindings(environment, functionEnvironment);
   copyEnvironmentUnusedDeclarations(environment, functionEnvironment);
+  copyForbiddenClassTypeParameterBindings(environment, functionEnvironment);
   return functionEnvironment;
 }
 
@@ -15745,7 +15786,7 @@ function typeArgumentSatisfiesConstraint(typeArgument: CheckedType, constraint: 
 }
 
 function typeFromResolvedEntity(type: CheckedType, diagnosticName: string | undefined, state: CheckState | undefined, typeArguments: readonly CheckedType[] = []): CheckedType {
-  if (type.kind === "typeParameter") {
+  if (type.kind === "typeParameter" || type.kind === "errorTypeParameter") {
     return type;
   }
   if (type.kind === "typeOnly") {
@@ -15832,6 +15873,10 @@ function resolveEntityName(typeName: EntityName, environment: TypeEnvironment, s
     if (bound !== undefined && meaning === "namespace" && namespaceMeaning(bound) === undefined && typeMeaning(bound) === undefined && !suppressesResolutionCascade(bound)) {
       state?.diagnostics.push(createDiagnostic(2503, typeName.text));
     }
+    if (meaning === "type" && bound !== undefined && isForbiddenClassTypeParameterBinding(typeName.text, bound, environment)) {
+      state?.diagnostics.push(createDiagnostic(2302));
+      return { kind: "errorTypeParameter", name: typeName.text };
+    }
     if (bound !== undefined) {
       markDeclarationUsed(typeName.text, state, environment);
     }
@@ -15866,6 +15911,10 @@ function resolveEntityNamespace(typeName: EntityName, environment: TypeEnvironme
     }
   }
   return undefined;
+}
+
+function isForbiddenClassTypeParameterBinding(name: string, binding: CheckedType, environment: TypeEnvironment): boolean {
+  return forbiddenClassTypeParameterBindings.get(environment)?.get(name) === binding;
 }
 
 function emptyCheckState(options: CompilerOptions = {}): CheckState {
@@ -16370,7 +16419,7 @@ function checkAssertionComparable(actual: CheckedType, target: CheckedType, stat
 }
 
 function typesSufficientlyOverlap(source: CheckedType, target: CheckedType, options: CompilerOptions = {}): boolean {
-  if (source.kind === "any" || target.kind === "any" || source.kind === "unknown" || target.kind === "unknown" || source.kind === "unresolved" || target.kind === "unresolved") {
+  if (source.kind === "any" || target.kind === "any" || source.kind === "unknown" || target.kind === "unknown" || source.kind === "unresolved" || target.kind === "unresolved" || source.kind === "errorTypeParameter" || target.kind === "errorTypeParameter") {
     return true;
   }
   if (source.kind === "typeAliasInstance") {
@@ -18191,7 +18240,7 @@ function assignabilityRecursionTypeKey(type: CheckedType): string {
   if (type.kind === "intrinsicConstructor" || type.kind === "intrinsicFunction") {
     return `${type.kind}:${type.intrinsic}`;
   }
-  if (type.kind === "intrinsicTypeAlias" || type.kind === "thisType" || type.kind === "thisClass" || type.kind === "unqualifiedStaticMember" || type.kind === "unqualifiedInstanceMember") {
+  if (type.kind === "intrinsicTypeAlias" || type.kind === "thisType" || type.kind === "thisClass" || type.kind === "unqualifiedStaticMember" || type.kind === "unqualifiedInstanceMember" || type.kind === "errorTypeParameter") {
     return `${type.kind}:${"className" in type ? type.className : ""}:${"memberName" in type ? type.memberName : ""}:${"name" in type ? type.name : ""}`;
   }
   if (type.kind === "stringLiteral" || type.kind === "numberLiteral" || type.kind === "booleanLiteral") {
@@ -18311,7 +18360,7 @@ function isAssignableTo(actual: CheckedType, expected: CheckedType, options: Com
   }
   assignabilityRelationDepth += 1;
   try {
-    if (actual.kind === "any" || expected.kind === "any" || expected.kind === "unknown" || actual.kind === "never") {
+    if (actual.kind === "any" || expected.kind === "any" || expected.kind === "unknown" || actual.kind === "never" || actual.kind === "errorTypeParameter" || expected.kind === "errorTypeParameter") {
       return true;
     }
     if (actual.kind === "typeParameter" && expected.kind === "typeParameter" && actual.name === expected.name) {
@@ -20160,7 +20209,7 @@ function displayType(type: CheckedType): string {
   if (type.kind === "tuple") {
     return displayTupleType(type);
   }
-  if (type.kind === "typeParameter") {
+  if (type.kind === "typeParameter" || type.kind === "errorTypeParameter") {
     return type.name;
   }
   if (type.kind === "typePredicate") {
