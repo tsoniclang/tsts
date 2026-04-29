@@ -7499,6 +7499,7 @@ function checkAbstractMemberModifiers(member: ClassElement, state: CheckState, c
 
 function checkTypeElements(members: readonly TypeElement[], state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
   const computedNameEnvironment = environmentWithoutTemporalDeadZoneDiagnostics(environment);
+  checkTypeElementDuplicateNames(members, state);
   for (const member of members) {
     checkInvalidBigIntPropertyName(member, state);
     checkComputedPropertyNameType(member, state, computedNameEnvironment);
@@ -7538,6 +7539,73 @@ function checkTypeElements(members: readonly TypeElement[], state: CheckState, e
       checkAccessorDeclaration(member, state, environment, ambient);
     }
   }
+}
+
+type TypeElementDuplicateKind = "property" | "method" | "get" | "set";
+
+interface TypeElementDuplicateEntry {
+  readonly name: string;
+  readonly kind: TypeElementDuplicateKind;
+}
+
+function checkTypeElementDuplicateNames(members: readonly TypeElement[], state: CheckState): void {
+  const entries = new Map<string, TypeElementDuplicateEntry[]>();
+  for (const member of members) {
+    const entry = typeElementDuplicateEntry(member);
+    if (entry === undefined) {
+      continue;
+    }
+    const existing = entries.get(entry.name);
+    if (existing === undefined) {
+      entries.set(entry.name, [entry]);
+    } else {
+      existing.push(entry);
+    }
+  }
+  for (const [name, nameEntries] of entries) {
+    const duplicateCount = typeElementDuplicateDiagnosticCount(nameEntries);
+    for (let index = 0; index < duplicateCount; index += 1) {
+      state.diagnostics.push(createDiagnostic(2300, name));
+    }
+  }
+}
+
+function typeElementDuplicateEntry(member: TypeElement): TypeElementDuplicateEntry | undefined {
+  if (isPropertySignatureDeclaration(member)) {
+    return typeElementDuplicateEntryWithKind(member.name, "property");
+  }
+  if (isMethodSignatureDeclaration(member)) {
+    return typeElementDuplicateEntryWithKind(member.name, "method");
+  }
+  if (isGetAccessorDeclaration(member)) {
+    return typeElementDuplicateEntryWithKind(member.name, "get");
+  }
+  if (isSetAccessorDeclaration(member)) {
+    return typeElementDuplicateEntryWithKind(member.name, "set");
+  }
+  return undefined;
+}
+
+function typeElementDuplicateEntryWithKind(nameNode: PropertyName, kind: TypeElementDuplicateKind): TypeElementDuplicateEntry | undefined {
+  const name = propertyNameText(nameNode);
+  return name === undefined ? undefined : { name, kind };
+}
+
+function typeElementDuplicateDiagnosticCount(entries: readonly TypeElementDuplicateEntry[]): number {
+  const propertyCount = entries.filter(entry => entry.kind === "property").length;
+  const methodCount = entries.filter(entry => entry.kind === "method").length;
+  const getCount = entries.filter(entry => entry.kind === "get").length;
+  const setCount = entries.filter(entry => entry.kind === "set").length;
+  if (methodCount > 0 && propertyCount + getCount + setCount > 0) {
+    return entries.length;
+  }
+  if (propertyCount > 1) {
+    return propertyCount;
+  }
+  if (getCount > 1 || setCount > 1) {
+    return getCount + setCount;
+  }
+  return 0;
 }
 
 function checkIndexSignatureDeclaration(member: IndexSignatureDeclaration, state: CheckState, environment: TypeEnvironment): void {

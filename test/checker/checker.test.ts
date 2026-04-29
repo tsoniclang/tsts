@@ -797,6 +797,39 @@ describe("checker groundwork", () => {
     ]);
   });
 
+  it("reports duplicate type-member names while allowing overload and accessor pairs", () => {
+    const sourceFile = parseSourceFile([
+      "type T = {",
+      "  a: string;",
+      "  a: string;",
+      "  method(value: string): void;",
+      "  method(value: number): void;",
+      "  get pair(): string;",
+      "  set pair(value: string);",
+      "  get repeated(): string;",
+      "  get repeated(): string;",
+      "  mixed: string;",
+      "  mixed(): string;",
+      "};",
+      "const computed = 'a';",
+      "type Computed = { [computed]: string; ['a']: string; a: string; };",
+      "interface I { duplicate: string; duplicate: string; }",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { target: "es2015" });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2300, 2300, 2300, 2300, 2300, 2300, 2300, 2300]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Duplicate identifier 'a'.",
+      "Duplicate identifier 'a'.",
+      "Duplicate identifier 'repeated'.",
+      "Duplicate identifier 'repeated'.",
+      "Duplicate identifier 'mixed'.",
+      "Duplicate identifier 'mixed'.",
+      "Duplicate identifier 'duplicate'.",
+      "Duplicate identifier 'duplicate'.",
+    ]);
+  });
+
   it("resolves duplicate computed object-literal keys from const and enum literals", () => {
     const sourceFile = parseSourceFile([
       "const n = 1;",
