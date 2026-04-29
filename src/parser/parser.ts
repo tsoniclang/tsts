@@ -1032,7 +1032,7 @@ export class Parser {
       this.#consumeOptional(Kind.CommaToken);
       return createCallSignatureDeclaration(typeParameters, createNodeArray(parameters), type);
     }
-    if (this.#current().kind === Kind.NewKeyword) {
+    if (this.#isConstructSignatureStart()) {
       this.#advance();
       const typeParameters = this.#parseOptionalTypeParameters();
       this.#expect(Kind.OpenParenToken);
@@ -1085,6 +1085,14 @@ export class Parser {
     this.#consumeOptional(Kind.SemicolonToken);
     this.#consumeOptional(Kind.CommaToken);
     return createPropertySignatureDeclaration(modifiers, name, postfixToken, type as never, undefined as never);
+  }
+
+  #isConstructSignatureStart(): boolean {
+    if (this.#current().kind !== Kind.NewKeyword) {
+      return false;
+    }
+    const nextKind = this.#tokens[this.#index + 1]?.kind;
+    return nextKind === Kind.OpenParenToken || nextKind === Kind.LessThanToken;
   }
 
   #isIndexSignatureStart(): boolean {

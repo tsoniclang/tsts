@@ -585,6 +585,20 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(statement.type.members[1]!.postfixToken?.kind, Kind.QuestionToken);
   });
 
+  it("parses contextual new type-literal members without stealing construct signatures", () => {
+    const sourceFile = parseSourceFile("type Shape = { new: string; new(): object; readonly newValue: number; };");
+    const statement = sourceFile.statements[0]!;
+
+    assert.equal(isTypeAliasDeclaration(statement), true);
+    if (!isTypeAliasDeclaration(statement) || !isTypeLiteralNode(statement.type)) throw new Error("Expected type literal");
+    assert.equal(isPropertySignatureDeclaration(statement.type.members[0]!), true);
+    assert.equal(isConstructSignatureDeclaration(statement.type.members[1]!), true);
+    assert.equal(isPropertySignatureDeclaration(statement.type.members[2]!), true);
+    if (!isPropertySignatureDeclaration(statement.type.members[0]!)) throw new Error("Expected new property signature");
+    assert.equal(statement.type.members[0]!.name.kind, Kind.Identifier);
+    assert.equal(statement.type.members[0]!.name.text, "new");
+  });
+
   it("parses mapped types with TS-Go modifier and type-parameter structure", () => {
     const sourceFile = parseSourceFile("type Box<T> = { readonly [P in keyof T]?: T[P]; };");
     const statement = sourceFile.statements[0]!;
