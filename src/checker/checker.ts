@@ -252,6 +252,7 @@ type CheckedType = { readonly contextualDiagnostics?: boolean } & (
 );
 
 type CheckedFunctionType = Extract<CheckedType, { readonly kind: "function" }>;
+type NamespaceLikeType = Extract<CheckedType, { readonly kind: "namespace" | "moduleNamespace" }>;
 
 export type CheckDiagnostic = Diagnostic;
 
@@ -2125,6 +2126,9 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
         }
       }
     }
+    if (exportEquals !== undefined) {
+      mergeExportEqualsNamespaceExports(exports, exportEquals);
+    }
     applyModuleAugmentations(fileName, exports);
     const info = exportEquals === undefined ? { exports } : { exports, exportEquals };
     exportCache.set(fileName, info);
@@ -2619,6 +2623,27 @@ function collectModuleExport(statement: Statement, exports: Map<string, CheckedT
 
 function mergeModuleExport(exports: Map<string, CheckedType>, name: string, type: CheckedType): void {
   exports.set(name, mergeExportBinding(exports.get(name), type));
+}
+
+function mergeExportEqualsNamespaceExports(exports: Map<string, CheckedType>, exportEquals: CheckedType): void {
+  const exportEqualsExports = exportEqualsExportMap(exportEquals);
+  if (exportEqualsExports === undefined) {
+    return;
+  }
+  for (const [name, type] of exportEqualsExports.entries()) {
+    mergeModuleExport(exports, name, type);
+  }
+}
+
+function exportEqualsExportMap(exportEquals: CheckedType): ReadonlyMap<string, CheckedType> | undefined {
+  const namespace = namespaceLikeMeaning(exportEquals);
+  if (namespace !== undefined) {
+    return namespace.exports;
+  }
+  if (exportEquals.kind === "object") {
+    return exportEquals.properties;
+  }
+  return undefined;
 }
 
 function mergeExportBinding(existing: CheckedType | undefined, next: CheckedType): CheckedType {
@@ -5281,6 +5306,17 @@ function namespaceMeaning(type: CheckedType): Extract<CheckedType, { readonly ki
     return type.namespace;
   }
   return undefined;
+}
+
+function namespaceLikeMeaning(type: CheckedType): NamespaceLikeType | undefined {
+  if (type.kind === "moduleNamespace") {
+    return type;
+  }
+  return namespaceMeaning(type);
+}
+
+function namespaceLikeDiagnosticName(type: NamespaceLikeType): string {
+  return type.kind === "namespace" ? type.name : type.diagnosticName;
 }
 
 function namespaceValueMeaning(namespace: Extract<CheckedType, { readonly kind: "namespace" }>, seen: Set<CheckedType> = new Set()): CheckedType | undefined {
@@ -16295,7 +16331,7 @@ function resolveEntityName(typeName: EntityName, environment: TypeEnvironment, s
     if (bound === undefined && meaning === "namespace") {
       state?.diagnostics.push(createDiagnostic(2503, typeName.text));
     }
-    if (bound !== undefined && meaning === "namespace" && namespaceMeaning(bound) === undefined && typeMeaning(bound) === undefined && !suppressesResolutionCascade(bound)) {
+    if (bound !== undefined && meaning === "namespace" && namespaceLikeMeaning(bound) === undefined && typeMeaning(bound) === undefined && !suppressesResolutionCascade(bound)) {
       state?.diagnostics.push(createDiagnostic(2503, typeName.text));
     }
     if (meaning === "type" && bound !== undefined && isForbiddenClassTypeParameterBinding(typeName.text, bound, environment)) {
@@ -16313,19 +16349,17 @@ function resolveEntityName(typeName: EntityName, environment: TypeEnvironment, s
   }
   const exported = namespace.exports.get(typeName.right.text);
   if (exported === undefined) {
-    state?.diagnostics.push(createDiagnostic(2694, namespace.name, typeName.right.text));
+    state?.diagnostics.push(createDiagnostic(2694, namespaceLikeDiagnosticName(namespace), typeName.right.text));
     return undefined;
   }
   return exported;
 }
 
-function resolveEntityNamespace(typeName: EntityName, environment: TypeEnvironment, state: CheckState | undefined): Extract<CheckedType, { readonly kind: "namespace" }> | undefined {
+function resolveEntityNamespace(typeName: EntityName, environment: TypeEnvironment, state: CheckState | undefined): NamespaceLikeType | undefined {
   const resolved = resolveEntityName(typeName, environment, state, "namespace");
-  if (resolved?.kind === "namespace") {
-    return resolved;
-  }
-  if (resolved?.kind === "namespaceAndType") {
-    return resolved.namespace;
+  const namespace = resolved === undefined ? undefined : namespaceLikeMeaning(resolved);
+  if (namespace !== undefined) {
+    return namespace;
   }
   const namespaceName = entityNameText(typeName);
   if (namespaceName !== undefined && resolved !== undefined && !suppressesResolutionCascade(resolved)) {

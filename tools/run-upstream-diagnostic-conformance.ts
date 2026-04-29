@@ -685,10 +685,43 @@ function readPackageJsonFromDiskIfPresent(fileName: string): string | undefined 
 }
 
 function readDiskFileIfPresent(fileName: string): string | undefined {
+  const virtualApiText = readTypeScriptHarnessVirtualApiFileIfPresent(fileName);
+  if (virtualApiText !== undefined) {
+    return virtualApiText;
+  }
   if (!existsSync(fileName)) {
     return undefined;
   }
   return decodeSourceText(readFileSync(fileName));
+}
+
+function readTypeScriptHarnessVirtualApiFileIfPresent(fileName: string): string | undefined {
+  const candidates = typeScriptHarnessVirtualApiCandidates(fileName);
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return decodeSourceText(readFileSync(candidate));
+    }
+  }
+  return undefined;
+}
+
+function typeScriptHarnessVirtualApiCandidates(fileName: string): readonly string[] {
+  const upstream = process.env.TYPESCRIPT_REPO ?? "/home/jester/repos/microsoft/TypeScript";
+  const apiBaseline = join(upstream, "tests/baselines/reference/api/typescript.d.ts");
+  const publicTypeScript = "node_modules/typescript/lib/typescript.d.ts";
+  const publicTsServerLibrary = "node_modules/typescript/lib/tsserverlibrary.d.ts";
+  switch (fileName) {
+    case "/.ts/typescript.d.ts":
+      return [apiBaseline, publicTypeScript];
+    case "/.ts/typescript.internal.d.ts":
+      return [join(upstream, "built/local/typescript.internal.d.ts"), apiBaseline, publicTypeScript];
+    case "/.ts/tsserverlibrary.d.ts":
+      return [join(upstream, "built/local/tsserverlibrary.d.ts"), publicTsServerLibrary];
+    case "/.ts/tsserverlibrary.internal.d.ts":
+      return [join(upstream, "built/local/tsserverlibrary.internal.d.ts"), publicTsServerLibrary];
+    default:
+      return [];
+  }
 }
 
 function normalizeProgramDiagnostic(diagnostic: ProgramDiagnostic): ComparableDiagnostic {

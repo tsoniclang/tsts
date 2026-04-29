@@ -760,6 +760,37 @@ describe("program groundwork", () => {
     assert.deepEqual(getProgramDiagnostics(program), []);
   });
 
+  it("exposes export-equals namespace members through namespace imports", () => {
+    const files = new Map<string, string>([
+      ["src/api.d.ts", [
+        "declare namespace api {",
+        "  export const version: string;",
+        "  export interface Node { text: string; }",
+        "  export namespace nested {",
+        "    export const value: number;",
+        "    export interface Item { ok: boolean; }",
+        "  }",
+        "}",
+        "export = api;",
+      ].join("\n")],
+      ["src/app.ts", [
+        "import * as api from './api';",
+        "const version: string = api.version;",
+        "const nestedValue: number = api.nested.value;",
+        "const node: api.Node = { text: version };",
+        "const item: api.nested.Item = { ok: true };",
+      ].join("\n")],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/app.ts"], { module: "commonjs" }, host);
+
+    assert.deepEqual(getProgramDiagnostics(program), []);
+  });
+
   it("resolves non-relative modules through baseUrl before package lookup", () => {
     const files = new Map<string, string>([
       ["/proj/component/file.ts", "import { CharCode } from \"defs/cc\"; export const value = CharCode.A;"],
