@@ -201,7 +201,7 @@ interface TupleElementType {
   readonly optional: boolean;
 }
 
-type CheckedType =
+type CheckedType = { readonly contextualDiagnostics?: boolean } & (
   | { readonly kind: PrimitiveTypeName | "unresolved" }
   | { readonly kind: "array"; readonly elementType: CheckedType; readonly evolving?: boolean }
   | { readonly kind: "readonlyArray"; readonly elementType: CheckedType }
@@ -246,7 +246,8 @@ type CheckedType =
   | { readonly kind: "unqualifiedStaticMember"; readonly className: string; readonly memberName: string }
   | { readonly kind: "unqualifiedInstanceMember"; readonly memberName: string }
   | { readonly kind: "valueOnly"; readonly name: string; readonly type: CheckedType }
-  | { readonly kind: "valueAndType"; readonly value: CheckedType; readonly type: CheckedType };
+  | { readonly kind: "valueAndType"; readonly value: CheckedType; readonly type: CheckedType }
+);
 
 type CheckedFunctionType = Extract<CheckedType, { readonly kind: "function" }>;
 
@@ -15744,7 +15745,7 @@ function checkCallArguments(argumentTypes: readonly CheckedType[], functionType:
       continue;
     }
     if (!isAssignableTo(argumentType, parameterType, state.options)) {
-      if (argumentType.kind === "object" && argumentType.contextualDiagnostics === true) {
+      if (typeHasContextualDiagnostics(argumentType)) {
         continue;
       }
       state.diagnostics.push(createDiagnostic(2345, displayType(argumentType), displayType(declaredParameterType ?? parameterType)));
@@ -15768,6 +15769,9 @@ function callArgumentsAssignable(argumentTypes: readonly CheckedType[], function
     if (parameterType.kind === "any" || argumentType.kind === "any" || parameterType.kind === "unknown" || parameterType.kind === "unresolved" || argumentType.kind === "unresolved") {
       continue;
     }
+    if (typeHasContextualDiagnostics(argumentType)) {
+      return false;
+    }
     if (!isAssignableTo(argumentType, parameterType, options)) {
       return false;
     }
@@ -15783,7 +15787,7 @@ function checkFixedCallArguments(argumentTypes: readonly CheckedType[], paramete
       continue;
     }
     if (!isAssignableTo(argumentType, parameterType, state.options)) {
-      if (argumentType.kind === "object" && argumentType.contextualDiagnostics === true) {
+      if (typeHasContextualDiagnostics(argumentType)) {
         continue;
       }
       state.diagnostics.push(createDiagnostic(2345, displayType(argumentType), displayType(parameterType)));
@@ -15797,7 +15801,7 @@ function checkAssignable(actual: CheckedType, expected: CheckedType, state: Chec
     return;
   }
   if (!isAssignableTo(actual, expected, state.options)) {
-    if (actual.kind === "object" && actual.contextualDiagnostics === true) {
+    if (typeHasContextualDiagnostics(actual)) {
       return;
     }
     state.diagnostics.push(assignabilityDiagnostic(actual, expected));
@@ -16595,10 +16599,40 @@ function inferArrayLiteral(elements: readonly Expression[], state: CheckState, e
     }
   }
   if (contextualArrayType !== undefined && !typeContainsTypeParameter(contextualArrayType)) {
-    return contextualArrayType;
+    return elementTypes.some(elementType => typeHasContextualDiagnostics(elementType))
+      ? withContextualDiagnostics(contextualArrayType)
+      : contextualArrayType;
   }
   const first = elementTypes[0]!;
   return { kind: "array", elementType: elementTypes.every(type => isSameType(type, first)) ? first : unionType(elementTypes) };
+}
+
+function typeHasContextualDiagnostics(type: CheckedType, seen: Set<CheckedType> = new Set()): boolean {
+  if (seen.has(type)) {
+    return false;
+  }
+  if (type.contextualDiagnostics === true) {
+    return true;
+  }
+  seen.add(type);
+  if (type.kind === "array" || type.kind === "readonlyArray" || type.kind === "arrayLike" || type.kind === "arrayIterator" || type.kind === "iterable" || type.kind === "set") {
+    return typeHasContextualDiagnostics(type.elementType, seen);
+  }
+  if (type.kind === "tuple") {
+    return type.elements.some(element => typeHasContextualDiagnostics(element.type, seen))
+      || (type.restElementType !== undefined && typeHasContextualDiagnostics(type.restElementType, seen));
+  }
+  if (type.kind === "union" || type.kind === "intersection") {
+    return type.types.some(member => typeHasContextualDiagnostics(member, seen));
+  }
+  if (type.kind === "nonNullable" || type.kind === "typeAliasInstance") {
+    return typeHasContextualDiagnostics(type.target, seen);
+  }
+  return false;
+}
+
+function withContextualDiagnostics(type: CheckedType): CheckedType {
+  return { ...type, contextualDiagnostics: true };
 }
 
 function inferTupleLiteral(elements: readonly Expression[], state: CheckState, environment: TypeEnvironment, contextualTuple: Extract<CheckedType, { readonly kind: "tuple" }>): CheckedType {

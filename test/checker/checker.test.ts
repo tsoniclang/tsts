@@ -239,6 +239,30 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type '<T>(bar: Bar<T>) => void' is not assignable to type 'Bar<{}>'."]);
   });
 
+  it("does not select overloads through invalid contextual array element diagnostics", () => {
+    const sourceFile = parseSourceFile([
+      "function foo(bar: { a: number }[]): string;",
+      "function foo(bar: { a: boolean }[]): number;",
+      "function foo(bar: { a: any }[]): any { return bar; }",
+      "const value: number = foo([{ a: true }]);",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { target: "es2015" });
+
+    assert.deepEqual(result.diagnostics, []);
+  });
+
+  it("suppresses duplicate outer diagnostics for contextually typed array elements", () => {
+    const sourceFile = parseSourceFile([
+      "interface Foo { bar: Bar | Bar[]; }",
+      "interface Bar { prop: string; }",
+      "let value: Foo[] = [{ bar: { prop: 100 } }];",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { target: "es2015" });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'number' is not assignable to type 'string'."]);
+  });
+
   it("accepts core array member access and method calls on typed arrays", () => {
     const sourceFile = parseSourceFile("function f(items: string[]): number { items.forEach(item => item.toLowerCase()); return items.map(item => item).length; }");
     const result = checkSourceFile(sourceFile);
