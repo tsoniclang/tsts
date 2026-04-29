@@ -981,6 +981,43 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2389, 2391, 7010, 7010]);
   });
 
+  it("reports non-ambient class/function declaration merges", () => {
+    const sourceFile = parseSourceFile([
+      "class Foo { constructor(value: string) {} }",
+      "function Foo(value: string): void;",
+      "function Foo(value: any) {}",
+      "declare class Ambient { }",
+      "function Ambient() {}",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2813, 2814, 2814]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Class declaration cannot implement overload list for 'Foo'.",
+      "Function with bodies can only merge with classes that are ambient.",
+      "Function with bodies can only merge with classes that are ambient.",
+    ]);
+  });
+
+  it("rejects parameter initializers in signature-only declarations", () => {
+    const sourceFile = parseSourceFile([
+      "function fn(value = 1): void;",
+      "class C { method(value = 1): void; method(value = 1) {} constructor(value = 1); constructor(value = 1) {} }",
+      "interface I { method(value = 1): void; }",
+      "type F = (value = 1) => void;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2391, 2371, 2371, 2371, 2371, 2371]);
+    assert.deepEqual(result.diagnostics.filter(diagnostic => diagnostic.code === 2371).map(diagnostic => diagnostic.message), [
+      "A parameter initializer is only allowed in a function or constructor implementation.",
+      "A parameter initializer is only allowed in a function or constructor implementation.",
+      "A parameter initializer is only allowed in a function or constructor implementation.",
+      "A parameter initializer is only allowed in a function or constructor implementation.",
+      "A parameter initializer is only allowed in a function or constructor implementation.",
+    ]);
+  });
+
   it("resolves calls against overload signatures instead of implementation arity", () => {
     const sourceFile = parseSourceFile([
       "function pick(value: string, mode): number;",
@@ -992,6 +1029,50 @@ describe("checker groundwork", () => {
 
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322]);
     assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Type 'number' is not assignable to type 'string'."]);
+  });
+
+  it("uses the single arity-compatible overload for failed call diagnostics", () => {
+    const sourceFile = parseSourceFile([
+      "function foo(): string;",
+      "function foo(value: string): number;",
+      "function foo(value?: string): any { return value; }",
+      "foo(5);",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile);
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2345]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["Argument of type 'number' is not assignable to parameter of type 'string'."]);
+  });
+
+  it("reports overload type argument arity from the matching overload range", () => {
+    const sourceFile = parseSourceFile([
+      "declare function Callbacks(flags?: string): void;",
+      "declare function Callbacks<T>(flags?: string): void;",
+      "declare function Callbacks<T1, T2>(flags?: string): void;",
+      "Callbacks<number, string, boolean>('s');",
+      "new Callbacks<number, string, boolean>('s');",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2558, 2558]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Expected 2 type arguments, but got 3.",
+      "Expected 2 type arguments, but got 3.",
+    ]);
+  });
+
+  it("uses construct signatures from merged constructor values", () => {
+    const sourceFile = parseSourceFile([
+      "declare namespace M {",
+      "  export class Function { constructor(...args: string[]); }",
+      "  export function Function(...args: any[]): any;",
+      "}",
+      "(new M.Function('return 5'))();",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2349]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), ["This expression is not callable."]);
   });
 
   it("reports implementation signatures that require more arguments than overloads", () => {
@@ -3879,6 +3960,59 @@ describe("checker groundwork", () => {
       "Static members cannot reference class type parameters.",
       "Static members cannot reference class type parameters.",
       "Static members cannot reference class type parameters.",
+    ]);
+  });
+
+  it("keeps variable value declarations separate from same-named type declarations", () => {
+    const sourceFile = parseSourceFile([
+      "interface Collection<T> { elems: T[]; }",
+      "interface CollectionStatic { new <T>(): Collection<T>; }",
+      "declare const Collection: CollectionStatic;",
+      "const result: Collection<\"all\"> = new Collection();",
+      "const ValueOnly = 1;",
+      "let invalid: ValueOnly;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { target: "es2015" });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2749]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "'ValueOnly' refers to a value, but is being used as a type here. Did you mean 'typeof ValueOnly'?",
+    ]);
+  });
+
+  it("checks generic standard Array construction and contextual array assignments", () => {
+    const sourceFile = parseSourceFile([
+      "const strings = new Array<string>(\"a\", \"b\");",
+      "let nested: number[][][];",
+      "nested = [[1, 2]];",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { target: "es2015" });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322, 2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type 'number' is not assignable to type 'number[]'.",
+      "Type 'number' is not assignable to type 'number[]'.",
+    ]);
+  });
+
+  it("reads unassigned value-only variables through their declared object type", () => {
+    const sourceFile = parseSourceFile([
+      "class Box<T> {",
+      "  value: T;",
+      "  constructor(value: T) { this.value = value; }",
+      "  clone(): Box<T> { return new Box<T>(this.value); }",
+      "}",
+      "let source: Box<string>;",
+      "let ok: Box<string> = source.clone();",
+      "let bad: Box<number> = source.clone();",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { target: "es2015", strict: true });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2454, 2454, 2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Variable 'source' is used before being assigned.",
+      "Variable 'source' is used before being assigned.",
+      "Type 'Box<string>' is not assignable to type 'Box<number>'.",
     ]);
   });
 });
