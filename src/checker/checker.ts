@@ -281,12 +281,24 @@ interface CheckState {
   readonly activeUnusedDeclarations: ReadonlySet<UnusedDeclarationEntry>;
   readonly reportedUncalledFunctionConditionNodes: WeakSet<Node>;
   readonly reportedTypeParameterModifierGrammar: WeakSet<TypeParameterDeclaration>;
+  readonly reportedDuplicateTypeParameterDeclarations: WeakSet<TypeParameterDeclaration>;
+  readonly reportedRequiredTypeParameterAfterOptionalDeclarations: WeakSet<TypeParameterDeclaration>;
+  readonly reportedClassOrInterfaceTypeParameterListDeclarations: WeakSet<GenericDeclarationWithTypeParameters>;
   readonly classUnusedMembers?: ReadonlyMap<string, UnusedDeclarationEntry>;
   readonly resolveExternalModule?: (moduleSpecifier: string) => CheckedType | undefined;
   readonly functionOverloadInfo?: FunctionOverloadInfo;
 }
 
 type TypeEnvironment = Map<string, CheckedType>;
+
+type GenericDeclarationWithTypeParameters = ClassDeclaration | InterfaceDeclaration;
+
+interface ClassOrInterfaceTypeParameterEntry {
+  readonly declaration: GenericDeclarationWithTypeParameters;
+  readonly typeParameters: readonly TypeParameterDeclaration[];
+  readonly constraints: readonly (CheckedType | undefined)[];
+  readonly defaults: readonly (CheckedType | undefined)[];
+}
 
 type UnusedDeclarationKind = "local" | "parameter" | "type" | "typeParameter";
 
@@ -323,6 +335,7 @@ const declaredEnvironmentBindingTypes = new WeakMap<TypeEnvironment, ReadonlyMap
 const wideningLiteralEnvironmentBindings = new WeakMap<TypeEnvironment, ReadonlySet<string>>();
 const environmentPropertyFlowTypes = new WeakMap<TypeEnvironment, Map<string, CheckedType>>();
 const environmentUnusedDeclarations = new WeakMap<TypeEnvironment, Map<string, UnusedDeclarationEntry>>();
+const classOrInterfaceTypeParameterDeclarations = new WeakMap<TypeEnvironment, Map<string, ClassOrInterfaceTypeParameterEntry[]>>();
 const activeTypeParameterConstraintDeclarations = new WeakMap<object, ReadonlySet<string>>();
 const propertyFlowPathSeparator = "\0";
 interface InterfaceTypeCacheEntry<T> {
@@ -668,7 +681,15 @@ function enterUnusedDeclaration(state: CheckState, entry: UnusedDeclarationEntry
 }
 
 function stateWithoutReportedDiagnostics(state: CheckState | undefined): CheckState | undefined {
-  return state === undefined ? undefined : { ...state, diagnostics: [], reportedUncalledFunctionConditionNodes: new WeakSet(), reportedTypeParameterModifierGrammar: new WeakSet() };
+  return state === undefined ? undefined : {
+    ...state,
+    diagnostics: [],
+    reportedUncalledFunctionConditionNodes: new WeakSet(),
+    reportedTypeParameterModifierGrammar: new WeakSet(),
+    reportedDuplicateTypeParameterDeclarations: new WeakSet(),
+    reportedRequiredTypeParameterAfterOptionalDeclarations: new WeakSet(),
+    reportedClassOrInterfaceTypeParameterListDeclarations: new WeakSet(),
+  };
 }
 
 function speculativeCheckState(state: CheckState): CheckState {
@@ -679,6 +700,9 @@ function speculativeCheckState(state: CheckState): CheckState {
     activeUnusedDeclarations: new Set(),
     reportedUncalledFunctionConditionNodes: new WeakSet(),
     reportedTypeParameterModifierGrammar: new WeakSet(),
+    reportedDuplicateTypeParameterDeclarations: new WeakSet(),
+    reportedRequiredTypeParameterAfterOptionalDeclarations: new WeakSet(),
+    reportedClassOrInterfaceTypeParameterListDeclarations: new WeakSet(),
   };
   delete (result as { classUnusedMembers?: ReadonlyMap<string, UnusedDeclarationEntry> }).classUnusedMembers;
   return result;
@@ -1702,6 +1726,9 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
         activeUnusedDeclarations: new Set(),
         reportedUncalledFunctionConditionNodes: new WeakSet(),
         reportedTypeParameterModifierGrammar: new WeakSet(),
+        reportedDuplicateTypeParameterDeclarations: new WeakSet(),
+        reportedRequiredTypeParameterAfterOptionalDeclarations: new WeakSet(),
+        reportedClassOrInterfaceTypeParameterListDeclarations: new WeakSet(),
         resolveExternalModule: moduleSpecifier => moduleResolver(sourceFile.fileName, moduleSpecifier),
       };
       const fileEnvironment = cloneTypeEnvironment(globalEnvironment);
@@ -1893,6 +1920,9 @@ function checkStateForSourceFile(sourceFile: SourceFile, options: CompilerOption
     activeUnusedDeclarations: new Set(),
     reportedUncalledFunctionConditionNodes: new WeakSet(),
     reportedTypeParameterModifierGrammar: new WeakSet(),
+    reportedDuplicateTypeParameterDeclarations: new WeakSet(),
+    reportedRequiredTypeParameterAfterOptionalDeclarations: new WeakSet(),
+    reportedClassOrInterfaceTypeParameterListDeclarations: new WeakSet(),
   };
 }
 
@@ -5591,7 +5621,9 @@ function classConstructorTypeDetailsFromDeclaration(classDeclaration: ClassLikeD
 } {
   const classEnvironment = cloneTypeEnvironment(environment);
   const className = classDeclaration.name?.text;
-  const typeParameterDeclarations = effectiveTypeParameterDeclarations(classDeclaration.typeParameters, classDeclaration);
+  const typeParameterDeclarationCandidates = effectiveTypeParameterDeclarationCandidates(classDeclaration.typeParameters, classDeclaration);
+  checkTypeParameterDeclarationList(typeParameterDeclarationCandidates, state);
+  const typeParameterDeclarations = uniqueTypeParameterDeclarations(typeParameterDeclarationCandidates);
   const typeParameters = addTypeParameterDeclarationsToEnvironment(
     typeParameterDeclarations,
     classEnvironment,
@@ -5602,6 +5634,16 @@ function classConstructorTypeDetailsFromDeclaration(classDeclaration: ClassLikeD
   const typeParameterConstraints = addTypeParameterConstraintsToEnvironment(classDeclaration.typeParameters, classEnvironment, state);
   const declaredTypeParameterDefaults = addTypeParameterDefaultsToEnvironment(classDeclaration.typeParameters, classEnvironment, state);
   const variances = typeParameterVariances(classDeclaration.typeParameters);
+  if (isClassDeclaration(classDeclaration)) {
+    registerClassOrInterfaceTypeParameterDeclaration(
+      classDeclaration,
+      typeParameterDeclarationCandidates,
+      typeParameterConstraints,
+      declaredTypeParameterDefaults,
+      environment,
+      state,
+    );
+  }
   const typeParameterDefaults = mergedClassInterfaceTypeParameterDefaults(className, typeParameters, declaredTypeParameterDefaults, environment);
   const classMembers = collectClassMemberNames(classDeclaration, inheritedMembers, classEnvironment, state.options);
   const classType: Extract<CheckedType, { readonly kind: "classConstructor" }> = {
@@ -6880,6 +6922,14 @@ function bindInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, st
     inheritedInterfaces: inheritedInterfaceTypes(interfaceDeclaration, interfaceEnvironment, interfaceState),
     inheritedClasses: inheritedClassTypes(interfaceDeclaration, interfaceEnvironment, interfaceState),
   }));
+  registerClassOrInterfaceTypeParameterDeclaration(
+    interfaceDeclaration,
+    interfaceDeclaration.typeParameters ?? [],
+    typeParameterConstraints,
+    typeParameterDefaults,
+    environment,
+    interfaceState,
+  );
   Object.assign(placeholderMembers, {
     typeParameterConstraints,
     typeParameterDefaults,
@@ -8099,6 +8149,9 @@ function addTypeParameterDeclarationsToEnvironment(typeParameters: readonly Type
   const names = typeParameters.map(typeParameter => typeParameter.name.text);
   const ownerBinding = ownerInfo === undefined ? undefined : environment.get(ownerInfo.declarationName);
   addTypeParametersToEnvironment(names, environment);
+  if (state !== undefined) {
+    checkTypeParameterDeclarationList(typeParameters, state);
+  }
   if (state !== undefined
     && (ownerInfo?.skipWhenMergedClassExists !== true || !mergedDeclarationHasClassValue(ownerBinding))
     && (ownerInfo?.skipWhenMergedInterfaceExists !== true || !mergedDeclarationHasInterfaceType(ownerBinding))) {
@@ -8114,6 +8167,89 @@ function addTypeParameterDeclarationsToEnvironment(typeParameters: readonly Type
     }
   }
   return names;
+}
+
+function checkTypeParameterDeclarationList(typeParameters: readonly TypeParameterDeclaration[], state: CheckState): void {
+  const seen = new Set<string>();
+  let seenDefault = false;
+  for (const typeParameter of typeParameters) {
+    if (seen.has(typeParameter.name.text) && !state.reportedDuplicateTypeParameterDeclarations.has(typeParameter)) {
+      state.reportedDuplicateTypeParameterDeclarations.add(typeParameter);
+      state.diagnostics.push(createDiagnostic(2300, typeParameter.name.text));
+    }
+    seen.add(typeParameter.name.text);
+    if (typeParameter.defaultType !== undefined) {
+      seenDefault = true;
+    } else if (seenDefault && !state.reportedRequiredTypeParameterAfterOptionalDeclarations.has(typeParameter)) {
+      state.reportedRequiredTypeParameterAfterOptionalDeclarations.add(typeParameter);
+      state.diagnostics.push(createDiagnostic(2706));
+    }
+  }
+}
+
+function registerClassOrInterfaceTypeParameterDeclaration(
+  declaration: GenericDeclarationWithTypeParameters,
+  typeParameters: readonly TypeParameterDeclaration[],
+  constraints: readonly (CheckedType | undefined)[],
+  defaults: readonly (CheckedType | undefined)[],
+  environment: TypeEnvironment,
+  state: CheckState,
+): void {
+  const declarationName = declaration.name?.text;
+  if (declarationName === undefined) {
+    return;
+  }
+  let declarationsByName = classOrInterfaceTypeParameterDeclarations.get(environment);
+  if (declarationsByName === undefined) {
+    declarationsByName = new Map();
+    classOrInterfaceTypeParameterDeclarations.set(environment, declarationsByName);
+  }
+  const entries = declarationsByName.get(declarationName) ?? [];
+  if (!entries.some(entry => entry.declaration === declaration)) {
+    entries.push({ declaration, typeParameters, constraints, defaults });
+    declarationsByName.set(declarationName, entries);
+  }
+  const target = entries[0];
+  if (target === undefined || entries.length <= 1 || entries.every(entry => classOrInterfaceTypeParameterListsIdentical(entry, target))) {
+    return;
+  }
+  for (const entry of entries) {
+    if (state.reportedClassOrInterfaceTypeParameterListDeclarations.has(entry.declaration)) {
+      continue;
+    }
+    state.reportedClassOrInterfaceTypeParameterListDeclarations.add(entry.declaration);
+    state.diagnostics.push(createDiagnostic(2428, entry.declaration.name?.text ?? declarationName));
+  }
+}
+
+function classOrInterfaceTypeParameterListsIdentical(source: ClassOrInterfaceTypeParameterEntry, target: ClassOrInterfaceTypeParameterEntry): boolean {
+  const targetNames = target.typeParameters.map(typeParameter => typeParameter.name.text);
+  const sourceCount = source.typeParameters.length;
+  const maximum = target.typeParameters.length;
+  const minimum = minimumTypeArgumentCount(targetNames, target.defaults);
+  if (sourceCount < minimum || sourceCount > maximum) {
+    return false;
+  }
+  for (let index = 0; index < sourceCount; index += 1) {
+    if (source.typeParameters[index]!.name.text !== targetNames[index]) {
+      return false;
+    }
+    const sourceConstraint = source.constraints[index];
+    const targetConstraint = target.constraints[index];
+    if (sourceConstraint !== undefined && targetConstraint !== undefined && !typeParameterIdentityTypeMatches(sourceConstraint, targetConstraint)) {
+      return false;
+    }
+    const sourceDefault = source.defaults[index];
+    const targetDefault = target.defaults[index];
+    if (sourceDefault !== undefined && targetDefault !== undefined && !typeParameterIdentityTypeMatches(sourceDefault, targetDefault)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function typeParameterIdentityTypeMatches(left: CheckedType, right: CheckedType): boolean {
+  return classDuplicatePropertyTypesMatch(left, right);
 }
 
 function checkTypeParameterModifierGrammar(typeParameter: TypeParameterDeclaration, state: CheckState, allowVarianceModifiers: boolean): void {
@@ -8338,12 +8474,20 @@ function effectiveTypeParameterNames(explicitTypeParameters: NodeArray<TypeParam
 }
 
 function effectiveTypeParameterDeclarations(explicitTypeParameters: NodeArray<TypeParameterDeclaration> | undefined, jsDocOwner: Node): readonly TypeParameterDeclaration[] {
-  const seen = new Set<string>();
-  const uniqueTypeParameters: TypeParameterDeclaration[] = [];
-  for (const typeParameter of [
+  return uniqueTypeParameterDeclarations(effectiveTypeParameterDeclarationCandidates(explicitTypeParameters, jsDocOwner));
+}
+
+function effectiveTypeParameterDeclarationCandidates(explicitTypeParameters: NodeArray<TypeParameterDeclaration> | undefined, jsDocOwner: Node): readonly TypeParameterDeclaration[] {
+  return [
     ...(explicitTypeParameters ?? []),
     ...jsDocTypeParameterDeclarations(jsDocOwner),
-  ]) {
+  ];
+}
+
+function uniqueTypeParameterDeclarations(typeParameters: readonly TypeParameterDeclaration[]): readonly TypeParameterDeclaration[] {
+  const seen = new Set<string>();
+  const uniqueTypeParameters: TypeParameterDeclaration[] = [];
+  for (const typeParameter of typeParameters) {
     if (seen.has(typeParameter.name.text)) {
       continue;
     }
@@ -8447,7 +8591,9 @@ function attachJSDocIfMissing(target: Node, source: Node): void {
 
 function functionDeclarationType(functionDeclaration: FunctionDeclaration, environment: TypeEnvironment, state: CheckState): CheckedFunctionType {
   const functionEnvironment = createFunctionEnvironment(environment);
-  const typeParameterDeclarations = effectiveTypeParameterDeclarations(functionDeclaration.typeParameters, functionDeclaration);
+  const typeParameterDeclarationCandidates = effectiveTypeParameterDeclarationCandidates(functionDeclaration.typeParameters, functionDeclaration);
+  checkTypeParameterDeclarationList(typeParameterDeclarationCandidates, state);
+  const typeParameterDeclarations = uniqueTypeParameterDeclarations(typeParameterDeclarationCandidates);
   const typeParameters = addTypeParameterDeclarationsToEnvironment(typeParameterDeclarations, functionEnvironment, state);
   addJSDocTypeParameterGroups(functionDeclaration, state);
   const typeParameterConstraints = addTypeParameterConstraintsToEnvironment(functionDeclaration.typeParameters, functionEnvironment, state);
@@ -8480,7 +8626,9 @@ function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, stat
     checkJavaScriptTypeAnnotation(state);
   }
   const functionEnvironment = createFunctionEnvironment(environment);
-  const typeParameterDeclarations = effectiveTypeParameterDeclarations(functionDeclaration.typeParameters, functionDeclaration);
+  const typeParameterDeclarationCandidates = effectiveTypeParameterDeclarationCandidates(functionDeclaration.typeParameters, functionDeclaration);
+  checkTypeParameterDeclarationList(typeParameterDeclarationCandidates, state);
+  const typeParameterDeclarations = uniqueTypeParameterDeclarations(typeParameterDeclarationCandidates);
   const typeParameters = addTypeParameterDeclarationsToEnvironment(typeParameterDeclarations, functionEnvironment, state);
   addJSDocTypeParameterGroups(functionDeclaration, state);
   const typeParameterConstraints = addTypeParameterConstraintsToEnvironment(functionDeclaration.typeParameters, functionEnvironment, state);
@@ -8621,7 +8769,9 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
     ? environmentWithoutImmediatePropertyInitializationDiagnostics(environment)
     : createFunctionEnvironment(environment);
   suppressImmediateThisDiagnostics(functionEnvironment);
-  const typeParameterDeclarations = effectiveTypeParameterDeclarations(functionExpression.typeParameters, functionExpression);
+  const typeParameterDeclarationCandidates = effectiveTypeParameterDeclarationCandidates(functionExpression.typeParameters, functionExpression);
+  checkTypeParameterDeclarationList(typeParameterDeclarationCandidates, state);
+  const typeParameterDeclarations = uniqueTypeParameterDeclarations(typeParameterDeclarationCandidates);
   const typeParameters = addTypeParameterDeclarationsToEnvironment(typeParameterDeclarations, functionEnvironment, state);
   addJSDocTypeParameterGroups(functionExpression, state);
   const typeParameterConstraints = addTypeParameterConstraintsToEnvironment(functionExpression.typeParameters, functionEnvironment, state);
@@ -12536,7 +12686,9 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
     ? environmentWithoutImmediatePropertyInitializationDiagnostics(environment)
     : createFunctionEnvironment(environment);
   suppressImmediateThisDiagnostics(arrowEnvironment);
-  const typeParameterDeclarations = effectiveTypeParameterDeclarations(arrowFunction.typeParameters, arrowFunction);
+  const typeParameterDeclarationCandidates = effectiveTypeParameterDeclarationCandidates(arrowFunction.typeParameters, arrowFunction);
+  checkTypeParameterDeclarationList(typeParameterDeclarationCandidates, state);
+  const typeParameterDeclarations = uniqueTypeParameterDeclarations(typeParameterDeclarationCandidates);
   const typeParameters = addTypeParameterDeclarationsToEnvironment(typeParameterDeclarations, arrowEnvironment, state);
   addJSDocTypeParameterGroups(arrowFunction, state);
   const typeParameterConstraints = addTypeParameterConstraintsToEnvironment(arrowFunction.typeParameters, arrowEnvironment, state);
@@ -15740,6 +15892,9 @@ function emptyCheckState(options: CompilerOptions = {}): CheckState {
     activeUnusedDeclarations: new Set(),
     reportedUncalledFunctionConditionNodes: new WeakSet(),
     reportedTypeParameterModifierGrammar: new WeakSet(),
+    reportedDuplicateTypeParameterDeclarations: new WeakSet(),
+    reportedRequiredTypeParameterAfterOptionalDeclarations: new WeakSet(),
+    reportedClassOrInterfaceTypeParameterListDeclarations: new WeakSet(),
   };
 }
 
@@ -19214,6 +19369,12 @@ function isFastSameType(left: CheckedType, right: CheckedType, seen: Set<string>
       return (left.members.origin ?? left.members) === (right.members.origin ?? right.members)
         && (left.typeArguments ?? []).length === (right.typeArguments ?? []).length
         && (left.typeArguments ?? []).every((typeArgument, index) => isFastSameType(typeArgument, (right.typeArguments ?? [])[index]!, seen));
+    }
+    if (left.kind === "classInstance" && right.kind === "classInstance" || left.kind === "classConstructor" && right.kind === "classConstructor") {
+      return left.name === right.name
+        && left.members === right.members
+        && left.typeArguments.length === right.typeArguments.length
+        && left.typeArguments.every((typeArgument, index) => isFastSameType(typeArgument, right.typeArguments[index]!, seen));
     }
     if (left.kind === "union" && right.kind === "union" || left.kind === "intersection" && right.kind === "intersection") {
       return false;

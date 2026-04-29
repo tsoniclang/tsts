@@ -780,6 +780,35 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics, []);
   });
 
+  it("reports duplicate generic type parameters and merged declaration list mismatches", () => {
+    const sourceFile = parseSourceFile([
+      "function f<T, T>() {}",
+      "class C<T, T> {",
+      "  method<U, U>() {}",
+      "}",
+      "interface I<T, T> {",
+      "  method<U, U>(): void;",
+      "}",
+      "const box = { fn: function <T, T>() {}, arrow: <U, U>() => undefined };",
+      "interface Merge<T> { value: T; }",
+      "interface Merge<U, V> { other: U; }",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { target: "es2015", strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2300, 2300, 2300, 2300, 2300, 2300, 2300, 2428, 2428]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Duplicate identifier 'T'.",
+      "Duplicate identifier 'T'.",
+      "Duplicate identifier 'U'.",
+      "Duplicate identifier 'T'.",
+      "Duplicate identifier 'U'.",
+      "Duplicate identifier 'T'.",
+      "Duplicate identifier 'U'.",
+      "All declarations of 'Merge' must have identical type parameters.",
+      "All declarations of 'Merge' must have identical type parameters.",
+    ]);
+  });
+
   it("reports function overload declarations without matching implementations", () => {
     const sourceFile = parseSourceFile("function foo(); function bar() { } function baz();");
     const result = checkSourceFile(sourceFile, { noImplicitAny: true });
