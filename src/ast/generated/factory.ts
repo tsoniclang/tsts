@@ -4,9 +4,14 @@
 import { Kind } from "./kind.js";
 import { forEachChild } from "./visitor.js";
 import type * as Ast from "./nodes.js";
-import type { Node, NodeArray, Path, SourceFile, Symbol } from "./types.js";
+import type { FileReference, Node, NodeArray, Path, SourceFile, Symbol } from "./types.js";
 
 type NodeData = Record<string, unknown>;
+interface SourceFileReferences {
+  readonly referencedFiles?: readonly FileReference[];
+  readonly typeReferenceDirectives?: readonly FileReference[];
+  readonly libReferenceDirectives?: readonly FileReference[];
+}
 
 export class NodeObject implements Node {
   readonly kind: Kind;
@@ -2353,7 +2358,7 @@ export function updateJSDocPropertyTag(node: Ast.JSDocPropertyTag, tagName: Ast.
   return createJSDocPropertyTag(tagName, name, isBracketed, typeExpression, isNameFirst, comment);
 }
 
-export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile): SourceFile {
+export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile, references: SourceFileReferences = {}): SourceFile {
   return createNode<SourceFile>(Kind.SourceFile, {
     fileName,
     path,
@@ -2363,9 +2368,9 @@ export function createSourceFile(fileName: string, path: Path, text: string, sta
     languageVariant: 0,
     scriptKind: 0,
     isDeclarationFile: false,
-    referencedFiles: [],
-    typeReferenceDirectives: [],
-    libReferenceDirectives: [],
+    referencedFiles: references.referencedFiles ?? [],
+    typeReferenceDirectives: references.typeReferenceDirectives ?? [],
+    libReferenceDirectives: references.libReferenceDirectives ?? [],
     imports: [],
     moduleAugmentations: [],
     ambientModuleNames: [],
@@ -2377,7 +2382,7 @@ export function updateSourceFile(node: SourceFile, statements: NodeArray<Ast.Sta
   if (node.statements === statements && node.endOfFileToken === endOfFileToken) {
     return node;
   }
-  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken);
+  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken, { referencedFiles: node.referencedFiles, typeReferenceDirectives: node.typeReferenceDirectives, libReferenceDirectives: node.libReferenceDirectives });
   return updated;
 }
 

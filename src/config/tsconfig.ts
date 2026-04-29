@@ -84,6 +84,8 @@ function parseCompilerOptions(fileName: string, value: unknown, diagnostics: TsC
     diagnostics.push({ fileName, message: "compilerOptions.outDir must be a string" });
     return {};
   }
+  const typeRoots = parseStringArrayCompilerOption(fileName, "typeRoots", value.typeRoots, diagnostics);
+  const types = parseStringArrayCompilerOption(fileName, "types", value.types, diagnostics);
   const allowSyntheticDefaultImports = parseBooleanCompilerOption(fileName, "allowSyntheticDefaultImports", value.allowSyntheticDefaultImports, diagnostics);
   const allowUnreachableCode = parseBooleanCompilerOption(fileName, "allowUnreachableCode", value.allowUnreachableCode, diagnostics);
   const alwaysStrict = parseBooleanCompilerOption(fileName, "alwaysStrict", value.alwaysStrict, diagnostics);
@@ -103,6 +105,8 @@ function parseCompilerOptions(fileName: string, value: unknown, diagnostics: TsC
   const emitDecoratorMetadata = parseBooleanCompilerOption(fileName, "emitDecoratorMetadata", value.emitDecoratorMetadata, diagnostics);
   return {
     ...(outDir === undefined ? {} : { outDir }),
+    ...(typeRoots === undefined ? {} : { typeRoots }),
+    ...(types === undefined ? {} : { types }),
     ...(allowSyntheticDefaultImports === undefined ? {} : { allowSyntheticDefaultImports }),
     ...(allowUnreachableCode === undefined ? {} : { allowUnreachableCode }),
     ...(alwaysStrict === undefined ? {} : { alwaysStrict }),
@@ -129,6 +133,17 @@ function parseBooleanCompilerOption(fileName: string, optionName: string, value:
   }
   if (typeof value !== "boolean") {
     diagnostics.push({ fileName, message: `compilerOptions.${optionName} must be a boolean` });
+    return undefined;
+  }
+  return value;
+}
+
+function parseStringArrayCompilerOption(fileName: string, optionName: string, value: unknown, diagnostics: TsConfigDiagnostic[]): readonly string[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!Array.isArray(value) || value.some(element => typeof element !== "string")) {
+    diagnostics.push({ fileName, message: `compilerOptions.${optionName} must be an array of strings` });
     return undefined;
   }
   return value;

@@ -707,9 +707,14 @@ function generateFactory(schema: AstSchema): string {
   lines.push("import { Kind } from \"./kind.js\";");
   lines.push("import { forEachChild } from \"./visitor.js\";");
   lines.push("import type * as Ast from \"./nodes.js\";");
-  lines.push("import type { Node, NodeArray, Path, SourceFile, Symbol } from \"./types.js\";");
+  lines.push("import type { FileReference, Node, NodeArray, Path, SourceFile, Symbol } from \"./types.js\";");
   lines.push("");
   lines.push("type NodeData = Record<string, unknown>;");
+  lines.push("interface SourceFileReferences {");
+  lines.push("  readonly referencedFiles?: readonly FileReference[];");
+  lines.push("  readonly typeReferenceDirectives?: readonly FileReference[];");
+  lines.push("  readonly libReferenceDirectives?: readonly FileReference[];");
+  lines.push("}");
   lines.push("");
   lines.push("export class NodeObject implements Node {");
   lines.push("  readonly kind: Kind;");
@@ -864,7 +869,7 @@ function generateFactory(schema: AstSchema): string {
     lines.push("");
   }
 
-  lines.push("export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile): SourceFile {");
+  lines.push("export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile, references: SourceFileReferences = {}): SourceFile {");
   lines.push("  return createNode<SourceFile>(Kind.SourceFile, {");
   lines.push("    fileName,");
   lines.push("    path,");
@@ -874,9 +879,9 @@ function generateFactory(schema: AstSchema): string {
   lines.push("    languageVariant: 0,");
   lines.push("    scriptKind: 0,");
   lines.push("    isDeclarationFile: false,");
-  lines.push("    referencedFiles: [],");
-  lines.push("    typeReferenceDirectives: [],");
-  lines.push("    libReferenceDirectives: [],");
+  lines.push("    referencedFiles: references.referencedFiles ?? [],");
+  lines.push("    typeReferenceDirectives: references.typeReferenceDirectives ?? [],");
+  lines.push("    libReferenceDirectives: references.libReferenceDirectives ?? [],");
   lines.push("    imports: [],");
   lines.push("    moduleAugmentations: [],");
   lines.push("    ambientModuleNames: [],");
@@ -888,7 +893,7 @@ function generateFactory(schema: AstSchema): string {
   lines.push("  if (node.statements === statements && node.endOfFileToken === endOfFileToken) {");
   lines.push("    return node;");
   lines.push("  }");
-  lines.push("  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken);");
+  lines.push("  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken, { referencedFiles: node.referencedFiles, typeReferenceDirectives: node.typeReferenceDirectives, libReferenceDirectives: node.libReferenceDirectives });");
   lines.push("  return updated;");
   lines.push("}");
   lines.push("");

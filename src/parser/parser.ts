@@ -171,6 +171,7 @@ import {
   type Expression,
   type ExpressionWithTypeArguments,
   type EntityName,
+  type FileReference,
   type ForInitializer,
   type Identifier,
   type ImportSpecifier,
@@ -227,6 +228,28 @@ export class ParseError extends Error {
     this.token = token;
   }
 }
+
+interface SourceFileReferences {
+  readonly referencedFiles: readonly FileReference[];
+  readonly typeReferenceDirectives: readonly FileReference[];
+  readonly libReferenceDirectives: readonly FileReference[];
+}
+
+interface ReferencePragma {
+  readonly pos: number;
+  readonly end: number;
+  readonly args: ReadonlyMap<string, ReferencePragmaArgument>;
+}
+
+interface ReferencePragmaArgument {
+  readonly value: string;
+  readonly pos: number;
+  readonly end: number;
+}
+
+const resolutionModeNone = 0;
+const resolutionModeCommonJS = 1;
+const resolutionModeESM = 99;
 
 interface SpeculationState {
   readonly index: number;
@@ -370,12 +393,14 @@ export class Parser {
         this.#advance();
       }
     }
+    const sourceFileReferences = this.#parseSourceFileReferences();
     const sourceFile = createSourceFile(
       this.#fileName,
       this.#fileName as never,
       this.#sourceText,
       createNodeArray(statements),
       createToken(Kind.EndOfFile),
+      sourceFileReferences,
     );
     if (!this.#topLevelAwaitContext && sourceFileHasExternalModuleSyntax(sourceFile) && this.#tokens.some(token => token.kind === Kind.AwaitKeyword)) {
       const reparsed = new Parser(this.#sourceText, { fileName: this.#fileName, topLevelAwaitContext: true }).parseSourceFileWithDiagnostics();
@@ -388,6 +413,66 @@ export class Parser {
   parseSourceFileWithDiagnostics(): ParseResult {
     const sourceFile = this.parseSourceFile();
     return { sourceFile, diagnostics: [...this.#diagnostics] };
+  }
+
+  #parseSourceFileReferences(): SourceFileReferences {
+    const referencedFiles: FileReference[] = [];
+    const typeReferenceDirectives: FileReference[] = [];
+    const libReferenceDirectives: FileReference[] = [];
+    for (const pragma of leadingCommentReferencePragmas(this.#sourceText)) {
+      const types = pragma.args.get("types");
+      const lib = pragma.args.get("lib");
+      const path = pragma.args.get("path");
+      const resolutionMode = pragma.args.get("resolution-mode");
+      const preserve = pragma.args.get("preserve");
+      const noDefaultLib = pragma.args.get("no-default-lib");
+      if (noDefaultLib !== undefined && noDefaultLib.value === "true") {
+        continue;
+      }
+      if (types !== undefined) {
+        typeReferenceDirectives.push({
+          pos: types.pos,
+          end: types.end,
+          fileName: types.value,
+          resolutionMode: resolutionMode === undefined ? resolutionModeNone : this.#parseReferenceResolutionMode(resolutionMode),
+          preserve: preserve !== undefined && preserve.value === "true",
+        });
+        continue;
+      }
+      if (lib !== undefined) {
+        libReferenceDirectives.push({
+          pos: lib.pos,
+          end: lib.end,
+          fileName: lib.value,
+          resolutionMode: resolutionModeNone,
+          preserve: preserve !== undefined && preserve.value === "true",
+        });
+        continue;
+      }
+      if (path !== undefined) {
+        referencedFiles.push({
+          pos: path.pos,
+          end: path.end,
+          fileName: path.value,
+          resolutionMode: resolutionModeNone,
+          preserve: preserve !== undefined && preserve.value === "true",
+        });
+        continue;
+      }
+      this.#addDiagnosticAt(pragma.pos, Math.max(0, pragma.end - pragma.pos), 1084);
+    }
+    return { referencedFiles, typeReferenceDirectives, libReferenceDirectives };
+  }
+
+  #parseReferenceResolutionMode(argument: ReferencePragmaArgument): number {
+    if (argument.value === "require") {
+      return resolutionModeCommonJS;
+    }
+    if (argument.value === "import") {
+      return resolutionModeESM;
+    }
+    this.#addDiagnosticAt(argument.pos, Math.max(0, argument.end - argument.pos), 1453);
+    return resolutionModeNone;
   }
 
   #parseStatement(): Statement {
@@ -2804,11 +2889,12 @@ export class Parser {
   }
 
   #parseIntersectionType(): TypeNode {
+    const hasLeadingAmpersand = this.#consumeOptional(Kind.AmpersandToken);
     const types = [this.#parsePostfixType()];
     while (this.#consumeOptional(Kind.AmpersandToken)) {
       types.push(this.#parsePostfixType());
     }
-    return types.length === 1 ? types[0]! : createIntersectionTypeNode(createNodeArray(types));
+    return !hasLeadingAmpersand && types.length === 1 ? types[0]! : createIntersectionTypeNode(createNodeArray(types));
   }
 
   #parsePostfixType(): TypeNode {
@@ -3831,6 +3917,113 @@ function collectJSDocByTokenStart(sourceText: string, fileName: string): Map<num
     }
   }
   return jsDocByTokenStart;
+}
+
+function leadingCommentReferencePragmas(sourceText: string): readonly ReferencePragma[] {
+  const pragmas: ReferencePragma[] = [];
+  for (const token of scanAll(sourceText, { skipTrivia: false })) {
+    if (token.kind === Kind.WhitespaceTrivia || token.kind === Kind.NewLineTrivia) {
+      continue;
+    }
+    if (token.kind !== Kind.SingleLineCommentTrivia && token.kind !== Kind.MultiLineCommentTrivia) {
+      break;
+    }
+    const pragma = referencePragmaFromComment(token);
+    if (pragma !== undefined) {
+      pragmas.push(pragma);
+    }
+  }
+  return pragmas;
+}
+
+function referencePragmaFromComment(token: ScannedToken): ReferencePragma | undefined {
+  if (token.kind !== Kind.SingleLineCommentTrivia) {
+    return undefined;
+  }
+  const text = token.text;
+  let position = 2;
+  const tripleSlash = text.startsWith("/", position);
+  if (tripleSlash) {
+    position += 1;
+  }
+  position = skipReferencePragmaBlanks(text, position);
+  if (!tripleSlash || !text.startsWith("<", position)) {
+    return undefined;
+  }
+  const tagName = extractReferencePragmaName(text, position + 1);
+  if (tagName !== "reference") {
+    return undefined;
+  }
+  position += 1 + tagName.length;
+  const args = new Map<string, ReferencePragmaArgument>();
+  while (true) {
+    position = skipReferencePragmaBlanks(text, position);
+    if (text.startsWith("/>", position)) {
+      break;
+    }
+    const argumentName = extractReferencePragmaName(text, position);
+    if (argumentName === "") {
+      break;
+    }
+    position = skipReferencePragmaBlanks(text, position + argumentName.length);
+    if (!text.startsWith("=", position)) {
+      break;
+    }
+    position = skipReferencePragmaBlanks(text, position + 1);
+    const quoted = extractReferencePragmaQuotedString(text, position);
+    if (quoted === undefined) {
+      break;
+    }
+    args.set(argumentName, {
+      value: quoted.value,
+      pos: token.pos + quoted.valueStart,
+      end: token.pos + quoted.valueEnd,
+    });
+    position = quoted.quoteEnd;
+  }
+  return { pos: token.pos, end: token.end, args };
+}
+
+function skipReferencePragmaBlanks(text: string, position: number): number {
+  while (position < text.length && (text[position] === " " || text[position] === "\t")) {
+    position += 1;
+  }
+  return position;
+}
+
+function extractReferencePragmaName(text: string, position: number): string {
+  const start = position;
+  while (position < text.length && isReferencePragmaNameCharacter(text[position]!)) {
+    position += 1;
+  }
+  return text.slice(start, position).toLowerCase();
+}
+
+function isReferencePragmaNameCharacter(character: string): boolean {
+  return (character >= "A" && character <= "Z")
+    || (character >= "a" && character <= "z")
+    || character === "-";
+}
+
+function extractReferencePragmaQuotedString(text: string, position: number): { readonly value: string; readonly valueStart: number; readonly valueEnd: number; readonly quoteEnd: number } | undefined {
+  const quote = text[position];
+  if (quote !== "\"" && quote !== "'") {
+    return undefined;
+  }
+  const valueStart = position + 1;
+  let valueEnd = valueStart;
+  while (valueEnd < text.length && text[valueEnd] !== quote) {
+    valueEnd += 1;
+  }
+  if (valueEnd >= text.length) {
+    return undefined;
+  }
+  return {
+    value: text.slice(valueStart, valueEnd),
+    valueStart,
+    valueEnd,
+    quoteEnd: valueEnd + 1,
+  };
 }
 
 function parseJSDocComment(commentText: string, fileName: string): Node {

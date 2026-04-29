@@ -10,6 +10,8 @@ describe("tsconfig groundwork", () => {
         // deterministic JSONC support
         "compilerOptions": {
           "outDir": "dist",
+          "typeRoots": ["types", "vendor/types"],
+          "types": ["node", "react"],
           "strict": true,
           "noImplicitAny": false,
           "strictNullChecks": true,
@@ -30,6 +32,8 @@ describe("tsconfig groundwork", () => {
     assert.deepEqual(result.config?.rootNames, ["project/src/add.ts", "project/src/value.ts"]);
     assert.deepEqual(result.config?.options, {
       outDir: "dist",
+      typeRoots: ["types", "vendor/types"],
+      types: ["node", "react"],
       strict: true,
       noImplicitAny: false,
       strictNullChecks: true,
@@ -96,11 +100,11 @@ describe("tsconfig groundwork", () => {
   });
 
   it("rejects invalid option shapes", () => {
-    const result = parseTsConfigText("tsconfig.json", "{\"compilerOptions\":{\"outDir\":false},\"files\":\"src/index.ts\",\"include\":\"src\"}");
+    const result = parseTsConfigText("tsconfig.json", "{\"compilerOptions\":{\"outDir\":\"dist\",\"typeRoots\":\"types\",\"types\":[\"node\", false]},\"files\":\"src/index.ts\",\"include\":\"src\"}");
 
     assert.deepEqual(
       result.diagnostics.map(diagnostic => diagnostic.message),
-      ["compilerOptions.outDir must be a string", "files must be an array of strings"],
+      ["compilerOptions.typeRoots must be an array of strings", "compilerOptions.types must be an array of strings", "files must be an array of strings"],
     );
   });
 });

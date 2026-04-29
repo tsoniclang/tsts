@@ -10,6 +10,8 @@ export interface CompilerOptions {
   readonly outDir?: string;
   readonly outFile?: string;
   readonly baseUrl?: string;
+  readonly typeRoots?: readonly string[];
+  readonly types?: readonly string[];
   readonly lib?: readonly string[];
   readonly target?: ScriptTargetName;
   readonly module?: ModuleKindName;
@@ -163,6 +165,22 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
     diagnostics.push(...bindResult.diagnostics.map(diagnostic => convertBindDiagnostic(rootName, diagnostic)));
     for (const moduleSpecifier of sourceFileAmbientModuleSpecifiers(sourceFile)) {
       ambientModules.add(moduleSpecifier);
+    }
+    for (const reference of sourceFile.referencedFiles) {
+      const resolvedReference = referencedFileName(reference.fileName, rootName);
+      if (!seen.has(canonicalFileName(resolvedReference, host))) {
+        pending.push(resolvedReference);
+      }
+    }
+    for (const reference of sourceFile.typeReferenceDirectives) {
+      const resolvedTypeReference = typeReferenceResolutionCandidates(reference.fileName, rootName, options, host, fileTextCache).find(candidate => readFileCached(candidate, host, fileTextCache) !== undefined);
+      if (resolvedTypeReference === undefined) {
+        diagnostics.push(programDiagnostic(rootName, 2688, reference.fileName));
+        continue;
+      }
+      if (!seen.has(canonicalFileName(resolvedTypeReference, host))) {
+        pending.push(resolvedTypeReference);
+      }
     }
     moduleAugmentations.push(...sourceFileModuleAugmentationSpecifiers(sourceFile).map(moduleSpecifier => ({ fileName: rootName, moduleSpecifier })));
     diagnostics.push(...sourceFileAmbientModuleGrammarDiagnostics(rootName, sourceFile));
@@ -694,6 +712,10 @@ function moduleResolutionBaseUrl(options: CompilerOptions, host: CompilerHost): 
   return normalize(isAbsolute(options.baseUrl) ? options.baseUrl : join(host.getCurrentDirectory?.() ?? ".", options.baseUrl));
 }
 
+function referencedFileName(fileName: string, containingFileName: string): string {
+  return normalize(isAbsolute(fileName) ? fileName : join(dirname(containingFileName), fileName));
+}
+
 function moduleResolutionCandidates(base: string, options: CompilerOptions): readonly string[] {
   const extension = extname(base);
   if (extension === ".js" || extension === ".jsx" || extension === ".mjs" || extension === ".cjs") {
@@ -734,6 +756,21 @@ function moduleResolutionCandidates(base: string, options: CompilerOptions): rea
   ];
 }
 
+function declarationResolutionCandidates(base: string): readonly string[] {
+  const extension = extname(base);
+  if (extension !== "") {
+    return [base];
+  }
+  return [
+    `${base}.d.ts`,
+    `${base}.d.mts`,
+    `${base}.d.cts`,
+    join(base, "index.d.ts"),
+    join(base, "index.d.mts"),
+    join(base, "index.d.cts"),
+  ];
+}
+
 function packageResolutionCandidates(moduleSpecifier: string, containingFileName: string, options: CompilerOptions, host: CompilerHost, cache: Map<string, string | undefined>): readonly string[] {
   const containingRealPath = normalize(host.realpath?.(containingFileName) ?? containingFileName);
   return nodeModulesSearchDirectories(dirname(containingRealPath)).flatMap(nodeModulesDirectory => {
@@ -741,6 +778,28 @@ function packageResolutionCandidates(moduleSpecifier: string, containingFileName
     return [
       ...packageJsonResolutionCandidates(base, options, host, cache),
       ...moduleResolutionCandidates(base, options),
+    ];
+  });
+}
+
+function typeReferenceResolutionCandidates(typeReferenceName: string, containingFileName: string, options: CompilerOptions, host: CompilerHost, cache: Map<string, string | undefined>): readonly string[] {
+  return [
+    ...typeRootResolutionCandidates(typeReferenceName, options, host, cache),
+    ...typePackageResolutionCandidates(typeReferenceName, containingFileName, options, host, cache),
+  ];
+}
+
+function typeRootResolutionCandidates(typeReferenceName: string, options: CompilerOptions, host: CompilerHost, cache: Map<string, string | undefined>): readonly string[] {
+  if (options.typeRoots === undefined) {
+    return [];
+  }
+  return options.typeRoots.flatMap(typeRoot => {
+    const normalizedRoot = normalize(isAbsolute(typeRoot) ? typeRoot : join(host.getCurrentDirectory?.() ?? ".", typeRoot));
+    const packageName = isNodeModulesAtTypesRoot(normalizedRoot) ? mangleScopedPackageName(typeReferenceName) : typeReferenceName;
+    const packageBase = join(normalizedRoot, packageName);
+    return [
+      ...declarationResolutionCandidates(packageBase),
+      ...packageJsonDeclarationResolutionCandidates(packageBase, host, cache),
     ];
   });
 }
@@ -755,8 +814,8 @@ function typePackageResolutionCandidates(moduleSpecifier: string, containingFile
     const packageDirectory = join(nodeModulesDirectory, "@types", typePackage.packageName);
     const subpathBase = typePackage.subpath === "" ? packageDirectory : join(packageDirectory, typePackage.subpath);
     return [
-      ...moduleResolutionCandidates(subpathBase, options),
-      ...(typePackage.subpath === "" ? packageJsonResolutionCandidates(packageDirectory, options, host, cache) : []),
+      ...declarationResolutionCandidates(subpathBase),
+      ...(typePackage.subpath === "" ? packageJsonDeclarationResolutionCandidates(packageDirectory, host, cache) : []),
     ];
   });
 }
@@ -775,6 +834,22 @@ function typePackageNameAndSubpath(moduleSpecifier: string): { readonly packageN
     return { packageName: `${scope}__${packageName}`, subpath: parts.slice(2).join("/") };
   }
   return { packageName: parts[0]!, subpath: parts.slice(1).join("/") };
+}
+
+function isNodeModulesAtTypesRoot(typeRoot: string): boolean {
+  const normalized = typeRoot.replaceAll("\\", "/");
+  return normalized === "node_modules/@types" || normalized.endsWith("/node_modules/@types");
+}
+
+function mangleScopedPackageName(packageName: string): string {
+  if (!packageName.startsWith("@")) {
+    return packageName;
+  }
+  const slashIndex = packageName.indexOf("/");
+  if (slashIndex < 0) {
+    return packageName;
+  }
+  return `${packageName.slice(1, slashIndex)}__${packageName.slice(slashIndex + 1)}`;
 }
 
 function nodeModulesSearchDirectories(startDirectory: string): readonly string[] {
@@ -813,6 +888,32 @@ function packageJsonResolutionCandidates(packageDirectory: string, options: Comp
     const fieldValue = packageMetadata[fieldName];
     if (typeof fieldValue === "string") {
       candidates.push(...moduleResolutionCandidates(packageFieldTarget(packageDirectory, fieldValue), options));
+    }
+  }
+  return candidates;
+}
+
+function packageJsonDeclarationResolutionCandidates(packageDirectory: string, host: CompilerHost, cache: Map<string, string | undefined>): readonly string[] {
+  const packageJsonText = readFileCached(join(packageDirectory, "package.json"), host, cache);
+  if (packageJsonText === undefined) {
+    return [];
+  }
+
+  let packageMetadata: unknown;
+  try {
+    packageMetadata = JSON.parse(packageJsonText);
+  } catch {
+    return [];
+  }
+  if (!isRecord(packageMetadata)) {
+    return [];
+  }
+
+  const candidates: string[] = [];
+  for (const fieldName of ["types", "typings"] as const) {
+    const fieldValue = packageMetadata[fieldName];
+    if (typeof fieldValue === "string") {
+      candidates.push(...declarationResolutionCandidates(packageFieldTarget(packageDirectory, fieldValue)));
     }
   }
   return candidates;

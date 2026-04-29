@@ -1169,6 +1169,41 @@ describe("program groundwork", () => {
     assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [1192, 2564]);
   });
 
+  it("loads triple-slash path references into the program graph", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "/// <reference path=\"./ambient.d.ts\" />\nimport { value } from \"pkg\";\nvalue;"],
+      ["src/ambient.d.ts", "declare module \"pkg\" { export const value: number; }"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/index.ts"], { module: "commonjs" }, host);
+
+    assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["src/index.ts", "src/ambient.d.ts"]);
+    assert.deepEqual(program.diagnostics, []);
+    assert.deepEqual(getProgramDiagnostics(program), []);
+  });
+
+  it("resolves triple-slash type references through configured typeRoots", () => {
+    const files = new Map<string, string>([
+      ["src/index.ts", "/// <reference types=\"lib\" />\nconst value: LibValue = { x: 1 };\nvalue.x;"],
+      ["types/lib/index.d.ts", "interface LibValue { x: number }"],
+    ]);
+    const host: CompilerHost = {
+      readFile: fileName => files.get(fileName),
+      getCurrentDirectory: () => ".",
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/index.ts"], { typeRoots: ["types"] }, host);
+
+    assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["src/index.ts", "types/lib/index.d.ts"]);
+    assert.deepEqual(program.diagnostics, []);
+    assert.deepEqual(getProgramDiagnostics(program), []);
+  });
+
   it("diagnoses relative ambient module names and nested relative ambient imports", () => {
     const files = new Map<string, string>([
       [

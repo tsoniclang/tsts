@@ -1523,4 +1523,30 @@ describe("TS-Go parser groundwork", () => {
       1353,
     ]);
   });
+
+  it("records leading triple-slash reference directives on the source file", () => {
+    const result = parseSourceFileWithDiagnostics([
+      "/// <reference path=\"./types.d.ts\" preserve=\"true\" />",
+      "/// <reference types='node' resolution-mode='require' />",
+      "/// <reference lib=\"es2020\" />",
+      "const value = 1;",
+    ].join("\n"));
+
+    assert.deepEqual(result.diagnostics, []);
+    assert.deepEqual(result.sourceFile.referencedFiles.map(reference => ({
+      fileName: reference.fileName,
+      preserve: reference.preserve,
+      resolutionMode: reference.resolutionMode,
+    })), [{ fileName: "./types.d.ts", preserve: true, resolutionMode: 0 }]);
+    assert.deepEqual(result.sourceFile.typeReferenceDirectives.map(reference => ({
+      fileName: reference.fileName,
+      preserve: reference.preserve,
+      resolutionMode: reference.resolutionMode,
+    })), [{ fileName: "node", preserve: false, resolutionMode: 1 }]);
+    assert.deepEqual(result.sourceFile.libReferenceDirectives.map(reference => ({
+      fileName: reference.fileName,
+      preserve: reference.preserve,
+      resolutionMode: reference.resolutionMode,
+    })), [{ fileName: "es2020", preserve: false, resolutionMode: 0 }]);
+  });
 });

@@ -27,6 +27,8 @@ interface CompilerCase {
 
 interface CaseCompilerOptions extends CompilerOptions {
   readonly baseUrl?: string;
+  readonly typeRoots?: readonly string[];
+  readonly types?: readonly string[];
   readonly noEmit?: boolean;
   readonly emitDeclarationOnly?: boolean;
   readonly ignoreDeprecations?: string;
@@ -435,6 +437,12 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
       case "baseurl":
         options = { ...options, baseUrl: value };
         break;
+      case "typeroots":
+        options = { ...options, typeRoots: parseList(value) };
+        break;
+      case "types":
+        options = { ...options, types: parseList(value) };
+        break;
       case "lib":
         options = { ...options, lib: parseList(value) };
         break;
@@ -707,6 +715,9 @@ function readTypeScriptHarnessVirtualApiFileIfPresent(fileName: string): string 
 
 function typeScriptHarnessVirtualApiCandidates(fileName: string): readonly string[] {
   const upstream = process.env.TYPESCRIPT_REPO ?? "/home/jester/repos/microsoft/TypeScript";
+  if (fileName.startsWith("/.lib/")) {
+    return [join(upstream, "tests/lib", fileName.slice("/.lib/".length))];
+  }
   const apiBaseline = join(upstream, "tests/baselines/reference/api/typescript.d.ts");
   const publicTypeScript = "node_modules/typescript/lib/typescript.d.ts";
   const publicTsServerLibrary = "node_modules/typescript/lib/tsserverlibrary.d.ts";
