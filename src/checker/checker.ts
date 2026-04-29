@@ -228,7 +228,7 @@ type CheckedType = { readonly contextualDiagnostics?: boolean } & (
   | { readonly kind: "namespaceAndType"; readonly namespace: Extract<CheckedType, { readonly kind: "namespace" }>; readonly type: CheckedType }
   | { readonly kind: "nonNullable"; readonly target: CheckedType }
   | { readonly kind: "object"; readonly properties: ReadonlyMap<string, CheckedType>; readonly readonlyProperties: ReadonlySet<string>; readonly optionalProperties: ReadonlySet<string>; readonly methodProperties: ReadonlySet<string>; readonly callSignatures?: readonly CheckedFunctionType[]; readonly stringIndexType?: CheckedType; readonly numberIndexType?: CheckedType; readonly symbolIndexType?: CheckedType; readonly contextualDiagnostics?: boolean }
-  | { readonly kind: "record"; readonly keyType: CheckedType; readonly valueType: CheckedType; readonly keyParameter?: string; readonly optional?: boolean; readonly sourceConstraint?: CheckedType; readonly mappedArraySource?: CheckedType }
+  | { readonly kind: "record"; readonly keyType: CheckedType; readonly valueType: CheckedType; readonly keyParameter?: string; readonly optional?: boolean; readonly removeUndefined?: boolean; readonly sourceConstraint?: CheckedType; readonly mappedArraySource?: CheckedType }
   | { readonly kind: "thisType" }
   | { readonly kind: "thisClass"; readonly className: string; readonly members: ClassMemberNames; readonly abstractProperties: ReadonlySet<string>; readonly abstractPropertyDeclaringClasses: ReadonlyMap<string, string>; readonly uninitializedProperties: ReadonlySet<string>; readonly mode: "constructor" | "fieldInitializer" | "method" }
   | { readonly kind: "typeAlias"; readonly name: string; readonly typeParameters: readonly string[]; readonly typeParameterConstraints?: readonly (CheckedType | undefined)[]; readonly typeParameterDefaults?: readonly (CheckedType | undefined)[]; readonly typeParameterVariances?: readonly (TypeParameterVariance | undefined)[]; readonly declaration?: TypeAliasDeclaration; readonly target: CheckedType; readonly preserveDisplay: boolean; readonly requiresExplicitDeclarationAnnotation: boolean }
@@ -281,6 +281,7 @@ interface CheckState {
   readonly unusedDeclarations: UnusedDeclarationTracker;
   readonly activeUnusedDeclarations: ReadonlySet<UnusedDeclarationEntry>;
   readonly reportedUncalledFunctionConditionNodes: WeakSet<Node>;
+  readonly reportedModifierGrammar: WeakSet<Node>;
   readonly reportedTypeParameterModifierGrammar: WeakSet<TypeParameterDeclaration>;
   readonly reportedDuplicateTypeParameterDeclarations: WeakSet<TypeParameterDeclaration>;
   readonly reportedRequiredTypeParameterAfterOptionalDeclarations: WeakSet<TypeParameterDeclaration>;
@@ -696,6 +697,7 @@ function stateWithoutReportedDiagnostics(state: CheckState | undefined): CheckSt
     ...state,
     diagnostics: [],
     reportedUncalledFunctionConditionNodes: new WeakSet(),
+    reportedModifierGrammar: new WeakSet(),
     reportedTypeParameterModifierGrammar: new WeakSet(),
     reportedDuplicateTypeParameterDeclarations: new WeakSet(),
     reportedRequiredTypeParameterAfterOptionalDeclarations: new WeakSet(),
@@ -710,6 +712,7 @@ function speculativeCheckState(state: CheckState): CheckState {
     unusedDeclarations: { entries: [], groups: [], nodes: new Map() },
     activeUnusedDeclarations: new Set(),
     reportedUncalledFunctionConditionNodes: new WeakSet(),
+    reportedModifierGrammar: new WeakSet(),
     reportedTypeParameterModifierGrammar: new WeakSet(),
     reportedDuplicateTypeParameterDeclarations: new WeakSet(),
     reportedRequiredTypeParameterAfterOptionalDeclarations: new WeakSet(),
@@ -870,6 +873,7 @@ const globalObjectType: CheckedType = { kind: "globalObject" };
 const emptyStringSet: ReadonlySet<string> = new Set();
 const emptyTypeSubstitutions: ReadonlyMap<string, CheckedType> = new Map();
 const partialUtilityKeyParameterName = "\0PartialKey";
+const requiredUtilityKeyParameterName = "\0RequiredKey";
 
 function suppressesResolutionCascade(type: CheckedType): boolean {
   return type.kind === "any" || type.kind === "unknown" || type.kind === "unresolved";
@@ -1736,6 +1740,7 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
         unusedDeclarations: { entries: [], groups: [], nodes: new Map() },
         activeUnusedDeclarations: new Set(),
         reportedUncalledFunctionConditionNodes: new WeakSet(),
+        reportedModifierGrammar: new WeakSet(),
         reportedTypeParameterModifierGrammar: new WeakSet(),
         reportedDuplicateTypeParameterDeclarations: new WeakSet(),
         reportedRequiredTypeParameterAfterOptionalDeclarations: new WeakSet(),
@@ -1878,7 +1883,7 @@ function shouldReportAllCheckDiagnostics(state: CheckState): boolean {
   return !state.isJavaScriptFile || state.options.checkJs === true;
 }
 
-const nonBlockingProgramDiagnosticCodes = new Set<number>([1003, 1005, 1009, 1011, 1068, 1099, 1109, 1110, 1124, 1127, 1128, 1200, 1352, 1353, 1359, 1434, 1437, 1440, 1490, 2300, 2307, 2318, 5052, 5059, 5067, 5101, 5102, 5107, 5110, 6082, 6142, 6504, 18035]);
+const nonBlockingProgramDiagnosticCodes = new Set<number>([1003, 1005, 1009, 1011, 1068, 1099, 1109, 1110, 1124, 1127, 1128, 1200, 1352, 1353, 1359, 1434, 1437, 1440, 1490, 2300, 2307, 2318, 5052, 5055, 5059, 5067, 5101, 5102, 5107, 5110, 6082, 6142, 6504, 18035]);
 const plainJavaScriptCheckDiagnosticCodes = new Set<number>([
   1100,
   1101,
@@ -1904,6 +1909,20 @@ const plainJavaScriptCheckDiagnosticCodes = new Set<number>([
   1318,
   1344,
   1355,
+  8002,
+  8003,
+  8004,
+  8005,
+  8006,
+  8008,
+  8009,
+  8010,
+  8011,
+  8012,
+  8013,
+  8016,
+  8017,
+  8037,
   18045,
 ]);
 
@@ -1930,6 +1949,7 @@ function checkStateForSourceFile(sourceFile: SourceFile, options: CompilerOption
     unusedDeclarations: { entries: [], groups: [], nodes: new Map() },
     activeUnusedDeclarations: new Set(),
     reportedUncalledFunctionConditionNodes: new WeakSet(),
+    reportedModifierGrammar: new WeakSet(),
     reportedTypeParameterModifierGrammar: new WeakSet(),
     reportedDuplicateTypeParameterDeclarations: new WeakSet(),
     reportedRequiredTypeParameterAfterOptionalDeclarations: new WeakSet(),
@@ -2662,8 +2682,10 @@ function ambientModuleExports(statements: readonly Statement[], environment: Typ
 
 function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, reportAmbientStatementDiagnostic = true, checkExpectedReturnType = expectedReturnType !== undefined): void {
   prebindStatementDeclarations(statements, state, environment, ambient);
-  checkStatementModifierGrammar(statements, state);
+  checkStatementModifierGrammar(statements, enterAmbientContext(state, ambient));
   checkHoistedAndBlockScopedDeclarationDuplicates(statements, state);
+  checkExportAssignmentNamespaceExportDuplicates(statements, state, ambient);
+  checkMergedTypeMemberModifierConsistency(statements, state);
   if (statementListIsVarScopeRoot(statements)) {
     checkHoistedDeclarationConflictsInVarScope(statements, state);
   }
@@ -2718,12 +2740,13 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
       return;
     }
     checkStrictModeDeclarationIdentifier(statement.name.text, state, ambient);
+    checkImportEqualsModuleReferenceValue(statement, state, environment);
     environment.set(statement.name.text, importEqualsDeclarationType(statement, state, environment));
     registerUnusedDeclaration(statement.name.text, statement, "local", state, environment);
     return;
   }
   if (isVariableStatement(statement)) {
-    checkJavaScriptDeclareModifier(statement, state);
+    checkJavaScriptModifierGrammar(statement, state);
     checkSingleStatementDeclaration(statement, state, singleStatementContext);
     const declarationListUnusedGroup = statement.declarationList.declarations.length > 1
       ? createUnusedDeclarationGroup("variableDeclarationList", statement.declarationList, state)
@@ -2742,17 +2765,17 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isFunctionDeclaration(statement)) {
-    checkJavaScriptDeclareModifier(statement, state);
+    checkJavaScriptModifierGrammar(statement, state);
     checkFunctionDeclaration(statement, state, environment, ambient || hasDeclareModifier(statement));
     return;
   }
   if (isClassDeclaration(statement)) {
-    checkJavaScriptDeclareModifier(statement, state);
+    checkJavaScriptModifierGrammar(statement, state);
     checkClassDeclaration(statement, state, environment, ambient || hasDeclareModifier(statement));
     return;
   }
   if (isEnumDeclaration(statement)) {
-    checkJavaScriptDeclareModifier(statement, state);
+    checkJavaScriptModifierGrammar(statement, state);
     checkEnumDeclaration(statement, state, environment, ambient || hasDeclareModifier(statement));
     return;
   }
@@ -2768,7 +2791,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   }
   if (isModuleDeclaration(statement)) {
     checkModuleElementContext(statement, state);
-    checkJavaScriptDeclareModifier(statement, state);
+    checkJavaScriptModifierGrammar(statement, state);
     checkModuleDeclaration(statement, state, environment, expectedReturnType, ambient, checkExpectedReturnType);
     return;
   }
@@ -3000,6 +3023,15 @@ function checkStrictModeGrammarInSkippedWithBody(statement: Statement, state: Ch
 
 function checkStatementModifierGrammar(statements: readonly Statement[], state: CheckState): void {
   for (const statement of statements) {
+    if (!isSourceFile(statement.parent) && !isModuleBlock(statement.parent)) {
+      if (firstIllegalStatementModifier(statement) !== undefined) {
+        state.diagnostics.push(createDiagnostic(1184));
+      }
+      continue;
+    }
+    if (checkModifierGrammar(statement, state)) {
+      continue;
+    }
     if (firstIllegalStatementModifier(statement) !== undefined) {
       state.diagnostics.push(createDiagnostic(1184));
     }
@@ -4012,12 +4044,39 @@ function importEqualsDeclarationType(statement: Extract<Statement, { readonly ki
   return anyType;
 }
 
+function checkImportEqualsModuleReferenceValue(statement: Extract<Statement, { readonly kind: Kind.ImportEqualsDeclaration }>, state: CheckState, environment: TypeEnvironment): void {
+  if (state.ambientContext || hasDeclareModifier(statement) || isExternalModuleReference(statement.moduleReference) || !isQualifiedName(statement.moduleReference)) {
+    return;
+  }
+  const root = entityNameRootIdentifier(statement.moduleReference);
+  if (root === undefined) {
+    return;
+  }
+  const bound = environment.get(root.text);
+  const valuelessNamespaceName = bound === undefined ? undefined : valuelessNamespaceMeaningName(bound);
+  if (valuelessNamespaceName !== undefined) {
+    state.diagnostics.push(createDiagnostic(2708, valuelessNamespaceName));
+  }
+}
+
+function entityNameRootIdentifier(name: EntityName): Identifier | undefined {
+  let current = name;
+  while (isQualifiedName(current)) {
+    current = current.left;
+  }
+  return isIdentifier(current) ? current : undefined;
+}
+
 function moduleNamespaceDiagnosticName(moduleSpecifier: string): string {
   const withoutRelativePrefix = moduleSpecifier.replace(/^\.?\//, "");
   return withoutRelativePrefix.replace(/\.(?:[cm]?[jt]sx?|d\.[cm]?ts)$/, "");
 }
 
 function checkExportAssignment(statement: Extract<Statement, { readonly kind: Kind.ExportAssignment }>, state: CheckState, environment: TypeEnvironment, statementListHasExportedElements: boolean, ambient: boolean): void {
+  const modifiers = nodeModifiers(statement);
+  if (statement.isExportEquals && (modifiers.length !== 1 || modifiers[0]?.kind !== Kind.ExportKeyword)) {
+    state.diagnostics.push(createDiagnostic(1120));
+  }
   if (ambient && !isEntityNameExpression(statement.expression)) {
     state.diagnostics.push(createDiagnostic(2714));
     return;
@@ -4272,6 +4331,158 @@ function checkHoistedAndBlockScopedDeclarationDuplicates(statements: readonly St
       state.diagnostics.push(createDiagnostic(code, name));
     }
   }
+}
+
+interface ExportedNameRecord {
+  readonly name: string;
+  readonly node: Node;
+}
+
+function checkExportAssignmentNamespaceExportDuplicates(statements: readonly Statement[], state: CheckState, ambient: boolean): void {
+  const exportAssignmentTarget = exportAssignmentTargetIdentifier(statements);
+  if (exportAssignmentTarget === undefined) {
+    return;
+  }
+  const directExports = exportedNameRecords(statements, ambient, undefined);
+  if (directExports.size === 0) {
+    return;
+  }
+  const reported = new Set<string>();
+  for (const statement of statements) {
+    if (!isModuleDeclaration(statement) || moduleDeclarationName(statement) !== exportAssignmentTarget || !isModuleBlock(statement.body)) {
+      continue;
+    }
+    const namespaceExports = exportedNameRecords(statement.body.statements, ambient || hasDeclareModifier(statement), statement);
+    for (const [name, namespaceRecord] of namespaceExports) {
+      const directRecord = directExports.get(name);
+      if (directRecord === undefined || reported.has(name)) {
+        continue;
+      }
+      reported.add(name);
+      state.diagnostics.push(createDiagnostic(2300, directRecord.name));
+      state.diagnostics.push(createDiagnostic(2300, namespaceRecord.name));
+    }
+  }
+}
+
+function exportAssignmentTargetIdentifier(statements: readonly Statement[]): string | undefined {
+  for (const statement of statements) {
+    if (isExportAssignment(statement) && statement.isExportEquals && isIdentifier(statement.expression)) {
+      return statement.expression.text;
+    }
+  }
+  return undefined;
+}
+
+function exportedNameRecords(statements: readonly Statement[], ambient: boolean, excludedNode: Node | undefined): ReadonlyMap<string, ExportedNameRecord> {
+  const records = new Map<string, ExportedNameRecord>();
+  for (const statement of statements) {
+    if (statement === excludedNode || isExportAssignment(statement)) {
+      continue;
+    }
+    for (const record of statementExportedNameRecords(statement, ambient)) {
+      if (record.name !== "default" && !records.has(record.name)) {
+        records.set(record.name, record);
+      }
+    }
+  }
+  return records;
+}
+
+function statementExportedNameRecords(statement: Statement, ambient: boolean): readonly ExportedNameRecord[] {
+  if (isExportDeclaration(statement) && statement.moduleSpecifier === undefined && statement.exportClause !== undefined && isNamedExports(statement.exportClause)) {
+    return statement.exportClause.elements.map(element => ({ name: moduleExportNameText(element.name), node: element }));
+  }
+  if (!ambient && !isExportedElement(statement)) {
+    return [];
+  }
+  return namespaceExportNames(statement).map(name => ({ name, node: statement }));
+}
+
+interface TypeMemberModifierRecord {
+  readonly name: string;
+  readonly container: Node;
+  readonly declaration: PropertyDeclaration | PropertySignatureDeclaration | GetAccessorDeclaration | SetAccessorDeclaration;
+  readonly identity: string;
+}
+
+function checkMergedTypeMemberModifierConsistency(statements: readonly Statement[], state: CheckState): void {
+  const declarationsByContainer = new Map<string, TypeMemberModifierRecord[]>();
+  for (const statement of statements) {
+    if (!isClassDeclaration(statement) && !isInterfaceDeclaration(statement) || statement.name === undefined) {
+      continue;
+    }
+    const records = statement.members.flatMap(member => typeMemberModifierRecords(member));
+    if (records.length === 0) {
+      continue;
+    }
+    const existing = declarationsByContainer.get(statement.name.text);
+    if (existing === undefined) {
+      declarationsByContainer.set(statement.name.text, records);
+    } else {
+      existing.push(...records);
+    }
+  }
+  for (const records of declarationsByContainer.values()) {
+    const recordsByName = new Map<string, TypeMemberModifierRecord[]>();
+    for (const record of records) {
+      const existing = recordsByName.get(record.name);
+      if (existing === undefined) {
+        recordsByName.set(record.name, [record]);
+      } else {
+        existing.push(record);
+      }
+    }
+    for (const sameNameRecords of recordsByName.values()) {
+      if (sameNameRecords.length <= 1) {
+        continue;
+      }
+      if (new Set(sameNameRecords.map(record => record.container)).size <= 1) {
+        continue;
+      }
+      const firstIdentity = sameNameRecords[0]!.identity;
+      if (sameNameRecords.every(record => record.identity === firstIdentity)) {
+        continue;
+      }
+      for (const record of sameNameRecords) {
+        state.diagnostics.push(createDiagnostic(2687, record.name));
+      }
+    }
+  }
+}
+
+function typeMemberModifierRecords(member: ClassElement | TypeElement): readonly TypeMemberModifierRecord[] {
+  if (!isPropertyDeclaration(member) && !isPropertySignatureDeclaration(member) && !isGetAccessorDeclaration(member) && !isSetAccessorDeclaration(member)) {
+    return [];
+  }
+  const name = propertyNameText(member.name);
+  if (name === undefined) {
+    return [];
+  }
+  return [{
+    name,
+    container: member.parent,
+    declaration: member,
+    identity: typeMemberModifierIdentity(member),
+  }];
+}
+
+function typeMemberModifierIdentity(member: PropertyDeclaration | PropertySignatureDeclaration | GetAccessorDeclaration | SetAccessorDeclaration): string {
+  const accessibility = hasModifier(member, Kind.PrivateKeyword)
+    ? "private"
+    : hasModifier(member, Kind.ProtectedKeyword) ? "protected" : "public";
+  return [
+    accessibility,
+    hasModifier(member, Kind.StaticKeyword) ? "static" : "instance",
+    hasModifier(member, Kind.ReadonlyKeyword) ? "readonly" : "mutable",
+    hasModifier(member, Kind.AbstractKeyword) ? "abstract" : "concrete",
+    nodeHasOptionalToken(member) ? "optional" : "required",
+  ].join("|");
+}
+
+function nodeHasOptionalToken(node: Node): boolean {
+  const optionalish = node as { readonly questionToken?: unknown; readonly postfixToken?: { readonly kind: Kind } };
+  return optionalish.questionToken !== undefined || optionalish.postfixToken?.kind === Kind.QuestionToken;
 }
 
 type BlockScopedDeclarationKind = "let" | "const";
@@ -5098,6 +5309,7 @@ function checkFunctionDeclarationOverloads(statements: readonly Statement[], sta
   if (ambient) {
     return;
   }
+  checkFunctionDeclarationOverloadModifierAgreement(statements, state);
   checkDuplicateFunctionImplementations(statements, state);
   const pendingNames: string[] = [];
   for (const statement of statements) {
@@ -5116,6 +5328,25 @@ function checkFunctionDeclarationOverloads(statements: readonly Statement[], sta
     diagnosePendingFunctionOverloads(pendingNames, state);
   }
   diagnosePendingFunctionOverloads(pendingNames, state);
+}
+
+function checkFunctionDeclarationOverloadModifierAgreement(statements: readonly Statement[], state: CheckState): void {
+  const parent = statements[0]?.parent;
+  if (parent === undefined || !isSourceFile(parent) && !isModuleBlock(parent)) {
+    return;
+  }
+  for (let index = 0; index < statements.length; index += 1) {
+    const statement = statements[index]!;
+    if (!isFunctionDeclaration(statement) || statement.name === undefined) {
+      continue;
+    }
+    const group = consecutiveFunctionDeclarations(statements, index, statement.name.text);
+    if (group.length <= 1) {
+      continue;
+    }
+    index += group.length - 1;
+    checkOverloadModifierAgreement(group.map(overloadDeclarationFacts), state);
+  }
 }
 
 function checkDuplicateFunctionImplementations(statements: readonly Statement[], state: CheckState): void {
@@ -7318,7 +7549,61 @@ type OverloadGroup =
   | { readonly kind: "constructor" }
   | { readonly kind: "method"; readonly name: string; readonly displayName: string };
 
+interface OverloadDeclarationFacts {
+  readonly exported: boolean;
+  readonly ambient: boolean;
+  readonly accessibility: "public" | "protected" | "private";
+  readonly optional: boolean;
+  readonly abstract: boolean;
+}
+
+function overloadDeclarationFacts(declaration: FunctionDeclaration | ConstructorDeclaration | MethodDeclaration | MethodSignatureDeclaration): OverloadDeclarationFacts {
+  return {
+    exported: hasModifier(declaration, Kind.ExportKeyword),
+    ambient: hasDeclareModifier(declaration),
+    accessibility: declarationAccessibility(declaration),
+    optional: nodeHasOptionalToken(declaration),
+    abstract: hasModifier(declaration, Kind.AbstractKeyword),
+  };
+}
+
+function declarationAccessibility(declaration: Node): "public" | "protected" | "private" {
+  if (hasModifier(declaration, Kind.PrivateKeyword)) {
+    return "private";
+  }
+  if (hasModifier(declaration, Kind.ProtectedKeyword)) {
+    return "protected";
+  }
+  return "public";
+}
+
+function checkOverloadModifierAgreement(declarations: readonly OverloadDeclarationFacts[], state: CheckState): void {
+  if (declarations.length <= 1) {
+    return;
+  }
+  if (!allSame(declarations.map(declaration => declaration.exported))) {
+    state.diagnostics.push(createDiagnostic(2383));
+  }
+  if (!allSame(declarations.map(declaration => declaration.ambient))) {
+    state.diagnostics.push(createDiagnostic(2384));
+  }
+  if (!allSame(declarations.map(declaration => declaration.accessibility))) {
+    state.diagnostics.push(createDiagnostic(2385));
+  }
+  if (!allSame(declarations.map(declaration => declaration.optional))) {
+    state.diagnostics.push(createDiagnostic(2386));
+  }
+  if (!allSame(declarations.map(declaration => declaration.abstract))) {
+    state.diagnostics.push(createDiagnostic(2512));
+  }
+}
+
+function allSame<T>(values: readonly T[]): boolean {
+  return values.every(value => value === values[0]);
+}
+
 function checkClassMemberOverloads(members: readonly ClassElement[], state: CheckState, environment: TypeEnvironment): void {
+  checkClassMemberOverloadModifierAgreement(members, state);
   checkDuplicateClassImplementations(members, state, environment);
   const pendingGroups: OverloadGroup[] = [];
   for (const member of members) {
@@ -7340,6 +7625,35 @@ function checkClassMemberOverloads(members: readonly ClassElement[], state: Chec
     diagnosePendingOverloadGroups(pendingGroups, state);
   }
   diagnosePendingOverloadGroups(pendingGroups, state);
+}
+
+function checkClassMemberOverloadModifierAgreement(members: readonly ClassElement[], state: CheckState): void {
+  for (let index = 0; index < members.length; index += 1) {
+    const member = members[index]!;
+    if (!isConstructorDeclaration(member) && !isMethodDeclaration(member)) {
+      continue;
+    }
+    const group = classMemberOverloadGroup(member);
+    if (group === undefined) {
+      continue;
+    }
+    const declarations: (ConstructorDeclaration | MethodDeclaration)[] = [member];
+    while (index + 1 < members.length) {
+      const next = members[index + 1]!;
+      if (!isConstructorDeclaration(next) && !isMethodDeclaration(next)) {
+        break;
+      }
+      const nextGroup = classMemberOverloadGroup(next);
+      if (nextGroup === undefined || !sameOverloadGroup(group, nextGroup)) {
+        break;
+      }
+      declarations.push(next);
+      index += 1;
+    }
+    if (declarations.length > 1) {
+      checkOverloadModifierAgreement(declarations.map(overloadDeclarationFacts), state);
+    }
+  }
 }
 
 function checkDuplicateClassImplementations(members: readonly ClassElement[], state: CheckState, environment: TypeEnvironment): void {
@@ -7546,13 +7860,14 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
   const memberScopeEnvironment = classElementScopeEnvironment(member, environment, classTypeParameters);
   const decoratorEnvironment = classMemberDecoratorEnvironment(environment, classMembers.className);
   const decoratorGrammarInvalid = checkDecoratorGrammar(member, state);
+  checkModifierGrammar(member, state);
   if (!decoratorGrammarInvalid) {
     checkDecorators(member, state, decoratorEnvironment);
   }
   if (decoratorGrammarInvalid) {
     return;
   }
-  checkJavaScriptDeclareModifier(member, state);
+  checkJavaScriptModifierGrammar(member, state);
   checkInvalidBigIntPropertyName(member, state);
   checkComputedPropertyNameType(member, state, classElementComputedNameEnvironment(member, memberScopeEnvironment, ambient));
   if (hasModifier(member, Kind.ConstKeyword)) {
@@ -7620,6 +7935,9 @@ function checkClassElement(member: ClassElement, state: CheckState, environment:
   if (isPropertyDeclaration(member) && member.initializer !== undefined) {
     if (checkClassPropertyComputedName(member, state)) {
       return;
+    }
+    if (ambient || hasDeclareModifier(member)) {
+      state.diagnostics.push(createDiagnostic(1039));
     }
     checkAbstractMemberModifiers(member, state, classIsAbstract, propertyNameText(member.name), true);
     checkUninitializedProperty(member, state, environment, ambient, constructorAssignedProperties);
@@ -7903,7 +8221,9 @@ function checkAbstractMemberModifiers(member: ClassElement, state: CheckState, c
 function checkTypeElements(members: readonly TypeElement[], state: CheckState, environment: TypeEnvironment, ambient: boolean): void {
   const computedNameEnvironment = environmentWithoutTemporalDeadZoneDiagnostics(environment);
   checkTypeElementDuplicateNames(members, state);
+  checkTypeElementOverloadModifierAgreement(members, state);
   for (const member of members) {
+    checkModifierGrammar(member, state);
     checkInvalidBigIntPropertyName(member, state);
     checkComputedPropertyNameType(member, state, computedNameEnvironment);
     if (isIndexSignatureDeclaration(member)) {
@@ -7940,6 +8260,30 @@ function checkTypeElements(members: readonly TypeElement[], state: CheckState, e
     }
     if (isGetAccessorDeclaration(member) || isSetAccessorDeclaration(member)) {
       checkAccessorDeclaration(member, state, environment, ambient);
+    }
+  }
+}
+
+function checkTypeElementOverloadModifierAgreement(members: readonly TypeElement[], state: CheckState): void {
+  const declarationsByName = new Map<string, MethodSignatureDeclaration[]>();
+  for (const member of members) {
+    if (!isMethodSignatureDeclaration(member)) {
+      continue;
+    }
+    const name = propertyNameText(member.name);
+    if (name === undefined) {
+      continue;
+    }
+    const declarations = declarationsByName.get(name);
+    if (declarations === undefined) {
+      declarationsByName.set(name, [member]);
+    } else {
+      declarations.push(member);
+    }
+  }
+  for (const declarations of declarationsByName.values()) {
+    if (declarations.length > 1) {
+      checkOverloadModifierAgreement(declarations.map(overloadDeclarationFacts), state);
     }
   }
 }
@@ -8018,6 +8362,10 @@ function checkIndexSignatureDeclaration(member: IndexSignatureDeclaration, state
     return;
   }
   const parameter = member.parameters[0]!;
+  checkParameterModifiers(parameter, state, false);
+  if (parameter.modifiers?.some(modifier => isAccessibilityModifierKind(modifier.kind)) === true) {
+    state.diagnostics.push(createDiagnostic(1018));
+  }
   if (parameter.dotDotDotToken !== undefined) {
     state.diagnostics.push(createDiagnostic(1017));
     checkIndexSignatureValueType(member, environment, state);
@@ -8106,7 +8454,14 @@ function checkAccessorBody(accessor: GetAccessorDeclaration | SetAccessorDeclara
   if (ambient) {
     state.diagnostics.push(createDiagnostic(1183));
   }
+  if (isGetAccessorDeclaration(accessor) && getAccessorBodyCanReturnWithoutValue(accessor.body)) {
+    state.diagnostics.push(createDiagnostic(2378));
+  }
   checkBlock(accessor.body, enterFunctionBody(state, accessor.body), environment, expectedReturnType);
+}
+
+function getAccessorBodyCanReturnWithoutValue(body: Block): boolean {
+  return functionHasImplicitReturn(body) || returnStatementsInBlock(body).some(statement => statement.expression === undefined);
 }
 
 type SignatureParameterBindingMode = "none" | "value" | "valueOnly";
@@ -13625,10 +13980,11 @@ function recordIndexedAccessType(type: Extract<CheckedType, { readonly kind: "re
 
 function instantiateRecordValueType(type: Extract<CheckedType, { readonly kind: "record" }>, indexType: CheckedType): CheckedType {
   if (type.keyParameter === undefined) {
-    return type.valueType;
+    return type.removeUndefined === true ? removeUndefinedType(type.valueType) : type.valueType;
   }
   const keyType = recordKeySubstitutionType(indexType);
-  return keyType === undefined ? type.valueType : substituteType(type.valueType, new Map([[type.keyParameter, keyType]]));
+  const valueType = keyType === undefined ? type.valueType : substituteType(type.valueType, new Map([[type.keyParameter, keyType]]));
+  return type.removeUndefined === true ? removeUndefinedType(valueType) : valueType;
 }
 
 function recordKeySubstitutionType(indexType: CheckedType): CheckedType | undefined {
@@ -14177,6 +14533,7 @@ function inferObjectLiteral(expression: Extract<Expression, { readonly kind: Kin
   let contextualDiagnostics = false;
   checkObjectLiteralDuplicateProperties(expression.properties, state, environment);
   for (const property of expression.properties) {
+    checkObjectLiteralElementModifierGrammar(property, state);
     checkInvalidBigIntPropertyName(property, state);
     checkComputedPropertyNameType(property, state, objectLiteralElementComputedNameEnvironment(property, environment));
     if (isPropertyAssignment(property)) {
@@ -14270,6 +14627,30 @@ function inferObjectLiteral(expression: Extract<Expression, { readonly kind: Kin
 
 function objectLiteralPropertyNameText(name: PropertyName, environment: TypeEnvironment): string | undefined {
   return constantPropertyNameText(name, environment) ?? propertyNameDiagnosticText(name);
+}
+
+function checkObjectLiteralElementModifierGrammar(property: ObjectLiteralElementLike, state: CheckState): void {
+  const modifiers = nodeModifiers(property);
+  if (modifiers.length === 0 || state.reportedModifierGrammar.has(property)) {
+    return;
+  }
+  state.reportedModifierGrammar.add(property);
+  if (isMethodDeclaration(property)) {
+    const invalidModifier = modifiers.find(modifier => modifier.kind !== Kind.AsyncKeyword);
+    if (invalidModifier !== undefined) {
+      state.diagnostics.push(createDiagnostic(1042, modifierText(invalidModifier.kind)));
+      state.diagnostics.push(createDiagnostic(1184));
+      return;
+    }
+    const asyncCount = modifiers.filter(modifier => modifier.kind === Kind.AsyncKeyword).length;
+    if (asyncCount > 1) {
+      state.diagnostics.push(createDiagnostic(1030, "async"));
+    }
+    return;
+  }
+  for (const modifier of modifiers) {
+    state.diagnostics.push(createDiagnostic(1042, modifierText(modifier.kind)));
+  }
 }
 
 function objectLiteralPropertyKeyType(name: PropertyName, environment: TypeEnvironment): CheckedType | undefined {
@@ -14953,6 +15334,47 @@ function typeFromTypeNode(type: TypeNode, environment: TypeEnvironment = new Map
         requiresExplicitDeclarationAnnotation: false,
       };
     }
+    if (name === "Required") {
+      if (!hasTypeArgumentArity(type, "Required<T>", 1, state)) {
+        return anyType;
+      }
+      const typeArgument = typeArguments[0] ?? anyType;
+      return {
+        kind: "typeAliasInstance",
+        name: "Required",
+        typeArguments: [typeArgument],
+        target: requiredUtilityType(typeArgument),
+        requiresExplicitDeclarationAnnotation: false,
+      };
+    }
+    if (name === "Pick") {
+      if (!hasTypeArgumentArity(type, "Pick<T, K>", 2, state)) {
+        return anyType;
+      }
+      const objectType = typeArguments[0] ?? anyType;
+      const keyType = typeArguments[1] ?? anyType;
+      return {
+        kind: "typeAliasInstance",
+        name: "Pick",
+        typeArguments: [objectType, keyType],
+        target: pickUtilityType(objectType, keyType),
+        requiresExplicitDeclarationAnnotation: false,
+      };
+    }
+    if (name === "Omit") {
+      if (!hasTypeArgumentArity(type, "Omit<T, K>", 2, state)) {
+        return anyType;
+      }
+      const objectType = typeArguments[0] ?? anyType;
+      const keyType = typeArguments[1] ?? anyType;
+      return {
+        kind: "typeAliasInstance",
+        name: "Omit",
+        typeArguments: [objectType, keyType],
+        target: omitUtilityType(objectType, keyType),
+        requiresExplicitDeclarationAnnotation: false,
+      };
+    }
     if (resolved !== undefined) {
       if (resolved.kind === "intrinsicTypeAlias" && resolved.name === "Awaited") {
         if (!hasTypeArgumentArity(type, "Awaited<T>", 1, state)) {
@@ -15024,6 +15446,9 @@ function shouldUseResolvedTypeReference(name: string | undefined, resolved: Chec
     || name === "Set"
     || name === "NonNullable"
     || name === "Partial"
+    || name === "Required"
+    || name === "Pick"
+    || name === "Omit"
     || name === "Record")
     && resolvedType.kind === "any") {
     return false;
@@ -15940,6 +16365,7 @@ function emptyCheckState(options: CompilerOptions = {}): CheckState {
     unusedDeclarations: { entries: [], groups: [], nodes: new Map() },
     activeUnusedDeclarations: new Set(),
     reportedUncalledFunctionConditionNodes: new WeakSet(),
+    reportedModifierGrammar: new WeakSet(),
     reportedTypeParameterModifierGrammar: new WeakSet(),
     reportedDuplicateTypeParameterDeclarations: new WeakSet(),
     reportedRequiredTypeParameterAfterOptionalDeclarations: new WeakSet(),
@@ -16062,6 +16488,7 @@ function mappedType(type: Extract<TypeNode, { readonly kind: Kind.MappedType }>,
     valueType,
     keyParameter: type.typeParameter.name.text,
     ...(mappedTypeAddsOptionalProperties(type) ? { optional: true } : {}),
+    ...(mappedTypeRemovesOptionalProperties(type) ? { removeUndefined: true } : {}),
     ...(sourceConstraint === undefined ? {} : { sourceConstraint }),
     ...(mappedArraySource === undefined ? {} : { mappedArraySource }),
   };
@@ -16069,6 +16496,10 @@ function mappedType(type: Extract<TypeNode, { readonly kind: Kind.MappedType }>,
 
 function mappedTypeAddsOptionalProperties(type: Extract<TypeNode, { readonly kind: Kind.MappedType }>): boolean {
   return type.questionToken !== undefined && type.questionToken.kind !== Kind.MinusToken;
+}
+
+function mappedTypeRemovesOptionalProperties(type: Extract<TypeNode, { readonly kind: Kind.MappedType }>): boolean {
+  return type.questionToken?.kind === Kind.MinusToken;
 }
 
 function homomorphicIdentityMappedSourceConstraint(keyType: CheckedType, valueType: CheckedType, keyParameterName: string): CheckedType | undefined {
@@ -16272,6 +16703,165 @@ function partialUtilityType(type: CheckedType): CheckedType {
     return { kind: "intersection", types: type.types.map(partialUtilityType) };
   }
   return anyType;
+}
+
+function requiredUtilityType(type: CheckedType): CheckedType {
+  if (type.kind === "typeAliasInstance") {
+    return requiredUtilityType(type.target);
+  }
+  if (type.kind === "valueAndType" || type.kind === "valueOnly" || type.kind === "accessorProperty") {
+    return requiredUtilityType(type.type);
+  }
+  if (type.kind === "interface") {
+    return requiredObjectType(interfacePropertyTypes(type), type.members.readonlyProperties, type.members.methodProperties, {
+      stringIndexType: interfaceStringIndexType(type),
+      numberIndexType: interfaceNumberIndexType(type),
+      symbolIndexType: interfaceSymbolIndexType(type),
+    });
+  }
+  if (type.kind === "object") {
+    return requiredObjectType(type.properties, type.readonlyProperties, type.methodProperties, {
+      callSignatures: type.callSignatures,
+      stringIndexType: type.stringIndexType,
+      numberIndexType: type.numberIndexType,
+      symbolIndexType: type.symbolIndexType,
+    });
+  }
+  if (type.kind === "classInstance") {
+    return requiredObjectType(classInstancePropertyTypes(type), type.members.readonlyProperties, new Set());
+  }
+  if (type.kind === "typeParameter") {
+    const keyType = keyofType(type);
+    const keyParameter = typeParameterType(requiredUtilityKeyParameterName, keyType);
+    return {
+      kind: "record",
+      keyType,
+      keyParameter: requiredUtilityKeyParameterName,
+      valueType: indexedAccessType(type, keyParameter),
+      removeUndefined: true,
+    };
+  }
+  if (type.kind === "union") {
+    return unionType(type.types.map(requiredUtilityType));
+  }
+  if (type.kind === "intersection") {
+    return { kind: "intersection", types: type.types.map(requiredUtilityType) };
+  }
+  return anyType;
+}
+
+function pickUtilityType(type: CheckedType, keyType: CheckedType): CheckedType {
+  return filterUtilityType(type, name => propertyNameMatchesKeyType(name, keyType));
+}
+
+function omitUtilityType(type: CheckedType, keyType: CheckedType): CheckedType {
+  return filterUtilityType(type, name => !propertyNameMatchesKeyType(name, keyType));
+}
+
+function filterUtilityType(type: CheckedType, include: (name: string) => boolean): CheckedType {
+  if (type.kind === "typeAliasInstance") {
+    return filterUtilityType(type.target, include);
+  }
+  if (type.kind === "valueAndType" || type.kind === "valueOnly" || type.kind === "accessorProperty") {
+    return filterUtilityType(type.type, include);
+  }
+  if (type.kind === "interface") {
+    return filteredObjectType(interfacePropertyTypes(type), type.members.readonlyProperties, type.members.optionalProperties, type.members.methodProperties, include, {
+      stringIndexType: interfaceStringIndexType(type),
+      numberIndexType: interfaceNumberIndexType(type),
+      symbolIndexType: interfaceSymbolIndexType(type),
+    });
+  }
+  if (type.kind === "object") {
+    return filteredObjectType(type.properties, type.readonlyProperties, type.optionalProperties, type.methodProperties, include, {
+      callSignatures: type.callSignatures,
+      stringIndexType: type.stringIndexType,
+      numberIndexType: type.numberIndexType,
+      symbolIndexType: type.symbolIndexType,
+    });
+  }
+  if (type.kind === "classInstance") {
+    return filteredObjectType(classInstancePropertyTypes(type), type.members.readonlyProperties, type.members.optionalProperties, new Set(), include);
+  }
+  return anyType;
+}
+
+function requiredObjectType(
+  properties: ReadonlyMap<string, CheckedType>,
+  readonlyProperties: ReadonlySet<string>,
+  methodProperties: ReadonlySet<string>,
+  extras: {
+    readonly callSignatures?: readonly CheckedFunctionType[] | undefined;
+    readonly stringIndexType?: CheckedType | undefined;
+    readonly numberIndexType?: CheckedType | undefined;
+    readonly symbolIndexType?: CheckedType | undefined;
+  } = {},
+): Extract<CheckedType, { readonly kind: "object" }> {
+  return {
+    kind: "object",
+    properties: new Map([...properties.entries()].map(([name, propertyType]) => [name, removeUndefinedType(propertyType)])),
+    readonlyProperties,
+    optionalProperties: new Set(),
+    methodProperties,
+    ...(extras.callSignatures === undefined ? {} : { callSignatures: extras.callSignatures }),
+    ...(extras.stringIndexType === undefined ? {} : { stringIndexType: removeUndefinedType(extras.stringIndexType) }),
+    ...(extras.numberIndexType === undefined ? {} : { numberIndexType: removeUndefinedType(extras.numberIndexType) }),
+    ...(extras.symbolIndexType === undefined ? {} : { symbolIndexType: removeUndefinedType(extras.symbolIndexType) }),
+  };
+}
+
+function filteredObjectType(
+  properties: ReadonlyMap<string, CheckedType>,
+  readonlyProperties: ReadonlySet<string>,
+  optionalProperties: ReadonlySet<string>,
+  methodProperties: ReadonlySet<string>,
+  include: (name: string) => boolean,
+  extras: {
+    readonly callSignatures?: readonly CheckedFunctionType[] | undefined;
+    readonly stringIndexType?: CheckedType | undefined;
+    readonly numberIndexType?: CheckedType | undefined;
+    readonly symbolIndexType?: CheckedType | undefined;
+  } = {},
+): Extract<CheckedType, { readonly kind: "object" }> {
+  const selectedProperties = new Map([...properties.entries()].filter(([name]) => include(name)));
+  const selectedNames = new Set(selectedProperties.keys());
+  return {
+    kind: "object",
+    properties: selectedProperties,
+    readonlyProperties: new Set([...readonlyProperties].filter(name => selectedNames.has(name))),
+    optionalProperties: new Set([...optionalProperties].filter(name => selectedNames.has(name))),
+    methodProperties: new Set([...methodProperties].filter(name => selectedNames.has(name))),
+    ...(extras.callSignatures === undefined ? {} : { callSignatures: extras.callSignatures }),
+    ...(extras.stringIndexType === undefined ? {} : { stringIndexType: extras.stringIndexType }),
+    ...(extras.numberIndexType === undefined ? {} : { numberIndexType: extras.numberIndexType }),
+    ...(extras.symbolIndexType === undefined ? {} : { symbolIndexType: extras.symbolIndexType }),
+  };
+}
+
+function propertyNameMatchesKeyType(name: string, keyType: CheckedType): boolean {
+  if (keyType.kind === "typeAliasInstance") {
+    return propertyNameMatchesKeyType(name, keyType.target);
+  }
+  if (keyType.kind === "union") {
+    return keyType.types.some(member => propertyNameMatchesKeyType(name, member));
+  }
+  if (keyType.kind === "intersection") {
+    return keyType.types.every(member => propertyNameMatchesKeyType(name, member));
+  }
+  if (keyType.kind === "keyof") {
+    const expanded = expandedKeyofType(keyType);
+    return expanded !== undefined && propertyNameMatchesKeyType(name, expanded);
+  }
+  if (keyType.kind === "stringLiteral" || keyType.kind === "numberLiteral") {
+    return keyType.value === name;
+  }
+  if (keyType.kind === "string") {
+    return true;
+  }
+  if (keyType.kind === "number") {
+    return String(Number(name)) === name;
+  }
+  return keyType.kind === "any" || keyType.kind === "unresolved";
 }
 
 function optionalizedPropertyMap(properties: ReadonlyMap<string, CheckedType>): ReadonlyMap<string, CheckedType> {
@@ -16534,10 +17124,29 @@ function hasDeclareModifier(node: object): boolean {
   return hasModifier(node, Kind.DeclareKeyword);
 }
 
-function checkJavaScriptDeclareModifier(node: object, state: CheckState): void {
-  if (state.isJavaScriptFile && hasDeclareModifier(node)) {
-    state.diagnostics.push(createDiagnostic(8009, "declare"));
+function checkJavaScriptModifierGrammar(node: Node, state: CheckState): void {
+  if (!state.isJavaScriptFile) {
+    return;
   }
+  for (const modifier of nodeModifiers(node)) {
+    if (modifier.kind === Kind.ConstKeyword
+      || modifier.kind === Kind.PublicKeyword
+      || modifier.kind === Kind.PrivateKeyword
+      || modifier.kind === Kind.ProtectedKeyword
+      || modifier.kind === Kind.ReadonlyKeyword
+      || modifier.kind === Kind.DeclareKeyword
+      || modifier.kind === Kind.AbstractKeyword
+      || modifier.kind === Kind.OverrideKeyword
+      || modifier.kind === Kind.InKeyword
+      || modifier.kind === Kind.OutKeyword
+      || isClassPropertyTypeScriptOnlyJavaScriptModifier(node, modifier.kind)) {
+      state.diagnostics.push(createDiagnostic(8009, modifierText(modifier.kind)));
+    }
+  }
+}
+
+function isClassPropertyTypeScriptOnlyJavaScriptModifier(node: Node, modifier: Kind): boolean {
+  return isPropertyDeclaration(node) && modifier !== Kind.StaticKeyword && modifier !== Kind.AccessorKeyword;
 }
 
 function checkJavaScriptTypeAnnotation(state: CheckState): void {
@@ -16574,6 +17183,353 @@ function declarationIsExported(node: Node): boolean {
 
 function hasModifier(node: object, kind: Kind): boolean {
   return (node as { readonly modifiers?: readonly { readonly kind: Kind }[] }).modifiers?.some(modifier => modifier.kind === kind) === true;
+}
+
+function checkModifierGrammar(node: Node, state: CheckState): boolean {
+  if (isExportAssignment(node)) {
+    return false;
+  }
+  const modifiers = nodeModifiers(node);
+  if (modifiers.length === 0 || state.reportedModifierGrammar.has(node)) {
+    return false;
+  }
+  state.reportedModifierGrammar.add(node);
+
+  let sawAccessibility = false;
+  let sawStatic = false;
+  let sawReadonly = false;
+  let sawAsync = false;
+  let sawAccessor = false;
+  let sawOverride = false;
+  let sawDeclare = false;
+  let sawExport = false;
+  let sawAbstract = false;
+
+  for (const modifier of modifiers) {
+    if (modifier.kind !== Kind.ReadonlyKeyword) {
+      if (isPropertySignatureDeclaration(node) || isMethodSignatureDeclaration(node)) {
+        state.diagnostics.push(createDiagnostic(1070, modifierText(modifier.kind)));
+        return true;
+      }
+      if (isIndexSignatureDeclaration(node) && (modifier.kind !== Kind.StaticKeyword || !isClassLikeDeclaration(node.parent))) {
+        state.diagnostics.push(createDiagnostic(1071, modifierText(modifier.kind)));
+        return true;
+      }
+    }
+
+    switch (modifier.kind) {
+      case Kind.PublicKeyword:
+      case Kind.ProtectedKeyword:
+      case Kind.PrivateKeyword: {
+        const text = modifierText(modifier.kind);
+        if (sawOverride) {
+          state.diagnostics.push(createDiagnostic(1029, text, "override"));
+          return true;
+        }
+        if (sawStatic) {
+          state.diagnostics.push(createDiagnostic(1029, text, "static"));
+          return true;
+        }
+        if (sawAccessor) {
+          state.diagnostics.push(createDiagnostic(1029, text, "accessor"));
+          return true;
+        }
+        if (sawReadonly) {
+          state.diagnostics.push(createDiagnostic(1029, text, "readonly"));
+          return true;
+        }
+        if (sawAsync) {
+          state.diagnostics.push(createDiagnostic(1029, text, "async"));
+          return true;
+        }
+        if (isModuleOrSourceElement(node)) {
+          state.diagnostics.push(createDiagnostic(1044, text));
+          return true;
+        }
+        if (sawAbstract) {
+          state.diagnostics.push(modifier.kind === Kind.PrivateKeyword ? createDiagnostic(1243, text, "abstract") : createDiagnostic(1029, text, "abstract"));
+          return true;
+        }
+        sawAccessibility = true;
+        break;
+      }
+      case Kind.StaticKeyword:
+        if (sawStatic) {
+          state.diagnostics.push(createDiagnostic(1030, "static"));
+          return true;
+        }
+        if (sawReadonly) {
+          state.diagnostics.push(createDiagnostic(1029, "static", "readonly"));
+          return true;
+        }
+        if (sawAsync) {
+          state.diagnostics.push(createDiagnostic(1029, "static", "async"));
+          return true;
+        }
+        if (sawAccessor) {
+          state.diagnostics.push(createDiagnostic(1029, "static", "accessor"));
+          return true;
+        }
+        if (isModuleOrSourceElement(node)) {
+          state.diagnostics.push(createDiagnostic(1044, "static"));
+          return true;
+        }
+        if (isParameterDeclaration(node)) {
+          state.diagnostics.push(createDiagnostic(1090, "static"));
+          return true;
+        }
+        if (sawAbstract) {
+          state.diagnostics.push(createDiagnostic(1243, "static", "abstract"));
+          return true;
+        }
+        if (sawOverride) {
+          state.diagnostics.push(createDiagnostic(1029, "static", "override"));
+          return true;
+        }
+        sawStatic = true;
+        break;
+      case Kind.AccessorKeyword:
+        if (sawAccessor) {
+          state.diagnostics.push(createDiagnostic(1030, "accessor"));
+          return true;
+        }
+        if (sawReadonly) {
+          state.diagnostics.push(createDiagnostic(1243, "accessor", "readonly"));
+          return true;
+        }
+        if (sawDeclare) {
+          state.diagnostics.push(createDiagnostic(1243, "accessor", "declare"));
+          return true;
+        }
+        if (!isPropertyDeclaration(node)) {
+          state.diagnostics.push(createDiagnostic(1275));
+          return true;
+        }
+        sawAccessor = true;
+        break;
+      case Kind.ReadonlyKeyword:
+        if (sawReadonly) {
+          state.diagnostics.push(createDiagnostic(1030, "readonly"));
+          return true;
+        }
+        if (!isPropertyDeclaration(node) && !isPropertySignatureDeclaration(node) && !isIndexSignatureDeclaration(node) && !isParameterDeclaration(node)) {
+          state.diagnostics.push(createDiagnostic(1024));
+          return true;
+        }
+        if (sawAccessor) {
+          state.diagnostics.push(createDiagnostic(1243, "readonly", "accessor"));
+          return true;
+        }
+        sawReadonly = true;
+        break;
+      case Kind.ExportKeyword:
+        if (sawExport) {
+          state.diagnostics.push(createDiagnostic(1030, "export"));
+          return true;
+        }
+        if (sawDeclare) {
+          state.diagnostics.push(createDiagnostic(1029, "export", "declare"));
+          return true;
+        }
+        if (sawAbstract) {
+          state.diagnostics.push(createDiagnostic(1029, "export", "abstract"));
+          return true;
+        }
+        if (sawAsync) {
+          state.diagnostics.push(createDiagnostic(1029, "export", "async"));
+          return true;
+        }
+        if (isClassLikeDeclaration(node.parent)) {
+          state.diagnostics.push(createDiagnostic(1031, "export"));
+          return true;
+        }
+        if (isParameterDeclaration(node)) {
+          state.diagnostics.push(createDiagnostic(1090, "export"));
+          return true;
+        }
+        sawExport = true;
+        break;
+      case Kind.DeclareKeyword:
+        if (sawDeclare) {
+          state.diagnostics.push(createDiagnostic(1030, "declare"));
+          return true;
+        }
+        if (state.ambientContext && isModuleBlock(node.parent)) {
+          state.diagnostics.push(createDiagnostic(1038));
+          return true;
+        }
+        if (sawAsync) {
+          state.diagnostics.push(createDiagnostic(1040, "async"));
+          return true;
+        }
+        if (sawOverride) {
+          state.diagnostics.push(createDiagnostic(1040, "override"));
+          return true;
+        }
+        if (isClassLikeDeclaration(node.parent) && !isPropertyDeclaration(node)) {
+          state.diagnostics.push(createDiagnostic(1031, "declare"));
+          return true;
+        }
+        if (isParameterDeclaration(node)) {
+          state.diagnostics.push(createDiagnostic(1090, "declare"));
+          return true;
+        }
+        if (sawAccessor) {
+          state.diagnostics.push(createDiagnostic(1243, "declare", "accessor"));
+          return true;
+        }
+        sawDeclare = true;
+        break;
+      case Kind.AbstractKeyword:
+        if (sawAbstract) {
+          state.diagnostics.push(createDiagnostic(1030, "abstract"));
+          return true;
+        }
+        if (!isClassDeclaration(node) && !isConstructorTypeNode(node) && !isMethodDeclaration(node) && !isPropertyDeclaration(node) && !isGetAccessorDeclaration(node) && !isSetAccessorDeclaration(node)) {
+          state.diagnostics.push(createDiagnostic(1242));
+          return true;
+        }
+        if (sawStatic) {
+          state.diagnostics.push(createDiagnostic(1243, "static", "abstract"));
+          return true;
+        }
+        if (sawAccessibility && hasModifier(node, Kind.PrivateKeyword)) {
+          state.diagnostics.push(createDiagnostic(1243, "private", "abstract"));
+          return true;
+        }
+        if (sawAsync) {
+          state.diagnostics.push(createDiagnostic(1243, "async", "abstract"));
+          return true;
+        }
+        if (sawOverride) {
+          state.diagnostics.push(createDiagnostic(1029, "abstract", "override"));
+          return true;
+        }
+        if (sawAccessor) {
+          state.diagnostics.push(createDiagnostic(1029, "abstract", "accessor"));
+          return true;
+        }
+        sawAbstract = true;
+        break;
+      case Kind.AsyncKeyword:
+        if (sawAsync) {
+          state.diagnostics.push(createDiagnostic(1030, "async"));
+          return true;
+        }
+        if (sawDeclare) {
+          state.diagnostics.push(createDiagnostic(1040, "async"));
+          return true;
+        }
+        if (isParameterDeclaration(node)) {
+          state.diagnostics.push(createDiagnostic(1090, "async"));
+          return true;
+        }
+        if (sawAbstract) {
+          state.diagnostics.push(createDiagnostic(1243, "async", "abstract"));
+          return true;
+        }
+        sawAsync = true;
+        break;
+      case Kind.OverrideKeyword:
+        if (sawOverride) {
+          state.diagnostics.push(createDiagnostic(1030, "override"));
+          return true;
+        }
+        if (sawDeclare) {
+          state.diagnostics.push(createDiagnostic(1243, "override", "declare"));
+          return true;
+        }
+        if (sawReadonly) {
+          state.diagnostics.push(createDiagnostic(1029, "override", "readonly"));
+          return true;
+        }
+        if (sawAccessor) {
+          state.diagnostics.push(createDiagnostic(1029, "override", "accessor"));
+          return true;
+        }
+        if (sawAsync) {
+          state.diagnostics.push(createDiagnostic(1029, "override", "async"));
+          return true;
+        }
+        sawOverride = true;
+        break;
+      default:
+        break;
+    }
+  }
+
+  if (isConstructorDeclaration(node)) {
+    if (sawStatic) {
+      state.diagnostics.push(createDiagnostic(1089, "static"));
+      return true;
+    }
+    if (sawOverride) {
+      state.diagnostics.push(createDiagnostic(1089, "override"));
+      return true;
+    }
+    if (sawAsync) {
+      state.diagnostics.push(createDiagnostic(1089, "async"));
+      return true;
+    }
+  }
+  if ((isImportDeclaration(node) || isImportEqualsDeclaration(node)) && sawDeclare) {
+    state.diagnostics.push(createDiagnostic(1079, "declare"));
+    return true;
+  }
+  if (sawAsync && !isMethodDeclaration(node) && !isFunctionDeclaration(node) && !isFunctionExpression(node) && !isArrowFunction(node)) {
+    state.diagnostics.push(createDiagnostic(1042, "async"));
+    return true;
+  }
+  return false;
+}
+
+function nodeModifiers(node: Node): readonly Node[] {
+  return ((node as { readonly modifiers?: readonly Node[] }).modifiers ?? []).filter(modifier => !isDecorator(modifier));
+}
+
+function isModuleOrSourceElement(node: Node): boolean {
+  return isModuleBlock(node.parent) || isSourceFile(node.parent);
+}
+
+function isClassLikeDeclaration(node: Node | undefined): node is ClassDeclaration | ClassExpression {
+  return node !== undefined && (isClassDeclaration(node) || isClassExpression(node));
+}
+
+function modifierText(kind: Kind): string {
+  switch (kind) {
+    case Kind.AbstractKeyword:
+      return "abstract";
+    case Kind.AccessorKeyword:
+      return "accessor";
+    case Kind.AsyncKeyword:
+      return "async";
+    case Kind.ConstKeyword:
+      return "const";
+    case Kind.DeclareKeyword:
+      return "declare";
+    case Kind.DefaultKeyword:
+      return "default";
+    case Kind.ExportKeyword:
+      return "export";
+    case Kind.InKeyword:
+      return "in";
+    case Kind.OutKeyword:
+      return "out";
+    case Kind.OverrideKeyword:
+      return "override";
+    case Kind.PrivateKeyword:
+      return "private";
+    case Kind.ProtectedKeyword:
+      return "protected";
+    case Kind.PublicKeyword:
+      return "public";
+    case Kind.ReadonlyKeyword:
+      return "readonly";
+    case Kind.StaticKeyword:
+      return "static";
+    default:
+      return Kind[kind] ?? "modifier";
+  }
 }
 
 function checkDecoratorGrammar(node: Node, state: CheckState): boolean {
@@ -16711,6 +17667,10 @@ function isTypeUsableAsPropertyName(type: CheckedType): boolean {
 
 function checkParameterModifiers(parameter: ParameterDeclaration, state: CheckState, allowParameterProperties: boolean): void {
   if (checkDecoratorGrammar(parameter, state)) {
+    return;
+  }
+  if (state.isJavaScriptFile && parameter.modifiers?.some(modifier => !isDecorator(modifier)) === true) {
+    state.diagnostics.push(createDiagnostic(8012));
     return;
   }
   checkParameterModifierGrammar(parameter, state);
@@ -18058,6 +19018,7 @@ function substituteTypeWithContext(type: CheckedType, substitutions: ReadonlyMap
       valueType: substituteTypeWithContext(type.valueType, valueSubstitutions, valueContext),
       ...(type.keyParameter === undefined ? {} : { keyParameter: type.keyParameter }),
       ...(type.optional === undefined ? {} : { optional: type.optional }),
+      ...(type.removeUndefined === undefined ? {} : { removeUndefined: type.removeUndefined }),
       ...(type.sourceConstraint === undefined ? {} : { sourceConstraint: substituteTypeWithContext(type.sourceConstraint, substitutions, context) }),
       ...(type.mappedArraySource === undefined ? {} : { mappedArraySource: substituteTypeWithContext(type.mappedArraySource, substitutions, context) }),
     };
@@ -19666,6 +20627,9 @@ function typeHasDeclaredProperty(type: CheckedType, name: string): boolean {
 }
 
 function structuralMissingPropertyDiagnosticApplies(actual: CheckedType): boolean {
+  if (actual.kind === "typeAliasInstance") {
+    return structuralMissingPropertyDiagnosticApplies(actual.target);
+  }
   return actual.kind === "array"
     || actual.kind === "readonlyArray"
     || actual.kind === "tuple"

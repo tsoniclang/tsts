@@ -671,16 +671,24 @@ export class Parser {
 
   #parseModifiers(options: { readonly allowDecorators?: boolean; readonly stopOnStartOfClassStaticBlock?: boolean } = {}): NodeArray<ModifierLike> | undefined {
     const modifiers: ModifierLike[] = [];
+    let hasSeenStaticModifier = false;
     while (true) {
       if (options.allowDecorators === true && this.#current().kind === Kind.AtToken) {
         modifiers.push(this.#parseDecorator());
         continue;
       }
+      if (hasSeenStaticModifier && this.#current().kind === Kind.StaticKeyword) {
+        break;
+      }
       if (!this.#isModifierAtCurrentPosition(options)) {
         break;
       }
-      modifiers.push(createToken(this.#current().kind as ModifierSyntaxKind) as ModifierLike);
+      const modifierKind = this.#current().kind as ModifierSyntaxKind;
+      modifiers.push(createToken(modifierKind) as ModifierLike);
       this.#advance();
+      if (modifierKind === Kind.StaticKeyword) {
+        hasSeenStaticModifier = true;
+      }
     }
     return modifiers.length === 0 ? undefined : createNodeArray(modifiers);
   }
@@ -1013,8 +1021,26 @@ export class Parser {
 
     const type = this.#parseOptionalTypeAnnotation();
     const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#withAwaitContext(false, () => this.#parseExpression()) : undefined;
-    this.#consumeOptional(Kind.SemicolonToken);
+    this.#parseSemicolonAfterPropertyName(name, type, initializer);
     return createPropertyDeclaration(modifiers, name, postfixToken, type, initializer);
+  }
+
+  #parseSemicolonAfterPropertyName(name: PropertyName, type: TypeNode | undefined, initializer: Expression | undefined): void {
+    if (this.#consumeOptional(Kind.SemicolonToken)
+      || this.#lineBreakBeforeCurrentToken()
+      || this.#current().kind === Kind.CloseBraceToken
+      || this.#current().kind === Kind.EndOfFile) {
+      return;
+    }
+    if (type !== undefined || initializer !== undefined) {
+      this.#addDiagnosticAtToken(this.#current(), 1005, ";");
+      return;
+    }
+    if (name.kind === Kind.Identifier) {
+      this.#addDiagnosticAtToken(this.#current(), 1434);
+      return;
+    }
+    this.#addDiagnosticAtToken(this.#current(), 1005, ";");
   }
 
   #parseTypeElement(): TypeElement {
@@ -1109,6 +1135,13 @@ export class Parser {
     const next = this.#tokens[this.#index + 2];
     if (next?.kind === Kind.ColonToken || next?.kind === Kind.CommaToken) {
       return true;
+    }
+    if (modifierKinds.has(name.kind) && isIdentifierNameKind(next?.kind ?? Kind.Unknown)) {
+      const afterParameterName = this.#tokens[this.#index + 3];
+      if (afterParameterName?.kind === Kind.ColonToken || afterParameterName?.kind === Kind.CommaToken) {
+        return true;
+      }
+      return afterParameterName?.kind === Kind.QuestionToken && this.#tokens[this.#index + 4]?.kind === Kind.ColonToken;
     }
     return next?.kind === Kind.QuestionToken && this.#tokens[this.#index + 3]?.kind === Kind.ColonToken;
   }

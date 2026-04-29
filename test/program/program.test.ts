@@ -690,7 +690,7 @@ describe("program groundwork", () => {
       useCaseSensitiveFileNames: () => true,
     };
 
-    const program = createProgram(["src/file.js"], { checkJs: true }, host);
+    const program = createProgram(["src/file.js"], { checkJs: true, noEmit: true }, host);
     const diagnostics = getProgramDiagnostics(program);
 
     assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["src/file.js"]);

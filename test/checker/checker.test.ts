@@ -3321,7 +3321,7 @@ describe("checker groundwork", () => {
         return fileName === "bar.ts" ? "f(1, 2, 3);" : undefined;
       },
     };
-    const program = createProgram(["foo.js", "bar.ts"], { allowJs: true, checkJs: true, strict: false }, host);
+    const program = createProgram(["foo.js", "bar.ts"], { allowJs: true, checkJs: true, strict: false, noEmit: true }, host);
     const diagnostics = checkProgram(program);
 
     assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [2554]);
@@ -3341,7 +3341,7 @@ describe("checker groundwork", () => {
         return fileName === "bar.ts" ? "f(1, 2, 3);" : undefined;
       },
     };
-    const program = createProgram(["foo.js", "bar.ts"], { allowJs: true, checkJs: true, strict: false }, host);
+    const program = createProgram(["foo.js", "bar.ts"], { allowJs: true, checkJs: true, strict: false, noEmit: true }, host);
     const diagnostics = checkProgram(program);
 
     assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [2554]);
@@ -3356,7 +3356,7 @@ describe("checker groundwork", () => {
         return fileName === "bar.ts" ? "f(); f(1); f(1, 2); f(1, 2, 3);" : undefined;
       },
     };
-    const program = createProgram(["foo.js", "bar.ts"], { allowJs: true, checkJs: true, strict: false }, host);
+    const program = createProgram(["foo.js", "bar.ts"], { allowJs: true, checkJs: true, strict: false, noEmit: true }, host);
     const diagnostics = checkProgram(program);
 
     assert.equal(diagnostics.length, 0);
@@ -3414,7 +3414,7 @@ describe("checker groundwork", () => {
         return fileName === "bar.ts" ? "f(1, 2);" : undefined;
       },
     };
-    const program = createProgram(["foo.js", "bar.ts"], { allowJs: true, checkJs: false, strict: false }, host);
+    const program = createProgram(["foo.js", "bar.ts"], { allowJs: true, checkJs: false, strict: false, noEmit: true }, host);
     const diagnostics = checkProgram(program);
 
     assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [2554]);

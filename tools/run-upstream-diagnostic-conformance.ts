@@ -54,6 +54,7 @@ interface CaseCompilerOptions extends CompilerOptions {
   readonly noUncheckedSideEffectImports?: boolean;
   readonly declaration?: boolean;
   readonly outFile?: string;
+  readonly outDir?: string;
   readonly jsx?: ts.JsxEmit;
   readonly jsxFactory?: string;
   readonly jsxFragmentFactory?: string;
@@ -347,6 +348,8 @@ function parseBaselineCompilerOptions(baselineFileName: string): CaseCompilerOpt
       options = { ...options, esModuleInterop: parseBoolean(value) };
     } else if (key === "outfile" && value !== undefined) {
       options = { ...options, outFile: value };
+    } else if (key === "outdir" && value !== undefined) {
+      options = { ...options, outDir: value };
     } else if (key === "nouncheckedsideeffectimports" && value !== undefined) {
       options = { ...options, noUncheckedSideEffectImports: parseBoolean(value) };
     } else if (key === "emitdeclarationonly" && value !== undefined) {
@@ -512,6 +515,9 @@ function parseCompilerOptions(text: string): CaseCompilerOptions {
         break;
       case "outfile":
         options = { ...options, outFile: value };
+        break;
+      case "outdir":
+        options = { ...options, outDir: value };
         break;
       case "jsx":
         options = { ...options, jsx: parseJsxEmit(value) };

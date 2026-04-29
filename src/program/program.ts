@@ -218,6 +218,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
     sourceFiles,
     diagnostics: [
       ...diagnostics,
+      ...outputOverwriteDiagnostics(sourceFiles, options, host),
       ...unresolvedModules
         .filter(unresolved => !ambientModules.has(unresolved.moduleSpecifier))
         .filter(unresolved => !unresolved.sideEffectOnly || options.noUncheckedSideEffectImports !== false)
@@ -589,6 +590,12 @@ function resolveModuleName(moduleSpecifier: string, containingFileName: string, 
     return moduleResolutionResult(fileName, options);
   }
   if (!isRelativeModuleName(moduleSpecifier)) {
+    if (effectiveModuleResolutionKind(options) === "classic") {
+      const classicResolvedFile = moduleResolutionCandidates(normalize(join(dirname(containingFileName), moduleSpecifier)), options).find(candidate => readFileCached(candidate, host, cache) !== undefined);
+      if (classicResolvedFile !== undefined) {
+        return moduleResolutionResult(classicResolvedFile, options);
+      }
+    }
     const baseUrl = moduleResolutionBaseUrl(options, host);
     if (baseUrl !== undefined) {
       const resolvedBaseUrlFile = moduleResolutionCandidates(normalize(join(baseUrl, moduleSpecifier)), options).find(candidate => readFileCached(candidate, host, cache) !== undefined);
@@ -607,6 +614,44 @@ function resolveModuleName(moduleSpecifier: string, containingFileName: string, 
     return { found: false };
   }
   return { found: false };
+}
+
+function effectiveModuleResolutionKind(options: CompilerOptions): ModuleResolutionKindName {
+  if (options.moduleResolution !== undefined) {
+    return options.moduleResolution;
+  }
+  return options.module === "amd" || options.module === "system" || options.module === "umd" ? "classic" : "node10";
+}
+
+function outputOverwriteDiagnostics(sourceFiles: readonly ProgramSourceFile[], options: CompilerOptions, host: CompilerHost): readonly ProgramDiagnostic[] {
+  if (options.noEmit === true) {
+    return [];
+  }
+  const inputNames = new Set(sourceFiles.map(sourceFile => canonicalFileName(sourceFile.fileName, host)));
+  const diagnostics: ProgramDiagnostic[] = [];
+  for (const sourceFile of sourceFiles) {
+    if (isDeclarationFileName(sourceFile.fileName)) {
+      continue;
+    }
+    for (const outputFileName of outputFileNamesForOverwriteCheck(sourceFile.fileName, options, host)) {
+      if (inputNames.has(canonicalFileName(outputFileName, host))) {
+        diagnostics.push(optionDiagnostic(5055, outputFileName));
+      }
+    }
+  }
+  return diagnostics;
+}
+
+function outputFileNamesForOverwriteCheck(inputFileName: string, options: CompilerOptions, host: Pick<CompilerHost, "getCurrentDirectory">): readonly string[] {
+  const outputFileNames: string[] = [];
+  const jsOutputFileName = options.outFile ?? outputFileNameFor(inputFileName, options, host);
+  if (options.emitDeclarationOnly !== true) {
+    outputFileNames.push(jsOutputFileName);
+  }
+  if (options.declaration === true || options.emitDeclarationOnly === true) {
+    outputFileNames.push(replaceExtension(jsOutputFileName, ".d.ts"));
+  }
+  return outputFileNames;
 }
 
 function moduleResolutionDiagnostics(containingFileName: string, moduleSpecifier: string, resolution: ModuleResolution, options: CompilerOptions): readonly ProgramDiagnostic[] {
