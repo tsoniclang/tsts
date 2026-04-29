@@ -1769,6 +1769,31 @@ describe("checker groundwork", () => {
     assert.deepEqual(result.diagnostics, []);
   });
 
+  it("models Object and Function structural surfaces from the standard library", () => {
+    const sourceFile = parseSourceFile([
+      "var badObjectSource = { toString: 5 };",
+      "var emptyObjectOk: {} = badObjectSource;",
+      "var objectError: Object = badObjectSource;",
+      "var contextualObjectError: Object = { toString: 0 };",
+      "var functionMissing: Function = {};",
+      "function good() {}",
+      "namespace good { export var extra = 0; }",
+      "var goodFunction: Function = good;",
+      "function bad() {}",
+      "namespace bad { export var apply = 0; }",
+      "var badFunction: Function = bad;",
+    ].join("\n"));
+    const result = checkSourceFile(sourceFile, { target: "es2015", strict: false });
+
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.code), [2322, 2322, 2740, 2322]);
+    assert.deepEqual(result.diagnostics.map(diagnostic => diagnostic.message), [
+      "Type '{ toString: number; }' is not assignable to type 'Object'.",
+      "Type 'number' is not assignable to type '() => string'.",
+      "Type '{}' is missing the following properties from type 'Function': apply, call, bind, prototype, and 5 more.",
+      "Type 'typeof bad' is not assignable to type 'Function'.",
+    ]);
+  });
+
   it("reports standard type-only library bindings used as values", () => {
     const sourceFile = parseSourceFile([
       "Generator;",

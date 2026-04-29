@@ -893,6 +893,39 @@ function standardInterfaceType(
   };
 }
 
+const standardObjectInterfaceType = standardInterfaceType("Object", new Map<string, CheckedType>(), {
+  methodProperties: new Set(["toString", "toLocaleString", "valueOf", "hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable"]),
+}) as Extract<CheckedType, { readonly kind: "interface" }>;
+const standardFunctionInterfaceType = standardInterfaceType("Function", new Map<string, CheckedType>(), {
+  readonlyProperties: new Set(["length", "name"]),
+  methodProperties: new Set(["apply", "call", "bind", "toString", "[Symbol.hasInstance]"]),
+}) as Extract<CheckedType, { readonly kind: "interface" }>;
+
+function initializeCoreObjectAndFunctionInterfaces(): void {
+  const objectProperties = standardObjectInterfaceType.members.properties as Map<string, CheckedType>;
+  objectProperties.set("constructor", standardFunctionInterfaceType);
+  objectProperties.set("toString", standardFunctionType([], stringType));
+  objectProperties.set("toLocaleString", standardFunctionType([], stringType));
+  objectProperties.set("valueOf", standardFunctionType([], standardObjectInterfaceType));
+  objectProperties.set("hasOwnProperty", standardFunctionType([propertyKeyType()], booleanType, { parameterNames: ["v"], minArgumentCount: 1, maxArgumentCount: 1 }));
+  objectProperties.set("isPrototypeOf", standardFunctionType([standardObjectInterfaceType], booleanType, { parameterNames: ["v"], minArgumentCount: 1, maxArgumentCount: 1 }));
+  objectProperties.set("propertyIsEnumerable", standardFunctionType([propertyKeyType()], booleanType, { parameterNames: ["v"], minArgumentCount: 1, maxArgumentCount: 1 }));
+
+  const functionProperties = standardFunctionInterfaceType.members.properties as Map<string, CheckedType>;
+  functionProperties.set("apply", standardFunctionType([anyType, anyType], anyType, { parameterNames: ["thisArg", "argArray"], minArgumentCount: 1, maxArgumentCount: 2 }));
+  functionProperties.set("call", standardFunctionType([anyType, anyType], anyType, { parameterNames: ["thisArg", "argArray"], restParameterIndex: 1, minArgumentCount: 1 }));
+  functionProperties.set("bind", standardFunctionType([anyType, anyType], anyType, { parameterNames: ["thisArg", "argArray"], restParameterIndex: 1, minArgumentCount: 1 }));
+  functionProperties.set("prototype", anyType);
+  functionProperties.set("toString", standardFunctionType([], stringType));
+  functionProperties.set("length", numberType);
+  functionProperties.set("arguments", anyType);
+  functionProperties.set("caller", standardFunctionInterfaceType);
+  functionProperties.set("name", stringType);
+  functionProperties.set("[Symbol.hasInstance]", standardFunctionType([anyType], booleanType, { parameterNames: ["value"], minArgumentCount: 1, maxArgumentCount: 1 }));
+}
+
+initializeCoreObjectAndFunctionInterfaces();
+
 const promiseFulfilledTypeParameter: CheckedType = { kind: "typeParameter", name: "T" };
 const promiseResolveCallbackType = standardFunctionType([promiseFulfilledTypeParameter], anyType, {
   parameterNames: ["value"],
@@ -2151,7 +2184,7 @@ function standardGlobalEnvironment(options: CompilerOptions): TypeEnvironment {
     ["URIError", { kind: "valueAndType", value: { kind: "builtinConstructor", name: "URIError", instanceType: errorInterfaceType, constructorParameters: [stringType], staticProperties: new Map() }, type: errorInterfaceType }],
     ["FinalizationRegistry", anyType],
     ["document", anyType],
-    ["Function", { kind: "valueAndType", value: anyType, type: anyType }],
+    ["Function", { kind: "valueAndType", value: anyType, type: standardFunctionInterfaceType }],
     ["console", standardConsoleObjectType],
     ["eval", standardGlobalFunction("eval", [stringType], anyType, { minArgumentCount: 0, maxArgumentCount: 1 })],
     ["AsyncGenerator", standardTypeOnly("AsyncGenerator", genericAsyncGeneratorInterfaceType)],
@@ -4735,26 +4768,34 @@ function declarationMergeValueMeaning(type: CheckedType): CheckedType | undefine
   return value?.kind === "unresolved" ? undefined : value;
 }
 
-function valueMeaning(type: CheckedType): CheckedType | undefined {
-  if (type.kind === "temporalDeadZone") {
-    return type.type;
-  }
-  if (type.kind === "valueAndType") {
-    return type.value.kind === "temporalDeadZone" ? valueMeaning(type.value) : type.value;
-  }
-  if (type.kind === "namespaceAndType") {
-    return valueMeaning(type.type) ?? namespaceValueMeaning(type.namespace);
-  }
-  if (type.kind === "valueOnly") {
-    return type.type;
-  }
-  if (type.kind === "functionDeclaration") {
-    return type.type;
-  }
-  if (type.kind === "interface" || type.kind === "typeAlias" || type.kind === "intrinsicTypeAlias" || type.kind === "typeOnly" || type.kind === "typeParameter") {
+function valueMeaning(type: CheckedType, seen: Set<CheckedType> = new Set()): CheckedType | undefined {
+  if (seen.has(type)) {
     return undefined;
   }
-  return type;
+  seen.add(type);
+  try {
+    if (type.kind === "temporalDeadZone") {
+      return type.type;
+    }
+    if (type.kind === "valueAndType") {
+      return type.value.kind === "temporalDeadZone" ? valueMeaning(type.value, seen) : type.value;
+    }
+    if (type.kind === "namespaceAndType") {
+      return valueMeaning(type.type, seen) ?? namespaceValueMeaning(type.namespace, seen);
+    }
+    if (type.kind === "valueOnly") {
+      return type.type;
+    }
+    if (type.kind === "functionDeclaration") {
+      return type.type;
+    }
+    if (type.kind === "interface" || type.kind === "typeAlias" || type.kind === "intrinsicTypeAlias" || type.kind === "typeOnly" || type.kind === "typeParameter") {
+      return undefined;
+    }
+    return type;
+  } finally {
+    seen.delete(type);
+  }
 }
 
 function typeMeaning(type: CheckedType): CheckedType | undefined {
@@ -4789,8 +4830,16 @@ function namespaceMeaning(type: CheckedType): Extract<CheckedType, { readonly ki
   return undefined;
 }
 
-function namespaceValueMeaning(namespace: Extract<CheckedType, { readonly kind: "namespace" }>): CheckedType | undefined {
-  return [...namespace.exports.values()].some(exported => valueMeaning(exported) !== undefined) ? namespace : undefined;
+function namespaceValueMeaning(namespace: Extract<CheckedType, { readonly kind: "namespace" }>, seen: Set<CheckedType> = new Set()): CheckedType | undefined {
+  if (seen.has(namespace)) {
+    return undefined;
+  }
+  seen.add(namespace);
+  try {
+    return [...namespace.exports.values()].some(exported => valueMeaning(exported, seen) !== undefined) ? namespace : undefined;
+  } finally {
+    seen.delete(namespace);
+  }
 }
 
 function seedNamespaceExports(environment: TypeEnvironment, namespace: Extract<CheckedType, { readonly kind: "namespace" }> | undefined): void {
@@ -8012,7 +8061,7 @@ function checkFunctionReturnCompleteness(body: Block, returnType: CheckedType | 
     state.diagnostics.push(createDiagnostic(2355));
     return;
   }
-  if (!returnTypeAllowsImplicitUndefined(returnType) && !blockDefinitelyTerminates(body)) {
+  if (!returnTypeAllowsImplicitUndefined(returnType, state.options) && !blockDefinitelyTerminates(body)) {
     state.diagnostics.push(createDiagnostic(2366));
   }
 }
@@ -8050,6 +8099,11 @@ function statementContainsReturn(statement: Statement): boolean {
   }
   if (isSwitchStatement(statement)) {
     return statement.caseBlock.clauses.some(clause => clause.statements.some(statementContainsReturn));
+  }
+  if (isTryStatement(statement)) {
+    return blockContainsReturn(statement.tryBlock)
+      || (statement.catchClause !== undefined && blockContainsReturn(statement.catchClause.block))
+      || (statement.finallyBlock !== undefined && blockContainsReturn(statement.finallyBlock));
   }
   if (isWhileStatement(statement) || isDoStatement(statement) || isForStatement(statement) || isForInStatement(statement) || isForOfStatement(statement)) {
     return statementContainsReturn(statement.statement);
@@ -8176,7 +8230,7 @@ function inferExpression(expression: Expression, state: CheckState, environment:
     if (bound?.kind === "namespaceAndType") {
       const value = valueMeaning(bound);
       if (value !== undefined) {
-        return value;
+        return bound;
       }
       state.diagnostics.push(createDiagnostic(2708, expression.text));
       return anyType;
@@ -11885,7 +11939,7 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
     return receiverType.staticProperties.get(propertyName);
   }
   if (receiverType.kind === "object") {
-    return receiverType.properties.get(propertyName) ?? receiverType.stringIndexType ?? receiverType.numberIndexType;
+    return receiverType.properties.get(propertyName) ?? receiverType.stringIndexType ?? receiverType.numberIndexType ?? standardObjectInterfaceType.members.properties.get(propertyName);
   }
   if (receiverType.kind === "record") {
     return recordPropertyAccessType(receiverType, propertyName);
@@ -11901,6 +11955,9 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
   }
   if (receiverType.kind === "function" && propertyName === "call") {
     return functionCallType(receiverType);
+  }
+  if (receiverType.kind === "function") {
+    return functionInterfacePropertyType(environment, propertyName) ?? functionApparentProperties().get(propertyName);
   }
   if (receiverType.kind === "stringLiteral") {
     return propertyAccessType(stringType, propertyName, environment);
@@ -11931,6 +11988,9 @@ function propertyAccessType(receiverType: CheckedType, propertyName: string, env
   }
   if (receiverType.kind === "set" && propertyName === "values") {
     return { kind: "function", typeParameters: [], parameters: [], returnType: { kind: "iterable", elementType: receiverType.elementType } };
+  }
+  if (receiverType.kind === "globalObject") {
+    return standardObjectInterfaceType.members.properties.get(propertyName);
   }
   return undefined;
 }
@@ -12018,18 +12078,14 @@ function functionCallType(functionType: CheckedFunctionType): CheckedFunctionTyp
 }
 
 function functionApparentProperties(): ReadonlyMap<string, CheckedType> {
-  const variadicFunctionMember: CheckedFunctionType = {
-    kind: "function",
-    typeParameters: [],
-    parameters: [anyType],
-    restParameterIndex: 0,
-    minArgumentCount: 0,
-    returnType: anyType,
-  };
-  return new Map([
-    ["apply", variadicFunctionMember],
-    ["call", variadicFunctionMember],
+  const properties = new Map([
+    ...standardFunctionInterfaceType.members.properties,
+    ...standardObjectInterfaceType.members.properties,
   ]);
+  properties.set("apply", standardVariadicAnyFunction());
+  properties.set("call", standardVariadicAnyFunction());
+  properties.set("bind", standardVariadicAnyFunction());
+  return properties;
 }
 
 function functionInterfacePropertyType(environment: TypeEnvironment | undefined, propertyName: string): CheckedType | undefined {
@@ -13146,6 +13202,9 @@ function contextualObjectPropertyType(contextualType: CheckedType | undefined, p
   }
   if (contextualType.kind === "classInstance") {
     return classInstancePropertyType(contextualType, propertyName);
+  }
+  if (contextualType.kind === "globalObject") {
+    return standardObjectInterfaceType.members.properties.get(propertyName);
   }
   return undefined;
 }
@@ -15055,12 +15114,15 @@ function requiresReturnValue(type: CheckedType): boolean {
   return type.kind !== "any" && type.kind !== "unresolved" && type.kind !== "undefined" && type.kind !== "void";
 }
 
-function returnTypeAllowsImplicitUndefined(type: CheckedType): boolean {
+function returnTypeAllowsImplicitUndefined(type: CheckedType, options: CompilerOptions = {}): boolean {
+  if (!strictOptionValue(options, "strictNullChecks")) {
+    return true;
+  }
   if (type.kind === "typeAliasInstance") {
-    return returnTypeAllowsImplicitUndefined(type.target);
+    return returnTypeAllowsImplicitUndefined(type.target, options);
   }
   if (type.kind === "union") {
-    return type.types.some(returnTypeAllowsImplicitUndefined);
+    return type.types.some(member => returnTypeAllowsImplicitUndefined(member, options));
   }
   return type.kind === "any" || type.kind === "unresolved" || type.kind === "undefined" || type.kind === "void";
 }
@@ -16902,6 +16964,110 @@ function sameInterfaceInstantiation(left: Extract<CheckedType, { readonly kind: 
     && leftArguments.every((typeArgument, index) => isFastSameType(typeArgument, rightArguments[index]!));
 }
 
+function namespaceAndValueAssignableTo(actual: Extract<CheckedType, { readonly kind: "namespaceAndType" }>, expected: CheckedType, options: CompilerOptions): boolean | undefined {
+  if (expected.kind === "interface") {
+    return namespaceAndValuePropertiesAssignableTo(actual, interfacePropertyTypes(expected), options, expected.members.optionalProperties)
+      && callSignaturesAssignableTo(callSignaturesOfType(actual.type), interfaceCallSignatures(expected), options);
+  }
+  if (expected.kind === "object") {
+    return namespaceAndValuePropertiesAssignableTo(actual, expected.properties, options, expected.optionalProperties)
+      && callSignaturesAssignableTo(callSignaturesOfType(actual.type), expected.callSignatures ?? [], options);
+  }
+  if (expected.kind === "classInstance" && expected.members.nominalProperties.size === 0) {
+    return namespaceAndValuePropertiesAssignableTo(actual, classInstancePropertyTypes(expected), options, expected.members.optionalProperties);
+  }
+  return undefined;
+}
+
+function namespaceAndValuePropertiesAssignableTo(actual: Extract<CheckedType, { readonly kind: "namespaceAndType" }>, expected: ReadonlyMap<string, CheckedType>, options: CompilerOptions, optionalExpected: ReadonlySet<string> = emptyStringSet): boolean {
+  for (const [name, expectedPropertyType] of expected.entries()) {
+    const actualPropertyType = namespaceAndValueStructuralPropertyType(actual, name);
+    if (actualPropertyType === undefined) {
+      if (optionalExpected.has(name)) {
+        continue;
+      }
+      return false;
+    }
+    if (!isAssignableTo(actualPropertyType, expectedPropertyType, options)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function namespaceAndValueStructuralPropertyType(actual: Extract<CheckedType, { readonly kind: "namespaceAndType" }>, name: string): CheckedType | undefined {
+  const namespacePropertyType = propertyAccessType(actual.namespace, name);
+  if (namespacePropertyType !== undefined) {
+    return namespacePropertyType;
+  }
+  const valueType = valueMeaning(actual.type);
+  return valueType === undefined ? undefined : structuralApparentPropertyType(valueType, name);
+}
+
+function structuralApparentPropertyType(type: CheckedType, name: string): CheckedType | undefined {
+  if (type.kind === "namespaceAndType") {
+    const namespacePropertyType = propertyAccessType(type.namespace, name);
+    if (namespacePropertyType !== undefined) {
+      return namespacePropertyType;
+    }
+    const valueType = valueMeaning(type.type);
+    return valueType === undefined ? undefined : structuralApparentPropertyType(valueType, name);
+  }
+  if (type.kind === "function" || type.kind === "functionDeclaration") {
+    return functionApparentProperties().get(name);
+  }
+  if (type.kind === "interface") {
+    return interfacePropertyType(type, name) ?? standardObjectInterfaceType.members.properties.get(name);
+  }
+  if (type.kind === "classInstance") {
+    const propertyType = classInstancePropertyType(type, name);
+    return propertyType ?? (type.members.instance.has(name) ? anyType : standardObjectInterfaceType.members.properties.get(name));
+  }
+  if (type.kind === "globalObject") {
+    return standardObjectInterfaceType.members.properties.get(name);
+  }
+  return propertyAccessType(type, name);
+}
+
+function callSignaturesOfType(type: CheckedType): readonly CheckedFunctionType[] {
+  if (type.kind === "valueAndType" || type.kind === "valueOnly" || type.kind === "accessorProperty" || type.kind === "temporalDeadZone" || type.kind === "unassignedVariable") {
+    return callSignaturesOfType(type.type);
+  }
+  if (type.kind === "functionDeclaration") {
+    return [type.type];
+  }
+  if (type.kind === "function") {
+    return [type];
+  }
+  if (type.kind === "object") {
+    return type.callSignatures ?? [];
+  }
+  if (type.kind === "interface") {
+    return interfaceCallSignatures(type);
+  }
+  if (type.kind === "classConstructor") {
+    return [classConstructorConstructSignature(type)];
+  }
+  return [];
+}
+
+function typeAssignableToGlobalObject(actual: CheckedType, options: CompilerOptions): boolean {
+  if (actual.kind === "union") {
+    return actual.types.every(type => typeAssignableToGlobalObject(type, options));
+  }
+  if (actual.kind === "null" || actual.kind === "undefined") {
+    return !strictOptionValue(options, "strictNullChecks");
+  }
+  const objectProperties = standardObjectInterfaceType.members.properties;
+  if (actual.kind === "object" || actual.kind === "interface" || actual.kind === "classInstance" || actual.kind === "function" || actual.kind === "namespaceAndType") {
+    return [...objectProperties.entries()].every(([name, expectedPropertyType]) => {
+      const actualPropertyType = structuralApparentPropertyType(actual, name);
+      return actualPropertyType !== undefined && isAssignableTo(actualPropertyType, expectedPropertyType, options);
+    });
+  }
+  return true;
+}
+
 function isAssignableToRelated(actual: CheckedType, expected: CheckedType, options: CompilerOptions = {}): boolean {
   if (actual.kind === "temporalDeadZone") {
     return isAssignableTo(actual.type, expected, options);
@@ -16940,6 +17106,10 @@ function isAssignableToRelated(actual: CheckedType, expected: CheckedType, optio
     return isAssignableTo(actual, expected.type, options);
   }
   if (actual.kind === "namespaceAndType") {
+    const structuralResult = namespaceAndValueAssignableTo(actual, expected, options);
+    if (structuralResult !== undefined) {
+      return structuralResult;
+    }
     return isAssignableTo(actual.type, expected, options);
   }
   if (expected.kind === "namespaceAndType") {
@@ -17025,7 +17195,7 @@ function isAssignableToRelated(actual: CheckedType, expected: CheckedType, optio
     return true;
   }
   if (expected.kind === "globalObject") {
-    return actual.kind !== "null" && actual.kind !== "undefined";
+    return typeAssignableToGlobalObject(actual, options);
   }
   if (actual.kind === "globalObject") {
     return false;
@@ -17693,13 +17863,13 @@ function typeHasDeclaredProperty(type: CheckedType, name: string): boolean {
     return typeHasDeclaredProperty(type.target, name);
   }
   if (type.kind === "object") {
-    return type.properties.has(name);
+    return type.properties.has(name) || standardObjectInterfaceType.members.properties.has(name);
   }
   if (type.kind === "interface") {
-    return interfacePropertyTypes(type).has(name);
+    return interfacePropertyTypes(type).has(name) || standardObjectInterfaceType.members.properties.has(name);
   }
   if (type.kind === "classInstance") {
-    return type.members.propertyTypes.has(name) || type.members.instance.has(name);
+    return type.members.propertyTypes.has(name) || type.members.instance.has(name) || standardObjectInterfaceType.members.properties.has(name);
   }
   return propertyAccessType(type, name) !== undefined;
 }
@@ -18322,7 +18492,7 @@ function displayType(type: CheckedType): string {
     return displayType(type.value);
   }
   if (type.kind === "namespaceAndType") {
-    return type.namespace.name;
+    return valueMeaning(type.type) === undefined ? type.namespace.name : `typeof ${type.namespace.name}`;
   }
   if (type.kind === "unqualifiedStaticMember" || type.kind === "unqualifiedInstanceMember") {
     return "unknown";
