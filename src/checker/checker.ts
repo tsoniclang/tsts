@@ -223,7 +223,7 @@ type CheckedType = { readonly contextualDiagnostics?: boolean } & (
   | { readonly kind: "indexedAccess"; readonly objectType: CheckedType; readonly indexType: CheckedType }
   | { readonly kind: "keyof"; readonly target: CheckedType }
   | { readonly kind: "iterable"; readonly elementType: CheckedType }
-  | { readonly kind: "moduleNamespace"; readonly moduleSpecifier: string; readonly diagnosticName: string; readonly exports: ReadonlyMap<string, CheckedType>; readonly exportEquals?: CheckedType }
+  | { readonly kind: "moduleNamespace"; readonly moduleSpecifier: string; readonly diagnosticName: string; readonly exports: ReadonlyMap<string, CheckedType>; readonly exportEquals?: CheckedType; readonly localDeclarationNames?: ReadonlySet<string>; readonly localExportAliases?: ReadonlyMap<string, string> }
   | { readonly kind: "namespace"; readonly name: string; readonly exports: ReadonlyMap<string, CheckedType>; readonly enumLike?: boolean; readonly readonlyExports?: ReadonlySet<string> }
   | { readonly kind: "namespaceAndType"; readonly namespace: Extract<CheckedType, { readonly kind: "namespace" }>; readonly type: CheckedType }
   | { readonly kind: "nonNullable"; readonly target: CheckedType }
@@ -851,6 +851,8 @@ interface SubstitutionContext {
 interface ModuleExportInfo {
   readonly exports: ReadonlyMap<string, CheckedType>;
   readonly exportEquals?: CheckedType;
+  readonly localDeclarationNames?: ReadonlySet<string>;
+  readonly localExportAliases?: ReadonlyMap<string, string>;
 }
 
 interface FunctionOverloadInfo {
@@ -2053,6 +2055,8 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
       diagnosticName: moduleNamespaceDiagnosticName(moduleSpecifier),
       exports: exportInfo.exports,
       ...(exportInfo.exportEquals === undefined ? {} : { exportEquals: exportInfo.exportEquals }),
+      ...(exportInfo.localDeclarationNames === undefined ? {} : { localDeclarationNames: exportInfo.localDeclarationNames }),
+      ...(exportInfo.localExportAliases === undefined ? {} : { localExportAliases: exportInfo.localExportAliases }),
     };
   };
   const resolvedModuleType = (moduleSpecifier: string, resolvedModule: ResolvedModule): CheckedType => {
@@ -2073,6 +2077,8 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
     if (sourceFileIsExternalModule(sourceFile.sourceFile)) {
       shadowStatementLocalDeclarationNames(environment, sourceFile.sourceFile.statements);
     }
+    const localDeclarationNames = collectModuleLocalDeclarationNames(sourceFile.sourceFile.statements);
+    const localExportAliases = collectModuleLocalExportAliases(sourceFile.sourceFile.statements);
     const exportState: CheckState = {
       ...emptyCheckState(program.options),
       resolveExternalModule: moduleSpecifier => {
@@ -2130,7 +2136,12 @@ function programModuleResolver(program: Program, globalEnvironment: TypeEnvironm
       mergeExportEqualsNamespaceExports(exports, exportEquals);
     }
     applyModuleAugmentations(fileName, exports);
-    const info = exportEquals === undefined ? { exports } : { exports, exportEquals };
+    const info = {
+      exports,
+      ...(exportEquals === undefined ? {} : { exportEquals }),
+      ...(localDeclarationNames.size === 0 ? {} : { localDeclarationNames }),
+      ...(localExportAliases.size === 0 ? {} : { localExportAliases }),
+    };
     exportCache.set(fileName, info);
     return info;
   };
@@ -2486,6 +2497,9 @@ function addJavaScriptCommonJSBindings(sourceFile: SourceFile, environment: Type
   if (!environment.has("exports")) {
     environment.set("exports", anyType);
   }
+  if (!environment.has("require")) {
+    environment.set("require", anyType);
+  }
 }
 
 function sourceFileHasJavaScriptCommonJSIndicator(sourceFile: SourceFile): boolean {
@@ -2593,6 +2607,33 @@ function collectReExports(statement: Extract<Statement, { readonly kind: Kind.Ex
     const localName = element.propertyName === undefined ? exportedName : moduleExportNameText(element.propertyName);
     mergeModuleExport(exports, exportedName, reexported?.exports.get(localName) ?? anyType);
   }
+}
+
+function collectModuleLocalDeclarationNames(statements: readonly Statement[]): ReadonlySet<string> {
+  const names = new Set<string>();
+  for (const statement of statements) {
+    for (const name of statementLocalDeclarationNames(statement)) {
+      names.add(name);
+    }
+  }
+  return names;
+}
+
+function collectModuleLocalExportAliases(statements: readonly Statement[]): ReadonlyMap<string, string> {
+  const aliases = new Map<string, string>();
+  for (const statement of statements) {
+    if (!isExportDeclaration(statement) || statement.moduleSpecifier !== undefined || statement.exportClause === undefined || !isNamedExports(statement.exportClause)) {
+      continue;
+    }
+    for (const element of statement.exportClause.elements) {
+      const exportedName = moduleExportNameText(element.name);
+      const localName = element.propertyName === undefined ? exportedName : moduleExportNameText(element.propertyName);
+      if (localName !== exportedName && !aliases.has(localName)) {
+        aliases.set(localName, exportedName);
+      }
+    }
+  }
+  return aliases;
 }
 
 function collectModuleExport(statement: Statement, exports: Map<string, CheckedType>, environment: TypeEnvironment): void {
@@ -4118,6 +4159,9 @@ function checkExportAssignment(statement: Extract<Statement, { readonly kind: Ki
   if (statement.isExportEquals && (modifiers.length !== 1 || modifiers[0]?.kind !== Kind.ExportKeyword)) {
     state.diagnostics.push(createDiagnostic(1120));
   }
+  if (statement.isExportEquals && statementIsInSourceFile(statement) && moduleKindTargetsEcmaScriptModules(state.options.module)) {
+    state.diagnostics.push(createDiagnostic(1203));
+  }
   if (ambient && !isEntityNameExpression(statement.expression)) {
     state.diagnostics.push(createDiagnostic(2714));
     return;
@@ -5047,9 +5091,27 @@ function namedImportType(statement: ImportDeclaration, specifier: ImportSpecifie
     }
   }
   if (moduleType !== undefined) {
-    state.diagnostics.push(createDiagnostic(2305, quotedModuleSpecifier(statement), importedName));
+    if (moduleType.exportEquals !== undefined) {
+      reportExportEqualsNamedImportDiagnostic(statement, importedName, state);
+      return anyType;
+    }
+    reportMissingNamedImportDiagnostic(statement, importedName, moduleType, state);
   }
   return anyType;
+}
+
+function reportMissingNamedImportDiagnostic(statement: ImportDeclaration, importedName: string, moduleType: Extract<CheckedType, { readonly kind: "moduleNamespace" }>, state: CheckState): void {
+  const moduleSpecifier = quotedModuleSpecifier(statement);
+  const exportedAlias = moduleType.localExportAliases?.get(importedName);
+  if (exportedAlias !== undefined) {
+    state.diagnostics.push(createDiagnostic(2460, moduleSpecifier, importedName, exportedAlias));
+    return;
+  }
+  if (moduleType.localDeclarationNames?.has(importedName) === true) {
+    state.diagnostics.push(createDiagnostic(2459, moduleSpecifier, importedName));
+    return;
+  }
+  state.diagnostics.push(createDiagnostic(2305, moduleSpecifier, importedName));
 }
 
 function moduleExportNameText(name: { readonly text: string }): string {
@@ -5060,6 +5122,34 @@ function allowSyntheticDefaultImports(options: CompilerOptions): boolean {
   return options.allowSyntheticDefaultImports === true
     || options.esModuleInterop === true
     || (options.allowSyntheticDefaultImports === undefined && options.module === "system");
+}
+
+function moduleKindTargetsEcmaScriptModules(moduleKind: CompilerOptions["module"]): boolean {
+  return moduleKind === "es2015"
+    || moduleKind === "es2020"
+    || moduleKind === "es2022"
+    || moduleKind === "esnext"
+    || moduleKind === "node16"
+    || moduleKind === "node18"
+    || moduleKind === "node20"
+    || moduleKind === "nodenext"
+    || moduleKind === "preserve";
+}
+
+function reportExportEqualsNamedImportDiagnostic(statement: ImportDeclaration, importedName: string, state: CheckState): void {
+  const moduleSpecifier = quotedModuleSpecifier(statement);
+  const ecmaScriptModuleTarget = moduleKindTargetsEcmaScriptModules(state.options.module);
+  state.diagnostics.push(createDiagnostic(2497, ecmaScriptModuleTarget ? "allowSyntheticDefaultImports" : "esModuleInterop"));
+  const defaultImportAllowed = allowSyntheticDefaultImports(state.options);
+  if (ecmaScriptModuleTarget) {
+    state.diagnostics.push(createDiagnostic(defaultImportAllowed ? 2595 : 2596, importedName));
+    return;
+  }
+  if (state.isJavaScriptFile) {
+    state.diagnostics.push(createDiagnostic(defaultImportAllowed ? 2597 : 2598, importedName));
+    return;
+  }
+  state.diagnostics.push(createDiagnostic(defaultImportAllowed ? 2616 : 2617, importedName, importedName, moduleSpecifier));
 }
 
 function syntheticDefaultImportType(moduleType: Extract<CheckedType, { readonly kind: "moduleNamespace" }>): CheckedType | undefined {

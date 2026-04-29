@@ -143,6 +143,90 @@ describe("program groundwork", () => {
     assert.deepEqual(result.emittedFiles.map(file => file.outputFileName), ["dist/src/index.js", "dist/src/dep.js"]);
   });
 
+  it("distinguishes missing imports from non-exported local declarations", () => {
+    const files = new Map<string, string>([
+      ["src/a.ts", "declare function foo(): any;\ndeclare function bar(): any;\nexport { foo };"],
+      ["src/b.ts", "import { bar, baz } from \"./a\";"],
+    ]);
+    const host: CompilerHost = {
+      getCurrentDirectory: () => ".",
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/b.ts"], { module: "commonjs", target: "es2015" }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [2459, 2305]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Module '\"./a\"' declares 'bar' locally, but it is not exported.",
+      "Module '\"./a\"' has no exported member 'baz'.",
+    ]);
+  });
+
+  it("reports the exported alias for missing imports of renamed local exports", () => {
+    const files = new Map<string, string>([
+      ["src/a.ts", "declare function foo(): any;\ndeclare function bar(): any;\nexport { foo, bar as baz };"],
+      ["src/b.ts", "import { foo, bar } from \"./a\";"],
+    ]);
+    const host: CompilerHost = {
+      getCurrentDirectory: () => ".",
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/b.ts"], { module: "commonjs", target: "es2015" }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [2460]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Module '\"./a\"' declares 'bar' locally, but it is exported as 'baz'.",
+    ]);
+  });
+
+  it("uses export-assignment interop diagnostics for named imports from export-equals modules", () => {
+    const files = new Map<string, string>([
+      ["src/a.ts", "class Foo {}\nexport = Foo;"],
+      ["src/b.ts", "import { Foo } from \"./a\";"],
+    ]);
+    const host: CompilerHost = {
+      getCurrentDirectory: () => ".",
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/b.ts"], { module: "commonjs", target: "es2015", esModuleInterop: false, ignoreDeprecations: "6.0" }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [2497, 2617]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "This module can only be referenced with ECMAScript imports/exports by turning on the 'esModuleInterop' flag and referencing its default export.",
+      "'Foo' can only be imported by using 'import Foo = require(\"./a\")' or by turning on the 'esModuleInterop' flag and using a default import.",
+    ]);
+  });
+
+  it("reports export-equals declarations in ECMAScript module output", () => {
+    const files = new Map<string, string>([
+      ["src/a.ts", "class Foo {}\nexport = Foo;"],
+      ["src/b.ts", "import { Foo } from \"./a\";"],
+    ]);
+    const host: CompilerHost = {
+      getCurrentDirectory: () => ".",
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/a.ts", "src/b.ts"], { module: "es2015", target: "es2015", esModuleInterop: false, ignoreDeprecations: "6.0" }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.code), [1203, 2497, 2596]);
+    assert.deepEqual(diagnostics.map(diagnostic => diagnostic.message), [
+      "Export assignment cannot be used when targeting ECMAScript modules. Consider using 'export default' or another module format instead.",
+      "This module can only be referenced with ECMAScript imports/exports by turning on the 'allowSyntheticDefaultImports' flag and referencing its default export.",
+      "'Foo' can only be imported by turning on the 'esModuleInterop' flag and using a default import.",
+    ]);
+  });
+
   it("resolves ESM .js specifiers to TypeScript source files", () => {
     const files = new Map<string, string>([
       ["src/index.ts", "import { value } from \"./dep.js\"; export const answer = value;"],
@@ -217,6 +301,25 @@ describe("program groundwork", () => {
     assert.deepEqual(diagnostics, []);
     assert.deepEqual(program.sourceFiles.map(file => file.fileName), ["src/index.ts"]);
     assert.deepEqual(program.sourceFiles[0]!.resolvedModules, [{ specifier: "pkg", fileName: "node_modules/pkg/index.js", untyped: true }]);
+  });
+
+  it("provides CommonJS require as a JavaScript commonjs binding", () => {
+    const files = new Map<string, string>([
+      ["src/a.js", "export const A = require(\"pkg\");"],
+      ["src/b.ts", "import { A } from \"./a\"; A;"],
+      ["node_modules/pkg/package.json", "{\"name\":\"pkg\",\"exports\":\"./index.js\"}"],
+      ["node_modules/pkg/index.js", "module.exports = 1;"],
+    ]);
+    const host: CompilerHost = {
+      getCurrentDirectory: () => ".",
+      readFile: fileName => files.get(fileName),
+      useCaseSensitiveFileNames: () => true,
+    };
+
+    const program = createProgram(["src/b.ts"], { module: "es2015", moduleResolution: "bundler", allowJs: true, checkJs: true, noEmit: true }, host);
+    const diagnostics = getProgramDiagnostics(program);
+
+    assert.deepEqual(diagnostics, []);
   });
 
   it("resolves absolute JS imports with allowJs and reports JSX option diagnostics without blocking checks", () => {
