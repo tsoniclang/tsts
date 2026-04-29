@@ -1151,9 +1151,7 @@ export class Parser {
     }
     const typeParameters: TypeParameterDeclaration[] = [];
     do {
-      const modifiers = this.#current().kind === Kind.ConstKeyword
-        ? createNodeArray([createToken(this.#advance().kind as ModifierSyntaxKind) as ModifierLike])
-        : undefined;
+      const modifiers = this.#parseTypeParameterModifiers();
       const name = this.#parseIdentifier();
       const constraint = this.#consumeOptional(Kind.ExtendsKeyword) ? this.#parseType() : undefined;
       const defaultType = this.#consumeOptional(Kind.EqualsToken) ? this.#parseType() : undefined;
@@ -1164,6 +1162,25 @@ export class Parser {
     } while (this.#current().kind !== Kind.GreaterThanToken);
     this.#parseExpectedGreaterThan();
     return createNodeArray(typeParameters);
+  }
+
+  #parseTypeParameterModifiers(): NodeArray<ModifierLike> | undefined {
+    const modifiers: ModifierLike[] = [];
+    while (this.#current().kind === Kind.ConstKeyword || this.#current().kind === Kind.InKeyword || this.#isOutTypeParameterModifier()) {
+      modifiers.push(createToken(this.#advance().kind as ModifierSyntaxKind) as ModifierLike);
+    }
+    return modifiers.length === 0 ? undefined : createNodeArray(modifiers);
+  }
+
+  #isOutTypeParameterModifier(): boolean {
+    if (this.#current().kind !== Kind.OutKeyword) {
+      return false;
+    }
+    const nextKind = this.#tokens[this.#index + 1]?.kind;
+    return nextKind !== Kind.CommaToken
+      && nextKind !== Kind.EqualsToken
+      && nextKind !== Kind.GreaterThanToken
+      && nextKind !== undefined;
   }
 
   #parseHeritageClauses(): NodeArray<ReturnType<typeof createHeritageClause>> | undefined {

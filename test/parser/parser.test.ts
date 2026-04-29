@@ -1189,6 +1189,26 @@ describe("TS-Go parser groundwork", () => {
     assert.equal(isClassExpression(firstProperty.objectAssignmentInitializer!), true);
   });
 
+  it("parses variance modifiers on type parameters without stealing out identifiers", () => {
+    const sourceFile = parseSourceFile([
+      "interface Effect<out A, in E, in out R> {}",
+      "type Alias<out = string> = out;",
+    ].join("\n"));
+
+    assert.equal(isInterfaceDeclaration(sourceFile.statements[0]!), true);
+    if (!isInterfaceDeclaration(sourceFile.statements[0]!)) throw new Error("Expected interface declaration");
+    assert.deepEqual(sourceFile.statements[0]!.typeParameters?.map(typeParameter => typeParameter.modifiers?.map(modifier => modifier.kind) ?? []), [
+      [Kind.OutKeyword],
+      [Kind.InKeyword],
+      [Kind.InKeyword, Kind.OutKeyword],
+    ]);
+
+    assert.equal(isTypeAliasDeclaration(sourceFile.statements[1]!), true);
+    if (!isTypeAliasDeclaration(sourceFile.statements[1]!)) throw new Error("Expected type alias declaration");
+    assert.equal(sourceFile.statements[1]!.typeParameters?.[0]?.name.text, "out");
+    assert.equal(sourceFile.statements[1]!.typeParameters?.[0]?.modifiers, undefined);
+  });
+
   it("preserves parameter property modifiers for checker diagnostics", () => {
     const sourceFile = parseSourceFile("const f = (public value: string) => value;");
     const statement = sourceFile.statements[0]!;
