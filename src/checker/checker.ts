@@ -2609,7 +2609,7 @@ function ambientModuleExports(statements: readonly Statement[], environment: Typ
   return { exports };
 }
 
-function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, reportAmbientStatementDiagnostic = true): void {
+function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, reportAmbientStatementDiagnostic = true, checkExpectedReturnType = expectedReturnType !== undefined): void {
   prebindStatementDeclarations(statements, state, environment, ambient);
   checkStatementModifierGrammar(statements, state);
   checkHoistedAndBlockScopedDeclarationDuplicates(statements, state);
@@ -2641,7 +2641,7 @@ function checkStatements(statements: readonly Statement[], state: CheckState, en
       state.diagnostics.push(createDiagnostic(7027));
       unreachableDiagnosticReported = true;
     }
-    checkStatement(statement, activeState, environment, expectedReturnType, ambient, statementListHasExportedElements, statement === ambientDiagnosticStatement);
+    checkStatement(statement, activeState, environment, expectedReturnType, ambient, statementListHasExportedElements, statement === ambientDiagnosticStatement, false, checkExpectedReturnType);
     if (reachable) {
       const termination = statementListTermination(statement);
       if (termination !== undefined) {
@@ -2653,7 +2653,7 @@ function checkStatements(statements: readonly Statement[], state: CheckState, en
   }
 }
 
-function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, statementListHasExportedElements: boolean, ambientStatementDiagnosticReported = false, singleStatementContext = false): void {
+function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, statementListHasExportedElements: boolean, ambientStatementDiagnosticReported = false, singleStatementContext = false, checkExpectedReturnType = expectedReturnType !== undefined): void {
   const moduleElementContextIsValid = statementIsInModuleElementContext(statement);
   if (isImportDeclaration(statement)) {
     if (checkModuleElementContext(statement, state)) {
@@ -2718,7 +2718,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
   if (isModuleDeclaration(statement)) {
     checkModuleElementContext(statement, state);
     checkJavaScriptDeclareModifier(statement, state);
-    checkModuleDeclaration(statement, state, environment, expectedReturnType, ambient);
+    checkModuleDeclaration(statement, state, environment, expectedReturnType, ambient, checkExpectedReturnType);
     return;
   }
   if (isExportDeclaration(statement)) {
@@ -2742,10 +2742,10 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     const conditionIsTrue = conditionIsSyntacticTrue(statement.expression);
     const conditionIsFalse = conditionIsSyntacticFalse(statement.expression);
     const thenState = conditionIsFalse ? unreachableEmbeddedStatementState(statement.thenStatement, state) : state;
-    checkStatement(statement.thenStatement, thenState, narrowedEnvironmentForCondition(statement.expression, state, environment), expectedReturnType, ambient, false, false, true);
+    checkStatement(statement.thenStatement, thenState, narrowedEnvironmentForCondition(statement.expression, state, environment), expectedReturnType, ambient, false, false, true, checkExpectedReturnType);
     if (statement.elseStatement !== undefined) {
       const elseState = conditionIsTrue ? unreachableEmbeddedStatementState(statement.elseStatement, state) : state;
-      checkStatement(statement.elseStatement, elseState, narrowedEnvironmentForNegatedCondition(statement.expression, state, environment), expectedReturnType, ambient, false, false, true);
+      checkStatement(statement.elseStatement, elseState, narrowedEnvironmentForNegatedCondition(statement.expression, state, environment), expectedReturnType, ambient, false, false, true, checkExpectedReturnType);
     }
     return;
   }
@@ -2755,11 +2755,11 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     const bodyState = conditionIsSyntacticFalse(statement.expression)
       ? unreachableEmbeddedStatementState(statement.statement, enterIteration(state))
       : enterIteration(state);
-    checkStatement(statement.statement, bodyState, cloneTypeEnvironment(environment), expectedReturnType, ambient, false, false, true);
+    checkStatement(statement.statement, bodyState, cloneTypeEnvironment(environment), expectedReturnType, ambient, false, false, true, checkExpectedReturnType);
     return;
   }
   if (isDoStatement(statement)) {
-    checkStatement(statement.statement, enterIteration(state), cloneTypeEnvironment(environment), expectedReturnType, ambient, false, false, true);
+    checkStatement(statement.statement, enterIteration(state), cloneTypeEnvironment(environment), expectedReturnType, ambient, false, false, true, checkExpectedReturnType);
     const conditionType = inferExpression(statement.expression, state, environment);
     diagnoseSyntacticTruthyFalsyExpression(statement.expression, conditionType, state, environment);
     return;
@@ -2779,7 +2779,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     const bodyState = statement.condition !== undefined && conditionIsSyntacticFalse(statement.condition)
       ? unreachableEmbeddedStatementState(statement.statement, enterIteration(state))
       : enterIteration(state);
-    checkStatement(statement.statement, bodyState, loopEnvironment, expectedReturnType, ambient, false, false, true);
+    checkStatement(statement.statement, bodyState, loopEnvironment, expectedReturnType, ambient, false, false, true, checkExpectedReturnType);
     return;
   }
   if (isForInStatement(statement) || isForOfStatement(statement)) {
@@ -2792,7 +2792,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     if (isForOfStatement(statement)) {
       checkIterationInputType(iteratedType, state, "forOf");
     }
-    checkStatement(statement.statement, enterIteration(state), loopEnvironment, expectedReturnType, ambient, false, false, true);
+    checkStatement(statement.statement, enterIteration(state), loopEnvironment, expectedReturnType, ambient, false, false, true, checkExpectedReturnType);
     return;
   }
   if (isSwitchStatement(statement)) {
@@ -2803,7 +2803,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
       if (clause.kind === Kind.CaseClause) {
         inferExpression(clause.expression, state, environment);
       }
-      checkStatements(clause.statements, state, switchClauseEnvironment(statement.expression, statement.caseBlock.clauses, clauseIndex, state, environment), expectedReturnType, ambient, false);
+      checkStatements(clause.statements, state, switchClauseEnvironment(statement.expression, statement.caseBlock.clauses, clauseIndex, state, environment), expectedReturnType, ambient, false, checkExpectedReturnType);
     }
     return;
   }
@@ -2827,7 +2827,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
       state.diagnostics.push(createDiagnostic(1108));
     }
     const actual = statement.expression === undefined ? voidType : inferExpressionWithContext(statement.expression, state, environment, expectedReturnType);
-    if (expectedReturnType !== undefined) {
+    if (expectedReturnType !== undefined && checkExpectedReturnType) {
       if (strictOptionValue(state.options, "strictNullChecks") || statement.expression !== undefined || expectedReturnType.kind === "never") {
         checkAssignable(actual, expectedReturnType, state);
       } else if (
@@ -2845,16 +2845,16 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isTryStatement(statement)) {
-    const tryEnvironment = checkBlockInEnvironment(statement.tryBlock, state, environment, expectedReturnType);
+    const tryEnvironment = checkBlockInEnvironment(statement.tryBlock, state, environment, expectedReturnType, checkExpectedReturnType);
     if (statement.catchClause !== undefined) {
       const catchEnvironment = cloneTypeEnvironment(environment);
       if (statement.catchClause.variableDeclaration !== undefined) {
         checkVariableDeclaration(statement.catchClause.variableDeclaration, state, catchEnvironment, false);
       }
-      checkBlockInEnvironment(statement.catchClause.block, state, catchEnvironment, expectedReturnType);
+      checkBlockInEnvironment(statement.catchClause.block, state, catchEnvironment, expectedReturnType, checkExpectedReturnType);
     }
     if (statement.finallyBlock !== undefined) {
-      checkBlock(statement.finallyBlock, state, environment, expectedReturnType);
+      checkBlock(statement.finallyBlock, state, environment, expectedReturnType, checkExpectedReturnType);
     }
     if (statement.catchClause === undefined && (statement.finallyBlock === undefined || statementListTerminates(statement.finallyBlock.statements) === undefined) && statementListTerminates(statement.tryBlock.statements) === undefined) {
       copyOuterFlowTypes(tryEnvironment, environment);
@@ -2872,7 +2872,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     if (state.strictMode && isVariableStatement(statement.statement)) {
       state.diagnostics.push(createDiagnostic(1344));
     }
-    checkStatement(statement.statement, state, environment, expectedReturnType, ambient, false, false, singleStatementContext);
+    checkStatement(statement.statement, state, environment, expectedReturnType, ambient, false, false, singleStatementContext, checkExpectedReturnType);
     return;
   }
   if (isExpressionStatement(statement)) {
@@ -2881,7 +2881,7 @@ function checkStatement(statement: Statement, state: CheckState, environment: Ty
     return;
   }
   if (isBlock(statement)) {
-    checkBlock(statement, state, environment, expectedReturnType);
+    checkBlock(statement, state, environment, expectedReturnType, checkExpectedReturnType);
   }
 }
 
@@ -3901,13 +3901,13 @@ function isEntityNameExpression(expression: Expression): boolean {
   return isPropertyAccessExpression(expression) && isEntityNameExpression(expression.expression);
 }
 
-function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean): void {
+function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly kind: Kind.ModuleDeclaration }>, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, ambient: boolean, checkExpectedReturnType = expectedReturnType !== undefined): void {
   if (isMissingModuleDeclarationName(moduleDeclaration)) {
     state.diagnostics.push(createDiagnostic(moduleDeclaration.keyword === Kind.ModuleKeyword ? 2591 : 2304, moduleDeclaration.keyword === Kind.ModuleKeyword ? "module" : "namespace"));
   }
   if (isGlobalAugmentationDeclaration(moduleDeclaration)) {
     if (isModuleBlock(moduleDeclaration.body)) {
-      checkStatements(moduleDeclaration.body.statements, state, environment, expectedReturnType, true);
+      checkStatements(moduleDeclaration.body.statements, state, environment, expectedReturnType, true, true, checkExpectedReturnType);
     }
     return;
   }
@@ -3947,9 +3947,9 @@ function checkModuleDeclaration(moduleDeclaration: Extract<Statement, { readonly
     if (!moduleBodyAmbient) {
       checkNamespaceValueDeclarationDuplicates(moduleDeclaration.body.statements, state);
     }
-    checkStatements(moduleDeclaration.body.statements, enterLocalScope(moduleState), namespaceEnvironment, expectedReturnType, moduleBodyAmbient);
+    checkStatements(moduleDeclaration.body.statements, enterLocalScope(moduleState), namespaceEnvironment, expectedReturnType, moduleBodyAmbient, true, checkExpectedReturnType);
   } else if (isModuleDeclaration(moduleDeclaration.body)) {
-    checkModuleDeclaration(moduleDeclaration.body, moduleState, namespaceEnvironment, expectedReturnType, moduleBodyAmbient);
+    checkModuleDeclaration(moduleDeclaration.body, moduleState, namespaceEnvironment, expectedReturnType, moduleBodyAmbient, checkExpectedReturnType);
   }
   if (moduleName === undefined) {
     return;
@@ -8023,7 +8023,9 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
     }
   }
   const expectedReturnType = asyncFunctionBodyExpectedReturnType(declaredReturnType ?? contextualReturnType, isAsync);
-  const inferredReturnType = methodBodyReturnType(functionExpression.body, state.options, functionEnvironment);
+  const checkExpectedReturnType = declaredReturnType !== undefined;
+  const inferredReturnType = methodBodyReturnType(functionExpression.body, state.options, functionEnvironment, expectedReturnType);
+  const effectiveReturnType = declaredReturnType ?? asyncFunctionInferredReturnType(inferredReturnType, isAsync);
   const functionType: CheckedFunctionType = {
     kind: "function",
     typeParameters,
@@ -8033,14 +8035,14 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
     ...signatureRestParameterIndex(functionExpression.parameters),
     ...signatureMinArgumentCount(functionExpression.parameters, state, contextualFunction),
     ...signatureMaxArgumentCount(functionExpression.parameters, state, functionExpression.body),
-    returnType: declaredReturnType ?? inferredReturnType,
+    returnType: effectiveReturnType,
   };
   if (functionExpression.name !== undefined) {
     checkStrictModeIdentifier(functionExpression.name.text, state, false);
     setScopedEnvironmentValue(functionEnvironment, functionExpression.name.text, functionType);
   }
   const yieldType = functionExpression.asteriskToken === undefined ? undefined : generatorYieldType(declaredReturnType);
-  checkBlock(functionExpression.body, enterFunctionBodyWithAwaitContext(state, functionExpression.body, yieldType, isAsync), functionEnvironment, functionExpression.asteriskToken === undefined && declaredReturnType !== undefined ? expectedReturnType : undefined);
+  checkBlock(functionExpression.body, enterFunctionBodyWithAwaitContext(state, functionExpression.body, yieldType, isAsync), functionEnvironment, functionExpression.asteriskToken === undefined ? expectedReturnType : undefined, functionExpression.asteriskToken === undefined && checkExpectedReturnType);
   if (functionExpression.asteriskToken === undefined) {
     checkFunctionReturnCompleteness(
       functionExpression.body,
@@ -8052,13 +8054,13 @@ function inferFunctionExpression(functionExpression: FunctionExpression, state: 
   return functionType;
 }
 
-function checkBlock(block: Block, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): void {
-  checkBlockInEnvironment(block, state, environment, expectedReturnType);
+function checkBlock(block: Block, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, checkExpectedReturnType = expectedReturnType !== undefined): void {
+  checkBlockInEnvironment(block, state, environment, expectedReturnType, checkExpectedReturnType);
 }
 
-function checkBlockInEnvironment(block: Block, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): TypeEnvironment {
+function checkBlockInEnvironment(block: Block, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, checkExpectedReturnType = expectedReturnType !== undefined): TypeEnvironment {
   const blockEnvironment = cloneTypeEnvironment(environment);
-  checkStatements(block.statements, enterLocalScope(state), blockEnvironment, expectedReturnType, false);
+  checkStatements(block.statements, enterLocalScope(state), blockEnvironment, expectedReturnType, false, true, checkExpectedReturnType);
   return blockEnvironment;
 }
 
@@ -9255,12 +9257,26 @@ function inferJSDocAnnotatedExpression(expression: Expression, state: CheckState
 }
 
 function inferExpressionWithContext(expression: Expression, state: CheckState, environment: TypeEnvironment, contextualType: CheckedType | undefined): CheckedType {
-  const contextualFunction = contextualFunctionTypeForExpression(callableFunctionType(contextualType));
+  const contextualFunction = contextualFunctionTypeForExpression(contextualCallableFunctionType(contextualType));
   if (isArrowFunction(expression) && contextualFunction !== undefined) {
     return inferArrowFunction(expression, state, environment, contextualFunction.parameters, contextualFunction.returnType, false, contextualFunction);
   }
   if (isFunctionExpression(expression) && contextualFunction !== undefined) {
     return inferFunctionExpression(expression, state, environment, contextualFunction.parameters, contextualFunction.returnType, false, contextualFunction);
+  }
+  if (isConditionalExpression(expression) && contextualType !== undefined) {
+    const conditionType = inferExpression(expression.condition, state, environment);
+    diagnoseSyntacticTruthyFalsyExpression(expression.condition, conditionType, state, environment);
+    diagnoseUncalledFunctionCondition(expression.condition, conditionType, state, environment, expression.whenTrue, true);
+    const whenTrue = inferExpressionWithContext(expression.whenTrue, state, environment, contextualType);
+    const whenFalse = inferExpressionWithContext(expression.whenFalse, state, environment, contextualType);
+    if (whenTrue.kind === "any" || whenFalse.kind === "any") {
+      return anyType;
+    }
+    if (whenTrue.kind === "unresolved" || whenFalse.kind === "unresolved") {
+      return unresolvedType;
+    }
+    return isSameType(whenTrue, whenFalse) ? whenTrue : unionType([whenTrue, whenFalse]);
   }
   if (isObjectLiteralExpression(expression) && contextualType !== undefined) {
     return inferObjectLiteral(expression, state, environment, contextualType);
@@ -9366,6 +9382,12 @@ function contextualTupleType(contextualType: CheckedType | undefined): Extract<C
   }
   if (contextualType.kind === "typeAliasInstance") {
     return contextualTupleType(contextualType.target);
+  }
+  if (contextualType.kind === "union") {
+    const tupleMembers = contextualType.types
+      .map(contextualTupleType)
+      .filter((type): type is Extract<CheckedType, { readonly kind: "tuple" }> => type !== undefined);
+    return tupleMembers.length === 1 ? tupleMembers[0] : undefined;
   }
   return contextualType.kind === "tuple" ? contextualType : undefined;
 }
@@ -9671,19 +9693,26 @@ function asyncFunctionBodyExpectedReturnType(declaredReturnType: CheckedType | u
   if (!isAsync || declaredReturnType === undefined) {
     return declaredReturnType;
   }
-  const promised = promisedTypeOfPromise(declaredReturnType);
-  if (promised.kind !== "promised") {
-    return declaredReturnType;
-  }
-  return unionType([promised.type, promiseLikeType(promised.type)]);
+  const fulfilledType = awaitedType(declaredReturnType);
+  return unionType([fulfilledType, promiseLikeType(fulfilledType)]);
 }
 
 function asyncFunctionCompletenessReturnType(declaredReturnType: CheckedType | undefined, isAsync: boolean): CheckedType | undefined {
   if (!isAsync || declaredReturnType === undefined) {
     return declaredReturnType;
   }
-  const promised = promisedTypeOfPromise(declaredReturnType);
-  return promised.kind === "promised" ? promised.type : declaredReturnType;
+  return awaitedType(declaredReturnType);
+}
+
+function asyncFunctionInferredReturnType(returnType: CheckedType, isAsync: boolean): CheckedType {
+  return isAsync ? promiseType(awaitedType(returnType)) : returnType;
+}
+
+function contextualReturnTypePermitsUncheckedReturnExpression(type: CheckedType): boolean {
+  if (type.kind === "typeAliasInstance") {
+    return contextualReturnTypePermitsUncheckedReturnExpression(type.target);
+  }
+  return type.kind === "void";
 }
 
 function callableFunctionType(type: CheckedType | undefined): CheckedFunctionType | undefined {
@@ -9741,6 +9770,23 @@ function callableFunctionType(type: CheckedType | undefined): CheckedFunctionTyp
     }
   }
   return undefined;
+}
+
+function contextualCallableFunctionType(type: CheckedType | undefined): CheckedFunctionType | undefined {
+  const direct = callableFunctionType(type);
+  if (direct !== undefined) {
+    return direct;
+  }
+  if (type?.kind === "typeAliasInstance") {
+    return contextualCallableFunctionType(type.target);
+  }
+  if (type?.kind !== "union") {
+    return undefined;
+  }
+  const callableMembers = type.types
+    .map(member => contextualCallableFunctionType(member))
+    .filter((member): member is CheckedFunctionType => member !== undefined);
+  return callableMembers.length === 0 ? undefined : callableFromCallSignatures(callableMembers);
 }
 
 function callableFromCallSignatures(signatures: readonly CheckedFunctionType[]): CheckedFunctionType | undefined {
@@ -11893,7 +11939,10 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
     : bindTypePredicateParameterIndex(typeFromTypeNode(arrowFunction.type, arrowEnvironment, state), arrowFunction.parameters);
   const expectedBodyReturnType = asyncFunctionBodyExpectedReturnType(declaredReturnType ?? contextualReturnType, isAsync);
   const completenessReturnType = asyncFunctionCompletenessReturnType(declaredReturnType, isAsync);
-  const inferredReturnType = inferConciseBody(arrowFunction.body, enterArrowFunction(state, isAsync), arrowEnvironment, expectedBodyReturnType, declaredReturnType !== undefined, completenessReturnType !== undefined, completenessReturnType);
+  const checkExpectedReturnType = declaredReturnType !== undefined
+    || !isBlock(arrowFunction.body) && contextualReturnType !== undefined && !contextualReturnTypePermitsUncheckedReturnExpression(contextualReturnType);
+  const inferredReturnType = inferConciseBody(arrowFunction.body, enterArrowFunction(state, isAsync), arrowEnvironment, expectedBodyReturnType, checkExpectedReturnType, completenessReturnType !== undefined, completenessReturnType);
+  const effectiveReturnType = declaredReturnType ?? asyncFunctionInferredReturnType(inferredReturnType, isAsync);
   return {
     kind: "function",
     typeParameters,
@@ -11903,7 +11952,7 @@ function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, env
     ...signatureRestParameterIndex(arrowFunction.parameters),
     ...signatureMinArgumentCount(arrowFunction.parameters, state, contextualFunction),
     ...signatureMaxArgumentCount(arrowFunction.parameters, state),
-    returnType: declaredReturnType ?? inferredReturnType,
+    returnType: effectiveReturnType,
   };
 }
 
@@ -11944,8 +11993,8 @@ function removeUninitializedStaticProperties(type: CheckedType): CheckedType {
 
 function inferConciseBody(body: ConciseBody, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined, checkExpectedReturnType: boolean, requireReturnCompleteness: boolean, completenessReturnType = expectedReturnType): CheckedType {
   if (isBlock(body)) {
-    checkBlock(body, { ...state, currentFunctionHasImplicitReturn: functionHasImplicitReturn(body) }, environment, checkExpectedReturnType ? expectedReturnType : undefined);
-    const inferredReturnType = methodBodyReturnType(body, state.options, environment);
+    checkBlock(body, { ...state, currentFunctionHasImplicitReturn: functionHasImplicitReturn(body) }, environment, expectedReturnType, checkExpectedReturnType);
+    const inferredReturnType = methodBodyReturnType(body, state.options, environment, expectedReturnType);
     if (requireReturnCompleteness && completenessReturnType !== undefined) {
       checkFunctionReturnCompleteness(body, completenessReturnType, state);
     } else {
@@ -11953,7 +12002,9 @@ function inferConciseBody(body: ConciseBody, state: CheckState, environment: Typ
     }
     return inferredReturnType;
   }
-  const bodyType = inferExpression(body, state, environment);
+  const bodyType = expectedReturnType === undefined
+    ? inferExpression(body, state, environment)
+    : inferExpressionWithContext(body, state, environment, expectedReturnType);
   if (expectedReturnType !== undefined && checkExpectedReturnType) {
     checkAssignable(bodyType, expectedReturnType, state);
   }
@@ -13254,7 +13305,7 @@ function inferObjectLiteral(expression: Extract<Expression, { readonly kind: Kin
         const keyType = objectLiteralPropertyKeyType(property.name, environment);
         const expectedInitializerType = keyType === undefined ? undefined : contextualObjectPropertyInitializerTypeForKey(contextualType, keyType);
         const expectedAssignmentType = keyType === undefined ? undefined : contextualObjectPropertyTypeForKey(contextualType, keyType);
-        const propertyType = inferExpressionWithContext(property.initializer, state, environment, expectedInitializerType);
+        const propertyType = inferObjectLiteralPropertyInitializer(property.initializer, state, environment, expectedInitializerType, keyType === undefined ? false : contextualObjectPropertyIsOptionalForKey(contextualType, keyType));
         const expectedCheckType = optionalPropertyAssignmentCheckType(propertyType, expectedInitializerType, expectedAssignmentType);
         if (expectedCheckType !== undefined && !isAssignableTo(propertyType, expectedCheckType, state.options)) {
           checkAssignable(propertyType, expectedCheckType, state);
@@ -13265,7 +13316,7 @@ function inferObjectLiteral(expression: Extract<Expression, { readonly kind: Kin
       contextualDiagnostics = checkExcessObjectLiteralProperty(name, contextualType, state) || contextualDiagnostics;
       const expectedInitializerType = contextualObjectPropertyInitializerType(contextualType, name);
       const expectedAssignmentType = contextualType === undefined ? undefined : contextualObjectPropertyAssignmentType(contextualType, name, state.options);
-      const propertyType = inferExpressionWithContext(property.initializer, state, environment, expectedInitializerType);
+      const propertyType = inferObjectLiteralPropertyInitializer(property.initializer, state, environment, expectedInitializerType, contextualObjectPropertyIsOptional(contextualType, name));
       const expectedCheckType = optionalPropertyAssignmentCheckType(propertyType, expectedInitializerType, expectedAssignmentType);
       if (expectedCheckType !== undefined && !isAssignableTo(propertyType, expectedCheckType, state.options)) {
         checkAssignable(propertyType, expectedCheckType, state);
@@ -13484,6 +13535,9 @@ function contextualObjectAllowsProperty(contextualType: CheckedType, propertyNam
   if (contextualType.kind === "typeAliasInstance") {
     return contextualObjectAllowsProperty(contextualType.target, propertyName);
   }
+  if (contextualType.kind === "union") {
+    return contextualType.types.some(member => contextualObjectAllowsProperty(member, propertyName));
+  }
   if (contextualType.kind === "record") {
     return true;
   }
@@ -13527,6 +13581,12 @@ function contextualObjectPropertyType(contextualType: CheckedType | undefined, p
   }
   if (contextualType.kind === "typeAliasInstance") {
     return contextualObjectPropertyType(contextualType.target, propertyName);
+  }
+  if (contextualType.kind === "union") {
+    const propertyTypes = contextualType.types
+      .map(member => contextualObjectPropertyType(member, propertyName))
+      .filter((type): type is CheckedType => type !== undefined);
+    return propertyTypes.length === 0 ? undefined : unionType(propertyTypes);
   }
   if (contextualType.kind === "record") {
     return recordPropertyAccessType(contextualType, propertyName);
@@ -13609,6 +13669,21 @@ function contextualObjectPropertyInitializerTypeForKey(contextualType: CheckedTy
   return contextualObjectPropertyTypeForKey(contextualType, keyType);
 }
 
+function inferObjectLiteralPropertyInitializer(initializer: Expression, state: CheckState, environment: TypeEnvironment, contextualType: CheckedType | undefined, optionalProperty: boolean): CheckedType {
+  if (optionalProperty && contextualType !== undefined) {
+    const contextualFunction = contextualFunctionTypeForExpression(contextualCallableFunctionType(contextualType));
+    if (contextualFunction !== undefined) {
+      if (isArrowFunction(initializer)) {
+        return inferArrowFunction(initializer, state, environment, contextualFunction.parameters, undefined, false, contextualFunction);
+      }
+      if (isFunctionExpression(initializer)) {
+        return inferFunctionExpression(initializer, state, environment, contextualFunction.parameters, undefined, false, contextualFunction);
+      }
+    }
+  }
+  return inferExpressionWithContext(initializer, state, environment, contextualType);
+}
+
 function contextualObjectPropertyIsOptional(contextualType: CheckedType | undefined, propertyName: string): boolean {
   if (contextualType === undefined) {
     return false;
@@ -13624,6 +13699,25 @@ function contextualObjectPropertyIsOptional(contextualType: CheckedType | undefi
   }
   if (contextualType.kind === "classInstance") {
     return contextualType.members.optionalProperties.has(propertyName);
+  }
+  return false;
+}
+
+function contextualObjectPropertyIsOptionalForKey(contextualType: CheckedType | undefined, keyType: CheckedType): boolean {
+  if (contextualType === undefined) {
+    return false;
+  }
+  if (contextualType.kind === "typeAliasInstance") {
+    return contextualObjectPropertyIsOptionalForKey(contextualType.target, keyType);
+  }
+  if (keyType.kind === "typeAliasInstance") {
+    return contextualObjectPropertyIsOptionalForKey(contextualType, keyType.target);
+  }
+  if (keyType.kind === "stringLiteral") {
+    return contextualObjectPropertyIsOptional(contextualType, keyType.value);
+  }
+  if (keyType.kind === "numberLiteral") {
+    return contextualObjectPropertyIsOptional(contextualType, numericPropertyNameText(keyType.value));
   }
   return false;
 }
@@ -13661,13 +13755,13 @@ function methodDeclarationType(method: MethodDeclaration, environment: TypeEnvir
   return { kind: "function", typeParameters, parameters, parameterNames: parameterDisplayNames(method.parameters), ...signatureRestParameterIndex(method.parameters), ...signatureMinArgumentCount(method.parameters, state), ...signatureMaxArgumentCount(method.parameters, state, method.body), returnType };
 }
 
-function methodBodyReturnType(body: Block | undefined, options?: CompilerOptions, environment?: TypeEnvironment): CheckedType {
+function methodBodyReturnType(body: Block | undefined, options?: CompilerOptions, environment?: TypeEnvironment, contextualReturnType?: CheckedType): CheckedType {
   if (body === undefined) {
     return unresolvedType;
   }
   const returns = returnStatementsInBlock(body)
     .filter(statement => statement.expression !== undefined)
-    .map(statement => returnExpressionType(statement.expression!, options, environment));
+    .map(statement => returnExpressionType(statement.expression!, options, environment, contextualReturnType));
   if (returns.length === 0) {
     return voidType;
   }
@@ -13676,9 +13770,11 @@ function methodBodyReturnType(body: Block | undefined, options?: CompilerOptions
     : unionType(returns);
 }
 
-function returnExpressionType(expression: Expression, options?: CompilerOptions, environment?: TypeEnvironment): CheckedType {
+function returnExpressionType(expression: Expression, options?: CompilerOptions, environment?: TypeEnvironment, contextualType?: CheckedType): CheckedType {
   const type = environment !== undefined
-    ? inferExpression(expression, emptyCheckState(options), environment)
+    ? contextualType === undefined
+      ? inferExpression(expression, emptyCheckState(options), environment)
+      : inferExpressionWithContext(expression, emptyCheckState(options), environment, contextualType)
     : literalExpressionType(expression) ?? anyType;
   if (!strictOptionValue(options ?? {}, "strictNullChecks") && (type.kind === "null" || type.kind === "undefined")) {
     return anyType;
