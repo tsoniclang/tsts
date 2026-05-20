@@ -11,3 +11,4 @@ export * from "./text.js";
 export * from "./stack.js";
 export * from "./version.js";
 export * from "./core.js";
+export * from "./pattern.js";
