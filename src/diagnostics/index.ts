@@ -1,11 +1,23 @@
 /**
- * Diagnostic message catalog (generated from diagnosticMessages.json) plus core types.
+ * Diagnostic message catalog and emission infrastructure.
  *
  * Mirrors TS-Go internal/diagnostics/.
  *
- * Status: empty placeholder. Generate from diagnosticMessages.json + extraDiagnosticMessages.json.
+ * Status: types in place; message catalog generation pending.
  *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * The TS-Go diagnostic system has two source files:
+ *   - Upstream TypeScript: src/compiler/diagnosticMessages.json
+ *     (~9500 messages, codes 1001-9999)
+ *   - TS-Go-specific: internal/diagnostics/extraDiagnosticMessages.json
+ *     (codes 100000+; vendored at _vendor/tsgo/extraDiagnosticMessages.json)
+ *
+ * Both are JSON; TS-Go's generate.go produces diagnostics_generated.go from
+ * them. TSTS will produce messages.generated.ts via tools/generate-diagnostics.ts
+ * (forthcoming).
+ *
+ * The upstream diagnosticMessages.json requires the upstream TypeScript
+ * submodule to be initialized (see _submodules/TypeScript). Until then,
+ * only extraDiagnosticMessages.json is consumable.
  */
 
-export {};
+export type { Diagnostic, DiagnosticMessage, SourceFileSlim } from "./types.js";
