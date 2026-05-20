@@ -1,11 +1,10 @@
 /**
- * Virtual filesystem abstraction (real FS + in-memory for tests).
+ * Virtual filesystem abstraction.
  *
- * Mirrors TS-Go internal/vfs/.
- *
- * Status: empty placeholder. Port from Go.
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * Port of TS-Go internal/vfs/. Currently includes the FS interface and
+ * an in-memory implementation for tests. Real Node-fs adapter and
+ * watching/caching implementations come later.
  */
 
-export {};
+export * from "./vfs.js";
+export * from "./memory.js";

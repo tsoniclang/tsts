@@ -53,6 +53,7 @@ export function packageJSONFromValue(raw: JsonValue): PackageJSON {
 function readString(obj: { readonly [key: string]: JsonValue }, key: string): Expected<string> {
   if (!(key in obj)) return absent;
   const v = obj[key];
+  if (v === undefined) return absent;
   if (v === null) return { state: "null", actualJSONType: "null" };
   const actual = jsonTypeOf(v);
   if (typeof v !== "string") return { state: "wrong-type", actualJSONType: actual };
@@ -65,6 +66,7 @@ function readStringMap(
 ): Expected<ReadonlyMap<string, string>> {
   if (!(key in obj)) return absent;
   const v = obj[key];
+  if (v === undefined) return absent;
   if (v === null) return { state: "null", actualJSONType: "null" };
   const actual = jsonTypeOf(v);
   if (!isJsonObject(v)) return { state: "wrong-type", actualJSONType: actual };

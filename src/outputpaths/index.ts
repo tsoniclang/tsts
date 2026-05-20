@@ -1,11 +1,7 @@
 /**
- * Resolving output paths based on rootDir, outDir, declarationDir, etc.
+ * Output path resolution.
  *
- * Mirrors TS-Go internal/outputpaths/.
- *
- * Status: empty placeholder. Port from Go.
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * Port of TS-Go internal/outputpaths/.
  */
 
-export {};
+export * from "./outputpaths.js";
