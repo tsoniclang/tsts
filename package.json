@@ -11,9 +11,10 @@
     "node": ">=22.18"
   },
   "scripts": {
-    "build": "node ../tsonic/packages/cli/dist/index.js build --project tsts",
-    "test": "node ../tsonic/packages/cli/dist/index.js test --project tsts",
-    "generate": "node ../tsonic/packages/cli/dist/index.js generate --project tsts",
+    "build": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} build --project tsts",
+    "test": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} test --project tsts",
+    "generate": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} generate --project tsts",
+    "restore": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} restore",
     "ast:generate": "node packages/tsts/tools/generate-ast.ts",
     "ast:schema-check": "node packages/tsts/tools/check-schema.ts",
     "ast:generated-check": "node packages/tsts/tools/check-generated.ts",
@@ -23,10 +24,8 @@
   "devDependencies": {
     "@types/node": "latest",
     "@tsonic/core": "10.0.45",
-    "@tsonic/dotnet": "^10.0.0",
-    "@tsonic/globals": "^10.0.0",
+    "@tsonic/dotnet": "10.0.45",
     "@tsonic/js": "10.0.52",
-    "@tsonic/nodejs": "10.0.53",
-    "xunit-types": "*"
+    "@tsonic/nodejs": "10.0.53"
   }
 }

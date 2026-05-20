@@ -10,6 +10,6 @@
     "nativeAot": false
   },
   "tests": {
-    "entryPoint": "test/index.ts"
+    "entryPoint": "src/tests-index.ts"
   }
 }
