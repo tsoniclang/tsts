@@ -1,11 +1,9 @@
 /**
- * Source map V3 generation.
+ * Source Map V3 generation.
  *
- * Mirrors TS-Go internal/sourcemap/.
- *
- * Status: empty placeholder. Port from Go.
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * Port of TS-Go internal/sourcemap/. Includes the Generator class for
+ * building VLQ-encoded mappings during emit. Decoder and source-mapper
+ * helpers come in follow-up commits.
  */
 
-export {};
+export * from "./generator.js";
