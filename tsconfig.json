@@ -21,5 +21,17 @@
     "src/**/*.ts",
     "tools/**/*.ts",
     "test/**/*.ts"
+  ],
+  "exclude": [
+    "src/ast/ast.ts",
+    "src/ast/ast.generated.ts",
+    "src/ast/factory.generated.ts",
+    "src/ast/is.generated.ts",
+    "src/ast/is.ts",
+    "src/ast/visitor.generated.ts",
+    "src/ast/clone.ts",
+    "src/ast/utils.ts",
+    "src/astnav/astnav.ts",
+    "src/scanner/scanner.native-preview.ts"
   ]
 }
