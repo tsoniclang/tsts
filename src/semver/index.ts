@@ -1,11 +1,8 @@
 /**
- * SemVer parsing for version-aware module resolution.
+ * SemVer 2.0 parsing and comparison.
  *
- * Mirrors TS-Go internal/semver/.
- *
- * Status: empty placeholder. Port from Go (or npm semver).
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * Port of TS-Go internal/semver/. Currently includes version parsing and
+ * comparison; range parsing (version_range.go, ~440 LOC) is forthcoming.
  */
 
-export {};
+export * from "./version.js";
