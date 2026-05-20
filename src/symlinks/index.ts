@@ -1,11 +1,7 @@
 /**
- * Symlink resolution for module-resolution edge cases.
+ * Symlink tracking for module resolution.
  *
- * Mirrors TS-Go internal/symlinks/.
- *
- * Status: empty placeholder. Port from Go.
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * Port of TS-Go internal/symlinks/.
  */
 
-export {};
+export * from "./known-symlinks.js";
