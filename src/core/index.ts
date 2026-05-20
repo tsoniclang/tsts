@@ -1,11 +1,13 @@
 /**
  * Low-level utilities shared across the compiler.
  *
- * Mirrors TS-Go internal/core/.
- *
- * Status: empty placeholder. Port from Go.
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * Port of TS-Go internal/core/. Includes Tristate, TextRange, Stack,
+ * version helpers, and generic array utilities. The huge CompilerOptions
+ * type and projectreference handling are forthcoming.
  */
 
-export {};
+export * from "./tristate.js";
+export * from "./text.js";
+export * from "./stack.js";
+export * from "./version.js";
+export * from "./core.js";
