@@ -1,11 +1,8 @@
 /**
- * Constant-expression evaluator for enum members, const-context types.
+ * Constant-expression evaluator.
  *
- * Mirrors TS-Go internal/evaluator/.
- *
- * Status: empty placeholder. Port from Go.
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * Port of TS-Go internal/evaluator/. The expression walker is stubbed
+ * pending AST adoption; types and pure-data utilities are in place.
  */
 
-export {};
+export * from "./evaluator.js";
