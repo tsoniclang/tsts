@@ -1,11 +1,11 @@
 /**
- * TypeScript-specific path utilities (always-posix, normalization).
+ * TypeScript-specific path utilities.
  *
- * Mirrors TS-Go internal/tspath/.
- *
- * Status: empty placeholder. Port from Go.
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * Port of TS-Go internal/tspath/. All functions mirror Go names (camelCased
+ * for TypeScript convention) and semantics. See path.ts, extension.ts,
+ * ignoredpaths.ts for the implementations.
  */
 
-export {};
+export * from "./path.js";
+export * from "./extension.js";
+export * from "./ignoredpaths.js";
