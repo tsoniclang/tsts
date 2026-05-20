@@ -29,7 +29,11 @@
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const TOOL_DIR = dirname(fileURLToPath(import.meta.url));
+const PROJECT_ROOT = join(TOOL_DIR, "..");
 
 // ────────────────────────────────────────────────────────────────────────────
 // Scope: which TS-Go modules TSTS targets, which it skips
@@ -244,7 +248,7 @@ function renderText(reports: readonly ModuleReport[]): string {
 
 function main(): void {
   const tsgoRepo = process.env.TSGO_REPO ?? "/home/jeswin/temp/typescript-go";
-  const tstsRepo = process.cwd();
+  const tstsRepo = PROJECT_ROOT;
 
   if (!existsSync(tsgoRepo)) {
     console.error(`TS-Go repo not found at ${tsgoRepo}.`);
