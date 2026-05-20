@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "kind": "tsonic-source-package",
+  "surfaces": [
+    "@tsonic/js",
+    "@tsonic/nodejs"
+  ],
+  "supportedTargets": [
+    "csharp"
+  ],
+  "source": {
+    "namespace": "tsts",
+    "exports": {
+      ".": "./src/index.ts",
+      "./index.js": "./src/index.ts"
+    }
+  }
+}

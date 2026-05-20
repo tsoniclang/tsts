@@ -1,11 +1,9 @@
 /**
- * Module resolution (node, bundler, classic, node16/nodenext).
+ * Module resolution.
  *
- * Mirrors TS-Go internal/module/.
- *
- * Status: empty placeholder. Port from Go.
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * Port of TS-Go internal/module/. Types and contracts in place; the
+ * resolver itself (which is ~2300 LOC of Go) is forthcoming once
+ * CompilerOptions and AST are available.
  */
 
-export {};
+export * from "./types.js";
