@@ -10,6 +10,10 @@
   "exports": {
     ".": "./dist/src/index.js"
   },
+  "imports": {
+    "#src/*.js": "./src/*.ts",
+    "#src/*": "./src/*"
+  },
   "engines": {
     "node": ">=22.18"
   },

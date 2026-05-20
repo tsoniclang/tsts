@@ -38,7 +38,7 @@ import {
   removeFileExtension,
   removeTrailingDirectorySeparator,
   toPath,
-} from "../../src/tspath/index.js";
+} from "#src/tspath/index.js";
 
 describe("tspath — normalizeSlashes", () => {
   it("normalizes backslashes to forward slashes", () => {
