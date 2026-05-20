@@ -1,11 +1,10 @@
 /**
  * Reading and validating package.json for module resolution.
  *
- * Mirrors TS-Go internal/packagejson/.
- *
- * Status: empty placeholder. Port from Go.
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * Port of TS-Go internal/packagejson/. Reads core fields used by module
+ * resolution and dependency tracking; tracks present-but-wrong-type cases
+ * via the Expected<T> discriminator for diagnostic emission.
  */
 
-export {};
+export * from "./types.js";
+export * from "./parser.js";
