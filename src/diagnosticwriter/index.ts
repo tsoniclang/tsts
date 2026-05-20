@@ -1,11 +1,15 @@
 /**
- * Pretty-printing of diagnostics for terminal output.
+ * Diagnostic formatting for terminal output.
  *
- * Mirrors TS-Go internal/diagnosticwriter/.
- *
- * Status: empty placeholder. Port from Go.
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * Port of TS-Go internal/diagnosticwriter/. Provides flat one-line
+ * `formatDiagnostic` and pretty multi-line `formatDiagnosticWithSource`
+ * (with source snippet + caret). ANSI colors not yet emitted; coming
+ * with the CLI when --pretty/--noColors flags are wired.
  */
 
-export {};
+export type { Diagnostic, FileLike } from "./types.js";
+export {
+  formatDiagnostic,
+  formatDiagnosticWithSource,
+  formatDiagnosticsWithSource,
+} from "./format.js";
