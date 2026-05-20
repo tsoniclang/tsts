@@ -3,3 +3,4 @@
 
 import "./_smoke.test.ts";
 import "./api/binary-protocol.test.ts";
+import "./debug/debug.test.ts";

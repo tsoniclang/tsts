@@ -31,19 +31,9 @@ export function failBadSyntaxKind(node: { kindString(): string }, ...message: re
  * Throws for impossible values in exhaustive switches; param type `never`
  * gives compile-time exhaustiveness checking when the call site is reached.
  */
-export function assertNever(member: never, ...message: readonly unknown[]): never;
-export function assertNever(member: unknown, ...message: readonly unknown[]): never;
 export function assertNever(member: unknown, ...message: readonly unknown[]): never {
   const msg = message.length === 0 ? "Illegal value:" : message.join("");
-  let detail: string;
-  if (typeof member === "object" && member !== null && "kindString" in member && typeof (member as { kindString: unknown }).kindString === "function") {
-    detail = (member as { kindString: () => string }).kindString();
-  } else if (typeof member === "object" && member !== null && "toString" in member && typeof (member as { toString: unknown }).toString === "function") {
-    detail = String(member);
-  } else {
-    detail = String(member);
-  }
-  fail(`${msg} ${detail}`);
+  fail(`${msg} ${String(member)}`);
 }
 
 /**
