@@ -1,11 +1,10 @@
 /**
- * Converting type-system types to AST nodes (used for .d.ts emit, hovers).
+ * Node builder interfaces and flags.
  *
- * Mirrors TS-Go internal/nodebuilder/ + internal/checker/nodebuilder*.go.
- *
- * Status: empty placeholder. Port from Go.
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * Port of TS-Go internal/nodebuilder/. The concrete implementations live
+ * with the checker (since they need type-system access) and aren't yet
+ * ported; the flag definitions and SymbolTracker interface are here as
+ * the contract.
  */
 
-export {};
+export * from "./types.js";
