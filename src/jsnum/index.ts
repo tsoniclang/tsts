@@ -1,11 +1,8 @@
 /**
- * JS-exact number semantics for constant evaluation.
+ * JS-exact number semantics.
  *
- * Mirrors TS-Go internal/jsnum/.
- *
- * Status: empty placeholder. Port from Go.
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * Port of TS-Go internal/jsnum/.
  */
 
-export {};
+export * from "./jsnum.js";
+export * from "./string.js";
