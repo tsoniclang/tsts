@@ -19,7 +19,10 @@
     "schema:check": "tsx tools/check-schema.ts",
     "generated:check": "tsx tools/check-generated.ts",
     "test": "tsx --test test/**/*.test.ts",
-    "verify": "npm run schema:check && npm run generate && npm run generated:check && npm run build && npm run test"
+    "completeness": "tsx tools/check-completeness.ts",
+    "completeness:json": "tsx tools/check-completeness.ts --json",
+    "verify": "npm run schema:check && npm run generate && npm run generated:check && npm run build && npm run test",
+    "verify:full": "npm run verify && npm run completeness"
   },
   "devDependencies": {
     "@types/node": "latest",
