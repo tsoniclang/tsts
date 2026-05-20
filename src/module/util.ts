@@ -26,21 +26,26 @@ import {
   tryGetExtensionFromPath,
 } from "../tspath/index.js";
 import { JsxEmit } from "../outputpaths/outputpaths.js";
+import { mustParse, tryParseVersionRange, type Version } from "../semver/index.js";
+import { version } from "../core/version.js";
 
 export const inferredTypesContainingFile = "__inferred type names__.ts";
 
+let cachedTypeScriptVersion: Version | undefined;
+function getTypeScriptVersion(): Version {
+  cachedTypeScriptVersion ??= mustParse(version());
+  return cachedTypeScriptVersion;
+}
+
 /**
- * Returns true if `key` is a `types@<range>` pattern that includes the
- * given TypeScript version.
- *
- * NOTE: This requires VersionRange parsing which isn't yet ported.
- * Returns false for unknown ranges until version_range.ts arrives.
+ * Returns true if `key` is a `types@<range>` pattern whose range
+ * includes the current TypeScript version.
  */
-export function isApplicableVersionedTypesKey(key: string, _tsVersion: string): boolean {
+export function isApplicableVersionedTypesKey(key: string): boolean {
   if (!key.startsWith("types@")) return false;
-  // TODO: parse range and test against tsVersion once semver/version_range
-  // is ported. For now, return false (safe default).
-  return false;
+  const range = tryParseVersionRange(key.slice("types@".length));
+  if (range === undefined) return false;
+  return range.test(getTypeScriptVersion());
 }
 
 /**
