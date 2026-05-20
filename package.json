@@ -28,6 +28,11 @@
     "verify": "npm run schema:check && npm run generate && npm run generated:check && npm run build && npm run test",
     "verify:full": "npm run verify && npm run completeness"
   },
+  "peerDependencies": {
+    "@tsonic/core": "10.0.45",
+    "@tsonic/js": "10.0.52",
+    "@tsonic/nodejs": "10.0.53"
+  },
   "devDependencies": {
     "@types/node": "latest",
     "tsx": "^4.21.0",
