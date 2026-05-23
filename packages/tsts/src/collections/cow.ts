@@ -31,9 +31,9 @@ export class CopyOnWriteMap<K, V> {
   private ensureOwned(): void {
     if (this.owned) return;
     if (this.m === undefined) {
-      this.m = new Map();
+      this.m = new Map<K, V>();
     } else {
-      this.m = new Map(this.m);
+      this.m = new Map<K, V>(this.m);
     }
     this.owned = true;
   }
@@ -59,7 +59,7 @@ export class CopyOnWriteSet<K> {
   private readonly m: CopyOnWriteMap<K, true>;
 
   constructor() {
-    this.m = new CopyOnWriteMap();
+    this.m = new CopyOnWriteMap<K, true>();
   }
 
   has(k: K): boolean {

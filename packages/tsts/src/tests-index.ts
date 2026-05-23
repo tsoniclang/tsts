@@ -7,3 +7,6 @@ import "./debug/debug.test.ts";
 
 // Disabled pending tsonic fixes (TSN5107: string index with `number`):
 // import "./tspath/path.test.ts";
+
+// Disabled pending tsonic fixes (CS8978/CS0030/CS0029 collections emitter):
+// import "./collections/collections.test.ts";

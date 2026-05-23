@@ -12,7 +12,7 @@ export class MultiMap<K, V> {
 
   constructor(sizeHint?: number) {
     void sizeHint; // size hints aren't meaningful for JS Map
-    this.m = new Map();
+    this.m = new Map<K, V[]>();
   }
 
   static groupBy<K, V>(items: Iterable<V>, groupId: (item: V) => K): MultiMap<K, V> {
