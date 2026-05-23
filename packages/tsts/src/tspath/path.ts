@@ -13,7 +13,9 @@
 // Constants
 // ────────────────────────────────────────────────────────────────────────────
 
-export type Path = string & { readonly __pathBrand: "Path" };
+// Path is logically a "branded string" in TS-Go (`type Path string`); tsonic
+// doesn't support intersection-typed brands, so we model it as a plain alias.
+export type Path = string;
 
 export const directorySeparator = "/";
 const urlSchemeSeparator = "://";
