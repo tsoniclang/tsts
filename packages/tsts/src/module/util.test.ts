@@ -1,5 +1,5 @@
-import { describe, it } from "node:test";
-import { strict as assert } from "node:assert";
+import { attributes as A } from "@tsonic/core/lang.js";
+import { Assert, FactAttribute } from "xunit-types/Xunit.js";
 
 import {
   comparePatternKeys,
@@ -10,156 +10,188 @@ import {
   parsePackageName,
   tryGetJSExtensionForFile,
   unmangleScopedPackageName,
-} from "../../src/module/util.js";
-import { JsxEmit } from "../../src/outputpaths/outputpaths.js";
+} from "./util.js";
+import { JsxEmit } from "../outputpaths/outputpaths.js";
 
-describe("module/util — parseNodeModuleFromPath", () => {
-  it("returns package root for simple package", () => {
-    assert.equal(
-      parseNodeModuleFromPath("/a/node_modules/foo/bar.ts", false),
-      "/a/node_modules/foo"
+export class ParseNodeModuleFromPathTests {
+  returns_package_root_for_simple_package(): void {
+    Assert.Equal(
+      "/a/node_modules/foo",
+      parseNodeModuleFromPath("/a/node_modules/foo/bar.ts", false)
     );
-  });
+  }
 
-  it("returns package root for scoped package", () => {
-    assert.equal(
-      parseNodeModuleFromPath("/a/node_modules/@scope/pkg/bar.ts", false),
-      "/a/node_modules/@scope/pkg"
+  returns_package_root_for_scoped_package(): void {
+    Assert.Equal(
+      "/a/node_modules/@scope/pkg",
+      parseNodeModuleFromPath("/a/node_modules/@scope/pkg/bar.ts", false)
     );
-  });
+  }
 
-  it("returns empty when path has no node_modules", () => {
-    assert.equal(parseNodeModuleFromPath("/a/something/bar.ts", false), "");
-  });
+  returns_empty_when_path_has_no_node_modules(): void {
+    Assert.Equal("", parseNodeModuleFromPath("/a/something/bar.ts", false));
+  }
 
-  it("uses the last occurrence of node_modules", () => {
-    assert.equal(
-      parseNodeModuleFromPath("/a/node_modules/x/node_modules/y/index.ts", false),
-      "/a/node_modules/x/node_modules/y"
+  uses_the_last_occurrence_of_node_modules(): void {
+    Assert.Equal(
+      "/a/node_modules/x/node_modules/y",
+      parseNodeModuleFromPath("/a/node_modules/x/node_modules/y/index.ts", false)
     );
-  });
-});
+  }
+}
 
-describe("module/util — parsePackageName", () => {
-  it("splits simple specifier", () => {
-    assert.deepEqual(parsePackageName("foo/bar"), ["foo", "bar"]);
-  });
+export class ParsePackageNameTests {
+  splits_simple_specifier(): void {
+    const r = parsePackageName("foo/bar");
+    Assert.Equal("foo", r[0]);
+    Assert.Equal("bar", r[1]);
+  }
 
-  it("splits scoped specifier", () => {
-    assert.deepEqual(parsePackageName("@scope/pkg/sub"), ["@scope/pkg", "sub"]);
-  });
+  splits_scoped_specifier(): void {
+    const r = parsePackageName("@scope/pkg/sub");
+    Assert.Equal("@scope/pkg", r[0]);
+    Assert.Equal("sub", r[1]);
+  }
 
-  it("returns whole name when no subpath", () => {
-    assert.deepEqual(parsePackageName("foo"), ["foo", ""]);
-  });
+  returns_whole_name_when_no_subpath(): void {
+    const r = parsePackageName("foo");
+    Assert.Equal("foo", r[0]);
+    Assert.Equal("", r[1]);
+  }
 
-  it("returns scoped package alone when no subpath", () => {
-    assert.deepEqual(parsePackageName("@scope/pkg"), ["@scope/pkg", ""]);
-  });
-});
+  returns_scoped_package_alone_when_no_subpath(): void {
+    const r = parsePackageName("@scope/pkg");
+    Assert.Equal("@scope/pkg", r[0]);
+    Assert.Equal("", r[1]);
+  }
+}
 
-describe("module/util — mangle/unmangle scoped package name", () => {
-  it("mangles scoped name", () => {
-    assert.equal(mangleScopedPackageName("@scope/pkg"), "scope__pkg");
-  });
+export class MangleUnmangleTests {
+  mangles_scoped_name(): void {
+    Assert.Equal("scope__pkg", mangleScopedPackageName("@scope/pkg"));
+  }
 
-  it("leaves unscoped name unchanged", () => {
-    assert.equal(mangleScopedPackageName("foo"), "foo");
-  });
+  leaves_unscoped_name_unchanged(): void {
+    Assert.Equal("foo", mangleScopedPackageName("foo"));
+  }
 
-  it("unmangles mangled name", () => {
-    assert.equal(unmangleScopedPackageName("scope__pkg"), "@scope/pkg");
-  });
+  unmangles_mangled_name(): void {
+    Assert.Equal("@scope/pkg", unmangleScopedPackageName("scope__pkg"));
+  }
 
-  it("leaves non-mangled name unchanged", () => {
-    assert.equal(unmangleScopedPackageName("foo"), "foo");
-  });
+  leaves_non_mangled_name_unchanged(): void {
+    Assert.Equal("foo", unmangleScopedPackageName("foo"));
+  }
 
-  it("round-trips", () => {
-    assert.equal(unmangleScopedPackageName(mangleScopedPackageName("@a/b")), "@a/b");
-  });
-});
+  round_trips(): void {
+    Assert.Equal("@a/b", unmangleScopedPackageName(mangleScopedPackageName("@a/b")));
+  }
+}
 
-describe("module/util — types package name", () => {
-  it("wraps unscoped name", () => {
-    assert.equal(getTypesPackageName("foo"), "@types/foo");
-  });
+export class TypesPackageNameTests {
+  wraps_unscoped_name(): void {
+    Assert.Equal("@types/foo", getTypesPackageName("foo"));
+  }
 
-  it("wraps scoped name with mangling", () => {
-    assert.equal(getTypesPackageName("@scope/pkg"), "@types/scope__pkg");
-  });
+  wraps_scoped_name_with_mangling(): void {
+    Assert.Equal("@types/scope__pkg", getTypesPackageName("@scope/pkg"));
+  }
 
-  it("unwraps mangled types name", () => {
-    assert.equal(getPackageNameFromTypesPackageName("@types/scope__pkg"), "@scope/pkg");
-  });
+  unwraps_mangled_types_name(): void {
+    Assert.Equal("@scope/pkg", getPackageNameFromTypesPackageName("@types/scope__pkg"));
+  }
 
-  it("unwraps unscoped types name", () => {
-    assert.equal(getPackageNameFromTypesPackageName("@types/foo"), "foo");
-  });
+  unwraps_unscoped_types_name(): void {
+    Assert.Equal("foo", getPackageNameFromTypesPackageName("@types/foo"));
+  }
 
-  it("returns input unchanged when not @types/", () => {
-    assert.equal(getPackageNameFromTypesPackageName("foo"), "foo");
-  });
-});
+  returns_input_unchanged_when_not_types(): void {
+    Assert.Equal("foo", getPackageNameFromTypesPackageName("foo"));
+  }
+}
 
-describe("module/util — comparePatternKeys", () => {
-  it("ranks longer prefix higher (more specific)", () => {
-    assert.equal(comparePatternKeys("foo/bar/*", "foo/*"), -1);
-    assert.equal(comparePatternKeys("foo/*", "foo/bar/*"), 1);
-  });
+export class ComparePatternKeysTests {
+  ranks_longer_prefix_higher(): void {
+    Assert.Equal(-1, comparePatternKeys("foo/bar/*", "foo/*"));
+    Assert.Equal(1, comparePatternKeys("foo/*", "foo/bar/*"));
+  }
 
-  it("returns 0 for equal patterns", () => {
-    assert.equal(comparePatternKeys("foo/*", "foo/*"), 0);
-  });
+  returns_zero_for_equal_patterns(): void {
+    Assert.Equal(0, comparePatternKeys("foo/*", "foo/*"));
+  }
 
-  it("ranks literal below wildcard pattern at same character length", () => {
-    // TS-Go semantics: a literal pattern's baseLen = len(s), a wildcard's
-    // baseLen = indexOf('*')+1. So "foo*" (baseLen 4) is considered more
-    // specific than "foo" (baseLen 3) by this comparator.
-    assert.equal(comparePatternKeys("foo", "foo*"), 1);
-    assert.equal(comparePatternKeys("foo*", "foo"), -1);
-  });
+  ranks_literal_below_wildcard_at_same_char_length(): void {
+    Assert.Equal(1, comparePatternKeys("foo", "foo*"));
+    Assert.Equal(-1, comparePatternKeys("foo*", "foo"));
+  }
 
-  it("ranks literal above wildcard when baseLens tie", () => {
-    // "foo" baseLen 3 vs "fo*" baseLen 3 → literal (no aIdx) wins via the
-    // aPatternIndex == -1 branch returning 1 (meaning a comes after… wait,
-    // see comparator: aPatternIndex == -1 returns 1 (b before a). So
-    // comparePatternKeys(literal, wildcard) at same baseLen returns 1.
-    assert.equal(comparePatternKeys("foo", "fo*"), 1);
-    assert.equal(comparePatternKeys("fo*", "foo"), -1);
-  });
-});
+  ranks_literal_above_wildcard_when_baselens_tie(): void {
+    Assert.Equal(1, comparePatternKeys("foo", "fo*"));
+    Assert.Equal(-1, comparePatternKeys("fo*", "foo"));
+  }
+}
 
-describe("module/util — tryGetJSExtensionForFile", () => {
-  it("maps .ts to .js", () => {
-    assert.equal(tryGetJSExtensionForFile("foo.ts", JsxEmit.None), ".js");
-  });
+export class TryGetJSExtensionForFileTests {
+  maps_ts_to_js(): void {
+    Assert.Equal(".js", tryGetJSExtensionForFile("foo.ts", JsxEmit.None));
+  }
 
-  it("maps .d.ts to .js", () => {
-    assert.equal(tryGetJSExtensionForFile("foo.d.ts", JsxEmit.None), ".js");
-  });
+  maps_dts_to_js(): void {
+    Assert.Equal(".js", tryGetJSExtensionForFile("foo.d.ts", JsxEmit.None));
+  }
 
-  it("maps .tsx with jsx=preserve to .jsx", () => {
-    assert.equal(tryGetJSExtensionForFile("foo.tsx", JsxEmit.Preserve), ".jsx");
-  });
+  maps_tsx_with_jsx_preserve_to_jsx(): void {
+    Assert.Equal(".jsx", tryGetJSExtensionForFile("foo.tsx", JsxEmit.Preserve));
+  }
 
-  it("maps .tsx with jsx=react to .js", () => {
-    assert.equal(tryGetJSExtensionForFile("foo.tsx", JsxEmit.React), ".js");
-  });
+  maps_tsx_with_jsx_react_to_js(): void {
+    Assert.Equal(".js", tryGetJSExtensionForFile("foo.tsx", JsxEmit.React));
+  }
 
-  it("maps .mts to .mjs", () => {
-    assert.equal(tryGetJSExtensionForFile("foo.mts", JsxEmit.None), ".mjs");
-  });
+  maps_mts_to_mjs(): void {
+    Assert.Equal(".mjs", tryGetJSExtensionForFile("foo.mts", JsxEmit.None));
+  }
 
-  it("maps .cts to .cjs", () => {
-    assert.equal(tryGetJSExtensionForFile("foo.cts", JsxEmit.None), ".cjs");
-  });
+  maps_cts_to_cjs(): void {
+    Assert.Equal(".cjs", tryGetJSExtensionForFile("foo.cts", JsxEmit.None));
+  }
 
-  it("preserves .json extension", () => {
-    assert.equal(tryGetJSExtensionForFile("foo.json", JsxEmit.None), ".json");
-  });
+  preserves_json_extension(): void {
+    Assert.Equal(".json", tryGetJSExtensionForFile("foo.json", JsxEmit.None));
+  }
 
-  it("returns empty for unsupported extension", () => {
-    assert.equal(tryGetJSExtensionForFile("foo.txt", JsxEmit.None), "");
-  });
-});
+  returns_empty_for_unsupported_extension(): void {
+    Assert.Equal("", tryGetJSExtensionForFile("foo.txt", JsxEmit.None));
+  }
+}
+
+A<ParseNodeModuleFromPathTests>().method((t) => t.returns_package_root_for_simple_package).add(FactAttribute);
+A<ParseNodeModuleFromPathTests>().method((t) => t.returns_package_root_for_scoped_package).add(FactAttribute);
+A<ParseNodeModuleFromPathTests>().method((t) => t.returns_empty_when_path_has_no_node_modules).add(FactAttribute);
+A<ParseNodeModuleFromPathTests>().method((t) => t.uses_the_last_occurrence_of_node_modules).add(FactAttribute);
+A<ParsePackageNameTests>().method((t) => t.splits_simple_specifier).add(FactAttribute);
+A<ParsePackageNameTests>().method((t) => t.splits_scoped_specifier).add(FactAttribute);
+A<ParsePackageNameTests>().method((t) => t.returns_whole_name_when_no_subpath).add(FactAttribute);
+A<ParsePackageNameTests>().method((t) => t.returns_scoped_package_alone_when_no_subpath).add(FactAttribute);
+A<MangleUnmangleTests>().method((t) => t.mangles_scoped_name).add(FactAttribute);
+A<MangleUnmangleTests>().method((t) => t.leaves_unscoped_name_unchanged).add(FactAttribute);
+A<MangleUnmangleTests>().method((t) => t.unmangles_mangled_name).add(FactAttribute);
+A<MangleUnmangleTests>().method((t) => t.leaves_non_mangled_name_unchanged).add(FactAttribute);
+A<MangleUnmangleTests>().method((t) => t.round_trips).add(FactAttribute);
+A<TypesPackageNameTests>().method((t) => t.wraps_unscoped_name).add(FactAttribute);
+A<TypesPackageNameTests>().method((t) => t.wraps_scoped_name_with_mangling).add(FactAttribute);
+A<TypesPackageNameTests>().method((t) => t.unwraps_mangled_types_name).add(FactAttribute);
+A<TypesPackageNameTests>().method((t) => t.unwraps_unscoped_types_name).add(FactAttribute);
+A<TypesPackageNameTests>().method((t) => t.returns_input_unchanged_when_not_types).add(FactAttribute);
+A<ComparePatternKeysTests>().method((t) => t.ranks_longer_prefix_higher).add(FactAttribute);
+A<ComparePatternKeysTests>().method((t) => t.returns_zero_for_equal_patterns).add(FactAttribute);
+A<ComparePatternKeysTests>().method((t) => t.ranks_literal_below_wildcard_at_same_char_length).add(FactAttribute);
+A<ComparePatternKeysTests>().method((t) => t.ranks_literal_above_wildcard_when_baselens_tie).add(FactAttribute);
+A<TryGetJSExtensionForFileTests>().method((t) => t.maps_ts_to_js).add(FactAttribute);
+A<TryGetJSExtensionForFileTests>().method((t) => t.maps_dts_to_js).add(FactAttribute);
+A<TryGetJSExtensionForFileTests>().method((t) => t.maps_tsx_with_jsx_preserve_to_jsx).add(FactAttribute);
+A<TryGetJSExtensionForFileTests>().method((t) => t.maps_tsx_with_jsx_react_to_js).add(FactAttribute);
+A<TryGetJSExtensionForFileTests>().method((t) => t.maps_mts_to_mjs).add(FactAttribute);
+A<TryGetJSExtensionForFileTests>().method((t) => t.maps_cts_to_cjs).add(FactAttribute);
+A<TryGetJSExtensionForFileTests>().method((t) => t.preserves_json_extension).add(FactAttribute);
+A<TryGetJSExtensionForFileTests>().method((t) => t.returns_empty_for_unsupported_extension).add(FactAttribute);
