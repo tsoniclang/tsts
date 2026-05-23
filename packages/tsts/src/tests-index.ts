@@ -11,6 +11,4 @@ import "./collections/collections.test.ts";
 // JSON.stringify / Array.isArray; codex batch 2026-05-23-065215):
 // import "./json/json.test.ts";
 
-// Disabled pending tsonic fixes per batch 2026-05-23-105639
-// (CS0161 exhaustive switch + CS1503 String.split(RegExp)):
-// import "./semver/version.test.ts";
+import "./semver/version.test.ts";
