@@ -24,3 +24,7 @@ import "./module/util.test.ts";
 import "./symlinks/symlinks.test.ts";
 
 import "./glob/glob.test.ts";
+
+// Disabled pending @tsonic/js Array.prototype.flatMap binding
+// (see batch 2026-05-24-001500):
+// import "./core/core.test.ts";

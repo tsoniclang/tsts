@@ -1,5 +1,6 @@
-import { describe, it } from "node:test";
-import { strict as assert } from "node:assert";
+import { attributes as A } from "@tsonic/core/lang.js";
+import { Assert, FactAttribute } from "xunit-types/Xunit.js";
+import { Exception } from "@tsonic/dotnet/System.js";
 
 import {
   boolToTristate,
@@ -19,7 +20,6 @@ import {
   sameMap,
   singleOrUndefined,
   Stack,
-  TextRange,
   Tristate,
   tristateDefaultIfUnknown,
   tristateIsFalse,
@@ -30,154 +30,175 @@ import {
   undefinedTextRange,
   version,
   versionMajorMinor,
-} from "../../src/core/index.js";
+} from "./index.js";
 
-describe("core — Tristate", () => {
-  it("predicates", () => {
-    assert.equal(tristateIsTrue(Tristate.True), true);
-    assert.equal(tristateIsFalse(Tristate.False), true);
-    assert.equal(tristateIsUnknown(Tristate.Unknown), true);
-  });
+export class TristateTests {
+  predicates(): void {
+    Assert.True(tristateIsTrue(Tristate.True));
+    Assert.True(tristateIsFalse(Tristate.False));
+    Assert.True(tristateIsUnknown(Tristate.Unknown));
+  }
 
-  it("boolToTristate", () => {
-    assert.equal(boolToTristate(true), Tristate.True);
-    assert.equal(boolToTristate(false), Tristate.False);
-  });
+  bool_to_tristate(): void {
+    Assert.Equal(Tristate.True, boolToTristate(true));
+    Assert.Equal(Tristate.False, boolToTristate(false));
+  }
 
-  it("defaultIfUnknown", () => {
-    assert.equal(tristateDefaultIfUnknown(Tristate.Unknown, Tristate.True), Tristate.True);
-    assert.equal(tristateDefaultIfUnknown(Tristate.False, Tristate.True), Tristate.False);
-  });
+  default_if_unknown(): void {
+    Assert.Equal(Tristate.True, tristateDefaultIfUnknown(Tristate.Unknown, Tristate.True));
+    Assert.Equal(Tristate.False, tristateDefaultIfUnknown(Tristate.False, Tristate.True));
+  }
 
-  it("JSON conversion", () => {
-    assert.equal(tristateFromJSON(true), Tristate.True);
-    assert.equal(tristateFromJSON(false), Tristate.False);
-    assert.equal(tristateFromJSON(null), Tristate.Unknown);
-    assert.equal(tristateToJSON(Tristate.True), true);
-    assert.equal(tristateToJSON(Tristate.Unknown), null);
-  });
-});
+  json_conversion(): void {
+    Assert.Equal(Tristate.True, tristateFromJSON(true));
+    Assert.Equal(Tristate.False, tristateFromJSON(false));
+    Assert.Equal(Tristate.Unknown, tristateFromJSON(null));
+    Assert.Equal(true, tristateToJSON(Tristate.True));
+    Assert.Null(tristateToJSON(Tristate.Unknown));
+  }
+}
 
-describe("core — TextRange", () => {
-  it("basic constructor + accessors", () => {
+export class TextRangeTests {
+  basic_constructor_and_accessors(): void {
     const r = newTextRange(5, 10);
-    assert.equal(r.pos, 5);
-    assert.equal(r.end, 10);
-    assert.equal(r.len(), 5);
-    assert.equal(r.isValid(), true);
-  });
+    Assert.Equal(5, r.pos);
+    Assert.Equal(10, r.end);
+    Assert.Equal(5, r.len());
+    Assert.True(r.isValid());
+  }
 
-  it("undefined range", () => {
+  undefined_range(): void {
     const r = undefinedTextRange();
-    assert.equal(r.isValid(), false);
-  });
+    Assert.False(r.isValid());
+  }
 
-  it("contains semantics", () => {
+  contains_semantics(): void {
     const r = newTextRange(5, 10);
-    assert.equal(r.contains(5), true);
-    assert.equal(r.contains(9), true);
-    assert.equal(r.contains(10), false);  // half-open
-    assert.equal(r.containsInclusive(10), true);
-    assert.equal(r.containsExclusive(5), false);
-    assert.equal(r.containsExclusive(7), true);
-  });
+    Assert.True(r.contains(5));
+    Assert.True(r.contains(9));
+    Assert.False(r.contains(10));
+    Assert.True(r.containsInclusive(10));
+    Assert.False(r.containsExclusive(5));
+    Assert.True(r.containsExclusive(7));
+  }
 
-  it("overlap vs intersect", () => {
+  overlap_vs_intersect(): void {
     const a = newTextRange(0, 5);
     const b = newTextRange(5, 10);
-    assert.equal(a.overlaps(b), false);     // touching doesn't overlap
-    assert.equal(a.intersects(b), true);    // touching does intersect
-  });
+    Assert.False(a.overlaps(b));
+    Assert.True(a.intersects(b));
+  }
 
-  it("compareTextRanges", () => {
-    assert.equal(compareTextRanges(newTextRange(0, 5), newTextRange(0, 5)), 0);
-    assert.equal(compareTextRanges(newTextRange(0, 5), newTextRange(1, 5)) < 0, true);
-  });
-});
+  compare_text_ranges(): void {
+    Assert.Equal(0, compareTextRanges(newTextRange(0, 5), newTextRange(0, 5)));
+    Assert.True(compareTextRanges(newTextRange(0, 5), newTextRange(1, 5)) < 0);
+  }
+}
 
-describe("core — Stack", () => {
-  it("push/pop/peek/size", () => {
+export class StackTests {
+  push_pop_peek_size(): void {
     const s = new Stack<number>();
     s.push(1);
     s.push(2);
     s.push(3);
-    assert.equal(s.size, 3);
-    assert.equal(s.peek(), 3);
-    assert.equal(s.pop(), 3);
-    assert.equal(s.pop(), 2);
-    assert.equal(s.size, 1);
-  });
+    Assert.Equal(3, s.size);
+    Assert.Equal(3, s.peek());
+    Assert.Equal(3, s.pop());
+    Assert.Equal(2, s.pop());
+    Assert.Equal(1, s.size);
+  }
 
-  it("pop on empty throws", () => {
+  pop_on_empty_throws(): void {
     const s = new Stack<number>();
-    assert.throws(() => s.pop());
-  });
-});
+    Assert.ThrowsAny<Exception>(() => { s.pop(); });
+  }
+}
 
-describe("core — version", () => {
-  it("version", () => {
-    assert.match(version(), /^\d+\.\d+\.\d+/);
-  });
+export class VersionTests {
+  version_returns_semver_string(): void {
+    Assert.Matches("^[0-9]+\\.[0-9]+\\.[0-9]+", version());
+  }
 
-  it("versionMajorMinor", () => {
-    assert.match(versionMajorMinor(), /^\d+\.\d+$/);
-  });
-});
+  version_major_minor_returns_major_dot_minor(): void {
+    Assert.Matches("^[0-9]+\\.[0-9]+$", versionMajorMinor());
+  }
+}
 
-describe("core — array utilities", () => {
-  it("filter", () => {
-    assert.deepEqual(filter([1, 2, 3, 4], (n) => n % 2 === 0), [2, 4]);
-  });
+export class ArrayUtilitiesTests {
+  filter_keeps_matching_elements(): void {
+    Assert.Equal<readonly number[]>([2, 4], filter([1, 2, 3, 4], (n) => n % 2 === 0));
+  }
 
-  it("map", () => {
-    assert.deepEqual(map([1, 2, 3], (n) => n * 2), [2, 4, 6]);
-  });
+  map_applies_transform(): void {
+    Assert.Equal<readonly number[]>([2, 4, 6], map([1, 2, 3], (n) => n * 2));
+  }
 
-  it("mapNonNil", () => {
-    assert.deepEqual(
-      mapNonNil([1, 2, 3], (n) => n % 2 === 0 ? n : undefined),
-      [2]
-    );
-  });
+  map_non_nil_drops_undefined(): void {
+    Assert.Equal<readonly number[]>([2], mapNonNil([1, 2, 3], (n) => (n % 2 === 0 ? n : undefined)));
+  }
 
-  it("flatMap", () => {
-    assert.deepEqual(flatMap([1, 2], (n) => [n, n * 10]), [1, 10, 2, 20]);
-  });
+  flat_map(): void {
+    Assert.Equal<readonly number[]>([1, 10, 2, 20], flatMap([1, 2], (n) => [n, n * 10]));
+  }
 
-  it("sameMap returns original if no change", () => {
+  same_map_returns_original_when_no_change(): void {
     const arr = [1, 2, 3];
     const result = sameMap(arr, (n) => n);
-    assert.equal(result, arr);
-  });
+    Assert.Same(arr, result);
+  }
 
-  it("sameMap returns new array if changed", () => {
+  same_map_returns_new_array_when_changed(): void {
     const arr = [1, 2, 3];
     const result = sameMap(arr, (n) => n * 2);
-    assert.notEqual(result, arr);
-    assert.deepEqual([...result], [2, 4, 6]);
-  });
+    Assert.NotSame(arr, result);
+    Assert.Equal<readonly number[]>([2, 4, 6], [...result]);
+  }
 
-  it("same is reference-equal by element", () => {
+  same_is_reference_equal_by_element(): void {
     const obj = { x: 1 };
-    assert.equal(same([obj], [obj]), true);
-    assert.equal(same([obj], [{ x: 1 }]), false);
-  });
+    Assert.True(same([obj], [obj]));
+    Assert.False(same([obj], [{ x: 1 }]));
+  }
 
-  it("findLast / findLastIndex", () => {
-    assert.equal(findLast([1, 2, 3, 4], (n) => n % 2 === 0), 4);
-    assert.equal(findLastIndex([1, 2, 3, 4], (n) => n % 2 === 0), 3);
-  });
+  find_last_and_find_last_index(): void {
+    Assert.Equal(4, findLast([1, 2, 3, 4], (n) => n % 2 === 0));
+    Assert.Equal(3, findLastIndex([1, 2, 3, 4], (n) => n % 2 === 0));
+  }
 
-  it("find", () => {
-    assert.equal(find([1, 2, 3], (n) => n > 1), 2);
-  });
+  find(): void {
+    Assert.Equal(2, find([1, 2, 3], (n) => n > 1));
+  }
 
-  it("ifElse / coalesce / singleOrUndefined / lastOrUndefined", () => {
-    assert.equal(ifElse(true, "a", "b"), "a");
-    assert.equal(coalesce(undefined, "x", "y"), "x");
-    assert.equal(singleOrUndefined([42]), 42);
-    assert.equal(singleOrUndefined([1, 2]), undefined);
-    assert.equal(lastOrUndefined([1, 2, 3]), 3);
-    assert.equal(lastOrUndefined([]), undefined);
-  });
-});
+  if_else_coalesce_single_last(): void {
+    Assert.Equal("a", ifElse(true, "a", "b"));
+    Assert.Equal("x", coalesce(undefined, "x", "y"));
+    Assert.Equal(42, singleOrUndefined([42]));
+    Assert.Null(singleOrUndefined([1, 2]));
+    Assert.Equal(3, lastOrUndefined([1, 2, 3]));
+    Assert.Null(lastOrUndefined([]));
+  }
+}
+
+A<TristateTests>().method((t) => t.predicates).add(FactAttribute);
+A<TristateTests>().method((t) => t.bool_to_tristate).add(FactAttribute);
+A<TristateTests>().method((t) => t.default_if_unknown).add(FactAttribute);
+A<TristateTests>().method((t) => t.json_conversion).add(FactAttribute);
+A<TextRangeTests>().method((t) => t.basic_constructor_and_accessors).add(FactAttribute);
+A<TextRangeTests>().method((t) => t.undefined_range).add(FactAttribute);
+A<TextRangeTests>().method((t) => t.contains_semantics).add(FactAttribute);
+A<TextRangeTests>().method((t) => t.overlap_vs_intersect).add(FactAttribute);
+A<TextRangeTests>().method((t) => t.compare_text_ranges).add(FactAttribute);
+A<StackTests>().method((t) => t.push_pop_peek_size).add(FactAttribute);
+A<StackTests>().method((t) => t.pop_on_empty_throws).add(FactAttribute);
+A<VersionTests>().method((t) => t.version_returns_semver_string).add(FactAttribute);
+A<VersionTests>().method((t) => t.version_major_minor_returns_major_dot_minor).add(FactAttribute);
+A<ArrayUtilitiesTests>().method((t) => t.filter_keeps_matching_elements).add(FactAttribute);
+A<ArrayUtilitiesTests>().method((t) => t.map_applies_transform).add(FactAttribute);
+A<ArrayUtilitiesTests>().method((t) => t.map_non_nil_drops_undefined).add(FactAttribute);
+A<ArrayUtilitiesTests>().method((t) => t.flat_map).add(FactAttribute);
+A<ArrayUtilitiesTests>().method((t) => t.same_map_returns_original_when_no_change).add(FactAttribute);
+A<ArrayUtilitiesTests>().method((t) => t.same_map_returns_new_array_when_changed).add(FactAttribute);
+A<ArrayUtilitiesTests>().method((t) => t.same_is_reference_equal_by_element).add(FactAttribute);
+A<ArrayUtilitiesTests>().method((t) => t.find_last_and_find_last_index).add(FactAttribute);
+A<ArrayUtilitiesTests>().method((t) => t.find).add(FactAttribute);
+A<ArrayUtilitiesTests>().method((t) => t.if_else_coalesce_single_last).add(FactAttribute);
