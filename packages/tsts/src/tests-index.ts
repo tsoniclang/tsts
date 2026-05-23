@@ -21,6 +21,4 @@ import "./evaluator/evaluator.test.ts";
 
 import "./module/util.test.ts";
 
-// Disabled pending tsonic ReadonlyMap/ReadonlySet bindings
-// (see batch 2026-05-23-225000):
-// import "./symlinks/symlinks.test.ts";
+import "./symlinks/symlinks.test.ts";
