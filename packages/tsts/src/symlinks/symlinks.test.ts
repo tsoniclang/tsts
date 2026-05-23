@@ -1,60 +1,58 @@
-/**
- * Tests for symlinks. Covers data-structure shape and processResolution.
- */
+import { attributes as A } from "@tsonic/core/lang.js";
+import { Assert, FactAttribute } from "xunit-types/Xunit.js";
 
-import { describe, it } from "node:test";
-import { strict as assert } from "node:assert";
+import { KnownSymlinks } from "./index.js";
+import { toPath } from "../tspath/index.js";
 
-import { KnownSymlinks } from "../../src/symlinks/index.js";
-import { toPath } from "../../src/tspath/index.js";
-
-describe("symlinks — KnownSymlinks data structure", () => {
-  it("starts empty", () => {
+export class KnownSymlinksTests {
+  starts_empty(): void {
     const s = new KnownSymlinks("/cwd", true);
-    assert.equal(s.getDirectories().size, 0);
-    assert.equal(s.getFiles().size, 0);
-  });
+    Assert.Equal(0, s.getDirectories().size);
+    Assert.Equal(0, s.getFiles().size);
+  }
 
-  it("setFile records symlink → realpath and realpath → symlink set", () => {
+  set_file_records_symlink_to_realpath_and_realpath_to_symlink_set(): void {
     const s = new KnownSymlinks("/cwd", true);
     const symlinkPath = toPath("/cwd/link.ts", "/cwd", true);
     s.setFile("/cwd/link.ts", symlinkPath, "/cwd/real/file.ts");
 
-    assert.equal(s.getFiles().get(symlinkPath), "/cwd/real/file.ts");
+    Assert.Equal("/cwd/real/file.ts", s.getFiles().get(symlinkPath));
     const realPath = toPath("/cwd/real/file.ts", "/cwd", true);
     const symlinks = s.getFilesByRealpath().get(realPath);
-    assert.ok(symlinks);
-    assert.equal(symlinks!.has("/cwd/link.ts"), true);
-  });
+    Assert.NotNull(symlinks);
+    Assert.True(symlinks!.has("/cwd/link.ts"));
+  }
 
-  it("processResolution infers directory symlink from filename suffix match", () => {
+  process_resolution_infers_directory_symlink_from_filename_suffix_match(): void {
     const s = new KnownSymlinks("/cwd", true);
     s.processResolution("/cwd/link/foo.ts", "/cwd/real/foo.ts");
 
-    // Files recorded
     const linkFilePath = toPath("/cwd/link/foo.ts", "/cwd", true);
-    assert.equal(s.getFiles().get(linkFilePath), "/cwd/real/foo.ts");
+    Assert.Equal("/cwd/real/foo.ts", s.getFiles().get(linkFilePath));
 
-    // Directory symlink inferred: /cwd/link → /cwd/real
     const linkDirPath = toPath("/cwd/link", "/cwd", true) + "/";
     const dirLink = s.getDirectories().get(linkDirPath as ReturnType<typeof toPath>);
-    assert.ok(dirLink);
-    assert.equal(dirLink!.real, "/cwd/real/");
-  });
+    Assert.NotNull(dirLink);
+    Assert.Equal("/cwd/real/", dirLink!.real);
+  }
 
-  it("processResolution ignores empty paths", () => {
+  process_resolution_ignores_empty_paths(): void {
     const s = new KnownSymlinks("/cwd", true);
     s.processResolution("", "/cwd/real/foo.ts");
     s.processResolution("/cwd/link/foo.ts", "");
-    assert.equal(s.getFiles().size, 0);
-  });
+    Assert.Equal(0, s.getFiles().size);
+  }
 
-  it("does not infer a symlink when filenames differ", () => {
+  does_not_infer_a_symlink_when_filenames_differ(): void {
     const s = new KnownSymlinks("/cwd", true);
     s.processResolution("/cwd/link/foo.ts", "/cwd/real/bar.ts");
-    // Files are still tracked
-    assert.equal(s.getFiles().size, 1);
-    // But no directory symlink
-    assert.equal(s.getDirectories().size, 0);
-  });
-});
+    Assert.Equal(1, s.getFiles().size);
+    Assert.Equal(0, s.getDirectories().size);
+  }
+}
+
+A<KnownSymlinksTests>().method((t) => t.starts_empty).add(FactAttribute);
+A<KnownSymlinksTests>().method((t) => t.set_file_records_symlink_to_realpath_and_realpath_to_symlink_set).add(FactAttribute);
+A<KnownSymlinksTests>().method((t) => t.process_resolution_infers_directory_symlink_from_filename_suffix_match).add(FactAttribute);
+A<KnownSymlinksTests>().method((t) => t.process_resolution_ignores_empty_paths).add(FactAttribute);
+A<KnownSymlinksTests>().method((t) => t.does_not_infer_a_symlink_when_filenames_differ).add(FactAttribute);
