@@ -16,3 +16,7 @@ import "./semver/version.test.ts";
 import "./jsnum/jsnum.test.ts";
 
 import "./stringutil/stringutil.test.ts";
+
+// Disabled pending tsonic ICE on indexed-access type / unknown emission
+// (see batch 2026-05-23-211000):
+// import "./evaluator/evaluator.test.ts";

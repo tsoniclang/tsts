@@ -1,65 +1,70 @@
-/**
- * Tests for evaluator utility functions. The full walker is stubbed
- * until AST adoption completes.
- */
+import { attributes as A } from "@tsonic/core/lang.js";
+import { Assert, FactAttribute } from "xunit-types/Xunit.js";
 
-import { describe, it } from "node:test";
-import { strict as assert } from "node:assert";
+import { anyToString, isTruthy, newResult } from "./index.js";
 
-import { anyToString, isTruthy, newResult } from "../../src/evaluator/index.js";
+export class AnyToStringTests {
+  strings_pass_through(): void {
+    Assert.Equal("hello", anyToString("hello"));
+    Assert.Equal("", anyToString(""));
+  }
 
-describe("evaluator — anyToString", () => {
-  it("strings pass through", () => {
-    assert.equal(anyToString("hello"), "hello");
-    assert.equal(anyToString(""), "");
-  });
+  numbers_stringify_per_js_spec(): void {
+    Assert.Equal("42", anyToString(42));
+    Assert.Equal("1.5", anyToString(1.5));
+    Assert.Equal("NaN", anyToString(NaN));
+    Assert.Equal("Infinity", anyToString(Infinity));
+  }
 
-  it("numbers stringify per JS spec", () => {
-    assert.equal(anyToString(42), "42");
-    assert.equal(anyToString(1.5), "1.5");
-    assert.equal(anyToString(NaN), "NaN");
-    assert.equal(anyToString(Infinity), "Infinity");
-  });
+  booleans(): void {
+    Assert.Equal("true", anyToString(true));
+    Assert.Equal("false", anyToString(false));
+  }
 
-  it("booleans", () => {
-    assert.equal(anyToString(true), "true");
-    assert.equal(anyToString(false), "false");
-  });
+  bigints(): void {
+    Assert.Equal("42", anyToString(42n));
+  }
+}
 
-  it("bigints", () => {
-    assert.equal(anyToString(42n), "42");
-  });
-});
+export class IsTruthyTests {
+  strings(): void {
+    Assert.True(isTruthy("hello"));
+    Assert.False(isTruthy(""));
+  }
 
-describe("evaluator — isTruthy", () => {
-  it("strings", () => {
-    assert.equal(isTruthy("hello"), true);
-    assert.equal(isTruthy(""), false);
-  });
+  numbers(): void {
+    Assert.True(isTruthy(1));
+    Assert.False(isTruthy(0));
+    Assert.False(isTruthy(NaN));
+  }
 
-  it("numbers", () => {
-    assert.equal(isTruthy(1), true);
-    assert.equal(isTruthy(0), false);
-    assert.equal(isTruthy(NaN), false);
-  });
+  booleans(): void {
+    Assert.True(isTruthy(true));
+    Assert.False(isTruthy(false));
+  }
 
-  it("booleans", () => {
-    assert.equal(isTruthy(true), true);
-    assert.equal(isTruthy(false), false);
-  });
+  bigints(): void {
+    Assert.True(isTruthy(1n));
+    Assert.False(isTruthy(0n));
+  }
+}
 
-  it("bigints", () => {
-    assert.equal(isTruthy(1n), true);
-    assert.equal(isTruthy(0n), false);
-  });
-});
-
-describe("evaluator — newResult", () => {
-  it("constructs Result objects", () => {
+export class NewResultTests {
+  constructs_result_objects(): void {
     const r = newResult("foo", true, false, false);
-    assert.equal(r.value, "foo");
-    assert.equal(r.isSyntacticallyString, true);
-    assert.equal(r.resolvedOtherFiles, false);
-    assert.equal(r.hasExternalReferences, false);
-  });
-});
+    Assert.Equal("foo", r.value);
+    Assert.True(r.isSyntacticallyString);
+    Assert.False(r.resolvedOtherFiles);
+    Assert.False(r.hasExternalReferences);
+  }
+}
+
+A<AnyToStringTests>().method((t) => t.strings_pass_through).add(FactAttribute);
+A<AnyToStringTests>().method((t) => t.numbers_stringify_per_js_spec).add(FactAttribute);
+A<AnyToStringTests>().method((t) => t.booleans).add(FactAttribute);
+A<AnyToStringTests>().method((t) => t.bigints).add(FactAttribute);
+A<IsTruthyTests>().method((t) => t.strings).add(FactAttribute);
+A<IsTruthyTests>().method((t) => t.numbers).add(FactAttribute);
+A<IsTruthyTests>().method((t) => t.booleans).add(FactAttribute);
+A<IsTruthyTests>().method((t) => t.bigints).add(FactAttribute);
+A<NewResultTests>().method((t) => t.constructs_result_objects).add(FactAttribute);
