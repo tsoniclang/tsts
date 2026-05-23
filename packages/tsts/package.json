@@ -17,7 +17,7 @@
   ],
   "peerDependencies": {
     "@tsonic/core": "10.0.45",
-    "@tsonic/js": "10.0.52",
-    "@tsonic/nodejs": "10.0.53"
+    "@tsonic/js": "10.0.53",
+    "@tsonic/nodejs": "10.0.54"
   }
 }

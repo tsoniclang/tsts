@@ -134,16 +134,22 @@ export function mustParse(text: string): Version {
   return tryParseVersion(text);
 }
 
-function isInt32(value: number): value is int {
+function isUint32Range(value: number): value is int {
   return Number.isInteger(value) && value >= 0 && value <= 0x7FFF_FFFF;
 }
 
-function getUintComponent(text: string, original: string): int {
+function parseUint(text: string): int | undefined {
   const n = Number(text);
-  if (!isInt32(n)) {
+  if (!isUint32Range(n)) return undefined;
+  return n;
+}
+
+function getUintComponent(text: string, original: string): int {
+  const parsed = parseUint(text);
+  if (parsed === undefined) {
     throw new SemverParseError(original);
   }
-  return n;
+  return parsed;
 }
 
 function comparePrereleaseIdentifiers(

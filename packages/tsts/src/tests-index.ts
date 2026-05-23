@@ -4,15 +4,13 @@
 import "./_smoke.test.ts";
 import "./api/binary-protocol.test.ts";
 import "./debug/debug.test.ts";
+import "./tspath/path.test.ts";
+import "./collections/collections.test.ts";
 
-// Disabled pending tsonic fixes (TSN5001 on JSON.stringify(unknown) + Array.isArray):
+// Disabled by tsonic policy (TSN5001 — open `unknown` carriers for
+// JSON.stringify / Array.isArray; codex batch 2026-05-23-065215):
 // import "./json/json.test.ts";
 
-// Disabled pending tsonic emitter stack-overflow (see batch report 07):
+// Disabled pending tsonic fixes per batch 2026-05-23-105639
+// (CS0161 exhaustive switch + CS1503 String.split(RegExp)):
 // import "./semver/version.test.ts";
-
-// Disabled pending tsonic fixes (TSN5107: string index with `number`):
-// import "./tspath/path.test.ts";
-
-// Disabled pending tsonic fixes (CS8978/CS0030/CS0029 collections emitter):
-// import "./collections/collections.test.ts";

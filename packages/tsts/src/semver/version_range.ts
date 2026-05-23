@@ -17,6 +17,7 @@
  *   xr        ::= 'x' | 'X' | '*' | nr
  */
 
+import type { int } from "@tsonic/core/types.js";
 import { Version } from "./version.js";
 
 const versionZero = new Version(0, 0, 0, ["0"]);
@@ -152,9 +153,9 @@ function parsePartial(text: string): PartialVersion | undefined {
   if (minorStr === "") minorStr = "*";
   if (patchStr === "") patchStr = "*";
 
-  let majorNum = 0;
-  let minorNum = 0;
-  let patchNum = 0;
+  let majorNum: int = 0;
+  let minorNum: int = 0;
+  let patchNum: int = 0;
 
   if (isWildcard(majorStr)) {
     // all stay 0
@@ -307,9 +308,13 @@ function isWildcard(text: string): boolean {
   return text === "*" || text === "x" || text === "X";
 }
 
-function parseUint(text: string): number | undefined {
+function isUint32Range(value: number): value is int {
+  return Number.isInteger(value) && value >= 0 && value <= 0x7FFF_FFFF;
+}
+
+function parseUint(text: string): int | undefined {
   if (!/^\d+$/.test(text)) return undefined;
   const n = Number(text);
-  if (!Number.isInteger(n) || n < 0 || n > 0xffff_ffff) return undefined;
+  if (!isUint32Range(n)) return undefined;
   return n;
 }
