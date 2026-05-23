@@ -1,153 +1,182 @@
-/**
- * Tests for semver/Version.
- *
- * Subset ported from TS-Go internal/semver/version_test.go.
- */
+import { attributes as A } from "@tsonic/core/lang.js";
+import { Assert, FactAttribute } from "xunit-types/Xunit.js";
+import { Exception } from "@tsonic/dotnet/System.js";
 
-import { describe, it } from "node:test";
-import { strict as assert } from "node:assert";
+import { mustParse, tryParseVersion, Version } from "./index.js";
 
-import { mustParse, SemverParseError, tryParseVersion, Version } from "../../src/semver/index.js";
-
-describe("semver — parse", () => {
-  it("parses full X.Y.Z", () => {
+export class SemverParseTests {
+  parses_full_x_y_z(): void {
     const v = tryParseVersion("1.2.3");
-    assert.equal(v.major, 1);
-    assert.equal(v.minor, 2);
-    assert.equal(v.patch, 3);
-  });
+    Assert.Equal(1, v.major);
+    Assert.Equal(2, v.minor);
+    Assert.Equal(3, v.patch);
+  }
 
-  it("parses partial X", () => {
+  parses_partial_x(): void {
     const v = tryParseVersion("5");
-    assert.equal(v.major, 5);
-    assert.equal(v.minor, 0);
-    assert.equal(v.patch, 0);
-  });
+    Assert.Equal(5, v.major);
+    Assert.Equal(0, v.minor);
+    Assert.Equal(0, v.patch);
+  }
 
-  it("parses X.Y", () => {
+  parses_x_y(): void {
     const v = tryParseVersion("3.14");
-    assert.equal(v.major, 3);
-    assert.equal(v.minor, 14);
-    assert.equal(v.patch, 0);
-  });
+    Assert.Equal(3, v.major);
+    Assert.Equal(14, v.minor);
+    Assert.Equal(0, v.patch);
+  }
 
-  it("parses with prerelease", () => {
+  parses_with_prerelease(): void {
     const v = tryParseVersion("1.2.3-alpha.1");
-    assert.deepEqual([...v.prerelease], ["alpha", "1"]);
-  });
+    Assert.Equal(2, v.prerelease.length);
+    Assert.Equal("alpha", v.prerelease[0]);
+    Assert.Equal("1", v.prerelease[1]);
+  }
 
-  it("parses with build", () => {
+  parses_with_build(): void {
     const v = tryParseVersion("1.2.3+build.456");
-    assert.deepEqual([...v.build], ["build", "456"]);
-  });
+    Assert.Equal(2, v.build.length);
+    Assert.Equal("build", v.build[0]);
+    Assert.Equal("456", v.build[1]);
+  }
 
-  it("parses with both prerelease and build", () => {
+  parses_with_both_prerelease_and_build(): void {
     const v = tryParseVersion("1.2.3-alpha.1+build.456");
-    assert.deepEqual([...v.prerelease], ["alpha", "1"]);
-    assert.deepEqual([...v.build], ["build", "456"]);
-  });
+    Assert.Equal(2, v.prerelease.length);
+    Assert.Equal("alpha", v.prerelease[0]);
+    Assert.Equal("1", v.prerelease[1]);
+    Assert.Equal(2, v.build.length);
+    Assert.Equal("build", v.build[0]);
+    Assert.Equal("456", v.build[1]);
+  }
 
-  it("rejects invalid input", () => {
-    assert.throws(() => tryParseVersion("not.a.version"), SemverParseError);
-    assert.throws(() => tryParseVersion(""), SemverParseError);
-    assert.throws(() => tryParseVersion("01.2.3"), SemverParseError);  // leading zero
-  });
+  rejects_invalid_input(): void {
+    Assert.ThrowsAny<Exception>(() => { tryParseVersion("not.a.version"); });
+    Assert.ThrowsAny<Exception>(() => { tryParseVersion(""); });
+    Assert.ThrowsAny<Exception>(() => { tryParseVersion("01.2.3"); });
+  }
 
-  it("mustParse alias", () => {
+  must_parse_alias(): void {
     const v = mustParse("1.0.0");
-    assert.ok(v instanceof Version);
-  });
-});
+    Assert.True(v instanceof Version);
+  }
+}
 
-describe("semver — compare", () => {
-  it("major version difference", () => {
-    assert.equal(tryParseVersion("2.0.0").compare(tryParseVersion("1.0.0")), 1);
-    assert.equal(tryParseVersion("1.0.0").compare(tryParseVersion("2.0.0")), -1);
-  });
+export class SemverCompareTests {
+  major_version_difference(): void {
+    Assert.Equal(1, tryParseVersion("2.0.0").compare(tryParseVersion("1.0.0")));
+    Assert.Equal(-1, tryParseVersion("1.0.0").compare(tryParseVersion("2.0.0")));
+  }
 
-  it("minor version difference", () => {
-    assert.equal(tryParseVersion("1.2.0").compare(tryParseVersion("1.1.0")), 1);
-  });
+  minor_version_difference(): void {
+    Assert.Equal(1, tryParseVersion("1.2.0").compare(tryParseVersion("1.1.0")));
+  }
 
-  it("patch version difference", () => {
-    assert.equal(tryParseVersion("1.2.3").compare(tryParseVersion("1.2.2")), 1);
-  });
+  patch_version_difference(): void {
+    Assert.Equal(1, tryParseVersion("1.2.3").compare(tryParseVersion("1.2.2")));
+  }
 
-  it("equal", () => {
-    assert.equal(tryParseVersion("1.2.3").compare(tryParseVersion("1.2.3")), 0);
-  });
+  equal(): void {
+    Assert.Equal(0, tryParseVersion("1.2.3").compare(tryParseVersion("1.2.3")));
+  }
 
-  it("prerelease vs no-prerelease (prerelease loses)", () => {
-    assert.equal(tryParseVersion("1.0.0-alpha").compare(tryParseVersion("1.0.0")), -1);
-    assert.equal(tryParseVersion("1.0.0").compare(tryParseVersion("1.0.0-alpha")), 1);
-  });
+  prerelease_vs_no_prerelease_prerelease_loses(): void {
+    Assert.Equal(-1, tryParseVersion("1.0.0-alpha").compare(tryParseVersion("1.0.0")));
+    Assert.Equal(1, tryParseVersion("1.0.0").compare(tryParseVersion("1.0.0-alpha")));
+  }
 
-  it("prerelease numeric vs alpha", () => {
-    // Numeric identifiers have lower precedence than non-numeric per spec
-    assert.equal(tryParseVersion("1.0.0-1").compare(tryParseVersion("1.0.0-alpha")), -1);
-  });
+  prerelease_numeric_vs_alpha(): void {
+    Assert.Equal(-1, tryParseVersion("1.0.0-1").compare(tryParseVersion("1.0.0-alpha")));
+  }
 
-  it("prerelease numeric comparison", () => {
-    assert.equal(tryParseVersion("1.0.0-9").compare(tryParseVersion("1.0.0-10")), -1);
-  });
+  prerelease_numeric_comparison(): void {
+    Assert.Equal(-1, tryParseVersion("1.0.0-9").compare(tryParseVersion("1.0.0-10")));
+  }
 
-  it("prerelease lexical comparison", () => {
-    assert.equal(tryParseVersion("1.0.0-alpha").compare(tryParseVersion("1.0.0-beta")), -1);
-  });
+  prerelease_lexical_comparison(): void {
+    Assert.Equal(-1, tryParseVersion("1.0.0-alpha").compare(tryParseVersion("1.0.0-beta")));
+  }
 
-  it("longer prerelease wins when prefix equal", () => {
-    assert.equal(tryParseVersion("1.0.0-alpha").compare(tryParseVersion("1.0.0-alpha.1")), -1);
-  });
+  longer_prerelease_wins_when_prefix_equal(): void {
+    Assert.Equal(-1, tryParseVersion("1.0.0-alpha").compare(tryParseVersion("1.0.0-alpha.1")));
+  }
 
-  it("build metadata does not affect precedence", () => {
+  build_metadata_does_not_affect_precedence(): void {
     const a = tryParseVersion("1.0.0+build.1");
     const b = tryParseVersion("1.0.0+build.2");
-    assert.equal(a.compare(b), 0);
-  });
+    Assert.Equal(0, a.compare(b));
+  }
 
-  it("equals method", () => {
-    assert.equal(tryParseVersion("1.2.3").equals(tryParseVersion("1.2.3")), true);
-    assert.equal(tryParseVersion("1.2.3").equals(tryParseVersion("1.2.4")), false);
-  });
-});
+  equals_method(): void {
+    Assert.True(tryParseVersion("1.2.3").equals(tryParseVersion("1.2.3")));
+    Assert.False(tryParseVersion("1.2.3").equals(tryParseVersion("1.2.4")));
+  }
+}
 
-describe("semver — increment", () => {
-  it("incrementMajor", () => {
+export class SemverIncrementTests {
+  increment_major(): void {
     const v = tryParseVersion("1.2.3").incrementMajor();
-    assert.equal(v.major, 2);
-    assert.equal(v.minor, 0);
-    assert.equal(v.patch, 0);
-  });
+    Assert.Equal(2, v.major);
+    Assert.Equal(0, v.minor);
+    Assert.Equal(0, v.patch);
+  }
 
-  it("incrementMinor", () => {
+  increment_minor(): void {
     const v = tryParseVersion("1.2.3").incrementMinor();
-    assert.equal(v.major, 1);
-    assert.equal(v.minor, 3);
-    assert.equal(v.patch, 0);
-  });
+    Assert.Equal(1, v.major);
+    Assert.Equal(3, v.minor);
+    Assert.Equal(0, v.patch);
+  }
 
-  it("incrementPatch", () => {
+  increment_patch(): void {
     const v = tryParseVersion("1.2.3").incrementPatch();
-    assert.equal(v.major, 1);
-    assert.equal(v.minor, 2);
-    assert.equal(v.patch, 4);
-  });
-});
+    Assert.Equal(1, v.major);
+    Assert.Equal(2, v.minor);
+    Assert.Equal(4, v.patch);
+  }
+}
 
-describe("semver — toString", () => {
-  it("round-trips simple versions", () => {
-    assert.equal(tryParseVersion("1.2.3").toString(), "1.2.3");
-  });
+export class SemverToStringTests {
+  round_trips_simple_versions(): void {
+    Assert.Equal("1.2.3", tryParseVersion("1.2.3").toString());
+  }
 
-  it("includes prerelease", () => {
-    assert.equal(tryParseVersion("1.2.3-alpha.1").toString(), "1.2.3-alpha.1");
-  });
+  includes_prerelease(): void {
+    Assert.Equal("1.2.3-alpha.1", tryParseVersion("1.2.3-alpha.1").toString());
+  }
 
-  it("includes build metadata", () => {
-    assert.equal(tryParseVersion("1.2.3+build.456").toString(), "1.2.3+build.456");
-  });
+  includes_build_metadata(): void {
+    Assert.Equal("1.2.3+build.456", tryParseVersion("1.2.3+build.456").toString());
+  }
 
-  it("partial parses fill with zeros", () => {
-    assert.equal(tryParseVersion("5").toString(), "5.0.0");
-  });
-});
+  partial_parses_fill_with_zeros(): void {
+    Assert.Equal("5.0.0", tryParseVersion("5").toString());
+  }
+}
+
+A<SemverParseTests>().method((t) => t.parses_full_x_y_z).add(FactAttribute);
+A<SemverParseTests>().method((t) => t.parses_partial_x).add(FactAttribute);
+A<SemverParseTests>().method((t) => t.parses_x_y).add(FactAttribute);
+A<SemverParseTests>().method((t) => t.parses_with_prerelease).add(FactAttribute);
+A<SemverParseTests>().method((t) => t.parses_with_build).add(FactAttribute);
+A<SemverParseTests>().method((t) => t.parses_with_both_prerelease_and_build).add(FactAttribute);
+A<SemverParseTests>().method((t) => t.rejects_invalid_input).add(FactAttribute);
+A<SemverParseTests>().method((t) => t.must_parse_alias).add(FactAttribute);
+A<SemverCompareTests>().method((t) => t.major_version_difference).add(FactAttribute);
+A<SemverCompareTests>().method((t) => t.minor_version_difference).add(FactAttribute);
+A<SemverCompareTests>().method((t) => t.patch_version_difference).add(FactAttribute);
+A<SemverCompareTests>().method((t) => t.equal).add(FactAttribute);
+A<SemverCompareTests>().method((t) => t.prerelease_vs_no_prerelease_prerelease_loses).add(FactAttribute);
+A<SemverCompareTests>().method((t) => t.prerelease_numeric_vs_alpha).add(FactAttribute);
+A<SemverCompareTests>().method((t) => t.prerelease_numeric_comparison).add(FactAttribute);
+A<SemverCompareTests>().method((t) => t.prerelease_lexical_comparison).add(FactAttribute);
+A<SemverCompareTests>().method((t) => t.longer_prerelease_wins_when_prefix_equal).add(FactAttribute);
+A<SemverCompareTests>().method((t) => t.build_metadata_does_not_affect_precedence).add(FactAttribute);
+A<SemverCompareTests>().method((t) => t.equals_method).add(FactAttribute);
+A<SemverIncrementTests>().method((t) => t.increment_major).add(FactAttribute);
+A<SemverIncrementTests>().method((t) => t.increment_minor).add(FactAttribute);
+A<SemverIncrementTests>().method((t) => t.increment_patch).add(FactAttribute);
+A<SemverToStringTests>().method((t) => t.round_trips_simple_versions).add(FactAttribute);
+A<SemverToStringTests>().method((t) => t.includes_prerelease).add(FactAttribute);
+A<SemverToStringTests>().method((t) => t.includes_build_metadata).add(FactAttribute);
+A<SemverToStringTests>().method((t) => t.partial_parses_fill_with_zeros).add(FactAttribute);

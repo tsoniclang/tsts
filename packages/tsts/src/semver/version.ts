@@ -9,27 +9,25 @@
  * (missing parts default to 0), matching TS-Go's behavior.
  */
 
+import type { int } from "@tsonic/core/types.js";
+
 const VERSION_REGEX = /^(0|[1-9]\d*)(?:\.(0|[1-9]\d*)(?:\.(0|[1-9]\d*)(?:-([a-z0-9-.]+))?(?:\+([a-z0-9-.]+))?)?)?$/i;
 
 const PRERELEASE_REGEX = /^(?:0|[1-9]\d*|[a-z-][a-z0-9-]*)(?:\.(?:0|[1-9]\d*|[a-zA-Z-][a-zA-Z0-9-]*))*$/i;
 const BUILD_REGEX = /^[a-z0-9-]+(?:\.[a-z0-9-]+)*$/i;
 const NUMERIC_IDENTIFIER_REGEX = /^(?:0|[1-9]\d*)$/;
 
-const COMPARISON_LESS = -1;
-const COMPARISON_EQUAL = 0;
-const COMPARISON_GREATER = 1;
-
 export class Version {
-  readonly major: number;
-  readonly minor: number;
-  readonly patch: number;
+  readonly major: int;
+  readonly minor: int;
+  readonly patch: int;
   readonly prerelease: readonly string[];
   readonly build: readonly string[];
 
   constructor(
-    major: number,
-    minor = 0,
-    patch = 0,
+    major: int,
+    minor: int = 0,
+    patch: int = 0,
     prerelease: readonly string[] = [],
     build: readonly string[] = []
   ) {
@@ -47,21 +45,23 @@ export class Version {
    * Returns -1 if `this < other`, 0 if equal, 1 if `this > other`.
    * Build metadata does not figure into precedence.
    */
-  compare(other: Version): -1 | 0 | 1 {
-    const a = this;
-    const b = other;
-    if (a === b) return COMPARISON_EQUAL;
-    if (a === null) return COMPARISON_LESS;
-    if (b === null) return COMPARISON_GREATER;
+  compare(other: Version): int {
+    if (this === other) return 0;
 
-    if (a.major !== b.major) return a.major < b.major ? COMPARISON_LESS : COMPARISON_GREATER;
-    if (a.minor !== b.minor) return a.minor < b.minor ? COMPARISON_LESS : COMPARISON_GREATER;
-    if (a.patch !== b.patch) return a.patch < b.patch ? COMPARISON_LESS : COMPARISON_GREATER;
-    return comparePrereleaseIdentifiers(a.prerelease, b.prerelease);
+    if (this.major !== other.major) {
+      return this.major < other.major ? -1 : 1;
+    }
+    if (this.minor !== other.minor) {
+      return this.minor < other.minor ? -1 : 1;
+    }
+    if (this.patch !== other.patch) {
+      return this.patch < other.patch ? -1 : 1;
+    }
+    return comparePrereleaseIdentifiers(this.prerelease, other.prerelease);
   }
 
   equals(other: Version): boolean {
-    return this.compare(other) === COMPARISON_EQUAL;
+    return this.compare(other) === 0;
   }
 
   incrementMajor(): Version {
@@ -85,8 +85,10 @@ export class Version {
 }
 
 export class SemverParseError extends Error {
-  constructor(public readonly origInput: string) {
+  readonly origInput: string;
+  constructor(origInput: string) {
     super(`Could not parse version string from "${origInput}"`);
+    this.origInput = origInput;
     this.name = "SemverParseError";
   }
 }
@@ -132,9 +134,13 @@ export function mustParse(text: string): Version {
   return tryParseVersion(text);
 }
 
-function getUintComponent(text: string, original: string): number {
+function isInt32(value: number): value is int {
+  return Number.isInteger(value) && value >= 0 && value <= 0x7FFF_FFFF;
+}
+
+function getUintComponent(text: string, original: string): int {
   const n = Number(text);
-  if (!Number.isInteger(n) || n < 0 || n > 0xFFFF_FFFF) {
+  if (!isInt32(n)) {
     throw new SemverParseError(original);
   }
   return n;
@@ -143,42 +149,42 @@ function getUintComponent(text: string, original: string): number {
 function comparePrereleaseIdentifiers(
   left: readonly string[],
   right: readonly string[]
-): -1 | 0 | 1 {
-  if (left.length === 0) return right.length === 0 ? COMPARISON_EQUAL : COMPARISON_GREATER;
-  if (right.length === 0) return COMPARISON_LESS;
+): int {
+  if (left.length === 0) return right.length === 0 ? 0 : 1;
+  if (right.length === 0) return -1;
 
   const len = Math.min(left.length, right.length);
   for (let i = 0; i < len; i += 1) {
     const cmp = comparePrereleaseIdentifier(left[i]!, right[i]!);
-    if (cmp !== COMPARISON_EQUAL) return cmp;
+    if (cmp !== 0) return cmp;
   }
-  if (left.length < right.length) return COMPARISON_LESS;
-  if (left.length > right.length) return COMPARISON_GREATER;
-  return COMPARISON_EQUAL;
+  if (left.length < right.length) return -1;
+  if (left.length > right.length) return 1;
+  return 0;
 }
 
-function comparePrereleaseIdentifier(left: string, right: string): -1 | 0 | 1 {
-  if (left === right) return COMPARISON_EQUAL;
+function comparePrereleaseIdentifier(left: string, right: string): int {
+  if (left === right) return 0;
 
   const leftIsNumeric = NUMERIC_IDENTIFIER_REGEX.test(left);
   const rightIsNumeric = NUMERIC_IDENTIFIER_REGEX.test(right);
 
   if (leftIsNumeric || rightIsNumeric) {
-    if (!rightIsNumeric) return COMPARISON_LESS;
-    if (!leftIsNumeric) return COMPARISON_GREATER;
+    if (!rightIsNumeric) return -1;
+    if (!leftIsNumeric) return 1;
 
     const leftN = Number(left);
     const rightN = Number(right);
     if (!Number.isFinite(leftN) || !Number.isFinite(rightN)) {
       // Overflow: fall back to length, then string compare
-      if (left.length < right.length) return COMPARISON_LESS;
-      if (left.length > right.length) return COMPARISON_GREATER;
-      return left < right ? COMPARISON_LESS : left > right ? COMPARISON_GREATER : COMPARISON_EQUAL;
+      if (left.length < right.length) return -1;
+      if (left.length > right.length) return 1;
+      return left < right ? -1 : left > right ? 1 : 0;
     }
-    if (leftN < rightN) return COMPARISON_LESS;
-    if (leftN > rightN) return COMPARISON_GREATER;
-    return COMPARISON_EQUAL;
+    if (leftN < rightN) return -1;
+    if (leftN > rightN) return 1;
+    return 0;
   }
 
-  return left < right ? COMPARISON_LESS : COMPARISON_GREATER;
+  return left < right ? -1 : 1;
 }

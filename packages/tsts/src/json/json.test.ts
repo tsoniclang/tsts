@@ -1,49 +1,49 @@
-import { describe, it } from "node:test";
-import { strict as assert } from "node:assert";
+import { attributes as A } from "@tsonic/core/lang.js";
+import { Assert, FactAttribute } from "xunit-types/Xunit.js";
 
-import { isJsonArray, isJsonObject, marshal, marshalIndent, unmarshal } from "../../src/json/index.js";
+import { isJsonArray, isJsonObject, marshal, marshalIndent, unmarshal } from "./index.js";
 
-describe("json — marshal/unmarshal", () => {
-  it("round-trips simple values", () => {
-    assert.equal(marshal(null), "null");
-    assert.equal(marshal(true), "true");
-    assert.equal(marshal(42), "42");
-    assert.equal(marshal("hello"), '"hello"');
-  });
+export class JsonMarshalTests {
+  round_trips_simple_values(): void {
+    Assert.Equal("null", marshal(null));
+    Assert.Equal("true", marshal(true));
+    Assert.Equal("42", marshal(42));
+    Assert.Equal('"hello"', marshal("hello"));
+  }
 
-  it("round-trips objects", () => {
-    const obj = { a: 1, b: "two", c: [1, 2, 3] };
-    const json = marshal(obj);
-    const parsed = unmarshal<typeof obj>(json);
-    assert.deepEqual(parsed, obj);
-  });
-
-  it("marshalIndent without prefix uses JSON.stringify indent", () => {
+  marshal_indent_without_prefix(): void {
     const result = marshalIndent({ a: 1 }, "", "  ");
-    assert.equal(result, '{\n  "a": 1\n}');
-  });
+    Assert.Equal('{\n  "a": 1\n}', result);
+  }
 
-  it("marshalIndent with empty prefix and indent equals marshal", () => {
-    assert.equal(marshalIndent({ a: 1 }, "", ""), marshal({ a: 1 }));
-  });
+  marshal_indent_empty_prefix_and_indent_equals_marshal(): void {
+    Assert.Equal(marshal({ a: 1 }), marshalIndent({ a: 1 }, "", ""));
+  }
 
-  it("marshalIndent with prefix adds prefix to subsequent lines", () => {
+  marshal_indent_with_prefix_adds_prefix_to_subsequent_lines(): void {
     const result = marshalIndent({ a: 1 }, "> ", "  ");
-    assert.equal(result, '{\n>   "a": 1\n> }');
-  });
-});
+    Assert.Equal('{\n>   "a": 1\n> }', result);
+  }
+}
 
-describe("json — type guards", () => {
-  it("isJsonObject", () => {
-    assert.equal(isJsonObject({}), true);
-    assert.equal(isJsonObject([]), false);
-    assert.equal(isJsonObject(null), false);
-    assert.equal(isJsonObject("foo"), false);
-  });
+export class JsonTypeGuardTests {
+  is_json_object(): void {
+    Assert.True(isJsonObject({}));
+    Assert.False(isJsonObject([]));
+    Assert.False(isJsonObject(null));
+    Assert.False(isJsonObject("foo"));
+  }
 
-  it("isJsonArray", () => {
-    assert.equal(isJsonArray([]), true);
-    assert.equal(isJsonArray({}), false);
-    assert.equal(isJsonArray(null), false);
-  });
-});
+  is_json_array(): void {
+    Assert.True(isJsonArray([]));
+    Assert.False(isJsonArray({}));
+    Assert.False(isJsonArray(null));
+  }
+}
+
+A<JsonMarshalTests>().method((t) => t.round_trips_simple_values).add(FactAttribute);
+A<JsonMarshalTests>().method((t) => t.marshal_indent_without_prefix).add(FactAttribute);
+A<JsonMarshalTests>().method((t) => t.marshal_indent_empty_prefix_and_indent_equals_marshal).add(FactAttribute);
+A<JsonMarshalTests>().method((t) => t.marshal_indent_with_prefix_adds_prefix_to_subsequent_lines).add(FactAttribute);
+A<JsonTypeGuardTests>().method((t) => t.is_json_object).add(FactAttribute);
+A<JsonTypeGuardTests>().method((t) => t.is_json_array).add(FactAttribute);
