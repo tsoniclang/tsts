@@ -12,3 +12,7 @@ import "./collections/collections.test.ts";
 // import "./json/json.test.ts";
 
 import "./semver/version.test.ts";
+
+// Disabled pending @tsonic/js Object.is + String.fromCharCode surfaces
+// (see batch 2026-05-23-180300):
+// import "./jsnum/jsnum.test.ts";
