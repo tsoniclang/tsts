@@ -15,5 +15,4 @@ import "./semver/version.test.ts";
 
 import "./jsnum/jsnum.test.ts";
 
-// Disabled pending tsonic ICE on union-type emission (see batch 2026-05-23-203400):
-// import "./stringutil/stringutil.test.ts";
+import "./stringutil/stringutil.test.ts";
