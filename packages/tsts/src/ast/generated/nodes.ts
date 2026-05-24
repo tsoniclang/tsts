@@ -729,7 +729,7 @@ export interface TemplateLiteralTypeSpan extends TypeNodeBase {
 }
 export interface SyntheticExpression extends ExpressionBase {
   readonly kind: Kind.SyntheticExpression;
-  readonly type: any;
+  readonly type: unknown;
   readonly isSpread: boolean;
   readonly tupleNameSource?: Node;
 }

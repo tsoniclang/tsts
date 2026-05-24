@@ -33,7 +33,6 @@ import "./core/pattern.test.ts";
 
 import "./diagnosticwriter/format.test.ts";
 
-// Disabled pending generated AST factory cleanup (`in`/`Array.isArray` on
-// unknown, `any`, untyped defaults) + config/tsconfig.ts Array.isArray
-// (see batch 2026-05-24-180000):
+// Disabled pending generator-wide refactor of ast/generated/{kind,schema,nodes}.ts
+// to avoid `enum`, `as const`, and other tsonic-rejected patterns:
 // import "./config/tsconfig.test.ts";

@@ -1,4 +1,7 @@
 import { dirname, join } from "node:path";
+
+import type { JsValue } from "@tsonic/core/types.js";
+
 import type { CompilerHost, CompilerOptions } from "../program/index.js";
 
 export interface TsConfig {
@@ -18,10 +21,10 @@ export interface TsConfigParseResult {
 }
 
 interface RawTsConfig {
-  readonly compilerOptions?: unknown;
-  readonly files?: unknown;
-  readonly include?: unknown;
-  readonly exclude?: unknown;
+  readonly compilerOptions?: JsValue;
+  readonly files?: JsValue;
+  readonly include?: JsValue;
+  readonly exclude?: JsValue;
 }
 
 const supportedRootExtensions = [".ts", ".tsx", ".d.ts"] as const;
@@ -39,7 +42,7 @@ export function loadTsConfig(fileName: string, host: Pick<CompilerHost, "readFil
 
 export function parseTsConfigText(fileName: string, text: string, host?: Pick<CompilerHost, "readDirectory">): TsConfigParseResult {
   const diagnostics: TsConfigDiagnostic[] = [];
-  let raw: unknown;
+  let raw: JsValue;
   try {
     raw = JSON.parse(stripJsonCommentsAndTrailingCommas(text));
   } catch (error) {
@@ -71,7 +74,7 @@ export function parseTsConfigText(fileName: string, text: string, host?: Pick<Co
   };
 }
 
-function parseCompilerOptions(fileName: string, value: unknown, diagnostics: TsConfigDiagnostic[]): CompilerOptions {
+function parseCompilerOptions(fileName: string, value: JsValue | undefined, diagnostics: TsConfigDiagnostic[]): CompilerOptions {
   if (value === undefined) {
     return {};
   }
@@ -119,7 +122,7 @@ function parseRootNames(
 function parseStringArrayOption(
   fileName: string,
   optionName: "include" | "exclude",
-  value: unknown,
+  value: JsValue | undefined,
   diagnostics: TsConfigDiagnostic[],
 ): readonly string[] | undefined {
   if (value === undefined) {
@@ -223,6 +226,6 @@ function removeTrailingCommas(text: string): string {
   return output;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
+function isRecord(value: JsValue): value is Record<string, JsValue> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
