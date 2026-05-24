@@ -25,6 +25,6 @@ import "./symlinks/symlinks.test.ts";
 
 import "./glob/glob.test.ts";
 
-// Disabled pending @tsonic/js Array.prototype.flatMap binding
-// (see batch 2026-05-24-001500):
+// Disabled pending emitter type-arg fix for Select-wrapped widening and
+// mapNonNil U inference (see batch 2026-05-24-093800):
 // import "./core/core.test.ts";
