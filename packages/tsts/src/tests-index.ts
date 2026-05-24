@@ -33,7 +33,7 @@ import "./core/pattern.test.ts";
 
 import "./diagnosticwriter/format.test.ts";
 
-// Disabled: importing CompilerHost transitively brings in parser/AST/program,
-// which currently surfaces TSN5001/TSN7401/TSN7405/TSN2001 across the
-// unfinished AST factory and parser source. Defer until those layers compile.
+// Disabled pending generated AST factory cleanup (`in`/`Array.isArray` on
+// unknown, `any`, untyped defaults) + config/tsconfig.ts Array.isArray
+// (see batch 2026-05-24-180000):
 // import "./config/tsconfig.test.ts";

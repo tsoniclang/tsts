@@ -887,7 +887,7 @@ export class Parser {
     return statements;
   }
 
-  #parseExpression(precedence = 0): Expression {
+  #parseExpression(precedence: number = 0): Expression {
     if (precedence === 0 && this.#isArrowFunctionStart()) {
       return this.#parseArrowFunction();
     }

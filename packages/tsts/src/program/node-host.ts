@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 import type { CompilerHost } from "./program.js";
 
-export function createNodeCompilerHost(currentDirectory = process.cwd()): CompilerHost {
+export function createNodeCompilerHost(currentDirectory: string = process.cwd()): CompilerHost {
   return {
     getCurrentDirectory: () => currentDirectory,
     readFile: fileName => {
@@ -47,7 +47,7 @@ export function createNodeCompilerHost(currentDirectory = process.cwd()): Compil
 }
 
 function isNotFoundError(error: unknown): boolean {
-  return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
+  return typeof error === "object" && error !== null && (error as { readonly code?: unknown }).code === "ENOENT";
 }
 
 function visitDirectory(directoryName: string, onFile: (fileName: string) => void, shouldVisitDirectory: (directoryName: string) => boolean): void {
