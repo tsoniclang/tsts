@@ -13,6 +13,8 @@ import "./collections/collections.test.ts";
 
 import "./semver/version.test.ts";
 
+import "./semver/version_range.test.ts";
+
 import "./jsnum/jsnum.test.ts";
 
 import "./stringutil/stringutil.test.ts";
