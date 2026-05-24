@@ -35,7 +35,8 @@ import "./diagnosticwriter/format.test.ts";
 
 // Disabled pending tsonic discriminated-union access in emitted C#
 // (Expected<T>, JSONValueShape) + Map/ReadonlyMap invariance + T leak
-// (see batch 2026-05-24-185000):
+// + absent-constant widening + typeof/isJsonObject early-return narrowing
+// (batch 2026-05-24-185000 not fully resolved; new batch 2026-05-24-211000 filed):
 // import "./packagejson/packagejson.test.ts";
 
 // Disabled pending source-side cleanup of binder/checker explicit type-arg
