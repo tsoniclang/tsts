@@ -4,8 +4,10 @@
  * Port of TS-Go internal/core/text.go.
  */
 
+import type { int } from "@tsonic/core/types.js";
+
 /** A position in a source file as a 0-based char offset. */
-export type TextPos = number;
+export type TextPos = int;
 
 /** A half-open range [pos, end) in a source file. */
 export class TextRange {

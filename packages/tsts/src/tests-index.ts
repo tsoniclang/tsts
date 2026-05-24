@@ -32,6 +32,6 @@ import "./core/core.test.ts";
 import "./core/pattern.test.ts";
 
 // Disabled pending emitter support for object-literal-as-anonymous-interface
-// (FileLike/Diagnostic), Dictionary<int, string> CATEGORY_NAMES emission, and
-// DiagnosticCategory enum coercion to int (see batch 2026-05-24-125700):
+// (FileLike/Diagnostic) and Record<number, string> literal emission
+// (see batch 2026-05-24-125700):
 // import "./diagnosticwriter/format.test.ts";

@@ -5,11 +5,16 @@
  * CompilerOptions where a flag has not been explicitly set.
  */
 
-export enum Tristate {
-  Unknown = 0,
-  False = 1,
-  True = 2,
-}
+export type Tristate = 0 | 1 | 2;
+export const Tristate: {
+  readonly Unknown: Tristate;
+  readonly False: Tristate;
+  readonly True: Tristate;
+} = {
+  Unknown: 0,
+  False: 1,
+  True: 2,
+};
 
 export function tristateIsTrue(t: Tristate): boolean {
   return t === Tristate.True;
