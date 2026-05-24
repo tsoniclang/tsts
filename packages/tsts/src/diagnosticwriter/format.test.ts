@@ -1,16 +1,17 @@
-import { describe, it } from "node:test";
-import { strict as assert } from "node:assert";
+import { attributes as A } from "@tsonic/core/lang.js";
+import { Assert, FactAttribute } from "xunit-types/Xunit.js";
 
 import {
   formatDiagnostic,
   formatDiagnosticWithSource,
   type Diagnostic,
   type FileLike,
-} from "../../src/diagnosticwriter/index.js";
+} from "./index.js";
+import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
 
-function makeFile(text: string, fileName = "test.ts"): FileLike {
+function makeFile(text: string, fileName: string = "test.ts"): FileLike {
   const lineMap: number[] = [0];
-  for (let i = 0; i < text.length; i += 1) {
+  for (let i = 0; i < text.length; i = i + 1) {
     if (text[i] === "\n") lineMap.push(i + 1);
   }
   return {
@@ -20,77 +21,93 @@ function makeFile(text: string, fileName = "test.ts"): FileLike {
   };
 }
 
-function makeDiag(opts: {
-  file?: FileLike;
-  pos: number;
-  end: number;
-  code: number;
-  category: number;
-  message: string;
-}): Diagnostic {
+interface DiagOpts {
+  readonly file?: FileLike;
+  readonly pos: number;
+  readonly end: number;
+  readonly code: number;
+  readonly category: DiagnosticCategory;
+  readonly message: string;
+}
+
+function makeDiag(opts: DiagOpts): Diagnostic {
   return {
     file: () => opts.file,
     pos: () => opts.pos,
     end: () => opts.end,
     len: () => opts.end - opts.pos,
     code: () => opts.code,
-    category: () => opts.category as 0 | 1 | 2 | 3,
-    localize: () => opts.message,
+    category: () => opts.category,
+    localize: (_locale?: string) => opts.message,
     messageChain: () => [],
     relatedInformation: () => [],
   };
 }
 
-describe("diagnosticwriter — formatDiagnostic", () => {
-  it("formats single line with file location", () => {
+export class FormatDiagnosticTests {
+  formats_single_line_with_file_location(): void {
     const file = makeFile("const x: number = 5;\nlet y = x;");
     const d = makeDiag({
       file,
       pos: 6,
       end: 7,
       code: 2304,
-      category: 1,
+      category: DiagnosticCategory.Error,
       message: "Identifier expected.",
     });
-    assert.equal(
-      formatDiagnostic(d),
-      "test.ts(1,7): error TS2304: Identifier expected."
-    );
-  });
+    Assert.Equal("test.ts(1,7): error TS2304: Identifier expected.", formatDiagnostic(d));
+  }
 
-  it("formats without a source file", () => {
+  formats_without_source_file(): void {
     const d = makeDiag({
       pos: 0,
       end: 0,
       code: 5023,
-      category: 1,
+      category: DiagnosticCategory.Error,
       message: "Unknown option.",
     });
-    assert.equal(formatDiagnostic(d), "error TS5023: Unknown option.");
-  });
+    Assert.Equal("error TS5023: Unknown option.", formatDiagnostic(d));
+  }
 
-  it("formats different categories", () => {
-    const d = makeDiag({ pos: 0, end: 0, code: 1, category: 0, message: "msg" });
-    assert.ok(formatDiagnostic(d).startsWith("warning"));
-    const d2 = makeDiag({ pos: 0, end: 0, code: 1, category: 2, message: "msg" });
-    assert.ok(formatDiagnostic(d2).startsWith("suggestion"));
-  });
-});
+  formats_different_categories(): void {
+    const dWarn = makeDiag({
+      pos: 0,
+      end: 0,
+      code: 1,
+      category: DiagnosticCategory.Warning,
+      message: "msg",
+    });
+    Assert.StartsWith("warning", formatDiagnostic(dWarn));
+    const dSug = makeDiag({
+      pos: 0,
+      end: 0,
+      code: 1,
+      category: DiagnosticCategory.Suggestion,
+      message: "msg",
+    });
+    Assert.StartsWith("suggestion", formatDiagnostic(dSug));
+  }
+}
 
-describe("diagnosticwriter — formatDiagnosticWithSource", () => {
-  it("includes source line and caret", () => {
+export class FormatDiagnosticWithSourceTests {
+  includes_source_line_and_caret(): void {
     const file = makeFile("const x = 5;\nlet y: string = x;\nconst z = 0;");
     const d = makeDiag({
       file,
-      pos: 30,   // Start of "x" on line 2
+      pos: 30,
       end: 31,
       code: 2322,
-      category: 1,
+      category: DiagnosticCategory.Error,
       message: "Type 'number' is not assignable to type 'string'.",
     });
     const output = formatDiagnosticWithSource(d);
-    assert.ok(output.includes("test.ts(2,18)"));
-    assert.ok(output.includes("let y: string = x;"));
-    assert.ok(output.includes("~"));
-  });
-});
+    Assert.Contains("test.ts(2,18)", output);
+    Assert.Contains("let y: string = x;", output);
+    Assert.Contains("~", output);
+  }
+}
+
+A<FormatDiagnosticTests>().method((t) => t.formats_single_line_with_file_location).add(FactAttribute);
+A<FormatDiagnosticTests>().method((t) => t.formats_without_source_file).add(FactAttribute);
+A<FormatDiagnosticTests>().method((t) => t.formats_different_categories).add(FactAttribute);
+A<FormatDiagnosticWithSourceTests>().method((t) => t.includes_source_line_and_caret).add(FactAttribute);

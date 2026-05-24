@@ -30,3 +30,8 @@ import "./glob/glob.test.ts";
 import "./core/core.test.ts";
 
 import "./core/pattern.test.ts";
+
+// Disabled pending TSN7430 fix: object-literal arrow-property members do not
+// receive contextual types from the function's declared return-type interface
+// (see batch 2026-05-24-110600):
+// import "./diagnosticwriter/format.test.ts";
