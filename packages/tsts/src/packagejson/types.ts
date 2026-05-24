@@ -28,7 +28,7 @@ export type Expected<T> =
 
 export type JsonTypeName = "string" | "number" | "boolean" | "null" | "array" | "object";
 
-export const absent: Expected<never> = { state: "absent" };
+export const absent: { readonly state: "absent" } = { state: "absent" };
 
 export function expectedOf<T>(value: T, actualJSONType: JsonTypeName): Expected<T> {
   return { state: "ok", value, actualJSONType };
@@ -69,7 +69,7 @@ export type JSONValueShape =
   | { readonly type: "array"; readonly value: readonly JSONValueShape[] }
   | { readonly type: "object"; readonly value: ReadonlyMap<string, JSONValueShape> };
 
-export function jsonValueFromJSON(raw: unknown): JSONValueShape {
+export function jsonValueFromJSON(raw: JsonValue | undefined): JSONValueShape {
   if (raw === undefined) return { type: "not-present" };
   if (raw === null) return { type: "null", value: null };
   switch (typeof raw) {
@@ -83,8 +83,7 @@ export function jsonValueFromJSON(raw: unknown): JSONValueShape {
           value: raw.map((item) => jsonValueFromJSON(item)),
         };
       }
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (raw !== null) {
+      {
         const map = new Map<string, JSONValueShape>();
         for (const [k, v] of Object.entries(raw)) {
           map.set(k, jsonValueFromJSON(v));

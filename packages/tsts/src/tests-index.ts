@@ -33,6 +33,11 @@ import "./core/pattern.test.ts";
 
 import "./diagnosticwriter/format.test.ts";
 
+// Disabled pending tsonic ICE: "Runtime typeof expression reached emitter -
+// validation missed TSN2001" when packagejson uses typeof narrowing on
+// JsonValue. See batch 2026-05-24-181000 follow-up.
+// import "./packagejson/packagejson.test.ts";
+
 // Disabled pending generator-wide refactor of ast/generated/{kind,schema,nodes}.ts
 // to avoid `enum`, `as const`, and other tsonic-rejected patterns:
 // import "./config/tsconfig.test.ts";

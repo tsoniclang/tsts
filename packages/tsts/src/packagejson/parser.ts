@@ -25,7 +25,7 @@ import {
  * states rather than throwing.
  */
 export function parsePackageJSON(text: string): PackageJSON {
-  const raw = unmarshal<JsonValue>(text);
+  const raw = unmarshal(text) as JsonValue;
   return packageJSONFromValue(raw);
 }
 
@@ -51,7 +51,6 @@ export function packageJSONFromValue(raw: JsonValue): PackageJSON {
 }
 
 function readString(obj: { readonly [key: string]: JsonValue }, key: string): Expected<string> {
-  if (!(key in obj)) return absent;
   const v = obj[key];
   if (v === undefined) return absent;
   if (v === null) return { state: "null", actualJSONType: "null" };
@@ -64,7 +63,6 @@ function readStringMap(
   obj: { readonly [key: string]: JsonValue },
   key: string
 ): Expected<ReadonlyMap<string, string>> {
-  if (!(key in obj)) return absent;
   const v = obj[key];
   if (v === undefined) return absent;
   if (v === null) return { state: "null", actualJSONType: "null" };
