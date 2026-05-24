@@ -7,6 +7,8 @@
  * and LSP diagnostics. Allows the formatter to work uniformly.
  */
 
+import type { int } from "@tsonic/core/types.js";
+
 import type { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
 import type { TextPos } from "../core/index.js";
 
@@ -27,10 +29,10 @@ export interface FileLike {
  */
 export interface Diagnostic {
   file(): FileLike | undefined;
-  pos(): number;
-  end(): number;
-  len(): number;
-  code(): number;
+  pos(): int;
+  end(): int;
+  len(): int;
+  code(): int;
   category(): DiagnosticCategory;
   localize(locale?: string): string;
   messageChain(): readonly Diagnostic[];

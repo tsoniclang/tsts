@@ -31,7 +31,7 @@ import "./core/core.test.ts";
 
 import "./core/pattern.test.ts";
 
-// Disabled pending TSN7430 fix: object-literal arrow-property members do not
-// receive contextual types from the function's declared return-type interface
-// (see batch 2026-05-24-110600):
+// Disabled pending emitter support for object-literal-as-anonymous-interface
+// (FileLike/Diagnostic), Dictionary<int, string> CATEGORY_NAMES emission, and
+// DiagnosticCategory enum coercion to int (see batch 2026-05-24-125700):
 // import "./diagnosticwriter/format.test.ts";

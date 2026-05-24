@@ -14,6 +14,8 @@
  * TERM/NO_COLOR environment variables.
  */
 
+import type { int } from "@tsonic/core/types.js";
+
 import type { Diagnostic, FileLike } from "./types.js";
 
 const CATEGORY_NAMES: Record<number, string> = {
@@ -109,21 +111,20 @@ export function formatDiagnosticsWithSource(diags: readonly Diagnostic[]): strin
 }
 
 interface LineColumn {
-  readonly line: number;
-  readonly column: number;
+  readonly line: int;
+  readonly column: int;
 }
 
 /**
  * Convert a character offset to (line, column) using the file's lineMap.
  * Returns 0-based line and column.
  */
-function locationForFileAndPos(file: FileLike, pos: number): LineColumn {
+function locationForFileAndPos(file: FileLike, pos: int): LineColumn {
   const lineMap = file.ecmaLineMap();
-  // Binary search for the line containing `pos`.
-  let lo = 0;
-  let hi = lineMap.length - 1;
+  let lo: int = 0;
+  let hi: int = lineMap.length - 1;
   while (lo < hi) {
-    const mid = (lo + hi + 1) >>> 1;
+    const mid: int = ((lo + hi + 1) / 2) | 0;
     if (lineMap[mid]! <= pos) lo = mid;
     else hi = mid - 1;
   }

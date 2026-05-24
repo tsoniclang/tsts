@@ -1,4 +1,5 @@
 import { attributes as A } from "@tsonic/core/lang.js";
+import type { int } from "@tsonic/core/types.js";
 import { Assert, FactAttribute } from "xunit-types/Xunit.js";
 
 import {
@@ -23,9 +24,9 @@ function makeFile(text: string, fileName: string = "test.ts"): FileLike {
 
 interface DiagOpts {
   readonly file?: FileLike;
-  readonly pos: number;
-  readonly end: number;
-  readonly code: number;
+  readonly pos: int;
+  readonly end: int;
+  readonly code: int;
   readonly category: DiagnosticCategory;
   readonly message: string;
 }
