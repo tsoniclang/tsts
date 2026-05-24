@@ -26,3 +26,5 @@ import "./symlinks/symlinks.test.ts";
 import "./glob/glob.test.ts";
 
 import "./core/core.test.ts";
+
+import "./core/pattern.test.ts";
