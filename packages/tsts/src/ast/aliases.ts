@@ -91,11 +91,9 @@ import type {
   TypeNode,
   ForInitializer,
   PrivateIdentifier,
-  FileReference,
   JSDocTypeExpression,
   JSDocTypeLiteral,
   JSDocAllType,
-  TextRange,
   JsxSelfClosingElement,
   JsxOpeningElement,
   StatementList,
@@ -109,6 +107,8 @@ import type {
   SourceFile,
   Symbol,
   FlowNode,
+  FileReference,
+  TextRange,
 } from "./generated/types.js";
 
 // ---------------------------------------------------------------------------
@@ -238,18 +238,16 @@ export type {
   TypeNode,
   ForInitializer,
   PrivateIdentifier,
-  FileReference,
   JSDocTypeExpression,
   JSDocTypeLiteral,
   JSDocAllType,
-  TextRange,
   JsxSelfClosingElement,
   JsxOpeningElement,
   StatementList,
   ParameterList,
   TypeParameterList,
 };
-export type { Node, NodeArray, SourceFile, Symbol, FlowNode };
+export type { Node, NodeArray, SourceFile, Symbol, FlowNode, FileReference, TextRange };
 
 // ---------------------------------------------------------------------------
 // Symbol-table + flow types

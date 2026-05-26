@@ -17,11 +17,11 @@ export interface MsgpackProtocolHandler {
 
 export interface DecodedMessage {
   kind: "request" | "response" | "notification";
-  id?: number;
-  method?: Method;
+  id?: number | undefined;
+  method?: Method | undefined;
   params?: unknown;
   result?: unknown;
-  error?: string;
+  error?: string | undefined;
 }
 
 export class MsgpackProtocol implements MsgpackProtocolHandler {
