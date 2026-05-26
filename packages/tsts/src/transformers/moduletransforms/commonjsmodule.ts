@@ -1580,7 +1580,7 @@ interface ReferenceResolver {
   getReferencedValueDeclaration(node: AstNode): AstNode | undefined;
   getReferencedValueDeclarations?(node: AstNode): readonly AstNode[] | undefined;
 }
-interface HasFileName { readonly _hf: unknown }
+type HasFileName = AstNode | { readonly fileName?: string };
 
 // NodeVisitor type comes from transformer.ts (imported via Transformer
 // base class context). Removed local stub — was conflicting with the
@@ -1698,12 +1698,12 @@ declare function exportDeclarationModuleSpecifier(node: ExportDeclaration): AstN
 declare function exportDeclarationExportClause(node: ExportDeclaration): AstNode | undefined;
 declare function exportAssignmentIsExportEquals(node: ExportAssignment): boolean;
 declare function exportAssignmentExpression(node: ExportAssignment): AstNode;
-declare function classDeclarationModifiers(node: ClassDeclaration): unknown;
-declare function classDeclarationHeritageClauses(node: ClassDeclaration): unknown;
-declare function classDeclarationMembers(node: ClassDeclaration): unknown;
-declare function functionDeclarationModifiers(node: FunctionDeclaration): unknown;
+declare function classDeclarationModifiers(node: ClassDeclaration): ModifierList | undefined;
+declare function classDeclarationHeritageClauses(node: ClassDeclaration): NodeList | undefined;
+declare function classDeclarationMembers(node: ClassDeclaration): NodeList | undefined;
+declare function functionDeclarationModifiers(node: FunctionDeclaration): ModifierList | undefined;
 declare function functionAsteriskTokenRO(node: FunctionDeclaration): AstNode | undefined;
-declare function functionDeclarationParameters(node: FunctionDeclaration): unknown;
+declare function functionDeclarationParameters(node: FunctionDeclaration): NodeList | undefined;
 declare function functionDeclarationBody(node: FunctionDeclaration): AstNode | undefined;
 declare function forInitializerRO(node: ForStatement): AstNode | undefined;
 declare function forConditionRO(node: ForStatement): AstNode | undefined;

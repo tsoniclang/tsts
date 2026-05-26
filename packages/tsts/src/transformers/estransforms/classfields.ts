@@ -23,7 +23,7 @@
  * Cross-module deps forward-declared at file end.
  */
 
-import { Transformer, type TransformOptions } from "../transformer.js";
+import { Transformer, type TransformOptions, type NodeVisitor } from "../transformer.js";
 import type {
   Node as AstNode,
   IdentifierNode,

@@ -12,7 +12,7 @@
 
 import { SuperAccessState } from "./utilities.js";
 import type { Node as AstNode, NodeArray, SourceFile, AwaitExpression, ForStatement, ForInOrOfStatement, CatchClause, VariableDeclaration, VariableDeclarationList, IdentifierNode, ConstructorDeclaration, MethodDeclaration, GetAccessorDeclaration, SetAccessorDeclaration, FunctionDeclaration, FunctionExpression, ArrowFunction, ParameterDeclaration, Block } from "../../ast/index.js";
-import { Transformer, type TransformOptions } from "../transformer.js";
+import { Transformer, type TransformOptions, type NodeVisitor } from "../transformer.js";
 
 // ---------------------------------------------------------------------------
 // Context flags

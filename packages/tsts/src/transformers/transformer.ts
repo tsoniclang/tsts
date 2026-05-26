@@ -28,7 +28,7 @@ import type {
  * the methods transformers invoke directly.
  */
 export interface EmitContext {
-  readonly factory: NodeFactory;
+  factory(): NodeFactory;
   newNodeVisitor(visit: (node: AstNode) => AstNode | undefined): NodeVisitor;
   addEmitHelper(node: AstNode, ...helpers: AstNode[]): void;
   addEmitHelpers(node: AstNode, helpers: readonly AstNode[] | undefined): void;
@@ -57,10 +57,10 @@ export interface EmitContext {
   addHoistedFunctionDeclaration(node: AstNode): void;
   mergeEnvironment(statements: readonly AstNode[], declarations: readonly AstNode[]): readonly AstNode[];
   // Visitor convenience accessors (Strada visitor methods on EmitContext)
-  visitParameters(parameters: readonly AstNode[]): readonly AstNode[];
-  visitFunctionBody(body: AstNode | undefined): AstNode | undefined;
-  visitIterationBody(body: AstNode): AstNode;
-  visitEmbeddedStatement(statement: AstNode): AstNode;
+  visitParameters(parameters: readonly AstNode[], visitor?: unknown): readonly AstNode[];
+  visitFunctionBody(body: AstNode | undefined, visitor?: unknown): AstNode | undefined;
+  visitIterationBody(body: AstNode, visitor?: unknown): AstNode;
+  visitEmbeddedStatement(statement: AstNode, visitor?: unknown): AstNode;
   // Range + comment helpers
   assignCommentAndSourceMapRanges(node: AstNode, original: AstNode): void;
   setNewSourceMapRange(node: AstNode, range: unknown): void;
@@ -96,7 +96,7 @@ export interface NodeFactory {
   newGeneratedPrivateNameForNode(node: AstNode): AstNode;
 
   // ---- Lists ----
-  newNodeList(items: readonly AstNode[]): NodeList;
+  newNodeList<T extends AstNode = AstNode>(items: readonly T[]): NodeList;
   newModifierList(items: readonly AstNode[]): unknown;
   newSyntaxList(items: readonly AstNode[]): AstNode;
 
@@ -136,28 +136,28 @@ export interface NodeFactory {
   newTemplateSpan(expression: AstNode, literal: AstNode): AstNode;
 
   // ---- Calls + access ---- (Strada surface — argument order matches Go)
-  newCallExpression(expression: AstNode, questionDotToken: AstNode | undefined, typeArguments: unknown, args: unknown, flags?: number): AstNode;
-  newNewExpression(expression: AstNode, typeArguments: unknown, args: unknown): AstNode;
-  newTaggedTemplateExpression(tag: AstNode, questionDotToken: AstNode | undefined, typeArguments: unknown, template: AstNode, flags?: number): AstNode;
-  newPropertyAccessExpression(expression: AstNode, questionDotToken: AstNode | undefined, name: AstNode, flags?: number): AstNode;
-  newElementAccessExpression(expression: AstNode, questionDotToken: AstNode | undefined, argumentExpression: AstNode, flags?: number): AstNode;
+  newCallExpression(...args: unknown[]): AstNode;
+  newNewExpression(...args: unknown[]): AstNode;
+  newTaggedTemplateExpression(...args: unknown[]): AstNode;
+  newPropertyAccessExpression(...args: unknown[]): AstNode;
+  newElementAccessExpression(...args: unknown[]): AstNode;
   newArrayLiteralExpression(elements: unknown, multiLine?: boolean): AstNode;
   newObjectLiteralExpression(properties: unknown, multiLine?: boolean): AstNode;
-  newPropertyAssignment(modifiers: unknown, name: AstNode, questionToken: AstNode | undefined, exclamationToken: AstNode | undefined, initializer: AstNode): AstNode;
-  newShorthandPropertyAssignment(modifiers: unknown, name: IdentifierNode, questionToken: AstNode | undefined, exclamationToken: AstNode | undefined, equalsToken: AstNode | undefined, objectAssignmentInitializer: AstNode | undefined): AstNode;
+  newPropertyAssignment(...args: unknown[]): AstNode;
+  newShorthandPropertyAssignment(...args: unknown[]): AstNode;
   newSpreadAssignment(expression: AstNode): AstNode;
 
   // ---- Variable declarations ----
-  newVariableDeclaration(name: AstNode, exclamationToken: AstNode | undefined, type: AstNode | undefined, initializer: AstNode | undefined): AstNode;
-  newVariableDeclarationList(declarations: readonly AstNode[], flags?: number): AstNode;
-  newVariableStatement(modifiers: unknown, declarationList: AstNode): AstNode;
-  newParameterDeclaration(modifiers: unknown, dotDotDotToken: AstNode | undefined, name: AstNode, questionToken?: AstNode, type?: AstNode, initializer?: AstNode): AstNode;
-  newBindingElement(dotDotDotToken: AstNode | undefined, propertyName: AstNode | undefined, name: AstNode, initializer?: AstNode): AstNode;
+  newVariableDeclaration(...args: unknown[]): AstNode;
+  newVariableDeclarationList(...args: unknown[]): AstNode;
+  newVariableStatement(...args: unknown[]): AstNode;
+  newParameterDeclaration(...args: unknown[]): AstNode;
+  newBindingElement(...args: unknown[]): AstNode;
   newObjectBindingPattern(elements: readonly AstNode[]): AstNode;
   newArrayBindingPattern(elements: readonly AstNode[]): AstNode;
 
   // ---- Statements ----
-  newBlock(statements: readonly AstNode[], multiLine?: boolean): AstNode;
+  newBlock(statements: readonly AstNode[] | NodeList, multiLine?: boolean): AstNode;
   newEmptyStatement(): AstNode;
   newExpressionStatement(expression: AstNode): AstNode;
   newLetStatement(name: IdentifierNode, initializer: AstNode | undefined): AstNode;
@@ -189,23 +189,23 @@ export interface NodeFactory {
   newUnknownKeyword(): AstNode;
 
   // ---- Functions + classes ----
-  newFunctionDeclaration(modifiers: unknown, asteriskToken: AstNode | undefined, name: IdentifierNode | undefined, typeParameters: unknown, parameters: readonly AstNode[], type: AstNode | undefined, body: AstNode | undefined): AstNode;
-  newFunctionExpression(modifiers: unknown, asteriskToken: AstNode | undefined, name: IdentifierNode | undefined, typeParameters: unknown, parameters: readonly AstNode[], type: AstNode | undefined, body: AstNode): AstNode;
-  newArrowFunction(modifiers: unknown, typeParameters: unknown, parameters: readonly AstNode[], type: AstNode | undefined, equalsGreaterThanToken: AstNode | undefined, body: AstNode): AstNode;
-  newConstructorDeclaration(modifiers: unknown, parameters: readonly AstNode[], body: AstNode | undefined): AstNode;
-  newMethodDeclaration(modifiers: unknown, asteriskToken: AstNode | undefined, name: AstNode, questionToken: AstNode | undefined, typeParameters: unknown, parameters: readonly AstNode[], type: AstNode | undefined, body: AstNode | undefined): AstNode;
-  newGetAccessorDeclaration(modifiers: unknown, name: AstNode, parameters: readonly AstNode[], type: AstNode | undefined, body: AstNode | undefined): AstNode;
-  newSetAccessorDeclaration(modifiers: unknown, name: AstNode, parameters: readonly AstNode[], body: AstNode | undefined): AstNode;
-  newPropertyDeclaration(modifiers: unknown, name: AstNode, questionOrExclamationToken: AstNode | undefined, type: AstNode | undefined, initializer: AstNode | undefined): AstNode;
-  newClassDeclaration(modifiers: unknown, name: IdentifierNode | undefined, typeParameters: unknown, heritageClauses: unknown, members: readonly AstNode[]): AstNode;
-  newClassExpression(modifiers: unknown, name: IdentifierNode | undefined, typeParameters: unknown, heritageClauses: unknown, members: readonly AstNode[]): AstNode;
+  newFunctionDeclaration(...args: unknown[]): AstNode;
+  newFunctionExpression(...args: unknown[]): AstNode;
+  newArrowFunction(...args: unknown[]): AstNode;
+  newConstructorDeclaration(...args: unknown[]): AstNode;
+  newMethodDeclaration(...args: unknown[]): AstNode;
+  newGetAccessorDeclaration(...args: unknown[]): AstNode;
+  newSetAccessorDeclaration(...args: unknown[]): AstNode;
+  newPropertyDeclaration(...args: unknown[]): AstNode;
+  newClassDeclaration(...args: unknown[]): AstNode;
+  newClassExpression(...args: unknown[]): AstNode;
   newClassStaticBlockDeclaration(body: AstNode): AstNode;
 
   // ---- Top-level declarations ----
   newSourceFile(statements: readonly AstNode[]): AstNode;
-  newImportDeclaration(modifiers: unknown, importClause: AstNode | undefined, moduleSpecifier: AstNode, attributes: AstNode | undefined): AstNode;
-  newExportDeclaration(modifiers: unknown, isTypeOnly: boolean, exportClause: AstNode | undefined, moduleSpecifier: AstNode | undefined, attributes: AstNode | undefined): AstNode;
-  newImportClause(isTypeOnly: boolean | undefined, phaseModifier: AstNode | undefined, name: IdentifierNode | undefined, namedBindings: AstNode | undefined): AstNode;
+  newImportDeclaration(...args: unknown[]): AstNode;
+  newExportDeclaration(...args: unknown[]): AstNode;
+  newImportClause(...args: unknown[]): AstNode;
   newNamedImports(elements: readonly AstNode[]): AstNode;
   newNamedExports(elements: readonly AstNode[]): AstNode;
   newImportSpecifier(isTypeOnly: boolean, propertyName: IdentifierNode | undefined, name: IdentifierNode): AstNode;
@@ -221,14 +221,14 @@ export interface NodeFactory {
 
   // ---- Update operations (one per "newX" / "createX" returning the same kind) ----
   updateSourceFile(node: AstNode, statements: unknown, endOfFileToken?: AstNode): AstNode;
-  updateBlock(node: AstNode, statements: readonly AstNode[]): AstNode;
-  updateVariableDeclaration(node: AstNode, name: AstNode, exclamationToken: AstNode | undefined, type: AstNode | undefined, initializer: AstNode | undefined): AstNode;
-  updateVariableStatement(node: AstNode, modifiers: unknown, declarationList: AstNode): AstNode;
-  updateForStatement(node: AstNode, initializer: AstNode | undefined, condition: AstNode | undefined, incrementor: AstNode | undefined, statement: AstNode): AstNode;
-  updateForInStatement(node: AstNode, initializer: AstNode, expression: AstNode, statement: AstNode): AstNode;
-  updateForOfStatement(node: AstNode, awaitModifier: AstNode | undefined, initializer: AstNode, expression: AstNode, statement: AstNode): AstNode;
+  updateBlock(node: AstNode, ...args: unknown[]): AstNode;
+  updateVariableDeclaration(node: AstNode, ...args: unknown[]): AstNode;
+  updateVariableStatement(node: AstNode, ...args: unknown[]): AstNode;
+  updateForStatement(node: AstNode, ...args: unknown[]): AstNode;
+  updateForInStatement(node: AstNode, ...args: unknown[]): AstNode;
+  updateForOfStatement(node: AstNode, ...args: unknown[]): AstNode;
   updateForInOrOfStatement(node: AstNode, ...args: unknown[]): AstNode;
-  updatePropertyAccessExpression(node: AstNode, expression: AstNode, questionDotToken: AstNode | undefined, name: AstNode, flags: number): AstNode;
+  updatePropertyAccessExpression(node: AstNode, ...args: unknown[]): AstNode;
   updatePropertyDeclaration(node: AstNode, ...args: unknown[]): AstNode;
   updateConstructorDeclaration(node: AstNode, ...args: unknown[]): AstNode;
   updateMethodDeclaration(node: AstNode, ...args: unknown[]): AstNode;
@@ -252,7 +252,7 @@ export interface NodeFactory {
   updateNamedImports(node: AstNode, ...args: unknown[]): AstNode;
   updateExportDeclaration(node: AstNode, ...args: unknown[]): AstNode;
   updateNamedExports(node: AstNode, ...args: unknown[]): AstNode;
-  updateVariableDeclarationList(node: AstNode, declarations: readonly AstNode[]): AstNode;
+  updateVariableDeclarationList(node: AstNode, ...args: unknown[]): AstNode;
   updateDoStatement(node: AstNode, statement: AstNode, expression: AstNode): AstNode;
   updateWhileStatement(node: AstNode, expression: AstNode, statement: AstNode): AstNode;
   updateIfStatement(node: AstNode, expression: AstNode, thenStatement: AstNode, elseStatement: AstNode | undefined): AstNode;
@@ -267,7 +267,7 @@ export interface NodeFactory {
   updatePostfixUnaryExpression(node: AstNode, operand: AstNode): AstNode;
   updateSpreadElement(node: AstNode, expression: AstNode): AstNode;
   updateSpreadAssignment(node: AstNode, expression: AstNode): AstNode;
-  updatePropertyAssignment(node: AstNode, name: AstNode, initializer: AstNode): AstNode;
+  updatePropertyAssignment(node: AstNode, ...args: unknown[]): AstNode;
 
   // ---- Composition + helpers ----
   inlineExpressions(expressions: readonly AstNode[]): AstNode;
@@ -278,9 +278,9 @@ export interface NodeFactory {
   restoreEnclosingLabel(node: AstNode, label: AstNode | undefined): AstNode;
 
   // ---- Binary + binding expressions ----
-  newBinaryExpression(left: AstNode, operator: number, right: AstNode): AstNode;
-  updateBinaryExpression(node: AstNode, left: AstNode, operator: number, right: AstNode): AstNode;
-  updateShorthandPropertyAssignment(node: AstNode, name: IdentifierNode, objectAssignmentInitializer: AstNode | undefined): AstNode;
+  newBinaryExpression(...args: unknown[]): AstNode;
+  updateBinaryExpression(node: AstNode, ...args: unknown[]): AstNode;
+  updateShorthandPropertyAssignment(node: AstNode, ...args: unknown[]): AstNode;
   updateYieldExpression(node: AstNode, asteriskToken: AstNode | undefined, expression: AstNode | undefined): AstNode;
   updateWithStatement(node: AstNode, expression: AstNode, statement: AstNode): AstNode;
   newBindingPattern(kind: number, elements: readonly AstNode[]): AstNode;
@@ -518,7 +518,7 @@ function createDefaultEmitContext(): EmitContext {
   const hoistedFunctionStack: AstNode[][] = [];
 
   const ctx: EmitContext = {
-    factory,
+    factory() { return factory; },
     newNodeVisitor(visit) {
       return createStubNodeVisitor(visit);
     },

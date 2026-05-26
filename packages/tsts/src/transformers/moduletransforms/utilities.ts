@@ -7,6 +7,7 @@
 
 import { isSimpleCopiableExpression } from "../utilities.js";
 import type { Node as AstNode, SourceFile, IdentifierNode, StringLiteralNode } from "../../ast/index.js";
+import type { NodeFactory, EmitContext as TransformerEmitContext } from "../transformer.js";
 
 export function isDeclarationNameOfEnumOrNamespace(emitContext: EmitContext, node: IdentifierNode): boolean {
   const original = emitContext.mostOriginal(node as unknown as AstNode);
@@ -61,7 +62,7 @@ export function getExternalModuleNameLiteral(
   if (moduleName !== undefined && isStringLiteral(moduleName)) {
     let name = tryGetModuleNameFromDeclaration(importNode, host, factory, resolver, compilerOptions);
     if (name === undefined) name = tryRenameExternalModule(factory, moduleName, sourceFile);
-    if (name === undefined) name = factory.newStringLiteral(nodeText(moduleName), TokenFlags.None);
+    if (name === undefined) name = factory.newStringLiteral(nodeText(moduleName), TokenFlags.None) as unknown as StringLiteralNode;
     return name;
   }
   return undefined;
@@ -109,7 +110,7 @@ export function tryRenameExternalModule(
 }
 
 export function isFileLevelReservedGeneratedIdentifier(emitContext: EmitContext, name: IdentifierNode): boolean {
-  const info = emitContext.getAutoGenerateInfo(name as unknown as AstNode);
+  const info = emitContext.getAutoGenerateInfo(name as unknown as AstNode) as AutoGenerateInfo | undefined;
   if (info === undefined) return false;
   return autoGenInfoIsFileLevel(info) && autoGenInfoIsOptimistic(info) && autoGenInfoIsReservedInNestedScopes(info);
 }
@@ -122,20 +123,11 @@ export function isSimpleInlineableExpression(expression: AstNode): boolean {
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-interface EmitContext {
-  factory(): Factory;
-  mostOriginal(node: AstNode): AstNode | undefined;
-  setOriginal(node: AstNode, original: AstNode): void;
-  assignCommentAndSourceMapRanges(node: AstNode, original: AstNode): void;
-  getAutoGenerateInfo(node: AstNode): AutoGenerateInfo | undefined;
-}
-
-interface Factory {
-  newStringLiteral(text: string, flags: number): StringLiteralNode;
-  newExportDeclaration(modifiers: unknown, isTypeOnly: boolean, namedExports: AstNode, moduleSpecifier: unknown, attributes: unknown): AstNode;
-  newNamedExports(specifiers: unknown): AstNode;
-  newNodeList<T extends AstNode>(items: readonly T[]): unknown;
-}
+// Factory/EmitContext are the canonical shapes from ../transformer.ts.
+// We treat StringLiteral results loosely (AstNode) since transformer's
+// NodeFactory does not narrow to StringLiteralNode.
+type Factory = NodeFactory;
+type EmitContext = TransformerEmitContext;
 
 interface CompilerOptions { readonly _opts?: unknown; readonly [key: string]: unknown }
 interface AutoGenerateInfo { readonly _info: unknown }
