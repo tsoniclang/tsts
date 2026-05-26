@@ -8,16 +8,16 @@
  *
  * Current scope (committed in stages):
  *   - `transformer.ts`: base Transformer class with emit context wiring
+ *   - `chain.ts`: factory composition
  *   - `tstransforms/`: TypeScript-specific passes (typeeraser, importelision)
+ *   - `estransforms/`: ES-target chain definitions
  *
- * Forthcoming (mirrors TS-Go file layout):
- *   - `chain.ts` (chain.go, transformer composition)
- *   - `destructuring.ts` (destructuring.go, destructuring lowering)
- *   - `modifiervisitor.ts` (modifier visiting helpers)
+ * Forthcoming:
+ *   - `destructuring.ts` (destructuring.go, 1500+ LoC)
+ *   - `modifiervisitor.ts`
  *   - `utilities.ts`
- *   - `estransforms/`: ES feature downlevel passes (async, optional
- *     chaining, decorators, private fields, etc. — ~17 transformer
- *     files in TS-Go)
+ *   - `estransforms/`: individual feature passes (async, classfields,
+ *     decorators, optional chaining, etc.)
  *   - `jsxtransforms/`: JSX → JS lowering
  *   - `moduletransforms/`: module format conversion (ESM ↔ CJS ↔ AMD)
  *   - `declarations/`: .d.ts emission
@@ -25,4 +25,6 @@
  */
 
 export * from "./transformer.js";
+export * from "./chain.js";
 export * from "./tstransforms/index.js";
+export * from "./estransforms/index.js";
