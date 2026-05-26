@@ -1,0 +1,331 @@
+/**
+ * Optional chaining (`?.`) downlevel transformer.
+ *
+ * Port of TS-Go `internal/transformers/estransforms/optionalchain.go`.
+ *
+ * Rewrites optional chain expressions like `a?.b.c?.()` into the
+ * equivalent ternary chains that early-exit when `a` or any
+ * intermediate value is `null`/`undefined`.
+ */
+
+import type { Node as AstNode } from "../../ast/index.js";
+
+import { Transformer, type EmitContext } from "../transformer.js";
+import type { TransformOptions } from "../tstransforms/typeeraser.js";
+
+class OptionalChainTransformer extends Transformer {
+  constructor(opts: TransformOptions) {
+    super();
+    this.newTransformer((node) => this.visit(node), opts.context);
+  }
+
+  private visit(node: AstNode): AstNode | undefined {
+    if (!subtreeContainsOptionalChaining(node)) return node;
+    const kind = nodeKind(node);
+    if (kind === KindCallExpression) {
+      return this.visitCallExpression(node, false);
+    }
+    if (kind === KindPropertyAccessExpression || kind === KindElementAccessExpression) {
+      if (hasOptionalChainFlag(node)) {
+        return this.visitOptionalExpression(node, false, false);
+      }
+      return visitEachChildOf(this.getVisitor(), node);
+    }
+    if (kind === KindDeleteExpression) {
+      return this.visitDeleteExpression(node);
+    }
+    return visitEachChildOf(this.getVisitor(), node);
+  }
+
+  private visitCallExpression(node: AstNode, captureThisArg: boolean): AstNode {
+    if (hasOptionalChainFlag(node)) {
+      return this.visitOptionalExpression(node, captureThisArg, false);
+    }
+    const expression = callExpressionExpression(node);
+    if (isParenthesizedExpression(expression)) {
+      const unwrapped = skipParentheses(expression);
+      if (hasOptionalChainFlag(unwrapped)) {
+        const visited = this.visitParenthesizedExpression(expression, true, false);
+        const args = visitNodes(this.getVisitor(), callExpressionArguments(node));
+        if (isSyntheticReferenceExpression(visited)) {
+          const res = newFunctionCallCall(
+            this.getFactory(),
+            syntheticReferenceExpression(visited),
+            syntheticReferenceThisArg(visited),
+            nodeListNodes(args),
+          );
+          setOriginal(this.getEmitContext(), res, node);
+          return res;
+        }
+        return updateCallExpression(this.getFactory(), node, visited, undefined, undefined, args);
+      }
+    }
+    return visitEachChildOf(this.getVisitor(), node);
+  }
+
+  private visitParenthesizedExpression(node: AstNode, captureThisArg: boolean, isDelete: boolean): AstNode {
+    const expr = this.visitNonOptionalExpression(parenthesizedExpression(node), captureThisArg, isDelete);
+    if (isSyntheticReferenceExpression(expr)) {
+      const synthExpr = syntheticReferenceExpression(expr);
+      const synthThis = syntheticReferenceThisArg(expr);
+      const res = newSyntheticReferenceExpression(
+        this.getFactory(),
+        updateParenthesizedExpression(this.getFactory(), node, synthExpr),
+        synthThis,
+      );
+      setOriginal(this.getEmitContext(), res, node);
+      return res;
+    }
+    return updateParenthesizedExpression(this.getFactory(), node, expr);
+  }
+
+  private visitPropertyOrElementAccessExpression(node: AstNode, captureThisArg: boolean, isDelete: boolean): AstNode {
+    if (hasOptionalChainFlag(node)) {
+      return this.visitOptionalExpression(node, captureThisArg, isDelete);
+    }
+    let expression = visitNode(this.getVisitor(), accessExpressionExpression(node));
+
+    let thisArg: AstNode | undefined;
+    if (captureThisArg) {
+      if (!isSimpleCopiableExpression(expression)) {
+        thisArg = newTempVariable(this.getFactory());
+        addVariableDeclaration(this.getEmitContext(), thisArg);
+        expression = newAssignmentExpression(this.getFactory(), thisArg, expression);
+      } else {
+        thisArg = expression;
+      }
+    }
+
+    if (nodeKind(node) === KindPropertyAccessExpression) {
+      expression = updatePropertyAccessExpression(
+        this.getFactory(),
+        node,
+        expression,
+        undefined,
+        visitNode(this.getVisitor(), propertyAccessName(node)),
+      );
+    } else {
+      expression = updateElementAccessExpression(
+        this.getFactory(),
+        node,
+        expression,
+        undefined,
+        visitNode(this.getVisitor(), elementArgumentExpression(node)),
+      );
+    }
+
+    if (thisArg !== undefined) {
+      const res = newSyntheticReferenceExpression(this.getFactory(), expression, thisArg);
+      setOriginal(this.getEmitContext(), res, node);
+      return res;
+    }
+    return expression;
+  }
+
+  private visitDeleteExpression(node: AstNode): AstNode {
+    const unwrapped = skipParentheses(deleteExpressionExpression(node));
+    if (hasOptionalChainFlag(unwrapped)) {
+      return this.visitNonOptionalExpression(deleteExpressionExpression(node), false, true);
+    }
+    return visitEachChildOf(this.getVisitor(), node);
+  }
+
+  private visitNonOptionalExpression(node: AstNode, captureThisArg: boolean, isDelete: boolean): AstNode {
+    const kind = nodeKind(node);
+    if (kind === KindParenthesizedExpression) return this.visitParenthesizedExpression(node, captureThisArg, isDelete);
+    if (kind === KindElementAccessExpression || kind === KindPropertyAccessExpression) {
+      return this.visitPropertyOrElementAccessExpression(node, captureThisArg, isDelete);
+    }
+    if (kind === KindCallExpression) return this.visitCallExpression(node, captureThisArg);
+    return visitNode(this.getVisitor(), node);
+  }
+
+  private visitOptionalExpression(node: AstNode, captureThisArg: boolean, isDelete: boolean): AstNode {
+    const factory = this.getFactory();
+    const emitContext = this.getEmitContext();
+    const visitor = this.getVisitor();
+
+    const flat = flattenChain(node);
+    const { expression, chain } = flat;
+
+    let left = this.visitNonOptionalExpression(skipPartiallyEmittedExpressions(expression), isCallChain(chain[0]!), false);
+    let leftThisArg: AstNode | undefined;
+    let capturedLeft = left;
+    if (isSyntheticReferenceExpression(left)) {
+      leftThisArg = syntheticReferenceThisArg(left);
+      capturedLeft = syntheticReferenceExpression(left);
+    }
+    let leftExpression = restoreOuterExpressions(factory, expression, capturedLeft, OEKPartiallyEmittedExpressions);
+    if (!isSimpleCopiableExpression(capturedLeft)) {
+      capturedLeft = newTempVariable(factory);
+      addVariableDeclaration(emitContext, capturedLeft);
+      leftExpression = newAssignmentExpression(factory, capturedLeft, leftExpression);
+    }
+    let rightExpression: AstNode = capturedLeft;
+    let thisArg: AstNode | undefined;
+
+    for (let i = 0; i < chain.length; i += 1) {
+      const segment = chain[i]!;
+      const kind = nodeKind(segment);
+      if (kind === KindElementAccessExpression || kind === KindPropertyAccessExpression) {
+        if (i === chain.length - 1 && captureThisArg) {
+          if (!isSimpleCopiableExpression(rightExpression)) {
+            thisArg = newTempVariable(factory);
+            addVariableDeclaration(emitContext, thisArg);
+            rightExpression = newAssignmentExpression(factory, thisArg, rightExpression);
+          } else {
+            thisArg = rightExpression;
+          }
+        }
+        if (kind === KindElementAccessExpression) {
+          rightExpression = newElementAccessExpression(factory, rightExpression, undefined, visitNode(visitor, elementArgumentExpression(segment)));
+        } else {
+          rightExpression = newPropertyAccessExpression(factory, rightExpression, undefined, visitNode(visitor, propertyAccessName(segment)));
+        }
+      } else if (kind === KindCallExpression) {
+        if (i === 0 && leftThisArg !== undefined) {
+          if (!hasAutoGenerateInfo(emitContext, leftThisArg)) {
+            leftThisArg = cloneNode(factory, leftThisArg);
+            addEmitFlags(emitContext, leftThisArg, EFNoComments);
+          }
+          let callThisArg = leftThisArg;
+          if (nodeKind(leftThisArg) === KindSuperKeyword) {
+            callThisArg = newThisExpression(factory);
+          }
+          rightExpression = newFunctionCallCall(
+            factory,
+            rightExpression,
+            callThisArg,
+            nodeListNodes(visitNodes(visitor, callExpressionArguments(segment))),
+          );
+        } else {
+          rightExpression = newCallExpression(
+            factory,
+            rightExpression,
+            undefined,
+            undefined,
+            visitNodes(visitor, callExpressionArguments(segment)),
+          );
+        }
+      }
+      setOriginal(emitContext, rightExpression, segment);
+    }
+
+    let target: AstNode;
+    if (isDelete) {
+      target = newConditionalExpression(
+        factory,
+        createNotNullCondition(emitContext, leftExpression, capturedLeft, true),
+        newToken(factory, KindQuestionToken),
+        newTrueExpression(factory),
+        newToken(factory, KindColonToken),
+        newDeleteExpression(factory, rightExpression),
+      );
+    } else {
+      target = newConditionalExpression(
+        factory,
+        createNotNullCondition(emitContext, leftExpression, capturedLeft, true),
+        newToken(factory, KindQuestionToken),
+        newVoidZeroExpression(factory),
+        newToken(factory, KindColonToken),
+        rightExpression,
+      );
+    }
+    if (thisArg !== undefined) {
+      target = newSyntheticReferenceExpression(factory, target, thisArg);
+    }
+    setOriginal(emitContext, target, node);
+    return target;
+  }
+}
+
+interface FlattenResult {
+  readonly expression: AstNode;
+  readonly chain: readonly AstNode[];
+}
+
+function isNonNullChain(node: AstNode): boolean {
+  return isNonNullExpression(node) && hasOptionalChainFlag(node);
+}
+
+function flattenChain(chain: AstNode): FlattenResult {
+  const links: AstNode[] = [chain];
+  while (!isTaggedTemplateExpression(chain) && questionDotTokenOf(chain) === undefined) {
+    chain = skipPartiallyEmittedExpressions(expressionOf(chain));
+    links.unshift(chain);
+  }
+  return { expression: expressionOf(chain), chain: links };
+}
+
+function isCallChain(node: AstNode): boolean {
+  return isCallExpression(node) && hasOptionalChainFlag(node);
+}
+
+export function newOptionalChainTransformer(opts: TransformOptions): Transformer {
+  return new OptionalChainTransformer(opts);
+}
+
+// Forward declarations.
+declare function subtreeContainsOptionalChaining(node: AstNode): boolean;
+declare function nodeKind(node: AstNode): number;
+declare function hasOptionalChainFlag(node: AstNode): boolean;
+declare function visitEachChildOf(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
+declare function visitNode(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
+declare function visitNodes(visitor: ReturnType<Transformer["getVisitor"]>, nodes: AstNode): AstNode;
+declare function nodeListNodes(list: AstNode): readonly AstNode[];
+
+declare function callExpressionExpression(node: AstNode): AstNode;
+declare function callExpressionArguments(node: AstNode): AstNode;
+declare function isParenthesizedExpression(node: AstNode): boolean;
+declare function skipParentheses(node: AstNode): AstNode;
+declare function parenthesizedExpression(node: AstNode): AstNode;
+declare function isSyntheticReferenceExpression(node: AstNode): boolean;
+declare function syntheticReferenceExpression(node: AstNode): AstNode;
+declare function syntheticReferenceThisArg(node: AstNode): AstNode;
+declare function deleteExpressionExpression(node: AstNode): AstNode;
+declare function accessExpressionExpression(node: AstNode): AstNode;
+declare function propertyAccessName(node: AstNode): AstNode;
+declare function elementArgumentExpression(node: AstNode): AstNode;
+declare function expressionOf(node: AstNode): AstNode;
+declare function questionDotTokenOf(node: AstNode): AstNode | undefined;
+declare function isNonNullExpression(node: AstNode): boolean;
+declare function isCallExpression(node: AstNode): boolean;
+declare function isTaggedTemplateExpression(node: AstNode): boolean;
+declare function skipPartiallyEmittedExpressions(node: AstNode): AstNode;
+declare function isSimpleCopiableExpression(node: AstNode): boolean;
+
+declare function newTempVariable(factory: ReturnType<Transformer["getFactory"]>): AstNode;
+declare function addVariableDeclaration(emitContext: EmitContext, decl: AstNode): void;
+declare function newAssignmentExpression(factory: ReturnType<Transformer["getFactory"]>, target: AstNode, value: AstNode): AstNode;
+declare function newSyntheticReferenceExpression(factory: ReturnType<Transformer["getFactory"]>, expr: AstNode, thisArg: AstNode): AstNode;
+declare function setOriginal(emitContext: EmitContext, node: AstNode, original: AstNode): void;
+declare function updateCallExpression(factory: ReturnType<Transformer["getFactory"]>, node: AstNode, expression: AstNode, questionDot: AstNode | undefined, typeArgs: AstNode | undefined, args: AstNode): AstNode;
+declare function updateParenthesizedExpression(factory: ReturnType<Transformer["getFactory"]>, node: AstNode, expr: AstNode): AstNode;
+declare function updatePropertyAccessExpression(factory: ReturnType<Transformer["getFactory"]>, node: AstNode, expression: AstNode, questionDot: AstNode | undefined, name: AstNode): AstNode;
+declare function updateElementAccessExpression(factory: ReturnType<Transformer["getFactory"]>, node: AstNode, expression: AstNode, questionDot: AstNode | undefined, argument: AstNode): AstNode;
+declare function newElementAccessExpression(factory: ReturnType<Transformer["getFactory"]>, expression: AstNode, questionDot: AstNode | undefined, argument: AstNode): AstNode;
+declare function newPropertyAccessExpression(factory: ReturnType<Transformer["getFactory"]>, expression: AstNode, questionDot: AstNode | undefined, name: AstNode): AstNode;
+declare function newCallExpression(factory: ReturnType<Transformer["getFactory"]>, expression: AstNode, questionDot: AstNode | undefined, typeArgs: AstNode | undefined, args: AstNode): AstNode;
+declare function newFunctionCallCall(factory: ReturnType<Transformer["getFactory"]>, expression: AstNode, thisArg: AstNode, args: readonly AstNode[]): AstNode;
+declare function newConditionalExpression(factory: ReturnType<Transformer["getFactory"]>, cond: AstNode, q: AstNode, whenTrue: AstNode, c: AstNode, whenFalse: AstNode): AstNode;
+declare function newDeleteExpression(factory: ReturnType<Transformer["getFactory"]>, expr: AstNode): AstNode;
+declare function newToken(factory: ReturnType<Transformer["getFactory"]>, kind: number): AstNode;
+declare function newTrueExpression(factory: ReturnType<Transformer["getFactory"]>): AstNode;
+declare function newVoidZeroExpression(factory: ReturnType<Transformer["getFactory"]>): AstNode;
+declare function newThisExpression(factory: ReturnType<Transformer["getFactory"]>): AstNode;
+declare function cloneNode(factory: ReturnType<Transformer["getFactory"]>, node: AstNode): AstNode;
+declare function hasAutoGenerateInfo(emitContext: EmitContext, node: AstNode): boolean;
+declare function addEmitFlags(emitContext: EmitContext, node: AstNode, flags: number): void;
+declare function restoreOuterExpressions(factory: ReturnType<Transformer["getFactory"]>, expression: AstNode, capturedLeft: AstNode, oek: number): AstNode;
+declare function createNotNullCondition(emitContext: EmitContext, left: AstNode, right: AstNode, invert: boolean): AstNode;
+
+declare const KindCallExpression: number;
+declare const KindPropertyAccessExpression: number;
+declare const KindElementAccessExpression: number;
+declare const KindDeleteExpression: number;
+declare const KindParenthesizedExpression: number;
+declare const KindSuperKeyword: number;
+declare const KindQuestionToken: number;
+declare const KindColonToken: number;
+declare const OEKPartiallyEmittedExpressions: number;
+declare const EFNoComments: number;
