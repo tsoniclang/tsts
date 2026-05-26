@@ -1143,7 +1143,9 @@ export function tryGetModuleNameFromPackageJsonImports(
   const info = host.getPackageJsonInfo(packageJsonPath) as PackageJsonInfo | undefined;
   if (info === undefined) return "";
 
-  const fields = info.getContents().fields;
+  const contents = info.getContents();
+  if (contents === undefined) return "";
+  const fields = contents.fields;
   if (fields === undefined) return "";
   const imports = fields.imports;
   if (imports === undefined) return "";

@@ -32,7 +32,10 @@ export class CheckerTracer {
   begin(name: string, cat?: string, args?: Record<string, unknown>): number {
     if (!this.enabled) return 0;
     const ts = Date.now() - this.startTime;
-    this.events.push({ name, ts, cat, args });
+    const ev: TraceEvent = { name, ts };
+    if (cat !== undefined) ev.cat = cat;
+    if (args !== undefined) ev.args = args;
+    this.events.push(ev);
     return ts;
   }
 

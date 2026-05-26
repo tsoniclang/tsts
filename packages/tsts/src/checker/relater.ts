@@ -11,7 +11,8 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
-import type { Type, Signature, VarianceFlags, TypeFlags } from "./types.js";
+import type { Type, Signature, VarianceFlags } from "./types.js";
+import { TypeFlags } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // Relation tables

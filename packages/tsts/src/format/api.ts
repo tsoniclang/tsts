@@ -300,7 +300,7 @@ declare function formatSpanWorker(
 ): FormatSpanWorker;
 
 declare function getLineStartPositionForPosition(position: number, sourceFile: SourceFile): number;
-declare function getTokenPosOfNode(node: AstNode, sourceFile: SourceFile, includeJSDoc: boolean): number;
+declare function getTokenPosOfNode(node: AstNode | undefined, sourceFile: SourceFile, includeJSDoc: boolean): number;
 declare function getECMALineOfPosition(sourceFile: SourceFile, position: number): number;
 declare function getECMALineStarts(sourceFile: SourceFile): readonly number[];
 declare function getECMAEndLinePosition(sourceFile: SourceFile, line: number): number;

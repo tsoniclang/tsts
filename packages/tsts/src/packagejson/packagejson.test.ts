@@ -76,8 +76,8 @@ export class PackageJsonDependencyTests {
       return true;
     });
     Assert.Equal(2, seen.length);
-    Assert.Contains("dependencies/a@1", seen);
-    Assert.Contains("devDependencies/b@2", seen);
+    Assert.True(seen.includes("dependencies/a@1"));
+    Assert.True(seen.includes("devDependencies/b@2"));
   }
 
   for_each_dependency_stops_on_false(): void {
