@@ -19,17 +19,13 @@ import "./stringutil/stringutil.test.ts";
 import "./symlinks/symlinks.test.ts";
 import "./tspath/path.test.ts";
 
-// === Still blocked. ===
-// Tsonic 4376d7f0 "Fix TSTS blocker compiler gaps" landed at 14:06 but
-// did NOT address the batch 114500 residuals — re-running the trial
-// enable at 14:25 reproduced the same errors verbatim:
-//   - checker.ts TSN5202 on `new Map(environment)` field-init pattern
-//   - checker.ts TSN7414 narrowing for union members 50-52 + initializer
-//     unknown leak
-//   - json.test.ts TSN5201 on call-site return-type recovery in
-//     xUnit method bodies
-// Re-enable once batch 114500 actually clears.
-// See /home/jeswin/repos/tsoniclang/tsonic/.analysis/claude-code-feedback/2026-05-26-114500/
+// === Still blocked after batch 114500 codex completion + clean rebuild ===
+// Codex's tuple-to-tuple unification fix targets `parameterType.kind ===
+// "tupleType" && argumentType.kind === "tupleType"` only. But the Map
+// constructor parameter is `Iterable<readonly [K, V]>` — a referenceType
+// over a tuple, not a tuple. So the fix doesn't reach this path.
+// The narrowing residuals were not addressed at all.
+// See batch 2026-05-26-153800/ for the follow-up reports.
 //
 // import "./ast/generated-types.test.ts";
 // import "./ast/runtime.test.ts";
