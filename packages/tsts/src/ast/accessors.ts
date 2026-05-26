@@ -42,7 +42,8 @@ export function nodeText(node: AstNode | undefined): string {
 export function nodeName(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "name"); }
 export function nodeBody(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "body"); }
 export function nodeInitializerOf(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "initializer"); }
-export function nodeLoc(node: AstNode | undefined): unknown {
+export interface NodeLoc { readonly pos: number; readonly end: number }
+export function nodeLoc(node: AstNode | undefined): NodeLoc | undefined {
   if (node === undefined) return undefined;
   return { pos: node.pos, end: node.end };
 }
