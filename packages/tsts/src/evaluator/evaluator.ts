@@ -1,35 +1,23 @@
 /**
  * Constant-expression evaluator for enum members and const-context types.
  *
- * Port of TS-Go internal/evaluator/evaluator.go.
+ * Faithful port of TS-Go `internal/evaluator/evaluator.go` (168 LoC).
  *
- * The evaluator computes literal values for expressions during the binder
- * and checker passes. It returns a Result tagged with metadata about whether
- * the value originated syntactically as a string (for template-literal type
- * narrowing), whether evaluation crossed file boundaries, and whether the
- * value reaches into external references (for isolatedModules diagnostics).
+ * The evaluator computes literal values for expressions during the
+ * binder and checker passes. It returns a Result tagged with metadata
+ * about whether the value originated syntactically as a string (for
+ * template-literal type narrowing), whether evaluation crossed file
+ * boundaries, and whether the value reaches into external references
+ * (for isolatedModules diagnostics).
  *
- * NOTE: this module's `newEvaluator` needs the AST module to be wired
- * (`src/ast/*`) before it can walk expression nodes. For now we expose the
- * type signatures and pure-data utility functions (`anyToString`,
- * `isTruthy`); the constructor remains a stub until the AST adoption is
- * complete.
+ * Cross-module AST deps are forward-declared at the file end. Numeric
+ * operations use JavaScript's native semantics, which match TC39 (and
+ * therefore TS-Go's `jsnum.Number`).
  */
 
-import { numberToString } from "../jsnum/string.js";
+import { numberToString, fromString } from "../jsnum/string.js";
+import type { Node as AstNode } from "../ast/index.js";
 
-/**
- * Result of evaluating a constant expression.
- *
- * - `value` is `string | number | boolean | bigint | undefined`. `undefined`
- *   means evaluation could not produce a constant.
- * - `isSyntacticallyString` distinguishes `"5"` from `5` even when both
- *   evaluate to the string `"5"` (relevant for template-literal type narrowing).
- * - `resolvedOtherFiles` records whether evaluation followed an identifier
- *   that resolved to a declaration in a different file.
- * - `hasExternalReferences` records whether the result depends on a symbol
- *   from outside the current compilation unit (for isolatedModules).
- */
 export interface EvaluatorResult {
   readonly value: string | number | boolean | bigint | undefined;
   readonly isSyntacticallyString: boolean;
@@ -41,51 +29,145 @@ export function newResult(
   value: EvaluatorResult["value"],
   isSyntacticallyString: boolean,
   resolvedOtherFiles: boolean,
-  hasExternalReferences: boolean
+  hasExternalReferences: boolean,
 ): EvaluatorResult {
-  return {
-    value,
-    isSyntacticallyString,
-    resolvedOtherFiles,
-    hasExternalReferences,
-  };
+  return { value, isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
 }
 
-/**
- * Evaluator function type. Takes an expression node and an optional
- * location node (for error reporting); returns the evaluated result.
- *
- * The AST node type is left as `unknown` here because the AST module is
- * still being adopted. When `src/ast/*` is wired, narrow this to the
- * appropriate node type.
- */
-export type Evaluator = (expr: unknown, location: unknown) => EvaluatorResult;
+export type Evaluator = (expr: AstNode, location: AstNode | undefined) => EvaluatorResult;
 
 /**
- * Constructs an evaluator with the given entity-resolution callback and
- * outer-expression-skipping configuration.
+ * Constructs an evaluator. The provided `evaluateEntity` callback
+ * resolves identifiers and entity-name expressions back to their
+ * declared values (typically by consulting the binder/checker).
  *
- * STUB: the full constant-expression walker requires the active AST.
- * Returns a placeholder evaluator that always returns "unevaluable" until
- * the AST is wired and the body can be filled in (mirroring TS-Go's
- * switch on `expr.Kind`).
+ * `outerExpressionsToSkip` is a bitmask of OuterExpressionKinds —
+ * always includes `Parentheses` per upstream.
  */
 export function newEvaluator(
   evaluateEntity: Evaluator,
-  outerExpressionsToSkip: number  // OuterExpressionKinds bitmask
+  outerExpressionsToSkip: number,
 ): Evaluator {
-  void evaluateEntity;
-  void outerExpressionsToSkip;
-  return (_expr: unknown, _location: unknown): EvaluatorResult => {
-    // TODO(tsts-rebuild): implement once AST is migrated.
-    return newResult(undefined, false, false, false);
+  const skip = outerExpressionsToSkip | OuterExpressionKinds.Parentheses;
+
+  const evaluate: Evaluator = (initialExpr, location) => {
+    let isSyntacticallyString = false;
+    let resolvedOtherFiles = false;
+    let hasExternalReferences = false;
+    const expr = skipOuterExpressions(initialExpr, skip);
+
+    switch (expr.kind) {
+      case Kind.PrefixUnaryExpression: {
+        const operand = prefixUnaryExpressionOperand(expr);
+        const operator = prefixUnaryExpressionOperator(expr);
+        const result = evaluate(operand, location);
+        resolvedOtherFiles = result.resolvedOtherFiles;
+        hasExternalReferences = result.hasExternalReferences;
+        if (typeof result.value === "number") {
+          const value = result.value;
+          switch (operator) {
+            case Kind.PlusToken:
+              return { value, isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
+            case Kind.MinusToken:
+              return { value: -value, isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
+            case Kind.TildeToken:
+              return { value: ~value, isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
+          }
+        }
+        break;
+      }
+      case Kind.BinaryExpression: {
+        const leftNode = binaryExpressionLeft(expr);
+        const rightNode = binaryExpressionRight(expr);
+        const operator = binaryExpressionOperatorTokenKind(expr);
+        const left = evaluate(leftNode, location);
+        const right = evaluate(rightNode, location);
+        isSyntacticallyString = (left.isSyntacticallyString || right.isSyntacticallyString) && operator === Kind.PlusToken;
+        resolvedOtherFiles = left.resolvedOtherFiles || right.resolvedOtherFiles;
+        hasExternalReferences = left.hasExternalReferences || right.hasExternalReferences;
+        const leftIsNum = typeof left.value === "number";
+        const rightIsNum = typeof right.value === "number";
+        if (leftIsNum && rightIsNum) {
+          const a = left.value as number;
+          const b = right.value as number;
+          switch (operator) {
+            case Kind.BarToken:
+              return { value: (a | 0) | (b | 0), isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
+            case Kind.AmpersandToken:
+              return { value: (a | 0) & (b | 0), isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
+            case Kind.GreaterThanGreaterThanToken:
+              return { value: (a | 0) >> (b | 0), isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
+            case Kind.GreaterThanGreaterThanGreaterThanToken:
+              return { value: (a | 0) >>> (b | 0), isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
+            case Kind.LessThanLessThanToken:
+              return { value: (a | 0) << (b | 0), isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
+            case Kind.CaretToken:
+              return { value: (a | 0) ^ (b | 0), isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
+            case Kind.AsteriskToken:
+              return { value: a * b, isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
+            case Kind.SlashToken:
+              return { value: a / b, isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
+            case Kind.PlusToken:
+              return { value: a + b, isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
+            case Kind.MinusToken:
+              return { value: a - b, isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
+            case Kind.PercentToken:
+              return { value: a % b, isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
+            case Kind.AsteriskAsteriskToken:
+              return { value: a ** b, isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
+          }
+        }
+        const leftIsStr = typeof left.value === "string";
+        const rightIsStr = typeof right.value === "string";
+        if ((leftIsStr || leftIsNum) && (rightIsStr || rightIsNum) && operator === Kind.PlusToken) {
+          const ls = leftIsNum ? numberToString(left.value as number) : (left.value as string);
+          const rs = rightIsNum ? numberToString(right.value as number) : (right.value as string);
+          return { value: ls + rs, isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
+        }
+        break;
+      }
+      case Kind.StringLiteral:
+      case Kind.NoSubstitutionTemplateLiteral:
+        return { value: nodeText(expr), isSyntacticallyString: true, resolvedOtherFiles: false, hasExternalReferences: false };
+      case Kind.TemplateExpression:
+        return evaluateTemplateExpression(expr, location, evaluate);
+      case Kind.NumericLiteral:
+        return { value: fromString(nodeText(expr)), isSyntacticallyString: false, resolvedOtherFiles: false, hasExternalReferences: false };
+      case Kind.Identifier:
+        return evaluateEntity(expr, location);
+      case Kind.ElementAccessExpression:
+      case Kind.PropertyAccessExpression:
+        if (isEntityNameExpression(memberAccessExpression(expr))) {
+          return evaluateEntity(expr, location);
+        }
+        break;
+    }
+    return { value: undefined, isSyntacticallyString, resolvedOtherFiles, hasExternalReferences };
   };
+  return evaluate;
 }
 
-/**
- * Stringifies an evaluated value per TS-Go's `AnyToString`. Mirrors JS
- * string-coercion rules (`String(x)` for the relevant types).
- */
+function evaluateTemplateExpression(
+  expr: AstNode,
+  location: AstNode | undefined,
+  evaluate: Evaluator,
+): EvaluatorResult {
+  let s = nodeText(templateExpressionHead(expr));
+  let resolvedOtherFiles = false;
+  let hasExternalReferences = false;
+  for (const span of templateExpressionSpans(expr)) {
+    const spanResult = evaluate(templateSpanExpression(span), location);
+    if (spanResult.value === undefined) {
+      return { value: undefined, isSyntacticallyString: true, resolvedOtherFiles: false, hasExternalReferences: false };
+    }
+    s += anyToString(spanResult.value);
+    s += nodeText(templateSpanLiteral(span));
+    resolvedOtherFiles = resolvedOtherFiles || spanResult.resolvedOtherFiles;
+    hasExternalReferences = hasExternalReferences || spanResult.hasExternalReferences;
+  }
+  return { value: s, isSyntacticallyString: true, resolvedOtherFiles, hasExternalReferences };
+}
+
 export function anyToString(v: EvaluatorResult["value"]): string {
   if (typeof v === "string") return v;
   if (typeof v === "number") return numberToString(v);
@@ -94,11 +176,6 @@ export function anyToString(v: EvaluatorResult["value"]): string {
   throw new Error("Unhandled case in anyToString");
 }
 
-/**
- * Truthiness check matching JS semantics. Throws if the value isn't one
- * of the evaluable types — callers should only call this with a confirmed
- * EvaluatorResult value.
- */
 export function isTruthy(v: EvaluatorResult["value"]): boolean {
   if (typeof v === "string") return v.length !== 0;
   if (typeof v === "number") return v !== 0 && !Number.isNaN(v);
@@ -106,3 +183,37 @@ export function isTruthy(v: EvaluatorResult["value"]): boolean {
   if (typeof v === "bigint") return v !== 0n;
   throw new Error("Unhandled case in isTruthy");
 }
+
+// ---------------------------------------------------------------------------
+// Forward-declared cross-module AST surface
+// ---------------------------------------------------------------------------
+
+declare const Kind: {
+  PrefixUnaryExpression: number; BinaryExpression: number;
+  StringLiteral: number; NoSubstitutionTemplateLiteral: number;
+  TemplateExpression: number; NumericLiteral: number; Identifier: number;
+  ElementAccessExpression: number; PropertyAccessExpression: number;
+  PlusToken: number; MinusToken: number; TildeToken: number;
+  BarToken: number; AmpersandToken: number; CaretToken: number;
+  AsteriskToken: number; SlashToken: number; PercentToken: number;
+  AsteriskAsteriskToken: number;
+  LessThanLessThanToken: number;
+  GreaterThanGreaterThanToken: number;
+  GreaterThanGreaterThanGreaterThanToken: number;
+};
+
+declare const OuterExpressionKinds: { Parentheses: number };
+
+declare function skipOuterExpressions(node: AstNode, kinds: number): AstNode;
+declare function nodeText(node: AstNode): string;
+declare function prefixUnaryExpressionOperand(node: AstNode): AstNode;
+declare function prefixUnaryExpressionOperator(node: AstNode): number;
+declare function binaryExpressionLeft(node: AstNode): AstNode;
+declare function binaryExpressionRight(node: AstNode): AstNode;
+declare function binaryExpressionOperatorTokenKind(node: AstNode): number;
+declare function memberAccessExpression(node: AstNode): AstNode;
+declare function isEntityNameExpression(node: AstNode): boolean;
+declare function templateExpressionHead(node: AstNode): AstNode;
+declare function templateExpressionSpans(node: AstNode): readonly AstNode[];
+declare function templateSpanExpression(span: AstNode): AstNode;
+declare function templateSpanLiteral(span: AstNode): AstNode;
