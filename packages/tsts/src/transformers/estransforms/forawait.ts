@@ -12,10 +12,10 @@
  */
 
 import { SuperAccessState } from "./utilities.js";
-import type { Node as AstNode, NodeArray, SourceFile, AwaitExpression, YieldExpression, ReturnStatement, LabeledStatement, ForInOrOfStatement, ModifierList, TokenNode, ConstructorDeclaration, GetAccessorDeclaration, SetAccessorDeclaration, MethodDeclaration, FunctionDeclaration, ArrowFunction, FunctionExpression, Block } from "../../ast/index.js";
-import type { CompilerOptions } from "../../tsoptions/parsedcommandline.js";
-import { Transformer, type TransformOptions } from "../transformer.js";
-import type { TextRange } from "../../core/textrange.js";
+import type { Node as AstNode, NodeArray, SourceFile, AwaitExpression, YieldExpression, ReturnStatement, LabeledStatement, ForInOrOfStatement, ModifierList, ConstructorDeclaration, GetAccessorDeclaration, SetAccessorDeclaration, MethodDeclaration, FunctionDeclaration, ArrowFunction, FunctionExpression, Block, TextRange } from "../../ast/index.js";
+import type { CompilerOptions } from "../../core/compileroptions.js";
+import { Transformer, type TransformOptions, type NodeVisitor } from "../transformer.js";
+type TokenNode = AstNode;
 
 // ---------------------------------------------------------------------------
 // Hierarchy facts (literal-union + const object — no enums)
@@ -64,7 +64,7 @@ export class ForAwaitTransformer extends Transformer {
 
   constructor(opts: TransformOptions) {
     super();
-    this.compilerOptions = opts.compilerOptions;
+    this.compilerOptions = opts.compilerOptions as CompilerOptions;
     this.superAccessState = new SuperAccessState();
     this.enclosingFunctionFlags = FunctionFlags.Normal;
     this.forAwaitHierarchyFacts = ForAwaitHierarchyFacts.None;

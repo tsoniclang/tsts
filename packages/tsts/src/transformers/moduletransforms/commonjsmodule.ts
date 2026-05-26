@@ -64,7 +64,7 @@ export class CommonJSModuleTransformer extends Transformer {
     super();
     this.compilerOptions = opts.compilerOptions;
     this.resolver = opts.resolver;
-    this.getEmitModuleFormatOfFile = opts.getEmitModuleFormatOfFile;
+    this.getEmitModuleFormatOfFile = opts.getEmitModuleFormatOfFile as (file: HasFileName) => number;
     this.languageVersion = compilerOptionsGetEmitScriptTarget(this.compilerOptions);
     this.moduleKind = compilerOptionsGetEmitModuleKind(this.compilerOptions);
     this.initTransformer((node) => this.visit(node), opts.context);
@@ -301,7 +301,7 @@ export class CommonJSModuleTransformer extends Transformer {
     const visitedRest = this.topLevelVisitor.visitSlice(rest).items;
     statements = [...statements, ...visitedRest];
     statements = this.appendExportEqualsIfNeeded(statements);
-    statements = this.emitContext().endAndMergeVariableEnvironment(statements);
+    statements = [...this.emitContext().endAndMergeVariableEnvironment(statements)];
 
     const statementList = this.factory().newNodeList(statements);
     setLoc(statementList, sourceFileStatementsLoc(node));

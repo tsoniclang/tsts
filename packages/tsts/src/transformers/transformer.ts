@@ -220,7 +220,7 @@ export interface NodeFactory {
   newTypeParameter(name: IdentifierNode, constraint?: AstNode, defaultType?: AstNode): AstNode;
 
   // ---- Update operations (one per "newX" / "createX" returning the same kind) ----
-  updateSourceFile(node: AstNode, statements: readonly AstNode[]): AstNode;
+  updateSourceFile(node: AstNode, statements: unknown, endOfFileToken?: AstNode): AstNode;
   updateBlock(node: AstNode, statements: readonly AstNode[]): AstNode;
   updateVariableDeclaration(node: AstNode, name: AstNode, exclamationToken: AstNode | undefined, type: AstNode | undefined, initializer: AstNode | undefined): AstNode;
   updateVariableStatement(node: AstNode, modifiers: unknown, declarationList: AstNode): AstNode;
@@ -252,6 +252,22 @@ export interface NodeFactory {
   updateNamedImports(node: AstNode, ...args: unknown[]): AstNode;
   updateExportDeclaration(node: AstNode, ...args: unknown[]): AstNode;
   updateNamedExports(node: AstNode, ...args: unknown[]): AstNode;
+  updateVariableDeclarationList(node: AstNode, declarations: readonly AstNode[]): AstNode;
+  updateDoStatement(node: AstNode, statement: AstNode, expression: AstNode): AstNode;
+  updateWhileStatement(node: AstNode, expression: AstNode, statement: AstNode): AstNode;
+  updateIfStatement(node: AstNode, expression: AstNode, thenStatement: AstNode, elseStatement: AstNode | undefined): AstNode;
+  updateSwitchStatement(node: AstNode, expression: AstNode, caseBlock: AstNode): AstNode;
+  updateLabeledStatement(node: AstNode, label: IdentifierNode, statement: AstNode): AstNode;
+  updateReturnStatement(node: AstNode, expression: AstNode | undefined): AstNode;
+  updateCatchClause(node: AstNode, variableDeclaration: AstNode | undefined, block: AstNode): AstNode;
+  updateCaseOrDefaultClause(node: AstNode, ...args: unknown[]): AstNode;
+  updatePartiallyEmittedExpression(node: AstNode, expression: AstNode): AstNode;
+  updateParenthesizedExpression(node: AstNode, expression: AstNode): AstNode;
+  updatePrefixUnaryExpression(node: AstNode, operand: AstNode): AstNode;
+  updatePostfixUnaryExpression(node: AstNode, operand: AstNode): AstNode;
+  updateSpreadElement(node: AstNode, expression: AstNode): AstNode;
+  updateSpreadAssignment(node: AstNode, expression: AstNode): AstNode;
+  updatePropertyAssignment(node: AstNode, name: AstNode, initializer: AstNode): AstNode;
 
   // ---- Composition + helpers ----
   inlineExpressions(expressions: readonly AstNode[]): AstNode;
@@ -292,6 +308,36 @@ export interface NodeFactory {
   newSpreadArrayHelper(to: AstNode, from: AstNode, packFrom?: boolean): AstNode;
   newAssignHelper(args: readonly AstNode[]): AstNode;
   newRestHelper(value: AstNode, elements: readonly AstNode[], computedTempVariables: readonly AstNode[]): AstNode;
+  newAsyncDelegatorHelper(expression: AstNode): AstNode;
+  newAsyncGeneratorHelper(generatorFunc: AstNode, hasLexicalThis: boolean): AstNode;
+  newExportStarHelper(moduleExpression: AstNode, exportsExpression?: AstNode): AstNode;
+  newGeneratorHelper(body: AstNode): AstNode;
+  newCreateBindingHelper(moduleExpression: AstNode, inputName: AstNode, outputName?: AstNode): AstNode;
+  newSetModuleDefaultHelper(targetObject: AstNode, value: AstNode): AstNode;
+
+  // ---- Misc node types ----
+  newOmittedExpression(): AstNode;
+  newNamespaceImport(name: IdentifierNode): AstNode;
+  newNamespaceExport(name: IdentifierNode): AstNode;
+  newModifier(kind: number): AstNode;
+  newMetaProperty(keywordToken: number, name: IdentifierNode): AstNode;
+  newFunctionCallCall(target: AstNode, thisArg: AstNode, argumentsList: readonly AstNode[]): AstNode;
+  newFunctionApplyCall(target: AstNode, thisArg: AstNode, argumentsExpression: AstNode): AstNode;
+  newTemplateHead(text: string, rawText: string | undefined): AstNode;
+  newTemplateMiddle(text: string, rawText: string | undefined): AstNode;
+  newTemplateTail(text: string, rawText: string | undefined): AstNode;
+  newTypeCheck(value: AstNode, tag: string): AstNode;
+  newArraySliceCall(array: AstNode, start?: number): AstNode;
+  newGlobalMethodCall(globalObjectName: string, methodName: string, argumentsList: readonly AstNode[]): AstNode;
+  newMethodCall(object: AstNode, methodName: IdentifierNode | string, argumentsList: readonly AstNode[]): AstNode;
+  newUnscopedHelperName(name: string): AstNode;
+  newReflectSetCall(target: AstNode, propertyKey: AstNode, value: AstNode, receiver: AstNode): AstNode;
+  newAssignmentTargetWrapper(paramName: IdentifierNode, expression: AstNode): AstNode;
+
+  // ---- Token / decorator factories ----
+  newDecorator(expression: AstNode): AstNode;
+  newQualifiedName(left: AstNode, right: IdentifierNode): AstNode;
+  newComputedPropertyName(expression: AstNode): AstNode;
 }
 
 /**
@@ -299,8 +345,8 @@ export interface NodeFactory {
  * Strada's `ast.NodeVisitor` surface.
  */
 export interface NodeVisitor {
-  visit(node: AstNode | undefined): AstNode | undefined;
-  visitNode(node: AstNode | undefined): AstNode | undefined;
+  visit(node: AstNode | undefined): AstNode;
+  visitNode(node: AstNode | undefined): AstNode;
   visitNodes(nodes: NodeList | undefined): NodeList;
   visitEachChild(node: AstNode): AstNode;
   visitSlice(nodes: readonly AstNode[]): { items: readonly AstNode[]; changed: boolean };
@@ -586,8 +632,16 @@ function createStubFactory(): NodeFactory {
 
 function createStubNodeVisitor(visit: (node: AstNode) => AstNode | undefined): NodeVisitor {
   const noop: NodeVisitor = {
-    visit(node) { return node === undefined ? undefined : visit(node); },
-    visitNode(node) { return node === undefined ? undefined : visit(node); },
+    visit(node) {
+      if (node === undefined) return {} as AstNode;
+      const result = visit(node);
+      return result ?? node;
+    },
+    visitNode(node) {
+      if (node === undefined) return {} as AstNode;
+      const result = visit(node);
+      return result ?? node;
+    },
     visitNodes(nodes) { return nodes ?? ({} as NodeList); },
     visitEachChild(node) { return node; },
     visitSlice(nodes) { return { items: nodes, changed: false }; },
