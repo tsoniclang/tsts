@@ -20,6 +20,7 @@ import type {
   SourceFile,
   IdentifierNode,
   NodeList,
+  ModifierList,
 } from "../ast/index.js";
 
 /**
@@ -98,7 +99,7 @@ export interface NodeFactory {
 
   // ---- Lists ----
   newNodeList<T extends AstNode = AstNode>(items: readonly T[]): NodeList;
-  newModifierList(items: readonly AstNode[]): unknown;
+  newModifierList(items: readonly AstNode[]): ModifierList;
   newSyntaxList(items: readonly AstNode[]): AstNode;
 
   // ---- Primitive expressions ----
@@ -210,9 +211,9 @@ export interface NodeFactory {
   newNamedImports(elements: readonly AstNode[]): AstNode;
   newNamedExports(elements: readonly AstNode[]): AstNode;
   newImportSpecifier(isTypeOnly: boolean, propertyName: IdentifierNode | undefined, name: IdentifierNode): AstNode;
-  newExportSpecifier(isTypeOnly: boolean, propertyName: IdentifierNode | undefined, name: IdentifierNode): AstNode;
+  newExportSpecifier(...args: unknown[]): AstNode;
   newImportEqualsDeclaration(modifiers: unknown, isTypeOnly: boolean, name: IdentifierNode, moduleReference: AstNode): AstNode;
-  newExportAssignment(modifiers: unknown, isExportEquals: boolean | undefined, expression: AstNode): AstNode;
+  newExportAssignment(...args: unknown[]): AstNode;
 
   // ---- Heritage + type nodes ----
   newHeritageClause(token: number, types: readonly AstNode[]): AstNode;
@@ -314,6 +315,7 @@ export interface NodeFactory {
   newExportStarHelper(moduleExpression: AstNode, exportsExpression?: AstNode): AstNode;
   newGeneratorHelper(body: AstNode): AstNode;
   newCreateBindingHelper(moduleExpression: AstNode, inputName: AstNode, outputName?: AstNode): AstNode;
+  createForOfBindingStatement(node: AstNode, value: AstNode): AstNode;
   newSetModuleDefaultHelper(targetObject: AstNode, value: AstNode): AstNode;
 
   // ---- Misc node types ----
@@ -352,7 +354,7 @@ export interface NodeVisitor {
   visitEachChild(node: AstNode): AstNode;
   visitSlice(nodes: readonly AstNode[]): { items: readonly AstNode[]; changed: boolean };
   visitSourceFile(file: SourceFile): SourceFile;
-  visitModifiers(modifiers: unknown): unknown;
+  visitModifiers(modifiers: ModifierList | undefined): ModifierList | undefined;
   visitParameters(parameters: readonly AstNode[]): readonly AstNode[];
   visitFunctionBody(body: AstNode | undefined): AstNode | undefined;
   visitIterationBody(body: AstNode | undefined): AstNode;

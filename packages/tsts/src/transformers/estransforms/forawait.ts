@@ -12,7 +12,7 @@
  */
 
 import { SuperAccessState } from "./utilities.js";
-import type { Node as AstNode, NodeArray, SourceFile, AwaitExpression, YieldExpression, ReturnStatement, LabeledStatement, ForInOrOfStatement, ModifierList, ConstructorDeclaration, GetAccessorDeclaration, SetAccessorDeclaration, MethodDeclaration, FunctionDeclaration, ArrowFunction, FunctionExpression, Block, TextRange } from "../../ast/index.js";
+import type { Node as AstNode, NodeArray, NodeList, SourceFile, AwaitExpression, YieldExpression, ReturnStatement, LabeledStatement, ForInOrOfStatement, ModifierList, ConstructorDeclaration, GetAccessorDeclaration, SetAccessorDeclaration, MethodDeclaration, FunctionDeclaration, ArrowFunction, FunctionExpression, Block, TextRange } from "../../ast/index.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
 import { Transformer, type TransformOptions, type NodeVisitor } from "../transformer.js";
 type TokenNode = AstNode;
@@ -939,13 +939,7 @@ function unwrapInnermostStatementOfLabel(node: LabeledStatement): AstNode {
 
 // NodeVisitor type comes from transformer.ts via the Transformer base.
 
-interface OrderedSet<T> {
-  add(value: T): void;
-  has(value: T): boolean;
-  readonly size: number;
-}
-
-declare function newOrderedSet<T>(): OrderedSet<T>;
+declare function newOrderedSet<T>(): Set<T>;
 
 declare const FunctionFlags: {
   Normal: number;
@@ -976,8 +970,8 @@ declare const EmitFlags: {
 };
 
 declare const EmitHelpers: {
-  AdvancedAsyncSuper: unknown;
-  AsyncSuper: unknown;
+  AdvancedAsyncSuper: AstNode;
+  AsyncSuper: AstNode;
 };
 
 declare const GeneratedIdentifierFlags: {
@@ -1018,4 +1012,4 @@ declare function parameterInitializer(parameter: AstNode): AstNode | undefined;
 declare function parameterDotDotDotToken(parameter: AstNode): TokenNode | undefined;
 declare function parameterName(parameter: AstNode): AstNode;
 declare function nodeLoc(node: AstNode): TextRange;
-declare function setLoc(node: AstNode, loc: TextRange): void;
+declare function setLoc(node: AstNode | NodeList, loc: TextRange): void;

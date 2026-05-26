@@ -51,6 +51,7 @@ import type {
   JsxSelfClosingElement,
   JsxOpeningElement,
   NodeList,
+  ModifierList,
 } from "../../ast/index.js";
 
 // ---------------------------------------------------------------------------
@@ -569,7 +570,7 @@ declare function isInstantiatedModule(node: AstNode, preserveConstEnums: boolean
 declare function shouldPreserveConstEnums(opts: CompilerOptions): boolean;
 declare function getInnermostModuleBody(node: ModuleDeclaration): AstNode | undefined;
 declare function getNodeName(node: AstNode): AstNode | undefined;
-declare function getModifiers(node: AstNode): unknown;
+declare function getModifiers(node: AstNode): ModifierList | undefined;
 declare function getInitializer(node: AstNode): AstNode | undefined;
 declare function getBody(node: AstNode): AstNode | undefined;
 declare function getParameters(node: AstNode): NodeList | undefined;

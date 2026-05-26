@@ -35,8 +35,8 @@ export class ESModuleTransformer extends Transformer {
   constructor(opts: TransformOptions) {
     super();
     this.compilerOptions = opts.compilerOptions;
-    this.resolver = opts.resolver;
-    this.getEmitModuleFormatOfFile = opts.getEmitModuleFormatOfFile;
+    this.resolver = opts.resolver as unknown as ReferenceResolver;
+    this.getEmitModuleFormatOfFile = opts.getEmitModuleFormatOfFile as (file: HasFileName) => number;
     this.currentSourceFile = undefined;
     this.importRequireStatements = undefined;
     this.helperNameSubstitutions = undefined;
@@ -89,8 +89,9 @@ export class ESModuleTransformer extends Transformer {
       if (externalHelpersImportDeclaration !== undefined) {
         statements.push(this.visitor().visitNode(externalHelpersImportDeclaration));
       }
-      if (this.importRequireStatements !== undefined) {
-        for (const s of this.importRequireStatements.statements) statements.push(s);
+      const irs = this.importRequireStatements as ImportRequireStatements | undefined;
+      if (irs !== undefined) {
+        for (const s of irs.statements) statements.push(s);
       }
       for (const s of rest) statements.push(s);
       const statementList = this.factory().newNodeList(statements);
@@ -391,7 +392,7 @@ export function newESModuleTransformer(opts: TransformOptions): Transformer {
 
 interface CompilerOptions { readonly _opts?: unknown; readonly [key: string]: unknown }
 interface ReferenceResolver { readonly _r?: unknown; readonly [key: string]: unknown }
-interface HasFileName { readonly _hf: unknown }
+type HasFileName = AstNode | { readonly fileName?: string };
 
 declare const Kind: {
   SourceFile: number; ImportDeclaration: number; ImportEqualsDeclaration: number;

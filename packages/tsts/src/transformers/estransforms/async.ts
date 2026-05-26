@@ -11,7 +11,7 @@
  */
 
 import { SuperAccessState } from "./utilities.js";
-import type { Node as AstNode, NodeArray, SourceFile, AwaitExpression, ForStatement, ForInOrOfStatement, CatchClause, VariableDeclaration, VariableDeclarationList, IdentifierNode, ConstructorDeclaration, MethodDeclaration, GetAccessorDeclaration, SetAccessorDeclaration, FunctionDeclaration, FunctionExpression, ArrowFunction, ParameterDeclaration, Block } from "../../ast/index.js";
+import type { Node as AstNode, NodeArray, SourceFile, AwaitExpression, ForStatement, ForInOrOfStatement, CatchClause, VariableDeclaration, VariableDeclarationList, IdentifierNode, ConstructorDeclaration, MethodDeclaration, GetAccessorDeclaration, SetAccessorDeclaration, FunctionDeclaration, FunctionExpression, ArrowFunction, ParameterDeclaration, Block, ModifierList } from "../../ast/index.js";
 import { Transformer, type TransformOptions, type NodeVisitor } from "../transformer.js";
 
 // ---------------------------------------------------------------------------
@@ -1154,7 +1154,7 @@ declare function isVariableDeclarationList(node: AstNode): boolean;
 declare function bindingPatternElements(node: AstNode): readonly AstNode[];
 declare function blockStatementList(node: AstNode | undefined): NodeArray<AstNode>;
 declare function blockMultiLine(node: AstNode | undefined): boolean;
-declare function declModifiers(decl: AstNode): unknown;
+declare function declModifiers(decl: AstNode): ModifierList | undefined;
 declare function declParameters(decl: AstNode): NodeArray<AstNode>;
 declare function declName(decl: AstNode): AstNode | undefined;
 declare function methodAsteriskToken(decl: MethodDeclaration): unknown;
