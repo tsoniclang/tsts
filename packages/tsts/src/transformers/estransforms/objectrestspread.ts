@@ -12,7 +12,7 @@
 import type { Node as AstNode, SourceFile } from "../../ast/index.js";
 
 import { Transformer, type EmitContext, type NodeFactory } from "../transformer.js";
-import type { TransformOptions } from "../tstransforms/typeeraser.js";
+import type { TransformOptions } from "../transformer.js";
 
 class ObjectRestSpreadTransformer extends Transformer {
   private readonly compilerOptions: CompilerOptionsForObjectRest;

@@ -248,15 +248,6 @@ export function getPathComponents(path: string, currentDirectory: string = ""): 
   return pathComponents(path, getRootLength(path));
 }
 
-function pathComponents(path: string, rootLength: number): readonly string[] {
-  const root = path.slice(0, rootLength);
-  let rest = path.slice(rootLength).split("/");
-  if (rest.length > 0 && rest[rest.length - 1] === "") {
-    rest = rest.slice(0, -1);
-  }
-  return [root, ...rest];
-}
-
 export function getPathFromPathComponents(pathComponents: readonly string[]): string {
   if (pathComponents.length === 0) return "";
   const root = ensureTrailingDirectorySeparator(pathComponents[0]!);
@@ -265,29 +256,6 @@ export function getPathFromPathComponents(pathComponents: readonly string[]): st
 
 export function getNormalizedPathComponents(path: string, currentDirectory: string): readonly string[] {
   return reducePathComponents(getPathComponents(path, currentDirectory));
-}
-
-function reducePathComponents(components: readonly string[]): readonly string[] {
-  if (components.length === 0) return [];
-  const reduced = [components[0]!];
-  for (let i = 1; i < components.length; i += 1) {
-    const component = components[i]!;
-    if (component === "" || component === ".") continue;
-    if (component === "..") {
-      if (reduced.length > 1) {
-        if (reduced[reduced.length - 1] !== "..") {
-          reduced.pop();
-          continue;
-        }
-      } else if (reduced[0] !== "") {
-        // Don't reduce above the first non-empty component
-        reduced.push(component);
-        continue;
-      }
-    }
-    reduced.push(component);
-  }
-  return reduced;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -584,31 +552,8 @@ export interface ForEachResult<T> {
   readonly stop: boolean;
 }
 
-export function forEachAncestorDirectory<T>(
-  directory: string,
-  callback: (directory: string) => T | undefined
-): T | undefined {
-  while (true) {
-    const result = callback(directory);
-    if (result !== undefined) return result;
-    const parent = getDirectoryPath(directory);
-    if (parent === directory) return undefined;
-    directory = parent;
-  }
-}
-
-export function forEachAncestorDirectoryPath<T>(
-  directory: Path,
-  callback: (directory: Path) => T | undefined
-): T | undefined {
-  while (true) {
-    const result = callback(directory);
-    if (result !== undefined) return result;
-    const parent = getDirectoryPath(directory) as Path;
-    if (parent === directory) return undefined;
-    directory = parent;
-  }
-}
+// Strada-style variants below (returning { result, ok }) supersede the
+// historical T|undefined shape.
 
 // ────────────────────────────────────────────────────────────────────────────
 // Convert to relative path

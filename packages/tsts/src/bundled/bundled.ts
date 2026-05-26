@@ -18,7 +18,7 @@
 
 import { dirname, join } from "node:path";
 
-import type { FS } from "../vfs/index.js";
+import type { FS, FileInfo, WalkDirFunc, DirEntry } from "../vfs/index.js";
 
 import { LibNames } from "./lib-names.js";
 
@@ -112,13 +112,22 @@ class WrappedFS implements FS {
     return this.#fs.fileExists(path);
   }
 
-  readFile(path: string): { contents: string; ok: boolean } {
+  readFile(path: string): string | undefined {
     const { rest, ok } = splitPath(path);
-    if (ok) {
-      const c = embeddedContents.get(rest);
-      return c !== undefined ? { contents: c, ok: true } : { contents: "", ok: false };
-    }
+    if (ok) return embeddedContents.get(rest);
     return this.#fs.readFile(path);
+  }
+
+  appendFile(path: string, data: string): void {
+    const { ok } = splitPath(path);
+    if (ok) throw new Error("cannot append to embedded file system");
+    this.#fs.appendFile(path, data);
+  }
+
+  chtimes(path: string, accessTime: Date, modifyTime: Date): void {
+    const { ok } = splitPath(path);
+    if (ok) throw new Error("cannot chtimes embedded file system");
+    this.#fs.chtimes(path, accessTime, modifyTime);
   }
 
   directoryExists(path: string): boolean {
@@ -137,20 +146,20 @@ class WrappedFS implements FS {
     return this.#fs.getAccessibleEntries(path);
   }
 
-  stat(path: string): { isFile: boolean; isDirectory: boolean; mtime: number; size: number } | undefined {
+  stat(path: string): FileInfo | undefined {
     const { rest, ok } = splitPath(path);
     if (ok) {
       if (rest === "" || rest === "libs") {
-        return { isFile: false, isDirectory: true, mtime: 0, size: 0 };
+        return { name: rest, isDir: true, size: 0, mode: 0, modTime: new Date(0) } as unknown as FileInfo;
       }
       const lib = embeddedContents.get(rest);
-      if (lib !== undefined) return { isFile: true, isDirectory: false, mtime: 0, size: lib.length };
+      if (lib !== undefined) return { name: rest, isDir: false, size: lib.length, mode: 0, modTime: new Date(0) } as unknown as FileInfo;
       return undefined;
     }
     return this.#fs.stat(path);
   }
 
-  walkDir(root: string, walkFn: (file: string, isDir: boolean) => boolean | undefined): void {
+  walkDir(root: string, walkFn: WalkDirFunc): void {
     const { rest, ok } = splitPath(root);
     if (ok) {
       this.walkDirEmbedded(rest, walkFn);
@@ -159,15 +168,15 @@ class WrappedFS implements FS {
     this.#fs.walkDir(root, walkFn);
   }
 
-  private walkDirEmbedded(rest: string, walkFn: (file: string, isDir: boolean) => boolean | undefined): void {
+  private walkDirEmbedded(rest: string, walkFn: WalkDirFunc): void {
     if (rest === "") {
-      walkFn(Scheme + "libs", true);
+      walkFn(Scheme + "libs", { name: "libs", isDir: true } as unknown as DirEntry);
       this.walkDirEmbedded("libs", walkFn);
       return;
     }
     if (rest === "libs") {
       for (const name of LibNames) {
-        walkFn(Scheme + "libs/" + name, false);
+        walkFn(Scheme + "libs/" + name, { name, isDir: false } as unknown as DirEntry);
       }
     }
   }
@@ -178,26 +187,16 @@ class WrappedFS implements FS {
     return this.#fs.realpath(path);
   }
 
-  writeFile(path: string, data: string): boolean {
+  writeFile(path: string, data: string): void {
     const { ok } = splitPath(path);
     if (ok) throw new Error("cannot write to embedded file system");
-    return this.#fs.writeFile(path, data);
+    this.#fs.writeFile(path, data);
   }
 
-  remove(path: string): boolean {
+  remove(path: string): void {
     const { ok } = splitPath(path);
     if (ok) throw new Error("cannot remove from embedded file system");
-    return this.#fs.remove(path);
-  }
-
-  watch(
-    path: string,
-    recursive: boolean,
-    callback: (file: string) => void,
-  ): { close(): void } | undefined {
-    const { ok } = splitPath(path);
-    if (ok) return undefined; // embedded files don't change
-    return this.#fs.watch !== undefined ? this.#fs.watch(path, recursive, callback) : undefined;
+    this.#fs.remove(path);
   }
 }
 

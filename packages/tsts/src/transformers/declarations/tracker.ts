@@ -7,6 +7,7 @@
  */
 
 import type { Node as AstNode, Diagnostic, Symbol as TsSymbol, SourceFile } from "../../ast/index.js";
+import type { DiagnosticMessage } from "../../diagnostics/types.js";
 
 export interface SymbolTrackerSharedState {
   lateMarkedStatements: AstNode[];

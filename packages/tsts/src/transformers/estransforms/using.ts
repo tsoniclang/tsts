@@ -12,7 +12,7 @@
 
 import { convertClassDeclarationToClassExpression } from "./utilities.js";
 import { isNamedEvaluation, transformNamedEvaluation } from "./namedevaluation.js";
-import type { Node as AstNode, SourceFile, Block, ForStatement, ForInOrOfStatement, VariableStatement, VariableDeclarationList, VariableDeclaration, ExportAssignment, ClassDeclaration, IdentifierNode, ExportSpecifierNode } from "../../ast/index.js";
+import type { Node as AstNode, SourceFile, Block, ForStatement, ForInOrOfStatement, VariableStatement, VariableDeclarationList, VariableDeclaration, ExportAssignment, ClassDeclaration, IdentifierNode, ExportSpecifier as ExportSpecifierNode } from "../../ast/index.js";
 import { Transformer, type TransformOptions } from "../transformer.js";
 
 // ---------------------------------------------------------------------------
@@ -697,7 +697,7 @@ declare function setLoc(node: unknown, loc: unknown): void;
 declare function nodeName(node: AstNode): AstNode | undefined;
 declare function hasSyntacticModifier(node: AstNode, flags: number): boolean;
 declare function skipOuterExpressions(node: AstNode, kinds: number): AstNode;
-declare function firstResult<T>(arr: readonly T[]): readonly T[];
+declare function firstResult<T>(arr: { items: readonly T[]; changed: boolean }): readonly T[];
 declare function isIdentifier(node: AstNode): boolean;
 declare function isBindingPattern(node: AstNode): boolean;
 declare function isVariableDeclarationList(node: AstNode): boolean;
