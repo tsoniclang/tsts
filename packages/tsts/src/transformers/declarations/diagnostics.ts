@@ -504,7 +504,19 @@ declare const Kind: {
 };
 declare const ModifierFlags: { Private: number };
 declare const SymbolAccessibility: { CannotBeNamed: number };
-declare const Diagnostics: Record<string, DiagnosticMessage>;
+// Diagnostics catalog imported via a permissive Record. The actual
+// catalog lives in diagnostics/diagnostics_generated.ts; using a typed
+// import here would couple this file to the catalog's exact key set.
+// Under noUncheckedIndexedAccess, untyped record lookups return
+// `T | undefined`, so the callers below treat undefined as a fallback
+// to the generic accessibility message.
+import { Diagnostics as DiagnosticsCatalog } from "../../diagnostics/diagnostics_generated.js";
+// The generated `Diagnostics` catalog has each message keyed by its
+// stable name (e.g. `Diagnostics.Identifier_expected`). Under the
+// catalog's `as const` shape, property access returns the typed
+// message directly — not `T | undefined`. Re-export with the catalog
+// type so this file's lookups remain strongly typed.
+const Diagnostics = DiagnosticsCatalog;
 
 declare function getNameOfDeclaration(node: AstNode): AstNode | undefined;
 declare function nodeName(node: AstNode): AstNode | undefined;

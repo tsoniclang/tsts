@@ -256,8 +256,8 @@ export interface NodeFactory {
   // ---- Composition + helpers ----
   inlineExpressions(expressions: readonly AstNode[]): AstNode;
   newClassPrivateFieldInHelper(brandCheckIdentifier: IdentifierNode, receiver: AstNode): AstNode;
-  splitStandardPrologue(statements: readonly AstNode[]): { standardPrologue: readonly AstNode[]; rest: readonly AstNode[] };
-  splitCustomPrologue(statements: readonly AstNode[]): { customPrologue: readonly AstNode[]; rest: readonly AstNode[]; prologue: readonly AstNode[] };
+  splitStandardPrologue(statements: readonly AstNode[]): { prologue: readonly AstNode[]; rest: readonly AstNode[] };
+  splitCustomPrologue(statements: readonly AstNode[]): { custom: readonly AstNode[]; rest: readonly AstNode[] };
   ensureUseStrict(statements: readonly AstNode[]): readonly AstNode[];
   restoreEnclosingLabel(node: AstNode, label: AstNode | undefined): AstNode;
 
@@ -303,7 +303,7 @@ export interface NodeVisitor {
   visitNode(node: AstNode | undefined): AstNode | undefined;
   visitNodes(nodes: NodeList | undefined): NodeList;
   visitEachChild(node: AstNode): AstNode;
-  visitSlice(nodes: readonly AstNode[]): readonly AstNode[];
+  visitSlice(nodes: readonly AstNode[]): { items: readonly AstNode[]; changed: boolean };
   visitSourceFile(file: SourceFile): SourceFile;
   visitModifiers(modifiers: unknown): unknown;
   visitParameters(parameters: readonly AstNode[]): readonly AstNode[];
@@ -590,7 +590,7 @@ function createStubNodeVisitor(visit: (node: AstNode) => AstNode | undefined): N
     visitNode(node) { return node === undefined ? undefined : visit(node); },
     visitNodes(nodes) { return nodes ?? ({} as NodeList); },
     visitEachChild(node) { return node; },
-    visitSlice(nodes) { return nodes; },
+    visitSlice(nodes) { return { items: nodes, changed: false }; },
     visitSourceFile(file) { return file; },
     visitModifiers(modifiers) { return modifiers; },
     visitParameters(parameters) { return parameters; },
