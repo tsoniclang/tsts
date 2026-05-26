@@ -61,6 +61,7 @@ export interface FormatCodeSettings {
   readonly placeOpenBraceOnNewLineForControlBlocks?: boolean;
   readonly insertSpaceBeforeTypeAnnotation?: boolean;
   readonly indentMultiLineObjectLiteralBeginningOnBlankLine?: boolean;
+  readonly indentSwitchCase?: boolean;
   readonly semicolons?: "ignore" | "insert" | "remove";
   readonly indentStyle?: "none" | "block" | "smart";
   readonly trimTrailingWhitespace?: boolean;

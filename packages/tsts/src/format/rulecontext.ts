@@ -87,7 +87,7 @@ export function isOptionDisabledOrUndefinedOrTokensOnSameLine(selector: OptionSe
 export function isOptionEnabledOrUndefined(selector: OptionSelector): ContextPredicate {
   return (ctx) => {
     const v = selector(ctx.options);
-    return v === undefined || tristateIsTrueOrUnknown(v);
+    return v === undefined || tristateIsTrueOrUnknown(coerceTristate(v));
   };
 }
 

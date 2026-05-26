@@ -50,6 +50,7 @@ import type {
   TaggedTemplateExpression,
   JsxSelfClosingElement,
   JsxOpeningElement,
+  NodeList,
 } from "../../ast/index.js";
 
 // ---------------------------------------------------------------------------
@@ -326,7 +327,7 @@ export class TypeEraserTransformer extends Transformer {
             : undefined;
           if (hasDecorators(node)) {
             const decorators = getDecorators(node);
-            const visited = this.visitor().visitSlice(decorators);
+            const visited = this.visitor().visitSlice(decorators).items;
             if (modifiers === undefined) {
               modifiers = this.factory().newModifierList(visited);
             } else {
@@ -571,20 +572,20 @@ declare function getNodeName(node: AstNode): AstNode | undefined;
 declare function getModifiers(node: AstNode): unknown;
 declare function getInitializer(node: AstNode): AstNode | undefined;
 declare function getBody(node: AstNode): AstNode | undefined;
-declare function getParameters(node: AstNode): unknown;
+declare function getParameters(node: AstNode): NodeList | undefined;
 declare function getAsteriskToken(node: AstNode): AstNode | undefined;
 declare function getEqualsGreaterThan(node: AstNode): AstNode;
 declare function getDotDotDotToken(node: AstNode): AstNode | undefined;
 declare function getQuestionDotToken(node: AstNode): AstNode | undefined;
 declare function getExpression(node: AstNode): AstNode;
-declare function getArguments(node: AstNode): unknown;
+declare function getArguments(node: AstNode): NodeList | undefined;
 declare function getTag(node: AstNode): AstNode;
 declare function getTemplate(node: AstNode): AstNode;
 declare function getTypeAnnotation(node: AstNode): AstNode | undefined;
 declare function getHeritageToken(node: AstNode): number;
-declare function getHeritageTypes(node: AstNode): unknown;
-declare function getHeritageClauses(node: AstNode): unknown;
-declare function getClassMembers(node: AstNode): unknown;
+declare function getHeritageTypes(node: AstNode): NodeList | undefined;
+declare function getHeritageClauses(node: AstNode): NodeList | undefined;
+declare function getClassMembers(node: AstNode): NodeList | undefined;
 declare function getJsxTagName(node: AstNode): AstNode;
 declare function getJsxAttributes(node: AstNode): AstNode;
 declare function getImportClause(node: ImportDeclaration): AstNode | undefined;
@@ -592,8 +593,8 @@ declare function getModuleSpecifier(node: AstNode): AstNode;
 declare function getImportAttributes(node: AstNode): AstNode | undefined;
 declare function getNamedBindings(node: ImportClause): AstNode | undefined;
 declare function getPhaseModifier(node: ImportClause): AstNode | undefined;
-declare function getNamedImportElements(node: NamedImports): readonly AstNode[];
-declare function getNamedExportElements(node: NamedExports): readonly AstNode[];
+declare function getNamedImportElements(node: NamedImports): NodeList;
+declare function getNamedExportElements(node: NamedExports): NodeList;
 declare function getExportClause(node: ExportDeclaration): AstNode | undefined;
 declare function getModifierListNodes(list: unknown): readonly AstNode[];
 declare function getNodeFlags(node: AstNode): number;
