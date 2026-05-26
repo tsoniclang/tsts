@@ -97,16 +97,19 @@ export const embeddedContents: ReadonlyMap<string, string> = new Map();
  * them from `embeddedContents`. Mirrors TS-Go `wrappedFS`.
  */
 class WrappedFS implements FS {
-  constructor(private readonly fs: FS) {}
+  readonly #fs: FS;
+  constructor(fs: FS) {
+    this.#fs = fs;
+  }
 
   useCaseSensitiveFileNames(): boolean {
-    return this.fs.useCaseSensitiveFileNames();
+    return this.#fs.useCaseSensitiveFileNames();
   }
 
   fileExists(path: string): boolean {
     const { rest, ok } = splitPath(path);
     if (ok) return embeddedContents.has(rest);
-    return this.fs.fileExists(path);
+    return this.#fs.fileExists(path);
   }
 
   readFile(path: string): { contents: string; ok: boolean } {
@@ -115,13 +118,13 @@ class WrappedFS implements FS {
       const c = embeddedContents.get(rest);
       return c !== undefined ? { contents: c, ok: true } : { contents: "", ok: false };
     }
-    return this.fs.readFile(path);
+    return this.#fs.readFile(path);
   }
 
   directoryExists(path: string): boolean {
     const { rest, ok } = splitPath(path);
     if (ok) return rest === "" || rest === "libs";
-    return this.fs.directoryExists(path);
+    return this.#fs.directoryExists(path);
   }
 
   getAccessibleEntries(path: string): { files: readonly string[]; directories: readonly string[] } {
@@ -131,7 +134,7 @@ class WrappedFS implements FS {
       if (rest === "libs") return { files: LibNames, directories: [] };
       return { files: [], directories: [] };
     }
-    return this.fs.getAccessibleEntries(path);
+    return this.#fs.getAccessibleEntries(path);
   }
 
   stat(path: string): { isFile: boolean; isDirectory: boolean; mtime: number; size: number } | undefined {
@@ -144,7 +147,7 @@ class WrappedFS implements FS {
       if (lib !== undefined) return { isFile: true, isDirectory: false, mtime: 0, size: lib.length };
       return undefined;
     }
-    return this.fs.stat(path);
+    return this.#fs.stat(path);
   }
 
   walkDir(root: string, walkFn: (file: string, isDir: boolean) => boolean | undefined): void {
@@ -153,7 +156,7 @@ class WrappedFS implements FS {
       this.walkDirEmbedded(rest, walkFn);
       return;
     }
-    this.fs.walkDir(root, walkFn);
+    this.#fs.walkDir(root, walkFn);
   }
 
   private walkDirEmbedded(rest: string, walkFn: (file: string, isDir: boolean) => boolean | undefined): void {
@@ -172,19 +175,19 @@ class WrappedFS implements FS {
   realpath(path: string): string {
     const { ok } = splitPath(path);
     if (ok) return path;
-    return this.fs.realpath(path);
+    return this.#fs.realpath(path);
   }
 
   writeFile(path: string, data: string): boolean {
     const { ok } = splitPath(path);
     if (ok) throw new Error("cannot write to embedded file system");
-    return this.fs.writeFile(path, data);
+    return this.#fs.writeFile(path, data);
   }
 
   remove(path: string): boolean {
     const { ok } = splitPath(path);
     if (ok) throw new Error("cannot remove from embedded file system");
-    return this.fs.remove(path);
+    return this.#fs.remove(path);
   }
 
   watch(
@@ -194,7 +197,7 @@ class WrappedFS implements FS {
   ): { close(): void } | undefined {
     const { ok } = splitPath(path);
     if (ok) return undefined; // embedded files don't change
-    return this.fs.watch !== undefined ? this.fs.watch(path, recursive, callback) : undefined;
+    return this.#fs.watch !== undefined ? this.#fs.watch(path, recursive, callback) : undefined;
   }
 }
 

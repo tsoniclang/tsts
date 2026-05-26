@@ -70,8 +70,10 @@ export interface UseStrictOptions {
 }
 
 class UseStrictTransformer extends Transformer {
-  constructor(private readonly opts: UseStrictOptions) {
+  readonly #opts: UseStrictOptions;
+  constructor(opts: UseStrictOptions) {
     super();
+    this.#opts = opts;
     this.newTransformer((node) => this.visit(node), opts.context);
   }
 
@@ -84,8 +86,8 @@ class UseStrictTransformer extends Transformer {
     if (scriptKindOf(node) === ScriptKindJSON) return node as unknown as AstNode;
 
     const isExternalModuleFile = isExternalModule(node);
-    const moduleKind = this.opts.compilerOptions.getEmitModuleKind();
-    const format = this.opts.getEmitModuleFormatOfFile(node);
+    const moduleKind = this.#opts.compilerOptions.getEmitModuleKind();
+    const format = this.#opts.getEmitModuleFormatOfFile(node);
 
     // ESM is always strict. Skip "use strict" if the file is ESM and
     // CJS emit hasn't been requested.
