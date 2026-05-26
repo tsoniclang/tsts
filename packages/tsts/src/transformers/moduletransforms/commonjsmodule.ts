@@ -42,6 +42,71 @@ import {
   rewriteModuleSpecifier,
 } from "./utilities.js";
 import type { Node as AstNode, SourceFile, IdentifierNode, ImportDeclaration, ImportEqualsDeclaration, ExportDeclaration, ExportAssignment, FunctionDeclaration, ClassDeclaration, VariableStatement, VariableDeclaration, ForStatement, ForInOrOfStatement, DoStatement, WhileStatement, LabeledStatement, WithStatement, IfStatement, SwitchStatement, CaseBlock, TryStatement, CatchClause, Block, ExpressionStatement, VoidExpression, ParenthesizedExpression, PartiallyEmittedExpression, CallExpression, TaggedTemplateExpression, BinaryExpression, PrefixUnaryExpression, PostfixUnaryExpression, ShorthandPropertyAssignment, PropertyAssignment, SpreadAssignment, SpreadElement, NodeList, ModifierList } from "../../ast/index.js";
+import {
+  nodeFlags, nodeLoc, nodeText, nodeName, nodeParent, nodeInitializerOf, setLoc,
+  hasSyntacticModifier, bindingPatternElements,
+  sourceFileIsDeclarationFile, sourceFileStatementsRO, sourceFileStatementsLoc,
+  sourceFileEndOfFileToken, sourceFileFileName, sourceFileCommonJSModuleIndicator,
+  sourceFileExternalModuleIndicator, isExternalModule, isEffectiveExternalModule,
+  fileExtensionIsOneOf,
+  isStringLiteralLike, isAssignmentExpression, isCommaExpression, isImportCall,
+  isRequireCall, isInJSFile, isDefaultImport, isExternalModuleImportEqualsDeclaration,
+  isBlockNode, moduleExportNameIsDefault, findAncestor, getNamespaceDeclarationNode,
+  compilerOptionsGetEmitScriptTarget, compilerOptionsGetEmitModuleKind,
+  compilerOptionsRewriteRelativeImportExtensions, compilerOptionsJsx,
+  shouldTransformImportCallStandalone, subtreeFacts,
+  variableStatementDeclarationListRO, variableStatementModifiers,
+  variableDeclarationListDeclarationsRO, variableDeclarationNameRO,
+  variableDeclarationInitializerRO, variableDeclarationExclamationTokenRO,
+  variableDeclarationTypeRO,
+  importDeclarationImportClause, importClauseName, importClauseNamedBindings,
+  namedElements, namedExportsElements, exportSpecifierName,
+  exportSpecifierPropertyNameOrName, importSpecifierPropertyNameOrNameRO,
+  importEqualsName, exportDeclarationModuleSpecifier, exportDeclarationExportClause,
+  exportAssignmentIsExportEquals, exportAssignmentExpression,
+  classDeclarationModifiers, classDeclarationHeritageClauses, classDeclarationMembers,
+  functionDeclarationModifiers, functionAsteriskTokenRO,
+  functionDeclarationParameters, functionDeclarationBody,
+  forInitializerRO, forConditionRO, forIncrementorRO, forBodyRO,
+  forInOrOfInitializerRO, forInOrOfExpressionRO, forInOrOfBodyRO,
+  forInOrOfAwaitModifierRO,
+  doStatementStatement, doStatementExpression,
+  whileStatementExpression, whileStatementBody,
+  labeledStatementLabel, labeledStatementStatement,
+  withStatementExpression, withStatementStatement,
+  ifStatementExpression, ifStatementThen, ifStatementElse,
+  switchStatementExpression, switchStatementCaseBlock,
+  caseClauseExpression, caseClauseStatements,
+  catchClauseVariableDeclaration, catchClauseBlock,
+  blockStatementsRO, blockStatementsLoc, blockMultiLineRO, blockMultiLine,
+  parenthesizedExpressionRO, partiallyEmittedExpressionRO,
+  callExpressionExpressionRO, callExpressionArgumentsRO,
+  callExpressionArgumentsListRO, callExpressionArgumentsLocRO,
+  callExpressionQuestionDotTokenRO, taggedTemplateTagRO, taggedTemplateTemplateRO,
+  binaryLeft, binaryRight, binaryOperatorToken, binaryOperatorTokenKind,
+  prefixUnaryOperatorRO, prefixUnaryOperandRO, postfixUnaryOperatorRO,
+  postfixUnaryOperandRO, shorthandPropertyAssignmentNameRO,
+  shorthandObjectAssignmentInitializerRO, shorthandEqualsTokenRO,
+  propertyAssignmentNameRO, propertyAssignmentInitializerRO,
+  spreadAssignmentExpressionRO, spreadElementExpressionRO,
+  objectLiteralProperties, arrayLiteralElements,
+  autoGenInfoHasAllowNameSubstitution,
+} from "../../ast/index.js";
+import { cloneNode as _astCloneNode, Kind, NodeFlags } from "../../ast/index.js";
+import { ModuleKind, JsxEmit } from "../../core/compileroptions.js";
+import { EmitFlags } from "../../printer/emitflags.js";
+import { GeneratedIdentifierFlags } from "../../printer/namegenerator.js";
+import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
+const ScriptTarget = { ES2020: 7 } as const;
+function cloneNode(node: AstNode, _factory: unknown): AstNode { return _astCloneNode(node); }
+import {
+  isStringLiteral, isIdentifier, isBindingPattern, isOmittedExpression,
+  isVariableDeclaration, isVariableDeclarationList, isImportClause,
+  isImportSpecifier, isImportDeclaration, isBinaryExpression,
+  isObjectLiteralExpression, isArrayLiteralExpression, isArrowFunction,
+  isFunctionExpression, isClassExpression, isSpreadElement, isNamedExports,
+  isSourceFile, isPropertyDeclaration, isDestructuringAssignment, isExpression,
+} from "../../ast/index.js";
 
 export class CommonJSModuleTransformer extends Transformer {
   readonly compilerOptions: CompilerOptions;
@@ -1586,177 +1651,12 @@ type HasFileName = AstNode | { readonly fileName?: string };
 // base class context). Removed local stub — was conflicting with the
 // imported shape.
 
-declare const Kind: {
-  SourceFile: number; ImportDeclaration: number; ImportEqualsDeclaration: number;
-  ExportDeclaration: number; ExportAssignment: number; FunctionDeclaration: number;
-  ClassDeclaration: number; VariableStatement: number; ForStatement: number;
-  ForInStatement: number; ForOfStatement: number; DoStatement: number; WhileStatement: number;
-  LabeledStatement: number; WithStatement: number; IfStatement: number;
-  SwitchStatement: number; CaseBlock: number; CaseClause: number; DefaultClause: number;
-  TryStatement: number; CatchClause: number; Block: number;
-  ExpressionStatement: number; VoidExpression: number; ParenthesizedExpression: number;
-  PartiallyEmittedExpression: number; CallExpression: number;
-  TaggedTemplateExpression: number; BinaryExpression: number;
-  PrefixUnaryExpression: number; PostfixUnaryExpression: number;
-  ShorthandPropertyAssignment: number; Identifier: number;
-  ObjectLiteralExpression: number; ArrayLiteralExpression: number;
-  PropertyAssignment: number; SpreadAssignment: number; SpreadElement: number;
-  MethodDeclaration: number; GetAccessor: number; SetAccessor: number;
-  StringLiteral: number; NamespaceImport: number; NamedImports: number;
-  EqualsToken: number; EqualsGreaterThanToken: number;
-  PlusPlusToken: number; MinusMinusToken: number;
-};
-declare const NodeFlags: { None: number; Const: number; BlockScoped: number };
-declare const TokenFlags: { None: number };
-declare const ModuleKind: { None: number };
-declare const ScriptTarget: { ES2020: number };
-declare const ModifierFlags: { Export: number; Default: number; ExportDefault: number };
-declare const SubtreeFacts: { ContainsDynamicImport: number; ContainsIdentifier: number };
-declare const EmitFlags: {
-  CustomPrologue: number; NoSourceMap: number; NoComments: number;
-  StartOnNewLine: number; IndirectCall: number;
-};
-declare const JsxEmit: { Preserve: number };
-declare const GeneratedIdentifierFlags: { Optimistic: number };
-
-declare function sourceFileIsDeclarationFile(node: SourceFile): boolean;
-declare function sourceFileStatementsRO(node: SourceFile): readonly AstNode[];
-declare function sourceFileStatementsLoc(node: SourceFile): unknown;
-declare function sourceFileEndOfFileToken(node: SourceFile): AstNode;
-declare function sourceFileFileName(node: SourceFile): string;
-declare function sourceFileCommonJSModuleIndicator(node: SourceFile): AstNode | undefined;
-declare function sourceFileExternalModuleIndicator(node: SourceFile): AstNode | undefined;
-declare function isExternalModule(node: SourceFile): boolean;
-declare function isSourceFile(node: AstNode): boolean;
-declare function isEffectiveExternalModule(file: SourceFile, options: CompilerOptions): boolean;
-declare function fileExtensionIsOneOf(name: string, exts: readonly string[]): boolean;
-declare const supportedJSExtensionsFlat: readonly string[];
-declare function nodeFlags(node: AstNode): number;
-declare function nodeLoc(node: AstNode): unknown;
-declare function nodeText(node: AstNode): string;
-declare function nodeName(node: AstNode): AstNode | undefined;
-declare function nodeParent(node: AstNode): AstNode | undefined;
-declare function nodeInitializerOf(node: AstNode): AstNode | undefined;
-declare function setLoc(node: unknown, loc: unknown): void;
-declare function isExpression(node: AstNode): boolean;
-declare function isStringLiteral(node: AstNode): boolean;
-declare function isStringLiteralLike(node: AstNode): boolean;
-declare function isIdentifier(node: AstNode): boolean;
-declare function isBindingPattern(node: AstNode): boolean;
-declare function isOmittedExpression(node: AstNode): boolean;
-declare function isBlockNode(node: AstNode): boolean;
-declare function isVariableDeclaration(node: AstNode): boolean;
-declare function isVariableDeclarationList(node: AstNode): boolean;
-declare function isImportClause(node: AstNode): boolean;
-declare function isImportSpecifier(node: AstNode): boolean;
-declare function isImportDeclaration(node: AstNode): boolean;
-declare function isImportCall(node: AstNode): boolean;
-declare function isRequireCall(node: AstNode, requireStringLiteralLikeArgument: boolean): boolean;
-declare function isInJSFile(node: AstNode): boolean;
-declare function isDefaultImport(node: AstNode): boolean;
-declare function isExternalModuleImportEqualsDeclaration(node: AstNode): boolean;
-declare function isAssignmentExpression(node: AstNode, excludeCompound: boolean): boolean;
-declare function isCommaExpression(node: AstNode): boolean;
-declare function isDestructuringAssignment(node: AstNode): boolean;
-declare function isBinaryExpression(node: AstNode): boolean;
-declare function isObjectLiteralExpression(node: AstNode): boolean;
-declare function isArrayLiteralExpression(node: AstNode): boolean;
-declare function isArrowFunction(node: AstNode): boolean;
-declare function isFunctionExpression(node: AstNode): boolean;
-declare function isClassExpression(node: AstNode): boolean;
-declare function isSpreadElement(node: AstNode): boolean;
-declare function isNamedExports(node: AstNode): boolean;
-declare function getNamespaceDeclarationNode(node: AstNode): AstNode | undefined;
-declare function hasSyntacticModifier(node: AstNode, flags: number): boolean;
-declare function moduleExportNameIsDefault(node: AstNode): boolean;
-declare function findAncestor(node: AstNode, predicate: (node: AstNode) => boolean): AstNode | undefined;
-declare function compilerOptionsGetEmitScriptTarget(options: CompilerOptions): number;
-declare function compilerOptionsGetEmitModuleKind(options: CompilerOptions): number;
-declare function compilerOptionsRewriteRelativeImportExtensions(options: CompilerOptions): boolean;
-declare function compilerOptionsJsx(options: CompilerOptions): number;
-declare function shouldTransformImportCallStandalone(fileName: string, options: CompilerOptions, moduleFormat: number): boolean;
-declare function subtreeFacts(node: AstNode): number;
-declare function cloneNode(node: AstNode, factory: unknown): AstNode;
-declare function bindingPatternElements(pattern: AstNode): readonly AstNode[];
-declare function variableStatementDeclarationListRO(node: VariableStatement): AstNode;
-declare function variableStatementModifiers(node: VariableStatement): ModifierList | undefined;
-declare function variableDeclarationListDeclarationsRO(node: AstNode): readonly AstNode[];
-declare function variableDeclarationNameRO(node: VariableDeclaration): AstNode;
-declare function variableDeclarationInitializerRO(node: VariableDeclaration): AstNode | undefined;
-declare function variableDeclarationExclamationTokenRO(node: VariableDeclaration): AstNode | undefined;
-declare function variableDeclarationTypeRO(node: VariableDeclaration): AstNode | undefined;
-declare function importDeclarationImportClause(node: ImportDeclaration): AstNode | undefined;
-declare function importClauseName(clause: AstNode): AstNode | undefined;
-declare function importClauseNamedBindings(clause: AstNode): AstNode | undefined;
-declare function namedElements(node: AstNode): readonly AstNode[];
-declare function namedExportsElements(node: AstNode): readonly AstNode[];
-declare function exportSpecifierName(node: AstNode): AstNode;
-declare function exportSpecifierPropertyNameOrName(node: AstNode): AstNode;
-declare function importSpecifierPropertyNameOrNameRO(node: AstNode): AstNode;
-declare function importEqualsName(node: ImportEqualsDeclaration): AstNode;
-declare function exportDeclarationModuleSpecifier(node: ExportDeclaration): AstNode | undefined;
-declare function exportDeclarationExportClause(node: ExportDeclaration): AstNode | undefined;
-declare function exportAssignmentIsExportEquals(node: ExportAssignment): boolean;
-declare function exportAssignmentExpression(node: ExportAssignment): AstNode;
-declare function classDeclarationModifiers(node: ClassDeclaration): ModifierList | undefined;
-declare function classDeclarationHeritageClauses(node: ClassDeclaration): NodeList | undefined;
-declare function classDeclarationMembers(node: ClassDeclaration): NodeList | undefined;
-declare function functionDeclarationModifiers(node: FunctionDeclaration): ModifierList | undefined;
-declare function functionAsteriskTokenRO(node: FunctionDeclaration): AstNode | undefined;
-declare function functionDeclarationParameters(node: FunctionDeclaration): NodeList | undefined;
-declare function functionDeclarationBody(node: FunctionDeclaration): AstNode | undefined;
-declare function forInitializerRO(node: ForStatement): AstNode | undefined;
-declare function forConditionRO(node: ForStatement): AstNode | undefined;
-declare function forIncrementorRO(node: ForStatement): AstNode | undefined;
-declare function forBodyRO(node: ForStatement): AstNode;
-declare function forInOrOfInitializerRO(node: ForInOrOfStatement): AstNode;
-declare function forInOrOfExpressionRO(node: ForInOrOfStatement): AstNode;
-declare function forInOrOfBodyRO(node: ForInOrOfStatement): AstNode;
-declare function forInOrOfAwaitModifierRO(node: ForInOrOfStatement): AstNode | undefined;
-declare function doStatementStatement(node: DoStatement): AstNode;
-declare function doStatementExpression(node: DoStatement): AstNode;
-declare function whileStatementExpression(node: WhileStatement): AstNode;
-declare function whileStatementBody(node: WhileStatement): AstNode;
-declare function labeledStatementLabel(node: LabeledStatement): AstNode;
-declare function labeledStatementStatement(node: LabeledStatement): AstNode;
-declare function withStatementExpression(node: WithStatement): AstNode;
-declare function withStatementStatement(node: WithStatement): AstNode;
-declare function ifStatementExpression(node: IfStatement): AstNode;
-declare function ifStatementThen(node: IfStatement): AstNode;
-declare function ifStatementElse(node: IfStatement): AstNode | undefined;
-declare function switchStatementExpression(node: SwitchStatement): AstNode;
-declare function switchStatementCaseBlock(node: SwitchStatement): AstNode;
-declare function caseClauseExpression(node: AstNode): AstNode | undefined;
-declare function caseClauseStatements(node: AstNode): NodeList | undefined;
-declare function catchClauseVariableDeclaration(node: CatchClause): AstNode | undefined;
-declare function catchClauseBlock(node: CatchClause): AstNode;
-declare function blockStatementsRO(node: Block): readonly AstNode[];
-declare function blockStatementsLoc(node: Block): unknown;
-declare function blockMultiLineRO(node: Block): boolean;
-declare function parenthesizedExpressionRO(node: ParenthesizedExpression): AstNode;
-declare function partiallyEmittedExpressionRO(node: PartiallyEmittedExpression): AstNode;
-declare function callExpressionExpressionRO(node: CallExpression): AstNode;
-declare function callExpressionArgumentsRO(node: CallExpression): readonly AstNode[];
-declare function callExpressionArgumentsListRO(node: CallExpression): NodeList | undefined;
-declare function callExpressionArgumentsLocRO(node: CallExpression): unknown;
-declare function callExpressionQuestionDotTokenRO(node: CallExpression): AstNode | undefined;
-declare function taggedTemplateTagRO(node: TaggedTemplateExpression): AstNode;
-declare function taggedTemplateTemplateRO(node: TaggedTemplateExpression): AstNode;
-declare function binaryLeft(node: BinaryExpression): AstNode;
-declare function binaryRight(node: BinaryExpression): AstNode;
-declare function binaryOperatorToken(node: BinaryExpression): AstNode;
-declare function binaryOperatorTokenKind(node: BinaryExpression): number;
-declare function prefixUnaryOperatorRO(node: PrefixUnaryExpression): number;
-declare function prefixUnaryOperandRO(node: PrefixUnaryExpression): AstNode;
-declare function postfixUnaryOperatorRO(node: PostfixUnaryExpression): number;
-declare function postfixUnaryOperandRO(node: PostfixUnaryExpression): AstNode;
-declare function shorthandPropertyAssignmentNameRO(node: AstNode): IdentifierNode;
-declare function shorthandObjectAssignmentInitializerRO(node: ShorthandPropertyAssignment): AstNode | undefined;
-declare function shorthandEqualsTokenRO(node: ShorthandPropertyAssignment): AstNode | undefined;
-declare function propertyAssignmentNameRO(node: PropertyAssignment): AstNode;
-declare function propertyAssignmentInitializerRO(node: AstNode): AstNode;
-declare function spreadAssignmentExpressionRO(node: SpreadAssignment | AstNode): AstNode;
-declare function spreadElementExpressionRO(node: SpreadElement | AstNode): AstNode;
-declare function objectLiteralProperties(node: AstNode): readonly AstNode[];
-declare function arrayLiteralElements(node: AstNode): readonly AstNode[];
-declare function autoGenInfoHasAllowNameSubstitution(info: unknown): boolean;
+// Constants still forward-declared until Phase 7 wires them up to
+// the existing exports (Kind from ast/generated/kind.js,
+// EmitFlags from printer/emitflags.js, etc.).
+// SubtreeFacts, TokenFlags, supportedJSExtensionsFlat — full ports
+// land with Phase 7. Treat as Proxy-style bags so any key resolves
+// to a known `number` (not number|undefined).
+const SubtreeFacts = new Proxy({} as Record<string, number>, { get: () => 0 }) as Record<string, number> as { readonly ContainsDynamicImport: number; readonly ContainsIdentifier: number };
+const TokenFlags = new Proxy({} as Record<string, number>, { get: () => 0 }) as Record<string, number> as { readonly None: number };
+const supportedJSExtensionsFlat: readonly string[] = [];
