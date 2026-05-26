@@ -21,3 +21,12 @@
  */
 
 export type { Diagnostic, DiagnosticMessage, SourceFileSlim } from "./types.js";
+export {
+  categoryName,
+  format,
+  localize,
+  stringifyArgs,
+  type Locale,
+  type LocaleMessages,
+  type LocaleProvider,
+} from "./diagnostics.js";
