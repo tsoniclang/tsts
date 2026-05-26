@@ -38,7 +38,10 @@ export interface SymbolAccessibilityErrorInfo {
   typeName: AstNode | undefined;
 }
 
-export interface DiagnosticMessage { readonly _msg: unknown }
+// DiagnosticMessage type re-exported from the canonical diagnostics
+// module so the tracker and the declarations/diagnostics callers
+// agree on a single shape.
+export type { DiagnosticMessage } from "../../diagnostics/types.js";
 
 export interface EmitResolver {
   isSymbolAccessible(symbol: TsSymbol, enclosing: AstNode | undefined, meaning: number, shouldComputeAliasToMarkVisible: boolean): SymbolAccessibilityResult;
