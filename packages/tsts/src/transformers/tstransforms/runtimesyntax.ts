@@ -57,9 +57,9 @@ export class RuntimeSyntaxTransformer extends Transformer {
 
   constructor(opts: TransformOptions) {
     super();
-    this.compilerOptions = opts.compilerOptions;
-    this.resolver = opts.resolver;
-    this.emitResolver = opts.emitResolver;
+    this.compilerOptions = opts.compilerOptions as unknown as CompilerOptions;
+    this.resolver = opts.resolver as unknown as ReferenceResolver;
+    this.emitResolver = opts.emitResolver as unknown as EmitResolver;
     this.initTransformer((node) => this.visit(node), opts.context);
   }
 
@@ -265,11 +265,11 @@ export class RuntimeSyntaxTransformer extends Transformer {
   }
 
   getNamespaceQualifiedProperty(ns: IdentifierNode, name: IdentifierNode): Expression {
-    return this.factory().newPropertyAccessExpression(ns as unknown as Expression, name as unknown as AstNode);
+    return this.factory().newPropertyAccessExpression(ns as unknown as Expression, name as unknown as AstNode) as Expression;
   }
 
   getNamespaceQualifiedElement(ns: IdentifierNode, expression: Expression): Expression {
-    return this.factory().newElementAccessExpression(ns as unknown as Expression, expression);
+    return this.factory().newElementAccessExpression(ns as unknown as Expression, expression) as Expression;
   }
 
   getExportQualifiedReferenceToDeclaration(node: Declaration): Expression {
@@ -292,7 +292,7 @@ export class RuntimeSyntaxTransformer extends Transformer {
 
   transformEnumBody(node: EnumDeclaration): Block {
     void node;
-    return this.factory().newBlock([]);
+    return this.factory().newBlock([]) as Block;
   }
 
   transformEnumMember(
@@ -308,7 +308,7 @@ export class RuntimeSyntaxTransformer extends Transformer {
 
   transformModuleBody(node: ModuleDeclaration, namespaceLocalName: IdentifierNode): Block {
     void node; void namespaceLocalName;
-    return this.factory().newBlock([]);
+    return this.factory().newBlock([]) as Block;
   }
 
   visitImportEqualsDeclaration(node: ImportEqualsDeclaration): AstNode {
@@ -323,7 +323,7 @@ export class RuntimeSyntaxTransformer extends Transformer {
     exportName: IdentifierNode, exportValue: Expression, location: TextRange | undefined,
   ): Expression {
     void location;
-    return this.factory().newAssignment(exportName as unknown as Expression, exportValue);
+    return this.factory().newAssignment(exportName as unknown as Expression, exportValue) as Expression;
   }
 
   // -------------------------------------------------------------------------
@@ -395,7 +395,7 @@ export class RuntimeSyntaxTransformer extends Transformer {
     exportAssignmentSourceMapRange: TextRange | undefined, original: AstNode | undefined,
   ): Expression {
     void exportAssignmentSourceMapRange; void original;
-    return this.factory().newAssignment(name as unknown as Expression, expression);
+    return this.factory().newAssignment(name as unknown as Expression, expression) as Expression;
   }
 
   createExportStatement(
@@ -406,7 +406,7 @@ export class RuntimeSyntaxTransformer extends Transformer {
   ): Statement {
     void exportAssignmentSourceMapRange; void exportStatementSourceMapRange; void original;
     const assignment = this.factory().newAssignment(name as unknown as Expression, expression);
-    return this.factory().newExpressionStatement(assignment);
+    return this.factory().newExpressionStatement(assignment) as Statement;
   }
 
   shouldEmitEnumDeclaration(node: EnumDeclaration): boolean {

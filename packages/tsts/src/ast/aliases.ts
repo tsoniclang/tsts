@@ -121,40 +121,13 @@ export type NumericLiteralNode = NumericLiteral;
 export type BigIntLiteralNode = BigIntLiteral;
 export type NoSubstitutionTemplateLiteralNode = NoSubstitutionTemplateLiteral;
 export type PrivateIdentifierNode = PrivateIdentifier;
-export type ClassLikeDeclaration = ClassDeclaration | ClassExpression;
-export type FunctionLikeDeclaration =
-  | FunctionDeclaration
-  | FunctionExpression
-  | ArrowFunction
-  | MethodDeclaration
-  | GetAccessorDeclaration
-  | SetAccessorDeclaration
-  | ConstructorDeclaration;
-export type ClassElement =
-  | PropertyDeclaration
-  | MethodDeclaration
-  | GetAccessorDeclaration
-  | SetAccessorDeclaration
-  | ConstructorDeclaration
-  | ClassStaticBlockDeclaration;
+// ClassLikeDeclaration, FunctionLikeDeclaration, ClassElement, ModuleName,
+// LiteralLikeNode, BindingName, PropertyName, LeftHandSideExpression,
+// MemberName all live in ./generated/nodes.ts now — re-exporting them here
+// would create duplicate-export conflicts.
 export type FunctionDeclarationNode = FunctionDeclaration;
 export type EnumDeclarationNode = EnumDeclaration;
 export type ModuleDeclarationNode = ModuleDeclaration;
-export type ModuleName = Identifier | StringLiteral;
-export type LiteralLikeNode =
-  | StringLiteral
-  | NumericLiteral
-  | BigIntLiteral
-  | NoSubstitutionTemplateLiteral;
-export type BindingName = Identifier | BindingPattern;
-export type PropertyName =
-  | Identifier
-  | StringLiteral
-  | NumericLiteral
-  | ComputedPropertyName
-  | PrivateIdentifier;
-export type LeftHandSideExpression = Expression;
-export type MemberName = Identifier | PrivateIdentifier;
 export type StringLiteralLike = StringLiteral | NoSubstitutionTemplateLiteral;
 
 /** `NodeArray<ModifierLike>` is what Strada calls a `ModifierList`. */

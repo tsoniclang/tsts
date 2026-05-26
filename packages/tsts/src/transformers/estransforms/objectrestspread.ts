@@ -555,7 +555,7 @@ declare function subtreeContainsObjectRestOrSpread(node: AstNode): boolean;
 declare function containsObjectRestOrSpread(node: AstNode): boolean;
 declare function nodeKind(node: AstNode): number;
 declare function visitEachChildOf(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
-declare function visitNode(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
+declare function visitNode(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode | undefined): AstNode;
 declare function visitNodes(visitor: ReturnType<Transformer["getVisitor"]>, list: AstNode | undefined): AstNode | undefined;
 declare function nodeListNodes(list: AstNode): readonly AstNode[];
 
