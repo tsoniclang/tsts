@@ -96,4 +96,58 @@ export const optionDeclarations: readonly CommandLineOption[] = [
   { name: "traceResolution", type: "boolean" },
   { name: "explainFiles", type: "boolean" },
   { name: "newLine", type: "string" },
+
+  // === Additional options to reach Strada parity (135 total) ===
+
+  { name: "allowArbitraryExtensions", type: "boolean" },
+  { name: "allowUmdGlobalAccess", type: "boolean" },
+  { name: "allowUnreachableCode", type: "boolean" },
+  { name: "allowUnusedLabels", type: "boolean" },
+  { name: "assumeChangesOnlyAffectDirectDependencies", type: "boolean" },
+  { name: "checkers", type: "number" },
+  { name: "deduplicatePackages", type: "boolean" },
+  { name: "disableReferencedProjectLoad", type: "boolean" },
+  { name: "disableSizeLimit", type: "boolean" },
+  { name: "disableSolutionSearching", type: "boolean" },
+  { name: "disableSourceOfProjectReferenceRedirect", type: "boolean" },
+  { name: "downlevelIteration", type: "boolean" },
+  { name: "emitBOM", type: "boolean" },
+  { name: "emitDeclarationOnly", type: "boolean" },
+  { name: "erasableSyntaxOnly", type: "boolean" },
+  { name: "exactOptionalPropertyTypes", type: "boolean" },
+  { name: "generateCpuProfile", type: "string" },
+  { name: "generateTrace", type: "string" },
+  { name: "ignoreConfig", type: "boolean" },
+  { name: "ignoreDeprecations", type: "string" },
+  { name: "jsxFactory", type: "string" },
+  { name: "jsxFragmentFactory", type: "string" },
+  { name: "jsxImportSource", type: "string" },
+  { name: "libReplacement", type: "boolean" },
+  { name: "listEmittedFiles", type: "boolean" },
+  { name: "locale", type: "string" },
+  { name: "mapRoot", type: "string", isFilePath: true },
+  { name: "moduleSuffixes", type: "list", element: { name: "moduleSuffixes", type: "string" } },
+  { name: "noCheck", type: "boolean" },
+  { name: "noEmitHelpers", type: "boolean" },
+  { name: "noErrorTruncation", type: "boolean" },
+  { name: "noImplicitOverride", type: "boolean" },
+  { name: "noResolve", type: "boolean" },
+  { name: "noUncheckedSideEffectImports", type: "boolean" },
+  { name: "plugins", type: "list", element: { name: "plugins", type: "object" } },
+  { name: "pprofDir", type: "string", isFilePath: true },
+  { name: "preserveWatchOutput", type: "boolean" },
+  { name: "pretty", type: "boolean" },
+  { name: "quiet", type: "boolean" },
+  { name: "reactNamespace", type: "string" },
+  { name: "singleThreaded", type: "boolean" },
+  { name: "sourceRoot", type: "string", isFilePath: true },
+  { name: "stableTypeOrdering", type: "boolean" },
+  { name: "strictBuiltinIteratorReturn", type: "boolean" },
+  { name: "useUnknownInCatchVariables", type: "boolean" },
+  { name: "version", type: "boolean" }, // duplicate-by-name with shortName: v above
+
+  // Short-form aliases
+  { name: "?", type: "boolean" }, // alias for help
+  { name: "i", type: "boolean" }, // alias for incremental
+  { name: "q", type: "boolean" }, // alias for quiet
 ];
