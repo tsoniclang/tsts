@@ -14,6 +14,8 @@ type NodeDataValue =
   | string
   | int
   | boolean
+  | bigint
+  | unknown
   | undefined;
 
 type NodeData = Record<string, NodeDataValue>;

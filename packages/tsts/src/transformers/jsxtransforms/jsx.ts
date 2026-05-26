@@ -923,7 +923,7 @@ const entities: Map<string, number> = new Map([
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-interface CompilerOptions { readonly _opts: unknown }
+interface CompilerOptions { readonly _opts?: unknown; readonly [key: string]: unknown }
 interface EmitResolver {
   setReferencedImportDeclaration(name: AstNode, specifier: AstNode): void;
   getReferencedExportContainer(name: AstNode, prefixLocals: boolean): AstNode | undefined;

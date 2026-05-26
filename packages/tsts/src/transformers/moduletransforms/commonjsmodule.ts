@@ -1573,7 +1573,7 @@ export function newCommonJSModuleTransformer(opts: TransformOptions): Transforme
 // Forward-declared
 // ---------------------------------------------------------------------------
 
-interface CompilerOptions { readonly _opts: unknown }
+interface CompilerOptions { readonly _opts?: unknown; readonly [key: string]: unknown }
 interface ReferenceResolver {
   getReferencedExportContainer(node: AstNode, prefixLocals: boolean): AstNode | undefined;
   getReferencedImportDeclaration(node: AstNode): AstNode | undefined;

@@ -389,8 +389,8 @@ export function newESModuleTransformer(opts: TransformOptions): Transformer {
 // Forward-declared
 // ---------------------------------------------------------------------------
 
-interface CompilerOptions { readonly _opts: unknown }
-interface ReferenceResolver { readonly _r: unknown }
+interface CompilerOptions { readonly _opts?: unknown; readonly [key: string]: unknown }
+interface ReferenceResolver { readonly _r?: unknown; readonly [key: string]: unknown }
 interface HasFileName { readonly _hf: unknown }
 
 declare const Kind: {

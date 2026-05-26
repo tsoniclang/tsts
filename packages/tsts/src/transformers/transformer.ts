@@ -75,10 +75,7 @@ export interface EmitContext {
 /**
  * NodeFactory — the AST-node constructor surface. The full ~200-method
  * surface mirrors Strada's `printer.NodeFactory` and the underlying
- * `ast/generated/factory.ts` create-functions. Methods are declared
- * here as a callable shape; the concrete implementation lives in
- * `printer/factory.ts` and ultimately delegates to the generated
- * `createX` functions in `ast/generated/factory.ts`.
+ * `ast/generated/factory.ts` create-functions.
  */
 export interface NodeFactory {
   // ---- Identifiers + names ----
@@ -134,16 +131,16 @@ export interface NodeFactory {
   newTemplateExpression(head: AstNode, spans: readonly AstNode[]): AstNode;
   newTemplateSpan(expression: AstNode, literal: AstNode): AstNode;
 
-  // ---- Calls + access ----
-  newCallExpression(expression: AstNode, typeArguments: readonly AstNode[] | undefined, args: readonly AstNode[]): AstNode;
-  newNewExpression(expression: AstNode, typeArguments: readonly AstNode[] | undefined, args: readonly AstNode[]): AstNode;
-  newTaggedTemplateExpression(tag: AstNode, template: AstNode): AstNode;
-  newPropertyAccessExpression(expression: AstNode, name: AstNode): AstNode;
-  newElementAccessExpression(expression: AstNode, argumentExpression: AstNode): AstNode;
-  newArrayLiteralExpression(elements: readonly AstNode[], multiLine?: boolean): AstNode;
-  newObjectLiteralExpression(properties: readonly AstNode[], multiLine?: boolean): AstNode;
-  newPropertyAssignment(name: AstNode, initializer: AstNode): AstNode;
-  newShorthandPropertyAssignment(name: IdentifierNode, objectAssignmentInitializer?: AstNode): AstNode;
+  // ---- Calls + access ---- (Strada surface — argument order matches Go)
+  newCallExpression(expression: AstNode, questionDotToken: AstNode | undefined, typeArguments: unknown, args: unknown, flags?: number): AstNode;
+  newNewExpression(expression: AstNode, typeArguments: unknown, args: unknown): AstNode;
+  newTaggedTemplateExpression(tag: AstNode, questionDotToken: AstNode | undefined, typeArguments: unknown, template: AstNode, flags?: number): AstNode;
+  newPropertyAccessExpression(expression: AstNode, questionDotToken: AstNode | undefined, name: AstNode, flags?: number): AstNode;
+  newElementAccessExpression(expression: AstNode, questionDotToken: AstNode | undefined, argumentExpression: AstNode, flags?: number): AstNode;
+  newArrayLiteralExpression(elements: unknown, multiLine?: boolean): AstNode;
+  newObjectLiteralExpression(properties: unknown, multiLine?: boolean): AstNode;
+  newPropertyAssignment(modifiers: unknown, name: AstNode, questionToken: AstNode | undefined, exclamationToken: AstNode | undefined, initializer: AstNode): AstNode;
+  newShorthandPropertyAssignment(modifiers: unknown, name: IdentifierNode, questionToken: AstNode | undefined, exclamationToken: AstNode | undefined, equalsToken: AstNode | undefined, objectAssignmentInitializer: AstNode | undefined): AstNode;
   newSpreadAssignment(expression: AstNode): AstNode;
 
   // ---- Variable declarations ----

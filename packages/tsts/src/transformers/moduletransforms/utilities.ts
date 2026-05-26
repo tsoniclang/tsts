@@ -137,7 +137,7 @@ interface Factory {
   newNodeList<T extends AstNode>(items: readonly T[]): unknown;
 }
 
-interface CompilerOptions { readonly _opts: unknown }
+interface CompilerOptions { readonly _opts?: unknown; readonly [key: string]: unknown }
 interface AutoGenerateInfo { readonly _info: unknown }
 interface EmitResolver {
   getExternalModuleFileFromDeclaration(declaration: AstNode): SourceFile | undefined;

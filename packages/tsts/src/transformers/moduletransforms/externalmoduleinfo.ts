@@ -448,7 +448,7 @@ interface Factory {
   newUniqueName(name: string): AstNode;
 }
 
-interface CompilerOptions { readonly _opts: unknown }
+interface CompilerOptions { readonly _opts?: unknown; readonly [key: string]: unknown }
 interface ReferenceResolver {
   getReferencedImportDeclaration(node: AstNode): AstNode | undefined;
   getReferencedValueDeclaration(node: AstNode): AstNode | undefined;
