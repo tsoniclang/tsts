@@ -8,7 +8,7 @@
  * can be configured via a stubbed handler.
  */
 
-import type { FS } from "../vfs.js";
+import type { FS, FileInfo, WalkDirFunc } from "../vfs.js";
 
 export type MockHandler = (...args: unknown[]) => unknown;
 
@@ -25,9 +25,19 @@ export class MockFS implements FS {
     return h !== undefined ? (h(path) as string | undefined) : undefined;
   }
 
-  writeFile(path: string, data: string): boolean {
+  writeFile(path: string, data: string): void {
     const h = this.handlers.get("writeFile");
-    return h !== undefined ? Boolean(h(path, data)) : false;
+    if (h !== undefined) h(path, data);
+  }
+
+  appendFile(path: string, data: string): void {
+    const h = this.handlers.get("appendFile");
+    if (h !== undefined) h(path, data);
+  }
+
+  chtimes(path: string, accessTime: Date, modifyTime: Date): void {
+    const h = this.handlers.get("chtimes");
+    if (h !== undefined) h(path, accessTime, modifyTime);
   }
 
   fileExists(path: string): boolean {
@@ -50,12 +60,12 @@ export class MockFS implements FS {
     return h !== undefined ? String(h(path)) : path;
   }
 
-  remove(path: string): boolean {
+  remove(path: string): void {
     const h = this.handlers.get("remove");
-    return h !== undefined ? Boolean(h(path)) : false;
+    if (h !== undefined) h(path);
   }
 
-  walkDir(path: string, walkFn: (file: string, isDir: boolean) => boolean | undefined): void {
+  walkDir(path: string, walkFn: WalkDirFunc): void {
     const h = this.handlers.get("walkDir");
     if (h !== undefined) h(path, walkFn);
   }
@@ -66,14 +76,9 @@ export class MockFS implements FS {
     return { files: [], directories: [] };
   }
 
-  stat(path: string): { isFile: boolean; isDirectory: boolean; mtime: number; size: number } | undefined {
+  stat(path: string): FileInfo | undefined {
     const h = this.handlers.get("stat");
-    return h !== undefined ? (h(path) as { isFile: boolean; isDirectory: boolean; mtime: number; size: number } | undefined) : undefined;
-  }
-
-  watch(path: string, recursive: boolean, callback: (file: string) => void): { close(): void } | undefined {
-    const h = this.handlers.get("watch");
-    return h !== undefined ? (h(path, recursive, callback) as { close(): void } | undefined) : undefined;
+    return h !== undefined ? (h(path) as FileInfo | undefined) : undefined;
   }
 }
 

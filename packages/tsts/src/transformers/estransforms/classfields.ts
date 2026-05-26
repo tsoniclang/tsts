@@ -542,7 +542,7 @@ export class ClassFieldsTransformer extends Transformer {
     if (this.pendingExpressions.length === 0) return expression;
     const all = [...this.pendingExpressions, expression];
     this.pendingExpressions = [];
-    return this.factory().inlineExpressions(all);
+    return this.factory().inlineExpressions(all) as Expression;
   }
 
   visitComputedPropertyName(node: ComputedPropertyName): AstNode {
@@ -751,7 +751,7 @@ export class ClassFieldsTransformer extends Transformer {
     _operator: number,
   ): Expression {
     void info;
-    return this.factory().newAssignment(receiver, right);
+    return this.factory().newAssignment(receiver, right) as Expression;
   }
 
   // -------------------------------------------------------------------------

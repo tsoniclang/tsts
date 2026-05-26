@@ -122,6 +122,7 @@ export interface NodeFactory {
   newPrefixUnaryExpression(operator: number, operand: AstNode): AstNode;
   newPostfixUnaryExpression(operand: AstNode, operator: number): AstNode;
   newConditional(condition: AstNode, whenTrue: AstNode, whenFalse: AstNode): AstNode;
+  newConditionalExpression(...args: unknown[]): AstNode;
   newTypeOfExpression(expression: AstNode): AstNode;
   newDeleteExpression(expression: AstNode): AstNode;
   newAwaitExpression(expression: AstNode): AstNode;
@@ -311,7 +312,7 @@ export interface NodeFactory {
   newSpreadHelper(value: AstNode): AstNode;
   newSpreadArrayHelper(to: AstNode, from: AstNode, packFrom?: boolean): AstNode;
   newAssignHelper(...args: unknown[]): AstNode;
-  newRestHelper(value: AstNode, elements: readonly AstNode[], computedTempVariables: readonly AstNode[]): AstNode;
+  newRestHelper(...args: unknown[]): AstNode;
   newAsyncDelegatorHelper(expression: AstNode): AstNode;
   newAsyncGeneratorHelper(generatorFunc: AstNode, hasLexicalThis: boolean): AstNode;
   newExportStarHelper(moduleExpression: AstNode, exportsExpression?: AstNode): AstNode;

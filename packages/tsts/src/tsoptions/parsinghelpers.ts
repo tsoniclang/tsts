@@ -62,8 +62,10 @@ export function parseProjectReference(json: unknown): readonly ProjectReference[
     const obj = entry as Record<string, unknown>;
     const path = typeof obj.path === "string" ? obj.path : "";
     const circular = obj.circular === true;
-    const originalPath = typeof obj.originalPath === "string" ? obj.originalPath : undefined;
-    result.push({ path, circular, originalPath });
+    const ref: ProjectReference = typeof obj.originalPath === "string"
+      ? { path, circular, originalPath: obj.originalPath }
+      : { path, circular };
+    result.push(ref);
   }
   return result;
 }

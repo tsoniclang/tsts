@@ -65,9 +65,9 @@ export class TrackingFS implements IFS {
 
   walkDir(root: string, walkFn: WalkDirFunc): void {
     this.seenFiles.add(root);
-    this.inner.walkDir(root, (path: string, d: DirEntry, err: Error | undefined) => {
+    this.inner.walkDir(root, (path: string, d: DirEntry) => {
       this.seenFiles.add(path);
-      return walkFn(path, d, err);
+      return walkFn(path, d);
     });
   }
 
