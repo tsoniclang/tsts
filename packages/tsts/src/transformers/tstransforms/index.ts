@@ -15,3 +15,4 @@ export * from "./legacydecorators.js";
 export * from "./runtimesyntax.js";
 export * from "./typeserializer.js";
 export * from "./metadata.js";
+export * from "./utilities.js";
