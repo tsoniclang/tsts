@@ -82,11 +82,120 @@ export function libPath(): string {
  */
 export function wrapFS(fs: FS): FS {
   if (!Embedded) return fs;
-  // Embedded path: when the .NET resource pipeline lands, this will
-  // return an overlay FS that intercepts paths starting with `Scheme`.
-  // For now, the parameter validates the contract and we fall back to
-  // the noembed behavior.
-  return fs;
+  return new WrappedFS(fs);
+}
+
+/**
+ * Embedded-contents lookup table. Populated at build time when
+ * `Embedded` becomes true and the .NET resource pipeline lands.
+ * Until then this is empty and the wrappedFS behaves like a passthrough.
+ */
+export const embeddedContents: ReadonlyMap<string, string> = new Map();
+
+/**
+ * FS overlay that intercepts paths starting with `bundled:///`, serving
+ * them from `embeddedContents`. Mirrors TS-Go `wrappedFS`.
+ */
+class WrappedFS implements FS {
+  constructor(private readonly fs: FS) {}
+
+  useCaseSensitiveFileNames(): boolean {
+    return this.fs.useCaseSensitiveFileNames();
+  }
+
+  fileExists(path: string): boolean {
+    const { rest, ok } = splitPath(path);
+    if (ok) return embeddedContents.has(rest);
+    return this.fs.fileExists(path);
+  }
+
+  readFile(path: string): { contents: string; ok: boolean } {
+    const { rest, ok } = splitPath(path);
+    if (ok) {
+      const c = embeddedContents.get(rest);
+      return c !== undefined ? { contents: c, ok: true } : { contents: "", ok: false };
+    }
+    return this.fs.readFile(path);
+  }
+
+  directoryExists(path: string): boolean {
+    const { rest, ok } = splitPath(path);
+    if (ok) return rest === "" || rest === "libs";
+    return this.fs.directoryExists(path);
+  }
+
+  getAccessibleEntries(path: string): { files: readonly string[]; directories: readonly string[] } {
+    const { rest, ok } = splitPath(path);
+    if (ok) {
+      if (rest === "") return { files: [], directories: ["libs"] };
+      if (rest === "libs") return { files: LibNames, directories: [] };
+      return { files: [], directories: [] };
+    }
+    return this.fs.getAccessibleEntries(path);
+  }
+
+  stat(path: string): { isFile: boolean; isDirectory: boolean; mtime: number; size: number } | undefined {
+    const { rest, ok } = splitPath(path);
+    if (ok) {
+      if (rest === "" || rest === "libs") {
+        return { isFile: false, isDirectory: true, mtime: 0, size: 0 };
+      }
+      const lib = embeddedContents.get(rest);
+      if (lib !== undefined) return { isFile: true, isDirectory: false, mtime: 0, size: lib.length };
+      return undefined;
+    }
+    return this.fs.stat(path);
+  }
+
+  walkDir(root: string, walkFn: (file: string, isDir: boolean) => boolean | undefined): void {
+    const { rest, ok } = splitPath(root);
+    if (ok) {
+      this.walkDirEmbedded(rest, walkFn);
+      return;
+    }
+    this.fs.walkDir(root, walkFn);
+  }
+
+  private walkDirEmbedded(rest: string, walkFn: (file: string, isDir: boolean) => boolean | undefined): void {
+    if (rest === "") {
+      walkFn(Scheme + "libs", true);
+      this.walkDirEmbedded("libs", walkFn);
+      return;
+    }
+    if (rest === "libs") {
+      for (const name of LibNames) {
+        walkFn(Scheme + "libs/" + name, false);
+      }
+    }
+  }
+
+  realpath(path: string): string {
+    const { ok } = splitPath(path);
+    if (ok) return path;
+    return this.fs.realpath(path);
+  }
+
+  writeFile(path: string, data: string): boolean {
+    const { ok } = splitPath(path);
+    if (ok) throw new Error("cannot write to embedded file system");
+    return this.fs.writeFile(path, data);
+  }
+
+  remove(path: string): boolean {
+    const { ok } = splitPath(path);
+    if (ok) throw new Error("cannot remove from embedded file system");
+    return this.fs.remove(path);
+  }
+
+  watch(
+    path: string,
+    recursive: boolean,
+    callback: (file: string) => void,
+  ): { close(): void } | undefined {
+    const { ok } = splitPath(path);
+    if (ok) return undefined; // embedded files don't change
+    return this.fs.watch !== undefined ? this.fs.watch(path, recursive, callback) : undefined;
+  }
 }
 
 /**
