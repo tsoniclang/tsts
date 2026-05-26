@@ -937,10 +937,7 @@ function unwrapInnermostStatementOfLabel(node: LabeledStatement): AstNode {
   }
 }
 
-interface NodeVisitor {
-  visitModifiers(modifiers: ModifierList | undefined): ModifierList | undefined;
-  visitEachChild(node: AstNode): AstNode;
-}
+// NodeVisitor type comes from transformer.ts via the Transformer base.
 
 interface OrderedSet<T> {
   add(value: T): void;

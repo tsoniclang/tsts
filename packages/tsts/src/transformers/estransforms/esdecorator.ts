@@ -790,10 +790,7 @@ interface CompilerOptions {
   experimentalDecorators?: unknown;
   readonly _opts?: unknown;
 }
-interface NodeVisitor {
-  visitEachChild(node: AstNode): AstNode;
-  visitNode(node: AstNode): AstNode;
-}
+// NodeVisitor type comes from transformer.ts via the Transformer base.
 
 declare const Kind: {
   SourceFile: number; Decorator: number; ClassDeclaration: number; ClassExpression: number;

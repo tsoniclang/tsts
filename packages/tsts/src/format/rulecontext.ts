@@ -17,7 +17,14 @@ import type { FormatCodeSettings } from "./api.js";
 import { type Tristate, tristateIsTrue, tristateIsTrueOrUnknown } from "../core/tristate.js";
 
 export type ContextPredicate = (ctx: FormattingContext) => boolean;
-export type OptionSelector = (options: FormatCodeSettings) => Tristate | undefined;
+export type OptionSelector = (options: FormatCodeSettings) => Tristate | boolean | undefined;
+
+/** Coerce a Tristate/boolean union to a Tristate. */
+function coerceTristate(value: Tristate | boolean | undefined): Tristate {
+  if (value === undefined) return 0 as Tristate;
+  if (typeof value === "boolean") return (value ? 1 : 2) as Tristate;
+  return value;
+}
 export type AnyOptionSelector<T> = (options: FormatCodeSettings) => T | undefined;
 
 // ---------------------------------------------------------------------------
@@ -55,25 +62,25 @@ export function optionEquals<T>(selector: AnyOptionSelector<T>, value: T): Conte
 }
 
 export function isOptionEnabled(selector: OptionSelector): ContextPredicate {
-  return (ctx) => tristateIsTrue(selector(ctx.options) ?? 0);
+  return (ctx) => tristateIsTrue(coerceTristate(selector(ctx.options)));
 }
 
 export function isOptionDisabled(selector: OptionSelector): ContextPredicate {
   const t = selector;
-  return (ctx) => !tristateIsTrue(t(ctx.options) ?? 0);
+  return (ctx) => !tristateIsTrue(coerceTristate(t(ctx.options)));
 }
 
 export function isOptionDisabledOrUndefined(selector: OptionSelector): ContextPredicate {
   return (ctx) => {
     const v = selector(ctx.options);
-    return v === undefined || !tristateIsTrue(v);
+    return v === undefined || !tristateIsTrue(coerceTristate(v));
   };
 }
 
 export function isOptionDisabledOrUndefinedOrTokensOnSameLine(selector: OptionSelector): ContextPredicate {
   return (ctx) => {
     const v = selector(ctx.options);
-    return v === undefined || !tristateIsTrue(v) || ctx.tokensAreOnSameLine();
+    return v === undefined || !tristateIsTrue(coerceTristate(v)) || ctx.tokensAreOnSameLine();
   };
 }
 

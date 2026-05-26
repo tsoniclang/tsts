@@ -1125,10 +1125,7 @@ interface ReferenceResolver {
   getReferencedValueDeclaration(node: AstNode): AstNode | undefined;
   readonly _resolver?: unknown;
 }
-interface NodeVisitor {
-  visitEachChild(node: AstNode): AstNode;
-  visitNode(node: AstNode): AstNode;
-}
+// NodeVisitor type comes from transformer.ts via the Transformer base.
 
 declare const Kind: {
   SourceFile: number; ClassDeclaration: number; ClassExpression: number;

@@ -926,45 +926,6 @@ export function getNormalizedPathComponentsFromCombined(path: string): readonly 
   return reducePathComponents(getPathComponents(path, ""));
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Misc
-// ────────────────────────────────────────────────────────────────────────────
-
-/** Mirrors TS-Go `StartsWithDirectory`. */
-export function startsWithDirectory(
-  fileName: string,
-  directoryName: string,
-  useCaseSensitiveFileNames: boolean,
-): boolean {
-  if (directoryName === "") return false;
-  const cFile = getCanonicalFileName(fileName, useCaseSensitiveFileNames);
-  let cDir = getCanonicalFileName(directoryName, useCaseSensitiveFileNames);
-  if (cDir.endsWith("/")) cDir = cDir.slice(0, -1);
-  if (cDir.endsWith("\\")) cDir = cDir.slice(0, -1);
-  return cFile.startsWith(cDir + "/") || cFile.startsWith(cDir + "\\");
-}
-
-/** Mirrors TS-Go `CompareNumberOfDirectorySeparators`. */
-export function compareNumberOfDirectorySeparators(path1: string, path2: string): number {
-  const c1 = countChar(path1, "/");
-  const c2 = countChar(path2, "/");
-  if (c1 < c2) return -1;
-  if (c1 > c2) return 1;
-  return 0;
-}
-
-function countChar(s: string, ch: string): number {
-  let count = 0;
-  for (let i = 0; i < s.length; i++) {
-    if (s[i] === ch) count++;
-  }
-  return count;
-}
-
-/** Mirrors TS-Go `SplitVolumePath`. */
-export function splitVolumePath(path: string): { volume: string; rest: string; ok: boolean } {
-  if (path.length >= 2 && isVolumeCharacter(path[0]!) && path[1] === ":") {
-    return { volume: path.slice(0, 2).toLowerCase(), rest: path.slice(2), ok: true };
-  }
-  return { volume: "", rest: path, ok: false };
-}
+// (Duplicate implementations of startsWithDirectory,
+// compareNumberOfDirectorySeparators, and splitVolumePath were
+// removed — the canonical versions live above at lines 546-568.)

@@ -1085,12 +1085,7 @@ export function newAsyncTransformer(opts: TransformOptions): Transformer {
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-interface NodeVisitor {
-  visitEachChild(node: AstNode): AstNode;
-  visitNode(node: AstNode): AstNode;
-  visitEmbeddedStatement(node: AstNode): AstNode;
-  visitNodes(nodes: NodeArray<AstNode>): NodeArray<AstNode>;
-}
+// NodeVisitor type comes from transformer.ts via the Transformer base.
 
 interface SetOfString {
   add(value: string): void;
