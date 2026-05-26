@@ -9,3 +9,5 @@ export * from "./generated/factory.js";
 export * from "./generated/visitor.js";
 export * from "./generated/is.js";
 export * from "./generated/metadata.js";
+// Naming aliases + Strada-side types (SymbolTable, FlowLabel, etc.)
+export * from "./aliases.js";
