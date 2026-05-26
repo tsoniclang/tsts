@@ -1,13 +1,14 @@
 /**
  * JSON utilities.
  *
- * Port of TS-Go internal/json/json.go. TS-Go's wrappers around go-json
- * support invalid UTF-8 and indent control. In TypeScript, `JSON.parse`
- * and `JSON.stringify` provide the equivalent functionality; this module
- * exposes the same names so ported callers translate mechanically.
+ * Port of TS-Go `internal/json/json.go` (100 LoC).
+ * TS-Go's wrappers around go-json support invalid UTF-8 and indent
+ * control; the TS counterpart uses native JSON.stringify / JSON.parse
+ * and exposes the same Marshal/MarshalIndent/Unmarshal names so
+ * ported callers translate mechanically.
  *
- * Tsonic-compatible: values flowing through JSON are typed as `JsValue`
- * rather than `unknown`, the sanctioned dynamic-JSON carrier.
+ * Values are typed as `JsValue` (TSTS canonical dynamic-JSON carrier)
+ * rather than `unknown`.
  */
 
 import type { JsValue } from "@tsonic/core/types.js";
@@ -23,19 +24,44 @@ export type JsonValue =
   | readonly JsonValue[]
   | { readonly [key: string]: JsonValue };
 
-// `marshal` and `marshalIndent` are temporarily removed pending a tsonic
-// policy resolution for `JSON.stringify(JsonValue)` — see batch
-// 2026-05-24-181000 follow-up. The previous sourcemap consumer is
-// migrated separately.
+// ---------------------------------------------------------------------------
+// Marshal / Unmarshal
+// ---------------------------------------------------------------------------
+
+/**
+ * Marshal a value to a compact JSON string. Mirrors Strada's `Marshal`.
+ */
+export function marshal(input: JsValue): string {
+  return JSON.stringify(input);
+}
+
+/**
+ * Marshal a value with indentation. Mirrors Strada's `MarshalIndent`.
+ *
+ * `prefix` is prepended to every line except the first. `indent` is
+ * the per-level indent string. When both are empty, falls back to
+ * compact `marshal`.
+ */
+export function marshalIndent(input: JsValue, prefix: string, indent: string): string {
+  if (prefix === "" && indent === "") return marshal(input);
+  const body = JSON.stringify(input, undefined, indent);
+  if (prefix === "") return body;
+  return body.split("\n").join("\n" + prefix);
+}
 
 /**
  * Parses a JSON string. Equivalent to TS-Go's `Unmarshal`.
- * Throws SyntaxError on invalid input. Returns `JsValue` — narrow at the
- * call site with the helpers below or with `instanceof`/`typeof` guards.
+ * Throws SyntaxError on invalid input. Returns `JsValue` — narrow at
+ * the call site with the helpers below or with `instanceof`/`typeof`
+ * guards.
  */
 export function unmarshal(input: string): JsValue {
   return JSON.parse(input) as JsValue;
 }
+
+// ---------------------------------------------------------------------------
+// Type guards
+// ---------------------------------------------------------------------------
 
 export function isJsonObject(value: JsValue): value is { readonly [key: string]: JsValue } {
   return typeof value === "object" && value !== null && !Array.isArray(value);
