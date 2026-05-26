@@ -624,6 +624,8 @@ function createDefaultEmitContext(): EmitContext {
     getTypeNode(node) { return typeNodeMap.get(node); },
     original(node) { return originalMap.get(node); },
     unsetOriginal(node) { originalMap.delete(node); },
+    addSyntheticTrailingComment(_node, _kind, _text, _hasTrailingNewLine) {},
+    addSyntheticLeadingComment(_node, _kind, _text, _hasTrailingNewLine) {},
   };
   return ctx;
 }
