@@ -11,3 +11,6 @@ export * from "./generated/is.js";
 export * from "./generated/metadata.js";
 // Naming aliases + Strada-side types (SymbolTable, FlowLabel, etc.)
 export * from "./aliases.js";
+// Strada-style accessor functions (nodeKind, nodeParent, etc.) so
+// transformer files can ESM-import them instead of `declare`ing.
+export * from "./accessors.js";
