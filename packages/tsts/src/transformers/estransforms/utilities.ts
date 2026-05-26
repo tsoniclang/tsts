@@ -27,12 +27,12 @@ import type { EmitContext, NodeFactory } from "../transformer.js";
 export function convertClassDeclarationToClassExpression(
   emitContext: EmitContext,
   node: AstNode,
-  extractModifiers: (emitContext: EmitContext, modifiers: AstNode | undefined, mask: number) => AstNode | undefined,
+  extractModifiers?: (emitContext: EmitContext, modifiers: AstNode | undefined, mask: number) => AstNode | undefined,
 ): AstNode {
   const factory = emitContext.factory();
   const updated = newClassExpression(
     factory,
-    extractModifiers(emitContext, classModifiers(node), ~ModifierFlagsExportDefault),
+    extractModifiers !== undefined ? extractModifiers(emitContext, classModifiers(node), ~ModifierFlagsExportDefault) : classModifiers(node),
     classDeclarationName(node),
     classTypeParameters(node),
     classHeritageClauses(node),

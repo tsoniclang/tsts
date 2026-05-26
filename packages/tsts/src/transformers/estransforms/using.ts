@@ -393,7 +393,7 @@ export class UsingDeclarationTransformer extends Transformer {
         GeneratedIdentifierFlags.FileLevel |
         GeneratedIdentifierFlags.Optimistic,
     });
-    this.emitContext().addVariableDeclaration(this.exportEqualsBinding as unknown as AstNode);
+    this.emitContext().addVariableDeclaration(this.exportEqualsBinding as unknown as IdentifierNode);
     const assignment = this.factory().newAssignmentExpression(
       this.exportEqualsBinding as unknown as AstNode,
       exportAssignmentExpressionRO(node),
@@ -536,9 +536,9 @@ export class UsingDeclarationTransformer extends Transformer {
       const specifier = this.factory().newExportSpecifier(false, localName, exportName!);
       if (original !== undefined) this.emitContext().setOriginal(specifier, original);
       if (this.exportBindings === undefined) this.exportBindings = new Map();
-      this.exportBindings.set(identifierText(name as unknown as AstNode), specifier);
+      this.exportBindings.set(identifierText(name as unknown as AstNode), specifier as unknown as ExportSpecifierNode);
     }
-    this.emitContext().addVariableDeclaration(name as unknown as AstNode);
+    this.emitContext().addVariableDeclaration(name as unknown as IdentifierNode);
   }
 
   createEnvBinding(): IdentifierNode {
