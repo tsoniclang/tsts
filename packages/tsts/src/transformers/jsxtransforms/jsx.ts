@@ -28,8 +28,8 @@ export class JSXTransformer extends Transformer {
 
   constructor(opts: TransformOptions) {
     super();
-    this.compilerOptions = opts.compilerOptions;
-    this.emitResolver = opts.emitResolver;
+    this.compilerOptions = opts.compilerOptions as unknown as CompilerOptions;
+    this.emitResolver = opts.emitResolver as unknown as EmitResolver;
     this.utilizedImplicitRuntimeImports = new Map();
     this.initTransformer((node) => this.visit(node), opts.context);
   }
@@ -466,7 +466,7 @@ export class JSXTransformer extends Transformer {
     const e = jsxSpreadAttributeExpression(node);
     if (isObjectLiteralExpression(e) && !hasProto(e)) {
       const { items } = this.visitor().visitSlice(objectLiteralProperties(e));
-      return items;
+      return [...items];
     }
     return [this.factory().newSpreadAssignment(this.visitor().visit(e)!)];
   }

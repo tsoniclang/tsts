@@ -310,7 +310,7 @@ export interface NodeFactory {
   newReadHelper(value: AstNode): AstNode;
   newSpreadHelper(value: AstNode): AstNode;
   newSpreadArrayHelper(to: AstNode, from: AstNode, packFrom?: boolean): AstNode;
-  newAssignHelper(args: readonly AstNode[]): AstNode;
+  newAssignHelper(...args: unknown[]): AstNode;
   newRestHelper(value: AstNode, elements: readonly AstNode[], computedTempVariables: readonly AstNode[]): AstNode;
   newAsyncDelegatorHelper(expression: AstNode): AstNode;
   newAsyncGeneratorHelper(generatorFunc: AstNode, hasLexicalThis: boolean): AstNode;
@@ -319,6 +319,7 @@ export interface NodeFactory {
   newCreateBindingHelper(moduleExpression: AstNode, inputName: AstNode, outputName?: AstNode): AstNode;
   createForOfBindingStatement(node: AstNode, value: AstNode): AstNode;
   restoreOuterExpressions(...args: unknown[]): AstNode;
+  createExpressionFromEntityName(name: AstNode): AstNode;
   newSetModuleDefaultHelper(targetObject: AstNode, value: AstNode): AstNode;
 
   // ---- Misc node types ----
@@ -437,7 +438,7 @@ export class Transformer {
     }
     const ec = emitContext ?? createDefaultEmitContext();
     this.#emitContext = ec;
-    this.#factory = ec.factory;
+    this.#factory = ec.factory();
     this.#visitor = ec.newNodeVisitor(visit);
     return this;
   }
@@ -604,10 +605,10 @@ function createDefaultEmitContext(): EmitContext {
     mergeEnvironment(statements, declarations) {
       return [...declarations, ...statements];
     },
-    visitParameters(parameters) { return parameters; },
+    visitParameters(parameters) { return (parameters ?? []) as unknown as NodeList; },
     visitFunctionBody(body) { return body; },
-    visitIterationBody(body) { return body; },
-    visitEmbeddedStatement(statement) { return statement; },
+    visitIterationBody(body) { return (body ?? ({} as AstNode)); },
+    visitEmbeddedStatement(statement) { return (statement ?? ({} as AstNode)); },
     assignCommentAndSourceMapRanges(node, original) {
       commentRangeMap.set(node, commentRangeMap.get(original));
       sourceMapRangeMap.set(node, sourceMapRangeMap.get(original));
@@ -658,10 +659,10 @@ function createStubNodeVisitor(visit: (node: AstNode) => AstNode | undefined): N
     visitSlice(nodes) { return { items: nodes, changed: false }; },
     visitSourceFile(file) { return file; },
     visitModifiers(modifiers) { return modifiers; },
-    visitParameters(parameters) { return parameters; },
+    visitParameters(parameters) { return (parameters ?? []) as unknown as NodeList; },
     visitFunctionBody(body) { return body; },
-    visitIterationBody(body) { return body; },
-    visitEmbeddedStatement(statement) { return statement; },
+    visitIterationBody(body) { return (body ?? ({} as AstNode)); },
+    visitEmbeddedStatement(statement) { return (statement ?? ({} as AstNode)); },
   };
   return noop;
 }

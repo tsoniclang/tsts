@@ -28,7 +28,7 @@ export interface ModeAwareCache<T> {
   set(key: string, value: T): void;
 }
 
-function keyToString<T extends { [k: string]: unknown }>(key: T): string {
+function keyToString<T>(key: T): string {
   return JSON.stringify(key);
 }
 

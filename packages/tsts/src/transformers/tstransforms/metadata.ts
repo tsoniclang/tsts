@@ -39,11 +39,11 @@ export class MetadataTransformer extends Transformer {
 
   constructor(opts: TransformOptions) {
     super();
-    this.compilerOptions = opts.compilerOptions;
+    this.compilerOptions = opts.compilerOptions as unknown as CompilerOptions;
     this.initTransformer((node) => this.visit(node), opts.context);
     this.serializer = newMetadataSerializer(
-      opts.emitResolver, this.factory(), this.emitContext(),
-      getStrictNullChecks(opts.compilerOptions),
+      opts.emitResolver as unknown as EmitResolver, this.factory(), this.emitContext(),
+      getStrictNullChecks(opts.compilerOptions as unknown as CompilerOptions),
     );
   }
 
@@ -171,7 +171,7 @@ export class MetadataTransformer extends Transformer {
 }
 
 export function newMetadataTransformer(opts: TransformOptions): Transformer | undefined {
-  if (!getEmitDecoratorMetadata(opts.compilerOptions)) return undefined;
+  if (!getEmitDecoratorMetadata(opts.compilerOptions as unknown as CompilerOptions)) return undefined;
   return new MetadataTransformer(opts);
 }
 
