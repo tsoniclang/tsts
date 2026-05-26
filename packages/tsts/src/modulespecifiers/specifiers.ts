@@ -38,6 +38,7 @@ import {
   replaceFirstStar,
   stringToRegex,
   tryGetRealFileNameForNonJSDeclarationFileName,
+  type ResolvedEntrypoint,
 } from "./util.js";
 
 import {
@@ -126,14 +127,7 @@ export interface ResolvedModule {
   isResolved(): boolean;
 }
 
-/**
- * Forward-declared `module.ResolvedEntrypoint` for
- * `processEntrypointEnding`.
- */
-export interface ResolvedEntrypoint {
-  readonly moduleSpecifier: string;
-  readonly ending: "fixed" | "changeable" | "extension-changeable";
-}
+// ResolvedEntrypoint lives in ./util.ts — single definition there.
 
 // ---------------------------------------------------------------------------
 // Public API

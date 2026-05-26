@@ -650,14 +650,14 @@ export function getAnyExtensionFromPathWorker(
   stringEqualityComparer: (a: string, b: string) => boolean,
 ): string {
   for (const extension of extensions) {
-    const result = tryGetExtensionFromPath(path, extension, stringEqualityComparer);
+    const result = tryGetExtensionFromPathWithComparer(path, extension, stringEqualityComparer);
     if (result !== "") return result;
   }
   return "";
 }
 
-/** Mirrors TS-Go `tryGetExtensionFromPath`. */
-export function tryGetExtensionFromPath(
+/** Mirrors TS-Go `tryGetExtensionFromPath` (extension+comparer variant). */
+export function tryGetExtensionFromPathWithComparer(
   path: string,
   extension: string,
   stringEqualityComparer: (a: string, b: string) => boolean,
