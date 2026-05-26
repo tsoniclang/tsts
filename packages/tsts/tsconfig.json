@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "rootDir": ".",
+    "outDir": "dist",
+    "skipLibCheck": false,
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "src/**/*.ts",
+    "tools/**/*.ts",
+    "test/**/*.ts"
+  ],
+  "exclude": [
+    "src/ast/ast.ts",
+    "src/ast/ast.generated.ts",
+    "src/ast/factory.generated.ts",
+    "src/ast/is.generated.ts",
+    "src/ast/is.ts",
+    "src/ast/visitor.generated.ts",
+    "src/ast/clone.ts",
+    "src/ast/utils.ts",
+    "src/astnav/astnav.ts",
+    "src/scanner/scanner.native-preview.ts"
+  ]
+}

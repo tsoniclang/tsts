@@ -175,8 +175,8 @@ test/fixtures/**/out/
 test/fixtures/**/package-lock.json
 
 # .NET build artifacts (per-project)
-packages/*/generated/bin/
-packages/*/generated/obj/
+packages/*/generated/
+packages/*/generated-test/
 
 # Optional: Uncomment to ignore generated C# files
 # packages/*/generated/**/*.cs

@@ -1,29 +1,31 @@
 {
-  "name": "@tsonic/tsts",
+  "name": "tsts-workspace",
   "version": "0.0.0",
   "private": true,
-  "description": "TypeScript-native TypeScript compiler targeting TS-Go contracts",
+  "description": "Workspace root for @tsonic/tsts (TypeScript-native TypeScript compiler)",
   "type": "module",
-  "bin": {
-    "tsts": "./dist/src/cli/tsts.js"
-  },
-  "exports": {
-    ".": "./dist/src/index.js"
-  },
+  "workspaces": [
+    "packages/*"
+  ],
   "engines": {
     "node": ">=22.18"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "generate": "tsx tools/generate-ast.ts",
-    "schema:check": "tsx tools/check-schema.ts",
-    "generated:check": "tsx tools/check-generated.ts",
-    "test": "tsx --test test/**/*.test.ts",
-    "verify": "npm run schema:check && npm run generate && npm run generated:check && npm run build && npm run test"
+    "build": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} build --project tsts",
+    "test": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} test --project tsts",
+    "generate": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} generate --project tsts",
+    "restore": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} restore",
+    "ast:generate": "node packages/tsts/tools/generate-ast.ts",
+    "ast:schema-check": "node packages/tsts/tools/check-schema.ts",
+    "ast:generated-check": "node packages/tsts/tools/check-generated.ts",
+    "completeness": "node packages/tsts/tools/check-completeness.ts",
+    "completeness:json": "node packages/tsts/tools/check-completeness.ts --json"
   },
   "devDependencies": {
     "@types/node": "latest",
-    "tsx": "^4.21.0",
-    "typescript": "^6.0.2"
+    "@tsonic/core": "file:../core/versions/10",
+    "@tsonic/dotnet": "file:../dotnet/versions/10",
+    "@tsonic/js": "file:../js/versions/10",
+    "@tsonic/nodejs": "file:../nodejs/versions/10"
   }
 }

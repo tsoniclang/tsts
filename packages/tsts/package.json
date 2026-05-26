@@ -1,0 +1,23 @@
+{
+  "name": "@tsonic/tsts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TypeScript-native TypeScript compiler targeting TS-Go contracts",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./index.js": "./src/index.ts"
+  },
+  "files": [
+    "src/**/*.ts",
+    "tsonic.package.json",
+    "tsonic.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "@tsonic/core": "10.0.45",
+    "@tsonic/js": "10.0.53",
+    "@tsonic/nodejs": "10.0.54"
+  }
+}
