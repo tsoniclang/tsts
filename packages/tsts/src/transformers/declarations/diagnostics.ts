@@ -174,35 +174,334 @@ function getMethodNameVisibilityDiagnosticMessage(node: AstNode, result: SymbolA
     Diagnostics.Method_0_of_exported_interface_has_or_is_using_private_name_1);
 }
 
-// Skeleton placeholders — full Strada coverage uses ~30 additional
-// selectors. Tests will surface gaps as we lock in baseline output.
-function getVariableDeclarationTypeVisibilityDiagnosticMessage(_n: AstNode, _r: SymbolAccessibilityResult): DiagnosticMessage {
+// Type-visibility message selectors. Mirror Strada's per-node-kind
+// switch over modifier flags + parent kind to pick the most specific
+// message. Each fall-back goes to Generic_inaccessible_symbol_error.
+
+function getVariableDeclarationTypeVisibilityDiagnosticMessage(node: AstNode, result: SymbolAccessibilityResult): DiagnosticMessage {
+  if (isVariableDeclaration(node) || isBindingElement(node) || isPropertyAccessExpression(node) || isElementAccessExpression(node) || isBinaryExpression(node)) {
+    return selectDiagnosticBasedOnModuleName(result,
+      Diagnostics.Exported_variable_0_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
+      Diagnostics.Exported_variable_0_has_or_is_using_name_1_from_private_module_2,
+      Diagnostics.Exported_variable_0_has_or_is_using_private_name_1);
+  }
+  if (isPropertyDeclaration(node) || isPropertySignatureDeclaration(node)) {
+    if (isStatic(node)) {
+      return selectDiagnosticBasedOnModuleName(result,
+        Diagnostics.Public_static_property_0_of_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
+        Diagnostics.Public_static_property_0_of_exported_class_has_or_is_using_name_1_from_private_module_2,
+        Diagnostics.Public_static_property_0_of_exported_class_has_or_is_using_private_name_1);
+    }
+    const parent = nodeParent(node);
+    if (parent !== undefined && parent.kind === Kind.ClassDeclaration) {
+      return selectDiagnosticBasedOnModuleName(result,
+        Diagnostics.Public_property_0_of_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
+        Diagnostics.Public_property_0_of_exported_class_has_or_is_using_name_1_from_private_module_2,
+        Diagnostics.Public_property_0_of_exported_class_has_or_is_using_private_name_1);
+    }
+    return selectDiagnosticBasedOnModuleNameNoNameCheck(result,
+      Diagnostics.Property_0_of_exported_interface_has_or_is_using_name_1_from_private_module_2,
+      Diagnostics.Property_0_of_exported_interface_has_or_is_using_private_name_1);
+  }
   return Diagnostics.Generic_inaccessible_symbol_error;
 }
-function getAccessorDeclarationTypeVisibilityDiagnosticMessage(_n: AstNode, _r: SymbolAccessibilityResult): DiagnosticMessage {
+
+function getAccessorDeclarationTypeVisibilityDiagnosticMessage(node: AstNode, result: SymbolAccessibilityResult): DiagnosticMessage {
+  if (isSetAccessorDeclaration(node)) {
+    if (isStatic(node)) {
+      return selectDiagnosticBasedOnModuleName(result,
+        Diagnostics.Parameter_type_of_public_static_setter_0_from_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
+        Diagnostics.Parameter_type_of_public_static_setter_0_from_exported_class_has_or_is_using_name_1_from_private_module_2,
+        Diagnostics.Parameter_type_of_public_static_setter_0_from_exported_class_has_or_is_using_private_name_1);
+    }
+    return selectDiagnosticBasedOnModuleName(result,
+      Diagnostics.Parameter_type_of_public_setter_0_from_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
+      Diagnostics.Parameter_type_of_public_setter_0_from_exported_class_has_or_is_using_name_1_from_private_module_2,
+      Diagnostics.Parameter_type_of_public_setter_0_from_exported_class_has_or_is_using_private_name_1);
+  }
+  if (isStatic(node)) {
+    return selectDiagnosticBasedOnModuleName(result,
+      Diagnostics.Return_type_of_public_static_getter_0_from_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
+      Diagnostics.Return_type_of_public_static_getter_0_from_exported_class_has_or_is_using_name_1_from_private_module_2,
+      Diagnostics.Return_type_of_public_static_getter_0_from_exported_class_has_or_is_using_private_name_1);
+  }
+  return selectDiagnosticBasedOnModuleName(result,
+    Diagnostics.Return_type_of_public_getter_0_from_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
+    Diagnostics.Return_type_of_public_getter_0_from_exported_class_has_or_is_using_name_1_from_private_module_2,
+    Diagnostics.Return_type_of_public_getter_0_from_exported_class_has_or_is_using_private_name_1);
+}
+
+function getReturnTypeVisibilityDiagnosticMessage(node: AstNode, result: SymbolAccessibilityResult): DiagnosticMessage {
+  if (isConstructSignatureDeclaration(node)) {
+    return selectDiagnosticBasedOnModuleNameNoNameCheck(result,
+      Diagnostics.Return_type_of_constructor_signature_from_exported_interface_has_or_is_using_name_0_from_private_module_1,
+      Diagnostics.Return_type_of_constructor_signature_from_exported_interface_has_or_is_using_private_name_0);
+  }
+  if (isCallSignatureDeclaration(node)) {
+    return selectDiagnosticBasedOnModuleNameNoNameCheck(result,
+      Diagnostics.Return_type_of_call_signature_from_exported_interface_has_or_is_using_name_0_from_private_module_1,
+      Diagnostics.Return_type_of_call_signature_from_exported_interface_has_or_is_using_private_name_0);
+  }
+  if (isIndexSignatureDeclaration(node)) {
+    return selectDiagnosticBasedOnModuleNameNoNameCheck(result,
+      Diagnostics.Return_type_of_index_signature_from_exported_interface_has_or_is_using_name_0_from_private_module_1,
+      Diagnostics.Return_type_of_index_signature_from_exported_interface_has_or_is_using_private_name_0);
+  }
+  if (isMethodDeclaration(node)) {
+    if (isStatic(node)) {
+      return selectDiagnosticBasedOnModuleName(result,
+        Diagnostics.Return_type_of_public_static_method_from_exported_class_has_or_is_using_name_0_from_external_module_1_but_cannot_be_named,
+        Diagnostics.Return_type_of_public_static_method_from_exported_class_has_or_is_using_name_0_from_private_module_1,
+        Diagnostics.Return_type_of_public_static_method_from_exported_class_has_or_is_using_private_name_0);
+    }
+    return selectDiagnosticBasedOnModuleName(result,
+      Diagnostics.Return_type_of_public_method_from_exported_class_has_or_is_using_name_0_from_external_module_1_but_cannot_be_named,
+      Diagnostics.Return_type_of_public_method_from_exported_class_has_or_is_using_name_0_from_private_module_1,
+      Diagnostics.Return_type_of_public_method_from_exported_class_has_or_is_using_private_name_0);
+  }
+  if (isMethodSignatureDeclaration(node)) {
+    return selectDiagnosticBasedOnModuleNameNoNameCheck(result,
+      Diagnostics.Return_type_of_method_from_exported_interface_has_or_is_using_name_0_from_private_module_1,
+      Diagnostics.Return_type_of_method_from_exported_interface_has_or_is_using_private_name_0);
+  }
+  if (isFunctionDeclaration(node)) {
+    return selectDiagnosticBasedOnModuleName(result,
+      Diagnostics.Return_type_of_exported_function_has_or_is_using_name_0_from_external_module_1_but_cannot_be_named,
+      Diagnostics.Return_type_of_exported_function_has_or_is_using_name_0_from_private_module_1,
+      Diagnostics.Return_type_of_exported_function_has_or_is_using_private_name_0);
+  }
   return Diagnostics.Generic_inaccessible_symbol_error;
 }
-function getReturnTypeVisibilityDiagnosticMessage(_n: AstNode, _r: SymbolAccessibilityResult): DiagnosticMessage {
+
+function getParameterDeclarationTypeVisibilityDiagnosticMessage(node: AstNode, result: SymbolAccessibilityResult): DiagnosticMessage {
+  const parent = nodeParent(node);
+  if (parent === undefined) return Diagnostics.Generic_inaccessible_symbol_error;
+  if (isConstructorDeclaration(parent)) {
+    if (isStatic(parent)) {
+      return selectDiagnosticBasedOnModuleName(result,
+        Diagnostics.Parameter_0_of_public_static_method_from_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
+        Diagnostics.Parameter_0_of_public_static_method_from_exported_class_has_or_is_using_name_1_from_private_module_2,
+        Diagnostics.Parameter_0_of_public_static_method_from_exported_class_has_or_is_using_private_name_1);
+    }
+    return selectDiagnosticBasedOnModuleName(result,
+      Diagnostics.Parameter_0_of_constructor_from_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
+      Diagnostics.Parameter_0_of_constructor_from_exported_class_has_or_is_using_name_1_from_private_module_2,
+      Diagnostics.Parameter_0_of_constructor_from_exported_class_has_or_is_using_private_name_1);
+  }
+  if (isConstructSignatureDeclaration(parent) || isCallSignatureDeclaration(parent)) {
+    return selectDiagnosticBasedOnModuleNameNoNameCheck(result,
+      Diagnostics.Parameter_0_of_call_signature_from_exported_interface_has_or_is_using_name_1_from_private_module_2,
+      Diagnostics.Parameter_0_of_call_signature_from_exported_interface_has_or_is_using_private_name_1);
+  }
+  if (isMethodDeclaration(parent) || isMethodSignatureDeclaration(parent)) {
+    if (isStatic(parent)) {
+      return selectDiagnosticBasedOnModuleName(result,
+        Diagnostics.Parameter_0_of_public_static_method_from_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
+        Diagnostics.Parameter_0_of_public_static_method_from_exported_class_has_or_is_using_name_1_from_private_module_2,
+        Diagnostics.Parameter_0_of_public_static_method_from_exported_class_has_or_is_using_private_name_1);
+    }
+    return selectDiagnosticBasedOnModuleName(result,
+      Diagnostics.Parameter_0_of_public_method_from_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
+      Diagnostics.Parameter_0_of_public_method_from_exported_class_has_or_is_using_name_1_from_private_module_2,
+      Diagnostics.Parameter_0_of_public_method_from_exported_class_has_or_is_using_private_name_1);
+  }
+  if (isFunctionDeclaration(parent)) {
+    return selectDiagnosticBasedOnModuleName(result,
+      Diagnostics.Parameter_0_of_exported_function_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
+      Diagnostics.Parameter_0_of_exported_function_has_or_is_using_name_1_from_private_module_2,
+      Diagnostics.Parameter_0_of_exported_function_has_or_is_using_private_name_1);
+  }
   return Diagnostics.Generic_inaccessible_symbol_error;
 }
-function getParameterDeclarationTypeVisibilityDiagnosticMessage(_n: AstNode, _r: SymbolAccessibilityResult): DiagnosticMessage {
-  return Diagnostics.Generic_inaccessible_symbol_error;
+
+function getTypeParameterConstraintVisibilityDiagnosticMessage(node: AstNode, _result: SymbolAccessibilityResult): DiagnosticMessage {
+  const parent = nodeParent(node);
+  if (parent === undefined) return Diagnostics.Generic_inaccessible_symbol_error;
+  switch (parent.kind) {
+    case Kind.ClassDeclaration:
+      return Diagnostics.Type_parameter_0_of_exported_class_has_or_is_using_private_name_1;
+    case Kind.InterfaceDeclaration:
+      return Diagnostics.Type_parameter_0_of_exported_interface_has_or_is_using_private_name_1;
+    case Kind.MappedType:
+      return Diagnostics.Type_parameter_0_of_exported_mapped_object_type_is_using_private_name_1;
+    case Kind.ConstructorType:
+    case Kind.ConstructSignature:
+      return Diagnostics.Type_parameter_0_of_constructor_signature_from_exported_interface_has_or_is_using_private_name_1;
+    case Kind.CallSignature:
+      return Diagnostics.Type_parameter_0_of_call_signature_from_exported_interface_has_or_is_using_private_name_1;
+    case Kind.MethodDeclaration:
+    case Kind.MethodSignature:
+      if (isStatic(parent)) {
+        return Diagnostics.Type_parameter_0_of_public_static_method_from_exported_class_has_or_is_using_private_name_1;
+      }
+      if (parent.kind === Kind.MethodDeclaration) {
+        return Diagnostics.Type_parameter_0_of_public_method_from_exported_class_has_or_is_using_private_name_1;
+      }
+      return Diagnostics.Type_parameter_0_of_method_from_exported_interface_has_or_is_using_private_name_1;
+    case Kind.FunctionType:
+    case Kind.FunctionDeclaration:
+      return Diagnostics.Type_parameter_0_of_exported_function_has_or_is_using_private_name_1;
+    case Kind.InferType:
+      return Diagnostics.Extends_clause_for_inferred_type_0_has_or_is_using_private_name_1;
+    case Kind.TypeAliasDeclaration:
+    case Kind.JSTypeAliasDeclaration:
+      return Diagnostics.Type_parameter_0_of_exported_type_alias_has_or_is_using_private_name_1;
+    default:
+      return Diagnostics.Generic_inaccessible_symbol_error;
+  }
 }
-function getTypeParameterConstraintVisibilityDiagnosticMessage(_n: AstNode, _r: SymbolAccessibilityResult): DiagnosticMessage {
-  return Diagnostics.Generic_inaccessible_symbol_error;
+
+// ---------------------------------------------------------------------------
+// Declaration-kind → message suggestion / error mappings
+// ---------------------------------------------------------------------------
+
+export function getRelatedSuggestionByDeclarationKind(kind: number): DiagnosticMessage | undefined {
+  switch (kind) {
+    case Kind.Parameter:
+      return Diagnostics.Add_a_type_annotation_to_the_parameter_0;
+    case Kind.VariableDeclaration:
+    case Kind.BindingElement:
+      return Diagnostics.Add_a_type_annotation_to_the_variable_0;
+    case Kind.PropertyDeclaration:
+    case Kind.PropertySignature:
+      return Diagnostics.Add_a_type_annotation_to_the_property_0;
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+      return Diagnostics.Add_a_return_type_to_the_accessor_0;
+    case Kind.MethodDeclaration:
+    case Kind.MethodSignature:
+      return Diagnostics.Add_a_return_type_to_the_method;
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.ArrowFunction:
+      return Diagnostics.Add_a_return_type_to_the_function;
+  }
+  return undefined;
 }
+
+export function getErrorByDeclarationKind(kind: number): DiagnosticMessage | undefined {
+  switch (kind) {
+    case Kind.VariableDeclaration:
+    case Kind.BindingElement:
+      return Diagnostics.Variable_must_have_an_explicit_type_annotation_with_isolatedDeclarations;
+    case Kind.Parameter:
+      return Diagnostics.Parameter_must_have_an_explicit_type_annotation_with_isolatedDeclarations;
+    case Kind.PropertyDeclaration:
+    case Kind.PropertySignature:
+      return Diagnostics.Property_must_have_an_explicit_type_annotation_with_isolatedDeclarations;
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+      return Diagnostics.At_least_one_accessor_must_have_an_explicit_type_annotation_with_isolatedDeclarations;
+    case Kind.MethodDeclaration:
+    case Kind.FunctionDeclaration:
+    case Kind.MethodSignature:
+      return Diagnostics.Function_must_have_an_explicit_return_type_annotation_with_isolatedDeclarations;
+  }
+  return undefined;
+}
+
+// ---------------------------------------------------------------------------
+// Predicate + nearest-declaration helpers
+// ---------------------------------------------------------------------------
+
+export function isDeclarationEnoughForErrors(node: AstNode): boolean {
+  void node;
+  return false;
+}
+
+export function isFunctionLikeAndNotConstructor(node: AstNode): boolean {
+  return isFunctionLike(node) && !isConstructorDeclaration(node);
+}
+
+export function findNearestDeclaration(node: AstNode | undefined): AstNode | undefined {
+  let current: AstNode | undefined = node;
+  while (current !== undefined) {
+    if (isDeclaration(current)) return current;
+    current = nodeParent(current);
+  }
+  return undefined;
+}
+
+// ---------------------------------------------------------------------------
+// Error creators
+// ---------------------------------------------------------------------------
+
+export function createEntityInTypeNodeError(node: AstNode): Diagnostic {
+  return makeDiagnostic(node, Diagnostics.Inference_from_class_expressions_is_not_supported_with_isolatedDeclarations);
+}
+
+export function addParentDeclarationRelatedInfo(node: AstNode, diag: Diagnostic): void {
+  void node; void diag;
+}
+
+export function createAccessorTypeError(node: AstNode): Diagnostic {
+  return makeDiagnostic(node, Diagnostics.At_least_one_accessor_must_have_an_explicit_type_annotation_with_isolatedDeclarations);
+}
+
+export function createObjectLiteralError(node: AstNode): Diagnostic {
+  return makeDiagnostic(node, Diagnostics.Object_literal_must_be_cast_to_an_explicit_type_with_isolatedDeclarations);
+}
+
+export function createArrayLiteralError(node: AstNode): Diagnostic {
+  return makeDiagnostic(node, Diagnostics.Array_literal_must_be_cast_to_an_explicit_type_with_isolatedDeclarations);
+}
+
+export function createReturnTypeError(node: AstNode): Diagnostic {
+  return makeDiagnostic(node, Diagnostics.Function_must_have_an_explicit_return_type_annotation_with_isolatedDeclarations);
+}
+
+export function createBindingElementError(node: AstNode): Diagnostic {
+  return makeDiagnostic(node, Diagnostics.Binding_elements_can_t_be_exported_directly_with_isolatedDeclarations);
+}
+
+export function createVariableOrPropertyError(node: AstNode): Diagnostic {
+  return createExpressionErrorEx(node, Diagnostics.Variable_must_have_an_explicit_type_annotation_with_isolatedDeclarations);
+}
+
+export function createExpressionError(node: AstNode): Diagnostic {
+  return createExpressionErrorEx(node, Diagnostics.Expression_type_can_t_be_inferred_with_isolatedDeclarations);
+}
+
+export function createClassExpressionError(node: AstNode): Diagnostic {
+  return makeDiagnostic(node, Diagnostics.Inference_from_class_expressions_is_not_supported_with_isolatedDeclarations);
+}
+
+export function createExpressionErrorEx(node: AstNode, diagnosticMessage: DiagnosticMessage): Diagnostic {
+  return makeDiagnostic(node, diagnosticMessage);
+}
+
+// ---------------------------------------------------------------------------
+// Isolated-declaration error factory
+// ---------------------------------------------------------------------------
 
 export function createGetIsolatedDeclarationErrors(_resolver: EmitResolver): (node: AstNode) => Diagnostic {
-  return (node) => createIsolatedDeclarationDiagnostic(node);
+  return (node) => {
+    const nearest = findNearestDeclaration(node);
+    if (nearest === undefined) return createExpressionError(node);
+    const msg = getErrorByDeclarationKind(nearest.kind);
+    if (msg !== undefined) return makeDiagnostic(nearest, msg);
+    return createExpressionError(node);
+  };
 }
 
-declare function createIsolatedDeclarationDiagnostic(node: AstNode): Diagnostic;
+declare function isFunctionLike(node: AstNode): boolean;
+declare function isDeclaration(node: AstNode): boolean;
+declare function makeDiagnostic(node: AstNode, message: DiagnosticMessage): Diagnostic;
 
 // ---------------------------------------------------------------------------
 // Forward-declared
 // ---------------------------------------------------------------------------
 
-declare const Kind: { ClassDeclaration: number };
+declare const Kind: {
+  ClassDeclaration: number; InterfaceDeclaration: number;
+  MappedType: number; ConstructorType: number; ConstructSignature: number;
+  CallSignature: number; MethodDeclaration: number; MethodSignature: number;
+  FunctionType: number; FunctionDeclaration: number; FunctionExpression: number;
+  InferType: number; TypeAliasDeclaration: number; JSTypeAliasDeclaration: number;
+  Parameter: number; VariableDeclaration: number; BindingElement: number;
+  PropertyDeclaration: number; PropertySignature: number;
+  GetAccessor: number; SetAccessor: number; ArrowFunction: number;
+};
 declare const ModifierFlags: { Private: number };
 declare const SymbolAccessibility: { CannotBeNamed: number };
 declare const Diagnostics: Record<string, DiagnosticMessage>;
