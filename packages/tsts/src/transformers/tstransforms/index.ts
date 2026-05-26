@@ -12,3 +12,4 @@
 export * from "./typeeraser.js";
 export * from "./importelision.js";
 export * from "./legacydecorators.js";
+export * from "./runtimesyntax.js";
