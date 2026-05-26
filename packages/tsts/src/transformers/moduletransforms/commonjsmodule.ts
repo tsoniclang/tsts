@@ -22,7 +22,7 @@
  * Cross-module deps forward-declared at file end.
  */
 
-import { Transformer, type TransformOptions } from "../transformer.js";
+import { Transformer, type TransformOptions, type NodeVisitor } from "../transformer.js";
 import { extractModifiers } from "../modifiervisitor.js";
 import { isExportName, isGeneratedIdentifier, isHelperName, isIdentifierReference, isLocalName, singleOrMany, convertVariableDeclarationToAssignmentExpression } from "../utilities.js";
 import { flattenDestructuringAssignment, FlattenLevel } from "../destructuring.js";

@@ -52,6 +52,23 @@ export interface SourceFile extends Node {
   readonly tokenCache?: Map<string, Node>;
 }
 
-export interface FlowNode {}
-export interface Symbol {}
+export interface FlowNode {
+  readonly flags: number;
+  readonly node?: Node;
+  readonly antecedent?: FlowNode;
+  readonly antecedents?: unknown;
+}
+
+export interface Symbol {
+  readonly name?: string;
+  readonly escapedName?: string;
+  readonly flags?: number;
+  readonly declarations: readonly Node[];
+  readonly valueDeclaration?: Node;
+  readonly members?: Map<string, Symbol>;
+  readonly exports?: Map<string, Symbol>;
+  readonly globalExports?: Map<string, Symbol>;
+  readonly parent?: Symbol;
+}
+
 export interface CheckFlagsBrand {}

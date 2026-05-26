@@ -31,8 +31,10 @@ export interface EmitContext {
   readonly factory: NodeFactory;
   newNodeVisitor(visit: (node: AstNode) => AstNode | undefined): NodeVisitor;
   addEmitHelper(node: AstNode, ...helpers: AstNode[]): void;
+  addEmitHelpers(node: AstNode, helpers: readonly AstNode[] | undefined): void;
   readEmitHelpers(): readonly AstNode[];
   emitFlags(node: AstNode): number;
+  setEmitFlags(node: AstNode, flags: number): void;
   addEmitFlags(node: AstNode, flags: number): void;
   setOriginal(node: AstNode, original: AstNode): void;
   setSourceMapRange(node: AstNode, range: unknown): void;
@@ -45,6 +47,8 @@ export interface EmitContext {
   startVariableEnvironment(): void;
   endVariableEnvironment(): readonly AstNode[];
   endAndMergeVariableEnvironment(statements: readonly AstNode[]): readonly AstNode[];
+  endAndMergeVariableEnvironmentList(statements: readonly AstNode[]): readonly AstNode[];
+  addInitializationStatement(node: AstNode): void;
   startLexicalEnvironment(): void;
   endLexicalEnvironment(): readonly AstNode[];
   endAndMergeLexicalEnvironment(statements: readonly AstNode[]): readonly AstNode[];
@@ -253,7 +257,41 @@ export interface NodeFactory {
   inlineExpressions(expressions: readonly AstNode[]): AstNode;
   newClassPrivateFieldInHelper(brandCheckIdentifier: IdentifierNode, receiver: AstNode): AstNode;
   splitStandardPrologue(statements: readonly AstNode[]): { standardPrologue: readonly AstNode[]; rest: readonly AstNode[] };
+  splitCustomPrologue(statements: readonly AstNode[]): { customPrologue: readonly AstNode[]; rest: readonly AstNode[]; prologue: readonly AstNode[] };
   ensureUseStrict(statements: readonly AstNode[]): readonly AstNode[];
+  restoreEnclosingLabel(node: AstNode, label: AstNode | undefined): AstNode;
+
+  // ---- Binary + binding expressions ----
+  newBinaryExpression(left: AstNode, operator: number, right: AstNode): AstNode;
+  updateBinaryExpression(node: AstNode, left: AstNode, operator: number, right: AstNode): AstNode;
+  updateShorthandPropertyAssignment(node: AstNode, name: IdentifierNode, objectAssignmentInitializer: AstNode | undefined): AstNode;
+  updateYieldExpression(node: AstNode, asteriskToken: AstNode | undefined, expression: AstNode | undefined): AstNode;
+  updateWithStatement(node: AstNode, expression: AstNode, statement: AstNode): AstNode;
+  newBindingPattern(kind: number, elements: readonly AstNode[]): AstNode;
+
+  // ---- Identifier-name helpers ----
+  getDeclarationName(node: AstNode, allowComments?: boolean, allowSourceMaps?: boolean): IdentifierNode;
+  getLocalName(node: AstNode, allowComments?: boolean, allowSourceMaps?: boolean): IdentifierNode;
+  getExportName(node: AstNode, allowComments?: boolean, allowSourceMaps?: boolean): IdentifierNode;
+  getNamespaceMemberName(ns: IdentifierNode, name: IdentifierNode, allowComments?: boolean, allowSourceMaps?: boolean): AstNode;
+
+  // ---- Emit helpers (__decorate, __metadata, __param, __await, etc.) ----
+  newAwaitHelper(expression: AstNode): AstNode;
+  newAwaiterHelper(hasLexicalArguments: boolean, hasLexicalThis: boolean, promiseConstructor: AstNode | undefined, body: AstNode): AstNode;
+  newAsyncValuesHelper(expression: AstNode): AstNode;
+  newDisposeResourcesHelper(envBinding: AstNode): AstNode;
+  newImportStarHelper(expression: AstNode): AstNode;
+  newImportDefaultHelper(expression: AstNode): AstNode;
+  newRewriteRelativeImportExtensionsHelper(expression: AstNode, preserveJSX?: boolean): AstNode;
+  newDecorateHelper(decoratorExpressions: readonly AstNode[], target: AstNode, memberName?: AstNode | undefined, descriptor?: AstNode | undefined): AstNode;
+  newMetadataHelper(metadataKey: string, metadataValue: AstNode): AstNode;
+  newParamHelper(expression: AstNode, parameterOffset: number, location?: unknown): AstNode;
+  newAddDisposableResourceHelper(envBinding: AstNode, value: AstNode, async: boolean): AstNode;
+  newReadHelper(value: AstNode): AstNode;
+  newSpreadHelper(value: AstNode): AstNode;
+  newSpreadArrayHelper(to: AstNode, from: AstNode, packFrom?: boolean): AstNode;
+  newAssignHelper(args: readonly AstNode[]): AstNode;
+  newRestHelper(value: AstNode, elements: readonly AstNode[], computedTempVariables: readonly AstNode[]): AstNode;
 }
 
 /**
@@ -441,12 +479,16 @@ function createDefaultEmitContext(): EmitContext {
     addEmitHelper(_node, ...newHelpers) {
       helpers.push(...newHelpers);
     },
+    addEmitHelpers(_node, newHelpers) {
+      if (newHelpers !== undefined) helpers.push(...newHelpers);
+    },
     readEmitHelpers() {
       const result = helpers.slice();
       helpers.length = 0;
       return result;
     },
     emitFlags(node) { return flagMap.get(node) ?? 0; },
+    setEmitFlags(node, flags) { flagMap.set(node, flags); },
     addEmitFlags(node, flags) { flagMap.set(node, (flagMap.get(node) ?? 0) | flags); },
     setOriginal(node, original) { originalMap.set(node, original); },
     setSourceMapRange(node, range) { sourceMapRangeMap.set(node, range); },
@@ -474,6 +516,15 @@ function createDefaultEmitContext(): EmitContext {
       const hoisted = hoistedFunctionStack.pop() ?? [];
       variableStack.pop();
       return [...hoisted, ...statements];
+    },
+    endAndMergeVariableEnvironmentList(statements) {
+      const hoisted = hoistedFunctionStack.pop() ?? [];
+      variableStack.pop();
+      return [...hoisted, ...statements];
+    },
+    addInitializationStatement(node) {
+      const top = hoistedFunctionStack[hoistedFunctionStack.length - 1];
+      if (top !== undefined) top.push(node);
     },
     startLexicalEnvironment() { lexicalStack.push([]); },
     endLexicalEnvironment() { return lexicalStack.pop() ?? []; },
