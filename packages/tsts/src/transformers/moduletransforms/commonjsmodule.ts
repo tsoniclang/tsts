@@ -1575,20 +1575,16 @@ export function newCommonJSModuleTransformer(opts: TransformOptions): Transforme
 
 interface CompilerOptions { readonly _opts?: unknown; readonly [key: string]: unknown }
 interface ReferenceResolver {
-  getReferencedExportContainer(node: AstNode, prefixLocals: boolean): AstNode | undefined;
-  getReferencedImportDeclaration(node: AstNode): AstNode | undefined;
+  getReferencedExportContainer?(node: AstNode, prefixLocals: boolean): AstNode | undefined;
+  getReferencedImportDeclaration?(node: AstNode): AstNode | undefined;
   getReferencedValueDeclaration(node: AstNode): AstNode | undefined;
-  getReferencedValueDeclarations(node: AstNode): readonly AstNode[] | undefined;
+  getReferencedValueDeclarations?(node: AstNode): readonly AstNode[] | undefined;
 }
 interface HasFileName { readonly _hf: unknown }
 
-interface NodeVisitor {
-  visitNode(node: AstNode): AstNode;
-  visitEachChild(node: AstNode): AstNode;
-  visitSlice(nodes: readonly AstNode[]): { items: AstNode[]; changed: boolean };
-  visitEmbeddedStatement(node: AstNode): AstNode;
-  visitNodes(nodes: unknown): unknown;
-}
+// NodeVisitor type comes from transformer.ts (imported via Transformer
+// base class context). Removed local stub — was conflicting with the
+// imported shape.
 
 declare const Kind: {
   SourceFile: number; ImportDeclaration: number; ImportEqualsDeclaration: number;

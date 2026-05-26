@@ -276,34 +276,49 @@ export interface NodeVisitor {
 
 /**
  * Options passed when constructing a transformer. Mirrors TS-Go
- * `transformers.TransformOptions`.
+ * `transformers.TransformOptions`. The index signature is intentional —
+ * concrete transformers may attach extra options (like
+ * `getEmitModuleFormatOfFile` used by commonjsmodule.ts).
  */
 export interface TransformOptions {
   readonly compilerOptions: CompilerOptionsLike;
   readonly resolver: ReferenceResolverLike;
   readonly emitResolver: EmitResolverLike;
   readonly context: EmitContext;
+  readonly [key: string]: unknown;
 }
 
-/** Minimal CompilerOptions surface needed by transformers. */
+/** Permissive CompilerOptions surface — the real shape lives in core. */
 export interface CompilerOptionsLike {
   readonly experimentalDecorators?: unknown;
   readonly verbatimModuleSyntax?: unknown;
   readonly [key: string]: unknown;
 }
 
-/** Minimal ReferenceResolver surface used by transformers. */
+/** Permissive ReferenceResolver surface. */
 export interface ReferenceResolverLike {
   getReferencedValueDeclaration(node: AstNode): AstNode | undefined;
-  readonly [key: string]: unknown;
+  getReferencedExportContainer?(node: AstNode, prefixLocals: boolean): AstNode | undefined;
+  getReferencedImportDeclaration?(node: AstNode): AstNode | undefined;
+  getReferencedValueDeclarations?(node: AstNode): readonly AstNode[] | undefined;
+  getReferencedDeclarationWithCollidingName?(node: AstNode): AstNode | undefined;
+  isDeclarationWithCollidingName?(node: AstNode): boolean;
 }
 
-/** Minimal EmitResolver surface used by transformers. */
+/** Permissive EmitResolver surface. */
 export interface EmitResolverLike {
   isReferencedAliasDeclaration?(node: AstNode): boolean;
   isValueAliasDeclaration?(node: AstNode): boolean;
   isTopLevelValueImportEqualsWithEntityName?(node: AstNode): boolean;
-  readonly [key: string]: unknown;
+  hasGlobalName?(name: string): boolean;
+  getReferencedExportContainer?(node: AstNode, prefixLocals: boolean): AstNode | undefined;
+  getReferencedImportDeclaration?(node: AstNode): AstNode | undefined;
+  getConstantValue?(node: AstNode): string | number | undefined;
+  getEnumMemberValue?(node: AstNode): string | number | undefined;
+  isImplementationOfOverload?(node: AstNode): boolean;
+  isLateBound?(node: AstNode): boolean;
+  getExternalModuleFileFromDeclaration?(declaration: AstNode): SourceFile | undefined;
+  getNodeCheckFlags?(node: AstNode): number;
 }
 
 /**
