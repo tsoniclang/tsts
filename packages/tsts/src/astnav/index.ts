@@ -1,11 +1,9 @@
 /**
- * AST navigation utilities (positions, find-by-position, walk).
+ * AST positional navigation.
  *
- * Mirrors TS-Go internal/astnav/.
- *
- * Status: empty placeholder. Adopt from @typescript/native-preview/src/ast/astnav.ts.
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * Port of TS-Go `internal/astnav/`. Provides position-based token
+ * queries used heavily by the language service (quick info,
+ * completion, signature help) and by code-fix flows.
  */
 
-export {};
+export * from "./tokens.js";
