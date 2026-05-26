@@ -1,6 +1,7 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
-import { Kind } from "../../src/ast/index.js";
+import { attributes as A } from "@tsonic/core/lang.js";
+import { Assert, FactAttribute } from "xunit-types/Xunit.js";
+
+import { Kind } from "../ast/index.js";
 import {
   HEADER_OFFSET_EXTENDED_DATA,
   HEADER_OFFSET_METADATA,
@@ -15,25 +16,25 @@ import {
   NODE_OFFSET_KIND,
   PROTOCOL_VERSION,
   encodeSourceFile,
-} from "../../src/api/binary-ast/index.js";
-import { parseSourceFile } from "../../src/parser/index.js";
+} from "./binary-ast/index.js";
+import { parseSourceFile } from "../parser/index.js";
 
-describe("TS-Go binary AST encoder", () => {
-  it("writes protocol header sections and root SourceFile node", () => {
+export class BinaryAstEncoderTests {
+  writes_protocol_header_sections_and_root_source_file_node(): void {
     const encoded = encodeSourceFile(parseSourceFile("x + 1;", { fileName: "sample.ts" }));
     const view = new DataView(encoded.buffer, encoded.byteOffset, encoded.byteLength);
     const offsetNodes = view.getUint32(HEADER_OFFSET_NODES, true);
 
-    assert.equal(view.getUint32(HEADER_OFFSET_METADATA, true), PROTOCOL_VERSION << 24);
-    assert.equal(view.getUint32(HEADER_OFFSET_STRING_TABLE_OFFSETS, true), HEADER_SIZE);
-    assert.ok(view.getUint32(HEADER_OFFSET_STRING_TABLE, true) >= HEADER_SIZE);
-    assert.ok(view.getUint32(HEADER_OFFSET_EXTENDED_DATA, true) >= view.getUint32(HEADER_OFFSET_STRING_TABLE, true));
-    assert.equal(view.getUint32(HEADER_OFFSET_STRUCTURED_DATA, true), offsetNodes);
-    assert.equal(view.getUint32(offsetNodes + NODE_LEN + NODE_OFFSET_KIND, true), Kind.SourceFile);
-    assert.equal((view.getUint32(offsetNodes + NODE_LEN + NODE_OFFSET_DATA, true) & NODE_DATA_TYPE_EXTENDED) >>> 0, NODE_DATA_TYPE_EXTENDED);
-  });
+    Assert.Equal(PROTOCOL_VERSION << 24, view.getUint32(HEADER_OFFSET_METADATA, true));
+    Assert.Equal(HEADER_SIZE, view.getUint32(HEADER_OFFSET_STRING_TABLE_OFFSETS, true));
+    Assert.True(view.getUint32(HEADER_OFFSET_STRING_TABLE, true) >= HEADER_SIZE);
+    Assert.True(view.getUint32(HEADER_OFFSET_EXTENDED_DATA, true) >= view.getUint32(HEADER_OFFSET_STRING_TABLE, true));
+    Assert.Equal(offsetNodes, view.getUint32(HEADER_OFFSET_STRUCTURED_DATA, true));
+    Assert.Equal(Kind.SourceFile, view.getUint32(offsetNodes + NODE_LEN + NODE_OFFSET_KIND, true));
+    Assert.Equal(NODE_DATA_TYPE_EXTENDED, (view.getUint32(offsetNodes + NODE_LEN + NODE_OFFSET_DATA, true) & NODE_DATA_TYPE_EXTENDED) >>> 0);
+  }
 
-  it("encodes parser-produced child nodes after the root", () => {
+  encodes_parser_produced_child_nodes_after_the_root(): void {
     const encoded = encodeSourceFile(parseSourceFile("x + 1;"));
     const view = new DataView(encoded.buffer, encoded.byteOffset, encoded.byteLength);
     const offsetNodes = view.getUint32(HEADER_OFFSET_NODES, true);
@@ -43,9 +44,12 @@ describe("TS-Go binary AST encoder", () => {
       nodeKinds.push(view.getUint32(offset + NODE_OFFSET_KIND, true));
     }
 
-    assert.equal(nodeKinds.includes(Kind.ExpressionStatement), true);
-    assert.equal(nodeKinds.includes(Kind.BinaryExpression), true);
-    assert.equal(nodeKinds.includes(Kind.Identifier), true);
-    assert.equal(nodeKinds.includes(Kind.NumericLiteral), true);
-  });
-});
+    Assert.True(nodeKinds.includes(Kind.ExpressionStatement));
+    Assert.True(nodeKinds.includes(Kind.BinaryExpression));
+    Assert.True(nodeKinds.includes(Kind.Identifier));
+    Assert.True(nodeKinds.includes(Kind.NumericLiteral));
+  }
+}
+
+A<BinaryAstEncoderTests>().method((t) => t.writes_protocol_header_sections_and_root_source_file_node).add(FactAttribute);
+A<BinaryAstEncoderTests>().method((t) => t.encodes_parser_produced_child_nodes_after_the_root).add(FactAttribute);

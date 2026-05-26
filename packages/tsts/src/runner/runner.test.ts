@@ -1,87 +1,91 @@
-import { describe, it } from "node:test";
-import { strict as assert } from "node:assert";
+import { attributes as A } from "@tsonic/core/lang.js";
+import { Assert, FactAttribute } from "xunit-types/Xunit.js";
 
 import { parseTestCase, DiffCategorizer } from "./index.js";
 
-describe("test runner — directive parser", () => {
-  it("parses simple @target directive", () => {
+export class TestRunnerDirectiveParserTests {
+  parses_simple_target_directive(): void {
     const tc = parseTestCase("/tmp/foo.ts", "compiler/foo", "// @target: ES5\nconst x = 5;");
-    assert.equal(tc.directives.target, "ES5");
-    assert.equal(tc.files.length, 1);
-    assert.equal(tc.files[0]!.content.trim(), "const x = 5;");
-  });
+    Assert.Equal("ES5", tc.directives.target);
+    Assert.Equal(1, tc.files.length);
+    Assert.Equal("const x = 5;", tc.files[0]!.content.trim());
+  }
 
-  it("parses multiple directives", () => {
+  parses_multiple_directives(): void {
     const tc = parseTestCase(
       "/tmp/foo.ts",
       "compiler/foo",
-      "// @target: ES2020\n// @strict: true\n// @noEmit: true\nconst x = 5;"
+      "// @target: ES2020\n// @strict: true\n// @noEmit: true\nconst x = 5;",
     );
-    assert.equal(tc.directives.target, "ES2020");
-    assert.equal(tc.directives.strict, true);
-    assert.equal(tc.directives.noEmit, true);
-  });
+    Assert.Equal("ES2020", tc.directives.target);
+    Assert.True(tc.directives.strict ?? false);
+    Assert.True(tc.directives.noEmit ?? false);
+  }
 
-  it("splits files on @Filename directive", () => {
+  splits_files_on_filename_directive(): void {
     const tc = parseTestCase(
       "/tmp/foo.ts",
       "compiler/foo",
-      `// @target: ES5
-// @Filename: globals.ts
-declare global { const __FOO__: any; }
-// @Filename: app.ts
-export {};`
+      "// @target: ES5\n// @Filename: globals.ts\ndeclare global { const __FOO__: any; }\n// @Filename: app.ts\nexport {};",
     );
-    assert.equal(tc.directives.target, "ES5");
-    assert.equal(tc.files.length, 2);
-    assert.equal(tc.files[0]!.fileName, "globals.ts");
-    assert.equal(tc.files[1]!.fileName, "app.ts");
-    assert.equal(tc.files[0]!.content.trim(), "declare global { const __FOO__: any; }");
-    assert.equal(tc.files[1]!.content.trim(), "export {};");
-  });
+    Assert.Equal("ES5", tc.directives.target);
+    Assert.Equal(2, tc.files.length);
+    Assert.Equal("globals.ts", tc.files[0]!.fileName);
+    Assert.Equal("app.ts", tc.files[1]!.fileName);
+    Assert.Equal("declare global { const __FOO__: any; }", tc.files[0]!.content.trim());
+    Assert.Equal("export {};", tc.files[1]!.content.trim());
+  }
 
-  it("parses @lib as comma-separated list", () => {
+  parses_lib_as_comma_separated_list(): void {
     const tc = parseTestCase(
       "/tmp/foo.ts",
       "compiler/foo",
-      "// @lib: ES5,ES2015.Symbol,ES2017.Object\nconst x = 5;"
+      "// @lib: ES5,ES2015.Symbol,ES2017.Object\nconst x = 5;",
     );
-    assert.deepEqual([...(tc.directives.lib ?? [])], ["ES5", "ES2015.Symbol", "ES2017.Object"]);
-  });
+    Assert.Equal<readonly string[]>(["ES5", "ES2015.Symbol", "ES2017.Object"], [...(tc.directives.lib ?? [])]);
+  }
 
-  it("records unknown directives", () => {
+  records_unknown_directives(): void {
     const tc = parseTestCase(
       "/tmp/foo.ts",
       "compiler/foo",
-      "// @customFlag: someValue\nconst x = 5;"
+      "// @customFlag: someValue\nconst x = 5;",
     );
-    assert.equal(tc.directives.unknown?.get("customFlag"), "someValue");
-  });
+    Assert.Equal("someValue", tc.directives.unknown?.get("customFlag"));
+  }
 
-  it("derives default filename from test name when no @Filename", () => {
+  derives_default_filename_from_test_name_when_no_filename_directive(): void {
     const tc = parseTestCase("/tmp/foo.ts", "compiler/myTest", "const x = 5;");
-    assert.equal(tc.files[0]!.fileName, "myTest.ts");
-  });
+    Assert.Equal("myTest.ts", tc.files[0]!.fileName);
+  }
 
-  it("respects first-occurrence-wins for repeated directives", () => {
-    // TS-Go semantics: first directive wins
+  respects_first_occurrence_wins_for_repeated_directives(): void {
     const tc = parseTestCase(
       "/tmp/foo.ts",
       "compiler/foo",
-      "// @target: ES5\n// @target: ES2020\nconst x = 5;"
+      "// @target: ES5\n// @target: ES2020\nconst x = 5;",
     );
-    assert.equal(tc.directives.target, "ES5");
-  });
-});
+    Assert.Equal("ES5", tc.directives.target);
+  }
+}
 
-describe("test runner — diff categorizer", () => {
-  it("treats missing list files as empty (no error)", () => {
+export class TestRunnerDiffCategorizerTests {
+  treats_missing_list_files_as_empty_no_error(): void {
     const cat = new DiffCategorizer({
       acceptedListPath: "/nonexistent/accepted.txt",
       triagedListPath: "/nonexistent/triaged.txt",
     });
-    assert.equal(cat.acceptedCount(), 0);
-    assert.equal(cat.triagedCount(), 0);
-    assert.equal(cat.categorize("compiler/foo.types.diff"), "new");
-  });
-});
+    Assert.Equal(0, cat.acceptedCount());
+    Assert.Equal(0, cat.triagedCount());
+    Assert.Equal("new", cat.categorize("compiler/foo.types.diff"));
+  }
+}
+
+A<TestRunnerDirectiveParserTests>().method((t) => t.parses_simple_target_directive).add(FactAttribute);
+A<TestRunnerDirectiveParserTests>().method((t) => t.parses_multiple_directives).add(FactAttribute);
+A<TestRunnerDirectiveParserTests>().method((t) => t.splits_files_on_filename_directive).add(FactAttribute);
+A<TestRunnerDirectiveParserTests>().method((t) => t.parses_lib_as_comma_separated_list).add(FactAttribute);
+A<TestRunnerDirectiveParserTests>().method((t) => t.records_unknown_directives).add(FactAttribute);
+A<TestRunnerDirectiveParserTests>().method((t) => t.derives_default_filename_from_test_name_when_no_filename_directive).add(FactAttribute);
+A<TestRunnerDirectiveParserTests>().method((t) => t.respects_first_occurrence_wins_for_repeated_directives).add(FactAttribute);
+A<TestRunnerDiffCategorizerTests>().method((t) => t.treats_missing_list_files_as_empty_no_error).add(FactAttribute);

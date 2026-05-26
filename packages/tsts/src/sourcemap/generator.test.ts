@@ -1,68 +1,68 @@
-import { describe, it } from "node:test";
-import { strict as assert } from "node:assert";
+import { attributes as A } from "@tsonic/core/lang.js";
+import { Assert, FactAttribute } from "xunit-types/Xunit.js";
+import { Exception } from "@tsonic/dotnet/System.js";
 
-import { encodeVLQ, Generator } from "../../src/sourcemap/index.js";
+import { encodeVLQ, Generator } from "./index.js";
 
-describe("sourcemap — encodeVLQ", () => {
-  it("encodes 0", () => {
-    assert.equal(encodeVLQ(0), "A");
-  });
+export class SourcemapEncodeVLQTests {
+  encodes_zero(): void {
+    Assert.Equal("A", encodeVLQ(0));
+  }
 
-  it("encodes small positive", () => {
-    assert.equal(encodeVLQ(1), "C");   // 1 << 1 = 2 → 'C'
-    assert.equal(encodeVLQ(2), "E");   // 2 << 1 = 4 → 'E'
-  });
+  encodes_small_positive(): void {
+    Assert.Equal("C", encodeVLQ(1));
+    Assert.Equal("E", encodeVLQ(2));
+  }
 
-  it("encodes small negative", () => {
-    assert.equal(encodeVLQ(-1), "D");  // (1 << 1) + 1 = 3 → 'D'
-  });
+  encodes_small_negative(): void {
+    Assert.Equal("D", encodeVLQ(-1));
+  }
 
-  it("encodes larger values with multi-char output", () => {
-    // 100 → multi-char output
+  encodes_larger_values_with_multi_char_output(): void {
     const enc = encodeVLQ(100);
-    assert.ok(enc.length >= 2);
-  });
-});
+    Assert.True(enc.length >= 2);
+  }
+}
 
-describe("sourcemap — Generator basics", () => {
-  it("creates empty source map", () => {
+export class SourcemapGeneratorBasicsTests {
+  creates_empty_source_map(): void {
     const gen = new Generator("out.js", "", "/output", {
       currentDirectory: "/output",
       useCaseSensitiveFileNames: true,
     });
     const raw = gen.rawSourceMap();
-    assert.equal(raw.version, 3);
-    assert.equal(raw.file, "out.js");
-    assert.deepEqual(raw.sources, []);
-    assert.deepEqual(raw.names, []);
-    assert.equal(raw.mappings, "");
-  });
+    Assert.Equal(3, raw.version);
+    Assert.Equal("out.js", raw.file);
+    Assert.Equal<readonly string[]>([], raw.sources);
+    Assert.Equal<readonly string[]>([], raw.names);
+    Assert.Equal("", raw.mappings);
+  }
 
-  it("addSource and deduplicates", () => {
+  add_source_deduplicates(): void {
     const gen = new Generator("out.js", "", "/output", {
       currentDirectory: "/output",
       useCaseSensitiveFileNames: true,
     });
     const a = gen.addSource("/output/foo.ts");
     const b = gen.addSource("/output/foo.ts");
-    assert.equal(a, b);
+    Assert.Equal(a, b);
     const c = gen.addSource("/output/bar.ts");
-    assert.notEqual(a, c);
-  });
+    Assert.NotEqual(a, c);
+  }
 
-  it("addName and deduplicates", () => {
+  add_name_deduplicates(): void {
     const gen = new Generator("out.js", "", "/output", {
       currentDirectory: "/output",
       useCaseSensitiveFileNames: true,
     });
     const a = gen.addName("foo");
     const b = gen.addName("foo");
-    assert.equal(a, b);
+    Assert.Equal(a, b);
     const c = gen.addName("bar");
-    assert.notEqual(a, c);
-  });
+    Assert.NotEqual(a, c);
+  }
 
-  it("addSourceMapping produces VLQ output", () => {
+  add_source_mapping_produces_vlq_output(): void {
     const gen = new Generator("out.js", "", "/output", {
       currentDirectory: "/output",
       useCaseSensitiveFileNames: true,
@@ -71,29 +71,38 @@ describe("sourcemap — Generator basics", () => {
     gen.addSourceMapping(0, 0, src, 0, 0);
     gen.addSourceMapping(0, 5, src, 0, 5);
     const raw = gen.rawSourceMap();
-    assert.ok(raw.mappings.length > 0);
-    // Source path is relativized via getRelativePathToDirectoryOrUrl,
-    // matching TS-Go behavior (leading-slash output when paths share root).
-    assert.equal(raw.sources.length, 1);
-    assert.ok(raw.sources[0]!.endsWith("foo.ts"));
-  });
+    Assert.True(raw.mappings.length > 0);
+    Assert.Equal(1, raw.sources.length);
+    Assert.True(raw.sources[0]!.endsWith("foo.ts"));
+  }
 
-  it("toBase64DataURL produces a valid data URL", () => {
+  to_base64_data_url_produces_valid_data_url(): void {
     const gen = new Generator("out.js", "", "/output", {
       currentDirectory: "/output",
       useCaseSensitiveFileNames: true,
     });
     const url = gen.toBase64DataURL();
-    assert.ok(url.startsWith("data:application/json;base64,"));
-  });
+    Assert.True(url.startsWith("data:application/json;base64,"));
+  }
 
-  it("rejects backtracking generated line", () => {
+  rejects_backtracking_generated_line(): void {
     const gen = new Generator("out.js", "", "/output", {
       currentDirectory: "/output",
       useCaseSensitiveFileNames: true,
     });
     const src = gen.addSource("/output/foo.ts");
     gen.addSourceMapping(5, 0, src, 0, 0);
-    assert.throws(() => gen.addSourceMapping(3, 0, src, 0, 0), /backtrack/);
-  });
-});
+    Assert.ThrowsAny<Exception>(() => { gen.addSourceMapping(3, 0, src, 0, 0); });
+  }
+}
+
+A<SourcemapEncodeVLQTests>().method((t) => t.encodes_zero).add(FactAttribute);
+A<SourcemapEncodeVLQTests>().method((t) => t.encodes_small_positive).add(FactAttribute);
+A<SourcemapEncodeVLQTests>().method((t) => t.encodes_small_negative).add(FactAttribute);
+A<SourcemapEncodeVLQTests>().method((t) => t.encodes_larger_values_with_multi_char_output).add(FactAttribute);
+A<SourcemapGeneratorBasicsTests>().method((t) => t.creates_empty_source_map).add(FactAttribute);
+A<SourcemapGeneratorBasicsTests>().method((t) => t.add_source_deduplicates).add(FactAttribute);
+A<SourcemapGeneratorBasicsTests>().method((t) => t.add_name_deduplicates).add(FactAttribute);
+A<SourcemapGeneratorBasicsTests>().method((t) => t.add_source_mapping_produces_vlq_output).add(FactAttribute);
+A<SourcemapGeneratorBasicsTests>().method((t) => t.to_base64_data_url_produces_valid_data_url).add(FactAttribute);
+A<SourcemapGeneratorBasicsTests>().method((t) => t.rejects_backtracking_generated_line).add(FactAttribute);

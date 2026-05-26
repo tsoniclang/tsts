@@ -1,5 +1,7 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { attributes as A } from "@tsonic/core/lang.js";
+import { Assert, FactAttribute } from "xunit-types/Xunit.js";
+import { Exception } from "@tsonic/dotnet/System.js";
+
 import {
   Kind,
   NodeFlags,
@@ -47,118 +49,116 @@ import {
   isVariableStatement,
   isWhileStatement,
   isArrayBindingPattern,
-} from "../../src/ast/index.js";
-import { parseSourceFile } from "../../src/parser/index.js";
+} from "../ast/index.js";
+import { parseSourceFile } from "./index.js";
 
-describe("TS-Go parser groundwork", () => {
-  it("produces a SourceFile with expression statements", () => {
+export class ParserGroundworkTests {
+  produces_a_source_file_with_expression_statements(): void {
     const sourceFile = parseSourceFile("x + 1;", { fileName: "sample.ts" });
 
-    assert.equal(sourceFile.kind, Kind.SourceFile);
-    assert.equal(sourceFile.fileName, "sample.ts");
-    assert.equal(sourceFile.statements.length, 1);
+    Assert.Equal(Kind.SourceFile, sourceFile.kind);
+    Assert.Equal("sample.ts", sourceFile.fileName);
+    Assert.Equal(1, sourceFile.statements.length);
 
     const statement = sourceFile.statements[0]!;
-    assert.equal(isExpressionStatement(statement), true);
-    if (!isExpressionStatement(statement)) throw new Error("unreachable");
-    assert.equal(isBinaryExpression(statement.expression), true);
-  });
+    Assert.True(isExpressionStatement(statement));
+    if (!isExpressionStatement(statement)) throw new Exception("unreachable");
+    Assert.True(isBinaryExpression(statement.expression));
+  }
 
-  it("preserves binary precedence in AST shape", () => {
+  preserves_binary_precedence_in_ast_shape(): void {
     const sourceFile = parseSourceFile("a + b * 2;");
     const statement = sourceFile.statements[0]!;
     if (!isExpressionStatement(statement) || !isBinaryExpression(statement.expression)) {
-      throw new Error("Expected binary expression statement");
+      throw new Exception("Expected binary expression statement");
     }
 
-    assert.equal(statement.expression.operatorToken.kind, Kind.PlusToken);
-    assert.equal(isIdentifier(statement.expression.left), true);
-    assert.equal(isBinaryExpression(statement.expression.right), true);
-    if (!isBinaryExpression(statement.expression.right)) throw new Error("unreachable");
-    assert.equal(statement.expression.right.operatorToken.kind, Kind.AsteriskToken);
-    assert.equal(isNumericLiteral(statement.expression.right.right), true);
-  });
+    Assert.Equal(Kind.PlusToken, statement.expression.operatorToken.kind);
+    Assert.True(isIdentifier(statement.expression.left));
+    Assert.True(isBinaryExpression(statement.expression.right));
+    if (!isBinaryExpression(statement.expression.right)) throw new Exception("unreachable");
+    Assert.Equal(Kind.AsteriskToken, statement.expression.right.operatorToken.kind);
+    Assert.True(isNumericLiteral(statement.expression.right.right));
+  }
 
-  it("round-trips parenthesized expressions as explicit AST nodes", () => {
+  round_trips_parenthesized_expressions_as_explicit_ast_nodes(): void {
     const sourceFile = parseSourceFile("(a + 1);");
     const statement = sourceFile.statements[0]!;
-    if (!isExpressionStatement(statement)) {
-      throw new Error("Expected expression statement");
-    }
+    if (!isExpressionStatement(statement)) throw new Exception("Expected expression statement");
 
-    assert.equal(isParenthesizedExpression(statement.expression), true);
-  });
+    Assert.True(isParenthesizedExpression(statement.expression));
+  }
 
-  it("is consumable through generated child traversal", () => {
+  is_consumable_through_generated_child_traversal(): void {
     const sourceFile = parseSourceFile("a + 1;");
     const visitedKinds: Kind[] = [];
 
-    forEachChild(sourceFile, node => {
+    forEachChild(sourceFile, (node) => {
       visitedKinds.push(node.kind);
       return undefined;
     });
 
-    assert.deepEqual(visitedKinds, [Kind.ExpressionStatement, Kind.EndOfFile]);
-  });
+    Assert.Equal<readonly Kind[]>([Kind.ExpressionStatement, Kind.EndOfFile], visitedKinds);
+  }
 
-  it("produces TS-Go variable declaration lists with exact flags and typed initializers", () => {
+  produces_ts_go_variable_declaration_lists_with_exact_flags_and_typed_initializers(): void {
     const sourceFile = parseSourceFile("export const answer: number = 42;");
     const statement = sourceFile.statements[0]!;
 
-    assert.equal(isVariableStatement(statement), true);
-    if (!isVariableStatement(statement)) throw new Error("Expected variable statement");
-    assert.equal(statement.modifiers?.[0]?.kind, Kind.ExportKeyword);
-    assert.equal(statement.declarationList.flags, NodeFlags.Const);
+    Assert.True(isVariableStatement(statement));
+    if (!isVariableStatement(statement)) throw new Exception("Expected variable statement");
+    Assert.Equal(Kind.ExportKeyword, statement.modifiers?.[0]?.kind);
+    Assert.Equal(NodeFlags.Const, statement.declarationList.flags);
 
     const declaration = statement.declarationList.declarations[0]!;
-    assert.equal(isIdentifier(declaration.name), true);
-    assert.equal(declaration.name.parent, declaration);
-    assert.equal(isKeywordTypeNode(declaration.type!), true);
-    assert.equal(declaration.type!.kind, Kind.NumberKeyword);
-    assert.equal(isNumericLiteral(declaration.initializer!), true);
-  });
+    Assert.True(isIdentifier(declaration.name));
+    Assert.Equal(declaration, declaration.name.parent);
+    Assert.True(isKeywordTypeNode(declaration.type!));
+    Assert.Equal(Kind.NumberKeyword, declaration.type!.kind);
+    Assert.True(isNumericLiteral(declaration.initializer!));
+  }
 
-  it("produces function declarations with parameters, return types, and return statements", () => {
+  produces_function_declarations_with_parameters_return_types_and_return_statements(): void {
     const sourceFile = parseSourceFile("function add(a: number, b: number): number { return a + b; }");
     const statement = sourceFile.statements[0]!;
 
-    assert.equal(isFunctionDeclaration(statement), true);
-    if (!isFunctionDeclaration(statement)) throw new Error("Expected function declaration");
-    assert.equal(statement.name?.text, "add");
-    assert.equal(statement.parameters.length, 2);
-    assert.equal(statement.parameters[0]!.parent, statement);
-    assert.equal(statement.parameters[0]!.type?.kind, Kind.NumberKeyword);
-    assert.equal(statement.type?.kind, Kind.NumberKeyword);
-    assert.equal(isBlock(statement.body!), true);
+    Assert.True(isFunctionDeclaration(statement));
+    if (!isFunctionDeclaration(statement)) throw new Exception("Expected function declaration");
+    Assert.Equal("add", statement.name?.text);
+    Assert.Equal(2, statement.parameters.length);
+    Assert.Equal(statement, statement.parameters[0]!.parent);
+    Assert.Equal(Kind.NumberKeyword, statement.parameters[0]!.type?.kind);
+    Assert.Equal(Kind.NumberKeyword, statement.type?.kind);
+    Assert.True(isBlock(statement.body!));
 
     const returnStatement = statement.body!.statements[0]!;
-    assert.equal(isReturnStatement(returnStatement), true);
-    if (!isReturnStatement(returnStatement)) throw new Error("Expected return statement");
-    assert.equal(isBinaryExpression(returnStatement.expression!), true);
-  });
+    Assert.True(isReturnStatement(returnStatement));
+    if (!isReturnStatement(returnStatement)) throw new Exception("Expected return statement");
+    Assert.True(isBinaryExpression(returnStatement.expression!));
+  }
 
-  it("produces import and export declarations with named bindings", () => {
+  produces_import_and_export_declarations_with_named_bindings(): void {
     const sourceFile = parseSourceFile("import value, { dep as renamed } from \"./dep\"; export { renamed as value };");
     const importDeclaration = sourceFile.statements[0]!;
     const exportDeclaration = sourceFile.statements[1]!;
 
-    assert.equal(isImportDeclaration(importDeclaration), true);
-    if (!isImportDeclaration(importDeclaration)) throw new Error("Expected import declaration");
-    assert.equal(importDeclaration.importClause?.name?.text, "value");
-    assert.equal(isNamedImports(importDeclaration.importClause!.namedBindings!), true);
-    if (!isNamedImports(importDeclaration.importClause!.namedBindings!)) throw new Error("Expected named imports");
-    assert.equal(importDeclaration.importClause!.namedBindings.elements[0]!.propertyName?.text, "dep");
-    assert.equal(importDeclaration.importClause!.namedBindings.elements[0]!.name.text, "renamed");
+    Assert.True(isImportDeclaration(importDeclaration));
+    if (!isImportDeclaration(importDeclaration)) throw new Exception("Expected import declaration");
+    Assert.Equal("value", importDeclaration.importClause?.name?.text);
+    Assert.True(isNamedImports(importDeclaration.importClause!.namedBindings!));
+    if (!isNamedImports(importDeclaration.importClause!.namedBindings!)) throw new Exception("Expected named imports");
+    Assert.Equal("dep", importDeclaration.importClause!.namedBindings.elements[0]!.propertyName?.text);
+    Assert.Equal("renamed", importDeclaration.importClause!.namedBindings.elements[0]!.name.text);
 
-    assert.equal(isExportDeclaration(exportDeclaration), true);
-    if (!isExportDeclaration(exportDeclaration)) throw new Error("Expected export declaration");
-    assert.equal(isNamedExports(exportDeclaration.exportClause!), true);
-    if (!isNamedExports(exportDeclaration.exportClause!)) throw new Error("Expected named exports");
-    assert.equal(exportDeclaration.exportClause.elements[0]!.propertyName?.text, "renamed");
-    assert.equal(exportDeclaration.exportClause.elements[0]!.name.text, "value");
-  });
+    Assert.True(isExportDeclaration(exportDeclaration));
+    if (!isExportDeclaration(exportDeclaration)) throw new Exception("Expected export declaration");
+    Assert.True(isNamedExports(exportDeclaration.exportClause!));
+    if (!isNamedExports(exportDeclaration.exportClause!)) throw new Exception("Expected named exports");
+    Assert.Equal("renamed", exportDeclaration.exportClause.elements[0]!.propertyName?.text);
+    Assert.Equal("value", exportDeclaration.exportClause.elements[0]!.name.text);
+  }
 
-  it("parses contextual import/export names and star re-exports", () => {
+  parses_contextual_import_export_names_and_star_re_exports(): void {
     const sourceFile = parseSourceFile([
       "import assert from \"node:assert/strict\";",
       "import type { type RuntimeShape, default as fallback } from \"./runtime.js\";",
@@ -168,188 +168,190 @@ describe("TS-Go parser groundwork", () => {
     const typeImport = sourceFile.statements[1]!;
     const starExport = sourceFile.statements[2]!;
 
-    assert.equal(isImportDeclaration(defaultImport), true);
-    if (!isImportDeclaration(defaultImport)) throw new Error("Expected default import");
-    assert.equal(defaultImport.importClause?.name?.text, "assert");
+    Assert.True(isImportDeclaration(defaultImport));
+    if (!isImportDeclaration(defaultImport)) throw new Exception("Expected default import");
+    Assert.Equal("assert", defaultImport.importClause?.name?.text);
 
-    assert.equal(isImportDeclaration(typeImport), true);
-    if (!isImportDeclaration(typeImport)) throw new Error("Expected type import");
-    assert.equal(typeImport.importClause?.phaseModifier, Kind.TypeKeyword);
-    assert.equal(isNamedImports(typeImport.importClause!.namedBindings!), true);
-    if (!isNamedImports(typeImport.importClause!.namedBindings!)) throw new Error("Expected named imports");
-    assert.equal(typeImport.importClause!.namedBindings.elements[0]!.isTypeOnly, true);
-    assert.equal(typeImport.importClause!.namedBindings.elements[0]!.name.text, "RuntimeShape");
-    assert.equal(typeImport.importClause!.namedBindings.elements[1]!.propertyName?.text, "default");
-    assert.equal(typeImport.importClause!.namedBindings.elements[1]!.name.text, "fallback");
+    Assert.True(isImportDeclaration(typeImport));
+    if (!isImportDeclaration(typeImport)) throw new Exception("Expected type import");
+    Assert.Equal(Kind.TypeKeyword, typeImport.importClause?.phaseModifier);
+    Assert.True(isNamedImports(typeImport.importClause!.namedBindings!));
+    if (!isNamedImports(typeImport.importClause!.namedBindings!)) throw new Exception("Expected named imports");
+    Assert.True(typeImport.importClause!.namedBindings.elements[0]!.isTypeOnly);
+    Assert.Equal("RuntimeShape", typeImport.importClause!.namedBindings.elements[0]!.name.text);
+    Assert.Equal("default", typeImport.importClause!.namedBindings.elements[1]!.propertyName?.text);
+    Assert.Equal("fallback", typeImport.importClause!.namedBindings.elements[1]!.name.text);
 
-    assert.equal(isExportDeclaration(starExport), true);
-    if (!isExportDeclaration(starExport)) throw new Error("Expected star export");
-    assert.equal(starExport.exportClause, undefined);
-    assert.equal(isStringLiteral(starExport.moduleSpecifier!), true);
-    if (!isStringLiteral(starExport.moduleSpecifier!)) throw new Error("Expected string literal module specifier");
-    assert.equal(starExport.moduleSpecifier.text, "./generated/kind.js");
-  });
+    Assert.True(isExportDeclaration(starExport));
+    if (!isExportDeclaration(starExport)) throw new Exception("Expected star export");
+    Assert.Null(starExport.exportClause);
+    Assert.True(isStringLiteral(starExport.moduleSpecifier!));
+    if (!isStringLiteral(starExport.moduleSpecifier!)) throw new Exception("Expected string literal module specifier");
+    Assert.Equal("./generated/kind.js", starExport.moduleSpecifier.text);
+  }
 
-  it("parses const assertions as contextual type references", () => {
+  parses_const_assertions_as_contextual_type_references(): void {
     const sourceFile = parseSourceFile("const values = [1, 2] as const;");
     const statement = sourceFile.statements[0]!;
-    if (!isVariableStatement(statement)) throw new Error("Expected variable statement");
+    if (!isVariableStatement(statement)) throw new Exception("Expected variable statement");
     const initializer = statement.declarationList.declarations[0]!.initializer;
 
-    assert.equal(isAsExpression(initializer!), true);
-    if (!isAsExpression(initializer!)) throw new Error("Expected as expression");
-    assert.equal(isTypeReferenceNode(initializer.type), true);
-    if (!isTypeReferenceNode(initializer.type)) throw new Error("Expected type reference");
-    assert.equal(initializer.type.typeName.kind, Kind.Identifier);
-    assert.equal(initializer.type.typeName.text, "const");
-  });
+    Assert.True(isAsExpression(initializer!));
+    if (!isAsExpression(initializer!)) throw new Exception("Expected as expression");
+    Assert.True(isTypeReferenceNode(initializer.type));
+    if (!isTypeReferenceNode(initializer.type)) throw new Exception("Expected type reference");
+    const typeName = initializer.type.typeName;
+    Assert.True(isIdentifier(typeName));
+    if (!isIdentifier(typeName)) throw new Exception("Expected identifier type name");
+    Assert.Equal("const", typeName.text);
+  }
 
-  it("produces property access and call expression nodes", () => {
+  produces_property_access_and_call_expression_nodes(): void {
     const sourceFile = parseSourceFile("answer.toFixed(2);");
     const statement = sourceFile.statements[0]!;
-    if (!isExpressionStatement(statement)) throw new Error("Expected expression statement");
+    if (!isExpressionStatement(statement)) throw new Exception("Expected expression statement");
 
-    assert.equal(isCallExpression(statement.expression), true);
-    if (!isCallExpression(statement.expression)) throw new Error("Expected call expression");
-    assert.equal(statement.expression.arguments.length, 1);
-    assert.equal(isPropertyAccessExpression(statement.expression.expression), true);
-    if (!isPropertyAccessExpression(statement.expression.expression)) throw new Error("Expected property access");
-    assert.equal(statement.expression.expression.name.text, "toFixed");
-  });
+    Assert.True(isCallExpression(statement.expression));
+    if (!isCallExpression(statement.expression)) throw new Exception("Expected call expression");
+    Assert.Equal(1, statement.expression.arguments.length);
+    Assert.True(isPropertyAccessExpression(statement.expression.expression));
+    if (!isPropertyAccessExpression(statement.expression.expression)) throw new Exception("Expected property access");
+    Assert.Equal("toFixed", statement.expression.expression.name.text);
+  }
 
-  it("produces type aliases and type literal members with TS-Go declaration nodes", () => {
+  produces_type_aliases_and_type_literal_members(): void {
     const sourceFile = parseSourceFile("export type Box<T> = { value: T; label?: string };");
     const statement = sourceFile.statements[0]!;
 
-    assert.equal(isTypeAliasDeclaration(statement), true);
-    if (!isTypeAliasDeclaration(statement)) throw new Error("Expected type alias");
-    assert.equal(statement.modifiers?.[0]?.kind, Kind.ExportKeyword);
-    assert.equal(statement.name.text, "Box");
-    assert.equal(statement.typeParameters?.[0]?.name.text, "T");
-    assert.equal(isTypeLiteralNode(statement.type), true);
-    if (!isTypeLiteralNode(statement.type)) throw new Error("Expected type literal");
-    assert.equal(statement.type.members.length, 2);
-    assert.equal(isPropertySignatureDeclaration(statement.type.members[0]!), true);
-    assert.equal(isPropertySignatureDeclaration(statement.type.members[1]!), true);
-    if (!isPropertySignatureDeclaration(statement.type.members[1]!)) throw new Error("Expected property signature");
-    assert.equal(statement.type.members[1]!.postfixToken?.kind, Kind.QuestionToken);
-  });
+    Assert.True(isTypeAliasDeclaration(statement));
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias");
+    Assert.Equal(Kind.ExportKeyword, statement.modifiers?.[0]?.kind);
+    Assert.Equal("Box", statement.name.text);
+    Assert.Equal("T", statement.typeParameters?.[0]?.name.text);
+    Assert.True(isTypeLiteralNode(statement.type));
+    if (!isTypeLiteralNode(statement.type)) throw new Exception("Expected type literal");
+    Assert.Equal(2, statement.type.members.length);
+    Assert.True(isPropertySignatureDeclaration(statement.type.members[0]!));
+    Assert.True(isPropertySignatureDeclaration(statement.type.members[1]!));
+    if (!isPropertySignatureDeclaration(statement.type.members[1]!)) throw new Exception("Expected property signature");
+    Assert.Equal(Kind.QuestionToken, statement.type.members[1]!.postfixToken?.kind);
+  }
 
-  it("produces interface declarations with heritage and method signatures", () => {
+  produces_interface_declarations_with_heritage_and_method_signatures(): void {
     const sourceFile = parseSourceFile("interface Named extends Base<string> { id: number; rename(value: string): void; }");
     const statement = sourceFile.statements[0]!;
 
-    assert.equal(isInterfaceDeclaration(statement), true);
-    if (!isInterfaceDeclaration(statement)) throw new Error("Expected interface");
-    assert.equal(statement.name.text, "Named");
-    assert.equal(statement.heritageClauses?.[0]?.token, Kind.ExtendsKeyword);
-    assert.equal(statement.heritageClauses?.[0]?.types[0]?.typeArguments?.[0]?.kind, Kind.StringKeyword);
-    assert.equal(isPropertySignatureDeclaration(statement.members[0]!), true);
-    assert.equal(isMethodSignatureDeclaration(statement.members[1]!), true);
-    if (!isMethodSignatureDeclaration(statement.members[1]!)) throw new Error("Expected method signature");
-    assert.equal(statement.members[1]!.parameters[0]?.name.kind, Kind.Identifier);
-    assert.equal(statement.members[1]!.type?.kind, Kind.VoidKeyword);
-  });
+    Assert.True(isInterfaceDeclaration(statement));
+    if (!isInterfaceDeclaration(statement)) throw new Exception("Expected interface");
+    Assert.Equal("Named", statement.name.text);
+    Assert.Equal(Kind.ExtendsKeyword, statement.heritageClauses?.[0]?.token);
+    Assert.Equal(Kind.StringKeyword, statement.heritageClauses?.[0]?.types[0]?.typeArguments?.[0]?.kind);
+    Assert.True(isPropertySignatureDeclaration(statement.members[0]!));
+    Assert.True(isMethodSignatureDeclaration(statement.members[1]!));
+    if (!isMethodSignatureDeclaration(statement.members[1]!)) throw new Exception("Expected method signature");
+    Assert.Equal(Kind.Identifier, statement.members[1]!.parameters[0]?.name.kind);
+    Assert.Equal(Kind.VoidKeyword, statement.members[1]!.type?.kind);
+  }
 
-  it("produces class declarations with heritage, constructor, methods, and properties", () => {
+  produces_class_declarations_with_heritage_constructor_methods_and_properties(): void {
     const sourceFile = parseSourceFile("export class Box<T> extends Base implements Named { value: T; constructor(value: T) { this.value = value; } getValue(): T { return this.value; } }");
     const statement = sourceFile.statements[0]!;
 
-    assert.equal(isClassDeclaration(statement), true);
-    if (!isClassDeclaration(statement)) throw new Error("Expected class");
-    assert.equal(statement.name?.text, "Box");
-    assert.equal(statement.typeParameters?.[0]?.name.text, "T");
-    assert.equal(statement.heritageClauses?.[0]?.token, Kind.ExtendsKeyword);
-    assert.equal(statement.heritageClauses?.[1]?.token, Kind.ImplementsKeyword);
-    assert.equal(isPropertyDeclaration(statement.members[0]!), true);
-    assert.equal(isConstructorDeclaration(statement.members[1]!), true);
-    assert.equal(isMethodDeclaration(statement.members[2]!), true);
-    if (!isMethodDeclaration(statement.members[2]!)) throw new Error("Expected method");
-    assert.equal(isTypeReferenceNode(statement.members[2]!.type!), true);
-    if (!isTypeReferenceNode(statement.members[2]!.type!)) throw new Error("Expected type reference");
-    assert.equal(statement.members[2]!.type!.typeName.kind, Kind.Identifier);
-  });
+    Assert.True(isClassDeclaration(statement));
+    if (!isClassDeclaration(statement)) throw new Exception("Expected class");
+    Assert.Equal("Box", statement.name?.text);
+    Assert.Equal("T", statement.typeParameters?.[0]?.name.text);
+    Assert.Equal(Kind.ExtendsKeyword, statement.heritageClauses?.[0]?.token);
+    Assert.Equal(Kind.ImplementsKeyword, statement.heritageClauses?.[1]?.token);
+    Assert.True(isPropertyDeclaration(statement.members[0]!));
+    Assert.True(isConstructorDeclaration(statement.members[1]!));
+    Assert.True(isMethodDeclaration(statement.members[2]!));
+    if (!isMethodDeclaration(statement.members[2]!)) throw new Exception("Expected method");
+    Assert.True(isTypeReferenceNode(statement.members[2]!.type!));
+    if (!isTypeReferenceNode(statement.members[2]!.type!)) throw new Exception("Expected type reference");
+    Assert.Equal(Kind.Identifier, statement.members[2]!.type!.typeName.kind);
+  }
 
-  it("produces arrow functions with parameter and return type nodes", () => {
+  produces_arrow_functions_with_parameter_and_return_type_nodes(): void {
     const sourceFile = parseSourceFile("const add = (a: number, b: number): number => a + b;");
     const statement = sourceFile.statements[0]!;
-    if (!isVariableStatement(statement)) throw new Error("Expected variable statement");
+    if (!isVariableStatement(statement)) throw new Exception("Expected variable statement");
     const initializer = statement.declarationList.declarations[0]!.initializer;
 
-    assert.equal(isArrowFunction(initializer!), true);
-    if (!isArrowFunction(initializer!)) throw new Error("Expected arrow function");
-    assert.equal(initializer.parameters.length, 2);
-    assert.equal(initializer.parameters[0]!.type?.kind, Kind.NumberKeyword);
-    assert.equal(initializer.type?.kind, Kind.NumberKeyword);
-    assert.equal(isBinaryExpression(initializer.body), true);
-  });
+    Assert.True(isArrowFunction(initializer!));
+    if (!isArrowFunction(initializer!)) throw new Exception("Expected arrow function");
+    Assert.Equal(2, initializer.parameters.length);
+    Assert.Equal(Kind.NumberKeyword, initializer.parameters[0]!.type?.kind);
+    Assert.Equal(Kind.NumberKeyword, initializer.type?.kind);
+    Assert.True(isBinaryExpression(initializer.body));
+  }
 
-  it("produces loop statements with TS-Go initializer and body nodes", () => {
+  produces_loop_statements_with_ts_go_initializer_and_body_nodes(): void {
     const sourceFile = parseSourceFile("for (let index = 0; index < 3; index += 1) { continue; } for (const item of items) { item; } while (ready) { ready; }");
     const forStatement = sourceFile.statements[0]!;
     const forOfStatement = sourceFile.statements[1]!;
     const whileStatement = sourceFile.statements[2]!;
 
-    assert.equal(isForStatement(forStatement), true);
-    if (!isForStatement(forStatement)) throw new Error("Expected for statement");
-    assert.equal(forStatement.initializer?.kind, Kind.VariableDeclarationList);
-    assert.equal(isBinaryExpression(forStatement.condition!), true);
-    assert.equal(isBinaryExpression(forStatement.incrementor!), true);
-    assert.equal(isBlock(forStatement.statement), true);
-    if (!isBlock(forStatement.statement)) throw new Error("Expected for block");
-    assert.equal(isContinueStatement(forStatement.statement.statements[0]!), true);
+    Assert.True(isForStatement(forStatement));
+    if (!isForStatement(forStatement)) throw new Exception("Expected for statement");
+    Assert.Equal(Kind.VariableDeclarationList, forStatement.initializer?.kind);
+    Assert.True(isBinaryExpression(forStatement.condition!));
+    Assert.True(isBinaryExpression(forStatement.incrementor!));
+    Assert.True(isBlock(forStatement.statement));
+    if (!isBlock(forStatement.statement)) throw new Exception("Expected for block");
+    Assert.True(isContinueStatement(forStatement.statement.statements[0]!));
 
-    assert.equal(isForOfStatement(forOfStatement), true);
-    if (!isForOfStatement(forOfStatement)) throw new Error("Expected for-of statement");
-    assert.equal(forOfStatement.initializer.kind, Kind.VariableDeclarationList);
-    assert.equal(isIdentifier(forOfStatement.expression), true);
+    Assert.True(isForOfStatement(forOfStatement));
+    if (!isForOfStatement(forOfStatement)) throw new Exception("Expected for-of statement");
+    Assert.Equal(Kind.VariableDeclarationList, forOfStatement.initializer.kind);
+    Assert.True(isIdentifier(forOfStatement.expression));
 
-    assert.equal(isWhileStatement(whileStatement), true);
-    if (!isWhileStatement(whileStatement)) throw new Error("Expected while statement");
-    assert.equal(isIdentifier(whileStatement.expression), true);
-  });
+    Assert.True(isWhileStatement(whileStatement));
+    if (!isWhileStatement(whileStatement)) throw new Exception("Expected while statement");
+    Assert.True(isIdentifier(whileStatement.expression));
+  }
 
-  it("produces core access, unary, new, and conditional expression nodes", () => {
+  produces_core_access_unary_new_and_conditional_expression_nodes(): void {
     const sourceFile = parseSourceFile("const value = enabled ? new Box(items[index++], ...rest).value as number : -1;");
     const statement = sourceFile.statements[0]!;
-    if (!isVariableStatement(statement)) throw new Error("Expected variable statement");
+    if (!isVariableStatement(statement)) throw new Exception("Expected variable statement");
     const initializer = statement.declarationList.declarations[0]!.initializer;
 
-    assert.equal(isConditionalExpression(initializer!), true);
-    if (!isConditionalExpression(initializer!)) throw new Error("Expected conditional expression");
-    assert.equal(isIdentifier(initializer.condition), true);
-    assert.equal(isAsExpression(initializer.whenTrue), true);
-    if (!isAsExpression(initializer.whenTrue)) throw new Error("Expected as expression");
-    assert.equal(isPropertyAccessExpression(initializer.whenTrue.expression), true);
-    if (!isPropertyAccessExpression(initializer.whenTrue.expression)) throw new Error("Expected property access");
-    assert.equal(isNewExpression(initializer.whenTrue.expression.expression), true);
-    if (!isNewExpression(initializer.whenTrue.expression.expression)) throw new Error("Expected new expression");
+    Assert.True(isConditionalExpression(initializer!));
+    if (!isConditionalExpression(initializer!)) throw new Exception("Expected conditional expression");
+    Assert.True(isIdentifier(initializer.condition));
+    Assert.True(isAsExpression(initializer.whenTrue));
+    if (!isAsExpression(initializer.whenTrue)) throw new Exception("Expected as expression");
+    Assert.True(isPropertyAccessExpression(initializer.whenTrue.expression));
+    if (!isPropertyAccessExpression(initializer.whenTrue.expression)) throw new Exception("Expected property access");
+    Assert.True(isNewExpression(initializer.whenTrue.expression.expression));
+    if (!isNewExpression(initializer.whenTrue.expression.expression)) throw new Exception("Expected new expression");
     const firstArgument = initializer.whenTrue.expression.expression.arguments?.[0];
-    assert.equal(isElementAccessExpression(firstArgument!), true);
-    if (!isElementAccessExpression(firstArgument!)) throw new Error("Expected element access");
-    assert.equal(isPostfixUnaryExpression(firstArgument.argumentExpression), true);
-    assert.equal(isPrefixUnaryExpression(initializer.whenFalse), true);
-  });
+    Assert.True(isElementAccessExpression(firstArgument!));
+    if (!isElementAccessExpression(firstArgument!)) throw new Exception("Expected element access");
+    Assert.True(isPostfixUnaryExpression(firstArgument.argumentExpression));
+    Assert.True(isPrefixUnaryExpression(initializer.whenFalse));
+  }
 
-  it("produces object and array binding patterns in declarations and parameters", () => {
+  produces_object_and_array_binding_patterns_in_declarations_and_parameters(): void {
     const sourceFile = parseSourceFile("const { id, name: label = \"x\", ...rest } = item; function f([first, second]: string[]) { return first; }");
     const variableStatement = sourceFile.statements[0]!;
     const functionStatement = sourceFile.statements[1]!;
-    if (!isVariableStatement(variableStatement)) throw new Error("Expected variable statement");
-    if (!isFunctionDeclaration(functionStatement)) throw new Error("Expected function statement");
+    if (!isVariableStatement(variableStatement)) throw new Exception("Expected variable statement");
+    if (!isFunctionDeclaration(functionStatement)) throw new Exception("Expected function statement");
 
     const bindingName = variableStatement.declarationList.declarations[0]!.name;
-    assert.equal(isObjectBindingPattern(bindingName), true);
-    if (!isObjectBindingPattern(bindingName)) throw new Error("Expected object binding pattern");
-    assert.equal(bindingName.elements.length, 3);
-    assert.equal(bindingName.elements[1]!.propertyName?.kind, Kind.Identifier);
-    assert.equal(bindingName.elements[1]!.initializer?.kind, Kind.StringLiteral);
-    assert.equal(bindingName.elements[2]!.dotDotDotToken?.kind, Kind.DotDotDotToken);
+    Assert.True(isObjectBindingPattern(bindingName));
+    if (!isObjectBindingPattern(bindingName)) throw new Exception("Expected object binding pattern");
+    Assert.Equal(3, bindingName.elements.length);
+    Assert.Equal(Kind.Identifier, bindingName.elements[1]!.propertyName?.kind);
+    Assert.Equal(Kind.StringLiteral, bindingName.elements[1]!.initializer?.kind);
+    Assert.Equal(Kind.DotDotDotToken, bindingName.elements[2]!.dotDotDotToken?.kind);
 
-    assert.equal(isArrayBindingPattern(functionStatement.parameters[0]!.name), true);
-  });
+    Assert.True(isArrayBindingPattern(functionStatement.parameters[0]!.name));
+  }
 
-  it("parses TS-Go enum, private identifier, and type-predicate surfaces", () => {
+  parses_ts_go_enum_private_identifier_and_type_predicate_surfaces(): void {
     const sourceFile = parseSourceFile([
       "export enum Kind { Unknown = 0, Identifier }",
       "class Box { #value: number = 1; getValue(): number { return this.#value; } }",
@@ -359,28 +361,48 @@ describe("TS-Go parser groundwork", () => {
     const classDeclaration = sourceFile.statements[1]!;
     const predicateFunction = sourceFile.statements[2]!;
 
-    assert.equal(isEnumDeclaration(enumDeclaration), true);
-    if (!isEnumDeclaration(enumDeclaration)) throw new Error("Expected enum declaration");
-    assert.equal(enumDeclaration.members[1]!.name.kind, Kind.Identifier);
+    Assert.True(isEnumDeclaration(enumDeclaration));
+    if (!isEnumDeclaration(enumDeclaration)) throw new Exception("Expected enum declaration");
+    Assert.Equal(Kind.Identifier, enumDeclaration.members[1]!.name.kind);
 
-    assert.equal(isClassDeclaration(classDeclaration), true);
-    if (!isClassDeclaration(classDeclaration)) throw new Error("Expected class declaration");
-    assert.equal(isPropertyDeclaration(classDeclaration.members[0]!), true);
-    if (!isPropertyDeclaration(classDeclaration.members[0]!)) throw new Error("Expected property declaration");
-    assert.equal(isPrivateIdentifier(classDeclaration.members[0]!.name), true);
+    Assert.True(isClassDeclaration(classDeclaration));
+    if (!isClassDeclaration(classDeclaration)) throw new Exception("Expected class declaration");
+    Assert.True(isPropertyDeclaration(classDeclaration.members[0]!));
+    if (!isPropertyDeclaration(classDeclaration.members[0]!)) throw new Exception("Expected property declaration");
+    Assert.True(isPrivateIdentifier(classDeclaration.members[0]!.name));
 
-    assert.equal(isFunctionDeclaration(predicateFunction), true);
-    if (!isFunctionDeclaration(predicateFunction)) throw new Error("Expected predicate function");
-    assert.equal(isTypePredicateNode(predicateFunction.type!), true);
-  });
+    Assert.True(isFunctionDeclaration(predicateFunction));
+    if (!isFunctionDeclaration(predicateFunction)) throw new Exception("Expected predicate function");
+    Assert.True(isTypePredicateNode(predicateFunction.type!));
+  }
 
-  it("parses generic function types, try/catch, switch, and throw statements", () => {
+  parses_generic_function_types_try_catch_switch_and_throw_statements(): void {
     const sourceFile = parseSourceFile([
       "type Equal<Actual, Expected> = (<T>() => T extends Actual ? 1 : 2) extends (<T>() => T extends Expected ? 1 : 2) ? true : false;",
       "try { throw new Error(\"x\"); } catch (error) { switch (error) { default: break; } }",
     ].join("\n"));
 
-    assert.equal(isTypeAliasDeclaration(sourceFile.statements[0]!), true);
-    assert.equal(sourceFile.statements[1]!.kind, Kind.TryStatement);
-  });
-});
+    Assert.True(isTypeAliasDeclaration(sourceFile.statements[0]!));
+    Assert.Equal(Kind.TryStatement, sourceFile.statements[1]!.kind);
+  }
+}
+
+A<ParserGroundworkTests>().method((t) => t.produces_a_source_file_with_expression_statements).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.preserves_binary_precedence_in_ast_shape).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.round_trips_parenthesized_expressions_as_explicit_ast_nodes).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.is_consumable_through_generated_child_traversal).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.produces_ts_go_variable_declaration_lists_with_exact_flags_and_typed_initializers).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.produces_function_declarations_with_parameters_return_types_and_return_statements).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.produces_import_and_export_declarations_with_named_bindings).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.parses_contextual_import_export_names_and_star_re_exports).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.parses_const_assertions_as_contextual_type_references).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.produces_property_access_and_call_expression_nodes).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.produces_type_aliases_and_type_literal_members).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.produces_interface_declarations_with_heritage_and_method_signatures).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.produces_class_declarations_with_heritage_constructor_methods_and_properties).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.produces_arrow_functions_with_parameter_and_return_type_nodes).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.produces_loop_statements_with_ts_go_initializer_and_body_nodes).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.produces_core_access_unary_new_and_conditional_expression_nodes).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.produces_object_and_array_binding_patterns_in_declarations_and_parameters).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.parses_ts_go_enum_private_identifier_and_type_predicate_surfaces).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.parses_generic_function_types_try_catch_switch_and_throw_statements).add(FactAttribute);
