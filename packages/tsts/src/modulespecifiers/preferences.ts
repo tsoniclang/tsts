@@ -76,6 +76,7 @@ function moduleResolutionIsNodeNextFamily(k: ModuleResolutionKind): boolean {
 export interface TspathHelpers {
   isDeclarationFileName(fileName: string): boolean;
   pathIsRelative(path: string): boolean;
+  pathIsAbsolute(path: string): boolean;
   hasTSFileExtension(path: string): boolean;
   hasJSFileExtension(path: string): boolean;
   fileExtensionIsOneOf(path: string, extensions: readonly string[]): boolean;

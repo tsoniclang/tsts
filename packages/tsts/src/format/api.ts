@@ -62,8 +62,9 @@ export interface FormatCodeSettings {
   readonly insertSpaceBeforeTypeAnnotation?: boolean;
   readonly indentMultiLineObjectLiteralBeginningOnBlankLine?: boolean;
   readonly indentSwitchCase?: boolean;
+  readonly baseIndentSize?: number;
   readonly semicolons?: "ignore" | "insert" | "remove";
-  readonly indentStyle?: "none" | "block" | "smart";
+  readonly indentStyle?: "none" | "block" | "smart" | number;
   readonly trimTrailingWhitespace?: boolean;
 }
 

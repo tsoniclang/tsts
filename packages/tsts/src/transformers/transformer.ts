@@ -76,6 +76,8 @@ export interface EmitContext {
   // Original-node mapping
   original(node: AstNode): AstNode | undefined;
   unsetOriginal(node: AstNode): void;
+  addSyntheticTrailingComment(node: AstNode, kind: number, text: string, hasTrailingNewLine?: boolean): void;
+  addSyntheticLeadingComment(node: AstNode, kind: number, text: string, hasTrailingNewLine?: boolean): void;
 }
 
 /**
@@ -131,7 +133,7 @@ export interface NodeFactory {
   newStringLiteral(text: string, flags?: number): AstNode;
   newStringLiteralFromNode(textSourceNode: AstNode): AstNode;
   newNumericLiteral(value: string, flags?: number): AstNode;
-  newBigIntLiteral(value: string): AstNode;
+  newBigIntLiteral(value: string, flags?: number): AstNode;
   newRegularExpressionLiteral(text: string): AstNode;
   newNoSubstitutionTemplateLiteral(text: string, rawText: string | undefined): AstNode;
   newTemplateExpression(head: AstNode, spans: readonly AstNode[]): AstNode;
@@ -316,6 +318,7 @@ export interface NodeFactory {
   newGeneratorHelper(body: AstNode): AstNode;
   newCreateBindingHelper(moduleExpression: AstNode, inputName: AstNode, outputName?: AstNode): AstNode;
   createForOfBindingStatement(node: AstNode, value: AstNode): AstNode;
+  restoreOuterExpressions(...args: unknown[]): AstNode;
   newSetModuleDefaultHelper(targetObject: AstNode, value: AstNode): AstNode;
 
   // ---- Misc node types ----

@@ -296,7 +296,7 @@ export function tryGetModuleNameFromAmbientModule(
     }
     let exportSymbol = checker.getSymbolAtLocation(exportAssignmentDeclExpression(exportAssignmentDecl));
     if (exportSymbol === undefined) continue;
-    if ((exportSymbol.flags & SymbolFlagsAlias) !== 0) {
+    if (((exportSymbol.flags ?? 0) & SymbolFlagsAlias) !== 0) {
       const aliased = checker.getAliasedSymbol(exportSymbol);
       if (aliased !== undefined) exportSymbol = aliased;
     }
@@ -1149,7 +1149,10 @@ export function tryGetModuleNameFromPackageJsonImports(
   const info = host.getPackageJsonInfo(packageJsonPath) as PackageJsonInfo | undefined;
   if (info === undefined) return "";
 
-  const imports = info.getContents().fields.imports;
+  const fields = info.getContents().fields;
+  if (fields === undefined) return "";
+  const imports = fields.imports;
+  if (imports === undefined) return "";
   switch (imports.type) {
     case "not-present":
     case "array":

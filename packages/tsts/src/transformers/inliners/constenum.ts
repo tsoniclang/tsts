@@ -24,12 +24,12 @@ export class ConstEnumInliningTransformer extends Transformer {
 
   constructor(opts: TransformOptions) {
     super();
-    this.compilerOptions = opts.compilerOptions;
+    this.compilerOptions = opts.compilerOptions as unknown as CompilerOptions;
     if (compilerOptionsGetIsolatedModules(this.compilerOptions)) {
       throw new Error("const enums are not inlined under isolated modules");
     }
     this.currentSourceFile = undefined;
-    this.emitResolver = opts.emitResolver;
+    this.emitResolver = opts.emitResolver as unknown as EmitResolver;
     this.initTransformer((node) => this.visit(node), opts.context);
   }
 
