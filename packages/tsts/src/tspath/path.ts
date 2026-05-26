@@ -639,3 +639,332 @@ export function getRelativePathToDirectoryOrUrl(
   }
   return getPathFromPathComponents(pathComponents);
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// Ancestor-directory traversal
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Walks ancestor directories from `directory` outward, invoking
+ * `callback` for each. Stops when `callback` returns `[result, true]`.
+ * Returns `{ result, ok }` where `ok` indicates whether `callback`
+ * signaled a stop. Mirrors TS-Go `ForEachAncestorDirectory`.
+ */
+export function forEachAncestorDirectory<T>(
+  directory: string,
+  callback: (directory: string) => { result: T; stop: boolean },
+): { result: T | undefined; ok: boolean } {
+  let dir = directory;
+  for (;;) {
+    const { result, stop } = callback(dir);
+    if (stop) return { result, ok: true };
+    const parent = getDirectoryPath(dir);
+    if (parent === dir) return { result: undefined, ok: false };
+    dir = parent;
+  }
+}
+
+/**
+ * Variant that stops walking past the global cache location.
+ * Mirrors TS-Go `ForEachAncestorDirectoryStoppingAtGlobalCache`.
+ */
+export function forEachAncestorDirectoryStoppingAtGlobalCache<T>(
+  globalCacheLocation: string,
+  directory: string,
+  callback: (directory: string) => { result: T; stop: boolean },
+): T | undefined {
+  const { result } = forEachAncestorDirectory<T>(directory, (ancestor) => {
+    const r = callback(ancestor);
+    if (r.stop || ancestor === globalCacheLocation) {
+      return { result: r.result, stop: true };
+    }
+    return { result: r.result, stop: false };
+  });
+  return result;
+}
+
+/** Path-typed variant; mirrors TS-Go `ForEachAncestorDirectoryPath`. */
+export function forEachAncestorDirectoryPath<T>(
+  directory: Path,
+  callback: (directory: Path) => { result: T; stop: boolean },
+): { result: T | undefined; ok: boolean } {
+  return forEachAncestorDirectory(directory, (d) => callback(d as Path));
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Extension helpers (workers + try variants)
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Worker for `getAnyExtensionFromPath`. Mirrors TS-Go
+ * `getAnyExtensionFromPathWorker`.
+ */
+export function getAnyExtensionFromPathWorker(
+  path: string,
+  extensions: readonly string[],
+  stringEqualityComparer: (a: string, b: string) => boolean,
+): string {
+  for (const extension of extensions) {
+    const result = tryGetExtensionFromPath(path, extension, stringEqualityComparer);
+    if (result !== "") return result;
+  }
+  return "";
+}
+
+/** Mirrors TS-Go `tryGetExtensionFromPath`. */
+export function tryGetExtensionFromPath(
+  path: string,
+  extension: string,
+  stringEqualityComparer: (a: string, b: string) => boolean,
+): string {
+  let ext = extension;
+  if (!ext.startsWith(".")) ext = "." + ext;
+  if (path.length >= ext.length && path[path.length - ext.length] === ".") {
+    const pathExtension = path.slice(path.length - ext.length);
+    if (stringEqualityComparer(pathExtension, ext)) return pathExtension;
+  }
+  return "";
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// hasRelativePathSegment / simpleNormalizePath
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Reports whether `p` contains `.`, `..`, `./`, `../`, `/.`, `/..`,
+ * `//`, `/./`, or `/../`. Mirrors TS-Go `hasRelativePathSegment`.
+ */
+export function hasRelativePathSegment(p: string): boolean {
+  const n = p.length;
+  if (n === 0) return false;
+  if (p === "." || p === "..") return true;
+  if (p.charCodeAt(0) === 0x2E) {
+    if (n >= 2 && p.charCodeAt(1) === 0x2F) return true;
+    if (n >= 3 && p.charCodeAt(1) === 0x2E && p.charCodeAt(2) === 0x2F) return true;
+  }
+  if (p.charCodeAt(n - 1) === 0x2E) {
+    if (n >= 2 && p.charCodeAt(n - 2) === 0x2F) return true;
+    if (n >= 3 && p.charCodeAt(n - 2) === 0x2E && p.charCodeAt(n - 3) === 0x2F) return true;
+  }
+  let prevSlash = false;
+  let segLen = 0;
+  let dotCount = 0; // -1 means "not all dots"
+  for (let i = 0; i < n; i++) {
+    const c = p.charCodeAt(i);
+    if (c === 0x2F) {
+      if (prevSlash) return true;
+      if ((segLen === 1 && dotCount === 1) || (segLen === 2 && dotCount === 2)) return true;
+      prevSlash = true;
+      segLen = 0;
+      dotCount = 0;
+      continue;
+    }
+    if (c === 0x2E) {
+      if (dotCount >= 0) dotCount += 1;
+    } else {
+      dotCount = -1;
+    }
+    segLen += 1;
+    prevSlash = false;
+  }
+  return (segLen === 1 && dotCount === 1) || (segLen === 2 && dotCount === 2);
+}
+
+/**
+ * Fast path for paths that need no normalization or only trivial
+ * `./`/`/./` cleanup. Returns `{ normalized, ok }` where ok=false
+ * means the caller must fall back to the full normalizer.
+ *
+ * Mirrors TS-Go `simpleNormalizePath`.
+ */
+export function simpleNormalizePath(path: string): { normalized: string; ok: boolean } {
+  if (!hasRelativePathSegment(path)) return { normalized: path, ok: true };
+  const simplified = path.split("/./").join("/");
+  const trimmed = simplified.startsWith("./") ? simplified.slice(2) : simplified;
+  if (
+    trimmed !== path &&
+    !hasRelativePathSegment(trimmed) &&
+    !(trimmed !== simplified && trimmed.startsWith("/"))
+  ) {
+    return { normalized: trimmed, ok: true };
+  }
+  return { normalized: "", ok: false };
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Common-parent computation
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Returns the smallest set of directories that are parents of all
+ * given paths with at least `minComponents` directory components.
+ * Paths with fewer components are returned in the second tuple value.
+ *
+ * Mirrors TS-Go `GetCommonParents`.
+ */
+export function getCommonParents(
+  paths: readonly string[],
+  minComponents: number,
+  getPathComponentsFn: (path: string, currentDirectory: string) => readonly string[],
+  options: ComparePathsOptions,
+): { parents: readonly string[]; ignored: ReadonlySet<string> } {
+  if (minComponents < 1) throw new Error("minComponents must be at least 1");
+  if (paths.length === 0) return { parents: [], ignored: new Set() };
+  if (paths.length === 1) {
+    const components = reducePathComponents(getPathComponentsFn(paths[0]!, options.currentDirectory));
+    if (components.length < minComponents) return { parents: [], ignored: new Set([paths[0]!]) };
+    return { parents: paths, ignored: new Set() };
+  }
+
+  const ignored = new Set<string>();
+  const pathComponents: string[][] = [];
+  for (const path of paths) {
+    const components = reducePathComponents(getPathComponentsFn(path, options.currentDirectory));
+    if (components.length < minComponents) ignored.add(path);
+    else pathComponents.push([...components]);
+  }
+
+  const results = getCommonParentsWorker(pathComponents, minComponents, options);
+  return { parents: results.map((c) => getPathFromPathComponents(c)), ignored };
+}
+
+function getCommonParentsWorker(
+  componentGroups: string[][],
+  minComponents: number,
+  options: ComparePathsOptions,
+): string[][] {
+  if (componentGroups.length === 0) return [];
+
+  let maxDepth = componentGroups[0]!.length;
+  for (let i = 1; i < componentGroups.length; i++) {
+    const l = componentGroups[i]!.length;
+    if (l < maxDepth) maxDepth = l;
+  }
+
+  const equality = options.useCaseSensitiveFileNames
+    ? (a: string, b: string) => a === b
+    : (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+
+  for (let lastCommonIndex = 0; lastCommonIndex < maxDepth; lastCommonIndex++) {
+    const candidate = componentGroups[0]![lastCommonIndex]!;
+    for (let j = 1; j < componentGroups.length; j++) {
+      const comps = componentGroups[j]!;
+      if (!equality(candidate, comps[lastCommonIndex]!)) {
+        if (lastCommonIndex < minComponents) {
+          const orderedGroups: string[] = [];
+          const newGroups = new Map<string, { head: readonly string[]; tails: string[][] }>();
+          for (const g of componentGroups) {
+            const key = toPath(g[lastCommonIndex]!, options.currentDirectory, options.useCaseSensitiveFileNames);
+            const existing = newGroups.get(key);
+            if (existing === undefined) orderedGroups.push(key);
+            const tails = existing?.tails ?? [];
+            tails.push(g.slice(lastCommonIndex + 1));
+            newGroups.set(key, { head: g.slice(0, lastCommonIndex + 1), tails });
+          }
+          orderedGroups.sort();
+          const result: string[][] = [];
+          for (const key of orderedGroups) {
+            const group = newGroups.get(key)!;
+            const subResults = getCommonParentsWorker(group.tails, minComponents - (lastCommonIndex + 1), options);
+            for (const sr of subResults) result.push([...group.head, ...sr]);
+          }
+          return result;
+        }
+        return [componentGroups[0]!.slice(0, lastCommonIndex)];
+      }
+    }
+  }
+  return [componentGroups[0]!.slice(0, maxDepth)];
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// reducePathComponents
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Reduces path components by collapsing `.` and `..` entries.
+ * Mirrors TS-Go `reducePathComponents`.
+ */
+export function reducePathComponents(components: readonly string[]): readonly string[] {
+  if (components.length === 0) return [];
+  const reduced: string[] = [components[0]!];
+  for (let i = 1; i < components.length; i++) {
+    const component = components[i]!;
+    if (component === "") continue;
+    if (component === ".") continue;
+    if (component === "..") {
+      if (reduced.length > 1) {
+        if (reduced[reduced.length - 1] !== "..") {
+          reduced.pop();
+          continue;
+        }
+      } else if (reduced[0] !== "") continue;
+    }
+    reduced.push(component);
+  }
+  return reduced;
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// pathComponents / getNormalizedPathComponentsFromCombined
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Splits a path into root + segments, mirroring TS-Go `pathComponents`.
+ */
+export function pathComponents(path: string, rootLength: number): string[] {
+  const root = path.slice(0, rootLength);
+  const rest = path.slice(rootLength).split("/").filter((s) => s.length > 0);
+  return [root, ...rest];
+}
+
+/**
+ * Mirrors TS-Go `getNormalizedPathComponentsFromCombined`. Internal
+ * helper used by `getNormalizedPathComponents`.
+ */
+export function getNormalizedPathComponentsFromCombined(path: string): readonly string[] {
+  return reducePathComponents(getPathComponents(path, ""));
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Misc
+// ────────────────────────────────────────────────────────────────────────────
+
+/** Mirrors TS-Go `StartsWithDirectory`. */
+export function startsWithDirectory(
+  fileName: string,
+  directoryName: string,
+  useCaseSensitiveFileNames: boolean,
+): boolean {
+  if (directoryName === "") return false;
+  const cFile = getCanonicalFileName(fileName, useCaseSensitiveFileNames);
+  let cDir = getCanonicalFileName(directoryName, useCaseSensitiveFileNames);
+  if (cDir.endsWith("/")) cDir = cDir.slice(0, -1);
+  if (cDir.endsWith("\\")) cDir = cDir.slice(0, -1);
+  return cFile.startsWith(cDir + "/") || cFile.startsWith(cDir + "\\");
+}
+
+/** Mirrors TS-Go `CompareNumberOfDirectorySeparators`. */
+export function compareNumberOfDirectorySeparators(path1: string, path2: string): number {
+  const c1 = countChar(path1, "/");
+  const c2 = countChar(path2, "/");
+  if (c1 < c2) return -1;
+  if (c1 > c2) return 1;
+  return 0;
+}
+
+function countChar(s: string, ch: string): number {
+  let count = 0;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === ch) count++;
+  }
+  return count;
+}
+
+/** Mirrors TS-Go `SplitVolumePath`. */
+export function splitVolumePath(path: string): { volume: string; rest: string; ok: boolean } {
+  if (path.length >= 2 && isVolumeCharacter(path[0]!) && path[1] === ":") {
+    return { volume: path.slice(0, 2).toLowerCase(), rest: path.slice(2), ok: true };
+  }
+  return { volume: "", rest: path, ok: false };
+}
