@@ -41,7 +41,7 @@ import {
   isSimpleInlineableExpression,
   rewriteModuleSpecifier,
 } from "./utilities.js";
-import type { Node as AstNode, SourceFile, IdentifierNode, ImportDeclaration, ImportEqualsDeclaration, ExportDeclaration, ExportAssignment, FunctionDeclaration, ClassDeclaration, VariableStatement, VariableDeclaration, ForStatement, ForInOrOfStatement, DoStatement, WhileStatement, LabeledStatement, WithStatement, IfStatement, SwitchStatement, CaseBlock, TryStatement, CatchClause, Block, ExpressionStatement, VoidExpression, ParenthesizedExpression, PartiallyEmittedExpression, CallExpression, TaggedTemplateExpression, BinaryExpression, PrefixUnaryExpression, PostfixUnaryExpression, ShorthandPropertyAssignment, PropertyAssignment, SpreadAssignment, SpreadElement } from "../../ast/index.js";
+import type { Node as AstNode, SourceFile, IdentifierNode, ImportDeclaration, ImportEqualsDeclaration, ExportDeclaration, ExportAssignment, FunctionDeclaration, ClassDeclaration, VariableStatement, VariableDeclaration, ForStatement, ForInOrOfStatement, DoStatement, WhileStatement, LabeledStatement, WithStatement, IfStatement, SwitchStatement, CaseBlock, TryStatement, CatchClause, Block, ExpressionStatement, VoidExpression, ParenthesizedExpression, PartiallyEmittedExpression, CallExpression, TaggedTemplateExpression, BinaryExpression, PrefixUnaryExpression, PostfixUnaryExpression, ShorthandPropertyAssignment, PropertyAssignment, SpreadAssignment, SpreadElement, NodeList, ModifierList } from "../../ast/index.js";
 
 export class CommonJSModuleTransformer extends Transformer {
   readonly compilerOptions: CompilerOptions;
@@ -63,7 +63,7 @@ export class CommonJSModuleTransformer extends Transformer {
   constructor(opts: TransformOptions) {
     super();
     this.compilerOptions = opts.compilerOptions;
-    this.resolver = opts.resolver;
+    this.resolver = opts.resolver as unknown as ReferenceResolver;
     this.getEmitModuleFormatOfFile = opts.getEmitModuleFormatOfFile as (file: HasFileName) => number;
     this.languageVersion = compilerOptionsGetEmitScriptTarget(this.compilerOptions);
     this.moduleKind = compilerOptionsGetEmitModuleKind(this.compilerOptions);
@@ -765,7 +765,7 @@ export class CommonJSModuleTransformer extends Transformer {
     if (hasSyntacticModifier(node as unknown as AstNode, ModifierFlags.Export)) {
       let variables: AstNode[] = [];
       let expressions: AstNode[] = [];
-      let modifiers: AstNode | undefined;
+      let modifiers: ModifierList | undefined;
 
       const commitVariables = () => {
         if (variables.length > 0) {
@@ -1292,7 +1292,7 @@ export class CommonJSModuleTransformer extends Transformer {
         let expression: AstNode = this.factory().updatePostfixUnaryExpression(node, this.visitor().visitNode(operand), op);
         if (!resultIsDiscarded) {
           temp = this.factory().newTempVariable() as unknown as IdentifierNode;
-          this.emitContext().addVariableDeclaration(temp as unknown as AstNode);
+          this.emitContext().addVariableDeclaration(temp as unknown as IdentifierNode);
           expression = this.factory().newAssignmentExpression(temp as unknown as AstNode, expression);
           this.emitContext().assignCommentAndSourceMapRanges(expression, node as unknown as AstNode);
         }
@@ -1538,7 +1538,7 @@ export class CommonJSModuleTransformer extends Transformer {
       }
       const bindingsSet = new Set<AstNode>();
       const bindings: AstNode[] = [];
-      const declarations = this.resolver.getReferencedValueDeclarations(this.emitContext().mostOriginal(name as unknown as AstNode)!);
+      const declarations = this.resolver.getReferencedValueDeclarations?.(this.emitContext().mostOriginal(name as unknown as AstNode)!);
       if (declarations !== undefined) {
         for (const declaration of declarations) {
           const exportedBindings = this.currentModuleInfo!.exportedBindings.get(declaration);
@@ -1575,8 +1575,8 @@ export function newCommonJSModuleTransformer(opts: TransformOptions): Transforme
 
 interface CompilerOptions { readonly _opts?: unknown; readonly [key: string]: unknown }
 interface ReferenceResolver {
-  getReferencedExportContainer?(node: AstNode, prefixLocals: boolean): AstNode | undefined;
-  getReferencedImportDeclaration?(node: AstNode): AstNode | undefined;
+  getReferencedExportContainer(node: AstNode, prefixLocals: boolean): AstNode | undefined;
+  getReferencedImportDeclaration(node: AstNode): AstNode | undefined;
   getReferencedValueDeclaration(node: AstNode): AstNode | undefined;
   getReferencedValueDeclarations?(node: AstNode): readonly AstNode[] | undefined;
 }
@@ -1679,7 +1679,7 @@ declare function subtreeFacts(node: AstNode): number;
 declare function cloneNode(node: AstNode, factory: unknown): AstNode;
 declare function bindingPatternElements(pattern: AstNode): readonly AstNode[];
 declare function variableStatementDeclarationListRO(node: VariableStatement): AstNode;
-declare function variableStatementModifiers(node: VariableStatement): AstNode | undefined;
+declare function variableStatementModifiers(node: VariableStatement): ModifierList | undefined;
 declare function variableDeclarationListDeclarationsRO(node: AstNode): readonly AstNode[];
 declare function variableDeclarationNameRO(node: VariableDeclaration): AstNode;
 declare function variableDeclarationInitializerRO(node: VariableDeclaration): AstNode | undefined;
@@ -1727,7 +1727,7 @@ declare function ifStatementElse(node: IfStatement): AstNode | undefined;
 declare function switchStatementExpression(node: SwitchStatement): AstNode;
 declare function switchStatementCaseBlock(node: SwitchStatement): AstNode;
 declare function caseClauseExpression(node: AstNode): AstNode | undefined;
-declare function caseClauseStatements(node: AstNode): unknown;
+declare function caseClauseStatements(node: AstNode): NodeList | undefined;
 declare function catchClauseVariableDeclaration(node: CatchClause): AstNode | undefined;
 declare function catchClauseBlock(node: CatchClause): AstNode;
 declare function blockStatementsRO(node: Block): readonly AstNode[];
@@ -1737,7 +1737,7 @@ declare function parenthesizedExpressionRO(node: ParenthesizedExpression): AstNo
 declare function partiallyEmittedExpressionRO(node: PartiallyEmittedExpression): AstNode;
 declare function callExpressionExpressionRO(node: CallExpression): AstNode;
 declare function callExpressionArgumentsRO(node: CallExpression): readonly AstNode[];
-declare function callExpressionArgumentsListRO(node: CallExpression): unknown;
+declare function callExpressionArgumentsListRO(node: CallExpression): NodeList | undefined;
 declare function callExpressionArgumentsLocRO(node: CallExpression): unknown;
 declare function callExpressionQuestionDotTokenRO(node: CallExpression): AstNode | undefined;
 declare function taggedTemplateTagRO(node: TaggedTemplateExpression): AstNode;
@@ -1750,11 +1750,11 @@ declare function prefixUnaryOperatorRO(node: PrefixUnaryExpression): number;
 declare function prefixUnaryOperandRO(node: PrefixUnaryExpression): AstNode;
 declare function postfixUnaryOperatorRO(node: PostfixUnaryExpression): number;
 declare function postfixUnaryOperandRO(node: PostfixUnaryExpression): AstNode;
-declare function shorthandPropertyAssignmentNameRO(node: ShorthandPropertyAssignment): AstNode;
+declare function shorthandPropertyAssignmentNameRO(node: AstNode): IdentifierNode;
 declare function shorthandObjectAssignmentInitializerRO(node: ShorthandPropertyAssignment): AstNode | undefined;
 declare function shorthandEqualsTokenRO(node: ShorthandPropertyAssignment): AstNode | undefined;
 declare function propertyAssignmentNameRO(node: PropertyAssignment): AstNode;
-declare function propertyAssignmentInitializerRO(node: PropertyAssignment): AstNode;
+declare function propertyAssignmentInitializerRO(node: AstNode): AstNode;
 declare function spreadAssignmentExpressionRO(node: SpreadAssignment | AstNode): AstNode;
 declare function spreadElementExpressionRO(node: SpreadElement | AstNode): AstNode;
 declare function objectLiteralProperties(node: AstNode): readonly AstNode[];

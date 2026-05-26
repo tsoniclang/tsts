@@ -47,7 +47,8 @@ export interface EmitContext {
   startVariableEnvironment(): void;
   endVariableEnvironment(): readonly AstNode[];
   endAndMergeVariableEnvironment(statements: readonly AstNode[]): readonly AstNode[];
-  endAndMergeVariableEnvironmentList(statements: readonly AstNode[]): readonly AstNode[];
+  endAndMergeVariableEnvironmentList(statements: readonly AstNode[] | NodeList | undefined): NodeList;
+  mergeEnvironmentList(statements: readonly AstNode[] | NodeList | undefined, declarations: readonly AstNode[]): NodeList;
   addInitializationStatement(node: AstNode): void;
   startLexicalEnvironment(): void;
   endLexicalEnvironment(): readonly AstNode[];
@@ -57,7 +58,7 @@ export interface EmitContext {
   addHoistedFunctionDeclaration(node: AstNode): void;
   mergeEnvironment(statements: readonly AstNode[], declarations: readonly AstNode[]): readonly AstNode[];
   // Visitor convenience accessors (Strada visitor methods on EmitContext)
-  visitParameters(parameters: readonly AstNode[], visitor?: unknown): readonly AstNode[];
+  visitParameters(parameters: readonly AstNode[] | NodeList | undefined, visitor?: unknown): NodeList;
   visitFunctionBody(body: AstNode | undefined, visitor?: unknown): AstNode | undefined;
   visitIterationBody(body: AstNode, visitor?: unknown): AstNode;
   visitEmbeddedStatement(statement: AstNode, visitor?: unknown): AstNode;
@@ -257,14 +258,14 @@ export interface NodeFactory {
   updateWhileStatement(node: AstNode, expression: AstNode, statement: AstNode): AstNode;
   updateIfStatement(node: AstNode, expression: AstNode, thenStatement: AstNode, elseStatement: AstNode | undefined): AstNode;
   updateSwitchStatement(node: AstNode, expression: AstNode, caseBlock: AstNode): AstNode;
-  updateLabeledStatement(node: AstNode, label: IdentifierNode, statement: AstNode): AstNode;
+  updateLabeledStatement(node: AstNode, ...args: unknown[]): AstNode;
   updateReturnStatement(node: AstNode, expression: AstNode | undefined): AstNode;
   updateCatchClause(node: AstNode, variableDeclaration: AstNode | undefined, block: AstNode): AstNode;
   updateCaseOrDefaultClause(node: AstNode, ...args: unknown[]): AstNode;
   updatePartiallyEmittedExpression(node: AstNode, expression: AstNode): AstNode;
   updateParenthesizedExpression(node: AstNode, expression: AstNode): AstNode;
-  updatePrefixUnaryExpression(node: AstNode, operand: AstNode): AstNode;
-  updatePostfixUnaryExpression(node: AstNode, operand: AstNode): AstNode;
+  updatePrefixUnaryExpression(node: AstNode, ...args: unknown[]): AstNode;
+  updatePostfixUnaryExpression(node: AstNode, ...args: unknown[]): AstNode;
   updateSpreadElement(node: AstNode, expression: AstNode): AstNode;
   updateSpreadAssignment(node: AstNode, expression: AstNode): AstNode;
   updatePropertyAssignment(node: AstNode, ...args: unknown[]): AstNode;
@@ -293,7 +294,7 @@ export interface NodeFactory {
 
   // ---- Emit helpers (__decorate, __metadata, __param, __await, etc.) ----
   newAwaitHelper(expression: AstNode): AstNode;
-  newAwaiterHelper(hasLexicalArguments: boolean, hasLexicalThis: boolean, promiseConstructor: AstNode | undefined, body: AstNode): AstNode;
+  newAwaiterHelper(...args: unknown[]): AstNode;
   newAsyncValuesHelper(expression: AstNode): AstNode;
   newDisposeResourcesHelper(envBinding: AstNode): AstNode;
   newImportStarHelper(expression: AstNode): AstNode;
@@ -323,9 +324,9 @@ export interface NodeFactory {
   newMetaProperty(keywordToken: number, name: IdentifierNode): AstNode;
   newFunctionCallCall(target: AstNode, thisArg: AstNode, argumentsList: readonly AstNode[]): AstNode;
   newFunctionApplyCall(target: AstNode, thisArg: AstNode, argumentsExpression: AstNode): AstNode;
-  newTemplateHead(text: string, rawText: string | undefined): AstNode;
-  newTemplateMiddle(text: string, rawText: string | undefined): AstNode;
-  newTemplateTail(text: string, rawText: string | undefined): AstNode;
+  newTemplateHead(...args: unknown[]): AstNode;
+  newTemplateMiddle(...args: unknown[]): AstNode;
+  newTemplateTail(...args: unknown[]): AstNode;
   newTypeCheck(value: AstNode, tag: string): AstNode;
   newArraySliceCall(array: AstNode, start?: number): AstNode;
   newGlobalMethodCall(globalObjectName: string, methodName: string, argumentsList: readonly AstNode[]): AstNode;
@@ -354,8 +355,8 @@ export interface NodeVisitor {
   visitModifiers(modifiers: unknown): unknown;
   visitParameters(parameters: readonly AstNode[]): readonly AstNode[];
   visitFunctionBody(body: AstNode | undefined): AstNode | undefined;
-  visitIterationBody(body: AstNode): AstNode;
-  visitEmbeddedStatement(statement: AstNode): AstNode;
+  visitIterationBody(body: AstNode | undefined): AstNode;
+  visitEmbeddedStatement(statement: AstNode | undefined): AstNode;
 }
 
 /**
@@ -566,7 +567,12 @@ function createDefaultEmitContext(): EmitContext {
     endAndMergeVariableEnvironmentList(statements) {
       const hoisted = hoistedFunctionStack.pop() ?? [];
       variableStack.pop();
-      return [...hoisted, ...statements];
+      const arr = statements === undefined ? [] : [...hoisted, ...(statements as readonly AstNode[])];
+      return arr as unknown as NodeList;
+    },
+    mergeEnvironmentList(statements, declarations) {
+      const arr = statements === undefined ? [...declarations] : [...declarations, ...(statements as readonly AstNode[])];
+      return arr as unknown as NodeList;
     },
     addInitializationStatement(node) {
       const top = hoistedFunctionStack[hoistedFunctionStack.length - 1];

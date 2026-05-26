@@ -646,7 +646,7 @@ export class AsyncTransformer extends Transformer {
     const name = nodeName(node);
     if (name === undefined) return;
     if (isIdentifier(name)) {
-      this.emitContext().addVariableDeclaration(name);
+      this.emitContext().addVariableDeclaration(name as IdentifierNode);
     } else if (isBindingPattern(name)) {
       for (const element of bindingPatternElements(name)) {
         if (!isOmittedExpression(element)) this.hoistVariable(element);
@@ -1096,7 +1096,7 @@ interface SetOfString {
 }
 
 declare function newSetOfString(): SetOfString;
-declare function newOrderedSet<T>(): { add(v: T): void; has(v: T): boolean; readonly size: number };
+declare function newOrderedSet<T>(): Set<T>;
 declare function convertBindingPatternToAssignmentPattern(emitContext: unknown, pattern: AstNode): AstNode;
 
 declare const Kind: {
@@ -1124,14 +1124,14 @@ declare const EmitFlags: {
   StartOnNewLine: number;
   CustomPrologue: number;
 };
-declare const EmitHelpers: { AdvancedAsyncSuper: unknown; AsyncSuper: unknown };
+declare const EmitHelpers: { AdvancedAsyncSuper: AstNode; AsyncSuper: AstNode };
 declare const GeneratedIdentifierFlags: {
   Optimistic: number; FileLevel: number; ReservedInNestedScopes: number;
 };
 
 declare function getFunctionFlags(node: AstNode): number;
 declare function subtreeFacts(node: AstNode): number;
-declare function nodeLoc(node: AstNode): unknown;
+declare function nodeLoc(node: AstNode | undefined): unknown;
 declare function setLoc(node: unknown, loc: unknown): void;
 declare function nodeFlags(node: AstNode): number;
 declare function nodeText(node: AstNode): string;
@@ -1152,8 +1152,8 @@ declare function isPostfixUnaryExpression(node: AstNode): boolean;
 declare function isFunctionLikeDeclaration(node: AstNode): boolean;
 declare function isVariableDeclarationList(node: AstNode): boolean;
 declare function bindingPatternElements(node: AstNode): readonly AstNode[];
-declare function blockStatementList(node: AstNode): NodeArray<AstNode>;
-declare function blockMultiLine(node: AstNode): boolean;
+declare function blockStatementList(node: AstNode | undefined): NodeArray<AstNode>;
+declare function blockMultiLine(node: AstNode | undefined): boolean;
 declare function declModifiers(decl: AstNode): unknown;
 declare function declParameters(decl: AstNode): NodeArray<AstNode>;
 declare function declName(decl: AstNode): AstNode | undefined;
