@@ -1,11 +1,13 @@
 /**
- * Computing import paths for emit (inverse of module resolution).
+ * Module-specifier generation for import statements.
  *
- * Mirrors TS-Go internal/modulespecifiers/.
- *
- * Status: empty placeholder. Port from Go.
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * Port of TS-Go `internal/modulespecifiers/`. Generates the specifier
+ * strings used in `import` statements when emitting TypeScript →
+ * JavaScript (or surfacing auto-imports in the language service).
  */
 
-export {};
+export * from "./types.js";
+export * from "./compare.js";
+export * from "./util.js";
+export * from "./preferences.js";
+export * from "./specifiers.js";
