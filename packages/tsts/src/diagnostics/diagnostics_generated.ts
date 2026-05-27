@@ -2964,6 +2964,60 @@ export const Diagnostics = {
   Print_names_of_files_that_are_part_of_the_compilation_and_then_stop_processing: msg(6505, Category.Message,
     "Print_names_of_files_listFiles_6505",
     "Print names of files that are part of the compilation and then stop processing."),
+
+  // ---------------------------------------------------------------------------
+  // More 2xxx — symbol + value
+  // ---------------------------------------------------------------------------
+  X_0_resolves_to_a_value_but_this_module_was_imported_using_import_type: msg(1379, Category.Error,
+    "_0_resolves_to_a_value_but_this_module_was_imported_using_import_type_1379",
+    "An import declaration cannot have modifiers."),
+  Import_attribute_values_must_be_string_literals: msg(2848, Category.Error,
+    "Import_attribute_values_must_be_string_literals_2848",
+    "Import attribute values must be string literals."),
+  An_export_modifier_can_only_be_applied_to_an_import_declaration_with_a_module_specifier_when_isolatedModules_is_enabled: msg(1205_3 as unknown as number, Category.Error,
+    "An_export_modifier_can_only_be_applied_1205_c",
+    "Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'."),
+  Property_0_does_not_exist_on_type_1_Did_you_mean_to_use_2: msg(2551_2 as unknown as number, Category.Error,
+    "Property_0_does_not_exist_on_type_1_Did_you_mean_2_2551_b",
+    "Property '{0}' does not exist on type '{1}'. Did you mean '{2}'?"),
+  X_0_was_used_before_it_was_declared: msg(2453_2 as unknown as number, Category.Error,
+    "_0_was_used_before_it_was_declared_2453_b",
+    "Block-scoped variable '{0}' used before its declaration."),
+  Cannot_find_module_0_or_its_corresponding_type_declarations_x: msg(2307_2 as unknown as number, Category.Error,
+    "Cannot_find_module_2307_b",
+    "Cannot find module '{0}' or its corresponding type declarations."),
+  Type_0_does_not_satisfy_the_expected_type_1: msg(1360, Category.Error,
+    "Type_0_does_not_satisfy_the_expected_type_1_1360",
+    "Type '{0}' does not satisfy the expected type '{1}'."),
+  This_expression_is_not_callable_Type_0_has_no_call_signatures: msg(2349_3 as unknown as number, Category.Error,
+    "This_expression_is_not_callable_2349_c",
+    "This expression is not callable. Type '{0}' has no call signatures."),
+
+  // ---------------------------------------------------------------------------
+  // 1xxx parser/keyword
+  // ---------------------------------------------------------------------------
+  X_const_must_be_followed_by_an_identifier: msg(1129_2 as unknown as number, Category.Error,
+    "const_must_be_followed_by_an_identifier_1129_b",
+    "Statement expected."),
+  X_default_label_can_only_appear_inside_a_switch_statement: msg(1130_2 as unknown as number, Category.Error,
+    "default_label_can_only_appear_inside_a_switch_statement_1130_b",
+    "'case' or 'default' expected."),
+  X_function_type_is_missing_a_return_type: msg(7011_2 as unknown as number, Category.Error,
+    "function_type_missing_return_type_7011_b",
+    "Function expression, which lacks return-type annotation, implicitly has an '{0}' return type."),
+
+  // ---------------------------------------------------------------------------
+  // More 6xxx + 9xxx
+  // ---------------------------------------------------------------------------
+  Print_the_version_of_TypeScript: msg(6019_2 as unknown as number, Category.Message,
+    "Print_the_version_of_TypeScript_6019_b",
+    "Print the version of TypeScript."),
+  Show_completions_for_the_completion_provider: msg(6201_2 as unknown as number, Category.Message,
+    "Show_completions_for_the_completion_provider_6201_b",
+    "Conflicts are in this file."),
+  This_error_can_t_be_described_by_diagnostic_format_codes: msg(9999, Category.Error,
+    "This_error_cant_be_described_9999",
+    "Internal error. Please file an issue."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
