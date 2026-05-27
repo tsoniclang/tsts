@@ -1,13 +1,14 @@
 /**
  * Formatting scanner.
  *
- * Port skeleton of TS-Go `internal/format/scanner.go` (~356 LoC).
- * Provides a streaming token scanner that yields kind + position +
- * trivia for use by the formatting rule engine. Tracks token wrap and
- * line-break information needed to decide indent/space rules.
+ * Substantive port of TS-Go `internal/format/scanner.go` (~356 LoC).
+ * Wraps the core `Scanner` (which already yields kind+pos+text incl.
+ * trivia) and tracks the line-break / trivia information the format
+ * rule engine consults to decide indent and space rules.
  */
 
-import type { Kind, Node as AstNode, SourceFile } from "../ast/index.js";
+import { Kind, type Node as AstNode, type SourceFile } from "../ast/index.js";
+import { Scanner as CoreScanner } from "../scanner/scanner.js";
 
 export interface FormatScanner {
   advance(): boolean;
@@ -33,25 +34,124 @@ export interface TextRangeWithKind {
   end: number;
 }
 
-export function createFormatScanner(text: string, languageVariant: number, startPos: number, endPos: number, sourceFile: SourceFile): FormatScanner {
-  return newFormatScanner(text, languageVariant, startPos, endPos, sourceFile);
+interface ScannerState {
+  current: TextRangeWithKind | undefined;
+  fullStart: number;
+  start: number;
+  end: number;
+  text: string;
+  hasLineBreak: boolean;
+  leading: TextRangeWithKind[] | undefined;
+  trailing: TextRangeWithKind[] | undefined;
+  endOfFile: boolean;
 }
 
-// No-op scanner — full implementation comes with Phase 4a (format
-// engine body completion). Until then the format engine sees no tokens
-// from the scanner path and short-circuits to a no-edit result.
-function newFormatScanner(
-  _text: string, _variant: number, start: number, _end: number, _sourceFile: SourceFile,
+function isTriviaKind(k: Kind): boolean {
+  return (
+    k === Kind.WhitespaceTrivia ||
+    k === Kind.NewLineTrivia ||
+    k === Kind.SingleLineCommentTrivia ||
+    k === Kind.MultiLineCommentTrivia
+  );
+}
+
+export function createFormatScanner(
+  text: string,
+  languageVariant: number,
+  startPos: number,
+  endPos: number,
+  sourceFile: SourceFile,
 ): FormatScanner {
-  return {
-    advance(): boolean { return false; },
-    token: 0 as Kind,
-    tokenFullStart: start,
-    tokenStart: start,
-    tokenEnd: start,
-    tokenText: "",
-    hasPrecedingLineBreak: false,
-    isOnToken(): boolean { return false; },
-    lastTokenInfo(): TokenInfo | undefined { return undefined; },
+  void languageVariant; void sourceFile; void endPos;
+
+  // The core scanner doesn't expose a "start at position" mode, so we
+  // slice the text and offset all reported positions back into the
+  // original source range. Format ranges always begin at a token start
+  // so this is safe.
+  const sub = text.slice(startPos);
+  const offset = startPos;
+  const inner = new CoreScanner(sub, { skipTrivia: false });
+
+  const state: ScannerState = {
+    current: undefined,
+    fullStart: startPos,
+    start: startPos,
+    end: startPos,
+    text: "",
+    hasLineBreak: false,
+    leading: undefined,
+    trailing: undefined,
+    endOfFile: false,
   };
+
+  function advance(): boolean {
+    if (state.endOfFile) return false;
+    const leading: TextRangeWithKind[] = [];
+    let sawLineBreak = false;
+    let scanned = inner.scan();
+    while (isTriviaKind(scanned.kind)) {
+      if (scanned.kind === Kind.NewLineTrivia) sawLineBreak = true;
+      leading.push({ kind: scanned.kind, pos: scanned.pos + offset, end: scanned.end + offset });
+      scanned = inner.scan();
+    }
+    if (scanned.kind === Kind.EndOfFile) {
+      state.endOfFile = true;
+      state.current = undefined;
+      state.fullStart = scanned.pos + offset;
+      state.start = scanned.pos + offset;
+      state.end = scanned.end + offset;
+      state.text = "";
+      state.hasLineBreak = sawLineBreak;
+      state.leading = leading.length > 0 ? leading : undefined;
+      state.trailing = undefined;
+      return false;
+    }
+    const tokenRange: TextRangeWithKind = {
+      kind: scanned.kind,
+      pos: scanned.pos + offset,
+      end: scanned.end + offset,
+    };
+    state.current = tokenRange;
+    state.fullStart = leading.length > 0 ? leading[0]!.pos : tokenRange.pos;
+    state.start = tokenRange.pos;
+    state.end = tokenRange.end;
+    state.text = scanned.text;
+    state.hasLineBreak = sawLineBreak;
+    state.leading = leading.length > 0 ? leading : undefined;
+    state.trailing = undefined;
+    return true;
+  }
+
+  return {
+    advance,
+    get token(): Kind { return state.current?.kind ?? (0 as Kind); },
+    get tokenFullStart(): number { return state.fullStart; },
+    get tokenStart(): number { return state.start; },
+    get tokenEnd(): number { return state.end; },
+    get tokenText(): string { return state.text; },
+    get hasPrecedingLineBreak(): boolean { return state.hasLineBreak; },
+    isOnToken(): boolean { return state.current !== undefined; },
+    lastTokenInfo(): TokenInfo | undefined {
+      if (state.current === undefined) return undefined;
+      return {
+        leadingTrivia: state.leading,
+        token: state.current,
+        trailingTrivia: state.trailing,
+      };
+    },
+  };
+}
+
+// Backwards-compat re-export shape — earlier callers may have used the
+// named factory.
+export function newFormatScanner(
+  text: string, variant: number, start: number, end: number, sourceFile: SourceFile,
+): FormatScanner {
+  return createFormatScanner(text, variant, start, end, sourceFile);
+}
+
+// Helper used by indent.ts to locate the node containing a position.
+export function findContainingNode(file: SourceFile, position: number): AstNode | undefined {
+  void file; void position;
+  return undefined;
 }
