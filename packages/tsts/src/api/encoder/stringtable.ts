@@ -7,6 +7,8 @@
  * synthesized strings are appended to a side buffer.
  */
 
+import { Kind } from "../../ast/index.js";
+
 export class StringTable {
   readonly fileText: string;
   otherStrings = "";
@@ -69,10 +71,3 @@ export class StringTable {
 export function newStringTable(fileText: string, stringCount: number): StringTable {
   return new StringTable(fileText, stringCount);
 }
-
-declare const Kind: {
-  SourceFile: number;
-  StringLiteral: number;
-  TemplateTail: number;
-  NoSubstitutionTemplateLiteral: number;
-};

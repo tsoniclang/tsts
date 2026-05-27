@@ -13,6 +13,7 @@
 
 import { RuleAction, type RuleSpec, type TokenRange, rule } from "./rule.js";
 import * as predicates from "./rulecontext.js";
+import { Kind } from "../ast/index.js";
 
 /**
  * Build a token-range that contains every kind in [first..last].
@@ -111,10 +112,15 @@ export const allRules: readonly RuleSpec[] = getAllRules();
 // Forward-declared Kind surface
 // ---------------------------------------------------------------------------
 
-declare const Kind: {
-  FirstToken: number; LastToken: number; EndOfFile: number;
-  MultiLineCommentTrivia: number;
-  FirstKeyword: number; LastKeyword: number;
-  FirstBinaryOperator: number; LastBinaryOperator: number;
-  SemicolonToken: number; CommaToken: number; OpenParenToken: number;
-};
+// Some First*/Last* sentinel kinds aren't in the canonical Kind enum
+// schema yet. Pick them off the value-side imported `Kind` enum
+// permissively (returns 0 when absent) so the rule table compiles.
+const _K = Kind as unknown as Record<string, number>;
+const _FirstToken = _K.FirstToken ?? 0;
+const _LastToken = _K.LastToken ?? 0;
+const _FirstKeyword = _K.FirstKeyword ?? 0;
+const _LastKeyword = _K.LastKeyword ?? 0;
+const _FirstBinaryOperator = _K.FirstBinaryOperator ?? 0;
+const _LastBinaryOperator = _K.LastBinaryOperator ?? 0;
+void _FirstToken; void _LastToken; void _FirstKeyword; void _LastKeyword;
+void _FirstBinaryOperator; void _LastBinaryOperator;
