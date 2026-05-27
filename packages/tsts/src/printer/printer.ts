@@ -597,29 +597,257 @@ export class Printer {
     this.writeKeyword("debugger");
     this.writeTrailingSemicolon();
   }
-  emitClassDeclaration(node: AstNode): void { void node; }
-  emitClassExpression(node: AstNode): void { void node; }
-  emitFunctionDeclaration(node: AstNode): void { void node; }
-  emitFunctionExpression(node: AstNode): void { void node; }
-  emitArrowFunction(node: AstNode): void { void node; }
-  emitConstructorDeclaration(node: AstNode): void { void node; }
-  emitMethodDeclaration(node: AstNode): void { void node; }
-  emitPropertyDeclaration(node: AstNode): void { void node; }
-  emitGetAccessor(node: AstNode): void { void node; }
-  emitSetAccessor(node: AstNode): void { void node; }
-  emitInterfaceDeclaration(node: AstNode): void { void node; }
-  emitTypeAliasDeclaration(node: AstNode): void { void node; }
-  emitEnumDeclaration(node: AstNode): void { void node; }
-  emitModuleDeclaration(node: AstNode): void { void node; }
-  emitImportDeclaration(node: AstNode): void { void node; }
-  emitImportClause(node: AstNode): void { void node; }
-  emitNamedImports(node: AstNode): void { void node; }
-  emitImportSpecifier(node: AstNode): void { void node; }
-  emitImportEqualsDeclaration(node: AstNode): void { void node; }
-  emitExportDeclaration(node: AstNode): void { void node; }
-  emitExportAssignment(node: AstNode): void { void node; }
-  emitNamedExports(node: AstNode): void { void node; }
-  emitExportSpecifier(node: AstNode): void { void node; }
+  emitClassDeclaration(node: AstNode): void {
+    this.emitClassLike(node, /*isExpression*/ false);
+  }
+  emitClassExpression(node: AstNode): void {
+    this.emitClassLike(node, /*isExpression*/ true);
+  }
+  private emitClassLike(node: AstNode, isExpression: boolean): void {
+    void isExpression;
+    this.writeKeyword("class");
+    const name = (node as unknown as { name?: AstNode }).name;
+    if (name !== undefined) {
+      this.writeSpace();
+      this.emit(0, name);
+    }
+    const heritageClauses = (node as unknown as { heritageClauses?: { nodes?: readonly AstNode[] } }).heritageClauses?.nodes ?? [];
+    for (const hc of heritageClauses) {
+      this.writeSpace();
+      this.emit(0, hc);
+    }
+    this.writeSpace();
+    this.writePunctuation("{");
+    this.increaseIndent();
+    const members = (node as unknown as { members?: { nodes?: readonly AstNode[] } }).members?.nodes ?? [];
+    for (const m of members) {
+      this.writeLine();
+      this.emit(0, m);
+    }
+    this.decreaseIndent();
+    this.writeLine();
+    this.writePunctuation("}");
+  }
+  emitFunctionDeclaration(node: AstNode): void {
+    this.emitFunctionLike(node, "function ");
+  }
+  emitFunctionExpression(node: AstNode): void {
+    this.emitFunctionLike(node, "function");
+  }
+  private emitFunctionLike(node: AstNode, keyword: string): void {
+    this.writeKeyword(keyword);
+    const asteriskToken = (node as unknown as { asteriskToken?: AstNode }).asteriskToken;
+    if (asteriskToken !== undefined) this.writeOperator("*");
+    const name = (node as unknown as { name?: AstNode }).name;
+    if (name !== undefined) {
+      if (keyword === "function") this.writeSpace();
+      this.emit(0, name);
+    }
+    this.emitParameterList(node);
+    const body = (node as unknown as { body?: AstNode }).body;
+    if (body !== undefined) {
+      this.writeSpace();
+      this.emit(0, body);
+    } else {
+      this.writeTrailingSemicolon();
+    }
+  }
+  emitArrowFunction(node: AstNode): void {
+    this.emitParameterList(node);
+    this.writePunctuation(" => ");
+    const body = (node as unknown as { body?: AstNode }).body;
+    if (body !== undefined) this.emit(0, body);
+  }
+  private emitParameterList(node: AstNode): void {
+    this.writePunctuation("(");
+    const params = (node as unknown as { parameters?: { nodes?: readonly AstNode[] } }).parameters?.nodes ?? [];
+    for (let i = 0; i < params.length; i++) {
+      if (i > 0) this.writePunctuation(", ");
+      this.emit(0, params[i]);
+    }
+    this.writePunctuation(")");
+  }
+  emitConstructorDeclaration(node: AstNode): void {
+    this.writeKeyword("constructor");
+    this.emitParameterList(node);
+    const body = (node as unknown as { body?: AstNode }).body;
+    if (body !== undefined) {
+      this.writeSpace();
+      this.emit(0, body);
+    } else {
+      this.writeTrailingSemicolon();
+    }
+  }
+  emitMethodDeclaration(node: AstNode): void {
+    const asteriskToken = (node as unknown as { asteriskToken?: AstNode }).asteriskToken;
+    if (asteriskToken !== undefined) this.writeOperator("*");
+    const name = (node as unknown as { name?: AstNode }).name;
+    if (name !== undefined) this.emit(0, name);
+    this.emitParameterList(node);
+    const body = (node as unknown as { body?: AstNode }).body;
+    if (body !== undefined) {
+      this.writeSpace();
+      this.emit(0, body);
+    } else {
+      this.writeTrailingSemicolon();
+    }
+  }
+  emitPropertyDeclaration(node: AstNode): void {
+    const name = (node as unknown as { name?: AstNode }).name;
+    if (name !== undefined) this.emit(0, name);
+    const initializer = (node as unknown as { initializer?: AstNode }).initializer;
+    if (initializer !== undefined) {
+      this.writeOperator(" = ");
+      this.emit(0, initializer);
+    }
+    this.writeTrailingSemicolon();
+  }
+  emitGetAccessor(node: AstNode): void {
+    this.writeKeyword("get ");
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+    this.emitParameterList(node);
+    const body = (node as unknown as { body?: AstNode }).body;
+    if (body !== undefined) {
+      this.writeSpace();
+      this.emit(0, body);
+    }
+  }
+  emitSetAccessor(node: AstNode): void {
+    this.writeKeyword("set ");
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+    this.emitParameterList(node);
+    const body = (node as unknown as { body?: AstNode }).body;
+    if (body !== undefined) {
+      this.writeSpace();
+      this.emit(0, body);
+    }
+  }
+  emitInterfaceDeclaration(node: AstNode): void {
+    this.writeKeyword("interface ");
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+    this.writeSpace();
+    this.writePunctuation("{");
+    this.increaseIndent();
+    const members = (node as unknown as { members?: { nodes?: readonly AstNode[] } }).members?.nodes ?? [];
+    for (const m of members) {
+      this.writeLine();
+      this.emit(0, m);
+    }
+    this.decreaseIndent();
+    this.writeLine();
+    this.writePunctuation("}");
+  }
+  emitTypeAliasDeclaration(node: AstNode): void {
+    this.writeKeyword("type ");
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+    this.writeOperator(" = ");
+    this.emit(0, (node as unknown as { type?: AstNode }).type);
+    this.writeTrailingSemicolon();
+  }
+  emitEnumDeclaration(node: AstNode): void {
+    this.writeKeyword("enum ");
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+    this.writeSpace();
+    this.writePunctuation("{");
+    this.increaseIndent();
+    const members = (node as unknown as { members?: { nodes?: readonly AstNode[] } }).members?.nodes ?? [];
+    for (let i = 0; i < members.length; i++) {
+      this.writeLine();
+      this.emit(0, members[i]);
+      if (i < members.length - 1) this.writePunctuation(",");
+    }
+    this.decreaseIndent();
+    this.writeLine();
+    this.writePunctuation("}");
+  }
+  emitModuleDeclaration(node: AstNode): void {
+    this.writeKeyword("namespace ");
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+    const body = (node as unknown as { body?: AstNode }).body;
+    if (body !== undefined) {
+      this.writeSpace();
+      this.emit(0, body);
+    }
+  }
+  emitImportDeclaration(node: AstNode): void {
+    this.writeKeyword("import ");
+    const importClause = (node as unknown as { importClause?: AstNode }).importClause;
+    if (importClause !== undefined) {
+      this.emit(0, importClause);
+      this.writeKeyword(" from ");
+    }
+    this.emit(0, (node as unknown as { moduleSpecifier?: AstNode }).moduleSpecifier);
+    this.writeTrailingSemicolon();
+  }
+  emitImportClause(node: AstNode): void {
+    const name = (node as unknown as { name?: AstNode }).name;
+    if (name !== undefined) this.emit(0, name);
+    const namedBindings = (node as unknown as { namedBindings?: AstNode }).namedBindings;
+    if (namedBindings !== undefined) {
+      if (name !== undefined) this.writePunctuation(", ");
+      this.emit(0, namedBindings);
+    }
+  }
+  emitNamedImports(node: AstNode): void {
+    this.writePunctuation("{ ");
+    const elements = (node as unknown as { elements?: { nodes?: readonly AstNode[] } }).elements?.nodes ?? [];
+    for (let i = 0; i < elements.length; i++) {
+      if (i > 0) this.writePunctuation(", ");
+      this.emit(0, elements[i]);
+    }
+    this.writePunctuation(" }");
+  }
+  emitImportSpecifier(node: AstNode): void {
+    const propertyName = (node as unknown as { propertyName?: AstNode }).propertyName;
+    if (propertyName !== undefined) {
+      this.emit(0, propertyName);
+      this.writeKeyword(" as ");
+    }
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+  }
+  emitImportEqualsDeclaration(node: AstNode): void {
+    this.writeKeyword("import ");
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+    this.writeOperator(" = ");
+    this.emit(0, (node as unknown as { moduleReference?: AstNode }).moduleReference);
+    this.writeTrailingSemicolon();
+  }
+  emitExportDeclaration(node: AstNode): void {
+    this.writeKeyword("export ");
+    const exportClause = (node as unknown as { exportClause?: AstNode }).exportClause;
+    if (exportClause !== undefined) this.emit(0, exportClause);
+    else this.writePunctuation("*");
+    const moduleSpecifier = (node as unknown as { moduleSpecifier?: AstNode }).moduleSpecifier;
+    if (moduleSpecifier !== undefined) {
+      this.writeKeyword(" from ");
+      this.emit(0, moduleSpecifier);
+    }
+    this.writeTrailingSemicolon();
+  }
+  emitExportAssignment(node: AstNode): void {
+    this.writeKeyword("export ");
+    const isExportEquals = (node as unknown as { isExportEquals?: boolean }).isExportEquals;
+    this.writeOperator(isExportEquals === true ? "= " : "default ");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writeTrailingSemicolon();
+  }
+  emitNamedExports(node: AstNode): void {
+    this.writePunctuation("{ ");
+    const elements = (node as unknown as { elements?: { nodes?: readonly AstNode[] } }).elements?.nodes ?? [];
+    for (let i = 0; i < elements.length; i++) {
+      if (i > 0) this.writePunctuation(", ");
+      this.emit(0, elements[i]);
+    }
+    this.writePunctuation(" }");
+  }
+  emitExportSpecifier(node: AstNode): void {
+    const propertyName = (node as unknown as { propertyName?: AstNode }).propertyName;
+    if (propertyName !== undefined) {
+      this.emit(0, propertyName);
+      this.writeKeyword(" as ");
+    }
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+  }
   emitCallExpression(node: AstNode): void {
     this.emit(0, (node as unknown as { expression?: AstNode }).expression);
     const qd = (node as unknown as { questionDotToken?: AstNode }).questionDotToken;
