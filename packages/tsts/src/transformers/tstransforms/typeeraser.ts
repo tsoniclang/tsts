@@ -37,7 +37,8 @@ import {
   getNodeListLength,
 } from "../../ast/index.js";
 import { isIdentifier, isAssertionExpression, isSatisfiesExpression, isStatement } from "../../ast/index.js";
-import { Kind } from "../../ast/index.js";
+import { Kind, getSubtreeFacts } from "../../ast/index.js";
+import { extractModifiers } from "../modifiervisitor.js";
 import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
 import type {
   Node as AstNode,
@@ -541,5 +542,3 @@ interface CompilerOptions {
 
 const SubtreeFacts = { ContainsTypeScript: 1 << 0 } as const;
 const OuterExpressionKinds = { NotAssertionsOrTypeArgs: 0 } as const;
-declare function getSubtreeFacts(node: AstNode): number;
-declare function extractModifiers(ec: unknown, list: unknown, flag: number): unknown;

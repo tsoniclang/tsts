@@ -7,7 +7,31 @@
  */
 
 import type { Node as AstNode, ModifierList } from "../ast/index.js";
+import { Kind } from "../ast/index.js";
+import { ModifierFlags } from "../enums/modifierFlags.enum.js";
 import { Transformer, type EmitContext } from "./transformer.js";
+
+// Map modifier syntax kinds to ModifierFlags bits.
+function modifierToFlag(kind: number): number {
+  switch (kind) {
+    case Kind.PublicKeyword: return ModifierFlags.Public;
+    case Kind.PrivateKeyword: return ModifierFlags.Private;
+    case Kind.ProtectedKeyword: return ModifierFlags.Protected;
+    case Kind.ReadonlyKeyword: return ModifierFlags.Readonly;
+    case Kind.OverrideKeyword: return ModifierFlags.Override;
+    case Kind.ExportKeyword: return ModifierFlags.Export;
+    case Kind.AbstractKeyword: return ModifierFlags.Abstract;
+    case Kind.DeclareKeyword: return ModifierFlags.Ambient;
+    case Kind.StaticKeyword: return ModifierFlags.Static;
+    case Kind.AccessorKeyword: return ModifierFlags.Accessor;
+    case Kind.AsyncKeyword: return ModifierFlags.Async;
+    case Kind.DefaultKeyword: return ModifierFlags.Default;
+    case Kind.ConstKeyword: return ModifierFlags.Const;
+    case Kind.InKeyword: return ModifierFlags.In;
+    case Kind.OutKeyword: return ModifierFlags.Out;
+    default: return ModifierFlags.None;
+  }
+}
 
 class ModifierVisitor extends Transformer {
   readonly allowedModifiers: number;
@@ -41,5 +65,3 @@ export function extractModifiers(
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-declare const ModifierFlags: { None: number };
-declare function modifierToFlag(kind: number): number;

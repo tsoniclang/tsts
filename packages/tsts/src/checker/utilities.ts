@@ -18,6 +18,7 @@ import type {
   ParameterDeclaration,
 } from "../ast/index.js";
 import type { Type } from "./types.js";
+import { Kind, nodeParent } from "../ast/index.js";
 
 // ---------------------------------------------------------------------------
 // Constant-union: AssignmentKind
@@ -218,8 +219,3 @@ export function compareTypeNames(t1: Type, t2: Type): number {
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-declare const Kind: {
-  Identifier: number; GreaterThanToken: number; TypeQuery: number; QualifiedName: number;
-};
-
-declare function nodeParent(node: AstNode): AstNode | undefined;
