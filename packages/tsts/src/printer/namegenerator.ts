@@ -25,12 +25,20 @@ export const GeneratedIdentifierFlags = {
 
 export class NameGenerator {
   reservedNames: Set<string> = new Set();
-  nameCount = 0;
+  scopeReserved: Set<string> = new Set();
+  // Sequential auto-name counters used by the `_a`, `_b`, ... naming.
+  tempVarCounter = 0;
+  // Per-base-name counter for `name_1`, `name_2`.
+  nameCounters: Map<string, number> = new Map();
   generatedNames: Map<AstNode, string> = new Map();
 
+  /**
+   * Generates a name unique under the current reservation set.
+   * Mirrors TS-Go `(*NameGenerator).generateNameWorker`.
+   */
   generateName(kind: GeneratedIdentifierFlags, prefix: string, suffix: string): string {
-    this.nameCount += 1;
-    return `${prefix}_${this.nameCount}${suffix}`;
+    void kind;
+    return this.uniquify(prefix, suffix);
   }
 
   generateNameForNode(node: AstNode, kind: GeneratedIdentifierFlags, prefix: string, suffix: string): string {
@@ -41,24 +49,74 @@ export class NameGenerator {
     this.reservedNames.add(name);
   }
 
+  reserveInScope(name: string): void {
+    this.scopeReserved.add(name);
+  }
+
   isReserved(name: string): boolean {
-    return this.reservedNames.has(name);
+    return this.reservedNames.has(name) || this.scopeReserved.has(name);
+  }
+
+  /**
+   * Returns a fresh name in the form `<prefix>_<n>[<suffix>]` whose
+   * total is not in the reserved set. Mirrors TS-Go `uniquify`.
+   */
+  private uniquify(prefix: string, suffix: string): string {
+    let n = this.nameCounters.get(prefix) ?? 0;
+    while (true) {
+      n += 1;
+      const candidate = `${prefix}_${n}${suffix}`;
+      if (!this.isReserved(candidate)) {
+        this.nameCounters.set(prefix, n);
+        this.reservedNames.add(candidate);
+        return candidate;
+      }
+    }
   }
 
   makeName(prefix: string, suffix: string): IdentifierNode {
-    return { kind: 80, text: `${prefix}_${++this.nameCount}${suffix}` } as unknown as IdentifierNode;
+    return { kind: 80, text: this.uniquify(prefix, suffix) } as unknown as IdentifierNode;
   }
 
+  /**
+   * Generates the next `_a`, `_b`, ..., `_z`, `_aa`, `_ab`, ... temp
+   * variable name (TS-Go's `makeTempVariableName`).
+   */
   makeTempVariable(): IdentifierNode {
-    return this.makeName("_", "");
+    while (true) {
+      const text = this.tempVariableText(this.tempVarCounter);
+      this.tempVarCounter += 1;
+      if (!this.isReserved(text)) {
+        this.reservedNames.add(text);
+        return { kind: 80, text } as unknown as IdentifierNode;
+      }
+    }
+  }
+
+  private tempVariableText(i: number): string {
+    let n = i;
+    let s = "";
+    while (true) {
+      const r = n % 26;
+      s = String.fromCharCode(97 + r) + s;
+      n = Math.floor(n / 26) - 1;
+      if (n < 0) break;
+    }
+    return `_${s}`;
   }
 
   makeUniqueName(text: string): IdentifierNode {
+    if (!this.isReserved(text)) {
+      this.reservedNames.add(text);
+      return { kind: 80, text } as unknown as IdentifierNode;
+    }
     return this.makeName(text, "");
   }
 
   makeFileLevelOptimisticUniqueName(text: string): IdentifierNode {
-    return this.makeName(text, "");
+    // Optimistic naming: try the bare name first (no `_N` suffix). If
+    // already reserved, fall through to the suffix path.
+    return this.makeUniqueName(text);
   }
 
   makeUniqueNameOfKind(text: string, kind: GeneratedIdentifierFlags): IdentifierNode {
@@ -68,7 +126,7 @@ export class NameGenerator {
   getGeneratedNameForNode(node: AstNode, prefix: string, suffix: string): IdentifierNode {
     const existing = this.generatedNames.get(node);
     if (existing !== undefined) return { kind: 80, text: existing } as unknown as IdentifierNode;
-    const name = `${prefix}_${++this.nameCount}${suffix}`;
+    const name = this.uniquify(prefix, suffix);
     this.generatedNames.set(node, name);
     return { kind: 80, text: name } as unknown as IdentifierNode;
   }
