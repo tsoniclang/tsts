@@ -151,10 +151,32 @@ function isBlockContext(ctx: FormattingContext): boolean {
   return kind === Kind.Block || kind === Kind.ModuleBlock || kind === Kind.CaseBlock;
 }
 
-function isBeforeBlockContext(ctx: FormattingContext): boolean {
+export function isBeforeBlockContext(ctx: FormattingContext): boolean {
   const next = ctxNextTokenKind(ctx);
   return next === Kind.OpenBraceToken;
 }
+
+export const isStatementOrDeclarationContext: ContextPredicate = (ctx) => {
+  const k = ctxParentKind(ctx);
+  return (
+    k === Kind.Block ||
+    k === Kind.SourceFile ||
+    k === Kind.ModuleBlock ||
+    k === Kind.CaseClause ||
+    k === Kind.DefaultClause
+  );
+};
+
+export const isNotPropertyAccessExpressionContext: ContextPredicate = (ctx) =>
+  ctxParentKind(ctx) !== Kind.PropertyAccessExpression;
+
+export const isConditionalContext: ContextPredicate = (ctx) =>
+  ctxParentKind(ctx) === Kind.ConditionalExpression;
+
+export const isUnaryContext: ContextPredicate = (ctx) => {
+  const k = ctxParentKind(ctx);
+  return k === Kind.PrefixUnaryExpression || k === Kind.PostfixUnaryExpression;
+};
 
 // ---------------------------------------------------------------------------
 // Misc predicate exports — each follows the same Strada-mirror shape
