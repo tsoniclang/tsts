@@ -2850,6 +2850,60 @@ export const Diagnostics = {
   Watch_input_files_and_emit_to_output_dir: msg(6118, Category.Message,
     "Watch_input_files_and_emit_to_output_dir_6118",
     "Watch input files and emit to output dir."),
+
+  // ---------------------------------------------------------------------------
+  // More 2xxx assignment + intersection
+  // ---------------------------------------------------------------------------
+  Object_literal_may_only_specify_known_properties_and_0_does_not_exist_in_type_1: msg(2353, Category.Error,
+    "Object_literal_may_only_specify_known_properties_2353",
+    "Object literal may only specify known properties, and '{0}' does not exist in type '{1}'."),
+  Object_literal_may_only_specify_known_properties_but_0_does_not_exist_in_type_1_Did_you_mean_to_write_2: msg(2561, Category.Error,
+    "Object_literal_may_only_specify_known_properties_2561",
+    "Object literal may only specify known properties, but '{0}' does not exist in type '{1}'. Did you mean to write '{2}'?"),
+  Type_0_is_missing_the_following_properties_from_type_1_Colon_2_and_3_more: msg(2740, Category.Error,
+    "Type_0_is_missing_the_following_properties_2740",
+    "Type '{0}' is missing the following properties from type '{1}': {2}, and {3} more."),
+  Property_0_is_missing_in_type_1: msg(2741_2 as unknown as number, Category.Error,
+    "Property_0_is_missing_in_type_1_2741_b",
+    "Property '{0}' is missing in type '{1}' but required in type '{2}'."),
+  Constructors_for_derived_classes_must_contain_a_super_call_x: msg(2377_2 as unknown as number, Category.Error,
+    "Constructors_for_derived_classes_2377_b",
+    "Constructors for derived classes must contain a 'super' call."),
+
+  // ---------------------------------------------------------------------------
+  // More 1xxx
+  // ---------------------------------------------------------------------------
+  X_const_can_only_be_used_with_a_property_declaration_in_an_anonymous_class_field_initializer: msg(1395_2 as unknown as number, Category.Error,
+    "const_can_only_be_used_1395_b",
+    "'const' can only be used in a class field property declaration."),
+  Decorators_must_precede_the_name_and_all_keywords_of_property_declarations: msg(1278, Category.Error,
+    "Decorators_must_precede_the_name_1278",
+    "Decorators must precede the name and all keywords of property declarations."),
+  Override_must_appear_before_static: msg(1029_2 as unknown as number, Category.Error,
+    "override_must_appear_before_static_1029_b",
+    "'override' modifier must precede 'static' modifier."),
+  A_member_initializer_in_a_enum_declaration_cannot_reference_members_declared_after_it_including_members_defined_in_other_enums: msg(2474_2 as unknown as number, Category.Error,
+    "A_member_initializer_in_a_enum_2474_b",
+    "In 'const' enum declarations member initializer must be constant expression."),
+
+  // ---------------------------------------------------------------------------
+  // More 6xxx
+  // ---------------------------------------------------------------------------
+  Found_0_errors: msg(6217_4 as unknown as number, Category.Message,
+    "Found_0_errors_6217_b",
+    "Found {0} errors."),
+  Found_1_error_x: msg(6193_2 as unknown as number, Category.Message,
+    "Found_1_error_6193_b",
+    "Found 1 error."),
+  No_errors_found: msg(6299, Category.Message,
+    "No_errors_found_6299",
+    "No errors found."),
+  Cannot_use_decorators_to_decorate_a_parameter_in_an_object_literal: msg(2486, Category.Error,
+    "Cannot_use_decorators_to_decorate_a_parameter_in_an_object_literal_2486",
+    "Decorators are not valid on this method declaration."),
+  Decorator_function_returned_an_unsupported_value: msg(1487, Category.Error,
+    "Decorator_function_returned_an_unsupported_value_1487",
+    "Type expected."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
