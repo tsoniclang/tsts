@@ -174,28 +174,82 @@ export class Checker {
   // Declaration checking
   // -------------------------------------------------------------------------
 
-  checkClassDeclaration(node: AstNode): void { void node; }
-  checkClassExpression(node: AstNode): Type { void node; return {} as Type; }
-  checkClassExpressionDeferred(node: AstNode): void { void node; }
-  checkClassLikeDeclaration(node: AstNode): void { void node; }
-  checkClassStaticBlockDeclaration(node: AstNode): void { void node; }
-  checkInterfaceDeclaration(node: AstNode): void { void node; }
+  checkClassDeclaration(node: AstNode): void { this.checkClassLikeDeclaration(node); }
+  checkClassExpression(node: AstNode): Type {
+    this.checkClassLikeDeclaration(node);
+    return {} as Type;
+  }
+  checkClassExpressionDeferred(node: AstNode): void { this.checkClassLikeDeclaration(node); }
+  checkClassLikeDeclaration(node: AstNode): void {
+    const members = (node as unknown as { members?: { nodes?: readonly AstNode[] } }).members?.nodes;
+    if (members === undefined) return;
+    for (const m of members) {
+      const k = (m as { kind?: number }).kind;
+      if (k === Kind.MethodDeclaration) this.checkMethodDeclaration(m);
+      else if (k === Kind.PropertyDeclaration) this.checkPropertyDeclaration(m);
+      else if (k === Kind.Constructor) this.checkConstructorDeclaration(m);
+      else if (k === Kind.GetAccessor || k === Kind.SetAccessor) this.checkAccessorDeclaration(m);
+      else if (k === Kind.ClassStaticBlockDeclaration) this.checkClassStaticBlockDeclaration(m);
+    }
+  }
+  checkClassStaticBlockDeclaration(node: AstNode): void {
+    const body = (node as unknown as { body?: AstNode }).body;
+    if (body !== undefined) this.checkSourceElement(body);
+  }
+  checkInterfaceDeclaration(node: AstNode): void {
+    void node; // Type-only — members checked via type system.
+  }
   checkTypeAliasDeclaration(node: AstNode): void { void node; }
-  checkEnumDeclaration(node: AstNode): void { void node; }
-  checkEnumMember(node: AstNode): void { void node; }
-  checkModuleDeclaration(node: AstNode): void { void node; }
-  checkConstructorDeclaration(node: AstNode): void { void node; }
-  checkMethodDeclaration(node: AstNode): void { void node; }
-  checkAccessorDeclaration(node: AstNode): void { void node; }
-  checkPropertyDeclaration(node: AstNode): void { void node; }
-  checkFunctionDeclaration(node: AstNode): void { void node; }
-  checkVariableDeclaration(node: AstNode): void { void node; }
-  checkVariableDeclarationList(node: AstNode): void { void node; }
-  checkParameter(node: AstNode): void { void node; }
-  checkBindingElement(node: AstNode): void { void node; }
+  checkEnumDeclaration(node: AstNode): void {
+    const members = (node as unknown as { members?: { nodes?: readonly AstNode[] } }).members?.nodes;
+    if (members === undefined) return;
+    for (const m of members) this.checkEnumMember(m);
+  }
+  checkEnumMember(node: AstNode): void {
+    const init = (node as unknown as { initializer?: AstNode }).initializer;
+    if (init !== undefined) this.checkExpression(init);
+  }
+  checkModuleDeclaration(node: AstNode): void {
+    const body = (node as unknown as { body?: AstNode }).body;
+    if (body !== undefined) this.checkSourceElement(body);
+  }
+  checkConstructorDeclaration(node: AstNode): void {
+    const params = (node as unknown as { parameters?: { nodes?: readonly AstNode[] } }).parameters?.nodes;
+    if (params !== undefined) for (const p of params) this.checkParameter(p);
+    const body = (node as unknown as { body?: AstNode }).body;
+    if (body !== undefined) this.checkSourceElement(body);
+  }
+  checkMethodDeclaration(node: AstNode): void {
+    this.checkConstructorDeclaration(node); // Same shape: params + body.
+  }
+  checkAccessorDeclaration(node: AstNode): void { this.checkConstructorDeclaration(node); }
+  checkPropertyDeclaration(node: AstNode): void {
+    const init = (node as unknown as { initializer?: AstNode }).initializer;
+    if (init !== undefined) this.checkExpression(init);
+  }
+  checkFunctionDeclaration(node: AstNode): void { this.checkConstructorDeclaration(node); }
+  checkVariableDeclaration(node: AstNode): void {
+    const init = (node as unknown as { initializer?: AstNode }).initializer;
+    if (init !== undefined) this.checkExpression(init);
+  }
+  checkVariableDeclarationList(node: AstNode): void {
+    const decls = (node as unknown as { declarations?: { nodes?: readonly AstNode[] } }).declarations?.nodes;
+    if (decls !== undefined) for (const d of decls) this.checkVariableDeclaration(d);
+  }
+  checkParameter(node: AstNode): void {
+    const init = (node as unknown as { initializer?: AstNode }).initializer;
+    if (init !== undefined) this.checkExpression(init);
+  }
+  checkBindingElement(node: AstNode): void {
+    const init = (node as unknown as { initializer?: AstNode }).initializer;
+    if (init !== undefined) this.checkExpression(init);
+  }
   checkImportDeclaration(node: AstNode): void { void node; }
   checkExportDeclaration(node: AstNode): void { void node; }
-  checkExportAssignment(node: AstNode): void { void node; }
+  checkExportAssignment(node: AstNode): void {
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    if (expr !== undefined) this.checkExpression(expr);
+  }
   checkExportSpecifier(node: AstNode): void { void node; }
   checkExternalImportOrExportDeclaration(node: AstNode): boolean { void node; return true; }
   checkExternalModuleExports(file: SourceFile): void { void file; }
