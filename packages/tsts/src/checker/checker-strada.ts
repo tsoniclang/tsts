@@ -1101,13 +1101,48 @@ export class Checker {
   }
 
   getTypePredicateFromBody(node: AstNode): unknown { void node; return undefined; }
-  getTypePredicateParent(node: AstNode): AstNode | undefined { void node; return undefined; }
-
-  getTypeOnlyAliasDeclaration(symbol: AstSymbol): AstNode | undefined { void symbol; return undefined; }
-  getTypeOnlyAliasDeclarationEx(symbol: AstSymbol, includeMode: number): AstNode | undefined {
-    void symbol; void includeMode; return undefined;
+  getTypePredicateParent(node: AstNode): AstNode | undefined {
+    // Walk up until a function-like ancestor (the type-predicate's
+    // containing signature). Useful for diagnostic reporting.
+    let n: AstNode | undefined = node;
+    while (n !== undefined) {
+      const k = (n as { kind?: number }).kind;
+      if (k === Kind.FunctionDeclaration || k === Kind.MethodDeclaration ||
+          k === Kind.FunctionExpression || k === Kind.ArrowFunction ||
+          k === Kind.MethodSignature || k === Kind.CallSignature) return n;
+      n = (n as unknown as { parent?: AstNode }).parent;
+    }
+    return undefined;
   }
-  getTypeOnlyDeclarationOfEntityName(node: AstNode): AstNode | undefined { void node; return undefined; }
+
+  getTypeOnlyAliasDeclaration(symbol: AstSymbol): AstNode | undefined {
+    return this.getTypeOnlyAliasDeclarationEx(symbol, 0);
+  }
+  getTypeOnlyAliasDeclarationEx(symbol: AstSymbol, includeMode: number): AstNode | undefined {
+    void includeMode;
+    const decls = (symbol as unknown as { declarations?: readonly AstNode[] }).declarations;
+    if (decls === undefined) return undefined;
+    for (const d of decls) {
+      const isTypeOnly = (d as unknown as { isTypeOnly?: boolean }).isTypeOnly;
+      if (isTypeOnly === true) return d;
+      // Walk up to find an enclosing ImportClause / ExportDeclaration
+      // / ImportEqualsDeclaration with isTypeOnly === true.
+      let p: AstNode | undefined = (d as unknown as { parent?: AstNode }).parent;
+      while (p !== undefined) {
+        const pk = (p as { kind?: number }).kind;
+        if (pk === Kind.ImportClause || pk === Kind.ExportDeclaration || pk === Kind.ImportEqualsDeclaration) {
+          if ((p as unknown as { isTypeOnly?: boolean }).isTypeOnly === true) return d;
+          break;
+        }
+        p = (p as unknown as { parent?: AstNode }).parent;
+      }
+    }
+    return undefined;
+  }
+  getTypeOnlyDeclarationOfEntityName(node: AstNode): AstNode | undefined {
+    const sym = this.getSymbolAtLocation(node);
+    return sym !== undefined ? this.getTypeOnlyAliasDeclaration(sym) : undefined;
+  }
 
   // -------------------------------------------------------------------------
   // Type relation predicates
