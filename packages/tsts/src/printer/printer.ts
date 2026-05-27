@@ -272,12 +272,39 @@ export class Printer {
   // Emit predicates
   // -------------------------------------------------------------------------
 
-  shouldEmitIndented(node: AstNode): boolean { void node; return false; }
-  shouldElideIndentation(node: AstNode): boolean { void node; return false; }
-  shouldEmitOnSingleLine(node: AstNode): boolean { void node; return false; }
-  shouldEmitOnMultipleLines(node: AstNode): boolean { void node; return false; }
-  shouldEmitBlockFunctionBodyOnSingleLine(body: Block): boolean { void body; return false; }
-  shouldEmitOnNewLine(node: AstNode, format: number): boolean { void node; void format; return false; }
+  shouldEmitIndented(node: AstNode): boolean {
+    // Block / object literal / array literal contents always get an
+    // indent step. (Caller is responsible for the single-line case.)
+    const k = (node as { kind?: number }).kind;
+    return k === 242 /* Block */ || k === 210 /* ObjectLiteralExpression */ ||
+      k === 209 /* ArrayLiteralExpression */;
+  }
+  shouldElideIndentation(node: AstNode): boolean {
+    void node; return false;
+  }
+  shouldEmitOnSingleLine(node: AstNode): boolean {
+    // A node is single-line when its end is on the same line as its
+    // start. We use a position-based heuristic via .pos / .end on the
+    // currentSourceFile.
+    const start = (node as unknown as { pos?: number }).pos;
+    const end = (node as unknown as { end?: number }).end;
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    if (text === undefined || start === undefined || end === undefined) return false;
+    for (let i = start; i < end; i++) {
+      if (text.charCodeAt(i) === 0x0a) return false;
+    }
+    return true;
+  }
+  shouldEmitOnMultipleLines(node: AstNode): boolean {
+    return !this.shouldEmitOnSingleLine(node);
+  }
+  shouldEmitBlockFunctionBodyOnSingleLine(body: Block): boolean {
+    return this.shouldEmitOnSingleLine(body as unknown as AstNode);
+  }
+  shouldEmitOnNewLine(node: AstNode, format: number): boolean {
+    void format;
+    return this.shouldEmitOnMultipleLines(node);
+  }
   shouldEmitSourceMaps(node: AstNode): boolean { void node; return this.options.sourceMap === true; }
   shouldEmitTokenSourceMaps(token: number, pos: number, contextNode: AstNode, flags: number): boolean {
     void token; void pos; void contextNode; void flags; return this.options.sourceMap === true;
@@ -287,8 +314,22 @@ export class Printer {
   shouldEmitNestedComments(node: AstNode): boolean { void node; return false; }
   shouldEmitDetachedComments(node: AstNode): boolean { return this.shouldEmitComments(node); }
   hasCommentsAtPosition(pos: number): boolean { void pos; return false; }
-  shouldEmitIndirectCall(node: AstNode): boolean { void node; return false; }
-  shouldAllowTrailingComma(node: AstNode, list: NodeList): boolean { void node; void list; return false; }
+  shouldEmitIndirectCall(node: AstNode): boolean {
+    // An indirect call is one wrapped to preserve `this`-isolation —
+    // we use this for `0, expr()` style emit. Not needed for default
+    // emit; conservative false.
+    void node; return false;
+  }
+  shouldAllowTrailingComma(node: AstNode, list: NodeList): boolean {
+    void list;
+    // Trailing commas are allowed in array literals, object literals,
+    // call expression arguments, parameters, and function body.
+    const k = (node as { kind?: number }).kind;
+    return k === 209 /* ArrayLiteralExpression */ ||
+      k === 210 /* ObjectLiteralExpression */ ||
+      k === 213 /* CallExpression */ ||
+      k === 214 /* NewExpression */;
+  }
 
   // -------------------------------------------------------------------------
   // Token emission
