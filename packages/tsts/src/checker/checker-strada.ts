@@ -92,20 +92,83 @@ export class Checker {
   // Statement checking
   // -------------------------------------------------------------------------
 
-  checkBlock(node: AstNode): void { void node; }
-  checkExpressionStatement(node: AstNode): void { void node; }
-  checkIfStatement(node: AstNode): void { void node; }
-  checkDoStatement(node: AstNode): void { void node; }
-  checkWhileStatement(node: AstNode): void { void node; }
-  checkForStatement(node: AstNode): void { void node; }
-  checkForInStatement(node: AstNode): void { void node; }
-  checkForOfStatement(node: AstNode): void { void node; }
-  checkReturnStatement(node: AstNode): void { void node; }
+  checkBlock(node: AstNode): void {
+    const statements = (node as unknown as { statements?: { nodes?: readonly AstNode[] } }).statements?.nodes;
+    if (statements === undefined) return;
+    for (const s of statements) this.checkSourceElement(s);
+  }
+  checkExpressionStatement(node: AstNode): void {
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    if (expr !== undefined) this.checkExpression(expr);
+  }
+  checkIfStatement(node: AstNode): void {
+    const expr = (node as unknown as { expression?: AstNode; thenStatement?: AstNode; elseStatement?: AstNode }).expression;
+    if (expr !== undefined) this.checkExpression(expr);
+    const then = (node as unknown as { thenStatement?: AstNode }).thenStatement;
+    const els = (node as unknown as { elseStatement?: AstNode }).elseStatement;
+    if (then !== undefined) this.checkSourceElement(then);
+    if (els !== undefined) this.checkSourceElement(els);
+  }
+  checkDoStatement(node: AstNode): void {
+    const stmt = (node as unknown as { statement?: AstNode }).statement;
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    if (stmt !== undefined) this.checkSourceElement(stmt);
+    if (expr !== undefined) this.checkExpression(expr);
+  }
+  checkWhileStatement(node: AstNode): void {
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    const stmt = (node as unknown as { statement?: AstNode }).statement;
+    if (expr !== undefined) this.checkExpression(expr);
+    if (stmt !== undefined) this.checkSourceElement(stmt);
+  }
+  checkForStatement(node: AstNode): void {
+    const init = (node as unknown as { initializer?: AstNode }).initializer;
+    const cond = (node as unknown as { condition?: AstNode }).condition;
+    const inc = (node as unknown as { incrementor?: AstNode }).incrementor;
+    const stmt = (node as unknown as { statement?: AstNode }).statement;
+    if (init !== undefined) this.checkSourceElement(init);
+    if (cond !== undefined) this.checkExpression(cond);
+    if (inc !== undefined) this.checkExpression(inc);
+    if (stmt !== undefined) this.checkSourceElement(stmt);
+  }
+  checkForInStatement(node: AstNode): void { this.checkForStatement(node); }
+  checkForOfStatement(node: AstNode): void { this.checkForStatement(node); }
+  checkReturnStatement(node: AstNode): void {
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    if (expr !== undefined) this.checkExpression(expr);
+  }
   checkBreakOrContinueStatement(node: AstNode): void { void node; }
-  checkSwitchStatement(node: AstNode): void { void node; }
-  checkLabeledStatement(node: AstNode): void { void node; }
-  checkThrowStatement(node: AstNode): void { void node; }
-  checkTryStatement(node: AstNode): void { void node; }
+  checkSwitchStatement(node: AstNode): void {
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    if (expr !== undefined) this.checkExpression(expr);
+    const caseBlock = (node as unknown as { caseBlock?: { clauses?: { nodes?: readonly AstNode[] } } }).caseBlock;
+    const clauses = caseBlock?.clauses?.nodes;
+    if (clauses !== undefined) {
+      for (const c of clauses) {
+        const stmts = (c as unknown as { statements?: { nodes?: readonly AstNode[] } }).statements?.nodes;
+        if (stmts !== undefined) for (const s of stmts) this.checkSourceElement(s);
+      }
+    }
+  }
+  checkLabeledStatement(node: AstNode): void {
+    const stmt = (node as unknown as { statement?: AstNode }).statement;
+    if (stmt !== undefined) this.checkSourceElement(stmt);
+  }
+  checkThrowStatement(node: AstNode): void {
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    if (expr !== undefined) this.checkExpression(expr);
+  }
+  checkTryStatement(node: AstNode): void {
+    const tryBlock = (node as unknown as { tryBlock?: AstNode }).tryBlock;
+    const catchClause = (node as unknown as { catchClause?: AstNode }).catchClause;
+    const finallyBlock = (node as unknown as { finallyBlock?: AstNode }).finallyBlock;
+    if (tryBlock !== undefined) this.checkSourceElement(tryBlock);
+    if (catchClause !== undefined) {
+      const cb = (catchClause as unknown as { block?: AstNode }).block;
+      if (cb !== undefined) this.checkSourceElement(cb);
+    }
+    if (finallyBlock !== undefined) this.checkSourceElement(finallyBlock);
+  }
 
   // -------------------------------------------------------------------------
   // Declaration checking
