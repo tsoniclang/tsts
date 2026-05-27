@@ -805,12 +805,32 @@ export class Checker {
       default: return { flags: 1 << 0 } as unknown as Type;
     }
   }
-  getTypeFromTypeReference(node: AstNode): Type { void node; return {} as Type; }
+  getTypeFromTypeReference(node: AstNode): Type {
+    // Resolve the .typeName entity to a symbol, then build a type
+    // reference with the typeArguments[].
+    const typeName = (node as unknown as { typeName?: AstNode }).typeName;
+    const symbol = typeName !== undefined ? this.getSymbolAtLocation(typeName) : undefined;
+    const typeArgNodes = (node as unknown as { typeArguments?: { nodes?: readonly AstNode[] } }).typeArguments?.nodes;
+    const typeArguments = typeArgNodes !== undefined ? typeArgNodes.map((t) => this.getTypeFromTypeNode(t)) : [];
+    if (symbol === undefined) {
+      return { flags: 1 << 19, typeArguments } as unknown as Type;
+    }
+    const flags = (symbol as unknown as { flags?: number }).flags ?? 0;
+    // TypeAlias bit (524288)
+    if ((flags & 524288) !== 0) return this.getTypeFromTypeAliasReference(node, symbol);
+    // Class/Interface bits (32, 64)
+    if ((flags & 96) !== 0) return this.getTypeFromClassOrInterfaceReference(node, symbol);
+    return { flags: 1 << 19, symbol, typeArguments } as unknown as Type;
+  }
   getTypeFromTypeAliasReference(node: AstNode, symbol: AstSymbol): Type {
-    void node; void symbol; return {} as Type;
+    const typeArgNodes = (node as unknown as { typeArguments?: { nodes?: readonly AstNode[] } }).typeArguments?.nodes;
+    const typeArguments = typeArgNodes !== undefined ? typeArgNodes.map((t) => this.getTypeFromTypeNode(t)) : undefined;
+    return this.getTypeAliasInstantiation(symbol, typeArguments);
   }
   getTypeFromClassOrInterfaceReference(node: AstNode, symbol: AstSymbol): Type {
-    void node; void symbol; return {} as Type;
+    const typeArgNodes = (node as unknown as { typeArguments?: { nodes?: readonly AstNode[] } }).typeArguments?.nodes;
+    const typeArguments = typeArgNodes !== undefined ? typeArgNodes.map((t) => this.getTypeFromTypeNode(t)) : [];
+    return this.createTypeReference(this.getDeclaredTypeOfClassOrInterface(symbol), typeArguments);
   }
   getTypeFromConditionalTypeNode(node: AstNode): Type {
     const checkType = (node as unknown as { checkType?: AstNode }).checkType;
@@ -930,7 +950,12 @@ export class Checker {
   getTypeReferenceArity(t: Type): number { void t; return 0; }
   getTypeReferenceType(node: AstNode, symbol: AstSymbol): Type { void node; void symbol; return {} as Type; }
   getTypeAliasInstantiation(symbol: AstSymbol, typeArguments: readonly Type[] | undefined): Type {
-    void symbol; void typeArguments; return {} as Type;
+    // Without lazy instantiation, return the declared alias type (the
+    // body expression resolved through getTypeFromTypeNode) plus the
+    // captured typeArguments for downstream rendering.
+    const base = this.getDeclaredTypeOfTypeAlias(symbol);
+    if (typeArguments === undefined || typeArguments.length === 0) return base;
+    return { ...(base as object), typeArguments } as unknown as Type;
   }
 
   getTypeParameterFromMappedType(mappedType: Type): Type { void mappedType; return {} as Type; }
