@@ -2728,6 +2728,75 @@ export const Diagnostics = {
   Allow_imports_to_include_TypeScript_file_extensions_Requires_moduleResolution_bundler_and_either_noEmit_or_emitDeclarationOnly_to_be_set: msg(6231_2 as unknown as number, Category.Message,
     "Allow_imports_to_include_TS_ext_6231_b",
     "Allow imports to include TypeScript file extensions. Requires '--moduleResolution bundler' and either '--noEmit' or '--emitDeclarationOnly' to be set."),
+
+  // ---------------------------------------------------------------------------
+  // 2xxx — more class hierarchy / member rules
+  // ---------------------------------------------------------------------------
+  Class_static_side_0_incorrectly_extends_base_class_static_side_1: msg(2417, Category.Error,
+    "Class_static_side_0_incorrectly_extends_2417",
+    "Class static side '{0}' incorrectly extends base class static side '{1}'."),
+  Class_0_defines_instance_member_accessor_1_but_extended_class_2_defines_it_as_instance_member_function: msg(2423, Category.Error,
+    "Class_0_defines_instance_member_accessor_1_2423",
+    "Class '{0}' defines instance member accessor '{1}', but extended class '{2}' defines it as instance member function."),
+  Class_0_defines_instance_member_property_1_but_extended_class_2_defines_it_as_instance_member_function: msg(2424, Category.Error,
+    "Class_0_defines_instance_member_property_1_2424",
+    "Class '{0}' defines instance member property '{1}', but extended class '{2}' defines it as instance member function."),
+  X_super_property_access_0_cannot_be_used_for_optional_chaining: msg(2885, Category.Error,
+    "super_property_access_0_2885",
+    "An import alias cannot use 'import type'."),
+  Imported_via_0_from_file_1_with_packageId_2: msg(1394, Category.Message,
+    "Imported_via_0_from_file_1_with_packageId_2_1394",
+    "Imported via '{0}' from file '{1}' with packageId '{2}'."),
+  Import_assertions_have_been_replaced_by_import_attributes_Use_with_instead_of_assert_x: msg(2879_2 as unknown as number, Category.Error,
+    "Import_assertions_have_been_replaced_2879_c",
+    "Import assertions have been replaced by import attributes. Use 'with' instead of 'assert'."),
+  X_with_clauses_only_support_a_single_key_value_pair_at_this_time: msg(2880, Category.Error,
+    "with_clauses_only_support_a_single_key_value_2880",
+    "'with' clauses only support a single key-value pair at this time."),
+
+  // ---------------------------------------------------------------------------
+  // More 1xxx
+  // ---------------------------------------------------------------------------
+  X_extends_0_must_use_intersection_or_union_to_combine_multiple_base_types: msg(1188_2 as unknown as number, Category.Error,
+    "extends_0_must_use_intersection_or_union_1188_b",
+    "Block-scoped variable '{0}' must be initialized when declared with 'using' or 'await using'."),
+  This_is_the_declaration_being_augmented_Consider_moving_the_augmenting_declaration_into_the_same_file: msg(6189_2 as unknown as number, Category.Message,
+    "This_is_the_declaration_being_augmented_6189_b",
+    "This is the declaration being augmented. Consider moving the augmenting declaration into the same file."),
+  File_change_detected_Starting_incremental_build: msg(6603, Category.Message,
+    "File_change_detected_Starting_incremental_build_6603",
+    "File change detected. Starting incremental build..."),
+  Updating_unchanged_output_timestamps_of_project_0: msg(6371, Category.Message,
+    "Updating_unchanged_output_timestamps_6371",
+    "Updating unchanged output timestamps of project '{0}'..."),
+  Skipping_build_of_project_0_because_its_dependency_1_has_errors: msg(6362, Category.Message,
+    "Skipping_build_0_dependency_1_has_errors_6362",
+    "Skipping build of project '{0}' because its dependency '{1}' has errors."),
+  Project_0_can_t_be_built_because_its_dependency_1_has_errors: msg(6363, Category.Message,
+    "Project_0_cant_be_built_dependency_1_has_errors_6363",
+    "Project '{0}' can't be built because its dependency '{1}' has errors"),
+  Project_0_is_out_of_date_because_output_1_is_older_than_input_2: msg(6378, Category.Message,
+    "Project_0_is_out_of_date_6378",
+    "Project '{0}' is out of date because output '{1}' is older than input '{2}'"),
+  Project_0_is_up_to_date_because_newest_input_1_is_older_than_oldest_output_2: msg(6383, Category.Message,
+    "Project_0_is_up_to_date_6383",
+    "Project '{0}' is up to date because newest input '{1}' is older than oldest output '{2}'"),
+
+  // ---------------------------------------------------------------------------
+  // 6xxx — option descriptions
+  // ---------------------------------------------------------------------------
+  Disable_emit_during_compilation_when_referenced_modules_are_out_of_date: msg(6306_2 as unknown as number, Category.Message,
+    "Disable_emit_during_compilation_6306_b",
+    "Disable emit during compilation when referenced modules are out of date."),
+  Enable_constraints_that_allow_a_TypeScript_project_to_be_used_with_project_references_x: msg(6116_3 as unknown as number, Category.Message,
+    "Enable_constraints_6116_c",
+    "Enable constraints that allow a TypeScript project to be used with project references."),
+  Specify_the_module_specifier_to_be_used_to_import_the_jsx_and_jsxs_factory_functions: msg(6253, Category.Message,
+    "Specify_the_module_specifier_to_be_used_6253",
+    "Specify the module specifier to be used to import the 'jsx' and 'jsxs' factory functions."),
+  Print_files_read_during_the_compilation_including_why_it_was_included: msg(6172, Category.Message,
+    "Print_files_read_during_the_compilation_6172",
+    "Print files read during the compilation including why it was included."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
