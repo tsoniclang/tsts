@@ -12,12 +12,14 @@
  * drive the incremental migration of bodies onto this skeleton.
  */
 
+import { Kind } from "../ast/index.js";
 import type {
   Node as AstNode,
   SourceFile,
   Symbol as AstSymbol,
   Diagnostic,
 } from "../ast/index.js";
+import { forEachChild as astForEachChild } from "../ast/generated/visitor.js";
 import type { Type, Signature, SignatureKind, TypeFormatFlags } from "./types.js";
 
 // ---------------------------------------------------------------------------
@@ -29,9 +31,62 @@ export class Checker {
   // Top-level entry
   // -------------------------------------------------------------------------
 
-  checkSourceFile(file: SourceFile): void { void file; }
-  getDiagnostics(file: SourceFile | undefined): readonly Diagnostic[] { void file; return []; }
-  getGlobalDiagnostics(): readonly Diagnostic[] { return []; }
+  fileDiagnostics: Map<SourceFile, Diagnostic[]> = new Map();
+  globalDiagnostics: Diagnostic[] = [];
+
+  checkSourceFile(file: SourceFile): void {
+    // Pre-order walk: dispatch each child to its per-kind checker.
+    // The checker walks declarations + statements at the top level.
+    this.fileDiagnostics.set(file, []);
+    const statements = (file as unknown as { statements?: { nodes?: readonly AstNode[] } }).statements?.nodes;
+    if (statements === undefined) return;
+    for (const stmt of statements) {
+      this.checkSourceElement(stmt);
+    }
+  }
+
+  checkSourceElement(node: AstNode): void {
+    const k = (node as { kind?: number }).kind;
+    switch (k) {
+      case Kind.Block: this.checkBlock(node); return;
+      case Kind.VariableStatement:
+        this.checkVariableDeclarationList((node as unknown as { declarationList: AstNode }).declarationList);
+        return;
+      case Kind.ExpressionStatement: this.checkExpressionStatement(node); return;
+      case Kind.IfStatement: this.checkIfStatement(node); return;
+      case Kind.DoStatement: this.checkDoStatement(node); return;
+      case Kind.WhileStatement: this.checkWhileStatement(node); return;
+      case Kind.ForStatement: this.checkForStatement(node); return;
+      case Kind.ForInStatement: this.checkForInStatement(node); return;
+      case Kind.ForOfStatement: this.checkForOfStatement(node); return;
+      case Kind.BreakStatement:
+      case Kind.ContinueStatement: this.checkBreakOrContinueStatement(node); return;
+      case Kind.ReturnStatement: this.checkReturnStatement(node); return;
+      case Kind.SwitchStatement: this.checkSwitchStatement(node); return;
+      case Kind.LabeledStatement: this.checkLabeledStatement(node); return;
+      case Kind.ThrowStatement: this.checkThrowStatement(node); return;
+      case Kind.TryStatement: this.checkTryStatement(node); return;
+      case Kind.ClassDeclaration: this.checkClassDeclaration(node); return;
+      case Kind.InterfaceDeclaration: this.checkInterfaceDeclaration(node); return;
+      case Kind.TypeAliasDeclaration: this.checkTypeAliasDeclaration(node); return;
+      case Kind.EnumDeclaration: this.checkEnumDeclaration(node); return;
+      case Kind.ModuleDeclaration: this.checkModuleDeclaration(node); return;
+      case Kind.FunctionDeclaration: this.checkFunctionDeclaration(node); return;
+      case Kind.ImportDeclaration: this.checkImportDeclaration(node); return;
+      case Kind.ExportDeclaration: this.checkExportDeclaration(node); return;
+      case Kind.ExportAssignment: this.checkExportAssignment(node); return;
+      default:
+        // Unknown node — walk children defensively so nested
+        // declarations still get visited.
+        astForEachChild(node, (c) => { this.checkSourceElement(c); return undefined; });
+    }
+  }
+
+  getDiagnostics(file: SourceFile | undefined): readonly Diagnostic[] {
+    if (file === undefined) return this.globalDiagnostics;
+    return this.fileDiagnostics.get(file) ?? [];
+  }
+  getGlobalDiagnostics(): readonly Diagnostic[] { return this.globalDiagnostics; }
 
   // -------------------------------------------------------------------------
   // Statement checking
