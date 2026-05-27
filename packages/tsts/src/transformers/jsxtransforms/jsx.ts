@@ -10,7 +10,41 @@
  */
 
 import { Transformer, type TransformOptions } from "../transformer.js";
-import type { Node as AstNode, NodeArray, SourceFile, JsxElement, JsxSelfClosingElement, JsxFragment, JsxOpeningFragment, JsxText, JsxExpression, JsxAttribute, JsxSpreadAttribute } from "../../ast/index.js";
+import type { Node as AstNode, NodeArray, SourceFile, JsxElement, JsxSelfClosingElement, JsxFragment, JsxOpeningFragment, JsxText, JsxExpression, JsxAttribute, JsxSpreadAttribute, TextRange } from "../../ast/index.js";
+import {
+  nodeLoc, nodeText, nodePos, nodeEnd, nodeExpression, nodeInitializerOf,
+  nodeAttributesProperties, nodeTagName, newTextRange, setLoc,
+  compilerOptionsJsx, compilerOptionsEmitScriptTarget, compilerOptionsReactNamespace,
+  getJSXRuntimeImport, getJSXImplicitImportBase,
+  sourceFileName, sourceFileText, sourceFileIsDeclarationFile,
+  sourceFileStatementsRO, sourceFileEndOfFileToken,
+  isExternalModule, isExternalOrCommonJSModule, isPrologueDirective,
+  isIntrinsicJsxName, isIdentifierText, isLineBreak, isWhiteSpaceSingleLine,
+  skipTrivia, getSemanticJsxChildren,
+  jsxOpeningElement, jsxChildren, jsxFragmentOpeningFragment, jsxFragmentChildren,
+  jsxAttributeName, jsxAttributeInitializer, jsxSpreadAttributeExpression,
+  jsxNamespacedNamespaceText, jsxNamespacedNameText,
+  jsxExpressionExpression, jsxExpressionDotDotDot, jsxTextText,
+  variableDeclarationName, objectLiteralProperties, propertyAssignmentNameRO,
+  importSpecifierName, importSpecifierPropertyName,
+  qualifiedNameLeft, qualifiedNameRight,
+  compareStringsCaseSensitive, setParentInChildren, clearNodeSynthesizedFlag,
+  setNodeParent, getECMALineAndUTF16CharacterOfPosition,
+  stringLiteralTokenFlags, setStringLiteralTokenFlags,
+} from "../../ast/index.js";
+import {
+  isSourceFile, isIdentifier, isJsxOpeningLikeElement, isJsxElement,
+  isJsxSelfClosingElement, isJsxFragment, isJsxExpression, isJsxNamespacedName,
+  isJsxSpreadAttribute, isStringLiteral, isPropertyAssignment,
+  isObjectLiteralExpression, isSpreadAssignment, isQualifiedName,
+  isModuleDeclaration,
+} from "../../ast/index.js";
+import { Kind, NodeFlags } from "../../ast/index.js";
+import { JsxEmit } from "../../core/compileroptions.js";
+import { EmitFlags } from "../../printer/emitflags.js";
+import { GeneratedIdentifierFlags } from "../../printer/namegenerator.js";
+const TokenFlags = { None: 0 } as const;
+const ScriptTarget = { ES2018: 5 } as const;
 
 // ---------------------------------------------------------------------------
 // Transformer
@@ -28,8 +62,8 @@ export class JSXTransformer extends Transformer {
 
   constructor(opts: TransformOptions) {
     super();
-    this.compilerOptions = opts.compilerOptions;
-    this.emitResolver = opts.emitResolver;
+    this.compilerOptions = opts.compilerOptions as unknown as CompilerOptions;
+    this.emitResolver = opts.emitResolver as unknown as EmitResolver;
     this.utilizedImplicitRuntimeImports = new Map();
     this.initTransformer((node) => this.visit(node), opts.context);
   }
@@ -246,7 +280,7 @@ export class JSXTransformer extends Transformer {
       skipTrivia(sourceFileText(this.currentSourceFile!), nodePos(element as unknown as AstNode)),
       nodeEnd(element as unknown as AstNode),
     );
-    return transform(jsxOpeningElement(element), jsxChildren(element), location);
+    return transform(jsxOpeningElement(element), jsxChildren(element) as NodeArray<AstNode>, location as unknown as TextRange);
   }
 
   visitJsxSelfClosingElement(element: JsxSelfClosingElement): AstNode {
@@ -256,7 +290,7 @@ export class JSXTransformer extends Transformer {
     const location = newTextRange(
       skipTrivia(sourceFileText(this.currentSourceFile!), nodePos(element as unknown as AstNode)),
       nodeEnd(element as unknown as AstNode),
-    );
+    ) as unknown as TextRange;
     return transform(element as unknown as AstNode, undefined, location);
   }
 
@@ -265,17 +299,17 @@ export class JSXTransformer extends Transformer {
     const location = newTextRange(
       skipTrivia(sourceFileText(this.currentSourceFile!), nodePos(fragment as unknown as AstNode)),
       nodeEnd(fragment as unknown as AstNode),
-    );
+    ) as unknown as TextRange;
     if (useCreateElement) {
       return this.visitJsxOpeningFragmentCreateElement(
-        jsxFragmentOpeningFragment(fragment),
-        jsxFragmentChildren(fragment),
+        jsxFragmentOpeningFragment(fragment) as JsxOpeningFragment,
+        jsxFragmentChildren(fragment) as NodeArray<AstNode>,
         location,
       );
     }
     return this.visitJsxOpeningFragmentJSX(
-      jsxFragmentOpeningFragment(fragment),
-      jsxFragmentChildren(fragment),
+      jsxFragmentOpeningFragment(fragment) as JsxOpeningFragment,
+      jsxFragmentChildren(fragment) as NodeArray<AstNode>,
       location,
     );
   }
@@ -466,7 +500,7 @@ export class JSXTransformer extends Transformer {
     const e = jsxSpreadAttributeExpression(node);
     if (isObjectLiteralExpression(e) && !hasProto(e)) {
       const { items } = this.visitor().visitSlice(objectLiteralProperties(e));
-      return items;
+      return [...items];
     }
     return [this.factory().newSpreadAssignment(this.visitor().visit(e)!)];
   }
@@ -535,7 +569,7 @@ export class JSXTransformer extends Transformer {
       if (originalFile !== undefined && isSourceFile(originalFile)) {
         if (keyAttr === undefined) args.push(this.factory().newVoidZeroExpression());
         args.push(isStaticChildren ? this.factory().newTrueExpression() : this.factory().newFalseExpression());
-        const { line, character } = getECMALineAndUTF16CharacterOfPosition(originalFile as unknown as SourceFile, location.pos());
+        const { line, character } = getECMALineAndUTF16CharacterOfPosition(originalFile as unknown as SourceFile, location.pos);
         args.push(
           this.factory().newObjectLiteralExpression(
             this.factory().newNodeList([
@@ -923,7 +957,7 @@ const entities: Map<string, number> = new Map([
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-interface CompilerOptions { readonly _opts: unknown }
+interface CompilerOptions { readonly _opts?: unknown; readonly [key: string]: unknown }
 interface EmitResolver {
   setReferencedImportDeclaration(name: AstNode, specifier: AstNode): void;
   getReferencedExportContainer(name: AstNode, prefixLocals: boolean): AstNode | undefined;
@@ -931,96 +965,9 @@ interface EmitResolver {
   getJsxFragmentFactoryEntity(file: AstNode): AstNode | undefined;
 }
 
-interface TextRange {
-  pos(): number;
-  end(): number;
-}
+// TextRange comes from ast/index.js (imported above).
 
-declare const JsxEmit: { ReactJSXDev: number };
-declare const ScriptTarget: { ES2018: number };
-declare const LanguageVariant: { Standard: number };
-declare const Kind: {
-  SourceFile: number; JsxElement: number; JsxSelfClosingElement: number; JsxFragment: number;
-  JsxOpeningElement: number; JsxOpeningFragment: number; JsxText: number; JsxExpression: number;
-  JsxAttribute: number; JsxSpreadAttribute: number; StringLiteral: number; Unknown: number;
-  NullKeyword: number; ObjectBindingPattern: number;
-};
-declare const NodeFlags: { None: number; Const: number };
-declare const TokenFlags: { None: number };
-declare const SubtreeFacts: { ContainsJsx: number };
-declare const EmitFlags: { StartOnNewLine: number; CustomPrologue: number };
-declare const GeneratedIdentifierFlags: {
-  Optimistic: number; FileLevel: number; AllowNameSubstitution: number;
-};
-
+// LanguageVariant/JsxEmit dev-flag/ScriptTarget — stub until printer port.
+const LanguageVariant = { Standard: 0 } as const;
+const SubtreeFacts = { ContainsJsx: 1 << 2 } as const;
 declare function subtreeFacts(node: AstNode): number;
-declare function nodeLoc(node: AstNode): TextRange;
-declare function nodeText(node: AstNode): string;
-declare function nodePos(node: AstNode): number;
-declare function nodeEnd(node: AstNode): number;
-declare function nodeExpression(node: AstNode): AstNode;
-declare function nodeInitializerOf(node: AstNode): AstNode;
-declare function nodeAttributesProperties(node: AstNode): readonly AstNode[];
-declare function nodeTagName(node: AstNode): AstNode;
-declare function newTextRange(pos: number, end: number): TextRange;
-declare function setLoc(node: unknown, loc: TextRange): void;
-declare function compilerOptionsJsx(opts: CompilerOptions): number;
-declare function compilerOptionsEmitScriptTarget(opts: CompilerOptions): number;
-declare function compilerOptionsReactNamespace(opts: CompilerOptions): string;
-declare function getJSXRuntimeImport(importSource: string, opts: CompilerOptions): string;
-declare function getJSXImplicitImportBase(opts: CompilerOptions, file: SourceFile): string;
-declare function sourceFileName(file: SourceFile): string;
-declare function sourceFileText(file: SourceFile): string;
-declare function sourceFileIsDeclarationFile(file: SourceFile): boolean;
-declare function sourceFileStatementsRO(file: SourceFile): readonly AstNode[];
-declare function sourceFileEndOfFileToken(file: SourceFile): AstNode;
-declare function isSourceFile(node: AstNode): boolean;
-declare function isExternalModule(node: SourceFile): boolean;
-declare function isExternalOrCommonJSModule(node: SourceFile): boolean;
-declare function isPrologueDirective(node: AstNode): boolean;
-declare function isIdentifier(node: AstNode): boolean;
-declare function isJsxOpeningLikeElement(node: AstNode): boolean;
-declare function isJsxElement(node: AstNode): boolean;
-declare function isJsxSelfClosingElement(node: AstNode): boolean;
-declare function isJsxFragment(node: AstNode): boolean;
-declare function isJsxExpression(node: AstNode): boolean;
-declare function isJsxNamespacedName(node: AstNode): boolean;
-declare function isJsxSpreadAttribute(node: AstNode): boolean;
-declare function isStringLiteral(node: AstNode): boolean;
-declare function isPropertyAssignment(node: AstNode): boolean;
-declare function isObjectLiteralExpression(node: AstNode): boolean;
-declare function isSpreadAssignment(node: AstNode): boolean;
-declare function isQualifiedName(node: AstNode): boolean;
-declare function isModuleDeclaration(node: AstNode): boolean;
-declare function isIntrinsicJsxName(name: string): boolean;
-declare function isIdentifierText(text: string, variant: number): boolean;
-declare function isLineBreak(code: number): boolean;
-declare function isWhiteSpaceSingleLine(code: number): boolean;
-declare function skipTrivia(text: string, pos: number): number;
-declare function getSemanticJsxChildren(children: readonly AstNode[]): readonly AstNode[];
-declare function jsxOpeningElement(node: JsxElement): AstNode;
-declare function jsxChildren(node: JsxElement): NodeArray<AstNode>;
-declare function jsxFragmentOpeningFragment(node: JsxFragment): JsxOpeningFragment;
-declare function jsxFragmentChildren(node: JsxFragment): NodeArray<AstNode>;
-declare function jsxAttributeName(node: AstNode): AstNode | undefined;
-declare function jsxAttributeInitializer(node: JsxAttribute): AstNode | undefined;
-declare function jsxSpreadAttributeExpression(node: JsxSpreadAttribute): AstNode;
-declare function jsxNamespacedNamespaceText(node: AstNode): string;
-declare function jsxNamespacedNameText(node: AstNode): string;
-declare function jsxExpressionExpression(node: JsxExpression): AstNode | undefined;
-declare function jsxExpressionDotDotDot(node: AstNode): AstNode | undefined;
-declare function jsxTextText(node: JsxText): string;
-declare function variableDeclarationName(node: AstNode): AstNode;
-declare function objectLiteralProperties(node: AstNode): readonly AstNode[];
-declare function propertyAssignmentNameRO(node: AstNode): AstNode;
-declare function importSpecifierName(node: AstNode): AstNode;
-declare function importSpecifierPropertyName(node: AstNode): AstNode | undefined;
-declare function qualifiedNameLeft(node: AstNode): AstNode;
-declare function qualifiedNameRight(node: AstNode): AstNode;
-declare function compareStringsCaseSensitive(a: string, b: string): number;
-declare function setParentInChildren(node: AstNode): void;
-declare function clearNodeSynthesizedFlag(node: AstNode): void;
-declare function setNodeParent(node: AstNode, parent: AstNode): void;
-declare function getECMALineAndUTF16CharacterOfPosition(file: SourceFile, pos: number): { line: number; character: number };
-declare function stringLiteralTokenFlags(node: AstNode): number;
-declare function setStringLiteralTokenFlags(node: AstNode, flags: number): void;

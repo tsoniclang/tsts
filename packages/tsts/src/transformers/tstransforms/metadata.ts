@@ -14,7 +14,7 @@
  */
 
 import { Transformer, type TransformOptions } from "../transformer.js";
-import { MetadataSerializer, newMetadataSerializer } from "./typeserializer.js";
+import { MetadataSerializer, newMetadataSerializer, type EmitResolver } from "./typeserializer.js";
 import type {
   Node as AstNode,
   ClassDeclaration,
@@ -39,11 +39,13 @@ export class MetadataTransformer extends Transformer {
 
   constructor(opts: TransformOptions) {
     super();
-    this.compilerOptions = opts.compilerOptions;
+    this.compilerOptions = opts.compilerOptions as unknown as CompilerOptions;
     this.initTransformer((node) => this.visit(node), opts.context);
     this.serializer = newMetadataSerializer(
-      opts.emitResolver, this.factory(), this.emitContext(),
-      getStrictNullChecks(opts.compilerOptions),
+      opts.emitResolver as unknown as EmitResolver,
+      this.factory() as unknown as Parameters<typeof newMetadataSerializer>[1],
+      this.emitContext() as unknown as Parameters<typeof newMetadataSerializer>[2],
+      getStrictNullChecks(opts.compilerOptions as unknown as CompilerOptions),
     );
   }
 
@@ -171,7 +173,7 @@ export class MetadataTransformer extends Transformer {
 }
 
 export function newMetadataTransformer(opts: TransformOptions): Transformer | undefined {
-  if (!getEmitDecoratorMetadata(opts.compilerOptions)) return undefined;
+  if (!getEmitDecoratorMetadata(opts.compilerOptions as unknown as CompilerOptions)) return undefined;
   return new MetadataTransformer(opts);
 }
 

@@ -17,7 +17,7 @@
  * Cross-module deps forward-declared at file end.
  */
 
-import { Transformer, type TransformOptions } from "../transformer.js";
+import { Transformer, type TransformOptions, type NodeVisitor } from "../transformer.js";
 import type {
   Node as AstNode,
   IdentifierNode,
@@ -441,7 +441,7 @@ export class ESDecoratorTransformer extends Transformer {
   }
 
   createLet(name: IdentifierNode, initializer: Expression | undefined): Statement {
-    return this.factory().newLetStatement(name, initializer);
+    return this.factory().newLetStatement(name, initializer) as Statement;
   }
 
   createClassInfo(node: AstNode): ClassInfo {
@@ -664,14 +664,14 @@ export class ESDecoratorTransformer extends Transformer {
 
   prependExpressions(pending: readonly Expression[], expression: Expression): Expression {
     if (pending.length === 0) return expression;
-    return this.factory().inlineExpressions([...pending, expression]);
+    return this.factory().inlineExpressions([...pending, expression]) as Expression;
   }
 
   injectPendingExpressions(expression: Expression): Expression {
     if (this.pendingExpressions.length === 0) return expression;
     const all = [...this.pendingExpressions, expression];
     this.pendingExpressions = [];
-    return this.factory().inlineExpressions(all);
+    return this.factory().inlineExpressions(all) as Expression;
   }
 
   injectPendingInitializers(ci: ClassInfo, isStatic: boolean, expression: Expression): Expression {
@@ -759,12 +759,12 @@ export class ESDecoratorTransformer extends Transformer {
 
   createMetadata(name: IdentifierNode, classSuper: IdentifierNode | undefined): Statement {
     void name; void classSuper;
-    return this.factory().newEmptyStatement();
+    return this.factory().newEmptyStatement() as Statement;
   }
 
   createSymbolMetadata(target: Expression, value: IdentifierNode): Statement {
     void target; void value;
-    return this.factory().newEmptyStatement();
+    return this.factory().newEmptyStatement() as Statement;
   }
 
   createSymbolMetadataReference(classSuper: IdentifierNode | undefined): Expression {
@@ -790,10 +790,7 @@ interface CompilerOptions {
   experimentalDecorators?: unknown;
   readonly _opts?: unknown;
 }
-interface NodeVisitor {
-  visitEachChild(node: AstNode): AstNode;
-  visitNode(node: AstNode): AstNode;
-}
+// NodeVisitor type comes from transformer.ts via the Transformer base.
 
 declare const Kind: {
   SourceFile: number; Decorator: number; ClassDeclaration: number; ClassExpression: number;

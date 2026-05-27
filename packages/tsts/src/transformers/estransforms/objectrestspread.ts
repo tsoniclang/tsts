@@ -12,7 +12,7 @@
 import type { Node as AstNode, SourceFile } from "../../ast/index.js";
 
 import { Transformer, type EmitContext, type NodeFactory } from "../transformer.js";
-import type { TransformOptions } from "../tstransforms/typeeraser.js";
+import type { TransformOptions } from "../transformer.js";
 
 class ObjectRestSpreadTransformer extends Transformer {
   private readonly compilerOptions: CompilerOptionsForObjectRest;
@@ -555,7 +555,7 @@ declare function subtreeContainsObjectRestOrSpread(node: AstNode): boolean;
 declare function containsObjectRestOrSpread(node: AstNode): boolean;
 declare function nodeKind(node: AstNode): number;
 declare function visitEachChildOf(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
-declare function visitNode(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
+declare function visitNode(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode | undefined): AstNode;
 declare function visitNodes(visitor: ReturnType<Transformer["getVisitor"]>, list: AstNode | undefined): AstNode | undefined;
 declare function nodeListNodes(list: AstNode): readonly AstNode[];
 
@@ -570,9 +570,9 @@ declare function methodPostfixToken(node: AstNode): AstNode | undefined;
 declare function declarationName(node: AstNode): AstNode | undefined;
 declare function arrowEqualsGreaterThanToken(node: AstNode): AstNode;
 declare function nodeBody(node: AstNode): AstNode | undefined;
-declare function blockStatements(block: AstNode): readonly AstNode[];
+declare function blockStatements(block: AstNode | undefined): readonly AstNode[];
 declare function blockMultiLine(block: AstNode): boolean;
-declare function isBlock(node: AstNode): boolean;
+declare function isBlock(node: AstNode | undefined): boolean;
 declare function isPrologueDirective(node: AstNode): boolean;
 declare function isBindingPattern(node: AstNode): boolean;
 declare function isAssignmentPattern(node: AstNode): boolean;

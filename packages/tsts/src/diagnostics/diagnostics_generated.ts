@@ -412,6 +412,31 @@ export const Diagnostics = {
   Add_a_return_type_to_the_function: msg(9105, Category.Suggestion,
     "Add_a_return_type_to_the_function_9105",
     "Add a return type to the function."),
+  // ----- declaration-emit diagnostics (Phase 6 will assign real codes) -----
+  Public_static_method_0_of_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named:
+    msg(-1, Category.Error, "Public_static_method_0_of_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named",
+        "Public static method '{0}' of exported class has or is using name '{1}' from external module '{2}' but cannot be named."),
+  Public_static_method_0_of_exported_class_has_or_is_using_name_1_from_private_module_2:
+    msg(-1, Category.Error, "Public_static_method_0_of_exported_class_has_or_is_using_name_1_from_private_module_2",
+        "Public static method '{0}' of exported class has or is using name '{1}' from private module '{2}'."),
+  Public_static_method_0_of_exported_class_has_or_is_using_private_name_1:
+    msg(-1, Category.Error, "Public_static_method_0_of_exported_class_has_or_is_using_private_name_1",
+        "Public static method '{0}' of exported class has or is using private name '{1}'."),
+  Public_method_0_of_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named:
+    msg(-1, Category.Error, "Public_method_0_of_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named",
+        "Public method '{0}' of exported class has or is using name '{1}' from external module '{2}' but cannot be named."),
+  Public_method_0_of_exported_class_has_or_is_using_name_1_from_private_module_2:
+    msg(-1, Category.Error, "Public_method_0_of_exported_class_has_or_is_using_name_1_from_private_module_2",
+        "Public method '{0}' of exported class has or is using name '{1}' from private module '{2}'."),
+  Public_method_0_of_exported_class_has_or_is_using_private_name_1:
+    msg(-1, Category.Error, "Public_method_0_of_exported_class_has_or_is_using_private_name_1",
+        "Public method '{0}' of exported class has or is using private name '{1}'."),
+  Method_0_of_exported_interface_has_or_is_using_name_1_from_private_module_2:
+    msg(-1, Category.Error, "Method_0_of_exported_interface_has_or_is_using_name_1_from_private_module_2",
+        "Method '{0}' of exported interface has or is using name '{1}' from private module '{2}'."),
+  Method_0_of_exported_interface_has_or_is_using_private_name_1:
+    msg(-1, Category.Error, "Method_0_of_exported_interface_has_or_is_using_private_name_1",
+        "Method '{0}' of exported interface has or is using private name '{1}'."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;

@@ -24,6 +24,15 @@ import type {
 } from "../ast/index.js";
 
 import {
+  getDirectoryPath, ensureTrailingDirectorySeparator,
+  removeTrailingDirectorySeparator, combinePaths,
+  normalizePath, containsPath, startsWithDirectory,
+  fileExtensionIsOneOf, removeFileExtension, removeExtension,
+  getBaseFileName, isDeclarationFileName, isRootedDiskPath,
+  tryGetExtensionFromPath, changeExtension, resolvePath,
+} from "../tspath/index.js";
+
+import {
   countPathComponents,
   ensurePathIsNonModuleName,
   getJSExtensionForDeclarationFileExtension,
@@ -38,6 +47,7 @@ import {
   replaceFirstStar,
   stringToRegex,
   tryGetRealFileNameForNonJSDeclarationFileName,
+  type ResolvedEntrypoint,
 } from "./util.js";
 
 import {
@@ -126,14 +136,7 @@ export interface ResolvedModule {
   isResolved(): boolean;
 }
 
-/**
- * Forward-declared `module.ResolvedEntrypoint` for
- * `processEntrypointEnding`.
- */
-export interface ResolvedEntrypoint {
-  readonly moduleSpecifier: string;
-  readonly ending: "fixed" | "changeable" | "extension-changeable";
-}
+// ResolvedEntrypoint lives in ./util.ts — single definition there.
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -296,7 +299,7 @@ export function tryGetModuleNameFromAmbientModule(
     }
     let exportSymbol = checker.getSymbolAtLocation(exportAssignmentDeclExpression(exportAssignmentDecl));
     if (exportSymbol === undefined) continue;
-    if ((exportSymbol.flags & SymbolFlagsAlias) !== 0) {
+    if (((exportSymbol.flags ?? 0) & SymbolFlagsAlias) !== 0) {
       const aliased = checker.getAliasedSymbol(exportSymbol);
       if (aliased !== undefined) exportSymbol = aliased;
     }
@@ -1149,7 +1152,12 @@ export function tryGetModuleNameFromPackageJsonImports(
   const info = host.getPackageJsonInfo(packageJsonPath) as PackageJsonInfo | undefined;
   if (info === undefined) return "";
 
-  const imports = info.getContents().fields.imports;
+  const contents = info.getContents();
+  if (contents === undefined) return "";
+  const fields = contents.fields;
+  if (fields === undefined) return "";
+  const imports = fields.imports;
+  if (imports === undefined) return "";
   switch (imports.type) {
     case "not-present":
     case "array":
@@ -1622,35 +1630,20 @@ declare const KindExportAssignment: number;
 declare const InternalSymbolNameExportEquals: string;
 declare const SymbolFlagsAlias: number;
 
-// `tspath` surface (extra helpers beyond the `TspathHelpers` contract)
-declare function getDirectoryPath(p: string): string;
-declare function ensureTrailingDirectorySeparator(p: string): string;
-declare function removeTrailingDirectorySeparator(p: string): string;
-declare function combinePaths(...parts: string[]): string;
+// `tspath` surface — most helpers come from ../tspath/index.js via the
+// top-of-file imports below. A few that aren't yet ported stay declared.
 declare function getNormalizedAbsolutePath(p: string, cwd: string): string;
-declare function normalizePath(p: string): string;
 declare function toPath(p: string, cwd: string, useCaseSensitive: boolean): string;
 declare function comparePathsSimple(a: string, b: string, useCaseSensitive: boolean): number;
 declare function comparePaths(a: string, b: string, opts: ComparePathsOptions): number;
-declare function containsPath(parent: string, child: string, opts: ComparePathsOptions): boolean;
 declare function getRelativePathFromDirectory(from: string, to: string, opts: ComparePathsOptions): string;
 declare function getRelativePathIfInSameVolume(path: string, directoryPath: string, useCaseSensitive: boolean): string;
-declare function startsWithDirectory(p: string, dir: string, useCaseSensitive: boolean): boolean;
 declare function stringHasPrefix(s: string, prefix: string, caseSensitive: boolean): boolean;
 declare function stringHasSuffix(s: string, suffix: string, caseSensitive: boolean): boolean;
 declare function hasPrefixAndSuffixWithoutOverlap(s: string, prefix: string, suffix: string, caseSensitive: boolean): boolean;
-declare function fileExtensionIsOneOf(p: string, extensions: readonly string[]): boolean;
-declare function removeFileExtension(p: string): string;
-declare function removeExtension(p: string, ext: string): string;
-declare function getBaseFileName(p: string): string;
 declare function getDeclarationFileExtension(p: string): string;
-declare function isDeclarationFileName(p: string): boolean;
-declare function isRootedDiskPath(p: string): boolean;
-declare function tryGetExtensionFromPath(p: string): string;
 declare function changeAnyExtension(p: string, ext: string, extensions: readonly string[], caseSensitive: boolean): string;
-declare function changeExtension(p: string, ext: string): string;
 declare function changeFullExtension(p: string, ext: string): string;
-declare function resolvePath(...parts: string[]): string;
 declare function indexAfter(s: string, search: string, position: number): number;
 declare const ExtensionsNotSupportingExtensionlessResolution: readonly string[];
 

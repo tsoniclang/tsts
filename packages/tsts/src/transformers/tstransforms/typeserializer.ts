@@ -248,15 +248,16 @@ export function getParametersOfDecoratedDeclaration(node: AstNode, container: As
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-interface EmitResolver { readonly _emit?: unknown }
-interface EmitContext { readonly _ec?: unknown }
+export interface EmitResolver { readonly _emit?: unknown; readonly [key: string]: unknown }
+interface EmitContext { readonly _ec?: unknown; readonly [key: string]: unknown }
 interface NodeFactory {
   newIdentifier(text: string): AstNode;
-  newArrayLiteralExpression(elements: readonly Expression[]): AstNode;
+  newArrayLiteralExpression(elements: unknown, multiLine?: boolean): AstNode;
   newVoidZero(): AstNode;
-  newPropertyAccessExpression(expression: Expression, name: AstNode): AstNode;
-  newConditional(condition: Expression, whenTrue: Expression, whenFalse: Expression): AstNode;
-  newTypeOfExpression(expression: Expression): Expression;
+  newPropertyAccessExpression(...args: unknown[]): AstNode;
+  newConditional(condition: AstNode, whenTrue: AstNode, whenFalse: AstNode): AstNode;
+  newTypeOfExpression(expression: AstNode): AstNode;
+  readonly [key: string]: unknown;
 }
 
 declare const Kind: {

@@ -134,13 +134,13 @@ export function getScanStartPosition(
   sourceFile: SourceFile,
 ): number {
   const adjusted = withTokenStart(enclosingNode, sourceFile);
-  const start = adjusted.pos();
-  if (start === originalRange.pos() && nodeEnd(enclosingNode) === originalRange.end()) {
+  const start = adjusted.pos;
+  if (start === originalRange.pos && nodeEnd(enclosingNode) === originalRange.end) {
     return start;
   }
-  const precedingToken = findPrecedingToken(sourceFile, originalRange.pos());
+  const precedingToken = findPrecedingToken(sourceFile, originalRange.pos);
   if (precedingToken === undefined) return nodePos(enclosingNode);
-  if (nodeEnd(precedingToken) >= originalRange.pos()) return nodePos(enclosingNode);
+  if (nodeEnd(precedingToken) >= originalRange.pos) return nodePos(enclosingNode);
   return nodeEnd(precedingToken);
 }
 
@@ -158,7 +158,7 @@ export function getOwnOrInheritedDelta(
   let child: AstNode | undefined;
   let n: AstNode | undefined = startNode;
   while (n !== undefined) {
-    const line = getECMALineOfPosition(sourceFile, withTokenStart(n, sourceFile).pos());
+    const line = getECMALineOfPosition(sourceFile, withTokenStart(n, sourceFile).pos);
     if (previousLine !== -1 && line !== previousLine) break;
     if (shouldIndentChildNode(options, n, child, sourceFile)) {
       return options.indentSize ?? 4;

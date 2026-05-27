@@ -7,8 +7,7 @@
  * declaration order and feeds the output of each into the next.
  */
 
-import type { Transformer } from "./transformer.js";
-import type { TransformOptions } from "./tstransforms/typeeraser.js";
+import { Transformer, type TransformOptions } from "./transformer.js";
 
 /**
  * Factory function that produces a transformer from options.
@@ -40,42 +39,25 @@ export function chain(...factories: readonly TransformerFactory[]): TransformerF
   };
 }
 
-class ChainedTransformer implements Transformer {
-  constructor(
-    private readonly head: Transformer,
-    private readonly rest: readonly TransformerFactory[],
-    private readonly opts: TransformOptions,
-  ) {}
+class ChainedTransformer extends Transformer {
+  readonly #head: Transformer;
+  readonly #rest: readonly TransformerFactory[];
+  readonly #opts: TransformOptions;
 
-  // The `Transformer` interface from transformer.ts has methods like
-  // `transformSourceFile`. The chained transformer applies each in
-  // order. The methods we don't implement here delegate to the head;
-  // the full surface lands when the printer/visitor port is finalized.
+  constructor(head: Transformer, rest: readonly TransformerFactory[], opts: TransformOptions) {
+    super();
+    this.#head = head;
+    this.#rest = rest;
+    this.#opts = opts;
+    this.newTransformer((node) => node, opts.context);
+  }
 
-  transformSourceFile(file: import("../ast/index.js").SourceFile): import("../ast/index.js").SourceFile {
-    let current = this.head.transformSourceFile(file);
-    for (const factory of this.rest) {
-      const next = factory(this.opts);
+  override transformSourceFile(file: import("../ast/index.js").SourceFile): import("../ast/index.js").SourceFile {
+    let current = this.#head.transformSourceFile(file);
+    for (const factory of this.#rest) {
+      const next = factory(this.#opts);
       current = next.transformSourceFile(current);
     }
     return current;
-  }
-
-  // Other Transformer methods delegate to head — they're rarely
-  // invoked on chained transformers in practice.
-  getEmitContext(): ReturnType<Transformer["getEmitContext"]> {
-    return this.head.getEmitContext();
-  }
-
-  getVisitor(): ReturnType<Transformer["getVisitor"]> {
-    return this.head.getVisitor();
-  }
-
-  getFactory(): ReturnType<Transformer["getFactory"]> {
-    return this.head.getFactory();
-  }
-
-  newTransformer(): this {
-    throw new Error("ChainedTransformer is already constructed");
   }
 }

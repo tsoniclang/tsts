@@ -14,6 +14,22 @@
  */
 
 import type { Node as AstNode, Diagnostic } from "../../ast/index.js";
+import {
+  nodeName, nodeParent, hasSyntacticModifier, getNodeName as _getNodeName,
+} from "../../ast/index.js";
+import {
+  isVariableDeclaration, isPropertyDeclaration, isPropertyAccessExpression,
+  isElementAccessExpression, isBinaryExpression, isBindingElement,
+  isConstructorDeclaration, isSetAccessorDeclaration, isGetAccessorDeclaration,
+  isMethodDeclaration, isFunctionDeclaration, isIndexSignatureDeclaration,
+  isParameterDeclaration, isTypeParameterDeclaration,
+  isExpressionWithTypeArguments, isImportEqualsDeclaration,
+  isTypeAliasDeclaration,
+  isDeclaration,
+} from "../../ast/index.js";
+import { isParameterPropertyDeclaration } from "../../ast/index.js";
+import { Kind } from "../../ast/index.js";
+import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
 import type { GetSymbolAccessibilityDiagnostic, SymbolAccessibilityResult, SymbolAccessibilityErrorInfo, DiagnosticMessage, EmitResolver } from "./tracker.js";
 
 export interface SymbolAccessibilityDiagnostic {
@@ -485,53 +501,22 @@ export function createGetIsolatedDeclarationErrors(_resolver: EmitResolver): (no
 }
 
 declare function isFunctionLike(node: AstNode): boolean;
-declare function isDeclaration(node: AstNode): boolean;
 declare function makeDiagnostic(node: AstNode, message: DiagnosticMessage): Diagnostic;
-
-// ---------------------------------------------------------------------------
-// Forward-declared
-// ---------------------------------------------------------------------------
-
-declare const Kind: {
-  ClassDeclaration: number; InterfaceDeclaration: number;
-  MappedType: number; ConstructorType: number; ConstructSignature: number;
-  CallSignature: number; MethodDeclaration: number; MethodSignature: number;
-  FunctionType: number; FunctionDeclaration: number; FunctionExpression: number;
-  InferType: number; TypeAliasDeclaration: number; JSTypeAliasDeclaration: number;
-  Parameter: number; VariableDeclaration: number; BindingElement: number;
-  PropertyDeclaration: number; PropertySignature: number;
-  GetAccessor: number; SetAccessor: number; ArrowFunction: number;
-};
-declare const ModifierFlags: { Private: number };
 declare const SymbolAccessibility: { CannotBeNamed: number };
-declare const Diagnostics: Record<string, DiagnosticMessage>;
+// Diagnostics catalog imported via a permissive Record. The actual
+// catalog lives in diagnostics/diagnostics_generated.ts; using a typed
+// import here would couple this file to the catalog's exact key set.
+// Under noUncheckedIndexedAccess, untyped record lookups return
+// `T | undefined`, so the callers below treat undefined as a fallback
+// to the generic accessibility message.
+import { Diagnostics as DiagnosticsCatalog } from "../../diagnostics/diagnostics_generated.js";
+const Diagnostics = DiagnosticsCatalog;
 
 declare function getNameOfDeclaration(node: AstNode): AstNode | undefined;
-declare function nodeName(node: AstNode): AstNode | undefined;
-declare function nodeParent(node: AstNode): AstNode | undefined;
 declare function nodeType(node: AstNode): AstNode | undefined;
-declare function hasSyntacticModifier(node: AstNode, flags: number): boolean;
 declare function isStatic(node: AstNode): boolean;
-declare function isVariableDeclaration(node: AstNode): boolean;
-declare function isPropertyDeclaration(node: AstNode): boolean;
 declare function isPropertySignatureDeclaration(node: AstNode): boolean;
-declare function isPropertyAccessExpression(node: AstNode): boolean;
-declare function isElementAccessExpression(node: AstNode): boolean;
-declare function isBinaryExpression(node: AstNode): boolean;
-declare function isBindingElement(node: AstNode): boolean;
-declare function isConstructorDeclaration(node: AstNode): boolean;
-declare function isSetAccessorDeclaration(node: AstNode): boolean;
-declare function isGetAccessorDeclaration(node: AstNode): boolean;
-declare function isMethodDeclaration(node: AstNode): boolean;
 declare function isMethodSignatureDeclaration(node: AstNode): boolean;
 declare function isConstructSignatureDeclaration(node: AstNode): boolean;
 declare function isCallSignatureDeclaration(node: AstNode): boolean;
-declare function isFunctionDeclaration(node: AstNode): boolean;
-declare function isIndexSignatureDeclaration(node: AstNode): boolean;
-declare function isParameterDeclaration(node: AstNode): boolean;
-declare function isTypeParameterDeclaration(node: AstNode): boolean;
-declare function isExpressionWithTypeArguments(node: AstNode): boolean;
-declare function isImportEqualsDeclaration(node: AstNode): boolean;
-declare function isTypeAliasDeclaration(node: AstNode): boolean;
 declare function isJSTypeAliasDeclaration(node: AstNode): boolean;
-declare function isParameterPropertyDeclaration(node: AstNode, parent: AstNode): boolean;

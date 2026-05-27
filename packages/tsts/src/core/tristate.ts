@@ -16,15 +16,15 @@ export const Tristate: {
   True: 2,
 };
 
-export function tristateIsTrue(t: Tristate): boolean {
+export function tristateIsTrue(t: Tristate | undefined): boolean {
   return t === Tristate.True;
 }
 
-export function tristateIsTrueOrUnknown(t: Tristate): boolean {
-  return t === Tristate.True || t === Tristate.Unknown;
+export function tristateIsTrueOrUnknown(t: Tristate | undefined): boolean {
+  return t === undefined || t === Tristate.True || t === Tristate.Unknown;
 }
 
-export function tristateIsFalse(t: Tristate): boolean {
+export function tristateIsFalse(t: Tristate | undefined): boolean {
   return t === Tristate.False;
 }
 

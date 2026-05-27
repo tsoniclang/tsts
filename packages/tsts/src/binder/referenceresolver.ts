@@ -114,13 +114,13 @@ class ReferenceResolverImpl implements ReferenceResolver {
     const symbol = this.getReferencedValueSymbol(node, false);
     if (symbol === undefined) return undefined;
     const decls = symbol.declarations;
-    return decls.length > 0 ? decls[0]! : undefined;
+    return decls.length > 0 ? (decls[0]! as Declaration) : undefined;
   }
 
   getReferencedValueDeclarations(node: IdentifierNode): readonly Declaration[] {
     const symbol = this.getReferencedValueSymbol(node, false);
     if (symbol === undefined) return [];
-    return symbol.declarations;
+    return symbol.declarations as readonly Declaration[];
   }
 
   getElementAccessExpressionName(expression: ElementAccessExpression): string {

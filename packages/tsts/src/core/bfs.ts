@@ -42,7 +42,10 @@ export interface BreadthFirstSearchOptions<K, N> {
 }
 
 class LevelView<K, N> implements BreadthFirstSearchLevel<K, N> {
-  constructor(readonly jobs: Map<K, BreadthFirstSearchJob<N>>) {}
+  readonly jobs: Map<K, BreadthFirstSearchJob<N>>;
+  constructor(jobs: Map<K, BreadthFirstSearchJob<N>>) {
+    this.jobs = jobs;
+  }
   has(key: K): boolean {
     return this.jobs.has(key);
   }

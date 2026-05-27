@@ -16,7 +16,8 @@
 import { chain, type TransformerFactory } from "../chain.js";
 import type { Transformer } from "../transformer.js";
 
-import type { CompilerOptionsForTypeEraser as CompilerOptionsForESTransform, TransformOptions } from "../tstransforms/typeeraser.js";
+import type { TransformOptions } from "../transformer.js";
+type CompilerOptionsForESTransform = Record<string, unknown>;
 
 // Forward declarations: each ES feature has its own constructor in
 // the matching file (classfields.ts, optionalchain.ts, etc.).

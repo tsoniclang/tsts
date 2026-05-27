@@ -12,7 +12,7 @@
 import type { Node as AstNode } from "../../ast/index.js";
 
 import { Transformer, type EmitContext } from "../transformer.js";
-import type { TransformOptions } from "../tstransforms/typeeraser.js";
+import type { TransformOptions } from "../transformer.js";
 
 class LogicalAssignmentTransformer extends Transformer {
   constructor(opts: TransformOptions) {

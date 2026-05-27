@@ -22,8 +22,8 @@ export class ImpliedModuleTransformer extends Transformer {
   constructor(opts: TransformOptions) {
     super();
     this.opts = opts;
-    this.resolver = opts.resolver;
-    this.getEmitModuleFormatOfFile = opts.getEmitModuleFormatOfFile;
+    this.resolver = opts.resolver as unknown as ReferenceResolver;
+    this.getEmitModuleFormatOfFile = opts.getEmitModuleFormatOfFile as (file: HasFileName) => number;
     this.cjsTransformer = undefined;
     this.esmTransformer = undefined;
     this.initTransformer((node) => this.visit(node), opts.context);
@@ -63,8 +63,8 @@ export function newImpliedModuleTransformer(opts: TransformOptions): Transformer
 // Forward-declared
 // ---------------------------------------------------------------------------
 
-interface ReferenceResolver { readonly _resolver: unknown }
-interface HasFileName { readonly _hf: unknown }
+interface ReferenceResolver { readonly [key: string]: unknown }
+type HasFileName = AstNode | { readonly fileName?: string };
 
 declare const Kind: { SourceFile: number };
 declare const ModuleKind: { ES2015: number };

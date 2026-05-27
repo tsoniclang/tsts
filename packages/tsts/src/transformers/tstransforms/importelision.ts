@@ -25,6 +25,7 @@ import type {
   NamedImports,
   ExportDeclaration,
   NamedExports,
+  NodeList,
 } from "../../ast/index.js";
 
 // ---------------------------------------------------------------------------
@@ -41,8 +42,8 @@ export class ImportElisionTransformer extends Transformer {
     if (isTrue(opts.compilerOptions.verbatimModuleSyntax)) {
       throw new Error("ImportElisionTransformer should not be used with VerbatimModuleSyntax");
     }
-    this.compilerOptions = opts.compilerOptions;
-    this.emitResolver = opts.emitResolver;
+    this.compilerOptions = opts.compilerOptions as unknown as CompilerOptions;
+    this.emitResolver = opts.emitResolver as unknown as EmitResolver;
     this.initTransformer((node) => this.visit(node), opts.context);
   }
 
@@ -207,7 +208,7 @@ declare function getImportAttributes(node: AstNode): AstNode | undefined;
 declare function getNodeName(node: AstNode): AstNode | undefined;
 declare function getNamedBindings(node: ImportClause): AstNode | undefined;
 declare function getPhaseModifier(node: ImportClause): AstNode | undefined;
-declare function getNamedImportElements(node: NamedImports): unknown;
-declare function getNamedExportElements(node: NamedExports): unknown;
+declare function getNamedImportElements(node: NamedImports): NodeList | undefined;
+declare function getNamedExportElements(node: NamedExports): NodeList | undefined;
 declare function getExportClause(node: ExportDeclaration): AstNode | undefined;
 declare function getNodeListLength(list: unknown): number;

@@ -14,6 +14,27 @@
  */
 
 import type { Node as AstNode, IdentifierNode, VariableDeclaration, BinaryExpression, ElementAccessExpression } from "../ast/index.js";
+import {
+  nodeLoc, nodeText, nodeIsSynthesized, setLoc,
+  binaryLeft, binaryRight, nodeInitializerOf,
+  variableDeclarationNameRO, shorthandObjectAssignmentInitializerRO,
+  spreadElementExpressionRO, cloneNode as _astCloneNode,
+} from "../ast/index.js";
+import {
+  isIdentifier, isComputedPropertyName, isLiteralExpression,
+  isBigIntLiteral, isBindingPattern, isOmittedExpression,
+  isDestructuringAssignment, isVariableDeclaration,
+  isPropertyAssignment, isShorthandPropertyAssignment,
+  isSpreadElement,
+} from "../ast/index.js";
+import { Kind, NodeFlags } from "../ast/index.js";
+const TokenFlags = { None: 0 } as const;
+function cloneNode(node: AstNode, _factory: unknown): AstNode { return _astCloneNode(node); }
+declare function isSimpleCopiableExpression(node: AstNode): boolean;
+declare function isStringOrNumericLiteralLike(node: AstNode): boolean;
+declare function isAssignmentPattern(node: AstNode): boolean;
+declare function isAssignmentExpression(node: AstNode, excludeCompound: boolean): boolean;
+type TextRange = { readonly pos: number; readonly end: number } | undefined;
 import type { Transformer } from "./transformer.js";
 
 // ---------------------------------------------------------------------------
@@ -576,58 +597,21 @@ function isSimpleBindingOrAssignmentElement(element: AstNode): boolean {
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-interface TextRange {
-  pos(): number;
-  end(): number;
-}
+const SubtreeFacts = {
+  ContainsRestOrSpread: 1 << 0,
+  ContainsObjectRestOrSpread: 1 << 1,
+} as const;
 
-declare const Kind: {
-  ArrayBindingPattern: number; ObjectBindingPattern: number;
-  ArrayLiteralExpression: number; ObjectLiteralExpression: number;
-  QuestionToken: number; ColonToken: number;
-};
-declare const NodeFlags: { None: number };
-declare const TokenFlags: { None: number };
-declare const SubtreeFacts: {
-  ContainsRestOrSpread: number;
-  ContainsObjectRestOrSpread: number;
-};
-
-declare function setLoc(node: unknown, loc: TextRange): void;
-declare function nodeLoc(node: AstNode): TextRange;
-declare function nodeText(node: AstNode): string;
-declare function nodeIsSynthesized(node: AstNode): boolean;
 declare function subtreeFacts(node: AstNode): number;
-declare function isIdentifier(node: AstNode): boolean;
-declare function isComputedPropertyName(node: AstNode): boolean;
-declare function isLiteralExpression(node: AstNode): boolean;
-declare function isStringOrNumericLiteralLike(node: AstNode): boolean;
-declare function isBigIntLiteral(node: AstNode): boolean;
-declare function isBindingPattern(node: AstNode): boolean;
-declare function isAssignmentPattern(node: AstNode): boolean;
-declare function isOmittedExpression(node: AstNode): boolean;
-declare function isDestructuringAssignment(node: AstNode): boolean;
-declare function isVariableDeclaration(node: AstNode): boolean;
+// Strada predicates and accessors that aren't yet wired to ast/index.js.
 declare function isDeclarationBindingElement(node: AstNode): boolean;
 declare function isEmptyArrayLiteral(node: AstNode): boolean;
 declare function isEmptyObjectLiteral(node: AstNode): boolean;
-declare function isPropertyAssignment(node: AstNode): boolean;
-declare function isShorthandPropertyAssignment(node: AstNode): boolean;
-declare function isAssignmentExpression(node: AstNode, excludeCompound: boolean): boolean;
-declare function isSpreadElement(node: AstNode): boolean;
 declare function isPropertyNameLiteral(node: AstNode): boolean;
-declare function isSimpleCopiableExpression(node: AstNode): boolean;
 declare function isSimpleInlineableExpression(node: AstNode): boolean;
 declare function getTargetOfBindingOrAssignmentElement(element: AstNode): AstNode | undefined;
 declare function getRestIndicatorOfBindingOrAssignmentElement(element: AstNode): AstNode | undefined;
 declare function tryGetPropertyNameOfBindingOrAssignmentElement(element: AstNode): AstNode | undefined;
 declare function getElementsOfBindingOrAssignmentPattern(pattern: AstNode): readonly AstNode[];
 declare function computedPropertyNameExpression(node: AstNode): AstNode;
-declare function cloneNode(node: AstNode, factory: unknown): AstNode;
-declare function binaryLeft(node: BinaryExpression): AstNode;
-declare function binaryRight(node: BinaryExpression): AstNode;
 declare function elementAccessExpressionArgument(node: ElementAccessExpression): AstNode;
-declare function nodeInitializerOf(node: AstNode): AstNode | undefined;
-declare function variableDeclarationNameRO(node: VariableDeclaration): AstNode;
-declare function shorthandObjectAssignmentInitializerRO(node: AstNode): AstNode | undefined;
-declare function spreadElementExpressionRO(node: AstNode): AstNode;

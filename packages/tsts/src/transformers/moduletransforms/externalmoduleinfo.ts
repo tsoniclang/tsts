@@ -15,6 +15,26 @@
 
 import { isLocalName } from "../utilities.js";
 import type { Node as AstNode, SourceFile, ImportDeclaration, ImportEqualsDeclaration, ExportDeclaration, ExportAssignment, VariableStatement, FunctionDeclaration, ClassDeclaration } from "../../ast/index.js";
+import {
+  sourceFileStatementsRO, hasSyntacticModifier,
+  importEqualsModuleReference, exportDeclarationModuleSpecifier,
+  exportDeclarationExportClause, variableStatementDeclarationListRO,
+  variableDeclarationListDeclarationsRO, classDeclName, namedExportsElements,
+  namedElements, exportSpecifierName, exportSpecifierPropertyNameOrName,
+  moduleExportNameIsDefault, nodeText, nodeName, bindingPatternElements,
+  getNamespaceDeclarationNode, importDeclarationImportClause,
+  importClauseNamedBindings, isDefaultImport, exportAssignmentIsExportEquals,
+  isEffectiveExternalModule,
+} from "../../ast/index.js";
+import {
+  isExportAssignment, isNamedExports, isNamedImports,
+  isBindingPattern, isExternalModuleReference,
+} from "../../ast/index.js";
+import { Kind } from "../../ast/index.js";
+import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
+import { ModuleKind } from "../../core/compileroptions.js";
+import { EmitFlags } from "../../printer/emitflags.js";
+const TokenFlags = { None: 0 } as const;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -448,55 +468,19 @@ interface Factory {
   newUniqueName(name: string): AstNode;
 }
 
-interface CompilerOptions { readonly _opts: unknown }
+interface CompilerOptions { readonly _opts?: unknown; readonly [key: string]: unknown }
 interface ReferenceResolver {
   getReferencedImportDeclaration(node: AstNode): AstNode | undefined;
   getReferencedValueDeclaration(node: AstNode): AstNode | undefined;
 }
 interface EmitHelper { readonly _h: unknown }
 
-declare const Kind: {
-  ImportDeclaration: number; ImportEqualsDeclaration: number; ExportDeclaration: number;
-  ExportAssignment: number; VariableStatement: number; FunctionDeclaration: number;
-  ClassDeclaration: number; StringLiteral: number; Unknown: number;
-};
-declare const ModifierFlags: { Export: number; Default: number };
-declare const ModuleKind: { CommonJS: number; None: number; System: number };
-declare const TokenFlags: { None: number };
-declare const EmitFlags: { CustomPrologue: number; ExternalHelpers: number };
-
-declare function sourceFileStatementsRO(node: SourceFile): readonly AstNode[];
+// Strada helpers not yet wired to ast/index.js
 declare function isNotEmittedStatement(node: AstNode): boolean;
-declare function isExportAssignment(node: AstNode): boolean;
-declare function exportAssignmentIsExportEquals(node: ExportAssignment): boolean;
-declare function isExternalModuleReference(node: AstNode): boolean;
-declare function importEqualsModuleReference(node: ImportEqualsDeclaration): AstNode;
-declare function exportDeclarationModuleSpecifier(node: ExportDeclaration): AstNode | undefined;
-declare function exportDeclarationExportClause(node: ExportDeclaration): AstNode | undefined;
-declare function isNamedExports(node: AstNode): boolean;
-declare function isNamedImports(node: AstNode): boolean;
 declare function namespaceExportName(node: AstNode): AstNode;
-declare function variableStatementDeclarationListRO(node: VariableStatement): AstNode;
-declare function variableDeclarationListDeclarationsRO(node: AstNode): readonly AstNode[];
-declare function hasSyntacticModifier(node: AstNode, flags: number): boolean;
-declare function classDeclName(node: ClassDeclaration): AstNode | undefined;
 declare function functionDeclarationName(node: FunctionDeclaration): AstNode;
-declare function namedExportsElements(node: AstNode): readonly AstNode[];
-declare function namedElements(node: AstNode): readonly AstNode[];
-declare function exportSpecifierName(node: AstNode): AstNode;
-declare function exportSpecifierPropertyNameOrName(node: AstNode): AstNode;
-declare function moduleExportNameIsDefault(node: AstNode): boolean;
-declare function nodeText(node: AstNode): string;
-declare function nodeName(node: AstNode): AstNode | undefined;
-declare function isBindingPattern(node: AstNode): boolean;
-declare function bindingPatternElements(node: AstNode): readonly AstNode[];
-declare function getNamespaceDeclarationNode(node: AstNode): AstNode | undefined;
-declare function importDeclarationImportClause(node: ImportDeclaration): AstNode | undefined;
-declare function importClauseNamedBindings(node: AstNode): AstNode | undefined;
-declare function isDefaultImport(node: AstNode): boolean;
 declare function compilerOptionsImportHelpers(opts: CompilerOptions): boolean;
 declare function compilerOptionsGetEmitModuleKind(opts: CompilerOptions): number;
-declare function isEffectiveExternalModule(file: SourceFile, opts: CompilerOptions): boolean;
 declare function isFileLevelUniqueName(file: SourceFile, name: string, hasGlobalName: ((name: string) => boolean) | undefined): boolean;
 declare function emitHelperImportName(helper: EmitHelper): string;
 declare function emitHelperScoped(helper: EmitHelper): boolean;

@@ -37,4 +37,8 @@ export const EmitFlags = {
   Iterator: (1 << 25) as EmitFlags,
   NoAsciiEscaping: (1 << 26) as EmitFlags,
   TransformPrivateStaticElements: (1 << 27) as EmitFlags,
+  StartOnNewLine: (1 << 28) as EmitFlags,
+  IndirectCall: (1 << 29) as EmitFlags,
+  NoLexicalArguments: (1 << 30) as EmitFlags,
+  ExternalHelpers: (1 << 31) as EmitFlags,
 } as const;

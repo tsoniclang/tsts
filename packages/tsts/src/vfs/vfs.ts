@@ -91,8 +91,10 @@ export interface FS {
 // ────────────────────────────────────────────────────────────────────────────
 
 export class VfsError extends Error {
-  constructor(public readonly kind: "invalid" | "permission" | "exist" | "not-exist" | "closed", message: string) {
+  readonly kind: "invalid" | "permission" | "exist" | "not-exist" | "closed";
+  constructor(kind: "invalid" | "permission" | "exist" | "not-exist" | "closed", message: string) {
     super(message);
+    this.kind = kind;
     this.name = "VfsError";
   }
 }

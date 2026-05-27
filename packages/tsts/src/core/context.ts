@@ -13,7 +13,10 @@ export interface CancellationToken {
 }
 
 export class AbortControllerToken implements CancellationToken {
-  constructor(readonly signal: AbortSignal) {}
+  readonly signal: AbortSignal;
+  constructor(signal: AbortSignal) {
+    this.signal = signal;
+  }
   isCancelled(): boolean {
     return this.signal.aborted;
   }

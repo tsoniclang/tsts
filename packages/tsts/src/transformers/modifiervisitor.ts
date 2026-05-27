@@ -7,7 +7,7 @@
  */
 
 import type { Node as AstNode, ModifierList } from "../ast/index.js";
-import { Transformer } from "./transformer.js";
+import { Transformer, type EmitContext } from "./transformer.js";
 
 class ModifierVisitor extends Transformer {
   readonly allowedModifiers: number;
@@ -40,10 +40,6 @@ export function extractModifiers(
 // ---------------------------------------------------------------------------
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
-
-interface EmitContext {
-  readonly _emitContext: unknown;
-}
 
 declare const ModifierFlags: { None: number };
 declare function modifierToFlag(kind: number): number;

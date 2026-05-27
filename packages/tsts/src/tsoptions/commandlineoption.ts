@@ -13,15 +13,18 @@ import type { OrderedMap } from "../collections/index.js";
 
 /**
  * The kind of value a command-line option accepts. Mirrors TS-Go
- * `CommandLineOptionType*` constants.
+ * `CommandLineOptionType*` constants. May also be a `Map` of
+ * string -> enum-value when the option is an enum (e.g. `--module`,
+ * `--target`, `--jsx`).
  */
-export type CommandLineOptionKind =
+export type CommandLineOptionType =
   | "string"
   | "number"
   | "boolean"
   | "object"
   | "list"
-  | "listOrElement";
+  | "listOrElement"
+  | ReadonlyMap<string, number | string>;
 
 /**
  * Single command-line option declaration. Mirrors TS-Go
@@ -34,7 +37,10 @@ export type CommandLineOptionKind =
 export interface CommandLineOption {
   readonly name: string;
   readonly shortName?: string;
-  readonly kind: CommandLineOptionKind;
+  /** Type discriminator. May be a string literal or an enum-Map. */
+  readonly type: CommandLineOptionType;
+  /** For `list`/`listOrElement`: shape of each element. */
+  readonly element?: CommandLineOption;
   readonly description?: DiagnosticMessage;
   readonly category?: DiagnosticMessage;
   readonly paramType?: DiagnosticMessage;
@@ -53,9 +59,13 @@ export interface CommandLineOption {
   readonly strictFlag?: boolean;
   readonly allowJsFlag?: boolean;
   readonly deprecated?: boolean;
+  readonly defaultValueDescription?: string | number | boolean | DiagnosticMessage;
 
   /** Optional methods that some kinds provide. */
   enumMap?(): OrderedMap<string, unknown>;
   deprecatedKeys?(): { has(key: string): boolean } | undefined;
   elements?(): CommandLineOption;
 }
+
+/** Backward-compat alias for callers that referred to it as `kind`. */
+export type CommandLineOptionKind = CommandLineOptionType;

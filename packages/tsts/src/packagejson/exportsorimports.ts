@@ -7,7 +7,8 @@
  * conditions (`{ node, default }`), or invalid (mixed).
  */
 
-import { JSONValue, JSONValueType, asObject } from "./jsonvalue.js";
+import type { JSONValue } from "./jsonvalue.js";
+import { JSONValueType, asObject } from "./jsonvalue.js";
 
 export type ObjectKind = number;
 export const ObjectKind = {

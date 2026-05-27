@@ -37,6 +37,7 @@ export interface TSConfig {
   include?: readonly string[];
   exclude?: readonly string[];
   compileOnSave?: boolean;
+  [key: string]: unknown;
 }
 
 interface ImpliedOption {
@@ -69,7 +70,7 @@ const impliedOptions: readonly ImpliedOption[] = [
 export function convertToTSConfig(parsed: ParsedCommandLine, configFileName: string): TSConfig {
   const fileName = configFileName === "" ? "tsconfig.json" : configFileName;
   void fileName; // used by full version for relative-path computation
-  const options = (parsed.options ?? {}) as CompilerOptions;
+  const options = (parsed.parsedConfig.compilerOptions ?? {}) as unknown as CompilerOptions;
 
   // Materialize implied options that callers set explicitly OR that
   // diverge from their default.
@@ -82,13 +83,10 @@ export function convertToTSConfig(parsed: ParsedCommandLine, configFileName: str
     }
   }
 
-  return {
-    compilerOptions: result,
-    files: parsed.fileNames,
-    include: undefined,
-    exclude: undefined,
-    references: parsed.projectReferences,
-  };
+  const files = parsed.parsedConfig.fileNames;
+  const out: TSConfig = { compilerOptions: result };
+  if (files !== undefined) out.files = files;
+  return out;
 }
 
 /**

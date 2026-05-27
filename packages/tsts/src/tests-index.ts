@@ -1,23 +1,23 @@
 // Test entry point.
 // Side-effect imports register each xUnit class via the attributes API.
 
-import "./_smoke.test.ts";
-import "./api/binary-protocol.test.ts";
-import "./collections/collections.test.ts";
-import "./core/core.test.ts";
-import "./core/pattern.test.ts";
-import "./debug/debug.test.ts";
-import "./diagnosticwriter/format.test.ts";
-import "./evaluator/evaluator.test.ts";
-import "./glob/glob.test.ts";
-import "./jsnum/jsnum.test.ts";
-import "./module/util.test.ts";
-import "./packagejson/packagejson.test.ts";
-import "./semver/version.test.ts";
-import "./semver/version_range.test.ts";
-import "./stringutil/stringutil.test.ts";
-import "./symlinks/symlinks.test.ts";
-import "./tspath/path.test.ts";
+import "./_smoke.test.js";
+import "./api/binary-protocol.test.js";
+import "./collections/collections.test.js";
+import "./core/core.test.js";
+import "./core/pattern.test.js";
+import "./debug/debug.test.js";
+import "./diagnosticwriter/format.test.js";
+import "./evaluator/evaluator.test.js";
+import "./glob/glob.test.js";
+import "./jsnum/jsnum.test.js";
+import "./module/util.test.js";
+import "./packagejson/packagejson.test.js";
+import "./semver/version.test.js";
+import "./semver/version_range.test.js";
+import "./stringutil/stringutil.test.js";
+import "./symlinks/symlinks.test.js";
+import "./tspath/path.test.js";
 
 // === Still blocked after batch 114500 codex completion + clean rebuild ===
 // Codex's tuple-to-tuple unification fix targets `parameterType.kind ===

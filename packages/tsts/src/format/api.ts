@@ -12,6 +12,11 @@
  */
 
 import type { Node as AstNode, SourceFile } from "../ast/index.js";
+import {
+  nodePos, nodeEnd, nodeParent, newTextRange,
+  sourceFileText, isWhiteSpaceSingleLine, isLineBreak,
+} from "../ast/index.js";
+import { Kind } from "../ast/index.js";
 
 /**
  * Format request flavor — mirrors TS-Go `FormatRequestKind`.
@@ -61,8 +66,10 @@ export interface FormatCodeSettings {
   readonly placeOpenBraceOnNewLineForControlBlocks?: boolean;
   readonly insertSpaceBeforeTypeAnnotation?: boolean;
   readonly indentMultiLineObjectLiteralBeginningOnBlankLine?: boolean;
+  readonly indentSwitchCase?: boolean;
+  readonly baseIndentSize?: number;
   readonly semicolons?: "ignore" | "insert" | "remove";
-  readonly indentStyle?: "none" | "block" | "smart";
+  readonly indentStyle?: "none" | "block" | "smart" | number;
   readonly trimTrailingWhitespace?: boolean;
 }
 
@@ -70,8 +77,8 @@ export interface FormatCodeSettings {
  * Text range used in change requests. Mirrors `core.TextRange`.
  */
 export interface TextRange {
-  pos(): number;
-  end(): number;
+  readonly pos: number;
+  readonly end: number;
 }
 
 /**
@@ -123,7 +130,7 @@ export function formatSpan(
     sourceFileText(file),
     sourceFileLanguageVariant(file),
     getScanStartPosition(enclosingNode, span, file),
-    span.end(),
+    span.end,
     formatSpanWorker(
       ctx,
       span,
@@ -153,8 +160,8 @@ export function formatNodeGivenIndentation(
   return runFormattingScanner(
     sourceFileText(file),
     languageVariant,
-    textRange.pos(),
-    textRange.end(),
+    textRange.pos,
+    textRange.end,
     formatSpanWorker(
       ctx,
       textRange,
@@ -257,15 +264,10 @@ function formatNodeLines(
 // Forward declarations — replaced as TSTS subsystems land.
 // ---------------------------------------------------------------------------
 
-declare function newTextRange(pos: number, end: number): TextRange;
-declare function nodePos(node: AstNode): number;
-declare function nodeEnd(node: AstNode): number;
-declare function nodeParent(node: AstNode): AstNode;
-declare function sourceFileText(file: SourceFile): string;
+// Format-engine-internal helpers — full ports come with Phase 4a.
 declare function sourceFileEnd(file: SourceFile): number;
 declare function sourceFileLanguageVariant(file: SourceFile): number;
 declare function sourceFileDiagnostics(file: SourceFile): readonly unknown[];
-
 declare function findEnclosingNode(range: TextRange, file: SourceFile): AstNode;
 declare function getScanStartPosition(enclosingNode: AstNode, span: TextRange, file: SourceFile): number;
 declare function getIndentationForNode(node: AstNode, range: TextRange, file: SourceFile, opts: FormatCodeSettings): number;
@@ -273,7 +275,6 @@ declare function getOwnOrInheritedDelta(node: AstNode, opts: FormatCodeSettings,
 declare function prepareRangeContainsErrorFunction(diags: readonly unknown[], span: TextRange): (r: TextRange) => boolean;
 declare function findImmediatelyPrecedingTokenOfKind(position: number, kind: number, sourceFile: SourceFile): AstNode | undefined;
 declare function findOutermostNodeWithinListLevel(node: AstNode | undefined): AstNode | undefined;
-
 declare function runFormattingScanner(
   text: string,
   languageVariant: number,
@@ -281,11 +282,9 @@ declare function runFormattingScanner(
   end: number,
   worker: FormatSpanWorker,
 ): readonly TextChange[];
-
 interface FormatSpanWorker {
   run(): readonly TextChange[];
 }
-
 declare function formatSpanWorker(
   ctx: FormatContext,
   span: TextRange,
@@ -296,15 +295,11 @@ declare function formatSpanWorker(
   rangeContainsError: (r: TextRange) => boolean,
   file: SourceFile,
 ): FormatSpanWorker;
-
 declare function getLineStartPositionForPosition(position: number, sourceFile: SourceFile): number;
-declare function getTokenPosOfNode(node: AstNode, sourceFile: SourceFile, includeJSDoc: boolean): number;
+declare function getTokenPosOfNode(node: AstNode | undefined, sourceFile: SourceFile, includeJSDoc: boolean): number;
 declare function getECMALineOfPosition(sourceFile: SourceFile, position: number): number;
 declare function getECMALineStarts(sourceFile: SourceFile): readonly number[];
 declare function getECMAEndLinePosition(sourceFile: SourceFile, line: number): number;
-declare function isWhiteSpaceSingleLine(ch: number): boolean;
-declare function isLineBreak(ch: number): boolean;
-
-declare const KindOpenBraceToken: number;
-declare const KindCloseBraceToken: number;
-declare const KindSemicolonToken: number;
+const KindOpenBraceToken = Kind.OpenBraceToken;
+const KindCloseBraceToken = Kind.CloseBraceToken;
+const KindSemicolonToken = Kind.SemicolonToken;

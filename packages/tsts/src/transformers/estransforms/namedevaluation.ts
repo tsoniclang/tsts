@@ -16,6 +16,25 @@
 
 import { isClassThisAssignmentBlock } from "./classthis.js";
 import type { Node as AstNode, ClassLikeDeclaration, IdentifierNode, StringLiteralNode, PropertyName, ComputedPropertyName, PropertyAssignment, ShorthandPropertyAssignment, VariableDeclaration, ParameterDeclaration, BindingElement, PropertyDeclaration, BinaryExpression, ExportAssignment, ClassExpression, FunctionExpression, ArrowFunction } from "../../ast/index.js";
+import {
+  nodeLoc, setLoc, declName, classDeclName, classMembers, classModifiers,
+  classHeritageClauses,
+  hasSyntacticModifier, skipOuterExpressions,
+  variableDeclarationName,
+  bindingElementName, bindingElementInitializer,
+  bindingElementDotDotDotToken, bindingElementPropertyName,
+  parameterDotDotDotToken,
+  callExpressionArguments,
+  binaryLeft, binaryRight, binaryOperatorToken, binaryOperatorTokenKind,
+  exportAssignmentExpression, exportAssignmentIsExportEquals,
+} from "../../ast/index.js";
+import {
+  isIdentifier, isStringLiteral, isPrivateIdentifier,
+  isComputedPropertyName, isClassDeclaration, isFunctionDeclaration,
+  isClassExpression, isExpressionStatement,
+} from "../../ast/index.js";
+import { Kind } from "../../ast/index.js";
+import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
 
 // An anonymous function definition is a ClassExpression | FunctionExpression | ArrowFunction.
 export type AnonymousFunctionDefinition = ClassExpression | FunctionExpression | ArrowFunction;
@@ -49,7 +68,7 @@ export function isClassNamedEvaluationHelperBlock(emitContext: EmitContext, node
 export function classHasExplicitlyAssignedName(emitContext: EmitContext, node: ClassLikeDeclaration): boolean {
   const assigned = emitContext.assignedName(node as unknown as AstNode);
   if (assigned !== undefined) {
-    for (const member of classMembers(node)) {
+    for (const member of classMembers(node as unknown as AstNode) ?? []) {
       if (isClassNamedEvaluationHelperBlock(emitContext, member)) return true;
     }
   }
@@ -280,7 +299,7 @@ export function injectClassNamedEvaluationHelperBlockIfMissing(
     );
   }
 
-  const members = classMembers(node);
+  const members = classMembers(node as unknown as AstNode) ?? [];
   let insertionIndex = -1;
   for (let i = 0; i < members.length; i++) {
     if (isClassThisAssignmentBlock(emitContext as unknown as never, members[i]!)) {
@@ -289,12 +308,12 @@ export function injectClassNamedEvaluationHelperBlockIfMissing(
     }
   }
   insertionIndex += 1;
-  const leading = members.slice(0, insertionIndex);
-  const trailing = members.slice(insertionIndex);
+  const leading = [...members].slice(0, insertionIndex);
+  const trailing = [...members].slice(insertionIndex);
 
   const newMembers: AstNode[] = [...leading, namedEvaluationBlock, ...trailing];
   const membersList = factory.newNodeList(newMembers);
-  setLoc(membersList, classMemberListLoc(node));
+  setLoc(membersList as AstNode, classMemberListLoc(node));
 
   const oldNode = node;
   let updated: ClassLikeDeclaration;
@@ -750,42 +769,15 @@ interface Factory {
   restoreOuterExpressions(original: AstNode, inner: AstNode, kinds: number): AstNode;
 }
 
-declare const Kind: {
-  ClassExpression: number; FunctionExpression: number; ArrowFunction: number;
-  PropertyAssignment: number; ShorthandPropertyAssignment: number; VariableDeclaration: number;
-  Parameter: number; BindingElement: number; PropertyDeclaration: number;
-  BinaryExpression: number; ExportAssignment: number;
-  EqualsToken: number; AmpersandAmpersandEqualsToken: number; BarBarEqualsToken: number;
-  QuestionQuestionEqualsToken: number;
-};
-
-declare const OEK: { All: number };
-declare const TokenFlags: { None: number };
-declare const ModifierFlags: { Default: number };
-
-declare function skipOuterExpressions(node: AstNode, kinds: number): AstNode;
+const OEK = { All: 0 } as const;
+const TokenFlags = { None: 0 } as const;
 declare function isClassStaticBlockDeclaration(node: AstNode): boolean;
 declare function classStaticBlockBodyStatements(node: AstNode): readonly AstNode[];
-declare function isExpressionStatement(node: AstNode): boolean;
 declare function expressionOfStatement(node: AstNode): AstNode;
-declare function callExpressionArguments(node: AstNode): readonly AstNode[];
-declare function isIdentifier(node: AstNode): boolean;
-declare function isStringLiteral(node: AstNode): boolean;
 declare function isPropertyNameLiteral(node: AstNode): boolean;
-declare function isPrivateIdentifier(node: AstNode): boolean;
-declare function isComputedPropertyName(node: AstNode): boolean;
-declare function isClassDeclaration(node: AstNode): boolean;
-declare function isFunctionDeclaration(node: AstNode): boolean;
-declare function isClassExpression(node: AstNode): boolean;
-declare function hasSyntacticModifier(node: AstNode, flags: number): boolean;
 declare function stringLiteralText(node: AstNode): string;
-declare function declName(node: AstNode): AstNode | undefined;
-declare function classDeclName(node: ClassLikeDeclaration): IdentifierNode | undefined;
-declare function classMembers(node: ClassLikeDeclaration): readonly AstNode[];
-declare function classMemberListLoc(node: ClassLikeDeclaration): unknown;
-declare function classModifiers(node: ClassLikeDeclaration): unknown;
-declare function classTypeParameterList(node: ClassLikeDeclaration): unknown;
-declare function classHeritageClauses(node: ClassLikeDeclaration): unknown;
+declare function classMemberListLoc(node: AstNode): unknown;
+declare function classTypeParameterList(node: AstNode): unknown;
 declare function functionExpressionName(node: FunctionExpression): AstNode | undefined;
 declare function propertyNameText(node: PropertyName): string;
 declare function propertyNameExpression(node: PropertyName): AstNode;
@@ -794,24 +786,10 @@ declare function propertyAssignmentInitializer(node: PropertyAssignment): AstNod
 declare function shorthandName(node: ShorthandPropertyAssignment): IdentifierNode;
 declare function shorthandObjectAssignmentInitializer(node: ShorthandPropertyAssignment): AstNode | undefined;
 declare function shorthandEqualsToken(node: ShorthandPropertyAssignment): unknown;
-declare function variableDeclarationName(node: VariableDeclaration): AstNode;
 declare function variableDeclarationInitializer(node: VariableDeclaration): AstNode | undefined;
 declare function parameterDeclarationName(node: ParameterDeclaration): AstNode;
 declare function parameterDeclarationInitializer(node: ParameterDeclaration): AstNode | undefined;
-declare function parameterDotDotDotToken(node: ParameterDeclaration): unknown;
-declare function bindingElementName(node: BindingElement): AstNode;
-declare function bindingElementInitializer(node: BindingElement): AstNode | undefined;
-declare function bindingElementDotDotDotToken(node: BindingElement): unknown;
-declare function bindingElementPropertyName(node: BindingElement): unknown;
 declare function propertyDeclarationName(node: PropertyDeclaration): PropertyName;
 declare function propertyDeclarationInitializer(node: PropertyDeclaration): AstNode | undefined;
 declare function propertyDeclarationModifiers(node: PropertyDeclaration): unknown;
-declare function binaryOperatorTokenKind(node: BinaryExpression): number;
-declare function binaryOperatorToken(node: BinaryExpression): unknown;
-declare function binaryLeft(node: BinaryExpression): AstNode;
-declare function binaryRight(node: BinaryExpression): AstNode;
-declare function exportAssignmentExpression(node: ExportAssignment): AstNode;
-declare function exportAssignmentIsExportEquals(node: ExportAssignment): boolean;
 declare function nodeInitializer(node: AstNode): AstNode | undefined;
-declare function nodeLoc(node: AstNode): unknown;
-declare function setLoc(node: unknown, loc: unknown): void;

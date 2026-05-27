@@ -44,7 +44,7 @@ export class FormattingContext {
 
   private contextNodeAllOnSameLine: Tristate = "unknown";
   private nextNodeAllOnSameLine: Tristate = "unknown";
-  private tokensAreOnSameLine: Tristate = "unknown";
+  private tokensAreOnSameLineCache: Tristate = "unknown";
   private contextNodeBlockIsOnOneLine: Tristate = "unknown";
   private nextNodeBlockIsOnOneLine: Tristate = "unknown";
 
@@ -74,7 +74,7 @@ export class FormattingContext {
     // Invalidate cached predicates.
     this.contextNodeAllOnSameLine = "unknown";
     this.nextNodeAllOnSameLine = "unknown";
-    this.tokensAreOnSameLine = "unknown";
+    this.tokensAreOnSameLineCache = "unknown";
     this.contextNodeBlockIsOnOneLine = "unknown";
     this.nextNodeBlockIsOnOneLine = "unknown";
   }
@@ -111,18 +111,20 @@ export class FormattingContext {
     return this.nextNodeAllOnSameLine === "true";
   }
 
-  tokensAreOnSameLineCached(): boolean {
+  tokensAreOnSameLine(): boolean {
     if (
-      this.tokensAreOnSameLine === "unknown" &&
+      this.tokensAreOnSameLineCache === "unknown" &&
       this.currentTokenSpan !== undefined &&
       this.nextTokenSpan !== undefined
     ) {
-      this.tokensAreOnSameLine = this.rangeIsOnOneLine(
-        newTextRange(this.currentTokenSpan.loc.pos(), this.nextTokenSpan.loc.end()),
+      this.tokensAreOnSameLineCache = this.rangeIsOnOneLine(
+        newTextRange(this.currentTokenSpan.loc.pos, this.nextTokenSpan.loc.end),
       );
     }
-    return this.tokensAreOnSameLine === "true";
+    return this.tokensAreOnSameLineCache === "true";
   }
+  tokensAreOnSameLineCached(): boolean { return this.tokensAreOnSameLine(); }
+
 
   contextNodeBlockIsOnOneLineCached(): boolean {
     if (this.contextNodeBlockIsOnOneLine === "unknown" && this.contextNode !== undefined) {

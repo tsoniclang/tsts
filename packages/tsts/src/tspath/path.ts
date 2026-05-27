@@ -248,15 +248,6 @@ export function getPathComponents(path: string, currentDirectory: string = ""): 
   return pathComponents(path, getRootLength(path));
 }
 
-function pathComponents(path: string, rootLength: number): readonly string[] {
-  const root = path.slice(0, rootLength);
-  let rest = path.slice(rootLength).split("/");
-  if (rest.length > 0 && rest[rest.length - 1] === "") {
-    rest = rest.slice(0, -1);
-  }
-  return [root, ...rest];
-}
-
 export function getPathFromPathComponents(pathComponents: readonly string[]): string {
   if (pathComponents.length === 0) return "";
   const root = ensureTrailingDirectorySeparator(pathComponents[0]!);
@@ -265,29 +256,6 @@ export function getPathFromPathComponents(pathComponents: readonly string[]): st
 
 export function getNormalizedPathComponents(path: string, currentDirectory: string): readonly string[] {
   return reducePathComponents(getPathComponents(path, currentDirectory));
-}
-
-function reducePathComponents(components: readonly string[]): readonly string[] {
-  if (components.length === 0) return [];
-  const reduced = [components[0]!];
-  for (let i = 1; i < components.length; i += 1) {
-    const component = components[i]!;
-    if (component === "" || component === ".") continue;
-    if (component === "..") {
-      if (reduced.length > 1) {
-        if (reduced[reduced.length - 1] !== "..") {
-          reduced.pop();
-          continue;
-        }
-      } else if (reduced[0] !== "") {
-        // Don't reduce above the first non-empty component
-        reduced.push(component);
-        continue;
-      }
-    }
-    reduced.push(component);
-  }
-  return reduced;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -584,31 +552,8 @@ export interface ForEachResult<T> {
   readonly stop: boolean;
 }
 
-export function forEachAncestorDirectory<T>(
-  directory: string,
-  callback: (directory: string) => T | undefined
-): T | undefined {
-  while (true) {
-    const result = callback(directory);
-    if (result !== undefined) return result;
-    const parent = getDirectoryPath(directory);
-    if (parent === directory) return undefined;
-    directory = parent;
-  }
-}
-
-export function forEachAncestorDirectoryPath<T>(
-  directory: Path,
-  callback: (directory: Path) => T | undefined
-): T | undefined {
-  while (true) {
-    const result = callback(directory);
-    if (result !== undefined) return result;
-    const parent = getDirectoryPath(directory) as Path;
-    if (parent === directory) return undefined;
-    directory = parent;
-  }
-}
+// Strada-style variants below (returning { result, ok }) supersede the
+// historical T|undefined shape.
 
 // ────────────────────────────────────────────────────────────────────────────
 // Convert to relative path
@@ -705,14 +650,14 @@ export function getAnyExtensionFromPathWorker(
   stringEqualityComparer: (a: string, b: string) => boolean,
 ): string {
   for (const extension of extensions) {
-    const result = tryGetExtensionFromPath(path, extension, stringEqualityComparer);
+    const result = tryGetExtensionFromPathWithComparer(path, extension, stringEqualityComparer);
     if (result !== "") return result;
   }
   return "";
 }
 
-/** Mirrors TS-Go `tryGetExtensionFromPath`. */
-export function tryGetExtensionFromPath(
+/** Mirrors TS-Go `tryGetExtensionFromPath` (extension+comparer variant). */
+export function tryGetExtensionFromPathWithComparer(
   path: string,
   extension: string,
   stringEqualityComparer: (a: string, b: string) => boolean,
@@ -926,45 +871,6 @@ export function getNormalizedPathComponentsFromCombined(path: string): readonly 
   return reducePathComponents(getPathComponents(path, ""));
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Misc
-// ────────────────────────────────────────────────────────────────────────────
-
-/** Mirrors TS-Go `StartsWithDirectory`. */
-export function startsWithDirectory(
-  fileName: string,
-  directoryName: string,
-  useCaseSensitiveFileNames: boolean,
-): boolean {
-  if (directoryName === "") return false;
-  const cFile = getCanonicalFileName(fileName, useCaseSensitiveFileNames);
-  let cDir = getCanonicalFileName(directoryName, useCaseSensitiveFileNames);
-  if (cDir.endsWith("/")) cDir = cDir.slice(0, -1);
-  if (cDir.endsWith("\\")) cDir = cDir.slice(0, -1);
-  return cFile.startsWith(cDir + "/") || cFile.startsWith(cDir + "\\");
-}
-
-/** Mirrors TS-Go `CompareNumberOfDirectorySeparators`. */
-export function compareNumberOfDirectorySeparators(path1: string, path2: string): number {
-  const c1 = countChar(path1, "/");
-  const c2 = countChar(path2, "/");
-  if (c1 < c2) return -1;
-  if (c1 > c2) return 1;
-  return 0;
-}
-
-function countChar(s: string, ch: string): number {
-  let count = 0;
-  for (let i = 0; i < s.length; i++) {
-    if (s[i] === ch) count++;
-  }
-  return count;
-}
-
-/** Mirrors TS-Go `SplitVolumePath`. */
-export function splitVolumePath(path: string): { volume: string; rest: string; ok: boolean } {
-  if (path.length >= 2 && isVolumeCharacter(path[0]!) && path[1] === ":") {
-    return { volume: path.slice(0, 2).toLowerCase(), rest: path.slice(2), ok: true };
-  }
-  return { volume: "", rest: path, ok: false };
-}
+// (Duplicate implementations of startsWithDirectory,
+// compareNumberOfDirectorySeparators, and splitVolumePath were
+// removed — the canonical versions live above at lines 546-568.)

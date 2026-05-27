@@ -150,7 +150,7 @@ class OsFS implements FS {
       try {
         st = statSync(currentPath);
       } catch {
-        return walkFn(currentPath, { name: baseName(currentPath), isDirectory: false, isFile: false, isSymlink: false }, undefined);
+        return walkFn(currentPath, { name: baseName(currentPath), isDirectory: false, isFile: false, isSymlink: false });
       }
       const entry: DirEntry = {
         name: baseName(currentPath),
@@ -158,7 +158,7 @@ class OsFS implements FS {
         isFile: st.isFile(),
         isSymlink: st.isSymbolicLink(),
       };
-      const action = walkFn(currentPath, entry, undefined);
+      const action = walkFn(currentPath, entry);
       if (action === "skip-all") return "skip-all";
       if (action === "skip-dir" || !entry.isDirectory) return action;
       let children: Dirent[];

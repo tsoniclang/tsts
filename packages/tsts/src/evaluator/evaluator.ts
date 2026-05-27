@@ -17,6 +17,8 @@
 
 import { numberToString, fromString } from "../jsnum/string.js";
 import type { Node as AstNode } from "../ast/index.js";
+import { nodeText, skipOuterExpressions } from "../ast/index.js";
+import { Kind } from "../ast/index.js";
 
 export interface EvaluatorResult {
   readonly value: string | number | boolean | bigint | undefined;
@@ -188,24 +190,8 @@ export function isTruthy(v: EvaluatorResult["value"]): boolean {
 // Forward-declared cross-module AST surface
 // ---------------------------------------------------------------------------
 
-declare const Kind: {
-  PrefixUnaryExpression: number; BinaryExpression: number;
-  StringLiteral: number; NoSubstitutionTemplateLiteral: number;
-  TemplateExpression: number; NumericLiteral: number; Identifier: number;
-  ElementAccessExpression: number; PropertyAccessExpression: number;
-  PlusToken: number; MinusToken: number; TildeToken: number;
-  BarToken: number; AmpersandToken: number; CaretToken: number;
-  AsteriskToken: number; SlashToken: number; PercentToken: number;
-  AsteriskAsteriskToken: number;
-  LessThanLessThanToken: number;
-  GreaterThanGreaterThanToken: number;
-  GreaterThanGreaterThanGreaterThanToken: number;
-};
-
-declare const OuterExpressionKinds: { Parentheses: number };
-
-declare function skipOuterExpressions(node: AstNode, kinds: number): AstNode;
-declare function nodeText(node: AstNode): string;
+const OuterExpressionKinds = { Parentheses: 1 << 0 } as const;
+// Strada-specific accessors not yet wired to ast/index.js.
 declare function prefixUnaryExpressionOperand(node: AstNode): AstNode;
 declare function prefixUnaryExpressionOperator(node: AstNode): number;
 declare function binaryExpressionLeft(node: AstNode): AstNode;

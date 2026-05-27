@@ -5,6 +5,25 @@
  */
 
 import type { Node as AstNode, StatementList, TypeParameterDeclaration, FunctionDeclaration } from "../../ast/index.js";
+import {
+  nodeName, nodeExpression, nodeParent, bindingPatternElements,
+  hasSyntacticModifier,
+} from "../../ast/index.js";
+import {
+  isExportAssignment, isExportDeclaration, isVariableDeclaration,
+  isPropertyDeclaration, isBindingElement, isSetAccessorDeclaration,
+  isGetAccessorDeclaration, isConstructSignatureDeclaration,
+  isCallSignatureDeclaration, isMethodDeclaration, isFunctionDeclaration,
+  isParameterDeclaration, isTypeParameterDeclaration,
+  isExpressionWithTypeArguments, isImportEqualsDeclaration,
+  isTypeAliasDeclaration, isConstructorDeclaration,
+  isIndexSignatureDeclaration, isPropertyAccessExpression,
+  isElementAccessExpression, isBinaryExpression, isOmittedExpression,
+  isBindingPattern, isSourceFile, isModuleDeclaration, isClassDeclaration,
+  isInterfaceDeclaration, isMappedTypeNode,
+} from "../../ast/index.js";
+import { Kind } from "../../ast/index.js";
+import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
 
 export function needsScopeMarker(result: AstNode): boolean {
   return (
@@ -162,56 +181,13 @@ interface DeclarationEmitHost {
 interface EmitContext { parseNode(node: AstNode): AstNode | undefined }
 interface EmitResolver { isDeclarationVisible(node: AstNode): boolean }
 
-declare const Kind: {
-  PropertyDeclaration: number; PropertySignature: number; Parameter: number;
-  VariableDeclaration: number; FunctionDeclaration: number; ModuleDeclaration: number;
-  InterfaceDeclaration: number; ClassDeclaration: number; TypeAliasDeclaration: number;
-  JSTypeAliasDeclaration: number; EnumDeclaration: number;
-  ImportEqualsDeclaration: number; ImportDeclaration: number; JSImportDeclaration: number;
-  ExportDeclaration: number; ExportAssignment: number; ClassStaticBlockDeclaration: number;
-  ParenthesizedExpression: number; MethodDeclaration: number;
-};
-declare const ModifierFlags: { Private: number; Default: number; Export: number; Ambient: number };
-
+// Strada helpers not yet wired to ast/index.js
 declare function isAnyImportOrReExport(node: AstNode): boolean;
-declare function isExportAssignment(node: AstNode): boolean;
-declare function isExportDeclaration(node: AstNode): boolean;
-declare function hasSyntacticModifier(node: AstNode, flags: number): boolean;
 declare function isAmbientModule(node: AstNode): boolean;
-declare function isVariableDeclaration(node: AstNode): boolean;
-declare function isPropertyDeclaration(node: AstNode): boolean;
 declare function isPropertySignatureDeclaration(node: AstNode): boolean;
-declare function isBindingElement(node: AstNode): boolean;
-declare function isSetAccessorDeclaration(node: AstNode): boolean;
-declare function isGetAccessorDeclaration(node: AstNode): boolean;
-declare function isConstructSignatureDeclaration(node: AstNode): boolean;
-declare function isCallSignatureDeclaration(node: AstNode): boolean;
-declare function isMethodDeclaration(node: AstNode): boolean;
 declare function isMethodSignatureDeclaration(node: AstNode): boolean;
-declare function isFunctionDeclaration(node: AstNode): boolean;
-declare function isParameterDeclaration(node: AstNode): boolean;
-declare function isTypeParameterDeclaration(node: AstNode): boolean;
-declare function isExpressionWithTypeArguments(node: AstNode): boolean;
-declare function isImportEqualsDeclaration(node: AstNode): boolean;
-declare function isTypeAliasDeclaration(node: AstNode): boolean;
 declare function isJSTypeAliasDeclaration(node: AstNode): boolean;
-declare function isConstructorDeclaration(node: AstNode): boolean;
-declare function isIndexSignatureDeclaration(node: AstNode): boolean;
-declare function isPropertyAccessExpression(node: AstNode): boolean;
-declare function isElementAccessExpression(node: AstNode): boolean;
-declare function isBinaryExpression(node: AstNode): boolean;
-declare function isOmittedExpression(node: AstNode): boolean;
-declare function isBindingPattern(node: AstNode): boolean;
-declare function isSourceFile(node: AstNode): boolean;
-declare function isModuleDeclaration(node: AstNode): boolean;
-declare function isClassDeclaration(node: AstNode): boolean;
-declare function isInterfaceDeclaration(node: AstNode): boolean;
 declare function isFunctionLike(node: AstNode): boolean;
-declare function isMappedTypeNode(node: AstNode): boolean;
-declare function bindingPatternElements(pattern: AstNode): readonly AstNode[];
-declare function nodeName(node: AstNode): AstNode | undefined;
-declare function nodeExpression(node: AstNode): AstNode;
-declare function nodeParent(node: AstNode): AstNode | undefined;
 declare function functionDeclarationBody(node: FunctionDeclaration): AstNode | undefined;
 declare function functionDeclarationSymbolDeclarations(node: FunctionDeclaration): readonly AstNode[];
 declare function getClassExtendsHeritageElement(node: AstNode): AstNode | undefined;

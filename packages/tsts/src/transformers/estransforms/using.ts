@@ -12,7 +12,28 @@
 
 import { convertClassDeclarationToClassExpression } from "./utilities.js";
 import { isNamedEvaluation, transformNamedEvaluation } from "./namedevaluation.js";
-import type { Node as AstNode, SourceFile, Block, ForStatement, ForInOrOfStatement, VariableStatement, VariableDeclarationList, VariableDeclaration, ExportAssignment, ClassDeclaration, IdentifierNode, ExportSpecifierNode } from "../../ast/index.js";
+import type { Node as AstNode, SourceFile, Block, ForStatement, ForInOrOfStatement, VariableStatement, VariableDeclarationList, VariableDeclaration, ExportAssignment, ClassDeclaration, IdentifierNode, ExportSpecifier as ExportSpecifierNode } from "../../ast/index.js";
+import {
+  nodeFlags, nodeLoc, setLoc, nodeName, hasSyntacticModifier,
+  identifierText, classDeclName,
+  sourceFileIsDeclarationFile, sourceFileEndOfFileToken,
+  blockStatementsRO, blockMultiLineRO,
+  forInitializerRO, forConditionRO, forIncrementorRO, forBodyRO,
+  forInOrOfInitializerRO, forInOrOfExpressionRO, forInOrOfBodyRO, forInOrOfAwaitModifierRO,
+  variableDeclarationListDeclarationsRO, variableStatementDeclarationListRO,
+  variableDeclarationNameRO, variableDeclarationInitializerRO,
+  bindingPatternElementsRO,
+  exportAssignmentExpressionRO, exportAssignmentIsExportEquals,
+} from "../../ast/index.js";
+import {
+  isIdentifier, isBindingPattern, isVariableDeclarationList,
+  isVariableStatement,
+} from "../../ast/index.js";
+import { isBlockNode } from "../../ast/index.js";
+import { Kind, NodeFlags } from "../../ast/index.js";
+import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
+import { EmitFlags } from "../../printer/emitflags.js";
+import { GeneratedIdentifierFlags } from "../../printer/namegenerator.js";
 import { Transformer, type TransformOptions } from "../transformer.js";
 
 // ---------------------------------------------------------------------------
@@ -393,7 +414,7 @@ export class UsingDeclarationTransformer extends Transformer {
         GeneratedIdentifierFlags.FileLevel |
         GeneratedIdentifierFlags.Optimistic,
     });
-    this.emitContext().addVariableDeclaration(this.exportEqualsBinding as unknown as AstNode);
+    this.emitContext().addVariableDeclaration(this.exportEqualsBinding as unknown as IdentifierNode);
     const assignment = this.factory().newAssignmentExpression(
       this.exportEqualsBinding as unknown as AstNode,
       exportAssignmentExpressionRO(node),
@@ -536,9 +557,9 @@ export class UsingDeclarationTransformer extends Transformer {
       const specifier = this.factory().newExportSpecifier(false, localName, exportName!);
       if (original !== undefined) this.emitContext().setOriginal(specifier, original);
       if (this.exportBindings === undefined) this.exportBindings = new Map();
-      this.exportBindings.set(identifierText(name as unknown as AstNode), specifier);
+      this.exportBindings.set(identifierText(name as unknown as AstNode), specifier as unknown as ExportSpecifierNode);
     }
-    this.emitContext().addVariableDeclaration(name as unknown as AstNode);
+    this.emitContext().addVariableDeclaration(name as unknown as IdentifierNode);
   }
 
   createEnvBinding(): IdentifierNode {
@@ -641,7 +662,7 @@ export function getUsingKindOfVariableDeclarationList(node: VariableDeclarationL
 }
 
 export function getUsingKindOfVariableStatement(node: VariableStatement): UsingKind {
-  return getUsingKindOfVariableDeclarationList(variableStatementDeclarationListRO(node));
+  return getUsingKindOfVariableDeclarationList(variableStatementDeclarationListRO(node) as VariableDeclarationList);
 }
 
 export function getUsingKind(statement: AstNode): UsingKind {
@@ -670,65 +691,16 @@ export function newUsingDeclarationTransformer(opts: TransformOptions): Transfor
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-declare const Kind: {
-  SourceFile: number; Block: number; ForStatement: number; ForOfStatement: number;
-  ImportDeclaration: number; ImportEqualsDeclaration: number; ExportDeclaration: number;
-  FunctionDeclaration: number; ExportAssignment: number; ClassDeclaration: number;
-  VariableStatement: number; SyntaxList: number; ExportKeyword: number;
-};
-
-declare const NodeFlags: {
-  None: number; Let: number; Const: number; BlockScoped: number;
-  Using: number; AwaitUsing: number;
-};
-
-declare const ModifierFlags: { Export: number; Default: number };
-declare const SubtreeFacts: { ContainsUsing: number };
-declare const OEK: { All: number };
-declare const EmitFlags: { LocalName: number; ExportName: number };
-declare const GeneratedIdentifierFlags: {
-  Optimistic: number; FileLevel: number; ReservedInNestedScopes: number;
-};
-
+const OEK = { All: 0 } as const;
+const SubtreeFacts = { ContainsUsing: 1 << 0 } as const;
 declare function subtreeFacts(node: AstNode): number;
-declare function nodeFlags(node: AstNode): number;
-declare function nodeLoc(node: AstNode): unknown;
-declare function setLoc(node: unknown, loc: unknown): void;
-declare function nodeName(node: AstNode): AstNode | undefined;
-declare function hasSyntacticModifier(node: AstNode, flags: number): boolean;
 declare function skipOuterExpressions(node: AstNode, kinds: number): AstNode;
-declare function firstResult<T>(arr: readonly T[]): readonly T[];
-declare function isIdentifier(node: AstNode): boolean;
-declare function isBindingPattern(node: AstNode): boolean;
-declare function isVariableDeclarationList(node: AstNode): boolean;
-declare function isVariableStatement(node: AstNode): boolean;
-declare function isBlockNode(node: AstNode): boolean;
+declare function firstResult<T>(arr: { items: readonly T[]; changed: boolean }): readonly T[];
 declare function isGeneratedIdentifier(emitContext: unknown, node: AstNode): boolean;
 declare function isLocalName(emitContext: unknown, node: AstNode): boolean;
 declare function cloneIdentifier(node: AstNode, factory: unknown): AstNode;
 declare function convertBindingPatternToAssignmentPattern(emitContext: unknown, pattern: AstNode): AstNode;
-declare function identifierText(node: AstNode): string;
 declare function syntaxListChildren(node: AstNode): readonly AstNode[];
 declare function sourceFileStatements(node: SourceFile): readonly AstNode[];
-declare function sourceFileIsDeclarationFile(node: SourceFile): boolean;
-declare function sourceFileEndOfFileToken(node: SourceFile): AstNode;
 declare function statementsListAsNode(node: AstNode): AstNode;
-declare function blockStatementsRO(node: Block): readonly AstNode[];
-declare function blockMultiLineRO(node: Block): boolean;
-declare function forInitializerRO(node: ForStatement): AstNode | undefined;
-declare function forConditionRO(node: ForStatement): AstNode | undefined;
-declare function forIncrementorRO(node: ForStatement): AstNode | undefined;
-declare function forBodyRO(node: ForStatement): AstNode;
-declare function forInOrOfInitializerRO(node: ForInOrOfStatement): AstNode;
-declare function forInOrOfExpressionRO(node: ForInOrOfStatement): AstNode;
-declare function forInOrOfBodyRO(node: ForInOrOfStatement): AstNode;
-declare function forInOrOfAwaitModifierRO(node: ForInOrOfStatement): AstNode | undefined;
 declare function forDeclName(node: AstNode): AstNode;
-declare function variableDeclarationListDeclarationsRO(node: VariableDeclarationList): readonly AstNode[];
-declare function variableStatementDeclarationListRO(node: VariableStatement): VariableDeclarationList;
-declare function variableDeclarationNameRO(node: VariableDeclaration): AstNode;
-declare function variableDeclarationInitializerRO(node: VariableDeclaration): AstNode | undefined;
-declare function bindingPatternElementsRO(node: AstNode): readonly AstNode[];
-declare function exportAssignmentExpressionRO(node: ExportAssignment): AstNode;
-declare function exportAssignmentIsExportEquals(node: ExportAssignment): boolean;
-declare function classDeclName(node: ClassDeclaration): IdentifierNode | undefined;

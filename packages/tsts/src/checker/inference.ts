@@ -80,7 +80,7 @@ export type TypeComparer = (source: Type, target: Type, reportErrors: boolean) =
 
 export interface InferenceContext {
   inferences: InferenceInfo[];
-  signature?: Signature;
+  signature: Signature | undefined;
   flags: InferenceFlags;
   compareTypes: TypeComparer;
   mapper: unknown;

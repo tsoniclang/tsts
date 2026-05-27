@@ -143,7 +143,7 @@ export class DeclarationTransformer extends Transformer {
       reportExpandoFunctionErrors: (node: AstNode) => this.reportExpandoFunctionErrors(node),
     };
     this.tracker = newSymbolTracker(host, this.resolver, this.state);
-    this.initTransformer((node) => this.visit(node) as AstNode, context);
+    this.initTransformer((node) => this.visit(node) as AstNode, context as unknown as Parameters<typeof this.initTransformer>[1]);
   }
 
   getDiagnostics(): readonly Diagnostic[] {
@@ -194,8 +194,8 @@ export class DeclarationTransformer extends Transformer {
     void sourceFile;
   }
 
-  transformSourceFile(node: SourceFile): AstNode {
-    return node as unknown as AstNode;
+  override transformSourceFile(node: SourceFile): SourceFile {
+    return node;
   }
 
   transformAndReplaceLatePaintedStatements(statements: StatementList): StatementList {

@@ -92,7 +92,7 @@ export function referenceLocationText(loc: ReferenceFileLocation): string {
 }
 
 export function referenceLocationDiagnosticAt(
-  loc: ReferenceFileLocation, message: { code: number; message: string }, ...args: unknown[],
+  loc: ReferenceFileLocation, message: { code: number; message: string }, ...args: unknown[]
 ): Diagnostic {
   void args;
   return {

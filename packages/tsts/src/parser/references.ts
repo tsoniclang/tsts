@@ -10,6 +10,15 @@
  */
 
 import type { Node as AstNode, SourceFile } from "../ast/index.js";
+import {
+  hasSyntacticModifier, getNodeFlags, isInJSFile, isExternalModule,
+} from "../ast/index.js";
+import {
+  isStringLiteral, isModuleDeclaration,
+} from "../ast/index.js";
+import { NodeFlags } from "../ast/index.js";
+import { ModifierFlags } from "../enums/modifierFlags.enum.js";
+import { Tristate } from "../core/tristate.js";
 
 export function collectExternalModuleReferences(file: SourceFile): void {
   for (const node of getStatements(file)) {
@@ -66,15 +75,10 @@ function collectModuleReferences(file: SourceFile, node: AstNode, inAmbientModul
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-declare const NodeFlags: { PossiblyContainsDynamicImport: number };
-declare const ModifierFlags: { Ambient: number };
-declare const Tristate: { Unknown: number; True: number; False: number };
+// Forward-declared helpers — full ports come with parser body completion.
 declare const ExclusivelyPrefixedNodeCoreModules: Record<string, boolean>;
 declare const UnprefixedNodeCoreModules: Record<string, boolean>;
-
 declare function getStatements(file: SourceFile | AstNode): readonly AstNode[];
-declare function getNodeFlags(node: AstNode): number;
-declare function isInJSFile(node: AstNode): boolean;
 declare function forEachDynamicImportOrRequireCall(
   file: SourceFile, includeTypeSpaceImports: boolean, requireStringLiteralLikeArgument: boolean,
   cb: (node: AstNode, moduleSpecifier: AstNode) => boolean,
@@ -82,16 +86,12 @@ declare function forEachDynamicImportOrRequireCall(
 declare function addImport(file: SourceFile, moduleSpecifier: AstNode): void;
 declare function isAnyImportOrReExport(node: AstNode): boolean;
 declare function getExternalModuleName(node: AstNode): AstNode | undefined;
-declare function isStringLiteral(node: AstNode): boolean;
 declare function getLiteralText(node: AstNode): string;
 declare function isExternalModuleNameRelative(name: string): boolean;
 declare function isDeclarationFile(file: SourceFile): boolean;
-declare function isExternalModule(file: SourceFile): boolean;
 declare function getUsesUriStyleNodeCoreModules(file: SourceFile): number;
 declare function setUsesUriStyleNodeCoreModules(file: SourceFile, value: number): void;
-declare function isModuleDeclaration(node: AstNode): boolean;
 declare function isAmbientModule(node: AstNode): boolean;
-declare function hasSyntacticModifier(node: AstNode, flag: number): boolean;
 declare function getModuleDeclarationName(node: AstNode): AstNode;
 declare function getModuleDeclarationBody(node: AstNode): AstNode | undefined;
 declare function addModuleAugmentation(file: SourceFile, name: AstNode): void;

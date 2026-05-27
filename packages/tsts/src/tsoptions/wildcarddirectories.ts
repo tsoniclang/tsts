@@ -6,12 +6,12 @@
  * a map from directory paths to a recursive flag, reflecting whether
  * each matched directory should be watched recursively.
  *
- * Watch rules (from TS-Go):
- *   /a/b/**/d  → /a/b watched recursively (wildcard in directory segment)
- *   /a/b/*/d   → /a/b watched recursively
- *   /a/b       → /a/b watched recursively (implicit-glob folder)
- *   /a/b/*     → /a/b watched directly (wildcard only in file segment)
- *   /a/b/a?z   → /a/b watched directly
+ * Watch rules (from TS-Go), using `D` for `/`:
+ *   D a D b D star star D d  ==>  /a/b watched recursively (wildcard in dir segment)
+ *   D a D b D star D d        ==>  /a/b watched recursively
+ *   D a D b                   ==>  /a/b watched recursively (implicit-glob folder)
+ *   D a D b D star            ==>  /a/b watched directly (wildcard only in file segment)
+ *   D a D b D a?z             ==>  /a/b watched directly
  */
 
 import type { ComparePathsOptions } from "../tspath/index.js";

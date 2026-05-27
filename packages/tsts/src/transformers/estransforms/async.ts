@@ -11,8 +11,31 @@
  */
 
 import { SuperAccessState } from "./utilities.js";
-import type { Node as AstNode, NodeArray, SourceFile, AwaitExpression, ForStatement, ForInOrOfStatement, CatchClause, VariableDeclaration, VariableDeclarationList, IdentifierNode, ConstructorDeclaration, MethodDeclaration, GetAccessorDeclaration, SetAccessorDeclaration, FunctionDeclaration, FunctionExpression, ArrowFunction, ParameterDeclaration, Block } from "../../ast/index.js";
-import { Transformer, type TransformOptions } from "../transformer.js";
+import type { Node as AstNode, NodeArray, SourceFile, AwaitExpression, ForStatement, ForInOrOfStatement, CatchClause, VariableDeclaration, VariableDeclarationList, IdentifierNode, ConstructorDeclaration, MethodDeclaration, GetAccessorDeclaration, SetAccessorDeclaration, FunctionDeclaration, FunctionExpression, ArrowFunction, ParameterDeclaration, Block, ModifierList } from "../../ast/index.js";
+import {
+  nodeFlags, nodeLoc, setLoc, nodeText, nodeName, nodeBody,
+  sourceFileIsDeclarationFile,
+  isBlockNode, bindingPatternElements,
+  blockStatementList, blockMultiLine,
+  declModifiers, declParameters, declName,
+  methodAsteriskToken, arrowFunctionBody, arrowEqualsGreaterThanToken,
+  catchClauseVariableDeclaration,
+  variableDeclarationName,
+  forInitializer, forCondition, forIncrementor, forBody,
+  parameterInitializer, parameterName, parameterDotDotDotToken,
+  arrayLiteralElements, objectLiteralProperties,
+  getFunctionFlags,
+} from "../../ast/index.js";
+import {
+  isIdentifier, isBindingPattern, isOmittedExpression,
+  isPropertyAccessExpression, isPropertyAssignment,
+  isPrefixUnaryExpression, isPostfixUnaryExpression,
+  isVariableDeclarationList,
+} from "../../ast/index.js";
+import { Kind, NodeFlags } from "../../ast/index.js";
+import { EmitFlags } from "../../printer/emitflags.js";
+import { GeneratedIdentifierFlags } from "../../printer/namegenerator.js";
+import { Transformer, type TransformOptions, type NodeVisitor } from "../transformer.js";
 
 // ---------------------------------------------------------------------------
 // Context flags
@@ -646,7 +669,7 @@ export class AsyncTransformer extends Transformer {
     const name = nodeName(node);
     if (name === undefined) return;
     if (isIdentifier(name)) {
-      this.emitContext().addVariableDeclaration(name);
+      this.emitContext().addVariableDeclaration(name as IdentifierNode);
     } else if (isBindingPattern(name)) {
       for (const element of bindingPatternElements(name)) {
         if (!isOmittedExpression(element)) this.hoistVariable(element);
@@ -873,7 +896,7 @@ export class AsyncTransformer extends Transformer {
 
     const hasLexicalThis = this.inHasLexicalThisContext();
 
-    let asyncBody = this.transformAsyncFunctionBodyWorker(nodeBody(node));
+    let asyncBody = this.transformAsyncFunctionBodyWorker(nodeBody(node)!);
     asyncBody = this.factory().updateBlock(
       asyncBody as unknown as Block,
       this.emitContext().endAndMergeVariableEnvironmentList(blockStatementList(asyncBody)),
@@ -1085,12 +1108,7 @@ export function newAsyncTransformer(opts: TransformOptions): Transformer {
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-interface NodeVisitor {
-  visitEachChild(node: AstNode): AstNode;
-  visitNode(node: AstNode): AstNode;
-  visitEmbeddedStatement(node: AstNode): AstNode;
-  visitNodes(nodes: NodeArray<AstNode>): NodeArray<AstNode>;
-}
+// NodeVisitor type comes from transformer.ts via the Transformer base.
 
 interface SetOfString {
   add(value: string): void;
@@ -1101,94 +1119,29 @@ interface SetOfString {
 }
 
 declare function newSetOfString(): SetOfString;
-declare function newOrderedSet<T>(): { add(v: T): void; has(v: T): boolean; readonly size: number };
+declare function newOrderedSet<T>(): Set<T>;
 declare function convertBindingPatternToAssignmentPattern(emitContext: unknown, pattern: AstNode): AstNode;
-
-declare const Kind: {
-  AsyncKeyword: number; SourceFile: number; AwaitExpression: number;
-  MethodDeclaration: number; FunctionDeclaration: number; FunctionExpression: number;
-  ArrowFunction: number; GetAccessor: number; SetAccessor: number; Constructor: number;
-  ClassDeclaration: number; ClassExpression: number;
-  VariableStatement: number; ForStatement: number; ForInStatement: number; ForOfStatement: number;
-  CatchClause: number; Block: number; SwitchStatement: number; CaseBlock: number;
-  CaseClause: number; DefaultClause: number; TryStatement: number; DoStatement: number;
-  WhileStatement: number; IfStatement: number; WithStatement: number; LabeledStatement: number;
-  Identifier: number; Parameter: number; BindingElement: number; VariableDeclaration: number;
-  DotDotDotToken: number;
-  PropertyAccessExpression: number; ElementAccessExpression: number; SuperKeyword: number;
-  ParenthesizedExpression: number; ArrayLiteralExpression: number; ObjectLiteralExpression: number;
-  PropertyAssignment: number; ShorthandPropertyAssignment: number; SpreadAssignment: number;
-  SpreadElement: number; PlusPlusToken: number; MinusMinusToken: number;
-};
-
-declare const NodeFlags: { None: number; BlockScoped: number };
-declare const FunctionFlags: { Async: number; AsyncGenerator: number };
-declare const SubtreeFacts: { ContainsAnyAwait: number; ContainsAwait: number };
-declare const EmitFlags: {
-  NoLexicalArguments: number;
-  StartOnNewLine: number;
-  CustomPrologue: number;
-};
-declare const EmitHelpers: { AdvancedAsyncSuper: unknown; AsyncSuper: unknown };
-declare const GeneratedIdentifierFlags: {
-  Optimistic: number; FileLevel: number; ReservedInNestedScopes: number;
-};
-
-declare function getFunctionFlags(node: AstNode): number;
+const FunctionFlags = { Async: 2, AsyncGenerator: 6 } as const;
+const SubtreeFacts = { ContainsAnyAwait: 1 << 0, ContainsAwait: 1 << 1 } as const;
+const EmitHelpers: { AdvancedAsyncSuper: AstNode; AsyncSuper: AstNode } = { AdvancedAsyncSuper: {} as AstNode, AsyncSuper: {} as AstNode };
 declare function subtreeFacts(node: AstNode): number;
-declare function nodeLoc(node: AstNode): unknown;
-declare function setLoc(node: unknown, loc: unknown): void;
-declare function nodeFlags(node: AstNode): number;
-declare function nodeText(node: AstNode): string;
-declare function nodeName(node: AstNode): AstNode | undefined;
-declare function nodeBody(node: AstNode): AstNode;
+declare function awaitExpressionOf(node: AwaitExpression): AstNode;
+declare function isFunctionLikeDeclaration(node: AstNode): boolean;
 declare function nodeParameters(node: AstNode): readonly AstNode[];
 declare function nodeParameterList(node: AstNode): NodeArray<AstNode>;
-declare function sourceFileIsDeclarationFile(node: SourceFile): boolean;
-declare function awaitExpressionOf(node: AwaitExpression): AstNode;
-declare function isIdentifier(node: AstNode): boolean;
-declare function isBindingPattern(node: AstNode): boolean;
-declare function isOmittedExpression(node: AstNode): boolean;
-declare function isBlockNode(node: AstNode): boolean;
-declare function isPropertyAccessExpression(node: AstNode): boolean;
-declare function isPropertyAssignment(node: AstNode): boolean;
-declare function isPrefixUnaryExpression(node: AstNode): boolean;
-declare function isPostfixUnaryExpression(node: AstNode): boolean;
-declare function isFunctionLikeDeclaration(node: AstNode): boolean;
-declare function isVariableDeclarationList(node: AstNode): boolean;
-declare function bindingPatternElements(node: AstNode): readonly AstNode[];
-declare function blockStatementList(node: AstNode): NodeArray<AstNode>;
-declare function blockMultiLine(node: AstNode): boolean;
-declare function declModifiers(decl: AstNode): unknown;
-declare function declParameters(decl: AstNode): NodeArray<AstNode>;
-declare function declName(decl: AstNode): AstNode | undefined;
-declare function methodAsteriskToken(decl: MethodDeclaration): unknown;
 declare function functionAsteriskToken(decl: FunctionDeclaration): unknown;
 declare function functionExpressionAsteriskToken(decl: FunctionExpression): unknown;
 declare function functionDeclarationBody(decl: FunctionDeclaration): AstNode | undefined;
 declare function functionExpressionBody(decl: FunctionExpression): AstNode | undefined;
-declare function arrowFunctionBody(decl: ArrowFunction): AstNode;
-declare function arrowEqualsGreaterThanToken(decl: ArrowFunction): unknown;
-declare function catchClauseVariableDeclaration(node: CatchClause): VariableDeclaration | undefined;
 declare function variableStatementDeclarationList(node: AstNode): VariableDeclarationList | undefined;
 declare function variableDeclarationListDeclarations(node: VariableDeclarationList): readonly AstNode[];
 declare function variableDeclarationInitializer(node: VariableDeclaration): AstNode | undefined;
-declare function variableDeclarationName(node: VariableDeclaration): AstNode;
 declare function forInOrOfInitializerNode(node: ForInOrOfStatement): AstNode;
 declare function forInOrOfExpressionNode(node: ForInOrOfStatement): AstNode;
 declare function forInOrOfBody(node: ForInOrOfStatement): AstNode;
 declare function forInOrOfAwaitModifierOpt(node: ForInOrOfStatement): AstNode | undefined;
-declare function forInitializer(node: ForStatement): AstNode | undefined;
-declare function forCondition(node: ForStatement): AstNode | undefined;
-declare function forIncrementor(node: ForStatement): AstNode | undefined;
-declare function forBody(node: ForStatement): AstNode;
-declare function parameterInitializer(parameter: AstNode): AstNode | undefined;
-declare function parameterName(parameter: AstNode): AstNode;
-declare function parameterDotDotDotToken(parameter: ParameterDeclaration): unknown;
 declare function propertyAccessExpressionOf(node: AstNode): AstNode;
 declare function parenthesizedExpression(node: AstNode): AstNode;
-declare function arrayLiteralElements(node: AstNode): readonly AstNode[];
-declare function objectLiteralProperties(node: AstNode): readonly AstNode[];
 declare function propertyAssignmentInitializer(node: AstNode): AstNode;
 declare function shorthandPropertyAssignmentName(node: AstNode): AstNode;
 declare function spreadAssignmentExpression(node: AstNode): AstNode;

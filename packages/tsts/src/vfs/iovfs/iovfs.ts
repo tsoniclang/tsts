@@ -6,7 +6,8 @@
  * file systems or jail-rooted tests.
  */
 
-import type { FS } from "../vfs.js";
+import type { FS, FileInfo, WalkDirFunc, DirEntry } from "../vfs.js";
+import { VfsError } from "../vfs.js";
 
 export interface NodeFSLike {
   readFileSync(path: string, encoding: "utf-8" | "utf8"): string;
@@ -50,43 +51,34 @@ export class IOFS implements FS {
     }
   }
 
-  readFile(path: string): { contents: string; ok: boolean } {
+  readFile(path: string): string | undefined {
     try {
-      const contents = this.fs.readFileSync(path, "utf8");
-      return { contents, ok: true };
+      return this.fs.readFileSync(path, "utf8");
     } catch {
-      return { contents: "", ok: false };
+      return undefined;
     }
   }
 
-  writeFile(path: string, data: string): boolean {
+  writeFile(path: string, data: string): void {
     try {
       this.fs.writeFileSync(path, data);
-      return true;
     } catch {
       // Try to create parent dir then retry
       if (this.fs.mkdirSync !== undefined) {
-        try {
-          const dir = path.slice(0, path.lastIndexOf("/"));
-          this.fs.mkdirSync(dir, { recursive: true });
-          this.fs.writeFileSync(path, data);
-          return true;
-        } catch {
-          return false;
-        }
+        const dir = path.slice(0, path.lastIndexOf("/"));
+        this.fs.mkdirSync(dir, { recursive: true });
+        this.fs.writeFileSync(path, data);
+      } else {
+        throw new VfsError("invalid", "writeFile failed");
       }
-      return false;
     }
   }
 
-  appendFile(path: string, data: string): boolean {
-    if (this.fs.appendFileSync === undefined) return false;
-    try {
-      this.fs.appendFileSync(path, data);
-      return true;
-    } catch {
-      return false;
+  appendFile(path: string, data: string): void {
+    if (this.fs.appendFileSync === undefined) {
+      throw new VfsError("invalid", "appendFile unsupported");
     }
+    this.fs.appendFileSync(path, data);
   }
 
   realpath(path: string): string {
@@ -100,16 +92,11 @@ export class IOFS implements FS {
     return path;
   }
 
-  remove(path: string): boolean {
-    try {
-      this.fs.rmSync(path, { recursive: true, force: true });
-      return true;
-    } catch {
-      return false;
-    }
+  remove(path: string): void {
+    this.fs.rmSync(path, { recursive: true, force: true });
   }
 
-  walkDir(root: string, walkFn: (file: string, isDir: boolean) => boolean | undefined): void {
+  walkDir(root: string, walkFn: WalkDirFunc): void {
     const walk = (dir: string): void => {
       let entries: readonly { name: string; isFile(): boolean; isDirectory(): boolean }[];
       try {
@@ -120,11 +107,17 @@ export class IOFS implements FS {
       }
       for (const entry of entries) {
         const full = dir + "/" + entry.name;
+        const dirEntry: DirEntry = {
+          name: entry.name,
+          isDirectory: entry.isDirectory(),
+          isFile: entry.isFile(),
+          isSymlink: false,
+        };
         if (entry.isDirectory()) {
-          if (walkFn(full, true) === false) continue;
+          if (walkFn(full, dirEntry) === "skip-dir") continue;
           walk(full);
         } else {
-          walkFn(full, false);
+          walkFn(full, dirEntry);
         }
       }
     };
@@ -147,28 +140,27 @@ export class IOFS implements FS {
     }
   }
 
-  stat(path: string): { isFile: boolean; isDirectory: boolean; mtime: number; size: number } | undefined {
+  stat(path: string): FileInfo | undefined {
     try {
       const s = this.fs.statSync(path);
       return {
-        isFile: s.isFile(),
-        isDirectory: s.isDirectory(),
-        mtime: s.mtimeMs,
+        name: path.slice(path.lastIndexOf("/") + 1),
         size: s.size,
+        mode: 0,
+        mtime: new Date(s.mtimeMs),
+        isDirectory: s.isDirectory(),
+        isRegularFile: s.isFile(),
       };
     } catch {
       return undefined;
     }
   }
 
-  chtimes(path: string, atime: number, mtime: number): boolean {
-    if (this.fs.utimesSync === undefined) return false;
-    try {
-      this.fs.utimesSync(path, atime, mtime);
-      return true;
-    } catch {
-      return false;
+  chtimes(path: string, accessTime: Date, modifyTime: Date): void {
+    if (this.fs.utimesSync === undefined) {
+      throw new VfsError("invalid", "chtimes unsupported");
     }
+    this.fs.utimesSync(path, accessTime.getTime() / 1000, modifyTime.getTime() / 1000);
   }
 }
 

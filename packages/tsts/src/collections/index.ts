@@ -17,3 +17,4 @@
 
 export * from "./multimap.js";
 export * from "./cow.js";
+export * from "./ordered_map.js";

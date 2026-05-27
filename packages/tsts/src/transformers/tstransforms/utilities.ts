@@ -11,31 +11,31 @@
  */
 
 import type { Node as AstNode, Expression } from "../../ast/index.js";
-import { Number as JsNumber } from "../../jsnum/jsnum.js";
+import { isInf, isNaN as jsIsNaN } from "../../jsnum/jsnum.js";
 
 export function constantExpression(value: unknown, factory: NodeFactory): Expression | undefined {
   if (typeof value === "string") {
-    return factory.newStringLiteral(value, TokenFlags.None);
+    return factory.newStringLiteral(value, TokenFlags.None) as unknown as Expression;
   }
-  if (value instanceof JsNumber) {
-    if (value.isInf()) {
-      if (value.gt(JsNumber.zero())) {
+  if (typeof value === "number") {
+    if (isInf(value)) {
+      if (value > 0) {
         return factory.newIdentifier("Infinity") as unknown as Expression;
       }
       return factory.newPrefixUnaryExpression(
         Kind.MinusToken,
         factory.newIdentifier("Infinity") as unknown as Expression,
-      );
+      ) as unknown as Expression;
     }
-    if (value.isNaN()) {
+    if (jsIsNaN(value)) {
       return factory.newIdentifier("NaN") as unknown as Expression;
     }
-    if (value.lt(JsNumber.zero())) {
-      const positive = constantExpression(value.negate(), factory);
+    if (value < 0) {
+      const positive = constantExpression(-value, factory);
       if (positive === undefined) return undefined;
-      return factory.newPrefixUnaryExpression(Kind.MinusToken, positive);
+      return factory.newPrefixUnaryExpression(Kind.MinusToken, positive) as unknown as Expression;
     }
-    return factory.newNumericLiteral(value.toString(), TokenFlags.None);
+    return factory.newNumericLiteral(String(value), TokenFlags.None) as unknown as Expression;
   }
   return undefined;
 }
