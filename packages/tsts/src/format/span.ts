@@ -22,6 +22,7 @@
 import type { Node as AstNode, SourceFile } from "../ast/index.js";
 import {
   nodeFlags, nodePos, nodeEnd, nodeParent,
+  forEachChild as astForEachChild,
   getECMALineOfPosition as _astGetECMALineOfPosition,
 } from "../ast/index.js";
 import { NodeFlags } from "../ast/index.js";
@@ -38,10 +39,10 @@ function rangeContainedBy(inner: TextRange, outer: TextRange): boolean {
 function withTokenStart(node: AstNode, _sourceFile: SourceFile): TextRange {
   return { pos: nodePos(node), end: nodeEnd(node) };
 }
-function forEachChild(_node: AstNode, _callback: (child: AstNode) => boolean): void {
-  // Real forEachChild walks the typed AST via a generated dispatch
-  // table. Until that ports, formatter rules see no children — this is
-  // a safe no-op (the format engine falls back to scanner-walked tokens).
+function forEachChild(node: AstNode, callback: (child: AstNode) => boolean): void {
+  // Wraps the generated AST visitor. Returning `true` from `callback`
+  // is treated as "stop walking children".
+  astForEachChild(node, (child) => (callback(child) ? true : undefined));
 }
 function findPrecedingToken(_sourceFile: SourceFile, _position: number): AstNode | undefined {
   return undefined;
