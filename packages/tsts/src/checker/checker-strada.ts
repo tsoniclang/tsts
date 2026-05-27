@@ -630,46 +630,139 @@ export class Checker {
   // -------------------------------------------------------------------------
 
   getContextualType(node: AstNode, contextFlags: number): Type | undefined {
-    void node; void contextFlags; return undefined;
+    void contextFlags;
+    // Dispatch by the node's parent — contextual type comes from the
+    // surrounding syntactic context.
+    const parent = (node as unknown as { parent?: AstNode }).parent;
+    if (parent === undefined) return undefined;
+    const k = (parent as { kind?: number }).kind;
+    switch (k) {
+      case Kind.VariableDeclaration:
+      case Kind.PropertyDeclaration:
+      case Kind.Parameter:
+      case Kind.PropertyAssignment:
+      case Kind.BindingElement:
+        return this.getContextualTypeForVariableLikeDeclaration(parent);
+      case Kind.ReturnStatement:
+        return this.getContextualTypeForReturnExpression(node);
+      case Kind.CallExpression:
+      case Kind.NewExpression:
+        return this.getContextualTypeForArgument(parent, node);
+      case Kind.ConditionalExpression:
+        return this.getContextualTypeForConditionalOperand(parent, 0);
+      case Kind.AwaitExpression:
+        return this.getContextualTypeForAwaitOperand(parent, 0);
+      case Kind.BinaryExpression:
+        return this.getContextualTypeForBinaryOperand(node, 0);
+      case Kind.ArrayLiteralExpression: {
+        // Find this node's index in the parent's elements array.
+        const elements = (parent as unknown as { elements?: { nodes?: readonly AstNode[] } }).elements?.nodes;
+        if (elements === undefined) return undefined;
+        const idx = elements.indexOf(node);
+        return idx >= 0 ? this.getContextualTypeForElementExpression(parent, idx) : undefined;
+      }
+      default:
+        return undefined;
+    }
   }
   getContextualTypeForArgument(callTarget: AstNode, arg: AstNode): Type | undefined {
-    void callTarget; void arg; return undefined;
+    const args = (callTarget as unknown as { arguments?: { nodes?: readonly AstNode[] } }).arguments?.nodes;
+    if (args === undefined) return undefined;
+    const idx = args.indexOf(arg);
+    return idx >= 0 ? this.getContextualTypeForArgumentAtIndex(callTarget, idx) : undefined;
   }
   getContextualTypeForArgumentAtIndex(callTarget: AstNode, argIndex: number): Type | undefined {
-    void callTarget; void argIndex; return undefined;
+    // Resolve the call's signature, then return the type of parameter
+    // at argIndex.
+    const calleeExpr = (callTarget as unknown as { expression?: AstNode }).expression;
+    if (calleeExpr === undefined) return undefined;
+    const calleeSym = this.getSymbolAtLocation(calleeExpr);
+    if (calleeSym === undefined) return undefined;
+    const signatures = this.getSignaturesOfSymbol(calleeSym);
+    if (signatures.length === 0) return undefined;
+    const params = (signatures[0] as unknown as { parameters?: readonly AstSymbol[] }).parameters;
+    if (params === undefined || argIndex >= params.length) return undefined;
+    return this.getTypeOfSymbol(params[argIndex]!);
   }
-  getContextualTypeForAssignmentExpression(node: AstNode): Type | undefined { void node; return undefined; }
+  getContextualTypeForAssignmentExpression(node: AstNode): Type | undefined {
+    // RHS of `=` takes the LHS type.
+    const left = (node as unknown as { left?: AstNode }).left;
+    return left !== undefined ? this.getTypeOfNode(left) : undefined;
+  }
   getContextualTypeForAwaitOperand(node: AstNode, contextFlags: number): Type | undefined {
-    void node; void contextFlags; return undefined;
+    void contextFlags;
+    // The operand's contextual type is the contextual type of the
+    // enclosing AwaitExpression itself (unwrapped from Promise<T>).
+    return this.getContextualType(node, 0);
   }
   getContextualTypeForBinaryOperand(node: AstNode, contextFlags: number): Type | undefined {
-    void node; void contextFlags; return undefined;
+    void contextFlags;
+    const parent = (node as unknown as { parent?: AstNode }).parent;
+    if (parent === undefined) return undefined;
+    const op = (parent as unknown as { operatorToken?: { kind?: number } }).operatorToken;
+    if (op?.kind === Kind.EqualsToken) {
+      const left = (parent as unknown as { left?: AstNode; right?: AstNode }).left;
+      const right = (parent as unknown as { right?: AstNode }).right;
+      if (right === node && left !== undefined) return this.getTypeOfNode(left);
+    }
+    return undefined;
   }
-  getContextualTypeForBindingElement(node: AstNode): Type | undefined { void node; return undefined; }
+  getContextualTypeForBindingElement(node: AstNode): Type | undefined {
+    const parent = (node as unknown as { parent?: AstNode }).parent;
+    return parent !== undefined ? this.getContextualTypeForVariableLikeDeclaration(parent) : undefined;
+  }
   getContextualTypeForConditionalOperand(node: AstNode, contextFlags: number): Type | undefined {
-    void node; void contextFlags; return undefined;
+    void contextFlags;
+    return this.getContextualType(node, 0);
   }
   getContextualTypeForDecorator(node: AstNode): Signature | undefined { void node; return undefined; }
   getContextualTypeForElementExpression(node: AstNode, elementIndex: number): Type | undefined {
     void node; void elementIndex; return undefined;
   }
   getContextualTypeForInitializerExpression(node: AstNode, contextFlags: number): Type | undefined {
-    void node; void contextFlags; return undefined;
+    void contextFlags;
+    // Initializer takes the declaration's type annotation.
+    const decl = (node as unknown as { parent?: AstNode }).parent;
+    if (decl === undefined) return undefined;
+    const typeNode = (decl as unknown as { type?: AstNode }).type;
+    return typeNode !== undefined ? this.getTypeFromTypeNode(typeNode) : undefined;
   }
   getContextualTypeForObjectLiteralElement(node: AstNode, contextFlags: number): Type | undefined {
     void node; void contextFlags; return undefined;
   }
   getContextualTypeForObjectLiteralMethod(node: AstNode, contextFlags: number): Type | undefined {
-    void node; void contextFlags; return undefined;
+    void contextFlags;
+    return this.getContextualTypeForObjectLiteralElement(node, 0);
   }
-  getContextualTypeForReturnExpression(node: AstNode): Type | undefined { void node; return undefined; }
+  getContextualTypeForReturnExpression(node: AstNode): Type | undefined {
+    // Walk up to the enclosing function-like and return its declared
+    // return type.
+    let n: AstNode | undefined = node;
+    while (n !== undefined) {
+      const k = (n as { kind?: number }).kind;
+      if (k === Kind.FunctionDeclaration || k === Kind.MethodDeclaration ||
+          k === Kind.FunctionExpression || k === Kind.ArrowFunction ||
+          k === Kind.GetAccessor || k === Kind.SetAccessor) {
+        const t = (n as unknown as { type?: AstNode }).type;
+        return t !== undefined ? this.getTypeFromTypeNode(t) : undefined;
+      }
+      n = (n as unknown as { parent?: AstNode }).parent;
+    }
+    return undefined;
+  }
   getContextualTypeForStaticPropertyDeclaration(node: AstNode, contextFlags: number): Type | undefined {
-    void node; void contextFlags; return undefined;
+    void contextFlags;
+    const t = (node as unknown as { type?: AstNode }).type;
+    return t !== undefined ? this.getTypeFromTypeNode(t) : undefined;
   }
   getContextualTypeForSubstitutionExpression(node: AstNode): Type | undefined { void node; return undefined; }
-  getContextualTypeForVariableLikeDeclaration(node: AstNode): Type | undefined { void node; return undefined; }
+  getContextualTypeForVariableLikeDeclaration(node: AstNode): Type | undefined {
+    const typeNode = (node as unknown as { type?: AstNode }).type;
+    return typeNode !== undefined ? this.getTypeFromTypeNode(typeNode) : undefined;
+  }
   getContextualTypeForYieldOperand(node: AstNode, contextFlags: number): Type | undefined {
-    void node; void contextFlags; return undefined;
+    void contextFlags;
+    return this.getContextualTypeForReturnExpression(node);
   }
 
   // -------------------------------------------------------------------------
