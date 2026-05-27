@@ -2598,6 +2598,72 @@ export const Diagnostics = {
   X_0_resolves_to_a_type_only_declaration_and_must_be_re_exported_using_a_type_only_re_export_when_isolatedModules_is_enabled: msg(1205_2 as unknown as number, Category.Error,
     "_0_resolves_to_a_type_only_declaration_1205_b",
     "Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'."),
+
+  // ---------------------------------------------------------------------------
+  // 2xxx — more checker errors
+  // ---------------------------------------------------------------------------
+  Function_type_node_has_no_return_type: msg(2354_2 as unknown as number, Category.Error,
+    "Function_type_node_has_no_return_type_2354_b",
+    "Function type node has no return type."),
+  An_async_function_or_method_in_ES5_requires_the_Promise_constructor: msg(2697_2 as unknown as number, Category.Error,
+    "An_async_function_or_method_in_ES5_2697_c",
+    "An async function or method in ES5 requires the 'Promise' constructor."),
+  Type_0_is_not_a_subtype_of_type_1: msg(2416_3 as unknown as number, Category.Error,
+    "Type_0_is_not_a_subtype_of_type_1_2416_d",
+    "Type '{0}' is not a subtype of type '{1}'."),
+  Symbol_0_has_no_value_declaration: msg(2700, Category.Error,
+    "Symbol_0_has_no_value_declaration_2700",
+    "Rest types may only be created from object types."),
+  Rest_types_may_only_be_created_from_object_types: msg(2700_2 as unknown as number, Category.Error,
+    "Rest_types_may_only_be_created_from_object_types_2700_b",
+    "Rest types may only be created from object types."),
+  A_spread_argument_must_either_have_a_tuple_type_or_be_passed_to_a_rest_parameter_x: msg(2556_2 as unknown as number, Category.Error,
+    "A_spread_argument_2556_b",
+    "A spread argument must either have a tuple type or be passed to a rest parameter."),
+  Property_0_cannot_be_accessed_on_1_when_indexed_with_a_index_type_2: msg(2538, Category.Error,
+    "Property_0_cannot_be_accessed_on_1_2538",
+    "Type '{0}' cannot be used as an index type."),
+  Type_0_cannot_be_used_as_an_index_type: msg(2538_2 as unknown as number, Category.Error,
+    "Type_0_cannot_be_used_as_an_index_type_2538_b",
+    "Type '{0}' cannot be used as an index type."),
+
+  // ---------------------------------------------------------------------------
+  // More 1xxx — parser more
+  // ---------------------------------------------------------------------------
+  X_class_expressions_are_not_currently_supported: msg(9000, Category.Error,
+    "class_expressions_are_not_currently_supported_9000",
+    "Class expressions are not currently supported."),
+  An_export_declaration_can_only_be_used_at_the_top_level_of_a_namespace_or_module: msg(1232, Category.Error,
+    "An_export_declaration_can_only_be_used_at_the_top_level_1232",
+    "An export declaration can only be used at the top level of a namespace or module."),
+  An_import_declaration_can_only_be_used_at_the_top_level_of_a_namespace_or_module: msg(1233, Category.Error,
+    "An_import_declaration_can_only_be_used_at_the_top_level_1233",
+    "An import declaration can only be used at the top level of a namespace or module."),
+  X_async_modifier_cannot_be_used_in_an_ambient_context: msg(1040_2 as unknown as number, Category.Error,
+    "async_modifier_cannot_be_used_in_an_ambient_context_1040_b",
+    "'async' modifier cannot be used in an ambient context."),
+  An_overload_signature_cannot_have_a_question_mark_token: msg(1058, Category.Error,
+    "An_overload_signature_cannot_have_a_question_mark_token_1058",
+    "Overload signature is not compatible with function implementation."),
+  Method_0_of_object_literal_implicitly_has_an_1_type: msg(2384_2 as unknown as number, Category.Error,
+    "Method_0_of_object_literal_implicitly_has_an_1_type_2384_b",
+    "Overload signatures must all be ambient or non-ambient."),
+  A_label_was_not_found: msg(1115_2 as unknown as number, Category.Error,
+    "A_label_was_not_found_1115_b",
+    "A 'continue' statement can only be used within an enclosing iteration statement."),
+
+  // ---------------------------------------------------------------------------
+  // 6xxx — additional CLI text
+  // ---------------------------------------------------------------------------
+  Specify_emit_Slashchecking_behavior_for_imports_that_are_only_used_for_types: msg(6191_2 as unknown as number, Category.Message,
+    "Specify_emit_checking_behavior_for_imports_6191_b",
+    "Specify emit/checking behavior for imports that are only used for types."),
+  Diagnostics_from_external_files: msg(6196, Category.Message,
+    "Diagnostics_from_external_files_6196",
+    "Diagnostics from external files."),
+  Enable_color_and_formatting_in_TypeScript_s_output_to_make_compiler_errors_easier_to_read: msg(6228, Category.Message,
+    "Enable_color_and_formatting_6228",
+    "Enable color and formatting in TypeScript's output to make compiler errors easier to read."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
