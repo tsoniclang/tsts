@@ -24,6 +24,20 @@
  */
 
 import { Transformer, type TransformOptions, type NodeVisitor } from "../transformer.js";
+import {
+  isTrue, isStatement, getNodeName, getClassMembers,
+  binaryLeft as getBinaryLeft, binaryRight as getBinaryRight,
+  getNodeLoc,
+} from "../../ast/index.js";
+import { hasStaticModifier } from "../../printer/printer-utilities.js";
+import {
+  isClassExpression, isPropertyDeclaration, isComputedPropertyName,
+  isPrivateIdentifier, isIdentifier, isObjectLiteralExpression,
+  isArrayLiteralExpression, isPropertyAccessExpression,
+} from "../../ast/index.js";
+import { Kind } from "../../ast/index.js";
+import { EmitFlags } from "../../printer/emitflags.js";
+import { getEmitScriptTarget, getUseDefineForClassFields } from "../../core/compileroptions.js";
 import type {
   Node as AstNode,
   IdentifierNode,
@@ -174,8 +188,8 @@ export class ClassFieldsTransformer extends Transformer {
     super();
     this.compilerOptions = opts.compilerOptions;
     this.resolver = opts.resolver;
-    const languageVersion = getEmitScriptTarget(opts.compilerOptions);
-    const useDefineForClassFields = getUseDefineForClassFields(opts.compilerOptions);
+    const languageVersion = getEmitScriptTarget(opts.compilerOptions as unknown as Parameters<typeof getEmitScriptTarget>[0]);
+    const useDefineForClassFields = getUseDefineForClassFields(opts.compilerOptions as unknown as Parameters<typeof getUseDefineForClassFields>[0]);
 
     this.legacyDecorators = isTrue(opts.compilerOptions.experimentalDecorators);
     this.shouldTransformInitializersUsingSet = !useDefineForClassFields;
@@ -215,7 +229,7 @@ export class ClassFieldsTransformer extends Transformer {
   classExpressionNeedsBlockScopedTemp(): boolean {
     if (!this.requiresBlockScopedVar()) return false;
     const container = this.currentClassContainer!;
-    for (const member of getClassMembers(container)) {
+    for (const member of getClassMembers(container) ?? []) {
       if (isPropertyDeclaration(member)
         && !hasStaticModifier(member)
         && getNodeName(member) !== undefined
@@ -1105,8 +1119,8 @@ export class ClassFieldsTransformer extends Transformer {
 }
 
 export function newClassFieldsTransformer(opts: TransformOptions): Transformer | undefined {
-  const languageVersion = getEmitScriptTarget(opts.compilerOptions);
-  const useDefineForClassFields = getUseDefineForClassFields(opts.compilerOptions);
+  const languageVersion = getEmitScriptTarget(opts.compilerOptions as unknown as Parameters<typeof getEmitScriptTarget>[0]);
+  const useDefineForClassFields = getUseDefineForClassFields(opts.compilerOptions as unknown as Parameters<typeof getUseDefineForClassFields>[0]);
   if (languageVersion >= ScriptTarget.ESNext && useDefineForClassFields) {
     return undefined;
   }
@@ -1127,63 +1141,19 @@ interface ReferenceResolver {
 }
 // NodeVisitor type comes from transformer.ts via the Transformer base.
 
-declare const Kind: {
-  SourceFile: number; ClassDeclaration: number; ClassExpression: number;
-  ClassStaticBlockDeclaration: number; PropertyDeclaration: number;
-  PropertyAssignment: number; VariableStatement: number; VariableDeclaration: number;
-  Parameter: number; BindingElement: number; ExportAssignment: number;
-  PrivateIdentifier: number; PropertyAccessExpression: number; ElementAccessExpression: number;
-  PrefixUnaryExpression: number; PostfixUnaryExpression: number;
-  BinaryExpression: number; ParenthesizedExpression: number; CallExpression: number;
-  ExpressionStatement: number; TaggedTemplateExpression: number; ForStatement: number;
-  ForInStatement: number; ForOfStatement: number; DoStatement: number; WhileStatement: number;
-  ThisKeyword: number; FunctionDeclaration: number; FunctionExpression: number;
-  Constructor: number; MethodDeclaration: number; GetAccessor: number; SetAccessor: number;
-  Identifier: number; HeritageClause: number; ExpressionWithTypeArguments: number;
-  ObjectLiteralExpression: number; ArrayLiteralExpression: number;
-  ComputedPropertyName: number; SemicolonClassElement: number; AccessorKeyword: number;
-};
-
-declare const ScriptTarget: {
-  ES2022: number;
-  ESNext: number;
-};
-
-declare const SubtreeFacts: {
-  ContainsClassFields: number;
-  ContainsLexicalThisOrSuper: number;
-};
-
-declare const EmitFlags: {
-  TransformPrivateStaticElements: number;
-};
-
-declare function getEmitScriptTarget(opts: CompilerOptions): number;
-declare function getUseDefineForClassFields(opts: CompilerOptions): boolean;
-declare function isTrue(value: unknown): boolean;
-declare function isClassExpression(node: AstNode): boolean;
-declare function isPropertyDeclaration(node: AstNode): boolean;
-declare function isComputedPropertyName(node: AstNode): boolean;
-declare function isPrivateIdentifier(node: AstNode | undefined): boolean;
-declare function isIdentifier(node: AstNode | undefined): boolean;
-declare function isObjectLiteralExpression(node: AstNode): boolean;
-declare function isArrayLiteralExpression(node: AstNode): boolean;
-declare function isPropertyAccessExpression(node: AstNode): boolean;
+const ScriptTarget = { ES2022: 9, ESNext: 99 } as const;
+const SubtreeFacts = {
+  ContainsClassFields: 1 << 0,
+  ContainsLexicalThisOrSuper: 1 << 1,
+} as const;
 declare function isSuperProperty(node: AstNode): boolean;
-declare function isStatement(node: AstNode): boolean;
+declare function isStaticPropertyDeclarationOrClassStaticBlock(node: AstNode): boolean;
+declare function isDeclarationFile(node: SourceFileNode): boolean;
 declare function isModifier(node: AstNode): boolean;
 declare function isModifierLike(node: AstNode): boolean;
-declare function isDeclarationFile(node: SourceFileNode): boolean;
-declare function isStaticPropertyDeclarationOrClassStaticBlock(node: AstNode): boolean;
-declare function hasStaticModifier(node: AstNode): boolean;
-declare function getNodeName(node: AstNode): AstNode | undefined;
 declare function getPropertyAccessName(node: PropertyAccessExpression): AstNode;
-declare function getClassMembers(node: ClassLikeDeclaration): readonly AstNode[];
 declare function classHasAccessorMember(node: ClassLikeDeclaration): boolean;
 declare function getSubtreeFacts(node: AstNode): number;
-declare function getBinaryLeft(node: BinaryExpression): AstNode;
-declare function getBinaryRight(node: BinaryExpression): AstNode;
-declare function getNodeLoc(node: AstNode): unknown;
 declare function cloneIdentifier(node: IdentifierNode, factory: unknown): IdentifierNode;
 declare function isNamedEvaluationAnd(
   emitContext: unknown,
