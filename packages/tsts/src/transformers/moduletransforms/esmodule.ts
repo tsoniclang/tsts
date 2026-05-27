@@ -17,6 +17,29 @@ import { Transformer, type TransformOptions } from "../transformer.js";
 import { singleOrMany } from "../utilities.js";
 import { createEmptyImports, getExternalModuleNameLiteral, rewriteModuleSpecifier } from "./utilities.js";
 import type { Node as AstNode, SourceFile, ImportDeclaration, ImportEqualsDeclaration, ExportAssignment, ExportDeclaration, CallExpression, IdentifierNode } from "../../ast/index.js";
+import {
+  nodeFlags, setLoc, sourceFileIsDeclarationFile, sourceFileStatementsRO,
+  sourceFileStatementsLoc, sourceFileEndOfFileToken, isExternalModule,
+  isImportCall, isInJSFile, isRequireCall, isStringLiteralLike,
+  isExternalModuleImportEqualsDeclaration, hasSyntacticModifier,
+  compilerOptionsGetEmitModuleKind, compilerOptionsRewriteRelativeImportExtensions,
+  compilerOptionsJsx,
+  importDeclarationImportClause, importDeclarationAttributes, importEqualsName,
+  exportAssignmentIsExportEquals, exportAssignmentExpression,
+  exportDeclarationModuleSpecifier, exportDeclarationExportClause,
+  exportDeclarationAttributes,
+  callExpressionArguments, callExpressionArgumentsLoc, callExpressionExpression,
+  callExpressionQuestionDotToken,
+  cloneNode as _astCloneNode,
+} from "../../ast/index.js";
+import { isNamespaceExport } from "../../ast/index.js";
+import { Kind, NodeFlags } from "../../ast/index.js";
+import { ModuleKind, JsxEmit } from "../../core/compileroptions.js";
+import { EmitFlags } from "../../printer/emitflags.js";
+import { GeneratedIdentifierFlags } from "../../printer/namegenerator.js";
+import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
+const TokenFlags = { None: 0 } as const;
+function cloneNode(node: AstNode, _factory: unknown): AstNode { return _astCloneNode(node); }
 
 interface ImportRequireStatements {
   statements: AstNode[];
@@ -394,40 +417,10 @@ interface CompilerOptions { readonly _opts?: unknown; readonly [key: string]: un
 interface ReferenceResolver { readonly _r?: unknown; readonly [key: string]: unknown }
 type HasFileName = AstNode | { readonly fileName?: string };
 
-declare const Kind: {
-  SourceFile: number; ImportDeclaration: number; ImportEqualsDeclaration: number;
-  ExportAssignment: number; ExportDeclaration: number; CallExpression: number;
-  Unknown: number; ImportKeyword: number;
-};
-declare const NodeFlags: { None: number; Const: number };
-declare const TokenFlags: { None: number };
-declare const ModuleKind: { ES2015: number; Preserve: number; Node16: number };
-declare const ModifierFlags: { Export: number };
-declare const JsxEmit: { Preserve: number };
-declare const EmitFlags: { CustomPrologue: number };
-declare const GeneratedIdentifierFlags: { Optimistic: number; FileLevel: number };
-
-declare function nodeFlags(node: AstNode): number;
-declare function setLoc(node: unknown, loc: unknown): void;
-declare function sourceFileIsDeclarationFile(node: SourceFile): boolean;
-declare function sourceFileStatementsRO(node: SourceFile): readonly AstNode[];
-declare function sourceFileStatementsLoc(node: SourceFile): unknown;
-declare function sourceFileEndOfFileToken(node: SourceFile): AstNode;
-declare function isExternalModule(node: SourceFile): boolean;
-declare function isExternalModuleIndicator(node: AstNode): boolean;
-declare function isExternalModuleImportEqualsDeclaration(node: AstNode): boolean;
-declare function isExportNamespaceAsDefaultDeclaration(node: AstNode): boolean;
-declare function isImportCall(node: AstNode): boolean;
-declare function isInJSFile(node: AstNode): boolean;
-declare function isRequireCall(node: AstNode, requireStringLiteralLikeArgument: boolean): boolean;
-declare function isStringLiteralLike(node: AstNode): boolean;
-declare function isNamespaceExport(node: AstNode): boolean;
-declare function hasSyntacticModifier(node: AstNode, flags: number): boolean;
-declare function compilerOptionsGetEmitModuleKind(options: CompilerOptions): number;
-declare function compilerOptionsGetIsolatedModules(options: CompilerOptions): boolean;
-declare function compilerOptionsRewriteRelativeImportExtensions(options: CompilerOptions): boolean;
-declare function compilerOptionsModule(options: CompilerOptions): number;
-declare function compilerOptionsJsx(options: CompilerOptions): number;
+// Forward-declared local helpers — the body-completion phase will
+// replace these with real implementations. For now we keep
+// `createExternalHelpersImportDeclarationIfNeeded` as a forward-
+// declared helper since its body lives in a different module.
 declare function createExternalHelpersImportDeclarationIfNeeded(
   emitContext: unknown,
   file: SourceFile,
@@ -437,18 +430,12 @@ declare function createExternalHelpersImportDeclarationIfNeeded(
   hasImportStar: boolean,
   hasImportDefault: boolean,
 ): AstNode | undefined;
+// importModuleSpecifier / isExternalModuleIndicator / isExportNamespaceAs
+// DefaultDeclaration / namespaceExportName / compilerOptionsModule have
+// no canonical home yet; stub here until Phase 4 wires them.
 declare function importModuleSpecifier(node: ImportDeclaration): AstNode;
-declare function importDeclarationImportClause(node: ImportDeclaration): AstNode | undefined;
-declare function importDeclarationAttributes(node: ImportDeclaration): AstNode | undefined;
-declare function importEqualsName(node: ImportEqualsDeclaration): AstNode;
-declare function exportAssignmentIsExportEquals(node: ExportAssignment): boolean;
-declare function exportAssignmentExpression(node: ExportAssignment): AstNode;
-declare function exportDeclarationModuleSpecifier(node: ExportDeclaration): AstNode | undefined;
-declare function exportDeclarationExportClause(node: ExportDeclaration): AstNode | undefined;
-declare function exportDeclarationAttributes(node: ExportDeclaration): AstNode | undefined;
+declare function isExternalModuleIndicator(node: AstNode): boolean;
+declare function isExportNamespaceAsDefaultDeclaration(node: AstNode): boolean;
 declare function namespaceExportName(node: AstNode): AstNode;
-declare function callExpressionArguments(node: CallExpression): readonly AstNode[];
-declare function callExpressionArgumentsLoc(node: CallExpression): unknown;
-declare function callExpressionExpression(node: CallExpression): AstNode;
-declare function callExpressionQuestionDotToken(node: CallExpression): AstNode | undefined;
-declare function cloneNode(node: AstNode, factory: unknown): AstNode;
+declare function compilerOptionsModule(options: CompilerOptions): number;
+declare function compilerOptionsGetIsolatedModules(options: CompilerOptions): boolean;

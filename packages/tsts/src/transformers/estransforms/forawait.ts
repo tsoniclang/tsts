@@ -13,6 +13,17 @@
 
 import { SuperAccessState } from "./utilities.js";
 import type { Node as AstNode, NodeArray, NodeList, SourceFile, AwaitExpression, YieldExpression, ReturnStatement, LabeledStatement, ForInOrOfStatement, ModifierList, ConstructorDeclaration, GetAccessorDeclaration, SetAccessorDeclaration, MethodDeclaration, FunctionDeclaration, ArrowFunction, FunctionExpression, Block, TextRange } from "../../ast/index.js";
+import {
+  nodeLoc, setLoc, nodeBody, nodeName, isBlockNode,
+  blockStatements, blockStatementList, blockStatementListLoc, blockMultiLine,
+  declModifiers, declParameters, methodAsteriskToken, arrowEqualsGreaterThanToken,
+  parameterInitializer, parameterDotDotDotToken, parameterName,
+  getFunctionFlags,
+} from "../../ast/index.js";
+import { Kind, NodeFlags } from "../../ast/index.js";
+import { isIdentifier } from "../../ast/index.js";
+import { EmitFlags } from "../../printer/emitflags.js";
+import { GeneratedIdentifierFlags } from "../../printer/namegenerator.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
 import { Transformer, type TransformOptions, type NodeVisitor } from "../transformer.js";
 type TokenNode = AstNode;
@@ -388,8 +399,8 @@ export class ForAwaitTransformer extends Transformer {
     const binding = this.factory().createForOfBindingStatement(forInOrOfInitializer(node), value);
     statements.push(this.visitor().visitNode(binding));
 
-    let bodyLocation: TextRange | undefined;
-    let statementsLocation: TextRange | undefined;
+    let bodyLocation: unknown;
+    let statementsLocation: unknown;
     const statement = this.visitor().visitEmbeddedStatement(forInOrOfStatementBody(node));
     if (isBlockNode(statement)) {
       for (const s of blockStatements(statement)) statements.push(s);
@@ -939,47 +950,13 @@ function unwrapInnermostStatementOfLabel(node: LabeledStatement): AstNode {
 
 // NodeVisitor type comes from transformer.ts via the Transformer base.
 
+// Forward-declared local helpers — body-completion phase will fill these.
 declare function newOrderedSet<T>(): Set<T>;
-
-declare const FunctionFlags: {
-  Normal: number;
-  Async: number;
-  Generator: number;
-};
-
-declare function getFunctionFlags(node: AstNode): number;
-
-declare const Kind: {
-  SourceFile: number; AwaitExpression: number; YieldExpression: number; ReturnStatement: number;
-  LabeledStatement: number; DoStatement: number; WhileStatement: number; ForInStatement: number;
-  ForOfStatement: number; ForStatement: number; Constructor: number; MethodDeclaration: number;
-  GetAccessor: number; SetAccessor: number; FunctionDeclaration: number; FunctionExpression: number;
-  ArrowFunction: number; ClassDeclaration: number; ClassExpression: number; AsteriskToken: number;
-  AsyncKeyword: number; FalseKeyword: number; TrueKeyword: number; ExclamationToken: number;
-  AmpersandAmpersandToken: number;
-};
-
-declare const NodeFlags: { None: number };
-
-declare const SubtreeFacts: { ContainsForAwaitOrAsyncGenerator: number };
+const FunctionFlags = { Normal: 0, Async: 2, Generator: 1 } as const;
+const SubtreeFacts = { ContainsForAwaitOrAsyncGenerator: 1 << 0 } as const;
 declare function subtreeFacts(node: AstNode): number;
-
-declare const EmitFlags: {
-  NoTokenTrailingSourceMaps: number;
-  SingleLine: number;
-};
-
-declare const EmitHelpers: {
-  AdvancedAsyncSuper: AstNode;
-  AsyncSuper: AstNode;
-};
-
-declare const GeneratedIdentifierFlags: {
-  ReservedInNestedScopes: number;
-  Optimistic: number;
-  FileLevel: number;
-};
-
+const EmitHelpers: { AdvancedAsyncSuper: AstNode; AsyncSuper: AstNode } = { AdvancedAsyncSuper: {} as AstNode, AsyncSuper: {} as AstNode };
+declare function isSimpleParameterList(parameters: readonly AstNode[]): boolean;
 declare function awaitExpressionOf(node: AwaitExpression): AstNode;
 declare function yieldExpressionOf(node: YieldExpression): AstNode | undefined;
 declare function yieldAsteriskToken(node: YieldExpression): TokenNode | undefined;
@@ -990,26 +967,8 @@ declare function forInOrOfExpression(node: ForInOrOfStatement): AstNode;
 declare function forInOrOfExpressionNode(node: ForInOrOfStatement): AstNode;
 declare function forInOrOfInitializer(node: ForInOrOfStatement): AstNode;
 declare function forInOrOfStatementBody(node: ForInOrOfStatement): AstNode;
-declare function isBlockNode(node: AstNode): boolean;
-declare function blockStatements(node: AstNode): readonly AstNode[];
-declare function blockStatementList(node: AstNode): NodeArray<AstNode>;
-declare function blockStatementListLoc(node: AstNode): TextRange;
-declare function blockMultiLine(node: AstNode): boolean;
-declare function isIdentifier(node: AstNode): boolean;
-declare function isSimpleParameterList(parameters: readonly AstNode[]): boolean;
-declare function declModifiers(decl: AstNode): ModifierList | undefined;
-declare function declParameters(decl: AstNode): NodeArray<AstNode>;
 declare function declName(decl: AstNode): AstNode | undefined;
-declare function nodeBody(node: AstNode): AstNode;
-declare function nodeName(node: AstNode): AstNode | undefined;
 declare function nodeParameters(node: AstNode): readonly AstNode[];
 declare function nodeParameterList(node: AstNode): NodeArray<AstNode>;
-declare function methodAsteriskToken(decl: MethodDeclaration): TokenNode | undefined;
 declare function functionAsteriskToken(decl: FunctionDeclaration): TokenNode | undefined;
 declare function functionExpressionAsteriskToken(decl: FunctionExpression): TokenNode | undefined;
-declare function arrowEqualsGreaterThanToken(decl: ArrowFunction): TokenNode;
-declare function parameterInitializer(parameter: AstNode): AstNode | undefined;
-declare function parameterDotDotDotToken(parameter: AstNode): TokenNode | undefined;
-declare function parameterName(parameter: AstNode): AstNode;
-declare function nodeLoc(node: AstNode): TextRange;
-declare function setLoc(node: AstNode | NodeList, loc: TextRange): void;
