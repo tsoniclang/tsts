@@ -194,6 +194,7 @@ export function functionDeclarationParameters(node: AstNode): NodeList | undefin
 export function functionDeclarationBody(node: AstNode): AstNode | undefined { return f<AstNode>(node, "body"); }
 export function declParameters(node: AstNode): NodeList | undefined { return f<NodeList>(node, "parameters"); }
 export function declModifiers(node: AstNode): ModifierList | undefined { return f<ModifierList>(node, "modifiers"); }
+export function declName(node: AstNode | undefined): AstNode | undefined { return nodeName(node); }
 export function methodAsteriskToken(node: AstNode): AstNode | undefined { return f<AstNode>(node, "asteriskToken"); }
 export function arrowFunctionBody(node: AstNode): AstNode { return f<AstNode>(node, "body")!; }
 export function arrowEqualsGreaterThanToken(node: AstNode): AstNode | undefined { return f<AstNode>(node, "equalsGreaterThanToken"); }

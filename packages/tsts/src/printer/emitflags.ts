@@ -39,4 +39,5 @@ export const EmitFlags = {
   TransformPrivateStaticElements: (1 << 27) as EmitFlags,
   StartOnNewLine: (1 << 28) as EmitFlags,
   IndirectCall: (1 << 29) as EmitFlags,
+  NoLexicalArguments: (1 << 30) as EmitFlags,
 } as const;
