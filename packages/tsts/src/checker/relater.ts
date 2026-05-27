@@ -197,11 +197,32 @@ export class Relater {
   structuredTypeRelatedTo(
     source: Type, target: Type, reportErrors: boolean, intersectionState: number,
   ): Ternary {
-    void source; void target; void reportErrors; void intersectionState; return Ternary.True;
+    void intersectionState;
+    // For object types: properties, call signatures, construct
+    // signatures, index signatures all relate.
+    const propsResult = this.propertiesRelatedTo(source, target, reportErrors);
+    if (propsResult === Ternary.False) return propsResult;
+    const callResult = this.signaturesRelatedTo(source, target, 0, reportErrors);
+    if (callResult === Ternary.False) return callResult;
+    const constructResult = this.signaturesRelatedTo(source, target, 1, reportErrors);
+    if (constructResult === Ternary.False) return constructResult;
+    return this.indexSignaturesRelatedTo(source, target, false, reportErrors);
   }
 
   membersRelatedToIndexInfo(source: Type, target: Type, reportErrors: boolean): Ternary {
-    void source; void target; void reportErrors; return Ternary.True;
+    // Each member of source's type must satisfy target's index signature.
+    void reportErrors;
+    const indexInfos = (target as unknown as { indexInfos?: readonly { keyType: Type; type: Type }[] }).indexInfos;
+    const sourceMembers = (source as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members;
+    if (indexInfos === undefined || sourceMembers === undefined) return Ternary.True;
+    for (const [, sym] of sourceMembers) {
+      const memberType = (sym as unknown as { type?: Type }).type;
+      if (memberType === undefined) continue;
+      for (const info of indexInfos) {
+        if (!this.isTypeAssignableTo(memberType, info.type)) return Ternary.False;
+      }
+    }
+    return Ternary.True;
   }
 
   propertiesRelatedTo(source: Type, target: Type, reportErrors: boolean): Ternary {
@@ -272,13 +293,33 @@ export class Relater {
   indexSignaturesRelatedTo(
     source: Type, target: Type, sourceIsPrimitive: boolean, reportErrors: boolean,
   ): Ternary {
-    void source; void target; void sourceIsPrimitive; void reportErrors;
+    void sourceIsPrimitive;
+    const targetInfos = (target as unknown as { indexInfos?: readonly { keyType: Type; type: Type }[] }).indexInfos;
+    if (targetInfos === undefined || targetInfos.length === 0) return Ternary.True;
+    const sourceInfos = (source as unknown as { indexInfos?: readonly { keyType: Type; type: Type }[] }).indexInfos;
+    if (sourceInfos === undefined) {
+      // Members of source must satisfy target's index signature.
+      return this.membersRelatedToIndexInfo(source, target, reportErrors);
+    }
+    // Match per keyType.
+    for (const ti of targetInfos) {
+      let found = false;
+      for (const si of sourceInfos) {
+        if (this.indexInfoRelatedTo(si as unknown as Type, ti as unknown as Type, reportErrors) !== Ternary.False) {
+          found = true; break;
+        }
+      }
+      if (!found) return Ternary.False;
+    }
     return Ternary.True;
   }
 
   indexInfoRelatedTo(source: Type, target: Type, reportErrors: boolean): Ternary {
-    void source; void target; void reportErrors;
-    return Ternary.True;
+    void reportErrors;
+    const sourceType = (source as unknown as { type?: Type }).type;
+    const targetType = (target as unknown as { type?: Type }).type;
+    if (sourceType === undefined || targetType === undefined) return Ternary.True;
+    return this.isTypeAssignableTo(sourceType, targetType) ? Ternary.True : Ternary.False;
   }
 
   // -------------------------------------------------------------------------
