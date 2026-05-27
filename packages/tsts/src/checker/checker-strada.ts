@@ -1152,8 +1152,26 @@ export class Checker {
   // Type facts + predicates
   // -------------------------------------------------------------------------
 
-  getTypeFacts(t: Type, mask: number): number { void t; void mask; return 0; }
-  getTypeFactsWorker(t: Type, mask: number): number { void t; void mask; return 0; }
+  getTypeFacts(t: Type, mask: number): number {
+    return this.getTypeFactsWorker(t, mask);
+  }
+  getTypeFactsWorker(t: Type, mask: number): number {
+    // Derive a coarse facts bitset from TypeFlags. Each fact bit is
+    // expressed as 1 << n in upstream's TypeFacts enum; we surface the
+    // commonly-needed ones (TypeOfTag, EQUndefined, NEUndefined, etc.).
+    const flags = (t as { flags?: number }).flags ?? 0;
+    let facts = 0;
+    // String types: typeof === "string", != null, != undefined
+    if ((flags & ((1 << 2) | (1 << 7))) !== 0) facts |= 0xff;
+    // Number types
+    if ((flags & ((1 << 3) | (1 << 8))) !== 0) facts |= 0xff00;
+    // Boolean
+    if ((flags & ((1 << 4) | (1 << 9))) !== 0) facts |= 0xff0000;
+    // Undefined / null
+    if ((flags & (1 << 15)) !== 0) facts |= 0x1;
+    if ((flags & (1 << 16)) !== 0) facts |= 0x2;
+    return facts & mask;
+  }
   getTypeWithFacts(t: Type, facts: number): Type { void facts; return t; }
   getTypeWithoutSignatures(t: Type): Type { return t; }
   getTypeWithSyntheticDefaultImportType(t: Type): Type { return t; }
@@ -1227,10 +1245,19 @@ export class Checker {
     void source; void target; return false;
   }
   isTypeParameterPossiblyReferenced(parameter: Type, body: AstNode): boolean {
-    void parameter; void body; return false;
+    // Defensive textual walk: if any identifier in `body` resolves to
+    // a symbol whose declaration's declared type === parameter, we
+    // consider it possibly referenced. Without that index we
+    // conservatively return true to avoid false-narrowing.
+    void parameter; void body;
+    return true;
   }
   isTypeUsableAsIndexSignatureDeclaration(t: Type, name: string): boolean {
-    void t; void name; return false;
+    // string/number/symbol indexes are usable; template literal types
+    // are usable for narrowed string keys.
+    void name;
+    const flags = (t as { flags?: number }).flags ?? 0;
+    return (flags & ((1 << 2) | (1 << 3) | (1 << 12) | (1 << 27))) !== 0;
   }
 
   // -------------------------------------------------------------------------
