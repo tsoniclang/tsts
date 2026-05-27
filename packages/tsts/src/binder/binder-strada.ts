@@ -307,10 +307,39 @@ export class Binder {
   // Per-kind binders
   // -------------------------------------------------------------------------
 
-  bindEnumDeclaration(node: AstNode): void { void node; }
-  bindVariableDeclarationOrBindingElement(node: AstNode): void { void node; }
-  bindParameter(node: AstNode): void { void node; }
-  bindFunctionDeclaration(node: AstNode): void { void node; }
+  bindEnumDeclaration(node: AstNode): void {
+    // SymbolFlags: ConstEnum = 128, RegularEnum = 256, EnumExcludes = 899
+    const mods = (node as unknown as { modifiers?: { nodes?: readonly AstNode[] } }).modifiers?.nodes;
+    const isConst = mods !== undefined && mods.some((m) => (m as { kind?: number }).kind === 87 /* ConstKeyword */);
+    const flags = isConst ? 128 : 256;
+    this.declareSourceFileMember(node, flags, 899);
+    // Bind each member.
+    const members = (node as unknown as { members?: { nodes?: readonly AstNode[] } }).members?.nodes;
+    if (members === undefined) return;
+    const savedContainer = this.container;
+    this.container = node;
+    try {
+      for (const m of members) {
+        // EnumMember flag = 8, EnumMemberExcludes = 900
+        this.declareSymbolAndAddToSymbolTable(m, 8, 900);
+      }
+    } finally {
+      this.container = savedContainer;
+    }
+  }
+  bindVariableDeclarationOrBindingElement(node: AstNode): void {
+    // SymbolFlags: BlockScopedVariable = 2, FunctionScopedVariable = 1
+    const flags = 1; // Default value-scoped — caller may override.
+    this.declareSymbolAndAddToSymbolTable(node, flags, 0);
+  }
+  bindParameter(node: AstNode): void {
+    // SymbolFlags: FunctionScopedVariable = 1, ParameterExcludes = 111551
+    this.declareSymbolAndAddToSymbolTable(node, 1, 0);
+  }
+  bindFunctionDeclaration(node: AstNode): void {
+    // SymbolFlags: Function = 16, FunctionExcludes = 110991
+    this.declareSourceFileMember(node, 16, 110991);
+  }
   getInferTypeContainer(node: AstNode): AstNode | undefined { void node; return undefined; }
   bindAnonymousDeclaration(node: AstNode, symbolFlags: number, name: string): void {
     void node; void symbolFlags; void name;
