@@ -11,7 +11,24 @@
 
 import type { Node as AstNode } from "../../ast/index.js";
 import { nodeKind, binaryOperatorKind, binaryLeft, binaryRight } from "../../ast/index.js";
-import { isPropertyAccessExpression } from "../../ast/index.js";
+import {
+  isPropertyAccessExpression,
+  isSimpleCopiableExpression,
+  skipParentheses,
+  expressionOf,
+  propertyAccessName,
+  elementArgumentExpression,
+  subtreeFacts,
+} from "../../ast/index.js";
+
+function subtreeContainsLogicalAssignments(node: AstNode): boolean {
+  return (subtreeFacts(node) & (1 << 9) /* ContainsLogicalAssignment */) !== 0;
+}
+function isAccessExpression(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = (node as { kind?: number }).kind;
+  return k === Kind.PropertyAccessExpression || k === Kind.ElementAccessExpression;
+}
 import { Kind } from "../../ast/index.js";
 import {
   visitNode, visitEachChildOf,
@@ -121,11 +138,3 @@ export function newLogicalAssignmentTransformer(opts: TransformOptions): Transfo
   return new LogicalAssignmentTransformer(opts);
 }
 
-// Strada-specific helpers still forward-declared.
-declare function subtreeContainsLogicalAssignments(node: AstNode): boolean;
-declare function isAccessExpression(node: AstNode): boolean;
-declare function isSimpleCopiableExpression(node: AstNode): boolean;
-declare function skipParentheses(node: AstNode): AstNode;
-declare function expressionOf(node: AstNode): AstNode;
-declare function propertyAccessName(node: AstNode): AstNode;
-declare function elementArgumentExpression(node: AstNode): AstNode;

@@ -12,7 +12,17 @@
 
 import type { Node as AstNode } from "../../ast/index.js";
 import { nodeKind, binaryOperatorKind, binaryLeft, binaryRight } from "../../ast/index.js";
-import { isElementAccessExpression, isPropertyAccessExpression } from "../../ast/index.js";
+import {
+  isElementAccessExpression, isPropertyAccessExpression,
+} from "../../ast/index.js";
+import {
+  expressionOf, elementArgumentExpression, propertyAccessName,
+  subtreeFacts,
+} from "../../ast/index.js";
+
+function subtreeContainsExponentiationOperator(node: AstNode): boolean {
+  return (subtreeFacts(node) & (1 << 10) /* ContainsExponentiation */) !== 0;
+}
 import { Kind } from "../../ast/index.js";
 import {
   visitNode, visitEachChildOf,
@@ -108,8 +118,3 @@ export function newExponentiationTransformer(opts: TransformOptions): Transforme
   return new ExponentiationTransformer(opts);
 }
 
-// Strada-specific helpers still forward-declared.
-declare function subtreeContainsExponentiationOperator(node: AstNode): boolean;
-declare function expressionOf(node: AstNode): AstNode;
-declare function elementArgumentExpression(node: AstNode): AstNode;
-declare function propertyAccessName(node: AstNode): AstNode;

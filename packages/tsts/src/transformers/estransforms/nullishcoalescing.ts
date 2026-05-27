@@ -9,8 +9,13 @@
  */
 
 import type { Node as AstNode } from "../../ast/index.js";
-import { nodeKind, binaryOperatorKind, binaryLeft, binaryRight } from "../../ast/index.js";
+import { nodeKind, binaryOperatorKind, binaryLeft, binaryRight, subtreeFacts, isSimpleCopiableExpression } from "../../ast/index.js";
 import { Kind } from "../../ast/index.js";
+import { createNotNullCondition } from "./utilities.js";
+
+function subtreeContainsNullishCoalescing(node: AstNode): boolean {
+  return (subtreeFacts(node) & (1 << 11) /* ContainsNullishCoalescing */) !== 0;
+}
 import {
   visitNode, visitEachChildOf,
   newTempVariable, addVariableDeclaration,
@@ -71,6 +76,3 @@ export function newNullishCoalescingTransformer(opts: TransformOptions): Transfo
   return new NullishCoalescingTransformer(opts);
 }
 
-declare function subtreeContainsNullishCoalescing(node: AstNode): boolean;
-declare function isSimpleCopiableExpression(node: AstNode): boolean;
-declare function createNotNullCondition(emitContext: EmitContext, left: AstNode, right: AstNode, invert: boolean): AstNode;
