@@ -39,7 +39,7 @@ import {
   isObjectLiteralExpression, isSpreadAssignment, isQualifiedName,
   isModuleDeclaration,
 } from "../../ast/index.js";
-import { Kind, NodeFlags } from "../../ast/index.js";
+import { Kind, NodeFlags, subtreeFacts } from "../../ast/index.js";
 import { JsxEmit } from "../../core/compileroptions.js";
 import { EmitFlags } from "../../printer/emitflags.js";
 import { GeneratedIdentifierFlags } from "../../printer/namegenerator.js";
@@ -970,4 +970,3 @@ interface EmitResolver {
 // LanguageVariant/JsxEmit dev-flag/ScriptTarget — stub until printer port.
 const LanguageVariant = { Standard: 0 } as const;
 const SubtreeFacts = { ContainsJsx: 1 << 2 } as const;
-declare function subtreeFacts(node: AstNode): number;

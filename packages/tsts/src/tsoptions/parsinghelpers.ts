@@ -15,6 +15,7 @@
 import { Tristate } from "../core/tristate.js";
 import type { CommandLineOption } from "./commandlineoption.js";
 import type { ProjectReference } from "../core/projectreference.js";
+import { combinePaths as joinPaths } from "../tspath/path.js";
 
 // ---------------------------------------------------------------------------
 // Primitive parsers
@@ -174,4 +175,3 @@ export function convertOptionsFromJson(
 // Forward-declared
 // ---------------------------------------------------------------------------
 
-declare function joinPaths(base: string, relative: string): string;

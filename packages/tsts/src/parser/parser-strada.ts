@@ -659,7 +659,4 @@ interface SourceFileParseOptions { readonly _opts?: unknown }
 interface DiagnosticMessage { code: number; message: string }
 interface TextRange { pos: number; end: number }
 
-declare const ScriptKind: {
-  JS: number;
-  JSX: number;
-};
+const ScriptKind = { JS: 1, JSX: 2 } as const;
