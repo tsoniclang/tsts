@@ -110,11 +110,31 @@ export class Inferer {
     inferences: InferenceInfo[], originalSource: Type | undefined, originalTarget: Type | undefined,
     priority: InferencePriority, contravariant: boolean,
   ): void {
-    void inferences; void originalSource; void originalTarget; void priority; void contravariant;
+    if (originalSource === undefined || originalTarget === undefined) return;
+    const state: InferenceState = {
+      inferences, originalSource, originalTarget, priority, contravariant,
+      visited: new Map(),
+      bivariant: false, sourceStack: [], targetStack: [],
+      inferencePriority: priority,
+      expandingFlags: 0,
+    };
+    this.inferFromTypes(state, originalSource, originalTarget);
   }
 
   inferFromTypes(n: InferenceState, source: Type, target: Type): void {
-    void n; void source; void target;
+    // Naked-type-variable case: if `target` is one of the inference's
+    // type parameters, record `source` as a candidate.
+    const info = n.inferences.find((i) => i.typeParameter === target);
+    if (info !== undefined && !info.isFixed) {
+      if (n.contravariant) {
+        if (info.contraCandidates === undefined) info.contraCandidates = [];
+        info.contraCandidates.push(source);
+      } else {
+        if (info.candidates === undefined) info.candidates = [];
+        info.candidates.push(source);
+      }
+      if (n.priority < info.priority) info.priority = n.priority;
+    }
   }
 
   inferFromTypeArguments(
@@ -301,11 +321,29 @@ export class Inferer {
   }
 
   getInferredType(n: InferenceContext, index: number): Type | undefined {
-    return n.inferences[index]?.inferredType;
+    const info = n.inferences[index];
+    if (info === undefined) return undefined;
+    if (info.inferredType !== undefined) return info.inferredType;
+    // Fall back to the first candidate (single-candidate case). The
+    // full algorithm unions candidates with widening / fixing rules;
+    // this approximation suffices for unambiguous single-candidate
+    // inferences.
+    const cand = info.candidates;
+    if (cand !== undefined && cand.length > 0) {
+      const first = cand[0]!;
+      info.inferredType = first;
+      return first;
+    }
+    return undefined;
   }
 
   getInferredTypes(n: InferenceContext): readonly Type[] {
-    return n.inferences.map((i) => i.inferredType).filter((t): t is Type => t !== undefined);
+    const result: Type[] = [];
+    for (let i = 0; i < n.inferences.length; i++) {
+      const t = this.getInferredType(n, i);
+      if (t !== undefined) result.push(t);
+    }
+    return result;
   }
 }
 
