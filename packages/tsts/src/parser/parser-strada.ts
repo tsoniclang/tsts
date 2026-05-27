@@ -337,7 +337,50 @@ export class Parser {
   isListElement(parsingContext: ParsingContext, inErrorRecovery: boolean): boolean {
     void parsingContext; void inErrorRecovery; return false;
   }
-  isListTerminator(kind: ParsingContext): boolean { void kind; return false; }
+  isListTerminator(kind: ParsingContext): boolean {
+    // EndOfFile always terminates.
+    if (this.token === 1 /* EndOfFile */) return true;
+    switch (kind) {
+      case ParsingContext.BlockStatements:
+      case ParsingContext.SwitchClauses:
+      case ParsingContext.TypeMembers:
+      case ParsingContext.ClassMembers:
+      case ParsingContext.EnumMembers:
+      case ParsingContext.ObjectLiteralMembers:
+      case ParsingContext.ObjectBindingElements:
+      case ParsingContext.ImportOrExportSpecifiers:
+      case ParsingContext.ImportAttributes:
+        return this.token === 20 /* CloseBraceToken */;
+      case ParsingContext.SwitchClauseStatements:
+        return this.token === 20 /* CloseBraceToken */ ||
+          this.token === 87 /* CaseKeyword */ || this.token === 93 /* DefaultKeyword */;
+      case ParsingContext.HeritageClauseElement:
+        return this.token === 19 /* OpenBraceToken */ || this.token === 1 /* EOF */;
+      case ParsingContext.VariableDeclarations:
+        return this.token === 27 /* SemicolonToken */ ||
+          this.token === 102 /* InKeyword */ || this.token === 165 /* OfKeyword */;
+      case ParsingContext.TypeParameters:
+      case ParsingContext.TypeArguments:
+        return this.token === 32 /* GreaterThanToken */ ||
+          this.token === 22 /* OpenParenToken */;
+      case ParsingContext.ArgumentExpressions:
+      case ParsingContext.Parameters:
+        return this.token === 23 /* CloseParenToken */;
+      case ParsingContext.ArrayLiteralMembers:
+      case ParsingContext.TupleElementTypes:
+      case ParsingContext.ArrayBindingElements:
+        return this.token === 25 /* CloseBracketToken */;
+      case ParsingContext.JsxAttributes:
+        return this.token === 32 /* GreaterThanToken */ ||
+          this.token === 43 /* SlashToken */;
+      case ParsingContext.JsxChildren:
+        // The JSX child list terminates at "</" — handled at a higher
+        // layer; here we conservatively stop only at EOF.
+        return false;
+      default:
+        return false;
+    }
+  }
 
   // -------------------------------------------------------------------------
   // Statements
