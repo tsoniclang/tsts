@@ -308,10 +308,35 @@ export class Binder {
   setExportContextFlag(node: AstNode): void { void node; }
   hasExportDeclarations(node: AstNode): boolean { void node; return false; }
 
-  bindFunctionExpression(node: AstNode): void { void node; }
-  bindCallExpression(node: AstNode): void { void node; }
-  setCommonJSModuleIndicator(node: AstNode): boolean { void node; return false; }
-  bindClassLikeDeclaration(node: AstNode): void { void node; }
+  bindFunctionExpression(node: AstNode): void {
+    // Anonymous function expressions get an anonymous symbol with
+    // Function=16 flag.
+    const name = (node as unknown as { name?: { text?: string } }).name?.text;
+    if (name !== undefined) {
+      this.declareSymbolAndAddToSymbolTable(node, 16, 0);
+    }
+  }
+  bindCallExpression(node: AstNode): void {
+    // Detects CommonJS module patterns and Object.defineProperty calls
+    // for expando properties. Conservative no-op until those are needed.
+    void node;
+  }
+  setCommonJSModuleIndicator(node: AstNode): boolean {
+    // Sets file's commonJsModuleIndicator if not already set.
+    const file = this.file as unknown as { commonJsModuleIndicator?: AstNode } | undefined;
+    if (file === undefined) return false;
+    if (file.commonJsModuleIndicator === undefined) {
+      file.commonJsModuleIndicator = node;
+      return true;
+    }
+    return false;
+  }
+  bindClassLikeDeclaration(node: AstNode): void {
+    // SymbolFlags: Class=32, ClassExcludes=899503
+    this.declareSourceFileMember(node, 32, 899503);
+    // Class members get bound when we walk into the class body via the
+    // container-update mechanism.
+  }
   bindPropertyOrMethodOrAccessor(node: AstNode, symbolFlags: number, symbolExcludes: number): void {
     void node; void symbolFlags; void symbolExcludes;
   }
