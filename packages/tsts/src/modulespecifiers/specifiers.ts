@@ -30,7 +30,28 @@ import {
   fileExtensionIsOneOf, removeFileExtension, removeExtension,
   getBaseFileName, isDeclarationFileName, isRootedDiskPath,
   tryGetExtensionFromPath, changeExtension, resolvePath,
+  getNormalizedAbsolutePath, toPath, comparePaths,
+  getRelativePathFromDirectory,
 } from "../tspath/index.js";
+import {
+  getDeclarationFileExtension, changeAnyExtension, changeFullExtension,
+} from "../tspath/extension.js";
+import { hasPrefixAndSuffixWithoutOverlap } from "../stringutil/compare.js";
+import { indexAfter as _indexAfter } from "../core/core.js";
+
+function comparePathsSimple(a: string, b: string, useCaseSensitive: boolean): number {
+  return useCaseSensitive
+    ? (a < b ? -1 : a > b ? 1 : 0)
+    : (a.toLowerCase() < b.toLowerCase() ? -1 : a.toLowerCase() > b.toLowerCase() ? 1 : 0);
+}
+function stringHasPrefix(s: string, prefix: string, caseSensitive: boolean): boolean {
+  if (caseSensitive) return s.startsWith(prefix);
+  return s.toLowerCase().startsWith(prefix.toLowerCase());
+}
+function stringHasSuffix(s: string, suffix: string, caseSensitive: boolean): boolean {
+  if (caseSensitive) return s.endsWith(suffix);
+  return s.toLowerCase().endsWith(suffix.toLowerCase());
+}
 
 import {
   countPathComponents,
@@ -1615,62 +1636,159 @@ export function processEntrypointEnding(
 // these imports come from the right places.
 // ---------------------------------------------------------------------------
 
-// `ast` surface
-declare function isModuleWithStringLiteralName(node: AstNode): boolean;
-declare function isModuleAugmentationExternal(node: AstNode): boolean;
-declare function isModuleDeclaration(node: AstNode): boolean;
-declare function isSourceFile(node: AstNode): boolean;
-declare function findAncestor<T extends AstNode>(node: AstNode, predicate: (n: AstNode) => boolean): T | undefined;
-declare function declName(node: AstNode): string;
-declare function declSymbol(node: AstNode): AstSymbol | undefined;
-declare function symbolExports(node: AstNode): ReadonlyMap<string, AstSymbol> | undefined;
-declare function exportAssignmentDeclExpression(node: AstNode): AstNode;
-declare function getSourceFileOfModule(symbol: AstSymbol): SourceFile | undefined;
-declare const KindExportAssignment: number;
-declare const InternalSymbolNameExportEquals: string;
-declare const SymbolFlagsAlias: number;
+// `ast` surface — local implementations.
+const KindExportAssignment = 276;
+const InternalSymbolNameExportEquals = "export=";
+const SymbolFlagsAlias = 1 << 21;
 
-// `tspath` surface — most helpers come from ../tspath/index.js via the
-// top-of-file imports below. A few that aren't yet ported stay declared.
-declare function getNormalizedAbsolutePath(p: string, cwd: string): string;
-declare function toPath(p: string, cwd: string, useCaseSensitive: boolean): string;
-declare function comparePathsSimple(a: string, b: string, useCaseSensitive: boolean): number;
-declare function comparePaths(a: string, b: string, opts: ComparePathsOptions): number;
-declare function getRelativePathFromDirectory(from: string, to: string, opts: ComparePathsOptions): string;
-declare function getRelativePathIfInSameVolume(path: string, directoryPath: string, useCaseSensitive: boolean): string;
-declare function stringHasPrefix(s: string, prefix: string, caseSensitive: boolean): boolean;
-declare function stringHasSuffix(s: string, suffix: string, caseSensitive: boolean): boolean;
-declare function hasPrefixAndSuffixWithoutOverlap(s: string, prefix: string, suffix: string, caseSensitive: boolean): boolean;
-declare function getDeclarationFileExtension(p: string): string;
-declare function changeAnyExtension(p: string, ext: string, extensions: readonly string[], caseSensitive: boolean): string;
-declare function changeFullExtension(p: string, ext: string): string;
-declare function indexAfter(s: string, search: string, position: number): number;
-declare const ExtensionsNotSupportingExtensionlessResolution: readonly string[];
+function isModuleWithStringLiteralName(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  if ((node as { kind?: number }).kind !== 272 /* ModuleDeclaration */) return false;
+  const name = (node as unknown as { name?: { kind?: number } }).name;
+  return name?.kind === 10 /* StringLiteral */;
+}
+function isModuleAugmentationExternal(node: AstNode | undefined): boolean {
+  if (!isModuleWithStringLiteralName(node)) return false;
+  const parent = (node as unknown as { parent?: AstNode }).parent;
+  const parentKind = (parent as { kind?: number } | undefined)?.kind;
+  return parentKind === 305 /* SourceFile */ || parentKind === 273 /* ModuleBlock */;
+}
+function isModuleDeclaration(node: AstNode | undefined): boolean {
+  return node !== undefined && (node as { kind?: number }).kind === 272;
+}
+function isSourceFile(node: AstNode | undefined): boolean {
+  return node !== undefined && (node as { kind?: number }).kind === 305;
+}
+function findAncestor<T extends AstNode>(node: AstNode | undefined, predicate: (n: AstNode) => boolean): T | undefined {
+  let cur = node;
+  while (cur !== undefined) {
+    if (predicate(cur)) return cur as T;
+    cur = (cur as unknown as { parent?: AstNode }).parent;
+  }
+  return undefined;
+}
+function declName(node: AstNode | undefined): string {
+  if (node === undefined) return "";
+  const name = (node as unknown as { name?: { text?: string } }).name;
+  return name?.text ?? "";
+}
+function declSymbol(node: AstNode | undefined): AstSymbol | undefined {
+  return (node as unknown as { symbol?: AstSymbol })?.symbol;
+}
+function symbolExports(node: AstNode | undefined): ReadonlyMap<string, AstSymbol> | undefined {
+  return (node as unknown as { exports?: ReadonlyMap<string, AstSymbol> })?.exports;
+}
+function exportAssignmentDeclExpression(node: AstNode): AstNode {
+  return (node as unknown as { expression: AstNode }).expression;
+}
+function getSourceFileOfModule(symbol: AstSymbol): SourceFile | undefined {
+  const decls = (symbol as unknown as { declarations?: readonly AstNode[] }).declarations ?? [];
+  for (const d of decls) {
+    let cur: AstNode | undefined = d;
+    while (cur !== undefined) {
+      if ((cur as { kind?: number }).kind === 305) return cur as unknown as SourceFile;
+      cur = (cur as unknown as { parent?: AstNode }).parent;
+    }
+  }
+  return undefined;
+}
+
+// `tspath` surface — additional helpers.
+const ExtensionsNotSupportingExtensionlessResolution: readonly string[] = [".mts", ".cts", ".mjs", ".cjs"];
+function getRelativePathIfInSameVolume(path: string, directoryPath: string, useCaseSensitive: boolean): string {
+  return getRelativePathFromDirectory(directoryPath, path, { useCaseSensitiveFileNames: useCaseSensitive, currentDirectory: "" });
+}
+function indexAfter(s: string, search: string, position: number): number {
+  const idx = s.indexOf(search, position);
+  return idx === -1 ? -1 : idx + search.length;
+}
 
 interface ComparePathsOptions {
   readonly useCaseSensitiveFileNames: boolean;
   readonly currentDirectory: string;
 }
 
-// `module` surface
-declare function getConditions(options: CompilerOptions, importMode: ResolutionMode): readonly string[];
-declare function tryGetJSExtensionForFile(fileName: string, options: CompilerOptions): string;
-declare function hasImplementationTSFileExtension(p: string): boolean;
-declare function isApplicableVersionedTypesKey(key: string): boolean;
-declare function matchPatternOrExact(patterns: readonly Pattern[], candidate: string): Pattern | undefined;
-declare function tryParsePatterns(paths: ReadonlyMap<string, readonly string[]>): readonly Pattern[];
-declare function getPackageNameFromTypesPackageName(name: string): string;
+// `module` surface — small local implementations.
+function getConditions(_options: CompilerOptions, importMode: ResolutionMode): readonly string[] {
+  // Default Strada conditions: types > import|require > default.
+  // Real implementation also reads opts.customConditions; until that
+  // lands we hard-code a reasonable Node-ESM set.
+  void importMode;
+  return ["types", "node", "import", "default"];
+}
+function tryGetJSExtensionForFile(fileName: string, _options: CompilerOptions): string {
+  if (fileName.endsWith(".ts")) return ".js";
+  if (fileName.endsWith(".tsx")) return ".jsx";
+  if (fileName.endsWith(".mts")) return ".mjs";
+  if (fileName.endsWith(".cts")) return ".cjs";
+  return "";
+}
+function hasImplementationTSFileExtension(p: string): boolean {
+  return p.endsWith(".ts") || p.endsWith(".tsx") || p.endsWith(".mts") || p.endsWith(".cts");
+}
+function isApplicableVersionedTypesKey(_key: string): boolean {
+  // Real version compares against TypeScript version. Conservative: accept all.
+  return true;
+}
+function matchPatternOrExact(patterns: readonly Pattern[], candidate: string): Pattern | undefined {
+  for (const p of patterns) {
+    if (candidate.startsWith(p.prefix) && candidate.endsWith(p.suffix)
+        && candidate.length >= p.prefix.length + p.suffix.length) {
+      return p;
+    }
+  }
+  return undefined;
+}
+function tryParsePatterns(paths: ReadonlyMap<string, readonly string[]>): readonly Pattern[] {
+  const result: Pattern[] = [];
+  for (const key of paths.keys()) {
+    const star = key.indexOf("*");
+    if (star === -1) result.push({ prefix: key, suffix: "" });
+    else result.push({ prefix: key.slice(0, star), suffix: key.slice(star + 1) });
+  }
+  return result;
+}
+function getPackageNameFromTypesPackageName(name: string): string {
+  const prefix = "@types/";
+  if (!name.startsWith(prefix)) return name;
+  const rest = name.slice(prefix.length);
+  const dunder = rest.indexOf("__");
+  if (dunder === -1) return rest;
+  return `@${rest.slice(0, dunder)}/${rest.slice(dunder + 2)}`;
+}
 
-// `outputpaths` surface
-declare function getOutputJSFileNameWorker(targetFilePath: string, options: CompilerOptions, host: ModuleSpecifierGenerationHost): string;
-declare function getOutputDeclarationFileNameWorker(targetFilePath: string, options: CompilerOptions, host: ModuleSpecifierGenerationHost): string;
+// `outputpaths` surface — imported from real impl.
+import { getOutputJSFileNameWorker } from "../outputpaths/outputpaths.js";
+
+// getOutputDeclarationFileNameWorker isn't ported yet — derive from JS
+// worker by swapping the extension. Conservative: assume .d.ts output
+// (declaration extension follows source extension category).
+function getOutputDeclarationFileNameWorker(
+  targetFilePath: string,
+  options: CompilerOptions,
+  host: ModuleSpecifierGenerationHost,
+): string {
+  const jsName = getOutputJSFileNameWorker(targetFilePath, options, host);
+  if (jsName.endsWith(".jsx")) return jsName.slice(0, -4) + ".d.ts";
+  if (jsName.endsWith(".mjs")) return jsName.slice(0, -4) + ".d.mts";
+  if (jsName.endsWith(".cjs")) return jsName.slice(0, -4) + ".d.cts";
+  if (jsName.endsWith(".js")) return jsName.slice(0, -3) + ".d.ts";
+  return jsName;
+}
 
 // `core` surface
-declare function forEachAncestorDirectoryStoppingAtGlobalCache(
+import { forEachAncestorDirectoryStoppingAtGlobalCache as _stopGlobal } from "../tspath/path.js";
+function forEachAncestorDirectoryStoppingAtGlobalCache(
   globalCache: string,
   start: string,
   fn: (dir: string) => { readonly stop: boolean; readonly value: boolean },
-): boolean;
+): boolean {
+  const result = _stopGlobal<boolean>(globalCache, start, (dir) => {
+    const { stop, value } = fn(dir);
+    return { result: value, stop };
+  });
+  return result ?? false;
+}
 
 interface Pattern {
   readonly prefix: string;

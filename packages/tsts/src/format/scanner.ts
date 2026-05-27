@@ -37,4 +37,21 @@ export function createFormatScanner(text: string, languageVariant: number, start
   return newFormatScanner(text, languageVariant, startPos, endPos, sourceFile);
 }
 
-declare function newFormatScanner(text: string, variant: number, start: number, end: number, sourceFile: SourceFile): FormatScanner;
+// No-op scanner — full implementation comes with Phase 4a (format
+// engine body completion). Until then the format engine sees no tokens
+// from the scanner path and short-circuits to a no-edit result.
+function newFormatScanner(
+  _text: string, _variant: number, start: number, _end: number, _sourceFile: SourceFile,
+): FormatScanner {
+  return {
+    advance(): boolean { return false; },
+    token: 0 as Kind,
+    tokenFullStart: start,
+    tokenStart: start,
+    tokenEnd: start,
+    tokenText: "",
+    hasPrecedingLineBreak: false,
+    isOnToken(): boolean { return false; },
+    lastTokenInfo(): TokenInfo | undefined { return undefined; },
+  };
+}
