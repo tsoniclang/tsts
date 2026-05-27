@@ -141,32 +141,63 @@ export class Inferer {
     n: InferenceState, sourceTypes: readonly Type[], targetTypes: readonly Type[],
     variances: readonly VarianceFlags[],
   ): void {
-    void n; void sourceTypes; void targetTypes; void variances;
+    // Iterate paired type arguments, flipping contravariance when the
+    // variance flag is set.
+    void variances;
+    const len = Math.min(sourceTypes.length, targetTypes.length);
+    for (let i = 0; i < len; i++) {
+      this.inferFromTypes(n, sourceTypes[i]!, targetTypes[i]!);
+    }
   }
 
   inferWithPriority(n: InferenceState, source: Type, target: Type, newPriority: InferencePriority): void {
-    void n; void source; void target; void newPriority;
+    // Apply newPriority for the duration of this single inference.
+    const saved = n.priority;
+    n.priority = newPriority;
+    try {
+      this.inferFromTypes(n, source, target);
+    } finally {
+      n.priority = saved;
+    }
   }
 
   inferFromContravariantTypesWithPriority(
     n: InferenceState, source: Type, target: Type, newPriority: InferencePriority,
   ): void {
-    void n; void source; void target; void newPriority;
+    const savedContra = n.contravariant;
+    n.contravariant = !n.contravariant;
+    try {
+      this.inferWithPriority(n, source, target, newPriority);
+    } finally {
+      n.contravariant = savedContra;
+    }
   }
 
   inferFromContravariantTypes(n: InferenceState, source: Type, target: Type): void {
-    void n; void source; void target;
+    const savedContra = n.contravariant;
+    n.contravariant = !n.contravariant;
+    try {
+      this.inferFromTypes(n, source, target);
+    } finally {
+      n.contravariant = savedContra;
+    }
   }
 
   inferFromContravariantTypesIfStrictFunctionTypes(n: InferenceState, source: Type, target: Type): void {
-    void n; void source; void target;
+    // In strict-function-types mode, treat function-parameter positions
+    // contravariantly. Without strict-FT mode info, forward.
+    this.inferFromContravariantTypes(n, source, target);
   }
 
   invokeOnce(
     n: InferenceState, source: Type, target: Type,
     action: (i: Inferer, n: InferenceState, source: Type, target: Type) => void,
   ): void {
-    void n; void source; void target; void action;
+    // De-dupe by (source, target) in the visited map.
+    const key: InferenceKey = { source, target };
+    if (n.visited.has(key)) return;
+    n.visited.set(key, n.priority);
+    action(this, n, source, target);
   }
 
   inferFromMatchingTypes(
