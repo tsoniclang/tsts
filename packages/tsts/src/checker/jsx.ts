@@ -41,8 +41,20 @@ export class JsxChecker {
   }
 
   // Intrinsic + component classification
-  isJsxIntrinsicTagName(tagName: AstNode): boolean { void tagName; return false; }
-  isJsxIntrinsicTagNameOfHostType(tagName: AstNode): boolean { void tagName; return false; }
+  isJsxIntrinsicTagName(tagName: AstNode): boolean {
+    // An intrinsic tag is an Identifier whose first char is lowercase
+    // (or a PropertyAccess whose head is lowercase — covered by the
+    // identifier case for now).
+    const k = (tagName as { kind?: number }).kind;
+    if (k !== 80 /* Identifier */) return false;
+    const text = (tagName as unknown as { text?: string }).text ?? "";
+    if (text.length === 0) return false;
+    const c = text.charCodeAt(0);
+    return c >= 0x61 /* a */ && c <= 0x7a /* z */;
+  }
+  isJsxIntrinsicTagNameOfHostType(tagName: AstNode): boolean {
+    return this.isJsxIntrinsicTagName(tagName);
+  }
   getIntrinsicTagSymbol(node: AstNode): AstSymbol | undefined { void node; return undefined; }
   getJsxElementClassType(location: AstNode): Type | undefined { void location; return undefined; }
   resolveJsxOpeningLikeElement(node: AstNode, candidatesOutArray: readonly Signature[]): Signature | undefined {
@@ -50,8 +62,16 @@ export class JsxChecker {
   }
 
   // Children
-  getJsxElementChildrenPropertyName(jsxNamespace: AstSymbol): string | undefined { void jsxNamespace; return undefined; }
-  getJsxElementPropertiesName(jsxNamespace: AstSymbol): string | undefined { void jsxNamespace; return undefined; }
+  getJsxElementChildrenPropertyName(jsxNamespace: AstSymbol): string | undefined {
+    // Standard React convention: "children". Real checker reads this
+    // from the JSX namespace's ElementChildrenAttribute interface.
+    void jsxNamespace; return "children";
+  }
+  getJsxElementPropertiesName(jsxNamespace: AstSymbol): string | undefined {
+    // Standard React convention: "props". Real checker reads this
+    // from the JSX namespace's ElementAttributesProperty interface.
+    void jsxNamespace; return "props";
+  }
   isUnhyphenatedJsxName(name: string): boolean { return !name.includes("-"); }
 }
 
