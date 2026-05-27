@@ -56,7 +56,30 @@ export class NameResolver {
     isUse: boolean,
     excludeGlobals: boolean,
   ): AstSymbol | undefined {
-    void location; void name; void meaning; void nameNotFoundMessage; void isUse; void excludeGlobals;
+    void nameNotFoundMessage; void isUse; void excludeGlobals;
+    // Walk up the parent chain of `location` looking for a symbol named
+    // `name` in any enclosing scope's `locals` table or `symbol.exports`
+    // (for module/namespace containers). Stops at SourceFile.
+    let n: AstNode | undefined = location;
+    while (n !== undefined) {
+      const locals = (n as unknown as { locals?: SymbolTable }).locals;
+      if (locals !== undefined) {
+        const found = this.lookup(locals, name, meaning);
+        if (found !== undefined) return found;
+      }
+      const sym = (n as unknown as { symbol?: AstSymbol }).symbol;
+      const exports = sym !== undefined ? (sym as unknown as { exports?: SymbolTable }).exports : undefined;
+      if (exports !== undefined) {
+        const found = this.lookup(exports, name, meaning);
+        if (found !== undefined) return found;
+      }
+      const members = sym !== undefined ? (sym as unknown as { members?: SymbolTable }).members : undefined;
+      if (members !== undefined) {
+        const found = this.lookup(members, name, meaning);
+        if (found !== undefined) return found;
+      }
+      n = (n as unknown as { parent?: AstNode }).parent;
+    }
     return undefined;
   }
 
@@ -89,8 +112,17 @@ export class NameResolver {
   }
 
   lookup(symbols: SymbolTable, name: string, meaning: number): AstSymbol | undefined {
-    void symbols; void name; void meaning;
-    return undefined;
+    const sym = symbols.get(name);
+    if (sym === undefined) return undefined;
+    // If a meaning bitset is provided, only return the symbol when its
+    // flags include at least one of the requested bits. When the symbol
+    // doesn't expose a `flags` field, fall through (caller-side meaning
+    // refinement is the responsibility of the checker).
+    if (meaning !== 0) {
+      const flags = (sym as unknown as { flags?: number }).flags;
+      if (flags !== undefined && (flags & meaning) === 0) return undefined;
+    }
+    return sym;
   }
 
   argumentsSymbol(): AstSymbol {
