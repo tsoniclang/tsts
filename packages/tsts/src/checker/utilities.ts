@@ -39,18 +39,38 @@ export const AssignmentKind = {
 export function newDiagnosticForNode(
   node: AstNode, message: { code: number; message: string }, ...args: unknown[]
 ): Diagnostic {
-  void args;
+  // Locate the containing SourceFile and resolve pos/length from the
+  // node so callers get a diagnostic anchored at the right location.
+  let sf: AstNode | undefined = node;
+  while (sf !== undefined && (sf as { kind?: number }).kind !== Kind.SourceFile) {
+    sf = (sf as unknown as { parent?: AstNode }).parent;
+  }
+  const pos = (node as unknown as { pos?: number }).pos ?? 0;
+  const end = (node as unknown as { end?: number }).end ?? pos;
+  const formatted = formatDiagnosticMessage(message.message, args);
   return {
-    file: undefined, start: 0, length: 0, messageText: message.message,
-    category: 1, code: message.code,
+    file: sf, start: pos, length: Math.max(0, end - pos),
+    messageText: formatted, category: 1, code: message.code,
   } as unknown as Diagnostic;
 }
 
 export function newDiagnosticChainForNode(
   chain: Diagnostic, node: AstNode, message: { code: number; message: string }, ...args: unknown[]
 ): Diagnostic {
-  void chain; void args;
-  return newDiagnosticForNode(node, message);
+  // Build a chained diagnostic: the new message is the head, the
+  // previous diagnostic becomes the .next link (matches ts-go's
+  // DiagnosticMessageChain shape).
+  const base = newDiagnosticForNode(node, message, ...args);
+  (base as unknown as { next?: Diagnostic }).next = chain;
+  return base;
+}
+
+function formatDiagnosticMessage(template: string, args: readonly unknown[]): string {
+  // Interpolate {0}, {1}, … placeholders with String(args[i]).
+  return template.replace(/\{(\d+)\}/g, (_match, idx) => {
+    const i = Number(idx);
+    return i < args.length ? String(args[i]) : `{${idx}}`;
+  });
 }
 
 // ---------------------------------------------------------------------------
