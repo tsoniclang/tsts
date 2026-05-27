@@ -209,44 +209,93 @@ export class Inferer {
   }
 
   inferToMultipleTypes(n: InferenceState, source: Type, targets: readonly Type[], targetFlags: TypeFlags): void {
-    void n; void source; void targets; void targetFlags;
+    // For each target in a union, infer source against it.
+    void targetFlags;
+    for (const t of targets) this.inferFromTypes(n, source, t);
   }
 
   inferToMultipleTypesWithPriority(
     n: InferenceState, source: Type, targets: readonly Type[], targetFlags: TypeFlags, newPriority: InferencePriority,
   ): void {
-    void n; void source; void targets; void targetFlags; void newPriority;
+    const saved = n.priority;
+    n.priority = newPriority;
+    try {
+      this.inferToMultipleTypes(n, source, targets, targetFlags);
+    } finally {
+      n.priority = saved;
+    }
   }
 
   inferToConditionalType(n: InferenceState, source: Type, target: Type): void {
-    void n; void source; void target;
+    // Conditional type: source → checkType, trueType, falseType.
+    const checkType = (target as unknown as { checkType?: Type }).checkType;
+    const trueType = (target as unknown as { trueType?: Type }).trueType;
+    const falseType = (target as unknown as { falseType?: Type }).falseType;
+    if (checkType !== undefined) this.inferFromTypes(n, source, checkType);
+    if (trueType !== undefined) this.inferFromTypes(n, source, trueType);
+    if (falseType !== undefined) this.inferFromTypes(n, source, falseType);
   }
 
   inferToTemplateLiteralType(n: InferenceState, source: Type, target: Type): void {
-    void n; void source; void target;
+    // Template literal type inference matches text+holes; conservative
+    // forward as a single-type inference.
+    this.inferFromTypes(n, source, target);
   }
 
   inferFromGenericMappedTypes(n: InferenceState, source: Type, target: Type): void {
-    void n; void source; void target;
+    // Mapped type's constraint + template; conservative pair forward.
+    const constraint = (target as unknown as { constraintType?: Type }).constraintType;
+    const template = (target as unknown as { templateType?: Type }).templateType;
+    if (constraint !== undefined) this.inferFromTypes(n, source, constraint);
+    if (template !== undefined) this.inferFromTypes(n, source, template);
   }
 
   inferFromObjectTypes(n: InferenceState, source: Type, target: Type): void {
-    void n; void source; void target;
+    this.inferFromProperties(n, source, target);
+    this.inferFromSignatures(n, source, target, 0 /* Call */);
+    this.inferFromSignatures(n, source, target, 1 /* Construct */);
   }
 
   inferFromProperties(n: InferenceState, source: Type, target: Type): void {
-    void n; void source; void target;
+    const targetProps = (target as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members;
+    const sourceProps = (source as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members;
+    if (targetProps === undefined || sourceProps === undefined) return;
+    for (const [name, targetSym] of targetProps) {
+      const sourceSym = sourceProps.get(name);
+      if (sourceSym === undefined) continue;
+      const sourceType = (sourceSym as unknown as { type?: Type }).type;
+      const targetType = (targetSym as unknown as { type?: Type }).type;
+      if (sourceType !== undefined && targetType !== undefined) {
+        this.inferFromTypes(n, sourceType, targetType);
+      }
+    }
   }
 
   inferFromSignatures(n: InferenceState, source: Type, target: Type, kind: SignatureKind): void {
-    void n; void source; void target; void kind;
+    const which = kind === 0 ? "callSignatures" : "constructSignatures";
+    const sourceSigs = (source as unknown as Record<string, readonly Signature[] | undefined>)[which];
+    const targetSigs = (target as unknown as Record<string, readonly Signature[] | undefined>)[which];
+    if (sourceSigs === undefined || targetSigs === undefined) return;
+    const len = Math.min(sourceSigs.length, targetSigs.length);
+    for (let i = 0; i < len; i++) {
+      this.inferFromSignature(n, sourceSigs[i]!, targetSigs[i]!);
+    }
   }
 
   inferFromSignature(n: InferenceState, source: Signature, target: Signature): void {
-    void n; void source; void target;
+    this.applyToParameterTypes(source, target, (s, t) => this.inferFromContravariantTypes(n, s, t));
+    this.applyToReturnTypes(source, target, (s, t) => this.inferFromTypes(n, s, t));
   }
 
   applyToParameterTypes(source: Signature, target: Signature, callback: (s: Type, t: Type) => void): void {
+    const sourceParams = (source as unknown as { parameters?: readonly AstSymbol[] }).parameters ?? [];
+    const targetParams = (target as unknown as { parameters?: readonly AstSymbol[] }).parameters ?? [];
+    const len = Math.min(sourceParams.length, targetParams.length);
+    for (let i = 0; i < len; i++) {
+      const sourceType = (sourceParams[i] as unknown as { type?: Type }).type;
+      const targetType = (targetParams[i] as unknown as { type?: Type }).type;
+      if (sourceType !== undefined && targetType !== undefined) callback(sourceType, targetType);
+    }
     void source; void target; void callback;
   }
 
