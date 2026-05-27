@@ -670,15 +670,45 @@ export class Checker {
       default: return { flags: 1 << 0 } as unknown as Type;
     }
   }
-  getTypeFromArrayOrTupleTypeNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromNamedTupleTypeNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromOptionalTypeNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromRestTypeNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromThisTypeNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromTemplateTypeNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromTypeOperatorNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromTypeQueryNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromTypeLiteralOrFunctionOrConstructorTypeNode(node: AstNode): Type { void node; return {} as Type; }
+  getTypeFromArrayOrTupleTypeNode(node: AstNode): Type {
+    const k = (node as { kind?: number }).kind;
+    if (k === Kind.ArrayType) {
+      const elementType = (node as unknown as { elementType?: AstNode }).elementType;
+      return {
+        flags: 1 << 19, // Object
+        elementType: elementType !== undefined ? this.getTypeFromTypeNode(elementType) : undefined,
+      } as unknown as Type;
+    }
+    // Tuple
+    const elements = (node as unknown as { elements?: { nodes?: readonly AstNode[] } }).elements?.nodes;
+    return {
+      flags: 1 << 19, // Object
+      typeArguments: elements !== undefined ? elements.map((e) => this.getTypeFromTypeNode(e)) : [],
+    } as unknown as Type;
+  }
+  getTypeFromNamedTupleTypeNode(node: AstNode): Type {
+    const type = (node as unknown as { type?: AstNode }).type;
+    return type !== undefined ? this.getTypeFromTypeNode(type) : { flags: 1 << 0 } as unknown as Type;
+  }
+  getTypeFromOptionalTypeNode(node: AstNode): Type {
+    const type = (node as unknown as { type?: AstNode }).type;
+    return type !== undefined ? this.getTypeFromTypeNode(type) : { flags: 1 << 0 } as unknown as Type;
+  }
+  getTypeFromRestTypeNode(node: AstNode): Type {
+    const type = (node as unknown as { type?: AstNode }).type;
+    return type !== undefined ? this.getTypeFromTypeNode(type) : { flags: 1 << 0 } as unknown as Type;
+  }
+  getTypeFromThisTypeNode(node: AstNode): Type { void node; return { flags: 1 << 18 } as unknown as Type; }
+  getTypeFromTemplateTypeNode(node: AstNode): Type { void node; return { flags: 1 << 27 } as unknown as Type; } // TemplateLiteral
+  getTypeFromTypeOperatorNode(node: AstNode): Type {
+    // keyof/typeof/readonly. Resolve operand to the underlying type.
+    const operand = (node as unknown as { type?: AstNode }).type;
+    return operand !== undefined ? this.getTypeFromTypeNode(operand) : { flags: 1 << 0 } as unknown as Type;
+  }
+  getTypeFromTypeQueryNode(node: AstNode): Type { void node; return { flags: 1 << 0 } as unknown as Type; }
+  getTypeFromTypeLiteralOrFunctionOrConstructorTypeNode(node: AstNode): Type {
+    void node; return { flags: 1 << 19 } as unknown as Type; // Object
+  }
   getTypeFromArrayBindingPattern(node: AstNode): Type { void node; return {} as Type; }
   getTypeFromObjectBindingPattern(node: AstNode): Type { void node; return {} as Type; }
   getTypeFromBindingElement(node: AstNode): Type { void node; return {} as Type; }
