@@ -9,6 +9,21 @@
  */
 
 import type { Node as AstNode, CommentRange } from "../ast/index.js";
+import { Kind, isKeywordKind, nodePos as getNodePos, nodeEnd as getNodeEnd } from "../ast/index.js";
+
+// Strada returns CommentRange[]; ours is empty until the scanner's
+// comment-range pass lands. Field-by-field shape isn't relied on here.
+function getTrailingCommentRanges(_factory: NodeFactory, _text: string, _pos: number): readonly CommentRange[] {
+  return [];
+}
+function getLeadingCommentRanges(_factory: NodeFactory, _text: string, _pos: number): readonly CommentRange[] {
+  return [];
+}
+function isPunctuationKind(token: number): boolean {
+  // Punctuation kinds occupy a contiguous range in the AST kind table
+  // (OpenBraceToken..CaretEqualsToken).
+  return token >= Kind.OpenBraceToken && token <= Kind.CaretEqualsToken;
+}
 
 export type LanguageVariant = 0 | 1;
 export const LanguageVariant = {
@@ -94,15 +109,3 @@ export function isJSDocLikeText(text: string): boolean {
 
 interface NodeFactory { readonly _f?: unknown }
 
-declare const Kind: {
-  Identifier: number; GreaterThanToken: number; Parameter: number;
-  TypeParameter: number; FunctionExpression: number; ArrowFunction: number;
-  ParenthesizedExpression: number; VariableDeclaration: number; ExportSpecifier: number;
-};
-
-declare function getTrailingCommentRanges(factory: NodeFactory, text: string, pos: number): readonly CommentRange[];
-declare function getLeadingCommentRanges(factory: NodeFactory, text: string, pos: number): readonly CommentRange[];
-declare function getNodePos(node: AstNode): number;
-declare function getNodeEnd(node: AstNode): number;
-declare function isKeywordKind(token: number): boolean;
-declare function isPunctuationKind(token: number): boolean;
