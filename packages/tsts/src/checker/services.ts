@@ -97,8 +97,18 @@ export class CheckerServices {
   getSignatureHelpItems(file: AstNode, position: number): SignatureHelpResult | undefined {
     void file; void position; return undefined;
   }
-  getCandidateSignatures(node: AstNode): readonly Signature[] { void node; return []; }
-  getResolvedSignature(node: AstNode): Signature | undefined { void node; return undefined; }
+  getCandidateSignatures(node: AstNode): readonly Signature[] {
+    // For a CallExpression, return signatures of the callee's type.
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    if (expr === undefined) return [];
+    const t = this.getTypeAtLocation(expr);
+    if (t === undefined) return [];
+    return this.getCallSignaturesOfType(t);
+  }
+  getResolvedSignature(node: AstNode): Signature | undefined {
+    const sigs = this.getCandidateSignatures(node);
+    return sigs.length > 0 ? sigs[0] : undefined;
+  }
   getResolvedSignatureForSignatureHelp(node: AstNode, candidatesOutArray: Signature[]): Signature | undefined {
     void node; void candidatesOutArray; return undefined;
   }
