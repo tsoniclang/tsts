@@ -1081,9 +1081,13 @@ export class Checker {
     return { flags: 1 << 0 } as unknown as Type;
   }
   getTypeFromBindingPattern(node: AstNode, includePatternInType: boolean, reportErrors: boolean): Type {
-    void node; void includePatternInType; void reportErrors; return {} as Type;
+    void includePatternInType; void reportErrors;
+    const k = (node as { kind?: number }).kind;
+    if (k === Kind.ArrayBindingPattern) return this.getTypeFromArrayBindingPattern(node);
+    if (k === Kind.ObjectBindingPattern) return this.getTypeFromObjectBindingPattern(node);
+    return { flags: 1 << 0 } as unknown as Type;
   }
-  getTypeFromPropertyDescriptor(node: AstNode): Type { void node; return {} as Type; }
+  getTypeFromPropertyDescriptor(node: AstNode): Type { void node; return { flags: 1 << 19 } as unknown as Type; }
   getTypeFromIndexInfosOfContextualType(t: Type, indexType: Type, accessNode: AstNode | undefined): Type | undefined {
     void t; void indexType; void accessNode; return undefined;
   }
@@ -1095,14 +1099,25 @@ export class Checker {
   getTypeArguments(t: Type): readonly Type[] {
     return (t as unknown as { typeArguments?: readonly Type[] }).typeArguments ?? [];
   }
-  getTypeArgumentsForAliasSymbol(symbol: AstSymbol): readonly Type[] | undefined { void symbol; return undefined; }
-  getTypeArgumentsFromNode(node: AstNode): readonly Type[] { void node; return []; }
-  getTypeArgumentsFromNodes(nodes: readonly AstNode[]): readonly Type[] { void nodes; return []; }
+  getTypeArgumentsForAliasSymbol(symbol: AstSymbol): readonly Type[] | undefined {
+    return (symbol as unknown as { typeArguments?: readonly Type[] }).typeArguments;
+  }
+  getTypeArgumentsFromNode(node: AstNode): readonly Type[] {
+    const args = (node as unknown as { typeArguments?: { nodes?: readonly AstNode[] } }).typeArguments?.nodes;
+    return args !== undefined ? args.map((a) => this.getTypeFromTypeNode(a)) : [];
+  }
+  getTypeArgumentsFromNodes(nodes: readonly AstNode[]): readonly Type[] {
+    return nodes.map((n) => this.getTypeFromTypeNode(n));
+  }
   getTypeArgumentArityError(node: AstNode, signatures: readonly Signature[]): unknown {
     void node; void signatures; return undefined;
   }
-  getTypeReferenceArity(t: Type): number { void t; return 0; }
-  getTypeReferenceType(node: AstNode, symbol: AstSymbol): Type { void node; void symbol; return {} as Type; }
+  getTypeReferenceArity(t: Type): number {
+    return (t as unknown as { typeArguments?: readonly Type[] }).typeArguments?.length ?? 0;
+  }
+  getTypeReferenceType(node: AstNode, symbol: AstSymbol): Type {
+    return this.getTypeFromClassOrInterfaceReference(node, symbol);
+  }
   getTypeAliasInstantiation(symbol: AstSymbol, typeArguments: readonly Type[] | undefined): Type {
     // Without lazy instantiation, return the declared alias type (the
     // body expression resolved through getTypeFromTypeNode) plus the
@@ -1112,10 +1127,15 @@ export class Checker {
     return { ...(base as object), typeArguments } as unknown as Type;
   }
 
-  getTypeParameterFromMappedType(mappedType: Type): Type { void mappedType; return {} as Type; }
-  getTypeParametersForMapper(mapper: unknown): readonly Type[] { void mapper; return []; }
+  getTypeParameterFromMappedType(mappedType: Type): Type {
+    return (mappedType as unknown as { typeParameter?: Type }).typeParameter ?? ({ flags: 1 << 18 } as unknown as Type);
+  }
+  getTypeParametersForMapper(mapper: unknown): readonly Type[] {
+    return (mapper as unknown as { sources?: readonly Type[] })?.sources ?? [];
+  }
   getTypeParametersForTypeAndSymbol(t: Type, symbol: AstSymbol): readonly Type[] | undefined {
-    void t; void symbol; return undefined;
+    void t;
+    return this.getTypeArgumentsForAliasSymbol(symbol);
   }
   getTypeParametersForTypeReferenceOrImport(node: AstNode): readonly Type[] {
     void node; return [];
