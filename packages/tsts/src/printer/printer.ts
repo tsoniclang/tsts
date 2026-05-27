@@ -1009,38 +1009,252 @@ export class Printer {
   }
 
   // Type emission
-  emitTypeNode(node: AstNode): void { void node; }
-  emitTypeReference(node: AstNode): void { void node; }
-  emitTypeLiteral(node: AstNode): void { void node; }
-  emitTypePredicate(node: AstNode): void { void node; }
-  emitFunctionType(node: AstNode): void { void node; }
-  emitConstructorType(node: AstNode): void { void node; }
-  emitArrayType(node: AstNode): void { void node; }
-  emitTupleType(node: AstNode): void { void node; }
-  emitUnionType(node: AstNode): void { void node; }
-  emitIntersectionType(node: AstNode): void { void node; }
-  emitConditionalType(node: AstNode): void { void node; }
-  emitMappedType(node: AstNode): void { void node; }
-  emitInferType(node: AstNode): void { void node; }
-  emitParenthesizedType(node: AstNode): void { void node; }
-  emitLiteralType(node: AstNode): void { void node; }
-  emitTemplateLiteralType(node: AstNode): void { void node; }
-  emitImportType(node: AstNode): void { void node; }
-  emitTypeOperator(node: AstNode): void { void node; }
-  emitIndexedAccessType(node: AstNode): void { void node; }
-  emitTypeQuery(node: AstNode): void { void node; }
-  emitTypeParameter(node: AstNode): void { void node; }
+  emitTypeNode(node: AstNode): void {
+    const k = (node as { kind?: number }).kind ?? 0;
+    switch (k) {
+      case Kind.TypeReference: return this.emitTypeReference(node);
+      case Kind.TypeLiteral: return this.emitTypeLiteral(node);
+      case Kind.TypePredicate: return this.emitTypePredicate(node);
+      case Kind.FunctionType: return this.emitFunctionType(node);
+      case Kind.ConstructorType: return this.emitConstructorType(node);
+      case Kind.ArrayType: return this.emitArrayType(node);
+      case Kind.TupleType: return this.emitTupleType(node);
+      case Kind.UnionType: return this.emitUnionType(node);
+      case Kind.IntersectionType: return this.emitIntersectionType(node);
+      case Kind.ConditionalType: return this.emitConditionalType(node);
+      case Kind.MappedType: return this.emitMappedType(node);
+      case Kind.InferType: return this.emitInferType(node);
+      case Kind.ParenthesizedType: return this.emitParenthesizedType(node);
+      case Kind.LiteralType: return this.emitLiteralType(node);
+      case Kind.TemplateLiteralType: return this.emitTemplateLiteralType(node);
+      case Kind.ImportType: return this.emitImportType(node);
+      case Kind.TypeOperator: return this.emitTypeOperator(node);
+      case Kind.IndexedAccessType: return this.emitIndexedAccessType(node);
+      case Kind.TypeQuery: return this.emitTypeQuery(node);
+      case Kind.TypeParameter: return this.emitTypeParameter(node);
+      case Kind.AnyKeyword: return this.writeKeyword("any");
+      case Kind.UnknownKeyword: return this.writeKeyword("unknown");
+      case Kind.NumberKeyword: return this.writeKeyword("number");
+      case Kind.StringKeyword: return this.writeKeyword("string");
+      case Kind.BooleanKeyword: return this.writeKeyword("boolean");
+      case Kind.VoidKeyword: return this.writeKeyword("void");
+      case Kind.NeverKeyword: return this.writeKeyword("never");
+      case Kind.UndefinedKeyword: return this.writeKeyword("undefined");
+      case Kind.NullKeyword: return this.writeKeyword("null");
+      case Kind.ObjectKeyword: return this.writeKeyword("object");
+      case Kind.BigIntKeyword: return this.writeKeyword("bigint");
+      case Kind.SymbolKeyword: return this.writeKeyword("symbol");
+      case Kind.ThisType: return this.writeKeyword("this");
+    }
+  }
+  emitTypeReference(node: AstNode): void {
+    this.emit(0, (node as unknown as { typeName?: AstNode }).typeName);
+    this.emitTypeArguments(node);
+  }
+  private emitTypeArguments(node: AstNode): void {
+    const args = (node as unknown as { typeArguments?: { nodes?: readonly AstNode[] } }).typeArguments?.nodes;
+    if (args === undefined || args.length === 0) return;
+    this.writePunctuation("<");
+    for (let i = 0; i < args.length; i++) {
+      if (i > 0) this.writePunctuation(", ");
+      this.emit(0, args[i]);
+    }
+    this.writePunctuation(">");
+  }
+  emitTypeLiteral(node: AstNode): void {
+    this.writePunctuation("{ ");
+    const members = (node as unknown as { members?: { nodes?: readonly AstNode[] } }).members?.nodes ?? [];
+    for (let i = 0; i < members.length; i++) {
+      if (i > 0) this.writePunctuation("; ");
+      this.emit(0, members[i]);
+    }
+    this.writePunctuation(" }");
+  }
+  emitTypePredicate(node: AstNode): void {
+    const assertsModifier = (node as unknown as { assertsModifier?: AstNode }).assertsModifier;
+    if (assertsModifier !== undefined) this.writeKeyword("asserts ");
+    this.emit(0, (node as unknown as { parameterName?: AstNode }).parameterName);
+    const type = (node as unknown as { type?: AstNode }).type;
+    if (type !== undefined) {
+      this.writeKeyword(" is ");
+      this.emit(0, type);
+    }
+  }
+  emitFunctionType(node: AstNode): void {
+    this.emitParameterList(node);
+    this.writePunctuation(" => ");
+    this.emit(0, (node as unknown as { type?: AstNode }).type);
+  }
+  emitConstructorType(node: AstNode): void {
+    this.writeKeyword("new ");
+    this.emitParameterList(node);
+    this.writePunctuation(" => ");
+    this.emit(0, (node as unknown as { type?: AstNode }).type);
+  }
+  emitArrayType(node: AstNode): void {
+    this.emit(0, (node as unknown as { elementType?: AstNode }).elementType);
+    this.writePunctuation("[]");
+  }
+  emitTupleType(node: AstNode): void {
+    this.writePunctuation("[");
+    const elements = (node as unknown as { elements?: { nodes?: readonly AstNode[] } }).elements?.nodes ?? [];
+    for (let i = 0; i < elements.length; i++) {
+      if (i > 0) this.writePunctuation(", ");
+      this.emit(0, elements[i]);
+    }
+    this.writePunctuation("]");
+  }
+  emitUnionType(node: AstNode): void {
+    const types = (node as unknown as { types?: { nodes?: readonly AstNode[] } }).types?.nodes ?? [];
+    for (let i = 0; i < types.length; i++) {
+      if (i > 0) this.writePunctuation(" | ");
+      this.emit(0, types[i]);
+    }
+  }
+  emitIntersectionType(node: AstNode): void {
+    const types = (node as unknown as { types?: { nodes?: readonly AstNode[] } }).types?.nodes ?? [];
+    for (let i = 0; i < types.length; i++) {
+      if (i > 0) this.writePunctuation(" & ");
+      this.emit(0, types[i]);
+    }
+  }
+  emitConditionalType(node: AstNode): void {
+    this.emit(0, (node as unknown as { checkType?: AstNode }).checkType);
+    this.writeKeyword(" extends ");
+    this.emit(0, (node as unknown as { extendsType?: AstNode }).extendsType);
+    this.writePunctuation(" ? ");
+    this.emit(0, (node as unknown as { trueType?: AstNode }).trueType);
+    this.writePunctuation(" : ");
+    this.emit(0, (node as unknown as { falseType?: AstNode }).falseType);
+  }
+  emitMappedType(node: AstNode): void {
+    this.writePunctuation("{ [");
+    this.emit(0, (node as unknown as { typeParameter?: AstNode }).typeParameter);
+    this.writePunctuation("]");
+    const questionToken = (node as unknown as { questionToken?: AstNode }).questionToken;
+    if (questionToken !== undefined) this.writePunctuation("?");
+    this.writePunctuation(": ");
+    this.emit(0, (node as unknown as { type?: AstNode }).type);
+    this.writePunctuation(" }");
+  }
+  emitInferType(node: AstNode): void {
+    this.writeKeyword("infer ");
+    this.emit(0, (node as unknown as { typeParameter?: AstNode }).typeParameter);
+  }
+  emitParenthesizedType(node: AstNode): void {
+    this.writePunctuation("(");
+    this.emit(0, (node as unknown as { type?: AstNode }).type);
+    this.writePunctuation(")");
+  }
+  emitLiteralType(node: AstNode): void {
+    this.emit(0, (node as unknown as { literal?: AstNode }).literal);
+  }
+  emitTemplateLiteralType(node: AstNode): void {
+    const text = (node as unknown as { text?: string }).text ?? "";
+    this.write(`\`${text}\``);
+  }
+  emitImportType(node: AstNode): void {
+    this.writeKeyword("import");
+    this.writePunctuation("(");
+    this.emit(0, (node as unknown as { argument?: AstNode }).argument);
+    this.writePunctuation(")");
+    const qualifier = (node as unknown as { qualifier?: AstNode }).qualifier;
+    if (qualifier !== undefined) {
+      this.writePunctuation(".");
+      this.emit(0, qualifier);
+    }
+  }
+  emitTypeOperator(node: AstNode): void {
+    const op = (node as unknown as { operator?: number }).operator;
+    switch (op) {
+      case Kind.KeyOfKeyword: this.writeKeyword("keyof "); break;
+      case Kind.UniqueKeyword: this.writeKeyword("unique "); break;
+      case Kind.ReadonlyKeyword: this.writeKeyword("readonly "); break;
+    }
+    this.emit(0, (node as unknown as { type?: AstNode }).type);
+  }
+  emitIndexedAccessType(node: AstNode): void {
+    this.emit(0, (node as unknown as { objectType?: AstNode }).objectType);
+    this.writePunctuation("[");
+    this.emit(0, (node as unknown as { indexType?: AstNode }).indexType);
+    this.writePunctuation("]");
+  }
+  emitTypeQuery(node: AstNode): void {
+    this.writeKeyword("typeof ");
+    this.emit(0, (node as unknown as { exprName?: AstNode }).exprName);
+  }
+  emitTypeParameter(node: AstNode): void {
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+    const constraint = (node as unknown as { constraint?: AstNode }).constraint;
+    if (constraint !== undefined) {
+      this.writeKeyword(" extends ");
+      this.emit(0, constraint);
+    }
+    const defaultType = (node as unknown as { default?: AstNode }).default;
+    if (defaultType !== undefined) {
+      this.writeOperator(" = ");
+      this.emit(0, defaultType);
+    }
+  }
 
   // Helpers
-  emitDecorator(node: AstNode): void { void node; }
-  emitModifiers(node: AstNode, modifiers: ModifierList | undefined): void { void node; void modifiers; }
-  emitParameter(node: AstNode): void { void node; }
-  emitDeclarationName(node: AstNode | undefined, allowSourceMaps: boolean): void { void node; void allowSourceMaps; }
-  emitName(node: AstNode | undefined): void { void node; }
-  emitPropertyName(node: AstNode | undefined): void { void node; }
-  emitComputedPropertyName(node: AstNode): void { void node; }
-  emitHeritageClause(node: AstNode): void { void node; }
-  emitSemicolon(): void { /* deferred */ }
+  emitDecorator(node: AstNode): void {
+    this.writePunctuation("@");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+  }
+  emitModifiers(node: AstNode, modifiers: ModifierList | undefined): void {
+    void node;
+    if (modifiers === undefined) return;
+    const list = (modifiers as unknown as { nodes?: readonly AstNode[] }).nodes ?? [];
+    for (const m of list) {
+      this.emit(0, m);
+      this.writeSpace();
+    }
+  }
+  emitParameter(node: AstNode): void {
+    const dotDotDot = (node as unknown as { dotDotDotToken?: AstNode }).dotDotDotToken;
+    if (dotDotDot !== undefined) this.writePunctuation("...");
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+    const questionToken = (node as unknown as { questionToken?: AstNode }).questionToken;
+    if (questionToken !== undefined) this.writePunctuation("?");
+    const type = (node as unknown as { type?: AstNode }).type;
+    if (type !== undefined) {
+      this.writePunctuation(": ");
+      this.emit(0, type);
+    }
+    const initializer = (node as unknown as { initializer?: AstNode }).initializer;
+    if (initializer !== undefined) {
+      this.writeOperator(" = ");
+      this.emit(0, initializer);
+    }
+  }
+  emitDeclarationName(node: AstNode | undefined, allowSourceMaps: boolean): void {
+    void allowSourceMaps;
+    if (node !== undefined) this.emit(0, node);
+  }
+  emitName(node: AstNode | undefined): void {
+    if (node !== undefined) this.emit(0, node);
+  }
+  emitPropertyName(node: AstNode | undefined): void {
+    if (node !== undefined) this.emit(0, node);
+  }
+  emitComputedPropertyName(node: AstNode): void {
+    this.writePunctuation("[");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writePunctuation("]");
+  }
+  emitHeritageClause(node: AstNode): void {
+    const token = (node as unknown as { token?: number }).token;
+    this.writeKeyword(token === Kind.ExtendsKeyword ? "extends " : "implements ");
+    const types = (node as unknown as { types?: { nodes?: readonly AstNode[] } }).types?.nodes ?? [];
+    for (let i = 0; i < types.length; i++) {
+      if (i > 0) this.writePunctuation(", ");
+      this.emit(0, types[i]);
+    }
+  }
+  emitSemicolon(): void {
+    this.writeTrailingSemicolon();
+  }
 }
 
 // ---------------------------------------------------------------------------
