@@ -190,28 +190,51 @@ export class NodeFactory {
     } as unknown as AstNode;
   }
   newReflectSetCall(target: Expression, name: Expression, value: Expression, receiver: Expression): Expression {
-    void target; void name; void value; void receiver; return {} as Expression;
+    return this.newGlobalMethodCall("Reflect", "set", [target, name, value, receiver]);
   }
   newAssignmentTargetWrapper(target: Expression, value: Expression): Expression {
-    void target; void value; return {} as Expression;
+    // (target = value) — used in destructuring synth.
+    return this.newAssignmentExpression(target, value);
   }
 
   // -------------------------------------------------------------------------
   // Type checks + call helpers
   // -------------------------------------------------------------------------
 
-  newTypeCheck(value: AstNode, tag: string): AstNode { void value; void tag; return {} as AstNode; }
-  newMethodCall(object: AstNode, methodName: AstNode, argumentsList: readonly AstNode[]): AstNode {
-    void object; void methodName; void argumentsList; return {} as AstNode;
+  newCallExpression(expression: AstNode, argumentsList: readonly AstNode[]): Expression {
+    return {
+      kind: 213 /* CallExpression */,
+      expression,
+      arguments: { nodes: argumentsList },
+    } as unknown as Expression;
   }
-  newGlobalMethodCall(globalObjectName: string, methodName: string, argumentsList: readonly AstNode[]): AstNode {
-    void globalObjectName; void methodName; void argumentsList; return {} as AstNode;
+  newTypeCheck(value: AstNode, tag: string): AstNode {
+    // typeof value === "tag"
+    return this.newStrictEqualityExpression(
+      this.newTypeOfExpression(value as Expression),
+      this.newStringLiteral(tag, 0),
+    );
   }
-  newFunctionCallCall(target: Expression, thisArg: Expression, argumentsList: readonly AstNode[]): AstNode {
-    void target; void thisArg; void argumentsList; return {} as AstNode;
+  newMethodCall(object: AstNode, methodName: AstNode, argumentsList: readonly AstNode[]): Expression {
+    return this.newCallExpression(
+      this.newPropertyAccessExpression(object as Expression, methodName),
+      argumentsList,
+    );
   }
-  newArraySliceCall(array: Expression, start: number): AstNode {
-    void array; void start; return {} as AstNode;
+  newGlobalMethodCall(globalObjectName: string, methodName: string, argumentsList: readonly AstNode[]): Expression {
+    return this.newMethodCall(
+      this.newIdentifier(globalObjectName),
+      this.newIdentifier(methodName),
+      argumentsList,
+    );
+  }
+  newFunctionCallCall(target: Expression, thisArg: Expression, argumentsList: readonly AstNode[]): Expression {
+    // target.call(thisArg, ...args)
+    return this.newMethodCall(target, this.newIdentifier("call"), [thisArg, ...argumentsList]);
+  }
+  newArraySliceCall(array: Expression, start: number): Expression {
+    // array.slice(start)
+    return this.newMethodCall(array, this.newIdentifier("slice"), [this.newNumericLiteral(`${start}`, 0)]);
   }
   inlineExpressions(expressions: readonly Expression[]): Expression {
     return expressions[expressions.length - 1] ?? ({} as Expression);
