@@ -371,26 +371,51 @@ export class Checker {
     return {} as Type;
   }
   checkObjectLiteralAssignment(node: AstNode, sourceType: Type, rightIsThis?: boolean): Type {
-    void node; void rightIsThis; return sourceType;
+    void rightIsThis;
+    // Walk each property and descend into nested binding patterns.
+    const props = (node as unknown as { properties?: { nodes?: readonly AstNode[] } }).properties?.nodes;
+    if (props !== undefined) {
+      for (const p of props) this.checkObjectLiteralDestructuringPropertyAssignment(node, sourceType, p, sourceType);
+    }
+    return sourceType;
   }
   checkObjectLiteralDestructuringPropertyAssignment(
     node: AstNode, objectLiteralType: Type, property: AstNode, rhsType: Type,
   ): Type {
-    void node; void objectLiteralType; void property; return rhsType;
+    void node; void objectLiteralType;
+    const init = (property as unknown as { initializer?: AstNode }).initializer;
+    if (init !== undefined) this.checkExpression(init);
+    return rhsType;
   }
   checkArrayLiteralAssignment(node: AstNode, sourceType: Type): Type {
-    void node; return sourceType;
+    const elems = (node as unknown as { elements?: { nodes?: readonly AstNode[] } }).elements?.nodes;
+    if (elems !== undefined) {
+      for (let i = 0; i < elems.length; i++) {
+        this.checkArrayLiteralDestructuringElementAssignment(elems[i]!, sourceType, i, sourceType);
+      }
+    }
+    return sourceType;
   }
   checkArrayLiteralDestructuringElementAssignment(
     node: AstNode, sourceType: Type, elementIndex: number, elementType: Type,
   ): Type {
-    void node; void sourceType; void elementIndex; return elementType;
+    void sourceType; void elementIndex;
+    const init = (node as unknown as { initializer?: AstNode }).initializer;
+    if (init !== undefined) this.checkExpression(init);
+    return elementType;
   }
   checkDestructuringAssignment(expr: AstNode, sourceType: Type, checkMode: number): Type {
-    void expr; void checkMode; return sourceType;
+    void checkMode;
+    const k = (expr as { kind?: number }).kind;
+    if (k === Kind.ObjectLiteralExpression) return this.checkObjectLiteralAssignment(expr, sourceType);
+    if (k === Kind.ArrayLiteralExpression) return this.checkArrayLiteralAssignment(expr, sourceType);
+    return sourceType;
   }
   checkDeclarationInitializer(declaration: AstNode, checkMode: number, contextualType: Type | undefined): Type {
-    void declaration; void checkMode; void contextualType; return {} as Type;
+    void contextualType;
+    const init = (declaration as unknown as { initializer?: AstNode }).initializer;
+    if (init !== undefined) return this.checkExpressionEx(init, checkMode, false);
+    return { flags: 1 << 0 } as unknown as Type;
   }
 
   // -------------------------------------------------------------------------
