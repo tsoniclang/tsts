@@ -4,11 +4,16 @@ import {
   isBlock,
   isClassDeclaration,
   isDoStatement,
+  isEnumDeclaration,
+  isExpressionStatement,
   isForInStatement,
   isForOfStatement,
   isForStatement,
   isFunctionDeclaration,
   isIdentifier,
+  isIfStatement,
+  isLabeledStatement,
+  isModuleDeclaration,
   isObjectBindingPattern,
   isArrayBindingPattern,
   isImportDeclaration,
@@ -16,7 +21,11 @@ import {
   isNamedImports,
   isNamespaceImport,
   isParameterDeclaration,
+  isReturnStatement,
   isSourceFile,
+  isSwitchStatement,
+  isThrowStatement,
+  isTryStatement,
   isTypeAliasDeclaration,
   isVariableStatement,
   isWhileStatement,
@@ -149,6 +158,127 @@ function bindStatement(statement: Statement, state: BinderState, lexicalScope: S
   }
   if (isBlock(statement)) {
     bindBlock(statement, state, functionScope);
+    return;
+  }
+  if (isIfStatement(statement)) {
+    // Then-branch + optional else-branch get bound in lexical scope.
+    bindStatement(statement.thenStatement, state, lexicalScope, functionScope);
+    if (statement.elseStatement !== undefined) {
+      bindStatement(statement.elseStatement, state, lexicalScope, functionScope);
+    }
+    return;
+  }
+  if (isSwitchStatement(statement)) {
+    // The CaseBlock contains the case clauses; each clause has its own
+    // implicit block-scope.
+    const caseBlock = statement.caseBlock;
+    if (caseBlock !== undefined) {
+      const switchScope: SymbolTable = new Map();
+      state.locals.set(caseBlock, switchScope);
+      for (const clause of caseBlock.clauses) {
+        // CaseClause and DefaultClause both have a `statements` array.
+        const clauseStatements = (clause as unknown as { statements?: readonly Statement[] }).statements;
+        if (clauseStatements !== undefined) {
+          bindStatements(clauseStatements, state, switchScope, functionScope);
+        }
+      }
+    }
+    return;
+  }
+  if (isTryStatement(statement)) {
+    bindBlock(statement.tryBlock, state, functionScope);
+    if (statement.catchClause !== undefined) {
+      const catchScope: SymbolTable = new Map();
+      state.locals.set(statement.catchClause, catchScope);
+      const varDecl = statement.catchClause.variableDeclaration;
+      if (varDecl !== undefined) {
+        bindBindingName(
+          varDecl.name, varDecl, catchScope,
+          SymbolFlags.FunctionScopedVariable,
+          SymbolFlags.FunctionScopedVariableExcludes,
+          state,
+        );
+      }
+      bindStatements(statement.catchClause.block.statements, state, catchScope, functionScope);
+    }
+    if (statement.finallyBlock !== undefined) {
+      bindBlock(statement.finallyBlock, state, functionScope);
+    }
+    return;
+  }
+  if (isReturnStatement(statement) || isThrowStatement(statement) || isExpressionStatement(statement)) {
+    // These don't declare new symbols — flow-bind only when checker is wired.
+    return;
+  }
+  if (isLabeledStatement(statement)) {
+    // Labels live in their own namespace (handled by the checker via
+    // labels-on-stack); we still descend into the labeled statement.
+    bindStatement(statement.statement, state, lexicalScope, functionScope);
+    return;
+  }
+  if (isModuleDeclaration(statement)) {
+    bindModuleDeclaration(statement, state, lexicalScope);
+    return;
+  }
+  if (isEnumDeclaration(statement)) {
+    bindEnumDeclaration(statement, state, lexicalScope);
+    return;
+  }
+}
+
+function bindModuleDeclaration(
+  moduleDecl: { name: { text: string }; body?: unknown },
+  state: BinderState,
+  lexicalScope: SymbolTable,
+): void {
+  const isAmbient = (moduleDecl as unknown as { flags?: number }).flags;
+  void isAmbient;
+  declareSymbol(
+    lexicalScope,
+    moduleDecl.name.text,
+    moduleDecl as unknown as Node,
+    SymbolFlags.ValueModule | SymbolFlags.NamespaceModule,
+    SymbolFlags.None,
+    state,
+  );
+  const moduleMembers: SymbolTable = new Map();
+  state.locals.set(moduleDecl as unknown as Node, moduleMembers);
+  // ModuleBlock body — bind its statements in the new scope.
+  const body = (moduleDecl as unknown as { body?: { statements?: readonly Statement[]; kind?: number } }).body;
+  if (body !== undefined && body.statements !== undefined) {
+    bindStatements(body.statements, state, moduleMembers, moduleMembers);
+  }
+}
+
+function bindEnumDeclaration(
+  enumDecl: Node,
+  state: BinderState,
+  lexicalScope: SymbolTable,
+): void {
+  const name = (enumDecl as unknown as { name?: { text?: string } }).name;
+  if (name?.text === undefined) return;
+  declareSymbol(
+    lexicalScope,
+    name.text,
+    enumDecl,
+    SymbolFlags.RegularEnum,
+    SymbolFlags.RegularEnumExcludes,
+    state,
+  );
+  const enumMembers: SymbolTable = new Map();
+  state.locals.set(enumDecl, enumMembers);
+  const members = (enumDecl as unknown as { members?: readonly Node[] }).members ?? [];
+  for (const member of members) {
+    const memberName = (member as unknown as { name?: { text?: string } }).name?.text;
+    if (memberName === undefined) continue;
+    declareSymbol(
+      enumMembers,
+      memberName,
+      member,
+      SymbolFlags.EnumMember,
+      SymbolFlags.EnumMemberExcludes,
+      state,
+    );
   }
 }
 
