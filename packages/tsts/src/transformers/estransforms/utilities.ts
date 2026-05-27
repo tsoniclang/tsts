@@ -26,7 +26,19 @@ import {
   isPropertyAccessExpression, isElementAccessExpression,
 } from "../../ast/index.js";
 import { callExpressionArguments } from "../../ast/index.js";
+import {
+  propertyAccessExpressionOf, propertyAccessName,
+  elementAccessExpressionOf, elementArgumentExpression,
+  isSuperProperty, isUpdateExpression,
+  unaryOperand, nodeListNodes, propertyDeclarationName,
+} from "../../ast/index.js";
 import { Kind, NodeFlags } from "../../ast/index.js";
+function isAssignmentOperator(kind: number): boolean {
+  // AssignmentOperator covers EqualsToken..CaretEqualsToken in the
+  // canonical Kind enum (kind values are contiguous).
+  return kind >= Kind.EqualsToken && kind <= Kind.CaretEqualsToken;
+}
+import { newGeneratedPrivateNameForNode } from "../../printer/factory-helpers.js";
 import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
 import {
   visitNode, visitNodes, visitEachChild,
@@ -355,14 +367,3 @@ export function createAccessorPropertyBackingField(
 // Forward declarations
 // ---------------------------------------------------------------------------
 
-declare function propertyAccessExpressionOf(node: AstNode): AstNode;
-declare function propertyAccessName(node: AstNode): AstNode;
-declare function elementAccessExpressionOf(node: AstNode): AstNode;
-declare function elementArgumentExpression(node: AstNode): AstNode;
-declare function isSuperProperty(node: AstNode): boolean;
-declare function isAssignmentOperator(kind: number): boolean;
-declare function isUpdateExpression(node: AstNode): boolean;
-declare function unaryOperand(node: AstNode): AstNode;
-declare function nodeListNodes(list: AstNode): readonly AstNode[];
-declare function propertyDeclarationName(node: AstNode): AstNode;
-declare function newGeneratedPrivateNameForNode(factory: NodeFactory, node: AstNode, opts: { readonly suffix: string }): AstNode;

@@ -40,7 +40,7 @@ export function newUniqueName(factory: NodeFactory, text: string): AstNode {
 export function newGeneratedNameForNode(factory: NodeFactory, node: AstNode): AstNode {
   return factory.newGeneratedNameForNode(node);
 }
-export function newGeneratedPrivateNameForNode(factory: NodeFactory, node: AstNode): AstNode {
+export function newGeneratedPrivateNameForNode(factory: NodeFactory, node: AstNode, _opts?: { readonly suffix: string }): AstNode {
   return factory.newGeneratedPrivateNameForNode(node);
 }
 export function newThisExpression(factory: NodeFactory): AstNode {
