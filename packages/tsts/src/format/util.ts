@@ -10,7 +10,13 @@
  * mature.
  */
 
-import type { Kind, Node as AstNode, NodeArray, SourceFile } from "../ast/index.js";
+import type { Node as AstNode, NodeArray, SourceFile } from "../ast/index.js";
+import { Kind } from "../ast/index.js";
+import {
+  isTypeParameterDeclaration, isPropertyDeclaration, isPropertyAssignment,
+  isShorthandPropertyAssignment, isMethodDeclaration, isConstructorDeclaration,
+  isGetAccessorDeclaration, isSetAccessorDeclaration,
+} from "../ast/index.js";
 
 import type { TextRange } from "./api.js";
 
@@ -235,54 +241,47 @@ declare function catchClauseBlock(node: AstNode): AstNode;
 declare function moduleDeclarationBody(node: AstNode): AstNode | undefined;
 declare function locContains(outer: TextRange, inner: TextRange): boolean;
 
-declare function isTypeParameterDeclaration(node: AstNode): boolean;
 declare function isPropertySignatureDeclaration(node: AstNode): boolean;
-declare function isPropertyDeclaration(node: AstNode): boolean;
 declare function isAutoAccessorPropertyDeclaration(node: AstNode): boolean;
-declare function isPropertyAssignment(node: AstNode): boolean;
-declare function isShorthandPropertyAssignment(node: AstNode): boolean;
-declare function isMethodDeclaration(node: AstNode): boolean;
-declare function isConstructorDeclaration(node: AstNode): boolean;
-declare function isGetAccessorDeclaration(node: AstNode): boolean;
-declare function isSetAccessorDeclaration(node: AstNode): boolean;
 declare function isNamespaceExportDeclaration(node: AstNode): boolean;
 declare function isModifierLike(node: AstNode): boolean;
 
-declare const KindConstructor: Kind;
-declare const KindFunctionDeclaration: Kind;
-declare const KindFunctionExpression: Kind;
-declare const KindMethodDeclaration: Kind;
-declare const KindMethodSignature: Kind;
-declare const KindArrowFunction: Kind;
-declare const KindCallSignature: Kind;
-declare const KindConstructSignature: Kind;
-declare const KindFunctionType: Kind;
-declare const KindConstructorType: Kind;
-declare const KindGetAccessor: Kind;
-declare const KindSetAccessor: Kind;
-declare const KindCallExpression: Kind;
-declare const KindNewExpression: Kind;
-declare const KindClassDeclaration: Kind;
-declare const KindClassExpression: Kind;
-declare const KindInterfaceDeclaration: Kind;
-declare const KindTypeAliasDeclaration: Kind;
-declare const KindTypeReference: Kind;
-declare const KindTaggedTemplateExpression: Kind;
-declare const KindTypeQuery: Kind;
-declare const KindExpressionWithTypeArguments: Kind;
-declare const KindImportType: Kind;
-declare const KindTypeLiteral: Kind;
-declare const KindModuleDeclaration: Kind;
-declare const KindModuleBlock: Kind;
-declare const KindSourceFile: Kind;
-declare const KindBlock: Kind;
-declare const KindCatchClause: Kind;
-declare const KindLessThanToken: Kind;
-declare const KindGreaterThanToken: Kind;
-declare const KindOpenParenToken: Kind;
-declare const KindCloseParenToken: Kind;
-declare const KindOpenBraceToken: Kind;
-declare const KindCloseBraceToken: Kind;
-declare const KindQuestionToken: Kind;
-declare const KindExclamationToken: Kind;
-declare const KindUnknown: Kind;
+// Kind constants are derived from the canonical Kind enum.
+const KindConstructor = Kind.Constructor;
+const KindFunctionDeclaration = Kind.FunctionDeclaration;
+const KindFunctionExpression = Kind.FunctionExpression;
+const KindMethodDeclaration = Kind.MethodDeclaration;
+const KindMethodSignature = Kind.MethodSignature;
+const KindArrowFunction = Kind.ArrowFunction;
+const KindCallSignature = Kind.CallSignature;
+const KindConstructSignature = Kind.ConstructSignature;
+const KindFunctionType = Kind.FunctionType;
+const KindConstructorType = Kind.ConstructorType;
+const KindGetAccessor = Kind.GetAccessor;
+const KindSetAccessor = Kind.SetAccessor;
+const KindCallExpression = Kind.CallExpression;
+const KindNewExpression = Kind.NewExpression;
+const KindClassDeclaration = Kind.ClassDeclaration;
+const KindClassExpression = Kind.ClassExpression;
+const KindInterfaceDeclaration = Kind.InterfaceDeclaration;
+const KindTypeAliasDeclaration = Kind.TypeAliasDeclaration;
+const KindTypeReference = Kind.TypeReference;
+const KindTaggedTemplateExpression = Kind.TaggedTemplateExpression;
+const KindTypeQuery = Kind.TypeQuery;
+const KindExpressionWithTypeArguments = Kind.ExpressionWithTypeArguments;
+const KindImportType = Kind.ImportType;
+const KindTypeLiteral = Kind.TypeLiteral;
+const KindModuleDeclaration = Kind.ModuleDeclaration;
+const KindModuleBlock = Kind.ModuleBlock;
+const KindSourceFile = Kind.SourceFile;
+const KindBlock = Kind.Block;
+const KindCatchClause = Kind.CatchClause;
+const KindLessThanToken = Kind.LessThanToken;
+const KindGreaterThanToken = Kind.GreaterThanToken;
+const KindOpenParenToken = Kind.OpenParenToken;
+const KindCloseParenToken = Kind.CloseParenToken;
+const KindOpenBraceToken = Kind.OpenBraceToken;
+const KindCloseBraceToken = Kind.CloseBraceToken;
+const KindQuestionToken = Kind.QuestionToken;
+const KindExclamationToken = Kind.ExclamationToken;
+const KindUnknown = Kind.Unknown;
