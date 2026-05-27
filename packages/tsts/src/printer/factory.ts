@@ -83,44 +83,112 @@ export class NodeFactory {
   // Primitive expressions
   // -------------------------------------------------------------------------
 
-  newThisExpression(): Expression { return {} as Expression; }
-  newTrueExpression(): Expression { return {} as Expression; }
-  newFalseExpression(): Expression { return {} as Expression; }
-  newNullExpression(): Expression { return {} as Expression; }
-  newCommaExpression(left: Expression, right: Expression): Expression { void left; void right; return {} as Expression; }
-  newAssignmentExpression(left: Expression, right: Expression): Expression { void left; void right; return {} as Expression; }
+  newBinary(left: Expression, operatorTokenKind: number, right: Expression): Expression {
+    return {
+      kind: 225 /* BinaryExpression */,
+      left, right,
+      operatorToken: { kind: operatorTokenKind },
+    } as unknown as Expression;
+  }
+
+  newThisExpression(): Expression { return { kind: 110 /* ThisKeyword */ } as unknown as Expression; }
+  newTrueExpression(): Expression { return { kind: 112 /* TrueKeyword */ } as unknown as Expression; }
+  newFalseExpression(): Expression { return { kind: 97 /* FalseKeyword */ } as unknown as Expression; }
+  newNullExpression(): Expression { return { kind: 106 /* NullKeyword */ } as unknown as Expression; }
+  newCommaExpression(left: Expression, right: Expression): Expression {
+    return this.newBinary(left, 28 /* CommaToken */, right);
+  }
+  newAssignmentExpression(left: Expression, right: Expression): Expression {
+    return this.newBinary(left, 64 /* EqualsToken */, right);
+  }
   newAssignment(left: Expression, right: Expression): Expression { return this.newAssignmentExpression(left, right); }
-  newLogicalORExpression(left: Expression, right: Expression): Expression { void left; void right; return {} as Expression; }
-  newLogicalANDExpression(left: Expression, right: Expression): Expression { void left; void right; return {} as Expression; }
-  newStrictEqualityExpression(left: Expression, right: Expression): Expression { void left; void right; return {} as Expression; }
-  newStrictInequalityExpression(left: Expression, right: Expression): Expression { void left; void right; return {} as Expression; }
-  newVoidZeroExpression(): Expression { return {} as Expression; }
+  newLogicalORExpression(left: Expression, right: Expression): Expression {
+    return this.newBinary(left, 58 /* BarBarToken */, right);
+  }
+  newLogicalANDExpression(left: Expression, right: Expression): Expression {
+    return this.newBinary(left, 57 /* AmpersandAmpersandToken */, right);
+  }
+  newStrictEqualityExpression(left: Expression, right: Expression): Expression {
+    return this.newBinary(left, 38 /* EqualsEqualsEqualsToken */, right);
+  }
+  newStrictInequalityExpression(left: Expression, right: Expression): Expression {
+    return this.newBinary(left, 39 /* ExclamationEqualsEqualsToken */, right);
+  }
+  newVoidZeroExpression(): Expression {
+    return {
+      kind: 220 /* VoidExpression */,
+      expression: { kind: 9 /* NumericLiteral */, text: "0" },
+    } as unknown as Expression;
+  }
   newVoidZero(): Expression { return this.newVoidZeroExpression(); }
   newConditional(condition: Expression, whenTrue: Expression, whenFalse: Expression): Expression {
-    void condition; void whenTrue; void whenFalse; return {} as Expression;
+    return {
+      kind: 226 /* ConditionalExpression */,
+      condition, whenTrue, whenFalse,
+      questionToken: { kind: 58 /* QuestionToken */ },
+      colonToken: { kind: 59 /* ColonToken */ },
+    } as unknown as Expression;
   }
-  newTypeOfExpression(expression: Expression): Expression { void expression; return {} as Expression; }
-  newAnyKeyword(): AstNode { return {} as AstNode; }
-  newEmptyStatement(): Statement { return {} as Statement; }
-  newBlock(statements: readonly Statement[]): Statement { void statements; return {} as Statement; }
-  newSyntaxList(items: readonly AstNode[]): AstNode { void items; return {} as AstNode; }
+  newTypeOfExpression(expression: Expression): Expression {
+    return { kind: 219 /* TypeOfExpression */, expression } as unknown as Expression;
+  }
+  newAnyKeyword(): AstNode { return { kind: 133 /* AnyKeyword */ } as unknown as AstNode; }
+  newEmptyStatement(): Statement {
+    return { kind: 244 /* EmptyStatement */ } as unknown as Statement;
+  }
+  newBlock(statements: readonly Statement[]): Statement {
+    return {
+      kind: 242 /* Block */,
+      statements: { nodes: statements },
+    } as unknown as Statement;
+  }
+  newSyntaxList(items: readonly AstNode[]): AstNode {
+    return { kind: 354 /* SyntaxList */, nodes: items } as unknown as AstNode;
+  }
   newLetStatement(name: IdentifierNode, initializer: Expression | undefined): Statement {
-    void name; void initializer; return {} as Statement;
+    return {
+      kind: 243 /* VariableStatement */,
+      declarationList: {
+        kind: 261 /* VariableDeclarationList */,
+        flags: 1, // Let
+        declarations: { nodes: [{
+          kind: 260 /* VariableDeclaration */,
+          name,
+          initializer,
+        }]},
+      },
+    } as unknown as Statement;
   }
-  newExpressionStatement(expression: Expression): Statement { void expression; return {} as Statement; }
+  newExpressionStatement(expression: Expression): Statement {
+    return { kind: 245 /* ExpressionStatement */, expression } as unknown as Statement;
+  }
   newPropertyAccessExpression(expression: Expression, name: AstNode): AstNode {
-    void expression; void name; return {} as AstNode;
+    return { kind: 211 /* PropertyAccessExpression */, expression, name } as unknown as AstNode;
   }
   newElementAccessExpression(expression: Expression, argumentExpression: Expression): Expression {
-    void expression; void argumentExpression; return {} as Expression;
+    return {
+      kind: 212 /* ElementAccessExpression */,
+      expression, argumentExpression,
+    } as unknown as Expression;
   }
-  newIdentifier(text: string): AstNode { void text; return {} as AstNode; }
-  newStringLiteral(text: string, flags: number): Expression { void text; void flags; return {} as Expression; }
-  newNumericLiteral(text: string, flags: number): Expression { void text; void flags; return {} as Expression; }
+  newIdentifier(text: string): AstNode {
+    return { kind: 80 /* Identifier */, text } as unknown as AstNode;
+  }
+  newStringLiteral(text: string, flags: number): Expression {
+    return { kind: 11 /* StringLiteral */, text, flags } as unknown as Expression;
+  }
+  newNumericLiteral(text: string, flags: number): Expression {
+    return { kind: 9 /* NumericLiteral */, text, flags } as unknown as Expression;
+  }
   newPrefixUnaryExpression(operator: number, operand: Expression): Expression {
-    void operator; void operand; return {} as Expression;
+    return { kind: 222 /* PrefixUnaryExpression */, operator, operand } as unknown as Expression;
   }
-  newArrayLiteralExpression(elements: readonly Expression[]): AstNode { void elements; return {} as AstNode; }
+  newArrayLiteralExpression(elements: readonly Expression[]): AstNode {
+    return {
+      kind: 209 /* ArrayLiteralExpression */,
+      elements: { nodes: elements },
+    } as unknown as AstNode;
+  }
   newReflectSetCall(target: Expression, name: Expression, value: Expression, receiver: Expression): Expression {
     void target; void name; void value; void receiver; return {} as Expression;
   }
