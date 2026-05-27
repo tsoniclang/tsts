@@ -13,12 +13,18 @@
  */
 
 import type {
-  Kind,
   Node as AstNode,
   NodeArray,
-  NodeFlags,
   SourceFile,
 } from "../ast/index.js";
+import { Kind, NodeFlags } from "../ast/index.js";
+import {
+  nodePos, nodeEnd, sourceFileEndOfFileToken,
+} from "../ast/index.js";
+import {
+  isPropertyNameLiteral,
+} from "../ast/index.js";
+import { isPrivateIdentifier } from "../ast/index.js";
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -676,21 +682,16 @@ interface Scanner {
   resetPos(pos: number): void;
 }
 
+// Strada helpers still forward-declared until scanner/parser ports land.
 declare function getScannerForSourceFile(sourceFile: SourceFile, position: number): Scanner;
 declare function getTokenPosOfNode(node: AstNode, sourceFile: SourceFile, includeJSDoc: boolean): number;
-
-declare function isPropertyNameLiteral(node: AstNode): boolean;
-declare function isKeywordKind(kind: Kind): boolean;
-declare function isPrivateIdentifier(node: AstNode): boolean;
 declare function isJSDocKind(kind: Kind): boolean;
 declare function isTokenKind(kind: Kind): boolean;
 declare function isNonWhitespaceToken(node: AstNode): boolean;
 declare function isWhitespaceOnlyJsxText(node: AstNode): boolean;
 declare function isJSDocLinkLike(node: AstNode): boolean;
 declare function isJSDocTag(node: AstNode): boolean;
-
 declare function sourceFileAsNode(sourceFile: SourceFile): AstNode;
-declare function sourceFileEndOfFileToken(sourceFile: SourceFile): AstNode;
 declare function sourceFileGetOrCreateToken(
   sourceFile: SourceFile,
   kind: Kind,
@@ -699,9 +700,6 @@ declare function sourceFileGetOrCreateToken(
   parent: AstNode,
   flags: number,
 ): AstNode;
-
-declare function nodePos(node: AstNode): number;
-declare function nodeEnd(node: AstNode): number;
 declare function nodeJSDoc(node: AstNode, sourceFile: SourceFile): readonly AstNode[];
 declare function nodeArrayPos(arr: NodeArray<AstNode>): number;
 declare function nodeArrayEnd(arr: NodeArray<AstNode>): number;
@@ -712,14 +710,15 @@ declare function visitEachChild(
   visitNodes: (n: NodeArray<AstNode> | undefined) => NodeArray<AstNode> | undefined,
 ): void;
 declare function forEachChildAndJSDoc(node: AstNode, sourceFile: SourceFile, visitNode: (n: AstNode) => boolean): void;
-
-declare const KindEndOfFile: Kind;
-declare const KindIdentifier: Kind;
-declare const KindJSDoc: Kind;
-declare const KindJSDocText: Kind;
-declare const KindJSDocTypeLiteral: Kind;
-declare const KindJSDocSignature: Kind;
-declare const NodeFlagsReparsed: number;
+declare function isKeywordKind(kind: Kind): boolean;
+const NodeFlagsReparsed = 1 << 3;
+// Kind tokens — typed via the imported Kind enum (Kind.JSDocXxx etc.).
+const KindEndOfFile = Kind.EndOfFile;
+const KindIdentifier = Kind.Identifier;
+const KindJSDoc = (Kind as unknown as Record<string, number>).JSDoc ?? 0;
+const KindJSDocText = (Kind as unknown as Record<string, number>).JSDocText ?? 0;
+const KindJSDocTypeLiteral = (Kind as unknown as Record<string, number>).JSDocTypeLiteral ?? 0;
+const KindJSDocSignature = (Kind as unknown as Record<string, number>).JSDocSignature ?? 0;
 
 /**
  * Forward-declared replacement for `core.BinarySearchUniqueFunc`.
