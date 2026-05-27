@@ -3018,6 +3018,63 @@ export const Diagnostics = {
   This_error_can_t_be_described_by_diagnostic_format_codes: msg(9999, Category.Error,
     "This_error_cant_be_described_9999",
     "Internal error. Please file an issue."),
+
+  // ---------------------------------------------------------------------------
+  // More 2xxx — type query + literal
+  // ---------------------------------------------------------------------------
+  Required_type_parameters_may_not_follow_optional_type_parameters: msg(2706_3 as unknown as number, Category.Error,
+    "Required_type_parameters_may_not_follow_optional_type_parameters_2706_b",
+    "Required type parameters may not follow optional type parameters."),
+  X_default_type_parameters_should_only_be_specified_after_required_type_parameters: msg(2768_2 as unknown as number, Category.Error,
+    "default_type_parameters_after_required_2768_b",
+    "Default type parameters may not appear before required type parameters."),
+  Computed_property_names_are_not_allowed_in_an_enum_with_string_valued_members_x: msg(2553_3 as unknown as number, Category.Error,
+    "Computed_property_names_string_enum_2553_c",
+    "Computed values are not permitted in an enum with string valued members."),
+  Decorators_are_not_valid_here_x: msg(1206_2 as unknown as number, Category.Error,
+    "Decorators_are_not_valid_here_1206_b",
+    "Decorators are not valid here."),
+  X_using_declarations_may_only_have_a_BindingIdentifier_as_a_name: msg(1158_2 as unknown as number, Category.Error,
+    "using_declarations_may_only_have_a_BindingIdentifier_1158_b",
+    "A rest parameter or binding pattern may not have a trailing comma."),
+  Property_or_signature_expected_x: msg(1131_2 as unknown as number, Category.Error,
+    "Property_or_signature_expected_1131_b",
+    "Property or signature expected."),
+
+  // ---------------------------------------------------------------------------
+  // 4xxx — declaration emit
+  // ---------------------------------------------------------------------------
+  X_0_is_referenced_directly_or_indirectly_in_its_own_base_expression_x: msg(2506_2 as unknown as number, Category.Error,
+    "_0_is_referenced_directly_or_indirectly_in_its_own_base_expression_2506_b",
+    "'{0}' is referenced directly or indirectly in its own base expression."),
+  Cannot_extend_a_class_0_Class_constructor_is_marked_as_private: msg(2675, Category.Error,
+    "Cannot_extend_a_class_0_2675",
+    "Cannot extend a class '{0}'. Class constructor is marked as private."),
+  X_super_can_only_be_referenced_in_members_of_derived_classes_or_object_literal_expressions: msg(2660_2 as unknown as number, Category.Error,
+    "super_can_only_be_referenced_2660_c",
+    "Base class expressions cannot reference class type parameters."),
+
+  // ---------------------------------------------------------------------------
+  // 6xxx — option metadata
+  // ---------------------------------------------------------------------------
+  Enable_error_reporting_for_codepaths_that_do_not_explicitly_return_in_a_function: msg(6076_2 as unknown as number, Category.Message,
+    "Enable_error_reporting_codepaths_6076_b",
+    "Enable error reporting for codepaths that do not explicitly return in a function."),
+  Enable_error_reporting_for_fallthrough_cases_in_switch_statements: msg(6079, Category.Message,
+    "Enable_error_reporting_fallthrough_6079",
+    "Enable error reporting for fallthrough cases in switch statements."),
+  Specify_the_module_specifier_to_use_to_import_the_jsx_function: msg(6087_4 as unknown as number, Category.Message,
+    "Specify_the_module_specifier_jsx_factory_6087_d",
+    "Specify the module specifier to use to import the JSX factory functions."),
+  Disable_truncating_types_in_error_messages: msg(6131, Category.Message,
+    "Disable_truncating_types_in_error_messages_6131",
+    "Disable truncating types in error messages."),
+  Make_keyof_only_return_strings_instead_of_string_numbers_or_symbols_Legacy_option: msg(6213_3 as unknown as number, Category.Message,
+    "Make_keyof_only_return_strings_6213_c",
+    "Make keyof only return strings instead of string, numbers or symbols. Legacy option."),
+  Print_diagnostic_information_about_the_tsserver_session: msg(6300, Category.Message,
+    "Print_diagnostic_information_tsserver_6300",
+    "Print diagnostic information about the tsserver session."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
