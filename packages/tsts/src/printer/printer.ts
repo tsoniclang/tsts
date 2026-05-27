@@ -418,17 +418,85 @@ export class Printer {
     const text = (node as unknown as { text?: string }).text ?? "";
     this.write(`\`${text}\``);
   }
-  emitTemplateExpression(node: AstNode): void { void node; }
-  emitTemplateSpan(node: AstNode): void { void node; }
-  emitJsxElement(node: AstNode): void { void node; }
-  emitJsxSelfClosingElement(node: AstNode): void { void node; }
-  emitJsxOpeningElement(node: AstNode): void { void node; }
-  emitJsxClosingElement(node: AstNode): void { void node; }
-  emitJsxFragment(node: AstNode): void { void node; }
-  emitJsxText(node: AstNode): void { void node; }
-  emitJsxAttribute(node: AstNode): void { void node; }
-  emitJsxSpreadAttribute(node: AstNode): void { void node; }
-  emitJsxExpression(node: AstNode): void { void node; }
+  emitTemplateExpression(node: AstNode): void {
+    // `head${a}middle${b}tail`
+    this.writePunctuation("`");
+    const head = (node as unknown as { head?: AstNode }).head;
+    if (head !== undefined) this.write((head as unknown as { text?: string }).text ?? "");
+    const spans = (node as unknown as { templateSpans?: { nodes?: readonly AstNode[] } }).templateSpans?.nodes;
+    if (spans !== undefined) {
+      for (const span of spans) this.emitTemplateSpan(span);
+    }
+    this.writePunctuation("`");
+  }
+  emitTemplateSpan(node: AstNode): void {
+    this.writePunctuation("${");
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    if (expr !== undefined) this.emit(0, expr);
+    this.writePunctuation("}");
+    const literal = (node as unknown as { literal?: AstNode }).literal;
+    if (literal !== undefined) this.write((literal as unknown as { text?: string }).text ?? "");
+  }
+  emitJsxElement(node: AstNode): void {
+    const opening = (node as unknown as { openingElement?: AstNode }).openingElement;
+    if (opening !== undefined) this.emit(0, opening);
+    const children = (node as unknown as { children?: { nodes?: readonly AstNode[] } }).children?.nodes;
+    if (children !== undefined) for (const c of children) this.emit(0, c);
+    const closing = (node as unknown as { closingElement?: AstNode }).closingElement;
+    if (closing !== undefined) this.emit(0, closing);
+  }
+  emitJsxSelfClosingElement(node: AstNode): void {
+    this.writePunctuation("<");
+    const tagName = (node as unknown as { tagName?: AstNode }).tagName;
+    if (tagName !== undefined) this.emit(0, tagName);
+    const attrs = (node as unknown as { attributes?: AstNode }).attributes;
+    if (attrs !== undefined) this.emit(0, attrs);
+    this.writePunctuation(" />");
+  }
+  emitJsxOpeningElement(node: AstNode): void {
+    this.writePunctuation("<");
+    const tagName = (node as unknown as { tagName?: AstNode }).tagName;
+    if (tagName !== undefined) this.emit(0, tagName);
+    const attrs = (node as unknown as { attributes?: AstNode }).attributes;
+    if (attrs !== undefined) this.emit(0, attrs);
+    this.writePunctuation(">");
+  }
+  emitJsxClosingElement(node: AstNode): void {
+    this.writePunctuation("</");
+    const tagName = (node as unknown as { tagName?: AstNode }).tagName;
+    if (tagName !== undefined) this.emit(0, tagName);
+    this.writePunctuation(">");
+  }
+  emitJsxFragment(node: AstNode): void {
+    this.writePunctuation("<>");
+    const children = (node as unknown as { children?: { nodes?: readonly AstNode[] } }).children?.nodes;
+    if (children !== undefined) for (const c of children) this.emit(0, c);
+    this.writePunctuation("</>");
+  }
+  emitJsxText(node: AstNode): void {
+    this.write((node as unknown as { text?: string }).text ?? "");
+  }
+  emitJsxAttribute(node: AstNode): void {
+    const name = (node as unknown as { name?: AstNode }).name;
+    if (name !== undefined) this.emit(0, name);
+    const init = (node as unknown as { initializer?: AstNode }).initializer;
+    if (init !== undefined) {
+      this.writePunctuation("=");
+      this.emit(0, init);
+    }
+  }
+  emitJsxSpreadAttribute(node: AstNode): void {
+    this.writePunctuation("{...");
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    if (expr !== undefined) this.emit(0, expr);
+    this.writePunctuation("}");
+  }
+  emitJsxExpression(node: AstNode): void {
+    this.writePunctuation("{");
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    if (expr !== undefined) this.emit(0, expr);
+    this.writePunctuation("}");
+  }
   emitBlock(node: AstNode): void {
     this.writePunctuation("{");
     this.increaseIndent();
