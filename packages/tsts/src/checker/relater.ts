@@ -73,13 +73,52 @@ export class Relater {
   // Public entry points
   // -------------------------------------------------------------------------
 
-  isTypeAssignableTo(source: Type, target: Type): boolean { void source; void target; return true; }
-  isTypeSubtypeOf(source: Type, target: Type): boolean { void source; void target; return true; }
-  isTypeStrictSubtypeOf(source: Type, target: Type): boolean { void source; void target; return true; }
-  isTypeIdenticalTo(source: Type, target: Type): boolean { void source; void target; return false; }
-  isTypeComparableTo(source: Type, target: Type): boolean { void source; void target; return true; }
+  isTypeAssignableTo(source: Type, target: Type): boolean {
+    return this.isTypeRelatedTo(source, target, this.assignableRelation);
+  }
+  isTypeSubtypeOf(source: Type, target: Type): boolean {
+    return this.isTypeRelatedTo(source, target, this.subtypeRelation);
+  }
+  isTypeStrictSubtypeOf(source: Type, target: Type): boolean {
+    return this.isTypeRelatedTo(source, target, this.strictSubtypeRelation);
+  }
+  isTypeIdenticalTo(source: Type, target: Type): boolean {
+    if (source === target) return true;
+    const sf = (source as { flags?: number }).flags ?? 0;
+    const tf = (target as { flags?: number }).flags ?? 0;
+    // Identical primitives by flag.
+    const primitiveMask = TypeFlags.Primitive;
+    if ((sf & primitiveMask) !== 0 && sf === tf) return true;
+    return false;
+  }
+  isTypeComparableTo(source: Type, target: Type): boolean {
+    return this.isTypeRelatedTo(source, target, this.comparableRelation);
+  }
   isTypeRelatedTo(source: Type, target: Type, relation: Relation): boolean {
-    void source; void target; void relation; return true;
+    if (source === target) return true;
+    const sf = (source as { flags?: number }).flags ?? 0;
+    const tf = (target as { flags?: number }).flags ?? 0;
+    // Any/Unknown target accepts everything.
+    if ((tf & (TypeFlags.Any | TypeFlags.Unknown)) !== 0) return true;
+    // Any source assigns to anything except never.
+    if ((sf & TypeFlags.Any) !== 0 && (tf & TypeFlags.Never) === 0) return true;
+    // Never source assigns to anything.
+    if ((sf & TypeFlags.Never) !== 0) return true;
+    // Primitive ↔ primitive: same flag bit.
+    if ((sf & TypeFlags.Primitive) !== 0 && (tf & TypeFlags.Primitive) !== 0) {
+      if (sf === tf) return true;
+      // Literal-of-primitive widens to its base in assignable contexts.
+      if (relation.kind === RelationKind.Assignable || relation.kind === RelationKind.Subtype) {
+        if ((sf & TypeFlags.StringLiteral) !== 0 && (tf & TypeFlags.String) !== 0) return true;
+        if ((sf & TypeFlags.NumberLiteral) !== 0 && (tf & TypeFlags.Number) !== 0) return true;
+        if ((sf & TypeFlags.BooleanLiteral) !== 0 && (tf & TypeFlags.Boolean) !== 0) return true;
+        if ((sf & TypeFlags.BigIntLiteral) !== 0 && (tf & TypeFlags.BigInt) !== 0) return true;
+      }
+      return false;
+    }
+    // Object/structural cases need the full relater — conservative
+    // "true" until the deep walk is ported.
+    return true;
   }
   checkTypeAssignableTo(
     source: Type, target: Type, errorNode: AstNode | undefined,
