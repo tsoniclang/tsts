@@ -306,9 +306,18 @@ export class Printer {
   // Comment emission
   // -------------------------------------------------------------------------
 
-  writeCommentRange(comment: CommentRange): void { void comment; }
+  writeCommentRange(comment: CommentRange): void {
+    // Render a comment span from the source file's text.
+    const sf = this.currentSourceFile as unknown as { text?: string };
+    if (sf.text === undefined) return;
+    const text = sf.text.slice(comment.pos, comment.end);
+    this.writeComment(text);
+  }
   writeCommentRangeWorker(text: string, lineMap: readonly number[], kind: number, loc: TextRange): void {
-    void text; void lineMap; void kind; void loc;
+    void lineMap; void kind;
+    // Slice and emit the comment span. SingleLineCommentTrivia is one
+    // line; MultiLineCommentTrivia may span several.
+    this.writeComment(text.slice(loc.pos, loc.end));
   }
   shouldEmitComments(node: AstNode): boolean { void node; return !this.options.removeComments; }
   shouldWriteComment(comment: CommentRange): boolean { void comment; return true; }
