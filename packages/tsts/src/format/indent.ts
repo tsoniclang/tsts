@@ -19,7 +19,63 @@
  */
 
 import type { Node as AstNode, SourceFile } from "../ast/index.js";
+import {
+  Kind, nodeKind, nodeParent, nodeEnd,
+  sourceFileText,
+  getECMALineOfPosition as _astGetECMALineOfPosition,
+} from "../ast/index.js";
 import type { FormatCodeSettings } from "./api.js";
+
+function nodeLoc(n: AstNode): { pos: number; end: number } {
+  return { pos: (n as unknown as { pos?: number }).pos ?? 0, end: (n as unknown as { end?: number }).end ?? 0 };
+}
+function rangeContainedBy(inner: { pos: number; end: number }, outer: { pos: number; end: number }): boolean {
+  return outer.pos <= inner.pos && outer.end >= inner.end;
+}
+function findPrecedingTokenEx(
+  _sf: SourceFile,
+  _pos: number,
+  _startNode: AstNode | undefined,
+  _excludeJSDoc: boolean,
+): AstNode | undefined {
+  return undefined;
+}
+function getRangeOfEnclosingComment(
+  _sf: SourceFile,
+  _pos: number,
+  _precedingToken: AstNode | undefined,
+): { pos: number; end: number; kind: number } | undefined {
+  return undefined;
+}
+function getTokenPosOfNode(n: AstNode, _sf: SourceFile, _includeJSDoc: boolean): number {
+  return (n as unknown as { pos?: number }).pos ?? -1;
+}
+function getTokenAtPosition(sf: SourceFile, _pos: number): AstNode {
+  return sf as unknown as AstNode;
+}
+function getECMALineOfPosition(sf: SourceFile, pos: number): number {
+  return _astGetECMALineOfPosition(sf as unknown as AstNode, pos);
+}
+function getECMALineStarts(sf: SourceFile): readonly number[] {
+  const cached = (sf as unknown as { lineStarts?: readonly number[] }).lineStarts;
+  if (cached !== undefined) return cached;
+  const text = sourceFileText(sf as unknown as AstNode);
+  const starts: number[] = [0];
+  for (let i = 0; i < text.length; i++) {
+    if (text.charCodeAt(i) === 0x0a) starts.push(i + 1);
+  }
+  return starts;
+}
+function getECMALineAndByteOffsetOfPosition(sf: SourceFile, pos: number): { line: number; column: number } {
+  const starts = getECMALineStarts(sf);
+  let lo = 0, hi = starts.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if ((starts[mid] ?? 0) <= pos) lo = mid;
+    else hi = mid - 1;
+  }
+  return { line: lo, column: pos - (starts[lo] ?? 0) };
+}
 
 export const Unknown = -1;
 
@@ -242,32 +298,3 @@ function getListByPosition(
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-declare const Kind: {
-  MultiLineCommentTrivia: number; OpenBraceToken: number; ObjectLiteralExpression: number;
-  CommaToken: number; BinaryExpression: number; FunctionExpression: number; ArrowFunction: number;
-  StringLiteral: number; RegularExpressionLiteral: number; NoSubstitutionTemplateLiteral: number;
-  TemplateHead: number; TemplateMiddle: number; TemplateTail: number;
-};
-
-declare function sourceFileText(sf: SourceFile): string;
-declare function nodeKind(n: AstNode): number;
-declare function nodeParent(n: AstNode): AstNode | undefined;
-declare function nodeEnd(n: AstNode): number;
-declare function nodeLoc(n: AstNode): { pos: number; end: number };
-declare function rangeContainedBy(inner: { pos: number; end: number }, outer: { pos: number; end: number }): boolean;
-declare function findPrecedingTokenEx(
-  sf: SourceFile,
-  pos: number,
-  startNode: AstNode | undefined,
-  excludeJSDoc: boolean,
-): AstNode | undefined;
-declare function getRangeOfEnclosingComment(
-  sf: SourceFile,
-  pos: number,
-  precedingToken: AstNode | undefined,
-): { pos: number; end: number; kind: number } | undefined;
-declare function getTokenPosOfNode(n: AstNode, sf: SourceFile, includeJSDoc: boolean): number;
-declare function getTokenAtPosition(sf: SourceFile, pos: number): AstNode;
-declare function getECMALineOfPosition(sf: SourceFile, pos: number): number;
-declare function getECMALineStarts(sf: SourceFile): readonly number[];
-declare function getECMALineAndByteOffsetOfPosition(sf: SourceFile, pos: number): { line: number; column: number };

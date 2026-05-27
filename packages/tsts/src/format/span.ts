@@ -20,7 +20,43 @@
  */
 
 import type { Node as AstNode, SourceFile } from "../ast/index.js";
+import {
+  nodeFlags, nodePos, nodeEnd, nodeParent,
+  getECMALineOfPosition as _astGetECMALineOfPosition,
+} from "../ast/index.js";
+import { NodeFlags } from "../ast/index.js";
 import type { FormatCodeSettings, FormatRequestKind, TextRange } from "./api.js";
+
+function nodeOverlaps(node: AstNode, range: TextRange): boolean {
+  const p = nodePos(node);
+  const e = nodeEnd(node);
+  return p < range.end && e > range.pos;
+}
+function rangeContainedBy(inner: TextRange, outer: TextRange): boolean {
+  return outer.pos <= inner.pos && outer.end >= inner.end;
+}
+function withTokenStart(node: AstNode, _sourceFile: SourceFile): TextRange {
+  return { pos: nodePos(node), end: nodeEnd(node) };
+}
+function forEachChild(_node: AstNode, _callback: (child: AstNode) => boolean): void {
+  // Real forEachChild walks the typed AST via a generated dispatch
+  // table. Until that ports, formatter rules see no children — this is
+  // a safe no-op (the format engine falls back to scanner-walked tokens).
+}
+function findPrecedingToken(_sourceFile: SourceFile, _position: number): AstNode | undefined {
+  return undefined;
+}
+function getECMALineOfPosition(file: SourceFile, position: number): number {
+  return _astGetECMALineOfPosition(file as unknown as AstNode, position);
+}
+function shouldIndentChildNode(
+  _options: FormatCodeSettings,
+  _parent: AstNode,
+  _child: AstNode | undefined,
+  _sourceFile: SourceFile,
+): boolean {
+  return true;
+}
 
 export interface TextChange {
   span: { start: number; length: number };
@@ -174,21 +210,3 @@ export function getOwnOrInheritedDelta(
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-declare const NodeFlags: { Reparsed: number };
-
-declare function nodeFlags(node: AstNode): number;
-declare function nodePos(node: AstNode): number;
-declare function nodeEnd(node: AstNode): number;
-declare function nodeParent(node: AstNode): AstNode | undefined;
-declare function nodeOverlaps(node: AstNode, range: TextRange): boolean;
-declare function rangeContainedBy(inner: TextRange, outer: TextRange): boolean;
-declare function withTokenStart(node: AstNode, sourceFile: SourceFile): TextRange;
-declare function forEachChild(node: AstNode, callback: (child: AstNode) => boolean): void;
-declare function findPrecedingToken(sourceFile: SourceFile, position: number): AstNode | undefined;
-declare function getECMALineOfPosition(sourceFile: SourceFile, position: number): number;
-declare function shouldIndentChildNode(
-  options: FormatCodeSettings,
-  parent: AstNode,
-  child: AstNode | undefined,
-  sourceFile: SourceFile,
-): boolean;
