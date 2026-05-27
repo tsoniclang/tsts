@@ -576,11 +576,28 @@ export class GrammarChecker {
     const returnType = (node as unknown as { type?: AstNode }).type;
     return typeParams !== undefined || returnType !== undefined;
   }
-  checkGrammarAccessorParameter(node: AstNode): boolean { void node; return false; }
-  checkGrammarTopLevelElementForRequiredDeclareModifier(node: AstNode): boolean { void node; return false; }
+  checkGrammarAccessorParameter(node: AstNode): boolean {
+    // Setter accessor parameter cannot be optional / rest / have init.
+    const isRest = (node as unknown as { dotDotDotToken?: AstNode }).dotDotDotToken !== undefined;
+    const isOptional = (node as unknown as { questionToken?: AstNode }).questionToken !== undefined;
+    const hasInit = (node as unknown as { initializer?: AstNode }).initializer !== undefined;
+    return isRest || isOptional || hasInit;
+  }
+  checkGrammarTopLevelElementForRequiredDeclareModifier(node: AstNode): boolean {
+    // Inside a declaration file (.d.ts), top-level value declarations
+    // must have a 'declare' modifier.
+    void node; return false;
+  }
   checkGrammarTopLevelElementsForRequiredDeclareModifier(file: AstNode): boolean { void file; return false; }
-  checkGrammarConstructorTypeParameters(node: AstNode): boolean { void node; return false; }
-  checkGrammarConstructorTypeAnnotation(node: AstNode): boolean { void node; return false; }
+  checkGrammarConstructorTypeParameters(node: AstNode): boolean {
+    // A constructor declaration cannot have type parameters (TS1092).
+    return (node as unknown as { typeParameters?: AstNode }).typeParameters !== undefined;
+  }
+  checkGrammarConstructorTypeAnnotation(node: AstNode): boolean {
+    // A constructor declaration cannot have a return-type annotation
+    // (TS1093).
+    return (node as unknown as { type?: AstNode }).type !== undefined;
+  }
   checkGrammarConstantInitializer(node: AstNode): boolean {
     // const enum member initializer must be a constant expression.
     // Without full constant-folding, we accept: NumericLiteral,
