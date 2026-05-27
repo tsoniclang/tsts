@@ -30,6 +30,82 @@ import {
 } from "../ast/index.js";
 import { isSimpleCopiableExpression, isAssignmentPattern, isPropertyNameLiteral, subtreeFacts } from "../ast/index.js";
 import { Kind, NodeFlags } from "../ast/index.js";
+import { bindingElementName, bindingElementInitializer, bindingElementDotDotDotToken, bindingElementPropertyName, bindingPatternElements } from "../ast/index.js";
+
+function isDeclarationBindingElement(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = (node as { kind?: number }).kind ?? 0;
+  return k === Kind.BindingElement || k === Kind.VariableDeclaration || k === Kind.Parameter;
+}
+function isEmptyArrayLiteral(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  if ((node as { kind?: number }).kind !== Kind.ArrayLiteralExpression) return false;
+  const elements = (node as unknown as { elements?: { nodes?: readonly AstNode[] } | readonly AstNode[] }).elements;
+  if (elements === undefined) return true;
+  const inner = (elements as { nodes?: readonly AstNode[] }).nodes;
+  return (inner ?? (elements as readonly AstNode[])).length === 0;
+}
+function isEmptyObjectLiteral(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  if ((node as { kind?: number }).kind !== Kind.ObjectLiteralExpression) return false;
+  const props = (node as unknown as { properties?: { nodes?: readonly AstNode[] } | readonly AstNode[] }).properties;
+  if (props === undefined) return true;
+  const inner = (props as { nodes?: readonly AstNode[] }).nodes;
+  return (inner ?? (props as readonly AstNode[])).length === 0;
+}
+function isSimpleInlineableExpression(node: AstNode): boolean {
+  // A simple inlineable expression: identifier, literal, this/super,
+  // or true/false/null/undefined. Same as isSimpleCopiableExpression
+  // for now (which covers all the simple literal-like cases).
+  return isSimpleCopiableExpression(node);
+}
+function getTargetOfBindingOrAssignmentElement(element: AstNode | undefined): AstNode | undefined {
+  if (element === undefined) return undefined;
+  const k = (element as { kind?: number }).kind;
+  if (k === Kind.BindingElement || k === Kind.VariableDeclaration || k === Kind.Parameter) {
+    return bindingElementName(element);
+  }
+  if (k === Kind.PropertyAssignment) {
+    return (element as unknown as { initializer?: AstNode }).initializer;
+  }
+  if (k === Kind.ShorthandPropertyAssignment || k === Kind.SpreadAssignment || k === Kind.SpreadElement) {
+    return (element as unknown as { expression?: AstNode; name?: AstNode }).expression
+      ?? (element as unknown as { name?: AstNode }).name;
+  }
+  return element;
+}
+function getRestIndicatorOfBindingOrAssignmentElement(element: AstNode | undefined): AstNode | undefined {
+  if (element === undefined) return undefined;
+  return bindingElementDotDotDotToken(element);
+}
+function tryGetPropertyNameOfBindingOrAssignmentElement(element: AstNode | undefined): AstNode | undefined {
+  if (element === undefined) return undefined;
+  return bindingElementPropertyName(element);
+}
+function getElementsOfBindingOrAssignmentPattern(pattern: AstNode): readonly AstNode[] {
+  const k = (pattern as { kind?: number }).kind;
+  if (k === Kind.ObjectBindingPattern || k === Kind.ArrayBindingPattern) {
+    return bindingPatternElements(pattern) ?? [];
+  }
+  if (k === Kind.ObjectLiteralExpression) {
+    const props = (pattern as unknown as { properties?: { nodes?: readonly AstNode[] } | readonly AstNode[] }).properties;
+    if (props === undefined) return [];
+    return (props as { nodes?: readonly AstNode[] }).nodes ?? (props as readonly AstNode[]);
+  }
+  if (k === Kind.ArrayLiteralExpression) {
+    const elements = (pattern as unknown as { elements?: { nodes?: readonly AstNode[] } | readonly AstNode[] }).elements;
+    if (elements === undefined) return [];
+    return (elements as { nodes?: readonly AstNode[] }).nodes ?? (elements as readonly AstNode[]);
+  }
+  return [];
+}
+function computedPropertyNameExpression(node: AstNode): AstNode {
+  return (node as unknown as { expression: AstNode }).expression;
+}
+function elementAccessExpressionArgument(node: ElementAccessExpression): AstNode {
+  return (node as unknown as { argumentExpression: AstNode }).argumentExpression;
+}
+void bindingElementInitializer;
 const TokenFlags = { None: 0 } as const;
 function cloneNode(node: AstNode, _factory: unknown): AstNode { return _astCloneNode(node); }
 // isAssignmentExpression: BinaryExpression with assignment operator.
@@ -610,13 +686,3 @@ const SubtreeFacts = {
 } as const;
 
 // Strada predicates and accessors that aren't yet wired to ast/index.js.
-declare function isDeclarationBindingElement(node: AstNode): boolean;
-declare function isEmptyArrayLiteral(node: AstNode): boolean;
-declare function isEmptyObjectLiteral(node: AstNode): boolean;
-declare function isSimpleInlineableExpression(node: AstNode): boolean;
-declare function getTargetOfBindingOrAssignmentElement(element: AstNode): AstNode | undefined;
-declare function getRestIndicatorOfBindingOrAssignmentElement(element: AstNode): AstNode | undefined;
-declare function tryGetPropertyNameOfBindingOrAssignmentElement(element: AstNode): AstNode | undefined;
-declare function getElementsOfBindingOrAssignmentPattern(pattern: AstNode): readonly AstNode[];
-declare function computedPropertyNameExpression(node: AstNode): AstNode;
-declare function elementAccessExpressionArgument(node: ElementAccessExpression): AstNode;
