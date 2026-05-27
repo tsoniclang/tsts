@@ -2300,6 +2300,75 @@ export const Diagnostics = {
   Show_a_summary_of_the_completion_session: msg(6071_2 as unknown as number, Category.Message,
     "Show_a_summary_of_the_completion_session_6071_b",
     "Show a summary of the completion session."),
+
+  // ---------------------------------------------------------------------------
+  // More 2xxx — symbol + import
+  // ---------------------------------------------------------------------------
+  An_import_path_cannot_end_with_a_0_extension_Consider_importing_1_instead: msg(2691, Category.Error,
+    "An_import_path_cannot_end_with_a_0_extension_Consider_importing_1_instead_2691",
+    "An import path cannot end with a '{0}' extension. Consider importing '{1}' instead."),
+  An_import_alias_cannot_reference_a_declaration_that_was_exported_using_export_type: msg(1382, Category.Error,
+    "An_import_alias_cannot_reference_a_declaration_1382",
+    "An import alias cannot reference a declaration that was exported using 'export type'."),
+  An_import_alias_cannot_reference_a_declaration_that_was_imported_using_import_type: msg(1383, Category.Error,
+    "An_import_alias_cannot_reference_a_declaration_that_was_imported_1383",
+    "An import alias cannot reference a declaration that was imported using 'import type'."),
+  Cannot_use_imports_exports_or_module_augmentations_when_module_is_none: msg(1148, Category.Error,
+    "Cannot_use_imports_exports_or_module_augmentations_1148",
+    "Cannot use imports, exports, or module augmentations when '--module' is 'none'."),
+  Identifier_string_or_number_literal_expected: msg(2693, Category.Error,
+    "Identifier_string_or_number_literal_expected_2693_b",
+    "'{0}' only refers to a type, but is being used as a value here."),
+  Type_at_position_0_in_source_is_not_compatible_with_type_at_position_1_in_target: msg(2624, Category.Error,
+    "Type_at_position_0_in_source_2624",
+    "Type at position {0} in source is not compatible with type at position {1} in target."),
+  Cannot_find_module_0_Did_you_mean_to_set_the_moduleResolution_option_to_nodenext: msg(2792_2 as unknown as number, Category.Error,
+    "Cannot_find_module_0_2792_c",
+    "Cannot find module '{0}'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?"),
+  An_async_function_can_only_be_used_inside_a_module: msg(1378_2 as unknown as number, Category.Error,
+    "An_async_function_can_only_be_used_inside_a_module_1378_b",
+    "An 'async' function can only be used inside a module."),
+
+  // ---------------------------------------------------------------------------
+  // More 6xxx — option metadata
+  // ---------------------------------------------------------------------------
+  Add_undefined_to_types_when_they_are_accessed_using_an_index: msg(6800_2 as unknown as number, Category.Message,
+    "Add_undefined_to_types_when_accessed_using_index_6800_b",
+    "Add 'undefined' to types when they are accessed using an index."),
+  Enable_top_level_await_in_modules_without_explicit_dependencies: msg(6175_2 as unknown as number, Category.Message,
+    "Enable_top_level_await_6175_b",
+    "Enable top-level 'await' in modules without explicit dependencies."),
+  Generate_d_ts_files_along_with_emitted_js_files: msg(6041_2 as unknown as number, Category.Message,
+    "Generate_d_ts_files_alongside_js_6041_b",
+    "Generate '.d.ts' files alongside emitted '.js' files."),
+  Specify_the_target_runtime_environment: msg(6190, Category.Message,
+    "Specify_the_target_runtime_environment_6190",
+    "Specify the target runtime environment."),
+  Specify_the_path_to_the_TypeScript_declaration_files: msg(6191, Category.Message,
+    "Specify_the_path_to_the_TypeScript_declaration_files_6191",
+    "Specify the path to the TypeScript declaration files."),
+
+  // ---------------------------------------------------------------------------
+  // 1xxx more
+  // ---------------------------------------------------------------------------
+  Constructor_implementation_is_missing: msg(2390, Category.Error,
+    "Constructor_implementation_is_missing_2390",
+    "Constructor implementation is missing."),
+  Function_implementation_is_missing_or_not_immediately_following_the_declaration: msg(2391_2 as unknown as number, Category.Error,
+    "Function_implementation_is_missing_2391_b",
+    "Function implementation is missing or not immediately following the declaration."),
+  Tagged_template_literals_are_not_permitted_in_an_optional_chain: msg(1255, Category.Error,
+    "Tagged_template_literals_are_not_permitted_in_an_optional_chain_1255",
+    "Tagged template literals are not permitted in an optional chain."),
+  A_label_is_not_allowed_here: msg(1344, Category.Error,
+    "A_label_is_not_allowed_here_1344",
+    "A label is not allowed here."),
+  X_await_expressions_are_only_allowed_within_async_functions_and_at_the_top_levels_of_modules: msg(1308_3 as unknown as number, Category.Error,
+    "await_expressions_only_allowed_in_async_1308_d",
+    "'await' expressions are only allowed within async functions and at the top levels of modules."),
+  An_await_using_declaration_requires_a_type_annotation_or_initializer: msg(1437, Category.Error,
+    "An_await_using_declaration_requires_a_type_annotation_or_initializer_1437",
+    "An 'await using' declaration requires a type annotation or initializer."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
