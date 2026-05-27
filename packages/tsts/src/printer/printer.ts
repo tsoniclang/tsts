@@ -139,10 +139,30 @@ export class Printer {
   // -------------------------------------------------------------------------
 
   getLiteralTextOfNode(node: LiteralLikeNode, sourceFile: SourceFile | undefined, flags: number): string {
-    void node; void sourceFile; void flags; return "";
+    void flags;
+    // Prefer the explicit text payload on the node (the parser stores
+    // the raw lexed text); fall back to a slice of the source file.
+    const text = (node as unknown as { text?: string }).text;
+    if (text !== undefined) return text;
+    if (sourceFile !== undefined) {
+      const src = (sourceFile as unknown as { text?: string }).text ?? "";
+      const pos = (node as unknown as { pos?: number }).pos ?? 0;
+      const end = (node as unknown as { end?: number }).end ?? 0;
+      return src.slice(pos, end);
+    }
+    return "";
   }
   getTextOfNode(node: AstNode, includeTrivia: boolean): string {
-    void node; void includeTrivia; return "";
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    if (text === undefined) {
+      // No source attached: use the node's own .text if present.
+      return (node as unknown as { text?: string }).text ?? "";
+    }
+    const pos = includeTrivia
+      ? (node as unknown as { pos?: number }).pos ?? 0
+      : (node as unknown as { fullStart?: number; pos?: number }).fullStart ?? (node as unknown as { pos?: number }).pos ?? 0;
+    const end = (node as unknown as { end?: number }).end ?? 0;
+    return text.slice(pos, end);
   }
 
   // -------------------------------------------------------------------------
