@@ -12,6 +12,36 @@
 
 import { Transformer, type TransformOptions } from "../transformer.js";
 import type { Node as AstNode, SourceFile } from "../../ast/index.js";
+import { Kind, nodeIsSynthesized } from "../../ast/index.js";
+import { getTextOfNode } from "../../scanner/utilities.js";
+import { getIsolatedModules as compilerOptionsGetIsolatedModules } from "../../core/compileroptions.js";
+
+const TokenFlags = { None: 0 } as const;
+
+// removeComments returns Tristate from CompilerOptions.
+function compilerOptionsRemoveComments(options: CompilerOptions): Tristate {
+  return (options as unknown as { removeComments?: Tristate }).removeComments;
+}
+function isFalseOrUnknown(t: Tristate): boolean {
+  return t === undefined || t === 0 || t === -1;
+}
+
+function isNumberValue(v: ConstantValue): v is { kind: "number"; numeric: JsNumber } {
+  return v.kind === "number";
+}
+function isStringValue(v: ConstantValue): v is { kind: "string"; string: string } {
+  return v.kind === "string";
+}
+function isBigIntValue(v: ConstantValue): v is { kind: "bigint"; bigint: PseudoBigInt } {
+  return v.kind === "bigint";
+}
+
+// JsNumber operations — these are simple wrappers over the JS number primitive.
+function jsNumIsInf(n: JsNumber): boolean { return !Number.isFinite(n as unknown as number) && !Number.isNaN(n as unknown as number); }
+function jsNumIsNaN(n: JsNumber): boolean { return Number.isNaN(n as unknown as number); }
+function jsNumAbsEq(n: JsNumber): boolean { return (n as unknown as number) < 0; }
+function jsNumAbs(n: JsNumber): JsNumber { return Math.abs(n as unknown as number) as unknown as JsNumber; }
+function jsNumToString(n: JsNumber): string { return String(n as unknown as number); }
 
 // ---------------------------------------------------------------------------
 // Transformer
@@ -25,7 +55,7 @@ export class ConstEnumInliningTransformer extends Transformer {
   constructor(opts: TransformOptions) {
     super();
     this.compilerOptions = opts.compilerOptions as unknown as CompilerOptions;
-    if (compilerOptionsGetIsolatedModules(this.compilerOptions)) {
+    if (compilerOptionsGetIsolatedModules(this.compilerOptions as unknown as Parameters<typeof compilerOptionsGetIsolatedModules>[0])) {
       throw new Error("const enums are not inlined under isolated modules");
     }
     this.currentSourceFile = undefined;
@@ -152,24 +182,5 @@ interface EmitResolver {
   getConstantValue(node: AstNode): ConstantValue | undefined;
 }
 
-declare const Kind: {
-  PropertyAccessExpression: number; ElementAccessExpression: number;
-  MinusToken: number; MultiLineCommentTrivia: number;
-};
-declare const TokenFlags: { None: number };
-
-declare function compilerOptionsGetIsolatedModules(options: CompilerOptions): boolean;
-declare function compilerOptionsRemoveComments(options: CompilerOptions): Tristate;
-declare function isFalseOrUnknown(t: Tristate): boolean;
-declare function nodeIsSynthesized(node: AstNode): boolean;
-declare function getTextOfNode(node: AstNode): string;
-declare function isNumberValue(v: ConstantValue): v is { kind: "number"; numeric: JsNumber };
-declare function isStringValue(v: ConstantValue): v is { kind: "string"; string: string };
-declare function isBigIntValue(v: ConstantValue): v is { kind: "bigint"; bigint: PseudoBigInt };
-declare function jsNumIsInf(n: JsNumber): boolean;
-declare function jsNumIsNaN(n: JsNumber): boolean;
-declare function jsNumAbsEq(n: JsNumber): boolean;
-declare function jsNumAbs(n: JsNumber): JsNumber;
-declare function jsNumToString(n: JsNumber): string;
 
 type Tristate = -1 | 0 | 1 | undefined;
