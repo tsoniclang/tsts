@@ -16,7 +16,18 @@ import {
   bindingElementPropertyName, bindingPatternElements, bindingPatternElementsLoc,
   variableDeclarationName, importEqualsModuleReference,
   canHaveModifiers, skipOuterExpressions as _skipOuter,
+  parentExpression, parentInitializer, parentBody, parentArguments,
+  forInitializer as forStatementInitializer,
+  forCondition as forStatementCondition,
+  forIncrementor as forStatementIncrementor,
+  conditionalCondition, conditionalWhenTrue, conditionalWhenFalse,
+  taggedTemplateTag, importAttributeValue, jsxTagName,
+  variableDeclarationInitializer,
+  tryStatementTryBlock, blockStatements, expressionOfStatement,
+  skipParentheses,
+  isSuperCall, modifierNodes, positionIsSynthesized,
 } from "../ast/index.js";
+import { isKeywordKind, getSourceFileOfNode, getECMALineOfPosition } from "../ast/index.js";
 import {
   isIdentifier, isBindingPattern, isNumericLiteral,
   isTryStatement, isExpressionStatement, isPropertyDeclaration,
@@ -439,27 +450,3 @@ interface Factory {
 type TextRange = { readonly pos: number; readonly end: number } | undefined;
 
 // Strada helpers not yet wired to ast/index.js
-declare function parentExpression(parent: AstNode): AstNode | undefined;
-declare function parentInitializer(parent: AstNode): AstNode | undefined;
-declare function parentBody(parent: AstNode): AstNode | undefined;
-declare function parentArguments(parent: AstNode): readonly AstNode[];
-declare function forStatementInitializer(node: ForStatement): AstNode | undefined;
-declare function forStatementCondition(node: ForStatement): AstNode | undefined;
-declare function forStatementIncrementor(node: ForStatement): AstNode | undefined;
-declare function conditionalCondition(node: ConditionalExpression): AstNode;
-declare function conditionalWhenTrue(node: ConditionalExpression): AstNode;
-declare function conditionalWhenFalse(node: ConditionalExpression): AstNode;
-declare function taggedTemplateTag(node: TaggedTemplateExpression): AstNode;
-declare function importAttributeValue(node: ImportAttribute): AstNode;
-declare function jsxTagName(node: AstNode): AstNode;
-declare function variableDeclarationInitializer(node: VariableDeclaration): AstNode | undefined;
-declare function isKeywordKind(kind: number): boolean;
-declare function tryStatementTryBlock(node: TryStatement): AstNode;
-declare function blockStatements(node: AstNode): readonly AstNode[];
-declare function expressionOfStatement(node: AstNode): AstNode;
-declare function skipParentheses(node: AstNode): AstNode;
-declare function isSuperCall(node: AstNode): boolean;
-declare function modifierNodes(node: AstNode): readonly AstNode[] | undefined;
-declare function positionIsSynthesized(pos: number): boolean;
-declare function getSourceFileOfNode(node: AstNode): AstNode | undefined;
-declare function getECMALineOfPosition(source: AstNode, pos: number): number;
