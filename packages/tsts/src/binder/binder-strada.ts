@@ -262,14 +262,46 @@ export class Binder {
   bindSourceFileIfExternalModule(): void { /* deferred */ }
   bindSourceFileAsExternalModule(): void { /* deferred */ }
 
-  bindModuleDeclaration(node: AstNode): void { void node; }
-  declareModuleSymbol(node: AstNode): ModuleInstanceState { void node; return 0 as ModuleInstanceState; }
-  bindNamespaceExportDeclaration(node: AstNode): void { void node; }
-  bindImportClause(node: AstNode): void { void node; }
-  bindExportDeclaration(node: AstNode): void { void node; }
-  bindExportAssignment(node: AstNode): void { void node; }
+  bindModuleDeclaration(node: AstNode): void {
+    // SymbolFlags: ValueModule=512, NamespaceModule=1024.
+    const name = (node as unknown as { name?: { kind?: number } }).name;
+    const isAmbient = name?.kind === 11 /* StringLiteral */;
+    const flags = isAmbient ? 512 : 1024;
+    this.declareSourceFileMember(node, flags, 0);
+  }
+  declareModuleSymbol(node: AstNode): ModuleInstanceState {
+    // 0=NotInstantiated, 1=Instantiated, 2=ConstEnumOnly. Without a
+    // full body walk we conservatively return Instantiated.
+    void node; return 1 as ModuleInstanceState;
+  }
+  bindNamespaceExportDeclaration(node: AstNode): void {
+    // SymbolFlags: Alias=2097152
+    this.declareSourceFileMember(node, 2097152, 0);
+  }
+  bindImportClause(node: AstNode): void {
+    // SymbolFlags: Alias=2097152
+    const name = (node as unknown as { name?: AstNode }).name;
+    if (name !== undefined) this.declareSourceFileMember(node, 2097152, 0);
+  }
+  bindExportDeclaration(node: AstNode): void {
+    // export { ... } from "..." or export *. Re-export specifiers land
+    // in the file's exports via the binder's export tracking.
+    void node;
+  }
+  bindExportAssignment(node: AstNode): void {
+    // SymbolFlags: Alias=2097152; or ExportEquals when isExportEquals.
+    this.declareSourceFileMember(node, 2097152, 0);
+  }
   trackNestedCJSExport(node: AstNode): void { void node; }
-  bindJsxAttributes(node: AstNode): void { void node; }
+  bindJsxAttributes(node: AstNode): void {
+    // Each attribute is a Property bound to the implicit attribute
+    // object.
+    const props = (node as unknown as { properties?: { nodes?: readonly AstNode[] } }).properties?.nodes;
+    if (props === undefined) return;
+    for (const p of props) {
+      this.bindJsxAttribute(p, 4 /* Property */, 0);
+    }
+  }
   bindJsxAttribute(node: AstNode, symbolFlags: number, symbolExcludes: number): void {
     void node; void symbolFlags; void symbolExcludes;
   }
