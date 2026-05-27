@@ -568,13 +568,28 @@ export class Checker {
   getTypeOfConcretePropertyOfContextualType(t: Type, name: string): Type | undefined {
     void t; void name; return undefined;
   }
-  getTypeOfPrototypeProperty(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getTypeOfFirstParameterOfSignature(signature: Signature): Type { void signature; return {} as Type; }
+  getTypeOfPrototypeProperty(symbol: AstSymbol): Type {
+    return this.getTypeOfSymbol(symbol);
+  }
+  getTypeOfFirstParameterOfSignature(signature: Signature): Type {
+    const params = (signature as unknown as { parameters?: readonly AstSymbol[] }).parameters;
+    if (params === undefined || params.length === 0) return { flags: 1 << 0 } as unknown as Type;
+    return this.getTypeOfSymbol(params[0]!);
+  }
   getTypeOfFirstParameterOfSignatureWithFallback(signature: Signature, fallback: Type): Type {
     void signature; return fallback;
   }
-  getTypeOfFuncClassEnumModule(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getTypeOfFuncClassEnumModuleWorker(symbol: AstSymbol): Type { void symbol; return {} as Type; }
+  getTypeOfFuncClassEnumModule(symbol: AstSymbol): Type {
+    // The type of a function/class/enum/module is the object-type built
+    // around its declarations. Return cached .type or a fresh Object
+    // record carrying the symbol back-ref.
+    const cached = (symbol as unknown as { type?: Type }).type;
+    if (cached !== undefined) return cached;
+    return this.getTypeOfFuncClassEnumModuleWorker(symbol);
+  }
+  getTypeOfFuncClassEnumModuleWorker(symbol: AstSymbol): Type {
+    return { flags: 1 << 19, symbol } as unknown as Type;
+  }
 
   getDeclaredTypeOfSymbol(symbol: AstSymbol): Type {
     // Dispatch by symbol kind. SymbolFlags: Class=32, Interface=64,
@@ -1041,9 +1056,30 @@ export class Checker {
   getTypeFromTypeLiteralOrFunctionOrConstructorTypeNode(node: AstNode): Type {
     void node; return { flags: 1 << 19 } as unknown as Type; // Object
   }
-  getTypeFromArrayBindingPattern(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromObjectBindingPattern(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromBindingElement(node: AstNode): Type { void node; return {} as Type; }
+  getTypeFromArrayBindingPattern(node: AstNode): Type {
+    // Synthesize a tuple of element types from the pattern's binding
+    // elements.
+    const elements = (node as unknown as { elements?: { nodes?: readonly AstNode[] } }).elements?.nodes;
+    return {
+      flags: 1 << 19, // Object
+      typeArguments: elements !== undefined ? elements.map((e) => this.getTypeFromBindingElement(e)) : [],
+    } as unknown as Type;
+  }
+  getTypeFromObjectBindingPattern(node: AstNode): Type {
+    void node;
+    // Synthesize an Object-flagged record; without symbol-table walk
+    // we can't surface per-property types directly.
+    return { flags: 1 << 19 } as unknown as Type;
+  }
+  getTypeFromBindingElement(node: AstNode): Type {
+    // The binding element type is its .type annotation if present, else
+    // its .initializer's expression type, else Any.
+    const typeNode = (node as unknown as { type?: AstNode }).type;
+    if (typeNode !== undefined) return this.getTypeFromTypeNode(typeNode);
+    const init = (node as unknown as { initializer?: AstNode }).initializer;
+    if (init !== undefined) return this.getTypeOfExpression(init);
+    return { flags: 1 << 0 } as unknown as Type;
+  }
   getTypeFromBindingPattern(node: AstNode, includePatternInType: boolean, reportErrors: boolean): Type {
     void node; void includePatternInType; void reportErrors; return {} as Type;
   }
