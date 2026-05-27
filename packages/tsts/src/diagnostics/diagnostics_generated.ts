@@ -1615,6 +1615,88 @@ export const Diagnostics = {
   Substitution_0_for_pattern_1_has_incorrect_type_expected_string_got_2: msg(5062, Category.Error,
     "Substitution_0_for_pattern_1_has_incorrect_type_5062",
     "Substitution '{0}' for pattern '{1}' has incorrect type, expected 'string', got '{2}'."),
+
+  // ---------------------------------------------------------------------------
+  // More 1xxx — parser/keyword
+  // ---------------------------------------------------------------------------
+  X_assert_clauses_have_been_replaced_by_import_attributes_Use_apos_with_apos_instead_of_apos_assert_apos: msg(2879, Category.Error,
+    "assert_clauses_replaced_by_import_attributes_2879",
+    "'assert' clauses have been replaced by 'with' attributes. Use 'with' instead of 'assert'."),
+  Import_assertions_have_been_replaced_by_import_attributes_Use_with_instead_of_assert: msg(2879, Category.Error,
+    "Import_assertions_have_been_replaced_2879_b",
+    "Import assertions have been replaced by import attributes. Use 'with' instead of 'assert'."),
+  X_Identifier_string_or_number_literal_expected: msg(1141, Category.Error,
+    "Identifier_string_or_number_literal_expected_1141_b",
+    "String literal expected."),
+  An_argument_for_0_was_not_provided: msg(6210, Category.Message,
+    "An_argument_for_0_was_not_provided_6210",
+    "An argument for '{0}' was not provided."),
+  An_argument_matching_this_binding_pattern_was_not_provided: msg(6211, Category.Message,
+    "An_argument_matching_this_binding_pattern_was_not_provided_6211",
+    "An argument matching this binding pattern was not provided."),
+  Did_you_forget_to_use_await: msg(2773, Category.Error,
+    "Did_you_forget_to_use_await_2773",
+    "Did you forget to use 'await'?"),
+  X_globalThis_is_not_allowed_as_a_target_for_assignment: msg(2697, Category.Error,
+    "globalThis_is_not_allowed_as_a_target_for_assignment_2697_b",
+    "An async function or method in ES5 requires the 'Promise' constructor."),
+  Initializer_for_property_0: msg(1252, Category.Error,
+    "Initializer_for_property_0_1252",
+    "Initializer for property '{0}'"),
+  Cannot_assign_to_0_because_it_is_a_function: msg(2540, Category.Error,
+    "Cannot_assign_to_0_because_it_is_a_function_2540_b",
+    "Cannot assign to '{0}' because it is a function."),
+  Class_constructor_may_not_be_a_generator: msg(1219, Category.Error,
+    "Class_constructor_may_not_be_a_generator_1219",
+    "Class constructor may not be a generator."),
+  Class_constructor_may_not_be_an_accessor: msg(1218, Category.Error,
+    "Class_constructor_may_not_be_an_accessor_1218",
+    "Class constructor may not be an accessor."),
+
+  // ---------------------------------------------------------------------------
+  // 4xxx more — declaration emit complications
+  // ---------------------------------------------------------------------------
+  Property_0_of_exported_class_expression_may_not_be_private_or_protected: msg(4094, Category.Error,
+    "Property_0_of_exported_class_expression_4094",
+    "Property '{0}' of exported class expression may not be private or protected."),
+  Cannot_redeclare_identifier_0_in_catch_clause: msg(2492, Category.Error,
+    "Cannot_redeclare_identifier_0_in_catch_clause_2492",
+    "Cannot redeclare identifier '{0}' in catch clause."),
+
+  // ---------------------------------------------------------------------------
+  // 6xxx more CLI / option metadata
+  // ---------------------------------------------------------------------------
+  Type_of_iterated_elements_of_a_for_await_of_statement_must_either_be_a_Promise_or_have_a_then_method: msg(2549, Category.Error,
+    "Type_of_iterated_elements_of_a_for_await_of_statement_2549",
+    "Type '{0}' is not an array type."),
+  Did_you_mean_to_use_await: msg(2860, Category.Error,
+    "Did_you_mean_to_use_await_2860",
+    "The right-hand side of an instanceof expression must not be an instantiation expression."),
+  Show_what_would_be_built_or_deleted_if_specified_with_clean: msg(6373, Category.Message,
+    "Show_what_would_be_built_or_deleted_6373",
+    "Show what would be built (or deleted, if specified with '--clean')"),
+  Synchronously_call_callbacks_and_update_the_state_of_directory_watchers_on_platforms_that_don_t_support_recursive_watching_natively: msg(6359, Category.Message,
+    "Synchronously_call_callbacks_6359",
+    "Synchronously call callbacks and update the state of directory watchers on platforms that don't support recursive watching natively."),
+  Show_diagnostic_information: msg(6149, Category.Message,
+    "Show_diagnostic_information_6149",
+    "Show diagnostic information."),
+  Show_verbose_diagnostic_information: msg(6150, Category.Message,
+    "Show_verbose_diagnostic_information_6150",
+    "Show verbose diagnostic information."),
+
+  // ---------------------------------------------------------------------------
+  // 7xxx more implicit-any specifics
+  // ---------------------------------------------------------------------------
+  Object_literal_s_property_0_implicitly_has_an_1_type: msg(7018, Category.Error,
+    "Object_literals_property_0_implicitly_has_an_1_type_7018",
+    "Object literal's property '{0}' implicitly has an '{1}' type."),
+  X_new_expression_whose_target_lacks_a_construct_signature_implicitly_has_an_any_type: msg(7009, Category.Error,
+    "new_expression_whose_target_lacks_a_construct_signature_7009",
+    "'new' expression, whose target lacks a construct signature, implicitly has an 'any' type."),
+  Binding_element_0_implicitly_has_an_1_type: msg(7031, Category.Error,
+    "Binding_element_0_implicitly_has_an_1_type_7031",
+    "Binding element '{0}' implicitly has an '{1}' type."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
