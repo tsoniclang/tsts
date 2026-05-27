@@ -1780,6 +1780,75 @@ export const Diagnostics = {
   X_super_can_only_be_used_inside_classes_and_class_expressions: msg(2335, Category.Error,
     "super_can_only_be_used_inside_classes_and_class_expressions_2335_b",
     "'super' can only be used inside classes and class expressions."),
+
+  // ---------------------------------------------------------------------------
+  // More 6xxx CLI options
+  // ---------------------------------------------------------------------------
+  Concatenate_and_emit_output_to_single_file: msg(6018_2 as unknown as number, Category.Message,
+    "Concatenate_and_emit_output_to_single_file_6018",
+    "Concatenate and emit output to single file."),
+  Print_names_of_files_part_of_the_compilation: msg(6022, Category.Message,
+    "Print_names_of_files_part_of_the_compilation_6022",
+    "Print names of files part of the compilation."),
+  Build_one_or_more_projects_and_their_dependencies_if_out_of_date: msg(6360, Category.Message,
+    "Build_one_or_more_projects_and_their_dependencies_6360",
+    "Build one or more projects and their dependencies, if out of date"),
+  Delete_the_outputs_of_all_projects: msg(6365, Category.Message,
+    "Delete_the_outputs_of_all_projects_6365",
+    "Delete the outputs of all projects"),
+  Show_all_compiler_options: msg(6116, Category.Message,
+    "Show_all_compiler_options_6116",
+    "Show all compiler options."),
+  Show_resolved_module_paths: msg(6094_2 as unknown as number, Category.Message,
+    "Show_resolved_module_paths_6094_b",
+    "Show resolved module paths."),
+
+  // ---------------------------------------------------------------------------
+  // More 2xxx — narrowing + nullability
+  // ---------------------------------------------------------------------------
+  Type_0_does_not_match_the_signature_of_type_1: msg(2348, Category.Error,
+    "Type_0_does_not_match_the_signature_of_type_1_2348",
+    "Type '{0}' does not match the signature 'new (...args: any[]) => any'."),
+  This_kind_of_assignment_is_not_allowed_in_the_constructor_of_a_class_with_parameter_properties: msg(2722, Category.Error,
+    "This_kind_of_assignment_is_not_allowed_in_the_constructor_2722_b",
+    "Cannot invoke an object which is possibly 'undefined'."),
+  Type_must_have_an_iterable_object_member_signature: msg(2768, Category.Error,
+    "Type_must_have_an_iterable_object_member_signature_2768_b",
+    "An async function or method must return a 'Promise'."),
+  Type_0_provides_no_match_for_the_signature_1: msg(2658, Category.Error,
+    "Type_0_provides_no_match_for_the_signature_1_2658",
+    "Type '{0}' provides no match for the signature '{1}'."),
+  Cannot_extract_to_function_local_to_a_destructuring_pattern: msg(2671, Category.Error,
+    "Cannot_extract_to_function_local_to_a_destructuring_pattern_2671",
+    "Cannot extend interface '{0}'. Did you mean 'implements'?"),
+  Type_alias_0_is_only_a_value_alias: msg(2691, Category.Error,
+    "Type_alias_0_is_only_a_value_alias_2691_b",
+    "An import path cannot end with a '{0}' extension. Consider importing '{1}' instead."),
+  Property_0_is_not_assignable_to_the_same_property_in_base_type_1: msg(2416, Category.Error,
+    "Property_0_is_not_assignable_to_the_same_property_in_base_type_1_2416_b",
+    "Property '{0}' in type '{1}' is not assignable to the same property in base type '{2}'."),
+
+  // ---------------------------------------------------------------------------
+  // More 4xxx — declaration emit
+  // ---------------------------------------------------------------------------
+  Computed_property_names_are_not_allowed_in_enums: msg(1164, Category.Error,
+    "Computed_property_names_are_not_allowed_in_enums_1164",
+    "Computed property names are not allowed in enums."),
+  A_computed_property_name_in_an_ambient_context_must_refer_to_an_expression_whose_type_is_a_literal_type_or_a_unique_symbol_type: msg(1165, Category.Error,
+    "A_computed_property_name_in_an_ambient_context_1165",
+    "A computed property name in an ambient context must refer to an expression whose type is a literal type or a 'unique symbol' type."),
+  A_computed_property_name_in_a_class_property_declaration_must_have_a_simple_literal_type_or_a_unique_symbol_type: msg(1166, Category.Error,
+    "A_computed_property_name_in_a_class_property_declaration_1166",
+    "A computed property name in a class property declaration must have a simple literal type or a 'unique symbol' type."),
+  A_computed_property_name_in_a_method_overload_must_refer_to_an_expression_whose_type_is_a_literal_type_or_a_unique_symbol_type: msg(1168, Category.Error,
+    "A_computed_property_name_in_a_method_overload_1168",
+    "A computed property name in a method overload must refer to an expression whose type is a literal type or a 'unique symbol' type."),
+  A_computed_property_name_in_an_interface_must_refer_to_an_expression_whose_type_is_a_literal_type_or_a_unique_symbol_type: msg(1169, Category.Error,
+    "A_computed_property_name_in_an_interface_1169",
+    "A computed property name in an interface must refer to an expression whose type is a literal type or a 'unique symbol' type."),
+  A_computed_property_name_in_a_type_literal_must_refer_to_an_expression_whose_type_is_a_literal_type_or_a_unique_symbol_type: msg(1170, Category.Error,
+    "A_computed_property_name_in_a_type_literal_1170",
+    "A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
