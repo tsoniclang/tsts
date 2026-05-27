@@ -163,7 +163,19 @@ export class Program {
   fileExists(path: string): boolean { return this.opts.host.fileExists(path); }
   getCurrentDirectory(): string { return this.opts.host.getCurrentDirectory(); }
   getGlobalTypingsCacheLocation(): string { return ""; }
-  getNearestAncestorDirectoryWithPackageJson(dirname: string): string { void dirname; return ""; }
+  getNearestAncestorDirectoryWithPackageJson(dirname: string): string {
+    // Walk up from `dirname` looking for a directory that contains a
+    // package.json file.
+    let cur = dirname;
+    while (cur !== "" && cur !== "/" && cur !== ".") {
+      const pkgJsonPath = (cur.endsWith("/") ? cur : cur + "/") + "package.json";
+      if (this.opts.host.fileExists(pkgJsonPath)) return cur;
+      const idx = cur.lastIndexOf("/");
+      if (idx <= 0) return "";
+      cur = cur.slice(0, idx);
+    }
+    return "";
+  }
   getPackageJsonInfo(pkgJsonPath: string): unknown { void pkgJsonPath; return undefined; }
   getRedirectTargets(path: string): readonly string[] { void path; return []; }
   getSourceOfProjectReferenceIfOutputIncluded(file: SourceFile): string { void file; return ""; }
