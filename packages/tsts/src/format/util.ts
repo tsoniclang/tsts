@@ -19,8 +19,8 @@ import type { TextRange } from "./api.js";
  * Mirrors TS-Go `rangeIsOnOneLine`.
  */
 export function rangeIsOnOneLine(range: TextRange, file: SourceFile): boolean {
-  const startLine = getECMALineOfPosition(file, range.pos());
-  const endLine = getECMALineOfPosition(file, range.end());
+  const startLine = getECMALineOfPosition(file, range.pos);
+  const endLine = getECMALineOfPosition(file, range.end);
   return startLine === endLine;
 }
 

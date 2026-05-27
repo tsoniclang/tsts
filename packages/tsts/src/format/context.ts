@@ -118,7 +118,7 @@ export class FormattingContext {
       this.nextTokenSpan !== undefined
     ) {
       this.tokensAreOnSameLineCache = this.rangeIsOnOneLine(
-        newTextRange(this.currentTokenSpan.loc.pos(), this.nextTokenSpan.loc.end()),
+        newTextRange(this.currentTokenSpan.loc.pos, this.nextTokenSpan.loc.end),
       );
     }
     return this.tokensAreOnSameLineCache === "true";
