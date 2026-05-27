@@ -1255,6 +1255,58 @@ export class Printer {
   emitSemicolon(): void {
     this.writeTrailingSemicolon();
   }
+
+  // -------------------------------------------------------------------------
+  // High-level entry: print a whole SourceFile to a text writer.
+  // Mirrors ts-go `(*Printer).printFile`.
+  // -------------------------------------------------------------------------
+
+  /**
+   * Renders the given SourceFile through the emit pipeline and returns
+   * the accumulated text. Allocates an internal TextWriter if no
+   * writer has been attached. The result includes a trailing newline
+   * when `emitTrailingNewlines` is enabled.
+   */
+  printFile(sourceFile: SourceFile): string {
+    const writer = this.state.writer ?? this.ensureOwnWriter();
+    this.state.writer = writer;
+    this.currentSourceFile = sourceFile;
+    const statements = (sourceFile as unknown as { statements?: { nodes?: readonly AstNode[] } }).statements?.nodes ?? [];
+    for (let i = 0; i < statements.length; i++) {
+      if (i > 0) this.writeLine();
+      this.emit(0, statements[i]);
+    }
+    if (this.options.emitTrailingNewlines !== false) {
+      this.writeLine();
+    }
+    const text = (writer as unknown as { getText?(): string }).getText?.() ?? "";
+    return text;
+  }
+
+  private ensureOwnWriter(): PrinterWriter {
+    if (this.state.ownWriter !== undefined) return this.state.ownWriter;
+    // Minimal text writer fallback so printFile can be called without
+    // explicit writer wiring. Mirrors EmitTextWriter (TextWriter)
+    // semantics: indent + line tracking + buffer.
+    const w: PrinterWriter & { getText(): string } = (() => {
+      let buf = "";
+      let indent = 0;
+      let lineStart = true;
+      const indentSize = 4;
+      return {
+        write(text: string): void {
+          if (lineStart) { buf += " ".repeat(indent * indentSize); lineStart = false; }
+          buf += text;
+        },
+        writeLine(): void { buf += "\n"; lineStart = true; },
+        increaseIndent(): void { indent += 1; },
+        decreaseIndent(): void { indent = Math.max(0, indent - 1); },
+        getText(): string { return buf; },
+      };
+    })();
+    this.state.ownWriter = w;
+    return w;
+  }
 }
 
 // ---------------------------------------------------------------------------
