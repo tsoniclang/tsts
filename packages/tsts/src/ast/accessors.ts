@@ -413,6 +413,46 @@ export function propertyAssignmentName(node: AstNode): AstNode { return property
 export function shorthandName(node: AstNode): AstNode { return shorthandPropertyAssignmentNameRO(node); }
 export function shorthandObjectAssignmentInitializer(node: AstNode): AstNode | undefined { return shorthandObjectAssignmentInitializerRO(node); }
 export function shorthandEqualsToken(node: AstNode): AstNode | undefined { return shorthandEqualsTokenRO(node); }
+export function cloneIdentifier(node: AstNode): AstNode {
+  return { ...(node as unknown as Record<string, unknown>) } as unknown as AstNode;
+}
+export function getQualifiedNameLeft(node: AstNode): AstNode { return f<AstNode>(node, "left")!; }
+export function getQualifiedNameRight(node: AstNode): AstNode { return f<AstNode>(node, "right")!; }
+export function getParenthesizedTypeType(node: AstNode): AstNode { return f<AstNode>(node, "type")!; }
+export function getUnionOrIntersectionTypes(node: AstNode): readonly AstNode[] {
+  const types = f<NodeList | readonly AstNode[]>(node, "types");
+  if (types === undefined) return [];
+  const inner = (types as unknown as { nodes?: readonly AstNode[] }).nodes;
+  return inner ?? (types as unknown as readonly AstNode[]);
+}
+export function getConditionalTrueType(node: AstNode): AstNode { return f<AstNode>(node, "trueType")!; }
+export function getConditionalFalseType(node: AstNode): AstNode { return f<AstNode>(node, "falseType")!; }
+export function getTypeOperatorOperator(node: AstNode): number { return f<number>(node, "operator") ?? 0; }
+export function getTypeOperatorType(node: AstNode): AstNode { return f<AstNode>(node, "type")!; }
+export function getAccessorParameters(node: AstNode): readonly AstNode[] {
+  const list = f<NodeList>(node, "parameters");
+  if (list === undefined) return [];
+  const inner = (list as unknown as { nodes?: readonly AstNode[] }).nodes;
+  return inner ?? [];
+}
+export function getParameterType(node: AstNode): AstNode | undefined { return f<AstNode>(node, "type"); }
+export function getReturnType(node: AstNode): AstNode | undefined { return f<AstNode>(node, "type"); }
+export function hasModifier(node: AstNode, flag: number): boolean { return hasSyntacticModifier(node, flag); }
+export function hasStaticModifier(node: AstNode): boolean { return hasSyntacticModifier(node, 1 << 8 /* ModifierFlags.Static */); }
+export function getPropertyAccessExpression(node: AstNode): AstNode { return f<AstNode>(node, "expression")!; }
+export function getPropertyAccessName(node: AstNode): AstNode { return f<AstNode>(node, "name")!; }
+export function getModifierListLength(list: unknown): number {
+  if (list === undefined || list === null) return 0;
+  const nodes = (list as unknown as { nodes?: readonly AstNode[] }).nodes;
+  return nodes?.length ?? 0;
+}
+export function moveRangePastModifiers(node: AstNode): unknown {
+  const mods = f<ModifierList>(node, "modifiers");
+  if (mods === undefined) return nodeLoc(node);
+  return nodeLoc(mods as unknown as AstNode);
+}
+export function copyNodeListLoc(_src: unknown, _dst: unknown): void { /* loc handled via setLoc elsewhere */ }
+export function copyModifierListLoc(_src: unknown, _dst: unknown): void { /* loc handled via setLoc elsewhere */ }
 export function skipParentheses(node: AstNode): AstNode {
   let cur: AstNode = node;
   while (nodeKind(cur) === Kind.ParenthesizedExpression) {
