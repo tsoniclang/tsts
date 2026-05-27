@@ -1530,6 +1530,91 @@ export const Diagnostics = {
   Convert_overload_list_to_single_signature: msg(95009, Category.Message,
     "Convert_overload_list_to_single_signature_95009",
     "Convert overload list to single signature"),
+
+  // ---------------------------------------------------------------------------
+  // More 2xxx — class hierarchy + spread
+  // ---------------------------------------------------------------------------
+  Property_0_in_type_1_refers_to_a_different_member_that_cannot_be_accessed_from_within_type_2: msg(2447, Category.Error,
+    "Property_0_in_type_1_refers_to_a_different_member_2447",
+    "The '{0}' property in type '{1}' is not assignable to the same property in base type '{2}'."),
+  Generic_class_0_must_be_instantiated_with_no_type_arguments: msg(2317, Category.Error,
+    "Generic_class_0_must_be_instantiated_with_no_type_arguments_2317",
+    "Generic type '{0}' requires no type arguments."),
+  Generic_type_instantiation_is_excessively_deep_and_possibly_infinite: msg(2589, Category.Error,
+    "Generic_type_instantiation_is_excessively_deep_and_possibly_infinite_2589_b",
+    "Type instantiation is excessively deep and possibly infinite."),
+  An_optional_chain_cannot_contain_private_identifiers: msg(18030, Category.Error,
+    "An_optional_chain_cannot_contain_private_identifiers_18030",
+    "An optional chain cannot contain private identifiers."),
+  This_syntax_requires_an_imported_helper_named_0_which_does_not_exist_in_1_Consider_upgrading_your_version_of_2: msg(2343, Category.Error,
+    "This_syntax_requires_an_imported_helper_named_0_2343",
+    "This syntax requires an imported helper named '{0}' which does not exist in '{1}'. Consider upgrading your version of '{2}'."),
+  This_syntax_requires_an_imported_helper_but_module_0_cannot_be_found: msg(2354, Category.Error,
+    "This_syntax_requires_an_imported_helper_but_module_0_cannot_be_found_2354",
+    "This syntax requires an imported helper but module '{0}' cannot be found."),
+  A_dynamic_import_call_in_ES5_SlashES3_requires_the_Promise_constructor_Make_sure_you_have_a_declaration_for_the_Promise_constructor_or_include_ES2015_in_your_lib_option: msg(2710, Category.Error,
+    "A_dynamic_import_call_in_ES5_2710",
+    "A dynamic import call returns a 'Promise'. Make sure you have a declaration for 'Promise' or include 'ES2015' in your '--lib' option."),
+  Type_0_may_represent_a_primitive_value_which_is_not_permitted_as_the_right_operand_of_the_in_operator: msg(2638, Category.Error,
+    "Type_0_may_represent_a_primitive_value_2638",
+    "Type '{0}' may represent a primitive value, which is not permitted as the right operand of the 'in' operator."),
+  The_intersection_0_was_reduced_to_never_because_property_1_has_conflicting_types_in_some_constituents: msg(2825, Category.Error,
+    "The_intersection_0_was_reduced_to_never_because_property_1_2825",
+    "The intersection '{0}' was reduced to 'never' because property '{1}' has conflicting types in some constituents."),
+  Property_0_must_be_assigned_with_in_const_assertion: msg(2779, Category.Error,
+    "Property_0_must_be_assigned_with_in_const_assertion_2779",
+    "The left-hand side of an assignment expression may not be an optional property access."),
+  A_const_assertions_can_only_be_applied_to_references_to_enum_members_or_string_number_boolean_array_or_object_literals: msg(1355, Category.Error,
+    "A_const_assertions_can_only_be_applied_1355",
+    "A 'const' assertions can only be applied to references to enum members, or string, number, boolean, array, or object literals."),
+  Type_arguments_for_0_circularly_reference_themselves: msg(4109, Category.Error,
+    "Type_arguments_for_0_circularly_reference_themselves_4109",
+    "Type arguments for '{0}' circularly reference themselves."),
+
+  // ---------------------------------------------------------------------------
+  // 8xxx more JS-only
+  // ---------------------------------------------------------------------------
+  X_can_only_be_used_in_TypeScript_files: msg(8009, Category.Error,
+    "_can_only_be_used_in_TypeScript_files_8009",
+    "The '{0}' modifier can only be used in TypeScript files."),
+  Constructor_signatures_can_only_be_used_in_TypeScript_files: msg(8016, Category.Error,
+    "Constructor_signatures_can_only_be_used_in_TypeScript_files_8016",
+    "Type assertion expressions can only be used in TypeScript files."),
+  X_extends_can_only_be_used_in_TypeScript_files: msg(8017, Category.Error,
+    "extends_can_only_be_used_in_TypeScript_files_8017_b",
+    "'extends' clause can only be used in TypeScript files."),
+
+  // ---------------------------------------------------------------------------
+  // 18xxx async-iterator etc.
+  // ---------------------------------------------------------------------------
+  An_unhandled_exception_occurred_Colon_0: msg(18054, Category.Error,
+    "An_unhandled_exception_occurred_Colon_0_18054",
+    "An unhandled exception occurred: {0}"),
+  Top_level_await_using_statements_are_only_allowed_when_the_module_option_is_set_to_es2022_esnext_system_node16_node18_or_nodenext_and_the_target_option_is_set_to_es2017_or_higher: msg(1431, Category.Error,
+    "Top_level_await_using_statements_are_only_allowed_1431",
+    "Top-level 'await using' statements are only allowed when the 'module' option is set to 'es2022', 'esnext', 'system', 'node16', 'node18', or 'nodenext', and the 'target' option is set to 'es2017' or higher."),
+
+  // ---------------------------------------------------------------------------
+  // 5xxx more config
+  // ---------------------------------------------------------------------------
+  Compiler_option_0_requires_a_value: msg(5057, Category.Error,
+    "Compiler_option_0_requires_a_value_5057",
+    "Cannot find a tsconfig.json file at the specified directory: '{0}'."),
+  Cannot_find_a_tsconfig_json_file_at_the_specified_directory_0: msg(5057, Category.Error,
+    "Cannot_find_a_tsconfig_json_file_at_the_specified_directory_0_5057_b",
+    "Cannot find a tsconfig.json file at the specified directory: '{0}'."),
+  The_specified_path_does_not_exist_Colon_0: msg(5058, Category.Error,
+    "The_specified_path_does_not_exist_Colon_0_5058",
+    "The specified path does not exist: '{0}'."),
+  Invalid_value_for_option_extends_Colon_0: msg(5059, Category.Error,
+    "Invalid_value_for_option_extends_Colon_0_5059",
+    "Invalid value for '--reactNamespace'. '{0}' is not a valid identifier."),
+  Pattern_0_can_have_at_most_one_Asterisk_character: msg(5061, Category.Error,
+    "Pattern_0_can_have_at_most_one_Asterisk_character_5061",
+    "Pattern '{0}' can have at most one '*' character."),
+  Substitution_0_for_pattern_1_has_incorrect_type_expected_string_got_2: msg(5062, Category.Error,
+    "Substitution_0_for_pattern_1_has_incorrect_type_5062",
+    "Substitution '{0}' for pattern '{1}' has incorrect type, expected 'string', got '{2}'."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
