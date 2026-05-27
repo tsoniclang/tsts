@@ -287,13 +287,19 @@ export class Printer {
     return getLineDifference(false);
   }
   getLeadingLineTerminatorCount(parentNode: AstNode | undefined, firstChild: AstNode | undefined, format: number): number {
-    void parentNode; void firstChild; void format; return 0;
+    void format;
+    if (parentNode === undefined || firstChild === undefined) return 0;
+    return this.getLinesBetweenNodes(undefined, parentNode, firstChild);
   }
   getSeparatingLineTerminatorCount(previousNode: AstNode | undefined, nextNode: AstNode | undefined, format: number): number {
-    void previousNode; void nextNode; void format; return 0;
+    void format;
+    if (previousNode === undefined || nextNode === undefined) return 0;
+    return this.getLinesBetweenNodes(undefined, previousNode, nextNode);
   }
   getClosingLineTerminatorCount(parentNode: AstNode | undefined, lastChild: AstNode | undefined, format: number, childrenTextRange: TextRange): number {
-    void parentNode; void lastChild; void format; void childrenTextRange; return 0;
+    void format; void childrenTextRange;
+    if (parentNode === undefined || lastChild === undefined) return 0;
+    return this.getLinesBetweenNodes(undefined, lastChild, parentNode);
   }
 
   // -------------------------------------------------------------------------
