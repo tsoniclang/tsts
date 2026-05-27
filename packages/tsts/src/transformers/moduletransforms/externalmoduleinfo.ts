@@ -475,12 +475,37 @@ interface ReferenceResolver {
 }
 interface EmitHelper { readonly _h: unknown }
 
-// Strada helpers not yet wired to ast/index.js
-declare function isNotEmittedStatement(node: AstNode): boolean;
-declare function namespaceExportName(node: AstNode): AstNode;
-declare function functionDeclarationName(node: FunctionDeclaration): AstNode;
-declare function compilerOptionsImportHelpers(opts: CompilerOptions): boolean;
-declare function compilerOptionsGetEmitModuleKind(opts: CompilerOptions): number;
-declare function isFileLevelUniqueName(file: SourceFile, name: string, hasGlobalName: ((name: string) => boolean) | undefined): boolean;
-declare function emitHelperImportName(helper: EmitHelper): string;
-declare function emitHelperScoped(helper: EmitHelper): boolean;
+// Strada helpers — local implementations:
+function isNotEmittedStatement(node: AstNode | undefined): boolean {
+  // NotEmittedStatement is a synthetic statement type Strada uses to
+  // mark elided declarations. Until that kind is wired, treat everything
+  // as emitted (false).
+  void node;
+  return false;
+}
+function namespaceExportName(node: AstNode): AstNode {
+  return (node as unknown as { name: AstNode }).name;
+}
+function functionDeclarationName(node: FunctionDeclaration): AstNode {
+  return (node as unknown as { name: AstNode }).name;
+}
+function compilerOptionsImportHelpers(opts: CompilerOptions): boolean {
+  return (opts as unknown as { importHelpers?: boolean }).importHelpers === true;
+}
+function compilerOptionsGetEmitModuleKind(opts: CompilerOptions): number {
+  return (opts as unknown as { module?: number }).module ?? 1;
+}
+function isFileLevelUniqueName(file: SourceFile, name: string, hasGlobalName: ((name: string) => boolean) | undefined): boolean {
+  // Without a global-symbol-table integration, the best we can do is
+  // honour the global-name callback when present and assume unique
+  // otherwise.
+  void file;
+  if (hasGlobalName !== undefined && hasGlobalName(name)) return false;
+  return true;
+}
+function emitHelperImportName(helper: EmitHelper): string {
+  return (helper as unknown as { importName?: string }).importName ?? "";
+}
+function emitHelperScoped(helper: EmitHelper): boolean {
+  return (helper as unknown as { scoped?: boolean }).scoped === true;
+}

@@ -15,6 +15,30 @@
 
 import { Transformer, type TransformOptions } from "../transformer.js";
 import { MetadataSerializer, newMetadataSerializer, type EmitResolver } from "./typeserializer.js";
+import { Kind, getSubtreeFacts } from "../../ast/index.js";
+import { isSourceFile, isModuleBlock, isClassLikeDeclaration as isClassLike } from "../../ast/index.js";
+
+const SubtreeFacts = { ContainsDecorators: 1 << 4 } as const;
+
+function getEmitDecoratorMetadata(opts: CompilerOptions): boolean {
+  return (opts as unknown as { emitDecoratorMetadata?: boolean }).emitDecoratorMetadata === true;
+}
+function getStrictNullChecks(opts: CompilerOptions): boolean {
+  return (opts as unknown as { strict?: boolean; strictNullChecks?: boolean }).strictNullChecks === true
+    || (opts as unknown as { strict?: boolean }).strict === true;
+}
+function getFirstConstructorWithBody(node: AstNode): AstNode | undefined {
+  const members = (node as unknown as { members?: { nodes?: readonly AstNode[] } | readonly AstNode[] }).members;
+  if (members === undefined) return undefined;
+  const inner = (members as { nodes?: readonly AstNode[] }).nodes ?? (members as readonly AstNode[]);
+  for (const m of inner) {
+    if ((m as { kind?: number }).kind === Kind.Constructor) {
+      const body = (m as unknown as { body?: AstNode }).body;
+      if (body !== undefined) return m;
+    }
+  }
+  return undefined;
+}
 import type {
   Node as AstNode,
   ClassDeclaration,
@@ -183,19 +207,3 @@ export function newMetadataTransformer(opts: TransformOptions): Transformer | un
 
 interface CompilerOptions { readonly _opts?: unknown }
 
-declare const Kind: {
-  ClassDeclaration: number; ClassExpression: number; PropertyDeclaration: number;
-  MethodDeclaration: number; SetAccessor: number; GetAccessor: number;
-};
-
-declare const SubtreeFacts: {
-  ContainsDecorators: number;
-};
-
-declare function getSubtreeFacts(node: AstNode): number;
-declare function getEmitDecoratorMetadata(opts: CompilerOptions): boolean;
-declare function getStrictNullChecks(opts: CompilerOptions): boolean;
-declare function isSourceFile(node: AstNode): boolean;
-declare function isModuleBlock(node: AstNode): boolean;
-declare function isClassLike(node: AstNode): boolean;
-declare function getFirstConstructorWithBody(node: AstNode): AstNode | undefined;
