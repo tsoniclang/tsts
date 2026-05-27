@@ -75,8 +75,15 @@ export class NodeFactory {
   }
 
   newStringLiteralFromNode(textSourceNode: AstNode): AstNode {
-    void textSourceNode;
-    return {} as AstNode;
+    // Mirror upstream: a string literal whose text is sourced from
+    // another node (e.g. an Identifier in destructuring). Carries the
+    // sourceText reference so the printer can preserve the original.
+    const text = (textSourceNode as unknown as { text?: string }).text ?? "";
+    return {
+      kind: 11 /* StringLiteral */,
+      text,
+      textSourceNode,
+    } as unknown as AstNode;
   }
 
   // -------------------------------------------------------------------------
