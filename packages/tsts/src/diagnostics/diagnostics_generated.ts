@@ -2797,6 +2797,59 @@ export const Diagnostics = {
   Print_files_read_during_the_compilation_including_why_it_was_included: msg(6172, Category.Message,
     "Print_files_read_during_the_compilation_6172",
     "Print files read during the compilation including why it was included."),
+
+  // ---------------------------------------------------------------------------
+  // More 2xxx — readonly + assertions
+  // ---------------------------------------------------------------------------
+  X_const_assertions_can_only_be_applied_to_references_to_enum_members_or_string_number_boolean_array_or_object_literals_x: msg(1355_2 as unknown as number, Category.Error,
+    "const_assertions_can_only_be_applied_1355_b",
+    "A 'const' assertions can only be applied to references to enum members, or string, number, boolean, array, or object literals."),
+  Property_0_was_also_declared_here: msg(2733, Category.Error,
+    "Property_0_was_also_declared_here_2733",
+    "Property '{0}' was also declared here."),
+  Identifier_0_is_not_supported_in_an_extended_class: msg(2854, Category.Error,
+    "Identifier_0_is_not_supported_in_an_extended_class_2854",
+    "Unexpected keyword or identifier."),
+  Unexpected_keyword_or_identifier: msg(1434, Category.Error,
+    "Unexpected_keyword_or_identifier_1434",
+    "Unexpected keyword or identifier."),
+  Type_0_cannot_be_used_to_index_type_1_x: msg(2536_2 as unknown as number, Category.Error,
+    "Type_0_cannot_be_used_to_index_type_1_2536_b",
+    "Type '{0}' cannot be used to index type '{1}'."),
+  Element_implicitly_has_an_any_type_because_expression_of_type_0_can_t_be_used_to_index_type_1_x: msg(7053_2 as unknown as number, Category.Error,
+    "Element_implicitly_has_an_any_type_7053_c",
+    "Element implicitly has an 'any' type because expression of type '{0}' can't be used to index type '{1}'."),
+  A_const_initializer_in_an_ambient_context_must_be_a_string_or_numeric_literal_or_literal_enum_reference: msg(1492, Category.Error,
+    "A_const_initializer_in_an_ambient_context_1492",
+    "A 'const' initializer in an ambient context must be a string or numeric literal or literal enum reference."),
+  Type_only_imports_can_specify_a_default_import_or_named_bindings_but_not_both_x: msg(1363_2 as unknown as number, Category.Error,
+    "Type_only_imports_can_specify_1363_b",
+    "A type-only import can specify a default import or named bindings, but not both."),
+
+  // ---------------------------------------------------------------------------
+  // 6xxx — option text
+  // ---------------------------------------------------------------------------
+  Number: msg(6092_2 as unknown as number, Category.Message,
+    "Number_6092_b",
+    "Number"),
+  String: msg(6097_2 as unknown as number, Category.Message,
+    "String_6097_b",
+    "String"),
+  Boolean: msg(6093_2 as unknown as number, Category.Message,
+    "Boolean_6093_b",
+    "Boolean"),
+  Object: msg(6094_3 as unknown as number, Category.Message,
+    "Object_6094_b",
+    "Object"),
+  Array_string_or_object: msg(6098, Category.Message,
+    "Array_string_or_object_6098",
+    "Array, string or object"),
+  Enable_constraints_that_allow_a_TypeScript_project_to_be_used_with_project_references_y: msg(6116_4 as unknown as number, Category.Message,
+    "Enable_constraints_6116_d",
+    "Enable constraints that allow a TypeScript project to be used with project references."),
+  Watch_input_files_and_emit_to_output_dir: msg(6118, Category.Message,
+    "Watch_input_files_and_emit_to_output_dir_6118",
+    "Watch input files and emit to output dir."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
