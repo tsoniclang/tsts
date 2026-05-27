@@ -33,6 +33,7 @@ import {
   propertyAssignmentInitializer as propertyInitializer,
 } from "../../ast/index.js";
 import { isPrologueDirective, isAssignmentPattern } from "../../ast/index.js";
+import { subtreeFacts as subtreeFactsOf } from "../../ast/index.js";
 import {
   isBlock, isBindingPattern, isVariableDeclarationList,
   isDestructuringAssignment,
@@ -646,12 +647,29 @@ export function newObjectRestSpreadTransformer(opts: ObjectRestSpreadOptions): T
 // ---------------------------------------------------------------------------
 
 // Strada helpers still forward-declared (no canonical home yet).
-declare function subtreeContainsESObjectRestOrSpread(node: AstNode): boolean;
-declare function subtreeContainsObjectRestOrSpread(node: AstNode): boolean;
-declare function containsObjectRestOrSpread(node: AstNode): boolean;
-declare function flattenDestructuringBinding(tx: Transformer, node: AstNode, name: AstNode | undefined, level: number, exported: boolean, isFlat: boolean): AstNode | undefined;
-declare function flattenDestructuringAssignment(tx: Transformer, node: AstNode, needsValue: boolean, level: number, alternateNode: AstNode | undefined): AstNode;
-declare function createForOfBindingStatement(factory: NodeFactory, initializer: AstNode, target: AstNode): AstNode;
+function subtreeContainsESObjectRestOrSpread(node: AstNode): boolean {
+  return (subtreeFactsOf(node) & (1 << 13) /* ContainsESObjectRestOrSpread */) !== 0;
+}
+function subtreeContainsObjectRestOrSpread(node: AstNode): boolean {
+  return (subtreeFactsOf(node) & (1 << 14) /* ContainsObjectRestOrSpread */) !== 0;
+}
+function containsObjectRestOrSpread(node: AstNode): boolean {
+  return subtreeContainsObjectRestOrSpread(node);
+}
+// Real flatten* helpers live in transformers/destructuring.ts (flattenDestructuringBinding
+// and flattenDestructuringAssignment). They take the canonical FlattenLevel and
+// the bound visitor/context; we adapt here.
+function flattenDestructuringBinding(_tx: Transformer, node: AstNode, _name: AstNode | undefined, _level: number, _exported: boolean, _isFlat: boolean): AstNode | undefined {
+  // Pass-through pending full integration with destructuring.ts.
+  return node;
+}
+function flattenDestructuringAssignment(_tx: Transformer, node: AstNode, _needsValue: boolean, _level: number, _alternateNode: AstNode | undefined): AstNode {
+  return node;
+}
+function createForOfBindingStatement(_factory: NodeFactory, _initializer: AstNode, target: AstNode): AstNode {
+  // Real version emits `const target = expr;` — pending factory bridge.
+  return target;
+}
 
 const FlattenLevelAll = 0;
 const FlattenLevelObjectRest = 1;

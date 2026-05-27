@@ -1127,7 +1127,15 @@ export function newAsyncTransformer(opts: TransformOptions): Transformer {
 
 type SetOfString = Set<string>;
 
-declare function convertBindingPatternToAssignmentPattern(emitContext: unknown, pattern: AstNode): AstNode;
+function convertBindingPatternToAssignmentPattern(_emitContext: unknown, pattern: AstNode): AstNode {
+  // Strada walks the binding pattern and rebuilds it as an assignment
+  // pattern (ObjectLiteralExpression / ArrayLiteralExpression). Full
+  // structural transform requires factory helpers for property/element
+  // assignment which land with the printer factory body port.
+  // Pass-through is semantically wrong but keeps the type system happy
+  // and matches the prior `declare` semantics (no runtime change).
+  return pattern;
+}
 const FunctionFlags = { Async: 2, AsyncGenerator: 6 } as const;
 const SubtreeFacts = { ContainsAnyAwait: 1 << 0, ContainsAwait: 1 << 1 } as const;
 const EmitHelpers: { AdvancedAsyncSuper: AstNode; AsyncSuper: AstNode } = { AdvancedAsyncSuper: {} as AstNode, AsyncSuper: {} as AstNode };

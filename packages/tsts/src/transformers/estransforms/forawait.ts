@@ -961,8 +961,24 @@ function unwrapInnermostStatementOfLabel(node: LabeledStatement): AstNode {
 const FunctionFlags = { Normal: 0, Async: 2, Generator: 1 } as const;
 const SubtreeFacts = { ContainsForAwaitOrAsyncGenerator: 1 << 0 } as const;
 const EmitHelpers: { AdvancedAsyncSuper: AstNode; AsyncSuper: AstNode } = { AdvancedAsyncSuper: {} as AstNode, AsyncSuper: {} as AstNode };
-declare function isSimpleParameterList(parameters: readonly AstNode[]): boolean;
-declare function yieldExpressionOf(node: YieldExpression): AstNode | undefined;
-declare function yieldAsteriskToken(node: YieldExpression): TokenNode | undefined;
-declare function returnExpressionOf(node: ReturnStatement): AstNode | undefined;
-declare function labeledStatementBody(node: LabeledStatement): AstNode;
+function isSimpleParameterList(parameters: readonly AstNode[]): boolean {
+  for (const p of parameters) {
+    if ((p as unknown as { initializer?: AstNode }).initializer !== undefined) return false;
+    if ((p as unknown as { dotDotDotToken?: AstNode }).dotDotDotToken !== undefined) return false;
+    const name = (p as unknown as { name?: { kind?: number } }).name;
+    if (name !== undefined && name.kind !== Kind.Identifier) return false;
+  }
+  return true;
+}
+function yieldExpressionOf(node: YieldExpression): AstNode | undefined {
+  return (node as unknown as { expression?: AstNode }).expression;
+}
+function yieldAsteriskToken(node: YieldExpression): TokenNode | undefined {
+  return (node as unknown as { asteriskToken?: TokenNode }).asteriskToken;
+}
+function returnExpressionOf(node: ReturnStatement): AstNode | undefined {
+  return (node as unknown as { expression?: AstNode }).expression;
+}
+function labeledStatementBody(node: LabeledStatement): AstNode {
+  return (node as unknown as { statement: AstNode }).statement;
+}

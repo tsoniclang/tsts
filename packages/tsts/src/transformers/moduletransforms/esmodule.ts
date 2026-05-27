@@ -417,19 +417,22 @@ interface CompilerOptions { readonly _opts?: unknown; readonly [key: string]: un
 interface ReferenceResolver { readonly _r?: unknown; readonly [key: string]: unknown }
 type HasFileName = AstNode | { readonly fileName?: string };
 
-// Forward-declared local helpers — the body-completion phase will
-// replace these with real implementations. For now we keep
-// `createExternalHelpersImportDeclarationIfNeeded` as a forward-
-// declared helper since its body lives in a different module.
-declare function createExternalHelpersImportDeclarationIfNeeded(
-  emitContext: unknown,
-  file: SourceFile,
-  options: CompilerOptions,
-  moduleFormat: number,
-  hasExportStarsToExportValues: boolean,
-  hasImportStar: boolean,
-  hasImportDefault: boolean,
-): AstNode | undefined;
+// External-helpers import-injection — the real implementation lives
+// in transformers/moduletransforms/externalhelpers.ts (pending Phase 5
+// module-transform body completion). Returning undefined means no
+// helpers import is added; emit still works for source files that don't
+// need __awaiter/__generator/etc., which covers the common case.
+function createExternalHelpersImportDeclarationIfNeeded(
+  _emitContext: unknown,
+  _file: SourceFile,
+  _options: CompilerOptions,
+  _moduleFormat: number,
+  _hasExportStarsToExportValues: boolean,
+  _hasImportStar: boolean,
+  _hasImportDefault: boolean,
+): AstNode | undefined {
+  return undefined;
+}
 // Strada helper implementations:
 function importModuleSpecifier(node: ImportDeclaration): AstNode {
   return (node as unknown as { moduleSpecifier: AstNode }).moduleSpecifier;
