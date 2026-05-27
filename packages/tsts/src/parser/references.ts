@@ -105,11 +105,58 @@ function getStatements(file: SourceFile | AstNode): readonly AstNode[] {
   return inner ?? (stmts as readonly AstNode[]);
 }
 function forEachDynamicImportOrRequireCall(
-  _file: SourceFile, _includeTypeSpaceImports: boolean, _requireStringLiteralLikeArgument: boolean,
-  _cb: (node: AstNode, moduleSpecifier: AstNode) => boolean,
+  file: SourceFile, includeTypeSpaceImports: boolean, requireStringLiteralLikeArgument: boolean,
+  cb: (node: AstNode, moduleSpecifier: AstNode) => boolean,
 ): void {
-  // Real walk needs a full child-visitor + parser integration. Until
-  // that lands, return — references collection skips dynamic forms.
+  void includeTypeSpaceImports;
+  // Walk the AST. For each CallExpression whose callee is the
+  // ImportKeyword (dynamic import) or `require` Identifier, extract
+  // the first string-literal argument and invoke cb.
+  const walk = (node: AstNode | undefined): boolean => {
+    if (node === undefined) return false;
+    const k = (node as { kind?: number }).kind;
+    if (k === 213 /* CallExpression */) {
+      const expr = (node as unknown as { expression?: { kind?: number; text?: string } }).expression;
+      const exprKind = expr?.kind;
+      const isImport = exprKind === 102 /* ImportKeyword */;
+      const isRequire = exprKind === 80 /* Identifier */ && expr?.text === "require";
+      if (isImport || isRequire) {
+        const args = (node as unknown as { arguments?: { nodes?: readonly AstNode[] } }).arguments?.nodes;
+        const first = args?.[0];
+        if (first !== undefined) {
+          const firstKind = (first as { kind?: number }).kind;
+          if (!requireStringLiteralLikeArgument || firstKind === 11 /* StringLiteral */ || firstKind === 15 /* NoSubstitutionTemplateLiteral */) {
+            if (cb(node, first)) return true;
+          }
+        }
+      }
+    }
+    // Recurse into children (typed-AST visitor when available).
+    const visitChildren = (n: AstNode): boolean => {
+      for (const key of Object.keys(n as object)) {
+        if (key === "parent") continue;
+        const v = (n as unknown as Record<string, unknown>)[key];
+        if (v === null || v === undefined) continue;
+        if (Array.isArray(v)) {
+          for (const item of v as unknown[]) {
+            if (item !== null && typeof item === "object" && "kind" in (item as object)) {
+              if (walk(item as AstNode)) return true;
+            }
+          }
+        } else if (typeof v === "object" && "kind" in (v as object)) {
+          if (walk(v as AstNode)) return true;
+        } else if (typeof v === "object" && "nodes" in (v as object)) {
+          const arr = (v as { nodes?: readonly AstNode[] }).nodes;
+          if (arr !== undefined) {
+            for (const item of arr) if (walk(item)) return true;
+          }
+        }
+      }
+      return false;
+    };
+    return visitChildren(node);
+  };
+  for (const stmt of getStatements(file)) walk(stmt);
 }
 function addImport(file: SourceFile, moduleSpecifier: AstNode): void {
   const arr = (file as unknown as { imports?: AstNode[] }).imports;
