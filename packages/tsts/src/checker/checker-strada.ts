@@ -578,8 +578,39 @@ export class Checker {
   // TypeNode → Type
   // -------------------------------------------------------------------------
 
-  getTypeFromTypeNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromTypeNodeWorker(node: AstNode): Type { void node; return {} as Type; }
+  getTypeFromTypeNode(node: AstNode): Type {
+    return this.getTypeFromTypeNodeWorker(node);
+  }
+  getTypeFromTypeNodeWorker(node: AstNode): Type {
+    // Type-keyword dispatch returns a tagged singleton stub that the
+    // checker/printer.ts type-renderer can already serialize. Real type
+    // identity + caching lands with the full type system.
+    const k = (node as { kind?: number }).kind;
+    switch (k) {
+      case Kind.AnyKeyword: return { flags: 1 << 0 } as unknown as Type;       // Any
+      case Kind.UnknownKeyword: return { flags: 1 << 1 } as unknown as Type;   // Unknown
+      case Kind.StringKeyword: return { flags: 1 << 2 } as unknown as Type;
+      case Kind.NumberKeyword: return { flags: 1 << 3 } as unknown as Type;
+      case Kind.BooleanKeyword: return { flags: 1 << 4 } as unknown as Type;
+      case Kind.BigIntKeyword: return { flags: 1 << 6 } as unknown as Type;
+      case Kind.VoidKeyword: return { flags: 1 << 14 } as unknown as Type;
+      case Kind.UndefinedKeyword: return { flags: 1 << 15 } as unknown as Type;
+      case Kind.NullKeyword: return { flags: 1 << 16 } as unknown as Type;
+      case Kind.NeverKeyword: return { flags: 1 << 17 } as unknown as Type;
+      case Kind.SymbolKeyword: return { flags: 1 << 12 } as unknown as Type;
+      case Kind.ObjectKeyword: return { flags: 1 << 26 } as unknown as Type;   // NonPrimitive
+      case Kind.ArrayType: return this.getTypeFromArrayOrTupleTypeNode(node);
+      case Kind.TupleType: return this.getTypeFromArrayOrTupleTypeNode(node);
+      case Kind.UnionType: return this.getTypeFromUnionTypeNode(node);
+      case Kind.IntersectionType: return this.getTypeFromIntersectionTypeNode(node);
+      case Kind.ConditionalType: return this.getTypeFromConditionalTypeNode(node);
+      case Kind.MappedType: return this.getTypeFromMappedTypeNode(node);
+      case Kind.LiteralType: return this.getTypeFromLiteralTypeNode(node);
+      case Kind.IndexedAccessType: return this.getTypeFromIndexedAccessTypeNode(node);
+      case Kind.TypeReference: return this.getTypeFromTypeReference(node);
+      default: return { flags: 1 << 0 } as unknown as Type;
+    }
+  }
   getTypeFromTypeReference(node: AstNode): Type { void node; return {} as Type; }
   getTypeFromTypeAliasReference(node: AstNode, symbol: AstSymbol): Type {
     void node; void symbol; return {} as Type;
