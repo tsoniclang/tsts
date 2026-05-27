@@ -349,6 +349,40 @@ function bindClassDeclaration(classDeclaration: ClassDeclaration, state: BinderS
   }
   const classMembers: SymbolTable = new Map();
   state.locals.set(classDeclaration, classMembers);
+  // Bind each member into the class's member table.
+  for (const member of classDeclaration.members) {
+    bindClassMember(member as Node, classMembers, state);
+  }
+}
+
+function bindClassMember(member: Node, classMembers: SymbolTable, state: BinderState): void {
+  const name = (member as unknown as { name?: { text?: string } }).name;
+  if (name?.text === undefined) return;
+  const kind = (member as { kind?: number }).kind;
+  // Method / GetAccessor / SetAccessor / PropertyDeclaration / Constructor
+  let flags: SymbolFlags = SymbolFlags.None;
+  let excludes: SymbolFlags = SymbolFlags.None;
+  switch (kind) {
+    case 174 /* MethodDeclaration */:
+      flags = SymbolFlags.Method;
+      excludes = SymbolFlags.MethodExcludes;
+      break;
+    case 177 /* GetAccessor */:
+      flags = SymbolFlags.GetAccessor;
+      excludes = SymbolFlags.GetAccessorExcludes;
+      break;
+    case 178 /* SetAccessor */:
+      flags = SymbolFlags.SetAccessor;
+      excludes = SymbolFlags.SetAccessorExcludes;
+      break;
+    case 171 /* PropertyDeclaration */:
+      flags = SymbolFlags.Property;
+      excludes = SymbolFlags.PropertyExcludes;
+      break;
+    default:
+      return;
+  }
+  declareSymbol(classMembers, name.text, member, flags, excludes, state);
 }
 
 function bindInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, state: BinderState, lexicalScope: SymbolTable): void {
@@ -362,6 +396,31 @@ function bindInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, st
   );
   const interfaceMembers: SymbolTable = new Map();
   state.locals.set(interfaceDeclaration, interfaceMembers);
+  // Bind interface members (PropertySignature/MethodSignature/etc).
+  for (const member of interfaceDeclaration.members) {
+    bindInterfaceMember(member as Node, interfaceMembers, state);
+  }
+}
+
+function bindInterfaceMember(member: Node, table: SymbolTable, state: BinderState): void {
+  const name = (member as unknown as { name?: { text?: string } }).name;
+  if (name?.text === undefined) return;
+  const kind = (member as { kind?: number }).kind;
+  let flags: SymbolFlags = SymbolFlags.None;
+  let excludes: SymbolFlags = SymbolFlags.None;
+  switch (kind) {
+    case 170 /* PropertySignature */:
+      flags = SymbolFlags.Property;
+      excludes = SymbolFlags.PropertyExcludes;
+      break;
+    case 173 /* MethodSignature */:
+      flags = SymbolFlags.Method;
+      excludes = SymbolFlags.MethodExcludes;
+      break;
+    default:
+      return;
+  }
+  declareSymbol(table, name.text, member, flags, excludes, state);
 }
 
 function bindTypeAliasDeclaration(typeAliasDeclaration: TypeAliasDeclaration, state: BinderState, lexicalScope: SymbolTable): void {
