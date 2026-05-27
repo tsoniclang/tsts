@@ -146,18 +146,64 @@ export function isConstTypeReference(node: AstNode): boolean {
 // Assignment-target classification
 // ---------------------------------------------------------------------------
 
-export function getAssignmentTargetKind(node: AstNode): AssignmentKind { void node; return AssignmentKind.None; }
-export function isDeleteTarget(node: AstNode): boolean { void node; return false; }
-export function isInCompoundLikeAssignment(node: AstNode): boolean { void node; return false; }
-export function isCompoundLikeAssignment(assignment: AstNode): boolean { void assignment; return false; }
+export function getAssignmentTargetKind(node: AstNode): AssignmentKind {
+  // Walk up parents looking for an assignment expression that has this
+  // node on its left side. Mirrors TS-Go `getAssignmentTargetKind`.
+  let parent: AstNode | undefined = nodeParent(node);
+  while (parent !== undefined) {
+    if (parent.kind === Kind.BinaryExpression) {
+      const op = (parent as unknown as { operatorToken?: { kind?: number } }).operatorToken?.kind;
+      const left = (parent as unknown as { left?: AstNode }).left;
+      if (op !== undefined && left === node) {
+        if (op === Kind.EqualsToken) return AssignmentKind.Definite;
+        if (op >= Kind.PlusEqualsToken && op <= Kind.CaretEqualsToken) return AssignmentKind.Compound;
+      }
+      return AssignmentKind.None;
+    }
+    if (parent.kind === Kind.PrefixUnaryExpression || parent.kind === Kind.PostfixUnaryExpression) {
+      const op = (parent as unknown as { operator?: number }).operator;
+      if (op === Kind.PlusPlusToken || op === Kind.MinusMinusToken) return AssignmentKind.Compound;
+      return AssignmentKind.None;
+    }
+    if (parent.kind === Kind.ForInStatement || parent.kind === Kind.ForOfStatement) {
+      const init = (parent as unknown as { initializer?: AstNode }).initializer;
+      return init === node ? AssignmentKind.Definite : AssignmentKind.None;
+    }
+    if (parent.kind === Kind.ParenthesizedExpression
+        || parent.kind === Kind.ArrayLiteralExpression
+        || parent.kind === Kind.SpreadElement
+        || parent.kind === Kind.NonNullExpression) {
+      node = parent;
+      parent = nodeParent(parent);
+      continue;
+    }
+    return AssignmentKind.None;
+  }
+  return AssignmentKind.None;
+}
+export function isDeleteTarget(node: AstNode): boolean {
+  const parent = nodeParent(node);
+  return parent !== undefined && parent.kind === Kind.DeleteExpression;
+}
+export function isInCompoundLikeAssignment(node: AstNode): boolean {
+  return getAssignmentTargetKind(node) === AssignmentKind.Compound;
+}
+export function isCompoundLikeAssignment(assignment: AstNode): boolean {
+  if (assignment.kind !== Kind.BinaryExpression) return false;
+  const op = (assignment as unknown as { operatorToken?: { kind?: number } }).operatorToken?.kind;
+  return op !== undefined && op >= Kind.PlusEqualsToken && op <= Kind.CaretEqualsToken;
+}
 
 // ---------------------------------------------------------------------------
 // Variable-statement helpers
 // ---------------------------------------------------------------------------
 
 export function getSingleVariableOfVariableStatement(node: AstNode): AstNode | undefined {
-  void node;
-  return undefined;
+  if (node.kind !== Kind.VariableStatement) return undefined;
+  const list = (node as unknown as { declarationList?: { declarations?: { nodes?: readonly AstNode[] } } }).declarationList;
+  const decls = list?.declarations?.nodes;
+  if (decls === undefined || decls.length !== 1) return undefined;
+  return decls[0];
 }
 
 // ---------------------------------------------------------------------------
@@ -190,16 +236,84 @@ export function isShorthandAmbientModule(node: AstNode): boolean { void node; re
 // Alias / import helpers
 // ---------------------------------------------------------------------------
 
-export function getAliasDeclarationFromName(node: AstNode): AstNode | undefined { void node; return undefined; }
-export function entityNameToString(name: AstNode): string { void name; return ""; }
-export function getContainingQualifiedNameNode(node: AstNode): AstNode | undefined { void node; return undefined; }
-export function isSideEffectImport(node: AstNode): boolean { void node; return false; }
-export function getExternalModuleRequireArgument(node: AstNode): AstNode | undefined { void node; return undefined; }
-export function isRightSideOfAccessExpression(node: AstNode): boolean { void node; return false; }
-export function isTopLevelInExternalModuleAugmentation(node: AstNode): boolean { void node; return false; }
-export function isSyntacticDefault(node: AstNode): boolean { void node; return false; }
-export function hasExportAssignmentSymbol(moduleSymbol: AstSymbol): boolean { void moduleSymbol; return false; }
-export function isTypeAlias(node: AstNode): boolean { void node; return false; }
+export function getAliasDeclarationFromName(node: AstNode): AstNode | undefined {
+  // Walks up from an identifier looking for the import/export
+  // declaration that introduces it as an alias.
+  let parent: AstNode | undefined = nodeParent(node);
+  while (parent !== undefined) {
+    switch (parent.kind) {
+      case Kind.ImportClause:
+      case Kind.NamespaceImport:
+      case Kind.NamespaceExport:
+      case Kind.ImportSpecifier:
+      case Kind.ExportSpecifier:
+      case Kind.ImportEqualsDeclaration:
+      case Kind.NamespaceExportDeclaration:
+        return parent;
+    }
+    parent = nodeParent(parent);
+  }
+  return undefined;
+}
+export function entityNameToString(name: AstNode): string {
+  if (name.kind === Kind.Identifier) return (name as unknown as { text?: string }).text ?? "";
+  if (name.kind === Kind.QualifiedName) {
+    const left = (name as unknown as { left?: AstNode }).left;
+    const right = (name as unknown as { right?: { text?: string } }).right;
+    return `${left !== undefined ? entityNameToString(left) : ""}.${right?.text ?? ""}`;
+  }
+  return (name as unknown as { text?: string }).text ?? "";
+}
+export function getContainingQualifiedNameNode(node: AstNode): AstNode | undefined {
+  let current: AstNode | undefined = node;
+  while (current !== undefined) {
+    const parent = nodeParent(current);
+    if (parent === undefined || parent.kind !== Kind.QualifiedName) return current;
+    current = parent;
+  }
+  return current;
+}
+export function isSideEffectImport(node: AstNode): boolean {
+  if (node.kind !== Kind.ImportDeclaration) return false;
+  return (node as unknown as { importClause?: AstNode }).importClause === undefined;
+}
+export function getExternalModuleRequireArgument(node: AstNode): AstNode | undefined {
+  // For `import x = require("path")`, returns the StringLiteral "path".
+  if (node.kind !== Kind.ImportEqualsDeclaration) return undefined;
+  const mr = (node as unknown as { moduleReference?: { kind?: number; expression?: AstNode } }).moduleReference;
+  if (mr?.kind === Kind.ExternalModuleReference) return mr.expression;
+  return undefined;
+}
+export function isRightSideOfAccessExpression(node: AstNode): boolean {
+  const parent = nodeParent(node);
+  if (parent === undefined) return false;
+  if (parent.kind === Kind.PropertyAccessExpression) {
+    return (parent as unknown as { name?: AstNode }).name === node;
+  }
+  if (parent.kind === Kind.ElementAccessExpression) {
+    return (parent as unknown as { argumentExpression?: AstNode }).argumentExpression === node;
+  }
+  return false;
+}
+export function isTopLevelInExternalModuleAugmentation(node: AstNode): boolean {
+  const parent = nodeParent(node);
+  if (parent === undefined || parent.kind !== Kind.ModuleBlock) return false;
+  const grandparent = nodeParent(parent);
+  return grandparent !== undefined && grandparent.kind === Kind.ModuleDeclaration;
+}
+export function isSyntacticDefault(node: AstNode): boolean {
+  if (node.kind === Kind.ExportAssignment) {
+    return (node as unknown as { isExportEquals?: boolean }).isExportEquals !== true;
+  }
+  return hasSyntacticModifier(node, ModifierFlags.Default);
+}
+export function hasExportAssignmentSymbol(moduleSymbol: AstSymbol): boolean {
+  const exports = (moduleSymbol as unknown as { exports?: SymbolTable }).exports;
+  return exports !== undefined && exports.has("export=");
+}
+export function isTypeAlias(node: AstNode): boolean {
+  return node.kind === Kind.TypeAliasDeclaration;
+}
 
 // ---------------------------------------------------------------------------
 // Initializer predicates
