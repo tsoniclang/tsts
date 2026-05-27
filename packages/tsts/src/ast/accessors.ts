@@ -413,7 +413,7 @@ export function propertyAssignmentName(node: AstNode): AstNode { return property
 export function shorthandName(node: AstNode): AstNode { return shorthandPropertyAssignmentNameRO(node); }
 export function shorthandObjectAssignmentInitializer(node: AstNode): AstNode | undefined { return shorthandObjectAssignmentInitializerRO(node); }
 export function shorthandEqualsToken(node: AstNode): AstNode | undefined { return shorthandEqualsTokenRO(node); }
-export function cloneIdentifier(node: AstNode): AstNode {
+export function cloneIdentifier(node: AstNode, _factory?: unknown): AstNode {
   return { ...(node as unknown as Record<string, unknown>) } as unknown as AstNode;
 }
 export function getQualifiedNameLeft(node: AstNode): AstNode { return f<AstNode>(node, "left")!; }

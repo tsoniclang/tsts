@@ -28,8 +28,9 @@ import {
   isTrue, isStatement, getNodeName, getClassMembers,
   binaryLeft as getBinaryLeft, binaryRight as getBinaryRight,
   getNodeLoc,
+  isSuperProperty, getSubtreeFacts, cloneIdentifier,
+  getPropertyAccessName, hasStaticModifier,
 } from "../../ast/index.js";
-import { hasStaticModifier } from "../../printer/printer-utilities.js";
 import {
   isClassExpression, isPropertyDeclaration, isComputedPropertyName,
   isPrivateIdentifier, isIdentifier, isObjectLiteralExpression,
@@ -1146,15 +1147,12 @@ const SubtreeFacts = {
   ContainsClassFields: 1 << 0,
   ContainsLexicalThisOrSuper: 1 << 1,
 } as const;
-declare function isSuperProperty(node: AstNode): boolean;
+// Strada-specific helpers awaiting downstream port:
 declare function isStaticPropertyDeclarationOrClassStaticBlock(node: AstNode): boolean;
 declare function isDeclarationFile(node: SourceFileNode): boolean;
 declare function isModifier(node: AstNode): boolean;
 declare function isModifierLike(node: AstNode): boolean;
-declare function getPropertyAccessName(node: PropertyAccessExpression): AstNode;
 declare function classHasAccessorMember(node: ClassLikeDeclaration): boolean;
-declare function getSubtreeFacts(node: AstNode): number;
-declare function cloneIdentifier(node: IdentifierNode, factory: unknown): IdentifierNode;
 declare function isNamedEvaluationAnd(
   emitContext: unknown,
   node: AstNode,
