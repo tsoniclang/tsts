@@ -296,15 +296,23 @@ export class Inferer {
       const targetType = (targetParams[i] as unknown as { type?: Type }).type;
       if (sourceType !== undefined && targetType !== undefined) callback(sourceType, targetType);
     }
-    void source; void target; void callback;
   }
 
   applyToReturnTypes(source: Signature, target: Signature, callback: (s: Type, t: Type) => void): void {
-    void source; void target; void callback;
+    const sourceRet = (source as unknown as { resolvedReturnType?: Type }).resolvedReturnType;
+    const targetRet = (target as unknown as { resolvedReturnType?: Type }).resolvedReturnType;
+    if (sourceRet !== undefined && targetRet !== undefined) callback(sourceRet, targetRet);
   }
 
   inferFromIndexTypes(n: InferenceState, source: Type, target: Type): void {
-    void n; void source; void target;
+    // Pull index infos off both types and pair-infer.
+    const sourceInfos = (source as unknown as { indexInfos?: readonly { keyType: Type; type: Type }[] }).indexInfos;
+    const targetInfos = (target as unknown as { indexInfos?: readonly { keyType: Type; type: Type }[] }).indexInfos;
+    if (sourceInfos === undefined || targetInfos === undefined) return;
+    const len = Math.min(sourceInfos.length, targetInfos.length);
+    for (let i = 0; i < len; i++) {
+      this.inferFromTypes(n, sourceInfos[i]!.type, targetInfos[i]!.type);
+    }
   }
 
   inferToMappedType(n: InferenceState, source: Type, target: Type, constraintType: Type): boolean {
@@ -348,7 +356,18 @@ export class Inferer {
   }
 
   typesDefinitelyUnrelated(source: Type, target: Type): boolean {
-    void source; void target; return false;
+    // Two types are definitely unrelated if their primitive flags
+    // don't overlap (and neither is Any/Unknown/Never).
+    const sf = (source as { flags?: number }).flags ?? 0;
+    const tf = (target as { flags?: number }).flags ?? 0;
+    // Any/Unknown/Never relate to everything.
+    if ((sf & ((1 << 0) | (1 << 1) | (1 << 17))) !== 0) return false;
+    if ((tf & ((1 << 0) | (1 << 1) | (1 << 17))) !== 0) return false;
+    const primitiveMask = (1 << 2) | (1 << 3) | (1 << 4) | (1 << 6) | (1 << 12);
+    if ((sf & primitiveMask) !== 0 && (tf & primitiveMask) !== 0 && (sf & tf & primitiveMask) === 0) {
+      return true;
+    }
+    return false;
   }
 
   isTupleTypeStructureMatching(t1: Type, t2: Type): boolean {
