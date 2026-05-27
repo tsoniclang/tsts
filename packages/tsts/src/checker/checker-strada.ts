@@ -472,24 +472,67 @@ export class Checker {
   // Type queries
   // -------------------------------------------------------------------------
 
-  getTypeOfSymbol(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getTypeOfSymbolWithDeferredType(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getTypeOfVariableOrParameterOrProperty(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getTypeOfVariableOrParameterOrPropertyWorker(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getTypeOfInstantiatedSymbol(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getTypeOfMappedSymbol(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getTypeOfAccessors(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getTypeOfAlias(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getTypeOfEnumMember(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getTypeOfNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeOfExpression(node: AstNode): Type { void node; return {} as Type; }
-  getTypeOfParameter(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getTypeOfPropertyOfType(t: Type, name: string): Type | undefined { void t; void name; return undefined; }
+  getTypeOfSymbol(symbol: AstSymbol): Type {
+    // Read cached type first, otherwise resolve via the first declaration's
+    // .type annotation (when present) or fall back to Any.
+    const cached = (symbol as unknown as { type?: Type }).type;
+    if (cached !== undefined) return cached;
+    return this.getTypeOfVariableOrParameterOrProperty(symbol);
+  }
+  getTypeOfSymbolWithDeferredType(symbol: AstSymbol): Type {
+    return this.getTypeOfSymbol(symbol);
+  }
+  getTypeOfVariableOrParameterOrProperty(symbol: AstSymbol): Type {
+    return this.getTypeOfVariableOrParameterOrPropertyWorker(symbol);
+  }
+  getTypeOfVariableOrParameterOrPropertyWorker(symbol: AstSymbol): Type {
+    const decls = (symbol as unknown as { declarations?: readonly AstNode[] }).declarations;
+    if (decls !== undefined) {
+      for (const d of decls) {
+        const typeNode = (d as unknown as { type?: AstNode }).type;
+        if (typeNode !== undefined) return this.getTypeFromTypeNode(typeNode);
+      }
+    }
+    return { flags: 1 << 0 } as unknown as Type; // Any
+  }
+  getTypeOfInstantiatedSymbol(symbol: AstSymbol): Type { return this.getTypeOfSymbol(symbol); }
+  getTypeOfMappedSymbol(symbol: AstSymbol): Type { return this.getTypeOfSymbol(symbol); }
+  getTypeOfAccessors(symbol: AstSymbol): Type { return this.getTypeOfSymbol(symbol); }
+  getTypeOfAlias(symbol: AstSymbol): Type { return this.getTypeOfSymbol(symbol); }
+  getTypeOfEnumMember(symbol: AstSymbol): Type {
+    const decls = (symbol as unknown as { declarations?: readonly AstNode[] }).declarations;
+    if (decls !== undefined && decls.length > 0) {
+      const init = (decls[0] as unknown as { initializer?: AstNode }).initializer;
+      if (init !== undefined) {
+        const k = (init as { kind?: number }).kind;
+        if (k === Kind.NumericLiteral) return { flags: 1 << 8, value: Number((init as unknown as { text?: string }).text ?? "0") } as unknown as Type;
+        if (k === Kind.StringLiteral) return { flags: 1 << 7, value: (init as unknown as { text?: string }).text } as unknown as Type;
+      }
+    }
+    return { flags: 1 << 5 } as unknown as Type; // Enum
+  }
+  getTypeOfNode(node: AstNode): Type {
+    const sym = this.getSymbolAtLocation(node);
+    if (sym !== undefined) return this.getTypeOfSymbol(sym);
+    return { flags: 1 << 0 } as unknown as Type;
+  }
+  getTypeOfExpression(node: AstNode): Type {
+    return this.getTypeOfNode(node);
+  }
+  getTypeOfParameter(symbol: AstSymbol): Type {
+    return this.getTypeOfSymbol(symbol);
+  }
+  getTypeOfPropertyOfType(t: Type, name: string): Type | undefined {
+    const prop = this.getPropertyOfType(t, name);
+    return prop !== undefined ? this.getTypeOfSymbol(prop) : undefined;
+  }
   getTypeOfPropertyOrIndexSignatureOfType(t: Type, name: string): Type | undefined {
-    void t; void name; return undefined;
+    return this.getTypeOfPropertyOfType(t, name);
   }
   getTypeOfPropertyInBaseClass(prop: AstSymbol, base: Type): Type | undefined {
-    void prop; void base; return undefined;
+    const name = (prop as unknown as { name?: string }).name;
+    if (name === undefined) return undefined;
+    return this.getTypeOfPropertyOfType(base, name);
   }
   getTypeOfPropertyOfContextualType(t: Type, name: string): Type | undefined {
     void t; void name; return undefined;
