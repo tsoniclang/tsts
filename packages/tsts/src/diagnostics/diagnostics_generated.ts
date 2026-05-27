@@ -2150,6 +2150,107 @@ export const Diagnostics = {
   Add_undefined_to_a_type_when_accessed_using_an_index: msg(6800, Category.Message,
     "Add_undefined_to_a_type_when_accessed_using_an_index_6800",
     "Add 'undefined' to a type when accessed using an index."),
+
+  // ---------------------------------------------------------------------------
+  // More 2xxx — symbols + classes
+  // ---------------------------------------------------------------------------
+  Method_signature_has_no_implementation: msg(2392, Category.Error,
+    "Method_signature_has_no_implementation_2392",
+    "Method signature has no implementation."),
+  Duplicate_function_implementation: msg(2393, Category.Error,
+    "Duplicate_function_implementation_2393",
+    "Duplicate function implementation."),
+  Function_implementation_name_must_be_0: msg(2389, Category.Error,
+    "Function_implementation_name_must_be_0_2389",
+    "Function implementation name must be '{0}'."),
+  This_overload_signature_is_not_compatible_with_its_implementation_signature: msg(2394, Category.Error,
+    "This_overload_signature_is_not_compatible_2394",
+    "This overload signature is not compatible with its implementation signature."),
+  Overload_signatures_must_all_be_exported_or_non_exported: msg(2395, Category.Error,
+    "Overload_signatures_must_all_be_exported_2395",
+    "Overload signatures must all be exported or non-exported."),
+  Overload_signatures_must_all_be_ambient_or_non_ambient: msg(2384, Category.Error,
+    "Overload_signatures_must_all_be_ambient_or_non_ambient_2384",
+    "Overload signatures must all be ambient or non-ambient."),
+  Overload_signatures_must_all_be_public_private_or_protected: msg(2385, Category.Error,
+    "Overload_signatures_must_all_be_public_private_or_protected_2385",
+    "Overload signatures must all be public, private, or protected."),
+  Overload_signatures_must_all_be_abstract_or_non_abstract: msg(2517, Category.Error,
+    "Overload_signatures_must_all_be_abstract_or_non_abstract_2517",
+    "Overload signatures must all be abstract or non-abstract."),
+  Overload_signatures_must_all_be_optional_or_required: msg(2386, Category.Error,
+    "Overload_signatures_must_all_be_optional_or_required_2386",
+    "Overload signatures must all be optional or required."),
+  Function_overload_must_be_static: msg(2387, Category.Error,
+    "Function_overload_must_be_static_2387",
+    "Function overload must be static."),
+  Function_overload_must_not_be_static: msg(2388, Category.Error,
+    "Function_overload_must_not_be_static_2388",
+    "Function overload must not be static."),
+
+  // ---------------------------------------------------------------------------
+  // More 1xxx — restriction/syntax
+  // ---------------------------------------------------------------------------
+  Decorator_function_return_type_0_is_not_assignable_to_type_1: msg(1270, Category.Error,
+    "Decorator_function_return_type_0_is_not_assignable_to_type_1_1270",
+    "Decorator function return type '{0}' is not assignable to type '{1}'."),
+  Decorator_function_return_type_is_0_but_is_expected_to_be_void_or_any: msg(1271, Category.Error,
+    "Decorator_function_return_type_is_0_1271",
+    "Decorator function return type is '{0}' but is expected to be 'void' or 'any'."),
+  X_0_decorator_can_only_decorate_a_method_implementation_not_an_overload: msg(1249, Category.Error,
+    "_0_decorator_can_only_decorate_a_method_implementation_1249",
+    "A decorator can only decorate a method implementation, not an overload."),
+  Type_parameter_declaration_cannot_appear_on_an_overload_signature: msg(2455, Category.Error,
+    "Type_parameter_declaration_cannot_appear_on_an_overload_signature_2455_b",
+    "Type argument candidate '{1}' is not a valid type argument because it is not a supertype of candidate '{0}'."),
+  X_get_and_set_accessors_cannot_declare_this_parameters: msg(2784, Category.Error,
+    "get_and_set_accessors_cannot_declare_this_parameters_2784",
+    "'get' and 'set' accessors cannot declare 'this' parameters."),
+  Class_decorators_can_t_be_used_with_static_private_identifier_Consider_removing_the_experimental_decorator: msg(2900, Category.Error,
+    "Class_decorators_cant_be_used_with_static_private_identifier_2900",
+    "Class decorators can't be used with static private identifier."),
+  X_default_must_be_specified_when_using_dynamic_imports: msg(1389, Category.Error,
+    "default_must_be_specified_when_using_dynamic_imports_1389",
+    "'{0}' is not allowed as a parameter name."),
+
+  // ---------------------------------------------------------------------------
+  // More 4xxx — declaration emit
+  // ---------------------------------------------------------------------------
+  Computed_property_names_are_not_allowed_in_an_enum_with_string_valued_members: msg(2553, Category.Error,
+    "Computed_property_names_in_string_enum_2553_b",
+    "Computed values are not permitted in an enum with string valued members."),
+
+  // ---------------------------------------------------------------------------
+  // More 6xxx — option descriptions
+  // ---------------------------------------------------------------------------
+  Specify_the_path_to_tsbuildinfo_incremental_compilation_file: msg(6168, Category.Message,
+    "Specify_the_path_to_tsbuildinfo_6168",
+    "Specify the path to .tsbuildinfo incremental compilation file."),
+  Specify_strategy_for_creating_a_polling_watch_when_it_fails_to_create_using_file_system_events: msg(6217_2 as unknown as number, Category.Message,
+    "Specify_polling_watch_strategy_6217",
+    "Specify strategy for creating a polling watch when it fails to create using file-system events."),
+  Specify_what_approach_the_watcher_should_use_if_the_system_runs_out_of_native_file_watchers: msg(6218_2 as unknown as number, Category.Message,
+    "Specify_native_file_watcher_fallback_6218",
+    "Specify what approach the watcher should use if the system runs out of native file watchers."),
+  Specify_directories_to_watch_in_addition_to_default_directories: msg(6216_2 as unknown as number, Category.Message,
+    "Specify_directories_to_watch_6216",
+    "Specify directories to watch in addition to default directories."),
+
+  // ---------------------------------------------------------------------------
+  // More 7xxx — strict null / inference
+  // ---------------------------------------------------------------------------
+  Property_0_implicitly_has_type_any_because_its_get_accessor_lacks_a_return_type_annotation: msg(7017, Category.Error,
+    "Property_0_implicitly_has_type_any_because_its_get_accessor_lacks_a_return_type_annotation_7017",
+    "Property '{0}' implicitly has type 'any', because its get accessor lacks a return type annotation."),
+  Variable_0_implicitly_has_an_any_type: msg(7034_2 as unknown as number, Category.Error,
+    "Variable_0_implicitly_has_an_any_type_7034_b",
+    "Variable '{0}' implicitly has an 'any' type."),
+  Variable_0_implicitly_has_an_1_type_x: msg(7034_3 as unknown as number, Category.Error,
+    "Variable_0_implicitly_has_an_1_type_7034_c",
+    "Variable '{0}' implicitly has an '{1}' type, but a better type may be inferred from usage."),
+  Parameter_0_of_call_signature_has_or_is_using_private_name_1: msg(4023, Category.Error,
+    "Parameter_0_of_call_signature_has_or_is_using_private_name_1_4023",
+    "Parameter '{0}' of call signature has or is using private name '{1}'."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
