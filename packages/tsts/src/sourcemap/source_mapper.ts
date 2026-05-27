@@ -18,6 +18,18 @@ import {
 import type { ECMALineInfo } from "./lineinfo.js";
 import { tryGetSourceMappingURL } from "./util.js";
 import { unmarshal } from "../json/json.js";
+import { getDirectoryPath, getNormalizedAbsolutePath } from "../tspath/path.js";
+
+function computePositionOfLineAndUTF16Character(
+  lineInfo: ECMALineInfo | undefined,
+  line: number,
+  character: number,
+): number {
+  if (lineInfo === undefined) return -1;
+  const lineStart = (lineInfo as unknown as { lineStarts?: readonly number[] }).lineStarts?.[line];
+  if (lineStart === undefined) return -1;
+  return lineStart + character;
+}
 
 const MISSING_POSITION = -1;
 
@@ -294,10 +306,3 @@ function tryParseBase64Url(url: string): { base64Object: string; matched: boolea
 // Forward-declared cross-module deps
 // ---------------------------------------------------------------------------
 
-declare function getDirectoryPath(path: string): string;
-declare function getNormalizedAbsolutePath(fileName: string, currentDirectory: string): string;
-declare function computePositionOfLineAndUTF16Character(
-  lineInfo: ECMALineInfo | undefined,
-  line: number,
-  character: number,
-): number;

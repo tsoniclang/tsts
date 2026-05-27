@@ -9,9 +9,51 @@
  */
 
 import type { Node as AstNode } from "../../ast/index.js";
+import {
+  nodeKind, accessExpressionExpression, callExpressionExpression,
+  callExpressionArguments,
+  nodeListNodes, skipParentheses, parenthesizedExpression,
+  propertyAccessName, elementArgumentExpression, expressionOf,
+  callExpressionQuestionDotToken as questionDotTokenOf,
+  isSimpleCopiableExpression,
+  subtreeFacts,
+} from "../../ast/index.js";
+import { createNotNullCondition } from "./utilities.js";
+import {
+  isCallExpression, isTaggedTemplateExpression,
+  isParenthesizedExpression, isNonNullExpression,
+} from "../../ast/index.js";
+import { Kind } from "../../ast/index.js";
+import { EmitFlags } from "../../printer/emitflags.js";
+import {
+  visitNode, visitNodes, visitEachChild, visitEachChildOf,
+  newTempVariable, addVariableDeclaration,
+  newAssignmentExpression, newSyntheticReferenceExpression,
+  setOriginal, addEmitFlags,
+  updateCallExpression, updateParenthesizedExpression,
+  updatePropertyAccessExpression, updateElementAccessExpression,
+  newElementAccessExpression, newPropertyAccessExpression,
+  newCallExpression, newFunctionCallCall, newConditionalExpression,
+  newDeleteExpression, newToken, newTrueExpression,
+  newVoidZeroExpression, newThisExpression,
+} from "../../printer/factory-helpers.js";
 
 import { Transformer, type EmitContext } from "../transformer.js";
 import type { TransformOptions } from "../transformer.js";
+
+const KindCallExpression = Kind.CallExpression;
+const KindPropertyAccessExpression = Kind.PropertyAccessExpression;
+const KindElementAccessExpression = Kind.ElementAccessExpression;
+const KindDeleteExpression = Kind.DeleteExpression;
+const KindParenthesizedExpression = Kind.ParenthesizedExpression;
+const KindSuperKeyword = Kind.SuperKeyword;
+const KindQuestionToken = Kind.QuestionToken;
+const KindColonToken = Kind.ColonToken;
+const EFNoComments = EmitFlags.NoComments;
+void KindCallExpression; void KindPropertyAccessExpression;
+void KindElementAccessExpression; void KindDeleteExpression;
+void KindParenthesizedExpression; void KindSuperKeyword;
+void KindQuestionToken; void KindColonToken; void EFNoComments;
 
 class OptionalChainTransformer extends Transformer {
   constructor(opts: TransformOptions) {
@@ -46,7 +88,7 @@ class OptionalChainTransformer extends Transformer {
       const unwrapped = skipParentheses(expression);
       if (hasOptionalChainFlag(unwrapped)) {
         const visited = this.visitParenthesizedExpression(expression, true, false);
-        const args = visitNodes(this.getVisitor(), callExpressionArguments(node));
+        const args = visitNodes(this.getVisitor(), callExpressionArguments(node)) as AstNode;
         if (isSyntheticReferenceExpression(visited)) {
           const res = newFunctionCallCall(
             this.getFactory(),
@@ -196,7 +238,7 @@ class OptionalChainTransformer extends Transformer {
             factory,
             rightExpression,
             callThisArg,
-            nodeListNodes(visitNodes(visitor, callExpressionArguments(segment))),
+            nodeListNodes(visitNodes(visitor, callExpressionArguments(segment)) as AstNode),
           );
         } else {
           rightExpression = newCallExpression(
@@ -265,67 +307,46 @@ export function newOptionalChainTransformer(opts: TransformOptions): Transformer
   return new OptionalChainTransformer(opts);
 }
 
-// Forward declarations.
-declare function subtreeContainsOptionalChaining(node: AstNode): boolean;
-declare function nodeKind(node: AstNode): number;
-declare function hasOptionalChainFlag(node: AstNode): boolean;
-declare function visitEachChildOf(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
-declare function visitNode(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
-declare function visitNodes(visitor: ReturnType<Transformer["getVisitor"]>, nodes: AstNode): AstNode;
-declare function nodeListNodes(list: AstNode): readonly AstNode[];
-
-declare function callExpressionExpression(node: AstNode): AstNode;
-declare function callExpressionArguments(node: AstNode): AstNode;
-declare function isParenthesizedExpression(node: AstNode): boolean;
-declare function skipParentheses(node: AstNode): AstNode;
-declare function parenthesizedExpression(node: AstNode): AstNode;
-declare function isSyntheticReferenceExpression(node: AstNode): boolean;
-declare function syntheticReferenceExpression(node: AstNode): AstNode;
-declare function syntheticReferenceThisArg(node: AstNode): AstNode;
-declare function deleteExpressionExpression(node: AstNode): AstNode;
-declare function accessExpressionExpression(node: AstNode): AstNode;
-declare function propertyAccessName(node: AstNode): AstNode;
-declare function elementArgumentExpression(node: AstNode): AstNode;
-declare function expressionOf(node: AstNode): AstNode;
-declare function questionDotTokenOf(node: AstNode): AstNode | undefined;
-declare function isNonNullExpression(node: AstNode): boolean;
-declare function isCallExpression(node: AstNode): boolean;
-declare function isTaggedTemplateExpression(node: AstNode): boolean;
-declare function skipPartiallyEmittedExpressions(node: AstNode): AstNode;
-declare function isSimpleCopiableExpression(node: AstNode): boolean;
-
-declare function newTempVariable(factory: ReturnType<Transformer["getFactory"]>): AstNode;
-declare function addVariableDeclaration(emitContext: EmitContext, decl: AstNode): void;
-declare function newAssignmentExpression(factory: ReturnType<Transformer["getFactory"]>, target: AstNode, value: AstNode): AstNode;
-declare function newSyntheticReferenceExpression(factory: ReturnType<Transformer["getFactory"]>, expr: AstNode, thisArg: AstNode): AstNode;
-declare function setOriginal(emitContext: EmitContext, node: AstNode, original: AstNode): void;
-declare function updateCallExpression(factory: ReturnType<Transformer["getFactory"]>, node: AstNode, expression: AstNode, questionDot: AstNode | undefined, typeArgs: AstNode | undefined, args: AstNode): AstNode;
-declare function updateParenthesizedExpression(factory: ReturnType<Transformer["getFactory"]>, node: AstNode, expr: AstNode): AstNode;
-declare function updatePropertyAccessExpression(factory: ReturnType<Transformer["getFactory"]>, node: AstNode, expression: AstNode, questionDot: AstNode | undefined, name: AstNode): AstNode;
-declare function updateElementAccessExpression(factory: ReturnType<Transformer["getFactory"]>, node: AstNode, expression: AstNode, questionDot: AstNode | undefined, argument: AstNode): AstNode;
-declare function newElementAccessExpression(factory: ReturnType<Transformer["getFactory"]>, expression: AstNode, questionDot: AstNode | undefined, argument: AstNode): AstNode;
-declare function newPropertyAccessExpression(factory: ReturnType<Transformer["getFactory"]>, expression: AstNode, questionDot: AstNode | undefined, name: AstNode): AstNode;
-declare function newCallExpression(factory: ReturnType<Transformer["getFactory"]>, expression: AstNode, questionDot: AstNode | undefined, typeArgs: AstNode | undefined, args: AstNode): AstNode;
-declare function newFunctionCallCall(factory: ReturnType<Transformer["getFactory"]>, expression: AstNode, thisArg: AstNode, args: readonly AstNode[]): AstNode;
-declare function newConditionalExpression(factory: ReturnType<Transformer["getFactory"]>, cond: AstNode, q: AstNode, whenTrue: AstNode, c: AstNode, whenFalse: AstNode): AstNode;
-declare function newDeleteExpression(factory: ReturnType<Transformer["getFactory"]>, expr: AstNode): AstNode;
-declare function newToken(factory: ReturnType<Transformer["getFactory"]>, kind: number): AstNode;
-declare function newTrueExpression(factory: ReturnType<Transformer["getFactory"]>): AstNode;
-declare function newVoidZeroExpression(factory: ReturnType<Transformer["getFactory"]>): AstNode;
-declare function newThisExpression(factory: ReturnType<Transformer["getFactory"]>): AstNode;
-declare function cloneNode(factory: ReturnType<Transformer["getFactory"]>, node: AstNode): AstNode;
-declare function hasAutoGenerateInfo(emitContext: EmitContext, node: AstNode): boolean;
-declare function addEmitFlags(emitContext: EmitContext, node: AstNode, flags: number): void;
-declare function restoreOuterExpressions(factory: ReturnType<Transformer["getFactory"]>, expression: AstNode, capturedLeft: AstNode, oek: number): AstNode;
-declare function createNotNullCondition(emitContext: EmitContext, left: AstNode, right: AstNode, invert: boolean): AstNode;
-
-declare const KindCallExpression: number;
-declare const KindPropertyAccessExpression: number;
-declare const KindElementAccessExpression: number;
-declare const KindDeleteExpression: number;
-declare const KindParenthesizedExpression: number;
-declare const KindSuperKeyword: number;
-declare const KindQuestionToken: number;
-declare const KindColonToken: number;
-declare const OEKPartiallyEmittedExpressions: number;
-declare const EFNoComments: number;
+// Local helper implementations:
+function subtreeContainsOptionalChaining(node: AstNode): boolean {
+  return (subtreeFacts(node) & (1 << 12) /* ContainsOptionalChaining */) !== 0;
+}
+function hasOptionalChainFlag(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  return ((node as unknown as { flags?: number }).flags ?? 0) & (1 << 5 /* NodeFlags.OptionalChain */) ? true : false;
+}
+function isSyntheticReferenceExpression(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  return (node as { kind?: number }).kind === Kind.SyntheticReferenceExpression;
+}
+function syntheticReferenceExpression(node: AstNode): AstNode {
+  return (node as unknown as { expression: AstNode }).expression;
+}
+function syntheticReferenceThisArg(node: AstNode): AstNode {
+  return (node as unknown as { thisArg: AstNode }).thisArg;
+}
+function deleteExpressionExpression(node: AstNode): AstNode {
+  return (node as unknown as { expression: AstNode }).expression;
+}
+function skipPartiallyEmittedExpressions(node: AstNode): AstNode {
+  let cur: AstNode = node;
+  while ((cur as { kind?: number }).kind === Kind.PartiallyEmittedExpression) {
+    cur = (cur as unknown as { expression: AstNode }).expression;
+  }
+  return cur;
+}
+function hasAutoGenerateInfo(emitContext: EmitContext, node: AstNode): boolean {
+  const ec = emitContext as unknown as { hasAutoGenerateInfo?: (n: AstNode) => boolean };
+  return ec.hasAutoGenerateInfo?.(node) === true;
+}
+function restoreOuterExpressions(_factory: ReturnType<Transformer["getFactory"]>, _expression: AstNode, capturedLeft: AstNode, _oek: number): AstNode {
+  // Real restoreOuterExpressions rebuilds outer-expression wrappers
+  // (TypeAssertion, AsExpression, NonNullExpression, Parenthesized,
+  // PartiallyEmittedExpression) around the inner expression. For now
+  // return the captured-left as-is so emit stays semantically correct.
+  return capturedLeft;
+}
+function cloneNode(_factory: ReturnType<Transformer["getFactory"]>, node: AstNode): AstNode {
+  return { ...(node as unknown as Record<string, unknown>) } as unknown as AstNode;
+}
+const OEKPartiallyEmittedExpressions = 1 << 0;

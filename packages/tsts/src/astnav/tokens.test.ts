@@ -2,6 +2,14 @@ import { attributes as A } from "@tsonic/core/lang.js";
 import { Assert, FactAttribute } from "xunit-types/Xunit.js";
 
 import { getTokenAtPositionPublic, getTouchingPropertyName } from "./tokens.js";
+import { parseSourceFile as _parseSourceFile } from "../parser/parser.js";
+import { Kind } from "../ast/index.js";
+
+function parseSourceFile(input: string, opts: { readonly fileName: string }): { readonly fileName: string } {
+  return _parseSourceFile(input, { fileName: opts.fileName }) as unknown as { readonly fileName: string };
+}
+const KindIdentifier = Kind.Identifier;
+const KindParenthesizedExpression = Kind.ParenthesizedExpression;
 
 // Most of TS-Go `internal/astnav/tokens_test.go` is baseline-driven:
 // it parses a real TypeScript file from the submodule (mapCode.ts), runs
@@ -16,15 +24,6 @@ import { getTokenAtPositionPublic, getTouchingPropertyName } from "./tokens.js";
 // pointer-equality check. Baseline-driven tests land alongside the
 // baseline/jstest port.
 
-// Forward declarations: TSTS parser API. The actual entry point in
-// TSTS's parser/index.ts is `parseSourceFile`; the upstream `SourceFileParseOptions`
-// type lives there.
-declare function parseSourceFile(input: string, opts: { readonly fileName: string }): {
-  readonly fileName: string;
-};
-
-declare const KindIdentifier: number;
-declare const KindParenthesizedExpression: number;
 
 export class GetTokenAtPositionTests {
   jsdoc_type_assertion_does_not_panic(): void {

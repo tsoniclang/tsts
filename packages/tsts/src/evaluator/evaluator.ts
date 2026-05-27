@@ -17,8 +17,39 @@
 
 import { numberToString, fromString } from "../jsnum/string.js";
 import type { Node as AstNode } from "../ast/index.js";
-import { nodeText, skipOuterExpressions } from "../ast/index.js";
+import {
+  nodeText, skipOuterExpressions,
+  unaryOperand as prefixUnaryExpressionOperand,
+  prefixUnaryOperator as prefixUnaryExpressionOperator,
+  binaryLeft as binaryExpressionLeft,
+  binaryRight as binaryExpressionRight,
+  binaryOperatorKind as binaryExpressionOperatorTokenKind,
+} from "../ast/index.js";
 import { Kind } from "../ast/index.js";
+
+function memberAccessExpression(node: AstNode): AstNode {
+  return (node as unknown as { expression: AstNode }).expression;
+}
+function isEntityNameExpression(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = (node as { kind?: number }).kind;
+  return k === Kind.Identifier || k === Kind.PropertyAccessExpression;
+}
+function templateExpressionHead(node: AstNode): AstNode {
+  return (node as unknown as { head: AstNode }).head;
+}
+function templateExpressionSpans(node: AstNode): readonly AstNode[] {
+  const spans = (node as unknown as { templateSpans?: { nodes?: readonly AstNode[] } | readonly AstNode[] }).templateSpans;
+  if (spans === undefined) return [];
+  const inner = (spans as { nodes?: readonly AstNode[] }).nodes;
+  return inner ?? (spans as readonly AstNode[]);
+}
+function templateSpanExpression(span: AstNode): AstNode {
+  return (span as unknown as { expression: AstNode }).expression;
+}
+function templateSpanLiteral(span: AstNode): AstNode {
+  return (span as unknown as { literal: AstNode }).literal;
+}
 
 export interface EvaluatorResult {
   readonly value: string | number | boolean | bigint | undefined;
@@ -192,14 +223,3 @@ export function isTruthy(v: EvaluatorResult["value"]): boolean {
 
 const OuterExpressionKinds = { Parentheses: 1 << 0 } as const;
 // Strada-specific accessors not yet wired to ast/index.js.
-declare function prefixUnaryExpressionOperand(node: AstNode): AstNode;
-declare function prefixUnaryExpressionOperator(node: AstNode): number;
-declare function binaryExpressionLeft(node: AstNode): AstNode;
-declare function binaryExpressionRight(node: AstNode): AstNode;
-declare function binaryExpressionOperatorTokenKind(node: AstNode): number;
-declare function memberAccessExpression(node: AstNode): AstNode;
-declare function isEntityNameExpression(node: AstNode): boolean;
-declare function templateExpressionHead(node: AstNode): AstNode;
-declare function templateExpressionSpans(node: AstNode): readonly AstNode[];
-declare function templateSpanExpression(span: AstNode): AstNode;
-declare function templateSpanLiteral(span: AstNode): AstNode;

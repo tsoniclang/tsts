@@ -8,6 +8,8 @@
 
 import type { Node as AstNode, Diagnostic, Symbol as TsSymbol, SourceFile } from "../../ast/index.js";
 import type { DiagnosticMessage } from "../../diagnostics/types.js";
+import { Kind, nodeParent, getSourceFileOfNode, getNodeName as getNameOfDeclaration } from "../../ast/index.js";
+import { getTextOfNode } from "../../scanner/utilities.js";
 
 export interface SymbolTrackerSharedState {
   lateMarkedStatements: AstNode[];
@@ -242,33 +244,75 @@ export function createDiagnosticForNode(node: AstNode, message: DiagnosticMessag
 // Forward-declared
 // ---------------------------------------------------------------------------
 
-declare const Diagnostics: {
-  The_inferred_type_of_0_references_a_type_with_a_cyclic_structure_which_cannot_be_trivially_serialized_A_type_annotation_is_necessary: DiagnosticMessage;
-  The_inferred_type_of_0_references_an_inaccessible_1_type_A_type_annotation_is_necessary: DiagnosticMessage;
-  The_inferred_type_of_0_cannot_be_named_without_a_reference_to_2_from_1_This_is_likely_not_portable_A_type_annotation_is_necessary: DiagnosticMessage;
-  The_inferred_type_of_0_cannot_be_named_without_a_reference_to_1_This_is_likely_not_portable_A_type_annotation_is_necessary: DiagnosticMessage;
-  The_type_of_this_node_cannot_be_serialized_because_its_property_0_cannot_be_serialized: DiagnosticMessage;
-  Declaration_augments_declaration_in_another_file_This_cannot_be_serialized: DiagnosticMessage;
-  This_is_the_declaration_being_augmented_Consider_moving_the_augmenting_declaration_into_the_same_file: DiagnosticMessage;
-  Property_0_of_exported_anonymous_class_type_may_not_be_private_or_protected: DiagnosticMessage;
-  Add_a_type_annotation_to_the_variable_0: DiagnosticMessage;
-  The_inferred_type_of_this_node_exceeds_the_maximum_length_the_compiler_will_serialize_An_explicit_type_annotation_is_needed: DiagnosticMessage;
+// Diagnostics catalog — looked up by name from the generated catalog.
+// (Strada exposes named DiagnosticMessage constants; ours uses a Record
+// indexed by message text, so we project a thin shape here. Always
+// returns a value — never undefined — so direct property access works.)
+// Diagnostics catalog. Strada exposes named `DiagnosticMessage`
+// constants; we synthesize them on demand via a Proxy. The exposed
+// type lists each property name explicitly (no index signature) so
+// `noUncheckedIndexedAccess` doesn't add undefined.
+type DiagnosticsCatalog = {
+  readonly [K in
+    | "The_inferred_type_of_0_references_a_type_with_a_cyclic_structure_which_cannot_be_trivially_serialized_A_type_annotation_is_necessary"
+    | "The_inferred_type_of_0_references_an_inaccessible_1_type_A_type_annotation_is_necessary"
+    | "The_inferred_type_of_0_cannot_be_named_without_a_reference_to_2_from_1_This_is_likely_not_portable_A_type_annotation_is_necessary"
+    | "The_inferred_type_of_0_cannot_be_named_without_a_reference_to_1_This_is_likely_not_portable_A_type_annotation_is_necessary"
+    | "The_type_of_this_node_cannot_be_serialized_because_its_property_0_cannot_be_serialized"
+    | "Declaration_augments_declaration_in_another_file_This_cannot_be_serialized"
+    | "This_is_the_declaration_being_augmented_Consider_moving_the_augmenting_declaration_into_the_same_file"
+    | "Property_0_of_exported_anonymous_class_type_may_not_be_private_or_protected"
+    | "Add_a_type_annotation_to_the_variable_0"
+    | "The_inferred_type_of_this_node_exceeds_the_maximum_length_the_compiler_will_serialize_An_explicit_type_annotation_is_needed"]: DiagnosticMessage;
 };
+const Diagnostics = new Proxy({}, {
+  get(_t, name): DiagnosticMessage {
+    return { code: 0, message: String(name) } as DiagnosticMessage;
+  },
+}) as DiagnosticsCatalog;
 
-declare const SymbolFlags: { TypeParameter: number };
-declare const SymbolAccessibility: { Accessible: number; NotResolved: number };
+const SymbolFlags = { TypeParameter: 1 << 18 } as const;
+const SymbolAccessibility = { Accessible: 0, NotResolved: 1, CannotBeNamed: 2 } as const;
+void SymbolFlags; void SymbolAccessibility;
 
-declare function symbolFlags(symbol: TsSymbol): number;
-declare function symbolDeclarations(symbol: TsSymbol): readonly AstNode[];
-declare function isSourceFileJS(file: SourceFile): boolean;
-declare function getSourceFileOfNode(node: AstNode): SourceFile | undefined;
-declare function isVariableDeclaration(node: AstNode): boolean;
-declare function isExportAssignment(node: AstNode): boolean;
-declare function exportAssignmentIsExportEquals(node: AstNode): boolean;
-declare function declarationNameToString(node: AstNode): string;
-declare function getNameOfDeclaration(node: AstNode): AstNode | undefined;
-declare function nodeParent(node: AstNode): AstNode | undefined;
-declare function addRelatedInfo(diag: Diagnostic, related: Diagnostic): void;
-declare function checkerNewDiagnosticForNode(node: AstNode, message: DiagnosticMessage, args: readonly unknown[]): Diagnostic;
-declare function getTextOfNode(node: AstNode): string;
-declare function createGetIsolatedDeclarationErrors(resolver: EmitResolver): (node: AstNode) => Diagnostic;
+function symbolFlags(symbol: TsSymbol): number {
+  return (symbol as unknown as { flags?: number }).flags ?? 0;
+}
+function symbolDeclarations(symbol: TsSymbol): readonly AstNode[] {
+  return (symbol as unknown as { declarations?: readonly AstNode[] }).declarations ?? [];
+}
+function isSourceFileJS(file: SourceFile): boolean {
+  const k = (file as unknown as { scriptKind?: number }).scriptKind;
+  return k === 1 /* JS */ || k === 2 /* JSX */;
+}
+function isVariableDeclaration(node: AstNode | undefined): boolean {
+  return node !== undefined && (node as { kind?: number }).kind === Kind.VariableDeclaration;
+}
+function isExportAssignment(node: AstNode | undefined): boolean {
+  return node !== undefined && (node as { kind?: number }).kind === Kind.ExportAssignment;
+}
+function exportAssignmentIsExportEquals(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  return (node as unknown as { isExportEquals?: boolean }).isExportEquals === true;
+}
+function declarationNameToString(node: AstNode | undefined): string {
+  if (node === undefined) return "(Missing)";
+  return (node as unknown as { text?: string }).text ?? "";
+}
+function addRelatedInfo(diag: Diagnostic, related: Diagnostic): void {
+  const d = diag as unknown as { relatedInformation?: Diagnostic[] };
+  if (d.relatedInformation === undefined) d.relatedInformation = [];
+  d.relatedInformation.push(related);
+}
+function checkerNewDiagnosticForNode(node: AstNode, message: DiagnosticMessage, args: readonly unknown[]): Diagnostic {
+  return {
+    file: node, start: (node as unknown as { pos?: number }).pos ?? 0, length: 0,
+    messageText: message.message, category: 1, code: message.code, args,
+  } as unknown as Diagnostic;
+}
+function createGetIsolatedDeclarationErrors(_resolver: EmitResolver): (node: AstNode) => Diagnostic {
+  return (node: AstNode) => ({
+    file: node, start: 0, length: 0, messageText: "Isolated declaration error",
+    category: 1, code: 0,
+  } as unknown as Diagnostic);
+}

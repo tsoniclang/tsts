@@ -25,6 +25,17 @@ import type {
   QualifiedName,
   Expression,
 } from "../../ast/index.js";
+import {
+  cloneIdentifier, getQualifiedNameLeft, getQualifiedNameRight,
+  getParenthesizedTypeType, getUnionOrIntersectionTypes,
+  getConditionalTrueType, getConditionalFalseType,
+  getTypeOperatorOperator, getTypeOperatorType,
+  getAccessorParameters, getParameterType, getReturnType, getParameters,
+  hasModifier,
+} from "../../ast/index.js";
+import { isIdentifier, isGetAccessorDeclaration as isGetAccessor, isThisParameter } from "../../ast/index.js";
+import { Kind } from "../../ast/index.js";
+import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
 
 // ---------------------------------------------------------------------------
 // Context + serializer class
@@ -183,7 +194,7 @@ export class MetadataSerializer {
 
   serializeQualifiedNameAsExpression(node: QualifiedName): AstNode {
     return this.factory.newPropertyAccessExpression(
-      this.serializeEntityNameAsExpression(getQualifiedNameLeft(node)) as unknown as Expression,
+      this.serializeEntityNameAsExpression(getQualifiedNameLeft(node) as unknown as EntityName) as unknown as Expression,
       getQualifiedNameRight(node) as unknown as AstNode,
     ) as unknown as AstNode;
   }
@@ -221,7 +232,7 @@ export function getSetAccessorValueParameter(node: SetAccessorDeclaration): AstN
   const params = getAccessorParameters(node as unknown as AstNode);
   if (params.length === 0) return undefined;
   const first = params[0]!;
-  if (hasModifier(first, ModifierFlags.This)) {
+  if (isThisParameter(first)) {
     return params[1];
   }
   return first;
@@ -260,35 +271,3 @@ interface NodeFactory {
   readonly [key: string]: unknown;
 }
 
-declare const Kind: {
-  VoidKeyword: number; UndefinedKeyword: number; NullKeyword: number; NeverKeyword: number;
-  ParenthesizedType: number; FunctionType: number; ConstructorType: number;
-  ArrayType: number; TupleType: number; TypePredicate: number;
-  BooleanKeyword: number; StringKeyword: number; ObjectKeyword: number;
-  LiteralType: number; NumberKeyword: number; BigIntKeyword: number; SymbolKeyword: number;
-  TypeReference: number; IntersectionType: number; UnionType: number;
-  ConditionalType: number; TypeOperator: number; ReadonlyKeyword: number;
-  TypeQuery: number; IndexedAccessType: number; MappedType: number; TypeLiteral: number;
-  AnyKeyword: number; UnknownKeyword: number; ThisType: number; ImportType: number;
-};
-
-declare const ModifierFlags: {
-  This: number;
-};
-
-declare function isIdentifier(node: AstNode | undefined): boolean;
-declare function cloneIdentifier(node: IdentifierNode): AstNode;
-declare function getQualifiedNameLeft(node: QualifiedName): EntityName;
-declare function getQualifiedNameRight(node: QualifiedName): AstNode;
-declare function getParenthesizedTypeType(node: AstNode): AstNode;
-declare function getUnionOrIntersectionTypes(node: AstNode): readonly AstNode[];
-declare function getConditionalTrueType(node: AstNode): AstNode;
-declare function getConditionalFalseType(node: AstNode): AstNode;
-declare function getTypeOperatorOperator(node: AstNode): number;
-declare function getTypeOperatorType(node: AstNode): AstNode;
-declare function getAccessorParameters(node: AstNode): readonly AstNode[];
-declare function getParameterType(node: AstNode): AstNode | undefined;
-declare function isGetAccessor(node: AstNode): boolean;
-declare function getReturnType(node: AstNode): AstNode | undefined;
-declare function getParameters(node: AstNode): NodeList | undefined;
-declare function hasModifier(node: AstNode, flag: number): boolean;

@@ -18,6 +18,21 @@
  */
 
 import { Transformer, type TransformOptions, type NodeVisitor } from "../transformer.js";
+import {
+  Kind, isTrue, getSubtreeFacts, hasStaticModifier,
+} from "../../ast/index.js";
+import { isClassStaticBlockDeclaration, isPropertyDeclaration } from "../../ast/index.js";
+import { getEmitScriptTarget, getUseDefineForClassFields } from "../../core/compileroptions.js";
+
+const ScriptTarget = { ESNext: 99 } as const;
+const SubtreeFacts = {
+  ContainsLexicalThis: 1 << 0,
+  ContainsLexicalSuper: 1 << 1,
+  ContainsDecorators: 1 << 4,
+} as const;
+const EmitFlags = {
+  TransformPrivateStaticElements: 1 << 24,
+} as const;
 import type {
   Node as AstNode,
   IdentifierNode,
@@ -775,8 +790,8 @@ export class ESDecoratorTransformer extends Transformer {
 
 export function newESDecoratorTransformer(opts: TransformOptions): Transformer | undefined {
   if (isTrue(opts.compilerOptions.experimentalDecorators)) return undefined;
-  const languageVersion = getEmitScriptTarget(opts.compilerOptions);
-  if (languageVersion >= ScriptTarget.ESNext && getUseDefineForClassFields(opts.compilerOptions)) {
+  const languageVersion = getEmitScriptTarget(opts.compilerOptions as unknown as Parameters<typeof getEmitScriptTarget>[0]);
+  if (languageVersion >= ScriptTarget.ESNext && getUseDefineForClassFields(opts.compilerOptions as unknown as Parameters<typeof getUseDefineForClassFields>[0])) {
     return undefined;
   }
   return new ESDecoratorTransformer(opts);
@@ -792,38 +807,3 @@ interface CompilerOptions {
 }
 // NodeVisitor type comes from transformer.ts via the Transformer base.
 
-declare const Kind: {
-  SourceFile: number; Decorator: number; ClassDeclaration: number; ClassExpression: number;
-  Constructor: number; MethodDeclaration: number; GetAccessor: number; SetAccessor: number;
-  ClassStaticBlockDeclaration: number; PropertyDeclaration: number; ThisKeyword: number;
-  CallExpression: number; TaggedTemplateExpression: number;
-  PropertyAccessExpression: number; ElementAccessExpression: number;
-  Parameter: number; ForStatement: number; ExpressionStatement: number;
-  BinaryExpression: number; PrefixUnaryExpression: number; PostfixUnaryExpression: number;
-  ComputedPropertyName: number; ExportAssignment: number;
-  ParenthesizedExpression: number; PartiallyEmittedExpression: number;
-  StaticKeyword: number; AsyncKeyword: number; AccessorKeyword: number;
-  ExportKeyword: number; DefaultKeyword: number;
-};
-
-declare const ScriptTarget: {
-  ESNext: number;
-};
-
-declare const SubtreeFacts: {
-  ContainsLexicalThis: number;
-  ContainsLexicalSuper: number;
-  ContainsDecorators: number;
-};
-
-declare const EmitFlags: {
-  TransformPrivateStaticElements: number;
-};
-
-declare function getSubtreeFacts(node: AstNode): number;
-declare function getEmitScriptTarget(opts: CompilerOptions): number;
-declare function getUseDefineForClassFields(opts: CompilerOptions): boolean;
-declare function isTrue(value: unknown): boolean;
-declare function isClassStaticBlockDeclaration(node: AstNode): boolean;
-declare function isPropertyDeclaration(node: AstNode): boolean;
-declare function hasStaticModifier(node: AstNode): boolean;

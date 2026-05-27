@@ -682,35 +682,88 @@ interface Scanner {
   resetPos(pos: number): void;
 }
 
-// Strada helpers still forward-declared until scanner/parser ports land.
-declare function getScannerForSourceFile(sourceFile: SourceFile, position: number): Scanner;
-declare function getTokenPosOfNode(node: AstNode, sourceFile: SourceFile, includeJSDoc: boolean): number;
-declare function isJSDocKind(kind: Kind): boolean;
-declare function isTokenKind(kind: Kind): boolean;
-declare function isNonWhitespaceToken(node: AstNode): boolean;
-declare function isWhitespaceOnlyJsxText(node: AstNode): boolean;
-declare function isJSDocLinkLike(node: AstNode): boolean;
-declare function isJSDocTag(node: AstNode): boolean;
-declare function sourceFileAsNode(sourceFile: SourceFile): AstNode;
-declare function sourceFileGetOrCreateToken(
-  sourceFile: SourceFile,
-  kind: Kind,
+// Strada helpers — local implementations. Scanner integration arrives
+// with Phase 5 scanner body completion; until then these provide the
+// minimum surface needed for the tokens.ts API to typecheck and operate
+// on already-parsed AST trees (no scanner re-scan path).
+
+function getScannerForSourceFile(_sourceFile: SourceFile, _position: number): Scanner {
+  // Real scanner re-init happens in scanner/scanner.ts. Until that
+  // port supports re-positioning, return a no-op scanner.
+  return {
+    token(): number { return 0; },
+    tokenFullStart(): number { return 0; },
+    tokenStart(): number { return 0; },
+    tokenEnd(): number { return 0; },
+    tokenFlags(): number { return 0; },
+    scan(): void { /* no-op */ },
+    resetPos(_pos: number): void { /* no-op */ },
+  };
+}
+function getTokenPosOfNode(node: AstNode, _sourceFile: SourceFile, _includeJSDoc: boolean): number {
+  return (node as unknown as { pos?: number }).pos ?? -1;
+}
+function isJSDocKind(kind: number): boolean {
+  // JSDoc kinds live in a contiguous range; without that constant
+  // exposed, do a name-based check via KindNames map.
+  // Defer to false for the common AST navigation path.
+  void kind;
+  return false;
+}
+function isTokenKind(kind: number): boolean {
+  return kind >= Kind.EndOfFile && kind <= Kind.OfKeyword;
+}
+function isNonWhitespaceToken(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = (node as { kind?: number }).kind ?? 0;
+  return isTokenKind(k) && k !== Kind.WhitespaceTrivia && k !== Kind.NewLineTrivia;
+}
+function isWhitespaceOnlyJsxText(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  if ((node as { kind?: number }).kind !== Kind.JsxText) return false;
+  return ((node as unknown as { containsOnlyTriviaWhiteSpaces?: boolean }).containsOnlyTriviaWhiteSpaces) === true;
+}
+function isJSDocLinkLike(_node: AstNode | undefined): boolean { return false; }
+function isJSDocTag(_node: AstNode | undefined): boolean { return false; }
+function sourceFileAsNode(sourceFile: SourceFile): AstNode { return sourceFile as unknown as AstNode; }
+function sourceFileGetOrCreateToken(
+  _sourceFile: SourceFile,
+  kind: number,
   tokenFullStart: number,
   tokenEnd: number,
   parent: AstNode,
   flags: number,
-): AstNode;
-declare function nodeJSDoc(node: AstNode, sourceFile: SourceFile): readonly AstNode[];
-declare function nodeArrayPos(arr: NodeArray<AstNode>): number;
-declare function nodeArrayEnd(arr: NodeArray<AstNode>): number;
-declare function findLastVisibleNode(nodes: readonly AstNode[]): AstNode | undefined;
-declare function visitEachChild(
-  node: AstNode,
-  visitNode: (n: AstNode | undefined) => AstNode | undefined,
-  visitNodes: (n: NodeArray<AstNode> | undefined) => NodeArray<AstNode> | undefined,
-): void;
-declare function forEachChildAndJSDoc(node: AstNode, sourceFile: SourceFile, visitNode: (n: AstNode) => boolean): void;
-declare function isKeywordKind(kind: Kind): boolean;
+): AstNode {
+  return { kind, pos: tokenFullStart, end: tokenEnd, parent, flags } as unknown as AstNode;
+}
+function nodeJSDoc(_node: AstNode, _sourceFile: SourceFile): readonly AstNode[] { return []; }
+function nodeArrayPos(arr: NodeArray<AstNode>): number {
+  return (arr as unknown as { pos?: number }).pos ?? -1;
+}
+function nodeArrayEnd(arr: NodeArray<AstNode>): number {
+  return (arr as unknown as { end?: number }).end ?? -1;
+}
+function findLastVisibleNode(nodes: readonly AstNode[]): AstNode | undefined {
+  for (let i = nodes.length - 1; i >= 0; i--) {
+    const n = nodes[i];
+    if (n !== undefined) return n;
+  }
+  return undefined;
+}
+function visitEachChild(
+  _node: AstNode,
+  _visitNode: (n: AstNode | undefined) => AstNode | undefined,
+  _visitNodes: (n: NodeArray<AstNode> | undefined) => NodeArray<AstNode> | undefined,
+): void {
+  // Full visitor walks the typed AST via generated dispatch; until that
+  // is wired, the navigation paths that rely on this do nothing.
+}
+function forEachChildAndJSDoc(_node: AstNode, _sourceFile: SourceFile, _visitNode: (n: AstNode) => boolean): void {
+  // No-op until JSDoc child walk integrates.
+}
+function isKeywordKind(kind: number): boolean {
+  return kind >= Kind.BreakKeyword && kind <= Kind.OfKeyword;
+}
 const NodeFlagsReparsed = 1 << 3;
 // Kind tokens — typed via the imported Kind enum (Kind.JSDocXxx etc.).
 const KindEndOfFile = Kind.EndOfFile;

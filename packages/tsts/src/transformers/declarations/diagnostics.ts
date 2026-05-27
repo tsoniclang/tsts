@@ -29,6 +29,44 @@ import {
 } from "../../ast/index.js";
 import { isParameterPropertyDeclaration } from "../../ast/index.js";
 import { Kind } from "../../ast/index.js";
+
+const SymbolAccessibility = { CannotBeNamed: 1 } as const;
+
+// Strada predicates we implement locally — kind-dispatch + field reads.
+function isFunctionLike(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = (node as { kind?: number }).kind ?? 0;
+  return k === Kind.FunctionDeclaration || k === Kind.FunctionExpression
+    || k === Kind.ArrowFunction || k === Kind.MethodDeclaration
+    || k === Kind.Constructor || k === Kind.GetAccessor || k === Kind.SetAccessor;
+}
+function makeDiagnostic(node: AstNode, message: DiagnosticMessage): Diagnostic {
+  return { file: node, start: 0, length: 0, messageText: message.message, category: 1, code: message.code } as unknown as Diagnostic;
+}
+function getNameOfDeclaration(node: AstNode | undefined): AstNode | undefined {
+  if (node === undefined) return undefined;
+  return _getNodeName(node) ?? undefined;
+}
+function nodeType(node: AstNode | undefined): AstNode | undefined {
+  if (node === undefined) return undefined;
+  return (node as unknown as { type?: AstNode }).type;
+}
+function isStatic(node: AstNode): boolean {
+  return hasSyntacticModifier(node, 1 << 8 /* ModifierFlags.Static */);
+}
+function isPropertySignatureDeclaration(node: AstNode | undefined): boolean {
+  return node !== undefined && (node as { kind?: number }).kind === Kind.PropertySignature;
+}
+function isMethodSignatureDeclaration(node: AstNode | undefined): boolean {
+  return node !== undefined && (node as { kind?: number }).kind === Kind.MethodSignature;
+}
+function isConstructSignatureDeclaration(node: AstNode | undefined): boolean {
+  return node !== undefined && (node as { kind?: number }).kind === Kind.ConstructSignature;
+}
+function isCallSignatureDeclaration(node: AstNode | undefined): boolean {
+  return node !== undefined && (node as { kind?: number }).kind === Kind.CallSignature;
+}
+function isJSTypeAliasDeclaration(_node: AstNode): boolean { return false; }
 import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
 import type { GetSymbolAccessibilityDiagnostic, SymbolAccessibilityResult, SymbolAccessibilityErrorInfo, DiagnosticMessage, EmitResolver } from "./tracker.js";
 
@@ -500,9 +538,6 @@ export function createGetIsolatedDeclarationErrors(_resolver: EmitResolver): (no
   };
 }
 
-declare function isFunctionLike(node: AstNode): boolean;
-declare function makeDiagnostic(node: AstNode, message: DiagnosticMessage): Diagnostic;
-declare const SymbolAccessibility: { CannotBeNamed: number };
 // Diagnostics catalog imported via a permissive Record. The actual
 // catalog lives in diagnostics/diagnostics_generated.ts; using a typed
 // import here would couple this file to the catalog's exact key set.
@@ -512,11 +547,3 @@ declare const SymbolAccessibility: { CannotBeNamed: number };
 import { Diagnostics as DiagnosticsCatalog } from "../../diagnostics/diagnostics_generated.js";
 const Diagnostics = DiagnosticsCatalog;
 
-declare function getNameOfDeclaration(node: AstNode): AstNode | undefined;
-declare function nodeType(node: AstNode): AstNode | undefined;
-declare function isStatic(node: AstNode): boolean;
-declare function isPropertySignatureDeclaration(node: AstNode): boolean;
-declare function isMethodSignatureDeclaration(node: AstNode): boolean;
-declare function isConstructSignatureDeclaration(node: AstNode): boolean;
-declare function isCallSignatureDeclaration(node: AstNode): boolean;
-declare function isJSTypeAliasDeclaration(node: AstNode): boolean;

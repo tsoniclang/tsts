@@ -36,6 +36,18 @@ import type {
   Expression,
   Statement,
 } from "../../ast/index.js";
+import {
+  getSubtreeFacts, hasStaticModifier,
+  getPropertyAccessExpression, getPropertyAccessName, getQuestionDotToken,
+  getNodeFlags, getNodeLoc,
+  moveRangePastModifiers, getNodeListLength, getModifierListLength,
+  copyNodeListLoc, copyModifierListLoc, isTrue,
+} from "../../ast/index.js";
+import { isPropertyDeclaration, isClassStaticBlockDeclaration } from "../../ast/index.js";
+import { Kind } from "../../ast/index.js";
+import { getEmitScriptTarget } from "../../core/compileroptions.js";
+
+const SubtreeFacts = { ContainsDecorators: 1 << 4 } as const;
 
 // ---------------------------------------------------------------------------
 // AllDecorators data structure
@@ -59,7 +71,7 @@ export class LegacyDecoratorsTransformer extends Transformer {
 
   constructor(opts: TransformOptions) {
     super();
-    this.languageVersion = getEmitScriptTarget(opts.compilerOptions);
+    this.languageVersion = getEmitScriptTarget(opts.compilerOptions as unknown as Parameters<typeof getEmitScriptTarget>[0]);
     this.referenceResolver = opts.resolver;
     this.initTransformer((node) => this.visit(node), opts.context);
   }
@@ -410,30 +422,3 @@ interface NodeFactory {
   newModifierList(nodes: readonly AstNode[]): ModifierList;
 }
 
-declare const Kind: {
-  SourceFile: number; Decorator: number; Identifier: number; PropertyAccessExpression: number;
-  ClassDeclaration: number; ClassExpression: number; Constructor: number;
-  MethodDeclaration: number; SetAccessor: number; GetAccessor: number; PropertyDeclaration: number;
-  Parameter: number; ExportKeyword: number; DefaultKeyword: number;
-};
-
-declare const SubtreeFacts: {
-  ContainsDecorators: number;
-};
-
-declare function getSubtreeFacts(node: AstNode): number;
-declare function getEmitScriptTarget(opts: unknown): number;
-declare function isTrue(value: unknown): boolean;
-declare function isClassStaticBlockDeclaration(node: AstNode): boolean;
-declare function isPropertyDeclaration(node: AstNode): boolean;
-declare function hasStaticModifier(node: AstNode): boolean;
-declare function getPropertyAccessExpression(node: PropertyAccessExpression): Expression;
-declare function getPropertyAccessName(node: PropertyAccessExpression): AstNode;
-declare function getQuestionDotToken(node: PropertyAccessExpression): AstNode | undefined;
-declare function getNodeFlags(node: AstNode): number;
-declare function getNodeLoc(node: AstNode): unknown;
-declare function moveRangePastModifiers(node: AstNode): unknown;
-declare function getNodeListLength(nodes: NodeList): number;
-declare function getModifierListLength(nodes: ModifierList): number;
-declare function copyNodeListLoc(src: NodeList, dst: NodeList): void;
-declare function copyModifierListLoc(src: ModifierList, dst: ModifierList): void;

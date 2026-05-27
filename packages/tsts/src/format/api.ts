@@ -15,8 +15,81 @@ import type { Node as AstNode, SourceFile } from "../ast/index.js";
 import {
   nodePos, nodeEnd, nodeParent, newTextRange,
   sourceFileText, isWhiteSpaceSingleLine, isLineBreak,
+  getECMALineOfPosition as _astGetECMALineOfPosition,
 } from "../ast/index.js";
 import { Kind } from "../ast/index.js";
+
+// Source-file accessors backed by direct field reads.
+function sourceFileEnd(file: SourceFile): number {
+  return (file as unknown as { end?: number }).end ?? 0;
+}
+function sourceFileLanguageVariant(file: SourceFile): number {
+  return (file as unknown as { languageVariant?: number }).languageVariant ?? 0;
+}
+function sourceFileDiagnostics(file: SourceFile): readonly unknown[] {
+  return (file as unknown as { parseDiagnostics?: readonly unknown[] }).parseDiagnostics ?? [];
+}
+// ECMA line tables — derived lazily from sourceFileText.
+function getECMALineStarts(file: SourceFile): readonly number[] {
+  const cached = (file as unknown as { lineStarts?: readonly number[] }).lineStarts;
+  if (cached !== undefined) return cached;
+  const text = sourceFileText(file);
+  const starts: number[] = [0];
+  for (let i = 0; i < text.length; i++) {
+    if (text.charCodeAt(i) === 0x0a) starts.push(i + 1);
+  }
+  return starts;
+}
+function getECMALineOfPosition(file: SourceFile, pos: number): number {
+  return _astGetECMALineOfPosition(file as unknown as AstNode, pos);
+}
+function getECMAEndLinePosition(file: SourceFile, line: number): number {
+  const starts = getECMALineStarts(file);
+  if (line < 0 || line >= starts.length) return -1;
+  if (line === starts.length - 1) return sourceFileEnd(file);
+  return (starts[line + 1] ?? 0) - 1;
+}
+function getLineStartPositionForPosition(pos: number, file: SourceFile): number {
+  const starts = getECMALineStarts(file);
+  let lo = 0, hi = starts.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if ((starts[mid] ?? 0) <= pos) lo = mid;
+    else hi = mid - 1;
+  }
+  return starts[lo] ?? 0;
+}
+function getTokenPosOfNode(node: AstNode | undefined, _file: SourceFile, _includeJSDoc: boolean): number {
+  return node === undefined ? -1 : nodePos(node);
+}
+// Format-engine entry points — bodies pending Phase 4a.
+function findEnclosingNode(_range: TextRange, file: SourceFile): AstNode {
+  return file as unknown as AstNode;
+}
+function getScanStartPosition(_enclosingNode: AstNode, span: TextRange, _file: SourceFile): number {
+  return span.pos;
+}
+function getIndentationForNode(_node: AstNode, _range: TextRange, _file: SourceFile, _opts: FormatCodeSettings): number {
+  return 0;
+}
+function getOwnOrInheritedDelta(_node: AstNode, _opts: FormatCodeSettings, _file: SourceFile): number {
+  return 0;
+}
+function prepareRangeContainsErrorFunction(_diags: readonly unknown[], _span: TextRange): (r: TextRange) => boolean {
+  return () => false;
+}
+function findImmediatelyPrecedingTokenOfKind(_position: number, _kind: number, _sourceFile: SourceFile): AstNode | undefined {
+  return undefined;
+}
+function findOutermostNodeWithinListLevel(_node: AstNode | undefined): AstNode | undefined {
+  return undefined;
+}
+function runFormattingScanner(..._args: unknown[]): readonly TextChange[] {
+  return [];
+}
+function formatSpanWorker(..._args: unknown[]): readonly TextChange[] {
+  return [];
+}
 
 /**
  * Format request flavor — mirrors TS-Go `FormatRequestKind`.
@@ -265,41 +338,9 @@ function formatNodeLines(
 // ---------------------------------------------------------------------------
 
 // Format-engine-internal helpers — full ports come with Phase 4a.
-declare function sourceFileEnd(file: SourceFile): number;
-declare function sourceFileLanguageVariant(file: SourceFile): number;
-declare function sourceFileDiagnostics(file: SourceFile): readonly unknown[];
-declare function findEnclosingNode(range: TextRange, file: SourceFile): AstNode;
-declare function getScanStartPosition(enclosingNode: AstNode, span: TextRange, file: SourceFile): number;
-declare function getIndentationForNode(node: AstNode, range: TextRange, file: SourceFile, opts: FormatCodeSettings): number;
-declare function getOwnOrInheritedDelta(node: AstNode, opts: FormatCodeSettings, file: SourceFile): number;
-declare function prepareRangeContainsErrorFunction(diags: readonly unknown[], span: TextRange): (r: TextRange) => boolean;
-declare function findImmediatelyPrecedingTokenOfKind(position: number, kind: number, sourceFile: SourceFile): AstNode | undefined;
-declare function findOutermostNodeWithinListLevel(node: AstNode | undefined): AstNode | undefined;
-declare function runFormattingScanner(
-  text: string,
-  languageVariant: number,
-  start: number,
-  end: number,
-  worker: FormatSpanWorker,
-): readonly TextChange[];
 interface FormatSpanWorker {
   run(): readonly TextChange[];
 }
-declare function formatSpanWorker(
-  ctx: FormatContext,
-  span: TextRange,
-  enclosingNode: AstNode,
-  initialIndentation: number,
-  delta: number,
-  kind: FormatRequestKind,
-  rangeContainsError: (r: TextRange) => boolean,
-  file: SourceFile,
-): FormatSpanWorker;
-declare function getLineStartPositionForPosition(position: number, sourceFile: SourceFile): number;
-declare function getTokenPosOfNode(node: AstNode | undefined, sourceFile: SourceFile, includeJSDoc: boolean): number;
-declare function getECMALineOfPosition(sourceFile: SourceFile, position: number): number;
-declare function getECMALineStarts(sourceFile: SourceFile): readonly number[];
-declare function getECMAEndLinePosition(sourceFile: SourceFile, line: number): number;
 const KindOpenBraceToken = Kind.OpenBraceToken;
 const KindCloseBraceToken = Kind.CloseBraceToken;
 const KindSemicolonToken = Kind.SemicolonToken;

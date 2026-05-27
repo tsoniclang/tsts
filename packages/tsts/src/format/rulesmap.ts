@@ -158,5 +158,9 @@ export class RulesMap {
 // Forward-declared accessors — implemented in context.ts when wired
 // ---------------------------------------------------------------------------
 
-declare function currentTokenKindOf(ctx: FormattingContext): number;
-declare function nextTokenKindOf(ctx: FormattingContext): number;
+function currentTokenKindOf(ctx: FormattingContext): number {
+  return ((ctx as unknown as { currentTokenSpan?: { kind?: number } }).currentTokenSpan?.kind) ?? 0;
+}
+function nextTokenKindOf(ctx: FormattingContext): number {
+  return ((ctx as unknown as { nextTokenSpan?: { kind?: number } }).nextTokenSpan?.kind) ?? 0;
+}

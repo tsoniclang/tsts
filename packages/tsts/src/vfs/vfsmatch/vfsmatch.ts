@@ -14,6 +14,15 @@
  */
 
 import type { FS } from "../vfs.js";
+import {
+  hasExtension, getDirectoryPath, removeTrailingDirectorySeparator,
+  isRootedDiskPath, normalizePath, combinePaths,
+  containsPath as _containsPath,
+} from "../../tspath/path.js";
+
+function containsPath(parent: string, child: string, useCaseSensitiveFileNames: boolean): boolean {
+  return _containsPath(parent, child, { useCaseSensitiveFileNames, currentDirectory: "" });
+}
 
 export type Usage = 0 | 1 | 2;
 export const Usage: {
@@ -234,10 +243,3 @@ function matchFiles(
 // Forward-declared tspath surface
 // ---------------------------------------------------------------------------
 
-declare function hasExtension(path: string): boolean;
-declare function getDirectoryPath(path: string): string;
-declare function removeTrailingDirectorySeparator(path: string): string;
-declare function isRootedDiskPath(path: string): boolean;
-declare function normalizePath(path: string): string;
-declare function combinePaths(base: string, child: string): string;
-declare function containsPath(parent: string, child: string, useCaseSensitiveFileNames: boolean): boolean;

@@ -15,6 +15,20 @@
 import type { FormattingContext } from "./context.js";
 import type { FormatCodeSettings } from "./api.js";
 import { type Tristate, tristateIsTrue, tristateIsTrueOrUnknown } from "../core/tristate.js";
+import { Kind } from "../ast/index.js";
+
+function ctxParentKind(ctx: FormattingContext): number {
+  return ((ctx as unknown as { contextNode?: { kind?: number } }).contextNode?.kind) ?? 0;
+}
+function ctxCurrentTokenKind(ctx: FormattingContext): number {
+  return ((ctx as unknown as { currentTokenSpan?: { kind?: number } }).currentTokenSpan?.kind) ?? 0;
+}
+function ctxNextTokenKind(ctx: FormattingContext): number {
+  return ((ctx as unknown as { nextTokenSpan?: { kind?: number } }).nextTokenSpan?.kind) ?? 0;
+}
+function ctxNextTokenParentKind(ctx: FormattingContext): number {
+  return ((ctx as unknown as { nextTokenParent?: { kind?: number } }).nextTokenParent?.kind) ?? 0;
+}
 
 export type ContextPredicate = (ctx: FormattingContext) => boolean;
 export type OptionSelector = (options: FormatCodeSettings) => Tristate | boolean | undefined;
@@ -196,23 +210,3 @@ export const isTypeArgumentOrParameterOrAssertionContext: ContextPredicate = (ct
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-declare const Kind: {
-  ForStatement: number; BinaryExpression: number; ConditionalExpression: number;
-  TypeReference: number; PropertyDeclaration: number; PropertySignature: number;
-  Block: number; ObjectLiteralExpression: number; ObjectBindingPattern: number;
-  TypeLiteral: number; MappedType: number; EnumDeclaration: number;
-  ModuleBlock: number; CaseBlock: number; OpenBraceToken: number;
-  IfStatement: number; ForInStatement: number; ForOfStatement: number;
-  WhileStatement: number; DoStatement: number; SwitchStatement: number; WithStatement: number;
-  FunctionDeclaration: number; FunctionExpression: number; MethodDeclaration: number;
-  GetAccessor: number; SetAccessor: number; Constructor: number;
-  TypeAssertionExpression: number; JsxText: number; JsxElement: number; JsxFragment: number;
-  JsxExpression: number; JsxAttribute: number; JsxNamespacedName: number;
-  Decorator: number; VariableDeclarationList: number; ModuleDeclaration: number;
-  ConstructSignature: number; PropertyAssignment: number; TypeParameter: number;
-};
-
-declare function ctxParentKind(ctx: FormattingContext): number;
-declare function ctxCurrentTokenKind(ctx: FormattingContext): number;
-declare function ctxNextTokenKind(ctx: FormattingContext): number;
-declare function ctxNextTokenParentKind(ctx: FormattingContext): number;

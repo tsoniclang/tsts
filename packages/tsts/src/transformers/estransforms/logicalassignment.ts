@@ -10,9 +10,47 @@
  */
 
 import type { Node as AstNode } from "../../ast/index.js";
+import { nodeKind, binaryOperatorKind, binaryLeft, binaryRight } from "../../ast/index.js";
+import {
+  isPropertyAccessExpression,
+  isSimpleCopiableExpression,
+  skipParentheses,
+  expressionOf,
+  propertyAccessName,
+  elementArgumentExpression,
+  subtreeFacts,
+} from "../../ast/index.js";
+
+function subtreeContainsLogicalAssignments(node: AstNode): boolean {
+  return (subtreeFacts(node) & (1 << 9) /* ContainsLogicalAssignment */) !== 0;
+}
+function isAccessExpression(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = (node as { kind?: number }).kind;
+  return k === Kind.PropertyAccessExpression || k === Kind.ElementAccessExpression;
+}
+import { Kind } from "../../ast/index.js";
+import {
+  visitNode, visitEachChildOf,
+  newTempVariable, addVariableDeclaration,
+  newAssignmentExpression, newPropertyAccessExpression,
+  newElementAccessExpression, newBinaryExpression, newToken,
+  newParenthesizedExpression,
+} from "../../printer/factory-helpers.js";
 
 import { Transformer, type EmitContext } from "../transformer.js";
 import type { TransformOptions } from "../transformer.js";
+
+const KindBinaryExpression = Kind.BinaryExpression;
+const KindBarBarToken = Kind.BarBarToken;
+const KindBarBarEqualsToken = Kind.BarBarEqualsToken;
+const KindAmpersandAmpersandToken = Kind.AmpersandAmpersandToken;
+const KindAmpersandAmpersandEqualsToken = Kind.AmpersandAmpersandEqualsToken;
+const KindQuestionQuestionToken = Kind.QuestionQuestionToken;
+const KindQuestionQuestionEqualsToken = Kind.QuestionQuestionEqualsToken;
+void KindBinaryExpression; void KindBarBarToken; void KindBarBarEqualsToken;
+void KindAmpersandAmpersandToken; void KindAmpersandAmpersandEqualsToken;
+void KindQuestionQuestionToken; void KindQuestionQuestionEqualsToken;
 
 class LogicalAssignmentTransformer extends Transformer {
   constructor(opts: TransformOptions) {
@@ -100,34 +138,3 @@ export function newLogicalAssignmentTransformer(opts: TransformOptions): Transfo
   return new LogicalAssignmentTransformer(opts);
 }
 
-// Forward declarations.
-declare function subtreeContainsLogicalAssignments(node: AstNode): boolean;
-declare function nodeKind(node: AstNode): number;
-declare function binaryOperatorKind(node: AstNode): number;
-declare function binaryLeft(node: AstNode): AstNode;
-declare function binaryRight(node: AstNode): AstNode;
-declare function visitEachChildOf(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
-declare function visitNode(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
-declare function skipParentheses(node: AstNode): AstNode;
-declare function isAccessExpression(node: AstNode): boolean;
-declare function isPropertyAccessExpression(node: AstNode): boolean;
-declare function isSimpleCopiableExpression(node: AstNode): boolean;
-declare function expressionOf(node: AstNode): AstNode;
-declare function propertyAccessName(node: AstNode): AstNode;
-declare function elementArgumentExpression(node: AstNode): AstNode;
-declare function newTempVariable(factory: ReturnType<Transformer["getFactory"]>): AstNode;
-declare function addVariableDeclaration(emitContext: EmitContext, decl: AstNode): void;
-declare function newAssignmentExpression(factory: ReturnType<Transformer["getFactory"]>, target: AstNode, value: AstNode): AstNode;
-declare function newPropertyAccessExpression(factory: ReturnType<Transformer["getFactory"]>, expr: AstNode, questionDot: AstNode | undefined, name: AstNode): AstNode;
-declare function newElementAccessExpression(factory: ReturnType<Transformer["getFactory"]>, expr: AstNode, questionDot: AstNode | undefined, argument: AstNode): AstNode;
-declare function newBinaryExpression(factory: ReturnType<Transformer["getFactory"]>, jsdoc: undefined, left: AstNode, jsdoc2: undefined, operator: AstNode, right: AstNode): AstNode;
-declare function newToken(factory: ReturnType<Transformer["getFactory"]>, kind: number): AstNode;
-declare function newParenthesizedExpression(factory: ReturnType<Transformer["getFactory"]>, expr: AstNode): AstNode;
-
-declare const KindBinaryExpression: number;
-declare const KindBarBarToken: number;
-declare const KindBarBarEqualsToken: number;
-declare const KindAmpersandAmpersandToken: number;
-declare const KindAmpersandAmpersandEqualsToken: number;
-declare const KindQuestionQuestionToken: number;
-declare const KindQuestionQuestionEqualsToken: number;

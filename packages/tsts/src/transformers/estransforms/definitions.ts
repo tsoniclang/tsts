@@ -14,25 +14,26 @@
  */
 
 import { chain, type TransformerFactory } from "../chain.js";
-import type { Transformer } from "../transformer.js";
+import { Transformer } from "../transformer.js";
 
 import type { TransformOptions } from "../transformer.js";
-type CompilerOptionsForESTransform = Record<string, unknown>;
+import { newESDecoratorTransformer as _newESDecoratorTransformer } from "./esdecorator.js";
+import { newClassFieldsTransformer as _newClassFieldsTransformer } from "./classfields.js";
+const newESDecoratorTransformer: TransformerFactory = (opts) => _newESDecoratorTransformer(opts) ?? new Transformer();
+const newClassFieldsTransformer: TransformerFactory = (opts) => _newClassFieldsTransformer(opts) ?? new Transformer();
+import { newUsingDeclarationTransformer } from "./using.js";
+import { newLogicalAssignmentTransformer } from "./logicalassignment.js";
+import { newNullishCoalescingTransformer } from "./nullishcoalescing.js";
+import { newOptionalChainTransformer } from "./optionalchain.js";
+import { newOptionalCatchTransformer } from "./optionalcatch.js";
+import { newObjectRestSpreadTransformer as _newObjectRestSpreadTransformer } from "./objectrestspread.js";
+const newObjectRestSpreadTransformer: TransformerFactory = (opts) => _newObjectRestSpreadTransformer(opts as Parameters<typeof _newObjectRestSpreadTransformer>[0]);
+import { newForAwaitTransformer as newforawaitTransformer } from "./forawait.js";
+import { newTaggedTemplateLiftRestrictionTransformer } from "./taggedtemplate.js";
+import { newAsyncTransformer } from "./async.js";
+import { newExponentiationTransformer } from "./exponentiation.js";
 
-// Forward declarations: each ES feature has its own constructor in
-// the matching file (classfields.ts, optionalchain.ts, etc.).
-declare const newESDecoratorTransformer: TransformerFactory;
-declare const newClassFieldsTransformer: TransformerFactory;
-declare const newUsingDeclarationTransformer: TransformerFactory;
-declare const newLogicalAssignmentTransformer: TransformerFactory;
-declare const newNullishCoalescingTransformer: TransformerFactory;
-declare const newOptionalChainTransformer: TransformerFactory;
-declare const newOptionalCatchTransformer: TransformerFactory;
-declare const newObjectRestSpreadTransformer: TransformerFactory;
-declare const newforawaitTransformer: TransformerFactory;
-declare const newTaggedTemplateLiftRestrictionTransformer: TransformerFactory;
-declare const newAsyncTransformer: TransformerFactory;
-declare const newExponentiationTransformer: TransformerFactory;
+type CompilerOptionsForESTransform = Record<string, unknown>;
 
 const esDecoratorAndClassFields = chain(newESDecoratorTransformer, newClassFieldsTransformer);
 

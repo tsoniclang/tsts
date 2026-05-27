@@ -11,9 +11,63 @@
  */
 
 import type { Node as AstNode, SourceFile } from "../../ast/index.js";
+import {
+  nodeKind, sourceFileEndOfFileToken, isExternalModule,
+  taggedTemplateTag, subtreeFacts, getSourceFileOfNode,
+} from "../../ast/index.js";
+import { isNoSubstitutionTemplateLiteral } from "../../ast/index.js";
+import { getSourceTextOfNodeFromSourceFile } from "../../scanner/utilities.js";
+
+function taggedTemplateTemplate(node: AstNode): AstNode {
+  return (node as unknown as { template: AstNode }).template;
+}
+function templateLiteralLikeData(node: AstNode): { readonly text: string; readonly rawText: string; readonly templateFlags: number } {
+  const n = node as unknown as { text?: string; rawText?: string; templateFlags?: number };
+  return { text: n.text ?? "", rawText: n.rawText ?? "", templateFlags: n.templateFlags ?? 0 };
+}
+function templateExpressionHead(node: AstNode): AstNode {
+  return (node as unknown as { head: AstNode }).head;
+}
+function templateExpressionSpans(node: AstNode): readonly AstNode[] {
+  const spans = (node as unknown as { templateSpans?: { nodes?: readonly AstNode[] } | readonly AstNode[] }).templateSpans;
+  if (spans === undefined) return [];
+  const inner = (spans as { nodes?: readonly AstNode[] }).nodes;
+  return inner ?? (spans as readonly AstNode[]);
+}
+function templateSpanLiteral(span: AstNode): AstNode {
+  return (span as unknown as { literal: AstNode }).literal;
+}
+function templateSpanExpression(span: AstNode): AstNode {
+  return (span as unknown as { expression: AstNode }).expression;
+}
+function subtreeContainsInvalidTemplateEscape(node: AstNode): boolean {
+  return (subtreeFacts(node) & (1 << 8) /* ContainsInvalidTemplateEscape */) !== 0;
+}
+function sourceFileStatements(file: SourceFile): readonly AstNode[] {
+  const stmts = (file as unknown as { statements?: { nodes?: readonly AstNode[] } | readonly AstNode[] }).statements;
+  if (stmts === undefined) return [];
+  const inner = (stmts as { nodes?: readonly AstNode[] }).nodes;
+  return inner ?? (stmts as readonly AstNode[]);
+}
+import { Kind } from "../../ast/index.js";
+import {
+  visitNode, visitEachChildOf, addEmitHelpers, readEmitHelpers,
+  newVariableStatement, newVariableDeclarationList,
+  newVariableDeclaration, newNodeList, updateSourceFile,
+  newTemplateObjectHelper, newArrayLiteralExpression, newCallExpression,
+  newStringLiteral, newVoidZeroExpression, newUniqueName,
+  newLogicalORExpression, newAssignmentExpression,
+} from "../../printer/factory-helpers.js";
 
 import { Transformer, type EmitContext } from "../transformer.js";
 import type { TransformOptions } from "../transformer.js";
+
+const KindSourceFile = Kind.SourceFile;
+const KindTaggedTemplateExpression = Kind.TaggedTemplateExpression;
+const KindNoSubstitutionTemplateLiteral = Kind.NoSubstitutionTemplateLiteral;
+const KindTemplateTail = Kind.TemplateTail;
+void KindSourceFile; void KindTaggedTemplateExpression;
+void KindNoSubstitutionTemplateLiteral; void KindTemplateTail;
 
 class TaggedTemplateTransformer extends Transformer {
   private currentSourceFile: SourceFile | undefined;
@@ -121,7 +175,7 @@ function getRawLiteral(
 ): AstNode {
   let text = templateLiteralLikeData(node).rawText;
   if (text === "") {
-    text = getSourceTextOfNodeFromSourceFile(getSourceFileOfNode(node), node, false);
+    text = getSourceTextOfNodeFromSourceFile(getSourceFileOfNode(node) as unknown as SourceFile, node, false);
     const kind = nodeKind(node);
     const isLast = kind === KindNoSubstitutionTemplateLiteral || kind === KindTemplateTail;
     const endLen = isLast ? 1 : 2;
@@ -152,44 +206,5 @@ export function newTaggedTemplateLiftRestrictionTransformer(opts: TransformOptio
   return new TaggedTemplateTransformer(opts);
 }
 
-// Forward declarations.
-declare function subtreeContainsInvalidTemplateEscape(node: AstNode): boolean;
-declare function nodeKind(node: AstNode): number;
-declare function visitEachChildOf(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
-declare function visitNode(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
-declare function taggedTemplateTag(node: AstNode): AstNode;
-declare function taggedTemplateTemplate(node: AstNode): AstNode;
-declare function isNoSubstitutionTemplateLiteral(node: AstNode): boolean;
-declare function templateLiteralLikeData(node: AstNode): { readonly text: string; readonly rawText: string; readonly templateFlags: number };
-declare function templateExpressionHead(node: AstNode): AstNode;
-declare function templateExpressionSpans(node: AstNode): readonly AstNode[];
-declare function templateSpanLiteral(span: AstNode): AstNode;
-declare function templateSpanExpression(span: AstNode): AstNode;
-declare function getSourceFileOfNode(node: AstNode): SourceFile;
-declare function getSourceTextOfNodeFromSourceFile(file: SourceFile, node: AstNode, includeTrivia: boolean): string;
-declare function sourceFileStatements(file: SourceFile): readonly AstNode[];
-declare function sourceFileEndOfFileToken(file: SourceFile): AstNode;
-declare function isExternalModule(file: SourceFile): boolean;
-declare function addEmitHelpers(emit: EmitContext, node: AstNode, helpers: readonly AstNode[]): void;
-declare function readEmitHelpers(emit: EmitContext): readonly AstNode[];
-
-declare function newVariableStatement(factory: ReturnType<Transformer["getFactory"]>, modifiers: undefined, declList: AstNode): AstNode;
-declare function newVariableDeclarationList(factory: ReturnType<Transformer["getFactory"]>, declarations: AstNode, flags: number): AstNode;
-declare function newVariableDeclaration(factory: ReturnType<Transformer["getFactory"]>, name: AstNode, exclamationToken: undefined, type: undefined, initializer: undefined): AstNode;
-declare function newNodeList(factory: ReturnType<Transformer["getFactory"]>, nodes: readonly AstNode[]): AstNode;
-declare function updateSourceFile(factory: ReturnType<Transformer["getFactory"]>, file: SourceFile, statements: AstNode, endOfFileToken: AstNode): AstNode;
-declare function newTemplateObjectHelper(factory: ReturnType<Transformer["getFactory"]>, cooked: AstNode, raw: AstNode): AstNode;
-declare function newArrayLiteralExpression(factory: ReturnType<Transformer["getFactory"]>, elements: AstNode, multiLine: boolean): AstNode;
-declare function newCallExpression(factory: ReturnType<Transformer["getFactory"]>, expression: AstNode, questionDotToken: undefined, typeArguments: undefined, args: AstNode): AstNode;
-declare function newStringLiteral(factory: ReturnType<Transformer["getFactory"]>, text: string, flags: number): AstNode;
-declare function newVoidZeroExpression(factory: ReturnType<Transformer["getFactory"]>): AstNode;
-declare function newUniqueName(factory: ReturnType<Transformer["getFactory"]>, hint: string): AstNode;
-declare function newLogicalORExpression(factory: ReturnType<Transformer["getFactory"]>, left: AstNode, right: AstNode): AstNode;
-declare function newAssignmentExpression(factory: ReturnType<Transformer["getFactory"]>, target: AstNode, value: AstNode): AstNode;
-
-declare const KindSourceFile: number;
-declare const KindTaggedTemplateExpression: number;
-declare const KindNoSubstitutionTemplateLiteral: number;
-declare const KindTemplateTail: number;
-declare const TokenFlagsIsInvalid: number;
-declare const TokenFlagsContainsInvalidEscape: number;
+const TokenFlagsIsInvalid = 1 << 0;
+const TokenFlagsContainsInvalidEscape = 1 << 1;

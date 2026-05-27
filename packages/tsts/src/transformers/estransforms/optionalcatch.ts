@@ -9,9 +9,21 @@
  */
 
 import type { Node as AstNode } from "../../ast/index.js";
+import {
+  Kind, nodeKind, subtreeFacts,
+  catchClauseVariableDeclaration, catchClauseBlock,
+} from "../../ast/index.js";
+import {
+  visitNode, visitEachChildOf, newCatchClause, newVariableDeclaration, newTempVariable,
+} from "../../printer/factory-helpers.js";
 
 import { Transformer } from "../transformer.js";
 import type { TransformOptions } from "../transformer.js";
+
+const KindCatchClause = Kind.CatchClause;
+function subtreeContainsMissingCatchClauseVariable(node: AstNode): boolean {
+  return (subtreeFacts(node) & (1 << 7) /* ContainsMissingCatchClauseVariable */) !== 0;
+}
 
 class OptionalCatchTransformer extends Transformer {
   constructor(opts: TransformOptions) {
@@ -45,14 +57,3 @@ export function newOptionalCatchTransformer(opts: TransformOptions): Transformer
   return new OptionalCatchTransformer(opts);
 }
 
-declare function subtreeContainsMissingCatchClauseVariable(node: AstNode): boolean;
-declare function nodeKind(node: AstNode): number;
-declare function visitEachChildOf(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
-declare function visitNode(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
-declare function catchClauseVariableDeclaration(node: AstNode): AstNode | undefined;
-declare function catchClauseBlock(node: AstNode): AstNode;
-declare function newCatchClause(factory: ReturnType<Transformer["getFactory"]>, varDecl: AstNode, block: AstNode): AstNode;
-declare function newVariableDeclaration(factory: ReturnType<Transformer["getFactory"]>, name: AstNode, exclamationToken: undefined, type: undefined, initializer: undefined): AstNode;
-declare function newTempVariable(factory: ReturnType<Transformer["getFactory"]>): AstNode;
-
-declare const KindCatchClause: number;

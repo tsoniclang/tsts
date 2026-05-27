@@ -9,9 +9,28 @@
  */
 
 import type { Node as AstNode } from "../../ast/index.js";
+import { nodeKind, binaryOperatorKind, binaryLeft, binaryRight, subtreeFacts, isSimpleCopiableExpression } from "../../ast/index.js";
+import { Kind } from "../../ast/index.js";
+import { createNotNullCondition } from "./utilities.js";
+
+function subtreeContainsNullishCoalescing(node: AstNode): boolean {
+  return (subtreeFacts(node) & (1 << 11) /* ContainsNullishCoalescing */) !== 0;
+}
+import {
+  visitNode, visitEachChildOf,
+  newTempVariable, addVariableDeclaration,
+  newAssignmentExpression, newConditionalExpression, newToken,
+} from "../../printer/factory-helpers.js";
 
 import { Transformer, type EmitContext } from "../transformer.js";
 import type { TransformOptions } from "../transformer.js";
+
+const KindBinaryExpression = Kind.BinaryExpression;
+const KindQuestionQuestionToken = Kind.QuestionQuestionToken;
+const KindQuestionToken = Kind.QuestionToken;
+const KindColonToken = Kind.ColonToken;
+void KindBinaryExpression; void KindQuestionQuestionToken;
+void KindQuestionToken; void KindColonToken;
 
 class NullishCoalescingTransformer extends Transformer {
   constructor(opts: TransformOptions) {
@@ -57,23 +76,3 @@ export function newNullishCoalescingTransformer(opts: TransformOptions): Transfo
   return new NullishCoalescingTransformer(opts);
 }
 
-// Forward declarations.
-declare function subtreeContainsNullishCoalescing(node: AstNode): boolean;
-declare function nodeKind(node: AstNode): number;
-declare function binaryOperatorKind(node: AstNode): number;
-declare function binaryLeft(node: AstNode): AstNode;
-declare function binaryRight(node: AstNode): AstNode;
-declare function isSimpleCopiableExpression(node: AstNode): boolean;
-declare function visitEachChildOf(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
-declare function visitNode(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
-declare function newTempVariable(factory: ReturnType<Transformer["getFactory"]>): AstNode;
-declare function addVariableDeclaration(emitContext: EmitContext, decl: AstNode): void;
-declare function newAssignmentExpression(factory: ReturnType<Transformer["getFactory"]>, target: AstNode, value: AstNode): AstNode;
-declare function newConditionalExpression(factory: ReturnType<Transformer["getFactory"]>, cond: AstNode, q: AstNode, whenTrue: AstNode, c: AstNode, whenFalse: AstNode): AstNode;
-declare function newToken(factory: ReturnType<Transformer["getFactory"]>, kind: number): AstNode;
-declare function createNotNullCondition(emitContext: EmitContext, left: AstNode, right: AstNode, invert: boolean): AstNode;
-
-declare const KindBinaryExpression: number;
-declare const KindQuestionQuestionToken: number;
-declare const KindQuestionToken: number;
-declare const KindColonToken: number;

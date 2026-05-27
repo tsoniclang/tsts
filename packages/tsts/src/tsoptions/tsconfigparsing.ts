@@ -30,6 +30,18 @@ import type { ParsedCommandLine } from "./parsedcommandline.js";
 import type { Diagnostic } from "../ast/index.js";
 import type { CommandLineOption } from "./commandlineoption.js";
 import type { Tristate } from "../core/tristate.js";
+import { getDirectoryPath, combinePaths } from "../tspath/path.js";
+
+function createParseError(fileName: string, message: string): Diagnostic {
+  return {
+    file: undefined,
+    start: 0,
+    length: 0,
+    messageText: `${fileName}: ${message}`,
+    category: 1,
+    code: 0,
+  } as unknown as Diagnostic;
+}
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -320,6 +332,3 @@ export function directoryOfCombinedPath(fileName: string, basePath: string): str
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-declare function createParseError(fileName: string, message: string): Diagnostic;
-declare function getDirectoryPath(path: string): string;
-declare function combinePaths(base: string, child: string): string;

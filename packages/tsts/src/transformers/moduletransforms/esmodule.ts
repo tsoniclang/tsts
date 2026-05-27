@@ -417,25 +417,53 @@ interface CompilerOptions { readonly _opts?: unknown; readonly [key: string]: un
 interface ReferenceResolver { readonly _r?: unknown; readonly [key: string]: unknown }
 type HasFileName = AstNode | { readonly fileName?: string };
 
-// Forward-declared local helpers — the body-completion phase will
-// replace these with real implementations. For now we keep
-// `createExternalHelpersImportDeclarationIfNeeded` as a forward-
-// declared helper since its body lives in a different module.
-declare function createExternalHelpersImportDeclarationIfNeeded(
-  emitContext: unknown,
-  file: SourceFile,
-  options: CompilerOptions,
-  moduleFormat: number,
-  hasExportStarsToExportValues: boolean,
-  hasImportStar: boolean,
-  hasImportDefault: boolean,
-): AstNode | undefined;
-// importModuleSpecifier / isExternalModuleIndicator / isExportNamespaceAs
-// DefaultDeclaration / namespaceExportName / compilerOptionsModule have
-// no canonical home yet; stub here until Phase 4 wires them.
-declare function importModuleSpecifier(node: ImportDeclaration): AstNode;
-declare function isExternalModuleIndicator(node: AstNode): boolean;
-declare function isExportNamespaceAsDefaultDeclaration(node: AstNode): boolean;
-declare function namespaceExportName(node: AstNode): AstNode;
-declare function compilerOptionsModule(options: CompilerOptions): number;
-declare function compilerOptionsGetIsolatedModules(options: CompilerOptions): boolean;
+// External-helpers import-injection — the real implementation lives
+// in transformers/moduletransforms/externalhelpers.ts (pending Phase 5
+// module-transform body completion). Returning undefined means no
+// helpers import is added; emit still works for source files that don't
+// need __awaiter/__generator/etc., which covers the common case.
+function createExternalHelpersImportDeclarationIfNeeded(
+  _emitContext: unknown,
+  _file: SourceFile,
+  _options: CompilerOptions,
+  _moduleFormat: number,
+  _hasExportStarsToExportValues: boolean,
+  _hasImportStar: boolean,
+  _hasImportDefault: boolean,
+): AstNode | undefined {
+  return undefined;
+}
+// Strada helper implementations:
+function importModuleSpecifier(node: ImportDeclaration): AstNode {
+  return (node as unknown as { moduleSpecifier: AstNode }).moduleSpecifier;
+}
+function isExternalModuleIndicator(node: AstNode | undefined): boolean {
+  // Strada marks a node as external-module-indicator when it's an
+  // ImportDeclaration/ExportDeclaration/ExportAssignment in a top-level
+  // file scope. Reasonable approximation here: any of those kinds.
+  if (node === undefined) return false;
+  const k = (node as { kind?: number }).kind ?? 0;
+  // Cross-imported Kind constants from ast index would create a cycle —
+  // use numeric values directly.
+  return k === 271 /* ImportDeclaration */
+    || k === 277 /* ExportDeclaration */
+    || k === 276 /* ExportAssignment */;
+}
+function isExportNamespaceAsDefaultDeclaration(node: AstNode | undefined): boolean {
+  // `export * as default from "..."` — namespace export specifier with default name.
+  if (node === undefined) return false;
+  const clause = (node as unknown as { exportClause?: AstNode }).exportClause;
+  if (clause === undefined) return false;
+  const name = (clause as unknown as { name?: { text?: string } }).name?.text;
+  return name === "default";
+}
+function namespaceExportName(node: AstNode): AstNode {
+  return (node as unknown as { name: AstNode }).name;
+}
+function compilerOptionsModule(options: CompilerOptions): number {
+  return (options as unknown as { module?: number }).module ?? 1;
+}
+function compilerOptionsGetIsolatedModules(options: CompilerOptions): boolean {
+  return (options as unknown as { isolatedModules?: boolean | number }).isolatedModules === true
+    || (options as unknown as { isolatedModules?: boolean | number }).isolatedModules === 1;
+}

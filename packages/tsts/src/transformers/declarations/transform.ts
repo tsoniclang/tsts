@@ -19,6 +19,7 @@
  */
 
 import { Transformer } from "../transformer.js";
+import { Kind } from "../../ast/index.js";
 import {
   newSymbolTracker,
   type SymbolTrackerImpl,
@@ -452,9 +453,9 @@ interface NodeFactory {
   newNamedExports(elements: readonly AstNode[]): AstNode;
 }
 
-declare const Kind: {
-  SourceFile: number;
-};
-
-declare function compilerOptionsIsolatedDeclarations(options: CompilerOptions): boolean;
-declare function compilerOptionsStripInternal(options: CompilerOptions): boolean;
+function compilerOptionsIsolatedDeclarations(options: CompilerOptions): boolean {
+  return (options as unknown as { isolatedDeclarations?: boolean }).isolatedDeclarations === true;
+}
+function compilerOptionsStripInternal(options: CompilerOptions): boolean {
+  return (options as unknown as { stripInternal?: boolean }).stripInternal === true;
+}

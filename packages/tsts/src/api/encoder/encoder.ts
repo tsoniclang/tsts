@@ -9,6 +9,7 @@
  */
 
 import type { Node as AstNode, SourceFile, ModifierList, FileReference, PositionMap } from "../../ast/index.js";
+import { getModifierListLength } from "../../ast/index.js";
 
 export function sourceFileHash(sourceFile: SourceFile): string {
   void sourceFile;
@@ -110,4 +111,3 @@ export function msgpackWriteBool(buf: number[], value: boolean): number[] {
 // ---------------------------------------------------------------------------
 
 interface ExternalModuleIndicatorOptions { readonly _opts?: unknown }
-declare function getModifierListLength(list: ModifierList): number;

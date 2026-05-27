@@ -11,7 +11,10 @@
  */
 
 import type { Node as AstNode, Expression } from "../../ast/index.js";
+import { Kind } from "../../ast/index.js";
 import { isInf, isNaN as jsIsNaN } from "../../jsnum/jsnum.js";
+
+const TokenFlags = { None: 0 } as const;
 
 export function constantExpression(value: unknown, factory: NodeFactory): Expression | undefined {
   if (typeof value === "string") {
@@ -51,10 +54,3 @@ interface NodeFactory {
   newPrefixUnaryExpression(operator: number, operand: Expression): Expression;
 }
 
-declare const Kind: {
-  MinusToken: number;
-};
-
-declare const TokenFlags: {
-  None: number;
-};

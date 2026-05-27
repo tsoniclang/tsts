@@ -24,7 +24,34 @@ import {
   variableDeclarationNameRO, variableDeclarationInitializerRO,
   bindingPatternElementsRO,
   exportAssignmentExpressionRO, exportAssignmentIsExportEquals,
+  subtreeFacts, cloneIdentifier,
 } from "../../ast/index.js";
+import { skipOuterExpressions } from "../../ast/index.js";
+import { isGeneratedIdentifier, isLocalName } from "../utilities.js";
+
+function firstResult<T>(arr: { items: readonly T[]; changed: boolean }): readonly T[] {
+  return arr.items;
+}
+function convertBindingPatternToAssignmentPattern(_emitContext: unknown, pattern: AstNode): AstNode {
+  // Strada's convertBindingPatternToAssignmentPattern is a deep transform.
+  // Real port awaits the destructuring helper port; for now return the
+  // pattern unchanged so the caller can wire it through.
+  return pattern;
+}
+function syntaxListChildren(node: AstNode): readonly AstNode[] {
+  const inner = (node as unknown as { nodes?: readonly AstNode[] }).nodes;
+  return inner ?? [];
+}
+function sourceFileStatements(file: SourceFile): readonly AstNode[] {
+  const stmts = (file as unknown as { statements?: { nodes?: readonly AstNode[] } | readonly AstNode[] }).statements;
+  if (stmts === undefined) return [];
+  const inner = (stmts as { nodes?: readonly AstNode[] }).nodes;
+  return inner ?? (stmts as readonly AstNode[]);
+}
+function statementsListAsNode(node: AstNode): AstNode { return node; }
+function forDeclName(node: AstNode): AstNode {
+  return (node as unknown as { name?: AstNode }).name ?? node;
+}
 import {
   isIdentifier, isBindingPattern, isVariableDeclarationList,
   isVariableStatement,
@@ -539,7 +566,7 @@ export class UsingDeclarationTransformer extends Transformer {
       name = cloneIdentifier(name as unknown as AstNode, this.factory()) as unknown as IdentifierNode;
     }
     if (isExport) {
-      if (exportAlias === undefined && !isLocalName(this.emitContext(), name as unknown as AstNode)) {
+      if (exportAlias === undefined && !isLocalName(this.emitContext(), name as unknown as IdentifierNode)) {
         const varDecl = this.factory().newVariableDeclaration(name as unknown as AstNode, undefined, undefined, undefined);
         if (original !== undefined) this.emitContext().setOriginal(varDecl, original);
         this.exportVars.push(varDecl);
@@ -693,14 +720,3 @@ export function newUsingDeclarationTransformer(opts: TransformOptions): Transfor
 
 const OEK = { All: 0 } as const;
 const SubtreeFacts = { ContainsUsing: 1 << 0 } as const;
-declare function subtreeFacts(node: AstNode): number;
-declare function skipOuterExpressions(node: AstNode, kinds: number): AstNode;
-declare function firstResult<T>(arr: { items: readonly T[]; changed: boolean }): readonly T[];
-declare function isGeneratedIdentifier(emitContext: unknown, node: AstNode): boolean;
-declare function isLocalName(emitContext: unknown, node: AstNode): boolean;
-declare function cloneIdentifier(node: AstNode, factory: unknown): AstNode;
-declare function convertBindingPatternToAssignmentPattern(emitContext: unknown, pattern: AstNode): AstNode;
-declare function syntaxListChildren(node: AstNode): readonly AstNode[];
-declare function sourceFileStatements(node: SourceFile): readonly AstNode[];
-declare function statementsListAsNode(node: AstNode): AstNode;
-declare function forDeclName(node: AstNode): AstNode;

@@ -22,8 +22,60 @@ import {
   isBindingPattern, isSourceFile, isModuleDeclaration, isClassDeclaration,
   isInterfaceDeclaration, isMappedTypeNode,
 } from "../../ast/index.js";
-import { Kind } from "../../ast/index.js";
+import { Kind, functionDeclarationBody, nodeBody } from "../../ast/index.js";
 import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
+
+// Strada helpers backed by Kind dispatch and small field reads:
+function isAnyImportOrReExport(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = (node as { kind?: number }).kind;
+  return k === Kind.ImportDeclaration || k === Kind.ImportEqualsDeclaration
+    || k === Kind.ExportDeclaration || k === Kind.ExportAssignment;
+}
+function isAmbientModule(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  if ((node as { kind?: number }).kind !== Kind.ModuleDeclaration) return false;
+  const name = (node as unknown as { name?: AstNode }).name;
+  if (name === undefined) return false;
+  return (name as { kind?: number }).kind === Kind.StringLiteral;
+}
+function isPropertySignatureDeclaration(node: AstNode | undefined): boolean {
+  return node !== undefined && (node as { kind?: number }).kind === Kind.PropertySignature;
+}
+function isMethodSignatureDeclaration(node: AstNode | undefined): boolean {
+  return node !== undefined && (node as { kind?: number }).kind === Kind.MethodSignature;
+}
+function isJSTypeAliasDeclaration(_node: AstNode): boolean {
+  // JSDoc type alias support is not yet ported.
+  return false;
+}
+function isFunctionLike(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = (node as { kind?: number }).kind ?? 0;
+  return k === Kind.FunctionDeclaration || k === Kind.FunctionExpression
+    || k === Kind.ArrowFunction || k === Kind.MethodDeclaration
+    || k === Kind.Constructor || k === Kind.GetAccessor || k === Kind.SetAccessor;
+}
+function functionDeclarationSymbolDeclarations(_node: AstNode): readonly AstNode[] {
+  // Multi-decl symbol grouping; binder pass populates this. Empty until binder lands.
+  return [];
+}
+function getClassExtendsHeritageElement(node: AstNode | undefined): AstNode | undefined {
+  if (node === undefined) return undefined;
+  const clauses = (node as unknown as { heritageClauses?: { nodes?: readonly AstNode[] } }).heritageClauses?.nodes;
+  if (clauses === undefined) return undefined;
+  for (const clause of clauses) {
+    if ((clause as { token?: number }).token === Kind.ExtendsKeyword) {
+      const types = (clause as unknown as { types?: { nodes?: readonly AstNode[] } }).types?.nodes;
+      return types?.[0];
+    }
+  }
+  return undefined;
+}
+function statementListNodes(list: StatementList): readonly AstNode[] {
+  return (list as unknown as { nodes?: readonly AstNode[] }).nodes ?? [];
+}
+void functionDeclarationBody; void nodeBody;
 
 export function needsScopeMarker(result: AstNode): boolean {
   return (
@@ -181,14 +233,3 @@ interface DeclarationEmitHost {
 interface EmitContext { parseNode(node: AstNode): AstNode | undefined }
 interface EmitResolver { isDeclarationVisible(node: AstNode): boolean }
 
-// Strada helpers not yet wired to ast/index.js
-declare function isAnyImportOrReExport(node: AstNode): boolean;
-declare function isAmbientModule(node: AstNode): boolean;
-declare function isPropertySignatureDeclaration(node: AstNode): boolean;
-declare function isMethodSignatureDeclaration(node: AstNode): boolean;
-declare function isJSTypeAliasDeclaration(node: AstNode): boolean;
-declare function isFunctionLike(node: AstNode): boolean;
-declare function functionDeclarationBody(node: FunctionDeclaration): AstNode | undefined;
-declare function functionDeclarationSymbolDeclarations(node: FunctionDeclaration): readonly AstNode[];
-declare function getClassExtendsHeritageElement(node: AstNode): AstNode | undefined;
-declare function statementListNodes(list: StatementList): readonly AstNode[];

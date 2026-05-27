@@ -15,8 +15,81 @@
  */
 
 import type { Node as AstNode } from "../../ast/index.js";
+import {
+  nodeKind, classModifiers, classDeclarationName, classTypeParameters,
+  classHeritageClauses, classMembers,
+  callExpressionExpression,
+  binaryLeft, binaryOperatorKind, identifierText,
+  assignmentTargetContainsSuperProperty,
+} from "../../ast/index.js";
+import {
+  isPropertyAccessExpression, isElementAccessExpression,
+} from "../../ast/index.js";
+import { callExpressionArguments } from "../../ast/index.js";
+import {
+  propertyAccessExpressionOf, propertyAccessName,
+  elementAccessExpressionOf, elementArgumentExpression,
+  isSuperProperty, isUpdateExpression,
+  unaryOperand, nodeListNodes, propertyDeclarationName,
+} from "../../ast/index.js";
+import { Kind, NodeFlags } from "../../ast/index.js";
+function isAssignmentOperator(kind: number): boolean {
+  // AssignmentOperator covers EqualsToken..CaretEqualsToken in the
+  // canonical Kind enum (kind values are contiguous).
+  return kind >= Kind.EqualsToken && kind <= Kind.CaretEqualsToken;
+}
+import { newGeneratedPrivateNameForNode } from "../../printer/factory-helpers.js";
+import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
+import {
+  visitNode, visitNodes, visitEachChild,
+  setOriginal,
+  newClassExpression, newBinaryExpression, newPropertyAccessExpression,
+  newKeywordExpression, newVoidZeroExpression, newToken,
+  newIdentifier, newThisExpression, newCallExpression,
+  newArrowFunction, newParameterDeclaration,
+  newPropertyAssignment, newAssignmentExpression,
+  newObjectLiteralExpression,
+  newVariableDeclaration, newVariableDeclarationList,
+  newVariableStatement, newNodeList,
+  updatePropertyDeclaration,
+} from "../../printer/factory-helpers.js";
 
-import type { EmitContext, NodeFactory } from "../transformer.js";
+import type { EmitContext, NodeFactory, NodeVisitor } from "../transformer.js";
+
+const KindCallExpression = Kind.CallExpression;
+const KindPropertyAccessExpression = Kind.PropertyAccessExpression;
+const KindElementAccessExpression = Kind.ElementAccessExpression;
+const KindBinaryExpression = Kind.BinaryExpression;
+const KindPrefixUnaryExpression = Kind.PrefixUnaryExpression;
+const KindPostfixUnaryExpression = Kind.PostfixUnaryExpression;
+const KindFunctionExpression = Kind.FunctionExpression;
+const KindFunctionDeclaration = Kind.FunctionDeclaration;
+const KindMethodDeclaration = Kind.MethodDeclaration;
+const KindGetAccessor = Kind.GetAccessor;
+const KindSetAccessor = Kind.SetAccessor;
+const KindConstructor = Kind.Constructor;
+const KindClassDeclaration = Kind.ClassDeclaration;
+const KindClassExpression = Kind.ClassExpression;
+const KindSuperKeyword = Kind.SuperKeyword;
+const KindNullKeyword = Kind.NullKeyword;
+const KindEqualsEqualsEqualsToken = Kind.EqualsEqualsEqualsToken;
+const KindExclamationEqualsEqualsToken = Kind.ExclamationEqualsEqualsToken;
+const KindBarBarToken = Kind.BarBarToken;
+const KindAmpersandAmpersandToken = Kind.AmpersandAmpersandToken;
+const KindEqualsGreaterThanToken = Kind.EqualsGreaterThanToken;
+const ModifierFlagsExportDefault = ModifierFlags.ExportDefault;
+const NodeFlagsConst = NodeFlags.Const;
+void KindCallExpression; void KindPropertyAccessExpression;
+void KindElementAccessExpression; void KindBinaryExpression;
+void KindPrefixUnaryExpression; void KindPostfixUnaryExpression;
+void KindFunctionExpression; void KindFunctionDeclaration;
+void KindMethodDeclaration; void KindGetAccessor; void KindSetAccessor;
+void KindConstructor; void KindClassDeclaration; void KindClassExpression;
+void KindSuperKeyword; void KindNullKeyword;
+void KindEqualsEqualsEqualsToken; void KindExclamationEqualsEqualsToken;
+void KindBarBarToken; void KindAmpersandAmpersandToken;
+void KindEqualsGreaterThanToken;
+void ModifierFlagsExportDefault; void NodeFlagsConst;
 
 /**
  * Converts a `class Foo {}` declaration to a `class Foo {}` expression
@@ -32,7 +105,7 @@ export function convertClassDeclarationToClassExpression(
   const factory = emitContext.factory();
   const updated = newClassExpression(
     factory,
-    extractModifiers !== undefined ? extractModifiers(emitContext, classModifiers(node), ~ModifierFlagsExportDefault) : classModifiers(node),
+    extractModifiers !== undefined ? extractModifiers(emitContext, classModifiers(node) as AstNode | undefined, ~ModifierFlagsExportDefault) : (classModifiers(node) as AstNode | undefined),
     classDeclarationName(node),
     classTypeParameters(node),
     classHeritageClauses(node),
@@ -92,13 +165,13 @@ export class SuperAccessState {
 
   public superBinding: AstNode | undefined;
   public superIndexBinding: AstNode | undefined;
-  public superAccessVisitor: NodeVisitorLike | undefined;
+  public superAccessVisitor: NodeVisitor | undefined;
 
   public factory: NodeFactory | undefined;
 
   initSuperAccessVisitor(emitContext: EmitContext, factory: NodeFactory): void {
     this.factory = factory;
-    this.superAccessVisitor = emitContext.newNodeVisitor((node) => this.visitSuperAccessNode(node)) as unknown as NodeVisitorLike;
+    this.superAccessVisitor = emitContext.newNodeVisitor((node) => this.visitSuperAccessNode(node));
   }
 
   visitSuperAccessNode(node: AstNode): AstNode | undefined {
@@ -155,7 +228,7 @@ export class SuperAccessState {
     if (callArgs !== undefined) {
       const visited = visitNodes(this.requireVisitor(), callArgs);
       if (visited !== undefined) {
-        for (const n of nodeListNodes(visited)) allArgs.push(n);
+        for (const n of nodeListNodes(visited as AstNode)) allArgs.push(n);
       }
     }
     return newCallExpression(this.requireFactory(), callTarget, undefined, undefined, newNodeList(this.requireFactory(), allArgs));
@@ -263,7 +336,7 @@ export class SuperAccessState {
     return this.superIndexBinding;
   }
 
-  private requireVisitor(): NodeVisitorLike {
+  private requireVisitor(): NodeVisitor {
     if (this.superAccessVisitor === undefined) throw new Error("SuperAccessState not initialized");
     return this.superAccessVisitor;
   }
@@ -294,84 +367,3 @@ export function createAccessorPropertyBackingField(
 // Forward declarations
 // ---------------------------------------------------------------------------
 
-interface NodeVisitorLike {
-  visitEachChild?(node: AstNode): AstNode;
-  visitNode?(node: AstNode): AstNode | undefined;
-  visitNodes?(nodes: AstNode): AstNode | undefined;
-}
-
-declare function nodeKind(node: AstNode): number;
-declare function classModifiers(node: AstNode): AstNode | undefined;
-declare function classDeclarationName(node: AstNode): AstNode | undefined;
-declare function classTypeParameters(node: AstNode): AstNode | undefined;
-declare function classHeritageClauses(node: AstNode): AstNode | undefined;
-declare function classMembers(node: AstNode): AstNode | undefined;
-declare function callExpressionExpression(node: AstNode): AstNode;
-declare function callExpressionArguments(node: AstNode): AstNode | undefined;
-declare function propertyAccessExpressionOf(node: AstNode): AstNode;
-declare function propertyAccessName(node: AstNode): AstNode;
-declare function elementAccessExpressionOf(node: AstNode): AstNode;
-declare function elementArgumentExpression(node: AstNode): AstNode;
-declare function isPropertyAccessExpression(node: AstNode): boolean;
-declare function isElementAccessExpression(node: AstNode): boolean;
-declare function isSuperProperty(node: AstNode): boolean;
-declare function isAssignmentOperator(kind: number): boolean;
-declare function isUpdateExpression(node: AstNode): boolean;
-declare function assignmentTargetContainsSuperProperty(node: AstNode): boolean;
-declare function binaryLeft(node: AstNode): AstNode;
-declare function binaryOperatorKind(node: AstNode): number;
-declare function unaryOperand(node: AstNode): AstNode;
-declare function identifierText(node: AstNode): string;
-declare function nodeListNodes(list: AstNode): readonly AstNode[];
-declare function propertyDeclarationName(node: AstNode): AstNode;
-
-declare function visitEachChild(visitor: NodeVisitorLike, node: AstNode): AstNode;
-declare function visitNode(visitor: NodeVisitorLike, node: AstNode): AstNode;
-declare function visitNodes(visitor: NodeVisitorLike, nodes: AstNode): AstNode | undefined;
-
-declare function setOriginal(emitContext: EmitContext, node: AstNode, original: AstNode): void;
-
-declare function newClassExpression(factory: NodeFactory, modifiers: AstNode | undefined, name: AstNode | undefined, typeParameters: AstNode | undefined, heritageClauses: AstNode | undefined, members: AstNode | undefined): AstNode;
-declare function newBinaryExpression(factory: NodeFactory, left: AstNode, operatorToken: AstNode, right: AstNode): AstNode;
-declare function newPropertyAccessExpression(factory: NodeFactory, expression: AstNode, questionDot: AstNode | undefined, name: AstNode): AstNode;
-declare function newKeywordExpression(factory: NodeFactory, kind: number): AstNode;
-declare function newVoidZeroExpression(factory: NodeFactory): AstNode;
-declare function newToken(factory: NodeFactory, kind: number): AstNode;
-declare function newIdentifier(factory: NodeFactory, text: string): AstNode;
-declare function newThisExpression(factory: NodeFactory): AstNode;
-declare function newCallExpression(factory: NodeFactory, expression: AstNode, questionDot: undefined, typeArgs: undefined, args: AstNode): AstNode;
-declare function newArrowFunction(factory: NodeFactory, parameters: readonly AstNode[], arrowToken: AstNode, body: AstNode): AstNode;
-declare function newParameterDeclaration(factory: NodeFactory, name: AstNode): AstNode;
-declare function newPropertyAssignment(factory: NodeFactory, name: AstNode, value: AstNode): AstNode;
-declare function newAssignmentExpression(factory: NodeFactory, target: AstNode, value: AstNode): AstNode;
-declare function newObjectLiteralExpression(factory: NodeFactory, properties: AstNode, multiLine: boolean): AstNode;
-declare function newVariableDeclaration(factory: NodeFactory, name: AstNode, exclamationToken: undefined, type: undefined, initializer: AstNode): AstNode;
-declare function newVariableDeclarationList(factory: NodeFactory, declarations: AstNode, flags: number): AstNode;
-declare function newVariableStatement(factory: NodeFactory, modifiers: undefined, declList: AstNode): AstNode;
-declare function newNodeList(factory: NodeFactory, nodes: readonly AstNode[]): AstNode;
-declare function updatePropertyDeclaration(factory: NodeFactory, node: AstNode, modifiers: AstNode | undefined, name: AstNode, postfixToken: undefined, type: undefined, initializer: AstNode | undefined): AstNode;
-declare function newGeneratedPrivateNameForNode(factory: NodeFactory, node: AstNode, opts: { readonly suffix: string }): AstNode;
-
-declare const KindCallExpression: number;
-declare const KindPropertyAccessExpression: number;
-declare const KindElementAccessExpression: number;
-declare const KindBinaryExpression: number;
-declare const KindPrefixUnaryExpression: number;
-declare const KindPostfixUnaryExpression: number;
-declare const KindFunctionExpression: number;
-declare const KindFunctionDeclaration: number;
-declare const KindMethodDeclaration: number;
-declare const KindGetAccessor: number;
-declare const KindSetAccessor: number;
-declare const KindConstructor: number;
-declare const KindClassDeclaration: number;
-declare const KindClassExpression: number;
-declare const KindSuperKeyword: number;
-declare const KindNullKeyword: number;
-declare const KindEqualsEqualsEqualsToken: number;
-declare const KindExclamationEqualsEqualsToken: number;
-declare const KindBarBarToken: number;
-declare const KindAmpersandAmpersandToken: number;
-declare const KindEqualsGreaterThanToken: number;
-declare const ModifierFlagsExportDefault: number;
-declare const NodeFlagsConst: number;

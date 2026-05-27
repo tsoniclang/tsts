@@ -6,6 +6,13 @@
  */
 
 import { Tristate, tristateIsTrue, tristateIsTrueOrUnknown } from "./tristate.js";
+import { isDeclarationFileName } from "../tspath/extension.js";
+import { getDirectoryPath, combinePaths as _combinePaths, forEachAncestorDirectory } from "../tspath/path.js";
+
+function combinePaths(...paths: readonly string[]): string {
+  if (paths.length === 0) return "";
+  return _combinePaths(paths[0]!, ...paths.slice(1));
+}
 
 const TSTrue = Tristate.True;
 const TSFalse = Tristate.False;
@@ -408,9 +415,9 @@ export function getEffectiveTypeRoots(
     baseDir = currentDirectory;
   }
   const typeRoots: string[] = [];
-  forEachAncestorDirectory(baseDir, (dir) => {
+  forEachAncestorDirectory<undefined>(baseDir, (dir) => {
     typeRoots.push(combinePaths(dir, "node_modules", "@types"));
-    return undefined;
+    return { result: undefined, stop: false };
   });
   return { typeRoots, fromConfig: false };
 }
@@ -461,7 +468,3 @@ export function getPathsBasePath(options: CompilerOptions, currentDirectory: str
 // Forward-declared tspath helpers (cross-module dep)
 // ---------------------------------------------------------------------------
 
-declare function isDeclarationFileName(fileName: string): boolean;
-declare function getDirectoryPath(path: string): string;
-declare function combinePaths(...paths: readonly string[]): string;
-declare function forEachAncestorDirectory<T>(directory: string, callback: (dir: string) => T | undefined): T | undefined;
