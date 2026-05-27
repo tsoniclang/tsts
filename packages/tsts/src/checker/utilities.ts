@@ -18,7 +18,8 @@ import type {
   ParameterDeclaration,
 } from "../ast/index.js";
 import type { Type } from "./types.js";
-import { Kind, nodeParent } from "../ast/index.js";
+import { Kind, nodeParent, hasSyntacticModifier } from "../ast/index.js";
+import { ModifierFlags } from "../enums/modifierFlags.enum.js";
 
 // ---------------------------------------------------------------------------
 // Constant-union: AssignmentKind
@@ -74,12 +75,41 @@ export function tokenIsIdentifierOrKeywordOrGreaterThan(token: number): boolean 
   return token === Kind.GreaterThanToken || tokenIsIdentifierOrKeyword(token);
 }
 
-export function hasOverrideModifier(node: AstNode): boolean { void node; return false; }
-export function hasAsyncModifier(node: AstNode): boolean { void node; return false; }
-export function getSelectedModifierFlags(node: AstNode, flags: number): number {
-  void node; void flags; return 0;
+export function hasOverrideModifier(node: AstNode): boolean {
+  return hasSyntacticModifier(node, ModifierFlags.Override);
 }
-export function hasReadonlyModifier(node: AstNode): boolean { void node; return false; }
+export function hasAsyncModifier(node: AstNode): boolean {
+  return hasSyntacticModifier(node, ModifierFlags.Async);
+}
+export function getSelectedModifierFlags(node: AstNode, flags: number): number {
+  // Mirrors TS-Go: collect only the bits in `flags` that node has.
+  const modifiers = (node as unknown as { modifiers?: { nodes?: readonly AstNode[] } }).modifiers?.nodes ?? [];
+  let result = 0;
+  for (const m of modifiers) {
+    const k = (m as { kind?: number }).kind;
+    switch (k) {
+      case Kind.PublicKeyword: result |= ModifierFlags.Public; break;
+      case Kind.PrivateKeyword: result |= ModifierFlags.Private; break;
+      case Kind.ProtectedKeyword: result |= ModifierFlags.Protected; break;
+      case Kind.StaticKeyword: result |= ModifierFlags.Static; break;
+      case Kind.ReadonlyKeyword: result |= ModifierFlags.Readonly; break;
+      case Kind.OverrideKeyword: result |= ModifierFlags.Override; break;
+      case Kind.ExportKeyword: result |= ModifierFlags.Export; break;
+      case Kind.DefaultKeyword: result |= ModifierFlags.Default; break;
+      case Kind.AbstractKeyword: result |= ModifierFlags.Abstract; break;
+      case Kind.AsyncKeyword: result |= ModifierFlags.Async; break;
+      case Kind.DeclareKeyword: result |= ModifierFlags.Ambient; break;
+      case Kind.AccessorKeyword: result |= ModifierFlags.Accessor; break;
+      case Kind.ConstKeyword: result |= ModifierFlags.Const; break;
+      case Kind.InKeyword: result |= ModifierFlags.In; break;
+      case Kind.OutKeyword: result |= ModifierFlags.Out; break;
+    }
+  }
+  return result & flags;
+}
+export function hasReadonlyModifier(node: AstNode): boolean {
+  return hasSyntacticModifier(node, ModifierFlags.Readonly);
+}
 
 // ---------------------------------------------------------------------------
 // Symbol predicates
@@ -91,10 +121,26 @@ export function isStaticPrivateIdentifierProperty(s: AstSymbol): boolean { void 
 // AST literal predicates
 // ---------------------------------------------------------------------------
 
-export function isEmptyObjectLiteral(expression: AstNode): boolean { void expression; return false; }
-export function isEmptyArrayLiteral(expression: AstNode): boolean { void expression; return false; }
-export function isTypeAssertion(node: AstNode): boolean { void node; return false; }
-export function isConstTypeReference(node: AstNode): boolean { void node; return false; }
+export function isEmptyObjectLiteral(expression: AstNode): boolean {
+  if (expression.kind !== Kind.ObjectLiteralExpression) return false;
+  const props = (expression as unknown as { properties?: { nodes?: readonly AstNode[] } }).properties?.nodes;
+  return props === undefined || props.length === 0;
+}
+export function isEmptyArrayLiteral(expression: AstNode): boolean {
+  if (expression.kind !== Kind.ArrayLiteralExpression) return false;
+  const els = (expression as unknown as { elements?: { nodes?: readonly AstNode[] } }).elements?.nodes;
+  return els === undefined || els.length === 0;
+}
+export function isTypeAssertion(node: AstNode): boolean {
+  return node.kind === Kind.TypeAssertionExpression || node.kind === Kind.AsExpression;
+}
+export function isConstTypeReference(node: AstNode): boolean {
+  // `as const` references — TypeReferenceNode whose typeName is the
+  // identifier "const".
+  if (node.kind !== Kind.TypeReference) return false;
+  const typeName = (node as unknown as { typeName?: { kind?: number; text?: string } }).typeName;
+  return typeName?.kind === Kind.Identifier && typeName.text === "const";
+}
 
 // ---------------------------------------------------------------------------
 // Assignment-target classification
