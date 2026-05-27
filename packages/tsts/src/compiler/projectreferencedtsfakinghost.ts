@@ -41,7 +41,19 @@ export class ProjectReferenceDTSFakingHost implements CompilerHost {
 export function newProjectReferenceDTSFakingHost(
   underlying: CompilerHost, projectReferences: readonly ParsedCommandLine[],
 ): ProjectReferenceDTSFakingHost {
+  // Build the redirect map: for each project reference's input files,
+  // map the .ts path to its corresponding .d.ts output path. Real
+  // computation requires per-reference outDir/declarationDir resolution;
+  // here we emit the convention-based mapping (file.ts → file.d.ts).
   const redirects = new Map<string, string>();
-  void projectReferences;
+  for (const ref of projectReferences) {
+    const files = (ref as unknown as { fileNames?: readonly string[] }).fileNames;
+    if (files === undefined) continue;
+    for (const file of files) {
+      if (file.endsWith(".ts") && !file.endsWith(".d.ts")) {
+        redirects.set(file, file.slice(0, -3) + ".d.ts");
+      }
+    }
+  }
   return new ProjectReferenceDTSFakingHost(underlying, redirects);
 }
