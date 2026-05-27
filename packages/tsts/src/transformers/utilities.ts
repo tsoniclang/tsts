@@ -10,6 +10,21 @@
  */
 
 import type { Node as AstNode, IdentifierNode, BindingElement, BindingPattern, VariableDeclaration, ForStatement, ConditionalExpression, TaggedTemplateExpression, ImportEqualsDeclaration, ImportAttribute, TryStatement } from "../ast/index.js";
+import {
+  nodeLoc, nodePos, nodeEnd, nodeName, setLoc, newTextRange,
+  bindingElementName, bindingElementDotDotDotToken, bindingElementInitializer,
+  bindingElementPropertyName, bindingPatternElements, bindingPatternElementsLoc,
+  variableDeclarationName, importEqualsModuleReference,
+  canHaveModifiers, skipOuterExpressions as _skipOuter,
+} from "../ast/index.js";
+import {
+  isIdentifier, isBindingPattern, isNumericLiteral,
+  isTryStatement, isExpressionStatement, isPropertyDeclaration,
+  isMethodDeclaration, isDecorator,
+} from "../ast/index.js";
+import { isStringLiteralLike } from "../ast/index.js";
+import { Kind } from "../ast/index.js";
+import { EmitFlags } from "../printer/emitflags.js";
 
 // ---------------------------------------------------------------------------
 // Identifier predicates
@@ -221,7 +236,7 @@ function convertBindingElementToObjectAssignmentPattern(
     properties.push(convertBindingElementToObjectAssignmentElement(emitContext, e as unknown as BindingElement));
   }
   const propertyList = f.newNodeList(properties);
-  setLoc(propertyList, bindingPatternElementsLoc(element));
+  setLoc(propertyList as AstNode, bindingPatternElementsLoc(element));
   const object = f.newObjectLiteralExpression(propertyList, false);
   emitContext.setOriginal(object, element as unknown as AstNode);
   emitContext.assignCommentAndSourceMapRanges(object, element as unknown as AstNode);
@@ -238,7 +253,7 @@ function convertBindingElementToArrayAssignmentPattern(
     elements.push(convertBindingElementToArrayAssignmentElement(emitContext, e as unknown as BindingElement));
   }
   const elementList = f.newNodeList(elements);
-  setLoc(elementList, bindingPatternElementsLoc(element));
+  setLoc(elementList as AstNode, bindingPatternElementsLoc(element));
   const object = f.newArrayLiteralExpression(elementList, false);
   emitContext.setOriginal(object, element as unknown as AstNode);
   emitContext.assignCommentAndSourceMapRanges(object, element as unknown as AstNode);
@@ -421,52 +436,9 @@ interface Factory {
   newSyntaxList(items: AstNode[]): AstNode;
 }
 
-interface TextRange {
-  pos(): number;
-  end(): number;
-}
+type TextRange = { readonly pos: number; readonly end: number } | undefined;
 
-declare const Kind: {
-  BinaryExpression: number; PrefixUnaryExpression: number; PostfixUnaryExpression: number;
-  YieldExpression: number; AsExpression: number; SatisfiesExpression: number;
-  ElementAccessExpression: number; NonNullExpression: number; SpreadElement: number;
-  SpreadAssignment: number; ParenthesizedExpression: number; ArrayLiteralExpression: number;
-  DeleteExpression: number; TypeOfExpression: number; VoidExpression: number;
-  AwaitExpression: number; TypeAssertionExpression: number; ExpressionWithTypeArguments: number;
-  JsxSelfClosingElement: number; JsxSpreadAttribute: number; JsxExpression: number;
-  PartiallyEmittedExpression: number; ComputedPropertyName: number; Decorator: number;
-  IfStatement: number; DoStatement: number; WhileStatement: number; WithStatement: number;
-  ReturnStatement: number; SwitchStatement: number; CaseClause: number; ThrowStatement: number;
-  ExpressionStatement: number; ExportAssignment: number; PropertyAccessExpression: number;
-  TemplateSpan: number; VariableDeclaration: number; Parameter: number; BindingElement: number;
-  PropertyDeclaration: number; PropertySignature: number; PropertyAssignment: number;
-  EnumMember: number; JsxAttribute: number; ForStatement: number; ForInStatement: number;
-  ForOfStatement: number; ImportEqualsDeclaration: number; ArrowFunction: number;
-  ConditionalExpression: number; CallExpression: number; NewExpression: number;
-  TaggedTemplateExpression: number; ImportAttribute: number;
-  JsxOpeningElement: number; JsxClosingElement: number;
-  ArrayBindingPattern: number; ObjectBindingPattern: number; EqualsToken: number;
-  PlusEqualsToken: number; PlusToken: number; MinusEqualsToken: number; MinusToken: number;
-  AsteriskEqualsToken: number; AsteriskToken: number; AsteriskAsteriskEqualsToken: number;
-  AsteriskAsteriskToken: number; SlashEqualsToken: number; SlashToken: number;
-  PercentEqualsToken: number; PercentToken: number;
-  LessThanLessThanEqualsToken: number; LessThanLessThanToken: number;
-  GreaterThanGreaterThanEqualsToken: number; GreaterThanGreaterThanToken: number;
-  GreaterThanGreaterThanGreaterThanEqualsToken: number; GreaterThanGreaterThanGreaterThanToken: number;
-  AmpersandEqualsToken: number; AmpersandToken: number;
-  BarEqualsToken: number; BarToken: number; CaretEqualsToken: number; CaretToken: number;
-  BarBarEqualsToken: number; BarBarToken: number;
-  AmpersandAmpersandEqualsToken: number; AmpersandAmpersandToken: number;
-  QuestionQuestionEqualsToken: number; QuestionQuestionToken: number;
-};
-
-declare const EmitFlags: { HelperName: number; LocalName: number; ExportName: number };
-
-declare function nodeLoc(node: AstNode): TextRange;
-declare function nodePos(node: AstNode): number;
-declare function nodeEnd(node: AstNode): number;
-declare function nodeName(node: AstNode): AstNode | undefined;
-declare function setLoc(node: unknown, loc: unknown): void;
+// Strada helpers not yet wired to ast/index.js
 declare function parentExpression(parent: AstNode): AstNode | undefined;
 declare function parentInitializer(parent: AstNode): AstNode | undefined;
 declare function parentBody(parent: AstNode): AstNode | undefined;
@@ -474,39 +446,20 @@ declare function parentArguments(parent: AstNode): readonly AstNode[];
 declare function forStatementInitializer(node: ForStatement): AstNode | undefined;
 declare function forStatementCondition(node: ForStatement): AstNode | undefined;
 declare function forStatementIncrementor(node: ForStatement): AstNode | undefined;
-declare function importEqualsModuleReference(node: ImportEqualsDeclaration): AstNode;
 declare function conditionalCondition(node: ConditionalExpression): AstNode;
 declare function conditionalWhenTrue(node: ConditionalExpression): AstNode;
 declare function conditionalWhenFalse(node: ConditionalExpression): AstNode;
 declare function taggedTemplateTag(node: TaggedTemplateExpression): AstNode;
 declare function importAttributeValue(node: ImportAttribute): AstNode;
 declare function jsxTagName(node: AstNode): AstNode;
-declare function bindingElementName(element: BindingElement): AstNode | undefined;
-declare function bindingElementDotDotDotToken(element: BindingElement): AstNode | undefined;
-declare function bindingElementInitializer(element: BindingElement): AstNode | undefined;
-declare function bindingElementPropertyName(element: BindingElement): AstNode | undefined;
-declare function bindingPatternElements(pattern: BindingPattern): readonly AstNode[];
-declare function bindingPatternElementsLoc(pattern: BindingPattern): unknown;
 declare function variableDeclarationInitializer(node: VariableDeclaration): AstNode | undefined;
-declare function variableDeclarationName(node: VariableDeclaration): AstNode;
-declare function isBindingPattern(node: AstNode): boolean;
-declare function isStringLiteralLike(node: AstNode): boolean;
-declare function isNumericLiteral(node: AstNode): boolean;
 declare function isKeywordKind(kind: number): boolean;
-declare function isIdentifier(node: AstNode): boolean;
-declare function isTryStatement(node: AstNode): boolean;
 declare function tryStatementTryBlock(node: TryStatement): AstNode;
 declare function blockStatements(node: AstNode): readonly AstNode[];
-declare function isExpressionStatement(node: AstNode): boolean;
 declare function expressionOfStatement(node: AstNode): AstNode;
 declare function skipParentheses(node: AstNode): AstNode;
 declare function isSuperCall(node: AstNode): boolean;
-declare function isPropertyDeclaration(node: AstNode): boolean;
-declare function isMethodDeclaration(node: AstNode): boolean;
-declare function canHaveModifiers(node: AstNode): boolean;
 declare function modifierNodes(node: AstNode): readonly AstNode[] | undefined;
-declare function isDecorator(node: AstNode): boolean;
 declare function positionIsSynthesized(pos: number): boolean;
-declare function newTextRange(pos: number, end: number): TextRange;
 declare function getSourceFileOfNode(node: AstNode): AstNode | undefined;
 declare function getECMALineOfPosition(source: AstNode, pos: number): number;
