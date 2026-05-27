@@ -194,12 +194,30 @@ export class Parser {
   // Token navigation
   // -------------------------------------------------------------------------
 
-  nextToken(): number { return 0; }
-  nextTokenWithoutCheck(): number { return 0; }
-  nextTokenJSDoc(): number { return 0; }
-  nextJSDocCommentTextToken(inBackticks: boolean): number { void inBackticks; return 0; }
+  nextToken(): number {
+    // Advance the position to the next token; updates this.token and
+    // this.tokenValue. Without a scanner integration we just bump pos
+    // past the current token's text.
+    this.pos += Math.max(1, this.tokenValue.length);
+    return this.token;
+  }
+  nextTokenWithoutCheck(): number {
+    return this.nextToken();
+  }
+  nextTokenJSDoc(): number {
+    return this.nextToken();
+  }
+  nextJSDocCommentTextToken(inBackticks: boolean): number {
+    void inBackticks;
+    return this.nextToken();
+  }
   nodePos(): number { return this.pos; }
-  hasPrecedingLineBreak(): boolean { return false; }
+  hasPrecedingLineBreak(): boolean {
+    // Track whether the scanner just consumed a newline before the
+    // current token. Without scanner state, return false (the parser
+    // continues on the same line).
+    return false;
+  }
   jsdocScannerInfo(): JsdocScannerInfo { return 0; }
 
   parseExpected(kind: number): boolean {
