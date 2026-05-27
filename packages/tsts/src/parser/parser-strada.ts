@@ -297,7 +297,15 @@ export class Parser {
 
   parseSourceFileWorker(): SourceFile { return {} as SourceFile; }
   finishSourceFile(result: SourceFile, isDeclarationFile: boolean): void {
-    void result; void isDeclarationFile;
+    // Attach final parser state to the SourceFile: identifier count,
+    // node count, parse diagnostics, JSDoc diagnostics, source flags.
+    const file = result as unknown as Record<string, unknown>;
+    file.identifierCount = this.identifierCount;
+    file.nodeCount = this.nodeCount;
+    file.parseDiagnostics = this.parseDiagnostics;
+    file.jsDocDiagnostics = this.jsdocDiagnostics;
+    file.flags = this.sourceFlags;
+    file.isDeclarationFile = isDeclarationFile;
   }
   createJSDocCache(): Map<AstNode, AstNode[]> { return new Map(); }
   parseToplevelStatement(i: number): AstNode { void i; return {} as AstNode; }
