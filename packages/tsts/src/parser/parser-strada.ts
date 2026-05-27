@@ -233,12 +233,36 @@ export class Parser {
     this.parseErrorAtCurrentToken(message);
     return false;
   }
-  parseOptional(token: number): boolean { void token; return false; }
-  parseTokenNode(): AstNode { return {} as AstNode; }
-  parseExpectedToken(kind: number): AstNode { void kind; return {} as AstNode; }
-  parseOptionalToken(kind: number): AstNode | undefined { void kind; return undefined; }
-  parseExpectedTokenJSDoc(kind: number): AstNode { void kind; return {} as AstNode; }
-  parseOptionalTokenJSDoc(kind: number): AstNode | undefined { void kind; return undefined; }
+  parseOptional(token: number): boolean {
+    if (this.token === token) {
+      this.nextToken();
+      return true;
+    }
+    return false;
+  }
+  parseTokenNode(): AstNode {
+    // Capture the current token as a node, then advance.
+    const node = { kind: this.token, pos: this.pos, end: this.pos } as unknown as AstNode;
+    this.nextToken();
+    return node;
+  }
+  parseExpectedToken(kind: number): AstNode {
+    if (this.token === kind) return this.parseTokenNode();
+    this.parseErrorAtCurrentToken({ code: 1005, message: `'${kind}' expected.` });
+    return { kind, pos: this.pos, end: this.pos } as unknown as AstNode;
+  }
+  parseOptionalToken(kind: number): AstNode | undefined {
+    if (this.token === kind) return this.parseTokenNode();
+    return undefined;
+  }
+  parseExpectedTokenJSDoc(kind: number): AstNode {
+    if (this.token === kind) return this.parseTokenNode();
+    return { kind, pos: this.pos, end: this.pos } as unknown as AstNode;
+  }
+  parseOptionalTokenJSDoc(kind: number): AstNode | undefined {
+    if (this.token === kind) return this.parseTokenNode();
+    return undefined;
+  }
 
   // -------------------------------------------------------------------------
   // Source-file entry + top-level
