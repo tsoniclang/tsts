@@ -419,10 +419,38 @@ export class GrammarChecker {
     // Interface method signatures cannot have a body.
     return (node as unknown as { body?: AstNode }).body !== undefined;
   }
-  checkGrammarClassExpression(node: AstNode): boolean { void node; return false; }
-  checkGrammarClassDeclaration(node: AstNode): boolean { void node; return false; }
-  checkGrammarClassLikeDeclaration(node: AstNode): boolean { void node; return false; }
-  checkGrammarClassStaticBlockDeclaration(node: AstNode): boolean { void node; return false; }
+  checkGrammarClassExpression(node: AstNode): boolean { return this.checkGrammarClassLikeDeclaration(node); }
+  checkGrammarClassDeclaration(node: AstNode): boolean { return this.checkGrammarClassLikeDeclaration(node); }
+  checkGrammarClassLikeDeclaration(node: AstNode): boolean {
+    // Heritage clauses: at most one 'extends' and one 'implements';
+    // 'extends' must precede 'implements'.
+    const clauses = (node as unknown as { heritageClauses?: { nodes?: readonly AstNode[] } }).heritageClauses?.nodes;
+    if (clauses === undefined) return false;
+    let sawExtends = false;
+    let sawImplements = false;
+    for (const c of clauses) {
+      const tok = (c as unknown as { token?: number }).token;
+      if (tok === Kind.ExtendsKeyword) {
+        if (sawExtends) return true; // Multiple extends.
+        if (sawImplements) return true; // extends after implements.
+        sawExtends = true;
+      } else if (tok === Kind.ImplementsKeyword) {
+        if (sawImplements) return true; // Multiple implements.
+        sawImplements = true;
+      }
+    }
+    return false;
+  }
+  checkGrammarClassStaticBlockDeclaration(node: AstNode): boolean {
+    // Static blocks cannot have modifiers (other than the 'static'
+    // marker implicit in the syntax).
+    const mods = (node as unknown as { modifiers?: { nodes?: readonly AstNode[] } }).modifiers?.nodes;
+    if (mods === undefined) return false;
+    for (const m of mods) {
+      if ((m as { kind?: number }).kind !== Kind.StaticKeyword) return true;
+    }
+    return false;
+  }
   checkGrammarEnumDeclaration(node: AstNode): boolean {
     // Enum members must have unique names; const enum members must
     // have constant initializers.
@@ -438,10 +466,40 @@ export class GrammarChecker {
     }
     return false;
   }
-  checkGrammarIndexSignature(node: AstNode): boolean { void node; return false; }
-  checkGrammarInterfaceDeclaration(node: AstNode): boolean { void node; return false; }
-  checkGrammarTypeAliasDeclaration(node: AstNode): boolean { void node; return false; }
-  checkGrammarModuleDeclaration(node: AstNode): boolean { void node; return false; }
+  checkGrammarIndexSignature(node: AstNode): boolean {
+    // Index signatures must have exactly one parameter with a type.
+    const params = (node as unknown as { parameters?: { nodes?: readonly AstNode[] } }).parameters?.nodes;
+    if (params === undefined || params.length !== 1) return true;
+    const p = params[0]!;
+    const t = (p as unknown as { type?: AstNode }).type;
+    if (t === undefined) return true;
+    // No rest/init/question on the parameter.
+    const hasDotDot = (p as unknown as { dotDotDotToken?: AstNode }).dotDotDotToken !== undefined;
+    const hasInit = (p as unknown as { initializer?: AstNode }).initializer !== undefined;
+    const hasQuestion = (p as unknown as { questionToken?: AstNode }).questionToken !== undefined;
+    return hasDotDot || hasInit || hasQuestion;
+  }
+  checkGrammarInterfaceDeclaration(node: AstNode): boolean {
+    // 'implements' clause invalid; only 'extends' allowed.
+    const clauses = (node as unknown as { heritageClauses?: { nodes?: readonly AstNode[] } }).heritageClauses?.nodes;
+    if (clauses === undefined) return false;
+    for (const c of clauses) {
+      const tok = (c as unknown as { token?: number }).token;
+      if (tok === Kind.ImplementsKeyword) return true;
+    }
+    return false;
+  }
+  checkGrammarTypeAliasDeclaration(node: AstNode): boolean {
+    // Type alias must have .type set.
+    return (node as unknown as { type?: AstNode }).type === undefined;
+  }
+  checkGrammarModuleDeclaration(node: AstNode): boolean {
+    // ModuleDeclaration with quoted name only valid at top level.
+    const name = (node as unknown as { name?: { kind?: number } }).name;
+    if (name?.kind !== Kind.StringLiteral) return false;
+    const parent = (node as unknown as { parent?: { kind?: number } }).parent;
+    return parent?.kind !== Kind.SourceFile && parent?.kind !== Kind.ModuleBlock;
+  }
   checkGrammarSourceFile(node: AstNode): boolean {
     // A SourceFile cannot have a 'with' statement in strict mode (which
     // includes all modules).
