@@ -12,9 +12,23 @@
  */
 
 import type { Node as AstNode, SourceFile } from "../ast/index.js";
+import { Kind, newTextRange, nodeEnd } from "../ast/index.js";
 
 import { type FormatCodeSettings, FormatRequestKind, type TextRange } from "./api.js";
 import { rangeIsOnOneLine } from "./util.js";
+
+const KindOpenBraceToken = Kind.OpenBraceToken;
+const KindCloseBraceToken = Kind.CloseBraceToken;
+
+// Strada helpers awaiting scanner-side ports. Until findChildOfKind
+// lands, return undefined — formatting rules will fall back to the
+// general path. getTokenPosOfNode uses nodePos until JSDoc handling lands.
+function getTokenPosOfNode(node: AstNode, _file: SourceFile, _includeJSDoc: boolean): number {
+  return (node as unknown as { pos?: number }).pos ?? -1;
+}
+function findChildOfKind(_node: AstNode, _kind: number, _sourceFile: SourceFile): AstNode | undefined {
+  return undefined;
+}
 
 /**
  * A token span — a text range carrying a token kind. Mirrors TS-Go
@@ -150,10 +164,3 @@ function withTokenStart(node: AstNode, file: SourceFile): TextRange {
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-declare function newTextRange(pos: number, end: number): TextRange;
-declare function nodeEnd(node: AstNode): number;
-declare function getTokenPosOfNode(node: AstNode, file: SourceFile, includeJSDoc: boolean): number;
-declare function findChildOfKind(node: AstNode, kind: number, sourceFile: SourceFile): AstNode | undefined;
-
-declare const KindOpenBraceToken: number;
-declare const KindCloseBraceToken: number;
