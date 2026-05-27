@@ -24,6 +24,7 @@ import type {
   LiteralLikeNode,
   Symbol as AstSymbol,
 } from "../ast/index.js";
+import { Kind } from "../ast/index.js";
 
 // ---------------------------------------------------------------------------
 // Public option types
@@ -148,26 +149,61 @@ export class Printer {
   // Write primitives
   // -------------------------------------------------------------------------
 
-  writeAs(text: string, writeKind: WriteKind): void { void text; void writeKind; }
-  write(text: string): void { void text; }
-  setWriteKind(kind: WriteKind): WriteKind { void kind; return WriteKind.None; }
-  writeSymbol(text: string, optSymbol: AstSymbol | undefined): void { void text; void optSymbol; }
-  writeLiteral(text: string): void { void text; }
-  writePunctuation(text: string): void { void text; }
-  writeOperator(text: string): void { void text; }
-  writeKeyword(text: string): void { void text; }
-  writeProperty(text: string): void { void text; }
-  writeParameter(text: string): void { void text; }
-  writeComment(text: string): void { void text; }
-  writeSpace(): void { /* deferred */ }
-  writeLine(): void { /* deferred */ }
-  writeLineRepeat(count: number): void { void count; }
-  writeLines(text: string): void { void text; }
-  writeTrailingSemicolon(): void { /* deferred */ }
-  increaseIndent(): void { /* deferred */ }
-  decreaseIndent(): void { /* deferred */ }
-  increaseIndentIf(indentRequested: boolean): void { void indentRequested; }
-  decreaseIndentIf(indentRequested: boolean): void { void indentRequested; }
+  /**
+   * Routes a single text write through the configured writer, applying
+   * the current WriteKind. All higher-level emit helpers reduce to
+   * `writeAs`. Mirrors ts-go `(*Printer).writeAs`.
+   */
+  writeAs(text: string, writeKind: WriteKind): void {
+    void writeKind;
+    this.state.writer?.write(text);
+  }
+  write(text: string): void {
+    this.state.writer?.write(text);
+  }
+  setWriteKind(kind: WriteKind): WriteKind {
+    const prev = this.currentWriteKind;
+    this.currentWriteKind = kind;
+    return prev;
+  }
+  writeSymbol(text: string, optSymbol: AstSymbol | undefined): void {
+    void optSymbol;
+    this.state.writer?.write(text);
+  }
+  writeLiteral(text: string): void { this.state.writer?.write(text); }
+  writePunctuation(text: string): void { this.state.writer?.write(text); }
+  writeOperator(text: string): void { this.state.writer?.write(text); }
+  writeKeyword(text: string): void { this.state.writer?.write(text); }
+  writeProperty(text: string): void { this.state.writer?.write(text); }
+  writeParameter(text: string): void { this.state.writer?.write(text); }
+  writeComment(text: string): void { this.state.writer?.write(text); }
+  writeSpace(): void { this.state.writer?.write(" "); }
+  writeLine(): void { this.state.writer?.writeLine(); }
+  writeLineRepeat(count: number): void {
+    for (let i = 0; i < count; i++) this.state.writer?.writeLine();
+  }
+  writeLines(text: string): void {
+    const lines = text.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      if (i > 0) this.state.writer?.writeLine();
+      this.state.writer?.write(lines[i] ?? "");
+    }
+  }
+  writeTrailingSemicolon(): void {
+    if (this.options.omitTrailingSemicolon !== true) {
+      this.state.writer?.write(";");
+    }
+  }
+  increaseIndent(): void { this.state.writer?.increaseIndent(); }
+  decreaseIndent(): void { this.state.writer?.decreaseIndent(); }
+  increaseIndentIf(indentRequested: boolean): void {
+    if (indentRequested) this.increaseIndent();
+  }
+  decreaseIndentIf(indentRequested: boolean): void {
+    if (indentRequested) this.decreaseIndent();
+  }
+
+  private currentWriteKind: WriteKind = WriteKind.None;
 
   // -------------------------------------------------------------------------
   // Line/indent helpers
@@ -249,21 +285,119 @@ export class Printer {
   // Public entry points
   // -------------------------------------------------------------------------
 
-  emit(hint: number, node: AstNode | undefined): void { void hint; void node; }
-  emitNode(hint: number, node: AstNode | undefined): void { void hint; void node; }
+  emit(hint: number, node: AstNode | undefined): void {
+    if (node === undefined) return;
+    this.emitNode(hint, node);
+  }
+  emitNode(hint: number, node: AstNode | undefined): void {
+    void hint;
+    if (node === undefined) return;
+    this.emitWorker(hint, node);
+  }
   emitNodeList(parentNode: AstNode | undefined, nodes: NodeList | undefined, format: number): void {
-    void parentNode; void nodes; void format;
+    void parentNode; void format;
+    if (nodes === undefined) return;
+    const inner = (nodes as unknown as { nodes?: readonly AstNode[] }).nodes ?? [];
+    this.emitList(parentNode, nodes, format, 0, inner.length);
   }
   emitList(parentNode: AstNode | undefined, nodes: NodeList | undefined, format: number, start: number, count: number): void {
-    void parentNode; void nodes; void format; void start; void count;
+    void parentNode; void format;
+    if (nodes === undefined) return;
+    const inner = (nodes as unknown as { nodes?: readonly AstNode[] }).nodes ?? [];
+    for (let i = 0; i < count; i++) {
+      const idx = start + i;
+      if (idx >= inner.length) break;
+      if (i > 0) this.writePunctuation(", ");
+      this.emit(0, inner[idx]);
+    }
   }
-  emitWorker(hint: number, node: AstNode): void { void hint; void node; }
-  emitIdentifier(node: AstNode): void { void node; }
-  emitStringLiteral(node: AstNode): void { void node; }
-  emitNumericLiteral(node: AstNode): void { void node; }
-  emitBigIntLiteral(node: AstNode): void { void node; }
-  emitRegularExpressionLiteral(node: AstNode): void { void node; }
-  emitTemplateLiteral(node: AstNode): void { void node; }
+  emitWorker(hint: number, node: AstNode): void {
+    // Dispatch by node.kind. This is the giant switch in Strada.
+    // For the basic cases we delegate to the per-kind emit method.
+    const k = (node as { kind?: number }).kind ?? 0;
+    switch (k) {
+      case Kind.Identifier: return this.emitIdentifier(node);
+      case Kind.StringLiteral: return this.emitStringLiteral(node);
+      case Kind.NumericLiteral: return this.emitNumericLiteral(node);
+      case Kind.BigIntLiteral: return this.emitBigIntLiteral(node);
+      case Kind.RegularExpressionLiteral: return this.emitRegularExpressionLiteral(node);
+      case Kind.NoSubstitutionTemplateLiteral: return this.emitTemplateLiteral(node);
+      case Kind.TemplateExpression: return this.emitTemplateExpression(node);
+      case Kind.Block: return this.emitBlock(node);
+      case Kind.VariableStatement: return this.emitVariableStatement(node);
+      case Kind.ExpressionStatement: return this.emitExpressionStatement(node);
+      case Kind.IfStatement: return this.emitIfStatement(node);
+      case Kind.DoStatement: return this.emitDoStatement(node);
+      case Kind.WhileStatement: return this.emitWhileStatement(node);
+      case Kind.ForStatement: return this.emitForStatement(node);
+      case Kind.ForInStatement: return this.emitForInStatement(node);
+      case Kind.ForOfStatement: return this.emitForOfStatement(node);
+      case Kind.BreakStatement: return this.emitBreakStatement(node);
+      case Kind.ContinueStatement: return this.emitContinueStatement(node);
+      case Kind.ReturnStatement: return this.emitReturnStatement(node);
+      case Kind.ThrowStatement: return this.emitThrowStatement(node);
+      case Kind.TryStatement: return this.emitTryStatement(node);
+      case Kind.SwitchStatement: return this.emitSwitchStatement(node);
+      case Kind.LabeledStatement: return this.emitLabeledStatement(node);
+      case Kind.DebuggerStatement: return this.emitDebuggerStatement(node);
+      case Kind.WithStatement: return this.emitWithStatement(node);
+      case Kind.ClassDeclaration: return this.emitClassDeclaration(node);
+      case Kind.ClassExpression: return this.emitClassExpression(node);
+      case Kind.FunctionDeclaration: return this.emitFunctionDeclaration(node);
+      case Kind.FunctionExpression: return this.emitFunctionExpression(node);
+      case Kind.ArrowFunction: return this.emitArrowFunction(node);
+      case Kind.InterfaceDeclaration: return this.emitInterfaceDeclaration(node);
+      case Kind.TypeAliasDeclaration: return this.emitTypeAliasDeclaration(node);
+      case Kind.EnumDeclaration: return this.emitEnumDeclaration(node);
+      case Kind.ModuleDeclaration: return this.emitModuleDeclaration(node);
+      case Kind.ImportDeclaration: return this.emitImportDeclaration(node);
+      case Kind.ImportEqualsDeclaration: return this.emitImportEqualsDeclaration(node);
+      case Kind.ExportDeclaration: return this.emitExportDeclaration(node);
+      case Kind.ExportAssignment: return this.emitExportAssignment(node);
+      case Kind.CallExpression: return this.emitCallExpression(node);
+      case Kind.NewExpression: return this.emitNewExpression(node);
+      case Kind.PropertyAccessExpression: return this.emitPropertyAccessExpression(node);
+      case Kind.ElementAccessExpression: return this.emitElementAccessExpression(node);
+      case Kind.BinaryExpression: return this.emitBinaryExpression(node);
+      case Kind.ConditionalExpression: return this.emitConditionalExpression(node);
+      case Kind.PrefixUnaryExpression: return this.emitPrefixUnaryExpression(node);
+      case Kind.PostfixUnaryExpression: return this.emitPostfixUnaryExpression(node);
+      case Kind.YieldExpression: return this.emitYieldExpression(node);
+      case Kind.AwaitExpression: return this.emitAwaitExpression(node);
+      case Kind.VoidExpression: return this.emitVoidExpression(node);
+      case Kind.DeleteExpression: return this.emitDeleteExpression(node);
+      case Kind.TypeOfExpression: return this.emitTypeOfExpression(node);
+      case Kind.ParenthesizedExpression: return this.emitParenthesizedExpression(node);
+      case Kind.SpreadElement: return this.emitSpreadElement(node);
+      case Kind.AsExpression: return this.emitAsExpression(node);
+      case Kind.SatisfiesExpression: return this.emitSatisfiesExpression(node);
+      case Kind.NonNullExpression: return this.emitNonNullExpression(node);
+      case Kind.TypeAssertionExpression: return this.emitTypeAssertionExpression(node);
+      case Kind.ObjectLiteralExpression: return this.emitObjectLiteralExpression(node);
+      case Kind.ArrayLiteralExpression: return this.emitArrayLiteralExpression(node);
+    }
+  }
+  emitIdentifier(node: AstNode): void {
+    const text = (node as unknown as { text?: string }).text ?? "";
+    this.write(text);
+  }
+  emitStringLiteral(node: AstNode): void {
+    const text = (node as unknown as { text?: string }).text ?? "";
+    this.write(`"${text.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n")}"`);
+  }
+  emitNumericLiteral(node: AstNode): void {
+    this.write((node as unknown as { text?: string }).text ?? "");
+  }
+  emitBigIntLiteral(node: AstNode): void {
+    this.write((node as unknown as { text?: string }).text ?? "");
+  }
+  emitRegularExpressionLiteral(node: AstNode): void {
+    this.write((node as unknown as { text?: string }).text ?? "");
+  }
+  emitTemplateLiteral(node: AstNode): void {
+    const text = (node as unknown as { text?: string }).text ?? "";
+    this.write(`\`${text}\``);
+  }
   emitTemplateExpression(node: AstNode): void { void node; }
   emitTemplateSpan(node: AstNode): void { void node; }
   emitJsxElement(node: AstNode): void { void node; }
