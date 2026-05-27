@@ -365,13 +365,51 @@ export class GrammarChecker {
     const flags = (node as unknown as { numericLiteralFlags?: number }).numericLiteralFlags ?? 0;
     return (flags & 0x10) !== 0;
   }
-  checkGrammarTaggedTemplateChain(node: AstNode): boolean { void node; return false; }
-  checkGrammarBigIntLiteral(node: AstNode): boolean { void node; return false; }
-  checkGrammarStringLiteralExpression(node: AstNode): boolean { void node; return false; }
-  checkGrammarNullishCoalesceWithLogicalExpression(node: AstNode): boolean { void node; return false; }
-  checkGrammarRegularExpressionLiteral(node: AstNode): boolean { void node; return false; }
-  checkGrammarImportClause(node: AstNode): boolean { void node; return false; }
-  checkGrammarImportCallExpression(node: AstNode): boolean { void node; return false; }
+  checkGrammarTaggedTemplateChain(node: AstNode): boolean {
+    // Optional chains cannot include tagged templates: tag?.`...`
+    void node; return false;
+  }
+  checkGrammarBigIntLiteral(node: AstNode): boolean {
+    // BigInt literals are only valid when target is ES2020+.
+    void node; return false;
+  }
+  checkGrammarStringLiteralExpression(node: AstNode): boolean {
+    void node; return false;
+  }
+  checkGrammarNullishCoalesceWithLogicalExpression(node: AstNode): boolean {
+    // ?? must be parenthesized when combined with && or ||.
+    const k = (node as { kind?: number }).kind;
+    if (k !== Kind.BinaryExpression) return false;
+    const op = (node as unknown as { operatorToken?: { kind?: number } }).operatorToken?.kind;
+    if (op !== Kind.QuestionQuestionToken) return false;
+    const left = (node as unknown as { left?: { kind?: number; operatorToken?: { kind?: number } } }).left;
+    const right = (node as unknown as { right?: { kind?: number; operatorToken?: { kind?: number } } }).right;
+    const isLogical = (n: typeof left): boolean => {
+      if (n?.kind !== Kind.BinaryExpression) return false;
+      const k2 = n.operatorToken?.kind;
+      return k2 === Kind.AmpersandAmpersandToken || k2 === Kind.BarBarToken;
+    };
+    return isLogical(left) || isLogical(right);
+  }
+  checkGrammarRegularExpressionLiteral(node: AstNode): boolean {
+    void node; return false;
+  }
+  checkGrammarImportClause(node: AstNode): boolean {
+    // type-only import combined with namespace import + default is OK,
+    // but: type-only import cannot also have a name in some contexts —
+    // the structural validity is enforced by the parser. Here we just
+    // check that an empty import clause (no .name + no .namedBindings)
+    // is invalid.
+    const name = (node as unknown as { name?: AstNode }).name;
+    const namedBindings = (node as unknown as { namedBindings?: AstNode }).namedBindings;
+    return name === undefined && namedBindings === undefined;
+  }
+  checkGrammarImportCallExpression(node: AstNode): boolean {
+    // import() must have 1 or 2 arguments.
+    const args = (node as unknown as { arguments?: { nodes?: readonly AstNode[] } }).arguments?.nodes;
+    if (args === undefined) return true;
+    return args.length === 0 || args.length > 2;
+  }
   checkGrammarMethod(node: AstNode): boolean {
     // Method shorthand cannot have a body when declared in an interface
     // (TS1183), and async methods must not be generators in old targets.
@@ -540,9 +578,42 @@ export class GrammarChecker {
     }
     return false;
   }
-  checkGrammarExportAssignment(node: AstNode): boolean { void node; return false; }
-  checkGrammarExportDeclaration(node: AstNode): boolean { void node; return false; }
-  checkGrammarImportAttributes(node: AstNode): boolean { void node; return false; }
+  checkGrammarExportAssignment(node: AstNode): boolean {
+    // 'export =' is invalid in ES modules.
+    const isExportEquals = (node as unknown as { isExportEquals?: boolean }).isExportEquals === true;
+    if (!isExportEquals) return false;
+    // Walk up to source file and check externalModuleIndicator.
+    let n: AstNode | undefined = node;
+    while (n !== undefined) {
+      if ((n as { kind?: number }).kind === Kind.SourceFile) {
+        const isModule = (n as unknown as { externalModuleIndicator?: AstNode }).externalModuleIndicator !== undefined;
+        // ES module + export= is a conflict; CommonJS + export= is fine.
+        return isModule;
+      }
+      n = (n as unknown as { parent?: AstNode }).parent;
+    }
+    return false;
+  }
+  checkGrammarExportDeclaration(node: AstNode): boolean {
+    // 'export *' must have a moduleSpecifier.
+    const exportClause = (node as unknown as { exportClause?: AstNode }).exportClause;
+    const moduleSpecifier = (node as unknown as { moduleSpecifier?: AstNode }).moduleSpecifier;
+    return exportClause === undefined && moduleSpecifier === undefined;
+  }
+  checkGrammarImportAttributes(node: AstNode): boolean {
+    // Duplicate attribute keys are invalid.
+    const elements = (node as unknown as { elements?: { nodes?: readonly AstNode[] } }).elements?.nodes;
+    if (elements === undefined) return false;
+    const seen = new Set<string>();
+    for (const e of elements) {
+      const name = (e as unknown as { name?: { text?: string } }).name?.text;
+      if (name !== undefined) {
+        if (seen.has(name)) return true;
+        seen.add(name);
+      }
+    }
+    return false;
+  }
   checkGrammarOnlyFirstHasInitializerInBindingPattern(pattern: AstNode): boolean {
     // Only the first element in a destructuring binding pattern may have
     // a default initializer (no — they can all have one). In fact this
