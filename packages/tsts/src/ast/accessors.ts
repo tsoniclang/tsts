@@ -476,6 +476,11 @@ export function isAssignmentPattern(node: AstNode | undefined): boolean {
   const k = nodeKind(node);
   return k === Kind.ArrayLiteralExpression || k === Kind.ObjectLiteralExpression;
 }
+export function isStringOrNumericLiteralLike(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = nodeKind(node);
+  return k === Kind.StringLiteral || k === Kind.NumericLiteral || k === Kind.NoSubstitutionTemplateLiteral;
+}
 export function getSourceFileOfNode(node: AstNode | undefined): AstNode | undefined {
   let cur: AstNode | undefined = node;
   while (cur !== undefined && nodeKind(cur) !== Kind.SourceFile) {

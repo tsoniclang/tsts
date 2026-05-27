@@ -26,14 +26,21 @@ import {
   isDestructuringAssignment, isVariableDeclaration,
   isPropertyAssignment, isShorthandPropertyAssignment,
   isSpreadElement,
+  isStringOrNumericLiteralLike,
 } from "../ast/index.js";
+import { isSimpleCopiableExpression, isAssignmentPattern, isPropertyNameLiteral, subtreeFacts } from "../ast/index.js";
 import { Kind, NodeFlags } from "../ast/index.js";
 const TokenFlags = { None: 0 } as const;
 function cloneNode(node: AstNode, _factory: unknown): AstNode { return _astCloneNode(node); }
-declare function isSimpleCopiableExpression(node: AstNode): boolean;
-declare function isStringOrNumericLiteralLike(node: AstNode): boolean;
-declare function isAssignmentPattern(node: AstNode): boolean;
-declare function isAssignmentExpression(node: AstNode, excludeCompound: boolean): boolean;
+// isAssignmentExpression: BinaryExpression with assignment operator.
+function isAssignmentExpression(node: AstNode | undefined, excludeCompound: boolean): boolean {
+  if (node === undefined) return false;
+  if ((node as { kind?: number }).kind !== Kind.BinaryExpression) return false;
+  const op = (node as unknown as { operatorToken?: { kind?: number } }).operatorToken?.kind;
+  if (op === undefined) return false;
+  if (excludeCompound) return op === Kind.EqualsToken;
+  return op >= Kind.EqualsToken && op <= Kind.CaretEqualsToken;
+}
 type TextRange = { readonly pos: number; readonly end: number } | undefined;
 import type { Transformer } from "./transformer.js";
 
@@ -602,12 +609,10 @@ const SubtreeFacts = {
   ContainsObjectRestOrSpread: 1 << 1,
 } as const;
 
-declare function subtreeFacts(node: AstNode): number;
 // Strada predicates and accessors that aren't yet wired to ast/index.js.
 declare function isDeclarationBindingElement(node: AstNode): boolean;
 declare function isEmptyArrayLiteral(node: AstNode): boolean;
 declare function isEmptyObjectLiteral(node: AstNode): boolean;
-declare function isPropertyNameLiteral(node: AstNode): boolean;
 declare function isSimpleInlineableExpression(node: AstNode): boolean;
 declare function getTargetOfBindingOrAssignmentElement(element: AstNode): AstNode | undefined;
 declare function getRestIndicatorOfBindingOrAssignmentElement(element: AstNode): AstNode | undefined;
