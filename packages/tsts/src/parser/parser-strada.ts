@@ -143,22 +143,31 @@ export class Parser {
   }
 
   scanError(message: DiagnosticMessage, pos: number, length: number, ...args: unknown[]): void {
-    void message; void pos; void length; void args;
+    // Scanner-level error: push onto parseDiagnostics with the position
+    // and length of the offending text span.
+    void args;
+    this.parseDiagnostics.push({
+      file: undefined, start: pos, length, messageText: message.message,
+      category: 1, code: message.code,
+    } as unknown as Diagnostic);
   }
 
   parseErrorAt(pos: number, end: number, message: DiagnosticMessage, ...args: unknown[]): Diagnostic | undefined {
-    void pos; void end; void message; void args;
-    return undefined;
+    void args;
+    const diag = {
+      file: undefined, start: pos, length: Math.max(0, end - pos),
+      messageText: message.message, category: 1, code: message.code,
+    } as unknown as Diagnostic;
+    this.parseDiagnostics.push(diag);
+    return diag;
   }
 
   parseErrorAtCurrentToken(message: DiagnosticMessage, ...args: unknown[]): Diagnostic | undefined {
-    void message; void args;
-    return undefined;
+    return this.parseErrorAt(this.pos, this.pos + Math.max(1, this.tokenValue.length), message, ...args);
   }
 
   parseErrorAtRange(loc: TextRange, message: DiagnosticMessage, ...args: unknown[]): Diagnostic | undefined {
-    void loc; void message; void args;
-    return undefined;
+    return this.parseErrorAt(loc.pos, loc.end, message, ...args);
   }
 
   mark(): ParserState {
