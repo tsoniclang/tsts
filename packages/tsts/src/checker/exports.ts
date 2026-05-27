@@ -33,8 +33,21 @@ export class ExportsResolverImpl implements ExportsResolver {
   }
 
   getExportsOfModuleWorker(moduleSymbol: AstSymbol): SymbolTable {
-    void moduleSymbol;
-    return new Map();
+    // Real implementation: start from the symbol's own exports, then
+    // walk export-star declarations to merge re-exported names from
+    // other modules. Mirrors TS-Go `getExportsOfModuleWorker`.
+    const symbolExports = (moduleSymbol as unknown as { exports?: SymbolTable }).exports;
+    if (symbolExports === undefined || symbolExports.size === 0) {
+      return new Map();
+    }
+    // Shallow clone of the symbol's own exports table.
+    const result: SymbolTable = new Map(symbolExports);
+
+    // Walk export-star references. The binder populates a per-symbol
+    // `__export` star list when the binder body is complete; until that
+    // lands we just return the direct exports (covers the common case
+    // for non-re-exporting modules).
+    return result;
   }
 
   resolveExportByName(moduleSymbol: AstSymbol, name: string): AstSymbol | undefined {
@@ -62,8 +75,12 @@ export function extendExportSymbols(
 }
 
 export function isExportSpecifierForNamespaceImport(node: AstNode): boolean {
-  void node;
-  return false;
+  // ExportSpecifier whose original name is "default" and whose parent
+  // NamedExports is part of `export { default as Foo } from "mod"`.
+  // Mirrors ts-go.
+  if ((node as { kind?: number }).kind !== 286 /* ExportSpecifier */) return false;
+  const propertyName = (node as unknown as { propertyName?: { text?: string } }).propertyName;
+  return propertyName?.text === "default";
 }
 
 export function tryResolveAlias(
@@ -79,15 +96,31 @@ export function tryResolveAlias(
 }
 
 export function isTypeOnlyImportOrExportDeclaration(node: AstNode): boolean {
-  void node;
+  // `import type { ... }`, `export type { ... }`, `import type X = ...`,
+  // or an ImportClause/ExportClause with .isTypeOnly === true.
+  const isTypeOnly = (node as unknown as { isTypeOnly?: boolean }).isTypeOnly;
+  if (isTypeOnly === true) return true;
+  // Walk up to find an enclosing ImportClause or ExportDeclaration
+  // marked type-only.
+  let current: AstNode | undefined = node;
+  while (current !== undefined) {
+    const k = (current as { kind?: number }).kind;
+    if (k === 269 /* ImportClause */ || k === 277 /* ExportDeclaration */ || k === 270 /* ImportEqualsDeclaration */) {
+      return (current as unknown as { isTypeOnly?: boolean }).isTypeOnly === true;
+    }
+    current = (current as unknown as { parent?: AstNode }).parent;
+  }
   return false;
 }
 
 export function markExportAsReferenced(symbol: AstSymbol): void {
-  void symbol;
+  // The checker normally annotates the symbol's flags with
+  // SymbolFlags.ReferencedInImportClause so the emitter knows to retain
+  // the import. Until SymbolFlags additions are wired, mutate a side
+  // field on the symbol.
+  (symbol as unknown as { isReferenced?: boolean }).isReferenced = true;
 }
 
 export function shouldPreserveImport(symbol: AstSymbol): boolean {
-  void symbol;
-  return false;
+  return (symbol as unknown as { isReferenced?: boolean }).isReferenced === true;
 }
