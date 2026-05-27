@@ -202,14 +202,35 @@ export class Parser {
   hasPrecedingLineBreak(): boolean { return false; }
   jsdocScannerInfo(): JsdocScannerInfo { return 0; }
 
-  parseExpected(kind: number): boolean { void kind; return false; }
-  parseExpectedJSDoc(kind: number): boolean { void kind; return false; }
-  parseExpectedMatchingBrackets(openKind: number, closeKind: number, openParsed: boolean, openPosition: number): void {
-    void openKind; void closeKind; void openParsed; void openPosition;
+  parseExpected(kind: number): boolean {
+    // If the current token matches, consume it; else report an error.
+    if (this.token === kind) {
+      this.nextToken();
+      return true;
+    }
+    this.parseErrorAtCurrentToken({ code: 1005, message: `'${kind}' expected.` });
+    return false;
   }
-  parseExpectedWithoutAdvancing(kind: number): boolean { void kind; return false; }
+  parseExpectedJSDoc(kind: number): boolean {
+    if (this.token === kind) {
+      this.nextTokenJSDoc();
+      return true;
+    }
+    return false;
+  }
+  parseExpectedMatchingBrackets(openKind: number, closeKind: number, openParsed: boolean, openPosition: number): void {
+    void openKind; void openParsed; void openPosition;
+    this.parseExpected(closeKind);
+  }
+  parseExpectedWithoutAdvancing(kind: number): boolean {
+    return this.token === kind;
+  }
   parseExpectedWithDiagnostic(kind: number, message: DiagnosticMessage, shouldAdvance: boolean): boolean {
-    void kind; void message; void shouldAdvance;
+    if (this.token === kind) {
+      if (shouldAdvance) this.nextToken();
+      return true;
+    }
+    this.parseErrorAtCurrentToken(message);
     return false;
   }
   parseOptional(token: number): boolean { void token; return false; }
