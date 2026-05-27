@@ -242,7 +242,13 @@ export class Inferer {
     return undefined;
   }
 
-  isPartiallyInferableType(t: Type): boolean { void t; return false; }
+  isPartiallyInferableType(t: Type): boolean {
+    // A type is partially inferable if it has at least one inferable
+    // type parameter. Without the full inference machinery, conservative
+    // true for object types (they may contain inferables).
+    const flags = (t as { flags?: number }).flags ?? 0;
+    return (flags & (1 << 19)) !== 0; // Object
+  }
 
   inferReverseMappedType(source: Type, target: Type, constraint: Type): Type | undefined {
     void source; void target; void constraint;
@@ -265,9 +271,17 @@ export class Inferer {
     void source; void target; return false;
   }
 
-  isTupleTypeStructureMatching(t1: Type, t2: Type): boolean { void t1; void t2; return false; }
-  isTypeOrBaseIdenticalTo(s: Type, t: Type): boolean { void s; void t; return false; }
-  isTypeCloselyMatchedBy(s: Type, t: Type): boolean { void s; void t; return false; }
+  isTupleTypeStructureMatching(t1: Type, t2: Type): boolean {
+    const ta1 = (t1 as unknown as { typeArguments?: readonly Type[] }).typeArguments;
+    const ta2 = (t2 as unknown as { typeArguments?: readonly Type[] }).typeArguments;
+    return (ta1?.length ?? 0) === (ta2?.length ?? 0);
+  }
+  isTypeOrBaseIdenticalTo(s: Type, t: Type): boolean {
+    return s === t || (s as { flags?: number }).flags === (t as { flags?: number }).flags;
+  }
+  isTypeCloselyMatchedBy(s: Type, t: Type): boolean {
+    return s === t;
+  }
 
   createEmptyObjectTypeFromStringLiteral(t: Type): Type { return t; }
 
