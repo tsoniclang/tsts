@@ -248,8 +248,10 @@ export class NodeFactory {
     node: AstNode, expression: AstNode, questionDotToken: AstNode | undefined,
     name: AstNode, flags: number,
   ): AstNode {
-    void node; void expression; void questionDotToken; void name; void flags;
-    return node;
+    // Returns a node sharing the original's pos/end but with updated
+    // expression + name (immutability via spread).
+    void flags;
+    return { ...(node as object), expression, name, questionDotToken } as unknown as AstNode;
   }
 
   updatePropertyDeclaration(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
@@ -276,12 +278,19 @@ export class NodeFactory {
   updateNamedImports(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
   updateExportDeclaration(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
   updateNamedExports(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  newPartiallyEmittedExpression(expression: AstNode): AstNode { void expression; return {} as AstNode; }
-  newClassPrivateFieldInHelper(brandCheckIdentifier: IdentifierNode, receiver: AstNode): AstNode {
-    void brandCheckIdentifier; void receiver; return {} as AstNode;
+  newPartiallyEmittedExpression(expression: AstNode): AstNode {
+    return { kind: 351 /* PartiallyEmittedExpression */, expression } as unknown as AstNode;
   }
-  newNodeList(items: readonly AstNode[]): AstNode { void items; return {} as AstNode; }
-  newModifierList(items: readonly AstNode[]): AstNode { void items; return {} as AstNode; }
+  newClassPrivateFieldInHelper(brandCheckIdentifier: IdentifierNode, receiver: AstNode): AstNode {
+    // brandCheckIdentifier in receiver  → BinaryExpression(InKeyword)
+    return this.newBinary(brandCheckIdentifier as unknown as Expression, 105 /* InKeyword */, receiver as Expression) as unknown as AstNode;
+  }
+  newNodeList(items: readonly AstNode[]): AstNode {
+    return { nodes: items } as unknown as AstNode;
+  }
+  newModifierList(items: readonly AstNode[]): AstNode {
+    return { nodes: items } as unknown as AstNode;
+  }
 
   // -------------------------------------------------------------------------
   // Emit-helper invocations (__decorate, __metadata, __param, etc.)
