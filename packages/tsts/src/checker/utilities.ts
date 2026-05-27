@@ -115,7 +115,15 @@ export function hasReadonlyModifier(node: AstNode): boolean {
 // Symbol predicates
 // ---------------------------------------------------------------------------
 
-export function isStaticPrivateIdentifierProperty(s: AstSymbol): boolean { void s; return false; }
+export function isStaticPrivateIdentifierProperty(s: AstSymbol): boolean {
+  const decls = (s as unknown as { declarations?: readonly AstNode[] }).declarations ?? [];
+  for (const d of decls) {
+    if (d.kind !== Kind.PropertyDeclaration) continue;
+    if (!isPrivateIdentifierClassElementDeclaration(d)) continue;
+    if (hasSyntacticModifier(d, ModifierFlags.Static)) return true;
+  }
+  return false;
+}
 
 // ---------------------------------------------------------------------------
 // AST literal predicates
@@ -210,7 +218,18 @@ export function getSingleVariableOfVariableStatement(node: AstNode): AstNode | u
 // Type-query context
 // ---------------------------------------------------------------------------
 
-export function isTypeReferenceIdentifier(node: AstNode): boolean { void node; return false; }
+export function isTypeReferenceIdentifier(node: AstNode): boolean {
+  // True for identifiers/qualified-names appearing inside TypeReference.
+  let current: AstNode | undefined = node;
+  while (current !== undefined
+      && (current.kind === Kind.Identifier || current.kind === Kind.QualifiedName)) {
+    const parent = nodeParent(current);
+    if (parent === undefined) return false;
+    if (parent.kind === Kind.TypeReference) return true;
+    current = parent;
+  }
+  return false;
+}
 export function isInTypeQuery(node: AstNode): boolean {
   let current: AstNode | undefined = node;
   while (current !== undefined) {
@@ -228,9 +247,54 @@ export function isInTypeQuery(node: AstNode): boolean {
 // Container queries
 // ---------------------------------------------------------------------------
 
-export function canHaveLocals(node: AstNode): boolean { void node; return false; }
-export function isShorthandAmbientModuleSymbol(moduleSymbol: AstSymbol): boolean { void moduleSymbol; return false; }
-export function isShorthandAmbientModule(node: AstNode): boolean { void node; return false; }
+export function canHaveLocals(node: AstNode): boolean {
+  // Mirrors ts-go canHaveLocals: container-like kinds that get a
+  // SymbolTable for their lexical scope.
+  switch (node.kind) {
+    case Kind.ArrowFunction:
+    case Kind.Block:
+    case Kind.CallSignature:
+    case Kind.CaseBlock:
+    case Kind.CatchClause:
+    case Kind.ClassStaticBlockDeclaration:
+    case Kind.ConditionalType:
+    case Kind.Constructor:
+    case Kind.ConstructorType:
+    case Kind.ConstructSignature:
+    case Kind.ForInStatement:
+    case Kind.ForOfStatement:
+    case Kind.ForStatement:
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.FunctionType:
+    case Kind.GetAccessor:
+    case Kind.IndexSignature:
+    case Kind.JSDocSignature:
+    case Kind.JSDocTypedefTag:
+    case Kind.JSDocCallbackTag:
+    case Kind.MappedType:
+    case Kind.MethodDeclaration:
+    case Kind.MethodSignature:
+    case Kind.ModuleDeclaration:
+    case Kind.SetAccessor:
+    case Kind.SourceFile:
+    case Kind.TypeAliasDeclaration:
+      return true;
+  }
+  return false;
+}
+export function isShorthandAmbientModuleSymbol(moduleSymbol: AstSymbol): boolean {
+  const decls = (moduleSymbol as unknown as { declarations?: readonly AstNode[] }).declarations ?? [];
+  for (const d of decls) {
+    if (isShorthandAmbientModule(d)) return true;
+  }
+  return false;
+}
+export function isShorthandAmbientModule(node: AstNode): boolean {
+  // Module declaration without a body — `declare module "x";`.
+  if (node.kind !== Kind.ModuleDeclaration) return false;
+  return (node as unknown as { body?: AstNode }).body === undefined;
+}
 
 // ---------------------------------------------------------------------------
 // Alias / import helpers
@@ -319,11 +383,34 @@ export function isTypeAlias(node: AstNode): boolean {
 // Initializer predicates
 // ---------------------------------------------------------------------------
 
-export function hasOnlyExpressionInitializer(node: AstNode): boolean { void node; return false; }
-export function hasDotDotDotToken(node: AstNode): boolean { void node; return false; }
-export function isJSDocOptionalParameter(node: ParameterDeclaration): boolean { void node; return false; }
-export function isExclamationToken(node: AstNode): boolean { void node; return false; }
-export function isOptionalDeclaration(declaration: AstNode): boolean { void declaration; return false; }
+export function hasOnlyExpressionInitializer(node: AstNode): boolean {
+  // True when the node has an .initializer that's an expression (not
+  // a binding-pattern initializer). Mirrors ts-go.
+  const k = node.kind;
+  if (k !== Kind.VariableDeclaration && k !== Kind.Parameter
+      && k !== Kind.BindingElement && k !== Kind.PropertyDeclaration
+      && k !== Kind.PropertyAssignment && k !== Kind.EnumMember) {
+    return false;
+  }
+  return (node as unknown as { initializer?: AstNode }).initializer !== undefined;
+}
+export function hasDotDotDotToken(node: AstNode): boolean {
+  return (node as unknown as { dotDotDotToken?: AstNode }).dotDotDotToken !== undefined;
+}
+export function isJSDocOptionalParameter(node: ParameterDeclaration): boolean {
+  // Optional parameter via @param tag — needs JSDoc port. Conservative
+  // false until that lands.
+  void node;
+  return false;
+}
+export function isExclamationToken(node: AstNode): boolean {
+  return node.kind === Kind.ExclamationToken;
+}
+export function isOptionalDeclaration(declaration: AstNode): boolean {
+  // Optional declaration via `?` token. Covers parameter, property, method.
+  const qm = (declaration as unknown as { questionToken?: AstNode }).questionToken;
+  return qm !== undefined;
+}
 
 // ---------------------------------------------------------------------------
 // Type-any check
@@ -337,8 +424,36 @@ export function isTypeAny(t: Type): boolean {
 // Privacy + ambient predicates
 // ---------------------------------------------------------------------------
 
-export function declarationBelongsToPrivateAmbientMember(declaration: AstNode): boolean { void declaration; return false; }
-export function isPrivateWithinAmbient(node: AstNode): boolean { void node; return false; }
+export function declarationBelongsToPrivateAmbientMember(declaration: AstNode): boolean {
+  const root = getRootDeclaration(declaration);
+  const memberDecl = root.kind === Kind.Parameter ? nodeParent(root) : root;
+  return memberDecl !== undefined && isPrivateWithinAmbient(memberDecl);
+}
+function getRootDeclaration(node: AstNode): AstNode {
+  let cur = node;
+  while (cur.kind === Kind.BindingElement) {
+    const p = nodeParent(cur);
+    if (p === undefined) break;
+    const pp = nodeParent(p);
+    if (pp === undefined) break;
+    cur = pp;
+  }
+  return cur;
+}
+export function isPrivateWithinAmbient(node: AstNode): boolean {
+  return (hasSyntacticModifier(node, ModifierFlags.Private)
+    || isPrivateIdentifierClassElementDeclaration(node))
+    && hasSyntacticModifier(node, ModifierFlags.Ambient);
+}
+function isPrivateIdentifierClassElementDeclaration(node: AstNode): boolean {
+  const k = node.kind;
+  if (k !== Kind.PropertyDeclaration && k !== Kind.MethodDeclaration
+      && k !== Kind.GetAccessor && k !== Kind.SetAccessor) {
+    return false;
+  }
+  const name = (node as unknown as { name?: AstNode }).name;
+  return name !== undefined && name.kind === Kind.PrivateIdentifier;
+}
 
 // ---------------------------------------------------------------------------
 // Symbol table construction
