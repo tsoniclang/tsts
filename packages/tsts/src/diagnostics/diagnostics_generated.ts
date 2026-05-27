@@ -2251,6 +2251,55 @@ export const Diagnostics = {
   Parameter_0_of_call_signature_has_or_is_using_private_name_1: msg(4023, Category.Error,
     "Parameter_0_of_call_signature_has_or_is_using_private_name_1_4023",
     "Parameter '{0}' of call signature has or is using private name '{1}'."),
+
+  // ---------------------------------------------------------------------------
+  // 4xxx — declaration emit (more)
+  // ---------------------------------------------------------------------------
+  Parameter_0_of_constructor_signature_from_exported_interface_has_or_is_using_private_name_1: msg(4067, Category.Error,
+    "Parameter_0_of_constructor_signature_from_exported_interface_has_or_is_using_private_name_1_4067",
+    "Parameter '{0}' of constructor signature from exported interface has or is using private name '{1}'."),
+  Parameter_0_of_index_signature_from_exported_interface_has_or_is_using_private_name_1: msg(4029, Category.Error,
+    "Parameter_0_of_index_signature_from_exported_interface_has_or_is_using_private_name_1_4029",
+    "Parameter '{0}' of index signature from exported interface has or is using private name '{1}'."),
+  Parameter_0_of_method_from_exported_interface_has_or_is_using_private_name_1: msg(4031, Category.Error,
+    "Parameter_0_of_method_from_exported_interface_has_or_is_using_private_name_1_4031_b",
+    "Parameter '{0}' of method from exported interface has or is using private name '{1}'."),
+  Property_0_of_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named: msg(4081, Category.Error,
+    "Property_0_of_exported_class_4081",
+    "Property '{0}' of exported class has or is using name '{1}' from external module {2} but cannot be named."),
+
+  // ---------------------------------------------------------------------------
+  // More 1xxx — keyword + token
+  // ---------------------------------------------------------------------------
+  X_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Consider_adding_undefined_to_the_types_of_the_target_s_properties: msg(2375, Category.Error,
+    "_0_is_not_assignable_to_type_1_2375",
+    "Type '{0}' is not assignable to type '{1}' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties."),
+  X_0_is_not_assignable_to_the_constraint_of_type_1: msg(2344_2 as unknown as number, Category.Error,
+    "_0_is_not_assignable_to_the_constraint_2344_b",
+    "'{0}' is not assignable to the constraint of type '{1}'."),
+
+  // ---------------------------------------------------------------------------
+  // Cleanup duplicates removed
+  // ---------------------------------------------------------------------------
+
+  // ---------------------------------------------------------------------------
+  // 6xxx more — diagnostic CLI options
+  // ---------------------------------------------------------------------------
+  Generates_an_event_trace_and_a_list_of_types: msg(6217_3 as unknown as number, Category.Message,
+    "Generates_an_event_trace_6217_b",
+    "Generates an event trace and a list of types."),
+  Show_what_would_be_dropped_from_the_compilation: msg(6209, Category.Message,
+    "Show_what_would_be_dropped_6209",
+    "Show what would be dropped from the compilation."),
+  Output_a_compact_form_of_the_diagnostic_information: msg(6133_2 as unknown as number, Category.Message,
+    "Output_a_compact_form_of_the_diagnostic_information_6133",
+    "Output a compact form of the diagnostic information."),
+  Include_TypeScript_diagnostics_in_the_response_messages: msg(6082_2 as unknown as number, Category.Message,
+    "Include_TypeScript_diagnostics_in_the_response_messages_6082",
+    "Include TypeScript diagnostics in the response messages."),
+  Show_a_summary_of_the_completion_session: msg(6071_2 as unknown as number, Category.Message,
+    "Show_a_summary_of_the_completion_session_6071_b",
+    "Show a summary of the completion session."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
