@@ -288,50 +288,73 @@ export class NodeFactory {
   // -------------------------------------------------------------------------
 
   newUnscopedHelperName(name: string): IdentifierNode {
-    void name;
-    return this.newTempVariable();
+    // The TS-Go printer emits __helperName as a plain identifier; the
+    // emitter is responsible for marking these for unscoped emission.
+    return this.newIdentifier(name) as unknown as IdentifierNode;
   }
 
   newDecorateHelper(
     decoratorExpressions: readonly AstNode[], target: AstNode, memberName: AstNode | undefined, descriptor: AstNode | undefined,
   ): Expression {
-    void decoratorExpressions; void target; void memberName; void descriptor;
-    return {} as Expression;
+    // __decorate([...decorators], target, memberName?, descriptor?)
+    const args: AstNode[] = [this.newArrayLiteralExpression(decoratorExpressions as readonly Expression[]) as AstNode, target];
+    if (memberName !== undefined) {
+      args.push(memberName);
+      if (descriptor !== undefined) args.push(descriptor);
+    }
+    return this.newCallExpression(this.newUnscopedHelperName("__decorate"), args);
   }
 
   newMetadataHelper(metadataKey: string, metadataValue: AstNode): AstNode {
-    void metadataKey; void metadataValue;
-    return {} as AstNode;
+    // __metadata(metadataKey, metadataValue)
+    return this.newCallExpression(
+      this.newUnscopedHelperName("__metadata"),
+      [this.newStringLiteral(metadataKey, 0), metadataValue],
+    ) as unknown as AstNode;
   }
 
   newParamHelper(expression: AstNode, parameterOffset: number, location: TextRange | undefined): Expression {
-    void expression; void parameterOffset; void location;
-    return {} as Expression;
+    // __param(parameterOffset, expression)
+    void location;
+    return this.newCallExpression(
+      this.newUnscopedHelperName("__param"),
+      [this.newNumericLiteral(`${parameterOffset}`, 0), expression],
+    );
   }
 
   newAddDisposableResourceHelper(envBinding: Expression, value: Expression, async: boolean): Expression {
-    void envBinding; void value; void async;
-    return {} as Expression;
+    // __addDisposableResource(envBinding, value, async)
+    return this.newCallExpression(
+      this.newUnscopedHelperName("__addDisposableResource"),
+      [envBinding, value, async ? this.newTrueExpression() : this.newFalseExpression()],
+    );
   }
 
   newDisposeResourcesHelper(envBinding: Expression): Expression {
-    void envBinding;
-    return {} as Expression;
+    // __disposeResources(envBinding)
+    return this.newCallExpression(
+      this.newUnscopedHelperName("__disposeResources"),
+      [envBinding],
+    );
   }
 
   newClassPrivateFieldGetHelper(
     receiver: Expression, state: IdentifierNode, kind: PrivateIdentifierKindStr, fn: IdentifierNode | undefined,
   ): Expression {
-    void receiver; void state; void kind; void fn;
-    return {} as Expression;
+    // __classPrivateFieldGet(receiver, state, "kind", fn?)
+    const args: AstNode[] = [receiver, state, this.newStringLiteral(kind, 0)];
+    if (fn !== undefined) args.push(fn);
+    return this.newCallExpression(this.newUnscopedHelperName("__classPrivateFieldGet"), args);
   }
 
   newClassPrivateFieldSetHelper(
     receiver: Expression, state: IdentifierNode, value: Expression,
     kind: PrivateIdentifierKindStr, fn: IdentifierNode | undefined,
   ): Expression {
-    void receiver; void state; void value; void kind; void fn;
-    return {} as Expression;
+    // __classPrivateFieldSet(receiver, state, value, "kind", fn?)
+    const args: AstNode[] = [receiver, state, value, this.newStringLiteral(kind, 0)];
+    if (fn !== undefined) args.push(fn);
+    return this.newCallExpression(this.newUnscopedHelperName("__classPrivateFieldSet"), args);
   }
 }
 
