@@ -618,15 +618,58 @@ export class Checker {
   getTypeFromClassOrInterfaceReference(node: AstNode, symbol: AstSymbol): Type {
     void node; void symbol; return {} as Type;
   }
-  getTypeFromConditionalTypeNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromUnionTypeNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromIntersectionTypeNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromMappedTypeNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromIndexedAccessTypeNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromInferTypeNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromImportTypeNode(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromImportAttributes(node: AstNode): Type { void node; return {} as Type; }
-  getTypeFromLiteralTypeNode(node: AstNode): Type { void node; return {} as Type; }
+  getTypeFromConditionalTypeNode(node: AstNode): Type {
+    const checkType = (node as unknown as { checkType?: AstNode }).checkType;
+    const extendsType = (node as unknown as { extendsType?: AstNode }).extendsType;
+    const trueType = (node as unknown as { trueType?: AstNode }).trueType;
+    const falseType = (node as unknown as { falseType?: AstNode }).falseType;
+    return {
+      flags: 1 << 24, // Conditional
+      checkType: checkType !== undefined ? this.getTypeFromTypeNode(checkType) : undefined,
+      extendsType: extendsType !== undefined ? this.getTypeFromTypeNode(extendsType) : undefined,
+      trueType: trueType !== undefined ? this.getTypeFromTypeNode(trueType) : undefined,
+      falseType: falseType !== undefined ? this.getTypeFromTypeNode(falseType) : undefined,
+    } as unknown as Type;
+  }
+  getTypeFromUnionTypeNode(node: AstNode): Type {
+    const types = (node as unknown as { types?: { nodes?: readonly AstNode[] } }).types?.nodes;
+    return {
+      flags: 1 << 20, // Union
+      types: types !== undefined ? types.map((t) => this.getTypeFromTypeNode(t)) : [],
+    } as unknown as Type;
+  }
+  getTypeFromIntersectionTypeNode(node: AstNode): Type {
+    const types = (node as unknown as { types?: { nodes?: readonly AstNode[] } }).types?.nodes;
+    return {
+      flags: 1 << 21, // Intersection
+      types: types !== undefined ? types.map((t) => this.getTypeFromTypeNode(t)) : [],
+    } as unknown as Type;
+  }
+  getTypeFromMappedTypeNode(node: AstNode): Type { void node; return { flags: 1 << 19 } as unknown as Type; }
+  getTypeFromIndexedAccessTypeNode(node: AstNode): Type {
+    const objectType = (node as unknown as { objectType?: AstNode }).objectType;
+    const indexType = (node as unknown as { indexType?: AstNode }).indexType;
+    return {
+      flags: 1 << 23, // IndexedAccess
+      objectType: objectType !== undefined ? this.getTypeFromTypeNode(objectType) : undefined,
+      indexType: indexType !== undefined ? this.getTypeFromTypeNode(indexType) : undefined,
+    } as unknown as Type;
+  }
+  getTypeFromInferTypeNode(node: AstNode): Type { void node; return { flags: 1 << 18 } as unknown as Type; }
+  getTypeFromImportTypeNode(node: AstNode): Type { void node; return { flags: 1 << 19 } as unknown as Type; }
+  getTypeFromImportAttributes(node: AstNode): Type { void node; return { flags: 1 << 19 } as unknown as Type; }
+  getTypeFromLiteralTypeNode(node: AstNode): Type {
+    const literal = (node as unknown as { literal?: { kind?: number; text?: string } }).literal;
+    if (literal === undefined) return { flags: 1 << 0 } as unknown as Type;
+    switch (literal.kind) {
+      case Kind.StringLiteral: return { flags: 1 << 7, value: literal.text } as unknown as Type;
+      case Kind.NumericLiteral: return { flags: 1 << 8, value: Number(literal.text ?? "0") } as unknown as Type;
+      case Kind.TrueKeyword: return { flags: 1 << 9, intrinsicName: "true" } as unknown as Type;
+      case Kind.FalseKeyword: return { flags: 1 << 9, intrinsicName: "false" } as unknown as Type;
+      case Kind.NullKeyword: return { flags: 1 << 16 } as unknown as Type;
+      default: return { flags: 1 << 0 } as unknown as Type;
+    }
+  }
   getTypeFromArrayOrTupleTypeNode(node: AstNode): Type { void node; return {} as Type; }
   getTypeFromNamedTupleTypeNode(node: AstNode): Type { void node; return {} as Type; }
   getTypeFromOptionalTypeNode(node: AstNode): Type { void node; return {} as Type; }
