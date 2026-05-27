@@ -33,7 +33,22 @@ export class GrammarChecker {
   }
   checkGrammarJsxElement(node: AstNode): boolean { void node; return false; }
   checkGrammarJsxExpression(node: AstNode): boolean { void node; return false; }
-  checkGrammarForInOrForOfStatement(node: AstNode): boolean { void node; return false; }
+  checkGrammarForInOrForOfStatement(node: AstNode): boolean {
+    // The .initializer must be a single VariableDeclarationList with
+    // exactly one declaration (no destructuring is fine), or a simple
+    // assignment target.
+    const init = (node as unknown as { initializer?: AstNode }).initializer;
+    if (init === undefined) return true;
+    const k = (init as { kind?: number }).kind;
+    if (k === Kind.VariableDeclarationList) {
+      const decls = (init as unknown as { declarations?: { nodes?: readonly AstNode[] } }).declarations?.nodes;
+      if (decls === undefined || decls.length !== 1) return true;
+      // Initializer on the declaration is invalid in for-in/of context.
+      const declInit = (decls[0] as unknown as { initializer?: AstNode }).initializer;
+      if (declInit !== undefined) return true;
+    }
+    return false;
+  }
   checkGrammarAccessor_(node: AstNode): boolean { void node; return false; }
   checkGrammarComputedPropertyName(node: AstNode): boolean { void node; return false; }
   checkGrammarForOfStatement(node: AstNode): boolean { void node; return false; }
@@ -109,8 +124,33 @@ export class GrammarChecker {
   }
   checkGrammarTryStatement(node: AstNode): boolean { void node; return false; }
   checkGrammarCatchClause(node: AstNode): boolean { void node; return false; }
-  checkGrammarSwitchStatement(node: AstNode): boolean { void node; return false; }
-  checkGrammarLabeledStatement(node: AstNode): boolean { void node; return false; }
+  checkGrammarSwitchStatement(node: AstNode): boolean {
+    // At most one 'default' clause in a switch.
+    const caseBlock = (node as unknown as { caseBlock?: { clauses?: { nodes?: readonly AstNode[] } } }).caseBlock;
+    const clauses = caseBlock?.clauses?.nodes;
+    if (clauses === undefined) return false;
+    let defaultCount = 0;
+    for (const c of clauses) {
+      if ((c as { kind?: number }).kind === Kind.DefaultClause) defaultCount += 1;
+      if (defaultCount > 1) return true;
+    }
+    return false;
+  }
+  checkGrammarLabeledStatement(node: AstNode): boolean {
+    // Duplicate-label check: walk parents looking for a LabeledStatement
+    // with the same label.
+    const name = (node as unknown as { label?: { text?: string } }).label?.text;
+    if (name === undefined) return false;
+    let n: AstNode | undefined = (node as unknown as { parent?: AstNode }).parent;
+    while (n !== undefined) {
+      if ((n as { kind?: number }).kind === Kind.LabeledStatement) {
+        const otherName = (n as unknown as { label?: { text?: string } }).label?.text;
+        if (otherName === name) return true;
+      }
+      n = (n as unknown as { parent?: AstNode }).parent;
+    }
+    return false;
+  }
   checkGrammarMetaProperty(node: AstNode): boolean { void node; return false; }
   checkGrammarPrivateIdentifier(node: AstNode): boolean { void node; return false; }
   checkGrammarPropertyDeclaration(node: AstNode): boolean { void node; return false; }
