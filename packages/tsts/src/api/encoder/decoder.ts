@@ -23,13 +23,16 @@ export class ASTDecoder {
   }
 
   allocNodeSlice(capacity: number): (AstNode | undefined)[] {
-    void capacity;
-    return [];
+    // Pre-allocates an array of size `capacity` with undefined slots.
+    return Array.from({ length: capacity }, () => undefined);
   }
 
   nodeField(i: number, field: number): number {
-    void i; void field;
-    return 0;
+    // Read a uint32 from the node-data buffer at offset `i * fieldStride + field*4`.
+    // Without the buffer-layout spec, use the offset directly into data.
+    const offset = i + field * 4;
+    if (offset + 4 > this.data.length) return 0;
+    return readLE32(this.data, offset);
   }
 
   getString(idx: number): string {
@@ -37,8 +40,13 @@ export class ASTDecoder {
   }
 
   collectChildren(i: number): number[] {
-    void i;
-    return [];
+    // Read a length-prefixed child-index array starting at offset i.
+    const len = this.nodeField(i, 0);
+    const result: number[] = [];
+    for (let k = 0; k < len; k++) {
+      result.push(this.nodeField(i + 4 + k * 4, 0));
+    }
+    return result;
   }
 
   decode(): AstNode | undefined {
