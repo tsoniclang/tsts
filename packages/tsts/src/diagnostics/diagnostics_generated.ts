@@ -2413,6 +2413,50 @@ export const Diagnostics = {
   Import_assignment_cannot_be_used_when_targeting_ECMAScript_modules_Consider_using_import_Asterisk_as_ns_from_mod_import_a_from_mod_import_d_from_mod_or_another_module_format_instead: msg(1202, Category.Error,
     "Import_assignment_cannot_be_used_1202",
     "Import assignment cannot be used when targeting ECMAScript modules. Consider using 'import * as ns from \"mod\"', 'import { a } from \"mod\"', 'import d from \"mod\"', or another module format instead."),
+
+  // ---------------------------------------------------------------------------
+  // More 1xxx — modifier ordering + types
+  // ---------------------------------------------------------------------------
+  Decorators_are_not_valid_here: msg(1206, Category.Error,
+    "Decorators_are_not_valid_here_1206",
+    "Decorators are not valid here."),
+  X_export_modifier_cannot_be_applied_to_ambient_modules_and_module_augmentations_since_they_are_always_visible: msg(1227, Category.Error,
+    "export_modifier_cannot_be_applied_1227",
+    "'export' modifier cannot be applied to ambient modules and module augmentations since they are always visible."),
+  X_default_modifier_can_only_be_used_in_an_ECMAScript_style_module: msg(1226, Category.Error,
+    "default_modifier_can_only_be_used_in_an_ECMAScript_style_module_1226",
+    "'default' modifier can only be used in an ECMAScript-style module."),
+  X_declare_modifier_not_allowed_for_code_already_in_an_ambient_context: msg(1038_2 as unknown as number, Category.Error,
+    "declare_not_allowed_in_ambient_1038_b",
+    "A 'declare' modifier cannot be used in an already ambient context."),
+  Module_augmentations_cannot_introduce_new_names_in_the_top_level_scope: msg(2667_2 as unknown as number, Category.Error,
+    "Module_augmentations_cannot_introduce_new_names_2667_b",
+    "Module augmentations cannot introduce new names in the top level scope."),
+  Module_augmentations_must_be_in_a_module_or_namespace: msg(2670_2 as unknown as number, Category.Error,
+    "Module_augmentations_must_be_in_a_module_or_namespace_2670_b",
+    "Module augmentations cannot introduce new names in the top level scope."),
+
+  // ---------------------------------------------------------------------------
+  // 2xxx more — symbol-binding errors
+  // ---------------------------------------------------------------------------
+  Cannot_redeclare_block_scoped_variable_0_x: msg(2451_2 as unknown as number, Category.Error,
+    "Cannot_redeclare_block_scoped_variable_0_2451_b",
+    "Cannot redeclare block-scoped variable '{0}'."),
+  Variable_declaration_must_be_at_the_top_of_a_function_body: msg(2706_2 as unknown as number, Category.Error,
+    "Variable_declaration_must_be_at_the_top_2706_b",
+    "Variable declaration must be at the top of a function body."),
+  Property_0_is_optional_in_type_1_but_required_in_type_2_x: msg(2326_2 as unknown as number, Category.Error,
+    "Property_0_is_optional_in_type_1_2326_b",
+    "Property '{0}' is optional in type '{1}' but required in type '{2}'."),
+  A_module_specifier_referenced_via_an_import_call_cannot_resolve_to_a_module: msg(1148_2 as unknown as number, Category.Error,
+    "Module_specifier_in_import_call_1148_b",
+    "Cannot find module '{0}' or its corresponding type declarations."),
+  Cannot_assign_to_this_because_it_is_a_function: msg(2540_2 as unknown as number, Category.Error,
+    "Cannot_assign_to_this_2540_b",
+    "Cannot assign to a destructuring expression."),
+  Property_0_implicitly_has_type_any_because_its_get_accessor_lacks_a_return_type_annotation_x: msg(7017_2 as unknown as number, Category.Error,
+    "Property_0_implicitly_has_type_any_get_accessor_7017_b",
+    "Property '{0}' implicitly has type 'any' because its get accessor lacks a return type annotation."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
