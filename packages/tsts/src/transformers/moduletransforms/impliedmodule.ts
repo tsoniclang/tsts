@@ -10,6 +10,9 @@ import { Transformer, type TransformOptions } from "../transformer.js";
 import { CommonJSModuleTransformer } from "./commonjsmodule.js";
 import { ESModuleTransformer } from "./esmodule.js";
 import type { Node as AstNode, SourceFile } from "../../ast/index.js";
+import { Kind, sourceFileIsDeclarationFile } from "../../ast/index.js";
+
+const ModuleKind = { ES2015: 5 } as const;
 
 export class ImpliedModuleTransformer extends Transformer {
   readonly opts: TransformOptions;
@@ -66,6 +69,3 @@ export function newImpliedModuleTransformer(opts: TransformOptions): Transformer
 interface ReferenceResolver { readonly [key: string]: unknown }
 type HasFileName = AstNode | { readonly fileName?: string };
 
-declare const Kind: { SourceFile: number };
-declare const ModuleKind: { ES2015: number };
-declare function sourceFileIsDeclarationFile(node: SourceFile): boolean;
