@@ -2904,6 +2904,66 @@ export const Diagnostics = {
   Decorator_function_returned_an_unsupported_value: msg(1487, Category.Error,
     "Decorator_function_returned_an_unsupported_value_1487",
     "Type expected."),
+
+  // ---------------------------------------------------------------------------
+  // 2xxx — more semantic
+  // ---------------------------------------------------------------------------
+  No_overload_matches_this_call_Overload_0_of_1_2_gave_the_following_error: msg(2772_2 as unknown as number, Category.Error,
+    "No_overload_matches_call_overload_0_2772_b",
+    "No overload matches this call. Overload {0} of {1}, '{2}', gave the following error."),
+  The_last_overload_gave_the_following_error: msg(2770, Category.Error,
+    "The_last_overload_gave_the_following_error_2770",
+    "The last overload gave the following error."),
+  No_overload_expects_0_arguments_but_overloads_do_exist_that_expect_either_1_or_2_arguments_x: msg(2575_2 as unknown as number, Category.Error,
+    "No_overload_expects_0_arguments_2575_b",
+    "No overload expects {0} arguments, but overloads do exist that expect either {1} or {2} arguments."),
+  Property_0_does_not_exist_on_type_1_x: msg(2339_2 as unknown as number, Category.Error,
+    "Property_0_does_not_exist_on_type_1_2339_b",
+    "Property '{0}' does not exist on type '{1}'."),
+  Property_0_is_missing_in_type_1_x: msg(2741_3 as unknown as number, Category.Error,
+    "Property_0_is_missing_in_type_1_2741_c",
+    "Property '{0}' is missing in type '{1}'."),
+  Cannot_assign_to_0_because_it_is_a_constant_x: msg(2588_2 as unknown as number, Category.Error,
+    "Cannot_assign_to_0_because_it_is_a_constant_2588_b",
+    "Cannot assign to '{0}' because it is a constant."),
+  X_const_assertions_can_only_be_applied_to_references_to_enum_members_or_string_number_boolean_array_or_object_literals_x2: msg(1355_3 as unknown as number, Category.Error,
+    "const_assertions_can_only_be_applied_1355_c",
+    "A 'const' assertions can only be applied to references to enum members, or string, number, boolean, array, or object literals."),
+
+  // ---------------------------------------------------------------------------
+  // More 1xxx — parser additional
+  // ---------------------------------------------------------------------------
+  X_template_literal_types_can_only_have_unique_unique_string_kind: msg(2538_3 as unknown as number, Category.Error,
+    "template_literal_types_2538_b",
+    "Template literal types can only have unique unique-string kind."),
+  Generic_arguments_for_0_should_be_specified_in_an_arrow_function_expression: msg(2347, Category.Error,
+    "Generic_arguments_for_0_should_be_specified_2347",
+    "Untyped function calls may not accept type arguments."),
+  Untyped_function_calls_may_not_accept_type_arguments: msg(2347_2 as unknown as number, Category.Error,
+    "Untyped_function_calls_may_not_accept_type_arguments_2347_b",
+    "Untyped function calls may not accept type arguments."),
+  Cannot_invoke_an_object_which_is_possibly_null_or_undefined_x: msg(2723_2 as unknown as number, Category.Error,
+    "Cannot_invoke_an_object_which_is_possibly_null_or_undefined_2723_b",
+    "Cannot invoke an object which is possibly 'null' or 'undefined'."),
+  Identifier_expected_but_0_was_found: msg(1003_3 as unknown as number, Category.Error,
+    "Identifier_expected_but_0_was_found_1003_c",
+    "Identifier expected."),
+  Trailing_comma_not_allowed_x: msg(1009_2 as unknown as number, Category.Error,
+    "Trailing_comma_not_allowed_1009_b",
+    "Trailing comma not allowed."),
+  X_extends_clauses_can_only_use_identifiers_with_optional_type_arguments: msg(2697, Category.Error,
+    "extends_clauses_can_only_use_identifiers_2697_d",
+    "An async function or method must return a 'Promise'. Make sure you have a declaration for 'Promise' or include 'ES2015' in your '--lib' option."),
+
+  // ---------------------------------------------------------------------------
+  // 6xxx — CLI completion
+  // ---------------------------------------------------------------------------
+  Disable_solution_searching_for_this_project_x: msg(6213_2 as unknown as number, Category.Message,
+    "Disable_solution_searching_6213_b",
+    "Disable solution searching for this project."),
+  Print_names_of_files_that_are_part_of_the_compilation_and_then_stop_processing: msg(6505, Category.Message,
+    "Print_names_of_files_listFiles_6505",
+    "Print names of files that are part of the compilation and then stop processing."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
