@@ -724,7 +724,9 @@ export class Checker {
   // Type arguments + parameters
   // -------------------------------------------------------------------------
 
-  getTypeArguments(t: Type): readonly Type[] { void t; return []; }
+  getTypeArguments(t: Type): readonly Type[] {
+    return (t as unknown as { typeArguments?: readonly Type[] }).typeArguments ?? [];
+  }
   getTypeArgumentsForAliasSymbol(symbol: AstSymbol): readonly Type[] | undefined { void symbol; return undefined; }
   getTypeArgumentsFromNode(node: AstNode): readonly Type[] { void node; return []; }
   getTypeArgumentsFromNodes(nodes: readonly AstNode[]): readonly Type[] { void nodes; return []; }
@@ -774,12 +776,18 @@ export class Checker {
   // Type relation predicates
   // -------------------------------------------------------------------------
 
-  isTypeAssignableToKind(source: Type, kind: number): boolean { void source; void kind; return false; }
+  isTypeAssignableToKind(source: Type, kind: number): boolean {
+    return ((source as { flags?: number }).flags ?? 0 & kind) !== 0;
+  }
   isTypeAssignableToKindEx(source: Type, kind: number, strict: boolean): boolean {
-    void source; void kind; void strict; return false;
+    void strict;
+    return this.isTypeAssignableToKind(source, kind);
   }
   isTypeEqualityComparableTo(source: Type, target: Type): boolean {
-    void source; void target; return false;
+    if (source === target) return true;
+    const sf = (source as { flags?: number }).flags ?? 0;
+    const tf = (target as { flags?: number }).flags ?? 0;
+    return sf === tf;
   }
   isTypeMatchedByTemplateLiteralOrStringMapping(source: Type, target: Type): boolean {
     void source; void target; return false;
@@ -796,12 +804,18 @@ export class Checker {
   // -------------------------------------------------------------------------
 
   createTypeReference(target: Type, typeArguments: readonly Type[] | undefined): Type {
-    void target; void typeArguments; return {} as Type;
+    return {
+      flags: 1 << 19, // Object
+      target,
+      typeArguments: typeArguments ?? [],
+    } as unknown as Type;
   }
   createTypeFromGenericGlobalType(genericGlobalType: Type, typeArguments: readonly Type[]): Type {
-    void genericGlobalType; void typeArguments; return {} as Type;
+    return this.createTypeReference(genericGlobalType, typeArguments);
   }
-  createSymbolWithType(symbol: AstSymbol, t: Type): AstSymbol { void t; return symbol; }
+  createSymbolWithType(symbol: AstSymbol, t: Type): AstSymbol {
+    return { ...(symbol as object), type: t } as unknown as AstSymbol;
+  }
 }
 
 export function newChecker(): Checker {
