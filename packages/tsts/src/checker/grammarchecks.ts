@@ -270,12 +270,65 @@ export class GrammarChecker {
   checkGrammarConstructorTypeParameters(node: AstNode): boolean { void node; return false; }
   checkGrammarConstructorTypeAnnotation(node: AstNode): boolean { void node; return false; }
   checkGrammarConstantInitializer(node: AstNode): boolean { void node; return false; }
-  checkGrammarYieldExpression(node: AstNode): boolean { void node; return false; }
-  checkGrammarAwaitExpression(node: AstNode): boolean { void node; return false; }
+  checkGrammarYieldExpression(node: AstNode): boolean {
+    // 'yield' is only valid inside a generator function.
+    let n: AstNode | undefined = (node as unknown as { parent?: AstNode }).parent;
+    while (n !== undefined) {
+      const k = (n as { kind?: number }).kind;
+      if (k === Kind.SourceFile) return true; // 'yield' outside any function
+      if (k === Kind.FunctionDeclaration || k === Kind.FunctionExpression ||
+          k === Kind.MethodDeclaration) {
+        const isGenerator = (n as unknown as { asteriskToken?: AstNode }).asteriskToken !== undefined;
+        return !isGenerator;
+      }
+      if (k === Kind.ArrowFunction) return true; // arrows can't be generators
+      n = (n as unknown as { parent?: AstNode }).parent;
+    }
+    return true;
+  }
+  checkGrammarAwaitExpression(node: AstNode): boolean {
+    // 'await' is only valid inside an async function or at the top level
+    // of a module.
+    let n: AstNode | undefined = (node as unknown as { parent?: AstNode }).parent;
+    while (n !== undefined) {
+      const k = (n as { kind?: number }).kind;
+      if (k === Kind.SourceFile) {
+        const isModule = (n as unknown as { externalModuleIndicator?: AstNode }).externalModuleIndicator !== undefined;
+        return !isModule;
+      }
+      if (k === Kind.FunctionDeclaration || k === Kind.FunctionExpression ||
+          k === Kind.MethodDeclaration || k === Kind.ArrowFunction) {
+        const mods = (n as unknown as { modifiers?: { nodes?: readonly AstNode[] } }).modifiers?.nodes;
+        const isAsync = mods !== undefined && mods.some((m) => (m as { kind?: number }).kind === Kind.AsyncKeyword);
+        return !isAsync;
+      }
+      n = (n as unknown as { parent?: AstNode }).parent;
+    }
+    return true;
+  }
   checkGrammarUsingDeclarations(node: AstNode): boolean { void node; return false; }
   checkGrammarAwaitUsing(node: AstNode): boolean { void node; return false; }
-  checkGrammarDecorator(node: AstNode): boolean { void node; return false; }
-  checkGrammarDecorators(node: AstNode): boolean { void node; return false; }
+  checkGrammarDecorator(node: AstNode): boolean {
+    // The expression of a decorator must be a call or identifier.
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    return expr === undefined;
+  }
+  checkGrammarDecorators(node: AstNode): boolean {
+    // Decorators are only valid on class declarations and class members.
+    const k = (node as { kind?: number }).kind;
+    const validTargets = new Set<number>([
+      Kind.ClassDeclaration, Kind.ClassExpression, Kind.MethodDeclaration,
+      Kind.GetAccessor, Kind.SetAccessor, Kind.PropertyDeclaration, Kind.Parameter,
+    ]);
+    if (!validTargets.has(k!)) {
+      const mods = (node as unknown as { modifiers?: { nodes?: readonly AstNode[] } }).modifiers?.nodes;
+      if (mods === undefined) return false;
+      for (const m of mods) {
+        if ((m as { kind?: number }).kind === Kind.Decorator) return true;
+      }
+    }
+    return false;
+  }
   checkGrammarExportAssignment(node: AstNode): boolean { void node; return false; }
   checkGrammarExportDeclaration(node: AstNode): boolean { void node; return false; }
   checkGrammarImportAttributes(node: AstNode): boolean { void node; return false; }
