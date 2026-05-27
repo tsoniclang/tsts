@@ -398,20 +398,62 @@ export class Checker {
   // -------------------------------------------------------------------------
 
   getSymbol(name: string, location: AstNode | undefined, meaning: number): AstSymbol | undefined {
-    void name; void location; void meaning; return undefined;
+    void meaning;
+    // Walk parents of `location` looking for a locals/exports/members
+    // table that has `name`. Matches nameresolver semantics.
+    let n: AstNode | undefined = location;
+    while (n !== undefined) {
+      const tables: ReadonlyArray<unknown> = [
+        (n as unknown as { locals?: Map<string, AstSymbol> }).locals,
+        (n as unknown as { symbol?: { exports?: Map<string, AstSymbol> } }).symbol?.exports,
+        (n as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members,
+      ];
+      for (const t of tables) {
+        const found = (t as Map<string, AstSymbol> | undefined)?.get(name);
+        if (found !== undefined) return found;
+      }
+      n = (n as unknown as { parent?: AstNode }).parent;
+    }
+    return undefined;
   }
-  getSymbolAtLocation(node: AstNode): AstSymbol | undefined { void node; return undefined; }
-  getSymbolOfNode(node: AstNode): AstSymbol | undefined { void node; return undefined; }
-  getSymbolOfDeclaration(node: AstNode): AstSymbol | undefined { void node; return undefined; }
-  getSymbolFlags(symbol: AstSymbol): number { void symbol; return 0; }
+  getSymbolAtLocation(node: AstNode): AstSymbol | undefined {
+    // The binder annotates Identifiers and declaration nodes with
+    // .symbol; for a property-access RHS, fall back to the parent's
+    // resolved member.
+    const direct = (node as unknown as { symbol?: AstSymbol }).symbol;
+    if (direct !== undefined) return direct;
+    const resolved = (node as unknown as { resolvedSymbol?: AstSymbol }).resolvedSymbol;
+    return resolved;
+  }
+  getSymbolOfNode(node: AstNode): AstSymbol | undefined {
+    return this.getSymbolAtLocation(node);
+  }
+  getSymbolOfDeclaration(node: AstNode): AstSymbol | undefined {
+    return (node as unknown as { symbol?: AstSymbol }).symbol;
+  }
+  getSymbolFlags(symbol: AstSymbol): number {
+    return (symbol as unknown as { flags?: number }).flags ?? 0;
+  }
   getSymbolFlagsEx(symbol: AstSymbol, excludeTypeOnlyMeanings: boolean): number {
-    void symbol; void excludeTypeOnlyMeanings; return 0;
+    void excludeTypeOnlyMeanings;
+    return this.getSymbolFlags(symbol);
   }
-  getSymbolFromTypeReference(node: AstNode): AstSymbol | undefined { void node; return undefined; }
-  getSymbolForPrivateIdentifierExpression(node: AstNode): AstSymbol | undefined { void node; return undefined; }
-  getSymbolIfSameReference(node: AstNode): AstSymbol | undefined { void node; return undefined; }
-  getSymbolOfNameOrPropertyAccessExpression(node: AstNode): AstSymbol | undefined { void node; return undefined; }
-  getSymbolOfPartOfRightHandSideOfImportEquals(node: AstNode): AstSymbol | undefined { void node; return undefined; }
+  getSymbolFromTypeReference(node: AstNode): AstSymbol | undefined {
+    const typeName = (node as unknown as { typeName?: AstNode }).typeName;
+    return typeName !== undefined ? this.getSymbolAtLocation(typeName) : undefined;
+  }
+  getSymbolForPrivateIdentifierExpression(node: AstNode): AstSymbol | undefined {
+    return this.getSymbolAtLocation(node);
+  }
+  getSymbolIfSameReference(node: AstNode): AstSymbol | undefined {
+    return this.getSymbolAtLocation(node);
+  }
+  getSymbolOfNameOrPropertyAccessExpression(node: AstNode): AstSymbol | undefined {
+    return this.getSymbolAtLocation(node);
+  }
+  getSymbolOfPartOfRightHandSideOfImportEquals(node: AstNode): AstSymbol | undefined {
+    return this.getSymbolAtLocation(node);
+  }
 
   resolveSymbol(symbol: AstSymbol | undefined, dontResolveAlias?: boolean): AstSymbol | undefined {
     void dontResolveAlias; return symbol;
