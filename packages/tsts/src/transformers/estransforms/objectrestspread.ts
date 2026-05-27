@@ -10,9 +10,93 @@
  */
 
 import type { Node as AstNode, SourceFile } from "../../ast/index.js";
+import {
+  nodeKind, nodeBody, blockStatements, blockMultiLine,
+  bindingPatternElements, variableDeclarationName,
+  catchClauseVariableDeclaration, catchClauseBlock,
+  hasSyntacticModifier,
+  parameterName, parameterDotDotDotToken, parameterInitializer,
+  methodAsteriskToken, arrowEqualsGreaterThanToken,
+  binaryLeft, binaryRight, binaryOperatorKind, binaryOperatorToken,
+  forStatementBody, cloneNode as _astCloneNode,
+} from "../../ast/index.js";
+import {
+  isBlock, isBindingPattern, isVariableDeclarationList,
+  isDestructuringAssignment,
+} from "../../ast/index.js";
+import { Kind, NodeFlags } from "../../ast/index.js";
+import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
+import { EmitFlags } from "../../printer/emitflags.js";
+import {
+  visitNode, visitNodes, visitEachChild, visitEachChildOf,
+  setOriginal, addEmitFlags, addEmitHelpers, readEmitHelpers,
+  emitFlagsOf, addVariableDeclaration, startVariableEnvironment,
+  endVariableEnvironment, endAndMergeVariableEnvironment,
+  syntaxListChildren, appendVariableDeclaration,
+  newGeneratedNameForNode, newTempVariable,
+  newBlock, newNodeList, newVariableDeclaration,
+  newVariableDeclarationList, newVariableStatement,
+  newExpressionStatement, newAssignmentExpression, newReturnStatement,
+  newTypeCheck, newIfStatement,
+  newObjectLiteralExpression, newPropertyAssignment, newAssignHelper,
+  updateParameterDeclaration, updateConstructorDeclaration,
+  updateGetAccessorDeclaration, updateSetAccessorDeclaration,
+  updateMethodDeclaration, updateFunctionDeclaration,
+  updateArrowFunction, updateFunctionExpression,
+  updateForInOrOfStatement, updateBlock, updateBinaryExpression,
+  updateVariableDeclaration, updateCatchClause,
+} from "../../printer/factory-helpers.js";
 
 import { Transformer, type EmitContext, type NodeFactory } from "../transformer.js";
 import type { TransformOptions } from "../transformer.js";
+
+function cloneNode(factory: NodeFactory, node: AstNode): AstNode { void factory; return _astCloneNode(node); }
+
+// Use Strada-style aliases for the EF flag constants the file references.
+const EFCustomPrologue = EmitFlags.CustomPrologue;
+const EFNoSourceMap = EmitFlags.NoSourceMap;
+const EFNoComments = EmitFlags.NoComments;
+const EFSingleLine = EmitFlags.SingleLine;
+const EFNoTrailingSourceMap = EmitFlags.NoTrailingSourceMap;
+const EFNoTokenSourceMaps = EmitFlags.NoTokenSourceMaps;
+const EFStartOnNewLine = EmitFlags.StartOnNewLine;
+
+// Kind aliases (the file uses these in case labels).
+const KindSourceFile = Kind.SourceFile;
+const KindObjectLiteralExpression = Kind.ObjectLiteralExpression;
+const KindBinaryExpression = Kind.BinaryExpression;
+const KindExpressionStatement = Kind.ExpressionStatement;
+const KindParenthesizedExpression = Kind.ParenthesizedExpression;
+const KindForOfStatement = Kind.ForOfStatement;
+const KindVariableStatement = Kind.VariableStatement;
+const KindVariableDeclaration = Kind.VariableDeclaration;
+const KindCatchClause = Kind.CatchClause;
+const KindParameter = Kind.Parameter;
+const KindConstructor = Kind.Constructor;
+const KindGetAccessor = Kind.GetAccessor;
+const KindSetAccessor = Kind.SetAccessor;
+const KindMethodDeclaration = Kind.MethodDeclaration;
+const KindFunctionDeclaration = Kind.FunctionDeclaration;
+const KindArrowFunction = Kind.ArrowFunction;
+const KindFunctionExpression = Kind.FunctionExpression;
+const KindSpreadAssignment = Kind.SpreadAssignment;
+const KindPropertyAssignment = Kind.PropertyAssignment;
+const KindSyntaxList = (Kind as unknown as Record<string, number>).SyntaxList ?? 0;
+const KindCommaToken = Kind.CommaToken;
+const NodeFlagsLet = NodeFlags.Let;
+const ModifierFlagsExport = ModifierFlags.Export;
+void KindSourceFile; void KindObjectLiteralExpression; void KindBinaryExpression;
+void KindExpressionStatement; void KindParenthesizedExpression;
+void KindForOfStatement; void KindVariableStatement; void KindVariableDeclaration;
+void KindCatchClause; void KindParameter; void KindConstructor;
+void KindGetAccessor; void KindSetAccessor; void KindMethodDeclaration;
+void KindFunctionDeclaration; void KindArrowFunction; void KindFunctionExpression;
+void KindSpreadAssignment; void KindPropertyAssignment;
+void KindSyntaxList; void KindCommaToken;
+void NodeFlagsLet; void ModifierFlagsExport;
+void EFCustomPrologue; void EFNoSourceMap; void EFNoComments;
+void EFSingleLine; void EFNoTrailingSourceMap; void EFNoTokenSourceMaps;
+void EFStartOnNewLine;
 
 class ObjectRestSpreadTransformer extends Transformer {
   private readonly compilerOptions: CompilerOptionsForObjectRest;
@@ -451,7 +535,7 @@ class ObjectRestSpreadTransformer extends Transformer {
         const res = visitNode(this.getVisitor(), createForOfBindingStatement(this.getFactory(), initializerWithoutParens, temp));
         const statements: AstNode[] = [];
         if (res !== undefined) statements.push(res);
-        const body = forStatementBody(node);
+        const body = forStatementBody(node)!;
         if (isBlock(body)) {
           for (const statement of blockStatements(body)) {
             const visited = visitEachChildOf(this.getVisitor(), statement);
@@ -550,128 +634,29 @@ export function newObjectRestSpreadTransformer(opts: ObjectRestSpreadOptions): T
 // Forward-declared AST/emit-context surface
 // ---------------------------------------------------------------------------
 
+// Strada helpers still forward-declared (no canonical home yet).
 declare function subtreeContainsESObjectRestOrSpread(node: AstNode): boolean;
 declare function subtreeContainsObjectRestOrSpread(node: AstNode): boolean;
 declare function containsObjectRestOrSpread(node: AstNode): boolean;
-declare function nodeKind(node: AstNode): number;
-declare function visitEachChildOf(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode): AstNode;
-declare function visitNode(visitor: ReturnType<Transformer["getVisitor"]>, node: AstNode | undefined): AstNode;
-declare function visitNodes(visitor: ReturnType<Transformer["getVisitor"]>, list: AstNode | undefined): AstNode | undefined;
 declare function nodeListNodes(list: AstNode): readonly AstNode[];
-
 declare function nodeParameters(node: AstNode): readonly AstNode[];
 declare function nodeParametersList(node: AstNode): AstNode | undefined;
-declare function parameterName(node: AstNode): AstNode;
-declare function parameterDotDotDotToken(node: AstNode): AstNode | undefined;
-declare function parameterInitializer(node: AstNode): AstNode | undefined;
 declare function nodeModifiers(node: AstNode): AstNode | undefined;
-declare function methodAsteriskToken(node: AstNode): AstNode | undefined;
 declare function methodPostfixToken(node: AstNode): AstNode | undefined;
 declare function declarationName(node: AstNode): AstNode | undefined;
-declare function arrowEqualsGreaterThanToken(node: AstNode): AstNode;
-declare function nodeBody(node: AstNode): AstNode | undefined;
-declare function blockStatements(block: AstNode | undefined): readonly AstNode[];
-declare function blockMultiLine(block: AstNode): boolean;
-declare function isBlock(node: AstNode | undefined): boolean;
 declare function isPrologueDirective(node: AstNode): boolean;
-declare function isBindingPattern(node: AstNode): boolean;
 declare function isAssignmentPattern(node: AstNode): boolean;
-declare function isVariableDeclarationList(node: AstNode): boolean;
-declare function isDestructuringAssignment(node: AstNode): boolean;
-declare function bindingPatternElements(node: AstNode): readonly AstNode[];
-declare function variableDeclarationName(node: AstNode): AstNode;
-declare function catchClauseVariableDeclaration(node: AstNode): AstNode | undefined;
-declare function catchClauseBlock(node: AstNode): AstNode;
-declare function hasSyntacticModifier(node: AstNode, modifier: number): boolean;
-declare function emitFlagsOf(emit: EmitContext, node: AstNode): number;
-declare function addEmitFlags(emit: EmitContext, node: AstNode, flags: number): void;
-declare function addEmitHelpers(emit: EmitContext, node: AstNode, helpers: readonly AstNode[]): void;
-declare function readEmitHelpers(emit: EmitContext): readonly AstNode[];
-declare function startVariableEnvironment(emit: EmitContext): void;
-declare function endVariableEnvironment(emit: EmitContext): readonly AstNode[];
-declare function endAndMergeVariableEnvironment(emit: EmitContext, existing: readonly AstNode[]): readonly AstNode[];
-declare function syntaxListChildren(node: AstNode): readonly AstNode[];
-declare function appendVariableDeclaration(list: AstNode, decl: AstNode): void;
-
 declare function forStatementInitializer(node: AstNode): AstNode;
 declare function forStatementExpression(node: AstNode): AstNode;
-declare function forStatementBody(node: AstNode): AstNode | undefined;
 declare function forStatementAwaitModifier(node: AstNode): AstNode | undefined;
-declare function createForOfBindingStatement(factory: NodeFactory, initializer: AstNode, target: AstNode): AstNode;
-
 declare function skipParentheses(node: AstNode): AstNode;
-declare function binaryLeft(node: AstNode): AstNode;
-declare function binaryRight(node: AstNode): AstNode;
-declare function binaryOperatorKind(node: AstNode): number;
-declare function binaryOperatorToken(node: AstNode): AstNode;
 declare function objectLiteralProperties(node: AstNode): AstNode | undefined;
 declare function propertyName(node: AstNode): AstNode;
 declare function propertyInitializer(node: AstNode): AstNode;
 declare function expressionOf(node: AstNode): AstNode;
-declare function cloneNode(factory: NodeFactory, node: AstNode): AstNode;
-
-declare function newGeneratedNameForNode(factory: NodeFactory, node: AstNode): AstNode;
-declare function updateParameterDeclaration(factory: NodeFactory, node: AstNode, decorators: undefined, dotDotDotToken: AstNode | undefined, name: AstNode, questionToken: undefined, type: undefined, initializer: AstNode | undefined): AstNode;
-declare function updateConstructorDeclaration(factory: NodeFactory, node: AstNode, modifiers: AstNode | undefined, typeParameters: undefined, parameters: AstNode | undefined, type: undefined, postfix: undefined, body: AstNode | undefined): AstNode;
-declare function updateGetAccessorDeclaration(factory: NodeFactory, node: AstNode, modifiers: AstNode | undefined, name: AstNode | undefined, typeParameters: undefined, parameters: AstNode | undefined, type: undefined, postfix: undefined, body: AstNode | undefined): AstNode;
-declare function updateSetAccessorDeclaration(factory: NodeFactory, node: AstNode, modifiers: AstNode | undefined, name: AstNode | undefined, typeParameters: undefined, parameters: AstNode | undefined, type: undefined, postfix: undefined, body: AstNode | undefined): AstNode;
-declare function updateMethodDeclaration(factory: NodeFactory, node: AstNode, modifiers: AstNode | undefined, asteriskToken: AstNode | undefined, name: AstNode | undefined, postfixToken: AstNode | undefined, typeParameters: undefined, parameters: AstNode | undefined, type: undefined, postfix: undefined, body: AstNode | undefined): AstNode;
-declare function updateFunctionDeclaration(factory: NodeFactory, node: AstNode, modifiers: AstNode | undefined, asteriskToken: AstNode | undefined, name: AstNode | undefined, typeParameters: undefined, parameters: AstNode | undefined, type: undefined, postfix: undefined, body: AstNode | undefined): AstNode;
-declare function updateArrowFunction(factory: NodeFactory, node: AstNode, modifiers: AstNode | undefined, typeParameters: undefined, parameters: AstNode | undefined, type: undefined, postfix: undefined, arrowToken: AstNode, body: AstNode | undefined): AstNode;
-declare function updateFunctionExpression(factory: NodeFactory, node: AstNode, modifiers: AstNode | undefined, asteriskToken: AstNode | undefined, name: AstNode | undefined, typeParameters: undefined, parameters: AstNode | undefined, type: undefined, postfix: undefined, body: AstNode | undefined): AstNode;
-declare function updateForInOrOfStatement(factory: NodeFactory, node: AstNode, awaitModifier: AstNode | undefined, initializer: AstNode, expression: AstNode, statement: AstNode): AstNode;
-declare function updateBlock(factory: NodeFactory, block: AstNode, statements: AstNode, multiLine: boolean): AstNode;
-declare function updateBinaryExpression(factory: NodeFactory, node: AstNode, decorators: undefined, left: AstNode, jsdoc: undefined, operator: AstNode, right: AstNode): AstNode;
-declare function updateVariableDeclaration(factory: NodeFactory, node: AstNode, name: AstNode, exclamation: undefined, type: undefined, initializer: AstNode | undefined): AstNode;
-declare function updateCatchClause(factory: NodeFactory, node: AstNode, varDecl: AstNode, block: AstNode): AstNode;
-
-declare function newBlock(factory: NodeFactory, statements: AstNode, multiLine: boolean): AstNode;
-declare function newNodeList(factory: NodeFactory, nodes: readonly AstNode[]): AstNode;
-declare function newVariableDeclaration(factory: NodeFactory, name: AstNode, exclamation: undefined, type: undefined, initializer: undefined): AstNode;
-declare function newVariableDeclarationList(factory: NodeFactory, declarations: AstNode, flags: number): AstNode;
-declare function newVariableStatement(factory: NodeFactory, modifiers: undefined, declList: AstNode): AstNode;
-declare function newExpressionStatement(factory: NodeFactory, expr: AstNode): AstNode;
-declare function newAssignmentExpression(factory: NodeFactory, target: AstNode, value: AstNode): AstNode;
-declare function newReturnStatement(factory: NodeFactory, expr: AstNode | undefined): AstNode;
-declare function newTypeCheck(factory: NodeFactory, expression: AstNode, expected: string): AstNode;
-declare function newIfStatement(factory: NodeFactory, condition: AstNode, thenBlock: AstNode, elseBlock: AstNode | undefined): AstNode;
-declare function newTempVariable(factory: NodeFactory): AstNode;
-declare function newObjectLiteralExpression(factory: NodeFactory, properties: AstNode, multiLine: boolean): AstNode;
-declare function newPropertyAssignment(factory: NodeFactory, name: AstNode, value: AstNode): AstNode;
-declare function newAssignHelper(factory: NodeFactory, elements: readonly AstNode[], target: string): AstNode;
-
 declare function flattenDestructuringBinding(tx: Transformer, node: AstNode, name: AstNode | undefined, level: number, exported: boolean, isFlat: boolean): AstNode | undefined;
 declare function flattenDestructuringAssignment(tx: Transformer, node: AstNode, needsValue: boolean, level: number, alternateNode: AstNode | undefined): AstNode;
+declare function createForOfBindingStatement(factory: NodeFactory, initializer: AstNode, target: AstNode): AstNode;
 
-declare const KindSourceFile: number;
-declare const KindObjectLiteralExpression: number;
-declare const KindBinaryExpression: number;
-declare const KindExpressionStatement: number;
-declare const KindParenthesizedExpression: number;
-declare const KindForOfStatement: number;
-declare const KindVariableStatement: number;
-declare const KindVariableDeclaration: number;
-declare const KindCatchClause: number;
-declare const KindParameter: number;
-declare const KindConstructor: number;
-declare const KindGetAccessor: number;
-declare const KindSetAccessor: number;
-declare const KindMethodDeclaration: number;
-declare const KindFunctionDeclaration: number;
-declare const KindArrowFunction: number;
-declare const KindFunctionExpression: number;
-declare const KindSpreadAssignment: number;
-declare const KindPropertyAssignment: number;
-declare const KindSyntaxList: number;
-declare const KindCommaToken: number;
-declare const NodeFlagsLet: number;
-declare const ModifierFlagsExport: number;
-declare const FlattenLevelAll: number;
-declare const FlattenLevelObjectRest: number;
-declare const EFCustomPrologue: number;
-declare const EFNoSourceMap: number;
-declare const EFNoComments: number;
-declare const EFSingleLine: number;
-declare const EFNoTrailingSourceMap: number;
-declare const EFNoTokenSourceMaps: number;
-declare const EFStartOnNewLine: number;
+const FlattenLevelAll = 0;
+const FlattenLevelObjectRest = 1;

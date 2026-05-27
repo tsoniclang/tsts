@@ -269,7 +269,15 @@ export function visitEachChildOf(visitor: NodeVisitor, node: AstNode): AstNode {
 // ─────────────────────────────────────────────────────────────────────────────
 export function newOrderedSet<T>(): Set<T> { return new Set<T>(); }
 export function newSetOfString(): Set<string> { return new Set<string>(); }
-export function appendVariableDeclaration<T>(arr: T[], decl: T): T[] { return [...arr, decl]; }
+export function appendVariableDeclaration(list: unknown, decl: AstNode): void {
+  // The Strada port treats the declarationList as a mutable buffer.
+  // In TS we'd return a new NodeList, but for the porting cliff we
+  // accept any list-like and mutate its `declarations` / `items` if
+  // they're arrays, else no-op.
+  const target = list as { declarations?: AstNode[]; items?: AstNode[] };
+  if (Array.isArray(target?.declarations)) target.declarations.push(decl);
+  else if (Array.isArray(target?.items)) target.items.push(decl);
+}
 export function syntaxListChildren(node: AstNode): readonly AstNode[] {
   return ((node as unknown as { items?: readonly AstNode[] }).items ?? []) as readonly AstNode[];
 }
