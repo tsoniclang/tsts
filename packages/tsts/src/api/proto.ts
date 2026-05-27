@@ -265,21 +265,213 @@ export function newDiagnosticResponses(diags: readonly DiagnosticType[]): readon
 }
 
 // ---------------------------------------------------------------------------
+// Method constants (mirrors TS-Go `Method` consts)
+// ---------------------------------------------------------------------------
+
+export const Method = {
+  // Top-level lifecycle
+  Release: "release" as Method,
+  Initialize: "initialize" as Method,
+  UpdateSnapshot: "updateSnapshot" as Method,
+  ParseConfigFile: "parseConfigFile" as Method,
+  GetDefaultProjectForFile: "getDefaultProjectForFile" as Method,
+  GetSourceFile: "getSourceFile" as Method,
+
+  // Symbol lookup
+  GetSymbolAtPosition: "getSymbolAtPosition" as Method,
+  GetSymbolsAtPositions: "getSymbolsAtPositions" as Method,
+  GetSymbolAtLocation: "getSymbolAtLocation" as Method,
+  GetSymbolsAtLocations: "getSymbolsAtLocations" as Method,
+  GetTypeOfSymbol: "getTypeOfSymbol" as Method,
+  GetTypesOfSymbols: "getTypesOfSymbols" as Method,
+  GetDeclaredTypeOfSymbol: "getDeclaredTypeOfSymbol" as Method,
+  ResolveName: "resolveName" as Method,
+  GetParentOfSymbol: "getParentOfSymbol" as Method,
+  GetMembersOfSymbol: "getMembersOfSymbol" as Method,
+  GetExportsOfSymbol: "getExportsOfSymbol" as Method,
+  GetExportSymbolOfSymbol: "getExportSymbolOfSymbol" as Method,
+  GetSymbolOfType: "getSymbolOfType" as Method,
+
+  // Type lookup
+  GetSignaturesOfType: "getSignaturesOfType" as Method,
+  GetTypeAtLocation: "getTypeAtLocation" as Method,
+  GetTypeAtLocations: "getTypeAtLocations" as Method,
+  GetTypeAtPosition: "getTypeAtPosition" as Method,
+  GetTypesAtPositions: "getTypesAtPositions" as Method,
+
+  // Type sub-property
+  GetTargetOfType: "getTargetOfType" as Method,
+  GetTypesOfType: "getTypesOfType" as Method,
+  GetTypeParametersOfType: "getTypeParametersOfType" as Method,
+  GetOuterTypeParametersOfType: "getOuterTypeParametersOfType" as Method,
+  GetLocalTypeParametersOfType: "getLocalTypeParametersOfType" as Method,
+  GetObjectTypeOfType: "getObjectTypeOfType" as Method,
+  GetIndexTypeOfType: "getIndexTypeOfType" as Method,
+  GetCheckTypeOfType: "getCheckTypeOfType" as Method,
+  GetExtendsTypeOfType: "getExtendsTypeOfType" as Method,
+  GetBaseTypeOfType: "getBaseTypeOfType" as Method,
+  GetConstraintOfType: "getConstraintOfType" as Method,
+
+  // Checker
+  GetContextualType: "getContextualType" as Method,
+  GetBaseTypeOfLiteralType: "getBaseTypeOfLiteralType" as Method,
+  GetShorthandAssignmentValueSymbol: "getShorthandAssignmentValueSymbol" as Method,
+  GetTypeOfSymbolAtLocation: "getTypeOfSymbolAtLocation" as Method,
+  TypeToTypeNode: "typeToTypeNode" as Method,
+  TypeToString: "typeToString" as Method,
+  IsContextSensitive: "isContextSensitive" as Method,
+  GetReturnTypeOfSignature: "getReturnTypeOfSignature" as Method,
+  GetRestTypeOfSignature: "getRestTypeOfSignature" as Method,
+  GetTypePredicateOfSignature: "getTypePredicateOfSignature" as Method,
+  GetBaseTypes: "getBaseTypes" as Method,
+  GetPropertiesOfType: "getPropertiesOfType" as Method,
+  GetIndexInfosOfType: "getIndexInfosOfType" as Method,
+  GetConstraintOfTypeParameter: "getConstraintOfTypeParameter" as Method,
+  GetTypeArguments: "getTypeArguments" as Method,
+
+  // Diagnostics
+  GetSyntacticDiagnostics: "getSyntacticDiagnostics" as Method,
+  GetSemanticDiagnostics: "getSemanticDiagnostics" as Method,
+  GetSuggestionDiagnostics: "getSuggestionDiagnostics" as Method,
+  GetDeclarationDiagnostics: "getDeclarationDiagnostics" as Method,
+  GetConfigFileParsingDiagnostics: "getConfigFileParsingDiagnostics" as Method,
+
+  // Emitter
+  PrintNode: "printNode" as Method,
+
+  // Intrinsic-type getters
+  GetAnyType: "getAnyType" as Method,
+  GetStringType: "getStringType" as Method,
+  GetNumberType: "getNumberType" as Method,
+  GetBooleanType: "getBooleanType" as Method,
+  GetVoidType: "getVoidType" as Method,
+  GetUndefinedType: "getUndefinedType" as Method,
+  GetNullType: "getNullType" as Method,
+  GetNeverType: "getNeverType" as Method,
+  GetUnknownType: "getUnknownType" as Method,
+  GetBigIntType: "getBigIntType" as Method,
+  GetESSymbolType: "getESSymbolType" as Method,
+} as const;
+
+// ---------------------------------------------------------------------------
 // Payload unmarshalling
 // ---------------------------------------------------------------------------
 
+/**
+ * Decodes raw JSON-bytes (typically read off an msgpack/jsonrpc wire)
+ * into a typed `T` payload value. Returns `undefined` if decode fails.
+ * Mirrors TS-Go's generic `unmarshallerFor[T]`.
+ */
+export function unmarshallerFor<T>(data: Uint8Array | string | unknown): T | undefined {
+  if (data === undefined || data === null) return undefined;
+  if (typeof data === "object" && !(data instanceof Uint8Array)) {
+    // Already-decoded value (jsonrpc layer pre-decoded).
+    return data as T;
+  }
+  let text: string;
+  if (data instanceof Uint8Array) {
+    text = new TextDecoder().decode(data);
+  } else if (typeof data === "string") {
+    text = data;
+  } else {
+    return undefined;
+  }
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return undefined;
+  }
+}
+
+/** No-params unmarshaler. Mirrors TS-Go `noParams`. */
+export function noParams(_data: unknown): undefined {
+  return undefined;
+}
+
+// Method → typed unmarshaler dispatch table. Mirrors TS-Go's
+// `unmarshalers` map.
+type Unmarshaler = (data: unknown) => unknown;
+const unmarshalers: ReadonlyMap<Method, Unmarshaler> = new Map<Method, Unmarshaler>([
+  [Method.Release, (d) => unmarshallerFor<ReleaseParams>(d)],
+  [Method.Initialize, noParams],
+  [Method.UpdateSnapshot, (d) => unmarshallerFor<UpdateSnapshotParams>(d)],
+  [Method.ParseConfigFile, (d) => unmarshallerFor<ParseConfigFileParams>(d)],
+  [Method.GetDefaultProjectForFile, (d) => unmarshallerFor<GetDefaultProjectForFileParams>(d)],
+  [Method.GetSourceFile, (d) => unmarshallerFor<GetSourceFileParams>(d)],
+  [Method.GetSymbolAtPosition, (d) => unmarshallerFor<GetSymbolAtPositionParams>(d)],
+  [Method.GetSymbolsAtPositions, (d) => unmarshallerFor<GetSymbolsAtPositionsParams>(d)],
+  [Method.GetSymbolAtLocation, (d) => unmarshallerFor<GetSymbolAtLocationParams>(d)],
+  [Method.GetSymbolsAtLocations, (d) => unmarshallerFor<GetSymbolsAtLocationsParams>(d)],
+  [Method.GetTypeOfSymbol, (d) => unmarshallerFor<GetTypeOfSymbolParams>(d)],
+  [Method.GetTypesOfSymbols, (d) => unmarshallerFor<GetTypesOfSymbolsParams>(d)],
+  [Method.GetDeclaredTypeOfSymbol, (d) => unmarshallerFor<GetTypeOfSymbolParams>(d)],
+  [Method.ResolveName, (d) => unmarshallerFor<ResolveNameParams>(d)],
+  [Method.GetParentOfSymbol, (d) => unmarshallerFor<GetParentOfSymbolParams>(d)],
+  [Method.GetMembersOfSymbol, (d) => unmarshallerFor<GetMembersOfSymbolParams>(d)],
+  [Method.GetExportsOfSymbol, (d) => unmarshallerFor<GetExportsOfSymbolParams>(d)],
+  [Method.GetExportSymbolOfSymbol, (d) => unmarshallerFor<GetExportSymbolOfSymbolParams>(d)],
+  [Method.GetSymbolOfType, (d) => unmarshallerFor<GetSymbolOfTypeParams>(d)],
+  [Method.GetSignaturesOfType, (d) => unmarshallerFor<GetSignaturesOfTypeParams>(d)],
+  [Method.GetTypeAtLocation, (d) => unmarshallerFor<GetTypeAtLocationParams>(d)],
+  [Method.GetTypeAtLocations, (d) => unmarshallerFor<GetTypeAtLocationsParams>(d)],
+  [Method.GetTypeAtPosition, (d) => unmarshallerFor<GetTypeAtPositionParams>(d)],
+  [Method.GetTypesAtPositions, (d) => unmarshallerFor<GetTypesAtPositionsParams>(d)],
+  [Method.GetTargetOfType, (d) => unmarshallerFor<GetTypePropertyParams>(d)],
+  [Method.GetTypesOfType, (d) => unmarshallerFor<GetTypePropertyParams>(d)],
+  [Method.GetTypeParametersOfType, (d) => unmarshallerFor<GetTypePropertyParams>(d)],
+  [Method.GetOuterTypeParametersOfType, (d) => unmarshallerFor<GetTypePropertyParams>(d)],
+  [Method.GetLocalTypeParametersOfType, (d) => unmarshallerFor<GetTypePropertyParams>(d)],
+  [Method.GetObjectTypeOfType, (d) => unmarshallerFor<GetTypePropertyParams>(d)],
+  [Method.GetIndexTypeOfType, (d) => unmarshallerFor<GetTypePropertyParams>(d)],
+  [Method.GetCheckTypeOfType, (d) => unmarshallerFor<GetTypePropertyParams>(d)],
+  [Method.GetExtendsTypeOfType, (d) => unmarshallerFor<GetTypePropertyParams>(d)],
+  [Method.GetBaseTypeOfType, (d) => unmarshallerFor<GetTypePropertyParams>(d)],
+  [Method.GetConstraintOfType, (d) => unmarshallerFor<GetTypePropertyParams>(d)],
+  [Method.GetContextualType, (d) => unmarshallerFor<GetContextualTypeParams>(d)],
+  [Method.GetBaseTypeOfLiteralType, (d) => unmarshallerFor<GetBaseTypeOfLiteralTypeParams>(d)],
+  [Method.GetShorthandAssignmentValueSymbol, (d) => unmarshallerFor<GetTypeAtLocationParams>(d)],
+  [Method.GetTypeOfSymbolAtLocation, (d) => unmarshallerFor<GetTypeOfSymbolAtLocationParams>(d)],
+  [Method.TypeToTypeNode, (d) => unmarshallerFor<TypeToTypeNodeParams>(d)],
+  [Method.TypeToString, (d) => unmarshallerFor<TypeToTypeNodeParams>(d)],
+  [Method.IsContextSensitive, (d) => unmarshallerFor<GetContextualTypeParams>(d)],
+  [Method.GetReturnTypeOfSignature, (d) => unmarshallerFor<CheckerSignatureParams>(d)],
+  [Method.GetRestTypeOfSignature, (d) => unmarshallerFor<CheckerSignatureParams>(d)],
+  [Method.GetTypePredicateOfSignature, (d) => unmarshallerFor<CheckerSignatureParams>(d)],
+  [Method.GetBaseTypes, (d) => unmarshallerFor<CheckerTypeParams>(d)],
+  [Method.GetPropertiesOfType, (d) => unmarshallerFor<CheckerTypeParams>(d)],
+  [Method.GetIndexInfosOfType, (d) => unmarshallerFor<CheckerTypeParams>(d)],
+  [Method.GetConstraintOfTypeParameter, (d) => unmarshallerFor<CheckerTypeParams>(d)],
+  [Method.GetTypeArguments, (d) => unmarshallerFor<CheckerTypeParams>(d)],
+  [Method.PrintNode, (d) => unmarshallerFor<PrintNodeParams>(d)],
+  [Method.GetAnyType, (d) => unmarshallerFor<GetIntrinsicTypeParams>(d)],
+  [Method.GetStringType, (d) => unmarshallerFor<GetIntrinsicTypeParams>(d)],
+  [Method.GetNumberType, (d) => unmarshallerFor<GetIntrinsicTypeParams>(d)],
+  [Method.GetBooleanType, (d) => unmarshallerFor<GetIntrinsicTypeParams>(d)],
+  [Method.GetVoidType, (d) => unmarshallerFor<GetIntrinsicTypeParams>(d)],
+  [Method.GetUndefinedType, (d) => unmarshallerFor<GetIntrinsicTypeParams>(d)],
+  [Method.GetNullType, (d) => unmarshallerFor<GetIntrinsicTypeParams>(d)],
+  [Method.GetNeverType, (d) => unmarshallerFor<GetIntrinsicTypeParams>(d)],
+  [Method.GetUnknownType, (d) => unmarshallerFor<GetIntrinsicTypeParams>(d)],
+  [Method.GetBigIntType, (d) => unmarshallerFor<GetIntrinsicTypeParams>(d)],
+  [Method.GetESSymbolType, (d) => unmarshallerFor<GetIntrinsicTypeParams>(d)],
+  [Method.GetSyntacticDiagnostics, (d) => unmarshallerFor<GetDiagnosticsParams>(d)],
+  [Method.GetSemanticDiagnostics, (d) => unmarshallerFor<GetDiagnosticsParams>(d)],
+  [Method.GetSuggestionDiagnostics, (d) => unmarshallerFor<GetDiagnosticsParams>(d)],
+  [Method.GetDeclarationDiagnostics, (d) => unmarshallerFor<GetDiagnosticsParams>(d)],
+  [Method.GetConfigFileParsingDiagnostics, (d) => unmarshallerFor<GetProjectDiagnosticsParams>(d)],
+]);
+
+/**
+ * Decodes a request's JSON payload into the typed parameter shape for
+ * the given API method. Throws ErrInvalidRequest if the method is
+ * unknown. Mirrors TS-Go `unmarshalPayload`.
+ */
 export function unmarshalPayload(method: string, payload: unknown): unknown {
-  void method;
-  return payload;
-}
-
-export function unmarshallerFor<T>(data: Uint8Array): T | undefined {
-  void data;
-  return undefined;
-}
-
-export function noParams(_data: Uint8Array): unknown {
-  return undefined;
+  const unmarshaler = unmarshalers.get(method as Method);
+  if (unmarshaler === undefined) {
+    throw new Error(`api: unknown method ${JSON.stringify(method)}`);
+  }
+  return unmarshaler(payload);
 }
 
 // ---------------------------------------------------------------------------
