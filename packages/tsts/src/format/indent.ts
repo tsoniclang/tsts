@@ -199,9 +199,22 @@ function getCommentIndent(
 }
 
 function getBlockIndent(sourceFile: SourceFile, position: number, options: FormatCodeSettings): number {
-  // Skeleton: defer to smart indent. Full version walks lines backwards
-  // looking for first non-blank line.
-  void position; void options;
+  // Walk lines backwards from `position` looking for the first
+  // non-blank line; that line's leading indent is the block indent.
+  const lineStarts = getECMALineStarts(sourceFile);
+  const text = sourceFileText(sourceFile);
+  let line = getECMALineOfPosition(sourceFile, position) - 1;
+  while (line >= 0) {
+    const start = lineStarts[line]!;
+    const end = line + 1 < lineStarts.length ? lineStarts[line + 1]! : text.length;
+    // Skip blank lines.
+    let i = start;
+    while (i < end && isWhitespace(text.charCodeAt(i))) i += 1;
+    if (i < end && text.charCodeAt(i) !== 0x0a && text.charCodeAt(i) !== 0x0d) {
+      return findFirstNonWhitespaceColumn(start, end, sourceFile, options);
+    }
+    line -= 1;
+  }
   return options.baseIndentSize ?? 0;
 }
 
@@ -213,11 +226,79 @@ function getSmartIndent(
   assumeNewLineBeforeCloseBrace: boolean,
   options: FormatCodeSettings,
 ): number {
-  // Skeleton: returns base indentation for the line of the preceding
-  // token. Full version walks the AST checking each ancestor for
-  // indentation contribution.
-  void position; void precedingToken; void lineAtPosition; void assumeNewLineBeforeCloseBrace;
-  return options.baseIndentSize ?? 0;
+  // Walk the ancestor chain of `precedingToken`. For each ancestor that
+  // (a) starts on its own line *before* lineAtPosition and (b) is a
+  // node kind that contributes indent (block, object literal, array
+  // literal, parenthesized list, control-flow body, type/interface
+  // member list), add one indent level.
+  void assumeNewLineBeforeCloseBrace;
+  const indentSize = options.indentSize ?? 4;
+  let indent = 0;
+  let n: AstNode | undefined = precedingToken;
+  let prevLine = lineAtPosition;
+  while (n !== undefined) {
+    const startPos = (n as unknown as { pos?: number }).pos ?? -1;
+    if (startPos >= 0) {
+      const startLine = getECMALineOfPosition(sourceFile, startPos);
+      if (startLine !== prevLine && shouldIndentChildNode(nodeKind(n))) {
+        indent += indentSize;
+        prevLine = startLine;
+      }
+    }
+    n = nodeParent(n);
+  }
+  void position;
+  return indent;
+}
+
+function shouldIndentChildNode(k: number): boolean {
+  switch (k) {
+    case Kind.Block:
+    case Kind.ObjectLiteralExpression:
+    case Kind.ArrayLiteralExpression:
+    case Kind.ParenthesizedExpression:
+    case Kind.ClassDeclaration:
+    case Kind.ClassExpression:
+    case Kind.InterfaceDeclaration:
+    case Kind.ModuleDeclaration:
+    case Kind.ModuleBlock:
+    case Kind.EnumDeclaration:
+    case Kind.IfStatement:
+    case Kind.ForStatement:
+    case Kind.ForInStatement:
+    case Kind.ForOfStatement:
+    case Kind.WhileStatement:
+    case Kind.DoStatement:
+    case Kind.SwitchStatement:
+    case Kind.CaseBlock:
+    case Kind.CaseClause:
+    case Kind.DefaultClause:
+    case Kind.TryStatement:
+    case Kind.CatchClause:
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.MethodDeclaration:
+    case Kind.ArrowFunction:
+    case Kind.ConstructorType:
+    case Kind.FunctionType:
+    case Kind.CallExpression:
+    case Kind.NewExpression:
+    case Kind.ConditionalExpression:
+    case Kind.JsxElement:
+    case Kind.JsxFragment:
+    case Kind.JsxAttribute:
+    case Kind.JsxExpression:
+    case Kind.JsxOpeningElement:
+    case Kind.JsxClosingElement:
+    case Kind.TypeLiteral:
+    case Kind.MappedType:
+    case Kind.TupleType:
+    case Kind.UnionType:
+    case Kind.IntersectionType:
+      return true;
+    default:
+      return false;
+  }
 }
 
 export function findFirstNonWhitespaceColumn(
