@@ -133,8 +133,25 @@ export class GrammarChecker {
     }
     return false;
   }
-  checkGrammarJsxElement(node: AstNode): boolean { void node; return false; }
-  checkGrammarJsxExpression(node: AstNode): boolean { void node; return false; }
+  checkGrammarJsxElement(node: AstNode): boolean {
+    // Detect duplicate JSX attributes by name.
+    const opening = (node as unknown as { openingElement?: { attributes?: { properties?: { nodes?: readonly AstNode[] } } } }).openingElement;
+    const props = opening?.attributes?.properties?.nodes;
+    if (props === undefined) return false;
+    const seen = new Set<string>();
+    for (const p of props) {
+      const name = (p as unknown as { name?: { text?: string } }).name?.text;
+      if (name !== undefined) {
+        if (seen.has(name)) return true;
+        seen.add(name);
+      }
+    }
+    return false;
+  }
+  checkGrammarJsxExpression(node: AstNode): boolean {
+    // Empty JSX expression: { } with no content (other than whitespace).
+    return (node as unknown as { expression?: AstNode }).expression === undefined;
+  }
   checkGrammarForInOrForOfStatement(node: AstNode): boolean {
     // The .initializer must be a single VariableDeclarationList with
     // exactly one declaration (no destructuring is fine), or a simple
@@ -151,14 +168,41 @@ export class GrammarChecker {
     }
     return false;
   }
-  checkGrammarAccessor_(node: AstNode): boolean { void node; return false; }
+  checkGrammarAccessor_(node: AstNode): boolean {
+    // Alias-style accessor check (used by `accessor` auto-accessor
+    // field). Auto-accessors cannot be abstract.
+    const flags = getModifierFlagsOf(node);
+    return (flags & ((1 << 7) | (1 << 15))) === ((1 << 7) | (1 << 15));
+  }
   checkGrammarComputedPropertyName(node: AstNode): boolean {
     // The computed property name expression must be a well-typed key.
     // Without type info we accept any non-undefined expression.
     const expr = (node as unknown as { expression?: AstNode }).expression;
     return expr === undefined;
   }
-  checkGrammarForOfStatement(node: AstNode): boolean { void node; return false; }
+  checkGrammarForOfStatement(node: AstNode): boolean {
+    // for-of cannot use a 'let'-of variant with an initializer; we
+    // covered the general case in checkGrammarForInOrForOfStatement.
+    // Here additionally: 'for await' must be in an async function.
+    const awaitToken = (node as unknown as { awaitModifier?: AstNode }).awaitModifier;
+    if (awaitToken === undefined) return false;
+    let n: AstNode | undefined = (node as unknown as { parent?: AstNode }).parent;
+    while (n !== undefined) {
+      const k = (n as { kind?: number }).kind;
+      if (k === Kind.SourceFile) {
+        const isModule = (n as unknown as { externalModuleIndicator?: AstNode }).externalModuleIndicator !== undefined;
+        return !isModule;
+      }
+      if (k === Kind.FunctionDeclaration || k === Kind.FunctionExpression ||
+          k === Kind.MethodDeclaration || k === Kind.ArrowFunction) {
+        const flags = getModifierFlagsOf(n);
+        const isAsync = (flags & (1 << 8)) !== 0;
+        return !isAsync;
+      }
+      n = (n as unknown as { parent?: AstNode }).parent;
+    }
+    return true;
+  }
   checkGrammarFunctionLikeDeclaration(node: AstNode): boolean {
     // Reject async generators when targeting old ES versions (handled
     // upstream); here we just check that function-like has either a
