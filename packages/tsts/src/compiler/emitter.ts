@@ -9,6 +9,7 @@
  */
 
 import type { SourceFile, Diagnostic } from "../ast/index.js";
+import { printFile } from "../printer/printer.js";
 
 export type EmitOnly = 0 | 1 | 2 | 3;
 export const EmitOnly = {
@@ -81,7 +82,13 @@ export class Emitter {
   }
 
   emitJSFile(sourceFile: SourceFile, jsFilePath: string, sourceMapFilePath: string): void {
-    void sourceFile; void jsFilePath; void sourceMapFilePath;
+    void sourceMapFilePath;
+    if (jsFilePath === "") return;
+    const text = printFile(sourceFile);
+    const writeRes = this.writeText(jsFilePath, text, {});
+    if (writeRes === undefined) {
+      this.emittedFiles.push(jsFilePath);
+    }
   }
 
   emitDeclarationFile(sourceFile: SourceFile, declarationFilePath: string, declarationMapPath: string): void {
@@ -96,7 +103,10 @@ export class Emitter {
   }
 
   writeText(fileName: string, text: string, data: WriteFileData): Error | undefined {
-    void fileName; void text; void data;
+    void data;
+    const host = this.opts.host as unknown as { writeFile?(p: string, d: string, bom: boolean): void };
+    if (host.writeFile === undefined) return undefined;
+    host.writeFile(fileName, text, false);
     return undefined;
   }
 

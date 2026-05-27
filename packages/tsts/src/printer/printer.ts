@@ -1317,6 +1317,20 @@ export function newPrinter(options: PrinterOptions, handlers: PrintHandlers, emi
   return new Printer(options, handlers, emitContext);
 }
 
+/**
+ * Module-level convenience: instantiate a Printer with default options
+ * and render the SourceFile to a string. Used by the compiler emitter.
+ */
+export function printFile(
+  sourceFile: SourceFile,
+  options: PrinterOptions = {},
+  handlers: PrintHandlers = {},
+  emitContext: EmitContext = {} as EmitContext,
+): string {
+  const printer = new Printer(options, handlers, emitContext);
+  return printer.printFile(sourceFile);
+}
+
 // ---------------------------------------------------------------------------
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
