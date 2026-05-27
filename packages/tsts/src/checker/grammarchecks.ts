@@ -46,9 +46,28 @@ export class GrammarChecker {
     // A required parameter cannot have a '?' marker.
     return (node as unknown as { questionToken?: AstNode }).questionToken !== undefined;
   }
-  checkGrammarBindingElement(node: AstNode): boolean { void node; return false; }
+  checkGrammarBindingElement(node: AstNode): boolean {
+    // A rest binding element cannot have an initializer.
+    const isRest = (node as unknown as { dotDotDotToken?: AstNode }).dotDotDotToken !== undefined;
+    const init = (node as unknown as { initializer?: AstNode }).initializer;
+    return isRest && init !== undefined;
+  }
   checkGrammarObjectLiteralExpression(node: AstNode, inDestructuring: boolean): boolean {
-    void node; void inDestructuring; return false;
+    // Duplicate property names within an object literal (TS1117).
+    // Excluded in destructuring assignment context, where each name
+    // is a distinct binding target.
+    if (inDestructuring) return false;
+    const props = (node as unknown as { properties?: { nodes?: readonly AstNode[] } }).properties?.nodes;
+    if (props === undefined) return false;
+    const seen = new Set<string>();
+    for (const p of props) {
+      const name = (p as unknown as { name?: { text?: string } }).name?.text;
+      if (name !== undefined) {
+        if (seen.has(name)) return true;
+        seen.add(name);
+      }
+    }
+    return false;
   }
   checkGrammarJsxElement(node: AstNode): boolean { void node; return false; }
   checkGrammarJsxExpression(node: AstNode): boolean { void node; return false; }
@@ -224,7 +243,18 @@ export class GrammarChecker {
   checkGrammarInterfaceDeclaration(node: AstNode): boolean { void node; return false; }
   checkGrammarTypeAliasDeclaration(node: AstNode): boolean { void node; return false; }
   checkGrammarModuleDeclaration(node: AstNode): boolean { void node; return false; }
-  checkGrammarSourceFile(node: AstNode): boolean { void node; return false; }
+  checkGrammarSourceFile(node: AstNode): boolean {
+    // A SourceFile cannot have a 'with' statement in strict mode (which
+    // includes all modules).
+    const isExternalModule = (node as unknown as { externalModuleIndicator?: AstNode }).externalModuleIndicator !== undefined;
+    if (!isExternalModule) return false;
+    const statements = (node as unknown as { statements?: { nodes?: readonly AstNode[] } }).statements?.nodes;
+    if (statements === undefined) return false;
+    for (const s of statements) {
+      if ((s as { kind?: number }).kind === Kind.WithStatement) return true;
+    }
+    return false;
+  }
   checkGrammarHeritageClause(node: AstNode): boolean { void node; return false; }
   checkGrammarExpressionWithTypeArguments(node: AstNode): boolean { void node; return false; }
   checkGrammarConstructor(node: AstNode): boolean {
