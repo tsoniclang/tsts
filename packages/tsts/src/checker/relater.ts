@@ -205,27 +205,67 @@ export class Relater {
   }
 
   propertiesRelatedTo(source: Type, target: Type, reportErrors: boolean): Ternary {
-    void source; void target; void reportErrors; return Ternary.True;
+    // For each property of target, check the matching source property
+    // is related.
+    const targetProps = (target as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members;
+    const sourceProps = (source as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members;
+    if (targetProps === undefined) return Ternary.True;
+    if (sourceProps === undefined) return Ternary.False;
+    for (const [name, targetProp] of targetProps) {
+      const sourceProp = sourceProps.get(name);
+      if (sourceProp === undefined) return Ternary.False;
+      const r = this.propertyRelatedTo(source, target, sourceProp, targetProp, reportErrors);
+      if (r === Ternary.False) return r;
+    }
+    return Ternary.True;
   }
 
   propertyRelatedTo(
     source: Type, target: Type, sourceProp: AstSymbol, targetProp: AstSymbol, reportErrors: boolean,
   ): Ternary {
-    void source; void target; void sourceProp; void targetProp; void reportErrors;
-    return Ternary.True;
+    void source; void target; void reportErrors;
+    const sourceType = (sourceProp as unknown as { type?: Type }).type;
+    const targetType = (targetProp as unknown as { type?: Type }).type;
+    if (sourceType === undefined || targetType === undefined) return Ternary.True;
+    return this.isTypeAssignableTo(sourceType, targetType) ? Ternary.True : Ternary.False;
   }
 
   signaturesRelatedTo(
     source: Type, target: Type, kind: number, reportErrors: boolean,
   ): Ternary {
-    void source; void target; void kind; void reportErrors;
+    const which = kind === 0 ? "callSignatures" : "constructSignatures";
+    const sourceSigs = (source as unknown as Record<string, readonly Signature[] | undefined>)[which];
+    const targetSigs = (target as unknown as Record<string, readonly Signature[] | undefined>)[which];
+    if (targetSigs === undefined || targetSigs.length === 0) return Ternary.True;
+    if (sourceSigs === undefined || sourceSigs.length === 0) return Ternary.False;
+    // For each target sig, source must have at least one related sig.
+    for (const ts of targetSigs) {
+      let found = false;
+      for (const ss of sourceSigs) {
+        if (this.signatureRelatedTo(ss, ts, false, reportErrors) !== Ternary.False) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) return Ternary.False;
+    }
     return Ternary.True;
   }
 
   signatureRelatedTo(
     source: Signature, target: Signature, erase: boolean, reportErrors: boolean,
   ): Ternary {
-    void source; void target; void erase; void reportErrors;
+    // Parameter count match (rest parameters loosen this; not enforced
+    // here). Return-type assignable.
+    void erase; void reportErrors;
+    const sourceParams = (source as unknown as { parameters?: readonly AstSymbol[] }).parameters ?? [];
+    const targetParams = (target as unknown as { parameters?: readonly AstSymbol[] }).parameters ?? [];
+    if (sourceParams.length > targetParams.length) return Ternary.False;
+    const sourceRet = (source as unknown as { resolvedReturnType?: Type }).resolvedReturnType;
+    const targetRet = (target as unknown as { resolvedReturnType?: Type }).resolvedReturnType;
+    if (sourceRet !== undefined && targetRet !== undefined) {
+      return this.isTypeAssignableTo(sourceRet, targetRet) ? Ternary.True : Ternary.False;
+    }
     return Ternary.True;
   }
 
