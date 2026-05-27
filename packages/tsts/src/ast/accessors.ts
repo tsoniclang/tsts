@@ -132,6 +132,73 @@ export function parameterName(node: AstNode): AstNode { return bindingElementNam
 export function parameterInitializer(node: AstNode): AstNode | undefined { return bindingElementInitializer(node); }
 export function parameterDotDotDotToken(node: AstNode): AstNode | undefined { return bindingElementDotDotDotToken(node); }
 
+// `getX` style accessors used by the typeeraser port.
+export function getNodeName(node: AstNode | undefined): AstNode | undefined { return nodeName(node); }
+export function getNodeFlags(node: AstNode | undefined): number { return nodeFlags(node); }
+export function getNodeLoc(node: AstNode | undefined): unknown { return nodeLoc(node); }
+export function setNodeLoc(node: AstNode | undefined, loc: unknown): void { setLoc(node, loc); }
+export function getModifiers(node: AstNode | undefined): ModifierList | undefined { return f<ModifierList>(node, "modifiers"); }
+export function getInitializer(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "initializer"); }
+export function getBody(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "body"); }
+export function getParameters(node: AstNode | undefined): NodeList | undefined { return f<NodeList>(node, "parameters"); }
+export function getAsteriskToken(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "asteriskToken"); }
+export function getEqualsGreaterThan(node: AstNode): AstNode { return f<AstNode>(node, "equalsGreaterThanToken")!; }
+export function getDotDotDotToken(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "dotDotDotToken"); }
+export function getQuestionDotToken(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "questionDotToken"); }
+export function getExpression(node: AstNode): AstNode { return f<AstNode>(node, "expression")!; }
+export function getArguments(node: AstNode | undefined): NodeList | undefined { return f<NodeList>(node, "arguments"); }
+export function getTag(node: AstNode): AstNode { return f<AstNode>(node, "tag")!; }
+export function getTemplate(node: AstNode): AstNode { return f<AstNode>(node, "template")!; }
+export function getTypeAnnotation(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "type"); }
+export function getHeritageToken(node: AstNode): number { return (node as unknown as { token?: number }).token ?? 0; }
+export function getHeritageTypes(node: AstNode | undefined): NodeList | undefined { return f<NodeList>(node, "types"); }
+export function getHeritageClauses(node: AstNode | undefined): NodeList | undefined { return f<NodeList>(node, "heritageClauses"); }
+export function getClassMembers(node: AstNode | undefined): NodeList | undefined { return f<NodeList>(node, "members"); }
+export function getJsxTagName(node: AstNode): AstNode { return f<AstNode>(node, "tagName")!; }
+export function getJsxAttributes(node: AstNode): AstNode { return f<AstNode>(node, "attributes")!; }
+export function getImportClause(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "importClause"); }
+export function getModuleSpecifier(node: AstNode): AstNode { return f<AstNode>(node, "moduleSpecifier")!; }
+export function getImportAttributes(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "attributes"); }
+export function getNamedBindings(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "namedBindings"); }
+export function getPhaseModifier(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "phaseModifier"); }
+export function getNamedImportElements(node: AstNode): NodeList { return (f<NodeList>(node, "elements") ?? []) as NodeList; }
+export function getNamedExportElements(node: AstNode): NodeList { return (f<NodeList>(node, "elements") ?? []) as NodeList; }
+export function getExportClause(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "exportClause"); }
+export function getNodeListLength(list: unknown): number {
+  if (list === undefined || list === null) return 0;
+  if (Array.isArray(list)) return list.length;
+  return (list as { items?: { length: number } }).items?.length ?? 0;
+}
+export function nodeIsMissing(node: AstNode | undefined): boolean {
+  if (node === undefined) return true;
+  return node.pos === node.end;
+}
+// isStatement is in generated/is.ts
+export function isThisParameter(node: AstNode | undefined): boolean {
+  return node !== undefined && nodeText(nodeName(node)) === "this";
+}
+export function hasDecorators(node: AstNode | undefined): boolean {
+  return node !== undefined && Boolean((node as unknown as { modifierFlags?: number }).modifierFlags);
+}
+export function getDecorators(_node: AstNode | undefined): readonly AstNode[] { return []; }
+// isAssertionExpression / isSatisfiesExpression are in generated/is.ts
+export function isJSDocTypeAssertion(_node: AstNode | undefined): boolean { return false; }
+export function isImportTypeOnly(node: AstNode | undefined): boolean {
+  return Boolean((node as unknown as { isTypeOnly?: boolean } | undefined)?.isTypeOnly);
+}
+export function isImportClauseTypeOnly(node: AstNode | undefined): boolean { return isImportTypeOnly(node); }
+export function isExportTypeOnly(node: AstNode | undefined): boolean { return isImportTypeOnly(node); }
+export function isSpecifierTypeOnly(node: AstNode | undefined): boolean { return isImportTypeOnly(node); }
+export function isEnumConst(node: AstNode | undefined): boolean {
+  return node !== undefined && (((node as unknown as { flags?: number }).flags ?? 0) & 0x2) !== 0;
+}
+export function isTrue(value: unknown): boolean { return value === true || value === 1; }
+export function skipOuterExpressions(node: AstNode, _kinds: number): AstNode { return node; }
+export function isInstantiatedModule(_node: AstNode, _preserveConstEnums: boolean): boolean { return false; }
+export function shouldPreserveConstEnums(_opts: unknown): boolean { return false; }
+export function getInnermostModuleBody(node: AstNode | undefined): AstNode | undefined { return nodeBody(node); }
+export function isParameterPropertyDeclaration(_node: AstNode, _parent: AstNode | undefined): boolean { return false; }
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Variable declarations
 // ─────────────────────────────────────────────────────────────────────────────

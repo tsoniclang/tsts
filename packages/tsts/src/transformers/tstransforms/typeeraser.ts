@@ -18,6 +18,27 @@
  */
 
 import { Transformer, type TransformOptions } from "../transformer.js";
+import {
+  hasSyntacticModifier, hasDecorators, getDecorators,
+  isThisParameter, isParameterPropertyDeclaration,
+  isInstantiatedModule, shouldPreserveConstEnums, getInnermostModuleBody,
+  getNodeName, getModifiers, getInitializer, getBody, getParameters,
+  getAsteriskToken, getEqualsGreaterThan, getDotDotDotToken,
+  getQuestionDotToken, getExpression, getArguments, getTag, getTemplate,
+  getTypeAnnotation, getHeritageToken, getHeritageTypes, getHeritageClauses,
+  getClassMembers, getJsxTagName, getJsxAttributes, getImportClause,
+  getModuleSpecifier, getImportAttributes, getNamedBindings, getPhaseModifier,
+  getNamedImportElements, getNamedExportElements, getExportClause,
+  getModifierListNodes, getNodeFlags, getNodeLoc, setNodeLoc,
+  nodeIsMissing, skipOuterExpressions,
+  isJSDocTypeAssertion,
+  isImportTypeOnly, isImportClauseTypeOnly, isExportTypeOnly,
+  isSpecifierTypeOnly, isEnumConst, isTrue,
+  getNodeListLength,
+} from "../../ast/index.js";
+import { isIdentifier, isAssertionExpression, isSatisfiesExpression, isStatement } from "../../ast/index.js";
+import { Kind } from "../../ast/index.js";
+import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
 import type {
   Node as AstNode,
   Statement,
@@ -155,7 +176,7 @@ export class TypeEraserTransformer extends Transformer {
         case Kind.ModuleDeclaration: {
           const md = node as unknown as ModuleDeclaration;
           const name = getNodeName(node);
-          if (!isIdentifier(name)
+          if (name === undefined || !isIdentifier(name)
             || !isInstantiatedModule(node, shouldPreserveConstEnums(this.compilerOptions))
             || getInnermostModuleBody(md) === undefined) {
             return this.elide(node);
@@ -332,7 +353,7 @@ export class TypeEraserTransformer extends Transformer {
             if (modifiers === undefined) {
               modifiers = this.factory().newModifierList(visited);
             } else {
-              modifiers = this.factory().newModifierList([...getModifierListNodes(modifiers), ...visited]);
+              modifiers = this.factory().newModifierList([...getModifierListNodes(modifiers as ModifierList | undefined), ...visited]);
             }
           }
           return this.factory().updateParameterDeclaration(
@@ -518,99 +539,7 @@ interface CompilerOptions {
   readonly _opts?: unknown;
 }
 
-declare const Kind: {
-  PublicKeyword: number; PrivateKeyword: number; ProtectedKeyword: number;
-  AbstractKeyword: number; OverrideKeyword: number; ConstKeyword: number;
-  DeclareKeyword: number; ReadonlyKeyword: number;
-  ArrayType: number; TupleType: number; OptionalType: number; RestType: number;
-  TypeLiteral: number; TypePredicate: number; TypeParameter: number;
-  AnyKeyword: number; UnknownKeyword: number; BooleanKeyword: number; StringKeyword: number;
-  NumberKeyword: number; NeverKeyword: number; VoidKeyword: number; SymbolKeyword: number;
-  ConstructorType: number; FunctionType: number; TypeQuery: number; TypeReference: number;
-  UnionType: number; IntersectionType: number; ConditionalType: number; ParenthesizedType: number;
-  ThisType: number; TypeOperator: number; IndexedAccessType: number; MappedType: number;
-  LiteralType: number; IndexSignature: number; JSImportDeclaration: number;
-  TypeAliasDeclaration: number; JSTypeAliasDeclaration: number; InterfaceDeclaration: number;
-  NamespaceExportDeclaration: number; ModuleDeclaration: number;
-  ExpressionWithTypeArguments: number; PropertyDeclaration: number;
-  Constructor: number; MethodDeclaration: number; GetAccessor: number; SetAccessor: number;
-  VariableDeclaration: number; HeritageClause: number; ImplementsKeyword: number;
-  ClassDeclaration: number; ClassExpression: number;
-  FunctionDeclaration: number; FunctionExpression: number; ArrowFunction: number;
-  Parameter: number; CallExpression: number; NewExpression: number;
-  TaggedTemplateExpression: number; NonNullExpression: number; TypeAssertionExpression: number;
-  AsExpression: number; SatisfiesExpression: number; ParenthesizedExpression: number;
-  JsxSelfClosingElement: number; JsxOpeningElement: number;
-  ImportEqualsDeclaration: number; ImportDeclaration: number; ImportClause: number;
-  NamedImports: number; ImportSpecifier: number; ExportDeclaration: number;
-  NamedExports: number; ExportSpecifier: number; EnumDeclaration: number;
-};
-
-declare const SubtreeFacts: {
-  ContainsTypeScript: number;
-};
-
-declare const ModifierFlags: {
-  Ambient: number; Abstract: number; ParameterPropertyModifier: number;
-};
-
-declare const OuterExpressionKinds: {
-  NotAssertionsOrTypeArgs: number;
-};
-
+const SubtreeFacts = { ContainsTypeScript: 1 << 0 } as const;
+const OuterExpressionKinds = { NotAssertionsOrTypeArgs: 0 } as const;
 declare function getSubtreeFacts(node: AstNode): number;
-declare function isStatement(node: AstNode): boolean;
-declare function hasSyntacticModifier(node: AstNode, flag: number): boolean;
-declare function hasDecorators(node: AstNode): boolean;
-declare function getDecorators(node: AstNode): readonly AstNode[];
-declare function isThisParameter(node: AstNode): boolean;
-declare function isParameterPropertyDeclaration(node: AstNode, parent: AstNode | undefined): boolean;
-declare function isIdentifier(node: AstNode | undefined): boolean;
-declare function isInstantiatedModule(node: AstNode, preserveConstEnums: boolean): boolean;
-declare function shouldPreserveConstEnums(opts: CompilerOptions): boolean;
-declare function getInnermostModuleBody(node: ModuleDeclaration): AstNode | undefined;
-declare function getNodeName(node: AstNode): AstNode | undefined;
-declare function getModifiers(node: AstNode): ModifierList | undefined;
-declare function getInitializer(node: AstNode): AstNode | undefined;
-declare function getBody(node: AstNode): AstNode | undefined;
-declare function getParameters(node: AstNode): NodeList | undefined;
-declare function getAsteriskToken(node: AstNode): AstNode | undefined;
-declare function getEqualsGreaterThan(node: AstNode): AstNode;
-declare function getDotDotDotToken(node: AstNode): AstNode | undefined;
-declare function getQuestionDotToken(node: AstNode): AstNode | undefined;
-declare function getExpression(node: AstNode): AstNode;
-declare function getArguments(node: AstNode): NodeList | undefined;
-declare function getTag(node: AstNode): AstNode;
-declare function getTemplate(node: AstNode): AstNode;
-declare function getTypeAnnotation(node: AstNode): AstNode | undefined;
-declare function getHeritageToken(node: AstNode): number;
-declare function getHeritageTypes(node: AstNode): NodeList | undefined;
-declare function getHeritageClauses(node: AstNode): NodeList | undefined;
-declare function getClassMembers(node: AstNode): NodeList | undefined;
-declare function getJsxTagName(node: AstNode): AstNode;
-declare function getJsxAttributes(node: AstNode): AstNode;
-declare function getImportClause(node: ImportDeclaration): AstNode | undefined;
-declare function getModuleSpecifier(node: AstNode): AstNode;
-declare function getImportAttributes(node: AstNode): AstNode | undefined;
-declare function getNamedBindings(node: ImportClause): AstNode | undefined;
-declare function getPhaseModifier(node: ImportClause): AstNode | undefined;
-declare function getNamedImportElements(node: NamedImports): NodeList;
-declare function getNamedExportElements(node: NamedExports): NodeList;
-declare function getExportClause(node: ExportDeclaration): AstNode | undefined;
-declare function getModifierListNodes(list: unknown): readonly AstNode[];
-declare function getNodeFlags(node: AstNode): number;
-declare function getNodeLoc(node: AstNode): unknown;
-declare function setNodeLoc(node: AstNode, loc: unknown): void;
-declare function nodeIsMissing(node: AstNode | undefined): boolean;
-declare function skipOuterExpressions(node: AstNode, kinds: number): AstNode;
-declare function isAssertionExpression(node: AstNode): boolean;
-declare function isSatisfiesExpression(node: AstNode): boolean;
-declare function isJSDocTypeAssertion(node: AstNode): boolean;
-declare function isImportTypeOnly(node: ImportEqualsDeclaration): boolean;
-declare function isImportClauseTypeOnly(node: ImportClause): boolean;
-declare function isExportTypeOnly(node: ExportDeclaration): boolean;
-declare function isSpecifierTypeOnly(node: ImportSpecifier | ExportSpecifier): boolean;
-declare function isEnumConst(node: AstNode): boolean;
-declare function isTrue(value: unknown): boolean;
-declare function getNodeListLength(list: unknown): number;
 declare function extractModifiers(ec: unknown, list: unknown, flag: number): unknown;
