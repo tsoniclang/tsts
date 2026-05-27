@@ -363,6 +363,85 @@ export function jsxNamespacedNameText(node: AstNode): string {
   const name = (node as unknown as { name?: AstNode }).name;
   return nodeText(name);
 }
+export function jsxOpeningElement(node: AstNode): AstNode { return f<AstNode>(node, "openingElement")!; }
+export function jsxChildren(node: AstNode): readonly AstNode[] { return f<readonly AstNode[]>(node, "children") ?? []; }
+export function jsxFragmentOpeningFragment(node: AstNode): AstNode { return f<AstNode>(node, "openingFragment")!; }
+export function jsxFragmentChildren(node: AstNode): readonly AstNode[] { return f<readonly AstNode[]>(node, "children") ?? []; }
+export function jsxAttributeName(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "name"); }
+export function jsxAttributeInitializer(node: AstNode): AstNode | undefined { return f<AstNode>(node, "initializer"); }
+export function jsxExpressionExpression(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "expression"); }
+export function jsxExpressionDotDotDot(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "dotDotDotToken"); }
+export function jsxTextText(node: AstNode): string { return nodeText(node); }
+export function nodeExpression(node: AstNode): AstNode { return f<AstNode>(node, "expression")!; }
+export function nodeAttributesProperties(node: AstNode): readonly AstNode[] {
+  const attrs = (node as unknown as { attributes?: { properties?: readonly AstNode[] } }).attributes;
+  return attrs?.properties ?? [];
+}
+export function nodeTagName(node: AstNode): AstNode { return f<AstNode>(node, "tagName")!; }
+export function qualifiedNameLeft(node: AstNode): AstNode { return f<AstNode>(node, "left")!; }
+export function qualifiedNameRight(node: AstNode): AstNode { return f<AstNode>(node, "right")!; }
+export function setParentInChildren(_node: AstNode): void { /* no-op until binder phase */ }
+export function clearNodeSynthesizedFlag(_node: AstNode): void { /* no-op until printer phase */ }
+export function setNodeParent(node: AstNode, parent: AstNode): void { (node as unknown as { parent: AstNode }).parent = parent; }
+export function stringLiteralTokenFlags(node: AstNode): number {
+  return (node as unknown as { tokenFlags?: number }).tokenFlags ?? 0;
+}
+export function setStringLiteralTokenFlags(node: AstNode, flags: number): void {
+  (node as unknown as { tokenFlags: number }).tokenFlags = flags;
+}
+export function compilerOptionsEmitScriptTarget(opts: unknown): number {
+  return compilerOptionsGetEmitScriptTarget(opts);
+}
+export function compilerOptionsReactNamespace(opts: unknown): string {
+  return (opts as { reactNamespace?: string } | undefined)?.reactNamespace ?? "React";
+}
+export function getJSXRuntimeImport(importSource: string, _opts: unknown): string { return importSource; }
+export function getJSXImplicitImportBase(_opts: unknown, _file: AstNode): string { return ""; }
+export function sourceFileName(file: AstNode): string { return sourceFileFileName(file); }
+export function sourceFileText(file: AstNode): string {
+  return (file as unknown as { text?: string }).text ?? "";
+}
+export function isExternalOrCommonJSModule(file: AstNode): boolean { return isExternalModule(file); }
+export function isPrologueDirective(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  return node.kind === 244 /* ExpressionStatement */ &&
+    ((node as unknown as { expression?: { kind?: number } }).expression?.kind === 11 /* StringLiteral */);
+}
+export function isIntrinsicJsxName(name: string): boolean {
+  return name.length > 0 && name[0] === name[0]?.toLowerCase();
+}
+export function isIdentifierText(text: string, _variant: number): boolean {
+  return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(text);
+}
+export function isLineBreak(code: number): boolean {
+  return code === 10 /* \n */ || code === 13 /* \r */ ||
+    code === 0x2028 /* line separator */ || code === 0x2029 /* paragraph separator */;
+}
+export function isWhiteSpaceSingleLine(code: number): boolean {
+  return code === 0x20 || code === 0x9 || code === 0xB || code === 0xC ||
+    code === 0xA0 || code === 0x1680 || code === 0xFEFF ||
+    (code >= 0x2000 && code <= 0x200A) || code === 0x202F || code === 0x205F || code === 0x3000;
+}
+export function skipTrivia(text: string, pos: number): number {
+  while (pos < text.length) {
+    const ch = text.charCodeAt(pos);
+    if (!isWhiteSpaceSingleLine(ch) && !isLineBreak(ch)) break;
+    pos++;
+  }
+  return pos;
+}
+export function getSemanticJsxChildren(children: readonly AstNode[]): readonly AstNode[] {
+  return children.filter((c) => !(c.kind === 14 /* JsxText */ && nodeText(c).trim() === ""));
+}
+export function compareStringsCaseSensitive(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+export function newTextRange(pos: number, end: number): { pos: number; end: number } {
+  return { pos, end };
+}
+export function getECMALineAndUTF16CharacterOfPosition(_file: AstNode, _pos: number): { line: number; character: number } {
+  return { line: 0, character: 0 };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Subtree facts + emit
