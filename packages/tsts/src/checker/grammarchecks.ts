@@ -88,10 +88,19 @@ export class GrammarChecker {
     return false;
   }
   checkGrammarAccessor_(node: AstNode): boolean { void node; return false; }
-  checkGrammarComputedPropertyName(node: AstNode): boolean { void node; return false; }
+  checkGrammarComputedPropertyName(node: AstNode): boolean {
+    // The computed property name expression must be a well-typed key.
+    // Without type info we accept any non-undefined expression.
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    return expr === undefined;
+  }
   checkGrammarForOfStatement(node: AstNode): boolean { void node; return false; }
   checkGrammarFunctionLikeDeclaration(node: AstNode): boolean { void node; return false; }
-  checkGrammarFunctionName(name: AstNode): boolean { void name; return false; }
+  checkGrammarFunctionName(name: AstNode): boolean {
+    // The function name must not be 'eval' or 'arguments' in strict mode.
+    const text = (name as unknown as { text?: string }).text;
+    return text === "eval" || text === "arguments";
+  }
   checkGrammarVariableDeclaration(node: AstNode): boolean {
     // A 'const' declaration must have an initializer (unless it's in
     // a `for ... in/of` initializer).
@@ -202,7 +211,17 @@ export class GrammarChecker {
     return false;
   }
   checkGrammarMetaProperty(node: AstNode): boolean { void node; return false; }
-  checkGrammarPrivateIdentifier(node: AstNode): boolean { void node; return false; }
+  checkGrammarPrivateIdentifier(node: AstNode): boolean {
+    // A private identifier (#foo) must be declared in an enclosing
+    // class. Walk parents looking for one.
+    let n: AstNode | undefined = (node as unknown as { parent?: AstNode }).parent;
+    while (n !== undefined) {
+      const k = (n as { kind?: number }).kind;
+      if (k === Kind.ClassDeclaration || k === Kind.ClassExpression) return false;
+      n = (n as unknown as { parent?: AstNode }).parent;
+    }
+    return true;
+  }
   checkGrammarPropertyDeclaration(node: AstNode): boolean { void node; return false; }
   checkGrammarPropertyAssignment(node: AstNode): boolean { void node; return false; }
   checkGrammarParameter(node: AstNode): boolean { void node; return false; }
