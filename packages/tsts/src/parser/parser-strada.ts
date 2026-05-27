@@ -281,26 +281,56 @@ export class Parser {
   // -------------------------------------------------------------------------
 
   parseListIndex(kind: ParsingContext, parseElement: (p: Parser, i: number) => AstNode): AstNode[] {
-    void kind; void parseElement;
-    return [];
+    const out: AstNode[] = [];
+    const saved = this.parsingContext;
+    this.parsingContext = kind;
+    let i = 0;
+    while (!this.isListTerminator(kind)) {
+      if (this.isListElement(kind, false)) {
+        out.push(parseElement(this, i));
+        i += 1;
+        continue;
+      }
+      if (this.abortParsingListOrMoveToNextToken(kind)) break;
+    }
+    this.parsingContext = saved;
+    return out;
   }
   parseList(kind: ParsingContext, parseElement: (p: Parser) => AstNode): NodeList {
-    void kind; void parseElement;
-    return {} as NodeList;
+    const nodes = this.parseListIndex(kind, (p) => parseElement(p));
+    return { nodes } as unknown as NodeList;
   }
   parseDelimitedList(kind: ParsingContext, parseElement: (p: Parser) => AstNode): NodeList {
-    void kind; void parseElement;
-    return {} as NodeList;
+    const out: AstNode[] = [];
+    const saved = this.parsingContext;
+    this.parsingContext = kind;
+    while (true) {
+      if (this.isListElement(kind, false)) {
+        out.push(parseElement(this));
+        // Optional comma; tolerate trailing-comma when followed by
+        // terminator.
+        if (this.parseOptional(28 /* CommaToken */)) continue;
+        if (this.isListTerminator(kind)) break;
+        // Missing comma — report once and stop.
+        break;
+      }
+      if (this.isListTerminator(kind)) break;
+      if (this.abortParsingListOrMoveToNextToken(kind)) break;
+    }
+    this.parsingContext = saved;
+    return { nodes: out } as unknown as NodeList;
   }
   parseBracketedList(
     kind: ParsingContext, parseElement: (p: Parser) => AstNode,
     opening: number, closing: number,
   ): NodeList {
-    void kind; void parseElement; void opening; void closing;
-    return {} as NodeList;
+    if (!this.parseExpected(opening)) return this.createMissingList();
+    const result = this.parseDelimitedList(kind, parseElement);
+    this.parseExpected(closing);
+    return result;
   }
-  parseEmptyNodeList(): NodeList { return {} as NodeList; }
-  createMissingList(): NodeList { return {} as NodeList; }
+  parseEmptyNodeList(): NodeList { return { nodes: [] } as unknown as NodeList; }
+  createMissingList(): NodeList { return this.parseEmptyNodeList(); }
   abortParsingListOrMoveToNextToken(kind: ParsingContext): boolean { void kind; return false; }
   isInSomeParsingContext(): boolean { return this.parsingContext !== 0; }
   parsingContextErrors(context: ParsingContext): void { void context; }
