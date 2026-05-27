@@ -2504,6 +2504,53 @@ export const Diagnostics = {
   Specify_strategy_for_watching_individual_files: msg(6202_2 as unknown as number, Category.Message,
     "Specify_strategy_for_watching_individual_files_6202_b",
     "Specify strategy for watching individual files."),
+
+  // ---------------------------------------------------------------------------
+  // More 2xxx — function types
+  // ---------------------------------------------------------------------------
+  Type_0_is_not_a_function_type: msg(2348_2 as unknown as number, Category.Error,
+    "Type_0_is_not_a_function_type_2348_b",
+    "Type '{0}' is not a function type."),
+  Type_0_has_no_construct_signatures: msg(2351_2 as unknown as number, Category.Error,
+    "Type_0_has_no_construct_signatures_2351_b",
+    "Type '{0}' has no construct signatures."),
+  Type_0_has_no_call_signatures: msg(2349_2 as unknown as number, Category.Error,
+    "Type_0_has_no_call_signatures_2349_b",
+    "Type '{0}' has no call signatures."),
+  Cannot_invoke_an_expression_whose_type_lacks_a_call_signature_Type_0_has_no_compatible_call_signatures: msg(2350, Category.Error,
+    "Cannot_invoke_an_expression_2350",
+    "Only a void function can be called with the 'new' keyword."),
+  Only_a_void_function_can_be_called_with_the_new_keyword: msg(2350_2 as unknown as number, Category.Error,
+    "Only_a_void_function_can_be_called_with_the_new_keyword_2350_b",
+    "Only a void function can be called with the 'new' keyword."),
+  X_arguments_object_cannot_be_referenced_in_a_class_field_initializer: msg(2522, Category.Error,
+    "arguments_object_cannot_be_referenced_in_a_class_field_initializer_2522",
+    "The 'arguments' object cannot be referenced in a class field initializer."),
+  X_super_calls_cannot_be_used_in_initializers_to_avoid_unintended_behavior: msg(2336, Category.Error,
+    "super_calls_cannot_be_used_in_initializers_2336",
+    "First argument to JSX element class type '{0}' must be of type '{1}', given '{2}'."),
+  Property_0_does_not_exist_on_const_enum_1_Did_you_mean_2: msg(2479, Category.Error,
+    "Property_0_does_not_exist_on_const_enum_1_2479",
+    "The operand of a 'delete' operator cannot be a read-only property."),
+
+  // ---------------------------------------------------------------------------
+  // 17xxx JSX more
+  // ---------------------------------------------------------------------------
+  Property_0_of_JSX_spread_attribute_is_not_assignable_to_target_property: msg(17000, Category.Error,
+    "Property_0_of_JSX_spread_attribute_is_not_assignable_to_target_property_17000",
+    "JSX attributes must only be assigned a non-empty 'expression'."),
+  JSX_attributes_must_only_be_assigned_a_non_empty_expression: msg(17000_2 as unknown as number, Category.Error,
+    "JSX_attributes_must_only_be_assigned_a_non_empty_expression_17000_b",
+    "JSX attributes must only be assigned a non-empty 'expression'."),
+  JSX_spread_child_must_be_an_array_type: msg(2607_2 as unknown as number, Category.Error,
+    "JSX_spread_child_must_be_an_array_type_2607_b",
+    "JSX spread child must be an array type."),
+  Property_0_in_JSX_element_class_1_is_not_assignable_to_target_property: msg(2606, Category.Error,
+    "Property_0_in_JSX_element_class_1_2606",
+    "Property '{0}' of JSX spread attribute is not assignable to target property."),
+  JSX_attribute_values_must_be_constant_expressions: msg(17004, Category.Error,
+    "JSX_attribute_values_must_be_constant_expressions_17004",
+    "Cannot use JSX unless the '--jsx' flag is provided."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
