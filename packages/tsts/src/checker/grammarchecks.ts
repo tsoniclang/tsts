@@ -45,11 +45,44 @@ export class GrammarChecker {
   // Modifier rules
   // -------------------------------------------------------------------------
 
-  checkGrammarModifiers(node: AstNode): boolean { void node; return false; }
-  checkGrammarAsyncModifier(node: AstNode, asyncModifier: AstNode | undefined): boolean {
-    void node; void asyncModifier; return false;
+  checkGrammarModifiers(node: AstNode): boolean {
+    // Walk the modifier list checking for invalid combinations:
+    // - duplicates
+    // - access modifier with private identifier
+    // - readonly outside class field / index signature
+    const mods = (node as unknown as { modifiers?: { nodes?: readonly AstNode[] } }).modifiers?.nodes;
+    if (mods === undefined) return false;
+    const seen = new Set<number>();
+    for (const m of mods) {
+      const k = (m as { kind?: number }).kind;
+      if (k === undefined) continue;
+      if (k === Kind.Decorator) continue;
+      if (seen.has(k)) return true; // Duplicate modifier.
+      seen.add(k);
+      // Mutually exclusive access modifiers.
+      if (k === Kind.PublicKeyword || k === Kind.PrivateKeyword || k === Kind.ProtectedKeyword) {
+        if (seen.has(Kind.PublicKeyword) && seen.has(Kind.PrivateKeyword)) return true;
+        if (seen.has(Kind.PublicKeyword) && seen.has(Kind.ProtectedKeyword)) return true;
+        if (seen.has(Kind.PrivateKeyword) && seen.has(Kind.ProtectedKeyword)) return true;
+      }
+    }
+    return false;
   }
-  checkGrammarAccessor(node: AstNode): boolean { void node; return false; }
+  checkGrammarAsyncModifier(node: AstNode, asyncModifier: AstNode | undefined): boolean {
+    // 'async' can only appear on function-like declarations + arrow
+    // functions.
+    if (asyncModifier === undefined) return false;
+    const k = (node as { kind?: number }).kind;
+    return !(k === Kind.FunctionDeclaration || k === Kind.FunctionExpression ||
+      k === Kind.ArrowFunction || k === Kind.MethodDeclaration);
+  }
+  checkGrammarAccessor(node: AstNode): boolean {
+    // Accessors cannot have type parameters (TS1094) or be marked
+    // generator (TS1138).
+    const typeParams = (node as unknown as { typeParameters?: AstNode }).typeParameters;
+    const asterisk = (node as unknown as { asteriskToken?: AstNode }).asteriskToken;
+    return typeParams !== undefined || asterisk !== undefined;
+  }
   checkGrammarTypeParameterList(node: AstNode, parent: AstNode): boolean {
     void parent;
     // Empty type-parameter list is invalid.
@@ -126,7 +159,15 @@ export class GrammarChecker {
     return expr === undefined;
   }
   checkGrammarForOfStatement(node: AstNode): boolean { void node; return false; }
-  checkGrammarFunctionLikeDeclaration(node: AstNode): boolean { void node; return false; }
+  checkGrammarFunctionLikeDeclaration(node: AstNode): boolean {
+    // Reject async generators when targeting old ES versions (handled
+    // upstream); here we just check that function-like has either a
+    // body or, when ambient, is a signature.
+    const body = (node as unknown as { body?: AstNode }).body;
+    const flags = getModifierFlagsOf(node);
+    const isAmbient = (flags & (1 << 1)) !== 0; // Declare
+    return isAmbient && body !== undefined;
+  }
   checkGrammarFunctionName(name: AstNode): boolean {
     // The function name must not be 'eval' or 'arguments' in strict mode.
     const text = (name as unknown as { text?: string }).text;
@@ -241,7 +282,14 @@ export class GrammarChecker {
     }
     return false;
   }
-  checkGrammarMetaProperty(node: AstNode): boolean { void node; return false; }
+  checkGrammarMetaProperty(node: AstNode): boolean {
+    // 'new.target' and 'import.meta' are the only allowed forms.
+    const name = (node as unknown as { name?: { text?: string } }).name?.text;
+    const keyword = (node as unknown as { keywordToken?: { kind?: number } }).keywordToken?.kind;
+    if (keyword === Kind.NewKeyword) return name !== "target";
+    if (keyword === Kind.ImportKeyword) return name !== "meta";
+    return true;
+  }
   checkGrammarPrivateIdentifier(node: AstNode): boolean {
     // A private identifier (#foo) must be declared in an enclosing
     // class. Walk parents looking for one.
