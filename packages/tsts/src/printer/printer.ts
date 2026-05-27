@@ -230,19 +230,58 @@ export class Printer {
   // -------------------------------------------------------------------------
 
   writeLineOrSpace(parentNode: AstNode, prevChildNode: AstNode | undefined, nextChildNode: AstNode | undefined): void {
-    void parentNode; void prevChildNode; void nextChildNode;
+    void parentNode;
+    // If the two siblings are on the same source line, emit a single
+    // space; otherwise emit a newline.
+    if (prevChildNode === undefined || nextChildNode === undefined) {
+      this.writeSpace();
+      return;
+    }
+    const prevEnd = (prevChildNode as unknown as { end?: number }).end ?? 0;
+    const nextPos = (nextChildNode as unknown as { pos?: number }).pos ?? 0;
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    if (text === undefined) {
+      this.writeSpace();
+      return;
+    }
+    for (let i = prevEnd; i < nextPos; i++) {
+      if (text.charCodeAt(i) === 0x0a) {
+        this.writeLine();
+        return;
+      }
+    }
+    this.writeSpace();
   }
   writeLinesAndIndent(lineCount: number, writeSpaceIfNotIndenting: boolean): void {
-    void lineCount; void writeSpaceIfNotIndenting;
+    if (lineCount > 0) {
+      for (let i = 0; i < lineCount; i++) this.writeLine();
+    } else if (writeSpaceIfNotIndenting) {
+      this.writeSpace();
+    }
   }
   writeLineSeparatorsAndIndentBefore(node: AstNode, parent: AstNode | undefined): boolean {
-    void node; void parent; return false;
+    const count = this.getLeadingLineTerminatorCount(parent, node, 0);
+    if (count > 0) {
+      this.writeLinesAndIndent(count, false);
+      return true;
+    }
+    return false;
   }
   writeLineSeparatorsAfter(node: AstNode, parent: AstNode | undefined): void {
-    void node; void parent;
+    const count = this.getClosingLineTerminatorCount(parent, node, 0, { pos: 0, end: 0 });
+    if (count > 0) this.writeLinesAndIndent(count, false);
   }
   getLinesBetweenNodes(parent: AstNode | undefined, node1: AstNode, node2: AstNode): number {
-    void parent; void node1; void node2; return 0;
+    void parent;
+    const end1 = (node1 as unknown as { end?: number }).end ?? 0;
+    const pos2 = (node2 as unknown as { pos?: number }).pos ?? 0;
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    if (text === undefined) return 0;
+    let lines = 0;
+    for (let i = end1; i < pos2; i++) {
+      if (text.charCodeAt(i) === 0x0a) lines += 1;
+    }
+    return lines;
   }
   getEffectiveLines(getLineDifference: (includeComments: boolean) => number): number {
     return getLineDifference(false);
