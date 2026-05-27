@@ -441,7 +441,17 @@ export class GrammarChecker {
   checkGrammarTopLevelElementsForRequiredDeclareModifier(file: AstNode): boolean { void file; return false; }
   checkGrammarConstructorTypeParameters(node: AstNode): boolean { void node; return false; }
   checkGrammarConstructorTypeAnnotation(node: AstNode): boolean { void node; return false; }
-  checkGrammarConstantInitializer(node: AstNode): boolean { void node; return false; }
+  checkGrammarConstantInitializer(node: AstNode): boolean {
+    // const enum member initializer must be a constant expression.
+    // Without full constant-folding, we accept: NumericLiteral,
+    // StringLiteral, identifier reference to an earlier enum member.
+    const init = (node as unknown as { initializer?: { kind?: number } }).initializer;
+    if (init === undefined) return false;
+    const k = init.kind;
+    return !(k === Kind.NumericLiteral || k === Kind.StringLiteral ||
+      k === Kind.PrefixUnaryExpression || k === Kind.Identifier ||
+      k === Kind.PropertyAccessExpression);
+  }
   checkGrammarYieldExpression(node: AstNode): boolean {
     // 'yield' is only valid inside a generator function.
     let n: AstNode | undefined = (node as unknown as { parent?: AstNode }).parent;
@@ -478,8 +488,37 @@ export class GrammarChecker {
     }
     return true;
   }
-  checkGrammarUsingDeclarations(node: AstNode): boolean { void node; return false; }
-  checkGrammarAwaitUsing(node: AstNode): boolean { void node; return false; }
+  checkGrammarUsingDeclarations(node: AstNode): boolean {
+    // 'using' declarations require an initializer and cannot be empty.
+    const decls = (node as unknown as { declarations?: { nodes?: readonly AstNode[] } }).declarations?.nodes;
+    if (decls === undefined || decls.length === 0) return true;
+    for (const d of decls) {
+      const init = (d as unknown as { initializer?: AstNode }).initializer;
+      if (init === undefined) return true;
+    }
+    return false;
+  }
+  checkGrammarAwaitUsing(node: AstNode): boolean {
+    // 'await using' must be inside an async function or top level of a
+    // module.
+    let n: AstNode | undefined = (node as unknown as { parent?: AstNode }).parent;
+    while (n !== undefined) {
+      const k = (n as { kind?: number }).kind;
+      if (k === Kind.SourceFile) {
+        const isModule = (n as unknown as { externalModuleIndicator?: AstNode }).externalModuleIndicator !== undefined;
+        return !isModule;
+      }
+      if (k === Kind.FunctionDeclaration || k === Kind.FunctionExpression ||
+          k === Kind.MethodDeclaration || k === Kind.ArrowFunction) {
+        const flags = getModifierFlagsOf(n);
+        const isAsync = (flags & (1 << 8)) !== 0;
+        return !isAsync;
+      }
+      if (k === Kind.ClassStaticBlockDeclaration) return true;
+      n = (n as unknown as { parent?: AstNode }).parent;
+    }
+    return true;
+  }
   checkGrammarDecorator(node: AstNode): boolean {
     // The expression of a decorator must be a call or identifier.
     const expr = (node as unknown as { expression?: AstNode }).expression;
@@ -504,9 +543,33 @@ export class GrammarChecker {
   checkGrammarExportAssignment(node: AstNode): boolean { void node; return false; }
   checkGrammarExportDeclaration(node: AstNode): boolean { void node; return false; }
   checkGrammarImportAttributes(node: AstNode): boolean { void node; return false; }
-  checkGrammarOnlyFirstHasInitializerInBindingPattern(pattern: AstNode): boolean { void pattern; return false; }
-  checkGrammarVariableDeclarationInUsingStatement(node: AstNode): boolean { void node; return false; }
-  checkGrammarBindingElementBindingDeclaration(node: AstNode): boolean { void node; return false; }
+  checkGrammarOnlyFirstHasInitializerInBindingPattern(pattern: AstNode): boolean {
+    // Only the first element in a destructuring binding pattern may have
+    // a default initializer (no — they can all have one). In fact this
+    // check enforces a different rule: rest element cannot have one.
+    const elements = (pattern as unknown as { elements?: { nodes?: readonly AstNode[] } }).elements?.nodes;
+    if (elements === undefined) return false;
+    for (const e of elements) {
+      const isRest = (e as unknown as { dotDotDotToken?: AstNode }).dotDotDotToken !== undefined;
+      const init = (e as unknown as { initializer?: AstNode }).initializer;
+      if (isRest && init !== undefined) return true;
+    }
+    return false;
+  }
+  checkGrammarVariableDeclarationInUsingStatement(node: AstNode): boolean {
+    // 'using' / 'await using' declarations: name must be an Identifier
+    // (no destructuring), and initializer must be present.
+    const name = (node as unknown as { name?: { kind?: number } }).name;
+    if (name?.kind !== Kind.Identifier) return true;
+    return (node as unknown as { initializer?: AstNode }).initializer === undefined;
+  }
+  checkGrammarBindingElementBindingDeclaration(node: AstNode): boolean {
+    // A binding element with a default initializer cannot also be marked
+    // optional with '?'.
+    const init = (node as unknown as { initializer?: AstNode }).initializer;
+    const optional = (node as unknown as { questionToken?: AstNode }).questionToken;
+    return init !== undefined && optional !== undefined;
+  }
 }
 
 export function newGrammarChecker(): GrammarChecker {
