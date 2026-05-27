@@ -2551,6 +2551,53 @@ export const Diagnostics = {
   JSX_attribute_values_must_be_constant_expressions: msg(17004, Category.Error,
     "JSX_attribute_values_must_be_constant_expressions_17004",
     "Cannot use JSX unless the '--jsx' flag is provided."),
+
+  // ---------------------------------------------------------------------------
+  // More 2xxx
+  // ---------------------------------------------------------------------------
+  An_async_function_or_method_in_ES5_SlashES3_requires_the_Promise_constructor_Make_sure_you_have_a_declaration_for_the_Promise_constructor_or_include_ES2015_in_your_lib_option: msg(2705_2 as unknown as number, Category.Error,
+    "An_async_function_or_method_in_ES5_2705",
+    "An async function or method in ES5/ES3 requires the 'Promise' constructor."),
+  X_no_overload_expects_0_arguments_but_overloads_do_exist_that_expect_either_1_or_2_arguments: msg(2575, Category.Error,
+    "no_overload_expects_0_arguments_2575",
+    "No overload expects {0} arguments, but overloads do exist that expect either {1} or {2} arguments."),
+  Operator_0_cannot_be_applied_to_type_1_and_2: msg(2365_2 as unknown as number, Category.Error,
+    "Operator_0_cannot_be_applied_to_type_1_and_2_2365_b",
+    "Operator '{0}' cannot be applied to types '{1}' and '{2}'."),
+  The_intersection_0_was_reduced_to_never_because_property_1_has_conflicting_types_in_some_constituents_x: msg(2825_2 as unknown as number, Category.Error,
+    "intersection_reduced_to_never_2825_b",
+    "The intersection '{0}' was reduced to 'never' because property '{1}' has conflicting types in some constituents."),
+  Property_0_of_type_1_is_not_assignable_to_string_index_type_2: msg(2411, Category.Error,
+    "Property_0_of_type_1_is_not_assignable_to_string_index_type_2_2411",
+    "Property '{0}' of type '{1}' is not assignable to '{2}' index type '{3}'."),
+  X_String_and_number_index_signature_types_must_match_in_type_0: msg(2413, Category.Error,
+    "String_and_number_index_signature_types_must_match_2413",
+    "'{0}' index type '{1}' is not assignable to '{2}' index type '{3}'."),
+  A_required_element_cannot_follow_an_optional_element: msg(1257, Category.Error,
+    "A_required_element_cannot_follow_an_optional_element_1257",
+    "A required element cannot follow an optional element."),
+  Tuple_type_arguments_circularly_reference_themselves: msg(2589_2 as unknown as number, Category.Error,
+    "Tuple_type_arguments_circularly_reference_themselves_2589_b",
+    "Type instantiation is excessively deep and possibly infinite."),
+  Cannot_use_argument_property_in_an_arrow_function: msg(2522_2 as unknown as number, Category.Error,
+    "Cannot_use_argument_in_arrow_2522_b",
+    "Cannot use 'arguments' in an arrow function."),
+  Tuple_type_0_with_length_1_cannot_be_assigned_to_tuple_with_length_2: msg(2493, Category.Error,
+    "Tuple_type_0_with_length_1_cannot_be_assigned_2493",
+    "Tuple type '{0}' of length '{1}' has no element at index '{2}'."),
+
+  // ---------------------------------------------------------------------------
+  // More 1xxx — type parameter restrictions
+  // ---------------------------------------------------------------------------
+  Type_parameters_cannot_be_specified_in_methods_with_overloads: msg(1184_2 as unknown as number, Category.Error,
+    "Type_parameters_cannot_be_specified_1184_b",
+    "Modifiers cannot appear here."),
+  X_0_cannot_be_used_as_a_value_because_it_was_imported_using_import_type: msg(1361, Category.Error,
+    "_0_cannot_be_used_as_a_value_because_imported_using_import_type_1361",
+    "'{0}' cannot be used as a value because it was imported using 'import type'."),
+  X_0_resolves_to_a_type_only_declaration_and_must_be_re_exported_using_a_type_only_re_export_when_isolatedModules_is_enabled: msg(1205_2 as unknown as number, Category.Error,
+    "_0_resolves_to_a_type_only_declaration_1205_b",
+    "Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
