@@ -11,8 +11,8 @@
 import type { Node as AstNode } from "../../ast/index.js";
 import {
   nodeKind, accessExpressionExpression, callExpressionExpression,
-  isSimpleCopiableExpression,
 } from "../../ast/index.js";
+declare function isSimpleCopiableExpression(node: AstNode): boolean;
 import {
   isCallExpression, isTaggedTemplateExpression,
 } from "../../ast/index.js";
@@ -81,7 +81,7 @@ class OptionalChainTransformer extends Transformer {
       const unwrapped = skipParentheses(expression);
       if (hasOptionalChainFlag(unwrapped)) {
         const visited = this.visitParenthesizedExpression(expression, true, false);
-        const args = visitNodes(this.getVisitor(), callExpressionArguments(node));
+        const args = visitNodes(this.getVisitor(), callExpressionArguments(node)) as AstNode;
         if (isSyntheticReferenceExpression(visited)) {
           const res = newFunctionCallCall(
             this.getFactory(),
@@ -231,7 +231,7 @@ class OptionalChainTransformer extends Transformer {
             factory,
             rightExpression,
             callThisArg,
-            nodeListNodes(visitNodes(visitor, callExpressionArguments(segment))),
+            nodeListNodes(visitNodes(visitor, callExpressionArguments(segment)) as AstNode),
           );
         } else {
           rightExpression = newCallExpression(
