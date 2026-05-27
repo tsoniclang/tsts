@@ -372,6 +372,47 @@ export function nodeListNodes(list: AstNode): readonly AstNode[] {
   return inner ?? [];
 }
 export function propertyDeclarationName(node: AstNode): AstNode { return f<AstNode>(node, "name")!; }
+export function propertyDeclarationInitializer(node: AstNode): AstNode | undefined { return f<AstNode>(node, "initializer"); }
+export function propertyDeclarationModifiers(node: AstNode): ModifierList | undefined { return f<ModifierList>(node, "modifiers"); }
+export function parameterDeclarationName(node: AstNode): AstNode { return f<AstNode>(node, "name")!; }
+export function parameterDeclarationInitializer(node: AstNode): AstNode | undefined { return f<AstNode>(node, "initializer"); }
+export function nodeInitializer(node: AstNode): AstNode | undefined { return f<AstNode>(node, "initializer"); }
+export function classStaticBlockBodyStatements(node: AstNode): readonly AstNode[] {
+  const body = f<AstNode>(node, "body");
+  if (body === undefined) return [];
+  const stmts = f<NodeList | readonly AstNode[]>(body, "statements");
+  if (stmts === undefined) return [];
+  const inner = (stmts as unknown as { nodes?: readonly AstNode[] }).nodes;
+  return inner ?? (stmts as unknown as readonly AstNode[]);
+}
+export function expressionOfStatement(node: AstNode): AstNode { return f<AstNode>(node, "expression")!; }
+export function stringLiteralText(node: AstNode): string {
+  const t = (node as unknown as { text?: string }).text;
+  return t ?? "";
+}
+export function classMemberListLoc(node: AstNode): unknown {
+  const members = f<NodeList>(node, "members");
+  return members !== undefined ? nodeLoc(members as unknown as AstNode) : nodeLoc(node);
+}
+export function classTypeParameterList(node: AstNode): NodeList | undefined {
+  return f<NodeList>(node, "typeParameters");
+}
+export function functionExpressionName(node: AstNode): AstNode | undefined {
+  return f<AstNode>(node, "name");
+}
+export function propertyNameText(node: AstNode | undefined): string {
+  if (node === undefined) return "";
+  return nodeText(node);
+}
+export function propertyNameExpression(node: AstNode): AstNode {
+  const k = nodeKind(node);
+  if (k === Kind.ComputedPropertyName) return f<AstNode>(node, "expression")!;
+  return node;
+}
+export function propertyAssignmentName(node: AstNode): AstNode { return propertyAssignmentNameRO(node); }
+export function shorthandName(node: AstNode): AstNode { return shorthandPropertyAssignmentNameRO(node); }
+export function shorthandObjectAssignmentInitializer(node: AstNode): AstNode | undefined { return shorthandObjectAssignmentInitializerRO(node); }
+export function shorthandEqualsToken(node: AstNode): AstNode | undefined { return shorthandEqualsTokenRO(node); }
 export function skipParentheses(node: AstNode): AstNode {
   let cur: AstNode = node;
   while (nodeKind(cur) === Kind.ParenthesizedExpression) {

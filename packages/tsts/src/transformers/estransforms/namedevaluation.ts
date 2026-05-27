@@ -32,6 +32,19 @@ import {
   isIdentifier, isStringLiteral, isPrivateIdentifier,
   isComputedPropertyName, isClassDeclaration, isFunctionDeclaration,
   isClassExpression, isExpressionStatement,
+  isClassStaticBlockDeclaration, isPropertyNameLiteral,
+} from "../../ast/index.js";
+import {
+  classStaticBlockBodyStatements, expressionOfStatement,
+  stringLiteralText, classMemberListLoc, classTypeParameterList,
+  functionExpressionName, propertyNameText, propertyNameExpression,
+  propertyAssignmentName, propertyAssignmentInitializer,
+  shorthandName, shorthandObjectAssignmentInitializer, shorthandEqualsToken,
+  variableDeclarationInitializer,
+  parameterDeclarationName, parameterDeclarationInitializer,
+  propertyDeclarationName, propertyDeclarationInitializer,
+  propertyDeclarationModifiers,
+  nodeInitializer,
 } from "../../ast/index.js";
 import { Kind } from "../../ast/index.js";
 import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
@@ -133,7 +146,7 @@ export function isAnonymousFunctionDefinition(
 export function isNamedEvaluationSource(node: AstNode): boolean {
   switch (node.kind) {
     case Kind.PropertyAssignment:
-      return !isProtoSetter(propertyAssignmentName(node as unknown as PropertyAssignment));
+      return !isProtoSetter(propertyAssignmentName(node) as unknown as PropertyName);
     case Kind.ShorthandPropertyAssignment:
       return shorthandObjectAssignmentInitializer(node as unknown as ShorthandPropertyAssignment) !== undefined;
     case Kind.VariableDeclaration:
@@ -390,7 +403,7 @@ export function transformNamedEvaluationOfPropertyAssignment(
   const factory = context.factory();
   const { assignedName, updatedName } = getAssignedNameOfPropertyName(
     context,
-    propertyAssignmentName(node),
+    propertyAssignmentName(node) as unknown as PropertyName,
     assignedNameText,
   );
   const initializer = finishTransformNamedEvaluation(
@@ -415,7 +428,7 @@ export function transformNamedEvaluationOfShorthandAssignmentProperty(
   } else {
     assignedName = getAssignedNameOfIdentifier(
       emitContext,
-      shorthandName(node),
+      shorthandName(node) as unknown as IdentifierNode,
       shorthandObjectAssignmentInitializer(node)!,
     );
   }
@@ -428,7 +441,7 @@ export function transformNamedEvaluationOfShorthandAssignmentProperty(
   return factory.updateShorthandPropertyAssignment(
     node,
     undefined,
-    shorthandName(node),
+    shorthandName(node) as unknown as IdentifierNode,
     undefined,
     undefined,
     shorthandEqualsToken(node),
@@ -543,7 +556,7 @@ export function transformNamedEvaluationOfPropertyDeclaration(
   const factory = emitContext.factory();
   const { assignedName, updatedName } = getAssignedNameOfPropertyName(
     emitContext,
-    propertyDeclarationName(node),
+    propertyDeclarationName(node) as unknown as PropertyName,
     assignedNameText,
   );
   const initializer = finishTransformNamedEvaluation(
@@ -771,25 +784,3 @@ interface Factory {
 
 const OEK = { All: 0 } as const;
 const TokenFlags = { None: 0 } as const;
-declare function isClassStaticBlockDeclaration(node: AstNode): boolean;
-declare function classStaticBlockBodyStatements(node: AstNode): readonly AstNode[];
-declare function expressionOfStatement(node: AstNode): AstNode;
-declare function isPropertyNameLiteral(node: AstNode): boolean;
-declare function stringLiteralText(node: AstNode): string;
-declare function classMemberListLoc(node: AstNode): unknown;
-declare function classTypeParameterList(node: AstNode): unknown;
-declare function functionExpressionName(node: FunctionExpression): AstNode | undefined;
-declare function propertyNameText(node: PropertyName): string;
-declare function propertyNameExpression(node: PropertyName): AstNode;
-declare function propertyAssignmentName(node: PropertyAssignment): PropertyName;
-declare function propertyAssignmentInitializer(node: PropertyAssignment): AstNode;
-declare function shorthandName(node: ShorthandPropertyAssignment): IdentifierNode;
-declare function shorthandObjectAssignmentInitializer(node: ShorthandPropertyAssignment): AstNode | undefined;
-declare function shorthandEqualsToken(node: ShorthandPropertyAssignment): unknown;
-declare function variableDeclarationInitializer(node: VariableDeclaration): AstNode | undefined;
-declare function parameterDeclarationName(node: ParameterDeclaration): AstNode;
-declare function parameterDeclarationInitializer(node: ParameterDeclaration): AstNode | undefined;
-declare function propertyDeclarationName(node: PropertyDeclaration): PropertyName;
-declare function propertyDeclarationInitializer(node: PropertyDeclaration): AstNode | undefined;
-declare function propertyDeclarationModifiers(node: PropertyDeclaration): unknown;
-declare function nodeInitializer(node: AstNode): AstNode | undefined;
