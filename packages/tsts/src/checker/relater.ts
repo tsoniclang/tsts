@@ -124,12 +124,14 @@ export class Relater {
     source: Type, target: Type, errorNode: AstNode | undefined,
     headMessage?: { code: number; message: string },
   ): boolean {
-    void source; void target; void errorNode; void headMessage; return true;
+    void errorNode; void headMessage;
+    return this.isTypeAssignableTo(source, target);
   }
   checkTypeRelatedTo(
     source: Type, target: Type, relation: Relation, errorNode: AstNode | undefined,
   ): boolean {
-    void source; void target; void relation; void errorNode; return true;
+    void errorNode;
+    return this.isTypeRelatedTo(source, target, relation);
   }
 
   // -------------------------------------------------------------------------
@@ -145,23 +147,51 @@ export class Relater {
   }
 
   typeRelatedToSomeType(source: Type, target: Type, reportErrors: boolean): Ternary {
-    void source; void target; void reportErrors; return Ternary.True;
+    // source is related to target (a union) if related to at least one
+    // of the union's constituents.
+    void reportErrors;
+    const types = (target as unknown as { types?: readonly Type[] }).types;
+    if (types === undefined) return Ternary.False;
+    for (const t of types) {
+      if (this.isTypeAssignableTo(source, t)) return Ternary.True;
+    }
+    return Ternary.False;
   }
-
   typeRelatedToEachType(source: Type, target: Type, reportErrors: boolean): Ternary {
-    void source; void target; void reportErrors; return Ternary.True;
+    // source is related to target (an intersection) iff related to all
+    // of its constituents.
+    void reportErrors;
+    const types = (target as unknown as { types?: readonly Type[] }).types;
+    if (types === undefined) return Ternary.True;
+    for (const t of types) {
+      if (!this.isTypeAssignableTo(source, t)) return Ternary.False;
+    }
+    return Ternary.True;
   }
-
   someTypeRelatedToType(source: Type, target: Type, reportErrors: boolean): Ternary {
-    void source; void target; void reportErrors; return Ternary.True;
+    // Source is a union; succeed if any constituent is related to target.
+    void reportErrors;
+    const types = (source as unknown as { types?: readonly Type[] }).types;
+    if (types === undefined) return Ternary.False;
+    for (const t of types) {
+      if (this.isTypeAssignableTo(t, target)) return Ternary.True;
+    }
+    return Ternary.False;
   }
-
   eachTypeRelatedToSomeType(source: Type, target: Type, reportErrors: boolean): Ternary {
-    void source; void target; void reportErrors; return Ternary.True;
+    // Every constituent of source must be related to some constituent
+    // of target.
+    void reportErrors;
+    const sourceTypes = (source as unknown as { types?: readonly Type[] }).types;
+    if (sourceTypes === undefined) return Ternary.False;
+    for (const s of sourceTypes) {
+      if (!this.isTypeAssignableTo(s, target)) return Ternary.False;
+    }
+    return Ternary.True;
   }
-
   eachTypeRelatedToType(source: Type, target: Type, reportErrors: boolean): Ternary {
-    void source; void target; void reportErrors; return Ternary.True;
+    // Every constituent of source must be related to target.
+    return this.eachTypeRelatedToSomeType(source, target, reportErrors);
   }
 
   structuredTypeRelatedTo(
