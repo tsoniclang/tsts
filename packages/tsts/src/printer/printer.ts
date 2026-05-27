@@ -409,25 +409,194 @@ export class Printer {
   emitJsxAttribute(node: AstNode): void { void node; }
   emitJsxSpreadAttribute(node: AstNode): void { void node; }
   emitJsxExpression(node: AstNode): void { void node; }
-  emitBlock(node: AstNode): void { void node; }
-  emitModuleBlock(node: AstNode): void { void node; }
-  emitVariableStatement(node: AstNode): void { void node; }
-  emitExpressionStatement(node: AstNode): void { void node; }
-  emitIfStatement(node: AstNode): void { void node; }
-  emitDoStatement(node: AstNode): void { void node; }
-  emitWhileStatement(node: AstNode): void { void node; }
-  emitForStatement(node: AstNode): void { void node; }
-  emitForInStatement(node: AstNode): void { void node; }
-  emitForOfStatement(node: AstNode): void { void node; }
-  emitContinueStatement(node: AstNode): void { void node; }
-  emitBreakStatement(node: AstNode): void { void node; }
-  emitReturnStatement(node: AstNode): void { void node; }
-  emitWithStatement(node: AstNode): void { void node; }
-  emitSwitchStatement(node: AstNode): void { void node; }
-  emitLabeledStatement(node: AstNode): void { void node; }
-  emitThrowStatement(node: AstNode): void { void node; }
-  emitTryStatement(node: AstNode): void { void node; }
-  emitDebuggerStatement(node: AstNode): void { void node; }
+  emitBlock(node: AstNode): void {
+    this.writePunctuation("{");
+    this.increaseIndent();
+    const statements = (node as unknown as { statements?: { nodes?: readonly AstNode[] } }).statements?.nodes;
+    if (statements !== undefined) {
+      for (const s of statements) {
+        this.writeLine();
+        this.emit(0, s);
+      }
+    }
+    this.decreaseIndent();
+    this.writeLine();
+    this.writePunctuation("}");
+  }
+  emitModuleBlock(node: AstNode): void {
+    this.emitBlock(node);
+  }
+  emitVariableStatement(node: AstNode): void {
+    const decls = (node as unknown as { declarationList?: AstNode }).declarationList;
+    if (decls !== undefined) {
+      const flags = (decls as unknown as { flags?: number }).flags ?? 0;
+      const keyword = (flags & 2) !== 0 ? "const " : (flags & 1) !== 0 ? "let " : "var ";
+      this.writeKeyword(keyword);
+      const list = (decls as unknown as { declarations?: { nodes?: readonly AstNode[] } }).declarations?.nodes ?? [];
+      for (let i = 0; i < list.length; i++) {
+        if (i > 0) this.writePunctuation(", ");
+        const d = list[i];
+        if (d === undefined) continue;
+        const name = (d as unknown as { name?: AstNode }).name;
+        if (name !== undefined) this.emit(0, name);
+        const initializer = (d as unknown as { initializer?: AstNode }).initializer;
+        if (initializer !== undefined) {
+          this.writeOperator(" = ");
+          this.emit(0, initializer);
+        }
+      }
+    }
+    this.writeTrailingSemicolon();
+  }
+  emitExpressionStatement(node: AstNode): void {
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    if (expr !== undefined) this.emit(0, expr);
+    this.writeTrailingSemicolon();
+  }
+  emitIfStatement(node: AstNode): void {
+    this.writeKeyword("if ");
+    this.writePunctuation("(");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writePunctuation(") ");
+    this.emit(0, (node as unknown as { thenStatement?: AstNode }).thenStatement);
+    const elseStmt = (node as unknown as { elseStatement?: AstNode }).elseStatement;
+    if (elseStmt !== undefined) {
+      this.writeSpace();
+      this.writeKeyword("else ");
+      this.emit(0, elseStmt);
+    }
+  }
+  emitDoStatement(node: AstNode): void {
+    this.writeKeyword("do ");
+    this.emit(0, (node as unknown as { statement?: AstNode }).statement);
+    this.writeSpace();
+    this.writeKeyword("while ");
+    this.writePunctuation("(");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writePunctuation(")");
+    this.writeTrailingSemicolon();
+  }
+  emitWhileStatement(node: AstNode): void {
+    this.writeKeyword("while ");
+    this.writePunctuation("(");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writePunctuation(") ");
+    this.emit(0, (node as unknown as { statement?: AstNode }).statement);
+  }
+  emitForStatement(node: AstNode): void {
+    this.writeKeyword("for ");
+    this.writePunctuation("(");
+    const init = (node as unknown as { initializer?: AstNode }).initializer;
+    if (init !== undefined) this.emit(0, init);
+    this.writePunctuation("; ");
+    const cond = (node as unknown as { condition?: AstNode }).condition;
+    if (cond !== undefined) this.emit(0, cond);
+    this.writePunctuation("; ");
+    const incr = (node as unknown as { incrementor?: AstNode }).incrementor;
+    if (incr !== undefined) this.emit(0, incr);
+    this.writePunctuation(") ");
+    this.emit(0, (node as unknown as { statement?: AstNode }).statement);
+  }
+  emitForInStatement(node: AstNode): void {
+    this.writeKeyword("for ");
+    this.writePunctuation("(");
+    this.emit(0, (node as unknown as { initializer?: AstNode }).initializer);
+    this.writeSpace();
+    this.writeKeyword("in ");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writePunctuation(") ");
+    this.emit(0, (node as unknown as { statement?: AstNode }).statement);
+  }
+  emitForOfStatement(node: AstNode): void {
+    this.writeKeyword("for ");
+    const awaitMod = (node as unknown as { awaitModifier?: AstNode }).awaitModifier;
+    if (awaitMod !== undefined) this.writeKeyword("await ");
+    this.writePunctuation("(");
+    this.emit(0, (node as unknown as { initializer?: AstNode }).initializer);
+    this.writeSpace();
+    this.writeKeyword("of ");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writePunctuation(") ");
+    this.emit(0, (node as unknown as { statement?: AstNode }).statement);
+  }
+  emitContinueStatement(node: AstNode): void {
+    this.writeKeyword("continue");
+    const label = (node as unknown as { label?: AstNode }).label;
+    if (label !== undefined) {
+      this.writeSpace();
+      this.emit(0, label);
+    }
+    this.writeTrailingSemicolon();
+  }
+  emitBreakStatement(node: AstNode): void {
+    this.writeKeyword("break");
+    const label = (node as unknown as { label?: AstNode }).label;
+    if (label !== undefined) {
+      this.writeSpace();
+      this.emit(0, label);
+    }
+    this.writeTrailingSemicolon();
+  }
+  emitReturnStatement(node: AstNode): void {
+    this.writeKeyword("return");
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    if (expr !== undefined) {
+      this.writeSpace();
+      this.emit(0, expr);
+    }
+    this.writeTrailingSemicolon();
+  }
+  emitWithStatement(node: AstNode): void {
+    this.writeKeyword("with ");
+    this.writePunctuation("(");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writePunctuation(") ");
+    this.emit(0, (node as unknown as { statement?: AstNode }).statement);
+  }
+  emitSwitchStatement(node: AstNode): void {
+    this.writeKeyword("switch ");
+    this.writePunctuation("(");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writePunctuation(") ");
+    this.emit(0, (node as unknown as { caseBlock?: AstNode }).caseBlock);
+  }
+  emitLabeledStatement(node: AstNode): void {
+    this.emit(0, (node as unknown as { label?: AstNode }).label);
+    this.writePunctuation(": ");
+    this.emit(0, (node as unknown as { statement?: AstNode }).statement);
+  }
+  emitThrowStatement(node: AstNode): void {
+    this.writeKeyword("throw ");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writeTrailingSemicolon();
+  }
+  emitTryStatement(node: AstNode): void {
+    this.writeKeyword("try ");
+    this.emit(0, (node as unknown as { tryBlock?: AstNode }).tryBlock);
+    const catchClause = (node as unknown as { catchClause?: AstNode }).catchClause;
+    if (catchClause !== undefined) {
+      this.writeSpace();
+      this.writeKeyword("catch ");
+      const varDecl = (catchClause as unknown as { variableDeclaration?: AstNode }).variableDeclaration;
+      if (varDecl !== undefined) {
+        this.writePunctuation("(");
+        const name = (varDecl as unknown as { name?: AstNode }).name;
+        if (name !== undefined) this.emit(0, name);
+        this.writePunctuation(") ");
+      }
+      this.emit(0, (catchClause as unknown as { block?: AstNode }).block);
+    }
+    const finallyBlock = (node as unknown as { finallyBlock?: AstNode }).finallyBlock;
+    if (finallyBlock !== undefined) {
+      this.writeSpace();
+      this.writeKeyword("finally ");
+      this.emit(0, finallyBlock);
+    }
+  }
+  emitDebuggerStatement(_node: AstNode): void {
+    this.writeKeyword("debugger");
+    this.writeTrailingSemicolon();
+  }
   emitClassDeclaration(node: AstNode): void { void node; }
   emitClassExpression(node: AstNode): void { void node; }
   emitFunctionDeclaration(node: AstNode): void { void node; }
@@ -451,28 +620,165 @@ export class Printer {
   emitExportAssignment(node: AstNode): void { void node; }
   emitNamedExports(node: AstNode): void { void node; }
   emitExportSpecifier(node: AstNode): void { void node; }
-  emitCallExpression(node: AstNode): void { void node; }
-  emitNewExpression(node: AstNode): void { void node; }
-  emitTaggedTemplateExpression(node: AstNode): void { void node; }
-  emitObjectLiteralExpression(node: AstNode): void { void node; }
-  emitArrayLiteralExpression(node: AstNode): void { void node; }
-  emitPropertyAccessExpression(node: AstNode): void { void node; }
-  emitElementAccessExpression(node: AstNode): void { void node; }
-  emitBinaryExpression(node: AstNode): void { void node; }
-  emitConditionalExpression(node: AstNode): void { void node; }
-  emitPrefixUnaryExpression(node: AstNode): void { void node; }
-  emitPostfixUnaryExpression(node: AstNode): void { void node; }
-  emitYieldExpression(node: AstNode): void { void node; }
-  emitAwaitExpression(node: AstNode): void { void node; }
-  emitVoidExpression(node: AstNode): void { void node; }
-  emitDeleteExpression(node: AstNode): void { void node; }
-  emitTypeOfExpression(node: AstNode): void { void node; }
-  emitParenthesizedExpression(node: AstNode): void { void node; }
-  emitSpreadElement(node: AstNode): void { void node; }
-  emitAsExpression(node: AstNode): void { void node; }
-  emitSatisfiesExpression(node: AstNode): void { void node; }
-  emitNonNullExpression(node: AstNode): void { void node; }
-  emitTypeAssertionExpression(node: AstNode): void { void node; }
+  emitCallExpression(node: AstNode): void {
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    const qd = (node as unknown as { questionDotToken?: AstNode }).questionDotToken;
+    if (qd !== undefined) this.writePunctuation("?.");
+    this.writePunctuation("(");
+    const args = (node as unknown as { arguments?: { nodes?: readonly AstNode[] } }).arguments?.nodes ?? [];
+    for (let i = 0; i < args.length; i++) {
+      if (i > 0) this.writePunctuation(", ");
+      this.emit(0, args[i]);
+    }
+    this.writePunctuation(")");
+  }
+  emitNewExpression(node: AstNode): void {
+    this.writeKeyword("new ");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    const args = (node as unknown as { arguments?: { nodes?: readonly AstNode[] } }).arguments?.nodes;
+    if (args !== undefined) {
+      this.writePunctuation("(");
+      for (let i = 0; i < args.length; i++) {
+        if (i > 0) this.writePunctuation(", ");
+        this.emit(0, args[i]);
+      }
+      this.writePunctuation(")");
+    }
+  }
+  emitTaggedTemplateExpression(node: AstNode): void {
+    this.emit(0, (node as unknown as { tag?: AstNode }).tag);
+    this.emit(0, (node as unknown as { template?: AstNode }).template);
+  }
+  emitObjectLiteralExpression(node: AstNode): void {
+    this.writePunctuation("{");
+    const props = (node as unknown as { properties?: { nodes?: readonly AstNode[] } }).properties?.nodes ?? [];
+    for (let i = 0; i < props.length; i++) {
+      if (i > 0) this.writePunctuation(", ");
+      else this.writeSpace();
+      this.emit(0, props[i]);
+    }
+    if (props.length > 0) this.writeSpace();
+    this.writePunctuation("}");
+  }
+  emitArrayLiteralExpression(node: AstNode): void {
+    this.writePunctuation("[");
+    const els = (node as unknown as { elements?: { nodes?: readonly AstNode[] } }).elements?.nodes ?? [];
+    for (let i = 0; i < els.length; i++) {
+      if (i > 0) this.writePunctuation(", ");
+      this.emit(0, els[i]);
+    }
+    this.writePunctuation("]");
+  }
+  emitPropertyAccessExpression(node: AstNode): void {
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    const qd = (node as unknown as { questionDotToken?: AstNode }).questionDotToken;
+    this.writePunctuation(qd !== undefined ? "?." : ".");
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+  }
+  emitElementAccessExpression(node: AstNode): void {
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    const qd = (node as unknown as { questionDotToken?: AstNode }).questionDotToken;
+    if (qd !== undefined) this.writePunctuation("?.");
+    this.writePunctuation("[");
+    this.emit(0, (node as unknown as { argumentExpression?: AstNode }).argumentExpression);
+    this.writePunctuation("]");
+  }
+  emitBinaryExpression(node: AstNode): void {
+    this.emit(0, (node as unknown as { left?: AstNode }).left);
+    this.writeSpace();
+    const opText = (node as unknown as { operatorToken?: { text?: string } }).operatorToken?.text;
+    this.writeOperator(opText ?? "=");
+    this.writeSpace();
+    this.emit(0, (node as unknown as { right?: AstNode }).right);
+  }
+  emitConditionalExpression(node: AstNode): void {
+    this.emit(0, (node as unknown as { condition?: AstNode }).condition);
+    this.writePunctuation(" ? ");
+    this.emit(0, (node as unknown as { whenTrue?: AstNode }).whenTrue);
+    this.writePunctuation(" : ");
+    this.emit(0, (node as unknown as { whenFalse?: AstNode }).whenFalse);
+  }
+  emitPrefixUnaryExpression(node: AstNode): void {
+    const opText = (node as unknown as { operatorText?: string }).operatorText;
+    if (opText !== undefined) this.writeOperator(opText);
+    else {
+      // operator stored as Kind — render typical prefix tokens.
+      const op = (node as unknown as { operator?: number }).operator;
+      switch (op) {
+        case Kind.PlusToken: this.writeOperator("+"); break;
+        case Kind.MinusToken: this.writeOperator("-"); break;
+        case Kind.TildeToken: this.writeOperator("~"); break;
+        case Kind.ExclamationToken: this.writeOperator("!"); break;
+        case Kind.PlusPlusToken: this.writeOperator("++"); break;
+        case Kind.MinusMinusToken: this.writeOperator("--"); break;
+        default: this.writeOperator("");
+      }
+    }
+    this.emit(0, (node as unknown as { operand?: AstNode }).operand);
+  }
+  emitPostfixUnaryExpression(node: AstNode): void {
+    this.emit(0, (node as unknown as { operand?: AstNode }).operand);
+    const op = (node as unknown as { operator?: number }).operator;
+    switch (op) {
+      case Kind.PlusPlusToken: this.writeOperator("++"); break;
+      case Kind.MinusMinusToken: this.writeOperator("--"); break;
+    }
+  }
+  emitYieldExpression(node: AstNode): void {
+    this.writeKeyword("yield");
+    const asterisk = (node as unknown as { asteriskToken?: AstNode }).asteriskToken;
+    if (asterisk !== undefined) this.writeOperator("*");
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    if (expr !== undefined) {
+      this.writeSpace();
+      this.emit(0, expr);
+    }
+  }
+  emitAwaitExpression(node: AstNode): void {
+    this.writeKeyword("await ");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+  }
+  emitVoidExpression(node: AstNode): void {
+    this.writeKeyword("void ");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+  }
+  emitDeleteExpression(node: AstNode): void {
+    this.writeKeyword("delete ");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+  }
+  emitTypeOfExpression(node: AstNode): void {
+    this.writeKeyword("typeof ");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+  }
+  emitParenthesizedExpression(node: AstNode): void {
+    this.writePunctuation("(");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writePunctuation(")");
+  }
+  emitSpreadElement(node: AstNode): void {
+    this.writePunctuation("...");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+  }
+  emitAsExpression(node: AstNode): void {
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writeKeyword(" as ");
+    this.emit(0, (node as unknown as { type?: AstNode }).type);
+  }
+  emitSatisfiesExpression(node: AstNode): void {
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writeKeyword(" satisfies ");
+    this.emit(0, (node as unknown as { type?: AstNode }).type);
+  }
+  emitNonNullExpression(node: AstNode): void {
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writePunctuation("!");
+  }
+  emitTypeAssertionExpression(node: AstNode): void {
+    this.writePunctuation("<");
+    this.emit(0, (node as unknown as { type?: AstNode }).type);
+    this.writePunctuation(">");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+  }
 
   // Type emission
   emitTypeNode(node: AstNode): void { void node; }
