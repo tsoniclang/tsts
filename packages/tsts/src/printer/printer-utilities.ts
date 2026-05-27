@@ -248,75 +248,207 @@ export function isPrivateIdentifier(node: AstNode | undefined): boolean {
   return node !== undefined && astIsPrivateIdentifier(node);
 }
 export function isComputedPropertyName(node: AstNode): boolean { return astIsComputedPropertyName(node); }
-export function isExternalModule(file: SourceFile): boolean { void file; return false; }
+export function isExternalModule(file: SourceFile): boolean {
+  return (file as unknown as { externalModuleIndicator?: AstNode }).externalModuleIndicator !== undefined;
+}
 export function isExternalModuleNameRelative(name: string): boolean {
   return name.startsWith("./") || name.startsWith("../");
 }
-export function isDeclarationFile(file: SourceFile): boolean { void file; return false; }
-export function isStringLiteral(node: AstNode): boolean { void node; return false; }
-export function isModuleDeclaration(node: AstNode): boolean { void node; return false; }
-export function isAmbientModule(node: AstNode): boolean { void node; return false; }
-export function isInJSFile(node: AstNode): boolean { void node; return false; }
-export function isEnumConst(node: AstNode): boolean { void node; return false; }
-export function isInstantiatedModule(node: AstNode, preserveConstEnums: boolean): boolean {
-  void node; void preserveConstEnums; return false;
+export function isDeclarationFile(file: SourceFile): boolean {
+  return (file as unknown as { isDeclarationFile?: boolean }).isDeclarationFile === true;
 }
-export function isSourceFile(node: AstNode): boolean { void node; return false; }
-export function isModuleBlock(node: AstNode): boolean { void node; return false; }
+export function isStringLiteral(node: AstNode): boolean { return astIsStringLiteral(node); }
+export function isModuleDeclaration(node: AstNode): boolean { return astIsModuleDeclaration(node); }
+export function isAmbientModule(node: AstNode): boolean {
+  if (!astIsModuleDeclaration(node)) return false;
+  const name = (node as unknown as { name?: { kind?: number } }).name;
+  return name?.kind === Kind.StringLiteral;
+}
+export function isInJSFile(node: AstNode): boolean {
+  // NodeFlags.JavaScriptFile = 1 << 9 — check the source-file flag.
+  let n: AstNode | undefined = node;
+  while (n !== undefined) {
+    if ((n as { kind?: number }).kind === Kind.SourceFile) {
+      const scriptKind = (n as unknown as { scriptKind?: number }).scriptKind;
+      // ScriptKind: JS=1, JSX=2.
+      return scriptKind === 1 || scriptKind === 2;
+    }
+    n = (n as unknown as { parent?: AstNode }).parent;
+  }
+  return false;
+}
+export function isEnumConst(node: AstNode): boolean {
+  return (getSyntacticModifierFlags(node) & (1 << 11)) !== 0; // ConstKeyword
+}
+export function isInstantiatedModule(node: AstNode, preserveConstEnums: boolean): boolean {
+  if (!astIsModuleDeclaration(node)) return false;
+  // A module is instantiated unless it's purely type-only (declarations
+  // only). Const enums opt out unless preserveConstEnums is set.
+  void preserveConstEnums;
+  return true;
+}
+export function isSourceFile(node: AstNode): boolean {
+  return (node as { kind?: number }).kind === Kind.SourceFile;
+}
+export function isModuleBlock(node: AstNode): boolean {
+  return (node as { kind?: number }).kind === Kind.ModuleBlock;
+}
 
-export function nodeIsMissing(node: AstNode | undefined): boolean { void node; return false; }
-export function nodeIsSynthesized(node: AstNode | undefined): boolean { void node; return false; }
+export function nodeIsMissing(node: AstNode | undefined): boolean {
+  if (node === undefined) return true;
+  const pos = (node as unknown as { pos?: number }).pos;
+  const end = (node as unknown as { end?: number }).end;
+  return pos === end;
+}
+export function nodeIsSynthesized(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const pos = (node as unknown as { pos?: number }).pos ?? 0;
+  return pos < 0;
+}
 
 export function skipOuterExpressions(node: AstNode, kinds: number): AstNode {
-  void kinds; return node;
+  // Default `kinds` of 0 means strip all common outer expression wraps.
+  let n: AstNode = node;
+  while (true) {
+    const k = (n as { kind?: number }).kind;
+    if (
+      k === Kind.ParenthesizedExpression ||
+      k === Kind.TypeAssertionExpression ||
+      k === Kind.AsExpression ||
+      k === Kind.SatisfiesExpression ||
+      k === Kind.NonNullExpression ||
+      k === Kind.PartiallyEmittedExpression
+    ) {
+      const inner = (n as unknown as { expression?: AstNode }).expression;
+      if (inner === undefined) return n;
+      n = inner;
+      continue;
+    }
+    return n;
+  }
+  void kinds;
 }
 
 export function getFirstConstructorWithBody(node: AstNode): AstNode | undefined {
-  void node; return undefined;
+  const members = (node as unknown as { members?: { nodes?: readonly AstNode[] } }).members;
+  if (members?.nodes === undefined) return undefined;
+  for (const m of members.nodes) {
+    if (astIsConstructorDeclaration(m) && (m as unknown as { body?: unknown }).body !== undefined) {
+      return m;
+    }
+  }
+  return undefined;
 }
 
-export function classHasAccessorMember(node: AstNode): boolean { void node; return false; }
+export function classHasAccessorMember(node: AstNode): boolean {
+  const members = (node as unknown as { members?: { nodes?: readonly AstNode[] } }).members;
+  if (members?.nodes === undefined) return false;
+  for (const m of members.nodes) {
+    if (astIsGetAccessor(m) || astIsSetAccessor(m)) return true;
+  }
+  return false;
+}
 
-export function getSubtreeFacts(node: AstNode): number { void node; return 0; }
+export function getSubtreeFacts(node: AstNode): number {
+  return (node as unknown as { subtreeFacts?: number }).subtreeFacts ?? 0;
+}
 
-export function getNodePos(node: AstNode): number { void node; return 0; }
-export function getNodeEnd(node: AstNode): number { void node; return 0; }
-export function getNodeLoc(node: AstNode): TextRange { void node; return { pos: 0, end: 0 }; }
-export function setNodeLoc(node: AstNode, loc: TextRange): void { void node; void loc; }
-export function getNodeFlags(node: AstNode): number { void node; return 0; }
+export function getNodePos(node: AstNode): number {
+  return (node as unknown as { pos?: number }).pos ?? 0;
+}
+export function getNodeEnd(node: AstNode): number {
+  return (node as unknown as { end?: number }).end ?? 0;
+}
+export function getNodeLoc(node: AstNode): TextRange {
+  return { pos: getNodePos(node), end: getNodeEnd(node) };
+}
+export function setNodeLoc(node: AstNode, loc: TextRange): void {
+  (node as unknown as { pos?: number; end?: number }).pos = loc.pos;
+  (node as unknown as { pos?: number; end?: number }).end = loc.end;
+}
+export function getNodeFlags(node: AstNode): number {
+  return (node as unknown as { flags?: number }).flags ?? 0;
+}
 export function getNodeKind(node: AstNode): number { return node.kind; }
-export function getNodeListLength(list: NodeList | undefined): number { void list; return 0; }
-export function getModifierListLength(list: ModifierList | undefined): number { void list; return 0; }
-export function getModifierListNodes(list: ModifierList): readonly AstNode[] { void list; return []; }
+export function getNodeListLength(list: NodeList | undefined): number {
+  return (list as unknown as { nodes?: readonly unknown[] })?.nodes?.length ?? 0;
+}
+export function getModifierListLength(list: ModifierList | undefined): number {
+  return (list as unknown as { nodes?: readonly unknown[] })?.nodes?.length ?? 0;
+}
+export function getModifierListNodes(list: ModifierList): readonly AstNode[] {
+  return (list as unknown as { nodes?: readonly AstNode[] })?.nodes ?? [];
+}
 
-export function moveRangePastModifiers(node: AstNode): TextRange { void node; return { pos: 0, end: 0 }; }
+export function moveRangePastModifiers(node: AstNode): TextRange {
+  const mods = getModifiers(node);
+  const lastModEnd = mods !== undefined
+    ? getModifierListNodes(mods).reduce(
+        (acc, m) => Math.max(acc, getNodeEnd(m)), getNodePos(node))
+    : getNodePos(node);
+  return { pos: lastModEnd, end: getNodeEnd(node) };
+}
 
 export function extractModifiers(emitContext: unknown, list: ModifierList | undefined, flags: number): ModifierList | undefined {
-  void emitContext; void flags;
-  return list;
+  void emitContext;
+  if (list === undefined) return undefined;
+  const nodes = getModifierListNodes(list);
+  const filtered = nodes.filter((m) => (modifierFlagFor((m as { kind?: number }).kind ?? 0) & flags) !== 0);
+  if (filtered.length === 0) return undefined;
+  return { ...(list as object), nodes: filtered } as unknown as ModifierList;
 }
 
 export function isTrue(value: unknown): boolean {
   return value === true || value === 1;
 }
 
-export function isKeywordKind(token: number): boolean { void token; return false; }
-export function isPunctuationKind(token: number): boolean { void token; return false; }
+export function isKeywordKind(token: number): boolean {
+  return token >= Kind.FirstKeyword && token <= Kind.LastKeyword;
+}
+export function isPunctuationKind(token: number): boolean {
+  return token >= Kind.FirstPunctuation && token <= Kind.LastPunctuation;
+}
 
 // Block-introspection helpers
-export function getBody(node: AstNode): Block | undefined { void node; return undefined; }
-export function getParameters(node: AstNode): NodeList | undefined { void node; return undefined; }
-export function getInitializer(node: AstNode): AstNode | undefined { void node; return undefined; }
-export function getReturnType(node: AstNode): AstNode | undefined { void node; return undefined; }
-export function getParameterType(node: AstNode): AstNode | undefined { void node; return undefined; }
-export function getAsteriskToken(node: AstNode): AstNode | undefined { void node; return undefined; }
-export function getDotDotDotToken(node: AstNode): AstNode | undefined { void node; return undefined; }
-export function getQuestionDotToken(node: AstNode): AstNode | undefined { void node; return undefined; }
-export function getEqualsGreaterThan(node: AstNode): AstNode { void node; return {} as AstNode; }
-export function getExpression(node: AstNode): AstNode { void node; return {} as AstNode; }
-export function getArguments(node: AstNode): NodeList | undefined { void node; return undefined; }
-export function getTag(node: AstNode): AstNode { void node; return {} as AstNode; }
-export function getTemplate(node: AstNode): AstNode { void node; return {} as AstNode; }
+export function getBody(node: AstNode): Block | undefined {
+  return (node as unknown as { body?: Block }).body;
+}
+export function getParameters(node: AstNode): NodeList | undefined {
+  return (node as unknown as { parameters?: NodeList }).parameters;
+}
+export function getInitializer(node: AstNode): AstNode | undefined {
+  return (node as unknown as { initializer?: AstNode }).initializer;
+}
+export function getReturnType(node: AstNode): AstNode | undefined {
+  return (node as unknown as { type?: AstNode }).type;
+}
+export function getParameterType(node: AstNode): AstNode | undefined {
+  return (node as unknown as { type?: AstNode }).type;
+}
+export function getAsteriskToken(node: AstNode): AstNode | undefined {
+  return (node as unknown as { asteriskToken?: AstNode }).asteriskToken;
+}
+export function getDotDotDotToken(node: AstNode): AstNode | undefined {
+  return (node as unknown as { dotDotDotToken?: AstNode }).dotDotDotToken;
+}
+export function getQuestionDotToken(node: AstNode): AstNode | undefined {
+  return (node as unknown as { questionDotToken?: AstNode }).questionDotToken;
+}
+export function getEqualsGreaterThan(node: AstNode): AstNode {
+  return (node as unknown as { equalsGreaterThanToken?: AstNode }).equalsGreaterThanToken ?? ({} as AstNode);
+}
+export function getExpression(node: AstNode): AstNode {
+  return (node as unknown as { expression?: AstNode }).expression ?? ({} as AstNode);
+}
+export function getArguments(node: AstNode): NodeList | undefined {
+  return (node as unknown as { arguments?: NodeList }).arguments;
+}
+export function getTag(node: AstNode): AstNode {
+  return (node as unknown as { tag?: AstNode }).tag ?? ({} as AstNode);
+}
+export function getTemplate(node: AstNode): AstNode {
+  return (node as unknown as { template?: AstNode }).template ?? ({} as AstNode);
+}
 export function getTypeAnnotation(node: AstNode): AstNode | undefined { void node; return undefined; }
 export function getHeritageToken(node: AstNode): number { void node; return 0; }
 export function getHeritageTypes(node: AstNode): NodeList | undefined { void node; return undefined; }
