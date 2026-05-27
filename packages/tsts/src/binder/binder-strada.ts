@@ -121,13 +121,42 @@ export class Binder {
     node: AstNode, includes: number, excludes: number,
     isReplaceableByMethod: boolean, isComputedName: boolean,
   ): AstSymbol {
-    void symbolTable; void parent; void includes; void excludes;
-    void isReplaceableByMethod; void isComputedName; void node;
-    return this.newSymbol(includes, "");
+    void isReplaceableByMethod; void isComputedName;
+    const name = this.getDeclarationName(node);
+    // Look up an existing symbol; merge declarations if compatible.
+    const existing = name !== "" ? symbolTable.get(name) : undefined;
+    if (existing !== undefined) {
+      const existingFlags = (existing as unknown as { flags?: number }).flags ?? 0;
+      if ((existingFlags & excludes) === 0) {
+        // Compatible merge.
+        (existing as unknown as { flags?: number }).flags = existingFlags | includes;
+        (existing as unknown as { declarations?: AstNode[] }).declarations?.push(node);
+        if (parent !== undefined) {
+          (existing as unknown as { parent?: AstSymbol }).parent = parent;
+        }
+        return existing;
+      }
+      // Conflict — fall through to creating a new symbol; downstream
+      // duplicate-identifier diagnostics handle the user-facing error.
+    }
+    const symbol = this.newSymbol(includes, name);
+    (symbol as unknown as { declarations?: AstNode[] }).declarations = [node];
+    if (parent !== undefined) {
+      (symbol as unknown as { parent?: AstSymbol }).parent = parent;
+    }
+    if (name !== "") symbolTable.set(name, symbol);
+    return symbol;
   }
 
-  getDeclarationName(node: AstNode): string { void node; return ""; }
-  getDisplayName(node: AstNode): string { void node; return ""; }
+  getDeclarationName(node: AstNode): string {
+    const name = (node as unknown as { name?: { text?: string; kind?: number } }).name;
+    if (name?.text !== undefined) return name.text;
+    // For default exports, conventionally "default".
+    return "";
+  }
+  getDisplayName(node: AstNode): string {
+    return this.getDeclarationName(node);
+  }
 
   declareModuleMember(node: AstNode, symbolFlags: number, symbolExcludes: number): AstSymbol {
     void node; void symbolExcludes;
