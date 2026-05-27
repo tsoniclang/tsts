@@ -88,16 +88,62 @@ export class JSDocReparser {
 export function findMatchingParameter(
   fun: AstNode, parameterTag: JSDocParameterOrPropertyTag, jsDoc: AstNode,
 ): { parameter: ParameterDeclaration | undefined; found: boolean } {
-  void fun; void parameterTag; void jsDoc;
+  void jsDoc;
+  // The function-like node carries .parameters; the tag's .name is the
+  // parameter identifier to match. JSDoc supports dotted-name property
+  // tags (e.g. `@param {Object} a` then `@param {string} a.b`); we
+  // only match top-level names here — nested name handling lives in
+  // the reparser body.
+  const params = (fun as unknown as { parameters?: { nodes?: readonly ParameterDeclaration[] } }).parameters;
+  const nodes = params?.nodes;
+  if (nodes === undefined || nodes.length === 0) return { parameter: undefined, found: false };
+  const tagName = (parameterTag as unknown as { name?: { text?: string; kind?: number } }).name;
+  if (tagName === undefined) return { parameter: undefined, found: false };
+  // Dotted name → only nested-property tag; can't match a parameter.
+  const tagText = tagName.text;
+  if (tagText === undefined) return { parameter: undefined, found: false };
+  for (const p of nodes) {
+    const pn = (p as unknown as { name?: { text?: string } }).name;
+    if (pn?.text === tagText) return { parameter: p, found: true };
+  }
   return { parameter: undefined, found: false };
 }
 
 export function getFunctionLikeHost(host: AstNode): AstNode | undefined {
-  void host;
+  // A JSDoc comment's "function-like host" is the nearest enclosing
+  // declaration that has parameters. Walk up parents looking for a
+  // function-like kind.
+  let n: AstNode | undefined = host;
+  while (n !== undefined) {
+    const k = (n as { kind?: number }).kind;
+    if (
+      k === 218 /* FunctionExpression */ ||
+      k === 219 /* ArrowFunction */ ||
+      k === 262 /* FunctionDeclaration */ ||
+      k === 174 /* MethodDeclaration */ ||
+      k === 176 /* Constructor */ ||
+      k === 177 /* GetAccessor */ ||
+      k === 178 /* SetAccessor */ ||
+      k === 173 /* MethodSignature */
+    ) {
+      return n;
+    }
+    n = (n as unknown as { parent?: AstNode }).parent;
+  }
   return undefined;
 }
 
 export function getClassLikeData(parent: AstNode): unknown {
-  void parent;
-  return undefined;
+  // Returns { members, heritageClauses, typeParameters } if `parent`
+  // is a ClassDeclaration / ClassExpression / InterfaceDeclaration.
+  const k = (parent as { kind?: number }).kind;
+  if (k !== 263 /* ClassDeclaration */ && k !== 231 /* ClassExpression */ && k !== 264 /* InterfaceDeclaration */) {
+    return undefined;
+  }
+  const p = parent as unknown as { members?: unknown; heritageClauses?: unknown; typeParameters?: unknown };
+  return {
+    members: p.members,
+    heritageClauses: p.heritageClauses,
+    typeParameters: p.typeParameters,
+  };
 }

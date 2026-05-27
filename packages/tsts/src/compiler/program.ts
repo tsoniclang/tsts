@@ -97,6 +97,7 @@ export interface DuplicateSourceFile {
 export interface CompilerHost {
   fileExists(path: string): boolean;
   readFile(path: string): string | undefined;
+  writeFile?(path: string, data: string, writeByteOrderMark: boolean): void;
   getCurrentDirectory(): string;
   useCaseSensitiveFileNames(): boolean;
   directoryExists?(path: string): boolean;

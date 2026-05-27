@@ -35,7 +35,8 @@ export class ProgramEmitHost implements EmitHost {
   getCurrentDirectory(): string { return this.program.getCurrentDirectory(); }
   useCaseSensitiveFileNames(): boolean { return this.program.useCaseSensitiveFileNames(); }
   writeFile(fileName: string, data: string, writeByteOrderMark: boolean): void {
-    void fileName; void data; void writeByteOrderMark;
+    const host = this.program.host();
+    host.writeFile?.(fileName, data, writeByteOrderMark);
   }
   getNewLine(): string { return "\n"; }
   getCanonicalFileName(fileName: string): string {
