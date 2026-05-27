@@ -27,6 +27,36 @@ import type {
   NamedExports,
   NodeList,
 } from "../../ast/index.js";
+import {
+  Kind, isTrue, isInJSFile, declModifiers as getModifiers,
+  getNodeName, getNodeListLength, nodeName,
+} from "../../ast/index.js";
+import { isExternalModule, isExternalModuleImportEqualsDeclaration } from "../../ast/index.js";
+
+function getImportClause(node: AstNode): AstNode | undefined {
+  return (node as unknown as { importClause?: AstNode }).importClause;
+}
+function getModuleSpecifier(node: AstNode): AstNode {
+  return (node as unknown as { moduleSpecifier: AstNode }).moduleSpecifier;
+}
+function getImportAttributes(node: AstNode): AstNode | undefined {
+  return (node as unknown as { attributes?: AstNode }).attributes;
+}
+function getNamedBindings(node: AstNode): AstNode | undefined {
+  return (node as unknown as { namedBindings?: AstNode }).namedBindings;
+}
+function getPhaseModifier(node: AstNode): AstNode | undefined {
+  return (node as unknown as { phaseModifier?: AstNode }).phaseModifier;
+}
+function getNamedImportElements(node: AstNode): NodeList | undefined {
+  return (node as unknown as { elements?: NodeList }).elements;
+}
+function getNamedExportElements(node: AstNode): NodeList | undefined {
+  return (node as unknown as { elements?: NodeList }).elements;
+}
+function getExportClause(node: AstNode): AstNode | undefined {
+  return (node as unknown as { exportClause?: AstNode }).exportClause;
+}
 
 // ---------------------------------------------------------------------------
 // Transformer
@@ -190,25 +220,3 @@ interface EmitResolver {
   isTopLevelValueImportEqualsWithEntityName(node: AstNode): boolean;
 }
 
-declare const Kind: {
-  ImportEqualsDeclaration: number; ImportDeclaration: number; ImportClause: number;
-  NamespaceImport: number; NamedImports: number; ImportSpecifier: number;
-  ExportAssignment: number; ExportDeclaration: number; NamedExports: number;
-  ExportSpecifier: number; SourceFile: number; ModuleDeclaration: number; ModuleBlock: number;
-};
-
-declare function isTrue(value: unknown): boolean;
-declare function isInJSFile(node: AstNode): boolean;
-declare function isExternalModule(node: SourceFileNode): boolean;
-declare function isExternalModuleImportEqualsDeclaration(node: AstNode): boolean;
-declare function getImportClause(node: ImportDeclaration): AstNode | undefined;
-declare function getModifiers(node: AstNode): unknown;
-declare function getModuleSpecifier(node: AstNode): AstNode;
-declare function getImportAttributes(node: AstNode): AstNode | undefined;
-declare function getNodeName(node: AstNode): AstNode | undefined;
-declare function getNamedBindings(node: ImportClause): AstNode | undefined;
-declare function getPhaseModifier(node: ImportClause): AstNode | undefined;
-declare function getNamedImportElements(node: NamedImports): NodeList | undefined;
-declare function getNamedExportElements(node: NamedExports): NodeList | undefined;
-declare function getExportClause(node: ExportDeclaration): AstNode | undefined;
-declare function getNodeListLength(list: unknown): number;

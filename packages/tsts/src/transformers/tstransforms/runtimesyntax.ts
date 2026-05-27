@@ -17,6 +17,23 @@
  */
 
 import { Transformer, type TransformOptions } from "../transformer.js";
+import {
+  Kind,
+  getSubtreeFacts,
+  variableStatementDeclarationList as getVariableStatementDeclarationList,
+  variableDeclarationListDeclarations as getDeclarationListDeclarations,
+  bindingPatternElements as getBindingPatternElements,
+  declName as getDeclarationName,
+  identifierText as getIdentifierText,
+  hasSyntacticModifier,
+  nodeBody as getModuleDeclarationBody,
+} from "../../ast/index.js";
+import { isIdentifier, isModuleDeclaration } from "../../ast/index.js";
+import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
+
+function getModuleReference(node: AstNode): AstNode {
+  return (node as unknown as { moduleReference: AstNode }).moduleReference;
+}
 import type {
   Node as AstNode,
   IdentifierNode,
@@ -441,35 +458,7 @@ interface CompilerOptions { readonly _opts?: unknown }
 interface ReferenceResolver { readonly _resolver?: unknown }
 interface EmitResolver { readonly _emit?: unknown }
 
-declare const Kind: {
-  SourceFile: number; CaseBlock: number; ModuleBlock: number; Block: number;
-  FunctionDeclaration: number; ClassDeclaration: number; VariableStatement: number;
-  PublicKeyword: number; PrivateKeyword: number; ProtectedKeyword: number;
-  ReadonlyKeyword: number; OverrideKeyword: number;
-  EnumDeclaration: number; ModuleDeclaration: number; ClassExpression: number;
-  Constructor: number; ExportDeclaration: number; ImportDeclaration: number;
-  ImportClause: number; ImportEqualsDeclaration: number; ExternalModuleReference: number;
-  Identifier: number; ShorthandPropertyAssignment: number;
-  VariableDeclarationList: number; ArrayBindingPattern: number; ObjectBindingPattern: number;
-};
-
-declare const SubtreeFacts: {
-  ContainsTypeScript: number;
-  ContainsIdentifier: number;
-};
-
-declare const ModifierFlags: {
-  Export: number;
-};
-
-declare function getSubtreeFacts(node: AstNode): number;
-declare function getModuleReference(node: ImportEqualsDeclaration): AstNode;
-declare function getVariableStatementDeclarationList(node: VariableStatement): AstNode;
-declare function getDeclarationListDeclarations(node: AstNode): readonly AstNode[];
-declare function getBindingPatternElements(node: AstNode): readonly AstNode[];
-declare function getDeclarationName(node: AstNode): AstNode | undefined;
-declare function isIdentifier(node: AstNode | undefined): boolean;
-declare function getIdentifierText(node: IdentifierNode): string;
-declare function hasSyntacticModifier(node: AstNode, flag: number): boolean;
-declare function getModuleDeclarationBody(node: ModuleDeclaration): AstNode | undefined;
-declare function isModuleDeclaration(node: AstNode): boolean;
+const SubtreeFacts = {
+  ContainsTypeScript: 1 << 0,
+  ContainsIdentifier: 1 << 1,
+} as const;
