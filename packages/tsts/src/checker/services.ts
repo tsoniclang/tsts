@@ -126,13 +126,25 @@ export class CheckerServices {
   }
 
   // Type / property access info
-  getPropertyOfType(t: Type, name: string): AstSymbol | undefined { void t; void name; return undefined; }
+  getPropertyOfType(t: Type, name: string): AstSymbol | undefined {
+    const members = (t as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members;
+    return members?.get(name);
+  }
   getPropertyOfTypeOrUndefined(t: Type, name: string): AstSymbol | undefined {
     return this.getPropertyOfType(t, name);
   }
-  getIndexTypeOfType(t: Type, kind: number): Type | undefined { void t; void kind; return undefined; }
-  getCallSignaturesOfType(t: Type): readonly Signature[] { void t; return []; }
-  getConstructSignaturesOfType(t: Type): readonly Signature[] { void t; return []; }
+  getIndexTypeOfType(t: Type, kind: number): Type | undefined {
+    void kind;
+    // Read pre-resolved index info off the type.
+    const indexInfos = (t as unknown as { indexInfos?: readonly { keyType: Type; type: Type }[] }).indexInfos;
+    return indexInfos !== undefined && indexInfos.length > 0 ? indexInfos[0]!.type : undefined;
+  }
+  getCallSignaturesOfType(t: Type): readonly Signature[] {
+    return (t as unknown as { callSignatures?: readonly Signature[] }).callSignatures ?? [];
+  }
+  getConstructSignaturesOfType(t: Type): readonly Signature[] {
+    return (t as unknown as { constructSignatures?: readonly Signature[] }).constructSignatures ?? [];
+  }
 }
 
 export function newCheckerServices(): CheckerServices {
