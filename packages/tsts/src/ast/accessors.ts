@@ -13,6 +13,7 @@
 
 import type { Node as AstNode, NodeArray } from "./generated/types.js";
 import type { ModifierList } from "./aliases.js";
+import { Kind } from "./generated/kind.js";
 
 type NodeList<T extends AstNode = AstNode> = NodeArray<T>;
 
@@ -337,6 +338,76 @@ export function callExpressionQuestionDotTokenRO(node: AstNode): AstNode | undef
 export function taggedTemplateTagRO(node: AstNode): AstNode { return f<AstNode>(node, "tag")!; }
 export function taggedTemplateTemplateRO(node: AstNode): AstNode { return f<AstNode>(node, "template")!; }
 export function accessExpressionExpression(node: AstNode): AstNode { return f<AstNode>(node, "expression")!; }
+export function propertyAccessExpressionOf(node: AstNode): AstNode { return f<AstNode>(node, "expression")!; }
+export function propertyAccessName(node: AstNode): AstNode { return f<AstNode>(node, "name")!; }
+export function elementAccessExpressionOf(node: AstNode): AstNode { return f<AstNode>(node, "expression")!; }
+export function elementArgumentExpression(node: AstNode): AstNode { return f<AstNode>(node, "argumentExpression")!; }
+export function expressionOf(node: AstNode): AstNode { return f<AstNode>(node, "expression")!; }
+export function parenthesizedExpression(node: AstNode): AstNode { return parenthesizedExpressionRO(node); }
+export function functionExpressionBody(node: AstNode): AstNode | undefined { return f<AstNode>(node, "body"); }
+export function functionExpressionAsteriskToken(node: AstNode): AstNode | undefined { return f<AstNode>(node, "asteriskToken"); }
+export function functionAsteriskToken(node: AstNode): AstNode | undefined { return functionAsteriskTokenRO(node); }
+export function nodeParameters(node: AstNode): readonly AstNode[] {
+  const list = f<NodeList>(node, "parameters");
+  if (list === undefined) return [];
+  const inner = (list as unknown as { nodes?: readonly AstNode[] }).nodes;
+  return inner ?? [];
+}
+export function nodeParameterList(node: AstNode): NodeList | undefined { return f<NodeList>(node, "parameters"); }
+export function forInOrOfInitializerNode(node: AstNode): AstNode { return forInOrOfInitializer(node); }
+export function forInOrOfExpressionNode(node: AstNode): AstNode { return forInOrOfExpression(node); }
+export function forInOrOfAwaitModifierOpt(node: AstNode): AstNode | undefined { return forInOrOfAwaitModifierRO(node); }
+export function variableStatementDeclarationList(node: AstNode): AstNode { return variableStatementDeclarationListRO(node); }
+export function variableDeclarationListDeclarations(node: AstNode): readonly AstNode[] { return variableDeclarationListDeclarationsRO(node); }
+export function variableDeclarationInitializer(node: AstNode): AstNode | undefined { return variableDeclarationInitializerRO(node); }
+export function propertyAssignmentInitializer(node: AstNode): AstNode { return propertyAssignmentInitializerRO(node); }
+export function shorthandPropertyAssignmentName(node: AstNode): AstNode { return shorthandPropertyAssignmentNameRO(node); }
+export function spreadAssignmentExpression(node: AstNode): AstNode { return spreadAssignmentExpressionRO(node); }
+export function spreadElementExpression(node: AstNode): AstNode { return spreadElementExpressionRO(node); }
+export function prefixUnaryOperator(node: AstNode): number { return prefixUnaryOperatorRO(node); }
+export function postfixUnaryOperator(node: AstNode): number { return postfixUnaryOperatorRO(node); }
+export function unaryOperand(node: AstNode): AstNode { return f<AstNode>(node, "operand")!; }
+export function nodeListNodes(list: AstNode): readonly AstNode[] {
+  const inner = (list as unknown as { nodes?: readonly AstNode[] }).nodes;
+  return inner ?? [];
+}
+export function propertyDeclarationName(node: AstNode): AstNode { return f<AstNode>(node, "name")!; }
+export function skipParentheses(node: AstNode): AstNode {
+  let cur: AstNode = node;
+  while (nodeKind(cur) === Kind.ParenthesizedExpression) {
+    cur = parenthesizedExpressionRO(cur);
+  }
+  return cur;
+}
+export function isSuperProperty(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = nodeKind(node);
+  if (k === Kind.PropertyAccessExpression || k === Kind.ElementAccessExpression) {
+    return nodeKind(f<AstNode>(node, "expression")!) === Kind.SuperKeyword;
+  }
+  return false;
+}
+export function isUpdateExpression(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = nodeKind(node);
+  if (k !== Kind.PrefixUnaryExpression && k !== Kind.PostfixUnaryExpression) return false;
+  const op = f<number>(node, "operator");
+  return op === Kind.PlusPlusToken || op === Kind.MinusMinusToken;
+}
+export function isSimpleCopiableExpression(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = nodeKind(node);
+  return k === Kind.Identifier
+    || k === Kind.StringLiteral
+    || k === Kind.NoSubstitutionTemplateLiteral
+    || k === Kind.NumericLiteral
+    || k === Kind.BigIntLiteral
+    || k === Kind.SuperKeyword
+    || k === Kind.ThisKeyword
+    || k === Kind.NullKeyword
+    || k === Kind.TrueKeyword
+    || k === Kind.FalseKeyword;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Property / shorthand / spread assignments

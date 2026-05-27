@@ -25,7 +25,22 @@ import {
   parameterInitializer, parameterName, parameterDotDotDotToken,
   arrayLiteralElements, objectLiteralProperties,
   getFunctionFlags,
+  awaitExpressionOf, propertyAccessExpressionOf,
+  nodeParameters, nodeParameterList,
+  functionAsteriskToken, functionExpressionAsteriskToken,
+  functionDeclarationBody, functionExpressionBody,
+  variableStatementDeclarationList, variableDeclarationListDeclarations,
+  variableDeclarationInitializer,
+  forInOrOfInitializerNode, forInOrOfExpressionNode, forInOrOfBody,
+  forInOrOfAwaitModifierOpt,
+  parenthesizedExpression, propertyAssignmentInitializer,
+  shorthandPropertyAssignmentName, spreadAssignmentExpression,
+  spreadElementExpression,
+  prefixUnaryOperator, postfixUnaryOperator,
+  subtreeFacts,
 } from "../../ast/index.js";
+import { isFunctionLikeDeclaration } from "../../ast/index.js";
+import { newOrderedSet, newSetOfString } from "../../printer/factory-helpers.js";
 import {
   isIdentifier, isBindingPattern, isOmittedExpression,
   isPropertyAccessExpression, isPropertyAssignment,
@@ -305,7 +320,7 @@ export class AsyncTransformer extends Transformer {
     for (const escapedName of catchClauseNames.keys()) {
       if (this.enclosingFunctionParameterNames !== undefined && this.enclosingFunctionParameterNames.has(escapedName)) {
         if (catchClauseUnshadowedNames === undefined) {
-          catchClauseUnshadowedNames = this.enclosingFunctionParameterNames.clone();
+          catchClauseUnshadowedNames = new Set(this.enclosingFunctionParameterNames);
         }
         catchClauseUnshadowedNames.delete(escapedName);
       }
@@ -1110,41 +1125,9 @@ export function newAsyncTransformer(opts: TransformOptions): Transformer {
 
 // NodeVisitor type comes from transformer.ts via the Transformer base.
 
-interface SetOfString {
-  add(value: string): void;
-  has(value: string): boolean;
-  delete(value: string): void;
-  clone(): SetOfString;
-  keys(): Iterable<string>;
-}
+type SetOfString = Set<string>;
 
-declare function newSetOfString(): SetOfString;
-declare function newOrderedSet<T>(): Set<T>;
 declare function convertBindingPatternToAssignmentPattern(emitContext: unknown, pattern: AstNode): AstNode;
 const FunctionFlags = { Async: 2, AsyncGenerator: 6 } as const;
 const SubtreeFacts = { ContainsAnyAwait: 1 << 0, ContainsAwait: 1 << 1 } as const;
 const EmitHelpers: { AdvancedAsyncSuper: AstNode; AsyncSuper: AstNode } = { AdvancedAsyncSuper: {} as AstNode, AsyncSuper: {} as AstNode };
-declare function subtreeFacts(node: AstNode): number;
-declare function awaitExpressionOf(node: AwaitExpression): AstNode;
-declare function isFunctionLikeDeclaration(node: AstNode): boolean;
-declare function nodeParameters(node: AstNode): readonly AstNode[];
-declare function nodeParameterList(node: AstNode): NodeArray<AstNode>;
-declare function functionAsteriskToken(decl: FunctionDeclaration): unknown;
-declare function functionExpressionAsteriskToken(decl: FunctionExpression): unknown;
-declare function functionDeclarationBody(decl: FunctionDeclaration): AstNode | undefined;
-declare function functionExpressionBody(decl: FunctionExpression): AstNode | undefined;
-declare function variableStatementDeclarationList(node: AstNode): VariableDeclarationList | undefined;
-declare function variableDeclarationListDeclarations(node: VariableDeclarationList): readonly AstNode[];
-declare function variableDeclarationInitializer(node: VariableDeclaration): AstNode | undefined;
-declare function forInOrOfInitializerNode(node: ForInOrOfStatement): AstNode;
-declare function forInOrOfExpressionNode(node: ForInOrOfStatement): AstNode;
-declare function forInOrOfBody(node: ForInOrOfStatement): AstNode;
-declare function forInOrOfAwaitModifierOpt(node: ForInOrOfStatement): AstNode | undefined;
-declare function propertyAccessExpressionOf(node: AstNode): AstNode;
-declare function parenthesizedExpression(node: AstNode): AstNode;
-declare function propertyAssignmentInitializer(node: AstNode): AstNode;
-declare function shorthandPropertyAssignmentName(node: AstNode): AstNode;
-declare function spreadAssignmentExpression(node: AstNode): AstNode;
-declare function spreadElementExpression(node: AstNode): AstNode;
-declare function prefixUnaryOperator(node: AstNode): number;
-declare function postfixUnaryOperator(node: AstNode): number;
