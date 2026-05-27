@@ -8,8 +8,16 @@
  */
 
 import type { Node as AstNode, SourceFile } from "../../ast/index.js";
+import { Kind, nodeKind, isExternalModule } from "../../ast/index.js";
 
 import { Transformer, type EmitContext } from "../transformer.js";
+
+const KindSourceFile = Kind.SourceFile;
+const ScriptKindJSON = 6 /* ScriptKind.JSON */;
+
+function scriptKindOf(node: SourceFile): number {
+  return (node as unknown as { scriptKind?: number }).scriptKind ?? 0;
+}
 
 /**
  * Forward-declared `core.CompilerOptions` + `core.ModuleKind` surface.
@@ -111,9 +119,3 @@ export function newUseStrictTransformer(opts: UseStrictOptions): Transformer {
   return new UseStrictTransformer(opts);
 }
 
-declare const KindSourceFile: number;
-declare const ScriptKindJSON: number;
-
-declare function nodeKind(node: AstNode): number;
-declare function scriptKindOf(node: SourceFile): number;
-declare function isExternalModule(node: SourceFile): boolean;

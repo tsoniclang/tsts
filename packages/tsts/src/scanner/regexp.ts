@@ -22,6 +22,11 @@
  * forward-declared at file end.
  */
 
+// ScriptTarget values match ts-go internal ordering (ES3=0 .. ESNext).
+const ScriptTarget_ES2018 = 5;
+const ScriptTarget_ES2022 = 9;
+const ScriptTarget_ES2024 = 11;
+
 export type RegularExpressionFlags = number;
 export const RegularExpressionFlags = {
   None: 0,
@@ -161,6 +166,3 @@ export function isRegExpFlagAvailable(flag: RegularExpressionFlags, target: numb
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-declare const ScriptTarget_ES2018: number;
-declare const ScriptTarget_ES2022: number;
-declare const ScriptTarget_ES2024: number;

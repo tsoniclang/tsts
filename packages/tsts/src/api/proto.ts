@@ -9,6 +9,14 @@
  */
 
 import type { Node as AstNode } from "../ast/index.js";
+import { nodePos as getNodePos, nodeEnd as getNodeEnd } from "../ast/index.js";
+
+function getNodePath(_node: AstNode): string {
+  // Strada exposes a node→path string for diagnostic UI. The full
+  // implementation walks ancestors; for now return empty until
+  // ancestor-walk helpers are wired through emit-context.
+  return "";
+}
 
 export const ErrInvalidRequest = new Error("api: invalid request");
 export const ErrClientError = new Error("api: client error");
@@ -285,6 +293,3 @@ interface SignatureType { readonly _sig?: unknown }
 interface SnapshotType { readonly _snap?: unknown }
 interface DiagnosticType { code: number; messageText: string; category: number }
 
-declare function getNodePos(node: AstNode): number;
-declare function getNodeEnd(node: AstNode): number;
-declare function getNodePath(node: AstNode): string;
