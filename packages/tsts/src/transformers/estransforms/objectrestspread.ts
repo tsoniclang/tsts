@@ -19,7 +19,20 @@ import {
   methodAsteriskToken, arrowEqualsGreaterThanToken,
   binaryLeft, binaryRight, binaryOperatorKind, binaryOperatorToken,
   forStatementBody, cloneNode as _astCloneNode,
+  nodeListNodes, nodeParameters, nodeParameterList as nodeParametersList,
+  declModifiers as nodeModifiers,
+  methodAsteriskToken as methodPostfixToken,
+  declName as declarationName,
+  forInOrOfInitializerNode as forStatementInitializer,
+  forInOrOfExpressionNode as forStatementExpression,
+  forInOrOfAwaitModifierOpt as forStatementAwaitModifier,
+  skipParentheses,
+  expressionOf,
+  objectLiteralProperties,
+  propertyAssignmentName as propertyName,
+  propertyAssignmentInitializer as propertyInitializer,
 } from "../../ast/index.js";
+import { isPrologueDirective, isAssignmentPattern } from "../../ast/index.js";
 import {
   isBlock, isBindingPattern, isVariableDeclarationList,
   isDestructuringAssignment,
@@ -587,10 +600,8 @@ class ObjectRestSpreadTransformer extends Transformer {
     return newAssignHelper(this.getFactory(), objects, this.compilerOptions.getEmitScriptTarget());
   }
 
-  private chunkObjectLiteralElements(list: AstNode | undefined): AstNode[] {
-    if (list === undefined) return [];
-    const elements = nodeListNodes(list);
-    if (elements.length === 0) return [];
+  private chunkObjectLiteralElements(elements: readonly AstNode[] | undefined): AstNode[] {
+    if (elements === undefined || elements.length === 0) return [];
     let chunkObject: AstNode[] = [];
     const objects: AstNode[] = [];
     for (const e of elements) {
@@ -638,22 +649,6 @@ export function newObjectRestSpreadTransformer(opts: ObjectRestSpreadOptions): T
 declare function subtreeContainsESObjectRestOrSpread(node: AstNode): boolean;
 declare function subtreeContainsObjectRestOrSpread(node: AstNode): boolean;
 declare function containsObjectRestOrSpread(node: AstNode): boolean;
-declare function nodeListNodes(list: AstNode): readonly AstNode[];
-declare function nodeParameters(node: AstNode): readonly AstNode[];
-declare function nodeParametersList(node: AstNode): AstNode | undefined;
-declare function nodeModifiers(node: AstNode): AstNode | undefined;
-declare function methodPostfixToken(node: AstNode): AstNode | undefined;
-declare function declarationName(node: AstNode): AstNode | undefined;
-declare function isPrologueDirective(node: AstNode): boolean;
-declare function isAssignmentPattern(node: AstNode): boolean;
-declare function forStatementInitializer(node: AstNode): AstNode;
-declare function forStatementExpression(node: AstNode): AstNode;
-declare function forStatementAwaitModifier(node: AstNode): AstNode | undefined;
-declare function skipParentheses(node: AstNode): AstNode;
-declare function objectLiteralProperties(node: AstNode): AstNode | undefined;
-declare function propertyName(node: AstNode): AstNode;
-declare function propertyInitializer(node: AstNode): AstNode;
-declare function expressionOf(node: AstNode): AstNode;
 declare function flattenDestructuringBinding(tx: Transformer, node: AstNode, name: AstNode | undefined, level: number, exported: boolean, isFlat: boolean): AstNode | undefined;
 declare function flattenDestructuringAssignment(tx: Transformer, node: AstNode, needsValue: boolean, level: number, alternateNode: AstNode | undefined): AstNode;
 declare function createForOfBindingStatement(factory: NodeFactory, initializer: AstNode, target: AstNode): AstNode;

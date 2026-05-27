@@ -11,10 +11,15 @@
 import type { Node as AstNode } from "../../ast/index.js";
 import {
   nodeKind, accessExpressionExpression, callExpressionExpression,
+  callExpressionArguments,
+  nodeListNodes, skipParentheses, parenthesizedExpression,
+  propertyAccessName, elementArgumentExpression, expressionOf,
+  callExpressionQuestionDotToken as questionDotTokenOf,
+  isSimpleCopiableExpression,
 } from "../../ast/index.js";
-declare function isSimpleCopiableExpression(node: AstNode): boolean;
 import {
   isCallExpression, isTaggedTemplateExpression,
+  isParenthesizedExpression, isNonNullExpression,
 } from "../../ast/index.js";
 import { Kind } from "../../ast/index.js";
 import { EmitFlags } from "../../printer/emitflags.js";
@@ -304,20 +309,10 @@ export function newOptionalChainTransformer(opts: TransformOptions): Transformer
 // Strada-specific helpers still forward-declared.
 declare function subtreeContainsOptionalChaining(node: AstNode): boolean;
 declare function hasOptionalChainFlag(node: AstNode): boolean;
-declare function nodeListNodes(list: AstNode): readonly AstNode[];
-declare function callExpressionArguments(node: AstNode): AstNode;
-declare function isParenthesizedExpression(node: AstNode): boolean;
-declare function skipParentheses(node: AstNode): AstNode;
-declare function parenthesizedExpression(node: AstNode): AstNode;
 declare function isSyntheticReferenceExpression(node: AstNode): boolean;
 declare function syntheticReferenceExpression(node: AstNode): AstNode;
 declare function syntheticReferenceThisArg(node: AstNode): AstNode;
 declare function deleteExpressionExpression(node: AstNode): AstNode;
-declare function propertyAccessName(node: AstNode): AstNode;
-declare function elementArgumentExpression(node: AstNode): AstNode;
-declare function expressionOf(node: AstNode): AstNode;
-declare function questionDotTokenOf(node: AstNode): AstNode | undefined;
-declare function isNonNullExpression(node: AstNode): boolean;
 declare function skipPartiallyEmittedExpressions(node: AstNode): AstNode;
 declare function hasAutoGenerateInfo(emitContext: EmitContext, node: AstNode): boolean;
 declare function createNotNullCondition(emitContext: EmitContext, left: AstNode, right: AstNode, invert: boolean): AstNode;

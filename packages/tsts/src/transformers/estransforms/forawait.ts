@@ -19,7 +19,14 @@ import {
   declModifiers, declParameters, methodAsteriskToken, arrowEqualsGreaterThanToken,
   parameterInitializer, parameterDotDotDotToken, parameterName,
   getFunctionFlags,
+  subtreeFacts, awaitExpressionOf,
+  forInOrOfAwaitModifierOpt as forInOrOfAwaitModifier,
+  forInOrOfInitializer, forInOrOfExpression, forInOrOfExpressionNode,
+  forInOrOfBody as forInOrOfStatementBody,
+  declName, nodeParameters, nodeParameterList,
+  functionAsteriskToken, functionExpressionAsteriskToken,
 } from "../../ast/index.js";
+import { newOrderedSet } from "../../printer/factory-helpers.js";
 import { Kind, NodeFlags } from "../../ast/index.js";
 import { isIdentifier } from "../../ast/index.js";
 import { EmitFlags } from "../../printer/emitflags.js";
@@ -951,24 +958,11 @@ function unwrapInnermostStatementOfLabel(node: LabeledStatement): AstNode {
 // NodeVisitor type comes from transformer.ts via the Transformer base.
 
 // Forward-declared local helpers — body-completion phase will fill these.
-declare function newOrderedSet<T>(): Set<T>;
 const FunctionFlags = { Normal: 0, Async: 2, Generator: 1 } as const;
 const SubtreeFacts = { ContainsForAwaitOrAsyncGenerator: 1 << 0 } as const;
-declare function subtreeFacts(node: AstNode): number;
 const EmitHelpers: { AdvancedAsyncSuper: AstNode; AsyncSuper: AstNode } = { AdvancedAsyncSuper: {} as AstNode, AsyncSuper: {} as AstNode };
 declare function isSimpleParameterList(parameters: readonly AstNode[]): boolean;
-declare function awaitExpressionOf(node: AwaitExpression): AstNode;
 declare function yieldExpressionOf(node: YieldExpression): AstNode | undefined;
 declare function yieldAsteriskToken(node: YieldExpression): TokenNode | undefined;
 declare function returnExpressionOf(node: ReturnStatement): AstNode | undefined;
 declare function labeledStatementBody(node: LabeledStatement): AstNode;
-declare function forInOrOfAwaitModifier(node: ForInOrOfStatement): AstNode | undefined;
-declare function forInOrOfExpression(node: ForInOrOfStatement): AstNode;
-declare function forInOrOfExpressionNode(node: ForInOrOfStatement): AstNode;
-declare function forInOrOfInitializer(node: ForInOrOfStatement): AstNode;
-declare function forInOrOfStatementBody(node: ForInOrOfStatement): AstNode;
-declare function declName(decl: AstNode): AstNode | undefined;
-declare function nodeParameters(node: AstNode): readonly AstNode[];
-declare function nodeParameterList(node: AstNode): NodeArray<AstNode>;
-declare function functionAsteriskToken(decl: FunctionDeclaration): TokenNode | undefined;
-declare function functionExpressionAsteriskToken(decl: FunctionExpression): TokenNode | undefined;

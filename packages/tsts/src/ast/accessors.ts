@@ -471,6 +471,11 @@ export function positionIsSynthesized(pos: number): boolean { return pos < 0; }
 export function isKeywordKind(kind: number): boolean {
   return kind >= Kind.BreakKeyword && kind <= Kind.OfKeyword;
 }
+export function isAssignmentPattern(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = nodeKind(node);
+  return k === Kind.ArrayLiteralExpression || k === Kind.ObjectLiteralExpression;
+}
 export function getSourceFileOfNode(node: AstNode | undefined): AstNode | undefined {
   let cur: AstNode | undefined = node;
   while (cur !== undefined && nodeKind(cur) !== Kind.SourceFile) {
