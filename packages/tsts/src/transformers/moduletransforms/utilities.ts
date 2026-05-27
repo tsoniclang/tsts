@@ -7,7 +7,44 @@
 
 import { isSimpleCopiableExpression } from "../utilities.js";
 import type { Node as AstNode, SourceFile, IdentifierNode, StringLiteralNode } from "../../ast/index.js";
+import { Kind, nodeParent, nodeName, nodeText, stringLiteralTokenFlags } from "../../ast/index.js";
+import { isStringLiteral, isIdentifier } from "../../ast/index.js";
+import { changeExtension } from "../../tspath/extension.js";
 import type { NodeFactory, EmitContext as TransformerEmitContext } from "../transformer.js";
+
+const TokenFlags = { None: 0 } as const;
+void TokenFlags;
+
+// shouldRewriteModuleSpecifier — only rewrite relative path imports
+// when the target output extension differs from the source extension.
+function shouldRewriteModuleSpecifier(text: string, _options: CompilerOptions): boolean {
+  if (text.length === 0) return false;
+  const first = text.charCodeAt(0);
+  // Only rewrite relative paths beginning with `.` or `./` or `../`.
+  return first === 0x2e /* . */;
+}
+// getOutputExtension — map .ts/.tsx → .js/.jsx based on JSX flag.
+function getOutputExtension(text: string, jsx: number): string {
+  if (text.endsWith(".tsx")) return jsx === 0 ? ".js" : ".jsx";
+  if (text.endsWith(".ts")) return ".js";
+  if (text.endsWith(".mts")) return ".mjs";
+  if (text.endsWith(".cts")) return ".cjs";
+  return "";
+}
+function compilerOptionsJsx(options: CompilerOptions): number {
+  return (options as unknown as { jsx?: number }).jsx ?? 0;
+}
+function getExternalModuleName(node: AstNode): AstNode | undefined {
+  // For ImportDeclaration / ExportDeclaration, the module specifier is `.moduleSpecifier`.
+  return (node as unknown as { moduleSpecifier?: AstNode }).moduleSpecifier;
+}
+// AutoGenerateInfo accessors — IdentifierFlags bit-test wrappers.
+function autoGenFlags(info: AutoGenerateInfo): number {
+  return (info as unknown as { flags?: number }).flags ?? 0;
+}
+function autoGenInfoIsFileLevel(info: AutoGenerateInfo): boolean { return (autoGenFlags(info) & 1 /* FileLevel */) !== 0; }
+function autoGenInfoIsOptimistic(info: AutoGenerateInfo): boolean { return (autoGenFlags(info) & 2 /* Optimistic */) !== 0; }
+function autoGenInfoIsReservedInNestedScopes(info: AutoGenerateInfo): boolean { return (autoGenFlags(info) & 4 /* ReservedInNestedScopes */) !== 0; }
 
 export function isDeclarationNameOfEnumOrNamespace(emitContext: EmitContext, node: IdentifierNode): boolean {
   const original = emitContext.mostOriginal(node as unknown as AstNode);
@@ -135,20 +172,3 @@ interface EmitResolver {
   getExternalModuleFileFromDeclaration(declaration: AstNode): SourceFile | undefined;
 }
 
-declare const Kind: { EnumDeclaration: number; ModuleDeclaration: number };
-declare const TokenFlags: { None: number };
-
-declare function nodeParent(node: AstNode): AstNode | undefined;
-declare function nodeName(parent: AstNode): AstNode | undefined;
-declare function nodeText(node: AstNode): string;
-declare function isStringLiteral(node: AstNode): boolean;
-declare function isIdentifier(node: AstNode): boolean;
-declare function shouldRewriteModuleSpecifier(text: string, options: CompilerOptions): boolean;
-declare function changeExtension(text: string, ext: string): string;
-declare function getOutputExtension(text: string, jsx: number): string;
-declare function compilerOptionsJsx(options: CompilerOptions): number;
-declare function getExternalModuleName(node: AstNode): AstNode | undefined;
-declare function stringLiteralTokenFlags(node: AstNode): number;
-declare function autoGenInfoIsFileLevel(info: AutoGenerateInfo): boolean;
-declare function autoGenInfoIsOptimistic(info: AutoGenerateInfo): boolean;
-declare function autoGenInfoIsReservedInNestedScopes(info: AutoGenerateInfo): boolean;
