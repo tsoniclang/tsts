@@ -10,7 +10,47 @@
  */
 
 import type { Node as AstNode, SourceFile, IdentifierNode } from "../ast/index.js";
+import {
+  nodeText, nodePos, nodeEnd, nodeIsMissing, skipTrivia,
+  getSourceFileOfNode,
+} from "../ast/index.js";
+import { Kind, KindNames } from "../ast/index.js";
+
+// Lazy text → keyword Kind map. Built from KindNames the first time
+// identifierToKeywordKind() is called.
+let textToKeywordCache: Map<string, number> | undefined;
+function textToKeyword(text: string): number | undefined {
+  if (textToKeywordCache === undefined) {
+    const m = new Map<string, number>();
+    for (let i = 0; i < KindNames.length; i++) {
+      const name = KindNames[i]!;
+      if (name.endsWith("Keyword")) {
+        const stem = name.slice(0, -"Keyword".length);
+        m.set(stem.charAt(0).toLowerCase() + stem.slice(1), i);
+      }
+    }
+    textToKeywordCache = m;
+  }
+  return textToKeywordCache.get(text);
+}
 import type { LanguageVariant } from "../core/languagevariant.js";
+const KindIdentifier = Kind.Identifier;
+const KindUnknown = Kind.Unknown;
+void KindIdentifier; void KindUnknown;
+void nodeText;
+function sourceFileText(file: SourceFile): string {
+  return (file as unknown as { text?: string }).text ?? "";
+}
+function isIdentifierStart(cp: number): boolean {
+  return (cp >= 0x41 && cp <= 0x5a)
+    || (cp >= 0x61 && cp <= 0x7a)
+    || cp === 0x24 /* $ */
+    || cp === 0x5f /* _ */
+    || cp >= 0x80;
+}
+function isIdentifierPartEx(cp: number, _variant: LanguageVariant): boolean {
+  return isIdentifierStart(cp) || (cp >= 0x30 && cp <= 0x39);
+}
 
 const SURR1 = 0xd800;
 const SURR2 = 0xdc00;
@@ -65,7 +105,7 @@ export function tokenIsIdentifierOrKeyword(token: number): boolean {
 }
 
 export function identifierToKeywordKind(node: IdentifierNode): number {
-  return textToKeyword.get(nodeText(node as unknown as AstNode)) ?? KindUnknown;
+  return textToKeyword(nodeText(node as unknown as AstNode)) ?? KindUnknown;
 }
 
 export function getSourceTextOfNodeFromSourceFile(
@@ -90,7 +130,7 @@ export function getTextOfNodeFromSourceText(
 export function getTextOfNode(node: AstNode): string {
   const sf = getSourceFileOfNode(node);
   if (sf === undefined) return "";
-  return getSourceTextOfNodeFromSourceFile(sf, node, false);
+  return getSourceTextOfNodeFromSourceFile(sf as unknown as SourceFile, node, false);
 }
 
 export function declarationNameToString(name: AstNode | undefined): string {
@@ -121,16 +161,3 @@ export function isIntrinsicJsxName(name: string): boolean {
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-declare const KindIdentifier: number;
-declare const KindUnknown: number;
-declare const textToKeyword: ReadonlyMap<string, number>;
-
-declare function nodeText(node: AstNode): string;
-declare function nodePos(node: AstNode): number;
-declare function nodeEnd(node: AstNode): number;
-declare function nodeIsMissing(node: AstNode): boolean;
-declare function sourceFileText(file: SourceFile): string;
-declare function skipTrivia(text: string, pos: number): number;
-declare function getSourceFileOfNode(node: AstNode): SourceFile | undefined;
-declare function isIdentifierStart(cp: number): boolean;
-declare function isIdentifierPartEx(cp: number, variant: LanguageVariant): boolean;
