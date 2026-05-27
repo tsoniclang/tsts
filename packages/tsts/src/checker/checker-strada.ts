@@ -258,48 +258,117 @@ export class Checker {
   // Expression checking
   // -------------------------------------------------------------------------
 
-  checkExpression(node: AstNode): Type { void node; return {} as Type; }
-  checkExpressionEx(node: AstNode, checkMode: number, forceTuple: boolean): Type {
-    void node; void checkMode; void forceTuple; return {} as Type;
+  checkExpression(node: AstNode): Type {
+    return this.checkExpressionEx(node, 0, false);
   }
-  checkExpressionCached(node: AstNode): Type { void node; return {} as Type; }
+  checkExpressionEx(node: AstNode, checkMode: number, forceTuple: boolean): Type {
+    void forceTuple;
+    return this.checkExpressionWorker(node, checkMode);
+  }
+  checkExpressionCached(node: AstNode): Type { return this.checkExpression(node); }
   checkExpressionCachedEx(node: AstNode, checkMode: number): Type {
-    void node; void checkMode; return {} as Type;
+    return this.checkExpressionEx(node, checkMode, false);
   }
   checkExpressionWorker(node: AstNode, checkMode: number): Type {
-    void node; void checkMode; return {} as Type;
+    // Dispatch by Kind. Without the full type system we recurse into
+    // sub-expressions to keep the visit pass driving the AST.
+    const k = (node as { kind?: number }).kind;
+    switch (k) {
+      case Kind.Identifier: return this.checkIdentifier(node);
+      case Kind.BinaryExpression: return this.checkBinaryExpression(node, checkMode);
+      case Kind.ConditionalExpression: return this.checkConditionalExpression(node, checkMode);
+      case Kind.CallExpression: return this.checkCallExpression(node, checkMode);
+      case Kind.ObjectLiteralExpression: return this.checkObjectLiteral(node, checkMode);
+      case Kind.ArrayLiteralExpression: return this.checkArrayLiteral(node, checkMode, false);
+      case Kind.PropertyAccessExpression:
+      case Kind.ElementAccessExpression: {
+        const expr = (node as unknown as { expression?: AstNode }).expression;
+        if (expr !== undefined) this.checkExpression(expr);
+        return {} as Type;
+      }
+      case Kind.ParenthesizedExpression:
+      case Kind.AsExpression:
+      case Kind.SatisfiesExpression:
+      case Kind.TypeAssertionExpression:
+      case Kind.NonNullExpression:
+      case Kind.PrefixUnaryExpression:
+      case Kind.PostfixUnaryExpression:
+      case Kind.AwaitExpression:
+      case Kind.VoidExpression:
+      case Kind.DeleteExpression:
+      case Kind.TypeOfExpression:
+      case Kind.YieldExpression:
+      case Kind.SpreadElement: {
+        const expr = (node as unknown as { expression?: AstNode }).expression;
+        if (expr !== undefined) this.checkExpression(expr);
+        return {} as Type;
+      }
+      default: return {} as Type;
+    }
   }
   checkExpressionForMutableLocation(node: AstNode, checkMode: number, contextualType: Type | undefined): Type {
-    void node; void checkMode; void contextualType; return {} as Type;
+    void contextualType;
+    return this.checkExpressionEx(node, checkMode, false);
   }
   checkExpressionWithContextualType(node: AstNode, contextualType: Type, checkMode: number): Type {
-    void node; void contextualType; void checkMode; return {} as Type;
+    void contextualType;
+    return this.checkExpressionEx(node, checkMode, false);
   }
-  checkExpressionWithTypeArguments(node: AstNode): Type { void node; return {} as Type; }
+  checkExpressionWithTypeArguments(node: AstNode): Type { return this.checkExpression(node); }
   checkIdentifier(node: AstNode): Type { void node; return {} as Type; }
   checkBinaryExpression(node: AstNode, checkMode: number): Type {
-    void node; void checkMode; return {} as Type;
+    const left = (node as unknown as { left?: AstNode }).left;
+    const right = (node as unknown as { right?: AstNode }).right;
+    const op = (node as unknown as { operatorToken?: { kind?: number } }).operatorToken;
+    return this.checkBinaryLikeExpression(left as AstNode, op?.kind ?? 0, right as AstNode, undefined);
   }
   checkBinaryLikeExpression(left: AstNode, operator: number, right: AstNode, errorNode: AstNode | undefined): Type {
-    void left; void operator; void right; void errorNode; return {} as Type;
+    void operator; void errorNode;
+    if (left !== undefined) this.checkExpression(left);
+    if (right !== undefined) this.checkExpression(right);
+    return {} as Type;
   }
   checkAssignmentOperator(left: AstNode, operator: number, right: AstNode, valueType: Type): void {
     void left; void operator; void right; void valueType;
   }
   checkConditionalExpression(node: AstNode, checkMode: number): Type {
-    void node; void checkMode; return {} as Type;
+    void checkMode;
+    const cond = (node as unknown as { condition?: AstNode }).condition;
+    const whenTrue = (node as unknown as { whenTrue?: AstNode }).whenTrue;
+    const whenFalse = (node as unknown as { whenFalse?: AstNode }).whenFalse;
+    if (cond !== undefined) this.checkExpression(cond);
+    if (whenTrue !== undefined) this.checkExpression(whenTrue);
+    if (whenFalse !== undefined) this.checkExpression(whenFalse);
+    return {} as Type;
   }
   checkCallExpression(node: AstNode, checkMode: number): Type {
-    void node; void checkMode; return {} as Type;
+    void checkMode;
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    if (expr !== undefined) this.checkExpression(expr);
+    const args = (node as unknown as { arguments?: { nodes?: readonly AstNode[] } }).arguments?.nodes;
+    if (args !== undefined) for (const a of args) this.checkExpression(a);
+    return {} as Type;
   }
   checkObjectLiteral(node: AstNode, checkMode: number): Type {
-    void node; void checkMode; return {} as Type;
+    void checkMode;
+    const props = (node as unknown as { properties?: { nodes?: readonly AstNode[] } }).properties?.nodes;
+    if (props === undefined) return {} as Type;
+    for (const p of props) {
+      const init = (p as unknown as { initializer?: AstNode }).initializer;
+      if (init !== undefined) this.checkExpression(init);
+    }
+    return {} as Type;
   }
   checkObjectLiteralMethod(node: AstNode, checkMode: number): Type {
-    void node; void checkMode; return {} as Type;
+    void checkMode;
+    this.checkMethodDeclaration(node);
+    return {} as Type;
   }
   checkArrayLiteral(node: AstNode, checkMode: number, forceTuple: boolean): Type {
-    void node; void checkMode; void forceTuple; return {} as Type;
+    void checkMode; void forceTuple;
+    const elems = (node as unknown as { elements?: { nodes?: readonly AstNode[] } }).elements?.nodes;
+    if (elems !== undefined) for (const e of elems) this.checkExpression(e);
+    return {} as Type;
   }
   checkObjectLiteralAssignment(node: AstNode, sourceType: Type, rightIsThis?: boolean): Type {
     void node; void rightIsThis; return sourceType;
