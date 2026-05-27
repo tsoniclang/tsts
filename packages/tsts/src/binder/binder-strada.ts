@@ -159,23 +159,47 @@ export class Binder {
   }
 
   declareModuleMember(node: AstNode, symbolFlags: number, symbolExcludes: number): AstSymbol {
-    void node; void symbolExcludes;
-    return this.newSymbol(symbolFlags, "");
+    // Module members go into the current container's symbol.exports
+    // when the container is a module, else into its locals.
+    const container = this.container;
+    if (container === undefined) return this.newSymbol(symbolFlags, this.getDeclarationName(node));
+    const containerSym = (container as unknown as { symbol?: AstSymbol }).symbol;
+    const table = (containerSym as unknown as { exports?: SymbolTable })?.exports
+      ?? (container as unknown as { locals?: SymbolTable }).locals;
+    if (table === undefined) return this.newSymbol(symbolFlags, this.getDeclarationName(node));
+    return this.declareSymbol(table, containerSym, node, symbolFlags, symbolExcludes);
   }
 
   declareClassMember(node: AstNode, symbolFlags: number, symbolExcludes: number): AstSymbol {
-    void node; void symbolExcludes;
-    return this.newSymbol(symbolFlags, "");
+    // Class members go into the class symbol's members or exports
+    // (for static members), based on the static modifier.
+    const container = this.container;
+    if (container === undefined) return this.newSymbol(symbolFlags, this.getDeclarationName(node));
+    const containerSym = (container as unknown as { symbol?: AstSymbol }).symbol;
+    const modifiers = (node as unknown as { modifiers?: { nodes?: readonly AstNode[] } }).modifiers?.nodes;
+    const isStatic = modifiers !== undefined && modifiers.some((m) => (m as { kind?: number }).kind === 126 /* StaticKeyword */);
+    const table = isStatic
+      ? (containerSym as unknown as { exports?: SymbolTable })?.exports
+      : (containerSym as unknown as { members?: SymbolTable })?.members;
+    if (table === undefined) return this.newSymbol(symbolFlags, this.getDeclarationName(node));
+    return this.declareSymbol(table, containerSym, node, symbolFlags, symbolExcludes);
   }
 
   declareSourceFileMember(node: AstNode, symbolFlags: number, symbolExcludes: number): AstSymbol {
-    void node; void symbolExcludes;
-    return this.newSymbol(symbolFlags, "");
+    const file = this.file;
+    if (file === undefined) return this.newSymbol(symbolFlags, this.getDeclarationName(node));
+    const isExternalModule = (file as unknown as { externalModuleIndicator?: AstNode }).externalModuleIndicator !== undefined;
+    if (isExternalModule) {
+      // Export-style member.
+      return this.declareModuleMember(node, symbolFlags, symbolExcludes);
+    }
+    const locals = (file as unknown as { locals?: SymbolTable }).locals;
+    if (locals === undefined) return this.newSymbol(symbolFlags, this.getDeclarationName(node));
+    return this.declareSymbol(locals, undefined, node, symbolFlags, symbolExcludes);
   }
 
   declareSymbolAndAddToSymbolTable(node: AstNode, symbolFlags: number, symbolExcludes: number): AstSymbol {
-    void node; void symbolExcludes;
-    return this.newSymbol(symbolFlags, "");
+    return this.declareSourceFileMember(node, symbolFlags, symbolExcludes);
   }
 
   // -------------------------------------------------------------------------
