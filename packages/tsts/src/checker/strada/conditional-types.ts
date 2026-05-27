@@ -73,7 +73,8 @@ export function resolveConditionalType(t: Type): Type {
 export function isDistributiveConditional(t: Type): boolean {
   const check = (t as unknown as { checkType?: Type }).checkType;
   if (check === undefined) return false;
-  return ((check as { flags?: number }).flags ?? 0 & TypeFlags.TypeParameter) !== 0;
+  const flags = (check as { flags?: number }).flags ?? 0;
+  return (flags & TypeFlags.TypeParameter) !== 0;
 }
 
 /**
