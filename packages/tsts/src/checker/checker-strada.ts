@@ -551,13 +551,47 @@ export class Checker {
   getTypeOfFuncClassEnumModule(symbol: AstSymbol): Type { void symbol; return {} as Type; }
   getTypeOfFuncClassEnumModuleWorker(symbol: AstSymbol): Type { void symbol; return {} as Type; }
 
-  getDeclaredTypeOfSymbol(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getDeclaredTypeOfAlias(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getDeclaredTypeOfClassOrInterface(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getDeclaredTypeOfEnum(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getDeclaredTypeOfEnumMember(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getDeclaredTypeOfTypeAlias(symbol: AstSymbol): Type { void symbol; return {} as Type; }
-  getDeclaredTypeOfTypeParameter(symbol: AstSymbol): Type { void symbol; return {} as Type; }
+  getDeclaredTypeOfSymbol(symbol: AstSymbol): Type {
+    // Dispatch by symbol kind. SymbolFlags: Class=32, Interface=64,
+    // Enum=384, TypeAlias=524288, TypeParameter=262144,
+    // EnumMember=8.
+    const flags = (symbol as unknown as { flags?: number }).flags ?? 0;
+    if ((flags & 32) !== 0 || (flags & 64) !== 0) {
+      return this.getDeclaredTypeOfClassOrInterface(symbol);
+    }
+    if ((flags & 384) !== 0) return this.getDeclaredTypeOfEnum(symbol);
+    if ((flags & 8) !== 0) return this.getDeclaredTypeOfEnumMember(symbol);
+    if ((flags & 524288) !== 0) return this.getDeclaredTypeOfTypeAlias(symbol);
+    if ((flags & 262144) !== 0) return this.getDeclaredTypeOfTypeParameter(symbol);
+    return { flags: 1 << 0 } as unknown as Type;
+  }
+  getDeclaredTypeOfAlias(symbol: AstSymbol): Type {
+    return this.getDeclaredTypeOfSymbol(symbol);
+  }
+  getDeclaredTypeOfClassOrInterface(symbol: AstSymbol): Type {
+    // Build an Object-flagged type record carrying the symbol back-ref.
+    const cached = (symbol as unknown as { declaredType?: Type }).declaredType;
+    if (cached !== undefined) return cached;
+    return { flags: 1 << 19, symbol } as unknown as Type;
+  }
+  getDeclaredTypeOfEnum(symbol: AstSymbol): Type {
+    return { flags: 1 << 5, symbol } as unknown as Type; // Enum
+  }
+  getDeclaredTypeOfEnumMember(symbol: AstSymbol): Type {
+    return this.getTypeOfEnumMember(symbol);
+  }
+  getDeclaredTypeOfTypeAlias(symbol: AstSymbol): Type {
+    // Walk the alias declaration's .type and resolve.
+    const decls = (symbol as unknown as { declarations?: readonly AstNode[] }).declarations;
+    if (decls !== undefined && decls.length > 0) {
+      const typeNode = (decls[0] as unknown as { type?: AstNode }).type;
+      if (typeNode !== undefined) return this.getTypeFromTypeNode(typeNode);
+    }
+    return { flags: 1 << 0 } as unknown as Type;
+  }
+  getDeclaredTypeOfTypeParameter(symbol: AstSymbol): Type {
+    return { flags: 1 << 18, symbol } as unknown as Type; // TypeParameter
+  }
 
   getApparentType(t: Type): Type { return t; }
   getApparentTypeOfContextualType(node: AstNode, contextFlags: number): Type | undefined {
