@@ -25,8 +25,27 @@ export class GrammarChecker {
   checkGrammarTypeParameterList(node: AstNode, parent: AstNode): boolean {
     void node; void parent; return false;
   }
-  checkGrammarParameterList(node: AstNode): boolean { void node; return false; }
-  checkGrammarRequiredParameter(node: AstNode): boolean { void node; return false; }
+  checkGrammarParameterList(node: AstNode): boolean {
+    // Required parameter after optional, or rest parameter not last.
+    const params = (node as unknown as { nodes?: readonly AstNode[] }).nodes;
+    if (params === undefined) return false;
+    let sawOptional = false;
+    for (let i = 0; i < params.length; i++) {
+      const p = params[i]!;
+      const isRest = (p as unknown as { dotDotDotToken?: AstNode }).dotDotDotToken !== undefined;
+      if (isRest && i !== params.length - 1) return true;
+      const isOptional = (p as unknown as { questionToken?: AstNode }).questionToken !== undefined ||
+        (p as unknown as { initializer?: AstNode }).initializer !== undefined ||
+        isRest;
+      if (sawOptional && !isOptional) return true;
+      if (isOptional) sawOptional = true;
+    }
+    return false;
+  }
+  checkGrammarRequiredParameter(node: AstNode): boolean {
+    // A required parameter cannot have a '?' marker.
+    return (node as unknown as { questionToken?: AstNode }).questionToken !== undefined;
+  }
   checkGrammarBindingElement(node: AstNode): boolean { void node; return false; }
   checkGrammarObjectLiteralExpression(node: AstNode, inDestructuring: boolean): boolean {
     void node; void inDestructuring; return false;
@@ -122,8 +141,20 @@ export class GrammarChecker {
     const expr = (node as unknown as { expression?: AstNode }).expression;
     return expr === undefined; // 'throw' without an expression is invalid.
   }
-  checkGrammarTryStatement(node: AstNode): boolean { void node; return false; }
-  checkGrammarCatchClause(node: AstNode): boolean { void node; return false; }
+  checkGrammarTryStatement(node: AstNode): boolean {
+    // A try statement must have either a catch clause or a finally
+    // block (or both).
+    const catchClause = (node as unknown as { catchClause?: AstNode }).catchClause;
+    const finallyBlock = (node as unknown as { finallyBlock?: AstNode }).finallyBlock;
+    return catchClause === undefined && finallyBlock === undefined;
+  }
+  checkGrammarCatchClause(node: AstNode): boolean {
+    // The catch-clause variable cannot have an initializer.
+    const variable = (node as unknown as { variableDeclaration?: AstNode }).variableDeclaration;
+    if (variable === undefined) return false;
+    const init = (variable as unknown as { initializer?: AstNode }).initializer;
+    return init !== undefined;
+  }
   checkGrammarSwitchStatement(node: AstNode): boolean {
     // At most one 'default' clause in a switch.
     const caseBlock = (node as unknown as { caseBlock?: { clauses?: { nodes?: readonly AstNode[] } } }).caseBlock;
@@ -174,7 +205,21 @@ export class GrammarChecker {
   checkGrammarClassDeclaration(node: AstNode): boolean { void node; return false; }
   checkGrammarClassLikeDeclaration(node: AstNode): boolean { void node; return false; }
   checkGrammarClassStaticBlockDeclaration(node: AstNode): boolean { void node; return false; }
-  checkGrammarEnumDeclaration(node: AstNode): boolean { void node; return false; }
+  checkGrammarEnumDeclaration(node: AstNode): boolean {
+    // Enum members must have unique names; const enum members must
+    // have constant initializers.
+    const members = (node as unknown as { members?: { nodes?: readonly AstNode[] } }).members?.nodes;
+    if (members === undefined) return false;
+    const seen = new Set<string>();
+    for (const m of members) {
+      const name = (m as unknown as { name?: { text?: string } }).name?.text;
+      if (name !== undefined) {
+        if (seen.has(name)) return true;
+        seen.add(name);
+      }
+    }
+    return false;
+  }
   checkGrammarIndexSignature(node: AstNode): boolean { void node; return false; }
   checkGrammarInterfaceDeclaration(node: AstNode): boolean { void node; return false; }
   checkGrammarTypeAliasDeclaration(node: AstNode): boolean { void node; return false; }
@@ -182,7 +227,13 @@ export class GrammarChecker {
   checkGrammarSourceFile(node: AstNode): boolean { void node; return false; }
   checkGrammarHeritageClause(node: AstNode): boolean { void node; return false; }
   checkGrammarExpressionWithTypeArguments(node: AstNode): boolean { void node; return false; }
-  checkGrammarConstructor(node: AstNode): boolean { void node; return false; }
+  checkGrammarConstructor(node: AstNode): boolean {
+    // A constructor cannot have type parameters or a return-type
+    // annotation.
+    const typeParams = (node as unknown as { typeParameters?: AstNode }).typeParameters;
+    const returnType = (node as unknown as { type?: AstNode }).type;
+    return typeParams !== undefined || returnType !== undefined;
+  }
   checkGrammarAccessorParameter(node: AstNode): boolean { void node; return false; }
   checkGrammarTopLevelElementForRequiredDeclareModifier(node: AstNode): boolean { void node; return false; }
   checkGrammarTopLevelElementsForRequiredDeclareModifier(file: AstNode): boolean { void file; return false; }
