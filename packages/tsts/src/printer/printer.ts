@@ -393,7 +393,15 @@ export class Printer {
     void token; void writeKind; return pos;
   }
   emitToken(token: number, pos: number, writeKind: WriteKind, contextNode: AstNode | undefined): number {
-    void token; void writeKind; void contextNode; return pos;
+    void writeKind; void contextNode;
+    // Look up the token text and write it. Returns the new position
+    // after the token.
+    const text = printerTokenToString(token);
+    if (text !== undefined) {
+      this.write(text);
+      return pos + text.length;
+    }
+    return pos;
   }
 
   // -------------------------------------------------------------------------
@@ -1519,3 +1527,74 @@ export function printFile(
 // ---------------------------------------------------------------------------
 
 interface EmitContext { readonly _ec?: unknown }
+
+/**
+ * Maps a Kind value to its canonical source-text representation.
+ * Returns undefined for tokens whose text is content-bearing (identifier,
+ * numeric literal, etc.) — callers should slice the source text in
+ * those cases.
+ */
+function printerTokenToString(token: number): string | undefined {
+  switch (token) {
+    case 18 /* OpenBraceToken */: return "{";
+    case 19 /* CloseBraceToken */: return "}";
+    case 20 /* OpenParenToken */: return "(";
+    case 21 /* CloseParenToken */: return ")";
+    case 22 /* OpenBracketToken */: return "[";
+    case 23 /* CloseBracketToken */: return "]";
+    case 24 /* DotToken */: return ".";
+    case 25 /* DotDotDotToken */: return "...";
+    case 26 /* SemicolonToken */: return ";";
+    case 27 /* CommaToken */: return ",";
+    case 28 /* QuestionDotToken */: return "?.";
+    case 29 /* LessThanToken */: return "<";
+    case 30 /* LessThanSlashToken */: return "</";
+    case 31 /* GreaterThanToken */: return ">";
+    case 32 /* LessThanEqualsToken */: return "<=";
+    case 33 /* GreaterThanEqualsToken */: return ">=";
+    case 34 /* EqualsEqualsToken */: return "==";
+    case 35 /* ExclamationEqualsToken */: return "!=";
+    case 36 /* EqualsEqualsEqualsToken */: return "===";
+    case 37 /* ExclamationEqualsEqualsToken */: return "!==";
+    case 38 /* EqualsGreaterThanToken */: return "=>";
+    case 39 /* PlusToken */: return "+";
+    case 40 /* MinusToken */: return "-";
+    case 41 /* AsteriskToken */: return "*";
+    case 42 /* AsteriskAsteriskToken */: return "**";
+    case 43 /* SlashToken */: return "/";
+    case 44 /* PercentToken */: return "%";
+    case 45 /* PlusPlusToken */: return "++";
+    case 46 /* MinusMinusToken */: return "--";
+    case 47 /* LessThanLessThanToken */: return "<<";
+    case 48 /* GreaterThanGreaterThanToken */: return ">>";
+    case 49 /* GreaterThanGreaterThanGreaterThanToken */: return ">>>";
+    case 50 /* AmpersandToken */: return "&";
+    case 51 /* BarToken */: return "|";
+    case 52 /* CaretToken */: return "^";
+    case 53 /* ExclamationToken */: return "!";
+    case 54 /* TildeToken */: return "~";
+    case 55 /* AmpersandAmpersandToken */: return "&&";
+    case 56 /* BarBarToken */: return "||";
+    case 57 /* QuestionToken */: return "?";
+    case 58 /* ColonToken */: return ":";
+    case 59 /* AtToken */: return "@";
+    case 60 /* QuestionQuestionToken */: return "??";
+    case 63 /* EqualsToken */: return "=";
+    case 64 /* PlusEqualsToken */: return "+=";
+    case 65 /* MinusEqualsToken */: return "-=";
+    case 66 /* AsteriskEqualsToken */: return "*=";
+    case 67 /* AsteriskAsteriskEqualsToken */: return "**=";
+    case 68 /* SlashEqualsToken */: return "/=";
+    case 69 /* PercentEqualsToken */: return "%=";
+    case 70 /* LessThanLessThanEqualsToken */: return "<<=";
+    case 71 /* GreaterThanGreaterThanEqualsToken */: return ">>=";
+    case 72 /* GreaterThanGreaterThanGreaterThanEqualsToken */: return ">>>=";
+    case 73 /* AmpersandEqualsToken */: return "&=";
+    case 74 /* BarEqualsToken */: return "|=";
+    case 75 /* CaretEqualsToken */: return "^=";
+    case 76 /* BarBarEqualsToken */: return "||=";
+    case 77 /* AmpersandAmpersandEqualsToken */: return "&&=";
+    case 78 /* QuestionQuestionEqualsToken */: return "??=";
+    default: return undefined;
+  }
+}
