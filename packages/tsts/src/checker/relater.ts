@@ -353,26 +353,76 @@ export class Relater {
     void headMessage; void source; void target;
   }
 
-  isWeakType(t: Type): boolean { void t; return false; }
-  isSimpleTypeRelatedTo(source: Type, target: Type, relation: Relation): boolean {
-    void source; void target; void relation;
-    return false;
+  isWeakType(t: Type): boolean {
+    // A weak type has only optional properties (or no required ones).
+    const symbol = (t as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol;
+    const members = symbol?.members;
+    if (members === undefined || members.size === 0) return false;
+    for (const [, sym] of members) {
+      const flags = (sym as unknown as { flags?: number }).flags ?? 0;
+      // SymbolFlags.Optional = 16777216
+      if ((flags & 16777216) === 0) return false;
+    }
+    return true;
   }
-  isTypeDerivedFrom(source: Type, target: Type): boolean { void source; void target; return false; }
+  isSimpleTypeRelatedTo(source: Type, target: Type, relation: Relation): boolean {
+    return this.isTypeRelatedTo(source, target, relation);
+  }
+  isTypeDerivedFrom(source: Type, target: Type): boolean {
+    return this.isTypeAssignableTo(source, target);
+  }
 
   // -------------------------------------------------------------------------
   // Subtype reduction
   // -------------------------------------------------------------------------
 
   removeSubtypes(types: readonly Type[], hasObjectTypes: boolean): readonly Type[] {
+    // Drop types that are subtypes of any other type in the list.
     void hasObjectTypes;
-    return types;
+    if (types.length < 2) return types;
+    const out: Type[] = [];
+    for (let i = 0; i < types.length; i++) {
+      let isSubsumed = false;
+      for (let j = 0; j < types.length; j++) {
+        if (i === j) continue;
+        if (this.isTypeStrictSubtypeOf(types[i]!, types[j]!)) {
+          isSubsumed = true;
+          break;
+        }
+      }
+      if (!isSubsumed) out.push(types[i]!);
+    }
+    return out;
   }
 
-  getCommonSubtype(types: readonly Type[]): Type | undefined { void types; return undefined; }
-  getCommonSupertype(types: readonly Type[]): Type | undefined { void types; return undefined; }
-  isTypeSubtypeOfFresh(source: Type, target: Type): boolean { void source; void target; return false; }
-  isExcessPropertyCheckTarget(t: Type): boolean { void t; return false; }
+  getCommonSubtype(types: readonly Type[]): Type | undefined {
+    // Find a type assignable to all of `types`.
+    if (types.length === 0) return undefined;
+    return types.reduce((acc: Type | undefined, t: Type) => {
+      if (acc === undefined) return t;
+      return this.isTypeAssignableTo(acc, t) ? acc :
+        this.isTypeAssignableTo(t, acc) ? t : undefined;
+    }, undefined as Type | undefined);
+  }
+  getCommonSupertype(types: readonly Type[]): Type | undefined {
+    if (types.length === 0) return undefined;
+    return types.reduce((acc: Type | undefined, t: Type) => {
+      if (acc === undefined) return t;
+      return this.isTypeAssignableTo(t, acc) ? acc :
+        this.isTypeAssignableTo(acc, t) ? t : undefined;
+    }, undefined as Type | undefined);
+  }
+  isTypeSubtypeOfFresh(source: Type, target: Type): boolean {
+    // Same as isTypeSubtypeOf but with fresh-object handling — for our
+    // simplified case, just forward.
+    return this.isTypeSubtypeOf(source, target);
+  }
+  isExcessPropertyCheckTarget(t: Type): boolean {
+    // A type is a target for excess-property check if it's an object
+    // literal type and not a union containing 'any'.
+    const flags = (t as { flags?: number }).flags ?? 0;
+    return (flags & (1 << 19)) !== 0 && (flags & 1) === 0;
+  }
   isObjectLiteralType(t: Type): boolean { void t; return (t.flags & TypeFlags.Object) !== 0; }
 }
 
