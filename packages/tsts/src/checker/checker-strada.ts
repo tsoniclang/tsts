@@ -637,20 +637,55 @@ export class Checker {
   // Property queries
   // -------------------------------------------------------------------------
 
-  getPropertyOfType(t: Type, name: string): AstSymbol | undefined { void t; void name; return undefined; }
-  getPropertyOfTypeEx(t: Type, name: string, skipObjectFunctionPropertyAugment: boolean): AstSymbol | undefined {
-    void t; void name; void skipObjectFunctionPropertyAugment; return undefined;
+  getPropertyOfType(t: Type, name: string): AstSymbol | undefined {
+    return this.getPropertyOfTypeEx(t, name, false);
   }
-  getPropertyOfObjectType(t: Type, name: string): AstSymbol | undefined { void t; void name; return undefined; }
+  getPropertyOfTypeEx(t: Type, name: string, skipObjectFunctionPropertyAugment: boolean): AstSymbol | undefined {
+    void skipObjectFunctionPropertyAugment;
+    // Read the type's properties table or members map for `name`.
+    const props = (t as unknown as { properties?: Map<string, AstSymbol> }).properties;
+    if (props !== undefined) {
+      const direct = props.get(name);
+      if (direct !== undefined) return direct;
+    }
+    const members = (t as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members;
+    if (members !== undefined) {
+      const direct = members.get(name);
+      if (direct !== undefined) return direct;
+    }
+    return undefined;
+  }
+  getPropertyOfObjectType(t: Type, name: string): AstSymbol | undefined {
+    return this.getPropertyOfType(t, name);
+  }
   getPropertyOfUnionOrIntersectionType(t: Type, name: string): AstSymbol | undefined {
-    void t; void name; return undefined;
+    // For union/intersection, the property is present in any constituent
+    // type that has it. Conservative implementation walks all types.
+    const types = (t as unknown as { types?: readonly Type[] }).types;
+    if (types === undefined) return undefined;
+    for (const sub of types) {
+      const found = this.getPropertyOfType(sub, name);
+      if (found !== undefined) return found;
+    }
+    return undefined;
   }
   getPropertyOfVariable(symbol: AstSymbol, name: string): AstSymbol | undefined {
-    void symbol; void name; return undefined;
+    const members = (symbol as unknown as { members?: Map<string, AstSymbol> }).members;
+    return members?.get(name);
   }
-  getPropertyNameFromBindingElement(node: AstNode): string | undefined { void node; return undefined; }
+  getPropertyNameFromBindingElement(node: AstNode): string | undefined {
+    const propertyName = (node as unknown as { propertyName?: { text?: string } }).propertyName;
+    if (propertyName?.text !== undefined) return propertyName.text;
+    const name = (node as unknown as { name?: { text?: string } }).name;
+    return name?.text;
+  }
   getPropertyNameFromIndex(node: AstNode, accessNode: AstNode | undefined): string | undefined {
-    void node; void accessNode; return undefined;
+    void accessNode;
+    const k = (node as { kind?: number }).kind;
+    if (k === Kind.StringLiteral || k === Kind.NoSubstitutionTemplateLiteral || k === Kind.NumericLiteral || k === Kind.Identifier) {
+      return (node as unknown as { text?: string }).text;
+    }
+    return undefined;
   }
   getPropertyTypeForIndexType(originalObjectType: Type, indexType: Type, accessNode: AstNode | undefined): Type | undefined {
     void originalObjectType; void indexType; void accessNode; return undefined;
