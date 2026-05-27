@@ -17,6 +17,88 @@ import {
   isShorthandPropertyAssignment, isMethodDeclaration, isConstructorDeclaration,
   isGetAccessorDeclaration, isSetAccessorDeclaration,
 } from "../ast/index.js";
+import {
+  getECMALineOfPosition as _getECMALineOfPosition,
+  nodeEnd as nodeEndOf, nodeParent, nodeLoc as _nodeLoc,
+  nodeInitializer,
+  declModifiers as modifiers,
+  methodAsteriskToken as postfixToken,
+  catchClauseBlock,
+  nodeBody as moduleDeclarationBody,
+} from "../ast/index.js";
+
+function getECMALineOfPosition(file: SourceFile, position: number): number {
+  return _getECMALineOfPosition(file as unknown as AstNode, position);
+}
+function getECMALineStarts(file: SourceFile): readonly number[] {
+  const text = (file as unknown as { text?: string }).text;
+  if (typeof text !== "string") return [0];
+  const starts: number[] = [0];
+  for (let i = 0; i < text.length; i++) {
+    if (text.charCodeAt(i) === 0x0a) starts.push(i + 1);
+  }
+  return starts;
+}
+function findPrecedingToken(_file: SourceFile, _position: number): AstNode | undefined {
+  // Deferred — preceding-token search requires scanner integration.
+  return undefined;
+}
+function nodeLoc(node: AstNode): TextRange {
+  const loc = _nodeLoc(node) as { pos?: number; end?: number } | undefined;
+  return { pos: loc?.pos ?? -1, end: loc?.end ?? -1 };
+}
+function equalsTokenOf(node: AstNode): AstNode | undefined {
+  return (node as unknown as { equalsToken?: AstNode }).equalsToken;
+}
+function constructorType(node: AstNode): AstNode | undefined {
+  return (node as unknown as { type?: AstNode }).type;
+}
+function setAccessorType(node: AstNode): AstNode | undefined {
+  return (node as unknown as { type?: AstNode }).type;
+}
+function typeParameterList(node: AstNode): NodeArray<AstNode> | undefined {
+  return (node as unknown as { typeParameters?: NodeArray<AstNode> }).typeParameters;
+}
+function parameterList(node: AstNode): NodeArray<AstNode> | undefined {
+  return (node as unknown as { parameters?: NodeArray<AstNode> }).parameters;
+}
+function typeArgumentList(node: AstNode): NodeArray<AstNode> | undefined {
+  return (node as unknown as { typeArguments?: NodeArray<AstNode> }).typeArguments;
+}
+function argumentList(node: AstNode): NodeArray<AstNode> | undefined {
+  return (node as unknown as { arguments?: NodeArray<AstNode> }).arguments;
+}
+function typeParameterExpression(node: AstNode): AstNode | undefined {
+  return (node as unknown as { expression?: AstNode }).expression;
+}
+function memberListLoc(node: AstNode): TextRange {
+  const members = (node as unknown as { members?: { pos?: number; end?: number } }).members;
+  return { pos: members?.pos ?? -1, end: members?.end ?? -1 };
+}
+function statementListLoc(node: AstNode): TextRange {
+  const stmts = (node as unknown as { statements?: { pos?: number; end?: number } }).statements;
+  return { pos: stmts?.pos ?? -1, end: stmts?.end ?? -1 };
+}
+function locContains(outer: TextRange, inner: TextRange): boolean {
+  return outer.pos <= inner.pos && outer.end >= inner.end;
+}
+function isPropertySignatureDeclaration(node: AstNode): boolean {
+  return (node as { kind?: number }).kind === Kind.PropertySignature;
+}
+function isAutoAccessorPropertyDeclaration(_node: AstNode): boolean {
+  // Auto-accessor: a property declaration with `accessor` modifier.
+  // Defer until ModifierFlags.Accessor wiring is settled.
+  return false;
+}
+function isNamespaceExportDeclaration(node: AstNode): boolean {
+  return (node as { kind?: number }).kind === Kind.NamespaceExportDeclaration;
+}
+function isModifierLike(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = (node as { kind?: number }).kind ?? 0;
+  return k === Kind.Decorator
+    || (k >= Kind.AbstractKeyword && k <= Kind.StaticKeyword);
+}
 
 import type { TextRange } from "./api.js";
 
@@ -216,35 +298,6 @@ function isListElement(parent: AstNode, node: AstNode | undefined): boolean {
 // Forward-declared AST / scanner surface
 // ---------------------------------------------------------------------------
 
-declare function getECMALineOfPosition(file: SourceFile, position: number): number;
-declare function getECMALineStarts(file: SourceFile): readonly number[];
-
-declare function findPrecedingToken(sourceFile: SourceFile, position: number): AstNode | undefined;
-
-declare function nodeEndOf(node: AstNode): number;
-declare function nodeParent(node: AstNode): AstNode | undefined;
-declare function nodeLoc(node: AstNode): TextRange;
-declare function nodeInitializer(node: AstNode): AstNode | undefined;
-declare function modifiers(node: AstNode): NodeArray<AstNode> | undefined;
-declare function postfixToken(node: AstNode): AstNode | undefined;
-declare function equalsTokenOf(node: AstNode): AstNode | undefined;
-declare function constructorType(node: AstNode): AstNode | undefined;
-declare function setAccessorType(node: AstNode): AstNode | undefined;
-declare function typeParameterList(node: AstNode): NodeArray<AstNode> | undefined;
-declare function parameterList(node: AstNode): NodeArray<AstNode> | undefined;
-declare function typeArgumentList(node: AstNode): NodeArray<AstNode> | undefined;
-declare function argumentList(node: AstNode): NodeArray<AstNode> | undefined;
-declare function typeParameterExpression(node: AstNode): AstNode | undefined;
-declare function memberListLoc(node: AstNode): TextRange;
-declare function statementListLoc(node: AstNode): TextRange;
-declare function catchClauseBlock(node: AstNode): AstNode;
-declare function moduleDeclarationBody(node: AstNode): AstNode | undefined;
-declare function locContains(outer: TextRange, inner: TextRange): boolean;
-
-declare function isPropertySignatureDeclaration(node: AstNode): boolean;
-declare function isAutoAccessorPropertyDeclaration(node: AstNode): boolean;
-declare function isNamespaceExportDeclaration(node: AstNode): boolean;
-declare function isModifierLike(node: AstNode): boolean;
 
 // Kind constants are derived from the canonical Kind enum.
 const KindConstructor = Kind.Constructor;
