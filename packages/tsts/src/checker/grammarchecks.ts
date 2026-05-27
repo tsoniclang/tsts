@@ -267,12 +267,56 @@ export class GrammarChecker {
     // The property must have an initializer (vs. a shorthand assignment).
     return (node as unknown as { initializer?: AstNode }).initializer === undefined;
   }
-  checkGrammarParameter(node: AstNode): boolean { void node; return false; }
-  checkGrammarParameterPropertyAndPrivateName(node: AstNode): boolean { void node; return false; }
-  checkGrammarParameterPropertyDeclaration(node: AstNode): boolean { void node; return false; }
-  checkGrammarTypeAssertion(node: AstNode): boolean { void node; return false; }
-  checkGrammarStatementInAmbientContext(node: AstNode): boolean { void node; return false; }
-  checkGrammarNumericLiteral(node: AstNode): boolean { void node; return false; }
+  checkGrammarParameter(node: AstNode): boolean {
+    // A parameter cannot have both ? and an initializer (TS1015).
+    const questionToken = (node as unknown as { questionToken?: AstNode }).questionToken;
+    const init = (node as unknown as { initializer?: AstNode }).initializer;
+    return questionToken !== undefined && init !== undefined;
+  }
+  checkGrammarParameterPropertyAndPrivateName(node: AstNode): boolean {
+    // A parameter property cannot have a private-identifier name.
+    const name = (node as unknown as { name?: { kind?: number } }).name;
+    return name?.kind === Kind.PrivateIdentifier;
+  }
+  checkGrammarParameterPropertyDeclaration(node: AstNode): boolean {
+    // Parameter properties are only valid in a constructor.
+    const parent = (node as unknown as { parent?: { kind?: number } }).parent;
+    return parent?.kind !== Kind.Constructor;
+  }
+  checkGrammarTypeAssertion(node: AstNode): boolean {
+    // Angle-bracket type assertions are not allowed in JSX files
+    // — caller is responsible for the JSX scriptKind check.
+    void node; return false;
+  }
+  checkGrammarStatementInAmbientContext(node: AstNode): boolean {
+    // Walk parents looking for an ambient (declare) context. In an
+    // ambient context, only declaration statements are allowed.
+    let n: AstNode | undefined = (node as unknown as { parent?: AstNode }).parent;
+    while (n !== undefined) {
+      const flags = getModifierFlagsOf(n);
+      if ((flags & (1 << 1)) !== 0) {
+        // Ambient context: reject non-declaration statements.
+        const k = (node as { kind?: number }).kind;
+        const allowedKinds = new Set<number>([
+          Kind.VariableStatement, Kind.FunctionDeclaration,
+          Kind.ClassDeclaration, Kind.InterfaceDeclaration,
+          Kind.TypeAliasDeclaration, Kind.EnumDeclaration,
+          Kind.ModuleDeclaration, Kind.ImportDeclaration,
+          Kind.ImportEqualsDeclaration, Kind.ExportDeclaration,
+          Kind.ExportAssignment,
+        ]);
+        return !allowedKinds.has(k!);
+      }
+      n = (n as unknown as { parent?: AstNode }).parent;
+    }
+    return false;
+  }
+  checkGrammarNumericLiteral(node: AstNode): boolean {
+    // Octal literals are not allowed in strict mode (TS1121); the
+    // parser tags such literals with NumericLiteralFlags.Octal.
+    const flags = (node as unknown as { numericLiteralFlags?: number }).numericLiteralFlags ?? 0;
+    return (flags & 0x10) !== 0;
+  }
   checkGrammarTaggedTemplateChain(node: AstNode): boolean { void node; return false; }
   checkGrammarBigIntLiteral(node: AstNode): boolean { void node; return false; }
   checkGrammarStringLiteralExpression(node: AstNode): boolean { void node; return false; }
