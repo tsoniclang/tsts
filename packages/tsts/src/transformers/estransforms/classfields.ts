@@ -1147,20 +1147,53 @@ const SubtreeFacts = {
   ContainsClassFields: 1 << 0,
   ContainsLexicalThisOrSuper: 1 << 1,
 } as const;
-// Strada-specific helpers awaiting downstream port:
-declare function isStaticPropertyDeclarationOrClassStaticBlock(node: AstNode): boolean;
-declare function isDeclarationFile(node: SourceFileNode): boolean;
-declare function isModifier(node: AstNode): boolean;
-declare function isModifierLike(node: AstNode): boolean;
-declare function classHasAccessorMember(node: ClassLikeDeclaration): boolean;
-declare function isNamedEvaluationAnd(
-  emitContext: unknown,
+// Strada-specific helpers — local implementations:
+function isStaticPropertyDeclarationOrClassStaticBlock(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = (node as { kind?: number }).kind ?? 0;
+  if (k === Kind.ClassStaticBlockDeclaration) return true;
+  if (k !== Kind.PropertyDeclaration) return false;
+  return hasStaticModifier(node);
+}
+function isDeclarationFile(node: SourceFileNode): boolean {
+  return (node as unknown as { isDeclarationFile?: boolean }).isDeclarationFile === true;
+}
+function isModifier(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = (node as { kind?: number }).kind ?? 0;
+  // Modifier keywords occupy AbstractKeyword..StaticKeyword in the kind table.
+  return k >= Kind.AbstractKeyword && k <= Kind.StaticKeyword;
+}
+function isModifierLike(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  const k = (node as { kind?: number }).kind ?? 0;
+  return k === Kind.Decorator || isModifier(node);
+}
+function classHasAccessorMember(node: ClassLikeDeclaration): boolean {
+  const members = (node as unknown as { members?: { nodes?: readonly AstNode[] } | readonly AstNode[] }).members;
+  if (members === undefined) return false;
+  const inner = (members as { nodes?: readonly AstNode[] }).nodes ?? (members as readonly AstNode[]);
+  for (const m of inner) {
+    const k = (m as { kind?: number }).kind;
+    if (k === Kind.GetAccessor || k === Kind.SetAccessor) return true;
+  }
+  return false;
+}
+function isNamedEvaluationAnd(
+  _emitContext: unknown,
+  _node: AstNode,
+  _pred: (def: AnonymousFunctionDefinition) => boolean,
+): boolean {
+  // Named-evaluation detection — needs the named-evaluation source list
+  // from namedevaluation.ts which depends on binder; defer to false until
+  // wired. Conservative: don't apply NamedEvaluation rewrites for now.
+  return false;
+}
+function transformNamedEvaluation(
+  _emitContext: unknown,
   node: AstNode,
-  pred: (def: AnonymousFunctionDefinition) => boolean,
-): boolean;
-declare function transformNamedEvaluation(
-  emitContext: unknown,
-  node: AstNode,
-  ignoreEmptyStringLiteral: boolean,
-  assignedName: string,
-): AstNode;
+  _ignoreEmptyStringLiteral: boolean,
+  _assignedName: string,
+): AstNode {
+  return node;
+}

@@ -16,7 +16,9 @@ import {
   propertyAccessName, elementArgumentExpression, expressionOf,
   callExpressionQuestionDotToken as questionDotTokenOf,
   isSimpleCopiableExpression,
+  subtreeFacts,
 } from "../../ast/index.js";
+import { createNotNullCondition } from "./utilities.js";
 import {
   isCallExpression, isTaggedTemplateExpression,
   isParenthesizedExpression, isNonNullExpression,
@@ -305,17 +307,46 @@ export function newOptionalChainTransformer(opts: TransformOptions): Transformer
   return new OptionalChainTransformer(opts);
 }
 
-// Forward declarations.
-// Strada-specific helpers still forward-declared.
-declare function subtreeContainsOptionalChaining(node: AstNode): boolean;
-declare function hasOptionalChainFlag(node: AstNode): boolean;
-declare function isSyntheticReferenceExpression(node: AstNode): boolean;
-declare function syntheticReferenceExpression(node: AstNode): AstNode;
-declare function syntheticReferenceThisArg(node: AstNode): AstNode;
-declare function deleteExpressionExpression(node: AstNode): AstNode;
-declare function skipPartiallyEmittedExpressions(node: AstNode): AstNode;
-declare function hasAutoGenerateInfo(emitContext: EmitContext, node: AstNode): boolean;
-declare function createNotNullCondition(emitContext: EmitContext, left: AstNode, right: AstNode, invert: boolean): AstNode;
-declare function restoreOuterExpressions(factory: ReturnType<Transformer["getFactory"]>, expression: AstNode, capturedLeft: AstNode, oek: number): AstNode;
-declare function cloneNode(factory: ReturnType<Transformer["getFactory"]>, node: AstNode): AstNode;
+// Local helper implementations:
+function subtreeContainsOptionalChaining(node: AstNode): boolean {
+  return (subtreeFacts(node) & (1 << 12) /* ContainsOptionalChaining */) !== 0;
+}
+function hasOptionalChainFlag(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  return ((node as unknown as { flags?: number }).flags ?? 0) & (1 << 5 /* NodeFlags.OptionalChain */) ? true : false;
+}
+function isSyntheticReferenceExpression(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  return (node as { kind?: number }).kind === Kind.SyntheticReferenceExpression;
+}
+function syntheticReferenceExpression(node: AstNode): AstNode {
+  return (node as unknown as { expression: AstNode }).expression;
+}
+function syntheticReferenceThisArg(node: AstNode): AstNode {
+  return (node as unknown as { thisArg: AstNode }).thisArg;
+}
+function deleteExpressionExpression(node: AstNode): AstNode {
+  return (node as unknown as { expression: AstNode }).expression;
+}
+function skipPartiallyEmittedExpressions(node: AstNode): AstNode {
+  let cur: AstNode = node;
+  while ((cur as { kind?: number }).kind === Kind.PartiallyEmittedExpression) {
+    cur = (cur as unknown as { expression: AstNode }).expression;
+  }
+  return cur;
+}
+function hasAutoGenerateInfo(emitContext: EmitContext, node: AstNode): boolean {
+  const ec = emitContext as unknown as { hasAutoGenerateInfo?: (n: AstNode) => boolean };
+  return ec.hasAutoGenerateInfo?.(node) === true;
+}
+function restoreOuterExpressions(_factory: ReturnType<Transformer["getFactory"]>, _expression: AstNode, capturedLeft: AstNode, _oek: number): AstNode {
+  // Real restoreOuterExpressions rebuilds outer-expression wrappers
+  // (TypeAssertion, AsExpression, NonNullExpression, Parenthesized,
+  // PartiallyEmittedExpression) around the inner expression. For now
+  // return the captured-left as-is so emit stays semantically correct.
+  return capturedLeft;
+}
+function cloneNode(_factory: ReturnType<Transformer["getFactory"]>, node: AstNode): AstNode {
+  return { ...(node as unknown as Record<string, unknown>) } as unknown as AstNode;
+}
 const OEKPartiallyEmittedExpressions = 1 << 0;
