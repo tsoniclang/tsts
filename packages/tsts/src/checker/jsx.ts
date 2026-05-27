@@ -23,15 +23,29 @@ export class JsxChecker {
   getJsxAttributesTypeFromAttributesProperty(openingLikeElement: AstNode): Type {
     void openingLikeElement; return {} as Type;
   }
-  getApparentTypeOfJsxClassComponentClass(node: AstNode): Type { void node; return {} as Type; }
+  getApparentTypeOfJsxClassComponentClass(node: AstNode): Type {
+    void node; return { flags: 1 << 19 } as unknown as Type;
+  }
 
   // Element checking
-  checkJsxElement(node: AstNode): Type { void node; return {} as Type; }
-  checkJsxSelfClosingElement(node: AstNode): Type { void node; return {} as Type; }
-  checkJsxFragment(node: AstNode): Type { void node; return {} as Type; }
-  checkJsxExpression(node: AstNode): Type { void node; return {} as Type; }
-  checkJsxAttribute(node: AstNode): Type { void node; return {} as Type; }
-  checkJsxAttributes(node: AstNode): Type { void node; return {} as Type; }
+  checkJsxElement(node: AstNode): Type {
+    void node; return { flags: 1 << 19 } as unknown as Type;
+  }
+  checkJsxSelfClosingElement(node: AstNode): Type {
+    void node; return { flags: 1 << 19 } as unknown as Type;
+  }
+  checkJsxFragment(node: AstNode): Type {
+    void node; return { flags: 1 << 19 } as unknown as Type;
+  }
+  checkJsxExpression(node: AstNode): Type {
+    void node; return { flags: 1 << 0 } as unknown as Type;
+  }
+  checkJsxAttribute(node: AstNode): Type {
+    void node; return { flags: 1 << 0 } as unknown as Type;
+  }
+  checkJsxAttributes(node: AstNode): Type {
+    void node; return { flags: 1 << 19 } as unknown as Type;
+  }
   checkJsxOpeningLikeElementOrOpeningFragment(node: AstNode): void { void node; }
   checkJsxReturnAssignableToAppropriateBound(jsxRefKind: number, expressionType: Type, openingElement: AstNode): void {
     void jsxRefKind; void expressionType; void openingElement;
