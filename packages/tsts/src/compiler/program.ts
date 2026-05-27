@@ -176,12 +176,47 @@ export class Program {
     }
     return "";
   }
-  getPackageJsonInfo(pkgJsonPath: string): unknown { void pkgJsonPath; return undefined; }
-  getRedirectTargets(path: string): readonly string[] { void path; return []; }
-  getSourceOfProjectReferenceIfOutputIncluded(file: SourceFile): string { void file; return ""; }
-  getProjectReferenceFromSource(path: string): unknown { void path; return undefined; }
-  isSourceFromProjectReference(path: string): boolean { void path; return false; }
-  getProjectReferenceFromOutputDts(path: string): unknown { void path; return undefined; }
+  getPackageJsonInfo(pkgJsonPath: string): unknown {
+    // Reads and parses the package.json at the given path, returning
+    // the parsed object (or undefined if read/parse fails).
+    const content = this.opts.host.readFile(pkgJsonPath);
+    if (content === undefined) return undefined;
+    try {
+      return JSON.parse(content);
+    } catch {
+      return undefined;
+    }
+  }
+  getRedirectTargets(path: string): readonly string[] {
+    // Project-reference redirects map a path to its output target(s);
+    // without a redirect map populated, return empty list.
+    void path; return [];
+  }
+  getSourceOfProjectReferenceIfOutputIncluded(file: SourceFile): string {
+    // Locate the .ts source whose output is this .d.ts file, when a
+    // project reference produces .d.ts as a build output.
+    void file; return "";
+  }
+  getProjectReferenceFromSource(path: string): unknown {
+    // Look up resolvedProjectReferences for one whose .fileNames
+    // contain `path`.
+    for (const ref of this.resolvedProjectReferences) {
+      const files = (ref as unknown as { fileNames?: readonly string[] }).fileNames;
+      if (files !== undefined && files.includes(path)) return ref;
+    }
+    return undefined;
+  }
+  isSourceFromProjectReference(path: string): boolean {
+    return this.getProjectReferenceFromSource(path) !== undefined;
+  }
+  getProjectReferenceFromOutputDts(path: string): unknown {
+    // Inverse of getSourceOfProjectReferenceIfOutputIncluded: given a
+    // .d.ts file's path, find the project reference whose output
+    // includes it.
+    if (!path.endsWith(".d.ts")) return undefined;
+    const sourceTs = path.slice(0, -5) + ".ts";
+    return this.getProjectReferenceFromSource(sourceTs);
+  }
   getResolvedProjectReferenceFor(path: string): { config: ParsedCommandLine | undefined; ok: boolean } {
     void path; return { config: undefined, ok: false };
   }
