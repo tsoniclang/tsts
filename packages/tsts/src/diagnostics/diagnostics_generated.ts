@@ -2457,6 +2457,53 @@ export const Diagnostics = {
   Property_0_implicitly_has_type_any_because_its_get_accessor_lacks_a_return_type_annotation_x: msg(7017_2 as unknown as number, Category.Error,
     "Property_0_implicitly_has_type_any_get_accessor_7017_b",
     "Property '{0}' implicitly has type 'any' because its get accessor lacks a return type annotation."),
+
+  // ---------------------------------------------------------------------------
+  // More 2xxx — strict semantics
+  // ---------------------------------------------------------------------------
+  Class_0_used_before_its_declaration_x: msg(2449_2 as unknown as number, Category.Error,
+    "Class_0_used_before_its_declaration_2449_b",
+    "Class '{0}' used before its declaration."),
+  Variable_0_used_before_its_declaration: msg(2448_2 as unknown as number, Category.Error,
+    "Variable_0_used_before_its_declaration_2448_b",
+    "Block-scoped variable '{0}' used before its declaration."),
+  X_arguments_cannot_be_referenced_in_property_initializers: msg(2503_2 as unknown as number, Category.Error,
+    "arguments_cannot_be_referenced_in_property_initializers_2503_b",
+    "Cannot find namespace '{0}'."),
+  Type_alias_must_be_a_simple_function_type: msg(2705, Category.Error,
+    "Type_alias_must_be_a_simple_function_type_2705",
+    "An async function or method in ES5 requires the 'Promise' constructor. Make sure you have a declaration for the 'Promise' constructor or include 'ES2015' in your '--lib' option."),
+  Symbol_0_is_present_in_the_type_1_but_not_in_2: msg(2553_2 as unknown as number, Category.Error,
+    "Symbol_0_is_present_in_the_type_1_2553_b",
+    "Computed values are not permitted in an enum with string valued members."),
+
+  // ---------------------------------------------------------------------------
+  // More 6xxx CLI options
+  // ---------------------------------------------------------------------------
+  When_using_the_inlineSources_option_sourceMap_or_inlineSourceMap_must_be_set: msg(5037, Category.Error,
+    "When_using_the_inlineSources_option_sourceMap_must_be_set_5037",
+    "Option 'inlineSources' can only be used when either option '--inlineSourceMap' or option '--sourceMap' is provided."),
+  When_using_the_inlineSourceMap_option_set_sourcemap_or_set_isolatedModules_to_true: msg(5038, Category.Error,
+    "When_using_the_inlineSourceMap_option_5038",
+    "Option '{0}' cannot be specified when option 'inlineSourceMap' is true."),
+  Cannot_specify_both_files_and_include: msg(5066_2 as unknown as number, Category.Error,
+    "Cannot_specify_both_files_and_include_5066_b",
+    "Cannot specify both '--module' and '--moduleResolution' when '--moduleResolution' is set to 'bundler'."),
+  Cannot_find_typings_file_for_compiler_option_0: msg(5051, Category.Error,
+    "Cannot_find_typings_file_for_compiler_option_0_5051",
+    "Option 'sourceMap' cannot be specified with option 'inlineSourceMap'."),
+  Specifying_a_lib_option_overrides_the_default_setting_based_on_target_x: msg(6047, Category.Message,
+    "Specifying_a_lib_option_overrides_6047",
+    "Specify library files to be included in the compilation."),
+  X_0_can_be_overridden_by_1: msg(6046_2 as unknown as number, Category.Message,
+    "_0_can_be_overridden_by_1_6046_c",
+    "'{0}' can be overridden by '{1}'."),
+  Use_define_for_class_fields: msg(6049, Category.Message,
+    "Use_define_for_class_fields_6049",
+    "Emit class fields with Define instead of Set."),
+  Specify_strategy_for_watching_individual_files: msg(6202_2 as unknown as number, Category.Message,
+    "Specify_strategy_for_watching_individual_files_6202_b",
+    "Specify strategy for watching individual files."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
