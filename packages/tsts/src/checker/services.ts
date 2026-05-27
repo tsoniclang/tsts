@@ -42,16 +42,56 @@ export class CheckerServices {
   getQuickInfoAtPosition(file: AstNode, position: number): QuickInfoResult | undefined {
     void file; void position; return undefined;
   }
-  getSymbolAtLocation(node: AstNode): AstSymbol | undefined { void node; return undefined; }
-  getSymbolsInScope(location: AstNode, meaning: number): readonly AstSymbol[] {
-    void location; void meaning; return [];
+  getSymbolAtLocation(node: AstNode): AstSymbol | undefined {
+    return (node as unknown as { symbol?: AstSymbol }).symbol;
   }
-  getTypeAtLocation(node: AstNode): Type | undefined { void node; return undefined; }
+  getSymbolsInScope(location: AstNode, meaning: number): readonly AstSymbol[] {
+    void meaning;
+    // Walk parents collecting symbols from each scope's locals table.
+    const out: AstSymbol[] = [];
+    const seen = new Set<string>();
+    let n: AstNode | undefined = location;
+    while (n !== undefined) {
+      const locals = (n as unknown as { locals?: Map<string, AstSymbol> }).locals;
+      if (locals !== undefined) {
+        for (const [name, sym] of locals) {
+          if (!seen.has(name)) {
+            seen.add(name);
+            out.push(sym);
+          }
+        }
+      }
+      n = (n as unknown as { parent?: AstNode }).parent;
+    }
+    return out;
+  }
+  getTypeAtLocation(node: AstNode): Type | undefined {
+    const sym = this.getSymbolAtLocation(node);
+    if (sym === undefined) return undefined;
+    return (sym as unknown as { type?: Type }).type;
+  }
   getContextualType(node: AstNode, contextFlags: number): Type | undefined {
     void node; void contextFlags; return undefined;
   }
-  getApparentType(t: Type): Type { return t; }
-  getNonOptionalType(t: Type): Type { return t; }
+  getApparentType(t: Type): Type {
+    // Apparent type unwraps type parameters to their constraint, but
+    // for primitives this is the type itself.
+    return t;
+  }
+  getNonOptionalType(t: Type): Type {
+    // Removes undefined/null from the type for definite-assignment
+    // narrowing. For union types, filter constituents; otherwise
+    // identity.
+    const types = (t as unknown as { types?: readonly Type[] }).types;
+    if (types === undefined) return t;
+    const filtered = types.filter((u) => {
+      const f = (u as { flags?: number }).flags ?? 0;
+      return (f & ((1 << 15) | (1 << 16))) === 0; // ¬(Undefined | Null)
+    });
+    if (filtered.length === types.length) return t;
+    if (filtered.length === 1) return filtered[0]!;
+    return { ...(t as object), types: filtered } as unknown as Type;
+  }
 
   // Signature help
   getSignatureHelpItems(file: AstNode, position: number): SignatureHelpResult | undefined {
