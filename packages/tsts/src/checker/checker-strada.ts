@@ -315,7 +315,13 @@ export class Checker {
     return this.checkExpressionEx(node, checkMode, false);
   }
   checkExpressionWithTypeArguments(node: AstNode): Type { return this.checkExpression(node); }
-  checkIdentifier(node: AstNode): Type { void node; return {} as Type; }
+  checkIdentifier(node: AstNode): Type {
+    // Resolve the identifier's symbol via getSymbolAtLocation, then
+    // return its type. Falls back to Any.
+    const sym = this.getSymbolAtLocation(node);
+    if (sym !== undefined) return this.getTypeOfSymbol(sym);
+    return { flags: 1 << 0 } as unknown as Type;
+  }
   checkBinaryExpression(node: AstNode, checkMode: number): Type {
     const left = (node as unknown as { left?: AstNode }).left;
     const right = (node as unknown as { right?: AstNode }).right;
