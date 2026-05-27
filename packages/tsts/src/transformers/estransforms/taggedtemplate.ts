@@ -11,8 +11,44 @@
  */
 
 import type { Node as AstNode, SourceFile } from "../../ast/index.js";
-import { nodeKind, sourceFileEndOfFileToken, isExternalModule } from "../../ast/index.js";
+import {
+  nodeKind, sourceFileEndOfFileToken, isExternalModule,
+  taggedTemplateTag, subtreeFacts, getSourceFileOfNode,
+} from "../../ast/index.js";
 import { isNoSubstitutionTemplateLiteral } from "../../ast/index.js";
+import { getSourceTextOfNodeFromSourceFile } from "../../scanner/utilities.js";
+
+function taggedTemplateTemplate(node: AstNode): AstNode {
+  return (node as unknown as { template: AstNode }).template;
+}
+function templateLiteralLikeData(node: AstNode): { readonly text: string; readonly rawText: string; readonly templateFlags: number } {
+  const n = node as unknown as { text?: string; rawText?: string; templateFlags?: number };
+  return { text: n.text ?? "", rawText: n.rawText ?? "", templateFlags: n.templateFlags ?? 0 };
+}
+function templateExpressionHead(node: AstNode): AstNode {
+  return (node as unknown as { head: AstNode }).head;
+}
+function templateExpressionSpans(node: AstNode): readonly AstNode[] {
+  const spans = (node as unknown as { templateSpans?: { nodes?: readonly AstNode[] } | readonly AstNode[] }).templateSpans;
+  if (spans === undefined) return [];
+  const inner = (spans as { nodes?: readonly AstNode[] }).nodes;
+  return inner ?? (spans as readonly AstNode[]);
+}
+function templateSpanLiteral(span: AstNode): AstNode {
+  return (span as unknown as { literal: AstNode }).literal;
+}
+function templateSpanExpression(span: AstNode): AstNode {
+  return (span as unknown as { expression: AstNode }).expression;
+}
+function subtreeContainsInvalidTemplateEscape(node: AstNode): boolean {
+  return (subtreeFacts(node) & (1 << 8) /* ContainsInvalidTemplateEscape */) !== 0;
+}
+function sourceFileStatements(file: SourceFile): readonly AstNode[] {
+  const stmts = (file as unknown as { statements?: { nodes?: readonly AstNode[] } | readonly AstNode[] }).statements;
+  if (stmts === undefined) return [];
+  const inner = (stmts as { nodes?: readonly AstNode[] }).nodes;
+  return inner ?? (stmts as readonly AstNode[]);
+}
 import { Kind } from "../../ast/index.js";
 import {
   visitNode, visitEachChildOf, addEmitHelpers, readEmitHelpers,
@@ -139,7 +175,7 @@ function getRawLiteral(
 ): AstNode {
   let text = templateLiteralLikeData(node).rawText;
   if (text === "") {
-    text = getSourceTextOfNodeFromSourceFile(getSourceFileOfNode(node), node, false);
+    text = getSourceTextOfNodeFromSourceFile(getSourceFileOfNode(node) as unknown as SourceFile, node, false);
     const kind = nodeKind(node);
     const isLast = kind === KindNoSubstitutionTemplateLiteral || kind === KindTemplateTail;
     const endLen = isLast ? 1 : 2;
@@ -170,17 +206,5 @@ export function newTaggedTemplateLiftRestrictionTransformer(opts: TransformOptio
   return new TaggedTemplateTransformer(opts);
 }
 
-// Strada-specific helpers still forward-declared.
-declare function subtreeContainsInvalidTemplateEscape(node: AstNode): boolean;
-declare function taggedTemplateTag(node: AstNode): AstNode;
-declare function taggedTemplateTemplate(node: AstNode): AstNode;
-declare function templateLiteralLikeData(node: AstNode): { readonly text: string; readonly rawText: string; readonly templateFlags: number };
-declare function templateExpressionHead(node: AstNode): AstNode;
-declare function templateExpressionSpans(node: AstNode): readonly AstNode[];
-declare function templateSpanLiteral(span: AstNode): AstNode;
-declare function templateSpanExpression(span: AstNode): AstNode;
-declare function getSourceFileOfNode(node: AstNode): SourceFile;
-declare function getSourceTextOfNodeFromSourceFile(file: SourceFile, node: AstNode, includeTrivia: boolean): string;
-declare function sourceFileStatements(file: SourceFile): readonly AstNode[];
 const TokenFlagsIsInvalid = 1 << 0;
 const TokenFlagsContainsInvalidEscape = 1 << 1;
