@@ -2369,6 +2369,50 @@ export const Diagnostics = {
   An_await_using_declaration_requires_a_type_annotation_or_initializer: msg(1437, Category.Error,
     "An_await_using_declaration_requires_a_type_annotation_or_initializer_1437",
     "An 'await using' declaration requires a type annotation or initializer."),
+
+  // ---------------------------------------------------------------------------
+  // More 2xxx — namespace/enum/interface
+  // ---------------------------------------------------------------------------
+  Cannot_extend_an_enum: msg(2647, Category.Error,
+    "Cannot_extend_an_enum_2647",
+    "Cannot use namespace '{0}' as a type."),
+  Enum_declarations_must_all_be_const_or_non_const: msg(2473, Category.Error,
+    "Enum_declarations_must_all_be_const_or_non_const_2473",
+    "Enum declarations must all be const or non-const."),
+  Subsequent_property_declarations_must_have_the_same_type: msg(2717, Category.Error,
+    "Subsequent_property_declarations_must_have_the_same_type_2717",
+    "Subsequent property declarations must have the same type. Property '{0}' must be of type '{1}', but here has type '{2}'."),
+  Subsequent_method_declarations_must_have_the_same_type: msg(2390_2 as unknown as number, Category.Error,
+    "Subsequent_method_declarations_must_have_the_same_type_2390_b",
+    "Constructor implementation is missing."),
+  Property_0_is_not_assignable_to_the_same_property_in_the_base_type: msg(2416_2 as unknown as number, Category.Error,
+    "Property_0_in_type_1_2416_c",
+    "Property '{0}' in type '{1}' is not assignable to the same property in base type '{2}'."),
+
+  // ---------------------------------------------------------------------------
+  // More 1xxx — parser strict
+  // ---------------------------------------------------------------------------
+  An_implementation_cannot_be_declared_in_ambient_contexts: msg(1183, Category.Error,
+    "An_implementation_cannot_be_declared_in_ambient_contexts_1183",
+    "An implementation cannot be declared in ambient contexts."),
+  Modifiers_cannot_appear_here: msg(1184, Category.Error,
+    "Modifiers_cannot_appear_here_1184",
+    "Modifiers cannot appear here."),
+  Merge_conflict_marker_encountered: msg(1185, Category.Error,
+    "Merge_conflict_marker_encountered_1185",
+    "Merge conflict marker encountered."),
+  An_extended_Unicode_escape_value_must_be_between_0x0_and_0x10FFFF_inclusive: msg(1198, Category.Error,
+    "An_extended_Unicode_escape_value_must_be_between_0x0_and_0x10FFFF_inclusive_1198",
+    "An extended Unicode escape value must be between 0x0 and 0x10FFFF inclusive."),
+  Unterminated_Unicode_escape_sequence: msg(1199, Category.Error,
+    "Unterminated_Unicode_escape_sequence_1199",
+    "Unterminated Unicode escape sequence."),
+  Line_terminator_not_permitted_before_arrow: msg(1200, Category.Error,
+    "Line_terminator_not_permitted_before_arrow_1200",
+    "Line terminator not permitted before arrow."),
+  Import_assignment_cannot_be_used_when_targeting_ECMAScript_modules_Consider_using_import_Asterisk_as_ns_from_mod_import_a_from_mod_import_d_from_mod_or_another_module_format_instead: msg(1202, Category.Error,
+    "Import_assignment_cannot_be_used_1202",
+    "Import assignment cannot be used when targeting ECMAScript modules. Consider using 'import * as ns from \"mod\"', 'import { a } from \"mod\"', 'import d from \"mod\"', or another module format instead."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
