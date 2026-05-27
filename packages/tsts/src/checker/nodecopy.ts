@@ -15,8 +15,11 @@ export class NodeCopier {
   }
 
   copyNodeWorker(node: AstNode): AstNode {
-    void node;
-    return { kind: node.kind } as AstNode;
+    // Shallow-clone the node — preserves kind/text/value/literal
+    // payloads and any other primitive fields. Child nodes are not
+    // deep-copied here; per-kind methods (copyClassMember etc.) can
+    // override when needed.
+    return { ...(node as object) } as AstNode;
   }
 
   copyNodes(nodes: readonly AstNode[] | undefined): readonly AstNode[] | undefined {
@@ -25,13 +28,23 @@ export class NodeCopier {
   }
 
   copyNodeList(list: NodeList | undefined): NodeList | undefined {
-    void list;
-    return undefined;
+    if (list === undefined) return undefined;
+    const nodes = (list as unknown as { nodes?: readonly AstNode[] }).nodes;
+    if (nodes === undefined) return list;
+    return {
+      ...(list as object),
+      nodes: nodes.map((n) => this.copyNodeWorker(n)),
+    } as unknown as NodeList;
   }
 
   copyModifierList(list: ModifierList | undefined): ModifierList | undefined {
-    void list;
-    return undefined;
+    if (list === undefined) return undefined;
+    const nodes = (list as unknown as { nodes?: readonly AstNode[] }).nodes;
+    if (nodes === undefined) return list;
+    return {
+      ...(list as object),
+      nodes: nodes.map((n) => this.copyNodeWorker(n)),
+    } as unknown as ModifierList;
   }
 
   copyIdentifier(node: AstNode): AstNode { return this.copyNodeWorker(node); }
