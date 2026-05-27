@@ -2664,6 +2664,70 @@ export const Diagnostics = {
   Enable_color_and_formatting_in_TypeScript_s_output_to_make_compiler_errors_easier_to_read: msg(6228, Category.Message,
     "Enable_color_and_formatting_6228",
     "Enable color and formatting in TypeScript's output to make compiler errors easier to read."),
+
+  // ---------------------------------------------------------------------------
+  // 2xxx — type literal + tuple
+  // ---------------------------------------------------------------------------
+  An_index_signature_must_have_a_type_annotation_x: msg(1021_2 as unknown as number, Category.Error,
+    "An_index_signature_must_have_a_type_annotation_1021_b",
+    "An index signature must have a type annotation."),
+  Index_signature_in_type_0_only_permits_reading_x: msg(2542_2 as unknown as number, Category.Error,
+    "Index_signature_in_type_0_only_permits_reading_2542_b",
+    "Index signature in type '{0}' only permits reading."),
+  Property_0_is_protected_in_type_1_but_public_in_type_2_x: msg(2444_2 as unknown as number, Category.Error,
+    "Property_0_is_protected_2444_b",
+    "Property '{0}' is protected in type '{1}' but public in type '{2}'."),
+  Property_0_is_private_in_type_1_but_not_in_type_2_x: msg(2442_2 as unknown as number, Category.Error,
+    "Property_0_is_private_2442_b",
+    "Types have separate declarations of a private property '{0}'."),
+  Property_0_is_not_assignable_to_the_same_property_in_the_base_type_x: msg(2416_4 as unknown as number, Category.Error,
+    "Property_0_in_type_1_2416_d",
+    "Property '{0}' in type '{1}' is not assignable to the same property in base type '{2}'."),
+
+  // ---------------------------------------------------------------------------
+  // 1xxx misc parser
+  // ---------------------------------------------------------------------------
+  X_const_can_only_be_used_in_a_class_field_property_declaration: msg(1395, Category.Error,
+    "const_can_only_be_used_in_a_class_field_1395",
+    "'const' can only be used in a class field property declaration."),
+  X_let_is_not_allowed_to_be_used_as_a_name_in_let_or_const_declarations: msg(1083, Category.Error,
+    "let_is_not_allowed_to_be_used_as_a_name_1083",
+    "'let' is not allowed to be used as a name in 'let' or 'const' declarations."),
+  Specify_emit_Slashchecking_behavior_for_imports_that_are_only_used_for_types_x: msg(6191_3 as unknown as number, Category.Message,
+    "Specify_emit_checking_behavior_for_imports_6191_c",
+    "Specify emit/checking behavior for imports that are only used for types."),
+  X_0_was_used_before_it_was_declared_so_this_use_should_be_a_typeof_query: msg(2453, Category.Error,
+    "_0_was_used_before_it_was_declared_2453",
+    "Type parameter '{0}' has a circular constraint."),
+
+  // ---------------------------------------------------------------------------
+  // 4xxx — declarations
+  // ---------------------------------------------------------------------------
+  X_default_export_of_the_module_has_or_is_using_private_name_0: msg(4082_2 as unknown as number, Category.Error,
+    "default_export_has_or_is_using_private_name_0_4082_b",
+    "Default export of the module has or is using private name '{0}'."),
+
+  // ---------------------------------------------------------------------------
+  // More 6xxx CLI text + diagnostics
+  // ---------------------------------------------------------------------------
+  Show_TC39_proposal_diagnostic_information_for_unfinished_proposals: msg(6105, Category.Message,
+    "Show_TC39_proposal_diagnostic_information_6105",
+    "Show TC39 proposal diagnostic information for unfinished proposals."),
+  X_0_at_position_1_of_2: msg(6147, Category.Message,
+    "_0_at_position_1_of_2_6147",
+    "'{0}' at position '{1}' of '{2}'."),
+  Disable_emitting_files_when_referenced_projects_are_out_of_date: msg(6266, Category.Message,
+    "Disable_emitting_files_when_referenced_projects_are_out_of_date_6266",
+    "Disable emitting files when referenced projects are out of date."),
+  Disable_solution_searching_for_this_project: msg(6213, Category.Message,
+    "Disable_solution_searching_for_this_project_6213",
+    "Disable solution searching for this project."),
+  Reduce_the_number_of_projects_loaded_automatically_by_TypeScript: msg(6215, Category.Message,
+    "Reduce_the_number_of_projects_loaded_automatically_6215",
+    "Reduce the number of projects loaded automatically by TypeScript."),
+  Allow_imports_to_include_TypeScript_file_extensions_Requires_moduleResolution_bundler_and_either_noEmit_or_emitDeclarationOnly_to_be_set: msg(6231_2 as unknown as number, Category.Message,
+    "Allow_imports_to_include_TS_ext_6231_b",
+    "Allow imports to include TypeScript file extensions. Requires '--moduleResolution bundler' and either '--noEmit' or '--emitDeclarationOnly' to be set."),
 } as const;
 
 export type DiagnosticsKey = keyof typeof Diagnostics;
