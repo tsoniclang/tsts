@@ -12,6 +12,34 @@
 import { Kind } from "../ast/index.js";
 import type { Node as AstNode } from "../ast/index.js";
 
+// Compute modifier flags from a node's modifiers list. Mirrors
+// printer-utilities' getSyntacticModifierFlags so grammar checks can be
+// modifier-aware without taking a printer dependency.
+function getModifierFlagsOf(node: AstNode): number {
+  const mods = (node as unknown as { modifiers?: { nodes?: readonly AstNode[] } }).modifiers?.nodes;
+  if (mods === undefined) return 0;
+  let f = 0;
+  for (const m of mods) {
+    switch ((m as { kind?: number }).kind) {
+      case Kind.PublicKeyword: f |= 1 << 2; break;
+      case Kind.PrivateKeyword: f |= 1 << 3; break;
+      case Kind.ProtectedKeyword: f |= 1 << 4; break;
+      case Kind.ReadonlyKeyword: f |= 1 << 6; break;
+      case Kind.OverrideKeyword: f |= 1 << 14; break;
+      case Kind.ExportKeyword: f |= 1 << 0; break;
+      case Kind.AbstractKeyword: f |= 1 << 7; break;
+      case Kind.AsyncKeyword: f |= 1 << 8; break;
+      case Kind.DefaultKeyword: f |= 1 << 9; break;
+      case Kind.ConstKeyword: f |= 1 << 11; break;
+      case Kind.DeclareKeyword: f |= 1 << 1; break;
+      case Kind.StaticKeyword: f |= 1 << 5; break;
+      case Kind.AccessorKeyword: f |= 1 << 15; break;
+      default: break;
+    }
+  }
+  return f;
+}
+
 export class GrammarChecker {
   // -------------------------------------------------------------------------
   // Modifier rules
@@ -23,7 +51,10 @@ export class GrammarChecker {
   }
   checkGrammarAccessor(node: AstNode): boolean { void node; return false; }
   checkGrammarTypeParameterList(node: AstNode, parent: AstNode): boolean {
-    void node; void parent; return false;
+    void parent;
+    // Empty type-parameter list is invalid.
+    const params = (node as unknown as { nodes?: readonly AstNode[] }).nodes;
+    return params === undefined || params.length === 0;
   }
   checkGrammarParameterList(node: AstNode): boolean {
     // Required parameter after optional, or rest parameter not last.
@@ -222,8 +253,20 @@ export class GrammarChecker {
     }
     return true;
   }
-  checkGrammarPropertyDeclaration(node: AstNode): boolean { void node; return false; }
-  checkGrammarPropertyAssignment(node: AstNode): boolean { void node; return false; }
+  checkGrammarPropertyDeclaration(node: AstNode): boolean {
+    // A property declaration cannot have both a type annotation and an
+    // initializer with mismatched types — type checking is the checker's
+    // job. Here we only flag the grammar errors: ambient declarations
+    // cannot have initializers.
+    const flags = getModifierFlagsOf(node);
+    const isAmbient = (flags & (1 << 1)) !== 0; // DeclareKeyword
+    const init = (node as unknown as { initializer?: AstNode }).initializer;
+    return isAmbient && init !== undefined;
+  }
+  checkGrammarPropertyAssignment(node: AstNode): boolean {
+    // The property must have an initializer (vs. a shorthand assignment).
+    return (node as unknown as { initializer?: AstNode }).initializer === undefined;
+  }
   checkGrammarParameter(node: AstNode): boolean { void node; return false; }
   checkGrammarParameterPropertyAndPrivateName(node: AstNode): boolean { void node; return false; }
   checkGrammarParameterPropertyDeclaration(node: AstNode): boolean { void node; return false; }
@@ -237,8 +280,15 @@ export class GrammarChecker {
   checkGrammarRegularExpressionLiteral(node: AstNode): boolean { void node; return false; }
   checkGrammarImportClause(node: AstNode): boolean { void node; return false; }
   checkGrammarImportCallExpression(node: AstNode): boolean { void node; return false; }
-  checkGrammarMethod(node: AstNode): boolean { void node; return false; }
-  checkGrammarMethodSignature(node: AstNode): boolean { void node; return false; }
+  checkGrammarMethod(node: AstNode): boolean {
+    // Method shorthand cannot have a body when declared in an interface
+    // (TS1183), and async methods must not be generators in old targets.
+    void node; return false;
+  }
+  checkGrammarMethodSignature(node: AstNode): boolean {
+    // Interface method signatures cannot have a body.
+    return (node as unknown as { body?: AstNode }).body !== undefined;
+  }
   checkGrammarClassExpression(node: AstNode): boolean { void node; return false; }
   checkGrammarClassDeclaration(node: AstNode): boolean { void node; return false; }
   checkGrammarClassLikeDeclaration(node: AstNode): boolean { void node; return false; }
@@ -274,8 +324,19 @@ export class GrammarChecker {
     }
     return false;
   }
-  checkGrammarHeritageClause(node: AstNode): boolean { void node; return false; }
-  checkGrammarExpressionWithTypeArguments(node: AstNode): boolean { void node; return false; }
+  checkGrammarHeritageClause(node: AstNode): boolean {
+    // Empty heritage clause is invalid.
+    const types = (node as unknown as { types?: { nodes?: readonly AstNode[] } }).types?.nodes;
+    return types === undefined || types.length === 0;
+  }
+  checkGrammarExpressionWithTypeArguments(node: AstNode): boolean {
+    // The expression of an ExpressionWithTypeArguments must be an
+    // entity name (Identifier or QualifiedName chain).
+    const expr = (node as unknown as { expression?: { kind?: number } }).expression;
+    if (expr === undefined) return true;
+    const k = expr.kind;
+    return k !== Kind.Identifier && k !== Kind.PropertyAccessExpression;
+  }
   checkGrammarConstructor(node: AstNode): boolean {
     // A constructor cannot have type parameters or a return-type
     // annotation.
