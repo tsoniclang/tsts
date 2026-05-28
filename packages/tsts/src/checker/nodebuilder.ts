@@ -28,6 +28,12 @@ import type { SymbolTracker } from "./symboltracker.js";
 // ---------------------------------------------------------------------------
 
 export type NodeBuilderFlags = number;
+// 1:1 with TS-Go internal/nodebuilder/types.go `Flags` (the public
+// node-builder flags). The previous layout was Strada's: shifted high bits
+// (InObjectTypeLiteral/InTypeAlias), a literal IgnoreErrors (should be a
+// composite), a misplaced DoNotIncludeSymbolChain (that lives in
+// SymbolFormatFlags), and missing WriteCallStyleSignature /
+// UseInstantiationExpressions / InInitialEntityName.
 export const NodeBuilderFlags = {
   None: 0 as NodeBuilderFlags,
   NoTruncation: (1 << 0) as NodeBuilderFlags,
@@ -47,7 +53,9 @@ export const NodeBuilderFlags = {
   UseAliasDefinedOutsideCurrentScope: (1 << 14) as NodeBuilderFlags,
   UseSingleQuotesForStringLiteralType: (1 << 28) as NodeBuilderFlags,
   NoTypeReduction: (1 << 29) as NodeBuilderFlags,
+  UseInstantiationExpressions: (1 << 30) as NodeBuilderFlags,
   OmitThisParameter: (1 << 25) as NodeBuilderFlags,
+  WriteCallStyleSignature: (1 << 27) as NodeBuilderFlags,
   AllowThisInObjectLiteral: (1 << 15) as NodeBuilderFlags,
   AllowQualifiedNameInPlaceOfIdentifier: (1 << 16) as NodeBuilderFlags,
   AllowAnonymousIdentifier: (1 << 17) as NodeBuilderFlags,
@@ -56,10 +64,10 @@ export const NodeBuilderFlags = {
   AllowUniqueESSymbolType: (1 << 20) as NodeBuilderFlags,
   AllowEmptyIndexInfoType: (1 << 21) as NodeBuilderFlags,
   AllowNodeModulesRelativePaths: (1 << 26) as NodeBuilderFlags,
-  DoNotIncludeSymbolChain: (1 << 27) as NodeBuilderFlags,
-  IgnoreErrors: (1 << 22) as NodeBuilderFlags,
-  InObjectTypeLiteral: (1 << 23) as NodeBuilderFlags,
-  InTypeAlias: (1 << 24) as NodeBuilderFlags,
+  IgnoreErrors: 70221824 as NodeBuilderFlags, // AllowThisInObjectLiteral|AllowQualifiedNameInPlaceOfIdentifier|AllowAnonymousIdentifier|AllowEmptyUnionOrIntersection|AllowEmptyTuple|AllowEmptyIndexInfoType|AllowNodeModulesRelativePaths
+  InObjectTypeLiteral: (1 << 22) as NodeBuilderFlags,
+  InTypeAlias: (1 << 23) as NodeBuilderFlags,
+  InInitialEntityName: (1 << 24) as NodeBuilderFlags,
 } as const;
 
 // ---------------------------------------------------------------------------
