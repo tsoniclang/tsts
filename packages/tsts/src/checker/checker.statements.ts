@@ -39,6 +39,7 @@ import {
   getWidenedType,
   getWidenedLiteralLikeTypeForContextualType,
   getRegularTypeOfLiteralType,
+  getRegularTypeOfObjectLiteral,
   setBindingNameType,
   typeFromTypeNode,
 } from "./checker.checkedtype.js";
@@ -51,9 +52,12 @@ import { checkClassDeclaration, checkFunctionDeclaration } from "./checker.decla
 // block-scoped declarations. Explicit annotations bypass this (handled by the
 // caller's `declaredType ?? ...`).
 function inferredBindingType(initializerType: Type, declarationList: VariableDeclarationList, state: CheckState): Type {
-  return (declarationList.flags & NodeFlags.Const) !== 0
+  const literalAdjusted = (declarationList.flags & NodeFlags.Const) !== 0
     ? getRegularTypeOfLiteralType(initializerType, state)
     : getWidenedType(initializerType, state);
+  // The stored type drops object-literal freshness (excess only applies to a
+  // direct fresh literal at the assignment site, not to a stored variable).
+  return getRegularTypeOfObjectLiteral(literalAdjusted, state);
 }
 
 export function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: Type | undefined): void {
@@ -66,7 +70,7 @@ export function checkStatement(statement: Statement, state: CheckState, environm
   if (isVariableStatement(statement)) {
     for (const declaration of statement.declarationList.declarations) {
       const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type, state);
-      const initializerType = declaration.initializer === undefined ? undefined : inferExpression(declaration.initializer, state, environment);
+      const initializerType = declaration.initializer === undefined ? undefined : inferExpression(declaration.initializer, state, environment, declaredType);
       if (declaredType !== undefined && initializerType !== undefined) {
         checkAssignable(getWidenedLiteralLikeTypeForContextualType(initializerType, declaredType, state), declaredType, state);
       }
@@ -126,7 +130,7 @@ export function checkStatement(statement: Statement, state: CheckState, environm
     return;
   }
   if (isReturnStatement(statement)) {
-    const actual = statement.expression === undefined ? voidType : inferExpression(statement.expression, state, environment);
+    const actual = statement.expression === undefined ? voidType : inferExpression(statement.expression, state, environment, expectedReturnType);
     if (expectedReturnType !== undefined) {
       checkAssignable(getWidenedLiteralLikeTypeForContextualType(actual, expectedReturnType, state), expectedReturnType, state);
     }
@@ -148,7 +152,7 @@ export function checkForInitializer(initializer: Extract<Statement, { readonly k
   if (isVariableDeclarationList(initializer)) {
     for (const declaration of initializer.declarations) {
       const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type, state);
-      const initializerType = declaration.initializer === undefined ? undefined : inferExpression(declaration.initializer, state, environment);
+      const initializerType = declaration.initializer === undefined ? undefined : inferExpression(declaration.initializer, state, environment, declaredType);
       if (declaredType !== undefined && initializerType !== undefined) {
         checkAssignable(getWidenedLiteralLikeTypeForContextualType(initializerType, declaredType, state), declaredType, state);
       }

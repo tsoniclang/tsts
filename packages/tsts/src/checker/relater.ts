@@ -13,7 +13,7 @@
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
 import { SymbolFlags } from "../ast/index.js";
 import type { Type, Signature, VarianceFlags, UnionOrIntersectionType, LiteralType, ObjectType } from "./types.js";
-import { TypeFlags, SignatureKind, getTypeOfSymbol } from "./types.js";
+import { TypeFlags, SignatureKind, ObjectFlags, getTypeOfSymbol } from "./types.js";
 
 // Composite TypeFlags masks (now defined 1:1 in types.ts); aliased locally
 // to keep the ported relation logic readable.
@@ -121,12 +121,17 @@ export class Relater {
   // strings, so the relater stays free of the checker's display layer.
   failingProperty: { readonly name: string; readonly source: Type; readonly target: Type } | undefined = undefined;
 
+  // Excess property of a fresh object literal relative to its target, recorded
+  // for the checker to format the "may only specify known properties" message.
+  excessProperty: { readonly name: string; readonly target: Type } | undefined = undefined;
+
   // -------------------------------------------------------------------------
   // Public entry points
   // -------------------------------------------------------------------------
 
   isTypeAssignableTo(source: Type, target: Type): boolean {
     this.failingProperty = undefined;
+    this.excessProperty = undefined;
     return this.isTypeRelatedTo(source, target, this.assignableRelation);
   }
   isTypeSubtypeOf(source: Type, target: Type): boolean {
@@ -298,6 +303,20 @@ export class Relater {
     source: Type, target: Type, reportErrors: boolean, intersectionState: number,
   ): Ternary {
     void intersectionState;
+    // Excess-property check: a fresh object literal may not carry properties
+    // absent from the target object type (TS-Go hasExcessProperties).
+    if (this.isFreshObjectLiteral(source)) {
+      const sourceMembers = (source.symbol as unknown as { readonly members?: Map<string, AstSymbol> } | undefined)?.members;
+      const targetMembers = (target.symbol as unknown as { readonly members?: Map<string, AstSymbol> } | undefined)?.members;
+      if (sourceMembers !== undefined && targetMembers !== undefined) {
+        for (const name of sourceMembers.keys()) {
+          if (!targetMembers.has(name)) {
+            this.excessProperty = { name, target };
+            return Ternary.False;
+          }
+        }
+      }
+    }
     // For object types: properties, call signatures, construct
     // signatures, index signatures all relate.
     const propsResult = this.propertiesRelatedTo(source, target, reportErrors);
@@ -606,6 +625,10 @@ export class Relater {
     return (flags & (1 << 19)) !== 0 && (flags & 1) === 0;
   }
   isObjectLiteralType(t: Type): boolean { void t; return (t.flags & TypeFlags.Object) !== 0; }
+  isFreshObjectLiteral(t: Type): boolean {
+    return (t.flags & TypeFlags.Object) !== 0
+      && (((t.data as { objectFlags?: ObjectFlags } | undefined)?.objectFlags ?? 0) & ObjectFlags.FreshLiteral) !== 0;
+  }
 }
 
 export function newRelater(): Relater {

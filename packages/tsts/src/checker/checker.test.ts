@@ -409,16 +409,40 @@ export class CheckerGroundworkTests {
     const optionalUndefined = checkSourceFile(parseSourceFile("function f(o: { parse(text?: string): number }): number { return o.parse(undefined); }"));
     const restMismatch = checkSourceFile(parseSourceFile("function f(o: { log(...args: string[]): number }): number { return o.log(1); }"));
     const restOk = checkSourceFile(parseSourceFile("function f(o: { log(...args: string[]): number }): number { return o.log(\"a\", \"b\"); }"));
-    const mixedOk = checkSourceFile(parseSourceFile("function f(o: { g(a: string, b?: number, c: boolean): void }): void { o.g(\"x\", undefined, true); }"));
+    // Valid mixed signature: required can't follow optional, so the tail is rest.
+    const mixedOk = checkSourceFile(parseSourceFile("function f(o: { g(a: string, b?: number, ...rest: boolean[]): void }): void { o.g(\"x\"); o.g(\"x\", undefined); o.g(\"x\", undefined, true, false); }"));
     const badOptional = checkSourceFile(parseSourceFile("function f(o: { g(a?: string): void }): void { o.g(1); }"));
-    const badRest = checkSourceFile(parseSourceFile("function f(o: { g(...rest: string[]): void }): void { o.g(\"x\", 1); }"));
+    const badRest = checkSourceFile(parseSourceFile("function f(o: { g(a: string, b?: number, ...rest: boolean[]): void }): void { o.g(\"x\", undefined, true, 1); }"));
+    // `true` lands in the optional `b: number` slot positionally, not rest[0].
+    const optionalSlotPositional = checkSourceFile(parseSourceFile("function f(o: { g(a: string, b?: number, ...rest: boolean[]): void }): void { o.g(\"x\", true); }"));
 
     Assert.Equal(0, optionalUndefined.diagnostics.length);
     Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], restMismatch.diagnostics.map((d) => d.message));
     Assert.Equal(0, restOk.diagnostics.length);
     Assert.Equal(0, mixedOk.diagnostics.length);
     Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string | undefined'."], badOptional.diagnostics.map((d) => d.message));
-    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], badRest.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type '1' is not assignable to type 'boolean'."], badRest.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'boolean' is not assignable to type 'number | undefined'."], optionalSlotPositional.diagnostics.map((d) => d.message));
+  }
+
+  checks_contextual_object_literals_and_excess(): void {
+    // Contextual typing preserves target-driven literals; excess properties on
+    // a FRESH object literal are reported (assignment, return, satisfies,
+    // nested); a stored variable is not excess-checked.
+    const excessMessage = "Object literal may only specify known properties, and 'host' does not exist in type '{ port: number }'.";
+    const contextualLiteral = checkSourceFile(parseSourceFile("function f(): void { const ok: { port: 8080 } = { port: 8080 }; }"));
+    const excessAssign = checkSourceFile(parseSourceFile("function f(): void { const bad: { port: number } = { port: 1, host: \"x\" }; }"));
+    const storedNoExcess = checkSourceFile(parseSourceFile("function f(): void { const tmp = { port: 1, host: \"x\" }; const ok: { port: number } = tmp; }"));
+    const returnExcess = checkSourceFile(parseSourceFile("function g(): { port: number } { return { port: 1, host: \"x\" }; }"));
+    const satisfiesExcess = checkSourceFile(parseSourceFile("function f(): void { const v = { port: 8080, host: \"x\" } satisfies { port: number }; }"));
+    const nestedExcess = checkSourceFile(parseSourceFile("function f(): void { const bad: { server: { port: number } } = { server: { port: 1, host: \"x\" } }; }"));
+
+    Assert.Equal(0, contextualLiteral.diagnostics.length);
+    Assert.Equal<readonly string[]>([excessMessage], excessAssign.diagnostics.map((d) => d.message));
+    Assert.Equal(0, storedNoExcess.diagnostics.length);
+    Assert.Equal<readonly string[]>([excessMessage], returnExcess.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>([excessMessage], satisfiesExcess.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>([excessMessage], nestedExcess.diagnostics.map((d) => d.message));
   }
 
   accepts_union_type_node_return_types(): void {
@@ -547,6 +571,7 @@ A<CheckerGroundworkTests>().method((t) => t.extends_object_member_support).add(F
 A<CheckerGroundworkTests>().method((t) => t.deepens_object_member_typing).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_call_signature_arity).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_optional_and_rest_parameter_semantics).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_contextual_object_literals_and_excess).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

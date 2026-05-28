@@ -63,6 +63,7 @@ import {
   makeFunctionType,
   type FunctionParameter,
   makeObjectType,
+  getPropertyTypeOfType,
   getPropertySymbolOfType,
   getTypeOfSymbol,
   isOptionalSymbol,
@@ -78,7 +79,18 @@ import {
 } from "./checker.checkedtype.js";
 import { checkBlock } from "./checker.statements.js";
 
-export function inferExpression(expression: Expression, state: CheckState, environment: TypeEnvironment): Type {
+// Infer an object-literal property value, contextually typed by the matching
+// target property when present (preserving primitive literals the target asks
+// for), otherwise widening it.
+function contextualPropertyType(valueExpression: Expression, name: string, contextualType: Type | undefined, state: CheckState, environment: TypeEnvironment): Type {
+  const contextualProperty = contextualType === undefined ? undefined : getPropertyTypeOfType(contextualType, name);
+  const valueType = inferExpression(valueExpression, state, environment, contextualProperty);
+  return contextualProperty === undefined
+    ? getWidenedType(valueType, state)
+    : getWidenedLiteralLikeTypeForContextualType(valueType, contextualProperty, state);
+}
+
+export function inferExpression(expression: Expression, state: CheckState, environment: TypeEnvironment, contextualType?: Type): Type {
   // String / number / bigint / true / false / null literals — shared with
   // literal type-node resolution via literalTypeFromLiteralExpression (so the
   // two paths can't drift). Keyword literals (`true`/`false`/`null`) are matched
@@ -132,8 +144,9 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     // but the RESULT type is the expression's own type — not narrowed/widened
     // to T (mirrors TS-Go checkSatisfiesExpression: assignability is verified,
     // the expression type flows through unchanged).
-    const exprType = inferExpression(expression.expression, state, environment);
-    checkAssignable(exprType, typeFromTypeNode(expression.type, state), state);
+    const targetType = typeFromTypeNode(expression.type, state);
+    const exprType = inferExpression(expression.expression, state, environment, targetType);
+    checkAssignable(exprType, targetType, state);
     return exprType;
   }
   if (isConditionalExpression(expression)) {
@@ -199,18 +212,20 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     // explicitly rather than silently dropped (which would falsify the type).
     const properties: ObjectProperty[] = [];
     for (const property of expression.properties) {
-      // Object-literal property types widen (TS-Go: a fresh object literal
-      // without a contextual type widens its primitive-literal properties), so
-      // `{ port: 8080 }` has property `port: number`, not `8080`.
+      // Each property is contextually typed by the target property type when a
+      // contextual object type is present (so `{ port: 8080 }` against
+      // `{ port: 8080 }` preserves the literal); otherwise its primitive-literal
+      // type widens (`{ port: 8080 }` alone has property `port: number`).
       if (isPropertyAssignment(property) && isIdentifier(property.name)) {
-        properties.push({ name: property.name.text, type: getWidenedType(inferExpression(property.initializer, state, environment), state) });
+        properties.push({ name: property.name.text, type: contextualPropertyType(property.initializer, property.name.text, contextualType, state, environment) });
       } else if (isShorthandPropertyAssignment(property) && isIdentifier(property.name)) {
-        properties.push({ name: property.name.text, type: getWidenedType(inferExpression(property.name, state, environment), state) });
+        properties.push({ name: property.name.text, type: contextualPropertyType(property.name, property.name.text, contextualType, state, environment) });
       } else {
         state.diagnostics.push({ message: `Object member kind '${Kind[property.kind]}' is not yet supported by the checker.` });
       }
     }
-    return makeObjectType(properties, state);
+    // Mark the direct object literal fresh so the relation can excess-check it.
+    return makeObjectType(properties, state, true);
   }
   if (isPropertyAccessExpression(expression)) {
     return inferPropertyAccess(expression.expression, expression.name.text, state, environment);
@@ -222,13 +237,24 @@ export function inferExpression(expression: Expression, state: CheckState, envir
   }
   if (isCallExpression(expression)) {
     const calleeType = inferExpression(expression.expression, state, environment);
-    const argumentTypes = expression.arguments.map((argument) => inferExpression(argument, state, environment));
     // Check each argument against the call signature's parameter type
     // (positionally; rest/overload resolution is not modeled yet).
     const signature = getCallSignature(calleeType);
+    const parameters = signature?.parameters ?? [];
+    const hasRest = parameters.length > 0 && isRestSymbol(parameters[parameters.length - 1]);
+    const restIndexForContext = hasRest ? parameters.length - 1 : -1;
+    // Arguments are contextually typed by their parameter type (so object/array
+    // literal arguments preserve target-driven literals + get excess-checked).
+    const contextualParameterType = (index: number): Type | undefined => {
+      if (restIndexForContext >= 0 && index >= restIndexForContext) {
+        const restType = getTypeOfSymbol(parameters[restIndexForContext]!);
+        return restType === undefined ? undefined : getArrayElementType(restType);
+      }
+      const parameter = parameters[index];
+      return parameter === undefined ? undefined : getTypeOfSymbol(parameter);
+    };
+    const argumentTypes = expression.arguments.map((argument, index) => inferExpression(argument, state, environment, contextualParameterType(index)));
     if (signature !== undefined) {
-      const parameters = signature.parameters;
-      const hasRest = parameters.length > 0 && isRestSymbol(parameters[parameters.length - 1]);
       const maxArguments = hasRest ? Number.POSITIVE_INFINITY : parameters.length;
       if (argumentTypes.length < signature.minArgumentCount || argumentTypes.length > maxArguments) {
         const expected = hasRest

@@ -261,7 +261,7 @@ export interface ObjectProperty {
   readonly optional?: boolean;
 }
 
-export function makeObjectType(properties: readonly ObjectProperty[], state: CheckState): Type {
+export function makeObjectType(properties: readonly ObjectProperty[], state: CheckState, fresh = false): Type {
   const members = new Map<string, AstSymbol>();
   for (const property of properties) {
     const symbol: PropertySymbol = {
@@ -272,13 +272,25 @@ export function makeObjectType(properties: readonly ObjectProperty[], state: Che
     };
     members.set(property.name, symbol as unknown as AstSymbol);
   }
-  const data: ObjectType = { objectFlags: ObjectFlags.Anonymous };
+  // Direct object literals are marked fresh; the assignability relation uses
+  // freshness to gate excess-property checking. Type-literal types are not fresh.
+  const data: ObjectType = { objectFlags: fresh ? (ObjectFlags.Anonymous | ObjectFlags.FreshLiteral) : ObjectFlags.Anonymous };
   const typeSymbol = { name: "__object", declarations: [], members } as unknown as AstSymbol;
   return { flags: TypeFlags.Object, id: state.nextTypeId(), data, symbol: typeSymbol };
 }
 
 function objectTypeMembers(type: Type): ReadonlyMap<string, PropertySymbol> | undefined {
   return (type.symbol as unknown as { readonly members?: Map<string, PropertySymbol> } | undefined)?.members;
+}
+
+// Strip the fresh-literal flag for stored/regular object types (TS-Go
+// getRegularTypeOfObjectLiteral). Returns the same type when not a fresh object.
+export function getRegularTypeOfObjectLiteral(type: Type, state: CheckState): Type {
+  if ((type.flags & TypeFlags.Object) === 0) return type;
+  const data = type.data as ObjectType | undefined;
+  if (data === undefined || (data.objectFlags & ObjectFlags.FreshLiteral) === 0) return type;
+  const regularData: ObjectType = { ...data, objectFlags: data.objectFlags & ~ObjectFlags.FreshLiteral };
+  return { ...type, id: state.nextTypeId(), data: regularData };
 }
 
 // ---------------------------------------------------------------------------
@@ -748,6 +760,15 @@ function typeFromLiteralTypeNode(node: LiteralTypeNode, state: CheckState): Type
 // inference/initializer sites, not in the relation itself.
 export function checkAssignable(actual: Type, expected: Type, state: CheckState): void {
   if (!state.relater.isTypeAssignableTo(actual, expected)) {
+    // Excess property of a fresh object literal: TS reports this in place of the
+    // structural mismatch.
+    const excess = state.relater.excessProperty;
+    if (excess !== undefined) {
+      state.diagnostics.push({
+        message: `Object literal may only specify known properties, and '${excess.name}' does not exist in type '${displayType(excess.target)}'.`,
+      });
+      return;
+    }
     // Per-property elaboration comes from the relation path (relater records the
     // failing property + incompatible types); the checker only formats it.
     const failing = state.relater.failingProperty;
