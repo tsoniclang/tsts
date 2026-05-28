@@ -232,15 +232,23 @@ export function inferExpression(expression: Expression, state: CheckState, envir
   }
   if (isArrayLiteralExpression(expression)) {
     // Element type = union of the (contextually typed, else widened) element
-    // types. Array spreads aren't modeled yet (skipped). `[]` -> the contextual
-    // element type, else `never`.
+    // types. A spread of an array contributes its element type; a non-array
+    // spread is surfaced explicitly rather than silently dropped. `[]` -> the
+    // contextual element type, else `never`.
     const contextualElement = contextualType === undefined ? undefined : getArrayElementType(contextualType);
-    const elementTypes = expression.elements
-      .filter((element) => !isSpreadElement(element))
-      .map((element) => {
-        const valueType = inferExpression(element, state, environment, contextualElement);
-        return contextualElement === undefined ? getWidenedType(valueType, state) : getWidenedLiteralLikeTypeForContextualType(valueType, contextualElement, state);
-      });
+    const elementTypes = expression.elements.flatMap((element) => {
+      if (isSpreadElement(element)) {
+        const spreadType = inferExpression(element.expression, state, environment, contextualType);
+        const spreadElement = getArrayElementType(spreadType);
+        if (spreadElement !== undefined) {
+          return [spreadElement];
+        }
+        state.diagnostics.push({ message: "Array spread of a non-array value is not yet supported by the checker." });
+        return [];
+      }
+      const valueType = inferExpression(element, state, environment, contextualElement);
+      return [contextualElement === undefined ? getWidenedType(valueType, state) : getWidenedLiteralLikeTypeForContextualType(valueType, contextualElement, state)];
+    });
     const elementType = elementTypes.length === 0 ? (contextualElement ?? neverType) : getUnionType(elementTypes, state);
     return makeArrayType(elementType, state);
   }
@@ -249,8 +257,20 @@ export function inferExpression(expression: Expression, state: CheckState, envir
   }
   if (isElementAccessExpression(expression)) {
     const receiverType = inferExpression(expression.expression, state, environment);
-    inferExpression(expression.argumentExpression, state, environment);
-    return getArrayElementType(receiverType) ?? unresolvedType;
+    const indexType = inferExpression(expression.argumentExpression, state, environment);
+    const elementType = getArrayElementType(receiverType);
+    if (elementType !== undefined) {
+      // Numeric element access only; non-numeric indexes (e.g. `xs["bad"]`) are
+      // not valid numeric indexes (named props go through property access later).
+      const indexOk = isNumberType(getApparentType(indexType))
+        || isAnyType(indexType) || isUnknownType(indexType) || isUnresolvedType(indexType);
+      if (!indexOk) {
+        state.diagnostics.push({ message: `Type '${displayType(indexType)}' cannot be used to index type '${displayType(receiverType)}'.` });
+        return unresolvedType;
+      }
+      return elementType;
+    }
+    return unresolvedType;
   }
   if (isCallExpression(expression)) {
     const calleeType = inferExpression(expression.expression, state, environment);

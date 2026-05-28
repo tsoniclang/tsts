@@ -483,6 +483,24 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type 'string[]' is not assignable to type 'number[]'."], readonlyMismatch.diagnostics.map((d) => d.message));
   }
 
+  checks_array_spread_index_and_broad_object(): void {
+    // Array spreads contribute their element type (not silently skipped); array
+    // element access requires a numeric index; the broad `{}` accepts arrays.
+    const spreadMismatch = checkSourceFile(parseSourceFile("function f(numbers: number[]): void { const xs: string[] = [...numbers]; }"));
+    const spreadOk = checkSourceFile(parseSourceFile("function f(more: string[]): void { const xs: string[] = [\"a\", ...more]; }"));
+    const spreadElementMismatch = checkSourceFile(parseSourceFile("function f(numbers: number[]): void { const xs: string[] = [\"a\", ...numbers]; }"));
+    const numericIndex = checkSourceFile(parseSourceFile("function f(xs: string[], i: number): string { return xs[i]; }"));
+    const nonNumericIndex = checkSourceFile(parseSourceFile("function f(xs: string[]): string { return xs[\"bad\"]; }"));
+    const broadObjectAcceptsArray = checkSourceFile(parseSourceFile("function f(xs: string[]): {} { return xs; }"));
+
+    Assert.Equal<readonly string[]>(["Type 'number[]' is not assignable to type 'string[]'."], spreadMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, spreadOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type '(string | number)[]' is not assignable to type 'string[]'."], spreadElementMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, numericIndex.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type '\"bad\"' cannot be used to index type 'string[]'."], nonNumericIndex.diagnostics.map((d) => d.message));
+    Assert.Equal(0, broadObjectAcceptsArray.diagnostics.length);
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -612,6 +630,7 @@ A<CheckerGroundworkTests>().method((t) => t.checks_optional_and_rest_parameter_s
 A<CheckerGroundworkTests>().method((t) => t.checks_contextual_object_literals_and_excess).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.excess_check_regularization_and_empty_target).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_array_types).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_array_spread_index_and_broad_object).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

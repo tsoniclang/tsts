@@ -359,7 +359,9 @@ export class Relater {
     // is related.
     const targetProps = (target as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members;
     const sourceProps = (source as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members;
-    if (targetProps === undefined) return Ternary.True;
+    // A target with no known properties is the broad empty object `{}`, which
+    // accepts any non-nullish value (incl. arrays / property-less sources).
+    if (targetProps === undefined || targetProps.size === 0) return Ternary.True;
     if (sourceProps === undefined) return Ternary.False;
     for (const [name, targetProp] of targetProps) {
       const sourceProp = sourceProps.get(name);
