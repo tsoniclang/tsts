@@ -258,6 +258,24 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type '\"b\"' is not assignable to type '\"a\"'."], resultNotTarget.diagnostics.map((d) => d.message));
   }
 
+  preserves_const_literal_widens_let(): void {
+    // `const` preserves a primitive literal initializer's type; `let`/`var`
+    // widen it; an explicit annotation wins.
+    const constNumber = checkSourceFile(parseSourceFile("function f(): 1 { const x = 1; return x; }"));
+    const letNumber = checkSourceFile(parseSourceFile("function f(): 1 { let x = 1; return x; }"));
+    const varNumber = checkSourceFile(parseSourceFile("function f(): 1 { var x = 1; return x; }"));
+    const constBoolean = checkSourceFile(parseSourceFile("function f(): true { const x = true; return x; }"));
+    const constSatisfies = checkSourceFile(parseSourceFile("function f(): \"a\" { const x = \"a\" satisfies string; return x; }"));
+    const annotationWins = checkSourceFile(parseSourceFile("function f(): number { const x: number = 1; return x; }"));
+
+    Assert.Equal(0, constNumber.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type '1'."], letNumber.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type '1'."], varNumber.diagnostics.map((d) => d.message));
+    Assert.Equal(0, constBoolean.diagnostics.length);
+    Assert.Equal(0, constSatisfies.diagnostics.length);
+    Assert.Equal(0, annotationWins.diagnostics.length);
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -376,6 +394,7 @@ A<CheckerGroundworkTests>().method((t) => t.boolean_union_interns_to_canonical_o
 A<CheckerGroundworkTests>().method((t) => t.boolean_pair_collapses_in_embedded_union).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_printer_prints_boolean_union).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_satisfies_expression).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.preserves_const_literal_widens_let).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

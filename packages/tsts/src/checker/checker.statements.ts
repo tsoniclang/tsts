@@ -8,6 +8,7 @@
 
 import {
   Kind,
+  NodeFlags,
   isBlock,
   isBreakStatement,
   isClassDeclaration,
@@ -26,6 +27,7 @@ import {
   isWhileStatement,
   type Block,
   type Statement,
+  type VariableDeclarationList,
 } from "../ast/index.js";
 import {
   type Type,
@@ -36,11 +38,23 @@ import {
   checkAssignable,
   getWidenedType,
   getWidenedLiteralLikeTypeForContextualType,
+  getRegularTypeOfLiteralType,
   setBindingNameType,
   typeFromTypeNode,
 } from "./checker.checkedtype.js";
 import { inferExpression } from "./checker.expressions.js";
 import { checkClassDeclaration, checkFunctionDeclaration } from "./checker.declarations.js";
+
+// Inferred (no-annotation) binding type: `const` preserves the initializer's
+// literal type, `let`/`var` widen it — mirrors TS-Go
+// getWidenedTypeForVariableLikeDeclaration, which widens only for non-const
+// block-scoped declarations. Explicit annotations bypass this (handled by the
+// caller's `declaredType ?? ...`).
+function inferredBindingType(initializerType: Type, declarationList: VariableDeclarationList, state: CheckState): Type {
+  return (declarationList.flags & NodeFlags.Const) !== 0
+    ? getRegularTypeOfLiteralType(initializerType, state)
+    : getWidenedType(initializerType, state);
+}
 
 export function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: Type | undefined): void {
   for (const statement of statements) {
@@ -56,7 +70,7 @@ export function checkStatement(statement: Statement, state: CheckState, environm
       if (declaredType !== undefined && initializerType !== undefined) {
         checkAssignable(getWidenedLiteralLikeTypeForContextualType(initializerType, declaredType, state), declaredType, state);
       }
-      const boundType = declaredType ?? (initializerType !== undefined ? getWidenedType(initializerType, state) : unresolvedType);
+      const boundType = declaredType ?? (initializerType !== undefined ? inferredBindingType(initializerType, statement.declarationList, state) : unresolvedType);
       setBindingNameType(declaration.name, boundType, environment);
     }
     return;
@@ -138,7 +152,7 @@ export function checkForInitializer(initializer: Extract<Statement, { readonly k
       if (declaredType !== undefined && initializerType !== undefined) {
         checkAssignable(getWidenedLiteralLikeTypeForContextualType(initializerType, declaredType, state), declaredType, state);
       }
-      const boundType = declaredType ?? (initializerType !== undefined ? getWidenedType(initializerType, state) : unresolvedType);
+      const boundType = declaredType ?? (initializerType !== undefined ? inferredBindingType(initializerType, initializer, state) : unresolvedType);
       setBindingNameType(declaration.name, boundType, environment);
     }
     return;
