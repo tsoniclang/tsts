@@ -195,15 +195,41 @@ export function getUnionTypeEx(
   alias?: unknown,
   origin?: unknown,
 ): Type {
-  void reduction;
   void alias;
   void origin;
   if (types.length === 0) return neverType;
   const typeSet: Type[] = [];
   addTypesToUnion(typeSet, types);
-  if (typeSet.length === 0) return neverType;
-  if (typeSet.length === 1) return typeSet[0]!;
-  return makeUnionType(typeSet, state);
+  const reduced = reduceUnion(typeSet, reduction, state);
+  if (reduced.length === 0) return neverType;
+  if (reduced.length === 1) return reduced[0]!;
+  return makeUnionType(reduced, state);
+}
+
+function reduceUnion(typeSet: Type[], reduction: UnionReduction, state: CheckState): Type[] {
+  if (reduction === UnionReduction.None) return typeSet;
+  const includes = typeSet.reduce((acc, t) => acc | t.flags, 0 as TypeFlags);
+  const afterLiteral = removeRedundantLiteralTypes(typeSet, includes);
+  if (reduction === UnionReduction.Subtype) {
+    return [...state.relater.removeSubtypes(afterLiteral, false)];
+  }
+  return afterLiteral;
+}
+
+// TS-Go removeRedundantLiteralTypes: drop a literal constituent when its base
+// primitive is already in the union, and drop a fresh literal when its regular
+// type is already present. (BooleanLiteral is included here because our
+// `booleanType` is still the intrinsic, not the `false | true` union.)
+function removeRedundantLiteralTypes(types: Type[], includes: TypeFlags): Type[] {
+  return types.filter((t) => {
+    const remove =
+      ((t.flags & TypeFlags.StringLiteral) !== 0 && (includes & TypeFlags.String) !== 0)
+      || ((t.flags & TypeFlags.NumberLiteral) !== 0 && (includes & TypeFlags.Number) !== 0)
+      || ((t.flags & TypeFlags.BigIntLiteral) !== 0 && (includes & TypeFlags.BigInt) !== 0)
+      || ((t.flags & TypeFlags.BooleanLiteral) !== 0 && (includes & TypeFlags.Boolean) !== 0)
+      || (isFreshLiteralType(t) && (t.data as LiteralType).regularType !== undefined && types.includes((t.data as LiteralType).regularType!));
+    return !remove;
+  });
 }
 
 export function unionConstituents(type: Type): readonly Type[] | undefined {
