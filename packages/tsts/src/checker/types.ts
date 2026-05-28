@@ -44,6 +44,8 @@ export const ContextFlags = {
 } as const;
 
 export type TypeFormatFlags = number;
+// 1:1 with TS-Go internal/checker/types.go TypeFormatFlags (the "holes" in
+// the bit sequence mirror upstream's alignment with NodeBuilderFlags).
 export const TypeFormatFlags = {
   None: 0 as TypeFormatFlags,
   NoTruncation: (1 << 0) as TypeFormatFlags,
@@ -58,7 +60,11 @@ export const TypeFormatFlags = {
   UseTypeOfFunction: (1 << 12) as TypeFormatFlags,
   OmitParameterModifiers: (1 << 13) as TypeFormatFlags,
   UseAliasDefinedOutsideCurrentScope: (1 << 14) as TypeFormatFlags,
-  ForSignatureHelp: (1 << 15) as TypeFormatFlags,
+  UseSingleQuotesForStringLiteralType: (1 << 28) as TypeFormatFlags,
+  NoTypeReduction: (1 << 29) as TypeFormatFlags,
+  UseInstantiationExpressions: (1 << 30) as TypeFormatFlags,
+  OmitThisParameter: (1 << 25) as TypeFormatFlags,
+  WriteCallStyleSignature: (1 << 27) as TypeFormatFlags,
   AllowUniqueESSymbolType: (1 << 20) as TypeFormatFlags,
   AddUndefined: (1 << 17) as TypeFormatFlags,
   WriteArrowStyleSignature: (1 << 18) as TypeFormatFlags,
@@ -66,8 +72,6 @@ export const TypeFormatFlags = {
   InElementType: (1 << 21) as TypeFormatFlags,
   InFirstTypeArgument: (1 << 22) as TypeFormatFlags,
   InTypeAlias: (1 << 23) as TypeFormatFlags,
-  NoTypeReduction: (1 << 29) as TypeFormatFlags,
-  OmitThisParameter: (1 << 25) as TypeFormatFlags,
 } as const;
 
 export const TypeFormatFlagsNodeBuilderFlagsMask = TypeFormatFlags.NoTruncation
@@ -75,7 +79,19 @@ export const TypeFormatFlagsNodeBuilderFlagsMask = TypeFormatFlags.NoTruncation
   | TypeFormatFlags.GenerateNamesForShadowedTypeParams
   | TypeFormatFlags.UseStructuralFallback
   | TypeFormatFlags.WriteTypeArgumentsOfSignature
-  | TypeFormatFlags.UseFullyQualifiedType;
+  | TypeFormatFlags.UseFullyQualifiedType
+  | TypeFormatFlags.SuppressAnyReturnType
+  | TypeFormatFlags.MultilineObjectLiterals
+  | TypeFormatFlags.WriteClassExpressionAsTypeLiteral
+  | TypeFormatFlags.UseTypeOfFunction
+  | TypeFormatFlags.OmitParameterModifiers
+  | TypeFormatFlags.UseAliasDefinedOutsideCurrentScope
+  | TypeFormatFlags.AllowUniqueESSymbolType
+  | TypeFormatFlags.InTypeAlias
+  | TypeFormatFlags.UseInstantiationExpressions
+  | TypeFormatFlags.UseSingleQuotesForStringLiteralType
+  | TypeFormatFlags.NoTypeReduction
+  | TypeFormatFlags.OmitThisParameter;
 
 export type SymbolFormatFlags = number;
 export const SymbolFormatFlags = {
@@ -90,17 +106,21 @@ export const SymbolFormatFlags = {
 
 export type TypeId = number;
 
-export type ExhaustiveState = 0 | 1 | 2;
+export type ExhaustiveState = 0 | 1 | 2 | 3;
+// 1:1 with TS-Go: Unknown, Computing, False, True (iota).
 export const ExhaustiveState = {
-  NotComputed: 0 as ExhaustiveState,
-  IsComputing: 1 as ExhaustiveState,
-  ComputedAsResult: 2 as ExhaustiveState,
+  Unknown: 0 as ExhaustiveState,
+  Computing: 1 as ExhaustiveState,
+  False: 2 as ExhaustiveState,
+  True: 3 as ExhaustiveState,
 } as const;
 
 export type MembersOrExportsResolutionKind = 0 | 1;
+// 1:1 with TS-Go: ResolvedExports=0, ResolvedMembers=1 (indexes
+// MembersAndExportsLinks; the previous Members=0/Exports=1 was reversed).
 export const MembersOrExportsResolutionKind = {
-  Members: 0 as MembersOrExportsResolutionKind,
-  Exports: 1 as MembersOrExportsResolutionKind,
+  ResolvedExports: 0 as MembersOrExportsResolutionKind,
+  ResolvedMembers: 1 as MembersOrExportsResolutionKind,
 } as const;
 
 export type VarianceFlags = number;
