@@ -62,8 +62,12 @@ import {
   literalTypeFromLiteralExpression,
   makeFunctionType,
   makeObjectType,
-  getPropertyTypeOfType,
+  getPropertySymbolOfType,
+  getTypeOfSymbol,
+  isOptionalSymbol,
+  getCallSignature,
   type ObjectProperty,
+  getWidenedType,
   checkAssignable,
   displayType,
   setBindingNameType,
@@ -192,10 +196,13 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     // explicitly rather than silently dropped (which would falsify the type).
     const properties: ObjectProperty[] = [];
     for (const property of expression.properties) {
+      // Object-literal property types widen (TS-Go: a fresh object literal
+      // without a contextual type widens its primitive-literal properties), so
+      // `{ port: 8080 }` has property `port: number`, not `8080`.
       if (isPropertyAssignment(property) && isIdentifier(property.name)) {
-        properties.push({ name: property.name.text, type: inferExpression(property.initializer, state, environment) });
+        properties.push({ name: property.name.text, type: getWidenedType(inferExpression(property.initializer, state, environment), state) });
       } else if (isShorthandPropertyAssignment(property) && isIdentifier(property.name)) {
-        properties.push({ name: property.name.text, type: inferExpression(property.name, state, environment) });
+        properties.push({ name: property.name.text, type: getWidenedType(inferExpression(property.name, state, environment), state) });
       } else {
         state.diagnostics.push({ message: `Object member kind '${Kind[property.kind]}' is not yet supported by the checker.` });
       }
@@ -212,8 +219,18 @@ export function inferExpression(expression: Expression, state: CheckState, envir
   }
   if (isCallExpression(expression)) {
     const calleeType = inferExpression(expression.expression, state, environment);
-    for (const argument of expression.arguments) {
-      inferExpression(argument, state, environment);
+    const argumentTypes = expression.arguments.map((argument) => inferExpression(argument, state, environment));
+    // Check each argument against the call signature's parameter type
+    // (positionally; rest/overload resolution is not modeled yet).
+    const signature = getCallSignature(calleeType);
+    if (signature !== undefined) {
+      signature.parameters.forEach((parameter, index) => {
+        const parameterType = getTypeOfSymbol(parameter);
+        const argumentType = argumentTypes[index];
+        if (parameterType !== undefined && argumentType !== undefined) {
+          checkAssignable(getWidenedLiteralLikeTypeForContextualType(argumentType, parameterType, state), parameterType, state);
+        }
+      });
     }
     if (isAnyType(calleeType) || isUnknownType(calleeType) || isUnresolvedType(calleeType)) {
       return anyType;
@@ -259,9 +276,11 @@ export function inferPropertyAccess(expression: Expression, propertyName: string
   if (isUnknownType(receiverType) || isUnresolvedType(receiverType)) {
     return anyType;
   }
-  const objectProperty = getPropertyTypeOfType(receiverType, propertyName);
-  if (objectProperty !== undefined) {
-    return objectProperty;
+  const propertySymbol = getPropertySymbolOfType(receiverType, propertyName);
+  if (propertySymbol !== undefined) {
+    const propertyType = getTypeOfSymbol(propertySymbol) ?? anyType;
+    // An optional property's access type includes `undefined`.
+    return isOptionalSymbol(propertySymbol) ? getUnionType([propertyType, undefinedType], state) : propertyType;
   }
   if (!isAnyType(receiverType) && !isFunctionType(receiverType)) {
     state.diagnostics.push({

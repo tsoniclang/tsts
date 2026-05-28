@@ -339,7 +339,7 @@ export class CheckerGroundworkTests {
     const objectMissingProperty = checkSourceFile(parseSourceFile("function f(): void { const o: { port: number } = { }; }"));
 
     Assert.Equal(0, satisfiesOk.diagnostics.length);
-    Assert.Equal<readonly string[]>(["Type '{ port: \"x\" }' is not assignable to type '{ port: number }'."], satisfiesBad.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type '{ port: string }' is not assignable to type '{ port: number }'.\n  Types of property 'port' are incompatible.\n    Type 'string' is not assignable to type 'number'."], satisfiesBad.diagnostics.map((d) => d.message));
     Assert.Equal(0, propertyOk.diagnostics.length);
     Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], propertyWrongType.diagnostics.map((d) => d.message));
     Assert.Equal<readonly string[]>(["Property 'missing' does not exist on type '{ port: number }'."], propertyMissing.diagnostics.map((d) => d.message));
@@ -364,6 +364,25 @@ export class CheckerGroundworkTests {
     Assert.Equal(0, optionalAbsent.diagnostics.length);
     Assert.Equal<readonly string[]>(["Type '{}' is not assignable to type '{ a: number }'."], requiredAbsent.diagnostics.map((d) => d.message));
     Assert.Equal<readonly string[]>(["Object member kind 'SpreadAssignment' is not yet supported by the checker."], spreadSurfaced.diagnostics.map((d) => d.message));
+  }
+
+  deepens_object_member_typing(): void {
+    // Object-literal properties widen; optional access includes undefined;
+    // method-signature parameters are checked at call sites; object mismatches
+    // get per-property elaboration via the relation path.
+    const widensProperty = checkSourceFile(parseSourceFile("function f(): 8080 { const x = { port: 8080 }; return x.port; }"));
+    const optionalAccess = checkSourceFile(parseSourceFile("function f(o: { a?: number }): number { return o.a; }"));
+    const optionalAccessOk = checkSourceFile(parseSourceFile("function f(o: { a?: number }): number | undefined { return o.a; }"));
+    const methodParamOk = checkSourceFile(parseSourceFile("function f(o: { parse(text: string): number }): number { return o.parse(\"1\"); }"));
+    const methodParamMismatch = checkSourceFile(parseSourceFile("function f(o: { parse(text: string): number }): number { return o.parse(1); }"));
+    const perPropertyElaboration = checkSourceFile(parseSourceFile("function f(): void { const bad: { port: number } = { port: \"x\" }; }"));
+
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type '8080'."], widensProperty.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'number | undefined' is not assignable to type 'number'."], optionalAccess.diagnostics.map((d) => d.message));
+    Assert.Equal(0, optionalAccessOk.diagnostics.length);
+    Assert.Equal(0, methodParamOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], methodParamMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type '{ port: string }' is not assignable to type '{ port: number }'.\n  Types of property 'port' are incompatible.\n    Type 'string' is not assignable to type 'number'."], perPropertyElaboration.diagnostics.map((d) => d.message));
   }
 
   accepts_union_type_node_return_types(): void {
@@ -489,6 +508,7 @@ A<CheckerGroundworkTests>().method((t) => t.derives_logical_operator_result_type
 A<CheckerGroundworkTests>().method((t) => t.hardens_logical_operator_facts).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.resolves_object_literal_members).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.extends_object_member_support).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.deepens_object_member_typing).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

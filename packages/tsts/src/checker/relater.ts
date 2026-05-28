@@ -115,11 +115,18 @@ export class Relater {
   // assignable. Modern default is on; the checker can flip it.
   strictNullChecks = true;
 
+  // The deepest failing object property of the most recent assignability check,
+  // recorded by propertyRelatedTo. The checker (which owns displayType) reads it
+  // to elaborate "Types of property 'X' are incompatible." It carries Types, not
+  // strings, so the relater stays free of the checker's display layer.
+  failingProperty: { readonly name: string; readonly source: Type; readonly target: Type } | undefined = undefined;
+
   // -------------------------------------------------------------------------
   // Public entry points
   // -------------------------------------------------------------------------
 
   isTypeAssignableTo(source: Type, target: Type): boolean {
+    this.failingProperty = undefined;
     return this.isTypeRelatedTo(source, target, this.assignableRelation);
   }
   isTypeSubtypeOf(source: Type, target: Type): boolean {
@@ -333,20 +340,25 @@ export class Relater {
         if (((targetProp.flags ?? 0) & SymbolFlags.Optional) !== 0) continue;
         return Ternary.False;
       }
-      const r = this.propertyRelatedTo(source, target, sourceProp, targetProp, reportErrors);
+      const r = this.propertyRelatedTo(name, sourceProp, targetProp, reportErrors);
       if (r === Ternary.False) return r;
     }
     return Ternary.True;
   }
 
   propertyRelatedTo(
-    source: Type, target: Type, sourceProp: AstSymbol, targetProp: AstSymbol, reportErrors: boolean,
+    name: string, sourceProp: AstSymbol, targetProp: AstSymbol, reportErrors: boolean,
   ): Ternary {
-    void source; void target; void reportErrors;
+    void reportErrors;
     const sourceType = getTypeOfSymbol(sourceProp);
     const targetType = getTypeOfSymbol(targetProp);
     if (sourceType === undefined || targetType === undefined) return Ternary.True;
-    return this.isTypeAssignableTo(sourceType, targetType) ? Ternary.True : Ternary.False;
+    if (this.isTypeAssignableTo(sourceType, targetType)) return Ternary.True;
+    // Record the failing property (name + the incompatible types) for the
+    // checker to elaborate. Set after the inner relation so the outermost
+    // failing property wins.
+    this.failingProperty = { name, source: sourceType, target: targetType };
+    return Ternary.False;
   }
 
   signaturesRelatedTo(

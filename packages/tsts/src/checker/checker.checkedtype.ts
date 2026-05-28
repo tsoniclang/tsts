@@ -170,11 +170,14 @@ export function isBooleanType(type: Type): boolean { return type === booleanType
 // (the on-model representation — functions are object types in TS-Go).
 // ---------------------------------------------------------------------------
 
-export function makeFunctionType(returnType: Type, state: CheckState): Type {
+export function makeFunctionType(returnType: Type, state: CheckState, parameters: readonly { readonly name: string; readonly type: Type }[] = []): Type {
+  const parameterSymbols = parameters.map((parameter) =>
+    ({ name: parameter.name, type: parameter.type, flags: 0, declarations: [] }) as unknown as AstSymbol,
+  );
   const signature: Signature = {
     flags: 0,
-    parameters: [],
-    minArgumentCount: 0,
+    parameters: parameterSymbols,
+    minArgumentCount: parameters.length,
     resolvedReturnType: returnType,
   };
   const data: ObjectType = {
@@ -190,9 +193,18 @@ export function isFunctionType(type: Type): boolean {
   return data?.declaredCallSignatures !== undefined && data.declaredCallSignatures.length > 0;
 }
 
+export function getCallSignature(type: Type): Signature | undefined {
+  return (type.data as ObjectType | undefined)?.declaredCallSignatures?.[0];
+}
+
 export function getFunctionReturnType(type: Type): Type {
   const data = type.data as ObjectType | undefined;
   return data?.declaredCallSignatures?.[0]?.resolvedReturnType ?? unresolvedType;
+}
+
+// SymbolFlags.Optional carried on a synthetic property symbol.
+export function isOptionalSymbol(symbol: AstSymbol | undefined): boolean {
+  return (((symbol as unknown as { readonly flags?: number } | undefined)?.flags ?? 0) & SymbolFlags.Optional) !== 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -658,9 +670,15 @@ function typeFromTypeLiteralNode(node: TypeLiteralNode, state: CheckState): Type
       });
     } else if (isMethodSignatureDeclaration(member) && isIdentifier(member.name)) {
       const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
+      const parameters = member.parameters
+        .filter((parameter) => isIdentifier(parameter.name))
+        .map((parameter) => ({
+          name: (parameter.name as { readonly text: string }).text,
+          type: parameter.type === undefined ? anyType : typeFromTypeNode(parameter.type, state),
+        }));
       properties.push({
         name: member.name.text,
-        type: makeFunctionType(returnType, state),
+        type: makeFunctionType(returnType, state, parameters),
         optional: member.postfixToken?.kind === Kind.QuestionToken,
       });
     } else {
@@ -692,8 +710,15 @@ function typeFromLiteralTypeNode(node: LiteralTypeNode, state: CheckState): Type
 // inference/initializer sites, not in the relation itself.
 export function checkAssignable(actual: Type, expected: Type, state: CheckState): void {
   if (!state.relater.isTypeAssignableTo(actual, expected)) {
+    // Per-property elaboration comes from the relation path (relater records the
+    // failing property + incompatible types); the checker only formats it.
+    const failing = state.relater.failingProperty;
+    const elaboration = failing === undefined
+      ? ""
+      : `\n  Types of property '${failing.name}' are incompatible.`
+        + `\n    Type '${displayType(failing.source)}' is not assignable to type '${displayType(failing.target)}'.`;
     state.diagnostics.push({
-      message: `Type '${displayType(actual)}' is not assignable to type '${displayType(expected)}'.`,
+      message: `Type '${displayType(actual)}' is not assignable to type '${displayType(expected)}'.${elaboration}`,
     });
   }
 }
