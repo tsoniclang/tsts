@@ -403,6 +403,24 @@ export class CheckerGroundworkTests {
     Assert.Equal(0, exact.diagnostics.length);
   }
 
+  checks_optional_and_rest_parameter_semantics(): void {
+    // Optional params accept an explicit `undefined`; rest arguments are checked
+    // against the array element type; mixed required/optional/rest signatures.
+    const optionalUndefined = checkSourceFile(parseSourceFile("function f(o: { parse(text?: string): number }): number { return o.parse(undefined); }"));
+    const restMismatch = checkSourceFile(parseSourceFile("function f(o: { log(...args: string[]): number }): number { return o.log(1); }"));
+    const restOk = checkSourceFile(parseSourceFile("function f(o: { log(...args: string[]): number }): number { return o.log(\"a\", \"b\"); }"));
+    const mixedOk = checkSourceFile(parseSourceFile("function f(o: { g(a: string, b?: number, c: boolean): void }): void { o.g(\"x\", undefined, true); }"));
+    const badOptional = checkSourceFile(parseSourceFile("function f(o: { g(a?: string): void }): void { o.g(1); }"));
+    const badRest = checkSourceFile(parseSourceFile("function f(o: { g(...rest: string[]): void }): void { o.g(\"x\", 1); }"));
+
+    Assert.Equal(0, optionalUndefined.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], restMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, restOk.diagnostics.length);
+    Assert.Equal(0, mixedOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string | undefined'."], badOptional.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], badRest.diagnostics.map((d) => d.message));
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -528,6 +546,7 @@ A<CheckerGroundworkTests>().method((t) => t.resolves_object_literal_members).add
 A<CheckerGroundworkTests>().method((t) => t.extends_object_member_support).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.deepens_object_member_typing).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_call_signature_arity).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_optional_and_rest_parameter_semantics).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

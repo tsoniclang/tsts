@@ -12,6 +12,7 @@
 import {
   Kind,
   SymbolFlags,
+  isArrayTypeNode,
   isBigIntLiteral,
   isIdentifier,
   isObjectBindingPattern,
@@ -210,6 +211,18 @@ export function isFunctionType(type: Type): boolean {
 
 export function getCallSignature(type: Type): Signature | undefined {
   return (type.data as ObjectType | undefined)?.declaredCallSignatures?.[0];
+}
+
+// Minimal array type: an object type carrying its element type. Enough to
+// extract a rest-parameter element type and to display `T[]`; full element-wise
+// array relating is a later tranche.
+export function makeArrayType(elementType: Type, state: CheckState): Type {
+  const data = { objectFlags: ObjectFlags.Anonymous, elementType } as unknown as ObjectType;
+  return { flags: TypeFlags.Object, id: state.nextTypeId(), data };
+}
+
+export function getArrayElementType(type: Type): Type | undefined {
+  return (type.data as unknown as { readonly elementType?: Type } | undefined)?.elementType;
 }
 
 export function getFunctionReturnType(type: Type): Type {
@@ -673,6 +686,9 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
   if (isTypeLiteralNode(type)) {
     return typeFromTypeLiteralNode(type, state);
   }
+  if (isArrayTypeNode(type)) {
+    return makeArrayType(typeFromTypeNode(type.elementType, state), state);
+  }
   return anyType;
 }
 
@@ -786,6 +802,10 @@ export function displayType(type: Type): string {
   if ((type.flags & TypeFlags.BooleanLiteral) !== 0) return String((type.data as LiteralType).value);
   if ((type.flags & TypeFlags.BigIntLiteral) !== 0) return `${pseudoBigIntToString((type.data as LiteralType).value as PseudoBigInt)}n`;
   if (isFunctionType(type)) return "function";
+  const elementType = getArrayElementType(type);
+  if (elementType !== undefined) {
+    return `${displayType(elementType)}[]`;
+  }
   if ((type.flags & TypeFlags.Object) !== 0) {
     const members = objectTypeMembers(type);
     if (members !== undefined) {

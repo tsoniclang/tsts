@@ -68,6 +68,7 @@ import {
   isOptionalSymbol,
   isRestSymbol,
   getCallSignature,
+  getArrayElementType,
   type ObjectProperty,
   getWidenedType,
   checkAssignable,
@@ -237,13 +238,25 @@ export function inferExpression(expression: Expression, state: CheckState, envir
             : `${signature.minArgumentCount}-${parameters.length}`;
         state.diagnostics.push({ message: `Expected ${expected} arguments, but got ${argumentTypes.length}.` });
       } else {
+        const restIndex = hasRest ? parameters.length - 1 : -1;
         parameters.forEach((parameter, index) => {
-          if (isRestSymbol(parameter)) return;
           const parameterType = getTypeOfSymbol(parameter);
-          const argumentType = argumentTypes[index];
-          if (parameterType !== undefined && argumentType !== undefined) {
-            checkAssignable(getWidenedLiteralLikeTypeForContextualType(argumentType, parameterType, state), parameterType, state);
+          if (parameterType === undefined) return;
+          if (index === restIndex) {
+            // Each rest argument is checked against the array element type.
+            const elementType = getArrayElementType(parameterType);
+            if (elementType !== undefined) {
+              argumentTypes.slice(index).forEach((argumentType) => {
+                checkAssignable(getWidenedLiteralLikeTypeForContextualType(argumentType, elementType, state), elementType, state);
+              });
+            }
+            return;
           }
+          const argumentType = argumentTypes[index];
+          if (argumentType === undefined) return;
+          // An optional parameter also accepts an explicit `undefined` argument.
+          const target = isOptionalSymbol(parameter) ? getUnionType([parameterType, undefinedType], state) : parameterType;
+          checkAssignable(getWidenedLiteralLikeTypeForContextualType(argumentType, target, state), target, state);
         });
       }
     }
