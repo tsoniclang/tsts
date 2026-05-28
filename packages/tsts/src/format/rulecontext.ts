@@ -151,10 +151,32 @@ function isBlockContext(ctx: FormattingContext): boolean {
   return kind === Kind.Block || kind === Kind.ModuleBlock || kind === Kind.CaseBlock;
 }
 
-function isBeforeBlockContext(ctx: FormattingContext): boolean {
+export function isBeforeBlockContext(ctx: FormattingContext): boolean {
   const next = ctxNextTokenKind(ctx);
   return next === Kind.OpenBraceToken;
 }
+
+export const isStatementOrDeclarationContext: ContextPredicate = (ctx) => {
+  const k = ctxParentKind(ctx);
+  return (
+    k === Kind.Block ||
+    k === Kind.SourceFile ||
+    k === Kind.ModuleBlock ||
+    k === Kind.CaseClause ||
+    k === Kind.DefaultClause
+  );
+};
+
+export const isNotPropertyAccessExpressionContext: ContextPredicate = (ctx) =>
+  ctxParentKind(ctx) !== Kind.PropertyAccessExpression;
+
+export const isConditionalContext: ContextPredicate = (ctx) =>
+  ctxParentKind(ctx) === Kind.ConditionalExpression;
+
+export const isUnaryContext: ContextPredicate = (ctx) => {
+  const k = ctxParentKind(ctx);
+  return k === Kind.PrefixUnaryExpression || k === Kind.PostfixUnaryExpression;
+};
 
 // ---------------------------------------------------------------------------
 // Misc predicate exports — each follows the same Strada-mirror shape
@@ -205,6 +227,113 @@ export const isTypeArgumentOrParameterOrAssertionContext: ContextPredicate = (ct
   const kind = ctxParentKind(ctx);
   return kind === Kind.TypeReference || kind === Kind.TypeParameter || kind === Kind.TypeAssertionExpression;
 };
+
+// Additional predicates ported to parity with TS-Go rulecontext.go.
+
+export const isFunctionCallContext: ContextPredicate = (ctx) => ctxParentKind(ctx) === Kind.CallExpression;
+export const isNewContext: ContextPredicate = (ctx) => ctxParentKind(ctx) === Kind.NewExpression;
+export const isFunctionCallOrNewContext: ContextPredicate = (ctx) => isFunctionCallContext(ctx) || isNewContext(ctx);
+export const isPreviousTokenNotComma: ContextPredicate = (ctx) => ctxCurrentTokenKind(ctx) !== Kind.CommaToken;
+export const isNextTokenNotCloseBracket: ContextPredicate = (ctx) => ctxNextTokenKind(ctx) !== Kind.CloseBracketToken;
+export const isNextTokenNotCloseParen: ContextPredicate = (ctx) => ctxNextTokenKind(ctx) !== Kind.CloseParenToken;
+export const isArrowFunctionContext: ContextPredicate = (ctx) => ctxParentKind(ctx) === Kind.ArrowFunction;
+export const isImportTypeContext: ContextPredicate = (ctx) => ctxParentKind(ctx) === Kind.ImportType;
+export const isNonJsxTextContext: ContextPredicate = (ctx) => ctxParentKind(ctx) !== Kind.JsxText;
+export const isNotFunctionDeclContext: ContextPredicate = (ctx) => !isFunctionDeclContext(ctx);
+export const isTypeScriptDeclWithBlockContext: ContextPredicate = (ctx) => {
+  const k = ctxParentKind(ctx);
+  return k === Kind.ClassDeclaration || k === Kind.ClassExpression
+    || k === Kind.InterfaceDeclaration || k === Kind.EnumDeclaration
+    || k === Kind.TypeLiteral || k === Kind.ModuleDeclaration
+    || k === Kind.ExportDeclaration || k === Kind.NamedExports
+    || k === Kind.ImportDeclaration || k === Kind.NamedImports;
+};
+
+// "Same-line" tests rely on context.tokensAreOnSameLine etc., already
+// provided as instance methods on FormattingContext.
+export const isStatementConditionContext: ContextPredicate = (ctx) => {
+  const k = ctxParentKind(ctx);
+  return k === Kind.IfStatement || k === Kind.WhileStatement
+    || k === Kind.DoStatement || k === Kind.ForStatement
+    || k === Kind.ForInStatement || k === Kind.ForOfStatement
+    || k === Kind.SwitchStatement;
+};
+
+export const isJsxElementOrFragmentContext: ContextPredicate = (ctx) => {
+  const kind = ctxParentKind(ctx);
+  return kind === Kind.JsxElement || kind === Kind.JsxFragment;
+};
+
+export const isJsxSelfClosingElementContext: ContextPredicate = (ctx) =>
+  ctxParentKind(ctx) === Kind.JsxSelfClosingElement;
+
+export const isJsxClosingElementContext: ContextPredicate = (ctx) =>
+  ctxParentKind(ctx) === Kind.JsxClosingElement;
+
+export const isVariableDeclarationOrInitializerContext: ContextPredicate = (ctx) => {
+  const k = ctxParentKind(ctx);
+  return k === Kind.VariableDeclaration;
+};
+
+export const isYieldOrYieldStarWithOperand: ContextPredicate = (ctx) =>
+  ctxParentKind(ctx) === Kind.YieldExpression;
+
+export const isPropertyAccessExpressionContext: ContextPredicate = (ctx) =>
+  ctxParentKind(ctx) === Kind.PropertyAccessExpression;
+
+export const isElementAccessExpressionContext: ContextPredicate = (ctx) =>
+  ctxParentKind(ctx) === Kind.ElementAccessExpression;
+
+export const isClassDeclContext: ContextPredicate = (ctx) => {
+  const k = ctxParentKind(ctx);
+  return k === Kind.ClassDeclaration || k === Kind.ClassExpression;
+};
+
+export const isInterfaceOrTypeAliasContext: ContextPredicate = (ctx) => {
+  const k = ctxParentKind(ctx);
+  return k === Kind.InterfaceDeclaration || k === Kind.TypeAliasDeclaration;
+};
+
+export const isEnumDeclarationContext: ContextPredicate = (ctx) =>
+  ctxParentKind(ctx) === Kind.EnumDeclaration;
+
+export const isClassMemberContext: ContextPredicate = (ctx) => {
+  const k = ctxParentKind(ctx);
+  return k === Kind.PropertyDeclaration || k === Kind.MethodDeclaration
+    || k === Kind.Constructor || k === Kind.GetAccessor || k === Kind.SetAccessor;
+};
+
+export const isAfterCommaContext: ContextPredicate = (ctx) => ctxCurrentTokenKind(ctx) === Kind.CommaToken;
+
+export const isAfterSemicolonContext: ContextPredicate = (ctx) =>
+  ctxCurrentTokenKind(ctx) === Kind.SemicolonToken;
+
+export const isAfterOpenBraceContext: ContextPredicate = (ctx) =>
+  ctxCurrentTokenKind(ctx) === Kind.OpenBraceToken;
+
+export const isAfterOpenParenContext: ContextPredicate = (ctx) =>
+  ctxCurrentTokenKind(ctx) === Kind.OpenParenToken;
+
+export const isAfterOpenBracketContext: ContextPredicate = (ctx) =>
+  ctxCurrentTokenKind(ctx) === Kind.OpenBracketToken;
+
+export const isBeforeCloseBraceContext: ContextPredicate = (ctx) =>
+  ctxNextTokenKind(ctx) === Kind.CloseBraceToken;
+
+export const isBeforeCloseParenContext: ContextPredicate = (ctx) =>
+  ctxNextTokenKind(ctx) === Kind.CloseParenToken;
+
+export const isBeforeCloseBracketContext: ContextPredicate = (ctx) =>
+  ctxNextTokenKind(ctx) === Kind.CloseBracketToken;
+
+export const isBeforeCommaContext: ContextPredicate = (ctx) =>
+  ctxNextTokenKind(ctx) === Kind.CommaToken;
+
+export const isBeforeSemicolonContext: ContextPredicate = (ctx) =>
+  ctxNextTokenKind(ctx) === Kind.SemicolonToken;
+
+// "Not on same line" predicate (negation of tokensAreOnSameLine).
+export const isNotSameLineTokenContext: ContextPredicate = (ctx) => !ctx.tokensAreOnSameLine();
 
 // ---------------------------------------------------------------------------
 // Forward-declared cross-module surface

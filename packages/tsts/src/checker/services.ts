@@ -42,23 +42,73 @@ export class CheckerServices {
   getQuickInfoAtPosition(file: AstNode, position: number): QuickInfoResult | undefined {
     void file; void position; return undefined;
   }
-  getSymbolAtLocation(node: AstNode): AstSymbol | undefined { void node; return undefined; }
-  getSymbolsInScope(location: AstNode, meaning: number): readonly AstSymbol[] {
-    void location; void meaning; return [];
+  getSymbolAtLocation(node: AstNode): AstSymbol | undefined {
+    return (node as unknown as { symbol?: AstSymbol }).symbol;
   }
-  getTypeAtLocation(node: AstNode): Type | undefined { void node; return undefined; }
+  getSymbolsInScope(location: AstNode, meaning: number): readonly AstSymbol[] {
+    void meaning;
+    // Walk parents collecting symbols from each scope's locals table.
+    const out: AstSymbol[] = [];
+    const seen = new Set<string>();
+    let n: AstNode | undefined = location;
+    while (n !== undefined) {
+      const locals = (n as unknown as { locals?: Map<string, AstSymbol> }).locals;
+      if (locals !== undefined) {
+        for (const [name, sym] of locals) {
+          if (!seen.has(name)) {
+            seen.add(name);
+            out.push(sym);
+          }
+        }
+      }
+      n = (n as unknown as { parent?: AstNode }).parent;
+    }
+    return out;
+  }
+  getTypeAtLocation(node: AstNode): Type | undefined {
+    const sym = this.getSymbolAtLocation(node);
+    if (sym === undefined) return undefined;
+    return (sym as unknown as { type?: Type }).type;
+  }
   getContextualType(node: AstNode, contextFlags: number): Type | undefined {
     void node; void contextFlags; return undefined;
   }
-  getApparentType(t: Type): Type { return t; }
-  getNonOptionalType(t: Type): Type { return t; }
+  getApparentType(t: Type): Type {
+    // Apparent type unwraps type parameters to their constraint, but
+    // for primitives this is the type itself.
+    return t;
+  }
+  getNonOptionalType(t: Type): Type {
+    // Removes undefined/null from the type for definite-assignment
+    // narrowing. For union types, filter constituents; otherwise
+    // identity.
+    const types = (t as unknown as { types?: readonly Type[] }).types;
+    if (types === undefined) return t;
+    const filtered = types.filter((u) => {
+      const f = (u as { flags?: number }).flags ?? 0;
+      return (f & ((1 << 15) | (1 << 16))) === 0; // ¬(Undefined | Null)
+    });
+    if (filtered.length === types.length) return t;
+    if (filtered.length === 1) return filtered[0]!;
+    return { ...(t as object), types: filtered } as unknown as Type;
+  }
 
   // Signature help
   getSignatureHelpItems(file: AstNode, position: number): SignatureHelpResult | undefined {
     void file; void position; return undefined;
   }
-  getCandidateSignatures(node: AstNode): readonly Signature[] { void node; return []; }
-  getResolvedSignature(node: AstNode): Signature | undefined { void node; return undefined; }
+  getCandidateSignatures(node: AstNode): readonly Signature[] {
+    // For a CallExpression, return signatures of the callee's type.
+    const expr = (node as unknown as { expression?: AstNode }).expression;
+    if (expr === undefined) return [];
+    const t = this.getTypeAtLocation(expr);
+    if (t === undefined) return [];
+    return this.getCallSignaturesOfType(t);
+  }
+  getResolvedSignature(node: AstNode): Signature | undefined {
+    const sigs = this.getCandidateSignatures(node);
+    return sigs.length > 0 ? sigs[0] : undefined;
+  }
   getResolvedSignatureForSignatureHelp(node: AstNode, candidatesOutArray: Signature[]): Signature | undefined {
     void node; void candidatesOutArray; return undefined;
   }
@@ -86,13 +136,25 @@ export class CheckerServices {
   }
 
   // Type / property access info
-  getPropertyOfType(t: Type, name: string): AstSymbol | undefined { void t; void name; return undefined; }
+  getPropertyOfType(t: Type, name: string): AstSymbol | undefined {
+    const members = (t as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members;
+    return members?.get(name);
+  }
   getPropertyOfTypeOrUndefined(t: Type, name: string): AstSymbol | undefined {
     return this.getPropertyOfType(t, name);
   }
-  getIndexTypeOfType(t: Type, kind: number): Type | undefined { void t; void kind; return undefined; }
-  getCallSignaturesOfType(t: Type): readonly Signature[] { void t; return []; }
-  getConstructSignaturesOfType(t: Type): readonly Signature[] { void t; return []; }
+  getIndexTypeOfType(t: Type, kind: number): Type | undefined {
+    void kind;
+    // Read pre-resolved index info off the type.
+    const indexInfos = (t as unknown as { indexInfos?: readonly { keyType: Type; type: Type }[] }).indexInfos;
+    return indexInfos !== undefined && indexInfos.length > 0 ? indexInfos[0]!.type : undefined;
+  }
+  getCallSignaturesOfType(t: Type): readonly Signature[] {
+    return (t as unknown as { callSignatures?: readonly Signature[] }).callSignatures ?? [];
+  }
+  getConstructSignaturesOfType(t: Type): readonly Signature[] {
+    return (t as unknown as { constructSignatures?: readonly Signature[] }).constructSignatures ?? [];
+  }
 }
 
 export function newCheckerServices(): CheckerServices {

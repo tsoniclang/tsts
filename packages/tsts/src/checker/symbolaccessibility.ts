@@ -121,11 +121,40 @@ export function newAccessibilityResolver(): AccessibilityResolver {
 // ---------------------------------------------------------------------------
 
 export function getNonModuleParentOfSymbol(symbol: AstSymbol): AstSymbol | undefined {
-  void symbol;
+  // Walk parent-of-symbol chain until we find a non-module parent.
+  // SymbolFlags: ValueModule(512), NamespaceModule(1024) — bit-mask
+  // for "is a module".
+  let s: AstSymbol | undefined = symbol;
+  while (s !== undefined) {
+    const p: AstSymbol | undefined = (s as unknown as { parent?: AstSymbol }).parent;
+    if (p === undefined) return undefined;
+    const pf = (p as unknown as { flags?: number }).flags ?? 0;
+    if ((pf & 0x600) === 0) return p; // 512 | 1024 = 1536
+    s = p;
+  }
   return undefined;
 }
 
 export function isAccessibleFromEnclosingClass(symbol: AstSymbol, enclosing: AstNode | undefined): boolean {
-  void symbol; void enclosing;
+  // Check whether walking parents of `enclosing` reaches the symbol's
+  // declaring class.
+  const decls = (symbol as unknown as { declarations?: readonly AstNode[] }).declarations;
+  if (decls === undefined || decls.length === 0) return true;
+  let n: AstNode | undefined = enclosing;
+  const declaringClass = decls[0];
+  while (n !== undefined) {
+    if (n === declaringClass) return true;
+    const k = (n as { kind?: number }).kind;
+    // Kind 263 = ClassDeclaration, 231 = ClassExpression.
+    if (k === 263 || k === 231) {
+      // Is this the declaring class?
+      let d: AstNode | undefined = declaringClass;
+      while (d !== undefined) {
+        if (d === n) return true;
+        d = (d as unknown as { parent?: AstNode }).parent;
+      }
+    }
+    n = (n as unknown as { parent?: AstNode }).parent;
+  }
   return false;
 }

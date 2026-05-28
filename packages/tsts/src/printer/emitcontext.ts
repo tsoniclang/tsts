@@ -121,15 +121,44 @@ export class EmitContext {
   endVariableEnvironment(): readonly Statement[] {
     const scope = this.varStack.pop();
     if (scope === undefined) return [];
-    void scope; return [];
+    const results: Statement[] = [];
+    // Hoisted function declarations come first.
+    for (const fn of scope.functions) {
+      results.push(fn as unknown as Statement);
+    }
+    // Then a single VariableStatement with all hoisted `var` decls.
+    // The factory's variable-statement constructor isn't ported yet —
+    // synthesize a minimal shape that downstream emit code can read.
+    if (scope.variables.length > 0) {
+      const declarations = scope.variables.map((name) => ({
+        kind: 261 /* VariableDeclaration */, name, initializer: undefined,
+      } as unknown as AstNode));
+      const declarationList = {
+        kind: 260 /* VariableDeclarationList */,
+        declarations: { nodes: declarations },
+        flags: 0 /* NodeFlags.None — implies `var` */,
+      };
+      const vs = {
+        kind: 246 /* VariableStatement */,
+        modifiers: undefined,
+        declarationList,
+      } as unknown as Statement;
+      results.push(vs);
+    }
+    return results;
   }
 
   endAndMergeVariableEnvironmentList(statements: StatementList): StatementList {
-    return statements;
+    const hoisted = this.endVariableEnvironment();
+    if (hoisted.length === 0) return statements;
+    const existing = (statements as unknown as { nodes?: readonly Statement[] }).nodes ?? [];
+    return { nodes: [...hoisted, ...existing] } as unknown as StatementList;
   }
 
   endAndMergeVariableEnvironment(statements: readonly Statement[]): readonly Statement[] {
-    return statements;
+    const hoisted = this.endVariableEnvironment();
+    if (hoisted.length === 0) return statements;
+    return [...hoisted, ...statements];
   }
 
   addVariableDeclaration(name: IdentifierNode): void {
@@ -153,15 +182,34 @@ export class EmitContext {
   endLexicalEnvironment(): readonly Statement[] {
     const scope = this.lexicalStack.pop();
     if (scope === undefined) return [];
-    void scope; return [];
+    if (scope.declarations.length === 0) return [];
+    // Lexical-scope declarations emit as a single `let`-statement.
+    const declarations = scope.declarations.map((name) => ({
+      kind: 261 /* VariableDeclaration */, name, initializer: undefined,
+    } as unknown as AstNode));
+    const declarationList = {
+      kind: 260 /* VariableDeclarationList */,
+      declarations: { nodes: declarations },
+      flags: 1 /* NodeFlags.Let */,
+    };
+    return [{
+      kind: 246 /* VariableStatement */,
+      modifiers: undefined,
+      declarationList,
+    } as unknown as Statement];
   }
 
   endAndMergeLexicalEnvironmentList(statements: StatementList): StatementList {
-    return statements;
+    const lexical = this.endLexicalEnvironment();
+    if (lexical.length === 0) return statements;
+    const existing = (statements as unknown as { nodes?: readonly Statement[] }).nodes ?? [];
+    return { nodes: [...lexical, ...existing] } as unknown as StatementList;
   }
 
   endAndMergeLexicalEnvironment(statements: readonly Statement[]): readonly Statement[] {
-    return statements;
+    const lexical = this.endLexicalEnvironment();
+    if (lexical.length === 0) return statements;
+    return [...lexical, ...statements];
   }
 
   addLexicalDeclaration(name: IdentifierNode): void {
@@ -177,9 +225,19 @@ export class EmitContext {
     return [...statements, ...declarations];
   }
 
-  isCustomPrologue(node: Statement): boolean { void node; return false; }
-  isHoistedFunction(node: Statement): boolean { void node; return false; }
-  isHoistedVariableStatement(node: Statement): boolean { void node; return false; }
+  isCustomPrologue(node: Statement): boolean {
+    // Synthesized prologue directive — marked via emit flags or via
+    // the EmitFlags.CustomPrologue bit (1 << 5 in ts-go).
+    return (this.emitFlags(node as unknown as AstNode) & (1 << 5)) !== 0;
+  }
+  isHoistedFunction(node: Statement): boolean {
+    if ((node as { kind?: number }).kind !== 262 /* FunctionDeclaration */) return false;
+    return (this.emitFlags(node as unknown as AstNode) & (1 << 19) /* HoistedDeclaration */) !== 0;
+  }
+  isHoistedVariableStatement(node: Statement): boolean {
+    if ((node as { kind?: number }).kind !== 246 /* VariableStatement */) return false;
+    return (this.emitFlags(node as unknown as AstNode) & (1 << 19) /* HoistedDeclaration */) !== 0;
+  }
 
   // -------------------------------------------------------------------------
   // Auto-generated names
@@ -271,8 +329,18 @@ export class EmitContext {
   // -------------------------------------------------------------------------
 
   newNotEmittedStatement(node: AstNode): AstNode {
-    void node;
-    return {} as AstNode;
+    // NotEmittedStatement — a synthetic node that holds source-position
+    // info for elided code (used by sourcemap emit so removed source
+    // ranges still map back to the original).
+    const ns = {
+      kind: 245 /* NotEmittedStatement */,
+      pos: (node as unknown as { pos?: number }).pos ?? -1,
+      end: (node as unknown as { end?: number }).end ?? -1,
+      flags: (node as unknown as { flags?: number }).flags ?? 0,
+      original: node,
+    } as unknown as AstNode;
+    this.originalMap.set(ns, node);
+    return ns;
   }
 }
 

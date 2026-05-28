@@ -1,36 +1,40 @@
 /**
  * tsconfig.json parsing.
  *
- * Port skeleton of TS-Go `internal/tsoptions/tsconfigparsing.go`
- * (~1792 LoC). The Strada file is the production tsconfig.json
- * loader — resolves `extends` chains, normalizes file globs, applies
- * project references, validates compilerOptions schema, and produces
- * a fully-realized `ParsedCommandLine`.
+ * Substantive port of TS-Go `internal/tsoptions/tsconfigparsing.go`
+ * (~1792 LoC). Loads a tsconfig.json file, applies extends-chain
+ * resolution, expands `include`/`exclude`/`files`, and produces a
+ * fully-realized `ParsedCommandLine` with typed CompilerOptions and
+ * resolved fileNames.
  *
- * Skeleton scope:
- * - Public API: parseConfigFileTextToJson, parseJsonConfigFileContent,
- *   parseJsonSourceFileConfigFileContent, ParseConfigHost,
- *   ExtendedConfigCacheEntry, NewTsconfigSourceFileFromFilePath,
- *   getParsedCommandLineOfConfigFile
- * - Internal: convertConfigFileToObject, convertToJson,
- *   convertJsonOption, normalizeNonListOptionValue,
- *   validateJsonOptionValue, convertJsonOptionOfListType,
- *   getExtendsConfigPath(OrArray), directoryOfCombinedPath,
- *   isCompilerOptionsValue, startsWithConfigDirTemplate
- * - configFileSpecs class with matchesExclude /
- *   getMatchedIncludeSpec / getMatchedFileSpec
+ * What this commit delivers:
+ *   - Real `parseJsonConfigFileContent` body using vfsmatch.readDirectory
+ *     for include/exclude/files expansion.
+ *   - Real JSON → CompilerOptions conversion via a field-by-field copy
+ *     (typed map driven by the commandline option declarations once they
+ *     are fully ported; today we accept known JSON keys directly).
+ *   - Defaults for jsconfig.json (allowJs, skipLibCheck, noEmit).
+ *   - Proper ParsedCommandLine construction (not the previous
+ *     `{} as unknown as ParsedCommandLine` cast).
  *
- * Deep parser internals (recursive object/array literal conversion,
- * extends chain resolution, project reference walking) stubbed —
- * tests will surface gaps as the integration matures.
+ * Deferred to follow-up commits in this branch (need parser body +
+ * extendedConfigCache wiring):
+ *   - Extends-chain resolution (`extends: "..."`).
+ *   - Project references walking.
+ *   - tsconfig source-file AST + per-property diagnostics.
+ *   - typeAcquisition / watchOptions / build options.
+ *   - convertToObject (JSON syntax-tree → value-tree conversion).
  */
 
 import type { CompilerOptions } from "../core/compileroptions.js";
-import type { ParsedCommandLine } from "./parsedcommandline.js";
+import { ParsedCommandLine } from "./parsedcommandline.js";
+import type { ParsedOptions } from "./parsedcommandline.js";
 import type { Diagnostic } from "../ast/index.js";
 import type { CommandLineOption } from "./commandlineoption.js";
-import type { Tristate } from "../core/tristate.js";
-import { getDirectoryPath, combinePaths } from "../tspath/path.js";
+import { Tristate } from "../core/tristate.js";
+import { getDirectoryPath, combinePaths, normalizePath, getBaseFileName } from "../tspath/path.js";
+import { readDirectory } from "../vfs/vfsmatch/vfsmatch.js";
+import type { FS } from "../vfs/vfs.js";
 
 function createParseError(fileName: string, message: string): Diagnostic {
   return {
@@ -49,7 +53,13 @@ function createParseError(fileName: string, message: string): Diagnostic {
 
 export interface ParseConfigHost {
   readonly useCaseSensitiveFileNames: boolean;
-  readDirectory(
+  /**
+   * Lower-level file-discovery hook. Strada's ParseConfigHost requires
+   * an FS-shaped readDirectory; our type widens it so callers can also
+   * pass a host that already has a backing FS (we then route through
+   * vfsmatch.readDirectory directly).
+   */
+  readDirectory?(
     rootDir: string,
     extensions: readonly string[],
     excludes: readonly string[] | undefined,
@@ -58,6 +68,10 @@ export interface ParseConfigHost {
   ): readonly string[];
   fileExists(path: string): boolean;
   readFile(path: string): string | undefined;
+  /** Optional pass-through FS for callers that want vfsmatch directly. */
+  fs?: FS;
+  /** Optional current directory used for resolving relative paths. */
+  currentDirectory?: string;
   trace?(msg: string): void;
 }
 
@@ -104,6 +118,63 @@ export interface ResolutionStackEntry {
 }
 
 // ---------------------------------------------------------------------------
+// Defaults
+// ---------------------------------------------------------------------------
+
+/**
+ * Default include pattern used when neither `files` nor `include` is
+ * provided. Mirrors TS-Go `defaultIncludeSpec`.
+ */
+const DEFAULT_INCLUDE_SPEC = "**/*";
+
+/**
+ * Default exclude patterns used when `exclude` is not provided. Mirrors
+ * TS-Go behavior of always excluding node_modules + bower_components +
+ * jspm_packages plus the `outDir`/`declarationDir`.
+ */
+const DEFAULT_EXCLUDE_SPECS: readonly string[] = [
+  "**/node_modules",
+  "**/bower_components",
+  "**/jspm_packages",
+];
+
+/**
+ * Default supported extensions for file discovery. Mirrors TS-Go
+ * supported extensions for TS-aware projects.
+ */
+const SUPPORTED_TS_EXTENSIONS: readonly string[] = [".ts", ".tsx", ".d.ts", ".mts", ".cts", ".d.mts", ".d.cts"];
+const SUPPORTED_JS_EXTENSIONS: readonly string[] = [".js", ".jsx", ".mjs", ".cjs"];
+
+function getSupportedExtensions(options: CompilerOptions): readonly string[] {
+  const exts: string[] = [...SUPPORTED_TS_EXTENSIONS];
+  const allowJs = (options as unknown as { allowJs?: Tristate }).allowJs;
+  if (allowJs === Tristate.True) {
+    for (const e of SUPPORTED_JS_EXTENSIONS) exts.push(e);
+  }
+  const resolveJsonModule = (options as unknown as { resolveJsonModule?: Tristate }).resolveJsonModule;
+  if (resolveJsonModule === Tristate.True) {
+    exts.push(".json");
+  }
+  return exts;
+}
+
+/**
+ * Returns the default CompilerOptions for the given config file. Mirrors
+ * TS-Go `getDefaultCompilerOptions`. jsconfig.json gets allowJs, skipLibCheck,
+ * and noEmit defaults.
+ */
+function getDefaultCompilerOptions(configFileName: string): CompilerOptions {
+  const options: Record<string, unknown> = {};
+  if (configFileName !== "" && getBaseFileName(configFileName) === "jsconfig.json") {
+    options.allowJs = Tristate.True;
+    options.skipLibCheck = Tristate.True;
+    options.noEmit = Tristate.True;
+    options.maxNodeModuleJsDepth = 2;
+  }
+  return options as unknown as CompilerOptions;
+}
+
+// ---------------------------------------------------------------------------
 // Top-level entry points
 // ---------------------------------------------------------------------------
 
@@ -112,6 +183,7 @@ export function parseConfigFileTextToJson(
   path: string,
   jsonText: string,
 ): { config: unknown; errors: readonly Diagnostic[] } {
+  void path;
   try {
     const config = JSON.parse(jsonText) as unknown;
     return { config, errors: [] };
@@ -125,7 +197,59 @@ export function newTsconfigSourceFileFromFilePath(
   configPath: string,
   configSourceText: string,
 ): TsConfigSourceFile {
+  void configPath;
   return { fileName: configFileName, text: configSourceText, configFileSpecs: undefined, jsonObject: undefined };
+}
+
+/**
+ * Converts a JSON `compilerOptions` object into a typed CompilerOptions
+ * value. Performs path normalization for string-typed file paths
+ * (`outDir`, `rootDir`, `baseUrl`, `declarationDir`) and tristate
+ * coercion for boolean fields. A pragmatic field-by-field copy until
+ * the full CommandLineOption-driven converter lands.
+ */
+function convertCompilerOptionsFromJson(
+  json: unknown,
+  basePath: string,
+  configFileName: string,
+): { options: CompilerOptions; errors: Diagnostic[] } {
+  const options = getDefaultCompilerOptions(configFileName);
+  const errors: Diagnostic[] = [];
+  if (json === undefined || json === null || typeof json !== "object") {
+    return { options, errors };
+  }
+  const source = json as Record<string, unknown>;
+  const target = options as unknown as Record<string, unknown>;
+  for (const [key, value] of Object.entries(source)) {
+    target[key] = normalizeOptionValue(key, value, basePath);
+  }
+  if (configFileName !== "") {
+    target.configFilePath = normalizePath(configFileName);
+  }
+  return { options, errors };
+}
+
+const PATH_LIKE_KEYS = new Set<string>([
+  "outDir", "rootDir", "baseUrl", "declarationDir", "outFile",
+  "tsBuildInfoFile", "rootDirs",
+]);
+const STRING_LIST_KEYS = new Set<string>([
+  "rootDirs", "types", "typeRoots", "lib",
+]);
+
+function normalizeOptionValue(key: string, value: unknown, basePath: string): unknown {
+  // Booleans → Tristate for fields that the rest of the compiler reads
+  // via tristate predicates.
+  if (typeof value === "boolean") {
+    return value ? Tristate.True : Tristate.False;
+  }
+  if (typeof value === "string" && PATH_LIKE_KEYS.has(key)) {
+    return combinePaths(basePath, value);
+  }
+  if (Array.isArray(value) && STRING_LIST_KEYS.has(key) && key !== "lib" && key !== "types" && key !== "typeRoots") {
+    return value.map((v) => typeof v === "string" ? combinePaths(basePath, v) : v);
+  }
+  return value;
 }
 
 export function parseJsonConfigFileContent(
@@ -138,17 +262,138 @@ export function parseJsonConfigFileContent(
   extraFileExtensions: readonly FileExtensionInfo[] | undefined,
   extendedConfigCache: ExtendedConfigCache | undefined,
 ): ParsedCommandLine {
-  void json; void host; void basePath; void configFileName;
-  void resolutionStack; void extraFileExtensions; void extendedConfigCache;
-  return {
-    options: existingOptions ?? {},
-    fileNames: [],
-    errors: [],
-    raw: json,
-    projectReferences: undefined,
-    typeAcquisition: undefined,
-    watchOptions: undefined,
-  } as unknown as ParsedCommandLine;
+  void resolutionStack; void extendedConfigCache;
+  const errors: Diagnostic[] = [];
+
+  // Extract well-known top-level fields.
+  const root = (json && typeof json === "object") ? (json as Record<string, unknown>) : {};
+  const filesField = readStringArray(root, "files");
+  const includeField = readStringArray(root, "include");
+  const excludeField = readStringArray(root, "exclude");
+  const compilerOptionsField = root.compilerOptions;
+
+  // Merge default + JSON options, then layer existingOptions on top.
+  const { options: jsonOptions, errors: optErrors } = convertCompilerOptionsFromJson(
+    compilerOptionsField,
+    basePath,
+    configFileName ?? "",
+  );
+  for (const e of optErrors) errors.push(e);
+  const mergedOptions = existingOptions !== undefined
+    ? mergeCompilerOptions(jsonOptions, existingOptions)
+    : jsonOptions;
+
+  // Compute file extensions (TS by default; +JS if allowJs; +.json if
+  // resolveJsonModule; +extraFileExtensions).
+  const extensions: string[] = [...getSupportedExtensions(mergedOptions)];
+  if (extraFileExtensions !== undefined) {
+    for (const e of extraFileExtensions) {
+      if (!extensions.includes(e.extension)) extensions.push(e.extension);
+    }
+  }
+
+  // Discover root file names.
+  const rootFileNames = computeRootFileNames(
+    host,
+    basePath,
+    filesField,
+    includeField,
+    excludeField,
+    extensions,
+  );
+
+  const cmpOptions = {
+    useCaseSensitiveFileNames: host.useCaseSensitiveFileNames,
+    currentDirectory: host.currentDirectory ?? basePath,
+  };
+
+  const result = new ParsedCommandLine(
+    mergedOptions as unknown as ParsedOptions["compilerOptions"],
+    rootFileNames,
+    cmpOptions,
+  );
+  result.raw = json;
+  result.errors = errors;
+  return result;
+}
+
+function readStringArray(obj: Record<string, unknown>, key: string): readonly string[] | undefined {
+  const v = obj[key];
+  if (v === undefined) return undefined;
+  if (!Array.isArray(v)) return undefined;
+  const out: string[] = [];
+  for (const e of v) if (typeof e === "string") out.push(e);
+  return out;
+}
+
+function mergeCompilerOptions(base: CompilerOptions, overlay: CompilerOptions): CompilerOptions {
+  const target: Record<string, unknown> = { ...(base as unknown as Record<string, unknown>) };
+  const ov = overlay as unknown as Record<string, unknown>;
+  for (const [k, v] of Object.entries(ov)) {
+    if (v !== undefined) target[k] = v;
+  }
+  return target as unknown as CompilerOptions;
+}
+
+/**
+ * Compute the root file names from `files`/`include`/`exclude`. Falls
+ * back to a recursive include if neither `files` nor `include` is set.
+ */
+function computeRootFileNames(
+  host: ParseConfigHost,
+  basePath: string,
+  filesSpec: readonly string[] | undefined,
+  includeSpec: readonly string[] | undefined,
+  excludeSpec: readonly string[] | undefined,
+  extensions: readonly string[],
+): readonly string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+
+  // Explicit `files` entries.
+  if (filesSpec !== undefined) {
+    for (const f of filesSpec) {
+      const absolute = normalizePath(combinePaths(basePath, f));
+      if (!seen.has(absolute) && host.fileExists(absolute)) {
+        seen.add(absolute);
+        out.push(absolute);
+      }
+    }
+  }
+
+  // Glob-expanded includes.
+  const includes = includeSpec ?? (filesSpec === undefined ? [DEFAULT_INCLUDE_SPEC] : []);
+  if (includes.length > 0) {
+    const excludes: string[] = excludeSpec !== undefined ? [...excludeSpec] : [...DEFAULT_EXCLUDE_SPECS];
+    // Also exclude outDir/declarationDir if present (TS-Go behavior).
+    // (Pulled from options later when wired to compilerOptions.)
+
+    const found = expandIncludes(host, basePath, extensions, excludes, includes);
+    for (const f of found) {
+      if (!seen.has(f)) {
+        seen.add(f);
+        out.push(f);
+      }
+    }
+  }
+
+  return out;
+}
+
+function expandIncludes(
+  host: ParseConfigHost,
+  basePath: string,
+  extensions: readonly string[],
+  excludes: readonly string[],
+  includes: readonly string[],
+): readonly string[] {
+  // Prefer host's own readDirectory if it brings its own logic.
+  if (host.readDirectory !== undefined) {
+    return host.readDirectory(basePath, extensions, excludes, includes);
+  }
+  // Otherwise route through vfsmatch.readDirectory via host.fs.
+  if (host.fs === undefined) return [];
+  return readDirectory(host.fs, basePath, basePath, extensions, excludes, includes, Number.MAX_SAFE_INTEGER);
 }
 
 export function parseJsonSourceFileConfigFileContent(
@@ -182,7 +427,14 @@ export function getParsedCommandLineOfConfigFile(
   const text = host.readFile(configFileName);
   if (text === undefined) return undefined;
   const { config, errors } = parseConfigFileTextToJson(configFileName, configFileName, text);
-  if (config === undefined) return { options: {}, fileNames: [], errors, raw: undefined } as unknown as ParsedCommandLine;
+  if (config === undefined) {
+    const result = new ParsedCommandLine({}, [], {
+      useCaseSensitiveFileNames: host.useCaseSensitiveFileNames,
+      currentDirectory: host.currentDirectory ?? getDirectoryPath(configFileName),
+    });
+    result.errors = errors;
+    return result;
+  }
   return parseJsonConfigFileContent(
     config,
     host,
@@ -204,8 +456,10 @@ export function configFileSpecsMatchesExclude(
   fileName: string,
   options: { currentDirectory: string; useCaseSensitiveFileNames: boolean },
 ): boolean {
-  void specs; void fileName; void options;
-  return false;
+  void options;
+  const excludes = specs.validatedExcludeSpecs ?? specs.excludeSpecs;
+  if (excludes === undefined || excludes.length === 0) return false;
+  return excludes.some((e) => globMatchesPath(fileName, e));
 }
 
 export function configFileSpecsGetMatchedIncludeSpec(
@@ -213,7 +467,12 @@ export function configFileSpecsGetMatchedIncludeSpec(
   fileName: string,
   options: { currentDirectory: string; useCaseSensitiveFileNames: boolean },
 ): string {
-  void specs; void fileName; void options;
+  void options;
+  const includes = specs.validatedIncludeSpecs ?? specs.includeSpecs;
+  if (includes === undefined) return "";
+  for (const inc of includes) {
+    if (globMatchesPath(fileName, inc)) return inc;
+  }
   return "";
 }
 
@@ -222,8 +481,26 @@ export function configFileSpecsGetMatchedFileSpec(
   fileName: string,
   options: { currentDirectory: string; useCaseSensitiveFileNames: boolean },
 ): string {
-  void specs; void fileName; void options;
+  void options;
+  const files = specs.validatedFilesSpec ?? specs.filesSpecs;
+  if (files === undefined) return "";
+  for (const f of files) {
+    if (fileName === f || fileName.endsWith("/" + f)) return f;
+  }
   return "";
+}
+
+function globMatchesPath(filePath: string, spec: string): boolean {
+  // Same simple-glob conversion vfsmatch uses for its internal matcher.
+  const re = "^" +
+    spec
+      .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+      .replace(/\*\*\//g, "(?:.*/)?")
+      .replace(/\*\*/g, ".*")
+      .replace(/\*/g, "[^/]*")
+      .replace(/\?/g, ".") +
+    "$";
+  return new RegExp(re).test(filePath);
 }
 
 // ---------------------------------------------------------------------------
@@ -327,8 +604,3 @@ export function getExtendsConfigPathOrArray(
 export function directoryOfCombinedPath(fileName: string, basePath: string): string {
   return getDirectoryPath(combinePaths(basePath, fileName));
 }
-
-// ---------------------------------------------------------------------------
-// Forward-declared cross-module surface
-// ---------------------------------------------------------------------------
-

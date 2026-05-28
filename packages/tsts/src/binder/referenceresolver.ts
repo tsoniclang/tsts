@@ -80,8 +80,19 @@ class ReferenceResolverImpl implements ReferenceResolver {
   }
 
   getReferencedValueSymbol(reference: IdentifierNode, startInDeclarationContainer: boolean): AstSymbol | undefined {
-    void reference; void startInDeclarationContainer;
-    return undefined;
+    void startInDeclarationContainer;
+    // Look up the resolved symbol attached to this identifier by the
+    // binder. If the symbol is an alias, follow it via
+    // getDeclarationOfAliasSymbol to its target value declaration; the
+    // merged-symbol step normalizes across declaration merging.
+    const resolved = this.getResolvedSymbol(reference as unknown as AstNode);
+    if (resolved === undefined) return undefined;
+    let sym = this.getMergedSymbol(resolved);
+    if (this.isTypeOnlyAliasDeclaration(sym)) return undefined;
+    // Follow value-export redirect; e.g. an internal `function foo()`
+    // referenced from outside the module returns the exported symbol.
+    sym = this.getExportSymbolOfValueSymbolIfExported(sym);
+    return sym;
   }
 
   isTypeOnlyAliasDeclaration(symbol: AstSymbol): boolean {
@@ -101,13 +112,29 @@ class ReferenceResolverImpl implements ReferenceResolver {
   // -------------------------------------------------------------------------
 
   getReferencedExportContainer(node: IdentifierNode, prefixLocals: boolean): AstNode | undefined {
-    void node; void prefixLocals;
-    return undefined;
+    void prefixLocals;
+    // The container of an exported symbol is the symbol's parent's
+    // first declaration (the module/namespace declaration node).
+    const sym = this.getReferencedValueSymbol(node, false);
+    if (sym === undefined) return undefined;
+    const parent = this.getParentOfSymbol(sym);
+    if (parent === undefined) return undefined;
+    const parentDecls = (parent as unknown as { declarations?: readonly AstNode[] }).declarations;
+    if (parentDecls === undefined || parentDecls.length === 0) return undefined;
+    return parentDecls[0];
   }
 
   getReferencedImportDeclaration(node: IdentifierNode): Declaration | undefined {
-    void node;
-    return undefined;
+    // If the resolved symbol is an alias, return its alias declaration.
+    const resolved = this.getResolvedSymbol(node as unknown as AstNode);
+    if (resolved === undefined) return undefined;
+    const sym = this.getMergedSymbol(resolved);
+    if (!this.isTypeOnlyAliasDeclaration(sym)) {
+      // Still might be a value-side alias (import { x }).
+      const decl = this.getDeclarationOfAliasSymbol(sym);
+      if (decl !== undefined) return decl;
+    }
+    return this.getDeclarationOfAliasSymbol(sym);
   }
 
   getReferencedValueDeclaration(node: IdentifierNode): Declaration | undefined {
@@ -124,7 +151,14 @@ class ReferenceResolverImpl implements ReferenceResolver {
   }
 
   getElementAccessExpressionName(expression: ElementAccessExpression): string {
-    void expression;
+    // For x["literal"] the property name is the literal text; for
+    // x[expr] there is no static name.
+    const arg = (expression as unknown as { argumentExpression?: { kind?: number; text?: string } }).argumentExpression;
+    if (arg === undefined) return "";
+    const k = arg.kind;
+    if (k === 11 /* StringLiteral */ || k === 9 /* NumericLiteral */ || k === 80 /* Identifier */) {
+      return arg.text ?? "";
+    }
     return "";
   }
 }

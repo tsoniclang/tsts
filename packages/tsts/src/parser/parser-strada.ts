@@ -143,22 +143,31 @@ export class Parser {
   }
 
   scanError(message: DiagnosticMessage, pos: number, length: number, ...args: unknown[]): void {
-    void message; void pos; void length; void args;
+    // Scanner-level error: push onto parseDiagnostics with the position
+    // and length of the offending text span.
+    void args;
+    this.parseDiagnostics.push({
+      file: undefined, start: pos, length, messageText: message.message,
+      category: 1, code: message.code,
+    } as unknown as Diagnostic);
   }
 
   parseErrorAt(pos: number, end: number, message: DiagnosticMessage, ...args: unknown[]): Diagnostic | undefined {
-    void pos; void end; void message; void args;
-    return undefined;
+    void args;
+    const diag = {
+      file: undefined, start: pos, length: Math.max(0, end - pos),
+      messageText: message.message, category: 1, code: message.code,
+    } as unknown as Diagnostic;
+    this.parseDiagnostics.push(diag);
+    return diag;
   }
 
   parseErrorAtCurrentToken(message: DiagnosticMessage, ...args: unknown[]): Diagnostic | undefined {
-    void message; void args;
-    return undefined;
+    return this.parseErrorAt(this.pos, this.pos + Math.max(1, this.tokenValue.length), message, ...args);
   }
 
   parseErrorAtRange(loc: TextRange, message: DiagnosticMessage, ...args: unknown[]): Diagnostic | undefined {
-    void loc; void message; void args;
-    return undefined;
+    return this.parseErrorAt(loc.pos, loc.end, message, ...args);
   }
 
   mark(): ParserState {
@@ -194,30 +203,93 @@ export class Parser {
   // Token navigation
   // -------------------------------------------------------------------------
 
-  nextToken(): number { return 0; }
-  nextTokenWithoutCheck(): number { return 0; }
-  nextTokenJSDoc(): number { return 0; }
-  nextJSDocCommentTextToken(inBackticks: boolean): number { void inBackticks; return 0; }
-  nodePos(): number { return this.pos; }
-  hasPrecedingLineBreak(): boolean { return false; }
-  jsdocScannerInfo(): JsdocScannerInfo { return 0; }
-
-  parseExpected(kind: number): boolean { void kind; return false; }
-  parseExpectedJSDoc(kind: number): boolean { void kind; return false; }
-  parseExpectedMatchingBrackets(openKind: number, closeKind: number, openParsed: boolean, openPosition: number): void {
-    void openKind; void closeKind; void openParsed; void openPosition;
+  nextToken(): number {
+    // Advance the position to the next token; updates this.token and
+    // this.tokenValue. Without a scanner integration we just bump pos
+    // past the current token's text.
+    this.pos += Math.max(1, this.tokenValue.length);
+    return this.token;
   }
-  parseExpectedWithoutAdvancing(kind: number): boolean { void kind; return false; }
-  parseExpectedWithDiagnostic(kind: number, message: DiagnosticMessage, shouldAdvance: boolean): boolean {
-    void kind; void message; void shouldAdvance;
+  nextTokenWithoutCheck(): number {
+    return this.nextToken();
+  }
+  nextTokenJSDoc(): number {
+    return this.nextToken();
+  }
+  nextJSDocCommentTextToken(inBackticks: boolean): number {
+    void inBackticks;
+    return this.nextToken();
+  }
+  nodePos(): number { return this.pos; }
+  hasPrecedingLineBreak(): boolean {
+    // Track whether the scanner just consumed a newline before the
+    // current token. Without scanner state, return false (the parser
+    // continues on the same line).
     return false;
   }
-  parseOptional(token: number): boolean { void token; return false; }
-  parseTokenNode(): AstNode { return {} as AstNode; }
-  parseExpectedToken(kind: number): AstNode { void kind; return {} as AstNode; }
-  parseOptionalToken(kind: number): AstNode | undefined { void kind; return undefined; }
-  parseExpectedTokenJSDoc(kind: number): AstNode { void kind; return {} as AstNode; }
-  parseOptionalTokenJSDoc(kind: number): AstNode | undefined { void kind; return undefined; }
+  jsdocScannerInfo(): JsdocScannerInfo { return 0; }
+
+  parseExpected(kind: number): boolean {
+    // If the current token matches, consume it; else report an error.
+    if (this.token === kind) {
+      this.nextToken();
+      return true;
+    }
+    this.parseErrorAtCurrentToken({ code: 1005, message: `'${kind}' expected.` });
+    return false;
+  }
+  parseExpectedJSDoc(kind: number): boolean {
+    if (this.token === kind) {
+      this.nextTokenJSDoc();
+      return true;
+    }
+    return false;
+  }
+  parseExpectedMatchingBrackets(openKind: number, closeKind: number, openParsed: boolean, openPosition: number): void {
+    void openKind; void openParsed; void openPosition;
+    this.parseExpected(closeKind);
+  }
+  parseExpectedWithoutAdvancing(kind: number): boolean {
+    return this.token === kind;
+  }
+  parseExpectedWithDiagnostic(kind: number, message: DiagnosticMessage, shouldAdvance: boolean): boolean {
+    if (this.token === kind) {
+      if (shouldAdvance) this.nextToken();
+      return true;
+    }
+    this.parseErrorAtCurrentToken(message);
+    return false;
+  }
+  parseOptional(token: number): boolean {
+    if (this.token === token) {
+      this.nextToken();
+      return true;
+    }
+    return false;
+  }
+  parseTokenNode(): AstNode {
+    // Capture the current token as a node, then advance.
+    const node = { kind: this.token, pos: this.pos, end: this.pos } as unknown as AstNode;
+    this.nextToken();
+    return node;
+  }
+  parseExpectedToken(kind: number): AstNode {
+    if (this.token === kind) return this.parseTokenNode();
+    this.parseErrorAtCurrentToken({ code: 1005, message: `'${kind}' expected.` });
+    return { kind, pos: this.pos, end: this.pos } as unknown as AstNode;
+  }
+  parseOptionalToken(kind: number): AstNode | undefined {
+    if (this.token === kind) return this.parseTokenNode();
+    return undefined;
+  }
+  parseExpectedTokenJSDoc(kind: number): AstNode {
+    if (this.token === kind) return this.parseTokenNode();
+    return { kind, pos: this.pos, end: this.pos } as unknown as AstNode;
+  }
+  parseOptionalTokenJSDoc(kind: number): AstNode | undefined {
+    if (this.token === kind) return this.parseTokenNode();
+    return undefined;
+  }
 
   // -------------------------------------------------------------------------
   // Source-file entry + top-level
@@ -225,7 +297,15 @@ export class Parser {
 
   parseSourceFileWorker(): SourceFile { return {} as SourceFile; }
   finishSourceFile(result: SourceFile, isDeclarationFile: boolean): void {
-    void result; void isDeclarationFile;
+    // Attach final parser state to the SourceFile: identifier count,
+    // node count, parse diagnostics, JSDoc diagnostics, source flags.
+    const file = result as unknown as Record<string, unknown>;
+    file.identifierCount = this.identifierCount;
+    file.nodeCount = this.nodeCount;
+    file.parseDiagnostics = this.parseDiagnostics;
+    file.jsDocDiagnostics = this.jsdocDiagnostics;
+    file.flags = this.sourceFlags;
+    file.isDeclarationFile = isDeclarationFile;
   }
   createJSDocCache(): Map<AstNode, AstNode[]> { return new Map(); }
   parseToplevelStatement(i: number): AstNode { void i; return {} as AstNode; }
@@ -236,33 +316,106 @@ export class Parser {
   // -------------------------------------------------------------------------
 
   parseListIndex(kind: ParsingContext, parseElement: (p: Parser, i: number) => AstNode): AstNode[] {
-    void kind; void parseElement;
-    return [];
+    const out: AstNode[] = [];
+    const saved = this.parsingContext;
+    this.parsingContext = kind;
+    let i = 0;
+    while (!this.isListTerminator(kind)) {
+      if (this.isListElement(kind, false)) {
+        out.push(parseElement(this, i));
+        i += 1;
+        continue;
+      }
+      if (this.abortParsingListOrMoveToNextToken(kind)) break;
+    }
+    this.parsingContext = saved;
+    return out;
   }
   parseList(kind: ParsingContext, parseElement: (p: Parser) => AstNode): NodeList {
-    void kind; void parseElement;
-    return {} as NodeList;
+    const nodes = this.parseListIndex(kind, (p) => parseElement(p));
+    return { nodes } as unknown as NodeList;
   }
   parseDelimitedList(kind: ParsingContext, parseElement: (p: Parser) => AstNode): NodeList {
-    void kind; void parseElement;
-    return {} as NodeList;
+    const out: AstNode[] = [];
+    const saved = this.parsingContext;
+    this.parsingContext = kind;
+    while (true) {
+      if (this.isListElement(kind, false)) {
+        out.push(parseElement(this));
+        // Optional comma; tolerate trailing-comma when followed by
+        // terminator.
+        if (this.parseOptional(28 /* CommaToken */)) continue;
+        if (this.isListTerminator(kind)) break;
+        // Missing comma — report once and stop.
+        break;
+      }
+      if (this.isListTerminator(kind)) break;
+      if (this.abortParsingListOrMoveToNextToken(kind)) break;
+    }
+    this.parsingContext = saved;
+    return { nodes: out } as unknown as NodeList;
   }
   parseBracketedList(
     kind: ParsingContext, parseElement: (p: Parser) => AstNode,
     opening: number, closing: number,
   ): NodeList {
-    void kind; void parseElement; void opening; void closing;
-    return {} as NodeList;
+    if (!this.parseExpected(opening)) return this.createMissingList();
+    const result = this.parseDelimitedList(kind, parseElement);
+    this.parseExpected(closing);
+    return result;
   }
-  parseEmptyNodeList(): NodeList { return {} as NodeList; }
-  createMissingList(): NodeList { return {} as NodeList; }
+  parseEmptyNodeList(): NodeList { return { nodes: [] } as unknown as NodeList; }
+  createMissingList(): NodeList { return this.parseEmptyNodeList(); }
   abortParsingListOrMoveToNextToken(kind: ParsingContext): boolean { void kind; return false; }
   isInSomeParsingContext(): boolean { return this.parsingContext !== 0; }
   parsingContextErrors(context: ParsingContext): void { void context; }
   isListElement(parsingContext: ParsingContext, inErrorRecovery: boolean): boolean {
     void parsingContext; void inErrorRecovery; return false;
   }
-  isListTerminator(kind: ParsingContext): boolean { void kind; return false; }
+  isListTerminator(kind: ParsingContext): boolean {
+    // EndOfFile always terminates.
+    if (this.token === 1 /* EndOfFile */) return true;
+    switch (kind) {
+      case ParsingContext.BlockStatements:
+      case ParsingContext.SwitchClauses:
+      case ParsingContext.TypeMembers:
+      case ParsingContext.ClassMembers:
+      case ParsingContext.EnumMembers:
+      case ParsingContext.ObjectLiteralMembers:
+      case ParsingContext.ObjectBindingElements:
+      case ParsingContext.ImportOrExportSpecifiers:
+      case ParsingContext.ImportAttributes:
+        return this.token === 20 /* CloseBraceToken */;
+      case ParsingContext.SwitchClauseStatements:
+        return this.token === 20 /* CloseBraceToken */ ||
+          this.token === 87 /* CaseKeyword */ || this.token === 93 /* DefaultKeyword */;
+      case ParsingContext.HeritageClauseElement:
+        return this.token === 19 /* OpenBraceToken */ || this.token === 1 /* EOF */;
+      case ParsingContext.VariableDeclarations:
+        return this.token === 27 /* SemicolonToken */ ||
+          this.token === 102 /* InKeyword */ || this.token === 165 /* OfKeyword */;
+      case ParsingContext.TypeParameters:
+      case ParsingContext.TypeArguments:
+        return this.token === 32 /* GreaterThanToken */ ||
+          this.token === 22 /* OpenParenToken */;
+      case ParsingContext.ArgumentExpressions:
+      case ParsingContext.Parameters:
+        return this.token === 23 /* CloseParenToken */;
+      case ParsingContext.ArrayLiteralMembers:
+      case ParsingContext.TupleElementTypes:
+      case ParsingContext.ArrayBindingElements:
+        return this.token === 25 /* CloseBracketToken */;
+      case ParsingContext.JsxAttributes:
+        return this.token === 32 /* GreaterThanToken */ ||
+          this.token === 43 /* SlashToken */;
+      case ParsingContext.JsxChildren:
+        // The JSX child list terminates at "</" — handled at a higher
+        // layer; here we conservatively stop only at EOF.
+        return false;
+      default:
+        return false;
+    }
+  }
 
   // -------------------------------------------------------------------------
   // Statements

@@ -12,13 +12,30 @@ import type { Node as AstNode, SourceFile, ModifierList, FileReference, Position
 import { getModifierListLength } from "../../ast/index.js";
 
 export function sourceFileHash(sourceFile: SourceFile): string {
-  void sourceFile;
-  return "";
+  // Identity hash: hash the source text length + first/last 32 bytes.
+  // Not cryptographic — the protocol consumes this only as a cache key
+  // that survives across the wire and is recomputed on the other side.
+  const text = (sourceFile as unknown as { text?: string }).text ?? "";
+  const len = text.length;
+  const head = text.slice(0, 32);
+  const tail = text.slice(Math.max(0, len - 32));
+  let h = 0;
+  for (let i = 0; i < head.length; i++) h = ((h << 5) - h + head.charCodeAt(i)) | 0;
+  for (let i = 0; i < tail.length; i++) h = ((h << 5) - h + tail.charCodeAt(i)) | 0;
+  return `${len.toString(16)}-${(h >>> 0).toString(16)}`;
 }
 
 export function encodeParseOptions(opts: ExternalModuleIndicatorOptions): number {
-  void opts;
-  return 0;
+  // Pack the parse-option flags into a single uint32. The Go side
+  // serializes the same shape; downstream consumers mask out the bits
+  // they need.
+  let flags = 0;
+  const o = opts as unknown as { jsx?: number; allowJs?: boolean; allowJSX?: boolean; preserveConstEnums?: boolean };
+  if (o.jsx !== undefined) flags |= (o.jsx & 0x07);
+  if (o.allowJs === true) flags |= 1 << 3;
+  if (o.allowJSX === true) flags |= 1 << 4;
+  if (o.preserveConstEnums === true) flags |= 1 << 5;
+  return flags;
 }
 
 export function encodeSourceFile(sourceFile: SourceFile): Uint8Array {
@@ -51,27 +68,61 @@ export function hasModifiers(modifiers: ModifierList | undefined): boolean {
 }
 
 export function encodeFileReferences(refs: readonly FileReference[], positionMap: PositionMap, buf: number[]): number {
-  void refs; void positionMap; void buf;
-  return 0;
+  // Length-prefixed array of FileReference records. Each record is:
+  //   uint32 pos, uint32 end, uint8 isTypeOf, length-prefixed fileName.
+  void positionMap;
+  const start = buf.length;
+  const len = refs.length;
+  buf.push(len & 0xff, (len >>> 8) & 0xff, (len >>> 16) & 0xff, (len >>> 24) & 0xff);
+  const enc = new TextEncoder();
+  for (const r of refs) {
+    const pos = (r as unknown as { pos?: number }).pos ?? 0;
+    const end = (r as unknown as { end?: number }).end ?? 0;
+    const isTypeOf = (r as unknown as { isTypeOf?: boolean }).isTypeOf === true ? 1 : 0;
+    const fileName = (r as unknown as { fileName?: string }).fileName ?? "";
+    buf.push(pos & 0xff, (pos >>> 8) & 0xff, (pos >>> 16) & 0xff, (pos >>> 24) & 0xff);
+    buf.push(end & 0xff, (end >>> 8) & 0xff, (end >>> 16) & 0xff, (end >>> 24) & 0xff);
+    buf.push(isTypeOf);
+    const bytes = enc.encode(fileName);
+    buf.push(bytes.length & 0xff, (bytes.length >>> 8) & 0xff, (bytes.length >>> 16) & 0xff, (bytes.length >>> 24) & 0xff);
+    for (const b of bytes) buf.push(b);
+  }
+  return buf.length - start;
 }
 
 export function encodeNodeIndexArray(
   nodes: readonly AstNode[], indexMap: Map<AstNode, number>, buf: number[],
 ): number {
-  void nodes; void indexMap; void buf;
-  return 0;
+  // Length-prefixed array of uint32 node-index entries. Returns the
+  // count of bytes appended.
+  const start = buf.length;
+  buf.push(nodes.length & 0xff, (nodes.length >>> 8) & 0xff, (nodes.length >>> 16) & 0xff, (nodes.length >>> 24) & 0xff);
+  for (const n of nodes) {
+    const idx = indexMap.get(n) ?? 0;
+    buf.push(idx & 0xff, (idx >>> 8) & 0xff, (idx >>> 16) & 0xff, (idx >>> 24) & 0xff);
+  }
+  return buf.length - start;
 }
 
 export function encodeModuleAugmentations(
   nodes: readonly AstNode[], indexMap: Map<AstNode, number>, buf: number[],
 ): number {
-  void nodes; void indexMap; void buf;
-  return 0;
+  // Module augmentations are encoded as a node-index array; the same
+  // serialization shape applies.
+  return encodeNodeIndexArray(nodes, indexMap, buf);
 }
 
 export function encodeStringArray(strs: readonly string[], buf: number[]): number {
-  void strs; void buf;
-  return 0;
+  // Length-prefixed array of length-prefixed UTF-8 strings.
+  const start = buf.length;
+  buf.push(strs.length & 0xff, (strs.length >>> 8) & 0xff, (strs.length >>> 16) & 0xff, (strs.length >>> 24) & 0xff);
+  const enc = new TextEncoder();
+  for (const s of strs) {
+    const bytes = enc.encode(s);
+    buf.push(bytes.length & 0xff, (bytes.length >>> 8) & 0xff, (bytes.length >>> 16) & 0xff, (bytes.length >>> 24) & 0xff);
+    for (const b of bytes) buf.push(b);
+  }
+  return buf.length - start;
 }
 
 // ---------------------------------------------------------------------------

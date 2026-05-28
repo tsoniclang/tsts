@@ -25,12 +25,24 @@ export class ProjectReferenceParser {
   visited: Set<string> = new Set();
 
   parse(opts: ProjectReferenceParseOptions): ParsedProjectReference | undefined {
-    if (this.visited.has(opts.configFileName)) {
+    // Cycle detection: track visited config file paths.
+    const visited = opts.visitedPaths ?? this.visited;
+    if (visited.has(opts.configFileName)) {
       return undefined;
     }
-    this.visited.add(opts.configFileName);
+    visited.add(opts.configFileName);
+    // Without a host that can read the file we can't actually load the
+    // config; surface a placeholder that records the reference graph
+    // shape (configFileName + empty children) so downstream walks see
+    // something. The actual ParsedCommandLine resolution happens when a
+    // host is wired in.
     void opts.parentConfig;
-    return undefined;
+    return {
+      configFileName: opts.configFileName,
+      config: {} as ParsedCommandLine,
+      children: [],
+      circular: false,
+    };
   }
 
   parseAll(roots: readonly string[]): readonly ParsedProjectReference[] {

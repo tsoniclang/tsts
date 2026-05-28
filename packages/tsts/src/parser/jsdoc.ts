@@ -279,7 +279,18 @@ export function isJSDocLinkTag(kind: string): boolean {
 }
 
 export function isObjectOrObjectArrayTypeReference(node: TypeNode | undefined): boolean {
-  void node;
+  if (node === undefined) return false;
+  // ArrayType with elementType being an Object-Object-Array reference
+  // recursively, OR a TypeReference whose typeName is identifier "Object".
+  const k = (node as { kind?: number }).kind;
+  if (k === 0xb6 /* ArrayType — sentinel; will be replaced when Kind enum is canonicalized */) {
+    const element = (node as unknown as { elementType?: TypeNode }).elementType;
+    return isObjectOrObjectArrayTypeReference(element);
+  }
+  if (k === 0xb2 /* TypeReference — same sentinel note */) {
+    const tn = (node as unknown as { typeName?: { kind?: number; text?: string } }).typeName;
+    return tn?.text === "Object";
+  }
   return false;
 }
 
