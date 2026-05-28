@@ -6,8 +6,9 @@
  */
 
 import type { Program } from "./program.js";
+import { type Checker, newChecker } from "../checker/index.js";
 
-export interface Checker { readonly _checker?: unknown }
+export type { Checker };
 
 export class CheckerPool {
   readonly program: Program;
@@ -26,7 +27,7 @@ export class CheckerPool {
       this.busy.add(c);
       return c;
     }
-    const created = {} as Checker;
+    const created = newChecker();
     this.busy.add(created);
     return created;
   }
