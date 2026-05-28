@@ -245,6 +245,19 @@ export class CheckerGroundworkTests {
     Assert.Equal("true", printer.typeToString(regularTrueType));
   }
 
+  checks_satisfies_expression(): void {
+    // `expr satisfies T` verifies expr is assignable to T but the RESULT type is
+    // the expression's own type, not T (proved by routing the result into a
+    // narrower return type the target would not satisfy).
+    const resultIsExprType = checkSourceFile(parseSourceFile("function f(): \"a\" { return \"a\" satisfies string; }"));
+    const checkFails = checkSourceFile(parseSourceFile("function g(): number { return 1 satisfies string; }"));
+    const resultNotTarget = checkSourceFile(parseSourceFile("function f(): \"a\" { return \"b\" satisfies string; }"));
+
+    Assert.Equal(0, resultIsExprType.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type '1' is not assignable to type 'string'."], checkFails.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type '\"b\"' is not assignable to type '\"a\"'."], resultNotTarget.diagnostics.map((d) => d.message));
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -362,6 +375,7 @@ A<CheckerGroundworkTests>().method((t) => t.boolean_normalizes_to_false_true_uni
 A<CheckerGroundworkTests>().method((t) => t.boolean_union_interns_to_canonical_object).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.boolean_pair_collapses_in_embedded_union).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_printer_prints_boolean_union).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_satisfies_expression).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

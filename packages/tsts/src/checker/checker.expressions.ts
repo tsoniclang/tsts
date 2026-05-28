@@ -103,9 +103,18 @@ export function inferExpression(expression: Expression, state: CheckState, envir
   if (isSpreadElement(expression)) {
     return inferExpression(expression.expression, state, environment);
   }
-  if (isAsExpression(expression) || isSatisfiesExpression(expression)) {
+  if (isAsExpression(expression)) {
     inferExpression(expression.expression, state, environment);
     return typeFromTypeNode(expression.type, state);
+  }
+  if (isSatisfiesExpression(expression)) {
+    // `expr satisfies T`: check that the expression's type is assignable to T,
+    // but the RESULT type is the expression's own type — not narrowed/widened
+    // to T (mirrors TS-Go checkSatisfiesExpression: assignability is verified,
+    // the expression type flows through unchanged).
+    const exprType = inferExpression(expression.expression, state, environment);
+    checkAssignable(exprType, typeFromTypeNode(expression.type, state), state);
+    return exprType;
   }
   if (isConditionalExpression(expression)) {
     inferExpression(expression.condition, state, environment);
