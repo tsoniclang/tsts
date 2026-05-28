@@ -463,6 +463,26 @@ export class CheckerGroundworkTests {
     Assert.Equal(0, storedCallArg.diagnostics.length);
   }
 
+  checks_array_types(): void {
+    // Array literal inference, element-wise array relation, element access type,
+    // array-literal call-argument context, and readonly arrays.
+    const arrayOk = checkSourceFile(parseSourceFile("function f(): void { const ok: string[] = [\"a\", \"b\"]; }"));
+    const elementMismatch = checkSourceFile(parseSourceFile("function f(): void { const bad: string[] = [\"a\", 1]; }"));
+    const elementAccess = checkSourceFile(parseSourceFile("function f(xs: string[]): string { return xs[0]; }"));
+    const elementAccessWrong = checkSourceFile(parseSourceFile("function f(xs: string[]): number { return xs[0]; }"));
+    const arrayRelate = checkSourceFile(parseSourceFile("function f(xs: string[]): number[] { return xs; }"));
+    const readonlyOk = checkSourceFile(parseSourceFile("function f(api: { takes(xs: readonly number[]): void }): void { api.takes([1, 2, 3]); }"));
+    const readonlyMismatch = checkSourceFile(parseSourceFile("function f(api: { takes(xs: readonly number[]): void }): void { api.takes([\"x\"]); }"));
+
+    Assert.Equal(0, arrayOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type '(string | number)[]' is not assignable to type 'string[]'."], elementMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, elementAccess.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], elementAccessWrong.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'string[]' is not assignable to type 'number[]'."], arrayRelate.diagnostics.map((d) => d.message));
+    Assert.Equal(0, readonlyOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'string[]' is not assignable to type 'number[]'."], readonlyMismatch.diagnostics.map((d) => d.message));
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -591,6 +611,7 @@ A<CheckerGroundworkTests>().method((t) => t.checks_call_signature_arity).add(Fac
 A<CheckerGroundworkTests>().method((t) => t.checks_optional_and_rest_parameter_semantics).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_contextual_object_literals_and_excess).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.excess_check_regularization_and_empty_target).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_array_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

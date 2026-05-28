@@ -25,6 +25,7 @@ import {
   isPropertySignatureDeclaration,
   isStringLiteral,
   isTypeLiteralNode,
+  isTypeOperatorNode,
   isUnionTypeNode,
   type BindingElement,
   type BindingName,
@@ -713,6 +714,12 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
   if (isArrayTypeNode(type)) {
     return makeArrayType(typeFromTypeNode(type.elementType, state), state);
   }
+  if (isTypeOperatorNode(type)) {
+    // `readonly T[]` relates element-wise like `T[]` here (readonly affects
+    // mutation, not the element-assignability cases modeled). keyof/unique
+    // operators are deferred.
+    return type.operator === Kind.ReadonlyKeyword ? typeFromTypeNode(type.type, state) : anyType;
+  }
   return anyType;
 }
 
@@ -837,7 +844,9 @@ export function displayType(type: Type): string {
   if (isFunctionType(type)) return "function";
   const elementType = getArrayElementType(type);
   if (elementType !== undefined) {
-    return `${displayType(elementType)}[]`;
+    const rendered = displayType(elementType);
+    // Parenthesize a union element so `(string | number)[]` reads correctly.
+    return (elementType.flags & TypeFlags.Union) !== 0 ? `(${rendered})[]` : `${rendered}[]`;
   }
   if ((type.flags & TypeFlags.Object) !== 0) {
     const members = objectTypeMembers(type);

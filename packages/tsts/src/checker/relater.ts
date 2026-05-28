@@ -319,6 +319,14 @@ export class Relater {
         }
       }
     }
+    // Array types relate element-wise (covariant here; readonly/mutable variance
+    // not modeled). A non-array source is not assignable to an array target.
+    const targetElement = this.arrayElementType(target);
+    if (targetElement !== undefined) {
+      const sourceElement = this.arrayElementType(source);
+      if (sourceElement === undefined) return Ternary.False;
+      return this.isTypeAssignableTo(sourceElement, targetElement) ? Ternary.True : Ternary.False;
+    }
     // For object types: properties, call signatures, construct
     // signatures, index signatures all relate.
     const propsResult = this.propertiesRelatedTo(source, target, reportErrors);
@@ -630,6 +638,9 @@ export class Relater {
   isFreshObjectLiteral(t: Type): boolean {
     return (t.flags & TypeFlags.Object) !== 0
       && (((t.data as { objectFlags?: ObjectFlags } | undefined)?.objectFlags ?? 0) & ObjectFlags.FreshLiteral) !== 0;
+  }
+  arrayElementType(t: Type): Type | undefined {
+    return (t.data as { elementType?: Type } | undefined)?.elementType;
   }
 }
 

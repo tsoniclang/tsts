@@ -9,6 +9,7 @@
 
 import {
   Kind,
+  isArrayLiteralExpression,
   isArrowFunction,
   isAsExpression,
   isBinaryExpression,
@@ -70,6 +71,8 @@ import {
   isRestSymbol,
   getCallSignature,
   getArrayElementType,
+  makeArrayType,
+  neverType,
   type ObjectProperty,
   getWidenedType,
   checkAssignable,
@@ -227,13 +230,27 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     // Mark the direct object literal fresh so the relation can excess-check it.
     return makeObjectType(properties, state, true);
   }
+  if (isArrayLiteralExpression(expression)) {
+    // Element type = union of the (contextually typed, else widened) element
+    // types. Array spreads aren't modeled yet (skipped). `[]` -> the contextual
+    // element type, else `never`.
+    const contextualElement = contextualType === undefined ? undefined : getArrayElementType(contextualType);
+    const elementTypes = expression.elements
+      .filter((element) => !isSpreadElement(element))
+      .map((element) => {
+        const valueType = inferExpression(element, state, environment, contextualElement);
+        return contextualElement === undefined ? getWidenedType(valueType, state) : getWidenedLiteralLikeTypeForContextualType(valueType, contextualElement, state);
+      });
+    const elementType = elementTypes.length === 0 ? (contextualElement ?? neverType) : getUnionType(elementTypes, state);
+    return makeArrayType(elementType, state);
+  }
   if (isPropertyAccessExpression(expression)) {
     return inferPropertyAccess(expression.expression, expression.name.text, state, environment);
   }
   if (isElementAccessExpression(expression)) {
-    inferExpression(expression.expression, state, environment);
+    const receiverType = inferExpression(expression.expression, state, environment);
     inferExpression(expression.argumentExpression, state, environment);
-    return unresolvedType;
+    return getArrayElementType(receiverType) ?? unresolvedType;
   }
   if (isCallExpression(expression)) {
     const calleeType = inferExpression(expression.expression, state, environment);
