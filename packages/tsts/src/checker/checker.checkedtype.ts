@@ -15,10 +15,15 @@ import {
   isObjectBindingPattern,
   isArrayBindingPattern,
   isKeywordTypeNode,
+  isLiteralTypeNode,
+  isNumericLiteral,
+  isStringLiteral,
   type BindingElement,
   type BindingName,
+  type LiteralTypeNode,
   type TypeNode,
 } from "../ast/index.js";
+import { fromString } from "../jsnum/index.js";
 import {
   type Type,
   type IntrinsicType,
@@ -312,14 +317,17 @@ function isLiteralLikeContextualType(contextualType: Type): boolean {
 // TS-Go getWidenedLiteralLikeTypeForContextualType). Applied at return /
 // assignment / arrow-body check sites — NOT inside checkAssignable.
 export function getWidenedLiteralLikeTypeForContextualType(type: Type, contextualType: Type, state: CheckState): Type {
-  return isLiteralLikeContextualType(contextualType) ? type : getWidenedType(type, state);
+  const contextual = isLiteralLikeContextualType(contextualType) ? type : getWidenedType(type, state);
+  // Always pass the regular (non-fresh) literal forward, matching TS-Go's
+  // trailing getRegularTypeOfLiteralType.
+  return getRegularTypeOfLiteralType(contextual);
 }
 
 // ---------------------------------------------------------------------------
 // Leaf helpers
 // ---------------------------------------------------------------------------
 
-export function typeFromTypeNode(type: TypeNode): Type {
+export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
   if (isKeywordTypeNode(type)) {
     switch (type.kind) {
       case Kind.AnyKeyword:
@@ -344,6 +352,21 @@ export function typeFromTypeNode(type: TypeNode): Type {
         return unknownType;
     }
   }
+  if (isLiteralTypeNode(type)) {
+    return typeFromLiteralTypeNode(type, state);
+  }
+  return anyType;
+}
+
+// Literal type nodes (`"lit"` / `1` / `true` / `false`) resolve to the
+// REGULAR literal type. (Negative numeric, bigint, and null literal type
+// nodes are deferred.)
+function typeFromLiteralTypeNode(node: LiteralTypeNode, state: CheckState): Type {
+  const literal = node.literal;
+  if (isStringLiteral(literal)) return getStringLiteralType(literal.text, state);
+  if (isNumericLiteral(literal)) return getNumberLiteralType(fromString(literal.text), state);
+  if (literal.kind === Kind.TrueKeyword) return getBooleanLiteralType(true);
+  if (literal.kind === Kind.FalseKeyword) return getBooleanLiteralType(false);
   return anyType;
 }
 

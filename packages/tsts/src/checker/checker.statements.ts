@@ -51,7 +51,7 @@ export function checkStatements(statements: readonly Statement[], state: CheckSt
 export function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: Type | undefined): void {
   if (isVariableStatement(statement)) {
     for (const declaration of statement.declarationList.declarations) {
-      const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type);
+      const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type, state);
       const initializerType = declaration.initializer === undefined ? undefined : inferExpression(declaration.initializer, state, environment);
       if (declaredType !== undefined && initializerType !== undefined) {
         checkAssignable(getWidenedLiteralLikeTypeForContextualType(initializerType, declaredType, state), declaredType, state);
@@ -133,7 +133,7 @@ export function checkForInitializer(initializer: Extract<Statement, { readonly k
   }
   if (isVariableDeclarationList(initializer)) {
     for (const declaration of initializer.declarations) {
-      const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type);
+      const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type, state);
       const initializerType = declaration.initializer === undefined ? undefined : inferExpression(declaration.initializer, state, environment);
       if (declaredType !== undefined && initializerType !== undefined) {
         checkAssignable(getWidenedLiteralLikeTypeForContextualType(initializerType, declaredType, state), declaredType, state);

@@ -98,7 +98,7 @@ export function inferExpression(expression: Expression, state: CheckState, envir
   }
   if (isAsExpression(expression) || isSatisfiesExpression(expression)) {
     inferExpression(expression.expression, state, environment);
-    return typeFromTypeNode(expression.type);
+    return typeFromTypeNode(expression.type, state);
   }
   if (isConditionalExpression(expression)) {
     inferExpression(expression.condition, state, environment);
@@ -160,9 +160,9 @@ export function inferExpression(expression: Expression, state: CheckState, envir
 export function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, environment: TypeEnvironment): Type {
   const arrowEnvironment = new Map(environment);
   for (const parameter of arrowFunction.parameters) {
-    setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type), arrowEnvironment);
+    setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, state), arrowEnvironment);
   }
-  const declaredReturnType = arrowFunction.type === undefined ? undefined : typeFromTypeNode(arrowFunction.type);
+  const declaredReturnType = arrowFunction.type === undefined ? undefined : typeFromTypeNode(arrowFunction.type, state);
   const inferredReturnType = inferConciseBody(arrowFunction.body, state, arrowEnvironment, declaredReturnType);
   return makeFunctionType(declaredReturnType ?? inferredReturnType, state);
 }

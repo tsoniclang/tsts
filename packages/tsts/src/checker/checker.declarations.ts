@@ -39,10 +39,10 @@ export function checkClassElement(member: ClassElement, state: CheckState, envir
   if (isConstructorDeclaration(member) || isMethodDeclaration(member)) {
     const memberEnvironment = new Map(environment);
     for (const parameter of member.parameters) {
-      setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type), memberEnvironment);
+      setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, state), memberEnvironment);
     }
     if (member.body !== undefined) {
-      checkBlock(member.body, state, memberEnvironment, member.type === undefined ? undefined : typeFromTypeNode(member.type));
+      checkBlock(member.body, state, memberEnvironment, member.type === undefined ? undefined : typeFromTypeNode(member.type, state));
     }
     return;
   }
@@ -57,9 +57,9 @@ export function checkFunctionDeclaration(functionDeclaration: FunctionDeclaratio
   }
   const functionEnvironment = new Map(environment);
   for (const parameter of functionDeclaration.parameters) {
-    setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type), functionEnvironment);
+    setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, state), functionEnvironment);
   }
   if (functionDeclaration.body !== undefined) {
-    checkBlock(functionDeclaration.body, state, functionEnvironment, functionDeclaration.type === undefined ? undefined : typeFromTypeNode(functionDeclaration.type));
+    checkBlock(functionDeclaration.body, state, functionEnvironment, functionDeclaration.type === undefined ? undefined : typeFromTypeNode(functionDeclaration.type, state));
   }
 }
