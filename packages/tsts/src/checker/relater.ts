@@ -244,6 +244,15 @@ export class Relater {
     if ((tf & TypeFlags.Intersection) !== 0) return this.typeRelatedToEachType(source, target, reportErrors);
     // Source intersection: some constituent must relate to the target.
     if ((sf & TypeFlags.Intersection) !== 0) return this.someTypeRelatedToType(source, target, reportErrors);
+    // Broad empty object `{}` target: accepts any non-nullish, known source
+    // (string/number/boolean/array/function/object). This mirrors TS-Go, where
+    // a primitive's apparent (wrapper) type satisfies `{}`'s absent required
+    // members. null/undefined/void/unknown are rejected here (any/never are
+    // already handled by isSimpleTypeRelatedTo).
+    if (this.isBroadEmptyObjectType(target)
+      && (sf & (TypeFlags.Null | TypeFlags.Undefined | TypeFlags.Void | TypeFlags.Unknown)) === 0) {
+      return Ternary.True;
+    }
     // Both object: structural comparison.
     if ((sf & TypeFlags.Object) !== 0 && (tf & TypeFlags.Object) !== 0) {
       return this.structuredTypeRelatedTo(source, target, reportErrors, intersectionState);
@@ -643,6 +652,21 @@ export class Relater {
   }
   arrayElementType(t: Type): Type | undefined {
     return (t.data as { elementType?: Type } | undefined)?.elementType;
+  }
+  isBroadEmptyObjectType(t: Type): boolean {
+    // The broad empty object `{}`: an object type with no required structure —
+    // no members, not an array, no call/construct signatures, no index info.
+    if ((t.flags & TypeFlags.Object) === 0) return false;
+    if (this.arrayElementType(t) !== undefined) return false;
+    const members = (t as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members;
+    if (members !== undefined && members.size > 0) return false;
+    const callSigs = signaturesOf(t, SignatureKind.Call);
+    if (callSigs !== undefined && callSigs.length > 0) return false;
+    const constructSigs = signaturesOf(t, SignatureKind.Construct);
+    if (constructSigs !== undefined && constructSigs.length > 0) return false;
+    const indexInfos = (t as unknown as { indexInfos?: readonly unknown[] }).indexInfos;
+    if (indexInfos !== undefined && indexInfos.length > 0) return false;
+    return true;
   }
 }
 

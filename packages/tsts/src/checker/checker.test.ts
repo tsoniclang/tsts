@@ -501,6 +501,34 @@ export class CheckerGroundworkTests {
     Assert.Equal(0, broadObjectAcceptsArray.diagnostics.length);
   }
 
+  checks_broad_empty_object_and_index_validation(): void {
+    // `unknown`/`boolean` are not valid numeric array indexes; `any` is accepted
+    // to avoid false precision. The broad `{}` target accepts any modeled
+    // non-nullish source (string/number/boolean/function/array), but rejects
+    // null/undefined/unknown.
+    const unknownIndex = checkSourceFile(parseSourceFile("function f(xs: string[], i: unknown): string { return xs[i]; }"));
+    const anyIndex = checkSourceFile(parseSourceFile("function f(xs: string[], i: any): string { return xs[i]; }"));
+    const booleanIndex = checkSourceFile(parseSourceFile("function f(xs: string[], i: boolean): string { return xs[i]; }"));
+    const broadString = checkSourceFile(parseSourceFile("function f(x: string): {} { return x; }"));
+    const broadNumber = checkSourceFile(parseSourceFile("function f(x: number): {} { return x; }"));
+    const broadBoolean = checkSourceFile(parseSourceFile("function f(x: boolean): {} { return x; }"));
+    const broadFunction = checkSourceFile(parseSourceFile("function f(): {} { return () => 1; }"));
+    const broadNull = checkSourceFile(parseSourceFile("function f(): {} { return null; }"));
+    const broadUndefined = checkSourceFile(parseSourceFile("function f(): {} { return undefined; }"));
+    const broadUnknown = checkSourceFile(parseSourceFile("function f(x: unknown): {} { return x; }"));
+
+    Assert.Equal<readonly string[]>(["Type 'unknown' cannot be used to index type 'string[]'."], unknownIndex.diagnostics.map((d) => d.message));
+    Assert.Equal(0, anyIndex.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'boolean' cannot be used to index type 'string[]'."], booleanIndex.diagnostics.map((d) => d.message));
+    Assert.Equal(0, broadString.diagnostics.length);
+    Assert.Equal(0, broadNumber.diagnostics.length);
+    Assert.Equal(0, broadBoolean.diagnostics.length);
+    Assert.Equal(0, broadFunction.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'null' is not assignable to type '{}'."], broadNull.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'undefined' is not assignable to type '{}'."], broadUndefined.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'unknown' is not assignable to type '{}'."], broadUnknown.diagnostics.map((d) => d.message));
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -631,6 +659,7 @@ A<CheckerGroundworkTests>().method((t) => t.checks_contextual_object_literals_an
 A<CheckerGroundworkTests>().method((t) => t.excess_check_regularization_and_empty_target).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_array_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_array_spread_index_and_broad_object).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_broad_empty_object_and_index_validation).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

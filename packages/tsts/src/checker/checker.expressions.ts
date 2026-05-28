@@ -260,10 +260,12 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     const indexType = inferExpression(expression.argumentExpression, state, environment);
     const elementType = getArrayElementType(receiverType);
     if (elementType !== undefined) {
-      // Numeric element access only; non-numeric indexes (e.g. `xs["bad"]`) are
-      // not valid numeric indexes (named props go through property access later).
+      // Numeric element access only; non-numeric indexes (e.g. `xs["bad"]`,
+      // `xs[unknownValue]`) are rejected (named props go through property access
+      // later). `any` and error types are accepted to avoid false cascades, but
+      // `unknown` is a real known type and is not a valid numeric index.
       const indexOk = isNumberType(getApparentType(indexType))
-        || isAnyType(indexType) || isUnknownType(indexType) || isUnresolvedType(indexType);
+        || isAnyType(indexType) || isUnresolvedType(indexType);
       if (!indexOk) {
         state.diagnostics.push({ message: `Type '${displayType(indexType)}' cannot be used to index type '${displayType(receiverType)}'.` });
         return unresolvedType;
