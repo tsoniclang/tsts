@@ -158,46 +158,75 @@ export const NodeCheckFlags = {
 } as const;
 
 export type TypeFlags = number;
+// 1:1 with TS-Go `internal/checker/types.go` TypeFlags (NOT the Strada/JS
+// layout). Bit positions and composite masks match upstream exactly;
+// composite values are the precomputed bit-unions of the formulas in the
+// trailing comments.
 export const TypeFlags = {
+  None: 0 as TypeFlags,
   Any: (1 << 0) as TypeFlags,
   Unknown: (1 << 1) as TypeFlags,
-  String: (1 << 2) as TypeFlags,
-  Number: (1 << 3) as TypeFlags,
-  Boolean: (1 << 4) as TypeFlags,
-  Enum: (1 << 5) as TypeFlags,
-  BigInt: (1 << 6) as TypeFlags,
-  StringLiteral: (1 << 7) as TypeFlags,
-  NumberLiteral: (1 << 8) as TypeFlags,
-  BooleanLiteral: (1 << 9) as TypeFlags,
-  EnumLiteral: (1 << 10) as TypeFlags,
-  BigIntLiteral: (1 << 11) as TypeFlags,
-  ESSymbol: (1 << 12) as TypeFlags,
-  UniqueESSymbol: (1 << 13) as TypeFlags,
-  Void: (1 << 14) as TypeFlags,
-  Undefined: (1 << 15) as TypeFlags,
-  Null: (1 << 16) as TypeFlags,
-  Never: (1 << 17) as TypeFlags,
-  TypeParameter: (1 << 18) as TypeFlags,
-  Object: (1 << 19) as TypeFlags,
-  Union: (1 << 20) as TypeFlags,
-  Intersection: (1 << 21) as TypeFlags,
-  Index: (1 << 22) as TypeFlags,
-  IndexedAccess: (1 << 23) as TypeFlags,
-  Conditional: (1 << 24) as TypeFlags,
-  Substitution: (1 << 25) as TypeFlags,
-  NonPrimitive: (1 << 26) as TypeFlags,
-  TemplateLiteral: (1 << 27) as TypeFlags,
-  StringMapping: (1 << 28) as TypeFlags,
-  Literal: 2944 as TypeFlags, // StringLiteral|NumberLiteral|BooleanLiteral|EnumLiteral|BigIntLiteral
-  Nullable: 98304 as TypeFlags, // Undefined|Null
-  Falsy: 117724 as TypeFlags,
-  Truthy: 16777215 as TypeFlags,
-  Primitive: 134221820 as TypeFlags,
-  StructuredType: 3670016 as TypeFlags, // Object|Union|Intersection
-  TypeVariable: 8650752 as TypeFlags, // TypeParameter|IndexedAccess
-  Instantiable: 58982400 as TypeFlags,
-  StructuredOrInstantiable: 66060288 as TypeFlags,
-  ObjectFlagsType: 3801088 as TypeFlags,
+  Undefined: (1 << 2) as TypeFlags,
+  Null: (1 << 3) as TypeFlags,
+  Void: (1 << 4) as TypeFlags,
+  String: (1 << 5) as TypeFlags,
+  Number: (1 << 6) as TypeFlags,
+  BigInt: (1 << 7) as TypeFlags,
+  Boolean: (1 << 8) as TypeFlags,
+  ESSymbol: (1 << 9) as TypeFlags,
+  StringLiteral: (1 << 10) as TypeFlags,
+  NumberLiteral: (1 << 11) as TypeFlags,
+  BigIntLiteral: (1 << 12) as TypeFlags,
+  BooleanLiteral: (1 << 13) as TypeFlags,
+  UniqueESSymbol: (1 << 14) as TypeFlags,
+  EnumLiteral: (1 << 15) as TypeFlags,
+  Enum: (1 << 16) as TypeFlags,
+  NonPrimitive: (1 << 17) as TypeFlags,
+  Never: (1 << 18) as TypeFlags,
+  TypeParameter: (1 << 19) as TypeFlags,
+  Object: (1 << 20) as TypeFlags,
+  Index: (1 << 21) as TypeFlags,
+  TemplateLiteral: (1 << 22) as TypeFlags,
+  StringMapping: (1 << 23) as TypeFlags,
+  Substitution: (1 << 24) as TypeFlags,
+  IndexedAccess: (1 << 25) as TypeFlags,
+  Conditional: (1 << 26) as TypeFlags,
+  Union: (1 << 27) as TypeFlags,
+  Intersection: (1 << 28) as TypeFlags,
+  Reserved1: (1 << 29) as TypeFlags,
+  Reserved2: (1 << 30) as TypeFlags,
+  Reserved3: (1 << 31) as TypeFlags,
+  AnyOrUnknown: 3 as TypeFlags, // Any|Unknown
+  Nullable: 12 as TypeFlags, // Undefined|Null
+  Literal: 15360 as TypeFlags, // StringLiteral|NumberLiteral|BigIntLiteral|BooleanLiteral
+  Unit: 97292 as TypeFlags, // Enum|Literal|UniqueESSymbol|Nullable
+  Freshable: 80896 as TypeFlags, // Enum|Literal
+  StringOrNumberLiteral: 3072 as TypeFlags, // StringLiteral|NumberLiteral
+  StringOrNumberLiteralOrUnique: 19456 as TypeFlags, // StringLiteral|NumberLiteral|UniqueESSymbol
+  DefinitelyFalsy: 15388 as TypeFlags,
+  PossiblyFalsy: 15868 as TypeFlags,
+  Intrinsic: 393983 as TypeFlags,
+  StringLike: 12583968 as TypeFlags, // String|StringLiteral|TemplateLiteral|StringMapping
+  NumberLike: 67648 as TypeFlags, // Number|NumberLiteral|Enum
+  BigIntLike: 4224 as TypeFlags, // BigInt|BigIntLiteral
+  BooleanLike: 8448 as TypeFlags, // Boolean|BooleanLiteral
+  EnumLike: 98304 as TypeFlags, // Enum|EnumLiteral
+  ESSymbolLike: 16896 as TypeFlags, // ESSymbol|UniqueESSymbol
+  VoidLike: 20 as TypeFlags, // Void|Undefined
+  Primitive: 12713980 as TypeFlags,
+  DefinitelyNonNullable: 13893600 as TypeFlags,
+  DisjointDomains: 12812284 as TypeFlags,
+  UnionOrIntersection: 402653184 as TypeFlags, // Union|Intersection
+  StructuredType: 403701760 as TypeFlags, // Object|Union|Intersection
+  TypeVariable: 34078720 as TypeFlags, // TypeParameter|IndexedAccess
+  InstantiableNonPrimitive: 117964800 as TypeFlags, // TypeVariable|Conditional|Substitution
+  InstantiablePrimitive: 14680064 as TypeFlags, // Index|TemplateLiteral|StringMapping
+  Instantiable: 132644864 as TypeFlags, // InstantiableNonPrimitive|InstantiablePrimitive
+  StructuredOrInstantiable: 536346624 as TypeFlags, // StructuredType|Instantiable
+  ObjectFlagsType: 403963917 as TypeFlags, // Any|Nullable|Never|Object|Union|Intersection
+  Simplifiable: 102760448 as TypeFlags, // IndexedAccess|Conditional|Index
+  Singleton: 394239 as TypeFlags,
+  Narrowable: 536575971 as TypeFlags,
 } as const;
 
 export type ObjectFlags = number;

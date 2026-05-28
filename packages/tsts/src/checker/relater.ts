@@ -11,17 +11,19 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
-import type { Type, Signature, VarianceFlags, UnionOrIntersectionType, LiteralType } from "./types.js";
-import { TypeFlags } from "./types.js";
+import type { Type, Signature, VarianceFlags, UnionOrIntersectionType, LiteralType, ObjectType } from "./types.js";
+import { TypeFlags, SignatureKind } from "./types.js";
 
-// Composite TypeFlags masks (mirror TS-Go's `TypeFlags*Like`; not
-// pre-defined in types.ts, so derived here from the base bits).
-const StringLikeFlags = TypeFlags.String | TypeFlags.StringLiteral;
-const NumberLikeFlags = TypeFlags.Number | TypeFlags.NumberLiteral;
-const BigIntLikeFlags = TypeFlags.BigInt | TypeFlags.BigIntLiteral;
-const BooleanLikeFlags = TypeFlags.Boolean | TypeFlags.BooleanLiteral;
-const ESSymbolLikeFlags = TypeFlags.ESSymbol | TypeFlags.UniqueESSymbol;
-const UnionOrIntersectionFlags = TypeFlags.Union | TypeFlags.Intersection;
+// Composite TypeFlags masks (now defined 1:1 in types.ts); aliased locally
+// to keep the ported relation logic readable.
+const StringLikeFlags = TypeFlags.StringLike;
+const NumberLikeFlags = TypeFlags.NumberLike;
+const BigIntLikeFlags = TypeFlags.BigIntLike;
+const BooleanLikeFlags = TypeFlags.BooleanLike;
+const ESSymbolLikeFlags = TypeFlags.ESSymbolLike;
+const UnionOrIntersectionFlags = TypeFlags.UnionOrIntersection;
+// Mask of types that may simplify to other forms — matches TS-Go's
+// isTypeRelatedTo identity branch exactly (NOT TypeFlags.Simplifiable).
 const SimplifiableFlags =
   UnionOrIntersectionFlags | TypeFlags.IndexedAccess | TypeFlags.Conditional | TypeFlags.Substitution;
 
@@ -33,6 +35,13 @@ function literalValueOf(t: Type): unknown {
 // (mirrors TS-Go's `t.AsUnionOrIntersectionType().Types()`).
 function constituentTypes(t: Type): readonly Type[] | undefined {
   return (t.data as UnionOrIntersectionType | undefined)?.types;
+}
+
+// Call/construct signatures of an object type, stored on `Type.data`
+// (mirrors TS-Go's `t.AsObjectType()` signature lists).
+function signaturesOf(t: Type, kind: SignatureKind): readonly Signature[] | undefined {
+  const data = t.data as ObjectType | undefined;
+  return kind === SignatureKind.Call ? data?.declaredCallSignatures : data?.declaredConstructSignatures;
 }
 
 function getRelationKey(source: Type, target: Type, isIdentity: boolean): string {
@@ -145,8 +154,9 @@ export class Relater {
       // Excluding types that may simplify, identical types must have
       // identical flags.
       if (sf !== tf) return false;
-      // Intrinsic singletons with equal flags are identical.
-      if ((sf & TypeFlags.Primitive) !== 0) return true;
+      // Singleton intrinsics with equal flags are identical (literals are
+      // NOT singletons — two literals with equal flags may differ by value).
+      if ((sf & TypeFlags.Singleton) !== 0) return true;
     }
     if ((sf & TypeFlags.Object) !== 0 && (tf & TypeFlags.Object) !== 0) {
       const id = getRelationKey(source, target, relation.kind === RelationKind.Identity);
@@ -323,11 +333,10 @@ export class Relater {
   }
 
   signaturesRelatedTo(
-    source: Type, target: Type, kind: number, reportErrors: boolean,
+    source: Type, target: Type, kind: SignatureKind, reportErrors: boolean,
   ): Ternary {
-    const which = kind === 0 ? "callSignatures" : "constructSignatures";
-    const sourceSigs = (source as unknown as Record<string, readonly Signature[] | undefined>)[which];
-    const targetSigs = (target as unknown as Record<string, readonly Signature[] | undefined>)[which];
+    const sourceSigs = signaturesOf(source, kind);
+    const targetSigs = signaturesOf(target, kind);
     if (targetSigs === undefined || targetSigs.length === 0) return Ternary.True;
     if (sourceSigs === undefined || sourceSigs.length === 0) return Ternary.False;
     // For each target sig, source must have at least one related sig.
