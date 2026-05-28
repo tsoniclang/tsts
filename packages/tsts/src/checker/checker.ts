@@ -1,89 +1,49 @@
-import {
-  Kind,
-  isArrowFunction,
-  isAsExpression,
-  isBinaryExpression,
-  isBlock,
-  isBreakStatement,
-  isCallExpression,
-  isClassDeclaration,
-  isContinueStatement,
-  isConditionalExpression,
-  isConstructorDeclaration,
-  isDoStatement,
-  isElementAccessExpression,
-  isExpressionStatement,
-  isForInStatement,
-  isForOfStatement,
-  isForStatement,
-  isFunctionDeclaration,
-  isArrayBindingPattern,
-  isIdentifier,
-  isIfStatement,
-  isKeywordTypeNode,
-  isMethodDeclaration,
-  isMissingDeclaration,
-  isNumericLiteral,
-  isObjectBindingPattern,
-  isParenthesizedExpression,
-  isPostfixUnaryExpression,
-  isPrefixUnaryExpression,
-  isPropertyAccessExpression,
-  isPropertyDeclaration,
-  isReturnStatement,
-  isSatisfiesExpression,
-  isSpreadElement,
-  isStringLiteral,
-  isVariableStatement,
-  isVariableDeclarationList,
-  isWhileStatement,
-  type Block,
-  type ArrowFunction,
-  type BindingElement,
-  type BindingName,
-  type ClassDeclaration,
-  type ClassElement,
-  type ConciseBody,
-  type Expression,
-  type FunctionDeclaration,
-  type SourceFile,
-  type Statement,
-  type TypeNode,
-} from "../ast/index.js";
+/**
+ * Checker — entry point + orchestration (port of `checker.go`).
+ *
+ * Upstream `checker.go` is a single 31k-line file: a `Checker` struct
+ * with its methods grouped by concern. We mirror that structure but
+ * split the file by concern (it would otherwise be unmanageable):
+ *
+ *   - checker.checkedtype.ts  — the checked-type model + leaf helpers
+ *   - checker.statements.ts   — statement checking
+ *   - checker.expressions.ts  — expression inference
+ *   - checker.declarations.ts — class / function declaration checking
+ *
+ * The `Checker` class owns per-check state and is the entry; the split
+ * files hold the recursive check logic. `newChecker` constructs one
+ * (mirrors `checkerpool.go` handing out `*Checker`). The free
+ * `checkSourceFile` / `checkProgram` wrappers preserve the existing
+ * call sites in `program/program.ts` and the checker tests.
+ */
+
+import type { SourceFile } from "../ast/index.js";
 import type { Program, ProgramDiagnostic } from "../program/index.js";
+import { type CheckResult, type CheckState } from "./checker.checkedtype.js";
+import { checkStatements } from "./checker.statements.js";
 
-type PrimitiveTypeName = "any" | "boolean" | "number" | "string" | "unknown" | "void";
+export type { CheckDiagnostic, CheckResult } from "./checker.checkedtype.js";
 
-type CheckedType =
-  | { readonly kind: PrimitiveTypeName | "unresolved" }
-  | { readonly kind: "function"; readonly returnType: CheckedType };
+export class Checker {
+  readonly program: Program | undefined;
 
-export interface CheckDiagnostic {
-  readonly message: string;
+  constructor(program?: Program) {
+    this.program = program;
+  }
+
+  checkSourceFile(sourceFile: SourceFile): CheckResult {
+    const state: CheckState = { diagnostics: [] };
+    checkStatements(sourceFile.statements, state, new Map(), undefined);
+    return { diagnostics: state.diagnostics };
+  }
 }
 
-export interface CheckResult {
-  readonly diagnostics: readonly CheckDiagnostic[];
+export function newChecker(program?: Program): Checker {
+  return new Checker(program);
 }
-
-interface CheckState {
-  readonly diagnostics: CheckDiagnostic[];
-}
-
-type TypeEnvironment = Map<string, CheckedType>;
-
-const anyType: CheckedType = { kind: "any" };
-const unknownType: CheckedType = { kind: "unknown" };
-const unresolvedType: CheckedType = { kind: "unresolved" };
-const numberType: CheckedType = { kind: "number" };
-const stringType: CheckedType = { kind: "string" };
-const voidType: CheckedType = { kind: "void" };
-const booleanType: CheckedType = { kind: "boolean" };
 
 export function checkSourceFile(sourceFile: SourceFile): CheckResult {
-  const state: CheckState = { diagnostics: [] };
-  checkStatements(sourceFile.statements, state, new Map(), undefined);
-  return { diagnostics: state.diagnostics };
+  return new Checker().checkSourceFile(sourceFile);
 }
 
 export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
@@ -91,385 +51,13 @@ export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
   if (diagnostics.length > 0) {
     return diagnostics;
   }
+  const checker = new Checker(program);
   for (const sourceFile of program.sourceFiles) {
-    const result = checkSourceFile(sourceFile.sourceFile);
+    const result = checker.checkSourceFile(sourceFile.sourceFile);
     diagnostics.push(...result.diagnostics.map(diagnostic => ({
       fileName: sourceFile.fileName,
       message: diagnostic.message,
     })));
   }
   return diagnostics;
-}
-
-function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): void {
-  for (const statement of statements) {
-    checkStatement(statement, state, environment, expectedReturnType);
-  }
-}
-
-function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): void {
-  if (isVariableStatement(statement)) {
-    for (const declaration of statement.declarationList.declarations) {
-      const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type);
-      const initializerType = declaration.initializer === undefined ? undefined : inferExpression(declaration.initializer, state, environment);
-      if (declaredType !== undefined && initializerType !== undefined) {
-        checkAssignable(initializerType, declaredType, state);
-      }
-      setBindingNameType(declaration.name, declaredType ?? initializerType ?? unresolvedType, environment);
-    }
-    return;
-  }
-  if (isFunctionDeclaration(statement)) {
-    checkFunctionDeclaration(statement, state, environment);
-    return;
-  }
-  if (isClassDeclaration(statement)) {
-    checkClassDeclaration(statement, state, environment);
-    return;
-  }
-  if (isIfStatement(statement)) {
-    inferExpression(statement.expression, state, environment);
-    checkStatement(statement.thenStatement, state, new Map(environment), expectedReturnType);
-    if (statement.elseStatement !== undefined) {
-      checkStatement(statement.elseStatement, state, new Map(environment), expectedReturnType);
-    }
-    return;
-  }
-  if (isWhileStatement(statement)) {
-    inferExpression(statement.expression, state, environment);
-    checkStatement(statement.statement, state, new Map(environment), expectedReturnType);
-    return;
-  }
-  if (isDoStatement(statement)) {
-    checkStatement(statement.statement, state, new Map(environment), expectedReturnType);
-    inferExpression(statement.expression, state, environment);
-    return;
-  }
-  if (isForStatement(statement)) {
-    const loopEnvironment = new Map(environment);
-    if (statement.initializer !== undefined) {
-      checkForInitializer(statement.initializer, state, loopEnvironment);
-    }
-    if (statement.condition !== undefined) {
-      inferExpression(statement.condition, state, loopEnvironment);
-    }
-    if (statement.incrementor !== undefined) {
-      inferExpression(statement.incrementor, state, loopEnvironment);
-    }
-    checkStatement(statement.statement, state, loopEnvironment, expectedReturnType);
-    return;
-  }
-  if (isForInStatement(statement) || isForOfStatement(statement)) {
-    const loopEnvironment = new Map(environment);
-    checkForInitializer(statement.initializer, state, loopEnvironment);
-    inferExpression(statement.expression, state, loopEnvironment);
-    checkStatement(statement.statement, state, loopEnvironment, expectedReturnType);
-    return;
-  }
-  if (isBreakStatement(statement) || isContinueStatement(statement)) {
-    return;
-  }
-  if (isReturnStatement(statement)) {
-    const actual = statement.expression === undefined ? voidType : inferExpression(statement.expression, state, environment);
-    if (expectedReturnType !== undefined) {
-      checkAssignable(actual, expectedReturnType, state);
-    }
-    return;
-  }
-  if (isExpressionStatement(statement)) {
-    inferExpression(statement.expression, state, environment);
-    return;
-  }
-  if (isBlock(statement)) {
-    checkBlock(statement, state, environment, expectedReturnType);
-  }
-}
-
-function checkForInitializer(initializer: Extract<Statement, { readonly kind: Kind.ForStatement }>["initializer"] | Extract<Statement, { readonly kind: Kind.ForInStatement }>["initializer"], state: CheckState, environment: TypeEnvironment): void {
-  if (initializer === undefined) {
-    return;
-  }
-  if (isVariableDeclarationList(initializer)) {
-    for (const declaration of initializer.declarations) {
-      const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type);
-      const initializerType = declaration.initializer === undefined ? undefined : inferExpression(declaration.initializer, state, environment);
-      if (declaredType !== undefined && initializerType !== undefined) {
-        checkAssignable(initializerType, declaredType, state);
-      }
-      setBindingNameType(declaration.name, declaredType ?? initializerType ?? unresolvedType, environment);
-    }
-    return;
-  }
-  if (isMissingDeclaration(initializer)) {
-    return;
-  }
-  inferExpression(initializer, state, environment);
-}
-
-function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckState, environment: TypeEnvironment): void {
-  if (classDeclaration.name !== undefined) {
-    environment.set(classDeclaration.name.text, anyType);
-  }
-  const classEnvironment = new Map(environment);
-  for (const member of classDeclaration.members) {
-    checkClassElement(member, state, classEnvironment);
-  }
-}
-
-function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment): void {
-  if (isConstructorDeclaration(member) || isMethodDeclaration(member)) {
-    const memberEnvironment = new Map(environment);
-    for (const parameter of member.parameters) {
-      setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type), memberEnvironment);
-    }
-    if (member.body !== undefined) {
-      checkBlock(member.body, state, memberEnvironment, member.type === undefined ? undefined : typeFromTypeNode(member.type));
-    }
-    return;
-  }
-  if (isPropertyDeclaration(member) && member.initializer !== undefined) {
-    inferExpression(member.initializer, state, environment);
-  }
-}
-
-function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, state: CheckState, environment: TypeEnvironment): void {
-  if (functionDeclaration.name !== undefined) {
-    environment.set(functionDeclaration.name.text, anyType);
-  }
-  const functionEnvironment = new Map(environment);
-  for (const parameter of functionDeclaration.parameters) {
-    setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type), functionEnvironment);
-  }
-  if (functionDeclaration.body !== undefined) {
-    checkBlock(functionDeclaration.body, state, functionEnvironment, functionDeclaration.type === undefined ? undefined : typeFromTypeNode(functionDeclaration.type));
-  }
-}
-
-function checkBlock(block: Block, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): void {
-  checkStatements(block.statements, state, new Map(environment), expectedReturnType);
-}
-
-function inferExpression(expression: Expression, state: CheckState, environment: TypeEnvironment): CheckedType {
-  if (isNumericLiteral(expression)) {
-    return numberType;
-  }
-  if (isStringLiteral(expression)) {
-    return stringType;
-  }
-  if (isIdentifier(expression)) {
-    return environment.get(expression.text) ?? unresolvedType;
-  }
-  if (isParenthesizedExpression(expression)) {
-    return inferExpression(expression.expression, state, environment);
-  }
-  if (isPrefixUnaryExpression(expression)) {
-    inferExpression(expression.operand, state, environment);
-    return expression.operator === Kind.ExclamationToken ? booleanType : numberType;
-  }
-  if (isPostfixUnaryExpression(expression)) {
-    inferExpression(expression.operand, state, environment);
-    return numberType;
-  }
-  if (isSpreadElement(expression)) {
-    return inferExpression(expression.expression, state, environment);
-  }
-  if (isAsExpression(expression) || isSatisfiesExpression(expression)) {
-    inferExpression(expression.expression, state, environment);
-    return typeFromTypeNode(expression.type);
-  }
-  if (isConditionalExpression(expression)) {
-    inferExpression(expression.condition, state, environment);
-    const whenTrue = inferExpression(expression.whenTrue, state, environment);
-    const whenFalse = inferExpression(expression.whenFalse, state, environment);
-    if (whenTrue.kind === "any" || whenFalse.kind === "any") {
-      return anyType;
-    }
-    if (whenTrue.kind === "unresolved" || whenFalse.kind === "unresolved") {
-      return unresolvedType;
-    }
-    return whenTrue.kind === whenFalse.kind ? whenTrue : unknownType;
-  }
-  if (isArrowFunction(expression)) {
-    return inferArrowFunction(expression, state, environment);
-  }
-  if (isBinaryExpression(expression)) {
-    const left = inferExpression(expression.left, state, environment);
-    const right = inferExpression(expression.right, state, environment);
-    if (isComparisonOperator(expression.operatorToken.kind) || expression.operatorToken.kind === Kind.AmpersandAmpersandToken || expression.operatorToken.kind === Kind.BarBarToken) {
-      return booleanType;
-    }
-    if (isAssignmentOperator(expression.operatorToken.kind)) {
-      return right;
-    }
-    if (expression.operatorToken.kind === Kind.PlusToken && (left.kind === "string" || right.kind === "string")) {
-      return stringType;
-    }
-    if (left.kind === "number" && right.kind === "number") {
-      return numberType;
-    }
-    return unresolvedType;
-  }
-  if (isPropertyAccessExpression(expression)) {
-    return inferPropertyAccess(expression.expression, expression.name.text, state, environment);
-  }
-  if (isElementAccessExpression(expression)) {
-    inferExpression(expression.expression, state, environment);
-    inferExpression(expression.argumentExpression, state, environment);
-    return unresolvedType;
-  }
-  if (isCallExpression(expression)) {
-    const calleeType = inferExpression(expression.expression, state, environment);
-    for (const argument of expression.arguments) {
-      inferExpression(argument, state, environment);
-    }
-    if (calleeType.kind === "any" || calleeType.kind === "unknown" || calleeType.kind === "unresolved") {
-      return anyType;
-    }
-    return calleeType.kind === "function" ? calleeType.returnType : unresolvedType;
-  }
-  return unresolvedType;
-}
-
-function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, environment: TypeEnvironment): CheckedType {
-  const arrowEnvironment = new Map(environment);
-  for (const parameter of arrowFunction.parameters) {
-    setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type), arrowEnvironment);
-  }
-  const declaredReturnType = arrowFunction.type === undefined ? undefined : typeFromTypeNode(arrowFunction.type);
-  const inferredReturnType = inferConciseBody(arrowFunction.body, state, arrowEnvironment, declaredReturnType);
-  return { kind: "function", returnType: declaredReturnType ?? inferredReturnType };
-}
-
-function inferConciseBody(body: ConciseBody, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): CheckedType {
-  if (isBlock(body)) {
-    checkBlock(body, state, environment, expectedReturnType);
-    return expectedReturnType ?? unresolvedType;
-  }
-  const bodyType = inferExpression(body, state, environment);
-  if (expectedReturnType !== undefined) {
-    checkAssignable(bodyType, expectedReturnType, state);
-  }
-  return bodyType;
-}
-
-function inferPropertyAccess(expression: Expression, propertyName: string, state: CheckState, environment: TypeEnvironment): CheckedType {
-  const receiverType = inferExpression(expression, state, environment);
-  if (receiverType.kind === "number" && propertyName === "toFixed") {
-    return { kind: "function", returnType: stringType };
-  }
-  if (receiverType.kind === "string" && propertyName === "length") {
-    return numberType;
-  }
-  if (receiverType.kind === "string" && stringMethodReturnTypes.has(propertyName)) {
-    return { kind: "function", returnType: stringMethodReturnTypes.get(propertyName)! };
-  }
-  if (receiverType.kind === "unknown" || receiverType.kind === "unresolved") {
-    return anyType;
-  }
-  if (receiverType.kind !== "any" && receiverType.kind !== "function") {
-    state.diagnostics.push({
-      message: `Property '${propertyName}' does not exist on type '${displayType(receiverType)}'.`,
-    });
-    return anyType;
-  }
-  return anyType;
-}
-
-function setBindingNameType(name: BindingName, type: CheckedType, environment: TypeEnvironment): void {
-  if (isIdentifier(name)) {
-    environment.set(name.text, type);
-    return;
-  }
-  if (isObjectBindingPattern(name) || isArrayBindingPattern(name)) {
-    for (const element of name.elements) {
-      setBindingElementType(element, type, environment);
-    }
-  }
-}
-
-function setBindingElementType(element: BindingElement, type: CheckedType, environment: TypeEnvironment): void {
-  if (element.name !== undefined) {
-    setBindingNameType(element.name, type, environment);
-  }
-}
-
-function typeFromTypeNode(type: TypeNode): CheckedType {
-  if (isKeywordTypeNode(type)) {
-    switch (type.kind) {
-      case Kind.AnyKeyword:
-        return anyType;
-      case Kind.BooleanKeyword:
-        return { kind: "boolean" };
-      case Kind.NumberKeyword:
-        return numberType;
-      case Kind.StringKeyword:
-        return stringType;
-      case Kind.VoidKeyword:
-        return voidType;
-      case Kind.UnknownKeyword:
-        return unknownType;
-      default:
-        return unknownType;
-    }
-  }
-  return anyType;
-}
-
-function checkAssignable(actual: CheckedType, expected: CheckedType, state: CheckState): void {
-  if (expected.kind === "any" || actual.kind === "any" || expected.kind === "unknown" || actual.kind === "unresolved") {
-    return;
-  }
-  if (actual.kind !== expected.kind) {
-    state.diagnostics.push({
-      message: `Type '${displayType(actual)}' is not assignable to type '${displayType(expected)}'.`,
-    });
-  }
-}
-
-const stringMethodReturnTypes = new Map<string, CheckedType>([
-  ["endsWith", booleanType],
-  ["includes", booleanType],
-  ["match", anyType],
-  ["matchAll", anyType],
-  ["replace", stringType],
-  ["slice", stringType],
-  ["split", anyType],
-  ["startsWith", booleanType],
-  ["toLowerCase", stringType],
-]);
-
-function isComparisonOperator(kind: Kind): boolean {
-  return kind === Kind.EqualsEqualsToken
-    || kind === Kind.EqualsEqualsEqualsToken
-    || kind === Kind.ExclamationEqualsToken
-    || kind === Kind.ExclamationEqualsEqualsToken
-    || kind === Kind.LessThanToken
-    || kind === Kind.LessThanEqualsToken
-    || kind === Kind.GreaterThanToken
-    || kind === Kind.GreaterThanEqualsToken
-    || kind === Kind.InstanceOfKeyword
-    || kind === Kind.InKeyword;
-}
-
-function isAssignmentOperator(kind: Kind): boolean {
-  return kind === Kind.EqualsToken
-    || kind === Kind.PlusEqualsToken
-    || kind === Kind.MinusEqualsToken
-    || kind === Kind.AsteriskEqualsToken
-    || kind === Kind.AsteriskAsteriskEqualsToken
-    || kind === Kind.SlashEqualsToken
-    || kind === Kind.PercentEqualsToken
-    || kind === Kind.AmpersandEqualsToken
-    || kind === Kind.BarEqualsToken
-    || kind === Kind.CaretEqualsToken
-    || kind === Kind.LessThanLessThanEqualsToken
-    || kind === Kind.GreaterThanGreaterThanEqualsToken
-    || kind === Kind.GreaterThanGreaterThanGreaterThanEqualsToken
-    || kind === Kind.AmpersandAmpersandEqualsToken
-    || kind === Kind.BarBarEqualsToken
-    || kind === Kind.QuestionQuestionEqualsToken;
-}
-
-function displayType(type: CheckedType): string {
-  return type.kind === "function" ? "function" : type.kind === "unresolved" ? "unknown" : type.kind;
 }
