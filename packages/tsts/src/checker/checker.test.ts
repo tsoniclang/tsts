@@ -1,7 +1,7 @@
 import { attributes as A } from "@tsonic/core/lang.js";
 import { Assert, FactAttribute } from "xunit-types/Xunit.js";
 
-import { checkProgram, checkSourceFile } from "./index.js";
+import { checkProgram, checkSourceFile, newChecker } from "./index.js";
 import { parseSourceFile } from "../parser/index.js";
 import { createProgram, type CompilerHost } from "../program/index.js";
 
@@ -71,6 +71,20 @@ export class CheckerGroundworkTests {
 
     Assert.Equal(0, result.diagnostics.length);
   }
+
+  checker_class_entry_reports_assignment_mismatches(): void {
+    const sourceFile = parseSourceFile("const x: number = \"a\";");
+    const result = newChecker().checkSourceFile(sourceFile);
+
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], result.diagnostics.map((d) => d.message));
+  }
+
+  checker_class_entry_accepts_well_typed_assignment(): void {
+    const sourceFile = parseSourceFile("const y: number = 1;");
+    const result = newChecker().checkSourceFile(sourceFile);
+
+    Assert.Equal(0, result.diagnostics.length);
+  }
 }
 
 A<CheckerGroundworkTests>().method((t) => t.accepts_numeric_to_fixed_calls_that_flow_into_string_returns).add(FactAttribute);
@@ -82,3 +96,5 @@ A<CheckerGroundworkTests>().method((t) => t.checks_declared_arrow_function_retur
 A<CheckerGroundworkTests>().method((t) => t.checks_loop_initializer_declarations_and_loop_bodies).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_conditional_branches_after_assertion_expressions).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.makes_destructured_binding_names_available_to_checked_bodies).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_reports_assignment_mismatches).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_accepts_well_typed_assignment).add(FactAttribute);
