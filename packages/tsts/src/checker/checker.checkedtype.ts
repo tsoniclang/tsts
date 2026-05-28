@@ -18,6 +18,7 @@ import {
   isKeywordTypeNode,
   isLiteralTypeNode,
   isNumericLiteral,
+  isPrefixUnaryExpression,
   isStringLiteral,
   isUnionTypeNode,
   type BindingElement,
@@ -450,9 +451,14 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
 // Literal type nodes resolve to the REGULAR literal type via the shared
 // literal-construction path (mirrors TS-Go
 // getRegularTypeOfLiteralType(checkExpression(literal))). Covers string /
-// number / bigint / true / false; negative-numeric and null are deferred.
+// number / bigint / true / false, plus `-<numeric|bigint>` prefix-minus
+// literal nodes routed through the same negated-literal helper as expression
+// inference (matching TS-Go's parseLiteralTypeNode(negative) shape).
 function typeFromLiteralTypeNode(node: LiteralTypeNode, state: CheckState): Type {
-  const fresh = literalTypeFromLiteralExpression(node.literal, state);
+  const literal = node.literal;
+  const fresh = isPrefixUnaryExpression(literal) && literal.operator === Kind.MinusToken
+    ? getNegatedLiteralType(literal.operand, state)
+    : literalTypeFromLiteralExpression(literal, state);
   return fresh !== undefined ? getRegularTypeOfLiteralType(fresh, state) : anyType;
 }
 

@@ -1480,6 +1480,20 @@ export class Parser {
       this.#advance();
       return createLiteralTypeNode(createBigIntLiteral(token.text, 0));
     }
+    // Negative numeric / bigint literal type nodes only (TS-Go: KindMinusToken
+    // when lookahead is a numeric/bigint literal -> LiteralTypeNode wrapping a
+    // PrefixUnaryExpression). Not a general unary-expression-in-type parser.
+    if (token.kind === Kind.MinusToken) {
+      const nextKind = this.#tokens[this.#index + 1]?.kind;
+      if (nextKind === Kind.NumericLiteral || nextKind === Kind.BigIntLiteral) {
+        this.#advance();
+        const literalToken = this.#advance();
+        const literal = literalToken.kind === Kind.BigIntLiteral
+          ? createBigIntLiteral(literalToken.text, 0)
+          : createNumericLiteral(literalToken.text, 0);
+        return createLiteralTypeNode(createPrefixUnaryExpression(Kind.MinusToken, literal));
+      }
+    }
     if (token.kind === Kind.TrueKeyword || token.kind === Kind.FalseKeyword || token.kind === Kind.NullKeyword) {
       this.#advance();
       return createLiteralTypeNode(createKeywordExpression(token.kind as Kind.TrueKeyword | Kind.FalseKeyword | Kind.NullKeyword));
