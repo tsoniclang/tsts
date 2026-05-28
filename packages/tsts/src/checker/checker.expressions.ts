@@ -29,6 +29,7 @@ import {
   type ConciseBody,
   type Expression,
 } from "../ast/index.js";
+import { fromString } from "../jsnum/index.js";
 import {
   type Type,
   type CheckState,
@@ -48,9 +49,11 @@ import {
   getUnionTypeEx,
   UnionReduction,
   getApparentType,
+  getBooleanLiteralType,
   getFreshTypeOfLiteralType,
   getNumberLiteralType,
   getStringLiteralType,
+  getWidenedLiteralLikeTypeForContextualType,
   makeFunctionType,
   checkAssignable,
   displayType,
@@ -61,10 +64,20 @@ import { checkBlock } from "./checker.statements.js";
 
 export function inferExpression(expression: Expression, state: CheckState, environment: TypeEnvironment): Type {
   if (isNumericLiteral(expression)) {
-    return getFreshTypeOfLiteralType(getNumberLiteralType(Number(expression.text), state), state);
+    return getFreshTypeOfLiteralType(getNumberLiteralType(fromString(expression.text), state), state);
   }
   if (isStringLiteral(expression)) {
     return getFreshTypeOfLiteralType(getStringLiteralType(expression.text, state), state);
+  }
+  // `true` / `false` are keyword-token expressions; switch on Kind directly
+  // (mirrors TS-Go's checkExpression KindTrueKeyword / KindFalseKeyword cases).
+  // The generated isTrueLiteral/isFalseLiteral predicates are stubs (return
+  // false) — flagged to codex as a separate ast-generator gap.
+  if (expression.kind === Kind.TrueKeyword) {
+    return getFreshTypeOfLiteralType(getBooleanLiteralType(true), state);
+  }
+  if (expression.kind === Kind.FalseKeyword) {
+    return getFreshTypeOfLiteralType(getBooleanLiteralType(false), state);
   }
   if (isIdentifier(expression)) {
     return environment.get(expression.text) ?? unresolvedType;
@@ -161,7 +174,7 @@ export function inferConciseBody(body: ConciseBody, state: CheckState, environme
   }
   const bodyType = inferExpression(body, state, environment);
   if (expectedReturnType !== undefined) {
-    checkAssignable(bodyType, expectedReturnType, state);
+    checkAssignable(getWidenedLiteralLikeTypeForContextualType(bodyType, expectedReturnType, state), expectedReturnType, state);
   }
   return bodyType;
 }

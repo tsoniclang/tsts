@@ -34,6 +34,8 @@ import {
   unresolvedType,
   voidType,
   checkAssignable,
+  getWidenedType,
+  getWidenedLiteralLikeTypeForContextualType,
   setBindingNameType,
   typeFromTypeNode,
 } from "./checker.checkedtype.js";
@@ -52,9 +54,10 @@ export function checkStatement(statement: Statement, state: CheckState, environm
       const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type);
       const initializerType = declaration.initializer === undefined ? undefined : inferExpression(declaration.initializer, state, environment);
       if (declaredType !== undefined && initializerType !== undefined) {
-        checkAssignable(initializerType, declaredType, state);
+        checkAssignable(getWidenedLiteralLikeTypeForContextualType(initializerType, declaredType, state), declaredType, state);
       }
-      setBindingNameType(declaration.name, declaredType ?? initializerType ?? unresolvedType, environment);
+      const boundType = declaredType ?? (initializerType !== undefined ? getWidenedType(initializerType, state) : unresolvedType);
+      setBindingNameType(declaration.name, boundType, environment);
     }
     return;
   }
@@ -111,7 +114,7 @@ export function checkStatement(statement: Statement, state: CheckState, environm
   if (isReturnStatement(statement)) {
     const actual = statement.expression === undefined ? voidType : inferExpression(statement.expression, state, environment);
     if (expectedReturnType !== undefined) {
-      checkAssignable(actual, expectedReturnType, state);
+      checkAssignable(getWidenedLiteralLikeTypeForContextualType(actual, expectedReturnType, state), expectedReturnType, state);
     }
     return;
   }
@@ -133,9 +136,10 @@ export function checkForInitializer(initializer: Extract<Statement, { readonly k
       const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type);
       const initializerType = declaration.initializer === undefined ? undefined : inferExpression(declaration.initializer, state, environment);
       if (declaredType !== undefined && initializerType !== undefined) {
-        checkAssignable(initializerType, declaredType, state);
+        checkAssignable(getWidenedLiteralLikeTypeForContextualType(initializerType, declaredType, state), declaredType, state);
       }
-      setBindingNameType(declaration.name, declaredType ?? initializerType ?? unresolvedType, environment);
+      const boundType = declaredType ?? (initializerType !== undefined ? getWidenedType(initializerType, state) : unresolvedType);
+      setBindingNameType(declaration.name, boundType, environment);
     }
     return;
   }

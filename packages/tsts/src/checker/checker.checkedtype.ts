@@ -280,6 +280,41 @@ export function getApparentType(type: Type): Type {
   return type;
 }
 
+// Boolean literal singletons (TS-Go regularTrueType/regularFalseType). Fresh
+// variants are created lazily via getFreshTypeOfLiteralType.
+// NOTE (deviation): TS-Go's `booleanType` is the union `false | true`; ours is
+// still the intrinsic `booleanType` above. That union shape is deferred.
+function fixedLiteralType(id: number, flags: TypeFlags, value: boolean): Type {
+  const data: LiteralType = { value };
+  const type: Type = { flags, id, data };
+  data.regularType = type;
+  return type;
+}
+
+export const regularFalseType: Type = fixedLiteralType(12, TypeFlags.BooleanLiteral, false);
+export const regularTrueType: Type = fixedLiteralType(13, TypeFlags.BooleanLiteral, true);
+
+export function getBooleanLiteralType(value: boolean): Type {
+  return value ? regularTrueType : regularFalseType;
+}
+
+// Whether a contextual (target) type would preserve a fresh literal source.
+function isLiteralLikeContextualType(contextualType: Type): boolean {
+  if ((contextualType.flags & TypeFlags.Literal) !== 0) return true;
+  if ((contextualType.flags & TypeFlags.Union) !== 0) {
+    return (unionConstituents(contextualType) ?? []).some(isLiteralLikeContextualType);
+  }
+  return false;
+}
+
+// Widening at a position with a contextual type: keep the fresh literal when
+// the contextual type is literal-like, otherwise widen to base (mirrors
+// TS-Go getWidenedLiteralLikeTypeForContextualType). Applied at return /
+// assignment / arrow-body check sites — NOT inside checkAssignable.
+export function getWidenedLiteralLikeTypeForContextualType(type: Type, contextualType: Type, state: CheckState): Type {
+  return isLiteralLikeContextualType(contextualType) ? type : getWidenedType(type, state);
+}
+
 // ---------------------------------------------------------------------------
 // Leaf helpers
 // ---------------------------------------------------------------------------
@@ -312,14 +347,14 @@ export function typeFromTypeNode(type: TypeNode): Type {
   return anyType;
 }
 
+// Pure assignability check + diagnostic. Callers are responsible for any
+// contextual widening of `actual` (via getWidenedLiteralLikeTypeForContextualType)
+// before calling — matching TS-Go, where widening happens at the
+// inference/initializer sites, not in the relation itself.
 export function checkAssignable(actual: Type, expected: Type, state: CheckState): void {
-  // Assignment/return positions widen fresh literals (and unions of them)
-  // to their base before checking — matching TS-Go diagnostics, where e.g.
-  // `return "x"` reports against `string`, not the literal `"x"`.
-  const widened = getWidenedType(actual, state);
-  if (!state.relater.isTypeAssignableTo(widened, expected)) {
+  if (!state.relater.isTypeAssignableTo(actual, expected)) {
     state.diagnostics.push({
-      message: `Type '${displayType(widened)}' is not assignable to type '${displayType(expected)}'.`,
+      message: `Type '${displayType(actual)}' is not assignable to type '${displayType(expected)}'.`,
     });
   }
 }

@@ -93,6 +93,13 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], result.diagnostics.map((d) => d.message));
   }
 
+  widens_boolean_literal_in_return_position(): void {
+    const sourceFile = parseSourceFile("function f(): number { return false; }");
+    const result = checkSourceFile(sourceFile);
+
+    Assert.Equal<readonly string[]>(["Type 'boolean' is not assignable to type 'number'."], result.diagnostics.map((d) => d.message));
+  }
+
   makes_destructured_binding_names_available_to_checked_bodies(): void {
     const sourceFile = parseSourceFile("function f({ value }: string): string { return value; }");
     const result = checkSourceFile(sourceFile);
@@ -127,6 +134,7 @@ A<CheckerGroundworkTests>().method((t) => t.builds_a_union_type_from_conditional
 A<CheckerGroundworkTests>().method((t) => t.collapses_conditional_branches_of_the_same_type).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.widens_numeric_literal_arithmetic_to_number).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.widens_string_literal_in_return_position).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.widens_boolean_literal_in_return_position).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.makes_destructured_binding_names_available_to_checked_bodies).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_reports_assignment_mismatches).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_accepts_well_typed_assignment).add(FactAttribute);
