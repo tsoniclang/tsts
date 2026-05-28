@@ -394,6 +394,11 @@ export function literalTypeFromLiteralExpression(literal: AstNode, state: CheckS
   if (literal.kind === Kind.FalseKeyword) {
     return getFreshTypeOfLiteralType(getBooleanLiteralType(false), state);
   }
+  // `null` is the intrinsic nullType, not a fresh literal type (mirrors TS-Go,
+  // where the null literal resolves directly to the null intrinsic).
+  if (literal.kind === Kind.NullKeyword) {
+    return nullType;
+  }
   return undefined;
 }
 
@@ -451,7 +456,7 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
 // Literal type nodes resolve to the REGULAR literal type via the shared
 // literal-construction path (mirrors TS-Go
 // getRegularTypeOfLiteralType(checkExpression(literal))). Covers string /
-// number / bigint / true / false, plus `-<numeric|bigint>` prefix-minus
+// number / bigint / true / false / null, plus `-<numeric|bigint>` prefix-minus
 // literal nodes routed through the same negated-literal helper as expression
 // inference (matching TS-Go's parseLiteralTypeNode(negative) shape).
 function typeFromLiteralTypeNode(node: LiteralTypeNode, state: CheckState): Type {

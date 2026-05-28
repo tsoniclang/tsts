@@ -171,6 +171,20 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type '1n' is not assignable to type '-1n'."], badBigInt.diagnostics.map((d) => d.message));
   }
 
+  checks_null_literal_type_nodes(): void {
+    // `null` resolves to the nullType intrinsic in both expression and
+    // literal-type-node position; `undefined` resolves to undefinedType.
+    const okNull = checkSourceFile(parseSourceFile("function ok(): null { return null; }"));
+    const undefinedToNull = checkSourceFile(parseSourceFile("function bad(): null { return undefined; }"));
+    const nullToString = checkSourceFile(parseSourceFile("function badString(): string { return null; }"));
+    const nullUnion = checkSourceFile(parseSourceFile("function f(flag: boolean): string | null { return flag ? \"x\" : null; }"));
+
+    Assert.Equal(0, okNull.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'undefined' is not assignable to type 'null'."], undefinedToNull.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'null' is not assignable to type 'string'."], nullToString.diagnostics.map((d) => d.message));
+    Assert.Equal(0, nullUnion.diagnostics.length);
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -282,6 +296,7 @@ A<CheckerGroundworkTests>().method((t) => t.reports_literal_type_node_mismatch).
 A<CheckerGroundworkTests>().method((t) => t.widens_bigint_literal_in_return_position).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_bigint_literal_type_nodes).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_negative_literal_type_nodes).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_null_literal_type_nodes).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

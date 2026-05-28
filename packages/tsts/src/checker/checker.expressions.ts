@@ -35,6 +35,7 @@ import {
   booleanType,
   numberType,
   stringType,
+  undefinedType,
   unresolvedType,
   isAnyType,
   isNumberType,
@@ -67,7 +68,17 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     return literalType;
   }
   if (isIdentifier(expression)) {
-    return environment.get(expression.text) ?? unresolvedType;
+    const bound = environment.get(expression.text);
+    if (bound !== undefined) {
+      return bound;
+    }
+    // `undefined` is the global undefined value (TS-Go resolves it to the
+    // undefinedSymbol of type undefined). TSTS has no global symbol table yet,
+    // so model the unbound `undefined` identifier as the undefined intrinsic.
+    if (expression.text === "undefined") {
+      return undefinedType;
+    }
+    return unresolvedType;
   }
   if (isParenthesizedExpression(expression)) {
     return inferExpression(expression.expression, state, environment);
