@@ -16,6 +16,7 @@
     "generate": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} generate --project tsts",
     "restore": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} restore",
     "ast:generate": "cd packages/tsts && node --import ./tools/register.mjs tools/generate-ast.ts",
+    "diagnostics:generate": "cd packages/tsts && node --import ./tools/register.mjs tools/generate-diagnostics.ts",
     "ast:schema-check": "cd packages/tsts && node --import ./tools/register.mjs tools/check-schema.ts",
     "ast:generated-check": "cd packages/tsts && node tools/check-generated.ts",
     "completeness": "node packages/tsts/tools/check-completeness.ts",
