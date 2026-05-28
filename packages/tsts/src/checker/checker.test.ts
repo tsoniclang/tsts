@@ -147,6 +147,17 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type 'bigint' is not assignable to type 'number'."], result.diagnostics.map((d) => d.message));
   }
 
+  checks_bigint_literal_type_nodes(): void {
+    // Parser now produces a LiteralTypeNode wrapping a BigIntLiteral for `: 123n`.
+    const ok = checkSourceFile(parseSourceFile("function ok(): 123n { return 123n; }"));
+    const bad = checkSourceFile(parseSourceFile("function bad(): 123n { return 124n; }"));
+    const numberToBigint = checkSourceFile(parseSourceFile("function f(): 123n { return 123; }"));
+
+    Assert.Equal(0, ok.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type '124n' is not assignable to type '123n'."], bad.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type '123' is not assignable to type '123n'."], numberToBigint.diagnostics.map((d) => d.message));
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -256,6 +267,7 @@ A<CheckerGroundworkTests>().method((t) => t.widens_boolean_literal_in_return_pos
 A<CheckerGroundworkTests>().method((t) => t.accepts_exact_literal_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_literal_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.widens_bigint_literal_in_return_position).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_bigint_literal_type_nodes).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

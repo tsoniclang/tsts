@@ -1476,6 +1476,10 @@ export class Parser {
       this.#advance();
       return createLiteralTypeNode(createNumericLiteral(token.text, 0));
     }
+    if (token.kind === Kind.BigIntLiteral) {
+      this.#advance();
+      return createLiteralTypeNode(createBigIntLiteral(token.text, 0));
+    }
     if (token.kind === Kind.TrueKeyword || token.kind === Kind.FalseKeyword || token.kind === Kind.NullKeyword) {
       this.#advance();
       return createLiteralTypeNode(createKeywordExpression(token.kind as Kind.TrueKeyword | Kind.FalseKeyword | Kind.NullKeyword));
