@@ -2,6 +2,16 @@ import { attributes as A } from "@tsonic/core/lang.js";
 import { Assert, FactAttribute } from "xunit-types/Xunit.js";
 
 import { checkProgram, checkSourceFile, newChecker } from "./index.js";
+import {
+  newCheckState,
+  getUnionType,
+  getUnionTypeEx,
+  UnionReduction,
+  unionConstituents,
+  getStringLiteralType,
+  getFreshTypeOfLiteralType,
+  stringType,
+} from "./checker.checkedtype.js";
 import { parseSourceFile } from "../parser/index.js";
 import { createProgram, type CompilerHost } from "../program/index.js";
 
@@ -141,6 +151,23 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type '\"a\" | \"c\"' is not assignable to type '\"a\" | \"b\"'."], result.diagnostics.map((d) => d.message));
   }
 
+  union_reduction_none_keeps_redundant_members(): void {
+    const state = newCheckState();
+    const regularA = getStringLiteralType("a", state);
+    const result = getUnionTypeEx([stringType, regularA], UnionReduction.None, state);
+
+    Assert.Equal(2, unionConstituents(result)?.length ?? 0);
+  }
+
+  fresh_plus_regular_same_literal_reduces_to_regular(): void {
+    const state = newCheckState();
+    const regularA = getStringLiteralType("a", state);
+    const freshA = getFreshTypeOfLiteralType(regularA, state);
+    const result = getUnionType([freshA, regularA], state);
+
+    Assert.Equal(true, result === regularA);
+  }
+
   reduces_redundant_literal_union_members(): void {
     // `string | "a"` reduces to `string`, `number | 1` to `number`,
     // `boolean | true` to `boolean` — the message shows the reduced base type.
@@ -193,6 +220,8 @@ A<CheckerGroundworkTests>().method((t) => t.reports_literal_type_node_mismatch).
 A<CheckerGroundworkTests>().method((t) => t.widens_bigint_literal_in_return_position).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.union_reduction_none_keeps_redundant_members).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.fresh_plus_regular_same_literal_reduces_to_regular).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reduces_redundant_literal_union_members).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.makes_destructured_binding_names_available_to_checked_bodies).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_reports_assignment_mismatches).add(FactAttribute);
