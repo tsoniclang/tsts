@@ -128,25 +128,60 @@ export function getFunctionReturnType(type: Type): Type {
 }
 
 // ---------------------------------------------------------------------------
-// Union types. Constituents are stored on `Type.data` (UnionOrIntersectionType)
-// so the relater's constituentTypes reads them. `getUnionType` does identity
-// dedup; full TS-Go normalization (subtype reduction, literal collapse,
-// flattening) is a later port step.
+// Union types. Constituents live on `Type.data` (UnionOrIntersectionType) so
+// the relater's constituentTypes reads them. The surface mirrors TS-Go's
+// `getUnionType` / `getUnionTypeEx` / `addTypesToUnion` family. Reduction
+// (Literal/Subtype) is not yet implemented — only union flattening + identity
+// dedup; full normalization (subtype reduction, literal collapse, ordering)
+// is a later port step that depends on literal types.
 // ---------------------------------------------------------------------------
+
+export type UnionReduction = 0 | 1 | 2;
+export const UnionReduction = {
+  None: 0 as UnionReduction,
+  Literal: 1 as UnionReduction,
+  Subtype: 2 as UnionReduction,
+} as const;
 
 function makeUnionType(types: readonly Type[], state: CheckState): Type {
   const data: UnionOrIntersectionType = { types, objectFlags: ObjectFlags.None };
   return { flags: TypeFlags.Union, id: state.nextTypeId(), data };
 }
 
-export function getUnionType(types: readonly Type[], state: CheckState): Type {
-  const unique: Type[] = [];
-  for (const t of types) {
-    if (!unique.includes(t)) unique.push(t);
+function addTypeToUnion(typeSet: Type[], type: Type): void {
+  if (!typeSet.includes(type)) typeSet.push(type);
+}
+
+function addTypesToUnion(typeSet: Type[], types: readonly Type[]): void {
+  for (const type of types) {
+    if ((type.flags & TypeFlags.Union) !== 0) {
+      addTypesToUnion(typeSet, unionConstituents(type) ?? []);
+    } else {
+      addTypeToUnion(typeSet, type);
+    }
   }
-  if (unique.length === 0) return unresolvedType;
-  if (unique.length === 1) return unique[0]!;
-  return makeUnionType(unique, state);
+}
+
+export function getUnionType(types: readonly Type[], state: CheckState): Type {
+  return getUnionTypeEx(types, UnionReduction.Literal, state);
+}
+
+export function getUnionTypeEx(
+  types: readonly Type[],
+  reduction: UnionReduction,
+  state: CheckState,
+  alias?: unknown,
+  origin?: unknown,
+): Type {
+  void reduction;
+  void alias;
+  void origin;
+  if (types.length === 0) return neverType;
+  const typeSet: Type[] = [];
+  addTypesToUnion(typeSet, types);
+  if (typeSet.length === 0) return neverType;
+  if (typeSet.length === 1) return typeSet[0]!;
+  return makeUnionType(typeSet, state);
 }
 
 export function unionConstituents(type: Type): readonly Type[] | undefined {

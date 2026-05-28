@@ -62,7 +62,21 @@ export class CheckerGroundworkTests {
     const sourceFile = parseSourceFile("function f(flag: boolean): number { return flag ? \"x\" as string : 1; }");
     const result = checkSourceFile(sourceFile);
 
-    Assert.Equal<readonly string[]>(["Type 'unknown' is not assignable to type 'number'."], result.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'string | number' is not assignable to type 'number'."], result.diagnostics.map((d) => d.message));
+  }
+
+  builds_a_union_type_from_conditional_branches(): void {
+    const sourceFile = parseSourceFile("function f(flag: boolean): string { return flag ? \"a\" as string : 1 as number; }");
+    const result = checkSourceFile(sourceFile);
+
+    Assert.Equal<readonly string[]>(["Type 'string | number' is not assignable to type 'string'."], result.diagnostics.map((d) => d.message));
+  }
+
+  collapses_conditional_branches_of_the_same_type(): void {
+    const sourceFile = parseSourceFile("function f(flag: boolean): number { return flag ? 1 : 2; }");
+    const result = checkSourceFile(sourceFile);
+
+    Assert.Equal(0, result.diagnostics.length);
   }
 
   makes_destructured_binding_names_available_to_checked_bodies(): void {
@@ -95,6 +109,8 @@ A<CheckerGroundworkTests>().method((t) => t.checks_method_and_constructor_bodies
 A<CheckerGroundworkTests>().method((t) => t.checks_declared_arrow_function_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_loop_initializer_declarations_and_loop_bodies).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_conditional_branches_after_assertion_expressions).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.builds_a_union_type_from_conditional_branches).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.collapses_conditional_branches_of_the_same_type).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.makes_destructured_binding_names_available_to_checked_bodies).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_reports_assignment_mismatches).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_accepts_well_typed_assignment).add(FactAttribute);

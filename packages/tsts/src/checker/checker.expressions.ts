@@ -45,7 +45,8 @@ import {
   isUnresolvedType,
   isFunctionType,
   getFunctionReturnType,
-  getUnionType,
+  getUnionTypeEx,
+  UnionReduction,
   makeFunctionType,
   checkAssignable,
   displayType,
@@ -92,7 +93,7 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     if (isUnresolvedType(whenTrue) || isUnresolvedType(whenFalse)) {
       return unresolvedType;
     }
-    return getUnionType([whenTrue, whenFalse], state);
+    return getUnionTypeEx([whenTrue, whenFalse], UnionReduction.Subtype, state);
   }
   if (isArrowFunction(expression)) {
     return inferArrowFunction(expression, state, environment);
