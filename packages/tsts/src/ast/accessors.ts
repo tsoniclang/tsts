@@ -14,6 +14,25 @@
 import type { Node as AstNode, NodeArray } from "./generated/types.js";
 import type { ModifierList } from "./aliases.js";
 import { Kind } from "./generated/kind.js";
+import {
+  type SourceFileLike,
+  getECMALineOfPosition as scannerGetECMALineOfPosition,
+  getECMALineAndUTF16CharacterOfPosition as scannerGetECMALineAndUTF16CharacterOfPosition,
+  skipTrivia as scannerSkipTrivia,
+} from "../scanner/trivia.js";
+import { computeECMALineStarts, memoize } from "../core/index.js";
+
+// Builds an ast.SourceFileLike adapter from a source-file node, reading only
+// the public text and computing the ECMA line map from it (mirrors
+// SourceFile.ECMALineMap(), whose result is computed lazily and memoized).
+function sourceFileLike(file: AstNode | undefined): SourceFileLike {
+  const t = file === undefined ? "" : sourceFileText(file);
+  const ecmaLineMap = memoize(() => computeECMALineStarts(t));
+  return {
+    text: () => t,
+    ecmaLineMap,
+  };
+}
 
 type NodeList<T extends AstNode = AstNode> = NodeArray<T>;
 
@@ -489,14 +508,7 @@ export function getSourceFileOfNode(node: AstNode | undefined): AstNode | undefi
   return cur;
 }
 export function getECMALineOfPosition(sourceFile: AstNode | undefined, pos: number): number {
-  if (sourceFile === undefined) return 0;
-  const text = (sourceFile as unknown as { text?: string }).text;
-  if (typeof text !== "string") return 0;
-  let line = 0;
-  for (let i = 0; i < pos && i < text.length; i++) {
-    if (text.charCodeAt(i) === 0x0a) line++;
-  }
-  return line;
+  return scannerGetECMALineOfPosition(sourceFileLike(sourceFile), pos);
 }
 export function getPropertyAccessExpression(node: AstNode): AstNode { return f<AstNode>(node, "expression")!; }
 export function getPropertyAccessName(node: AstNode): AstNode { return f<AstNode>(node, "name")!; }
@@ -634,12 +646,7 @@ export function isWhiteSpaceSingleLine(code: number): boolean {
     (code >= 0x2000 && code <= 0x200A) || code === 0x202F || code === 0x205F || code === 0x3000;
 }
 export function skipTrivia(text: string, pos: number): number {
-  while (pos < text.length) {
-    const ch = text.charCodeAt(pos);
-    if (!isWhiteSpaceSingleLine(ch) && !isLineBreak(ch)) break;
-    pos++;
-  }
-  return pos;
+  return scannerSkipTrivia(text, pos);
 }
 export function getSemanticJsxChildren(children: readonly AstNode[]): readonly AstNode[] {
   return children.filter((c) => !(c.kind === 14 /* JsxText */ && nodeText(c).trim() === ""));
@@ -650,8 +657,8 @@ export function compareStringsCaseSensitive(a: string, b: string): number {
 export function newTextRange(pos: number, end: number): { pos: number; end: number } {
   return { pos, end };
 }
-export function getECMALineAndUTF16CharacterOfPosition(_file: AstNode, _pos: number): { line: number; character: number } {
-  return { line: 0, character: 0 };
+export function getECMALineAndUTF16CharacterOfPosition(file: AstNode, pos: number): { line: number; character: number } {
+  return scannerGetECMALineAndUTF16CharacterOfPosition(sourceFileLike(file), pos);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
