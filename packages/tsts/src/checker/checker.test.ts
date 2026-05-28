@@ -385,6 +385,24 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type '{ port: string }' is not assignable to type '{ port: number }'.\n  Types of property 'port' are incompatible.\n    Type 'string' is not assignable to type 'number'."], perPropertyElaboration.diagnostics.map((d) => d.message));
   }
 
+  checks_call_signature_arity(): void {
+    // Missing required arguments + extra arguments are reported; optional and
+    // rest parameters relax the bounds (matching TS-Go/TypeScript).
+    const missing = checkSourceFile(parseSourceFile("function f(o: { parse(text: string): number }): number { return o.parse(); }"));
+    const extra = checkSourceFile(parseSourceFile("function f(o: { parse(text: string): number }): number { return o.parse(\"a\", \"b\"); }"));
+    const optional = checkSourceFile(parseSourceFile("function f(o: { parse(text?: string): number }): number { return o.parse(); }"));
+    const restZero = checkSourceFile(parseSourceFile("function f(o: { log(...args: string[]): number }): number { return o.log(); }"));
+    const restMany = checkSourceFile(parseSourceFile("function f(o: { log(...args: string[]): number }): number { return o.log(\"a\", \"b\"); }"));
+    const exact = checkSourceFile(parseSourceFile("function f(o: { parse(text: string): number }): number { return o.parse(\"a\"); }"));
+
+    Assert.Equal<readonly string[]>(["Expected 1 arguments, but got 0."], missing.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Expected 1 arguments, but got 2."], extra.diagnostics.map((d) => d.message));
+    Assert.Equal(0, optional.diagnostics.length);
+    Assert.Equal(0, restZero.diagnostics.length);
+    Assert.Equal(0, restMany.diagnostics.length);
+    Assert.Equal(0, exact.diagnostics.length);
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -509,6 +527,7 @@ A<CheckerGroundworkTests>().method((t) => t.hardens_logical_operator_facts).add(
 A<CheckerGroundworkTests>().method((t) => t.resolves_object_literal_members).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.extends_object_member_support).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.deepens_object_member_typing).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_call_signature_arity).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

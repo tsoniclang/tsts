@@ -61,10 +61,12 @@ import {
   getWidenedLiteralLikeTypeForContextualType,
   literalTypeFromLiteralExpression,
   makeFunctionType,
+  type FunctionParameter,
   makeObjectType,
   getPropertySymbolOfType,
   getTypeOfSymbol,
   isOptionalSymbol,
+  isRestSymbol,
   getCallSignature,
   type ObjectProperty,
   getWidenedType,
@@ -224,13 +226,26 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     // (positionally; rest/overload resolution is not modeled yet).
     const signature = getCallSignature(calleeType);
     if (signature !== undefined) {
-      signature.parameters.forEach((parameter, index) => {
-        const parameterType = getTypeOfSymbol(parameter);
-        const argumentType = argumentTypes[index];
-        if (parameterType !== undefined && argumentType !== undefined) {
-          checkAssignable(getWidenedLiteralLikeTypeForContextualType(argumentType, parameterType, state), parameterType, state);
-        }
-      });
+      const parameters = signature.parameters;
+      const hasRest = parameters.length > 0 && isRestSymbol(parameters[parameters.length - 1]);
+      const maxArguments = hasRest ? Number.POSITIVE_INFINITY : parameters.length;
+      if (argumentTypes.length < signature.minArgumentCount || argumentTypes.length > maxArguments) {
+        const expected = hasRest
+          ? `at least ${signature.minArgumentCount}`
+          : signature.minArgumentCount === parameters.length
+            ? `${signature.minArgumentCount}`
+            : `${signature.minArgumentCount}-${parameters.length}`;
+        state.diagnostics.push({ message: `Expected ${expected} arguments, but got ${argumentTypes.length}.` });
+      } else {
+        parameters.forEach((parameter, index) => {
+          if (isRestSymbol(parameter)) return;
+          const parameterType = getTypeOfSymbol(parameter);
+          const argumentType = argumentTypes[index];
+          if (parameterType !== undefined && argumentType !== undefined) {
+            checkAssignable(getWidenedLiteralLikeTypeForContextualType(argumentType, parameterType, state), parameterType, state);
+          }
+        });
+      }
     }
     if (isAnyType(calleeType) || isUnknownType(calleeType) || isUnresolvedType(calleeType)) {
       return anyType;
@@ -247,7 +262,15 @@ export function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckSta
   }
   const declaredReturnType = arrowFunction.type === undefined ? undefined : typeFromTypeNode(arrowFunction.type, state);
   const inferredReturnType = inferConciseBody(arrowFunction.body, state, arrowEnvironment, declaredReturnType);
-  return makeFunctionType(declaredReturnType ?? inferredReturnType, state);
+  const parameters: FunctionParameter[] = arrowFunction.parameters
+    .filter((parameter) => isIdentifier(parameter.name))
+    .map((parameter) => ({
+      name: (parameter.name as { readonly text: string }).text,
+      type: parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, state),
+      optional: parameter.questionToken !== undefined || parameter.initializer !== undefined,
+      rest: parameter.dotDotDotToken !== undefined,
+    }));
+  return makeFunctionType(declaredReturnType ?? inferredReturnType, state, parameters);
 }
 
 export function inferConciseBody(body: ConciseBody, state: CheckState, environment: TypeEnvironment, expectedReturnType: Type | undefined): Type {
@@ -262,16 +285,21 @@ export function inferConciseBody(body: ConciseBody, state: CheckState, environme
   return bodyType;
 }
 
+// Primitive built-in methods (toFixed, string methods) are placeholders whose
+// real parameter lists aren't modeled yet, so they accept any arguments (a rest
+// `any`) rather than enforcing arity. Real declared signatures still enforce it.
+const placeholderRestParameters: readonly FunctionParameter[] = [{ name: "args", type: anyType, rest: true }];
+
 export function inferPropertyAccess(expression: Expression, propertyName: string, state: CheckState, environment: TypeEnvironment): Type {
   const receiverType = getApparentType(inferExpression(expression, state, environment));
   if (isNumberType(receiverType) && propertyName === "toFixed") {
-    return makeFunctionType(stringType, state);
+    return makeFunctionType(stringType, state, placeholderRestParameters);
   }
   if (isStringType(receiverType) && propertyName === "length") {
     return numberType;
   }
   if (isStringType(receiverType) && stringMethodReturnTypes.has(propertyName)) {
-    return makeFunctionType(stringMethodReturnTypes.get(propertyName)!, state);
+    return makeFunctionType(stringMethodReturnTypes.get(propertyName)!, state, placeholderRestParameters);
   }
   if (isUnknownType(receiverType) || isUnresolvedType(receiverType)) {
     return anyType;

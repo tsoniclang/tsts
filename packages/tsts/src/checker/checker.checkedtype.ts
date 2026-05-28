@@ -170,14 +170,29 @@ export function isBooleanType(type: Type): boolean { return type === booleanType
 // (the on-model representation — functions are object types in TS-Go).
 // ---------------------------------------------------------------------------
 
-export function makeFunctionType(returnType: Type, state: CheckState, parameters: readonly { readonly name: string; readonly type: Type }[] = []): Type {
+export interface FunctionParameter {
+  readonly name: string;
+  readonly type: Type;
+  readonly optional?: boolean;
+  readonly rest?: boolean;
+}
+
+export function makeFunctionType(returnType: Type, state: CheckState, parameters: readonly FunctionParameter[] = []): Type {
   const parameterSymbols = parameters.map((parameter) =>
-    ({ name: parameter.name, type: parameter.type, flags: 0, declarations: [] }) as unknown as AstSymbol,
+    ({
+      name: parameter.name,
+      type: parameter.type,
+      flags: parameter.optional === true ? SymbolFlags.Optional : 0,
+      rest: parameter.rest === true,
+      declarations: [],
+    }) as unknown as AstSymbol,
   );
+  // Required arity excludes optional and rest parameters.
+  const minArgumentCount = parameters.filter((parameter) => parameter.optional !== true && parameter.rest !== true).length;
   const signature: Signature = {
     flags: 0,
     parameters: parameterSymbols,
-    minArgumentCount: parameters.length,
+    minArgumentCount,
     resolvedReturnType: returnType,
   };
   const data: ObjectType = {
@@ -205,6 +220,11 @@ export function getFunctionReturnType(type: Type): Type {
 // SymbolFlags.Optional carried on a synthetic property symbol.
 export function isOptionalSymbol(symbol: AstSymbol | undefined): boolean {
   return (((symbol as unknown as { readonly flags?: number } | undefined)?.flags ?? 0) & SymbolFlags.Optional) !== 0;
+}
+
+// Rest parameter marker on a synthetic parameter symbol.
+export function isRestSymbol(symbol: AstSymbol | undefined): boolean {
+  return (symbol as unknown as { readonly rest?: boolean } | undefined)?.rest === true;
 }
 
 // ---------------------------------------------------------------------------
@@ -675,6 +695,8 @@ function typeFromTypeLiteralNode(node: TypeLiteralNode, state: CheckState): Type
         .map((parameter) => ({
           name: (parameter.name as { readonly text: string }).text,
           type: parameter.type === undefined ? anyType : typeFromTypeNode(parameter.type, state),
+          optional: parameter.questionToken !== undefined || parameter.initializer !== undefined,
+          rest: parameter.dotDotDotToken !== undefined,
         }));
       properties.push({
         name: member.name.text,
