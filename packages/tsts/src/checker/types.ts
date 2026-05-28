@@ -230,6 +230,9 @@ export const TypeFlags = {
 } as const;
 
 export type ObjectFlags = number;
+// 1:1 with TS-Go `internal/checker/types.go` ObjectFlags. Bits 22+ are
+// context-overloaded upstream (their meaning depends on the type's
+// TypeFlags), reproduced here with the same names + values.
 export const ObjectFlags = {
   None: 0 as ObjectFlags,
   Class: (1 << 0) as ObjectFlags,
@@ -247,19 +250,41 @@ export const ObjectFlags = {
   JSLiteral: (1 << 12) as ObjectFlags,
   FreshLiteral: (1 << 13) as ObjectFlags,
   ArrayLiteral: (1 << 14) as ObjectFlags,
-  ContainsSpread: (1 << 15) as ObjectFlags,
-  ObjectRestType: (1 << 16) as ObjectFlags,
-  InstantiationExpressionType: (1 << 17) as ObjectFlags,
-  SingleSignatureType: (1 << 18) as ObjectFlags,
-  ClassOrInterface: 3 as ObjectFlags,
-  RequiresWidening: 786432 as ObjectFlags,
-  PropagatingFlags: 5242880 as ObjectFlags,
-  GenericMappedType: (1 << 22) as ObjectFlags,
-  ContainsObjectOrArrayLiteral: (1 << 23) as ObjectFlags,
-  NonInferrableType: (1 << 24) as ObjectFlags,
-  CouldContainTypeVariablesComputed: (1 << 25) as ObjectFlags,
-  CouldContainTypeVariables: (1 << 26) as ObjectFlags,
-  MembersResolved: (1 << 27) as ObjectFlags,
+  PrimitiveUnion: (1 << 15) as ObjectFlags,
+  ContainsWideningType: (1 << 16) as ObjectFlags,
+  ContainsObjectOrArrayLiteral: (1 << 17) as ObjectFlags,
+  NonInferrableType: (1 << 18) as ObjectFlags,
+  CouldContainTypeVariablesComputed: (1 << 19) as ObjectFlags,
+  CouldContainTypeVariables: (1 << 20) as ObjectFlags,
+  MembersResolved: (1 << 21) as ObjectFlags,
+  ClassOrInterface: 3 as ObjectFlags, // Class|Interface
+  RequiresWidening: 196608 as ObjectFlags, // ContainsWideningType|ContainsObjectOrArrayLiteral
+  PropagatingFlags: 458752 as ObjectFlags, // RequiresWidening|NonInferrableType
+  InstantiatedMapped: 96 as ObjectFlags, // Mapped|Instantiated
+  ObjectTypeKindMask: 50332991 as ObjectFlags,
+  // Flags that require TypeFlags.Object
+  ContainsSpread: (1 << 22) as ObjectFlags,
+  ObjectRestType: (1 << 23) as ObjectFlags,
+  InstantiationExpressionType: (1 << 24) as ObjectFlags,
+  SingleSignatureType: (1 << 25) as ObjectFlags,
+  IsClassInstanceClone: (1 << 26) as ObjectFlags,
+  // Flags that require TypeFlags.Object and ObjectFlags.Reference
+  IdenticalBaseTypeCalculated: (1 << 27) as ObjectFlags,
+  IdenticalBaseTypeExists: (1 << 28) as ObjectFlags,
+  UnresolvedMembers: (1 << 29) as ObjectFlags,
+  // Flags that require TypeFlags.UnionOrIntersection or TypeFlags.Substitution
+  IsGenericTypeComputed: (1 << 22) as ObjectFlags,
+  IsGenericObjectType: (1 << 23) as ObjectFlags,
+  IsGenericIndexType: (1 << 24) as ObjectFlags,
+  IsGenericType: 25165824 as ObjectFlags, // IsGenericObjectType|IsGenericIndexType
+  // Flags that require TypeFlags.Union
+  ContainsIntersections: (1 << 25) as ObjectFlags,
+  IsUnknownLikeUnionComputed: (1 << 26) as ObjectFlags,
+  IsUnknownLikeUnion: (1 << 27) as ObjectFlags,
+  // Flags that require TypeFlags.Intersection
+  IsNeverIntersectionComputed: (1 << 25) as ObjectFlags,
+  IsNeverIntersection: (1 << 26) as ObjectFlags,
+  IsConstrainedTypeVariable: (1 << 27) as ObjectFlags,
 } as const;
 
 export type ElementFlags = number;
