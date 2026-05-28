@@ -185,6 +185,17 @@ export class CheckerGroundworkTests {
     Assert.Equal(0, nullUnion.diagnostics.length);
   }
 
+  local_undefined_binding_wins_over_global(): void {
+    // A parameter named `undefined` must shadow the global undefined fallback:
+    // environment lookup first, global-undefined fallback second. This is the
+    // property that keeps the name-based `undefined` model safe.
+    const ok = checkSourceFile(parseSourceFile("function ok(undefined: number): number { return undefined; }"));
+    const bad = checkSourceFile(parseSourceFile("function bad(undefined: number): undefined { return undefined; }"));
+
+    Assert.Equal(0, ok.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'undefined'."], bad.diagnostics.map((d) => d.message));
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -297,6 +308,7 @@ A<CheckerGroundworkTests>().method((t) => t.widens_bigint_literal_in_return_posi
 A<CheckerGroundworkTests>().method((t) => t.checks_bigint_literal_type_nodes).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_negative_literal_type_nodes).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_null_literal_type_nodes).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.local_undefined_binding_wins_over_global).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

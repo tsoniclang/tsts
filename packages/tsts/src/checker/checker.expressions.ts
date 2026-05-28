@@ -59,10 +59,10 @@ import {
 import { checkBlock } from "./checker.statements.js";
 
 export function inferExpression(expression: Expression, state: CheckState, environment: TypeEnvironment): Type {
-  // String / number / bigint / true / false literals — shared with literal
-  // type-node resolution via literalTypeFromLiteralExpression (so the two
-  // paths can't drift). `true`/`false` are matched by Kind inside the helper
-  // because the generated isTrueLiteral/isFalseLiteral predicates are stubs.
+  // String / number / bigint / true / false / null literals — shared with
+  // literal type-node resolution via literalTypeFromLiteralExpression (so the
+  // two paths can't drift). Keyword literals (`true`/`false`/`null`) are matched
+  // by Kind inside the helper, mirroring TS-Go's keyword-kind switch.
   const literalType = literalTypeFromLiteralExpression(expression, state);
   if (literalType !== undefined) {
     return literalType;
