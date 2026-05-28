@@ -28,7 +28,7 @@ import {
   type Statement,
 } from "../ast/index.js";
 import {
-  type CheckedType,
+  type Type,
   type CheckState,
   type TypeEnvironment,
   unresolvedType,
@@ -40,13 +40,13 @@ import {
 import { inferExpression } from "./checker.expressions.js";
 import { checkClassDeclaration, checkFunctionDeclaration } from "./checker.declarations.js";
 
-export function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): void {
+export function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: Type | undefined): void {
   for (const statement of statements) {
     checkStatement(statement, state, environment, expectedReturnType);
   }
 }
 
-export function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): void {
+export function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: Type | undefined): void {
   if (isVariableStatement(statement)) {
     for (const declaration of statement.declarationList.declarations) {
       const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type);
@@ -145,6 +145,6 @@ export function checkForInitializer(initializer: Extract<Statement, { readonly k
   inferExpression(initializer, state, environment);
 }
 
-export function checkBlock(block: Block, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): void {
+export function checkBlock(block: Block, state: CheckState, environment: TypeEnvironment, expectedReturnType: Type | undefined): void {
   checkStatements(block.statements, state, new Map(environment), expectedReturnType);
 }

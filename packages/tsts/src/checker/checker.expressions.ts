@@ -30,7 +30,7 @@ import {
   type Expression,
 } from "../ast/index.js";
 import {
-  type CheckedType,
+  type Type,
   type CheckState,
   type TypeEnvironment,
   anyType,
@@ -39,6 +39,14 @@ import {
   stringType,
   unknownType,
   unresolvedType,
+  isAnyType,
+  isNumberType,
+  isStringType,
+  isUnknownType,
+  isUnresolvedType,
+  isFunctionType,
+  getFunctionReturnType,
+  makeFunctionType,
   checkAssignable,
   displayType,
   setBindingNameType,
@@ -46,7 +54,7 @@ import {
 } from "./checker.checkedtype.js";
 import { checkBlock } from "./checker.statements.js";
 
-export function inferExpression(expression: Expression, state: CheckState, environment: TypeEnvironment): CheckedType {
+export function inferExpression(expression: Expression, state: CheckState, environment: TypeEnvironment): Type {
   if (isNumericLiteral(expression)) {
     return numberType;
   }
@@ -78,13 +86,14 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     inferExpression(expression.condition, state, environment);
     const whenTrue = inferExpression(expression.whenTrue, state, environment);
     const whenFalse = inferExpression(expression.whenFalse, state, environment);
-    if (whenTrue.kind === "any" || whenFalse.kind === "any") {
+    if (isAnyType(whenTrue) || isAnyType(whenFalse)) {
       return anyType;
     }
-    if (whenTrue.kind === "unresolved" || whenFalse.kind === "unresolved") {
+    if (isUnresolvedType(whenTrue) || isUnresolvedType(whenFalse)) {
       return unresolvedType;
     }
-    return whenTrue.kind === whenFalse.kind ? whenTrue : unknownType;
+    const sameType = whenTrue === whenFalse || (isFunctionType(whenTrue) && isFunctionType(whenFalse));
+    return sameType ? whenTrue : unknownType;
   }
   if (isArrowFunction(expression)) {
     return inferArrowFunction(expression, state, environment);
@@ -98,10 +107,10 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     if (isAssignmentOperator(expression.operatorToken.kind)) {
       return right;
     }
-    if (expression.operatorToken.kind === Kind.PlusToken && (left.kind === "string" || right.kind === "string")) {
+    if (expression.operatorToken.kind === Kind.PlusToken && (isStringType(left) || isStringType(right))) {
       return stringType;
     }
-    if (left.kind === "number" && right.kind === "number") {
+    if (isNumberType(left) && isNumberType(right)) {
       return numberType;
     }
     return unresolvedType;
@@ -119,25 +128,25 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     for (const argument of expression.arguments) {
       inferExpression(argument, state, environment);
     }
-    if (calleeType.kind === "any" || calleeType.kind === "unknown" || calleeType.kind === "unresolved") {
+    if (isAnyType(calleeType) || isUnknownType(calleeType) || isUnresolvedType(calleeType)) {
       return anyType;
     }
-    return calleeType.kind === "function" ? calleeType.returnType : unresolvedType;
+    return isFunctionType(calleeType) ? getFunctionReturnType(calleeType) : unresolvedType;
   }
   return unresolvedType;
 }
 
-export function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, environment: TypeEnvironment): CheckedType {
+export function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, environment: TypeEnvironment): Type {
   const arrowEnvironment = new Map(environment);
   for (const parameter of arrowFunction.parameters) {
     setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type), arrowEnvironment);
   }
   const declaredReturnType = arrowFunction.type === undefined ? undefined : typeFromTypeNode(arrowFunction.type);
   const inferredReturnType = inferConciseBody(arrowFunction.body, state, arrowEnvironment, declaredReturnType);
-  return { kind: "function", returnType: declaredReturnType ?? inferredReturnType };
+  return makeFunctionType(declaredReturnType ?? inferredReturnType, state);
 }
 
-export function inferConciseBody(body: ConciseBody, state: CheckState, environment: TypeEnvironment, expectedReturnType: CheckedType | undefined): CheckedType {
+export function inferConciseBody(body: ConciseBody, state: CheckState, environment: TypeEnvironment, expectedReturnType: Type | undefined): Type {
   if (isBlock(body)) {
     checkBlock(body, state, environment, expectedReturnType);
     return expectedReturnType ?? unresolvedType;
@@ -149,21 +158,21 @@ export function inferConciseBody(body: ConciseBody, state: CheckState, environme
   return bodyType;
 }
 
-export function inferPropertyAccess(expression: Expression, propertyName: string, state: CheckState, environment: TypeEnvironment): CheckedType {
+export function inferPropertyAccess(expression: Expression, propertyName: string, state: CheckState, environment: TypeEnvironment): Type {
   const receiverType = inferExpression(expression, state, environment);
-  if (receiverType.kind === "number" && propertyName === "toFixed") {
-    return { kind: "function", returnType: stringType };
+  if (isNumberType(receiverType) && propertyName === "toFixed") {
+    return makeFunctionType(stringType, state);
   }
-  if (receiverType.kind === "string" && propertyName === "length") {
+  if (isStringType(receiverType) && propertyName === "length") {
     return numberType;
   }
-  if (receiverType.kind === "string" && stringMethodReturnTypes.has(propertyName)) {
-    return { kind: "function", returnType: stringMethodReturnTypes.get(propertyName)! };
+  if (isStringType(receiverType) && stringMethodReturnTypes.has(propertyName)) {
+    return makeFunctionType(stringMethodReturnTypes.get(propertyName)!, state);
   }
-  if (receiverType.kind === "unknown" || receiverType.kind === "unresolved") {
+  if (isUnknownType(receiverType) || isUnresolvedType(receiverType)) {
     return anyType;
   }
-  if (receiverType.kind !== "any" && receiverType.kind !== "function") {
+  if (!isAnyType(receiverType) && !isFunctionType(receiverType)) {
     state.diagnostics.push({
       message: `Property '${propertyName}' does not exist on type '${displayType(receiverType)}'.`,
     });
@@ -172,7 +181,7 @@ export function inferPropertyAccess(expression: Expression, propertyName: string
   return anyType;
 }
 
-const stringMethodReturnTypes = new Map<string, CheckedType>([
+const stringMethodReturnTypes = new Map<string, Type>([
   ["endsWith", booleanType],
   ["includes", booleanType],
   ["match", anyType],
