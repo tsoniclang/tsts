@@ -19,13 +19,15 @@ import {
   isLiteralTypeNode,
   isNumericLiteral,
   isStringLiteral,
+  isUnionTypeNode,
   type BindingElement,
   type BindingName,
   type LiteralTypeNode,
   type Node as AstNode,
   type TypeNode,
+  type UnionTypeNode,
 } from "../ast/index.js";
-import { fromString, parseValidBigInt, pseudoBigIntToString, type PseudoBigInt } from "../jsnum/index.js";
+import { fromString, newPseudoBigInt, parsePseudoBigInt, parseValidBigInt, pseudoBigIntToString, type PseudoBigInt } from "../jsnum/index.js";
 import {
   type Type,
   type IntrinsicType,
@@ -215,7 +217,7 @@ export function unionConstituents(type: Type): readonly Type[] | undefined {
 // widen to their base primitive in widening positions.
 // ---------------------------------------------------------------------------
 
-function newLiteralType(flags: TypeFlags, value: string | number | bigint | boolean | PseudoBigInt, regularType: Type | undefined, state: CheckState): Type {
+function newLiteralType(flags: TypeFlags, value: string | number | boolean | PseudoBigInt, regularType: Type | undefined, state: CheckState): Type {
   const data: LiteralType = { value };
   const type: Type = { flags, id: state.nextTypeId(), data };
   data.regularType = regularType ?? type;
@@ -368,6 +370,19 @@ export function literalTypeFromLiteralExpression(literal: AstNode, state: CheckS
   return undefined;
 }
 
+// Negative numeric / bigint literal types for `-<literal>` prefix-unary
+// expressions (mirrors TS-Go's KindMinusToken literal special-cases).
+export function getNegatedLiteralType(operand: AstNode, state: CheckState): Type | undefined {
+  if (isNumericLiteral(operand)) {
+    return getFreshTypeOfLiteralType(getNumberLiteralType(-fromString(operand.text), state), state);
+  }
+  if (isBigIntLiteral(operand)) {
+    const value = newPseudoBigInt(parsePseudoBigInt(operand.text), true);
+    return getFreshTypeOfLiteralType(getBigIntLiteralType(value, state), state);
+  }
+  return undefined;
+}
+
 // ---------------------------------------------------------------------------
 // Leaf helpers
 // ---------------------------------------------------------------------------
@@ -399,6 +414,9 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
   }
   if (isLiteralTypeNode(type)) {
     return typeFromLiteralTypeNode(type, state);
+  }
+  if (isUnionTypeNode(type)) {
+    return getUnionType((type as UnionTypeNode).types.map((member) => typeFromTypeNode(member, state)), state);
   }
   return anyType;
 }

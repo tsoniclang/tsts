@@ -46,6 +46,7 @@ import {
   getUnionTypeEx,
   UnionReduction,
   getApparentType,
+  getNegatedLiteralType,
   getWidenedLiteralLikeTypeForContextualType,
   literalTypeFromLiteralExpression,
   makeFunctionType,
@@ -73,7 +74,16 @@ export function inferExpression(expression: Expression, state: CheckState, envir
   }
   if (isPrefixUnaryExpression(expression)) {
     inferExpression(expression.operand, state, environment);
-    return expression.operator === Kind.ExclamationToken ? booleanType : numberType;
+    if (expression.operator === Kind.ExclamationToken) {
+      return booleanType;
+    }
+    if (expression.operator === Kind.MinusToken) {
+      const negated = getNegatedLiteralType(expression.operand, state);
+      if (negated !== undefined) {
+        return negated;
+      }
+    }
+    return numberType;
   }
   if (isPostfixUnaryExpression(expression)) {
     inferExpression(expression.operand, state, environment);

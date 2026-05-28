@@ -124,6 +124,23 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type 'bigint' is not assignable to type 'number'."], result.diagnostics.map((d) => d.message));
   }
 
+  accepts_union_type_node_return_types(): void {
+    const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
+    const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
+    const mixedCase = checkSourceFile(parseSourceFile("function h(flag: boolean): \"a\" | 1 { return flag ? \"a\" : 1; }"));
+
+    Assert.Equal(0, baseCase.diagnostics.length);
+    Assert.Equal(0, literalCase.diagnostics.length);
+    Assert.Equal(0, mixedCase.diagnostics.length);
+  }
+
+  reports_union_type_node_mismatch(): void {
+    const sourceFile = parseSourceFile("function bad(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"c\"; }");
+    const result = checkSourceFile(sourceFile);
+
+    Assert.Equal<readonly string[]>(["Type '\"a\" | \"c\"' is not assignable to type '\"a\" | \"b\"'."], result.diagnostics.map((d) => d.message));
+  }
+
   makes_destructured_binding_names_available_to_checked_bodies(): void {
     const sourceFile = parseSourceFile("function f({ value }: string): string { return value; }");
     const result = checkSourceFile(sourceFile);
@@ -162,6 +179,8 @@ A<CheckerGroundworkTests>().method((t) => t.widens_boolean_literal_in_return_pos
 A<CheckerGroundworkTests>().method((t) => t.accepts_exact_literal_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_literal_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.widens_bigint_literal_in_return_position).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.makes_destructured_binding_names_available_to_checked_bodies).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_reports_assignment_mismatches).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_accepts_well_typed_assignment).add(FactAttribute);

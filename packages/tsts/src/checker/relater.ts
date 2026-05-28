@@ -218,14 +218,18 @@ export class Relater {
     void recursionFlags; void relation;
     const sf = (source as { flags?: number }).flags ?? 0;
     const tf = (target as { flags?: number }).flags ?? 0;
+    // Source union/intersection are dispatched BEFORE target union/intersection
+    // (mirrors TS-Go relater.go), so union-source-to-union-target relates each
+    // source constituent to the target union rather than the whole source
+    // union to a single target constituent.
+    // Source union: every constituent must relate to the target.
+    if ((sf & TypeFlags.Union) !== 0) return this.eachTypeRelatedToType(source, target, reportErrors);
+    // Source intersection: some constituent must relate to the target.
+    if ((sf & TypeFlags.Intersection) !== 0) return this.someTypeRelatedToType(source, target, reportErrors);
     // Target union: source must relate to at least one constituent.
     if ((tf & TypeFlags.Union) !== 0) return this.typeRelatedToSomeType(source, target, reportErrors);
     // Target intersection: source must relate to every constituent.
     if ((tf & TypeFlags.Intersection) !== 0) return this.typeRelatedToEachType(source, target, reportErrors);
-    // Source union: every constituent must relate to target.
-    if ((sf & TypeFlags.Union) !== 0) return this.eachTypeRelatedToType(source, target, reportErrors);
-    // Source intersection: some constituent must relate to target.
-    if ((sf & TypeFlags.Intersection) !== 0) return this.someTypeRelatedToType(source, target, reportErrors);
     // Both object: structural comparison.
     if ((sf & TypeFlags.Object) !== 0 && (tf & TypeFlags.Object) !== 0) {
       return this.structuredTypeRelatedTo(source, target, reportErrors, intersectionState);

@@ -498,7 +498,8 @@ export interface IntrinsicType extends TypeBase {
 }
 
 export interface LiteralType extends TypeBase {
-  value: string | number | bigint | boolean | PseudoBigInt;
+  // BigInt literal values use PseudoBigInt (matching TS-Go); no native bigint.
+  value: string | number | boolean | PseudoBigInt;
   freshType?: Type;
   regularType?: Type;
 }
