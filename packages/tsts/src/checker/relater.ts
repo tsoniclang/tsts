@@ -11,6 +11,7 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
+import { SymbolFlags } from "../ast/index.js";
 import type { Type, Signature, VarianceFlags, UnionOrIntersectionType, LiteralType, ObjectType } from "./types.js";
 import { TypeFlags, SignatureKind } from "./types.js";
 
@@ -440,8 +441,7 @@ export class Relater {
     if (members === undefined || members.size === 0) return false;
     for (const [, sym] of members) {
       const flags = (sym as unknown as { flags?: number }).flags ?? 0;
-      // SymbolFlags.Optional = 16777216
-      if ((flags & 16777216) === 0) return false;
+      if ((flags & SymbolFlags.Optional) === 0) return false;
     }
     return true;
   }
