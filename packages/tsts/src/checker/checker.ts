@@ -19,7 +19,7 @@
 
 import type { SourceFile } from "../ast/index.js";
 import type { Program, ProgramDiagnostic } from "../program/index.js";
-import { type CheckResult, newCheckState } from "./checker.checkedtype.js";
+import { type CheckResult, newCheckState, collectTypeAliases, resolveCollectedTypeAliases } from "./checker.checkedtype.js";
 import { checkStatements } from "./checker.statements.js";
 
 export type { CheckDiagnostic, CheckResult } from "./checker.checkedtype.js";
@@ -33,6 +33,10 @@ export class Checker {
 
   checkSourceFile(sourceFile: SourceFile): CheckResult {
     const state = newCheckState();
+    // Collect type aliases before checking bodies (forward references resolve),
+    // then eagerly resolve them to surface cycles / target errors.
+    collectTypeAliases(sourceFile.statements, state);
+    resolveCollectedTypeAliases(state);
     checkStatements(sourceFile.statements, state, new Map(), undefined);
     return { diagnostics: state.diagnostics };
   }

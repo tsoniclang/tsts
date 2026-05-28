@@ -26,17 +26,22 @@ import {
   isPrefixUnaryExpression,
   isPropertySignatureDeclaration,
   isStringLiteral,
+  isTypeAliasDeclaration,
   isTypeLiteralNode,
   isTypeOperatorNode,
+  isTypeReferenceNode,
   isUnionTypeNode,
   type BindingElement,
   type BindingName,
   type LiteralTypeNode,
   type Node as AstNode,
   type ParameterDeclaration,
+  type Statement,
   type Symbol as AstSymbol,
+  type TypeAliasDeclaration,
   type TypeLiteralNode,
   type TypeNode,
+  type TypeReferenceNode,
   type UnionTypeNode,
 } from "../ast/index.js";
 import { fromString, newPseudoBigInt, parsePseudoBigInt, parseValidBigInt, pseudoBigIntToString, type PseudoBigInt } from "../jsnum/index.js";
@@ -77,6 +82,13 @@ export interface CheckState {
   // Union interning by sorted constituent type ids (mirrors TS-Go's unionTypes
   // cache). Preseeded with the canonical `false | true` -> booleanType entry.
   readonly unionTypes: Map<string, Type>;
+  // Type-alias environment: name -> declaration (collected before checking
+  // bodies), the resolved-type cache, and the in-progress set for cycle
+  // detection (mirrors TS-Go's symbol-table + getDeclaredTypeOfTypeAlias
+  // circularity guard).
+  readonly typeAliases: Map<string, TypeAliasDeclaration>;
+  readonly typeAliasResolutions: Map<string, Type>;
+  readonly aliasResolutionStack: Set<string>;
   nextTypeId(): number;
 }
 
@@ -91,11 +103,26 @@ export function newCheckState(): CheckState {
     numberLiteralTypes: new Map<number, Type>(),
     bigintLiteralTypes: new Map<string, Type>(),
     unionTypes: new Map<string, Type>([[unionTypeKey([regularFalseType, regularTrueType]), booleanType]]),
+    typeAliases: new Map<string, TypeAliasDeclaration>(),
+    typeAliasResolutions: new Map<string, Type>(),
+    aliasResolutionStack: new Set<string>(),
     nextTypeId: () => {
       idSource.value += 1;
       return idSource.value;
     },
   };
+}
+
+// Collect top-level type aliases into the check state's alias environment
+// before any body is checked, so a forward reference (`d: Dict` declared above
+// `type Dict = …`) resolves. Mirrors TS-Go, where the binder populates the
+// symbol table before the checker resolves type references.
+export function collectTypeAliases(statements: readonly Statement[], state: CheckState): void {
+  for (const statement of statements) {
+    if (isTypeAliasDeclaration(statement) && isIdentifier(statement.name)) {
+      state.typeAliases.set(statement.name.text, statement);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -740,7 +767,72 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
     // operators are deferred.
     return type.operator === Kind.ReadonlyKeyword ? typeFromTypeNode(type.type, state) : anyType;
   }
+  if (isTypeReferenceNode(type)) {
+    return typeFromTypeReferenceNode(type, state);
+  }
   return anyType;
+}
+
+// Resolve a named type reference through the type-alias environment. A named
+// reference must NEVER silently become `any`: an unresolved name, a generic
+// alias (not yet modeled), or a circular alias each produces a deliberate
+// diagnostic and returns the error type. Mirrors TS-Go getTypeFromTypeReference
+// + getDeclaredTypeOfTypeAlias (with its circularity guard).
+function typeFromTypeReferenceNode(type: TypeReferenceNode, state: CheckState): Type {
+  if (!isIdentifier(type.typeName)) {
+    // Qualified names (`A.B`) are not modeled yet.
+    state.diagnostics.push({ message: `Qualified type names are not yet supported by the checker.` });
+    return unresolvedType;
+  }
+  const name = type.typeName.text;
+  const declaration = state.typeAliases.get(name);
+  if (declaration === undefined) {
+    state.diagnostics.push({ message: `Cannot find name '${name}'.` });
+    return unresolvedType;
+  }
+  // A reference supplying type arguments is a generic usage — deferred with an
+  // explicit diagnostic rather than erased to `any`.
+  if (type.typeArguments !== undefined && type.typeArguments.length > 0) {
+    state.diagnostics.push({ message: `Generic type alias '${name}' is not yet supported by the checker.` });
+    return unresolvedType;
+  }
+  return resolveTypeAlias(name, declaration, state);
+}
+
+// Resolve an alias declaration to its target type, with cycle protection and
+// caching. A generic alias (declaring type parameters) is a deferred-with-
+// diagnostic usage; a self/mutually-referential alias is diagnosed once.
+function resolveTypeAlias(name: string, declaration: TypeAliasDeclaration, state: CheckState): Type {
+  if (declaration.typeParameters !== undefined && declaration.typeParameters.length > 0) {
+    state.diagnostics.push({ message: `Generic type alias '${name}' is not yet supported by the checker.` });
+    return unresolvedType;
+  }
+  const cached = state.typeAliasResolutions.get(name);
+  if (cached !== undefined) {
+    return cached;
+  }
+  if (state.aliasResolutionStack.has(name)) {
+    state.diagnostics.push({ message: `Type alias '${name}' circularly references itself.` });
+    return unresolvedType;
+  }
+  state.aliasResolutionStack.add(name);
+  const resolved = typeFromTypeNode(declaration.type, state);
+  state.aliasResolutionStack.delete(name);
+  state.typeAliasResolutions.set(name, resolved);
+  return resolved;
+}
+
+// Eagerly resolve every collected non-generic alias so cycles and target errors
+// are reported even when the alias is never referenced from a body (mirrors
+// TS-Go checkTypeAliasDeclaration). Generic aliases are left for their usage
+// sites, where the deferred-generic diagnostic fires.
+export function resolveCollectedTypeAliases(state: CheckState): void {
+  for (const [name, declaration] of state.typeAliases) {
+    if (declaration.typeParameters !== undefined && declaration.typeParameters.length > 0) {
+      continue;
+    }
+    resolveTypeAlias(name, declaration, state);
+  }
 }
 
 // Build the FunctionParameter list for a signature/method declaration's

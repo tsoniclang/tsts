@@ -556,6 +556,29 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], arrayLengthMismatch.diagnostics.map((d) => d.message));
   }
 
+  resolves_type_alias_references(): void {
+    // Named type references resolve through the type-alias environment instead
+    // of silently becoming `any`. Unresolved names, circular aliases, and
+    // generic aliases each surface a deliberate diagnostic.
+    const aliasToIndex = checkSourceFile(parseSourceFile("type Dict = { [key: string]: number }; function read(d: Dict, key: string): number { return d[key]; }"));
+    const aliasToCall = checkSourceFile(parseSourceFile("type Fn = { (text: string): number }; function call(fn: Fn): number { return fn(\"x\"); }"));
+    const aliasToPrimitiveMismatch = checkSourceFile(parseSourceFile("type Count = number; function bad(x: Count): string { return x; }"));
+    const aliasOfAliasOk = checkSourceFile(parseSourceFile("type Count = number; type Alias = Count; function ok(x: Alias): number { return x; }"));
+    const unresolved = checkSourceFile(parseSourceFile("function bad(x: MissingType): number { return 1; }"));
+    const circular = checkSourceFile(parseSourceFile("type A = B; type B = A;"));
+    const genericUsage = checkSourceFile(parseSourceFile("type Box<T> = { value: T }; function f(b: Box<number>): void { }"));
+    const genericBareUsage = checkSourceFile(parseSourceFile("type Box<T> = { value: T }; function f(b: Box): void { }"));
+
+    Assert.Equal(0, aliasToIndex.diagnostics.length);
+    Assert.Equal(0, aliasToCall.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], aliasToPrimitiveMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, aliasOfAliasOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Cannot find name 'MissingType'."], unresolved.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type alias 'A' circularly references itself."], circular.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Generic type alias 'Box' is not yet supported by the checker."], genericUsage.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Generic type alias 'Box' is not yet supported by the checker."], genericBareUsage.diagnostics.map((d) => d.message));
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -688,6 +711,7 @@ A<CheckerGroundworkTests>().method((t) => t.checks_array_types).add(FactAttribut
 A<CheckerGroundworkTests>().method((t) => t.checks_array_spread_index_and_broad_object).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_broad_empty_object_and_index_validation).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_object_type_signatures).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.resolves_type_alias_references).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);
