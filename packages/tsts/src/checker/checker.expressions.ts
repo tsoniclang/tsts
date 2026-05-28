@@ -47,6 +47,10 @@ import {
   getFunctionReturnType,
   getUnionTypeEx,
   UnionReduction,
+  getApparentType,
+  getFreshTypeOfLiteralType,
+  getNumberLiteralType,
+  getStringLiteralType,
   makeFunctionType,
   checkAssignable,
   displayType,
@@ -57,10 +61,10 @@ import { checkBlock } from "./checker.statements.js";
 
 export function inferExpression(expression: Expression, state: CheckState, environment: TypeEnvironment): Type {
   if (isNumericLiteral(expression)) {
-    return numberType;
+    return getFreshTypeOfLiteralType(getNumberLiteralType(Number(expression.text), state), state);
   }
   if (isStringLiteral(expression)) {
-    return stringType;
+    return getFreshTypeOfLiteralType(getStringLiteralType(expression.text, state), state);
   }
   if (isIdentifier(expression)) {
     return environment.get(expression.text) ?? unresolvedType;
@@ -101,16 +105,20 @@ export function inferExpression(expression: Expression, state: CheckState, envir
   if (isBinaryExpression(expression)) {
     const left = inferExpression(expression.left, state, environment);
     const right = inferExpression(expression.right, state, environment);
+    // Operand kind is determined from the apparent type so primitive literals
+    // (e.g. `1 + 2`) classify as their base primitive.
+    const leftApparent = getApparentType(left);
+    const rightApparent = getApparentType(right);
     if (isComparisonOperator(expression.operatorToken.kind) || expression.operatorToken.kind === Kind.AmpersandAmpersandToken || expression.operatorToken.kind === Kind.BarBarToken) {
       return booleanType;
     }
     if (isAssignmentOperator(expression.operatorToken.kind)) {
       return right;
     }
-    if (expression.operatorToken.kind === Kind.PlusToken && (isStringType(left) || isStringType(right))) {
+    if (expression.operatorToken.kind === Kind.PlusToken && (isStringType(leftApparent) || isStringType(rightApparent))) {
       return stringType;
     }
-    if (isNumberType(left) && isNumberType(right)) {
+    if (isNumberType(leftApparent) && isNumberType(rightApparent)) {
       return numberType;
     }
     return unresolvedType;
@@ -159,7 +167,7 @@ export function inferConciseBody(body: ConciseBody, state: CheckState, environme
 }
 
 export function inferPropertyAccess(expression: Expression, propertyName: string, state: CheckState, environment: TypeEnvironment): Type {
-  const receiverType = inferExpression(expression, state, environment);
+  const receiverType = getApparentType(inferExpression(expression, state, environment));
   if (isNumberType(receiverType) && propertyName === "toFixed") {
     return makeFunctionType(stringType, state);
   }

@@ -22,6 +22,7 @@ import {
 import {
   type Type,
   type IntrinsicType,
+  type LiteralType,
   type ObjectType,
   type Signature,
   type UnionOrIntersectionType,
@@ -43,6 +44,10 @@ export interface CheckResult {
 export interface CheckState {
   readonly diagnostics: CheckDiagnostic[];
   readonly relater: Relater;
+  // Literal-type caches (mirror checker.go's stringLiteralTypes /
+  // numberLiteralTypes maps), keyed by literal value.
+  readonly stringLiteralTypes: Map<string, Type>;
+  readonly numberLiteralTypes: Map<number, Type>;
   nextTypeId(): number;
 }
 
@@ -53,6 +58,8 @@ export function newCheckState(): CheckState {
   return {
     diagnostics: [],
     relater: newRelater(),
+    stringLiteralTypes: new Map<string, Type>(),
+    numberLiteralTypes: new Map<number, Type>(),
     nextTypeId: () => {
       idSource.value += 1;
       return idSource.value;
@@ -83,6 +90,7 @@ export const neverType: Type = intrinsicType(9, TypeFlags.Never, "never");
 // accepts and is accepted, suppressing cascading diagnostics (mirrors
 // checker.go's `errorType`).
 export const unresolvedType: Type = intrinsicType(10, TypeFlags.Any, "error");
+export const bigintType: Type = intrinsicType(11, TypeFlags.BigInt, "bigint");
 
 // ---------------------------------------------------------------------------
 // Intrinsic identity predicates. Intrinsics are singletons, so identity is
@@ -149,6 +157,8 @@ function makeUnionType(types: readonly Type[], state: CheckState): Type {
 }
 
 function addTypeToUnion(typeSet: Type[], type: Type): void {
+  // TS-Go ignores `never` constituents in unions (independent of reduction).
+  if ((type.flags & TypeFlags.Never) !== 0) return;
   if (!typeSet.includes(type)) typeSet.push(type);
 }
 
@@ -189,6 +199,88 @@ export function unionConstituents(type: Type): readonly Type[] | undefined {
 }
 
 // ---------------------------------------------------------------------------
+// Primitive literal types. Faithful to TS-Go's literal model: a regular
+// literal (cached by value) plus a lazily-created fresh variant linked via
+// `freshType`/`regularType` on `Type.data` (LiteralType). Fresh literals
+// widen to their base primitive in widening positions.
+// ---------------------------------------------------------------------------
+
+function newLiteralType(flags: TypeFlags, value: string | number | bigint | boolean, regularType: Type | undefined, state: CheckState): Type {
+  const data: LiteralType = { value };
+  const type: Type = { flags, id: state.nextTypeId(), data };
+  data.regularType = regularType ?? type;
+  return type;
+}
+
+export function getStringLiteralType(value: string, state: CheckState): Type {
+  const cached = state.stringLiteralTypes.get(value);
+  if (cached !== undefined) return cached;
+  const type = newLiteralType(TypeFlags.StringLiteral, value, undefined, state);
+  state.stringLiteralTypes.set(value, type);
+  return type;
+}
+
+export function getNumberLiteralType(value: number, state: CheckState): Type {
+  const cached = state.numberLiteralTypes.get(value);
+  if (cached !== undefined) return cached;
+  const type = newLiteralType(TypeFlags.NumberLiteral, value, undefined, state);
+  state.numberLiteralTypes.set(value, type);
+  return type;
+}
+
+export function getFreshTypeOfLiteralType(type: Type, state: CheckState): Type {
+  if ((type.flags & TypeFlags.Freshable) === 0) return type;
+  const data = type.data as LiteralType;
+  if (data.freshType === undefined) {
+    const fresh = newLiteralType(type.flags, data.value, type, state);
+    (fresh.data as LiteralType).freshType = fresh;
+    data.freshType = fresh;
+  }
+  return data.freshType;
+}
+
+export function getRegularTypeOfLiteralType(type: Type): Type {
+  if ((type.flags & TypeFlags.Freshable) === 0) return type;
+  return (type.data as LiteralType).regularType ?? type;
+}
+
+export function isFreshLiteralType(type: Type): boolean {
+  return (type.flags & TypeFlags.Freshable) !== 0 && (type.data as LiteralType).freshType === type;
+}
+
+// Widens a FRESH primitive literal to its base primitive (mirrors TS-Go
+// getWidenedLiteralType). Regular literals and non-literals are unchanged.
+export function getWidenedLiteralType(type: Type): Type {
+  if ((type.flags & TypeFlags.StringLiteral) !== 0 && isFreshLiteralType(type)) return stringType;
+  if ((type.flags & TypeFlags.NumberLiteral) !== 0 && isFreshLiteralType(type)) return numberType;
+  if ((type.flags & TypeFlags.BigIntLiteral) !== 0 && isFreshLiteralType(type)) return bigintType;
+  if ((type.flags & TypeFlags.BooleanLiteral) !== 0 && isFreshLiteralType(type)) return booleanType;
+  return type;
+}
+
+// Widening for assignment/return positions. Primitive-literal + union only;
+// object/array literal widening is deferred (needs member resolution).
+export function getWidenedType(type: Type, state: CheckState): Type {
+  if ((type.flags & TypeFlags.Freshable) !== 0) return getWidenedLiteralType(type);
+  if ((type.flags & TypeFlags.Union) !== 0) {
+    const widened = (unionConstituents(type) ?? []).map((t) => getWidenedType(t, state));
+    return getUnionType(widened, state);
+  }
+  return type;
+}
+
+// Apparent type for member access: a primitive literal's members come from
+// its base primitive. Full getApparentType (number→Number interface, etc.)
+// is deferred until member resolution lands.
+export function getApparentType(type: Type): Type {
+  if ((type.flags & TypeFlags.StringLiteral) !== 0) return stringType;
+  if ((type.flags & TypeFlags.NumberLiteral) !== 0) return numberType;
+  if ((type.flags & TypeFlags.BooleanLiteral) !== 0) return booleanType;
+  if ((type.flags & TypeFlags.BigIntLiteral) !== 0) return bigintType;
+  return type;
+}
+
+// ---------------------------------------------------------------------------
 // Leaf helpers
 // ---------------------------------------------------------------------------
 
@@ -203,8 +295,14 @@ export function typeFromTypeNode(type: TypeNode): Type {
         return numberType;
       case Kind.StringKeyword:
         return stringType;
+      case Kind.BigIntKeyword:
+        return bigintType;
       case Kind.VoidKeyword:
         return voidType;
+      case Kind.UndefinedKeyword:
+        return undefinedType;
+      case Kind.NeverKeyword:
+        return neverType;
       case Kind.UnknownKeyword:
         return unknownType;
       default:
@@ -215,9 +313,13 @@ export function typeFromTypeNode(type: TypeNode): Type {
 }
 
 export function checkAssignable(actual: Type, expected: Type, state: CheckState): void {
-  if (!state.relater.isTypeAssignableTo(actual, expected)) {
+  // Assignment/return positions widen fresh literals (and unions of them)
+  // to their base before checking — matching TS-Go diagnostics, where e.g.
+  // `return "x"` reports against `string`, not the literal `"x"`.
+  const widened = getWidenedType(actual, state);
+  if (!state.relater.isTypeAssignableTo(widened, expected)) {
     state.diagnostics.push({
-      message: `Type '${displayType(actual)}' is not assignable to type '${displayType(expected)}'.`,
+      message: `Type '${displayType(widened)}' is not assignable to type '${displayType(expected)}'.`,
     });
   }
 }
@@ -244,6 +346,10 @@ export function displayType(type: Type): string {
   if ((type.flags & TypeFlags.Union) !== 0) {
     return (unionConstituents(type) ?? []).map(displayType).join(" | ");
   }
+  if ((type.flags & TypeFlags.StringLiteral) !== 0) return JSON.stringify((type.data as LiteralType).value);
+  if ((type.flags & TypeFlags.NumberLiteral) !== 0) return String((type.data as LiteralType).value);
+  if ((type.flags & TypeFlags.BooleanLiteral) !== 0) return String((type.data as LiteralType).value);
+  if ((type.flags & TypeFlags.BigIntLiteral) !== 0) return `${(type.data as LiteralType).value}n`;
   if (isFunctionType(type)) return "function";
   const name = (type.data as IntrinsicType | undefined)?.intrinsicName;
   if (name === undefined || name === "error") return "unknown";

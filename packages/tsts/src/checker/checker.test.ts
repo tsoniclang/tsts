@@ -79,6 +79,20 @@ export class CheckerGroundworkTests {
     Assert.Equal(0, result.diagnostics.length);
   }
 
+  widens_numeric_literal_arithmetic_to_number(): void {
+    const sourceFile = parseSourceFile("function f(): number { return 1 + 2; }");
+    const result = checkSourceFile(sourceFile);
+
+    Assert.Equal(0, result.diagnostics.length);
+  }
+
+  widens_string_literal_in_return_position(): void {
+    const sourceFile = parseSourceFile("function f(): number { return \"lit\"; }");
+    const result = checkSourceFile(sourceFile);
+
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], result.diagnostics.map((d) => d.message));
+  }
+
   makes_destructured_binding_names_available_to_checked_bodies(): void {
     const sourceFile = parseSourceFile("function f({ value }: string): string { return value; }");
     const result = checkSourceFile(sourceFile);
@@ -111,6 +125,8 @@ A<CheckerGroundworkTests>().method((t) => t.checks_loop_initializer_declarations
 A<CheckerGroundworkTests>().method((t) => t.checks_conditional_branches_after_assertion_expressions).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.builds_a_union_type_from_conditional_branches).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.collapses_conditional_branches_of_the_same_type).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.widens_numeric_literal_arithmetic_to_number).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.widens_string_literal_in_return_position).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.makes_destructured_binding_names_available_to_checked_bodies).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_reports_assignment_mismatches).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_accepts_well_typed_assignment).add(FactAttribute);
