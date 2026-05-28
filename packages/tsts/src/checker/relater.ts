@@ -13,7 +13,7 @@
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
 import { SymbolFlags } from "../ast/index.js";
 import type { Type, Signature, VarianceFlags, UnionOrIntersectionType, LiteralType, ObjectType } from "./types.js";
-import { TypeFlags, SignatureKind } from "./types.js";
+import { TypeFlags, SignatureKind, getTypeOfSymbol } from "./types.js";
 
 // Composite TypeFlags masks (now defined 1:1 in types.ts); aliased locally
 // to keep the ported relation logic readable.
@@ -327,7 +327,12 @@ export class Relater {
     if (sourceProps === undefined) return Ternary.False;
     for (const [name, targetProp] of targetProps) {
       const sourceProp = sourceProps.get(name);
-      if (sourceProp === undefined) return Ternary.False;
+      if (sourceProp === undefined) {
+        // A missing source property is only acceptable when the target
+        // property is optional (mirrors TS-Go propertiesRelatedTo).
+        if (((targetProp.flags ?? 0) & SymbolFlags.Optional) !== 0) continue;
+        return Ternary.False;
+      }
       const r = this.propertyRelatedTo(source, target, sourceProp, targetProp, reportErrors);
       if (r === Ternary.False) return r;
     }
@@ -338,8 +343,8 @@ export class Relater {
     source: Type, target: Type, sourceProp: AstSymbol, targetProp: AstSymbol, reportErrors: boolean,
   ): Ternary {
     void source; void target; void reportErrors;
-    const sourceType = (sourceProp as unknown as { type?: Type }).type;
-    const targetType = (targetProp as unknown as { type?: Type }).type;
+    const sourceType = getTypeOfSymbol(sourceProp);
+    const targetType = getTypeOfSymbol(targetProp);
     if (sourceType === undefined || targetType === undefined) return Ternary.True;
     return this.isTypeAssignableTo(sourceType, targetType) ? Ternary.True : Ternary.False;
   }

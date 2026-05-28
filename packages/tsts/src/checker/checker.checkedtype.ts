@@ -11,12 +11,14 @@
 
 import {
   Kind,
+  SymbolFlags,
   isBigIntLiteral,
   isIdentifier,
   isObjectBindingPattern,
   isArrayBindingPattern,
   isKeywordTypeNode,
   isLiteralTypeNode,
+  isMethodSignatureDeclaration,
   isNumericLiteral,
   isPrefixUnaryExpression,
   isPropertySignatureDeclaration,
@@ -45,6 +47,8 @@ import {
   ObjectFlags,
 } from "./types.js";
 import { type Relater, newRelater } from "./relater.js";
+
+export { getTypeOfSymbol, getPropertySymbolOfType, getPropertyTypeOfType } from "./types.js";
 
 export type { Type } from "./types.js";
 
@@ -202,23 +206,30 @@ export function getFunctionReturnType(type: Type): Type {
 interface PropertySymbol {
   readonly name: string;
   readonly type: Type;
+  readonly flags: number;
   readonly declarations: readonly AstNode[];
 }
 
-export function makeObjectType(properties: readonly { readonly name: string; readonly type: Type }[], state: CheckState): Type {
+export interface ObjectProperty {
+  readonly name: string;
+  readonly type: Type;
+  readonly optional?: boolean;
+}
+
+export function makeObjectType(properties: readonly ObjectProperty[], state: CheckState): Type {
   const members = new Map<string, AstSymbol>();
   for (const property of properties) {
-    const symbol: PropertySymbol = { name: property.name, type: property.type, declarations: [] };
+    const symbol: PropertySymbol = {
+      name: property.name,
+      type: property.type,
+      flags: property.optional === true ? SymbolFlags.Optional : 0,
+      declarations: [],
+    };
     members.set(property.name, symbol as unknown as AstSymbol);
   }
   const data: ObjectType = { objectFlags: ObjectFlags.Anonymous };
   const typeSymbol = { name: "__object", declarations: [], members } as unknown as AstSymbol;
   return { flags: TypeFlags.Object, id: state.nextTypeId(), data, symbol: typeSymbol };
-}
-
-export function getPropertyOfType(type: Type, name: string): Type | undefined {
-  const members = (type.symbol as unknown as { readonly members?: Map<string, PropertySymbol> } | undefined)?.members;
-  return members?.get(name)?.type;
 }
 
 function objectTypeMembers(type: Type): ReadonlyMap<string, PropertySymbol> | undefined {
@@ -496,14 +507,17 @@ export function isPossiblyFalsy(type: Type): boolean {
   return unionMembers(type).some(constituentCanBeFalsy);
 }
 
-// hasTypeFacts(type, EQUndefinedOrNull): some constituent is null/undefined.
+// hasTypeFacts(type, EQUndefinedOrNull): some constituent is null/undefined/void
+// (void carries the EQUndefined fact in TS-Go). any/unknown nullish handling is
+// deferred — they need a `{}`/non-nullish-unknown representation the checker
+// does not model yet (`any ?? x` already yields `any` via the left branch).
 export function isPossiblyNullOrUndefined(type: Type): boolean {
-  return unionMembers(type).some((t) => (t.flags & (TypeFlags.Null | TypeFlags.Undefined)) !== 0);
+  return unionMembers(type).some((t) => (t.flags & (TypeFlags.Null | TypeFlags.Undefined | TypeFlags.Void)) !== 0);
 }
 
-// TS-Go GetNonNullableType: drop null/undefined constituents.
+// TS-Go GetNonNullableType: drop null/undefined/void constituents.
 export function getNonNullableType(type: Type, state: CheckState): Type {
-  return filterType(type, (t) => (t.flags & (TypeFlags.Null | TypeFlags.Undefined)) === 0, state);
+  return filterType(type, (t) => (t.flags & (TypeFlags.Null | TypeFlags.Undefined | TypeFlags.Void)) === 0, state);
 }
 
 // TS-Go getDefinitelyFalsyPartOfType: the always-falsy projection of a type.
@@ -634,10 +648,25 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
 // property signatures (only named property signatures are modeled in this
 // tranche; index/call/construct signatures are deferred).
 function typeFromTypeLiteralNode(node: TypeLiteralNode, state: CheckState): Type {
-  const properties: { readonly name: string; readonly type: Type }[] = [];
+  const properties: ObjectProperty[] = [];
   for (const member of node.members) {
     if (isPropertySignatureDeclaration(member) && isIdentifier(member.name)) {
-      properties.push({ name: member.name.text, type: typeFromTypeNode(member.type, state) });
+      properties.push({
+        name: member.name.text,
+        type: typeFromTypeNode(member.type, state),
+        optional: member.postfixToken?.kind === Kind.QuestionToken,
+      });
+    } else if (isMethodSignatureDeclaration(member) && isIdentifier(member.name)) {
+      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
+      properties.push({
+        name: member.name.text,
+        type: makeFunctionType(returnType, state),
+        optional: member.postfixToken?.kind === Kind.QuestionToken,
+      });
+    } else {
+      // Index/call/construct signatures + non-identifier names aren't modeled
+      // yet; surface explicitly rather than silently dropping the member.
+      state.diagnostics.push({ message: `Type member kind '${Kind[member.kind]}' is not yet supported by the checker.` });
     }
   }
   return makeObjectType(properties, state);

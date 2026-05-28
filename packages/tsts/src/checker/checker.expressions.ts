@@ -24,6 +24,7 @@ import {
   isPropertyAccessExpression,
   isPropertyAssignment,
   isSatisfiesExpression,
+  isShorthandPropertyAssignment,
   isSpreadElement,
   type ArrowFunction,
   type ConciseBody,
@@ -61,7 +62,8 @@ import {
   literalTypeFromLiteralExpression,
   makeFunctionType,
   makeObjectType,
-  getPropertyOfType,
+  getPropertyTypeOfType,
+  type ObjectProperty,
   checkAssignable,
   displayType,
   setBindingNameType,
@@ -185,12 +187,17 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     return unresolvedType;
   }
   if (isObjectLiteralExpression(expression)) {
-    // Anonymous object type from property assignments. Shorthand/spread/computed
-    // members are deferred; their properties simply aren't modeled yet.
-    const properties: { readonly name: string; readonly type: Type }[] = [];
+    // Anonymous object type from property + shorthand assignments. Spread /
+    // computed / non-identifier members aren't modeled yet — surfaced
+    // explicitly rather than silently dropped (which would falsify the type).
+    const properties: ObjectProperty[] = [];
     for (const property of expression.properties) {
       if (isPropertyAssignment(property) && isIdentifier(property.name)) {
         properties.push({ name: property.name.text, type: inferExpression(property.initializer, state, environment) });
+      } else if (isShorthandPropertyAssignment(property) && isIdentifier(property.name)) {
+        properties.push({ name: property.name.text, type: inferExpression(property.name, state, environment) });
+      } else {
+        state.diagnostics.push({ message: `Object member kind '${Kind[property.kind]}' is not yet supported by the checker.` });
       }
     }
     return makeObjectType(properties, state);
@@ -252,7 +259,7 @@ export function inferPropertyAccess(expression: Expression, propertyName: string
   if (isUnknownType(receiverType) || isUnresolvedType(receiverType)) {
     return anyType;
   }
-  const objectProperty = getPropertyOfType(receiverType, propertyName);
+  const objectProperty = getPropertyTypeOfType(receiverType, propertyName);
   if (objectProperty !== undefined) {
     return objectProperty;
   }

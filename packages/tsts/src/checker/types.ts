@@ -650,3 +650,23 @@ export interface TypeMapper {
   mapper2?: TypeMapper;
   map?: (t: Type) => Type;
 }
+
+// ---------------------------------------------------------------------------
+// Symbol-type access layer. Property types are stored on synthetic property
+// symbols (the structural relater's backing field). All property-type reads —
+// in the checker AND the relater — route through these accessors so the
+// shortcut can later be swapped for a TS-Go-style symbol-links implementation
+// without touching every caller.
+// ---------------------------------------------------------------------------
+
+export function getTypeOfSymbol(symbol: AstSymbol | undefined): Type | undefined {
+  return (symbol as unknown as { readonly type?: Type } | undefined)?.type;
+}
+
+export function getPropertySymbolOfType(type: Type, name: string): AstSymbol | undefined {
+  return (type.symbol as unknown as { readonly members?: Map<string, AstSymbol> } | undefined)?.members?.get(name);
+}
+
+export function getPropertyTypeOfType(type: Type, name: string): Type | undefined {
+  return getTypeOfSymbol(getPropertySymbolOfType(type, name));
+}

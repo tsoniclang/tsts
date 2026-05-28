@@ -347,6 +347,25 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type '{}' is not assignable to type '{ port: number }'."], objectMissingProperty.diagnostics.map((d) => d.message));
   }
 
+  extends_object_member_support(): void {
+    // void nullish facts; shorthand properties; type-literal method signatures;
+    // optional properties (relater skips a missing optional); unsupported
+    // members are surfaced explicitly, never silently dropped.
+    const voidNullish = checkSourceFile(parseSourceFile("function f(x: void, y: number): number { return x ?? y; }"));
+    const shorthand = checkSourceFile(parseSourceFile("function f(a: number): { a: number } { return { a }; }"));
+    const methodSignature = checkSourceFile(parseSourceFile("function f(o: { kindString(): string }): string { return o.kindString(); }"));
+    const optionalAbsent = checkSourceFile(parseSourceFile("function f(): void { const o: { a?: number } = { }; }"));
+    const requiredAbsent = checkSourceFile(parseSourceFile("function f(): void { const o: { a: number } = { }; }"));
+    const spreadSurfaced = checkSourceFile(parseSourceFile("function f(b: { a: number }): void { const o = { ...b }; }"));
+
+    Assert.Equal(0, voidNullish.diagnostics.length);
+    Assert.Equal(0, shorthand.diagnostics.length);
+    Assert.Equal(0, methodSignature.diagnostics.length);
+    Assert.Equal(0, optionalAbsent.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type '{}' is not assignable to type '{ a: number }'."], requiredAbsent.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Object member kind 'SpreadAssignment' is not yet supported by the checker."], spreadSurfaced.diagnostics.map((d) => d.message));
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -469,6 +488,7 @@ A<CheckerGroundworkTests>().method((t) => t.preserves_const_literal_widens_let).
 A<CheckerGroundworkTests>().method((t) => t.derives_logical_operator_result_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.hardens_logical_operator_facts).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.resolves_object_literal_members).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.extends_object_member_support).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);
