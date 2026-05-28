@@ -13,6 +13,7 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol, SymbolTable } from "../ast/index.js";
+import type { PseudoBigInt } from "../jsnum/index.js";
 
 // ---------------------------------------------------------------------------
 // Constant-union flag tables (no Go iota)
@@ -497,7 +498,7 @@ export interface IntrinsicType extends TypeBase {
 }
 
 export interface LiteralType extends TypeBase {
-  value: string | number | bigint | boolean;
+  value: string | number | bigint | boolean | PseudoBigInt;
   freshType?: Type;
   regularType?: Type;
 }

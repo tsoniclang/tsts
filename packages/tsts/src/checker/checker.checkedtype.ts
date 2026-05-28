@@ -11,6 +11,7 @@
 
 import {
   Kind,
+  isBigIntLiteral,
   isIdentifier,
   isObjectBindingPattern,
   isArrayBindingPattern,
@@ -21,15 +22,17 @@ import {
   type BindingElement,
   type BindingName,
   type LiteralTypeNode,
+  type Node as AstNode,
   type TypeNode,
 } from "../ast/index.js";
-import { fromString } from "../jsnum/index.js";
+import { fromString, parseValidBigInt, pseudoBigIntToString, type PseudoBigInt } from "../jsnum/index.js";
 import {
   type Type,
   type IntrinsicType,
   type LiteralType,
   type ObjectType,
   type Signature,
+  type UnionType,
   type UnionOrIntersectionType,
   TypeFlags,
   ObjectFlags,
@@ -53,6 +56,7 @@ export interface CheckState {
   // numberLiteralTypes maps), keyed by literal value.
   readonly stringLiteralTypes: Map<string, Type>;
   readonly numberLiteralTypes: Map<number, Type>;
+  readonly bigintLiteralTypes: Map<string, Type>;
   nextTypeId(): number;
 }
 
@@ -65,6 +69,7 @@ export function newCheckState(): CheckState {
     relater: newRelater(),
     stringLiteralTypes: new Map<string, Type>(),
     numberLiteralTypes: new Map<number, Type>(),
+    bigintLiteralTypes: new Map<string, Type>(),
     nextTypeId: () => {
       idSource.value += 1;
       return idSource.value;
@@ -210,7 +215,7 @@ export function unionConstituents(type: Type): readonly Type[] | undefined {
 // widen to their base primitive in widening positions.
 // ---------------------------------------------------------------------------
 
-function newLiteralType(flags: TypeFlags, value: string | number | bigint | boolean, regularType: Type | undefined, state: CheckState): Type {
+function newLiteralType(flags: TypeFlags, value: string | number | bigint | boolean | PseudoBigInt, regularType: Type | undefined, state: CheckState): Type {
   const data: LiteralType = { value };
   const type: Type = { flags, id: state.nextTypeId(), data };
   data.regularType = regularType ?? type;
@@ -233,6 +238,15 @@ export function getNumberLiteralType(value: number, state: CheckState): Type {
   return type;
 }
 
+export function getBigIntLiteralType(value: PseudoBigInt, state: CheckState): Type {
+  const key = pseudoBigIntToString(value);
+  const cached = state.bigintLiteralTypes.get(key);
+  if (cached !== undefined) return cached;
+  const type = newLiteralType(TypeFlags.BigIntLiteral, value, undefined, state);
+  state.bigintLiteralTypes.set(key, type);
+  return type;
+}
+
 export function getFreshTypeOfLiteralType(type: Type, state: CheckState): Type {
   if ((type.flags & TypeFlags.Freshable) === 0) return type;
   const data = type.data as LiteralType;
@@ -244,9 +258,19 @@ export function getFreshTypeOfLiteralType(type: Type, state: CheckState): Type {
   return data.freshType;
 }
 
-export function getRegularTypeOfLiteralType(type: Type): Type {
-  if ((type.flags & TypeFlags.Freshable) === 0) return type;
-  return (type.data as LiteralType).regularType ?? type;
+export function getRegularTypeOfLiteralType(type: Type, state: CheckState): Type {
+  if ((type.flags & TypeFlags.Freshable) !== 0) {
+    return (type.data as LiteralType).regularType ?? type;
+  }
+  if ((type.flags & TypeFlags.Union) !== 0) {
+    const data = type.data as UnionType;
+    if (data.regularType === undefined) {
+      const regular = (unionConstituents(type) ?? []).map((t) => getRegularTypeOfLiteralType(t, state));
+      data.regularType = getUnionType(regular, state);
+    }
+    return data.regularType;
+  }
+  return type;
 }
 
 export function isFreshLiteralType(type: Type): boolean {
@@ -320,7 +344,28 @@ export function getWidenedLiteralLikeTypeForContextualType(type: Type, contextua
   const contextual = isLiteralLikeContextualType(contextualType) ? type : getWidenedType(type, state);
   // Always pass the regular (non-fresh) literal forward, matching TS-Go's
   // trailing getRegularTypeOfLiteralType.
-  return getRegularTypeOfLiteralType(contextual);
+  return getRegularTypeOfLiteralType(contextual, state);
+}
+
+// Shared fresh-literal construction for literal expressions AND literal type
+// nodes (so the two paths can't drift). Returns undefined for non-literals.
+export function literalTypeFromLiteralExpression(literal: AstNode, state: CheckState): Type | undefined {
+  if (isStringLiteral(literal)) {
+    return getFreshTypeOfLiteralType(getStringLiteralType(literal.text, state), state);
+  }
+  if (isNumericLiteral(literal)) {
+    return getFreshTypeOfLiteralType(getNumberLiteralType(fromString(literal.text), state), state);
+  }
+  if (isBigIntLiteral(literal)) {
+    return getFreshTypeOfLiteralType(getBigIntLiteralType(parseValidBigInt(literal.text), state), state);
+  }
+  if (literal.kind === Kind.TrueKeyword) {
+    return getFreshTypeOfLiteralType(getBooleanLiteralType(true), state);
+  }
+  if (literal.kind === Kind.FalseKeyword) {
+    return getFreshTypeOfLiteralType(getBooleanLiteralType(false), state);
+  }
+  return undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -358,16 +403,13 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
   return anyType;
 }
 
-// Literal type nodes (`"lit"` / `1` / `true` / `false`) resolve to the
-// REGULAR literal type. (Negative numeric, bigint, and null literal type
-// nodes are deferred.)
+// Literal type nodes resolve to the REGULAR literal type via the shared
+// literal-construction path (mirrors TS-Go
+// getRegularTypeOfLiteralType(checkExpression(literal))). Covers string /
+// number / bigint / true / false; negative-numeric and null are deferred.
 function typeFromLiteralTypeNode(node: LiteralTypeNode, state: CheckState): Type {
-  const literal = node.literal;
-  if (isStringLiteral(literal)) return getStringLiteralType(literal.text, state);
-  if (isNumericLiteral(literal)) return getNumberLiteralType(fromString(literal.text), state);
-  if (literal.kind === Kind.TrueKeyword) return getBooleanLiteralType(true);
-  if (literal.kind === Kind.FalseKeyword) return getBooleanLiteralType(false);
-  return anyType;
+  const fresh = literalTypeFromLiteralExpression(node.literal, state);
+  return fresh !== undefined ? getRegularTypeOfLiteralType(fresh, state) : anyType;
 }
 
 // Pure assignability check + diagnostic. Callers are responsible for any
@@ -407,7 +449,7 @@ export function displayType(type: Type): string {
   if ((type.flags & TypeFlags.StringLiteral) !== 0) return JSON.stringify((type.data as LiteralType).value);
   if ((type.flags & TypeFlags.NumberLiteral) !== 0) return String((type.data as LiteralType).value);
   if ((type.flags & TypeFlags.BooleanLiteral) !== 0) return String((type.data as LiteralType).value);
-  if ((type.flags & TypeFlags.BigIntLiteral) !== 0) return `${(type.data as LiteralType).value}n`;
+  if ((type.flags & TypeFlags.BigIntLiteral) !== 0) return `${pseudoBigIntToString((type.data as LiteralType).value as PseudoBigInt)}n`;
   if (isFunctionType(type)) return "function";
   const name = (type.data as IntrinsicType | undefined)?.intrinsicName;
   if (name === undefined || name === "error") return "unknown";

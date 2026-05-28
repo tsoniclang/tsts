@@ -17,19 +17,16 @@ import {
   isConditionalExpression,
   isElementAccessExpression,
   isIdentifier,
-  isNumericLiteral,
   isParenthesizedExpression,
   isPostfixUnaryExpression,
   isPrefixUnaryExpression,
   isPropertyAccessExpression,
   isSatisfiesExpression,
   isSpreadElement,
-  isStringLiteral,
   type ArrowFunction,
   type ConciseBody,
   type Expression,
 } from "../ast/index.js";
-import { fromString } from "../jsnum/index.js";
 import {
   type Type,
   type CheckState,
@@ -49,11 +46,8 @@ import {
   getUnionTypeEx,
   UnionReduction,
   getApparentType,
-  getBooleanLiteralType,
-  getFreshTypeOfLiteralType,
-  getNumberLiteralType,
-  getStringLiteralType,
   getWidenedLiteralLikeTypeForContextualType,
+  literalTypeFromLiteralExpression,
   makeFunctionType,
   checkAssignable,
   displayType,
@@ -63,21 +57,13 @@ import {
 import { checkBlock } from "./checker.statements.js";
 
 export function inferExpression(expression: Expression, state: CheckState, environment: TypeEnvironment): Type {
-  if (isNumericLiteral(expression)) {
-    return getFreshTypeOfLiteralType(getNumberLiteralType(fromString(expression.text), state), state);
-  }
-  if (isStringLiteral(expression)) {
-    return getFreshTypeOfLiteralType(getStringLiteralType(expression.text, state), state);
-  }
-  // `true` / `false` are keyword-token expressions; switch on Kind directly
-  // (mirrors TS-Go's checkExpression KindTrueKeyword / KindFalseKeyword cases).
-  // The generated isTrueLiteral/isFalseLiteral predicates are stubs (return
-  // false) — flagged to codex as a separate ast-generator gap.
-  if (expression.kind === Kind.TrueKeyword) {
-    return getFreshTypeOfLiteralType(getBooleanLiteralType(true), state);
-  }
-  if (expression.kind === Kind.FalseKeyword) {
-    return getFreshTypeOfLiteralType(getBooleanLiteralType(false), state);
+  // String / number / bigint / true / false literals — shared with literal
+  // type-node resolution via literalTypeFromLiteralExpression (so the two
+  // paths can't drift). `true`/`false` are matched by Kind inside the helper
+  // because the generated isTrueLiteral/isFalseLiteral predicates are stubs.
+  const literalType = literalTypeFromLiteralExpression(expression, state);
+  if (literalType !== undefined) {
+    return literalType;
   }
   if (isIdentifier(expression)) {
     return environment.get(expression.text) ?? unresolvedType;
