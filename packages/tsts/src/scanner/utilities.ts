@@ -72,7 +72,7 @@ export function surrogatePairToCodepoint(high: number, low: number): number {
 /**
  * Encodes a surrogate code unit (0xD800–0xDFFF) as a 3-byte CESU-8
  * sentinel. JS strings are natively UTF-16 so surrogates are already
- * representable; this helper is provided for parity with Strada's
+ * representable; this helper is provided for parity with TS-Go's
  * regex parser that handles unmatched surrogates in non-unicode mode.
  */
 export function encodeSurrogate(code: number): string {

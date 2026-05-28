@@ -266,7 +266,7 @@ export class Program {
     createCheckerPool: (program: Program) => CheckerPool,
   ): { program: Program; ok: boolean } {
     // Pessimistic update: build a fresh program with the new host.
-    // Real Strada impl reuses unchanged source files; that diff/merge
+    // Real TS-Go impl reuses unchanged source files; that diff/merge
     // path lands when caching matures.
     void changedFilePath;
     const fresh = new Program({ ...this.opts, host: newHost });

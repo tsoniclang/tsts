@@ -245,10 +245,10 @@ export function createDiagnosticForNode(node: AstNode, message: DiagnosticMessag
 // ---------------------------------------------------------------------------
 
 // Diagnostics catalog — looked up by name from the generated catalog.
-// (Strada exposes named DiagnosticMessage constants; ours uses a Record
+// (TS-Go exposes named DiagnosticMessage constants; ours uses a Record
 // indexed by message text, so we project a thin shape here. Always
 // returns a value — never undefined — so direct property access works.)
-// Diagnostics catalog. Strada exposes named `DiagnosticMessage`
+// Diagnostics catalog. TS-Go exposes named `DiagnosticMessage`
 // constants; we synthesize them on demand via a Proxy. The exposed
 // type lists each property name explicitly (no index signature) so
 // `noUncheckedIndexedAccess` doesn't add undefined.

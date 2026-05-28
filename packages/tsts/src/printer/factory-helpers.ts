@@ -1,5 +1,5 @@
 /**
- * Strada-style free-function helpers over NodeFactory + EmitContext +
+ * TS-Go-style free-function helpers over NodeFactory + EmitContext +
  * NodeVisitor.
  *
  * The TS-Go transformer port spells helper calls as
@@ -270,7 +270,7 @@ export function visitEachChildOf(visitor: NodeVisitor, node: AstNode): AstNode {
 export function newOrderedSet<T>(): Set<T> { return new Set<T>(); }
 export function newSetOfString(): Set<string> { return new Set<string>(); }
 export function appendVariableDeclaration(list: unknown, decl: AstNode): void {
-  // The Strada port treats the declarationList as a mutable buffer.
+  // The TS-Go port treats the declarationList as a mutable buffer.
   // In TS we'd return a new NodeList, but for the porting cliff we
   // accept any list-like and mutate its `declarations` / `items` if
   // they're arrays, else no-op.

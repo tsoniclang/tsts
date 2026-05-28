@@ -6,7 +6,7 @@
  * Used by command-line parsing to convert `--module commonjs` → numeric
  * ModuleKind.CommonJS.
  *
- * Each map below preserves the exact Strada string → number bindings.
+ * Each map below preserves the exact TS-Go string → number bindings.
  */
 
 export const moduleKindMap: ReadonlyMap<string, number> = new Map([

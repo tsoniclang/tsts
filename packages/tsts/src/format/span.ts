@@ -7,7 +7,7 @@
  * emits text edits (insertions, deletions, replacements) by applying
  * rule actions (Space, NewLine, Delete, Indent, IndentDouble).
  *
- * Skeleton scope (preserves Strada call shapes; deeper algorithm
+ * Skeleton scope (preserves TS-Go call shapes; deeper algorithm
  * filled in incrementally):
  * - findEnclosingNode
  * - getScanStartPosition

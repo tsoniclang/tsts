@@ -32,7 +32,7 @@ import { Kind } from "../../ast/index.js";
 
 const SymbolAccessibility = { CannotBeNamed: 1 } as const;
 
-// Strada predicates we implement locally — kind-dispatch + field reads.
+// TS-Go predicates we implement locally — kind-dispatch + field reads.
 function isFunctionLike(node: AstNode | undefined): boolean {
   if (node === undefined) return false;
   const k = (node as { kind?: number }).kind ?? 0;
@@ -228,7 +228,7 @@ function getMethodNameVisibilityDiagnosticMessage(node: AstNode, result: SymbolA
     Diagnostics.Method_0_of_exported_interface_has_or_is_using_private_name_1);
 }
 
-// Type-visibility message selectors. Mirror Strada's per-node-kind
+// Type-visibility message selectors. Mirror TS-Go's per-node-kind
 // switch over modifier flags + parent kind to pick the most specific
 // message. Each fall-back goes to Generic_inaccessible_symbol_error.
 

@@ -552,7 +552,7 @@ export interface ForEachResult<T> {
   readonly stop: boolean;
 }
 
-// Strada-style variants below (returning { result, ok }) supersede the
+// TS-Go-style variants below (returning { result, ok }) supersede the
 // historical T|undefined shape.
 
 // ────────────────────────────────────────────────────────────────────────────

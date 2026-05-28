@@ -433,12 +433,12 @@ function createExternalHelpersImportDeclarationIfNeeded(
 ): AstNode | undefined {
   return undefined;
 }
-// Strada helper implementations:
+// TS-Go helper implementations:
 function importModuleSpecifier(node: ImportDeclaration): AstNode {
   return (node as unknown as { moduleSpecifier: AstNode }).moduleSpecifier;
 }
 function isExternalModuleIndicator(node: AstNode | undefined): boolean {
-  // Strada marks a node as external-module-indicator when it's an
+  // TS-Go marks a node as external-module-indicator when it's an
   // ImportDeclaration/ExportDeclaration/ExportAssignment in a top-level
   // file scope. Reasonable approximation here: any of those kinds.
   if (node === undefined) return false;

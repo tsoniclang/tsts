@@ -1,5 +1,5 @@
 /**
- * Strada-style accessor functions.
+ * TS-Go-style accessor functions.
  *
  * The TS-Go port uses free functions like `nodeKind(n)` everywhere
  * because Go's `*ast.Node` is polymorphic. In TypeScript we have
@@ -128,7 +128,7 @@ export function bindingElementName(node: AstNode): AstNode { return f<AstNode>(n
 export function bindingElementInitializer(node: AstNode): AstNode | undefined { return f<AstNode>(node, "initializer"); }
 export function bindingElementDotDotDotToken(node: AstNode): AstNode | undefined { return f<AstNode>(node, "dotDotDotToken"); }
 export function bindingElementPropertyName(node: AstNode): AstNode | undefined { return f<AstNode>(node, "propertyName"); }
-// Parameter-shaped aliases (Strada uses a single accessor for both).
+// Parameter-shaped aliases (TS-Go uses a single accessor for both).
 export function parameterName(node: AstNode): AstNode { return bindingElementName(node); }
 export function parameterInitializer(node: AstNode): AstNode | undefined { return bindingElementInitializer(node); }
 export function parameterDotDotDotToken(node: AstNode): AstNode | undefined { return bindingElementDotDotDotToken(node); }

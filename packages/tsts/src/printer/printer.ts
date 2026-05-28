@@ -1,5 +1,5 @@
 /**
- * Strada-shaped Printer.
+ * TS-Go-shaped Printer.
  *
  * Substantive port of TS-Go `internal/printer/printer.go` (~6242 LoC,
  * 370 Printer methods). The Printer is the main code-emission engine
@@ -435,7 +435,7 @@ export class Printer {
     }
   }
   emitWorker(hint: number, node: AstNode): void {
-    // Dispatch by node.kind. This is the giant switch in Strada.
+    // Dispatch by node.kind. This is the giant switch in TS-Go.
     // For the basic cases we delegate to the per-kind emit method.
     const k = (node as { kind?: number }).kind ?? 0;
     switch (k) {

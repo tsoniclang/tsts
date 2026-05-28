@@ -54,7 +54,7 @@ function createParseError(fileName: string, message: string): Diagnostic {
 export interface ParseConfigHost {
   readonly useCaseSensitiveFileNames: boolean;
   /**
-   * Lower-level file-discovery hook. Strada's ParseConfigHost requires
+   * Lower-level file-discovery hook. TS-Go's ParseConfigHost requires
    * an FS-shaped readDirectory; our type widens it so callers can also
    * pass a host that already has a backing FS (we then route through
    * vfsmatch.readDirectory directly).

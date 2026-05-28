@@ -682,7 +682,7 @@ interface Scanner {
   resetPos(pos: number): void;
 }
 
-// Strada helpers — local implementations. Scanner integration arrives
+// TS-Go helpers — local implementations. Scanner integration arrives
 // with Phase 5 scanner body completion; until then these provide the
 // minimum surface needed for the tokens.ts API to typecheck and operate
 // on already-parsed AST trees (no scanner re-scan path).

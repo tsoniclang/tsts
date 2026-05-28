@@ -222,4 +222,4 @@ export function isTruthy(v: EvaluatorResult["value"]): boolean {
 // ---------------------------------------------------------------------------
 
 const OuterExpressionKinds = { Parentheses: 1 << 0 } as const;
-// Strada-specific accessors not yet wired to ast/index.js.
+// TS-Go-specific accessors not yet wired to ast/index.js.

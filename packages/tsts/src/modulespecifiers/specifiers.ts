@@ -1710,7 +1710,7 @@ interface ComparePathsOptions {
 
 // `module` surface — small local implementations.
 function getConditions(_options: CompilerOptions, importMode: ResolutionMode): readonly string[] {
-  // Default Strada conditions: types > import|require > default.
+  // Default TS-Go conditions: types > import|require > default.
   // Real implementation also reads opts.customConditions; until that
   // lands we hard-code a reasonable Node-ESM set.
   void importMode;

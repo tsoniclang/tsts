@@ -6,7 +6,7 @@
  * transformers (type eraser, downlevel passes, decorator lowering, etc.)
  * compose with it.
  *
- * API surface mirrors Strada exactly:
+ * API surface mirrors TS-Go exactly:
  * - `emitContext()`, `factory()`, `visitor()` — accessor methods (Go
  *   exported methods, capitalized in Go, lowercased in TS).
  * - `newTransformer(visit, ec)` / `initTransformer(visit, ec)` —
@@ -44,7 +44,7 @@ export interface EmitContext {
   mostOriginal(node: AstNode): AstNode;
   parseNode(node: AstNode): AstNode | undefined;
   newNotEmittedStatement(node: AstNode): AstNode;
-  // Variable + lexical scope (Strada emit context surface)
+  // Variable + lexical scope (TS-Go emit context surface)
   startVariableEnvironment(): void;
   endVariableEnvironment(): readonly AstNode[];
   endAndMergeVariableEnvironment(statements: readonly AstNode[]): readonly AstNode[];
@@ -58,7 +58,7 @@ export interface EmitContext {
   addLexicalDeclaration(name: IdentifierNode): void;
   addHoistedFunctionDeclaration(node: AstNode): void;
   mergeEnvironment(statements: readonly AstNode[], declarations: readonly AstNode[]): readonly AstNode[];
-  // Visitor convenience accessors (Strada visitor methods on EmitContext)
+  // Visitor convenience accessors (TS-Go visitor methods on EmitContext)
   visitParameters(parameters: readonly AstNode[] | NodeList | undefined, visitor?: unknown): NodeList;
   visitFunctionBody(body: AstNode | undefined, visitor?: unknown): AstNode | undefined;
   visitIterationBody(body: AstNode, visitor?: unknown): AstNode;
@@ -82,7 +82,7 @@ export interface EmitContext {
 
 /**
  * NodeFactory — the AST-node constructor surface. The full ~200-method
- * surface mirrors Strada's `printer.NodeFactory` and the underlying
+ * surface mirrors TS-Go's `printer.NodeFactory` and the underlying
  * `ast/generated/factory.ts` create-functions.
  */
 export interface NodeFactory {
@@ -140,7 +140,7 @@ export interface NodeFactory {
   newTemplateExpression(head: AstNode, spans: readonly AstNode[]): AstNode;
   newTemplateSpan(expression: AstNode, literal: AstNode): AstNode;
 
-  // ---- Calls + access ---- (Strada surface — argument order matches Go)
+  // ---- Calls + access ---- (TS-Go surface — argument order matches Go)
   newCallExpression(...args: unknown[]): AstNode;
   newNewExpression(...args: unknown[]): AstNode;
   newTaggedTemplateExpression(...args: unknown[]): AstNode;
@@ -350,7 +350,7 @@ export interface NodeFactory {
 
 /**
  * NodeVisitor — visits, transforms, and walks AST trees. Mirrors
- * Strada's `ast.NodeVisitor` surface.
+ * TS-Go's `ast.NodeVisitor` surface.
  */
 export interface NodeVisitor {
   visit(node: AstNode | undefined): AstNode;
@@ -453,7 +453,7 @@ export class Transformer {
   }
 
   /**
-   * Accessor for the emit context (Strada `EmitContext()`).
+   * Accessor for the emit context (TS-Go `EmitContext()`).
    * Throws if the transformer is not initialized.
    */
   emitContext(): EmitContext {
@@ -469,7 +469,7 @@ export class Transformer {
   }
 
   /**
-   * Accessor for the node factory (Strada `Factory()`).
+   * Accessor for the node factory (TS-Go `Factory()`).
    */
   factory(): NodeFactory {
     if (this.#factory === undefined) {
@@ -484,7 +484,7 @@ export class Transformer {
   }
 
   /**
-   * Accessor for the node visitor (Strada `Visitor()`).
+   * Accessor for the node visitor (TS-Go `Visitor()`).
    */
   visitor(): NodeVisitor {
     if (this.#visitor === undefined) {

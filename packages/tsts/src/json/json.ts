@@ -29,14 +29,14 @@ export type JsonValue =
 // ---------------------------------------------------------------------------
 
 /**
- * Marshal a value to a compact JSON string. Mirrors Strada's `Marshal`.
+ * Marshal a value to a compact JSON string. Mirrors TS-Go's `Marshal`.
  */
 export function marshal(input: JsValue): string {
   return JSON.stringify(input);
 }
 
 /**
- * Marshal a value with indentation. Mirrors Strada's `MarshalIndent`.
+ * Marshal a value with indentation. Mirrors TS-Go's `MarshalIndent`.
  *
  * `prefix` is prepended to every line except the first. `indent` is
  * the per-level indent string. When both are empty, falls back to

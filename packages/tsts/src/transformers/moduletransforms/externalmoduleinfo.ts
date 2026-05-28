@@ -475,9 +475,9 @@ interface ReferenceResolver {
 }
 interface EmitHelper { readonly _h: unknown }
 
-// Strada helpers — local implementations:
+// TS-Go helpers — local implementations:
 function isNotEmittedStatement(node: AstNode | undefined): boolean {
-  // NotEmittedStatement is a synthetic statement type Strada uses to
+  // NotEmittedStatement is a synthetic statement type TS-Go uses to
   // mark elided declarations. Until that kind is wired, treat everything
   // as emitted (false).
   void node;

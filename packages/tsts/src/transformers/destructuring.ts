@@ -685,4 +685,4 @@ const SubtreeFacts = {
   ContainsObjectRestOrSpread: 1 << 1,
 } as const;
 
-// Strada predicates and accessors that aren't yet wired to ast/index.js.
+// TS-Go predicates and accessors that aren't yet wired to ast/index.js.

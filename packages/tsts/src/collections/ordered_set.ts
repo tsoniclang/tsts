@@ -3,7 +3,7 @@
  *
  * Port of TS-Go `internal/collections/ordered_set.go` (54 LoC).
  * JS `Set` is already insertion-ordered, but we wrap it for API
- * parity with Strada's OrderedSet.
+ * parity with TS-Go's OrderedSet.
  */
 
 export class OrderedSet<T> {

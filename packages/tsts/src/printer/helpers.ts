@@ -146,7 +146,7 @@ export function needsParensForSpread(expression: Expression): boolean {
 // ParenthesizedExpression when needed. Without the factory wired,
 // we return the input unchanged and let the parent emit-method's
 // needsParens* predicates decide whether to write parens at emit time
-// (which matches Strada's pragmatic "lift parens to emit, not AST").
+// (which matches TS-Go's pragmatic "lift parens to emit, not AST").
 export function parenthesizeExpressionForExportDefault(expression: Expression): Expression {
   return expression;
 }

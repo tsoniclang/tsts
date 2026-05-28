@@ -2,7 +2,7 @@
  * Test-only mock FS.
  *
  * Port skeleton of TS-Go `internal/vfs/vfsmock/wrapper.go` and
- * `mock_generated.go`. The Strada version uses `go.uber.org/mock`
+ * `mock_generated.go`. The TS-Go version uses `go.uber.org/mock`
  * generated stubs that record every method call; in TypeScript we
  * use a hand-written class with the same interface where each method
  * can be configured via a stubbed handler.

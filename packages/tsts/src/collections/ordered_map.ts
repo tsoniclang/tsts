@@ -3,7 +3,7 @@
  *
  * Port of TS-Go `internal/collections/ordered_map.go` (316 LoC).
  * Native JS `Map` is already insertion-ordered, but we wrap it to
- * preserve Strada's explicit `keys`/`mp` separation (for `entryAt`
+ * preserve TS-Go's explicit `keys`/`mp` separation (for `entryAt`
  * by-index lookup) and to expose the same method surface.
  */
 

@@ -311,7 +311,7 @@ export function newLegacyDecoratorsTransformer(opts: TransformOptions): Transfor
 }
 
 // ---------------------------------------------------------------------------
-// Module-level helpers (matching Strada's package-level funcs)
+// Module-level helpers (matching TS-Go's package-level funcs)
 // ---------------------------------------------------------------------------
 
 export function elideNodes(factory: NodeFactory, nodes: NodeList | undefined): NodeList | undefined {

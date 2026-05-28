@@ -11,7 +11,7 @@
 import type { Node as AstNode, CommentRange } from "../ast/index.js";
 import { Kind, isKeywordKind, nodePos as getNodePos, nodeEnd as getNodeEnd } from "../ast/index.js";
 
-// Strada returns CommentRange[]; ours is empty until the scanner's
+// TS-Go returns CommentRange[]; ours is empty until the scanner's
 // comment-range pass lands. Field-by-field shape isn't relied on here.
 function getTrailingCommentRanges(_factory: NodeFactory, _text: string, _pos: number): readonly CommentRange[] {
   return [];

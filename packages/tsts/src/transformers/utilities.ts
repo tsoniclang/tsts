@@ -449,4 +449,4 @@ interface Factory {
 
 type TextRange = { readonly pos: number; readonly end: number } | undefined;
 
-// Strada helpers not yet wired to ast/index.js
+// TS-Go helpers not yet wired to ast/index.js

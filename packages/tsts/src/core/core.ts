@@ -420,7 +420,7 @@ export function indexAfter(s: string, pattern: string, startIndex: number): numb
 export function stringifyJson(input: unknown, prefix: string, indent: string): string {
   if (prefix === "" && indent === "") return JSON.stringify(input);
   if (prefix === "") return JSON.stringify(input, undefined, indent);
-  // Custom prefix per line — emulate Strada's strings.NewReplacer(..., prefix + "\n")
+  // Custom prefix per line — emulate TS-Go's strings.NewReplacer(..., prefix + "\n")
   const out = JSON.stringify(input, undefined, indent);
   return out.split("\n").join("\n" + prefix);
 }

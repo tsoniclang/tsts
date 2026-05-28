@@ -1,14 +1,14 @@
 /**
  * AST type aliases + re-exports.
  *
- * The Strada Go port and the TS-side AST schema use slightly different
+ * The TS-Go Go port and the TS-side AST schema use slightly different
  * names for the same concepts. This module unifies them:
  *
- * - `Identifier` (TS schema) ↔ `IdentifierNode` (Strada-style)
+ * - `Identifier` (TS schema) ↔ `IdentifierNode` (TS-Go-style)
  * - `StringLiteral` ↔ `StringLiteralNode`
  * - `NodeArray<ModifierLike>` ↔ `ModifierList`
  *
- * It also defines the minimal types Strada exposes from its
+ * It also defines the minimal types TS-Go exposes from its
  * `internal/ast` package that the TS schema doesn't yet have (because
  * they belong to checker/binder/printer state, not the AST proper).
  * These are kept as type-only aliases over `unknown` so consumers can
@@ -112,7 +112,7 @@ import type {
 } from "./generated/types.js";
 
 // ---------------------------------------------------------------------------
-// Naming aliases — Strada-style names for TS-schema types
+// Naming aliases — TS-Go-style names for TS-schema types
 // ---------------------------------------------------------------------------
 
 export type IdentifierNode = Identifier;
@@ -130,7 +130,7 @@ export type EnumDeclarationNode = EnumDeclaration;
 export type ModuleDeclarationNode = ModuleDeclaration;
 export type StringLiteralLike = StringLiteral | NoSubstitutionTemplateLiteral;
 
-/** `NodeArray<ModifierLike>` is what Strada calls a `ModifierList`. */
+/** `NodeArray<ModifierLike>` is what TS-Go calls a `ModifierList`. */
 export type ModifierList = NodeArray<ModifierLike>;
 
 // ---------------------------------------------------------------------------
@@ -224,7 +224,7 @@ export type { Node, NodeArray, SourceFile, Symbol, FlowNode, FileReference, Text
 
 // ---------------------------------------------------------------------------
 // Symbol-table + flow types
-// (Strada's internal/ast/symbol.go + internal/ast/flow.go shapes)
+// (TS-Go's internal/ast/symbol.go + internal/ast/flow.go shapes)
 // ---------------------------------------------------------------------------
 
 /** Symbol table keyed by escaped name. */

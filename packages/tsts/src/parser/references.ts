@@ -76,7 +76,7 @@ function collectModuleReferences(file: SourceFile, node: AstNode, inAmbientModul
 // ---------------------------------------------------------------------------
 
 // Node-core module tables. Both are conservative subsets that cover the
-// common cases. Full Strada tables are larger and version-tracked;
+// common cases. Full TS-Go tables are larger and version-tracked;
 // updates land with the module-resolver port.
 const NODE_CORE = [
   "assert", "async_hooks", "buffer", "child_process", "cluster", "console",

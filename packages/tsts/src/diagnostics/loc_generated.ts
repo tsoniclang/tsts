@@ -6,7 +6,7 @@
  * for 13 locales and provides a `matcher` for BCP-47 tag negotiation.
  *
  * TSTS keeps an in-memory table loaded lazily from external locale
- * files. The lookup surface matches Strada's: `getLocaleSpecificMessage`
+ * files. The lookup surface matches TS-Go's: `getLocaleSpecificMessage`
  * returns the translated text or falls back to the canonical English.
  */
 

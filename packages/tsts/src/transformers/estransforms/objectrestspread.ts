@@ -66,7 +66,7 @@ import type { TransformOptions } from "../transformer.js";
 
 function cloneNode(factory: NodeFactory, node: AstNode): AstNode { void factory; return _astCloneNode(node); }
 
-// Use Strada-style aliases for the EF flag constants the file references.
+// Use TS-Go-style aliases for the EF flag constants the file references.
 const EFCustomPrologue = EmitFlags.CustomPrologue;
 const EFNoSourceMap = EmitFlags.NoSourceMap;
 const EFNoComments = EmitFlags.NoComments;
@@ -646,7 +646,7 @@ export function newObjectRestSpreadTransformer(opts: ObjectRestSpreadOptions): T
 // Forward-declared AST/emit-context surface
 // ---------------------------------------------------------------------------
 
-// Strada helpers still forward-declared (no canonical home yet).
+// TS-Go helpers still forward-declared (no canonical home yet).
 function subtreeContainsESObjectRestOrSpread(node: AstNode): boolean {
   return (subtreeFactsOf(node) & (1 << 13) /* ContainsESObjectRestOrSpread */) !== 0;
 }
