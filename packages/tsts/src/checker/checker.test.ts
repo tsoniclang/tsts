@@ -445,6 +445,24 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>([excessMessage], nestedExcess.diagnostics.map((d) => d.message));
   }
 
+  excess_check_regularization_and_empty_target(): void {
+    // Stored objects regularize recursively (nested freshness stripped), so a
+    // stored variable never excess-checks. The broad `{}` target never
+    // excess-checks. Call arguments use the same fresh-literal excess rule.
+    const excessMessage = "Object literal may only specify known properties, and 'host' does not exist in type '{ port: number }'.";
+    const storedNested = checkSourceFile(parseSourceFile("function f(): void { const tmp = { server: { port: 1, host: \"x\" } }; const ok: { server: { port: number } } = tmp; }"));
+    const emptyTarget = checkSourceFile(parseSourceFile("function f(): void { const x: {} = { a: 1 }; }"));
+    const nestedEmptyTarget = checkSourceFile(parseSourceFile("function f(): void { const x: { nested: {} } = { nested: { a: 1 } }; }"));
+    const callArgExcess = checkSourceFile(parseSourceFile("function f(api: { takesConfig(config: { port: number }): void }): void { api.takesConfig({ port: 1, host: \"x\" }); }"));
+    const storedCallArg = checkSourceFile(parseSourceFile("function f(api: { takesConfig(config: { server: { port: number } }): void }): void { const tmp = { server: { port: 1, host: \"x\" } }; api.takesConfig(tmp); }"));
+
+    Assert.Equal(0, storedNested.diagnostics.length);
+    Assert.Equal(0, emptyTarget.diagnostics.length);
+    Assert.Equal(0, nestedEmptyTarget.diagnostics.length);
+    Assert.Equal<readonly string[]>([excessMessage], callArgExcess.diagnostics.map((d) => d.message));
+    Assert.Equal(0, storedCallArg.diagnostics.length);
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -572,6 +590,7 @@ A<CheckerGroundworkTests>().method((t) => t.deepens_object_member_typing).add(Fa
 A<CheckerGroundworkTests>().method((t) => t.checks_call_signature_arity).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_optional_and_rest_parameter_semantics).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_contextual_object_literals_and_excess).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.excess_check_regularization_and_empty_target).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

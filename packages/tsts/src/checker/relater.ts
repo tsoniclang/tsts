@@ -308,7 +308,9 @@ export class Relater {
     if (this.isFreshObjectLiteral(source)) {
       const sourceMembers = (source.symbol as unknown as { readonly members?: Map<string, AstSymbol> } | undefined)?.members;
       const targetMembers = (target.symbol as unknown as { readonly members?: Map<string, AstSymbol> } | undefined)?.members;
-      if (sourceMembers !== undefined && targetMembers !== undefined) {
+      // Skip excess checking against the broad empty object type `{}` (no known
+      // properties) — it accepts any non-nullish value, including extra props.
+      if (sourceMembers !== undefined && targetMembers !== undefined && targetMembers.size > 0) {
         for (const name of sourceMembers.keys()) {
           if (!targetMembers.has(name)) {
             this.excessProperty = { name, target };

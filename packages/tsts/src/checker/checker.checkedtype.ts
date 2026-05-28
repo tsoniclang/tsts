@@ -284,13 +284,25 @@ function objectTypeMembers(type: Type): ReadonlyMap<string, PropertySymbol> | un
 }
 
 // Strip the fresh-literal flag for stored/regular object types (TS-Go
-// getRegularTypeOfObjectLiteral). Returns the same type when not a fresh object.
+// getRegularTypeOfObjectLiteral), RECURSIVELY — a stored object's nested
+// object-literal properties must also lose freshness, or assigning the stored
+// variable would still excess-check nested literals. Returns the same type when
+// nothing needs regularization (e.g. type-literal object types).
 export function getRegularTypeOfObjectLiteral(type: Type, state: CheckState): Type {
   if ((type.flags & TypeFlags.Object) === 0) return type;
-  const data = type.data as ObjectType | undefined;
-  if (data === undefined || (data.objectFlags & ObjectFlags.FreshLiteral) === 0) return type;
-  const regularData: ObjectType = { ...data, objectFlags: data.objectFlags & ~ObjectFlags.FreshLiteral };
-  return { ...type, id: state.nextTypeId(), data: regularData };
+  const members = objectTypeMembers(type);
+  if (members === undefined) return type;
+  const wasFresh = (((type.data as ObjectType | undefined)?.objectFlags ?? 0) & ObjectFlags.FreshLiteral) !== 0;
+  const regularized = [...members.values()].map((member) => ({
+    name: member.name,
+    regular: getRegularTypeOfObjectLiteral(member.type, state),
+    original: member.type,
+    optional: (member.flags & SymbolFlags.Optional) !== 0,
+  }));
+  if (!wasFresh && regularized.every((property) => property.regular === property.original)) {
+    return type;
+  }
+  return makeObjectType(regularized.map((property) => ({ name: property.name, type: property.regular, optional: property.optional })), state, false);
 }
 
 // ---------------------------------------------------------------------------
