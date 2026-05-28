@@ -60,6 +60,9 @@ export interface CheckState {
   readonly stringLiteralTypes: Map<string, Type>;
   readonly numberLiteralTypes: Map<number, Type>;
   readonly bigintLiteralTypes: Map<string, Type>;
+  // Union interning by sorted constituent type ids (mirrors TS-Go's unionTypes
+  // cache). Preseeded with the canonical `false | true` -> booleanType entry.
+  readonly unionTypes: Map<string, Type>;
   nextTypeId(): number;
 }
 
@@ -73,6 +76,7 @@ export function newCheckState(): CheckState {
     stringLiteralTypes: new Map<string, Type>(),
     numberLiteralTypes: new Map<number, Type>(),
     bigintLiteralTypes: new Map<string, Type>(),
+    unionTypes: new Map<string, Type>([[unionTypeKey([regularFalseType, regularTrueType]), booleanType]]),
     nextTypeId: () => {
       idSource.value += 1;
       return idSource.value;
@@ -94,7 +98,6 @@ export const anyType: Type = intrinsicType(1, TypeFlags.Any, "any");
 export const unknownType: Type = intrinsicType(2, TypeFlags.Unknown, "unknown");
 export const numberType: Type = intrinsicType(3, TypeFlags.Number, "number");
 export const stringType: Type = intrinsicType(4, TypeFlags.String, "string");
-export const booleanType: Type = intrinsicType(5, TypeFlags.Boolean, "boolean");
 export const voidType: Type = intrinsicType(6, TypeFlags.Void, "void");
 export const undefinedType: Type = intrinsicType(7, TypeFlags.Undefined, "undefined");
 export const nullType: Type = intrinsicType(8, TypeFlags.Null, "null");
@@ -104,6 +107,38 @@ export const neverType: Type = intrinsicType(9, TypeFlags.Never, "never");
 // checker.go's `errorType`).
 export const unresolvedType: Type = intrinsicType(10, TypeFlags.Any, "error");
 export const bigintType: Type = intrinsicType(11, TypeFlags.BigInt, "bigint");
+
+// ---------------------------------------------------------------------------
+// Boolean. TS-Go models `boolean` as the canonical union `false | true`
+// (checker.go:991 `c.booleanType = c.getUnionType([regularFalseType, regularTrueType])`),
+// NOT as a standalone intrinsic. The two boolean literal singletons are created
+// first (fixed ids), then `booleanType` is a fixed union of them. `getUnionType`
+// interns by sorted constituent ids and `newCheckState` preseeds the
+// `[false,true]` key, so `false | true` (in any order) normalizes back to this
+// exact object — making boolean <-> `false | true` assignability fall out of
+// identity rather than a special case.
+// ---------------------------------------------------------------------------
+
+function fixedLiteralType(id: number, flags: TypeFlags, value: boolean): Type {
+  const data: LiteralType = { value };
+  const type: Type = { flags, id, data };
+  data.regularType = type;
+  return type;
+}
+
+export const regularFalseType: Type = fixedLiteralType(12, TypeFlags.BooleanLiteral, false);
+export const regularTrueType: Type = fixedLiteralType(13, TypeFlags.BooleanLiteral, true);
+
+function fixedUnionType(id: number, types: readonly Type[]): Type {
+  const data: UnionType = { types, objectFlags: ObjectFlags.None };
+  return { flags: TypeFlags.Union, id, data };
+}
+
+export const booleanType: Type = fixedUnionType(5, [regularFalseType, regularTrueType]);
+
+export function getBooleanLiteralType(value: boolean): Type {
+  return value ? regularTrueType : regularFalseType;
+}
 
 // ---------------------------------------------------------------------------
 // Intrinsic identity predicates. Intrinsics are singletons, so identity is
@@ -164,9 +199,20 @@ export const UnionReduction = {
   Subtype: 2 as UnionReduction,
 } as const;
 
+// Stable interning key: sorted constituent type ids. `false | true` in either
+// order maps to the same key (and to the preseeded booleanType).
+function unionTypeKey(types: readonly Type[]): string {
+  return types.map((t) => t.id).sort((a, b) => a - b).join(",");
+}
+
 function makeUnionType(types: readonly Type[], state: CheckState): Type {
+  const key = unionTypeKey(types);
+  const cached = state.unionTypes.get(key);
+  if (cached !== undefined) return cached;
   const data: UnionOrIntersectionType = { types, objectFlags: ObjectFlags.None };
-  return { flags: TypeFlags.Union, id: state.nextTypeId(), data };
+  const type: Type = { flags: TypeFlags.Union, id: state.nextTypeId(), data };
+  state.unionTypes.set(key, type);
+  return type;
 }
 
 function addTypeToUnion(typeSet: Type[], type: Type): void {
@@ -219,15 +265,15 @@ function reduceUnion(typeSet: Type[], reduction: UnionReduction, state: CheckSta
 
 // TS-Go removeRedundantLiteralTypes: drop a literal constituent when its base
 // primitive is already in the union, and drop a fresh literal when its regular
-// type is already present. (BooleanLiteral is included here because our
-// `booleanType` is still the intrinsic, not the `false | true` union.)
+// type is already present. No BooleanLiteral/Boolean rule: `booleanType` is now
+// the `false | true` union, so `boolean | false` collapses via union flattening
+// + identity dedup, not a Boolean-flag special case.
 function removeRedundantLiteralTypes(types: Type[], includes: TypeFlags): Type[] {
   return types.filter((t) => {
     const remove =
       ((t.flags & TypeFlags.StringLiteral) !== 0 && (includes & TypeFlags.String) !== 0)
       || ((t.flags & TypeFlags.NumberLiteral) !== 0 && (includes & TypeFlags.Number) !== 0)
       || ((t.flags & TypeFlags.BigIntLiteral) !== 0 && (includes & TypeFlags.BigInt) !== 0)
-      || ((t.flags & TypeFlags.BooleanLiteral) !== 0 && (includes & TypeFlags.Boolean) !== 0)
       || (isFreshLiteralType(t) && (t.data as LiteralType).regularType !== undefined && types.includes((t.data as LiteralType).regularType!));
     return !remove;
   });
@@ -336,24 +382,6 @@ export function getApparentType(type: Type): Type {
   if ((type.flags & TypeFlags.BooleanLiteral) !== 0) return booleanType;
   if ((type.flags & TypeFlags.BigIntLiteral) !== 0) return bigintType;
   return type;
-}
-
-// Boolean literal singletons (TS-Go regularTrueType/regularFalseType). Fresh
-// variants are created lazily via getFreshTypeOfLiteralType.
-// NOTE (deviation): TS-Go's `booleanType` is the union `false | true`; ours is
-// still the intrinsic `booleanType` above. That union shape is deferred.
-function fixedLiteralType(id: number, flags: TypeFlags, value: boolean): Type {
-  const data: LiteralType = { value };
-  const type: Type = { flags, id, data };
-  data.regularType = type;
-  return type;
-}
-
-export const regularFalseType: Type = fixedLiteralType(12, TypeFlags.BooleanLiteral, false);
-export const regularTrueType: Type = fixedLiteralType(13, TypeFlags.BooleanLiteral, true);
-
-export function getBooleanLiteralType(value: boolean): Type {
-  return value ? regularTrueType : regularFalseType;
 }
 
 // Whether a contextual (target) type would preserve a fresh literal source.
@@ -499,7 +527,21 @@ export function setBindingElementType(element: BindingElement, type: Type, envir
 
 export function displayType(type: Type): string {
   if ((type.flags & TypeFlags.Union) !== 0) {
-    return (unionConstituents(type) ?? []).map(displayType).join(" | ");
+    const constituents = unionConstituents(type) ?? [];
+    // Collapse the canonical `false`+`true` pair to `boolean`, emitted at the
+    // position of its first member (mirrors TS-Go formatUnionTypes).
+    const hasBooleanPair = constituents.includes(regularFalseType) && constituents.includes(regularTrueType);
+    if (!hasBooleanPair) {
+      return constituents.map(displayType).join(" | ");
+    }
+    const firstBooleanIndex = constituents.findIndex((t) => t === regularFalseType || t === regularTrueType);
+    return constituents
+      .flatMap((t, i) =>
+        t === regularFalseType || t === regularTrueType
+          ? (i === firstBooleanIndex ? ["boolean"] : [])
+          : [displayType(t)],
+      )
+      .join(" | ");
   }
   if ((type.flags & TypeFlags.StringLiteral) !== 0) return JSON.stringify((type.data as LiteralType).value);
   if ((type.flags & TypeFlags.NumberLiteral) !== 0) return String((type.data as LiteralType).value);

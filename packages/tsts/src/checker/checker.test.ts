@@ -11,6 +11,9 @@ import {
   getStringLiteralType,
   getFreshTypeOfLiteralType,
   stringType,
+  booleanType,
+  regularFalseType,
+  regularTrueType,
 } from "./checker.checkedtype.js";
 import { parseSourceFile } from "../parser/index.js";
 import { createProgram, type CompilerHost } from "../program/index.js";
@@ -196,6 +199,29 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'undefined'."], bad.diagnostics.map((d) => d.message));
   }
 
+  boolean_normalizes_to_false_true_union(): void {
+    // booleanType IS the canonical `false | true` union, so the two forms are
+    // mutually assignable and the union displays as `boolean`.
+    const boolToFalseTrue = checkSourceFile(parseSourceFile("function f(b: boolean): false | true { return b; }"));
+    const falseTrueToBool = checkSourceFile(parseSourceFile("function f(flag: boolean): boolean { return flag ? true : false; }"));
+    const displaysBoolean = checkSourceFile(parseSourceFile("function f(): string { const b: false | true = true; return b; }"));
+    const reducesWithLiteral = checkSourceFile(parseSourceFile("function f(): number { const b: boolean | false = true; return b; }"));
+
+    Assert.Equal(0, boolToFalseTrue.diagnostics.length);
+    Assert.Equal(0, falseTrueToBool.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'boolean' is not assignable to type 'string'."], displaysBoolean.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'boolean' is not assignable to type 'number'."], reducesWithLiteral.diagnostics.map((d) => d.message));
+  }
+
+  boolean_union_interns_to_canonical_object(): void {
+    // `false | true` in either order must intern to the exact booleanType
+    // singleton — the property that makes boolean relations identity-based.
+    const state = newCheckState();
+
+    Assert.Equal(true, getUnionType([regularFalseType, regularTrueType], state) === booleanType);
+    Assert.Equal(true, getUnionType([regularTrueType, regularFalseType], state) === booleanType);
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -309,6 +335,8 @@ A<CheckerGroundworkTests>().method((t) => t.checks_bigint_literal_type_nodes).ad
 A<CheckerGroundworkTests>().method((t) => t.checks_negative_literal_type_nodes).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_null_literal_type_nodes).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.local_undefined_binding_wins_over_global).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.boolean_normalizes_to_false_true_union).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.boolean_union_interns_to_canonical_object).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);
