@@ -14,7 +14,19 @@ import {
 } from "./checker.checkedtype.js";
 import { parseSourceFile } from "../parser/index.js";
 import { createProgram, type CompilerHost } from "../program/index.js";
-import { isExpressionStatement, isTrueLiteral, isFalseLiteral, isThisExpression } from "../ast/index.js";
+import {
+  isExpressionStatement,
+  isTrueLiteral,
+  isFalseLiteral,
+  isThisExpression,
+  isNullLiteral,
+  isSuperExpression,
+  isImportExpression,
+  createNode,
+  Kind,
+  type SuperExpression,
+  type ImportExpression,
+} from "../ast/index.js";
 
 export class CheckerGroundworkTests {
   accepts_numeric_to_fixed_calls_that_flow_into_string_returns(): void {
@@ -153,16 +165,28 @@ export class CheckerGroundworkTests {
   }
 
   recognizes_keyword_literal_predicates(): void {
-    // Regenerated alias predicates (isTrueLiteral/isFalseLiteral/isThisExpression
-    // were generator stubs returning false before the bare-concrete-kind fix).
+    // All six keyword/literal alias predicates (isTrueLiteral/isFalseLiteral/
+    // isNullLiteral/isThisExpression/isSuperExpression/isImportExpression) were
+    // generator stubs returning false before the bare-concrete-kind fix.
     const trueStatement = parseSourceFile("true;").statements[0]!;
     const falseStatement = parseSourceFile("false;").statements[0]!;
+    const nullStatement = parseSourceFile("null;").statements[0]!;
     const thisStatement = parseSourceFile("this;").statements[0]!;
 
     Assert.Equal(true, isExpressionStatement(trueStatement) && isTrueLiteral(trueStatement.expression));
     Assert.Equal(true, isExpressionStatement(falseStatement) && isFalseLiteral(falseStatement.expression));
     Assert.Equal(false, isExpressionStatement(falseStatement) && isTrueLiteral(falseStatement.expression));
+    Assert.Equal(true, isExpressionStatement(nullStatement) && isNullLiteral(nullStatement.expression));
     Assert.Equal(true, isExpressionStatement(thisStatement) && isThisExpression(thisStatement.expression));
+
+    // `super` and `import` are not valid standalone expression statements, so
+    // exercise their predicates with directly constructed keyword nodes.
+    const superExpression = createNode<SuperExpression>(Kind.SuperKeyword);
+    const importExpression = createNode<ImportExpression>(Kind.ImportKeyword);
+
+    Assert.Equal(true, isSuperExpression(superExpression));
+    Assert.Equal(false, isImportExpression(superExpression));
+    Assert.Equal(true, isImportExpression(importExpression));
   }
 
   union_reduction_none_keeps_redundant_members(): void {

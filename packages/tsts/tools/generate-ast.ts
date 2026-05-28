@@ -79,8 +79,11 @@ function formatType(schema: AstSchema, type: string | readonly string[] | undefi
       return "number";
     case "string":
     case "unknown":
-    case "any":
       return type;
+    // Schema `any` mirrors TS-Go's untyped checker-Type slots; emit `unknown`
+    // to honor the package's no-`any` convention.
+    case "any":
+      return "unknown";
     case "NodeFlags":
     case "ModifierFlags":
     case "TokenFlags":
@@ -255,8 +258,25 @@ export interface SourceFile extends Node {
   readonly tokenCache?: Map<string, Node>;
 }
 
-export interface FlowNode {}
-export interface Symbol {}
+export interface FlowNode {
+  readonly flags: number;
+  readonly node?: Node;
+  readonly antecedent?: FlowNode;
+  readonly antecedents?: unknown;
+}
+
+export interface Symbol {
+  readonly name?: string;
+  readonly escapedName?: string;
+  readonly flags?: number;
+  readonly declarations: readonly Node[];
+  readonly valueDeclaration?: Node;
+  readonly members?: Map<string, Symbol>;
+  readonly exports?: Map<string, Symbol>;
+  readonly globalExports?: Map<string, Symbol>;
+  readonly parent?: Symbol;
+}
+
 export interface CheckFlagsBrand {}
 `;
 }
@@ -709,12 +729,24 @@ function concreteNodeEntries(schema: AstSchema): {
 
 function generateFactory(schema: AstSchema): string {
   const lines: string[] = [generatedHeader("schema/tsgo/ast.json")];
+  lines.push("import type { int } from \"@tsonic/core/types.js\";");
+  lines.push("");
   lines.push("import { Kind } from \"./kind.js\";");
   lines.push("import { forEachChild } from \"./visitor.js\";");
   lines.push("import type * as Ast from \"./nodes.js\";");
   lines.push("import type { Node, NodeArray, Path, SourceFile, Symbol } from \"./types.js\";");
   lines.push("");
-  lines.push("type NodeData = Record<string, unknown>;");
+  lines.push("type NodeDataValue =");
+  lines.push("  | Node");
+  lines.push("  | readonly NodeDataValue[]");
+  lines.push("  | string");
+  lines.push("  | int");
+  lines.push("  | boolean");
+  lines.push("  | bigint");
+  lines.push("  | unknown");
+  lines.push("  | undefined;");
+  lines.push("");
+  lines.push("type NodeData = Record<string, NodeDataValue>;");
   lines.push("");
   lines.push("export class NodeObject implements Node {");
   lines.push("  readonly kind: Kind;");
@@ -725,7 +757,7 @@ function generateFactory(schema: AstSchema): string {
   lines.push("  readonly jsDoc?: readonly Node[];");
   lines.push("  readonly #data: NodeData;");
   lines.push("");
-  lines.push("  constructor(kind: Kind, data: NodeData = {}, pos = -1, end = -1) {");
+  lines.push("  constructor(kind: Kind, data: NodeData = {}, pos: int = -1, end: int = -1) {");
   lines.push("    this.kind = kind;");
   lines.push("    this.#data = data;");
   lines.push("    this.pos = pos;");
@@ -783,7 +815,7 @@ function generateFactory(schema: AstSchema): string {
   lines.push("  }");
   lines.push("}");
   lines.push("");
-  lines.push("export function createNode<TNode extends Node>(kind: Kind, data: NodeData = {}, pos = -1, end = -1): TNode {");
+  lines.push("export function createNode<TNode extends Node>(kind: Kind, data: NodeData = {}, pos: int = -1, end: int = -1): TNode {");
   lines.push("  const node = new NodeObject(kind, data, pos, end) as unknown as TNode;");
   lines.push("  const flags = data[\"flags\"];");
   lines.push("  if (typeof flags === \"number\") {");
@@ -795,11 +827,11 @@ function generateFactory(schema: AstSchema): string {
   lines.push("  return node;");
   lines.push("}");
   lines.push("");
-  lines.push("function isNode(value: unknown): value is Node {");
-  lines.push("  return typeof value === \"object\" && value !== null && \"kind\" in value && \"flags\" in value && \"parent\" in value;");
+  lines.push("function isNode(value: NodeDataValue): value is Node {");
+  lines.push("  return value instanceof NodeObject;");
   lines.push("}");
   lines.push("");
-  lines.push("function attachParent(parent: Node, value: unknown): void {");
+  lines.push("function attachParent(parent: Node, value: NodeDataValue): void {");
   lines.push("  if (isNode(value)) {");
   lines.push("    (value as { parent: Node }).parent = parent;");
   lines.push("    return;");
@@ -812,10 +844,11 @@ function generateFactory(schema: AstSchema): string {
   lines.push("}");
   lines.push("");
   lines.push("function isNodeArray<TNode extends Node>(array: readonly TNode[]): array is NodeArray<TNode> {");
-  lines.push("  return \"pos\" in array && \"end\" in array && \"transformFlags\" in array;");
+  lines.push("  const marker = array as unknown as { readonly pos?: int; readonly end?: int; readonly transformFlags?: int };");
+  lines.push("  return marker.pos !== undefined && marker.end !== undefined && marker.transformFlags !== undefined;");
   lines.push("}");
   lines.push("");
-  lines.push("export function createNodeArray<TNode extends Node>(elements: readonly TNode[], pos = -1, end = -1): NodeArray<TNode> {");
+  lines.push("export function createNodeArray<TNode extends Node>(elements: readonly TNode[], pos: int = -1, end: int = -1): NodeArray<TNode> {");
   lines.push("  if (isNodeArray(elements)) {");
   lines.push("    return elements;");
   lines.push("  }");
@@ -1310,6 +1343,33 @@ function generateNodeTypes(schema: AstSchema): string {
   return `${lines.join("\n")}\n`;
 }
 
+// The generated barrel also re-exports two deterministic handwritten-extension
+// modules that live beside the generated output: `aliases.ts` (naming aliases +
+// TS-Go-side types like SymbolTable/FlowLabel) and `accessors.ts` (TS-Go-style
+// accessor functions like nodeKind/nodePos/nodeEnd). They are not schema-driven,
+// but the generator owns the barrel, so it must emit their exports to keep
+// generation replayable (zero-diff) instead of relying on post-generation edits.
+function generateIndex(): string {
+  return [
+    generatedHeader("schema/tsgo/ast.json").trimEnd(),
+    `export * from "./flags.js";`,
+    `export * from "./generated/kind.js";`,
+    `export * from "./generated/schema.js";`,
+    `export * from "./generated/types.js";`,
+    `export * from "./generated/nodes.js";`,
+    `export * from "./generated/factory.js";`,
+    `export * from "./generated/visitor.js";`,
+    `export * from "./generated/is.js";`,
+    `export * from "./generated/metadata.js";`,
+    `// Naming aliases + TS-Go-side types (SymbolTable, FlowLabel, etc.)`,
+    `export * from "./aliases.js";`,
+    `// TS-Go-style accessor functions (nodeKind, nodeParent, etc.) so`,
+    "// transformer files can ESM-import them instead of `declare`ing.",
+    `export * from "./accessors.js";`,
+    "",
+  ].join("\n");
+}
+
 async function main(): Promise<void> {
   const schema = await readAstSchema();
   await writeGenerated("src/ast/generated/kind.ts", generateKind(schema));
@@ -1320,7 +1380,7 @@ async function main(): Promise<void> {
   await writeGenerated("src/ast/generated/visitor.ts", generateVisitor(schema));
   await writeGenerated("src/ast/generated/is.ts", generateGuards(schema));
   await writeGenerated("src/ast/generated/metadata.ts", generateMetadata(schema));
-  await writeGenerated("src/ast/index.ts", `${generatedHeader("schema/tsgo/ast.json")}export * from "./flags.js";\nexport * from "./generated/kind.js";\nexport * from "./generated/schema.js";\nexport * from "./generated/types.js";\nexport * from "./generated/nodes.js";\nexport * from "./generated/factory.js";\nexport * from "./generated/visitor.js";\nexport * from "./generated/is.js";\nexport * from "./generated/metadata.js";\n`);
+  await writeGenerated("src/ast/index.ts", generateIndex());
 }
 
 await main();
