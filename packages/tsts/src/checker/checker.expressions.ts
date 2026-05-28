@@ -37,7 +37,6 @@ import {
   booleanType,
   numberType,
   stringType,
-  unknownType,
   unresolvedType,
   isAnyType,
   isNumberType,
@@ -46,6 +45,7 @@ import {
   isUnresolvedType,
   isFunctionType,
   getFunctionReturnType,
+  getUnionType,
   makeFunctionType,
   checkAssignable,
   displayType,
@@ -92,8 +92,7 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     if (isUnresolvedType(whenTrue) || isUnresolvedType(whenFalse)) {
       return unresolvedType;
     }
-    const sameType = whenTrue === whenFalse || (isFunctionType(whenTrue) && isFunctionType(whenFalse));
-    return sameType ? whenTrue : unknownType;
+    return getUnionType([whenTrue, whenFalse], state);
   }
   if (isArrowFunction(expression)) {
     return inferArrowFunction(expression, state, environment);

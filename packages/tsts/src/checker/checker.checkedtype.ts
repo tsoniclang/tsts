@@ -24,6 +24,7 @@ import {
   type IntrinsicType,
   type ObjectType,
   type Signature,
+  type UnionOrIntersectionType,
   TypeFlags,
   ObjectFlags,
 } from "./types.js";
@@ -127,6 +128,32 @@ export function getFunctionReturnType(type: Type): Type {
 }
 
 // ---------------------------------------------------------------------------
+// Union types. Constituents are stored on `Type.data` (UnionOrIntersectionType)
+// so the relater's constituentTypes reads them. `getUnionType` does identity
+// dedup; full TS-Go normalization (subtype reduction, literal collapse,
+// flattening) is a later port step.
+// ---------------------------------------------------------------------------
+
+function makeUnionType(types: readonly Type[], state: CheckState): Type {
+  const data: UnionOrIntersectionType = { types, objectFlags: ObjectFlags.None };
+  return { flags: TypeFlags.Union, id: state.nextTypeId(), data };
+}
+
+export function getUnionType(types: readonly Type[], state: CheckState): Type {
+  const unique: Type[] = [];
+  for (const t of types) {
+    if (!unique.includes(t)) unique.push(t);
+  }
+  if (unique.length === 0) return unresolvedType;
+  if (unique.length === 1) return unique[0]!;
+  return makeUnionType(unique, state);
+}
+
+export function unionConstituents(type: Type): readonly Type[] | undefined {
+  return (type.data as UnionOrIntersectionType | undefined)?.types;
+}
+
+// ---------------------------------------------------------------------------
 // Leaf helpers
 // ---------------------------------------------------------------------------
 
@@ -179,6 +206,9 @@ export function setBindingElementType(element: BindingElement, type: Type, envir
 }
 
 export function displayType(type: Type): string {
+  if ((type.flags & TypeFlags.Union) !== 0) {
+    return (unionConstituents(type) ?? []).map(displayType).join(" | ");
+  }
   if (isFunctionType(type)) return "function";
   const name = (type.data as IntrinsicType | undefined)?.intrinsicName;
   if (name === undefined || name === "error") return "unknown";
