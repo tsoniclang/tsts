@@ -305,6 +305,27 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type '\"\" | number' is not assignable to type 'string'."], andString.diagnostics.map((d) => d.message));
   }
 
+  hardens_logical_operator_facts(): void {
+    // Fresh `false` literals (not just regularFalseType) must be preserved as
+    // definitely-falsy by `&&`; always-truthy / always-falsy operands collapse
+    // to the correct branch; nullish facts cover the undefined intrinsic.
+    const freshFalse = checkSourceFile(parseSourceFile("function f(flag: boolean, y: number): false | number { return (flag ? false : \"x\") && y; }"));
+    const trueAnd = checkSourceFile(parseSourceFile("function f(y: number): number { return true && y; }"));
+    const falseAnd = checkSourceFile(parseSourceFile("function f(y: number): false { return false && y; }"));
+    const emptyStringOr = checkSourceFile(parseSourceFile("function f(y: number): number { return \"\" || y; }"));
+    const truthyStringOr = checkSourceFile(parseSourceFile("function f(y: number): \"x\" { return \"x\" || y; }"));
+    const undefinedUnionNullish = checkSourceFile(parseSourceFile("function f(x: string | undefined, y: number): string | number { return x ?? y; }"));
+    const undefinedConstNullish = checkSourceFile(parseSourceFile("function f(y: number): number { const x = undefined; return x ?? y; }"));
+
+    Assert.Equal(0, freshFalse.diagnostics.length);
+    Assert.Equal(0, trueAnd.diagnostics.length);
+    Assert.Equal(0, falseAnd.diagnostics.length);
+    Assert.Equal(0, emptyStringOr.diagnostics.length);
+    Assert.Equal(0, truthyStringOr.diagnostics.length);
+    Assert.Equal(0, undefinedUnionNullish.diagnostics.length);
+    Assert.Equal(0, undefinedConstNullish.diagnostics.length);
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -425,6 +446,7 @@ A<CheckerGroundworkTests>().method((t) => t.checker_printer_prints_boolean_union
 A<CheckerGroundworkTests>().method((t) => t.checks_satisfies_expression).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.preserves_const_literal_widens_let).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.derives_logical_operator_result_types).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.hardens_logical_operator_facts).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

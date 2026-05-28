@@ -418,6 +418,12 @@ function isZeroPseudoBigInt(value: PseudoBigInt): boolean {
   return pseudoBigIntToString(value) === "0";
 }
 
+// Value-based false-literal test (matches fresh AND regular `false`, unlike an
+// identity check against regularFalseType).
+function isFalseLiteralType(t: Type): boolean {
+  return (t.flags & TypeFlags.BooleanLiteral) !== 0 && (t.data as LiteralType).value === false;
+}
+
 // A single (non-union) constituent can hold a truthy value.
 function constituentCanBeTruthy(t: Type): boolean {
   if ((t.flags & (TypeFlags.Any | TypeFlags.Unknown)) !== 0) return true;
@@ -467,7 +473,7 @@ function getDefinitelyFalsyPartOfType(t: Type, state: CheckState): Type {
   if ((t.flags & TypeFlags.String) !== 0) return getStringLiteralType("", state);
   if ((t.flags & TypeFlags.Number) !== 0) return getNumberLiteralType(0, state);
   if ((t.flags & TypeFlags.BigInt) !== 0) return getBigIntLiteralType(parseValidBigInt("0n"), state);
-  if (t === regularFalseType
+  if (isFalseLiteralType(t)
     || (t.flags & (TypeFlags.Void | TypeFlags.Undefined | TypeFlags.Null | TypeFlags.Any | TypeFlags.Unknown)) !== 0
     || ((t.flags & TypeFlags.StringLiteral) !== 0 && (t.data as LiteralType).value === "")
     || ((t.flags & TypeFlags.NumberLiteral) !== 0 && (t.data as LiteralType).value === 0)
