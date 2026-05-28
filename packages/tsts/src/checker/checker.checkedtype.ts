@@ -19,12 +19,16 @@ import {
   isLiteralTypeNode,
   isNumericLiteral,
   isPrefixUnaryExpression,
+  isPropertySignatureDeclaration,
   isStringLiteral,
+  isTypeLiteralNode,
   isUnionTypeNode,
   type BindingElement,
   type BindingName,
   type LiteralTypeNode,
   type Node as AstNode,
+  type Symbol as AstSymbol,
+  type TypeLiteralNode,
   type TypeNode,
   type UnionTypeNode,
 } from "../ast/index.js";
@@ -185,6 +189,40 @@ export function isFunctionType(type: Type): boolean {
 export function getFunctionReturnType(type: Type): Type {
   const data = type.data as ObjectType | undefined;
   return data?.declaredCallSignatures?.[0]?.resolvedReturnType ?? unresolvedType;
+}
+
+// ---------------------------------------------------------------------------
+// Anonymous object types (object literals + `{ ... }` type literals). The
+// relater compares object types structurally via `type.symbol.members`
+// (Map<string, Symbol>) where each property symbol carries its checker `type`,
+// so construction mirrors that contract. Property type lives on the synthetic
+// symbol (the relater's existing shortcut for getTypeOfSymbol).
+// ---------------------------------------------------------------------------
+
+interface PropertySymbol {
+  readonly name: string;
+  readonly type: Type;
+  readonly declarations: readonly AstNode[];
+}
+
+export function makeObjectType(properties: readonly { readonly name: string; readonly type: Type }[], state: CheckState): Type {
+  const members = new Map<string, AstSymbol>();
+  for (const property of properties) {
+    const symbol: PropertySymbol = { name: property.name, type: property.type, declarations: [] };
+    members.set(property.name, symbol as unknown as AstSymbol);
+  }
+  const data: ObjectType = { objectFlags: ObjectFlags.Anonymous };
+  const typeSymbol = { name: "__object", declarations: [], members } as unknown as AstSymbol;
+  return { flags: TypeFlags.Object, id: state.nextTypeId(), data, symbol: typeSymbol };
+}
+
+export function getPropertyOfType(type: Type, name: string): Type | undefined {
+  const members = (type.symbol as unknown as { readonly members?: Map<string, PropertySymbol> } | undefined)?.members;
+  return members?.get(name)?.type;
+}
+
+function objectTypeMembers(type: Type): ReadonlyMap<string, PropertySymbol> | undefined {
+  return (type.symbol as unknown as { readonly members?: Map<string, PropertySymbol> } | undefined)?.members;
 }
 
 // ---------------------------------------------------------------------------
@@ -586,7 +624,23 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
   if (isUnionTypeNode(type)) {
     return getUnionType((type as UnionTypeNode).types.map((member) => typeFromTypeNode(member, state)), state);
   }
+  if (isTypeLiteralNode(type)) {
+    return typeFromTypeLiteralNode(type, state);
+  }
   return anyType;
+}
+
+// `{ name: T; ... }` type literals: build an anonymous object type from the
+// property signatures (only named property signatures are modeled in this
+// tranche; index/call/construct signatures are deferred).
+function typeFromTypeLiteralNode(node: TypeLiteralNode, state: CheckState): Type {
+  const properties: { readonly name: string; readonly type: Type }[] = [];
+  for (const member of node.members) {
+    if (isPropertySignatureDeclaration(member) && isIdentifier(member.name)) {
+      properties.push({ name: member.name.text, type: typeFromTypeNode(member.type, state) });
+    }
+  }
+  return makeObjectType(properties, state);
 }
 
 // Literal type nodes resolve to the REGULAR literal type via the shared
@@ -656,6 +710,14 @@ export function displayType(type: Type): string {
   if ((type.flags & TypeFlags.BooleanLiteral) !== 0) return String((type.data as LiteralType).value);
   if ((type.flags & TypeFlags.BigIntLiteral) !== 0) return `${pseudoBigIntToString((type.data as LiteralType).value as PseudoBigInt)}n`;
   if (isFunctionType(type)) return "function";
+  if ((type.flags & TypeFlags.Object) !== 0) {
+    const members = objectTypeMembers(type);
+    if (members !== undefined) {
+      const entries = [...members.values()].map((m) => `${m.name}: ${displayType(m.type)}`);
+      return entries.length === 0 ? "{}" : `{ ${entries.join("; ")} }`;
+    }
+    return "object";
+  }
   const name = (type.data as IntrinsicType | undefined)?.intrinsicName;
   if (name === undefined || name === "error") return "unknown";
   return name;

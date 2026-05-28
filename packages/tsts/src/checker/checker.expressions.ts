@@ -17,10 +17,12 @@ import {
   isConditionalExpression,
   isElementAccessExpression,
   isIdentifier,
+  isObjectLiteralExpression,
   isParenthesizedExpression,
   isPostfixUnaryExpression,
   isPrefixUnaryExpression,
   isPropertyAccessExpression,
+  isPropertyAssignment,
   isSatisfiesExpression,
   isSpreadElement,
   type ArrowFunction,
@@ -58,6 +60,8 @@ import {
   getWidenedLiteralLikeTypeForContextualType,
   literalTypeFromLiteralExpression,
   makeFunctionType,
+  makeObjectType,
+  getPropertyOfType,
   checkAssignable,
   displayType,
   setBindingNameType,
@@ -180,6 +184,17 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     }
     return unresolvedType;
   }
+  if (isObjectLiteralExpression(expression)) {
+    // Anonymous object type from property assignments. Shorthand/spread/computed
+    // members are deferred; their properties simply aren't modeled yet.
+    const properties: { readonly name: string; readonly type: Type }[] = [];
+    for (const property of expression.properties) {
+      if (isPropertyAssignment(property) && isIdentifier(property.name)) {
+        properties.push({ name: property.name.text, type: inferExpression(property.initializer, state, environment) });
+      }
+    }
+    return makeObjectType(properties, state);
+  }
   if (isPropertyAccessExpression(expression)) {
     return inferPropertyAccess(expression.expression, expression.name.text, state, environment);
   }
@@ -236,6 +251,10 @@ export function inferPropertyAccess(expression: Expression, propertyName: string
   }
   if (isUnknownType(receiverType) || isUnresolvedType(receiverType)) {
     return anyType;
+  }
+  const objectProperty = getPropertyOfType(receiverType, propertyName);
+  if (objectProperty !== undefined) {
+    return objectProperty;
   }
   if (!isAnyType(receiverType) && !isFunctionType(receiverType)) {
     state.diagnostics.push({

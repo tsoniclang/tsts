@@ -326,6 +326,27 @@ export class CheckerGroundworkTests {
     Assert.Equal(0, undefinedConstNullish.diagnostics.length);
   }
 
+  resolves_object_literal_members(): void {
+    // Object literal + `{ ... }` type literal -> anonymous object types,
+    // related structurally; property access resolves member types; missing
+    // properties / mismatches error. Object-literal `satisfies` now works.
+    const satisfiesOk = checkSourceFile(parseSourceFile("function f(): void { const ok = { port: 8080 } satisfies { port: number }; }"));
+    const satisfiesBad = checkSourceFile(parseSourceFile("function f(): void { const bad = { port: \"x\" } satisfies { port: number }; }"));
+    const propertyOk = checkSourceFile(parseSourceFile("function f(o: { port: number }): number { return o.port; }"));
+    const propertyWrongType = checkSourceFile(parseSourceFile("function f(o: { port: number }): string { return o.port; }"));
+    const propertyMissing = checkSourceFile(parseSourceFile("function f(o: { port: number }): number { return o.missing; }"));
+    const objectAssignable = checkSourceFile(parseSourceFile("function f(): void { const o: { port: number } = { port: 1 }; }"));
+    const objectMissingProperty = checkSourceFile(parseSourceFile("function f(): void { const o: { port: number } = { }; }"));
+
+    Assert.Equal(0, satisfiesOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type '{ port: \"x\" }' is not assignable to type '{ port: number }'."], satisfiesBad.diagnostics.map((d) => d.message));
+    Assert.Equal(0, propertyOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], propertyWrongType.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Property 'missing' does not exist on type '{ port: number }'."], propertyMissing.diagnostics.map((d) => d.message));
+    Assert.Equal(0, objectAssignable.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type '{}' is not assignable to type '{ port: number }'."], objectMissingProperty.diagnostics.map((d) => d.message));
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -447,6 +468,7 @@ A<CheckerGroundworkTests>().method((t) => t.checks_satisfies_expression).add(Fac
 A<CheckerGroundworkTests>().method((t) => t.preserves_const_literal_widens_let).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.derives_logical_operator_result_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.hardens_logical_operator_facts).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.resolves_object_literal_members).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);
