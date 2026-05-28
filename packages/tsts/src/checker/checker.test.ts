@@ -14,6 +14,7 @@ import {
 } from "./checker.checkedtype.js";
 import { parseSourceFile } from "../parser/index.js";
 import { createProgram, type CompilerHost } from "../program/index.js";
+import { isExpressionStatement, isTrueLiteral, isFalseLiteral, isThisExpression } from "../ast/index.js";
 
 export class CheckerGroundworkTests {
   accepts_numeric_to_fixed_calls_that_flow_into_string_returns(): void {
@@ -151,6 +152,19 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type '\"a\" | \"c\"' is not assignable to type '\"a\" | \"b\"'."], result.diagnostics.map((d) => d.message));
   }
 
+  recognizes_keyword_literal_predicates(): void {
+    // Regenerated alias predicates (isTrueLiteral/isFalseLiteral/isThisExpression
+    // were generator stubs returning false before the bare-concrete-kind fix).
+    const trueStatement = parseSourceFile("true;").statements[0]!;
+    const falseStatement = parseSourceFile("false;").statements[0]!;
+    const thisStatement = parseSourceFile("this;").statements[0]!;
+
+    Assert.Equal(true, isExpressionStatement(trueStatement) && isTrueLiteral(trueStatement.expression));
+    Assert.Equal(true, isExpressionStatement(falseStatement) && isFalseLiteral(falseStatement.expression));
+    Assert.Equal(false, isExpressionStatement(falseStatement) && isTrueLiteral(falseStatement.expression));
+    Assert.Equal(true, isExpressionStatement(thisStatement) && isThisExpression(thisStatement.expression));
+  }
+
   union_reduction_none_keeps_redundant_members(): void {
     const state = newCheckState();
     const regularA = getStringLiteralType("a", state);
@@ -220,6 +234,7 @@ A<CheckerGroundworkTests>().method((t) => t.reports_literal_type_node_mismatch).
 A<CheckerGroundworkTests>().method((t) => t.widens_bigint_literal_in_return_position).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.union_reduction_none_keeps_redundant_members).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.fresh_plus_regular_same_literal_reduces_to_regular).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reduces_redundant_literal_union_members).add(FactAttribute);

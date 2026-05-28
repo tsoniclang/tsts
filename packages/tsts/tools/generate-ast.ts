@@ -628,6 +628,11 @@ function kindNamesFromType(schema: AstSchema, type: string | readonly string[] |
   if (type === "Kind") {
     return normalizeKinds(schema).map(kind => kind.name);
   }
+  // A bare concrete kind name (e.g. instantiation-alias type arguments like
+  // `TrueKeyword` for `TrueLiteral = Token<TrueKeyword>`) resolves to itself.
+  if (concreteKindNames(schema).has(type)) {
+    return [type];
+  }
   return [];
 }
 
