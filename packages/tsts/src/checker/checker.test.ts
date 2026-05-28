@@ -15,6 +15,8 @@ import {
   regularFalseType,
   regularTrueType,
 } from "./checker.checkedtype.js";
+import { TypeFlags } from "./types.js";
+import { CheckerPrinter } from "./printer.js";
 import { parseSourceFile } from "../parser/index.js";
 import { createProgram, type CompilerHost } from "../program/index.js";
 import {
@@ -216,10 +218,31 @@ export class CheckerGroundworkTests {
   boolean_union_interns_to_canonical_object(): void {
     // `false | true` in either order must intern to the exact booleanType
     // singleton — the property that makes boolean relations identity-based.
+    // booleanType carries BOTH TypeFlags.Union and TypeFlags.Boolean (TS-Go's
+    // two-member boolean-literal union flagging).
     const state = newCheckState();
 
+    Assert.Equal(true, (booleanType.flags & TypeFlags.Union) !== 0);
+    Assert.Equal(true, (booleanType.flags & TypeFlags.Boolean) !== 0);
     Assert.Equal(true, getUnionType([regularFalseType, regularTrueType], state) === booleanType);
     Assert.Equal(true, getUnionType([regularTrueType, regularFalseType], state) === booleanType);
+  }
+
+  boolean_pair_collapses_in_embedded_union(): void {
+    // A `false`+`true` pair inside a larger union displays as `boolean`.
+    const result = checkSourceFile(parseSourceFile("function f(): number { const value: string | false | true = true; return value; }"));
+
+    Assert.Equal<readonly string[]>(["Type 'string | boolean' is not assignable to type 'number'."], result.diagnostics.map((d) => d.message));
+  }
+
+  checker_printer_prints_boolean_union(): void {
+    // CheckerPrinter (nodebuilder/api display path) must collapse the canonical
+    // boolean union to `boolean` and print boolean literals by value.
+    const printer = new CheckerPrinter();
+
+    Assert.Equal("boolean", printer.typeToString(booleanType));
+    Assert.Equal("false", printer.typeToString(regularFalseType));
+    Assert.Equal("true", printer.typeToString(regularTrueType));
   }
 
   accepts_union_type_node_return_types(): void {
@@ -337,6 +360,8 @@ A<CheckerGroundworkTests>().method((t) => t.checks_null_literal_type_nodes).add(
 A<CheckerGroundworkTests>().method((t) => t.local_undefined_binding_wins_over_global).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.boolean_normalizes_to_false_true_union).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.boolean_union_interns_to_canonical_object).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.boolean_pair_collapses_in_embedded_union).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checker_printer_prints_boolean_union).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

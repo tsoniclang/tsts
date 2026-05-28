@@ -129,12 +129,16 @@ function fixedLiteralType(id: number, flags: TypeFlags, value: boolean): Type {
 export const regularFalseType: Type = fixedLiteralType(12, TypeFlags.BooleanLiteral, false);
 export const regularTrueType: Type = fixedLiteralType(13, TypeFlags.BooleanLiteral, true);
 
-function fixedUnionType(id: number, types: readonly Type[]): Type {
+function fixedUnionType(id: number, flags: TypeFlags, types: readonly Type[]): Type {
   const data: UnionType = { types, objectFlags: ObjectFlags.None };
-  return { flags: TypeFlags.Union, id, data };
+  return { flags, id, data };
 }
 
-export const booleanType: Type = fixedUnionType(5, [regularFalseType, regularTrueType]);
+// booleanType is the canonical `false | true` union that ALSO carries
+// TypeFlags.Boolean, matching TS-Go (getUnionType flags a two-member
+// boolean-literal union with TypeFlags.Boolean). The TypeFlags.Boolean fast
+// paths in relater.ts / printer.ts are live against this object.
+export const booleanType: Type = fixedUnionType(5, TypeFlags.Union | TypeFlags.Boolean, [regularFalseType, regularTrueType]);
 
 export function getBooleanLiteralType(value: boolean): Type {
   return value ? regularTrueType : regularFalseType;
@@ -205,12 +209,18 @@ function unionTypeKey(types: readonly Type[]): string {
   return types.map((t) => t.id).sort((a, b) => a - b).join(",");
 }
 
+// The exact two-member `false | true` union (TS-Go marks it with TypeFlags.Boolean).
+function isCanonicalBooleanUnion(types: readonly Type[]): boolean {
+  return types.length === 2 && types.includes(regularFalseType) && types.includes(regularTrueType);
+}
+
 function makeUnionType(types: readonly Type[], state: CheckState): Type {
   const key = unionTypeKey(types);
   const cached = state.unionTypes.get(key);
   if (cached !== undefined) return cached;
+  const flags = isCanonicalBooleanUnion(types) ? TypeFlags.Union | TypeFlags.Boolean : TypeFlags.Union;
   const data: UnionOrIntersectionType = { types, objectFlags: ObjectFlags.None };
-  const type: Type = { flags: TypeFlags.Union, id: state.nextTypeId(), data };
+  const type: Type = { flags, id: state.nextTypeId(), data };
   state.unionTypes.set(key, type);
   return type;
 }

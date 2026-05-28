@@ -7,7 +7,7 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
-import type { Type, Signature, TypeFormatFlags } from "./types.js";
+import type { Type, Signature, TypeFormatFlags, LiteralType } from "./types.js";
 import { TypeFlags } from "./types.js";
 
 export class CheckerPrinter {
@@ -21,16 +21,16 @@ export class CheckerPrinter {
     if ((flags & TypeFlags.Any) !== 0) return "any";
     if ((flags & TypeFlags.Unknown) !== 0) return "unknown";
     if ((flags & TypeFlags.StringLiteral) !== 0) {
-      const value = (t as unknown as { value?: string }).value;
-      return value !== undefined ? `"${value}"` : "string";
+      const value = (t as { data?: LiteralType }).data?.value;
+      return value !== undefined ? `"${value as string}"` : "string";
     }
     if ((flags & TypeFlags.NumberLiteral) !== 0) {
-      const value = (t as unknown as { value?: number }).value;
-      return value !== undefined ? `${value}` : "number";
+      const value = (t as { data?: LiteralType }).data?.value;
+      return value !== undefined ? `${value as number}` : "number";
     }
     if ((flags & TypeFlags.BooleanLiteral) !== 0) {
-      const value = (t as unknown as { intrinsicName?: string }).intrinsicName;
-      return value ?? "boolean";
+      const value = (t as { data?: LiteralType }).data?.value;
+      return value !== undefined ? String(value) : "boolean";
     }
     if ((flags & TypeFlags.String) !== 0) return "string";
     if ((flags & TypeFlags.Number) !== 0) return "number";
@@ -82,9 +82,24 @@ export class CheckerPrinter {
     return `[${args.map((a) => this.renderType(a)).join(", ")}]`;
   }
   writeUnionType(t: Type): string {
-    const types = (t as unknown as { types?: readonly Type[] }).types ?? [];
+    const types = (t as { data?: { types?: readonly Type[] } }).data?.types ?? [];
     if (types.length === 0) return "never";
-    return types.map((u) => this.renderType(u)).join(" | ");
+    // Collapse a false+true BooleanLiteral pair to `boolean`, emitted at the
+    // first member's position (port of TS-Go formatUnionTypes).
+    const isBooleanLiteral = (u: Type, value: boolean): boolean =>
+      ((u.flags & TypeFlags.BooleanLiteral) !== 0) && (u as { data?: LiteralType }).data?.value === value;
+    const hasBooleanPair = types.some((u) => isBooleanLiteral(u, false)) && types.some((u) => isBooleanLiteral(u, true));
+    if (!hasBooleanPair) {
+      return types.map((u) => this.renderType(u)).join(" | ");
+    }
+    const firstBooleanIndex = types.findIndex((u) => isBooleanLiteral(u, false) || isBooleanLiteral(u, true));
+    return types
+      .flatMap((u, i) =>
+        isBooleanLiteral(u, false) || isBooleanLiteral(u, true)
+          ? (i === firstBooleanIndex ? ["boolean"] : [])
+          : [this.renderType(u)],
+      )
+      .join(" | ");
   }
   writeIntersectionType(t: Type): string {
     const types = (t as unknown as { types?: readonly Type[] }).types ?? [];
