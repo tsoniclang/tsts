@@ -70,12 +70,15 @@ export interface Relation {
   errorCache?: Map<string, readonly unknown[]>;
 }
 
-export type RelationComparisonResult = 0 | 1 | 2 | 3;
+export type RelationComparisonResult = number;
+// 1:1 with TS-Go relater.go RelationComparisonResult.
 export const RelationComparisonResult = {
   None: 0 as RelationComparisonResult,
-  Succeeded: 1 as RelationComparisonResult,
-  Failed: 2 as RelationComparisonResult,
-  Reported: 3 as RelationComparisonResult,
+  Succeeded: (1 << 0) as RelationComparisonResult,
+  Failed: (1 << 1) as RelationComparisonResult,
+  ReportsUnmeasurable: (1 << 3) as RelationComparisonResult,
+  ReportsUnreliable: (1 << 4) as RelationComparisonResult,
+  ReportsMask: 24 as RelationComparisonResult, // ReportsUnmeasurable|ReportsUnreliable
 } as const;
 
 export type RecursionFlags = number;
@@ -86,11 +89,13 @@ export const RecursionFlags = {
   Both: 3 as RecursionFlags,
 } as const;
 
-export type Ternary = -1 | 0 | 1 | 2;
+export type Ternary = -1 | 0 | 1 | 3;
+// 1:1 with TS-Go: True=-1, False=0, Unknown=1, Maybe=3. The values are
+// chosen so bitwise-AND of results composes correctly (Maybe MUST be 3).
 export const Ternary = {
   False: 0 as Ternary,
   Unknown: 1 as Ternary,
-  Maybe: 2 as Ternary,
+  Maybe: 3 as Ternary,
   True: -1 as Ternary,
 } as const;
 
