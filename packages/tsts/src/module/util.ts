@@ -28,6 +28,21 @@ import {
 import { JsxEmit } from "../outputpaths/outputpaths.js";
 import { mustParse, tryParseVersionRange, type Version } from "../semver/index.js";
 import { version } from "../core/version.js";
+import type { CompilerOptions } from "../core/compileroptions.js";
+import {
+  getAllowJS,
+  getResolveJsonModule,
+  JsxEmit as CoreJsxEmit,
+} from "../core/compileroptions.js";
+import {
+  Tristate,
+  tristateDefaultIfUnknown,
+  tristateIsTrue,
+} from "../core/tristate.js";
+import type { ResolvedModule } from "./types.js";
+import type { SourceFile } from "../ast/index.js";
+import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
+import type { DiagnosticMessage } from "../diagnostics/types.js";
 
 export const inferredTypesContainingFile = "__inferred type names__.ts";
 
@@ -183,6 +198,79 @@ export function comparePatternKeys(a: string, b: string): number {
   if (a.length > b.length) return -1;
   if (b.length > a.length) return 1;
   return 0;
+}
+
+/**
+ * Returns a DiagnosticMessage if we won't include a resolved module due to its
+ * extension. The DiagnosticMessage's parameters are the imported module name,
+ * and the filename it resolved to. This returns a diagnostic even if the module
+ * will be an untyped module.
+ *
+ * Mirrors TS-Go `GetResolutionDiagnostic`.
+ */
+export function getResolutionDiagnostic(
+  options: CompilerOptions,
+  resolvedModule: ResolvedModule,
+  file: SourceFile
+): DiagnosticMessage | undefined {
+  const needJsx = (): DiagnosticMessage | undefined => {
+    if ((options.jsx ?? CoreJsxEmit.None) !== CoreJsxEmit.None) {
+      return undefined;
+    }
+    return Diagnostics.Module_0_was_resolved_to_1_but_jsx_is_not_set;
+  };
+
+  const needAllowJs = (): DiagnosticMessage | undefined => {
+    if (
+      getAllowJS(options) ||
+      !tristateIsTrue(tristateDefaultIfUnknown(options.noImplicitAny ?? Tristate.Unknown, options.strict ?? Tristate.Unknown))
+    ) {
+      return undefined;
+    }
+    return Diagnostics.Could_not_find_a_declaration_file_for_module_0_1_implicitly_has_an_any_type;
+  };
+
+  const needResolveJsonModule = (): DiagnosticMessage | undefined => {
+    if (getResolveJsonModule(options)) {
+      return undefined;
+    }
+    return Diagnostics.Module_0_was_resolved_to_1_but_resolveJsonModule_is_not_used;
+  };
+
+  const needAllowArbitraryExtensions = (): DiagnosticMessage | undefined => {
+    if (file.isDeclarationFile || tristateIsTrue(options.allowArbitraryExtensions ?? Tristate.Unknown)) {
+      return undefined;
+    }
+    return Diagnostics.Module_0_was_resolved_to_1_but_allowArbitraryExtensions_is_not_set;
+  };
+
+  switch (resolvedModule.extension) {
+    case extensionTs:
+    case extensionDts:
+    case extensionMts:
+    case extensionDmts:
+    case extensionCts:
+    case extensionDcts:
+      // These are always allowed.
+      return undefined;
+    case extensionTsx:
+      return needJsx();
+    case extensionJsx: {
+      const message = needJsx();
+      if (message !== undefined) {
+        return message;
+      }
+      return needAllowJs();
+    }
+    case extensionJs:
+    case extensionMjs:
+    case extensionCjs:
+      return needAllowJs();
+    case extensionJson:
+      return needResolveJsonModule();
+    default:
+      return needAllowArbitraryExtensions();
+  }
 }
 
 /**
