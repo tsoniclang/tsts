@@ -113,7 +113,7 @@ export const VarianceFlags = {
   VarianceMask: 7 as VarianceFlags,
   Unmeasurable: (1 << 3) as VarianceFlags,
   Unreliable: (1 << 4) as VarianceFlags,
-  AllowsStructuralFallback: (1 << 5) as VarianceFlags,
+  AllowsStructuralFallback: 24 as VarianceFlags, // Unmeasurable|Unreliable
 } as const;
 
 export type AccessFlags = number;
@@ -128,33 +128,23 @@ export const AccessFlags = {
   ReportDeprecated: (1 << 6) as AccessFlags,
   SuppressNoImplicitAnyError: (1 << 7) as AccessFlags,
   Contextual: (1 << 8) as AccessFlags,
-  Persistent: (1 << 9) as AccessFlags,
+  Persistent: 1 as AccessFlags, // = IncludeUndefined
 } as const;
 
 export type NodeCheckFlags = number;
+// 1:1 with TS-Go `internal/checker/types.go` NodeCheckFlags (sparse — the
+// broader Strada flag set was not carried into the Go rewrite).
 export const NodeCheckFlags = {
   None: 0 as NodeCheckFlags,
   TypeChecked: (1 << 0) as NodeCheckFlags,
-  LexicalThis: (1 << 1) as NodeCheckFlags,
-  CaptureThis: (1 << 2) as NodeCheckFlags,
-  CaptureNewTarget: (1 << 3) as NodeCheckFlags,
-  SuperInstance: (1 << 4) as NodeCheckFlags,
-  SuperStatic: (1 << 5) as NodeCheckFlags,
   ContextChecked: (1 << 6) as NodeCheckFlags,
-  ConstructorReferenceInClass: (1 << 7) as NodeCheckFlags,
-  EnumValuesComputed: (1 << 9) as NodeCheckFlags,
-  LexicalModuleMergesWithClass: (1 << 10) as NodeCheckFlags,
-  LoopWithCapturedBlockScopedBinding: (1 << 11) as NodeCheckFlags,
-  ContainsCapturedBlockScopeBinding: (1 << 12) as NodeCheckFlags,
-  CapturedBlockScopedBinding: (1 << 13) as NodeCheckFlags,
-  BlockScopedBindingInLoop: (1 << 14) as NodeCheckFlags,
-  NeedsLoopOutParameter: (1 << 15) as NodeCheckFlags,
-  AssignmentsMarked: (1 << 16) as NodeCheckFlags,
-  ContainsConstructorReference: (1 << 17) as NodeCheckFlags,
-  ContainerWithNoReturnExpression: (1 << 18) as NodeCheckFlags,
-  ConstructorReference: (1 << 19) as NodeCheckFlags,
+  EnumValuesComputed: (1 << 10) as NodeCheckFlags,
+  AssignmentsMarked: (1 << 17) as NodeCheckFlags,
   ContainsClassWithPrivateIdentifiers: (1 << 20) as NodeCheckFlags,
-  InCheckIdentifier: (1 << 21) as NodeCheckFlags,
+  ContainsSuperPropertyInStaticInitializer: (1 << 21) as NodeCheckFlags,
+  InCheckIdentifier: (1 << 22) as NodeCheckFlags,
+  InitializerIsUndefined: (1 << 24) as NodeCheckFlags,
+  InitializerIsUndefinedComputed: (1 << 25) as NodeCheckFlags,
 } as const;
 
 export type TypeFlags = number;
