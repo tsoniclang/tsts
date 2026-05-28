@@ -89,6 +89,10 @@ export interface CheckState {
   readonly typeAliases: Map<string, TypeAliasDeclaration>;
   readonly typeAliasResolutions: Map<string, Type>;
   readonly aliasResolutionStack: Set<string>;
+  // Names currently shadowed by a block-local `type` declaration. Full lexical
+  // type-alias scoping needs the binder's symbol tables (deferred); until then,
+  // a shadowed name must NOT resolve to a same-named outer alias.
+  readonly shadowedAliasNames: Set<string>;
   nextTypeId(): number;
 }
 
@@ -106,6 +110,7 @@ export function newCheckState(): CheckState {
     typeAliases: new Map<string, TypeAliasDeclaration>(),
     typeAliasResolutions: new Map<string, Type>(),
     aliasResolutionStack: new Set<string>(),
+    shadowedAliasNames: new Set<string>(),
     nextTypeId: () => {
       idSource.value += 1;
       return idSource.value;
@@ -120,8 +125,42 @@ export function newCheckState(): CheckState {
 export function collectTypeAliases(statements: readonly Statement[], state: CheckState): void {
   for (const statement of statements) {
     if (isTypeAliasDeclaration(statement) && isIdentifier(statement.name)) {
-      state.typeAliases.set(statement.name.text, statement);
+      const name = statement.name.text;
+      if (state.typeAliases.has(name)) {
+        // A second top-level alias of the same name is a duplicate identifier;
+        // keep the first declaration as the recovery type (mirrors TS2300).
+        state.diagnostics.push({ message: `Duplicate identifier '${name}'.` });
+        continue;
+      }
+      state.typeAliases.set(name, statement);
     }
+  }
+}
+
+// Enter a block scope: register its block-local `type` declarations. Full
+// lexical type-alias scoping is deferred to the binder, so each local alias
+// gets an explicit unsupported diagnostic and its name is shadowed — a
+// reference within the block then resolves to the error type rather than
+// silently binding to a same-named OUTER alias (which would check against the
+// wrong type). Returns the names this scope newly shadowed (to unshadow on exit).
+export function enterLocalAliasScope(statements: readonly Statement[], state: CheckState): readonly string[] {
+  const added: string[] = [];
+  for (const statement of statements) {
+    if (isTypeAliasDeclaration(statement) && isIdentifier(statement.name)) {
+      state.diagnostics.push({ message: `Local type alias declarations are not yet supported by the checker.` });
+      const name = statement.name.text;
+      if (!state.shadowedAliasNames.has(name)) {
+        state.shadowedAliasNames.add(name);
+        added.push(name);
+      }
+    }
+  }
+  return added;
+}
+
+export function exitLocalAliasScope(added: readonly string[], state: CheckState): void {
+  for (const name of added) {
+    state.shadowedAliasNames.delete(name);
   }
 }
 
@@ -785,6 +824,12 @@ function typeFromTypeReferenceNode(type: TypeReferenceNode, state: CheckState): 
     return unresolvedType;
   }
   const name = type.typeName.text;
+  // A block-local alias shadows this name: its declaration already emitted the
+  // unsupported diagnostic, so the reference resolves to the error type rather
+  // than binding to a same-named outer alias.
+  if (state.shadowedAliasNames.has(name)) {
+    return unresolvedType;
+  }
   const declaration = state.typeAliases.get(name);
   if (declaration === undefined) {
     state.diagnostics.push({ message: `Cannot find name '${name}'.` });

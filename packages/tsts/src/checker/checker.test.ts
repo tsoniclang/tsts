@@ -579,6 +579,25 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Generic type alias 'Box' is not yet supported by the checker."], genericBareUsage.diagnostics.map((d) => d.message));
   }
 
+  enforces_type_alias_scoping_rules(): void {
+    // Duplicate top-level aliases are a duplicate-identifier error (first kept
+    // as recovery). Block-local aliases are deferred-with-diagnostic and shadow
+    // the name so a reference cannot silently bind to a same-named outer alias.
+    const duplicate = checkSourceFile(parseSourceFile("type A = number; type A = string;"));
+    const duplicateRecovery = checkSourceFile(parseSourceFile("type A = number; type A = string; function f(x: A): string { return x; }"));
+    const localShadow = checkSourceFile(parseSourceFile("type X = number; function f(): string { type X = string; const x: X = \"a\"; return x; }"));
+    const localForwardRef = checkSourceFile(parseSourceFile("function f(): number { const x: Local = 1; type Local = number; return x; }"));
+    const shadowNoLeak = checkSourceFile(parseSourceFile("type X = number; function f(): void { type X = string; const a: X = \"z\"; } function g(y: X): string { return y; }"));
+
+    Assert.Equal<readonly string[]>(["Duplicate identifier 'A'."], duplicate.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Duplicate identifier 'A'.", "Type 'number' is not assignable to type 'string'."], duplicateRecovery.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Local type alias declarations are not yet supported by the checker."], localShadow.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Local type alias declarations are not yet supported by the checker."], localForwardRef.diagnostics.map((d) => d.message));
+    // The local shadow inside f must not leak: g's `y: X` resolves to the outer
+    // `number`, so returning it as `string` is still a mismatch.
+    Assert.Equal<readonly string[]>(["Local type alias declarations are not yet supported by the checker.", "Type 'number' is not assignable to type 'string'."], shadowNoLeak.diagnostics.map((d) => d.message));
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -712,6 +731,7 @@ A<CheckerGroundworkTests>().method((t) => t.checks_array_spread_index_and_broad_
 A<CheckerGroundworkTests>().method((t) => t.checks_broad_empty_object_and_index_validation).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_object_type_signatures).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.resolves_type_alias_references).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.enforces_type_alias_scoping_rules).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

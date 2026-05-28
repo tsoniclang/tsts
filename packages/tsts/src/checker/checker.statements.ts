@@ -42,6 +42,8 @@ import {
   getRegularTypeOfObjectLiteral,
   setBindingNameType,
   typeFromTypeNode,
+  enterLocalAliasScope,
+  exitLocalAliasScope,
 } from "./checker.checkedtype.js";
 import { inferExpression } from "./checker.expressions.js";
 import { checkClassDeclaration, checkFunctionDeclaration } from "./checker.declarations.js";
@@ -168,5 +170,10 @@ export function checkForInitializer(initializer: Extract<Statement, { readonly k
 }
 
 export function checkBlock(block: Block, state: CheckState, environment: TypeEnvironment, expectedReturnType: Type | undefined): void {
+  // Block-local `type` aliases shadow outer aliases within this block (their
+  // full lexical scoping is deferred); register before checking so forward
+  // references inside the block are shadowed too.
+  const shadowed = enterLocalAliasScope(block.statements, state);
   checkStatements(block.statements, state, new Map(environment), expectedReturnType);
+  exitLocalAliasScope(shadowed, state);
 }
