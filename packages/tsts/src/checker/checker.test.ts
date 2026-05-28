@@ -288,6 +288,23 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type '1'."], forLet.diagnostics.map((d) => d.message));
   }
 
+  derives_logical_operator_result_types(): void {
+    // `&&` / `||` / `??` produce operand-derived result types, NOT boolean.
+    const orResult = checkSourceFile(parseSourceFile("function f(x: string, y: number): string | number { return x || y; }"));
+    const orNotBoolean = checkSourceFile(parseSourceFile("function f(x: string, y: number): number { return x || y; }"));
+    const nullishRemovesNull = checkSourceFile(parseSourceFile("function f(x: string | null, y: number): string | number { return x ?? y; }"));
+    const nullishNoNull = checkSourceFile(parseSourceFile("function f(x: string, y: number): string { return x ?? y; }"));
+    const andBoolean = checkSourceFile(parseSourceFile("function f(b: boolean, y: number): number { return b && y; }"));
+    const andString = checkSourceFile(parseSourceFile("function f(x: string, y: number): string { return x && y; }"));
+
+    Assert.Equal(0, orResult.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'string | number' is not assignable to type 'number'."], orNotBoolean.diagnostics.map((d) => d.message));
+    Assert.Equal(0, nullishRemovesNull.diagnostics.length);
+    Assert.Equal(0, nullishNoNull.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'false | number' is not assignable to type 'number'."], andBoolean.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type '\"\" | number' is not assignable to type 'string'."], andString.diagnostics.map((d) => d.message));
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -407,6 +424,7 @@ A<CheckerGroundworkTests>().method((t) => t.boolean_pair_collapses_in_embedded_u
 A<CheckerGroundworkTests>().method((t) => t.checker_printer_prints_boolean_union).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_satisfies_expression).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.preserves_const_literal_widens_let).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.derives_logical_operator_result_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

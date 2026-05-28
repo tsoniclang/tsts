@@ -44,9 +44,16 @@ import {
   isUnresolvedType,
   isFunctionType,
   getFunctionReturnType,
+  getUnionType,
   getUnionTypeEx,
   UnionReduction,
   getApparentType,
+  getNonNullableType,
+  extractDefinitelyFalsyTypes,
+  removeDefinitelyFalsyTypes,
+  isPossiblyTruthy,
+  isPossiblyFalsy,
+  isPossiblyNullOrUndefined,
   getNegatedLiteralType,
   getWidenedLiteralLikeTypeForContextualType,
   literalTypeFromLiteralExpression,
@@ -138,7 +145,28 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     // (e.g. `1 + 2`) classify as their base primitive.
     const leftApparent = getApparentType(left);
     const rightApparent = getApparentType(right);
-    if (isComparisonOperator(expression.operatorToken.kind) || expression.operatorToken.kind === Kind.AmpersandAmpersandToken || expression.operatorToken.kind === Kind.BarBarToken) {
+    if (expression.operatorToken.kind === Kind.AmpersandAmpersandToken) {
+      // `a && b`: definitely-falsy part of a, unioned with b, when a can be
+      // truthy; otherwise just a (mirrors TS-Go checkBinaryLikeExpression).
+      return isPossiblyTruthy(left)
+        ? getUnionType([extractDefinitelyFalsyTypes(left, state), right], state)
+        : left;
+    }
+    if (expression.operatorToken.kind === Kind.BarBarToken) {
+      // `a || b`: non-nullable truthy part of a, unioned with b, when a can be
+      // falsy; otherwise just a.
+      return isPossiblyFalsy(left)
+        ? getUnionTypeEx([getNonNullableType(removeDefinitelyFalsyTypes(left, state), state), right], UnionReduction.Subtype, state)
+        : left;
+    }
+    if (expression.operatorToken.kind === Kind.QuestionQuestionToken) {
+      // `a ?? b`: non-nullable a, unioned with b, when a can be null/undefined;
+      // otherwise just a.
+      return isPossiblyNullOrUndefined(left)
+        ? getUnionTypeEx([getNonNullableType(left, state), right], UnionReduction.Subtype, state)
+        : left;
+    }
+    if (isComparisonOperator(expression.operatorToken.kind)) {
       return booleanType;
     }
     if (isAssignmentOperator(expression.operatorToken.kind)) {

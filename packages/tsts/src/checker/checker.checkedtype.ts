@@ -394,6 +394,98 @@ export function getApparentType(type: Type): Type {
   return type;
 }
 
+// ---------------------------------------------------------------------------
+// Truthiness / nullability facts (the subset of TS-Go getTypeFacts +
+// falsy-flag helpers needed for `&&` / `||` / `??` result types). Scoped to the
+// primitive / literal / union types the checker currently models.
+// ---------------------------------------------------------------------------
+
+function unionMembers(type: Type): readonly Type[] {
+  return (type.flags & TypeFlags.Union) !== 0 ? (unionConstituents(type) ?? [type]) : [type];
+}
+
+function mapType(type: Type, f: (t: Type) => Type, state: CheckState): Type {
+  if ((type.flags & TypeFlags.Union) === 0) return f(type);
+  return getUnionType((unionConstituents(type) ?? []).map(f), state);
+}
+
+function filterType(type: Type, predicate: (t: Type) => boolean, state: CheckState): Type {
+  if ((type.flags & TypeFlags.Union) === 0) return predicate(type) ? type : neverType;
+  return getUnionType((unionConstituents(type) ?? []).filter(predicate), state);
+}
+
+function isZeroPseudoBigInt(value: PseudoBigInt): boolean {
+  return pseudoBigIntToString(value) === "0";
+}
+
+// A single (non-union) constituent can hold a truthy value.
+function constituentCanBeTruthy(t: Type): boolean {
+  if ((t.flags & (TypeFlags.Any | TypeFlags.Unknown)) !== 0) return true;
+  if ((t.flags & (TypeFlags.Null | TypeFlags.Undefined | TypeFlags.Void | TypeFlags.Never)) !== 0) return false;
+  if ((t.flags & TypeFlags.StringLiteral) !== 0) return (t.data as LiteralType).value !== "";
+  if ((t.flags & TypeFlags.NumberLiteral) !== 0) return (t.data as LiteralType).value !== 0;
+  if ((t.flags & TypeFlags.BigIntLiteral) !== 0) return !isZeroPseudoBigInt((t.data as LiteralType).value as PseudoBigInt);
+  if ((t.flags & TypeFlags.BooleanLiteral) !== 0) return (t.data as LiteralType).value === true;
+  return true;
+}
+
+// A single (non-union) constituent can hold a falsy value.
+function constituentCanBeFalsy(t: Type): boolean {
+  if ((t.flags & (TypeFlags.Any | TypeFlags.Unknown)) !== 0) return true;
+  if ((t.flags & (TypeFlags.Null | TypeFlags.Undefined | TypeFlags.Void)) !== 0) return true;
+  if ((t.flags & TypeFlags.Never) !== 0) return false;
+  if ((t.flags & TypeFlags.StringLiteral) !== 0) return (t.data as LiteralType).value === "";
+  if ((t.flags & TypeFlags.NumberLiteral) !== 0) return (t.data as LiteralType).value === 0;
+  if ((t.flags & TypeFlags.BigIntLiteral) !== 0) return isZeroPseudoBigInt((t.data as LiteralType).value as PseudoBigInt);
+  if ((t.flags & TypeFlags.BooleanLiteral) !== 0) return (t.data as LiteralType).value === false;
+  // Base string / number / bigint can be "" / 0 / 0n.
+  return (t.flags & (TypeFlags.String | TypeFlags.Number | TypeFlags.BigInt)) !== 0;
+}
+
+// hasTypeFacts(type, Truthy): some constituent can be truthy.
+export function isPossiblyTruthy(type: Type): boolean {
+  return unionMembers(type).some(constituentCanBeTruthy);
+}
+
+// hasTypeFacts(type, Falsy): some constituent can be falsy.
+export function isPossiblyFalsy(type: Type): boolean {
+  return unionMembers(type).some(constituentCanBeFalsy);
+}
+
+// hasTypeFacts(type, EQUndefinedOrNull): some constituent is null/undefined.
+export function isPossiblyNullOrUndefined(type: Type): boolean {
+  return unionMembers(type).some((t) => (t.flags & (TypeFlags.Null | TypeFlags.Undefined)) !== 0);
+}
+
+// TS-Go GetNonNullableType: drop null/undefined constituents.
+export function getNonNullableType(type: Type, state: CheckState): Type {
+  return filterType(type, (t) => (t.flags & (TypeFlags.Null | TypeFlags.Undefined)) === 0, state);
+}
+
+// TS-Go getDefinitelyFalsyPartOfType: the always-falsy projection of a type.
+function getDefinitelyFalsyPartOfType(t: Type, state: CheckState): Type {
+  if ((t.flags & TypeFlags.String) !== 0) return getStringLiteralType("", state);
+  if ((t.flags & TypeFlags.Number) !== 0) return getNumberLiteralType(0, state);
+  if ((t.flags & TypeFlags.BigInt) !== 0) return getBigIntLiteralType(parseValidBigInt("0n"), state);
+  if (t === regularFalseType
+    || (t.flags & (TypeFlags.Void | TypeFlags.Undefined | TypeFlags.Null | TypeFlags.Any | TypeFlags.Unknown)) !== 0
+    || ((t.flags & TypeFlags.StringLiteral) !== 0 && (t.data as LiteralType).value === "")
+    || ((t.flags & TypeFlags.NumberLiteral) !== 0 && (t.data as LiteralType).value === 0)
+    || ((t.flags & TypeFlags.BigIntLiteral) !== 0 && isZeroPseudoBigInt((t.data as LiteralType).value as PseudoBigInt))) {
+    return t;
+  }
+  return neverType;
+}
+
+// TS-Go extractDefinitelyFalsyTypes / removeDefinitelyFalsyTypes.
+export function extractDefinitelyFalsyTypes(type: Type, state: CheckState): Type {
+  return mapType(type, (t) => getDefinitelyFalsyPartOfType(t, state), state);
+}
+
+export function removeDefinitelyFalsyTypes(type: Type, state: CheckState): Type {
+  return filterType(type, constituentCanBeTruthy, state);
+}
+
 // Whether a contextual (target) type would preserve a fresh literal source.
 function isLiteralLikeContextualType(contextualType: Type): boolean {
   if ((contextualType.flags & TypeFlags.Literal) !== 0) return true;
