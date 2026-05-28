@@ -265,15 +265,27 @@ export class CheckerGroundworkTests {
     const letNumber = checkSourceFile(parseSourceFile("function f(): 1 { let x = 1; return x; }"));
     const varNumber = checkSourceFile(parseSourceFile("function f(): 1 { var x = 1; return x; }"));
     const constBoolean = checkSourceFile(parseSourceFile("function f(): true { const x = true; return x; }"));
+    const constBigInt = checkSourceFile(parseSourceFile("function f(): 1n { const x = 1n; return x; }"));
+    const letBigInt = checkSourceFile(parseSourceFile("function f(): 1n { let x = 1n; return x; }"));
     const constSatisfies = checkSourceFile(parseSourceFile("function f(): \"a\" { const x = \"a\" satisfies string; return x; }"));
-    const annotationWins = checkSourceFile(parseSourceFile("function f(): number { const x: number = 1; return x; }"));
+    const annotationWinsOk = checkSourceFile(parseSourceFile("function f(): number { const x: number = 1; return x; }"));
+    // Negative proof that the annotation (not the literal) wins: x is `number`.
+    const annotationWinsNegative = checkSourceFile(parseSourceFile("function f(): 1 { const x: number = 1; return x; }"));
+    // The helper is used at the for-loop VariableDeclarationList site too.
+    const forConst = checkSourceFile(parseSourceFile("function f(): 1 { for (const x = 1; ; ) { return x; } return 1; }"));
+    const forLet = checkSourceFile(parseSourceFile("function f(): 1 { for (let x = 1; ; ) { return x; } return 1; }"));
 
     Assert.Equal(0, constNumber.diagnostics.length);
     Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type '1'."], letNumber.diagnostics.map((d) => d.message));
     Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type '1'."], varNumber.diagnostics.map((d) => d.message));
     Assert.Equal(0, constBoolean.diagnostics.length);
+    Assert.Equal(0, constBigInt.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'bigint' is not assignable to type '1n'."], letBigInt.diagnostics.map((d) => d.message));
     Assert.Equal(0, constSatisfies.diagnostics.length);
-    Assert.Equal(0, annotationWins.diagnostics.length);
+    Assert.Equal(0, annotationWinsOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type '1'."], annotationWinsNegative.diagnostics.map((d) => d.message));
+    Assert.Equal(0, forConst.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type '1'."], forLet.diagnostics.map((d) => d.message));
   }
 
   accepts_union_type_node_return_types(): void {
