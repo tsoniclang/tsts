@@ -11,7 +11,7 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
-import type { Type, Signature, VarianceFlags } from "./types.js";
+import type { Type, Signature, VarianceFlags, UnionOrIntersectionType, LiteralType } from "./types.js";
 import { TypeFlags } from "./types.js";
 
 // Composite TypeFlags masks (mirror TS-Go's `TypeFlags*Like`; not
@@ -26,7 +26,13 @@ const SimplifiableFlags =
   UnionOrIntersectionFlags | TypeFlags.IndexedAccess | TypeFlags.Conditional | TypeFlags.Substitution;
 
 function literalValueOf(t: Type): unknown {
-  return (t as unknown as { value?: unknown }).value;
+  return (t.data as LiteralType | undefined)?.value;
+}
+
+// Constituents of a union or intersection type, stored on `Type.data`
+// (mirrors TS-Go's `t.AsUnionOrIntersectionType().Types()`).
+function constituentTypes(t: Type): readonly Type[] | undefined {
+  return (t.data as UnionOrIntersectionType | undefined)?.types;
 }
 
 function getRelationKey(source: Type, target: Type, isIdentity: boolean): string {
@@ -215,7 +221,7 @@ export class Relater {
     // source is related to target (a union) if related to at least one
     // of the union's constituents.
     void reportErrors;
-    const types = (target as unknown as { types?: readonly Type[] }).types;
+    const types = constituentTypes(target);
     if (types === undefined) return Ternary.False;
     for (const t of types) {
       if (this.isTypeAssignableTo(source, t)) return Ternary.True;
@@ -226,7 +232,7 @@ export class Relater {
     // source is related to target (an intersection) iff related to all
     // of its constituents.
     void reportErrors;
-    const types = (target as unknown as { types?: readonly Type[] }).types;
+    const types = constituentTypes(target);
     if (types === undefined) return Ternary.True;
     for (const t of types) {
       if (!this.isTypeAssignableTo(source, t)) return Ternary.False;
@@ -236,7 +242,7 @@ export class Relater {
   someTypeRelatedToType(source: Type, target: Type, reportErrors: boolean): Ternary {
     // Source is a union; succeed if any constituent is related to target.
     void reportErrors;
-    const types = (source as unknown as { types?: readonly Type[] }).types;
+    const types = constituentTypes(source);
     if (types === undefined) return Ternary.False;
     for (const t of types) {
       if (this.isTypeAssignableTo(t, target)) return Ternary.True;
@@ -247,7 +253,7 @@ export class Relater {
     // Every constituent of source must be related to some constituent
     // of target.
     void reportErrors;
-    const sourceTypes = (source as unknown as { types?: readonly Type[] }).types;
+    const sourceTypes = constituentTypes(source);
     if (sourceTypes === undefined) return Ternary.False;
     for (const s of sourceTypes) {
       if (!this.isTypeAssignableTo(s, target)) return Ternary.False;
