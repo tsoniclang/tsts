@@ -583,6 +583,24 @@ export const ScriptKind = {
   Deferred: 7 as ScriptKind,
 } as const;
 
+const scriptKindNames: readonly string[] = [
+  "ScriptKindUnknown",
+  "ScriptKindJS",
+  "ScriptKindJSX",
+  "ScriptKindTS",
+  "ScriptKindTSX",
+  "ScriptKindExternal",
+  "ScriptKindJSON",
+  "ScriptKindDeferred",
+];
+
+export function scriptKindToString(i: ScriptKind): string {
+  if (i < 0 || i >= scriptKindNames.length) {
+    return "ScriptKind(" + String(i) + ")";
+  }
+  return scriptKindNames[i]!;
+}
+
 const EXT_TO_SCRIPT: ReadonlyMap<string, ScriptKind> = new Map([
   [".js", ScriptKind.JS], [".cjs", ScriptKind.JS], [".mjs", ScriptKind.JS],
   [".jsx", ScriptKind.JSX],

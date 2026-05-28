@@ -25,6 +25,7 @@ import {
   isPropertyNameLiteral,
 } from "../ast/index.js";
 import { isPrivateIdentifier } from "../ast/index.js";
+import { binarySearchUniqueFunc } from "../core/index.js";
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -772,24 +773,3 @@ const KindJSDoc = (Kind as unknown as Record<string, number>).JSDoc ?? 0;
 const KindJSDocText = (Kind as unknown as Record<string, number>).JSDocText ?? 0;
 const KindJSDocTypeLiteral = (Kind as unknown as Record<string, number>).JSDocTypeLiteral ?? 0;
 const KindJSDocSignature = (Kind as unknown as Record<string, number>).JSDocSignature ?? 0;
-
-/**
- * Forward-declared replacement for `core.BinarySearchUniqueFunc`.
- * Returns `{ index, match }` where `index` is the insertion point and
- * `match` is true if a match was found.
- */
-function binarySearchUniqueFunc<T>(
-  arr: readonly T[],
-  cmp: (middle: number, value: T) => number,
-): { readonly index: number; readonly match: boolean } {
-  let lo = 0;
-  let hi = arr.length;
-  while (lo < hi) {
-    const mid = (lo + hi) >>> 1;
-    const result = cmp(mid, arr[mid]!);
-    if (result === 0) return { index: mid, match: true };
-    if (result < 0) lo = mid + 1;
-    else hi = mid;
-  }
-  return { index: lo, match: false };
-}

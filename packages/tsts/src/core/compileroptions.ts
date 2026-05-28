@@ -42,6 +42,31 @@ export const ModuleKind = {
   Preserve: 200,
 } as const;
 
+const moduleKindNames: readonly string[] = [
+  "None", "CommonJS", "AMD", "UMD", "System", "ES2015", "ES2020", "ES2022",
+];
+
+const moduleKindNamesEsm: readonly string[] = [
+  "ESNext", "Node16", "Node18", "Node20",
+];
+
+const moduleKindNamesNodeNext: readonly string[] = [
+  "NodeNext", "Preserve",
+];
+
+export function moduleKindToString(i: ModuleKind): string {
+  if (i >= 0 && i <= 7) {
+    return moduleKindNames[i]!;
+  }
+  if (i >= 99 && i <= 102) {
+    return moduleKindNamesEsm[i - 99]!;
+  }
+  if (i >= 199 && i <= 200) {
+    return moduleKindNamesNodeNext[i - 199]!;
+  }
+  return "ModuleKind(" + String(i) + ")";
+}
+
 export type ResolutionMode = ModuleKind;
 export const ResolutionMode = {
   None: ModuleKind.None,
@@ -110,6 +135,25 @@ export const ScriptTarget = {
   Latest: 99 /* ESNext */,
   LatestStandard: 12 /* ES2025 */,
 } as const;
+
+const scriptTargetNames: readonly string[] = [
+  "None", "ES5", "ES2015", "ES2016", "ES2017", "ES2018", "ES2019", "ES2020",
+  "ES2021", "ES2022", "ES2023", "ES2024", "ES2025",
+];
+
+const scriptTargetNamesEsm: readonly string[] = [
+  "ESNext", "JSON",
+];
+
+export function scriptTargetToString(i: ScriptTarget): string {
+  if (i >= 0 && i <= 12) {
+    return scriptTargetNames[i]!;
+  }
+  if (i >= 99 && i <= 100) {
+    return scriptTargetNamesEsm[i - 99]!;
+  }
+  return "ScriptTarget(" + String(i) + ")";
+}
 
 export type JsxEmit = number;
 export const JsxEmit = {
