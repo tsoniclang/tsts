@@ -529,6 +529,33 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type 'unknown' is not assignable to type '{}'."], broadUnknown.diagnostics.map((d) => d.message));
   }
 
+  checks_object_type_signatures(): void {
+    // Index signatures `{ [k: K]: V }`, object call signatures `{ (a): R }`, and
+    // named array `length`. Construct signatures parse but are deferred by the
+    // checker with a deliberate diagnostic.
+    const indexOk = checkSourceFile(parseSourceFile("function f(d: { [key: string]: number }, key: string): number { return d[key]; }"));
+    const indexValueMismatch = checkSourceFile(parseSourceFile("function f(d: { [key: string]: number }, key: string): string { return d[key]; }"));
+    const indexNumericKeyOk = checkSourceFile(parseSourceFile("function f(d: { [key: string]: number }, key: number): number { return d[key]; }"));
+    const indexBadKey = checkSourceFile(parseSourceFile("function f(d: { [key: number]: string }, key: string): string { return d[key]; }"));
+    const callOk = checkSourceFile(parseSourceFile("function f(fn: { (text: string): number }): number { return fn(\"x\"); }"));
+    const callReturnMismatch = checkSourceFile(parseSourceFile("function f(fn: { (text: string): number }): string { return fn(\"x\"); }"));
+    const callArgMismatch = checkSourceFile(parseSourceFile("function f(fn: { (text: string): number }): number { return fn(1); }"));
+    const constructDeferred = checkSourceFile(parseSourceFile("function f(c: { new (text: string): Widget }): void { }"));
+    const arrayLengthOk = checkSourceFile(parseSourceFile("function f(xs: string[]): number { return xs.length; }"));
+    const arrayLengthMismatch = checkSourceFile(parseSourceFile("function f(xs: string[]): string { return xs.length; }"));
+
+    Assert.Equal(0, indexOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], indexValueMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, indexNumericKeyOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'string' cannot be used to index type '{ [key: number]: string }'."], indexBadKey.diagnostics.map((d) => d.message));
+    Assert.Equal(0, callOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], callReturnMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], callArgMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type member kind 'ConstructSignature' is not yet supported by the checker."], constructDeferred.diagnostics.map((d) => d.message));
+    Assert.Equal(0, arrayLengthOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], arrayLengthMismatch.diagnostics.map((d) => d.message));
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -660,6 +687,7 @@ A<CheckerGroundworkTests>().method((t) => t.excess_check_regularization_and_empt
 A<CheckerGroundworkTests>().method((t) => t.checks_array_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_array_spread_index_and_broad_object).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_broad_empty_object_and_index_validation).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_object_type_signatures).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

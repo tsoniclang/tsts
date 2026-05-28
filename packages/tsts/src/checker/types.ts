@@ -512,10 +512,18 @@ export interface ConstrainedType extends TypeBase {
   constraint?: Type;
 }
 
+export interface IndexInfo {
+  keyType: Type;
+  valueType: Type;
+  isReadonly?: boolean;
+  declaration?: AstNode;
+}
+
 export interface StructuredType extends ConstrainedType {
   declaredProperties?: readonly AstSymbol[];
   declaredCallSignatures?: readonly Signature[];
   declaredConstructSignatures?: readonly Signature[];
+  indexInfos?: readonly IndexInfo[];
 }
 
 export interface ObjectType extends StructuredType {

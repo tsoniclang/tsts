@@ -14,7 +14,9 @@ import {
   SymbolFlags,
   isArrayTypeNode,
   isBigIntLiteral,
+  isCallSignatureDeclaration,
   isIdentifier,
+  isIndexSignatureDeclaration,
   isObjectBindingPattern,
   isArrayBindingPattern,
   isKeywordTypeNode,
@@ -31,6 +33,7 @@ import {
   type BindingName,
   type LiteralTypeNode,
   type Node as AstNode,
+  type ParameterDeclaration,
   type Symbol as AstSymbol,
   type TypeLiteralNode,
   type TypeNode,
@@ -39,6 +42,7 @@ import {
 import { fromString, newPseudoBigInt, parsePseudoBigInt, parseValidBigInt, pseudoBigIntToString, type PseudoBigInt } from "../jsnum/index.js";
 import {
   type Type,
+  type IndexInfo,
   type IntrinsicType,
   type LiteralType,
   type ObjectType,
@@ -179,7 +183,7 @@ export interface FunctionParameter {
   readonly rest?: boolean;
 }
 
-export function makeFunctionType(returnType: Type, state: CheckState, parameters: readonly FunctionParameter[] = []): Type {
+export function makeCallSignature(returnType: Type, parameters: readonly FunctionParameter[] = []): Signature {
   const parameterSymbols = parameters.map((parameter) =>
     ({
       name: parameter.name,
@@ -191,15 +195,18 @@ export function makeFunctionType(returnType: Type, state: CheckState, parameters
   );
   // Required arity excludes optional and rest parameters.
   const minArgumentCount = parameters.filter((parameter) => parameter.optional !== true && parameter.rest !== true).length;
-  const signature: Signature = {
+  return {
     flags: 0,
     parameters: parameterSymbols,
     minArgumentCount,
     resolvedReturnType: returnType,
   };
+}
+
+export function makeFunctionType(returnType: Type, state: CheckState, parameters: readonly FunctionParameter[] = []): Type {
   const data: ObjectType = {
     objectFlags: ObjectFlags.Anonymous,
-    declaredCallSignatures: [signature],
+    declaredCallSignatures: [makeCallSignature(returnType, parameters)],
   };
   return { flags: TypeFlags.Object, id: state.nextTypeId(), data };
 }
@@ -224,6 +231,10 @@ export function makeArrayType(elementType: Type, state: CheckState): Type {
 
 export function getArrayElementType(type: Type): Type | undefined {
   return (type.data as unknown as { readonly elementType?: Type } | undefined)?.elementType;
+}
+
+export function getIndexInfos(type: Type): readonly IndexInfo[] | undefined {
+  return (type.data as ObjectType | undefined)?.indexInfos;
 }
 
 export function getFunctionReturnType(type: Type): Type {
@@ -262,7 +273,12 @@ export interface ObjectProperty {
   readonly optional?: boolean;
 }
 
-export function makeObjectType(properties: readonly ObjectProperty[], state: CheckState, fresh = false): Type {
+export interface ObjectTypeExtras {
+  readonly callSignatures?: readonly Signature[];
+  readonly indexInfos?: readonly IndexInfo[];
+}
+
+export function makeObjectType(properties: readonly ObjectProperty[], state: CheckState, fresh = false, extras?: ObjectTypeExtras): Type {
   const members = new Map<string, AstSymbol>();
   for (const property of properties) {
     const symbol: PropertySymbol = {
@@ -275,7 +291,11 @@ export function makeObjectType(properties: readonly ObjectProperty[], state: Che
   }
   // Direct object literals are marked fresh; the assignability relation uses
   // freshness to gate excess-property checking. Type-literal types are not fresh.
-  const data: ObjectType = { objectFlags: fresh ? (ObjectFlags.Anonymous | ObjectFlags.FreshLiteral) : ObjectFlags.Anonymous };
+  const data: ObjectType = {
+    objectFlags: fresh ? (ObjectFlags.Anonymous | ObjectFlags.FreshLiteral) : ObjectFlags.Anonymous,
+    ...(extras?.callSignatures !== undefined ? { declaredCallSignatures: extras.callSignatures } : {}),
+    ...(extras?.indexInfos !== undefined ? { indexInfos: extras.indexInfos } : {}),
+  };
   const typeSymbol = { name: "__object", declarations: [], members } as unknown as AstSymbol;
   return { flags: TypeFlags.Object, id: state.nextTypeId(), data, symbol: typeSymbol };
 }
@@ -723,11 +743,26 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
   return anyType;
 }
 
+// Build the FunctionParameter list for a signature/method declaration's
+// parameters (named parameters only; matches the method-signature path).
+function functionParametersFromNode(parameters: readonly ParameterDeclaration[], state: CheckState): FunctionParameter[] {
+  return parameters
+    .filter((parameter) => isIdentifier(parameter.name))
+    .map((parameter) => ({
+      name: (parameter.name as { readonly text: string }).text,
+      type: parameter.type === undefined ? anyType : typeFromTypeNode(parameter.type, state),
+      optional: parameter.questionToken !== undefined || parameter.initializer !== undefined,
+      rest: parameter.dotDotDotToken !== undefined,
+    }));
+}
+
 // `{ name: T; ... }` type literals: build an anonymous object type from the
-// property signatures (only named property signatures are modeled in this
-// tranche; index/call/construct signatures are deferred).
+// property/method signatures, call signatures, and index signatures. Construct
+// signatures and non-identifier names are still deferred.
 function typeFromTypeLiteralNode(node: TypeLiteralNode, state: CheckState): Type {
   const properties: ObjectProperty[] = [];
+  const callSignatures: Signature[] = [];
+  const indexInfos: IndexInfo[] = [];
   for (const member of node.members) {
     if (isPropertySignatureDeclaration(member) && isIdentifier(member.name)) {
       properties.push({
@@ -737,26 +772,33 @@ function typeFromTypeLiteralNode(node: TypeLiteralNode, state: CheckState): Type
       });
     } else if (isMethodSignatureDeclaration(member) && isIdentifier(member.name)) {
       const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
-      const parameters = member.parameters
-        .filter((parameter) => isIdentifier(parameter.name))
-        .map((parameter) => ({
-          name: (parameter.name as { readonly text: string }).text,
-          type: parameter.type === undefined ? anyType : typeFromTypeNode(parameter.type, state),
-          optional: parameter.questionToken !== undefined || parameter.initializer !== undefined,
-          rest: parameter.dotDotDotToken !== undefined,
-        }));
       properties.push({
         name: member.name.text,
-        type: makeFunctionType(returnType, state, parameters),
+        type: makeFunctionType(returnType, state, functionParametersFromNode(member.parameters, state)),
         optional: member.postfixToken?.kind === Kind.QuestionToken,
       });
+    } else if (isCallSignatureDeclaration(member)) {
+      // `{ (args): R }` — an object type carrying a bare call signature.
+      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
+      callSignatures.push(makeCallSignature(returnType, functionParametersFromNode(member.parameters, state)));
+    } else if (isIndexSignatureDeclaration(member)) {
+      // `{ [key: K]: V }` — the index parameter's type is the key, member.type
+      // is the value. A missing key/value type defaults to `any`.
+      const keyParameter = member.parameters[0];
+      const keyType = keyParameter?.type === undefined ? anyType : typeFromTypeNode(keyParameter.type, state);
+      const valueType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
+      indexInfos.push({ keyType, valueType, declaration: member });
     } else {
-      // Index/call/construct signatures + non-identifier names aren't modeled
-      // yet; surface explicitly rather than silently dropping the member.
+      // Construct signatures + non-identifier names aren't modeled yet; surface
+      // explicitly rather than silently dropping the member.
       state.diagnostics.push({ message: `Type member kind '${Kind[member.kind]}' is not yet supported by the checker.` });
     }
   }
-  return makeObjectType(properties, state);
+  const extras: ObjectTypeExtras = {
+    ...(callSignatures.length > 0 ? { callSignatures } : {}),
+    ...(indexInfos.length > 0 ? { indexInfos } : {}),
+  };
+  return makeObjectType(properties, state, false, extras);
 }
 
 // Literal type nodes resolve to the REGULAR literal type via the shared
@@ -819,6 +861,13 @@ export function setBindingElementType(element: BindingElement, type: Type, envir
   }
 }
 
+// The declared index parameter name (`[key: string]`) for display, falling back
+// to `x` (TS-Go's default) when the declaration is unavailable.
+function indexSignatureParameterName(info: IndexInfo): string {
+  const parameter = (info.declaration as { parameters?: readonly ParameterDeclaration[] } | undefined)?.parameters?.[0];
+  return parameter !== undefined && isIdentifier(parameter.name) ? parameter.name.text : "x";
+}
+
 export function displayType(type: Type): string {
   if ((type.flags & TypeFlags.Union) !== 0) {
     const constituents = unionConstituents(type) ?? [];
@@ -852,7 +901,11 @@ export function displayType(type: Type): string {
     const members = objectTypeMembers(type);
     if (members !== undefined) {
       const entries = [...members.values()].map((m) => `${m.name}: ${displayType(m.type)}`);
-      return entries.length === 0 ? "{}" : `{ ${entries.join("; ")} }`;
+      const indexEntries = (getIndexInfos(type) ?? []).map(
+        (info) => `[${indexSignatureParameterName(info)}: ${displayType(info.keyType)}]: ${displayType(info.valueType)}`,
+      );
+      const all = [...entries, ...indexEntries];
+      return all.length === 0 ? "{}" : `{ ${all.join("; ")} }`;
     }
     return "object";
   }

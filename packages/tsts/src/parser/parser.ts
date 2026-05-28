@@ -50,6 +50,9 @@ import {
   createInterfaceDeclaration,
   createKeywordTypeNode,
   createCallExpression,
+  createCallSignatureDeclaration,
+  createConstructSignatureDeclaration,
+  createIndexSignatureDeclaration,
   createKeywordExpression,
   createLiteralTypeNode,
   createMethodDeclaration,
@@ -651,8 +654,19 @@ export class Parser {
     return createPropertyDeclaration(modifiers, name, postfixToken, type, initializer);
   }
 
+  // Mirrors TS-Go parser.go parseTypeMember: call/construct signatures first,
+  // then modifiers, then index signatures, then property/method signatures.
   #parseTypeElement(): TypeElement {
+    if (this.#current().kind === Kind.OpenParenToken || this.#current().kind === Kind.LessThanToken) {
+      return this.#parseSignatureMember(Kind.CallSignature);
+    }
+    if (this.#current().kind === Kind.NewKeyword && this.#nextTokenIsOpenParenOrLessThan()) {
+      return this.#parseSignatureMember(Kind.ConstructSignature);
+    }
     const modifiers = this.#parseModifiers();
+    if (this.#isIndexSignature()) {
+      return this.#parseIndexSignatureDeclaration(modifiers);
+    }
     const name = this.#parsePropertyName();
     const postfixToken = this.#parseOptionalPostfixToken();
     if (this.#current().kind === Kind.OpenParenToken || this.#current().kind === Kind.LessThanToken) {
@@ -669,6 +683,67 @@ export class Parser {
     this.#consumeOptional(Kind.SemicolonToken);
     this.#consumeOptional(Kind.CommaToken);
     return createPropertySignatureDeclaration(modifiers, name, postfixToken, type as never, undefined as never);
+  }
+
+  // `{ (args): R }` (call) and `{ new (args): R }` (construct) signatures.
+  #parseSignatureMember(kind: Kind.CallSignature | Kind.ConstructSignature): TypeElement {
+    if (kind === Kind.ConstructSignature) {
+      this.#expect(Kind.NewKeyword);
+    }
+    const typeParameters = this.#parseOptionalTypeParameters();
+    this.#expect(Kind.OpenParenToken);
+    const parameters = this.#parseParameterList();
+    this.#expect(Kind.CloseParenToken);
+    const type = this.#parseOptionalTypeAnnotation();
+    this.#consumeOptional(Kind.SemicolonToken);
+    this.#consumeOptional(Kind.CommaToken);
+    return kind === Kind.CallSignature
+      ? createCallSignatureDeclaration(typeParameters, createNodeArray(parameters), type)
+      : createConstructSignatureDeclaration(typeParameters, createNodeArray(parameters), type);
+  }
+
+  // `{ [key: K]: V }` index signature.
+  #parseIndexSignatureDeclaration(modifiers: NodeArray<ModifierLike> | undefined): TypeElement {
+    this.#expect(Kind.OpenBracketToken);
+    const parameters = this.#parseParameterList();
+    this.#expect(Kind.CloseBracketToken);
+    const type = this.#parseOptionalTypeAnnotation();
+    this.#consumeOptional(Kind.SemicolonToken);
+    this.#consumeOptional(Kind.CommaToken);
+    return createIndexSignatureDeclaration(modifiers, createNodeArray(parameters), type as never);
+  }
+
+  #nextTokenIsOpenParenOrLessThan(): boolean {
+    const kind = this.#tokens[this.#index + 1]?.kind ?? Kind.Unknown;
+    return kind === Kind.OpenParenToken || kind === Kind.LessThanToken;
+  }
+
+  // Distinguish an index signature `[id: T]` from a computed property name.
+  // Faithful port of TS-Go nextIsUnambiguouslyIndexSignature (token lookahead).
+  #isIndexSignature(): boolean {
+    if (this.#current().kind !== Kind.OpenBracketToken) {
+      return false;
+    }
+    const kindAt = (offset: number): Kind => this.#tokens[this.#index + offset]?.kind ?? Kind.Unknown;
+    const first = kindAt(1);
+    if (first === Kind.DotDotDotToken || first === Kind.CloseBracketToken) {
+      return true;
+    }
+    if (modifierKinds.has(first)) {
+      return isIdentifierNameKind(kindAt(2));
+    }
+    if (!isIdentifierNameKind(first)) {
+      return false;
+    }
+    const afterId = kindAt(2);
+    if (afterId === Kind.ColonToken || afterId === Kind.CommaToken) {
+      return true;
+    }
+    if (afterId !== Kind.QuestionToken) {
+      return false;
+    }
+    const afterQuestion = kindAt(3);
+    return afterQuestion === Kind.ColonToken || afterQuestion === Kind.CommaToken || afterQuestion === Kind.CloseBracketToken;
   }
 
   #parseOptionalTypeParameters(): NodeArray<TypeParameterDeclaration> | undefined {

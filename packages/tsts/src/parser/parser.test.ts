@@ -11,8 +11,11 @@ import {
   isBinaryExpression,
   isBlock,
   isCallExpression,
+  isCallSignatureDeclaration,
   isClassDeclaration,
   isConstructorDeclaration,
+  isConstructSignatureDeclaration,
+  isIndexSignatureDeclaration,
   isContinueStatement,
   isConditionalExpression,
   isElementAccessExpression,
@@ -385,6 +388,39 @@ export class ParserGroundworkTests {
     Assert.True(isTypeAliasDeclaration(sourceFile.statements[0]!));
     Assert.Equal(Kind.TryStatement, sourceFile.statements[1]!.kind);
   }
+
+  parses_type_literal_call_index_and_construct_signatures(): void {
+    const sourceFile = parseSourceFile(
+      "type T = { (text: string): number; [key: string]: number; new (text: string): Widget };",
+    );
+    const statement = sourceFile.statements[0]!;
+    Assert.True(isTypeAliasDeclaration(statement));
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias");
+    Assert.True(isTypeLiteralNode(statement.type));
+    if (!isTypeLiteralNode(statement.type)) throw new Exception("Expected type literal");
+    Assert.Equal(3, statement.type.members.length);
+
+    const callSig = statement.type.members[0]!;
+    Assert.True(isCallSignatureDeclaration(callSig));
+    if (!isCallSignatureDeclaration(callSig)) throw new Exception("Expected call signature");
+    Assert.Equal(1, callSig.parameters.length);
+    Assert.Equal(Kind.StringKeyword, callSig.parameters[0]!.type?.kind);
+    Assert.Equal(Kind.NumberKeyword, callSig.type?.kind);
+
+    const indexSig = statement.type.members[1]!;
+    Assert.True(isIndexSignatureDeclaration(indexSig));
+    if (!isIndexSignatureDeclaration(indexSig)) throw new Exception("Expected index signature");
+    Assert.Equal(1, indexSig.parameters.length);
+    Assert.Equal("key", (indexSig.parameters[0]!.name as { text: string }).text);
+    Assert.Equal(Kind.StringKeyword, indexSig.parameters[0]!.type?.kind);
+    Assert.Equal(Kind.NumberKeyword, indexSig.type?.kind);
+
+    const constructSig = statement.type.members[2]!;
+    Assert.True(isConstructSignatureDeclaration(constructSig));
+    if (!isConstructSignatureDeclaration(constructSig)) throw new Exception("Expected construct signature");
+    Assert.Equal(1, constructSig.parameters.length);
+    Assert.Equal(Kind.StringKeyword, constructSig.parameters[0]!.type?.kind);
+  }
 }
 
 A<ParserGroundworkTests>().method((t) => t.produces_a_source_file_with_expression_statements).add(FactAttribute);
@@ -406,3 +442,4 @@ A<ParserGroundworkTests>().method((t) => t.produces_core_access_unary_new_and_co
 A<ParserGroundworkTests>().method((t) => t.produces_object_and_array_binding_patterns_in_declarations_and_parameters).add(FactAttribute);
 A<ParserGroundworkTests>().method((t) => t.parses_ts_go_enum_private_identifier_and_type_predicate_surfaces).add(FactAttribute);
 A<ParserGroundworkTests>().method((t) => t.parses_generic_function_types_try_catch_switch_and_throw_statements).add(FactAttribute);
+A<ParserGroundworkTests>().method((t) => t.parses_type_literal_call_index_and_construct_signatures).add(FactAttribute);

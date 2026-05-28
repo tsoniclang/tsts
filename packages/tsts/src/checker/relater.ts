@@ -12,7 +12,7 @@
 
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
 import { SymbolFlags } from "../ast/index.js";
-import type { Type, Signature, VarianceFlags, UnionOrIntersectionType, LiteralType, ObjectType } from "./types.js";
+import type { Type, Signature, VarianceFlags, UnionOrIntersectionType, LiteralType, ObjectType, IndexInfo } from "./types.js";
 import { TypeFlags, SignatureKind, ObjectFlags, getTypeOfSymbol } from "./types.js";
 
 // Composite TypeFlags masks (now defined 1:1 in types.ts); aliased locally
@@ -43,6 +43,10 @@ function constituentTypes(t: Type): readonly Type[] | undefined {
 function signaturesOf(t: Type, kind: SignatureKind): readonly Signature[] | undefined {
   const data = t.data as ObjectType | undefined;
   return kind === SignatureKind.Call ? data?.declaredCallSignatures : data?.declaredConstructSignatures;
+}
+
+function indexInfosOf(t: Type): readonly IndexInfo[] | undefined {
+  return (t.data as ObjectType | undefined)?.indexInfos;
 }
 
 function getRelationKey(source: Type, target: Type, isIdentity: boolean): string {
@@ -350,14 +354,14 @@ export class Relater {
   membersRelatedToIndexInfo(source: Type, target: Type, reportErrors: boolean): Ternary {
     // Each member of source's type must satisfy target's index signature.
     void reportErrors;
-    const indexInfos = (target as unknown as { indexInfos?: readonly { keyType: Type; type: Type }[] }).indexInfos;
+    const indexInfos = indexInfosOf(target);
     const sourceMembers = (source as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members;
     if (indexInfos === undefined || sourceMembers === undefined) return Ternary.True;
     for (const [, sym] of sourceMembers) {
       const memberType = (sym as unknown as { type?: Type }).type;
       if (memberType === undefined) continue;
       for (const info of indexInfos) {
-        if (!this.isTypeAssignableTo(memberType, info.type)) return Ternary.False;
+        if (!this.isTypeAssignableTo(memberType, info.valueType)) return Ternary.False;
       }
     }
     return Ternary.True;
@@ -443,18 +447,19 @@ export class Relater {
     source: Type, target: Type, sourceIsPrimitive: boolean, reportErrors: boolean,
   ): Ternary {
     void sourceIsPrimitive;
-    const targetInfos = (target as unknown as { indexInfos?: readonly { keyType: Type; type: Type }[] }).indexInfos;
+    const targetInfos = indexInfosOf(target);
     if (targetInfos === undefined || targetInfos.length === 0) return Ternary.True;
-    const sourceInfos = (source as unknown as { indexInfos?: readonly { keyType: Type; type: Type }[] }).indexInfos;
+    const sourceInfos = indexInfosOf(source);
     if (sourceInfos === undefined) {
       // Members of source must satisfy target's index signature.
       return this.membersRelatedToIndexInfo(source, target, reportErrors);
     }
-    // Match per keyType.
+    // Match per keyType: each target index info needs a source info whose key
+    // relates and whose value is assignable.
     for (const ti of targetInfos) {
       let found = false;
       for (const si of sourceInfos) {
-        if (this.indexInfoRelatedTo(si as unknown as Type, ti as unknown as Type, reportErrors) !== Ternary.False) {
+        if (this.indexInfoRelatedTo(si, ti, reportErrors) !== Ternary.False) {
           found = true; break;
         }
       }
@@ -463,12 +468,10 @@ export class Relater {
     return Ternary.True;
   }
 
-  indexInfoRelatedTo(source: Type, target: Type, reportErrors: boolean): Ternary {
+  indexInfoRelatedTo(source: IndexInfo, target: IndexInfo, reportErrors: boolean): Ternary {
     void reportErrors;
-    const sourceType = (source as unknown as { type?: Type }).type;
-    const targetType = (target as unknown as { type?: Type }).type;
-    if (sourceType === undefined || targetType === undefined) return Ternary.True;
-    return this.isTypeAssignableTo(sourceType, targetType) ? Ternary.True : Ternary.False;
+    if (!this.isTypeAssignableTo(target.keyType, source.keyType)) return Ternary.False;
+    return this.isTypeAssignableTo(source.valueType, target.valueType) ? Ternary.True : Ternary.False;
   }
 
   // -------------------------------------------------------------------------
@@ -664,7 +667,7 @@ export class Relater {
     if (callSigs !== undefined && callSigs.length > 0) return false;
     const constructSigs = signaturesOf(t, SignatureKind.Construct);
     if (constructSigs !== undefined && constructSigs.length > 0) return false;
-    const indexInfos = (t as unknown as { indexInfos?: readonly unknown[] }).indexInfos;
+    const indexInfos = indexInfosOf(t);
     if (indexInfos !== undefined && indexInfos.length > 0) return false;
     return true;
   }

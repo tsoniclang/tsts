@@ -71,6 +71,7 @@ import {
   isRestSymbol,
   getCallSignature,
   getArrayElementType,
+  getIndexInfos,
   makeArrayType,
   neverType,
   type ObjectProperty,
@@ -272,6 +273,22 @@ export function inferExpression(expression: Expression, state: CheckState, envir
       }
       return elementType;
     }
+    // Index-signature access: `d[k]` returns the matching index info's value
+    // type when the index relates to the key type. A string index signature is
+    // also satisfied by a numeric index (JS keys coerce to strings).
+    const indexInfos = getIndexInfos(receiverType);
+    if (indexInfos !== undefined && indexInfos.length > 0) {
+      if (isAnyType(indexType) || isUnresolvedType(indexType)) {
+        return indexInfos[0]!.valueType;
+      }
+      const indexApparent = getApparentType(indexType);
+      const matched = indexInfos.find((info) =>
+        state.relater.isTypeAssignableTo(indexApparent, info.keyType)
+        || (isStringType(info.keyType) && isNumberType(indexApparent)));
+      if (matched !== undefined) return matched.valueType;
+      state.diagnostics.push({ message: `Type '${displayType(indexType)}' cannot be used to index type '${displayType(receiverType)}'.` });
+      return unresolvedType;
+    }
     return unresolvedType;
   }
   if (isCallExpression(expression)) {
@@ -374,6 +391,9 @@ export function inferPropertyAccess(expression: Expression, propertyName: string
     return makeFunctionType(stringType, state, placeholderRestParameters);
   }
   if (isStringType(receiverType) && propertyName === "length") {
+    return numberType;
+  }
+  if (getArrayElementType(receiverType) !== undefined && propertyName === "length") {
     return numberType;
   }
   if (isStringType(receiverType) && stringMethodReturnTypes.has(propertyName)) {
