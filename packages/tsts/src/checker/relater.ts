@@ -14,6 +14,27 @@ import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
 import type { Type, Signature, VarianceFlags } from "./types.js";
 import { TypeFlags } from "./types.js";
 
+// Composite TypeFlags masks (mirror TS-Go's `TypeFlags*Like`; not
+// pre-defined in types.ts, so derived here from the base bits).
+const StringLikeFlags = TypeFlags.String | TypeFlags.StringLiteral;
+const NumberLikeFlags = TypeFlags.Number | TypeFlags.NumberLiteral;
+const BigIntLikeFlags = TypeFlags.BigInt | TypeFlags.BigIntLiteral;
+const BooleanLikeFlags = TypeFlags.Boolean | TypeFlags.BooleanLiteral;
+const ESSymbolLikeFlags = TypeFlags.ESSymbol | TypeFlags.UniqueESSymbol;
+const UnionOrIntersectionFlags = TypeFlags.Union | TypeFlags.Intersection;
+const SimplifiableFlags =
+  UnionOrIntersectionFlags | TypeFlags.IndexedAccess | TypeFlags.Conditional | TypeFlags.Substitution;
+
+function literalValueOf(t: Type): unknown {
+  return (t as unknown as { value?: unknown }).value;
+}
+
+function getRelationKey(source: Type, target: Type, isIdentity: boolean): string {
+  const sid = (source as { id?: number }).id ?? 0;
+  const tid = (target as { id?: number }).id ?? 0;
+  return isIdentity && sid > tid ? `${tid},${sid}` : `${sid},${tid}`;
+}
+
 // ---------------------------------------------------------------------------
 // Relation tables
 // ---------------------------------------------------------------------------
@@ -69,6 +90,10 @@ export class Relater {
   comparableRelation: Relation = { kind: RelationKind.Comparable, cache: new Map() };
   enumRelation: Map<string, RelationComparisonResult> = new Map();
 
+  // strictNullChecks affects whether `null`/`undefined` are widely
+  // assignable. Modern default is on; the checker can flip it.
+  strictNullChecks = true;
+
   // -------------------------------------------------------------------------
   // Public entry points
   // -------------------------------------------------------------------------
@@ -95,30 +120,39 @@ export class Relater {
     return this.isTypeRelatedTo(source, target, this.comparableRelation);
   }
   isTypeRelatedTo(source: Type, target: Type, relation: Relation): boolean {
+    // Faithful port of relater.go isTypeRelatedTo. (Fresh-literal
+    // normalization is deferred — it affects only literal-identity
+    // edge cases.)
     if (source === target) return true;
     const sf = (source as { flags?: number }).flags ?? 0;
     const tf = (target as { flags?: number }).flags ?? 0;
-    // Any/Unknown target accepts everything.
-    if ((tf & (TypeFlags.Any | TypeFlags.Unknown)) !== 0) return true;
-    // Any source assigns to anything except never.
-    if ((sf & TypeFlags.Any) !== 0 && (tf & TypeFlags.Never) === 0) return true;
-    // Never source assigns to anything.
-    if ((sf & TypeFlags.Never) !== 0) return true;
-    // Primitive ↔ primitive: same flag bit.
-    if ((sf & TypeFlags.Primitive) !== 0 && (tf & TypeFlags.Primitive) !== 0) {
-      if (sf === tf) return true;
-      // Literal-of-primitive widens to its base in assignable contexts.
-      if (relation.kind === RelationKind.Assignable || relation.kind === RelationKind.Subtype) {
-        if ((sf & TypeFlags.StringLiteral) !== 0 && (tf & TypeFlags.String) !== 0) return true;
-        if ((sf & TypeFlags.NumberLiteral) !== 0 && (tf & TypeFlags.Number) !== 0) return true;
-        if ((sf & TypeFlags.BooleanLiteral) !== 0 && (tf & TypeFlags.Boolean) !== 0) return true;
-        if ((sf & TypeFlags.BigIntLiteral) !== 0 && (tf & TypeFlags.BigInt) !== 0) return true;
+    if (relation.kind !== RelationKind.Identity) {
+      if (
+        (relation.kind === RelationKind.Comparable
+          && (tf & TypeFlags.Never) === 0
+          && this.isSimpleTypeRelatedTo(target, source, relation))
+        || this.isSimpleTypeRelatedTo(source, target, relation)
+      ) {
+        return true;
       }
-      return false;
+    } else if (((sf | tf) & SimplifiableFlags) === 0) {
+      // Excluding types that may simplify, identical types must have
+      // identical flags.
+      if (sf !== tf) return false;
+      // Intrinsic singletons with equal flags are identical.
+      if ((sf & TypeFlags.Primitive) !== 0) return true;
     }
-    // Object/structural cases need the full relater — conservative
-    // "true" until the deep walk is ported.
-    return true;
+    if ((sf & TypeFlags.Object) !== 0 && (tf & TypeFlags.Object) !== 0) {
+      const id = getRelationKey(source, target, relation.kind === RelationKind.Identity);
+      const cached = relation.cache.get(id);
+      if (cached !== undefined && cached !== RelationComparisonResult.None) {
+        return (cached & RelationComparisonResult.Succeeded) !== 0;
+      }
+    }
+    if ((sf & TypeFlags.StructuredOrInstantiable) !== 0 || (tf & TypeFlags.StructuredOrInstantiable) !== 0) {
+      return this.checkTypeRelatedTo(source, target, relation, undefined);
+    }
+    return false;
   }
   checkTypeAssignableTo(
     source: Type, target: Type, errorNode: AstNode | undefined,
@@ -131,7 +165,24 @@ export class Relater {
     source: Type, target: Type, relation: Relation, errorNode: AstNode | undefined,
   ): boolean {
     void errorNode;
-    return this.isTypeRelatedTo(source, target, relation);
+    if (this.isSimpleTypeRelatedTo(source, target, relation)) return true;
+    const sf = (source as { flags?: number }).flags ?? 0;
+    const tf = (target as { flags?: number }).flags ?? 0;
+    if ((sf & TypeFlags.StructuredOrInstantiable) === 0 && (tf & TypeFlags.StructuredOrInstantiable) === 0) {
+      return false;
+    }
+    const key = getRelationKey(source, target, relation.kind === RelationKind.Identity);
+    const cached = relation.cache.get(key);
+    if (cached !== undefined && cached !== RelationComparisonResult.None) {
+      return (cached & RelationComparisonResult.Succeeded) !== 0;
+    }
+    // Coinductive guard: assume related while recursing so cyclic
+    // (recursive) types terminate (mirrors TS's maybe-stack approach).
+    relation.cache.set(key, RelationComparisonResult.Succeeded);
+    const result = this.recursiveTypeRelatedTo(source, target, false, 0, RecursionFlags.Both, relation);
+    const ok = result !== Ternary.False;
+    relation.cache.set(key, ok ? RelationComparisonResult.Succeeded : RelationComparisonResult.Failed);
+    return ok;
   }
 
   // -------------------------------------------------------------------------
@@ -142,8 +193,22 @@ export class Relater {
     source: Type, target: Type, reportErrors: boolean, intersectionState: number,
     recursionFlags: RecursionFlags, relation: Relation,
   ): Ternary {
-    void source; void target; void reportErrors; void intersectionState; void recursionFlags; void relation;
-    return Ternary.True;
+    void recursionFlags; void relation;
+    const sf = (source as { flags?: number }).flags ?? 0;
+    const tf = (target as { flags?: number }).flags ?? 0;
+    // Target union: source must relate to at least one constituent.
+    if ((tf & TypeFlags.Union) !== 0) return this.typeRelatedToSomeType(source, target, reportErrors);
+    // Target intersection: source must relate to every constituent.
+    if ((tf & TypeFlags.Intersection) !== 0) return this.typeRelatedToEachType(source, target, reportErrors);
+    // Source union: every constituent must relate to target.
+    if ((sf & TypeFlags.Union) !== 0) return this.eachTypeRelatedToType(source, target, reportErrors);
+    // Source intersection: some constituent must relate to target.
+    if ((sf & TypeFlags.Intersection) !== 0) return this.someTypeRelatedToType(source, target, reportErrors);
+    // Both object: structural comparison.
+    if ((sf & TypeFlags.Object) !== 0 && (tf & TypeFlags.Object) !== 0) {
+      return this.structuredTypeRelatedTo(source, target, reportErrors, intersectionState);
+    }
+    return Ternary.False;
   }
 
   typeRelatedToSomeType(source: Type, target: Type, reportErrors: boolean): Ternary {
@@ -366,7 +431,81 @@ export class Relater {
     return true;
   }
   isSimpleTypeRelatedTo(source: Type, target: Type, relation: Relation): boolean {
-    return this.isTypeRelatedTo(source, target, relation);
+    // Faithful port of relater.go isSimpleTypeRelatedTo: the flag-level
+    // (non-structural) relation rules between intrinsic/primitive types.
+    const s = (source as { flags?: number }).flags ?? 0;
+    const t = (target as { flags?: number }).flags ?? 0;
+    if ((t & TypeFlags.Any) !== 0 || (s & TypeFlags.Never) !== 0) return true;
+    if ((t & TypeFlags.Unknown) !== 0
+      && !(relation.kind === RelationKind.StrictSubtype && (s & TypeFlags.Any) !== 0)) {
+      return true;
+    }
+    if ((t & TypeFlags.Never) !== 0) return false;
+    if ((s & StringLikeFlags) !== 0 && (t & TypeFlags.String) !== 0) return true;
+    if ((s & TypeFlags.StringLiteral) !== 0 && (s & TypeFlags.EnumLiteral) !== 0
+      && (t & TypeFlags.StringLiteral) !== 0 && (t & TypeFlags.EnumLiteral) === 0
+      && literalValueOf(source) === literalValueOf(target)) {
+      return true;
+    }
+    if ((s & NumberLikeFlags) !== 0 && (t & TypeFlags.Number) !== 0) return true;
+    if ((s & TypeFlags.NumberLiteral) !== 0 && (s & TypeFlags.EnumLiteral) !== 0
+      && (t & TypeFlags.NumberLiteral) !== 0 && (t & TypeFlags.EnumLiteral) === 0
+      && literalValueOf(source) === literalValueOf(target)) {
+      return true;
+    }
+    if ((s & BigIntLikeFlags) !== 0 && (t & TypeFlags.BigInt) !== 0) return true;
+    if ((s & BooleanLikeFlags) !== 0 && (t & TypeFlags.Boolean) !== 0) return true;
+    if ((s & ESSymbolLikeFlags) !== 0 && (t & TypeFlags.ESSymbol) !== 0) return true;
+    if ((s & TypeFlags.Enum) !== 0 && (t & TypeFlags.Enum) !== 0 && this.isEnumTypeRelatedTo(source, target)) {
+      return true;
+    }
+    if ((s & TypeFlags.EnumLiteral) !== 0 && (t & TypeFlags.EnumLiteral) !== 0) {
+      if ((s & TypeFlags.Union) !== 0 && (t & TypeFlags.Union) !== 0 && this.isEnumTypeRelatedTo(source, target)) {
+        return true;
+      }
+      if ((s & TypeFlags.Literal) !== 0 && (t & TypeFlags.Literal) !== 0
+        && literalValueOf(source) === literalValueOf(target) && this.isEnumTypeRelatedTo(source, target)) {
+        return true;
+      }
+    }
+    // In non-strictNullChecks mode, undefined/null are assignable to
+    // anything except never (and unions/intersections, which may reduce).
+    if ((s & TypeFlags.Undefined) !== 0
+      && ((!this.strictNullChecks && (t & UnionOrIntersectionFlags) === 0)
+        || (t & (TypeFlags.Undefined | TypeFlags.Void)) !== 0)) {
+      return true;
+    }
+    if ((s & TypeFlags.Null) !== 0
+      && ((!this.strictNullChecks && (t & UnionOrIntersectionFlags) === 0)
+        || (t & TypeFlags.Null) !== 0)) {
+      return true;
+    }
+    if ((s & TypeFlags.Object) !== 0 && (t & TypeFlags.NonPrimitive) !== 0) {
+      return true;
+    }
+    if (relation.kind === RelationKind.Assignable || relation.kind === RelationKind.Comparable) {
+      if ((s & TypeFlags.Any) !== 0) return true;
+      if ((s & TypeFlags.Number) !== 0
+        && ((t & TypeFlags.Enum) !== 0 || ((t & TypeFlags.NumberLiteral) !== 0 && (t & TypeFlags.EnumLiteral) !== 0))) {
+        return true;
+      }
+      if ((s & TypeFlags.NumberLiteral) !== 0 && (s & TypeFlags.EnumLiteral) === 0
+        && ((t & TypeFlags.Enum) !== 0
+          || ((t & TypeFlags.NumberLiteral) !== 0 && (t & TypeFlags.EnumLiteral) !== 0 && literalValueOf(source) === literalValueOf(target)))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  isEnumTypeRelatedTo(source: Type, target: Type): boolean {
+    // Simplified: full version (relater.go) walks enum members via the
+    // checker. Here: same enum symbol, or same enum name.
+    const ss = (source as unknown as { symbol?: { name?: string } }).symbol;
+    const ts = (target as unknown as { symbol?: { name?: string } }).symbol;
+    if (ss === undefined || ts === undefined) return false;
+    if (ss === ts) return true;
+    return ss.name !== undefined && ss.name === ts.name;
   }
   isTypeDerivedFrom(source: Type, target: Type): boolean {
     return this.isTypeAssignableTo(source, target);
