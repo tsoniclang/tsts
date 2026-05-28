@@ -29,16 +29,18 @@ export const InferencePriority = {
   NoConstraints: (1 << 9) as InferencePriority,
   AlwaysStrict: (1 << 10) as InferencePriority,
   MaxValue: (1 << 11) as InferencePriority,
+  Circularity: -1 as InferencePriority, // less than all other priorities
+  PriorityImpliesCombination: 416 as InferencePriority, // ReturnType|MappedTypeConstraint|LiteralKeyof
 } as const;
 
 export type InferenceFlags = number;
+// 1:1 with TS-Go: only None/NoDefault/AnyDefault/SkippedGenericFunction
+// (the Strada ProvidesGenericReturn/TooManyDeductions flags were dropped).
 export const InferenceFlags = {
   None: 0 as InferenceFlags,
   NoDefault: (1 << 0) as InferenceFlags,
   AnyDefault: (1 << 1) as InferenceFlags,
   SkippedGenericFunction: (1 << 2) as InferenceFlags,
-  ProvidesGenericReturn: (1 << 3) as InferenceFlags,
-  TooManyDeductions: (1 << 4) as InferenceFlags,
 } as const;
 
 // ---------------------------------------------------------------------------
