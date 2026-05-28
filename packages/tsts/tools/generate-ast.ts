@@ -1370,8 +1370,41 @@ function generateIndex(): string {
   ].join("\n");
 }
 
+// formatType maps schema `any` -> emitted `unknown` for TSTS's no-`any`
+// surface. Only SyntheticExpression.Type is allowed to be `any` (TS-Go models
+// it as an untyped checker-Type slot). Guard against a future upstream schema
+// refresh silently introducing new `any` members whose semantics nobody
+// reviewed — fail loudly so the mapping decision stays explicit.
+const APPROVED_ANY_MEMBERS: ReadonlySet<string> = new Set(["SyntheticExpression.Type"]);
+
+function assertApprovedAnyMembers(schema: AstSchema): void {
+  const offenders: string[] = [];
+  for (const [nodeName, definition] of Object.entries(schema.nodes.definitions)) {
+    for (const member of definition.members ?? []) {
+      if (member.type === "any" && !APPROVED_ANY_MEMBERS.has(`${nodeName}.${member.name}`)) {
+        offenders.push(`${nodeName}.${member.name}`);
+      }
+    }
+  }
+  for (const [baseName, base] of Object.entries(schema.bases)) {
+    for (const [fieldName, field] of Object.entries(base.fields ?? {})) {
+      if (field.type === "any" && !APPROVED_ANY_MEMBERS.has(`${baseName}.${fieldName}`)) {
+        offenders.push(`${baseName}.${fieldName}`);
+      }
+    }
+  }
+  if (offenders.length > 0) {
+    throw new Error(
+      `Review required: schema has \`any\` member(s) not on the approved list: ${offenders.join(", ")}. `
+      + "The generator maps `any` -> `unknown`; confirm the intended emitted type and update "
+      + "APPROVED_ANY_MEMBERS in tools/generate-ast.ts.",
+    );
+  }
+}
+
 async function main(): Promise<void> {
   const schema = await readAstSchema();
+  assertApprovedAnyMembers(schema);
   await writeGenerated("src/ast/generated/kind.ts", generateKind(schema));
   await writeGenerated("src/ast/generated/schema.ts", generateSchemaContract(schema));
   await writeGenerated("src/ast/generated/types.ts", generateRuntimeTypes());
