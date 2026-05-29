@@ -30,6 +30,7 @@ import {
   isCaseClause,
   isCatchClause,
   isClassDeclaration,
+  isClassStaticBlockDeclaration,
   isComputedPropertyName,
   isConditionalExpression,
   isConditionalTypeNode,
@@ -37,6 +38,7 @@ import {
   isConstructorDeclaration,
   isConstructorTypeNode,
   isDebuggerStatement,
+  isDecorator,
   isElementAccessExpression,
   isEmptyStatement,
   isEnumDeclaration,
@@ -1199,6 +1201,115 @@ export class ParserPositionTests {
     Assert.Equal(10, member.end);
   }
 
+  // Stage 1h: a decorator on a class declaration. `@dec class C {}` -> the decorator `@dec`
+  // lives in the class's modifiers list, spans [0,4); its expression is the Identifier `dec`
+  // [1,4). The class declaration start covers the decorator: [0,15).
+  decorator_on_class_declaration_lives_in_modifiers(): void {
+    const sourceFile = parseSourceFile("@dec class C {}");
+    const statement = sourceFile.statements[0]!;
+    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(15, statement.end);
+    const modifiers = statement.modifiers!;
+    const decorator = modifiers[0]!;
+    if (!isDecorator(decorator)) throw new Exception("Expected decorator");
+    Assert.Equal(Kind.Decorator, decorator.kind);
+    Assert.Equal(0, decorator.pos);
+    Assert.Equal(4, decorator.end);
+    const expression = decorator.expression;
+    if (!isIdentifier(expression)) throw new Exception("Expected identifier decorator expression");
+    Assert.Equal(1, expression.pos);
+    Assert.Equal(4, expression.end);
+  }
+
+  // Stage 1h: a dotted decorator `@ns.deco class C {}` -> the decorator spans [0,8) and its
+  // expression is a PropertyAccessExpression `ns.deco`. Proves the decorator expression is a
+  // full left-hand-side expression (tsgo parseDecoratorExpression -> parseLeftHandSideExpressionOrHigher).
+  decorator_dotted_expression_is_property_access(): void {
+    const sourceFile = parseSourceFile("@ns.deco class C {}");
+    const statement = sourceFile.statements[0]!;
+    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
+    const decorator = statement.modifiers![0]!;
+    if (!isDecorator(decorator)) throw new Exception("Expected decorator");
+    Assert.Equal(0, decorator.pos);
+    Assert.Equal(8, decorator.end);
+    if (!isPropertyAccessExpression(decorator.expression)) throw new Exception("Expected property access decorator expression");
+  }
+
+  // Stage 1h: a call decorator `@deco(1) class C {}` -> the decorator spans [0,8) and its
+  // expression is a CallExpression. Proves `@expr(args)` parses via the LHS-expression path.
+  decorator_call_expression_form(): void {
+    const sourceFile = parseSourceFile("@deco(1) class C {}");
+    const statement = sourceFile.statements[0]!;
+    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
+    const decorator = statement.modifiers![0]!;
+    if (!isDecorator(decorator)) throw new Exception("Expected decorator");
+    Assert.Equal(0, decorator.pos);
+    Assert.Equal(8, decorator.end);
+    if (!isCallExpression(decorator.expression)) throw new Exception("Expected call decorator expression");
+  }
+
+  // Stage 1h: decorators on class members. `class C { @dec m(){} @dec x=1 }` -> the method
+  // member starts at its decorator (`@` at 10) and ends after its body (`}` at 19, end 20),
+  // [10,20); its decorator is [10,14). The property member starts at its decorator (`@` at 21),
+  // ends after `1` (end 29), [21,29); its decorator is [21,25).
+  decorators_on_class_members_thread_member_start(): void {
+    const sourceFile = parseSourceFile("class C { @dec m(){} @dec x=1 }");
+    const statement = sourceFile.statements[0]!;
+    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
+    const method = statement.members[0]!;
+    if (!isMethodDeclaration(method)) throw new Exception("Expected method declaration");
+    Assert.Equal(10, method.pos);
+    Assert.Equal(20, method.end);
+    const methodDecorator = method.modifiers![0]!;
+    if (!isDecorator(methodDecorator)) throw new Exception("Expected method decorator");
+    Assert.Equal(10, methodDecorator.pos);
+    Assert.Equal(14, methodDecorator.end);
+    const property = statement.members[1]!;
+    if (!isPropertyDeclaration(property)) throw new Exception("Expected property declaration");
+    Assert.Equal(21, property.pos);
+    Assert.Equal(29, property.end);
+    const propertyDecorator = property.modifiers![0]!;
+    if (!isDecorator(propertyDecorator)) throw new Exception("Expected property decorator");
+    Assert.Equal(21, propertyDecorator.pos);
+    Assert.Equal(25, propertyDecorator.end);
+  }
+
+  // Stage 1h: a decorator on a parameter. `function f(@dec p){}` -> the parameter starts at
+  // its decorator (`@` at 11) and ends after the name `p` (end 17), [11,17); its decorator is
+  // [11,15) and carries the Identifier `dec`.
+  decorator_on_parameter_threads_parameter_start(): void {
+    const sourceFile = parseSourceFile("function f(@dec p){}");
+    const statement = sourceFile.statements[0]!;
+    if (!isFunctionDeclaration(statement)) throw new Exception("Expected function declaration");
+    const param = statement.parameters[0]!;
+    if (!isParameterDeclaration(param)) throw new Exception("Expected parameter declaration");
+    Assert.Equal(11, param.pos);
+    Assert.Equal(17, param.end);
+    const decorator = param.modifiers![0]!;
+    if (!isDecorator(decorator)) throw new Exception("Expected parameter decorator");
+    Assert.Equal(11, decorator.pos);
+    Assert.Equal(15, decorator.end);
+  }
+
+  // Stage 1h: a class static block. `class C { static { } }` -> the static-block member starts
+  // at `static` (index 10) and ends after the body's `}` (index 19, end 20), [10,20). Its body
+  // is a Block spanning the braces [17,20).
+  class_static_block_member_spans_static_through_body(): void {
+    const sourceFile = parseSourceFile("class C { static { } }");
+    const statement = sourceFile.statements[0]!;
+    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
+    const member = statement.members[0]!;
+    if (!isClassStaticBlockDeclaration(member)) throw new Exception("Expected class static block declaration");
+    Assert.Equal(Kind.ClassStaticBlockDeclaration, member.kind);
+    Assert.Equal(10, member.pos);
+    Assert.Equal(20, member.end);
+    const body = member.body;
+    if (!isBlock(body)) throw new Exception("Expected block body");
+    Assert.Equal(17, body.pos);
+    Assert.Equal(20, body.end);
+  }
+
   // Stage 1e: interface members. `interface I{ a:number; m(): void; [k:string]:number }`
   // -> property signature `a:number` [13,22); method signature `m(): void` [23,33);
   // index signature `[k:string]:number` [34,51).
@@ -1888,6 +1999,12 @@ A<ParserPositionTests>().method((t) => t.modifier_led_member_starts_at_modifier)
 A<ParserPositionTests>().method((t) => t.static_modifier_led_method_starts_at_modifier).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.class_constructor_and_set_accessor_ranges).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.semicolon_class_element_is_token_tight).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.decorator_on_class_declaration_lives_in_modifiers).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.decorator_dotted_expression_is_property_access).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.decorator_call_expression_form).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.decorators_on_class_members_thread_member_start).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.decorator_on_parameter_threads_parameter_start).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.class_static_block_member_spans_static_through_body).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.interface_property_method_index_signature_ranges).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.interface_call_and_construct_signature_ranges).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.enum_member_ranges_cover_initializer).add(FactAttribute);

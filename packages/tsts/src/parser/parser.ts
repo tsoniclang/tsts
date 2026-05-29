@@ -15,11 +15,13 @@ import {
   createCaseClause,
   createCatchClause,
   createClassDeclaration,
+  createClassStaticBlockDeclaration,
   createComputedPropertyName,
   createConditionalTypeNode,
   createConstructorDeclaration,
   createConstructorTypeNode,
   createDebuggerStatement,
+  createDecorator,
   createDeleteExpression,
   createDefaultClause,
   createEmptyStatement,
@@ -141,6 +143,7 @@ import {
   type ConciseBody,
   type ClassElement,
   type CaseOrDefaultClause,
+  type Decorator,
   type Expression,
   type ExpressionWithTypeArguments,
   type EntityName,
@@ -150,6 +153,7 @@ import {
   type ImportSpecifier,
   type ImportPhaseModifierSyntaxKind,
   type KeywordTypeSyntaxKind,
+  type LeftHandSideExpression,
   type ModifierSyntaxKind,
   type ModifierLike,
   type MinusToken,
@@ -296,7 +300,13 @@ export class Parser {
     // enum/function/expression statement). Keyword-led statements that reject modifiers
     // capture their own pos at their #parseX entry instead.
     const pos = this.#nodePos();
-    const modifiers = this.#parseModifiers();
+    // tsgo parseStatement routes a leading `@` (KindAtToken, parser.go:1107-1108) into
+    // parseDeclaration -> parseModifiersEx(allowDecorators=true), so leading decorators on a
+    // class/function declaration are consumed into `modifiers`. Pass allowDecorators=true here
+    // so a leading `@` is parsed as a decorator (otherwise it would fall through to
+    // #parseExpression and throw); the existing ClassKeyword/FunctionKeyword switch cases then
+    // build the decorated declaration with the combined modifiers list.
+    const modifiers = this.#parseModifiers(true);
     // tsgo parseDeclarationWorker KindExportKeyword case (parser.go:1169-1178): after the
     // `export` keyword, the FOLLOWING token decides the production. Unlike tsgo (where the
     // bare `export` is consumed inside parseDeclarationWorker), tsts's #parseModifiers has
@@ -713,13 +723,44 @@ export class Parser {
     return this.#finishNode(createImportAttribute(name, value), pos);
   }
 
-  #parseModifiers(): NodeArray<ModifierLike> | undefined {
+  // tsgo parseModifiers / parseModifiersEx (parser.go:3854-3896): a single loop that, when
+  // `allowDecorators` is set, accepts EITHER a decorator (`@expr` -> parseDecorator) OR a
+  // keyword modifier, appending both into ONE list (ModifierLike already includes Decorator,
+  // nodes.ts:1019). tsts keeps the existing keyword-modifier branch and adds the AtToken
+  // branch in front. `allowDecorators` defaults to false so decorator-forbidding sites
+  // (#parseTypeElement et al.) never mis-consume a stray `@`, mirroring tsgo's parseModifiers
+  // (allowDecorators=false) vs parseModifiersEx(true). The grammar-level legality of
+  // interleavings/orderings is deferred to the checker, exactly as tsgo does.
+  #parseModifiers(allowDecorators = false): NodeArray<ModifierLike> | undefined {
     const modifiers: ModifierLike[] = [];
-    while (this.#isModifierAtCurrentPosition()) {
+    while (true) {
+      if (allowDecorators && this.#current().kind === Kind.AtToken) {
+        modifiers.push(this.#parseDecorator());
+        continue;
+      }
+      if (!this.#isModifierAtCurrentPosition()) {
+        break;
+      }
       modifiers.push(createToken(this.#current().kind as ModifierSyntaxKind) as ModifierLike);
       this.#advance();
     }
     return modifiers.length === 0 ? undefined : createNodeArray(modifiers);
+  }
+
+  // tsgo parseDecorator (parser.go:3898): pos at the `@`, consume it, then parse the
+  // decorator expression as a left-hand-side expression. tsgo wraps the expression in
+  // NodeFlagsDecoratorContext (parser.go:3901) which gates ONLY the `@await`-in-await-context
+  // recovery + an in/of restriction (parseDecoratorExpression parser.go:3905-3915) — neither
+  // changes node shape/range for valid `@expr` / `@ns.expr` / `@expr(args)` decorators. That
+  // contextFlag is intentionally NOT implemented here (Stage 1 forbids contextFlags); the
+  // DecoratorContext-gated `@await` recovery is BLOCKED-on-Stage-2 (dependency:
+  // contextFlags / NodeFlagsDecoratorContext + NodeFlagsAwaitContext). The non-await branch
+  // (parser.go:3915) is reproduced directly via #parseLeftHandSideExpression.
+  #parseDecorator(): Decorator {
+    const pos = this.#nodePos();
+    this.#expect(Kind.AtToken);
+    const expression = this.#parseLeftHandSideExpression() as LeftHandSideExpression;
+    return this.#finishNode(createDecorator(expression), pos);
   }
 
   #isModifierAtCurrentPosition(): boolean {
@@ -727,6 +768,13 @@ export class Parser {
       return false;
     }
     const nextKind = this.#tokens[this.#index + 1]?.kind;
+    // tsgo tryParseModifier stopOnStartOfClassStaticBlock (parser.go:3929-3930): a `static`
+    // immediately followed by `{` is NOT a modifier — it begins a class static block, which
+    // is dispatched by #parseClassElement. Without this guard #parseModifiers would eat the
+    // `static` and misparse the `{`.
+    if (this.#current().kind === Kind.StaticKeyword && nextKind === Kind.OpenBraceToken) {
+      return false;
+    }
     return nextKind !== Kind.QuestionToken
       && nextKind !== Kind.ColonToken
       && nextKind !== Kind.OpenParenToken
@@ -905,7 +953,22 @@ export class Parser {
     if (this.#consumeOptional(Kind.SemicolonToken)) {
       return this.#finishNode(createSemicolonClassElement(), pos);
     }
-    const modifiers = this.#parseModifiers();
+    // tsgo parseClassElement (parser.go:1853): parseModifiersEx(allowDecorators=true,
+    // stopOnStartOfClassStaticBlock=true) — decorators on members are consumed here, and a
+    // `static {` is left UNconsumed (the static-block guard lives in #isModifierAtCurrentPosition).
+    const modifiers = this.#parseModifiers(true);
+    // tsgo parseClassElement static-block dispatch (parser.go:1854-1856): the static-block
+    // check runs AFTER parseModifiers and BEFORE the get/set/constructor branches, on the
+    // still-unconsumed `static` token. `static {` -> parseClassStaticBlockDeclaration. The
+    // body's await/yield contextFlags (parseClassStaticBlockBody parser.go:1907-1914) are
+    // intentionally NOT set (Stage 1 forbids contextFlags); the body shape/range is identical
+    // for valid input, so they are BLOCKED-on-Stage-2 (dependency: contextFlags /
+    // NodeFlagsAwaitContext + NodeFlagsYieldContext).
+    if (this.#current().kind === Kind.StaticKeyword && this.#tokens[this.#index + 1]?.kind === Kind.OpenBraceToken) {
+      this.#expect(Kind.StaticKeyword);
+      const body = this.#parseBlock();
+      return this.#finishNode(createClassStaticBlockDeclaration(modifiers, body), pos);
+    }
     if (this.#current().kind === Kind.ConstructorKeyword) {
       this.#advance();
       this.#expect(Kind.OpenParenToken);
@@ -1212,12 +1275,18 @@ export class Parser {
     // and the optional `...`; finishNode after the optional initializer. (The single-
     // identifier arrow param in #parseArrowFunction is stamped separately via paramPos.)
     const pos = this.#nodePos();
+    // tsgo parseParameterEx (parser.go:3315-3323): parseModifiersEx(allowDecorators=true)
+    // runs right after the entry pos capture and BEFORE the `...` consume. This threads
+    // parameter decorators (`@dec p`) and parameter-property accessibility modifiers
+    // (public/private/protected/readonly) into the ParameterDeclaration's modifiers list
+    // (previously hard-coded undefined, silently dropping them).
+    const modifiers = this.#parseModifiers(true);
     const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
     const name = this.#parseBindingName();
     const questionToken = this.#consumeOptional(Kind.QuestionToken) ? createToken(Kind.QuestionToken) : undefined;
     const type = this.#parseOptionalTypeAnnotation();
     const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
-    return this.#finishNode(createParameterDeclaration(undefined, dotDotDotToken, name, questionToken, type, initializer), pos);
+    return this.#finishNode(createParameterDeclaration(modifiers, dotDotDotToken, name, questionToken, type, initializer), pos);
   }
 
   #parseBlock(): Block {
