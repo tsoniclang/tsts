@@ -806,10 +806,13 @@ export class Parser {
     }
     const typeParameters: TypeParameterDeclaration[] = [];
     do {
+      // tsgo parseTypeParameter (3228): pos at entry (before modifiers/name);
+      // finishNode after the optional defaultType.
+      const pos = this.#nodePos();
       const name = this.#parseIdentifier();
       const constraint = this.#consumeOptional(Kind.ExtendsKeyword) ? this.#parseType() : undefined;
       const defaultType = this.#consumeOptional(Kind.EqualsToken) ? this.#parseType() : undefined;
-      typeParameters.push(createTypeParameterDeclaration(undefined, name, constraint, undefined, defaultType));
+      typeParameters.push(this.#finishNode(createTypeParameterDeclaration(undefined, name, constraint, undefined, defaultType), pos));
     } while (this.#consumeOptional(Kind.CommaToken));
     this.#expectGreaterThan();
     return createNodeArray(typeParameters);
@@ -830,9 +833,14 @@ export class Parser {
   }
 
   #parseExpressionWithTypeArguments(): ExpressionWithTypeArguments {
+    // tsgo parseExpressionWithTypeArguments (1834): pos at the expression start;
+    // finishNode after the optional type-argument list. Only the EWTA wrapper +
+    // its TypeNode args are stamped here; the inner heritage PropertyAccess stays
+    // unstamped (Stage 1e).
+    const pos = this.#nodePos();
     const expression = this.#parseHeritageExpression();
     const typeArguments = this.#parseOptionalTypeArguments();
-    return createExpressionWithTypeArguments(expression, typeArguments);
+    return this.#finishNode(createExpressionWithTypeArguments(expression, typeArguments), pos);
   }
 
   #parseHeritageExpression(): Expression {
@@ -1611,6 +1619,9 @@ export class Parser {
     if (predicate !== undefined) {
       return predicate;
     }
+    // tsgo parseType (2607): pos captured before parseUnionTypeOrHigher; the same
+    // pos doubles as the conditional-type start (covers checkType through falseType).
+    const pos = this.#nodePos();
     const checkType = this.#parseUnionType();
     if (this.#consumeOptional(Kind.ExtendsKeyword)) {
       const extendsType = this.#parseType();
@@ -1618,59 +1629,77 @@ export class Parser {
       const trueType = this.#parseType();
       this.#expect(Kind.ColonToken);
       const falseType = this.#parseType();
-      return createConditionalTypeNode(checkType, extendsType, trueType, falseType);
+      return this.#finishNode(createConditionalTypeNode(checkType, extendsType, trueType, falseType), pos);
     }
     return checkType;
   }
 
   #parseUnionType(): TypeNode {
+    // tsgo parseUnionOrIntersectionType (2639): pos at entry (before the optional
+    // leading operator); finishNode ONLY when the union node is actually built. The
+    // single-constituent passthrough returns the child unwrapped and must NOT be
+    // re-stamped (else the child's correct range is overwritten).
+    const pos = this.#nodePos();
     const hasLeadingBar = this.#consumeOptional(Kind.BarToken);
     const types = [this.#parseIntersectionType()];
     while (this.#consumeOptional(Kind.BarToken)) {
       types.push(this.#parseIntersectionType());
     }
-    return !hasLeadingBar && types.length === 1 ? types[0]! : createUnionTypeNode(createNodeArray(types));
+    return !hasLeadingBar && types.length === 1 ? types[0]! : this.#finishNode(createUnionTypeNode(createNodeArray(types)), pos);
   }
 
   #parseIntersectionType(): TypeNode {
+    // tsgo parseUnionOrIntersectionType (2639): pos at entry; finishNode ONLY when
+    // the intersection node is built (single-constituent passthrough unwrapped).
+    const pos = this.#nodePos();
     const types = [this.#parsePostfixType()];
     while (this.#consumeOptional(Kind.AmpersandToken)) {
       types.push(this.#parsePostfixType());
     }
-    return types.length === 1 ? types[0]! : createIntersectionTypeNode(createNodeArray(types));
+    return types.length === 1 ? types[0]! : this.#finishNode(createIntersectionTypeNode(createNodeArray(types)), pos);
   }
 
   #parsePostfixType(): TypeNode {
+    // tsgo parsePostfixTypeOrHigher (2727): the node start for array (T[]) and
+    // indexed-access (T[K]) is the LEFTMOST primary type's start — capture pos ONCE
+    // before parseNonArrayType and thread that single pos into each loop iteration's
+    // finishNode, finishing AFTER the closing ']' so the end covers it.
+    const pos = this.#nodePos();
     let type = this.#parsePrimaryType();
     while (this.#current().kind === Kind.OpenBracketToken) {
       this.#advance();
       if (this.#consumeOptional(Kind.CloseBracketToken)) {
-        type = createArrayTypeNode(type);
+        type = this.#finishNode(createArrayTypeNode(type), pos);
         continue;
       }
       const indexType = this.#parseType();
       this.#expect(Kind.CloseBracketToken);
-      type = createIndexedAccessTypeNode(type, indexType);
+      type = this.#finishNode(createIndexedAccessTypeNode(type, indexType), pos);
     }
     return type;
   }
 
   #parsePrimaryType(): TypeNode {
+    // tsgo: each non-array type production captures pos := nodePos() at its start
+    // (before its first token). None of the branches below consume a token before
+    // this point, so a single capture at the top covers all of them. The two
+    // function-type branches ('<' and '(' paths) own their pos internally.
+    const pos = this.#nodePos();
     const token = this.#current();
     if (token.kind === Kind.KeyOfKeyword || token.kind === Kind.ReadonlyKeyword || token.kind === Kind.UniqueKeyword) {
       this.#advance();
-      return createTypeOperatorNode(token.kind as Kind.KeyOfKeyword | Kind.ReadonlyKeyword | Kind.UniqueKeyword, this.#parsePostfixType());
+      return this.#finishNode(createTypeOperatorNode(token.kind as Kind.KeyOfKeyword | Kind.ReadonlyKeyword | Kind.UniqueKeyword, this.#parsePostfixType()), pos);
     }
     if (token.kind === Kind.TypeOfKeyword) {
       this.#advance();
-      return createTypeQueryNode(this.#parseEntityName(), this.#parseOptionalTypeArguments());
+      return this.#finishNode(createTypeQueryNode(this.#parseEntityName(), this.#parseOptionalTypeArguments()), pos);
     }
     if (token.kind === Kind.LessThanToken) {
       return this.#parseFunctionTypeWithOptionalTypeParameters();
     }
     if (token.kind === Kind.ThisKeyword) {
       this.#advance();
-      return createThisTypeNode();
+      return this.#finishNode(createThisTypeNode(), pos);
     }
     if (token.kind === Kind.OpenParenToken) {
       const functionType = this.#tryParseFunctionType();
@@ -1680,7 +1709,7 @@ export class Parser {
       this.#advance();
       const type = this.#parseType();
       this.#expect(Kind.CloseParenToken);
-      return createParenthesizedTypeNode(type);
+      return this.#finishNode(createParenthesizedTypeNode(type), pos);
     }
     if (token.kind === Kind.NewKeyword) {
       this.#advance();
@@ -1688,7 +1717,7 @@ export class Parser {
       const parameters = this.#parseParameterList();
       this.#expect(Kind.CloseParenToken);
       this.#expect(Kind.EqualsGreaterThanToken);
-      return createConstructorTypeNode(undefined, undefined, createNodeArray(parameters), this.#parseType());
+      return this.#finishNode(createConstructorTypeNode(undefined, undefined, createNodeArray(parameters), this.#parseType()), pos);
     }
     if (token.kind === Kind.OpenBracketToken) {
       this.#advance();
@@ -1698,7 +1727,7 @@ export class Parser {
         this.#consumeOptional(Kind.CommaToken);
       }
       this.#expect(Kind.CloseBracketToken);
-      return createTupleTypeNode(createNodeArray(elements));
+      return this.#finishNode(createTupleTypeNode(createNodeArray(elements)), pos);
     }
     if (token.kind === Kind.OpenBraceToken) {
       this.#advance();
@@ -1710,23 +1739,29 @@ export class Parser {
         members.push(this.#parseTypeElement());
       }
       this.#expect(Kind.CloseBraceToken);
-      return createTypeLiteralNode(createNodeArray(members));
+      return this.#finishNode(createTypeLiteralNode(createNodeArray(members)), pos);
     }
     if (keywordTypeKinds.has(token.kind)) {
       this.#advance();
-      return createKeywordTypeNode(token.kind as KeywordTypeSyntaxKind);
+      return this.#finishNode(createKeywordTypeNode(token.kind as KeywordTypeSyntaxKind), pos);
     }
     if (token.kind === Kind.StringLiteral) {
-      return createLiteralTypeNode(this.#parseStringLiteralExpression());
+      // The inner string-literal leaf is stamped via #parseStringLiteralExpression;
+      // the LiteralTypeNode wrapper shares that same start (tsgo parseLiteralTypeNode 2875).
+      return this.#finishNode(createLiteralTypeNode(this.#parseStringLiteralExpression()), pos);
     }
     if (token.kind === Kind.NumericLiteral) {
+      // Stage-1a-deferred numeric leaf: stamp BOTH the inner numeric literal and the
+      // LiteralTypeNode wrapper with the same pos (tsgo parseLiteralExpression stamps
+      // the leaf, parseLiteralTypeNode stamps the wrapper, both share pos).
       this.#advance();
-      return createLiteralTypeNode(createNumericLiteral(token.text, 0));
+      return this.#finishNode(createLiteralTypeNode(this.#finishNode(createNumericLiteral(token.text, 0), pos)), pos);
     }
     if (token.kind === Kind.BigIntLiteral) {
-      const pos = this.#nodePos();
+      // The bigint leaf is already stamped; stamp the LiteralTypeNode wrapper with
+      // that same pos (tsgo parseLiteralTypeNode 2875).
       this.#advance();
-      return createLiteralTypeNode(this.#finishNode(createBigIntLiteral(token.text, 0), pos));
+      return this.#finishNode(createLiteralTypeNode(this.#finishNode(createBigIntLiteral(token.text, 0), pos)), pos);
     }
     // Negative numeric / bigint literal type nodes only (TS-Go: KindMinusToken
     // when lookahead is a numeric/bigint literal -> LiteralTypeNode wrapping a
@@ -1734,9 +1769,10 @@ export class Parser {
     if (token.kind === Kind.MinusToken) {
       const nextKind = this.#tokens[this.#index + 1]?.kind;
       if (nextKind === Kind.NumericLiteral || nextKind === Kind.BigIntLiteral) {
-        // Stage-1a-deferred negative-literal PrefixUnaryExpression. The inner literal leaf and
-        // the PrefixUnaryExpression wrapper are expression-shaped (Stage 1b) and must be
-        // stamped; the LiteralTypeNode wrapper is a TYPE node (Stage 1d) and is left unstamped.
+        // The inner literal leaf and the PrefixUnaryExpression wrapper are stamped
+        // (Stage 1b). Stage 1d stamps the LiteralTypeNode wrapper with unaryPos (the
+        // '-' token start) so it shares the prefix-unary start (tsgo parseLiteralTypeNode
+        // negative=true 2887-2889: both PrefixUnary and LiteralTypeNode share pos).
         const unaryPos = this.#nodePos();
         this.#advance();
         const literalPos = this.#nodePos();
@@ -1744,21 +1780,26 @@ export class Parser {
         const literal = literalToken.kind === Kind.BigIntLiteral
           ? this.#finishNode(createBigIntLiteral(literalToken.text, 0), literalPos)
           : this.#finishNode(createNumericLiteral(literalToken.text, 0), literalPos);
-        return createLiteralTypeNode(this.#finishNode(createPrefixUnaryExpression(Kind.MinusToken, literal), unaryPos));
+        return this.#finishNode(createLiteralTypeNode(this.#finishNode(createPrefixUnaryExpression(Kind.MinusToken, literal), unaryPos)), unaryPos);
       }
     }
     if (token.kind === Kind.TrueKeyword || token.kind === Kind.FalseKeyword || token.kind === Kind.NullKeyword) {
+      // Stage-1b-deferred keyword leaf: stamp BOTH the inner keyword-expression leaf
+      // (tsgo parseKeywordExpression 5762) and the LiteralTypeNode wrapper with pos.
       this.#advance();
-      return createLiteralTypeNode(createKeywordExpression(token.kind as Kind.TrueKeyword | Kind.FalseKeyword | Kind.NullKeyword));
+      return this.#finishNode(createLiteralTypeNode(this.#finishNode(createKeywordExpression(token.kind as Kind.TrueKeyword | Kind.FalseKeyword | Kind.NullKeyword), pos)), pos);
     }
     if (isIdentifierNameKind(token.kind)) {
-      return createTypeReferenceNode(this.#parseEntityName(), this.#parseOptionalTypeArguments());
+      return this.#finishNode(createTypeReferenceNode(this.#parseEntityName(), this.#parseOptionalTypeArguments()), pos);
     }
     throw new ParseError(`Unexpected type token ${Kind[token.kind]}`, token);
   }
 
   #tryParseFunctionType(): TypeNode | undefined {
+    // tsgo parseFunctionOrConstructorType (3775): pos at the '(' (captured BEFORE the
+    // speculative consume). On the rewind paths NO node is created, so no stray stamp.
     const startIndex = this.#index;
+    const pos = this.#nodePos();
     try {
       this.#expect(Kind.OpenParenToken);
       const parameters = this.#parseParameterList();
@@ -1767,7 +1808,7 @@ export class Parser {
         this.#index = startIndex;
         return undefined;
       }
-      return createFunctionTypeNode(undefined, createNodeArray(parameters), this.#parseType());
+      return this.#finishNode(createFunctionTypeNode(undefined, createNodeArray(parameters), this.#parseType()), pos);
     } catch {
       this.#index = startIndex;
       return undefined;
@@ -1775,21 +1816,32 @@ export class Parser {
   }
 
   #parseFunctionTypeWithOptionalTypeParameters(): TypeNode {
+    // tsgo parseFunctionOrConstructorType (3775): pos at the '<' (before the optional
+    // type parameters); finishNode after the return-type #parseType.
+    const pos = this.#nodePos();
     const typeParameters = this.#parseOptionalTypeParameters();
     this.#expect(Kind.OpenParenToken);
     const parameters = this.#parseParameterList();
     this.#expect(Kind.CloseParenToken);
     this.#expect(Kind.EqualsGreaterThanToken);
-    return createFunctionTypeNode(typeParameters, createNodeArray(parameters), this.#parseType());
+    return this.#finishNode(createFunctionTypeNode(typeParameters, createNodeArray(parameters), this.#parseType()), pos);
   }
 
   #tryParseTypePredicate(): TypeNode | undefined {
+    // tsgo parseTypeOrTypePredicate / parseAssertsTypePredicate (3404/3668): pos at
+    // entry (BEFORE the optional 'asserts'); finishNode after parameterName (no 'is')
+    // or after the #parseType following 'is'. The rewind paths return undefined
+    // without creating a node, so no stray stamp.
     const startIndex = this.#index;
+    const pos = this.#nodePos();
     const assertsModifier = this.#consumeOptional(Kind.AssertsKeyword) ? createToken(Kind.AssertsKeyword) : undefined;
     let parameterName: ReturnType<typeof createThisTypeNode> | Identifier;
     if (this.#current().kind === Kind.ThisKeyword) {
+      // Inner this-type leaf used as the predicate parameter: capture pos before
+      // advancing 'this' (tsgo parseThisTypeNode 2828).
+      const thisPos = this.#nodePos();
       this.#advance();
-      parameterName = createThisTypeNode();
+      parameterName = this.#finishNode(createThisTypeNode(), thisPos);
     } else if (isIdentifierNameKind(this.#current().kind)) {
       parameterName = this.#parseIdentifier();
     } else {
@@ -1798,18 +1850,21 @@ export class Parser {
     }
     if (!this.#consumeOptional(Kind.IsKeyword)) {
       if (assertsModifier !== undefined) {
-        return createTypePredicateNode(assertsModifier, parameterName, undefined);
+        return this.#finishNode(createTypePredicateNode(assertsModifier, parameterName, undefined), pos);
       }
       this.#index = startIndex;
       return undefined;
     }
-    return createTypePredicateNode(assertsModifier, parameterName, this.#parseType());
+    return this.#finishNode(createTypePredicateNode(assertsModifier, parameterName, this.#parseType()), pos);
   }
 
   #parseEntityName(): EntityName {
+    // tsgo parseEntityName (2901): the node start is the leftmost entity-name start
+    // threaded through the dotted loop; finishNode each iteration with the single pos.
+    const pos = this.#nodePos();
     let name: EntityName = this.#parseIdentifier();
     while (this.#consumeOptional(Kind.DotToken)) {
-      name = createQualifiedName(name, this.#parseIdentifier());
+      name = this.#finishNode(createQualifiedName(name, this.#parseIdentifier()), pos);
     }
     return name;
   }

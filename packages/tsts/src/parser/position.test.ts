@@ -14,9 +14,11 @@ import { Exception } from "@tsonic/dotnet/System.js";
 
 import {
   isArrayLiteralExpression,
+  isArrayTypeNode,
   isArrowFunction,
   isAsExpression,
   isAwaitExpression,
+  isBigIntLiteral,
   isBinaryExpression,
   isBlock,
   isCallExpression,
@@ -24,31 +26,51 @@ import {
   isCaseClause,
   isCatchClause,
   isConditionalExpression,
+  isConditionalTypeNode,
+  isConstructorTypeNode,
   isElementAccessExpression,
   isExportDeclaration,
   isExpressionStatement,
   isForStatement,
+  isFunctionDeclaration,
+  isFunctionTypeNode,
   isIdentifier,
   isIfStatement,
   isImportDeclaration,
+  isIndexedAccessTypeNode,
+  isInterfaceDeclaration,
+  isIntersectionTypeNode,
+  isKeywordExpression,
+  isKeywordTypeNode,
   isLiteralTypeNode,
   isNamedExports,
   isNonNullExpression,
   isNumericLiteral,
   isObjectLiteralExpression,
   isParenthesizedExpression,
+  isParenthesizedTypeNode,
   isPostfixUnaryExpression,
   isPrefixUnaryExpression,
   isPropertyAccessExpression,
+  isQualifiedName,
   isReturnStatement,
   isSatisfiesExpression,
   isSpreadElement,
   isStringLiteral,
   isSwitchStatement,
   isTemplateExpression,
+  isThisTypeNode,
   isTryStatement,
+  isTupleTypeNode,
   isTypeAliasDeclaration,
+  isTypeLiteralNode,
   isTypeOfExpression,
+  isTypeOperatorNode,
+  isTypeParameterDeclaration,
+  isTypePredicateNode,
+  isTypeQueryNode,
+  isTypeReferenceNode,
+  isUnionTypeNode,
   isVariableDeclaration,
   isVariableDeclarationList,
   isVariableStatement,
@@ -414,16 +436,19 @@ export class ParserPositionTests {
     Assert.Equal(8, span.end);
   }
 
-  // Negative-literal `-1` in TYPE position (Stage-1a-deferred): the inner numeric
-  // literal and the PrefixUnaryExpression wrapper are both stamped. In
-  // `type T = -1;` the '-' is at index 9 and the '1' at index 10, so the prefix
-  // wrapper covers [9,11) and the inner literal covers [10,11).
+  // Negative-literal `-1` in TYPE position: the inner numeric literal and the
+  // PrefixUnaryExpression wrapper (Stage 1b) AND the LiteralTypeNode wrapper
+  // (Stage 1d) are all stamped, sharing the '-' start. In `type T = -1;` the '-'
+  // is at index 9 and the '1' at index 10, so the LiteralTypeNode + prefix wrapper
+  // cover [9,11) and the inner literal covers [10,11).
   negative_literal_prefix_unary_in_type_is_stamped(): void {
     const sourceFile = parseSourceFile("type T = -1;");
     const statement = sourceFile.statements[0]!;
     if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
     const literalType = statement.type;
     if (!isLiteralTypeNode(literalType)) throw new Exception("Expected literal type node");
+    Assert.Equal(9, literalType.pos);
+    Assert.Equal(11, literalType.end);
     const unary = literalType.literal;
     if (!isPrefixUnaryExpression(unary)) throw new Exception("Expected prefix unary expression");
 
@@ -433,6 +458,468 @@ export class ParserPositionTests {
     if (!isNumericLiteral(operand)) throw new Exception("Expected numeric literal operand");
     Assert.Equal(10, operand.pos);
     Assert.Equal(11, operand.end);
+  }
+
+  // Stage 1d: `type X = A|B;` -> the UnionTypeNode spans the two constituents,
+  // starting at `A` (index 9) and ending after `B` (index 12). Each constituent is
+  // a TypeReference stamped token-tight.
+  union_type_spans_constituents(): void {
+    const sourceFile = parseSourceFile("type X = A|B;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const union = statement.type;
+    if (!isUnionTypeNode(union)) throw new Exception("Expected union type node");
+
+    Assert.Equal(9, union.pos);
+    Assert.Equal(12, union.end);
+    const first = union.types[0]!;
+    Assert.Equal(9, first.pos);
+    Assert.Equal(10, first.end);
+    const second = union.types[1]!;
+    Assert.Equal(11, second.pos);
+    Assert.Equal(12, second.end);
+  }
+
+  // Stage 1d: single-constituent passthrough must NOT re-stamp. `type X = A;` ->
+  // the type is the bare TypeReference `A` [9,10), not a UnionTypeNode.
+  union_single_constituent_passes_through_unwrapped(): void {
+    const sourceFile = parseSourceFile("type X = A;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const type = statement.type;
+    if (!isTypeReferenceNode(type)) throw new Exception("Expected type reference (unwrapped)");
+
+    Assert.Equal(9, type.pos);
+    Assert.Equal(10, type.end);
+  }
+
+  // Stage 1d: `type X = A&B;` -> IntersectionTypeNode spans [9,12).
+  intersection_type_spans_constituents(): void {
+    const sourceFile = parseSourceFile("type X = A&B;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const intersection = statement.type;
+    if (!isIntersectionTypeNode(intersection)) throw new Exception("Expected intersection type node");
+
+    Assert.Equal(9, intersection.pos);
+    Assert.Equal(12, intersection.end);
+    Assert.Equal(9, intersection.types[0]!.pos);
+    Assert.Equal(12, intersection.types[1]!.end);
+  }
+
+  // Stage 1d: `type X = T[];` -> ArrayTypeNode starts at the LEFTMOST element type
+  // `T` (index 9) and ends after the closing ']' (index 12). The element type `T`
+  // spans [9,10).
+  array_type_starts_at_element_and_covers_bracket(): void {
+    const sourceFile = parseSourceFile("type X = T[];");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const arrayType = statement.type;
+    if (!isArrayTypeNode(arrayType)) throw new Exception("Expected array type node");
+
+    Assert.Equal(9, arrayType.pos);
+    Assert.Equal(12, arrayType.end);
+    Assert.Equal(9, arrayType.elementType.pos);
+    Assert.Equal(10, arrayType.elementType.end);
+  }
+
+  // Stage 1d: nested `type X = T[][];` -> the outer array starts at the SAME leftmost
+  // `T` start (index 9, threaded) and ends after the second ']' (index 14); the inner
+  // array spans [9,12).
+  nested_array_type_threads_leftmost_start(): void {
+    const sourceFile = parseSourceFile("type X = T[][];");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const outer = statement.type;
+    if (!isArrayTypeNode(outer)) throw new Exception("Expected outer array type node");
+    Assert.Equal(9, outer.pos);
+    Assert.Equal(14, outer.end);
+    const inner = outer.elementType;
+    if (!isArrayTypeNode(inner)) throw new Exception("Expected inner array type node");
+    Assert.Equal(9, inner.pos);
+    Assert.Equal(12, inner.end);
+  }
+
+  // Stage 1d: `type X = T[K];` -> IndexedAccessTypeNode starts at the leftmost object
+  // type `T` (index 9) and ends after the closing ']' (index 13). The index type `K`
+  // spans [11,12).
+  indexed_access_type_starts_at_object_and_covers_bracket(): void {
+    const sourceFile = parseSourceFile("type X = T[K];");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const indexed = statement.type;
+    if (!isIndexedAccessTypeNode(indexed)) throw new Exception("Expected indexed access type node");
+
+    Assert.Equal(9, indexed.pos);
+    Assert.Equal(13, indexed.end);
+    Assert.Equal(9, indexed.objectType.pos);
+    Assert.Equal(11, indexed.indexType.pos);
+    Assert.Equal(12, indexed.indexType.end);
+  }
+
+  // Stage 1d: `type X = keyof T;` -> TypeOperatorNode starts at the `keyof` keyword
+  // (index 9) and ends after the operand `T` (index 16). The operand spans [15,16).
+  keyof_type_operator_starts_at_keyword(): void {
+    const sourceFile = parseSourceFile("type X = keyof T;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const operator = statement.type;
+    if (!isTypeOperatorNode(operator)) throw new Exception("Expected type operator node");
+
+    Assert.Equal(9, operator.pos);
+    Assert.Equal(16, operator.end);
+    Assert.Equal(15, operator.type.pos);
+    Assert.Equal(16, operator.type.end);
+  }
+
+  // Stage 1d: `type X = typeof y;` -> TypeQueryNode starts at the `typeof` keyword
+  // (index 9) and ends after the entity name `y` (index 17).
+  typeof_type_query_starts_at_keyword(): void {
+    const sourceFile = parseSourceFile("type X = typeof y;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const query = statement.type;
+    if (!isTypeQueryNode(query)) throw new Exception("Expected type query node");
+
+    Assert.Equal(9, query.pos);
+    Assert.Equal(17, query.end);
+    Assert.Equal(16, query.exprName.pos);
+    Assert.Equal(17, query.exprName.end);
+  }
+
+  // Stage 1d: `type X = this;` -> ThisTypeNode is token-tight [9,13).
+  this_type_is_token_tight(): void {
+    const sourceFile = parseSourceFile("type X = this;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const thisType = statement.type;
+    if (!isThisTypeNode(thisType)) throw new Exception("Expected this type node");
+
+    Assert.Equal(9, thisType.pos);
+    Assert.Equal(13, thisType.end);
+  }
+
+  // Stage 1d: `type X = (A);` -> ParenthesizedTypeNode starts at the '(' (index 9)
+  // and ends after the closing ')' (index 12). The inner type `A` spans [10,11).
+  parenthesized_type_covers_parens(): void {
+    const sourceFile = parseSourceFile("type X = (A);");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const paren = statement.type;
+    if (!isParenthesizedTypeNode(paren)) throw new Exception("Expected parenthesized type node");
+
+    Assert.Equal(9, paren.pos);
+    Assert.Equal(12, paren.end);
+    Assert.Equal(10, paren.type.pos);
+    Assert.Equal(11, paren.type.end);
+  }
+
+  // Stage 1d: `type X = [A,B];` -> TupleTypeNode starts at the '[' (index 9) and ends
+  // after the closing ']' (index 14). The first element `A` spans [10,11).
+  tuple_type_covers_brackets(): void {
+    const sourceFile = parseSourceFile("type X = [A,B];");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const tuple = statement.type;
+    if (!isTupleTypeNode(tuple)) throw new Exception("Expected tuple type node");
+
+    Assert.Equal(9, tuple.pos);
+    Assert.Equal(14, tuple.end);
+    Assert.Equal(10, tuple.elements[0]!.pos);
+    Assert.Equal(11, tuple.elements[0]!.end);
+  }
+
+  // Stage 1d: `type X = {a:number};` -> TypeLiteralNode starts at the '{' (index 9)
+  // and ends after the closing '}' (index 19).
+  type_literal_covers_braces(): void {
+    const sourceFile = parseSourceFile("type X = {a:number};");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const literal = statement.type;
+    if (!isTypeLiteralNode(literal)) throw new Exception("Expected type literal node");
+
+    Assert.Equal(9, literal.pos);
+    Assert.Equal(19, literal.end);
+  }
+
+  // Stage 1d: `type X = number;` -> KeywordTypeNode is token-tight [9,15).
+  keyword_type_is_token_tight(): void {
+    const sourceFile = parseSourceFile("type X = number;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const keyword = statement.type;
+    if (!isKeywordTypeNode(keyword)) throw new Exception("Expected keyword type node");
+
+    Assert.Equal(9, keyword.pos);
+    Assert.Equal(15, keyword.end);
+  }
+
+  // Stage 1d: `type X = "s";` -> LiteralTypeNode wrapper shares the inner string-literal
+  // leaf's range [9,12) (the leaf covers the quotes).
+  string_literal_type_wrapper_shares_leaf_range(): void {
+    const sourceFile = parseSourceFile("type X = \"s\";");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const literalType = statement.type;
+    if (!isLiteralTypeNode(literalType)) throw new Exception("Expected literal type node");
+
+    Assert.Equal(9, literalType.pos);
+    Assert.Equal(12, literalType.end);
+    const leaf = literalType.literal;
+    if (!isStringLiteral(leaf)) throw new Exception("Expected string literal leaf");
+    Assert.Equal(9, leaf.pos);
+    Assert.Equal(12, leaf.end);
+  }
+
+  // Stage 1d: `type X = 1;` -> LiteralTypeNode wrapper AND inner numeric leaf both
+  // stamped [9,10).
+  numeric_literal_type_wrapper_and_leaf_stamped(): void {
+    const sourceFile = parseSourceFile("type X = 1;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const literalType = statement.type;
+    if (!isLiteralTypeNode(literalType)) throw new Exception("Expected literal type node");
+
+    Assert.Equal(9, literalType.pos);
+    Assert.Equal(10, literalType.end);
+    const leaf = literalType.literal;
+    if (!isNumericLiteral(leaf)) throw new Exception("Expected numeric literal leaf");
+    Assert.Equal(9, leaf.pos);
+    Assert.Equal(10, leaf.end);
+  }
+
+  // Stage 1d: `type X = 1n;` -> LiteralTypeNode wrapper AND inner bigint leaf both
+  // stamped [9,11).
+  bigint_literal_type_wrapper_and_leaf_stamped(): void {
+    const sourceFile = parseSourceFile("type X = 1n;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const literalType = statement.type;
+    if (!isLiteralTypeNode(literalType)) throw new Exception("Expected literal type node");
+
+    Assert.Equal(9, literalType.pos);
+    Assert.Equal(11, literalType.end);
+    const leaf = literalType.literal;
+    if (!isBigIntLiteral(leaf)) throw new Exception("Expected bigint literal leaf");
+    Assert.Equal(9, leaf.pos);
+    Assert.Equal(11, leaf.end);
+  }
+
+  // Stage 1d: `type X = true;` -> LiteralTypeNode wrapper AND inner keyword-expression
+  // leaf both stamped [9,13).
+  true_literal_type_wrapper_and_leaf_stamped(): void {
+    const sourceFile = parseSourceFile("type X = true;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const literalType = statement.type;
+    if (!isLiteralTypeNode(literalType)) throw new Exception("Expected literal type node");
+
+    Assert.Equal(9, literalType.pos);
+    Assert.Equal(13, literalType.end);
+    const leaf = literalType.literal;
+    if (!isKeywordExpression(leaf)) throw new Exception("Expected keyword expression leaf");
+    Assert.Equal(9, leaf.pos);
+    Assert.Equal(13, leaf.end);
+  }
+
+  // Stage 1d: `type X = null;` -> LiteralTypeNode wrapper AND inner keyword-expression
+  // leaf both stamped [9,13).
+  null_literal_type_wrapper_and_leaf_stamped(): void {
+    const sourceFile = parseSourceFile("type X = null;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const literalType = statement.type;
+    if (!isLiteralTypeNode(literalType)) throw new Exception("Expected literal type node");
+
+    Assert.Equal(9, literalType.pos);
+    Assert.Equal(13, literalType.end);
+    const leaf = literalType.literal;
+    if (!isKeywordExpression(leaf)) throw new Exception("Expected keyword expression leaf");
+    Assert.Equal(9, leaf.pos);
+    Assert.Equal(13, leaf.end);
+  }
+
+  // Stage 1d: `type X = Y<Z>;` -> TypeReferenceNode starts at the type name `Y`
+  // (index 9) and ends after the closing '>' (index 13). The type-argument `Z`
+  // spans [11,12).
+  type_reference_with_type_arguments_covers_angle(): void {
+    const sourceFile = parseSourceFile("type X = Y<Z>;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const reference = statement.type;
+    if (!isTypeReferenceNode(reference)) throw new Exception("Expected type reference node");
+
+    Assert.Equal(9, reference.pos);
+    Assert.Equal(13, reference.end);
+    const arg = reference.typeArguments![0]!;
+    Assert.Equal(11, arg.pos);
+    Assert.Equal(12, arg.end);
+  }
+
+  // Stage 1d: nested generics `type X = A<B<C>>;` -> the '>>' token is split; the
+  // outer reference ends after the final '>' (index 16) and the inner B<C> ends at
+  // the first '>' (index 15). Verifies #expectGreaterThan split-token ends are
+  // off-by-one-correct.
+  nested_generic_type_arguments_split_greater_than(): void {
+    const sourceFile = parseSourceFile("type X = A<B<C>>;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const outer = statement.type;
+    if (!isTypeReferenceNode(outer)) throw new Exception("Expected outer type reference node");
+    Assert.Equal(9, outer.pos);
+    Assert.Equal(16, outer.end);
+    const inner = outer.typeArguments![0]!;
+    if (!isTypeReferenceNode(inner)) throw new Exception("Expected inner type reference node");
+    Assert.Equal(11, inner.pos);
+    Assert.Equal(15, inner.end);
+  }
+
+  // Stage 1d: `type X = a.b;` -> the type reference's name is a QualifiedName whose
+  // start is the LEFTMOST identifier `a` (index 9), ending after `b` (index 12).
+  qualified_name_threads_leftmost_start(): void {
+    const sourceFile = parseSourceFile("type X = a.b;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const reference = statement.type;
+    if (!isTypeReferenceNode(reference)) throw new Exception("Expected type reference node");
+    const name = reference.typeName;
+    if (!isQualifiedName(name)) throw new Exception("Expected qualified name");
+
+    Assert.Equal(9, name.pos);
+    Assert.Equal(12, name.end);
+    Assert.Equal(9, name.left.pos);
+    Assert.Equal(11, name.right.pos);
+  }
+
+  // Stage 1d: dotted `type X = a.b.c;` -> the outer QualifiedName starts at the
+  // leftmost `a` (index 9, threaded) and ends after `c` (index 14); the nested
+  // left QualifiedName `a.b` spans [9,12).
+  nested_qualified_name_threads_single_start(): void {
+    const sourceFile = parseSourceFile("type X = a.b.c;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const reference = statement.type;
+    if (!isTypeReferenceNode(reference)) throw new Exception("Expected type reference node");
+    const outer = reference.typeName;
+    if (!isQualifiedName(outer)) throw new Exception("Expected outer qualified name");
+    Assert.Equal(9, outer.pos);
+    Assert.Equal(14, outer.end);
+    const left = outer.left;
+    if (!isQualifiedName(left)) throw new Exception("Expected nested qualified name");
+    Assert.Equal(9, left.pos);
+    Assert.Equal(12, left.end);
+  }
+
+  // Stage 1d: `type X = (a:T)=>R;` -> FunctionTypeNode starts at the '(' (index 9)
+  // and ends after the return type `R` (index 17).
+  function_type_paren_path_spans_to_return(): void {
+    const sourceFile = parseSourceFile("type X = (a:T)=>R;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const fn = statement.type;
+    if (!isFunctionTypeNode(fn)) throw new Exception("Expected function type node");
+
+    Assert.Equal(9, fn.pos);
+    Assert.Equal(17, fn.end);
+    Assert.Equal(16, fn.type!.pos);
+    Assert.Equal(17, fn.type!.end);
+  }
+
+  // Stage 1d: `type X = <T>()=>R;` -> FunctionTypeNode (generic path) starts at the
+  // '<' (index 9) and ends after the return type `R` (index 17).
+  function_type_generic_path_starts_at_angle(): void {
+    const sourceFile = parseSourceFile("type X = <T>()=>R;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const fn = statement.type;
+    if (!isFunctionTypeNode(fn)) throw new Exception("Expected function type node");
+
+    Assert.Equal(9, fn.pos);
+    Assert.Equal(17, fn.end);
+    const tp = fn.typeParameters![0]!;
+    if (!isTypeParameterDeclaration(tp)) throw new Exception("Expected type parameter declaration");
+    Assert.Equal(10, tp.pos);
+    Assert.Equal(11, tp.end);
+  }
+
+  // Stage 1d: `type X = new()=>R;` -> ConstructorTypeNode starts at the `new` keyword
+  // (index 9) and ends after the return type `R` (index 17).
+  constructor_type_starts_at_new_keyword(): void {
+    const sourceFile = parseSourceFile("type X = new()=>R;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const ctor = statement.type;
+    if (!isConstructorTypeNode(ctor)) throw new Exception("Expected constructor type node");
+
+    Assert.Equal(9, ctor.pos);
+    Assert.Equal(17, ctor.end);
+    Assert.Equal(16, ctor.type!.pos);
+    Assert.Equal(17, ctor.type!.end);
+  }
+
+  // Stage 1d: `type X = A extends B?C:D;` -> ConditionalTypeNode starts at the
+  // checkType `A` (index 9) and ends after the falseType `D` (index 24). Children
+  // are stamped token-tight.
+  conditional_type_spans_check_through_false(): void {
+    const sourceFile = parseSourceFile("type X = A extends B?C:D;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const conditional = statement.type;
+    if (!isConditionalTypeNode(conditional)) throw new Exception("Expected conditional type node");
+
+    Assert.Equal(9, conditional.pos);
+    Assert.Equal(24, conditional.end);
+    Assert.Equal(9, conditional.checkType.pos);
+    Assert.Equal(23, conditional.falseType.pos);
+    Assert.Equal(24, conditional.falseType.end);
+  }
+
+  // Stage 1d: `function f(x): x is T {}` -> the return type is a TypePredicateNode
+  // starting at the parameter name `x` (index 15) and ending after the predicate
+  // type `T` (index 21). The predicate `x` is at 15, `is` at 17, `T` at 20.
+  type_predicate_is_path_spans_param_through_type(): void {
+    const sourceFile = parseSourceFile("function f(x): x is T {}");
+    const statement = sourceFile.statements[0]!;
+    if (!isFunctionDeclaration(statement)) throw new Exception("Expected function declaration");
+    const predicate = statement.type;
+    if (predicate === undefined || !isTypePredicateNode(predicate)) throw new Exception("Expected type predicate node");
+
+    Assert.Equal(15, predicate.pos);
+    Assert.Equal(21, predicate.end);
+    Assert.Equal(15, predicate.parameterName.pos);
+    Assert.Equal(20, predicate.type!.pos);
+    Assert.Equal(21, predicate.type!.end);
+  }
+
+  // Stage 1d: `function f(x): asserts x {}` -> the return type is a TypePredicateNode
+  // (asserts-only path) starting at the `asserts` keyword (index 15) and ending after
+  // the parameter name `x` (index 24).
+  type_predicate_asserts_path_starts_at_asserts(): void {
+    const sourceFile = parseSourceFile("function f(x): asserts x {}");
+    const statement = sourceFile.statements[0]!;
+    if (!isFunctionDeclaration(statement)) throw new Exception("Expected function declaration");
+    const predicate = statement.type;
+    if (predicate === undefined || !isTypePredicateNode(predicate)) throw new Exception("Expected type predicate node");
+
+    Assert.Equal(15, predicate.pos);
+    Assert.Equal(24, predicate.end);
+    Assert.Equal(23, predicate.parameterName.pos);
+    Assert.Equal(24, predicate.parameterName.end);
+  }
+
+  // Stage 1d: `interface I<T extends U> {}` -> the TypeParameterDeclaration starts at
+  // the name `T` (index 12) and ends after the constraint `U` (index 23).
+  type_parameter_declaration_spans_name_through_constraint(): void {
+    const sourceFile = parseSourceFile("interface I<T extends U> {}");
+    const statement = sourceFile.statements[0]!;
+    if (!isInterfaceDeclaration(statement)) throw new Exception("Expected interface declaration");
+    const tp = statement.typeParameters![0]!;
+    if (!isTypeParameterDeclaration(tp)) throw new Exception("Expected type parameter declaration");
+
+    Assert.Equal(12, tp.pos);
+    Assert.Equal(23, tp.end);
+    Assert.Equal(22, tp.constraint!.pos);
+    Assert.Equal(23, tp.constraint!.end);
   }
 
   // Stage 1c: `if(x){}` -> IfStatement spans [0,7); start at the `if` keyword, end
@@ -616,6 +1103,35 @@ A<ParserPositionTests>().method((t) => t.await_expression_starts_at_keyword).add
 A<ParserPositionTests>().method((t) => t.typeof_expression_starts_at_keyword).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.template_expression_spans_whole_range_with_span).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.negative_literal_prefix_unary_in_type_is_stamped).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.union_type_spans_constituents).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.union_single_constituent_passes_through_unwrapped).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.intersection_type_spans_constituents).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.array_type_starts_at_element_and_covers_bracket).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.nested_array_type_threads_leftmost_start).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.indexed_access_type_starts_at_object_and_covers_bracket).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.keyof_type_operator_starts_at_keyword).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.typeof_type_query_starts_at_keyword).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.this_type_is_token_tight).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.parenthesized_type_covers_parens).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.tuple_type_covers_brackets).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.type_literal_covers_braces).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.keyword_type_is_token_tight).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.string_literal_type_wrapper_shares_leaf_range).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.numeric_literal_type_wrapper_and_leaf_stamped).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.bigint_literal_type_wrapper_and_leaf_stamped).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.true_literal_type_wrapper_and_leaf_stamped).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.null_literal_type_wrapper_and_leaf_stamped).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.type_reference_with_type_arguments_covers_angle).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.nested_generic_type_arguments_split_greater_than).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.qualified_name_threads_leftmost_start).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.nested_qualified_name_threads_single_start).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.function_type_paren_path_spans_to_return).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.function_type_generic_path_starts_at_angle).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.constructor_type_starts_at_new_keyword).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.conditional_type_spans_check_through_false).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.type_predicate_is_path_spans_param_through_type).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.type_predicate_asserts_path_starts_at_asserts).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.type_parameter_declaration_spans_name_through_constraint).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.if_statement_spans_whole_range_from_keyword).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.for_statement_spans_whole_range_from_keyword).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.while_statement_spans_whole_range_from_keyword).add(FactAttribute);
