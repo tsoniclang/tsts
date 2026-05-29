@@ -18,3 +18,9 @@ export {
   getECMALineOfPosition,
   getECMALineAndUTF16CharacterOfPosition,
 } from "./scanner/index.js";
+
+// `TokenFlags` is exported as a bare `type` alias by `./ast/index.js`
+// (generated) and as a runtime const-map + type by `./scanner/token-flags.js`
+// (the faithful tokenflags.go port). The scanner owns the canonical values, so
+// disambiguate the package root in its favor.
+export { TokenFlags } from "./scanner/index.js";
