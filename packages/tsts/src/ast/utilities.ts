@@ -41,6 +41,7 @@ import {
   isClassElement,
   isElementAccessExpression,
   isFunctionLikeDeclaration,
+  isIdentifier,
   isLeftHandSideExpression,
   isNonNullExpression,
   isNumericLiteral,
@@ -715,6 +716,44 @@ export function getCombinedNodeFlags(node: Node): NodeFlags {
     flags |= current.flags as NodeFlags;
   }
   return flags;
+}
+
+// GetCombinedModifierFlags (utilities.go:1162) — the modifier-flag specialization
+// of getCombinedFlags: ORs a VariableDeclaration's modifier flags with those of
+// its enclosing VariableDeclarationList and VariableStatement so an
+// `export const x` (modifier on the statement) is visible from the declaration.
+// Mirrors getCombinedNodeFlags above; relies on parent pointers (set by the binder
+// traversal before descending). Used by the binder's declareModuleMember.
+export function getCombinedModifierFlags(node: Node): ModifierFlags {
+  let current: Node | undefined = getRootDeclaration(node);
+  let flags = nodeModifierFlags(current);
+  if (current.kind === Kind.VariableDeclaration) {
+    current = current.parent;
+  }
+  if (current !== undefined && current.kind === Kind.VariableDeclarationList) {
+    flags |= nodeModifierFlags(current);
+    current = current.parent;
+  }
+  if (current !== undefined && current.kind === Kind.VariableStatement) {
+    flags |= nodeModifierFlags(current);
+  }
+  return flags;
+}
+
+// IsEntityNameExpression (utilities.go:1580) — non-JS form: an identifier or a
+// property-access chain whose name is an identifier and whose head is itself an
+// entity-name expression. Used by ExpressionIsAlias (binder bindExportAssignment).
+export function isEntityNameExpression(node: Node): boolean {
+  return isIdentifier(node) || isPropertyAccessEntityNameExpression(node);
+}
+
+// IsPropertyAccessEntityNameExpression (utilities.go:1590), non-JS form.
+function isPropertyAccessEntityNameExpression(node: Node): boolean {
+  if (!isPropertyAccessExpression(node)) {
+    return false;
+  }
+  const access = node as PropertyAccessExpression;
+  return isIdentifier(access.name) && isEntityNameExpression(access.expression);
 }
 
 // IsCatchClauseVariableDeclarationOrBindingElement (utilities.go:721).

@@ -619,6 +619,10 @@ export function qualifiedNameRight(node: AstNode): AstNode { return f<AstNode>(n
 export function setParentInChildren(_node: AstNode): void { /* no-op until binder phase */ }
 export function clearNodeSynthesizedFlag(_node: AstNode): void { /* no-op until printer phase */ }
 export function setNodeParent(node: AstNode, parent: AstNode): void { (node as unknown as { parent: AstNode }).parent = parent; }
+// node.Flags = flags — the binder writes the export-context flag in
+// setExportContextFlag (binder.go:893-900). `flags` is a mutable number slot on
+// the typed Node contract (codex-054), so this writes without any cast.
+export function setNodeFlags(node: AstNode, flags: number): void { node.flags = flags; }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Binder-set slot writers + symbol-table getters (tsgo node.DeclarationData(),
@@ -646,6 +650,20 @@ export function setNodeLocals(node: AstNode, locals: SymbolTable): void {
 // node.LocalsContainerData().NextContainer = next (addToContainerChain).
 export function setNodeNextContainer(node: AstNode, next: AstNode): void {
   node.nextContainer = next;
+}
+
+// node.ExportableData().LocalSymbol = local — the binder's local↔export back-link
+// written in declareModuleMember (binder.go:415) so the checker can recover the
+// local symbol of an exported declaration. Reads/writes the typed Node.localSymbol
+// slot (surfaced on the shared contract by the generator), so the binder writes it
+// without any cast of its own. Mirrors setNodeSymbol / setNodeNextContainer above.
+export function setNodeLocalSymbol(node: AstNode, local: AstSymbol): void {
+  node.localSymbol = local;
+}
+
+// ast node.ExportableData().LocalSymbol read.
+export function getNodeLocalSymbol(node: AstNode | undefined): AstSymbol | undefined {
+  return node?.localSymbol;
 }
 
 // ast.GetLocals(node) — returns the (already-created) locals table of a locals
@@ -679,6 +697,17 @@ export function getSymbolParent(symbol: AstSymbol): AstSymbol | undefined {
 export function setSymbolParent(symbol: AstSymbol, parent: AstSymbol): void {
   symbol.parent = parent;
 }
+
+// Symbol.ExportSymbol read/write — declareModuleMember links the local symbol of
+// an exported declaration to its export-table counterpart (`local.ExportSymbol =
+// export`, binder.go:414). Reads/writes the typed Symbol.exportSymbol slot
+// (surfaced on the contract in M4a), so the binder writes it without any cast.
+export function getSymbolExportSymbol(symbol: AstSymbol | undefined): AstSymbol | undefined {
+  return symbol?.exportSymbol;
+}
+export function setSymbolExportSymbol(symbol: AstSymbol, exportSymbol: AstSymbol): void {
+  symbol.exportSymbol = exportSymbol;
+}
 export function stringLiteralTokenFlags(node: AstNode): number {
   return (node as unknown as { tokenFlags?: number }).tokenFlags ?? 0;
 }
@@ -697,7 +726,13 @@ export function sourceFileName(file: AstNode): string { return sourceFileFileNam
 export function sourceFileText(file: AstNode): string {
   return (file as unknown as { text?: string }).text ?? "";
 }
-export function isExternalOrCommonJSModule(file: AstNode): boolean { return isExternalModule(file); }
+// IsExternalOrCommonJSModule (utilities.go:1626): externalModuleIndicator OR
+// commonJSModuleIndicator present. tsts does not yet detect CommonJS require
+// indicators, so commonJSModuleIndicator is always undefined, but the check is
+// stated faithfully.
+export function isExternalOrCommonJSModule(file: AstNode): boolean {
+  return isExternalModule(file) || sourceFileCommonJSModuleIndicator(file) !== undefined;
+}
 // isPrologueDirective is owned by ./utilities.js (faithful 1:1) and re-exported
 // through the ast barrel; the non-faithful copy here was removed during the
 // M2 Fork B migration to avoid duplicate exports.

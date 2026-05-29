@@ -39,6 +39,10 @@ import {
   NodeFlags,
   SymbolFlags,
   forEachChild,
+  exportAssignmentExpression,
+  exportAssignmentIsExportEquals,
+  exportDeclarationExportClause,
+  getCombinedModifierFlags,
   getNodeLocals,
   getSymbolExports,
   getSymbolMembers,
@@ -47,8 +51,17 @@ import {
   isBigIntLiteral,
   isBindingPattern,
   isBlockOrCatchScoped,
+  isClassExpression,
+  isEntityNameExpression,
+  isExportAssignment,
+  isExportSpecifier,
+  isExportDeclaration,
+  isExternalModule,
+  isExternalOrCommonJSModule,
   isFunctionLike,
   isIdentifier,
+  isModuleBlock,
+  isNamespaceExport,
   isNoSubstitutionTemplateLiteral,
   isNumericLiteral,
   isObjectLiteralOrClassExpressionMethodOrAccessor,
@@ -59,17 +72,23 @@ import {
   isStatic,
   isStringLiteral,
   blockStatements,
+  moduleExportNameIsDefault,
+  nodeBody,
   nodeInitializer,
   nodeName,
   nodeParameters,
   nodeQuestionToken,
   nodeSymbol,
+  setNodeFlags,
   setNodeLocals,
+  setNodeLocalSymbol,
   setNodeNextContainer,
   setNodeParent,
   setNodeSymbol,
+  setSymbolExportSymbol,
   setSymbolParent,
   sourceFileEndOfFileToken,
+  sourceFileFileName,
   sourceFileStatementsRO,
   type Declaration,
   type Node,
@@ -79,6 +98,7 @@ import {
   type SymbolTable,
 } from "../ast/index.js";
 import { ModifierFlags } from "../enums/modifierFlags.enum.js";
+import { removeFileExtension } from "../tspath/index.js";
 import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
 import { format } from "../diagnostics/index.js";
 
@@ -90,8 +110,12 @@ export interface BindDiagnostic {
 const allMeanings: SymbolFlags =
   SymbolFlags.Value | SymbolFlags.Type | SymbolFlags.Namespace | SymbolFlags.Alias;
 
-// tsgo InternalSymbolName values relevant to M4b (ast/symbol.go).
+// tsgo InternalSymbolName values relevant to M4b/M4c (ast/symbol.go:49-67).
 const InternalSymbolNameMissing = "__missing";
+// M4c: the default-export / export-assignment / export-star reserved names.
+const InternalSymbolNameDefault = "default";
+const InternalSymbolNameExportEquals = "export=";
+const InternalSymbolNameExportStar = "__export";
 
 // Container-flag bitset (binder.go:17-43). The single source of truth for which
 // nodes establish a container / block-scope / control-flow / locals boundary.
@@ -269,7 +293,18 @@ class Binder {
     includes: SymbolFlags,
     excludes: SymbolFlags,
   ): Symbol {
-    const name = getDeclarationName(node);
+    // isComputedName / isReplaceableByMethod are the JS-only declareSymbolEx
+    // parameters (binder.go:156); they are never set on this port's reachable
+    // paths, so both are false here. The default-export determination
+    // (binder.go:158) decides whether this declaration is named "default" in the
+    // export table.
+    const isDefaultExport = hasSyntacticModifier(node, ModifierFlags.Default)
+      || (isExportSpecifier(node) && moduleExportNameIsDefault(nodeName(node)));
+    // The exported symbol for an `export default` function/class node is always
+    // named "default" (binder.go:159-168).
+    const name = (isDefaultExport && parent !== undefined)
+      ? InternalSymbolNameDefault
+      : getDeclarationName(node);
     let symbol: Symbol;
     if (name === InternalSymbolNameMissing) {
       symbol = this.#newSymbol(SymbolFlags.None, InternalSymbolNameMissing);
@@ -284,16 +319,42 @@ class Binder {
         symbol = this.#newSymbol(SymbolFlags.None, name);
         symbolTable.set(name, symbol);
       } else if (((existing.flags ?? SymbolFlags.None) & excludes) !== 0) {
-        // Conflict: report on the current declaration and on each prior
-        // declaration of the existing symbol, then create a fresh symbol.
-        const message = ((existing.flags ?? SymbolFlags.None) & SymbolFlags.BlockScopedVariable) !== 0
+        // Conflict (binder.go:209-294). The isReplaceableByMethod and
+        // assignment-vs-variable merge exceptions (binder.go:210-217) are JS-only
+        // and not reachable here, so we go straight to the diagnostic.
+        const existingFlags = existing.flags ?? SymbolFlags.None;
+        let message = (existingFlags & SymbolFlags.BlockScopedVariable) !== 0
           ? Diagnostics.Cannot_redeclare_block_scoped_variable_0
           : Diagnostics.Duplicate_identifier_0;
-        const displayName = getDisplayName(node);
-        for (const declaration of existing.declarations) {
-          this.#diagnostics.push({ message: format(message.message, [getDisplayName(declaration)]), node: declaration });
+        let messageNeedsName = true;
+        // Enum declarations can only merge with namespace or other enum
+        // declarations (binder.go:227-230) — a conflicting enum/non-enum pair.
+        if ((existingFlags & SymbolFlags.Enum) !== 0 || (includes & SymbolFlags.Enum) !== 0) {
+          message = Diagnostics.Enum_declarations_can_only_merge_with_namespace_or_other_enum_declarations;
+          messageNeedsName = false;
         }
-        this.#diagnostics.push({ message: format(message.message, [displayName]), node });
+        // A module cannot have multiple default exports (binder.go:231-251). The
+        // symbol already has a declaration list, so a second default export (or a
+        // second `export default <expr>`) conflicts.
+        if (existing.declarations.length !== 0) {
+          if (isDefaultExport) {
+            message = Diagnostics.A_module_cannot_have_multiple_default_exports;
+            messageNeedsName = false;
+          } else if (isExportAssignment(node) && !exportAssignmentIsExportEquals(node)) {
+            message = Diagnostics.A_module_cannot_have_multiple_default_exports;
+            messageNeedsName = false;
+          }
+        }
+        // Report on each prior declaration of the existing symbol AND on the
+        // conflicting declaration (binder.go:266-285). Related-info attachment
+        // (multipleDefaultExports / the Did_you_mean type-alias hint) is folded
+        // into the flat BindDiagnostic message model, consistent with M4b.
+        for (const declaration of existing.declarations) {
+          const args = messageNeedsName ? [getDisplayName(declaration)] : [];
+          this.#diagnostics.push({ message: format(message.message, args), node: declaration });
+        }
+        const args = messageNeedsName ? [getDisplayName(node)] : [];
+        this.#diagnostics.push({ message: format(message.message, args), node });
         symbol = this.#newSymbol(SymbolFlags.None, name);
       } else {
         // Compatible: merge into the existing symbol.
@@ -317,11 +378,36 @@ class Binder {
   // dispatches by the CONTAINER kind to the right declaration sink.
   // ───────────────────────────────────────────────────────────────────────
 
-  // declareModuleMember (binder.go:380) — M4b non-external-module form: a
-  // namespace/module member goes into the module symbol's locals (no export
-  // modifier handling, which is M4c). Aliases go to locals too.
+  // declareModuleMember (binder.go:380) — the full M4c form. Routes aliases and
+  // exported members between the container's locals and its symbol's export table,
+  // creating the local↔export DUAL symbol for an exported value/type member.
   #declareModuleMember(node: Node, symbolFlags: SymbolFlags, symbolExcludes: SymbolFlags): Symbol {
     const container = this.#container!;
+    const hasExportModifier = (getCombinedModifierFlags(node) & ModifierFlags.Export) !== 0;
+    if ((symbolFlags & SymbolFlags.Alias) !== 0) {
+      // An export-specifier (or an exported `import =`) is an export; a plain
+      // import-side alias is a local (binder.go:383-388).
+      if (node.kind === Kind.ExportSpecifier || (node.kind === Kind.ImportEqualsDeclaration && hasExportModifier)) {
+        return this.#declareSymbol(getSymbolExports(nodeSymbol(container)!), nodeSymbol(container), node, symbolFlags, symbolExcludes);
+      }
+      return this.#declareSymbol(getOrCreateLocals(container), undefined, node, symbolFlags, symbolExcludes);
+    }
+    // Exported module members get TWO symbols: a local symbol flagged ExportValue
+    // and an associated export symbol with the real flags (binder.go:389-417).
+    // (Ambient-module nesting is not in the M4c surface.)
+    if (hasExportModifier || (container.flags & NodeFlags.ExportContext) !== 0) {
+      if (!isLocalsContainer(container)
+        || (hasSyntacticModifier(node, ModifierFlags.Default) && getDeclarationName(node) === InternalSymbolNameMissing)) {
+        // No local symbol for an unnamed default (binder.go:405-408).
+        return this.#declareSymbol(getSymbolExports(nodeSymbol(container)!), nodeSymbol(container), node, symbolFlags, symbolExcludes);
+      }
+      const exportKind = (symbolFlags & SymbolFlags.Value) !== 0 ? SymbolFlags.ExportValue : SymbolFlags.None;
+      const local = this.#declareSymbol(getOrCreateLocals(container), undefined, node, exportKind, symbolExcludes);
+      const exportSymbol = this.#declareSymbol(getSymbolExports(nodeSymbol(container)!), nodeSymbol(container), node, symbolFlags, symbolExcludes);
+      setSymbolExportSymbol(local, exportSymbol);
+      setNodeLocalSymbol(node, local);
+      return local;
+    }
     return this.#declareSymbol(getOrCreateLocals(container), undefined, node, symbolFlags, symbolExcludes);
   }
 
@@ -333,9 +419,13 @@ class Binder {
     return this.#declareSymbol(table, containerSymbol, node, symbolFlags, symbolExcludes);
   }
 
-  // declareSourceFileMember (binder.go:428) — M4b binds a non-external-module
-  // source file, so members go into the file's locals.
+  // declareSourceFileMember (binder.go:428) — an external (or CommonJS) module's
+  // top-level members route through declareModuleMember so exports/locals split;
+  // a script-mode file puts everything into the file's locals.
   #declareSourceFileMember(node: Node, symbolFlags: SymbolFlags, symbolExcludes: SymbolFlags): Symbol {
+    if (isExternalOrCommonJSModule(this.#file!)) {
+      return this.#declareModuleMember(node, symbolFlags, symbolExcludes);
+    }
     return this.#declareSymbol(getOrCreateLocals(this.#file!), undefined, node, symbolFlags, symbolExcludes);
   }
 
@@ -378,15 +468,23 @@ class Binder {
     throw new Error("Unhandled case in declareSymbolAndAddToSymbolTable");
   }
 
-  // declareModuleMember-vs-locals for block-scoped declarations
-  // (bindBlockScopedDeclaration, binder.go:1254). Non-external-module form: the
-  // declaration goes into the nearest block-scope container's locals (or the
-  // module member table for a namespace container).
+  // bindBlockScopedDeclaration (binder.go:1254). A block-scoped declaration
+  // (class/enum/let/const/interface/type alias) routes to its block-scope
+  // container's locals — except a namespace member, or a top-level member of an
+  // external module, which routes through declareModuleMember so exports split.
   #bindBlockScopedDeclaration(node: Node, symbolFlags: SymbolFlags, symbolExcludes: SymbolFlags): void {
     const blockScopeContainer = this.#blockScopeContainer!;
     switch (blockScopeContainer.kind) {
       case Kind.ModuleDeclaration:
         this.#declareModuleMember(node, symbolFlags, symbolExcludes);
+        return;
+      case Kind.SourceFile:
+        if (isExternalOrCommonJSModule(this.#container!)) {
+          this.#declareModuleMember(node, symbolFlags, symbolExcludes);
+          return;
+        }
+        // fallthrough to locals.
+        this.#declareSymbol(getOrCreateLocals(blockScopeContainer), undefined, node, symbolFlags, symbolExcludes);
         return;
       default:
         this.#declareSymbol(getOrCreateLocals(blockScopeContainer), undefined, node, symbolFlags, symbolExcludes);
@@ -495,6 +593,15 @@ class Binder {
         break;
       case Kind.ImportClause:
         this.#bindImportClause(node);
+        break;
+      case Kind.ExportDeclaration:
+        this.#bindExportDeclaration(node);
+        break;
+      case Kind.ExportAssignment:
+        this.#bindExportAssignment(node);
+        break;
+      case Kind.SourceFile:
+        this.#bindSourceFileIfExternalModule();
         break;
       case Kind.TypeParameter:
         this.#bindTypeParameter(node);
@@ -705,10 +812,46 @@ class Binder {
     }
   }
 
-  // bindModuleDeclaration (binder.go:778) — M4b non-ambient form: declare the
-  // module/namespace symbol. (Instance-state/const-enum tracking is M4c.)
+  // bindModuleDeclaration (binder.go:778) — non-ambient form: set the
+  // export-context flag, then declare the module/namespace symbol. (Ambient
+  // modules + module-instance-state/const-enum tracking are outside the M4c
+  // surface.)
   #bindModuleDeclaration(node: Node): void {
+    this.#setExportContextFlag(node);
     this.#declareSymbolAndAddToSymbolTable(node, SymbolFlags.ValueModule | SymbolFlags.NamespaceModule, SymbolFlags.None);
+  }
+
+  // bindSourceFileIfExternalModule (binder.go:761) — set the file's
+  // export-context flag, then if the file is an external (or CommonJS) module give
+  // it a SourceFile module symbol so top-level exported members route into
+  // sourceFile.symbol.exports. (JSON-source-file handling is not in the surface.)
+  #bindSourceFileIfExternalModule(): void {
+    this.#setExportContextFlag(this.#file!);
+    if (isExternalOrCommonJSModule(this.#file!)) {
+      this.#bindSourceFileAsExternalModule();
+    }
+  }
+
+  // bindSourceFileAsExternalModule (binder.go:774) — the module symbol is an
+  // anonymous ValueModule named with the quoted, extension-stripped file name.
+  #bindSourceFileAsExternalModule(): void {
+    this.#bindAnonymousDeclaration(
+      this.#file!,
+      SymbolFlags.ValueModule,
+      "\"" + removeFileExtension(sourceFileFileName(this.#file!)) + "\"",
+    );
+  }
+
+  // setExportContextFlag (binder.go:893) — a declaration-file or ambient module
+  // with no export declarations is an export context (implicit exports). The
+  // M4c surface only handles non-ambient files/modules, so this consistently
+  // CLEARS the flag, mirroring the else branch faithfully.
+  #setExportContextFlag(node: Node): void {
+    if ((node.flags & NodeFlags.Ambient) !== 0 && !hasExportDeclarations(node)) {
+      setNodeFlags(node, node.flags | NodeFlags.ExportContext);
+    } else {
+      setNodeFlags(node, node.flags & ~NodeFlags.ExportContext);
+    }
   }
 
   // bindImportClause (binder.go:843) — declare the default-import name; named
@@ -717,6 +860,41 @@ class Binder {
   #bindImportClause(node: Node): void {
     if (nodeName(node) !== undefined) {
       this.#declareSymbolAndAddToSymbolTable(node, SymbolFlags.Alias, SymbolFlags.AliasExcludes);
+    }
+  }
+
+  // bindExportDeclaration (binder.go:849). `export *` and `export * as ns` land in
+  // the container symbol's exports; a named `export { ... }` declaration is bound
+  // through its ExportSpecifier children during the child traversal.
+  #bindExportDeclaration(node: Node): void {
+    const containerSymbol = nodeSymbol(this.#container);
+    const exportClause = exportDeclarationExportClause(node);
+    if (containerSymbol === undefined) {
+      // `export *` in some block construct — no container symbol.
+      this.#bindAnonymousDeclaration(node, SymbolFlags.ExportStar, getDeclarationName(node));
+    } else if (exportClause === undefined) {
+      // All `export *` declarations are collected in one __export symbol.
+      this.#declareSymbol(getSymbolExports(containerSymbol), containerSymbol, node, SymbolFlags.ExportStar, SymbolFlags.None);
+    } else if (isNamespaceExport(exportClause)) {
+      this.#declareSymbol(getSymbolExports(containerSymbol), containerSymbol, exportClause, SymbolFlags.Alias, SymbolFlags.AliasExcludes);
+    }
+  }
+
+  // bindExportAssignment (binder.go:862). `export = x` / `export default <expr>`:
+  // an alias when the expression is an entity-name/class expression, else a
+  // value property. The symbol lands in the container symbol's exports.
+  #bindExportAssignment(node: Node): void {
+    const containerSymbol = nodeSymbol(this.#container);
+    if (containerSymbol === undefined && isExportAssignment(node)) {
+      // Incorrect export assignment in a block construct.
+      this.#bindAnonymousDeclaration(node, SymbolFlags.Value, getDeclarationName(node));
+    } else if (containerSymbol !== undefined) {
+      const flags = expressionIsAlias(exportAssignmentExpression(node)) ? SymbolFlags.Alias : SymbolFlags.Property;
+      const symbol = this.#declareSymbol(getSymbolExports(containerSymbol), containerSymbol, node, flags, SymbolFlags.All);
+      if (exportAssignmentIsExportEquals(node)) {
+        // Ensure export assignments have a ValueDeclaration set.
+        setValueDeclaration(symbol, node);
+      }
     }
   }
 
@@ -736,6 +914,15 @@ function setValueDeclaration(symbol: Symbol, node: Node): void {
   }
 }
 
+// ast.IsLocalsContainer (ast.go:1528) — a node that owns a locals table
+// (LocalsContainerData != nil). In this port that is exactly the set of nodes
+// GetContainerFlags marks HasLocals (SourceFile, ModuleDeclaration, function-/
+// signature-likes, and the block-scoped loop/catch containers), so the boundary
+// source is reused rather than re-enumerating the embedding set.
+function isLocalsContainer(node: Node): boolean {
+  return (getContainerFlags(node) & ContainerFlags.HasLocals) !== 0;
+}
+
 // ast.GetLocals(node) with eager creation for the block-scoped on-demand case.
 // HasLocals containers already had locals created in bindContainer; block-scoped
 // containers create them lazily here (binder.go declareSymbol(GetLocals(...))).
@@ -749,10 +936,15 @@ function getOrCreateLocals(node: Node): SymbolTable {
   return created;
 }
 
-// getDeclarationName (binder.go:308) — M4b form for a non-external-module,
-// non-JS source file: the declaration name is its `name` node's text (when a
-// literal/identifier property name) else "__missing".
+// getDeclarationName (binder.go:308) — the declaration name is its `name` node's
+// text (when a literal/identifier property name) else "__missing", with the
+// reserved names for export-assignment / export-star / export-equals. The
+// ambient-module / private-identifier / computed-name JS/declaration branches
+// (binder.go:314-344) are not reachable in the M4c surface.
 function getDeclarationName(node: Node): string {
+  if (isExportAssignment(node)) {
+    return exportAssignmentIsExportEquals(node) ? InternalSymbolNameExportEquals : InternalSymbolNameDefault;
+  }
   const name = nodeName(node);
   if (name !== undefined) {
     if (isPropertyNameLiteralLike(name)) {
@@ -771,6 +963,10 @@ function getDeclarationName(node: Node): string {
       return "__new";
     case Kind.IndexSignature:
       return "__index";
+    case Kind.ExportDeclaration:
+      return InternalSymbolNameExportStar;
+    case Kind.SourceFile:
+      return InternalSymbolNameExportEquals;
   }
   return InternalSymbolNameMissing;
 }
@@ -826,6 +1022,28 @@ function parameterIndex(node: Node): number {
 // const-enum detection (ast.IsEnumConst).
 function isEnumConst(node: Node): boolean {
   return (node.flags & NodeFlags.Const) !== 0;
+}
+
+// ExpressionIsAlias (utilities.go:1834) — an export-assignment expression that
+// aliases another declaration: an entity-name expression or a class expression.
+function expressionIsAlias(node: Node): boolean {
+  return isEntityNameExpression(node) || isClassExpression(node);
+}
+
+// hasExportDeclarations (binder.go:903) — whether a source file or module body
+// contains a top-level `export …` / `export =` statement (drives the
+// export-context flag for ambient declarations).
+function hasExportDeclarations(node: Node): boolean {
+  let statements: readonly Node[] = [];
+  if (node.kind === Kind.SourceFile) {
+    statements = sourceFileStatementsRO(node);
+  } else if (node.kind === Kind.ModuleDeclaration) {
+    const body = nodeBody(node);
+    if (body !== undefined && isModuleBlock(body)) {
+      statements = blockStatements(body);
+    }
+  }
+  return statements.some((s) => isExportDeclaration(s) || isExportAssignment(s));
 }
 
 // The statement list of a Block / ModuleBlock.

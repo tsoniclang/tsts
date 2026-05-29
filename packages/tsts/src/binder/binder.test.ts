@@ -3,12 +3,17 @@ import { Assert, FactAttribute } from "xunit-types/Xunit.js";
 import { Exception } from "@tsonic/dotnet/System.js";
 
 import {
+  Kind,
   SymbolFlags,
   isBlock,
   isClassDeclaration,
+  isExportDeclaration,
   isForStatement,
   isFunctionDeclaration,
+  isImportDeclaration,
   isInterfaceDeclaration,
+  isNamedExports,
+  isNamedImports,
   isTypeAliasDeclaration,
   isVariableStatement,
 } from "../ast/index.js";
@@ -270,6 +275,120 @@ export class BinderGroundworkTests {
     Assert.True(staticS?.valueDeclaration === staticMember);
     Assert.True(instanceM?.valueDeclaration === instanceMember);
   }
+
+  // codex-032140 M4c ACCEPTANCE A: external-module detection + import/export alias
+  // binding + the local↔export DUAL symbol link.
+  //   import { value as localValue } from "./dep.js";
+  //   export { localValue };
+  //   - the file is an external module → sourceFile.symbol is set (a ValueModule)
+  //   - sourceFile.locals.get("localValue") is an Alias whose declaration is the
+  //     ImportSpecifier (imports route to locals, NOT to exports)
+  //   - sourceFile.symbol.exports.get("localValue") is an Alias whose declaration
+  //     is the ExportSpecifier (export-specifiers route to the module's exports)
+  binds_import_and_export_aliases_with_external_module_symbol(): void {
+    const sourceFile = parseSourceFile("import { value as localValue } from \"./dep.js\";\nexport { localValue };");
+    const diagnostics = bindSourceFile(sourceFile);
+
+    Assert.Equal(0, diagnostics.length);
+    // External-module detection: the file got a module symbol (an Alias-free
+    // ValueModule), and the parser flagged the external-module indicator.
+    Assert.NotNull(sourceFile.externalModuleIndicator);
+    Assert.NotNull(sourceFile.symbol);
+    Assert.Equal(SymbolFlags.ValueModule, sourceFile.symbol?.flags);
+
+    // The imported alias lives in the file's LOCALS, declared by the ImportSpecifier.
+    Assert.NotNull(sourceFile.locals);
+    const localAlias = lookupSymbol(sourceFile.locals!, "localValue");
+    Assert.Equal(SymbolFlags.Alias, localAlias?.flags);
+    const importDeclaration = sourceFile.statements[0]!;
+    if (!isImportDeclaration(importDeclaration)) throw new Exception("Expected import declaration");
+    const namedImports = importDeclaration.importClause!.namedBindings!;
+    if (!isNamedImports(namedImports)) throw new Exception("Expected named imports");
+    const importSpecifier = namedImports.elements[0]!;
+    Assert.Equal(Kind.ImportSpecifier, importSpecifier.kind);
+    Assert.Equal(1, localAlias?.declarations.length);
+    Assert.True(localAlias?.declarations[0] === importSpecifier);
+
+    // The export specifier lives in the MODULE's exports, declared by the
+    // ExportSpecifier — a separate Alias symbol from the local import alias.
+    const exportTable = sourceFile.symbol?.exports;
+    Assert.NotNull(exportTable);
+    const exportAlias = exportTable?.get("localValue");
+    Assert.Equal(SymbolFlags.Alias, exportAlias?.flags);
+    const exportDeclaration = sourceFile.statements[1]!;
+    if (!isExportDeclaration(exportDeclaration)) throw new Exception("Expected export declaration");
+    const namedExports = exportDeclaration.exportClause!;
+    if (!isNamedExports(namedExports)) throw new Exception("Expected named exports");
+    const exportSpecifier = namedExports.elements[0]!;
+    Assert.Equal(Kind.ExportSpecifier, exportSpecifier.kind);
+    Assert.Equal(1, exportAlias?.declarations.length);
+    Assert.True(exportAlias?.declarations[0] === exportSpecifier);
+
+    // The import alias (local) and the export alias are DISTINCT symbols.
+    Assert.True(localAlias !== exportAlias);
+  }
+
+  // codex-032140 M4c ACCEPTANCE A (dual symbol): an `export const` produces a
+  // local symbol AND an export symbol, linked via local.exportSymbol and the
+  // node.localSymbol back-link (ExportableBase.LocalSymbol).
+  //   export const exported = 1;
+  binds_exported_const_with_local_export_dual_symbol_link(): void {
+    const sourceFile = parseSourceFile("export const exported = 1;");
+    const diagnostics = bindSourceFile(sourceFile);
+
+    Assert.Equal(0, diagnostics.length);
+    Assert.NotNull(sourceFile.symbol);
+
+    // The local symbol is flagged ExportValue (declareModuleMember exportKind) and
+    // lives in the file's locals; the export symbol carries the real flags. The
+    // local is read directly (not via lookupSymbol, which filters by value/type/
+    // namespace/alias meaning — ExportValue is none of those).
+    const local = sourceFile.locals!.get("exported");
+    Assert.Equal(SymbolFlags.ExportValue, local?.flags);
+    const exported = sourceFile.symbol?.exports?.get("exported");
+    Assert.Equal(SymbolFlags.BlockScopedVariable, exported?.flags);
+
+    // The local↔export link is set both ways: local.exportSymbol === the export
+    // symbol, and the declaration node's localSymbol back-link === the local.
+    Assert.True(local?.exportSymbol === exported);
+    const variableStatement = sourceFile.statements[0]!;
+    if (!isVariableStatement(variableStatement)) throw new Exception("Expected variable statement");
+    const variableDeclaration = variableStatement.declarationList.declarations[0]!;
+    Assert.True(variableDeclaration.localSymbol === local);
+  }
+
+  // codex-032140 M4c ACCEPTANCE B: a module cannot have multiple default exports.
+  //   export default 1;
+  //   export default 2;
+  // The second `export default <expr>` conflicts with the first under the
+  // reserved name "default", emitting A_module_cannot_have_multiple_default_exports
+  // on both the prior and the conflicting declaration.
+  diagnoses_multiple_default_exports(): void {
+    const diagnostics = bindSourceFile(parseSourceFile("export default 1;\nexport default 2;"));
+    Assert.Equal<readonly string[]>(
+      ["A module cannot have multiple default exports.", "A module cannot have multiple default exports."],
+      diagnostics.map((d) => d.message),
+    );
+  }
+
+  // codex-032140 M4c ACCEPTANCE C: faithful enum merge.
+  //   enum E { A }
+  //   enum E { B }
+  // The two enum declarations merge into ONE symbol whose member table contains
+  // both A and B — no spurious duplicate diagnostic.
+  binds_merged_enum_declarations_without_duplicate(): void {
+    const sourceFile = parseSourceFile("enum E { A } enum E { B }");
+    const diagnostics = bindSourceFile(sourceFile);
+
+    Assert.Equal(0, diagnostics.length);
+    Assert.NotNull(sourceFile.locals);
+    const enumSymbol = lookupSymbol(sourceFile.locals!, "E");
+    Assert.Equal(SymbolFlags.RegularEnum, enumSymbol?.flags);
+    // A single merged symbol with both declarations and both members.
+    Assert.Equal(2, enumSymbol?.declarations.length);
+    Assert.Equal(SymbolFlags.EnumMember, enumSymbol?.exports?.get("A")?.flags);
+    Assert.Equal(SymbolFlags.EnumMember, enumSymbol?.exports?.get("B")?.flags);
+  }
 }
 
 A<BinderGroundworkTests>().method((t) => t.binds_source_file_variables_and_function_declarations_into_symbol_tables).add(FactAttribute);
@@ -282,3 +401,7 @@ A<BinderGroundworkTests>().method((t) => t.binds_names_inside_object_and_array_b
 A<BinderGroundworkTests>().method((t) => t.binds_function_f_let_x_gate_in_place).add(FactAttribute);
 A<BinderGroundworkTests>().method((t) => t.binds_function_var_let_block_scopes_with_distinct_inner_let).add(FactAttribute);
 A<BinderGroundworkTests>().method((t) => t.binds_class_static_member_to_exports_and_instance_member_to_members).add(FactAttribute);
+A<BinderGroundworkTests>().method((t) => t.binds_import_and_export_aliases_with_external_module_symbol).add(FactAttribute);
+A<BinderGroundworkTests>().method((t) => t.binds_exported_const_with_local_export_dual_symbol_link).add(FactAttribute);
+A<BinderGroundworkTests>().method((t) => t.diagnoses_multiple_default_exports).add(FactAttribute);
+A<BinderGroundworkTests>().method((t) => t.binds_merged_enum_declarations_without_duplicate).add(FactAttribute);

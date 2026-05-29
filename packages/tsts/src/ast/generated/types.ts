@@ -33,6 +33,13 @@ export interface Node extends TextRange {
   symbol?: Symbol;
   locals?: Map<string, Symbol>;
   nextContainer?: Node;
+  // codex-032140 M4c ruling: localSymbol is the binder's local↔export back-link
+  // (tsgo ExportableBase.LocalSymbol; node.ExportableData().LocalSymbol = local in
+  // declareModuleMember, binder.go:415). Same controlled-mutable binder-owned-slot
+  // category as symbol/locals/nextContainer above — surfaced on the shared Node
+  // contract so ast/accessors.ts reads/writes it through the typed contract instead
+  // of an `as unknown as { field }` structural-erasure cast.
+  localSymbol?: Symbol;
   readonly jsDoc?: readonly Node[];
   forEachChild<T>(visitor: (node: Node) => T, visitArray?: (nodes: NodeArray<Node>) => T): T | undefined;
   getSourceFile(): SourceFile;
