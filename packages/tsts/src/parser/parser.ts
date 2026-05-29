@@ -19,12 +19,16 @@ import {
   createConditionalTypeNode,
   createConstructorDeclaration,
   createConstructorTypeNode,
+  createDebuggerStatement,
   createDeleteExpression,
   createDefaultClause,
+  createEmptyStatement,
+  createExportAssignment,
   createExportDeclaration,
   createExportSpecifier,
   createExpressionStatement,
   createExpressionWithTypeArguments,
+  createExternalModuleReference,
   createBreakStatement,
   createContinueStatement,
   createConditionalExpression,
@@ -43,8 +47,11 @@ import {
   createIfStatement,
   createIdentifier,
   createIndexedAccessTypeNode,
+  createImportAttribute,
+  createImportAttributes,
   createImportClause,
   createImportDeclaration,
+  createImportEqualsDeclaration,
   createImportSpecifier,
   createIntersectionTypeNode,
   createInterfaceDeclaration,
@@ -54,11 +61,13 @@ import {
   createConstructSignatureDeclaration,
   createIndexSignatureDeclaration,
   createKeywordExpression,
+  createLabeledStatement,
   createLiteralTypeNode,
   createMethodDeclaration,
   createMethodSignatureDeclaration,
   createNamedExports,
   createNamedImports,
+  createNamespaceExportDeclaration,
   createNamespaceImport,
   createNewExpression,
   createNoSubstitutionTemplateLiteral,
@@ -113,7 +122,9 @@ import {
   createVariableStatement,
   createVoidExpression,
   createWhileStatement,
+  createWithStatement,
   isBinaryOperatorToken,
+  isIdentifier,
   type BinaryOperator,
   type BinaryOperatorToken,
   type BindingName,
@@ -127,12 +138,14 @@ import {
   type EntityName,
   type ForInitializer,
   type Identifier,
+  type ImportAttributeName,
   type ImportSpecifier,
   type ImportPhaseModifierSyntaxKind,
   type KeywordTypeSyntaxKind,
   type ModifierSyntaxKind,
   type ModifierLike,
   type ModuleExportName,
+  type ModuleReference,
   type NamedImportBindings,
   type Node,
   type NodeArray,
@@ -273,18 +286,56 @@ export class Parser {
     // capture their own pos at their #parseX entry instead.
     const pos = this.#nodePos();
     const modifiers = this.#parseModifiers();
-    if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword) && this.#current().kind === Kind.DefaultKeyword) {
-      this.#advance();
-      const defaultModifiers = createNodeArray([...modifiers, createToken(Kind.DefaultKeyword) as ModifierLike]);
-      if (this.#current().kind === Kind.FunctionKeyword) {
-        return this.#parseFunctionDeclaration(pos, defaultModifiers);
+    // tsgo parseDeclarationWorker KindExportKeyword case (parser.go:1169-1178): after the
+    // `export` keyword, the FOLLOWING token decides the production. Unlike tsgo (where the
+    // bare `export` is consumed inside parseDeclarationWorker), tsts's #parseModifiers has
+    // already consumed `export` into `modifiers`, so the deciding token is the CURRENT token.
+    // Mirror tsgo's split: `default`(+expr) | `=` -> ExportAssignment; `as` -> namespace
+    // export; `default`(+function/class) stays a declaration carrying a DefaultKeyword
+    // modifier (tsgo absorbs `default` as a modifier only when followed by class/function).
+    if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword)) {
+      if (this.#current().kind === Kind.DefaultKeyword) {
+        // tsgo nextTokenCanFollowDefaultKeyword (parser.go:3986): `export default class`/
+        // `export default function` are declarations with a DefaultKeyword modifier; any
+        // other follower is an ExportAssignment(isExportEquals=false).
+        const followerKind = this.#tokens[this.#index + 1]?.kind;
+        if (followerKind === Kind.FunctionKeyword || followerKind === Kind.ClassKeyword) {
+          this.#advance();
+          const defaultModifiers = createNodeArray([...modifiers, createToken(Kind.DefaultKeyword) as ModifierLike]);
+          if (this.#current().kind === Kind.FunctionKeyword) {
+            return this.#parseFunctionDeclaration(pos, defaultModifiers);
+          }
+          return this.#parseClassDeclaration(pos, defaultModifiers);
+        }
+        return this.#parseExportAssignment(pos, modifiers);
       }
-      if (this.#current().kind === Kind.ClassKeyword) {
-        return this.#parseClassDeclaration(pos, defaultModifiers);
+      if (this.#current().kind === Kind.EqualsToken) {
+        return this.#parseExportAssignment(pos, modifiers);
       }
-      throw new ParseError("Unsupported export default declaration", this.#current());
+      if (this.#current().kind === Kind.AsKeyword) {
+        return this.#parseNamespaceExportDeclaration(pos, modifiers);
+      }
     }
     switch (this.#current().kind) {
+      case Kind.SemicolonToken:
+        // tsgo parseStatement KindSemicolonToken (parser.go:1061): a bare `;` is an
+        // EmptyStatement. It carries no modifiers (keyword-led production).
+        if (modifiers !== undefined) {
+          throw new ParseError("Modifiers are not valid on empty statements", this.#current());
+        }
+        return this.#parseEmptyStatement();
+      case Kind.DebuggerKeyword:
+        // tsgo parseStatement KindDebuggerKeyword (parser.go:1105).
+        if (modifiers !== undefined) {
+          throw new ParseError("Modifiers are not valid on debugger statements", this.#current());
+        }
+        return this.#parseDebuggerStatement();
+      case Kind.WithKeyword:
+        // tsgo parseStatement KindWithKeyword (parser.go:1097).
+        if (modifiers !== undefined) {
+          throw new ParseError("Modifiers are not valid on with statements", this.#current());
+        }
+        return this.#parseWithStatement();
       case Kind.ImportKeyword:
         return this.#parseImportDeclaration(pos, modifiers);
       case Kind.ClassKeyword:
@@ -369,10 +420,17 @@ export class Parser {
     if (modifiers !== undefined) {
       throw new ParseError("Modifiers are not valid on expression statements", this.#current());
     }
-    // tsgo parseExpressionOrLabeledStatement: pos captured before the expression. Since
-    // modifiers are rejected for expression statements, the #parseStatement-top pos equals
-    // the expression's own start; reuse it.
+    // tsgo parseExpressionOrLabeledStatement (parser.go:1515): pos captured before the
+    // expression. Since modifiers are rejected for expression statements, the
+    // #parseStatement-top pos equals the expression's own start; reuse it. Parse the
+    // expression, then if it is an Identifier followed by `:`, build a LabeledStatement
+    // whose body is a full #parseStatement (so `a: b: stmt` recurses). The identifier+colon
+    // test keys off the PARSED expression's kind (Kind.Identifier), not a raw token peek, so
+    // a parenthesized/member expression followed by `:` is NOT mistaken for a label.
     const expression = this.#parseExpression();
+    if (isIdentifier(expression) && this.#consumeOptional(Kind.ColonToken)) {
+      return this.#finishNode(createLabeledStatement(expression, this.#parseStatement()), pos);
+    }
     this.#consumeOptional(Kind.SemicolonToken);
     return this.#finishNode(createExpressionStatement(expression), pos);
   }
@@ -382,41 +440,132 @@ export class Parser {
   }
 
   #parseImportDeclaration(pos: number, modifiers: NodeArray<ModifierLike> | undefined): Statement {
-    // tsgo parseImportDeclarationOrImportEqualsDeclaration: ImportDeclaration start is the
-    // #parseStatement-top pos (covering modifiers); finishNode runs after the trailing
-    // semicolon so a present `;` is covered.
+    // tsgo parseImportDeclarationOrImportEqualsDeclaration (parser.go:2229): ImportDeclaration
+    // / ImportEqualsDeclaration start is the #parseStatement-top pos (covering modifiers);
+    // finishNode runs after the trailing semicolon so a present `;` is covered.
     this.#expect(Kind.ImportKeyword);
-    let importClause: ReturnType<typeof createImportClause> | undefined;
-    let moduleSpecifier: Expression;
+    // tsgo: afterImportPos is captured here, before parsing the leading identifier. It becomes
+    // the ImportClause's pos.
+    const afterImportPos = this.#nodePos();
+    // String-specifier shape: `import "x";` (no clause). tokenAfterImportDefinitelyProduces-
+    // ImportDeclaration is implicitly handled by the clause path below.
     if (this.#current().kind === Kind.StringLiteral) {
-      moduleSpecifier = this.#parseStringLiteralExpression();
-    } else {
-      importClause = this.#parseImportClause();
-      this.#expect(Kind.FromKeyword);
-      moduleSpecifier = this.#parseStringLiteralExpression();
+      const moduleSpecifier = this.#parseStringLiteralExpression();
+      const attributes = this.#tryParseImportAttributes();
+      this.#consumeOptional(Kind.SemicolonToken);
+      return this.#finishNode(createImportDeclaration(modifiers, undefined, moduleSpecifier, attributes), pos);
     }
+    // tsgo: optionally parse a leading identifier, then reinterpret a leading `type`/`defer`
+    // as a phase modifier (re-parsing the real identifier after it). The phase-modifier
+    // disambiguation mirrors tsgo (parser.go:2238-2261).
+    let identifier = this.#isImportedIdentifier() ? this.#parseIdentifier() : undefined;
+    let phaseModifier: ImportPhaseModifierSyntaxKind | undefined;
+    if (
+      identifier !== undefined
+      && identifier.text === "type"
+      && (this.#current().kind !== Kind.FromKeyword
+        || (this.#isImportedIdentifier() && this.#nextTokenIsFromKeywordOrEqualsToken()))
+      && (this.#isImportedIdentifier() || this.#tokenAfterImportDefinitelyProducesImportDeclaration())
+    ) {
+      phaseModifier = Kind.TypeKeyword;
+      identifier = this.#isImportedIdentifier() ? this.#parseIdentifier() : undefined;
+    } else if (identifier !== undefined && identifier.text === "defer") {
+      const shouldParseAsDeferModifier = this.#current().kind === Kind.FromKeyword
+        ? this.#tokens[this.#index + 1]?.kind !== Kind.StringLiteral
+        : this.#current().kind !== Kind.CommaToken && this.#current().kind !== Kind.EqualsToken;
+      if (shouldParseAsDeferModifier) {
+        phaseModifier = Kind.DeferKeyword;
+        identifier = this.#isImportedIdentifier() ? this.#parseIdentifier() : undefined;
+      }
+    }
+    // tsgo: `import id ___` where the token after the identifier is NOT comma/from produces an
+    // ImportEqualsDeclaration (parser.go:2262). `defer` phase never produces import-equals.
+    if (
+      identifier !== undefined
+      && !this.#tokenAfterImportedIdentifierDefinitelyProducesImportDeclaration()
+      && phaseModifier !== Kind.DeferKeyword
+    ) {
+      return this.#parseImportEqualsDeclaration(pos, modifiers, identifier, phaseModifier === Kind.TypeKeyword);
+    }
+    const importClause = this.#parseImportClause(afterImportPos, phaseModifier, identifier);
+    this.#expect(Kind.FromKeyword);
+    const moduleSpecifier = this.#parseStringLiteralExpression();
+    const attributes = this.#tryParseImportAttributes();
     this.#consumeOptional(Kind.SemicolonToken);
-    return this.#finishNode(createImportDeclaration(modifiers, importClause, moduleSpecifier, undefined), pos);
+    return this.#finishNode(createImportDeclaration(modifiers, importClause, moduleSpecifier, attributes), pos);
   }
 
-  #parseImportClause(): ReturnType<typeof createImportClause> {
-    // tsgo parseImportClause: ImportClause pos is `afterImportPos` (the token after
-    // `import`), which equals this method's entry here.
+  #isImportedIdentifier(): boolean {
+    // tsgo isIdentifier (used as `p.isIdentifier()` when parsing the imported binding).
+    // Mirrors the existing isIdentifierNameKind gate used elsewhere for import bindings.
+    return isIdentifierNameKind(this.#current().kind);
+  }
+
+  #nextTokenIsFromKeywordOrEqualsToken(): boolean {
+    // tsgo nextTokenIsFromKeywordOrEqualsToken (parser.go:2278): a lookAhead over the NEXT
+    // token. tsts has a token array, so peek index+1 without consuming.
+    const next = this.#tokens[this.#index + 1]?.kind;
+    return next === Kind.FromKeyword || next === Kind.EqualsToken;
+  }
+
+  #tokenAfterImportDefinitelyProducesImportDeclaration(): boolean {
+    // tsgo tokenAfterImportDefinitelyProducesImportDeclaration (parser.go:2283).
+    return this.#current().kind === Kind.AsteriskToken || this.#current().kind === Kind.OpenBraceToken;
+  }
+
+  #tokenAfterImportedIdentifierDefinitelyProducesImportDeclaration(): boolean {
+    // tsgo tokenAfterImportedIdentifierDefinitelyProducesImportDeclaration (parser.go:2287):
+    // in `import id ___`, comma/from => ImportDeclaration; anything else => ImportEquals.
+    return this.#current().kind === Kind.CommaToken || this.#current().kind === Kind.FromKeyword;
+  }
+
+  #parseImportEqualsDeclaration(
+    pos: number,
+    modifiers: NodeArray<ModifierLike> | undefined,
+    name: Identifier,
+    isTypeOnly: boolean,
+  ): Statement {
+    // tsgo parseImportEqualsDeclaration (parser.go:2293): `= ModuleReference ;`. Start pos is
+    // the #parseStatement-top pos; finishNode after the trailing semicolon.
+    this.#expect(Kind.EqualsToken);
+    const moduleReference = this.#parseModuleReference();
+    this.#consumeOptional(Kind.SemicolonToken);
+    return this.#finishNode(createImportEqualsDeclaration(modifiers, isTypeOnly, name, moduleReference), pos);
+  }
+
+  #parseModuleReference(): ModuleReference {
+    // tsgo parseModuleReference (parser.go:2302): `require( ... )` external module reference,
+    // else a (dotted) entity name.
+    if (this.#current().kind === Kind.RequireKeyword && this.#tokens[this.#index + 1]?.kind === Kind.OpenParenToken) {
+      return this.#parseExternalModuleReference();
+    }
+    return this.#parseEntityName();
+  }
+
+  #parseExternalModuleReference(): ModuleReference {
+    // tsgo parseExternalModuleReference (parser.go:2309): `require ( ModuleSpecifier )`. Start
+    // pos at the `require` keyword; finishNode after the closing `)`.
     const pos = this.#nodePos();
-    const phaseModifier = this.#current().kind === Kind.TypeKeyword || this.#current().kind === Kind.DeferKeyword
-      ? this.#advance().kind as ImportPhaseModifierSyntaxKind
-      : undefined;
-    let name: Identifier | undefined;
+    this.#expect(Kind.RequireKeyword);
+    this.#expect(Kind.OpenParenToken);
+    const expression = this.#parseStringLiteralExpression();
+    this.#expect(Kind.CloseParenToken);
+    return this.#finishNode(createExternalModuleReference(expression), pos);
+  }
+
+  #parseImportClause(
+    pos: number,
+    phaseModifier: ImportPhaseModifierSyntaxKind | undefined,
+    identifier: Identifier | undefined,
+  ): ReturnType<typeof createImportClause> {
+    // tsgo parseImportClause (parser.go:2344): ImportClause pos is `afterImportPos` (the token
+    // after `import`); the default-binding identifier and phase modifier were already parsed
+    // by the caller (#parseImportDeclaration), mirroring tsgo's threading of those values.
     let namedBindings: NamedImportBindings | undefined;
-    if (isIdentifierNameKind(this.#current().kind)) {
-      name = this.#parseIdentifier();
-      if (this.#consumeOptional(Kind.CommaToken)) {
-        namedBindings = this.#parseNamedImportBindings();
-      }
-    } else {
+    if (identifier === undefined || this.#consumeOptional(Kind.CommaToken)) {
       namedBindings = this.#parseNamedImportBindings();
     }
-    return this.#finishNode(createImportClause(phaseModifier, name, namedBindings), pos);
+    return this.#finishNode(createImportClause(phaseModifier, identifier, namedBindings), pos);
   }
 
   #parseNamedImportBindings(): NamedImportBindings {
@@ -445,12 +594,15 @@ export class Parser {
   }
 
   #parseExportDeclaration(pos: number, modifiers: NodeArray<ModifierLike>): Statement {
-    // tsgo parseExportDeclaration: ExportDeclaration start is the #parseStatement-top pos
-    // (covering modifiers); finishNode runs after the trailing semicolon.
+    // tsgo parseExportDeclaration (parser.go:2539): ExportDeclaration start is the
+    // #parseStatement-top pos (covering modifiers); finishNode runs after the trailing
+    // semicolon. After a module specifier, an optional import-attributes clause
+    // (`with`/`assert { ... }`) is parsed (tsgo parser.go:2564).
     if (this.#consumeOptional(Kind.AsteriskToken)) {
       const moduleSpecifier = this.#consumeOptional(Kind.FromKeyword) ? this.#parseStringLiteralExpression() : undefined;
+      const attributes = moduleSpecifier !== undefined ? this.#tryParseImportAttributes() : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
-      return this.#finishNode(createExportDeclaration(modifiers, false, undefined, moduleSpecifier, undefined), pos);
+      return this.#finishNode(createExportDeclaration(modifiers, false, undefined, moduleSpecifier, attributes), pos);
     }
     // tsgo parseNamedExports: NamedExports pos is the `{` token.
     const namedExportsPos = this.#nodePos();
@@ -468,8 +620,82 @@ export class Parser {
     this.#expect(Kind.CloseBraceToken);
     const namedExports = this.#finishNode(createNamedExports(createNodeArray(elements)), namedExportsPos);
     const moduleSpecifier = this.#consumeOptional(Kind.FromKeyword) ? this.#parseStringLiteralExpression() : undefined;
+    const attributes = moduleSpecifier !== undefined ? this.#tryParseImportAttributes() : undefined;
     this.#consumeOptional(Kind.SemicolonToken);
-    return this.#finishNode(createExportDeclaration(modifiers, false, namedExports, moduleSpecifier, undefined), pos);
+    return this.#finishNode(createExportDeclaration(modifiers, false, namedExports, moduleSpecifier, attributes), pos);
+  }
+
+  #parseExportAssignment(pos: number, modifiers: NodeArray<ModifierLike>): Statement {
+    // tsgo parseExportAssignment (parser.go:2506): `export = <expr> ;` (isExportEquals=true)
+    // or `export default <expr> ;` (isExportEquals=false). Start pos is the #parseStatement-top
+    // pos (covering the `export` modifier); finishNode after the trailing semicolon. tsgo
+    // parses the value with parseAssignmentExpressionOrHigher; tsts has no separate assignment-
+    // only production, so #parseExpression (precedence 0) is the faithful stand-in (broader,
+    // but does not diverge in shape/range for valid inputs). The TypeNode arg is nil in tsgo;
+    // passed as `undefined as never` here, matching the established tsts pattern for non-
+    // optional factory fields that tsgo leaves nil. The AwaitContext contextFlag tsgo sets
+    // around the expression is intentionally omitted (Stage-1 forbids contextFlags).
+    const isExportEquals = this.#consumeOptional(Kind.EqualsToken);
+    if (!isExportEquals) {
+      this.#expect(Kind.DefaultKeyword);
+    }
+    const expression = this.#parseExpression();
+    this.#consumeOptional(Kind.SemicolonToken);
+    return this.#finishNode(createExportAssignment(modifiers, isExportEquals, undefined as never, expression), pos);
+  }
+
+  #parseNamespaceExportDeclaration(pos: number, modifiers: NodeArray<ModifierLike>): Statement {
+    // tsgo parseNamespaceExportDeclaration (parser.go:2526): `export as namespace Id ;`. The
+    // `export` modifier was already consumed into `modifiers`; here we consume `as`,
+    // `namespace`, the identifier, then the trailing semicolon. Start pos is the
+    // #parseStatement-top pos; finishNode after the semicolon.
+    this.#expect(Kind.AsKeyword);
+    this.#expect(Kind.NamespaceKeyword);
+    const name = this.#parseIdentifier();
+    this.#consumeOptional(Kind.SemicolonToken);
+    return this.#finishNode(createNamespaceExportDeclaration(modifiers, name), pos);
+  }
+
+  #tryParseImportAttributes(): ReturnType<typeof createImportAttributes> | undefined {
+    // tsgo tryParseImportAttributes (parser.go:2496): on `with` (or `assert`) parse the
+    // attributes clause. The assert-deprecation diagnostic is Stage-3 error-model and is
+    // intentionally NOT emitted here; the node is built faithfully.
+    if (this.#current().kind === Kind.WithKeyword || this.#current().kind === Kind.AssertKeyword) {
+      return this.#parseImportAttributes(this.#current().kind);
+    }
+    return undefined;
+  }
+
+  #parseImportAttributes(token: Kind): ReturnType<typeof createImportAttributes> {
+    // tsgo parseImportAttributes (parser.go:3085): `with|assert { name: value, ... }`. Start
+    // pos at the with/assert keyword; finishNode after the closing `}`. multiLine is computed
+    // from the source slice spanning the braces (matching the existing tsts approach in
+    // #parseBlock / #parseObjectLiteralExpression, since tsts has no hasPrecedingLineBreak).
+    const pos = this.#nodePos();
+    this.#expect(token);
+    const openBrace = this.#expect(Kind.OpenBraceToken);
+    const elements: ReturnType<typeof createImportAttribute>[] = [];
+    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
+      elements.push(this.#parseImportAttribute());
+      this.#consumeOptional(Kind.CommaToken);
+    }
+    const closeBrace = this.#expect(Kind.CloseBraceToken);
+    const multiLine = this.#sourceText.slice(openBrace.pos, closeBrace.end).includes("\n");
+    // The factory's token param is narrowed to WithKeyword|AssertKeyword; the guard in
+    // #tryParseImportAttributes ensures `token` is exactly one of those.
+    return this.#finishNode(createImportAttributes(token as Kind.WithKeyword | Kind.AssertKeyword, createNodeArray(elements), multiLine), pos);
+  }
+
+  #parseImportAttribute(): ReturnType<typeof createImportAttribute> {
+    // tsgo parseImportAttribute (parser.go:3068): `name: value`, where name is an identifier/
+    // keyword or a string literal. Start pos at the name; finishNode after the value.
+    const pos = this.#nodePos();
+    const name: ImportAttributeName = this.#current().kind === Kind.StringLiteral
+      ? this.#parseStringLiteralExpression() as ImportAttributeName
+      : this.#parseIdentifier();
+    this.#expect(Kind.ColonToken);
+    const value = this.#parseExpression();
+    return this.#finishNode(createImportAttribute(name, value), pos);
   }
 
   #parseModifiers(): NodeArray<ModifierLike> | undefined {
@@ -991,6 +1217,37 @@ export class Parser {
     const closeBrace = this.#expect(Kind.CloseBraceToken);
     const multiLine = this.#sourceText.slice(openBrace.pos, closeBrace.end).includes("\n");
     return this.#finishNode(createBlock(createNodeArray(statements), multiLine), pos);
+  }
+
+  #parseEmptyStatement(): Statement {
+    // tsgo parseEmptyStatement (parser.go:1227): pos at the `;`; finishNode after the
+    // consumed semicolon so the range covers exactly the `;`.
+    const pos = this.#nodePos();
+    this.#expect(Kind.SemicolonToken);
+    return this.#finishNode(createEmptyStatement(), pos);
+  }
+
+  #parseDebuggerStatement(): Statement {
+    // tsgo parseDebuggerStatement (parser.go:1505): pos at the `debugger` keyword;
+    // finishNode after the optional terminating semicolon (tsgo parseSemicolon).
+    const pos = this.#nodePos();
+    this.#expect(Kind.DebuggerKeyword);
+    this.#consumeOptional(Kind.SemicolonToken);
+    return this.#finishNode(createDebuggerStatement(), pos);
+  }
+
+  #parseWithStatement(): Statement {
+    // tsgo parseWithStatement (parser.go:1377): pos at the `with` keyword; the body is a
+    // full #parseStatement. tsgo wraps the body in NodeFlagsInWithStatement via a
+    // contextFlag — that contextFlag is intentionally OMITTED here (Stage-1 forbids
+    // touching contextFlags); the node shape/range is faithful without it.
+    const pos = this.#nodePos();
+    this.#expect(Kind.WithKeyword);
+    this.#expect(Kind.OpenParenToken);
+    const expression = this.#parseExpression();
+    this.#expect(Kind.CloseParenToken);
+    const statement = this.#parseStatement();
+    return this.#finishNode(createWithStatement(expression, statement), pos);
   }
 
   #parseReturnStatement(): Statement {

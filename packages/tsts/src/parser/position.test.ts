@@ -36,11 +36,15 @@ import {
   isConstructSignatureDeclaration,
   isConstructorDeclaration,
   isConstructorTypeNode,
+  isDebuggerStatement,
   isElementAccessExpression,
+  isEmptyStatement,
   isEnumDeclaration,
   isEnumMember,
+  isExportAssignment,
   isExportDeclaration,
   isExpressionStatement,
+  isExternalModuleReference,
   isForStatement,
   isFunctionDeclaration,
   isFunctionTypeNode,
@@ -48,17 +52,22 @@ import {
   isHeritageClause,
   isIdentifier,
   isIfStatement,
+  isImportAttribute,
+  isImportAttributes,
   isImportDeclaration,
+  isImportEqualsDeclaration,
   isIndexSignatureDeclaration,
   isIndexedAccessTypeNode,
   isInterfaceDeclaration,
   isIntersectionTypeNode,
   isKeywordExpression,
   isKeywordTypeNode,
+  isLabeledStatement,
   isLiteralTypeNode,
   isMethodDeclaration,
   isMethodSignatureDeclaration,
   isNamedExports,
+  isNamespaceExportDeclaration,
   isNonNullExpression,
   isNumericLiteral,
   isObjectBindingPattern,
@@ -96,6 +105,7 @@ import {
   isVariableDeclarationList,
   isVariableStatement,
   isWhileStatement,
+  isWithStatement,
 } from "../ast/index.js";
 import { parseSourceFile } from "./index.js";
 
@@ -1381,6 +1391,182 @@ export class ParserPositionTests {
     Assert.Equal(9, name.pos);
     Assert.Equal(12, name.end);
   }
+
+  // Stage 1f: a bare `;` parses to an EmptyStatement covering exactly the semicolon.
+  empty_statement_covers_the_semicolon(): void {
+    const sourceFile = parseSourceFile(";");
+    const statement = sourceFile.statements[0]!;
+    if (!isEmptyStatement(statement)) throw new Exception("Expected empty statement");
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(1, statement.end);
+  }
+
+  // Stage 1f: `debugger;` parses to a DebuggerStatement spanning the keyword through the
+  // trailing semicolon.
+  debugger_statement_spans_through_semicolon(): void {
+    const sourceFile = parseSourceFile("debugger;");
+    const statement = sourceFile.statements[0]!;
+    if (!isDebuggerStatement(statement)) throw new Exception("Expected debugger statement");
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(9, statement.end);
+  }
+
+  // Stage 1f: `with (x) { y; }` parses to a WithStatement starting at the `with` keyword and
+  // ending at the body block's closing brace; the body is a full statement.
+  with_statement_spans_keyword_through_body(): void {
+    const sourceFile = parseSourceFile("with (x) { y; }");
+    const statement = sourceFile.statements[0]!;
+    if (!isWithStatement(statement)) throw new Exception("Expected with statement");
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(15, statement.end);
+    Assert.Equal(6, statement.expression.pos);
+    Assert.Equal(7, statement.expression.end);
+    if (!isBlock(statement.statement)) throw new Exception("Expected block body");
+  }
+
+  // Stage 1f: `label: foo;` parses to a LabeledStatement whose label is an Identifier and whose
+  // body is the trailing ExpressionStatement. The whole node spans label through the `;`.
+  labeled_statement_spans_label_through_body(): void {
+    const sourceFile = parseSourceFile("label: foo;");
+    const statement = sourceFile.statements[0]!;
+    if (!isLabeledStatement(statement)) throw new Exception("Expected labeled statement");
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(11, statement.end);
+    if (!isIdentifier(statement.label)) throw new Exception("Expected identifier label");
+    Assert.Equal(0, statement.label.pos);
+    Assert.Equal(5, statement.label.end);
+    if (!isExpressionStatement(statement.statement)) throw new Exception("Expected expression statement body");
+  }
+
+  // Stage 1f: nested labels `a: b: c;` recurse — the outer label's body is itself a
+  // LabeledStatement.
+  nested_labeled_statement_recurses(): void {
+    const sourceFile = parseSourceFile("a: b: c;");
+    const statement = sourceFile.statements[0]!;
+    if (!isLabeledStatement(statement)) throw new Exception("Expected outer labeled statement");
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(8, statement.end);
+    if (!isLabeledStatement(statement.statement)) throw new Exception("Expected inner labeled statement");
+    Assert.Equal(3, statement.statement.pos);
+    Assert.Equal(8, statement.statement.end);
+  }
+
+  // Stage 1f: `import x = require("m");` parses to an ImportEqualsDeclaration whose
+  // moduleReference is an ExternalModuleReference covering `require("m")`.
+  import_equals_require_spans_through_semicolon(): void {
+    const sourceFile = parseSourceFile("import x = require(\"m\");");
+    const statement = sourceFile.statements[0]!;
+    if (!isImportEqualsDeclaration(statement)) throw new Exception("Expected import equals declaration");
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(24, statement.end);
+    Assert.Equal("x", statement.name.text);
+    Assert.Equal(false, statement.isTypeOnly);
+    if (!isExternalModuleReference(statement.moduleReference)) throw new Exception("Expected external module reference");
+    Assert.Equal(11, statement.moduleReference.pos);
+    Assert.Equal(23, statement.moduleReference.end);
+  }
+
+  // Stage 1f: `import y = A.B;` parses to an ImportEqualsDeclaration whose moduleReference is a
+  // dotted entity name (QualifiedName).
+  import_equals_entity_name_uses_qualified_name(): void {
+    const sourceFile = parseSourceFile("import y = A.B;");
+    const statement = sourceFile.statements[0]!;
+    if (!isImportEqualsDeclaration(statement)) throw new Exception("Expected import equals declaration");
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(15, statement.end);
+    if (!isQualifiedName(statement.moduleReference)) throw new Exception("Expected qualified name module reference");
+    Assert.Equal(11, statement.moduleReference.pos);
+    Assert.Equal(14, statement.moduleReference.end);
+  }
+
+  // Stage 1f: `import type z = require("m");` is a type-only ImportEqualsDeclaration; the
+  // leading `type` is threaded into isTypeOnly, not the identifier name.
+  import_type_equals_threads_is_type_only(): void {
+    const sourceFile = parseSourceFile("import type z = require(\"m\");");
+    const statement = sourceFile.statements[0]!;
+    if (!isImportEqualsDeclaration(statement)) throw new Exception("Expected import equals declaration");
+    Assert.Equal(true, statement.isTypeOnly);
+    Assert.Equal("z", statement.name.text);
+  }
+
+  // Stage 1f: `export = value;` parses to an ExportAssignment with isExportEquals=true, spanning
+  // the `export` keyword through the trailing semicolon.
+  export_assignment_equals_spans_through_semicolon(): void {
+    const sourceFile = parseSourceFile("export = value;");
+    const statement = sourceFile.statements[0]!;
+    if (!isExportAssignment(statement)) throw new Exception("Expected export assignment");
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(15, statement.end);
+    Assert.Equal(true, statement.isExportEquals);
+    if (!isIdentifier(statement.expression)) throw new Exception("Expected identifier expression");
+  }
+
+  // Stage 1f: `export default 42;` parses to an ExportAssignment with isExportEquals=false (NOT
+  // a declaration), spanning the `export` keyword through the trailing semicolon.
+  export_default_expression_is_export_assignment(): void {
+    const sourceFile = parseSourceFile("export default 42;");
+    const statement = sourceFile.statements[0]!;
+    if (!isExportAssignment(statement)) throw new Exception("Expected export assignment");
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(18, statement.end);
+    Assert.Equal(false, statement.isExportEquals);
+    if (!isNumericLiteral(statement.expression)) throw new Exception("Expected numeric literal expression");
+  }
+
+  // Stage 1f: `export default function f() {}` remains a FunctionDeclaration (default kept as a
+  // modifier), proving the expression-default fix did not regress declaration defaults.
+  export_default_function_remains_function_declaration(): void {
+    const sourceFile = parseSourceFile("export default function f() {}");
+    const statement = sourceFile.statements[0]!;
+    if (!isFunctionDeclaration(statement)) throw new Exception("Expected function declaration");
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(30, statement.end);
+  }
+
+  // Stage 1f: `export as namespace Lib;` parses to a NamespaceExportDeclaration spanning the
+  // `export` keyword through the trailing semicolon.
+  namespace_export_declaration_spans_through_semicolon(): void {
+    const sourceFile = parseSourceFile("export as namespace Lib;");
+    const statement = sourceFile.statements[0]!;
+    if (!isNamespaceExportDeclaration(statement)) throw new Exception("Expected namespace export declaration");
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(24, statement.end);
+    Assert.Equal("Lib", statement.name.text);
+  }
+
+  // Stage 1f: `import data from "d.json" with { type: "json" };` carries an ImportAttributes node
+  // (token = WithKeyword) covering the `with { ... }` clause; the single attribute is `type:
+  // "json"`.
+  import_attributes_with_clause_ranges(): void {
+    const sourceFile = parseSourceFile("import data from \"d.json\" with { type: \"json\" };");
+    const statement = sourceFile.statements[0]!;
+    if (!isImportDeclaration(statement)) throw new Exception("Expected import declaration");
+    const attributes = statement.attributes;
+    if (attributes === undefined || !isImportAttributes(attributes)) throw new Exception("Expected import attributes");
+    Assert.Equal(Kind.WithKeyword, attributes.token);
+    Assert.Equal(26, attributes.pos);
+    Assert.Equal(47, attributes.end);
+    Assert.Equal(1, attributes.attributes.length);
+    const attribute = attributes.attributes[0]!;
+    if (!isImportAttribute(attribute)) throw new Exception("Expected import attribute");
+    Assert.Equal(33, attribute.pos);
+    Assert.Equal(45, attribute.end);
+    if (!isIdentifier(attribute.name)) throw new Exception("Expected identifier attribute name");
+    Assert.Equal("type", attribute.name.text);
+    if (!isStringLiteral(attribute.value)) throw new Exception("Expected string literal attribute value");
+  }
+
+  // Stage 1f: re-exports also carry attributes — `export { a } from "m.json" with { type:
+  // "json" };` wires an ImportAttributes node onto the ExportDeclaration.
+  reexport_attributes_with_clause_wired(): void {
+    const sourceFile = parseSourceFile("export { a } from \"m.json\" with { type: \"json\" };");
+    const statement = sourceFile.statements[0]!;
+    if (!isExportDeclaration(statement)) throw new Exception("Expected export declaration");
+    const attributes = statement.attributes;
+    if (attributes === undefined || !isImportAttributes(attributes)) throw new Exception("Expected import attributes");
+    Assert.Equal(Kind.WithKeyword, attributes.token);
+    Assert.Equal(1, attributes.attributes.length);
+  }
 }
 
 A<ParserPositionTests>().method((t) => t.stamps_identifier_leaf_with_token_tight_range).add(FactAttribute);
@@ -1465,3 +1651,17 @@ A<ParserPositionTests>().method((t) => t.binding_pattern_parameters_and_elements
 A<ParserPositionTests>().method((t) => t.array_binding_hole_and_elements_ranges).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.array_binding_rest_element_starts_at_dotdotdot).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.computed_property_name_covers_brackets).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.empty_statement_covers_the_semicolon).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.debugger_statement_spans_through_semicolon).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.with_statement_spans_keyword_through_body).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.labeled_statement_spans_label_through_body).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.nested_labeled_statement_recurses).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.import_equals_require_spans_through_semicolon).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.import_equals_entity_name_uses_qualified_name).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.import_type_equals_threads_is_type_only).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.export_assignment_equals_spans_through_semicolon).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.export_default_expression_is_export_assignment).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.export_default_function_remains_function_declaration).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.namespace_export_declaration_spans_through_semicolon).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.import_attributes_with_clause_ranges).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.reexport_attributes_with_clause_wired).add(FactAttribute);
