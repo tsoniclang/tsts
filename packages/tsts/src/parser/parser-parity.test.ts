@@ -45,6 +45,7 @@ import {
   isConditionalTypeNode,
   isConstructorTypeNode,
   isDecorator,
+  isExportDeclaration,
   isExpressionStatement,
   isFunctionTypeNode,
   isIdentifier,
@@ -55,6 +56,7 @@ import {
   isKeywordTypeNode,
   isLiteralTypeNode,
   isMappedTypeNode,
+  isMissingDeclaration,
   isNamedTupleMember,
   isOptionalTypeNode,
   isParameterDeclaration,
@@ -67,6 +69,7 @@ import {
   isTemplateLiteralTypeNode,
   isTemplateLiteralTypeSpan,
   isTemplateSpan,
+  isTryStatement,
   isTupleTypeNode,
   isTypeAliasDeclaration,
   isTypeLiteralNode,
@@ -410,10 +413,10 @@ export class ParserParityTests {
   }
 
   // ── Category 4: arrow vs parenthesized-expression disambiguation ───────────
-  // NOTE coverage gap: bare `(a,b);` THROWS "Expected token CloseParenToken" — the
-  // parser has no sequence/comma-expression production. So the corpus uses the
-  // arrow forms `((a,b)=>a)` and `((a):T=>a)` which DO parse. `(a,b)` is recorded
-  // here as a known unimplemented form, NOT a passing probe.
+  // NOTE coverage gap: bare `(a,b);` has no sequence/comma-expression production, so
+  // after `a` the parser now RECORDS X_0_expected[1005] (')' expected) and recovers
+  // instead of throwing (Stage-3b throw->diagnostics flip). The corpus uses the arrow
+  // forms `((a,b)=>a)` and `((a):T=>a)` which DO parse; `(a,b)` is the recovery probe.
 
   arrow_in_parens_two_params(): void {
     const { sourceFile, expression } = this.#soleExpression("((a,b)=>a);");
@@ -465,20 +468,15 @@ export class ParserParityTests {
     Assert.Equal(9, body.end);
   }
 
-  // Coverage gap: bare `(a,b);` (sequence/comma expression) is UNIMPLEMENTED — the
-  // parser throws "Expected token CloseParenToken at 2". This probe pins that the
-  // gap still exists (so 4b-swap does not silently change the failure mode). It is
-  // a PASSING probe because the throw is the EXPECTED current behavior.
+  // Coverage gap: bare `(a,b);` (sequence/comma expression) is UNIMPLEMENTED. Stage-3b
+  // throw->diagnostics flip: the parser no longer throws — after `a` it RECORDS
+  // X_0_expected[1005] (')' expected, the comma is unexpected inside the parenthesized
+  // expression) and recovers. This probe pins that recovery (no throw, diagnostic
+  // recorded). It also serves as recovery probe #1 (recover_sequence_paren).
   sequence_expression_is_known_gap(): void {
-    const threw = ((): boolean => {
-      try {
-        parseSourceFile("(a,b);");
-        return false;
-      } catch {
-        return true;
-      }
-    })();
-    Assert.True(threw, "bare (a,b) sequence expression should throw (known unimplemented gap)");
+    const sourceFile = parseSourceFile("(a,b);");
+    Assert.True(sourceFile.parseDiagnostics.length > 0, "(a,b) should record a parse diagnostic, not throw");
+    Assert.True(sourceFile.parseDiagnostics.some((d) => d.code === 1005), "expected X_0_expected (')' expected) at the comma");
   }
 
   // ── Category 5: call type-args vs relational ──────────────────────────────
@@ -888,6 +886,182 @@ export class ParserParityTests {
   }
 }
 
+// ── Stage-3b throw->diagnostics FLIP: recovery probes ──────────────────────────
+// Each probe parses a MALFORMED input that previously THREW a ParseError. After the
+// flip the parser RECORDS a tsgo-faithful Diagnostic into sourceFile.parseDiagnostics
+// and recovers (no throw, terminates). Probes assert the tsgo-faithful diagnostic
+// code (and/or recovered AST shape) AND that no throw occurred. Termination is
+// guaranteed by the 3b-list-model parseList progress guards. The recover_sequence_paren
+// probe (`(a,b);` -> X_0_expected[1005]) lives in ParserParityTests.
+// sequence_expression_is_known_gap to avoid duplication.
+export class ParserRecoveryTests {
+  // Parse `src` asserting NO throw; return the SourceFile for diagnostic/shape checks.
+  #parseNoThrow(src: string): SourceFile {
+    let threw = false;
+    let sourceFile: SourceFile | undefined;
+    try {
+      sourceFile = parseSourceFile(src);
+    } catch {
+      threw = true;
+    }
+    Assert.False(threw, "parser should recover (record a diagnostic), not throw, for: " + src);
+    if (sourceFile === undefined) throw new Exception("no source file produced");
+    return sourceFile;
+  }
+
+  #hasCode(sourceFile: SourceFile, code: number): boolean {
+    return sourceFile.parseDiagnostics.some((d) => d.code === code);
+  }
+
+  // #2: `let x =` (no initializer) -> Expression_expected[1109].
+  recover_let_no_initializer(): void {
+    const sourceFile = this.#parseNoThrow("let x =");
+    Assert.True(this.#hasCode(sourceFile, 1109), "expected Expression_expected[1109]");
+  }
+
+  // #3: `function f( {` (unclosed param list) -> X_0_expected[1005] (the `)`/`}`).
+  recover_function_unclosed_paren(): void {
+    const sourceFile = this.#parseNoThrow("function f( {");
+    Assert.True(this.#hasCode(sourceFile, 1005), "expected X_0_expected[1005]");
+  }
+
+  // #4: `type T = ;` (empty type) -> Type_expected[1110].
+  recover_type_alias_empty(): void {
+    const sourceFile = this.#parseNoThrow("type T = ;");
+    Assert.True(this.#hasCode(sourceFile, 1110), "expected Type_expected[1110]");
+  }
+
+  // #5: `f<T>(x);` parses as a CallExpression with one typeArgument; no diagnostics.
+  keep_call_type_args(): void {
+    const sourceFile = this.#parseNoThrow("f<T>(x);");
+    Assert.Equal(0, sourceFile.parseDiagnostics.length);
+    const statement = sourceFile.statements[0]!;
+    if (!isExpressionStatement(statement)) throw new Exception("expected expression statement");
+    const expression = statement.expression;
+    if (!isCallExpression(expression)) throw new Exception("expected call expression");
+    Assert.Equal(1, expression.typeArguments!.length);
+  }
+
+  // #6: `x<y>z;` is relational (BinaryExpression), NOT a type-argument call;
+  // canFollowTypeArgumentsInExpression returns false on identifier `z`. No diagnostics.
+  relational_not_type_args(): void {
+    const sourceFile = this.#parseNoThrow("x<y>z;");
+    Assert.Equal(0, sourceFile.parseDiagnostics.length);
+    const statement = sourceFile.statements[0]!;
+    if (!isExpressionStatement(statement)) throw new Exception("expected expression statement");
+    const expression = statement.expression;
+    if (!isBinaryExpression(expression)) throw new Exception("expected binary (relational) expression");
+    Assert.Equal(false, isCallExpression(expression));
+  }
+
+  // #7: `(a: number) => x` as a FunctionType still parses; binding/type contexts
+  // preserved. No diagnostics.
+  arrow_vs_paren_functiontype(): void {
+    const sourceFile = this.#parseNoThrow("type F=(a: number) => x;");
+    Assert.Equal(0, sourceFile.parseDiagnostics.length);
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("expected type alias");
+    if (!isFunctionTypeNode(statement.type)) throw new Exception("expected function type");
+    Assert.Equal(1, statement.type.parameters.length);
+  }
+
+  // #8: `*;` (a token that is not start-of-expression in expr position) ->
+  // Expression_expected[1109]; a missing identifier is built.
+  recover_primary_unexpected(): void {
+    const sourceFile = this.#parseNoThrow("*;");
+    Assert.True(this.#hasCode(sourceFile, 1109), "expected Expression_expected[1109]");
+  }
+
+  // #9: `try {}` (no catch/finally) -> X_catch_or_finally_expected[1472];
+  // statements[0] is a recovered TryStatement.
+  recover_try_no_catch_finally(): void {
+    const sourceFile = this.#parseNoThrow("try {}");
+    Assert.True(this.#hasCode(sourceFile, 1472), "expected X_catch_or_finally_expected[1472]");
+    if (!isTryStatement(sourceFile.statements[0]!)) throw new Exception("expected try statement");
+  }
+
+  // #10: "`a${b`" (head+expr, no middle/tail close) -> X_0_expected[1005].
+  recover_template_unterminated_span(): void {
+    const sourceFile = this.#parseNoThrow("`a${b`");
+    Assert.True(this.#hasCode(sourceFile, 1005), "expected X_0_expected[1005]");
+  }
+
+  // #11: `const {1} = x;` (numeric prop, no colon) -> Identifier_expected[1003].
+  recover_object_binding_shorthand(): void {
+    const sourceFile = this.#parseNoThrow("const {1} = x;");
+    Assert.True(this.#hasCode(sourceFile, 1003), "expected Identifier_expected[1003]");
+  }
+
+  // #12: `a?.;` -> Identifier_expected[1003]; the expression is a
+  // PropertyAccessExpression with a missing (zero-width, empty-text) member name.
+  recover_optional_chain_no_member(): void {
+    const sourceFile = this.#parseNoThrow("a?.;");
+    Assert.True(this.#hasCode(sourceFile, 1003), "expected Identifier_expected[1003]");
+    const statement = sourceFile.statements[0]!;
+    if (!isExpressionStatement(statement)) throw new Exception("expected expression statement");
+    if (!isPropertyAccessExpression(statement.expression)) throw new Exception("expected property access expression");
+    Assert.Equal("", statement.expression.name.text);
+  }
+
+  // #13: `type T = import("x", { bad: {} });` (bad attributes keyword) ->
+  // X_0_expected[1005] ("with" expected).
+  recover_import_attributes_bad_keyword(): void {
+    const sourceFile = this.#parseNoThrow("type T = import(\"x\", { bad: {} });");
+    Assert.True(this.#hasCode(sourceFile, 1005), "expected X_0_expected[1005] (\"with\")");
+  }
+
+  // #14a: `export {}` stays an ExportDeclaration (NOT MissingDeclaration); no diagnostics.
+  recover_modifiers_on_block_export(): void {
+    const sourceFile = this.#parseNoThrow("export {}");
+    Assert.Equal(0, sourceFile.parseDiagnostics.length);
+    if (!isExportDeclaration(sourceFile.statements[0]!)) throw new Exception("expected export declaration");
+  }
+
+  // #14b: `abstract {}` (non-export modifier + block) -> Declaration_expected[1146];
+  // statements[0] is a MissingDeclaration (the block fall-through Group-A site).
+  recover_modifiers_on_block(): void {
+    const sourceFile = this.#parseNoThrow("abstract {}");
+    Assert.True(this.#hasCode(sourceFile, 1146), "expected Declaration_expected[1146]");
+    if (!isMissingDeclaration(sourceFile.statements[0]!)) throw new Exception("expected missing declaration");
+  }
+
+  // #15: `abstract x;` (modifier before a non-keyword expression) ->
+  // Declaration_expected[1146]; statements[0] is a MissingDeclaration carrying the
+  // modifier (the expression-statement fall-through Group-A site). NOTE: `public a;`
+  // does NOT reach this path — tsgo isStartOfStatement(PublicKeyword) is false when an
+  // identifier follows on the same line (parser.go:6041), so it is handled by
+  // source-element abort recovery (Declaration_or_statement_expected[1128]), not the
+  // modifier fall-through. `abstract` (followed by a non-decl token) is the faithful
+  // input that consumes the modifier and reaches the expr-stmt MissingDeclaration.
+  recover_modifiers_expr_stmt(): void {
+    const sourceFile = this.#parseNoThrow("abstract x;");
+    Assert.True(this.#hasCode(sourceFile, 1146), "expected Declaration_expected[1146]");
+    const statement = sourceFile.statements[0]!;
+    if (!isMissingDeclaration(statement)) throw new Exception("expected missing declaration");
+    Assert.Equal(1, statement.modifiers!.length);
+  }
+
+  // #16: `type T = X extends infer U extends string ? U : never;` -> the conditional
+  // + infer-constraint parses (context-flag rewind in #tryParseConstraintOfInferType
+  // still works under the diagnostics-truncating #rewind). No diagnostics.
+  infer_constraint_context_preserved(): void {
+    const sourceFile = this.#parseNoThrow("type T = X extends infer U extends string ? U : never;");
+    Assert.Equal(0, sourceFile.parseDiagnostics.length);
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("expected type alias");
+    if (!isConditionalTypeNode(statement.type)) throw new Exception("expected conditional type");
+  }
+
+  // #17 (sanity): `}}}};` terminates via the parseList abort path (no throw, no hang).
+  terminates_on_garbage(): void {
+    const sourceFile = this.#parseNoThrow("}}}};");
+    // The abort path records Declaration_or_statement_expected[1128] for the leading
+    // close-braces; the only assertion that matters here is that it TERMINATED without
+    // throwing (already checked by #parseNoThrow) and produced diagnostics.
+    Assert.True(sourceFile.parseDiagnostics.length > 0, "garbage should record diagnostics");
+  }
+}
+
 // ── xunit registration (side-effect imports, mirroring position.test.ts) ─────
 A<ParserParityTests>().method((t) => t.shift_right_shift_a_rsh_b).add(FactAttribute);
 A<ParserParityTests>().method((t) => t.shift_unsigned_right_shift_a_ursh_b).add(FactAttribute);
@@ -935,3 +1109,22 @@ A<ParserParityTests>().method((t) => t.decorator_call_on_class).add(FactAttribut
 A<ParserParityTests>().method((t) => t.optional_type_in_tuple).add(FactAttribute);
 A<ParserParityTests>().method((t) => t.rest_type_in_tuple).add(FactAttribute);
 A<ParserParityTests>().method((t) => t.import_type_with_qualifier).add(FactAttribute);
+
+// Stage-3b throw->diagnostics FLIP recovery probes.
+A<ParserRecoveryTests>().method((t) => t.recover_let_no_initializer).add(FactAttribute);
+A<ParserRecoveryTests>().method((t) => t.recover_function_unclosed_paren).add(FactAttribute);
+A<ParserRecoveryTests>().method((t) => t.recover_type_alias_empty).add(FactAttribute);
+A<ParserRecoveryTests>().method((t) => t.keep_call_type_args).add(FactAttribute);
+A<ParserRecoveryTests>().method((t) => t.relational_not_type_args).add(FactAttribute);
+A<ParserRecoveryTests>().method((t) => t.arrow_vs_paren_functiontype).add(FactAttribute);
+A<ParserRecoveryTests>().method((t) => t.recover_primary_unexpected).add(FactAttribute);
+A<ParserRecoveryTests>().method((t) => t.recover_try_no_catch_finally).add(FactAttribute);
+A<ParserRecoveryTests>().method((t) => t.recover_template_unterminated_span).add(FactAttribute);
+A<ParserRecoveryTests>().method((t) => t.recover_object_binding_shorthand).add(FactAttribute);
+A<ParserRecoveryTests>().method((t) => t.recover_optional_chain_no_member).add(FactAttribute);
+A<ParserRecoveryTests>().method((t) => t.recover_import_attributes_bad_keyword).add(FactAttribute);
+A<ParserRecoveryTests>().method((t) => t.recover_modifiers_on_block_export).add(FactAttribute);
+A<ParserRecoveryTests>().method((t) => t.recover_modifiers_on_block).add(FactAttribute);
+A<ParserRecoveryTests>().method((t) => t.recover_modifiers_expr_stmt).add(FactAttribute);
+A<ParserRecoveryTests>().method((t) => t.infer_constraint_context_preserved).add(FactAttribute);
+A<ParserRecoveryTests>().method((t) => t.terminates_on_garbage).add(FactAttribute);

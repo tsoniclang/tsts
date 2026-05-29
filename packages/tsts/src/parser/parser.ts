@@ -76,6 +76,7 @@ import {
   createLiteralTypeNode,
   createMethodDeclaration,
   createMethodSignatureDeclaration,
+  createMissingDeclaration,
   createNamedExports,
   createNamedImports,
   createNamespaceExportDeclaration,
@@ -213,16 +214,6 @@ interface ParserMark {
   // diagnostics pushed during a speculative probe (tsgo ParserState.diagnosticsLen,
   // parser.go:353/366). Inert in 3a (no throw flipped => #diagnostics stays empty).
   readonly diagnosticsLen: number;
-}
-
-export class ParseError extends Error {
-  readonly token: ScannedToken;
-
-  constructor(message: string, token: ScannedToken) {
-    super(`${message} at ${token.pos}`);
-    this.name = "ParseError";
-    this.token = token;
-  }
 }
 
 const binaryPrecedence = new Map<Kind, number>([
@@ -602,6 +593,16 @@ export class Parser {
     }
   }
 
+  // codex Stage-3b 3b-flip: mirrors #reScanGreaterThan for the `<` family
+  // (tsgo p.reScanLessThanToken(), parser.go:5230). Used by the speculative
+  // call-type-args path to merge `<<` etc. back to a single `<` before probing.
+  #reScanLessThan(): void {
+    const kind = this.#scanner.reScanLessThanToken();
+    if (kind !== this.#token.kind) {
+      this.#refreshTokenFromScanner(kind);
+    }
+  }
+
   // codex Stage-3a: faithful port of tsgo parseErrorAtRange (parser.go:330-340).
   // Builds a concrete Diagnostic (text via format(message.message, args)) and
   // pushes it onto #diagnostics, deduping by last-position: if the previous
@@ -710,22 +711,16 @@ export class Parser {
     switch (this.#current().kind) {
       case Kind.SemicolonToken:
         // tsgo parseStatement KindSemicolonToken (parser.go:1061): a bare `;` is an
-        // EmptyStatement. It carries no modifiers (keyword-led production).
-        if (modifiers !== undefined) {
-          throw new ParseError("Modifiers are not valid on empty statements", this.#current());
-        }
+        // EmptyStatement. In tsgo a keyword-led statement is reached BEFORE modifiers
+        // are consumed (modifiers only matter inside parseDeclaration), so it never
+        // carries modifiers and builds with NO diagnostic. codex Stage-3b 3b-flip:
+        // drop the modifier guard, build the node.
         return this.#parseEmptyStatement();
       case Kind.DebuggerKeyword:
         // tsgo parseStatement KindDebuggerKeyword (parser.go:1105).
-        if (modifiers !== undefined) {
-          throw new ParseError("Modifiers are not valid on debugger statements", this.#current());
-        }
         return this.#parseDebuggerStatement();
       case Kind.WithKeyword:
         // tsgo parseStatement KindWithKeyword (parser.go:1097).
-        if (modifiers !== undefined) {
-          throw new ParseError("Modifiers are not valid on with statements", this.#current());
-        }
         return this.#parseWithStatement();
       case Kind.ImportKeyword:
         return this.#parseImportDeclaration(pos, modifiers);
@@ -741,34 +736,16 @@ export class Parser {
       case Kind.EnumKeyword:
         return this.#parseEnumDeclaration(pos, modifiers);
       case Kind.IfKeyword:
-        if (modifiers !== undefined) {
-          throw new ParseError("Modifiers are not valid on if statements", this.#current());
-        }
         return this.#parseIfStatement();
       case Kind.WhileKeyword:
-        if (modifiers !== undefined) {
-          throw new ParseError("Modifiers are not valid on while statements", this.#current());
-        }
         return this.#parseWhileStatement();
       case Kind.DoKeyword:
-        if (modifiers !== undefined) {
-          throw new ParseError("Modifiers are not valid on do statements", this.#current());
-        }
         return this.#parseDoStatement();
       case Kind.ForKeyword:
-        if (modifiers !== undefined) {
-          throw new ParseError("Modifiers are not valid on for statements", this.#current());
-        }
         return this.#parseForStatement();
       case Kind.BreakKeyword:
-        if (modifiers !== undefined) {
-          throw new ParseError("Modifiers are not valid on break statements", this.#current());
-        }
         return this.#parseBreakStatement();
       case Kind.ContinueKeyword:
-        if (modifiers !== undefined) {
-          throw new ParseError("Modifiers are not valid on continue statements", this.#current());
-        }
         return this.#parseContinueStatement();
       case Kind.VarKeyword:
       case Kind.LetKeyword:
@@ -777,31 +754,26 @@ export class Parser {
       case Kind.FunctionKeyword:
         return this.#parseFunctionDeclaration(pos, modifiers);
       case Kind.ReturnKeyword:
-        if (modifiers !== undefined) {
-          throw new ParseError("Modifiers are not valid on return statements", this.#current());
-        }
         return this.#parseReturnStatement();
       case Kind.ThrowKeyword:
-        if (modifiers !== undefined) {
-          throw new ParseError("Modifiers are not valid on throw statements", this.#current());
-        }
         return this.#parseThrowStatement();
       case Kind.TryKeyword:
-        if (modifiers !== undefined) {
-          throw new ParseError("Modifiers are not valid on try statements", this.#current());
-        }
         return this.#parseTryStatement();
       case Kind.SwitchKeyword:
-        if (modifiers !== undefined) {
-          throw new ParseError("Modifiers are not valid on switch statements", this.#current());
-        }
         return this.#parseSwitchStatement();
       case Kind.OpenBraceToken:
         if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword)) {
           return this.#parseExportDeclaration(pos, modifiers);
         }
+        // codex Stage-3b 3b-flip: tsgo parseDeclarationWorker terminal fall-through
+        // (parser.go:1180-1185): a leftover modifier with no valid declaration ->
+        // parseErrorAt(nodePos, nodePos, Declaration_expected) + finishNode(
+        // NewMissingDeclaration(modifiers)). Here a non-export modifier precedes a
+        // block; build the MissingDeclaration carrying the modifiers (zero-width at
+        // nodePos, no token consumed). On non-modifier input this builds a Block.
         if (modifiers !== undefined) {
-          throw new ParseError("Modifiers are not valid on blocks", this.#current());
+          this.#parseErrorAt(this.#nodePos(), this.#nodePos(), Diagnostics.Declaration_expected);
+          return this.#finishNode(createMissingDeclaration(modifiers), pos);
         }
         return this.#parseBlock();
     }
@@ -809,7 +781,11 @@ export class Parser {
       return this.#parseExportDeclaration(pos, modifiers);
     }
     if (modifiers !== undefined) {
-      throw new ParseError("Modifiers are not valid on expression statements", this.#current());
+      // codex Stage-3b 3b-flip: tsgo parseDeclarationWorker terminal fall-through
+      // (parser.go:1180-1185): leftover modifiers with no valid declaration ->
+      // Declaration_expected + MissingDeclaration carrying the modifiers.
+      this.#parseErrorAt(this.#nodePos(), this.#nodePos(), Diagnostics.Declaration_expected);
+      return this.#finishNode(createMissingDeclaration(modifiers), pos);
     }
     // tsgo parseExpressionOrLabeledStatement (parser.go:1515): pos captured before the
     // expression. Since modifiers are rejected for expression statements, the
@@ -1663,7 +1639,11 @@ export class Parser {
         this.#advance();
         return NodeFlags.Const;
       default:
-        throw new ParseError("Expected variable declaration kind", token);
+        // codex Stage-3b 3b-flip: UNREACHABLE internal invariant. #parseVariableStatement
+        // is only entered for Var/Let/Const (the #parseStatement switch). This is a debug
+        // assert, NOT a user-facing diagnostic (same category as the parsingContextErrors
+        // panic-equivalents); a plain internal Error, NOT the removed diagnostic class.
+        throw new Error("Unhandled variable declaration kind");
     }
   }
 
@@ -1816,7 +1796,10 @@ export class Parser {
     const catchClause = this.#current().kind === Kind.CatchKeyword ? this.#parseCatchClause() : undefined;
     const finallyBlock = this.#consumeOptional(Kind.FinallyKeyword) ? this.#parseBlock() : undefined;
     if (catchClause === undefined && finallyBlock === undefined) {
-      throw new ParseError("Expected catch or finally clause", this.#current());
+      // codex Stage-3b 3b-flip: tsgo parseTryStatement (parser.go ~1810) records
+      // X_catch_or_finally_expected (1472) and STILL finishes the node with both
+      // clauses undefined (NO advance).
+      this.#parseErrorAtCurrentToken(Diagnostics.X_catch_or_finally_expected);
     }
     return this.#finishNode(createTryStatement(tryBlock, catchClause, finallyBlock), pos);
   }
@@ -1861,9 +1844,8 @@ export class Parser {
   #parseCaseOrDefaultClause(): CaseOrDefaultClause {
     // tsgo parseCaseOrDefaultClause: if token==Case -> parseCaseClause, else
     // parseDefaultClause. pos at the case/default keyword; finishNode after the
-    // clause statement list. The explicit ParseError on neither-token (kept from
-    // the original tsts loop, NOT flipped) is unreachable here: #parseList only
-    // calls this when isListElement(PCSwitchClauses) = Case||Default is true.
+    // clause statement list. The neither-token tail is UNREACHABLE here: #parseList
+    // only calls this when isListElement(PCSwitchClauses) = Case||Default is true.
     const clausePos = this.#nodePos();
     if (this.#consumeOptional(Kind.CaseKeyword)) {
       const caseExpression = this.#parseExpression();
@@ -1874,7 +1856,11 @@ export class Parser {
       this.#expect(Kind.ColonToken);
       return this.#finishNode(createDefaultClause(undefined as never, this.#parseCaseClauseStatements()), clausePos);
     }
-    throw new ParseError("Expected case or default clause", this.#current());
+    // codex Stage-3b 3b-flip: dormant (unreachable under PCSwitchClauses, which gates
+    // entry on Case||Default). Match the dormant PCSwitchClauses parsingContextErrors
+    // (X_case_or_default_expected, 1130) and return a benign empty default clause.
+    this.#parseErrorAtCurrentToken(Diagnostics.X_case_or_default_expected);
+    return this.#finishNode(createDefaultClause(undefined as never, createNodeArray<Statement>([])), clausePos);
   }
 
   #parseCaseClauseStatements(): NodeArray<Statement> {
@@ -1923,7 +1909,11 @@ export class Parser {
       const right = this.#parseExpression(operatorPrecedence);
       const token = createToken(operatorToken.kind as BinaryOperator);
       if (!isBinaryOperatorToken(token)) {
-        throw new ParseError("Expected binary operator", operatorToken);
+        // codex Stage-3b 3b-flip: UNREACHABLE internal invariant. The loop is entered
+        // only when binaryPrecedence.get(operatorToken.kind) consumes (> precedence),
+        // which holds only for binary-operator kinds, so isBinaryOperatorToken is always
+        // true. A plain internal Error (debug assert), NOT the removed diagnostic class.
+        throw new Error("Unexpected non-binary operator token");
       }
       left = this.#finishNode(createBinaryExpression(undefined, left, undefined, token as BinaryOperatorToken, right), pos);
     }
@@ -2159,7 +2149,15 @@ export class Parser {
         continue;
       }
       if (questionDotToken !== undefined) {
-        throw new ParseError("Expected optional chain member", this.#current());
+        // codex Stage-3b 3b-flip: a `?.` not followed by `(`/`[`/property-name. tsgo
+        // resolves this via parseRightSideOfDot -> parseIdentifierName ->
+        // createMissingIdentifier(Identifier_expected). Record Identifier_expected
+        // (1003) and build a PropertyAccessExpression with a zero-width missing member
+        // name (NO advance); the loop continues and terminates next iteration since
+        // nothing follows.
+        this.#parseErrorAtCurrentToken(Diagnostics.Identifier_expected);
+        expression = this.#finishNode(createPropertyAccessExpression(expression, questionDotToken, this.#finishNode(createIdentifier(""), this.#nodePos()), NodeFlags.None), pos);
+        continue;
       }
       if (this.#consumeOptional(Kind.ExclamationToken)) {
         expression = this.#finishNode(createNonNullExpression(expression, NodeFlags.None), pos);
@@ -2169,20 +2167,53 @@ export class Parser {
     }
   }
 
+  // codex Stage-3b 3b-flip catchBailRework: faithful port of tsgo
+  // tryParseTypeArgumentsInExpression (parser.go:5227-5247). No try/catch — recovery
+  // is internal: #parseDelimitedList RECORDS, and the #mark/#rewind diagnosticsLen
+  // truncate (Stage-3a) discards any diagnostics on the rewind path. This calls
+  // #parseDelimitedList DIRECTLY (not #parseBracketedList) so there is no inner
+  // #expect(`<`)/#expectGreaterThan recording a stray diagnostic — matching tsgo.
   #tryParseCallTypeArguments(): NodeArray<TypeNode> | undefined {
     if (this.#current().kind !== Kind.LessThanToken) {
       return undefined;
     }
     const mark = this.#mark();
-    try {
-      const typeArguments = this.#parseOptionalTypeArguments();
-      if (typeArguments !== undefined && this.#current().kind === Kind.OpenParenToken) {
-        return typeArguments;
+    this.#reScanLessThan();
+    if (this.#current().kind === Kind.LessThanToken) {
+      this.#advance();
+      const typeArguments = this.#parseDelimitedList(PCTypeArguments, () => this.#parseType());
+      this.#reScanGreaterThan();
+      if (this.#current().kind === Kind.GreaterThanToken) {
+        this.#advance();
+        // tsgo favors the type-argument interpretation only when the next token can
+        // follow a type argument list in an expression (e.g. `(`/template); a `<`/`>`/
+        // identifier disqualifies, so relational `x<y>z` stays a binary expression.
+        if (this.#canFollowTypeArgumentsInExpression()) {
+          return typeArguments === undefined ? undefined : typeArguments;
+        }
       }
-    } catch {
     }
     this.#rewind(mark);
     return undefined;
+  }
+
+  // codex Stage-3b 3b-flip: faithful port of tsgo canFollowTypeArgumentsInExpression
+  // (parser.go:5249-5265). `(` / NoSubstitutionTemplateLiteral / TemplateHead favor
+  // the type-arg interpretation; `<` / `>` / `+` / `-` disqualify it; otherwise favor
+  // it when followed by a line break, a binary operator, or a non-expression-start.
+  #canFollowTypeArgumentsInExpression(): boolean {
+    switch (this.#current().kind) {
+      case Kind.OpenParenToken:
+      case Kind.NoSubstitutionTemplateLiteral:
+      case Kind.TemplateHead:
+        return true;
+      case Kind.LessThanToken:
+      case Kind.GreaterThanToken:
+      case Kind.PlusToken:
+      case Kind.MinusToken:
+        return false;
+    }
+    return this.#hasPrecedingLineBreak() || this.#isBinaryOperator() || !this.#isStartOfExpression();
   }
 
   #parseArgumentList(): Expression[] {
@@ -2296,7 +2327,12 @@ export class Parser {
           this.#advance();
           return this.#finishNode(createIdentifier(token.text), pos);
         }
-        throw new ParseError(`Unexpected token ${Kind[token.kind]}`, token);
+        // codex Stage-3b 3b-flip: tsgo's start-of-expression failure flows through
+        // parseExpression -> createMissingIdentifier on Expression_expected (1109,
+        // parser.go ~5650/2976). Record Expression_expected and return a zero-width
+        // MISSING identifier at the current pos WITHOUT advancing.
+        this.#parseErrorAtCurrentToken(Diagnostics.Expression_expected);
+        return this.#finishNode(createIdentifier(""), this.#nodePos());
     }
   }
 
@@ -2354,14 +2390,22 @@ export class Parser {
   // the `}`-started continuation in place via reScanTemplateToken(false) (tsgo
   // parser.go:5542), refresh #token, then read + advance past the Middle/Tail.
   #parseLiteralOfTemplateSpan(): ScannedToken {
+    // codex Stage-3b 3b-flip: tsgo parseTemplateSpan/parseLiteralOfTemplateSpan uses
+    // parseExpectedToken which records X_0_expected (1005) and synthesizes the
+    // continuation token (parser.go ~3727). When the `}` that should start the
+    // continuation is missing, or the re-scanned token is not a Middle/Tail, record
+    // X_0_expected("}") and return a synthesized zero-width TemplateTail at the
+    // current pos (NO advance) so the caller breaks the span loop.
     if (this.#current().kind !== Kind.CloseBraceToken) {
-      throw new ParseError("Expected template continuation", this.#current());
+      this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, ["}"]);
+      return { kind: Kind.TemplateTail, pos: this.#current().pos, end: this.#current().pos, text: "" };
     }
     const kind = this.#scanner.reScanTemplateToken(false);
     this.#refreshTokenFromScanner(kind);
     const literalToken = this.#current();
     if (literalToken.kind !== Kind.TemplateMiddle && literalToken.kind !== Kind.TemplateTail) {
-      throw new ParseError("Expected template continuation", literalToken);
+      this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, ["}"]);
+      return { kind: Kind.TemplateTail, pos: this.#current().pos, end: this.#current().pos, text: "" };
     }
     this.#advance();
     return literalToken;
@@ -2457,7 +2501,11 @@ export class Parser {
     const firstName = this.#parsePropertyName();
     const propertyName = this.#consumeOptional(Kind.ColonToken) ? firstName : undefined;
     if (propertyName === undefined && firstName.kind !== Kind.Identifier) {
-      throw new ParseError("Expected identifier shorthand in binding pattern", this.#current());
+      // codex Stage-3b 3b-flip: tsgo parseObjectBindingElement (parser.go:2296) treats
+      // a non-Identifier property name with no `:` via the missing-identifier path.
+      // Record Identifier_expected (1003) and continue building the element with
+      // firstName as the binding name (NO advance).
+      this.#parseErrorAtCurrentToken(Diagnostics.Identifier_expected);
     }
     const name = propertyName === undefined ? firstName as BindingName : this.#parseBindingName();
     const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
@@ -2546,13 +2594,28 @@ export class Parser {
   }
 
   #parseIdentifier(): Identifier {
+    // codex Stage-3b 3b-flip: faithful subset of tsgo createIdentifierWithDiagnostic
+    // (parser.go:5833-5879). On a valid identifier name: build it from the token text
+    // and advance. On a PrivateIdentifier: record Private_identifiers_are_not_allowed_
+    // outside_class_bodies (18016) then build the identifier from the token text and
+    // advance (tsgo's `return createIdentifier(true)` path consumes the token). On any
+    // other non-identifier token (the corpus has no reserved-word special arm wired):
+    // record Identifier_expected (1003) and return a zero-width MISSING identifier at
+    // the current pos WITHOUT advancing (tsgo createMissingIdentifier, parser.go:2976).
     const token = this.#current();
-    if (!isIdentifierNameKind(token.kind)) {
-      throw new ParseError(`Expected token ${Kind[Kind.Identifier]}`, token);
+    if (isIdentifierNameKind(token.kind)) {
+      const pos = this.#nodePos();
+      this.#advance();
+      return this.#finishNode(createIdentifier(token.text), pos);
     }
-    const pos = this.#nodePos();
-    this.#advance();
-    return this.#finishNode(createIdentifier(token.text), pos);
+    if (token.kind === Kind.PrivateIdentifier) {
+      this.#parseErrorAtCurrentToken(Diagnostics.Private_identifiers_are_not_allowed_outside_class_bodies);
+      const pos = this.#nodePos();
+      this.#advance();
+      return this.#finishNode(createIdentifier(token.text), pos);
+    }
+    this.#parseErrorAtCurrentToken(Diagnostics.Identifier_expected);
+    return this.#finishNode(createIdentifier(""), this.#nodePos());
   }
 
   #parseOptionalTypeAnnotation(): TypeNode | undefined {
@@ -2780,7 +2843,12 @@ export class Parser {
     if (isIdentifierNameKind(token.kind)) {
       return this.#finishNode(createTypeReferenceNode(this.#parseEntityName(), this.#parseOptionalTypeArguments()), pos);
     }
-    throw new ParseError(`Unexpected type token ${Kind[token.kind]}`, token);
+    // codex Stage-3b 3b-flip: tsgo parseNonArrayType default (parser.go ~2855) ->
+    // parseErrorAtCurrentToken(Type_expected) + a missing TypeReference whose entity
+    // name is a missing identifier. Record Type_expected (1110) and return a
+    // zero-width missing TypeReference at the current pos WITHOUT advancing.
+    this.#parseErrorAtCurrentToken(Diagnostics.Type_expected);
+    return this.#finishNode(createTypeReferenceNode(this.#finishNode(createIdentifier(""), this.#nodePos()), undefined), this.#nodePos());
   }
 
   #parseInferType(): TypeNode {
@@ -2846,10 +2914,16 @@ export class Parser {
     // comma and the outer `}` are consumed here.
     this.#expect(Kind.OpenBraceToken);
     const keyword = this.#current().kind;
+    // codex Stage-3b 3b-flip: tsgo parseImportType (parser.go:3041) does
+    // parseExpected(With|Assert) then parseExpected(Colon). On a bad keyword, record
+    // X_0_expected("with") and DO NOT advance (leave the token for recovery so the
+    // following #expect(Colon) records its own diagnostic against the same token).
+    // Only advance past a real With/Assert keyword.
     if (keyword !== Kind.WithKeyword && keyword !== Kind.AssertKeyword) {
-      throw new ParseError(`Expected token ${Kind[Kind.WithKeyword]}`, this.#current());
+      this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, ["with"]);
+    } else {
+      this.#advance();
     }
-    this.#advance();
     this.#expect(Kind.ColonToken);
     const attributes = this.#parseImportAttributes(keyword, true);
     this.#consumeOptional(Kind.CommaToken);
@@ -3068,8 +3142,7 @@ export class Parser {
   #skipParameterStart(): boolean {
     // tsgo skipParameterStart (parser.go:3835-3852). Skip modifiers, an optional
     // `...`, then an identifier/`this` (nextToken+true) OR a binding pattern parsed
-    // with no error. tsts has no diagnostics array yet, so the binding-pattern arm
-    // returns whether the pattern parsed without throwing.
+    // with no error.
     if (modifierKinds.has(this.#current().kind)) {
       this.#parseModifiers();
     }
@@ -3079,12 +3152,15 @@ export class Parser {
       return true;
     }
     if (this.#current().kind === Kind.OpenBracketToken || this.#current().kind === Kind.OpenBraceToken) {
-      try {
-        this.#parseBindingName();
-        return true;
-      } catch {
-        return false;
-      }
+      // codex Stage-3b 3b-flip catchBailRework: tsgo uses a diagnostics-length
+      // WATERMARK, not try/catch (parser.go:3835-3852 — `previousErrorCount ==
+      // len(p.diagnostics)`). Now that #parseBindingName/#parseObjectBindingPattern/
+      // #parseIdentifier RECORD instead of THROW, a malformed binding pushes a
+      // diagnostic; the watermark detects it. The 3b-list-model parseList progress
+      // guards guarantee #parseBindingName terminates.
+      const before = this.#diagnostics.length;
+      this.#parseBindingName();
+      return before === this.#diagnostics.length;
     }
     return false;
   }
@@ -3152,9 +3228,19 @@ export class Parser {
   }
 
   #expect(kind: Kind): ScannedToken {
+    // codex Stage-3b 3b-flip: faithful port of tsgo parseExpectedWithDiagnostic
+    // (parser.go:1001-1015). On match: advance + return the consumed token. On
+    // mismatch: record X_0_expected with the expected token's lexeme (tsgo
+    // scanner.TokenToString(kind); tokenToString returns undefined only for
+    // identifier/literal kinds — never an #expect arg, the ?? Kind[kind] is
+    // defensive) and DO NOT advance. Returns a zero-width synthesized MISSING token
+    // at the current pos (tsgo parseExpected returns bool=false and the caller
+    // proceeds; tsts callers proceed with this missing token — they either ignore
+    // the return or read .text/.pos, which are caller-compatible here).
     const token = this.#current();
     if (token.kind !== kind) {
-      throw new ParseError(`Expected token ${Kind[kind]}`, token);
+      this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, [tokenToString(kind) ?? Kind[kind]]);
+      return { kind, pos: this.#current().pos, end: this.#current().pos, text: "" };
     }
     this.#advance();
     return token;
@@ -3269,11 +3355,10 @@ export class Parser {
 
   // codex-054 M3 Stage-2: tsgo doInContext (parser.go:6360-6366) — save the current
   // contextFlags, set the requested context, run the production, then RESTORE.
-  // tsgo has no exceptions so it restores after the call returns; tsts still throws
-  // ParseError in Stage-2 and uses try/catch speculative rewinds, so the restore MUST
-  // run in a `finally` to guarantee #contextFlags is never left mutated when a
-  // production unwinds via a throw. This is NOT an error-model change — it only
-  // preserves tsgo's save/set/run/restore invariant under tsts's still-present throws.
+  // tsgo has no exceptions so it restores after the call returns. After the Stage-3b
+  // throw->diagnostics flip the parser no longer throws diagnostics, but the internal
+  // debug-assert Errors can still unwind; the `finally` guarantees #contextFlags is
+  // never left mutated, preserving tsgo's save/set/run/restore invariant either way.
   #doInContext<T>(flags: NodeFlags, value: boolean, f: () => T): T {
     const save = this.#contextFlags;
     this.#setContextFlags(flags, value);
@@ -4047,8 +4132,8 @@ export class Parser {
       default:
         // tsgo panic("Unhandled case in parsingContextErrors") (parser.go:816).
         // Internal invariant violation (NOT a user parse error), so a plain Error
-        // is the faithful panic-equivalent — it is NOT one of the 28 ParseError
-        // throws and is unreachable (every defined context has an arm).
+        // is the faithful panic-equivalent — it is a debug assert (not a recorded
+        // diagnostic) and is unreachable (every defined context has an arm).
         throw new Error("Unhandled case in parsingContextErrors");
     }
   }
@@ -4141,7 +4226,7 @@ export class Parser {
       default:
         // tsgo panic("Unhandled case in isListElement") (parser.go:909). Internal
         // invariant violation (NOT a user parse error) — plain Error is the
-        // faithful panic-equivalent; NOT one of the 28 ParseError throws.
+        // faithful panic-equivalent; a debug assert, not a recorded diagnostic.
         throw new Error("Unhandled case in isListElement");
     }
   }

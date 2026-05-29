@@ -44,6 +44,8 @@ const jsoutDir = process.argv[2] ?? resolvePath(repoRoot, ".temp", "jsout");
 const suites = [
   { className: "ParserPositionTests", file: "src/parser/position.test.js" },
   { className: "ParserParityTests", file: "src/parser/parser-parity.test.js" },
+  // Stage-3b throw->diagnostics FLIP recovery probes (same .test.js module).
+  { className: "ParserRecoveryTests", file: "src/parser/parser-parity.test.js" },
   { className: "ScannerGroundworkTests", file: "src/scanner/scanner.test.js" },
 ];
 
