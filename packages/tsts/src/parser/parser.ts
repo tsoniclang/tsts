@@ -134,6 +134,7 @@ import {
   type ModifierLike,
   type ModuleExportName,
   type NamedImportBindings,
+  type Node,
   type NodeArray,
   type ObjectLiteralElementLike,
   type ParameterDeclaration,
@@ -1206,34 +1207,50 @@ export class Parser {
         return this.#parseArrayLiteralExpression();
       case Kind.OpenBraceToken:
         return this.#parseObjectLiteralExpression();
-      case Kind.Identifier:
+      case Kind.Identifier: {
+        const pos = this.#nodePos();
         this.#advance();
-        return createIdentifier(token.text);
-      case Kind.PrivateIdentifier:
+        return this.#finishNode(createIdentifier(token.text), pos);
+      }
+      case Kind.PrivateIdentifier: {
+        const pos = this.#nodePos();
         this.#advance();
-        return createPrivateIdentifier(token.text);
+        return this.#finishNode(createPrivateIdentifier(token.text), pos);
+      }
       case Kind.FalseKeyword:
       case Kind.NullKeyword:
       case Kind.SuperKeyword:
       case Kind.ThisKeyword:
-      case Kind.TrueKeyword:
+      case Kind.TrueKeyword: {
+        const pos = this.#nodePos();
         this.#advance();
-        return createKeywordExpression(token.kind as Kind.FalseKeyword | Kind.NullKeyword | Kind.SuperKeyword | Kind.ThisKeyword | Kind.TrueKeyword);
-      case Kind.NumericLiteral:
+        return this.#finishNode(createKeywordExpression(token.kind as Kind.FalseKeyword | Kind.NullKeyword | Kind.SuperKeyword | Kind.ThisKeyword | Kind.TrueKeyword), pos);
+      }
+      case Kind.NumericLiteral: {
+        const pos = this.#nodePos();
         this.#advance();
-        return createNumericLiteral(token.text, 0);
-      case Kind.BigIntLiteral:
+        return this.#finishNode(createNumericLiteral(token.text, 0), pos);
+      }
+      case Kind.BigIntLiteral: {
+        const pos = this.#nodePos();
         this.#advance();
-        return createBigIntLiteral(token.text, 0);
-      case Kind.RegularExpressionLiteral:
+        return this.#finishNode(createBigIntLiteral(token.text, 0), pos);
+      }
+      case Kind.RegularExpressionLiteral: {
+        const pos = this.#nodePos();
         this.#advance();
-        return createRegularExpressionLiteral(token.text, 0);
-      case Kind.StringLiteral:
+        return this.#finishNode(createRegularExpressionLiteral(token.text, 0), pos);
+      }
+      case Kind.StringLiteral: {
+        const pos = this.#nodePos();
         this.#advance();
-        return createStringLiteral(unquote(token.text), 0);
-      case Kind.NoSubstitutionTemplateLiteral:
+        return this.#finishNode(createStringLiteral(unquote(token.text), 0), pos);
+      }
+      case Kind.NoSubstitutionTemplateLiteral: {
+        const pos = this.#nodePos();
         this.#advance();
-        return createNoSubstitutionTemplateLiteral(unquoteTemplate(token.text), 0);
+        return this.#finishNode(createNoSubstitutionTemplateLiteral(unquoteTemplate(token.text), 0), pos);
+      }
       case Kind.TemplateHead:
         return this.#parseTemplateExpression();
       case Kind.FunctionKeyword:
@@ -1246,8 +1263,9 @@ export class Parser {
       }
       default:
         if (isContextualExpressionIdentifierKind(token.kind)) {
+          const pos = this.#nodePos();
           this.#advance();
-          return createIdentifier(token.text);
+          return this.#finishNode(createIdentifier(token.text), pos);
         }
         throw new ParseError(`Unexpected token ${Kind[token.kind]}`, token);
     }
@@ -1267,7 +1285,9 @@ export class Parser {
   }
 
   #parseTemplateExpression(): Expression {
+    const headPos = this.#nodePos();
     const headToken = this.#expect(Kind.TemplateHead);
+    const head = this.#finishNode(createTemplateHead(templateHeadText(headToken.text), templateHeadText(headToken.text), 0), headPos);
     const spans = [];
     while (true) {
       const expression = this.#parseExpression();
@@ -1276,16 +1296,17 @@ export class Parser {
       if (literalToken.kind !== Kind.TemplateMiddle && literalToken.kind !== Kind.TemplateTail) {
         throw new ParseError("Expected template continuation", literalToken);
       }
+      const literalPos = this.#nodePos();
       this.#advance();
       const literal = literalToken.kind === Kind.TemplateMiddle
-        ? createTemplateMiddle(templateMiddleText(literalToken.text), templateMiddleText(literalToken.text), 0)
-        : createTemplateTail(templateTailText(literalToken.text), templateTailText(literalToken.text), 0);
+        ? this.#finishNode(createTemplateMiddle(templateMiddleText(literalToken.text), templateMiddleText(literalToken.text), 0), literalPos)
+        : this.#finishNode(createTemplateTail(templateTailText(literalToken.text), templateTailText(literalToken.text), 0), literalPos);
       spans.push(createTemplateSpan(expression, literal as TemplateMiddleOrTail));
       if (literalToken.kind === Kind.TemplateTail) {
         break;
       }
     }
-    return createTemplateExpression(createTemplateHead(templateHeadText(headToken.text), templateHeadText(headToken.text), 0), createNodeArray(spans));
+    return createTemplateExpression(head, createNodeArray(spans));
   }
 
   #parseArrayLiteralExpression(): Expression {
@@ -1321,8 +1342,9 @@ export class Parser {
   }
 
   #parseStringLiteralExpression(): Expression {
+    const pos = this.#nodePos();
     const token = this.#expect(Kind.StringLiteral);
-    return createStringLiteral(unquote(token.text), 0);
+    return this.#finishNode(createStringLiteral(unquote(token.text), 0), pos);
   }
 
   #parseModuleExportName(): ModuleExportName {
@@ -1390,20 +1412,23 @@ export class Parser {
       return this.#parseStringLiteralExpression() as PropertyName;
     }
     if (token.kind === Kind.NumericLiteral) {
+      const pos = this.#nodePos();
       this.#advance();
-      return createNumericLiteral(token.text, 0) as PropertyName;
+      return this.#finishNode(createNumericLiteral(token.text, 0), pos) as PropertyName;
     }
     if (token.kind === Kind.PrivateIdentifier) {
+      const pos = this.#nodePos();
       this.#advance();
-      return createPrivateIdentifier(token.text);
+      return this.#finishNode(createPrivateIdentifier(token.text), pos);
     }
     return this.#parseIdentifier();
   }
 
   #parseMemberName(): Identifier | PrivateIdentifier {
     if (this.#current().kind === Kind.PrivateIdentifier) {
+      const pos = this.#nodePos();
       const token = this.#advance();
-      return createPrivateIdentifier(token.text);
+      return this.#finishNode(createPrivateIdentifier(token.text), pos);
     }
     return this.#parseIdentifier();
   }
@@ -1423,8 +1448,9 @@ export class Parser {
     if (!isIdentifierNameKind(token.kind)) {
       throw new ParseError(`Expected token ${Kind[Kind.Identifier]}`, token);
     }
+    const pos = this.#nodePos();
     this.#advance();
-    return createIdentifier(token.text);
+    return this.#finishNode(createIdentifier(token.text), pos);
   }
 
   #parseOptionalTypeAnnotation(): TypeNode | undefined {
@@ -1552,8 +1578,9 @@ export class Parser {
       return createLiteralTypeNode(createNumericLiteral(token.text, 0));
     }
     if (token.kind === Kind.BigIntLiteral) {
+      const pos = this.#nodePos();
       this.#advance();
-      return createLiteralTypeNode(createBigIntLiteral(token.text, 0));
+      return createLiteralTypeNode(this.#finishNode(createBigIntLiteral(token.text, 0), pos));
     }
     // Negative numeric / bigint literal type nodes only (TS-Go: KindMinusToken
     // when lookahead is a numeric/bigint literal -> LiteralTypeNode wrapping a
@@ -1682,6 +1709,26 @@ export class Parser {
       this.#index += 1;
     }
     return token;
+  }
+
+  // codex-048 Stage-1a: position plumbing mirroring tsgo
+  // internal/parser/parser.go finishNode (5904-5917) MINUS the error-flag bit
+  // (that bit is Stage 3). nodePos is the start of the CURRENT (not-yet-consumed)
+  // token; capture it BEFORE advancing. nodeEnd is token-tight: the end of the
+  // just-consumed token. Per codex-048 (i) this is the token end, NOT the
+  // trivia-inclusive Scanner TokenFullStart (that is a Stage-4 closure item).
+  #nodePos(): number {
+    return this.#current().pos;
+  }
+
+  #nodeEnd(): number {
+    return this.#tokens[this.#index - 1]!.end;
+  }
+
+  #finishNode<T extends Node>(node: T, pos: number): T {
+    node.pos = pos;
+    node.end = this.#nodeEnd();
+    return node;
   }
 }
 

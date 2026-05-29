@@ -23,8 +23,10 @@ type NodeData = Record<string, NodeDataValue>;
 export class NodeObject implements Node {
   readonly kind: Kind;
   flags = 0;
-  readonly pos: number;
-  readonly end: number;
+  // codex-048 Stage-1a: pos/end are MUTABLE parse-state (tsgo
+  // parser.go:5904-5917) so finishNode can stamp ranges post-construction.
+  pos: number;
+  end: number;
   parent: Node = undefined!;
   readonly jsDoc?: readonly Node[];
   readonly #data: NodeData;

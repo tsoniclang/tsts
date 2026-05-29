@@ -230,8 +230,11 @@ function generateRuntimeTypes(): string {
 import type { EndOfFile, Statement } from "./nodes.js";
 
 export interface TextRange {
-  readonly pos: number;
-  readonly end: number;
+  // codex-048 Stage-1a: pos/end are MUTABLE parse-state. tsgo treats node
+  // Loc/range as mutable (parser.go:5904-5917) so a faithful finishNode can
+  // stamp ranges post-construction; same category as the M2 mutable slots.
+  pos: number;
+  end: number;
 }
 
 export interface Node extends TextRange {
@@ -783,8 +786,10 @@ function generateFactory(schema: AstSchema): string {
   lines.push("export class NodeObject implements Node {");
   lines.push("  readonly kind: Kind;");
   lines.push("  flags = 0;");
-  lines.push("  readonly pos: number;");
-  lines.push("  readonly end: number;");
+  lines.push("  // codex-048 Stage-1a: pos/end are MUTABLE parse-state (tsgo");
+  lines.push("  // parser.go:5904-5917) so finishNode can stamp ranges post-construction.");
+  lines.push("  pos: number;");
+  lines.push("  end: number;");
   lines.push("  parent: Node = undefined!;");
   lines.push("  readonly jsDoc?: readonly Node[];");
   lines.push("  readonly #data: NodeData;");
