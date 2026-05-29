@@ -221,6 +221,56 @@ export function getIdentifierToken(str: string): Kind {
   return Kind.Identifier;
 }
 
+// JSDoc tag terminators — scanner.go:398 (a valid JSDoc tag name is followed by
+// whitespace, '}', '*', or end-of-string).
+const jsDocTagTerminators: ReadonlySet<string> = new Set([" ", "\t", "\n", "\r", "}", "*"]);
+
+// hasJSDocTag — scanner.go:387-403. Reports whether `text` at `offset` starts
+// with one of the given tag names followed by a valid JSDoc tag terminator.
+function hasJSDocTag(text: string, offset: number, tags: readonly string[]): boolean {
+  for (const tag of tags) {
+    if (text.startsWith(tag, offset)) {
+      if (offset + tag.length === text.length) {
+        return true;
+      }
+      if (jsDocTagTerminators.has(text[offset + tag.length]!)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// scanJSDocCommentForTags — scanner.go:367-385. Scans a JSDoc comment body for
+// @deprecated / @see / @link tags and returns the updated tokenFlags. Pure (no
+// scanner-state mutation): the caller folds the result into state.tokenFlags.
+function scanJSDocCommentForTags(text: string, tokenFlags: TokenFlagsType): TokenFlagsType {
+  let flags = tokenFlags;
+  let offset = 0;
+  for (;;) {
+    const i = text.indexOf("@", offset);
+    if (i < 0) {
+      return flags;
+    }
+    offset = i + 1;
+    if ((flags & TokenFlags.PrecedingJSDocWithDeprecated) === 0 && hasJSDocTag(text, offset, ["deprecated"])) {
+      flags |= TokenFlags.PrecedingJSDocWithDeprecated;
+    }
+    if (
+      (flags & TokenFlags.PrecedingJSDocWithSeeOrLink) === 0
+      && hasJSDocTag(text, offset, ["see", "link", "linkcode", "linkplain"])
+    ) {
+      flags |= TokenFlags.PrecedingJSDocWithSeeOrLink;
+    }
+    if (
+      (flags & (TokenFlags.PrecedingJSDocWithDeprecated | TokenFlags.PrecedingJSDocWithSeeOrLink))
+        === (TokenFlags.PrecedingJSDocWithDeprecated | TokenFlags.PrecedingJSDocWithSeeOrLink)
+    ) {
+      return flags;
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // ScannerState — the unit captured by Mark() / restored by Rewind().
 // EXACTLY the 8 tsgo fields (scanner.go:201-210), retyped Kind/TokenFlags.
@@ -255,6 +305,11 @@ export interface LiveScanner {
   getTokenValue(): string;
   getTokenFlags(): TokenFlagsType;
   hasPrecedingLineBreak(): boolean;
+  // JSDoc trivia accessors — scanner.go:349-362. Read the JSDoc token flags
+  // captured while skipping leading trivia for the current token.
+  hasPrecedingJSDocComment(): boolean;
+  hasPrecedingJSDocWithDeprecatedTag(): boolean;
+  hasPrecedingJSDocWithSeeOrLink(): boolean;
   isIdentifier(): boolean;
   isReservedWord(): boolean;
   isUnterminated(): boolean;
@@ -1164,6 +1219,8 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
           // Multi-line comment.
           if (charAt(1) === 0x2a /* * */) {
             state.pos += 2;
+            // scanner.go:628 — JSDoc opens with `/**` but `/**/` is NOT JSDoc.
+            const isJSDoc = char() === 0x2a /* * */ && charAt(1) !== 0x2f /* / */;
             let commentClosed = false;
             for (;;) {
               const cs = charAndSize();
@@ -1179,6 +1236,15 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
               if (isLineBreakCode(cs.ch)) {
                 state.tokenFlags |= TokenFlags.PrecedingLineBreak;
               }
+            }
+            // scanner.go:652-655 — flag the preceding JSDoc and scan it for
+            // @deprecated / @see / @link tags.
+            if (isJSDoc) {
+              state.tokenFlags |= TokenFlags.PrecedingJSDocComment;
+              state.tokenFlags = scanJSDocCommentForTags(
+                config.text.slice(state.tokenStart, state.pos),
+                state.tokenFlags,
+              );
             }
             if (!commentClosed) {
               error(Diagnostics.Asterisk_Slash_expected);
@@ -1898,6 +1964,9 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
     getTokenValue: () => state.tokenValue,
     getTokenFlags: () => state.tokenFlags,
     hasPrecedingLineBreak: () => (state.tokenFlags & TokenFlags.PrecedingLineBreak) !== 0,
+    hasPrecedingJSDocComment: () => (state.tokenFlags & TokenFlags.PrecedingJSDocComment) !== 0,
+    hasPrecedingJSDocWithDeprecatedTag: () => (state.tokenFlags & TokenFlags.PrecedingJSDocWithDeprecated) !== 0,
+    hasPrecedingJSDocWithSeeOrLink: () => (state.tokenFlags & TokenFlags.PrecedingJSDocWithSeeOrLink) !== 0,
     isIdentifier: () => state.token === Kind.Identifier,
     isReservedWord: () => state.token >= Kind.FirstReservedWord && state.token <= Kind.LastReservedWord,
     isUnterminated: () => (state.tokenFlags & TokenFlags.Unterminated) !== 0,

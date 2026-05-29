@@ -37,6 +37,7 @@ import { Exception } from "@tsonic/dotnet/System.js";
 import type { Expression, SourceFile, TypeNode } from "../ast/index.js";
 import {
   Kind,
+  NodeFlags,
   isArrayTypeNode,
   isArrowFunction,
   isBinaryExpression,
@@ -47,6 +48,7 @@ import {
   isDecorator,
   isExportDeclaration,
   isExpressionStatement,
+  isFunctionDeclaration,
   isFunctionTypeNode,
   isIdentifier,
   isImportTypeNode,
@@ -1236,6 +1238,64 @@ export class ParserParityTests {
     if (!isIdentifier(expression.closingElement.tagName)) throw new Exception("Expected identifier closing tag div");
     Assert.Equal("div", expression.closingElement.tagName.text);
   }
+
+  // ── M3 6a: withJSDoc flag-stamp (tsgo jsdoc.go:56-74, TS/TSX slice) ──────────
+  // For a TS file the parser stamps NodeFlags.HasJSDoc onto a declaration preceded
+  // by a JSDoc comment (no eager JSDoc child node — lazy/checker-owned). The stamp
+  // is RANGE-NEUTRAL: the leading JSDoc stays in the host node's leading trivia
+  // [node.pos, firstTokenStart), so node.pos is the trivia-inclusive full-start and
+  // node.end stays token-tight; the host span is NOT widened by the comment.
+
+  // `/** Adds one. */\nexport function inc(...) {...}` followed by a sibling decl
+  // with NO JSDoc. The first FunctionDeclaration carries HasJSDoc; its pos is the
+  // trivia-inclusive full-start (0, covering the JSDoc) and its end is token-tight
+  // (the `}`). The sibling carries NO HasJSDoc and an unchanged token-tight range.
+  jsdoc_hasjsdoc_on_function_declaration(): void {
+    const src = "/** Adds one. */\nexport function inc(x: number): number { return x + 1; }\nfunction plain(): void {}";
+    const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
+    Assert.Equal(ScriptKind.TS, sourceFile.scriptKind);
+    const withDoc = sourceFile.statements[0]!;
+    if (!isFunctionDeclaration(withDoc)) throw new Exception("Expected first function declaration");
+    // HasJSDoc is stamped.
+    Assert.Equal(NodeFlags.HasJSDoc, withDoc.flags & NodeFlags.HasJSDoc);
+    // No @deprecated => PossiblyContainsDeprecatedTag stays clear.
+    Assert.Equal(0, withDoc.flags & NodeFlags.PossiblyContainsDeprecatedTag);
+    // pos is the trivia-inclusive full-start = 0 (the JSDoc is leading trivia of the host).
+    Assert.Equal(0, withDoc.pos);
+    // end is token-tight at the closing `}` of the body (NOT widened by the JSDoc).
+    const incEnd = src.indexOf("}") + 1;
+    Assert.Equal(incEnd, withDoc.end);
+    Assert.Equal("return x + 1; }", src.slice(withDoc.end - "return x + 1; }".length, withDoc.end));
+    // The leading JSDoc lives in [withDoc.pos, firstTokenStart) trivia; the first
+    // real token is `export`, so the host span starts at 0 but the source slice
+    // begins with the comment (proving the comment is inside the trivia, not a child).
+    Assert.Equal("/**", src.slice(withDoc.pos, withDoc.pos + 3));
+
+    // Sibling with NO JSDoc: no HasJSDoc flag, range unaffected by the earlier stamp.
+    const plain = sourceFile.statements[1]!;
+    if (!isFunctionDeclaration(plain)) throw new Exception("Expected second function declaration");
+    Assert.Equal(0, plain.flags & NodeFlags.HasJSDoc);
+    Assert.Equal(0, plain.flags & NodeFlags.PossiblyContainsDeprecatedTag);
+    const plainEnd = src.length;
+    Assert.Equal(plainEnd, plain.end);
+    Assert.Equal("function plain(): void {}", src.slice(plain.end - "function plain(): void {}".length, plain.end));
+  }
+
+  // `/** @deprecated */\nexport function old(): void {}` — the preceding JSDoc has an
+  // @deprecated tag, so BOTH HasJSDoc and PossiblyContainsDeprecatedTag are stamped.
+  jsdoc_deprecated_sets_possibly_contains_deprecated_tag(): void {
+    const src = "/** @deprecated */\nexport function old(): void {}";
+    const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
+    Assert.Equal(ScriptKind.TS, sourceFile.scriptKind);
+    const decl = sourceFile.statements[0]!;
+    if (!isFunctionDeclaration(decl)) throw new Exception("Expected function declaration");
+    Assert.Equal(NodeFlags.HasJSDoc, decl.flags & NodeFlags.HasJSDoc);
+    Assert.Equal(NodeFlags.PossiblyContainsDeprecatedTag, decl.flags & NodeFlags.PossiblyContainsDeprecatedTag);
+    // Range-neutral: pos is the trivia-inclusive full-start (0), end token-tight (`}`).
+    Assert.Equal(0, decl.pos);
+    Assert.Equal(src.length, decl.end);
+    Assert.Equal("/**", src.slice(decl.pos, decl.pos + 3));
+  }
 }
 
 // ── Stage-3b throw->diagnostics FLIP: recovery probes ──────────────────────────
@@ -1474,6 +1534,9 @@ A<ParserParityTests>().method((t) => t.jsx_self_closing_spread_attribute).add(Fa
 A<ParserParityTests>().method((t) => t.jsx_self_closing_attributes).add(FactAttribute);
 A<ParserParityTests>().method((t) => t.jsx_empty_fragment).add(FactAttribute);
 A<ParserParityTests>().method((t) => t.jsx_empty_element).add(FactAttribute);
+// M3 6a: withJSDoc flag-stamp probes.
+A<ParserParityTests>().method((t) => t.jsdoc_hasjsdoc_on_function_declaration).add(FactAttribute);
+A<ParserParityTests>().method((t) => t.jsdoc_deprecated_sets_possibly_contains_deprecated_tag).add(FactAttribute);
 
 // Stage-3b throw->diagnostics FLIP recovery probes.
 A<ParserRecoveryTests>().method((t) => t.recover_let_no_initializer).add(FactAttribute);
