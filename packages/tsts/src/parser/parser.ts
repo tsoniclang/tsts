@@ -964,6 +964,15 @@ export class Parser {
   }
 
   #parseExpression(precedence: number = 0): Expression {
+    // tsgo: this method fuses parseBinaryExpressionOrHigher + parseBinaryExpressionRest +
+    // parseConditionalExpressionRest. The node start for EVERY binary/as/satisfies/conditional
+    // level is the LEFT operand's start. Capture pos ONCE before the left operand, then reuse
+    // it at every level (tsgo threads the same `pos` / left.Pos() through the rest loops —
+    // makeBinaryExpression uses pos, makeAsExpression/makeSatisfiesExpression use left.Pos(),
+    // parseConditionalExpressionRest uses the threaded pos; never a fresh nodePos). The arrow
+    // path re-captures its own pos in #parseArrowFunction, so the unconditional capture here is
+    // benign (no double-stamp).
+    const pos = this.#nodePos();
     if (precedence === 0 && this.#isArrowFunctionStart()) {
       return this.#parseArrowFunction();
     }
@@ -980,19 +989,21 @@ export class Parser {
       if (!isBinaryOperatorToken(token)) {
         throw new ParseError("Expected binary operator", operatorToken);
       }
-      left = createBinaryExpression(undefined, left, undefined, token as BinaryOperatorToken, right);
+      left = this.#finishNode(createBinaryExpression(undefined, left, undefined, token as BinaryOperatorToken, right), pos);
     }
     while (this.#current().kind === Kind.AsKeyword || this.#current().kind === Kind.SatisfiesKeyword) {
       const operator = this.#current().kind;
       this.#advance();
       const type = this.#parseType();
-      left = operator === Kind.AsKeyword ? createAsExpression(left, type) : createSatisfiesExpression(left, type);
+      left = operator === Kind.AsKeyword
+        ? this.#finishNode(createAsExpression(left, type), pos)
+        : this.#finishNode(createSatisfiesExpression(left, type), pos);
     }
     if (precedence === 0 && this.#consumeOptional(Kind.QuestionToken)) {
       const whenTrue = this.#parseExpression();
       this.#expect(Kind.ColonToken);
       const whenFalse = this.#parseExpression();
-      left = createConditionalExpression(left, createToken(Kind.QuestionToken), whenTrue, createToken(Kind.ColonToken), whenFalse);
+      left = this.#finishNode(createConditionalExpression(left, createToken(Kind.QuestionToken), whenTrue, createToken(Kind.ColonToken), whenFalse), pos);
     }
     return left;
   }
@@ -1042,10 +1053,16 @@ export class Parser {
   }
 
   #parseArrowFunction(): Expression {
+    // tsgo parseParenthesizedArrowFunctionExpression/parseSimpleArrowFunctionExpression:
+    // the arrow node start is captured at entry (before the param/openParen).
+    const pos = this.#nodePos();
     const parameters: ParameterDeclaration[] = [];
     let type: TypeNode | undefined;
     if (isIdentifierNameKind(this.#current().kind)) {
-      parameters.push(createParameterDeclaration(undefined, undefined, this.#parseIdentifier(), undefined, undefined, undefined));
+      // tsgo parseParameter: the single-identifier ParameterDeclaration has its own
+      // start at the identifier token.
+      const paramPos = this.#nodePos();
+      parameters.push(this.#finishNode(createParameterDeclaration(undefined, undefined, this.#parseIdentifier(), undefined, undefined, undefined), paramPos));
     } else {
       this.#expect(Kind.OpenParenToken);
       parameters.push(...this.#parseParameterList());
@@ -1054,7 +1071,7 @@ export class Parser {
     }
     this.#expect(Kind.EqualsGreaterThanToken);
     const body = this.#parseArrowBody();
-    return createArrowFunction(undefined, undefined, createNodeArray(parameters), type, createToken(Kind.EqualsGreaterThanToken), body);
+    return this.#finishNode(createArrowFunction(undefined, undefined, createNodeArray(parameters), type, createToken(Kind.EqualsGreaterThanToken), body), pos);
   }
 
   #parseArrowBody(): ConciseBody {
@@ -1065,6 +1082,11 @@ export class Parser {
   }
 
   #parseUnaryExpression(): Expression {
+    // tsgo parsePrefixUnaryExpression/parseDeleteExpression/parseTypeOfExpression/
+    // parseVoidExpression/parseAwaitExpression: node start is the operator keyword/punct,
+    // captured before consuming it. The NewKeyword case captures its pos inside
+    // #parseNewExpression.
+    const pos = this.#nodePos();
     const token = this.#current();
     switch (token.kind) {
       case Kind.PlusToken:
@@ -1074,37 +1096,43 @@ export class Parser {
       case Kind.PlusPlusToken:
       case Kind.MinusMinusToken:
         this.#advance();
-        return createPrefixUnaryExpression(token.kind, this.#parseUnaryExpression());
+        return this.#finishNode(createPrefixUnaryExpression(token.kind, this.#parseUnaryExpression()), pos);
       case Kind.NewKeyword:
         return this.#parseNewExpression();
       case Kind.DeleteKeyword:
         this.#advance();
-        return createDeleteExpression(this.#parseUnaryExpression());
+        return this.#finishNode(createDeleteExpression(this.#parseUnaryExpression()), pos);
       case Kind.TypeOfKeyword:
         this.#advance();
-        return createTypeOfExpression(this.#parseUnaryExpression());
+        return this.#finishNode(createTypeOfExpression(this.#parseUnaryExpression()), pos);
       case Kind.VoidKeyword:
         this.#advance();
-        return createVoidExpression(this.#parseUnaryExpression());
+        return this.#finishNode(createVoidExpression(this.#parseUnaryExpression()), pos);
       case Kind.AwaitKeyword:
         this.#advance();
-        return createAwaitExpression(this.#parseUnaryExpression());
+        return this.#finishNode(createAwaitExpression(this.#parseUnaryExpression()), pos);
       default:
         return this.#parsePostfixExpression();
     }
   }
 
   #parsePostfixExpression(): Expression {
+    // tsgo parseUpdateExpression: the postfix node start is the operand (LHS expression) start.
+    const pos = this.#nodePos();
     const expression = this.#parseLeftHandSideExpression();
     if (this.#current().kind === Kind.PlusPlusToken || this.#current().kind === Kind.MinusMinusToken) {
       const operator = this.#current().kind as Kind.PlusPlusToken | Kind.MinusMinusToken;
       this.#advance();
-      return createPostfixUnaryExpression(expression, operator);
+      return this.#finishNode(createPostfixUnaryExpression(expression, operator), pos);
     }
     return expression;
   }
 
   #parseNewExpression(): Expression {
+    // tsgo parseNewExpressionOrNewDotTarget: node start is the 'new' keyword. tsgo applies
+    // member rest using that same 'new' start, so thread `pos` into #parseMemberSuffixes and
+    // finish the NewExpression with the same pos.
+    const pos = this.#nodePos();
     this.#expect(Kind.NewKeyword);
     const expression = this.#parseHeritageExpression();
     const typeArguments = this.#parseOptionalTypeArguments();
@@ -1113,50 +1141,61 @@ export class Parser {
       arguments_ = createNodeArray(this.#parseArgumentList());
       this.#expect(Kind.CloseParenToken);
     }
-    return this.#parseMemberSuffixes(createNewExpression(expression, typeArguments, arguments_));
+    return this.#parseMemberSuffixes(this.#finishNode(createNewExpression(expression, typeArguments, arguments_), pos), pos);
   }
 
   #parseLeftHandSideExpression(): Expression {
-    return this.#parseMemberSuffixes(this.#parsePrimaryExpression());
+    // tsgo parseLeftHandSideExpressionOrHigher: capture the base/primary start and thread it
+    // into the member rest loop so every rest-loop node (property/element access, call,
+    // non-null) is finished with the ORIGINAL base start.
+    const pos = this.#nodePos();
+    return this.#parseMemberSuffixes(this.#parsePrimaryExpression(), pos);
   }
 
-  #parseMemberSuffixes(initialExpression: Expression): Expression {
+  #parseMemberSuffixes(initialExpression: Expression, pos: number): Expression {
+    // tsgo parseCallExpressionRest/parseMemberExpressionRest/parseElementAccessExpressionRest/
+    // parsePropertyAccessExpressionRest: every node in the rest loop is finished with the
+    // single threaded base start `pos`. finishNode runs AFTER the closing ')'/']' is consumed
+    // so #nodeEnd() (the just-consumed last token's end) covers the closer.
     let expression = initialExpression;
     while (true) {
       const questionDotToken = this.#consumeOptional(Kind.QuestionDotToken) ? createToken(Kind.QuestionDotToken) : undefined;
       if (questionDotToken !== undefined && this.#current().kind !== Kind.OpenParenToken && this.#current().kind !== Kind.OpenBracketToken) {
-        expression = createPropertyAccessExpression(expression, questionDotToken, this.#parseMemberName(), NodeFlags.None);
+        expression = this.#finishNode(createPropertyAccessExpression(expression, questionDotToken, this.#parseMemberName(), NodeFlags.None), pos);
         continue;
       }
       if (questionDotToken === undefined && this.#consumeOptional(Kind.DotToken)) {
-        expression = createPropertyAccessExpression(expression, undefined, this.#parseMemberName(), NodeFlags.None);
+        expression = this.#finishNode(createPropertyAccessExpression(expression, undefined, this.#parseMemberName(), NodeFlags.None), pos);
         continue;
       }
       const typeArguments = this.#tryParseCallTypeArguments();
       if (questionDotToken !== undefined && this.#current().kind === Kind.OpenParenToken || typeArguments !== undefined && this.#current().kind === Kind.OpenParenToken) {
         this.#expect(Kind.OpenParenToken);
-        expression = createCallExpression(expression, questionDotToken, typeArguments, createNodeArray(this.#parseArgumentList()), NodeFlags.None);
+        const callee = createCallExpression(expression, questionDotToken, typeArguments, createNodeArray(this.#parseArgumentList()), NodeFlags.None);
         this.#expect(Kind.CloseParenToken);
+        expression = this.#finishNode(callee, pos);
         continue;
       }
       if (this.#consumeOptional(Kind.OpenParenToken)) {
-        expression = createCallExpression(expression, undefined, undefined, createNodeArray(this.#parseArgumentList()), NodeFlags.None);
+        const callee = createCallExpression(expression, undefined, undefined, createNodeArray(this.#parseArgumentList()), NodeFlags.None);
         this.#expect(Kind.CloseParenToken);
+        expression = this.#finishNode(callee, pos);
         continue;
       }
       if (questionDotToken !== undefined && this.#current().kind === Kind.OpenBracketToken || questionDotToken === undefined && this.#consumeOptional(Kind.OpenBracketToken)) {
         if (questionDotToken !== undefined) {
           this.#expect(Kind.OpenBracketToken);
         }
-        expression = createElementAccessExpression(expression, questionDotToken, this.#parseExpression(), NodeFlags.None);
+        const access = createElementAccessExpression(expression, questionDotToken, this.#parseExpression(), NodeFlags.None);
         this.#expect(Kind.CloseBracketToken);
+        expression = this.#finishNode(access, pos);
         continue;
       }
       if (questionDotToken !== undefined) {
         throw new ParseError("Expected optional chain member", this.#current());
       }
       if (this.#consumeOptional(Kind.ExclamationToken)) {
-        expression = createNonNullExpression(expression, NodeFlags.None);
+        expression = this.#finishNode(createNonNullExpression(expression, NodeFlags.None), pos);
         continue;
       }
       return expression;
@@ -1194,8 +1233,10 @@ export class Parser {
   }
 
   #parseArgumentExpression(): Expression {
+    // tsgo parseSpreadElement: node start is the '...' token.
+    const pos = this.#nodePos();
     if (this.#consumeOptional(Kind.DotDotDotToken)) {
-      return createSpreadElement(this.#parseExpression());
+      return this.#finishNode(createSpreadElement(this.#parseExpression()), pos);
     }
     return this.#parseExpression();
   }
@@ -1256,10 +1297,13 @@ export class Parser {
       case Kind.FunctionKeyword:
         return this.#parseFunctionExpression();
       case Kind.OpenParenToken: {
+        // tsgo parseParenthesizedExpression: node start is the '(' token; finish after the
+        // closing ')' is consumed so the end covers it.
+        const pos = this.#nodePos();
         this.#advance();
         const expression = this.#parseExpression();
         this.#expect(Kind.CloseParenToken);
-        return createParenthesizedExpression(expression);
+        return this.#finishNode(createParenthesizedExpression(expression), pos);
       }
       default:
         if (isContextualExpressionIdentifierKind(token.kind)) {
@@ -1272,6 +1316,8 @@ export class Parser {
   }
 
   #parseFunctionExpression(): Expression {
+    // tsgo parseFunctionExpression: node start is the 'function' keyword.
+    const pos = this.#nodePos();
     this.#expect(Kind.FunctionKeyword);
     const asteriskToken = this.#consumeOptional(Kind.AsteriskToken) ? createToken(Kind.AsteriskToken) : undefined;
     const name = isIdentifierNameKind(this.#current().kind) ? this.#parseIdentifier() : undefined;
@@ -1281,7 +1327,7 @@ export class Parser {
     this.#expect(Kind.CloseParenToken);
     const type = this.#parseOptionalTypeAnnotation();
     const body = this.#parseBlock();
-    return createFunctionExpression(undefined, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body);
+    return this.#finishNode(createFunctionExpression(undefined, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body), pos);
   }
 
   #parseTemplateExpression(): Expression {
@@ -1290,6 +1336,9 @@ export class Parser {
     const head = this.#finishNode(createTemplateHead(templateHeadText(headToken.text), templateHeadText(headToken.text), 0), headPos);
     const spans = [];
     while (true) {
+      // tsgo parseTemplateSpan: span node start is the span expression start. finish after the
+      // trailing TemplateMiddle/TemplateTail literal is consumed so the end covers it.
+      const spanPos = this.#nodePos();
       const expression = this.#parseExpression();
       this.#expect(Kind.CloseBraceToken);
       const literalToken = this.#current();
@@ -1301,15 +1350,20 @@ export class Parser {
       const literal = literalToken.kind === Kind.TemplateMiddle
         ? this.#finishNode(createTemplateMiddle(templateMiddleText(literalToken.text), templateMiddleText(literalToken.text), 0), literalPos)
         : this.#finishNode(createTemplateTail(templateTailText(literalToken.text), templateTailText(literalToken.text), 0), literalPos);
-      spans.push(createTemplateSpan(expression, literal as TemplateMiddleOrTail));
+      spans.push(this.#finishNode(createTemplateSpan(expression, literal as TemplateMiddleOrTail), spanPos));
       if (literalToken.kind === Kind.TemplateTail) {
         break;
       }
     }
-    return createTemplateExpression(head, createNodeArray(spans));
+    // tsgo parseTemplateExpression: node start is the TemplateHead start (reuse headPos).
+    return this.#finishNode(createTemplateExpression(head, createNodeArray(spans)), headPos);
   }
 
   #parseArrayLiteralExpression(): Expression {
+    // tsgo parseArrayLiteralExpression: node start is the '[' token; finish after the closing
+    // ']' is consumed. (The multiLine flag's whole-source includes("\n") is a pre-existing bug
+    // out of scope for Stage 1b — left untouched.)
+    const pos = this.#nodePos();
     this.#expect(Kind.OpenBracketToken);
     const elements: Expression[] = [];
     while (this.#current().kind !== Kind.CloseBracketToken && this.#current().kind !== Kind.EndOfFile) {
@@ -1317,28 +1371,33 @@ export class Parser {
       this.#consumeOptional(Kind.CommaToken);
     }
     this.#expect(Kind.CloseBracketToken);
-    return createArrayLiteralExpression(createNodeArray(elements), this.#sourceText.includes("\n"));
+    return this.#finishNode(createArrayLiteralExpression(createNodeArray(elements), this.#sourceText.includes("\n")), pos);
   }
 
   #parseObjectLiteralExpression(): Expression {
+    // tsgo parseObjectLiteralExpression: node start is the '{' token; finish after the closing
+    // '}' is consumed. Each element (parseObjectLiteralElement) captures its own start at the
+    // top of the loop iteration before its first token (the '...' for spread, or the name).
+    const pos = this.#nodePos();
     const openBrace = this.#expect(Kind.OpenBraceToken);
     const properties: ObjectLiteralElementLike[] = [];
     while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
+      const elementPos = this.#nodePos();
       if (this.#consumeOptional(Kind.DotDotDotToken)) {
-        properties.push(createSpreadAssignment(this.#parseExpression()));
+        properties.push(this.#finishNode(createSpreadAssignment(this.#parseExpression()), elementPos));
         this.#consumeOptional(Kind.CommaToken);
         continue;
       }
       const name = this.#parsePropertyName();
       if (this.#consumeOptional(Kind.ColonToken)) {
-        properties.push(createPropertyAssignment(undefined, name, undefined, undefined as never, this.#parseExpression()));
+        properties.push(this.#finishNode(createPropertyAssignment(undefined, name, undefined, undefined as never, this.#parseExpression()), elementPos));
       } else {
-        properties.push(createShorthandPropertyAssignment(undefined, name, undefined, undefined as never, undefined, undefined));
+        properties.push(this.#finishNode(createShorthandPropertyAssignment(undefined, name, undefined, undefined as never, undefined, undefined), elementPos));
       }
       this.#consumeOptional(Kind.CommaToken);
     }
     const closeBrace = this.#expect(Kind.CloseBraceToken);
-    return createObjectLiteralExpression(createNodeArray(properties), this.#sourceText.slice(openBrace.pos, closeBrace.end).includes("\n"));
+    return this.#finishNode(createObjectLiteralExpression(createNodeArray(properties), this.#sourceText.slice(openBrace.pos, closeBrace.end).includes("\n")), pos);
   }
 
   #parseStringLiteralExpression(): Expression {
@@ -1588,12 +1647,17 @@ export class Parser {
     if (token.kind === Kind.MinusToken) {
       const nextKind = this.#tokens[this.#index + 1]?.kind;
       if (nextKind === Kind.NumericLiteral || nextKind === Kind.BigIntLiteral) {
+        // Stage-1a-deferred negative-literal PrefixUnaryExpression. The inner literal leaf and
+        // the PrefixUnaryExpression wrapper are expression-shaped (Stage 1b) and must be
+        // stamped; the LiteralTypeNode wrapper is a TYPE node (Stage 1d) and is left unstamped.
+        const unaryPos = this.#nodePos();
         this.#advance();
+        const literalPos = this.#nodePos();
         const literalToken = this.#advance();
         const literal = literalToken.kind === Kind.BigIntLiteral
-          ? createBigIntLiteral(literalToken.text, 0)
-          : createNumericLiteral(literalToken.text, 0);
-        return createLiteralTypeNode(createPrefixUnaryExpression(Kind.MinusToken, literal));
+          ? this.#finishNode(createBigIntLiteral(literalToken.text, 0), literalPos)
+          : this.#finishNode(createNumericLiteral(literalToken.text, 0), literalPos);
+        return createLiteralTypeNode(this.#finishNode(createPrefixUnaryExpression(Kind.MinusToken, literal), unaryPos));
       }
     }
     if (token.kind === Kind.TrueKeyword || token.kind === Kind.FalseKeyword || token.kind === Kind.NullKeyword) {
