@@ -2370,7 +2370,7 @@ export function updateJSDocPropertyTag(node: Ast.JSDocPropertyTag, tagName: Ast.
   return createJSDocPropertyTag(tagName, name, isBracketed, typeExpression, isNameFirst, comment);
 }
 
-export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile, parseDiagnostics: readonly Diagnostic[], languageVariant: number, scriptKind: number): SourceFile {
+export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile, parseDiagnostics: readonly Diagnostic[], languageVariant: number, scriptKind: number, externalModuleIndicator: Node | true | undefined = undefined): SourceFile {
   return createNode<SourceFile>(Kind.SourceFile, {
     fileName,
     path,
@@ -2386,7 +2386,7 @@ export function createSourceFile(fileName: string, path: Path, text: string, sta
     imports: [],
     moduleAugmentations: [],
     ambientModuleNames: [],
-    externalModuleIndicator: undefined,
+    externalModuleIndicator,
     parseDiagnostics,
   });
 }
@@ -2395,7 +2395,7 @@ export function updateSourceFile(node: SourceFile, statements: NodeArray<Ast.Sta
   if (node.statements === statements && node.endOfFileToken === endOfFileToken) {
     return node;
   }
-  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken, node.parseDiagnostics, node.languageVariant, node.scriptKind);
+  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken, node.parseDiagnostics, node.languageVariant, node.scriptKind, node.externalModuleIndicator);
   return updated;
 }
 

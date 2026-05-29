@@ -40,6 +40,7 @@ import {
   NodeFlags,
   isArrayTypeNode,
   isArrowFunction,
+  isAwaitExpression,
   isBinaryExpression,
   isCallExpression,
   isClassDeclaration,
@@ -1295,6 +1296,108 @@ export class ParserParityTests {
     Assert.Equal(0, decl.pos);
     Assert.Equal(src.length, decl.end);
     Assert.Equal("/**", src.slice(decl.pos, decl.pos + 3));
+  }
+
+  // ── M3 6b: top-level-await reparse ────────────────────────────────────────────
+  //
+  // SetExternalModuleIndicator is STRUCTURAL: a SourceFile is an external module iff a
+  // top-level statement is an export/import/export-assignment/export-declaration (no
+  // filename/package heuristics). The reparse fires only for a non-declaration external
+  // module with recorded possibleAwaitSpans. A leading `await` followed by `(`/`[`/etc.
+  // (NOT an identifier/keyword/literal on the same line) is FIRST parsed as an `await`
+  // IDENTIFIER (isAwaitExpression's lookahead heuristic fails), which records a span;
+  // the reparse re-runs the statement with AwaitContext forced on, promoting it to a
+  // real AwaitExpression carrying NodeFlags.AwaitContext.
+
+  // TLA module (allowed): `await (load());\nexport const ready = true;` (scriptKind TS).
+  // The `export const` makes the file an external module (indicator SET); statement 0's
+  // leading `await (` mis-parses as an `await` identifier first-pass → span → reparse →
+  // a real AwaitExpression carrying AwaitContext. Statement 1 (the export) is unchanged.
+  tla_module_reparses_await_paren_to_await_expression(): void {
+    const src = "await (load());\nexport const ready = true;";
+    const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
+    Assert.Equal(ScriptKind.TS, sourceFile.scriptKind);
+    // Structural module decision: the export makes externalModuleIndicator defined.
+    Assert.Equal(true, sourceFile.externalModuleIndicator !== undefined);
+    // Statement 0: ExpressionStatement whose expression is a (reparsed) AwaitExpression
+    // carrying AwaitContext.
+    const stmt0 = sourceFile.statements[0]!;
+    if (!isExpressionStatement(stmt0)) throw new Exception("Expected expression statement");
+    const expr = stmt0.expression;
+    if (!isAwaitExpression(expr)) throw new Exception("Expected await expression after reparse");
+    Assert.Equal(Kind.AwaitExpression, expr.kind);
+    Assert.Equal(NodeFlags.AwaitContext, expr.flags & NodeFlags.AwaitContext);
+    // Statement 1: the export const, unchanged (a VariableStatement carrying ExportKeyword).
+    // M3 4c: stmt1.pos is the trivia-inclusive full-start, so it begins at the `\n` after
+    // statement 0; the raw slice therefore leads with that newline.
+    const stmt1 = sourceFile.statements[1]!;
+    if (!isVariableStatement(stmt1)) throw new Exception("Expected variable statement");
+    Assert.Equal("\nexport const ready = true;", this.#raw(sourceFile, stmt1));
+  }
+
+  // First-pass heuristic (no reparse): `await load();\nexport const ready = true;`. After
+  // `await`, the next token `load` IS an identifier on the same line, so isAwaitExpression's
+  // lookahead succeeds and `await load()` is parsed DIRECTLY as an AwaitExpression on the
+  // first pass — no `await` identifier, no span, no reparse. tsgo-faithful: the expression
+  // is an AwaitExpression but does NOT carry AwaitContext (it was built outside one).
+  tla_module_await_identifier_followed_parses_directly_no_await_context(): void {
+    const src = "await load();\nexport const ready = true;";
+    const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
+    Assert.Equal(true, sourceFile.externalModuleIndicator !== undefined);
+    const stmt0 = sourceFile.statements[0]!;
+    if (!isExpressionStatement(stmt0)) throw new Exception("Expected expression statement");
+    const expr = stmt0.expression;
+    if (!isAwaitExpression(expr)) throw new Exception("Expected await expression (first-pass heuristic)");
+    // No reparse occurred, so it carries NO AwaitContext (built with AwaitContext off).
+    Assert.Equal(0, expr.flags & NodeFlags.AwaitContext);
+  }
+
+  // TLA non-module (rejected): `await (load());` with NO import/export. externalModule-
+  // Indicator is undefined, so the reparse gate fails — statement 0 keeps its first-pass
+  // await-as-identifier shape (a CallExpression `await(load())`, NOT an AwaitExpression),
+  // matching tsgo (no reparse for a non-module).
+  tla_non_module_no_reparse(): void {
+    const src = "await (load());";
+    const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
+    Assert.Equal(true, sourceFile.externalModuleIndicator === undefined);
+    const stmt0 = sourceFile.statements[0]!;
+    if (!isExpressionStatement(stmt0)) throw new Exception("Expected expression statement");
+    // No reparse: `await (load())` was parsed as `await(load())` — a CallExpression on the
+    // `await` identifier, NOT an AwaitExpression.
+    Assert.Equal(false, isAwaitExpression(stmt0.expression));
+    Assert.Equal(Kind.CallExpression, stmt0.expression.kind);
+  }
+
+  // import.meta module detection: CLASSIFIED NOT-APPLICABLE. tsts does NOT parse
+  // `import.meta` (the parser never builds a MetaProperty for it — #parsePrimaryExpression
+  // has no ImportKeyword arm), so getImportMetaIfNecessary / the PossiblyContainsImportMeta
+  // indicator branch can never fire (there is no node to find). This probe is therefore
+  // intentionally OMITTED — the import.meta indicator depends on syntax tsts does not parse.
+
+  // Range / parent integrity: the reparsed AwaitExpression statement has 4c-faithful
+  // pos/end (full-start pos, token-tight end) and its parent points to the (rebuilt)
+  // SourceFile. Uses a leading blank/space so the full-start (trivia-inclusive) is exercised.
+  tla_reparse_range_and_parent_integrity(): void {
+    const src = "await (x);\nexport {};";
+    const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
+    Assert.Equal(true, sourceFile.externalModuleIndicator !== undefined);
+    const stmt0 = sourceFile.statements[0]!;
+    if (!isExpressionStatement(stmt0)) throw new Exception("Expected expression statement");
+    const expr = stmt0.expression;
+    if (!isAwaitExpression(expr)) throw new Exception("Expected reparsed await expression");
+    // 4c-faithful ranges: ExpressionStatement starts at full-start 0, ends token-tight at
+    // the `;` after `await (x)` (index 10). The AwaitExpression starts at the `await` (0).
+    Assert.Equal(0, stmt0.pos);
+    Assert.Equal(10, stmt0.end);
+    Assert.Equal("await (x);", this.#raw(sourceFile, stmt0));
+    Assert.Equal(0, expr.pos);
+    Assert.Equal("await (x)", this.#raw(sourceFile, expr));
+    // Parent of the reparsed statement is the REBUILT SourceFile (the very node returned).
+    Assert.Equal(Kind.SourceFile, stmt0.parent.kind);
+    Assert.Equal(true, stmt0.parent === sourceFile);
+    // The untouched copied statement (the export) also reparents to the rebuilt file.
+    const stmt1 = sourceFile.statements[1]!;
+    Assert.Equal(true, stmt1.parent === sourceFile);
   }
 }
 

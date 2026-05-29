@@ -149,8 +149,14 @@ import {
   createVoidExpression,
   createWhileStatement,
   createWithStatement,
+  modifiersToFlags,
   isBinaryOperatorToken,
+  isExportAssignment,
+  isExportDeclaration,
+  isExternalModuleReference,
   isIdentifier,
+  isImportDeclaration,
+  isImportEqualsDeclaration,
   isJsxElement,
   isJsxNamespacedName,
   isJsxOpeningElement,
@@ -211,6 +217,10 @@ import {
   type TypeParameterDeclaration,
   type VariableDeclaration,
 } from "../ast/index.js";
+// M3 6b: ModifierFlags is imported as a VALUE from the enum module directly (the
+// ../ast/index.js re-export is seen as type-only under verbatimModuleSyntax), matching
+// how src/ast/utilities.ts / src/checker/utilities.ts consume it.
+import { ModifierFlags } from "../enums/modifierFlags.enum.js";
 import { createLiveScanner, skipTrivia, TokenFlags, type LiveScanner, type ScannerState, type ScannedToken } from "../scanner/index.js";
 import { getTextOfNodeFromSourceText, tokenIsIdentifierOrKeyword } from "../scanner/utilities.js";
 import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
@@ -282,6 +292,10 @@ interface ParserMark {
   // diagnostics pushed during a speculative probe (tsgo ParserState.diagnosticsLen,
   // parser.go:353/366). Inert in 3a (no throw flipped => #diagnostics stays empty).
   readonly diagnosticsLen: number;
+  // M3 6b: tsgo ParserState.statementHasAwaitIdentifier (parser.go:345/357/370) — a
+  // speculative probe that builds an `await` identifier must not leak the flag into
+  // the rewound cursor, so it is snapshot here and restored by #rewind.
+  readonly statementHasAwaitIdentifier: boolean;
 }
 
 const binaryPrecedence = new Map<Kind, number>([
@@ -606,6 +620,20 @@ export class Parser {
   // parseBracketedList set `1 << kind` while iterating and restore on exit;
   // isInSomeParsingContext reads it to decide whether to abort a recovering list.
   #parsingContexts: number = 0;
+  // M3 6b top-level-await reparse: tsgo p.statementHasAwaitIdentifier (parser.go:81).
+  // Set true by #newIdentifier whenever it builds an identifier whose text is "await"
+  // (i.e. with AwaitContext OFF, a leading `await x` mis-parses `await` as an
+  // Identifier). Reset per top-level statement by #parseToplevelStatement; saved/
+  // restored around nested-expression productions (class/enum/module/import/export/
+  // property-name/function-block/binding-identifier) exactly as tsgo, so a span is
+  // recorded ONLY when the await-identifier is at the statement's own top level.
+  // Same controlled mutable parse-state category as #token/#contextFlags.
+  #statementHasAwaitIdentifier: boolean = false;
+  // M3 6b: tsgo p.possibleAwaitSpans (parser.go:91). A flat array of PAIRED
+  // [startIndex, endIndex) statement-index spans recorded by #parseToplevelStatement
+  // for every top-level statement that contained an `await` identifier (outside
+  // AwaitContext). Consumed by #reparseTopLevelAwait. Same parse-state category.
+  #possibleAwaitSpans: number[] = [];
 
   constructor(sourceText: string, options: ParseSourceFileOptions = {}) {
     this.#sourceText = sourceText;
@@ -751,10 +779,12 @@ export class Parser {
   }
 
   parseSourceFile(): SourceFile {
-    // M3 3b-list-model retrofit (loop #1): tsgo parseSourceFile uses
-    // parseList(PCSourceElements, parseStatement). element: !(Semi&&recovery)&&
-    // isStartOfStatement; terminator: EOF only (PCSourceElements default false).
-    const statements = this.#parseList(PCSourceElements, () => this.#parseStatement());
+    // M3 6b: tsgo parseSourceFileWorker (parser.go:434) uses
+    // parseListIndex(PCSourceElements, parseToplevelStatement) so each top-level
+    // statement is parsed with the await-identifier flag reset and any `await`
+    // identifier records a possibleAwaitSpan (by statement index). element:
+    // !(Semi&&recovery)&&isStartOfStatement; terminator: EOF only.
+    const statements = this.#parseListIndex(PCSourceElements, (i) => this.#parseToplevelStatement(i));
     // M3 6a: tsgo parseSourceFileWorker (parser.go:436-438) captures the trailing JSDoc
     // state AFTER the statement list and stamps it onto the EOF token. The parse loop has
     // consumed every statement, so the current #token is the EOF token and #jsdocScannerInfo
@@ -766,21 +796,33 @@ export class Parser {
     // codex Stage-3a: attach the parser-owned diagnostics buffer onto the
     // SourceFile at end-of-parse, mirroring tsgo finishSourceFile's
     // result.SetDiagnostics(...) (parser.go:466) which runs AFTER the parse loop.
-    // At this call point #diagnostics is fully populated (end of parse). In 3a it
-    // is always empty (no throw flipped) — behaviorally inert but live end-to-end.
-    return createSourceFile(
+    // M3 6b: tsgo finishSourceFile (parser.go:486) calls SetExternalModuleIndicator —
+    // the STRUCTURAL module decision (scan of the already-parsed statements). Compute
+    // it here and stamp it onto the SourceFile (the field is constructed, mirroring
+    // tsgo's post-parse mutation).
+    const result = createSourceFile(
       this.#fileName,
       this.#fileName as never,
       this.#sourceText,
       statements,
       endOfFileToken,
-      this.#diagnostics,
       // M3 Stage-5 pre-wave: stamp the resolved variant + script kind onto the
       // SourceFile, faithful to tsgo NewSourceFile which carries languageVariant
       // and scriptKind (parser sets them in initializeState, ast.go:2432-2433).
+      this.#diagnostics,
       this.#languageVariant,
       this.#scriptKind,
+      getExternalModuleIndicator(statements),
     );
+    // M3 6b: tsgo parseSourceFileWorker gate (parser.go:449) — reparse the recorded
+    // top-level-await spans ONLY for a non-declaration external module that recorded at
+    // least one span. tsts has no declaration-file parse path, so result.isDeclarationFile
+    // is structurally false (the gate term stays faithful). The reparse rebuilds the
+    // SourceFile (new statements, repointed parents, recomputed diagnostics + indicator).
+    if (!result.isDeclarationFile && result.externalModuleIndicator !== undefined && this.#possibleAwaitSpans.length > 0) {
+      return this.#reparseTopLevelAwait(result);
+    }
+    return result;
   }
 
   #parseStatement(): Statement {
@@ -939,12 +981,18 @@ export class Parser {
     // tsgo: afterImportPos is captured here, before parsing the leading identifier. It becomes
     // the ImportClause's pos.
     const afterImportPos = this.#nodePos();
+    // M3 6b: tsgo parseImportDeclarationOrImportEqualsDeclaration (parser.go:2233/2264/2268)
+    // saves statementHasAwaitIdentifier before the leading identifier and restores it on
+    // every return path — an import binding/clause (incl. a binding named `await`) is
+    // always parsed in await context, so it must NOT mark the statement for reparse.
+    const saveHasAwaitIdentifier = this.#statementHasAwaitIdentifier;
     // String-specifier shape: `import "x";` (no clause). tokenAfterImportDefinitelyProduces-
     // ImportDeclaration is implicitly handled by the clause path below.
     if (this.#current().kind === Kind.StringLiteral) {
       const moduleSpecifier = this.#parseStringLiteralExpression();
       const attributes = this.#tryParseImportAttributes();
       this.#consumeOptional(Kind.SemicolonToken);
+      this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
       // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:2273). tsgo has a single
       // ImportDeclaration finishNode; tsts split the no-clause string-import into an
       // early return, so the stamp applies on both ImportDeclaration return paths.
@@ -980,9 +1028,12 @@ export class Parser {
       && !this.#tokenAfterImportedIdentifierDefinitelyProducesImportDeclaration()
       && phaseModifier !== Kind.DeferKeyword
     ) {
-      return this.#parseImportEqualsDeclaration(pos, jsdoc, modifiers, identifier, phaseModifier === Kind.TypeKeyword);
+      const importEquals = this.#parseImportEqualsDeclaration(pos, jsdoc, modifiers, identifier, phaseModifier === Kind.TypeKeyword);
+      this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier; // tsgo 2264: Import= is always in await context, no reparse
+      return importEquals;
     }
     const importClause = this.#parseImportClause(afterImportPos, phaseModifier, identifier);
+    this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier; // tsgo 2268: import clause is always in await context
     this.#expect(Kind.FromKeyword);
     const moduleSpecifier = this.#parseStringLiteralExpression();
     const attributes = this.#tryParseImportAttributes();
@@ -1043,11 +1094,15 @@ export class Parser {
   #parseExternalModuleReference(): ModuleReference {
     // tsgo parseExternalModuleReference (parser.go:2309): `require ( ModuleSpecifier )`. Start
     // pos at the `require` keyword; finishNode after the closing `)`.
+    // M3 6b: tsgo (parser.go:2310/2317) saves/restores statementHasAwaitIdentifier around
+    // the reference — `import x = require(...)` is always in await context.
+    const saveHasAwaitIdentifier = this.#statementHasAwaitIdentifier;
     const pos = this.#nodePos();
     this.#expect(Kind.RequireKeyword);
     this.#expect(Kind.OpenParenToken);
     const expression = this.#parseStringLiteralExpression();
     this.#expect(Kind.CloseParenToken);
+    this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
     return this.#finishNode(createExternalModuleReference(expression), pos);
   }
 
@@ -1059,10 +1114,14 @@ export class Parser {
     // tsgo parseImportClause (parser.go:2344): ImportClause pos is `afterImportPos` (the token
     // after `import`); the default-binding identifier and phase modifier were already parsed
     // by the caller (#parseImportDeclaration), mirroring tsgo's threading of those values.
+    // M3 6b: tsgo (parser.go:2354/2369) saves/restores statementHasAwaitIdentifier around the
+    // named-bindings parse — an import binding named `await` is in await context.
+    const saveHasAwaitIdentifier = this.#statementHasAwaitIdentifier;
     let namedBindings: NamedImportBindings | undefined;
     if (identifier === undefined || this.#consumeOptional(Kind.CommaToken)) {
       namedBindings = this.#parseNamedImportBindings();
     }
+    this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
     return this.#finishNode(createImportClause(phaseModifier, identifier, namedBindings), pos);
   }
 
@@ -1107,10 +1166,16 @@ export class Parser {
     // #parseStatement-top pos (covering modifiers); finishNode runs after the trailing
     // semicolon. After a module specifier, an optional import-attributes clause
     // (`with`/`assert { ... }`) is parsed (tsgo parser.go:2564).
+    // M3 6b: tsgo parseExportDeclaration (parser.go:2541/2572) saves
+    // statementHasAwaitIdentifier and restores it before finishing — export clauses are
+    // parsed in await context, so an `await` export specifier name must NOT mark the
+    // statement for reparse. Restore on BOTH return paths (tsts split the `*`-export).
+    const saveHasAwaitIdentifier = this.#statementHasAwaitIdentifier;
     if (this.#consumeOptional(Kind.AsteriskToken)) {
       const moduleSpecifier = this.#consumeOptional(Kind.FromKeyword) ? this.#parseStringLiteralExpression() : undefined;
       const attributes = moduleSpecifier !== undefined ? this.#tryParseImportAttributes() : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
+      this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
       // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:2574). tsgo has a single
       // ExportDeclaration finishNode; tsts split the `*`-export into an early return,
       // so the stamp applies on both ExportDeclaration return paths.
@@ -1126,6 +1191,7 @@ export class Parser {
     const moduleSpecifier = this.#consumeOptional(Kind.FromKeyword) ? this.#parseStringLiteralExpression() : undefined;
     const attributes = moduleSpecifier !== undefined ? this.#tryParseImportAttributes() : undefined;
     this.#consumeOptional(Kind.SemicolonToken);
+    this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
     // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:2574).
     return this.#withJSDoc(this.#finishNode(createExportDeclaration(modifiers, false, namedExports, moduleSpecifier, attributes), pos), jsdoc);
   }
@@ -1142,12 +1208,18 @@ export class Parser {
     // parseExportAssignment sets NodeFlagsAwaitContext=true around the value expression
     // (parser.go:2509) — `export default`/`export =` values are in module-await context —
     // so the expression and its finished nodes carry AwaitContext.
+    // M3 6b: tsgo parseExportAssignment (parser.go:2508-2519) saves
+    // statementHasAwaitIdentifier and restores it at the end — the value is parsed in
+    // AwaitContext, so any `await` identifier inside it must NOT mark the export
+    // statement for reparse. (#doInContext already handles the contextFlags save.)
+    const saveHasAwaitIdentifier = this.#statementHasAwaitIdentifier;
     const isExportEquals = this.#consumeOptional(Kind.EqualsToken);
     if (!isExportEquals) {
       this.#expect(Kind.DefaultKeyword);
     }
     const expression = this.#doInContext(NodeFlags.AwaitContext, true, () => this.#parseExpression());
     this.#consumeOptional(Kind.SemicolonToken);
+    this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
     // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:2521).
     return this.#withJSDoc(this.#finishNode(createExportAssignment(modifiers, isExportEquals, undefined as never, expression), pos), jsdoc);
   }
@@ -1159,7 +1231,12 @@ export class Parser {
     // #parseStatement-top pos; finishNode after the semicolon.
     this.#expect(Kind.AsKeyword);
     this.#expect(Kind.NamespaceKeyword);
+    // M3 6b: tsgo parseNamespaceExportDeclaration (parser.go:2529-2531) saves/restores
+    // statementHasAwaitIdentifier around the name identifier — `export as namespace
+    // await` names a namespace, not a top-level await expression.
+    const saveHasAwaitIdentifier = this.#statementHasAwaitIdentifier;
     const name = this.#parseIdentifier();
+    this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
     this.#consumeOptional(Kind.SemicolonToken);
     // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:2535).
     return this.#withJSDoc(this.#finishNode(createNamespaceExportDeclaration(modifiers, name), pos), jsdoc);
@@ -1279,7 +1356,13 @@ export class Parser {
     // tsgo parseClassDeclaration: declaration start is the #parseStatement-top pos
     // (covering modifiers). Members/heritage/type-params are Stage 1e (left unstamped).
     this.#expect(Kind.ClassKeyword);
+    // M3 6b: tsgo parseClassDeclarationOrExpression (parser.go:1797-1799) saves/restores
+    // statementHasAwaitIdentifier around the class NAME binding identifier — a class named
+    // `await` is a declaration name, not a top-level await expression. (Member names are
+    // covered by #parsePropertyName's own save/restore.)
+    const saveHasAwaitIdentifier = this.#statementHasAwaitIdentifier;
     const name = this.#current().kind === Kind.Identifier ? this.#parseIdentifier() : undefined;
+    this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
     const typeParameters = this.#parseOptionalTypeParameters();
     const heritageClauses = this.#parseHeritageClauses();
     this.#expect(Kind.OpenBraceToken);
@@ -1328,6 +1411,10 @@ export class Parser {
 
   #parseEnumDeclaration(pos: number, jsdoc: JSDocScannerInfo, modifiers: NodeArray<ModifierLike> | undefined): Statement {
     // tsgo parseEnumDeclaration: declaration start is the #parseStatement-top pos.
+    // M3 6b: tsgo (parser.go:2132/2148) saves/restores statementHasAwaitIdentifier across
+    // the whole enum — an enum named `await` (or a member named `await`) is a declaration
+    // name, not a top-level await expression, so it must NOT mark the statement for reparse.
+    const saveHasAwaitIdentifier = this.#statementHasAwaitIdentifier;
     this.#expect(Kind.EnumKeyword);
     const name = this.#parseIdentifier();
     this.#expect(Kind.OpenBraceToken);
@@ -1340,6 +1427,7 @@ export class Parser {
     // of this loop retrofit.
     const members = this.#parseDelimitedList(PCEnumMembers, () => this.#parseEnumMember());
     this.#expect(Kind.CloseBraceToken);
+    this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
     // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:1625).
     return this.#withJSDoc(this.#finishNode(createEnumDeclaration(modifiers, name, members ?? createNodeArray<ReturnType<typeof createEnumMember>>([])), pos), jsdoc);
   }
@@ -1499,7 +1587,7 @@ export class Parser {
       const parameters = this.#withSignatureContext(false, false, () => this.#parseParameterList());
       this.#expect(Kind.CloseParenToken);
       const body = this.#current().kind === Kind.OpenBraceToken
-        ? this.#withSignatureContext(false, false, () => this.#doInContext(NodeFlags.DecoratorContext, false, () => this.#parseBlock()))
+        ? this.#parseFunctionBlock(false, false)
         : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
       // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:1925, tryParseConstructorDeclaration).
@@ -1517,7 +1605,11 @@ export class Parser {
       this.#expect(Kind.OpenParenToken);
       this.#expect(Kind.CloseParenToken);
       const type = this.#parseOptionalTypeAnnotation();
-      const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
+      // M3 6b: tsgo accessor body goes through parseFunctionBlockOrSemicolon ->
+      // parseFunctionBlock (parser.go:3437) with ParseFlagsNone, so no Yield/Await is set
+      // but statementHasAwaitIdentifier IS saved/restored. #parseFunctionBlock(false,false)
+      // matches: an accessor is neither generator nor async.
+      const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseFunctionBlock(false, false) : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
       // M3 6a: tsgo withJSDoc(p.finishNode(result, pos), jsdoc) (parser.go:3438, parseAccessorDeclaration).
       return this.#withJSDoc(this.#finishNode(createGetAccessorDeclaration(modifiers, name, undefined, createNodeArray([]), type, body), pos), jsdoc);
@@ -1529,7 +1621,9 @@ export class Parser {
       this.#expect(Kind.OpenParenToken);
       const parameters = this.#parseParameterList();
       this.#expect(Kind.CloseParenToken);
-      const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
+      // M3 6b: tsgo set-accessor body also goes through parseFunctionBlock (ParseFlagsNone) —
+      // statementHasAwaitIdentifier saved/restored, no Yield/Await context.
+      const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseFunctionBlock(false, false) : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
       // M3 6a: tsgo withJSDoc(p.finishNode(result, pos), jsdoc) (parser.go:3438, parseAccessorDeclaration).
       return this.#withJSDoc(this.#finishNode(createSetAccessorDeclaration(modifiers, name, undefined, createNodeArray(parameters), undefined, body), pos), jsdoc);
@@ -1552,7 +1646,7 @@ export class Parser {
       this.#expect(Kind.CloseParenToken);
       const type = this.#parseOptionalTypeAnnotation();
       const body = this.#current().kind === Kind.OpenBraceToken
-        ? this.#withSignatureContext(isGenerator, isAsync, () => this.#doInContext(NodeFlags.DecoratorContext, false, () => this.#parseBlock()))
+        ? this.#parseFunctionBlock(isGenerator, isAsync)
         : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
       // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:1956, parseMethodDeclaration).
@@ -1844,11 +1938,10 @@ export class Parser {
       this.#expect(Kind.CloseParenToken);
       const type = this.#parseOptionalTypeAnnotation();
       // tsgo parseFunctionBlock additionally CLEARS DecoratorContext (parser.go:3500): a
-      // function body is never in decorator context. #withSignatureContext sets Yield/Await
-      // from the signature; wrap the body additionally clearing Decorator.
-      const body = this.#withSignatureContext(isGenerator, isAsync, () =>
-        this.#doInContext(NodeFlags.DecoratorContext, false, () => this.#parseBlock()),
-      );
+      // function body is never in decorator context, and saves/restores
+      // statementHasAwaitIdentifier so a body `await` identifier does not mark THIS
+      // declaration for reparse. #parseFunctionBlock wraps all three.
+      const body = this.#parseFunctionBlock(isGenerator, isAsync);
       // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:1730).
       return this.#withJSDoc(this.#finishNode(createFunctionDeclaration(modifiers, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body), pos), jsdoc);
     };
@@ -2198,9 +2291,10 @@ export class Parser {
     // are reproduced via #withSignatureContext(false, isAsync, ...); the block body also
     // clears DecoratorContext.
     if (this.#current().kind === Kind.OpenBraceToken) {
-      return this.#withSignatureContext(false, isAsync, () =>
-        this.#doInContext(NodeFlags.DecoratorContext, false, () => this.#parseBlock()),
-      );
+      // M3 6b: tsgo arrow block body goes through parseFunctionBlock (parser.go:4462),
+      // which saves/restores statementHasAwaitIdentifier. The expression-body branch
+      // below does NOT (tsgo parses it directly at parser.go:4483-4484).
+      return this.#parseFunctionBlock(false, isAsync);
     }
     return this.#withSignatureContext(false, isAsync, () => this.#parseExpression());
   }
@@ -2280,11 +2374,44 @@ export class Parser {
         }
         return this.#parseTypeAssertion();
       case Kind.AwaitKeyword:
-        this.#advance();
-        return this.#finishNode(createAwaitExpression(this.#parseUnaryExpression()), pos);
+        // tsgo parseSimpleUnaryExpression AwaitKeyword arm (parser.go:5065-5069):
+        // build an AwaitExpression ONLY when isAwaitExpression() holds (in an await
+        // context, OR the lookahead heuristic says the next token starts an operand
+        // on the same line). Otherwise FALL THROUGH to parseUpdateExpression, where
+        // `await` is consumed as a plain identifier — which #newIdentifier flags for
+        // the top-level-await reparse.
+        if (this.#isAwaitExpression()) {
+          return this.#parseAwaitExpression();
+        }
+        return this.#parsePostfixExpression();
       default:
         return this.#parsePostfixExpression();
     }
+  }
+
+  // tsgo isAwaitExpression (parser.go:5100-5108): at an AwaitKeyword, `await` heads an
+  // AwaitExpression when EITHER we are already in an await context, OR the same
+  // heuristic as yield — the next token begins an operand on the SAME line. When this
+  // is false the `await` is treated as an identifier (handled by the unary fall-through
+  // to parseUpdateExpression), which is what the 6b reparse later promotes to a real
+  // AwaitExpression once AwaitContext is forced on.
+  #isAwaitExpression(): boolean {
+    if (this.#current().kind === Kind.AwaitKeyword) {
+      if (this.#inAwaitContext()) {
+        return true;
+      }
+      return this.#lookAhead(() => this.#nextTokenIsIdentifierOrKeywordOrLiteralOnSameLine());
+    }
+    return false;
+  }
+
+  // tsgo parseAwaitExpression (parser.go:5093-5097): node start is the `await` keyword;
+  // consume it, then parse the operand as a SimpleUnaryExpression. (tsts #parseUnaryExpression
+  // is parseSimpleUnaryExpression.)
+  #parseAwaitExpression(): Expression {
+    const pos = this.#nodePos();
+    this.#advance();
+    return this.#finishNode(createAwaitExpression(this.#parseUnaryExpression()), pos);
   }
 
   // tsgo parseTypeAssertion (parser.go:5117-5125): `< Type > unaryExpression` =>
@@ -2822,13 +2949,36 @@ export class Parser {
       }
       return this.#parseIdentifierNameErrorOnUnicodeEscapeSequence();
     }
-    return this.#parseIdentifier();
+    // M3 6b: tsgo parseRightSideOfDot final branch (parser.go:2961-2964) saves/restores
+    // statementHasAwaitIdentifier around this parseIdentifier — the allowIdentifierNames
+    // branches above intentionally do NOT (a `.await` member name over-records a span,
+    // which the reparse handles idempotently), but this non-identifier-name branch does.
+    const saveHasAwaitIdentifier = this.#statementHasAwaitIdentifier;
+    const id = this.#parseIdentifier();
+    this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
+    return id;
+  }
+
+  // M3 6b: tsgo newIdentifier (parser.go:2967-2974). The SINGLE identifier factory:
+  // every identifier the parser builds from token text routes through here so the
+  // top-level-await detector observes them. When the text is exactly "await" (i.e.
+  // with AwaitContext OFF, a leading `await x` mis-parsed `await` as an Identifier),
+  // flip #statementHasAwaitIdentifier so #parseToplevelStatement records the span and
+  // #reparseTopLevelAwait can re-run the statement with AwaitContext ON. tsts has no
+  // identifier-intern table, so the identifierCount bump is omitted (not part of 6b).
+  #newIdentifier(text: string): Identifier {
+    if (text === "await") {
+      this.#statementHasAwaitIdentifier = true;
+    }
+    return createIdentifier(text);
   }
 
   // tsgo createMissingIdentifier (parser.go:2974-2976): a zero-width Identifier at the
-  // current full-start, finished via #finishNode (no advance).
+  // current full-start, finished via #finishNode (no advance). Routes through
+  // #newIdentifier like tsgo (text "" never matches "await", so this is a no-op flag-
+  // wise — faithful, not behavior-changing).
   #createMissingIdentifier(): Identifier {
-    return this.#finishNode(createIdentifier(""), this.#nodePos());
+    return this.#finishNode(this.#newIdentifier(""), this.#nodePos());
   }
 
   // tsgo parseIdentifierNameErrorOnUnicodeEscapeSequence (parser.go:5795-5800). KEEP its
@@ -2847,7 +2997,7 @@ export class Parser {
     const pos = this.#nodePos();
     const token = this.#current();
     this.#advance();
-    return this.#finishNode(createIdentifier(token.text), pos);
+    return this.#finishNode(this.#newIdentifier(token.text), pos);
   }
 
   #parseNewExpression(): Expression {
@@ -3017,7 +3167,7 @@ export class Parser {
       case Kind.Identifier: {
         const pos = this.#nodePos();
         this.#advance();
-        return this.#finishNode(createIdentifier(token.text), pos);
+        return this.#finishNode(this.#newIdentifier(token.text), pos);
       }
       case Kind.PrivateIdentifier: {
         const pos = this.#nodePos();
@@ -3090,14 +3240,18 @@ export class Parser {
         if (isContextualExpressionIdentifierKind(token.kind)) {
           const pos = this.#nodePos();
           this.#advance();
-          return this.#finishNode(createIdentifier(token.text), pos);
+          // M3 6b: a contextual-keyword identifier here includes `await` outside an
+          // await context (AwaitKeyword passes isContextualExpressionIdentifierKind),
+          // so route through #newIdentifier — this is the site that mis-parses a
+          // leading `await` as an Identifier and flips #statementHasAwaitIdentifier.
+          return this.#finishNode(this.#newIdentifier(token.text), pos);
         }
         // codex Stage-3b 3b-flip: tsgo's start-of-expression failure flows through
         // parseExpression -> createMissingIdentifier on Expression_expected (1109,
         // parser.go ~5650/2976). Record Expression_expected and return a zero-width
         // MISSING identifier at the current pos WITHOUT advancing.
         this.#parseErrorAtCurrentToken(Diagnostics.Expression_expected);
-        return this.#finishNode(createIdentifier(""), this.#nodePos());
+        return this.#finishNode(this.#newIdentifier(""), this.#nodePos());
     }
   }
 
@@ -3119,9 +3273,10 @@ export class Parser {
     const parameters = this.#withSignatureContext(isGenerator, isAsync, () => this.#parseParameterList());
     this.#expect(Kind.CloseParenToken);
     const type = this.#parseOptionalTypeAnnotation();
-    const body = this.#withSignatureContext(isGenerator, isAsync, () =>
-      this.#doInContext(NodeFlags.DecoratorContext, false, () => this.#parseBlock()),
-    );
+    // M3 6b: tsgo function-expression body goes through parseFunctionBlock (parser.go:1716),
+    // which saves/restores statementHasAwaitIdentifier (a body `await` identifier must not
+    // mark the enclosing top-level statement for reparse).
+    const body = this.#parseFunctionBlock(isGenerator, isAsync);
     return this.#finishNode(createFunctionExpression(undefined, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body), pos);
   }
 
@@ -3313,6 +3468,17 @@ export class Parser {
   }
 
   #parsePropertyName(): PropertyName {
+    // M3 6b: tsgo parsePropertyName (parser.go:3446-3448) saves/restores
+    // statementHasAwaitIdentifier around the whole worker — a property name `await`
+    // (`{ await: 1 }`, a member `await() {}`) is a member name, not a top-level await
+    // expression, so it must NOT mark the enclosing statement for reparse.
+    const saveHasAwaitIdentifier = this.#statementHasAwaitIdentifier;
+    const prop = this.#parsePropertyNameWorker();
+    this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
+    return prop;
+  }
+
+  #parsePropertyNameWorker(): PropertyName {
     const token = this.#current();
     // tsgo parseComputedPropertyName (3466): pos at the `[` (before parseExpected);
     // finishNode after the closing `]`. Only this branch is stamped here; the
@@ -3371,16 +3537,16 @@ export class Parser {
     if (isIdentifierNameKind(token.kind)) {
       const pos = this.#nodePos();
       this.#advance();
-      return this.#finishNode(createIdentifier(token.text), pos);
+      return this.#finishNode(this.#newIdentifier(token.text), pos);
     }
     if (token.kind === Kind.PrivateIdentifier) {
       this.#parseErrorAtCurrentToken(Diagnostics.Private_identifiers_are_not_allowed_outside_class_bodies);
       const pos = this.#nodePos();
       this.#advance();
-      return this.#finishNode(createIdentifier(token.text), pos);
+      return this.#finishNode(this.#newIdentifier(token.text), pos);
     }
     this.#parseErrorAtCurrentToken(Diagnostics.Identifier_expected);
-    return this.#finishNode(createIdentifier(""), this.#nodePos());
+    return this.#finishNode(this.#newIdentifier(""), this.#nodePos());
   }
 
   #parseOptionalTypeAnnotation(): TypeNode | undefined {
@@ -4071,6 +4237,7 @@ export class Parser {
       prevTokenEnd: this.#prevTokenEnd,
       contextFlags: this.#contextFlags,
       diagnosticsLen: this.#diagnostics.length,
+      statementHasAwaitIdentifier: this.#statementHasAwaitIdentifier,
     };
   }
 
@@ -4084,6 +4251,10 @@ export class Parser {
     // parser.go:366). Setting Array.length truncates in place. Inert in 3a
     // (diagnosticsLen is always 0, #diagnostics stays empty).
     this.#diagnostics.length = mark.diagnosticsLen;
+    // M3 6b: restore the await-identifier flag (tsgo parser.go:370) so a speculative
+    // probe that built an `await` identifier does not leave the flag set for the
+    // statement that actually parses after the rewind.
+    this.#statementHasAwaitIdentifier = mark.statementHasAwaitIdentifier;
   }
 
   // wave 4b-swap: tsgo lookAhead (parser.go:374-379) — run a speculative probe
@@ -4202,6 +4373,23 @@ export class Parser {
     return this.#doInContext(NodeFlags.YieldContext, isGenerator, () =>
       this.#doInContext(NodeFlags.AwaitContext, isAsync, f),
     );
+  }
+
+  // M3 6b: tsgo parseFunctionBlock (parser.go:3494-3506). Parses a function/method/
+  // constructor/accessor/arrow BODY block with Yield/Await context from the signature,
+  // DecoratorContext cleared, AND statementHasAwaitIdentifier saved/restored — the flag
+  // must NOT leak out of a function body, otherwise an `await` identifier inside a body
+  // would mark the ENCLOSING top-level statement (the function/class declaration) for
+  // reparse and stamp it with a spurious AwaitContext flag. tsts splits tsgo's single
+  // setContextFlags trio into #withSignatureContext (Yield/Await) + the explicit Decorator
+  // clear; this wrapper adds the flag save/restore around that exact pattern.
+  #parseFunctionBlock(isGenerator: boolean, isAsync: boolean): Block {
+    const saveHasAwaitIdentifier = this.#statementHasAwaitIdentifier;
+    const block = this.#withSignatureContext(isGenerator, isAsync, () =>
+      this.#doInContext(NodeFlags.DecoratorContext, false, () => this.#parseBlock()),
+    );
+    this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
+    return block;
   }
 
   // ==========================================================================
@@ -4605,6 +4793,20 @@ export class Parser {
     return tokenIsIdentifierOrKeyword(this.#current().kind) && !this.#hasPrecedingLineBreak();
   }
 
+  // tsgo nextTokenIsIdentifierOrKeywordOrLiteralOnSameLine (parser.go, used by
+  // isAwaitExpression). Like the keyword variant but also admits numeric/bigint/string
+  // literals as the start of an `await` operand on the same line. nextTokenIsIdentifierOrKeyword
+  // advances one token; mirror it by advancing then testing the (now current) token.
+  #nextTokenIsIdentifierOrKeywordOrLiteralOnSameLine(): boolean {
+    this.#nextToken();
+    const kind = this.#current().kind;
+    return (tokenIsIdentifierOrKeyword(kind)
+      || kind === Kind.NumericLiteral
+      || kind === Kind.BigIntLiteral
+      || kind === Kind.StringLiteral)
+      && !this.#hasPrecedingLineBreak();
+  }
+
   // tsgo isUsingDeclaration (parser.go:6314-6321).
   #isUsingDeclaration(): boolean {
     return this.#lookAhead(() => this.#nextTokenIsBindingIdentifierOrStartOfDestructuringOnSameLine(false));
@@ -4730,6 +4932,172 @@ export class Parser {
     }
     this.#parsingContexts = save;
     return createNodeArray(list, pos, this.#nodePos());
+  }
+
+  // M3 6b: tsgo parseListIndex (parser.go:609-638, minus the JSDoc-only reparseList
+  // block tsts has already dropped — see #parseList). Identical to #parseList except
+  // the element parser receives the element's INDEX in the list (the same `len(list)`
+  // tsgo passes), used by #parseToplevelStatement to record possibleAwaitSpans by
+  // statement index. Used only by parseSourceFile (PCSourceElements).
+  #parseListIndex<T extends Node>(kind: ParsingContext, parseElement: (index: number) => T): NodeArray<T> {
+    const pos = this.#nodePos();
+    const save = this.#parsingContexts;
+    this.#parsingContexts |= (1 << kind);
+    const list: T[] = [];
+    while (!this.#isListTerminator(kind)) {
+      if (this.#isListElement(kind, false)) {
+        list.push(parseElement(list.length));
+        continue;
+      }
+      if (this.#abortParsingListOrMoveToNextToken(kind)) {
+        break;
+      }
+    }
+    this.#parsingContexts = save;
+    return createNodeArray(list, pos, this.#nodePos());
+  }
+
+  // M3 6b: tsgo parseToplevelStatement (parser.go:500-511). Parse one top-level
+  // statement with the await-identifier flag reset, then — if the statement contained
+  // an `await` identifier AND was not already parsed in AwaitContext — record/extend
+  // its [i, i+1) span in #possibleAwaitSpans (merging into the previous span when the
+  // statements are adjacent), exactly mirroring tsgo's index bookkeeping.
+  #parseToplevelStatement(i: number): Statement {
+    this.#statementHasAwaitIdentifier = false;
+    const statement = this.#parseStatement();
+    if (this.#statementHasAwaitIdentifier && (statement.flags & NodeFlags.AwaitContext) === 0) {
+      const spans = this.#possibleAwaitSpans;
+      if (spans.length === 0 || spans[spans.length - 1] !== i) {
+        spans.push(i, i + 1);
+      } else {
+        spans[spans.length - 1] = i + 1;
+      }
+    }
+    return statement;
+  }
+
+  // M3 6b: tsgo reparseTopLevelAwait (parser.go:513-607). The controlled reparse pass:
+  // for each recorded possibleAwaitSpan, ResetPos to the span's first statement and
+  // re-run the statement parse with AwaitContext FORCED ON (via #doInContext), so the
+  // live scanner now yields the `await` OPERATOR and #parseUnaryExpression builds a real
+  // AwaitExpression. Non-await statements are copied verbatim. A NEW SourceFile is built
+  // from the spliced statement list, every statement's parent is repointed to it, and
+  // the first-pass (bogus) await diagnostics are replaced by the reparse's diagnostics
+  // (savedParseDiagnostics splice). This is ONE parser/scanner model — the same
+  // #doInContext + #finishNode the first pass uses — not a second parser.
+  // tsts Diagnostic uses `.start` (= tsgo Diagnostic.Pos()).
+  #reparseTopLevelAwait(sourceFile: SourceFile): SourceFile {
+    const spans = this.#possibleAwaitSpans;
+    if (spans.length % 2 === 1) {
+      throw new Error("possibleAwaitSpans malformed: odd number of indices, not paired into spans.");
+    }
+    const sourceStatements = sourceFile.statements;
+    const statements: Statement[] = [];
+    // tsgo swaps p.diagnostics for a fresh buffer (518-519) and rebuilds it span by
+    // span. #diagnostics is a readonly in-place buffer here, so capture the saved
+    // (first-pass) diagnostics, clear the live buffer in place, then re-accumulate.
+    const savedParseDiagnostics: readonly Diagnostic[] = [...this.#diagnostics];
+    this.#diagnostics.length = 0;
+
+    const diagStart = (fromPos: number): number =>
+      savedParseDiagnostics.findIndex((d) => (d.start ?? 0) >= fromPos);
+
+    let afterAwaitStatement = 0;
+    for (let i = 0; i < spans.length; i += 2) {
+      const nextAwaitStatement = spans[i]!;
+      const prevStatement = sourceStatements[afterAwaitStatement]!;
+      const nextStatement = sourceStatements[nextAwaitStatement]!;
+      // append all non-await statements between afterAwaitStatement and nextAwaitStatement
+      for (let s = afterAwaitStatement; s < nextAwaitStatement; s += 1) {
+        statements.push(sourceStatements[s]!);
+      }
+
+      // append all diagnostics associated with the copied range (tsgo 530-549)
+      const diagnosticStart = diagStart(prevStatement.pos);
+      if (diagnosticStart >= 0) {
+        let diagnosticEnd = -1;
+        for (let d = 0; d < diagnosticStart; d += 1) {
+          if ((savedParseDiagnostics[d]!.start ?? 0) >= nextStatement.pos) {
+            diagnosticEnd = d;
+            break;
+          }
+        }
+        const slice = diagnosticEnd >= 0
+          ? savedParseDiagnostics.slice(diagnosticStart, diagnosticStart + diagnosticEnd)
+          : savedParseDiagnostics.slice(diagnosticStart);
+        for (const d of slice) {
+          this.#diagnostics.push(d);
+        }
+      }
+
+      const state = this.#mark();
+      // reparse all statements between start and pos with AwaitContext forced on; the
+      // pre-existing diagnostics for this range are skipped above and new ones allowed.
+      this.#setContextFlags(NodeFlags.AwaitContext, true);
+      this.#scanner.resetPos(nextStatement.pos);
+      this.#nextToken();
+
+      afterAwaitStatement = spans[i + 1]!;
+      while (this.#current().kind !== Kind.EndOfFile) {
+        const startPos = this.#scanner.getTokenFullStart();
+        const statement = this.#parseStatement();
+        statements.push(statement);
+        if (startPos === this.#scanner.getTokenFullStart()) {
+          this.#nextToken();
+        }
+        if (afterAwaitStatement < sourceStatements.length) {
+          const nonAwaitStatement = sourceStatements[afterAwaitStatement]!;
+          if (statement.end === nonAwaitStatement.pos) {
+            // done reparsing this section
+            break;
+          }
+          if (statement.end > nonAwaitStatement.pos) {
+            // we ate into the next statement, so we must continue reparsing the next span
+            i += 2;
+            if (i < spans.length) {
+              afterAwaitStatement = spans[i + 1]!;
+            } else {
+              afterAwaitStatement = sourceStatements.length;
+            }
+          }
+        }
+      }
+
+      // Keep diagnostics from the reparse (tsgo 584-585): rewind everything EXCEPT the
+      // diagnostics accumulated since `state` (override the snapshot's length to the
+      // current length so #rewind keeps them).
+      this.#rewind({ ...state, diagnosticsLen: this.#diagnostics.length });
+    }
+
+    // append all statements between pos and the end of the list (tsgo 588-600)
+    if (afterAwaitStatement < sourceStatements.length) {
+      const prevStatement = sourceStatements[afterAwaitStatement]!;
+      for (let s = afterAwaitStatement; s < sourceStatements.length; s += 1) {
+        statements.push(sourceStatements[s]!);
+      }
+      const diagnosticStart = diagStart(prevStatement.pos);
+      if (diagnosticStart >= 0) {
+        for (const d of savedParseDiagnostics.slice(diagnosticStart)) {
+          this.#diagnostics.push(d);
+        }
+      }
+    }
+
+    const result = createSourceFile(
+      sourceFile.fileName,
+      sourceFile.path,
+      sourceFile.text,
+      createNodeArray(statements, sourceFile.statements.pos, sourceFile.statements.end),
+      sourceFile.endOfFileToken,
+      this.#diagnostics,
+      sourceFile.languageVariant,
+      sourceFile.scriptKind,
+      getExternalModuleIndicator(statements),
+    );
+    for (const s of statements) {
+      s.parent = result; // force (re)set parent to reparsed source file
+    }
+    return result;
   }
 
   // tsgo parseDelimitedList (parser.go:648-703). The parseElement-returns-nil arm
@@ -5245,6 +5613,58 @@ function isContextualExpressionIdentifierKind(kind: Kind): boolean {
     && kind !== Kind.TrueKeyword
     && kind !== Kind.NewKeyword
     && kind !== Kind.FunctionKeyword;
+}
+
+// M3 6b top-level-await reparse — SHARED STRUCTURAL module-indicator infrastructure.
+// Faithful port of tsgo internal/ast/parseoptions.go getExternalModuleIndicator /
+// isFileProbablyExternalModule / isAnExternalModuleIndicatorNode. This is the MODULE
+// DECISION: a SourceFile is an external module iff one of its top-level statements is
+// an external-module-indicator node. The decision is STRUCTURAL (a scan over the
+// already-parsed statements) — NO filename, package, or content heuristics.
+//
+// tsgo getExternalModuleIndicator additionally consults three option/syntax branches
+// that are CLASSIFIED NOT-APPLICABLE here, because they depend on inputs tsts does not
+// have:
+//  - getImportMetaIfNecessary (PossiblyContainsImportMeta + IsImportMeta): tsts does
+//    NOT parse `import.meta` (no MetaProperty is produced for it), so the import-meta
+//    indicator can never fire — there is no node to find. Not-applicable (syntax).
+//  - isFileModuleFromUsingJSXTag (opts.JSX): driven by ExternalModuleIndicatorOptions
+//    .JSX, computed from CompilerOptions.Jsx — not threaded into the parser. Not-
+//    applicable (options).
+//  - opts.Force (ModuleDetectionKind / file-format): driven by ExternalModuleIndicator
+//    Options.Force, computed from CompilerOptions — not threaded into the parser.
+//    Not-applicable (options).
+// What REMAINS is isFileProbablyExternalModule (the statement scan), ported directly.
+
+// tsgo isAnExternalModuleIndicatorNode (parseoptions.go:95-99). The HasSyntacticModifier
+// (node, Export) check is computed DIRECTLY from the node's modifier list — tsgo's
+// Node.ModifierFlags() reads ModifierList.ModifierFlags, which NewModifierList computes
+// eagerly at parse time via ModifiersToFlags(nodes). tsts's nodeModifierFlags/
+// hasSyntacticModifier instead read a `modifierFlags` cache that the BINDER fills (empty
+// at parse time), so it cannot be used here; compute the flag from the modifiers array,
+// exactly mirroring tsgo's ModifiersToFlags-derived ModifierFlags.
+function hasExportModifier(node: Statement): boolean {
+  const modifiers = (node as { readonly modifiers?: readonly ModifierLike[] }).modifiers;
+  return modifiers !== undefined && (modifiersToFlags(modifiers) & ModifierFlags.Export) !== 0;
+}
+
+function isAnExternalModuleIndicatorNode(node: Statement): boolean {
+  return hasExportModifier(node)
+    || (isImportEqualsDeclaration(node) && isExternalModuleReference(node.moduleReference))
+    || isImportDeclaration(node)
+    || isExportAssignment(node)
+    || isExportDeclaration(node);
+}
+
+// tsgo isFileProbablyExternalModule (parseoptions.go:86-93), minus the import.meta tail
+// (getImportMetaIfNecessary) which is not-applicable (tsts does not parse import.meta).
+function getExternalModuleIndicator(statements: readonly Statement[]): Node | undefined {
+  for (const statement of statements) {
+    if (isAnExternalModuleIndicatorNode(statement)) {
+      return statement;
+    }
+  }
+  return undefined;
 }
 
 export function parseSourceFile(sourceText: string, options?: ParseSourceFileOptions): SourceFile {

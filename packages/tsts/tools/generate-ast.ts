@@ -963,7 +963,7 @@ function generateFactory(schema: AstSchema): string {
     lines.push("");
   }
 
-  lines.push("export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile, parseDiagnostics: readonly Diagnostic[], languageVariant: number, scriptKind: number): SourceFile {");
+  lines.push("export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile, parseDiagnostics: readonly Diagnostic[], languageVariant: number, scriptKind: number, externalModuleIndicator: Node | true | undefined = undefined): SourceFile {");
   lines.push("  return createNode<SourceFile>(Kind.SourceFile, {");
   lines.push("    fileName,");
   lines.push("    path,");
@@ -979,7 +979,7 @@ function generateFactory(schema: AstSchema): string {
   lines.push("    imports: [],");
   lines.push("    moduleAugmentations: [],");
   lines.push("    ambientModuleNames: [],");
-  lines.push("    externalModuleIndicator: undefined,");
+  lines.push("    externalModuleIndicator,");
   lines.push("    parseDiagnostics,");
   lines.push("  });");
   lines.push("}");
@@ -988,7 +988,7 @@ function generateFactory(schema: AstSchema): string {
   lines.push("  if (node.statements === statements && node.endOfFileToken === endOfFileToken) {");
   lines.push("    return node;");
   lines.push("  }");
-  lines.push("  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken, node.parseDiagnostics, node.languageVariant, node.scriptKind);");
+  lines.push("  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken, node.parseDiagnostics, node.languageVariant, node.scriptKind, node.externalModuleIndicator);");
   lines.push("  return updated;");
   lines.push("}");
   lines.push("");
