@@ -11,8 +11,8 @@
  * No declares, no runtime side effects — just typed pass-throughs.
  */
 
-import type { Node as AstNode, NodeArray } from "./generated/types.js";
-import type { ModifierList } from "./aliases.js";
+import type { Node as AstNode, NodeArray, Symbol as AstSymbol } from "./generated/types.js";
+import type { ModifierList, SymbolTable } from "./aliases.js";
 import { Kind } from "./generated/kind.js";
 import {
   type SourceFileLike,
@@ -63,6 +63,11 @@ export function nodeText(node: AstNode | undefined): string {
   return typeof t === "string" ? t : "";
 }
 export function nodeName(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "name"); }
+// Binder-set slot readers (LocalsContainerBase.locals / DeclarationBase.symbol).
+// The polymorphic `f` bridge is the sanctioned accessor-layer cast; callers
+// (e.g. the name resolver) read typed values without any cast of their own.
+export function nodeLocals(node: AstNode | undefined): SymbolTable | undefined { return f<SymbolTable>(node, "locals"); }
+export function nodeSymbol(node: AstNode | undefined): AstSymbol | undefined { return f<AstSymbol>(node, "symbol"); }
 export function nodeBody(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "body"); }
 export function nodeInitializerOf(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "initializer"); }
 export interface NodeLoc { readonly pos: number; readonly end: number }

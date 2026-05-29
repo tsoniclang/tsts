@@ -61,6 +61,11 @@ export interface SourceFile extends Node {
   readonly externalModuleIndicator: Node | true | undefined;
   readonly parseDiagnostics: readonly Diagnostic[];
   readonly tokenCache?: Map<string, Node>;
+  // codex-021307 M4a Fork A: SourceFile is a HasLocals control-flow container
+  // (tsgo GetContainerFlags KindSourceFile => HasLocals; binder.go:2577). The
+  // binder writes the file's top-level symbol table here in place.
+  locals?: Map<string, Symbol>;
+  nextContainer?: Node;
 }
 
 export interface FlowNode {
@@ -73,15 +78,24 @@ export interface FlowNode {
 export interface Symbol {
   readonly name?: string;
   readonly escapedName?: string;
-  readonly flags?: number;
+  // codex-021307 M4a Fork A: flags is a mutable binder slot — addDeclarationToSymbol
+  // does `symbol.Flags |= symbolFlags` (binder.go:2531).
+  flags?: number;
   // codex-043 M2 Fork A: binder-mutated symbol slots (declarations are pushed,
   // member/export tables are populated in place) — mirror TS-Go []*Node + maps.
   declarations: Node[];
-  readonly valueDeclaration?: Node;
+  // codex-021307 M4a Fork A: valueDeclaration is mutable — SetValueDeclaration
+  // writes `symbol.ValueDeclaration = node` (binder.go:2555).
+  valueDeclaration?: Node;
   members?: Map<string, Symbol>;
   exports?: Map<string, Symbol>;
   readonly globalExports?: Map<string, Symbol>;
-  readonly parent?: Symbol;
+  // codex-021307 M4a Fork A: parent is mutable — declareSymbolEx writes the
+  // symbol's owning-container parent during the bind walk (binder.go).
+  parent?: Symbol;
+  // codex-021307 M4a Fork A: exportSymbol is the mutable local↔export link
+  // (ast.Symbol.ExportSymbol, symbol.go:20).
+  exportSymbol?: Symbol;
 }
 
 export interface CheckFlagsBrand {}

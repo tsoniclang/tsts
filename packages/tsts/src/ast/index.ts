@@ -16,3 +16,5 @@ export * from "./aliases.js";
 // TS-Go-style accessor functions (nodeKind, nodeParent, etc.) so
 // transformer files can ESM-import them instead of `declare`ing.
 export * from "./accessors.js";
+// FlowFlags const-bitset (control-flow-graph node flags; flow.go:5-23).
+export * from "./flowflags.js";

@@ -23,6 +23,7 @@ import type {
   IdentifierNode,
   ElementAccessExpression,
 } from "../ast/index.js";
+import { isIdentifier, isNumericLiteral, isStringLiteral } from "../ast/index.js";
 
 // ---------------------------------------------------------------------------
 // Public interface + hooks
@@ -85,7 +86,7 @@ class ReferenceResolverImpl implements ReferenceResolver {
     // binder. If the symbol is an alias, follow it via
     // getDeclarationOfAliasSymbol to its target value declaration; the
     // merged-symbol step normalizes across declaration merging.
-    const resolved = this.getResolvedSymbol(reference as unknown as AstNode);
+    const resolved = this.getResolvedSymbol(reference);
     if (resolved === undefined) return undefined;
     let sym = this.getMergedSymbol(resolved);
     if (this.isTypeOnlyAliasDeclaration(sym)) return undefined;
@@ -119,14 +120,14 @@ class ReferenceResolverImpl implements ReferenceResolver {
     if (sym === undefined) return undefined;
     const parent = this.getParentOfSymbol(sym);
     if (parent === undefined) return undefined;
-    const parentDecls = (parent as unknown as { declarations?: readonly AstNode[] }).declarations;
-    if (parentDecls === undefined || parentDecls.length === 0) return undefined;
+    const parentDecls = parent.declarations;
+    if (parentDecls.length === 0) return undefined;
     return parentDecls[0];
   }
 
   getReferencedImportDeclaration(node: IdentifierNode): Declaration | undefined {
     // If the resolved symbol is an alias, return its alias declaration.
-    const resolved = this.getResolvedSymbol(node as unknown as AstNode);
+    const resolved = this.getResolvedSymbol(node);
     if (resolved === undefined) return undefined;
     const sym = this.getMergedSymbol(resolved);
     if (!this.isTypeOnlyAliasDeclaration(sym)) {
@@ -157,11 +158,9 @@ class ReferenceResolverImpl implements ReferenceResolver {
   getElementAccessExpressionName(expression: ElementAccessExpression): string {
     // For x["literal"] the property name is the literal text; for
     // x[expr] there is no static name.
-    const arg = (expression as unknown as { argumentExpression?: { kind?: number; text?: string } }).argumentExpression;
-    if (arg === undefined) return "";
-    const k = arg.kind;
-    if (k === 11 /* StringLiteral */ || k === 9 /* NumericLiteral */ || k === 80 /* Identifier */) {
-      return arg.text ?? "";
+    const arg = expression.argumentExpression;
+    if (isStringLiteral(arg) || isNumericLiteral(arg) || isIdentifier(arg)) {
+      return arg.text;
     }
     return "";
   }

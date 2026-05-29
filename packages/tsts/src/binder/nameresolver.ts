@@ -24,6 +24,7 @@ import type {
   SymbolTable,
   IdentifierNode,
 } from "../ast/index.js";
+import { nodeLocals, nodeParent, nodeSymbol } from "../ast/index.js";
 
 // ---------------------------------------------------------------------------
 // NameResolver
@@ -62,23 +63,23 @@ export class NameResolver {
     // (for module/namespace containers). Stops at SourceFile.
     let n: AstNode | undefined = location;
     while (n !== undefined) {
-      const locals = (n as unknown as { locals?: SymbolTable }).locals;
+      const locals = nodeLocals(n);
       if (locals !== undefined) {
         const found = this.lookup(locals, name, meaning);
         if (found !== undefined) return found;
       }
-      const sym = (n as unknown as { symbol?: AstSymbol }).symbol;
-      const exports = sym !== undefined ? (sym as unknown as { exports?: SymbolTable }).exports : undefined;
+      const sym = nodeSymbol(n);
+      const exports = sym?.exports;
       if (exports !== undefined) {
         const found = this.lookup(exports, name, meaning);
         if (found !== undefined) return found;
       }
-      const members = sym !== undefined ? (sym as unknown as { members?: SymbolTable }).members : undefined;
+      const members = sym?.members;
       if (members !== undefined) {
         const found = this.lookup(members, name, meaning);
         if (found !== undefined) return found;
       }
-      n = (n as unknown as { parent?: AstNode }).parent;
+      n = nodeParent(n);
     }
     return undefined;
   }
@@ -119,7 +120,7 @@ export class NameResolver {
     // doesn't expose a `flags` field, fall through (caller-side meaning
     // refinement is the responsibility of the checker).
     if (meaning !== 0) {
-      const flags = (sym as unknown as { flags?: number }).flags;
+      const flags = sym.flags;
       if (flags !== undefined && (flags & meaning) === 0) return undefined;
     }
     return sym;

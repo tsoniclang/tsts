@@ -1,6 +1,29 @@
+/**
+ * Binder — SUBSTRATE (codex-021307 M4a).
+ *
+ * Faithful 1:1 re-port of microsoft/typescript-go `internal/binder/binder.go`
+ * at the DATA-SUBSTRATE level: the binder writes symbols, locals tables and
+ * parent pointers IN PLACE onto the parsed AST, exactly as tsgo does — there is
+ * no side-table. The container stack + the single recursive `bind` dispatch +
+ * `GetContainerFlags` + the full `declareSymbolEx` merge engine + module/class
+ * static-vs-instance routing are deferred to M4b; M4a keeps the existing
+ * statement-walk SHAPE while swapping the substrate to in-place binding.
+ *
+ * Controlled-mutable `Binder` class: one instance per bind run, the same
+ * sanctioned exception as the parser/scanner run-state. Pure helpers
+ * (declareSymbol given an explicit table) remain free of binder identity.
+ *
+ * tsgo refs:
+ *   - newSymbol                binder.go:136
+ *   - addDeclarationToSymbol   binder.go:2530-2546
+ *   - SetValueDeclaration      binder.go:2548-2557
+ */
+
 import {
   NodeFlags,
   SymbolFlags,
+  isArrayBindingPattern,
+  isBigIntLiteral,
   isBlock,
   isClassDeclaration,
   isDoStatement,
@@ -10,514 +33,567 @@ import {
   isForOfStatement,
   isForStatement,
   isFunctionDeclaration,
+  isGetAccessorDeclaration,
   isIdentifier,
   isIfStatement,
-  isLabeledStatement,
-  isModuleDeclaration,
-  isObjectBindingPattern,
-  isArrayBindingPattern,
   isImportDeclaration,
   isInterfaceDeclaration,
+  isLabeledStatement,
+  isMethodDeclaration,
+  isMethodSignatureDeclaration,
+  isModuleBlock,
+  isModuleDeclaration,
   isNamedImports,
   isNamespaceImport,
+  isNoSubstitutionTemplateLiteral,
+  isNumericLiteral,
+  isObjectBindingPattern,
   isParameterDeclaration,
+  isPrivateIdentifier,
+  isPropertyDeclaration,
+  isPropertySignatureDeclaration,
   isReturnStatement,
+  isSetAccessorDeclaration,
   isSourceFile,
+  isStringLiteral,
   isSwitchStatement,
   isThrowStatement,
   isTryStatement,
   isTypeAliasDeclaration,
   isVariableStatement,
   isWhileStatement,
-  type BindingName,
   type BindingElement,
+  type BindingName,
   type Block,
   type ClassDeclaration,
+  type Declaration,
+  type EnumDeclaration,
   type ForInitializer,
   type FunctionDeclaration,
   type ImportClause,
   type ImportSpecifier,
   type InterfaceDeclaration,
+  type ModuleDeclaration,
   type Node,
   type ParameterDeclaration,
+  type PropertyName,
   type SourceFile,
   type Statement,
+  type Symbol,
+  type SymbolTable,
   type TypeAliasDeclaration,
+  type TypeElement,
+  type ClassElement,
   type VariableDeclaration,
   type VariableDeclarationList,
 } from "../ast/index.js";
-
-export type SymbolTable = Map<string, BoundSymbol>;
-
-export interface BoundSymbol {
-  readonly name: string;
-  flags: SymbolFlags;
-  readonly declarations: Node[];
-  valueDeclaration?: Node;
-  readonly members?: SymbolTable;
-  readonly exports?: SymbolTable;
-}
 
 export interface BindDiagnostic {
   readonly message: string;
   readonly node: Node;
 }
 
-export interface BindResult {
-  readonly sourceFile: SourceFile;
-  readonly globals: SymbolTable;
-  readonly locals: WeakMap<Node, SymbolTable>;
-  readonly symbols: WeakMap<Node, BoundSymbol>;
-  readonly diagnostics: readonly BindDiagnostic[];
+const allMeanings: SymbolFlags =
+  SymbolFlags.Value | SymbolFlags.Type | SymbolFlags.Namespace | SymbolFlags.Alias;
+
+/**
+ * Binds `sourceFile` in place (writing `node.symbol`, `node.locals`,
+ * `node.parent`, and the real `Symbol` tables) and returns the binder
+ * diagnostics. Mirrors tsgo's binder accumulating `bindDiagnostics` on the
+ * source file (SourceFile.BindDiagnostics()); the substrate surfaces them as
+ * the function result rather than as a side-table `BindResult`.
+ */
+export function bindSourceFile(sourceFile: SourceFile): readonly BindDiagnostic[] {
+  return new Binder().bind(sourceFile);
 }
 
-interface BinderState {
-  readonly locals: WeakMap<Node, SymbolTable>;
-  readonly symbols: WeakMap<Node, BoundSymbol>;
-  readonly diagnostics: BindDiagnostic[];
+/**
+ * Reads the in-place symbol slot a declaration was bound to (tsgo
+ * node.DeclarationData().Symbol).
+ */
+export function getSymbol(node: Declaration): Symbol | undefined {
+  return node.symbol;
 }
 
-export function bindSourceFile(sourceFile: SourceFile): BindResult {
-  const state: BinderState = {
-    locals: new WeakMap(),
-    symbols: new WeakMap(),
-    diagnostics: [],
-  };
-  const globals: SymbolTable = new Map();
-  state.locals.set(sourceFile, globals);
-  bindStatements(sourceFile.statements, state, globals, globals);
-  return {
-    sourceFile,
-    globals,
-    locals: state.locals,
-    symbols: state.symbols,
-    diagnostics: state.diagnostics,
-  };
-}
-
-export function lookupSymbol(symbols: SymbolTable, name: string, meaning: SymbolFlags = SymbolFlags.Value | SymbolFlags.Type | SymbolFlags.Namespace | SymbolFlags.Alias): BoundSymbol | undefined {
+/**
+ * Looks up `name` in `symbols`, filtered by `meaning`. Mirrors the meaning
+ * refinement the name resolver applies when walking in-place `locals` /
+ * `symbol.exports` / `symbol.members` tables.
+ */
+export function lookupSymbol(symbols: SymbolTable, name: string, meaning: SymbolFlags = allMeanings): Symbol | undefined {
   const symbol = symbols.get(name);
   if (symbol === undefined) {
     return undefined;
   }
-  return (symbol.flags & meaning) === 0 ? undefined : symbol;
+  return ((symbol.flags ?? SymbolFlags.None) & meaning) === 0 ? undefined : symbol;
 }
 
-export function getSymbol(bindResult: BindResult, node: Node): BoundSymbol | undefined {
-  return bindResult.symbols.get(node);
-}
+class Binder {
+  // Controlled-mutable run-state (the sanctioned exception — one instance per
+  // bind run, same category as the parser/scanner state).
+  #file: SourceFile | undefined = undefined;
+  #container: Node | undefined = undefined;
+  #blockScopeContainer: Node | undefined = undefined;
+  #thisContainer: Node | undefined = undefined;
+  #lastContainer: Node | undefined = undefined;
+  #symbolCount = 0;
+  readonly #classifiableNames: Set<string> = new Set<string>();
+  readonly #diagnostics: BindDiagnostic[] = [];
+  // Flow run-state — declared now (used by M4d, not M4a).
+  #currentFlow: Node | undefined = undefined;
 
-function bindStatements(statements: readonly Statement[], state: BinderState, lexicalScope: SymbolTable, functionScope: SymbolTable): void {
-  for (const statement of statements) {
-    bindStatement(statement, state, lexicalScope, functionScope);
+  bind(sourceFile: SourceFile): readonly BindDiagnostic[] {
+    this.#file = sourceFile;
+    this.#container = sourceFile;
+    this.#thisContainer = sourceFile;
+    this.#blockScopeContainer = sourceFile;
+    const globals: SymbolTable = new Map<string, Symbol>();
+    sourceFile.locals = globals;
+    this.bindStatements(sourceFile.statements, sourceFile, globals, globals);
+    return this.#diagnostics;
   }
-}
 
-function bindStatement(statement: Statement, state: BinderState, lexicalScope: SymbolTable, functionScope: SymbolTable): void {
-  if (isVariableStatement(statement)) {
-    bindVariableDeclarationList(statement.declarationList, state, lexicalScope, functionScope);
-    return;
+  // tsgo binder.go:136 — newSymbol(flags, name).
+  #newSymbol(flags: SymbolFlags, name: string): Symbol {
+    this.#symbolCount += 1;
+    return { name, flags, declarations: [] };
   }
-  if (isImportDeclaration(statement)) {
-    bindImportClause(statement.importClause, lexicalScope, state);
-    return;
-  }
-  if (isFunctionDeclaration(statement)) {
-    bindFunctionDeclaration(statement, state, lexicalScope);
-    return;
-  }
-  if (isClassDeclaration(statement)) {
-    bindClassDeclaration(statement, state, lexicalScope);
-    return;
-  }
-  if (isInterfaceDeclaration(statement)) {
-    bindInterfaceDeclaration(statement, state, lexicalScope);
-    return;
-  }
-  if (isTypeAliasDeclaration(statement)) {
-    bindTypeAliasDeclaration(statement, state, lexicalScope);
-    return;
-  }
-  if (isWhileStatement(statement) || isDoStatement(statement)) {
-    bindStatement(statement.statement, state, lexicalScope, functionScope);
-    return;
-  }
-  if (isForStatement(statement)) {
-    const loopScope: SymbolTable = new Map();
-    state.locals.set(statement, loopScope);
-    bindForInitializer(statement.initializer, state, loopScope, functionScope);
-    bindStatement(statement.statement, state, loopScope, functionScope);
-    return;
-  }
-  if (isForInStatement(statement) || isForOfStatement(statement)) {
-    const loopScope: SymbolTable = new Map();
-    state.locals.set(statement, loopScope);
-    bindForInitializer(statement.initializer, state, loopScope, functionScope);
-    bindStatement(statement.statement, state, loopScope, functionScope);
-    return;
-  }
-  if (isBlock(statement)) {
-    bindBlock(statement, state, functionScope);
-    return;
-  }
-  if (isIfStatement(statement)) {
-    // Then-branch + optional else-branch get bound in lexical scope.
-    bindStatement(statement.thenStatement, state, lexicalScope, functionScope);
-    if (statement.elseStatement !== undefined) {
-      bindStatement(statement.elseStatement, state, lexicalScope, functionScope);
+
+  // tsgo binder.go:2530-2546 — addDeclarationToSymbol(symbol, node, symbolFlags).
+  #addDeclarationToSymbol(symbol: Symbol, node: Declaration, symbolFlags: SymbolFlags): void {
+    symbol.flags = (symbol.flags ?? SymbolFlags.None) | symbolFlags;
+    node.symbol = symbol;
+    if (!symbol.declarations.includes(node)) {
+      symbol.declarations.push(node);
     }
-    return;
+    if ((symbolFlags & SymbolFlags.Value) !== 0) {
+      setValueDeclaration(symbol, node);
+    }
   }
-  if (isSwitchStatement(statement)) {
-    // The CaseBlock contains the case clauses; each clause has its own
-    // implicit block-scope.
-    const caseBlock = statement.caseBlock;
-    if (caseBlock !== undefined) {
-      const switchScope: SymbolTable = new Map();
-      state.locals.set(caseBlock, switchScope);
-      for (const clause of caseBlock.clauses) {
-        // CaseClause and DefaultClause both have a `statements` array.
-        const clauseStatements = (clause as unknown as { statements?: readonly Statement[] }).statements;
-        if (clauseStatements !== undefined) {
-          bindStatements(clauseStatements, state, switchScope, functionScope);
-        }
+
+  // declareSymbol skeleton (the full declareSymbolEx merge engine is M4b). Adds
+  // `node` to `symbolTable` under `name`, reporting forbidden-redeclaration
+  // diagnostics for `excludes` clashes.
+  #declareSymbol(
+    symbolTable: SymbolTable,
+    name: string,
+    node: Declaration,
+    includes: SymbolFlags,
+    excludes: SymbolFlags,
+  ): Symbol {
+    const existing = symbolTable.get(name);
+    if (existing !== undefined) {
+      if (((existing.flags ?? SymbolFlags.None) & excludes) !== 0) {
+        this.#diagnostics.push({ message: `Duplicate identifier '${name}'.`, node });
+        const symbol = this.#newSymbol(SymbolFlags.None, name);
+        this.#addDeclarationToSymbol(symbol, node, includes);
+        return symbol;
       }
-    }
-    return;
-  }
-  if (isTryStatement(statement)) {
-    bindBlock(statement.tryBlock, state, functionScope);
-    if (statement.catchClause !== undefined) {
-      const catchScope: SymbolTable = new Map();
-      state.locals.set(statement.catchClause, catchScope);
-      const varDecl = statement.catchClause.variableDeclaration;
-      if (varDecl !== undefined) {
-        bindBindingName(
-          varDecl.name, varDecl, catchScope,
-          SymbolFlags.FunctionScopedVariable,
-          SymbolFlags.FunctionScopedVariableExcludes,
-          state,
-        );
-      }
-      bindStatements(statement.catchClause.block.statements, state, catchScope, functionScope);
-    }
-    if (statement.finallyBlock !== undefined) {
-      bindBlock(statement.finallyBlock, state, functionScope);
-    }
-    return;
-  }
-  if (isReturnStatement(statement) || isThrowStatement(statement) || isExpressionStatement(statement)) {
-    // These don't declare new symbols — flow-bind only when checker is wired.
-    return;
-  }
-  if (isLabeledStatement(statement)) {
-    // Labels live in their own namespace (handled by the checker via
-    // labels-on-stack); we still descend into the labeled statement.
-    bindStatement(statement.statement, state, lexicalScope, functionScope);
-    return;
-  }
-  if (isModuleDeclaration(statement)) {
-    bindModuleDeclaration(statement, state, lexicalScope);
-    return;
-  }
-  if (isEnumDeclaration(statement)) {
-    bindEnumDeclaration(statement, state, lexicalScope);
-    return;
-  }
-}
-
-function bindModuleDeclaration(
-  moduleDecl: { name: { text: string }; body?: unknown },
-  state: BinderState,
-  lexicalScope: SymbolTable,
-): void {
-  const isAmbient = (moduleDecl as unknown as { flags?: number }).flags;
-  void isAmbient;
-  declareSymbol(
-    lexicalScope,
-    moduleDecl.name.text,
-    moduleDecl as unknown as Node,
-    SymbolFlags.ValueModule | SymbolFlags.NamespaceModule,
-    SymbolFlags.None,
-    state,
-  );
-  const moduleMembers: SymbolTable = new Map();
-  state.locals.set(moduleDecl as unknown as Node, moduleMembers);
-  // ModuleBlock body — bind its statements in the new scope.
-  const body = (moduleDecl as unknown as { body?: { statements?: readonly Statement[]; kind?: number } }).body;
-  if (body !== undefined && body.statements !== undefined) {
-    bindStatements(body.statements, state, moduleMembers, moduleMembers);
-  }
-}
-
-function bindEnumDeclaration(
-  enumDecl: Node,
-  state: BinderState,
-  lexicalScope: SymbolTable,
-): void {
-  const name = (enumDecl as unknown as { name?: { text?: string } }).name;
-  if (name?.text === undefined) return;
-  declareSymbol(
-    lexicalScope,
-    name.text,
-    enumDecl,
-    SymbolFlags.RegularEnum,
-    SymbolFlags.RegularEnumExcludes,
-    state,
-  );
-  const enumMembers: SymbolTable = new Map();
-  state.locals.set(enumDecl, enumMembers);
-  const members = (enumDecl as unknown as { members?: readonly Node[] }).members ?? [];
-  for (const member of members) {
-    const memberName = (member as unknown as { name?: { text?: string } }).name?.text;
-    if (memberName === undefined) continue;
-    declareSymbol(
-      enumMembers,
-      memberName,
-      member,
-      SymbolFlags.EnumMember,
-      SymbolFlags.EnumMemberExcludes,
-      state,
-    );
-  }
-}
-
-function bindImportClause(importClause: ImportClause | undefined, lexicalScope: SymbolTable, state: BinderState): void {
-  if (importClause === undefined) {
-    return;
-  }
-  if (importClause.name !== undefined) {
-    declareSymbol(lexicalScope, importClause.name.text, importClause, SymbolFlags.Alias, SymbolFlags.AliasExcludes, state);
-  }
-  const namedBindings = importClause.namedBindings;
-  if (namedBindings === undefined) {
-    return;
-  }
-  if (isNamespaceImport(namedBindings)) {
-    declareSymbol(lexicalScope, namedBindings.name.text, namedBindings, SymbolFlags.Alias, SymbolFlags.AliasExcludes, state);
-    return;
-  }
-  if (isNamedImports(namedBindings)) {
-    for (const specifier of namedBindings.elements) {
-      bindImportSpecifier(specifier, lexicalScope, state);
-    }
-  }
-}
-
-function bindImportSpecifier(specifier: ImportSpecifier, lexicalScope: SymbolTable, state: BinderState): void {
-  declareSymbol(lexicalScope, specifier.name.text, specifier, SymbolFlags.Alias, SymbolFlags.AliasExcludes, state);
-}
-
-function bindBlock(block: Block, state: BinderState, functionScope: SymbolTable): void {
-  const blockScope: SymbolTable = new Map();
-  state.locals.set(block, blockScope);
-  bindStatements(block.statements, state, blockScope, functionScope);
-}
-
-function bindFunctionDeclaration(functionDeclaration: FunctionDeclaration, state: BinderState, lexicalScope: SymbolTable): void {
-  if (functionDeclaration.name !== undefined) {
-    declareSymbol(
-      lexicalScope,
-      functionDeclaration.name.text,
-      functionDeclaration,
-      SymbolFlags.Function,
-      SymbolFlags.FunctionExcludes,
-      state,
-    );
-  }
-
-  const functionLocals: SymbolTable = new Map();
-  state.locals.set(functionDeclaration, functionLocals);
-  for (const parameter of functionDeclaration.parameters) {
-    bindParameter(parameter, functionLocals, state);
-  }
-  if (functionDeclaration.body !== undefined) {
-    bindBlock(functionDeclaration.body, state, functionLocals);
-  }
-}
-
-function bindClassDeclaration(classDeclaration: ClassDeclaration, state: BinderState, lexicalScope: SymbolTable): void {
-  if (classDeclaration.name !== undefined) {
-    declareSymbol(
-      lexicalScope,
-      classDeclaration.name.text,
-      classDeclaration,
-      SymbolFlags.Class,
-      SymbolFlags.ClassExcludes,
-      state,
-    );
-  }
-  const classMembers: SymbolTable = new Map();
-  state.locals.set(classDeclaration, classMembers);
-  // Bind each member into the class's member table.
-  for (const member of classDeclaration.members) {
-    bindClassMember(member as Node, classMembers, state);
-  }
-}
-
-function bindClassMember(member: Node, classMembers: SymbolTable, state: BinderState): void {
-  const name = (member as unknown as { name?: { text?: string } }).name;
-  if (name?.text === undefined) return;
-  const kind = (member as { kind?: number }).kind;
-  // Method / GetAccessor / SetAccessor / PropertyDeclaration / Constructor
-  let flags: SymbolFlags = SymbolFlags.None;
-  let excludes: SymbolFlags = SymbolFlags.None;
-  switch (kind) {
-    case 174 /* MethodDeclaration */:
-      flags = SymbolFlags.Method;
-      excludes = SymbolFlags.MethodExcludes;
-      break;
-    case 177 /* GetAccessor */:
-      flags = SymbolFlags.GetAccessor;
-      excludes = SymbolFlags.GetAccessorExcludes;
-      break;
-    case 178 /* SetAccessor */:
-      flags = SymbolFlags.SetAccessor;
-      excludes = SymbolFlags.SetAccessorExcludes;
-      break;
-    case 171 /* PropertyDeclaration */:
-      flags = SymbolFlags.Property;
-      excludes = SymbolFlags.PropertyExcludes;
-      break;
-    default:
-      return;
-  }
-  declareSymbol(classMembers, name.text, member, flags, excludes, state);
-}
-
-function bindInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, state: BinderState, lexicalScope: SymbolTable): void {
-  declareSymbol(
-    lexicalScope,
-    interfaceDeclaration.name.text,
-    interfaceDeclaration,
-    SymbolFlags.Interface,
-    SymbolFlags.InterfaceExcludes,
-    state,
-  );
-  const interfaceMembers: SymbolTable = new Map();
-  state.locals.set(interfaceDeclaration, interfaceMembers);
-  // Bind interface members (PropertySignature/MethodSignature/etc).
-  for (const member of interfaceDeclaration.members) {
-    bindInterfaceMember(member as Node, interfaceMembers, state);
-  }
-}
-
-function bindInterfaceMember(member: Node, table: SymbolTable, state: BinderState): void {
-  const name = (member as unknown as { name?: { text?: string } }).name;
-  if (name?.text === undefined) return;
-  const kind = (member as { kind?: number }).kind;
-  let flags: SymbolFlags = SymbolFlags.None;
-  let excludes: SymbolFlags = SymbolFlags.None;
-  switch (kind) {
-    case 170 /* PropertySignature */:
-      flags = SymbolFlags.Property;
-      excludes = SymbolFlags.PropertyExcludes;
-      break;
-    case 173 /* MethodSignature */:
-      flags = SymbolFlags.Method;
-      excludes = SymbolFlags.MethodExcludes;
-      break;
-    default:
-      return;
-  }
-  declareSymbol(table, name.text, member, flags, excludes, state);
-}
-
-function bindTypeAliasDeclaration(typeAliasDeclaration: TypeAliasDeclaration, state: BinderState, lexicalScope: SymbolTable): void {
-  declareSymbol(
-    lexicalScope,
-    typeAliasDeclaration.name.text,
-    typeAliasDeclaration,
-    SymbolFlags.TypeAlias,
-    SymbolFlags.TypeAliasExcludes,
-    state,
-  );
-}
-
-function bindParameter(parameter: ParameterDeclaration, functionLocals: SymbolTable, state: BinderState): void {
-  bindBindingName(parameter.name, parameter, functionLocals, SymbolFlags.FunctionScopedVariable, SymbolFlags.ParameterExcludes, state);
-}
-
-function bindVariableDeclarationList(declarationList: VariableDeclarationList, state: BinderState, lexicalScope: SymbolTable, functionScope: SymbolTable): void {
-  const blockScoped = (declarationList.flags & NodeFlags.BlockScoped) !== 0;
-  const targetScope = blockScoped ? lexicalScope : functionScope;
-  const flags = blockScoped ? SymbolFlags.BlockScopedVariable : SymbolFlags.FunctionScopedVariable;
-  const excludes = blockScoped ? SymbolFlags.BlockScopedVariableExcludes : SymbolFlags.FunctionScopedVariableExcludes;
-  for (const declaration of declarationList.declarations) {
-    bindVariableDeclaration(declaration, targetScope, flags, excludes, state);
-  }
-}
-
-function bindForInitializer(initializer: ForInitializer | undefined, state: BinderState, lexicalScope: SymbolTable, functionScope: SymbolTable): void {
-  if (initializer !== undefined && "declarations" in initializer) {
-    bindVariableDeclarationList(initializer, state, lexicalScope, functionScope);
-  }
-}
-
-function bindVariableDeclaration(declaration: VariableDeclaration, targetScope: SymbolTable, flags: SymbolFlags, excludes: SymbolFlags, state: BinderState): void {
-  bindBindingName(declaration.name, declaration, targetScope, flags, excludes, state);
-}
-
-function bindBindingName(name: BindingName, declaration: Node, targetScope: SymbolTable, flags: SymbolFlags, excludes: SymbolFlags, state: BinderState): void {
-  if (isIdentifier(name)) {
-    declareSymbol(targetScope, name.text, declaration, flags, excludes, state);
-    return;
-  }
-  if (isObjectBindingPattern(name) || isArrayBindingPattern(name)) {
-    for (const element of name.elements) {
-      bindBindingElement(element, targetScope, flags, excludes, state);
-    }
-    return;
-  }
-}
-
-function bindBindingElement(element: BindingElement, targetScope: SymbolTable, flags: SymbolFlags, excludes: SymbolFlags, state: BinderState): void {
-  if (element.name !== undefined) {
-    bindBindingName(element.name, element, targetScope, flags, excludes, state);
-  }
-}
-
-function declareSymbol(
-  symbols: SymbolTable,
-  name: string,
-  declaration: Node,
-  includes: SymbolFlags,
-  excludes: SymbolFlags,
-  state: BinderState,
-): BoundSymbol {
-  const existing = symbols.get(name);
-  if (existing !== undefined) {
-    if ((existing.flags & excludes) !== 0) {
-      state.diagnostics.push({
-        message: `Duplicate identifier '${name}'.`,
-        node: declaration,
-      });
-    } else {
-      existing.flags |= includes;
-      existing.declarations.push(declaration);
-      if (existing.valueDeclaration === undefined && isValueDeclaration(includes)) {
-        existing.valueDeclaration = declaration;
-      }
-      state.symbols.set(declaration, existing);
+      this.#addDeclarationToSymbol(existing, node, includes);
       return existing;
     }
+    const symbol = this.#newSymbol(SymbolFlags.None, name);
+    symbolTable.set(name, symbol);
+    this.#addDeclarationToSymbol(symbol, node, includes);
+    return symbol;
   }
 
-  const symbol: BoundSymbol = {
-    name,
-    flags: includes,
-    declarations: [declaration],
-  };
-  if (isValueDeclaration(includes)) {
-    symbol.valueDeclaration = declaration;
+  bindStatements(statements: readonly Statement[], parent: Node, lexicalScope: SymbolTable, functionScope: SymbolTable): void {
+    for (const statement of statements) {
+      this.bindStatement(statement, parent, lexicalScope, functionScope);
+    }
   }
-  symbols.set(name, symbol);
-  state.symbols.set(declaration, symbol);
-  return symbol;
+
+  bindStatement(statement: Statement, parent: Node, lexicalScope: SymbolTable, functionScope: SymbolTable): void {
+    statement.parent = parent;
+    if (isVariableStatement(statement)) {
+      this.bindVariableDeclarationList(statement.declarationList, statement, lexicalScope, functionScope);
+      return;
+    }
+    if (isImportDeclaration(statement)) {
+      this.bindImportClause(statement.importClause, statement, lexicalScope);
+      return;
+    }
+    if (isFunctionDeclaration(statement)) {
+      this.bindFunctionDeclaration(statement, lexicalScope);
+      return;
+    }
+    if (isClassDeclaration(statement)) {
+      this.bindClassDeclaration(statement, lexicalScope);
+      return;
+    }
+    if (isInterfaceDeclaration(statement)) {
+      this.bindInterfaceDeclaration(statement, lexicalScope);
+      return;
+    }
+    if (isTypeAliasDeclaration(statement)) {
+      this.bindTypeAliasDeclaration(statement, lexicalScope);
+      return;
+    }
+    if (isWhileStatement(statement) || isDoStatement(statement)) {
+      this.bindStatement(statement.statement, statement, lexicalScope, functionScope);
+      return;
+    }
+    if (isForStatement(statement)) {
+      const loopScope: SymbolTable = new Map<string, Symbol>();
+      statement.locals = loopScope;
+      this.bindForInitializer(statement.initializer, statement, loopScope, functionScope);
+      this.bindStatement(statement.statement, statement, loopScope, functionScope);
+      return;
+    }
+    if (isForInStatement(statement) || isForOfStatement(statement)) {
+      const loopScope: SymbolTable = new Map<string, Symbol>();
+      statement.locals = loopScope;
+      this.bindForInitializer(statement.initializer, statement, loopScope, functionScope);
+      this.bindStatement(statement.statement, statement, loopScope, functionScope);
+      return;
+    }
+    if (isBlock(statement)) {
+      this.bindBlock(statement, statement.parent, functionScope);
+      return;
+    }
+    if (isIfStatement(statement)) {
+      // Then-branch + optional else-branch get bound in lexical scope.
+      this.bindStatement(statement.thenStatement, statement, lexicalScope, functionScope);
+      if (statement.elseStatement !== undefined) {
+        this.bindStatement(statement.elseStatement, statement, lexicalScope, functionScope);
+      }
+      return;
+    }
+    if (isSwitchStatement(statement)) {
+      // The CaseBlock contains the case clauses; each clause has its own
+      // implicit block-scope.
+      const caseBlock = statement.caseBlock;
+      caseBlock.parent = statement;
+      const switchScope: SymbolTable = new Map<string, Symbol>();
+      caseBlock.locals = switchScope;
+      for (const clause of caseBlock.clauses) {
+        clause.parent = caseBlock;
+        // CaseClause and DefaultClause both have a `statements` array.
+        this.bindStatements(clause.statements, clause, switchScope, functionScope);
+      }
+      return;
+    }
+    if (isTryStatement(statement)) {
+      this.bindBlock(statement.tryBlock, statement, functionScope);
+      if (statement.catchClause !== undefined) {
+        const catchClause = statement.catchClause;
+        catchClause.parent = statement;
+        const catchScope: SymbolTable = new Map<string, Symbol>();
+        catchClause.locals = catchScope;
+        const varDecl = catchClause.variableDeclaration;
+        if (varDecl !== undefined) {
+          varDecl.parent = catchClause;
+          this.bindBindingName(
+            varDecl.name, varDecl, catchScope,
+            SymbolFlags.FunctionScopedVariable,
+            SymbolFlags.FunctionScopedVariableExcludes,
+          );
+        }
+        this.bindBlock(catchClause.block, catchClause, functionScope);
+      }
+      if (statement.finallyBlock !== undefined) {
+        this.bindBlock(statement.finallyBlock, statement, functionScope);
+      }
+      return;
+    }
+    if (isReturnStatement(statement) || isThrowStatement(statement) || isExpressionStatement(statement)) {
+      // These don't declare new symbols — flow-bind only when checker is wired.
+      return;
+    }
+    if (isLabeledStatement(statement)) {
+      // Labels live in their own namespace (handled by the checker via
+      // labels-on-stack); we still descend into the labeled statement.
+      this.bindStatement(statement.statement, statement, lexicalScope, functionScope);
+      return;
+    }
+    if (isModuleDeclaration(statement)) {
+      this.bindModuleDeclaration(statement, lexicalScope);
+      return;
+    }
+    if (isEnumDeclaration(statement)) {
+      this.bindEnumDeclaration(statement, lexicalScope);
+      return;
+    }
+  }
+
+  bindModuleDeclaration(moduleDecl: ModuleDeclaration, lexicalScope: SymbolTable): void {
+    if (isIdentifier(moduleDecl.name) || isStringLiteral(moduleDecl.name)) {
+      this.#declareSymbol(
+        lexicalScope,
+        moduleDecl.name.text,
+        moduleDecl,
+        SymbolFlags.ValueModule | SymbolFlags.NamespaceModule,
+        SymbolFlags.None,
+      );
+    }
+    const moduleMembers: SymbolTable = new Map<string, Symbol>();
+    moduleDecl.locals = moduleMembers;
+    // ModuleBlock body — bind its statements in the new scope.
+    const body = moduleDecl.body;
+    body.parent = moduleDecl;
+    if (isModuleBlock(body)) {
+      this.bindStatements(body.statements, body, moduleMembers, moduleMembers);
+    } else {
+      // Nested `namespace A.B` — body is itself a ModuleDeclaration.
+      this.bindModuleDeclaration(body, moduleMembers);
+    }
+  }
+
+  bindEnumDeclaration(enumDecl: EnumDeclaration, lexicalScope: SymbolTable): void {
+    this.#declareSymbol(
+      lexicalScope,
+      enumDecl.name.text,
+      enumDecl,
+      SymbolFlags.RegularEnum,
+      SymbolFlags.RegularEnumExcludes,
+    );
+    // tsgo declareSymbolAndAddToSymbolTable (binder.go:443-444): an enum is an
+    // IsContainer (NOT HasLocals); its members live on the enum symbol's
+    // `exports` table, not on `node.locals`.
+    const symbol = enumDecl.symbol;
+    const enumMembers: SymbolTable = symbol?.exports ?? new Map<string, Symbol>();
+    if (symbol !== undefined) {
+      symbol.exports = enumMembers;
+    }
+    for (const member of enumDecl.members) {
+      member.parent = enumDecl;
+      const memberName = propertyNameText(member.name);
+      if (memberName === undefined) continue;
+      this.#declareSymbol(
+        enumMembers,
+        memberName,
+        member,
+        SymbolFlags.EnumMember,
+        SymbolFlags.EnumMemberExcludes,
+      );
+    }
+  }
+
+  bindImportClause(importClause: ImportClause | undefined, parent: Node, lexicalScope: SymbolTable): void {
+    if (importClause === undefined) {
+      return;
+    }
+    importClause.parent = parent;
+    if (importClause.name !== undefined) {
+      importClause.name.parent = importClause;
+      this.#declareSymbol(lexicalScope, importClause.name.text, importClause, SymbolFlags.Alias, SymbolFlags.AliasExcludes);
+    }
+    const namedBindings = importClause.namedBindings;
+    if (namedBindings === undefined) {
+      return;
+    }
+    namedBindings.parent = importClause;
+    if (isNamespaceImport(namedBindings)) {
+      this.#declareSymbol(lexicalScope, namedBindings.name.text, namedBindings, SymbolFlags.Alias, SymbolFlags.AliasExcludes);
+      return;
+    }
+    if (isNamedImports(namedBindings)) {
+      for (const specifier of namedBindings.elements) {
+        specifier.parent = namedBindings;
+        this.bindImportSpecifier(specifier, lexicalScope);
+      }
+    }
+  }
+
+  bindImportSpecifier(specifier: ImportSpecifier, lexicalScope: SymbolTable): void {
+    if (isIdentifier(specifier.name)) {
+      this.#declareSymbol(lexicalScope, specifier.name.text, specifier, SymbolFlags.Alias, SymbolFlags.AliasExcludes);
+    }
+  }
+
+  bindBlock(block: Block, parent: Node, functionScope: SymbolTable): void {
+    block.parent = parent;
+    const blockScope: SymbolTable = new Map<string, Symbol>();
+    block.locals = blockScope;
+    this.bindStatements(block.statements, block, blockScope, functionScope);
+  }
+
+  bindFunctionDeclaration(functionDeclaration: FunctionDeclaration, lexicalScope: SymbolTable): void {
+    if (functionDeclaration.name !== undefined) {
+      this.#declareSymbol(
+        lexicalScope,
+        functionDeclaration.name.text,
+        functionDeclaration,
+        SymbolFlags.Function,
+        SymbolFlags.FunctionExcludes,
+      );
+    }
+
+    const functionLocals: SymbolTable = new Map<string, Symbol>();
+    functionDeclaration.locals = functionLocals;
+    for (const parameter of functionDeclaration.parameters) {
+      parameter.parent = functionDeclaration;
+      this.bindParameter(parameter, functionLocals);
+    }
+    if (functionDeclaration.body !== undefined) {
+      this.bindBlock(functionDeclaration.body, functionDeclaration, functionLocals);
+    }
+  }
+
+  bindClassDeclaration(classDeclaration: ClassDeclaration, lexicalScope: SymbolTable): void {
+    if (classDeclaration.name !== undefined) {
+      this.#declareSymbol(
+        lexicalScope,
+        classDeclaration.name.text,
+        classDeclaration,
+        SymbolFlags.Class,
+        SymbolFlags.ClassExcludes,
+      );
+    }
+    // Class members live on the class symbol's member table (the full
+    // static-vs-instance routing — members vs exports — is M4b; M4a writes
+    // the in-place mechanism). `locals` carries the class type-parameter scope.
+    const classMembers: SymbolTable = new Map<string, Symbol>();
+    classDeclaration.locals = classMembers;
+    const symbol = classDeclaration.symbol;
+    const memberTable: SymbolTable = symbol?.members ?? new Map<string, Symbol>();
+    if (symbol !== undefined) {
+      symbol.members = memberTable;
+    }
+    for (const member of classDeclaration.members) {
+      member.parent = classDeclaration;
+      this.bindClassMember(member, memberTable);
+    }
+  }
+
+  bindClassMember(member: ClassElement, memberTable: SymbolTable): void {
+    if (isMethodDeclaration(member)) {
+      this.bindNamedMember(member, member.name, memberTable, SymbolFlags.Method, SymbolFlags.MethodExcludes);
+      return;
+    }
+    if (isGetAccessorDeclaration(member)) {
+      this.bindNamedMember(member, member.name, memberTable, SymbolFlags.GetAccessor, SymbolFlags.GetAccessorExcludes);
+      return;
+    }
+    if (isSetAccessorDeclaration(member)) {
+      this.bindNamedMember(member, member.name, memberTable, SymbolFlags.SetAccessor, SymbolFlags.SetAccessorExcludes);
+      return;
+    }
+    if (isPropertyDeclaration(member)) {
+      this.bindNamedMember(member, member.name, memberTable, SymbolFlags.Property, SymbolFlags.PropertyExcludes);
+      return;
+    }
+  }
+
+  bindInterfaceDeclaration(interfaceDeclaration: InterfaceDeclaration, lexicalScope: SymbolTable): void {
+    this.#declareSymbol(
+      lexicalScope,
+      interfaceDeclaration.name.text,
+      interfaceDeclaration,
+      SymbolFlags.Interface,
+      SymbolFlags.InterfaceExcludes,
+    );
+    const symbol = interfaceDeclaration.symbol;
+    const memberTable: SymbolTable = symbol?.members ?? new Map<string, Symbol>();
+    if (symbol !== undefined) {
+      symbol.members = memberTable;
+    }
+    for (const member of interfaceDeclaration.members) {
+      member.parent = interfaceDeclaration;
+      this.bindInterfaceMember(member, memberTable);
+    }
+  }
+
+  bindInterfaceMember(member: TypeElement, memberTable: SymbolTable): void {
+    if (isPropertySignatureDeclaration(member)) {
+      this.bindNamedMember(member, member.name, memberTable, SymbolFlags.Property, SymbolFlags.PropertyExcludes);
+      return;
+    }
+    if (isMethodSignatureDeclaration(member)) {
+      this.bindNamedMember(member, member.name, memberTable, SymbolFlags.Method, SymbolFlags.MethodExcludes);
+      return;
+    }
+  }
+
+  bindNamedMember(member: Declaration, name: PropertyName, memberTable: SymbolTable, flags: SymbolFlags, excludes: SymbolFlags): void {
+    const text = propertyNameText(name);
+    if (text === undefined) return;
+    this.#declareSymbol(memberTable, text, member, flags, excludes);
+  }
+
+  bindTypeAliasDeclaration(typeAliasDeclaration: TypeAliasDeclaration, lexicalScope: SymbolTable): void {
+    this.#declareSymbol(
+      lexicalScope,
+      typeAliasDeclaration.name.text,
+      typeAliasDeclaration,
+      SymbolFlags.TypeAlias,
+      SymbolFlags.TypeAliasExcludes,
+    );
+  }
+
+  bindParameter(parameter: ParameterDeclaration, functionLocals: SymbolTable): void {
+    this.bindBindingName(parameter.name, parameter, functionLocals, SymbolFlags.FunctionScopedVariable, SymbolFlags.ParameterExcludes);
+  }
+
+  bindVariableDeclarationList(declarationList: VariableDeclarationList, parent: Node, lexicalScope: SymbolTable, functionScope: SymbolTable): void {
+    declarationList.parent = parent;
+    const blockScoped = (declarationList.flags & NodeFlags.BlockScoped) !== 0;
+    const targetScope = blockScoped ? lexicalScope : functionScope;
+    const flags = blockScoped ? SymbolFlags.BlockScopedVariable : SymbolFlags.FunctionScopedVariable;
+    const excludes = blockScoped ? SymbolFlags.BlockScopedVariableExcludes : SymbolFlags.FunctionScopedVariableExcludes;
+    for (const declaration of declarationList.declarations) {
+      declaration.parent = declarationList;
+      this.bindVariableDeclaration(declaration, targetScope, flags, excludes);
+    }
+  }
+
+  bindForInitializer(initializer: ForInitializer | undefined, parent: Node, lexicalScope: SymbolTable, functionScope: SymbolTable): void {
+    if (initializer !== undefined && "declarations" in initializer) {
+      this.bindVariableDeclarationList(initializer, parent, lexicalScope, functionScope);
+    }
+  }
+
+  bindVariableDeclaration(declaration: VariableDeclaration, targetScope: SymbolTable, flags: SymbolFlags, excludes: SymbolFlags): void {
+    this.bindBindingName(declaration.name, declaration, targetScope, flags, excludes);
+  }
+
+  bindBindingName(name: BindingName, declaration: Declaration, targetScope: SymbolTable, flags: SymbolFlags, excludes: SymbolFlags): void {
+    name.parent = declaration;
+    if (isIdentifier(name)) {
+      this.#declareSymbol(targetScope, name.text, declaration, flags, excludes);
+      return;
+    }
+    if (isObjectBindingPattern(name) || isArrayBindingPattern(name)) {
+      for (const element of name.elements) {
+        element.parent = name;
+        this.bindBindingElement(element, targetScope, flags, excludes);
+      }
+      return;
+    }
+  }
+
+  bindBindingElement(element: BindingElement, targetScope: SymbolTable, flags: SymbolFlags, excludes: SymbolFlags): void {
+    if (element.name !== undefined) {
+      this.bindBindingName(element.name, element, targetScope, flags, excludes);
+    }
+  }
 }
 
-function isValueDeclaration(flags: SymbolFlags): boolean {
-  return (flags & SymbolFlags.Value) !== 0;
+// tsgo binder.go:2548-2557 — SetValueDeclaration (pure: writes the symbol's
+// value declaration slot). Non-assignment declarations take precedence over
+// assignment declarations; the M4a substrate only needs the first-writer rule.
+function setValueDeclaration(symbol: Symbol, node: Declaration): void {
+  if (symbol.valueDeclaration === undefined) {
+    symbol.valueDeclaration = node;
+  }
+}
+
+// Extracts the text of a member/property name when it is a textual name; a
+// ComputedPropertyName has no static text and is skipped (full computed-name
+// handling is M4b).
+function propertyNameText(name: PropertyName): string | undefined {
+  if (
+    isIdentifier(name)
+    || isStringLiteral(name)
+    || isNumericLiteral(name)
+    || isPrivateIdentifier(name)
+    || isNoSubstitutionTemplateLiteral(name)
+    || isBigIntLiteral(name)
+  ) {
+    return name.text;
+  }
+  return undefined;
 }
 
 export function assertBoundSourceFile(node: Node): asserts node is SourceFile {
