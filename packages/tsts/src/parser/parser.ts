@@ -180,6 +180,7 @@ import {
   type VariableDeclaration,
 } from "../ast/index.js";
 import { createLiveScanner, type LiveScanner, type ScannerState, type ScannedToken } from "../scanner/index.js";
+import { tokenIsIdentifierOrKeyword } from "../scanner/utilities.js";
 import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
 import { format } from "../diagnostics/diagnostics.js";
 import type { Diagnostic, DiagnosticMessage } from "../diagnostics/types.js";
@@ -188,12 +189,24 @@ export interface ParseSourceFileOptions {
   readonly fileName?: string;
 }
 
+// M3 3b-list-model: parser-internal token snapshot. tsgo carries the
+// preceding-line-break status as a SEPARATE p.scanner.HasPrecedingLineBreak()
+// method (parser.go:410-412), NOT on a token struct. The closest faithful tsts
+// analogue — without polluting the shared scanner ScannedToken (also consumed by
+// scanAll/tests) — is a parser-local snapshot that extends ScannedToken with the
+// flag, captured at the moment the current token was scanned. The reader
+// #hasPrecedingLineBreak() reads THIS snapshot (not the live scanner), because
+// #peekKind/#lookAhead move the live scanner independently of the cached #token.
+interface TokenSnapshot extends ScannedToken {
+  readonly hasPrecedingLineBreak: boolean;
+}
+
 // wave 4b-swap: a speculative parse-state snapshot (tsgo ParserState,
 // parser.go:349-372). Bundles the live-scanner state with the parser cursor
 // (#token), #prevTokenEnd, and #contextFlags so #rewind can restore all of them.
 interface ParserMark {
   readonly scannerState: ScannerState;
-  readonly token: ScannedToken;
+  readonly token: TokenSnapshot;
   readonly prevTokenEnd: number;
   readonly contextFlags: NodeFlags;
   // codex Stage-3a: snapshot of #diagnostics.length so #rewind can discard any
@@ -255,6 +268,114 @@ const binaryPrecedence = new Map<Kind, number>([
   [Kind.BarBarEqualsToken, 3],
   [Kind.QuestionQuestionEqualsToken, 3],
 ]);
+
+// M3 3b-list-model: faithful 1:1 port of tsgo ast.OperatorPrecedence ordinals
+// (precedence.go:9-186, the `iota` scale). These are the numeric ordinals matching
+// tsgo's iota — NOT the denser binaryPrecedence Map scale below. Named consts make
+// getBinaryOperatorPrecedence read faithfully against precedence.go. NOTE tsgo
+// defines OperatorPrecedenceCoalesce = OperatorPrecedenceLogicalOR (precedence.go:183),
+// so both `??` and `||` return 5 — faithful.
+const OperatorPrecedenceLogicalOR = 5;
+const OperatorPrecedenceCoalesce = OperatorPrecedenceLogicalOR;
+const OperatorPrecedenceLogicalAND = 6;
+const OperatorPrecedenceBitwiseOR = 7;
+const OperatorPrecedenceBitwiseXOR = 8;
+const OperatorPrecedenceBitwiseAND = 9;
+const OperatorPrecedenceEquality = 10;
+const OperatorPrecedenceRelational = 11;
+const OperatorPrecedenceShift = 12;
+const OperatorPrecedenceAdditive = 13;
+const OperatorPrecedenceMultiplicative = 14;
+const OperatorPrecedenceExponentiation = 15;
+const OperatorPrecedenceInvalid = -1;
+
+// M3 3b-list-model: PURE, ADDITIVE faithful 1:1 port of tsgo
+// ast.GetBinaryOperatorPrecedence (precedence.go:336-367). Used ONLY as a
+// predicate source — consumed by #isBinaryOperator (parser.go:6275-6280) /
+// #isStartOfExpression this wave. This is a SEPARATE function from the
+// binaryPrecedence Map above (which drives the binary LOOP on a DIFFERENT, denser
+// scale and is NOT touched per codex-204517). KindCommaToken is intentionally not
+// a case — it falls through to OperatorPrecedenceInvalid (-1), matching tsgo.
+function getBinaryOperatorPrecedence(kind: Kind): number {
+  switch (kind) {
+    case Kind.QuestionQuestionToken:
+      return OperatorPrecedenceCoalesce;
+    case Kind.BarBarToken:
+      return OperatorPrecedenceLogicalOR;
+    case Kind.AmpersandAmpersandToken:
+      return OperatorPrecedenceLogicalAND;
+    case Kind.BarToken:
+      return OperatorPrecedenceBitwiseOR;
+    case Kind.CaretToken:
+      return OperatorPrecedenceBitwiseXOR;
+    case Kind.AmpersandToken:
+      return OperatorPrecedenceBitwiseAND;
+    case Kind.EqualsEqualsToken:
+    case Kind.ExclamationEqualsToken:
+    case Kind.EqualsEqualsEqualsToken:
+    case Kind.ExclamationEqualsEqualsToken:
+      return OperatorPrecedenceEquality;
+    case Kind.LessThanToken:
+    case Kind.GreaterThanToken:
+    case Kind.LessThanEqualsToken:
+    case Kind.GreaterThanEqualsToken:
+    case Kind.InstanceOfKeyword:
+    case Kind.InKeyword:
+    case Kind.AsKeyword:
+    case Kind.SatisfiesKeyword:
+      return OperatorPrecedenceRelational;
+    case Kind.LessThanLessThanToken:
+    case Kind.GreaterThanGreaterThanToken:
+    case Kind.GreaterThanGreaterThanGreaterThanToken:
+      return OperatorPrecedenceShift;
+    case Kind.PlusToken:
+    case Kind.MinusToken:
+      return OperatorPrecedenceAdditive;
+    case Kind.AsteriskToken:
+    case Kind.SlashToken:
+    case Kind.PercentToken:
+      return OperatorPrecedenceMultiplicative;
+    case Kind.AsteriskAsteriskToken:
+      return OperatorPrecedenceExponentiation;
+    default:
+      return OperatorPrecedenceInvalid;
+  }
+}
+
+// M3 3b-list-model: faithful 1:1 port of tsgo's ParsingContext iota
+// (parser.go:19-47). NO TS enum (per no-enums policy) — each context is a NUMERIC
+// ordinal const so the `1 << kind` bitset matches tsgo exactly. The full 26-wide
+// model is ported (JSX 13/14 and JSDoc 17/25 included for a faithful bitset and
+// isInSomeParsingContext loop) even though tsts has no JSX/JSDoc parser: those arms
+// are present-but-UNREACHABLE (no loop ever runs with those kinds).
+type ParsingContext = number;
+const PCSourceElements: ParsingContext = 0;
+const PCBlockStatements: ParsingContext = 1;
+const PCSwitchClauses: ParsingContext = 2;
+const PCSwitchClauseStatements: ParsingContext = 3;
+const PCTypeMembers: ParsingContext = 4;
+const PCClassMembers: ParsingContext = 5;
+const PCEnumMembers: ParsingContext = 6;
+const PCHeritageClauseElement: ParsingContext = 7;
+const PCVariableDeclarations: ParsingContext = 8;
+const PCObjectBindingElements: ParsingContext = 9;
+const PCArrayBindingElements: ParsingContext = 10;
+const PCArgumentExpressions: ParsingContext = 11;
+const PCObjectLiteralMembers: ParsingContext = 12;
+const PCJsxAttributes: ParsingContext = 13;
+const PCJsxChildren: ParsingContext = 14;
+const PCArrayLiteralMembers: ParsingContext = 15;
+const PCParameters: ParsingContext = 16;
+const PCJSDocParameters: ParsingContext = 17;
+const PCRestProperties: ParsingContext = 18;
+const PCTypeParameters: ParsingContext = 19;
+const PCTypeArguments: ParsingContext = 20;
+const PCTupleElementTypes: ParsingContext = 21;
+const PCHeritageClauses: ParsingContext = 22;
+const PCImportOrExportSpecifiers: ParsingContext = 23;
+const PCImportAttributes: ParsingContext = 24;
+const PCJSDocComment: ParsingContext = 25;
+const PCCount = 26;
 
 const modifierKinds = new Set<Kind>([
   Kind.AbstractKeyword,
@@ -390,7 +511,7 @@ export class Parser {
   // #prevTokenEnd is the end of the JUST-consumed token (seeded 0), the source
   // of #nodeEnd (token-tight, NOT trivia-inclusive — codex-048 (i)).
   readonly #scanner: LiveScanner;
-  #token: ScannedToken;
+  #token: TokenSnapshot;
   #prevTokenEnd = 0;
   // codex-054 M3 Stage-2: parser parse-state mirroring tsgo's `p.contextFlags`
   // (parser.go contextFlags field). This is a NodeFlags bitset of the parsing
@@ -412,6 +533,12 @@ export class Parser {
   // truncate) — same controlled mutable-compiler-state category as #token /
   // #prevTokenEnd / #contextFlags (parse-state, NOT a binder slot).
   readonly #diagnostics: Diagnostic[] = [];
+  // M3 3b-list-model: the bitset of currently-active parsing contexts (tsgo
+  // Parser.parsingContexts, parser.go:80). One new mutable parse-state field, same
+  // controlled category as #token/#contextFlags. parseList/parseDelimitedList/
+  // parseBracketedList set `1 << kind` while iterating and restore on exit;
+  // isInSomeParsingContext reads it to decide whether to abort a recovering list.
+  #parsingContexts: number = 0;
 
   constructor(sourceText: string, options: ParseSourceFileOptions = {}) {
     this.#sourceText = sourceText;
@@ -425,7 +552,7 @@ export class Parser {
     // Seed #token with the EOF placeholder so #nextToken's `this.#token.end`
     // read is well-typed; #nextToken immediately overwrites it with the first
     // real token (and #prevTokenEnd stays 0 because the placeholder end is 0).
-    this.#token = { kind: Kind.EndOfFile, pos: 0, end: 0, text: "" };
+    this.#token = { kind: Kind.EndOfFile, pos: 0, end: 0, text: "", hasPrecedingLineBreak: false };
     this.#nextToken();
   }
 
@@ -444,6 +571,10 @@ export class Parser {
       pos: this.#scanner.getTokenStart(),
       end: this.#scanner.getTokenEnd(),
       text: this.#scanner.getTokenText(),
+      // M3 3b-list-model: capture the scanner's preceding-line-break bit at the
+      // moment this token is scanned (tsgo p.scanner.HasPrecedingLineBreak(),
+      // parser.go:410). The snapshot reader #hasPrecedingLineBreak() reads this.
+      hasPrecedingLineBreak: this.#scanner.hasPrecedingLineBreak(),
     };
   }
 
@@ -457,6 +588,10 @@ export class Parser {
       pos: this.#scanner.getTokenStart(),
       end: this.#scanner.getTokenEnd(),
       text: this.#scanner.getTokenText(),
+      // M3 3b-list-model: reScan* keeps tokenStart, so the preceding-trivia
+      // line-break status of the current token is unchanged; read it from the
+      // scanner (it reflects the same token start).
+      hasPrecedingLineBreak: this.#scanner.hasPrecedingLineBreak(),
     };
   }
 
@@ -508,10 +643,10 @@ export class Parser {
   }
 
   parseSourceFile(): SourceFile {
-    const statements: Statement[] = [];
-    while (this.#current().kind !== Kind.EndOfFile) {
-      statements.push(this.#parseStatement());
-    }
+    // M3 3b-list-model retrofit (loop #1): tsgo parseSourceFile uses
+    // parseList(PCSourceElements, parseStatement). element: !(Semi&&recovery)&&
+    // isStartOfStatement; terminator: EOF only (PCSourceElements default false).
+    const statements = this.#parseList(PCSourceElements, () => this.#parseStatement());
     // codex Stage-3a: attach the parser-owned diagnostics buffer onto the
     // SourceFile at end-of-parse, mirroring tsgo finishSourceFile's
     // result.SetDiagnostics(...) (parser.go:466) which runs AFTER the parse loop.
@@ -521,7 +656,7 @@ export class Parser {
       this.#fileName,
       this.#fileName as never,
       this.#sourceText,
-      createNodeArray(statements),
+      statements,
       createToken(Kind.EndOfFile),
       this.#diagnostics,
     );
@@ -832,21 +967,32 @@ export class Parser {
       return this.#finishNode(createNamespaceImport(this.#parseIdentifier()), pos);
     }
     // tsgo parseNamedImports: NamedImports pos is the `{` token.
-    this.#expect(Kind.OpenBraceToken);
-    const elements: ImportSpecifier[] = [];
-    while (this.#current().kind !== Kind.CloseBraceToken) {
-      // tsgo parseImportSpecifier: each specifier pos is the top of its element parse,
-      // before the optional `type` modifier / first name.
-      const specifierPos = this.#nodePos();
-      const isTypeOnly = this.#consumeOptional(Kind.TypeKeyword);
-      const firstName = this.#parseModuleExportName();
-      const propertyName = this.#consumeOptional(Kind.AsKeyword) ? firstName : undefined;
-      const name = propertyName === undefined ? firstName : this.#parseIdentifier();
-      elements.push(this.#finishNode(createImportSpecifier(isTypeOnly, propertyName, name as Identifier), specifierPos));
-      this.#consumeOptional(Kind.CommaToken);
-    }
-    this.#expect(Kind.CloseBraceToken);
-    return this.#finishNode(createNamedImports(createNodeArray(elements)), pos);
+    // M3 3b-list-model retrofit (loop #18): tsgo parseNamedImports uses
+    // parseBracketedList(PCImportOrExportSpecifiers, parseImportSpecifier, `{`, `}`).
+    // element: (From&&lookAhead(stringLit)?false : String?true : tokenIsIdentifierOrKeyword);
+    // terminator: CloseBrace (or EOF). On valid input identical to the prior loop.
+    const elements = this.#parseBracketedList(PCImportOrExportSpecifiers, () => this.#parseImportSpecifier(), Kind.OpenBraceToken, Kind.CloseBraceToken);
+    return this.#finishNode(createNamedImports(elements ?? createNodeArray<ImportSpecifier>([])), pos);
+  }
+
+  #parseImportSpecifier(): ImportSpecifier {
+    // tsgo parseImportSpecifier: each specifier pos is the top of its element parse,
+    // before the optional `type` modifier / first name.
+    const specifierPos = this.#nodePos();
+    const isTypeOnly = this.#consumeOptional(Kind.TypeKeyword);
+    const firstName = this.#parseModuleExportName();
+    const propertyName = this.#consumeOptional(Kind.AsKeyword) ? firstName : undefined;
+    const name = propertyName === undefined ? firstName : this.#parseIdentifier();
+    return this.#finishNode(createImportSpecifier(isTypeOnly, propertyName, name as Identifier), specifierPos);
+  }
+
+  #parseExportSpecifier(): ReturnType<typeof createExportSpecifier> {
+    // tsgo parseExportSpecifier: each specifier pos is the top of its element parse.
+    const specifierPos = this.#nodePos();
+    const firstName = this.#parseModuleExportName();
+    const propertyName = this.#consumeOptional(Kind.AsKeyword) ? firstName : undefined;
+    const name = propertyName === undefined ? firstName : this.#parseModuleExportName();
+    return this.#finishNode(createExportSpecifier(false, propertyName, name), specifierPos);
   }
 
   #parseExportDeclaration(pos: number, modifiers: NodeArray<ModifierLike>): Statement {
@@ -861,20 +1007,12 @@ export class Parser {
       return this.#finishNode(createExportDeclaration(modifiers, false, undefined, moduleSpecifier, attributes), pos);
     }
     // tsgo parseNamedExports: NamedExports pos is the `{` token.
+    // M3 3b-list-model retrofit (loop #19): tsgo parseNamedExports uses
+    // parseBracketedList(PCImportOrExportSpecifiers, parseExportSpecifier, `{`, `}`).
+    // Same predicates as #18. On valid input identical to the prior loop.
     const namedExportsPos = this.#nodePos();
-    this.#expect(Kind.OpenBraceToken);
-    const elements: ReturnType<typeof createExportSpecifier>[] = [];
-    while (this.#current().kind !== Kind.CloseBraceToken) {
-      // tsgo parseExportSpecifier: each specifier pos is the top of its element parse.
-      const specifierPos = this.#nodePos();
-      const firstName = this.#parseModuleExportName();
-      const propertyName = this.#consumeOptional(Kind.AsKeyword) ? firstName : undefined;
-      const name = propertyName === undefined ? firstName : this.#parseModuleExportName();
-      elements.push(this.#finishNode(createExportSpecifier(false, propertyName, name), specifierPos));
-      this.#consumeOptional(Kind.CommaToken);
-    }
-    this.#expect(Kind.CloseBraceToken);
-    const namedExports = this.#finishNode(createNamedExports(createNodeArray(elements)), namedExportsPos);
+    const elements = this.#parseBracketedList(PCImportOrExportSpecifiers, () => this.#parseExportSpecifier(), Kind.OpenBraceToken, Kind.CloseBraceToken);
+    const namedExports = this.#finishNode(createNamedExports(elements ?? createNodeArray<ReturnType<typeof createExportSpecifier>>([])), namedExportsPos);
     const moduleSpecifier = this.#consumeOptional(Kind.FromKeyword) ? this.#parseStringLiteralExpression() : undefined;
     const attributes = moduleSpecifier !== undefined ? this.#tryParseImportAttributes() : undefined;
     this.#consumeOptional(Kind.SemicolonToken);
@@ -936,16 +1074,17 @@ export class Parser {
       this.#expect(token);
     }
     const openBrace = this.#expect(Kind.OpenBraceToken);
-    const elements: ReturnType<typeof createImportAttribute>[] = [];
-    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
-      elements.push(this.#parseImportAttribute());
-      this.#consumeOptional(Kind.CommaToken);
-    }
+    // M3 3b-list-model retrofit (loop #20): tsgo parseImportAttributes uses
+    // parseDelimitedList(PCImportAttributes, parseImportAttribute) between the braces.
+    // element: isImportAttributeName; terminator: CloseBrace (or EOF); SPECIAL
+    // semicolon-skip arm applies (PCImportAttributes). The braces are managed here
+    // (keyword/skipKeyword logic), so this uses the delimited (not bracketed) list.
+    const elements = this.#parseDelimitedList(PCImportAttributes, () => this.#parseImportAttribute());
     const closeBrace = this.#expect(Kind.CloseBraceToken);
     const multiLine = this.#sourceText.slice(openBrace.pos, closeBrace.end).includes("\n");
     // The factory's token param is narrowed to WithKeyword|AssertKeyword; the guard in
     // #tryParseImportAttributes ensures `token` is exactly one of those.
-    return this.#finishNode(createImportAttributes(token as Kind.WithKeyword | Kind.AssertKeyword, createNodeArray(elements), multiLine), pos);
+    return this.#finishNode(createImportAttributes(token as Kind.WithKeyword | Kind.AssertKeyword, elements ?? createNodeArray<ReturnType<typeof createImportAttribute>>([]), multiLine), pos);
   }
 
   #parseImportAttribute(): ReturnType<typeof createImportAttribute> {
@@ -1031,12 +1170,14 @@ export class Parser {
     const typeParameters = this.#parseOptionalTypeParameters();
     const heritageClauses = this.#parseHeritageClauses();
     this.#expect(Kind.OpenBraceToken);
-    const members: ClassElement[] = [];
-    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
-      members.push(this.#parseClassElement());
-    }
+    // M3 3b-list-model retrofit (loop #8): tsgo parseClassMembers uses
+    // parseList(PCClassMembers, parseClassElement). element:
+    // lookAhead(scanClassMemberStart) || (Semicolon && !recovery); terminator:
+    // CloseBrace (or EOF). The bare `;` SemicolonClassElement is handled inside
+    // #parseClassElement, matching tsgo.
+    const members = this.#parseList(PCClassMembers, () => this.#parseClassElement());
     this.#expect(Kind.CloseBraceToken);
-    return this.#finishNode(createClassDeclaration(modifiers, name, typeParameters, heritageClauses, createNodeArray(members)), pos);
+    return this.#finishNode(createClassDeclaration(modifiers, name, typeParameters, heritageClauses, members), pos);
   }
 
   #parseInterfaceDeclaration(pos: number, modifiers: NodeArray<ModifierLike> | undefined): Statement {
@@ -1047,15 +1188,14 @@ export class Parser {
     const typeParameters = this.#parseOptionalTypeParameters();
     const heritageClauses = this.#parseHeritageClauses();
     this.#expect(Kind.OpenBraceToken);
-    const members: TypeElement[] = [];
-    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
-      if (this.#consumeOptional(Kind.SemicolonToken) || this.#consumeOptional(Kind.CommaToken)) {
-        continue;
-      }
-      members.push(this.#parseTypeElement());
-    }
+    // M3 3b-list-model retrofit (loop #5): tsgo parseInterfaceDeclaration members
+    // use parseObjectTypeMembers -> parseList(PCTypeMembers, parseTypeMember).
+    // element: lookAhead(scanTypeMemberStart); terminator: CloseBrace (or EOF).
+    // The trailing `;`/`,` is consumed inside #parseTypeElement (tsgo
+    // parseTypeMemberSemicolon), so the loop owns no separator.
+    const members = this.#parseList(PCTypeMembers, () => this.#parseTypeElement());
     this.#expect(Kind.CloseBraceToken);
-    return this.#finishNode(createInterfaceDeclaration(modifiers, name, typeParameters, heritageClauses, createNodeArray(members)), pos);
+    return this.#finishNode(createInterfaceDeclaration(modifiers, name, typeParameters, heritageClauses, members), pos);
   }
 
   #parseTypeAliasDeclaration(pos: number, modifiers: NodeArray<ModifierLike> | undefined): Statement {
@@ -1075,21 +1215,25 @@ export class Parser {
     this.#expect(Kind.EnumKeyword);
     const name = this.#parseIdentifier();
     this.#expect(Kind.OpenBraceToken);
-    const members = [];
-    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
-      if (this.#consumeOptional(Kind.CommaToken)) {
-        continue;
-      }
-      // tsgo parseEnumMember (2121): pos at entry (before parsePropertyName);
-      // finishNode after the optional initializer.
-      const memberPos = this.#nodePos();
-      const memberName = this.#parsePropertyName();
-      const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
-      members.push(this.#finishNode(createEnumMember(memberName, initializer), memberPos));
-      this.#consumeOptional(Kind.CommaToken);
-    }
+    // M3 3b-list-model retrofit (loop #9): tsgo parseEnumDeclaration uses
+    // parseDelimitedList(PCEnumMembers, parseEnumMember). element:
+    // OpenBracket||isLiteralPropertyName; terminator: CloseBrace (or EOF). The
+    // SPECIAL comma arm (An_enum_member_name_must_be_followed_by_a_or) lives in
+    // #parseDelimitedList. tsgo's enclosing Yield/Await-context clear is a no-op
+    // on the gate corpus (top-level enums have contextFlags=None) and is not part
+    // of this loop retrofit.
+    const members = this.#parseDelimitedList(PCEnumMembers, () => this.#parseEnumMember());
     this.#expect(Kind.CloseBraceToken);
-    return this.#finishNode(createEnumDeclaration(modifiers, name, createNodeArray(members)), pos);
+    return this.#finishNode(createEnumDeclaration(modifiers, name, members ?? createNodeArray<ReturnType<typeof createEnumMember>>([])), pos);
+  }
+
+  #parseEnumMember(): ReturnType<typeof createEnumMember> {
+    // tsgo parseEnumMember (2121): pos at entry (before parsePropertyName);
+    // finishNode after the optional initializer.
+    const memberPos = this.#nodePos();
+    const memberName = this.#parsePropertyName();
+    const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
+    return this.#finishNode(createEnumMember(memberName, initializer), memberPos);
   }
 
   #parseIfStatement(): Statement {
@@ -1403,39 +1547,47 @@ export class Parser {
   }
 
   #parseOptionalTypeParameters(): NodeArray<TypeParameterDeclaration> | undefined {
-    if (!this.#consumeOptional(Kind.LessThanToken)) {
+    if (this.#current().kind !== Kind.LessThanToken) {
       return undefined;
     }
-    const typeParameters: TypeParameterDeclaration[] = [];
-    do {
-      // tsgo parseTypeParameter (3228): pos at entry (before modifiers/name);
-      // finishNode after the optional defaultType.
-      const pos = this.#nodePos();
-      const name = this.#parseIdentifier();
-      const constraint = this.#consumeOptional(Kind.ExtendsKeyword) ? this.#parseType() : undefined;
-      const defaultType = this.#consumeOptional(Kind.EqualsToken) ? this.#parseType() : undefined;
-      typeParameters.push(this.#finishNode(createTypeParameterDeclaration(undefined, name, constraint, undefined, defaultType), pos));
-    } while (this.#consumeOptional(Kind.CommaToken));
-    this.#expectGreaterThan();
-    return createNodeArray(typeParameters);
+    // M3 3b-list-model retrofit (loop #23): tsgo parseTypeParameters (parser.go:3223)
+    // is parseBracketedList(PCTypeParameters, parseTypeParameter, `<`, `>`).
+    // element: In||Const||isIdentifier; terminator: `>`||`(`||`{`||extends||implements.
+    // Same #expectGreaterThan closer as #22. On valid input identical to the prior
+    // do/while(comma) loop.
+    return this.#parseBracketedList(PCTypeParameters, () => this.#parseTypeParameter(), Kind.LessThanToken, Kind.GreaterThanToken);
+  }
+
+  #parseTypeParameter(): TypeParameterDeclaration {
+    // tsgo parseTypeParameter (3228): pos at entry (before modifiers/name);
+    // finishNode after the optional defaultType.
+    const pos = this.#nodePos();
+    const name = this.#parseIdentifier();
+    const constraint = this.#consumeOptional(Kind.ExtendsKeyword) ? this.#parseType() : undefined;
+    const defaultType = this.#consumeOptional(Kind.EqualsToken) ? this.#parseType() : undefined;
+    return this.#finishNode(createTypeParameterDeclaration(undefined, name, constraint, undefined, defaultType), pos);
   }
 
   #parseHeritageClauses(): NodeArray<ReturnType<typeof createHeritageClause>> | undefined {
-    const clauses: ReturnType<typeof createHeritageClause>[] = [];
-    while (this.#current().kind === Kind.ExtendsKeyword || this.#current().kind === Kind.ImplementsKeyword) {
-      // tsgo parseHeritageClause (1826): pos at the extends/implements keyword
-      // (captured before nextToken); finishNode after the delimited type list.
-      // Inner ExpressionWithTypeArguments elements are already Stage-1d stamped.
-      const clausePos = this.#nodePos();
-      const token = this.#current().kind as Kind.ExtendsKeyword | Kind.ImplementsKeyword;
-      this.#advance();
-      const types: ExpressionWithTypeArguments[] = [];
-      do {
-        types.push(this.#parseExpressionWithTypeArguments());
-      } while (this.#consumeOptional(Kind.CommaToken));
-      clauses.push(this.#finishNode(createHeritageClause(token, createNodeArray(types)), clausePos));
+    // M3 3b-list-model retrofit (loop #10): tsgo parseHeritageClauses (parser.go)
+    // guards on isHeritageClause() then OUTER parseList(PCHeritageClauses,
+    // parseHeritageClause), returning nil (undefined) when no clauses.
+    if (this.#isHeritageClause()) {
+      return this.#parseList(PCHeritageClauses, () => this.#parseHeritageClause());
     }
-    return clauses.length === 0 ? undefined : createNodeArray(clauses);
+    return undefined;
+  }
+
+  #parseHeritageClause(): ReturnType<typeof createHeritageClause> {
+    // tsgo parseHeritageClause (1826): pos at the extends/implements keyword
+    // (captured before nextToken); finishNode after the delimited type list.
+    // Inner ExpressionWithTypeArguments elements are already Stage-1d stamped.
+    // INNER parseDelimitedList(PCHeritageClauseElement, parseExpressionWithTypeArguments).
+    const clausePos = this.#nodePos();
+    const token = this.#current().kind as Kind.ExtendsKeyword | Kind.ImplementsKeyword;
+    this.#advance();
+    const types = this.#parseDelimitedList(PCHeritageClauseElement, () => this.#parseExpressionWithTypeArguments());
+    return this.#finishNode(createHeritageClause(token, types ?? createNodeArray<ExpressionWithTypeArguments>([])), clausePos);
   }
 
   #parseExpressionWithTypeArguments(): ExpressionWithTypeArguments {
@@ -1462,15 +1614,15 @@ export class Parser {
   }
 
   #parseOptionalTypeArguments(): NodeArray<TypeNode> | undefined {
-    if (!this.#consumeOptional(Kind.LessThanToken)) {
+    if (this.#current().kind !== Kind.LessThanToken) {
       return undefined;
     }
-    const typeArguments: TypeNode[] = [];
-    do {
-      typeArguments.push(this.#parseType());
-    } while (this.#consumeOptional(Kind.CommaToken));
-    this.#expectGreaterThan();
-    return createNodeArray(typeArguments);
+    // M3 3b-list-model retrofit (loop #22): tsgo parseTypeArguments (parser.go:3016)
+    // is parseBracketedList(PCTypeArguments, parseType, `<`, `>`). The closer uses
+    // #expectGreaterThan (single `>`, reScan-aware) via the GreaterThan branch of
+    // #parseBracketedList. element: Comma||isStartOfType(false); terminator:
+    // token!==Comma. On valid input identical to the prior do/while(comma) loop.
+    return this.#parseBracketedList(PCTypeArguments, () => this.#parseType(), Kind.LessThanToken, Kind.GreaterThanToken);
   }
 
   #parseVariableStatement(pos: number, modifiers: NodeArray<ModifierLike> | undefined): Statement {
@@ -1487,11 +1639,15 @@ export class Parser {
     // variable-statement pos; with modifiers it starts later (at var/let/const).
     const pos = this.#nodePos();
     const flags = this.#parseVariableDeclarationListFlags();
-    const declarations: VariableDeclaration[] = [];
-    do {
-      declarations.push(this.#parseVariableDeclaration());
-    } while (this.#consumeOptional(Kind.CommaToken));
-    return this.#finishNode(createVariableDeclarationList(createNodeArray(declarations), flags), pos);
+    // M3 3b-list-model retrofit (loop #11): tsgo parseVariableDeclarationList uses
+    // parseDelimitedList(PCVariableDeclarations, parseVariableDeclaration...).
+    // element: isBindingIdentifierOrPrivateIdentifierOrPattern; terminator:
+    // canParseSemicolon||In||Of||EqualsGreaterThan. tsgo's for-initializer /
+    // using / await-using / exclamation-variant machinery is NOT part of this
+    // loop retrofit (separate scope); the existing single element parser is kept,
+    // so valid-input ASTs are unchanged.
+    const declarations = this.#parseDelimitedList(PCVariableDeclarations, () => this.#parseVariableDeclaration());
+    return this.#finishNode(createVariableDeclarationList(declarations ?? createNodeArray<VariableDeclaration>([]), flags), pos);
   }
 
   #parseVariableDeclarationListFlags(): number {
@@ -1556,17 +1712,14 @@ export class Parser {
   }
 
   #parseParameterList(): ParameterDeclaration[] {
-    const parameters: ParameterDeclaration[] = [];
-    if (this.#current().kind === Kind.CloseParenToken) {
-      return parameters;
-    }
-    while (true) {
-      parameters.push(this.#parseParameterDeclaration());
-      if (!this.#consumeOptional(Kind.CommaToken) || this.#current().kind === Kind.CloseParenToken) {
-        break;
-      }
-    }
-    return parameters;
+    // M3 3b-list-model retrofit (loop #17): tsgo parseParametersWorker uses
+    // parseDelimitedList(PCParameters, parseParameter). element: isStartOfParameter(false);
+    // terminator: CloseParen||CloseBracket. The callers still wrap the result in
+    // createNodeArray (an array is returned to preserve the existing signature and
+    // avoid touching the ~13 call sites; the delimited list's NodeArray pos/end is
+    // not load-bearing). On valid input identical to the prior while(true) loop.
+    const parameters = this.#parseDelimitedList(PCParameters, () => this.#parseParameterDeclaration());
+    return parameters === undefined ? [] : [...parameters];
   }
 
   #parseParameterDeclaration(): ParameterDeclaration {
@@ -1593,13 +1746,13 @@ export class Parser {
     // closing `}` is consumed so the end covers it.
     const pos = this.#nodePos();
     const openBrace = this.#expect(Kind.OpenBraceToken);
-    const statements: Statement[] = [];
-    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
-      statements.push(this.#parseStatement());
-    }
+    // M3 3b-list-model retrofit (loop #2): tsgo parseBlock uses
+    // parseList(PCBlockStatements, parseStatement). element: isStartOfStatement;
+    // terminator: CloseBrace (or EOF).
+    const statements = this.#parseList(PCBlockStatements, () => this.#parseStatement());
     const closeBrace = this.#expect(Kind.CloseBraceToken);
     const multiLine = this.#sourceText.slice(openBrace.pos, closeBrace.end).includes("\n");
-    return this.#finishNode(createBlock(createNodeArray(statements), multiLine), pos);
+    return this.#finishNode(createBlock(statements, multiLine), pos);
   }
 
   #parseEmptyStatement(): Statement {
@@ -1696,36 +1849,39 @@ export class Parser {
     this.#expect(Kind.CloseParenToken);
     const caseBlockPos = this.#nodePos();
     this.#expect(Kind.OpenBraceToken);
-    const clauses: CaseOrDefaultClause[] = [];
-    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
-      const clausePos = this.#nodePos();
-      if (this.#consumeOptional(Kind.CaseKeyword)) {
-        const caseExpression = this.#parseExpression();
-        this.#expect(Kind.ColonToken);
-        clauses.push(this.#finishNode(createCaseClause(caseExpression, createNodeArray(this.#parseCaseClauseStatements())), clausePos));
-        continue;
-      }
-      if (this.#consumeOptional(Kind.DefaultKeyword)) {
-        this.#expect(Kind.ColonToken);
-        clauses.push(this.#finishNode(createDefaultClause(undefined as never, createNodeArray(this.#parseCaseClauseStatements())), clausePos));
-        continue;
-      }
-      throw new ParseError("Expected case or default clause", this.#current());
-    }
+    // M3 3b-list-model retrofit (loop #3): tsgo parseCaseBlock uses
+    // parseList(PCSwitchClauses, parseCaseOrDefaultClause). element: Case||Default;
+    // terminator: CloseBrace (or EOF).
+    const clauses = this.#parseList(PCSwitchClauses, () => this.#parseCaseOrDefaultClause());
     this.#expect(Kind.CloseBraceToken);
-    const caseBlock = this.#finishNode(createCaseBlock(createNodeArray(clauses)), caseBlockPos);
+    const caseBlock = this.#finishNode(createCaseBlock(clauses), caseBlockPos);
     return this.#finishNode(createSwitchStatement(expression, caseBlock), pos);
   }
 
-  #parseCaseClauseStatements(): Statement[] {
-    const statements: Statement[] = [];
-    while (this.#current().kind !== Kind.CaseKeyword
-      && this.#current().kind !== Kind.DefaultKeyword
-      && this.#current().kind !== Kind.CloseBraceToken
-      && this.#current().kind !== Kind.EndOfFile) {
-      statements.push(this.#parseStatement());
+  #parseCaseOrDefaultClause(): CaseOrDefaultClause {
+    // tsgo parseCaseOrDefaultClause: if token==Case -> parseCaseClause, else
+    // parseDefaultClause. pos at the case/default keyword; finishNode after the
+    // clause statement list. The explicit ParseError on neither-token (kept from
+    // the original tsts loop, NOT flipped) is unreachable here: #parseList only
+    // calls this when isListElement(PCSwitchClauses) = Case||Default is true.
+    const clausePos = this.#nodePos();
+    if (this.#consumeOptional(Kind.CaseKeyword)) {
+      const caseExpression = this.#parseExpression();
+      this.#expect(Kind.ColonToken);
+      return this.#finishNode(createCaseClause(caseExpression, this.#parseCaseClauseStatements()), clausePos);
     }
-    return statements;
+    if (this.#consumeOptional(Kind.DefaultKeyword)) {
+      this.#expect(Kind.ColonToken);
+      return this.#finishNode(createDefaultClause(undefined as never, this.#parseCaseClauseStatements()), clausePos);
+    }
+    throw new ParseError("Expected case or default clause", this.#current());
+  }
+
+  #parseCaseClauseStatements(): NodeArray<Statement> {
+    // M3 3b-list-model retrofit (loop #4): tsgo uses
+    // parseList(PCSwitchClauseStatements, parseStatement). element: isStartOfStatement;
+    // terminator: CloseBrace||Case||Default (or EOF).
+    return this.#parseList(PCSwitchClauseStatements, () => this.#parseStatement());
   }
 
   #parseExpression(precedence: number = 0): Expression {
@@ -2030,17 +2186,13 @@ export class Parser {
   }
 
   #parseArgumentList(): Expression[] {
-    const expressions: Expression[] = [];
-    if (this.#current().kind === Kind.CloseParenToken) {
-      return expressions;
-    }
-    while (true) {
-      expressions.push(this.#parseArgumentExpression());
-      if (!this.#consumeOptional(Kind.CommaToken) || this.#current().kind === Kind.CloseParenToken) {
-        break;
-      }
-    }
-    return expressions;
+    // M3 3b-list-model retrofit (loop #14): tsgo parseArgumentList uses
+    // parseDelimitedList(PCArgumentExpressions, parseArgumentExpression). element:
+    // DotDotDot||isStartOfExpression; terminator: CloseParen||Semicolon. Callers
+    // wrap the array in createNodeArray; an array is returned to keep the signature.
+    // On valid input identical to the prior while(true) loop.
+    const expressions = this.#parseDelimitedList(PCArgumentExpressions, () => this.#parseArgumentExpression());
+    return expressions === undefined ? [] : [...expressions];
   }
 
   #parseArgumentExpression(): Expression {
@@ -2221,13 +2373,15 @@ export class Parser {
     // out of scope for Stage 1b — left untouched.)
     const pos = this.#nodePos();
     this.#expect(Kind.OpenBracketToken);
-    const elements: Expression[] = [];
-    while (this.#current().kind !== Kind.CloseBracketToken && this.#current().kind !== Kind.EndOfFile) {
-      elements.push(this.#parseArgumentExpression());
-      this.#consumeOptional(Kind.CommaToken);
-    }
+    // M3 3b-list-model retrofit (loop #16): tsgo parseArrayLiteralExpression uses
+    // parseDelimitedList(PCArrayLiteralMembers, parseArgumentOrArrayLiteralElement).
+    // element: (Comma||Dot true) else DotDotDot||isStartOfExpression; terminator:
+    // CloseBracket (or EOF). The existing #parseArgumentExpression element parser is
+    // kept (tsts has no OmittedExpression hole handling — a pre-existing gap, not in
+    // scope for this loop retrofit). On valid input identical to the prior loop.
+    const elements = this.#parseDelimitedList(PCArrayLiteralMembers, () => this.#parseArgumentExpression());
     this.#expect(Kind.CloseBracketToken);
-    return this.#finishNode(createArrayLiteralExpression(createNodeArray(elements), this.#sourceText.includes("\n")), pos);
+    return this.#finishNode(createArrayLiteralExpression(elements ?? createNodeArray<Expression>([]), this.#sourceText.includes("\n")), pos);
   }
 
   #parseObjectLiteralExpression(): Expression {
@@ -2236,24 +2390,27 @@ export class Parser {
     // top of the loop iteration before its first token (the '...' for spread, or the name).
     const pos = this.#nodePos();
     const openBrace = this.#expect(Kind.OpenBraceToken);
-    const properties: ObjectLiteralElementLike[] = [];
-    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
-      const elementPos = this.#nodePos();
-      if (this.#consumeOptional(Kind.DotDotDotToken)) {
-        properties.push(this.#finishNode(createSpreadAssignment(this.#parseExpression()), elementPos));
-        this.#consumeOptional(Kind.CommaToken);
-        continue;
-      }
-      const name = this.#parsePropertyName();
-      if (this.#consumeOptional(Kind.ColonToken)) {
-        properties.push(this.#finishNode(createPropertyAssignment(undefined, name, undefined, undefined as never, this.#parseExpression()), elementPos));
-      } else {
-        properties.push(this.#finishNode(createShorthandPropertyAssignment(undefined, name, undefined, undefined as never, undefined, undefined), elementPos));
-      }
-      this.#consumeOptional(Kind.CommaToken);
-    }
+    // M3 3b-list-model retrofit (loop #15): tsgo parseObjectLiteralExpression uses
+    // parseDelimitedList(PCObjectLiteralMembers, parseObjectLiteralElement). element:
+    // OpenBracket||Asterisk||DotDotDot||Dot true else isLiteralPropertyName;
+    // terminator: CloseBrace (or EOF); SPECIAL semicolon-skip arm applies. The
+    // EXISTING tsts inline build is extracted into #parseObjectLiteralElement (the
+    // loop no longer owns the trailing comma).
+    const properties = this.#parseDelimitedList(PCObjectLiteralMembers, () => this.#parseObjectLiteralElement());
     const closeBrace = this.#expect(Kind.CloseBraceToken);
-    return this.#finishNode(createObjectLiteralExpression(createNodeArray(properties), this.#sourceText.slice(openBrace.pos, closeBrace.end).includes("\n")), pos);
+    return this.#finishNode(createObjectLiteralExpression(properties ?? createNodeArray<ObjectLiteralElementLike>([]), this.#sourceText.slice(openBrace.pos, closeBrace.end).includes("\n")), pos);
+  }
+
+  #parseObjectLiteralElement(): ObjectLiteralElementLike {
+    const elementPos = this.#nodePos();
+    if (this.#consumeOptional(Kind.DotDotDotToken)) {
+      return this.#finishNode(createSpreadAssignment(this.#parseExpression()), elementPos);
+    }
+    const name = this.#parsePropertyName();
+    if (this.#consumeOptional(Kind.ColonToken)) {
+      return this.#finishNode(createPropertyAssignment(undefined, name, undefined, undefined as never, this.#parseExpression()), elementPos);
+    }
+    return this.#finishNode(createShorthandPropertyAssignment(undefined, name, undefined, undefined as never, undefined, undefined), elementPos);
   }
 
   #parseStringLiteralExpression(): Expression {
@@ -2284,37 +2441,49 @@ export class Parser {
     // parseExpected); finishNode after the closing `}`.
     const pos = this.#nodePos();
     this.#expect(Kind.OpenBraceToken);
-    const elements: BindingElement[] = [];
-    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
-      // tsgo parseObjectBindingElement (1680): pos at the top of the iteration,
-      // BEFORE the optional `...`; finishNode after the optional initializer.
-      const elementPos = this.#nodePos();
-      const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
-      const firstName = this.#parsePropertyName();
-      const propertyName = this.#consumeOptional(Kind.ColonToken) ? firstName : undefined;
-      if (propertyName === undefined && firstName.kind !== Kind.Identifier) {
-        throw new ParseError("Expected identifier shorthand in binding pattern", this.#current());
-      }
-      const name = propertyName === undefined ? firstName as BindingName : this.#parseBindingName();
-      const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
-      elements.push(this.#finishNode(createBindingElement(dotDotDotToken, propertyName, name, initializer), elementPos));
-      this.#consumeOptional(Kind.CommaToken);
-    }
+    // M3 3b-list-model retrofit (loop #12): tsgo parseObjectBindingPattern uses
+    // parseDelimitedList(PCObjectBindingElements, parseObjectBindingElement). element:
+    // OpenBracket||DotDotDot||isLiteralPropertyName; terminator: CloseBrace (or EOF).
+    const elements = this.#parseDelimitedList(PCObjectBindingElements, () => this.#parseObjectBindingElement());
     this.#expect(Kind.CloseBraceToken);
-    return this.#finishNode(createObjectBindingPattern(createNodeArray(elements)), pos);
+    return this.#finishNode(createObjectBindingPattern(elements ?? createNodeArray<BindingElement>([])), pos);
+  }
+
+  #parseObjectBindingElement(): BindingElement {
+    // tsgo parseObjectBindingElement (1680): pos at the top of the iteration,
+    // BEFORE the optional `...`; finishNode after the optional initializer.
+    const elementPos = this.#nodePos();
+    const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
+    const firstName = this.#parsePropertyName();
+    const propertyName = this.#consumeOptional(Kind.ColonToken) ? firstName : undefined;
+    if (propertyName === undefined && firstName.kind !== Kind.Identifier) {
+      throw new ParseError("Expected identifier shorthand in binding pattern", this.#current());
+    }
+    const name = propertyName === undefined ? firstName as BindingName : this.#parseBindingName();
+    const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
+    return this.#finishNode(createBindingElement(dotDotDotToken, propertyName, name, initializer), elementPos);
   }
 
   #parseArrayBindingPattern(): BindingName {
     // tsgo parseArrayBindingPattern (1644): pattern pos at the `[` (before
     // parseExpected); finishNode after the closing `]`.
+    //
+    // M3 3b-list-model: this loop is INTENTIONALLY NOT retrofitted to
+    // #parseDelimitedList(PCArrayBindingElements). tsgo's parseArrayBindingElement
+    // creates the HOLE node (token==Comma => all-nil) WITHOUT consuming, and the
+    // delimited list consumes the comma AFTER. Under tsts's end=#prevTokenEnd
+    // (token-tight) finishNode semantics — which differ from tsgo's
+    // end=nodePos()/TokenFullStart() — the hole's end would then be the PREVIOUS
+    // comma's end (14) instead of the hole comma's end (16), drifting
+    // array_binding_hole_and_elements_ranges (expected 16, got 14). The existing
+    // loop consumes the comma INSIDE the iteration before finishNode, so the hole
+    // end is the hole comma's end. Retrofitting this loop requires the tsgo end
+    // semantics (a separate, out-of-scope architectural change), so it is left as
+    // the hand-rolled loop to preserve byte-identical hole ranges.
     const pos = this.#nodePos();
     this.#expect(Kind.OpenBracketToken);
     const elements: BindingElement[] = [];
     while (this.#current().kind !== Kind.CloseBracketToken && this.#current().kind !== Kind.EndOfFile) {
-      // tsgo parseArrayBindingElement (1655): pos captured at the top of the iteration
-      // (BEFORE the comma), so an elided hole still finishNodes a (zero-length) nil
-      // BindingElement at the comma position. Capture elementPos before consuming the
-      // comma that TSTS uses to detect the hole.
       const elementPos = this.#nodePos();
       if (this.#consumeOptional(Kind.CommaToken)) {
         elements.push(this.#finishNode(createBindingElement(undefined, undefined, undefined, undefined), elementPos));
@@ -2533,14 +2702,13 @@ export class Parser {
       return this.#finishNode(createConstructorTypeNode(undefined, undefined, createNodeArray(parameters), this.#parseType()), pos);
     }
     if (token.kind === Kind.OpenBracketToken) {
-      this.#advance();
-      const elements: TypeNode[] = [];
-      while (this.#current().kind !== Kind.CloseBracketToken && this.#current().kind !== Kind.EndOfFile) {
-        elements.push(this.#parseTupleElementNameOrTupleElementType());
-        this.#consumeOptional(Kind.CommaToken);
-      }
-      this.#expect(Kind.CloseBracketToken);
-      return this.#finishNode(createTupleTypeNode(createNodeArray(elements)), pos);
+      // M3 3b-list-model retrofit (loop #21): tsgo parseTupleType uses
+      // parseBracketedList(PCTupleElementTypes, parseTupleElementNameOrTupleElementType,
+      // `[`, `]`). element: Comma||isStartOfType(false); terminator: CloseBracket
+      // (or EOF). #parseBracketedList consumes the opening `[` itself. On valid
+      // input identical to the prior loop.
+      const elements = this.#parseBracketedList(PCTupleElementTypes, () => this.#parseTupleElementNameOrTupleElementType(), Kind.OpenBracketToken, Kind.CloseBracketToken);
+      return this.#finishNode(createTupleTypeNode(elements ?? createNodeArray<TypeNode>([])), pos);
     }
     if (token.kind === Kind.OpenBraceToken) {
       // tsgo parseNonArrayType (2810-2814): `{` dispatches to parseMappedType when the
@@ -2550,15 +2718,12 @@ export class Parser {
         return this.#parseMappedType();
       }
       this.#advance();
-      const members: TypeElement[] = [];
-      while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
-        if (this.#consumeOptional(Kind.SemicolonToken) || this.#consumeOptional(Kind.CommaToken)) {
-          continue;
-        }
-        members.push(this.#parseTypeElement());
-      }
+      // M3 3b-list-model retrofit (loop #6): tsgo parseTypeLiteral -> parseObjectTypeMembers
+      // -> parseList(PCTypeMembers, parseTypeMember). element: lookAhead(scanTypeMemberStart);
+      // terminator: CloseBrace (or EOF). Trailing `;`/`,` consumed inside #parseTypeElement.
+      const members = this.#parseList(PCTypeMembers, () => this.#parseTypeElement());
       this.#expect(Kind.CloseBraceToken);
-      return this.#finishNode(createTypeLiteralNode(createNodeArray(members)), pos);
+      return this.#finishNode(createTypeLiteralNode(members), pos);
     }
     if (keywordTypeKinds.has(token.kind)) {
       this.#advance();
@@ -2704,15 +2869,12 @@ export class Parser {
     const questionToken = this.#parseMappedTypeModifierToken(Kind.QuestionToken);
     const type = this.#parseOptionalTypeAnnotation();
     this.#consumeOptional(Kind.SemicolonToken);
-    const members: TypeElement[] = [];
-    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
-      if (this.#consumeOptional(Kind.SemicolonToken) || this.#consumeOptional(Kind.CommaToken)) {
-        continue;
-      }
-      members.push(this.#parseTypeElement());
-    }
+    // M3 3b-list-model retrofit (loop #7): tsgo parseMappedType uses
+    // parseList(PCTypeMembers, parseTypeMember) for the trailing members.
+    // element: lookAhead(scanTypeMemberStart); terminator: CloseBrace (or EOF).
+    const members = this.#parseList(PCTypeMembers, () => this.#parseTypeElement());
     this.#expect(Kind.CloseBraceToken);
-    return this.#finishNode(createMappedTypeNode(readonlyToken, typeParameter, nameType, questionToken, type, createNodeArray(members)), pos);
+    return this.#finishNode(createMappedTypeNode(readonlyToken, typeParameter, nameType, questionToken, type, members), pos);
   }
 
   #parseMappedTypeModifierToken<TExpected extends Kind.ReadonlyKeyword | Kind.QuestionToken>(expected: TExpected): Token<TExpected> | PlusToken | MinusToken | undefined {
@@ -3013,6 +3175,16 @@ export class Parser {
     return this.#token;
   }
 
+  // M3 3b-list-model: tsgo hasPrecedingLineBreak (parser.go:410-412). tsgo reads
+  // the LIVE scanner; tsts MUST read the SNAPSHOT (#token) because the parser
+  // caches the current token and #peekKind/#lookAhead move the live scanner
+  // independently — reading the live scanner directly would be wrong after a
+  // peek. The snapshot was taken at the moment the current token was scanned, so
+  // it is the faithful tsts equivalent.
+  #hasPrecedingLineBreak(): boolean {
+    return this.#token.hasPrecedingLineBreak;
+  }
+
   #advance(): ScannedToken {
     const token = this.#token;
     if (token.kind !== Kind.EndOfFile) {
@@ -3119,6 +3291,21 @@ export class Parser {
     return (this.#contextFlags & NodeFlags.DisallowConditionalTypesContext) !== 0;
   }
 
+  // M3 3b-list-model: the remaining in*Context readers (tsgo parser.go:6368-6386).
+  // Pure derivations of #contextFlags bits already set/cleared today (Yield/Await
+  // via #withSignatureContext; DisallowIn via the for-initializer/conditional paths).
+  #inYieldContext(): boolean {
+    return (this.#contextFlags & NodeFlags.YieldContext) !== 0;
+  }
+
+  #inAwaitContext(): boolean {
+    return (this.#contextFlags & NodeFlags.AwaitContext) !== 0;
+  }
+
+  #inDisallowInContext(): boolean {
+    return (this.#contextFlags & NodeFlags.DisallowInContext) !== 0;
+  }
+
   // codex-054 M3 Stage-2: convert the per-signature ParseFlags (Yield from generator,
   // Await from async) into contextFlags around a function/method/arrow parameter list
   // AND body, faithfully fusing tsgo parseParametersWorker (parser.go:3298-3299) and
@@ -3128,6 +3315,893 @@ export class Parser {
     return this.#doInContext(NodeFlags.YieldContext, isGenerator, () =>
       this.#doInContext(NodeFlags.AwaitContext, isAsync, f),
     );
+  }
+
+  // ==========================================================================
+  // M3 3b-list-model: start-of predicate layer (tsgo parser.go). All ADDITIVE.
+  // Faithful 1:1 ports. tsgo reads the live scanner via p.token; tsts reads the
+  // cached snapshot (#current().kind) and #hasPrecedingLineBreak() (the snapshot
+  // field). Multi-token probes run inside #lookAhead so the cursor + snapshot
+  // rewind correctly.
+  // ==========================================================================
+
+  // tsgo isIdentifier (parser.go:6252-6264).
+  #isIdentifier(): boolean {
+    const token = this.#current().kind;
+    if (token === Kind.Identifier) {
+      return true;
+    }
+    if ((token === Kind.YieldKeyword && this.#inYieldContext()) || (token === Kind.AwaitKeyword && this.#inAwaitContext())) {
+      return false;
+    }
+    return token > Kind.LastReservedWord;
+  }
+
+  // tsgo isBindingIdentifier (parser.go:6266-6268).
+  #isBindingIdentifier(): boolean {
+    const token = this.#current().kind;
+    return token === Kind.Identifier || token > Kind.LastReservedWord;
+  }
+
+  // tsgo isBindingIdentifierOrPrivateIdentifierOrPattern (parser.go:6225-6227).
+  #isBindingIdentifierOrPrivateIdentifierOrPattern(): boolean {
+    const token = this.#current().kind;
+    return token === Kind.OpenBraceToken
+      || token === Kind.OpenBracketToken
+      || token === Kind.PrivateIdentifier
+      || this.#isBindingIdentifier();
+  }
+
+  // tsgo isLiteralPropertyName (parser.go:6037-6039).
+  #isLiteralPropertyName(): boolean {
+    const token = this.#current().kind;
+    return tokenIsIdentifierOrKeyword(token)
+      || token === Kind.StringLiteral
+      || token === Kind.NumericLiteral
+      || token === Kind.BigIntLiteral;
+  }
+
+  // tsgo canParseSemicolon (parser.go:6016-6020). Consumes the snapshot
+  // hasPrecedingLineBreak bit.
+  #canParseSemicolon(): boolean {
+    const token = this.#current().kind;
+    return token === Kind.SemicolonToken
+      || token === Kind.CloseBraceToken
+      || token === Kind.EndOfFile
+      || this.#hasPrecedingLineBreak();
+  }
+
+  // tsgo isImportAttributeName (parser.go:6271-6273).
+  #isImportAttributeName(): boolean {
+    const token = this.#current().kind;
+    return tokenIsIdentifierOrKeyword(token) || token === Kind.StringLiteral;
+  }
+
+  // tsgo isBinaryOperator (parser.go:6275-6280). Uses the PURE
+  // getBinaryOperatorPrecedence + the #inDisallowInContext reader. Does NOT touch
+  // the binaryPrecedence Map / binary loop.
+  #isBinaryOperator(): boolean {
+    if (this.#inDisallowInContext() && this.#current().kind === Kind.InKeyword) {
+      return false;
+    }
+    return getBinaryOperatorPrecedence(this.#current().kind) !== OperatorPrecedenceInvalid;
+  }
+
+  // tsgo isHeritageClause (parser.go:6301-6303).
+  #isHeritageClause(): boolean {
+    const token = this.#current().kind;
+    return token === Kind.ExtendsKeyword || token === Kind.ImplementsKeyword;
+  }
+
+  // tsgo isHeritageClauseExtendsOrImplementsKeyword (parser.go:6305-6307).
+  #isHeritageClauseExtendsOrImplementsKeyword(): boolean {
+    return this.#isHeritageClause() && this.#lookAhead(() => {
+      this.#nextToken();
+      return this.#isStartOfExpression();
+    });
+  }
+
+  // tsgo isValidHeritageClauseObjectLiteral (parser.go:6282-6299).
+  #isValidHeritageClauseObjectLiteral(): boolean {
+    return this.#lookAhead(() => {
+      this.#nextToken();
+      if (this.#current().kind === Kind.CloseBraceToken) {
+        this.#nextToken();
+        const next = this.#current().kind;
+        return next === Kind.CommaToken
+          || next === Kind.OpenBraceToken
+          || next === Kind.ExtendsKeyword
+          || next === Kind.ImplementsKeyword;
+      }
+      return true;
+    });
+  }
+
+  // tsgo isStartOfStatement (parser.go:6041-6068).
+  #isStartOfStatement(): boolean {
+    switch (this.#current().kind) {
+      case Kind.AtToken:
+      case Kind.SemicolonToken:
+      case Kind.OpenBraceToken:
+      case Kind.VarKeyword:
+      case Kind.LetKeyword:
+      case Kind.UsingKeyword:
+      case Kind.FunctionKeyword:
+      case Kind.ClassKeyword:
+      case Kind.EnumKeyword:
+      case Kind.IfKeyword:
+      case Kind.DoKeyword:
+      case Kind.WhileKeyword:
+      case Kind.ForKeyword:
+      case Kind.ContinueKeyword:
+      case Kind.BreakKeyword:
+      case Kind.ReturnKeyword:
+      case Kind.WithKeyword:
+      case Kind.SwitchKeyword:
+      case Kind.ThrowKeyword:
+      case Kind.TryKeyword:
+      case Kind.DebuggerKeyword:
+      case Kind.CatchKeyword:
+      case Kind.FinallyKeyword:
+        return true;
+      case Kind.ImportKeyword:
+        return this.#isStartOfDeclaration() || this.#isNextTokenOpenParenOrLessThanOrDot();
+      case Kind.ConstKeyword:
+      case Kind.ExportKeyword:
+        return this.#isStartOfDeclaration();
+      case Kind.AsyncKeyword:
+      case Kind.DeclareKeyword:
+      case Kind.InterfaceKeyword:
+      case Kind.ModuleKeyword:
+      case Kind.NamespaceKeyword:
+      case Kind.TypeKeyword:
+      case Kind.GlobalKeyword:
+      case Kind.DeferKeyword:
+        return true;
+      case Kind.AccessorKeyword:
+      case Kind.PublicKeyword:
+      case Kind.PrivateKeyword:
+      case Kind.ProtectedKeyword:
+      case Kind.StaticKeyword:
+      case Kind.ReadonlyKeyword:
+        return this.#isStartOfDeclaration() || !this.#lookAhead(() => this.#nextTokenIsIdentifierOrKeywordOnSameLine());
+      default:
+        return this.#isStartOfExpression();
+    }
+  }
+
+  // tsgo isStartOfDeclaration (parser.go:6070-6072).
+  #isStartOfDeclaration(): boolean {
+    return this.#lookAhead(() => this.#scanStartOfDeclaration());
+  }
+
+  // tsgo scanStartOfDeclaration (parser.go:6074-6146). Modifier-eater loop; runs
+  // inside #lookAhead (walks the cursor forward). Uses scan/loop-local mutation.
+  #scanStartOfDeclaration(): boolean {
+    for (;;) {
+      switch (this.#current().kind) {
+        case Kind.VarKeyword:
+        case Kind.LetKeyword:
+        case Kind.ConstKeyword:
+        case Kind.FunctionKeyword:
+        case Kind.ClassKeyword:
+        case Kind.EnumKeyword:
+          return true;
+        case Kind.UsingKeyword:
+          return this.#isUsingDeclaration();
+        case Kind.AwaitKeyword:
+          return this.#isAwaitUsingDeclaration();
+        case Kind.InterfaceKeyword:
+        case Kind.TypeKeyword:
+        case Kind.DeferKeyword:
+          return this.#nextTokenIsIdentifierOnSameLine();
+        case Kind.ModuleKeyword:
+        case Kind.NamespaceKeyword:
+          return this.#nextTokenIsIdentifierOrStringLiteralOnSameLine();
+        case Kind.AbstractKeyword:
+        case Kind.AccessorKeyword:
+        case Kind.AsyncKeyword:
+        case Kind.DeclareKeyword:
+        case Kind.PrivateKeyword:
+        case Kind.ProtectedKeyword:
+        case Kind.PublicKeyword:
+        case Kind.ReadonlyKeyword: {
+          const previousToken = this.#current().kind;
+          this.#nextToken();
+          if (this.#hasPrecedingLineBreak()) {
+            return false;
+          }
+          if (previousToken === Kind.DeclareKeyword && this.#current().kind === Kind.TypeKeyword) {
+            return true;
+          }
+          continue;
+        }
+        case Kind.GlobalKeyword: {
+          this.#nextToken();
+          const t = this.#current().kind;
+          return t === Kind.OpenBraceToken || t === Kind.Identifier || t === Kind.ExportKeyword;
+        }
+        case Kind.ImportKeyword: {
+          this.#nextToken();
+          const t = this.#current().kind;
+          return t === Kind.DeferKeyword
+            || t === Kind.StringLiteral
+            || t === Kind.AsteriskToken
+            || t === Kind.OpenBraceToken
+            || tokenIsIdentifierOrKeyword(t);
+        }
+        case Kind.ExportKeyword: {
+          this.#nextToken();
+          const t = this.#current().kind;
+          if (t === Kind.EqualsToken
+            || t === Kind.AsteriskToken
+            || t === Kind.OpenBraceToken
+            || t === Kind.DefaultKeyword
+            || t === Kind.AsKeyword
+            || t === Kind.AtToken) {
+            return true;
+          }
+          if (t === Kind.TypeKeyword) {
+            this.#nextToken();
+            const t2 = this.#current().kind;
+            return t2 === Kind.AsteriskToken
+              || t2 === Kind.OpenBraceToken
+              || (this.#isIdentifier() && !this.#hasPrecedingLineBreak());
+          }
+          continue;
+        }
+        case Kind.StaticKeyword:
+          this.#nextToken();
+          continue;
+        default:
+          return false;
+      }
+    }
+  }
+
+  // tsgo isStartOfExpression (parser.go:6148-6169).
+  #isStartOfExpression(): boolean {
+    if (this.#isStartOfLeftHandSideExpression()) {
+      return true;
+    }
+    switch (this.#current().kind) {
+      case Kind.PlusToken:
+      case Kind.MinusToken:
+      case Kind.TildeToken:
+      case Kind.ExclamationToken:
+      case Kind.DeleteKeyword:
+      case Kind.TypeOfKeyword:
+      case Kind.VoidKeyword:
+      case Kind.PlusPlusToken:
+      case Kind.MinusMinusToken:
+      case Kind.LessThanToken:
+      case Kind.AwaitKeyword:
+      case Kind.YieldKeyword:
+      case Kind.PrivateIdentifier:
+      case Kind.AtToken:
+        return true;
+    }
+    if (this.#isBinaryOperator()) {
+      return true;
+    }
+    return this.#isIdentifier();
+  }
+
+  // tsgo isStartOfLeftHandSideExpression (parser.go:6171-6182).
+  #isStartOfLeftHandSideExpression(): boolean {
+    switch (this.#current().kind) {
+      case Kind.ThisKeyword:
+      case Kind.SuperKeyword:
+      case Kind.NullKeyword:
+      case Kind.TrueKeyword:
+      case Kind.FalseKeyword:
+      case Kind.NumericLiteral:
+      case Kind.BigIntLiteral:
+      case Kind.StringLiteral:
+      case Kind.NoSubstitutionTemplateLiteral:
+      case Kind.TemplateHead:
+      case Kind.OpenParenToken:
+      case Kind.OpenBracketToken:
+      case Kind.OpenBraceToken:
+      case Kind.FunctionKeyword:
+      case Kind.ClassKeyword:
+      case Kind.NewKeyword:
+      case Kind.SlashToken:
+      case Kind.SlashEqualsToken:
+      case Kind.Identifier:
+        return true;
+      case Kind.ImportKeyword:
+        return this.#isNextTokenOpenParenOrLessThanOrDot();
+    }
+    return this.#isIdentifier();
+  }
+
+  // tsgo isStartOfType (parser.go:6184-6205).
+  #isStartOfType(inStartOfParameter: boolean): boolean {
+    switch (this.#current().kind) {
+      case Kind.AnyKeyword:
+      case Kind.UnknownKeyword:
+      case Kind.StringKeyword:
+      case Kind.NumberKeyword:
+      case Kind.BigIntKeyword:
+      case Kind.BooleanKeyword:
+      case Kind.ReadonlyKeyword:
+      case Kind.SymbolKeyword:
+      case Kind.UniqueKeyword:
+      case Kind.VoidKeyword:
+      case Kind.UndefinedKeyword:
+      case Kind.NullKeyword:
+      case Kind.ThisKeyword:
+      case Kind.TypeOfKeyword:
+      case Kind.NeverKeyword:
+      case Kind.OpenBraceToken:
+      case Kind.OpenBracketToken:
+      case Kind.LessThanToken:
+      case Kind.BarToken:
+      case Kind.AmpersandToken:
+      case Kind.NewKeyword:
+      case Kind.StringLiteral:
+      case Kind.NumericLiteral:
+      case Kind.BigIntLiteral:
+      case Kind.TrueKeyword:
+      case Kind.FalseKeyword:
+      case Kind.ObjectKeyword:
+      case Kind.AsteriskToken:
+      case Kind.QuestionToken:
+      case Kind.ExclamationToken:
+      case Kind.DotDotDotToken:
+      case Kind.InferKeyword:
+      case Kind.ImportKeyword:
+      case Kind.AssertsKeyword:
+      case Kind.NoSubstitutionTemplateLiteral:
+      case Kind.TemplateHead:
+        return true;
+      case Kind.FunctionKeyword:
+        return !inStartOfParameter;
+      case Kind.MinusToken:
+        return !inStartOfParameter && this.#lookAhead(() => this.#nextTokenIsNumericOrBigIntLiteral());
+      case Kind.OpenParenToken:
+        return !inStartOfParameter && this.#lookAhead(() => this.#nextIsParenthesizedOrFunctionType());
+    }
+    return this.#isIdentifier();
+  }
+
+  // tsgo nextTokenIsNumericOrBigIntLiteral (parser.go:6207-6210).
+  #nextTokenIsNumericOrBigIntLiteral(): boolean {
+    this.#nextToken();
+    const t = this.#current().kind;
+    return t === Kind.NumericLiteral || t === Kind.BigIntLiteral;
+  }
+
+  // tsgo nextIsParenthesizedOrFunctionType (parser.go:6212-6215).
+  #nextIsParenthesizedOrFunctionType(): boolean {
+    this.#nextToken();
+    return this.#current().kind === Kind.CloseParenToken
+      || this.#isStartOfParameter(false)
+      || this.#isStartOfType(false);
+  }
+
+  // tsgo isStartOfParameter (parser.go:6217-6223).
+  #isStartOfParameter(isJSDocParameter: boolean): boolean {
+    const token = this.#current().kind;
+    return token === Kind.DotDotDotToken
+      || this.#isBindingIdentifierOrPrivateIdentifierOrPattern()
+      || isModifierKind(token)
+      || token === Kind.AtToken
+      || this.#isStartOfType(!isJSDocParameter);
+  }
+
+  // tsgo isNextTokenOpenParenOrLessThanOrDot (parser.go:6229-6239).
+  #isNextTokenOpenParenOrLessThanOrDot(): boolean {
+    return this.#lookAhead(() => {
+      this.#nextToken();
+      const t = this.#current().kind;
+      return t === Kind.OpenParenToken || t === Kind.LessThanToken || t === Kind.DotToken;
+    });
+  }
+
+  // tsgo nextTokenIsIdentifierOnSameLine (parser.go:6241-6244).
+  #nextTokenIsIdentifierOnSameLine(): boolean {
+    this.#nextToken();
+    return this.#isIdentifier() && !this.#hasPrecedingLineBreak();
+  }
+
+  // tsgo nextTokenIsIdentifierOrStringLiteralOnSameLine (parser.go:6246-6249).
+  #nextTokenIsIdentifierOrStringLiteralOnSameLine(): boolean {
+    this.#nextToken();
+    return (this.#isIdentifier() || this.#current().kind === Kind.StringLiteral) && !this.#hasPrecedingLineBreak();
+  }
+
+  // tsgo nextTokenIsIdentifierOrKeywordOnSameLine (parser.go:4006-4008).
+  #nextTokenIsIdentifierOrKeywordOnSameLine(): boolean {
+    this.#nextToken();
+    return tokenIsIdentifierOrKeyword(this.#current().kind) && !this.#hasPrecedingLineBreak();
+  }
+
+  // tsgo isUsingDeclaration (parser.go:6314-6321).
+  #isUsingDeclaration(): boolean {
+    return this.#lookAhead(() => this.#nextTokenIsBindingIdentifierOrStartOfDestructuringOnSameLine(false));
+  }
+
+  // tsgo nextTokenIsBindingIdentifierOrStartOfDestructuringOnSameLine (parser.go:6328-6334).
+  #nextTokenIsBindingIdentifierOrStartOfDestructuringOnSameLine(disallowOf: boolean): boolean {
+    this.#nextToken();
+    if (disallowOf && this.#current().kind === Kind.OfKeyword) {
+      return this.#lookAhead(() => {
+        this.#nextToken();
+        const t = this.#current().kind;
+        return t === Kind.EqualsToken || t === Kind.SemicolonToken || t === Kind.ColonToken;
+      });
+    }
+    return this.#isBindingIdentifier()
+      || (this.#current().kind === Kind.OpenBraceToken && !this.#hasPrecedingLineBreak());
+  }
+
+  // tsgo isAwaitUsingDeclaration (parser.go:6340-6346).
+  #isAwaitUsingDeclaration(): boolean {
+    return this.#lookAhead(() => {
+      this.#nextToken();
+      return this.#current().kind === Kind.UsingKeyword
+        && this.#nextTokenIsBindingIdentifierOrStartOfDestructuringOnSameLine(false);
+    });
+  }
+
+  // tsgo scanTypeMemberStart (parser.go:5929-5955). Runs inside #lookAhead.
+  #scanTypeMemberStart(): boolean {
+    const t = this.#current().kind;
+    if (t === Kind.OpenParenToken || t === Kind.LessThanToken || t === Kind.GetKeyword || t === Kind.SetKeyword) {
+      return true;
+    }
+    let idToken = false;
+    while (isModifierKind(this.#current().kind)) {
+      idToken = true;
+      this.#nextToken();
+    }
+    if (this.#current().kind === Kind.OpenBracketToken) {
+      return true;
+    }
+    if (this.#isLiteralPropertyName()) {
+      idToken = true;
+      this.#nextToken();
+    }
+    if (idToken) {
+      const cur = this.#current().kind;
+      return cur === Kind.OpenParenToken
+        || cur === Kind.LessThanToken
+        || cur === Kind.QuestionToken
+        || cur === Kind.ColonToken
+        || cur === Kind.CommaToken
+        || this.#canParseSemicolon();
+    }
+    return false;
+  }
+
+  // tsgo scanClassMemberStart (parser.go:5957-6014). Runs inside #lookAhead.
+  #scanClassMemberStart(): boolean {
+    let idToken: Kind = Kind.Unknown;
+    if (this.#current().kind === Kind.AtToken) {
+      return true;
+    }
+    while (isModifierKind(this.#current().kind)) {
+      idToken = this.#current().kind;
+      if (isClassMemberModifier(idToken)) {
+        return true;
+      }
+      this.#nextToken();
+    }
+    if (this.#current().kind === Kind.AsteriskToken) {
+      return true;
+    }
+    if (this.#isLiteralPropertyName()) {
+      idToken = this.#current().kind;
+      this.#nextToken();
+    }
+    if (this.#current().kind === Kind.OpenBracketToken) {
+      return true;
+    }
+    if (idToken !== Kind.Unknown) {
+      if (!isKeyword(idToken) || idToken === Kind.SetKeyword || idToken === Kind.GetKeyword) {
+        return true;
+      }
+      switch (this.#current().kind) {
+        case Kind.OpenParenToken:
+        case Kind.LessThanToken:
+        case Kind.ExclamationToken:
+        case Kind.ColonToken:
+        case Kind.EqualsToken:
+        case Kind.QuestionToken:
+          return true;
+      }
+      return this.#canParseSemicolon();
+    }
+    return false;
+  }
+
+  // ==========================================================================
+  // M3 3b-list-model: parseList family (tsgo parser.go:641-714). ADDITIVE — new
+  // code paths. The reparseList machinery (tsgo parseListIndex, JSDoc-only) is
+  // dropped: tsts has no JS @typedef reparse, so #parseList is implemented
+  // directly (faithful-minus-JSDoc). On VALID input the dormant abort/error path
+  // is unreachable (isListElement/isListTerminator always satisfied).
+  // ==========================================================================
+
+  // tsgo parseList (parser.go:641-645, collapsing parseListIndex 609-638 minus
+  // the JSDoc-only reparse block).
+  #parseList<T extends Node>(kind: ParsingContext, parseElement: () => T): NodeArray<T> {
+    const pos = this.#nodePos();
+    const save = this.#parsingContexts;
+    this.#parsingContexts |= (1 << kind);
+    const list: T[] = [];
+    while (!this.#isListTerminator(kind)) {
+      if (this.#isListElement(kind, false)) {
+        list.push(parseElement());
+        continue;
+      }
+      if (this.#abortParsingListOrMoveToNextToken(kind)) {
+        break;
+      }
+    }
+    this.#parsingContexts = save;
+    return createNodeArray(list, pos, this.#nodePos());
+  }
+
+  // tsgo parseDelimitedList (parser.go:648-703). The parseElement-returns-nil arm
+  // (tsgo lines 657-661) is present-but-dormant: tsts element parsers throw rather
+  // than return undefined today, so the undefined branch never fires under the
+  // current throw model.
+  #parseDelimitedList<T extends Node>(kind: ParsingContext, parseElement: () => T | undefined): NodeArray<T> | undefined {
+    const pos = this.#nodePos();
+    const save = this.#parsingContexts;
+    this.#parsingContexts |= (1 << kind);
+    const list: T[] = [];
+    for (;;) {
+      if (this.#isListElement(kind, false)) {
+        const startPos = this.#nodePos();
+        const element = parseElement();
+        if (element === undefined) {
+          this.#parsingContexts = save;
+          return undefined;
+        }
+        list.push(element);
+        if (this.#consumeOptional(Kind.CommaToken)) {
+          continue;
+        }
+        if (this.#isListTerminator(kind)) {
+          break;
+        }
+        // No comma and not terminated: explicitly parse a comma for a good error.
+        if (this.#current().kind !== Kind.CommaToken && kind === PCEnumMembers) {
+          this.#parseErrorAtCurrentToken(Diagnostics.An_enum_member_name_must_be_followed_by_a_or);
+        } else {
+          this.#expect(Kind.CommaToken);
+        }
+        // Semicolon-as-delimiter recovery for object literals / import attributes.
+        if ((kind === PCObjectLiteralMembers || kind === PCImportAttributes)
+          && this.#current().kind === Kind.SemicolonToken
+          && !this.#hasPrecedingLineBreak()) {
+          this.#nextToken();
+        }
+        // Anti-hang: if we consumed no tokens, advance one to avoid an infinite loop.
+        if (startPos === this.#nodePos()) {
+          this.#nextToken();
+        }
+        continue;
+      }
+      if (this.#isListTerminator(kind)) {
+        break;
+      }
+      if (this.#abortParsingListOrMoveToNextToken(kind)) {
+        break;
+      }
+    }
+    this.#parsingContexts = save;
+    return createNodeArray(list, pos, this.#nodePos());
+  }
+
+  // tsgo parseBracketedList (parser.go:707-714). PROBLEM: tsts #expect THROWS on
+  // mismatch and returns a token (tsgo parseExpected returns bool). At every
+  // bracketed call site the opening is guaranteed present (callers guard), so
+  // #expect(opening) is behavior-identical on valid input; the false-branch
+  // createMissingList recovery is dormant. The closing #expect runs after the
+  // delimited list. closeWithGreaterThan threads through #expectGreaterThan for
+  // the type-arg/type-param `>` closer (single-`>` reScan-aware).
+  #parseBracketedList<T extends Node>(
+    kind: ParsingContext,
+    parseElement: () => T | undefined,
+    opening: Kind,
+    closing: Kind,
+  ): NodeArray<T> | undefined {
+    this.#expect(opening);
+    const result = this.#parseDelimitedList(kind, parseElement);
+    if (closing === Kind.GreaterThanToken) {
+      this.#expectGreaterThan();
+    } else {
+      this.#expect(closing);
+    }
+    return result;
+  }
+
+  // tsgo createMissingList (parser.go:720-724). tsts has no missingListNodes
+  // sentinel; an empty NodeArray at pos..pos is the faithful empty list.
+  #createMissingList<T extends Node>(): NodeArray<T> {
+    return createNodeArray<T>([], this.#nodePos(), this.#nodePos());
+  }
+
+  // tsgo abortParsingListOrMoveToNextToken (parser.go:727-734). #parsingContextErrors
+  // pushes a dormant diagnostic; on VALID input the enclosing loop never reaches abort.
+  #abortParsingListOrMoveToNextToken(kind: ParsingContext): boolean {
+    this.#parsingContextErrors(kind);
+    if (this.#isInSomeParsingContext()) {
+      return true;
+    }
+    this.#nextToken();
+    return false;
+  }
+
+  // tsgo isInSomeParsingContext (parser.go:737-749).
+  #isInSomeParsingContext(): boolean {
+    for (let kind = 0; kind < PCCount; kind++) {
+      if ((this.#parsingContexts & (1 << kind)) !== 0) {
+        if (this.#isListElement(kind, true) || this.#isListTerminator(kind)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // tsgo parsingContextErrors (parser.go:751-818). Present-but-dormant this wave:
+  // throws are NOT flipped, so this is only reachable via abort, which on the
+  // VALID-input gate corpus is never entered. Pushes onto the inert #diagnostics
+  // buffer.
+  #parsingContextErrors(context: ParsingContext): void {
+    switch (context) {
+      case PCSourceElements:
+        if (this.#current().kind === Kind.DefaultKeyword) {
+          this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, ["export"]);
+        } else {
+          this.#parseErrorAtCurrentToken(Diagnostics.Declaration_or_statement_expected);
+        }
+        return;
+      case PCBlockStatements:
+        this.#parseErrorAtCurrentToken(Diagnostics.Declaration_or_statement_expected);
+        return;
+      case PCSwitchClauses:
+        this.#parseErrorAtCurrentToken(Diagnostics.X_case_or_default_expected);
+        return;
+      case PCSwitchClauseStatements:
+        this.#parseErrorAtCurrentToken(Diagnostics.Statement_expected);
+        return;
+      case PCRestProperties:
+      case PCTypeMembers:
+        this.#parseErrorAtCurrentToken(Diagnostics.Property_or_signature_expected);
+        return;
+      case PCClassMembers:
+        this.#parseErrorAtCurrentToken(Diagnostics.Unexpected_token_A_constructor_method_accessor_or_property_was_expected);
+        return;
+      case PCEnumMembers:
+        this.#parseErrorAtCurrentToken(Diagnostics.Enum_member_expected);
+        return;
+      case PCHeritageClauseElement:
+        this.#parseErrorAtCurrentToken(Diagnostics.Expression_expected);
+        return;
+      case PCVariableDeclarations:
+        if (isKeyword(this.#current().kind)) {
+          this.#parseErrorAtCurrentToken(Diagnostics.X_0_is_not_allowed_as_a_variable_declaration_name, [tokenToString(this.#current().kind) ?? ""]);
+        } else {
+          this.#parseErrorAtCurrentToken(Diagnostics.Variable_declaration_expected);
+        }
+        return;
+      case PCObjectBindingElements:
+        this.#parseErrorAtCurrentToken(Diagnostics.Property_destructuring_pattern_expected);
+        return;
+      case PCArrayBindingElements:
+        this.#parseErrorAtCurrentToken(Diagnostics.Array_element_destructuring_pattern_expected);
+        return;
+      case PCArgumentExpressions:
+        this.#parseErrorAtCurrentToken(Diagnostics.Argument_expression_expected);
+        return;
+      case PCObjectLiteralMembers:
+        this.#parseErrorAtCurrentToken(Diagnostics.Property_assignment_expected);
+        return;
+      case PCArrayLiteralMembers:
+        this.#parseErrorAtCurrentToken(Diagnostics.Expression_or_comma_expected);
+        return;
+      case PCJSDocParameters:
+        this.#parseErrorAtCurrentToken(Diagnostics.Parameter_declaration_expected);
+        return;
+      case PCParameters:
+        if (isKeyword(this.#current().kind)) {
+          this.#parseErrorAtCurrentToken(Diagnostics.X_0_is_not_allowed_as_a_parameter_name, [tokenToString(this.#current().kind) ?? ""]);
+        } else {
+          this.#parseErrorAtCurrentToken(Diagnostics.Parameter_declaration_expected);
+        }
+        return;
+      case PCTypeParameters:
+        this.#parseErrorAtCurrentToken(Diagnostics.Type_parameter_declaration_expected);
+        return;
+      case PCTypeArguments:
+        this.#parseErrorAtCurrentToken(Diagnostics.Type_argument_expected);
+        return;
+      case PCTupleElementTypes:
+        this.#parseErrorAtCurrentToken(Diagnostics.Type_expected);
+        return;
+      case PCHeritageClauses:
+        this.#parseErrorAtCurrentToken(Diagnostics.Unexpected_token_expected);
+        return;
+      case PCImportOrExportSpecifiers:
+        if (this.#current().kind === Kind.FromKeyword) {
+          this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, ["}"]);
+        } else {
+          this.#parseErrorAtCurrentToken(Diagnostics.Identifier_expected);
+        }
+        return;
+      case PCJsxAttributes:
+      case PCJsxChildren:
+      case PCJSDocComment:
+        this.#parseErrorAtCurrentToken(Diagnostics.Identifier_expected);
+        return;
+      case PCImportAttributes:
+        this.#parseErrorAtCurrentToken(Diagnostics.Identifier_or_string_literal_expected);
+        return;
+      default:
+        // tsgo panic("Unhandled case in parsingContextErrors") (parser.go:816).
+        // Internal invariant violation (NOT a user parse error), so a plain Error
+        // is the faithful panic-equivalent — it is NOT one of the 28 ParseError
+        // throws and is unreachable (every defined context has an arm).
+        throw new Error("Unhandled case in parsingContextErrors");
+    }
+  }
+
+  // tsgo isListElement (parser.go:820-910). Faithful switch over all 26 contexts;
+  // JSX (13/14) and JSDoc (17/25) arms are present-but-unreachable.
+  #isListElement(parsingContext: ParsingContext, inErrorRecovery: boolean): boolean {
+    const token = this.#current().kind;
+    switch (parsingContext) {
+      case PCSourceElements:
+      case PCBlockStatements:
+      case PCSwitchClauseStatements:
+        return !(token === Kind.SemicolonToken && inErrorRecovery) && this.#isStartOfStatement();
+      case PCSwitchClauses:
+        return token === Kind.CaseKeyword || token === Kind.DefaultKeyword;
+      case PCTypeMembers:
+        return this.#lookAhead(() => this.#scanTypeMemberStart());
+      case PCClassMembers:
+        return this.#lookAhead(() => this.#scanClassMemberStart())
+          || (token === Kind.SemicolonToken && !inErrorRecovery);
+      case PCEnumMembers:
+        return token === Kind.OpenBracketToken || this.#isLiteralPropertyName();
+      case PCObjectLiteralMembers:
+        switch (token) {
+          case Kind.OpenBracketToken:
+          case Kind.AsteriskToken:
+          case Kind.DotDotDotToken:
+          case Kind.DotToken:
+            return true;
+          default:
+            return this.#isLiteralPropertyName();
+        }
+      case PCRestProperties:
+        return this.#isLiteralPropertyName();
+      case PCObjectBindingElements:
+        return token === Kind.OpenBracketToken
+          || token === Kind.DotDotDotToken
+          || this.#isLiteralPropertyName();
+      case PCImportAttributes:
+        return this.#isImportAttributeName();
+      case PCHeritageClauseElement:
+        if (token === Kind.OpenBraceToken) {
+          return this.#isValidHeritageClauseObjectLiteral();
+        }
+        if (!inErrorRecovery) {
+          return this.#isStartOfLeftHandSideExpression() && !this.#isHeritageClauseExtendsOrImplementsKeyword();
+        }
+        return this.#isIdentifier() && !this.#isHeritageClauseExtendsOrImplementsKeyword();
+      case PCVariableDeclarations:
+        return this.#isBindingIdentifierOrPrivateIdentifierOrPattern();
+      case PCArrayBindingElements:
+        return token === Kind.CommaToken
+          || token === Kind.DotDotDotToken
+          || this.#isBindingIdentifierOrPrivateIdentifierOrPattern();
+      case PCTypeParameters:
+        return token === Kind.InKeyword || token === Kind.ConstKeyword || this.#isIdentifier();
+      case PCArrayLiteralMembers:
+        if (token === Kind.CommaToken || token === Kind.DotToken) {
+          return true;
+        }
+        return token === Kind.DotDotDotToken || this.#isStartOfExpression();
+      case PCArgumentExpressions:
+        return token === Kind.DotDotDotToken || this.#isStartOfExpression();
+      case PCParameters:
+        return this.#isStartOfParameter(false);
+      case PCJSDocParameters:
+        return this.#isStartOfParameter(true);
+      case PCTypeArguments:
+      case PCTupleElementTypes:
+        return token === Kind.CommaToken || this.#isStartOfType(false);
+      case PCHeritageClauses:
+        return this.#isHeritageClause();
+      case PCImportOrExportSpecifiers:
+        if (token === Kind.FromKeyword && this.#lookAhead(() => {
+          this.#nextToken();
+          return this.#current().kind === Kind.StringLiteral;
+        })) {
+          return false;
+        }
+        if (token === Kind.StringLiteral) {
+          return true;
+        }
+        return tokenIsIdentifierOrKeyword(token);
+      case PCJsxAttributes:
+        return tokenIsIdentifierOrKeyword(token) || token === Kind.OpenBraceToken;
+      case PCJsxChildren:
+        return true;
+      case PCJSDocComment:
+        return true;
+      default:
+        // tsgo panic("Unhandled case in isListElement") (parser.go:909). Internal
+        // invariant violation (NOT a user parse error) — plain Error is the
+        // faithful panic-equivalent; NOT one of the 28 ParseError throws.
+        throw new Error("Unhandled case in isListElement");
+    }
+  }
+
+  // tsgo isListTerminator (parser.go:912-956).
+  #isListTerminator(kind: ParsingContext): boolean {
+    const token = this.#current().kind;
+    if (token === Kind.EndOfFile) {
+      return true;
+    }
+    switch (kind) {
+      case PCBlockStatements:
+      case PCSwitchClauses:
+      case PCTypeMembers:
+      case PCClassMembers:
+      case PCEnumMembers:
+      case PCObjectLiteralMembers:
+      case PCObjectBindingElements:
+      case PCImportOrExportSpecifiers:
+      case PCImportAttributes:
+        return token === Kind.CloseBraceToken;
+      case PCSwitchClauseStatements:
+        return token === Kind.CloseBraceToken || token === Kind.CaseKeyword || token === Kind.DefaultKeyword;
+      case PCHeritageClauseElement:
+        return token === Kind.OpenBraceToken || token === Kind.ExtendsKeyword || token === Kind.ImplementsKeyword;
+      case PCVariableDeclarations:
+        return this.#canParseSemicolon()
+          || token === Kind.InKeyword
+          || token === Kind.OfKeyword
+          || token === Kind.EqualsGreaterThanToken;
+      case PCTypeParameters:
+        return token === Kind.GreaterThanToken
+          || token === Kind.OpenParenToken
+          || token === Kind.OpenBraceToken
+          || token === Kind.ExtendsKeyword
+          || token === Kind.ImplementsKeyword;
+      case PCArgumentExpressions:
+        return token === Kind.CloseParenToken || token === Kind.SemicolonToken;
+      case PCArrayLiteralMembers:
+      case PCTupleElementTypes:
+      case PCArrayBindingElements:
+        return token === Kind.CloseBracketToken;
+      case PCJSDocParameters:
+      case PCParameters:
+      case PCRestProperties:
+        return token === Kind.CloseParenToken || token === Kind.CloseBracketToken;
+      case PCTypeArguments:
+        return token !== Kind.CommaToken;
+      case PCHeritageClauses:
+        return token === Kind.OpenBraceToken || token === Kind.CloseBraceToken;
+      case PCJsxAttributes:
+        return token === Kind.GreaterThanToken || token === Kind.SlashToken;
+      case PCJsxChildren:
+        return token === Kind.LessThanToken && this.#lookAhead(() => {
+          this.#nextToken();
+          return this.#current().kind === Kind.SlashToken;
+        });
+      default:
+        return false;
+    }
   }
 
   #finishNode<T extends Node>(node: T, pos: number): T {
@@ -3200,6 +4274,60 @@ function hasModifier(modifiers: NodeArray<ModifierLike>, kind: Kind): boolean {
 
 function isIdentifierNameKind(kind: Kind): boolean {
   return kind === Kind.Identifier || (kind >= Kind.FirstKeyword && kind <= Kind.LastKeyword);
+}
+
+// M3 3b-list-model: faithful 1:1 port of tsgo ast.IsModifierKind
+// (ast_generated.go:9657-9663). NOTE: distinct from the parser's `modifierKinds`
+// Set above (that Set drives #parseModifiers and omits Const/Default/In/Out). This
+// is the broader grammar predicate consumed by the start-of predicate layer.
+function isModifierKind(kind: Kind): boolean {
+  switch (kind) {
+    case Kind.AbstractKeyword:
+    case Kind.AccessorKeyword:
+    case Kind.AsyncKeyword:
+    case Kind.ConstKeyword:
+    case Kind.DeclareKeyword:
+    case Kind.DefaultKeyword:
+    case Kind.ExportKeyword:
+    case Kind.InKeyword:
+    case Kind.PrivateKeyword:
+    case Kind.ProtectedKeyword:
+    case Kind.PublicKeyword:
+    case Kind.ReadonlyKeyword:
+    case Kind.OutKeyword:
+    case Kind.OverrideKeyword:
+    case Kind.StaticKeyword:
+      return true;
+    default:
+      return false;
+  }
+}
+
+// M3 3b-list-model: faithful 1:1 port of tsgo ast.IsKeyword (utilities.go:4068-4070):
+// FirstKeyword..LastKeyword inclusive. (The accessors.ts isKeywordKind uses a
+// DIFFERENT, narrower range and is NOT the faithful predicate; this local one is.)
+function isKeyword(kind: Kind): boolean {
+  return kind >= Kind.FirstKeyword && kind <= Kind.LastKeyword;
+}
+
+// M3 3b-list-model: faithful port of tsgo ast.IsClassMemberModifier
+// (utilities.go:2960-2967): IsParameterPropertyModifier (public/private/protected/
+// readonly/override per ModifierFlagsParameterPropertyModifier, modifierflags.go:43-45)
+// || static || override || accessor. Override appears via both arms; the union is
+// {public, private, protected, readonly, override, static, accessor}.
+function isClassMemberModifier(kind: Kind): boolean {
+  switch (kind) {
+    case Kind.PublicKeyword:
+    case Kind.PrivateKeyword:
+    case Kind.ProtectedKeyword:
+    case Kind.ReadonlyKeyword:
+    case Kind.OverrideKeyword:
+    case Kind.StaticKeyword:
+    case Kind.AccessorKeyword:
+      return true;
+    default:
+      return false;
+  }
 }
 
 function isContextualExpressionIdentifierKind(kind: Kind): boolean {
