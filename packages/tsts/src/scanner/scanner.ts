@@ -1,4 +1,5 @@
 import { Kind, KindNames } from "../ast/index.js";
+import type { JsxTokenSyntaxKind } from "../ast/index.js";
 import { LanguageVariant } from "../core/languagevariant.js";
 import type { DiagnosticMessage } from "../diagnostics/types.js";
 import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
@@ -8,6 +9,7 @@ import {
   isHexDigit as isHexDigitCode,
   isLineBreak as isLineBreakCode,
   isOctalDigit as isOctalDigitCode,
+  isWhiteSpaceLike,
   isWhiteSpaceSingleLine,
 } from "../stringutil/util.js";
 import { fromString as jsnumFromString, numberToString as jsnumToString } from "../jsnum/string.js";
@@ -22,6 +24,7 @@ import {
   isConflictMarkerTrivia,
   scanConflictMarkerTrivia,
 } from "./trivia.js";
+import { tokenIsIdentifierOrKeyword } from "./utilities.js";
 import { TokenFlags } from "./token-flags.js";
 import type { CommentDirective, TokenFlags as TokenFlagsType } from "./token-flags.js";
 
@@ -632,6 +635,35 @@ const EscapeSequenceScanningFlags = {
   AllowExtendedUnicodeEscape: (1 << 0) | (1 << 4),
 } as const;
 
+// regularExpressionFlags — faithful to regexp.go:16-41 (NO enum). Only the bits
+// the reScanSlashToken flag-error loop needs (the deep regExpParser validation
+// path of scanner.go:1171-1192 is DEFERRED — see reScanSlashToken below).
+const regularExpressionFlags = {
+  None: 0,
+  HasIndices: 1 << 0, // d
+  Global: 1 << 1, // g
+  IgnoreCase: 1 << 2, // i
+  Multiline: 1 << 3, // m
+  DotAll: 1 << 4, // s
+  Unicode: 1 << 5, // u
+  UnicodeSets: 1 << 6, // v
+  Sticky: 1 << 7, // y
+  // AnyUnicodeMode = Unicode | UnicodeSets
+  AnyUnicodeMode: (1 << 5) | (1 << 6),
+} as const;
+
+// charCodeToRegExpFlag — faithful to regexp.go:33-42 (keyed by char code).
+const charCodeToRegExpFlag: ReadonlyMap<number, number> = new Map<number, number>([
+  [0x64 /* d */, regularExpressionFlags.HasIndices],
+  [0x67 /* g */, regularExpressionFlags.Global],
+  [0x69 /* i */, regularExpressionFlags.IgnoreCase],
+  [0x6d /* m */, regularExpressionFlags.Multiline],
+  [0x73 /* s */, regularExpressionFlags.DotAll],
+  [0x75 /* u */, regularExpressionFlags.Unicode],
+  [0x76 /* v */, regularExpressionFlags.UnicodeSets],
+  [0x79 /* y */, regularExpressionFlags.Sticky],
+]);
+
 /**
  * ErrorCallback — faithful to scanner.go:34. Optional, threaded so error sites
  * (and the flags they set, e.g. Unterminated) are preserved without dropping.
@@ -772,6 +804,22 @@ export interface LiveScanner {
   setText(text: string, start?: number, length?: number): void;
   getText(): string;
   setLanguageVariant(variant: LanguageVariant): void;
+  // reScan* family (scanner.go:996-1226) — re-tokenize the current token.
+  reScanLessThanToken(): Kind;
+  reScanGreaterThanToken(): Kind;
+  reScanTemplateToken(isTaggedTemplate: boolean): Kind;
+  reScanTemplateHeadOrNoSubstitutionTemplate(): Kind;
+  reScanAsteriskEqualsToken(): Kind;
+  reScanSlashToken(reportErrors?: boolean): Kind;
+  reScanHashToken(): Kind;
+  reScanQuestionToken(): Kind;
+  reScanInvalidIdentifier(): Kind;
+  // JSX scan modes (scanner.go:1204-1350).
+  scanJsxToken(): JsxTokenSyntaxKind;
+  reScanJsxToken(allowMultilineJsxText?: boolean): JsxTokenSyntaxKind;
+  scanJsxIdentifier(): Kind;
+  scanJsxAttributeValue(): Kind;
+  reScanJsxAttributeValue(): Kind;
 }
 
 export function createLiveScanner(text: string, options?: LiveScannerOptions): LiveScanner {
@@ -1977,6 +2025,395 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
     return scan();
   }
 
+  // -------------------------------------------------------------------------
+  // reScan* family (scanner.go:996-1226) — parser-requested re-tokenization of
+  // the CURRENT token. Each MUTATES the shared ScannerState in place and
+  // returns state.token, re-reading from state.tokenStart (or fullStartPos for
+  // JSX) via the existing char()/charAt()/charAndSize() cursor. No speculation.
+  // -------------------------------------------------------------------------
+
+  // scanner.go:996-1002. Splits a `<<` back into a single `<`.
+  function reScanLessThanToken(): Kind {
+    if (state.token === Kind.LessThanLessThanToken) {
+      state.pos = state.tokenStart + 1;
+      state.token = Kind.LessThanToken;
+    }
+    return state.token;
+  }
+
+  // scanner.go:1004-1029. Splits a `>` token forward into >>, >>>, >=, >>=, >>>=.
+  function reScanGreaterThanToken(): Kind {
+    if (state.token === Kind.GreaterThanToken) {
+      state.pos = state.tokenStart + 1;
+      if (char() === 0x3e /* > */) {
+        if (charAt(1) === 0x3e /* > */) {
+          if (charAt(2) === 0x3d /* = */) {
+            state.pos += 3;
+            state.token = Kind.GreaterThanGreaterThanGreaterThanEqualsToken;
+          } else {
+            state.pos += 2;
+            state.token = Kind.GreaterThanGreaterThanGreaterThanToken;
+          }
+        } else if (charAt(1) === 0x3d /* = */) {
+          state.pos += 2;
+          state.token = Kind.GreaterThanGreaterThanEqualsToken;
+        } else {
+          state.pos++;
+          state.token = Kind.GreaterThanGreaterThanToken;
+        }
+      } else if (char() === 0x3d /* = */) {
+        state.pos++;
+        state.token = Kind.GreaterThanEqualsToken;
+      }
+    }
+    return state.token;
+  }
+
+  // scanner.go:1031-1035. Re-reads a template continuation/start from tokenStart
+  // so a `}`-started TemplateMiddle/Tail or a backtick head/no-substitution is
+  // rescanned with the correct head/tail kind.
+  function reScanTemplateToken(isTaggedTemplate: boolean): Kind {
+    state.pos = state.tokenStart;
+    state.token = scanTemplateAndSetTokenValue(!isTaggedTemplate);
+    return state.token;
+  }
+
+  // scanner.go:1037-1044. tsgo PANICS if the current token is not `*=`; ported
+  // as a thrown Error to stay faithful (NOT the unconditional native-preview
+  // form). Splits `*=` into `=`.
+  function reScanAsteriskEqualsToken(): Kind {
+    if (state.token !== Kind.AsteriskEqualsToken) {
+      throw new Error("'ReScanAsteriskEqualsToken' should only be called on a '*='");
+    }
+    state.pos = state.tokenStart + 1;
+    state.token = Kind.EqualsToken;
+    return state.token;
+  }
+
+  // scanner.go:1046-1202. Re-reads a `/` or `/=` as a regular expression
+  // literal. Ports the simple body + recovery + flag-error path. The heavyweight
+  // regExpParser deep-validation sub-branch (scanner.go:1171-1192, depends on
+  // internal/scanner/regexp.go which is NOT ported in wave 4a) is DEFERRED: the
+  // parser only ever calls ReScanSlashToken() with no args (reportErrors=false),
+  // so the produced token kind/pos/tokenValue is identical without it.
+  function reScanSlashToken(reportErrors?: boolean): Kind {
+    const shouldReportErrors = reportErrors === true;
+    if (state.token === Kind.SlashToken || state.token === Kind.SlashEqualsToken) {
+      // Quickly get to the end of regex such that we know the flags.
+      const startOfRegExpBody = state.tokenStart + 1;
+      let p = startOfRegExpBody;
+      let inEscape = false;
+      // Although nested character classes are allowed in Unicode Sets mode, an
+      // unescaped slash is invalid even in a character class in any Unicode mode
+      // (see scanner.go:1054-1062). We must not handle nested character classes
+      // in the first pass.
+      let inCharacterClass = false;
+      for (;;) {
+        // EOF or newline => unterminated regex; report and return what we have.
+        if (p >= config.end) {
+          state.tokenFlags |= TokenFlags.Unterminated;
+          break;
+        }
+        const ch = config.text.charCodeAt(p);
+        if (isLineBreakCode(ch)) {
+          state.tokenFlags |= TokenFlags.Unterminated;
+          break;
+        } else if (inEscape) {
+          // Parsing an escape character; reset the flag and advance.
+          inEscape = false;
+        } else if (ch === 0x2f /* / */ && !inCharacterClass) {
+          // A slash within a character class is permissible, but in general it
+          // signals the end of the regexp literal.
+          break;
+        } else if (ch === 0x5b /* [ */) {
+          inCharacterClass = true;
+        } else if (ch === 0x5c /* \ */) {
+          inEscape = true;
+        } else if (ch === 0x5d /* ] */) {
+          inCharacterClass = false;
+        }
+        p++;
+      }
+
+      const endOfRegExpBody = p;
+      if ((state.tokenFlags & TokenFlags.Unterminated) !== 0) {
+        // Search for the nearest unbalanced bracket for better recovery. Since
+        // the expression is invalid anyway, take nested square brackets into
+        // consideration for the best guess (scanner.go:1104-1136).
+        p = startOfRegExpBody;
+        inEscape = false;
+        let characterClassDepth = 0;
+        let inDecimalQuantifier = false;
+        let groupDepth = 0;
+        for (; p < endOfRegExpBody;) {
+          const ch = config.text.charCodeAt(p);
+          if (inEscape) {
+            inEscape = false;
+          } else if (ch === 0x5c /* \ */) {
+            inEscape = true;
+          } else if (ch === 0x5b /* [ */) {
+            characterClassDepth++;
+          } else if (ch === 0x5d /* ] */ && characterClassDepth !== 0) {
+            characterClassDepth--;
+          } else if (characterClassDepth === 0) {
+            if (ch === 0x7b /* { */) {
+              inDecimalQuantifier = true;
+            } else if (ch === 0x7d /* } */ && inDecimalQuantifier) {
+              inDecimalQuantifier = false;
+            } else if (!inDecimalQuantifier) {
+              if (ch === 0x28 /* ( */) {
+                groupDepth++;
+              } else if (ch === 0x29 /* ) */ && groupDepth !== 0) {
+                groupDepth--;
+              } else if (ch === 0x29 /* ) */ || ch === 0x5d /* ] */ || ch === 0x7d /* } */) {
+                // Unbalanced bracket outside a character class: treat this
+                // position as the end of regex.
+                break;
+              }
+            }
+          }
+          p++;
+        }
+        // Whitespace and semicolons at the end are not likely part of the regex.
+        for (; p > startOfRegExpBody;) {
+          const last = config.text.codePointAt(p - 1)!;
+          const size = last > 0xffff ? 2 : 1;
+          if (isWhiteSpaceLike(last) || last === 0x3b /* ; */) {
+            p -= size;
+          } else {
+            break;
+          }
+        }
+        errorAt(Diagnostics.Unterminated_regular_expression_literal, state.tokenStart, p - state.tokenStart);
+      } else {
+        // Consume the slash character.
+        p++;
+        let regExpFlagsValue = regularExpressionFlags.None;
+        for (; p < config.end;) {
+          const cp = config.text.codePointAt(p)!;
+          const size = cp > 0xffff ? 2 : 1;
+          if (!isIdentifierPartCodePoint(cp, config.languageVariant)) {
+            break;
+          }
+          if (shouldReportErrors) {
+            const flag = charCodeToRegExpFlag.get(cp);
+            if (flag === undefined) {
+              errorAt(Diagnostics.Unknown_regular_expression_flag, p, size);
+            } else if ((regExpFlagsValue & flag) !== 0) {
+              errorAt(Diagnostics.Duplicate_regular_expression_flag, p, size);
+            } else if (
+              ((regExpFlagsValue | flag) & regularExpressionFlags.AnyUnicodeMode) === regularExpressionFlags.AnyUnicodeMode
+            ) {
+              errorAt(
+                Diagnostics.The_Unicode_u_flag_and_the_Unicode_Sets_v_flag_cannot_be_set_simultaneously,
+                p,
+                size,
+              );
+            } else {
+              regExpFlagsValue |= flag;
+              // checkRegularExpressionFlagAvailability needs languageVersion(),
+              // which the LiveScanner has no script-target for — that
+              // availability check is part of the DEFERRED deep-validation.
+            }
+          }
+          p += size;
+        }
+        // DEFERRED: the regExpParser.run() deep-validation sub-branch
+        // (scanner.go:1171-1192) is not ported in wave 4a; the parser path
+        // (reportErrors=false) never reaches it.
+      }
+
+      state.pos = p;
+      state.tokenValue = config.text.slice(state.tokenStart, state.pos);
+      state.token = Kind.RegularExpressionLiteral;
+    }
+    return state.token;
+  }
+
+  // scanner.go:1211-1217. Splits a private identifier back into a `#` token.
+  function reScanHashToken(): Kind {
+    if (state.token === Kind.PrivateIdentifier) {
+      state.pos = state.tokenStart + 1;
+      state.token = Kind.HashToken;
+    }
+    return state.token;
+  }
+
+  // scanner.go:1219-1226. tsgo PANICS if the current token is not `??`; ported
+  // as a thrown Error to stay faithful. Splits `??` into `?`.
+  function reScanQuestionToken(): Kind {
+    if (state.token !== Kind.QuestionQuestionToken) {
+      throw new Error("'reScanQuestionToken' should only be called on a '??'");
+    }
+    state.pos = state.tokenStart + 1;
+    state.token = Kind.QuestionToken;
+    return state.token;
+  }
+
+  // Strada-parity (NOT in tsgo scanner.go) — ported from
+  // scanner.native-preview.ts:2015-2025. Re-reads from fullStartPos and tries a
+  // plain identifier scan; on failure advances one code unit, leaving Unknown.
+  function reScanInvalidIdentifier(): Kind {
+    state.pos = state.fullStartPos;
+    state.tokenStart = state.fullStartPos;
+    state.tokenFlags = TokenFlags.None;
+    if (scanIdentifier(0)) {
+      state.token = getIdentifierToken(state.tokenValue);
+      return state.token;
+    }
+    const cs = charAndSize();
+    state.pos += cs.size;
+    return state.token; // Still Kind.Unknown
+  }
+
+  // Strada-parity (NOT in tsgo scanner.go) — ported from
+  // scanner.native-preview.ts:2207-2210. Identical body to
+  // reScanTemplateToken(false).
+  function reScanTemplateHeadOrNoSubstitutionTemplate(): Kind {
+    state.pos = state.tokenStart;
+    state.token = scanTemplateAndSetTokenValue(true /*shouldEmitInvalidEscapeError*/);
+    return state.token;
+  }
+
+  // -------------------------------------------------------------------------
+  // JSX scan modes (scanner.go:1204-1350) — also MUTATE ScannerState in place.
+  // -------------------------------------------------------------------------
+
+  // scanner.go:1232-1297. Internal worker for scanJsxToken/reScanJsxToken.
+  function scanJsxTokenEx(allowMultilineJsxText: boolean): JsxTokenSyntaxKind {
+    state.fullStartPos = state.pos;
+    state.tokenStart = state.pos;
+    const ch = char();
+    if (ch < 0) {
+      state.token = Kind.EndOfFile;
+    } else if (ch === 0x3c /* < */) {
+      if (charAt(1) === 0x2f /* / */) {
+        state.pos += 2;
+        state.token = Kind.LessThanSlashToken;
+      } else {
+        state.pos++;
+        state.token = Kind.LessThanToken;
+      }
+    } else if (ch === 0x7b /* { */) {
+      state.pos++;
+      state.token = Kind.OpenBraceToken;
+    } else {
+      // First non-whitespace character on this line. The initial value 0 is
+      // special: it means "we still want leading whitespace" (scanner.go:1252).
+      let firstNonWhitespace = 0;
+      for (;;) {
+        const cs = charAndSize();
+        if (cs.size === 0 || cs.ch === 0x7b /* { */) {
+          break;
+        }
+        if (cs.ch === 0x3c /* < */) {
+          if (isConflictMarkerTrivia(config.text, state.pos)) {
+            state.pos = scanConflictMarkerTrivia(config.text, state.pos, onError);
+            state.token = Kind.ConflictMarkerTrivia;
+            return state.token;
+          }
+          break;
+        }
+        if (cs.ch === 0x3e /* > */) {
+          errorAt(Diagnostics.Unexpected_token_Did_you_mean_or_gt, state.pos, 1);
+        } else if (cs.ch === 0x7d /* } */) {
+          errorAt(Diagnostics.Unexpected_token_Did_you_mean_or_rbrace, state.pos, 1);
+        }
+        // If firstNonWhitespace is 0 we have only seen whitespace so far; a
+        // line break means we ignore that leading whitespace (scanner.go:1273).
+        if (isLineBreakCode(cs.ch) && firstNonWhitespace === 0) {
+          firstNonWhitespace = -1;
+        } else if (!allowMultilineJsxText && isLineBreakCode(cs.ch) && firstNonWhitespace > 0) {
+          // Stop JsxText on each line during formatting.
+          break;
+        } else if (!isWhiteSpaceLike(cs.ch)) {
+          firstNonWhitespace = state.pos;
+        }
+        state.pos += cs.size;
+      }
+      state.tokenValue = config.text.slice(state.fullStartPos, state.pos);
+      state.token = Kind.JsxText;
+      if (firstNonWhitespace === -1) {
+        state.token = Kind.JsxTextAllWhiteSpaces;
+      }
+    }
+    return state.token as JsxTokenSyntaxKind;
+  }
+
+  // scanner.go:1228-1230.
+  function scanJsxToken(): JsxTokenSyntaxKind {
+    return scanJsxTokenEx(true /*allowMultilineJsxText*/);
+  }
+
+  // scanner.go:1204-1209. Re-reads from fullStartPos (the trivia-inclusive
+  // start), not tokenStart.
+  function reScanJsxToken(allowMultilineJsxText?: boolean): JsxTokenSyntaxKind {
+    const allow = allowMultilineJsxText ?? true;
+    state.pos = state.fullStartPos;
+    state.tokenStart = state.fullStartPos;
+    state.token = scanJsxTokenEx(allow);
+    return state.token as JsxTokenSyntaxKind;
+  }
+
+  // scanner.go:1300-1325. Scans a JSX identifier; these allow dashes and a
+  // single `:`. MUTATES the visible token in place (no advance to a new token);
+  // callers read pos/tokenValue after.
+  function scanJsxIdentifier(): Kind {
+    if (tokenIsIdentifierOrKeyword(state.token)) {
+      for (;;) {
+        const ch = char();
+        if (ch < 0) {
+          break;
+        }
+        if (ch === 0x2d /* - */) {
+          state.tokenValue += "-";
+          state.pos++;
+          continue;
+        }
+        const oldPos = state.pos;
+        // Reuse scanIdentifierParts so unicode escapes are handled.
+        state.tokenValue += scanIdentifierParts();
+        if (state.pos === oldPos) {
+          break;
+        }
+      }
+      state.token = getIdentifierToken(state.tokenValue);
+    }
+    return state.token;
+  }
+
+  // scanner.go:1327-1344. Skips leading whitespace (tsgo behavior; native
+  // preview does NOT skip — we follow tsgo, the source of truth), then scans a
+  // quoted attribute string, or re-tokenizes via scan() for anything else.
+  function scanJsxAttributeValue(): Kind {
+    state.fullStartPos = state.pos;
+    // Skip whitespace between '=' and the value so tokenStart lands on the
+    // opening quote, not on trivia.
+    for (;;) {
+      const cs = charAndSize();
+      if (!(cs.size > 0 && isWhiteSpaceLike(cs.ch))) {
+        break;
+      }
+      state.pos += cs.size;
+    }
+    state.tokenStart = state.pos;
+    const ch = char();
+    if (ch === 0x22 /* " */ || ch === 0x27 /* ' */) {
+      state.tokenValue = scanString(true /*jsxAttributeString*/);
+      state.token = Kind.StringLiteral;
+      return state.token;
+    }
+    // If this scans anything other than `{`, it's a parse error.
+    return scan();
+  }
+
+  // scanner.go:1346-1350.
+  function reScanJsxAttributeValue(): Kind {
+    state.pos = state.fullStartPos;
+    state.tokenStart = state.fullStartPos;
+    return scanJsxAttributeValue();
+  }
+
   // --- accessors -----------------------------------------------------------
   return {
     scan,
@@ -2039,5 +2476,19 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
     setLanguageVariant: (variant: LanguageVariant): void => {
       config.languageVariant = variant;
     },
+    reScanLessThanToken,
+    reScanGreaterThanToken,
+    reScanTemplateToken,
+    reScanTemplateHeadOrNoSubstitutionTemplate,
+    reScanAsteriskEqualsToken,
+    reScanSlashToken,
+    reScanHashToken,
+    reScanQuestionToken,
+    reScanInvalidIdentifier,
+    scanJsxToken,
+    reScanJsxToken,
+    scanJsxIdentifier,
+    scanJsxAttributeValue,
+    reScanJsxAttributeValue,
   };
 }
