@@ -20,12 +20,16 @@ import type {
 import type {
   BinaryExpression,
   ForInOrOfStatement,
+  Identifier,
+  JsxNamespacedName,
+  JsxTagNameExpression,
   LabeledStatement,
   ModifiersBase,
   ParenthesizedExpression,
   ParenthesizedTypeNode,
   PostfixUnaryExpression,
   PrefixUnaryExpression,
+  PropertyAccessExpression,
   PropertyAssignment,
   ShorthandPropertyAssignment,
 } from "./generated/nodes.js";
@@ -328,6 +332,42 @@ export function isCommaExpression(node: Node): boolean {
 
 export function isCommaSequence(node: Node): boolean {
   return isCommaExpression(node);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JSX tag-name structural equivalence
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Faithful 1:1 port of tsgo ast.TagNamesAreEquivalent (ast/utilities.go ~4400).
+// STRUCTURAL compare of two JSX tag-name expressions — NOT a stringification /
+// name-text heuristic. Used by the parser's JSX closing-tag mismatch check and the
+// mismatch restructure. Compares exactly the tsgo-compared forms: Identifier text,
+// `this` keyword (KeywordExpression with Kind.ThisKeyword), PropertyAccessExpression
+// (name text + recursive expression), and JsxNamespacedName (namespace + name text).
+export function tagNamesAreEquivalent(lhs: JsxTagNameExpression, rhs: JsxTagNameExpression): boolean {
+  if (lhs.kind !== rhs.kind) {
+    return false;
+  }
+  switch (lhs.kind) {
+    case Kind.Identifier:
+      return (lhs as Identifier).text === (rhs as Identifier).text;
+    case Kind.ThisKeyword:
+      return true;
+    case Kind.JsxNamespacedName:
+      return (lhs as JsxNamespacedName).namespace.text === (rhs as JsxNamespacedName).namespace.text
+        && (lhs as JsxNamespacedName).name.text === (rhs as JsxNamespacedName).name.text;
+    case Kind.PropertyAccessExpression:
+      return (lhs as PropertyAccessExpression).name.text === (rhs as PropertyAccessExpression).name.text
+        && tagNamesAreEquivalent(
+          (lhs as PropertyAccessExpression).expression as JsxTagNameExpression,
+          (rhs as PropertyAccessExpression).expression as JsxTagNameExpression,
+        );
+    default:
+      // tsgo panic("Unhandled case in TagNamesAreEquivalent"). A JsxTagNameExpression
+      // is only ever one of the four forms above; any other kind is an internal
+      // invariant violation (the faithful panic-equivalent is a thrown Error).
+      throw new Error("Unhandled case in tagNamesAreEquivalent");
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

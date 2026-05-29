@@ -359,7 +359,11 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
         state.pos += size;
         const next = charAndSize();
         size = next.size;
-        if (!isIdentifierPartCodePoint(next.ch, config.languageVariant)) {
+        // tsgo main identifier scan uses IsIdentifierPart (scanner.go:1530) =
+        // IsIdentifierPartEx(Standard) — it does NOT treat the JSX `-`/`:` as
+        // identifier parts here. JSX `-` is handled explicitly by ScanJsxIdentifier
+        // and JSX `:` by the parser, so the core token scan stays Standard.
+        if (!isIdentifierPartCodePoint(next.ch, LanguageVariant.Standard)) {
           state.tokenValue = config.text.slice(start, state.pos);
           if (next.ch === 0x5c /* \ */) {
             state.tokenValue += scanIdentifierParts();
@@ -372,17 +376,22 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
   }
 
   function scanIdentifierParts(): string {
+    // tsgo scanIdentifierParts (scanner.go:1543-1556) uses IsIdentifierPart =
+    // IsIdentifierPartEx(Standard) — NOT the JSX variant. So `-`/`:` are never absorbed
+    // into an identifier here; ScanJsxIdentifier handles `-` explicitly and the parser
+    // handles JSX `:`. (Passing config.languageVariant would wrongly swallow `ns:tag`'s
+    // `:` and a JSX tag's `-` into the identifier.)
     let sb = "";
     let start = state.pos;
     for (;;) {
       const cs = charAndSize();
-      if (isIdentifierPartCodePoint(cs.ch, config.languageVariant)) {
+      if (isIdentifierPartCodePoint(cs.ch, LanguageVariant.Standard)) {
         state.pos += cs.size;
         continue;
       }
       if (cs.ch === 0x5c /* \ */) {
         const escaped = peekUnicodeEscape();
-        if (escaped >= 0 && isIdentifierPartCodePoint(escaped, config.languageVariant)) {
+        if (escaped >= 0 && isIdentifierPartCodePoint(escaped, LanguageVariant.Standard)) {
           sb += config.text.slice(start, state.pos);
           sb += String.fromCodePoint(scanUnicodeEscape(true));
           start = state.pos;
@@ -652,7 +661,8 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
           (flags & EscapeSequenceScanningFlags.AnyUnicodeMode) !== 0
           || ((flags & EscapeSequenceScanningFlags.RegularExpression) !== 0
             && (flags & EscapeSequenceScanningFlags.AnnexB) === 0
-            && isIdentifierPartCodePoint(ch, config.languageVariant))
+            // tsgo uses IsIdentifierPart (Standard) here (scanner.go:1803).
+            && isIdentifierPartCodePoint(ch, LanguageVariant.Standard))
         ) {
           errorAt(Diagnostics.This_character_cannot_be_escaped_in_a_regular_expression, state.pos - 2, 2);
         }
@@ -1653,7 +1663,8 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
         for (; p < config.end;) {
           const cp = config.text.codePointAt(p)!;
           const size = cp > 0xffff ? 2 : 1;
-          if (!isIdentifierPartCodePoint(cp, config.languageVariant)) {
+          // tsgo uses IsIdentifierPart (Standard) for regex flags (scanner.go:1153).
+          if (!isIdentifierPartCodePoint(cp, LanguageVariant.Standard)) {
             break;
           }
           if (shouldReportErrors) {

@@ -71,6 +71,18 @@ import {
   createCallSignatureDeclaration,
   createConstructSignatureDeclaration,
   createIndexSignatureDeclaration,
+  createJsxAttribute,
+  createJsxAttributes,
+  createJsxClosingElement,
+  createJsxClosingFragment,
+  createJsxElement,
+  createJsxExpression,
+  createJsxFragment,
+  createJsxNamespacedName,
+  createJsxOpeningElement,
+  createJsxOpeningFragment,
+  createJsxSelfClosingElement,
+  createJsxSpreadAttribute,
   createKeywordExpression,
   createLabeledStatement,
   createLiteralTypeNode,
@@ -119,6 +131,7 @@ import {
   createThrowStatement,
   createToken,
   createTypeAliasDeclaration,
+  createTypeAssertion,
   createTypeLiteralNode,
   createTypeOfExpression,
   createTypeOperatorNode,
@@ -137,6 +150,10 @@ import {
   createWithStatement,
   isBinaryOperatorToken,
   isIdentifier,
+  isJsxElement,
+  isJsxNamespacedName,
+  isJsxOpeningElement,
+  tagNamesAreEquivalent,
   type BinaryOperator,
   type BinaryOperatorToken,
   type BindingName,
@@ -154,6 +171,18 @@ import {
   type ImportAttributeName,
   type ImportSpecifier,
   type ImportPhaseModifierSyntaxKind,
+  type JsxAttributeLike,
+  type JsxAttributeName,
+  type JsxAttributeValue,
+  type JsxChild,
+  type JsxClosingElement,
+  type JsxClosingFragment,
+  type JsxElement,
+  type JsxExpression,
+  type JsxOpeningElement,
+  type JsxOpeningFragment,
+  type JsxSelfClosingElement,
+  type JsxTagNameExpression,
   type KeywordTypeSyntaxKind,
   type LeftHandSideExpression,
   type ModifierSyntaxKind,
@@ -180,8 +209,8 @@ import {
   type TypeParameterDeclaration,
   type VariableDeclaration,
 } from "../ast/index.js";
-import { createLiveScanner, type LiveScanner, type ScannerState, type ScannedToken } from "../scanner/index.js";
-import { tokenIsIdentifierOrKeyword } from "../scanner/utilities.js";
+import { createLiveScanner, skipTrivia, TokenFlags, type LiveScanner, type ScannerState, type ScannedToken } from "../scanner/index.js";
+import { getTextOfNodeFromSourceText, tokenIsIdentifierOrKeyword } from "../scanner/utilities.js";
 import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
 import { format } from "../diagnostics/diagnostics.js";
 import type { Diagnostic, DiagnosticMessage } from "../diagnostics/types.js";
@@ -193,7 +222,7 @@ import type { Diagnostic, DiagnosticMessage } from "../diagnostics/types.js";
 // LanguageVariant mirror tsgo parser.getLanguageVariant (parser/utilities.go:11)
 // returning core.LanguageVariant (core/languagevariant.go).
 import { ScriptKind, getScriptKindFromFileName } from "../core/core.js";
-import { LanguageVariant, getLanguageVariant } from "./parser-utilities.js";
+import { LanguageVariant, getLanguageVariant, tokenIsIdentifierOrKeywordOrGreaterThan } from "./parser-utilities.js";
 
 export interface ParseSourceFileOptions {
   readonly fileName?: string;
@@ -1934,7 +1963,7 @@ export class Parser {
     if (precedence === 0 && this.#isArrowFunctionStart()) {
       return this.#parseArrowFunction();
     }
-    let left = this.#parseUnaryExpression();
+    let left = this.#parseUnaryExpressionOrHigher();
     while (true) {
       // wave 4b-swap: EXPRESSION-POSITION `>`-family via reScanGreaterThanToken
       // (tsgo parser.go:4582). The live scanner emits a single GreaterThanToken for
@@ -2089,11 +2118,50 @@ export class Parser {
     return this.#withSignatureContext(false, isAsync, () => this.#parseExpression());
   }
 
+  // tsgo isUpdateExpression (parser.go:4692-4700). Returns false ONLY for the
+  // simple-unary operators (+ - ~ ! delete typeof void await), and — for the
+  // LessThanToken — true exactly in the JSX variant (a leading `<` is then a JSX
+  // element, an UpdateExpression-level construct); in the Standard variant a leading
+  // `<` is a type assertion (a SimpleUnaryExpression), so this returns false.
+  #isUpdateExpression(): boolean {
+    switch (this.#current().kind) {
+      case Kind.PlusToken:
+      case Kind.MinusToken:
+      case Kind.TildeToken:
+      case Kind.ExclamationToken:
+      case Kind.DeleteKeyword:
+      case Kind.TypeOfKeyword:
+      case Kind.VoidKeyword:
+      case Kind.AwaitKeyword:
+        return false;
+      case Kind.LessThanToken:
+        return this.#languageVariant === LanguageVariant.JSX;
+      default:
+        return true;
+    }
+  }
+
+  // tsgo parseUnaryExpressionOrHigher (parser.go:4653-4689). Dispatch on
+  // #isUpdateExpression: an UpdateExpression-level construct (incl. a JSX-variant
+  // leading `<`) routes to #parsePostfixExpression (tsgo parseUpdateExpression);
+  // a SimpleUnaryExpression (a unary operator, or a Standard-variant leading `<`
+  // type assertion) routes to #parseUnaryExpression (tsgo parseSimpleUnaryExpression).
+  // The `**` exponentiation rest (tsgo 4661-4665) is handled by #parseExpression's
+  // precedence loop (binaryPrecedence carries AsteriskAsteriskToken).
+  #parseUnaryExpressionOrHigher(): Expression {
+    if (this.#isUpdateExpression()) {
+      return this.#parsePostfixExpression();
+    }
+    return this.#parseUnaryExpression();
+  }
+
   #parseUnaryExpression(): Expression {
+    // tsgo parseSimpleUnaryExpression (parser.go:5045-5072): the simple-unary arms.
     // tsgo parsePrefixUnaryExpression/parseDeleteExpression/parseTypeOfExpression/
     // parseVoidExpression/parseAwaitExpression: node start is the operator keyword/punct,
     // captured before consuming it. The NewKeyword case captures its pos inside
-    // #parseNewExpression.
+    // #parseNewExpression. `++`/`--` are NOT here (they are UpdateExpression-level,
+    // handled by #parsePostfixExpression — tsgo parseUpdateExpression:4704).
     const pos = this.#nodePos();
     const token = this.#current();
     switch (token.kind) {
@@ -2101,8 +2169,6 @@ export class Parser {
       case Kind.MinusToken:
       case Kind.TildeToken:
       case Kind.ExclamationToken:
-      case Kind.PlusPlusToken:
-      case Kind.MinusMinusToken:
         this.#advance();
         return this.#finishNode(createPrefixUnaryExpression(token.kind, this.#parseUnaryExpression()), pos);
       case Kind.NewKeyword:
@@ -2116,6 +2182,16 @@ export class Parser {
       case Kind.VoidKeyword:
         this.#advance();
         return this.#finishNode(createVoidExpression(this.#parseUnaryExpression()), pos);
+      case Kind.LessThanToken:
+        // tsgo parseSimpleUnaryExpression LessThanToken case (parser.go:5055-5064).
+        // Reached only when `<` follows a true unary operator (e.g. `+<foo>bar`) or
+        // is the simple-unary entry: in JSX this is a JSX element parsed with
+        // mustBeUnary=true (the binary recovery is INVALID in a unary context); in
+        // Standard it is a `< Type > expr` type assertion.
+        if (this.#languageVariant === LanguageVariant.JSX) {
+          return this.#parseJsxElementOrSelfClosingElementOrFragment(true /*inExpressionContext*/, -1 /*topInvalidNodePosition*/, undefined /*openingTag*/, true /*mustBeUnary*/);
+        }
+        return this.#parseTypeAssertion();
       case Kind.AwaitKeyword:
         this.#advance();
         return this.#finishNode(createAwaitExpression(this.#parseUnaryExpression()), pos);
@@ -2124,16 +2200,539 @@ export class Parser {
     }
   }
 
-  #parsePostfixExpression(): Expression {
-    // tsgo parseUpdateExpression: the postfix node start is the operand (LHS expression) start.
+  // tsgo parseTypeAssertion (parser.go:5117-5125): `< Type > unaryExpression` =>
+  // TypeAssertionExpression. The Standard-variant arm of the fused LessThanToken
+  // handling (tsgo debug.Asserts the variant is never JSX here). Reuses #parseType
+  // and recurses into #parseUnaryExpression for the asserted expression.
+  #parseTypeAssertion(): Expression {
     const pos = this.#nodePos();
+    this.#expect(Kind.LessThanToken);
+    const typeNode = this.#parseType();
+    this.#expect(Kind.GreaterThanToken);
+    const expression = this.#parseUnaryExpression();
+    return this.#finishNode(createTypeAssertion(typeNode, expression), pos);
+  }
+
+  #parsePostfixExpression(): Expression {
+    // tsgo parseUpdateExpression (parser.go:4702-4719): the postfix/update node start
+    // is the operand (LHS expression) start. Handles `++`/`--` PREFIX, the JSX-variant
+    // leading `<` (mustBeUnary=false — binary recovery IS allowed here), then a
+    // left-hand-side expression with an optional trailing `++`/`--`.
+    const pos = this.#nodePos();
+    const token = this.#current();
+    if (token.kind === Kind.PlusPlusToken || token.kind === Kind.MinusMinusToken) {
+      this.#advance();
+      return this.#finishNode(createPrefixUnaryExpression(token.kind, this.#parseLeftHandSideExpression()), pos);
+    }
+    if (this.#languageVariant === LanguageVariant.JSX && token.kind === Kind.LessThanToken && this.#lookAhead(() => this.#nextTokenIsIdentifierOrKeywordOrGreaterThan())) {
+      // tsgo parseUpdateExpression JSX arm (parser.go:4708-4711): a JSXElement is part
+      // of primaryExpression. One token of lookahead (nextTokenIsIdentifierOrKeyword
+      // OrGreaterThan) via the existing #lookAhead/#mark/#rewind primitive.
+      return this.#parseJsxElementOrSelfClosingElementOrFragment(true /*inExpressionContext*/, -1 /*topInvalidNodePosition*/, undefined /*openingTag*/, false /*mustBeUnary*/);
+    }
     const expression = this.#parseLeftHandSideExpression();
-    if (this.#current().kind === Kind.PlusPlusToken || this.#current().kind === Kind.MinusMinusToken) {
+    if ((this.#current().kind === Kind.PlusPlusToken || this.#current().kind === Kind.MinusMinusToken) && !this.#hasPrecedingLineBreak()) {
       const operator = this.#current().kind as Kind.PlusPlusToken | Kind.MinusMinusToken;
       this.#advance();
       return this.#finishNode(createPostfixUnaryExpression(expression, operator), pos);
     }
     return expression;
+  }
+
+  // tsgo nextTokenIsIdentifierOrKeywordOrGreaterThan (parser.go:4002-4004):
+  // tokenIsIdentifierOrKeywordOrGreaterThan(nextToken()). ONE token of lookahead.
+  // The caller wraps this in #lookAhead so the cursor + snapshot rewind.
+  #nextTokenIsIdentifierOrKeywordOrGreaterThan(): boolean {
+    this.#nextToken();
+    return tokenIsIdentifierOrKeywordOrGreaterThan(this.#current().kind);
+  }
+
+  // ==========================================================================
+  // M3 Stage-5a: JSX scanner-cadence wrappers (tsgo parser.go:4883-4896).
+  // tsgo writes `p.token = p.scanner.ScanJsxX()`. The faithful tsts equivalents
+  // call the JSX scanner method and refresh the #token snapshot DIRECTLY from the
+  // live scanner result — NOT via #nextToken (which calls the REGULAR scanner.scan()).
+  // ==========================================================================
+
+  // tsgo scanJsxText (parser.go:4883). ADVANCE wrapper: the current token (e.g. the
+  // `>` of an opening tag) is being consumed and the scanner re-positions to scan the
+  // following JSX text/`</`/`{`/`<`. Record the consumed token's end as #prevTokenEnd
+  // (so a following #finishNode covers it — identical bookkeeping to #nextToken, but
+  // driving the JSX scanner), then refresh #token from the JSX scan result.
+  #scanJsxText(): void {
+    this.#prevTokenEnd = this.#token.end;
+    const kind = this.#scanner.scanJsxToken();
+    this.#refreshTokenFromScanner(kind);
+  }
+
+  // tsgo scanJsxIdentifier (parser.go:4888). IN-PLACE re-scan: ScanJsxIdentifier
+  // MUTATES the current identifier/keyword token (appends `-`/identifier-parts) WITHOUT
+  // advancing to a new token — the subsequent parseIdentifierName* does the advance.
+  // So this is a REFRESH (no #prevTokenEnd perturbation), mirroring the reScan* sites.
+  #scanJsxIdentifier(): void {
+    const kind = this.#scanner.scanJsxIdentifier();
+    this.#refreshTokenFromScanner(kind);
+  }
+
+  // tsgo scanJsxAttributeValue (parser.go:4893). ADVANCE wrapper: the current `=`
+  // token is consumed and the scanner scans the value (a JSX-aware string, or `{`/`<`
+  // re-tokenized via the normal scanner). Record `=`'s end as #prevTokenEnd, then
+  // refresh #token from the JSX attribute-value scan result.
+  #scanJsxAttributeValue(): void {
+    this.#prevTokenEnd = this.#token.end;
+    const kind = this.#scanner.scanJsxAttributeValue();
+    this.#refreshTokenFromScanner(kind);
+  }
+
+  // tsgo reScanJsxToken (parser.go via p.scanner.ReScanJsxToken). IN-PLACE: re-reads
+  // the CURRENT token from its full-start as a JSX token (used at the top of the
+  // children loop). No #prevTokenEnd perturbation (it re-tokenizes in place).
+  #reScanJsxToken(allowMultilineJsxText: boolean): void {
+    const kind = this.#scanner.reScanJsxToken(allowMultilineJsxText);
+    this.#refreshTokenFromScanner(kind);
+  }
+
+  // ==========================================================================
+  // M3 Stage-5a: JSX element / fragment / attribute productions.
+  // Faithful 1:1 port of tsgo parser.go:4721-5043. Child-content productions
+  // (JsxText, {expr}, nested-element recursion) are DEFERRED to 5b — see
+  // #parseJsxChild below.
+  // ==========================================================================
+
+  // tsgo parseJsxElementOrSelfClosingElementOrFragment (parser.go:4721-4799). The top
+  // JSX driver. mustBeUnary is threaded from the two entry points: #parsePostfixExpression
+  // (parseUpdateExpression-equivalent) passes false; #parseUnaryExpression
+  // (parseSimpleUnaryExpression-equivalent) passes true.
+  #parseJsxElementOrSelfClosingElementOrFragment(
+    inExpressionContext: boolean,
+    topInvalidNodePosition: number,
+    openingTag: JsxOpeningElement | JsxOpeningFragment | undefined,
+    mustBeUnary: boolean,
+  ): Expression {
+    const pos = this.#nodePos();
+    const opening = this.#parseJsxOpeningOrSelfClosingElementOrOpeningFragment(inExpressionContext);
+    let result: Expression;
+    if (opening.kind === Kind.JsxOpeningElement) {
+      const openingElement = opening as JsxOpeningElement;
+      let children = this.#parseJsxChildren(openingElement);
+      let closingElement: JsxClosingElement;
+      const lastChild = children.length > 0 ? children[children.length - 1] : undefined;
+      if (
+        lastChild !== undefined
+        && isJsxElement(lastChild)
+        && !tagNamesAreEquivalent(lastChild.openingElement.tagName, lastChild.closingElement.tagName)
+        && tagNamesAreEquivalent(openingElement.tagName, lastChild.closingElement.tagName)
+      ) {
+        // tsgo (4730-4755): an unclosed JsxOpeningElement incorrectly parsed its parent's
+        // JsxClosingElement. Restructure (<div>(...<span>...</div>)) -> (<div>(...<span>...</>)</div>).
+        // The synthesized inner closing tag is zero-width at the discarded child's children end;
+        // explicit-end stamping via #finishNodeWithEnd (NO parent-pointer reset — tsts manages
+        // parents in the binder, not the parser, consistent with #finishNode).
+        const end = lastChild.children.end;
+        const missingIdentifier = this.#finishNodeWithEnd(createIdentifier(""), end, end);
+        const newClosingElement = this.#finishNodeWithEnd(createJsxClosingElement(missingIdentifier), end, end);
+        const newLast = this.#finishNodeWithEnd(
+          createJsxElement(lastChild.openingElement, lastChild.children, newClosingElement),
+          lastChild.openingElement.pos,
+          end,
+        );
+        const rebuilt = [...children.slice(0, children.length - 1), newLast];
+        children = createNodeArray(rebuilt as readonly JsxChild[], children.pos, newLast.end);
+        closingElement = lastChild.closingElement;
+      } else {
+        closingElement = this.#parseJsxClosingElement(openingElement, inExpressionContext);
+        if (!tagNamesAreEquivalent(openingElement.tagName, closingElement.tagName)) {
+          if (openingTag !== undefined && isJsxOpeningElement(openingTag) && tagNamesAreEquivalent(closingElement.tagName, openingTag.tagName)) {
+            // opening incorrectly matched with its parent's closing -- put error on opening
+            this.#parseErrorAtRange(openingElement.tagName.pos, openingElement.tagName.end, Diagnostics.JSX_element_0_has_no_corresponding_closing_tag, [getTextOfNodeFromSourceText(this.#sourceText, openingElement.tagName, false)]);
+          } else {
+            // other opening/closing mismatches -- put error on closing
+            this.#parseErrorAtRange(closingElement.tagName.pos, closingElement.tagName.end, Diagnostics.Expected_corresponding_JSX_closing_tag_for_0, [getTextOfNodeFromSourceText(this.#sourceText, openingElement.tagName, false)]);
+          }
+        }
+      }
+      result = this.#finishNode(createJsxElement(openingElement, children, closingElement), pos);
+    } else if (opening.kind === Kind.JsxOpeningFragment) {
+      const openingFragment = opening as JsxOpeningFragment;
+      const children = this.#parseJsxChildren(openingFragment);
+      const closingFragment = this.#parseJsxClosingFragment(inExpressionContext);
+      result = this.#finishNode(createJsxFragment(openingFragment, children, closingFragment), pos);
+    } else if (opening.kind === Kind.JsxSelfClosingElement) {
+      // Nothing else to do for self-closing elements.
+      result = opening;
+    } else {
+      // tsgo panic("Unhandled case in parseJsxElementOrSelfClosingElementOrFragment").
+      throw new Error("Unhandled case in parseJsxElementOrSelfClosingElementOrFragment");
+    }
+    // tsgo (4778-4797): in an expression context (not a unary context), a following `<`
+    // means the user wrote invalid sibling-element JSX like `<div></div><div></div>`.
+    // Speculatively parse the second element and wrap both in a synthetic comma
+    // BinaryExpression so the error is better localized. Not done in a unary context
+    // (the binary expression would not be a valid UnaryExpression).
+    if (!mustBeUnary && inExpressionContext && this.#current().kind === Kind.LessThanToken) {
+      const topBadPos = topInvalidNodePosition < 0 ? result.pos : topInvalidNodePosition;
+      const invalidElement = this.#parseJsxElementOrSelfClosingElementOrFragment(true /*inExpressionContext*/, topBadPos, undefined, false);
+      const operatorToken = createToken(Kind.CommaToken);
+      operatorToken.pos = invalidElement.pos;
+      operatorToken.end = invalidElement.pos;
+      this.#parseErrorAt(skipTrivia(this.#sourceText, topBadPos), invalidElement.end, Diagnostics.JSX_expressions_must_have_one_parent_element);
+      result = this.#finishNodeWithEnd(createBinaryExpression(undefined, result, undefined, operatorToken as BinaryOperatorToken, invalidElement), pos, invalidElement.end);
+    }
+    return result;
+  }
+
+  // tsgo parseJsxChildren (parser.go:4801-4822). Custom loop (NOT #parseList): set the
+  // PCJsxChildren bit, reScanJsxToken(true) at the top of each iteration, parseJsxChild,
+  // break when it returns undefined, restore the bit, build the child NodeList.
+  // 5a NOTE: the CHILD-CONTENT arms (JsxText, {expr}, nested `<`) live in 5b — see
+  // #parseJsxChild. In 5a the loop only ever sees TERMINATION tokens for the probe
+  // inputs (empty `<div></div>` / `<></>`), producing an empty child list.
+  #parseJsxChildren(openingTag: JsxOpeningElement | JsxOpeningFragment): NodeArray<JsxChild> {
+    const pos = this.#nodePos();
+    const save = this.#parsingContexts;
+    this.#parsingContexts |= (1 << PCJsxChildren);
+    const list: JsxChild[] = [];
+    for (;;) {
+      this.#reScanJsxToken(true /*allowMultilineJsxText*/);
+      const currentToken = this.#current().kind;
+      const child = this.#parseJsxChild(openingTag, currentToken);
+      if (child === undefined) {
+        break;
+      }
+      list.push(child);
+      if (
+        isJsxOpeningElement(openingTag)
+        && isJsxElement(child)
+        && !tagNamesAreEquivalent(child.openingElement.tagName, child.closingElement.tagName)
+        && tagNamesAreEquivalent(openingTag.tagName, child.closingElement.tagName)
+      ) {
+        // tsgo (4813-4818): stop after a mismatched child like <div>...(<span></div>)
+        // so the </div> can be reattached at a higher level.
+        break;
+      }
+    }
+    this.#parsingContexts = save;
+    return createNodeArray(list, pos, this.#nodePos());
+  }
+
+  // tsgo parseJsxChild (parser.go:4824-4850). 5a SCOPE: ONLY the TERMINATION cases are
+  // implemented — EofToken (closing-tag-expected diagnostic + undefined), LessThanSlash
+  // Token / ConflictMarkerTrivia (undefined). The CONTENT arms (JsxText, OpenBrace `{expr}`,
+  // nested `<`) are the explicit 5b deliverable and are NOT faked here: any other token
+  // is an unhandled-content case that 5b will implement. For the 5a probe inputs (empty
+  // elements/fragments) the loop only ever sees a termination token, so this is faithful.
+  #parseJsxChild(openingTag: JsxOpeningElement | JsxOpeningFragment, token: Kind): JsxChild | undefined {
+    switch (token) {
+      case Kind.EndOfFile: {
+        // tsgo (4826-4839): issue the no-closing-tag error at the opening tag (not at EOF).
+        if (this.#isJsxOpeningFragment(openingTag)) {
+          this.#parseErrorAtRange(openingTag.pos, openingTag.end, Diagnostics.JSX_fragment_has_no_corresponding_closing_tag, []);
+        } else {
+          const tag = (openingTag as JsxOpeningElement).tagName;
+          const start = Math.min(skipTrivia(this.#sourceText, tag.pos), tag.end);
+          this.#parseErrorAt(start, tag.end, Diagnostics.JSX_element_0_has_no_corresponding_closing_tag, [getTextOfNodeFromSourceText(this.#sourceText, tag, false)]);
+        }
+        return undefined;
+      }
+      case Kind.LessThanSlashToken:
+      case Kind.ConflictMarkerTrivia:
+        return undefined;
+      default:
+        // 5b: JsxText / JsxTextAllWhiteSpaces / OpenBraceToken (`{expr}`) / LessThanToken
+        // (nested element) content arms. Deferred — not faked. tsgo panics on an
+        // unhandled case; in 5a only termination tokens reach the loop for the in-scope
+        // probe inputs, so this is the faithful "scaffolding" seam.
+        throw new Error("parseJsxChild: content arms (JsxText / {expr} / nested element) are deferred to M3 Stage 5b");
+    }
+  }
+
+  // tsgo ast.IsJsxOpeningFragment narrowing for the parseJsxChild EOF arm.
+  #isJsxOpeningFragment(node: JsxOpeningElement | JsxOpeningFragment): node is JsxOpeningFragment {
+    return node.kind === Kind.JsxOpeningFragment;
+  }
+
+  // tsgo parseJsxOpeningOrSelfClosingElementOrOpeningFragment (parser.go:4913-4946).
+  #parseJsxOpeningOrSelfClosingElementOrOpeningFragment(inExpressionContext: boolean): JsxOpeningElement | JsxSelfClosingElement | JsxOpeningFragment {
+    const pos = this.#nodePos();
+    this.#expect(Kind.LessThanToken);
+    if (this.#current().kind === Kind.GreaterThanToken) {
+      // `<>` opening fragment. scanJsxText positions the scanner for children.
+      this.#scanJsxText();
+      return this.#finishNode(createJsxOpeningFragment(), pos);
+    }
+    const tagName = this.#parseJsxElementName();
+    // tsgo (4923): typeArguments parsed only when NOT a JS file. tsonic is always TS/TSX
+    // (contextFlags never carries JavaScriptFile), so the guard is always true and type
+    // args are attempted. #parseOptionalTypeArguments is the LessThan-guarded
+    // parseBracketedList(PCTypeArguments) — exactly tsgo parseTypeArguments.
+    const typeArguments = (this.#contextFlags & NodeFlags.JavaScriptFile) === 0 ? this.#parseOptionalTypeArguments() : undefined;
+    const attributes = this.#parseJsxAttributes();
+    if (this.#current().kind === Kind.GreaterThanToken) {
+      // Opening tag. scanJsxText scans the immediately-following text with JSX rules.
+      this.#scanJsxText();
+      return this.#finishNode(createJsxOpeningElement(tagName, typeArguments, attributes), pos);
+    }
+    this.#expect(Kind.SlashToken);
+    if (this.#parseExpectedGreaterThanWithoutAdvancing()) {
+      if (inExpressionContext) {
+        this.#nextToken();
+      } else {
+        this.#scanJsxText();
+      }
+    }
+    return this.#finishNode(createJsxSelfClosingElement(tagName, typeArguments, attributes), pos);
+  }
+
+  // tsgo parseExpectedWithoutAdvancing(KindGreaterThanToken) (parser.go:4936/5034). On a
+  // match returns true WITHOUT advancing; on a mismatch records X_0_expected and returns
+  // false. Used by JSX self-closing/closing where the caller manually re-scans.
+  #parseExpectedGreaterThanWithoutAdvancing(): boolean {
+    if (this.#current().kind === Kind.GreaterThanToken) {
+      return true;
+    }
+    this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, [tokenToString(Kind.GreaterThanToken) ?? KindNames[Kind.GreaterThanToken]]);
+    return false;
+  }
+
+  // tsgo parseJsxElementName (parser.go:4948-4964). A JSX element name is an Identifier,
+  // a `this` keyword, a namespaced name (`a:b`), or a `.`-chain (PropertyAccess). The
+  // namespaced name short-circuits (no `.` chain on `a:b`). The `.`-chain reuses the
+  // shared #parseRightSideOfDot, NOT a hand-rolled A.B.C.
+  #parseJsxElementName(): JsxTagNameExpression {
+    const pos = this.#nodePos();
+    const initialExpression = this.#parseJsxTagName();
+    if (isJsxNamespacedName(initialExpression)) {
+      return initialExpression;
+    }
+    let expression: JsxTagNameExpression = initialExpression;
+    while (this.#consumeOptional(Kind.DotToken)) {
+      const name = this.#parseRightSideOfDot(true /*allowIdentifierNames*/, false /*allowPrivateIdentifiers*/, false /*allowUnicodeEscapeSequenceInIdentifierName*/);
+      expression = this.#finishNode(createPropertyAccessExpression(expression, undefined, name, NodeFlags.None), pos);
+    }
+    return expression;
+  }
+
+  // tsgo parseJsxTagName (parser.go:4966-4980). scanJsxIdentifier-driven; allows the
+  // `this` keyword tag and the `a:b` namespaced-name form. Uses the unicode-escape-
+  // erroring identifier-name helper (keyword-allowed).
+  #parseJsxTagName(): JsxTagNameExpression {
+    const pos = this.#nodePos();
+    this.#scanJsxIdentifier();
+    const isThis = this.#current().kind === Kind.ThisKeyword;
+    const tagName = this.#parseIdentifierNameErrorOnUnicodeEscapeSequence();
+    if (this.#consumeOptional(Kind.ColonToken)) {
+      this.#scanJsxIdentifier();
+      return this.#finishNode(createJsxNamespacedName(tagName, this.#parseIdentifierNameErrorOnUnicodeEscapeSequence()), pos);
+    }
+    if (isThis) {
+      return this.#finishNode(createKeywordExpression(Kind.ThisKeyword), pos);
+    }
+    return tagName;
+  }
+
+  // tsgo parseJsxAttributes (parser.go:4982-4985). parseList(PCJsxAttributes, parseJsxAttribute).
+  #parseJsxAttributes(): JsxOpeningElement["attributes"] {
+    const pos = this.#nodePos();
+    const properties = this.#parseList(PCJsxAttributes, () => this.#parseJsxAttribute());
+    return this.#finishNode(createJsxAttributes(properties), pos);
+  }
+
+  // tsgo parseJsxAttribute (parser.go:4987-4993). `{...}` => spread attribute; else a
+  // name + optional value.
+  #parseJsxAttribute(): JsxAttributeLike {
+    if (this.#current().kind === Kind.OpenBraceToken) {
+      return this.#parseJsxSpreadAttribute();
+    }
+    const pos = this.#nodePos();
+    return this.#finishNode(createJsxAttribute(this.#parseJsxAttributeName(), this.#parseJsxAttributeValue()), pos);
+  }
+
+  // tsgo parseJsxSpreadAttribute (parser.go:4995-5002). `{ ... expr }`.
+  #parseJsxSpreadAttribute(): JsxAttributeLike {
+    const pos = this.#nodePos();
+    this.#expect(Kind.OpenBraceToken);
+    this.#expect(Kind.DotDotDotToken);
+    const expression = this.#parseExpression();
+    this.#expect(Kind.CloseBraceToken);
+    return this.#finishNode(createJsxSpreadAttribute(expression), pos);
+  }
+
+  // tsgo parseJsxAttributeName (parser.go:5004-5013). scanJsxIdentifier-driven; allows
+  // the `a:b` namespaced-name form.
+  #parseJsxAttributeName(): JsxAttributeName {
+    const pos = this.#nodePos();
+    this.#scanJsxIdentifier();
+    const attrName = this.#parseIdentifierNameErrorOnUnicodeEscapeSequence();
+    if (this.#consumeOptional(Kind.ColonToken)) {
+      this.#scanJsxIdentifier();
+      return this.#finishNode(createJsxNamespacedName(attrName, this.#parseIdentifierNameErrorOnUnicodeEscapeSequence()), pos);
+    }
+    return attrName;
+  }
+
+  // tsgo parseJsxAttributeValue (parser.go:5015-5029). After `=`: a JSX-scanned string
+  // literal, or `{expr}` JsxExpression, or a JSX element value. No `=` => no initializer.
+  #parseJsxAttributeValue(): JsxAttributeValue | undefined {
+    if (this.#current().kind === Kind.EqualsToken) {
+      this.#scanJsxAttributeValue();
+      if (this.#current().kind === Kind.StringLiteral) {
+        return this.#parseLiteralExpressionAdvancing() as JsxAttributeValue;
+      }
+      if (this.#current().kind === Kind.OpenBraceToken) {
+        return this.#parseJsxExpression(true /*inExpressionContext*/) as JsxAttributeValue;
+      }
+      if (this.#current().kind === Kind.LessThanToken) {
+        return this.#parseJsxElementOrSelfClosingElementOrFragment(true /*inExpressionContext*/, -1, undefined, false) as JsxAttributeValue;
+      }
+      this.#parseErrorAtCurrentToken(Diagnostics.X_or_JSX_element_expected);
+    }
+    return undefined;
+  }
+
+  // tsgo parseLiteralExpression(false /*intern*/) for a JSX attribute StringLiteral
+  // (parser.go:5769). Builds a StringLiteral from the current token then advances —
+  // identical to #parseStringLiteralExpression's body but the token is already known to
+  // be a StringLiteral (no #expect) since the JSX-attribute-value scan produced it.
+  #parseLiteralExpressionAdvancing(): Expression {
+    const pos = this.#nodePos();
+    const token = this.#current();
+    this.#advance();
+    return this.#finishNode(createStringLiteral(unquote(token.text), 0), pos);
+  }
+
+  // tsgo parseJsxExpression (parser.go:4859-4881) — JSX-attribute-value `{expr}` form
+  // (inExpressionContext=true). 5b will add the child-position (inExpressionContext=false)
+  // dotDotDot + scanJsxText cadence. In 5a this is reachable ONLY from a JSX attribute
+  // value (`b={1}`), where inExpressionContext is always true.
+  #parseJsxExpression(inExpressionContext: boolean): JsxExpression {
+    const pos = this.#nodePos();
+    if (!this.#consumeOptional(Kind.OpenBraceToken)) {
+      this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, [tokenToString(Kind.OpenBraceToken) ?? KindNames[Kind.OpenBraceToken]]);
+      return this.#finishNode(createJsxExpression(undefined, undefined), pos);
+    }
+    let dotDotDotToken: Token<Kind.DotDotDotToken> | undefined;
+    let expression: Expression | undefined;
+    if (this.#current().kind !== Kind.CloseBraceToken) {
+      if (!inExpressionContext) {
+        // 5b child-position cadence; unreachable in 5a (only attribute values call this).
+        dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
+      }
+      expression = this.#parseExpression();
+    }
+    if (inExpressionContext) {
+      this.#expect(Kind.CloseBraceToken);
+    } else if (this.#parseExpectedCloseBraceWithoutAdvancing()) {
+      this.#scanJsxText();
+    }
+    return this.#finishNode(createJsxExpression(dotDotDotToken, expression), pos);
+  }
+
+  // tsgo parseExpectedWithoutAdvancing(KindCloseBraceToken) for the 5b child-position
+  // JsxExpression (unreachable in 5a). Match => true (no advance); mismatch => record
+  // X_0_expected + false.
+  #parseExpectedCloseBraceWithoutAdvancing(): boolean {
+    if (this.#current().kind === Kind.CloseBraceToken) {
+      return true;
+    }
+    this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, [tokenToString(Kind.CloseBraceToken) ?? KindNames[Kind.CloseBraceToken]]);
+    return false;
+  }
+
+  // tsgo parseJsxClosingElement (parser.go:4898-4911). `</ tagName >`. The `>` is checked
+  // WITHOUT advancing, then the scanner is manually advanced (nextToken for an
+  // expression-context/mismatched close, scanJsxText otherwise).
+  #parseJsxClosingElement(open: JsxOpeningElement, inExpressionContext: boolean): JsxClosingElement {
+    const pos = this.#nodePos();
+    this.#expect(Kind.LessThanSlashToken);
+    const tagName = this.#parseJsxElementName();
+    if (this.#parseExpectedGreaterThanWithoutAdvancing()) {
+      if (inExpressionContext || !tagNamesAreEquivalent(open.tagName, tagName)) {
+        this.#nextToken();
+      } else {
+        this.#scanJsxText();
+      }
+    }
+    return this.#finishNode(createJsxClosingElement(tagName), pos);
+  }
+
+  // tsgo parseJsxClosingFragment (parser.go:5031-5043). `</ >`.
+  #parseJsxClosingFragment(inExpressionContext: boolean): JsxClosingFragment {
+    const pos = this.#nodePos();
+    this.#expect(Kind.LessThanSlashToken);
+    if (this.#parseExpectedGreaterThanWithoutAdvancingFragment()) {
+      if (inExpressionContext) {
+        this.#nextToken();
+      } else {
+        this.#scanJsxText();
+      }
+    }
+    return this.#finishNode(createJsxClosingFragment(), pos);
+  }
+
+  // tsgo parseExpectedWithDiagnostic(KindGreaterThanToken, Expected_corresponding_
+  // closing_tag_for_JSX_fragment, shouldAdvance=false) (parser.go:5034). Match => true
+  // (no advance); mismatch => record the fragment-specific diagnostic + false.
+  #parseExpectedGreaterThanWithoutAdvancingFragment(): boolean {
+    if (this.#current().kind === Kind.GreaterThanToken) {
+      return true;
+    }
+    this.#parseErrorAtCurrentToken(Diagnostics.Expected_corresponding_closing_tag_for_JSX_fragment);
+    return false;
+  }
+
+  // tsgo parseRightSideOfDot (parser.go:2920-2972). The shared dotted-name right-side
+  // behavior, reused by the JSX tag-name dot-chain (do NOT hand-roll A.B.C in JSX). The
+  // ASI/private-identifier arms are faithful; for JSX it is called with
+  // allowIdentifierNames=true, allowPrivateIdentifiers=false,
+  // allowUnicodeEscapeSequenceInIdentifierName=false (the unicode-erroring helper).
+  #parseRightSideOfDot(allowIdentifierNames: boolean, allowPrivateIdentifiers: boolean, allowUnicodeEscapeSequenceInIdentifierName: boolean): Identifier | PrivateIdentifier {
+    if (this.#hasPrecedingLineBreak() && tokenIsIdentifierOrKeyword(this.#current().kind) && this.#lookAhead(() => {
+      this.#nextToken();
+      return tokenIsIdentifierOrKeyword(this.#current().kind) && !this.#hasPrecedingLineBreak();
+    })) {
+      this.#parseErrorAt(this.#nodePos(), this.#nodePos(), Diagnostics.Identifier_expected);
+      return this.#createMissingIdentifier();
+    }
+    if (this.#current().kind === Kind.PrivateIdentifier) {
+      const pid = this.#parseMemberName() as PrivateIdentifier;
+      if (allowPrivateIdentifiers) {
+        return pid;
+      }
+      this.#parseErrorAt(this.#nodePos(), this.#nodePos(), Diagnostics.Identifier_expected);
+      return this.#createMissingIdentifier();
+    }
+    if (allowIdentifierNames) {
+      if (allowUnicodeEscapeSequenceInIdentifierName) {
+        return this.#parseIdentifier();
+      }
+      return this.#parseIdentifierNameErrorOnUnicodeEscapeSequence();
+    }
+    return this.#parseIdentifier();
+  }
+
+  // tsgo createMissingIdentifier (parser.go:2974-2976): a zero-width Identifier at the
+  // current full-start, finished via #finishNode (no advance).
+  #createMissingIdentifier(): Identifier {
+    return this.#finishNode(createIdentifier(""), this.#nodePos());
+  }
+
+  // tsgo parseIdentifierNameErrorOnUnicodeEscapeSequence (parser.go:5795-5800). KEEP its
+  // diagnostic behavior DISTINCT from the generic identifier helper: if the current token
+  // carries a unicode escape, record Unicode_escape_sequence_cannot_appear_here, then
+  // build the identifier (keyword-allowed) and advance. JSX tag parsing must NOT erase
+  // unicode-escape diagnostics, so this is its own helper.
+  #parseIdentifierNameErrorOnUnicodeEscapeSequence(): Identifier {
+    const flags = this.#scanner.getTokenFlags();
+    if ((flags & TokenFlags.UnicodeEscape) !== 0 || (flags & TokenFlags.ExtendedUnicodeEscape) !== 0) {
+      this.#parseErrorAtCurrentToken(Diagnostics.Unicode_escape_sequence_cannot_appear_here);
+    }
+    // tsgo createIdentifier(tokenIsIdentifierOrKeyword(p.token)): build from the current
+    // (identifier-or-keyword) token text and advance. The current token is an
+    // identifier/keyword here (the JSX scan produced it), so build + advance directly.
+    const pos = this.#nodePos();
+    const token = this.#current();
+    this.#advance();
+    return this.#finishNode(createIdentifier(token.text), pos);
   }
 
   #parseNewExpression(): Expression {
@@ -4350,6 +4949,25 @@ export class Parser {
     // in (Yield/Await/DisallowIn/DisallowConditionalTypes/Decorator/InWith). node.flags
     // is the controlled mutable parse-state slot made writable in the generator (Fork-A,
     // same category as pos/end above); this assignment typechecks with no cast.
+    node.flags |= this.#contextFlags;
+    return node;
+  }
+
+  // M3 Stage-5a: SHARED explicit-end primitive — the EXPLICIT-end sibling of
+  // #finishNode. tsgo finishNodeWithEnd (parser.go:5908) stamps node.pos = the
+  // supplied trivia-inclusive full-start `pos`, node.end = the EXPLICIT `end`, then
+  // node.Flags |= p.contextFlags. #finishNode delegates to it in tsgo with
+  // end = nodeEnd() (= TokenFullStart there); tsts keeps #finishNode independent
+  // (#nodeEnd() = #prevTokenEnd) per the wave directive, so this is added as a
+  // separate primitive. It mirrors #finishNode's body but takes an explicit `end`
+  // instead of #nodeEnd(). Used ONLY where the faithful port supplies an explicit
+  // end (JSX mismatch restructure, synthetic-binary recovery, and the
+  // createMissingIdentifier(end, end) inside the restructure). It does NOT touch
+  // #prevTokenEnd and is NOT a JSX-local span mode — the explicit end always comes
+  // from an already-finished node's .end (a real token-tight position).
+  #finishNodeWithEnd<T extends Node>(node: T, pos: number, end: number): T {
+    node.pos = pos;
+    node.end = end;
     node.flags |= this.#contextFlags;
     return node;
   }

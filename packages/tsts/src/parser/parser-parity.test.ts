@@ -53,11 +53,19 @@ import {
   isIndexSignatureDeclaration,
   isIndexedAccessTypeNode,
   isInferTypeNode,
+  isJsxAttribute,
+  isJsxElement,
+  isJsxExpression,
+  isJsxFragment,
+  isJsxNamespacedName,
+  isJsxSelfClosingElement,
+  isJsxSpreadAttribute,
   isKeywordTypeNode,
   isLiteralTypeNode,
   isMappedTypeNode,
   isMissingDeclaration,
   isNamedTupleMember,
+  isNumericLiteral,
   isOptionalTypeNode,
   isParameterDeclaration,
   isParenthesizedExpression,
@@ -72,6 +80,7 @@ import {
   isTryStatement,
   isTupleTypeNode,
   isTypeAliasDeclaration,
+  isTypeAssertion,
   isTypeLiteralNode,
   isTypeOperatorNode,
   isTypeParameterDeclaration,
@@ -907,26 +916,31 @@ export class ParserParityTests {
   // These probes prove ONLY the plumbing (ScriptKind -> getLanguageVariant ->
   // parser/scanner variant + SourceFile stamp), NOT JSX parsing (5a adds that).
 
-  // (a) A .ts/ScriptKindTS parse stays Standard, and `let x = <T>y;` parses
-  // EXACTLY as it did pre-wave: the LessThanToken arm is still unimplemented, so
-  // the parser records Expression_expected[1109] and recovers (a VariableStatement
-  // with a BinaryExpression initializer) — it does NOT build a TypeAssertion (5a).
-  // The point is the .ts path is byte-identical to pre-wave.
+  // (a) A .ts/ScriptKindTS parse stays Standard, and `let x = <T>y;` now parses to a
+  // TypeAssertionExpression. CAPTURE-CORRECTION: pre-5a this probe asserted the (then-
+  // unimplemented) LessThanToken arm fell through to Expression_expected[1109] + a
+  // BinaryExpression. M3 Stage 5a implements parseTypeAssertion (tsgo 5117-5125), the
+  // Standard-variant arm of the fused LessThanToken handling, so `< Type > expr` is now
+  // the faithful TypeAssertion. No diagnostics; the initializer is a TypeAssertion.
   prewave_ts_is_standard_variant_unchanged(): void {
     const sourceFile = parseSourceFile("let x = <T>y;", { fileName: "a.ts" });
     Assert.Equal(LanguageVariant.Standard, sourceFile.languageVariant);
     Assert.Equal(ScriptKind.TS, sourceFile.scriptKind);
-    // Current (pre-wave) behavior: LessThanToken arm unimplemented => 1109 recorded.
-    Assert.True(
-      sourceFile.parseDiagnostics.some((d) => d.code === 1109),
-      "expected Expression_expected[1109] (LessThanToken arm still unimplemented — TypeAssertion is 5a, not this wave)",
-    );
+    // 5a: the LessThanToken arm now builds a TypeAssertion — no Expression_expected[1109].
+    Assert.Equal(0, sourceFile.parseDiagnostics.length);
     const statement = sourceFile.statements[0]!;
-    if (!isVariableStatement(statement)) throw new Exception("Expected variable statement (unchanged .ts behavior)");
+    if (!isVariableStatement(statement)) throw new Exception("Expected variable statement");
     const declaration = statement.declarationList.declarations[0]!;
     const initializer = declaration.initializer!;
-    // No TypeAssertion produced (that is 5a); current arm falls through to binary.
-    Assert.Equal(Kind.BinaryExpression, initializer.kind);
+    // 5a: `<T>y` is now a faithful TypeAssertionExpression (not a binary recovery).
+    Assert.Equal(Kind.TypeAssertionExpression, initializer.kind);
+    if (!isTypeAssertion(initializer)) throw new Exception("Expected type assertion");
+    if (!isTypeReferenceNode(initializer.type)) throw new Exception("Expected type reference (T)");
+    if (!isIdentifier(initializer.expression)) throw new Exception("Expected identifier operand (y)");
+    Assert.Equal("y", initializer.expression.text);
+    // .pos is the trivia-inclusive full-start (the space after `=`), so the raw slice
+    // includes that leading trivia — tsts node.pos = TokenFullStart (M3 4c).
+    Assert.Equal(" <T>y", this.#raw(sourceFile, initializer));
   }
 
   // (b) A .tsx/ScriptKindTSX parse (via the new options) reaches JSX mode: the
@@ -952,6 +966,122 @@ export class ParserParityTests {
   prewave_get_script_kind_from_file_name(): void {
     Assert.Equal(ScriptKind.TSX, getScriptKindFromFileName("a.tsx"));
     Assert.Equal(ScriptKind.TS, getScriptKindFromFileName("a.ts"));
+  }
+
+  // ── M3 Stage-5a: JSX element / attribute layer ──────────────────────────────
+  // All parse in JSX mode (scriptKind: ScriptKind.TSX); assert tsgo-correct Kind +
+  // full-start .pos + token-tight .end + raw source slices. Children content is 5b,
+  // so these are self-closing / empty-element / empty-fragment inputs.
+
+  // Returns the single ExpressionStatement's JSX expression for a `<...>;` snippet,
+  // parsed in JSX mode.
+  #soleJsx(src: string): { sourceFile: SourceFile; expression: Expression } {
+    const sourceFile = parseSourceFile(src, { fileName: "a.tsx", scriptKind: ScriptKind.TSX });
+    Assert.Equal(0, sourceFile.parseDiagnostics.length);
+    const statement = sourceFile.statements[0]!;
+    if (!isExpressionStatement(statement)) throw new Exception("Expected expression statement");
+    return { sourceFile, expression: statement.expression };
+  }
+
+  // `<div/>` => JsxSelfClosingElement (tagName Identifier, no attributes).
+  jsx_self_closing_identifier(): void {
+    const { sourceFile, expression } = this.#soleJsx("<div/>;");
+    if (!isJsxSelfClosingElement(expression)) throw new Exception("Expected self-closing element");
+    Assert.Equal(Kind.JsxSelfClosingElement, expression.kind);
+    Assert.Equal(0, expression.pos);
+    Assert.Equal(6, expression.end);
+    Assert.Equal("<div/>", this.#raw(sourceFile, expression));
+    if (!isIdentifier(expression.tagName)) throw new Exception("Expected identifier tag name");
+    Assert.Equal("div", expression.tagName.text);
+    Assert.Equal(0, expression.attributes.properties.length);
+  }
+
+  // `<A.B.C/>` => self-closing, tagName = PropertyAccess chain (structural).
+  jsx_self_closing_property_access_chain(): void {
+    const { sourceFile, expression } = this.#soleJsx("<A.B.C/>;");
+    if (!isJsxSelfClosingElement(expression)) throw new Exception("Expected self-closing element");
+    Assert.Equal("<A.B.C/>", this.#raw(sourceFile, expression));
+    const tagName = expression.tagName;
+    if (!isPropertyAccessExpression(tagName)) throw new Exception("Expected property access tag name (A.B.C)");
+    Assert.Equal("C", tagName.name.text);
+    if (!isPropertyAccessExpression(tagName.expression)) throw new Exception("Expected A.B inner property access");
+    Assert.Equal("B", tagName.expression.name.text);
+    if (!isIdentifier(tagName.expression.expression)) throw new Exception("Expected A identifier base");
+    Assert.Equal("A", tagName.expression.expression.text);
+  }
+
+  // `<ns:tag/>` => self-closing, tagName = JsxNamespacedName.
+  jsx_self_closing_namespaced_name(): void {
+    const { sourceFile, expression } = this.#soleJsx("<ns:tag/>;");
+    if (!isJsxSelfClosingElement(expression)) throw new Exception("Expected self-closing element");
+    Assert.Equal("<ns:tag/>", this.#raw(sourceFile, expression));
+    const tagName = expression.tagName;
+    if (!isJsxNamespacedName(tagName)) throw new Exception("Expected namespaced name tag");
+    Assert.Equal("ns", tagName.namespace.text);
+    Assert.Equal("tag", tagName.name.text);
+  }
+
+  // `<div {...props}/>` => self-closing with a JsxSpreadAttribute.
+  jsx_self_closing_spread_attribute(): void {
+    const { sourceFile, expression } = this.#soleJsx("<div {...props}/>;");
+    if (!isJsxSelfClosingElement(expression)) throw new Exception("Expected self-closing element");
+    Assert.Equal("<div {...props}/>", this.#raw(sourceFile, expression));
+    Assert.Equal(1, expression.attributes.properties.length);
+    const attr = expression.attributes.properties[0]!;
+    if (!isJsxSpreadAttribute(attr)) throw new Exception("Expected spread attribute");
+    if (!isIdentifier(attr.expression)) throw new Exception("Expected identifier spread expression");
+    Assert.Equal("props", attr.expression.text);
+  }
+
+  // `<div a="x" b={1}/>` => self-closing with JsxAttribute(string) + JsxAttribute(JsxExpression).
+  jsx_self_closing_attributes(): void {
+    const { sourceFile, expression } = this.#soleJsx("<div a=\"x\" b={1}/>;");
+    if (!isJsxSelfClosingElement(expression)) throw new Exception("Expected self-closing element");
+    Assert.Equal("<div a=\"x\" b={1}/>", this.#raw(sourceFile, expression));
+    Assert.Equal(2, expression.attributes.properties.length);
+    const a = expression.attributes.properties[0]!;
+    if (!isJsxAttribute(a)) throw new Exception("Expected jsx attribute a");
+    if (!isIdentifier(a.name)) throw new Exception("Expected identifier attribute name a");
+    Assert.Equal("a", a.name.text);
+    if (a.initializer === undefined || !isStringLiteral(a.initializer)) throw new Exception("Expected string-literal value for a");
+    Assert.Equal("x", a.initializer.text);
+    const b = expression.attributes.properties[1]!;
+    if (!isJsxAttribute(b)) throw new Exception("Expected jsx attribute b");
+    if (!isIdentifier(b.name)) throw new Exception("Expected identifier attribute name b");
+    Assert.Equal("b", b.name.text);
+    if (b.initializer === undefined || !isJsxExpression(b.initializer)) throw new Exception("Expected jsx-expression value for b");
+    if (b.initializer.expression === undefined || !isNumericLiteral(b.initializer.expression)) throw new Exception("Expected numeric expression in b={1}");
+    Assert.Equal("1", b.initializer.expression.text);
+  }
+
+  // `<></>` => JsxFragment with JsxOpeningFragment + empty children + JsxClosingFragment.
+  jsx_empty_fragment(): void {
+    const { sourceFile, expression } = this.#soleJsx("<></>;");
+    if (!isJsxFragment(expression)) throw new Exception("Expected jsx fragment");
+    Assert.Equal(Kind.JsxFragment, expression.kind);
+    Assert.Equal(0, expression.pos);
+    Assert.Equal(5, expression.end);
+    Assert.Equal("<></>", this.#raw(sourceFile, expression));
+    Assert.Equal(Kind.JsxOpeningFragment, expression.openingFragment.kind);
+    Assert.Equal(0, expression.children.length);
+    Assert.Equal(Kind.JsxClosingFragment, expression.closingFragment.kind);
+  }
+
+  // `<div></div>` => JsxElement with empty children + JsxClosingElement (tag match).
+  jsx_empty_element(): void {
+    const { sourceFile, expression } = this.#soleJsx("<div></div>;");
+    if (!isJsxElement(expression)) throw new Exception("Expected jsx element");
+    Assert.Equal(Kind.JsxElement, expression.kind);
+    Assert.Equal(0, expression.pos);
+    Assert.Equal(11, expression.end);
+    Assert.Equal("<div></div>", this.#raw(sourceFile, expression));
+    Assert.Equal(Kind.JsxOpeningElement, expression.openingElement.kind);
+    if (!isIdentifier(expression.openingElement.tagName)) throw new Exception("Expected identifier opening tag name");
+    Assert.Equal("div", expression.openingElement.tagName.text);
+    Assert.Equal(0, expression.children.length);
+    Assert.Equal(Kind.JsxClosingElement, expression.closingElement.kind);
+    if (!isIdentifier(expression.closingElement.tagName)) throw new Exception("Expected identifier closing tag name");
+    Assert.Equal("div", expression.closingElement.tagName.text);
   }
 }
 
@@ -1183,6 +1313,14 @@ A<ParserParityTests>().method((t) => t.prewave_ts_is_standard_variant_unchanged)
 A<ParserParityTests>().method((t) => t.prewave_tsx_reaches_jsx_variant).add(FactAttribute);
 A<ParserParityTests>().method((t) => t.prewave_tsx_inferred_from_filename).add(FactAttribute);
 A<ParserParityTests>().method((t) => t.prewave_get_script_kind_from_file_name).add(FactAttribute);
+// M3 Stage-5a: JSX element / attribute layer probes.
+A<ParserParityTests>().method((t) => t.jsx_self_closing_identifier).add(FactAttribute);
+A<ParserParityTests>().method((t) => t.jsx_self_closing_property_access_chain).add(FactAttribute);
+A<ParserParityTests>().method((t) => t.jsx_self_closing_namespaced_name).add(FactAttribute);
+A<ParserParityTests>().method((t) => t.jsx_self_closing_spread_attribute).add(FactAttribute);
+A<ParserParityTests>().method((t) => t.jsx_self_closing_attributes).add(FactAttribute);
+A<ParserParityTests>().method((t) => t.jsx_empty_fragment).add(FactAttribute);
+A<ParserParityTests>().method((t) => t.jsx_empty_element).add(FactAttribute);
 
 // Stage-3b throw->diagnostics FLIP recovery probes.
 A<ParserRecoveryTests>().method((t) => t.recover_let_no_initializer).add(FactAttribute);
