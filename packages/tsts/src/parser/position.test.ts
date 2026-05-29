@@ -13,6 +13,8 @@ import { Assert, FactAttribute } from "xunit-types/Xunit.js";
 import { Exception } from "@tsonic/dotnet/System.js";
 
 import {
+  Kind,
+  isArrayBindingPattern,
   isArrayLiteralExpression,
   isArrayTypeNode,
   isArrowFunction,
@@ -20,41 +22,60 @@ import {
   isAwaitExpression,
   isBigIntLiteral,
   isBinaryExpression,
+  isBindingElement,
   isBlock,
   isCallExpression,
+  isCallSignatureDeclaration,
   isCaseBlock,
   isCaseClause,
   isCatchClause,
+  isClassDeclaration,
+  isComputedPropertyName,
   isConditionalExpression,
   isConditionalTypeNode,
+  isConstructSignatureDeclaration,
+  isConstructorDeclaration,
   isConstructorTypeNode,
   isElementAccessExpression,
+  isEnumDeclaration,
+  isEnumMember,
   isExportDeclaration,
   isExpressionStatement,
   isForStatement,
   isFunctionDeclaration,
   isFunctionTypeNode,
+  isGetAccessorDeclaration,
+  isHeritageClause,
   isIdentifier,
   isIfStatement,
   isImportDeclaration,
+  isIndexSignatureDeclaration,
   isIndexedAccessTypeNode,
   isInterfaceDeclaration,
   isIntersectionTypeNode,
   isKeywordExpression,
   isKeywordTypeNode,
   isLiteralTypeNode,
+  isMethodDeclaration,
+  isMethodSignatureDeclaration,
   isNamedExports,
   isNonNullExpression,
   isNumericLiteral,
+  isObjectBindingPattern,
   isObjectLiteralExpression,
+  isParameterDeclaration,
   isParenthesizedExpression,
   isParenthesizedTypeNode,
   isPostfixUnaryExpression,
   isPrefixUnaryExpression,
   isPropertyAccessExpression,
+  isPropertyDeclaration,
+  isPropertySignatureDeclaration,
   isQualifiedName,
   isReturnStatement,
   isSatisfiesExpression,
+  isSemicolonClassElement,
+  isSetAccessorDeclaration,
   isSpreadElement,
   isStringLiteral,
   isSwitchStatement,
@@ -1075,6 +1096,291 @@ export class ParserPositionTests {
     Assert.Equal(7, exportClause.pos);
     Assert.Equal(10, exportClause.end);
   }
+
+  // Stage 1e: `class C{ x=1; m(){} get g(){return 1} }` -> each class member is now
+  // stamped token-tight. Property `x=1` [9,13) (start at name, end after ';');
+  // method `m(){}` [14,19); get accessor `g` [20,37).
+  class_members_property_method_get_accessor_ranges(): void {
+    const sourceFile = parseSourceFile("class C{ x=1; m(){} get g(){return 1} }");
+    const statement = sourceFile.statements[0]!;
+    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
+    const property = statement.members[0]!;
+    if (!isPropertyDeclaration(property)) throw new Exception("Expected property declaration");
+    Assert.Equal(9, property.pos);
+    Assert.Equal(13, property.end);
+    const method = statement.members[1]!;
+    if (!isMethodDeclaration(method)) throw new Exception("Expected method declaration");
+    Assert.Equal(14, method.pos);
+    Assert.Equal(19, method.end);
+    const getter = statement.members[2]!;
+    if (!isGetAccessorDeclaration(getter)) throw new Exception("Expected get accessor declaration");
+    Assert.Equal(20, getter.pos);
+    Assert.Equal(37, getter.end);
+  }
+
+  // Stage 1e: modifier-led member start covers the modifier, NOT the member keyword.
+  // `interface I{ readonly a: number }` -> the property signature starts at `readonly`
+  // (index 13), ending after `number` (index 31); the name `a` is at [22,23). This is
+  // the load-bearing proof that pos is captured BEFORE parseModifiers.
+  modifier_led_member_starts_at_modifier(): void {
+    const sourceFile = parseSourceFile("interface I{ readonly a: number }");
+    const statement = sourceFile.statements[0]!;
+    if (!isInterfaceDeclaration(statement)) throw new Exception("Expected interface declaration");
+    const member = statement.members[0]!;
+    if (!isPropertySignatureDeclaration(member)) throw new Exception("Expected property signature");
+    Assert.Equal(13, member.pos);
+    Assert.Equal(31, member.end);
+    const name = member.name;
+    if (!isIdentifier(name)) throw new Exception("Expected identifier name");
+    Assert.Equal(22, name.pos);
+    Assert.Equal(23, name.end);
+  }
+
+  // Stage 1e: a static-modifier-led method `class C{ static m(){} }` starts at
+  // `static` (index 9) and ends after the body (index 21).
+  static_modifier_led_method_starts_at_modifier(): void {
+    const sourceFile = parseSourceFile("class C{ static m(){} }");
+    const statement = sourceFile.statements[0]!;
+    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
+    const method = statement.members[0]!;
+    if (!isMethodDeclaration(method)) throw new Exception("Expected method declaration");
+    Assert.Equal(9, method.pos);
+    Assert.Equal(21, method.end);
+  }
+
+  // Stage 1e: constructor + set accessor. `class C{ constructor(a){} set s(v){} }` ->
+  // the constructor starts at `constructor` (index 9) and ends after its body; the set
+  // accessor follows. The constructor's parameter `a` is stamped via #parseParameterDeclaration.
+  class_constructor_and_set_accessor_ranges(): void {
+    const sourceFile = parseSourceFile("class C{ constructor(a){} set s(v){} }");
+    const statement = sourceFile.statements[0]!;
+    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
+    const ctor = statement.members[0]!;
+    if (!isConstructorDeclaration(ctor)) throw new Exception("Expected constructor declaration");
+    Assert.Equal(9, ctor.pos);
+    Assert.Equal(25, ctor.end);
+    const param = ctor.parameters[0]!;
+    if (!isParameterDeclaration(param)) throw new Exception("Expected parameter declaration");
+    Assert.Equal(21, param.pos);
+    Assert.Equal(22, param.end);
+    const setter = statement.members[1]!;
+    if (!isSetAccessorDeclaration(setter)) throw new Exception("Expected set accessor declaration");
+    Assert.Equal(26, setter.pos);
+    Assert.Equal(36, setter.end);
+  }
+
+  // Stage 1e: a bare `;` class member is a SemicolonClassElement. In `class C{ ; }`
+  // the `;` is at index 9, so the element spans [9,10).
+  semicolon_class_element_is_token_tight(): void {
+    const sourceFile = parseSourceFile("class C{ ; }");
+    const statement = sourceFile.statements[0]!;
+    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
+    const member = statement.members[0]!;
+    if (!isSemicolonClassElement(member)) throw new Exception("Expected semicolon class element");
+    Assert.Equal(9, member.pos);
+    Assert.Equal(10, member.end);
+  }
+
+  // Stage 1e: interface members. `interface I{ a:number; m(): void; [k:string]:number }`
+  // -> property signature `a:number` [13,22); method signature `m(): void` [23,33);
+  // index signature `[k:string]:number` [34,51).
+  interface_property_method_index_signature_ranges(): void {
+    const sourceFile = parseSourceFile("interface I{ a:number; m(): void; [k:string]:number }");
+    const statement = sourceFile.statements[0]!;
+    if (!isInterfaceDeclaration(statement)) throw new Exception("Expected interface declaration");
+    const property = statement.members[0]!;
+    if (!isPropertySignatureDeclaration(property)) throw new Exception("Expected property signature");
+    Assert.Equal(13, property.pos);
+    Assert.Equal(22, property.end);
+    const method = statement.members[1]!;
+    if (!isMethodSignatureDeclaration(method)) throw new Exception("Expected method signature");
+    Assert.Equal(23, method.pos);
+    Assert.Equal(33, method.end);
+    const indexSig = statement.members[2]!;
+    if (!isIndexSignatureDeclaration(indexSig)) throw new Exception("Expected index signature");
+    Assert.Equal(34, indexSig.pos);
+    Assert.Equal(51, indexSig.end);
+    const indexParam = indexSig.parameters[0]!;
+    if (!isParameterDeclaration(indexParam)) throw new Exception("Expected index parameter");
+    Assert.Equal(35, indexParam.pos);
+  }
+
+  // Stage 1e: call & construct signatures. `interface I{ (a:number): void; new(): I }`
+  // -> call signature [13,30) (own pos at the '('); construct signature [31,39) (own
+  // pos at the `new` keyword, covering it).
+  interface_call_and_construct_signature_ranges(): void {
+    const sourceFile = parseSourceFile("interface I{ (a:number): void; new(): I }");
+    const statement = sourceFile.statements[0]!;
+    if (!isInterfaceDeclaration(statement)) throw new Exception("Expected interface declaration");
+    const callSig = statement.members[0]!;
+    if (!isCallSignatureDeclaration(callSig)) throw new Exception("Expected call signature");
+    Assert.Equal(13, callSig.pos);
+    Assert.Equal(30, callSig.end);
+    const constructSig = statement.members[1]!;
+    if (!isConstructSignatureDeclaration(constructSig)) throw new Exception("Expected construct signature");
+    Assert.Equal(31, constructSig.pos);
+    Assert.Equal(39, constructSig.end);
+  }
+
+  // Stage 1e: enum members. `enum E{A,B=2}` -> member `A` [7,8); member `B=2` [9,12)
+  // (start at the name, end after the initializer).
+  enum_member_ranges_cover_initializer(): void {
+    const sourceFile = parseSourceFile("enum E{A,B=2}");
+    const statement = sourceFile.statements[0]!;
+    if (!isEnumDeclaration(statement)) throw new Exception("Expected enum declaration");
+    const first = statement.members[0]!;
+    if (!isEnumMember(first)) throw new Exception("Expected enum member");
+    Assert.Equal(7, first.pos);
+    Assert.Equal(8, first.end);
+    const second = statement.members[1]!;
+    if (!isEnumMember(second)) throw new Exception("Expected enum member");
+    Assert.Equal(9, second.pos);
+    Assert.Equal(12, second.end);
+  }
+
+  // Stage 1e: heritage clauses. `class C extends B implements I{}` -> the extends
+  // clause starts at the `extends` keyword (index 8) and spans [8,17); the implements
+  // clause starts at `implements` (index 18) and spans [18,30). Tokens preserved.
+  heritage_clauses_start_at_extends_and_implements(): void {
+    const sourceFile = parseSourceFile("class C extends B implements I{}");
+    const statement = sourceFile.statements[0]!;
+    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
+    const extendsClause = statement.heritageClauses![0]!;
+    if (!isHeritageClause(extendsClause)) throw new Exception("Expected heritage clause");
+    Assert.Equal(8, extendsClause.pos);
+    Assert.Equal(17, extendsClause.end);
+    Assert.Equal(Kind.ExtendsKeyword, extendsClause.token);
+    const implementsClause = statement.heritageClauses![1]!;
+    if (!isHeritageClause(implementsClause)) throw new Exception("Expected heritage clause");
+    Assert.Equal(18, implementsClause.pos);
+    Assert.Equal(30, implementsClause.end);
+    Assert.Equal(Kind.ImplementsKeyword, implementsClause.token);
+  }
+
+  // Stage 1e: dotted heritage expression. `class C extends a.b.C{}` -> the inner
+  // PropertyAccessExpression `a.b.C` threads the leftmost base start `a` (index 16)
+  // and spans [16,21).
+  heritage_dotted_property_access_threads_base_start(): void {
+    const sourceFile = parseSourceFile("class C extends a.b.C{}");
+    const statement = sourceFile.statements[0]!;
+    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
+    const clause = statement.heritageClauses![0]!;
+    const ewta = clause.types[0]!;
+    const expression = ewta.expression;
+    if (!isPropertyAccessExpression(expression)) throw new Exception("Expected property access expression");
+    Assert.Equal(16, expression.pos);
+    Assert.Equal(21, expression.end);
+    Assert.Equal(expression.pos, ewta.pos);
+  }
+
+  // Stage 1e: parameter declarations. `function f(a:T, ...b:U[]){}` -> `a:T` [11,14);
+  // the rest parameter `...b:U[]` starts at the '...' (index 16) and spans [16,24).
+  parameter_declaration_ranges_including_rest(): void {
+    const sourceFile = parseSourceFile("function f(a:T, ...b:U[]){}");
+    const statement = sourceFile.statements[0]!;
+    if (!isFunctionDeclaration(statement)) throw new Exception("Expected function declaration");
+    const first = statement.parameters[0]!;
+    if (!isParameterDeclaration(first)) throw new Exception("Expected parameter declaration");
+    Assert.Equal(11, first.pos);
+    Assert.Equal(14, first.end);
+    const rest = statement.parameters[1]!;
+    if (!isParameterDeclaration(rest)) throw new Exception("Expected rest parameter declaration");
+    Assert.Equal(16, rest.pos);
+    Assert.Equal(24, rest.end);
+  }
+
+  // Stage 1e: optional + defaulted parameters. `function f(a?: T, b: U = 1){}` ->
+  // `a?: T` [11,16); `b: U = 1` [18,26) (end after the initializer).
+  parameter_declaration_optional_and_default_ranges(): void {
+    const sourceFile = parseSourceFile("function f(a?: T, b: U = 1){}");
+    const statement = sourceFile.statements[0]!;
+    if (!isFunctionDeclaration(statement)) throw new Exception("Expected function declaration");
+    const optional = statement.parameters[0]!;
+    if (!isParameterDeclaration(optional)) throw new Exception("Expected parameter declaration");
+    Assert.Equal(11, optional.pos);
+    Assert.Equal(16, optional.end);
+    const defaulted = statement.parameters[1]!;
+    if (!isParameterDeclaration(defaulted)) throw new Exception("Expected parameter declaration");
+    Assert.Equal(18, defaulted.pos);
+    Assert.Equal(26, defaulted.end);
+  }
+
+  // Stage 1e: object & array binding patterns as parameters.
+  // `function f(a:T, {x}:O, [y]:A){}` -> object pattern `{x}` [16,19) with element
+  // `x` [17,18); array pattern `[y]` [23,26) with element `y` [24,25).
+  binding_pattern_parameters_and_elements_ranges(): void {
+    const sourceFile = parseSourceFile("function f(a:T, {x}:O, [y]:A){}");
+    const statement = sourceFile.statements[0]!;
+    if (!isFunctionDeclaration(statement)) throw new Exception("Expected function declaration");
+    const objParam = statement.parameters[1]!;
+    const objPattern = objParam.name;
+    if (!isObjectBindingPattern(objPattern)) throw new Exception("Expected object binding pattern");
+    Assert.Equal(16, objPattern.pos);
+    Assert.Equal(19, objPattern.end);
+    const objElement = objPattern.elements[0]!;
+    if (!isBindingElement(objElement)) throw new Exception("Expected binding element");
+    Assert.Equal(17, objElement.pos);
+    Assert.Equal(18, objElement.end);
+    const arrParam = statement.parameters[2]!;
+    const arrPattern = arrParam.name;
+    if (!isArrayBindingPattern(arrPattern)) throw new Exception("Expected array binding pattern");
+    Assert.Equal(23, arrPattern.pos);
+    Assert.Equal(26, arrPattern.end);
+    const arrElement = arrPattern.elements[0]!;
+    if (!isBindingElement(arrElement)) throw new Exception("Expected binding element");
+    Assert.Equal(24, arrElement.pos);
+    Assert.Equal(25, arrElement.end);
+  }
+
+  // Stage 1e: array binding hole + rest. `function f([a, ,b]:A){}` -> the elided hole
+  // (the second comma) gets a zero-length BindingElement at the comma position [15,16);
+  // the surrounding elements `a` [12,13) and `b` [16,17) are stamped.
+  array_binding_hole_and_elements_ranges(): void {
+    const sourceFile = parseSourceFile("function f([a, ,b]:A){}");
+    const statement = sourceFile.statements[0]!;
+    if (!isFunctionDeclaration(statement)) throw new Exception("Expected function declaration");
+    const pattern = statement.parameters[0]!.name;
+    if (!isArrayBindingPattern(pattern)) throw new Exception("Expected array binding pattern");
+    const a = pattern.elements[0]!;
+    Assert.Equal(12, a.pos);
+    Assert.Equal(13, a.end);
+    const hole = pattern.elements[1]!;
+    if (!isBindingElement(hole)) throw new Exception("Expected hole binding element");
+    Assert.Equal(15, hole.pos);
+    Assert.Equal(16, hole.end);
+    const b = pattern.elements[2]!;
+    Assert.Equal(16, b.pos);
+    Assert.Equal(17, b.end);
+  }
+
+  // Stage 1e: rest element in an array binding pattern. `function f([...r]:A){}` ->
+  // the rest element `...r` starts at the '...' (index 12) and spans [12,16).
+  array_binding_rest_element_starts_at_dotdotdot(): void {
+    const sourceFile = parseSourceFile("function f([...r]:A){}");
+    const statement = sourceFile.statements[0]!;
+    if (!isFunctionDeclaration(statement)) throw new Exception("Expected function declaration");
+    const pattern = statement.parameters[0]!.name;
+    if (!isArrayBindingPattern(pattern)) throw new Exception("Expected array binding pattern");
+    const rest = pattern.elements[0]!;
+    if (!isBindingElement(rest)) throw new Exception("Expected rest binding element");
+    Assert.Equal(12, rest.pos);
+    Assert.Equal(16, rest.end);
+  }
+
+  // Stage 1e: computed property name. `class C{ [k]=1; }` -> the member's name is a
+  // ComputedPropertyName starting at the '[' (index 9) and ending after the ']'
+  // (index 12), spanning [9,12).
+  computed_property_name_covers_brackets(): void {
+    const sourceFile = parseSourceFile("class C{ [k]=1; }");
+    const statement = sourceFile.statements[0]!;
+    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
+    const member = statement.members[0]!;
+    if (!isPropertyDeclaration(member)) throw new Exception("Expected property declaration");
+    const name = member.name;
+    if (!isComputedPropertyName(name)) throw new Exception("Expected computed property name");
+    Assert.Equal(9, name.pos);
+    Assert.Equal(12, name.end);
+  }
 }
 
 A<ParserPositionTests>().method((t) => t.stamps_identifier_leaf_with_token_tight_range).add(FactAttribute);
@@ -1143,3 +1449,19 @@ A<ParserPositionTests>().method((t) => t.switch_statement_and_case_block_ranges)
 A<ParserPositionTests>().method((t) => t.switch_case_clause_starts_at_case_keyword).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.import_declaration_spans_through_semicolon).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.export_declaration_and_named_exports_ranges).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.class_members_property_method_get_accessor_ranges).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.modifier_led_member_starts_at_modifier).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.static_modifier_led_method_starts_at_modifier).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.class_constructor_and_set_accessor_ranges).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.semicolon_class_element_is_token_tight).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.interface_property_method_index_signature_ranges).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.interface_call_and_construct_signature_ranges).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.enum_member_ranges_cover_initializer).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.heritage_clauses_start_at_extends_and_implements).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.heritage_dotted_property_access_threads_base_start).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.parameter_declaration_ranges_including_rest).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.parameter_declaration_optional_and_default_ranges).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.binding_pattern_parameters_and_elements_ranges).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.array_binding_hole_and_elements_ranges).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.array_binding_rest_element_starts_at_dotdotdot).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.computed_property_name_covers_brackets).add(FactAttribute);

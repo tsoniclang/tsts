@@ -543,7 +543,6 @@ export class Parser {
 
   #parseEnumDeclaration(pos: number, modifiers: NodeArray<ModifierLike> | undefined): Statement {
     // tsgo parseEnumDeclaration: declaration start is the #parseStatement-top pos.
-    // Enum members are Stage 1e (left unstamped).
     this.#expect(Kind.EnumKeyword);
     const name = this.#parseIdentifier();
     this.#expect(Kind.OpenBraceToken);
@@ -552,9 +551,12 @@ export class Parser {
       if (this.#consumeOptional(Kind.CommaToken)) {
         continue;
       }
+      // tsgo parseEnumMember (2121): pos at entry (before parsePropertyName);
+      // finishNode after the optional initializer.
+      const memberPos = this.#nodePos();
       const memberName = this.#parsePropertyName();
       const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
-      members.push(createEnumMember(memberName, initializer));
+      members.push(this.#finishNode(createEnumMember(memberName, initializer), memberPos));
       this.#consumeOptional(Kind.CommaToken);
     }
     this.#expect(Kind.CloseBraceToken);
@@ -653,8 +655,14 @@ export class Parser {
   }
 
   #parseClassElement(): ClassElement {
+    // tsgo parseClassElement (1844): pos captured at the VERY TOP, BEFORE the ';'
+    // check and BEFORE parseModifiersEx, so the member start covers leading
+    // modifiers / the bare ';'. This single threaded pos flows into every branch's
+    // finishNode (matching tsgo threading `pos` into parseAccessorDeclaration /
+    // parseMethodDeclaration / parsePropertyDeclaration / tryParseConstructorDeclaration).
+    const pos = this.#nodePos();
     if (this.#consumeOptional(Kind.SemicolonToken)) {
-      return createSemicolonClassElement();
+      return this.#finishNode(createSemicolonClassElement(), pos);
     }
     const modifiers = this.#parseModifiers();
     if (this.#current().kind === Kind.ConstructorKeyword) {
@@ -664,7 +672,7 @@ export class Parser {
       this.#expect(Kind.CloseParenToken);
       const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
-      return createConstructorDeclaration(modifiers, undefined, createNodeArray(parameters), undefined, body);
+      return this.#finishNode(createConstructorDeclaration(modifiers, undefined, createNodeArray(parameters), undefined, body), pos);
     }
 
     if (this.#current().kind === Kind.GetKeyword && this.#tokens[this.#index + 1]?.kind !== Kind.OpenParenToken) {
@@ -675,7 +683,7 @@ export class Parser {
       const type = this.#parseOptionalTypeAnnotation();
       const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
-      return createGetAccessorDeclaration(modifiers, name, undefined, createNodeArray([]), type, body);
+      return this.#finishNode(createGetAccessorDeclaration(modifiers, name, undefined, createNodeArray([]), type, body), pos);
     }
 
     if (this.#current().kind === Kind.SetKeyword && this.#tokens[this.#index + 1]?.kind !== Kind.OpenParenToken) {
@@ -686,7 +694,7 @@ export class Parser {
       this.#expect(Kind.CloseParenToken);
       const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
-      return createSetAccessorDeclaration(modifiers, name, undefined, createNodeArray(parameters), undefined, body);
+      return this.#finishNode(createSetAccessorDeclaration(modifiers, name, undefined, createNodeArray(parameters), undefined, body), pos);
     }
 
     const name = this.#parsePropertyName();
@@ -699,13 +707,13 @@ export class Parser {
       const type = this.#parseOptionalTypeAnnotation();
       const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
-      return createMethodDeclaration(modifiers, undefined, name, postfixToken, typeParameters, createNodeArray(parameters), type, body);
+      return this.#finishNode(createMethodDeclaration(modifiers, undefined, name, postfixToken, typeParameters, createNodeArray(parameters), type, body), pos);
     }
 
     const type = this.#parseOptionalTypeAnnotation();
     const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
     this.#consumeOptional(Kind.SemicolonToken);
-    return createPropertyDeclaration(modifiers, name, postfixToken, type, initializer);
+    return this.#finishNode(createPropertyDeclaration(modifiers, name, postfixToken, type, initializer), pos);
   }
 
   // Mirrors TS-Go parser.go parseTypeMember: call/construct signatures first,
@@ -717,9 +725,13 @@ export class Parser {
     if (this.#current().kind === Kind.NewKeyword && this.#nextTokenIsOpenParenOrLessThan()) {
       return this.#parseSignatureMember(Kind.ConstructSignature);
     }
+    // tsgo parseTypeMember (3180): after the call/construct early dispatch, pos is
+    // captured BEFORE parseModifiers so index/property/method-signature starts cover
+    // leading modifiers (e.g. `readonly`). This single pos threads into each branch.
+    const pos = this.#nodePos();
     const modifiers = this.#parseModifiers();
     if (this.#isIndexSignature()) {
-      return this.#parseIndexSignatureDeclaration(modifiers);
+      return this.#parseIndexSignatureDeclaration(pos, modifiers);
     }
     const name = this.#parsePropertyName();
     const postfixToken = this.#parseOptionalPostfixToken();
@@ -731,16 +743,20 @@ export class Parser {
       const type = this.#parseOptionalTypeAnnotation();
       this.#consumeOptional(Kind.SemicolonToken);
       this.#consumeOptional(Kind.CommaToken);
-      return createMethodSignatureDeclaration(modifiers, name, postfixToken, typeParameters, createNodeArray(parameters), type);
+      return this.#finishNode(createMethodSignatureDeclaration(modifiers, name, postfixToken, typeParameters, createNodeArray(parameters), type), pos);
     }
     const type = this.#parseOptionalTypeAnnotation();
     this.#consumeOptional(Kind.SemicolonToken);
     this.#consumeOptional(Kind.CommaToken);
-    return createPropertySignatureDeclaration(modifiers, name, postfixToken, type as never, undefined as never);
+    return this.#finishNode(createPropertySignatureDeclaration(modifiers, name, postfixToken, type as never, undefined as never), pos);
   }
 
   // `{ (args): R }` (call) and `{ new (args): R }` (construct) signatures.
   #parseSignatureMember(kind: Kind.CallSignature | Kind.ConstructSignature): TypeElement {
+    // tsgo parseSignatureMember (3200): own pos captured at entry, BEFORE the
+    // optional `new` consume (so the construct-signature start covers `new`);
+    // finishNode after the trailing semicolon/comma handling.
+    const pos = this.#nodePos();
     if (kind === Kind.ConstructSignature) {
       this.#expect(Kind.NewKeyword);
     }
@@ -752,19 +768,21 @@ export class Parser {
     this.#consumeOptional(Kind.SemicolonToken);
     this.#consumeOptional(Kind.CommaToken);
     return kind === Kind.CallSignature
-      ? createCallSignatureDeclaration(typeParameters, createNodeArray(parameters), type)
-      : createConstructSignatureDeclaration(typeParameters, createNodeArray(parameters), type);
+      ? this.#finishNode(createCallSignatureDeclaration(typeParameters, createNodeArray(parameters), type), pos)
+      : this.#finishNode(createConstructSignatureDeclaration(typeParameters, createNodeArray(parameters), type), pos);
   }
 
   // `{ [key: K]: V }` index signature.
-  #parseIndexSignatureDeclaration(modifiers: NodeArray<ModifierLike> | undefined): TypeElement {
+  #parseIndexSignatureDeclaration(pos: number, modifiers: NodeArray<ModifierLike> | undefined): TypeElement {
+    // tsgo parseIndexSignatureDeclaration(pos, ...): pos is the parseTypeMember-top
+    // pos (covering preceding modifiers); finishNode after parseTypeMemberSemicolon.
     this.#expect(Kind.OpenBracketToken);
     const parameters = this.#parseParameterList();
     this.#expect(Kind.CloseBracketToken);
     const type = this.#parseOptionalTypeAnnotation();
     this.#consumeOptional(Kind.SemicolonToken);
     this.#consumeOptional(Kind.CommaToken);
-    return createIndexSignatureDeclaration(modifiers, createNodeArray(parameters), type as never);
+    return this.#finishNode(createIndexSignatureDeclaration(modifiers, createNodeArray(parameters), type as never), pos);
   }
 
   #nextTokenIsOpenParenOrLessThan(): boolean {
@@ -821,13 +839,17 @@ export class Parser {
   #parseHeritageClauses(): NodeArray<ReturnType<typeof createHeritageClause>> | undefined {
     const clauses: ReturnType<typeof createHeritageClause>[] = [];
     while (this.#current().kind === Kind.ExtendsKeyword || this.#current().kind === Kind.ImplementsKeyword) {
+      // tsgo parseHeritageClause (1826): pos at the extends/implements keyword
+      // (captured before nextToken); finishNode after the delimited type list.
+      // Inner ExpressionWithTypeArguments elements are already Stage-1d stamped.
+      const clausePos = this.#nodePos();
       const token = this.#current().kind as Kind.ExtendsKeyword | Kind.ImplementsKeyword;
       this.#advance();
       const types: ExpressionWithTypeArguments[] = [];
       do {
         types.push(this.#parseExpressionWithTypeArguments());
       } while (this.#consumeOptional(Kind.CommaToken));
-      clauses.push(createHeritageClause(token, createNodeArray(types)));
+      clauses.push(this.#finishNode(createHeritageClause(token, createNodeArray(types)), clausePos));
     }
     return clauses.length === 0 ? undefined : createNodeArray(clauses);
   }
@@ -844,9 +866,13 @@ export class Parser {
   }
 
   #parseHeritageExpression(): Expression {
+    // tsgo builds this via parseLeftHandSideExpressionOrHigher whose property-access
+    // rest threads the base entity start: each dotted PropertyAccess node starts at
+    // the leftmost base identifier (pos) and ends after the just-parsed name.
+    const pos = this.#nodePos();
     let expression: Expression = this.#parseIdentifier();
     while (this.#consumeOptional(Kind.DotToken)) {
-      expression = createPropertyAccessExpression(expression, undefined, this.#parseIdentifier(), NodeFlags.None);
+      expression = this.#finishNode(createPropertyAccessExpression(expression, undefined, this.#parseIdentifier(), NodeFlags.None), pos);
     }
     return expression;
   }
@@ -941,12 +967,16 @@ export class Parser {
   }
 
   #parseParameterDeclaration(): ParameterDeclaration {
+    // tsgo parseParameterEx (3315): pos captured at entry, BEFORE modifiers/decorators
+    // and the optional `...`; finishNode after the optional initializer. (The single-
+    // identifier arrow param in #parseArrowFunction is stamped separately via paramPos.)
+    const pos = this.#nodePos();
     const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
     const name = this.#parseBindingName();
     const questionToken = this.#consumeOptional(Kind.QuestionToken) ? createToken(Kind.QuestionToken) : undefined;
     const type = this.#parseOptionalTypeAnnotation();
     const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
-    return createParameterDeclaration(undefined, dotDotDotToken, name, questionToken, type, initializer);
+    return this.#finishNode(createParameterDeclaration(undefined, dotDotDotToken, name, questionToken, type, initializer), pos);
   }
 
   #parseBlock(): Block {
@@ -1519,9 +1549,15 @@ export class Parser {
   }
 
   #parseObjectBindingPattern(): BindingName {
+    // tsgo parseObjectBindingPattern (1669): pattern pos at the `{` (before
+    // parseExpected); finishNode after the closing `}`.
+    const pos = this.#nodePos();
     this.#expect(Kind.OpenBraceToken);
     const elements: BindingElement[] = [];
     while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
+      // tsgo parseObjectBindingElement (1680): pos at the top of the iteration,
+      // BEFORE the optional `...`; finishNode after the optional initializer.
+      const elementPos = this.#nodePos();
       const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
       const firstName = this.#parsePropertyName();
       const propertyName = this.#consumeOptional(Kind.ColonToken) ? firstName : undefined;
@@ -1530,37 +1566,49 @@ export class Parser {
       }
       const name = propertyName === undefined ? firstName as BindingName : this.#parseBindingName();
       const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
-      elements.push(createBindingElement(dotDotDotToken, propertyName, name, initializer));
+      elements.push(this.#finishNode(createBindingElement(dotDotDotToken, propertyName, name, initializer), elementPos));
       this.#consumeOptional(Kind.CommaToken);
     }
     this.#expect(Kind.CloseBraceToken);
-    return createObjectBindingPattern(createNodeArray(elements));
+    return this.#finishNode(createObjectBindingPattern(createNodeArray(elements)), pos);
   }
 
   #parseArrayBindingPattern(): BindingName {
+    // tsgo parseArrayBindingPattern (1644): pattern pos at the `[` (before
+    // parseExpected); finishNode after the closing `]`.
+    const pos = this.#nodePos();
     this.#expect(Kind.OpenBracketToken);
     const elements: BindingElement[] = [];
     while (this.#current().kind !== Kind.CloseBracketToken && this.#current().kind !== Kind.EndOfFile) {
+      // tsgo parseArrayBindingElement (1655): pos captured at the top of the iteration
+      // (BEFORE the comma), so an elided hole still finishNodes a (zero-length) nil
+      // BindingElement at the comma position. Capture elementPos before consuming the
+      // comma that TSTS uses to detect the hole.
+      const elementPos = this.#nodePos();
       if (this.#consumeOptional(Kind.CommaToken)) {
-        elements.push(createBindingElement(undefined, undefined, undefined, undefined));
+        elements.push(this.#finishNode(createBindingElement(undefined, undefined, undefined, undefined), elementPos));
         continue;
       }
       const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
       const name = this.#parseBindingName();
       const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
-      elements.push(createBindingElement(dotDotDotToken, undefined, name, initializer));
+      elements.push(this.#finishNode(createBindingElement(dotDotDotToken, undefined, name, initializer), elementPos));
       this.#consumeOptional(Kind.CommaToken);
     }
     this.#expect(Kind.CloseBracketToken);
-    return createArrayBindingPattern(createNodeArray(elements));
+    return this.#finishNode(createArrayBindingPattern(createNodeArray(elements)), pos);
   }
 
   #parsePropertyName(): PropertyName {
     const token = this.#current();
+    // tsgo parseComputedPropertyName (3466): pos at the `[` (before parseExpected);
+    // finishNode after the closing `]`. Only this branch is stamped here; the
+    // identifier/string/numeric/private branches stamp their own leaves below.
+    const pos = token.pos;
     if (this.#consumeOptional(Kind.OpenBracketToken)) {
       const expression = this.#parseExpression();
       this.#expect(Kind.CloseBracketToken);
-      return createComputedPropertyName(expression);
+      return this.#finishNode(createComputedPropertyName(expression), pos);
     }
     if (token.kind === Kind.StringLiteral) {
       return this.#parseStringLiteralExpression() as PropertyName;
