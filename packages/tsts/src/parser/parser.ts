@@ -292,7 +292,8 @@ export class Parser {
   // contexts (Yield/Await/DisallowIn/DisallowConditionalTypes/Decorator/InWith)
   // currently in effect; #finishNode ORs it into each node's flags exactly like
   // tsgo finishNodeWithEnd `node.Flags |= p.contextFlags` (parser.go:5910). It is
-  // the one allowed mutable parse-state sibling of #index (NOT a binder slot).
+  // the one allowed mutable parse-state field alongside #token/#prevTokenEnd
+  // (NOT a binder slot).
   // INITIALIZED BY scriptKind: tsgo initializeState (parser.go:302-309) seeds
   // contextFlags from the script kind — JS/JSX => NodeFlagsJavaScriptFile,
   // JSON => JavaScriptFile|JsonFile, default (TS/TSX/.d.ts) => None. tsonic is
@@ -305,8 +306,8 @@ export class Parser {
     this.#sourceText = sourceText;
     this.#fileName = options.fileName ?? "input.ts";
     // tsgo initializeState (parser.go:288-313): create the scanner (default
-    // LanguageVariant.Standard, skipTrivia true — matches the old scanAll
-    // default), then call nextToken() ONCE (parser.go:283/139) to load the
+    // LanguageVariant.Standard, skipTrivia true — createLiveScanner defaults),
+    // then call nextToken() ONCE (parser.go:283/139) to load the
     // first token into #token before parseSourceFile runs. tsts is always
     // ScriptKindTS so #contextFlags starts at NodeFlags.None (the field default).
     this.#scanner = createLiveScanner(sourceText);
@@ -1637,10 +1638,9 @@ export class Parser {
     if (this.#current().kind !== Kind.OpenParenToken) {
       return false;
     }
-    // wave 4b-swap: the same boundary logic as before, but driven off the live
-    // scanner inside one #lookAhead (bounded by the matching `)` then the post-`)`
-    // peek) so no #tokens/#index remain. Behavior is identical; only the cursor
-    // changes. Scan forward tracking paren depth to the matching `)`, then decide
+    // the same boundary logic, driven entirely off the live scanner cursor
+    // inside one #lookAhead (bounded by the matching `)` then the post-`)`
+    // peek). Scan forward tracking paren depth to the matching `)`, then decide
     // off the token after it (`=>` ⇒ arrow; `:` ⇒ scan for `=>` before a
     // statement boundary; anything else ⇒ not an arrow).
     return this.#lookAhead(() => {
@@ -1940,10 +1940,10 @@ export class Parser {
       }
       case Kind.SlashToken:
       case Kind.SlashEqualsToken: {
-        // wave 4b-swap: the live scanner yields SlashToken/SlashEqualsToken for `/`
-        // (scanner.ts:1676+) — it does NOT auto-scan a RegularExpressionLiteral the
-        // way the old batch scanAll pre-detected one. At the regex-allowed primary
-        // position, re-tokenize via reScanSlashToken() (tsgo parser.go) and re-read
+        // the live scanner yields SlashToken/SlashEqualsToken for `/`
+        // (scanner.ts:1676+) — it does NOT auto-scan a RegularExpressionLiteral. At
+        // the regex-allowed primary position, re-tokenize via reScanSlashToken()
+        // (tsgo parser.go) and re-read
         // #token before building the regex literal (probe regex_literal_after_assignment
         // `x=/ab+/g;`).
         const pos = this.#nodePos();
