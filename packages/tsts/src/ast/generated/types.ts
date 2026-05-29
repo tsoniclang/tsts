@@ -2,6 +2,7 @@
 // Source: schema/tsgo/ast.json
 import { Kind } from "./kind.js";
 import type { EndOfFile, Statement } from "./nodes.js";
+import type { Diagnostic } from "../../diagnostics/types.js";
 
 export interface TextRange {
   // codex-048 Stage-1a: pos/end are MUTABLE parse-state. tsgo treats node
@@ -58,6 +59,7 @@ export interface SourceFile extends Node {
   readonly moduleAugmentations: readonly Node[];
   readonly ambientModuleNames: readonly string[];
   readonly externalModuleIndicator: Node | true | undefined;
+  readonly parseDiagnostics: readonly Diagnostic[];
   readonly tokenCache?: Map<string, Node>;
 }
 

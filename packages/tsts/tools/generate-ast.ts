@@ -243,6 +243,7 @@ function generateSchemaContract(schema: AstSchema): string {
 function generateRuntimeTypes(): string {
   return `${generatedHeader("schema/tsgo/ast.json")}import { Kind } from "./kind.js";
 import type { EndOfFile, Statement } from "./nodes.js";
+import type { Diagnostic } from "../../diagnostics/types.js";
 
 export interface TextRange {
   // codex-048 Stage-1a: pos/end are MUTABLE parse-state. tsgo treats node
@@ -299,6 +300,7 @@ export interface SourceFile extends Node {
   readonly moduleAugmentations: readonly Node[];
   readonly ambientModuleNames: readonly string[];
   readonly externalModuleIndicator: Node | true | undefined;
+  readonly parseDiagnostics: readonly Diagnostic[];
   readonly tokenCache?: Map<string, Node>;
 }
 
@@ -790,6 +792,7 @@ function generateFactory(schema: AstSchema): string {
   lines.push("import { forEachChild } from \"./visitor.js\";");
   lines.push("import type * as Ast from \"./nodes.js\";");
   lines.push("import type { Node, NodeArray, Path, SourceFile, Symbol } from \"./types.js\";");
+  lines.push("import type { Diagnostic } from \"../../diagnostics/types.js\";");
   lines.push("");
   lines.push("type NodeDataValue =");
   lines.push("  | Node");
@@ -848,6 +851,7 @@ function generateFactory(schema: AstSchema): string {
     "moduleAugmentations",
     "ambientModuleNames",
     "externalModuleIndicator",
+    "parseDiagnostics",
     "tokenCache",
   ]) {
     getterNames.add(name);
@@ -959,7 +963,7 @@ function generateFactory(schema: AstSchema): string {
     lines.push("");
   }
 
-  lines.push("export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile): SourceFile {");
+  lines.push("export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile, parseDiagnostics: readonly Diagnostic[]): SourceFile {");
   lines.push("  return createNode<SourceFile>(Kind.SourceFile, {");
   lines.push("    fileName,");
   lines.push("    path,");
@@ -976,6 +980,7 @@ function generateFactory(schema: AstSchema): string {
   lines.push("    moduleAugmentations: [],");
   lines.push("    ambientModuleNames: [],");
   lines.push("    externalModuleIndicator: undefined,");
+  lines.push("    parseDiagnostics,");
   lines.push("  });");
   lines.push("}");
   lines.push("");
@@ -983,7 +988,7 @@ function generateFactory(schema: AstSchema): string {
   lines.push("  if (node.statements === statements && node.endOfFileToken === endOfFileToken) {");
   lines.push("    return node;");
   lines.push("  }");
-  lines.push("  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken);");
+  lines.push("  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken, node.parseDiagnostics);");
   lines.push("  return updated;");
   lines.push("}");
   lines.push("");

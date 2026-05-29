@@ -7,6 +7,7 @@ import { Kind } from "./kind.js";
 import { forEachChild } from "./visitor.js";
 import type * as Ast from "./nodes.js";
 import type { Node, NodeArray, Path, SourceFile, Symbol } from "./types.js";
+import type { Diagnostic } from "../../diagnostics/types.js";
 
 type NodeDataValue =
   | Node
@@ -126,6 +127,7 @@ export class NodeObject implements Node {
   get operatorToken(): unknown { return this.#data["operatorToken"]; }
   get parameterName(): unknown { return this.#data["parameterName"]; }
   get parameters(): unknown { return this.#data["parameters"]; }
+  get parseDiagnostics(): unknown { return this.#data["parseDiagnostics"]; }
   get path(): unknown { return this.#data["path"]; }
   get phaseModifier(): unknown { return this.#data["phaseModifier"]; }
   get postfixToken(): unknown { return this.#data["postfixToken"]; }
@@ -2368,7 +2370,7 @@ export function updateJSDocPropertyTag(node: Ast.JSDocPropertyTag, tagName: Ast.
   return createJSDocPropertyTag(tagName, name, isBracketed, typeExpression, isNameFirst, comment);
 }
 
-export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile): SourceFile {
+export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile, parseDiagnostics: readonly Diagnostic[]): SourceFile {
   return createNode<SourceFile>(Kind.SourceFile, {
     fileName,
     path,
@@ -2385,6 +2387,7 @@ export function createSourceFile(fileName: string, path: Path, text: string, sta
     moduleAugmentations: [],
     ambientModuleNames: [],
     externalModuleIndicator: undefined,
+    parseDiagnostics,
   });
 }
 
@@ -2392,7 +2395,7 @@ export function updateSourceFile(node: SourceFile, statements: NodeArray<Ast.Sta
   if (node.statements === statements && node.endOfFileToken === endOfFileToken) {
     return node;
   }
-  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken);
+  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken, node.parseDiagnostics);
   return updated;
 }
 
@@ -2486,6 +2489,7 @@ export function cloneNode<TNode extends Node>(node: TNode): TNode {
   if ((node as { readonly operatorToken?: unknown }).operatorToken !== undefined) data["operatorToken"] = (node as { readonly operatorToken?: unknown }).operatorToken;
   if ((node as { readonly parameterName?: unknown }).parameterName !== undefined) data["parameterName"] = (node as { readonly parameterName?: unknown }).parameterName;
   if ((node as { readonly parameters?: unknown }).parameters !== undefined) data["parameters"] = (node as { readonly parameters?: unknown }).parameters;
+  if ((node as { readonly parseDiagnostics?: unknown }).parseDiagnostics !== undefined) data["parseDiagnostics"] = (node as { readonly parseDiagnostics?: unknown }).parseDiagnostics;
   if ((node as { readonly path?: unknown }).path !== undefined) data["path"] = (node as { readonly path?: unknown }).path;
   if ((node as { readonly phaseModifier?: unknown }).phaseModifier !== undefined) data["phaseModifier"] = (node as { readonly phaseModifier?: unknown }).phaseModifier;
   if ((node as { readonly postfixToken?: unknown }).postfixToken !== undefined) data["postfixToken"] = (node as { readonly postfixToken?: unknown }).postfixToken;

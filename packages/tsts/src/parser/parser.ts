@@ -1,5 +1,6 @@
 import {
   Kind,
+  KindNames,
   NodeFlags,
   createArrowFunction,
   createArrayTypeNode,
@@ -179,6 +180,9 @@ import {
   type VariableDeclaration,
 } from "../ast/index.js";
 import { createLiveScanner, type LiveScanner, type ScannerState, type ScannedToken } from "../scanner/index.js";
+import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
+import { format } from "../diagnostics/diagnostics.js";
+import type { Diagnostic, DiagnosticMessage } from "../diagnostics/types.js";
 
 export interface ParseSourceFileOptions {
   readonly fileName?: string;
@@ -192,6 +196,10 @@ interface ParserMark {
   readonly token: ScannedToken;
   readonly prevTokenEnd: number;
   readonly contextFlags: NodeFlags;
+  // codex Stage-3a: snapshot of #diagnostics.length so #rewind can discard any
+  // diagnostics pushed during a speculative probe (tsgo ParserState.diagnosticsLen,
+  // parser.go:353/366). Inert in 3a (no throw flipped => #diagnostics stays empty).
+  readonly diagnosticsLen: number;
 }
 
 export class ParseError extends Error {
@@ -276,6 +284,103 @@ const keywordTypeKinds = new Set<Kind>([
   Kind.VoidKeyword,
 ]);
 
+// codex Stage-3a: faithful port of tsgo scanner.go textToToken (124-189) ∪
+// textToKeyword (36-122), inverted into tokenToText (scanner.go:2213-2219) and
+// surfaced via tokenToString (scanner.go:2221-2223). Used as the `{0}` arg to
+// Diagnostics.X_0_expected. The scanner.native-preview.ts tokenToString is NOT
+// usable here (that file is excluded from the build, tsconfig.json), so the map
+// is rebuilt locally: punctuation lexemes from tsgo textToToken plus keyword
+// stems derived from KindNames (matching scanner.ts textToKeyword, scanner.go:36).
+const tokenToText: ReadonlyMap<Kind, string> = (() => {
+  const m = new Map<Kind, string>();
+  // tsgo textToToken punctuation entries (scanner.go:125-187).
+  const punctuation: ReadonlyArray<readonly [string, Kind]> = [
+    ["{", Kind.OpenBraceToken],
+    ["}", Kind.CloseBraceToken],
+    ["(", Kind.OpenParenToken],
+    [")", Kind.CloseParenToken],
+    ["[", Kind.OpenBracketToken],
+    ["]", Kind.CloseBracketToken],
+    [".", Kind.DotToken],
+    ["...", Kind.DotDotDotToken],
+    [";", Kind.SemicolonToken],
+    [",", Kind.CommaToken],
+    ["<", Kind.LessThanToken],
+    [">", Kind.GreaterThanToken],
+    ["<=", Kind.LessThanEqualsToken],
+    [">=", Kind.GreaterThanEqualsToken],
+    ["==", Kind.EqualsEqualsToken],
+    ["!=", Kind.ExclamationEqualsToken],
+    ["===", Kind.EqualsEqualsEqualsToken],
+    ["!==", Kind.ExclamationEqualsEqualsToken],
+    ["=>", Kind.EqualsGreaterThanToken],
+    ["+", Kind.PlusToken],
+    ["-", Kind.MinusToken],
+    ["**", Kind.AsteriskAsteriskToken],
+    ["*", Kind.AsteriskToken],
+    ["/", Kind.SlashToken],
+    ["%", Kind.PercentToken],
+    ["++", Kind.PlusPlusToken],
+    ["--", Kind.MinusMinusToken],
+    ["<<", Kind.LessThanLessThanToken],
+    ["</", Kind.LessThanSlashToken],
+    [">>", Kind.GreaterThanGreaterThanToken],
+    [">>>", Kind.GreaterThanGreaterThanGreaterThanToken],
+    ["&", Kind.AmpersandToken],
+    ["|", Kind.BarToken],
+    ["^", Kind.CaretToken],
+    ["!", Kind.ExclamationToken],
+    ["~", Kind.TildeToken],
+    ["&&", Kind.AmpersandAmpersandToken],
+    ["||", Kind.BarBarToken],
+    ["?", Kind.QuestionToken],
+    ["??", Kind.QuestionQuestionToken],
+    ["?.", Kind.QuestionDotToken],
+    [":", Kind.ColonToken],
+    ["=", Kind.EqualsToken],
+    ["+=", Kind.PlusEqualsToken],
+    ["-=", Kind.MinusEqualsToken],
+    ["*=", Kind.AsteriskEqualsToken],
+    ["**=", Kind.AsteriskAsteriskEqualsToken],
+    ["/=", Kind.SlashEqualsToken],
+    ["%=", Kind.PercentEqualsToken],
+    ["<<=", Kind.LessThanLessThanEqualsToken],
+    [">>=", Kind.GreaterThanGreaterThanEqualsToken],
+    [">>>=", Kind.GreaterThanGreaterThanGreaterThanEqualsToken],
+    ["&=", Kind.AmpersandEqualsToken],
+    ["|=", Kind.BarEqualsToken],
+    ["^=", Kind.CaretEqualsToken],
+    ["||=", Kind.BarBarEqualsToken],
+    ["&&=", Kind.AmpersandAmpersandEqualsToken],
+    ["??=", Kind.QuestionQuestionEqualsToken],
+    ["@", Kind.AtToken],
+    ["#", Kind.HashToken],
+    ["`", Kind.BacktickToken],
+  ];
+  // tsgo tokenToText inverts textToToken: last write per kind wins. Keywords are
+  // copied in after punctuation (maps.Copy(m, textToKeyword), scanner.go:188), so
+  // seed punctuation first, then keyword stems.
+  for (const [text, kind] of punctuation) {
+    m.set(kind, text);
+  }
+  for (let i = 0; i < KindNames.length; i++) {
+    const name = KindNames[i]!;
+    if (name.endsWith("Keyword")) {
+      const stem = name.slice(0, -"Keyword".length);
+      m.set(i as Kind, stem.toLowerCase());
+    }
+  }
+  return m;
+})();
+
+// codex Stage-3a: tsgo scanner.TokenToString (scanner.go:2221-2223) — the lexeme
+// for a punctuation/keyword Kind, or undefined for tokens with no fixed text
+// (identifiers, literals). Top-level helper (no `this` coupling) per the plan.
+// codex Stage-3b: wired to throw sites in 3b.
+function tokenToString(kind: Kind): string | undefined {
+  return tokenToText.get(kind);
+}
+
 export class Parser {
   readonly #sourceText: string;
   readonly #fileName: string;
@@ -301,6 +406,12 @@ export class Parser {
   // applies and contextFlags starts at NodeFlags.None; the JS/JSX/JSON arms are
   // unreachable for tsonic (no scriptKind is plumbed into ParseSourceFileOptions).
   #contextFlags: NodeFlags = NodeFlags.None;
+  // codex Stage-3a: parser-owned diagnostics buffer (tsgo p.diagnostics,
+  // parser.go:319-336). ADDITIVE: populated only when throw sites are flipped in
+  // 3b; empty in 3a. The `readonly` binding is mutated in-place (push/length
+  // truncate) — same controlled mutable-compiler-state category as #token /
+  // #prevTokenEnd / #contextFlags (parse-state, NOT a binder slot).
+  readonly #diagnostics: Diagnostic[] = [];
 
   constructor(sourceText: string, options: ParseSourceFileOptions = {}) {
     this.#sourceText = sourceText;
@@ -356,17 +467,63 @@ export class Parser {
     }
   }
 
+  // codex Stage-3a: faithful port of tsgo parseErrorAtRange (parser.go:330-340).
+  // Builds a concrete Diagnostic (text via format(message.message, args)) and
+  // pushes it onto #diagnostics, deduping by last-position: if the previous
+  // diagnostic starts at the same pos, this one is skipped (tsgo parser.go:332).
+  // tsgo's NewDiagnostic passes file=nil at parse time (finishSourceFile later
+  // re-attaches the file); file:undefined is faithful here and the buffer is
+  // empty in 3a regardless. ADDITIVE — not yet called by any throw site.
+  // codex Stage-3b: wired to throw sites in 3b.
+  #parseErrorAtRange(pos: number, end: number, message: DiagnosticMessage, args: readonly string[]): Diagnostic | undefined {
+    const last = this.#diagnostics[this.#diagnostics.length - 1];
+    if (last !== undefined && last.start === pos) {
+      return undefined;
+    }
+    // tsgo NewDiagnostic passes file=nil at parse time (finishSourceFile later
+    // re-attaches the file, parser.go:466). The `file` property is omitted here
+    // rather than set to undefined: with exactOptionalPropertyTypes the optional
+    // SourceFileSlim field rejects an explicit `undefined`, and an absent property
+    // is the faithful "no file yet" state.
+    const diag: Diagnostic = {
+      message,
+      start: pos,
+      length: end - pos,
+      category: message.category,
+      code: message.code,
+      text: format(message.message, args),
+    };
+    this.#diagnostics.push(diag);
+    return diag;
+  }
+
+  // codex Stage-3a: tsgo parseErrorAt (parser.go:324-326). codex Stage-3b: wired in 3b.
+  #parseErrorAt(pos: number, end: number, message: DiagnosticMessage, args: readonly string[] = []): Diagnostic | undefined {
+    return this.#parseErrorAtRange(pos, end, message, args);
+  }
+
+  // codex Stage-3a: tsgo parseErrorAtCurrentToken (parser.go:328-330). codex Stage-3b: wired in 3b.
+  #parseErrorAtCurrentToken(message: DiagnosticMessage, args: readonly string[] = []): Diagnostic | undefined {
+    return this.#parseErrorAtRange(this.#token.pos, this.#token.end, message, args);
+  }
+
   parseSourceFile(): SourceFile {
     const statements: Statement[] = [];
     while (this.#current().kind !== Kind.EndOfFile) {
       statements.push(this.#parseStatement());
     }
+    // codex Stage-3a: attach the parser-owned diagnostics buffer onto the
+    // SourceFile at end-of-parse, mirroring tsgo finishSourceFile's
+    // result.SetDiagnostics(...) (parser.go:466) which runs AFTER the parse loop.
+    // At this call point #diagnostics is fully populated (end of parse). In 3a it
+    // is always empty (no throw flipped) — behaviorally inert but live end-to-end.
     return createSourceFile(
       this.#fileName,
       this.#fileName as never,
       this.#sourceText,
       createNodeArray(statements),
       createToken(Kind.EndOfFile),
+      this.#diagnostics,
     );
   }
 
@@ -2879,15 +3036,18 @@ export class Parser {
 
   // wave 4b-swap: speculative parse-state snapshot/restore, modeling tsgo
   // ParserState (parser.go:349-372). Captures the scanner state plus the
-  // parser cursor (#token), #prevTokenEnd, and #contextFlags. The
-  // diagnostics-length slot tsgo also saves is a no-op pre-Stage-3 (tsts has no
-  // diagnostics array yet) so it is intentionally omitted.
+  // parser cursor (#token), #prevTokenEnd, and #contextFlags. codex Stage-3a:
+  // now also snapshots #diagnostics.length (tsgo ParserState.diagnosticsLen,
+  // parser.go:353) so #rewind can discard diagnostics pushed during a
+  // speculative probe (parser.go:366). Inert in 3a — #diagnostics stays empty
+  // for all input (no throw flipped), so the snapshot is always 0.
   #mark(): ParserMark {
     return {
       scannerState: this.#scanner.mark(),
       token: this.#token,
       prevTokenEnd: this.#prevTokenEnd,
       contextFlags: this.#contextFlags,
+      diagnosticsLen: this.#diagnostics.length,
     };
   }
 
@@ -2896,6 +3056,11 @@ export class Parser {
     this.#token = mark.token;
     this.#prevTokenEnd = mark.prevTokenEnd;
     this.#contextFlags = mark.contextFlags;
+    // codex Stage-3a: discard any diagnostics appended during the speculative
+    // probe (tsgo p.diagnostics = p.diagnostics[0:state.diagnosticsLen],
+    // parser.go:366). Setting Array.length truncates in place. Inert in 3a
+    // (diagnosticsLen is always 0, #diagnostics stays empty).
+    this.#diagnostics.length = mark.diagnosticsLen;
   }
 
   // wave 4b-swap: tsgo lookAhead (parser.go:374-379) — run a speculative probe

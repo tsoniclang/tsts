@@ -66,7 +66,7 @@ export class GeneratedAstRuntimeTests {
   models_handwritten_source_file_with_generated_node_array_storage(): void {
     const expression = createExpressionStatement(createIdentifier("x"));
     const endOfFileToken = createToken(Kind.EndOfFile);
-    const sourceFile = createSourceFile("input.ts", "input.ts" as never, "x;", createNodeArray([expression]), endOfFileToken);
+    const sourceFile = createSourceFile("input.ts", "input.ts" as never, "x;", createNodeArray([expression]), endOfFileToken, []);
     const visited: Node[] = [];
 
     Assert.Equal(Kind.SourceFile, sourceFile.kind);
