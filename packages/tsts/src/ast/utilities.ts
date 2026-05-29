@@ -36,6 +36,7 @@ import type {
 import {
   isBinaryExpression,
   isCallExpression,
+  isCatchClause,
   isClassStaticBlockDeclaration,
   isClassElement,
   isElementAccessExpression,
@@ -48,6 +49,7 @@ import {
   isPropertyAccessExpression,
   isPropertyDeclaration,
   isSourceFile,
+  isVariableDeclaration,
 } from "./generated/is.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -56,10 +58,20 @@ import {
 // can read the field directly via a checked downcast (mirrors node.AsXxx()).
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Mirrors n.ModifierFlags(): returns the syntactic modifier flags, or None when
-// the node carries no modifiers field.
+// Mirrors n.ModifierFlags() (ast.go:601) → Modifiers().ModifierFlags. tsgo
+// computes the modifier flags eagerly on the modifier LIST at parse time
+// (NewModifierList → ModifiersToFlags(nodes)); the tsts AST instead carries a
+// node-level `modifierFlags` cache that the parser leaves unset. To stay faithful
+// to Node.ModifierFlags() this reads the cache when present (fast path) and
+// otherwise computes the flags from the modifier list directly, exactly as
+// tsgo's ModifiersToFlags would. Returns None when the node has no modifiers.
 function nodeModifierFlags(node: Node): ModifierFlags {
-  return "modifierFlags" in node ? (node as ModifiersBase).modifierFlags : ModifierFlags.None;
+  const cached = "modifierFlags" in node ? (node as ModifiersBase).modifierFlags : undefined;
+  if (typeof cached === "number") {
+    return cached;
+  }
+  const modifiers = "modifiers" in node ? (node as ModifiersBase).modifiers : undefined;
+  return modifiers === undefined ? ModifierFlags.None : modifiersToFlags(modifiers);
 }
 
 // Mirrors getQuestionDotToken / the QuestionDotToken() accessor for the kinds
@@ -420,8 +432,10 @@ function isFunctionLikeDeclarationKind(kind: Kind): boolean {
   return false;
 }
 
-// Determines if a node is function- or signature-like.
-function isFunctionLike(node: Node | undefined): boolean {
+// Determines if a node is function- or signature-like. Exported (mirrors
+// ast.IsFunctionLike) so the binder's GetContainerFlags can classify a Block by
+// the kind of its parent.
+export function isFunctionLike(node: Node | undefined): boolean {
   return node !== undefined && isFunctionLikeKind(node.kind);
 }
 
@@ -666,4 +680,56 @@ export function canHaveDecorators(node: Node): boolean {
       return true;
   }
   return false;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Declaration root / combined flags (binder support)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GetRootDeclaration (utilities.go:1139) — climbs binding-element nesting to the
+// owning VariableDeclaration / ParameterDeclaration.
+export function getRootDeclaration(node: Node): Node {
+  let current = node;
+  while (current.kind === Kind.BindingElement) {
+    current = current.parent.parent;
+  }
+  return current;
+}
+
+// getCombinedFlags (utilities.go:1146) specialized for NodeFlags — ORs the flags
+// of a VariableDeclaration with its enclosing VariableDeclarationList and
+// VariableStatement so `let`/`const`/`using` (carried on the list/statement) are
+// visible from the declaration node. Relies on parent pointers being set, which
+// the binder establishes in its traversal before descending.
+export function getCombinedNodeFlags(node: Node): NodeFlags {
+  let current: Node | undefined = getRootDeclaration(node);
+  let flags = current.flags as NodeFlags;
+  if (current.kind === Kind.VariableDeclaration) {
+    current = current.parent;
+  }
+  if (current !== undefined && current.kind === Kind.VariableDeclarationList) {
+    flags |= current.flags as NodeFlags;
+    current = current.parent;
+  }
+  if (current !== undefined && current.kind === Kind.VariableStatement) {
+    flags |= current.flags as NodeFlags;
+  }
+  return flags;
+}
+
+// IsCatchClauseVariableDeclarationOrBindingElement (utilities.go:721).
+export function isCatchClauseVariableDeclarationOrBindingElement(declaration: Node): boolean {
+  const node = getRootDeclaration(declaration);
+  return isVariableDeclaration(node) && node.parent !== undefined && isCatchClause(node.parent);
+}
+
+// IsBlockOrCatchScoped (utilities.go:717).
+export function isBlockOrCatchScoped(declaration: Node): boolean {
+  return (getCombinedNodeFlags(declaration) & NodeFlags.BlockScoped) !== 0
+    || isCatchClauseVariableDeclarationOrBindingElement(declaration);
+}
+
+// IsPartOfParameterDeclaration (utilities.go:1736).
+export function isPartOfParameterDeclaration(node: Node): boolean {
+  return getRootDeclaration(node).kind === Kind.Parameter;
 }

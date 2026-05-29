@@ -66,7 +66,14 @@ export class BinderGroundworkTests {
     const blockScoped = bindSourceFile(parseSourceFile("let x; const x = 1;"));
     const functionScoped = bindSourceFile(parseSourceFile("var y; var y;"));
 
-    Assert.Equal<readonly string[]>(["Duplicate identifier 'x'."], blockScoped.map((d) => d.message));
+    // Faithful declareSymbolEx (binder.go:221-285): a block-scoped redeclaration
+    // emits Cannot_redeclare_block_scoped_variable_0 on the prior declaration(s)
+    // AND on the conflicting one — two diagnostics for `let x; const x;`.
+    Assert.Equal<readonly string[]>(
+      ["Cannot redeclare block-scoped variable 'x'.", "Cannot redeclare block-scoped variable 'x'."],
+      blockScoped.map((d) => d.message),
+    );
+    // `var y; var y;` is a compatible function-scoped merge — no diagnostic.
     Assert.Equal(0, functionScoped.length);
   }
 
@@ -98,7 +105,11 @@ export class BinderGroundworkTests {
     Assert.True(isTypeAliasDeclaration(typeAliasDeclaration));
     if (!isClassDeclaration(classDeclaration)) throw new Exception("Expected class declaration");
     if (!isInterfaceDeclaration(interfaceDeclaration)) throw new Exception("Expected interface declaration");
-    Assert.NotNull(classDeclaration.locals);
+    // Faithful GetContainerFlags: a class is IsContainer but NOT HasLocals
+    // (binder.go:2570), so its instance members live on the class symbol's
+    // members table — not on node.locals (which holds only type-parameter scope,
+    // unallocated here as Box has none).
+    Assert.NotNull(classDeclaration.symbol?.members);
     Assert.NotNull(interfaceDeclaration.symbol?.members);
     // The class member `value` is bound onto the class symbol's member table.
     Assert.Equal(SymbolFlags.Property, classDeclaration.symbol?.members?.get("value")?.flags);
@@ -134,9 +145,14 @@ export class BinderGroundworkTests {
     Assert.Equal(SymbolFlags.FunctionScopedVariable, functionLocals?.get("second")?.flags);
   }
 
-  // codex-021307 M4a GATE: `function f() { let x = 1; }` must bind in place —
-  // sourceFile.locals contains `f`; f's container locals contain `x`
-  // (BlockScopedVariable); declaration `symbol` slots populated; parents set.
+  // codex-021307 M4a GATE (faithful under M4b): `function f() { let x = 1; }`
+  // must bind in place — sourceFile.locals contains `f`; f's container locals
+  // contain `x` (BlockScopedVariable); declaration `symbol` slots populated;
+  // parents set. M4b uses the real GetContainerFlags: a Block parented by a
+  // function-like is ContainerFlagsNone (binder.go:2602-2604), so the function
+  // BODY shares the function's locals — `x` lands in f.locals, and f.body has no
+  // locals table of its own (the M4a interim binder created a body-block table;
+  // the faithful binder does not).
   binds_function_f_let_x_gate_in_place(): void {
     const sourceFile = parseSourceFile("function f() { let x = 1; }");
     const diagnostics = bindSourceFile(sourceFile);
@@ -152,20 +168,107 @@ export class BinderGroundworkTests {
     Assert.True(fSymbol === functionDeclaration.symbol);
     Assert.True(functionDeclaration.symbol?.valueDeclaration === functionDeclaration);
 
-    // `x` lives in the block-scope locals of f's body block, BlockScopedVariable.
+    // `x` lives in f's function locals (the body block shares the function
+    // scope), BlockScopedVariable.
     const body = functionDeclaration.body!;
     const xVariableStatement = body.statements[0]!;
     if (!isVariableStatement(xVariableStatement)) throw new Exception("Expected variable statement");
     const xDeclaration = xVariableStatement.declarationList.declarations[0]!;
-    const xSymbol = body.locals?.get("x");
+    const xSymbol = functionDeclaration.locals?.get("x");
     Assert.Equal(SymbolFlags.BlockScopedVariable, xSymbol?.flags);
     Assert.True(xSymbol === getSymbol(xDeclaration));
+    // The function body Block is NOT its own block-scoped container.
+    Assert.Null(body.locals);
 
     // Parent pointers are populated in place along the chain.
     Assert.True(functionDeclaration.parent === sourceFile);
     Assert.True(body.parent === functionDeclaration);
     Assert.True(xVariableStatement.parent === body);
     Assert.True(xDeclaration.parent === xVariableStatement.declarationList);
+  }
+
+  // codex-024359 M4b ACCEPTANCE A: function var/let scoping with a nested block.
+  // `function f() { var shared = 1; let scoped = 2; { let scoped = 3; } }`
+  //   - `f` in sourceFile.locals
+  //   - `shared` FUNCTION-scoped → f's container locals (NOT a body-block table)
+  //   - outer `scoped` (let) → f's container locals (the function body block
+  //     shares the function scope; GetContainerFlags(Block parented by fn) = None)
+  //   - inner `scoped` (let) → the INNER block's own locals (that block is parented
+  //     by the body block, so it IS a block-scoped container)
+  //   - the two `scoped` are DISTINCT symbols, no false duplicate.
+  binds_function_var_let_block_scopes_with_distinct_inner_let(): void {
+    const sourceFile = parseSourceFile("function f() { var shared = 1; let scoped = 2; { let scoped = 3; } }");
+    const diagnostics = bindSourceFile(sourceFile);
+
+    Assert.Equal(0, diagnostics.length);
+    Assert.NotNull(sourceFile.locals);
+    Assert.NotNull(lookupSymbol(sourceFile.locals!, "f"));
+
+    const functionDeclaration = sourceFile.statements[0]!;
+    if (!isFunctionDeclaration(functionDeclaration)) throw new Exception("Expected function declaration");
+    const functionLocals = functionDeclaration.locals!;
+    Assert.NotNull(functionLocals);
+
+    // `shared` is function-scoped, in the function's locals.
+    Assert.Equal(SymbolFlags.FunctionScopedVariable, functionLocals.get("shared")?.flags);
+    // Outer `scoped` (let) is block-scoped but its nearest block-scope container
+    // is the function (the body block shares the function scope).
+    const outerScoped = functionLocals.get("scoped");
+    Assert.Equal(SymbolFlags.BlockScopedVariable, outerScoped?.flags);
+
+    // The function body block is not its own locals container.
+    const body = functionDeclaration.body!;
+    Assert.Null(body.locals);
+
+    // The inner `{ let scoped = 3; }` block IS a block-scoped container.
+    const innerBlock = body.statements[2]!;
+    if (!isBlock(innerBlock)) throw new Exception("Expected inner block");
+    const innerScoped = innerBlock.locals?.get("scoped");
+    Assert.Equal(SymbolFlags.BlockScopedVariable, innerScoped?.flags);
+
+    // The two `scoped` are distinct symbols — no false duplicate diagnostic.
+    Assert.NotNull(outerScoped);
+    Assert.NotNull(innerScoped);
+    Assert.True(outerScoped !== innerScoped);
+  }
+
+  // codex-024359 M4b ACCEPTANCE B: class static vs instance member routing.
+  // `class C { static s = 1; m() { return C.s; } }`
+  //   - `C` in sourceFile.locals
+  //   - static `s` → C.symbol.exports (declareClassMember: IsStatic → GetExports)
+  //   - instance `m` → C.symbol.members (declareClassMember: GetMembers)
+  //   - both have their own node.symbol; valueDeclaration points at the member.
+  binds_class_static_member_to_exports_and_instance_member_to_members(): void {
+    const sourceFile = parseSourceFile("class C { static s = 1; m() { return C.s; } }");
+    const diagnostics = bindSourceFile(sourceFile);
+
+    Assert.Equal(0, diagnostics.length);
+    Assert.NotNull(sourceFile.locals);
+    Assert.NotNull(lookupSymbol(sourceFile.locals!, "C"));
+
+    const classDeclaration = sourceFile.statements[0]!;
+    if (!isClassDeclaration(classDeclaration)) throw new Exception("Expected class declaration");
+    const classSymbol = classDeclaration.symbol!;
+    Assert.NotNull(classSymbol);
+
+    // static `s` on the class symbol's EXPORTS, not its members.
+    const staticS = classSymbol.exports?.get("s");
+    Assert.Equal(SymbolFlags.Property, staticS?.flags);
+    Assert.Null(classSymbol.members?.get("s"));
+
+    // instance `m` on the class symbol's MEMBERS, not its exports.
+    const instanceM = classSymbol.members?.get("m");
+    Assert.Equal(SymbolFlags.Method, instanceM?.flags);
+    Assert.Null(classSymbol.exports?.get("m"));
+
+    // Each member declaration has its own node.symbol === the table entry, and the
+    // value declaration points at the declaring member.
+    const staticMember = classDeclaration.members[0]!;
+    const instanceMember = classDeclaration.members[1]!;
+    Assert.True(getSymbol(staticMember) === staticS);
+    Assert.True(getSymbol(instanceMember) === instanceM);
+    Assert.True(staticS?.valueDeclaration === staticMember);
+    Assert.True(instanceM?.valueDeclaration === instanceMember);
   }
 }
 
@@ -177,3 +280,5 @@ A<BinderGroundworkTests>().method((t) => t.binds_class_interface_and_type_alias_
 A<BinderGroundworkTests>().method((t) => t.binds_loop_declaration_initializers_into_the_loop_lexical_scope).add(FactAttribute);
 A<BinderGroundworkTests>().method((t) => t.binds_names_inside_object_and_array_binding_patterns).add(FactAttribute);
 A<BinderGroundworkTests>().method((t) => t.binds_function_f_let_x_gate_in_place).add(FactAttribute);
+A<BinderGroundworkTests>().method((t) => t.binds_function_var_let_block_scopes_with_distinct_inner_let).add(FactAttribute);
+A<BinderGroundworkTests>().method((t) => t.binds_class_static_member_to_exports_and_instance_member_to_members).add(FactAttribute);

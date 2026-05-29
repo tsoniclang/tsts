@@ -263,6 +263,17 @@ export interface Node extends TextRange {
   flags: number;
   // codex-043 M2 Fork A: parent is a mutable binder-set slot.
   parent: Node;
+  // codex-032140 ruling B: binder-owned slots surfaced on the shared Node
+  // contract. tsgo's *ast.Node exposes these via typed DeclarationData()/
+  // LocalsContainerData() accessors, so any node can reach them; the slots
+  // physically live on DeclarationBase.symbol / LocalsContainerBase.locals +
+  // nextContainer, and SourceFile already re-declares locals/nextContainer.
+  // Surfacing them here (optional + mutable, same category as parent/flags
+  // above) lets ast/accessors.ts read/write the binder slots through the typed
+  // contract instead of an \`as unknown as { field }\` structural-erasure cast.
+  symbol?: Symbol;
+  locals?: Map<string, Symbol>;
+  nextContainer?: Node;
   readonly jsDoc?: readonly Node[];
   forEachChild<T>(visitor: (node: Node) => T, visitArray?: (nodes: NodeArray<Node>) => T): T | undefined;
   getSourceFile(): SourceFile;

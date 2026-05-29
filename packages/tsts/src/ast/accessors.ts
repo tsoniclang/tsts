@@ -403,6 +403,7 @@ export function propertyDeclarationModifiers(node: AstNode): ModifierList | unde
 export function parameterDeclarationName(node: AstNode): AstNode { return f<AstNode>(node, "name")!; }
 export function parameterDeclarationInitializer(node: AstNode): AstNode | undefined { return f<AstNode>(node, "initializer"); }
 export function nodeInitializer(node: AstNode): AstNode | undefined { return f<AstNode>(node, "initializer"); }
+export function nodeQuestionToken(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "questionToken"); }
 export function classStaticBlockBodyStatements(node: AstNode): readonly AstNode[] {
   const body = f<AstNode>(node, "body");
   if (body === undefined) return [];
@@ -618,6 +619,66 @@ export function qualifiedNameRight(node: AstNode): AstNode { return f<AstNode>(n
 export function setParentInChildren(_node: AstNode): void { /* no-op until binder phase */ }
 export function clearNodeSynthesizedFlag(_node: AstNode): void { /* no-op until printer phase */ }
 export function setNodeParent(node: AstNode, parent: AstNode): void { (node as unknown as { parent: AstNode }).parent = parent; }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Binder-set slot writers + symbol-table getters (tsgo node.DeclarationData(),
+// node.LocalsContainerData(), ast.GetLocals/GetMembers/GetExports). These read
+// and write the binder-owned slots THROUGH the typed generated contract: the
+// generated `Node` surfaces the optional mutable `symbol`/`locals`/`nextContainer`
+// slots (mirroring tsgo's DeclarationData()/LocalsContainerData() accessors) and
+// the generated `Symbol` surfaces the optional mutable `members`/`exports`/
+// `parent` slots. No structural-erasure slot cast is needed — the binder writes
+// the in-place symbol/locals slots without any cast of its own.
+// Mirrors the M4a read-side accessors (nodeSymbol / nodeLocals) above.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// node.DeclarationData().Symbol = symbol.
+export function setNodeSymbol(node: AstNode, symbol: AstSymbol): void {
+  node.symbol = symbol;
+}
+
+// node.LocalsContainerData().Locals = locals (binder eagerly creates locals when
+// a container HasLocals; bindContainer line 1514-1517).
+export function setNodeLocals(node: AstNode, locals: SymbolTable): void {
+  node.locals = locals;
+}
+
+// node.LocalsContainerData().NextContainer = next (addToContainerChain).
+export function setNodeNextContainer(node: AstNode, next: AstNode): void {
+  node.nextContainer = next;
+}
+
+// ast.GetLocals(node) — returns the (already-created) locals table of a locals
+// container. The binder eagerly initializes locals in bindContainer for
+// HasLocals containers, so this returns the live table.
+export function getNodeLocals(node: AstNode): SymbolTable | undefined {
+  return node.locals;
+}
+
+// ast.GetMembers(symbol) — lazily creates and returns symbol.members.
+export function getSymbolMembers(symbol: AstSymbol): SymbolTable {
+  if (symbol.members === undefined) {
+    symbol.members = new Map();
+  }
+  return symbol.members;
+}
+
+// ast.GetExports(symbol) — lazily creates and returns symbol.exports.
+export function getSymbolExports(symbol: AstSymbol): SymbolTable {
+  if (symbol.exports === undefined) {
+    symbol.exports = new Map();
+  }
+  return symbol.exports;
+}
+
+// Symbol.Parent read/write (declareSymbolEx sets symbol.parent to the owning
+// container symbol).
+export function getSymbolParent(symbol: AstSymbol): AstSymbol | undefined {
+  return symbol.parent;
+}
+export function setSymbolParent(symbol: AstSymbol, parent: AstSymbol): void {
+  symbol.parent = parent;
+}
 export function stringLiteralTokenFlags(node: AstNode): number {
   return (node as unknown as { tokenFlags?: number }).tokenFlags ?? 0;
 }
