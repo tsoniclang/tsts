@@ -76,8 +76,12 @@ import {
   isTypeOperatorNode,
   isTypeParameterDeclaration,
   isTypeReferenceNode,
+  isVariableStatement,
 } from "../ast/index.js";
 import { parseSourceFile } from "./index.js";
+// M3 Stage-5 pre-wave: ScriptKind/languageVariant plumbing probes.
+import { ScriptKind, getScriptKindFromFileName } from "../core/core.js";
+import { LanguageVariant } from "./parser-utilities.js";
 
 export class ParserParityTests {
   // ── Helpers ──────────────────────────────────────────────────────────────
@@ -898,6 +902,57 @@ export class ParserParityTests {
     Assert.Equal(20, qualifier.end);
     Assert.Equal("X", this.#raw(sourceFile, qualifier));
   }
+
+  // ── M3 Stage-5 pre-wave: scriptKind/languageVariant plumbing ────────────────
+  // These probes prove ONLY the plumbing (ScriptKind -> getLanguageVariant ->
+  // parser/scanner variant + SourceFile stamp), NOT JSX parsing (5a adds that).
+
+  // (a) A .ts/ScriptKindTS parse stays Standard, and `let x = <T>y;` parses
+  // EXACTLY as it did pre-wave: the LessThanToken arm is still unimplemented, so
+  // the parser records Expression_expected[1109] and recovers (a VariableStatement
+  // with a BinaryExpression initializer) — it does NOT build a TypeAssertion (5a).
+  // The point is the .ts path is byte-identical to pre-wave.
+  prewave_ts_is_standard_variant_unchanged(): void {
+    const sourceFile = parseSourceFile("let x = <T>y;", { fileName: "a.ts" });
+    Assert.Equal(LanguageVariant.Standard, sourceFile.languageVariant);
+    Assert.Equal(ScriptKind.TS, sourceFile.scriptKind);
+    // Current (pre-wave) behavior: LessThanToken arm unimplemented => 1109 recorded.
+    Assert.True(
+      sourceFile.parseDiagnostics.some((d) => d.code === 1109),
+      "expected Expression_expected[1109] (LessThanToken arm still unimplemented — TypeAssertion is 5a, not this wave)",
+    );
+    const statement = sourceFile.statements[0]!;
+    if (!isVariableStatement(statement)) throw new Exception("Expected variable statement (unchanged .ts behavior)");
+    const declaration = statement.declarationList.declarations[0]!;
+    const initializer = declaration.initializer!;
+    // No TypeAssertion produced (that is 5a); current arm falls through to binary.
+    Assert.Equal(Kind.BinaryExpression, initializer.kind);
+  }
+
+  // (b) A .tsx/ScriptKindTSX parse (via the new options) reaches JSX mode: the
+  // SourceFile is stamped LanguageVariant.JSX + ScriptKind.TSX (tsgo NewSourceFile
+  // carries scriptKind + languageVariant). Explicit option wins over fileName.
+  prewave_tsx_reaches_jsx_variant(): void {
+    const sourceFile = parseSourceFile("const a = 1;", { fileName: "a.tsx", scriptKind: ScriptKind.TSX });
+    Assert.Equal(LanguageVariant.JSX, sourceFile.languageVariant);
+    Assert.Equal(ScriptKind.TSX, sourceFile.scriptKind);
+  }
+
+  // (b') The same JSX variant is reached when ScriptKind is INFERRED from a .tsx
+  // fileName (no explicit scriptKind option) via getScriptKindFromFileName — the
+  // shared helper is the single source of truth, no text heuristic.
+  prewave_tsx_inferred_from_filename(): void {
+    const sourceFile = parseSourceFile("const a = 1;", { fileName: "a.tsx" });
+    Assert.Equal(LanguageVariant.JSX, sourceFile.languageVariant);
+    Assert.Equal(ScriptKind.TSX, sourceFile.scriptKind);
+  }
+
+  // (c) getScriptKindFromFileName maps .tsx -> TSX and .ts -> TS (tsgo
+  // core.GetScriptKindFromFileName, core/core.go:512).
+  prewave_get_script_kind_from_file_name(): void {
+    Assert.Equal(ScriptKind.TSX, getScriptKindFromFileName("a.tsx"));
+    Assert.Equal(ScriptKind.TS, getScriptKindFromFileName("a.ts"));
+  }
 }
 
 // ── Stage-3b throw->diagnostics FLIP: recovery probes ──────────────────────────
@@ -1123,6 +1178,11 @@ A<ParserParityTests>().method((t) => t.decorator_call_on_class).add(FactAttribut
 A<ParserParityTests>().method((t) => t.optional_type_in_tuple).add(FactAttribute);
 A<ParserParityTests>().method((t) => t.rest_type_in_tuple).add(FactAttribute);
 A<ParserParityTests>().method((t) => t.import_type_with_qualifier).add(FactAttribute);
+// M3 Stage-5 pre-wave: scriptKind/languageVariant plumbing probes.
+A<ParserParityTests>().method((t) => t.prewave_ts_is_standard_variant_unchanged).add(FactAttribute);
+A<ParserParityTests>().method((t) => t.prewave_tsx_reaches_jsx_variant).add(FactAttribute);
+A<ParserParityTests>().method((t) => t.prewave_tsx_inferred_from_filename).add(FactAttribute);
+A<ParserParityTests>().method((t) => t.prewave_get_script_kind_from_file_name).add(FactAttribute);
 
 // Stage-3b throw->diagnostics FLIP recovery probes.
 A<ParserRecoveryTests>().method((t) => t.recover_let_no_initializer).add(FactAttribute);

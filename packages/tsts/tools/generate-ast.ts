@@ -963,15 +963,15 @@ function generateFactory(schema: AstSchema): string {
     lines.push("");
   }
 
-  lines.push("export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile, parseDiagnostics: readonly Diagnostic[]): SourceFile {");
+  lines.push("export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile, parseDiagnostics: readonly Diagnostic[], languageVariant: number, scriptKind: number): SourceFile {");
   lines.push("  return createNode<SourceFile>(Kind.SourceFile, {");
   lines.push("    fileName,");
   lines.push("    path,");
   lines.push("    text,");
   lines.push("    statements,");
   lines.push("    endOfFileToken,");
-  lines.push("    languageVariant: 0,");
-  lines.push("    scriptKind: 0,");
+  lines.push("    languageVariant,");
+  lines.push("    scriptKind,");
   lines.push("    isDeclarationFile: false,");
   lines.push("    referencedFiles: [],");
   lines.push("    typeReferenceDirectives: [],");
@@ -988,7 +988,7 @@ function generateFactory(schema: AstSchema): string {
   lines.push("  if (node.statements === statements && node.endOfFileToken === endOfFileToken) {");
   lines.push("    return node;");
   lines.push("  }");
-  lines.push("  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken, node.parseDiagnostics);");
+  lines.push("  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken, node.parseDiagnostics, node.languageVariant, node.scriptKind);");
   lines.push("  return updated;");
   lines.push("}");
   lines.push("");

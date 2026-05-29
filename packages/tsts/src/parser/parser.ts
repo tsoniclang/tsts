@@ -185,9 +185,23 @@ import { tokenIsIdentifierOrKeyword } from "../scanner/utilities.js";
 import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
 import { format } from "../diagnostics/diagnostics.js";
 import type { Diagnostic, DiagnosticMessage } from "../diagnostics/types.js";
+// M3 Stage-5 pre-wave: scriptKind/languageVariant plumbing. tsgo
+// initializeState (parser.go:288-313) resolves the effective ScriptKind, derives
+// the LanguageVariant via getLanguageVariant, and seeds the scanner with it.
+// ScriptKind + getScriptKindFromFileName mirror tsgo core.ScriptKind /
+// core.GetScriptKindFromFileName (core/core.go:512); getLanguageVariant +
+// LanguageVariant mirror tsgo parser.getLanguageVariant (parser/utilities.go:11)
+// returning core.LanguageVariant (core/languagevariant.go).
+import { ScriptKind, getScriptKindFromFileName } from "../core/core.js";
+import { LanguageVariant, getLanguageVariant } from "./parser-utilities.js";
 
 export interface ParseSourceFileOptions {
   readonly fileName?: string;
+  // tsgo SourceFileParseOptions carries the explicit ScriptKind; initializeState
+  // requires a known kind (panics on ScriptKindUnknown). When omitted here, the
+  // parser infers it from fileName via getScriptKindFromFileName, exactly like the
+  // tsgo program/host pipeline that fills opts.ScriptKind before parsing.
+  readonly scriptKind?: ScriptKind;
 }
 
 // M3 3b-list-model: parser-internal token snapshot. tsgo carries the
@@ -517,11 +531,19 @@ export class Parser {
   // (NOT a binder slot).
   // INITIALIZED BY scriptKind: tsgo initializeState (parser.go:302-309) seeds
   // contextFlags from the script kind — JS/JSX => NodeFlagsJavaScriptFile,
-  // JSON => JavaScriptFile|JsonFile, default (TS/TSX/.d.ts) => None. tsonic is
-  // ALWAYS ScriptKindTS (.ts only, noLib .NET target), so the `default` arm
-  // applies and contextFlags starts at NodeFlags.None; the JS/JSX/JSON arms are
-  // unreachable for tsonic (no scriptKind is plumbed into ParseSourceFileOptions).
+  // JSON => JavaScriptFile|JsonFile, default (TS/TSX/.d.ts) => None. tsonic only
+  // emits TS/TSX, so the JS/JSON arms stay unreached, but the variant plumbing
+  // (M3 Stage-5 pre-wave) now resolves the effective ScriptKind faithfully; the
+  // TS/TSX `default` arm keeps contextFlags at NodeFlags.None (the field default).
   #contextFlags: NodeFlags = NodeFlags.None;
+  // M3 Stage-5 pre-wave: the resolved ScriptKind for this parse (tsgo
+  // p.scriptKind, parser.go:300) and the LanguageVariant derived from it (tsgo
+  // p.languageVariant = getLanguageVariant(p.scriptKind), parser.go:301). Both are
+  // resolved in the constructor (tsgo initializeState) and stamped onto the
+  // SourceFile (tsgo NewSourceFile carries scriptKind + languageVariant). They are
+  // parse-config (set once at init), not mutable parse-state.
+  readonly #scriptKind: ScriptKind;
+  readonly #languageVariant: LanguageVariant;
   // codex Stage-3a: parser-owned diagnostics buffer (tsgo p.diagnostics,
   // parser.go:319-336). ADDITIVE: populated only when throw sites are flipped in
   // 3b; empty in 3a. The `readonly` binding is mutated in-place (push/length
@@ -538,12 +560,22 @@ export class Parser {
   constructor(sourceText: string, options: ParseSourceFileOptions = {}) {
     this.#sourceText = sourceText;
     this.#fileName = options.fileName ?? "input.ts";
-    // tsgo initializeState (parser.go:288-313): create the scanner (default
-    // LanguageVariant.Standard, skipTrivia true — createLiveScanner defaults),
-    // then call nextToken() ONCE (parser.go:283/139) to load the
-    // first token into #token before parseSourceFile runs. tsts is always
-    // ScriptKindTS so #contextFlags starts at NodeFlags.None (the field default).
+    // M3 Stage-5 pre-wave — tsgo initializeState (parser.go:300-301): resolve the
+    // effective ScriptKind (explicit option wins; otherwise infer from fileName via
+    // the shared getScriptKindFromFileName helper — NOT JSX-local logic), then
+    // derive the LanguageVariant with getLanguageVariant. ScriptKind is the ONLY
+    // source of truth for the variant (no text heuristic, no separate jsx flag).
+    this.#scriptKind = options.scriptKind ?? getScriptKindFromFileName(options.fileName ?? "");
+    this.#languageVariant = getLanguageVariant(this.#scriptKind);
+    // tsgo initializeState (parser.go:288-313): create the scanner, then call
+    // nextToken() ONCE (parser.go:283/139) to load the first token into #token
+    // before parseSourceFile runs. tsts only emits TS/TSX so #contextFlags starts
+    // at NodeFlags.None (the field default — the JS/JSON arms stay unreached).
     this.#scanner = createLiveScanner(sourceText);
+    // tsgo p.scanner.SetLanguageVariant(p.languageVariant) (parser.go:312): seed
+    // the live scanner with the resolved variant so a .tsx/ScriptKindTSX parse
+    // reaches LanguageVariant.JSX (JSX scanner mode), faithful to tsgo.
+    this.#scanner.setLanguageVariant(this.#languageVariant);
     // Seed #token with the EOF placeholder so #nextToken's `this.#token.end`
     // read is well-typed; #nextToken immediately overwrites it with the first
     // real token (and #prevTokenEnd stays 0 because the placeholder end is 0).
@@ -674,6 +706,11 @@ export class Parser {
       statements,
       createToken(Kind.EndOfFile),
       this.#diagnostics,
+      // M3 Stage-5 pre-wave: stamp the resolved variant + script kind onto the
+      // SourceFile, faithful to tsgo NewSourceFile which carries languageVariant
+      // and scriptKind (parser sets them in initializeState, ast.go:2432-2433).
+      this.#languageVariant,
+      this.#scriptKind,
     );
   }
 

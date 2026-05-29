@@ -2370,15 +2370,15 @@ export function updateJSDocPropertyTag(node: Ast.JSDocPropertyTag, tagName: Ast.
   return createJSDocPropertyTag(tagName, name, isBracketed, typeExpression, isNameFirst, comment);
 }
 
-export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile, parseDiagnostics: readonly Diagnostic[]): SourceFile {
+export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile, parseDiagnostics: readonly Diagnostic[], languageVariant: number, scriptKind: number): SourceFile {
   return createNode<SourceFile>(Kind.SourceFile, {
     fileName,
     path,
     text,
     statements,
     endOfFileToken,
-    languageVariant: 0,
-    scriptKind: 0,
+    languageVariant,
+    scriptKind,
     isDeclarationFile: false,
     referencedFiles: [],
     typeReferenceDirectives: [],
@@ -2395,7 +2395,7 @@ export function updateSourceFile(node: SourceFile, statements: NodeArray<Ast.Sta
   if (node.statements === statements && node.endOfFileToken === endOfFileToken) {
     return node;
   }
-  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken, node.parseDiagnostics);
+  const updated = createSourceFile(node.fileName, node.path, node.text, statements, endOfFileToken, node.parseDiagnostics, node.languageVariant, node.scriptKind);
   return updated;
 }
 
