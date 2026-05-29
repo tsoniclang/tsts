@@ -11,7 +11,8 @@ export interface TextRange {
 export interface Node extends TextRange {
   readonly kind: Kind;
   readonly flags: number;
-  readonly parent: Node;
+  // codex-043 M2 Fork A: parent is a mutable binder-set slot.
+  parent: Node;
   readonly jsDoc?: readonly Node[];
   forEachChild<T>(visitor: (node: Node) => T, visitArray?: (nodes: NodeArray<Node>) => T): T | undefined;
   getSourceFile(): SourceFile;
@@ -63,10 +64,12 @@ export interface Symbol {
   readonly name?: string;
   readonly escapedName?: string;
   readonly flags?: number;
-  readonly declarations: readonly Node[];
+  // codex-043 M2 Fork A: binder-mutated symbol slots (declarations are pushed,
+  // member/export tables are populated in place) — mirror TS-Go []*Node + maps.
+  declarations: Node[];
   readonly valueDeclaration?: Node;
-  readonly members?: Map<string, Symbol>;
-  readonly exports?: Map<string, Symbol>;
+  members?: Map<string, Symbol>;
+  exports?: Map<string, Symbol>;
   readonly globalExports?: Map<string, Symbol>;
   readonly parent?: Symbol;
 }

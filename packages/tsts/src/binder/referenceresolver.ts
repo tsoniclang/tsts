@@ -147,7 +147,11 @@ class ReferenceResolverImpl implements ReferenceResolver {
   getReferencedValueDeclarations(node: IdentifierNode): readonly Declaration[] {
     const symbol = this.getReferencedValueSymbol(node, false);
     if (symbol === undefined) return [];
-    return symbol.declarations as readonly Declaration[];
+    // `symbol.declarations` is `Node[]` (a mutable binder slot, TS-Go []*Node).
+    // Narrow each entry to `Declaration` the same way the single-declaration
+    // accessor above does; this mirrors TS-Go treating *ast.Node and
+    // *ast.Declaration as the same underlying node pointer.
+    return symbol.declarations.map(declaration => declaration as Declaration);
   }
 
   getElementAccessExpressionName(expression: ElementAccessExpression): string {

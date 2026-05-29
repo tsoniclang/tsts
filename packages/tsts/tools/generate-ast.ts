@@ -4,6 +4,26 @@ import { generatedHeader, stableJson, writeGenerated } from "./common.js";
 type KindAliasDefinition = readonly string[] | { readonly range: readonly [string, string] };
 type NodeAliasDefinition = readonly string[] | { readonly base: string };
 
+// codex-043 M2 Fork A: the controlled mutable compiler-state slots. These are
+// `goOnly` fields in schema/tsgo/ast.json (which is byte-locked against the
+// pinned upstream blob and MUST NOT be edited). Instead, the TS-emit path is
+// opted in here via an explicit allowlist keyed by "BaseName.FieldName". The
+// five slots are emitted as OPTIONAL and MUTABLE (no `readonly`) — they mirror
+// TS-Go's per-node binder/checker state (Symbol, LocalSymbol, Locals,
+// NextContainer, FlowNode). Other `goOnly` fields (CompositeBase.facts,
+// BodyBase.EndFlowNode, per-node Return/FallthroughFlowNode) stay Go-only.
+const MUTABLE_SLOT_FIELDS: ReadonlySet<string> = new Set([
+  "DeclarationBase.Symbol",
+  "ExportableBase.LocalSymbol",
+  "LocalsContainerBase.Locals",
+  "LocalsContainerBase.NextContainer",
+  "FlowNodeBase.FlowNode",
+]);
+
+function isMutableSlotField(baseName: string, fieldName: string): boolean {
+  return MUTABLE_SLOT_FIELDS.has(`${baseName}.${fieldName}`);
+}
+
 function enumMemberName(name: string): string {
   if (!/^[$A-Z_a-z][$\w]*$/.test(name)) {
     throw new Error(`Invalid Kind name ${name}`);
@@ -217,7 +237,8 @@ export interface TextRange {
 export interface Node extends TextRange {
   readonly kind: Kind;
   readonly flags: number;
-  readonly parent: Node;
+  // codex-043 M2 Fork A: parent is a mutable binder-set slot.
+  parent: Node;
   readonly jsDoc?: readonly Node[];
   forEachChild<T>(visitor: (node: Node) => T, visitArray?: (nodes: NodeArray<Node>) => T): T | undefined;
   getSourceFile(): SourceFile;
@@ -269,10 +290,12 @@ export interface Symbol {
   readonly name?: string;
   readonly escapedName?: string;
   readonly flags?: number;
-  readonly declarations: readonly Node[];
+  // codex-043 M2 Fork A: binder-mutated symbol slots (declarations are pushed,
+  // member/export tables are populated in place) — mirror TS-Go []*Node + maps.
+  declarations: Node[];
   readonly valueDeclaration?: Node;
-  readonly members?: Map<string, Symbol>;
-  readonly exports?: Map<string, Symbol>;
+  members?: Map<string, Symbol>;
+  exports?: Map<string, Symbol>;
   readonly globalExports?: Map<string, Symbol>;
   readonly parent?: Symbol;
 }
@@ -322,7 +345,16 @@ function isGoOnlyBase(schema: AstSchema, baseName: string): boolean {
   if (base.fields === undefined) {
     return true;
   }
-  return Object.values(base.fields).every(field => field.goOnly === true || (field.noTS === true && field.noFactory === true));
+  return Object.entries(base.fields).every(([fieldName, field]) => {
+    // An allowlisted mutable slot is a TS-emitted field even though it is
+    // marked `goOnly` in the schema, so a base that carries one is NOT
+    // collapsed (un-collapses ExportableBase, LocalsContainerBase,
+    // FlowNodeBase). Treat it as a real TS field by returning false here.
+    if (isMutableSlotField(baseName, fieldName)) {
+      return false;
+    }
+    return field.goOnly === true || (field.noTS === true && field.noFactory === true);
+  });
 }
 
 function expandTypeScriptExtends(schema: AstSchema, extendsList: readonly string[]): string[] {
@@ -1217,7 +1249,11 @@ function generateMetadata(schema: AstSchema): string {
 function generateNodeTypes(schema: AstSchema): string {
   const lines: string[] = [generatedHeader("schema/tsgo/ast.json")];
   lines.push("import { Kind } from \"./kind.js\";");
-  lines.push("import type { Node, NodeArray, SourceFile, Symbol } from \"./types.js\";");
+  lines.push("import type { FlowNode, Node, NodeArray, SourceFile, Symbol } from \"./types.js\";");
+  // codex-043 mutable slots: LocalsContainerBase.Locals is `SymbolTable`, which
+  // is defined in the handwritten aliases module (Map<string, Symbol>). The
+  // import is type-only, so the nodes.ts <-> aliases.ts cycle is erased.
+  lines.push("import type { SymbolTable } from \"../aliases.js\";");
   lines.push("");
   lines.push("export type ModifierFlags = number;");
   lines.push("export type TokenFlags = number;");
@@ -1243,7 +1279,13 @@ function generateNodeTypes(schema: AstSchema): string {
       lines.push(`  readonly ${base.brand}: unknown;`);
     }
     for (const [fieldName, field] of Object.entries(base.fields ?? {})) {
-      if (field.noTS === true || field.goOnly === true) {
+      const isSlot = isMutableSlotField(name, fieldName);
+      if (!isSlot && (field.noTS === true || field.goOnly === true)) {
+        continue;
+      }
+      if (isSlot) {
+        // codex-043 mutable compiler-state slot: optional + mutable (no readonly).
+        lines.push(`  ${lowerFirst(fieldName)}?: ${formatMemberType(schema, { ...field, name: fieldName })};`);
         continue;
       }
       const optional = field.optional === true ? "?" : "";

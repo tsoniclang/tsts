@@ -2,7 +2,8 @@
 // Source: schema/tsgo/ast.json
 
 import { Kind } from "./kind.js";
-import type { Node, NodeArray, SourceFile, Symbol } from "./types.js";
+import type { FlowNode, Node, NodeArray, SourceFile, Symbol } from "./types.js";
+import type { SymbolTable } from "../aliases.js";
 
 export type ModifierFlags = number;
 export type TokenFlags = number;
@@ -48,7 +49,7 @@ export type LogicalOrCoalescingAssignmentOperator = Kind.AmpersandAmpersandEqual
 export interface NodeBase extends Node {
   readonly flags: number;
 }
-export interface StatementBase extends NodeBase {
+export interface StatementBase extends NodeBase, FlowNodeBase {
   readonly _statementBrand: unknown;
 }
 export interface IterationStatementBase extends StatementBase {
@@ -83,12 +84,23 @@ export interface JSDocTypeBase extends TypeNodeBase {
 }
 export interface DeclarationBase extends Node {
   readonly _declarationBrand: unknown;
+  symbol?: Symbol;
+}
+export interface ExportableBase extends Node {
+  localSymbol?: Symbol;
 }
 export interface ModifiersBase extends Node {
   readonly modifiers?: NodeArray<ModifierLike>;
   readonly modifierFlags: number;
 }
-export interface FunctionLikeBase extends DeclarationBase {
+export interface LocalsContainerBase extends Node {
+  locals?: SymbolTable;
+  nextContainer?: Node;
+}
+export interface FlowNodeBase extends Node {
+  flowNode?: FlowNode;
+}
+export interface FunctionLikeBase extends DeclarationBase, LocalsContainerBase {
   readonly typeParameters?: NodeArray<TypeParameterDeclaration>;
   readonly parameters: NodeArray<ParameterDeclaration>;
   readonly type?: TypeNode;
@@ -102,7 +114,7 @@ export interface FunctionLikeWithBodyBase extends FunctionLikeBase, BodyBase {
   readonly _functionLikeDeclarationBrand: unknown;
   readonly body?: BlockOrExpression;
 }
-export interface ClassLikeBase extends DeclarationBase, ModifiersBase {
+export interface ClassLikeBase extends DeclarationBase, ExportableBase, ModifiersBase, LocalsContainerBase {
   readonly name?: Identifier;
   readonly typeParameters?: NodeArray<TypeParameterDeclaration>;
   readonly heritageClauses?: NodeArray<HeritageClause>;
@@ -146,7 +158,7 @@ export interface JSDocCommentBase extends NodeBase {
 export interface Token<TKind extends TokenSyntaxKind = TokenSyntaxKind> extends NodeBase {
   readonly kind: TKind;
 }
-export interface Identifier extends PrimaryExpressionBase {
+export interface Identifier extends PrimaryExpressionBase, FlowNodeBase {
   readonly kind: Kind.Identifier;
   readonly text: string;
 }
@@ -154,7 +166,7 @@ export interface PrivateIdentifier extends PrimaryExpressionBase {
   readonly kind: Kind.PrivateIdentifier;
   readonly text: string;
 }
-export interface QualifiedName extends NodeBase {
+export interface QualifiedName extends NodeBase, FlowNodeBase {
   readonly kind: Kind.QualifiedName;
   readonly left: EntityName;
   readonly right: Identifier;
@@ -186,7 +198,7 @@ export interface WhileStatement extends IterationStatementBase {
   readonly expression: Expression;
   readonly statement: Statement;
 }
-export interface ForStatement extends IterationStatementBase {
+export interface ForStatement extends IterationStatementBase, LocalsContainerBase {
   readonly kind: Kind.ForStatement;
   readonly initializer?: ForInitializer;
   readonly condition?: Expression;
@@ -215,7 +227,7 @@ export interface SwitchStatement extends StatementBase {
   readonly expression: Expression;
   readonly caseBlock: CaseBlock;
 }
-export interface CaseBlock extends NodeBase {
+export interface CaseBlock extends NodeBase, LocalsContainerBase {
   readonly kind: Kind.CaseBlock;
   readonly clauses: NodeArray<CaseOrDefaultClause>;
 }
@@ -229,7 +241,7 @@ export interface TryStatement extends StatementBase {
   readonly catchClause?: CatchClause;
   readonly finallyBlock?: Block;
 }
-export interface CatchClause extends NodeBase {
+export interface CatchClause extends NodeBase, LocalsContainerBase {
   readonly kind: Kind.CatchClause;
   readonly variableDeclaration?: VariableDeclaration;
   readonly block: Block;
@@ -246,7 +258,7 @@ export interface ExpressionStatement extends StatementBase {
   readonly kind: Kind.ExpressionStatement;
   readonly expression: Expression;
 }
-export interface Block extends StatementBase {
+export interface Block extends StatementBase, LocalsContainerBase {
   readonly kind: Kind.Block;
   readonly statements: NodeArray<Statement>;
   readonly multiLine: boolean;
@@ -255,7 +267,7 @@ export interface VariableStatement extends StatementBase, ModifiersBase {
   readonly kind: Kind.VariableStatement;
   readonly declarationList: VariableDeclarationList;
 }
-export interface VariableDeclaration extends NodeBase, DeclarationBase {
+export interface VariableDeclaration extends NodeBase, DeclarationBase, ExportableBase {
   readonly kind: Kind.VariableDeclaration;
   readonly name: BindingName;
   readonly exclamationToken?: ExclamationToken;
@@ -274,7 +286,7 @@ export interface ParameterDeclaration extends NodeBase, DeclarationBase, Modifie
   readonly type?: TypeNode;
   readonly initializer?: Expression;
 }
-export interface BindingElement extends NodeBase, DeclarationBase {
+export interface BindingElement extends NodeBase, DeclarationBase, ExportableBase, FlowNodeBase {
   readonly kind: Kind.BindingElement;
   readonly dotDotDotToken?: DotDotDotToken;
   readonly propertyName?: PropertyName;
@@ -284,7 +296,7 @@ export interface BindingElement extends NodeBase, DeclarationBase {
 export interface MissingDeclaration extends StatementBase, DeclarationBase, ModifiersBase {
   readonly kind: Kind.MissingDeclaration;
 }
-export interface FunctionDeclaration extends DeclarationBase, StatementBase, ModifiersBase, FunctionLikeWithBodyBase {
+export interface FunctionDeclaration extends DeclarationBase, StatementBase, ExportableBase, ModifiersBase, FunctionLikeWithBodyBase {
   readonly kind: Kind.FunctionDeclaration;
   readonly name?: Identifier;
   readonly body?: FunctionBody;
@@ -300,14 +312,14 @@ export interface HeritageClause extends NodeBase {
   readonly token: Kind.ExtendsKeyword | Kind.ImplementsKeyword;
   readonly types: NodeArray<ExpressionWithTypeArguments>;
 }
-export interface InterfaceDeclaration extends DeclarationBase, StatementBase, ModifiersBase {
+export interface InterfaceDeclaration extends DeclarationBase, StatementBase, ExportableBase, ModifiersBase {
   readonly kind: Kind.InterfaceDeclaration;
   readonly name: Identifier;
   readonly typeParameters?: NodeArray<TypeParameterDeclaration>;
   readonly heritageClauses?: NodeArray<HeritageClause>;
   readonly members: NodeArray<TypeElement>;
 }
-export interface TypeAliasDeclaration extends DeclarationBase, StatementBase, ModifiersBase {
+export interface TypeAliasDeclaration extends DeclarationBase, StatementBase, ExportableBase, ModifiersBase, LocalsContainerBase {
   readonly kind: Kind.TypeAliasDeclaration | Kind.JSTypeAliasDeclaration;
   readonly name: Identifier;
   readonly typeParameters?: NodeArray<TypeParameterDeclaration>;
@@ -317,7 +329,7 @@ export interface EnumMember extends NodeBase, NamedMemberBase {
   readonly kind: Kind.EnumMember;
   readonly initializer?: Expression;
 }
-export interface EnumDeclaration extends DeclarationBase, StatementBase, ModifiersBase {
+export interface EnumDeclaration extends DeclarationBase, StatementBase, ExportableBase, ModifiersBase {
   readonly kind: Kind.EnumDeclaration;
   readonly name: Identifier;
   readonly members: NodeArray<EnumMember>;
@@ -342,7 +354,7 @@ export interface ExternalModuleReference extends NodeBase {
   readonly kind: Kind.ExternalModuleReference;
   readonly expression: Expression;
 }
-export interface NamespaceImport extends NodeBase, DeclarationBase {
+export interface NamespaceImport extends NodeBase, DeclarationBase, ExportableBase {
   readonly kind: Kind.NamespaceImport;
   readonly name: Identifier;
 }
@@ -368,7 +380,7 @@ export interface NamedExports extends NodeBase {
   readonly kind: Kind.NamedExports;
   readonly elements: NodeArray<ExportSpecifier>;
 }
-export interface ExportSpecifier extends NodeBase, DeclarationBase {
+export interface ExportSpecifier extends NodeBase, DeclarationBase, ExportableBase {
   readonly kind: Kind.ExportSpecifier;
   readonly isTypeOnly: boolean;
   readonly propertyName?: ModuleExportName;
@@ -384,11 +396,11 @@ export interface ConstructorDeclaration extends NodeBase, DeclarationBase, Modif
   readonly kind: Kind.Constructor;
   readonly body?: FunctionBody;
 }
-export interface GetAccessorDeclaration extends NamedMemberBase, FunctionLikeWithBodyBase, TypeElementBase, ClassElementBase, ObjectLiteralElementBase, NodeBase {
+export interface GetAccessorDeclaration extends NamedMemberBase, FunctionLikeWithBodyBase, FlowNodeBase, TypeElementBase, ClassElementBase, ObjectLiteralElementBase, NodeBase {
   readonly kind: Kind.GetAccessor;
   readonly body?: FunctionBody;
 }
-export interface SetAccessorDeclaration extends NamedMemberBase, FunctionLikeWithBodyBase, TypeElementBase, ClassElementBase, ObjectLiteralElementBase, NodeBase {
+export interface SetAccessorDeclaration extends NamedMemberBase, FunctionLikeWithBodyBase, FlowNodeBase, TypeElementBase, ClassElementBase, ObjectLiteralElementBase, NodeBase {
   readonly kind: Kind.SetAccessor;
   readonly body?: FunctionBody;
 }
@@ -398,7 +410,7 @@ export interface IndexSignatureDeclaration extends NodeBase, DeclarationBase, Mo
 export interface MethodSignatureDeclaration extends NodeBase, NamedMemberBase, FunctionLikeBase, TypeElementBase {
   readonly kind: Kind.MethodSignature;
 }
-export interface MethodDeclaration extends NodeBase, NamedMemberBase, FunctionLikeWithBodyBase, ClassElementBase, ObjectLiteralElementBase {
+export interface MethodDeclaration extends NodeBase, NamedMemberBase, FunctionLikeWithBodyBase, FlowNodeBase, ClassElementBase, ObjectLiteralElementBase {
   readonly kind: Kind.MethodDeclaration;
   readonly body?: FunctionBody;
 }
@@ -415,14 +427,14 @@ export interface PropertyDeclaration extends NodeBase, NamedMemberBase, ClassEle
 export interface SemicolonClassElement extends NodeBase, DeclarationBase, ClassElementBase {
   readonly kind: Kind.SemicolonClassElement;
 }
-export interface ClassStaticBlockDeclaration extends NodeBase, DeclarationBase, ModifiersBase, ClassElementBase {
+export interface ClassStaticBlockDeclaration extends NodeBase, DeclarationBase, ModifiersBase, LocalsContainerBase, ClassElementBase {
   readonly kind: Kind.ClassStaticBlockDeclaration;
   readonly body: Block;
 }
 export interface OmittedExpression extends ExpressionBase {
   readonly kind: Kind.OmittedExpression;
 }
-export interface KeywordExpression<TKind extends KeywordExpressionSyntaxKind = KeywordExpressionSyntaxKind> extends ExpressionBase {
+export interface KeywordExpression<TKind extends KeywordExpressionSyntaxKind = KeywordExpressionSyntaxKind> extends ExpressionBase, FlowNodeBase {
   readonly kind: TKind;
 }
 export interface StringLiteral extends LiteralExpressionBase {
@@ -462,12 +474,12 @@ export interface YieldExpression extends ExpressionBase {
   readonly asteriskToken?: AsteriskToken;
   readonly expression?: Expression;
 }
-export interface ArrowFunction extends ExpressionBase, DeclarationBase, ModifiersBase, FunctionLikeWithBodyBase {
+export interface ArrowFunction extends ExpressionBase, DeclarationBase, ModifiersBase, FunctionLikeWithBodyBase, FlowNodeBase {
   readonly kind: Kind.ArrowFunction;
   readonly equalsGreaterThanToken: EqualsGreaterThanToken;
   readonly body: ConciseBody;
 }
-export interface FunctionExpression extends PrimaryExpressionBase, DeclarationBase, ModifiersBase, FunctionLikeWithBodyBase {
+export interface FunctionExpression extends PrimaryExpressionBase, DeclarationBase, ModifiersBase, FunctionLikeWithBodyBase, FlowNodeBase {
   readonly kind: Kind.FunctionExpression;
   readonly name?: Identifier;
   readonly body: FunctionBody;
@@ -490,13 +502,13 @@ export interface ConditionalExpression extends ExpressionBase {
   readonly colonToken: ColonToken;
   readonly whenFalse: Expression;
 }
-export interface PropertyAccessExpression extends MemberExpressionBase {
+export interface PropertyAccessExpression extends MemberExpressionBase, FlowNodeBase {
   readonly kind: Kind.PropertyAccessExpression;
   readonly expression: Expression;
   readonly questionDotToken?: QuestionDotToken;
   readonly name: MemberName;
 }
-export interface ElementAccessExpression extends MemberExpressionBase {
+export interface ElementAccessExpression extends MemberExpressionBase, FlowNodeBase {
   readonly kind: Kind.ElementAccessExpression;
   readonly expression: Expression;
   readonly questionDotToken?: QuestionDotToken;
@@ -515,7 +527,7 @@ export interface NewExpression extends PrimaryExpressionBase {
   readonly typeArguments?: NodeArray<TypeNode>;
   readonly arguments?: NodeArray<Expression>;
 }
-export interface MetaProperty extends PrimaryExpressionBase {
+export interface MetaProperty extends PrimaryExpressionBase, FlowNodeBase {
   readonly kind: Kind.MetaProperty;
   readonly keywordToken: Kind.ImportKeyword | Kind.NewKeyword;
   readonly name: Identifier;
@@ -604,7 +616,7 @@ export interface UnionTypeNode extends TypeNodeBase, UnionOrIntersectionTypeNode
 export interface IntersectionTypeNode extends TypeNodeBase, UnionOrIntersectionTypeNodeBase {
   readonly kind: Kind.IntersectionType;
 }
-export interface ConditionalTypeNode extends TypeNodeBase {
+export interface ConditionalTypeNode extends TypeNodeBase, LocalsContainerBase {
   readonly kind: Kind.ConditionalType;
   readonly checkType: TypeNode;
   readonly extendsType: TypeNode;
@@ -666,7 +678,7 @@ export interface TypeQueryNode extends NodeWithTypeArgumentsBase {
   readonly kind: Kind.TypeQuery;
   readonly exprName: EntityName;
 }
-export interface MappedTypeNode extends TypeNodeBase, DeclarationBase {
+export interface MappedTypeNode extends TypeNodeBase, DeclarationBase, LocalsContainerBase {
   readonly kind: Kind.MappedType;
   readonly readonlyToken?: ReadonlyKeyword | PlusToken | MinusToken;
   readonly typeParameter: TypeParameterDeclaration;
@@ -915,13 +927,13 @@ export interface JSDocNameReference extends TypeNodeBase {
   readonly kind: Kind.JSDocNameReference;
   readonly name: EntityName;
 }
-export interface ModuleDeclaration extends DeclarationBase, StatementBase, ModifiersBase, BodyBase {
+export interface ModuleDeclaration extends DeclarationBase, StatementBase, ExportableBase, ModifiersBase, LocalsContainerBase, BodyBase {
   readonly kind: Kind.ModuleDeclaration;
   readonly keyword: Kind.ModuleKeyword | Kind.NamespaceKeyword;
   readonly name: ModuleName;
   readonly body: ModuleBody;
 }
-export interface ImportEqualsDeclaration extends DeclarationBase, StatementBase, ModifiersBase {
+export interface ImportEqualsDeclaration extends DeclarationBase, StatementBase, ExportableBase, ModifiersBase {
   readonly kind: Kind.ImportEqualsDeclaration;
   readonly isTypeOnly: boolean;
   readonly name: Identifier;
@@ -941,13 +953,13 @@ export interface ImportTypeNode extends NodeWithTypeArgumentsBase {
   readonly attributes?: ImportAttributes;
   readonly qualifier?: EntityName;
 }
-export interface ImportClause extends NodeBase, DeclarationBase {
+export interface ImportClause extends NodeBase, DeclarationBase, ExportableBase {
   readonly kind: Kind.ImportClause;
   readonly phaseModifier?: ImportPhaseModifierSyntaxKind;
   readonly name?: Identifier;
   readonly namedBindings?: NamedImportBindings;
 }
-export interface ImportSpecifier extends NodeBase, DeclarationBase {
+export interface ImportSpecifier extends NodeBase, DeclarationBase, ExportableBase {
   readonly kind: Kind.ImportSpecifier;
   readonly isTypeOnly: boolean;
   readonly propertyName?: ModuleExportName;
@@ -1058,14 +1070,14 @@ export type ObjectDestructuringAssignment = BinaryExpression;
 export type FunctionBody = Block;
 export type IncrementExpression = UpdateExpressionBase;
 
-export interface ForInStatement extends StatementBase {
+export interface ForInStatement extends StatementBase, LocalsContainerBase {
   readonly kind: Kind.ForInStatement;
   readonly awaitModifier?: AwaitKeyword;
   readonly initializer: ForInitializer;
   readonly expression: Expression;
   readonly statement: Statement;
 }
-export interface ForOfStatement extends StatementBase {
+export interface ForOfStatement extends StatementBase, LocalsContainerBase {
   readonly kind: Kind.ForOfStatement;
   readonly awaitModifier?: AwaitKeyword;
   readonly initializer: ForInitializer;
