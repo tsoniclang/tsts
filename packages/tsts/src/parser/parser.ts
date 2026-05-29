@@ -53,6 +53,14 @@ import {
   createImportDeclaration,
   createImportEqualsDeclaration,
   createImportSpecifier,
+  createImportTypeNode,
+  createInferTypeNode,
+  createMappedTypeNode,
+  createNamedTupleMember,
+  createOptionalTypeNode,
+  createRestTypeNode,
+  createTemplateLiteralTypeNode,
+  createTemplateLiteralTypeSpan,
   createIntersectionTypeNode,
   createInterfaceDeclaration,
   createKeywordTypeNode,
@@ -144,11 +152,13 @@ import {
   type KeywordTypeSyntaxKind,
   type ModifierSyntaxKind,
   type ModifierLike,
+  type MinusToken,
   type ModuleExportName,
   type ModuleReference,
   type NamedImportBindings,
   type Node,
   type NodeArray,
+  type PlusToken,
   type ObjectLiteralElementLike,
   type ParameterDeclaration,
   type ExclamationToken,
@@ -157,6 +167,7 @@ import {
   type QuestionToken,
   type SourceFile,
   type Statement,
+  type Token,
   type TypeElement,
   type TypeNode,
   type TemplateMiddleOrTail,
@@ -666,13 +677,17 @@ export class Parser {
     return undefined;
   }
 
-  #parseImportAttributes(token: Kind): ReturnType<typeof createImportAttributes> {
+  #parseImportAttributes(token: Kind, skipKeyword = false): ReturnType<typeof createImportAttributes> {
     // tsgo parseImportAttributes (parser.go:3085): `with|assert { name: value, ... }`. Start
-    // pos at the with/assert keyword; finishNode after the closing `}`. multiLine is computed
-    // from the source slice spanning the braces (matching the existing tsts approach in
-    // #parseBlock / #parseObjectLiteralExpression, since tsts has no hasPrecedingLineBreak).
+    // pos at the with/assert keyword (or, when skipKeyword=true for the import-type form, at
+    // the `{` — the keyword + `:` were already consumed by #parseImportType); finishNode after
+    // the closing `}`. multiLine is computed from the source slice spanning the braces (matching
+    // the existing tsts approach in #parseBlock / #parseObjectLiteralExpression, since tsts has
+    // no hasPrecedingLineBreak).
     const pos = this.#nodePos();
-    this.#expect(token);
+    if (!skipKeyword) {
+      this.#expect(token);
+    }
     const openBrace = this.#expect(Kind.OpenBraceToken);
     const elements: ReturnType<typeof createImportAttribute>[] = [];
     while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
@@ -1995,7 +2010,22 @@ export class Parser {
       this.#advance();
       return this.#finishNode(createTypeOperatorNode(token.kind as Kind.KeyOfKeyword | Kind.ReadonlyKeyword | Kind.UniqueKeyword, this.#parsePostfixType()), pos);
     }
+    if (token.kind === Kind.InferKeyword) {
+      // tsgo parseTypeOperatorOrHigher (2677) dispatches `infer` to parseInferType.
+      return this.#parseInferType();
+    }
+    if (token.kind === Kind.ImportKeyword) {
+      // tsgo parseNonArrayType (2807) KindImportKeyword -> parseImportType. Not a typeof
+      // import here (that is routed from the TypeOfKeyword branch below).
+      return this.#parseImportType(false);
+    }
     if (token.kind === Kind.TypeOfKeyword) {
+      // tsgo parseTypeQuery / parseImportType (2799-2806): `typeof import(...)` is an
+      // import type with isTypeOf=true (nextIsStartOfTypeOfImportType, 3021), otherwise a
+      // plain type query.
+      if (this.#tokens[this.#index + 1]?.kind === Kind.ImportKeyword) {
+        return this.#parseImportType(true);
+      }
       this.#advance();
       return this.#finishNode(createTypeQueryNode(this.#parseEntityName(), this.#parseOptionalTypeArguments()), pos);
     }
@@ -2028,13 +2058,19 @@ export class Parser {
       this.#advance();
       const elements: TypeNode[] = [];
       while (this.#current().kind !== Kind.CloseBracketToken && this.#current().kind !== Kind.EndOfFile) {
-        elements.push(this.#parseType());
+        elements.push(this.#parseTupleElementNameOrTupleElementType());
         this.#consumeOptional(Kind.CommaToken);
       }
       this.#expect(Kind.CloseBracketToken);
       return this.#finishNode(createTupleTypeNode(createNodeArray(elements)), pos);
     }
     if (token.kind === Kind.OpenBraceToken) {
+      // tsgo parseNonArrayType (2810-2814): `{` dispatches to parseMappedType when the
+      // lookahead (nextIsStartOfMappedType, 3123) matches `{ +/-? readonly? [ id in`,
+      // otherwise to a type literal.
+      if (this.#nextIsStartOfMappedType()) {
+        return this.#parseMappedType();
+      }
       this.#advance();
       const members: TypeElement[] = [];
       while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
@@ -2094,10 +2130,253 @@ export class Parser {
       this.#advance();
       return this.#finishNode(createLiteralTypeNode(this.#finishNode(createKeywordExpression(token.kind as Kind.TrueKeyword | Kind.FalseKeyword | Kind.NullKeyword), pos)), pos);
     }
+    if (token.kind === Kind.TemplateHead) {
+      // tsgo parseNonArrayType (2855) KindTemplateHead -> parseTemplateType (3684).
+      return this.#parseTemplateLiteralType();
+    }
     if (isIdentifierNameKind(token.kind)) {
       return this.#finishNode(createTypeReferenceNode(this.#parseEntityName(), this.#parseOptionalTypeArguments()), pos);
     }
     throw new ParseError(`Unexpected type token ${Kind[token.kind]}`, token);
+  }
+
+  #parseInferType(): TypeNode {
+    // tsgo parseInferType (2689): node start at the `infer` keyword; finishNode after
+    // the inner TypeParameterDeclaration. The TypeParameterDeclaration is built by
+    // parseTypeParameterOfInferType (2695) with its own pos at the name.
+    const pos = this.#nodePos();
+    this.#expect(Kind.InferKeyword);
+    const namePos = this.#nodePos();
+    const name = this.#parseIdentifier();
+    const constraint = this.#tryParseConstraintOfInferType();
+    const typeParameter = this.#finishNode(createTypeParameterDeclaration(undefined, name, constraint, undefined, undefined), namePos);
+    return this.#finishNode(createInferTypeNode(typeParameter), pos);
+  }
+
+  #tryParseConstraintOfInferType(): TypeNode | undefined {
+    // tsgo tryParseConstraintOfInferType (2702): on `extends`, parse the constraint. tsgo
+    // returns it when `p.inDisallowConditionalTypesContext() || p.token != QuestionToken`, and
+    // ONLY rewinds (dropping the constraint) when NOT in DisallowConditionalTypesContext and a
+    // trailing `?` follows — i.e. the `?` should start a NESTED conditional type that becomes the
+    // constraint (`infer U extends (C ? X : Y)`).
+    //
+    // STAGE-2 BLOCKER (NodeFlagsDisallowConditionalTypesContext): the rewind branch is reachable
+    // only via that contextFlag, which tsts does not yet have (Stage 2). Critically, in the
+    // common case the extends-type of the ENCLOSING conditional is parsed by tsgo IN
+    // DisallowConditionalTypesContext (parseType 2617), so `inDisallowConditionalTypesContext()`
+    // is true and the constraint is KEPT even when a trailing `?` follows (that `?` belongs to
+    // the enclosing conditional, e.g. `A extends infer U extends string ? U : never`). Since
+    // tsts has no context flag and its #parseType conditional branch is ungated, the faithful
+    // observable behavior here is to ALWAYS keep the constraint: tsts's #parseType cannot form
+    // the nested-conditional-in-constraint shape anyway (it requires `extends`, not `?`), so the
+    // rewind branch's purpose — choosing the nested-conditional constraint — is the named Stage-2
+    // dependency and is left unimplemented. Bare `infer T` and non-conditional `infer T extends C`
+    // (incl. as a conditional's extends-type) parse faithfully.
+    if (this.#consumeOptional(Kind.ExtendsKeyword)) {
+      return this.#parseType();
+    }
+    return undefined;
+  }
+
+  #parseImportType(isTypeOf: boolean): TypeNode {
+    // tsgo parseImportType (3026): node start at the `typeof` (when present) else `import`;
+    // finishNode after the optional type arguments. The optional `, { with|assert: ... }`
+    // attributes clause re-enters #parseImportAttributes (self-contained: captures its own
+    // pos and consumes through `}`); the trailing `.` qualifier reuses #parseEntityName.
+    const pos = this.#nodePos();
+    if (isTypeOf) {
+      this.#expect(Kind.TypeOfKeyword);
+    }
+    this.#expect(Kind.ImportKeyword);
+    this.#expect(Kind.OpenParenToken);
+    const argument = this.#parseType();
+    const attributes = this.#consumeOptional(Kind.CommaToken)
+      ? this.#parseImportTypeAttributes()
+      : undefined;
+    this.#expect(Kind.CloseParenToken);
+    const qualifier = this.#consumeOptional(Kind.DotToken) ? this.#parseEntityName() : undefined;
+    const typeArguments = this.#parseOptionalTypeArguments();
+    return this.#finishNode(createImportTypeNode(isTypeOf, argument, attributes, qualifier, typeArguments), pos);
+  }
+
+  #parseImportTypeAttributes(): ReturnType<typeof createImportAttributes> {
+    // tsgo parseImportType (3034-3057): after the comma, the attributes clause is the OUTER
+    // `{ with|assert : { name: value, ... } }`. The outer `{`, the `with`/`assert` keyword and
+    // the `:` are consumed here; the inner attribute object is then parsed by
+    // #parseImportAttributes(keyword, skipKeyword=true) (its node starts at the inner `{` and
+    // carries the keyword as token, exactly as tsgo's skipKeyword path). The trailing optional
+    // comma and the outer `}` are consumed here.
+    this.#expect(Kind.OpenBraceToken);
+    const keyword = this.#current().kind;
+    if (keyword !== Kind.WithKeyword && keyword !== Kind.AssertKeyword) {
+      throw new ParseError(`Expected token ${Kind[Kind.WithKeyword]}`, this.#current());
+    }
+    this.#advance();
+    this.#expect(Kind.ColonToken);
+    const attributes = this.#parseImportAttributes(keyword, true);
+    this.#consumeOptional(Kind.CommaToken);
+    this.#expect(Kind.CloseBraceToken);
+    return attributes;
+  }
+
+  #parseMappedType(): TypeNode {
+    // tsgo parseMappedType (3134): node start at the `{`; finishNode after the closing `}`.
+    const pos = this.#nodePos();
+    this.#expect(Kind.OpenBraceToken);
+    const readonlyToken = this.#parseMappedTypeModifierToken(Kind.ReadonlyKeyword);
+    this.#expect(Kind.OpenBracketToken);
+    const typeParameter = this.#parseMappedTypeParameter();
+    const nameType = this.#consumeOptional(Kind.AsKeyword) ? this.#parseType() : undefined;
+    this.#expect(Kind.CloseBracketToken);
+    const questionToken = this.#parseMappedTypeModifierToken(Kind.QuestionToken);
+    const type = this.#parseOptionalTypeAnnotation();
+    this.#consumeOptional(Kind.SemicolonToken);
+    const members: TypeElement[] = [];
+    while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
+      if (this.#consumeOptional(Kind.SemicolonToken) || this.#consumeOptional(Kind.CommaToken)) {
+        continue;
+      }
+      members.push(this.#parseTypeElement());
+    }
+    this.#expect(Kind.CloseBraceToken);
+    return this.#finishNode(createMappedTypeNode(readonlyToken, typeParameter, nameType, questionToken, type, createNodeArray(members)), pos);
+  }
+
+  #parseMappedTypeModifierToken<TExpected extends Kind.ReadonlyKeyword | Kind.QuestionToken>(expected: TExpected): Token<TExpected> | PlusToken | MinusToken | undefined {
+    // tsgo parseMappedType (3137-3143 / 3151-3157): the readonly/question slot accepts an
+    // optional `+`/`-` prefix OR the bare keyword/question token. When a `+`/`-` is seen tsgo
+    // parses the token, then expects the keyword/question to follow — here we faithfully
+    // consume the `+`/`-` token node and (per tsgo's parseExpected) require the following
+    // keyword/question, advancing past it.
+    const current = this.#current().kind;
+    if (current === Kind.PlusToken) {
+      this.#advance();
+      this.#expect(expected);
+      return createToken(Kind.PlusToken);
+    }
+    if (current === Kind.MinusToken) {
+      this.#advance();
+      this.#expect(expected);
+      return createToken(Kind.MinusToken);
+    }
+    if (current === expected) {
+      this.#advance();
+      return createToken(expected);
+    }
+    return undefined;
+  }
+
+  #parseMappedTypeParameter(): TypeParameterDeclaration {
+    // tsgo parseMappedTypeParameter (3165): `name in type`; the `in`-type goes in the
+    // constraint slot of the TypeParameterDeclaration. Node start at the name.
+    const pos = this.#nodePos();
+    const name = this.#parseIdentifier();
+    this.#expect(Kind.InKeyword);
+    const type = this.#parseType();
+    return this.#finishNode(createTypeParameterDeclaration(undefined, name, type, undefined, undefined), pos);
+  }
+
+  #nextIsStartOfMappedType(): boolean {
+    // tsgo nextIsStartOfMappedType (3123): from the `{`, peek `+/-? readonly? [ id in`. tsts
+    // has no nextToken-style scanner cursor, so this is a pure forward token peek (mirroring
+    // #isIndexSignature's this.#tokens[this.#index + N] pattern) — no save/restore needed
+    // because no token is consumed.
+    let offset = this.#index + 1;
+    if (this.#tokens[offset]?.kind === Kind.PlusToken || this.#tokens[offset]?.kind === Kind.MinusToken) {
+      return this.#tokens[offset + 1]?.kind === Kind.ReadonlyKeyword;
+    }
+    if (this.#tokens[offset]?.kind === Kind.ReadonlyKeyword) {
+      offset += 1;
+    }
+    return this.#tokens[offset]?.kind === Kind.OpenBracketToken
+      && isIdentifierNameKind(this.#tokens[offset + 1]?.kind ?? Kind.Unknown)
+      && this.#tokens[offset + 2]?.kind === Kind.InKeyword;
+  }
+
+  #parseTemplateLiteralType(): TypeNode {
+    // tsgo parseTemplateType (3684): node start at the TemplateHead; spans parse a TYPE
+    // (#parseType) rather than an expression. The scanner pre-scans TemplateHead/Middle/Tail
+    // via the brace-depth counter (scanner.ts 301-313,425-447), so the token stream is
+    // identical to the expression path even when the `${...}` interior contains `{ }`.
+    const headPos = this.#nodePos();
+    const headToken = this.#expect(Kind.TemplateHead);
+    const head = this.#finishNode(createTemplateHead(templateHeadText(headToken.text), templateHeadText(headToken.text), 0), headPos);
+    const spans = [];
+    while (true) {
+      // tsgo parseTemplateTypeSpan (3720): span node start is the span TYPE start; finish
+      // after the trailing TemplateMiddle/TemplateTail literal is consumed.
+      const spanPos = this.#nodePos();
+      const type = this.#parseType();
+      this.#expect(Kind.CloseBraceToken);
+      const literalToken = this.#current();
+      if (literalToken.kind !== Kind.TemplateMiddle && literalToken.kind !== Kind.TemplateTail) {
+        throw new ParseError("Expected template continuation", literalToken);
+      }
+      const literalPos = this.#nodePos();
+      this.#advance();
+      const literal = literalToken.kind === Kind.TemplateMiddle
+        ? this.#finishNode(createTemplateMiddle(templateMiddleText(literalToken.text), templateMiddleText(literalToken.text), 0), literalPos)
+        : this.#finishNode(createTemplateTail(templateTailText(literalToken.text), templateTailText(literalToken.text), 0), literalPos);
+      spans.push(this.#finishNode(createTemplateLiteralTypeSpan(type, literal as TemplateMiddleOrTail), spanPos));
+      if (literalToken.kind === Kind.TemplateTail) {
+        break;
+      }
+    }
+    return this.#finishNode(createTemplateLiteralTypeNode(head, createNodeArray(spans)), headPos);
+  }
+
+  #parseTupleElementNameOrTupleElementType(): TypeNode {
+    // tsgo parseTupleElementNameOrTupleElementType (3617): a named-tuple member is detected
+    // by a lookahead (scanStartOfNamedTupleElement, 3633): optional `...`, an identifier OR
+    // keyword, then `:` OR `?:`. On match build a NamedTupleMember; otherwise fall through to
+    // the plain element parse (which itself handles leading `...` rest / trailing `?` optional).
+    if (this.#scanStartOfNamedTupleElement()) {
+      const pos = this.#nodePos();
+      const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
+      const name = this.#parseIdentifier();
+      const questionToken = this.#consumeOptional(Kind.QuestionToken) ? createToken(Kind.QuestionToken) : undefined;
+      this.#expect(Kind.ColonToken);
+      const type = this.#parseTupleElementType();
+      return this.#finishNode(createNamedTupleMember(dotDotDotToken, name, questionToken, type), pos);
+    }
+    return this.#parseTupleElementType();
+  }
+
+  #scanStartOfNamedTupleElement(): boolean {
+    // tsgo scanStartOfNamedTupleElement (3633) + nextTokenIsColonOrQuestionColon (3640): a
+    // pure forward token peek (no consume). `...`? then an identifier/keyword, then `:` or
+    // `?` `:`.
+    let offset = this.#index;
+    if (this.#tokens[offset]?.kind === Kind.DotDotDotToken) {
+      offset += 1;
+    }
+    if (!isIdentifierNameKind(this.#tokens[offset]?.kind ?? Kind.Unknown)) {
+      return false;
+    }
+    offset += 1;
+    if (this.#tokens[offset]?.kind === Kind.ColonToken) {
+      return true;
+    }
+    return this.#tokens[offset]?.kind === Kind.QuestionToken && this.#tokens[offset + 1]?.kind === Kind.ColonToken;
+  }
+
+  #parseTupleElementType(): TypeNode {
+    // tsgo parseTupleElementType (3644): a leading `...` -> RestTypeNode wrapping the element
+    // type; a trailing `?` -> OptionalTypeNode. tsgo derives the OptionalTypeNode from a
+    // JSDocNullableType produced by parsePostfixTypeOrHigher (3650-3656); tsts has no
+    // JSDoc-nullable postfix machinery and OptionalTypeNode appears ONLY inside a tuple, so we
+    // handle the trailing `?` directly here — yielding the identical OptionalTypeNode-in-tuple
+    // shape (equivalent AST per parser.go:3650-3656, NOT a token-for-token call-graph port).
+    const pos = this.#nodePos();
+    if (this.#consumeOptional(Kind.DotDotDotToken)) {
+      return this.#finishNode(createRestTypeNode(this.#parseType()), pos);
+    }
+    const type = this.#parseType();
+    if (this.#current().kind === Kind.QuestionToken) {
+      this.#advance();
+      return this.#finishNode(createOptionalTypeNode(type), pos);
+    }
+    return type;
   }
 
   #tryParseFunctionType(): TypeNode | undefined {

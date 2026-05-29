@@ -56,22 +56,27 @@ import {
   isImportAttributes,
   isImportDeclaration,
   isImportEqualsDeclaration,
+  isImportTypeNode,
   isIndexSignatureDeclaration,
   isIndexedAccessTypeNode,
+  isInferTypeNode,
   isInterfaceDeclaration,
   isIntersectionTypeNode,
   isKeywordExpression,
   isKeywordTypeNode,
   isLabeledStatement,
   isLiteralTypeNode,
+  isMappedTypeNode,
   isMethodDeclaration,
   isMethodSignatureDeclaration,
   isNamedExports,
+  isNamedTupleMember,
   isNamespaceExportDeclaration,
   isNonNullExpression,
   isNumericLiteral,
   isObjectBindingPattern,
   isObjectLiteralExpression,
+  isOptionalTypeNode,
   isParameterDeclaration,
   isParenthesizedExpression,
   isParenthesizedTypeNode,
@@ -81,6 +86,7 @@ import {
   isPropertyDeclaration,
   isPropertySignatureDeclaration,
   isQualifiedName,
+  isRestTypeNode,
   isReturnStatement,
   isSatisfiesExpression,
   isSemicolonClassElement,
@@ -89,6 +95,8 @@ import {
   isStringLiteral,
   isSwitchStatement,
   isTemplateExpression,
+  isTemplateLiteralTypeNode,
+  isTemplateLiteralTypeSpan,
   isThisTypeNode,
   isTryStatement,
   isTupleTypeNode,
@@ -1567,6 +1575,246 @@ export class ParserPositionTests {
     Assert.Equal(Kind.WithKeyword, attributes.token);
     Assert.Equal(1, attributes.attributes.length);
   }
+
+  // Stage 1g: template-literal TYPE. `type T = `a${B}c`;` -> TemplateLiteralTypeNode starts at
+  // the TemplateHead `` `a${ `` (index 9) and ends after the tail `` }c` `` (index 17). The head
+  // spans [9,13); the single TemplateLiteralTypeSpan covers the span TYPE `B` through the tail
+  // [13,17) (its start is the span type's start, NOT the `${`).
+  template_literal_type_spans_head_through_tail(): void {
+    const sourceFile = parseSourceFile("type T = `a${B}c`;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const template = statement.type;
+    if (!isTemplateLiteralTypeNode(template)) throw new Exception("Expected template literal type node");
+    Assert.Equal(9, template.pos);
+    Assert.Equal(17, template.end);
+    Assert.Equal(9, template.head.pos);
+    Assert.Equal(13, template.head.end);
+    const span = template.templateSpans[0]!;
+    if (!isTemplateLiteralTypeSpan(span)) throw new Exception("Expected template literal type span");
+    Assert.Equal(13, span.pos);
+    Assert.Equal(17, span.end);
+    Assert.Equal(span.type.pos, span.pos);
+  }
+
+  // Stage 1g: template-literal TYPE with a `{`-containing interior. `type T = `a${{x:B}}c`;` ->
+  // the `${...}` interior is a type literal `{x:B}`; the scanner's brace-depth counter round-trips
+  // the nested `{ }` so the span TYPE is a TypeLiteralNode and the whole template still spans
+  // [9,21) (head `` `a${ `` [9,13); the type literal `{x:B}` [13,18); the tail `` }c` `` [18,21)).
+  template_literal_type_with_brace_interior_round_trips(): void {
+    const sourceFile = parseSourceFile("type T = `a${{x:B}}c`;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const template = statement.type;
+    if (!isTemplateLiteralTypeNode(template)) throw new Exception("Expected template literal type node");
+    Assert.Equal(9, template.pos);
+    Assert.Equal(21, template.end);
+    const span = template.templateSpans[0]!;
+    if (!isTemplateLiteralTypeSpan(span)) throw new Exception("Expected template literal type span");
+    if (!isTypeLiteralNode(span.type)) throw new Exception("Expected type literal span type");
+  }
+
+  // Stage 1g: mapped type. `type T = { readonly [K in U]?: V };` -> MappedTypeNode covers the
+  // braces [9,34). The readonlyToken is a ReadonlyKeyword; the questionToken is a QuestionToken;
+  // the typeParameter (`K in U`) starts at the name `K` (index 21) and ends after the in-type `U`
+  // (index 27); the in-type lives in the typeParameter's constraint slot.
+  mapped_type_covers_braces_with_readonly_and_question(): void {
+    const sourceFile = parseSourceFile("type T = { readonly [K in U]?: V };");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const mapped = statement.type;
+    if (!isMappedTypeNode(mapped)) throw new Exception("Expected mapped type node");
+    Assert.Equal(9, mapped.pos);
+    Assert.Equal(34, mapped.end);
+    Assert.Equal(Kind.ReadonlyKeyword, mapped.readonlyToken!.kind);
+    Assert.Equal(Kind.QuestionToken, mapped.questionToken!.kind);
+    const tp = mapped.typeParameter;
+    if (!isTypeParameterDeclaration(tp)) throw new Exception("Expected type parameter declaration");
+    Assert.Equal(21, tp.pos);
+    Assert.Equal(27, tp.end);
+    if (tp.constraint === undefined) throw new Exception("Expected in-type in constraint slot");
+    Assert.Equal(Kind.TypeReference, tp.constraint.kind);
+  }
+
+  // Stage 1g: mapped type with `+/-` modifiers and `as` remapping.
+  // `type T = { -readonly [K in U as `g${K}`]-?: V };` -> the readonly/question slots carry
+  // MinusToken (+/- form); the `as` nameType is a TemplateLiteralType.
+  mapped_type_plus_minus_modifiers_and_as_remapping(): void {
+    const sourceFile = parseSourceFile("type T = { -readonly [K in U as `g${K}`]-?: V };");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const mapped = statement.type;
+    if (!isMappedTypeNode(mapped)) throw new Exception("Expected mapped type node");
+    Assert.Equal(Kind.MinusToken, mapped.readonlyToken!.kind);
+    Assert.Equal(Kind.MinusToken, mapped.questionToken!.kind);
+    if (mapped.nameType === undefined) throw new Exception("Expected as-remapping nameType");
+    Assert.Equal(Kind.TemplateLiteralType, mapped.nameType.kind);
+  }
+
+  // Stage 1g: import type with qualifier + type arguments.
+  // `type T = import("mod").Ns.Type<X>;` -> ImportTypeNode starts at `import` (index 9) and ends
+  // after the closing `>` (index 33). isTypeOf is false; the qualifier is a dotted entity name
+  // (QualifiedName); there is one type argument.
+  import_type_with_qualifier_and_type_arguments(): void {
+    const sourceFile = parseSourceFile("type T = import(\"mod\").Ns.Type<X>;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const importType = statement.type;
+    if (!isImportTypeNode(importType)) throw new Exception("Expected import type node");
+    Assert.Equal(9, importType.pos);
+    Assert.Equal(33, importType.end);
+    Assert.Equal(false, importType.isTypeOf);
+    if (importType.qualifier === undefined || !isQualifiedName(importType.qualifier)) throw new Exception("Expected qualified-name qualifier");
+    Assert.Equal(1, importType.typeArguments!.length);
+  }
+
+  // Stage 1g: typeof import type. `type T = typeof import("mod").Default;` -> ImportTypeNode with
+  // isTypeOf=true starting at the `typeof` keyword (index 9), ending after the qualifier `Default`
+  // (index 37).
+  typeof_import_type_sets_is_type_of(): void {
+    const sourceFile = parseSourceFile("type T = typeof import(\"mod\").Default;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const importType = statement.type;
+    if (!isImportTypeNode(importType)) throw new Exception("Expected import type node");
+    Assert.Equal(9, importType.pos);
+    Assert.Equal(37, importType.end);
+    Assert.Equal(true, importType.isTypeOf);
+  }
+
+  // Stage 1g: import type with attributes. `type T = import("m", { with: { t: "json" } }).X;` ->
+  // ImportTypeNode carrying an ImportAttributes node (token = WithKeyword) parsed mid-type via the
+  // skipKeyword path; the inner attribute object has one entry. The whole import type spans [9,47).
+  import_type_with_attributes_clause(): void {
+    const sourceFile = parseSourceFile("type T = import(\"m\", { with: { t: \"json\" } }).X;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const importType = statement.type;
+    if (!isImportTypeNode(importType)) throw new Exception("Expected import type node");
+    Assert.Equal(9, importType.pos);
+    Assert.Equal(47, importType.end);
+    const attributes = importType.attributes;
+    if (attributes === undefined || !isImportAttributes(attributes)) throw new Exception("Expected import attributes");
+    Assert.Equal(Kind.WithKeyword, attributes.token);
+    Assert.Equal(1, attributes.attributes.length);
+  }
+
+  // Stage 1g: bare infer type. `type T = A extends infer U ? U : never;` -> the conditional's
+  // extendsType is an InferTypeNode starting at the `infer` keyword (index 19) and ending after
+  // the type parameter name `U` (index 26); its TypeParameterDeclaration has no constraint.
+  infer_type_bare_in_conditional_extends_position(): void {
+    const sourceFile = parseSourceFile("type T = A extends infer U ? U : never;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const conditional = statement.type;
+    if (!isConditionalTypeNode(conditional)) throw new Exception("Expected conditional type node");
+    const infer = conditional.extendsType;
+    if (!isInferTypeNode(infer)) throw new Exception("Expected infer type node");
+    Assert.Equal(19, infer.pos);
+    Assert.Equal(26, infer.end);
+    const tp = infer.typeParameter;
+    if (!isTypeParameterDeclaration(tp)) throw new Exception("Expected type parameter declaration");
+    Assert.Equal(25, tp.pos);
+    Assert.Equal(26, tp.end);
+    if (tp.constraint !== undefined) throw new Exception("Expected no constraint on bare infer");
+  }
+
+  // Stage 1g: infer type with `extends` constraint. `type T = A extends infer U extends string ? U
+  // : never;` -> the InferTypeNode spans the `infer` keyword (index 19) through the constraint
+  // `string` (index 41); the constraint is KEPT (the trailing `?` belongs to the enclosing
+  // conditional). The constraint is a StringKeyword spanning [35,41).
+  infer_type_extends_constraint_is_kept(): void {
+    const sourceFile = parseSourceFile("type T = A extends infer U extends string ? U : never;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const conditional = statement.type;
+    if (!isConditionalTypeNode(conditional)) throw new Exception("Expected conditional type node");
+    const infer = conditional.extendsType;
+    if (!isInferTypeNode(infer)) throw new Exception("Expected infer type node");
+    Assert.Equal(19, infer.pos);
+    Assert.Equal(41, infer.end);
+    const constraint = infer.typeParameter.constraint;
+    if (constraint === undefined) throw new Exception("Expected kept constraint");
+    Assert.Equal(Kind.StringKeyword, constraint.kind);
+    Assert.Equal(35, constraint.pos);
+    Assert.Equal(41, constraint.end);
+  }
+
+  // Stage 1g: named-tuple members + optional + rest.
+  // `type T = [a: string, b?: number, ...c: boolean[]];` -> the tuple spans [9,49) with three
+  // NamedTupleMember elements: `a: string` [10,19); `b?: number` [21,31) with a QuestionToken;
+  // `...c: boolean[]` [33,48) with a DotDotDotToken.
+  named_tuple_members_with_optional_and_rest(): void {
+    const sourceFile = parseSourceFile("type T = [a: string, b?: number, ...c: boolean[]];");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const tuple = statement.type;
+    if (!isTupleTypeNode(tuple)) throw new Exception("Expected tuple type node");
+    Assert.Equal(9, tuple.pos);
+    Assert.Equal(49, tuple.end);
+    const first = tuple.elements[0]!;
+    if (!isNamedTupleMember(first)) throw new Exception("Expected first named tuple member");
+    Assert.Equal(10, first.pos);
+    Assert.Equal(19, first.end);
+    const second = tuple.elements[1]!;
+    if (!isNamedTupleMember(second)) throw new Exception("Expected second named tuple member");
+    Assert.Equal(21, second.pos);
+    Assert.Equal(31, second.end);
+    Assert.Equal(Kind.QuestionToken, second.questionToken!.kind);
+    const third = tuple.elements[2]!;
+    if (!isNamedTupleMember(third)) throw new Exception("Expected third named tuple member");
+    Assert.Equal(33, third.pos);
+    Assert.Equal(48, third.end);
+    Assert.Equal(Kind.DotDotDotToken, third.dotDotDotToken!.kind);
+  }
+
+  // Stage 1g: a keyword-named tuple member. `type T = [type: string];` -> the member name accepts
+  // a keyword (`type`); the NamedTupleMember spans [10,22) and its name text is `type`.
+  named_tuple_member_allows_keyword_name(): void {
+    const sourceFile = parseSourceFile("type T = [type: string];");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const tuple = statement.type;
+    if (!isTupleTypeNode(tuple)) throw new Exception("Expected tuple type node");
+    const member = tuple.elements[0]!;
+    if (!isNamedTupleMember(member)) throw new Exception("Expected named tuple member");
+    Assert.Equal(10, member.pos);
+    Assert.Equal(22, member.end);
+    Assert.Equal("type", member.name.text);
+  }
+
+  // Stage 1g: rest type in a tuple. `type T = [...string[]];` -> the element is a RestTypeNode
+  // starting at the `...` (index 10) and ending after the inner array type (index 21).
+  rest_type_in_tuple_starts_at_dotdotdot(): void {
+    const sourceFile = parseSourceFile("type T = [...string[]];");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const tuple = statement.type;
+    if (!isTupleTypeNode(tuple)) throw new Exception("Expected tuple type node");
+    const rest = tuple.elements[0]!;
+    if (!isRestTypeNode(rest)) throw new Exception("Expected rest type node");
+    Assert.Equal(10, rest.pos);
+    Assert.Equal(21, rest.end);
+    if (!isArrayTypeNode(rest.type)) throw new Exception("Expected array type inside rest");
+  }
+
+  // Stage 1g: optional type in a tuple. `type T = [string?];` -> the element is an OptionalTypeNode
+  // starting at the element type `string` (index 10) and ending after the `?` (index 17); the inner
+  // type is the StringKeyword spanning [10,16).
+  optional_type_in_tuple_wraps_element(): void {
+    const sourceFile = parseSourceFile("type T = [string?];");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const tuple = statement.type;
+    if (!isTupleTypeNode(tuple)) throw new Exception("Expected tuple type node");
+    const optional = tuple.elements[0]!;
+    if (!isOptionalTypeNode(optional)) throw new Exception("Expected optional type node");
+    Assert.Equal(10, optional.pos);
+    Assert.Equal(17, optional.end);
+    if (!isKeywordTypeNode(optional.type)) throw new Exception("Expected keyword type inside optional");
+    Assert.Equal(10, optional.type.pos);
+    Assert.Equal(16, optional.type.end);
+  }
 }
 
 A<ParserPositionTests>().method((t) => t.stamps_identifier_leaf_with_token_tight_range).add(FactAttribute);
@@ -1665,3 +1913,16 @@ A<ParserPositionTests>().method((t) => t.export_default_function_remains_functio
 A<ParserPositionTests>().method((t) => t.namespace_export_declaration_spans_through_semicolon).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.import_attributes_with_clause_ranges).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.reexport_attributes_with_clause_wired).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.template_literal_type_spans_head_through_tail).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.template_literal_type_with_brace_interior_round_trips).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.mapped_type_covers_braces_with_readonly_and_question).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.mapped_type_plus_minus_modifiers_and_as_remapping).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.import_type_with_qualifier_and_type_arguments).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.typeof_import_type_sets_is_type_of).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.import_type_with_attributes_clause).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.infer_type_bare_in_conditional_extends_position).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.infer_type_extends_constraint_is_kept).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.named_tuple_members_with_optional_and_rest).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.named_tuple_member_allows_keyword_name).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.rest_type_in_tuple_starts_at_dotdotdot).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.optional_type_in_tuple_wraps_element).add(FactAttribute);
