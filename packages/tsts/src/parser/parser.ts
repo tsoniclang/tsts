@@ -200,6 +200,10 @@ export interface ParseSourceFileOptions {
 // #peekKind/#lookAhead move the live scanner independently of the cached #token.
 interface TokenSnapshot extends ScannedToken {
   readonly hasPrecedingLineBreak: boolean;
+  // M3 4c: the trivia-inclusive full-start of this token (tsgo
+  // scanner.TokenFullStart(), read by nodePos()=parser.go nodePos). Captured at
+  // the moment this token was scanned, parallel to hasPrecedingLineBreak.
+  readonly fullStart: number;
 }
 
 // wave 4b-swap: a speculative parse-state snapshot (tsgo ParserState,
@@ -543,7 +547,7 @@ export class Parser {
     // Seed #token with the EOF placeholder so #nextToken's `this.#token.end`
     // read is well-typed; #nextToken immediately overwrites it with the first
     // real token (and #prevTokenEnd stays 0 because the placeholder end is 0).
-    this.#token = { kind: Kind.EndOfFile, pos: 0, end: 0, text: "", hasPrecedingLineBreak: false };
+    this.#token = { kind: Kind.EndOfFile, pos: 0, end: 0, text: "", hasPrecedingLineBreak: false, fullStart: 0 };
     this.#nextToken();
   }
 
@@ -566,6 +570,12 @@ export class Parser {
       // moment this token is scanned (tsgo p.scanner.HasPrecedingLineBreak(),
       // parser.go:410). The snapshot reader #hasPrecedingLineBreak() reads this.
       hasPrecedingLineBreak: this.#scanner.hasPrecedingLineBreak(),
+      // M3 4c: capture the trivia-inclusive full-start of this scanned token
+      // (tsgo scanner.TokenFullStart()). Every scanned snapshot — including the
+      // ACTUAL scanned EOF token at end-of-input — is built here, so the EOF
+      // token gets its real full-start (NOT hardcoded 0). The reader #nodePos()
+      // reads this.
+      fullStart: this.#scanner.getTokenFullStart(),
     };
   }
 
@@ -583,6 +593,10 @@ export class Parser {
       // line-break status of the current token is unchanged; read it from the
       // scanner (it reflects the same token start).
       hasPrecedingLineBreak: this.#scanner.hasPrecedingLineBreak(),
+      // M3 4c: reScan* re-reads from fullStartPos and keeps it, so
+      // getTokenFullStart() returns the same trivia-inclusive full-start of the
+      // current token — correct for an in-place re-tokenization.
+      fullStart: this.#scanner.getTokenFullStart(),
     };
   }
 
@@ -3332,14 +3346,15 @@ export class Parser {
     return result;
   }
 
-  // codex-048 Stage-1a: position plumbing mirroring tsgo
+  // codex-048 Stage-1a / M3 4c: position plumbing mirroring tsgo
   // internal/parser/parser.go finishNode (5904-5917) MINUS the error-flag bit
-  // (that bit is Stage 3). nodePos is the start of the CURRENT (not-yet-consumed)
-  // token; capture it BEFORE advancing. nodeEnd is token-tight: the end of the
-  // just-consumed token. Per codex-048 (i) this is the token end, NOT the
-  // trivia-inclusive Scanner TokenFullStart (that is a Stage-4 closure item).
+  // (that bit is Stage 3). nodePos is the trivia-INCLUSIVE full-start of the
+  // CURRENT (not-yet-consumed) token (tsgo nodePos()=scanner.TokenFullStart(),
+  // parser.go); capture it BEFORE advancing. nodeEnd stays token-tight: the end
+  // of the just-consumed token (codex-048 (i) — the end side is NOT
+  // trivia-inclusive).
   #nodePos(): number {
-    return this.#token.pos;
+    return this.#token.fullStart;
   }
 
   #nodeEnd(): number {

@@ -186,9 +186,12 @@ export class ParserParityTests {
   nested_generic_double_closer_tsgo_correct(): void {
     const { sourceFile, type } = this.#soleType("type X = A<B<C>>;");
     if (!isTypeReferenceNode(type)) throw new Exception("Expected outer type reference");
-    Assert.Equal(9, type.pos);
+    // M3 4c: type.pos is the trivia-inclusive full-start = end of `=` (8); the
+    // leading space after `=` is the type's leading trivia, so #raw([8,16)) now
+    // includes it. end stays token-tight at 16.
+    Assert.Equal(8, type.pos);
     Assert.Equal(16, type.end);
-    Assert.Equal("A<B<C>>", this.#raw(sourceFile, type));
+    Assert.Equal(" A<B<C>>", this.#raw(sourceFile, type));
     const inner = type.typeArguments![0]!;
     if (!isTypeReferenceNode(inner)) throw new Exception("Expected inner type reference");
     // TSGO-CORRECT: inner B<C> ends AFTER the first '>' (index 15), raw "B<C>".
@@ -535,18 +538,25 @@ export class ParserParityTests {
     Assert.Equal(8, checkType.end);
     const extendsType = type.extendsType;
     if (!isInferTypeNode(extendsType)) throw new Exception("Expected infer extends type");
-    Assert.Equal(17, extendsType.pos);
+    // M3 4c: extendsType.pos is its full-start = end of the first `extends` (16);
+    // the space after `extends` is its leading trivia, so #raw includes it. end
+    // stays token-tight at 39.
+    Assert.Equal(16, extendsType.pos);
     Assert.Equal(39, extendsType.end);
-    Assert.Equal("infer U extends string", this.#raw(sourceFile, extendsType));
+    Assert.Equal(" infer U extends string", this.#raw(sourceFile, extendsType));
     const tp = extendsType.typeParameter;
     if (!isTypeParameterDeclaration(tp)) throw new Exception("Expected type parameter");
-    Assert.Equal(23, tp.pos);
+    // M3 4c: tp `U`'s pos is its full-start = end of `infer` (22); the space is
+    // its leading trivia, so #raw includes it. end stays token-tight at 39.
+    Assert.Equal(22, tp.pos);
     Assert.Equal(39, tp.end);
-    Assert.Equal("U extends string", this.#raw(sourceFile, tp));
+    Assert.Equal(" U extends string", this.#raw(sourceFile, tp));
     const constraint = tp.constraint!;
     if (!isKeywordTypeNode(constraint)) throw new Exception("Expected keyword constraint");
     Assert.Equal(Kind.StringKeyword, constraint.kind);
-    Assert.Equal(33, constraint.pos);
+    // M3 4c: constraint `string`'s pos is its full-start = end of the second
+    // `extends` (32); the space is its leading trivia. end stays token-tight at 39.
+    Assert.Equal(32, constraint.pos);
     Assert.Equal(39, constraint.end);
     const trueType = type.trueType;
     if (!isTypeReferenceNode(trueType)) throw new Exception("Expected true type reference");
@@ -612,9 +622,11 @@ export class ParserParityTests {
     Assert.Equal("K in keyof T", this.#raw(sourceFile, tp));
     const constraint = tp.constraint!;
     if (!isTypeOperatorNode(constraint)) throw new Exception("Expected keyof type operator constraint");
-    Assert.Equal(14, constraint.pos);
+    // M3 4c: constraint.pos is its full-start = end of `in` (13); the space after
+    // `in` is its leading trivia, so #raw includes it. end stays token-tight at 21.
+    Assert.Equal(13, constraint.pos);
     Assert.Equal(21, constraint.end);
-    Assert.Equal("keyof T", this.#raw(sourceFile, constraint));
+    Assert.Equal(" keyof T", this.#raw(sourceFile, constraint));
     const valueType = type.type!;
     if (!isIndexedAccessTypeNode(valueType)) throw new Exception("Expected indexed access value type");
     Assert.Equal(23, valueType.pos);
@@ -800,7 +812,9 @@ export class ParserParityTests {
     Assert.Equal("dec", this.#raw(sourceFile, expression));
     const name = statement.name!;
     if (!isIdentifier(name)) throw new Exception("Expected class name identifier");
-    Assert.Equal(11, name.pos);
+    // M3 4c: the class name `C`'s pos is its full-start = end of `class` (10); the
+    // space after `class` is its leading trivia. end stays token-tight at 12.
+    Assert.Equal(10, name.pos);
     Assert.Equal(12, name.end);
   }
 

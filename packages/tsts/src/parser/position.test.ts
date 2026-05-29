@@ -157,8 +157,10 @@ export class ParserPositionTests {
     Assert.Equal(2, expression.end);
   }
 
-  // An identifier that does not start at offset 0 must carry its real start,
-  // proving nodePos captures the current token start (not a constant 0).
+  // M3 4c: nodePos is now the trivia-INCLUSIVE full-start. The leading "  "
+  // trivia of the leftmost node begins at 0, so this identifier's pos is 0 (the
+  // full-start), not 2 (the token-tight start). end stays token-tight at 5.
+  // Cross-checked vs tsgo: `"  abc"` id pos == 0.
   stamps_identifier_at_non_zero_offset(): void {
     const sourceFile = parseSourceFile("  abc");
     const statement = sourceFile.statements[0]!;
@@ -166,13 +168,15 @@ export class ParserPositionTests {
     const expression = statement.expression;
     if (!isIdentifier(expression)) throw new Exception("Expected identifier");
 
-    Assert.Equal(2, expression.pos);
+    Assert.Equal(0, expression.pos);
     Assert.Equal(5, expression.end);
     Assert.Equal("abc", expression.text);
   }
 
-  // Both leaves of a binary expression carry real token-tight ranges, not the
-  // factory default pos/end == -1. `foo + 7`: foo @ [0,3), 7 @ [6,7).
+  // Both leaves of a binary expression carry real ranges, not the factory
+  // default pos/end == -1. `foo + 7`: foo @ [0,3); 7's pos is now the
+  // trivia-INCLUSIVE full-start = end of `+` (5), so the `7` literal is [5,7)
+  // (pos covers the leading space). end stays token-tight at 7.
   literal_and_identifier_leaves_are_not_synthesized(): void {
     const sourceFile = parseSourceFile("foo + 7");
     const statement = sourceFile.statements[0]!;
@@ -188,7 +192,7 @@ export class ParserPositionTests {
 
     const right = binary.right;
     if (!isNumericLiteral(right)) throw new Exception("Expected numeric literal on the right");
-    Assert.Equal(6, right.pos);
+    Assert.Equal(5, right.pos);
     Assert.Equal(7, right.end);
   }
 
@@ -444,7 +448,9 @@ export class ParserPositionTests {
 
     Assert.Equal(0, awaitExpr.pos);
     Assert.Equal(7, awaitExpr.end);
-    Assert.Equal(6, awaitExpr.expression.pos);
+    // M3 4c: the operand `x`'s pos is its trivia-inclusive full-start = end of
+    // `await` (5); the leading space belongs to `x`'s leading trivia.
+    Assert.Equal(5, awaitExpr.expression.pos);
   }
 
   // typeof expression `typeof x`: node spans [0,8), start at the 'typeof' keyword.
@@ -457,7 +463,8 @@ export class ParserPositionTests {
 
     Assert.Equal(0, typeofExpr.pos);
     Assert.Equal(8, typeofExpr.end);
-    Assert.Equal(7, typeofExpr.expression.pos);
+    // M3 4c: operand `x`'s pos is its full-start = end of `typeof` (6).
+    Assert.Equal(6, typeofExpr.expression.pos);
   }
 
   // Template expression `` `x${y}z` ``: node spans the whole literal [0,8); the
@@ -489,12 +496,14 @@ export class ParserPositionTests {
     if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
     const literalType = statement.type;
     if (!isLiteralTypeNode(literalType)) throw new Exception("Expected literal type node");
-    Assert.Equal(9, literalType.pos);
+    // M3 4c: the LiteralTypeNode + prefix wrapper pos is the full-start = end of
+    // `=` (8); the leading space after `=` belongs to the type's leading trivia.
+    Assert.Equal(8, literalType.pos);
     Assert.Equal(11, literalType.end);
     const unary = literalType.literal;
     if (!isPrefixUnaryExpression(unary)) throw new Exception("Expected prefix unary expression");
 
-    Assert.Equal(9, unary.pos);
+    Assert.Equal(8, unary.pos);
     Assert.Equal(11, unary.end);
     const operand = unary.operand;
     if (!isNumericLiteral(operand)) throw new Exception("Expected numeric literal operand");
@@ -512,10 +521,13 @@ export class ParserPositionTests {
     const union = statement.type;
     if (!isUnionTypeNode(union)) throw new Exception("Expected union type node");
 
-    Assert.Equal(9, union.pos);
+    // M3 4c: union.pos and the first constituent `A` share the full-start = end
+    // of `=` (8). The second constituent `B` is preceded by `|` (no trivia), so
+    // its full-start stays token-tight at 11.
+    Assert.Equal(8, union.pos);
     Assert.Equal(12, union.end);
     const first = union.types[0]!;
-    Assert.Equal(9, first.pos);
+    Assert.Equal(8, first.pos);
     Assert.Equal(10, first.end);
     const second = union.types[1]!;
     Assert.Equal(11, second.pos);
@@ -531,7 +543,8 @@ export class ParserPositionTests {
     const type = statement.type;
     if (!isTypeReferenceNode(type)) throw new Exception("Expected type reference (unwrapped)");
 
-    Assert.Equal(9, type.pos);
+    // M3 4c: the bare TypeReference `A`'s pos is the full-start = end of `=` (8).
+    Assert.Equal(8, type.pos);
     Assert.Equal(10, type.end);
   }
 
@@ -543,9 +556,11 @@ export class ParserPositionTests {
     const intersection = statement.type;
     if (!isIntersectionTypeNode(intersection)) throw new Exception("Expected intersection type node");
 
-    Assert.Equal(9, intersection.pos);
+    // M3 4c: intersection.pos and the first constituent `A` share the full-start
+    // = end of `=` (8); types[1].end (end side) stays token-tight.
+    Assert.Equal(8, intersection.pos);
     Assert.Equal(12, intersection.end);
-    Assert.Equal(9, intersection.types[0]!.pos);
+    Assert.Equal(8, intersection.types[0]!.pos);
     Assert.Equal(12, intersection.types[1]!.end);
   }
 
@@ -559,9 +574,11 @@ export class ParserPositionTests {
     const arrayType = statement.type;
     if (!isArrayTypeNode(arrayType)) throw new Exception("Expected array type node");
 
-    Assert.Equal(9, arrayType.pos);
+    // M3 4c: arrayType.pos and the element `T` share the full-start = end of `=`
+    // (8). elementType.end stays token-tight at 10.
+    Assert.Equal(8, arrayType.pos);
     Assert.Equal(12, arrayType.end);
-    Assert.Equal(9, arrayType.elementType.pos);
+    Assert.Equal(8, arrayType.elementType.pos);
     Assert.Equal(10, arrayType.elementType.end);
   }
 
@@ -574,11 +591,12 @@ export class ParserPositionTests {
     if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
     const outer = statement.type;
     if (!isArrayTypeNode(outer)) throw new Exception("Expected outer array type node");
-    Assert.Equal(9, outer.pos);
+    // M3 4c: both array nodes thread the leftmost `T`'s full-start = end of `=` (8).
+    Assert.Equal(8, outer.pos);
     Assert.Equal(14, outer.end);
     const inner = outer.elementType;
     if (!isArrayTypeNode(inner)) throw new Exception("Expected inner array type node");
-    Assert.Equal(9, inner.pos);
+    Assert.Equal(8, inner.pos);
     Assert.Equal(12, inner.end);
   }
 
@@ -592,9 +610,11 @@ export class ParserPositionTests {
     const indexed = statement.type;
     if (!isIndexedAccessTypeNode(indexed)) throw new Exception("Expected indexed access type node");
 
-    Assert.Equal(9, indexed.pos);
+    // M3 4c: indexed.pos and objectType `T` share the full-start = end of `=` (8).
+    // indexType `K` is preceded by `[` (no trivia), so its pos stays 11.
+    Assert.Equal(8, indexed.pos);
     Assert.Equal(13, indexed.end);
-    Assert.Equal(9, indexed.objectType.pos);
+    Assert.Equal(8, indexed.objectType.pos);
     Assert.Equal(11, indexed.indexType.pos);
     Assert.Equal(12, indexed.indexType.end);
   }
@@ -608,9 +628,12 @@ export class ParserPositionTests {
     const operator = statement.type;
     if (!isTypeOperatorNode(operator)) throw new Exception("Expected type operator node");
 
-    Assert.Equal(9, operator.pos);
+    // M3 4c: operator.pos is the full-start = end of `=` (8). The operand `T`'s
+    // pos is its full-start = end of `keyof` (14); the space after `keyof` is the
+    // operand's leading trivia. end stays token-tight at 16.
+    Assert.Equal(8, operator.pos);
     Assert.Equal(16, operator.end);
-    Assert.Equal(15, operator.type.pos);
+    Assert.Equal(14, operator.type.pos);
     Assert.Equal(16, operator.type.end);
   }
 
@@ -623,9 +646,11 @@ export class ParserPositionTests {
     const query = statement.type;
     if (!isTypeQueryNode(query)) throw new Exception("Expected type query node");
 
-    Assert.Equal(9, query.pos);
+    // M3 4c: query.pos is the full-start = end of `=` (8). exprName `y`'s pos is
+    // its full-start = end of `typeof` (15); end stays token-tight at 17.
+    Assert.Equal(8, query.pos);
     Assert.Equal(17, query.end);
-    Assert.Equal(16, query.exprName.pos);
+    Assert.Equal(15, query.exprName.pos);
     Assert.Equal(17, query.exprName.end);
   }
 
@@ -637,7 +662,8 @@ export class ParserPositionTests {
     const thisType = statement.type;
     if (!isThisTypeNode(thisType)) throw new Exception("Expected this type node");
 
-    Assert.Equal(9, thisType.pos);
+    // M3 4c: thisType.pos is the full-start = end of `=` (8); end stays at 13.
+    Assert.Equal(8, thisType.pos);
     Assert.Equal(13, thisType.end);
   }
 
@@ -650,7 +676,9 @@ export class ParserPositionTests {
     const paren = statement.type;
     if (!isParenthesizedTypeNode(paren)) throw new Exception("Expected parenthesized type node");
 
-    Assert.Equal(9, paren.pos);
+    // M3 4c: paren.pos is the full-start = end of `=` (8). The inner type `A` is
+    // preceded by `(` (no trivia), so its pos stays token-tight at 10.
+    Assert.Equal(8, paren.pos);
     Assert.Equal(12, paren.end);
     Assert.Equal(10, paren.type.pos);
     Assert.Equal(11, paren.type.end);
@@ -665,7 +693,9 @@ export class ParserPositionTests {
     const tuple = statement.type;
     if (!isTupleTypeNode(tuple)) throw new Exception("Expected tuple type node");
 
-    Assert.Equal(9, tuple.pos);
+    // M3 4c: tuple.pos is the full-start = end of `=` (8). The first element `A`
+    // is preceded by `[` (no trivia), so its pos stays token-tight at 10.
+    Assert.Equal(8, tuple.pos);
     Assert.Equal(14, tuple.end);
     Assert.Equal(10, tuple.elements[0]!.pos);
     Assert.Equal(11, tuple.elements[0]!.end);
@@ -680,7 +710,8 @@ export class ParserPositionTests {
     const literal = statement.type;
     if (!isTypeLiteralNode(literal)) throw new Exception("Expected type literal node");
 
-    Assert.Equal(9, literal.pos);
+    // M3 4c: literal.pos is the full-start = end of `=` (8); end stays at 19.
+    Assert.Equal(8, literal.pos);
     Assert.Equal(19, literal.end);
   }
 
@@ -692,7 +723,8 @@ export class ParserPositionTests {
     const keyword = statement.type;
     if (!isKeywordTypeNode(keyword)) throw new Exception("Expected keyword type node");
 
-    Assert.Equal(9, keyword.pos);
+    // M3 4c: keyword.pos is the full-start = end of `=` (8); end stays at 15.
+    Assert.Equal(8, keyword.pos);
     Assert.Equal(15, keyword.end);
   }
 
@@ -705,11 +737,12 @@ export class ParserPositionTests {
     const literalType = statement.type;
     if (!isLiteralTypeNode(literalType)) throw new Exception("Expected literal type node");
 
-    Assert.Equal(9, literalType.pos);
+    // M3 4c: wrapper and leaf share the full-start = end of `=` (8); ends stay token-tight.
+    Assert.Equal(8, literalType.pos);
     Assert.Equal(12, literalType.end);
     const leaf = literalType.literal;
     if (!isStringLiteral(leaf)) throw new Exception("Expected string literal leaf");
-    Assert.Equal(9, leaf.pos);
+    Assert.Equal(8, leaf.pos);
     Assert.Equal(12, leaf.end);
   }
 
@@ -722,11 +755,12 @@ export class ParserPositionTests {
     const literalType = statement.type;
     if (!isLiteralTypeNode(literalType)) throw new Exception("Expected literal type node");
 
-    Assert.Equal(9, literalType.pos);
+    // M3 4c: wrapper and leaf share the full-start = end of `=` (8); ends stay token-tight.
+    Assert.Equal(8, literalType.pos);
     Assert.Equal(10, literalType.end);
     const leaf = literalType.literal;
     if (!isNumericLiteral(leaf)) throw new Exception("Expected numeric literal leaf");
-    Assert.Equal(9, leaf.pos);
+    Assert.Equal(8, leaf.pos);
     Assert.Equal(10, leaf.end);
   }
 
@@ -739,11 +773,12 @@ export class ParserPositionTests {
     const literalType = statement.type;
     if (!isLiteralTypeNode(literalType)) throw new Exception("Expected literal type node");
 
-    Assert.Equal(9, literalType.pos);
+    // M3 4c: wrapper and leaf share the full-start = end of `=` (8); ends stay token-tight.
+    Assert.Equal(8, literalType.pos);
     Assert.Equal(11, literalType.end);
     const leaf = literalType.literal;
     if (!isBigIntLiteral(leaf)) throw new Exception("Expected bigint literal leaf");
-    Assert.Equal(9, leaf.pos);
+    Assert.Equal(8, leaf.pos);
     Assert.Equal(11, leaf.end);
   }
 
@@ -756,11 +791,12 @@ export class ParserPositionTests {
     const literalType = statement.type;
     if (!isLiteralTypeNode(literalType)) throw new Exception("Expected literal type node");
 
-    Assert.Equal(9, literalType.pos);
+    // M3 4c: wrapper and leaf share the full-start = end of `=` (8); ends stay token-tight.
+    Assert.Equal(8, literalType.pos);
     Assert.Equal(13, literalType.end);
     const leaf = literalType.literal;
     if (!isKeywordExpression(leaf)) throw new Exception("Expected keyword expression leaf");
-    Assert.Equal(9, leaf.pos);
+    Assert.Equal(8, leaf.pos);
     Assert.Equal(13, leaf.end);
   }
 
@@ -773,11 +809,12 @@ export class ParserPositionTests {
     const literalType = statement.type;
     if (!isLiteralTypeNode(literalType)) throw new Exception("Expected literal type node");
 
-    Assert.Equal(9, literalType.pos);
+    // M3 4c: wrapper and leaf share the full-start = end of `=` (8); ends stay token-tight.
+    Assert.Equal(8, literalType.pos);
     Assert.Equal(13, literalType.end);
     const leaf = literalType.literal;
     if (!isKeywordExpression(leaf)) throw new Exception("Expected keyword expression leaf");
-    Assert.Equal(9, leaf.pos);
+    Assert.Equal(8, leaf.pos);
     Assert.Equal(13, leaf.end);
   }
 
@@ -791,7 +828,9 @@ export class ParserPositionTests {
     const reference = statement.type;
     if (!isTypeReferenceNode(reference)) throw new Exception("Expected type reference node");
 
-    Assert.Equal(9, reference.pos);
+    // M3 4c: reference.pos is the full-start = end of `=` (8). The type-argument
+    // `Z` is preceded by `<` (no trivia), so its pos stays token-tight at 11.
+    Assert.Equal(8, reference.pos);
     Assert.Equal(13, reference.end);
     const arg = reference.typeArguments![0]!;
     Assert.Equal(11, arg.pos);
@@ -808,7 +847,9 @@ export class ParserPositionTests {
     if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
     const outer = statement.type;
     if (!isTypeReferenceNode(outer)) throw new Exception("Expected outer type reference node");
-    Assert.Equal(9, outer.pos);
+    // M3 4c: outer.pos is the full-start = end of `=` (8). inner `B<C>` is
+    // preceded by `<` (no trivia), so its pos stays 11.
+    Assert.Equal(8, outer.pos);
     Assert.Equal(16, outer.end);
     const inner = outer.typeArguments![0]!;
     if (!isTypeReferenceNode(inner)) throw new Exception("Expected inner type reference node");
@@ -827,9 +868,11 @@ export class ParserPositionTests {
     const name = reference.typeName;
     if (!isQualifiedName(name)) throw new Exception("Expected qualified name");
 
-    Assert.Equal(9, name.pos);
+    // M3 4c: name.pos and the leftmost `a` share the full-start = end of `=` (8).
+    // `b` (right) is preceded by `.` (no trivia), so its pos stays 11.
+    Assert.Equal(8, name.pos);
     Assert.Equal(12, name.end);
-    Assert.Equal(9, name.left.pos);
+    Assert.Equal(8, name.left.pos);
     Assert.Equal(11, name.right.pos);
   }
 
@@ -844,11 +887,12 @@ export class ParserPositionTests {
     if (!isTypeReferenceNode(reference)) throw new Exception("Expected type reference node");
     const outer = reference.typeName;
     if (!isQualifiedName(outer)) throw new Exception("Expected outer qualified name");
-    Assert.Equal(9, outer.pos);
+    // M3 4c: both qualified names thread the leftmost `a`'s full-start = end of `=` (8).
+    Assert.Equal(8, outer.pos);
     Assert.Equal(14, outer.end);
     const left = outer.left;
     if (!isQualifiedName(left)) throw new Exception("Expected nested qualified name");
-    Assert.Equal(9, left.pos);
+    Assert.Equal(8, left.pos);
     Assert.Equal(12, left.end);
   }
 
@@ -861,7 +905,9 @@ export class ParserPositionTests {
     const fn = statement.type;
     if (!isFunctionTypeNode(fn)) throw new Exception("Expected function type node");
 
-    Assert.Equal(9, fn.pos);
+    // M3 4c: fn.pos is the full-start = end of `=` (8). The return type `R` is
+    // preceded by `=>` (no trivia), so its pos stays token-tight at 16.
+    Assert.Equal(8, fn.pos);
     Assert.Equal(17, fn.end);
     Assert.Equal(16, fn.type!.pos);
     Assert.Equal(17, fn.type!.end);
@@ -876,7 +922,9 @@ export class ParserPositionTests {
     const fn = statement.type;
     if (!isFunctionTypeNode(fn)) throw new Exception("Expected function type node");
 
-    Assert.Equal(9, fn.pos);
+    // M3 4c: fn.pos is the full-start = end of `=` (8). The type-parameter `T` is
+    // preceded by `<` (no trivia), so its pos stays token-tight at 10.
+    Assert.Equal(8, fn.pos);
     Assert.Equal(17, fn.end);
     const tp = fn.typeParameters![0]!;
     if (!isTypeParameterDeclaration(tp)) throw new Exception("Expected type parameter declaration");
@@ -893,7 +941,9 @@ export class ParserPositionTests {
     const ctor = statement.type;
     if (!isConstructorTypeNode(ctor)) throw new Exception("Expected constructor type node");
 
-    Assert.Equal(9, ctor.pos);
+    // M3 4c: ctor.pos is the full-start = end of `=` (8). The return type `R` is
+    // preceded by `=>` (no trivia), so its pos stays token-tight at 16.
+    Assert.Equal(8, ctor.pos);
     Assert.Equal(17, ctor.end);
     Assert.Equal(16, ctor.type!.pos);
     Assert.Equal(17, ctor.type!.end);
@@ -909,9 +959,11 @@ export class ParserPositionTests {
     const conditional = statement.type;
     if (!isConditionalTypeNode(conditional)) throw new Exception("Expected conditional type node");
 
-    Assert.Equal(9, conditional.pos);
+    // M3 4c: conditional.pos and checkType `A` share the full-start = end of `=`
+    // (8). falseType `D` is preceded by `:` (no trivia), so its pos stays 23.
+    Assert.Equal(8, conditional.pos);
     Assert.Equal(24, conditional.end);
-    Assert.Equal(9, conditional.checkType.pos);
+    Assert.Equal(8, conditional.checkType.pos);
     Assert.Equal(23, conditional.falseType.pos);
     Assert.Equal(24, conditional.falseType.end);
   }
@@ -926,10 +978,13 @@ export class ParserPositionTests {
     const predicate = statement.type;
     if (predicate === undefined || !isTypePredicateNode(predicate)) throw new Exception("Expected type predicate node");
 
-    Assert.Equal(15, predicate.pos);
+    // M3 4c: predicate.pos and parameterName `x` share the full-start = end of
+    // `:` (14). The predicate type `T`'s pos is its full-start = end of `is` (19);
+    // the space after `is` is its leading trivia. ends stay token-tight.
+    Assert.Equal(14, predicate.pos);
     Assert.Equal(21, predicate.end);
-    Assert.Equal(15, predicate.parameterName.pos);
-    Assert.Equal(20, predicate.type!.pos);
+    Assert.Equal(14, predicate.parameterName.pos);
+    Assert.Equal(19, predicate.type!.pos);
     Assert.Equal(21, predicate.type!.end);
   }
 
@@ -943,9 +998,12 @@ export class ParserPositionTests {
     const predicate = statement.type;
     if (predicate === undefined || !isTypePredicateNode(predicate)) throw new Exception("Expected type predicate node");
 
-    Assert.Equal(15, predicate.pos);
+    // M3 4c: predicate.pos is the full-start = end of `:` (14). parameterName `x`'s
+    // pos is its full-start = end of `asserts` (22); the space after `asserts` is
+    // its leading trivia. end stays token-tight at 24.
+    Assert.Equal(14, predicate.pos);
     Assert.Equal(24, predicate.end);
-    Assert.Equal(23, predicate.parameterName.pos);
+    Assert.Equal(22, predicate.parameterName.pos);
     Assert.Equal(24, predicate.parameterName.end);
   }
 
@@ -958,9 +1016,12 @@ export class ParserPositionTests {
     const tp = statement.typeParameters![0]!;
     if (!isTypeParameterDeclaration(tp)) throw new Exception("Expected type parameter declaration");
 
+    // M3 4c: tp `T` is preceded by `<` (no trivia), so tp.pos stays 12. The
+    // constraint `U`'s pos is its full-start = end of `extends` (21); the space
+    // after `extends` is its leading trivia. end stays token-tight at 23.
     Assert.Equal(12, tp.pos);
     Assert.Equal(23, tp.end);
-    Assert.Equal(22, tp.constraint!.pos);
+    Assert.Equal(21, tp.constraint!.pos);
     Assert.Equal(23, tp.constraint!.end);
   }
 
@@ -1043,7 +1104,9 @@ export class ParserPositionTests {
     Assert.Equal(9, declarationList.end);
     const declaration = declarationList.declarations[0]!;
     if (!isVariableDeclaration(declaration)) throw new Exception("Expected variable declaration");
-    Assert.Equal(6, declaration.pos);
+    // M3 4c: the declaration `x`'s pos is its full-start = end of `const` (5);
+    // the space after `const` is its leading trivia. end stays token-tight at 9.
+    Assert.Equal(5, declaration.pos);
     Assert.Equal(9, declaration.end);
   }
 
@@ -1114,7 +1177,9 @@ export class ParserPositionTests {
     Assert.Equal(11, statement.end);
     const exportClause = statement.exportClause!;
     if (!isNamedExports(exportClause)) throw new Exception("Expected named exports");
-    Assert.Equal(7, exportClause.pos);
+    // M3 4c: the NamedExports `{...}` pos is its full-start = end of `export` (6);
+    // the space after `export` is its leading trivia. end stays token-tight at 10.
+    Assert.Equal(6, exportClause.pos);
     Assert.Equal(10, exportClause.end);
   }
 
@@ -1127,15 +1192,19 @@ export class ParserPositionTests {
     if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
     const property = statement.members[0]!;
     if (!isPropertyDeclaration(property)) throw new Exception("Expected property declaration");
-    Assert.Equal(9, property.pos);
+    // M3 4c: each member's pos is its full-start = end of the PRIOR token (the
+    // leading whitespace is the member's leading trivia). property `x` follows
+    // `{` (end 8); method `m` follows `;` (end 13); getter follows the method
+    // body `}` (end 19). All ends stay token-tight.
+    Assert.Equal(8, property.pos);
     Assert.Equal(13, property.end);
     const method = statement.members[1]!;
     if (!isMethodDeclaration(method)) throw new Exception("Expected method declaration");
-    Assert.Equal(14, method.pos);
+    Assert.Equal(13, method.pos);
     Assert.Equal(19, method.end);
     const getter = statement.members[2]!;
     if (!isGetAccessorDeclaration(getter)) throw new Exception("Expected get accessor declaration");
-    Assert.Equal(20, getter.pos);
+    Assert.Equal(19, getter.pos);
     Assert.Equal(37, getter.end);
   }
 
@@ -1149,11 +1218,14 @@ export class ParserPositionTests {
     if (!isInterfaceDeclaration(statement)) throw new Exception("Expected interface declaration");
     const member = statement.members[0]!;
     if (!isPropertySignatureDeclaration(member)) throw new Exception("Expected property signature");
-    Assert.Equal(13, member.pos);
+    // M3 4c: member.pos is its full-start = end of `{` (12). The name `a`'s pos is
+    // its full-start = end of `readonly` (21); the space is its leading trivia.
+    // ends stay token-tight.
+    Assert.Equal(12, member.pos);
     Assert.Equal(31, member.end);
     const name = member.name;
     if (!isIdentifier(name)) throw new Exception("Expected identifier name");
-    Assert.Equal(22, name.pos);
+    Assert.Equal(21, name.pos);
     Assert.Equal(23, name.end);
   }
 
@@ -1165,7 +1237,9 @@ export class ParserPositionTests {
     if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
     const method = statement.members[0]!;
     if (!isMethodDeclaration(method)) throw new Exception("Expected method declaration");
-    Assert.Equal(9, method.pos);
+    // M3 4c: method.pos (covering the `static` modifier) is its full-start = end
+    // of `{` (8); the space is its leading trivia. end stays token-tight at 21.
+    Assert.Equal(8, method.pos);
     Assert.Equal(21, method.end);
   }
 
@@ -1178,7 +1252,10 @@ export class ParserPositionTests {
     if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
     const ctor = statement.members[0]!;
     if (!isConstructorDeclaration(ctor)) throw new Exception("Expected constructor declaration");
-    Assert.Equal(9, ctor.pos);
+    // M3 4c: ctor.pos is its full-start = end of `{` (8). param `a` follows `(`
+    // with no trivia, so its pos stays 21. setter.pos is its full-start = end of
+    // the ctor body `}` (25); the space is its leading trivia. ends stay token-tight.
+    Assert.Equal(8, ctor.pos);
     Assert.Equal(25, ctor.end);
     const param = ctor.parameters[0]!;
     if (!isParameterDeclaration(param)) throw new Exception("Expected parameter declaration");
@@ -1186,7 +1263,7 @@ export class ParserPositionTests {
     Assert.Equal(22, param.end);
     const setter = statement.members[1]!;
     if (!isSetAccessorDeclaration(setter)) throw new Exception("Expected set accessor declaration");
-    Assert.Equal(26, setter.pos);
+    Assert.Equal(25, setter.pos);
     Assert.Equal(36, setter.end);
   }
 
@@ -1198,7 +1275,9 @@ export class ParserPositionTests {
     if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
     const member = statement.members[0]!;
     if (!isSemicolonClassElement(member)) throw new Exception("Expected semicolon class element");
-    Assert.Equal(9, member.pos);
+    // M3 4c: member.pos is its full-start = end of `{` (8); the space is its
+    // leading trivia. end stays token-tight at 10.
+    Assert.Equal(8, member.pos);
     Assert.Equal(10, member.end);
   }
 
@@ -1260,19 +1339,22 @@ export class ParserPositionTests {
     if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
     const method = statement.members[0]!;
     if (!isMethodDeclaration(method)) throw new Exception("Expected method declaration");
-    Assert.Equal(10, method.pos);
+    // M3 4c: the member pos (= its leading decorator's pos) is its full-start =
+    // end of the PRIOR token. The method's decorator follows `{` (end 9); the
+    // property's decorator follows the method body `}` (end 20). ends stay token-tight.
+    Assert.Equal(9, method.pos);
     Assert.Equal(20, method.end);
     const methodDecorator = method.modifiers![0]!;
     if (!isDecorator(methodDecorator)) throw new Exception("Expected method decorator");
-    Assert.Equal(10, methodDecorator.pos);
+    Assert.Equal(9, methodDecorator.pos);
     Assert.Equal(14, methodDecorator.end);
     const property = statement.members[1]!;
     if (!isPropertyDeclaration(property)) throw new Exception("Expected property declaration");
-    Assert.Equal(21, property.pos);
+    Assert.Equal(20, property.pos);
     Assert.Equal(29, property.end);
     const propertyDecorator = property.modifiers![0]!;
     if (!isDecorator(propertyDecorator)) throw new Exception("Expected property decorator");
-    Assert.Equal(21, propertyDecorator.pos);
+    Assert.Equal(20, propertyDecorator.pos);
     Assert.Equal(25, propertyDecorator.end);
   }
 
@@ -1303,11 +1385,14 @@ export class ParserPositionTests {
     const member = statement.members[0]!;
     if (!isClassStaticBlockDeclaration(member)) throw new Exception("Expected class static block declaration");
     Assert.Equal(Kind.ClassStaticBlockDeclaration, member.kind);
-    Assert.Equal(10, member.pos);
+    // M3 4c: member.pos is its full-start = end of `{` (9). The body block's pos
+    // is its full-start = end of `static` (16); the space after `static` is its
+    // leading trivia. ends stay token-tight.
+    Assert.Equal(9, member.pos);
     Assert.Equal(20, member.end);
     const body = member.body;
     if (!isBlock(body)) throw new Exception("Expected block body");
-    Assert.Equal(17, body.pos);
+    Assert.Equal(16, body.pos);
     Assert.Equal(20, body.end);
   }
 
@@ -1320,15 +1405,20 @@ export class ParserPositionTests {
     if (!isInterfaceDeclaration(statement)) throw new Exception("Expected interface declaration");
     const property = statement.members[0]!;
     if (!isPropertySignatureDeclaration(property)) throw new Exception("Expected property signature");
-    Assert.Equal(13, property.pos);
+    // M3 4c: each member's pos is its full-start = end of the PRIOR token (the
+    // leading space is the member's leading trivia). property `a` follows `{`
+    // (end 12); method `m` follows the property's `;` (end 22); index sig `[`
+    // follows the method's `;` (end 33). The index parameter `k` follows `[` with
+    // no trivia, so its pos stays 35. ends stay token-tight.
+    Assert.Equal(12, property.pos);
     Assert.Equal(22, property.end);
     const method = statement.members[1]!;
     if (!isMethodSignatureDeclaration(method)) throw new Exception("Expected method signature");
-    Assert.Equal(23, method.pos);
+    Assert.Equal(22, method.pos);
     Assert.Equal(33, method.end);
     const indexSig = statement.members[2]!;
     if (!isIndexSignatureDeclaration(indexSig)) throw new Exception("Expected index signature");
-    Assert.Equal(34, indexSig.pos);
+    Assert.Equal(33, indexSig.pos);
     Assert.Equal(51, indexSig.end);
     const indexParam = indexSig.parameters[0]!;
     if (!isParameterDeclaration(indexParam)) throw new Exception("Expected index parameter");
@@ -1344,11 +1434,14 @@ export class ParserPositionTests {
     if (!isInterfaceDeclaration(statement)) throw new Exception("Expected interface declaration");
     const callSig = statement.members[0]!;
     if (!isCallSignatureDeclaration(callSig)) throw new Exception("Expected call signature");
-    Assert.Equal(13, callSig.pos);
+    // M3 4c: callSig.pos is its full-start = end of `{` (12). constructSig.pos is
+    // its full-start = end of the call signature's `;` (30); the leading spaces
+    // are leading trivia. ends stay token-tight.
+    Assert.Equal(12, callSig.pos);
     Assert.Equal(30, callSig.end);
     const constructSig = statement.members[1]!;
     if (!isConstructSignatureDeclaration(constructSig)) throw new Exception("Expected construct signature");
-    Assert.Equal(31, constructSig.pos);
+    Assert.Equal(30, constructSig.pos);
     Assert.Equal(39, constructSig.end);
   }
 
@@ -1377,12 +1470,15 @@ export class ParserPositionTests {
     if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
     const extendsClause = statement.heritageClauses![0]!;
     if (!isHeritageClause(extendsClause)) throw new Exception("Expected heritage clause");
-    Assert.Equal(8, extendsClause.pos);
+    // M3 4c: extendsClause.pos is its full-start = end of `C` (7). implementsClause.pos
+    // is its full-start = end of the extends base `B` (17); the leading spaces are
+    // leading trivia. ends and token kinds stay token-tight.
+    Assert.Equal(7, extendsClause.pos);
     Assert.Equal(17, extendsClause.end);
     Assert.Equal(Kind.ExtendsKeyword, extendsClause.token);
     const implementsClause = statement.heritageClauses![1]!;
     if (!isHeritageClause(implementsClause)) throw new Exception("Expected heritage clause");
-    Assert.Equal(18, implementsClause.pos);
+    Assert.Equal(17, implementsClause.pos);
     Assert.Equal(30, implementsClause.end);
     Assert.Equal(Kind.ImplementsKeyword, implementsClause.token);
   }
@@ -1398,7 +1494,10 @@ export class ParserPositionTests {
     const ewta = clause.types[0]!;
     const expression = ewta.expression;
     if (!isPropertyAccessExpression(expression)) throw new Exception("Expected property access expression");
-    Assert.Equal(16, expression.pos);
+    // M3 4c: expression.pos threads the leftmost `a`'s full-start = end of
+    // `extends` (15); the space after `extends` is its leading trivia. end stays
+    // token-tight at 21. ewta.pos relation still holds (both shift identically).
+    Assert.Equal(15, expression.pos);
     Assert.Equal(21, expression.end);
     Assert.Equal(expression.pos, ewta.pos);
   }
@@ -1411,11 +1510,14 @@ export class ParserPositionTests {
     if (!isFunctionDeclaration(statement)) throw new Exception("Expected function declaration");
     const first = statement.parameters[0]!;
     if (!isParameterDeclaration(first)) throw new Exception("Expected parameter declaration");
+    // M3 4c: first `a` follows `(` with no trivia, so its pos stays 11. The rest
+    // param `...b` follows `,` (end 15), so its pos is the full-start 15 (the
+    // space after `,` is its leading trivia). ends stay token-tight.
     Assert.Equal(11, first.pos);
     Assert.Equal(14, first.end);
     const rest = statement.parameters[1]!;
     if (!isParameterDeclaration(rest)) throw new Exception("Expected rest parameter declaration");
-    Assert.Equal(16, rest.pos);
+    Assert.Equal(15, rest.pos);
     Assert.Equal(24, rest.end);
   }
 
@@ -1427,11 +1529,14 @@ export class ParserPositionTests {
     if (!isFunctionDeclaration(statement)) throw new Exception("Expected function declaration");
     const optional = statement.parameters[0]!;
     if (!isParameterDeclaration(optional)) throw new Exception("Expected parameter declaration");
+    // M3 4c: optional `a` follows `(` with no trivia, so its pos stays 11. The
+    // defaulted param `b` follows `,` (end 17), so its pos is the full-start 17
+    // (the space after `,` is its leading trivia). ends stay token-tight.
     Assert.Equal(11, optional.pos);
     Assert.Equal(16, optional.end);
     const defaulted = statement.parameters[1]!;
     if (!isParameterDeclaration(defaulted)) throw new Exception("Expected parameter declaration");
-    Assert.Equal(18, defaulted.pos);
+    Assert.Equal(17, defaulted.pos);
     Assert.Equal(26, defaulted.end);
   }
 
@@ -1445,7 +1550,11 @@ export class ParserPositionTests {
     const objParam = statement.parameters[1]!;
     const objPattern = objParam.name;
     if (!isObjectBindingPattern(objPattern)) throw new Exception("Expected object binding pattern");
-    Assert.Equal(16, objPattern.pos);
+    // M3 4c: the binding-pattern parameters' pos is the full-start = end of the
+    // preceding `,`. objPattern `{x}` follows the first `,` (end 15); arrPattern
+    // `[y]` follows the second `,` (end 22). Elements (`x`, `y`) follow `{`/`[`
+    // with no trivia, so their pos stays token-tight. ends stay token-tight.
+    Assert.Equal(15, objPattern.pos);
     Assert.Equal(19, objPattern.end);
     const objElement = objPattern.elements[0]!;
     if (!isBindingElement(objElement)) throw new Exception("Expected binding element");
@@ -1454,7 +1563,7 @@ export class ParserPositionTests {
     const arrParam = statement.parameters[2]!;
     const arrPattern = arrParam.name;
     if (!isArrayBindingPattern(arrPattern)) throw new Exception("Expected array binding pattern");
-    Assert.Equal(23, arrPattern.pos);
+    Assert.Equal(22, arrPattern.pos);
     Assert.Equal(26, arrPattern.end);
     const arrElement = arrPattern.elements[0]!;
     if (!isBindingElement(arrElement)) throw new Exception("Expected binding element");
@@ -1472,11 +1581,15 @@ export class ParserPositionTests {
     const pattern = statement.parameters[0]!.name;
     if (!isArrayBindingPattern(pattern)) throw new Exception("Expected array binding pattern");
     const a = pattern.elements[0]!;
+    // M3 4c: `a` follows `[` with no trivia, so its pos stays 12. The elided hole's
+    // pos is its full-start = end of the first `,` (14); the space after the first
+    // `,` is the hole's leading trivia. `b` follows the second `,` with no trivia,
+    // so its pos stays 16. ends stay token-tight.
     Assert.Equal(12, a.pos);
     Assert.Equal(13, a.end);
     const hole = pattern.elements[1]!;
     if (!isBindingElement(hole)) throw new Exception("Expected hole binding element");
-    Assert.Equal(15, hole.pos);
+    Assert.Equal(14, hole.pos);
     Assert.Equal(16, hole.end);
     const b = pattern.elements[2]!;
     Assert.Equal(16, b.pos);
@@ -1567,7 +1680,9 @@ export class ParserPositionTests {
     Assert.Equal(0, statement.pos);
     Assert.Equal(8, statement.end);
     if (!isLabeledStatement(statement.statement)) throw new Exception("Expected inner labeled statement");
-    Assert.Equal(3, statement.statement.pos);
+    // M3 4c: the inner labeled statement's pos is its full-start = end of the
+    // outer label's `:` (2); the space is its leading trivia. end stays at 8.
+    Assert.Equal(2, statement.statement.pos);
     Assert.Equal(8, statement.statement.end);
   }
 
@@ -1582,7 +1697,9 @@ export class ParserPositionTests {
     Assert.Equal("x", statement.name.text);
     Assert.Equal(false, statement.isTypeOnly);
     if (!isExternalModuleReference(statement.moduleReference)) throw new Exception("Expected external module reference");
-    Assert.Equal(11, statement.moduleReference.pos);
+    // M3 4c: moduleReference.pos is its full-start = end of `=` (10); the space
+    // after `=` is its leading trivia. end stays token-tight at 23.
+    Assert.Equal(10, statement.moduleReference.pos);
     Assert.Equal(23, statement.moduleReference.end);
   }
 
@@ -1595,7 +1712,9 @@ export class ParserPositionTests {
     Assert.Equal(0, statement.pos);
     Assert.Equal(15, statement.end);
     if (!isQualifiedName(statement.moduleReference)) throw new Exception("Expected qualified name module reference");
-    Assert.Equal(11, statement.moduleReference.pos);
+    // M3 4c: moduleReference `A.B` threads the leftmost `A`'s full-start = end of
+    // `=` (10); the space after `=` is its leading trivia. end stays token-tight at 14.
+    Assert.Equal(10, statement.moduleReference.pos);
     Assert.Equal(14, statement.moduleReference.end);
   }
 
@@ -1664,12 +1783,15 @@ export class ParserPositionTests {
     const attributes = statement.attributes;
     if (attributes === undefined || !isImportAttributes(attributes)) throw new Exception("Expected import attributes");
     Assert.Equal(Kind.WithKeyword, attributes.token);
-    Assert.Equal(26, attributes.pos);
+    // M3 4c: attributes.pos is its full-start = end of the `"d.json"` string
+    // literal (25). The attribute `type: "json"`'s pos is its full-start = end of
+    // `{` (32); leading spaces are leading trivia. ends stay token-tight.
+    Assert.Equal(25, attributes.pos);
     Assert.Equal(47, attributes.end);
     Assert.Equal(1, attributes.attributes.length);
     const attribute = attributes.attributes[0]!;
     if (!isImportAttribute(attribute)) throw new Exception("Expected import attribute");
-    Assert.Equal(33, attribute.pos);
+    Assert.Equal(32, attribute.pos);
     Assert.Equal(45, attribute.end);
     if (!isIdentifier(attribute.name)) throw new Exception("Expected identifier attribute name");
     Assert.Equal("type", attribute.name.text);
@@ -1698,9 +1820,12 @@ export class ParserPositionTests {
     if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
     const template = statement.type;
     if (!isTemplateLiteralTypeNode(template)) throw new Exception("Expected template literal type node");
-    Assert.Equal(9, template.pos);
+    // M3 4c: template.pos and the TemplateHead share the full-start = end of `=`
+    // (8). The span starts at its span type `B`, which follows the head token (no
+    // trivia), so span.pos stays 13. ends stay token-tight.
+    Assert.Equal(8, template.pos);
     Assert.Equal(17, template.end);
-    Assert.Equal(9, template.head.pos);
+    Assert.Equal(8, template.head.pos);
     Assert.Equal(13, template.head.end);
     const span = template.templateSpans[0]!;
     if (!isTemplateLiteralTypeSpan(span)) throw new Exception("Expected template literal type span");
@@ -1719,7 +1844,8 @@ export class ParserPositionTests {
     if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
     const template = statement.type;
     if (!isTemplateLiteralTypeNode(template)) throw new Exception("Expected template literal type node");
-    Assert.Equal(9, template.pos);
+    // M3 4c: template.pos is the full-start = end of `=` (8); end stays at 21.
+    Assert.Equal(8, template.pos);
     Assert.Equal(21, template.end);
     const span = template.templateSpans[0]!;
     if (!isTemplateLiteralTypeSpan(span)) throw new Exception("Expected template literal type span");
@@ -1736,7 +1862,9 @@ export class ParserPositionTests {
     if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
     const mapped = statement.type;
     if (!isMappedTypeNode(mapped)) throw new Exception("Expected mapped type node");
-    Assert.Equal(9, mapped.pos);
+    // M3 4c: mapped.pos is the full-start = end of `=` (8). The type parameter `K`
+    // follows `[` with no trivia, so tp.pos stays 21. ends stay token-tight.
+    Assert.Equal(8, mapped.pos);
     Assert.Equal(34, mapped.end);
     Assert.Equal(Kind.ReadonlyKeyword, mapped.readonlyToken!.kind);
     Assert.Equal(Kind.QuestionToken, mapped.questionToken!.kind);
@@ -1773,7 +1901,8 @@ export class ParserPositionTests {
     if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
     const importType = statement.type;
     if (!isImportTypeNode(importType)) throw new Exception("Expected import type node");
-    Assert.Equal(9, importType.pos);
+    // M3 4c: importType.pos is the full-start = end of `=` (8); end stays at 33.
+    Assert.Equal(8, importType.pos);
     Assert.Equal(33, importType.end);
     Assert.Equal(false, importType.isTypeOf);
     if (importType.qualifier === undefined || !isQualifiedName(importType.qualifier)) throw new Exception("Expected qualified-name qualifier");
@@ -1789,7 +1918,8 @@ export class ParserPositionTests {
     if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
     const importType = statement.type;
     if (!isImportTypeNode(importType)) throw new Exception("Expected import type node");
-    Assert.Equal(9, importType.pos);
+    // M3 4c: importType.pos is the full-start = end of `=` (8); end stays at 37.
+    Assert.Equal(8, importType.pos);
     Assert.Equal(37, importType.end);
     Assert.Equal(true, importType.isTypeOf);
   }
@@ -1803,7 +1933,8 @@ export class ParserPositionTests {
     if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
     const importType = statement.type;
     if (!isImportTypeNode(importType)) throw new Exception("Expected import type node");
-    Assert.Equal(9, importType.pos);
+    // M3 4c: importType.pos is the full-start = end of `=` (8); end stays at 47.
+    Assert.Equal(8, importType.pos);
     Assert.Equal(47, importType.end);
     const attributes = importType.attributes;
     if (attributes === undefined || !isImportAttributes(attributes)) throw new Exception("Expected import attributes");
@@ -1822,11 +1953,14 @@ export class ParserPositionTests {
     if (!isConditionalTypeNode(conditional)) throw new Exception("Expected conditional type node");
     const infer = conditional.extendsType;
     if (!isInferTypeNode(infer)) throw new Exception("Expected infer type node");
-    Assert.Equal(19, infer.pos);
+    // M3 4c: infer.pos is its full-start = end of `extends` (18). The type
+    // parameter `U`'s pos is its full-start = end of `infer` (24); leading spaces
+    // are leading trivia. ends stay token-tight.
+    Assert.Equal(18, infer.pos);
     Assert.Equal(26, infer.end);
     const tp = infer.typeParameter;
     if (!isTypeParameterDeclaration(tp)) throw new Exception("Expected type parameter declaration");
-    Assert.Equal(25, tp.pos);
+    Assert.Equal(24, tp.pos);
     Assert.Equal(26, tp.end);
     if (tp.constraint !== undefined) throw new Exception("Expected no constraint on bare infer");
   }
@@ -1843,12 +1977,15 @@ export class ParserPositionTests {
     if (!isConditionalTypeNode(conditional)) throw new Exception("Expected conditional type node");
     const infer = conditional.extendsType;
     if (!isInferTypeNode(infer)) throw new Exception("Expected infer type node");
-    Assert.Equal(19, infer.pos);
+    // M3 4c: infer.pos is its full-start = end of the first `extends` (18). The
+    // constraint `string`'s pos is its full-start = end of the second `extends`
+    // (34); leading spaces are leading trivia. ends stay token-tight.
+    Assert.Equal(18, infer.pos);
     Assert.Equal(41, infer.end);
     const constraint = infer.typeParameter.constraint;
     if (constraint === undefined) throw new Exception("Expected kept constraint");
     Assert.Equal(Kind.StringKeyword, constraint.kind);
-    Assert.Equal(35, constraint.pos);
+    Assert.Equal(34, constraint.pos);
     Assert.Equal(41, constraint.end);
   }
 
@@ -1862,7 +1999,10 @@ export class ParserPositionTests {
     if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
     const tuple = statement.type;
     if (!isTupleTypeNode(tuple)) throw new Exception("Expected tuple type node");
-    Assert.Equal(9, tuple.pos);
+    // M3 4c: tuple.pos is the full-start = end of `=` (8). first `a` follows `[`
+    // with no trivia (pos 10); second `b` follows the first `,` (full-start 20);
+    // third `...c` follows the second `,` (full-start 32). ends/kinds stay token-tight.
+    Assert.Equal(8, tuple.pos);
     Assert.Equal(49, tuple.end);
     const first = tuple.elements[0]!;
     if (!isNamedTupleMember(first)) throw new Exception("Expected first named tuple member");
@@ -1870,12 +2010,12 @@ export class ParserPositionTests {
     Assert.Equal(19, first.end);
     const second = tuple.elements[1]!;
     if (!isNamedTupleMember(second)) throw new Exception("Expected second named tuple member");
-    Assert.Equal(21, second.pos);
+    Assert.Equal(20, second.pos);
     Assert.Equal(31, second.end);
     Assert.Equal(Kind.QuestionToken, second.questionToken!.kind);
     const third = tuple.elements[2]!;
     if (!isNamedTupleMember(third)) throw new Exception("Expected third named tuple member");
-    Assert.Equal(33, third.pos);
+    Assert.Equal(32, third.pos);
     Assert.Equal(48, third.end);
     Assert.Equal(Kind.DotDotDotToken, third.dotDotDotToken!.kind);
   }
