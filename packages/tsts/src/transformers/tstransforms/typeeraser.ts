@@ -345,7 +345,7 @@ export class TypeEraserTransformer extends Transformer {
         case Kind.Parameter: {
           if (isThisParameter(node)) return undefined;
           const n = node as unknown as ParameterDeclaration;
-          let modifiers = isParameterPropertyDeclaration(node, this.parentNode)
+          let modifiers = isParameterPropertyDeclaration(node, this.parentNode!)
             ? extractModifiers(this.emitContext(), getModifiers(n), ModifierFlags.ParameterPropertyModifier)
             : undefined;
           if (hasDecorators(node)) {

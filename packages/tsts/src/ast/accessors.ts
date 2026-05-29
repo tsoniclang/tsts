@@ -21,6 +21,9 @@ import {
   skipTrivia as scannerSkipTrivia,
 } from "../scanner/trivia.js";
 import { computeECMALineStarts, memoize } from "../core/index.js";
+// Faithful 1:1 modifier predicate (sole owner). `hasModifier` below delegates
+// to this instead of the removed local copy.
+import { hasSyntacticModifier } from "./utilities.js";
 
 // Builds an ast.SourceFileLike adapter from a source-file node, reading only
 // the public text and computing the ECMA line map from it (mirrors
@@ -105,11 +108,9 @@ export function postfixUnaryOperandRO(node: AstNode): AstNode { return f<AstNode
 // ─────────────────────────────────────────────────────────────────────────────
 // Modifier predicates
 // ─────────────────────────────────────────────────────────────────────────────
-export function hasSyntacticModifier(node: AstNode, flag: number): boolean {
-  const flags = (node as unknown as { modifierFlags?: number }).modifierFlags ?? 0;
-  return (flags & flag) !== 0;
-}
-export function canHaveModifiers(_node: AstNode): boolean { return true; }
+// hasSyntacticModifier / canHaveModifiers are owned by ./utilities.js (faithful
+// 1:1) and re-exported through the ast barrel; the former non-faithful copies
+// here were removed during the M2 Fork B migration to avoid duplicate exports.
 export function getModifierListNodes(modifiers: ModifierList | AstNode | undefined): readonly AstNode[] {
   if (modifiers === undefined) return [];
   return ((modifiers as unknown as { items?: readonly AstNode[] }).items ?? modifiers) as readonly AstNode[];
@@ -189,10 +190,9 @@ export function getNodeListLength(list: unknown): number {
   if (Array.isArray(list)) return list.length;
   return (list as { items?: { length: number } }).items?.length ?? 0;
 }
-export function nodeIsMissing(node: AstNode | undefined): boolean {
-  if (node === undefined) return true;
-  return node.pos === node.end;
-}
+// nodeIsMissing is owned by ./utilities.js (faithful 1:1) and re-exported
+// through the ast barrel; the non-faithful copy here was removed during the
+// M2 Fork B migration to avoid duplicate exports.
 // isStatement is in generated/is.ts
 export function isThisParameter(node: AstNode | undefined): boolean {
   return node !== undefined && nodeText(nodeName(node)) === "this";
@@ -217,7 +217,9 @@ export function skipOuterExpressions(node: AstNode, _kinds: number): AstNode { r
 export function isInstantiatedModule(_node: AstNode, _preserveConstEnums: boolean): boolean { return false; }
 export function shouldPreserveConstEnums(_opts: unknown): boolean { return false; }
 export function getInnermostModuleBody(node: AstNode | undefined): AstNode | undefined { return nodeBody(node); }
-export function isParameterPropertyDeclaration(_node: AstNode, _parent: AstNode | undefined): boolean { return false; }
+// isParameterPropertyDeclaration is owned by ./utilities.js (faithful 1:1) and
+// re-exported through the ast barrel; the non-faithful stub here was removed
+// during the M2 Fork B migration to avoid duplicate exports.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Variable declarations
@@ -456,8 +458,11 @@ export function getAccessorParameters(node: AstNode): readonly AstNode[] {
 }
 export function getParameterType(node: AstNode): AstNode | undefined { return f<AstNode>(node, "type"); }
 export function getReturnType(node: AstNode): AstNode | undefined { return f<AstNode>(node, "type"); }
+// Delegates to the faithful hasSyntacticModifier (sole owner in ./utilities.js).
 export function hasModifier(node: AstNode, flag: number): boolean { return hasSyntacticModifier(node, flag); }
-export function hasStaticModifier(node: AstNode): boolean { return hasSyntacticModifier(node, 1 << 8 /* ModifierFlags.Static */); }
+// hasStaticModifier is owned by ./utilities.js (faithful 1:1) and re-exported
+// through the ast barrel; the non-faithful copy here was removed during the
+// M2 Fork B migration to avoid duplicate exports.
 export function parentExpression(parent: AstNode): AstNode | undefined { return f<AstNode>(parent, "expression"); }
 export function parentInitializer(parent: AstNode): AstNode | undefined { return f<AstNode>(parent, "initializer"); }
 export function parentBody(parent: AstNode): AstNode | undefined { return f<AstNode>(parent, "body"); }
@@ -486,7 +491,9 @@ export function modifierNodes(node: AstNode | undefined): readonly AstNode[] | u
   const inner = (list as unknown as { nodes?: readonly AstNode[] }).nodes;
   return inner;
 }
-export function positionIsSynthesized(pos: number): boolean { return pos < 0; }
+// positionIsSynthesized is owned by ./utilities.js (faithful 1:1) and
+// re-exported through the ast barrel; the non-faithful copy here was removed
+// during the M2 Fork B migration to avoid duplicate exports.
 export function isKeywordKind(kind: number): boolean {
   return kind >= Kind.BreakKeyword && kind <= Kind.OfKeyword;
 }
@@ -625,11 +632,9 @@ export function sourceFileText(file: AstNode): string {
   return (file as unknown as { text?: string }).text ?? "";
 }
 export function isExternalOrCommonJSModule(file: AstNode): boolean { return isExternalModule(file); }
-export function isPrologueDirective(node: AstNode | undefined): boolean {
-  if (node === undefined) return false;
-  return node.kind === 244 /* ExpressionStatement */ &&
-    ((node as unknown as { expression?: { kind?: number } }).expression?.kind === 11 /* StringLiteral */);
-}
+// isPrologueDirective is owned by ./utilities.js (faithful 1:1) and re-exported
+// through the ast barrel; the non-faithful copy here was removed during the
+// M2 Fork B migration to avoid duplicate exports.
 export function isIntrinsicJsxName(name: string): boolean {
   return name.length > 0 && name[0] === name[0]?.toLowerCase();
 }
@@ -694,18 +699,10 @@ export function isStringLiteralLike(node: AstNode | undefined): boolean {
   if (node === undefined) return false;
   return node.kind === /* StringLiteral */ 11 || node.kind === /* NoSubstitutionTemplateLiteral */ 14;
 }
-export function isAssignmentExpression(node: AstNode | undefined, excludeCompound: boolean): boolean {
-  if (node === undefined) return false;
-  if (node.kind !== /* BinaryExpression */ 226) return false;
-  const op = binaryOperatorTokenKind(node);
-  if (excludeCompound) return op === /* EqualsToken */ 64;
-  return op >= 64 && op <= 79;
-}
-export function isCommaExpression(node: AstNode | undefined): boolean {
-  if (node === undefined) return false;
-  if (node.kind !== /* BinaryExpression */ 226) return false;
-  return binaryOperatorTokenKind(node) === /* CommaToken */ 28;
-}
+// isAssignmentExpression / isCommaExpression are owned by ./utilities.js
+// (faithful 1:1) and re-exported through the ast barrel; the non-faithful
+// copies here were removed during the M2 Fork B migration to avoid duplicate
+// exports.
 // isExpression lives in generated/is.ts
 export function isInJSFile(_node: AstNode): boolean { return false; }
 export function isDefaultImport(node: AstNode | undefined): boolean {
@@ -773,10 +770,9 @@ export function shouldTransformImportCallStandalone(_fileName: string, _opts: un
 export function appendVariableDeclaration<T>(arr: T[], decl: T): T[] {
   return [...arr, decl];
 }
-export function nodeIsSynthesized(node: AstNode | undefined): boolean {
-  if (node === undefined) return false;
-  return (node.pos ?? -1) < 0 || (node.end ?? -1) < 0;
-}
+// nodeIsSynthesized is owned by ./utilities.js (faithful 1:1) and re-exported
+// through the ast barrel; the non-faithful copy here was removed during the
+// M2 Fork B migration to avoid duplicate exports.
 export function getTextOfNode(node: AstNode | undefined): string { return nodeText(node); }
 export function safeMultiLineComment(text: string): string {
   return text.replace(/\*\//g, "*\\/");

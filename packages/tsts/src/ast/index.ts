@@ -9,6 +9,8 @@ export * from "./generated/factory.js";
 export * from "./generated/visitor.js";
 export * from "./generated/is.js";
 export * from "./generated/metadata.js";
+// Faithful 1:1 AST utility helpers (sole owner of the shared predicates).
+export * from "./utilities.js";
 // Naming aliases + TS-Go-side types (SymbolTable, FlowLabel, etc.)
 export * from "./aliases.js";
 // TS-Go-style accessor functions (nodeKind, nodeParent, etc.) so
