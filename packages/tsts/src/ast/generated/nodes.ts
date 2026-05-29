@@ -47,7 +47,7 @@ export type AssignmentOperatorOrHigher = Kind.QuestionQuestionToken | Kind.Aster
 export type LogicalOrCoalescingAssignmentOperator = Kind.AmpersandAmpersandEqualsToken | Kind.BarBarEqualsToken | Kind.QuestionQuestionEqualsToken;
 
 export interface NodeBase extends Node {
-  readonly flags: number;
+  flags: number;
 }
 export interface StatementBase extends NodeBase, FlowNodeBase {
   readonly _statementBrand: unknown;

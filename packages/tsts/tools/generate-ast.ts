@@ -24,6 +24,21 @@ function isMutableSlotField(baseName: string, fieldName: string): boolean {
   return MUTABLE_SLOT_FIELDS.has(`${baseName}.${fieldName}`);
 }
 
+// codex-054 M3 Stage-2 Fork A: required-and-MUTABLE compiler-state fields. Unlike the
+// optional MUTABLE_SLOT_FIELDS (binder slots that may be absent), these are always present
+// fields emitted WITHOUT `readonly` (and WITHOUT `?`). NodeBase.Flags is the parser
+// parse-state slot that #finishNode writes via `node.flags |= p.contextFlags` (tsgo
+// finishNodeWithEnd, parser.go:5910); it MUST agree with the hardcoded mutable `Node.flags`
+// in generateRuntimeTypes so the Node hierarchy does not split readonly/mutable (TS2320).
+// Same controlled mutable-parse-state category as the pos/end TextRange slots (codex-048).
+const MUTABLE_REQUIRED_FIELDS: ReadonlySet<string> = new Set([
+  "NodeBase.Flags",
+]);
+
+function isMutableRequiredField(baseName: string, fieldName: string): boolean {
+  return MUTABLE_REQUIRED_FIELDS.has(`${baseName}.${fieldName}`);
+}
+
 function enumMemberName(name: string): string {
   if (!/^[$A-Z_a-z][$\w]*$/.test(name)) {
     throw new Error(`Invalid Kind name ${name}`);
@@ -239,7 +254,12 @@ export interface TextRange {
 
 export interface Node extends TextRange {
   readonly kind: Kind;
-  readonly flags: number;
+  // codex-054 M3 Stage-2 Fork A: flags is MUTABLE parse-state. tsgo finishNodeWithEnd
+  // does \`node.Flags |= p.contextFlags\` (parser.go:5910), OR-ing the parser's
+  // contextFlags into the node post-construction; a faithful #finishNode must write
+  // node.flags after createX builds the node. Same controlled mutable-compiler-state
+  // category as the pos/end TextRange slots above (codex-048) and the parent slot below.
+  flags: number;
   // codex-043 M2 Fork A: parent is a mutable binder-set slot.
   parent: Node;
   readonly jsDoc?: readonly Node[];
@@ -1291,6 +1311,11 @@ function generateNodeTypes(schema: AstSchema): string {
       if (isSlot) {
         // codex-043 mutable compiler-state slot: optional + mutable (no readonly).
         lines.push(`  ${lowerFirst(fieldName)}?: ${formatMemberType(schema, { ...field, name: fieldName })};`);
+        continue;
+      }
+      if (isMutableRequiredField(name, fieldName)) {
+        // codex-054 M3 Stage-2 Fork A: required + mutable (no readonly), e.g. NodeBase.Flags.
+        lines.push(`  ${lowerFirst(fieldName)}: ${formatMemberType(schema, { ...field, name: fieldName })};`);
         continue;
       }
       const optional = field.optional === true ? "?" : "";

@@ -271,6 +271,19 @@ export class Parser {
   readonly #fileName: string;
   readonly #tokens: readonly ScannedToken[];
   #index = 0;
+  // codex-054 M3 Stage-2: parser parse-state mirroring tsgo's `p.contextFlags`
+  // (parser.go contextFlags field). This is a NodeFlags bitset of the parsing
+  // contexts (Yield/Await/DisallowIn/DisallowConditionalTypes/Decorator/InWith)
+  // currently in effect; #finishNode ORs it into each node's flags exactly like
+  // tsgo finishNodeWithEnd `node.Flags |= p.contextFlags` (parser.go:5910). It is
+  // the one allowed mutable parse-state sibling of #index (NOT a binder slot).
+  // INITIALIZED BY scriptKind: tsgo initializeState (parser.go:302-309) seeds
+  // contextFlags from the script kind — JS/JSX => NodeFlagsJavaScriptFile,
+  // JSON => JavaScriptFile|JsonFile, default (TS/TSX/.d.ts) => None. tsonic is
+  // ALWAYS ScriptKindTS (.ts only, noLib .NET target), so the `default` arm
+  // applies and contextFlags starts at NodeFlags.None; the JS/JSX/JSON arms are
+  // unreachable for tsonic (no scriptKind is plumbed into ParseSourceFileOptions).
+  #contextFlags: NodeFlags = NodeFlags.None;
 
   constructor(sourceText: string, options: ParseSourceFileOptions = {}) {
     this.#sourceText = sourceText;
@@ -654,13 +667,15 @@ export class Parser {
     // only production, so #parseExpression (precedence 0) is the faithful stand-in (broader,
     // but does not diverge in shape/range for valid inputs). The TypeNode arg is nil in tsgo;
     // passed as `undefined as never` here, matching the established tsts pattern for non-
-    // optional factory fields that tsgo leaves nil. The AwaitContext contextFlag tsgo sets
-    // around the expression is intentionally omitted (Stage-1 forbids contextFlags).
+    // optional factory fields that tsgo leaves nil. codex-054 M3 Stage-2 (1f): tsgo
+    // parseExportAssignment sets NodeFlagsAwaitContext=true around the value expression
+    // (parser.go:2509) — `export default`/`export =` values are in module-await context —
+    // so the expression and its finished nodes carry AwaitContext.
     const isExportEquals = this.#consumeOptional(Kind.EqualsToken);
     if (!isExportEquals) {
       this.#expect(Kind.DefaultKeyword);
     }
-    const expression = this.#parseExpression();
+    const expression = this.#doInContext(NodeFlags.AwaitContext, true, () => this.#parseExpression());
     this.#consumeOptional(Kind.SemicolonToken);
     return this.#finishNode(createExportAssignment(modifiers, isExportEquals, undefined as never, expression), pos);
   }
@@ -748,18 +763,21 @@ export class Parser {
   }
 
   // tsgo parseDecorator (parser.go:3898): pos at the `@`, consume it, then parse the
-  // decorator expression as a left-hand-side expression. tsgo wraps the expression in
-  // NodeFlagsDecoratorContext (parser.go:3901) which gates ONLY the `@await`-in-await-context
-  // recovery + an in/of restriction (parseDecoratorExpression parser.go:3905-3915) — neither
-  // changes node shape/range for valid `@expr` / `@ns.expr` / `@expr(args)` decorators. That
-  // contextFlag is intentionally NOT implemented here (Stage 1 forbids contextFlags); the
-  // DecoratorContext-gated `@await` recovery is BLOCKED-on-Stage-2 (dependency:
-  // contextFlags / NodeFlagsDecoratorContext + NodeFlagsAwaitContext). The non-await branch
-  // (parser.go:3915) is reproduced directly via #parseLeftHandSideExpression.
+  // decorator expression as a left-hand-side expression. codex-054 M3 Stage-2 (1h): tsgo
+  // wraps the expression in NodeFlagsDecoratorContext (parser.go:3901). The DecoratorContext
+  // bit gates the `@await`-in-await-context recovery (parseDecoratorExpression
+  // parser.go:3905-3915); the recovery branch itself is checker/error-model Stage-3, but the
+  // FLAG must be set now so finished decorator-expression nodes faithfully carry
+  // DecoratorContext and the predicate is available. The non-await branch (parser.go:3915) is
+  // reproduced directly via #parseLeftHandSideExpression.
   #parseDecorator(): Decorator {
     const pos = this.#nodePos();
     this.#expect(Kind.AtToken);
-    const expression = this.#parseLeftHandSideExpression() as LeftHandSideExpression;
+    const expression = this.#doInContext(
+      NodeFlags.DecoratorContext,
+      true,
+      () => this.#parseLeftHandSideExpression() as LeftHandSideExpression,
+    );
     return this.#finishNode(createDecorator(expression), pos);
   }
 
@@ -898,7 +916,13 @@ export class Parser {
     if (initializer !== undefined && (this.#current().kind === Kind.InKeyword || this.#current().kind === Kind.OfKeyword)) {
       const token = this.#current().kind;
       this.#advance();
-      const expression = this.#parseExpression();
+      // codex-054 M3 Stage-2: tsgo parses the for-OF right-hand side with
+      // DisallowInContext=false (parser.go:1308, parseAssignmentExpressionOrHigher in the
+      // of-branch) and the for-IN right-hand side with parseExpressionAllowIn (DisallowIn
+      // cleared, parser.go:1313). tsts uses #parseExpression for both; clearing DisallowIn
+      // around it matches tsgo (a top-level `in` would be a binary-in in the of/in RHS, but
+      // since the enclosing for-init may have set DisallowIn we explicitly clear it here).
+      const expression = this.#doInContext(NodeFlags.DisallowInContext, false, () => this.#parseExpression());
       this.#expect(Kind.CloseParenToken);
       const statement = this.#parseStatement();
       return token === Kind.InKeyword
@@ -920,7 +944,12 @@ export class Parser {
     if (this.#current().kind === Kind.VarKeyword || this.#current().kind === Kind.LetKeyword || this.#current().kind === Kind.ConstKeyword) {
       return this.#parseVariableDeclarationList();
     }
-    return this.#parseExpression();
+    // codex-054 M3 Stage-2: tsgo parses the non-declaration for-initializer expression with
+    // DisallowInContext=true (parser.go:1301) so a top-level `in` is read as the for-IN
+    // separator (`for (x in y)`) rather than a binary `in` expression. #doInContext restores
+    // the prior context after the initializer so the for-of/for-in RHS and the C-style
+    // condition/incrementor (which tsgo parses allow-in) are unaffected.
+    return this.#doInContext(NodeFlags.DisallowInContext, true, () => this.#parseExpression());
   }
 
   #parseBreakStatement(): Statement {
@@ -959,26 +988,38 @@ export class Parser {
     const modifiers = this.#parseModifiers(true);
     // tsgo parseClassElement static-block dispatch (parser.go:1854-1856): the static-block
     // check runs AFTER parseModifiers and BEFORE the get/set/constructor branches, on the
-    // still-unconsumed `static` token. `static {` -> parseClassStaticBlockDeclaration. The
-    // body's await/yield contextFlags (parseClassStaticBlockBody parser.go:1907-1914) are
-    // intentionally NOT set (Stage 1 forbids contextFlags); the body shape/range is identical
-    // for valid input, so they are BLOCKED-on-Stage-2 (dependency: contextFlags /
-    // NodeFlagsAwaitContext + NodeFlagsYieldContext).
+    // still-unconsumed `static` token. `static {` -> parseClassStaticBlockDeclaration.
+    // codex-054 M3 Stage-2 (1h): tsgo parseClassStaticBlockBody (parser.go:1907-1914) sets
+    // YieldContext=false AND AwaitContext=true for the static-block body (a static block is
+    // an await context but never a yield context). Wrap the body parse accordingly.
     if (this.#current().kind === Kind.StaticKeyword && this.#tokens[this.#index + 1]?.kind === Kind.OpenBraceToken) {
       this.#expect(Kind.StaticKeyword);
-      const body = this.#parseBlock();
+      const body = this.#doInContext(NodeFlags.YieldContext, false, () =>
+        this.#doInContext(NodeFlags.AwaitContext, true, () => this.#parseBlock()),
+      );
       return this.#finishNode(createClassStaticBlockDeclaration(modifiers, body), pos);
     }
     if (this.#current().kind === Kind.ConstructorKeyword) {
       this.#advance();
       this.#expect(Kind.OpenParenToken);
-      const parameters = this.#parseParameterList();
+      // codex-054 M3 Stage-2: tsgo tryParseConstructorDeclaration threads ParseFlagsNone for
+      // the constructor params and body (parser.go:1921/1923) — a constructor is neither
+      // generator nor async — so Yield=false, Await=false. The body also clears
+      // DecoratorContext per parseFunctionBlock (parser.go:3500).
+      const parameters = this.#withSignatureContext(false, false, () => this.#parseParameterList());
       this.#expect(Kind.CloseParenToken);
-      const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
+      const body = this.#current().kind === Kind.OpenBraceToken
+        ? this.#withSignatureContext(false, false, () => this.#doInContext(NodeFlags.DecoratorContext, false, () => this.#parseBlock()))
+        : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
       return this.#finishNode(createConstructorDeclaration(modifiers, undefined, createNodeArray(parameters), undefined, body), pos);
     }
 
+    // codex-054 M3 Stage-2: tsgo parses get/set accessors with ParseFlagsNone
+    // (parser.go:1858/1861, parseAccessorDeclaration parser.go:3425) — accessors are neither
+    // async nor generators — so NO Yield/Await context is set; the params/body run with
+    // whatever enclosing contextFlags exist (for a class body, None). The get/set branches
+    // therefore correctly require NO #withSignatureContext wrap.
     if (this.#current().kind === Kind.GetKeyword && this.#tokens[this.#index + 1]?.kind !== Kind.OpenParenToken) {
       this.#advance();
       const name = this.#parsePropertyName();
@@ -1004,12 +1045,22 @@ export class Parser {
     const name = this.#parsePropertyName();
     const postfixToken = this.#parseOptionalPostfixToken();
     if (this.#current().kind === Kind.OpenParenToken || this.#current().kind === Kind.LessThanToken) {
+      // codex-054 M3 Stage-2: tsgo parseMethodDeclaration signatureFlags = IfElse(asterisk,
+      // Yield) | IfElse(async modifier, Await) (parser.go:5681/parsePropertyOrMethodDeclaration
+      // parser.go:1949). tsts builds methods with asteriskToken=undefined (no generator-method
+      // asterisk is parsed) so isGenerator is false; isAsync comes from the async modifier
+      // already consumed into `modifiers`. The worker wraps params and body (body also clears
+      // DecoratorContext).
+      const isGenerator = false;
+      const isAsync = modifiers !== undefined && hasModifier(modifiers, Kind.AsyncKeyword);
       const typeParameters = this.#parseOptionalTypeParameters();
       this.#expect(Kind.OpenParenToken);
-      const parameters = this.#parseParameterList();
+      const parameters = this.#withSignatureContext(isGenerator, isAsync, () => this.#parseParameterList());
       this.#expect(Kind.CloseParenToken);
       const type = this.#parseOptionalTypeAnnotation();
-      const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseBlock() : undefined;
+      const body = this.#current().kind === Kind.OpenBraceToken
+        ? this.#withSignatureContext(isGenerator, isAsync, () => this.#doInContext(NodeFlags.DecoratorContext, false, () => this.#parseBlock()))
+        : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
       return this.#finishNode(createMethodDeclaration(modifiers, undefined, name, postfixToken, typeParameters, createNodeArray(parameters), type, body), pos);
     }
@@ -1243,17 +1294,36 @@ export class Parser {
   #parseFunctionDeclaration(pos: number, modifiers: NodeArray<ModifierLike> | undefined): Statement {
     // tsgo parseFunctionDeclaration(pos, ...): the declaration start is the
     // #parseStatement-top pos (covering modifiers, incl. the default-export path).
-    // Params are Stage 1e (left unstamped); the body Block is stamped via #parseBlock.
     this.#expect(Kind.FunctionKeyword);
     const asteriskToken = this.#consumeOptional(Kind.AsteriskToken) ? createToken(Kind.AsteriskToken) : undefined;
-    const name = isIdentifierNameKind(this.#current().kind) ? this.#parseIdentifier() : undefined;
-    const typeParameters = this.#parseOptionalTypeParameters();
-    this.#expect(Kind.OpenParenToken);
-    const parameters = this.#parseParameterList();
-    this.#expect(Kind.CloseParenToken);
-    const type = this.#parseOptionalTypeAnnotation();
-    const body = this.#parseBlock();
-    return this.#finishNode(createFunctionDeclaration(modifiers, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body), pos);
+    // codex-054 M3 Stage-2: tsgo computes signatureFlags = IfElse(asterisk, Yield) |
+    // IfElse(async modifier, Await) (parser.go:1719) and threads them through
+    // parseParameters/parseFunctionBlock; the worker converts them to Yield/Await
+    // contextFlags. tsts derives the same booleans from the asterisk token and the async
+    // modifier and wraps the parameter list AND the body via #withSignatureContext.
+    const isGenerator = asteriskToken !== undefined;
+    const isAsync = modifiers !== undefined && hasModifier(modifiers, Kind.AsyncKeyword);
+    // tsgo additionally sets AwaitContext=true for an EXPORTED function declaration
+    // (parser.go:1722-1723) — an exported function is in module-await context — applied as
+    // the OUTER context around params + body. For a non-exported function tsgo leaves the
+    // enclosing AwaitContext unchanged, so we only wrap when exported.
+    const isExported = modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword);
+    const build = (): Statement => {
+      const name = isIdentifierNameKind(this.#current().kind) ? this.#parseIdentifier() : undefined;
+      const typeParameters = this.#parseOptionalTypeParameters();
+      this.#expect(Kind.OpenParenToken);
+      const parameters = this.#withSignatureContext(isGenerator, isAsync, () => this.#parseParameterList());
+      this.#expect(Kind.CloseParenToken);
+      const type = this.#parseOptionalTypeAnnotation();
+      // tsgo parseFunctionBlock additionally CLEARS DecoratorContext (parser.go:3500): a
+      // function body is never in decorator context. #withSignatureContext sets Yield/Await
+      // from the signature; wrap the body additionally clearing Decorator.
+      const body = this.#withSignatureContext(isGenerator, isAsync, () =>
+        this.#doInContext(NodeFlags.DecoratorContext, false, () => this.#parseBlock()),
+      );
+      return this.#finishNode(createFunctionDeclaration(modifiers, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body), pos);
+    };
+    return isExported ? this.#doInContext(NodeFlags.AwaitContext, true, build) : build();
   }
 
   #parseParameterList(): ParameterDeclaration[] {
@@ -1322,15 +1392,15 @@ export class Parser {
 
   #parseWithStatement(): Statement {
     // tsgo parseWithStatement (parser.go:1377): pos at the `with` keyword; the body is a
-    // full #parseStatement. tsgo wraps the body in NodeFlagsInWithStatement via a
-    // contextFlag — that contextFlag is intentionally OMITTED here (Stage-1 forbids
-    // touching contextFlags); the node shape/range is faithful without it.
+    // full #parseStatement. codex-054 M3 Stage-2 (1f): tsgo wraps the body in
+    // NodeFlagsInWithStatement (parser.go:1385) so every node finished inside the with-body
+    // records that it descends from a WithStatement's `statement` (not its `expression`).
     const pos = this.#nodePos();
     this.#expect(Kind.WithKeyword);
     this.#expect(Kind.OpenParenToken);
     const expression = this.#parseExpression();
     this.#expect(Kind.CloseParenToken);
-    const statement = this.#parseStatement();
+    const statement = this.#doInContext(NodeFlags.InWithStatement, true, () => this.#parseStatement());
     return this.#finishNode(createWithStatement(expression, statement), pos);
   }
 
@@ -1522,6 +1592,14 @@ export class Parser {
     // tsgo parseParenthesizedArrowFunctionExpression/parseSimpleArrowFunctionExpression:
     // the arrow node start is captured at entry (before the param/openParen).
     const pos = this.#nodePos();
+    // codex-054 M3 Stage-2: arrows are NEVER generators, so signatureFlags = IfElse(isAsync,
+    // Await) (tsgo parser.go:4344-4345). tsts builds arrows with no modifiers
+    // (createArrowFunction(undefined, ...)) and does not parse an async-arrow modifier, so
+    // isAsync is false here — matching the node tsts builds. This wrap is still load-bearing:
+    // it Yield=false/Await=false around the params and body, which CLEARS any enclosing
+    // Await/Yield (e.g. a non-async arrow inside an async function is NOT in await context),
+    // exactly as tsgo parseFunctionBlock(IfElse(isAsync,Await)) does for the arrow body.
+    const isAsync = false;
     const parameters: ParameterDeclaration[] = [];
     let type: TypeNode | undefined;
     if (isIdentifierNameKind(this.#current().kind)) {
@@ -1531,20 +1609,28 @@ export class Parser {
       parameters.push(this.#finishNode(createParameterDeclaration(undefined, undefined, this.#parseIdentifier(), undefined, undefined, undefined), paramPos));
     } else {
       this.#expect(Kind.OpenParenToken);
-      parameters.push(...this.#parseParameterList());
+      parameters.push(...this.#withSignatureContext(false, isAsync, () => this.#parseParameterList()));
       this.#expect(Kind.CloseParenToken);
       type = this.#parseOptionalTypeAnnotation();
     }
     this.#expect(Kind.EqualsGreaterThanToken);
-    const body = this.#parseArrowBody();
+    const body = this.#parseArrowBody(isAsync);
     return this.#finishNode(createArrowFunction(undefined, undefined, createNodeArray(parameters), type, createToken(Kind.EqualsGreaterThanToken), body), pos);
   }
 
-  #parseArrowBody(): ConciseBody {
+  #parseArrowBody(isAsync: boolean): ConciseBody {
+    // codex-054 M3 Stage-2: tsgo parseArrowFunctionExpressionBody (parser.go:4461-4485). A
+    // block body goes through parseFunctionBlock(IfElse(isAsync,Await)) which sets
+    // Yield=false, Await=isAsync and CLEARS DecoratorContext (parser.go:3497-3500). An
+    // expression body sets Await=isAsync, Yield=false directly (parser.go:4483-4484). Both
+    // are reproduced via #withSignatureContext(false, isAsync, ...); the block body also
+    // clears DecoratorContext.
     if (this.#current().kind === Kind.OpenBraceToken) {
-      return this.#parseBlock();
+      return this.#withSignatureContext(false, isAsync, () =>
+        this.#doInContext(NodeFlags.DecoratorContext, false, () => this.#parseBlock()),
+      );
     }
-    return this.#parseExpression();
+    return this.#withSignatureContext(false, isAsync, () => this.#parseExpression());
   }
 
   #parseUnaryExpression(): Expression {
@@ -1699,12 +1785,19 @@ export class Parser {
   }
 
   #parseArgumentExpression(): Expression {
-    // tsgo parseSpreadElement: node start is the '...' token.
-    const pos = this.#nodePos();
-    if (this.#consumeOptional(Kind.DotDotDotToken)) {
-      return this.#finishNode(createSpreadElement(this.#parseExpression()), pos);
-    }
-    return this.#parseExpression();
+    // codex-054 M3 Stage-2: tsgo parseArgumentExpression (parser.go:5481) parses each
+    // call-argument / array-literal element with NodeFlagsDisallowInContext |
+    // NodeFlagsDecoratorContext CLEARED (value=false), so a top-level `in` IS allowed inside
+    // arguments/array elements even when the call/array sits inside a for-initializer
+    // (DisallowIn) context, and decorator-context recovery is off. Wrap the whole element.
+    return this.#doInContext(NodeFlags.DisallowInContext | NodeFlags.DecoratorContext, false, () => {
+      // tsgo parseSpreadElement: node start is the '...' token.
+      const pos = this.#nodePos();
+      if (this.#consumeOptional(Kind.DotDotDotToken)) {
+        return this.#finishNode(createSpreadElement(this.#parseExpression()), pos);
+      }
+      return this.#parseExpression();
+    });
   }
 
   #parsePrimaryExpression(): Expression {
@@ -1786,13 +1879,22 @@ export class Parser {
     const pos = this.#nodePos();
     this.#expect(Kind.FunctionKeyword);
     const asteriskToken = this.#consumeOptional(Kind.AsteriskToken) ? createToken(Kind.AsteriskToken) : undefined;
+    // codex-054 M3 Stage-2: tsgo signatureFlags = IfElse(asterisk, Yield) |
+    // IfElse(async modifier, Await) (parser.go:1950). tsts builds function expressions with
+    // no modifiers list (createFunctionExpression(undefined, ...)) so it has no async-modifier
+    // to read — isAsync is false, matching the node tsts builds; isGenerator comes from the
+    // asterisk token. The worker wraps params and body (body also clears DecoratorContext).
+    const isGenerator = asteriskToken !== undefined;
+    const isAsync = false;
     const name = isIdentifierNameKind(this.#current().kind) ? this.#parseIdentifier() : undefined;
     const typeParameters = this.#parseOptionalTypeParameters();
     this.#expect(Kind.OpenParenToken);
-    const parameters = this.#parseParameterList();
+    const parameters = this.#withSignatureContext(isGenerator, isAsync, () => this.#parseParameterList());
     this.#expect(Kind.CloseParenToken);
     const type = this.#parseOptionalTypeAnnotation();
-    const body = this.#parseBlock();
+    const body = this.#withSignatureContext(isGenerator, isAsync, () =>
+      this.#doInContext(NodeFlags.DecoratorContext, false, () => this.#parseBlock()),
+    );
     return this.#finishNode(createFunctionExpression(undefined, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body), pos);
   }
 
@@ -2004,23 +2106,36 @@ export class Parser {
   }
 
   #parseType(): TypeNode {
-    const predicate = this.#tryParseTypePredicate();
-    if (predicate !== undefined) {
-      return predicate;
-    }
-    // tsgo parseType (2607): pos captured before parseUnionTypeOrHigher; the same
-    // pos doubles as the conditional-type start (covers checkType through falseType).
-    const pos = this.#nodePos();
-    const checkType = this.#parseUnionType();
-    if (this.#consumeOptional(Kind.ExtendsKeyword)) {
-      const extendsType = this.#parseType();
-      this.#expect(Kind.QuestionToken);
-      const trueType = this.#parseType();
-      this.#expect(Kind.ColonToken);
-      const falseType = this.#parseType();
-      return this.#finishNode(createConditionalTypeNode(checkType, extendsType, trueType, falseType), pos);
-    }
-    return checkType;
+    // codex-054 M3 Stage-2: tsgo parseType (parser.go:2606-2607) clears
+    // NodeFlagsTypeExcludesFlags (= YieldContext | AwaitContext) for the WHOLE type, so a
+    // type annotation inside an async/generator signature does NOT inherit Await/Yield
+    // context. Wrap the entire production in #doInContext with both bits cleared; the
+    // #doInContext finally restores the enclosing Await/Yield afterwards (so e.g. an async
+    // function's body — parsed after its return-type annotation — resumes Await context).
+    return this.#doInContext(NodeFlags.TypeExcludesFlags, false, () => {
+      const predicate = this.#tryParseTypePredicate();
+      if (predicate !== undefined) {
+        return predicate;
+      }
+      // tsgo parseType (2607): pos captured before parseUnionTypeOrHigher; the same
+      // pos doubles as the conditional-type start (covers checkType through falseType).
+      const pos = this.#nodePos();
+      const checkType = this.#parseUnionType();
+      if (this.#consumeOptional(Kind.ExtendsKeyword)) {
+        // codex-054 M3 Stage-2: tsgo parseType (parser.go:2617/2619/2621) parses the
+        // extends-type with DisallowConditionalTypesContext=true (a bare nested conditional
+        // is forbidden as the extends-type) and the true/false branches with it set to false
+        // (conditionals re-permitted). The extends=true flag is also what the infer-constraint
+        // rewind (#tryParseConstraintOfInferType) reads to KEEP its constraint.
+        const extendsType = this.#doInContext(NodeFlags.DisallowConditionalTypesContext, true, () => this.#parseType());
+        this.#expect(Kind.QuestionToken);
+        const trueType = this.#doInContext(NodeFlags.DisallowConditionalTypesContext, false, () => this.#parseType());
+        this.#expect(Kind.ColonToken);
+        const falseType = this.#doInContext(NodeFlags.DisallowConditionalTypesContext, false, () => this.#parseType());
+        return this.#finishNode(createConditionalTypeNode(checkType, extendsType, trueType, falseType), pos);
+      }
+      return checkType;
+    });
   }
 
   #parseUnionType(): TypeNode {
@@ -2053,6 +2168,12 @@ export class Parser {
     // indexed-access (T[K]) is the LEFTMOST primary type's start — capture pos ONCE
     // before parseNonArrayType and thread that single pos into each loop iteration's
     // finishNode, finishing AFTER the closing ']' so the end covers it.
+    // codex-054 M3 Stage-2: tsgo's parseTypeOperatorOrHigher default arm parses
+    // postfix-and-higher under DisallowConditionalTypesContext=false (parser.go:2680). In tsts
+    // that bit is set true ONLY transiently inside the conditional extends-type wrap
+    // (#parseType) and the infer-constraint wrap, each of which restores it via #doInContext.
+    // Outside those, DisallowConditionalTypes is its default (false) here, so no explicit wrap
+    // is needed: #parsePostfixType / #parseIntersectionType never run under a stuck-true bit.
     const pos = this.#nodePos();
     let type = this.#parsePrimaryType();
     while (this.#current().kind === Kind.OpenBracketToken) {
@@ -2223,27 +2344,22 @@ export class Parser {
   }
 
   #tryParseConstraintOfInferType(): TypeNode | undefined {
-    // tsgo tryParseConstraintOfInferType (2702): on `extends`, parse the constraint. tsgo
-    // returns it when `p.inDisallowConditionalTypesContext() || p.token != QuestionToken`, and
-    // ONLY rewinds (dropping the constraint) when NOT in DisallowConditionalTypesContext and a
-    // trailing `?` follows — i.e. the `?` should start a NESTED conditional type that becomes the
-    // constraint (`infer U extends (C ? X : Y)`).
-    //
-    // STAGE-2 BLOCKER (NodeFlagsDisallowConditionalTypesContext): the rewind branch is reachable
-    // only via that contextFlag, which tsts does not yet have (Stage 2). Critically, in the
-    // common case the extends-type of the ENCLOSING conditional is parsed by tsgo IN
-    // DisallowConditionalTypesContext (parseType 2617), so `inDisallowConditionalTypesContext()`
-    // is true and the constraint is KEPT even when a trailing `?` follows (that `?` belongs to
-    // the enclosing conditional, e.g. `A extends infer U extends string ? U : never`). Since
-    // tsts has no context flag and its #parseType conditional branch is ungated, the faithful
-    // observable behavior here is to ALWAYS keep the constraint: tsts's #parseType cannot form
-    // the nested-conditional-in-constraint shape anyway (it requires `extends`, not `?`), so the
-    // rewind branch's purpose — choosing the nested-conditional constraint — is the named Stage-2
-    // dependency and is left unimplemented. Bare `infer T` and non-conditional `infer T extends C`
-    // (incl. as a conditional's extends-type) parse faithfully.
+    // codex-054 M3 Stage-2 (1g): tsgo tryParseConstraintOfInferType (parser.go:2702-2712).
+    // On `extends`, parse the constraint under DisallowConditionalTypesContext=true. KEEP it
+    // when `inDisallowConditionalTypesContext() || token != QuestionToken`; otherwise REWIND
+    // (dropping the constraint) so the trailing `?` starts the ENCLOSING conditional whose
+    // extends-type this infer-type is — e.g. `A extends infer U extends string ? U : never`
+    // KEEPS `string` (the enclosing conditional's extends-type is parsed with
+    // DisallowConditionalTypesContext=true via #parseType, so the predicate reads true), while
+    // `infer U extends X ? ...` at a position NOT under that context rewinds the `?` out.
+    const startIndex = this.#index;
     if (this.#consumeOptional(Kind.ExtendsKeyword)) {
-      return this.#parseType();
+      const constraint = this.#doInContext(NodeFlags.DisallowConditionalTypesContext, true, () => this.#parseType());
+      if (this.#inDisallowConditionalTypesContext() || this.#current().kind !== Kind.QuestionToken) {
+        return constraint;
+      }
     }
+    this.#index = startIndex;
     return undefined;
   }
 
@@ -2584,9 +2700,58 @@ export class Parser {
     return this.#tokens[this.#index - 1]!.end;
   }
 
+  // codex-054 M3 Stage-2: tsgo setContextFlags (parser.go:6352-6358). Sets or
+  // clears the given context bit(s) in #contextFlags in place; tsgo mutates the
+  // pointer-receiver field, so this is the faithful mutable-parse-state equivalent.
+  #setContextFlags(flags: NodeFlags, value: boolean): void {
+    this.#contextFlags = value ? (this.#contextFlags | flags) : (this.#contextFlags & ~flags);
+  }
+
+  // codex-054 M3 Stage-2: tsgo doInContext (parser.go:6360-6366) — save the current
+  // contextFlags, set the requested context, run the production, then RESTORE.
+  // tsgo has no exceptions so it restores after the call returns; tsts still throws
+  // ParseError in Stage-2 and uses try/catch speculative rewinds, so the restore MUST
+  // run in a `finally` to guarantee #contextFlags is never left mutated when a
+  // production unwinds via a throw. This is NOT an error-model change — it only
+  // preserves tsgo's save/set/run/restore invariant under tsts's still-present throws.
+  #doInContext<T>(flags: NodeFlags, value: boolean, f: () => T): T {
+    const save = this.#contextFlags;
+    this.#setContextFlags(flags, value);
+    try {
+      return f();
+    } finally {
+      this.#contextFlags = save;
+    }
+  }
+
+  // codex-054 M3 Stage-2: tsgo in*Context predicates (parser.go:6368-6386). Each is a
+  // one-line bit read used at the wired call sites (#inDisallowConditionalTypesContext
+  // is consumed by the infer-constraint rewind in #tryParseConstraintOfInferType).
+  #inDisallowConditionalTypesContext(): boolean {
+    return (this.#contextFlags & NodeFlags.DisallowConditionalTypesContext) !== 0;
+  }
+
+  // codex-054 M3 Stage-2: convert the per-signature ParseFlags (Yield from generator,
+  // Await from async) into contextFlags around a function/method/arrow parameter list
+  // AND body, faithfully fusing tsgo parseParametersWorker (parser.go:3298-3299) and
+  // parseFunctionBlock (parser.go:3497-3498), which each set BOTH bits in one save/set
+  // pair. Accessors (get/set) thread ParseFlagsNone in tsgo, so they are NOT wrapped.
+  #withSignatureContext<T>(isGenerator: boolean, isAsync: boolean, f: () => T): T {
+    return this.#doInContext(NodeFlags.YieldContext, isGenerator, () =>
+      this.#doInContext(NodeFlags.AwaitContext, isAsync, f),
+    );
+  }
+
   #finishNode<T extends Node>(node: T, pos: number): T {
     node.pos = pos;
     node.end = this.#nodeEnd();
+    // codex-054 M3 Stage-2: tsgo finishNodeWithEnd (parser.go:5910)
+    // `node.Flags |= p.contextFlags`. OR the parser's current contextFlags into the
+    // node so each finished node faithfully records the parsing contexts it was built
+    // in (Yield/Await/DisallowIn/DisallowConditionalTypes/Decorator/InWith). node.flags
+    // is the controlled mutable parse-state slot made writable in the generator (Fork-A,
+    // same category as pos/end above); this assignment typechecks with no cast.
+    node.flags |= this.#contextFlags;
     return node;
   }
 }

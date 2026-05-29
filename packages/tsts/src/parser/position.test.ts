@@ -14,6 +14,7 @@ import { Exception } from "@tsonic/dotnet/System.js";
 
 import {
   Kind,
+  NodeFlags,
   isArrayBindingPattern,
   isArrayLiteralExpression,
   isArrayTypeNode,
@@ -1926,6 +1927,133 @@ export class ParserPositionTests {
     Assert.Equal(10, optional.type.pos);
     Assert.Equal(16, optional.type.end);
   }
+
+  // codex-054 M3 Stage-2: contextFlags are OR-ed into every node's flags at #finishNode
+  // (tsgo finishNodeWithEnd `node.Flags |= p.contextFlags`, parser.go:5910). The probes
+  // below pin that the relevant context bit is recorded on nodes parsed inside each
+  // context, and that a plain top-level node carries NO context bits (None-init).
+
+  // A plain `.ts` top-level statement is parsed with contextFlags == NodeFlags.None, so no
+  // context bit is set. tsonic is always ScriptKindTS (tsgo initializeState default arm),
+  // so the parser seeds contextFlags at None.
+  top_level_node_has_no_context_flags(): void {
+    const sourceFile = parseSourceFile("x;");
+    const statement = sourceFile.statements[0]!;
+    if (!isExpressionStatement(statement)) throw new Exception("Expected expression statement");
+    Assert.False((statement.flags & NodeFlags.YieldContext) !== 0);
+    Assert.False((statement.flags & NodeFlags.AwaitContext) !== 0);
+    Assert.False((statement.flags & NodeFlags.DisallowInContext) !== 0);
+    Assert.False((statement.flags & NodeFlags.DecoratorContext) !== 0);
+    Assert.False((statement.flags & NodeFlags.InWithStatement) !== 0);
+    Assert.False((statement.flags & NodeFlags.DisallowConditionalTypesContext) !== 0);
+  }
+
+  // `function* g() { x; }` -> the generator body Block (and every node finished inside it)
+  // is parsed in YieldContext (signatureFlags Yield from the asterisk) but NOT AwaitContext.
+  generator_body_node_carries_yield_context(): void {
+    const sourceFile = parseSourceFile("function* g() { x; }");
+    const statement = sourceFile.statements[0]!;
+    if (!isFunctionDeclaration(statement)) throw new Exception("Expected function declaration");
+    const body = statement.body;
+    if (body === undefined || !isBlock(body)) throw new Exception("Expected function body block");
+    Assert.True((body.flags & NodeFlags.YieldContext) !== 0);
+    Assert.False((body.flags & NodeFlags.AwaitContext) !== 0);
+    const inner = body.statements[0]!;
+    Assert.True((inner.flags & NodeFlags.YieldContext) !== 0);
+    Assert.False((inner.flags & NodeFlags.AwaitContext) !== 0);
+  }
+
+  // `async function f() { x; }` -> the body Block is parsed in AwaitContext (signatureFlags
+  // Await from the async modifier) but NOT YieldContext.
+  async_function_body_node_carries_await_context(): void {
+    const sourceFile = parseSourceFile("async function f() { x; }");
+    const statement = sourceFile.statements[0]!;
+    if (!isFunctionDeclaration(statement)) throw new Exception("Expected function declaration");
+    const body = statement.body;
+    if (body === undefined || !isBlock(body)) throw new Exception("Expected function body block");
+    Assert.True((body.flags & NodeFlags.AwaitContext) !== 0);
+    Assert.False((body.flags & NodeFlags.YieldContext) !== 0);
+    const inner = body.statements[0]!;
+    Assert.True((inner.flags & NodeFlags.AwaitContext) !== 0);
+    Assert.False((inner.flags & NodeFlags.YieldContext) !== 0);
+  }
+
+  // `type T = A extends B ? C : D;` -> the extends-type (B) is parsed in
+  // DisallowConditionalTypesContext (tsgo parseType extends-type wrap), while the true/false
+  // branches are parsed with it cleared.
+  conditional_extends_type_carries_disallow_conditional_types(): void {
+    const sourceFile = parseSourceFile("type T = A extends B ? C : D;");
+    const statement = sourceFile.statements[0]!;
+    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
+    const conditional = statement.type;
+    if (!isConditionalTypeNode(conditional)) throw new Exception("Expected conditional type node");
+    Assert.True((conditional.extendsType.flags & NodeFlags.DisallowConditionalTypesContext) !== 0);
+    Assert.False((conditional.trueType.flags & NodeFlags.DisallowConditionalTypesContext) !== 0);
+    Assert.False((conditional.falseType.flags & NodeFlags.DisallowConditionalTypesContext) !== 0);
+  }
+
+  // `for (a + b; ;) ;` -> the for-initializer expression is parsed in DisallowInContext, so a
+  // node finished inside it carries the DisallowIn bit.
+  for_initializer_expression_carries_disallow_in(): void {
+    const sourceFile = parseSourceFile("for (a + b; ;) ;");
+    const statement = sourceFile.statements[0]!;
+    if (!isForStatement(statement)) throw new Exception("Expected for statement");
+    const initializer = statement.initializer;
+    if (initializer === undefined) throw new Exception("Expected for initializer");
+    Assert.True((initializer.flags & NodeFlags.DisallowInContext) !== 0);
+  }
+
+  // `f(a in b);` -> the call argument clears DisallowInContext|DecoratorContext (tsgo
+  // parseArgumentExpression), so the `in` binary expression inside the argument list is NOT
+  // in DisallowIn context (the `in` is a binary operator, not a for-in separator).
+  call_argument_clears_disallow_in_context(): void {
+    const sourceFile = parseSourceFile("f(a in b);");
+    const statement = sourceFile.statements[0]!;
+    if (!isExpressionStatement(statement)) throw new Exception("Expected expression statement");
+    const call = statement.expression;
+    if (!isCallExpression(call)) throw new Exception("Expected call expression");
+    const argument = call.arguments[0]!;
+    if (!isBinaryExpression(argument)) throw new Exception("Expected binary `in` argument");
+    Assert.Equal(Kind.InKeyword, argument.operatorToken.kind);
+    Assert.False((argument.flags & NodeFlags.DisallowInContext) !== 0);
+  }
+
+  // `with (o) x;` -> the with-statement body (and nodes finished inside it) are parsed in
+  // InWithStatement context (tsgo parseWithStatement wraps the body statement).
+  with_statement_body_carries_in_with_statement(): void {
+    const sourceFile = parseSourceFile("with (o) x;");
+    const statement = sourceFile.statements[0]!;
+    if (!isWithStatement(statement)) throw new Exception("Expected with statement");
+    Assert.True((statement.statement.flags & NodeFlags.InWithStatement) !== 0);
+    // The `with` expression (parsed OUTSIDE the body wrap) does NOT carry InWithStatement.
+    Assert.False((statement.expression.flags & NodeFlags.InWithStatement) !== 0);
+  }
+
+  // `@dec class X {}` -> the decorator expression is parsed in DecoratorContext (tsgo
+  // parseDecorator wraps the decorator expression).
+  decorator_expression_carries_decorator_context(): void {
+    const sourceFile = parseSourceFile("@dec class X {}");
+    const statement = sourceFile.statements[0]!;
+    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
+    const decorator = statement.modifiers![0]!;
+    if (!isDecorator(decorator)) throw new Exception("Expected decorator modifier");
+    Assert.True((decorator.expression.flags & NodeFlags.DecoratorContext) !== 0);
+  }
+
+  // `class C { static { x; } }` -> the static-block body is parsed with AwaitContext=true and
+  // YieldContext=false (tsgo parseClassStaticBlockBody).
+  static_block_body_carries_await_context(): void {
+    const sourceFile = parseSourceFile("class C { static { x; } }");
+    const statement = sourceFile.statements[0]!;
+    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
+    const member = statement.members[0]!;
+    if (!isClassStaticBlockDeclaration(member)) throw new Exception("Expected class static block");
+    Assert.True((member.body.flags & NodeFlags.AwaitContext) !== 0);
+    Assert.False((member.body.flags & NodeFlags.YieldContext) !== 0);
+    const inner = member.body.statements[0]!;
+    Assert.True((inner.flags & NodeFlags.AwaitContext) !== 0);
+    Assert.False((inner.flags & NodeFlags.YieldContext) !== 0);
+  }
 }
 
 A<ParserPositionTests>().method((t) => t.stamps_identifier_leaf_with_token_tight_range).add(FactAttribute);
@@ -2043,3 +2171,12 @@ A<ParserPositionTests>().method((t) => t.named_tuple_members_with_optional_and_r
 A<ParserPositionTests>().method((t) => t.named_tuple_member_allows_keyword_name).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.rest_type_in_tuple_starts_at_dotdotdot).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.optional_type_in_tuple_wraps_element).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.top_level_node_has_no_context_flags).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.generator_body_node_carries_yield_context).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.async_function_body_node_carries_await_context).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.conditional_extends_type_carries_disallow_conditional_types).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.for_initializer_expression_carries_disallow_in).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.call_argument_clears_disallow_in_context).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.with_statement_body_carries_in_with_statement).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.decorator_expression_carries_decorator_context).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.static_block_body_carries_await_context).add(FactAttribute);

@@ -13,7 +13,12 @@ export interface TextRange {
 
 export interface Node extends TextRange {
   readonly kind: Kind;
-  readonly flags: number;
+  // codex-054 M3 Stage-2 Fork A: flags is MUTABLE parse-state. tsgo finishNodeWithEnd
+  // does `node.Flags |= p.contextFlags` (parser.go:5910), OR-ing the parser's
+  // contextFlags into the node post-construction; a faithful #finishNode must write
+  // node.flags after createX builds the node. Same controlled mutable-compiler-state
+  // category as the pos/end TextRange slots above (codex-048) and the parent slot below.
+  flags: number;
   // codex-043 M2 Fork A: parent is a mutable binder-set slot.
   parent: Node;
   readonly jsDoc?: readonly Node[];
