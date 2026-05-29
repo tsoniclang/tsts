@@ -28,10 +28,16 @@ import {
   isSuperExpression,
   isImportExpression,
   createNode,
+  forEachChild,
+  nodeParent,
+  nodeSymbol,
   Kind,
+  SymbolFlags,
+  type Node,
   type SuperExpression,
   type ImportExpression,
 } from "../ast/index.js";
+import { NameResolver } from "../binder/index.js";
 
 export class CheckerGroundworkTests {
   accepts_numeric_to_fixed_calls_that_flow_into_string_returns(): void {
@@ -689,6 +695,107 @@ export class CheckerGroundworkTests {
 
     Assert.Equal(0, result.diagnostics.length);
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // M5a (codex-041455): VALUE/module/export name resolution moved from the
+  // string-keyed TypeEnvironment substitution to the binder symbol graph
+  // (bind-before-check → NameResolver.resolve → getTypeOfSymbol flag-dispatch).
+  // ROOT CAUSE for these two probes: M5a-resolution (the checker now consumes
+  // the binder's locals / symbol.exports). They prove the resolution swap
+  // preserves the import-alias-vs-export-alias and local-vs-export symbol
+  // distinctions the binder builds (M4c), and check cleanly with no spurious
+  // value-resolution diagnostics.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  m5a_import_alias_and_export_resolve_to_distinct_binder_symbols(): void {
+    // `import { value as localValue } from "./dep.js"; export { localValue };`
+    // checkSourceFile binds-before-checks; the final `localValue;` reference
+    // resolves the IMPORT alias from sourceFile.locals (NameResolver walks
+    // locals first), while the module export surface keeps a DISTINCT export
+    // alias in sourceFile.symbol.exports — they must NOT collapse into one entry.
+    const sourceFile = parseSourceFile("import { value as localValue } from \"./dep.js\";\nexport { localValue };\nlocalValue;");
+    const result = checkSourceFile(sourceFile);
+
+    // No spurious value-resolution diagnostic: the reference resolved.
+    Assert.Equal(0, result.diagnostics.length);
+
+    const importAlias = sourceFile.locals?.get("localValue");
+    const exportAlias = sourceFile.symbol?.exports?.get("localValue");
+    Assert.Equal(SymbolFlags.Alias, importAlias?.flags);
+    Assert.Equal(SymbolFlags.Alias, exportAlias?.flags);
+    // The local import alias and the module export alias are DISTINCT symbols.
+    Assert.True(importAlias !== exportAlias);
+
+    // The standalone `localValue;` reference resolves to the IMPORT alias
+    // (the lexical local), not the export-surface alias.
+    const reference = findExpressionStatementIdentifier(sourceFile, "localValue");
+    Assert.NotNull(reference);
+    const resolver = makeM5aResolver();
+    const resolved = resolver.resolve(reference!, "localValue", SymbolFlags.Value | SymbolFlags.Alias, undefined, true, false);
+    Assert.True(resolved === importAlias);
+  }
+
+  m5a_export_const_in_file_reference_and_export_table_keep_symbol_distinction(): void {
+    // `export const exported = 1; exported;`
+    // The binder (M4c) splits this into a LOCAL symbol (ExportValue, in
+    // sourceFile.locals) linked via exportSymbol to the EXPORT symbol
+    // (BlockScopedVariable, in sourceFile.symbol.exports). An in-file value
+    // reference (`exported;`) carries `Value` meaning, which the ExportValue
+    // local does NOT satisfy, so NameResolver walks past it to the export
+    // symbol that holds the real value flags — matching tsgo resolveName.
+    // The symbol distinction (local↔export link) is preserved either way.
+    const sourceFile = parseSourceFile("export const exported = 1;\nexported;");
+    const result = checkSourceFile(sourceFile);
+
+    Assert.Equal(0, result.diagnostics.length);
+
+    const local = sourceFile.locals?.get("exported");
+    const exported = sourceFile.symbol?.exports?.get("exported");
+    Assert.Equal(SymbolFlags.ExportValue, local?.flags);
+    Assert.Equal(SymbolFlags.BlockScopedVariable, exported?.flags);
+    // The local↔export link is intact (the symbol distinction is preserved).
+    Assert.True(local?.exportSymbol === exported);
+
+    const reference = findExpressionStatementIdentifier(sourceFile, "exported");
+    Assert.NotNull(reference);
+    const resolver = makeM5aResolver();
+    const resolved = resolver.resolve(reference!, "exported", SymbolFlags.Value | SymbolFlags.Alias, undefined, true, false);
+    // The ExportValue local is filtered by the Value meaning; resolution lands
+    // on the export symbol (which carries the real BlockScopedVariable value).
+    Assert.True(resolved === exported);
+    Assert.True(resolved !== local);
+  }
+}
+
+// Find the identifier `text` whose direct parent is an ExpressionStatement (the
+// standalone `name;` reference site), walking the bound AST via forEachChild.
+function findExpressionStatementIdentifier(node: Node, text: string): Node | undefined {
+  if (node.kind === Kind.Identifier && (node as { readonly text?: string }).text === text
+    && nodeParent(node)?.kind === Kind.ExpressionStatement) {
+    return node;
+  }
+  let found: Node | undefined;
+  forEachChild(node, (child) => {
+    if (found === undefined) {
+      found = findExpressionStatementIdentifier(child, text);
+    }
+    return undefined;
+  });
+  return found;
+}
+
+// The checker's NameResolver wiring (mirrors the shared resolver in
+// checker.checkedtype.ts): getSymbolOfDeclaration reads the in-place node symbol;
+// error/arguments are no-op (the checker caller owns unresolved-name diagnostics).
+function makeM5aResolver(): NameResolver {
+  return new NameResolver(
+    {
+      argumentsSymbol: () => ({ name: "arguments", declarations: [] }),
+      error: () => { /* caller emits unresolved-name diagnostics */ },
+      getSymbolOfDeclaration: (node) => nodeSymbol(node),
+    },
+    {},
+  );
 }
 
 A<CheckerGroundworkTests>().method((t) => t.accepts_numeric_to_fixed_calls_that_flow_into_string_returns).add(FactAttribute);
@@ -741,3 +848,5 @@ A<CheckerGroundworkTests>().method((t) => t.reduces_redundant_literal_union_memb
 A<CheckerGroundworkTests>().method((t) => t.makes_destructured_binding_names_available_to_checked_bodies).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_reports_assignment_mismatches).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_accepts_well_typed_assignment).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.m5a_import_alias_and_export_resolve_to_distinct_binder_symbols).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.m5a_export_const_in_file_reference_and_export_table_keep_symbol_distinction).add(FactAttribute);

@@ -11,19 +11,21 @@
 
 import {
   Kind,
+  NodeFlags,
   SymbolFlags,
   isArrayTypeNode,
   isBigIntLiteral,
+  isBindingElement,
   isCallSignatureDeclaration,
   isIdentifier,
   isIndexSignatureDeclaration,
-  isObjectBindingPattern,
-  isArrayBindingPattern,
   isKeywordTypeNode,
   isLiteralTypeNode,
   isMethodSignatureDeclaration,
   isNumericLiteral,
+  isParameterDeclaration,
   isPrefixUnaryExpression,
+  isPropertyDeclaration,
   isPropertySignatureDeclaration,
   isStringLiteral,
   isTypeAliasDeclaration,
@@ -31,8 +33,9 @@ import {
   isTypeOperatorNode,
   isTypeReferenceNode,
   isUnionTypeNode,
+  isVariableDeclaration,
   type BindingElement,
-  type BindingName,
+  type Expression,
   type LiteralTypeNode,
   type Node as AstNode,
   type ParameterDeclaration,
@@ -44,6 +47,8 @@ import {
   type TypeReferenceNode,
   type UnionTypeNode,
 } from "../ast/index.js";
+import { nodeParent, nodeSymbol } from "../ast/index.js";
+import { NameResolver } from "../binder/index.js";
 import { fromString, newPseudoBigInt, parsePseudoBigInt, parseValidBigInt, pseudoBigIntToString, type PseudoBigInt } from "../jsnum/index.js";
 import {
   type Type,
@@ -56,6 +61,7 @@ import {
   type UnionOrIntersectionType,
   TypeFlags,
   ObjectFlags,
+  setBinderSymbolTypeResolver,
 } from "./types.js";
 import { type Relater, newRelater } from "./relater.js";
 
@@ -95,8 +101,6 @@ export interface CheckState {
   readonly shadowedAliasNames: Set<string>;
   nextTypeId(): number;
 }
-
-export type TypeEnvironment = Map<string, Type>;
 
 export function newCheckState(): CheckState {
   const idSource = { value: 1000 };
@@ -253,7 +257,12 @@ export function makeCallSignature(returnType: Type, parameters: readonly Functio
   const parameterSymbols = parameters.map((parameter) =>
     ({
       name: parameter.name,
-      type: parameter.type,
+      // `synthetic` + `syntheticType` are the checker-created provenance marker
+      // getTypeOfSymbol gates on (so a synthetic parameter symbol never goes
+      // through the binder flag-dispatch). The synthetic carrier stays — but
+      // PROVENANCE-SPECIFIC.
+      synthetic: true,
+      syntheticType: parameter.type,
       flags: parameter.optional === true ? SymbolFlags.Optional : 0,
       rest: parameter.rest === true,
       declarations: [],
@@ -328,7 +337,10 @@ export function isRestSymbol(symbol: AstSymbol | undefined): boolean {
 
 interface PropertySymbol {
   readonly name: string;
-  readonly type: Type;
+  // `synthetic`/`syntheticType` are the checker-created provenance marker
+  // getTypeOfSymbol gates on (mirrors the parameter-symbol carrier above).
+  readonly synthetic: true;
+  readonly syntheticType: Type;
   readonly flags: number;
   readonly declarations: readonly AstNode[];
 }
@@ -349,7 +361,8 @@ export function makeObjectType(properties: readonly ObjectProperty[], state: Che
   for (const property of properties) {
     const symbol: PropertySymbol = {
       name: property.name,
-      type: property.type,
+      synthetic: true,
+      syntheticType: property.type,
       flags: property.optional === true ? SymbolFlags.Optional : 0,
       declarations: [],
     };
@@ -382,8 +395,8 @@ export function getRegularTypeOfObjectLiteral(type: Type, state: CheckState): Ty
   const wasFresh = (((type.data as ObjectType | undefined)?.objectFlags ?? 0) & ObjectFlags.FreshLiteral) !== 0;
   const regularized = [...members.values()].map((member) => ({
     name: member.name,
-    regular: getRegularTypeOfObjectLiteral(member.type, state),
-    original: member.type,
+    regular: getRegularTypeOfObjectLiteral(member.syntheticType, state),
+    original: member.syntheticType,
     optional: (member.flags & SymbolFlags.Optional) !== 0,
   }));
   if (!wasFresh && regularized.every((property) => property.regular === property.original)) {
@@ -980,22 +993,164 @@ export function checkAssignable(actual: Type, expected: Type, state: CheckState)
   }
 }
 
-export function setBindingNameType(name: BindingName, type: Type, environment: TypeEnvironment): void {
-  if (isIdentifier(name)) {
-    environment.set(name.text, type);
-    return;
-  }
-  if (isObjectBindingPattern(name) || isArrayBindingPattern(name)) {
-    for (const element of name.elements) {
-      setBindingElementType(element, type, environment);
-    }
-  }
+// ---------------------------------------------------------------------------
+// Value/module/export name resolution via the BINDER symbol graph (M5a).
+//
+// The checker no longer carries its own value scope (the `new Map(environment)`
+// clones + setBindingNameType are gone): the binder already built the lexical
+// scopes (container.locals), the module export surface (sourceFile.symbol.
+// exports), and the member tables (symbol.members). An identifier in value
+// position resolves through NameResolver.resolve walking those tables up the
+// parent chain (mirrors checker.go getResolvedSymbol → resolveName), then its
+// type comes from getTypeOfSymbol's flag-dispatch.
+// ---------------------------------------------------------------------------
+
+// The single shared NameResolver (mirrors the checker's one resolver). Its
+// hooks are checker-side concerns; M5a only needs getSymbolOfDeclaration +
+// no-op error/arguments (diagnostics for unresolved names are emitted by the
+// caller, matching checker.go where resolveName returns undefined and the
+// caller reports Cannot_find_name).
+const sharedNameResolver = new NameResolver(
+  {
+    argumentsSymbol: () => ({ name: "arguments", declarations: [] }),
+    error: () => { /* the checker caller emits the unresolved-name diagnostic */ },
+    getSymbolOfDeclaration: (node) => nodeSymbol(node),
+  },
+  {},
+);
+
+// getResolvedSymbol (checker.go:14036) — resolve an identifier in VALUE position
+// to its binder symbol. Value meaning admits an Alias (an imported/exported
+// binding used as a value resolves through its alias symbol).
+export function getResolvedSymbol(identifierText: string, location: AstNode): AstSymbol | undefined {
+  return sharedNameResolver.resolve(location, identifierText, SymbolFlags.Value | SymbolFlags.Alias, undefined, true, false);
 }
 
-export function setBindingElementType(element: BindingElement, type: Type, environment: TypeEnvironment): void {
-  if (element.name !== undefined) {
-    setBindingNameType(element.name, type, environment);
+// Initializer inference is injected by checker.expressions.ts (which owns
+// inferExpression) to avoid a checkedtype → expressions import cycle at module
+// load; the runtime call cycle is fine (ESM supports it).
+let inferInitializerType: ((initializer: Expression, state: CheckState, contextualType?: Type) => Type) | undefined;
+
+export function setInitializerInferrer(inferrer: (initializer: Expression, state: CheckState, contextualType?: Type) => Type): void {
+  inferInitializerType = inferrer;
+}
+
+// getTypeOfSymbol flag-dispatch for BINDER symbols (checker.go:16099). Registered
+// per-check via wireBinderSymbolResolution so the resolver hook (called from the
+// state-free getTypeOfSymbol) sees the current CheckState.
+export function wireBinderSymbolResolution(state: CheckState): void {
+  setBinderSymbolTypeResolver((symbol) => getTypeOfBinderSymbol(symbol, state));
+}
+
+function getTypeOfBinderSymbol(symbol: AstSymbol, state: CheckState): Type | undefined {
+  const flags = symbol.flags ?? 0;
+  if ((flags & (SymbolFlags.Variable | SymbolFlags.Property)) !== 0) {
+    return getTypeOfVariableOrParameterOrProperty(symbol, state);
   }
+  if ((flags & (SymbolFlags.Function | SymbolFlags.Class | SymbolFlags.Enum | SymbolFlags.Module)) !== 0) {
+    return getTypeOfFuncClassEnumModule(symbol, state);
+  }
+  if ((flags & SymbolFlags.Alias) !== 0) {
+    return getTypeOfAlias(symbol, state);
+  }
+  // ExportValue locals carry no value type of their own — the value lives on the
+  // linked export symbol (local.exportSymbol). An in-file reference resolves to
+  // the value declaration via locals before reaching here, so this path is the
+  // export-surface read: follow the link.
+  if ((flags & SymbolFlags.ExportValue) !== 0 && symbol.exportSymbol !== undefined) {
+    return getTypeOfBinderSymbol(symbol.exportSymbol, state);
+  }
+  return undefined;
+}
+
+// getTypeOfVariableOrParameterOrProperty (checker.go) — the declared annotation
+// when present, else the inferred initializer type (widened per const/let, as in
+// getWidenedTypeForVariableLikeDeclaration). Destructuring binding-element types
+// are deferred to a later slice (no annotation → falls back to the initializer /
+// error type), matching the previous setBindingNameType pattern-binding behavior.
+function getTypeOfVariableOrParameterOrProperty(symbol: AstSymbol, state: CheckState): Type | undefined {
+  const declaration = symbol.valueDeclaration;
+  if (declaration === undefined) return undefined;
+  if (isVariableDeclaration(declaration) || isParameterDeclaration(declaration) || isPropertyDeclaration(declaration)) {
+    if (declaration.type !== undefined) {
+      return typeFromTypeNode(declaration.type, state);
+    }
+    if (declaration.initializer !== undefined && inferInitializerType !== undefined) {
+      const initializerType = inferInitializerType(declaration.initializer, state);
+      return isVariableDeclaration(declaration)
+        ? widenedVariableType(initializerType, declaration, state)
+        : getWidenedType(initializerType, state);
+    }
+    // A parameter with neither annotation nor initializer is an implicit-any
+    // position the checker does not yet model precisely — the error type keeps
+    // it from cascading (matching the prior unresolvedType binding).
+    return isParameterDeclaration(declaration) ? unresolvedType : anyType;
+  }
+  // A destructured binding element resolves through its annotated parent for now
+  // (pattern element typing is a later slice). The prior model bound the whole
+  // pattern's type to each name; return that so a `{ value }: T` parameter still
+  // resolves `value`.
+  if (isBindingElement(declaration)) {
+    return getTypeOfDestructuredBindingElement(declaration, state);
+  }
+  return undefined;
+}
+
+// `const` preserves a primitive-literal initializer; `let`/`var` widen it
+// (getWidenedTypeForVariableLikeDeclaration widens only non-const block-scoped
+// declarations). The stored type also drops object-literal freshness.
+function widenedVariableType(initializerType: Type, declaration: AstNode, state: CheckState): Type {
+  const declarationList = nodeParent(declaration);
+  const isConst = declarationList !== undefined && ((declarationList.flags ?? 0) & NodeFlags.Const) !== 0;
+  const literalAdjusted = isConst
+    ? getRegularTypeOfLiteralType(initializerType, state)
+    : getWidenedType(initializerType, state);
+  return getRegularTypeOfObjectLiteral(literalAdjusted, state);
+}
+
+// A binding-element name (`const { value } = …` / `function f({ value }: T)`)
+// resolves through the pattern's annotated parent declaration. Element-wise
+// destructured typing is a later slice; the whole-pattern type is returned (the
+// behavior the prior setBindingNameType pattern-binding produced).
+function getTypeOfDestructuredBindingElement(element: BindingElement, state: CheckState): Type | undefined {
+  let node: AstNode | undefined = nodeParent(element);
+  while (node !== undefined) {
+    if (isParameterDeclaration(node) || isVariableDeclaration(node)) {
+      if (node.type !== undefined) return typeFromTypeNode(node.type, state);
+      if (node.initializer !== undefined && inferInitializerType !== undefined) {
+        return getWidenedType(inferInitializerType(node.initializer, state), state);
+      }
+      return isParameterDeclaration(node) ? unresolvedType : anyType;
+    }
+    node = nodeParent(node);
+  }
+  return undefined;
+}
+
+// getTypeOfFuncClassEnumModule (checker.go) — a function/class/enum/module symbol
+// used as a value. Function symbols are callable; classes/enums/modules are
+// object-like value namespaces. Full class-instance/static + enum-member typing
+// is a later slice, so these resolve to `any` value placeholders (NOT the error
+// type — a class name IS a known value), with functions kept callable so a
+// direct `f()` call still type-checks.
+function getTypeOfFuncClassEnumModule(symbol: AstSymbol, state: CheckState): Type | undefined {
+  const flags = symbol.flags ?? 0;
+  if ((flags & SymbolFlags.Function) !== 0) {
+    // The function's declared signature drives its callable value type. Parameter
+    // + return typing of the declaration is a later slice; a placeholder callable
+    // keeps `f(...)` calls flowing without false arity errors.
+    return makeFunctionType(anyType, state, [{ name: "args", type: anyType, rest: true }]);
+  }
+  void state;
+  return anyType;
+}
+
+// getTypeOfAlias (checker.go) — an import/export alias. Cross-file alias-target
+// typing is a later slice; M5a takes the symbol-flag path and resolves the alias
+// to `any` (a known imported value of unknown-yet type), NOT the error type.
+function getTypeOfAlias(symbol: AstSymbol, state: CheckState): Type | undefined {
+  void symbol; void state;
+  return anyType;
 }
 
 // The declared index parameter name (`[key: string]`) for display, falling back
@@ -1037,7 +1192,7 @@ export function displayType(type: Type): string {
   if ((type.flags & TypeFlags.Object) !== 0) {
     const members = objectTypeMembers(type);
     if (members !== undefined) {
-      const entries = [...members.values()].map((m) => `${m.name}: ${displayType(m.type)}`);
+      const entries = [...members.values()].map((m) => `${m.name}: ${displayType(m.syntheticType)}`);
       const indexEntries = (getIndexInfos(type) ?? []).map(
         (info) => `[${indexSignatureParameterName(info)}: ${displayType(info.keyType)}]: ${displayType(info.valueType)}`,
       );

@@ -34,7 +34,6 @@ import {
 import {
   type Type,
   type CheckState,
-  type TypeEnvironment,
   anyType,
   booleanType,
   numberType,
@@ -78,23 +77,24 @@ import {
   getWidenedType,
   checkAssignable,
   displayType,
-  setBindingNameType,
   typeFromTypeNode,
+  getResolvedSymbol,
+  setInitializerInferrer,
 } from "./checker.checkedtype.js";
 import { checkBlock } from "./checker.statements.js";
 
 // Infer an object-literal property value, contextually typed by the matching
 // target property when present (preserving primitive literals the target asks
 // for), otherwise widening it.
-function contextualPropertyType(valueExpression: Expression, name: string, contextualType: Type | undefined, state: CheckState, environment: TypeEnvironment): Type {
+function contextualPropertyType(valueExpression: Expression, name: string, contextualType: Type | undefined, state: CheckState): Type {
   const contextualProperty = contextualType === undefined ? undefined : getPropertyTypeOfType(contextualType, name);
-  const valueType = inferExpression(valueExpression, state, environment, contextualProperty);
+  const valueType = inferExpression(valueExpression, state, contextualProperty);
   return contextualProperty === undefined
     ? getWidenedType(valueType, state)
     : getWidenedLiteralLikeTypeForContextualType(valueType, contextualProperty, state);
 }
 
-export function inferExpression(expression: Expression, state: CheckState, environment: TypeEnvironment, contextualType?: Type): Type {
+export function inferExpression(expression: Expression, state: CheckState, contextualType?: Type): Type {
   // String / number / bigint / true / false / null literals — shared with
   // literal type-node resolution via literalTypeFromLiteralExpression (so the
   // two paths can't drift). Keyword literals (`true`/`false`/`null`) are matched
@@ -104,9 +104,16 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     return literalType;
   }
   if (isIdentifier(expression)) {
-    const bound = environment.get(expression.text);
-    if (bound !== undefined) {
-      return bound;
+    // VALUE-name resolution via the binder symbol graph (M5a): resolve the
+    // identifier to its binder symbol (lexical local / parameter / module alias /
+    // exported value, walking container.locals + symbol.exports/.members + the
+    // parent chain), then read its type via getTypeOfSymbol's flag-dispatch.
+    const symbol = getResolvedSymbol(expression.text, expression);
+    if (symbol !== undefined) {
+      const symbolType = getTypeOfSymbol(symbol);
+      if (symbolType !== undefined) {
+        return symbolType;
+      }
     }
     // `undefined` is the global undefined value (TS-Go resolves it to the
     // undefinedSymbol of type undefined). TSTS has no global symbol table yet,
@@ -117,10 +124,10 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     return unresolvedType;
   }
   if (isParenthesizedExpression(expression)) {
-    return inferExpression(expression.expression, state, environment);
+    return inferExpression(expression.expression, state);
   }
   if (isPrefixUnaryExpression(expression)) {
-    inferExpression(expression.operand, state, environment);
+    inferExpression(expression.operand, state);
     if (expression.operator === Kind.ExclamationToken) {
       return booleanType;
     }
@@ -133,14 +140,14 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     return numberType;
   }
   if (isPostfixUnaryExpression(expression)) {
-    inferExpression(expression.operand, state, environment);
+    inferExpression(expression.operand, state);
     return numberType;
   }
   if (isSpreadElement(expression)) {
-    return inferExpression(expression.expression, state, environment);
+    return inferExpression(expression.expression, state);
   }
   if (isAsExpression(expression)) {
-    inferExpression(expression.expression, state, environment);
+    inferExpression(expression.expression, state);
     return typeFromTypeNode(expression.type, state);
   }
   if (isSatisfiesExpression(expression)) {
@@ -149,14 +156,14 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     // to T (mirrors TS-Go checkSatisfiesExpression: assignability is verified,
     // the expression type flows through unchanged).
     const targetType = typeFromTypeNode(expression.type, state);
-    const exprType = inferExpression(expression.expression, state, environment, targetType);
+    const exprType = inferExpression(expression.expression, state, targetType);
     checkAssignable(exprType, targetType, state);
     return exprType;
   }
   if (isConditionalExpression(expression)) {
-    inferExpression(expression.condition, state, environment);
-    const whenTrue = inferExpression(expression.whenTrue, state, environment);
-    const whenFalse = inferExpression(expression.whenFalse, state, environment);
+    inferExpression(expression.condition, state);
+    const whenTrue = inferExpression(expression.whenTrue, state);
+    const whenFalse = inferExpression(expression.whenFalse, state);
     if (isAnyType(whenTrue) || isAnyType(whenFalse)) {
       return anyType;
     }
@@ -166,11 +173,11 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     return getUnionTypeEx([whenTrue, whenFalse], UnionReduction.Subtype, state);
   }
   if (isArrowFunction(expression)) {
-    return inferArrowFunction(expression, state, environment);
+    return inferArrowFunction(expression, state);
   }
   if (isBinaryExpression(expression)) {
-    const left = inferExpression(expression.left, state, environment);
-    const right = inferExpression(expression.right, state, environment);
+    const left = inferExpression(expression.left, state);
+    const right = inferExpression(expression.right, state);
     // Operand kind is determined from the apparent type so primitive literals
     // (e.g. `1 + 2`) classify as their base primitive.
     const leftApparent = getApparentType(left);
@@ -221,9 +228,9 @@ export function inferExpression(expression: Expression, state: CheckState, envir
       // `{ port: 8080 }` preserves the literal); otherwise its primitive-literal
       // type widens (`{ port: 8080 }` alone has property `port: number`).
       if (isPropertyAssignment(property) && isIdentifier(property.name)) {
-        properties.push({ name: property.name.text, type: contextualPropertyType(property.initializer, property.name.text, contextualType, state, environment) });
+        properties.push({ name: property.name.text, type: contextualPropertyType(property.initializer, property.name.text, contextualType, state) });
       } else if (isShorthandPropertyAssignment(property) && isIdentifier(property.name)) {
-        properties.push({ name: property.name.text, type: contextualPropertyType(property.name, property.name.text, contextualType, state, environment) });
+        properties.push({ name: property.name.text, type: contextualPropertyType(property.name, property.name.text, contextualType, state) });
       } else {
         state.diagnostics.push({ message: `Object member kind '${Kind[property.kind]}' is not yet supported by the checker.` });
       }
@@ -239,7 +246,7 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     const contextualElement = contextualType === undefined ? undefined : getArrayElementType(contextualType);
     const elementTypes = expression.elements.flatMap((element) => {
       if (isSpreadElement(element)) {
-        const spreadType = inferExpression(element.expression, state, environment, contextualType);
+        const spreadType = inferExpression(element.expression, state, contextualType);
         const spreadElement = getArrayElementType(spreadType);
         if (spreadElement !== undefined) {
           return [spreadElement];
@@ -247,18 +254,18 @@ export function inferExpression(expression: Expression, state: CheckState, envir
         state.diagnostics.push({ message: "Array spread of a non-array value is not yet supported by the checker." });
         return [];
       }
-      const valueType = inferExpression(element, state, environment, contextualElement);
+      const valueType = inferExpression(element, state, contextualElement);
       return [contextualElement === undefined ? getWidenedType(valueType, state) : getWidenedLiteralLikeTypeForContextualType(valueType, contextualElement, state)];
     });
     const elementType = elementTypes.length === 0 ? (contextualElement ?? neverType) : getUnionType(elementTypes, state);
     return makeArrayType(elementType, state);
   }
   if (isPropertyAccessExpression(expression)) {
-    return inferPropertyAccess(expression.expression, expression.name.text, state, environment);
+    return inferPropertyAccess(expression.expression, expression.name.text, state);
   }
   if (isElementAccessExpression(expression)) {
-    const receiverType = inferExpression(expression.expression, state, environment);
-    const indexType = inferExpression(expression.argumentExpression, state, environment);
+    const receiverType = inferExpression(expression.expression, state);
+    const indexType = inferExpression(expression.argumentExpression, state);
     const elementType = getArrayElementType(receiverType);
     if (elementType !== undefined) {
       // Numeric element access only; non-numeric indexes (e.g. `xs["bad"]`,
@@ -292,7 +299,7 @@ export function inferExpression(expression: Expression, state: CheckState, envir
     return unresolvedType;
   }
   if (isCallExpression(expression)) {
-    const calleeType = inferExpression(expression.expression, state, environment);
+    const calleeType = inferExpression(expression.expression, state);
     // Check each argument against the call signature's parameter type
     // (positionally; rest/overload resolution is not modeled yet).
     const signature = getCallSignature(calleeType);
@@ -309,7 +316,7 @@ export function inferExpression(expression: Expression, state: CheckState, envir
       const parameter = parameters[index];
       return parameter === undefined ? undefined : getTypeOfSymbol(parameter);
     };
-    const argumentTypes = expression.arguments.map((argument, index) => inferExpression(argument, state, environment, contextualParameterType(index)));
+    const argumentTypes = expression.arguments.map((argument, index) => inferExpression(argument, state, contextualParameterType(index)));
     if (signature !== undefined) {
       const maxArguments = hasRest ? Number.POSITIVE_INFINITY : parameters.length;
       if (argumentTypes.length < signature.minArgumentCount || argumentTypes.length > maxArguments) {
@@ -350,13 +357,12 @@ export function inferExpression(expression: Expression, state: CheckState, envir
   return unresolvedType;
 }
 
-export function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState, environment: TypeEnvironment): Type {
-  const arrowEnvironment = new Map(environment);
-  for (const parameter of arrowFunction.parameters) {
-    setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type, state), arrowEnvironment);
-  }
+export function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState): Type {
+  // The arrow's parameters were bound into its own `locals` by the binder; a
+  // reference inside the body resolves through them (no checker-side parameter
+  // environment). The checker only infers the body + assembles the function type.
   const declaredReturnType = arrowFunction.type === undefined ? undefined : typeFromTypeNode(arrowFunction.type, state);
-  const inferredReturnType = inferConciseBody(arrowFunction.body, state, arrowEnvironment, declaredReturnType);
+  const inferredReturnType = inferConciseBody(arrowFunction.body, state, declaredReturnType);
   const parameters: FunctionParameter[] = arrowFunction.parameters
     .filter((parameter) => isIdentifier(parameter.name))
     .map((parameter) => ({
@@ -368,12 +374,12 @@ export function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckSta
   return makeFunctionType(declaredReturnType ?? inferredReturnType, state, parameters);
 }
 
-export function inferConciseBody(body: ConciseBody, state: CheckState, environment: TypeEnvironment, expectedReturnType: Type | undefined): Type {
+export function inferConciseBody(body: ConciseBody, state: CheckState, expectedReturnType: Type | undefined): Type {
   if (isBlock(body)) {
-    checkBlock(body, state, environment, expectedReturnType);
+    checkBlock(body, state, expectedReturnType);
     return expectedReturnType ?? unresolvedType;
   }
-  const bodyType = inferExpression(body, state, environment);
+  const bodyType = inferExpression(body, state);
   if (expectedReturnType !== undefined) {
     checkAssignable(getWidenedLiteralLikeTypeForContextualType(bodyType, expectedReturnType, state), expectedReturnType, state);
   }
@@ -385,8 +391,8 @@ export function inferConciseBody(body: ConciseBody, state: CheckState, environme
 // `any`) rather than enforcing arity. Real declared signatures still enforce it.
 const placeholderRestParameters: readonly FunctionParameter[] = [{ name: "args", type: anyType, rest: true }];
 
-export function inferPropertyAccess(expression: Expression, propertyName: string, state: CheckState, environment: TypeEnvironment): Type {
-  const receiverType = getApparentType(inferExpression(expression, state, environment));
+export function inferPropertyAccess(expression: Expression, propertyName: string, state: CheckState): Type {
+  const receiverType = getApparentType(inferExpression(expression, state));
   if (isNumberType(receiverType) && propertyName === "toFixed") {
     return makeFunctionType(stringType, state, placeholderRestParameters);
   }
@@ -416,6 +422,12 @@ export function inferPropertyAccess(expression: Expression, propertyName: string
   }
   return anyType;
 }
+
+// Wire the initializer inferrer used by getTypeOfVariableOrParameterOrProperty
+// (in checker.checkedtype.ts) to infer an un-annotated declaration's type from
+// its initializer. Registered at module load; the runtime call cycle
+// (checkedtype → inferExpression → checkedtype) is ESM-safe.
+setInitializerInferrer(inferExpression);
 
 const stringMethodReturnTypes = new Map<string, Type>([
   ["endsWith", booleanType],

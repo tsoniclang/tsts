@@ -8,7 +8,6 @@
 
 import {
   Kind,
-  NodeFlags,
   isBlock,
   isBreakStatement,
   isClassDeclaration,
@@ -26,21 +25,16 @@ import {
   isVariableDeclarationList,
   isWhileStatement,
   type Block,
+  type Expression,
   type Statement,
-  type VariableDeclarationList,
+  type TypeNode,
 } from "../ast/index.js";
 import {
   type Type,
   type CheckState,
-  type TypeEnvironment,
-  unresolvedType,
   voidType,
   checkAssignable,
-  getWidenedType,
   getWidenedLiteralLikeTypeForContextualType,
-  getRegularTypeOfLiteralType,
-  getRegularTypeOfObjectLiteral,
-  setBindingNameType,
   typeFromTypeNode,
   enterLocalAliasScope,
   exitLocalAliasScope,
@@ -48,132 +42,119 @@ import {
 import { inferExpression } from "./checker.expressions.js";
 import { checkClassDeclaration, checkFunctionDeclaration } from "./checker.declarations.js";
 
-// Inferred (no-annotation) binding type: `const` preserves the initializer's
-// literal type, `let`/`var` widen it — mirrors TS-Go
-// getWidenedTypeForVariableLikeDeclaration, which widens only for non-const
-// block-scoped declarations. Explicit annotations bypass this (handled by the
-// caller's `declaredType ?? ...`).
-function inferredBindingType(initializerType: Type, declarationList: VariableDeclarationList, state: CheckState): Type {
-  const literalAdjusted = (declarationList.flags & NodeFlags.Const) !== 0
-    ? getRegularTypeOfLiteralType(initializerType, state)
-    : getWidenedType(initializerType, state);
-  // The stored type drops object-literal freshness (excess only applies to a
-  // direct fresh literal at the assignment site, not to a stored variable).
-  return getRegularTypeOfObjectLiteral(literalAdjusted, state);
-}
-
-export function checkStatements(statements: readonly Statement[], state: CheckState, environment: TypeEnvironment, expectedReturnType: Type | undefined): void {
+export function checkStatements(statements: readonly Statement[], state: CheckState, expectedReturnType: Type | undefined): void {
   for (const statement of statements) {
-    checkStatement(statement, state, environment, expectedReturnType);
+    checkStatement(statement, state, expectedReturnType);
   }
 }
 
-export function checkStatement(statement: Statement, state: CheckState, environment: TypeEnvironment, expectedReturnType: Type | undefined): void {
+export function checkStatement(statement: Statement, state: CheckState, expectedReturnType: Type | undefined): void {
   if (isVariableStatement(statement)) {
+    // The binder already declared each name into its lexical scope; the var's
+    // stored type is computed lazily (getTypeOfVariableOrParameterOrProperty).
+    // The checker only validates an annotated initializer here.
     for (const declaration of statement.declarationList.declarations) {
-      const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type, state);
-      const initializerType = declaration.initializer === undefined ? undefined : inferExpression(declaration.initializer, state, environment, declaredType);
-      if (declaredType !== undefined && initializerType !== undefined) {
-        checkAssignable(getWidenedLiteralLikeTypeForContextualType(initializerType, declaredType, state), declaredType, state);
-      }
-      const boundType = declaredType ?? (initializerType !== undefined ? inferredBindingType(initializerType, statement.declarationList, state) : unresolvedType);
-      setBindingNameType(declaration.name, boundType, environment);
+      checkVariableDeclaration(declaration.type, declaration.initializer, state);
     }
     return;
   }
   if (isFunctionDeclaration(statement)) {
-    checkFunctionDeclaration(statement, state, environment);
+    checkFunctionDeclaration(statement, state);
     return;
   }
   if (isClassDeclaration(statement)) {
-    checkClassDeclaration(statement, state, environment);
+    checkClassDeclaration(statement, state);
     return;
   }
   if (isIfStatement(statement)) {
-    inferExpression(statement.expression, state, environment);
-    checkStatement(statement.thenStatement, state, new Map(environment), expectedReturnType);
+    inferExpression(statement.expression, state);
+    checkStatement(statement.thenStatement, state, expectedReturnType);
     if (statement.elseStatement !== undefined) {
-      checkStatement(statement.elseStatement, state, new Map(environment), expectedReturnType);
+      checkStatement(statement.elseStatement, state, expectedReturnType);
     }
     return;
   }
   if (isWhileStatement(statement)) {
-    inferExpression(statement.expression, state, environment);
-    checkStatement(statement.statement, state, new Map(environment), expectedReturnType);
+    inferExpression(statement.expression, state);
+    checkStatement(statement.statement, state, expectedReturnType);
     return;
   }
   if (isDoStatement(statement)) {
-    checkStatement(statement.statement, state, new Map(environment), expectedReturnType);
-    inferExpression(statement.expression, state, environment);
+    checkStatement(statement.statement, state, expectedReturnType);
+    inferExpression(statement.expression, state);
     return;
   }
   if (isForStatement(statement)) {
-    const loopEnvironment = new Map(environment);
     if (statement.initializer !== undefined) {
-      checkForInitializer(statement.initializer, state, loopEnvironment);
+      checkForInitializer(statement.initializer, state);
     }
     if (statement.condition !== undefined) {
-      inferExpression(statement.condition, state, loopEnvironment);
+      inferExpression(statement.condition, state);
     }
     if (statement.incrementor !== undefined) {
-      inferExpression(statement.incrementor, state, loopEnvironment);
+      inferExpression(statement.incrementor, state);
     }
-    checkStatement(statement.statement, state, loopEnvironment, expectedReturnType);
+    checkStatement(statement.statement, state, expectedReturnType);
     return;
   }
   if (isForInStatement(statement) || isForOfStatement(statement)) {
-    const loopEnvironment = new Map(environment);
-    checkForInitializer(statement.initializer, state, loopEnvironment);
-    inferExpression(statement.expression, state, loopEnvironment);
-    checkStatement(statement.statement, state, loopEnvironment, expectedReturnType);
+    checkForInitializer(statement.initializer, state);
+    inferExpression(statement.expression, state);
+    checkStatement(statement.statement, state, expectedReturnType);
     return;
   }
   if (isBreakStatement(statement) || isContinueStatement(statement)) {
     return;
   }
   if (isReturnStatement(statement)) {
-    const actual = statement.expression === undefined ? voidType : inferExpression(statement.expression, state, environment, expectedReturnType);
+    const actual = statement.expression === undefined ? voidType : inferExpression(statement.expression, state, expectedReturnType);
     if (expectedReturnType !== undefined) {
       checkAssignable(getWidenedLiteralLikeTypeForContextualType(actual, expectedReturnType, state), expectedReturnType, state);
     }
     return;
   }
   if (isExpressionStatement(statement)) {
-    inferExpression(statement.expression, state, environment);
+    inferExpression(statement.expression, state);
     return;
   }
   if (isBlock(statement)) {
-    checkBlock(statement, state, environment, expectedReturnType);
+    checkBlock(statement, state, expectedReturnType);
   }
 }
 
-export function checkForInitializer(initializer: Extract<Statement, { readonly kind: Kind.ForStatement }>["initializer"] | Extract<Statement, { readonly kind: Kind.ForInStatement }>["initializer"], state: CheckState, environment: TypeEnvironment): void {
+// Validate a variable declaration's annotated initializer
+// (checkVariableLikeDeclaration's initializer assignability check). The bound
+// name's stored type is no longer set here — it is derived on demand from the
+// binder symbol via getTypeOfVariableOrParameterOrProperty.
+function checkVariableDeclaration(typeNode: TypeNode | undefined, initializer: Expression | undefined, state: CheckState): void {
+  const declaredType = typeNode === undefined ? undefined : typeFromTypeNode(typeNode, state);
+  const initializerType = initializer === undefined ? undefined : inferExpression(initializer, state, declaredType);
+  if (declaredType !== undefined && initializerType !== undefined) {
+    checkAssignable(getWidenedLiteralLikeTypeForContextualType(initializerType, declaredType, state), declaredType, state);
+  }
+}
+
+export function checkForInitializer(initializer: Extract<Statement, { readonly kind: Kind.ForStatement }>["initializer"] | Extract<Statement, { readonly kind: Kind.ForInStatement }>["initializer"], state: CheckState): void {
   if (initializer === undefined) {
     return;
   }
   if (isVariableDeclarationList(initializer)) {
     for (const declaration of initializer.declarations) {
-      const declaredType = declaration.type === undefined ? undefined : typeFromTypeNode(declaration.type, state);
-      const initializerType = declaration.initializer === undefined ? undefined : inferExpression(declaration.initializer, state, environment, declaredType);
-      if (declaredType !== undefined && initializerType !== undefined) {
-        checkAssignable(getWidenedLiteralLikeTypeForContextualType(initializerType, declaredType, state), declaredType, state);
-      }
-      const boundType = declaredType ?? (initializerType !== undefined ? inferredBindingType(initializerType, initializer, state) : unresolvedType);
-      setBindingNameType(declaration.name, boundType, environment);
+      checkVariableDeclaration(declaration.type, declaration.initializer, state);
     }
     return;
   }
   if (isMissingDeclaration(initializer)) {
     return;
   }
-  inferExpression(initializer, state, environment);
+  inferExpression(initializer, state);
 }
 
-export function checkBlock(block: Block, state: CheckState, environment: TypeEnvironment, expectedReturnType: Type | undefined): void {
+export function checkBlock(block: Block, state: CheckState, expectedReturnType: Type | undefined): void {
   // Block-local `type` aliases shadow outer aliases within this block (their
   // full lexical scoping is deferred); register before checking so forward
   // references inside the block are shadowed too.
   const shadowed = enterLocalAliasScope(block.statements, state);
-  checkStatements(block.statements, state, new Map(environment), expectedReturnType);
+  checkStatements(block.statements, state, expectedReturnType);
   exitLocalAliasScope(shadowed, state);
 }

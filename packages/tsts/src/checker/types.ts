@@ -660,15 +660,56 @@ export interface TypeMapper {
 }
 
 // ---------------------------------------------------------------------------
-// Symbol-type access layer. Property types are stored on synthetic property
-// symbols (the structural relater's backing field). All property-type reads —
-// in the checker AND the relater — route through these accessors so the
-// shortcut can later be swapped for a TS-Go-style symbol-links implementation
-// without touching every caller.
+// Symbol-type access layer. Two PROVENANCES flow through getTypeOfSymbol:
+//
+//   1. CHECKER-CREATED synthetic property / parameter symbols (built by
+//      makeObjectType / makeCallSignature) carry their type directly on a typed
+//      `syntheticType` field marked by `synthetic: true`. The structural relater
+//      only ever inspects these synthetic property symbols, so its
+//      getTypeOfSymbol read resolves straight to the carried type. This is the
+//      relater's backing field — it stays, but PROVENANCE-SPECIFIC (gated on the
+//      synthetic marker, NOT a general "if a type field exists" fallback).
+//
+//   2. BINDER-CREATED symbols (variables, parameters, properties, functions,
+//      classes, enums, modules, import/export aliases) have NO synthetic marker;
+//      their type is computed by tsgo's getTypeOfSymbol flag-dispatch
+//      (checker.go:16099). That dispatch needs typeFromTypeNode + initializer
+//      inference, which live above types.ts in the import graph, so it is
+//      injected as a resolver hook (set once at checker module init). This keeps
+//      types.ts at the base of the import graph (no cycle) while making
+//      getTypeOfSymbol the single symbol-type entry for both provenances.
 // ---------------------------------------------------------------------------
 
+// A checker-created symbol carrying its type directly (the synthetic backing
+// field). `synthetic: true` is the provenance discriminant — a binder symbol
+// never sets it, so it never masks a binder symbol's flag-dispatch.
+export interface SyntheticTypeSymbol {
+  synthetic: true;
+  syntheticType: Type;
+}
+
+function asSyntheticTypeSymbol(symbol: AstSymbol): SyntheticTypeSymbol | undefined {
+  const candidate = symbol as Partial<SyntheticTypeSymbol>;
+  return candidate.synthetic === true && candidate.syntheticType !== undefined
+    ? { synthetic: true, syntheticType: candidate.syntheticType }
+    : undefined;
+}
+
+// The flag-dispatch for BINDER symbols, injected by the checker (avoids a
+// types.ts → checkedtype.ts import cycle).
+let binderSymbolTypeResolver: ((symbol: AstSymbol) => Type | undefined) | undefined;
+
+export function setBinderSymbolTypeResolver(resolver: (symbol: AstSymbol) => Type | undefined): void {
+  binderSymbolTypeResolver = resolver;
+}
+
 export function getTypeOfSymbol(symbol: AstSymbol | undefined): Type | undefined {
-  return (symbol as unknown as { readonly type?: Type } | undefined)?.type;
+  if (symbol === undefined) return undefined;
+  // Provenance 1: a checker-created synthetic symbol returns its carried type.
+  const synthetic = asSyntheticTypeSymbol(symbol);
+  if (synthetic !== undefined) return synthetic.syntheticType;
+  // Provenance 2: a binder symbol goes through the flag-dispatch.
+  return binderSymbolTypeResolver?.(symbol);
 }
 
 export function getPropertySymbolOfType(type: Type, name: string): AstSymbol | undefined {
