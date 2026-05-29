@@ -18,12 +18,21 @@ import {
   isAsExpression,
   isAwaitExpression,
   isBinaryExpression,
+  isBlock,
   isCallExpression,
+  isCaseBlock,
+  isCaseClause,
+  isCatchClause,
   isConditionalExpression,
   isElementAccessExpression,
+  isExportDeclaration,
   isExpressionStatement,
+  isForStatement,
   isIdentifier,
+  isIfStatement,
+  isImportDeclaration,
   isLiteralTypeNode,
+  isNamedExports,
   isNonNullExpression,
   isNumericLiteral,
   isObjectLiteralExpression,
@@ -31,12 +40,19 @@ import {
   isPostfixUnaryExpression,
   isPrefixUnaryExpression,
   isPropertyAccessExpression,
+  isReturnStatement,
   isSatisfiesExpression,
   isSpreadElement,
   isStringLiteral,
+  isSwitchStatement,
   isTemplateExpression,
+  isTryStatement,
   isTypeAliasDeclaration,
   isTypeOfExpression,
+  isVariableDeclaration,
+  isVariableDeclarationList,
+  isVariableStatement,
+  isWhileStatement,
 } from "../ast/index.js";
 import { parseSourceFile } from "./index.js";
 
@@ -418,6 +434,160 @@ export class ParserPositionTests {
     Assert.Equal(10, operand.pos);
     Assert.Equal(11, operand.end);
   }
+
+  // Stage 1c: `if(x){}` -> IfStatement spans [0,7); start at the `if` keyword, end
+  // covering the empty then-block. The then-block `{}` spans [5,7).
+  if_statement_spans_whole_range_from_keyword(): void {
+    const sourceFile = parseSourceFile("if(x){}");
+    const statement = sourceFile.statements[0]!;
+    if (!isIfStatement(statement)) throw new Exception("Expected if statement");
+
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(7, statement.end);
+    const thenStatement = statement.thenStatement;
+    if (!isBlock(thenStatement)) throw new Exception("Expected then block");
+    Assert.Equal(5, thenStatement.pos);
+    Assert.Equal(7, thenStatement.end);
+  }
+
+  // Stage 1c: `for(;;){}` -> ForStatement spans [0,9); start at the `for` keyword,
+  // end covering the empty body block.
+  for_statement_spans_whole_range_from_keyword(): void {
+    const sourceFile = parseSourceFile("for(;;){}");
+    const statement = sourceFile.statements[0]!;
+    if (!isForStatement(statement)) throw new Exception("Expected for statement");
+
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(9, statement.end);
+  }
+
+  // Stage 1c: `while(x){}` -> WhileStatement spans [0,10); start at the `while`
+  // keyword, end covering the body block.
+  while_statement_spans_whole_range_from_keyword(): void {
+    const sourceFile = parseSourceFile("while(x){}");
+    const statement = sourceFile.statements[0]!;
+    if (!isWhileStatement(statement)) throw new Exception("Expected while statement");
+
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(10, statement.end);
+  }
+
+  // Stage 1c: `return 1;` -> ReturnStatement spans [0,9); start at the `return`
+  // keyword, end covering the trailing semicolon.
+  return_statement_spans_through_semicolon(): void {
+    const sourceFile = parseSourceFile("return 1;");
+    const statement = sourceFile.statements[0]!;
+    if (!isReturnStatement(statement)) throw new Exception("Expected return statement");
+
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(9, statement.end);
+  }
+
+  // Stage 1c: `{a;}` -> Block spans [0,4); start at the `{`, end covering the `}`.
+  // The inner expression statement `a;` spans [1,3).
+  block_statement_spans_through_closing_brace(): void {
+    const sourceFile = parseSourceFile("{a;}");
+    const statement = sourceFile.statements[0]!;
+    if (!isBlock(statement)) throw new Exception("Expected block statement");
+
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(4, statement.end);
+    const inner = statement.statements[0]!;
+    if (!isExpressionStatement(inner)) throw new Exception("Expected inner expression statement");
+    Assert.Equal(1, inner.pos);
+    Assert.Equal(3, inner.end);
+  }
+
+  // Stage 1c: `const x=1;` -> VariableStatement spans [0,10); the declaration list
+  // (no modifiers) shares the statement start at the `const` keyword and ends at the
+  // initializer (end 9); the declaration `x=1` spans [6,9).
+  variable_statement_and_declaration_ranges(): void {
+    const sourceFile = parseSourceFile("const x=1;");
+    const statement = sourceFile.statements[0]!;
+    if (!isVariableStatement(statement)) throw new Exception("Expected variable statement");
+
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(10, statement.end);
+    const declarationList = statement.declarationList;
+    if (!isVariableDeclarationList(declarationList)) throw new Exception("Expected variable declaration list");
+    Assert.Equal(0, declarationList.pos);
+    Assert.Equal(9, declarationList.end);
+    const declaration = declarationList.declarations[0]!;
+    if (!isVariableDeclaration(declaration)) throw new Exception("Expected variable declaration");
+    Assert.Equal(6, declaration.pos);
+    Assert.Equal(9, declaration.end);
+  }
+
+  // Stage 1c: `try{}catch{}` -> TryStatement spans [0,12); start at the `try`
+  // keyword, end covering the catch block. The catch clause spans [5,12).
+  try_statement_and_catch_clause_ranges(): void {
+    const sourceFile = parseSourceFile("try{}catch{}");
+    const statement = sourceFile.statements[0]!;
+    if (!isTryStatement(statement)) throw new Exception("Expected try statement");
+
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(12, statement.end);
+    const catchClause = statement.catchClause!;
+    if (!isCatchClause(catchClause)) throw new Exception("Expected catch clause");
+    Assert.Equal(5, catchClause.pos);
+    Assert.Equal(12, catchClause.end);
+  }
+
+  // Stage 1c: `switch(x){}` -> SwitchStatement spans [0,11); start at the `switch`
+  // keyword, end covering the empty case block. The case block `{}` spans [9,11).
+  switch_statement_and_case_block_ranges(): void {
+    const sourceFile = parseSourceFile("switch(x){}");
+    const statement = sourceFile.statements[0]!;
+    if (!isSwitchStatement(statement)) throw new Exception("Expected switch statement");
+
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(11, statement.end);
+    const caseBlock = statement.caseBlock;
+    if (!isCaseBlock(caseBlock)) throw new Exception("Expected case block");
+    Assert.Equal(9, caseBlock.pos);
+    Assert.Equal(11, caseBlock.end);
+  }
+
+  // Stage 1c: `switch(x){case 1:break;}` -> the case clause starts at the `case`
+  // keyword (pos 10, after `switch(x){`) and ends after its `break;` statement
+  // (end 23).
+  switch_case_clause_starts_at_case_keyword(): void {
+    const sourceFile = parseSourceFile("switch(x){case 1:break;}");
+    const statement = sourceFile.statements[0]!;
+    if (!isSwitchStatement(statement)) throw new Exception("Expected switch statement");
+    const clause = statement.caseBlock.clauses[0]!;
+    if (!isCaseClause(clause)) throw new Exception("Expected case clause");
+
+    Assert.Equal(10, clause.pos);
+    Assert.Equal(23, clause.end);
+  }
+
+  // Stage 1c: `import a from "m";` -> ImportDeclaration spans [0,18); start at the
+  // `import` keyword, end covering the trailing semicolon.
+  import_declaration_spans_through_semicolon(): void {
+    const sourceFile = parseSourceFile("import a from \"m\";");
+    const statement = sourceFile.statements[0]!;
+    if (!isImportDeclaration(statement)) throw new Exception("Expected import declaration");
+
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(18, statement.end);
+  }
+
+  // Stage 1c: `export {a};` -> ExportDeclaration spans [0,11); start at the `export`
+  // keyword (the #parseStatement-top modifier pos), end covering the semicolon. The
+  // NamedExports clause starts at the `{` (pos 7) and ends at the `}` (end 10).
+  export_declaration_and_named_exports_ranges(): void {
+    const sourceFile = parseSourceFile("export {a};");
+    const statement = sourceFile.statements[0]!;
+    if (!isExportDeclaration(statement)) throw new Exception("Expected export declaration");
+
+    Assert.Equal(0, statement.pos);
+    Assert.Equal(11, statement.end);
+    const exportClause = statement.exportClause!;
+    if (!isNamedExports(exportClause)) throw new Exception("Expected named exports");
+    Assert.Equal(7, exportClause.pos);
+    Assert.Equal(10, exportClause.end);
+  }
 }
 
 A<ParserPositionTests>().method((t) => t.stamps_identifier_leaf_with_token_tight_range).add(FactAttribute);
@@ -446,3 +616,14 @@ A<ParserPositionTests>().method((t) => t.await_expression_starts_at_keyword).add
 A<ParserPositionTests>().method((t) => t.typeof_expression_starts_at_keyword).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.template_expression_spans_whole_range_with_span).add(FactAttribute);
 A<ParserPositionTests>().method((t) => t.negative_literal_prefix_unary_in_type_is_stamped).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.if_statement_spans_whole_range_from_keyword).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.for_statement_spans_whole_range_from_keyword).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.while_statement_spans_whole_range_from_keyword).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.return_statement_spans_through_semicolon).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.block_statement_spans_through_closing_brace).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.variable_statement_and_declaration_ranges).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.try_statement_and_catch_clause_ranges).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.switch_statement_and_case_block_ranges).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.switch_case_clause_starts_at_case_keyword).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.import_declaration_spans_through_semicolon).add(FactAttribute);
+A<ParserPositionTests>().method((t) => t.export_declaration_and_named_exports_ranges).add(FactAttribute);

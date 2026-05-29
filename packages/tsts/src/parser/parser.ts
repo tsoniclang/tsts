@@ -265,32 +265,39 @@ export class Parser {
   }
 
   #parseStatement(): Statement {
+    // tsgo parseDeclaration / parseStatement: capture `pos := p.nodePos()` BEFORE
+    // parseModifiersEx so the statement start covers any leading modifiers (export,
+    // declare, abstract, async, ...). Thread this single pos into every
+    // modifier-carrying production (variable/import/export/class/interface/type-alias/
+    // enum/function/expression statement). Keyword-led statements that reject modifiers
+    // capture their own pos at their #parseX entry instead.
+    const pos = this.#nodePos();
     const modifiers = this.#parseModifiers();
     if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword) && this.#current().kind === Kind.DefaultKeyword) {
       this.#advance();
       const defaultModifiers = createNodeArray([...modifiers, createToken(Kind.DefaultKeyword) as ModifierLike]);
       if (this.#current().kind === Kind.FunctionKeyword) {
-        return this.#parseFunctionDeclaration(defaultModifiers);
+        return this.#parseFunctionDeclaration(pos, defaultModifiers);
       }
       if (this.#current().kind === Kind.ClassKeyword) {
-        return this.#parseClassDeclaration(defaultModifiers);
+        return this.#parseClassDeclaration(pos, defaultModifiers);
       }
       throw new ParseError("Unsupported export default declaration", this.#current());
     }
     switch (this.#current().kind) {
       case Kind.ImportKeyword:
-        return this.#parseImportDeclaration(modifiers);
+        return this.#parseImportDeclaration(pos, modifiers);
       case Kind.ClassKeyword:
-        return this.#parseClassDeclaration(modifiers);
+        return this.#parseClassDeclaration(pos, modifiers);
       case Kind.InterfaceKeyword:
-        return this.#parseInterfaceDeclaration(modifiers);
+        return this.#parseInterfaceDeclaration(pos, modifiers);
       case Kind.TypeKeyword:
         if (this.#isTypeAliasDeclarationStart()) {
-          return this.#parseTypeAliasDeclaration(modifiers);
+          return this.#parseTypeAliasDeclaration(pos, modifiers);
         }
         break;
       case Kind.EnumKeyword:
-        return this.#parseEnumDeclaration(modifiers);
+        return this.#parseEnumDeclaration(pos, modifiers);
       case Kind.IfKeyword:
         if (modifiers !== undefined) {
           throw new ParseError("Modifiers are not valid on if statements", this.#current());
@@ -324,9 +331,9 @@ export class Parser {
       case Kind.VarKeyword:
       case Kind.LetKeyword:
       case Kind.ConstKeyword:
-        return this.#parseVariableStatement(modifiers);
+        return this.#parseVariableStatement(pos, modifiers);
       case Kind.FunctionKeyword:
-        return this.#parseFunctionDeclaration(modifiers);
+        return this.#parseFunctionDeclaration(pos, modifiers);
       case Kind.ReturnKeyword:
         if (modifiers !== undefined) {
           throw new ParseError("Modifiers are not valid on return statements", this.#current());
@@ -349,7 +356,7 @@ export class Parser {
         return this.#parseSwitchStatement();
       case Kind.OpenBraceToken:
         if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword)) {
-          return this.#parseExportDeclaration(modifiers);
+          return this.#parseExportDeclaration(pos, modifiers);
         }
         if (modifiers !== undefined) {
           throw new ParseError("Modifiers are not valid on blocks", this.#current());
@@ -357,21 +364,27 @@ export class Parser {
         return this.#parseBlock();
     }
     if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword) && this.#current().kind === Kind.AsteriskToken) {
-      return this.#parseExportDeclaration(modifiers);
+      return this.#parseExportDeclaration(pos, modifiers);
     }
     if (modifiers !== undefined) {
       throw new ParseError("Modifiers are not valid on expression statements", this.#current());
     }
+    // tsgo parseExpressionOrLabeledStatement: pos captured before the expression. Since
+    // modifiers are rejected for expression statements, the #parseStatement-top pos equals
+    // the expression's own start; reuse it.
     const expression = this.#parseExpression();
     this.#consumeOptional(Kind.SemicolonToken);
-    return createExpressionStatement(expression);
+    return this.#finishNode(createExpressionStatement(expression), pos);
   }
 
   #isTypeAliasDeclarationStart(): boolean {
     return this.#current().kind === Kind.TypeKeyword && isIdentifierNameKind(this.#tokens[this.#index + 1]?.kind ?? Kind.Unknown);
   }
 
-  #parseImportDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
+  #parseImportDeclaration(pos: number, modifiers: NodeArray<ModifierLike> | undefined): Statement {
+    // tsgo parseImportDeclarationOrImportEqualsDeclaration: ImportDeclaration start is the
+    // #parseStatement-top pos (covering modifiers); finishNode runs after the trailing
+    // semicolon so a present `;` is covered.
     this.#expect(Kind.ImportKeyword);
     let importClause: ReturnType<typeof createImportClause> | undefined;
     let moduleSpecifier: Expression;
@@ -383,10 +396,13 @@ export class Parser {
       moduleSpecifier = this.#parseStringLiteralExpression();
     }
     this.#consumeOptional(Kind.SemicolonToken);
-    return createImportDeclaration(modifiers, importClause, moduleSpecifier, undefined);
+    return this.#finishNode(createImportDeclaration(modifiers, importClause, moduleSpecifier, undefined), pos);
   }
 
   #parseImportClause(): ReturnType<typeof createImportClause> {
+    // tsgo parseImportClause: ImportClause pos is `afterImportPos` (the token after
+    // `import`), which equals this method's entry here.
+    const pos = this.#nodePos();
     const phaseModifier = this.#current().kind === Kind.TypeKeyword || this.#current().kind === Kind.DeferKeyword
       ? this.#advance().kind as ImportPhaseModifierSyntaxKind
       : undefined;
@@ -400,47 +416,60 @@ export class Parser {
     } else {
       namedBindings = this.#parseNamedImportBindings();
     }
-    return createImportClause(phaseModifier, name, namedBindings);
+    return this.#finishNode(createImportClause(phaseModifier, name, namedBindings), pos);
   }
 
   #parseNamedImportBindings(): NamedImportBindings {
+    // tsgo parseNamespaceImport: NamespaceImport pos is the `*` token.
+    const pos = this.#nodePos();
     if (this.#consumeOptional(Kind.AsteriskToken)) {
       this.#expect(Kind.AsKeyword);
-      return createNamespaceImport(this.#parseIdentifier());
+      return this.#finishNode(createNamespaceImport(this.#parseIdentifier()), pos);
     }
+    // tsgo parseNamedImports: NamedImports pos is the `{` token.
     this.#expect(Kind.OpenBraceToken);
     const elements: ImportSpecifier[] = [];
     while (this.#current().kind !== Kind.CloseBraceToken) {
+      // tsgo parseImportSpecifier: each specifier pos is the top of its element parse,
+      // before the optional `type` modifier / first name.
+      const specifierPos = this.#nodePos();
       const isTypeOnly = this.#consumeOptional(Kind.TypeKeyword);
       const firstName = this.#parseModuleExportName();
       const propertyName = this.#consumeOptional(Kind.AsKeyword) ? firstName : undefined;
       const name = propertyName === undefined ? firstName : this.#parseIdentifier();
-      elements.push(createImportSpecifier(isTypeOnly, propertyName, name as Identifier));
+      elements.push(this.#finishNode(createImportSpecifier(isTypeOnly, propertyName, name as Identifier), specifierPos));
       this.#consumeOptional(Kind.CommaToken);
     }
     this.#expect(Kind.CloseBraceToken);
-    return createNamedImports(createNodeArray(elements));
+    return this.#finishNode(createNamedImports(createNodeArray(elements)), pos);
   }
 
-  #parseExportDeclaration(modifiers: NodeArray<ModifierLike>): Statement {
+  #parseExportDeclaration(pos: number, modifiers: NodeArray<ModifierLike>): Statement {
+    // tsgo parseExportDeclaration: ExportDeclaration start is the #parseStatement-top pos
+    // (covering modifiers); finishNode runs after the trailing semicolon.
     if (this.#consumeOptional(Kind.AsteriskToken)) {
       const moduleSpecifier = this.#consumeOptional(Kind.FromKeyword) ? this.#parseStringLiteralExpression() : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
-      return createExportDeclaration(modifiers, false, undefined, moduleSpecifier, undefined);
+      return this.#finishNode(createExportDeclaration(modifiers, false, undefined, moduleSpecifier, undefined), pos);
     }
+    // tsgo parseNamedExports: NamedExports pos is the `{` token.
+    const namedExportsPos = this.#nodePos();
     this.#expect(Kind.OpenBraceToken);
     const elements: ReturnType<typeof createExportSpecifier>[] = [];
     while (this.#current().kind !== Kind.CloseBraceToken) {
+      // tsgo parseExportSpecifier: each specifier pos is the top of its element parse.
+      const specifierPos = this.#nodePos();
       const firstName = this.#parseModuleExportName();
       const propertyName = this.#consumeOptional(Kind.AsKeyword) ? firstName : undefined;
       const name = propertyName === undefined ? firstName : this.#parseModuleExportName();
-      elements.push(createExportSpecifier(false, propertyName, name));
+      elements.push(this.#finishNode(createExportSpecifier(false, propertyName, name), specifierPos));
       this.#consumeOptional(Kind.CommaToken);
     }
     this.#expect(Kind.CloseBraceToken);
+    const namedExports = this.#finishNode(createNamedExports(createNodeArray(elements)), namedExportsPos);
     const moduleSpecifier = this.#consumeOptional(Kind.FromKeyword) ? this.#parseStringLiteralExpression() : undefined;
     this.#consumeOptional(Kind.SemicolonToken);
-    return createExportDeclaration(modifiers, false, createNamedExports(createNodeArray(elements)), moduleSpecifier, undefined);
+    return this.#finishNode(createExportDeclaration(modifiers, false, namedExports, moduleSpecifier, undefined), pos);
   }
 
   #parseModifiers(): NodeArray<ModifierLike> | undefined {
@@ -465,7 +494,9 @@ export class Parser {
       && nextKind !== Kind.CloseBraceToken;
   }
 
-  #parseClassDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
+  #parseClassDeclaration(pos: number, modifiers: NodeArray<ModifierLike> | undefined): Statement {
+    // tsgo parseClassDeclaration: declaration start is the #parseStatement-top pos
+    // (covering modifiers). Members/heritage/type-params are Stage 1e (left unstamped).
     this.#expect(Kind.ClassKeyword);
     const name = this.#current().kind === Kind.Identifier ? this.#parseIdentifier() : undefined;
     const typeParameters = this.#parseOptionalTypeParameters();
@@ -476,10 +507,12 @@ export class Parser {
       members.push(this.#parseClassElement());
     }
     this.#expect(Kind.CloseBraceToken);
-    return createClassDeclaration(modifiers, name, typeParameters, heritageClauses, createNodeArray(members));
+    return this.#finishNode(createClassDeclaration(modifiers, name, typeParameters, heritageClauses, createNodeArray(members)), pos);
   }
 
-  #parseInterfaceDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
+  #parseInterfaceDeclaration(pos: number, modifiers: NodeArray<ModifierLike> | undefined): Statement {
+    // tsgo parseInterfaceDeclaration: declaration start is the #parseStatement-top pos.
+    // Members are Stage 1e (left unstamped).
     this.#expect(Kind.InterfaceKeyword);
     const name = this.#parseIdentifier();
     const typeParameters = this.#parseOptionalTypeParameters();
@@ -493,20 +526,24 @@ export class Parser {
       members.push(this.#parseTypeElement());
     }
     this.#expect(Kind.CloseBraceToken);
-    return createInterfaceDeclaration(modifiers, name, typeParameters, heritageClauses, createNodeArray(members));
+    return this.#finishNode(createInterfaceDeclaration(modifiers, name, typeParameters, heritageClauses, createNodeArray(members)), pos);
   }
 
-  #parseTypeAliasDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
+  #parseTypeAliasDeclaration(pos: number, modifiers: NodeArray<ModifierLike> | undefined): Statement {
+    // tsgo parseTypeAliasDeclaration: declaration start is the #parseStatement-top pos.
+    // The `.type` child is Stage 1d (left unstamped).
     this.#expect(Kind.TypeKeyword);
     const name = this.#parseIdentifier();
     const typeParameters = this.#parseOptionalTypeParameters();
     this.#expect(Kind.EqualsToken);
     const type = this.#parseType();
     this.#consumeOptional(Kind.SemicolonToken);
-    return createTypeAliasDeclaration(modifiers, name, typeParameters, type);
+    return this.#finishNode(createTypeAliasDeclaration(modifiers, name, typeParameters, type), pos);
   }
 
-  #parseEnumDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
+  #parseEnumDeclaration(pos: number, modifiers: NodeArray<ModifierLike> | undefined): Statement {
+    // tsgo parseEnumDeclaration: declaration start is the #parseStatement-top pos.
+    // Enum members are Stage 1e (left unstamped).
     this.#expect(Kind.EnumKeyword);
     const name = this.#parseIdentifier();
     this.#expect(Kind.OpenBraceToken);
@@ -521,28 +558,35 @@ export class Parser {
       this.#consumeOptional(Kind.CommaToken);
     }
     this.#expect(Kind.CloseBraceToken);
-    return createEnumDeclaration(modifiers, name, createNodeArray(members));
+    return this.#finishNode(createEnumDeclaration(modifiers, name, createNodeArray(members)), pos);
   }
 
   #parseIfStatement(): Statement {
+    // tsgo parseIfStatement: pos at the `if` keyword.
+    const pos = this.#nodePos();
     this.#expect(Kind.IfKeyword);
     this.#expect(Kind.OpenParenToken);
     const expression = this.#parseExpression();
     this.#expect(Kind.CloseParenToken);
     const thenStatement = this.#parseStatement();
     const elseStatement = this.#consumeOptional(Kind.ElseKeyword) ? this.#parseStatement() : undefined;
-    return createIfStatement(expression, thenStatement, elseStatement);
+    return this.#finishNode(createIfStatement(expression, thenStatement, elseStatement), pos);
   }
 
   #parseWhileStatement(): Statement {
+    // tsgo parseWhileStatement: pos at the `while` keyword.
+    const pos = this.#nodePos();
     this.#expect(Kind.WhileKeyword);
     this.#expect(Kind.OpenParenToken);
     const expression = this.#parseExpression();
     this.#expect(Kind.CloseParenToken);
-    return createWhileStatement(expression, this.#parseStatement());
+    return this.#finishNode(createWhileStatement(expression, this.#parseStatement()), pos);
   }
 
   #parseDoStatement(): Statement {
+    // tsgo parseDoStatement: pos at the `do` keyword; finishNode after the trailing
+    // optional semicolon.
+    const pos = this.#nodePos();
     this.#expect(Kind.DoKeyword);
     const statement = this.#parseStatement();
     this.#expect(Kind.WhileKeyword);
@@ -550,10 +594,13 @@ export class Parser {
     const expression = this.#parseExpression();
     this.#expect(Kind.CloseParenToken);
     this.#consumeOptional(Kind.SemicolonToken);
-    return createDoStatement(statement, expression);
+    return this.#finishNode(createDoStatement(statement, expression), pos);
   }
 
   #parseForStatement(): Statement {
+    // tsgo parseForOrForInOrForOfStatement: single pos at the `for` keyword, threaded to
+    // whichever branch produces (finishNode runs once at the bottom there).
+    const pos = this.#nodePos();
     this.#expect(Kind.ForKeyword);
     this.#expect(Kind.OpenParenToken);
     const initializer = this.#parseForInitializer();
@@ -564,15 +611,15 @@ export class Parser {
       this.#expect(Kind.CloseParenToken);
       const statement = this.#parseStatement();
       return token === Kind.InKeyword
-        ? createForInStatement(undefined, initializer, expression, statement)
-        : createForOfStatement(undefined, initializer, expression, statement);
+        ? this.#finishNode(createForInStatement(undefined, initializer, expression, statement), pos)
+        : this.#finishNode(createForOfStatement(undefined, initializer, expression, statement), pos);
     }
     this.#expect(Kind.SemicolonToken);
     const condition = this.#current().kind === Kind.SemicolonToken ? undefined : this.#parseExpression();
     this.#expect(Kind.SemicolonToken);
     const incrementor = this.#current().kind === Kind.CloseParenToken ? undefined : this.#parseExpression();
     this.#expect(Kind.CloseParenToken);
-    return createForStatement(initializer, condition, incrementor, this.#parseStatement());
+    return this.#finishNode(createForStatement(initializer, condition, incrementor, this.#parseStatement()), pos);
   }
 
   #parseForInitializer(): ForInitializer | undefined {
@@ -586,17 +633,23 @@ export class Parser {
   }
 
   #parseBreakStatement(): Statement {
+    // tsgo parseBreakStatement: pos at the `break` keyword; finishNode after the optional
+    // label/semicolon.
+    const pos = this.#nodePos();
     this.#expect(Kind.BreakKeyword);
     const label = this.#current().kind === Kind.Identifier ? this.#parseIdentifier() : undefined;
     this.#consumeOptional(Kind.SemicolonToken);
-    return createBreakStatement(label);
+    return this.#finishNode(createBreakStatement(label), pos);
   }
 
   #parseContinueStatement(): Statement {
+    // tsgo parseContinueStatement: pos at the `continue` keyword; finishNode after the
+    // optional label/semicolon.
+    const pos = this.#nodePos();
     this.#expect(Kind.ContinueKeyword);
     const label = this.#current().kind === Kind.Identifier ? this.#parseIdentifier() : undefined;
     this.#consumeOptional(Kind.SemicolonToken);
-    return createContinueStatement(label);
+    return this.#finishNode(createContinueStatement(label), pos);
   }
 
   #parseClassElement(): ClassElement {
@@ -802,19 +855,25 @@ export class Parser {
     return createNodeArray(typeArguments);
   }
 
-  #parseVariableStatement(modifiers: NodeArray<ModifierLike> | undefined): Statement {
+  #parseVariableStatement(pos: number, modifiers: NodeArray<ModifierLike> | undefined): Statement {
+    // tsgo parseVariableStatement(pos, ...): the statement start is the #parseStatement-top
+    // pos (covering modifiers); finishNode after the trailing optional semicolon.
     const declarationList = this.#parseVariableDeclarationList();
     this.#consumeOptional(Kind.SemicolonToken);
-    return createVariableStatement(modifiers, declarationList);
+    return this.#finishNode(createVariableStatement(modifiers, declarationList), pos);
   }
 
   #parseVariableDeclarationList(): ReturnType<typeof createVariableDeclarationList> {
+    // tsgo parseVariableDeclarationList: own pos at the var/let/const keyword (NOT the
+    // outer statement's modifier start). When no modifiers precede, this equals the
+    // variable-statement pos; with modifiers it starts later (at var/let/const).
+    const pos = this.#nodePos();
     const flags = this.#parseVariableDeclarationListFlags();
     const declarations: VariableDeclaration[] = [];
     do {
       declarations.push(this.#parseVariableDeclaration());
     } while (this.#consumeOptional(Kind.CommaToken));
-    return createVariableDeclarationList(createNodeArray(declarations), flags);
+    return this.#finishNode(createVariableDeclarationList(createNodeArray(declarations), flags), pos);
   }
 
   #parseVariableDeclarationListFlags(): number {
@@ -835,13 +894,18 @@ export class Parser {
   }
 
   #parseVariableDeclaration(): VariableDeclaration {
+    // tsgo parseVariableDeclarationWorker: own pos at the binding-name start.
+    const pos = this.#nodePos();
     const name = this.#parseBindingName();
     const type = this.#parseOptionalTypeAnnotation();
     const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
-    return createVariableDeclaration(name, undefined, type, initializer);
+    return this.#finishNode(createVariableDeclaration(name, undefined, type, initializer), pos);
   }
 
-  #parseFunctionDeclaration(modifiers: NodeArray<ModifierLike> | undefined): Statement {
+  #parseFunctionDeclaration(pos: number, modifiers: NodeArray<ModifierLike> | undefined): Statement {
+    // tsgo parseFunctionDeclaration(pos, ...): the declaration start is the
+    // #parseStatement-top pos (covering modifiers, incl. the default-export path).
+    // Params are Stage 1e (left unstamped); the body Block is stamped via #parseBlock.
     this.#expect(Kind.FunctionKeyword);
     const asteriskToken = this.#consumeOptional(Kind.AsteriskToken) ? createToken(Kind.AsteriskToken) : undefined;
     const name = isIdentifierNameKind(this.#current().kind) ? this.#parseIdentifier() : undefined;
@@ -851,7 +915,7 @@ export class Parser {
     this.#expect(Kind.CloseParenToken);
     const type = this.#parseOptionalTypeAnnotation();
     const body = this.#parseBlock();
-    return createFunctionDeclaration(modifiers, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body);
+    return this.#finishNode(createFunctionDeclaration(modifiers, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body), pos);
   }
 
   #parseParameterList(): ParameterDeclaration[] {
@@ -878,6 +942,9 @@ export class Parser {
   }
 
   #parseBlock(): Block {
+    // tsgo parseBlock: pos at the `{` (captured before parseExpected); finishNode after the
+    // closing `}` is consumed so the end covers it.
+    const pos = this.#nodePos();
     const openBrace = this.#expect(Kind.OpenBraceToken);
     const statements: Statement[] = [];
     while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
@@ -885,26 +952,34 @@ export class Parser {
     }
     const closeBrace = this.#expect(Kind.CloseBraceToken);
     const multiLine = this.#sourceText.slice(openBrace.pos, closeBrace.end).includes("\n");
-    return createBlock(createNodeArray(statements), multiLine);
+    return this.#finishNode(createBlock(createNodeArray(statements), multiLine), pos);
   }
 
   #parseReturnStatement(): Statement {
+    // tsgo parseReturnStatement: pos at the `return` keyword; finishNode after the optional
+    // semicolon so a present `;` is covered.
+    const pos = this.#nodePos();
     this.#expect(Kind.ReturnKeyword);
     const expression = this.#current().kind === Kind.SemicolonToken || this.#current().kind === Kind.CloseBraceToken
       ? undefined
       : this.#parseExpression();
     this.#consumeOptional(Kind.SemicolonToken);
-    return createReturnStatement(expression);
+    return this.#finishNode(createReturnStatement(expression), pos);
   }
 
   #parseThrowStatement(): Statement {
+    // tsgo parseThrowStatement: pos at the `throw` keyword; finishNode after the optional
+    // semicolon.
+    const pos = this.#nodePos();
     this.#expect(Kind.ThrowKeyword);
     const expression = this.#parseExpression();
     this.#consumeOptional(Kind.SemicolonToken);
-    return createThrowStatement(expression);
+    return this.#finishNode(createThrowStatement(expression), pos);
   }
 
   #parseTryStatement(): Statement {
+    // tsgo parseTryStatement: pos at the `try` keyword.
+    const pos = this.#nodePos();
     this.#expect(Kind.TryKeyword);
     const tryBlock = this.#parseBlock();
     const catchClause = this.#current().kind === Kind.CatchKeyword ? this.#parseCatchClause() : undefined;
@@ -912,44 +987,56 @@ export class Parser {
     if (catchClause === undefined && finallyBlock === undefined) {
       throw new ParseError("Expected catch or finally clause", this.#current());
     }
-    return createTryStatement(tryBlock, catchClause, finallyBlock);
+    return this.#finishNode(createTryStatement(tryBlock, catchClause, finallyBlock), pos);
   }
 
   #parseCatchClause(): ReturnType<typeof createCatchClause> {
+    // tsgo parseCatchClause: pos at the `catch` keyword. The catch variable's
+    // VariableDeclaration gets its own pos at the binding-name start (tsgo
+    // parseVariableDeclaration), finished after its optional type annotation.
+    const pos = this.#nodePos();
     this.#expect(Kind.CatchKeyword);
     let variableDeclaration: VariableDeclaration | undefined;
     if (this.#consumeOptional(Kind.OpenParenToken)) {
+      const variablePos = this.#nodePos();
       const name = this.#parseBindingName();
       const type = this.#parseOptionalTypeAnnotation();
-      variableDeclaration = createVariableDeclaration(name, undefined, type, undefined);
+      variableDeclaration = this.#finishNode(createVariableDeclaration(name, undefined, type, undefined), variablePos);
       this.#expect(Kind.CloseParenToken);
     }
-    return createCatchClause(variableDeclaration, this.#parseBlock());
+    return this.#finishNode(createCatchClause(variableDeclaration, this.#parseBlock()), pos);
   }
 
   #parseSwitchStatement(): Statement {
+    // tsgo parseSwitchStatement: pos at the `switch` keyword. The CaseBlock has its own pos
+    // at the `{` (tsgo parseCaseBlock); each case/default clause has its own pos captured at
+    // the top of the loop iteration before consuming the case/default keyword.
+    const pos = this.#nodePos();
     this.#expect(Kind.SwitchKeyword);
     this.#expect(Kind.OpenParenToken);
     const expression = this.#parseExpression();
     this.#expect(Kind.CloseParenToken);
+    const caseBlockPos = this.#nodePos();
     this.#expect(Kind.OpenBraceToken);
     const clauses: CaseOrDefaultClause[] = [];
     while (this.#current().kind !== Kind.CloseBraceToken && this.#current().kind !== Kind.EndOfFile) {
+      const clausePos = this.#nodePos();
       if (this.#consumeOptional(Kind.CaseKeyword)) {
         const caseExpression = this.#parseExpression();
         this.#expect(Kind.ColonToken);
-        clauses.push(createCaseClause(caseExpression, createNodeArray(this.#parseCaseClauseStatements())));
+        clauses.push(this.#finishNode(createCaseClause(caseExpression, createNodeArray(this.#parseCaseClauseStatements())), clausePos));
         continue;
       }
       if (this.#consumeOptional(Kind.DefaultKeyword)) {
         this.#expect(Kind.ColonToken);
-        clauses.push(createDefaultClause(undefined as never, createNodeArray(this.#parseCaseClauseStatements())));
+        clauses.push(this.#finishNode(createDefaultClause(undefined as never, createNodeArray(this.#parseCaseClauseStatements())), clausePos));
         continue;
       }
       throw new ParseError("Expected case or default clause", this.#current());
     }
     this.#expect(Kind.CloseBraceToken);
-    return createSwitchStatement(expression, createCaseBlock(createNodeArray(clauses)));
+    const caseBlock = this.#finishNode(createCaseBlock(createNodeArray(clauses)), caseBlockPos);
+    return this.#finishNode(createSwitchStatement(expression, caseBlock), pos);
   }
 
   #parseCaseClauseStatements(): Statement[] {
