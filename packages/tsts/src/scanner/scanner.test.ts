@@ -62,7 +62,7 @@ export class ScannerGroundworkTests {
     );
   }
 
-  treats_a_leading_shebang_as_single_line_trivia(): void {
+  treats_a_leading_shebang_as_skipped_trivia(): void {
     Assert.Equal<readonly Kind[]>(
       [
         Kind.ConstKeyword,
@@ -74,9 +74,13 @@ export class ScannerGroundworkTests {
       ],
       kindsOf("#!/usr/bin/env node\nconst answer = 42;"),
     );
+    // tsgo-faithful bare-scanner stream: scanner.go:880-888 SKIPS a leading
+    // `#!...` shebang (continue, no token emitted) even with skipTrivia:false,
+    // so the stream starts at the next real token (NewLineTrivia at the shebang's
+    // terminating newline). The old batch scanner pre-emitted it as
+    // SingleLineCommentTrivia; the faithful scanner drops it entirely.
     Assert.Equal<readonly Kind[]>(
       [
-        Kind.SingleLineCommentTrivia,
         Kind.NewLineTrivia,
         Kind.ConstKeyword,
         Kind.WhitespaceTrivia,
@@ -93,6 +97,12 @@ export class ScannerGroundworkTests {
   }
 
   recognizes_multi_character_punctuators_greedily(): void {
+    // tsgo-faithful bare-scanner stream: `??=` and `===` are scanned greedily as
+    // single tokens, but `>>>=` is NOT merged. The faithful scanner scans one `>`
+    // per token (scanner.go:803-804), so the run emits four tokens
+    // (>, >, >, =); the parser recombines them via reScanGreaterThanToken. The
+    // old batch scanner pre-merged the whole run into a single
+    // GreaterThanGreaterThanGreaterThanEqualsToken.
     Assert.Equal<readonly Kind[]>(
       [
         Kind.Identifier,
@@ -100,7 +110,10 @@ export class ScannerGroundworkTests {
         Kind.Identifier,
         Kind.EqualsEqualsEqualsToken,
         Kind.Identifier,
-        Kind.GreaterThanGreaterThanGreaterThanEqualsToken,
+        Kind.GreaterThanToken,
+        Kind.GreaterThanToken,
+        Kind.GreaterThanToken,
+        Kind.EqualsToken,
         Kind.Identifier,
         Kind.EndOfFile,
       ],
@@ -110,18 +123,29 @@ export class ScannerGroundworkTests {
 
   scans_private_identifiers_regular_expressions_templates_and_numeric_separators(): void {
     Assert.Equal<readonly Kind[]>([Kind.PrivateIdentifier, Kind.EndOfFile], kindsOf("#value"));
+    // tsgo-faithful bare-scanner stream: the scanner does NOT pre-detect regex or
+    // template continuations (no parser context). `/abc/g` is scanned as
+    // SlashToken + Identifier(abc) + SlashToken + Identifier(g) — the parser
+    // calls reScanSlashToken to recombine a RegularExpressionLiteral. After a
+    // template `}` the scanner emits CloseBraceToken; with no parser-driven
+    // reScanTemplateToken the following backtick starts a fresh template literal,
+    // so `` ` 25_263_104`` is scanned (unterminated) as a single
+    // NoSubstitutionTemplateLiteral. The old batch scanner pre-detected
+    // RegularExpressionLiteral / TemplateTail via stateful look-back.
     Assert.Equal<readonly Kind[]>(
       [
         Kind.ConstKeyword,
         Kind.Identifier,
         Kind.EqualsToken,
-        Kind.RegularExpressionLiteral,
+        Kind.SlashToken,
+        Kind.Identifier,
+        Kind.SlashToken,
+        Kind.Identifier,
         Kind.SemicolonToken,
         Kind.TemplateHead,
         Kind.Identifier,
         Kind.CloseBraceToken,
-        Kind.TemplateTail,
-        Kind.NumericLiteral,
+        Kind.NoSubstitutionTemplateLiteral,
         Kind.EndOfFile,
       ],
       kindsOf("const pattern = /abc/g; `hi ${name}` 25_263_104"),
@@ -132,6 +156,6 @@ export class ScannerGroundworkTests {
 A<ScannerGroundworkTests>().method((t) => t.scans_basic_declarations_with_ts_go_syntax_kind_ids).add(FactAttribute);
 A<ScannerGroundworkTests>().method((t) => t.preserves_source_spans_and_token_text).add(FactAttribute);
 A<ScannerGroundworkTests>().method((t) => t.can_expose_trivia_instead_of_skipping_it).add(FactAttribute);
-A<ScannerGroundworkTests>().method((t) => t.treats_a_leading_shebang_as_single_line_trivia).add(FactAttribute);
+A<ScannerGroundworkTests>().method((t) => t.treats_a_leading_shebang_as_skipped_trivia).add(FactAttribute);
 A<ScannerGroundworkTests>().method((t) => t.recognizes_multi_character_punctuators_greedily).add(FactAttribute);
 A<ScannerGroundworkTests>().method((t) => t.scans_private_identifiers_regular_expressions_templates_and_numeric_separators).add(FactAttribute);
