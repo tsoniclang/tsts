@@ -245,7 +245,7 @@ export class ParserParityTests {
     const right = expression.right;
     if (!isBinaryExpression(right)) throw new Exception("Expected right-assoc inner binary");
     Assert.Equal(3, right.pos);
-    Assert.Equal(6, right.end);
+    Assert.Equal(7, right.end);
     Assert.Equal("b**c", this.#raw(sourceFile, right));
   }
 

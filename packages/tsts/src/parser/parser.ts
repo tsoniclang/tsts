@@ -178,10 +178,20 @@ import {
   type TypeParameterDeclaration,
   type VariableDeclaration,
 } from "../ast/index.js";
-import { scanAll, type ScannedToken } from "../scanner/index.js";
+import { createLiveScanner, type LiveScanner, type ScannerState, type ScannedToken } from "../scanner/index.js";
 
 export interface ParseSourceFileOptions {
   readonly fileName?: string;
+}
+
+// wave 4b-swap: a speculative parse-state snapshot (tsgo ParserState,
+// parser.go:349-372). Bundles the live-scanner state with the parser cursor
+// (#token), #prevTokenEnd, and #contextFlags so #rewind can restore all of them.
+interface ParserMark {
+  readonly scannerState: ScannerState;
+  readonly token: ScannedToken;
+  readonly prevTokenEnd: number;
+  readonly contextFlags: NodeFlags;
 }
 
 export class ParseError extends Error {
@@ -269,8 +279,14 @@ const keywordTypeKinds = new Set<Kind>([
 export class Parser {
   readonly #sourceText: string;
   readonly #fileName: string;
-  readonly #tokens: readonly ScannedToken[];
-  #index = 0;
+  // wave 4b-swap: live-scanner cursor mirroring tsgo's Parser (`p.scanner` +
+  // single `p.token` snapshot, parser.go:381-388). #token is the CURRENT token
+  // (the not-yet-consumed token), rebuilt by #nextToken from the live scanner.
+  // #prevTokenEnd is the end of the JUST-consumed token (seeded 0), the source
+  // of #nodeEnd (token-tight, NOT trivia-inclusive — codex-048 (i)).
+  readonly #scanner: LiveScanner;
+  #token: ScannedToken;
+  #prevTokenEnd = 0;
   // codex-054 M3 Stage-2: parser parse-state mirroring tsgo's `p.contextFlags`
   // (parser.go contextFlags field). This is a NodeFlags bitset of the parsing
   // contexts (Yield/Await/DisallowIn/DisallowConditionalTypes/Decorator/InWith)
@@ -288,7 +304,55 @@ export class Parser {
   constructor(sourceText: string, options: ParseSourceFileOptions = {}) {
     this.#sourceText = sourceText;
     this.#fileName = options.fileName ?? "input.ts";
-    this.#tokens = scanAll(sourceText);
+    // tsgo initializeState (parser.go:288-313): create the scanner (default
+    // LanguageVariant.Standard, skipTrivia true — matches the old scanAll
+    // default), then call nextToken() ONCE (parser.go:283/139) to load the
+    // first token into #token before parseSourceFile runs. tsts is always
+    // ScriptKindTS so #contextFlags starts at NodeFlags.None (the field default).
+    this.#scanner = createLiveScanner(sourceText);
+    // Seed #token with the EOF placeholder so #nextToken's `this.#token.end`
+    // read is well-typed; #nextToken immediately overwrites it with the first
+    // real token (and #prevTokenEnd stays 0 because the placeholder end is 0).
+    this.#token = { kind: Kind.EndOfFile, pos: 0, end: 0, text: "" };
+    this.#nextToken();
+  }
+
+  // tsgo nextToken (parser.go:381-388): record the just-consumed token's end as
+  // #prevTokenEnd, then scan the next token and snapshot it into #token. Uses
+  // getTokenText() (raw slice tokenStart..pos) — NOT getTokenValue() (processed)
+  // — because the parser passes raw lexemes to createIdentifier/createNumeric/
+  // createString and applies unquote/unquoteTemplate/templateHeadText itself.
+  // At EOF scan() stays at Kind.EndOfFile (scanner pos>=end), so a further scan
+  // never advances past EOF.
+  #nextToken(): void {
+    this.#prevTokenEnd = this.#token.end;
+    const kind = this.#scanner.scan();
+    this.#token = {
+      kind,
+      pos: this.#scanner.getTokenStart(),
+      end: this.#scanner.getTokenEnd(),
+      text: this.#scanner.getTokenText(),
+    };
+  }
+
+  // wave 4b-swap: refresh the #token snapshot from the live scanner AFTER an
+  // in-place reScan* re-tokenization of the CURRENT token (no advance, so
+  // #prevTokenEnd is NOT touched). reScan* keeps tokenStart (so #token.pos is
+  // unchanged) and updates the kind + end.
+  #refreshTokenFromScanner(kind: Kind): void {
+    this.#token = {
+      kind,
+      pos: this.#scanner.getTokenStart(),
+      end: this.#scanner.getTokenEnd(),
+      text: this.#scanner.getTokenText(),
+    };
+  }
+
+  #reScanGreaterThan(): void {
+    const kind = this.#scanner.reScanGreaterThanToken();
+    if (kind !== this.#token.kind) {
+      this.#refreshTokenFromScanner(kind);
+    }
   }
 
   parseSourceFile(): SourceFile {
@@ -332,7 +396,7 @@ export class Parser {
         // tsgo nextTokenCanFollowDefaultKeyword (parser.go:3986): `export default class`/
         // `export default function` are declarations with a DefaultKeyword modifier; any
         // other follower is an ExportAssignment(isExportEquals=false).
-        const followerKind = this.#tokens[this.#index + 1]?.kind;
+        const followerKind = this.#peekKind();
         if (followerKind === Kind.FunctionKeyword || followerKind === Kind.ClassKeyword) {
           this.#advance();
           const defaultModifiers = createNodeArray([...modifiers, createToken(Kind.DefaultKeyword) as ModifierLike]);
@@ -470,7 +534,7 @@ export class Parser {
   }
 
   #isTypeAliasDeclarationStart(): boolean {
-    return this.#current().kind === Kind.TypeKeyword && isIdentifierNameKind(this.#tokens[this.#index + 1]?.kind ?? Kind.Unknown);
+    return this.#current().kind === Kind.TypeKeyword && isIdentifierNameKind(this.#peekKind());
   }
 
   #parseImportDeclaration(pos: number, modifiers: NodeArray<ModifierLike> | undefined): Statement {
@@ -505,7 +569,7 @@ export class Parser {
       identifier = this.#isImportedIdentifier() ? this.#parseIdentifier() : undefined;
     } else if (identifier !== undefined && identifier.text === "defer") {
       const shouldParseAsDeferModifier = this.#current().kind === Kind.FromKeyword
-        ? this.#tokens[this.#index + 1]?.kind !== Kind.StringLiteral
+        ? this.#peekKind() !== Kind.StringLiteral
         : this.#current().kind !== Kind.CommaToken && this.#current().kind !== Kind.EqualsToken;
       if (shouldParseAsDeferModifier) {
         phaseModifier = Kind.DeferKeyword;
@@ -537,8 +601,8 @@ export class Parser {
 
   #nextTokenIsFromKeywordOrEqualsToken(): boolean {
     // tsgo nextTokenIsFromKeywordOrEqualsToken (parser.go:2278): a lookAhead over the NEXT
-    // token. tsts has a token array, so peek index+1 without consuming.
-    const next = this.#tokens[this.#index + 1]?.kind;
+    // token. Peek one token off the live scanner without consuming.
+    const next = this.#peekKind();
     return next === Kind.FromKeyword || next === Kind.EqualsToken;
   }
 
@@ -570,7 +634,7 @@ export class Parser {
   #parseModuleReference(): ModuleReference {
     // tsgo parseModuleReference (parser.go:2302): `require( ... )` external module reference,
     // else a (dotted) entity name.
-    if (this.#current().kind === Kind.RequireKeyword && this.#tokens[this.#index + 1]?.kind === Kind.OpenParenToken) {
+    if (this.#current().kind === Kind.RequireKeyword && this.#peekKind() === Kind.OpenParenToken) {
       return this.#parseExternalModuleReference();
     }
     return this.#parseEntityName();
@@ -785,7 +849,7 @@ export class Parser {
     if (!modifierKinds.has(this.#current().kind)) {
       return false;
     }
-    const nextKind = this.#tokens[this.#index + 1]?.kind;
+    const nextKind = this.#peekKind();
     // tsgo tryParseModifier stopOnStartOfClassStaticBlock (parser.go:3929-3930): a `static`
     // immediately followed by `{` is NOT a modifier — it begins a class static block, which
     // is dispatched by #parseClassElement. Without this guard #parseModifiers would eat the
@@ -992,7 +1056,7 @@ export class Parser {
     // codex-054 M3 Stage-2 (1h): tsgo parseClassStaticBlockBody (parser.go:1907-1914) sets
     // YieldContext=false AND AwaitContext=true for the static-block body (a static block is
     // an await context but never a yield context). Wrap the body parse accordingly.
-    if (this.#current().kind === Kind.StaticKeyword && this.#tokens[this.#index + 1]?.kind === Kind.OpenBraceToken) {
+    if (this.#current().kind === Kind.StaticKeyword && this.#peekKind() === Kind.OpenBraceToken) {
       this.#expect(Kind.StaticKeyword);
       const body = this.#doInContext(NodeFlags.YieldContext, false, () =>
         this.#doInContext(NodeFlags.AwaitContext, true, () => this.#parseBlock()),
@@ -1020,7 +1084,7 @@ export class Parser {
     // async nor generators — so NO Yield/Await context is set; the params/body run with
     // whatever enclosing contextFlags exist (for a class body, None). The get/set branches
     // therefore correctly require NO #withSignatureContext wrap.
-    if (this.#current().kind === Kind.GetKeyword && this.#tokens[this.#index + 1]?.kind !== Kind.OpenParenToken) {
+    if (this.#current().kind === Kind.GetKeyword && this.#peekKind() !== Kind.OpenParenToken) {
       this.#advance();
       const name = this.#parsePropertyName();
       this.#expect(Kind.OpenParenToken);
@@ -1031,7 +1095,7 @@ export class Parser {
       return this.#finishNode(createGetAccessorDeclaration(modifiers, name, undefined, createNodeArray([]), type, body), pos);
     }
 
-    if (this.#current().kind === Kind.SetKeyword && this.#tokens[this.#index + 1]?.kind !== Kind.OpenParenToken) {
+    if (this.#current().kind === Kind.SetKeyword && this.#peekKind() !== Kind.OpenParenToken) {
       this.#advance();
       const name = this.#parsePropertyName();
       this.#expect(Kind.OpenParenToken);
@@ -1141,7 +1205,7 @@ export class Parser {
   }
 
   #nextTokenIsOpenParenOrLessThan(): boolean {
-    const kind = this.#tokens[this.#index + 1]?.kind ?? Kind.Unknown;
+    const kind = this.#peekKind();
     return kind === Kind.OpenParenToken || kind === Kind.LessThanToken;
   }
 
@@ -1151,26 +1215,33 @@ export class Parser {
     if (this.#current().kind !== Kind.OpenBracketToken) {
       return false;
     }
-    const kindAt = (offset: number): Kind => this.#tokens[this.#index + offset]?.kind ?? Kind.Unknown;
-    const first = kindAt(1);
-    if (first === Kind.DotDotDotToken || first === Kind.CloseBracketToken) {
-      return true;
-    }
-    if (modifierKinds.has(first)) {
-      return isIdentifierNameKind(kindAt(2));
-    }
-    if (!isIdentifierNameKind(first)) {
-      return false;
-    }
-    const afterId = kindAt(2);
-    if (afterId === Kind.ColonToken || afterId === Kind.CommaToken) {
-      return true;
-    }
-    if (afterId !== Kind.QuestionToken) {
-      return false;
-    }
-    const afterQuestion = kindAt(3);
-    return afterQuestion === Kind.ColonToken || afterQuestion === Kind.CommaToken || afterQuestion === Kind.CloseBracketToken;
+    // tsgo nextIsUnambiguouslyIndexSignature runs as a lookAhead callback; walk
+    // the cursor forward off the live scanner and rewind via #lookAhead.
+    return this.#lookAhead(() => {
+      this.#nextToken(); // skip `[`
+      const first = this.#current().kind;
+      if (first === Kind.DotDotDotToken || first === Kind.CloseBracketToken) {
+        return true;
+      }
+      if (modifierKinds.has(first)) {
+        this.#nextToken();
+        return isIdentifierNameKind(this.#current().kind);
+      }
+      if (!isIdentifierNameKind(first)) {
+        return false;
+      }
+      this.#nextToken();
+      const afterId = this.#current().kind;
+      if (afterId === Kind.ColonToken || afterId === Kind.CommaToken) {
+        return true;
+      }
+      if (afterId !== Kind.QuestionToken) {
+        return false;
+      }
+      this.#nextToken();
+      const afterQuestion = this.#current().kind;
+      return afterQuestion === Kind.ColonToken || afterQuestion === Kind.CommaToken || afterQuestion === Kind.CloseBracketToken;
+    });
   }
 
   #parseOptionalTypeParameters(): NodeArray<TypeParameterDeclaration> | undefined {
@@ -1514,9 +1585,24 @@ export class Parser {
     }
     let left = this.#parseUnaryExpression();
     while (true) {
+      // wave 4b-swap: EXPRESSION-POSITION `>`-family via reScanGreaterThanToken
+      // (tsgo parser.go:4582). The live scanner emits a single GreaterThanToken for
+      // `>` (no greedy `>>`/`>>>`/`>=`/`>>=`/`>>>=`), so before reading precedence we
+      // merge the `>`-family off the scanner. reScanGreaterThanToken is a no-op
+      // unless the current token IS `>`, so calling it unconditionally each iteration
+      // is safe (tsgo does exactly this at 4582). `<<` is still scanned greedily
+      // (scanner.ts:1806-1813) so shift-left/relational `<` is unaffected.
+      this.#reScanGreaterThan();
       const operatorToken = this.#current();
       const operatorPrecedence = binaryPrecedence.get(operatorToken.kind) ?? 0;
-      if (operatorPrecedence <= precedence) {
+      // wave 4b-swap: `**` (AsteriskAsteriskToken) is the ONLY right-associative
+      // binary operator, so it consumes at EQUAL precedence (recursing right);
+      // all other operators consume only at strictly-greater precedence (tsgo
+      // parser.go:4605-4613). `a**b**c` -> `a**(b**c)`; `a-b-c` stays `(a-b)-c`.
+      const consume = operatorToken.kind === Kind.AsteriskAsteriskToken
+        ? operatorPrecedence >= precedence
+        : operatorPrecedence > precedence;
+      if (!consume) {
         break;
       }
       this.#advance();
@@ -1545,45 +1631,61 @@ export class Parser {
   }
 
   #isArrowFunctionStart(): boolean {
-    if (isIdentifierNameKind(this.#current().kind) && this.#tokens[this.#index + 1]?.kind === Kind.EqualsGreaterThanToken) {
+    if (isIdentifierNameKind(this.#current().kind) && this.#peekKind() === Kind.EqualsGreaterThanToken) {
       return true;
     }
     if (this.#current().kind !== Kind.OpenParenToken) {
       return false;
     }
-    let depth = 0;
-    for (let index = this.#index; index < this.#tokens.length; index += 1) {
-      const kind = this.#tokens[index]!.kind;
-      if (kind === Kind.OpenParenToken) {
-        depth += 1;
-        continue;
-      }
-      if (kind === Kind.CloseParenToken) {
-        depth -= 1;
-        if (depth === 0) {
-          const nextKind = this.#tokens[index + 1]?.kind;
-          if (nextKind === Kind.EqualsGreaterThanToken) {
-            return true;
-          }
-          if (nextKind !== Kind.ColonToken) {
-            return false;
-          }
-          return this.#hasEqualsGreaterThanBeforeStatementBoundary(index + 2);
+    // wave 4b-swap: the same boundary logic as before, but driven off the live
+    // scanner inside one #lookAhead (bounded by the matching `)` then the post-`)`
+    // peek) so no #tokens/#index remain. Behavior is identical; only the cursor
+    // changes. Scan forward tracking paren depth to the matching `)`, then decide
+    // off the token after it (`=>` ⇒ arrow; `:` ⇒ scan for `=>` before a
+    // statement boundary; anything else ⇒ not an arrow).
+    return this.#lookAhead(() => {
+      let depth = 0;
+      while (this.#current().kind !== Kind.EndOfFile) {
+        const kind = this.#current().kind;
+        if (kind === Kind.OpenParenToken) {
+          depth += 1;
+          this.#nextToken();
+          continue;
         }
+        if (kind === Kind.CloseParenToken) {
+          depth -= 1;
+          this.#nextToken();
+          if (depth === 0) {
+            const nextKind = this.#current().kind;
+            if (nextKind === Kind.EqualsGreaterThanToken) {
+              return true;
+            }
+            if (nextKind !== Kind.ColonToken) {
+              return false;
+            }
+            this.#nextToken();
+            return this.#hasEqualsGreaterThanBeforeStatementBoundary();
+          }
+          continue;
+        }
+        this.#nextToken();
       }
-    }
-    return false;
+      return false;
+    });
   }
 
-  #hasEqualsGreaterThanBeforeStatementBoundary(startIndex: number): boolean {
-    for (let index = startIndex; index < this.#tokens.length; index += 1) {
-      const kind = this.#tokens[index]!.kind;
+  // wave 4b-swap: scan forward from the CURRENT token (already inside the
+  // #isArrowFunctionStart #lookAhead) for a `=>` before a statement boundary.
+  #hasEqualsGreaterThanBeforeStatementBoundary(): boolean {
+    while (this.#current().kind !== Kind.EndOfFile) {
+      const kind = this.#current().kind;
       if (kind === Kind.EqualsGreaterThanToken) {
         return true;
       }
-      if (kind === Kind.SemicolonToken || kind === Kind.OpenBraceToken || kind === Kind.CloseBraceToken || kind === Kind.EndOfFile) {
+      if (kind === Kind.SemicolonToken || kind === Kind.OpenBraceToken || kind === Kind.CloseBraceToken) {
         return false;
       }
+      this.#nextToken();
     }
     return false;
   }
@@ -1758,7 +1860,7 @@ export class Parser {
     if (this.#current().kind !== Kind.LessThanToken) {
       return undefined;
     }
-    const startIndex = this.#index;
+    const mark = this.#mark();
     try {
       const typeArguments = this.#parseOptionalTypeArguments();
       if (typeArguments !== undefined && this.#current().kind === Kind.OpenParenToken) {
@@ -1766,7 +1868,7 @@ export class Parser {
       }
     } catch {
     }
-    this.#index = startIndex;
+    this.#rewind(mark);
     return undefined;
   }
 
@@ -1835,6 +1937,21 @@ export class Parser {
         const pos = this.#nodePos();
         this.#advance();
         return this.#finishNode(createBigIntLiteral(token.text, 0), pos);
+      }
+      case Kind.SlashToken:
+      case Kind.SlashEqualsToken: {
+        // wave 4b-swap: the live scanner yields SlashToken/SlashEqualsToken for `/`
+        // (scanner.ts:1676+) — it does NOT auto-scan a RegularExpressionLiteral the
+        // way the old batch scanAll pre-detected one. At the regex-allowed primary
+        // position, re-tokenize via reScanSlashToken() (tsgo parser.go) and re-read
+        // #token before building the regex literal (probe regex_literal_after_assignment
+        // `x=/ab+/g;`).
+        const pos = this.#nodePos();
+        const kind = this.#scanner.reScanSlashToken();
+        this.#refreshTokenFromScanner(kind);
+        const regexToken = this.#current();
+        this.#advance();
+        return this.#finishNode(createRegularExpressionLiteral(regexToken.text, 0), pos);
       }
       case Kind.RegularExpressionLiteral: {
         const pos = this.#nodePos();
@@ -1908,13 +2025,8 @@ export class Parser {
       // trailing TemplateMiddle/TemplateTail literal is consumed so the end covers it.
       const spanPos = this.#nodePos();
       const expression = this.#parseExpression();
-      this.#expect(Kind.CloseBraceToken);
-      const literalToken = this.#current();
-      if (literalToken.kind !== Kind.TemplateMiddle && literalToken.kind !== Kind.TemplateTail) {
-        throw new ParseError("Expected template continuation", literalToken);
-      }
       const literalPos = this.#nodePos();
-      this.#advance();
+      const literalToken = this.#parseLiteralOfTemplateSpan();
       const literal = literalToken.kind === Kind.TemplateMiddle
         ? this.#finishNode(createTemplateMiddle(templateMiddleText(literalToken.text), templateMiddleText(literalToken.text), 0), literalPos)
         : this.#finishNode(createTemplateTail(templateTailText(literalToken.text), templateTailText(literalToken.text), 0), literalPos);
@@ -1925,6 +2037,25 @@ export class Parser {
     }
     // tsgo parseTemplateExpression: node start is the TemplateHead start (reuse headPos).
     return this.#finishNode(createTemplateExpression(head, createNodeArray(spans)), headPos);
+  }
+
+  // wave 4b-swap: tsgo parseLiteralOfTemplateSpan (parser.go:3727-3745). After a
+  // span body, the CURRENT token is `}` (the live scanner emits CloseBraceToken,
+  // NOT a TemplateMiddle/Tail, since scan() does not track brace depth). Re-scan
+  // the `}`-started continuation in place via reScanTemplateToken(false) (tsgo
+  // parser.go:5542), refresh #token, then read + advance past the Middle/Tail.
+  #parseLiteralOfTemplateSpan(): ScannedToken {
+    if (this.#current().kind !== Kind.CloseBraceToken) {
+      throw new ParseError("Expected template continuation", this.#current());
+    }
+    const kind = this.#scanner.reScanTemplateToken(false);
+    this.#refreshTokenFromScanner(kind);
+    const literalToken = this.#current();
+    if (literalToken.kind !== Kind.TemplateMiddle && literalToken.kind !== Kind.TemplateTail) {
+      throw new ParseError("Expected template continuation", literalToken);
+    }
+    this.#advance();
+    return literalToken;
   }
 
   #parseArrayLiteralExpression(): Expression {
@@ -2213,7 +2344,7 @@ export class Parser {
       // tsgo parseTypeQuery / parseImportType (2799-2806): `typeof import(...)` is an
       // import type with isTypeOf=true (nextIsStartOfTypeOfImportType, 3021), otherwise a
       // plain type query.
-      if (this.#tokens[this.#index + 1]?.kind === Kind.ImportKeyword) {
+      if (this.#peekKind() === Kind.ImportKeyword) {
         return this.#parseImportType(true);
       }
       this.#advance();
@@ -2298,7 +2429,7 @@ export class Parser {
     // when lookahead is a numeric/bigint literal -> LiteralTypeNode wrapping a
     // PrefixUnaryExpression). Not a general unary-expression-in-type parser.
     if (token.kind === Kind.MinusToken) {
-      const nextKind = this.#tokens[this.#index + 1]?.kind;
+      const nextKind = this.#peekKind();
       if (nextKind === Kind.NumericLiteral || nextKind === Kind.BigIntLiteral) {
         // The inner literal leaf and the PrefixUnaryExpression wrapper are stamped
         // (Stage 1b). Stage 1d stamps the LiteralTypeNode wrapper with unaryPos (the
@@ -2352,14 +2483,14 @@ export class Parser {
     // KEEPS `string` (the enclosing conditional's extends-type is parsed with
     // DisallowConditionalTypesContext=true via #parseType, so the predicate reads true), while
     // `infer U extends X ? ...` at a position NOT under that context rewinds the `?` out.
-    const startIndex = this.#index;
+    const mark = this.#mark();
     if (this.#consumeOptional(Kind.ExtendsKeyword)) {
       const constraint = this.#doInContext(NodeFlags.DisallowConditionalTypesContext, true, () => this.#parseType());
       if (this.#inDisallowConditionalTypesContext() || this.#current().kind !== Kind.QuestionToken) {
         return constraint;
       }
     }
-    this.#index = startIndex;
+    this.#rewind(mark);
     return undefined;
   }
 
@@ -2462,27 +2593,36 @@ export class Parser {
   }
 
   #nextIsStartOfMappedType(): boolean {
-    // tsgo nextIsStartOfMappedType (3123): from the `{`, peek `+/-? readonly? [ id in`. tsts
-    // has no nextToken-style scanner cursor, so this is a pure forward token peek (mirroring
-    // #isIndexSignature's this.#tokens[this.#index + N] pattern) — no save/restore needed
-    // because no token is consumed.
-    let offset = this.#index + 1;
-    if (this.#tokens[offset]?.kind === Kind.PlusToken || this.#tokens[offset]?.kind === Kind.MinusToken) {
-      return this.#tokens[offset + 1]?.kind === Kind.ReadonlyKeyword;
-    }
-    if (this.#tokens[offset]?.kind === Kind.ReadonlyKeyword) {
-      offset += 1;
-    }
-    return this.#tokens[offset]?.kind === Kind.OpenBracketToken
-      && isIdentifierNameKind(this.#tokens[offset + 1]?.kind ?? Kind.Unknown)
-      && this.#tokens[offset + 2]?.kind === Kind.InKeyword;
+    // tsgo nextIsStartOfMappedType (3123): from the `{`, peek `+/-? readonly? [ id in`.
+    // Runs as a lookAhead callback in tsgo; walk the cursor forward off the live
+    // scanner and rewind via #lookAhead.
+    return this.#lookAhead(() => {
+      this.#nextToken(); // skip `{`
+      if (this.#current().kind === Kind.PlusToken || this.#current().kind === Kind.MinusToken) {
+        this.#nextToken();
+        return this.#current().kind === Kind.ReadonlyKeyword;
+      }
+      if (this.#current().kind === Kind.ReadonlyKeyword) {
+        this.#nextToken();
+      }
+      if (this.#current().kind !== Kind.OpenBracketToken) {
+        return false;
+      }
+      this.#nextToken();
+      if (!isIdentifierNameKind(this.#current().kind)) {
+        return false;
+      }
+      this.#nextToken();
+      return this.#current().kind === Kind.InKeyword;
+    });
   }
 
   #parseTemplateLiteralType(): TypeNode {
     // tsgo parseTemplateType (3684): node start at the TemplateHead; spans parse a TYPE
-    // (#parseType) rather than an expression. The scanner pre-scans TemplateHead/Middle/Tail
-    // via the brace-depth counter (scanner.ts 301-313,425-447), so the token stream is
-    // identical to the expression path even when the `${...}` interior contains `{ }`.
+    // (#parseType) rather than an expression. wave 4b-swap: the `${...}` continuation
+    // is re-scanned in place via reScanTemplateToken(false) after each span (see
+    // #parseLiteralOfTemplateSpan), since the live scanner emits a plain CloseBraceToken
+    // for `}` (no brace-depth pre-scan of Middle/Tail).
     const headPos = this.#nodePos();
     const headToken = this.#expect(Kind.TemplateHead);
     const head = this.#finishNode(createTemplateHead(templateHeadText(headToken.text), templateHeadText(headToken.text), 0), headPos);
@@ -2492,13 +2632,8 @@ export class Parser {
       // after the trailing TemplateMiddle/TemplateTail literal is consumed.
       const spanPos = this.#nodePos();
       const type = this.#parseType();
-      this.#expect(Kind.CloseBraceToken);
-      const literalToken = this.#current();
-      if (literalToken.kind !== Kind.TemplateMiddle && literalToken.kind !== Kind.TemplateTail) {
-        throw new ParseError("Expected template continuation", literalToken);
-      }
       const literalPos = this.#nodePos();
-      this.#advance();
+      const literalToken = this.#parseLiteralOfTemplateSpan();
       const literal = literalToken.kind === Kind.TemplateMiddle
         ? this.#finishNode(createTemplateMiddle(templateMiddleText(literalToken.text), templateMiddleText(literalToken.text), 0), literalPos)
         : this.#finishNode(createTemplateTail(templateTailText(literalToken.text), templateTailText(literalToken.text), 0), literalPos);
@@ -2528,21 +2663,27 @@ export class Parser {
   }
 
   #scanStartOfNamedTupleElement(): boolean {
-    // tsgo scanStartOfNamedTupleElement (3633) + nextTokenIsColonOrQuestionColon (3640): a
-    // pure forward token peek (no consume). `...`? then an identifier/keyword, then `:` or
-    // `?` `:`.
-    let offset = this.#index;
-    if (this.#tokens[offset]?.kind === Kind.DotDotDotToken) {
-      offset += 1;
-    }
-    if (!isIdentifierNameKind(this.#tokens[offset]?.kind ?? Kind.Unknown)) {
-      return false;
-    }
-    offset += 1;
-    if (this.#tokens[offset]?.kind === Kind.ColonToken) {
-      return true;
-    }
-    return this.#tokens[offset]?.kind === Kind.QuestionToken && this.#tokens[offset + 1]?.kind === Kind.ColonToken;
+    // tsgo scanStartOfNamedTupleElement (3633) + nextTokenIsColonOrQuestionColon (3640):
+    // `...`? then an identifier/keyword, then `:` or `?` `:`. Runs as a lookAhead
+    // callback; walk forward off the live scanner from the CURRENT token and rewind
+    // via #lookAhead.
+    return this.#lookAhead(() => {
+      if (this.#current().kind === Kind.DotDotDotToken) {
+        this.#nextToken();
+      }
+      if (!isIdentifierNameKind(this.#current().kind)) {
+        return false;
+      }
+      this.#nextToken();
+      if (this.#current().kind === Kind.ColonToken) {
+        return true;
+      }
+      if (this.#current().kind !== Kind.QuestionToken) {
+        return false;
+      }
+      this.#nextToken();
+      return this.#current().kind === Kind.ColonToken;
+    });
   }
 
   #parseTupleElementType(): TypeNode {
@@ -2565,23 +2706,68 @@ export class Parser {
   }
 
   #tryParseFunctionType(): TypeNode | undefined {
-    // tsgo parseFunctionOrConstructorType (3775): pos at the '(' (captured BEFORE the
-    // speculative consume). On the rewind paths NO node is created, so no stray stamp.
-    const startIndex = this.#index;
-    const pos = this.#nodePos();
-    try {
-      this.#expect(Kind.OpenParenToken);
-      const parameters = this.#parseParameterList();
-      this.#expect(Kind.CloseParenToken);
-      if (!this.#consumeOptional(Kind.EqualsGreaterThanToken)) {
-        this.#index = startIndex;
-        return undefined;
-      }
-      return this.#finishNode(createFunctionTypeNode(undefined, createNodeArray(parameters), this.#parseType()), pos);
-    } catch {
-      this.#index = startIndex;
+    // wave 4b-swap: faithful tsgo shape (isStartOfFunctionTypeOrConstructorType,
+    // parser.go:3768-3773). A `(` is a function type ONLY if the unambiguous
+    // lookahead matches; THEN we commit to parsing it (no rewind). The lookahead
+    // itself runs under #lookAhead (= #mark/#rewind, the audited rewind machinery),
+    // so the speculation is a bounded structural probe rather than a parse-then-
+    // discard of a whole param-list AST. This eliminates the old catch-and-rollback.
+    if (!this.#lookAhead(() => this.#nextIsUnambiguouslyStartOfFunctionType())) {
       return undefined;
     }
+    // tsgo parseFunctionOrConstructorType (3775): pos at the '(' (BEFORE the consume).
+    const pos = this.#nodePos();
+    this.#expect(Kind.OpenParenToken);
+    const parameters = this.#parseParameterList();
+    this.#expect(Kind.CloseParenToken);
+    this.#expect(Kind.EqualsGreaterThanToken);
+    return this.#finishNode(createFunctionTypeNode(undefined, createNodeArray(parameters), this.#parseType()), pos);
+  }
+
+  #nextIsUnambiguouslyStartOfFunctionType(): boolean {
+    // tsgo nextIsUnambiguouslyStartOfFunctionType (parser.go:3810-3833). Run under
+    // #lookAhead by the caller (the cursor is rewound afterward).
+    this.#nextToken(); // advance past `(`
+    if (this.#current().kind === Kind.CloseParenToken || this.#current().kind === Kind.DotDotDotToken) {
+      // `( )` or `( ...`
+      return true;
+    }
+    if (this.#skipParameterStart()) {
+      const kind = this.#current().kind;
+      if (kind === Kind.ColonToken || kind === Kind.CommaToken || kind === Kind.QuestionToken || kind === Kind.EqualsToken) {
+        // `( xxx :` / `( xxx ,` / `( xxx ?` / `( xxx =`
+        return true;
+      }
+      if (kind === Kind.CloseParenToken) {
+        this.#nextToken();
+        return this.#current().kind === Kind.EqualsGreaterThanToken; // `( xxx ) =>`
+      }
+    }
+    return false;
+  }
+
+  #skipParameterStart(): boolean {
+    // tsgo skipParameterStart (parser.go:3835-3852). Skip modifiers, an optional
+    // `...`, then an identifier/`this` (nextToken+true) OR a binding pattern parsed
+    // with no error. tsts has no diagnostics array yet, so the binding-pattern arm
+    // returns whether the pattern parsed without throwing.
+    if (modifierKinds.has(this.#current().kind)) {
+      this.#parseModifiers();
+    }
+    this.#consumeOptional(Kind.DotDotDotToken);
+    if (isIdentifierNameKind(this.#current().kind) || this.#current().kind === Kind.ThisKeyword) {
+      this.#nextToken();
+      return true;
+    }
+    if (this.#current().kind === Kind.OpenBracketToken || this.#current().kind === Kind.OpenBraceToken) {
+      try {
+        this.#parseBindingName();
+        return true;
+      } catch {
+        return false;
+      }
+    }
+    return false;
   }
 
   #parseFunctionTypeWithOptionalTypeParameters(): TypeNode {
@@ -2601,7 +2787,7 @@ export class Parser {
     // entry (BEFORE the optional 'asserts'); finishNode after parameterName (no 'is')
     // or after the #parseType following 'is'. The rewind paths return undefined
     // without creating a node, so no stray stamp.
-    const startIndex = this.#index;
+    const mark = this.#mark();
     const pos = this.#nodePos();
     const assertsModifier = this.#consumeOptional(Kind.AssertsKeyword) ? createToken(Kind.AssertsKeyword) : undefined;
     let parameterName: ReturnType<typeof createThisTypeNode> | Identifier;
@@ -2614,14 +2800,14 @@ export class Parser {
     } else if (isIdentifierNameKind(this.#current().kind)) {
       parameterName = this.#parseIdentifier();
     } else {
-      this.#index = startIndex;
+      this.#rewind(mark);
       return undefined;
     }
     if (!this.#consumeOptional(Kind.IsKeyword)) {
       if (assertsModifier !== undefined) {
         return this.#finishNode(createTypePredicateNode(assertsModifier, parameterName, undefined), pos);
       }
-      this.#index = startIndex;
+      this.#rewind(mark);
       return undefined;
     }
     return this.#finishNode(createTypePredicateNode(assertsModifier, parameterName, this.#parseType()), pos);
@@ -2656,34 +2842,71 @@ export class Parser {
   }
 
   #expectGreaterThan(): ScannedToken {
-    const token = this.#current();
-    if (token.kind === Kind.GreaterThanToken) {
-      this.#advance();
-      return token;
-    }
-    if (token.kind === Kind.GreaterThanGreaterThanToken) {
-      const tokens = this.#tokens as ScannedToken[];
-      tokens[this.#index] = { kind: Kind.GreaterThanToken, pos: token.pos + 1, end: token.end, text: ">" };
-      return { kind: Kind.GreaterThanToken, pos: token.pos, end: token.pos + 1, text: ">" };
-    }
-    if (token.kind === Kind.GreaterThanGreaterThanGreaterThanToken) {
-      const tokens = this.#tokens as ScannedToken[];
-      tokens[this.#index] = { kind: Kind.GreaterThanGreaterThanToken, pos: token.pos + 1, end: token.end, text: ">>" };
-      return { kind: Kind.GreaterThanToken, pos: token.pos, end: token.pos + 1, text: ">" };
-    }
-    throw new ParseError(`Expected token ${Kind[Kind.GreaterThanToken]}`, token);
+    // wave 4b-swap: the live scanner emits a SINGLE GreaterThanToken per `>`
+    // (scanner.ts:1859-1860) — it never greedily combines `>>`/`>>>`/`>=` (matching
+    // tsgo scanner.go:803-804). So the type-position closer just consumes one real
+    // `>` (tsgo parseExpected(KindGreaterThanToken) on a single `>`, parser.go:710
+    // via parseBracketedList). For nested `A<B<C>>` the inner closer consumes the
+    // first `>` (so inner B<C> end == that `>`'s end, index 15) and the outer
+    // consumes the second — no array mutation, no off-by-one.
+    return this.#expect(Kind.GreaterThanToken);
   }
 
   #current(): ScannedToken {
-    return this.#tokens[this.#index]!;
+    return this.#token;
   }
 
   #advance(): ScannedToken {
-    const token = this.#current();
+    const token = this.#token;
     if (token.kind !== Kind.EndOfFile) {
-      this.#index += 1;
+      // #nextToken records #prevTokenEnd (= this consumed token's end) before
+      // scanning, so after advance #nodeEnd() returns the consumed token's end.
+      // At EOF we must NOT advance and NOT clobber #prevTokenEnd.
+      this.#nextToken();
     }
     return token;
+  }
+
+  // wave 4b-swap: one-token lookahead with no #token mutation, modeling tsgo's
+  // scanner-backed peeks. Marks the scanner, scans one token, reads its kind,
+  // then rewinds the scanner back so the parser cursor is unchanged.
+  #peekKind(): Kind {
+    const saved = this.#scanner.mark();
+    const kind = this.#scanner.scan();
+    this.#scanner.rewind(saved);
+    return kind;
+  }
+
+  // wave 4b-swap: speculative parse-state snapshot/restore, modeling tsgo
+  // ParserState (parser.go:349-372). Captures the scanner state plus the
+  // parser cursor (#token), #prevTokenEnd, and #contextFlags. The
+  // diagnostics-length slot tsgo also saves is a no-op pre-Stage-3 (tsts has no
+  // diagnostics array yet) so it is intentionally omitted.
+  #mark(): ParserMark {
+    return {
+      scannerState: this.#scanner.mark(),
+      token: this.#token,
+      prevTokenEnd: this.#prevTokenEnd,
+      contextFlags: this.#contextFlags,
+    };
+  }
+
+  #rewind(mark: ParserMark): void {
+    this.#scanner.rewind(mark.scannerState);
+    this.#token = mark.token;
+    this.#prevTokenEnd = mark.prevTokenEnd;
+    this.#contextFlags = mark.contextFlags;
+  }
+
+  // wave 4b-swap: tsgo lookAhead (parser.go:374-379) — run a speculative probe
+  // and ALWAYS rewind, returning the probe's result. Used for bounded
+  // multi-token / unbounded boundary lookaheads that walk the cursor forward
+  // via #advance/#current and must leave it untouched.
+  #lookAhead<T>(callback: () => T): T {
+    const mark = this.#mark();
+    const result = callback();
+    this.#rewind(mark);
+    return result;
   }
 
   // codex-048 Stage-1a: position plumbing mirroring tsgo
@@ -2693,11 +2916,11 @@ export class Parser {
   // just-consumed token. Per codex-048 (i) this is the token end, NOT the
   // trivia-inclusive Scanner TokenFullStart (that is a Stage-4 closure item).
   #nodePos(): number {
-    return this.#current().pos;
+    return this.#token.pos;
   }
 
   #nodeEnd(): number {
-    return this.#tokens[this.#index - 1]!.end;
+    return this.#prevTokenEnd;
   }
 
   // codex-054 M3 Stage-2: tsgo setContextFlags (parser.go:6352-6358). Sets or

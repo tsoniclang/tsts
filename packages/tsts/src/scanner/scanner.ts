@@ -740,7 +740,7 @@ const textToKeyword: ReadonlyMap<string, number> = (() => {
     const name = KindNames[i]!;
     if (name.endsWith("Keyword")) {
       const stem = name.slice(0, -"Keyword".length);
-      m.set(stem.charAt(0).toLowerCase() + stem.slice(1), i);
+      m.set(stem.toLowerCase(), i);
     }
   }
   return m;

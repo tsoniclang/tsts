@@ -25,31 +25,16 @@ import { pathToFileURL } from "node:url";
 import { resolve as resolvePath, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// TSGO-DIVERGENCE probes: known to FAIL against the current pre-scan parser.
-// They encode the TSGO-CORRECT value and are expected to pass only after the
-// parser is fixed (4b-swap). If one of these PASSES now, the gate flags it as an
-// XPASS (the bug was fixed early → prune this list in that wave).
-//
-// Two divergence classes:
-//  (a) nested generic closers — #expectGreaterThan splits `>>`/`>>>` WITHOUT
-//      advancing #index, leaving the inner TypeReference end off-by-one (inner
-//      B<C> end is 14 "B<C" instead of tsgo-correct 15 "B<C>"). The live scanner's
-//      reScanGreaterThanToken is expected to fix this in 4b-swap.
-//  (b) `**` associativity — the binary loop (parser.ts ~1519) treats EVERY operator
-//      as left-associative (`operatorPrecedence <= precedence`), so `a**b**c` parses
-//      as `(a**b)**c` instead of the tsgo-correct right-associative `a**(b**c)`.
-//      tsgo strictly-less-thans only for the right-associative `**`. This is a real
-//      parser bug independent of the scanner swap; the probe pins the tsgo-correct
-//      right-assoc shape so the fix is gated.
-const KNOWN_DIVERGENCE_FAILURES = new Set([
-  // (a) existing probe in position.test.ts (asserts inner B<C> end == 15)
-  "ParserPositionTests.nested_generic_type_arguments_split_greater_than",
-  // (a) new parity probes (assert tsgo-correct nested-generic ends)
-  "ParserParityTests.nested_generic_double_closer_tsgo_correct",
-  "ParserParityTests.nested_generic_triple_closer_tsgo_correct",
-  // (b) `**` right-associativity (a**b**c -> a**(b**c))
-  "ParserParityTests.precedence_exponent_right_assoc",
-]);
+// TSGO-DIVERGENCE probes: historically FAILED against the pre-scan parser and
+// encoded the TSGO-CORRECT value, flipping green once the parser was fixed.
+// As of the 4b-swap (parser → live scanner) ALL of them now PASS:
+//  (a) nested generic closers — the live scanner emits a single GreaterThanToken
+//      per `>`, so #expectGreaterThan consumes one real `>` (no array-mutation
+//      off-by-one); inner `B<C>` ends at the first `>` (index 15).
+//  (b) `**` right-associativity — the binary loop now consumes `**` at EQUAL
+//      precedence (`a**b**c` -> `a**(b**c)`), all other ops unchanged.
+// The set is therefore empty: every probe is a real (non-divergence) assertion.
+const KNOWN_DIVERGENCE_FAILURES = new Set([]);
 
 const thisDir = dirname(fileURLToPath(import.meta.url));
 // <root>/packages/tsts/tools/parser-positions/ → repo root is 4 levels up.
