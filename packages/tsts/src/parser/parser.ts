@@ -83,6 +83,7 @@ import {
   createJsxOpeningFragment,
   createJsxSelfClosingElement,
   createJsxSpreadAttribute,
+  createJsxText,
   createKeywordExpression,
   createLabeledStatement,
   createLiteralTypeNode,
@@ -183,6 +184,7 @@ import {
   type JsxOpeningFragment,
   type JsxSelfClosingElement,
   type JsxTagNameExpression,
+  type JsxText,
   type KeywordTypeSyntaxKind,
   type LeftHandSideExpression,
   type ModifierSyntaxKind,
@@ -2293,10 +2295,10 @@ export class Parser {
   }
 
   // ==========================================================================
-  // M3 Stage-5a: JSX element / fragment / attribute productions.
-  // Faithful 1:1 port of tsgo parser.go:4721-5043. Child-content productions
-  // (JsxText, {expr}, nested-element recursion) are DEFERRED to 5b — see
-  // #parseJsxChild below.
+  // M3 Stage-5a/5b: JSX element / fragment / attribute productions.
+  // Faithful 1:1 port of tsgo parser.go:4721-5043. 5b adds the child-content
+  // productions (JsxText, {expr}, nested-element recursion) in #parseJsxChild /
+  // #parseJsxText / #parseJsxExpression.
   // ==========================================================================
 
   // tsgo parseJsxElementOrSelfClosingElementOrFragment (parser.go:4721-4799). The top
@@ -2384,9 +2386,10 @@ export class Parser {
   // tsgo parseJsxChildren (parser.go:4801-4822). Custom loop (NOT #parseList): set the
   // PCJsxChildren bit, reScanJsxToken(true) at the top of each iteration, parseJsxChild,
   // break when it returns undefined, restore the bit, build the child NodeList.
-  // 5a NOTE: the CHILD-CONTENT arms (JsxText, {expr}, nested `<`) live in 5b — see
-  // #parseJsxChild. In 5a the loop only ever sees TERMINATION tokens for the probe
-  // inputs (empty `<div></div>` / `<></>`), producing an empty child list.
+  // 5b: #parseJsxChild now parses the CHILD-CONTENT arms (JsxText, {expr}, nested `<`),
+  // each of which leaves the scanner positioned for the next child; the reScanJsxToken at
+  // the top of the loop re-tokenizes the current position as a JSX token before each
+  // child. The loop terminates when #parseJsxChild returns undefined (`</`/EOF).
   #parseJsxChildren(openingTag: JsxOpeningElement | JsxOpeningFragment): NodeArray<JsxChild> {
     const pos = this.#nodePos();
     const save = this.#parsingContexts;
@@ -2415,12 +2418,13 @@ export class Parser {
     return createNodeArray(list, pos, this.#nodePos());
   }
 
-  // tsgo parseJsxChild (parser.go:4824-4850). 5a SCOPE: ONLY the TERMINATION cases are
-  // implemented — EofToken (closing-tag-expected diagnostic + undefined), LessThanSlash
-  // Token / ConflictMarkerTrivia (undefined). The CONTENT arms (JsxText, OpenBrace `{expr}`,
-  // nested `<`) are the explicit 5b deliverable and are NOT faked here: any other token
-  // is an unhandled-content case that 5b will implement. For the 5a probe inputs (empty
-  // elements/fragments) the loop only ever sees a termination token, so this is faithful.
+  // tsgo parseJsxChild (parser.go:4824-4850). TERMINATION cases — EofToken (closing-tag-
+  // expected diagnostic + undefined), LessThanSlashToken / ConflictMarkerTrivia (undefined).
+  // CONTENT arms (5b): JsxText / JsxTextAllWhiteSpaces => #parseJsxText; OpenBraceToken =>
+  // child-position #parseJsxExpression(inExpressionContext=false); LessThanToken => nested
+  // #parseJsxElementOrSelfClosingElementOrFragment in child position (inExpressionContext=
+  // false, topInvalidNodePosition=-1, openingTag threaded through, mustBeUnary=false). The
+  // trailing `Unhandled case` panic is tsgo's invariant guard (parser.go:4849).
   #parseJsxChild(openingTag: JsxOpeningElement | JsxOpeningFragment, token: Kind): JsxChild | undefined {
     switch (token) {
       case Kind.EndOfFile: {
@@ -2437,13 +2441,31 @@ export class Parser {
       case Kind.LessThanSlashToken:
       case Kind.ConflictMarkerTrivia:
         return undefined;
+      case Kind.JsxText:
+      case Kind.JsxTextAllWhiteSpaces:
+        return this.#parseJsxText();
+      case Kind.OpenBraceToken:
+        return this.#parseJsxExpression(false /*inExpressionContext*/);
+      case Kind.LessThanToken:
+        return this.#parseJsxElementOrSelfClosingElementOrFragment(false /*inExpressionContext*/, -1 /*topInvalidNodePosition*/, openingTag, false /*mustBeUnary*/) as JsxChild;
       default:
-        // 5b: JsxText / JsxTextAllWhiteSpaces / OpenBraceToken (`{expr}`) / LessThanToken
-        // (nested element) content arms. Deferred — not faked. tsgo panics on an
-        // unhandled case; in 5a only termination tokens reach the loop for the in-scope
-        // probe inputs, so this is the faithful "scaffolding" seam.
-        throw new Error("parseJsxChild: content arms (JsxText / {expr} / nested element) are deferred to M3 Stage 5b");
+        // tsgo panic("Unhandled case in parseJsxChild") (parser.go:4849).
+        throw new Error("Unhandled case in parseJsxChild");
     }
+  }
+
+  // tsgo parseJsxText (parser.go:4852-4857). pos = nodePos(); build JsxText from the
+  // current token's value (for a JsxText token tokenStart === fullStartPos, so the raw
+  // snapshot text equals tsgo's scanner.TokenValue()) and containsOnlyTriviaWhiteSpaces =
+  // (token kind === JsxTextAllWhiteSpaces). The value/kind are read BEFORE #scanJsxText
+  // advances the scanner to position for the next child; finishNode covers the consumed
+  // JsxText via the #prevTokenEnd set by #scanJsxText.
+  #parseJsxText(): JsxText {
+    const pos = this.#nodePos();
+    const token = this.#current();
+    const result = createJsxText(token.text, token.kind === Kind.JsxTextAllWhiteSpaces);
+    this.#scanJsxText();
+    return this.#finishNode(result, pos);
   }
 
   // tsgo ast.IsJsxOpeningFragment narrowing for the parseJsxChild EOF arm.
@@ -2600,10 +2622,16 @@ export class Parser {
     return this.#finishNode(createStringLiteral(unquote(token.text), 0), pos);
   }
 
-  // tsgo parseJsxExpression (parser.go:4859-4881) — JSX-attribute-value `{expr}` form
-  // (inExpressionContext=true). 5b will add the child-position (inExpressionContext=false)
-  // dotDotDot + scanJsxText cadence. In 5a this is reachable ONLY from a JSX attribute
-  // value (`b={1}`), where inExpressionContext is always true.
+  // tsgo parseJsxExpression (parser.go:4859-4881). Shared by BOTH positions:
+  //  - attribute value (#parseJsxAttributeValue, inExpressionContext=true): close via
+  //    #expect(CloseBraceToken) — the normal scanner advance.
+  //  - child position (#parseJsxChild OpenBraceToken arm, inExpressionContext=false): a
+  //    leading `...` spread token is permitted, the close is checked WITHOUT advancing
+  //    (#parseExpectedCloseBraceWithoutAdvancing), then #scanJsxText re-positions the
+  //    scanner for the next child (tsgo 4877-4879).
+  // The expression body (when not immediately `}`) re-enters the NORMAL #parseExpression.
+  // Both call sites only invoke this when the current token is `{`, so the missing-`{`
+  // fallback (tsgo `return nil`) is a never-reached invariant guard.
   #parseJsxExpression(inExpressionContext: boolean): JsxExpression {
     const pos = this.#nodePos();
     if (!this.#consumeOptional(Kind.OpenBraceToken)) {
@@ -2614,22 +2642,24 @@ export class Parser {
     let expression: Expression | undefined;
     if (this.#current().kind !== Kind.CloseBraceToken) {
       if (!inExpressionContext) {
-        // 5b child-position cadence; unreachable in 5a (only attribute values call this).
+        // Child position: a spread child `{...expr}` is permitted (tsgo 4867-4869).
         dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
       }
+      // Only an AssignmentExpression is valid per the JSX spec, but a comma sequence is
+      // parsed unambiguously here so grammar checking can give a better error (tsgo 4870-4873).
       expression = this.#parseExpression();
     }
     if (inExpressionContext) {
       this.#expect(Kind.CloseBraceToken);
     } else if (this.#parseExpectedCloseBraceWithoutAdvancing()) {
+      // Child position: manually advance the JSX scanner to position for the next child.
       this.#scanJsxText();
     }
     return this.#finishNode(createJsxExpression(dotDotDotToken, expression), pos);
   }
 
-  // tsgo parseExpectedWithoutAdvancing(KindCloseBraceToken) for the 5b child-position
-  // JsxExpression (unreachable in 5a). Match => true (no advance); mismatch => record
-  // X_0_expected + false.
+  // tsgo parseExpectedWithoutAdvancing(KindCloseBraceToken) for the child-position
+  // JsxExpression close. Match => true (no advance); mismatch => record X_0_expected + false.
   #parseExpectedCloseBraceWithoutAdvancing(): boolean {
     if (this.#current().kind === Kind.CloseBraceToken) {
       return true;

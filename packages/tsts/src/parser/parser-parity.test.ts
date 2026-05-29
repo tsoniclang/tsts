@@ -60,6 +60,7 @@ import {
   isJsxNamespacedName,
   isJsxSelfClosingElement,
   isJsxSpreadAttribute,
+  isJsxText,
   isKeywordTypeNode,
   isLiteralTypeNode,
   isMappedTypeNode,
@@ -1081,6 +1082,158 @@ export class ParserParityTests {
     Assert.Equal(0, expression.children.length);
     Assert.Equal(Kind.JsxClosingElement, expression.closingElement.kind);
     if (!isIdentifier(expression.closingElement.tagName)) throw new Exception("Expected identifier closing tag name");
+    Assert.Equal("div", expression.closingElement.tagName.text);
+  }
+
+  // ── M3 Stage-5b: JSX children (JsxText / {expr} / nested element) ────────────
+
+  // `<div>text</div>` => JsxElement with one JsxText child "text".
+  jsx_element_text_child(): void {
+    const { sourceFile, expression } = this.#soleJsx("<div>text</div>;");
+    if (!isJsxElement(expression)) throw new Exception("Expected jsx element");
+    Assert.Equal(0, expression.pos);
+    Assert.Equal(15, expression.end);
+    Assert.Equal("<div>text</div>", this.#raw(sourceFile, expression));
+    Assert.Equal(1, expression.children.length);
+    const child = expression.children[0]!;
+    if (!isJsxText(child)) throw new Exception("Expected JsxText child");
+    Assert.Equal(Kind.JsxText, child.kind);
+    Assert.Equal(5, child.pos);
+    Assert.Equal(9, child.end);
+    Assert.Equal("text", this.#raw(sourceFile, child));
+    Assert.Equal("text", child.text);
+    Assert.Equal(false, child.containsOnlyTriviaWhiteSpaces);
+    // The closing tag still matches structurally (tagNamesAreEquivalent).
+    if (!isIdentifier(expression.closingElement.tagName)) throw new Exception("Expected identifier closing tag");
+    Assert.Equal("div", expression.closingElement.tagName.text);
+  }
+
+  // `<div>{expr}</div>` => JsxElement with one JsxExpression child.
+  jsx_element_expression_child(): void {
+    const { sourceFile, expression } = this.#soleJsx("<div>{expr}</div>;");
+    if (!isJsxElement(expression)) throw new Exception("Expected jsx element");
+    Assert.Equal(0, expression.pos);
+    Assert.Equal(17, expression.end);
+    Assert.Equal("<div>{expr}</div>", this.#raw(sourceFile, expression));
+    Assert.Equal(1, expression.children.length);
+    const child = expression.children[0]!;
+    if (!isJsxExpression(child)) throw new Exception("Expected JsxExpression child");
+    Assert.Equal(Kind.JsxExpression, child.kind);
+    Assert.Equal(5, child.pos);
+    Assert.Equal(11, child.end);
+    Assert.Equal("{expr}", this.#raw(sourceFile, child));
+    Assert.Equal(undefined, child.dotDotDotToken);
+    if (child.expression === undefined || !isIdentifier(child.expression)) throw new Exception("Expected identifier expression in {expr}");
+    Assert.Equal("expr", child.expression.text);
+  }
+
+  // `<><span/></>` => JsxFragment with a nested JsxSelfClosingElement child.
+  jsx_fragment_nested_self_closing_child(): void {
+    const { sourceFile, expression } = this.#soleJsx("<><span/></>;");
+    if (!isJsxFragment(expression)) throw new Exception("Expected jsx fragment");
+    Assert.Equal(0, expression.pos);
+    Assert.Equal(12, expression.end);
+    Assert.Equal("<><span/></>", this.#raw(sourceFile, expression));
+    Assert.Equal(1, expression.children.length);
+    const child = expression.children[0]!;
+    if (!isJsxSelfClosingElement(child)) throw new Exception("Expected JsxSelfClosingElement child");
+    Assert.Equal(2, child.pos);
+    Assert.Equal(9, child.end);
+    Assert.Equal("<span/>", this.#raw(sourceFile, child));
+    if (!isIdentifier(child.tagName)) throw new Exception("Expected identifier tag name span");
+    Assert.Equal("span", child.tagName.text);
+  }
+
+  // `<a><b/></a>` => nested JsxElement whose child is JsxSelfClosingElement b.
+  jsx_element_nested_element_child(): void {
+    const { sourceFile, expression } = this.#soleJsx("<a><b/></a>;");
+    if (!isJsxElement(expression)) throw new Exception("Expected jsx element");
+    Assert.Equal(0, expression.pos);
+    Assert.Equal(11, expression.end);
+    Assert.Equal("<a><b/></a>", this.#raw(sourceFile, expression));
+    if (!isIdentifier(expression.openingElement.tagName)) throw new Exception("Expected identifier opening tag a");
+    Assert.Equal("a", expression.openingElement.tagName.text);
+    Assert.Equal(1, expression.children.length);
+    const child = expression.children[0]!;
+    if (!isJsxSelfClosingElement(child)) throw new Exception("Expected JsxSelfClosingElement child b");
+    Assert.Equal(3, child.pos);
+    Assert.Equal(7, child.end);
+    Assert.Equal("<b/>", this.#raw(sourceFile, child));
+    if (!isIdentifier(child.tagName)) throw new Exception("Expected identifier tag name b");
+    Assert.Equal("b", child.tagName.text);
+    if (!isIdentifier(expression.closingElement.tagName)) throw new Exception("Expected identifier closing tag a");
+    Assert.Equal("a", expression.closingElement.tagName.text);
+  }
+
+  // Whitespace-only JsxText (with a line break) between elements =>
+  // containsOnlyTriviaWhiteSpaces JsxText (scanner produces JsxTextAllWhiteSpaces,
+  // the node carries Kind.JsxText + containsOnlyTriviaWhiteSpaces=true).
+  jsx_element_whitespace_only_text_child(): void {
+    const { sourceFile, expression } = this.#soleJsx("<a>\n<b/>\n</a>;");
+    if (!isJsxElement(expression)) throw new Exception("Expected jsx element");
+    Assert.Equal("<a>\n<b/>\n</a>", this.#raw(sourceFile, expression));
+    Assert.Equal(3, expression.children.length);
+    const first = expression.children[0]!;
+    if (!isJsxText(first)) throw new Exception("Expected leading JsxText child");
+    Assert.Equal(Kind.JsxText, first.kind);
+    Assert.Equal(true, first.containsOnlyTriviaWhiteSpaces);
+    Assert.Equal(3, first.pos);
+    Assert.Equal(4, first.end);
+    Assert.Equal("\n", this.#raw(sourceFile, first));
+    const middle = expression.children[1]!;
+    if (!isJsxSelfClosingElement(middle)) throw new Exception("Expected middle JsxSelfClosingElement b");
+    Assert.Equal("<b/>", this.#raw(sourceFile, middle));
+    const last = expression.children[2]!;
+    if (!isJsxText(last)) throw new Exception("Expected trailing JsxText child");
+    Assert.Equal(true, last.containsOnlyTriviaWhiteSpaces);
+    Assert.Equal("\n", this.#raw(sourceFile, last));
+  }
+
+  // Tag-mismatch `<a></b>` => the 5a mismatch diagnostic path (recovery, NOT a throw):
+  // Expected_corresponding_JSX_closing_tag_for_0 (17002), and a recovered JsxElement.
+  jsx_element_tag_mismatch_recovers(): void {
+    const sourceFile = parseSourceFile("<a></b>;", { fileName: "a.tsx", scriptKind: ScriptKind.TSX });
+    Assert.True(
+      sourceFile.parseDiagnostics.some((d) => d.code === 17002),
+      "expected Expected_corresponding_JSX_closing_tag_for_0 (17002) on <a></b>",
+    );
+    const statement = sourceFile.statements[0]!;
+    if (!isExpressionStatement(statement)) throw new Exception("Expected expression statement");
+    const expression = statement.expression;
+    if (!isJsxElement(expression)) throw new Exception("Expected recovered jsx element");
+    Assert.Equal("<a></b>", this.#raw(sourceFile, expression));
+    if (!isIdentifier(expression.openingElement.tagName)) throw new Exception("Expected identifier opening tag a");
+    Assert.Equal("a", expression.openingElement.tagName.text);
+    if (!isIdentifier(expression.closingElement.tagName)) throw new Exception("Expected identifier closing tag b");
+    Assert.Equal("b", expression.closingElement.tagName.text);
+    Assert.Equal(0, expression.children.length);
+  }
+
+  // codex concrete case: `<div a="x">hi {name}<span /></div>` => mixed children:
+  // JsxText "hi ", JsxExpression {name}, nested JsxSelfClosingElement span; closing
+  // tag matches via tagNamesAreEquivalent (no diagnostic).
+  jsx_element_mixed_children(): void {
+    const { sourceFile, expression } = this.#soleJsx("<div a=\"x\">hi {name}<span /></div>;");
+    if (!isJsxElement(expression)) throw new Exception("Expected jsx element");
+    Assert.Equal("<div a=\"x\">hi {name}<span /></div>", this.#raw(sourceFile, expression));
+    Assert.Equal(1, expression.openingElement.attributes.properties.length);
+    Assert.Equal(3, expression.children.length);
+    const text = expression.children[0]!;
+    if (!isJsxText(text)) throw new Exception("Expected JsxText child 'hi '");
+    Assert.Equal("hi ", this.#raw(sourceFile, text));
+    Assert.Equal("hi ", text.text);
+    Assert.Equal(false, text.containsOnlyTriviaWhiteSpaces);
+    const expr = expression.children[1]!;
+    if (!isJsxExpression(expr)) throw new Exception("Expected JsxExpression child {name}");
+    Assert.Equal("{name}", this.#raw(sourceFile, expr));
+    if (expr.expression === undefined || !isIdentifier(expr.expression)) throw new Exception("Expected identifier in {name}");
+    Assert.Equal("name", expr.expression.text);
+    const span = expression.children[2]!;
+    if (!isJsxSelfClosingElement(span)) throw new Exception("Expected JsxSelfClosingElement child span");
+    Assert.Equal("<span />", this.#raw(sourceFile, span));
+    if (!isIdentifier(span.tagName)) throw new Exception("Expected identifier tag name span");
+    Assert.Equal("span", span.tagName.text);
+    if (!isIdentifier(expression.closingElement.tagName)) throw new Exception("Expected identifier closing tag div");
     Assert.Equal("div", expression.closingElement.tagName.text);
   }
 }
