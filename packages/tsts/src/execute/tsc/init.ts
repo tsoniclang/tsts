@@ -11,7 +11,7 @@ export interface InitConfigOptions {
 
 export function createDefaultInitConfig(): InitConfigOptions {
   return {
-    compilerOptions: new Map<string, unknown>([
+    compilerOptions: new Map<string, InitConfigValue>([
       ["target", "es2016"],
       ["module", "commonjs"],
       ["strict", true],
