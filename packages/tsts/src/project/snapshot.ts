@@ -3,6 +3,9 @@ import { ProjectCollection } from "./projectCollection.js";
 import { ConfigFileRegistry } from "./configFileRegistry.js";
 import type { FileChangeSummary } from "./fileChange.js";
 import { SnapshotFS, type FileHandle } from "./snapshotFs.js";
+import type { ATAStateChange } from "./ata/ata.js";
+import type { LogTree } from "./logging/logtree.js";
+import type { UpdateReason } from "./session.js";
 
 export interface SnapshotOptions {
   readonly id: number;
@@ -42,6 +45,24 @@ export class ProjectTreeRequest {
   }
 }
 
+export interface ResourceRequest {
+  readonly documents?: readonly string[];
+  readonly configuredProjectDocuments?: readonly string[];
+  readonly projects?: readonly string[];
+  readonly projectTree?: ProjectTreeRequest;
+  readonly autoImports?: string;
+}
+
+export interface SnapshotChange extends ResourceRequest {
+  readonly reason: UpdateReason;
+  readonly fileChanges: FileChangeSummary;
+  readonly compilerOptionsForInferredProjects?: CompilerOptions;
+  readonly userPreferences?: ReadonlyMap<string, unknown>;
+  readonly ataChanges?: ReadonlyMap<string, ATAStateChange>;
+  readonly apiRequest?: APISnapshotRequest;
+  readonly cleanDiskCache?: boolean;
+}
+
 export class Snapshot {
   private readonly snapshotId: number;
   private readonly snapshotParentId: number;
@@ -54,6 +75,8 @@ export class Snapshot {
   readonly compilerOptionsForInferredProjects: CompilerOptions | undefined;
   readonly userPreferences: ReadonlyMap<string, unknown>;
   readonly fileChanges: FileChangeSummary;
+  readonly builderLogs: LogTree | undefined;
+  readonly apiError: Error | undefined;
 
   constructor(options: SnapshotOptions) {
     this.snapshotId = options.id;
@@ -77,7 +100,14 @@ export class Snapshot {
   }
 
   ref(): void {
+    if (this.refs <= 0) throw new Error(`snapshot ${this.snapshotId}: ref on disposed snapshot`);
     this.refs += 1;
+  }
+
+  tryRef(): boolean {
+    if (this.refs <= 0) return false;
+    this.refs += 1;
+    return true;
   }
 
   deref(): boolean {
@@ -92,6 +122,41 @@ export class Snapshot {
 
   getFile(fileName: string): FileHandle | undefined {
     return this.fs.getFile(fileName);
+  }
+
+  lspLineMap(fileName: string): readonly number[] | undefined {
+    return this.fs.getFile(fileName)?.lineMap();
+  }
+
+  ecmaLineInfo(fileName: string): readonly number[] | undefined {
+    return this.lspLineMap(fileName);
+  }
+
+  getPreferences(_activeFile?: string): ReadonlyMap<string, unknown> {
+    return this.userPreferences;
+  }
+
+  clone(change: SnapshotChange, init?: Partial<SnapshotOptions>): Snapshot {
+    const parentId = this.snapshotId;
+    const nextOptions: SnapshotOptions = {
+      id: init?.id ?? parentId + 1,
+      parentId,
+      fs: init?.fs ?? this.fs.clone(),
+      currentDirectory: init?.currentDirectory ?? this.currentDirectory,
+      useCaseSensitiveFileNames: init?.useCaseSensitiveFileNames ?? this.useCaseSensitiveFileNamesValue,
+      fileChanges: change.fileChanges,
+      projectCollection: init?.projectCollection ?? this.projectCollection.clone(),
+      configFileRegistry: init?.configFileRegistry ?? this.configFileRegistry.clone(),
+      userPreferences: change.userPreferences ?? this.userPreferences,
+      ...(change.compilerOptionsForInferredProjects !== undefined
+        ? { compilerOptionsForInferredProjects: change.compilerOptionsForInferredProjects }
+        : this.compilerOptionsForInferredProjects !== undefined
+          ? { compilerOptionsForInferredProjects: this.compilerOptionsForInferredProjects }
+          : {}),
+    };
+    const snapshot = new Snapshot(nextOptions);
+    snapshot.applyResourceRequest(change);
+    return snapshot;
   }
 
   readFile(fileName: string): string | undefined {
@@ -130,6 +195,24 @@ export class Snapshot {
     const normalized = fileName.replaceAll("\\", "/");
     if (normalized.startsWith("/")) return normalizePath(normalized, this.useCaseSensitiveFileNamesValue);
     return normalizePath(`${this.currentDirectory}/${normalized}`, this.useCaseSensitiveFileNamesValue);
+  }
+
+  private applyResourceRequest(change: SnapshotChange): void {
+    for (const projectId of change.apiRequest?.closeProjects ?? []) this.projectCollection.closeAPIProject(projectId);
+    for (const projectId of change.apiRequest?.openProjects ?? []) this.projectCollection.openAPIProject(projectId);
+    for (const fileName of change.fileChanges.closed) this.projectCollection.closeFile(fileName);
+    const opened = change.fileChanges.opened ?? change.fileChanges.reopened;
+    if (opened !== undefined) {
+      const project = this.projectCollection.getDefaultProject(opened) ?? this.projectCollection.inferredProject();
+      if (project !== undefined) this.projectCollection.openFile(opened, project);
+    }
+    for (const document of change.documents ?? []) this.projectCollection.getDefaultProject(document);
+    for (const document of change.configuredProjectDocuments ?? []) this.projectCollection.getProjectsContainingFile(document);
+    for (const projectId of change.projects ?? []) this.projectCollection.getProjectByPath(projectId);
+    change.projectTree?.projects();
+    change.autoImports;
+    change.ataChanges;
+    change.cleanDiskCache;
   }
 }
 
