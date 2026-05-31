@@ -57,6 +57,14 @@ export class SnapshotFS {
     this.closedFiles.add(normalize(fileName));
   }
 
+  openFiles(): readonly string[] {
+    const out: string[] = [];
+    for (const [path, handle] of this.files) {
+      if (!this.closedFiles.has(path)) out.push(handle.fileName);
+    }
+    return out.sort();
+  }
+
   getFile(fileName: string): FileHandle | undefined {
     return this.files.get(normalize(fileName));
   }
