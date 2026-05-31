@@ -9,6 +9,7 @@ export { EmitContext, EnvironmentFlags, getEmitContext, newEmitContext } from ".
 export type { AutoGenerateId, AutoGenerateInfo, AutoGenerateOptions } from "./emitContext.js";
 export { EmitFlags } from "./emitFlags.js";
 export type { EmitFlags as EmitFlagsType } from "./emitFlags.js";
+export * from "./listFormat.js";
 export { GeneratedIdentifierFlags, NameGenerator, newNameGenerator } from "./nameGenerator.js";
 export type { GeneratedIdentifierFlags as GeneratedIdentifierFlagsType } from "./nameGenerator.js";
 export { NodeFactory, newNodeFactory } from "./factory.js";
