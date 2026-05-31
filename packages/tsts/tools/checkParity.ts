@@ -33,6 +33,7 @@ const EXCLUDED_TSTS_SOURCE_FILES = new Set<string>([
   "ast/clone.ts",
   "ast/utils.ts",
   "astnav/astnav.ts",
+  "checker/checker.functionRegistry.generated.ts",
   "scanner/scanner.nativePreview.ts",
 ]);
 
