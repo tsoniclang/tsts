@@ -16,6 +16,57 @@ import type {
   Statement,
   TextRange,
   PrivateIdentifierNode,
+  NodeArray,
+} from "../ast/index.js";
+import {
+  Kind,
+  createArrayLiteralExpression,
+  createBinaryExpression,
+  createBlock,
+  createCallExpression,
+  createConditionalExpression,
+  createElementAccessExpression,
+  createEmptyStatement,
+  createExpressionStatement,
+  createIdentifier,
+  createKeywordExpression,
+  createNodeArray,
+  createNumericLiteral,
+  createPartiallyEmittedExpression,
+  createPrefixUnaryExpression,
+  createPrivateIdentifier,
+  createPropertyAccessExpression,
+  createStringLiteral,
+  createSyntaxList,
+  createToken,
+  createTypeOfExpression,
+  createVariableDeclaration,
+  createVariableDeclarationList,
+  createVariableStatement,
+  createVoidExpression,
+  updateArrowFunction as updateAstArrowFunction,
+  updateCallExpression as updateAstCallExpression,
+  updateClassDeclaration as updateAstClassDeclaration,
+  updateClassExpression as updateAstClassExpression,
+  updateConstructorDeclaration as updateAstConstructorDeclaration,
+  updateElementAccessExpression as updateAstElementAccessExpression,
+  updateExportDeclaration as updateAstExportDeclaration,
+  updateFunctionDeclaration as updateAstFunctionDeclaration,
+  updateFunctionExpression as updateAstFunctionExpression,
+  updateGetAccessorDeclaration as updateAstGetAccessorDeclaration,
+  updateHeritageClause as updateAstHeritageClause,
+  updateImportClause as updateAstImportClause,
+  updateImportDeclaration as updateAstImportDeclaration,
+  updateMethodDeclaration as updateAstMethodDeclaration,
+  updateNamedExports as updateAstNamedExports,
+  updateNamedImports as updateAstNamedImports,
+  updateNewExpression as updateAstNewExpression,
+  updateParameterDeclaration as updateAstParameterDeclaration,
+  updatePropertyAccessExpression as updateAstPropertyAccessExpression,
+  updatePropertyDeclaration as updateAstPropertyDeclaration,
+  updateSetAccessorDeclaration as updateAstSetAccessorDeclaration,
+  updateTaggedTemplateExpression as updateAstTaggedTemplateExpression,
+  updateVariableDeclaration as updateAstVariableDeclaration,
 } from "../ast/index.js";
 
 // ---------------------------------------------------------------------------
@@ -79,15 +130,10 @@ export class NodeFactory {
   }
 
   newStringLiteralFromNode(textSourceNode: AstNode): AstNode {
-    // Mirror upstream: a string literal whose text is sourced from
-    // another node (e.g. an Identifier in destructuring). Carries the
-    // sourceText reference so the printer can preserve the original.
     const text = (textSourceNode as unknown as { text?: string }).text ?? "";
-    return {
-      kind: 11 /* StringLiteral */,
-      text,
-      textSourceNode,
-    } as unknown as AstNode;
+    const node = createStringLiteral(text, 0) as AstNode & { textSourceNode?: AstNode };
+    node.textSourceNode = textSourceNode;
+    return node;
   }
 
   // -------------------------------------------------------------------------
@@ -95,110 +141,92 @@ export class NodeFactory {
   // -------------------------------------------------------------------------
 
   newBinary(left: Expression, operatorTokenKind: number, right: Expression): Expression {
-    return {
-      kind: 225 /* BinaryExpression */,
-      left, right,
-      operatorToken: { kind: operatorTokenKind },
-    } as unknown as Expression;
+    return createBinaryExpression(
+      undefined,
+      left,
+      undefined,
+      createToken(operatorTokenKind as never) as never,
+      right,
+    ) as unknown as Expression;
   }
 
-  newThisExpression(): Expression { return { kind: 110 /* ThisKeyword */ } as unknown as Expression; }
-  newTrueExpression(): Expression { return { kind: 112 /* TrueKeyword */ } as unknown as Expression; }
-  newFalseExpression(): Expression { return { kind: 97 /* FalseKeyword */ } as unknown as Expression; }
-  newNullExpression(): Expression { return { kind: 106 /* NullKeyword */ } as unknown as Expression; }
+  newThisExpression(): Expression { return createKeywordExpression(Kind.ThisKeyword) as unknown as Expression; }
+  newTrueExpression(): Expression { return createKeywordExpression(Kind.TrueKeyword) as unknown as Expression; }
+  newFalseExpression(): Expression { return createKeywordExpression(Kind.FalseKeyword) as unknown as Expression; }
+  newNullExpression(): Expression { return createKeywordExpression(Kind.NullKeyword) as unknown as Expression; }
   newCommaExpression(left: Expression, right: Expression): Expression {
-    return this.newBinary(left, 28 /* CommaToken */, right);
+    return this.newBinary(left, Kind.CommaToken, right);
   }
   newAssignmentExpression(left: Expression, right: Expression): Expression {
-    return this.newBinary(left, 64 /* EqualsToken */, right);
+    return this.newBinary(left, Kind.EqualsToken, right);
   }
   newAssignment(left: Expression, right: Expression): Expression { return this.newAssignmentExpression(left, right); }
   newLogicalORExpression(left: Expression, right: Expression): Expression {
-    return this.newBinary(left, 58 /* BarBarToken */, right);
+    return this.newBinary(left, Kind.BarBarToken, right);
   }
   newLogicalANDExpression(left: Expression, right: Expression): Expression {
-    return this.newBinary(left, 57 /* AmpersandAmpersandToken */, right);
+    return this.newBinary(left, Kind.AmpersandAmpersandToken, right);
   }
   newStrictEqualityExpression(left: Expression, right: Expression): Expression {
-    return this.newBinary(left, 38 /* EqualsEqualsEqualsToken */, right);
+    return this.newBinary(left, Kind.EqualsEqualsEqualsToken, right);
   }
   newStrictInequalityExpression(left: Expression, right: Expression): Expression {
-    return this.newBinary(left, 39 /* ExclamationEqualsEqualsToken */, right);
+    return this.newBinary(left, Kind.ExclamationEqualsEqualsToken, right);
   }
   newVoidZeroExpression(): Expression {
-    return {
-      kind: 220 /* VoidExpression */,
-      expression: { kind: 9 /* NumericLiteral */, text: "0" },
-    } as unknown as Expression;
+    return createVoidExpression(this.newNumericLiteral("0", 0)) as unknown as Expression;
   }
   newVoidZero(): Expression { return this.newVoidZeroExpression(); }
   newConditional(condition: Expression, whenTrue: Expression, whenFalse: Expression): Expression {
-    return {
-      kind: 226 /* ConditionalExpression */,
-      condition, whenTrue, whenFalse,
-      questionToken: { kind: 58 /* QuestionToken */ },
-      colonToken: { kind: 59 /* ColonToken */ },
-    } as unknown as Expression;
+    return createConditionalExpression(
+      condition,
+      createToken(Kind.QuestionToken) as never,
+      whenTrue,
+      createToken(Kind.ColonToken) as never,
+      whenFalse,
+    ) as unknown as Expression;
   }
   newTypeOfExpression(expression: Expression): Expression {
-    return { kind: 219 /* TypeOfExpression */, expression } as unknown as Expression;
+    return createTypeOfExpression(expression) as unknown as Expression;
   }
-  newAnyKeyword(): AstNode { return { kind: 133 /* AnyKeyword */ } as unknown as AstNode; }
+  newAnyKeyword(): AstNode { return createToken(Kind.AnyKeyword) as unknown as AstNode; }
   newEmptyStatement(): Statement {
-    return { kind: 244 /* EmptyStatement */ } as unknown as Statement;
+    return createEmptyStatement() as unknown as Statement;
   }
   newBlock(statements: readonly Statement[]): Statement {
-    return {
-      kind: 242 /* Block */,
-      statements: { nodes: statements },
-    } as unknown as Statement;
+    return createBlock(createNodeArray(statements) as NodeArray<never>, false) as unknown as Statement;
   }
   newSyntaxList(items: readonly AstNode[]): AstNode {
-    return { kind: 354 /* SyntaxList */, nodes: items } as unknown as AstNode;
+    return createSyntaxList(items) as unknown as AstNode;
   }
   newLetStatement(name: IdentifierNode, initializer: Expression | undefined): Statement {
-    return {
-      kind: 243 /* VariableStatement */,
-      declarationList: {
-        kind: 261 /* VariableDeclarationList */,
-        flags: 1, // Let
-        declarations: { nodes: [{
-          kind: 260 /* VariableDeclaration */,
-          name,
-          initializer,
-        }]},
-      },
-    } as unknown as Statement;
+    const declaration = createVariableDeclaration(name as never, undefined, undefined, initializer);
+    const declarationList = createVariableDeclarationList(createNodeArray([declaration]) as NodeArray<never>, 1);
+    return createVariableStatement(undefined, declarationList) as unknown as Statement;
   }
   newExpressionStatement(expression: Expression): Statement {
-    return { kind: 245 /* ExpressionStatement */, expression } as unknown as Statement;
+    return createExpressionStatement(expression) as unknown as Statement;
   }
   newPropertyAccessExpression(expression: Expression, name: AstNode): AstNode {
-    return { kind: 211 /* PropertyAccessExpression */, expression, name } as unknown as AstNode;
+    return createPropertyAccessExpression(expression, undefined, name as never, 0) as unknown as AstNode;
   }
   newElementAccessExpression(expression: Expression, argumentExpression: Expression): Expression {
-    return {
-      kind: 212 /* ElementAccessExpression */,
-      expression, argumentExpression,
-    } as unknown as Expression;
+    return createElementAccessExpression(expression, undefined, argumentExpression, 0) as unknown as Expression;
   }
   newIdentifier(text: string): AstNode {
-    return { kind: 80 /* Identifier */, text } as unknown as AstNode;
+    return createIdentifier(text) as unknown as AstNode;
   }
   newStringLiteral(text: string, flags: number): Expression {
-    return { kind: 11 /* StringLiteral */, text, flags } as unknown as Expression;
+    return createStringLiteral(text, flags) as unknown as Expression;
   }
   newNumericLiteral(text: string, flags: number): Expression {
-    return { kind: 9 /* NumericLiteral */, text, flags } as unknown as Expression;
+    return createNumericLiteral(text, flags) as unknown as Expression;
   }
   newPrefixUnaryExpression(operator: number, operand: Expression): Expression {
-    return { kind: 222 /* PrefixUnaryExpression */, operator, operand } as unknown as Expression;
+    return createPrefixUnaryExpression(operator as Kind, operand) as unknown as Expression;
   }
   newArrayLiteralExpression(elements: readonly Expression[]): AstNode {
-    return {
-      kind: 209 /* ArrayLiteralExpression */,
-      elements: { nodes: elements },
-    } as unknown as AstNode;
+    return createArrayLiteralExpression(createNodeArray(elements) as NodeArray<never>, false) as unknown as AstNode;
   }
   newReflectSetCall(target: Expression, name: Expression, value: Expression, receiver: Expression): Expression {
     return this.newGlobalMethodCall("Reflect", "set", [target, name, value, receiver]);
@@ -213,11 +241,13 @@ export class NodeFactory {
   // -------------------------------------------------------------------------
 
   newCallExpression(expression: AstNode, argumentsList: readonly AstNode[]): Expression {
-    return {
-      kind: 213 /* CallExpression */,
-      expression,
-      arguments: { nodes: argumentsList },
-    } as unknown as Expression;
+    return createCallExpression(
+      expression as never,
+      undefined,
+      undefined,
+      createNodeArray(argumentsList as readonly Expression[]) as NodeArray<never>,
+      0,
+    ) as unknown as Expression;
   }
   newTypeCheck(value: AstNode, tag: string): AstNode {
     // typeof value === "tag"
@@ -263,48 +293,44 @@ export class NodeFactory {
     node: AstNode, expression: AstNode, questionDotToken: AstNode | undefined,
     name: AstNode, flags: number,
   ): AstNode {
-    // Returns a node sharing the original's pos/end but with updated
-    // expression + name (immutability via spread).
-    void flags;
-    return { ...(node as object), expression, name, questionDotToken } as unknown as AstNode;
+    return updateAstPropertyAccessExpression(node as never, expression as never, questionDotToken as never, name as never, flags) as unknown as AstNode;
   }
 
-  updatePropertyDeclaration(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateConstructorDeclaration(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateMethodDeclaration(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateGetAccessorDeclaration(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateSetAccessorDeclaration(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateVariableDeclaration(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateHeritageClause(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateClassDeclaration(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateClassExpression(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateFunctionDeclaration(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateFunctionExpression(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateArrowFunction(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateParameterDeclaration(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateCallExpression(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateNewExpression(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateTaggedTemplateExpression(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateExpressionWithTypeArguments(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateJsxSelfClosingElement(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateJsxOpeningElement(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateImportDeclaration(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateImportClause(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateNamedImports(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateExportDeclaration(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
-  updateNamedExports(node: AstNode, ...args: unknown[]): AstNode { void args; return node; }
+  updatePropertyDeclaration(node: AstNode, ...args: unknown[]): AstNode { return updateAstPropertyDeclaration(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never) as unknown as AstNode; }
+  updateConstructorDeclaration(node: AstNode, ...args: unknown[]): AstNode { return updateAstConstructorDeclaration(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never) as unknown as AstNode; }
+  updateMethodDeclaration(node: AstNode, ...args: unknown[]): AstNode { return updateAstMethodDeclaration(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never, args[5] as never, args[6] as never, args[7] as never) as unknown as AstNode; }
+  updateGetAccessorDeclaration(node: AstNode, ...args: unknown[]): AstNode { return updateAstGetAccessorDeclaration(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never, args[5] as never) as unknown as AstNode; }
+  updateSetAccessorDeclaration(node: AstNode, ...args: unknown[]): AstNode { return updateAstSetAccessorDeclaration(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never, args[5] as never) as unknown as AstNode; }
+  updateVariableDeclaration(node: AstNode, ...args: unknown[]): AstNode { return updateAstVariableDeclaration(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never) as unknown as AstNode; }
+  updateHeritageClause(node: AstNode, ...args: unknown[]): AstNode { return updateAstHeritageClause(node as never, args[0] as never, args[1] as never) as unknown as AstNode; }
+  updateClassDeclaration(node: AstNode, ...args: unknown[]): AstNode { return updateAstClassDeclaration(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never) as unknown as AstNode; }
+  updateClassExpression(node: AstNode, ...args: unknown[]): AstNode { return updateAstClassExpression(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never) as unknown as AstNode; }
+  updateFunctionDeclaration(node: AstNode, ...args: unknown[]): AstNode { return updateAstFunctionDeclaration(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never, args[5] as never, args[6] as never) as unknown as AstNode; }
+  updateFunctionExpression(node: AstNode, ...args: unknown[]): AstNode { return updateAstFunctionExpression(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never, args[5] as never, args[6] as never) as unknown as AstNode; }
+  updateArrowFunction(node: AstNode, ...args: unknown[]): AstNode { return updateAstArrowFunction(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never, args[5] as never) as unknown as AstNode; }
+  updateParameterDeclaration(node: AstNode, ...args: unknown[]): AstNode { return updateAstParameterDeclaration(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never, args[5] as never) as unknown as AstNode; }
+  updateCallExpression(node: AstNode, ...args: unknown[]): AstNode { return updateAstCallExpression(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never) as unknown as AstNode; }
+  updateNewExpression(node: AstNode, ...args: unknown[]): AstNode { return updateAstNewExpression(node as never, args[0] as never, args[1] as never, args[2] as never) as unknown as AstNode; }
+  updateTaggedTemplateExpression(node: AstNode, ...args: unknown[]): AstNode { return updateAstTaggedTemplateExpression(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never) as unknown as AstNode; }
+  updateExpressionWithTypeArguments(node: AstNode, ...args: unknown[]): AstNode { return { ...(node as object), expression: args[0], typeArguments: args[1] } as unknown as AstNode; }
+  updateJsxSelfClosingElement(node: AstNode, ...args: unknown[]): AstNode { return { ...(node as object), tagName: args[0], typeArguments: args[1], attributes: args[2] } as unknown as AstNode; }
+  updateJsxOpeningElement(node: AstNode, ...args: unknown[]): AstNode { return { ...(node as object), tagName: args[0], typeArguments: args[1], attributes: args[2] } as unknown as AstNode; }
+  updateImportDeclaration(node: AstNode, ...args: unknown[]): AstNode { return updateAstImportDeclaration(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never) as unknown as AstNode; }
+  updateImportClause(node: AstNode, ...args: unknown[]): AstNode { return updateAstImportClause(node as never, args[0] as never, args[1] as never, args[2] as never) as unknown as AstNode; }
+  updateNamedImports(node: AstNode, ...args: unknown[]): AstNode { return updateAstNamedImports(node as never, args[0] as never) as unknown as AstNode; }
+  updateExportDeclaration(node: AstNode, ...args: unknown[]): AstNode { return updateAstExportDeclaration(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never) as unknown as AstNode; }
+  updateNamedExports(node: AstNode, ...args: unknown[]): AstNode { return updateAstNamedExports(node as never, args[0] as never) as unknown as AstNode; }
   newPartiallyEmittedExpression(expression: AstNode): AstNode {
-    return { kind: 351 /* PartiallyEmittedExpression */, expression } as unknown as AstNode;
+    return createPartiallyEmittedExpression(expression as never) as unknown as AstNode;
   }
   newClassPrivateFieldInHelper(brandCheckIdentifier: IdentifierNode, receiver: AstNode): AstNode {
-    // brandCheckIdentifier in receiver  → BinaryExpression(InKeyword)
-    return this.newBinary(brandCheckIdentifier as unknown as Expression, 105 /* InKeyword */, receiver as Expression) as unknown as AstNode;
+    return this.newBinary(brandCheckIdentifier as unknown as Expression, Kind.InKeyword, receiver as Expression) as unknown as AstNode;
   }
   newNodeList(items: readonly AstNode[]): AstNode {
-    return { nodes: items } as unknown as AstNode;
+    return createNodeArray(items) as unknown as AstNode;
   }
   newModifierList(items: readonly AstNode[]): AstNode {
-    return { nodes: items } as unknown as AstNode;
+    return createNodeArray(items) as unknown as AstNode;
   }
 
   // -------------------------------------------------------------------------
@@ -385,7 +411,7 @@ export class NodeFactory {
     const id = this.nextAutoGenerateId + 1;
     this.nextAutoGenerateId = id;
     const nameText = formatGeneratedName(false, options.prefix, text === "" ? `(auto@${id})` : text, options.suffix);
-    const name = { kind: 80 /* Identifier */, text: nameText } as unknown as IdentifierNode;
+    const name = createIdentifier(nameText) as unknown as IdentifierNode;
     this.autoGenerate.set(name, { ...options, id, node });
     return name;
   }
@@ -395,11 +421,11 @@ export class NodeFactory {
     this.nextAutoGenerateId = id;
     const candidate = text === "" ? `(auto@${id})` : text;
     if (candidate.startsWith("#")) {
-      const name = { kind: 81 /* PrivateIdentifier */, text: candidate } as unknown as PrivateIdentifierNode;
+      const name = createPrivateIdentifier(candidate) as unknown as PrivateIdentifierNode;
       this.autoGenerate.set(name, { ...options, id, node });
       return name;
     }
-    const name = { kind: 81 /* PrivateIdentifier */, text: formatGeneratedName(true, options.prefix, candidate, options.suffix) } as unknown as PrivateIdentifierNode;
+    const name = createPrivateIdentifier(formatGeneratedName(true, options.prefix, candidate, options.suffix)) as unknown as PrivateIdentifierNode;
     this.autoGenerate.set(name, { ...options, id, node });
     return name;
   }
