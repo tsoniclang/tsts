@@ -8,6 +8,7 @@
  */
 
 import type { int } from "@tsonic/core/types.js";
+import { marshal, unmarshal, isJsonObject, type JsonValue } from "../json/index.js";
 
 export interface MapEntry<K, V> {
   readonly key: K;
@@ -107,6 +108,52 @@ export class OrderedMap<K, V> {
     m.mp = new Map(this.mp);
     return m;
   }
+
+  toJsonValue(valueToJson: (value: V) => JsonValue): JsonValue {
+    const result: { [key: string]: JsonValue } = {};
+    for (const key of this.keys_) {
+      result[resolveKeyName(key)] = valueToJson(this.mp.get(key) as V);
+    }
+    return result;
+  }
+
+  toJsonString(valueToJson: (value: V) => JsonValue): string {
+    return marshal(this.toJsonValue(valueToJson));
+  }
+
+  static fromJsonObject<V>(
+    value: JsonValue,
+    valueFromJson: (value: JsonValue) => V,
+  ): OrderedMap<string, V> {
+    if (!isJsonObject(value)) {
+      throw new Error("cannot unmarshal non-object JSON value into OrderedMap");
+    }
+    const map = new OrderedMap<string, V>();
+    for (const key of Object.keys(value)) {
+      map.set(key, valueFromJson(value[key]!));
+    }
+    return map;
+  }
+
+  static fromJsonString<V>(
+    text: string,
+    valueFromJson: (value: JsonValue) => V,
+  ): OrderedMap<string, V> {
+    return OrderedMap.fromJsonObject(unmarshal(text), valueFromJson);
+  }
+}
+
+function resolveKeyName(key: unknown): string {
+  if (typeof key === "string") return key;
+  if (typeof key === "number" && Number.isFinite(key)) return String(Math.trunc(key));
+  if (typeof key === "bigint") return key.toString();
+  if (key === null || key === undefined) return "";
+  const textMarshaler = key as { marshalText?: () => string; toString?: () => string };
+  if (typeof textMarshaler.marshalText === "function") return textMarshaler.marshalText();
+  if (typeof textMarshaler.toString === "function" && textMarshaler.toString !== Object.prototype.toString) {
+    return textMarshaler.toString();
+  }
+  throw new Error("unexpected map key type");
 }
 
 // ---------------------------------------------------------------------------

@@ -18,6 +18,14 @@ export function filter<T>(slice: readonly T[], f: (item: T) => boolean): readonl
   return slice.filter(f);
 }
 
+export function* filterSeq<T>(slice: readonly T[], f: (item: T) => boolean): Iterable<T> {
+  for (const value of slice) {
+    if (f(value)) {
+      yield value;
+    }
+  }
+}
+
 export function filterIndex<T>(
   slice: readonly T[],
   f: (item: T, index: number, slice: readonly T[]) => boolean,
@@ -148,6 +156,14 @@ export function lastOrNil<T>(slice: readonly T[]): T | undefined {
 
 export function elementOrNil<T>(slice: readonly T[], index: int): T | undefined {
   return index < slice.length ? slice[index] : undefined;
+}
+
+export function firstOrNilSeq<T>(seq: Iterable<T> | undefined): T | undefined {
+  if (seq === undefined) return undefined;
+  for (const value of seq) {
+    return value;
+  }
+  return undefined;
 }
 
 export function firstOrUndefined<T>(slice: readonly T[]): T | undefined {
@@ -410,6 +426,10 @@ export function copyMapInto<K, V>(dst: Map<K, V> | undefined, src: ReadonlyMap<K
   return dst;
 }
 
+export function comparableValuesEqual<T>(left: T, right: T): boolean {
+  return left === right;
+}
+
 // ---------------------------------------------------------------------------
 // String helpers
 // ---------------------------------------------------------------------------
@@ -482,23 +502,29 @@ function stringifyJsonIndented(input: JsonSerializable, indent: string, depth: n
 export type ECMALineStarts = readonly TextPos[];
 
 export function computeECMALineStarts(text: string): ECMALineStarts {
-  const result: TextPos[] = [0 as TextPos];
+  return [...computeECMALineStartsSeq(text)];
+}
+
+export function* computeECMALineStartsSeq(text: string): Iterable<TextPos> {
   const len = text.length;
   let pos = 0;
+  let lineStart = 0;
   while (pos < len) {
     const cp = text.charCodeAt(pos);
     if (cp === 0x0D) {
       pos += 1;
       if (pos < len && text.charCodeAt(pos) === 0x0A) pos += 1;
-      result.push(pos as TextPos);
+      yield lineStart as TextPos;
+      lineStart = pos;
     } else if (cp === 0x0A || cp === 0x2028 || cp === 0x2029 || isLineBreak(cp)) {
       pos += 1;
-      result.push(pos as TextPos);
+      yield lineStart as TextPos;
+      lineStart = pos;
     } else {
       pos += 1;
     }
   }
-  return result;
+  yield lineStart as TextPos;
 }
 
 export function positionToLineAndByteOffset(

@@ -31,10 +31,26 @@ export class SyncSet<T> {
     return this.set.delete(value);
   }
 
+  clear(): void {
+    this.set.clear();
+  }
+
   range(callback: (value: T) => boolean): void {
     for (const v of this.set) {
       if (!callback(v)) return;
     }
+  }
+
+  isEmpty(): boolean {
+    return this.set.size === 0;
+  }
+
+  toSlice(): readonly T[] {
+    return [...this.set];
+  }
+
+  keys(): IterableIterator<T> {
+    return this.values();
   }
 
   *values(): IterableIterator<T> {

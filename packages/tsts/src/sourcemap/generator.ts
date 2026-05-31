@@ -12,7 +12,7 @@ import {
   type ComparePathsOptions,
   getRelativePathToDirectoryOrUrl,
 } from "../tspath/index.js";
-import type { JsonValue } from "../json/index.js";
+import { marshal, type JsonValue } from "../json/index.js";
 
 export type SourceIndex = number & { readonly __sourceIndex: unique symbol };
 export type NameIndex = number & { readonly __nameIndex: unique symbol };
@@ -298,12 +298,12 @@ export class Generator {
   }
 
   toString(): string {
-    return JSON.stringify(rawSourceMapJson(this.rawSourceMap()));
+    return marshal(rawSourceMapJson(this.rawSourceMap()));
   }
 
   toBase64DataURL(): string {
     const json = this.toString();
-    const base64 = uint8ArrayToBase64(new TextEncoder().encode(json));
+    const base64 = Buffer.from(json, "utf8").toString("base64");
     return "data:application/json;base64," + base64;
   }
 }
@@ -321,22 +321,6 @@ function rawSourceMapJson(sourceMap: RawSourceMap): JsonValue {
     result["sourcesContent"] = sourceMap.sourcesContent;
   }
   return result;
-}
-
-function uint8ArrayToBase64(data: Uint8Array): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  let out = "";
-  for (let index = 0; index < data.length; index += 3) {
-    const byte1 = data[index]!;
-    const byte2 = index + 1 < data.length ? data[index + 1]! : 0;
-    const byte3 = index + 2 < data.length ? data[index + 2]! : 0;
-    const triple = (byte1 << 16) | (byte2 << 8) | byte3;
-    out += chars[(triple >> 18) & 63];
-    out += chars[(triple >> 12) & 63];
-    out += index + 1 < data.length ? chars[(triple >> 6) & 63] : "=";
-    out += index + 2 < data.length ? chars[triple & 63] : "=";
-  }
-  return out;
 }
 
 const BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

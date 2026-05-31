@@ -20,7 +20,9 @@
     "ast:schema-check": "cd packages/tsts && node --import ./tools/register.mjs tools/check-schema.ts",
     "ast:generated-check": "cd packages/tsts && node tools/check-generated.ts",
     "completeness": "node packages/tsts/tools/check-completeness.ts",
-    "completeness:json": "node packages/tsts/tools/check-completeness.ts --json"
+    "completeness:json": "node packages/tsts/tools/check-completeness.ts --json",
+    "parity": "node packages/tsts/tools/check-parity.ts",
+    "parity:json": "node packages/tsts/tools/check-parity.ts --json"
   },
   "devDependencies": {
     "@types/node": "latest",
