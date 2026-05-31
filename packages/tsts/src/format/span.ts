@@ -92,6 +92,141 @@ export interface TokenInfo {
   hasPrecedingLineBreak: boolean;
 }
 
+export function rangeHasNoErrors(_range: TextRange): boolean {
+  return false;
+}
+
+export function prepareRangeContainsErrorFunction(
+  errors: readonly { readonly pos?: number; readonly start?: number; readonly end?: number; readonly length?: number; readonly loc?: TextRange }[],
+  originalRange: TextRange,
+): (range: TextRange) => boolean {
+  const sorted = errors
+    .map(diagnosticToRange)
+    .filter((range): range is TextRange => range !== undefined && rangesOverlap(range, originalRange))
+    .sort((left, right) => left.pos - right.pos);
+  if (sorted.length === 0) return rangeHasNoErrors;
+  let index = 0;
+  return (range: TextRange): boolean => {
+    while (index < sorted.length) {
+      const errorRange = sorted[index]!;
+      if (range.end <= errorRange.pos) return false;
+      if (rangesOverlap(range, errorRange)) return true;
+      index += 1;
+    }
+    return false;
+  };
+}
+
+function diagnosticToRange(error: { readonly pos?: number; readonly start?: number; readonly end?: number; readonly length?: number; readonly loc?: TextRange }): TextRange | undefined {
+  if (error.loc !== undefined) return error.loc;
+  const pos = error.pos ?? error.start;
+  if (pos === undefined) return undefined;
+  if (error.end !== undefined) return { pos, end: error.end };
+  return { pos, end: pos + (error.length ?? 0) };
+}
+
+function rangesOverlap(left: TextRange, right: TextRange): boolean {
+  return left.pos < right.end && right.pos < left.end;
+}
+
+export class DynamicIndenter {
+  private readonly options: FormatCodeSettings;
+  private readonly baseIndentation: number;
+  private readonly delta: number;
+  private readonly lines = new Map<number, number>();
+
+  constructor(options: FormatCodeSettings, baseIndentation: number, delta: number) {
+    this.options = options;
+    this.baseIndentation = baseIndentation;
+    this.delta = delta;
+  }
+
+  indentationForLine(line: number): number {
+    return this.lines.get(line) ?? this.baseIndentation;
+  }
+
+  increase(line: number): void {
+    this.lines.set(line, this.indentationForLine(line) + this.delta);
+  }
+
+  decrease(line: number): void {
+    this.lines.set(line, Math.max(0, this.indentationForLine(line) - this.delta));
+  }
+
+  indentationString(line: number): string {
+    return indentationString(this.indentationForLine(line), this.options);
+  }
+}
+
+export function indentationString(indentation: number, options: FormatCodeSettings): string {
+  const tabSize = options.tabSize ?? options.indentSize ?? 4;
+  if (options.convertTabsToSpaces !== false) return " ".repeat(Math.max(0, indentation));
+  const tabs = Math.floor(indentation / tabSize);
+  const spaces = indentation % tabSize;
+  return "\t".repeat(tabs) + " ".repeat(spaces);
+}
+
+export function changeSpan(start: number, end: number, newText: string): TextChange {
+  return { span: { start, length: Math.max(0, end - start) }, newText };
+}
+
+export function insertText(position: number, text: string): TextChange {
+  return { span: { start: position, length: 0 }, newText: text };
+}
+
+export function deleteText(start: number, end: number): TextChange {
+  return changeSpan(start, end, "");
+}
+
+export function replaceWhitespace(
+  sourceText: string,
+  start: number,
+  end: number,
+  replacement: string,
+): TextChange | undefined {
+  const current = sourceText.slice(start, end);
+  if (current === replacement) return undefined;
+  return changeSpan(start, end, replacement);
+}
+
+export function applyTextChanges(sourceText: string, changes: readonly TextChange[]): string {
+  const sorted = [...changes].sort((left, right) => right.span.start - left.span.start);
+  let text = sourceText;
+  for (const change of sorted) {
+    const start = change.span.start;
+    const end = start + change.span.length;
+    text = text.slice(0, start) + change.newText + text.slice(end);
+  }
+  return text;
+}
+
+export function getNonDecoratorTokenPosOfNode(node: AstNode, file: SourceFile): number {
+  const modifiers = (node as unknown as { modifiers?: readonly AstNode[] }).modifiers ?? [];
+  let lastDecorator: AstNode | undefined;
+  for (const modifier of modifiers) {
+    if ((modifier as { kind?: number }).kind === 170) lastDecorator = modifier;
+  }
+  if (lastDecorator === undefined) return withTokenStart(node, file).pos;
+  return nodeEnd(lastDecorator);
+}
+
+export function isComment(token: TokenInfo): boolean {
+  const trimmed = token.text.trimStart();
+  return trimmed.startsWith("//") || trimmed.startsWith("/*");
+}
+
+export function tokenRange(token: TokenInfo): TextRange {
+  return { pos: token.pos, end: token.end };
+}
+
+export function tokenIsOnLine(token: TokenInfo, line: number, sourceFile: SourceFile): boolean {
+  return getECMALineOfPosition(sourceFile, token.pos) === line;
+}
+
+export function lineOfToken(token: TokenInfo, sourceFile: SourceFile): number {
+  return getECMALineOfPosition(sourceFile, token.pos);
+}
+
 /**
  * Worker entry for formatSpan. Returns an array of edits to be
  * applied to the source text in order.
@@ -210,4 +345,3 @@ export function getOwnOrInheritedDelta(
 // ---------------------------------------------------------------------------
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
-
