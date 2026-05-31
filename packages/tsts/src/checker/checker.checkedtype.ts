@@ -29,6 +29,7 @@ import {
   isGetAccessorDeclaration,
   isIdentifier,
   isIndexSignatureDeclaration,
+  isIntersectionTypeNode,
   isInterfaceDeclaration,
   isKeywordTypeNode,
   isLiteralTypeNode,
@@ -463,6 +464,11 @@ function makeUnionType(types: readonly Type[], state: CheckState): Type {
   return type;
 }
 
+function makeIntersectionType(types: readonly Type[], state: CheckState): Type {
+  const data: UnionOrIntersectionType = { types, objectFlags: ObjectFlags.None };
+  return { flags: TypeFlags.Intersection, id: state.nextTypeId(), data };
+}
+
 function addTypeToUnion(typeSet: Type[], type: Type): void {
   // TS-Go ignores `never` constituents in unions (independent of reduction).
   if ((type.flags & TypeFlags.Never) !== 0) return;
@@ -499,6 +505,32 @@ export function getUnionTypeEx(
   if (reduced.length === 0) return neverType;
   if (reduced.length === 1) return reduced[0]!;
   return makeUnionType(reduced, state);
+}
+
+export function getIntersectionType(types: readonly Type[], state: CheckState): Type {
+  const typeSet: Type[] = [];
+  for (const type of types) {
+    if ((type.flags & TypeFlags.Intersection) !== 0) {
+      addTypesToIntersection(typeSet, unionConstituents(type) ?? []);
+    } else if ((type.flags & TypeFlags.Never) !== 0) {
+      return neverType;
+    } else if (!typeSet.includes(type)) {
+      typeSet.push(type);
+    }
+  }
+  if (typeSet.length === 0) return unknownType;
+  if (typeSet.length === 1) return typeSet[0]!;
+  return makeIntersectionType(typeSet, state);
+}
+
+function addTypesToIntersection(typeSet: Type[], types: readonly Type[]): void {
+  for (const type of types) {
+    if ((type.flags & TypeFlags.Intersection) !== 0) {
+      addTypesToIntersection(typeSet, unionConstituents(type) ?? []);
+    } else if (!typeSet.includes(type) && (type.flags & TypeFlags.Never) === 0) {
+      typeSet.push(type);
+    }
+  }
 }
 
 function reduceUnion(typeSet: Type[], reduction: UnionReduction, state: CheckState): Type[] {
@@ -826,6 +858,9 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
   }
   if (isUnionTypeNode(type)) {
     return getUnionType((type as UnionTypeNode).types.map((member) => typeFromTypeNode(member, state)), state);
+  }
+  if (isIntersectionTypeNode(type)) {
+    return getIntersectionType(type.types.map((member) => typeFromTypeNode(member, state)), state);
   }
   if (isParenthesizedTypeNode(type)) {
     return typeFromTypeNode(type.type, state);
@@ -1673,6 +1708,9 @@ export function displayType(type: Type): string {
           : [displayType(t)],
       )
       .join(" | ");
+  }
+  if ((type.flags & TypeFlags.Intersection) !== 0) {
+    return (unionConstituents(type) ?? []).map(displayType).join(" & ");
   }
   if ((type.flags & TypeFlags.StringLiteral) !== 0) return quoteStringLiteral(String((type.data as LiteralType).value));
   if ((type.flags & TypeFlags.NumberLiteral) !== 0) return String((type.data as LiteralType).value);

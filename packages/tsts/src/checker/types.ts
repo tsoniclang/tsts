@@ -831,7 +831,15 @@ export function getTypeOfSymbol(symbol: AstSymbol | undefined): Type | undefined
 }
 
 export function getPropertySymbolOfType(type: Type, name: string): AstSymbol | undefined {
-  return (type.symbol as unknown as { readonly members?: Map<string, AstSymbol> } | undefined)?.members?.get(name);
+  const direct = (type.symbol as unknown as { readonly members?: Map<string, AstSymbol> } | undefined)?.members?.get(name);
+  if (direct !== undefined) return direct;
+  if ((type.flags & TypeFlags.Intersection) !== 0) {
+    for (const constituent of (type.data as UnionOrIntersectionType | undefined)?.types ?? []) {
+      const symbol = getPropertySymbolOfType(constituent, name);
+      if (symbol !== undefined) return symbol;
+    }
+  }
+  return undefined;
 }
 
 export function getPropertyTypeOfType(type: Type, name: string): Type | undefined {

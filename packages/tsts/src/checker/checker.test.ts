@@ -830,6 +830,18 @@ export class CheckerGroundworkTests {
     Assert.Equal(0, mixedCase.diagnostics.length);
   }
 
+  checks_intersection_type_node_members_and_relations(): void {
+    const propertyOk = checkSourceFile(parseSourceFile("type AB = { a: number } & { b: string }; function f(value: AB): string { return value.b; }"));
+    const propertyMismatch = checkSourceFile(parseSourceFile("type AB = { a: number } & { b: string }; function f(value: AB): number { return value.b; }"));
+    const assignOk = checkSourceFile(parseSourceFile("type AB = { a: number } & { b: string }; function f(): void { const value: AB = { a: 1, b: \"x\" }; }"));
+    const assignMissing = checkSourceFile(parseSourceFile("type AB = { a: number } & { b: string }; function f(): void { const value: AB = { a: 1 }; }"));
+
+    Assert.Equal(0, propertyOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], propertyMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, assignOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type '{ a: number }' is not assignable to type '{ a: number } & { b: string }'."], assignMissing.diagnostics.map((d) => d.message));
+  }
+
   reports_union_type_node_mismatch(): void {
     const sourceFile = parseSourceFile("function bad(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"c\"; }");
     const result = checkSourceFile(sourceFile);
@@ -1078,6 +1090,7 @@ A<CheckerGroundworkTests>().method((t) => t.m5b_resolves_nominal_interface_and_c
 A<CheckerGroundworkTests>().method((t) => t.m5c_instantiates_generic_aliases_interfaces_and_classes).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_interface_and_class_heritage_members).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_intersection_type_node_members_and_relations).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.union_reduction_none_keeps_redundant_members).add(FactAttribute);
