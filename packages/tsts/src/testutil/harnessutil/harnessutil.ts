@@ -1,11 +1,12 @@
 import { normalizeNewlines } from "../stringtestutil/stringTestUtil.js";
 import type { Diagnostic, SourceFile } from "../../ast/index.js";
 import { NewLineKind, type CompilerOptions } from "../../core/index.js";
-import { newProgram, type CompilerHost, type Program } from "../../compiler/program.js";
+import { newProgram, type CompilerHost, type EmitResult, type Program } from "../../compiler/program.js";
 import { optionDeclarations, type CommandLineOption } from "../../tsoptions/index.js";
 import { parseListTypeOption } from "../../tsoptions/commandLineParser.js";
 import { ParsedCommandLine } from "../../tsoptions/parsedCommandLine.js";
-import { getDirectoryPath, normalizePath } from "../../tspath/index.js";
+import { getDirectoryPath, hasJSFileExtension, hasJSONFileExtension, isDeclarationFileName, normalizePath } from "../../tspath/index.js";
+import { getDeclarationEmitOutputFilePath, getOutputJSFileNameWorker } from "../../outputpaths/index.js";
 
 export interface NamedSource {
   readonly name: string;
@@ -111,12 +112,31 @@ export interface CompilationResult {
   readonly otherFiles: readonly TestFile[];
   readonly harnessOptions: HarnessOptions;
   readonly compilerOptions: CompilerOptions;
+  readonly result: EmitResult;
   readonly currentDirectory: string;
   readonly files: ReadonlyMap<string, string>;
+  readonly js: ReadonlyMap<string, TestFile>;
+  readonly dts: ReadonlyMap<string, TestFile>;
+  readonly maps: ReadonlyMap<string, TestFile>;
+  readonly outputFiles: readonly TestFile[];
+  readonly inputsAndOutputs: ReadonlyMap<string, CompilationOutput>;
   readonly diagnostics: readonly Diagnostic[];
   readonly symlinks: ReadonlyMap<string, string>;
   readonly trace: string;
+  readonly getNumberOfJSFiles: (includeJson: boolean) => number;
+  readonly inputs: () => readonly TestFile[];
+  readonly outputs: () => readonly TestFile[];
+  readonly getInputsAndOutputsForFile: (path: string) => CompilationOutput | undefined;
+  readonly getInputsForFile: (path: string) => readonly TestFile[] | undefined;
+  readonly getOutput: (path: string, kind: "js" | "dts" | "map") => TestFile | undefined;
   readonly repeat: (testConfig: TestConfiguration) => CompilationResult;
+}
+
+export interface CompilationOutput {
+  readonly inputs: readonly TestFile[];
+  readonly js?: TestFile;
+  readonly dts?: TestFile;
+  readonly map?: TestFile;
 }
 
 export interface CompileFilesOptions {
@@ -201,21 +221,48 @@ export function compileFilesEx(options: {
     },
   );
   const program = newProgram({ config: parsed, host });
+  const compilerContext = {} as Parameters<Program["emit"]>[0];
   const diagnostics = [
     ...program.getConfigFileParsingDiagnostics(),
-    ...program.getSyntacticDiagnostics({}, undefined),
+    ...program.getSyntacticDiagnostics(compilerContext, undefined),
+    ...program.getSemanticDiagnostics(compilerContext, undefined),
+    ...program.getGlobalDiagnostics(compilerContext),
   ];
+  if (compilerOptionsEmitDeclarations(program.options())) {
+    diagnostics.push(...program.getDeclarationDiagnostics(compilerContext, undefined));
+  }
+  if (options.harnessOptions.captureSuggestions) {
+    diagnostics.push(...program.getSuggestionDiagnostics(compilerContext, undefined));
+  }
+  const emitResult = program.emit(compilerContext, {
+    writeFile: (fileName, text) => host.writeFile(fileName, text),
+  });
+  diagnostics.push(...emitResult.diagnostics);
+  const fileSnapshot = host.snapshotFiles();
+  const outputRecord = collectCompilationOutputs(fileSnapshot, program, options.currentDirectory);
   return {
     program,
     inputFiles: options.inputFiles,
     otherFiles: options.otherFiles,
     harnessOptions: options.harnessOptions,
     compilerOptions: options.compilerOptions,
+    result: emitResult,
     currentDirectory: options.currentDirectory,
-    files,
+    files: fileSnapshot,
+    js: outputRecord.js,
+    dts: outputRecord.dts,
+    maps: outputRecord.maps,
+    outputFiles: outputRecord.outputs,
+    inputsAndOutputs: outputRecord.inputsAndOutputs,
     diagnostics,
     symlinks: options.symlinks,
     trace: host.trace.join("\n"),
+    getNumberOfJSFiles: (includeJson) => getNumberOfJSFiles(outputRecord.js, includeJson),
+    inputs: () => outputRecord.inputs,
+    outputs: () => outputRecord.outputs,
+    getInputsAndOutputsForFile: (path) => outputRecord.inputsAndOutputs.get(normalizedAbsolutePath(path, options.currentDirectory)),
+    getInputsForFile: (path) => outputRecord.inputsAndOutputs.get(normalizedAbsolutePath(path, options.currentDirectory))?.inputs,
+    getOutput: (path, kind) => outputRecord.inputsAndOutputs.get(normalizedAbsolutePath(path, options.currentDirectory))?.[kind],
     repeat: (testConfig) => {
       const repeatBase = {
         inputFiles: options.inputFiles,
@@ -324,9 +371,104 @@ function compilerOptionIsTrue(value: unknown): boolean {
   return value === true || value === 2;
 }
 
+function compilerOptionsEmitDeclarations(options: CompilerOptions): boolean {
+  return compilerOptionIsTrue(options.declaration) || compilerOptionIsTrue(options.composite);
+}
+
 function toReadonlyMap(value: ReadonlyMap<string, string> | Record<string, string>): ReadonlyMap<string, string> {
   if (value instanceof Map) return value;
   return new Map(Object.entries(value));
+}
+
+interface CompilationOutputRecord {
+  readonly inputs: readonly TestFile[];
+  readonly outputs: readonly TestFile[];
+  readonly js: ReadonlyMap<string, TestFile>;
+  readonly dts: ReadonlyMap<string, TestFile>;
+  readonly maps: ReadonlyMap<string, TestFile>;
+  readonly inputsAndOutputs: ReadonlyMap<string, CompilationOutput>;
+}
+
+function collectCompilationOutputs(files: ReadonlyMap<string, string>, program: Program, currentDirectory: string): CompilationOutputRecord {
+  const inputs = program.getSourceFiles().map(file => ({
+    unitName: normalizePath(file.fileName),
+    content: file.text,
+  }));
+  const inputNames = new Set(inputs.map(file => file.unitName));
+  const js = new Map<string, TestFile>();
+  const dts = new Map<string, TestFile>();
+  const maps = new Map<string, TestFile>();
+  for (const [unitName, content] of files) {
+    if (inputNames.has(unitName)) continue;
+    const testFile = { unitName, content };
+    if (isDeclarationFileName(unitName)) dts.set(unitName, testFile);
+    else if (unitName.endsWith(".map")) maps.set(unitName, testFile);
+    else if (hasJSFileExtension(unitName) || hasJSONFileExtension(unitName)) js.set(unitName, testFile);
+  }
+
+  const inputsAndOutputs = new Map<string, CompilationOutput>();
+  const outputFiles: TestFile[] = [];
+  const outputHost = {
+    commonSourceDirectory: () => program.commonSourceDirectory(),
+    getCurrentDirectory: () => currentDirectory,
+    useCaseSensitiveFileNames: () => program.useCaseSensitiveFileNames(),
+  };
+  const compilerOptions = program.options();
+  for (const input of inputs) {
+    const output = outputForInput(input, js, dts, maps, compilerOptions, outputHost);
+    inputsAndOutputs.set(input.unitName, output);
+    if (output.js !== undefined) {
+      inputsAndOutputs.set(output.js.unitName, output);
+      outputFiles.push(output.js);
+    }
+    if (output.dts !== undefined) {
+      inputsAndOutputs.set(output.dts.unitName, output);
+      outputFiles.push(output.dts);
+    }
+    if (output.map !== undefined) {
+      inputsAndOutputs.set(output.map.unitName, output);
+      outputFiles.push(output.map);
+    }
+  }
+  return { inputs, outputs: outputFiles.sort(compareTestFiles), js, dts, maps, inputsAndOutputs };
+}
+
+function outputForInput(
+  input: TestFile,
+  js: ReadonlyMap<string, TestFile>,
+  dts: ReadonlyMap<string, TestFile>,
+  maps: ReadonlyMap<string, TestFile>,
+  compilerOptions: CompilerOptions,
+  outputHost: {
+    commonSourceDirectory(): string;
+    getCurrentDirectory(): string;
+    useCaseSensitiveFileNames(): boolean;
+  },
+): CompilationOutput {
+  const output: {
+    inputs: readonly TestFile[];
+    js?: TestFile;
+    dts?: TestFile;
+    map?: TestFile;
+  } = { inputs: [input] };
+  const jsOutput = js.get(getOutputJSFileNameWorker(input.unitName, compilerOptions, outputHost));
+  if (jsOutput !== undefined) output.js = jsOutput;
+  const dtsOutput = dts.get(getDeclarationEmitOutputFilePath(input.unitName, compilerOptions, outputHost));
+  if (dtsOutput !== undefined) output.dts = dtsOutput;
+  const mapOutput = maps.get(getOutputJSFileNameWorker(input.unitName, compilerOptions, outputHost) + ".map");
+  if (mapOutput !== undefined) output.map = mapOutput;
+  return output;
+}
+
+function getNumberOfJSFiles(js: ReadonlyMap<string, TestFile>, includeJson: boolean): number {
+  if (includeJson) return js.size;
+  let count = 0;
+  for (const file of js.values()) if (!file.unitName.endsWith(".json")) count += 1;
+  return count;
+}
+
+function compareTestFiles(left: TestFile, right: TestFile): number {
+  return left.unitName.localeCompare(right.unitName);
 }
 
 export interface SourceFileCacheKey {
@@ -476,6 +618,10 @@ class HarnessCompilerHost implements CompilerHost {
       if (getDirectoryPath(symlink) === normalized || symlink.startsWith(normalized + "/")) return true;
     }
     return false;
+  }
+
+  snapshotFiles(): ReadonlyMap<string, string> {
+    return new Map(this.files);
   }
 
   private pushTrace(message: string): void {
