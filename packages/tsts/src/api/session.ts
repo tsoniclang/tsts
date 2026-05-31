@@ -14,9 +14,11 @@
  */
 
 import { Buffer } from "node:buffer";
-import { ChildPropertiesByKind, type Node as AstNode, type SourceFile } from "../ast/index.js";
+import { ChildPropertiesByKind, Kind, type Node as AstNode, type SourceFile } from "../ast/index.js";
 import { getTouchingPropertyName } from "../astnav/index.js";
-import { encodeSourceFile } from "./encoder/encoder.js";
+import { printFile } from "../printer/index.js";
+import { decodeNodes } from "./encoder/decoder.js";
+import { encodeNode, encodeSourceFile } from "./encoder/encoder.js";
 
 // ---------------------------------------------------------------------------
 // Handle types (opaque server-side keys)
@@ -281,10 +283,68 @@ export class Session {
         return { result: this.handleGetContextualType(ctx, params as GetContextualTypeParams) };
       case "getBaseTypeOfLiteralType":
         return { result: this.handleGetBaseTypeOfLiteralType(ctx, params as GetBaseTypeOfLiteralTypeParams) };
+      case "getNonNullableType":
+        return { result: this.handleGetNonNullableType(ctx, params as GetNonNullableTypeParams) };
+      case "getTypeFromTypeNode":
+        return { result: this.handleGetTypeFromTypeNode(ctx, params as GetTypeFromTypeNodeParams) };
+      case "getWidenedType":
+        return { result: this.handleGetWidenedType(ctx, params as GetWidenedTypeParams) };
+      case "getParameterType":
+        return { result: this.handleGetParameterType(ctx, params as GetParameterTypeParams) };
+      case "isArrayLikeType":
+        return { result: this.handleIsArrayLikeType(ctx, params as IsArrayLikeTypeParams) };
       case "getShorthandAssignmentValueSymbol":
         return { result: this.handleGetShorthandAssignmentValueSymbol(ctx, params as GetTypeAtLocationParams) };
       case "getTypeOfSymbolAtLocation":
         return { result: this.handleGetTypeOfSymbolAtLocation(ctx, params as GetTypeOfSymbolAtLocationParams) };
+      case "typeToTypeNode":
+        return { result: this.handleTypeToTypeNode(ctx, params as TypeToTypeNodeParams) };
+      case "signatureToSignatureDeclaration":
+        return { result: this.handleSignatureToSignatureDeclaration(ctx, params as SignatureToSignatureDeclarationParams) };
+      case "typeToString":
+        return { result: this.handleTypeToString(ctx, params as TypeToTypeNodeParams) };
+      case "printNode":
+        return { result: this.handlePrintNode(ctx, params as PrintNodeParams) };
+      case "isContextSensitive":
+        return { result: this.handleIsContextSensitive(ctx, params as GetContextualTypeParams) };
+      case "getReturnTypeOfSignature":
+        return { result: this.handleGetReturnTypeOfSignature(ctx, params as CheckerSignatureParams) };
+      case "getRestTypeOfSignature":
+        return { result: this.handleGetRestTypeOfSignature(ctx, params as CheckerSignatureParams) };
+      case "getTypePredicateOfSignature":
+        return { result: this.handleGetTypePredicateOfSignature(ctx, params as CheckerSignatureParams) };
+      case "getBaseTypes":
+        return { result: this.handleGetBaseTypes(ctx, params as CheckerTypeParams) };
+      case "getPropertiesOfType":
+        return { result: this.handleGetPropertiesOfType(ctx, params as CheckerTypeParams) };
+      case "getIndexInfosOfType":
+        return { result: this.handleGetIndexInfosOfType(ctx, params as CheckerTypeParams) };
+      case "getConstraintOfTypeParameter":
+        return { result: this.handleGetConstraintOfTypeParameter(ctx, params as CheckerTypeParams) };
+      case "getTypeArguments":
+        return { result: this.handleGetTypeArguments(ctx, params as CheckerTypeParams) };
+      case "getAnyType":
+      case "getStringType":
+      case "getNumberType":
+      case "getBooleanType":
+      case "getVoidType":
+      case "getUndefinedType":
+      case "getNullType":
+      case "getNeverType":
+      case "getUnknownType":
+      case "getBigIntType":
+      case "getESSymbolType":
+        return { result: this.handleGetIntrinsicType(ctx, params as GetIntrinsicTypeParams, method) };
+      case "getSyntacticDiagnostics":
+        return { result: this.handleGetSyntacticDiagnostics(ctx, params as GetDiagnosticsParams) };
+      case "getSemanticDiagnostics":
+        return { result: this.handleGetSemanticDiagnostics(ctx, params as GetDiagnosticsParams) };
+      case "getSuggestionDiagnostics":
+        return { result: this.handleGetSuggestionDiagnostics(ctx, params as GetDiagnosticsParams) };
+      case "getDeclarationDiagnostics":
+        return { result: this.handleGetDeclarationDiagnostics(ctx, params as GetDiagnosticsParams) };
+      case "getConfigFileParsingDiagnostics":
+        return { result: this.handleGetConfigFileParsingDiagnostics(ctx, params as GetProjectDiagnosticsParams) };
       default:
         return { error: `unknown method: ${method}` };
     }
@@ -611,6 +671,216 @@ export class Session {
     if (node === undefined) return undefined;
     return registerCheckerType(setup.snapshotData, setup.checker, "getTypeOfSymbolAtLocation", symbol, node);
   }
+  handleGetNonNullableType(ctx: Context, params: GetNonNullableTypeParams): TypeResponse | undefined {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined) return undefined;
+    const targetType = setup.snapshotData.resolveTypeHandle(params.type);
+    if (isError(targetType)) return undefined;
+    return registerCheckerType(setup.snapshotData, setup.checker, "getNonNullableType", targetType);
+  }
+  handleGetTypeFromTypeNode(ctx: Context, params: GetTypeFromTypeNodeParams): TypeResponse | undefined {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return undefined;
+    const node = resolveNodeHandle(setup.program, params.location);
+    if (node === undefined) return undefined;
+    return registerCheckerType(setup.snapshotData, setup.checker, "getTypeFromTypeNode", node);
+  }
+  handleGetWidenedType(ctx: Context, params: GetWidenedTypeParams): TypeResponse | undefined {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined) return undefined;
+    const targetType = setup.snapshotData.resolveTypeHandle(params.type);
+    if (isError(targetType)) return undefined;
+    return registerCheckerType(setup.snapshotData, setup.checker, "getWidenedType", targetType);
+  }
+  handleGetParameterType(ctx: Context, params: GetParameterTypeParams): TypeResponse | undefined {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined || params.index < 0) return undefined;
+    const signature = setup.snapshotData.resolveSignatureHandle(params.signature);
+    if (isError(signature)) return undefined;
+    return registerCheckerType(setup.snapshotData, setup.checker, "getTypeAtPosition", signature, params.index);
+  }
+  handleIsArrayLikeType(ctx: Context, params: IsArrayLikeTypeParams): boolean {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined) return false;
+    const targetType = setup.snapshotData.resolveTypeHandle(params.type);
+    if (isError(targetType)) return false;
+    const result = callMethod(setup.checker, "isArrayLikeType", targetType) ?? callMethod(setup.checker, "IsArrayLikeType", targetType);
+    return result === true;
+  }
+  handleTypeToTypeNode(ctx: Context, params: TypeToTypeNodeParams): unknown {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return undefined;
+    const targetType = setup.snapshotData.resolveTypeHandle(params.type);
+    if (isError(targetType)) return undefined;
+    const enclosingDeclaration = params.location === undefined ? undefined : resolveNodeHandle(setup.program, params.location);
+    const node = callMethod(setup.checker, "typeToTypeNode", targetType, enclosingDeclaration, params.flags ?? 0, undefined)
+      ?? callMethod(setup.checker, "TypeToTypeNode", targetType, enclosingDeclaration, params.flags ?? 0, undefined);
+    return encodeResponseNode(node, this.useBinaryResponses);
+  }
+  handleSignatureToSignatureDeclaration(ctx: Context, params: SignatureToSignatureDeclarationParams): unknown {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return undefined;
+    const signature = setup.snapshotData.resolveSignatureHandle(params.signature);
+    if (isError(signature)) return undefined;
+    const enclosingDeclaration = params.location === undefined ? undefined : resolveNodeHandle(setup.program, params.location);
+    const node = callMethod(setup.checker, "signatureToSignatureDeclaration", signature, params.kind, enclosingDeclaration, params.flags ?? 0)
+      ?? callMethod(setup.checker, "SignatureToSignatureDeclaration", signature, params.kind, enclosingDeclaration, params.flags ?? 0);
+    return encodeResponseNode(node, this.useBinaryResponses);
+  }
+  handleTypeToString(ctx: Context, params: TypeToTypeNodeParams): string | undefined {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return undefined;
+    const targetType = setup.snapshotData.resolveTypeHandle(params.type);
+    if (isError(targetType)) return undefined;
+    const enclosingDeclaration = params.location === undefined ? undefined : resolveNodeHandle(setup.program, params.location);
+    const result = callMethod(setup.checker, "typeToStringEx", targetType, enclosingDeclaration, params.flags ?? 0, undefined)
+      ?? callMethod(setup.checker, "TypeToStringEx", targetType, enclosingDeclaration, params.flags ?? 0, undefined)
+      ?? callMethod(setup.checker, "typeToString", targetType, enclosingDeclaration, params.flags ?? 0)
+      ?? callMethod(setup.checker, "TypeToString", targetType, enclosingDeclaration, params.flags ?? 0);
+    return typeof result === "string" ? result : undefined;
+  }
+  handlePrintNode(ctx: Context, params: PrintNodeParams): string {
+    void ctx;
+    const node = decodeNodes(Buffer.from(params.data, "base64"));
+    if (node === undefined) return "";
+    if (node.kind === Kind.SourceFile) {
+      return printFile(node as SourceFile, printNodeOptions(params));
+    }
+    return printFile({
+      kind: Kind.SourceFile,
+      pos: node.pos,
+      end: node.end,
+      flags: 0,
+      text: "",
+      fileName: "",
+      path: "",
+      statements: [node],
+      endOfFileToken: { kind: Kind.EndOfFile, pos: node.end, end: node.end, flags: 0 },
+    } as unknown as SourceFile);
+  }
+  handleGetIntrinsicType(ctx: Context, params: GetIntrinsicTypeParams, method: string): TypeResponse | undefined {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined) return undefined;
+    const targetType = callMethod(setup.checker, method) ?? callMethod(setup.checker, capitalizeMethod(method));
+    return targetType === undefined ? undefined : setup.snapshotData.registerType(targetType as TypeType);
+  }
+  handleIsContextSensitive(ctx: Context, params: GetContextualTypeParams): boolean {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined) return false;
+    const node = resolveNodeHandle(setup.program, params.location);
+    if (node === undefined) return false;
+    const result = callMethod(setup.checker, "isContextSensitive", node) ?? callMethod(setup.checker, "IsContextSensitive", node);
+    return result === true;
+  }
+  handleGetReturnTypeOfSignature(ctx: Context, params: CheckerSignatureParams): TypeResponse | undefined {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined) return undefined;
+    const signature = setup.snapshotData.resolveSignatureHandle(params.signature);
+    if (isError(signature)) return undefined;
+    return registerCheckerType(setup.snapshotData, setup.checker, "getReturnTypeOfSignature", signature);
+  }
+  handleGetRestTypeOfSignature(ctx: Context, params: CheckerSignatureParams): TypeResponse | undefined {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined) return undefined;
+    const signature = setup.snapshotData.resolveSignatureHandle(params.signature);
+    if (isError(signature)) return undefined;
+    return registerCheckerType(setup.snapshotData, setup.checker, "getRestTypeOfSignature", signature);
+  }
+  handleGetTypePredicateOfSignature(ctx: Context, params: CheckerSignatureParams): TypePredicateResponse | undefined {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined) return undefined;
+    const signature = setup.snapshotData.resolveSignatureHandle(params.signature);
+    if (isError(signature)) return undefined;
+    const predicate = callMethod(setup.checker, "getTypePredicateOfSignature", signature)
+      ?? callMethod(setup.checker, "GetTypePredicateOfSignature", signature);
+    if (predicate === undefined) return undefined;
+    const predicateType = readProperty(predicate, "type") as TypeType | undefined;
+    const response: TypePredicateResponse = {
+      kind: readNumber(predicate, "kind", 0),
+      parameterName: readString(predicate, "parameterName", ""),
+      parameterIndex: readNumber(predicate, "parameterIndex", 0),
+    };
+    if (predicateType !== undefined) response.type = setup.snapshotData.registerType(predicateType).id;
+    return response;
+  }
+  handleGetBaseTypes(ctx: Context, params: CheckerTypeParams): readonly TypeResponse[] {
+    return this.resolveCheckerTypeArray(ctx, params, "getBaseTypes");
+  }
+  handleGetPropertiesOfType(ctx: Context, params: CheckerTypeParams): readonly SymbolResponse[] {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined) return [];
+    const targetType = setup.snapshotData.resolveTypeHandle(params.type);
+    if (isError(targetType)) return [];
+    const props = callMethod(setup.checker, "getPropertiesOfType", targetType)
+      ?? callMethod(setup.checker, "GetPropertiesOfType", targetType)
+      ?? readProperty(targetType, "properties");
+    return arrayFromUnknown<SymbolType>(props).map((symbol) => setup.snapshotData!.registerSymbol(symbol));
+  }
+  handleGetIndexInfosOfType(ctx: Context, params: CheckerTypeParams): readonly IndexInfoResponse[] {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined) return [];
+    const targetType = setup.snapshotData.resolveTypeHandle(params.type);
+    if (isError(targetType)) return [];
+    const infos = callMethod(setup.checker, "getIndexInfosOfType", targetType)
+      ?? callMethod(setup.checker, "GetIndexInfosOfType", targetType)
+      ?? readProperty(targetType, "indexInfos");
+    return arrayFromUnknown<IndexInfoType>(infos).map((info) => ({
+      keyType: setup.snapshotData!.registerType(readProperty(info, "keyType") as TypeType),
+      valueType: setup.snapshotData!.registerType(readProperty(info, "valueType") as TypeType),
+      isReadonly: readBoolean(info, "isReadonly", false),
+    }));
+  }
+  handleGetConstraintOfTypeParameter(ctx: Context, params: CheckerTypeParams): TypeResponse | undefined {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined) return undefined;
+    const targetType = setup.snapshotData.resolveTypeHandle(params.type);
+    if (isError(targetType)) return undefined;
+    return registerCheckerType(setup.snapshotData, setup.checker, "getConstraintOfTypeParameter", targetType)
+      ?? this.resolveTypeProperty({ snapshot: params.snapshot, type: params.type }, (type) => type.constraint);
+  }
+  handleGetTypeArguments(ctx: Context, params: CheckerTypeParams): readonly TypeResponse[] {
+    return this.resolveCheckerTypeArray(ctx, params, "getTypeArguments");
+  }
+  handleGetSyntacticDiagnostics(ctx: Context, params: GetDiagnosticsParams): readonly DiagnosticResponse[] {
+    return this.getProgramDiagnostics(ctx, params, "getSyntacticDiagnostics");
+  }
+  handleGetSemanticDiagnostics(ctx: Context, params: GetDiagnosticsParams): readonly DiagnosticResponse[] {
+    return this.getProgramDiagnostics(ctx, params, "getSemanticDiagnostics");
+  }
+  handleGetSuggestionDiagnostics(ctx: Context, params: GetDiagnosticsParams): readonly DiagnosticResponse[] {
+    return this.getProgramDiagnostics(ctx, params, "getSuggestionDiagnostics");
+  }
+  handleGetDeclarationDiagnostics(ctx: Context, params: GetDiagnosticsParams): readonly DiagnosticResponse[] {
+    return this.getProgramDiagnostics(ctx, params, "getDeclarationDiagnostics");
+  }
+  handleGetConfigFileParsingDiagnostics(ctx: Context, params: GetProjectDiagnosticsParams): readonly DiagnosticResponse[] {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.program === undefined) return [];
+    const diagnostics = callMethod(setup.program, "getConfigFileParsingDiagnostics")
+      ?? callMethod(setup.program, "GetConfigFileParsingDiagnostics");
+    return arrayFromUnknown<DiagnosticType>(diagnostics).map(newDiagnosticResponse);
+  }
+  resolveCheckerTypeArray(ctx: Context, params: CheckerTypeParams, methodName: string): readonly TypeResponse[] {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined) return [];
+    const targetType = setup.snapshotData.resolveTypeHandle(params.type);
+    if (isError(targetType)) return [];
+    const types = callMethod(setup.checker, methodName, targetType)
+      ?? callMethod(setup.checker, capitalizeMethod(methodName), targetType)
+      ?? [];
+    return arrayFromUnknown<TypeType>(types).map((type) => setup.snapshotData!.registerType(type));
+  }
+  getProgramDiagnostics(ctx: Context, params: GetDiagnosticsParams, methodName: string): readonly DiagnosticResponse[] {
+    const snapshotData = this.getSnapshotData(params.snapshot);
+    if (isError(snapshotData)) return [];
+    const program = snapshotData.getProgram(params.project);
+    if (isError(program)) return [];
+    const sourceFile = params.file === undefined ? undefined : getProgramSourceFile(program, params.file);
+    const diagnostics = callMethod(program, methodName, ctx, sourceFile)
+      ?? callMethod(program, capitalizeMethod(methodName), ctx, sourceFile)
+      ?? [];
+    return arrayFromUnknown<DiagnosticType>(diagnostics).map(newDiagnosticResponse);
+  }
 
   resolveTypeProperty(
     params: GetTypePropertyParams, getter: (t: TypeType) => TypeType | undefined,
@@ -907,6 +1177,50 @@ function registerCheckerSymbol(snapshotData: SnapshotData, checker: Checker, met
   return value === undefined ? undefined : snapshotData.registerSymbol(value as SymbolType);
 }
 
+function encodeResponseNode(node: unknown, useBinaryResponses: boolean): unknown {
+  if (!isAstNode(node)) return undefined;
+  const sourceFile = sourceFileOfNode(node);
+  const data = encodeNode(node, sourceFile);
+  return useBinaryResponses ? data : { data: Buffer.from(data).toString("base64") };
+}
+
+function sourceFileOfNode(node: AstNode): SourceFile {
+  const sourceFile = callMethod(node, "getSourceFile") ?? callMethod(node, "GetSourceFile");
+  if (isAstNode(sourceFile) && sourceFile.kind === Kind.SourceFile) return sourceFile as SourceFile;
+  return {
+    kind: Kind.SourceFile,
+    pos: node.pos,
+    end: node.end,
+    flags: 0,
+    text: "",
+    fileName: "",
+    path: "",
+    statements: node.kind === Kind.SourceFile ? (node as SourceFile).statements : [node],
+    endOfFileToken: { kind: Kind.EndOfFile, pos: node.end, end: node.end, flags: 0 },
+  } as unknown as SourceFile;
+}
+
+function newDiagnosticResponse(diagnostic: DiagnosticType): DiagnosticResponse {
+  const file = readProperty(diagnostic, "file") as { fileName?: string } | undefined;
+  const messageText = readProperty(diagnostic, "messageText") ?? readProperty(diagnostic, "message") ?? readProperty(diagnostic, "text");
+  return {
+    fileName: file?.fileName ?? readString(diagnostic, "fileName", ""),
+    pos: readNumber(diagnostic, "pos", 0),
+    end: readNumber(diagnostic, "end", 0),
+    code: readNumber(diagnostic, "code", 0),
+    category: readNumber(diagnostic, "category", 0),
+    text: typeof messageText === "string" ? messageText : String(messageText ?? ""),
+  };
+}
+
+function printNodeOptions(params: PrintNodeParams): Parameters<typeof printFile>[1] {
+  const options: NonNullable<Parameters<typeof printFile>[1]> = {};
+  if (params.preserveSourceNewlines !== undefined) options.preserveSourceNewlines = params.preserveSourceNewlines;
+  if (params.neverAsciiEscape !== undefined) options.neverAsciiEscape = params.neverAsciiEscape;
+  if (params.terminateUnterminatedLiterals !== undefined) options.terminateUnterminatedLiterals = params.terminateUnterminatedLiterals;
+  return options;
+}
+
 function capitalizeMethod(name: string): string {
   return name.length === 0 ? name : name[0]!.toUpperCase() + name.slice(1);
 }
@@ -945,7 +1259,13 @@ interface TypeType {
   typeParameters?: readonly TypeType[]; outerTypeParameters?: readonly TypeType[];
   localTypeParameters?: readonly TypeType[]; objectType?: TypeType;
   indexType?: TypeType; checkType?: TypeType; extendsType?: TypeType;
-  baseType?: TypeType; constraint?: TypeType;
+  baseType?: TypeType; constraint?: TypeType; properties?: readonly SymbolType[];
+  indexInfos?: readonly IndexInfoType[];
+}
+interface IndexInfoType { keyType?: TypeType; valueType?: TypeType; isReadonly?: boolean }
+interface DiagnosticType {
+  file?: { fileName?: string }; fileName?: string; pos?: number; end?: number;
+  code?: number; category?: number; messageText?: unknown; message?: unknown; text?: unknown;
 }
 interface SymbolResponse {
   id: Handle<SymbolType>; name: string; flags: number; checkFlags: number;
@@ -997,7 +1317,35 @@ interface GetTypesAtPositionsParams { snapshot: Handle<Snapshot>; project: Handl
 interface GetTypePropertyParams { snapshot: Handle<Snapshot>; type: Handle<TypeType> }
 interface GetContextualTypeParams { snapshot: Handle<Snapshot>; project: Handle<Project>; location: Handle<AstNode> }
 interface GetBaseTypeOfLiteralTypeParams { snapshot: Handle<Snapshot>; project: Handle<Project>; type: Handle<TypeType> }
+interface GetNonNullableTypeParams { snapshot: Handle<Snapshot>; project: Handle<Project>; type: Handle<TypeType> }
+interface GetTypeFromTypeNodeParams { snapshot: Handle<Snapshot>; project: Handle<Project>; location: Handle<AstNode> }
+interface GetWidenedTypeParams { snapshot: Handle<Snapshot>; project: Handle<Project>; type: Handle<TypeType> }
+interface GetParameterTypeParams { snapshot: Handle<Snapshot>; project: Handle<Project>; signature: Handle<SignatureType>; index: number }
+interface IsArrayLikeTypeParams { snapshot: Handle<Snapshot>; project: Handle<Project>; type: Handle<TypeType> }
 interface GetTypeOfSymbolAtLocationParams { snapshot: Handle<Snapshot>; project: Handle<Project>; symbol: Handle<SymbolType>; location: Handle<AstNode> }
+interface GetIntrinsicTypeParams { snapshot: Handle<Snapshot>; project: Handle<Project> }
+interface TypeToTypeNodeParams {
+  snapshot: Handle<Snapshot>; project: Handle<Project>; type: Handle<TypeType>;
+  location?: Handle<AstNode>; flags?: number;
+}
+interface SignatureToSignatureDeclarationParams {
+  snapshot: Handle<Snapshot>; project: Handle<Project>; signature: Handle<SignatureType>;
+  kind: number; location?: Handle<AstNode>; flags?: number;
+}
+interface PrintNodeParams {
+  data: string; preserveSourceNewlines?: boolean; neverAsciiEscape?: boolean; terminateUnterminatedLiterals?: boolean;
+}
+interface CheckerTypeParams { snapshot: Handle<Snapshot>; project: Handle<Project>; type: Handle<TypeType> }
+interface CheckerSignatureParams { snapshot: Handle<Snapshot>; project: Handle<Project>; signature: Handle<SignatureType> }
+interface TypePredicateResponse {
+  kind: number; parameterName: string; parameterIndex: number; type?: Handle<TypeType>;
+}
+interface IndexInfoResponse { keyType: TypeResponse; valueType: TypeResponse; isReadonly: boolean }
+interface GetDiagnosticsParams { snapshot: Handle<Snapshot>; project: Handle<Project>; file?: DocumentIdentifier }
+interface GetProjectDiagnosticsParams { snapshot: Handle<Snapshot>; project: Handle<Project> }
+interface DiagnosticResponse {
+  fileName?: string; pos: number; end: number; code: number; category: number; text: string;
+}
 
 // AstNode reserved for future imports
 export type _Ast = AstNode;

@@ -6,9 +6,9 @@
  * — given an AST and emit-context, it produces the .js/.ts text
  * output, source maps, and comment/JSDoc handling.
  *
- * Port scope: ~140 method signatures across the major write-* / emit-*
- * / should* / get* families mapped to the upstream surface. Bodies
- * are stubbed; emission integration tests drive incremental fill-in.
+ * Port scope: write-* / emit-* / should* / get* families mapped to the
+ * upstream surface, with emission handlers filled incrementally from
+ * printer and transform baselines.
  *
  * Cross-module deps forward-declared at file end.
  */
@@ -40,6 +40,9 @@ export interface PrinterOptions {
   noEmitHelpers?: boolean;
   omitTrailingSemicolon?: boolean;
   preserveConstEnums?: boolean;
+  preserveSourceNewlines?: boolean;
+  neverAsciiEscape?: boolean;
+  terminateUnterminatedLiterals?: boolean;
   pretty?: boolean;
   stripInternal?: boolean;
   target?: number;
