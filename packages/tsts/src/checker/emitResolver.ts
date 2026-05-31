@@ -10,8 +10,35 @@ import { getCombinedNodeFlags, hasSyntacticModifier, Kind, NodeFlags, SymbolFlag
 import type { Node as AstNode, Symbol as AstSymbol, Declaration, IdentifierNode, Expression } from "../ast/index.js";
 import { ModifierFlags } from "../enums/modifierFlags.enum.js";
 import { SymbolAccessibility, type SymbolAccessibilityResult, type EmitResolver } from "../printer/emitResolver.js";
+import { ObjectFlags, TypeFlags, type Type } from "./types.js";
+
+export type TypeReferenceSerializationKind = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
+export const TypeReferenceSerializationKind = {
+  Unknown: 0 as TypeReferenceSerializationKind,
+  TypeWithConstructSignatureAndValue: 1 as TypeReferenceSerializationKind,
+  VoidNullableOrNeverType: 2 as TypeReferenceSerializationKind,
+  NumberLikeType: 3 as TypeReferenceSerializationKind,
+  BigIntLikeType: 4 as TypeReferenceSerializationKind,
+  StringLikeType: 5 as TypeReferenceSerializationKind,
+  BooleanType: 6 as TypeReferenceSerializationKind,
+  ArrayLikeType: 7 as TypeReferenceSerializationKind,
+  ESSymbolType: 8 as TypeReferenceSerializationKind,
+  Promise: 9 as TypeReferenceSerializationKind,
+  TypeWithCallSignature: 10 as TypeReferenceSerializationKind,
+  ObjectType: 11 as TypeReferenceSerializationKind,
+} as const;
 
 export class CheckerEmitResolver implements EmitResolver {
+  getJsxFactoryEntity(location: AstNode | undefined): AstNode | undefined {
+    return findClosest(location, (node) => nodeField(node, "jsxFactoryEntity"))
+      ?? findClosest(location, (node) => nodeField(node, "jsxFactory"));
+  }
+
+  getJsxFragmentFactoryEntity(location: AstNode | undefined): AstNode | undefined {
+    return findClosest(location, (node) => nodeField(node, "jsxFragmentFactoryEntity"))
+      ?? findClosest(location, (node) => nodeField(node, "jsxFragmentFactory"));
+  }
+
   // Alias / value-alias queries
   isReferencedAliasDeclaration(node: AstNode): boolean {
     if (!isAliasDeclaration(node)) return false;
@@ -23,6 +50,9 @@ export class CheckerEmitResolver implements EmitResolver {
     return hasExportModifier(node) && target !== undefined && ((target.flags ?? 0) & SymbolFlags.Value) !== 0;
   }
   isValueAliasDeclaration(node: AstNode): boolean {
+    return this.isValueAliasDeclarationWorker(node);
+  }
+  isValueAliasDeclarationWorker(node: AstNode): boolean {
     switch (node.kind) {
       case Kind.ImportEqualsDeclaration:
         return this.isAliasResolvedToValue(declarationSymbol(node), false);
@@ -155,6 +185,12 @@ export class CheckerEmitResolver implements EmitResolver {
   }
   markLinkedAliases(node: IdentifierNode): void {
     this.collectLinkedAliases(node, true);
+  }
+  markLinkedReferencesRecursively(file: AstNode): void {
+    forEachChild(file, node => {
+      this.aliasMarkingVisitorWorker(node);
+      return true;
+    });
   }
   aliasMarkingVisitorWorker(node: AstNode): boolean {
     if (node.kind === Kind.ExportSpecifier) {
@@ -415,6 +451,34 @@ export class CheckerEmitResolver implements EmitResolver {
     void reportErrors;
     return (node as { readonly resolutionMode?: unknown } | undefined)?.resolutionMode;
   }
+  getReferenceResolver(): { readonly resolverKind: "checker"; readonly resolve?: (node: AstNode) => AstSymbol | undefined } {
+    return {
+      resolverKind: "checker",
+      resolve: (node) => declarationSymbol(node),
+    };
+  }
+  getTypeReferenceSerializationKind(typeName: AstNode | undefined, location: AstNode | undefined): TypeReferenceSerializationKind {
+    if (typeName === undefined || location === undefined) return TypeReferenceSerializationKind.Unknown;
+    const symbol = declarationSymbol(typeName);
+    const resolvedSymbol = symbol === undefined ? undefined : resolveAliasSymbol(symbol);
+    const type = symbolType(resolvedSymbol);
+    const isTypeOnly = symbol !== undefined && typeOnlyAliasDeclaration(symbol) !== undefined;
+    if (type === undefined) return isTypeOnly ? TypeReferenceSerializationKind.ObjectType : TypeReferenceSerializationKind.Unknown;
+    if ((type.flags & TypeFlags.AnyOrUnknown) !== 0) return TypeReferenceSerializationKind.ObjectType;
+    if ((type.flags & (TypeFlags.Void | TypeFlags.Nullable | TypeFlags.Never)) !== 0) return TypeReferenceSerializationKind.VoidNullableOrNeverType;
+    if ((type.flags & TypeFlags.BooleanLike) !== 0) return TypeReferenceSerializationKind.BooleanType;
+    if ((type.flags & TypeFlags.NumberLike) !== 0) return TypeReferenceSerializationKind.NumberLikeType;
+    if ((type.flags & TypeFlags.BigIntLike) !== 0) return TypeReferenceSerializationKind.BigIntLikeType;
+    if ((type.flags & TypeFlags.StringLike) !== 0) return TypeReferenceSerializationKind.StringLikeType;
+    if ((type.flags & TypeFlags.ESSymbolLike) !== 0) return TypeReferenceSerializationKind.ESSymbolType;
+    if (isArrayLikeType(type)) return TypeReferenceSerializationKind.ArrayLikeType;
+    if (isFunctionLikeType(type)) return TypeReferenceSerializationKind.TypeWithCallSignature;
+    if (isConstructorLikeType(type)) return isTypeOnly
+      ? TypeReferenceSerializationKind.TypeWithCallSignature
+      : TypeReferenceSerializationKind.TypeWithConstructSignatureAndValue;
+    if (symbolToName(resolvedSymbol) === "Promise") return TypeReferenceSerializationKind.Promise;
+    return TypeReferenceSerializationKind.ObjectType;
+  }
 
   // Declaration emit support
   createTypeOfDeclaration(declaration: AstNode): AstNode {
@@ -640,4 +704,72 @@ function isExpandoPropertyDeclaration(node: AstNode): boolean {
 
 export function newCheckerEmitResolver(): CheckerEmitResolver {
   return new CheckerEmitResolver();
+}
+
+export function newEmitResolver(): CheckerEmitResolver {
+  return new CheckerEmitResolver();
+}
+
+export function noopAddVisibleAlias(_declaration: AstNode, _aliasingStatement: AstNode): void {}
+
+export function isConstEnumOrConstEnumOnlyModule(symbol: AstSymbol | undefined): boolean {
+  const constEnumFlag = (SymbolFlags as unknown as { readonly ConstEnum?: number }).ConstEnum ?? 0;
+  if (symbol === undefined) return false;
+  if (((symbol.flags ?? 0) & constEnumFlag) !== 0) return true;
+  const exports = symbol.exports ?? symbol.members;
+  if (exports === undefined || exports.size === 0) return false;
+  for (const exported of exports.values()) {
+    if (!isConstEnumOrConstEnumOnlyModule(exported)) return false;
+  }
+  return true;
+}
+
+function findClosest<T extends AstNode>(
+  node: AstNode | undefined,
+  predicate: (node: AstNode) => T | undefined,
+): T | undefined {
+  let current = node;
+  while (current !== undefined) {
+    const match = predicate(current);
+    if (match !== undefined) return match;
+    current = parentOf(current);
+  }
+  return undefined;
+}
+
+function resolveAliasSymbol(symbol: AstSymbol): AstSymbol {
+  return (symbol as { readonly aliasTarget?: AstSymbol; readonly target?: AstSymbol }).aliasTarget
+    ?? (symbol as { readonly aliasTarget?: AstSymbol; readonly target?: AstSymbol }).target
+    ?? symbol.exportSymbol
+    ?? symbol;
+}
+
+function symbolType(symbol: AstSymbol | undefined): Type | undefined {
+  return (symbol as { readonly type?: Type; readonly declaredType?: Type } | undefined)?.type
+    ?? (symbol as { readonly type?: Type; readonly declaredType?: Type } | undefined)?.declaredType;
+}
+
+function symbolToName(symbol: AstSymbol | undefined): string {
+  return symbol?.name ?? symbol?.escapedName ?? "";
+}
+
+function isArrayLikeType(type: Type): boolean {
+  const objectFlags = (type.data as { readonly objectFlags?: number } | undefined)?.objectFlags ?? 0;
+  return (objectFlags & (ObjectFlags.ArrayLiteral | ObjectFlags.Tuple | ObjectFlags.Reference)) !== 0
+    && /^(?:Array|ReadonlyArray|Tuple)/.test(symbolToName(type.symbol));
+}
+
+function isFunctionLikeType(type: Type): boolean {
+  return ((type.data as { readonly callSignatures?: readonly unknown[]; readonly declaredCallSignatures?: readonly unknown[] } | undefined)?.callSignatures?.length ?? 0) > 0
+    || ((type.data as { readonly callSignatures?: readonly unknown[]; readonly declaredCallSignatures?: readonly unknown[] } | undefined)?.declaredCallSignatures?.length ?? 0) > 0;
+}
+
+function isConstructorLikeType(type: Type): boolean {
+  return ((type.data as { readonly constructSignatures?: readonly unknown[]; readonly declaredConstructSignatures?: readonly unknown[] } | undefined)?.constructSignatures?.length ?? 0) > 0
+    || ((type.data as { readonly constructSignatures?: readonly unknown[]; readonly declaredConstructSignatures?: readonly unknown[] } | undefined)?.declaredConstructSignatures?.length ?? 0) > 0;
+}
+
+function nodeField(node: AstNode, key: string): AstNode | undefined {
+  const value = (node as unknown as Record<string, unknown>)[key];
+  return isAstNode(value) ? value : undefined;
 }
