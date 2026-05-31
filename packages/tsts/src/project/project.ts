@@ -33,11 +33,49 @@ export interface ProjectOptions {
   readonly rootFileNames?: readonly string[];
   readonly compilerOptions?: object | undefined;
   readonly logger?: LogTree | undefined;
+  readonly defaultLibraryPath?: string | undefined;
+  readonly typingsLocation?: string | undefined;
 }
 
 export interface ProjectDiagnostic {
   readonly fileName?: string;
   readonly message: string;
+}
+
+export interface TypingsInfo {
+  readonly compilerOptions: ReadonlyMap<string, unknown>;
+  readonly unresolvedImports: readonly string[];
+  readonly projectRootPath: string;
+  readonly safeListPath: string;
+  readonly typeAcquisition?: unknown;
+}
+
+export interface TypingsState {
+  readonly info: TypingsInfo;
+  readonly files: readonly string[];
+  readonly filesToWatch: readonly string[];
+}
+
+export interface WatchPatternSet {
+  readonly patternsInsideWorkspace: readonly string[];
+  readonly patternsOutsideWorkspace: readonly string[];
+  readonly ignored: readonly string[];
+}
+
+export class WatchedFiles<T = WatchPatternSet> {
+  readonly description: string;
+  readonly watchKind: number;
+  readonly value: T;
+
+  constructor(description: string, watchKind: number, value: T) {
+    this.description = description;
+    this.watchKind = watchKind;
+    this.value = value;
+  }
+
+  clone(value: T): WatchedFiles<T> {
+    return new WatchedFiles(this.description, this.watchKind, value);
+  }
 }
 
 export class Project {
@@ -47,14 +85,22 @@ export class Project {
   readonly configFilePathValue: string;
   readonly rootFileNames: readonly string[];
   readonly compilerOptions: object | undefined;
+  readonly defaultLibraryPath: string | undefined;
+  readonly typingsLocation: string | undefined;
   program: Program | undefined;
   programUpdateKind: ProgramUpdateKind = ProgramUpdateKind.None;
   programLastUpdate = 0;
   dirty = true;
   dirtyFilePath: string | undefined;
   pendingReload: PendingReload = PendingReload.None;
+  programFilesWatch: WatchedFiles<WatchPatternSet>;
+  typingsWatch: WatchedFiles<WatchPatternSet> | undefined;
+  installedTypingsInfo: TypingsInfo | undefined;
+  typingsFiles: readonly string[] = [];
+  checkerPool: unknown;
   private readonly files = new Set<string>();
   private readonly referencedProjects = new Set<string>();
+  private readonly potentialProjectReferences = new Set<string>();
 
   constructor(options: ProjectOptions) {
     this.kind = options.kind;
@@ -63,7 +109,21 @@ export class Project {
     this.configFilePathValue = options.configFilePath ?? toPath(options.configFileName, options.currentDirectory);
     this.rootFileNames = options.rootFileNames ?? [];
     this.compilerOptions = options.compilerOptions;
-    options.logger?.log(`Creating ${projectKindToString(this.kind)}Project: ${options.configFileName}`);
+    this.defaultLibraryPath = options.defaultLibraryPath;
+    this.typingsLocation = options.typingsLocation;
+    this.programFilesWatch = new WatchedFiles(
+      `program files for ${options.configFileName}`,
+      WatchKind.Create | WatchKind.Change | WatchKind.Delete,
+      createResolutionLookupPatterns(options.currentDirectory, options.defaultLibraryPath, this.currentDirectory),
+    );
+    if (options.typingsLocation !== undefined && options.typingsLocation !== "") {
+      this.typingsWatch = new WatchedFiles(
+        "typings installer files",
+        WatchKind.Create | WatchKind.Change | WatchKind.Delete,
+        { patternsInsideWorkspace: [], patternsOutsideWorkspace: [], ignored: [] },
+      );
+    }
+    options.logger?.log(`Creating ${projectKindToString(this.kind)}Project: ${options.configFileName}, currentDirectory: ${options.currentDirectory}`);
   }
 
   name(): string {
@@ -123,7 +183,52 @@ export class Project {
   }
 
   addPotentialProjectReference(path: string): void {
+    this.potentialProjectReferences.add(path);
+  }
+
+  hasPotentialProjectReference(request: { readonly isAllProjects?: () => boolean; readonly isProjectReferenced?: (path: string) => boolean }): boolean {
+    if (request.isAllProjects?.() === true) return true;
+    for (const reference of this.potentialProjectReferences) {
+      if (request.isProjectReferenced?.(reference) === true) return true;
+    }
+    return false;
+  }
+
+  setResolvedProjectReference(path: string): void {
     this.referencedProjects.add(path);
+  }
+
+  clearPotentialProjectReferences(): void {
+    this.potentialProjectReferences.clear();
+  }
+
+  updateTypingsState(state: TypingsState): boolean {
+    if (this.installedTypingsInfo !== undefined && typingsInfoEquals(this.installedTypingsInfo, state.info)
+      && sameRootFiles(this.typingsFiles, state.files)) {
+      return false;
+    }
+    this.installedTypingsInfo = state.info;
+    this.typingsFiles = [...state.files].sort();
+    this.typingsWatch = (this.typingsWatch ?? new WatchedFiles(
+      "typings installer files",
+      WatchKind.Create | WatchKind.Change | WatchKind.Delete,
+      { patternsInsideWorkspace: [], patternsOutsideWorkspace: [], ignored: [] },
+    )).clone(getTypingsLocationGlobs(state.filesToWatch, this.typingsLocation, this.currentDirectory));
+    this.markDirty(undefined, PendingReload.Full);
+    return true;
+  }
+
+  commandLineRootFileNames(): readonly string[] {
+    return [...this.rootFileNames, ...this.typingsFiles].sort();
+  }
+
+  computeTypingsInfo(unresolvedImports: readonly string[] = []): TypingsInfo {
+    return {
+      compilerOptions: compilerOptionsMap(this.compilerOptions),
+      unresolvedImports: [...new Set(unresolvedImports)].sort(),
+      projectRootPath: this.currentDirectory,
+      safeListPath: this.typingsLocation ?? "",
+    };
   }
 
   getProjectDiagnostics(): readonly ProjectDiagnostic[] {
@@ -154,8 +259,14 @@ export class Project {
     project.dirty = this.dirty;
     project.dirtyFilePath = this.dirtyFilePath;
     project.pendingReload = this.pendingReload;
+    project.programFilesWatch = this.programFilesWatch.clone(this.programFilesWatch.value);
+    project.typingsWatch = this.typingsWatch?.clone(this.typingsWatch.value);
+    project.installedTypingsInfo = this.installedTypingsInfo;
+    project.typingsFiles = [...this.typingsFiles];
+    project.checkerPool = this.checkerPool;
     for (const file of this.files) project.files.add(file);
     for (const reference of this.referencedProjects) project.referencedProjects.add(reference);
+    for (const reference of this.potentialProjectReferences) project.potentialProjectReferences.add(reference);
     return project;
   }
 }
@@ -207,4 +318,84 @@ function relativePath(from: string, to: string): string {
   let common = 0;
   while (common < fromParts.length && common < toParts.length && fromParts[common] === toParts[common]) common += 1;
   return [...fromParts.slice(common).map(() => ".."), ...toParts.slice(common)].join("/") || ".";
+}
+
+const WatchKind = {
+  Create: 1,
+  Change: 2,
+  Delete: 4,
+} as const;
+
+function createResolutionLookupPatterns(workspaceDirectory: string, defaultLibraryPath: string | undefined, projectDirectory: string): WatchPatternSet {
+  const roots = new Set<string>();
+  roots.add(projectDirectory);
+  if (defaultLibraryPath !== undefined && defaultLibraryPath !== "") roots.add(defaultLibraryPath);
+  roots.add(`${workspaceDirectory}/node_modules`);
+  const patternsInsideWorkspace: string[] = [];
+  const patternsOutsideWorkspace: string[] = [];
+  for (const root of roots) {
+    const pattern = getRecursiveGlobPattern(root);
+    if (isInsidePath(workspaceDirectory, root)) patternsInsideWorkspace.push(pattern);
+    else patternsOutsideWorkspace.push(pattern);
+  }
+  return {
+    patternsInsideWorkspace: patternsInsideWorkspace.sort(),
+    patternsOutsideWorkspace: patternsOutsideWorkspace.sort(),
+    ignored: [`${normalizeSlashes(projectDirectory)}/**/node_modules/**`],
+  };
+}
+
+function getTypingsLocationGlobs(filesToWatch: readonly string[], typingsLocation: string | undefined, currentDirectory: string): WatchPatternSet {
+  const patternsInsideWorkspace: string[] = [];
+  const patternsOutsideWorkspace: string[] = [];
+  for (const file of filesToWatch) {
+    const normalized = normalizeSlashes(file);
+    if (typingsLocation !== undefined && isInsidePath(typingsLocation, normalized)) {
+      patternsOutsideWorkspace.push(normalized);
+    } else if (isInsidePath(currentDirectory, normalized)) {
+      patternsInsideWorkspace.push(normalized);
+    } else {
+      patternsOutsideWorkspace.push(normalized);
+    }
+  }
+  return {
+    patternsInsideWorkspace: patternsInsideWorkspace.sort(),
+    patternsOutsideWorkspace: patternsOutsideWorkspace.sort(),
+    ignored: [],
+  };
+}
+
+function getRecursiveGlobPattern(directory: string): string {
+  return `${normalizeSlashes(directory).replace(/\/$/, "")}/**/*`;
+}
+
+function isInsidePath(parent: string, child: string): boolean {
+  const parentPath = normalizeSlashes(parent).replace(/\/$/, "");
+  const childPath = normalizeSlashes(child);
+  return childPath === parentPath || childPath.startsWith(`${parentPath}/`);
+}
+
+function typingsInfoEquals(left: TypingsInfo, right: TypingsInfo): boolean {
+  if (left.projectRootPath !== right.projectRootPath || left.safeListPath !== right.safeListPath) return false;
+  if (!sameRootFiles(left.unresolvedImports, right.unresolvedImports)) return false;
+  if (left.compilerOptions.size !== right.compilerOptions.size) return false;
+  for (const [key, value] of left.compilerOptions) {
+    if (right.compilerOptions.get(key) !== value) return false;
+  }
+  return true;
+}
+
+function compilerOptionsMap(options: object | undefined): ReadonlyMap<string, unknown> {
+  if (options instanceof Map) return new Map(options.entries());
+  return new Map(Object.entries(options ?? {}));
+}
+
+function sameRootFiles(left: readonly string[], right: readonly string[]): boolean {
+  if (left.length !== right.length) return false;
+  const a = [...left].map(normalizeSlashes).sort();
+  const b = [...right].map(normalizeSlashes).sort();
+  for (let index = 0; index < a.length; index += 1) {
+    if (a[index] !== b[index]) return false;
+  }
+  return true;
 }

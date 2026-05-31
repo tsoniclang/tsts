@@ -6,6 +6,7 @@ import { SnapshotFS, type FileHandle } from "./snapshotFs.js";
 import type { ATAStateChange } from "./ata/ata.js";
 import type { LogTree } from "./logging/logtree.js";
 import type { UpdateReason } from "./session.js";
+import type { WatchedFiles } from "./project.js";
 
 export interface SnapshotOptions {
   readonly id: number;
@@ -18,6 +19,10 @@ export interface SnapshotOptions {
   readonly userPreferences?: ReadonlyMap<string, unknown>;
   readonly projectCollection?: ProjectCollection;
   readonly configFileRegistry?: ConfigFileRegistry;
+  readonly autoImports?: unknown;
+  readonly autoImportsWatch?: WatchedFiles<ReadonlyMap<string, string>> | undefined;
+  readonly builderLogs?: LogTree | undefined;
+  readonly apiError?: Error | undefined;
 }
 
 export interface APISnapshotRequest {
@@ -75,6 +80,9 @@ export class Snapshot {
   readonly compilerOptionsForInferredProjects: CompilerOptions | undefined;
   readonly userPreferences: ReadonlyMap<string, unknown>;
   readonly fileChanges: FileChangeSummary;
+  readonly autoImports: unknown;
+  readonly autoImportsWatch: WatchedFiles<ReadonlyMap<string, string>> | undefined;
+  readonly converters: SnapshotConverters;
   readonly builderLogs: LogTree | undefined;
   readonly apiError: Error | undefined;
 
@@ -89,6 +97,11 @@ export class Snapshot {
     this.userPreferences = options.userPreferences ?? new Map();
     this.projectCollection = options.projectCollection ?? new ProjectCollection(fileName => this.toPath(fileName));
     this.configFileRegistry = options.configFileRegistry ?? new ConfigFileRegistry();
+    this.autoImports = options.autoImports;
+    this.autoImportsWatch = options.autoImportsWatch;
+    this.converters = new SnapshotConverters(this.lspLineMap.bind(this));
+    this.builderLogs = options.builderLogs;
+    this.apiError = options.apiError;
   }
 
   id(): number {
@@ -136,6 +149,18 @@ export class Snapshot {
     return this.userPreferences;
   }
 
+  userPreferencesSnapshot(): ReadonlyMap<string, unknown> {
+    return this.userPreferences;
+  }
+
+  getConverters(): SnapshotConverters {
+    return this.converters;
+  }
+
+  autoImportRegistry(): unknown {
+    return this.autoImports;
+  }
+
   clone(change: SnapshotChange, init?: Partial<SnapshotOptions>): Snapshot {
     const parentId = this.snapshotId;
     const nextOptions: SnapshotOptions = {
@@ -148,6 +173,10 @@ export class Snapshot {
       projectCollection: init?.projectCollection ?? this.projectCollection.clone(),
       configFileRegistry: init?.configFileRegistry ?? this.configFileRegistry.clone(),
       userPreferences: change.userPreferences ?? this.userPreferences,
+      autoImports: init?.autoImports ?? this.autoImports,
+      autoImportsWatch: init?.autoImportsWatch ?? this.autoImportsWatch,
+      builderLogs: init?.builderLogs ?? this.builderLogs,
+      apiError: init?.apiError ?? this.apiError,
       ...(change.compilerOptionsForInferredProjects !== undefined
         ? { compilerOptionsForInferredProjects: change.compilerOptionsForInferredProjects }
         : this.compilerOptionsForInferredProjects !== undefined
@@ -213,6 +242,30 @@ export class Snapshot {
     change.autoImports;
     change.ataChanges;
     change.cleanDiskCache;
+  }
+}
+
+export class SnapshotConverters {
+  private readonly lineMap: (fileName: string) => readonly number[] | undefined;
+
+  constructor(lineMap: (fileName: string) => readonly number[] | undefined) {
+    this.lineMap = lineMap;
+  }
+
+  lineAndCharacter(fileName: string, position: number): { readonly line: number; readonly character: number } {
+    const starts = this.lineMap(fileName) ?? [0];
+    let line = 0;
+    for (let index = 0; index < starts.length; index += 1) {
+      const start = starts[index]!;
+      if (start > position) break;
+      line = index;
+    }
+    return { line, character: Math.max(0, position - (starts[line] ?? 0)) };
+  }
+
+  position(fileName: string, line: number, character: number): number {
+    const starts = this.lineMap(fileName) ?? [0];
+    return (starts[line] ?? starts[starts.length - 1] ?? 0) + character;
   }
 }
 
