@@ -30,31 +30,16 @@ import "./program/program.test.js";
 import "./scanner/scanner.test.js";
 import "./json/json.test.js";
 
-// === Still disabled (TSTS source incompleteness; not tsonic blockers) ===
+// === Additional modules now mechanically re-enabled ===
 
-// Disabled — pulls in api/binary-ast/encoder.ts which uses `value: unknown`
-// in isNodeArray (TSN5001). Codex explicitly decided not to fix
-// Array.isArray(unknown); TSTS source needs JsValue migration first.
-// import "./api/binary-encoder.test.ts";
+import "./api/binary-encoder.test.js";
 
-// Disabled — compile.ts depends on api/binary-ast/encoder.ts (same
-// TSN5001 blocker as above).
-// import "./compiler/compile.test.ts";
+import "./compiler/compile.test.js";
 
-// Disabled — config/tsconfig.ts pulls in compile.ts via cascade.
-// Re-enable once compiler/compile.test.ts is enabled.
-// import "./config/tsconfig.test.ts";
+import "./config/tsconfig.test.js";
 
-// Disabled — runner module has no source files (only the test).
-// Re-enable when runner is implemented.
-// import "./runner/runner.test.ts";
+import "./runner/runner.test.js";
 
-// Disabled — schema-contract.test.ts uses JSON.stringify(NodeMembersByName.X)
-// for deep-shape equality, which trips TSN5001 (closed-type stringify).
-// Rewrite with per-field assertions before re-enabling.
-// import "./schema/schema-contract.test.ts";
+import "./schema/schema-contract.test.js";
 
-// Disabled — sourcemap/generator.ts imports `marshal` from json/index.js
-// which was removed pending JSON.stringify policy; also pulls Buffer Node
-// API recovery.
-// import "./sourcemap/generator.test.ts";
+import "./sourcemap/generator.test.js";

@@ -76,7 +76,7 @@ function isChildPresent(value: unknown): boolean {
 
 function childMask(node: Node): number {
   const properties = ChildPropertiesByKind.get(node.kind) ?? [];
-  const record = node as unknown as Record<string, unknown>;
+  const record = node as { readonly [propertyName: string]: Node | NodeArray<Node> | undefined };
   let mask = 0;
   for (let index = 0; index < properties.length; index += 1) {
     const property = properties[index]!;
@@ -101,7 +101,7 @@ function nodeDataType(kind: Kind): number {
 }
 
 function recordStringNode(node: Node, strings: StringTable): number {
-  return strings.add(String((node as unknown as { readonly text?: unknown }).text ?? ""));
+  return strings.add(String((node as { readonly text?: string }).text ?? ""));
 }
 
 function recordExtendedNode(node: Node, strings: StringTable, extendedData: number[]): number {
@@ -125,7 +125,7 @@ function recordExtendedNode(node: Node, strings: StringTable, extendedData: numb
     return offset;
   }
 
-  const literal = node as unknown as { readonly text?: string; readonly tokenFlags?: number; readonly rawText?: string; readonly templateFlags?: number };
+  const literal = node as { readonly text?: string; readonly tokenFlags?: number; readonly rawText?: string; readonly templateFlags?: number };
   if (node.kind === Kind.TemplateHead || node.kind === Kind.TemplateMiddle || node.kind === Kind.TemplateTail) {
     extendedData.push(strings.add(literal.text ?? ""), strings.add(literal.rawText ?? ""), literal.templateFlags ?? 0);
   } else {
@@ -217,7 +217,7 @@ export function encodeNode(root: Node): Uint8Array {
 
   const visitChildren = (node: Node): void => {
     const properties = ChildPropertiesByKind.get(node.kind) ?? [];
-    const record = node as unknown as Record<string, unknown>;
+    const record = node as { readonly [propertyName: string]: Node | NodeArray<Node> | undefined };
     for (const property of properties) {
       const child = record[property];
       if (!isChildPresent(child)) {
@@ -273,5 +273,25 @@ export function encodeNode(root: Node): Uint8Array {
 }
 
 export function uint8ArrayToBase64(data: Uint8Array): string {
-  return Buffer.from(data).toString("base64");
+  const base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  let out = "";
+  for (let index = 0; index < data.length; index += 3) {
+    const byte1 = data[index]!;
+    const byte2 = index + 1 < data.length ? data[index + 1]! : 0;
+    const byte3 = index + 2 < data.length ? data[index + 2]! : 0;
+    const triplet = (byte1 << 16) | (byte2 << 8) | byte3;
+    out += base64[(triplet >> 18) & 0x3f];
+    out += base64[(triplet >> 12) & 0x3f];
+    if (index + 1 < data.length) {
+      out += base64[(triplet >> 6) & 0x3f];
+    } else {
+      out += "=";
+    }
+    if (index + 2 < data.length) {
+      out += base64[triplet & 0x3f];
+    } else {
+      out += "=";
+    }
+  }
+  return out;
 }
