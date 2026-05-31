@@ -58,6 +58,8 @@ import {
 } from "./checker.checkedtype.js";
 import { inferExpression } from "./checker.expressions.js";
 import { checkStatements } from "./checker.statements.js";
+import { createCheckerCoreState } from "./checkerInitialization.js";
+import type { CheckerCoreState, CheckerProgram } from "./checkerCore.js";
 import { checkSourceElements } from "./sourceElements.js";
 import {
   getPropertySymbolOfType,
@@ -77,10 +79,12 @@ export type { CheckDiagnostic, CheckResult } from "./checker.checkedtype.js";
 export class Checker {
   readonly program: Program | undefined;
   readonly state: CheckState;
+  readonly core: CheckerCoreState;
 
   constructor(program?: Program) {
     this.program = program;
     this.state = newCheckState();
+    this.core = createCheckerCoreState(program as unknown as CheckerProgram | undefined);
     wireBinderSymbolResolution(this.state);
   }
 
