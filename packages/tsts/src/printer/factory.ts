@@ -20,30 +20,92 @@ import type {
 } from "../ast/index.js";
 import {
   Kind,
+  createArrowFunction,
   createArrayLiteralExpression,
+  createArrayBindingPattern,
+  createAwaitExpression,
   createBinaryExpression,
+  createBigIntLiteral,
   createBlock,
+  createBreakStatement,
+  createBindingElement,
   createCallExpression,
+  createCaseBlock,
+  createCaseClause,
+  createCatchClause,
+  createClassDeclaration,
+  createClassExpression,
+  createClassStaticBlockDeclaration,
   createConditionalExpression,
+  createConstructorDeclaration,
+  createContinueStatement,
+  createDebuggerStatement,
+  createDefaultClause,
+  createDeleteExpression,
+  createDoStatement,
   createElementAccessExpression,
   createEmptyStatement,
+  createExportAssignment,
+  createExportDeclaration,
+  createExportSpecifier,
   createExpressionStatement,
+  createExpressionWithTypeArguments,
+  createForInStatement,
+  createForOfStatement,
+  createForStatement,
+  createFunctionDeclaration,
+  createFunctionExpression,
+  createGetAccessorDeclaration,
+  createHeritageClause,
   createIdentifier,
+  createIfStatement,
+  createImportClause,
+  createImportDeclaration,
+  createImportEqualsDeclaration,
+  createImportSpecifier,
+  createLabeledStatement,
+  createMethodDeclaration,
+  createNamedExports,
+  createNamedImports,
+  createNewExpression,
+  createNoSubstitutionTemplateLiteral,
   createKeywordExpression,
   createNodeArray,
   createNumericLiteral,
+  createObjectBindingPattern,
+  createObjectLiteralExpression,
+  createParameterDeclaration,
   createPartiallyEmittedExpression,
+  createParenthesizedExpression,
   createPrefixUnaryExpression,
   createPrivateIdentifier,
+  createPropertyAssignment,
   createPropertyAccessExpression,
+  createPropertyDeclaration,
+  createRegularExpressionLiteral,
+  createReturnStatement,
+  createSetAccessorDeclaration,
+  createShorthandPropertyAssignment,
+  createSpreadAssignment,
+  createSpreadElement,
   createStringLiteral,
+  createSwitchStatement,
   createSyntaxList,
+  createTaggedTemplateExpression,
+  createTemplateExpression,
+  createTemplateSpan,
+  createThrowStatement,
   createToken,
   createTypeOfExpression,
+  createTypeParameterDeclaration,
+  createTypeReferenceNode,
+  createTryStatement,
   createVariableDeclaration,
   createVariableDeclarationList,
   createVariableStatement,
   createVoidExpression,
+  createWhileStatement,
+  createYieldExpression,
   updateArrowFunction as updateAstArrowFunction,
   updateCallExpression as updateAstCallExpression,
   updateClassDeclaration as updateAstClassDeclaration,
@@ -228,6 +290,18 @@ export class NodeFactory {
   newArrayLiteralExpression(elements: readonly Expression[]): AstNode {
     return createArrayLiteralExpression(createNodeArray(elements) as NodeArray<never>, false) as unknown as AstNode;
   }
+  newObjectLiteralExpression(properties: unknown, multiLine = false): AstNode {
+    return createObjectLiteralExpression(asNodeArray(properties), multiLine) as unknown as AstNode;
+  }
+  newPropertyAssignment(...args: unknown[]): AstNode {
+    return createPropertyAssignment(args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never) as unknown as AstNode;
+  }
+  newShorthandPropertyAssignment(...args: unknown[]): AstNode {
+    return createShorthandPropertyAssignment(args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never, args[5] as never) as unknown as AstNode;
+  }
+  newSpreadAssignment(expression: AstNode): AstNode {
+    return createSpreadAssignment(expression as never) as unknown as AstNode;
+  }
   newReflectSetCall(target: Expression, name: Expression, value: Expression, receiver: Expression): Expression {
     return this.newGlobalMethodCall("Reflect", "set", [target, name, value, receiver]);
   }
@@ -249,12 +323,218 @@ export class NodeFactory {
       0,
     ) as unknown as Expression;
   }
+  newNewExpression(...args: unknown[]): AstNode {
+    return createNewExpression(args[0] as never, asOptionalNodeArray(args[1]), asOptionalNodeArray(args[2])) as unknown as AstNode;
+  }
+  newTaggedTemplateExpression(...args: unknown[]): AstNode {
+    return createTaggedTemplateExpression(args[0] as never, args[1] as never, asOptionalNodeArray(args[2]), args[3] as never, args[4] as number ?? 0) as unknown as AstNode;
+  }
   newTypeCheck(value: AstNode, tag: string): AstNode {
     // typeof value === "tag"
     return this.newStrictEqualityExpression(
       this.newTypeOfExpression(value as Expression),
       this.newStringLiteral(tag, 0),
     );
+  }
+
+  newToken(kind: number): AstNode {
+    return createToken(kind as never) as unknown as AstNode;
+  }
+  newKeywordExpression(kind: number): AstNode {
+    return createKeywordExpression(kind as never) as unknown as AstNode;
+  }
+  newSuperExpression(): AstNode {
+    return createKeywordExpression(Kind.SuperKeyword) as unknown as AstNode;
+  }
+  newUnknownKeyword(): AstNode {
+    return createToken(Kind.UnknownKeyword as never) as unknown as AstNode;
+  }
+  newPostfixUnaryExpression(operand: AstNode, operator: number): AstNode {
+    return { kind: Kind.PostfixUnaryExpression, operand, operator } as unknown as AstNode;
+  }
+  newConditionalExpression(...args: unknown[]): AstNode {
+    return createConditionalExpression(args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never) as unknown as AstNode;
+  }
+  newDeleteExpression(expression: AstNode): AstNode {
+    return createDeleteExpression(expression as never) as unknown as AstNode;
+  }
+  newAwaitExpression(expression: AstNode): AstNode {
+    return createAwaitExpression(expression as never) as unknown as AstNode;
+  }
+  newYieldExpression(asteriskToken: AstNode | undefined, expression: AstNode | undefined): AstNode {
+    return createYieldExpression(asteriskToken as never, expression as never) as unknown as AstNode;
+  }
+  newSpreadElement(expression: AstNode): AstNode {
+    return createSpreadElement(expression as never) as unknown as AstNode;
+  }
+  newParenthesizedExpression(expression: AstNode): AstNode {
+    return createParenthesizedExpression(expression as never) as unknown as AstNode;
+  }
+  newBigIntLiteral(value: string, flags = 0): AstNode {
+    return createBigIntLiteral(value, flags) as unknown as AstNode;
+  }
+  newRegularExpressionLiteral(text: string): AstNode {
+    return createRegularExpressionLiteral(text, 0) as unknown as AstNode;
+  }
+  newNoSubstitutionTemplateLiteral(text: string, rawText: string | undefined): AstNode {
+    return createNoSubstitutionTemplateLiteral(rawText ?? text, 0) as unknown as AstNode;
+  }
+  newTemplateExpression(head: AstNode, spans: readonly AstNode[]): AstNode {
+    return createTemplateExpression(head as never, createNodeArray(spans) as NodeArray<never>) as unknown as AstNode;
+  }
+  newTemplateSpan(expression: AstNode, literal: AstNode): AstNode {
+    return createTemplateSpan(expression as never, literal as never) as unknown as AstNode;
+  }
+
+  newVariableDeclaration(...args: unknown[]): AstNode {
+    return createVariableDeclaration(args[0] as never, args[1] as never, args[2] as never, args[3] as never) as unknown as AstNode;
+  }
+  newVariableDeclarationList(...args: unknown[]): AstNode {
+    return createVariableDeclarationList(asNodeArray(args[0]), args[1] as number ?? 0) as unknown as AstNode;
+  }
+  newVariableStatement(...args: unknown[]): AstNode {
+    return createVariableStatement(asOptionalNodeArray(args[0]), args[1] as never) as unknown as AstNode;
+  }
+  newParameterDeclaration(...args: unknown[]): AstNode {
+    return createParameterDeclaration(args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never, args[5] as never) as unknown as AstNode;
+  }
+  newBindingElement(...args: unknown[]): AstNode {
+    return createBindingElement(args[0] as never, args[1] as never, args[2] as never, args[3] as never) as unknown as AstNode;
+  }
+  newObjectBindingPattern(elements: readonly AstNode[]): AstNode {
+    return createObjectBindingPattern(createNodeArray(elements) as NodeArray<never>) as unknown as AstNode;
+  }
+  newArrayBindingPattern(elements: readonly AstNode[]): AstNode {
+    return createArrayBindingPattern(createNodeArray(elements) as NodeArray<never>) as unknown as AstNode;
+  }
+
+  newIfStatement(expression: AstNode, thenStatement: AstNode, elseStatement?: AstNode): AstNode {
+    return createIfStatement(expression as never, thenStatement as never, elseStatement as never) as unknown as AstNode;
+  }
+  newDoStatement(statement: AstNode, expression: AstNode): AstNode {
+    return createDoStatement(statement as never, expression as never) as unknown as AstNode;
+  }
+  newWhileStatement(expression: AstNode, statement: AstNode): AstNode {
+    return createWhileStatement(expression as never, statement as never) as unknown as AstNode;
+  }
+  newForStatement(initializer: AstNode | undefined, condition: AstNode | undefined, incrementor: AstNode | undefined, statement: AstNode): AstNode {
+    return createForStatement(initializer as never, condition as never, incrementor as never, statement as never) as unknown as AstNode;
+  }
+  newForInStatement(initializer: AstNode, expression: AstNode, statement: AstNode): AstNode {
+    return createForInStatement(undefined, initializer as never, expression as never, statement as never) as unknown as AstNode;
+  }
+  newForOfStatement(awaitModifier: AstNode | undefined, initializer: AstNode, expression: AstNode, statement: AstNode): AstNode {
+    return createForOfStatement(awaitModifier as never, initializer as never, expression as never, statement as never) as unknown as AstNode;
+  }
+  newReturnStatement(expression?: AstNode): AstNode {
+    return createReturnStatement(expression as never) as unknown as AstNode;
+  }
+  newBreakStatement(label?: IdentifierNode): AstNode {
+    return createBreakStatement(label as never) as unknown as AstNode;
+  }
+  newContinueStatement(label?: IdentifierNode): AstNode {
+    return createContinueStatement(label as never) as unknown as AstNode;
+  }
+  newThrowStatement(expression: AstNode): AstNode {
+    return createThrowStatement(expression as never) as unknown as AstNode;
+  }
+  newTryStatement(tryBlock: AstNode, catchClause?: AstNode, finallyBlock?: AstNode): AstNode {
+    return createTryStatement(tryBlock as never, catchClause as never, finallyBlock as never) as unknown as AstNode;
+  }
+  newCatchClause(variableDeclaration: AstNode | undefined, block: AstNode): AstNode {
+    return createCatchClause(variableDeclaration as never, block as never) as unknown as AstNode;
+  }
+  newSwitchStatement(expression: AstNode, caseBlock: AstNode): AstNode {
+    return createSwitchStatement(expression as never, caseBlock as never) as unknown as AstNode;
+  }
+  newCaseClause(expression: AstNode, statements: readonly AstNode[]): AstNode {
+    return createCaseClause(expression as never, createNodeArray(statements) as NodeArray<never>) as unknown as AstNode;
+  }
+  newDefaultClause(statements: readonly AstNode[]): AstNode {
+    return createDefaultClause(undefined as never, createNodeArray(statements) as NodeArray<never>) as unknown as AstNode;
+  }
+  newCaseBlock(clauses: readonly AstNode[]): AstNode {
+    return createCaseBlock(createNodeArray(clauses) as NodeArray<never>) as unknown as AstNode;
+  }
+  newLabeledStatement(label: IdentifierNode, statement: AstNode): AstNode {
+    return createLabeledStatement(label as never, statement as never) as unknown as AstNode;
+  }
+  newDebuggerStatement(): AstNode {
+    return createDebuggerStatement() as unknown as AstNode;
+  }
+
+  newFunctionDeclaration(...args: unknown[]): AstNode {
+    return createFunctionDeclaration(asOptionalNodeArray(args[0]), args[1] as never, args[2] as never, asOptionalNodeArray(args[3]), asNodeArray(args[4]), args[5] as never, args[6] as never) as unknown as AstNode;
+  }
+  newFunctionExpression(...args: unknown[]): AstNode {
+    return createFunctionExpression(asOptionalNodeArray(args[0]), args[1] as never, args[2] as never, asOptionalNodeArray(args[3]), asNodeArray(args[4]), args[5] as never, args[6] as never) as unknown as AstNode;
+  }
+  newArrowFunction(...args: unknown[]): AstNode {
+    return createArrowFunction(asOptionalNodeArray(args[0]), asOptionalNodeArray(args[1]), asNodeArray(args[2]), args[3] as never, args[4] as never, args[5] as never) as unknown as AstNode;
+  }
+  newConstructorDeclaration(...args: unknown[]): AstNode {
+    return createConstructorDeclaration(asOptionalNodeArray(args[0]), asOptionalNodeArray(args[1]), asNodeArray(args[2]), args[3] as never, args[4] as never) as unknown as AstNode;
+  }
+  newMethodDeclaration(...args: unknown[]): AstNode {
+    return createMethodDeclaration(asOptionalNodeArray(args[0]), args[1] as never, args[2] as never, args[3] as never, asOptionalNodeArray(args[4]), asNodeArray(args[5]), args[6] as never, args[7] as never) as unknown as AstNode;
+  }
+  newGetAccessorDeclaration(...args: unknown[]): AstNode {
+    return createGetAccessorDeclaration(asOptionalNodeArray(args[0]), args[1] as never, asOptionalNodeArray(args[2]), asNodeArray(args[3]), args[4] as never, args[5] as never) as unknown as AstNode;
+  }
+  newSetAccessorDeclaration(...args: unknown[]): AstNode {
+    return createSetAccessorDeclaration(asOptionalNodeArray(args[0]), args[1] as never, asOptionalNodeArray(args[2]), asNodeArray(args[3]), args[4] as never, args[5] as never) as unknown as AstNode;
+  }
+  newPropertyDeclaration(...args: unknown[]): AstNode {
+    return createPropertyDeclaration(asOptionalNodeArray(args[0]), args[1] as never, args[2] as never, args[3] as never, args[4] as never) as unknown as AstNode;
+  }
+  newClassDeclaration(...args: unknown[]): AstNode {
+    return createClassDeclaration(asOptionalNodeArray(args[0]), args[1] as never, asOptionalNodeArray(args[2]), asOptionalNodeArray(args[3]), asNodeArray(args[4])) as unknown as AstNode;
+  }
+  newClassExpression(...args: unknown[]): AstNode {
+    return createClassExpression(asOptionalNodeArray(args[0]), args[1] as never, asOptionalNodeArray(args[2]), asOptionalNodeArray(args[3]), asNodeArray(args[4])) as unknown as AstNode;
+  }
+  newClassStaticBlockDeclaration(body: AstNode): AstNode {
+    return createClassStaticBlockDeclaration(undefined, body as never) as unknown as AstNode;
+  }
+
+  newImportDeclaration(...args: unknown[]): AstNode {
+    return createImportDeclaration(asOptionalNodeArray(args[0]), args[1] as never, args[2] as never, args[3] as never) as unknown as AstNode;
+  }
+  newExportDeclaration(...args: unknown[]): AstNode {
+    return createExportDeclaration(asOptionalNodeArray(args[0]), Boolean(args[1]), args[2] as never, args[3] as never, args[4] as never) as unknown as AstNode;
+  }
+  newImportClause(...args: unknown[]): AstNode {
+    return createImportClause(args[0] as never, args[1] as never, args[2] as never) as unknown as AstNode;
+  }
+  newNamedImports(elements: readonly AstNode[]): AstNode {
+    return createNamedImports(createNodeArray(elements) as NodeArray<never>) as unknown as AstNode;
+  }
+  newNamedExports(elements: readonly AstNode[]): AstNode {
+    return createNamedExports(createNodeArray(elements) as NodeArray<never>) as unknown as AstNode;
+  }
+  newImportSpecifier(isTypeOnly: boolean, propertyName: IdentifierNode | undefined, name: IdentifierNode): AstNode {
+    return createImportSpecifier(isTypeOnly, propertyName as never, name as never) as unknown as AstNode;
+  }
+  newExportSpecifier(...args: unknown[]): AstNode {
+    return createExportSpecifier(Boolean(args[0]), args[1] as never, args[2] as never) as unknown as AstNode;
+  }
+  newImportEqualsDeclaration(modifiers: unknown, isTypeOnly: boolean, name: IdentifierNode, moduleReference: AstNode): AstNode {
+    return createImportEqualsDeclaration(asOptionalNodeArray(modifiers), isTypeOnly, name as never, moduleReference as never) as unknown as AstNode;
+  }
+  newExportAssignment(...args: unknown[]): AstNode {
+    return createExportAssignment(asOptionalNodeArray(args[0]), Boolean(args[1]), args[2] as never, args[3] as never) as unknown as AstNode;
+  }
+  newHeritageClause(token: number, types: readonly AstNode[]): AstNode {
+    return createHeritageClause(token as Kind, createNodeArray(types) as NodeArray<never>) as unknown as AstNode;
+  }
+  newExpressionWithTypeArguments(expression: AstNode, typeArguments: readonly AstNode[] | undefined): AstNode {
+    return createExpressionWithTypeArguments(expression as never, typeArguments === undefined ? undefined : createNodeArray(typeArguments) as NodeArray<never>) as unknown as AstNode;
+  }
+  newTypeReference(name: AstNode, typeArguments?: readonly AstNode[]): AstNode {
+    return createTypeReferenceNode(name as never, typeArguments === undefined ? undefined : createNodeArray(typeArguments) as NodeArray<never>) as unknown as AstNode;
+  }
+  newTypeParameter(name: IdentifierNode, constraint?: AstNode, defaultType?: AstNode): AstNode {
+    return createTypeParameterDeclaration(undefined, name as never, constraint as never, undefined, defaultType as never) as unknown as AstNode;
   }
   newMethodCall(object: AstNode, methodName: AstNode, argumentsList: readonly AstNode[]): Expression {
     return this.newCallExpression(
@@ -450,6 +730,17 @@ function flattenCommaElement(expression: Expression, result: Expression[]): void
 function memberNameText(node: AstNode): string | undefined {
   const text = (node as unknown as { text?: string }).text;
   return text === undefined || text === "" ? undefined : text;
+}
+
+function asNodeArray<T extends AstNode = AstNode>(items: unknown): NodeArray<T> {
+  if (items === undefined) return createNodeArray([]) as NodeArray<T>;
+  if (Array.isArray(items)) return createNodeArray(items as readonly T[]);
+  const nodes = (items as { readonly nodes?: readonly T[] }).nodes;
+  return createNodeArray(nodes ?? []);
+}
+
+function asOptionalNodeArray<T extends AstNode = AstNode>(items: unknown): NodeArray<T> | undefined {
+  return items === undefined ? undefined : asNodeArray<T>(items);
 }
 
 function formatGeneratedName(privateName: boolean, prefix: string | undefined, text: string, suffix: string | undefined): string {
