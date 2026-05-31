@@ -9,7 +9,8 @@
  */
 
 import type { ModifierList, Node as AstNode, NodeArray, NodeList, SourceFile } from "../../ast/index.js";
-import { ChildPropertiesByKind, Kind } from "../../ast/index.js";
+import { Kind } from "../../ast/index.js";
+import { createNode as createGeneratedNode, GeneratedChildPropertiesByKind } from "./decoder.generated.js";
 import {
   HeaderOffsetExtendedData,
   HeaderOffsetMetadata,
@@ -18,11 +19,7 @@ import {
   HeaderOffsetStringData,
   HeaderOffsetStringOffsets,
   HeaderSize,
-  NodeDataChildMask,
   NodeDataStringIndexMask,
-  NodeDataTypeExtendedData,
-  NodeDataTypeMask,
-  NodeDataTypeString,
   NodeOffsetData,
   NodeOffsetEnd,
   NodeOffsetFlags,
@@ -139,16 +136,7 @@ export class ASTDecoder {
   }
 
   createNode(kind: number, data: number, childIndices: readonly number[]): AstNode {
-    const dataType = data & NodeDataTypeMask;
-    const commonData = (data >>> 24) & 0x3f;
-    switch (dataType) {
-      case NodeDataTypeString:
-        return this.createStringNode(kind, data, commonData);
-      case NodeDataTypeExtendedData:
-        return this.createExtendedNode(kind, data, childIndices, commonData);
-      default:
-        return this.createChildrenNode(kind, data, childIndices, commonData);
-    }
+    return createGeneratedNode(this, kind, data, childIndices);
   }
 
   decodeExtendedData_SourceFile(data: number, childIndices: readonly number[], commonData: number): AstNode {
@@ -249,8 +237,16 @@ export class ASTDecoder {
   }
 
   createChildrenNode(kind: number, data: number, childIndices: readonly number[], commonData: number): AstNode {
-    const mask = data & NodeDataChildMask;
-    const properties = ChildPropertiesByKind.get(kind as Kind) ?? [];
+    return this.createChildrenNodeWithProperties(kind, data & 0x000000ff, childIndices, commonData, []);
+  }
+
+  createChildrenNodeWithProperties(
+    kind: number,
+    mask: number,
+    childIndices: readonly number[],
+    commonData: number,
+    properties: readonly string[],
+  ): AstNode {
     const iterator = newChildIter(childIndices);
     const decodedProperties: Record<string, unknown> = decodeCommonDataProperties(kind, commonData);
     for (let bit = 0; bit < properties.length; bit += 1) {
@@ -371,7 +367,7 @@ function createDecodedNode(kind: number, properties: Record<string, unknown> = {
     parent: undefined,
     ...properties,
     forEachChild(visitor: (node: AstNode) => boolean | undefined, visitArray?: (nodes: NodeArray<AstNode>) => boolean | undefined): boolean | undefined {
-      const childProperties = ChildPropertiesByKind.get(kind as Kind) ?? [];
+      const childProperties = GeneratedChildPropertiesByKind.get(kind as Kind) ?? [];
       for (const property of childProperties) {
         const value = (this as unknown as Record<string, unknown>)[property];
         if (Array.isArray(value)) {
