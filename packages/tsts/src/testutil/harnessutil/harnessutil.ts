@@ -1,6 +1,11 @@
 import { normalizeNewlines } from "../stringtestutil/stringTestUtil.js";
+import type { Diagnostic, SourceFile } from "../../ast/index.js";
+import type { CompilerOptions } from "../../core/index.js";
+import { newProgram, type CompilerHost, type Program } from "../../compiler/program.js";
 import { optionDeclarations, type CommandLineOption } from "../../tsoptions/index.js";
 import { parseListTypeOption } from "../../tsoptions/commandLineParser.js";
+import { ParsedCommandLine } from "../../tsoptions/parsedCommandLine.js";
+import { getDirectoryPath, normalizePath } from "../../tspath/index.js";
 
 export interface NamedSource {
   readonly name: string;
@@ -98,6 +103,229 @@ export function defaultHarnessOptions(currentDirectory: string): HarnessOptions 
     captureSuggestions: false,
     typescriptVersion: "",
   };
+}
+
+export interface CompilationResult {
+  readonly program: Program;
+  readonly inputFiles: readonly TestFile[];
+  readonly otherFiles: readonly TestFile[];
+  readonly harnessOptions: HarnessOptions;
+  readonly compilerOptions: CompilerOptions;
+  readonly currentDirectory: string;
+  readonly files: ReadonlyMap<string, string>;
+  readonly diagnostics: readonly Diagnostic[];
+  readonly symlinks: ReadonlyMap<string, string>;
+  readonly trace: string;
+  readonly repeat: (testConfig: TestConfiguration) => CompilationResult;
+}
+
+export interface CompileFilesOptions {
+  readonly inputFiles: readonly TestFile[];
+  readonly otherFiles?: readonly TestFile[];
+  readonly testConfig?: TestConfiguration;
+  readonly tsconfig?: ParsedCommandLine;
+  readonly currentDirectory?: string;
+  readonly symlinks?: ReadonlyMap<string, string> | Record<string, string>;
+  readonly compilerOptions?: CompilerOptions;
+  readonly harnessOptions?: Partial<HarnessOptions>;
+}
+
+export function compileFiles(options: CompileFilesOptions): CompilationResult {
+  const currentDirectory = options.currentDirectory ?? "/";
+  const compilerOptions = cloneCompilerOptions(options.compilerOptions);
+  const harnessOptions = {
+    ...defaultHarnessOptions(currentDirectory),
+    ...(options.harnessOptions ?? {}),
+  };
+  if (options.testConfig !== undefined) {
+    setOptionsFromTestConfig(options.testConfig, compilerOptions as Record<string, unknown>, harnessOptions, currentDirectory, false);
+  }
+  const exOptions: {
+    inputFiles: readonly TestFile[];
+    otherFiles: readonly TestFile[];
+    harnessOptions: HarnessOptions;
+    compilerOptions: CompilerOptions;
+    currentDirectory: string;
+    symlinks: ReadonlyMap<string, string>;
+    tsconfig?: ParsedCommandLine;
+  } = {
+    inputFiles: options.inputFiles,
+    otherFiles: options.otherFiles ?? [],
+    harnessOptions,
+    compilerOptions,
+    currentDirectory,
+    symlinks: toReadonlyMap(options.symlinks ?? new Map()),
+  };
+  if (options.tsconfig !== undefined) exOptions.tsconfig = options.tsconfig;
+  return compileFilesEx(exOptions);
+}
+
+export function compileFilesEx(options: {
+  readonly inputFiles: readonly TestFile[];
+  readonly otherFiles: readonly TestFile[];
+  readonly harnessOptions: HarnessOptions;
+  readonly compilerOptions: CompilerOptions;
+  readonly currentDirectory: string;
+  readonly symlinks: ReadonlyMap<string, string>;
+  readonly tsconfig?: ParsedCommandLine;
+}): CompilationResult {
+  const programFileNames: string[] = [];
+  for (const file of options.inputFiles) {
+    const fileName = normalizedAbsolutePath(file.unitName, options.currentDirectory);
+    if (!fileName.endsWith(".json") && !fileName.endsWith(".tsbuildinfo")) {
+      programFileNames.push(fileName);
+    }
+  }
+
+  const files = new Map<string, string>();
+  addTestFiles(files, options.inputFiles, options.currentDirectory);
+  addTestFiles(files, options.otherFiles, options.currentDirectory);
+  for (const libFile of options.harnessOptions.libFiles) {
+    const fileName = normalizePath(testLibFolder + "/" + libFile);
+    if (!files.has(fileName)) files.set(fileName, "");
+  }
+
+  const host = new HarnessCompilerHost(files, options.currentDirectory, options.harnessOptions.useCaseSensitiveFileNames);
+  const parsed = options.tsconfig ?? new ParsedCommandLine(
+    options.compilerOptions,
+    programFileNames,
+    {
+      currentDirectory: options.currentDirectory,
+      useCaseSensitiveFileNames: options.harnessOptions.useCaseSensitiveFileNames,
+    },
+  );
+  const program = newProgram({ config: parsed, host });
+  const diagnostics = [
+    ...program.getConfigFileParsingDiagnostics(),
+    ...program.getSyntacticDiagnostics({}, undefined),
+  ];
+  return {
+    program,
+    inputFiles: options.inputFiles,
+    otherFiles: options.otherFiles,
+    harnessOptions: options.harnessOptions,
+    compilerOptions: options.compilerOptions,
+    currentDirectory: options.currentDirectory,
+    files,
+    diagnostics,
+    symlinks: options.symlinks,
+    trace: host.trace.join("\n"),
+    repeat: (testConfig) => {
+      const repeatBase = {
+        inputFiles: options.inputFiles,
+        otherFiles: options.otherFiles,
+        testConfig,
+        currentDirectory: options.currentDirectory,
+        symlinks: options.symlinks,
+        compilerOptions: options.compilerOptions,
+        harnessOptions: options.harnessOptions,
+      };
+      const repeatOptions: CompileFilesOptions = options.tsconfig === undefined
+        ? repeatBase
+        : { ...repeatBase, tsconfig: options.tsconfig };
+      return compileFiles(repeatOptions);
+    },
+  };
+}
+
+export function setOptionsFromTestConfig(
+  testConfig: TestConfiguration,
+  compilerOptions: Record<string, unknown>,
+  harnessOptions: HarnessOptions,
+  currentDirectory: string,
+  allowUnknownOptions: boolean,
+): void {
+  for (const [key, value] of testConfig) {
+    const harnessOption = getHarnessOption(key);
+    if (harnessOption !== undefined || key === "typescriptVersion") {
+      parseHarnessOption(key, value, harnessOptions);
+      continue;
+    }
+    const compilerOption = getCommandLineOption(key);
+    if (compilerOption === undefined) {
+      if (allowUnknownOptions) continue;
+      throw new Error(`Unknown compiler option '${key}'.`);
+    }
+    compilerOptions[compilerOption.name] = parseCompilerOptionValue(compilerOption, value, currentDirectory);
+  }
+}
+
+function parseCompilerOptionValue(option: CommandLineOption, value: string, currentDirectory: string): unknown {
+  if (option.type === "boolean") return value.toLowerCase() === "true";
+  if (option.type === "number") return Number(value);
+  if (option.type === "list") return requireStringListOption(option.name, value);
+  if (option.type instanceof Map) return getValueOfOptionString(option.name, value);
+  if (option.isFilePath === true) return normalizedAbsolutePath(value, currentDirectory);
+  return value;
+}
+
+function addTestFiles(files: Map<string, string>, testFiles: readonly TestFile[], currentDirectory: string): void {
+  for (const file of testFiles) {
+    files.set(normalizedAbsolutePath(file.unitName, currentDirectory), file.content);
+  }
+}
+
+function normalizedAbsolutePath(fileName: string, currentDirectory: string): string {
+  if (fileName.startsWith("/")) return normalizePath(fileName);
+  return normalizePath(currentDirectory.replace(/\/+$/, "") + "/" + fileName);
+}
+
+function cloneCompilerOptions(options: CompilerOptions | undefined): CompilerOptions {
+  if (options === undefined) return {} as CompilerOptions;
+  return { ...(options as Record<string, unknown>) } as CompilerOptions;
+}
+
+function toReadonlyMap(value: ReadonlyMap<string, string> | Record<string, string>): ReadonlyMap<string, string> {
+  if (value instanceof Map) return value;
+  return new Map(Object.entries(value));
+}
+
+class HarnessCompilerHost implements CompilerHost {
+  readonly trace: string[] = [];
+  private readonly files: Map<string, string>;
+  private readonly currentDirectory: string;
+  private readonly caseSensitive: boolean;
+
+  constructor(files: ReadonlyMap<string, string>, currentDirectory: string, caseSensitive: boolean) {
+    this.files = new Map(files);
+    this.currentDirectory = currentDirectory;
+    this.caseSensitive = caseSensitive;
+  }
+
+  fileExists(path: string): boolean {
+    const normalized = normalizePath(path);
+    const exists = this.files.has(normalized);
+    this.trace.push(`fileExists ${normalized} ${exists ? "true" : "false"}`);
+    return exists;
+  }
+
+  readFile(path: string): string | undefined {
+    const normalized = normalizePath(path);
+    this.trace.push(`readFile ${normalized}`);
+    return this.files.get(normalized);
+  }
+
+  writeFile(path: string, data: string): void {
+    const normalized = normalizePath(path);
+    this.trace.push(`writeFile ${normalized}`);
+    this.files.set(normalized, data);
+  }
+
+  getCurrentDirectory(): string {
+    return this.currentDirectory;
+  }
+
+  useCaseSensitiveFileNames(): boolean {
+    return this.caseSensitive;
+  }
+
+  directoryExists(path: string): boolean {
+    const normalized = normalizePath(path).replace(/\/+$/, "");
+    for (const fileName of this.files.keys()) {
+      if (getDirectoryPath(fileName) === normalized || fileName.startsWith(normalized + "/")) return true;
+    }
+    return false;
+  }
 }
 
 export function getHarnessOption(name: string): HarnessCommandLineOption | undefined {
