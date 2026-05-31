@@ -6,7 +6,7 @@
  */
 
 export * from "./set.js";
-export * from "./syncmap.js";
-export * from "./multimap.js";
+export * from "./syncMap.js";
+export * from "./multiMap.js";
 export * from "./cow.js";
-export * from "./ordered_map.js";
+export * from "./orderedMap.js";

@@ -7,7 +7,7 @@
 
 import { extensionJson, fileExtensionIs, isDeclarationFileName, type Path } from "../../tspath/index.js";
 import type { FS } from "../../vfs/index.js";
-import { ParseCache } from "./parsecache.js";
+import { ParseCache } from "./parseCache.js";
 
 export interface SourceFileParseOptions {
   readonly fileName: string;

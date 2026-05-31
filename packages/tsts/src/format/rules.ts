@@ -12,7 +12,7 @@
  */
 
 import { RuleAction, type RuleSpec, type TokenRange, rule } from "./rule.js";
-import * as predicates from "./rulecontext.js";
+import * as predicates from "./ruleContext.js";
 import { Kind } from "../ast/index.js";
 
 /**

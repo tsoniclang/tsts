@@ -11,7 +11,7 @@
  */
 
 import { convertClassDeclarationToClassExpression } from "./utilities.js";
-import { isNamedEvaluation, transformNamedEvaluation } from "./namedevaluation.js";
+import { isNamedEvaluation, transformNamedEvaluation } from "./namedEvaluation.js";
 import type { Node as AstNode, SourceFile, Block, ForStatement, ForInOrOfStatement, VariableStatement, VariableDeclarationList, VariableDeclaration, ExportAssignment, ClassDeclaration, IdentifierNode, ExportSpecifier as ExportSpecifierNode } from "../../ast/index.js";
 import {
   nodeFlags, nodeLoc, setLoc, nodeName, hasSyntacticModifier,
@@ -59,8 +59,8 @@ import {
 import { isBlockNode } from "../../ast/index.js";
 import { Kind, NodeFlags } from "../../ast/index.js";
 import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
-import { EmitFlags } from "../../printer/emitflags.js";
-import { GeneratedIdentifierFlags } from "../../printer/namegenerator.js";
+import { EmitFlags } from "../../printer/emitFlags.js";
+import { GeneratedIdentifierFlags } from "../../printer/nameGenerator.js";
 import { Transformer, type TransformOptions } from "../transformer.js";
 
 // ---------------------------------------------------------------------------

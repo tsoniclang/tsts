@@ -1,5 +1,5 @@
 import type { Program } from "../program/index.js";
-import type { FileChangeSummary } from "./filechange.js";
+import type { FileChangeSummary } from "./fileChange.js";
 import type { LogTree } from "./logging/logtree.js";
 
 export type Kind = 0 | 1;

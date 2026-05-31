@@ -1,4 +1,4 @@
-import type { FileChangeSummary } from "./filechange.js";
+import type { FileChangeSummary } from "./fileChange.js";
 
 export interface APISnapshotRequest {
   readonly openProjects?: ReadonlySet<string>;

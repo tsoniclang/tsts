@@ -1,3 +1,3 @@
-export * from "./clientmock_generated.js";
-export * from "./npmexecutormock_generated.js";
-export * from "./projecttestutil.js";
+export * from "./clientMock.generated.js";
+export * from "./npmExecutorMock.generated.js";
+export * from "./projectTestUtil.js";

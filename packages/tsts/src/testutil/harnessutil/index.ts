@@ -1,3 +1,3 @@
 export * from "./harnessutil.js";
-export * from "./recorderfs.js";
-export * from "./sourcemap_recorder.js";
+export * from "./recorderFs.js";
+export * from "./sourceMapRecorder.js";

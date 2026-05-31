@@ -1,1 +1,1 @@
-export * from "./lspclient.js";
+export * from "./lspClient.js";

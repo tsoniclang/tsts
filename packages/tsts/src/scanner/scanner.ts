@@ -1,8 +1,8 @@
 import { Kind, KindNames } from "../ast/index.js";
 import type { JsxTokenSyntaxKind } from "../ast/index.js";
-import { LanguageVariant } from "../core/languagevariant.js";
+import { LanguageVariant } from "../core/languageVariant.js";
 import type { DiagnosticMessage } from "../diagnostics/types.js";
-import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
+import { Diagnostics } from "../diagnostics/diagnostics.generated.js";
 import {
   isASCIILetter,
   isDigit as isDigitCode,
@@ -13,7 +13,7 @@ import {
   isWhiteSpaceSingleLine,
 } from "../stringutil/util.js";
 import { fromString as jsnumFromString, numberToString as jsnumToString } from "../jsnum/string.js";
-import { parsePseudoBigInt } from "../jsnum/pseudobigint.js";
+import { parsePseudoBigInt } from "../jsnum/pseudoBigint.js";
 import {
   codePointIsHighSurrogate,
   codePointIsLowSurrogate,
@@ -25,8 +25,8 @@ import {
   scanConflictMarkerTrivia,
 } from "./trivia.js";
 import { tokenIsIdentifierOrKeyword } from "./utilities.js";
-import { TokenFlags } from "./token-flags.js";
-import type { CommentDirective, TokenFlags as TokenFlagsType } from "./token-flags.js";
+import { TokenFlags } from "./tokenFlags.js";
+import type { CommentDirective, TokenFlags as TokenFlagsType } from "./tokenFlags.js";
 
 export interface ScannedToken {
   readonly kind: Kind;
@@ -1820,7 +1820,7 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
   }
 
   // Strada-parity (NOT in tsgo scanner.go) — ported from
-  // scanner.native-preview.ts:2015-2025. Re-reads from fullStartPos and tries a
+  // scanner.nativePreview.ts:2015-2025. Re-reads from fullStartPos and tries a
   // plain identifier scan; on failure advances one code unit, leaving Unknown.
   function reScanInvalidIdentifier(): Kind {
     state.pos = state.fullStartPos;
@@ -1836,7 +1836,7 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
   }
 
   // Strada-parity (NOT in tsgo scanner.go) — ported from
-  // scanner.native-preview.ts:2207-2210. Identical body to
+  // scanner.nativePreview.ts:2207-2210. Identical body to
   // reScanTemplateToken(false).
   function reScanTemplateHeadOrNoSubstitutionTemplate(): Kind {
     state.pos = state.tokenStart;

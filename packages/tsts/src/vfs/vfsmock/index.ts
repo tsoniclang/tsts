@@ -1,3 +1,3 @@
-export * from "./vfsmock.js";
-export * from "./mock_generated.js";
+export * from "./vfsMock.js";
+export * from "./mock.generated.js";
 export * from "./wrapper.js";

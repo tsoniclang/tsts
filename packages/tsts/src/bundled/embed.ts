@@ -1,7 +1,7 @@
 import type { DirEntry, Entries, FileInfo, FS, WalkDirFunc } from "../vfs/index.js";
 
-import { LibNames } from "./libs_generated.js";
-import { embeddedContents } from "./embed_generated.js";
+import { LibNames } from "./libs.generated.js";
+import { embeddedContents } from "./embed.generated.js";
 
 export const embedded = true;
 export const scheme = "bundled:///";

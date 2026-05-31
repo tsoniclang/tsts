@@ -5,4 +5,4 @@
  * construct an FS from a plain JS object of paths to contents.
  */
 
-export * from "./vfstest.js";
+export * from "./vfsTest.js";

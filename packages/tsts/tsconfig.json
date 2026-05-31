@@ -33,6 +33,6 @@
     "src/ast/utils.ts",
     "src/astnav/astnav.ts",
     "src/bundled/libs/**/*.d.ts",
-    "src/scanner/scanner.native-preview.ts"
+    "src/scanner/scanner.nativePreview.ts"
   ]
 }

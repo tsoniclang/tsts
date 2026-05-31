@@ -1,2 +1,2 @@
-export * from "./node-host.js";
+export * from "./nodeHost.js";
 export * from "./program.js";

@@ -1,4 +1,4 @@
-export * from "./testutil.js";
+export * from "./testUtil.js";
 export * from "./autoimporttestutil/index.js";
 export * from "./baseline/index.js";
 export * from "./emittestutil/index.js";

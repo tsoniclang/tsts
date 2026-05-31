@@ -40,9 +40,9 @@ import {
   isModuleDeclaration,
 } from "../../ast/index.js";
 import { Kind, NodeFlags, subtreeFacts } from "../../ast/index.js";
-import { JsxEmit } from "../../core/compileroptions.js";
-import { EmitFlags } from "../../printer/emitflags.js";
-import { GeneratedIdentifierFlags } from "../../printer/namegenerator.js";
+import { JsxEmit } from "../../core/compilerOptions.js";
+import { EmitFlags } from "../../printer/emitFlags.js";
+import { GeneratedIdentifierFlags } from "../../printer/nameGenerator.js";
 const TokenFlags = { None: 0 } as const;
 const ScriptTarget = { ES2018: 5 } as const;
 

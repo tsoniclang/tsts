@@ -7,7 +7,7 @@
  */
 
 import type { Node as AstNode, FileReference, Diagnostic, SourceFile } from "../ast/index.js";
-import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
+import { Diagnostics } from "../diagnostics/diagnostics.generated.js";
 
 // ---------------------------------------------------------------------------
 // FileIncludeKind constant-union

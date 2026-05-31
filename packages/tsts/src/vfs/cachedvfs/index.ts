@@ -5,4 +5,4 @@
  * (exists, stat, realpath, getAccessibleEntries).
  */
 
-export * from "./cachedvfs.js";
+export * from "./cachedVfs.js";

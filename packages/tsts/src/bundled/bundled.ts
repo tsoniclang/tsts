@@ -20,8 +20,8 @@ import { dirname, join } from "node:path";
 
 import type { FS, FileInfo, WalkDirFunc, DirEntry } from "../vfs/index.js";
 
-import { embeddedContents } from "./embed_generated.js";
-import { LibNames } from "./libs_generated.js";
+import { embeddedContents } from "./embed.generated.js";
+import { LibNames } from "./libs.generated.js";
 
 /**
  * True if bundled files come from an embedded FS. When false, `LibPath`

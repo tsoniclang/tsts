@@ -1,8 +1,8 @@
 import type { CompilerOptions } from "../program/index.js";
-import { ProjectCollection } from "./projectcollection.js";
-import { ConfigFileRegistry } from "./configfileregistry.js";
-import type { FileChangeSummary } from "./filechange.js";
-import { SnapshotFS, type FileHandle } from "./snapshotfs.js";
+import { ProjectCollection } from "./projectCollection.js";
+import { ConfigFileRegistry } from "./configFileRegistry.js";
+import type { FileChangeSummary } from "./fileChange.js";
+import { SnapshotFS, type FileHandle } from "./snapshotFs.js";
 
 export interface SnapshotOptions {
   readonly id: number;

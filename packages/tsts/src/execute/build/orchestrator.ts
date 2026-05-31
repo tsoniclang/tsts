@@ -1,5 +1,5 @@
 import type { CommandLineResult, DiagnosticLike, DiagnosticReporter, DiagnosticsReporter, ExitStatus, Statistics, Watcher } from "../tsc/index.js";
-import { BuildTask, type BuildAggregateResult, type BuildTaskResolvedProject } from "./buildtask.js";
+import { BuildTask, type BuildAggregateResult, type BuildTaskResolvedProject } from "./buildTask.js";
 
 export interface BuildOptions<ParsedCommandLine extends BuildCommandLine = BuildCommandLine> {
   readonly command: ParsedCommandLine;

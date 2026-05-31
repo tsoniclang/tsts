@@ -1,5 +1,5 @@
 import { Kind } from "../ast/index.js";
-import { ParsingContext, isListElement, isListTerminator } from "./list-context.js";
+import { ParsingContext, isListElement, isListTerminator } from "./listContext.js";
 
 export interface ParseRecoveryDecision {
   readonly action: "consume" | "skip" | "insert-missing" | "stop-list";

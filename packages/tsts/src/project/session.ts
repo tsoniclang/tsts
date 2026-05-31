@@ -1,9 +1,9 @@
 import type { Client } from "./client.js";
-import { newFileChangeSummary, mergeFileChangeSummary, type FileChange, type FileChangeSummary } from "./filechange.js";
+import { newFileChangeSummary, mergeFileChangeSummary, type FileChange, type FileChangeSummary } from "./fileChange.js";
 import { newLogTree, type LogTree } from "./logging/logtree.js";
-import { newParseCache, type ParseCache } from "./parsecache.js";
+import { newParseCache, type ParseCache } from "./parseCache.js";
 import { Snapshot, type SnapshotOptions } from "./snapshot.js";
-import { SnapshotFS, type FileHandle } from "./snapshotfs.js";
+import { SnapshotFS, type FileHandle } from "./snapshotFs.js";
 
 export type UpdateReason = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export const UpdateReason = {

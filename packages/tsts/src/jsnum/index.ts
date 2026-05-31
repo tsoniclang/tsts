@@ -6,4 +6,4 @@
 
 export * from "./jsnum.js";
 export * from "./string.js";
-export * from "./pseudobigint.js";
+export * from "./pseudoBigint.js";

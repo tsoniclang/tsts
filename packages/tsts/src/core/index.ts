@@ -6,7 +6,7 @@
  * type and projectreference handling are forthcoming.
  */
 
-export * from "./binarysearch.js";
+export * from "./binarySearch.js";
 export * from "./tristate.js";
 export * from "./text.js";
 export * from "./stack.js";

@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, normalize } from "node:path";
 
-import { assertEqualText, normalizeNewlines } from "../stringtestutil/stringtestutil.js";
+import { assertEqualText, normalizeNewlines } from "../stringtestutil/stringTestUtil.js";
 
 export interface BaselineOptions {
   readonly baselineRoot: string;

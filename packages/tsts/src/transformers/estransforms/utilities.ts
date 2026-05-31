@@ -38,7 +38,7 @@ function isAssignmentOperator(kind: number): boolean {
   // canonical Kind enum (kind values are contiguous).
   return kind >= Kind.EqualsToken && kind <= Kind.CaretEqualsToken;
 }
-import { newGeneratedPrivateNameForNode } from "../../printer/factory-helpers.js";
+import { newGeneratedPrivateNameForNode } from "../../printer/factoryHelpers.js";
 import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
 import {
   visitNode, visitNodes, visitEachChild,
@@ -52,7 +52,7 @@ import {
   newVariableDeclaration, newVariableDeclarationList,
   newVariableStatement, newNodeList,
   updatePropertyDeclaration,
-} from "../../printer/factory-helpers.js";
+} from "../../printer/factoryHelpers.js";
 
 import type { EmitContext, NodeFactory, NodeVisitor } from "../transformer.js";
 

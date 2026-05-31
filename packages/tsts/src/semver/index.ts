@@ -6,4 +6,4 @@
  */
 
 export * from "./version.js";
-export * from "./version_range.js";
+export * from "./versionRange.js";

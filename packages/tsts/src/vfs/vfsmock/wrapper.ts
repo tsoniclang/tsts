@@ -1,5 +1,5 @@
 import type { FS } from "../vfs.js";
-import { FSMock } from "./mock_generated.js";
+import { FSMock } from "./mock.generated.js";
 
 export function wrap(fs: FS): FSMock {
   const mock = new FSMock();

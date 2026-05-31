@@ -6,10 +6,10 @@
  */
 
 import type { Path } from "../tspath/path.js";
-import { JSONValueType, jsonValueTypeToString, type JSONValue, asArray, asObject, asString } from "./jsonvalue.js";
+import { JSONValueType, jsonValueTypeToString, type JSONValue, asArray, asObject, asString } from "./jsonValue.js";
 import { mustParse, tryParseVersionRange, type Version } from "../semver/index.js";
 import { version, versionMajorMinor } from "../core/version.js";
-import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
+import { Diagnostics } from "../diagnostics/diagnostics.generated.js";
 import type { DiagnosticMessage } from "../diagnostics/types.js";
 
 // ---------------------------------------------------------------------------

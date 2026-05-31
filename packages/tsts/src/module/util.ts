@@ -28,12 +28,12 @@ import {
 import { JsxEmit } from "../outputpaths/outputpaths.js";
 import { mustParse, tryParseVersionRange, type Version } from "../semver/index.js";
 import { version } from "../core/version.js";
-import type { CompilerOptions } from "../core/compileroptions.js";
+import type { CompilerOptions } from "../core/compilerOptions.js";
 import {
   getAllowJS,
   getResolveJsonModule,
   JsxEmit as CoreJsxEmit,
-} from "../core/compileroptions.js";
+} from "../core/compilerOptions.js";
 import {
   Tristate,
   tristateDefaultIfUnknown,
@@ -41,7 +41,7 @@ import {
 } from "../core/tristate.js";
 import type { ResolvedModule } from "./types.js";
 import type { SourceFile } from "../ast/index.js";
-import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
+import { Diagnostics } from "../diagnostics/diagnostics.generated.js";
 import type { DiagnosticMessage } from "../diagnostics/types.js";
 
 export const inferredTypesContainingFile = "__inferred type names__.ts";

@@ -1,1 +1,1 @@
-export * from "./stringtestutil.js";
+export * from "./stringTestUtil.js";

@@ -20,7 +20,7 @@
 import { assert as debugAssert, fail as debugFail } from "../debug/index.js";
 import type { int } from "@tsonic/core/types.js";
 import type { DiagnosticMessage } from "../diagnostics/types.js";
-import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
+import { Diagnostics } from "../diagnostics/diagnostics.generated.js";
 import { isLineBreak, isWhiteSpaceLike } from "../stringutil/util.js";
 import type { TextPos, UTF16Offset } from "../core/index.js";
 

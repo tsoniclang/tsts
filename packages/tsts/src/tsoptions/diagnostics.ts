@@ -11,8 +11,8 @@
 
 import type { DiagnosticMessage } from "../diagnostics/types.js";
 
-import type { CommandLineOption } from "./commandlineoption.js";
-import type { NameMap } from "./namemap.js";
+import type { CommandLineOption } from "./commandLineOption.js";
+import type { NameMap } from "./nameMap.js";
 
 /**
  * "Did you mean ..." diagnostic group. Mirrors TS-Go

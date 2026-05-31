@@ -27,9 +27,9 @@ import type {
   Diagnostic,
   FileReference,
 } from "../ast/index.js";
-import { processAllProgramFiles, type CompilerHost as LoaderCompilerHost, type ResolvedModule } from "./fileloader.js";
-import { ParsedCommandLine } from "../tsoptions/parsedcommandline.js";
-import type { CompilerOptions } from "../core/compileroptions.js";
+import { processAllProgramFiles, type CompilerHost as LoaderCompilerHost, type ResolvedModule } from "./fileLoader.js";
+import { ParsedCommandLine } from "../tsoptions/parsedCommandLine.js";
+import type { CompilerOptions } from "../core/compilerOptions.js";
 import { getDirectoryPath, toPath as toCanonicalPath } from "../tspath/index.js";
 
 // ---------------------------------------------------------------------------

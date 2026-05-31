@@ -6,4 +6,4 @@
  * compiler's exact dependency surface.
  */
 
-export * from "./trackingvfs.js";
+export * from "./trackingVfs.js";

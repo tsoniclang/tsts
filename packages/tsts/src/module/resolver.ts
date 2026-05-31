@@ -34,7 +34,7 @@
  * where they directly correspond.
  */
 
-import type { CompilerOptions, ModuleResolutionKind } from "../core/compileroptions.js";
+import type { CompilerOptions, ModuleResolutionKind } from "../core/compilerOptions.js";
 import {
   ModuleResolutionKind as MRK,
   ModuleKind as MK,
@@ -42,7 +42,7 @@ import {
   getPathsBasePath,
   getResolvePackageJsonExports,
   getResolvePackageJsonImports,
-} from "../core/compileroptions.js";
+} from "../core/compilerOptions.js";
 import { Tristate } from "../core/tristate.js";
 import type { Diagnostic } from "../ast/index.js";
 import {

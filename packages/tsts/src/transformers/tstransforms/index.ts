@@ -9,10 +9,10 @@
  * Forthcoming: metadata, typeserializer, runtimesyntax, utilities.
  */
 
-export * from "./typeeraser.js";
-export * from "./importelision.js";
-export * from "./legacydecorators.js";
-export * from "./runtimesyntax.js";
-export * from "./typeserializer.js";
+export * from "./typeEraser.js";
+export * from "./importElision.js";
+export * from "./legacyDecorators.js";
+export * from "./runtimeSyntax.js";
+export * from "./typeSerializer.js";
 export * from "./metadata.js";
 export * from "./utilities.js";

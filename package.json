@@ -15,14 +15,15 @@
     "test": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} test --project tsts",
     "generate": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} generate --project tsts",
     "restore": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} restore",
-    "ast:generate": "cd packages/tsts && node --import ./tools/register.mjs tools/generate-ast.ts",
-    "diagnostics:generate": "cd packages/tsts && node --import ./tools/register.mjs tools/generate-diagnostics.ts",
-    "ast:schema-check": "cd packages/tsts && node --import ./tools/register.mjs tools/check-schema.ts",
-    "ast:generated-check": "cd packages/tsts && node tools/check-generated.ts",
-    "completeness": "node packages/tsts/tools/check-completeness.ts",
-    "completeness:json": "node packages/tsts/tools/check-completeness.ts --json",
-    "parity": "node packages/tsts/tools/check-parity.ts",
-    "parity:json": "node packages/tsts/tools/check-parity.ts --json"
+    "ast:generate": "cd packages/tsts && node --import ./tools/register.mjs tools/generateAst.ts",
+    "diagnostics:generate": "cd packages/tsts && node --import ./tools/register.mjs tools/generateDiagnostics.ts",
+    "ast:schema-check": "cd packages/tsts && node --import ./tools/register.mjs tools/checkSchema.ts",
+    "ast:generated-check": "cd packages/tsts && node tools/checkGenerated.ts",
+    "naming": "node packages/tsts/tools/checkNaming.ts",
+    "completeness": "node packages/tsts/tools/checkCompleteness.ts",
+    "completeness:json": "node packages/tsts/tools/checkCompleteness.ts --json",
+    "parity": "node packages/tsts/tools/checkParity.ts",
+    "parity:json": "node packages/tsts/tools/checkParity.ts --json"
   },
   "devDependencies": {
     "@types/node": "latest",

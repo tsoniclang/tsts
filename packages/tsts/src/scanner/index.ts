@@ -1,3 +1,3 @@
 export * from "./scanner.js";
-export * from "./token-flags.js";
+export * from "./tokenFlags.js";
 export * from "./trivia.js";

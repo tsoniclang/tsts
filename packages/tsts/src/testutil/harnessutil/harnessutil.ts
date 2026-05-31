@@ -1,4 +1,4 @@
-import { normalizeNewlines } from "../stringtestutil/stringtestutil.js";
+import { normalizeNewlines } from "../stringtestutil/stringTestUtil.js";
 
 export interface NamedSource {
   readonly name: string;

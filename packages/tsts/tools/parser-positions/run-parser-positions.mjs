@@ -4,7 +4,7 @@
 // WHY THIS EXISTS: the ~124 ParserPositionTests probes in src/parser/position.test.ts
 // compile into jsout but were NOT run by any committed gate — only by throwaway
 // .temp/jsout/run-*.mjs scripts. The new ParserParityTests probes in
-// src/parser/parser-parity.test.ts would be inert the same way. This runner is the
+// src/parser/parserParity.test.ts would be inert the same way. This runner is the
 // committed gate that actually EXECUTES both suites, so the 4b-swap (parser → live
 // scanner) is gated by real assertions, not compiled-but-unrun dead tests.
 //

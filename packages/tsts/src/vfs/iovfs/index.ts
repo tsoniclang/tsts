@@ -1,2 +1,2 @@
-export * from "./iovfs.js";
-export * from "./iofs.js";
+export * from "./ioVfs.js";
+export * from "./ioFs.js";

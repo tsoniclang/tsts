@@ -1,2 +1,2 @@
 export * from "./baseline.js";
-export * from "./testmain.js";
+export * from "./testMain.js";

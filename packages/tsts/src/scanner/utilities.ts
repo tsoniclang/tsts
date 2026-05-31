@@ -35,7 +35,7 @@ function textToKeyword(text: string): number | undefined {
   }
   return textToKeywordCache.get(text);
 }
-import type { LanguageVariant } from "../core/languagevariant.js";
+import type { LanguageVariant } from "../core/languageVariant.js";
 const KindIdentifier = Kind.Identifier;
 const KindUnknown = Kind.Unknown;
 void KindIdentifier; void KindUnknown;

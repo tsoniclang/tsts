@@ -29,7 +29,7 @@ import { NodeFlags } from "../ast/index.js";
 import type { FormatCodeSettings, FormatRequestKind, TextRange } from "./api.js";
 import { FormattingContext, type TextRangeWithKind } from "./context.js";
 import { RuleAction, type RuleSpec } from "./rule.js";
-import { getRules } from "./rulesmap.js";
+import { getRules } from "./rulesMap.js";
 
 function nodeOverlaps(node: AstNode, range: TextRange): boolean {
   const p = nodePos(node);
