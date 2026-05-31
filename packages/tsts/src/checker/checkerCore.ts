@@ -444,6 +444,9 @@ export interface IterationTypesResolver {
   readonly getGlobalGeneratorType: () => Type;
   readonly getGlobalBuiltinIteratorTypes: () => readonly Type[];
   readonly resolveIterationType: (type: Type, errorNode: AstNode | undefined) => Type;
+  readonly mustHaveANextMethodDiagnostic?: string;
+  readonly mustBeAMethodDiagnostic?: string;
+  readonly mustHaveAValueDiagnostic?: string;
 }
 
 export interface WideningContext {
@@ -909,4 +912,59 @@ function interfaceTypeArity(type: Type): number {
 
 function symbolName(symbol: AstSymbol): string {
   return symbol.escapedName ?? symbol.name ?? "";
+}
+
+export interface IterationResolverFactoryState {
+  readonly getGlobalIteratorType: () => Type;
+  readonly getGlobalIterableType: () => Type;
+  readonly getGlobalIterableTypeChecked: () => Type;
+  readonly getGlobalIterableIteratorType: () => Type;
+  readonly getGlobalIterableIteratorTypeChecked: () => Type;
+  readonly getGlobalIteratorObjectType: () => Type;
+  readonly getGlobalGeneratorType: () => Type;
+  readonly getGlobalAsyncIteratorType: () => Type;
+  readonly getGlobalAsyncIterableType: () => Type;
+  readonly getGlobalAsyncIterableTypeChecked: () => Type;
+  readonly getGlobalAsyncIterableIteratorType: () => Type;
+  readonly getGlobalAsyncIterableIteratorTypeChecked: () => Type;
+  readonly getGlobalAsyncIteratorObjectType: () => Type;
+  readonly getGlobalAsyncGeneratorType: () => Type;
+  readonly getGlobalTypesResolver: (names: readonly string[], arity: number, reportErrors: boolean) => () => readonly Type[];
+  readonly getAwaitedType: (type: Type, errorNode: AstNode | undefined, diagnostic: string) => Type;
+}
+
+export function createSyncIterationTypesResolver(state: IterationResolverFactoryState): IterationTypesResolver {
+  return {
+    iteratorSymbolName: "iterator",
+    getGlobalIteratorType: state.getGlobalIteratorType,
+    getGlobalIterableType: state.getGlobalIterableType,
+    getGlobalIterableTypeChecked: state.getGlobalIterableTypeChecked,
+    getGlobalIterableIteratorType: state.getGlobalIterableIteratorType,
+    getGlobalIterableIteratorTypeChecked: state.getGlobalIterableIteratorTypeChecked,
+    getGlobalIteratorObjectType: state.getGlobalIteratorObjectType,
+    getGlobalGeneratorType: state.getGlobalGeneratorType,
+    getGlobalBuiltinIteratorTypes: state.getGlobalTypesResolver(["ArrayIterator", "MapIterator", "SetIterator", "StringIterator"], 1, false),
+    resolveIterationType: type => type,
+    mustHaveANextMethodDiagnostic: "An_iterator_must_have_a_next_method",
+    mustBeAMethodDiagnostic: "The_0_property_of_an_iterator_must_be_a_method",
+    mustHaveAValueDiagnostic: "The_type_returned_by_the_0_method_of_an_iterator_must_have_a_value_property",
+  };
+}
+
+export function createAsyncIterationTypesResolver(state: IterationResolverFactoryState): IterationTypesResolver {
+  return {
+    iteratorSymbolName: "asyncIterator",
+    getGlobalIteratorType: state.getGlobalAsyncIteratorType,
+    getGlobalIterableType: state.getGlobalAsyncIterableType,
+    getGlobalIterableTypeChecked: state.getGlobalAsyncIterableTypeChecked,
+    getGlobalIterableIteratorType: state.getGlobalAsyncIterableIteratorType,
+    getGlobalIterableIteratorTypeChecked: state.getGlobalAsyncIterableIteratorTypeChecked,
+    getGlobalIteratorObjectType: state.getGlobalAsyncIteratorObjectType,
+    getGlobalGeneratorType: state.getGlobalAsyncGeneratorType,
+    getGlobalBuiltinIteratorTypes: state.getGlobalTypesResolver(["ReadableStreamAsyncIterator"], 1, false),
+    resolveIterationType: (type, errorNode) => state.getAwaitedType(type, errorNode, "Type_of_await_operand_must_either_be_a_valid_promise_or_must_not_contain_a_callable_then_member"),
+    mustHaveANextMethodDiagnostic: "An_async_iterator_must_have_a_next_method",
+    mustBeAMethodDiagnostic: "The_0_property_of_an_async_iterator_must_be_a_method",
+    mustHaveAValueDiagnostic: "The_type_returned_by_the_0_method_of_an_async_iterator_must_be_a_promise_for_a_type_with_a_value_property",
+  };
 }
