@@ -1,18 +1,17 @@
 /**
  * Node builder.
  *
- * Substantive port of TS-Go `internal/checker/nodebuilder.go` (~292 LoC),
- * `nodebuilderimpl.go` (~3490 LoC), `nodebuilder_hover.go` (~597 LoC),
- * `nodebuilderscopes.go` (~259 LoC), `pseudotypenodebuilder.go` (~696 LoC).
+ * Substantive port of TS-Go `internal/checker/nodebuilder.go` (~292 LoC).
  *
  * The NodeBuilder constructs type-node AST representations from
  * checker types for declaration emit, hover display, and language-
- * services type queries. The full implementation spans ~5300 LoC; this
- * skeleton provides the method-API surface.
+ * services type queries. Companion files host the hover, scope, pseudo-type,
+ * and implementation-state portions of the TS-Go node-builder family.
  *
  * Port scope: full method-API parity for the major typeToTypeNode /
  * signatureToSignatureDeclaration / symbolToExpression / typeToString
- * surface. Bodies are stubbed; baseline tests drive incremental fill-in.
+ * surface with primitive, literal, union/intersection, signature, object,
+ * tuple, array, and type-parameter serialization.
  */
 
 import type {
@@ -264,87 +263,11 @@ export class NodeBuilder {
 }
 
 // ---------------------------------------------------------------------------
-// Hover-specific entry points (nodebuilder_hover.go)
-// ---------------------------------------------------------------------------
-
-export class NodeBuilderHover {
-  buildHoverForSymbol(symbol: AstSymbol, enclosingDeclaration: AstNode | undefined): string {
-    void enclosingDeclaration;
-    return symbolName(symbol);
-  }
-
-  buildHoverForType(type: Type, enclosingDeclaration: AstNode | undefined): string {
-    void enclosingDeclaration;
-    return typeToStringWorker(type);
-  }
-
-  buildHoverForSignature(signature: Signature, enclosingDeclaration: AstNode | undefined): string {
-    void enclosingDeclaration;
-    return new NodeBuilder().signatureToString(signature, enclosingDeclaration, 0 as TypeFormatFlags, Kind.FunctionType);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Scope tracking (nodebuilderscopes.go)
-// ---------------------------------------------------------------------------
-
-export class NodeBuilderScopes {
-  scopes: AstNode[] = [];
-
-  enterScope(node: AstNode): void {
-    this.scopes.push(node);
-  }
-
-  exitScope(): void {
-    this.scopes.pop();
-  }
-
-  currentScope(): AstNode | undefined {
-    return this.scopes[this.scopes.length - 1];
-  }
-
-  isInScope(node: AstNode): boolean {
-    return this.scopes.includes(node);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Pseudo type-node builder (pseudotypenodebuilder.go)
-// ---------------------------------------------------------------------------
-
-export class PseudoTypeNodeBuilder {
-  buildPseudoTypeNode(
-    type: Type, enclosingDeclaration: AstNode | undefined, flags: NodeBuilderFlags,
-  ): TypeNode | undefined {
-    void enclosingDeclaration; void flags;
-    return typeToTypeNodeWorker(type);
-  }
-
-  buildPseudoTypeParameter(
-    parameter: Type, enclosingDeclaration: AstNode | undefined,
-  ): AstNode | undefined {
-    return new NodeBuilder().typeParameterToDeclaration(parameter, enclosingDeclaration, NodeBuilderFlags.None);
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Top-level factory
 // ---------------------------------------------------------------------------
 
 export function newNodeBuilder(): NodeBuilder {
   return new NodeBuilder();
-}
-
-export function newNodeBuilderHover(): NodeBuilderHover {
-  return new NodeBuilderHover();
-}
-
-export function newNodeBuilderScopes(): NodeBuilderScopes {
-  return new NodeBuilderScopes();
-}
-
-export function newPseudoTypeNodeBuilder(): PseudoTypeNodeBuilder {
-  return new PseudoTypeNodeBuilder();
 }
 
 function typeToTypeNodeWorker(type: Type): TypeNode | undefined {
