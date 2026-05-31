@@ -164,7 +164,9 @@ function walk(dir: string, predicate: (path: string) => boolean): readonly strin
 }
 
 function isTsGoSource(path: string): boolean {
-  return path.endsWith(".go") && !path.endsWith("_test.go");
+  if (!path.endsWith(".go") || path.endsWith("_test.go")) return false;
+  const header = readFileSync(path, "utf8").slice(0, 256);
+  return !header.includes("//go:build ignore");
 }
 
 function isTstsSource(path: string): boolean {
