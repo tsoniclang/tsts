@@ -18,6 +18,17 @@ import type {
   TextRange,
   CommentRange,
 } from "../ast/index.js";
+import {
+  Kind,
+  NodeFlags,
+  createNodeArray,
+  createNotEmittedStatement,
+  createVariableDeclaration,
+  createVariableDeclarationList,
+  createVariableStatement,
+  isPrologueDirective,
+} from "../ast/index.js";
+import { EmitFlags } from "./emitFlags.js";
 import { NodeFactory } from "./factory.js";
 
 // ---------------------------------------------------------------------------
@@ -39,6 +50,7 @@ interface VarScope {
   variables: IdentifierNode[];
   functions: AstNode[];
   flags: EnvironmentFlags;
+  initializationStatements: AstNode[];
 }
 
 interface LexicalScope {
@@ -115,50 +127,43 @@ export class EmitContext {
   // -------------------------------------------------------------------------
 
   startVariableEnvironment(): void {
-    this.varStack.push({ variables: [], functions: [], flags: EnvironmentFlags.None });
+    this.varStack.push({ variables: [], functions: [], flags: EnvironmentFlags.None, initializationStatements: [] });
+    this.startLexicalEnvironment();
   }
 
   endVariableEnvironment(): readonly Statement[] {
     const scope = this.varStack.pop();
     if (scope === undefined) return [];
     const results: Statement[] = [];
-    // Hoisted function declarations come first.
     for (const fn of scope.functions) {
       results.push(fn as unknown as Statement);
     }
-    // Then a single VariableStatement with all hoisted `var` decls.
-    // The factory's variable-statement constructor isn't ported yet —
-    // synthesize a minimal shape that downstream emit code can read.
     if (scope.variables.length > 0) {
-      const declarations = scope.variables.map((name) => ({
-        kind: 261 /* VariableDeclaration */, name, initializer: undefined,
-      } as unknown as AstNode));
-      const declarationList = {
-        kind: 260 /* VariableDeclarationList */,
-        declarations: { nodes: declarations },
-        flags: 0 /* NodeFlags.None — implies `var` */,
-      };
-      const vs = {
-        kind: 246 /* VariableStatement */,
-        modifiers: undefined,
-        declarationList,
-      } as unknown as Statement;
-      results.push(vs);
+      const declarations = scope.variables.map((name) => {
+        const declaration = createVariableDeclaration(name as never, undefined, undefined, undefined);
+        this.addEmitFlags(declaration as unknown as AstNode, EmitFlags.NoNestedSourceMaps);
+        return declaration;
+      });
+      const declarationList = createVariableDeclarationList(createNodeArray(declarations) as never, NodeFlags.None);
+      const variableStatement = createVariableStatement(undefined, declarationList) as unknown as Statement;
+      this.setEmitFlags(variableStatement as unknown as AstNode, EmitFlags.CustomPrologue);
+      results.push(variableStatement);
     }
+    results.push(...scope.initializationStatements as Statement[]);
+    results.push(...this.endLexicalEnvironment());
     return results;
   }
 
   endAndMergeVariableEnvironmentList(statements: StatementList): StatementList {
     const hoisted = this.endVariableEnvironment();
     if (hoisted.length === 0) return statements;
-    const existing = (statements as unknown as { nodes?: readonly Statement[] }).nodes ?? [];
-    return { nodes: [...hoisted, ...existing] } as unknown as StatementList;
+    return createNodeArray(this.mergeEnvironment(statementListElements(statements), hoisted) as readonly Statement[]) as unknown as StatementList;
   }
 
   endAndMergeVariableEnvironment(statements: readonly Statement[]): readonly Statement[] {
     const hoisted = this.endVariableEnvironment();
     if (hoisted.length === 0) return statements;
-    return [...hoisted, ...statements];
+    return this.mergeEnvironment(statements, hoisted);
   }
 
   addVariableDeclaration(name: IdentifierNode): void {
@@ -167,6 +172,7 @@ export class EmitContext {
   }
 
   addHoistedFunctionDeclaration(node: AstNode): void {
+    this.setEmitFlags(node, EmitFlags.CustomPrologue);
     const scope = this.varStack[this.varStack.length - 1];
     if (scope !== undefined) scope.functions.push(node);
   }
@@ -183,33 +189,27 @@ export class EmitContext {
     const scope = this.lexicalStack.pop();
     if (scope === undefined) return [];
     if (scope.declarations.length === 0) return [];
-    // Lexical-scope declarations emit as a single `let`-statement.
-    const declarations = scope.declarations.map((name) => ({
-      kind: 261 /* VariableDeclaration */, name, initializer: undefined,
-    } as unknown as AstNode));
-    const declarationList = {
-      kind: 260 /* VariableDeclarationList */,
-      declarations: { nodes: declarations },
-      flags: 1 /* NodeFlags.Let */,
-    };
-    return [{
-      kind: 246 /* VariableStatement */,
-      modifiers: undefined,
-      declarationList,
-    } as unknown as Statement];
+    const declarations = scope.declarations.map((name) => {
+      const declaration = createVariableDeclaration(name as never, undefined, undefined, undefined);
+      this.addEmitFlags(declaration as unknown as AstNode, EmitFlags.NoNestedSourceMaps);
+      return declaration;
+    });
+    const declarationList = createVariableDeclarationList(createNodeArray(declarations) as never, NodeFlags.Let);
+    const variableStatement = createVariableStatement(undefined, declarationList) as unknown as Statement;
+    this.setEmitFlags(variableStatement as unknown as AstNode, EmitFlags.CustomPrologue);
+    return [variableStatement];
   }
 
   endAndMergeLexicalEnvironmentList(statements: StatementList): StatementList {
     const lexical = this.endLexicalEnvironment();
     if (lexical.length === 0) return statements;
-    const existing = (statements as unknown as { nodes?: readonly Statement[] }).nodes ?? [];
-    return { nodes: [...lexical, ...existing] } as unknown as StatementList;
+    return createNodeArray(this.mergeEnvironment(statementListElements(statements), lexical) as readonly Statement[]) as unknown as StatementList;
   }
 
   endAndMergeLexicalEnvironment(statements: readonly Statement[]): readonly Statement[] {
     const lexical = this.endLexicalEnvironment();
     if (lexical.length === 0) return statements;
-    return [...lexical, ...statements];
+    return this.mergeEnvironment(statements, lexical);
   }
 
   addLexicalDeclaration(name: IdentifierNode): void {
@@ -218,25 +218,65 @@ export class EmitContext {
   }
 
   mergeEnvironmentList(statements: StatementList, declarations: readonly Statement[]): StatementList {
-    void declarations; return statements;
+    const merged = this.mergeEnvironment(statementListElements(statements), declarations);
+    return merged === statementListElements(statements) ? statements : createNodeArray(merged as readonly Statement[]) as unknown as StatementList;
   }
 
   mergeEnvironment(statements: readonly Statement[], declarations: readonly Statement[]): readonly Statement[] {
-    return [...statements, ...declarations];
+    if (declarations.length === 0) return statements;
+    const leftStandardPrologueEnd = findSpanEnd(statements, isPrologueDirectiveStatement, 0);
+    const leftHoistedFunctionsEnd = findSpanEnd(statements, statement => this.isHoistedFunction(statement), leftStandardPrologueEnd);
+    const leftHoistedVariablesEnd = findSpanEnd(statements, statement => this.isHoistedVariableStatement(statement), leftHoistedFunctionsEnd);
+    const rightStandardPrologueEnd = findSpanEnd(declarations, isPrologueDirectiveStatement, 0);
+    const rightHoistedFunctionsEnd = findSpanEnd(declarations, statement => this.isHoistedFunction(statement), rightStandardPrologueEnd);
+    const rightHoistedVariablesEnd = findSpanEnd(declarations, statement => this.isHoistedVariableStatement(statement), rightHoistedFunctionsEnd);
+    const rightCustomPrologueEnd = findSpanEnd(declarations, statement => this.isCustomPrologue(statement), rightHoistedVariablesEnd);
+    if (rightCustomPrologueEnd !== declarations.length) {
+      throw new Error("Expected declarations to be valid standard or custom prologues");
+    }
+
+    let left = statements.slice();
+    let changed = false;
+    if (rightCustomPrologueEnd > rightHoistedVariablesEnd) {
+      left.splice(leftHoistedVariablesEnd, 0, ...declarations.slice(rightHoistedVariablesEnd, rightCustomPrologueEnd));
+      changed = true;
+    }
+    if (rightHoistedVariablesEnd > rightHoistedFunctionsEnd) {
+      left.splice(leftHoistedFunctionsEnd, 0, ...declarations.slice(rightHoistedFunctionsEnd, rightHoistedVariablesEnd));
+      changed = true;
+    }
+    if (rightHoistedFunctionsEnd > rightStandardPrologueEnd) {
+      left.splice(leftStandardPrologueEnd, 0, ...declarations.slice(rightStandardPrologueEnd, rightHoistedFunctionsEnd));
+      changed = true;
+    }
+    if (rightStandardPrologueEnd > 0) {
+      if (leftStandardPrologueEnd === 0) {
+        left.unshift(...declarations.slice(0, rightStandardPrologueEnd));
+        changed = true;
+      } else {
+        const leftPrologues = new Set(statements.slice(0, leftStandardPrologueEnd).map(prologueText));
+        for (let index = rightStandardPrologueEnd - 1; index >= 0; index -= 1) {
+          const rightPrologue = declarations[index]!;
+          if (!leftPrologues.has(prologueText(rightPrologue))) {
+            left.unshift(rightPrologue);
+            changed = true;
+          }
+        }
+      }
+    }
+    return changed ? left : statements;
   }
 
   isCustomPrologue(node: Statement): boolean {
-    // Synthesized prologue directive — marked via emit flags or via
-    // the EmitFlags.CustomPrologue bit (1 << 5 in ts-go).
-    return (this.emitFlags(node as unknown as AstNode) & (1 << 5)) !== 0;
+    return (this.emitFlags(node as unknown as AstNode) & EmitFlags.CustomPrologue) !== 0;
   }
   isHoistedFunction(node: Statement): boolean {
-    if ((node as { kind?: number }).kind !== 262 /* FunctionDeclaration */) return false;
-    return (this.emitFlags(node as unknown as AstNode) & (1 << 19) /* HoistedDeclaration */) !== 0;
+    return this.isCustomPrologue(node) && node.kind === Kind.FunctionDeclaration;
   }
   isHoistedVariableStatement(node: Statement): boolean {
-    if ((node as { kind?: number }).kind !== 246 /* VariableStatement */) return false;
-    return (this.emitFlags(node as unknown as AstNode) & (1 << 19) /* HoistedDeclaration */) !== 0;
+    if (!this.isCustomPrologue(node) || node.kind !== Kind.VariableStatement) return false;
+    const declarations = variableStatementDeclarations(node);
+    return declarations.length > 0 && declarations.every(isHoistedVariable);
   }
 
   // -------------------------------------------------------------------------
@@ -267,8 +307,12 @@ export class EmitContext {
     this.originalMap.delete(node);
   }
   setOriginalEx(node: AstNode, original: AstNode, allowOverwrite: boolean): void {
-    if (!allowOverwrite && this.originalMap.has(node)) return;
-    this.originalMap.set(node, original);
+    const existing = this.originalMap.get(node);
+    if (existing === undefined || allowOverwrite) {
+      this.originalMap.set(node, original);
+      return;
+    }
+    if (existing !== original) throw new Error("Original node already set.");
   }
   original(node: AstNode): AstNode | undefined {
     return this.originalMap.get(node);
@@ -301,6 +345,9 @@ export class EmitContext {
   addEmitFlags(node: AstNode, flags: number): void {
     this.emitFlagsMap.set(node, (this.emitFlagsMap.get(node) ?? 0) | flags);
   }
+  setEmitFlags(node: AstNode, flags: number): void {
+    this.emitFlagsMap.set(node, flags);
+  }
   setCommentRange(node: AstNode, range: TextRange | undefined): void {
     if (range === undefined) this.commentRangeMap.delete(node);
     else this.commentRangeMap.set(node, range);
@@ -325,20 +372,14 @@ export class EmitContext {
   }
 
   // -------------------------------------------------------------------------
-  // NotEmittedStatement factory (placeholder for elided code)
+  // NotEmittedStatement factory
   // -------------------------------------------------------------------------
 
   newNotEmittedStatement(node: AstNode): AstNode {
-    // NotEmittedStatement — a synthetic node that holds source-position
-    // info for elided code (used by sourcemap emit so removed source
-    // ranges still map back to the original).
-    const ns = {
-      kind: 245 /* NotEmittedStatement */,
-      pos: (node as unknown as { pos?: number }).pos ?? -1,
-      end: (node as unknown as { end?: number }).end ?? -1,
-      flags: (node as unknown as { flags?: number }).flags ?? 0,
-      original: node,
-    } as unknown as AstNode;
+    const ns = createNotEmittedStatement() as unknown as AstNode;
+    ns.pos = node.pos;
+    ns.end = node.end;
+    ns.flags = node.flags;
     this.originalMap.set(ns, node);
     return ns;
   }
@@ -360,6 +401,36 @@ export function getEmitContext(): { context: EmitContext; release: () => void } 
 interface NodeVisitor {
   visitNode(node: AstNode): AstNode;
   visitEachChild(node: AstNode): AstNode;
+}
+
+function statementListElements(statements: StatementList): readonly Statement[] {
+  return Array.isArray(statements) ? statements as readonly Statement[] : (statements as unknown as { readonly nodes?: readonly Statement[] }).nodes ?? [];
+}
+
+function findSpanEnd(statements: readonly Statement[], predicate: (statement: Statement) => boolean, start: number): number {
+  let index = start;
+  while (index < statements.length && predicate(statements[index]!)) index += 1;
+  return index;
+}
+
+function isPrologueDirectiveStatement(statement: Statement): boolean {
+  return isPrologueDirective(statement as unknown as AstNode);
+}
+
+function prologueText(statement: Statement): string {
+  const expression = (statement as unknown as { readonly expression?: { readonly text?: unknown } }).expression;
+  return typeof expression?.text === "string" ? expression.text : "";
+}
+
+function variableStatementDeclarations(statement: Statement): readonly AstNode[] {
+  const declarationList = (statement as unknown as { readonly declarationList?: { readonly declarations?: readonly AstNode[] } }).declarationList;
+  return declarationList?.declarations ?? [];
+}
+
+function isHoistedVariable(node: AstNode): boolean {
+  return node.kind === Kind.VariableDeclaration
+    && (node as unknown as { readonly name?: AstNode }).name?.kind === Kind.Identifier
+    && (node as unknown as { readonly initializer?: AstNode }).initializer === undefined;
 }
 
 // Suppress unused-import warnings
