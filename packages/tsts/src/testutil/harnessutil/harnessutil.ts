@@ -1,6 +1,6 @@
 import { normalizeNewlines } from "../stringtestutil/stringTestUtil.js";
 import type { Diagnostic, SourceFile } from "../../ast/index.js";
-import type { CompilerOptions } from "../../core/index.js";
+import { NewLineKind, type CompilerOptions } from "../../core/index.js";
 import { newProgram, type CompilerHost, type Program } from "../../compiler/program.js";
 import { optionDeclarations, type CommandLineOption } from "../../tsoptions/index.js";
 import { parseListTypeOption } from "../../tsoptions/commandLineParser.js";
@@ -133,6 +133,7 @@ export interface CompileFilesOptions {
 export function compileFiles(options: CompileFilesOptions): CompilationResult {
   const currentDirectory = options.currentDirectory ?? "/";
   const compilerOptions = cloneCompilerOptions(options.compilerOptions);
+  setDefaultCompilerOptionsForTests(compilerOptions);
   const harnessOptions = {
     ...defaultHarnessOptions(currentDirectory),
     ...(options.harnessOptions ?? {}),
@@ -169,6 +170,7 @@ export function compileFilesEx(options: {
   readonly symlinks: ReadonlyMap<string, string>;
   readonly tsconfig?: ParsedCommandLine;
 }): CompilationResult {
+  normalizeCompilerOptionPaths(options.compilerOptions, options.currentDirectory);
   const programFileNames: string[] = [];
   for (const file of options.inputFiles) {
     const fileName = normalizedAbsolutePath(file.unitName, options.currentDirectory);
@@ -180,12 +182,16 @@ export function compileFilesEx(options: {
   const files = new Map<string, string>();
   addTestFiles(files, options.inputFiles, options.currentDirectory);
   addTestFiles(files, options.otherFiles, options.currentDirectory);
-  for (const libFile of options.harnessOptions.libFiles) {
-    const fileName = normalizePath(testLibFolder + "/" + libFile);
-    if (!files.has(fileName)) files.set(fileName, "");
+  if (shouldIncludeLibDir(options.inputFiles, options.harnessOptions.libFiles)) {
+    for (const libFile of options.harnessOptions.libFiles) {
+      if (libFile === "lib.d.ts" && !compilerOptionIsTrue(options.compilerOptions.noLib)) continue;
+      const fileName = normalizePath(`${testLibFolder}/${libFile}`);
+      if (!programFileNames.includes(fileName)) programFileNames.push(fileName);
+      if (!files.has(fileName)) files.set(fileName, "");
+    }
   }
 
-  const host = new HarnessCompilerHost(files, options.currentDirectory, options.harnessOptions.useCaseSensitiveFileNames);
+  const host = new HarnessCompilerHost(files, options.symlinks, options.currentDirectory, options.harnessOptions.useCaseSensitiveFileNames);
   const parsed = options.tsconfig ?? new ParsedCommandLine(
     options.compilerOptions,
     programFileNames,
@@ -253,7 +259,11 @@ export function setOptionsFromTestConfig(
 function parseCompilerOptionValue(option: CommandLineOption, value: string, currentDirectory: string): unknown {
   if (option.type === "boolean") return value.toLowerCase() === "true";
   if (option.type === "number") return Number(value);
-  if (option.type === "list") return requireStringListOption(option.name, value);
+  if (option.type === "list") {
+    const list = requireStringListOption(option.name, value);
+    const element = option.element ?? option.elements?.();
+    return element?.isFilePath === true ? list.map(item => normalizedAbsolutePath(item, currentDirectory)) : list;
+  }
   if (option.type instanceof Map) return getValueOfOptionString(option.name, value);
   if (option.isFilePath === true) return normalizedAbsolutePath(value, currentDirectory);
   return value;
@@ -275,39 +285,177 @@ function cloneCompilerOptions(options: CompilerOptions | undefined): CompilerOpt
   return { ...(options as Record<string, unknown>) } as CompilerOptions;
 }
 
+function setDefaultCompilerOptionsForTests(options: CompilerOptions): void {
+  const mutable = options as Record<string, unknown>;
+  if (mutable.newLine === undefined || mutable.newLine === NewLineKind.None) mutable.newLine = NewLineKind.CRLF;
+  if (mutable.skipDefaultLibCheck === undefined) mutable.skipDefaultLibCheck = true;
+  mutable.noErrorTruncation = true;
+}
+
+function normalizeCompilerOptionPaths(options: CompilerOptions, currentDirectory: string): void {
+  normalizeStringOptionPath(options, currentDirectory, "outDir");
+  normalizeStringOptionPath(options, currentDirectory, "project");
+  normalizeStringOptionPath(options, currentDirectory, "rootDir");
+  normalizeStringOptionPath(options, currentDirectory, "tsBuildInfoFile");
+  normalizeStringOptionPath(options, currentDirectory, "baseUrl");
+  normalizeStringOptionPath(options, currentDirectory, "declarationDir");
+  normalizeStringArrayOptionPath(options, currentDirectory, "rootDirs");
+  normalizeStringArrayOptionPath(options, currentDirectory, "typeRoots");
+}
+
+function normalizeStringOptionPath(options: CompilerOptions, currentDirectory: string, key: keyof CompilerOptions): void {
+  const mutable = options as Record<string, unknown>;
+  const value = mutable[key];
+  if (typeof value === "string" && value.length > 0) mutable[key] = normalizedAbsolutePath(value, currentDirectory);
+}
+
+function normalizeStringArrayOptionPath(options: CompilerOptions, currentDirectory: string, key: keyof CompilerOptions): void {
+  const mutable = options as Record<string, unknown>;
+  const value = mutable[key];
+  if (Array.isArray(value)) mutable[key] = value.map(item => typeof item === "string" ? normalizedAbsolutePath(item, currentDirectory) : String(item));
+}
+
+function shouldIncludeLibDir(inputFiles: readonly TestFile[], libFiles: readonly string[]): boolean {
+  if (libFiles.length > 0) return true;
+  return inputFiles.some(file => file.content.includes(`${testLibFolder}/`));
+}
+
+function compilerOptionIsTrue(value: unknown): boolean {
+  return value === true || value === 2;
+}
+
 function toReadonlyMap(value: ReadonlyMap<string, string> | Record<string, string>): ReadonlyMap<string, string> {
   if (value instanceof Map) return value;
   return new Map(Object.entries(value));
 }
 
+export interface SourceFileCacheKey {
+  readonly fileName: string;
+  readonly text: string;
+  readonly scriptKind: string;
+}
+
+export function getSourceFileCacheKey(fileName: string, text: string, scriptKind: string): SourceFileCacheKey {
+  return { fileName: normalizePath(fileName), text, scriptKind };
+}
+
+export const sourceFileCache: Map<string, SourceFile> = new Map();
+
+export class TracerForBaselining {
+  private readonly packageJsonCache = new Map<string, boolean>();
+  private readonly lines: string[] = [];
+
+  constructor(
+    private readonly currentDirectory: string,
+    private readonly useCaseSensitiveFileNames: boolean,
+    private readonly typescriptVersion: string = "",
+  ) {}
+
+  trace(message: string): void {
+    this.lines.push(this.sanitizeTrace(message, true));
+  }
+
+  traceWithPackageJsonCache(message: string, usePackageJsonCache: boolean): string {
+    const sanitized = this.sanitizeTrace(message, usePackageJsonCache);
+    this.lines.push(sanitized);
+    return sanitized;
+  }
+
+  reset(): void {
+    this.packageJsonCache.clear();
+    this.lines.length = 0;
+  }
+
+  toString(): string {
+    return this.lines.join("\n");
+  }
+
+  private sanitizeTrace(message: string, usePackageJsonCache: boolean): string {
+    const version = this.typescriptVersion.length > 0 ? this.typescriptVersion : fakeTSVersion;
+    const versionQuoted = `'${version}'`;
+    if (message.includes(versionQuoted)) return message.replace(versionQuoted, `'${fakeTSVersion}'`);
+
+    const cachedMissing = cutSuffix(message, "' does not exist according to earlier cached lookups.");
+    if (cachedMissing !== undefined) {
+      const fileName = cachedMissing.replace(/^File '/, "");
+      if (usePackageJsonCache && this.notePackageJsonCache(fileName, false)) return message;
+      return `File '${fileName}' does not exist.`;
+    }
+
+    const cachedFound = cutSuffix(message, "' exists according to earlier cached lookups.");
+    if (cachedFound !== undefined) {
+      const fileName = cachedFound.replace(/^File '/, "");
+      if (usePackageJsonCache && this.notePackageJsonCache(fileName, true)) return message;
+      return `Found 'package.json' at '${fileName}'.`;
+    }
+
+    if (usePackageJsonCache) {
+      const missing = cutSuffix(message, "' does not exist.");
+      if (missing !== undefined) {
+        const fileName = missing.replace(/^File '/, "");
+        if (!this.notePackageJsonCache(fileName, false)) return message;
+        return `File '${fileName}' does not exist according to earlier cached lookups.`;
+      }
+
+      const found = cutPrefix(message, "Found 'package.json' at '");
+      if (found !== undefined) {
+        const fileName = found.replace(/'\.$/, "");
+        if (!this.notePackageJsonCache(fileName, true)) return message;
+        return `File '${fileName}' exists according to earlier cached lookups.`;
+      }
+    }
+
+    return message;
+  }
+
+  private notePackageJsonCache(fileName: string, exists: boolean): boolean {
+    const key = this.toTracePath(fileName);
+    const hadEntry = this.packageJsonCache.has(key);
+    this.packageJsonCache.set(key, exists);
+    return hadEntry;
+  }
+
+  private toTracePath(fileName: string): string {
+    const absolute = normalizedAbsolutePath(fileName, this.currentDirectory);
+    return this.useCaseSensitiveFileNames ? absolute : absolute.toLowerCase();
+  }
+}
+
 class HarnessCompilerHost implements CompilerHost {
   readonly trace: string[] = [];
+  private readonly tracer: TracerForBaselining;
   private readonly files: Map<string, string>;
+  private readonly symlinks: Map<string, string>;
   private readonly currentDirectory: string;
   private readonly caseSensitive: boolean;
 
-  constructor(files: ReadonlyMap<string, string>, currentDirectory: string, caseSensitive: boolean) {
+  constructor(files: ReadonlyMap<string, string>, symlinks: ReadonlyMap<string, string>, currentDirectory: string, caseSensitive: boolean) {
     this.files = new Map(files);
+    this.symlinks = new Map();
+    for (const [source, target] of symlinks) {
+      this.symlinks.set(normalizedAbsolutePath(source, currentDirectory), normalizedAbsolutePath(target, currentDirectory));
+    }
     this.currentDirectory = currentDirectory;
     this.caseSensitive = caseSensitive;
+    this.tracer = new TracerForBaselining(currentDirectory, caseSensitive);
   }
 
   fileExists(path: string): boolean {
-    const normalized = normalizePath(path);
+    const normalized = this.resolvePath(path);
     const exists = this.files.has(normalized);
-    this.trace.push(`fileExists ${normalized} ${exists ? "true" : "false"}`);
+    this.pushTrace(`fileExists ${normalized} ${exists ? "true" : "false"}`);
     return exists;
   }
 
   readFile(path: string): string | undefined {
-    const normalized = normalizePath(path);
-    this.trace.push(`readFile ${normalized}`);
+    const normalized = this.resolvePath(path);
+    this.pushTrace(`readFile ${normalized}`);
     return this.files.get(normalized);
   }
 
   writeFile(path: string, data: string): void {
     const normalized = normalizePath(path);
-    this.trace.push(`writeFile ${normalized}`);
+    this.pushTrace(`writeFile ${normalized}`);
     this.files.set(normalized, data);
   }
 
@@ -324,7 +472,20 @@ class HarnessCompilerHost implements CompilerHost {
     for (const fileName of this.files.keys()) {
       if (getDirectoryPath(fileName) === normalized || fileName.startsWith(normalized + "/")) return true;
     }
+    for (const symlink of this.symlinks.keys()) {
+      if (getDirectoryPath(symlink) === normalized || symlink.startsWith(normalized + "/")) return true;
+    }
     return false;
+  }
+
+  private pushTrace(message: string): void {
+    this.tracer.trace(message);
+    this.trace.push(this.tracer.toString().split("\n").at(-1) ?? message);
+  }
+
+  private resolvePath(path: string): string {
+    const normalized = normalizePath(path);
+    return this.symlinks.get(normalized) ?? normalized;
   }
 }
 
@@ -567,4 +728,12 @@ function getBaseFileName(path: string): string {
   const normalized = path.replaceAll("\\", "/");
   const slash = normalized.lastIndexOf("/");
   return slash < 0 ? normalized : normalized.slice(slash + 1);
+}
+
+function cutSuffix(value: string, suffix: string): string | undefined {
+  return value.endsWith(suffix) ? value.slice(0, -suffix.length) : undefined;
+}
+
+function cutPrefix(value: string, prefix: string): string | undefined {
+  return value.startsWith(prefix) ? value.slice(prefix.length) : undefined;
 }
