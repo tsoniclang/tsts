@@ -1,11 +1,13 @@
-import type { BuildInfo } from "./buildInfo.js";
+import { FileEmitKind, type BuildInfo, type BuildInfoDiagnostic, type BuildInfoDiagnosticsOfFile, type BuildInfoFileId, type BuildInfoFileIdListId } from "./buildInfo.js";
 import {
   createProgramSnapshotFromParts,
   type DiagnosticsOrBuildInfoDiagnosticsWithFileName,
+  type BuildInfoDiagnosticWithFileName,
   type ProgramSnapshotFileInfo,
   type ProgramSnapshot,
   type SnapshotFileEmitKind,
 } from "./snapshot.js";
+import { SnapshotFileEmitKind as SnapshotEmitKind } from "./snapshot.js";
 
 export function buildInfoFileInfoToSnapshot(info: {
   readonly version: string;
@@ -22,33 +24,175 @@ export function buildInfoFileInfoToSnapshot(info: {
 }
 
 export function buildInfoToSnapshot<Diagnostic = unknown>(buildInfo: BuildInfo): ProgramSnapshot<Diagnostic> {
-  const fileInfos = new Map<string, ProgramSnapshotFileInfo>();
-  for (let index = 0; index < buildInfo.fileNames.length; index += 1) {
-    const fileName = buildInfo.fileNames[index];
-    const fileInfo = buildInfo.fileInfos[index];
-    if (fileName === undefined || fileInfo === undefined) continue;
-    fileInfos.set(fileName, buildInfoFileInfoToSnapshot(fileInfo.getFileInfo()));
+  const converter = new BuildInfoSnapshotConverter<Diagnostic>(buildInfo);
+  return converter.convert();
+}
+
+class BuildInfoSnapshotConverter<Diagnostic> {
+  private readonly buildInfo: BuildInfo;
+  private readonly filePaths: readonly string[];
+  private readonly filePathSets: readonly ReadonlySet<string>[];
+
+  constructor(buildInfo: BuildInfo) {
+    this.buildInfo = buildInfo;
+    this.filePaths = buildInfo.fileNames.map((fileName) => normalizeBuildInfoFileName(fileName));
+    this.filePathSets = buildInfo.fileIdsList.map((ids) => new Set(ids.map((id) => this.toFilePath(id))));
   }
-  const pendingEmit = new Map<string, SnapshotFileEmitKind>();
-  for (const entry of buildInfo.affectedFilesPendingEmit ?? []) {
-    const fileName = buildInfo.fileName(entry.fileId);
-    if (fileName !== "") pendingEmit.set(fileName, entry.emitKind as unknown as SnapshotFileEmitKind);
+
+  convert(): ProgramSnapshot<Diagnostic> {
+    const fileInfos = this.fileInfos();
+    const references = this.referencedMap();
+    return createProgramSnapshotFromParts(
+      this.buildInfo.version,
+      fileInfos,
+      this.buildInfo.options,
+      this.roots(),
+      this.semanticDiagnostics(fileInfos, this.changedFiles()),
+      this.emitDiagnostics(),
+      this.affectedFilesPendingEmit(),
+      this.buildInfo.latestChangedDtsFile === "" ? undefined : normalizeBuildInfoFileName(this.buildInfo.latestChangedDtsFile),
+      [] as Diagnostic[],
+      this.buildInfo.checkPending === true,
+      undefined,
+      references,
+      this.changedFiles(),
+    );
   }
-  const roots: string[] = [];
-  for (const root of buildInfo.root) {
-    const fileName = buildInfo.fileName(root.start);
-    if (fileName !== "") roots.push(fileName);
+
+  private toFilePath(fileId: BuildInfoFileId): string {
+    return this.filePaths[fileId - 1] ?? "";
   }
-  return createProgramSnapshotFromParts(
-    buildInfo.version,
-    fileInfos,
-    buildInfo.options,
-    roots,
-    new Map<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>(),
-    new Map<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>(),
-    pendingEmit,
-    buildInfo.latestChangedDtsFile,
-    [] as Diagnostic[],
-    buildInfo.checkPending === true,
-  );
+
+  private toFilePathSet(fileIdListId: BuildInfoFileIdListId): ReadonlySet<string> {
+    return this.filePathSets[fileIdListId - 1] ?? new Set<string>();
+  }
+
+  private fileInfos(): Map<string, ProgramSnapshotFileInfo> {
+    const fileInfos = new Map<string, ProgramSnapshotFileInfo>();
+    for (let index = 0; index < this.buildInfo.fileInfos.length; index += 1) {
+      const fileName = this.toFilePath((index + 1) as BuildInfoFileId);
+      const fileInfo = this.buildInfo.fileInfos[index];
+      if (fileName === "" || fileInfo === undefined) continue;
+      fileInfos.set(fileName, buildInfoFileInfoToSnapshot(fileInfo.getFileInfo()));
+    }
+    return fileInfos;
+  }
+
+  private roots(): readonly string[] {
+    const roots: string[] = [];
+    for (const root of this.buildInfo.root) {
+      if (root.nonIncremental !== "") {
+        roots.push(normalizeBuildInfoFileName(root.nonIncremental));
+      } else if (root.end === 0) {
+        const fileName = this.toFilePath(root.start);
+        if (fileName !== "") roots.push(fileName);
+      } else {
+        for (let fileId = root.start; fileId <= root.end; fileId += 1) {
+          const fileName = this.toFilePath(fileId as BuildInfoFileId);
+          if (fileName !== "") roots.push(fileName);
+        }
+      }
+    }
+    return roots;
+  }
+
+  private referencedMap(): ReadonlyMap<string, ReadonlySet<string>> {
+    const references = new Map<string, ReadonlySet<string>>();
+    for (const entry of this.buildInfo.referencedMap) {
+      const filePath = this.toFilePath(entry.fileId);
+      if (filePath !== "") references.set(filePath, new Set(this.toFilePathSet(entry.fileIdListId)));
+    }
+    return references;
+  }
+
+  private changedFiles(): ReadonlySet<string> {
+    const changed = new Set<string>();
+    for (const fileId of this.buildInfo.changeFileSet) {
+      const filePath = this.toFilePath(fileId);
+      if (filePath !== "") changed.add(filePath);
+    }
+    return changed;
+  }
+
+  private semanticDiagnostics(
+    fileInfos: ReadonlyMap<string, ProgramSnapshotFileInfo>,
+    changedFiles: ReadonlySet<string>,
+  ): ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>> {
+    const diagnostics = new Map<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>();
+    for (const path of fileInfos.keys()) {
+      if (!changedFiles.has(path)) {
+        diagnostics.set(path, { diagnostics: [], buildInfoDiagnostics: [] });
+      }
+    }
+    for (const entry of this.buildInfo.semanticDiagnosticsPerFile) {
+      if (entry.fileId !== 0) {
+        diagnostics.delete(this.toFilePath(entry.fileId));
+        continue;
+      }
+      if (entry.diagnostics !== undefined) {
+        diagnostics.set(this.toFilePath(entry.diagnostics.fileId), this.diagnosticsOfFile(entry.diagnostics));
+      }
+    }
+    return diagnostics;
+  }
+
+  private emitDiagnostics(): ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>> {
+    const diagnostics = new Map<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>();
+    for (const entry of this.buildInfo.emitDiagnosticsPerFile) {
+      diagnostics.set(this.toFilePath(entry.fileId), this.diagnosticsOfFile(entry));
+    }
+    return diagnostics;
+  }
+
+  private affectedFilesPendingEmit(): ReadonlyMap<string, SnapshotFileEmitKind> {
+    const pendingEmit = new Map<string, SnapshotFileEmitKind>();
+    for (const entry of this.buildInfo.affectedFilesPendingEmit) {
+      const fileName = this.toFilePath(entry.fileId);
+      if (fileName === "") continue;
+      pendingEmit.set(fileName, buildInfoFileEmitKindToSnapshot(entry.emitKind));
+    }
+    return pendingEmit;
+  }
+
+  private diagnosticsOfFile(diagnostics: BuildInfoDiagnosticsOfFile): DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic> {
+    return {
+      diagnostics: [],
+      buildInfoDiagnostics: this.buildInfoDiagnostics(diagnostics.diagnostics),
+    };
+  }
+
+  private buildInfoDiagnostics(diagnostics: readonly BuildInfoDiagnostic[]): readonly BuildInfoDiagnosticWithFileName[] {
+    return diagnostics.map((diagnostic) => {
+      const file = diagnostic.file === undefined || diagnostic.file === 0 ? undefined : this.toFilePath(diagnostic.file);
+      return {
+        file,
+        noFile: diagnostic.noFile === true,
+        pos: diagnostic.pos ?? 0,
+        end: diagnostic.end ?? 0,
+        code: diagnostic.code ?? 0,
+        category: String(diagnostic.category ?? ""),
+        messageKey: String(diagnostic.messageKey ?? ""),
+        messageArgs: diagnostic.messageArgs ?? [],
+        messageChain: this.buildInfoDiagnostics(diagnostic.messageChain ?? []),
+        relatedInformation: this.buildInfoDiagnostics(diagnostic.relatedInformation ?? []),
+        reportsUnnecessary: diagnostic.reportsUnnecessary === true,
+        reportsDeprecated: diagnostic.reportsDeprecated === true,
+        skippedOnNoEmit: diagnostic.skippedOnNoEmit === true,
+        repopulateInfo: diagnostic.repopulateInfo,
+      };
+    });
+  }
+}
+
+function buildInfoFileEmitKindToSnapshot(emitKind: FileEmitKind): SnapshotFileEmitKind {
+  if (emitKind === FileEmitKind.Default) return SnapshotEmitKind.All;
+  let result = SnapshotEmitKind.None;
+  if ((emitKind & FileEmitKind.Js) !== 0) result |= SnapshotEmitKind.AllJs;
+  if ((emitKind & FileEmitKind.Dts) !== 0) result |= SnapshotEmitKind.Dts;
+  if ((emitKind & FileEmitKind.DtsErrors) !== 0) result |= SnapshotEmitKind.DtsErrors;
+  return result;
+}
+
+function normalizeBuildInfoFileName(fileName: string): string {
+  return fileName.replace(/\\/g, "/");
 }

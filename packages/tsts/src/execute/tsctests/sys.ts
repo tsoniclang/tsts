@@ -105,6 +105,10 @@ export class TestFileSystem {
     if (existing !== undefined) this.files.set(normalized, { text: existing.text, mtime });
   }
 
+  getFiles(): readonly string[] {
+    return [...this.files.keys()].sort();
+  }
+
   snapshot(): FileMap {
     const out: FileMap = {};
     for (const [path, file] of this.files.entries()) out[path] = file.text;
@@ -120,6 +124,25 @@ export interface TscInput {
   readonly windowsStyleRoot?: string;
 }
 
+export interface TestEmitResult {
+  readonly emittedFiles: readonly string[];
+}
+
+export interface TestProgramBaselineFile {
+  readonly fileName: string;
+  readonly path?: string | undefined;
+  readonly semanticDiagnosticsCached?: boolean | undefined;
+  readonly semanticDiagnosticsRefreshed?: boolean | undefined;
+  readonly signatureUpdateKind?: "computed-dts" | "stored-at-emit" | "used-version" | undefined;
+  readonly hasIncludeReason?: boolean | undefined;
+  readonly inProgramWithIncludeReason?: boolean | undefined;
+}
+
+export interface TestProgramBaseline {
+  readonly configFilePath?: string | undefined;
+  readonly files: readonly TestProgramBaselineFile[];
+}
+
 export class TestSys {
   readonly fs: TestFileSystem;
   readonly cwd: string;
@@ -128,6 +151,7 @@ export class TestSys {
   defaultLibraryPath: string;
   forIncrementalCorrectness = false;
   private output = "";
+  private readonly traces: string[] = [];
   private readonly programBaselines: string[] = [];
   private readonly programIncludeBaselines: string[] = [];
 
@@ -172,6 +196,15 @@ export class TestSys {
     this.fs.writeFile(path, text);
   }
 
+  removeFile(path: string): void {
+    this.fs.remove(path);
+  }
+
+  renameFile(oldPath: string, newPath: string): void {
+    this.writeFile(newPath, this.readFileNoError(oldPath));
+    this.removeFile(oldPath);
+  }
+
   ensureLibPathExists(path: string): void {
     const fullPath = `${this.defaultLibraryPath}/${path}`;
     if (!this.fs.fileExists(fullPath)) {
@@ -189,12 +222,77 @@ export class TestSys {
   onWatchStatusReportStart(): void { this.writeLine(watchStatusReportStart); }
   onWatchStatusReportEnd(): void { this.writeLine(watchStatusReportEnd); }
 
+  getTrace(): (message: string, ...args: readonly unknown[]) => void {
+    return (message, ...args) => {
+      this.writeLine(traceStart);
+      const localized = formatTrace(message, args);
+      this.traces.push(localized);
+      this.writeLine(localized);
+      this.writeLine(traceEnd);
+    };
+  }
+
+  onEmittedFiles(result: TestEmitResult | undefined, mtimesCache?: Map<string, Date> | undefined): void {
+    if (result === undefined) return;
+    for (const fileName of result.emittedFiles) {
+      const modTime = this.fs.getMTime(fileName);
+      const now = this.now();
+      this.fs.setMTime(fileName, now);
+      if (mtimesCache?.has(fileName) === true) {
+        mtimesCache.set(fileName, now);
+      } else if (modTime !== undefined && mtimesCache?.has(this.fs.normalize(fileName)) === true) {
+        mtimesCache.set(this.fs.normalize(fileName), now);
+      }
+    }
+  }
+
   addProgramBaseline(text: string): void {
     this.programBaselines.push(text);
   }
 
   addProgramIncludeBaseline(text: string): void {
     this.programIncludeBaselines.push(text);
+  }
+
+  onProgram(program: TestProgramBaseline): void {
+    this.writeHeaderToBaseline(this.programBaselines, program.configFilePath);
+    this.programBaselines.push("SemanticDiagnostics::\n");
+    for (const file of program.files) {
+      const prefix = file.semanticDiagnosticsCached === false
+        ? "*not cached* "
+        : file.semanticDiagnosticsRefreshed === true
+          ? "*refresh*    "
+          : "*cached*     ";
+      this.programBaselines.push(`${prefix}${file.fileName}\n`);
+    }
+
+    this.programBaselines.push("Signatures::\n");
+    for (const file of program.files) {
+      if (file.signatureUpdateKind === undefined) continue;
+      const prefix = signatureUpdateKindText(file.signatureUpdateKind);
+      this.programBaselines.push(`${prefix} ${file.fileName}\n`);
+    }
+
+    const filesWithoutIncludeReason = program.files
+      .filter((file) => file.hasIncludeReason === false)
+      .map((file) => file.path ?? file.fileName);
+    const fileNotInProgramWithIncludeReason = program.files
+      .filter((file) => file.inProgramWithIncludeReason === false)
+      .map((file) => file.path ?? file.fileName);
+    if (filesWithoutIncludeReason.length !== 0 || fileNotInProgramWithIncludeReason.length !== 0) {
+      this.writeHeaderToBaseline(this.programIncludeBaselines, program.configFilePath);
+      this.programIncludeBaselines.push("!!! Expected all files to have include reasons\nfilesWithoutIncludeReason::\n");
+      for (const file of filesWithoutIncludeReason) this.programIncludeBaselines.push(`  ${file}\n`);
+      this.programIncludeBaselines.push("filesNotInProgramWithIncludeReason::\n");
+      for (const file of fileNotInProgramWithIncludeReason) this.programIncludeBaselines.push(`  ${file}\n`);
+    }
+  }
+
+  private writeHeaderToBaseline(target: string[], configFilePath: string | undefined): void {
+    if (target.length !== 0) target.push("\n");
+    if (configFilePath !== undefined && configFilePath !== "") {
+      target.push(`${relativePathFromDirectory(this.cwd, configFilePath)}::\n`);
+    }
   }
 
   baselinePrograms(header: string): string {
@@ -213,6 +311,43 @@ export class TestSys {
 
   clearOutput(): void {
     this.output = "";
+    this.traces.length = 0;
+  }
+
+  writeFileNoError(path: string, content: string): void {
+    this.writeFile(path, content);
+  }
+
+  removeNoError(path: string): void {
+    this.removeFile(path);
+  }
+
+  readFileNoError(path: string): string {
+    const content = this.readFile(path);
+    if (content === undefined) throw new Error(`File not found: ${path}`);
+    return content;
+  }
+
+  renameFileNoError(oldPath: string, newPath: string): void {
+    this.renameFile(oldPath, newPath);
+  }
+
+  replaceFileText(path: string, oldText: string, newText: string): void {
+    const content = this.readFileNoError(path);
+    this.writeFileNoError(path, content.replace(oldText, newText));
+  }
+
+  replaceFileTextAll(path: string, oldText: string, newText: string): void {
+    const content = this.readFileNoError(path);
+    this.writeFileNoError(path, content.split(oldText).join(newText));
+  }
+
+  appendFile(path: string, text: string): void {
+    this.writeFileNoError(path, `${this.readFileNoError(path)}${text}`);
+  }
+
+  prependFile(path: string, text: string): void {
+    this.writeFileNoError(path, `${text}${this.readFileNoError(path)}`);
   }
 }
 
@@ -263,15 +398,27 @@ function sanitizeOutput(output: string, forComparing: boolean): string {
       continue;
     }
     if (skipDelimited(lines, index, listFileStart, listFileEnd)) {
+      if (!forComparing) out.push(...sanitizeDelimitedLines(lines, index, listFileEnd, false));
       index = findDelimitedEnd(lines, index, listFileEnd);
-      if (!forComparing) out.push(line);
       continue;
     }
-    if (skipDelimited(lines, index, statisticsStart, statisticsEnd)
-      || skipDelimited(lines, index, traceStart, traceEnd)
-      || skipDelimited(lines, index, buildStatusReportStart, buildStatusReportEnd)
-      || skipDelimited(lines, index, watchStatusReportStart, watchStatusReportEnd)) {
-      index = findDelimitedEnd(lines, index, lines[index]!.replace("Start", "End"));
+    if (skipDelimited(lines, index, statisticsStart, statisticsEnd)) {
+      index = findDelimitedEnd(lines, index, statisticsEnd);
+      continue;
+    }
+    if (skipDelimited(lines, index, traceStart, traceEnd)) {
+      if (!forComparing) out.push(...sanitizeDelimitedLines(lines, index, traceEnd, false));
+      index = findDelimitedEnd(lines, index, traceEnd);
+      continue;
+    }
+    if (skipDelimited(lines, index, buildStatusReportStart, buildStatusReportEnd)) {
+      if (!forComparing) out.push(...sanitizeDelimitedLines(lines, index, buildStatusReportEnd, true));
+      index = findDelimitedEnd(lines, index, buildStatusReportEnd);
+      continue;
+    }
+    if (skipDelimited(lines, index, watchStatusReportStart, watchStatusReportEnd)) {
+      if (!forComparing) out.push(...sanitizeDelimitedLines(lines, index, watchStatusReportEnd, true));
+      index = findDelimitedEnd(lines, index, watchStatusReportEnd);
       continue;
     }
     out.push(line);
@@ -287,5 +434,56 @@ function findDelimitedEnd(lines: readonly string[], index: number, end: string):
   for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
     if (lines[cursor] === end) return cursor;
   }
-  return lines.length - 1;
+  throw new Error(`Expected lineEnd ${end} not found after ${lines[index] ?? ""}`);
+}
+
+function sanitizeDelimitedLines(lines: readonly string[], startIndex: number, end: string, sanitizeFirstLine: boolean): readonly string[] {
+  const out: string[] = [];
+  let isFirstLine = true;
+  for (let index = startIndex + 1; index < lines.length; index += 1) {
+    const line = lines[index]!;
+    if (line === end) break;
+    if (sanitizeFirstLine && isFirstLine) {
+      out.push(sanitizeBuildStatusTimeStamp(line));
+    } else {
+      out.push(sanitizeVersionText(line));
+    }
+    isFirstLine = false;
+  }
+  return out;
+}
+
+function sanitizeBuildStatusTimeStamp(statusLine: string): string {
+  const separator = statusLine.indexOf(":");
+  if (separator < 2) throw new Error("Expected timestamp");
+  return `${statusLine.slice(0, Math.max(0, separator - 2))}${fakeTimeStamp}${statusLine.slice(separator + fakeTimeStamp.length - 2)}`;
+}
+
+function sanitizeVersionText(text: string): string {
+  return text.replace(/'\d+\.\d+\.\d+(?:-[^']*)?'/g, "'0.0.0'").replace(/\bVersion \d+\.\d+\.\d+(?:-[^\s]+)?/g, "Version 0.0.0");
+}
+
+function formatTrace(message: string, args: readonly unknown[]): string {
+  if (args.length === 0) return sanitizeVersionText(message);
+  let index = 0;
+  return sanitizeVersionText(message.replace(/%[sdv]/g, () => String(args[index++] ?? "")));
+}
+
+function signatureUpdateKindText(kind: "computed-dts" | "stored-at-emit" | "used-version"): string {
+  switch (kind) {
+    case "computed-dts": return "(computed .d.ts)";
+    case "stored-at-emit": return "(stored at emit)";
+    case "used-version": return "(used version)  ";
+  }
+}
+
+function relativePathFromDirectory(base: string, target: string): string {
+  const baseParts = base.split("/").filter(Boolean);
+  const targetParts = target.split("/").filter(Boolean);
+  let common = 0;
+  while (common < baseParts.length && common < targetParts.length && baseParts[common] === targetParts[common]) common += 1;
+  const up = new Array<string>(baseParts.length - common).fill("..");
+  const down = targetParts.slice(common);
+  const result = [...up, ...down].join("/");
+  return result === "" ? "." : result;
 }

@@ -26,6 +26,7 @@ export interface AffectedFilesProgram<SourceFile = unknown> {
   readonly skipTypeChecking: (file: SourceFile, ignoreNoCheck: boolean) => boolean;
   readonly computeDtsSignature: (file: SourceFile) => string | undefined;
   readonly affectsGlobalScope: (file: SourceFile) => boolean;
+  readonly hasExportedConstEnum?: (file: SourceFile) => boolean;
 }
 
 export interface AffectedFilesState<SourceFile = unknown, Diagnostic = unknown> {
@@ -35,13 +36,19 @@ export interface AffectedFilesState<SourceFile = unknown, Diagnostic = unknown> 
   readonly changedFiles: ReadonlySet<string>;
   readonly pendingEmit: Map<string, SnapshotFileEmitKind>;
   readonly diagnosticsToRemove: Set<string>;
+  readonly updatedSignatureKinds?: Map<string, SignatureUpdateKind> | undefined;
+  readonly buildInfoPending?: { value: boolean } | undefined;
+  readonly hasChangedDtsFile?: { value: boolean } | undefined;
 }
 
 export class AffectedFilesHandler<SourceFile = unknown, Diagnostic = unknown> {
   private readonly state: AffectedFilesState<SourceFile, Diagnostic>;
   private readonly referencedBy: ReadonlyMap<string, ReadonlySet<string>>;
   private readonly updatedSignatures = new Map<string, UpdatedSignature>();
+  private readonly dtsMayChange: DtsMayChange[] = [];
+  private readonly seenFileAndReferences = new Map<string, boolean>();
   private hasAllFilesExcludingDefaultLibraryFile = false;
+  private cleanedDiagnosticsOfLibFiles = false;
 
   constructor(state: AffectedFilesState<SourceFile, Diagnostic>) {
     this.state = state;
@@ -49,7 +56,9 @@ export class AffectedFilesHandler<SourceFile = unknown, Diagnostic = unknown> {
   }
 
   getDtsMayChange(affectedFilePath: string, affectedFileEmitKind: SnapshotFileEmitKind): DtsMayChange {
-    return new Map([[affectedFilePath, affectedFileEmitKind]]);
+    const result = new Map([[affectedFilePath, affectedFileEmitKind]]);
+    this.dtsMayChange.push(result);
+    return result;
   }
 
   isChangedSignature(path: string): boolean {
@@ -63,6 +72,8 @@ export class AffectedFilesHandler<SourceFile = unknown, Diagnostic = unknown> {
   }
 
   removeDiagnosticsOfLibraryFiles(): void {
+    if (this.cleanedDiagnosticsOfLibFiles) return;
+    this.cleanedDiagnosticsOfLibFiles = true;
     for (const file of this.state.program.getSourceFiles()) {
       if (this.state.program.isDefaultLibrary(file) && !this.state.program.skipTypeChecking(file, true)) {
         this.removeSemanticDiagnosticsOf(this.state.program.pathOf(file));
@@ -90,6 +101,7 @@ export class AffectedFilesHandler<SourceFile = unknown, Diagnostic = unknown> {
       this.hasAllFilesExcludingDefaultLibraryFile = true;
       return this.allFilesExcludingDefaultLibrary(file);
     }
+    if (optionBool(this.state.snapshot.options, "isolatedModules")) return [file];
     return this.forEachFileReferencedBy(file, (currentFile) => {
       if (currentFile !== undefined && this.updateShapeSignature(currentFile, false)) return true;
       return false;
@@ -104,17 +116,42 @@ export class AffectedFilesHandler<SourceFile = unknown, Diagnostic = unknown> {
       this.updateShapeSignature(affectedFile, false);
       return;
     }
+    if (optionBool(this.state.snapshot.options, "assumeChangesOnlyAffectDirectDependencies")) return;
     if (!this.state.changedFiles.has(path) || !this.isChangedSignature(path)) return;
-    for (const file of this.forEachFileReferencedBy(affectedFile, () => true)) {
-      const currentPath = this.state.program.pathOf(file);
-      this.handleDtsMayChangeOf(dtsMayChange, currentPath, false);
+
+    if (optionBool(this.state.snapshot.options, "isolatedModules")) {
+      this.forEachFileReferencedBy(affectedFile, (_currentFile, currentPath) => {
+        if (this.handleDtsMayChangeOfGlobalScope(dtsMayChange, currentPath, false)) return false;
+        this.handleDtsMayChangeOf(dtsMayChange, currentPath, false);
+        return this.isChangedSignature(currentPath);
+      });
+      return;
+    }
+
+    const invalidateJsFiles = this.state.program.hasExportedConstEnum?.(affectedFile) === true;
+    for (const referencingPath of this.referencedBy.get(path) ?? []) {
+      if (this.handleDtsMayChangeOfGlobalScope(dtsMayChange, referencingPath, invalidateJsFiles)) return;
+      for (const nestedPath of this.referencedBy.get(referencingPath) ?? []) {
+        if (this.handleDtsMayChangeOfFileAndReferences(dtsMayChange, nestedPath, invalidateJsFiles)) return;
+      }
     }
   }
 
   handleDtsMayChangeOf(dtsMayChange: DtsMayChange, path: string, invalidateJsFiles: boolean): void {
+    if (this.state.changedFiles.has(path)) return;
+    const file = this.state.program.getSourceFileByPath(path);
+    if (file === undefined) return;
     this.removeSemanticDiagnosticsOf(path);
-    let emitKind = dtsMayChange.get(path) ?? SnapshotFileEmitKind.Dts;
-    if (invalidateJsFiles) emitKind |= SnapshotFileEmitKind.AllJs;
+    this.updateShapeSignature(file, true);
+    let emitKind = dtsMayChange.get(path) ?? SnapshotFileEmitKind.None;
+    if (invalidateJsFiles) {
+      emitKind |= getSnapshotEmitKindFromOptions(this.state.snapshot.options);
+    } else if (optionBool(this.state.snapshot.options, "declaration") || optionBool(this.state.snapshot.options, "composite")) {
+      emitKind |= optionBool(this.state.snapshot.options, "declarationMap")
+        ? SnapshotFileEmitKind.AllDts
+        : SnapshotFileEmitKind.Dts;
+    }
+    if (emitKind === SnapshotFileEmitKind.None) return;
     dtsMayChange.set(path, emitKind);
     this.state.pendingEmit.set(path, emitKind);
   }
@@ -127,6 +164,37 @@ export class AffectedFilesHandler<SourceFile = unknown, Diagnostic = unknown> {
     }
     this.hasAllFilesExcludingDefaultLibraryFile = true;
     return true;
+  }
+
+  handleDtsMayChangeOfFileAndReferences(dtsMayChange: DtsMayChange, filePath: string, invalidateJsFiles: boolean): boolean {
+    const existing = this.seenFileAndReferences.get(filePath);
+    if (existing !== undefined && (existing || !invalidateJsFiles)) return false;
+    if (existing !== undefined && invalidateJsFiles) this.seenFileAndReferences.set(filePath, true);
+    else this.seenFileAndReferences.set(filePath, invalidateJsFiles);
+
+    if (this.handleDtsMayChangeOfGlobalScope(dtsMayChange, filePath, invalidateJsFiles)) return true;
+    this.handleDtsMayChangeOf(dtsMayChange, filePath, invalidateJsFiles);
+    for (const referencingFilePath of this.referencedBy.get(filePath) ?? []) {
+      if (this.handleDtsMayChangeOfFileAndReferences(dtsMayChange, referencingFilePath, invalidateJsFiles)) return true;
+    }
+    return false;
+  }
+
+  updateSnapshot(): void {
+    for (const [filePath, update] of this.updatedSignatures) {
+      this.state.updatedSignatureKinds?.set(filePath, update.kind);
+    }
+    for (const path of this.state.diagnosticsToRemove) {
+      if (this.state.snapshot.semanticDiagnosticsPerFile instanceof Map) {
+        this.state.snapshot.semanticDiagnosticsPerFile.delete(path);
+      }
+    }
+    for (const change of this.dtsMayChange) {
+      for (const [filePath, emitKind] of change) {
+        this.state.pendingEmit.set(filePath, emitKind);
+      }
+    }
+    if (this.state.buildInfoPending !== undefined) this.state.buildInfoPending.value = true;
   }
 
   private forEachFileReferencedBy(file: SourceFile, shouldQueue: (file: SourceFile | undefined, path: string) => boolean): readonly SourceFile[] {
@@ -172,5 +240,25 @@ export function collectAffectedFiles<SourceFile, Diagnostic>(
       affected.set(state.program.pathOf(file), file);
     }
   }
+  const emitKind = getSnapshotEmitKindFromOptions(state.snapshot.options);
+  for (const file of affected.values()) {
+    const dtsMayChange = handler.getDtsMayChange(state.program.pathOf(file), emitKind);
+    handler.handleDtsMayChangeOfAffectedFile(dtsMayChange, file);
+  }
+  handler.updateSnapshot();
   return [...affected.values()];
+}
+
+function optionBool(options: ReadonlyMap<string, unknown>, key: string): boolean {
+  return options.get(key) === true;
+}
+
+function getSnapshotEmitKindFromOptions(options: ReadonlyMap<string, unknown>): SnapshotFileEmitKind {
+  let result = SnapshotFileEmitKind.Js;
+  if (optionBool(options, "sourceMap")) result |= SnapshotFileEmitKind.JsMap;
+  if (optionBool(options, "inlineSourceMap")) result |= SnapshotFileEmitKind.JsInlineMap;
+  if (optionBool(options, "declaration") || optionBool(options, "composite")) result |= SnapshotFileEmitKind.Dts;
+  if (optionBool(options, "declarationMap")) result |= SnapshotFileEmitKind.DtsMap;
+  if (optionBool(options, "emitDeclarationOnly")) result &= SnapshotFileEmitKind.AllDts;
+  return result;
 }
