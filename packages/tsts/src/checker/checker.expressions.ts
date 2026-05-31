@@ -117,7 +117,7 @@ import {
 } from "./checker.checkedtype.js";
 import { checkBlock } from "./checker.statements.js";
 import { getPropertyNameFromType, isTypeUsableAsPropertyName } from "./utilities.js";
-import { SignatureFlags, SignatureKind, TypeFlags, type Signature } from "./types.js";
+import { SignatureFlags, SignatureKind, TypeFlags, type IndexInfo, type Signature } from "./types.js";
 
 type SignatureKindValue = typeof SignatureKind.Call | typeof SignatureKind.Construct;
 const SignatureKindCall = SignatureKind.Call;
@@ -916,6 +916,182 @@ export function checkArithmeticOperandType(operand: AstNode, type: Type, diagnos
   return ok;
 }
 
+export function checkForDisallowedESSymbolOperand(operand: AstNode, type: Type, state: CheckState): boolean {
+  if ((type.flags & TypeFlags.ESSymbolLike) === 0) return true;
+  state.diagnostics.push({ message: "The Symbol primitive cannot be used as an arithmetic operand." });
+  void operand;
+  return false;
+}
+
+export function checkNaNEquality(left: AstNode, operator: Kind, right: AstNode, state: CheckState): void {
+  if ((operator === Kind.EqualsEqualsToken || operator === Kind.EqualsEqualsEqualsToken || operator === Kind.ExclamationEqualsToken || operator === Kind.ExclamationEqualsEqualsToken)
+    && (isGlobalNaN(left) || isGlobalNaN(right))) {
+    state.diagnostics.push({ message: "This condition will always return false. Did you mean to use Number.isNaN?" });
+  }
+}
+
+export function isGlobalNaN(node: AstNode): boolean {
+  return isIdentifier(node) && node.text === "NaN";
+}
+
+export function isTypeEqualityComparableTo(source: Type, target: Type, state: CheckState): boolean {
+  return state.relater.isTypeComparableTo(source, target) || state.relater.isTypeComparableTo(target, source);
+}
+
+export function checkTruthinessOfType(type: Type, node: AstNode, state: CheckState): Type {
+  const semantics = getSyntacticTruthySemantics(node);
+  if (semantics === "always" || (!isPossiblyFalsy(type) && isPossiblyTruthy(type))) {
+    state.diagnostics.push({ message: "This expression is always truthy." });
+  }
+  if (semantics === "never") state.diagnostics.push({ message: "This expression is always falsy." });
+  return type;
+}
+
+export function getSyntacticTruthySemantics(node: AstNode): "always" | "never" | "sometimes" {
+  if (isStringLiteral(node)) return node.text.length > 0 ? "always" : "never";
+  if (isNumericLiteral(node)) return Number(node.text) === 0 ? "never" : "always";
+  if (isObjectLiteralExpression(node) || isArrayLiteralExpression(node) || isArrowFunction(node)) return "always";
+  return "sometimes";
+}
+
+export function checkNullishCoalesceOperands(node: AstNode, state: CheckState): void {
+  if (!isBinaryExpression(node) || node.operatorToken.kind !== Kind.QuestionQuestionToken) return;
+  const leftType = inferExpression(node.left, state);
+  checkNullishCoalesceOperandLeft(node.left, leftType, state);
+  inferExpression(node.right, state);
+}
+
+export function checkNullishCoalesceOperandLeft(left: AstNode, leftType: Type, state: CheckState): void {
+  const semantics = getSyntacticNullishnessSemantics(left, leftType);
+  if (semantics === "never") state.diagnostics.push({ message: "Right operand of ?? is unreachable because the left operand is never nullish." });
+  if (semantics === "always") state.diagnostics.push({ message: "Left operand of ?? is always nullish." });
+}
+
+export function getSyntacticNullishnessSemantics(node: AstNode, type: Type): "always" | "never" | "sometimes" {
+  if ((type.flags & (TypeFlags.Null | TypeFlags.Undefined | TypeFlags.Void)) !== 0) return "always";
+  if (!isPossiblyNullOrUndefined(type)) return "never";
+  if (node.kind === Kind.NullKeyword || node.kind === Kind.VoidExpression) return "always";
+  return "sometimes";
+}
+
+export function isSideEffectFree(node: AstNode): boolean {
+  if (isIdentifier(node) || isStringLiteral(node) || isNumericLiteral(node) || isBigIntLiteral(node) || isNoSubstitutionTemplateLiteral(node)) return true;
+  if (isPropertyAccessExpression(node)) return isSideEffectFree(node.expression);
+  if (isElementAccessExpression(node)) return isSideEffectFree(node.expression) && isSideEffectFree(node.argumentExpression);
+  if (isParenthesizedExpression(node) || isNonNullExpression(node) || isAsExpression(node) || isSatisfiesExpression(node)) return isSideEffectFree(node.expression);
+  return false;
+}
+
+export function isIndirectCall(node: AstNode): boolean {
+  return isCallExpression(node)
+    && isBinaryExpression(node.expression)
+    && node.expression.operatorToken.kind === Kind.CommaToken;
+}
+
+export function checkInstanceOfExpression(node: AstNode, state: CheckState): Type {
+  if (isBinaryExpression(node)) {
+    inferExpression(node.left, state);
+    const rightType = inferExpression(node.right, state);
+    if (getConstructSignature(rightType) === undefined && !isAnyType(rightType)) {
+      state.diagnostics.push({ message: "The right-hand side of an instanceof expression must be constructable." });
+    }
+  }
+  return booleanType;
+}
+
+export function checkInExpression(node: AstNode, state: CheckState): Type {
+  if (isBinaryExpression(node)) {
+    const leftType = inferExpression(node.left, state);
+    inferExpression(node.right, state);
+    if (!isStringType(getApparentType(leftType)) && !isNumberType(getApparentType(leftType)) && !isAnyType(leftType)) {
+      state.diagnostics.push({ message: "The left-hand side of an in expression must be a property name." });
+    }
+  }
+  return booleanType;
+}
+
+export function hasEmptyObjectIntersection(type: Type): boolean {
+  return (type.flags & TypeFlags.Intersection) !== 0
+    && ((type.data as { readonly types?: readonly Type[] } | undefined)?.types?.some(isEmptyObjectLikeType) ?? false);
+}
+
+export function getExactOptionalUnassignableProperties(source: Type, target: Type, state: CheckState): readonly string[] {
+  const result: string[] = [];
+  for (const [name, targetProperty] of objectPropertyMap(target)) {
+    if (!isOptionalSymbol(targetProperty)) continue;
+    const sourceProperty = objectPropertyMap(source).get(name);
+    const sourceType = sourceProperty === undefined ? undefined : getTypeOfSymbol(sourceProperty);
+    const targetType = getTypeOfSymbol(targetProperty);
+    if (sourceType !== undefined && targetType !== undefined && !state.relater.isTypeAssignableTo(sourceType, targetType)) result.push(name);
+  }
+  return result;
+}
+
+export function isExactOptionalPropertyMismatch(source: Type, target: Type, state: CheckState): boolean {
+  return getExactOptionalUnassignableProperties(source, target, state).length > 0;
+}
+
+export function checkReferenceExpression(node: AstNode, invalidReferenceMessage: string | undefined, state: CheckState): Type {
+  const type = inferExpression(expressionNode(node), state);
+  if (!isReferenceAssignableTarget(node) && invalidReferenceMessage !== undefined) state.diagnostics.push({ message: invalidReferenceMessage });
+  return type;
+}
+
+export function checkSpreadPropOverrides(properties: readonly AstNode[], state: CheckState): void {
+  const seen = new Set<string>();
+  for (const property of properties) {
+    const name = propertyNameText((property as { readonly name?: PropertyName }).name, state);
+    if (name === undefined) continue;
+    if (seen.has(name)) state.diagnostics.push({ message: `Spread property '${name}' is overwritten by a later property.` });
+    seen.add(name);
+  }
+}
+
+export function getSpreadType(left: Type, right: Type, state: CheckState): Type {
+  const properties = new Map<string, ObjectProperty>();
+  for (const property of objectPropertiesOfType(left, state)) properties.set(property.name, property);
+  for (const property of objectPropertiesOfType(right, state)) properties.set(property.name, property);
+  return makeObjectType([...properties.values()], state, true);
+}
+
+export function getIndexInfoWithReadonly(type: Type, keyType: Type, readonly: boolean): IndexInfo | undefined {
+  return getIndexInfos(type)?.find(info => info.isReadonly === readonly && (info.keyType === keyType || (info.keyType.flags & keyType.flags) !== 0));
+}
+
+export function isValidSpreadType(type: Type): boolean {
+  return isAnyType(type) || isUnknownType(type) || (type.flags & (TypeFlags.Object | TypeFlags.NonPrimitive)) !== 0;
+}
+
+export function getUnionIndexInfos(types: readonly Type[], state: CheckState): readonly IndexInfo[] {
+  const infos = types.flatMap(type => [...(getIndexInfos(type) ?? [])]);
+  const result: IndexInfo[] = [];
+  for (const info of infos) {
+    const existing = result.find(candidate => candidate.keyType.flags === info.keyType.flags);
+    if (existing === undefined) result.push(info);
+    else existing.valueType = getUnionType([existing.valueType, info.valueType], state);
+  }
+  return result;
+}
+
+export function isNonGenericObjectType(type: Type): boolean {
+  return (type.flags & TypeFlags.Object) !== 0 && (type.flags & TypeFlags.TypeVariable) === 0;
+}
+
+export function tryMergeUnionOfObjectTypeAndEmptyObject(type: Type, state: CheckState): Type {
+  const parts = (type.data as { readonly types?: readonly Type[] } | undefined)?.types;
+  if ((type.flags & TypeFlags.Union) === 0 || parts === undefined) return type;
+  const nonEmpty = parts.filter(part => !isEmptyObjectLikeType(part));
+  return nonEmpty.length === parts.length ? type : getUnionType(nonEmpty.length === 0 ? [type] : nonEmpty, state);
+}
+
+export function isSpreadableProperty(symbol: AstSymbol): boolean {
+  return ((symbol.flags ?? 0) & (SymbolFlags.Method | SymbolFlags.GetAccessor | SymbolFlags.SetAccessor)) === 0;
+}
+
+export function getSpreadSymbol(symbol: AstSymbol, readonly: boolean): AstSymbol {
+  return { ...symbol, flags: symbol.flags, declarations: symbol.declarations, readonly } as AstSymbol;
+}
+
 export function checkBinaryExpression(node: AstNode, state: CheckState): Type {
   const expression = expressionNode(node);
   return isBinaryExpression(expression) ? inferExpression(expression, state) : unresolvedType;
@@ -1682,7 +1858,8 @@ function functionParametersFromNode(parameters: readonly ParameterDeclaration[],
     }));
 }
 
-function propertyNameText(name: PropertyName, state: CheckState): string | undefined {
+function propertyNameText(name: PropertyName | undefined, state: CheckState): string | undefined {
+  if (name === undefined) return undefined;
   if (isIdentifier(name) || isPrivateIdentifier(name)) return name.text;
   if (isStringLiteral(name) || isNoSubstitutionTemplateLiteral(name) || isNumericLiteral(name) || isBigIntLiteral(name)) return name.text;
   if (isComputedPropertyName(name)) {
@@ -1693,6 +1870,29 @@ function propertyNameText(name: PropertyName, state: CheckState): string | undef
   }
   state.diagnostics.push({ message: `Property name kind '${kindDebugName((name as { readonly kind: Kind }).kind)}' is not yet supported by the checker.` });
   return undefined;
+}
+
+function isEmptyObjectLikeType(type: Type): boolean {
+  if ((type.flags & TypeFlags.Object) === 0) return false;
+  const members = (type.symbol as unknown as { readonly members?: ReadonlyMap<string, unknown> } | undefined)?.members;
+  const data = type.data as { readonly declaredCallSignatures?: readonly unknown[]; readonly declaredConstructSignatures?: readonly unknown[]; readonly indexInfos?: readonly unknown[] } | undefined;
+  return (members?.size ?? 0) === 0
+    && (data?.declaredCallSignatures?.length ?? 0) === 0
+    && (data?.declaredConstructSignatures?.length ?? 0) === 0
+    && (data?.indexInfos?.length ?? 0) === 0;
+}
+
+function objectPropertyMap(type: Type): ReadonlyMap<string, AstSymbol> {
+  return (type.symbol as unknown as { readonly members?: ReadonlyMap<string, AstSymbol> } | undefined)?.members ?? new Map<string, AstSymbol>();
+}
+
+function isReferenceAssignableTarget(node: AstNode): boolean {
+  return isIdentifier(node)
+    || isPropertyAccessExpression(node)
+    || isElementAccessExpression(node)
+    || isObjectLiteralExpression(node)
+    || isArrayLiteralExpression(node)
+    || (isParenthesizedExpression(node) && isReferenceAssignableTarget(node.expression));
 }
 
 function objectPropertiesOfType(type: Type, state: CheckState): readonly ObjectProperty[] {
