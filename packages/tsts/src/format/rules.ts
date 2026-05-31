@@ -292,6 +292,622 @@ export function getAllRules(): readonly RuleSpec[] {
     RuleAction.DeleteSpace,
   ));
 
+  rules.push(rule(
+    "NoSpaceAfterOpenParenBeforeCloseParen",
+    Kind.OpenParenToken,
+    Kind.CloseParenToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceAfterOpenBracketBeforeCloseBracket",
+    Kind.OpenBracketToken,
+    Kind.CloseBracketToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterSemicolonInFor",
+    Kind.SemicolonToken,
+    anyToken,
+    [predicates.isOptionEnabled(predicates.insertSpaceAfterSemicolonInForStatementsOption), predicates.isForContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceBeforeSemicolonInFor",
+    anyToken,
+    Kind.SemicolonToken,
+    [predicates.isForContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceBeforeFunctionOpenParen",
+    Kind.FunctionKeyword,
+    Kind.OpenParenToken,
+    [predicates.isOptionEnabled(predicates.insertSpaceBeforeFunctionParenthesisOption), predicates.isFunctionDeclContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceBeforeFunctionOpenParen",
+    Kind.FunctionKeyword,
+    Kind.OpenParenToken,
+    [predicates.isOptionDisabledOrUndefined(predicates.insertSpaceBeforeFunctionParenthesisOption), predicates.isFunctionDeclContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterAnonymousFunctionKeyword",
+    Kind.FunctionKeyword,
+    anyToken,
+    [predicates.isOptionEnabled(predicates.insertSpaceAfterFunctionKeywordForAnonymousFunctionsOption), predicates.isFunctionDeclarationOrFunctionExpressionContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterConstructorKeyword",
+    Kind.ConstructorKeyword,
+    Kind.OpenParenToken,
+    [predicates.isOptionEnabled(predicates.insertSpaceAfterConstructorOption), predicates.isFunctionDeclContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceBeforeTypeAnnotationColon",
+    anyToken,
+    Kind.ColonToken,
+    [predicates.isTypeAnnotationContext, predicates.isOptionDisabledOrUndefined(predicates.insertSpaceBeforeTypeAnnotationOption)],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceBeforeTypeAnnotationColon",
+    anyToken,
+    Kind.ColonToken,
+    [predicates.isTypeAnnotationContext, predicates.isOptionEnabled(predicates.insertSpaceBeforeTypeAnnotationOption)],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterTypeAnnotationColon",
+    Kind.ColonToken,
+    anyToken,
+    [predicates.isTypeAnnotationContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceBeforeOptionalPropertyQuestion",
+    anyToken,
+    Kind.QuestionToken,
+    [predicates.isOptionalPropertyContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceAfterOptionalPropertyQuestion",
+    Kind.QuestionToken,
+    Kind.ColonToken,
+    [predicates.isOptionalPropertyContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAroundEqualsInVariableDeclaration",
+    Kind.EqualsToken,
+    anyToken,
+    [predicates.isVariableDeclarationOrInitializerContext, predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceBeforeEqualsInVariableDeclaration",
+    anyToken,
+    Kind.EqualsToken,
+    [predicates.isVariableDeclarationOrInitializerContext, predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceAfterOpenBraceEmptyBraces",
+    Kind.OpenBraceToken,
+    Kind.CloseBraceToken,
+    [predicates.isOptionDisabledOrUndefined(predicates.insertSpaceAfterOpeningAndBeforeClosingEmptyBracesOption), predicates.isNonJsxSameLineTokenContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterOpenBraceEmptyBraces",
+    Kind.OpenBraceToken,
+    Kind.CloseBraceToken,
+    [predicates.isOptionEnabled(predicates.insertSpaceAfterOpeningAndBeforeClosingEmptyBracesOption), predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceBeforeOpenBraceForFunctions",
+    anyToken,
+    Kind.OpenBraceToken,
+    [predicates.isFunctionDeclContext, predicates.isOptionDisabledOrUndefined(predicates.placeOpenBraceOnNewLineForFunctionsOption), predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NewLineBeforeOpenBraceForFunctions",
+    anyToken,
+    Kind.OpenBraceToken,
+    [predicates.isFunctionDeclContext, predicates.isOptionEnabled(predicates.placeOpenBraceOnNewLineForFunctionsOption)],
+    RuleAction.InsertNewLine,
+  ));
+
+  rules.push(rule(
+    "SpaceBeforeOpenBraceForControl",
+    anyToken,
+    Kind.OpenBraceToken,
+    [predicates.isControlDeclContext, predicates.isOptionDisabledOrUndefined(predicates.placeOpenBraceOnNewLineForControlBlocksOption), predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NewLineBeforeOpenBraceForControl",
+    anyToken,
+    Kind.OpenBraceToken,
+    [predicates.isControlDeclContext, predicates.isOptionEnabled(predicates.placeOpenBraceOnNewLineForControlBlocksOption)],
+    RuleAction.InsertNewLine,
+  ));
+
+  rules.push(rule(
+    "NoSpaceAfterJsxExpressionOpenBrace",
+    Kind.OpenBraceToken,
+    anyToken,
+    [predicates.isJsxExpressionContext, predicates.isOptionDisabledOrUndefined(predicates.insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBracesOption)],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterJsxExpressionOpenBrace",
+    Kind.OpenBraceToken,
+    anyToken,
+    [predicates.isJsxExpressionContext, predicates.isOptionEnabled(predicates.insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBracesOption)],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceBeforeJsxExpressionCloseBrace",
+    anyToken,
+    Kind.CloseBraceToken,
+    [predicates.isJsxExpressionContext, predicates.isOptionDisabledOrUndefined(predicates.insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBracesOption)],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceBeforeJsxExpressionCloseBrace",
+    anyToken,
+    Kind.CloseBraceToken,
+    [predicates.isJsxExpressionContext, predicates.isOptionEnabled(predicates.insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBracesOption)],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceAfterTemplateOpenBrace",
+    Kind.OpenBraceToken,
+    anyToken,
+    [predicates.isOptionDisabledOrUndefined(predicates.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBracesOption)],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterTemplateOpenBrace",
+    Kind.OpenBraceToken,
+    anyToken,
+    [predicates.isOptionEnabled(predicates.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBracesOption)],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceBeforeTemplateCloseBrace",
+    anyToken,
+    Kind.CloseBraceToken,
+    [predicates.isOptionDisabledOrUndefined(predicates.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBracesOption)],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceBeforeTemplateCloseBrace",
+    anyToken,
+    Kind.CloseBraceToken,
+    [predicates.isOptionEnabled(predicates.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBracesOption)],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceBeforeCloseBraceSingleLineBlock",
+    anyToken,
+    Kind.CloseBraceToken,
+    [predicates.isSingleLineBlockContext, predicates.isOptionDisabledOrUndefined(predicates.insertSpaceAfterOpeningAndBeforeClosingNonemptyBracesOption)],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceBeforeCloseBraceSingleLineBlock",
+    anyToken,
+    Kind.CloseBraceToken,
+    [predicates.isSingleLineBlockContext, predicates.isOptionEnabled(predicates.insertSpaceAfterOpeningAndBeforeClosingNonemptyBracesOption)],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NewLineAfterOpenBraceMultilineBlock",
+    Kind.OpenBraceToken,
+    anyToken,
+    [predicates.isMultilineBlockContext],
+    RuleAction.InsertNewLine,
+  ));
+
+  rules.push(rule(
+    "NewLineBeforeCloseBraceMultilineBlock",
+    anyToken,
+    Kind.CloseBraceToken,
+    [predicates.isMultilineBlockContext],
+    RuleAction.InsertNewLine,
+  ));
+
+  rules.push(rule(
+    "NoSpaceAfterLessThanInTypeArguments",
+    Kind.LessThanToken,
+    anyToken,
+    [predicates.isTypeArgumentOrParameterOrAssertionContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceBeforeGreaterThanInTypeArguments",
+    anyToken,
+    Kind.GreaterThanToken,
+    [predicates.isTypeArgumentOrParameterOrAssertionContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterExtendsKeyword",
+    Kind.ExtendsKeyword,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterImplementsKeyword",
+    Kind.ImplementsKeyword,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterFromKeyword",
+    Kind.FromKeyword,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceBeforeFromKeyword",
+    anyToken,
+    Kind.FromKeyword,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterAsKeyword",
+    Kind.AsKeyword,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceBeforeAsKeyword",
+    anyToken,
+    Kind.AsKeyword,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterSatisfiesKeyword",
+    Kind.SatisfiesKeyword,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceBeforeSatisfiesKeyword",
+    anyToken,
+    Kind.SatisfiesKeyword,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceAfterAtDecorator",
+    Kind.AtToken,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "NewLineAfterDecorator",
+    anyToken,
+    [Kind.ExportKeyword, Kind.DefaultKeyword, Kind.ClassKeyword, Kind.FunctionKeyword],
+    [predicates.isEndOfDecoratorContextOnSameLine],
+    RuleAction.InsertNewLine,
+  ));
+
+  rules.push(rule(
+    "NoSpaceAfterSpread",
+    Kind.DotDotDotToken,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceBeforeSpread",
+    anyToken,
+    Kind.DotDotDotToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterCaseKeyword",
+    Kind.CaseKeyword,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceBeforeCaseColon",
+    anyToken,
+    Kind.ColonToken,
+    [predicates.isEnumDeclarationContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterThrowKeyword",
+    Kind.ThrowKeyword,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterImportKeyword",
+    Kind.ImportKeyword,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterExportKeyword",
+    Kind.ExportKeyword,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterDefaultKeyword",
+    Kind.DefaultKeyword,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterReadonlyKeyword",
+    Kind.ReadonlyKeyword,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterPublicPrivateProtected",
+    [Kind.PublicKeyword, Kind.PrivateKeyword, Kind.ProtectedKeyword],
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterStaticAbstractAccessor",
+    [Kind.StaticKeyword, Kind.AbstractKeyword, Kind.AccessorKeyword],
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterAsyncKeyword",
+    Kind.AsyncKeyword,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterLetConstVarKeywords",
+    [Kind.LetKeyword, Kind.ConstKeyword, Kind.VarKeyword],
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterGetSetKeywords",
+    [Kind.GetKeyword, Kind.SetKeyword],
+    anyToken,
+    [predicates.isClassMemberContext, predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterInOfKeywords",
+    [Kind.InKeyword, Kind.OfKeyword],
+    anyToken,
+    [predicates.isForContext, predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceBeforeInOfKeywords",
+    anyToken,
+    [Kind.InKeyword, Kind.OfKeyword],
+    [predicates.isForContext, predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterInstanceofKeyword",
+    Kind.InstanceOfKeyword,
+    anyToken,
+    [predicates.isBinaryOpContext, predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceBeforeInstanceofKeyword",
+    anyToken,
+    Kind.InstanceOfKeyword,
+    [predicates.isBinaryOpContext, predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterInferKeyword",
+    Kind.InferKeyword,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterKeyofUniqueKeywords",
+    [Kind.KeyOfKeyword, Kind.UniqueKeyword],
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterAssertKeyword",
+    Kind.AssertKeyword,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceBeforeNonNullAssertion",
+    anyToken,
+    Kind.ExclamationToken,
+    [predicates.isNonJsxSameLineTokenContext, predicates.isNotBinaryOpContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceAfterNonNullAssertion",
+    Kind.ExclamationToken,
+    anyToken,
+    [predicates.isNonJsxSameLineTokenContext, predicates.isNotBinaryOpContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAroundAmpersandIntersection",
+    Kind.AmpersandToken,
+    anyToken,
+    [predicates.isInterfaceOrTypeAliasContext, predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceBeforeAmpersandIntersection",
+    anyToken,
+    Kind.AmpersandToken,
+    [predicates.isInterfaceOrTypeAliasContext, predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAroundBarUnion",
+    Kind.BarToken,
+    anyToken,
+    [predicates.isInterfaceOrTypeAliasContext, predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceBeforeBarUnion",
+    anyToken,
+    Kind.BarToken,
+    [predicates.isInterfaceOrTypeAliasContext, predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceBeforeQuestionDot",
+    anyToken,
+    Kind.QuestionDotToken,
+    [predicates.isPropertyAccessExpressionContext, predicates.isNonJsxSameLineTokenContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceAfterQuestionDot",
+    Kind.QuestionDotToken,
+    anyToken,
+    [predicates.isPropertyAccessExpressionContext, predicates.isNonJsxSameLineTokenContext],
+    RuleAction.DeleteSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterNamespaceKeyword",
+    Kind.NamespaceKeyword,
+    anyToken,
+    [predicates.isModuleDeclContext, predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "SpaceAfterModuleKeyword",
+    Kind.ModuleKeyword,
+    anyToken,
+    [predicates.isModuleDeclContext, predicates.isNonJsxSameLineTokenContext],
+    RuleAction.InsertSpace,
+  ));
+
+  rules.push(rule(
+    "NoSpaceAroundImportTypeDot",
+    anyToken,
+    Kind.DotToken,
+    [predicates.isImportTypeContext, predicates.isNonJsxSameLineTokenContext],
+    RuleAction.DeleteSpace,
+  ));
+
   void anyTokenIncludingMultilineComments;
   void anyTokenIncludingEOF;
 
