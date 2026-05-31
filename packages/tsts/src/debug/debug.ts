@@ -12,10 +12,13 @@
  * `Fail` behavior of prefixing the message with "Debug failure.".
  */
 export function fail(reason?: string): never {
-  const msg = reason && reason.length > 0
+  throw new Error(formatFailureMessage(reason));
+}
+
+export function formatFailureMessage(reason?: string): string {
+  return reason !== undefined && reason.length > 0
     ? "Debug failure. " + reason
     : "Debug failure.";
-  throw new Error(msg);
 }
 
 /**
@@ -33,7 +36,7 @@ export function failBadSyntaxKind(node: { kindString(): string }, ...message: re
  */
 export function assertNever(member: unknown, ...message: readonly unknown[]): never {
   const msg = message.length === 0 ? "Illegal value:" : message.join("");
-  fail(`${msg} ${String(member)}`);
+  fail(`${msg} ${debugString(member)}`);
 }
 
 /**
@@ -42,8 +45,38 @@ export function assertNever(member: unknown, ...message: readonly unknown[]): ne
  */
 export function assert(value: boolean, ...message: readonly unknown[]): asserts value {
   if (value) return;
-  const msg = message.length > 0
+  assertSlow(...message);
+}
+
+function assertSlow(...message: readonly unknown[]): never {
+  fail(formatAssertionMessage(message));
+}
+
+export function formatAssertionMessage(message: readonly unknown[]): string {
+  return message.length > 0
     ? "False expression: " + message.join("")
     : "False expression.";
-  fail(msg);
+}
+
+export function debugString(value: unknown): string {
+  if (hasKindString(value)) {
+    return value.kindString();
+  }
+  if (hasToString(value)) {
+    return value.toString();
+  }
+  return String(value);
+}
+
+export function hasKindString(value: unknown): value is { kindString(): string } {
+  return typeof value === "object"
+    && value !== null
+    && typeof (value as { readonly kindString?: unknown }).kindString === "function";
+}
+
+export function hasToString(value: unknown): value is { toString(): string } {
+  return typeof value === "object"
+    && value !== null
+    && typeof (value as { readonly toString?: unknown }).toString === "function"
+    && (value as { readonly toString: unknown }).toString !== Object.prototype.toString;
 }

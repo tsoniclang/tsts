@@ -12,7 +12,7 @@ export const ComparisonEqual: Comparison = 0;
 export const ComparisonGreaterThan: Comparison = 1;
 
 export function equateStringCaseInsensitive(a: string, b: string): boolean {
-  return a === b || a.toLowerCase() === b.toLowerCase();
+  return compareStringsCaseInsensitive(a, b) === ComparisonEqual;
 }
 
 export function equateStringCaseSensitive(a: string, b: string): boolean {
@@ -27,10 +27,20 @@ export function getStringEqualityComparer(
 
 export function compareStringsCaseInsensitive(a: string, b: string): Comparison {
   if (a === b) return ComparisonEqual;
-  const la = a.toLowerCase();
-  const lb = b.toLowerCase();
-  if (la < lb) return ComparisonLessThan;
-  if (la > lb) return ComparisonGreaterThan;
+  let aIndex = 0;
+  let bIndex = 0;
+  while (aIndex < a.length || bIndex < b.length) {
+    if (aIndex >= a.length) return ComparisonLessThan;
+    if (bIndex >= b.length) return ComparisonGreaterThan;
+    const aCodePoint = a.codePointAt(aIndex)!;
+    const bCodePoint = b.codePointAt(bIndex)!;
+    const aLower = String.fromCodePoint(aCodePoint).toLowerCase();
+    const bLower = String.fromCodePoint(bCodePoint).toLowerCase();
+    if (aLower < bLower) return ComparisonLessThan;
+    if (aLower > bLower) return ComparisonGreaterThan;
+    aIndex += aCodePoint > 0xffff ? 2 : 1;
+    bIndex += bCodePoint > 0xffff ? 2 : 1;
+  }
   return ComparisonEqual;
 }
 
