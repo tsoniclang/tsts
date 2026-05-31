@@ -5,8 +5,9 @@ import { newProgram, type CompilerHost, type EmitResult, type Program } from "..
 import { optionDeclarations, type CommandLineOption } from "../../tsoptions/index.js";
 import { parseListTypeOption } from "../../tsoptions/commandLineParser.js";
 import { ParsedCommandLine } from "../../tsoptions/parsedCommandLine.js";
-import { getDirectoryPath, hasJSFileExtension, hasJSONFileExtension, isDeclarationFileName, normalizePath } from "../../tspath/index.js";
-import { getDeclarationEmitOutputFilePath, getOutputJSFileNameWorker } from "../../outputpaths/index.js";
+import { ensureTrailingDirectorySeparator, getDirectoryPath, hasJSFileExtension, hasJSONFileExtension, isDeclarationFileName, normalizePath } from "../../tspath/index.js";
+import { getDeclarationEmitOutputFilePath, getOutputJSFileNameWorker, type OutputPathsHost } from "../../outputpaths/index.js";
+import { parseSourceFile } from "../../parser/index.js";
 
 export interface NamedSource {
   readonly name: string;
@@ -279,6 +280,118 @@ export function compileFilesEx(options: {
       return compileFiles(repeatOptions);
     },
   };
+}
+
+export function getOptionValue(testConfig: TestConfiguration, name: string): string | undefined {
+  for (const [key, value] of testConfig) {
+    if (key.toLowerCase() === name.toLowerCase()) return value;
+  }
+  return undefined;
+}
+
+export function getSourceFile(result: CompilationResult, fileName: string): SourceFile | undefined {
+  return result.program.getSourceFile(normalizedAbsolutePath(fileName, result.currentDirectory));
+}
+
+export function newTracerForBaselining(currentDirectory: string, useCaseSensitiveFileNames: boolean): TracerForBaselining {
+  return new TracerForBaselining(currentDirectory, useCaseSensitiveFileNames);
+}
+
+export function traceWithWriter(currentDirectory: string, useCaseSensitiveFileNames: boolean, write: (line: string) => void): TracerForBaselining {
+  const tracer = new TracerForBaselining(currentDirectory, useCaseSensitiveFileNames);
+  const originalTrace = tracer.trace.bind(tracer);
+  tracer.trace = (message: string) => {
+    originalTrace(message);
+    write(tracer.toString().split("\n").at(-1) ?? message);
+  };
+  return tracer;
+}
+
+export function createCompilerHost(
+  files: ReadonlyMap<string, string>,
+  symlinks: ReadonlyMap<string, string>,
+  currentDirectory: string,
+  useCaseSensitiveFileNames: boolean,
+): HarnessCompilerHost {
+  return new HarnessCompilerHost(files, symlinks, currentDirectory, useCaseSensitiveFileNames);
+}
+
+export function compileFilesWithHost(
+  inputFiles: readonly TestFile[],
+  host: HarnessCompilerHost,
+  compilerOptions: CompilerOptions,
+  currentDirectory: string,
+): CompilationResult {
+  const parsed = new ParsedCommandLine(
+    compilerOptions,
+    inputFiles.map(file => normalizedAbsolutePath(file.unitName, currentDirectory)),
+    { currentDirectory, useCaseSensitiveFileNames: host.useCaseSensitiveFileNames() },
+  );
+  return compileFilesEx({
+    inputFiles,
+    otherFiles: [],
+    harnessOptions: defaultHarnessOptions(currentDirectory),
+    compilerOptions,
+    currentDirectory,
+    symlinks: new Map(),
+    tsconfig: parsed,
+  });
+}
+
+export function newCompilationResult(options: CompileFilesOptions): CompilationResult {
+  return compileFiles(options);
+}
+
+export function getOutputPath(fileName: string, kind: "js" | "dts" | "map", compilerOptions: CompilerOptions, currentDirectory: string): string {
+  const normalized = normalizedAbsolutePath(fileName, currentDirectory);
+  const outputHost: OutputPathsHost = {
+    commonSourceDirectory: () => ensureTrailingDirectorySeparator(getDirectoryPath(normalized)),
+    getCurrentDirectory: () => currentDirectory,
+    useCaseSensitiveFileNames: () => true,
+  };
+  switch (kind) {
+    case "dts":
+      return getDeclarationEmitOutputFilePath(normalized, compilerOptions, outputHost);
+    case "map":
+      return `${getOutputJSFileNameWorker(normalized, compilerOptions, outputHost)}.map`;
+    default:
+      return getOutputJSFileNameWorker(normalized, compilerOptions, outputHost);
+  }
+}
+
+export function readBuildInfo(result: CompilationResult, fileName = ".tsbuildinfo"): string | undefined {
+  return result.files.get(normalizedAbsolutePath(fileName, result.currentDirectory));
+}
+
+export function getTestBuildInfoReader(result: CompilationResult): (fileName: string) => string | undefined {
+  return (fileName) => readBuildInfo(result, fileName);
+}
+
+export function createProgram(options: CompileFilesOptions): Program {
+  return compileFiles(options).program;
+}
+
+export function enumerateFiles(files: ReadonlyMap<string, string>, root = "/"): readonly string[] {
+  const normalizedRoot = normalizePath(root).replace(/\/+$/, "");
+  return [...files.keys()]
+    .filter(fileName => fileName === normalizedRoot || fileName.startsWith(normalizedRoot + "/"))
+    .sort();
+}
+
+export function listFiles(files: ReadonlyMap<string, string>, root = "/"): readonly string[] {
+  return enumerateFiles(files, root);
+}
+
+export function listFilesWorker(files: ReadonlyMap<string, string>, root: string, results: string[]): void {
+  results.push(...enumerateFiles(files, root));
+}
+
+export function skipUnsupportedCompilerOptions(testConfig: TestConfiguration): TestConfiguration {
+  const supported = new Map<string, string>();
+  for (const [key, value] of testConfig) {
+    if (getHarnessOption(key) !== undefined || getCommandLineOption(key) !== undefined) supported.set(key, value);
+  }
+  return supported;
 }
 
 export function setOptionsFromTestConfig(
@@ -563,7 +676,7 @@ export class TracerForBaselining {
   }
 }
 
-class HarnessCompilerHost implements CompilerHost {
+export class HarnessCompilerHost implements CompilerHost {
   readonly trace: string[] = [];
   private readonly tracer: TracerForBaselining;
   private readonly files: Map<string, string>;
@@ -595,6 +708,12 @@ class HarnessCompilerHost implements CompilerHost {
     return this.files.get(normalized);
   }
 
+  getSourceFile(path: string): SourceFile | undefined {
+    const text = this.readFile(path);
+    if (text === undefined) return undefined;
+    return parseSourceFile(text, { fileName: this.resolvePath(path) });
+  }
+
   writeFile(path: string, data: string): void {
     const normalized = normalizePath(path);
     this.pushTrace(`writeFile ${normalized}`);
@@ -607,6 +726,25 @@ class HarnessCompilerHost implements CompilerHost {
 
   useCaseSensitiveFileNames(): boolean {
     return this.caseSensitive;
+  }
+
+  fs(): ReadonlyMap<string, string> {
+    return new Map(this.files);
+  }
+
+  enumerateFiles(root = this.currentDirectory): readonly string[] {
+    return this.listFiles(root);
+  }
+
+  listFiles(root = this.currentDirectory): readonly string[] {
+    const normalizedRoot = normalizePath(root).replace(/\/+$/, "");
+    return [...this.files.keys()]
+      .filter(fileName => fileName === normalizedRoot || fileName.startsWith(normalizedRoot + "/"))
+      .sort();
+  }
+
+  listFilesWorker(root: string, results: string[]): void {
+    results.push(...this.listFiles(root));
   }
 
   directoryExists(path: string): boolean {
