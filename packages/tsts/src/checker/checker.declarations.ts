@@ -50,7 +50,7 @@ import {
 } from "./checker.checkedtype.js";
 import { inferExpression } from "./checker.expressions.js";
 import { checkBlock } from "./checker.statements.js";
-import type { Type } from "./types.js";
+import { SignatureFlags, TypeFlags, type Signature, type Type } from "./types.js";
 
 // The class/function name + its parameters/members were declared by the binder
 // into the appropriate symbol tables (the class symbol's members/exports, the
@@ -544,6 +544,212 @@ export function checkBaseTypeAccessibility(node: AstNode, baseTypes: readonly Ty
   }
 }
 
+export function isConstructorAccessible(node: AstNode, signature: Signature | undefined, state: CheckState): boolean {
+  if (signature?.declaration === undefined) return true;
+  const declaration = signature.declaration;
+  if (declaration.kind !== Kind.Constructor) return true;
+  const accessibility = accessibilityModifier(declaration);
+  if (accessibility === undefined) return true;
+  const declaringClass = parentOf(declaration);
+  if (declaringClass !== undefined && isNodeWithinClass(node, declaringClass)) return true;
+  if (accessibility === Kind.ProtectedKeyword) {
+    const containingClass = getContainingClass(node);
+    const containingType = containingClass === undefined ? undefined : typeFromClassOrInterfaceDeclaration(containingClass as ClassDeclaration, state);
+    const declaringSymbol = declaringClass === undefined ? undefined : nodeSymbol(declaringClass);
+    if (declaringSymbol !== undefined && containingType !== undefined && typeHasProtectedAccessibleBase(declaringSymbol, containingType)) return true;
+  }
+  state.diagnostics.push({ message: accessibility === Kind.PrivateKeyword ? "Constructor is private and only accessible within the class declaration." : "Constructor is protected and only accessible within the class declaration." });
+  return false;
+}
+
+export function typeHasProtectedAccessibleBase(target: AstSymbolLike, type: Type | undefined): boolean {
+  if (type === undefined) return false;
+  if (type.symbol === target) return true;
+  const baseTypes = (type.data as { readonly resolvedBaseTypes?: readonly Type[]; readonly baseTypes?: readonly Type[] } | undefined)?.resolvedBaseTypes
+    ?? (type.data as { readonly baseTypes?: readonly Type[] } | undefined)?.baseTypes
+    ?? [];
+  return baseTypes.some(base => typeHasProtectedAccessibleBase(target, base));
+}
+
+export function isPotentiallyUncalledDecorator(decorator: AstNode, signatures: readonly Signature[]): boolean {
+  return signatures.length > 0 && signatures.every(signature =>
+    signature.minArgumentCount === 0
+    && (signature.flags & SignatureFlags.HasRestParameter) === 0
+    && signature.parameters.length < getDecoratorArgumentCount(decorator));
+}
+
+export function getDiagnosticHeadMessageForDecoratorResolution(node: AstNode): string {
+  switch (parentOf(node)?.kind) {
+    case Kind.ClassDeclaration:
+    case Kind.ClassExpression:
+      return "Unable_to_resolve_signature_of_class_decorator_when_called_as_an_expression";
+    case Kind.Parameter:
+      return "Unable_to_resolve_signature_of_parameter_decorator_when_called_as_an_expression";
+    case Kind.PropertyDeclaration:
+      return "Unable_to_resolve_signature_of_property_decorator_when_called_as_an_expression";
+    case Kind.MethodDeclaration:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+      return "Unable_to_resolve_signature_of_method_decorator_when_called_as_an_expression";
+    default:
+      return "Unable_to_resolve_signature_of_decorator_when_called_as_an_expression";
+  }
+}
+
+export function maybeAddMissingAwaitInfo(errorNode: AstNode | undefined, source: Type, target: Type, state: CheckState): void {
+  if (errorNode === undefined) return;
+  if ((source.symbol?.name ?? "") === "Promise" && state.relater.isTypeAssignableTo((source.data as { readonly resolvedTypeArguments?: readonly Type[] } | undefined)?.resolvedTypeArguments?.[0] ?? source, target)) {
+    state.diagnostics.push({ message: "Did_you_forget_to_use_await" });
+  }
+}
+
+export function isSameScopedBindingElement(node: AstNode, declaration: AstNode): boolean {
+  if (declaration.kind !== Kind.BindingElement) return false;
+  const bindingElement = findAncestor(node, candidate => candidate.kind === Kind.BindingElement);
+  return bindingElement !== undefined && rootDeclaration(bindingElement) === rootDeclaration(declaration);
+}
+
+export function removeOptionalityFromDeclaredType(declaredType: Type, declaration: AstNode, state: CheckState): Type {
+  if (!state.relater.strictNullChecks) return declaredType;
+  if (declaration.kind !== Kind.Parameter || (declaration as { readonly initializer?: AstNode }).initializer === undefined) return declaredType;
+  if (!parameterInitializerContainsUndefined(declaration, state) && (declaredType.flags & TypeFlags.Union) !== 0) {
+    const types = (declaredType.data as { readonly types?: readonly Type[] } | undefined)?.types?.filter(type => (type.flags & TypeFlags.Undefined) === 0);
+    if (types !== undefined && types.length > 0) return types.length === 1 ? types[0]! : declaredType;
+  }
+  return declaredType;
+}
+
+export function parameterInitializerContainsUndefined(declaration: AstNode, state: CheckState): boolean {
+  const initializer = (declaration as { readonly initializer?: AstNode }).initializer;
+  if (initializer === undefined) return false;
+  const type = inferExpression(initializer as never, state);
+  return (type.flags & TypeFlags.Undefined) !== 0
+    || ((type.flags & TypeFlags.Union) !== 0 && ((type.data as { readonly types?: readonly Type[] } | undefined)?.types?.some(part => (part.flags & TypeFlags.Undefined) !== 0) ?? false));
+}
+
+export function checkAndReportErrorForExtendingInterface(errorLocation: AstNode, state: CheckState): boolean {
+  const expression = getEntityNameForExtendingInterface(errorLocation);
+  if (expression === undefined) return false;
+  state.diagnostics.push({ message: `Cannot_extend_an_interface_0_Did_you_mean_implements: ${declarationNameFromNode(expression)}` });
+  return true;
+}
+
+export function getEntityNameForExtendingInterface(node: AstNode): AstNode | undefined {
+  if ((node.kind === Kind.Identifier || node.kind === Kind.PropertyAccessExpression) && parentOf(node) !== undefined) {
+    return getEntityNameForExtendingInterface(parentOf(node)!);
+  }
+  if (node.kind === Kind.ExpressionWithTypeArguments) return (node as { readonly expression?: AstNode }).expression;
+  return undefined;
+}
+
+export function isUncalledFunctionReference(_node: AstNode, symbol: AstSymbolLike): boolean {
+  return ((symbol.flags ?? 0) & (SymbolFlags.Function | SymbolFlags.Method)) !== 0
+    && (symbol.declarations ?? []).every(declaration => declaration.kind !== Kind.FunctionDeclaration && declaration.kind !== Kind.MethodDeclaration);
+}
+
+export function checkPropertyNotUsedBeforeDeclaration(prop: AstSymbolLike, node: AstNode, right: AstNode, state: CheckState): void {
+  const declaration = prop.valueDeclaration ?? prop.declarations?.[0];
+  if (declaration === undefined) return;
+  if (isNodeUsedDuringClassInitialization(node) && !isOptionalPropertyDeclaration(declaration) && !isDeclaredBeforeUse(declaration, right)) {
+    state.diagnostics.push({ message: `Property_${symbolDisplayName(prop)}_is_used_before_its_initialization` });
+  }
+}
+
+export function isOptionalPropertyDeclaration(node: AstNode): boolean {
+  return node.kind === Kind.PropertyDeclaration
+    && !modifierKinds(node).some(kind => kind === Kind.GetKeyword || kind === Kind.SetKeyword)
+    && (node as { readonly questionToken?: unknown }).questionToken !== undefined;
+}
+
+export function isPropertyDeclaredInAncestorClass(prop: AstSymbolLike): boolean {
+  const parent = prop.parent as AstSymbolLike | undefined;
+  if (parent === undefined || ((parent.flags ?? 0) & SymbolFlags.Class) === 0) return false;
+  return parent.declarations?.some(declaration => declaration.kind === Kind.ClassDeclaration && membersOf(declaration).some(member => classMemberName(member as ClassElement) === symbolDisplayName(prop))) ?? false;
+}
+
+export function checkPropertyAccessibility(node: AstNode, isSuper: boolean, writing: boolean, type: Type, prop: AstSymbolLike, state: CheckState): boolean {
+  return checkPropertyAccessibilityEx(node, isSuper, writing, type, prop, state, true);
+}
+
+export function checkPropertyAccessibilityEx(node: AstNode, isSuper: boolean, writing: boolean, type: Type, prop: AstSymbolLike, state: CheckState, reportError = true): boolean {
+  return checkPropertyAccessibilityAtLocation(node, isSuper, writing, type, prop, reportError ? node : undefined, state);
+}
+
+export function checkPropertyAccessibilityAtLocation(location: AstNode, isSuper: boolean, writing: boolean, containingType: Type, prop: AstSymbolLike, errorNode: AstNode | undefined, state: CheckState): boolean {
+  void writing; void containingType;
+  const flags = declarationAccessibility(prop.valueDeclaration ?? prop.declarations?.[0]);
+  if (isSuper && symbolHasNonMethodDeclaration(prop)) {
+    if (errorNode !== undefined) state.diagnostics.push({ message: `Class field ${symbolDisplayName(prop)} is not accessible via super.` });
+    return false;
+  }
+  if (flags === undefined) return true;
+  const declaringClass = getDeclaringClass(prop);
+  if (flags === Kind.PrivateKeyword && declaringClass?.symbol?.declarations?.some(declaration => isNodeWithinClass(location, declaration)) !== true) {
+    if (errorNode !== undefined) state.diagnostics.push({ message: `Property ${symbolDisplayName(prop)} is private.` });
+    return false;
+  }
+  if (flags === Kind.ProtectedKeyword && !isSuper && declaringClass !== undefined && !hasBaseType(containingType, declaringClass)) {
+    if (errorNode !== undefined) state.diagnostics.push({ message: `Property ${symbolDisplayName(prop)} is protected.` });
+    return false;
+  }
+  return true;
+}
+
+export function symbolHasNonMethodDeclaration(symbol: AstSymbolLike): boolean {
+  return forEachProperty(symbol, prop => ((prop.flags ?? 0) & SymbolFlags.Method) === 0);
+}
+
+export function forEachProperty(prop: AstSymbolLike, callback: (prop: AstSymbolLike) => boolean): boolean {
+  if (((prop as { readonly checkFlags?: number }).checkFlags ?? 0) === 0) return callback(prop);
+  return callback(prop);
+}
+
+export function getDeclaringClass(prop: AstSymbolLike): Type | undefined {
+  const parent = prop.parent as AstSymbolLike | undefined;
+  if (parent === undefined || ((parent.flags ?? 0) & SymbolFlags.Class) === 0) return undefined;
+  const declaration = parent.declarations?.find(node => node.kind === Kind.ClassDeclaration);
+  return declaration === undefined ? undefined : {
+    flags: TypeFlags.Object,
+    id: -1,
+    symbol: parent,
+    data: { objectFlags: 0 },
+  } as Type;
+}
+
+export function isValidOverrideOf(sourceProp: AstSymbolLike, targetProp: AstSymbolLike): boolean {
+  return !forEachProperty(targetProp, target => {
+    if (declarationAccessibility(target.valueDeclaration ?? target.declarations?.[0]) === Kind.ProtectedKeyword) {
+      const declaringClass = getDeclaringClass(target);
+      return declaringClass !== undefined && !isPropertyInClassDerivedFrom(sourceProp, declaringClass);
+    }
+    return false;
+  });
+}
+
+export function isPropertyInClassDerivedFrom(prop: AstSymbolLike, baseClass: Type | undefined): boolean {
+  if (baseClass === undefined) return false;
+  return forEachProperty(prop, source => {
+    const sourceClass = getDeclaringClass(source);
+    return sourceClass !== undefined && hasBaseType(sourceClass, baseClass);
+  });
+}
+
+export function isNodeUsedDuringClassInitialization(node: AstNode): boolean {
+  return findAncestor(node, element =>
+    element.kind === Kind.Constructor || element.kind === Kind.PropertyDeclaration || element.kind === Kind.ClassStaticBlockDeclaration) !== undefined;
+}
+
+export function isNodeWithinClass(node: AstNode, classDeclaration: AstNode | undefined): boolean {
+  return classDeclaration !== undefined && forEachEnclosingClass(node, candidate => candidate === classDeclaration);
+}
+
+export function forEachEnclosingClass(node: AstNode, callback: (node: AstNode) => boolean): boolean {
+  for (let containingClass = getContainingClass(node); containingClass !== undefined; containingClass = getContainingClass(parentOf(containingClass))) {
+    if (callback(containingClass)) return true;
+  }
+  return false;
+}
+
 export function issueMemberSpecificError(
   node: AstNode,
   members: readonly AstNode[],
@@ -724,6 +930,62 @@ interface AstSymbolLike {
   readonly flags?: number;
   readonly declarations?: readonly AstNode[];
   readonly members?: Map<string, AstSymbolLike>;
+  readonly parent?: AstSymbolLike;
+  readonly valueDeclaration?: AstNode;
+}
+
+function accessibilityModifier(node: AstNode | undefined): Kind | undefined {
+  return declarationAccessibility(node);
+}
+
+function declarationAccessibility(node: AstNode | undefined): Kind | undefined {
+  if (node === undefined) return undefined;
+  const modifiers = modifierKinds(node);
+  if (modifiers.includes(Kind.PrivateKeyword)) return Kind.PrivateKeyword;
+  if (modifiers.includes(Kind.ProtectedKeyword)) return Kind.ProtectedKeyword;
+  if (modifiers.includes(Kind.PublicKeyword)) return Kind.PublicKeyword;
+  return undefined;
+}
+
+function getDecoratorArgumentCount(decorator: AstNode): number {
+  const expression = (decorator as { readonly expression?: AstNode }).expression;
+  return expression?.kind === Kind.CallExpression ? ((expression as { readonly arguments?: readonly AstNode[] }).arguments?.length ?? 0) : 1;
+}
+
+function findAncestor(node: AstNode | undefined, predicate: (node: AstNode) => boolean): AstNode | undefined {
+  for (let current = parentOf(node); current !== undefined; current = parentOf(current)) {
+    if (predicate(current)) return current;
+  }
+  return undefined;
+}
+
+function rootDeclaration(node: AstNode): AstNode {
+  let current = node;
+  while (parentOf(current)?.kind === Kind.BindingElement) current = parentOf(current)!;
+  return current;
+}
+
+function getContainingClass(node: AstNode | undefined): AstNode | undefined {
+  return findAncestor(node, candidate => candidate.kind === Kind.ClassDeclaration || candidate.kind === Kind.ClassExpression);
+}
+
+function isDeclaredBeforeUse(declaration: AstNode, use: AstNode): boolean {
+  const declarationPos = (declaration as { readonly pos?: number }).pos ?? 0;
+  const usePos = (use as { readonly pos?: number }).pos ?? 0;
+  return declarationPos <= usePos;
+}
+
+function symbolDisplayName(symbol: AstSymbolLike): string {
+  return symbol.name ?? symbol.escapedName ?? "";
+}
+
+function hasBaseType(type: Type, baseType: Type | undefined): boolean {
+  if (baseType === undefined) return false;
+  if (type === baseType || type.symbol === baseType.symbol) return true;
+  const bases = (type.data as { readonly resolvedBaseTypes?: readonly Type[]; readonly baseTypes?: readonly Type[] } | undefined)?.resolvedBaseTypes
+    ?? (type.data as { readonly baseTypes?: readonly Type[] } | undefined)?.baseTypes
+    ?? [];
+  return bases.some(base => hasBaseType(base, baseType));
 }
 
 function hasBody(node: AstNode): boolean {
@@ -755,8 +1017,8 @@ function returnTypeOfSignatureNode(node: AstNode, state: CheckState): Type | und
   return typeNode === undefined ? undefined : typeFromTypeNode(typeNode as TypeNode, state);
 }
 
-function parentOf(node: AstNode): AstNode | undefined {
-  return (node as { readonly parent?: AstNode }).parent;
+function parentOf(node: AstNode | undefined): AstNode | undefined {
+  return (node as { readonly parent?: AstNode } | undefined)?.parent;
 }
 
 function membersOf(node: AstNode | undefined): readonly AstNode[] {
