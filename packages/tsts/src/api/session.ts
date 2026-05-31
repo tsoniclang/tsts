@@ -7,18 +7,16 @@
  * loads tsconfig, manages snapshots, hands out program/checker
  * references, and proxies type/symbol queries.
  *
- * Port scope: full state declarations, ~70 handle* method signatures
- * mapped to the upstream surface (handleInitialize, handleUpdateSnapshot,
- * handleGetSourceFile, handleGetSymbolAtPosition, handleGetTypeAtPosition,
- * handleGet{Types,Signatures,Members,Exports}*, handleResolveName,
- * handleGetContextualType, handleGetBaseTypeOfLiteralType,
- * handleGetShorthandAssignmentValueSymbol, handleGetTypeOfSymbolAtLocation,
- * plus the 14 GetTypePropertyParams handlers). Method bodies are
- * stubbed; full implementations require the corresponding checker.go
- * + project.go surfaces.
+ * Port scope: state declarations plus request handlers that mirror TS-Go's
+ * handle* methods. The handlers resolve snapshot/project/checker state,
+ * register returned symbols/types/signatures into the per-snapshot registries,
+ * and preserve binary-vs-base64 source-file responses.
  */
 
-import type { Node as AstNode } from "../ast/index.js";
+import { Buffer } from "node:buffer";
+import { ChildPropertiesByKind, type Node as AstNode, type SourceFile } from "../ast/index.js";
+import { getTouchingPropertyName } from "../astnav/index.js";
+import { encodeSourceFile } from "./encoder/encoder.js";
 
 // ---------------------------------------------------------------------------
 // Handle types (opaque server-side keys)
@@ -68,6 +66,7 @@ function prefixedHandle<T>(prefix: string, value: unknown): Handle<T> {
 // ---------------------------------------------------------------------------
 
 export interface SnapshotData {
+  readonly snapshot: Snapshot;
   getProgram(projectHandle: Handle<Project>): Program | { error: string };
   registerSymbol(symbol: SymbolType): SymbolResponse;
   registerType(t: TypeType): TypeResponse;
@@ -296,7 +295,7 @@ export class Session {
   }
 
   // -------------------------------------------------------------------------
-  // Per-method handlers (bodies stubbed)
+  // Per-method handlers
   // -------------------------------------------------------------------------
 
   handleInitialize(ctx: Context): InitializeResponse {
@@ -346,68 +345,208 @@ export class Session {
     return undefined;
   }
   handleGetDefaultProjectForFile(ctx: Context, params: GetDefaultProjectForFileParams): ProjectResponse {
-    void ctx; void params;
-    return { id: "" as Handle<Project>, configFileName: "", rootFiles: [], compilerOptions: undefined };
+    void ctx;
+    const snapshotData = this.getSnapshotData(params.snapshot);
+    if (isError(snapshotData)) return emptyProjectResponse();
+    const uri = documentIdentifierToURI(params.file);
+    const fileName = documentIdentifierToFileName(params.file);
+    const project = callMethod(snapshotData.snapshot, "getDefaultProject", uri)
+      ?? callMethod(snapshotData.snapshot, "GetDefaultProject", uri)
+      ?? callMethod(snapshotData.snapshot, "getDefaultProject", fileName)
+      ?? callMethod(snapshotData.snapshot, "GetDefaultProject", fileName);
+    return project === undefined ? emptyProjectResponse() : newProjectResponse(project as Project);
   }
   handleParseConfigFile(ctx: Context, params: ParseConfigFileParams): ConfigFileResponse {
-    void ctx; void params; return { config: "" };
+    void ctx;
+    const currentDirectory = readString(this.projectSession, "currentDirectory", process.cwd());
+    const configFileName = documentIdentifierToAbsoluteFileName(params.file, currentDirectory);
+    const parsed = callMethod(this.projectSession, "parseConfigFile", configFileName)
+      ?? callMethod(this.projectSession, "ParseConfigFile", configFileName);
+    if (parsed !== undefined) {
+      return {
+        fileNames: readArray<string>(parsed, "fileNames"),
+        options: readProperty(parsed, "options") ?? readProperty(parsed, "compilerOptions"),
+      };
+    }
+    const fs = callMethod(this.projectSession, "fs") ?? callMethod(this.projectSession, "FS") ?? readProperty(this.projectSession, "fs");
+    const text = readFileFromFs(fs, configFileName);
+    if (text === undefined) return { fileNames: [], options: undefined };
+    try {
+      const json = JSON.parse(text) as { files?: readonly string[]; compilerOptions?: unknown };
+      return { fileNames: [...(json.files ?? [])], options: json.compilerOptions };
+    } catch {
+      return { fileNames: [], options: undefined };
+    }
   }
   handleGetSourceFile(ctx: Context, params: GetSourceFileParams): unknown {
-    void ctx; void params; return undefined;
+    void ctx;
+    const snapshotData = this.getSnapshotData(params.snapshot);
+    if (isError(snapshotData)) return undefined;
+    const program = snapshotData.getProgram(params.project);
+    if (isError(program)) return undefined;
+    const sourceFile = getProgramSourceFile(program, params.file);
+    if (sourceFile === undefined) return this.useBinaryResponses ? new Uint8Array() : undefined;
+    const data = encodeSourceFile(sourceFile);
+    return this.useBinaryResponses ? data : { data: Buffer.from(data).toString("base64") };
   }
   handleGetSymbolAtPosition(ctx: Context, params: GetSymbolAtPositionParams): SymbolResponse | undefined {
-    void ctx; void params; return undefined;
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return undefined;
+    const node = getNodeAtDocumentPosition(setup.program, params.file, params.position);
+    if (node === undefined) return undefined;
+    return registerCheckerSymbol(setup.snapshotData, setup.checker, "getSymbolAtLocation", node);
   }
   handleGetSymbolsAtPositions(ctx: Context, params: GetSymbolsAtPositionsParams): readonly SymbolResponse[] {
-    void ctx; void params; return [];
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return [];
+    return params.positions
+      .map((position) => {
+        const node = getNodeAtDocumentPosition(setup.program!, params.file, position);
+        return node === undefined ? undefined : registerCheckerSymbol(setup.snapshotData!, setup.checker!, "getSymbolAtLocation", node);
+      })
+      .filter((response): response is SymbolResponse => response !== undefined);
   }
   handleGetSymbolAtLocation(ctx: Context, params: GetSymbolAtLocationParams): SymbolResponse | undefined {
-    void ctx; void params; return undefined;
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return undefined;
+    const node = resolveNodeHandle(setup.program, params.location);
+    if (node === undefined) return undefined;
+    return registerCheckerSymbol(setup.snapshotData, setup.checker, "getSymbolAtLocation", node);
   }
   handleGetSymbolsAtLocations(ctx: Context, params: GetSymbolsAtLocationsParams): readonly SymbolResponse[] {
-    void ctx; void params; return [];
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return [];
+    return params.locations
+      .map((location) => {
+        const node = resolveNodeHandle(setup.program!, location);
+        return node === undefined ? undefined : registerCheckerSymbol(setup.snapshotData!, setup.checker!, "getSymbolAtLocation", node);
+      })
+      .filter((response): response is SymbolResponse => response !== undefined);
   }
   handleGetTypeOfSymbol(ctx: Context, params: GetTypeOfSymbolParams): TypeResponse | undefined {
-    void ctx; void params; return undefined;
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined) return undefined;
+    const symbol = setup.snapshotData.resolveSymbolHandle(params.symbol);
+    if (isError(symbol)) return undefined;
+    return registerCheckerType(setup.snapshotData, setup.checker, "getTypeOfSymbol", symbol);
   }
   handleGetTypesOfSymbols(ctx: Context, params: GetTypesOfSymbolsParams): readonly TypeResponse[] {
-    void ctx; void params; return [];
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined) return [];
+    return params.symbols
+      .map((symbolHandleValue) => {
+        const symbol = setup.snapshotData!.resolveSymbolHandle(symbolHandleValue);
+        return isError(symbol) ? undefined : registerCheckerType(setup.snapshotData!, setup.checker!, "getTypeOfSymbol", symbol);
+      })
+      .filter((response): response is TypeResponse => response !== undefined);
   }
   handleGetDeclaredTypeOfSymbol(ctx: Context, params: GetTypeOfSymbolParams): TypeResponse | undefined {
-    void ctx; void params; return undefined;
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined) return undefined;
+    const symbol = setup.snapshotData.resolveSymbolHandle(params.symbol);
+    if (isError(symbol)) return undefined;
+    return registerCheckerType(setup.snapshotData, setup.checker, "getDeclaredTypeOfSymbol", symbol);
   }
   handleResolveName(ctx: Context, params: ResolveNameParams): SymbolResponse | undefined {
-    void ctx; void params; return undefined;
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return undefined;
+    const location = params.location !== undefined
+      ? resolveNodeHandle(setup.program, params.location)
+      : params.file !== undefined && params.position !== undefined
+        ? getNodeAtDocumentPosition(setup.program, params.file, params.position)
+        : undefined;
+    const symbol = callMethod(setup.checker, "resolveName", params.name, location, params.meaning, params.excludeGlobals === true)
+      ?? callMethod(setup.checker, "ResolveName", params.name, location, params.meaning, params.excludeGlobals === true);
+    return symbol === undefined ? undefined : setup.snapshotData.registerSymbol(symbol as SymbolType);
   }
   handleGetParentOfSymbol(ctx: Context, params: GetParentOfSymbolParams): SymbolResponse | undefined {
-    void ctx; void params; return undefined;
+    void ctx;
+    const snapshotData = this.getSnapshotData(params.snapshot);
+    if (isError(snapshotData)) return undefined;
+    const symbol = snapshotData.resolveSymbolHandle(params.symbol);
+    if (isError(symbol)) return undefined;
+    const parent = readProperty(symbol, "parent") ?? readProperty(symbol, "Parent");
+    return parent === undefined ? undefined : snapshotData.registerSymbol(parent as SymbolType);
   }
   handleGetMembersOfSymbol(ctx: Context, params: GetMembersOfSymbolParams): readonly SymbolResponse[] {
-    void ctx; void params; return [];
+    void ctx;
+    const snapshotData = this.getSnapshotData(params.snapshot);
+    if (isError(snapshotData)) return [];
+    const symbol = snapshotData.resolveSymbolHandle(params.symbol);
+    if (isError(symbol)) return [];
+    return symbolTableValues(readProperty(symbol, "members") ?? readProperty(symbol, "Members"))
+      .map((member) => snapshotData.registerSymbol(member));
   }
   handleGetExportsOfSymbol(ctx: Context, params: GetExportsOfSymbolParams): readonly SymbolResponse[] {
-    void ctx; void params; return [];
+    void ctx;
+    const snapshotData = this.getSnapshotData(params.snapshot);
+    if (isError(snapshotData)) return [];
+    const symbol = snapshotData.resolveSymbolHandle(params.symbol);
+    if (isError(symbol)) return [];
+    return symbolTableValues(readProperty(symbol, "exports") ?? readProperty(symbol, "Exports"))
+      .map((exported) => snapshotData.registerSymbol(exported));
   }
   handleGetExportSymbolOfSymbol(ctx: Context, params: GetExportSymbolOfSymbolParams): SymbolResponse | undefined {
-    void ctx; void params; return undefined;
+    void ctx;
+    const snapshotData = this.getSnapshotData(params.snapshot);
+    if (isError(snapshotData)) return undefined;
+    const symbol = snapshotData.resolveSymbolHandle(params.symbol);
+    if (isError(symbol)) return undefined;
+    const exportSymbol = readProperty(symbol, "exportSymbol") ?? readProperty(symbol, "ExportSymbol") ?? symbol;
+    return snapshotData.registerSymbol(exportSymbol as SymbolType);
   }
   handleGetSymbolOfType(ctx: Context, params: GetSymbolOfTypeParams): SymbolResponse | undefined {
-    void ctx; void params; return undefined;
+    void ctx;
+    const snapshotData = this.getSnapshotData(params.snapshot);
+    if (isError(snapshotData)) return undefined;
+    const targetType = snapshotData.resolveTypeHandle(params.type);
+    if (isError(targetType)) return undefined;
+    const symbol = readProperty(targetType, "symbol") ?? callMethod(targetType, "symbol") ?? callMethod(targetType, "Symbol");
+    return symbol === undefined ? undefined : snapshotData.registerSymbol(symbol as SymbolType);
   }
   handleGetSignaturesOfType(ctx: Context, params: GetSignaturesOfTypeParams): readonly SignatureResponse[] {
-    void ctx; void params; return [];
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined) return [];
+    const targetType = setup.snapshotData.resolveTypeHandle(params.type);
+    if (isError(targetType)) return [];
+    const signatures = callMethod(setup.checker, "getSignaturesOfType", targetType, params.kind)
+      ?? callMethod(setup.checker, "GetSignaturesOfType", targetType, params.kind)
+      ?? readArray<SignatureType>(targetType, params.kind === 1 ? "constructSignatures" : "callSignatures");
+    return arrayFromUnknown<SignatureType>(signatures).map((signature) => setup.snapshotData!.registerSignature(signature));
   }
   handleGetTypeAtLocation(ctx: Context, params: GetTypeAtLocationParams): TypeResponse | undefined {
-    void ctx; void params; return undefined;
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return undefined;
+    const node = resolveNodeHandle(setup.program, params.location);
+    if (node === undefined) return undefined;
+    return registerCheckerType(setup.snapshotData, setup.checker, "getTypeAtLocation", node);
   }
   handleGetTypeAtLocations(ctx: Context, params: GetTypeAtLocationsParams): readonly TypeResponse[] {
-    void ctx; void params; return [];
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return [];
+    return params.locations
+      .map((location) => {
+        const node = resolveNodeHandle(setup.program!, location);
+        return node === undefined ? undefined : registerCheckerType(setup.snapshotData!, setup.checker!, "getTypeAtLocation", node);
+      })
+      .filter((response): response is TypeResponse => response !== undefined);
   }
   handleGetTypeAtPosition(ctx: Context, params: GetTypeAtPositionParams): TypeResponse | undefined {
-    void ctx; void params; return undefined;
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return undefined;
+    const node = getNodeAtDocumentPosition(setup.program, params.file, params.position);
+    if (node === undefined) return undefined;
+    return registerCheckerType(setup.snapshotData, setup.checker, "getTypeAtLocation", node);
   }
   handleGetTypesAtPositions(ctx: Context, params: GetTypesAtPositionsParams): readonly TypeResponse[] {
-    void ctx; void params; return [];
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return [];
+    return params.positions
+      .map((position) => {
+        const node = getNodeAtDocumentPosition(setup.program!, params.file, position);
+        return node === undefined ? undefined : registerCheckerType(setup.snapshotData!, setup.checker!, "getTypeAtLocation", node);
+      })
+      .filter((response): response is TypeResponse => response !== undefined);
   }
   handleGetTargetOfType(_ctx: Context, params: GetTypePropertyParams): TypeResponse | undefined {
     return this.resolveTypeProperty(params, (t) => t.target);
@@ -443,16 +582,34 @@ export class Session {
     return this.resolveTypeProperty(params, (t) => t.constraint);
   }
   handleGetContextualType(ctx: Context, params: GetContextualTypeParams): TypeResponse | undefined {
-    void ctx; void params; return undefined;
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return undefined;
+    const node = resolveNodeHandle(setup.program, params.location);
+    if (node === undefined) return undefined;
+    return registerCheckerType(setup.snapshotData, setup.checker, "getContextualType", node);
   }
   handleGetBaseTypeOfLiteralType(ctx: Context, params: GetBaseTypeOfLiteralTypeParams): TypeResponse | undefined {
-    void ctx; void params; return undefined;
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.snapshotData === undefined) return undefined;
+    const targetType = setup.snapshotData.resolveTypeHandle(params.type);
+    if (isError(targetType)) return undefined;
+    return registerCheckerType(setup.snapshotData, setup.checker, "getBaseTypeOfLiteralType", targetType);
   }
   handleGetShorthandAssignmentValueSymbol(ctx: Context, params: GetTypeAtLocationParams): SymbolResponse | undefined {
-    void ctx; void params; return undefined;
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return undefined;
+    const node = resolveNodeHandle(setup.program, params.location);
+    if (node === undefined) return undefined;
+    return registerCheckerSymbol(setup.snapshotData, setup.checker, "getShorthandAssignmentValueSymbol", node);
   }
   handleGetTypeOfSymbolAtLocation(ctx: Context, params: GetTypeOfSymbolAtLocationParams): TypeResponse | undefined {
-    void ctx; void params; return undefined;
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return undefined;
+    const symbol = setup.snapshotData.resolveSymbolHandle(params.symbol);
+    if (isError(symbol)) return undefined;
+    const node = resolveNodeHandle(setup.program, params.location);
+    if (node === undefined) return undefined;
+    return registerCheckerType(setup.snapshotData, setup.checker, "getTypeOfSymbolAtLocation", symbol, node);
   }
 
   resolveTypeProperty(
@@ -584,6 +741,10 @@ function newProjectResponse(project: Project): ProjectResponse {
   };
 }
 
+function emptyProjectResponse(): ProjectResponse {
+  return { id: "" as Handle<Project>, configFileName: "", rootFiles: [], compilerOptions: undefined };
+}
+
 function computeSnapshotChanges(previousSnapshot: Snapshot | undefined, nextSnapshot: unknown): SnapshotChanges | undefined {
   if (previousSnapshot === undefined || previousSnapshot === nextSnapshot) return undefined;
   return { changedProjects: new Map(), removedProjects: [] };
@@ -626,6 +787,128 @@ function readNumber(value: unknown, key: string, fallback: number): number {
 function readArray<T>(value: unknown, key: string): readonly T[] {
   const property = readProperty(value, key);
   return Array.isArray(property) ? property as readonly T[] : [];
+}
+
+function arrayFromUnknown<T>(value: unknown): readonly T[] {
+  if (Array.isArray(value)) return value as readonly T[];
+  if (value instanceof Map) return Array.from(value.values()) as readonly T[];
+  if (typeof value === "object" && value !== null && Symbol.iterator in value) {
+    return Array.from(value as Iterable<T>);
+  }
+  return [];
+}
+
+function symbolTableValues(value: unknown): readonly SymbolType[] {
+  if (value instanceof Map) return Array.from(value.values()) as readonly SymbolType[];
+  if (Array.isArray(value)) return value as readonly SymbolType[];
+  if (typeof value === "object" && value !== null) return Object.values(value as Record<string, SymbolType>);
+  return [];
+}
+
+function documentIdentifierToFileName(file: DocumentIdentifier): string {
+  return file.fileName ?? file.uri ?? "";
+}
+
+function documentIdentifierToURI(file: DocumentIdentifier): string {
+  return file.uri ?? file.fileName ?? "";
+}
+
+function documentIdentifierToAbsoluteFileName(file: DocumentIdentifier, currentDirectory: string): string {
+  const fileName = documentIdentifierToFileName(file);
+  if (fileName.startsWith("/") || /^[a-zA-Z]:[\\/]/.test(fileName)) return fileName;
+  return `${currentDirectory.replace(/[\\/]$/, "")}/${fileName}`;
+}
+
+function readFileFromFs(fs: unknown, fileName: string): string | undefined {
+  const result = callMethod(fs, "readFile", fileName) ?? callMethod(fs, "ReadFile", fileName);
+  if (typeof result === "string") return result;
+  if (Array.isArray(result) && typeof result[0] === "string") return result[0];
+  if (typeof result === "object" && result !== null) {
+    const content = readProperty(result, "content") ?? readProperty(result, "text");
+    if (typeof content === "string") return content;
+  }
+  return undefined;
+}
+
+function getProgramSourceFile(program: Program, file: DocumentIdentifier): SourceFile | undefined {
+  const fileName = documentIdentifierToFileName(file);
+  const sourceFile = callMethod(program, "getSourceFile", fileName)
+    ?? callMethod(program, "GetSourceFile", fileName)
+    ?? readMapValue(readProperty(program, "sourceFiles"), fileName);
+  return sourceFile as SourceFile | undefined;
+}
+
+function getNodeAtDocumentPosition(program: Program, file: DocumentIdentifier, position: number): AstNode | undefined {
+  const sourceFile = getProgramSourceFile(program, file);
+  if (sourceFile === undefined) return undefined;
+  const mappedPosition = utf16ToUtf8Position(sourceFile, position);
+  return getTouchingPropertyName(sourceFile, mappedPosition);
+}
+
+function utf16ToUtf8Position(sourceFile: SourceFile, position: number): number {
+  const positionMap = callMethod(sourceFile, "getPositionMap") ?? callMethod(sourceFile, "GetPositionMap") ?? readProperty(sourceFile, "positionMap");
+  const converted = callMethod(positionMap, "utf16ToUtf8", position) ?? callMethod(positionMap, "UTF16ToUTF8", position);
+  return typeof converted === "number" ? converted : position;
+}
+
+function resolveNodeHandle(program: Program, handle: Handle<AstNode>): AstNode | undefined {
+  const parsed = parseNodeHandle(handle);
+  if (parsed === undefined) return undefined;
+  const sourceFile = getProgramSourceFile(program, { fileName: parsed.path });
+  if (sourceFile === undefined) return undefined;
+  return findNodeByRangeAndKind(sourceFile, parsed.pos, parsed.end, parsed.kind);
+}
+
+function parseNodeHandle(handle: Handle<AstNode>): { pos: number; end: number; kind: number; path: string } | undefined {
+  const parts = (handle as unknown as string).split(".", 4);
+  if (parts.length !== 4) return undefined;
+  const pos = Number.parseInt(parts[0]!, 10);
+  const end = Number.parseInt(parts[1]!, 10);
+  const kind = Number.parseInt(parts[2]!, 10);
+  if (!Number.isFinite(pos) || !Number.isFinite(end) || !Number.isFinite(kind)) return undefined;
+  return { pos, end, kind, path: parts[3]! };
+}
+
+function findNodeByRangeAndKind(node: AstNode, pos: number, end: number, kind: number): AstNode | undefined {
+  if (node.pos === pos && node.end === end && node.kind === kind) return node;
+  const childProperties = ChildPropertiesByKind.get(node.kind) ?? [];
+  const record = node as unknown as Record<string, unknown>;
+  for (const property of childProperties) {
+    const value = record[property];
+    if (Array.isArray(value)) {
+      for (const child of value) {
+        if (isAstNode(child)) {
+          const found = findNodeByRangeAndKind(child, pos, end, kind);
+          if (found !== undefined) return found;
+        }
+      }
+    } else if (isAstNode(value)) {
+      const found = findNodeByRangeAndKind(value, pos, end, kind);
+      if (found !== undefined) return found;
+    }
+  }
+  return undefined;
+}
+
+function isAstNode(value: unknown): value is AstNode {
+  return typeof value === "object" && value !== null
+    && typeof (value as { kind?: unknown }).kind === "number"
+    && typeof (value as { pos?: unknown }).pos === "number"
+    && typeof (value as { end?: unknown }).end === "number";
+}
+
+function registerCheckerType(snapshotData: SnapshotData, checker: Checker, methodName: string, ...args: readonly unknown[]): TypeResponse | undefined {
+  const value = callMethod(checker, methodName, ...args) ?? callMethod(checker, capitalizeMethod(methodName), ...args);
+  return value === undefined ? undefined : snapshotData.registerType(value as TypeType);
+}
+
+function registerCheckerSymbol(snapshotData: SnapshotData, checker: Checker, methodName: string, ...args: readonly unknown[]): SymbolResponse | undefined {
+  const value = callMethod(checker, methodName, ...args) ?? callMethod(checker, capitalizeMethod(methodName), ...args);
+  return value === undefined ? undefined : snapshotData.registerSymbol(value as SymbolType);
+}
+
+function capitalizeMethod(name: string): string {
+  return name.length === 0 ? name : name[0]!.toUpperCase() + name.slice(1);
 }
 
 // ---------------------------------------------------------------------------
@@ -676,6 +959,7 @@ interface SignatureResponse {
   typeParameters?: readonly Handle<TypeType>[]; parameters?: readonly Handle<SymbolType>[];
   thisParameter?: Handle<SymbolType>; target?: Handle<SignatureType>;
 }
+interface DocumentIdentifier { uri?: string; fileName?: string }
 interface InitializeResponse { sessionId: string; useCaseSensitiveFileNames: boolean; currentDirectory: string }
 interface UpdateSnapshotParams { readonly _p?: unknown }
 interface SnapshotChanges {
@@ -685,32 +969,35 @@ interface SnapshotChanges {
 interface ProjectFileChanges { changedFiles?: readonly string[]; deletedFiles?: readonly string[] }
 interface UpdateSnapshotResponse { snapshot: Handle<Snapshot>; projects: readonly ProjectResponse[]; changes?: SnapshotChanges }
 interface ReleaseParams { handle: string }
-interface GetDefaultProjectForFileParams { readonly _p?: unknown }
+interface GetDefaultProjectForFileParams { snapshot: Handle<Snapshot>; file: DocumentIdentifier }
 interface ProjectResponse { id: Handle<Project>; configFileName: string; rootFiles: readonly string[]; compilerOptions: unknown }
-interface ParseConfigFileParams { readonly _p?: unknown }
-interface ConfigFileResponse { config: string }
-interface GetSourceFileParams { readonly _p?: unknown }
-interface GetSymbolAtPositionParams { readonly _p?: unknown }
-interface GetSymbolsAtPositionsParams { readonly _p?: unknown }
-interface GetSymbolAtLocationParams { readonly _p?: unknown }
-interface GetSymbolsAtLocationsParams { readonly _p?: unknown }
-interface GetTypeOfSymbolParams { readonly _p?: unknown }
-interface GetTypesOfSymbolsParams { readonly _p?: unknown }
-interface ResolveNameParams { readonly _p?: unknown }
-interface GetParentOfSymbolParams { readonly _p?: unknown }
-interface GetMembersOfSymbolParams { readonly _p?: unknown }
-interface GetExportsOfSymbolParams { readonly _p?: unknown }
-interface GetExportSymbolOfSymbolParams { readonly _p?: unknown }
-interface GetSymbolOfTypeParams { readonly _p?: unknown }
-interface GetSignaturesOfTypeParams { readonly _p?: unknown }
-interface GetTypeAtLocationParams { readonly _p?: unknown }
-interface GetTypeAtLocationsParams { readonly _p?: unknown }
-interface GetTypeAtPositionParams { readonly _p?: unknown }
-interface GetTypesAtPositionsParams { readonly _p?: unknown }
+interface ParseConfigFileParams { file: DocumentIdentifier }
+interface ConfigFileResponse { fileNames: readonly string[]; options: unknown }
+interface GetSourceFileParams { snapshot: Handle<Snapshot>; project: Handle<Project>; file: DocumentIdentifier }
+interface GetSymbolAtPositionParams { snapshot: Handle<Snapshot>; project: Handle<Project>; file: DocumentIdentifier; position: number }
+interface GetSymbolsAtPositionsParams { snapshot: Handle<Snapshot>; project: Handle<Project>; file: DocumentIdentifier; positions: readonly number[] }
+interface GetSymbolAtLocationParams { snapshot: Handle<Snapshot>; project: Handle<Project>; location: Handle<AstNode> }
+interface GetSymbolsAtLocationsParams { snapshot: Handle<Snapshot>; project: Handle<Project>; locations: readonly Handle<AstNode>[] }
+interface GetTypeOfSymbolParams { snapshot: Handle<Snapshot>; project: Handle<Project>; symbol: Handle<SymbolType> }
+interface GetTypesOfSymbolsParams { snapshot: Handle<Snapshot>; project: Handle<Project>; symbols: readonly Handle<SymbolType>[] }
+interface ResolveNameParams {
+  snapshot: Handle<Snapshot>; project: Handle<Project>; name: string; meaning: number;
+  location?: Handle<AstNode>; file?: DocumentIdentifier; position?: number; excludeGlobals?: boolean;
+}
+interface GetParentOfSymbolParams { snapshot: Handle<Snapshot>; symbol: Handle<SymbolType> }
+interface GetMembersOfSymbolParams { snapshot: Handle<Snapshot>; symbol: Handle<SymbolType> }
+interface GetExportsOfSymbolParams { snapshot: Handle<Snapshot>; symbol: Handle<SymbolType> }
+interface GetExportSymbolOfSymbolParams { snapshot: Handle<Snapshot>; symbol: Handle<SymbolType> }
+interface GetSymbolOfTypeParams { snapshot: Handle<Snapshot>; type: Handle<TypeType> }
+interface GetSignaturesOfTypeParams { snapshot: Handle<Snapshot>; project: Handle<Project>; type: Handle<TypeType>; kind: number }
+interface GetTypeAtLocationParams { snapshot: Handle<Snapshot>; project: Handle<Project>; location: Handle<AstNode> }
+interface GetTypeAtLocationsParams { snapshot: Handle<Snapshot>; project: Handle<Project>; locations: readonly Handle<AstNode>[] }
+interface GetTypeAtPositionParams { snapshot: Handle<Snapshot>; project: Handle<Project>; file: DocumentIdentifier; position: number }
+interface GetTypesAtPositionsParams { snapshot: Handle<Snapshot>; project: Handle<Project>; file: DocumentIdentifier; positions: readonly number[] }
 interface GetTypePropertyParams { snapshot: Handle<Snapshot>; type: Handle<TypeType> }
-interface GetContextualTypeParams { readonly _p?: unknown }
-interface GetBaseTypeOfLiteralTypeParams { readonly _p?: unknown }
-interface GetTypeOfSymbolAtLocationParams { readonly _p?: unknown }
+interface GetContextualTypeParams { snapshot: Handle<Snapshot>; project: Handle<Project>; location: Handle<AstNode> }
+interface GetBaseTypeOfLiteralTypeParams { snapshot: Handle<Snapshot>; project: Handle<Project>; type: Handle<TypeType> }
+interface GetTypeOfSymbolAtLocationParams { snapshot: Handle<Snapshot>; project: Handle<Project>; symbol: Handle<SymbolType>; location: Handle<AstNode> }
 
 // AstNode reserved for future imports
 export type _Ast = AstNode;
