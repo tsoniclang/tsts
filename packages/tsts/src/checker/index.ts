@@ -2,6 +2,7 @@ export * from "./checker.js";
 export * from "./checkerInitialization.js";
 export * from "./checkerCore.js";
 export * as nameResolution from "./checker.nameResolution.js";
+export * as diagnosticsPipeline from "./diagnosticsPipeline.js";
 export * as moduleChecks from "./checker.moduleChecks.js";
 export * as iteration from "./checker.iteration.js";
 export * as unused from "./checker.unused.js";
