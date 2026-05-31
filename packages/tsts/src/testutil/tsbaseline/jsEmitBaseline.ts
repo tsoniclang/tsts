@@ -86,6 +86,8 @@ export interface DeclarationCompilationContext {
   readonly otherFiles: readonly NamedSource[];
   readonly emittedDeclarations: readonly EmitBaselineFile[];
   readonly currentDirectory: string;
+  readonly compilerOptions?: JSEmitBaselineCompilerOptions;
+  readonly configFile?: unknown;
 }
 
 export function prepareDeclarationCompilationContext(input: JSEmitBaselineInput): DeclarationCompilationContext | undefined {
@@ -100,12 +102,13 @@ export function prepareDeclarationCompilationContext(input: JSEmitBaselineInput)
       throw new Error("Declaration output count must match emitted JavaScript file count when declaration emit succeeds.");
     }
   }
-  return {
+  const context: DeclarationCompilationContext = {
     inputFiles: input.toBeCompiled,
     otherFiles: input.otherFiles ?? [],
     emittedDeclarations: dts,
     currentDirectory: input.harnessSettings?.currentDirectory ?? "",
   };
+  return input.compilerOptions === undefined ? context : { ...context, compilerOptions: input.compilerOptions };
 }
 
 export function declarationFileInputs(context: DeclarationCompilationContext): readonly NamedSource[] {
@@ -114,6 +117,61 @@ export function declarationFileInputs(context: DeclarationCompilationContext): r
   for (const file of context.otherFiles) byName.set(file.name, file);
   for (const file of context.emittedDeclarations) byName.set(file.name, { name: file.name, content: file.content });
   return [...byName.values()].sort((left, right) => left.name.localeCompare(right.name));
+}
+
+export interface DeclarationCompilationResult<TCompilationResult = unknown> {
+  readonly declInputFiles: readonly NamedSource[];
+  readonly declOtherFiles: readonly NamedSource[];
+  readonly declResult: TCompilationResult;
+}
+
+export interface DeclarationCompiler<TCompilationResult = unknown> {
+  compileDeclarationFiles(
+    inputFiles: readonly NamedSource[],
+    otherFiles: readonly NamedSource[],
+    context: DeclarationCompilationContext,
+    symlinks: ReadonlyMap<string, string>,
+  ): TCompilationResult;
+}
+
+export function compileDeclarationFiles<TCompilationResult>(
+  context: DeclarationCompilationContext | undefined,
+  symlinks: ReadonlyMap<string, string>,
+  compiler: DeclarationCompiler<TCompilationResult>,
+): DeclarationCompilationResult<TCompilationResult> | undefined {
+  if (context === undefined) return undefined;
+  const declInputFiles = declarationInputFiles(context);
+  const declOtherFiles = declarationOtherFiles(context, declInputFiles);
+  const declResult = compiler.compileDeclarationFiles(declInputFiles, declOtherFiles, context, symlinks);
+  return { declInputFiles, declOtherFiles, declResult };
+}
+
+export function declarationInputFiles(context: DeclarationCompilationContext): readonly NamedSource[] {
+  const inputNames = new Set(context.inputFiles.map(file => normalizedName(file.name)));
+  return context.emittedDeclarations
+    .filter(file => inputNames.has(sourceNameForDeclaration(file.name)))
+    .map(file => ({ name: file.name, content: stripBom(file.content) }))
+    .sort(compareSources);
+}
+
+export function declarationOtherFiles(
+  context: DeclarationCompilationContext,
+  declarationInputs: readonly NamedSource[] = declarationInputFiles(context),
+): readonly NamedSource[] {
+  const inputNames = new Set(declarationInputs.map(file => normalizedName(file.name)));
+  const sourceNames = new Set(context.inputFiles.map(file => normalizedName(file.name)));
+  return context.emittedDeclarations
+    .filter(file => !inputNames.has(normalizedName(file.name)) && !sourceNames.has(sourceNameForDeclaration(file.name)))
+    .map(file => ({ name: file.name, content: stripBom(file.content) }))
+    .sort(compareSources);
+}
+
+export function sourceNameForDeclaration(fileName: string): string {
+  const normalized = normalizedName(fileName);
+  if (normalized.endsWith(".d.mts")) return `${normalized.slice(0, -".d.mts".length)}.mts`;
+  if (normalized.endsWith(".d.cts")) return `${normalized.slice(0, -".d.cts".length)}.cts`;
+  if (normalized.endsWith(".d.ts")) return `${normalized.slice(0, -".d.ts".length)}.ts`;
+  return normalized;
 }
 
 export function compareNoCheckEmit(
@@ -166,4 +224,16 @@ function baseFileName(fileName: string): string {
 
 function optionIsTrue(value: boolean | number | undefined): boolean {
   return value === true || value === 2;
+}
+
+function normalizedName(fileName: string): string {
+  return fileName.replaceAll("\\", "/");
+}
+
+function stripBom(text: string): string {
+  return text.startsWith("\uFEFF") ? text.slice(1) : text;
+}
+
+function compareSources(left: NamedSource, right: NamedSource): number {
+  return normalizedName(left.name).localeCompare(normalizedName(right.name));
 }
