@@ -28,9 +28,13 @@ import {
   isClassExpression, isPropertyDeclaration, isComputedPropertyName,
   isPrivateIdentifier, isIdentifier, isObjectLiteralExpression,
   isArrayLiteralExpression, isPropertyAccessExpression,
+  isAutoAccessorPropertyDeclaration, isMethodDeclaration,
+  isGetAccessorDeclaration, isSetAccessorDeclaration,
+  nodeText,
 } from "../../ast/index.js";
 import { Kind } from "../../ast/index.js";
 import { EmitFlags } from "../../printer/emitFlags.js";
+import { GeneratedIdentifierFlags } from "../../printer/generatedIdentifierFlags.js";
 import { getEmitScriptTarget, getUseDefineForClassFields } from "../../core/compilerOptions.js";
 import type {
   Node as AstNode,
@@ -661,18 +665,105 @@ export class ClassFieldsTransformer extends Transformer {
   // -------------------------------------------------------------------------
 
   transformAutoAccessor(node: PropertyDeclaration): AstNode { return node as unknown as AstNode; }
-  transformPrivateFieldInitializer(node: PropertyDeclaration): AstNode { return node as unknown as AstNode; }
-  transformPublicFieldInitializer(node: PropertyDeclaration): AstNode { return node as unknown as AstNode; }
-  transformFieldInitializer(node: PropertyDeclaration): AstNode { return node as unknown as AstNode; }
+  transformPrivateFieldInitializer(node: PropertyDeclaration): AstNode {
+    const astNode = node as unknown as AstNode;
+    if (this.shouldTransformClassElementToWeakMap(astNode)) {
+      const name = getNodeName(astNode);
+      const info = name === undefined ? undefined : this.accessPrivateIdentifier(name);
+      if (info === undefined || !info.isValid) return astNode;
+      if (info.isStatic && !this.shouldTransformPrivateElementsOrClassStaticBlocks) {
+        const statement = this.transformPropertyOrClassStaticBlock(astNode, this.factory().newThisExpression() as Expression);
+        const block = this.factory().newBlock([statement], true);
+        const staticBlock = this.factory().newClassStaticBlockDeclaration(block);
+        this.emitContext().setOriginal(staticBlock, astNode);
+        return staticBlock;
+      }
+      return this.factory().newSyntaxList([]);
+    }
+
+    if (this.shouldTransformInitializersUsingSet
+      && !hasStaticModifier(astNode)
+      && this.lexicalEnvironment?.data !== undefined
+      && (this.lexicalEnvironment.data.facts & ClassFacts.WillHoistInitializersToConstructor) !== 0) {
+      return this.factory().updatePropertyDeclaration(
+        astNode,
+        this.modifierVisitor.visitNode((astNode as { modifiers?: AstNode }).modifiers),
+        getNodeName(astNode),
+        undefined,
+        undefined,
+        undefined,
+      );
+    }
+
+    const transformed = isNamedEvaluationAnd(this.emitContext(), astNode, this.isAnonymousClassNeedingAssignedName)
+      ? transformNamedEvaluation(this.emitContext(), astNode, false, "")
+      : astNode;
+    const initializer = propertyInitializerOf(transformed);
+    return this.factory().updatePropertyDeclaration(
+      transformed,
+      this.modifierVisitor.visitNode((transformed as { modifiers?: AstNode }).modifiers),
+      this.visitPropertyName(getNodeName(transformed)! as PropertyName),
+      undefined,
+      undefined,
+      initializer === undefined ? undefined : this.visitor().visitNode(initializer),
+    );
+  }
+
+  transformPublicFieldInitializer(node: PropertyDeclaration): AstNode {
+    const astNode = node as unknown as AstNode;
+    if (this.shouldTransformInitializers && !isAutoAccessorPropertyDeclaration(astNode)) {
+      const name = getNodeName(astNode);
+      const expression = name === undefined ? undefined : this.getPropertyNameExpressionIfNeeded(
+        name as PropertyName,
+        propertyInitializerOf(astNode) !== undefined
+          || getUseDefineForClassFields(this.compilerOptions as unknown as Parameters<typeof getUseDefineForClassFields>[0]),
+      );
+      if (expression !== undefined) this.addPendingExpressions(...this.flattenCommaList([expression]));
+
+      if (hasStaticModifier(astNode) && !this.shouldTransformPrivateElementsOrClassStaticBlocks) {
+        const statement = this.transformPropertyOrClassStaticBlock(astNode, this.factory().newThisExpression() as Expression);
+        this.emitContext().addEmitFlags(statement, EmitFlags.NoComments);
+        const staticBlock = this.factory().newClassStaticBlockDeclaration(this.factory().newBlock([statement], false));
+        this.emitContext().setOriginal(staticBlock, astNode);
+        return staticBlock;
+      }
+
+      return this.factory().newSyntaxList([]);
+    }
+
+    const initializer = propertyInitializerOf(astNode);
+    return this.factory().updatePropertyDeclaration(
+      astNode,
+      this.modifierVisitor.visitNode((astNode as { modifiers?: AstNode }).modifiers),
+      this.visitPropertyName(getNodeName(astNode)! as PropertyName),
+      undefined,
+      undefined,
+      initializer === undefined ? undefined : this.visitor().visitNode(initializer),
+    );
+  }
+
+  transformFieldInitializer(node: PropertyDeclaration): AstNode {
+    const astNode = node as unknown as AstNode;
+    const name = getNodeName(astNode);
+    if (name !== undefined && isPrivateIdentifier(name)) {
+      return this.transformPrivateFieldInitializer(node);
+    }
+    return this.transformPublicFieldInitializer(node);
+  }
 
   shouldTransformAutoAccessorsInCurrentClass(): boolean {
-    return this.shouldTransformAutoAccessors
-      && this.currentClassContainer !== undefined
-      && classHasAccessorMember(this.currentClassContainer);
+    if (this.shouldTransformAutoAccessors) return true;
+    return this.lexicalEnvironment?.data !== undefined
+      && (this.lexicalEnvironment.data.facts & ClassFacts.WillHoistInitializersToConstructor) !== 0;
   }
 
   visitPropertyDeclaration(node: AstNode): AstNode {
-    return this.visitor().visitEachChild(node);
+    if (isAutoAccessorPropertyDeclaration(node)
+      && (this.shouldTransformAutoAccessorsInCurrentClass()
+        || (hasStaticModifier(node) && this.shouldAlwaysTransformPrivateStaticElements(node)))) {
+      return this.transformAutoAccessor(node as unknown as PropertyDeclaration);
+    }
+    return this.transformFieldInitializer(node as unknown as PropertyDeclaration);
   }
 
   // -------------------------------------------------------------------------
@@ -978,38 +1069,154 @@ export class ClassFieldsTransformer extends Transformer {
   // -------------------------------------------------------------------------
 
   addPrivateIdentifierPropertyDeclarationToEnvironment(node: AstNode, name: AstNode): void {
-    void node; void name;
+    const lex = this.getClassLexicalEnvironment();
+    const env = this.getPrivateIdentifierEnvironment();
+    const isStatic = hasStaticModifier(node);
+    const previousInfo = this.getPrivateIdentifier(env, name).info;
+    const isValid = !this.isReservedPrivateName(name) && previousInfo === undefined;
+
+    if (isStatic) {
+      const brandCheckIdentifier = lex.classThis ?? lex.classConstructor;
+      const variableName = this.createHoistedVariableForPrivateName(name, "");
+      this.setPrivateIdentifier(env, name, {
+        kind: PrivateIdentifierKind.Field,
+        brandCheckIdentifier,
+        isStatic: true,
+        isValid,
+        variableName,
+      });
+      return;
+    }
+
+    const weakMapName = this.createHoistedVariableForPrivateName(name, "");
+    this.setPrivateIdentifier(env, name, {
+      kind: PrivateIdentifierKind.Field,
+      brandCheckIdentifier: weakMapName,
+      isStatic: false,
+      isValid,
+    });
+    this.addPendingExpressions(this.factory().newAssignmentExpression(
+      weakMapName,
+      this.factory().newNewExpression(this.factory().newIdentifier("WeakMap"), undefined, this.factory().newNodeList([])),
+    ) as Expression);
   }
 
   addPrivateIdentifierMethodToEnvironment(
     name: AstNode, lex: ClassLexicalEnvironment, env: PrivateEnvironment,
     isStatic: boolean, isValid: boolean,
-  ): void { void name; void lex; void env; void isStatic; void isValid; }
+  ): void {
+    const methodName = this.createHoistedVariableForPrivateName(name, "");
+    const brandCheckIdentifier = isStatic ? lex.classThis ?? lex.classConstructor : env.data.weakSetName;
+    this.setPrivateIdentifier(env, name, {
+      kind: PrivateIdentifierKind.Method,
+      brandCheckIdentifier,
+      isStatic,
+      isValid,
+      methodName,
+    });
+  }
 
   addPrivateIdentifierGetAccessorToEnvironment(
     name: AstNode, lex: ClassLexicalEnvironment, env: PrivateEnvironment,
     isStatic: boolean, isValid: boolean, previousInfo: PrivateIdentifierInfo | undefined,
-  ): void { void name; void lex; void env; void isStatic; void isValid; void previousInfo; }
+  ): void {
+    const getterName = this.createHoistedVariableForPrivateName(name, "_get");
+    const brandCheckIdentifier = isStatic ? lex.classThis ?? lex.classConstructor : env.data.weakSetName;
+    if (previousInfo !== undefined
+      && previousInfo.kind === PrivateIdentifierKind.Accessor
+      && previousInfo.isStatic === isStatic
+      && previousInfo.getterName === undefined) {
+      previousInfo.getterName = getterName;
+      return;
+    }
+    this.setPrivateIdentifier(env, name, {
+      kind: PrivateIdentifierKind.Accessor,
+      brandCheckIdentifier,
+      getterName,
+      isStatic,
+      isValid,
+    });
+  }
 
   addPrivateIdentifierSetAccessorToEnvironment(
     name: AstNode, lex: ClassLexicalEnvironment, env: PrivateEnvironment,
     isStatic: boolean, isValid: boolean, previousInfo: PrivateIdentifierInfo | undefined,
-  ): void { void name; void lex; void env; void isStatic; void isValid; void previousInfo; }
+  ): void {
+    const setterName = this.createHoistedVariableForPrivateName(name, "_set");
+    const brandCheckIdentifier = isStatic ? lex.classThis ?? lex.classConstructor : env.data.weakSetName;
+    if (previousInfo !== undefined
+      && previousInfo.kind === PrivateIdentifierKind.Accessor
+      && previousInfo.isStatic === isStatic
+      && previousInfo.setterName === undefined) {
+      previousInfo.setterName = setterName;
+      return;
+    }
+    this.setPrivateIdentifier(env, name, {
+      kind: PrivateIdentifierKind.Accessor,
+      brandCheckIdentifier,
+      setterName,
+      isStatic,
+      isValid,
+    });
+  }
 
   addPrivateIdentifierAutoAccessorToEnvironment(
     node: AstNode, name: AstNode, lex: ClassLexicalEnvironment, env: PrivateEnvironment,
     isStatic: boolean, isValid: boolean,
-  ): void { void node; void name; void lex; void env; void isStatic; void isValid; }
+  ): void {
+    void node;
+    const getterName = this.createHoistedVariableForPrivateName(name, "_get");
+    const setterName = this.createHoistedVariableForPrivateName(name, "_set");
+    const brandCheckIdentifier = isStatic ? lex.classThis ?? lex.classConstructor : env.data.weakSetName;
+    this.setPrivateIdentifier(env, name, {
+      kind: PrivateIdentifierKind.Accessor,
+      brandCheckIdentifier,
+      getterName,
+      setterName,
+      isStatic,
+      isValid,
+    });
+  }
 
-  addPrivateIdentifierToEnvironment(node: AstNode): void { void node; }
+  addPrivateIdentifierToEnvironment(node: AstNode): void {
+    const name = getNodeName(node);
+    if (name === undefined) return;
+    const lex = this.getClassLexicalEnvironment();
+    const env = this.getPrivateIdentifierEnvironment();
+    const isStatic = hasStaticModifier(node);
+    const previousInfo = this.getPrivateIdentifier(env, name).info;
+    const isValid = !this.isReservedPrivateName(name) && previousInfo === undefined;
+
+    if (isAutoAccessorPropertyDeclaration(node)) {
+      this.addPrivateIdentifierAutoAccessorToEnvironment(node, name, lex, env, isStatic, isValid);
+    } else if (isPropertyDeclaration(node)) {
+      this.addPrivateIdentifierPropertyDeclarationToEnvironment(node, name);
+    } else if (isMethodDeclaration(node)) {
+      this.addPrivateIdentifierMethodToEnvironment(name, lex, env, isStatic, isValid);
+    } else if (isGetAccessorDeclaration(node)) {
+      this.addPrivateIdentifierGetAccessorToEnvironment(name, lex, env, isStatic, isValid, previousInfo);
+    } else if (isSetAccessorDeclaration(node)) {
+      this.addPrivateIdentifierSetAccessorToEnvironment(name, lex, env, isStatic, isValid, previousInfo);
+    }
+  }
 
   setPrivateIdentifier(env: PrivateEnvironment, name: AstNode, info: PrivateIdentifierInfo): void {
-    void env; void name; void info;
+    if (this.emitContext().hasAutoGenerateInfo(name)) {
+      const generatedNode = this.emitContext().getNodeForGeneratedName(name);
+      if (generatedNode !== undefined) env.generatedIdentifiers.set(generatedNode, info);
+      return;
+    }
+    env.members.set(nodeText(name), info);
   }
 
   getPrivateIdentifier(env: PrivateEnvironment, name: AstNode): { info: PrivateIdentifierInfo | undefined; found: boolean } {
-    void env; void name;
-    return { info: undefined, found: false };
+    if (this.emitContext().hasAutoGenerateInfo(name)) {
+      const generatedNode = this.emitContext().getNodeForGeneratedName(name);
+      const info = generatedNode === undefined ? undefined : env.generatedIdentifiers.get(generatedNode);
+      return { info, found: info !== undefined };
+    }
+    const info = env.members.get(nodeText(name));
+    return { info, found: info !== undefined };
   }
 
   // -------------------------------------------------------------------------
@@ -1017,22 +1224,46 @@ export class ClassFieldsTransformer extends Transformer {
   // -------------------------------------------------------------------------
 
   createHoistedVariableForClass(nameText: string, node: AstNode, suffix: string): IdentifierNode {
-    void nameText; void node; void suffix;
-    return this.factory().newTempVariable() as unknown as IdentifierNode;
+    const env = this.getPrivateIdentifierEnvironment();
+    const className = env.data.className === undefined ? undefined : nodeText(env.data.className);
+    const prefix = className === undefined ? "_" : `_${className}_`;
+    const identifier = this.factory().newUniqueNameEx(`${prefix}${nameText}`, {
+      flags: GeneratedIdentifierFlags.Optimistic | GeneratedIdentifierFlags.ReservedInNestedScopes,
+      suffix,
+    }) as unknown as IdentifierNode;
+    if (this.requiresBlockScopedVar()) this.emitContext().addLexicalDeclaration(identifier);
+    else this.emitContext().addVariableDeclaration(identifier);
+    void node;
+    return identifier;
   }
 
   createHoistedVariableForClassFromNode(name: AstNode, suffix: string): IdentifierNode {
-    void name; void suffix;
-    return this.factory().newTempVariable() as unknown as IdentifierNode;
+    const env = this.getPrivateIdentifierEnvironment();
+    const className = env.data.className === undefined ? undefined : nodeText(env.data.className);
+    const prefix = className === undefined ? "_" : `_${className}_`;
+    const identifier = this.factory().newGeneratedNameForNodeEx(name, {
+      flags: GeneratedIdentifierFlags.Optimistic | GeneratedIdentifierFlags.ReservedInNestedScopes,
+      prefix,
+      suffix,
+    }) as unknown as IdentifierNode;
+    if (this.requiresBlockScopedVar()) this.emitContext().addLexicalDeclaration(identifier);
+    else this.emitContext().addVariableDeclaration(identifier);
+    return identifier;
   }
 
   createHoistedVariableForPrivateName(name: AstNode, suffix: string): IdentifierNode {
-    void name; void suffix;
-    return this.factory().newTempVariable() as unknown as IdentifierNode;
+    if (this.emitContext().hasAutoGenerateInfo(name)) {
+      return this.createHoistedVariableForClassFromNode(name, suffix);
+    }
+    return this.createHoistedVariableForClass(stripPrivateIdentifierPrefix(nodeText(name)), name, suffix);
   }
 
   accessPrivateIdentifier(name: AstNode): PrivateIdentifierInfo | undefined {
-    void name;
+    for (let env = this.lexicalEnvironment; env !== undefined; env = env.previous) {
+      if (env.privateEnv === undefined) continue;
+      const result = this.getPrivateIdentifier(env.privateEnv, name);
+      if (result.found) return result.info;
+    }
     return undefined;
   }
 
@@ -1079,18 +1310,21 @@ export class ClassFieldsTransformer extends Transformer {
   // -------------------------------------------------------------------------
 
   isReservedPrivateName(node: AstNode): boolean {
-    void node;
-    return false;
+    return !(isPrivateIdentifier(node) && this.emitContext().hasAutoGenerateInfo(node))
+      && nodeText(node) === "#constructor";
   }
 
   getProperties(node: AstNode, requireInitializer: boolean, isStatic: boolean): readonly AstNode[] {
-    void node; void requireInitializer; void isStatic;
-    return [];
+    return classMemberArray(node).filter((member) =>
+      isPropertyDeclaration(member)
+      && (!requireInitializer || propertyInitializerOf(member) !== undefined)
+      && hasStaticModifier(member) === isStatic);
   }
 
   getStaticPropertiesAndClassStaticBlock(node: AstNode): readonly AstNode[] {
-    void node;
-    return [];
+    return classMemberArray(node).filter((member) =>
+      member.kind === Kind.ClassStaticBlockDeclaration
+      || (isPropertyDeclaration(member) && hasStaticModifier(member)));
   }
 
   createCallBinding(node: AstNode): { thisArg: Expression; target: Expression } {
@@ -1274,6 +1508,21 @@ function classHasAccessorMember(node: ClassLikeDeclaration): boolean {
   }
   return false;
 }
+
+function propertyInitializerOf(node: AstNode): Expression | undefined {
+  return (node as unknown as { initializer?: Expression }).initializer;
+}
+
+function classMemberArray(node: AstNode): readonly AstNode[] {
+  const members = getClassMembers(node);
+  if (members === undefined) return [];
+  return ((members as unknown as { nodes?: readonly AstNode[] }).nodes ?? members as unknown as readonly AstNode[]);
+}
+
+function stripPrivateIdentifierPrefix(text: string): string {
+  return text.startsWith("#") ? text.slice(1) : text;
+}
+
 function isNamedEvaluationAnd(
   _emitContext: unknown,
   _node: AstNode,
