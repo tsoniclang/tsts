@@ -20,10 +20,12 @@ import type {
 } from "../ast/index.js";
 import {
   Kind,
+  NodeFlags,
   createArrowFunction,
   createArrayLiteralExpression,
   createArrayBindingPattern,
   createAwaitExpression,
+  createAsExpression,
   createBinaryExpression,
   createBigIntLiteral,
   createBlock,
@@ -96,6 +98,7 @@ import {
   createTemplateSpan,
   createThrowStatement,
   createToken,
+  createTypeAssertion,
   createTypeOfExpression,
   createTypeParameterDeclaration,
   createTypeReferenceNode,
@@ -107,29 +110,48 @@ import {
   createWhileStatement,
   createYieldExpression,
   updateArrowFunction as updateAstArrowFunction,
+  updateAsExpression as updateAstAsExpression,
   updateCallExpression as updateAstCallExpression,
   updateClassDeclaration as updateAstClassDeclaration,
   updateClassExpression as updateAstClassExpression,
   updateConstructorDeclaration as updateAstConstructorDeclaration,
+  updateDoStatement as updateAstDoStatement,
   updateElementAccessExpression as updateAstElementAccessExpression,
   updateExportDeclaration as updateAstExportDeclaration,
+  updateExpressionStatement as updateAstExpressionStatement,
+  updateExpressionWithTypeArguments as updateAstExpressionWithTypeArguments,
+  updateForInStatement as updateAstForInStatement,
+  updateForOfStatement as updateAstForOfStatement,
+  updateForStatement as updateAstForStatement,
   updateFunctionDeclaration as updateAstFunctionDeclaration,
   updateFunctionExpression as updateAstFunctionExpression,
   updateGetAccessorDeclaration as updateAstGetAccessorDeclaration,
   updateHeritageClause as updateAstHeritageClause,
+  updateIfStatement as updateAstIfStatement,
   updateImportClause as updateAstImportClause,
   updateImportDeclaration as updateAstImportDeclaration,
+  updateLabeledStatement as updateAstLabeledStatement,
   updateMethodDeclaration as updateAstMethodDeclaration,
   updateNamedExports as updateAstNamedExports,
   updateNamedImports as updateAstNamedImports,
   updateNewExpression as updateAstNewExpression,
+  updateNonNullExpression as updateAstNonNullExpression,
   updateParameterDeclaration as updateAstParameterDeclaration,
+  updateParenthesizedExpression as updateAstParenthesizedExpression,
+  updatePartiallyEmittedExpression as updateAstPartiallyEmittedExpression,
   updatePropertyAccessExpression as updateAstPropertyAccessExpression,
   updatePropertyDeclaration as updateAstPropertyDeclaration,
   updateSetAccessorDeclaration as updateAstSetAccessorDeclaration,
+  updateSatisfiesExpression as updateAstSatisfiesExpression,
+  updateSourceFile as updateAstSourceFile,
+  updateSwitchStatement as updateAstSwitchStatement,
   updateTaggedTemplateExpression as updateAstTaggedTemplateExpression,
+  updateTypeAssertion as updateAstTypeAssertion,
   updateVariableDeclaration as updateAstVariableDeclaration,
+  updateVariableDeclarationList as updateAstVariableDeclarationList,
+  updateWhileStatement as updateAstWhileStatement,
 } from "../ast/index.js";
+import { EmitFlags } from "./emitFlags.js";
 
 // ---------------------------------------------------------------------------
 // AutoGenerate options
@@ -141,8 +163,8 @@ export interface AutoGenerateOptions {
   suffix?: string;
 }
 
-export interface NameOptions { allowSourceMap?: boolean; emitFlags?: number }
-export interface AssignedNameOptions { allowSourceMap?: boolean; ignoreEmptyStringLiteral?: boolean; assignedName?: string }
+export interface NameOptions { allowComments?: boolean; allowSourceMaps?: boolean; emitFlags?: number }
+export interface AssignedNameOptions { allowComments?: boolean; allowSourceMaps?: boolean; ignoreAssignedName?: boolean; ignoreEmptyStringLiteral?: boolean; assignedName?: string }
 
 export type PrivateIdentifierKindStr = "field" | "method" | "accessor" | "auto-accessor";
 
@@ -229,6 +251,15 @@ export class NodeFactory {
   newLogicalANDExpression(left: Expression, right: Expression): Expression {
     return this.newBinary(left, Kind.AmpersandAmpersandToken, right);
   }
+  newBitwiseORExpression(left: Expression, right: Expression): Expression {
+    return this.newBinary(left, Kind.BarToken, right);
+  }
+  newBitwiseXORExpression(left: Expression, right: Expression): Expression {
+    return this.newBinary(left, Kind.CaretToken, right);
+  }
+  newBitwiseANDExpression(left: Expression, right: Expression): Expression {
+    return this.newBinary(left, Kind.AmpersandToken, right);
+  }
   newStrictEqualityExpression(left: Expression, right: Expression): Expression {
     return this.newBinary(left, Kind.EqualsEqualsEqualsToken, right);
   }
@@ -263,7 +294,7 @@ export class NodeFactory {
   }
   newLetStatement(name: IdentifierNode, initializer: Expression | undefined): Statement {
     const declaration = createVariableDeclaration(name as never, undefined, undefined, initializer);
-    const declarationList = createVariableDeclarationList(createNodeArray([declaration]) as NodeArray<never>, 1);
+    const declarationList = createVariableDeclarationList(createNodeArray([declaration]) as NodeArray<never>, NodeFlags.Let);
     return createVariableStatement(undefined, declarationList) as unknown as Statement;
   }
   newExpressionStatement(expression: Expression): Statement {
@@ -565,6 +596,139 @@ export class NodeFactory {
     return expression;
   }
 
+  createExpressionFromEntityName(node: AstNode): Expression {
+    const qualified = node as { kind?: number; left?: AstNode; right?: AstNode };
+    if (qualified.kind === Kind.QualifiedName && qualified.left !== undefined && qualified.right !== undefined) {
+      return this.newPropertyAccessExpression(
+        this.createExpressionFromEntityName(qualified.left),
+        cloneNodeLike(qualified.right),
+      ) as unknown as Expression;
+    }
+    return cloneNodeLike(node) as unknown as Expression;
+  }
+
+  restoreEnclosingLabel(node: AstNode, outermostLabeledStatement: AstNode | undefined): AstNode {
+    if (outermostLabeledStatement === undefined) return node;
+    const labeled = outermostLabeledStatement as { label?: IdentifierNode; statement?: AstNode };
+    const statement = labeled.statement;
+    const innerLabel = statement !== undefined && (statement as { kind?: number }).kind === Kind.LabeledStatement
+      ? this.restoreEnclosingLabel(node, statement)
+      : node;
+    return this.updateLabeledStatement(outermostLabeledStatement, labeled.label, innerLabel);
+  }
+
+  createForOfBindingStatement(node: AstNode, boundValue: AstNode): AstNode {
+    const candidate = node as { kind?: number; declarations?: { nodes?: readonly AstNode[] } | readonly AstNode[]; flags?: number };
+    if (candidate.kind === Kind.VariableDeclarationList) {
+      const declarations = nodeArrayElements(candidate.declarations);
+      const [firstDeclaration, ...rest] = declarations;
+      if (firstDeclaration === undefined) return this.newEmptyStatement();
+      const first = firstDeclaration as { name?: AstNode };
+      const updatedDeclaration = this.updateVariableDeclaration(firstDeclaration, first.name, undefined, undefined, boundValue);
+      const updatedList = this.updateVariableDeclarationList(
+        node,
+        this.newNodeList([updatedDeclaration, ...rest]),
+        candidate.flags ?? NodeFlags.None,
+      );
+      return this.newVariableStatement(undefined, updatedList);
+    }
+    return this.newExpressionStatement(this.newAssignmentExpression(node as unknown as Expression, boundValue as unknown as Expression));
+  }
+
+  restoreOuterExpressions(outerExpression: Expression | undefined, innerExpression: Expression, kinds = OuterExpressionKinds.All): Expression {
+    if (outerExpression !== undefined && isOuterExpressionKind((outerExpression as { kind?: number }).kind, kinds) && !this.isIgnorableParen(outerExpression)) {
+      const expression = (outerExpression as { expression?: Expression }).expression;
+      return this.updateOuterExpression(
+        outerExpression,
+        this.restoreOuterExpressions(expression, innerExpression, OuterExpressionKinds.All),
+      );
+    }
+    return innerExpression;
+  }
+
+  ensureUseStrict(statements: readonly Statement[]): readonly Statement[] {
+    const first = statements[0];
+    if (first !== undefined && isUseStrictPrologue(first)) return statements;
+    return [this.newExpressionStatement(this.newStringLiteral("use strict", 0)), ...statements];
+  }
+
+  splitStandardPrologue(source: readonly Statement[]): readonly [readonly Statement[], readonly Statement[]] {
+    const index = findFirstIndex(source, (statement) => !isPrologueDirectiveStatement(statement));
+    return index < 0 ? [source, []] : [source.slice(0, index), source.slice(index)];
+  }
+
+  splitCustomPrologue(source: readonly Statement[]): readonly [readonly Statement[], readonly Statement[]] {
+    const index = findFirstIndex(source, (statement) => isPrologueDirectiveStatement(statement) || !this.isCustomPrologue(statement));
+    return index < 0 ? [source, []] : [source.slice(0, index), source.slice(index)];
+  }
+
+  getLocalName(node: AstNode): IdentifierNode {
+    return this.getLocalNameEx(node, {});
+  }
+
+  getLocalNameEx(node: AstNode, opts: AssignedNameOptions): IdentifierNode {
+    return this.getName(node, EmitFlags.LocalName, opts);
+  }
+
+  getExportName(node: AstNode): IdentifierNode {
+    return this.getExportNameEx(node, {});
+  }
+
+  getExportNameEx(node: AstNode, opts: AssignedNameOptions): IdentifierNode {
+    return this.getName(node, EmitFlags.ExportName, opts);
+  }
+
+  getDeclarationName(node: AstNode): IdentifierNode {
+    return this.getDeclarationNameEx(node, {});
+  }
+
+  getDeclarationNameEx(node: AstNode, opts: NameOptions): IdentifierNode {
+    const assignedOptions: AssignedNameOptions = {};
+    if (opts.allowComments !== undefined) assignedOptions.allowComments = opts.allowComments;
+    if (opts.allowSourceMaps !== undefined) assignedOptions.allowSourceMaps = opts.allowSourceMaps;
+    return this.getName(node, EmitFlags.None, assignedOptions);
+  }
+
+  getNamespaceMemberName(ns: IdentifierNode, name: IdentifierNode, opts: NameOptions): IdentifierNode {
+    const qualifiedName = this.newPropertyAccessExpression(ns as unknown as Expression, name) as unknown as IdentifierNode;
+    return this.withNameEmitFlags(qualifiedName, opts);
+  }
+
+  getExternalModuleOrNamespaceExportName(ns: IdentifierNode | undefined, node: AstNode, allowComments: boolean, allowSourceMaps: boolean): AstNode {
+    if (ns !== undefined && hasModifier(node, Kind.ExportKeyword)) {
+      const opts: NameOptions = { allowComments, allowSourceMaps };
+      return this.getNamespaceMemberName(ns, this.getDeclarationNameEx(node, opts), opts) as unknown as AstNode;
+    }
+    return this.getExportNameEx(node, { allowComments, allowSourceMaps }) as unknown as AstNode;
+  }
+
+  newObjectDefinePropertyCall(target: Expression, propertyName: Expression, attributes: AstNode): Expression {
+    return this.newGlobalMethodCall("Object", "defineProperty", [target, propertyName, attributes]);
+  }
+
+  newReflectGetCall(target: Expression, propertyKey: Expression, receiver?: Expression): Expression {
+    return this.newGlobalMethodCall("Reflect", "get", receiver === undefined ? [target, propertyKey] : [target, propertyKey, receiver]);
+  }
+
+  newFunctionBindCall(target: Expression, thisArg: Expression, argumentsList: readonly AstNode[]): Expression {
+    return this.newMethodCall(target, this.newIdentifier("bind"), [thisArg, ...argumentsList]);
+  }
+
+  newImmediatelyInvokedArrowFunction(statements: readonly Statement[]): Expression {
+    return this.newCallExpression(
+      this.newParenthesizedExpression(this.newArrowFunction(undefined, undefined, [], undefined, undefined, this.newBlock(statements)) as AstNode),
+      [],
+    );
+  }
+
+  newExportDefault(expression: AstNode): AstNode {
+    return this.newExportAssignment(undefined, false, expression);
+  }
+
+  newExternalModuleExport(exportName: AstNode): AstNode {
+    return this.newExportDeclaration(undefined, false, this.newNamedExports([this.newExportSpecifier(false, undefined, exportName as IdentifierNode)]), undefined, undefined);
+  }
+
   // -------------------------------------------------------------------------
   // Update helpers (forwarders to per-node update functions)
   // -------------------------------------------------------------------------
@@ -592,7 +756,24 @@ export class NodeFactory {
   updateCallExpression(node: AstNode, ...args: unknown[]): AstNode { return updateAstCallExpression(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never) as unknown as AstNode; }
   updateNewExpression(node: AstNode, ...args: unknown[]): AstNode { return updateAstNewExpression(node as never, args[0] as never, args[1] as never, args[2] as never) as unknown as AstNode; }
   updateTaggedTemplateExpression(node: AstNode, ...args: unknown[]): AstNode { return updateAstTaggedTemplateExpression(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never, args[4] as never) as unknown as AstNode; }
-  updateExpressionWithTypeArguments(node: AstNode, ...args: unknown[]): AstNode { return { ...(node as object), expression: args[0], typeArguments: args[1] } as unknown as AstNode; }
+  updateIfStatement(node: AstNode, ...args: unknown[]): AstNode { return updateAstIfStatement(node as never, args[0] as never, args[1] as never, args[2] as never) as unknown as AstNode; }
+  updateDoStatement(node: AstNode, ...args: unknown[]): AstNode { return updateAstDoStatement(node as never, args[0] as never, args[1] as never) as unknown as AstNode; }
+  updateWhileStatement(node: AstNode, ...args: unknown[]): AstNode { return updateAstWhileStatement(node as never, args[0] as never, args[1] as never) as unknown as AstNode; }
+  updateForStatement(node: AstNode, ...args: unknown[]): AstNode { return updateAstForStatement(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never) as unknown as AstNode; }
+  updateForInStatement(node: AstNode, ...args: unknown[]): AstNode { return updateAstForInStatement(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never) as unknown as AstNode; }
+  updateForOfStatement(node: AstNode, ...args: unknown[]): AstNode { return updateAstForOfStatement(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never) as unknown as AstNode; }
+  updateSwitchStatement(node: AstNode, ...args: unknown[]): AstNode { return updateAstSwitchStatement(node as never, args[0] as never, args[1] as never) as unknown as AstNode; }
+  updateLabeledStatement(node: AstNode, ...args: unknown[]): AstNode { return updateAstLabeledStatement(node as never, args[0] as never, args[1] as never) as unknown as AstNode; }
+  updateExpressionStatement(node: AstNode, ...args: unknown[]): AstNode { return updateAstExpressionStatement(node as never, args[0] as never) as unknown as AstNode; }
+  updateVariableDeclarationList(node: AstNode, ...args: unknown[]): AstNode { return updateAstVariableDeclarationList(node as never, asNodeArray(args[0]), args[1] as number ?? nodeFlags(node)) as unknown as AstNode; }
+  updateParenthesizedExpression(node: AstNode, expression: AstNode): AstNode { return updateAstParenthesizedExpression(node as never, expression as never) as unknown as AstNode; }
+  updateTypeAssertion(node: AstNode, type: AstNode, expression: AstNode): AstNode { return updateAstTypeAssertion(node as never, type as never, expression as never) as unknown as AstNode; }
+  updateAsExpression(node: AstNode, expression: AstNode, type: AstNode): AstNode { return updateAstAsExpression(node as never, expression as never, type as never) as unknown as AstNode; }
+  updateSatisfiesExpression(node: AstNode, expression: AstNode, type: AstNode): AstNode { return updateAstSatisfiesExpression(node as never, expression as never, type as never) as unknown as AstNode; }
+  updateNonNullExpression(node: AstNode, expression: AstNode, flags?: number): AstNode { return updateAstNonNullExpression(node as never, expression as never, flags ?? nodeFlags(node)) as unknown as AstNode; }
+  updateExpressionWithTypeArguments(node: AstNode, ...args: unknown[]): AstNode { return updateAstExpressionWithTypeArguments(node as never, args[0] as never, asOptionalNodeArray(args[1])) as unknown as AstNode; }
+  updatePartiallyEmittedExpression(node: AstNode, expression: AstNode): AstNode { return updateAstPartiallyEmittedExpression(node as never, expression as never) as unknown as AstNode; }
+  updateSourceFile(node: AstNode, statements: readonly AstNode[], endOfFileToken: AstNode): AstNode { return updateAstSourceFile(node as never, createNodeArray(statements) as never, endOfFileToken as never) as unknown as AstNode; }
   updateJsxSelfClosingElement(node: AstNode, ...args: unknown[]): AstNode { return { ...(node as object), tagName: args[0], typeArguments: args[1], attributes: args[2] } as unknown as AstNode; }
   updateJsxOpeningElement(node: AstNode, ...args: unknown[]): AstNode { return { ...(node as object), tagName: args[0], typeArguments: args[1], attributes: args[2] } as unknown as AstNode; }
   updateImportDeclaration(node: AstNode, ...args: unknown[]): AstNode { return updateAstImportDeclaration(node as never, args[0] as never, args[1] as never, args[2] as never, args[3] as never) as unknown as AstNode; }
@@ -687,6 +868,65 @@ export class NodeFactory {
     return this.newCallExpression(this.newUnscopedHelperName("__classPrivateFieldSet"), args);
   }
 
+  private isIgnorableParen(node: Expression): boolean {
+    const current = node as unknown as { kind?: number; pos?: number; end?: number };
+    return current.kind === Kind.ParenthesizedExpression
+      && current.pos !== undefined
+      && current.end !== undefined
+      && current.pos >= 0
+      && current.end >= 0;
+  }
+
+  private updateOuterExpression(outerExpression: Expression, expression: Expression): Expression {
+    const outer = outerExpression as unknown as { kind?: number; type?: AstNode; flags?: number; typeArguments?: readonly AstNode[] };
+    switch (outer.kind) {
+      case Kind.ParenthesizedExpression:
+        return this.updateParenthesizedExpression(outerExpression as unknown as AstNode, expression as unknown as AstNode) as unknown as Expression;
+      case Kind.TypeAssertionExpression:
+        return this.updateTypeAssertion(outerExpression as unknown as AstNode, outer.type as AstNode, expression as unknown as AstNode) as unknown as Expression;
+      case Kind.AsExpression:
+        return this.updateAsExpression(outerExpression as unknown as AstNode, expression as unknown as AstNode, outer.type as AstNode) as unknown as Expression;
+      case Kind.SatisfiesExpression:
+        return this.updateSatisfiesExpression(outerExpression as unknown as AstNode, expression as unknown as AstNode, outer.type as AstNode) as unknown as Expression;
+      case Kind.NonNullExpression:
+        return this.updateNonNullExpression(outerExpression as unknown as AstNode, expression as unknown as AstNode, outer.flags) as unknown as Expression;
+      case Kind.ExpressionWithTypeArguments:
+        return this.updateExpressionWithTypeArguments(outerExpression as unknown as AstNode, expression as unknown as AstNode, outer.typeArguments) as unknown as Expression;
+      case Kind.PartiallyEmittedExpression:
+        return this.updatePartiallyEmittedExpression(outerExpression as unknown as AstNode, expression as unknown as AstNode) as unknown as Expression;
+      default:
+        throw new Error(`Unexpected outer expression kind: ${String(outer.kind)}`);
+    }
+  }
+
+  private isCustomPrologue(statement: Statement): boolean {
+    return (emitFlags(statement as unknown as AstNode) & EmitFlags.CustomPrologue) !== 0;
+  }
+
+  private getName(node: AstNode, emitFlagsValue: EmitFlags, opts: AssignedNameOptions): IdentifierNode {
+    const declarationName = opts.ignoreAssignedName ? nonAssignedNameOfDeclaration(node) : nameOfDeclaration(node);
+    if (declarationName !== undefined) {
+      return this.withAssignedNameEmitFlags(cloneNodeLike(declarationName) as IdentifierNode, emitFlagsValue, opts);
+    }
+    return this.newGeneratedNameForNode(node);
+  }
+
+  private withAssignedNameEmitFlags(name: IdentifierNode, emitFlagsValue: EmitFlags, opts: AssignedNameOptions): IdentifierNode {
+    let flags = emitFlagsValue;
+    if (opts.allowComments !== true) flags |= EmitFlags.NoComments;
+    if (opts.allowSourceMaps !== true) flags |= EmitFlags.NoSourceMap;
+    setEmitFlags(name as unknown as AstNode, flags);
+    return name;
+  }
+
+  private withNameEmitFlags(name: IdentifierNode, opts: NameOptions): IdentifierNode {
+    let flags = opts.emitFlags ?? EmitFlags.None;
+    if (opts.allowComments !== true) flags |= EmitFlags.NoComments;
+    if (opts.allowSourceMaps !== true) flags |= EmitFlags.NoSourceMap;
+    setEmitFlags(name as unknown as AstNode, flags);
+    return name;
+  }
+
   private newGeneratedIdentifier(text: string, node: AstNode | undefined, options: AutoGenerateOptions): IdentifierNode {
     const id = this.nextAutoGenerateId + 1;
     this.nextAutoGenerateId = id;
@@ -732,6 +972,16 @@ function memberNameText(node: AstNode): string | undefined {
   return text === undefined || text === "" ? undefined : text;
 }
 
+function cloneNodeLike<T extends AstNode>(node: T): T {
+  return { ...(node as object) } as T;
+}
+
+function nodeArrayElements<T extends AstNode = AstNode>(items: unknown): readonly T[] {
+  if (items === undefined) return [];
+  if (Array.isArray(items)) return items as readonly T[];
+  return (items as { readonly nodes?: readonly T[] }).nodes ?? [];
+}
+
 function asNodeArray<T extends AstNode = AstNode>(items: unknown): NodeArray<T> {
   if (items === undefined) return createNodeArray([]) as NodeArray<T>;
   if (Array.isArray(items)) return createNodeArray(items as readonly T[]);
@@ -746,6 +996,79 @@ function asOptionalNodeArray<T extends AstNode = AstNode>(items: unknown): NodeA
 function formatGeneratedName(privateName: boolean, prefix: string | undefined, text: string, suffix: string | undefined): string {
   const body = `${prefix ?? ""}${text}${suffix ?? ""}`;
   return privateName ? `#${body.replace(/^#/, "")}` : body;
+}
+
+const OuterExpressionKinds = {
+  Parentheses: 1 << 0,
+  TypeAssertions: 1 << 1,
+  NonNullAssertions: 1 << 2,
+  PartiallyEmittedExpressions: 1 << 3,
+  ExpressionsWithTypeArguments: 1 << 4,
+  All: (1 << 5) - 1,
+} as const;
+
+function isOuterExpressionKind(kind: number | undefined, kinds: number): boolean {
+  switch (kind) {
+    case Kind.ParenthesizedExpression:
+      return (kinds & OuterExpressionKinds.Parentheses) !== 0;
+    case Kind.TypeAssertionExpression:
+    case Kind.AsExpression:
+    case Kind.SatisfiesExpression:
+      return (kinds & OuterExpressionKinds.TypeAssertions) !== 0;
+    case Kind.NonNullExpression:
+      return (kinds & OuterExpressionKinds.NonNullAssertions) !== 0;
+    case Kind.PartiallyEmittedExpression:
+      return (kinds & OuterExpressionKinds.PartiallyEmittedExpressions) !== 0;
+    case Kind.ExpressionWithTypeArguments:
+      return (kinds & OuterExpressionKinds.ExpressionsWithTypeArguments) !== 0;
+    default:
+      return false;
+  }
+}
+
+function isPrologueDirectiveStatement(statement: Statement): boolean {
+  const candidate = statement as unknown as { kind?: number; expression?: { kind?: number; text?: string } };
+  return candidate.kind === Kind.ExpressionStatement
+    && candidate.expression?.kind === Kind.StringLiteral
+    && typeof candidate.expression.text === "string";
+}
+
+function isUseStrictPrologue(statement: Statement): boolean {
+  const candidate = statement as unknown as { expression?: { text?: string } };
+  return isPrologueDirectiveStatement(statement) && candidate.expression?.text === "use strict";
+}
+
+function findFirstIndex<T>(items: readonly T[], predicate: (value: T) => boolean): number {
+  for (let index = 0; index < items.length; index += 1) {
+    if (predicate(items[index]!)) return index;
+  }
+  return -1;
+}
+
+function hasModifier(node: AstNode, modifierKind: number): boolean {
+  return nodeArrayElements((node as { modifiers?: unknown }).modifiers)
+    .some((modifier) => (modifier as { kind?: number }).kind === modifierKind);
+}
+
+function nameOfDeclaration(node: AstNode): AstNode | undefined {
+  const assignedName = (node as { assignedName?: AstNode }).assignedName;
+  return assignedName ?? (node as { name?: AstNode }).name;
+}
+
+function nonAssignedNameOfDeclaration(node: AstNode): AstNode | undefined {
+  return (node as { name?: AstNode }).name;
+}
+
+function nodeFlags(node: AstNode): number {
+  return (node as { flags?: number }).flags ?? NodeFlags.None;
+}
+
+function emitFlags(node: AstNode): number {
+  return (node as { emitFlags?: number }).emitFlags ?? EmitFlags.None;
+}
+
+function setEmitFlags(node: AstNode, flags: number): void {
+  (node as { emitFlags?: number }).emitFlags = flags;
 }
 
 export function newNodeFactory(): NodeFactory {
