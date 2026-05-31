@@ -26,6 +26,7 @@ import {
 } from "./checkerCore.js";
 import {
   getPropertyTypeOfType,
+  ObjectFlags,
   type Signature,
   type Type,
   TypeFlags,
@@ -52,6 +53,36 @@ export function getIteratedTypeOrElementType(
   if ((use & IterationUse.AllowsStringInputFlag) !== 0 && (inputType.flags & TypeFlags.StringLike) !== 0) return stringType;
   void sentType;
   return unknownType;
+}
+
+export function checkIteratedTypeOrElementType(
+  use: IterationUse,
+  inputType: Type,
+  sentType: Type | undefined,
+  errorNode: AstNode | undefined,
+  state: CheckState,
+  resolver: IterationTypesResolver,
+): Type {
+  if ((inputType.flags & TypeFlags.Any) !== 0) return inputType;
+  const result = getIteratedTypeOrElementType(use, inputType, sentType, errorNode, state, resolver);
+  if (sentType !== undefined) {
+    const iterationTypes = getIterationTypesOfIterable(inputType, use, undefined, state, resolver);
+    if (iterationTypes?.nextType !== undefined && !state.relater.isTypeAssignableTo(sentType, iterationTypes.nextType)) {
+      state.diagnostics.push({ message: "Iterator next input type is not assignable to the iterator next parameter type." });
+    }
+  }
+  return result ?? anyType;
+}
+
+export function isReferenceToType(type: Type | undefined, target: Type | undefined): boolean {
+  if (type === undefined || target === undefined) return false;
+  if ((type.flags & TypeFlags.Object) === 0) return false;
+  const data = type.data as { readonly objectFlags?: ObjectFlags; readonly target?: Type } | undefined;
+  return ((data?.objectFlags ?? 0) & ObjectFlags.Reference) !== 0 && data?.target === target;
+}
+
+export function isReferenceToSomeType(type: Type | undefined, targets: readonly Type[]): boolean {
+  return targets.some(target => isReferenceToType(type, target));
 }
 
 export function getIterationTypeOfGeneratorFunctionReturnType(

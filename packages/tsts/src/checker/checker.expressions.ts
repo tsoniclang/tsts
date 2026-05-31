@@ -115,7 +115,7 @@ import {
 } from "./checker.checkedtype.js";
 import { checkBlock } from "./checker.statements.js";
 import { getPropertyNameFromType, isTypeUsableAsPropertyName } from "./utilities.js";
-import { SignatureKind, type Signature } from "./types.js";
+import { SignatureFlags, SignatureKind, type Signature } from "./types.js";
 
 type SignatureKindValue = typeof SignatureKind.Call | typeof SignatureKind.Construct;
 const SignatureKindCall = SignatureKind.Call;
@@ -563,6 +563,38 @@ export function getYieldedTypeOfYieldExpression(node: AstNode, state: CheckState
 
 export function checkSyntheticExpression(node: AstNode, state: CheckState): Type {
   return inferExpression(expressionNode(node), state);
+}
+
+export function checkDeprecatedSignature(signature: Signature, node: AstNode, state: CheckState): void {
+  if ((signature.flags & SignatureFlags.IsSignatureCandidateForOverloadFailure) !== 0) return;
+  if (signature.declaration !== undefined && isDeprecatedDeclaration(signature.declaration)) {
+    const suggestionNode = getDeprecatedSuggestionNode(node);
+    const name = tryGetPropertyAccessOrIdentifierToString(invokedExpression(node));
+    addDeprecatedSuggestionWithSignature(suggestionNode, signature.declaration, name, signatureToString(signature), state);
+  }
+}
+
+export function addDeprecatedSuggestionWithSignature(
+  location: AstNode,
+  declaration: AstNode,
+  deprecatedEntity: string,
+  signatureString: string,
+  state: CheckState,
+): { readonly message: string } {
+  void location; void declaration;
+  const message = deprecatedEntity.length > 0 ? "The_signature_0_of_1_is_deprecated" : "X_0_is_deprecated";
+  const diagnostic = { message: `${message}: ${deprecatedEntity.length > 0 ? `${signatureString} of ${deprecatedEntity}` : signatureString}` };
+  state.diagnostics.push(diagnostic);
+  return diagnostic;
+}
+
+export function isSymbolOrSymbolForCall(node: AstNode): boolean {
+  if (!isCallExpression(node)) return false;
+  let left: AstNode | undefined = node.expression;
+  if (left !== undefined && isPropertyAccessExpression(left) && left.name.text === "for") {
+    left = left.expression;
+  }
+  return left !== undefined && isIdentifier(left) && left.text === "Symbol";
 }
 
 export function checkIdentifier(node: AstNode, state: CheckState): Type {
@@ -1452,6 +1484,50 @@ function inferGlobalStaticProperty(receiverName: string, propertyName: string, s
     return makeFunctionType(booleanType, state, [{ name: "value", type: anyType }]);
   }
   return undefined;
+}
+
+function isDeprecatedDeclaration(node: AstNode): boolean {
+  const tags = (node as { readonly jsDoc?: readonly { readonly tags?: readonly unknown[] }[]; readonly jsDocTags?: readonly unknown[] }).jsDocTags
+    ?? (node as { readonly jsDoc?: readonly { readonly tags?: readonly unknown[] }[] }).jsDoc?.flatMap(doc => doc.tags ?? [])
+    ?? [];
+  return tags.some(tag => {
+    const tagName = (tag as { readonly tagName?: { readonly text?: string }; readonly name?: string }).tagName?.text
+      ?? (tag as { readonly tagName?: string; readonly name?: string }).tagName
+      ?? (tag as { readonly name?: string }).name
+      ?? "";
+    return tagName === "deprecated";
+  }) || ((node as { readonly deprecated?: boolean }).deprecated === true);
+}
+
+function getDeprecatedSuggestionNode(node: AstNode): AstNode {
+  return invokedExpression(node) ?? node;
+}
+
+function invokedExpression(node: AstNode): AstNode | undefined {
+  if (isCallExpression(node) || isNewExpression(node)) {
+    return node.expression;
+  }
+  if (isTaggedTemplateExpression(node)) return node.tag;
+  return (node as { readonly expression?: AstNode }).expression;
+}
+
+function tryGetPropertyAccessOrIdentifierToString(node: AstNode | undefined): string {
+  if (node === undefined) return "";
+  if (isIdentifier(node) || isPrivateIdentifier(node)) return node.text;
+  if (isPropertyAccessExpression(node)) {
+    const left = tryGetPropertyAccessOrIdentifierToString(node.expression);
+    return left.length === 0 ? node.name.text : `${left}.${node.name.text}`;
+  }
+  return "";
+}
+
+function signatureToString(signature: Signature): string {
+  const parameters = signature.parameters.map(parameter => {
+    const type = getTypeOfSymbol(parameter);
+    return `${parameter.name ?? "arg"}${type === undefined ? "" : `: ${displayType(type)}`}`;
+  });
+  const returnType = signature.resolvedReturnType === undefined ? "any" : displayType(signature.resolvedReturnType);
+  return `(${parameters.join(", ")}) => ${returnType}`;
 }
 
 function parentOf(node: Expression | undefined): Expression | undefined {

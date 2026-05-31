@@ -9,6 +9,7 @@
 
 import {
   Kind,
+  NodeFlags,
   isIdentifier,
   nodeSymbol,
   type Node as AstNode,
@@ -56,6 +57,42 @@ export function checkUnusedIdentifiers(potentiallyUnusedIdentifiers: readonly As
         break;
     }
   }
+}
+
+export function checkUnusedLocalsAndParameters(node: AstNode, state: CheckState): void {
+  const variableParents = new Set<AstNode>();
+  const importClauses = new Map<AstNode, AstNode[]>();
+  for (const local of localSymbolsOf(node)) {
+    const referenceKinds = (local as { readonly referenceKinds?: number }).referenceKinds ?? 0;
+    if (((local.flags ?? 0) & SymbolFlags.TypeParameter) !== 0) {
+      if (((local.flags ?? 0) & SymbolFlags.Variable) === 0 || (referenceKinds & SymbolFlags.Variable) !== 0) continue;
+    } else if (referenceKinds !== 0 || local.exportSymbol !== undefined || ((local.flags ?? 0) & SymbolFlags.ModuleExports) !== 0) {
+      continue;
+    }
+    for (const declaration of local.declarations ?? []) {
+      if (declaration.kind === Kind.VariableDeclaration || declaration.kind === Kind.Parameter || declaration.kind === Kind.BindingElement) {
+        const root = rootDeclaration(declaration);
+        const parent = parentOf(root);
+        if (parent !== undefined) variableParents.add(parent);
+      } else if (declaration.kind === Kind.ImportClause || declaration.kind === Kind.ImportSpecifier || declaration.kind === Kind.NamespaceImport) {
+        if (!isIdentifierThatStartsWithUnderscore(nameOf(declaration))) {
+          const importClause = importClauseFromImported(declaration);
+          if (importClause !== undefined) {
+            const existing = importClauses.get(importClause) ?? [];
+            existing.push(declaration);
+            importClauses.set(importClause, existing);
+          }
+        }
+      } else if (declaration.kind !== Kind.TypeParameter && !isAmbientModuleDeclaration(declaration)) {
+        reportUnusedLocal(declaration, state);
+      }
+    }
+  }
+  for (const declaration of variableParents) {
+    if (declaration.kind === Kind.VariableDeclarationList) reportUnusedVariables(declaration, state);
+    else reportUnusedParameters(declaration, state);
+  }
+  for (const [declaration] of importClauses) reportUnusedImports(declaration, state);
 }
 
 export function isReferenced(symbol: AstSymbol | undefined): boolean {
@@ -216,6 +253,21 @@ function collectDeclarations(root: AstNode): readonly AstNode[] {
     }
   });
   return result;
+}
+
+function localSymbolsOf(node: AstNode): Iterable<AstSymbol> {
+  const locals = (node as { readonly locals?: Map<string, AstSymbol> }).locals;
+  return locals?.values() ?? [];
+}
+
+function rootDeclaration(node: AstNode): AstNode {
+  let current = node;
+  while (parentOf(current)?.kind === Kind.BindingElement) current = parentOf(current)!;
+  return current;
+}
+
+function isAmbientModuleDeclaration(node: AstNode): boolean {
+  return node.kind === Kind.ModuleDeclaration && (((node as { readonly flags?: number }).flags ?? 0) & NodeFlags.Ambient) !== 0;
 }
 
 function collectImports(root: AstNode): readonly AstNode[] {

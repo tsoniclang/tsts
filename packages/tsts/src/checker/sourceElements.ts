@@ -1,5 +1,7 @@
 import {
   Kind,
+  NodeFlags,
+  SymbolFlags,
   isArrayTypeNode,
   isBlock,
   isCallSignatureDeclaration,
@@ -541,7 +543,21 @@ export function checkFunctionLikeDeclaration(node: AstNode, state: CheckState): 
   else if (isGetAccessorDeclaration(node) || isSetAccessorDeclaration(node)) checkAccessorDeclaration(node, state);
 }
 
-export function checkSourceElementUnreachable(_node: AstNode, _context: SourceElementCheckContext): boolean {
+export function checkSourceElementUnreachable(node: AstNode, _context: SourceElementCheckContext): boolean {
+  return isSourceElementUnreachable(node);
+}
+
+export function isSourceElementUnreachable(node: AstNode): boolean {
+  if (((node as { readonly flags?: number }).flags ?? 0) & NodeFlags.Unreachable) {
+    if (node.kind === Kind.EnumDeclaration) return !isConstEnumDeclaration(node) || shouldPreserveConstEnums(node);
+    if (node.kind === Kind.ModuleDeclaration) return isInstantiatedModule(node);
+    return true;
+  }
+  const flowNode = (node as { readonly flowNode?: { readonly reachable?: boolean; readonly flags?: number } }).flowNode;
+  if (flowNode !== undefined) {
+    if (flowNode.reachable === false) return true;
+    if (((flowNode.flags ?? 0) & 1) !== 0) return true;
+  }
   return false;
 }
 
@@ -568,6 +584,21 @@ function expressionOf(node: AstNode): AstNode | undefined {
 
 function tagOf(node: AstNode): AstNode | undefined {
   return (node as { readonly tag?: AstNode }).tag;
+}
+
+function isConstEnumDeclaration(node: AstNode): boolean {
+  const symbolFlags = (node as { readonly symbol?: { readonly flags?: number } }).symbol?.flags ?? 0;
+  return (symbolFlags & SymbolFlags.ConstEnum) !== 0 || ((node as { readonly constEnum?: boolean }).constEnum === true);
+}
+
+function shouldPreserveConstEnums(node: AstNode): boolean {
+  const sourceFile = (node as { readonly sourceFile?: { readonly compilerOptions?: { readonly preserveConstEnums?: boolean } } }).sourceFile;
+  return sourceFile?.compilerOptions?.preserveConstEnums === true;
+}
+
+function isInstantiatedModule(node: AstNode): boolean {
+  const symbol = (node as { readonly symbol?: { readonly exports?: ReadonlyMap<string, unknown>; readonly members?: ReadonlyMap<string, unknown> } }).symbol;
+  return (symbol?.exports?.size ?? 0) > 0 || (symbol?.members?.size ?? 0) > 0;
 }
 
 function argumentExpressionOf(node: AstNode): AstNode | undefined {
