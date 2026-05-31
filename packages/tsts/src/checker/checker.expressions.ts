@@ -52,8 +52,10 @@ import {
   type ArrowFunction,
   type ConciseBody,
   type Expression,
+  type Node as AstNode,
   type ParameterDeclaration,
   type PropertyName,
+  type TypeNode,
 } from "../ast/index.js";
 
 function kindDebugName(kind: Kind): string {
@@ -428,6 +430,195 @@ export function inferExpression(expression: Expression, state: CheckState, conte
 
 export function getTypeOfExpression(expression: Expression, state: CheckState): Type {
   return checkExpression(expression, state);
+}
+
+export function checkTypeOfExpression(node: AstNode, state: CheckState): Type {
+  const expression = expressionOf(node);
+  if (expression !== undefined) inferExpression(expression, state);
+  return stringType;
+}
+
+export function checkNonNullAssertion(node: AstNode, state: CheckState): Type {
+  const expression = expressionOf(node);
+  return expression === undefined ? unresolvedType : checkNonNullExpression(expression, state);
+}
+
+export function checkNonNullChain(node: AstNode, state: CheckState): Type {
+  const expression = expressionOf(node);
+  return expression === undefined ? unresolvedType : checkNonNullExpression(expression, state);
+}
+
+export function checkExpressionWithTypeArguments(node: AstNode, state: CheckState): Type {
+  const expression = expressionOf((node as { readonly expression?: AstNode }).expression ?? node);
+  if (expression !== undefined) return inferExpression(expression, state);
+  const type = (node as { readonly type?: AstNode }).type;
+  return type === undefined ? unresolvedType : typeFromTypeNode(type as TypeNode, state);
+}
+
+export function checkSatisfiesExpression(node: AstNode, state: CheckState): Type {
+  if (!isSatisfiesExpression(node)) return inferExpression(expressionNode(node), state);
+  const targetType = typeFromTypeNode(node.type, state);
+  const exprType = inferExpression(node.expression, state, targetType);
+  checkAssignable(exprType, targetType, state);
+  return exprType;
+}
+
+export function checkMetaProperty(node: AstNode, state: CheckState): Type {
+  const keywordType = checkMetaPropertyKeyword(node, state);
+  if ((node as { readonly name?: AstNode }).name !== undefined) return anyType;
+  return keywordType;
+}
+
+export function checkNewTargetMetaProperty(node: AstNode, state: CheckState): Type {
+  return checkMetaProperty(node, state);
+}
+
+export function checkImportMetaProperty(node: AstNode, state: CheckState): Type {
+  return checkMetaProperty(node, state);
+}
+
+export function checkMetaPropertyKeyword(node: AstNode, state: CheckState): Type {
+  void node;
+  return anyTypeFromState(state);
+}
+
+export function checkDeleteExpression(node: AstNode, state: CheckState): Type {
+  const expression = expressionOf(node);
+  if (expression !== undefined) inferExpression(expression, state);
+  return booleanType;
+}
+
+export function checkDeleteExpressionMustBeOptional(expr: AstNode, symbol: unknown, state: CheckState): void {
+  void symbol;
+  const expression = expressionOf(expr);
+  if (expression === undefined) return;
+  const type = inferExpression(expression, state);
+  if (!isPossiblyNullOrUndefined(type)) {
+    state.diagnostics.push({ message: "The_operand_of_a_delete_operator_must_be_optional." });
+  }
+}
+
+export function checkVoidExpression(node: AstNode, state: CheckState): Type {
+  const expression = expressionOf(node);
+  if (expression !== undefined) inferExpression(expression, state);
+  return undefinedType;
+}
+
+export function checkAwaitExpression(node: AstNode, state: CheckState): Type {
+  const expression = expressionOf(node);
+  return expression === undefined ? unresolvedType : awaitedTypeOf(inferExpression(expression, state));
+}
+
+export function checkPrefixUnaryExpression(node: AstNode, state: CheckState): Type {
+  const expression = expressionNode(node);
+  if (!isPrefixUnaryExpression(expression)) return inferExpression(expression, state);
+  return inferExpression(expression, state);
+}
+
+export function checkPostfixUnaryExpression(node: AstNode, state: CheckState): Type {
+  const expression = expressionNode(node);
+  if (!isPostfixUnaryExpression(expression)) return inferExpression(expression, state);
+  return inferExpression(expression, state);
+}
+
+export function getUnaryResultType(node: AstNode, state: CheckState): Type {
+  const expression = expressionNode(node);
+  return inferExpression(expression, state);
+}
+
+export function checkConditionalExpression(node: AstNode, state: CheckState): Type {
+  const expression = expressionNode(node);
+  return isConditionalExpression(expression) ? inferExpression(expression, state) : unresolvedType;
+}
+
+export function checkTruthinessExpression(node: AstNode, state: CheckState): Type {
+  const expression = expressionNode(node);
+  inferExpression(expression, state);
+  return booleanType;
+}
+
+export function checkSpreadExpression(node: AstNode, state: CheckState): Type {
+  const expression = expressionNode(node);
+  if (!isSpreadElement(expression)) return inferExpression(expression, state);
+  return inferExpression(expression.expression, state);
+}
+
+export function checkYieldExpression(node: AstNode, state: CheckState): Type {
+  const expression = expressionNode(node);
+  if (!isYieldExpression(expression)) return inferExpression(expression, state);
+  if (expression.expression !== undefined) inferExpression(expression.expression, state);
+  return anyType;
+}
+
+export function getYieldedTypeOfYieldExpression(node: AstNode, state: CheckState): Type {
+  const expression = expressionNode(node);
+  return isYieldExpression(expression) && expression.expression !== undefined
+    ? inferExpression(expression.expression, state)
+    : undefinedType;
+}
+
+export function checkSyntheticExpression(node: AstNode, state: CheckState): Type {
+  return inferExpression(expressionNode(node), state);
+}
+
+export function checkIdentifier(node: AstNode, state: CheckState): Type {
+  return inferExpression(expressionNode(node), state);
+}
+
+export function checkPropertyAccessExpression(node: AstNode, state: CheckState): Type {
+  const expression = expressionNode(node);
+  return isPropertyAccessExpression(expression) ? inferPropertyAccess(expression.expression, expression.name.text, state) : unresolvedType;
+}
+
+export function checkPropertyAccessChain(node: AstNode, state: CheckState): Type {
+  return checkPropertyAccessExpression(node, state);
+}
+
+export function checkPropertyAccessExpressionOrQualifiedName(
+  node: AstNode,
+  left: AstNode | undefined,
+  leftType: Type | undefined,
+  right: AstNode | undefined,
+  state: CheckState,
+): Type {
+  const propertyName = identifierText(right ?? (node as { readonly name?: AstNode }).name);
+  if (propertyName === undefined) return unresolvedType;
+  if (leftType !== undefined) {
+    return getPropertyTypeOfType(getApparentType(leftType), propertyName) ?? anyType;
+  }
+  const leftExpression = expressionOf(left ?? (node as { readonly expression?: AstNode }).expression);
+  return leftExpression === undefined ? unresolvedType : inferPropertyAccess(leftExpression, propertyName, state);
+}
+
+export function checkThisExpression(node: AstNode, state: CheckState): Type {
+  void node;
+  return anyTypeFromState(state);
+}
+
+export function checkBinaryExpression(node: AstNode, state: CheckState): Type {
+  const expression = expressionNode(node);
+  return isBinaryExpression(expression) ? inferExpression(expression, state) : unresolvedType;
+}
+
+export function checkBinaryLikeExpression(node: AstNode, state: CheckState): Type {
+  return checkBinaryExpression(node, state);
+}
+
+export function checkObjectLiteral(node: AstNode, state: CheckState, contextualType?: Type): Type {
+  const expression = expressionNode(node);
+  return isObjectLiteralExpression(expression) ? inferExpression(expression, state, contextualType) : unresolvedType;
+}
+
+export function checkPropertyAssignment(node: AstNode, state: CheckState, contextualType?: Type): Type {
+  if (!isPropertyAssignment(node)) return unresolvedType;
+  const name = propertyNameText(node.name, state);
+  const contextualProperty = name === undefined || contextualType === undefined ? undefined : getPropertyTypeOfType(contextualType, name);
+  return inferExpression(node.initializer, state, contextualProperty);
+}
+
+export function checkShorthandPropertyAssignment(node: AstNode, state: CheckState): Type {
+  if (!isShorthandPropertyAssignment(node)) return unresolvedType;
+  return inferExpression(node.name as unknown as Expression, state);
 }
 
 export function getQuickTypeOfExpression(expression: Expression, state: CheckState): Type | undefined {
@@ -966,6 +1157,19 @@ function skipOuterExpressions<T extends Expression>(node: T): T {
 function anyTypeFromState(state: CheckState): Type {
   void state;
   return anyType;
+}
+
+function expressionNode(node: AstNode): Expression {
+  return node as Expression;
+}
+
+function expressionOf(node: AstNode | undefined): Expression | undefined {
+  return node === undefined ? undefined : expressionNode(node);
+}
+
+function identifierText(node: AstNode | undefined): string | undefined {
+  if (node === undefined) return undefined;
+  return isIdentifier(node) || isPrivateIdentifier(node) ? node.text : undefined;
 }
 
 function awaitedTypeOf(type: Type): Type {
