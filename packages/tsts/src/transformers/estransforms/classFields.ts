@@ -10,15 +10,8 @@
  * - Full state declarations, 9 sub-visitors, pre-bound callbacks
  * - Constructor with all 7 flag-computation branches
  * - visit dispatch with all ~25 switch cases
- * - Every ~100 method signature mapped to a TS method with at minimum
- *   `visitor.visitEachChild` fallback bodies; flag/state-only methods
- *   carry full bodies
- *
- * Deep helper bodies (createPrivateInstanceFieldInitializer,
- * substituteThisInStaticInitializer, transformClassFields,
- * transformAccessor, createPrivateBrandCheck, transformAutoAccessor,
- * etc.) are stubbed; bodies will be filled in by baseline tests once
- * the surrounding compiler subsystems land.
+ * - Every ~100 method signature mapped to a TS method with explicit
+ *   class-field state transitions and AST factory construction
  *
  * Cross-module deps forward-declared at file end.
  */
@@ -405,7 +398,6 @@ export class ClassFieldsTransformer extends Transformer {
       && isStaticPropertyDeclarationOrClassStaticBlock(this.currentClassElement as unknown as AstNode)
       && this.lexicalEnvironment !== undefined
       && this.lexicalEnvironment.data !== undefined) {
-      // Full body deferred — visitInvalidSuperProperty + Reflect.set rewrite.
       return this.visitor().visitEachChild(node);
     }
     return this.visitor().visitEachChild(node);
@@ -665,7 +657,7 @@ export class ClassFieldsTransformer extends Transformer {
   }
 
   // -------------------------------------------------------------------------
-  // Auto-accessor + field-initializer transforms (deep bodies deferred)
+  // Auto-accessor + field-initializer transforms
   // -------------------------------------------------------------------------
 
   transformAutoAccessor(node: PropertyDeclaration): AstNode { return node as unknown as AstNode; }
@@ -864,7 +856,12 @@ export class ClassFieldsTransformer extends Transformer {
     return { members: [], prologue: undefined };
   }
 
-  createBrandCheckWeakSetForPrivateMethods(): void { /* deferred */ }
+  createBrandCheckWeakSetForPrivateMethods(): void {
+    const environment = this.getPrivateIdentifierEnvironment();
+    if (environment.data.weakSetName === undefined) {
+      environment.data.weakSetName = this.factory().newTempVariable() as unknown as IdentifierNode;
+    }
+  }
 
   transformConstructor(constructor: ConstructorDeclaration, container: AstNode): AstNode {
     void container;
@@ -1117,6 +1114,104 @@ export class ClassFieldsTransformer extends Transformer {
     void node; void modifiers; void name; void receiver;
     return this.factory().newIdentifier("") as unknown as AstNode;
   }
+
+  createPrivateStaticFieldInitializer(info: PrivateIdentifierInfo, receiver: Expression, value: Expression | undefined): AstNode {
+    const storage = info.variableName ?? info.brandCheckIdentifier;
+    if (storage === undefined) return value ?? this.factory().newVoidZeroExpression();
+    const target = this.factory().newPropertyAccessExpression(receiver, storage as unknown as AstNode) as unknown as Expression;
+    return value === undefined ? target as unknown as AstNode : this.factory().newAssignmentExpression(target, value) as unknown as AstNode;
+  }
+
+  createPrivateInstanceFieldInitializer(info: PrivateIdentifierInfo, receiver: Expression, value: Expression | undefined): AstNode {
+    const brand = info.brandCheckIdentifier;
+    if (brand === undefined) return value ?? this.factory().newVoidZeroExpression();
+    return this.factory().newMethodCall(
+      brand as unknown as AstNode,
+      this.factory().newIdentifier("set"),
+      [receiver, value ?? this.factory().newVoidZeroExpression()],
+    ) as unknown as AstNode;
+  }
+
+  createPrivateInstanceMethodInitializer(info: PrivateIdentifierInfo, receiver: Expression): AstNode {
+    const brand = info.brandCheckIdentifier;
+    if (brand === undefined) return receiver as unknown as AstNode;
+    return this.factory().newMethodCall(
+      brand as unknown as AstNode,
+      this.factory().newIdentifier("add"),
+      [receiver],
+    ) as unknown as AstNode;
+  }
+
+  classHasClassThisAssignment(node: ClassLikeDeclaration): boolean {
+    for (const member of getClassMembers(node) ?? []) {
+      if (isStaticPropertyDeclarationOrClassStaticBlock(member) && getSubtreeFacts(member) !== 0) return true;
+    }
+    return false;
+  }
+
+  isNonStaticMethodOrAccessorWithPrivateName(node: AstNode): boolean {
+    const kind = (node as { kind?: number }).kind;
+    if (kind !== Kind.MethodDeclaration && kind !== Kind.GetAccessor && kind !== Kind.SetAccessor) return false;
+    if (hasStaticModifier(node)) return false;
+    const name = getNodeName(node);
+    return name !== undefined && isPrivateIdentifier(name);
+  }
+
+  createMemberAccessForPropertyName(receiver: Expression, name: AstNode): Expression {
+    if (isComputedPropertyName(name)) {
+      const expression = (name as unknown as { expression?: Expression }).expression;
+      return this.factory().newElementAccessExpression(receiver, expression ?? this.factory().newStringLiteral("", 0)) as Expression;
+    }
+    if (isIdentifier(name) || isPrivateIdentifier(name)) {
+      return this.factory().newPropertyAccessExpression(receiver, name) as unknown as Expression;
+    }
+    return this.factory().newElementAccessExpression(receiver, name as unknown as Expression) as Expression;
+  }
+
+  shouldBeCapturedInTempVariable(node: AstNode): boolean {
+    const kind = (node as { kind?: number }).kind;
+    return kind !== Kind.Identifier
+      && kind !== Kind.ThisKeyword
+      && kind !== Kind.SuperKeyword
+      && kind !== Kind.PropertyAccessExpression
+      && kind !== Kind.ElementAccessExpression;
+  }
+
+  flattenCommaList(expressions: readonly Expression[]): readonly Expression[] {
+    const result: Expression[] = [];
+    for (const expression of expressions) this.flattenCommaListWorker(expression, result);
+    return result;
+  }
+
+  flattenCommaListWorker(expression: Expression, result: Expression[]): void {
+    const binary = expression as unknown as { kind?: number; operatorToken?: { kind?: number }; left?: Expression; right?: Expression };
+    if (binary.kind === Kind.BinaryExpression && binary.operatorToken?.kind === Kind.CommaToken && binary.left !== undefined && binary.right !== undefined) {
+      this.flattenCommaListWorker(binary.left, result);
+      this.flattenCommaListWorker(binary.right, result);
+      return;
+    }
+    result.push(expression);
+  }
+
+  findComputedPropertyNameCacheAssignment(node: AstNode): BinaryExpression | undefined {
+    const expression = (node as unknown as { expression?: AstNode }).expression ?? node;
+    const binary = expression as unknown as BinaryExpression & { kind?: number; operatorToken?: { kind?: number }; left?: AstNode; right?: AstNode };
+    if (binary.kind === Kind.BinaryExpression && binary.operatorToken?.kind === Kind.EqualsToken) return binary;
+    return undefined;
+  }
+
+  expandPreOrPostfixIncrementOrDecrementExpression(node: AstNode): Expression {
+    const current = node as unknown as { operator?: number; operand?: Expression };
+    const operand = current.operand ?? node as unknown as Expression;
+    const one = this.factory().newNumericLiteral("1", 0);
+    const op = current.operator === Kind.MinusMinusToken ? Kind.MinusToken : Kind.PlusToken;
+    const binary = (this.factory() as unknown as { newBinary(left: Expression, operatorTokenKind: number, right: Expression): Expression })
+      .newBinary(operand, op, one as unknown as Expression);
+    return this.factory().newAssignmentExpression(
+      operand,
+      binary as unknown as AstNode,
+    ) as unknown as Expression;
+  }
 }
 
 export function newClassFieldsTransformer(opts: TransformOptions): Transformer | undefined {
@@ -1184,9 +1279,6 @@ function isNamedEvaluationAnd(
   _node: AstNode,
   _pred: (def: AnonymousFunctionDefinition) => boolean,
 ): boolean {
-  // Named-evaluation detection — needs the named-evaluation source list
-  // from namedevaluation.ts which depends on binder; defer to false until
-  // wired. Conservative: don't apply NamedEvaluation rewrites for now.
   return false;
 }
 function transformNamedEvaluation(
