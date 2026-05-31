@@ -41,6 +41,10 @@ export function newSimpleMapper(source: Type, target: Type): TypeMapper {
   return { kind: MapperKind.Simple, sources: [source], targets: [target] };
 }
 
+export function newSimpleTypeMapper(source: Type, target: Type): TypeMapper {
+  return newSimpleMapper(source, target);
+}
+
 export function newArrayMapper(sources: readonly Type[], targets: readonly Type[]): TypeMapper {
   if (sources.length !== targets.length) {
     throw new Error("Type mapper source/target arity mismatch");
@@ -48,24 +52,60 @@ export function newArrayMapper(sources: readonly Type[], targets: readonly Type[
   return { kind: MapperKind.Array, sources, targets };
 }
 
+export function newArrayTypeMapper(sources: readonly Type[], targets: readonly Type[]): TypeMapper {
+  return newArrayMapper(sources, targets);
+}
+
 export function newArrayToSingleMapper(sources: readonly Type[], target: Type): TypeMapper {
   return { kind: MapperKind.ArrayToSingle, sources, targets: [target] };
+}
+
+export function newArrayToSingleTypeMapper(sources: readonly Type[], target: Type): TypeMapper {
+  return newArrayToSingleMapper(sources, target);
 }
 
 export function newFunctionMapper(fn: (t: Type) => Type): TypeMapper {
   return { kind: MapperKind.Function, map: fn };
 }
 
+export function newFunctionTypeMapper(fn: (t: Type) => Type): TypeMapper {
+  return newFunctionMapper(fn);
+}
+
 export function newCompositeMapper(mapper1: TypeMapper, mapper2: TypeMapper): TypeMapper {
-  return newMergedMapper(mapper1, mapper2);
+  return newCompositeTypeMapper(mapper1, mapper2);
+}
+
+export function newCompositeTypeMapper(
+  mapper1: TypeMapper,
+  mapper2: TypeMapper,
+  instantiateType: (type: Type, mapper: TypeMapper) => Type = getMappedType,
+): TypeMapper {
+  return {
+    kind: MapperKind.Merged,
+    mapper1,
+    mapper2,
+    map: (type) => {
+      const mapped = getMappedType(type, mapper1);
+      return mapped === type ? getMappedType(type, mapper2) : instantiateType(mapped, mapper2);
+    },
+  };
 }
 
 export function newMergedMapper(mapper1: TypeMapper, mapper2: TypeMapper): TypeMapper {
   return { kind: MapperKind.Merged, mapper1, mapper2 };
 }
 
+export function newMergedTypeMapper(mapper1: TypeMapper, mapper2: TypeMapper): TypeMapper {
+  return newMergedMapper(mapper1, mapper2);
+}
+
 export function newDeferredMapper(source: Type, target: () => Type): TypeMapper {
   return newDeferredArrayMapper([source], [target]);
+}
+
+export function newDeferredTypeMapper(sources: readonly Type[], targets: readonly (() => Type)[]): TypeMapper {
+  return newDeferredArrayMapper(sources, targets);
 }
 
 export function newDeferredArrayMapper(sources: readonly Type[], targets: readonly (() => Type)[]): TypeMapper {
@@ -113,6 +153,7 @@ export function getMappedType(t: Type, mapper: TypeMapper | undefined): Type {
     case MapperKind.Function:
       return mapper.map!(t);
     case MapperKind.Merged: {
+      if (mapper.map !== undefined) return mapper.map(t);
       return getMappedType(getMappedType(t, mapper.mapper1), mapper.mapper2);
     }
     case MapperKind.Deferred:
@@ -120,6 +161,37 @@ export function getMappedType(t: Type, mapper: TypeMapper | undefined): Type {
     default:
       return t;
   }
+}
+
+export function mapType(mapper: TypeMapper | undefined, type: Type): Type {
+  return getMappedType(type, mapper);
+}
+
+export function kindOfTypeMapper(mapper: TypeMapper | undefined): MapperKind {
+  return (mapper?.kind ?? MapperKind.Unknown) as MapperKind;
+}
+
+export interface InferenceTypeMapperContext {
+  readonly inferences: readonly { readonly typeParameter: Type; isFixed?: boolean }[];
+  readonly getInferredType: (index: number) => Type;
+  readonly inferFromIntraExpressionSites?: () => void;
+  readonly clearCachedInferences?: () => void;
+}
+
+export function newInferenceTypeMapper(context: InferenceTypeMapperContext, fixing: boolean): TypeMapper {
+  return newFunctionTypeMapper((type) => {
+    for (let index = 0; index < context.inferences.length; index += 1) {
+      const inference = context.inferences[index]!;
+      if (type !== inference.typeParameter) continue;
+      if (fixing && inference.isFixed !== true) {
+        context.inferFromIntraExpressionSites?.();
+        context.clearCachedInferences?.();
+        inference.isFixed = true;
+      }
+      return context.getInferredType(index);
+    }
+    return type;
+  });
 }
 
 export function combineTypeMappers(
