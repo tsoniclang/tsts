@@ -215,7 +215,7 @@ export function getNonDecoratorTokenPosOfNode(node: AstNode, file: SourceFile): 
 
 export function isComment(token: TokenInfo): boolean {
   const trimmed = token.text.trimStart();
-  return trimmed.startsWith("//") || trimmed.startsWith("/*");
+  return trimmed.startsWith("//") || (trimmed.charCodeAt(0) === 0x2F && trimmed.charCodeAt(1) === 0x2A);
 }
 
 export function tokenRange(token: TokenInfo): TextRange {
@@ -228,6 +228,156 @@ export function tokenIsOnLine(token: TokenInfo, line: number, sourceFile: Source
 
 export function lineOfToken(token: TokenInfo, sourceFile: SourceFile): number {
   return getECMALineOfPosition(sourceFile, token.pos);
+}
+
+export function getLineStartPositionForPosition(position: number, sourceFile: SourceFile): number {
+  const text = sourceTextOf(sourceFile);
+  let lineStart = 0;
+  let scan = 0;
+  while (scan < position && scan < text.length) {
+    const code = text.charCodeAt(scan);
+    if (code === 0x0D) {
+      scan += 1;
+      if (scan < text.length && text.charCodeAt(scan) === 0x0A) scan += 1;
+      lineStart = scan;
+      continue;
+    }
+    if (code === 0x0A || code === 0x2028 || code === 0x2029) {
+      scan += 1;
+      lineStart = scan;
+      continue;
+    }
+    scan += 1;
+  }
+  return lineStart;
+}
+
+export function findFirstNonWhitespaceColumn(
+  lineStart: number,
+  scanEnd: number,
+  sourceFile: SourceFile,
+  options: FormatCodeSettings,
+): number {
+  const text = sourceTextOf(sourceFile);
+  const tabSize = options.tabSize ?? options.indentSize ?? 4;
+  let column = 0;
+  let position = lineStart;
+  while (position < scanEnd && position < text.length) {
+    const char = text.charCodeAt(position);
+    if (char === 0x20) {
+      column += 1;
+    } else if (char === 0x09) {
+      column += tabSize - (column % tabSize);
+    } else {
+      break;
+    }
+    position += 1;
+  }
+  return column;
+}
+
+export function nodeWillIndentChild(
+  options: FormatCodeSettings,
+  parent: AstNode,
+  child: AstNode | undefined,
+  sourceFile: SourceFile,
+  isListEndToken: boolean,
+): boolean {
+  if (isListEndToken) return false;
+  return shouldIndentChildNode(options, parent, child, sourceFile);
+}
+
+export function computeChildIndentation(
+  child: AstNode,
+  childStartLine: number,
+  inheritedIndentation: number,
+  parent: AstNode,
+  parentStartLine: number,
+  parentDynamicIndentation: DynamicIndenter,
+  sourceFile: SourceFile,
+  options: FormatCodeSettings,
+): { indentation: number; delta: number } {
+  const indentSize = options.indentSize ?? 4;
+  const delta = shouldIndentChildNode(options, child, undefined, sourceFile) ? indentSize : 0;
+  if (parentStartLine === childStartLine) {
+    return {
+      indentation: parentDynamicIndentation.indentationForLine(parentStartLine),
+      delta: Math.min(indentSize, delta),
+    };
+  }
+  if (inheritedIndentation !== -1) {
+    return { indentation: inheritedIndentation, delta };
+  }
+  const parentIndentation = parentDynamicIndentation.indentationForLine(parentStartLine);
+  if (childStartsOnSameLineWithElseInIfStatement(parent, child, childStartLine)) {
+    return { indentation: parentIndentation, delta };
+  }
+  if (childIsUnindentedBranchOfConditionalExpression(parent, child, childStartLine)) {
+    return { indentation: parentIndentation, delta };
+  }
+  if (argumentStartsOnSameLineAsPreviousArgument(parent, child, childStartLine, sourceFile)) {
+    return { indentation: parentIndentation, delta };
+  }
+  return { indentation: parentIndentation + indentSize, delta };
+}
+
+export function tryComputeIndentationForListItem(
+  startPos: number,
+  endPos: number,
+  parentStartLine: number,
+  range: TextRange,
+  inheritedIndentation: number,
+  sourceFile: SourceFile,
+  options: FormatCodeSettings,
+): number {
+  const itemRange = { pos: startPos, end: endPos };
+  if (rangesOverlap(range, itemRange) || rangeContainedBy(itemRange, range)) {
+    if (inheritedIndentation !== -1) return inheritedIndentation;
+  } else {
+    const startLine = getECMALineOfPosition(sourceFile, startPos);
+    const lineStart = getLineStartPositionForPosition(startPos, sourceFile);
+    const column = findFirstNonWhitespaceColumn(lineStart, startPos, sourceFile, options);
+    if (startLine !== parentStartLine || startPos === column) {
+      const baseIndentSize = options.baseIndentSize ?? 0;
+      return Math.max(baseIndentSize, column);
+    }
+  }
+  return -1;
+}
+
+export function childStartsOnSameLineWithElseInIfStatement(
+  parent: AstNode,
+  child: AstNode,
+  childStartLine: number,
+): boolean {
+  if ((parent as { kind?: number }).kind !== Kind.IfStatement) return false;
+  const elseStatement = (parent as { elseStatement?: AstNode }).elseStatement;
+  return elseStatement === child && nodeEnd(parent) >= nodePos(child) && childStartLine >= 0;
+}
+
+export function childIsUnindentedBranchOfConditionalExpression(
+  parent: AstNode,
+  child: AstNode,
+  childStartLine: number,
+): boolean {
+  if ((parent as { kind?: number }).kind !== Kind.ConditionalExpression) return false;
+  const whenTrue = (parent as { whenTrue?: AstNode }).whenTrue;
+  const whenFalse = (parent as { whenFalse?: AstNode }).whenFalse;
+  return (child === whenTrue || child === whenFalse) && childStartLine >= 0;
+}
+
+export function argumentStartsOnSameLineAsPreviousArgument(
+  parent: AstNode,
+  child: AstNode,
+  childStartLine: number,
+  sourceFile: SourceFile,
+): boolean {
+  const argumentsList = (parent as { arguments?: readonly AstNode[] }).arguments;
+  if (argumentsList === undefined) return false;
+  const index = argumentsList.indexOf(child);
+  if (index <= 0) return false;
+  const previous = argumentsList[index - 1]!;
+  return childStartLine === getECMALineOfPosition(sourceFile, nodeEnd(previous));
 }
 
 export class FormatSpanRunner {
