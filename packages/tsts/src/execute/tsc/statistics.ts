@@ -71,7 +71,12 @@ function padStart(value: string, width: number): string {
 }
 
 export function formatDuration(durationMilliseconds: number): string {
-  return (durationMilliseconds / 1000).toFixed(3) + "s";
+  const roundedMilliseconds = (durationMilliseconds + 0.5) | 0;
+  const milliseconds = roundedMilliseconds % 1000;
+  const seconds = (roundedMilliseconds - milliseconds) / 1000;
+  let millisecondsText = String(milliseconds);
+  while (millisecondsText.length < 3) millisecondsText = "0" + millisecondsText;
+  return String(seconds) + "." + millisecondsText + "s";
 }
 
 export class Statistics {

@@ -7,6 +7,7 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
+import type { int } from "@tsonic/core/types.js";
 import type { IndexInfo, ObjectType, Signature, TupleType, Type, TypeFormatFlags, LiteralType } from "./types.js";
 import { ElementFlags, ObjectFlags, SignatureKind, TypeFlags, getTypeOfSymbol } from "./types.js";
 
@@ -86,14 +87,16 @@ export class CheckerPrinter {
     const tuple = t.data as TupleType | undefined;
     const args = this.typeArgumentsOf(t);
     if (tuple === undefined) return `[${args.map((a) => this.renderType(a)).join(", ")}]`;
-    const elements = tuple.elementInfo.map((info, index) => {
+    const elements: string[] = [];
+    for (let index = 0 as int; index < tuple.elementInfo.length; index = (index + 1) as int) {
+      const info = tuple.elementInfo[index]!;
       const elementType = args[index] ?? (info.labeledDeclaration as unknown as { type?: Type } | undefined)?.type;
       const typeText = elementType === undefined ? "unknown" : this.renderType(elementType);
       const label = nodeName((info.labeledDeclaration as unknown as { name?: AstNode } | undefined)?.name);
       const optional = (info.flags & ElementFlags.Optional) !== 0 ? "?" : "";
       const rest = (info.flags & ElementFlags.Rest) !== 0 ? "..." : "";
-      return label === "" ? `${rest}${typeText}` : `${rest}${label}${optional}: ${typeText}`;
-    });
+      elements.push(label === "" ? `${rest}${typeText}` : `${rest}${label}${optional}: ${typeText}`);
+    }
     return `[${elements.join(", ")}]`;
   }
   writeUnionType(t: Type): string {

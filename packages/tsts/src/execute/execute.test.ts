@@ -31,6 +31,8 @@ import {
   UpstreamErrors,
   UpToDateStatus,
   UpToDateStatusType,
+  type CompilerOptionsLike,
+  type ExtendedConfigHost,
   type TextWriter,
 } from "./index.js";
 import { MemoryFS } from "../vfs/index.js";
@@ -327,7 +329,7 @@ export class ExecuteBuildHostTests {
         },
         toPath: (fileName) => fileName.toLowerCase(),
         getTask: () => ({
-          loadOrStoreBuildInfo: (_configPath, buildInfoFileName) => ({ name: buildInfoFileName }),
+          loadOrStoreBuildInfo: (_configPath: string, buildInfoFileName: string): TestBuildInfo => ({ name: buildInfoFileName }),
         }),
       },
       {
@@ -356,8 +358,9 @@ export class ExecuteTscSupportTests {
       return { configFileName: fileName, path, value: "parsed" };
     });
 
-    const first = cache.getExtendedConfig("a.json", "/a.json", [], {});
-    const second = cache.getExtendedConfig("a.json", "/a.json", [], {});
+    const host: ExtendedConfigHost = {};
+    const first = cache.getExtendedConfig("a.json", "/a.json", [], host);
+    const second = cache.getExtendedConfig("a.json", "/a.json", [], host);
 
     Assert.Same(first, second);
     Assert.Equal(1, parses);
@@ -392,16 +395,19 @@ export class ExecuteTscSupportTests {
   diagnostic_reporters_respect_quiet_pretty_and_summary_options(): void {
     const sys = new TestSystem();
     const writer = new StringWriter();
-    const report = createDiagnosticReporter(sys, writer, { pretty: false });
+    const reportOptions: CompilerOptionsLike = { pretty: false };
+    const report = createDiagnosticReporter(sys, writer, reportOptions);
     report({ message: "boom" });
     Assert.Equal("boom\n", writer.text);
 
     const quietWriter = new StringWriter();
-    createDiagnosticReporter(sys, quietWriter, { quiet: true })({ message: "hidden" });
+    const quietOptions: CompilerOptionsLike = { quiet: true };
+    createDiagnosticReporter(sys, quietWriter, quietOptions)({ message: "hidden" });
     Assert.Equal("", quietWriter.text);
 
     const summaryWriter = new StringWriter();
-    const summary = createReportErrorSummary(sys, summaryWriter, { pretty: true });
+    const summaryOptions: CompilerOptionsLike = { pretty: true };
+    const summary = createReportErrorSummary(sys, summaryWriter, summaryOptions);
     summary([{ message: "a" }, { message: "b" }]);
     Assert.Equal("Found 2 errors.\n", summaryWriter.text);
 

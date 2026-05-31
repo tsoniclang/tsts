@@ -514,6 +514,54 @@ export class CheckerGroundworkTests {
     Assert.Equal(0, fromCharCodeOk.diagnostics.length);
   }
 
+  narrows_branch_types_from_control_flow_conditions(): void {
+    const typeofThen = checkSourceFile(parseSourceFile("function f(x: string | number): string { if (typeof x === \"string\") { return x; } return \"fallback\"; }"));
+    const typeofElse = checkSourceFile(parseSourceFile("function f(x: string | number): number { if (typeof x === \"string\") { return 1; } return x; }"));
+    const nullish = checkSourceFile(parseSourceFile("function f(x: string | undefined): string { if (x !== undefined) { return x; } return \"fallback\"; }"));
+    const truthy = checkSourceFile(parseSourceFile("function f(x: \"\" | \"ok\"): \"ok\" { if (x) { return x; } return \"ok\"; }"));
+    const negated = checkSourceFile(parseSourceFile("function f(x: string | null): string { if (!x) { return \"fallback\"; } return x; }"));
+    const noLeak = checkSourceFile(parseSourceFile("function f(x: string | undefined): string { if (x !== undefined) { } return x; }"));
+
+    Assert.Equal(0, typeofThen.diagnostics.length);
+    Assert.Equal(0, typeofElse.diagnostics.length);
+    Assert.Equal(0, nullish.diagnostics.length);
+    Assert.Equal(0, truthy.diagnostics.length);
+    Assert.Equal(0, negated.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'string | undefined' is not assignable to type 'string'."], noLeak.diagnostics.map((d) => d.message));
+  }
+
+  narrows_switch_clause_types_from_discriminants(): void {
+    const stringCase = checkSourceFile(parseSourceFile("function f(x: \"a\" | \"b\" | 1): \"a\" { switch (x) { case \"a\": return x; default: return \"a\"; } }"));
+    const numberCase = checkSourceFile(parseSourceFile("function f(x: \"a\" | 1 | 2): 1 { switch (x) { case 1: return x; default: return 1; } }"));
+    const defaultCase = checkSourceFile(parseSourceFile("function f(x: \"a\" | \"b\" | \"c\"): \"c\" { switch (x) { case \"a\": return \"c\"; case \"b\": return \"c\"; default: return x; } }"));
+    const mismatch = checkSourceFile(parseSourceFile("function f(x: \"a\" | \"b\"): \"a\" { switch (x) { case \"b\": return x; default: return \"a\"; } }"));
+    const fallthrough = checkSourceFile(parseSourceFile("function f(x: \"a\" | \"b\" | \"c\"): \"a\" | \"b\" { switch (x) { case \"a\": case \"b\": return x; default: return \"a\"; } }"));
+
+    Assert.Equal(0, stringCase.diagnostics.length);
+    Assert.Equal(0, numberCase.diagnostics.length);
+    Assert.Equal(0, defaultCase.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type '\"b\"' is not assignable to type '\"a\"'."], mismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, fallthrough.diagnostics.length);
+  }
+
+  checks_try_throw_labeled_with_and_empty_statements(): void {
+    const tryBlock = checkSourceFile(parseSourceFile("function f(): number { try { return \"x\"; } catch (e) { return 1; } }"));
+    const catchBlock = checkSourceFile(parseSourceFile("function f(): number { try { throw \"x\"; } catch (e) { return \"bad\"; } }"));
+    const finallyBlock = checkSourceFile(parseSourceFile("function f(): void { try { } finally { const value: number = \"x\"; } }"));
+    const throwExpression = checkSourceFile(parseSourceFile("function f(value: string): void { throw value.toFixed(); }"));
+    const labeled = checkSourceFile(parseSourceFile("function f(): number { label: return \"x\"; }"));
+    const withStatement = checkSourceFile(parseSourceFile("function f(box: { value: number }): number { with (box) { return \"x\"; } }"));
+    const emptyAndDebugger = checkSourceFile(parseSourceFile("function f(): number { ; debugger; return 1; }"));
+
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], tryBlock.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], catchBlock.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], finallyBlock.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Property 'toFixed' does not exist on type 'string'."], throwExpression.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], labeled.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], withStatement.diagnostics.map((d) => d.message));
+    Assert.Equal(0, emptyAndDebugger.diagnostics.length);
+  }
+
   checks_additional_expression_forms(): void {
     // Template/type/void/delete/non-null/yield/await/new expression nodes are
     // visited and typed instead of falling through to the unresolved sentinel.
@@ -610,6 +658,22 @@ export class CheckerGroundworkTests {
     Assert.Equal(0, constructOk.diagnostics.length);
     Assert.Equal(0, arrayLengthOk.diagnostics.length);
     Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], arrayLengthMismatch.diagnostics.map((d) => d.message));
+  }
+
+  checks_function_constructor_and_parenthesized_type_nodes(): void {
+    const functionTypeOk = checkSourceFile(parseSourceFile("function f(callback: (value: string) => number): number { return callback(\"x\"); }"));
+    const functionArgMismatch = checkSourceFile(parseSourceFile("function f(callback: (value: string) => number): number { return callback(1); }"));
+    const functionReturnMismatch = checkSourceFile(parseSourceFile("function f(callback: (value: string) => number): string { return callback(\"x\"); }"));
+    const constructorTypeOk = checkSourceFile(parseSourceFile("interface Widget { value: number; } function f(factory: new (value: number) => Widget): Widget { return new factory(1); }"));
+    const constructorArgMismatch = checkSourceFile(parseSourceFile("interface Widget { value: number; } function f(factory: new (value: number) => Widget): Widget { return new factory(\"x\"); }"));
+    const parenthesized = checkSourceFile(parseSourceFile("type Count = (number); function f(value: Count): number { return value; }"));
+
+    Assert.Equal(0, functionTypeOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], functionArgMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], functionReturnMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, constructorTypeOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], constructorArgMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, parenthesized.diagnostics.length);
   }
 
   checks_literal_named_object_members(): void {
@@ -738,6 +802,24 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type alias 'Box' requires 1 type argument, but got 2."], extraTypeArg.diagnostics.map((d) => d.message));
   }
 
+  checks_interface_and_class_heritage_members(): void {
+    const interfaceBase = checkSourceFile(parseSourceFile("interface Base { value: number; } interface Derived extends Base { label: string; } function f(d: Derived): number { return d.value; }"));
+    const interfaceMismatch = checkSourceFile(parseSourceFile("interface Base { value: number; } interface Derived extends Base { } function f(d: Derived): string { return d.value; }"));
+    const genericBase = checkSourceFile(parseSourceFile("interface Box<T> { value: T; } interface StringBox extends Box<string> { } function f(box: StringBox): string { return box.value; }"));
+    const classBase = checkSourceFile(parseSourceFile("class Base { value: number; get(): number { return this.value; } } class Derived extends Base { label: string; } function f(d: Derived): number { return d.get(); }"));
+    const classMismatch = checkSourceFile(parseSourceFile("class Base { value: number; } class Derived extends Base { } function f(d: Derived): string { return d.value; }"));
+    const implementsOk = checkSourceFile(parseSourceFile("interface Service { run(): number; } class Good implements Service { run(): number { return 1; } }"));
+    const implementsMismatch = checkSourceFile(parseSourceFile("interface Service { run(): number; } class Bad implements Service { run(): string { return \"x\"; } }"));
+
+    Assert.Equal(0, interfaceBase.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], interfaceMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, genericBase.diagnostics.length);
+    Assert.Equal(0, classBase.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], classMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, implementsOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'Bad' is not assignable to type 'Service'.\n  Types of property 'run' are incompatible.\n    Type 'function' is not assignable to type 'function'."], implementsMismatch.diagnostics.map((d) => d.message));
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -746,6 +828,18 @@ export class CheckerGroundworkTests {
     Assert.Equal(0, baseCase.diagnostics.length);
     Assert.Equal(0, literalCase.diagnostics.length);
     Assert.Equal(0, mixedCase.diagnostics.length);
+  }
+
+  checks_intersection_type_node_members_and_relations(): void {
+    const propertyOk = checkSourceFile(parseSourceFile("type AB = { a: number } & { b: string }; function f(value: AB): string { return value.b; }"));
+    const propertyMismatch = checkSourceFile(parseSourceFile("type AB = { a: number } & { b: string }; function f(value: AB): number { return value.b; }"));
+    const assignOk = checkSourceFile(parseSourceFile("type AB = { a: number } & { b: string }; function f(): void { const value: AB = { a: 1, b: \"x\" }; }"));
+    const assignMissing = checkSourceFile(parseSourceFile("type AB = { a: number } & { b: string }; function f(): void { const value: AB = { a: 1 }; }"));
+
+    Assert.Equal(0, propertyOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], propertyMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, assignOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type '{ a: number }' is not assignable to type '{ a: number } & { b: string }'."], assignMissing.diagnostics.map((d) => d.message));
   }
 
   reports_union_type_node_mismatch(): void {
@@ -814,6 +908,20 @@ export class CheckerGroundworkTests {
     const result = checkSourceFile(sourceFile);
 
     Assert.Equal(0, result.diagnostics.length);
+  }
+
+  checks_destructured_binding_element_types(): void {
+    const parameterOk = checkSourceFile(parseSourceFile("function f({ value }: { value: number }): number { return value; }"));
+    const parameterMismatch = checkSourceFile(parseSourceFile("function f({ value }: { value: number }): string { return value; }"));
+    const renamedProperty = checkSourceFile(parseSourceFile("function f({ value: renamed }: { value: string }): string { return renamed; }"));
+    const variableOk = checkSourceFile(parseSourceFile("function f(): number { const { value } = { value: 1 }; return value; }"));
+    const arrayOk = checkSourceFile(parseSourceFile("function f(xs: number[]): number { const [first] = xs; return first; }"));
+
+    Assert.Equal(0, parameterOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], parameterMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, renamedProperty.diagnostics.length);
+    Assert.Equal(0, variableOk.diagnostics.length);
+    Assert.Equal(0, arrayOk.diagnostics.length);
   }
 
   checker_class_entry_reports_assignment_mismatches(): void {
@@ -968,20 +1076,28 @@ A<CheckerGroundworkTests>().method((t) => t.checks_optional_and_rest_parameter_s
 A<CheckerGroundworkTests>().method((t) => t.checks_contextual_object_literals_and_excess).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.excess_check_regularization_and_empty_target).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_array_types).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_string_indexing_and_builtin_method_shapes).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.narrows_branch_types_from_control_flow_conditions).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.narrows_switch_clause_types_from_discriminants).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_try_throw_labeled_with_and_empty_statements).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_array_spread_index_and_broad_object).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_broad_empty_object_and_index_validation).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_object_type_signatures).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_function_constructor_and_parenthesized_type_nodes).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.resolves_type_alias_references).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.enforces_type_alias_scoping_rules).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.m5b_resolves_nominal_interface_and_class_members).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.m5c_instantiates_generic_aliases_interfaces_and_classes).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_interface_and_class_heritage_members).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_intersection_type_node_members_and_relations).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.union_reduction_none_keeps_redundant_members).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.fresh_plus_regular_same_literal_reduces_to_regular).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reduces_redundant_literal_union_members).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.makes_destructured_binding_names_available_to_checked_bodies).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_destructured_binding_element_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_reports_assignment_mismatches).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_accepts_well_typed_assignment).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.m5a_import_alias_and_export_resolve_to_distinct_binder_symbols).add(FactAttribute);

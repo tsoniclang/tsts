@@ -1,12 +1,18 @@
 import type { BuildInfo } from "./buildinfo.js";
-import { createProgramSnapshot, type FileInfo, type ProgramSnapshot, type SnapshotFileEmitKind } from "./snapshot.js";
+import {
+  createProgramSnapshotFromParts,
+  type DiagnosticsOrBuildInfoDiagnosticsWithFileName,
+  type ProgramSnapshotFileInfo,
+  type ProgramSnapshot,
+  type SnapshotFileEmitKind,
+} from "./snapshot.js";
 
 export function buildInfoFileInfoToSnapshot(info: {
   readonly version: string;
   readonly signature?: string | undefined;
   readonly affectsGlobalScope?: boolean | undefined;
   readonly impliedNodeFormat?: string | number | undefined;
-}): FileInfo {
+}): ProgramSnapshotFileInfo {
   return {
     version: info.version,
     signature: info.signature ?? info.version,
@@ -16,7 +22,7 @@ export function buildInfoFileInfoToSnapshot(info: {
 }
 
 export function buildInfoToSnapshot<Diagnostic = unknown>(buildInfo: BuildInfo): ProgramSnapshot<Diagnostic> {
-  const fileInfos = new Map<string, FileInfo>();
+  const fileInfos = new Map<string, ProgramSnapshotFileInfo>();
   for (let index = 0; index < buildInfo.fileNames.length; index += 1) {
     const fileName = buildInfo.fileNames[index];
     const fileInfo = buildInfo.fileInfos[index];
@@ -25,19 +31,24 @@ export function buildInfoToSnapshot<Diagnostic = unknown>(buildInfo: BuildInfo):
   }
   const pendingEmit = new Map<string, SnapshotFileEmitKind>();
   for (const entry of buildInfo.affectedFilesPendingEmit ?? []) {
-    const fileName = buildInfo.fileNames[entry.fileId - 1];
-    if (fileName !== undefined) pendingEmit.set(fileName, entry.emitKind as unknown as SnapshotFileEmitKind);
+    const fileName = buildInfo.fileName(entry.fileId);
+    if (fileName !== "") pendingEmit.set(fileName, entry.emitKind as unknown as SnapshotFileEmitKind);
   }
-  return createProgramSnapshot({
-    version: buildInfo.version,
+  const roots: string[] = [];
+  for (const root of buildInfo.root) {
+    const fileName = buildInfo.fileName(root.start);
+    if (fileName !== "") roots.push(fileName);
+  }
+  return createProgramSnapshotFromParts(
+    buildInfo.version,
     fileInfos,
-    options: buildInfo.options,
-    root: buildInfo.root.map((root) => buildInfo.fileNames[root.start - 1]).filter((fileName): fileName is string => fileName !== undefined),
-    semanticDiagnosticsPerFile: new Map(),
-    emitDiagnosticsPerFile: new Map(),
+    buildInfo.options,
+    roots,
+    new Map<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>(),
+    new Map<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>(),
     pendingEmit,
-    latestChangedDtsFile: buildInfo.latestChangedDtsFile,
-    errors: [] as Diagnostic[],
-    checkPending: buildInfo.checkPending === true,
-  });
+    buildInfo.latestChangedDtsFile,
+    [] as Diagnostic[],
+    buildInfo.checkPending === true,
+  );
 }

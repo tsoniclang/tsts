@@ -163,8 +163,8 @@ export class BuildTask<Resolved extends BuildTaskResolvedProject = BuildTaskReso
     if (result === undefined) return;
     this.result = {
       text: "",
-      reportStatus: this.result?.reportStatus ?? (() => undefined),
-      diagnosticReporter: this.result?.diagnosticReporter ?? (() => undefined),
+      reportStatus: this.result?.reportStatus ?? ((_diagnostic: DiagnosticLike): void => {}),
+      diagnosticReporter: this.result?.diagnosticReporter ?? ((_diagnostic: DiagnosticLike): void => {}),
       exitStatus: result.status,
       statistics: undefined,
       program: undefined,

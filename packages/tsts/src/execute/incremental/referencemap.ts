@@ -28,7 +28,7 @@ export class ReferenceMap {
   getReferencedBy(path: Path): IterableIterator<Path> {
     const referencedBy = this.getReferencedByMap();
     const refs = referencedBy.get(path);
-    if (refs === undefined) return [][Symbol.iterator]();
+    if (refs === undefined) return new Set<Path>().values();
     return refs.values();
   }
 

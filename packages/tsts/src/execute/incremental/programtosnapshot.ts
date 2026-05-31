@@ -1,4 +1,11 @@
-import { computeHash, createProgramSnapshot, type FileInfo, type ProgramSnapshot, type SnapshotFileEmitKind } from "./snapshot.js";
+import {
+  computeHash,
+  createProgramSnapshotFromParts,
+  type DiagnosticsOrBuildInfoDiagnosticsWithFileName,
+  type ProgramSnapshotFileInfo,
+  type ProgramSnapshot,
+  type SnapshotFileEmitKind,
+} from "./snapshot.js";
 import type { IncrementalProgram } from "./program.js";
 
 export interface ProgramToSnapshotSourceFile {
@@ -13,11 +20,11 @@ export interface ProgramToSnapshotOptions {
   readonly hashWithText: boolean;
   readonly sourceFiles: readonly ProgramToSnapshotSourceFile[];
   readonly root: readonly string[];
-  readonly options: unknown;
+  readonly options: ReadonlyMap<string, unknown>;
   readonly pendingEmit: ReadonlyMap<string, SnapshotFileEmitKind>;
 }
 
-export function fileInfoFromText(sourceFile: ProgramToSnapshotSourceFile, hashWithText: boolean): FileInfo {
+export function fileInfoFromText(sourceFile: ProgramToSnapshotSourceFile, hashWithText: boolean): ProgramSnapshotFileInfo {
   return {
     version: computeHash(sourceFile.text, hashWithText),
     signature: computeHash(sourceFile.text, hashWithText),
@@ -30,20 +37,20 @@ export function programToSnapshot<Diagnostic>(
   program: IncrementalProgram<Diagnostic> | undefined,
   options: ProgramToSnapshotOptions,
 ): ProgramSnapshot<Diagnostic> {
-  const fileInfos = new Map<string, FileInfo>();
+  const fileInfos = new Map<string, ProgramSnapshotFileInfo>();
   for (const sourceFile of options.sourceFiles) {
     fileInfos.set(sourceFile.path, fileInfoFromText(sourceFile, options.hashWithText));
   }
-  return createProgramSnapshot({
-    version: options.version,
+  return createProgramSnapshotFromParts(
+    options.version,
     fileInfos,
-    options: options.options,
-    root: options.root,
-    semanticDiagnosticsPerFile: new Map(),
-    emitDiagnosticsPerFile: new Map(),
-    pendingEmit: new Map(options.pendingEmit),
-    latestChangedDtsFile: program?.hasChangedDtsFile() === true ? program.changedFiles().find((file) => file.endsWith(".d.ts")) : undefined,
-    errors: [],
-    checkPending: false,
-  });
+    options.options,
+    options.root,
+    new Map<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>(),
+    new Map<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>(),
+    new Map(options.pendingEmit),
+    program?.hasChangedDtsFile() === true ? program.changedFiles().find((file: string): boolean => file.endsWith(".d.ts")) : undefined,
+    [],
+    false,
+  );
 }

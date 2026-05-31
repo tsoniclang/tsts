@@ -7,6 +7,7 @@
  */
 
 import {
+  Kind,
   isConstructorDeclaration,
   isMethodDeclaration,
   isPropertyDeclaration,
@@ -17,6 +18,9 @@ import {
 } from "../ast/index.js";
 import {
   type CheckState,
+  checkAssignable,
+  typeFromClassOrInterfaceDeclaration,
+  typeFromExpressionWithTypeArguments,
   typeFromTypeNode,
 } from "./checker.checkedtype.js";
 import { inferExpression } from "./checker.expressions.js";
@@ -45,6 +49,7 @@ export function checkClassDeclaration(classDeclaration: ClassDeclaration, state:
   for (const member of classDeclaration.members) {
     checkClassElement(member, state);
   }
+  checkClassImplementsClauses(classDeclaration, state);
 }
 
 export function checkClassElement(member: ClassElement, state: CheckState): void {
@@ -64,5 +69,17 @@ export function checkFunctionDeclaration(functionDeclaration: FunctionDeclaratio
   checkSignatureParameterAnnotations(functionDeclaration.parameters, state);
   if (functionDeclaration.body !== undefined) {
     checkBlock(functionDeclaration.body, state, functionDeclaration.type === undefined ? undefined : typeFromTypeNode(functionDeclaration.type, state));
+  }
+}
+
+function checkClassImplementsClauses(classDeclaration: ClassDeclaration, state: CheckState): void {
+  const heritageClauses = classDeclaration.heritageClauses;
+  if (heritageClauses === undefined) return;
+  const classType = typeFromClassOrInterfaceDeclaration(classDeclaration, state);
+  for (const clause of heritageClauses) {
+    if (clause.token !== Kind.ImplementsKeyword) continue;
+    for (const implementedType of clause.types) {
+      checkAssignable(classType, typeFromExpressionWithTypeArguments(implementedType, state), state);
+    }
   }
 }

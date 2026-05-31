@@ -274,7 +274,7 @@ export class Relater {
     // Target union: source must relate to at least one constituent.
     if ((tf & TypeFlags.Union) !== 0) return this.typeRelatedToSomeType(source, target, reportErrors);
     // Target intersection: source must relate to every constituent.
-    if ((tf & TypeFlags.Intersection) !== 0) return this.typeRelatedToEachType(source, target, reportErrors);
+    if ((tf & TypeFlags.Intersection) !== 0) return this.typeRelatedToEachType(source, target, reportErrors, relation);
     // Source intersection: some constituent must relate to the target.
     if ((sf & TypeFlags.Intersection) !== 0) return this.someTypeRelatedToType(source, target, reportErrors);
     // Broad empty object `{}` target: accepts any non-nullish, known source
@@ -304,14 +304,16 @@ export class Relater {
     }
     return Ternary.False;
   }
-  typeRelatedToEachType(source: Type, target: Type, reportErrors: boolean): Ternary {
+  typeRelatedToEachType(source: Type, target: Type, reportErrors: boolean, relation: Relation): Ternary {
     // source is related to target (an intersection) iff related to all
     // of its constituents.
-    void reportErrors;
     const types = constituentTypes(target);
     if (types === undefined) return Ternary.True;
     for (const t of types) {
-      if (!this.isTypeAssignableTo(source, t)) return Ternary.False;
+      const previousExcessProperty = this.excessProperty;
+      const result = this.recursiveTypeRelatedTo(source, t, reportErrors, 1, RecursionFlags.Both, relation);
+      if (result === Ternary.False) return Ternary.False;
+      this.excessProperty = previousExcessProperty;
     }
     return Ternary.True;
   }
@@ -347,7 +349,7 @@ export class Relater {
     void intersectionState;
     // Excess-property check: a fresh object literal may not carry properties
     // absent from the target object type (TS-Go hasExcessProperties).
-    if (this.isFreshObjectLiteral(source)) {
+    if (intersectionState === 0 && this.isFreshObjectLiteral(source)) {
       const sourceMembers = (source.symbol as unknown as { readonly members?: Map<string, AstSymbol> } | undefined)?.members;
       const targetMembers = (target.symbol as unknown as { readonly members?: Map<string, AstSymbol> } | undefined)?.members;
       // Skip excess checking against the broad empty object type `{}` (no known

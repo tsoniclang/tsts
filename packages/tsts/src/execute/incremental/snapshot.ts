@@ -1,4 +1,4 @@
-export interface FileInfo {
+export interface ProgramSnapshotFileInfo {
   readonly version: string;
   readonly signature: string;
   readonly affectsGlobalScope: boolean;
@@ -58,8 +58,8 @@ export interface DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic = unkn
 
 export interface ProgramSnapshot<Diagnostic = unknown> {
   readonly version: string;
-  readonly fileInfos: ReadonlyMap<string, FileInfo>;
-  readonly options: unknown;
+  readonly fileInfos: ReadonlyMap<string, ProgramSnapshotFileInfo>;
+  readonly options: ReadonlyMap<string, unknown>;
   readonly root: readonly string[];
   readonly referencedBy?: ReadonlyMap<string, ReadonlySet<string>>;
   readonly references?: ReadonlyMap<string, ReadonlySet<string>>;
@@ -72,18 +72,72 @@ export interface ProgramSnapshot<Diagnostic = unknown> {
   readonly checkPending: boolean;
 }
 
+class ProgramSnapshotData<Diagnostic> implements ProgramSnapshot<Diagnostic> {
+  readonly version: string;
+  readonly fileInfos: ReadonlyMap<string, ProgramSnapshotFileInfo>;
+  readonly options: ReadonlyMap<string, unknown>;
+  readonly root: readonly string[];
+  readonly referencedBy: ReadonlyMap<string, ReadonlySet<string>> | undefined;
+  readonly references: ReadonlyMap<string, ReadonlySet<string>> | undefined;
+  readonly changedFilesSet: ReadonlySet<string> | undefined;
+  readonly semanticDiagnosticsPerFile: ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>;
+  readonly emitDiagnosticsPerFile: ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>;
+  readonly pendingEmit: ReadonlyMap<string, SnapshotFileEmitKind>;
+  readonly latestChangedDtsFile: string | undefined;
+  readonly errors: readonly Diagnostic[];
+  readonly checkPending: boolean;
+
+  constructor(
+    version: string,
+    fileInfos: ReadonlyMap<string, ProgramSnapshotFileInfo>,
+    options: ReadonlyMap<string, unknown>,
+    root: readonly string[],
+    semanticDiagnosticsPerFile: ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>,
+    emitDiagnosticsPerFile: ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>,
+    pendingEmit: ReadonlyMap<string, SnapshotFileEmitKind>,
+    latestChangedDtsFile: string | undefined,
+    errors: readonly Diagnostic[],
+    checkPending: boolean,
+    referencedBy: ReadonlyMap<string, ReadonlySet<string>> | undefined = undefined,
+    references: ReadonlyMap<string, ReadonlySet<string>> | undefined = undefined,
+    changedFilesSet: ReadonlySet<string> | undefined = undefined,
+  ) {
+    this.version = version;
+    this.fileInfos = fileInfos;
+    this.options = options;
+    this.root = root;
+    this.semanticDiagnosticsPerFile = semanticDiagnosticsPerFile;
+    this.emitDiagnosticsPerFile = emitDiagnosticsPerFile;
+    this.pendingEmit = pendingEmit;
+    this.latestChangedDtsFile = latestChangedDtsFile;
+    this.errors = errors;
+    this.checkPending = checkPending;
+    this.referencedBy = referencedBy;
+    this.references = references;
+    this.changedFilesSet = changedFilesSet;
+  }
+}
+
 export function computeHash(text: string, hashWithText: boolean): string {
   let h1 = 0xdeadbeef;
   let h2 = 0x41c6ce57;
   for (let i = 0; i < text.length; i += 1) {
     const ch = text.charCodeAt(i);
-    h1 = Math.imul(h1 ^ ch, 2654435761);
-    h2 = Math.imul(h2 ^ ch, 1597334677);
+    h1 = multiplySignedInt32(h1 ^ ch, 2654435761);
+    h2 = multiplySignedInt32(h2 ^ ch, 1597334677);
   }
-  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  h1 = multiplySignedInt32(h1 ^ (h1 >>> 16), 2246822507) ^ multiplySignedInt32(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = multiplySignedInt32(h2 ^ (h2 >>> 16), 2246822507) ^ multiplySignedInt32(h1 ^ (h1 >>> 13), 3266489909);
   const hash = `${(h2 >>> 0).toString(16).padStart(8, "0")}${(h1 >>> 0).toString(16).padStart(8, "0")}`;
   return hashWithText ? `${hash}-${text}` : hash;
+}
+
+function multiplySignedInt32(left: number, right: number): number {
+  const leftLow = left & 0xffff;
+  const leftHigh = left >>> 16;
+  const rightLow = right & 0xffff;
+  const rightHigh = right >>> 16;
+  return ((leftLow * rightLow) + (((leftHigh * rightLow + leftLow * rightHigh) & 0xffff) << 16)) | 0;
 }
 
 export function getFileEmitKind(options: EmitOptions): SnapshotFileEmitKind {
@@ -120,22 +174,53 @@ export function getNewEmitSignature(signature: EmitSignature, oldOptions: EmitOp
 }
 
 export function createProgramSnapshot<Diagnostic>(snapshot: ProgramSnapshot<Diagnostic>): ProgramSnapshot<Diagnostic> {
-  const out: ProgramSnapshot<Diagnostic> = {
-    version: snapshot.version,
-    fileInfos: new Map(snapshot.fileInfos),
-    options: snapshot.options,
-    root: [...snapshot.root],
-    semanticDiagnosticsPerFile: new Map(snapshot.semanticDiagnosticsPerFile),
-    emitDiagnosticsPerFile: new Map(snapshot.emitDiagnosticsPerFile),
-    pendingEmit: new Map(snapshot.pendingEmit),
-    latestChangedDtsFile: snapshot.latestChangedDtsFile,
-    errors: [...snapshot.errors],
-    checkPending: snapshot.checkPending,
-  };
-  if (snapshot.referencedBy !== undefined) Object.assign(out, { referencedBy: cloneSetMap(snapshot.referencedBy) });
-  if (snapshot.references !== undefined) Object.assign(out, { references: cloneSetMap(snapshot.references) });
-  if (snapshot.changedFilesSet !== undefined) Object.assign(out, { changedFilesSet: new Set(snapshot.changedFilesSet) });
-  return out;
+  return createProgramSnapshotFromParts(
+    snapshot.version,
+    snapshot.fileInfos,
+    snapshot.options,
+    snapshot.root,
+    snapshot.semanticDiagnosticsPerFile,
+    snapshot.emitDiagnosticsPerFile,
+    snapshot.pendingEmit,
+    snapshot.latestChangedDtsFile,
+    snapshot.errors,
+    snapshot.checkPending,
+    snapshot.referencedBy,
+    snapshot.references,
+    snapshot.changedFilesSet,
+  );
+}
+
+export function createProgramSnapshotFromParts<Diagnostic>(
+  version: string,
+  fileInfos: ReadonlyMap<string, ProgramSnapshotFileInfo>,
+  options: ReadonlyMap<string, unknown>,
+  root: readonly string[],
+  semanticDiagnosticsPerFile: ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>,
+  emitDiagnosticsPerFile: ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>,
+  pendingEmit: ReadonlyMap<string, SnapshotFileEmitKind>,
+  latestChangedDtsFile: string | undefined,
+  errors: readonly Diagnostic[],
+  checkPending: boolean,
+  referencedBy: ReadonlyMap<string, ReadonlySet<string>> | undefined = undefined,
+  references: ReadonlyMap<string, ReadonlySet<string>> | undefined = undefined,
+  changedFilesSet: ReadonlySet<string> | undefined = undefined,
+): ProgramSnapshot<Diagnostic> {
+  return new ProgramSnapshotData(
+    version,
+    new Map(fileInfos),
+    options,
+    [...root],
+    new Map(semanticDiagnosticsPerFile),
+    new Map(emitDiagnosticsPerFile),
+    new Map(pendingEmit),
+    latestChangedDtsFile,
+    [...errors],
+    checkPending,
+    referencedBy === undefined ? undefined : cloneSetMap(referencedBy),
+    references === undefined ? undefined : cloneSetMap(references),
+    changedFilesSet === undefined ? undefined : new Set(changedFilesSet),
+  );
 }
 
 export function cloneSetMap(map: ReadonlyMap<string, ReadonlySet<string>>): ReadonlyMap<string, ReadonlySet<string>> {
@@ -163,11 +248,21 @@ export function withReferenceMaps<Diagnostic>(
   snapshot: ProgramSnapshot<Diagnostic>,
   references: ReadonlyMap<string, ReadonlySet<string>>,
 ): ProgramSnapshot<Diagnostic> {
-  return createProgramSnapshot({
-    ...snapshot,
+  return createProgramSnapshotFromParts(
+    snapshot.version,
+    snapshot.fileInfos,
+    snapshot.options,
+    snapshot.root,
+    snapshot.semanticDiagnosticsPerFile,
+    snapshot.emitDiagnosticsPerFile,
+    snapshot.pendingEmit,
+    snapshot.latestChangedDtsFile,
+    snapshot.errors,
+    snapshot.checkPending,
+    buildReferencedByMap(references),
     references,
-    referencedBy: buildReferencedByMap(references),
-  });
+    snapshot.changedFilesSet,
+  );
 }
 
 export function changedFiles(oldSnapshot: ProgramSnapshot, newSnapshot: ProgramSnapshot): readonly string[] {
