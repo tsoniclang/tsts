@@ -334,6 +334,200 @@ export class Session {
     this.scheduledUpdate = undefined;
   }
 
+  fileSystem(): SnapshotFS {
+    return this.fs;
+  }
+
+  trace(message: string): void {
+    if (this.options.loggingEnabled === true) this.logger.log(message);
+  }
+
+  didOpenFile(fileName: string, content: string, version = 0): Snapshot {
+    this.openFile(fileName, content, version);
+    return this.snapshotValue;
+  }
+
+  didCloseFile(fileName: string): Snapshot {
+    this.closeFile(fileName);
+    return this.snapshotValue;
+  }
+
+  didChangeFile(fileName: string, content: string, version = 0): ScheduledUpdate {
+    this.changeFile(fileName, content, version);
+    return this.scheduledUpdate ?? this.scheduleSnapshotUpdate(UpdateReason.RequestedLanguageServicePendingChanges);
+  }
+
+  didSaveFile(fileName: string): ScheduledUpdate {
+    this.saveFile(fileName);
+    return this.scheduledUpdate ?? this.scheduleSnapshotUpdate(UpdateReason.RequestedLanguageServicePendingChanges);
+  }
+
+  sendPerformanceTelemetry(): void {
+    if (this.options.telemetryEnabled === true) void this.client?.sendTelemetry(undefined, this.collectPerformanceTelemetry());
+  }
+
+  sendProjectInfoTelemetryForNewProjects(projects: readonly unknown[]): void {
+    if (this.options.telemetryEnabled !== true) return;
+    for (const project of projects) this.sendProjectInfoTelemetry(project);
+  }
+
+  sendProjectInfoTelemetry(project: unknown): void {
+    if (this.options.telemetryEnabled === true) void this.client?.sendTelemetry(undefined, this.collectProjectInfoTelemetry(project));
+  }
+
+  collectProjectInfoTelemetry(project: unknown): ReadonlyMap<string, unknown> {
+    return new Map<string, unknown>([
+      ["project", project],
+      ["snapshotId", this.snapshotValue.id()],
+      ["openFiles", this.fs.openFiles().length],
+    ]);
+  }
+
+  setTristate(value: boolean | undefined): "true" | "false" | "unset" {
+    return value === undefined ? "unset" : value ? "true" : "false";
+  }
+
+  boolTelemetry(value: boolean | undefined): 0 | 1 | 2 {
+    return value === undefined ? 0 : value ? 1 : 2;
+  }
+
+  countFileStats(): ReadonlyMap<string, number> {
+    const openFiles = this.fs.openFiles();
+    return new Map<string, number>([
+      ["openFiles", openFiles.length],
+      ["pendingChanges", this.pendingFileChanges.length],
+      ["pendingAtaChanges", this.pendingAtaChanges.size],
+      ["snapshotId", this.snapshotValue.id()],
+    ]);
+  }
+
+  getSnapshot(): Snapshot {
+    return this.snapshotValue;
+  }
+
+  getSnapshotAndDefaultProject(): readonly [Snapshot, unknown | undefined] {
+    return [this.snapshotValue, this.defaultProject()];
+  }
+
+  getLanguageService(fileName: string): Snapshot {
+    return this.requestLanguageService(fileName);
+  }
+
+  getLanguageServiceAndProjectsForFile(fileName: string): readonly [Snapshot, readonly unknown[]] {
+    const snapshot = this.requestLanguageService(fileName);
+    return [snapshot, this.getProjectsForFile(fileName)];
+  }
+
+  getProjectsForFile(fileName: string): readonly unknown[] {
+    const file = this.snapshotValue.getFile(fileName);
+    return file === undefined ? [] : [this.defaultProject()];
+  }
+
+  getLanguageServicesForDocuments(fileNames: readonly string[]): readonly Snapshot[] {
+    return fileNames.map((fileName) => this.requestLanguageService(fileName));
+  }
+
+  getLanguageServiceForProjectWithFile(fileName: string): Snapshot {
+    return this.requestLanguageService(fileName);
+  }
+
+  withSnapshotLoadingProjectTree<T>(callback: (snapshot: Snapshot) => T): T {
+    return callback(this.requestProjectTree());
+  }
+
+  getCurrentLanguageServiceWithAutoImports(fileName: string): Snapshot {
+    return this.getLanguageServiceWithAutoImports(fileName);
+  }
+
+  withLanguageServiceAndSnapshot<T>(fileName: string, callback: (snapshot: Snapshot) => T): T {
+    return callback(this.requestLanguageService(fileName));
+  }
+
+  getLanguageServiceWithAutoImports(fileName: string): Snapshot {
+    return this.requestLanguageService(fileName, true);
+  }
+
+  adoptSnapshotChange(change: SnapshotChange): Snapshot {
+    return this.updateSnapshotWithChange(change);
+  }
+
+  updateSnapshotRef(snapshot: Snapshot): void {
+    this.snapshotValue = snapshot;
+    this.snapshotId = snapshot.id();
+  }
+
+  waitForBackgroundTasks(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  updateWatches(): void {
+    if (this.options.watchEnabled === true) this.trace("Updated file watches");
+  }
+
+  close(): void {
+    this.dispose();
+  }
+
+  flushChanges(): Snapshot {
+    return this.flushChangesLocked();
+  }
+
+  flushChangesLocked(): Snapshot {
+    this.cancelScheduledSnapshotUpdate();
+    return this.updateSnapshot(UpdateReason.RequestedLanguageServicePendingChanges);
+  }
+
+  logProjectChanges(previous: Snapshot, next: Snapshot): void {
+    this.logger.log(`Project snapshot changed ${previous.id()} -> ${next.id()}`);
+  }
+
+  logRuntimeMetrics(): void {
+    const telemetry = this.collectPerformanceTelemetry();
+    this.logger.log(`Runtime heap ${telemetry.heapUsed}/${telemetry.heapTotal}`);
+  }
+
+  logCacheStats(): void {
+    const stats = this.countFileStats();
+    this.logger.log(`Cache snapshot=${stats.get("snapshotId") ?? 0} openFiles=${stats.get("openFiles") ?? 0}`);
+  }
+
+  npmInstall(packageNames: readonly string[]): Promise<readonly string[]> {
+    this.trace(`npm install ${packageNames.join(" ")}`);
+    return Promise.resolve(packageNames);
+  }
+
+  refreshAtaIfNeededPublic(oldConfig: ReadonlyMap<string, unknown>, newConfig: ReadonlyMap<string, unknown>): void {
+    this.refreshAtaIfNeeded(oldConfig, newConfig);
+  }
+
+  publishProgramDiagnostics(): void {
+    if (this.shouldPublishProgramDiagnostics()) void this.client?.refreshDiagnostics(undefined);
+  }
+
+  shouldPublishProgramDiagnostics(): boolean {
+    return this.options.pushDiagnosticsEnabled === true && this.client !== undefined;
+  }
+
+  publishProjectDiagnostics(project: unknown): void {
+    if (this.shouldPublishProgramDiagnostics()) void this.client?.refreshDiagnostics(project);
+  }
+
+  enqueuePublishGlobalDiagnostics(): void {
+    this.scheduleDiagnosticsRefresh();
+  }
+
+  publishGlobalDiagnostics(): void {
+    void this.client?.refreshDiagnostics(undefined);
+  }
+
+  triggerAtaForUpdatedProjects(projects: readonly unknown[]): void {
+    for (const [index, project] of projects.entries()) this.pendingAtaChanges.set(`project:${index}`, project);
+  }
+
+  warmAutoImportCache(): void {
+    this.trace("Warming auto-import cache");
+  }
+
   startPerformanceTelemetry(intervalMs = 5 * 60 * 1000): void {
     if (this.options.telemetryEnabled !== true) return;
     this.stopPerformanceTelemetry();
@@ -369,6 +563,13 @@ export class Session {
     this.pendingAtaChanges.clear();
     this.logger.log(`Snapshot ${this.snapshotValue.id()} updated for reason ${change.reason}`);
     return this.snapshotValue;
+  }
+
+  private defaultProject(): unknown {
+    return {
+      snapshotId: this.snapshotValue.id(),
+      currentDirectory: this.options.currentDirectory,
+    };
   }
 
   private createSnapshot(parentId = 0, fileChanges: FileChangeSummary = newFileChangeSummary()): Snapshot {
