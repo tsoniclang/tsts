@@ -10,6 +10,21 @@ import type { int } from "@tsonic/core/types.js";
 import type { TextPos } from "./text.js";
 import { isLineBreak } from "../stringutil/util.js";
 
+export function applyDebugStackLimit(
+  env: Readonly<Record<string, string | undefined>> = runtimeEnvironment(),
+): number | undefined {
+  const value = env["TS_GO_DEBUG_STACK_LIMIT"];
+  if (value === undefined || value === "") return undefined;
+  const limit = Number.parseInt(value, 10);
+  if (!Number.isFinite(limit) || limit <= 0) return undefined;
+  return limit;
+}
+
+function runtimeEnvironment(): Readonly<Record<string, string | undefined>> {
+  const processLike = (globalThis as { readonly process?: { readonly env?: Record<string, string | undefined> } }).process;
+  return processLike?.env ?? {};
+}
+
 // ---------------------------------------------------------------------------
 // Filter / Map family
 // ---------------------------------------------------------------------------
