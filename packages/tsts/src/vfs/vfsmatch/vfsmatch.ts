@@ -110,6 +110,7 @@ interface GlobComponent {
   readonly text: string;
   /** True for `**` recursive wildcard. */
   readonly isRecursive: boolean;
+  readonly regex?: RegExp;
 }
 
 interface CompiledGlob {
@@ -172,25 +173,22 @@ function compileGlobForUsage(spec: string, basePath: string, usage: Usage): Comp
   }
   for (const segment of parts) {
     if (segment === "") continue;
-    components.push({ text: segment, isRecursive: segment === "**" });
+    components.push({
+      text: segment,
+      isRecursive: segment === "**",
+      ...(segment === "**" ? {} : { regex: globSegmentToRegExp(segment, caseSensitiveDefault) }),
+    });
   }
   return { basePath: getIncludeBasePath(absolute), components };
 }
+
+const caseSensitiveDefault = true;
 
 function matchesGlob(filePath: string, glob: CompiledGlob, caseSensitive: boolean): boolean {
   const cmp = (a: string, b: string) => caseSensitive ? a === b : a.toLowerCase() === b.toLowerCase();
   const matchSegment = (segment: string, component: GlobComponent): boolean => {
     if (component.isRecursive) return true;
-    // Convert simple-glob (* ? . literal) to regex
-    const re = new RegExp(
-      "^" +
-        component.text
-          .replace(/[.+^${}()|[\]\\]/g, "\\$&")
-          .replace(/\*/g, ".*")
-          .replace(/\?/g, ".") +
-        "$",
-      caseSensitive ? "" : "i",
-    );
+    const re = caseSensitive ? (component.regex ?? globSegmentToRegExp(component.text, true)) : globSegmentToRegExp(component.text, false);
     void cmp;
     return re.test(segment);
   };
@@ -215,6 +213,90 @@ function matchesGlob(filePath: string, glob: CompiledGlob, caseSensitive: boolea
     j += 1;
   }
   return j >= glob.components.length;
+}
+
+export function isFileNameMatchedBySpecs(
+  fileName: string,
+  includes: readonly string[],
+  excludes: readonly string[],
+  currentDirectory: string,
+  useCaseSensitiveFileNames: boolean,
+): boolean {
+  const includeMatcher = newSpecMatcher(includes, currentDirectory, Usage.Files, useCaseSensitiveFileNames);
+  const excludeMatcher = newSpecMatcher(excludes, currentDirectory, Usage.Exclude, useCaseSensitiveFileNames);
+  if (excludeMatcher?.matchString(fileName) === true) return false;
+  return includeMatcher === undefined || includeMatcher.matchString(fileName);
+}
+
+export function getRegularExpressionForSpec(spec: string, currentDirectory: string, usage: Usage, caseSensitive: boolean): RegExp | undefined {
+  const glob = compileGlobForUsage(spec, currentDirectory, usage);
+  if (glob === undefined) return undefined;
+  const pattern = glob.components.map((component) => {
+    if (component.isRecursive) return "(?:[^/]+/)*";
+    return globSegmentToSource(component.text);
+  }).join("/");
+  return new RegExp(`^${pattern}$`, caseSensitive ? "" : "i");
+}
+
+export function getFileMatcherPatterns(
+  path: string,
+  includes: readonly string[],
+  excludes: readonly string[],
+  caseSensitive: boolean,
+): readonly RegExp[] {
+  void excludes;
+  return includes
+    .map((include) => getRegularExpressionForSpec(include, path, Usage.Files, caseSensitive))
+    .filter((regex): regex is RegExp => regex !== undefined);
+}
+
+export function getExcludeMatcherPatterns(path: string, excludes: readonly string[], caseSensitive: boolean): readonly RegExp[] {
+  return excludes
+    .map((exclude) => getRegularExpressionForSpec(exclude, path, Usage.Exclude, caseSensitive))
+    .filter((regex): regex is RegExp => regex !== undefined);
+}
+
+export function matchesExclude(path: string, excludes: readonly string[], currentDirectory: string, caseSensitive: boolean): boolean {
+  const matcher = newSpecMatcher(excludes, currentDirectory, Usage.Exclude, caseSensitive);
+  return matcher?.matchString(path) === true;
+}
+
+export function globSegmentToRegExp(segment: string, caseSensitive: boolean): RegExp {
+  return new RegExp(`^${globSegmentToSource(segment)}$`, caseSensitive ? "" : "i");
+}
+
+export function globSegmentToSource(segment: string): string {
+  let source = "";
+  for (let index = 0; index < segment.length; index += 1) {
+    const ch = segment[index]!;
+    if (ch === "*") {
+      source += "[^/]*";
+    } else if (ch === "?") {
+      source += "[^/]";
+    } else if (ch === "[") {
+      const end = findCharClassEnd(segment, index + 1);
+      if (end > index) {
+        source += segment.slice(index, end + 1);
+        index = end;
+      } else {
+        source += "\\[";
+      }
+    } else {
+      source += escapeRegExpChar(ch);
+    }
+  }
+  return source;
+}
+
+function findCharClassEnd(segment: string, start: number): number {
+  for (let index = start; index < segment.length; index += 1) {
+    if (segment[index] === "]") return index;
+  }
+  return -1;
+}
+
+function escapeRegExpChar(ch: string): string {
+  return /[\\^$.*+?()[\]{}|]/.test(ch) ? `\\${ch}` : ch;
 }
 
 function shouldSkipRecursiveSegment(segment: string, component: GlobComponent): boolean {

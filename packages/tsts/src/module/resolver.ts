@@ -420,8 +420,45 @@ function nodeModuleNameResolver(state: ResolutionState): ResolvedInternal | unde
     const candidate = normalizePath(combinePaths(state.containingDirectory, state.name));
     return nodeLoadModuleByRelativeName(state, candidate, /*considerPackageJson*/ true);
   }
+  const pathMapped = tryLoadModuleUsingPaths(state);
+  if (pathMapped !== undefined) return pathMapped;
   // Non-relative: walk node_modules folders up the directory tree.
   return loadModuleFromNearestNodeModulesDirectory(state);
+}
+
+function tryLoadModuleUsingPaths(state: ResolutionState): ResolvedInternal | undefined {
+  const paths = (state.compilerOptions as unknown as { paths?: Record<string, readonly string[]> }).paths;
+  const baseUrl = (state.compilerOptions as unknown as { baseUrl?: string }).baseUrl;
+  if (paths === undefined || baseUrl === undefined) return undefined;
+  const parsed = parsePatterns(new Map(Object.entries(paths)));
+  if (parsed.matchableStringSet.has(state.name)) {
+    const substitutions = paths[state.name] ?? [];
+    const result = tryLoadModuleUsingPathSubstitutions(state, substitutions, "");
+    if (result !== undefined) return result;
+  }
+  const best = findBestPatternMatch(parsed.patterns, state.name);
+  if (best === undefined) return undefined;
+  const matchedStar = state.name.slice(best.prefix.length, state.name.length - best.suffix.length);
+  const substitutions = paths[`${best.prefix}*${best.suffix}`] ?? [];
+  return tryLoadModuleUsingPathSubstitutions(state, substitutions, matchedStar);
+}
+
+function tryLoadModuleUsingPathSubstitutions(
+  state: ResolutionState,
+  substitutions: readonly string[],
+  matchedStar: string,
+): ResolvedInternal | undefined {
+  const baseUrl = (state.compilerOptions as unknown as { baseUrl?: string }).baseUrl;
+  if (baseUrl === undefined) return undefined;
+  for (const substitution of substitutions) {
+    const substituted = substitution.includes("*")
+      ? substitution.replace("*", matchedStar)
+      : substitution;
+    const candidate = normalizePath(combinePaths(baseUrl, substituted));
+    const result = nodeLoadModuleByRelativeName(state, candidate, true);
+    if (result !== undefined) return result;
+  }
+  return undefined;
 }
 
 function nodeLoadModuleByRelativeName(
@@ -562,14 +599,122 @@ function loadNodeModuleFromDirectory(
   candidate: string,
   considerPackageJson: boolean,
 ): ResolvedInternal | undefined {
-  void considerPackageJson;
-  // Full TS-Go implementation reads package.json first (when
-  // considerPackageJson is true) to look up `main`/`types`/`typings`
-  // fields. Until our packagejson port lands, we fall back to the
-  // index-file probe which handles the common case of `./dir` resolving
-  // to `./dir/index.{ts,d.ts,js}`.
+  if (considerPackageJson) {
+    const packageJsonResult = loadModuleFromPackageJson(state, candidate);
+    if (packageJsonResult !== undefined) return packageJsonResult;
+  }
   const indexCandidate = combinePaths(candidate, "index");
   return tryAddingExtensions(state, indexCandidate, "");
+}
+
+interface PackageJsonLike {
+  readonly name?: string;
+  readonly version?: string;
+  readonly types?: string;
+  readonly typings?: string;
+  readonly main?: string;
+  readonly module?: string;
+  readonly exports?: unknown;
+  readonly typesVersions?: Record<string, Record<string, readonly string[]>>;
+}
+
+function loadModuleFromPackageJson(state: ResolutionState, packageDirectory: string): ResolvedInternal | undefined {
+  const packageJsonPath = combinePaths(packageDirectory, "package.json");
+  const packageJson = readPackageJson(state, packageJsonPath);
+  if (packageJson === undefined) return undefined;
+  state.affectingLocations.push(packageJsonPath);
+  const typesVersionsResult = loadModuleFromTypesVersions(state, packageDirectory, packageJson);
+  if (typesVersionsResult !== undefined) return withPackageJsonId(typesVersionsResult, packageJson, packageDirectory);
+  const fieldResult = loadModuleFromPackageJsonFields(state, packageDirectory, packageJson);
+  if (fieldResult !== undefined) return withPackageJsonId(fieldResult, packageJson, packageDirectory);
+  return undefined;
+}
+
+function readPackageJson(state: ResolutionState, path: string): PackageJsonLike | undefined {
+  if (!state.resolver.host.fileExists(path)) {
+    state.failedLookupLocations.push(path);
+    return undefined;
+  }
+  const text = state.resolver.host.readFile(path);
+  if (text === undefined) return undefined;
+  try {
+    const parsed = JSON.parse(text) as PackageJsonLike;
+    return typeof parsed === "object" && parsed !== null ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function loadModuleFromPackageJsonFields(
+  state: ResolutionState,
+  packageDirectory: string,
+  packageJson: PackageJsonLike,
+): ResolvedInternal | undefined {
+  const fields = state.isTypeReferenceDirective
+    ? [packageJson.types, packageJson.typings]
+    : [packageJson.types, packageJson.typings, packageJson.module, packageJson.main];
+  for (const field of fields) {
+    if (field === undefined || field === "") continue;
+    const candidate = normalizePath(combinePaths(packageDirectory, field));
+    const result = nodeLoadModuleByRelativeName(state, candidate, false);
+    if (result !== undefined) return result;
+  }
+  return undefined;
+}
+
+function loadModuleFromTypesVersions(
+  state: ResolutionState,
+  packageDirectory: string,
+  packageJson: PackageJsonLike,
+): ResolvedInternal | undefined {
+  if (packageJson.typesVersions === undefined) return undefined;
+  const selected = selectTypesVersion(packageJson.typesVersions);
+  if (selected === undefined) return undefined;
+  for (const [pattern, substitutions] of Object.entries(selected)) {
+    const parsed = parsePattern(pattern);
+    if (!patternMatches(parsed, state.name)) continue;
+    const matchedStar = getMatchedStar(parsed, state.name);
+    for (const substitution of substitutions) {
+      const replaced = substitution.includes("*") ? substitution.replace("*", matchedStar) : substitution;
+      const candidate = normalizePath(combinePaths(packageDirectory, replaced));
+      const result = nodeLoadModuleByRelativeName(state, candidate, false);
+      if (result !== undefined) return result;
+    }
+  }
+  return undefined;
+}
+
+function selectTypesVersion(typesVersions: Record<string, Record<string, readonly string[]>>): Record<string, readonly string[]> | undefined {
+  for (const [range, value] of Object.entries(typesVersions)) {
+    void range;
+    return value;
+  }
+  return undefined;
+}
+
+function withPackageJsonId(resolved: ResolvedInternal, packageJson: PackageJsonLike, packageDirectory: string): ResolvedInternal {
+  resolved.packageId = {
+    name: packageJson.name ?? packageDirectory.slice(packageDirectory.lastIndexOf("/") + 1),
+    subModuleName: "",
+    version: packageJson.version ?? "",
+    peerDependencies: "",
+  };
+  return resolved;
+}
+
+function parsePattern(pattern: string): ParsedPattern {
+  const index = pattern.indexOf("*");
+  if (index < 0) return { prefix: pattern, suffix: "" };
+  return { prefix: pattern.slice(0, index), suffix: pattern.slice(index + 1) };
+}
+
+function patternMatches(pattern: ParsedPattern, candidate: string): boolean {
+  return candidate.startsWith(pattern.prefix) && candidate.endsWith(pattern.suffix);
+}
+
+function getMatchedStar(pattern: ParsedPattern, candidate: string): string {
+  if (!patternMatches(pattern, candidate)) return "";
+  return candidate.slice(pattern.prefix.length, candidate.length - pattern.suffix.length);
 }
 
 function loadModuleFromNearestNodeModulesDirectory(

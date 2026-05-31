@@ -18,6 +18,23 @@ export interface MapFile {
   readonly modTime?: Date;
 }
 
+export interface Clock {
+  now(): Date;
+  sinceStart(): number;
+}
+
+class RealClock implements Clock {
+  private readonly start = Date.now();
+
+  now(): Date {
+    return new Date();
+  }
+
+  sinceStart(): number {
+    return Date.now() - this.start;
+  }
+}
+
 /**
  * Constructs a `MapFile` representing a symlink to `target`. Mirrors
  * TS-Go `Symlink`.
@@ -35,6 +52,14 @@ export function symlink(target: string): MapFile {
 export function fromMap(
   entries: Readonly<Record<string, string | MapFile>>,
   useCaseSensitiveFileNames: boolean,
+): FS {
+  return fromMapWithClock(entries, useCaseSensitiveFileNames, new RealClock());
+}
+
+export function fromMapWithClock(
+  entries: Readonly<Record<string, string | MapFile>>,
+  useCaseSensitiveFileNames: boolean,
+  clock: Clock,
 ): FS {
   const fs = new MemoryFS({ caseSensitive: useCaseSensitiveFileNames });
   const keys = Object.keys(entries).sort(comparePathsByParts);
@@ -63,24 +88,77 @@ export function fromMap(
       const targetContent = entries[file.data];
       if (targetContent === undefined) {
         // Broken symlink — store the link literal as content for now.
-        fs.writeFile(p, file.data);
+        writeMapFile(fs, p, file.data, clock);
         continue;
       }
       if (typeof targetContent === "string") {
-        fs.writeFile(p, targetContent);
+        writeMapFile(fs, p, targetContent, clock);
       } else if (!targetContent.isSymlink) {
-        fs.writeFile(p, targetContent.data);
+        writeMapFile(fs, p, targetContent.data, clock);
       } else {
         // Symlink to symlink — follow once. For deeper chains the
         // upstream `getFollowingSymlinks` recursion is needed.
-        fs.writeFile(p, targetContent.data);
+        writeMapFile(fs, p, targetContent.data, clock);
       }
     } else {
-      fs.writeFile(p, file.data);
+      writeMapFile(fs, p, file.data, clock);
     }
   }
 
   return fs;
+}
+
+function writeMapFile(fs: FS, path: string, content: string, clock: Clock): void {
+  fs.writeFile(path, content);
+  const now = clock.now();
+  fs.chtimes(path, now, now);
+}
+
+export function validateMapPaths(paths: readonly string[]): void {
+  let posix = false;
+  let windows = false;
+  for (const path of paths) {
+    if (!isRootedDiskPath(path)) throw new Error(`vfstest: non-rooted path ${JSON.stringify(path)}`);
+    const normalized = removeTrailingDirectorySeparator(normalizePath(path));
+    if (normalized !== path) throw new Error(`vfstest: non-normalized path ${JSON.stringify(path)}`);
+    if (path.startsWith("/")) posix = true;
+    else windows = true;
+  }
+  if (posix && windows) throw new Error("vfstest: mixed posix and windows paths");
+}
+
+export function canonicalPath(path: string, useCaseSensitiveFileNames: boolean): string {
+  const normalized = removeTrailingDirectorySeparator(normalizePath(path));
+  return useCaseSensitiveFileNames ? normalized : normalized.toLowerCase();
+}
+
+export function dirName(path: string): string {
+  const normalized = removeTrailingDirectorySeparator(normalizePath(path));
+  const index = normalized.lastIndexOf("/");
+  if (index <= 0) return "";
+  return normalized.slice(0, index);
+}
+
+export function baseName(path: string): string {
+  const normalized = removeTrailingDirectorySeparator(normalizePath(path));
+  const index = normalized.lastIndexOf("/");
+  return index === -1 ? normalized : normalized.slice(index + 1);
+}
+
+function normalizePath(path: string): string {
+  const parts: string[] = [];
+  const root = path.match(/^[A-Za-z]:[\\/]/)?.[0] ?? (path.startsWith("/") ? "/" : "");
+  for (const part of path.replace(/\\/g, "/").slice(root.length).split("/")) {
+    if (part === "" || part === ".") continue;
+    if (part === "..") parts.pop();
+    else parts.push(part);
+  }
+  return root + parts.join("/");
+}
+
+function removeTrailingDirectorySeparator(path: string): string {
+  if (path === "/" || /^[A-Za-z]:\/$/.test(path)) return path;
+  return path.endsWith("/") ? path.slice(0, -1) : path;
 }
 
 function isRootedDiskPath(p: string): boolean {

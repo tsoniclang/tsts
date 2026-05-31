@@ -55,3 +55,59 @@ export function toPathKey(path: string, caseSensitive: boolean): string {
   if (caseSensitive) return path;
   return path.toLowerCase();
 }
+
+export function rootLength(path: string): number {
+  if (path.startsWith("/")) return 1;
+  if (/^[A-Za-z]:[\\/]/.test(path)) return 3;
+  if (path.startsWith("\\\\")) {
+    const normalized = path.replace(/\\/g, "/");
+    const first = normalized.indexOf("/", 2);
+    if (first < 0) return normalized.length;
+    const second = normalized.indexOf("/", first + 1);
+    return second < 0 ? normalized.length : second + 1;
+  }
+  throw new Error(`vfs: path ${JSON.stringify(path)} is not absolute`);
+}
+
+export function splitPath(path: string): readonly [rootName: string, rest: string] {
+  const normalized = normalizePath(path);
+  const length = rootLength(normalized);
+  const rootName = normalized.slice(0, length);
+  const rest = removeTrailingDirectorySeparator(normalized.slice(length));
+  return [rootName, rest];
+}
+
+export function normalizePath(path: string): string {
+  const slash = path.replace(/\\/g, "/");
+  const length = rootLengthOrZero(slash);
+  const root = slash.slice(0, length);
+  const parts: string[] = [];
+  for (const part of slash.slice(length).split("/")) {
+    if (part === "" || part === ".") continue;
+    if (part === "..") parts.pop();
+    else parts.push(part);
+  }
+  return root + parts.join("/");
+}
+
+export function rootAndPath(path: string): readonly [rootName: string, rest: string] {
+  const [rootName, rest] = splitPath(path);
+  return [rootName, rest === "" ? "." : rest];
+}
+
+export function removeTrailingDirectorySeparator(path: string): string {
+  if (path === "/" || /^[A-Za-z]:\/$/.test(path)) return path;
+  return path.endsWith("/") ? path.slice(0, -1) : path;
+}
+
+function rootLengthOrZero(path: string): number {
+  if (path.startsWith("/")) return 1;
+  if (/^[A-Za-z]:\//.test(path)) return 3;
+  if (path.startsWith("//")) {
+    const first = path.indexOf("/", 2);
+    if (first < 0) return path.length;
+    const second = path.indexOf("/", first + 1);
+    return second < 0 ? path.length : second + 1;
+  }
+  return 0;
+}

@@ -38,7 +38,8 @@ export class FileWatcher {
   private readonly testing: boolean;
   private readonly callback: () => void;
   private watchState?: Map<string, WatchEntry>;
-  private wildcardDirectories?: Map<string, boolean>;
+  private wildcardDirectories = new Map<string, boolean>();
+  private debugLog: { write(text: string): void } | undefined;
 
   constructor(fs: FS, pollIntervalMs: number, testing: boolean, callback: () => void) {
     this.fs = fs;
@@ -49,6 +50,10 @@ export class FileWatcher {
 
   setPollInterval(ms: number): void {
     this.pollIntervalMs = ms;
+  }
+
+  setDebugLog(writer: { write(text: string): void } | undefined): void {
+    this.debugLog = writer;
   }
 
   watchStateEntry(path: string): WatchEntry | undefined {
@@ -83,6 +88,7 @@ export class FileWatcher {
       if (this.hasChanges(current)) {
         current = this.currentState();
         settledAt = now();
+        this.callback();
       }
     }
   }
@@ -98,23 +104,50 @@ export class FileWatcher {
         out.set(fn, { modTime: new Date(0), exists: false, childrenHash: 0n });
       }
     }
+    for (const [dir, recursive] of this.wildcardDirectories) {
+      if (!recursive) {
+        snapshotDirEntry(this.fs, out, dir);
+        continue;
+      }
+      this.fs.walkDir(dir, (path, entry) => {
+        if (!entry.isDirectory) return undefined;
+        snapshotDirEntry(this.fs, out, path);
+        return undefined;
+      });
+    }
     return out;
   }
 
   private hasChanges(prior: Map<string, WatchEntry>): boolean {
-    // TODO: also consult `this.wildcardDirectories` for child-set changes.
+    const start = Date.now();
+    const current = this.currentState();
+    let changed = false;
     if (this.watchState === undefined) return false;
     for (const [path, entry] of prior) {
-      const cur = this.watchState.get(path);
-      if (cur === undefined) return true;
-      if (cur.exists !== entry.exists) return true;
-      if (cur.exists && cur.modTime.getTime() !== entry.modTime.getTime()) return true;
+      const cur = current.get(path);
+      if (cur === undefined) {
+        changed = true;
+        break;
+      }
+      if (cur.exists !== entry.exists) {
+        changed = true;
+        break;
+      }
+      if (cur.exists && cur.modTime.getTime() !== entry.modTime.getTime()) {
+        changed = true;
+        break;
+      }
+      if (cur.childrenHash !== entry.childrenHash) {
+        changed = true;
+        break;
+      }
     }
-    return false;
+    this.debugLog?.write(`vfswatch scan paths=${prior.size} changed=${changed} elapsedMs=${Date.now() - start}\n`);
+    return changed;
   }
 }
 
-function snapshotPaths(fs: FS, paths: readonly string[], _wildcardDirs: Map<string, boolean>): Map<string, WatchEntry> {
+function snapshotPaths(fs: FS, paths: readonly string[], wildcardDirs: Map<string, boolean>): Map<string, WatchEntry> {
   const state = new Map<string, WatchEntry>();
   for (const path of paths) {
     const s = fs.stat(path);
@@ -124,7 +157,53 @@ function snapshotPaths(fs: FS, paths: readonly string[], _wildcardDirs: Map<stri
       state.set(path, { modTime: new Date(0), exists: false, childrenHash: 0n });
     }
   }
+  for (const [dir, recursive] of wildcardDirs) {
+    if (!recursive) {
+      snapshotDirEntry(fs, state, dir);
+      continue;
+    }
+    fs.walkDir(dir, (path, entry) => {
+      if (!entry.isDirectory) return undefined;
+      snapshotDirEntry(fs, state, path);
+      return undefined;
+    });
+  }
   return state;
+}
+
+function snapshotDirEntry(fs: FS, state: Map<string, WatchEntry>, dir: string): void {
+  const stat = fs.stat(dir);
+  if (stat === undefined) return;
+  const entries = fs.getAccessibleEntries(dir);
+  const childrenHash = hashEntries(entries.files, entries.directories);
+  const existing = state.get(dir);
+  if (existing !== undefined) {
+    state.set(dir, { ...existing, childrenHash });
+  } else {
+    state.set(dir, { modTime: stat.mtime, exists: true, childrenHash });
+  }
+}
+
+export function hashEntries(files: readonly string[], directories: readonly string[]): bigint {
+  let hash = 1469598103934665603n;
+  const write = (text: string): void => {
+    for (let index = 0; index < text.length; index += 1) {
+      hash ^= BigInt(text.charCodeAt(index));
+      hash *= 1099511628211n;
+      hash &= 0xffffffffffffffffn;
+    }
+  };
+  for (const directory of [...directories].sort()) {
+    write("d:");
+    write(directory);
+    write("\0");
+  }
+  for (const file of [...files].sort()) {
+    write("f:");
+    write(file);
+    write("\0");
+  }
+  return hash;
 }
 
 function sleep(ms: number): Promise<void> {

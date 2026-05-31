@@ -47,6 +47,71 @@ export class FSMock implements FS {
   private walkDirCallList: WalkDirCall[] = [];
   private writeFileCallList: AppendFileCall[] = [];
 
+  resetCalls(): void {
+    this.appendFileCallList = [];
+    this.chtimesCallList = [];
+    this.directoryExistsCallList = [];
+    this.fileExistsCallList = [];
+    this.getAccessibleEntriesCallList = [];
+    this.readFileCallList = [];
+    this.realpathCallList = [];
+    this.removeCallList = [];
+    this.statCallList = [];
+    this.useCaseSensitiveFileNamesCallCount = 0;
+    this.walkDirCallList = [];
+    this.writeFileCallList = [];
+  }
+
+  configureFrom(fs: FS): void {
+    this.appendFileFunc = (path, data) => fs.appendFile(path, data);
+    this.chtimesFunc = (path, accessTime, modifyTime) => fs.chtimes(path, accessTime, modifyTime);
+    this.directoryExistsFunc = (path) => fs.directoryExists(path);
+    this.fileExistsFunc = (path) => fs.fileExists(path);
+    this.getAccessibleEntriesFunc = (path) => fs.getAccessibleEntries(path);
+    this.readFileFunc = (path) => fs.readFile(path);
+    this.realpathFunc = (path) => fs.realpath(path);
+    this.removeFunc = (path) => fs.remove(path);
+    this.statFunc = (path) => fs.stat(path);
+    this.useCaseSensitiveFileNamesFunc = () => fs.useCaseSensitiveFileNames();
+    this.walkDirFunc = (root, walkFn) => fs.walkDir(root, walkFn);
+    this.writeFileFunc = (path, data) => fs.writeFile(path, data);
+  }
+
+  callCount(methodName: string): number {
+    switch (methodName) {
+      case "appendFile": return this.appendFileCallList.length;
+      case "chtimes": return this.chtimesCallList.length;
+      case "directoryExists": return this.directoryExistsCallList.length;
+      case "fileExists": return this.fileExistsCallList.length;
+      case "getAccessibleEntries": return this.getAccessibleEntriesCallList.length;
+      case "readFile": return this.readFileCallList.length;
+      case "realpath": return this.realpathCallList.length;
+      case "remove": return this.removeCallList.length;
+      case "stat": return this.statCallList.length;
+      case "useCaseSensitiveFileNames": return this.useCaseSensitiveFileNamesCallCount;
+      case "walkDir": return this.walkDirCallList.length;
+      case "writeFile": return this.writeFileCallList.length;
+      default: return 0;
+    }
+  }
+
+  allCalls(): readonly { readonly method: string; readonly args: readonly unknown[] }[] {
+    return [
+      ...this.appendFileCallList.map((call) => ({ method: "appendFile", args: [call.path, call.data] })),
+      ...this.chtimesCallList.map((call) => ({ method: "chtimes", args: [call.path, call.accessTime, call.modifyTime] })),
+      ...this.directoryExistsCallList.map((call) => ({ method: "directoryExists", args: [call.path] })),
+      ...this.fileExistsCallList.map((call) => ({ method: "fileExists", args: [call.path] })),
+      ...this.getAccessibleEntriesCallList.map((call) => ({ method: "getAccessibleEntries", args: [call.path] })),
+      ...this.readFileCallList.map((call) => ({ method: "readFile", args: [call.path] })),
+      ...this.realpathCallList.map((call) => ({ method: "realpath", args: [call.path] })),
+      ...this.removeCallList.map((call) => ({ method: "remove", args: [call.path] })),
+      ...this.statCallList.map((call) => ({ method: "stat", args: [call.path] })),
+      ...Array.from({ length: this.useCaseSensitiveFileNamesCallCount }, () => ({ method: "useCaseSensitiveFileNames", args: [] })),
+      ...this.walkDirCallList.map((call) => ({ method: "walkDir", args: [call.root, call.walkFn] })),
+      ...this.writeFileCallList.map((call) => ({ method: "writeFile", args: [call.path, call.data] })),
+    ];
+  }
+
   appendFile(path: string, data: string): void {
     if (this.appendFileFunc === undefined) throw new Error("FSMock.appendFileFunc is not configured");
     this.appendFileCallList.push({ path, data });
