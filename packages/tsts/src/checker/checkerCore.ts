@@ -351,17 +351,49 @@ export const TypeFacts = {
 
 export const TypeFactsDerived = {
   BaseStringStrictFacts: TypeFacts.TypeofEQString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull,
+  BaseStringFacts: TypeFacts.TypeofEQString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.Falsy,
+  StringStrictFacts: TypeFacts.TypeofEQString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.Truthy | TypeFacts.Falsy,
+  StringFacts: TypeFacts.TypeofEQString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.Falsy | TypeFacts.Truthy,
+  EmptyStringStrictFacts: TypeFacts.TypeofEQString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.Falsy,
+  EmptyStringFacts: TypeFacts.TypeofEQString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.Falsy,
+  NonEmptyStringStrictFacts: TypeFacts.TypeofEQString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.Truthy,
+  NonEmptyStringFacts: TypeFacts.TypeofEQString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.Falsy | TypeFacts.Truthy,
   BaseNumberStrictFacts: TypeFacts.TypeofEQNumber | TypeFacts.TypeofNEString | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull,
+  BaseNumberFacts: TypeFacts.TypeofEQNumber | TypeFacts.TypeofNEString | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.Falsy,
+  NumberStrictFacts: TypeFacts.TypeofEQNumber | TypeFacts.TypeofNEString | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.Truthy | TypeFacts.Falsy,
+  NumberFacts: TypeFacts.TypeofEQNumber | TypeFacts.TypeofNEString | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.Falsy | TypeFacts.Truthy,
+  ZeroNumberStrictFacts: TypeFacts.TypeofEQNumber | TypeFacts.TypeofNEString | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.Falsy,
+  ZeroNumberFacts: TypeFacts.TypeofEQNumber | TypeFacts.TypeofNEString | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.Falsy,
+  NonZeroNumberStrictFacts: TypeFacts.TypeofEQNumber | TypeFacts.TypeofNEString | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.Truthy,
+  NonZeroNumberFacts: TypeFacts.TypeofEQNumber | TypeFacts.TypeofNEString | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.Falsy | TypeFacts.Truthy,
   BaseBigIntStrictFacts: TypeFacts.TypeofEQBigInt | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull,
+  BaseBigIntFacts: TypeFacts.TypeofEQBigInt | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.Falsy,
+  BigIntStrictFacts: TypeFacts.TypeofEQBigInt | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.Truthy | TypeFacts.Falsy,
+  BigIntFacts: TypeFacts.TypeofEQBigInt | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.Falsy | TypeFacts.Truthy,
+  ZeroBigIntStrictFacts: TypeFacts.TypeofEQBigInt | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.Falsy,
+  ZeroBigIntFacts: TypeFacts.TypeofEQBigInt | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.Falsy,
+  NonZeroBigIntStrictFacts: TypeFacts.TypeofEQBigInt | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.Truthy,
+  NonZeroBigIntFacts: TypeFacts.TypeofEQBigInt | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.Falsy | TypeFacts.Truthy,
   BaseBooleanStrictFacts: TypeFacts.TypeofEQBoolean | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull,
+  BaseBooleanFacts: TypeFacts.TypeofEQBoolean | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.Falsy,
+  BooleanStrictFacts: TypeFacts.TypeofEQBoolean | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.Truthy | TypeFacts.Falsy,
+  BooleanFacts: TypeFacts.TypeofEQBoolean | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.Falsy | TypeFacts.Truthy,
+  FalseStrictFacts: TypeFacts.TypeofEQBoolean | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.Falsy,
+  FalseFacts: TypeFacts.TypeofEQBoolean | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.Falsy,
+  TrueStrictFacts: TypeFacts.TypeofEQBoolean | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.Truthy,
+  TrueFacts: TypeFacts.TypeofEQBoolean | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.Falsy | TypeFacts.Truthy,
   SymbolStrictFacts: TypeFacts.TypeofEQSymbol | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.Truthy,
   ObjectStrictFacts: TypeFacts.TypeofEQObject | TypeFacts.TypeofEQHostObject | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEFunction | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.Truthy,
   FunctionStrictFacts: TypeFacts.TypeofEQFunction | TypeFacts.TypeofEQHostObject | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.NEUndefined | TypeFacts.NENull | TypeFacts.NEUndefinedOrNull | TypeFacts.Truthy,
   VoidFacts: TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.EQUndefined | TypeFacts.EQUndefinedOrNull | TypeFacts.NENull | TypeFacts.Falsy,
   UndefinedFacts: TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.EQUndefined | TypeFacts.EQUndefinedOrNull | TypeFacts.NENull | TypeFacts.Falsy | TypeFacts.IsUndefined,
   NullFacts: TypeFacts.TypeofEQObject | TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEFunction | TypeFacts.TypeofNEHostObject | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.NEUndefined | TypeFacts.Falsy | TypeFacts.IsNull,
+  EmptyObjectStrictFacts: TypeFacts.All & ~(TypeFacts.EQUndefined | TypeFacts.EQNull | TypeFacts.EQUndefinedOrNull | TypeFacts.IsUndefinedOrNull),
+  EmptyObjectFacts: TypeFacts.All & ~TypeFacts.IsUndefinedOrNull,
+  UnknownFacts: TypeFacts.All & ~TypeFacts.IsUndefinedOrNull,
   AllTypeofNE: TypeFacts.TypeofNEString | TypeFacts.TypeofNENumber | TypeFacts.TypeofNEBigInt | TypeFacts.TypeofNEBoolean | TypeFacts.TypeofNESymbol | TypeFacts.TypeofNEObject | TypeFacts.TypeofNEFunction | TypeFacts.NEUndefined,
   OrFactsMask: TypeFacts.TypeofEQFunction | TypeFacts.TypeofNEObject,
+  AndFactsMask: TypeFacts.All & ~(TypeFacts.TypeofEQFunction | TypeFacts.TypeofNEObject),
 } as const;
 
 export type IterationUse = number;
@@ -419,4 +451,169 @@ export interface WideningContext {
   readonly resolvedProperties: readonly AstSymbol[];
   readonly childContexts: Map<string, WideningContext>;
   readonly widenedTypes: Map<Type, Type>;
+}
+
+export interface CheckerHost {
+  readonly getCurrentDirectory?: () => string;
+  readonly useCaseSensitiveFileNames?: () => boolean;
+}
+
+export interface CheckerProgram extends CheckerHost {
+  readonly options: () => unknown;
+  readonly sourceFiles: () => readonly AstNode[];
+  readonly bindSourceFiles: () => void;
+  readonly fileExists: (fileName: string) => boolean;
+  readonly getSourceFile: (fileName: string) => AstNode | undefined;
+  readonly getSourceFileForResolvedModule: (fileName: string) => AstNode | undefined;
+  readonly getEmitModuleFormatOfFile: (sourceFile: AstNode) => number;
+  readonly getEmitSyntaxForUsageLocation: (sourceFile: AstNode, usageLocation: AstNode) => number;
+  readonly getImpliedNodeFormatForEmit: (sourceFile: AstNode) => number;
+  readonly getResolvedModule: (currentSourceFile: AstNode, moduleReference: string, mode: number) => unknown;
+  readonly getResolvedModules: () => ReadonlyMap<string, unknown>;
+  readonly getPackagesMap: () => ReadonlyMap<string, boolean>;
+  readonly getSourceFileMetaData: (path: string) => unknown;
+  readonly getJSXRuntimeImportSpecifier: (path: string) => readonly [string, AstNode | undefined];
+  readonly getImportHelpersImportSpecifier: (path: string) => AstNode | undefined;
+  readonly sourceFileMayBeEmitted: (sourceFile: AstNode, forceDtsEmit: boolean) => boolean;
+  readonly isSourceFileDefaultLibrary: (path: string) => boolean;
+  readonly getProjectReferenceFromOutputDts: (path: string) => unknown;
+  readonly getRedirectForResolution: (file: AstNode) => unknown;
+  readonly commonSourceDirectory: () => string;
+}
+
+export interface CheckerCoreState {
+  readonly id: number;
+  readonly program: CheckerProgram | undefined;
+  readonly compilerOptions: unknown;
+  readonly files: readonly AstNode[];
+  readonly fileIndexMap: ReadonlyMap<AstNode, number>;
+  readonly compareSymbols: (left: AstSymbol, right: AstSymbol) => number;
+  readonly compareSymbolChains: (left: readonly AstSymbol[], right: readonly AstSymbol[]) => number;
+  typeCount: number;
+  symbolCount: number;
+  totalInstantiationCount: number;
+  instantiationCount: number;
+  instantiationDepth: number;
+  inlineLevel: number;
+  currentNode: AstNode | undefined;
+  varianceTypeParameter: Type | undefined;
+  languageVersion: number;
+  moduleKind: number;
+  moduleResolutionKind: number;
+  isInferencePartiallyBlocked: boolean;
+  legacyDecorators: boolean;
+  emitStandardClassFields: boolean;
+  strictNullChecks: boolean;
+  strictFunctionTypes: boolean;
+  strictBindCallApply: boolean;
+  strictPropertyInitialization: boolean;
+  strictBuiltinIteratorReturn: boolean;
+  noImplicitAny: boolean;
+  noImplicitThis: boolean;
+  useUnknownInCatchVariables: boolean;
+  exactOptionalPropertyTypes: boolean;
+  canCollectSymbolAliasAccessibilityData: boolean;
+  wasCanceled: boolean;
+  saveDeferredDiagnostics: boolean;
+  arrayVariances: readonly number[];
+  globals: Map<string, AstSymbol>;
+  stringLiteralTypes: Map<string, Type>;
+  numberLiteralTypes: Map<number, Type>;
+  nanType: Type | undefined;
+  bigintLiteralTypes: Map<string, Type>;
+  enumLiteralTypes: Map<string, Type>;
+  enumNaNLiteralTypes: Map<AstSymbol, Type>;
+  indexedAccessTypes: Map<CacheHashKey, Type>;
+  templateLiteralTypes: Map<CacheHashKey, Type>;
+  stringMappingTypes: Map<string, Type>;
+  uniqueESSymbolTypes: Map<AstSymbol, Type>;
+  thisExpandoKinds: Map<AstSymbol, number>;
+  thisExpandoLocations: Map<AstSymbol, AstNode>;
+  subtypeReductionCache: Map<CacheHashKey, readonly Type[]>;
+  cachedTypes: Map<string, Type>;
+  cachedSignatures: Map<string, Signature>;
+  undefinedProperties: Map<string, AstSymbol>;
+  narrowedTypes: Map<string, Type>;
+  assignmentReducedTypes: Map<string, Type>;
+  discriminatedContextualTypes: Map<string, Type>;
+  instantiationExpressionTypes: Map<string, Type>;
+  substitutionTypes: Map<string, Type>;
+  reverseMappedCache: Map<string, Type>;
+  reverseHomomorphicMappedCache: Map<string, Type>;
+  iterationTypesCache: Map<string, IterationTypes>;
+  markerTypes: Set<Type>;
+  undefinedSymbol: AstSymbol | undefined;
+  argumentsSymbol: AstSymbol | undefined;
+  requireSymbol: AstSymbol | undefined;
+  unknownSymbol: AstSymbol | undefined;
+  unresolvedSymbols: Map<string, AstSymbol>;
+  errorTypes: Map<CacheHashKey, Type>;
+  moduleSymbols: Map<AstNode, AstSymbol>;
+  globalThisSymbol: AstSymbol | undefined;
+  symbolTableAliasCache: Map<number, readonly AstSymbol[]>;
+  tupleTypes: Map<CacheHashKey, Type>;
+  unionTypes: Map<CacheHashKey, Type>;
+  unionOfUnionTypes: Map<string, Type>;
+  intersectionTypes: Map<CacheHashKey, Type>;
+  propertiesTypes: Map<string, Type>;
+  diagnostics: readonly unknown[];
+  suggestionDiagnostics: readonly unknown[];
+  mergedSymbols: Map<AstSymbol, AstSymbol>;
+  nodeLinks: Map<AstNode, unknown>;
+  signatureLinks: Map<AstNode, unknown>;
+  symbolNodeLinks: Map<AstNode, unknown>;
+  typeNodeLinks: Map<AstNode, unknown>;
+  enumMemberLinks: Map<AstNode, unknown>;
+  assertionLinks: Map<AstNode, unknown>;
+  arrayLiteralLinks: Map<AstNode, unknown>;
+  switchStatementLinks: Map<AstNode, unknown>;
+  jsxElementLinks: Map<AstNode, unknown>;
+  symbolReferenceLinks: Map<AstSymbol, unknown>;
+  valueSymbolLinks: Map<AstSymbol, unknown>;
+  mappedSymbolLinks: Map<AstSymbol, unknown>;
+  deferredSymbolLinks: Map<AstSymbol, unknown>;
+  aliasSymbolLinks: Map<AstSymbol, unknown>;
+  moduleSymbolLinks: Map<AstSymbol, unknown>;
+  lateBoundLinks: Map<AstSymbol, unknown>;
+  exportTypeLinks: Map<AstSymbol, unknown>;
+  membersAndExportsLinks: Map<AstSymbol, unknown>;
+  typeAliasLinks: Map<AstSymbol, unknown>;
+  declaredTypeLinks: Map<AstSymbol, unknown>;
+  spreadLinks: Map<AstSymbol, unknown>;
+  varianceLinks: Map<AstSymbol, unknown>;
+  reverseMappedSymbolLinks: Map<AstSymbol, unknown>;
+  markedAssignmentSymbolLinks: Map<AstSymbol, unknown>;
+  symbolContainerLinks: Map<AstSymbol, unknown>;
+  sourceFileLinks: Map<AstNode, unknown>;
+  patternForType: Map<Type, AstNode>;
+  contextFreeTypes: Map<AstNode, Type>;
+  anyType: Type;
+  autoType: Type;
+  wildcardType: Type;
+  blockedStringType: Type;
+  errorType: Type;
+  unresolvedType: Type;
+  nonInferrableAnyType: Type;
+  intrinsicMarkerType: Type;
+  unknownType: Type;
+  undefinedType: Type;
+  undefinedWideningType: Type;
+  missingType: Type;
+  undefinedOrMissingType: Type;
+  optionalType: Type;
+  nullType: Type;
+  nullWideningType: Type;
+  stringType: Type;
+  numberType: Type;
+  bigintType: Type;
+  regularFalseType: Type;
+  falseType: Type;
+  regularTrueType: Type;
+  trueType: Type;
+  booleanType: Type;
+  esSymbolType: Type;
+  voidType: Type;
+  neverType: Type;
+  silentNeverType: Type;
+  implicitNeverType: Type;
 }
