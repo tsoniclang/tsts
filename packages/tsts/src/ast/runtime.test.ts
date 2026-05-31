@@ -23,7 +23,11 @@ import {
   isSourceFile,
   updateIdentifier,
   type BinaryOperatorToken,
+  type EndOfFile,
   type Node,
+  type NodeArray,
+  type Statement,
+  type VariableDeclaration,
 } from "./index.js";
 
 export class GeneratedAstRuntimeTests {
@@ -65,8 +69,8 @@ export class GeneratedAstRuntimeTests {
 
   models_handwritten_source_file_with_generated_node_array_storage(): void {
     const expression = createExpressionStatement(createIdentifier("x"));
-    const endOfFileToken = createToken(Kind.EndOfFile);
-    const sourceFile = createSourceFile("input.ts", "input.ts" as never, "x;", createNodeArray([expression]), endOfFileToken);
+    const endOfFileToken = createToken(Kind.EndOfFile) as EndOfFile;
+    const sourceFile = createSourceFile("input.ts", "input.ts" as never, "x;", createNodeArray([expression]) as NodeArray<Statement>, endOfFileToken, [], 0, 0);
     const visited: Node[] = [];
 
     Assert.Equal(Kind.SourceFile, sourceFile.kind);
@@ -96,7 +100,7 @@ export class GeneratedAstRuntimeTests {
   maps_schema_flags_members_onto_node_flags_and_wires_parent_links_generically(): void {
     const name = createIdentifier("answer");
     const declaration = createVariableDeclaration(name, undefined, undefined, createNumericLiteral("42", 0));
-    const declarations = createNodeArray([declaration]);
+    const declarations = createNodeArray([declaration]) as NodeArray<VariableDeclaration>;
     const list = createVariableDeclarationList(declarations, NodeFlags.Const);
 
     Assert.Equal(NodeFlags.Const, list.flags);

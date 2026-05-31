@@ -16,6 +16,15 @@ export const Tristate: {
   True: 2,
 };
 
+const tristateNames: readonly string[] = ["TSUnknown", "TSFalse", "TSTrue"];
+
+export function tristateToString(i: Tristate): string {
+  if (i === Tristate.Unknown) return "TSUnknown";
+  if (i === Tristate.False) return "TSFalse";
+  if (i === Tristate.True) return "TSTrue";
+  return "Tristate(" + String(i) + ")";
+}
+
 export function tristateIsTrue(t: Tristate | undefined): boolean {
   return t === Tristate.True;
 }

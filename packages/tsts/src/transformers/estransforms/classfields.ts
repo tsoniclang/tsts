@@ -1147,7 +1147,7 @@ const SubtreeFacts = {
   ContainsClassFields: 1 << 0,
   ContainsLexicalThisOrSuper: 1 << 1,
 } as const;
-// Strada-specific helpers — local implementations:
+// TS-Go-specific helpers — local implementations:
 function isStaticPropertyDeclarationOrClassStaticBlock(node: AstNode | undefined): boolean {
   if (node === undefined) return false;
   const k = (node as { kind?: number }).kind ?? 0;

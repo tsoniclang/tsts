@@ -5,8 +5,12 @@
  * parsed package.json contents keyed by canonical path.
  */
 
-import type { Path } from "../tspath/path.ts";
-import { JSONValueType, type JSONValue, asArray, asObject, asString } from "./jsonvalue.js";
+import type { Path } from "../tspath/path.js";
+import { JSONValueType, jsonValueTypeToString, type JSONValue, asArray, asObject, asString } from "./jsonvalue.js";
+import { mustParse, tryParseVersionRange, type Version } from "../semver/index.js";
+import { version, versionMajorMinor } from "../core/version.js";
+import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
+import type { DiagnosticMessage } from "../diagnostics/types.js";
 
 // ---------------------------------------------------------------------------
 // VersionPaths
@@ -66,8 +70,104 @@ export interface PackageJson {
 }
 
 export interface DiagnosticAndArgs {
-  message: string; // diagnostic key
+  message: DiagnosticMessage;
   args: readonly unknown[];
+}
+
+let cachedTypeScriptVersion: Version | undefined;
+function getTypeScriptVersion(): Version {
+  cachedTypeScriptVersion ??= mustParse(version());
+  return cachedTypeScriptVersion;
+}
+
+/**
+ * Mirrors the body of TS-Go's `PackageJson.GetVersionPaths` `sync.Once`:
+ * parses `fields.typesVersions`, populating `p.versionPaths` and caching
+ * `p.versionTraces`. Runs at most once per `PackageJson`.
+ */
+function computeVersionTraces(p: PackageJson): readonly DiagnosticAndArgs[] {
+  const cached = p.versionTraces;
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const traces: DiagnosticAndArgs[] = [];
+  const typesVersions = p.fields.typesVersions;
+  if (typesVersions.type === JSONValueType.NotPresent) {
+    traces.push({
+      message: Diagnostics.X_package_json_does_not_have_a_0_field,
+      args: ["typesVersions"],
+    });
+    p.versionTraces = traces;
+    return traces;
+  }
+  if (typesVersions.type !== JSONValueType.Object) {
+    traces.push({
+      message: Diagnostics.Expected_type_of_0_field_in_package_json_to_be_1_got_2,
+      args: ["typesVersions", "object", jsonValueTypeToString(typesVersions.type)],
+    });
+    p.versionTraces = traces;
+    return traces;
+  }
+
+  traces.push({
+    message: Diagnostics.X_package_json_has_a_typesVersions_field_with_version_specific_path_mappings,
+    args: ["typesVersions"],
+  });
+
+  for (const [key, value] of asObject(typesVersions)) {
+    const keyRange = tryParseVersionRange(key);
+    if (keyRange === undefined) {
+      traces.push({
+        message: Diagnostics.X_package_json_has_a_typesVersions_entry_0_that_is_not_a_valid_semver_range,
+        args: [key],
+      });
+      continue;
+    }
+    if (keyRange.test(getTypeScriptVersion())) {
+      if (value.type !== JSONValueType.Object) {
+        traces.push({
+          message: Diagnostics.Expected_type_of_0_field_in_package_json_to_be_1_got_2,
+          args: ["typesVersions['" + key + "']", "object", jsonValueTypeToString(value.type)],
+        });
+        p.versionTraces = traces;
+        return traces;
+      }
+      p.versionPaths = {
+        version: key,
+        pathsJSON: asObject(value),
+      };
+      p.versionTraces = traces;
+      return traces;
+    }
+  }
+
+  traces.push({
+    message: Diagnostics.X_package_json_does_not_have_a_typesVersions_entry_that_matches_version_0,
+    args: [versionMajorMinor()],
+  });
+  p.versionTraces = traces;
+  return traces;
+}
+
+/**
+ * Parses `fields.typesVersions` to populate `versionPaths` + `versionTraces`,
+ * computing them at most once. Mirrors TS-Go `PackageJson.GetVersionPaths`
+ * (the `sync.Once` body); subsequent calls reuse the cached traces and replay
+ * them through `trace` if provided.
+ */
+export function getVersionPaths(
+  p: PackageJson,
+  trace?: (m: DiagnosticMessage, ...args: readonly unknown[]) => void
+): VersionPaths | undefined {
+  const versionTraces = computeVersionTraces(p);
+
+  if (trace !== undefined) {
+    for (const t of versionTraces) {
+      trace(t.message, ...t.args);
+    }
+  }
+  return p.versionPaths;
 }
 
 export interface InfoCacheEntry {

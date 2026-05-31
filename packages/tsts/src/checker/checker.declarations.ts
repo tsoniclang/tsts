@@ -13,53 +13,56 @@ import {
   type ClassDeclaration,
   type ClassElement,
   type FunctionDeclaration,
+  type ParameterDeclaration,
 } from "../ast/index.js";
 import {
   type CheckState,
-  type TypeEnvironment,
-  anyType,
-  unresolvedType,
-  setBindingNameType,
   typeFromTypeNode,
 } from "./checker.checkedtype.js";
 import { inferExpression } from "./checker.expressions.js";
 import { checkBlock } from "./checker.statements.js";
 
-export function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckState, environment: TypeEnvironment): void {
-  if (classDeclaration.name !== undefined) {
-    environment.set(classDeclaration.name.text, anyType);
-  }
-  const classEnvironment = new Map(environment);
-  for (const member of classDeclaration.members) {
-    checkClassElement(member, state, classEnvironment);
+// The class/function name + its parameters/members were declared by the binder
+// into the appropriate symbol tables (the class symbol's members/exports, the
+// function's locals); references inside the bodies resolve through those tables
+// via NameResolver. The checker no longer seeds a value environment — it just
+// descends into the bodies with the declared return-type context.
+
+// Eagerly resolve a signature's parameter type annotations (checkSourceElement
+// over each parameter's TypeNode, independent of whether the parameter is
+// referenced). Resolving the annotation surfaces the TYPE-path diagnostics
+// (unresolved type name, generic/construct-signature deferral) that the lazy
+// per-reference type derivation would otherwise miss for an unused parameter.
+function checkSignatureParameterAnnotations(parameters: readonly ParameterDeclaration[], state: CheckState): void {
+  for (const parameter of parameters) {
+    if (parameter.type !== undefined) {
+      typeFromTypeNode(parameter.type, state);
+    }
   }
 }
 
-export function checkClassElement(member: ClassElement, state: CheckState, environment: TypeEnvironment): void {
+export function checkClassDeclaration(classDeclaration: ClassDeclaration, state: CheckState): void {
+  for (const member of classDeclaration.members) {
+    checkClassElement(member, state);
+  }
+}
+
+export function checkClassElement(member: ClassElement, state: CheckState): void {
   if (isConstructorDeclaration(member) || isMethodDeclaration(member)) {
-    const memberEnvironment = new Map(environment);
-    for (const parameter of member.parameters) {
-      setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type), memberEnvironment);
-    }
+    checkSignatureParameterAnnotations(member.parameters, state);
     if (member.body !== undefined) {
-      checkBlock(member.body, state, memberEnvironment, member.type === undefined ? undefined : typeFromTypeNode(member.type));
+      checkBlock(member.body, state, member.type === undefined ? undefined : typeFromTypeNode(member.type, state));
     }
     return;
   }
   if (isPropertyDeclaration(member) && member.initializer !== undefined) {
-    inferExpression(member.initializer, state, environment);
+    inferExpression(member.initializer, state);
   }
 }
 
-export function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, state: CheckState, environment: TypeEnvironment): void {
-  if (functionDeclaration.name !== undefined) {
-    environment.set(functionDeclaration.name.text, anyType);
-  }
-  const functionEnvironment = new Map(environment);
-  for (const parameter of functionDeclaration.parameters) {
-    setBindingNameType(parameter.name, parameter.type === undefined ? unresolvedType : typeFromTypeNode(parameter.type), functionEnvironment);
-  }
+export function checkFunctionDeclaration(functionDeclaration: FunctionDeclaration, state: CheckState): void {
+  checkSignatureParameterAnnotations(functionDeclaration.parameters, state);
   if (functionDeclaration.body !== undefined) {
-    checkBlock(functionDeclaration.body, state, functionEnvironment, functionDeclaration.type === undefined ? undefined : typeFromTypeNode(functionDeclaration.type));
+    checkBlock(functionDeclaration.body, state, functionDeclaration.type === undefined ? undefined : typeFromTypeNode(functionDeclaration.type, state));
   }
 }

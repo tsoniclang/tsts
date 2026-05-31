@@ -47,7 +47,7 @@ export function parsePseudoBigInt(stringValue: string): string {
     // hex / binary / octal — use BigInt parser
     try {
       const bi = BigInt(s);
-      return bi.toString(10);
+      return String(bi);
     } catch {
       throw new Error(`Failed to parse big int: ${JSON.stringify(s)}`);
     }

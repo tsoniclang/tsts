@@ -33,7 +33,7 @@ function firstResult<T>(arr: { items: readonly T[]; changed: boolean }): readonl
   return arr.items;
 }
 function convertBindingPatternToAssignmentPattern(_emitContext: unknown, pattern: AstNode): AstNode {
-  // Strada's convertBindingPatternToAssignmentPattern is a deep transform.
+  // TS-Go's convertBindingPatternToAssignmentPattern is a deep transform.
   // Real port awaits the destructuring helper port; for now return the
   // pattern unchanged so the caller can wire it through.
   return pattern;

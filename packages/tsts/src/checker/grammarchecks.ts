@@ -12,6 +12,13 @@
 import { Kind } from "../ast/index.js";
 import type { Node as AstNode } from "../ast/index.js";
 
+const ModifierFlagsExport = 1 << 0;
+const ModifierFlagsDeclare = 1 << 1;
+const ModifierFlagsAsync = 1 << 8;
+const ScriptTargetES2018 = 5;
+const ScriptTargetES2020 = 7;
+const TokenFlagsUnterminated = 1 << 0;
+
 // Compute modifier flags from a node's modifiers list. Mirrors
 // printer-utilities' getSyntacticModifierFlags so grammar checks can be
 // modifier-aware without taking a printer dependency.
@@ -378,7 +385,7 @@ export class GrammarChecker {
   checkGrammarTypeAssertion(node: AstNode): boolean {
     // Angle-bracket type assertions are not allowed in JSX files
     // — caller is responsible for the JSX scriptKind check.
-    void node; return false;
+    return isJsxSourceFile(node);
   }
   checkGrammarStatementInAmbientContext(node: AstNode): boolean {
     // Walk parents looking for an ambient (declare) context. In an
@@ -411,14 +418,20 @@ export class GrammarChecker {
   }
   checkGrammarTaggedTemplateChain(node: AstNode): boolean {
     // Optional chains cannot include tagged templates: tag?.`...`
-    void node; return false;
+    const tag = (node as unknown as { tag?: AstNode }).tag;
+    return containsOptionalChain(tag);
   }
   checkGrammarBigIntLiteral(node: AstNode): boolean {
     // BigInt literals are only valid when target is ES2020+.
-    void node; return false;
+    return scriptTargetOf(node) < ScriptTargetES2020;
   }
   checkGrammarStringLiteralExpression(node: AstNode): boolean {
-    void node; return false;
+    const text = (node as unknown as { text?: string; rawText?: string }).rawText
+      ?? (node as unknown as { text?: string; rawText?: string }).text
+      ?? "";
+    const flags = (node as unknown as { tokenFlags?: number }).tokenFlags ?? 0;
+    return (flags & TokenFlagsUnterminated) !== 0
+      || (isStrictContext(node) && containsLegacyOctalEscape(text));
   }
   checkGrammarNullishCoalesceWithLogicalExpression(node: AstNode): boolean {
     // ?? must be parenthesized when combined with && or ||.
@@ -436,7 +449,16 @@ export class GrammarChecker {
     return isLogical(left) || isLogical(right);
   }
   checkGrammarRegularExpressionLiteral(node: AstNode): boolean {
-    void node; return false;
+    const text = (node as unknown as { text?: string }).text ?? "";
+    if (text.length === 0) return false;
+    const match = /^\/(.*)\/([a-z]*)$/iu.exec(text);
+    if (match === null) return true;
+    try {
+      new RegExp(match[1]!, match[2]!);
+      return false;
+    } catch {
+      return true;
+    }
   }
   checkGrammarImportClause(node: AstNode): boolean {
     // type-only import combined with namespace import + default is OK,
@@ -457,7 +479,12 @@ export class GrammarChecker {
   checkGrammarMethod(node: AstNode): boolean {
     // Method shorthand cannot have a body when declared in an interface
     // (TS1183), and async methods must not be generators in old targets.
-    void node; return false;
+    const body = (node as unknown as { body?: AstNode }).body;
+    const parent = (node as unknown as { parent?: AstNode }).parent;
+    if (body !== undefined && parent?.kind === Kind.InterfaceDeclaration) return true;
+    const flags = getModifierFlagsOf(node);
+    const asterisk = (node as unknown as { asteriskToken?: AstNode }).asteriskToken;
+    return (flags & ModifierFlagsAsync) !== 0 && asterisk !== undefined && scriptTargetOf(node) < ScriptTargetES2018;
   }
   checkGrammarMethodSignature(node: AstNode): boolean {
     // Interface method signatures cannot have a body.
@@ -586,9 +613,15 @@ export class GrammarChecker {
   checkGrammarTopLevelElementForRequiredDeclareModifier(node: AstNode): boolean {
     // Inside a declaration file (.d.ts), top-level value declarations
     // must have a 'declare' modifier.
-    void node; return false;
+    if (!isDeclarationFile(node)) return false;
+    if (!isTopLevel(node)) return false;
+    if (!isValueDeclarationKind(node.kind)) return false;
+    const flags = getModifierFlagsOf(node);
+    return (flags & (ModifierFlagsDeclare | ModifierFlagsExport)) === 0;
   }
-  checkGrammarTopLevelElementsForRequiredDeclareModifier(file: AstNode): boolean { void file; return false; }
+  checkGrammarTopLevelElementsForRequiredDeclareModifier(file: AstNode): boolean {
+    return sourceFileStatements(file).some((statement) => this.checkGrammarTopLevelElementForRequiredDeclareModifier(statement));
+  }
   checkGrammarConstructorTypeParameters(node: AstNode): boolean {
     // A constructor declaration cannot have type parameters (TS1092).
     return (node as unknown as { typeParameters?: AstNode }).typeParameters !== undefined;
@@ -764,4 +797,109 @@ export class GrammarChecker {
 
 export function newGrammarChecker(): GrammarChecker {
   return new GrammarChecker();
+}
+
+function parentOf(node: AstNode | undefined): AstNode | undefined {
+  return (node as unknown as { parent?: AstNode } | undefined)?.parent;
+}
+
+function sourceFileOf(node: AstNode | undefined): AstNode | undefined {
+  let current = node;
+  while (current !== undefined) {
+    if (current.kind === Kind.SourceFile || (current as unknown as { fileName?: string; path?: string }).fileName !== undefined) {
+      return current;
+    }
+    current = parentOf(current);
+  }
+  return undefined;
+}
+
+function isJsxSourceFile(node: AstNode): boolean {
+  const sourceFile = sourceFileOf(node);
+  const languageVariant = (sourceFile as unknown as { languageVariant?: string | number } | undefined)?.languageVariant;
+  const fileName = (sourceFile as unknown as { fileName?: string; path?: string } | undefined)?.fileName
+    ?? (sourceFile as unknown as { fileName?: string; path?: string } | undefined)?.path
+    ?? "";
+  return languageVariant === "jsx" || languageVariant === 1 || /\.tsx$/iu.test(fileName);
+}
+
+function containsOptionalChain(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  if ((node as unknown as { questionDotToken?: AstNode }).questionDotToken !== undefined) return true;
+  for (const child of childNodes(node)) {
+    if (containsOptionalChain(child)) return true;
+  }
+  return false;
+}
+
+function scriptTargetOf(node: AstNode): number {
+  return (sourceFileOf(node) as unknown as { scriptTarget?: number; languageVersion?: number } | undefined)?.scriptTarget
+    ?? (sourceFileOf(node) as unknown as { scriptTarget?: number; languageVersion?: number } | undefined)?.languageVersion
+    ?? ScriptTargetES2020;
+}
+
+function isStrictContext(node: AstNode): boolean {
+  let current: AstNode | undefined = node;
+  while (current !== undefined) {
+    if (((current as unknown as { flags?: number }).flags ?? 0) & (1 << 23)) return true;
+    const statements = sourceFileStatements(current);
+    if (statements.length > 0) {
+      const first = statements[0];
+      const text = (first as unknown as { expression?: { text?: string } }).expression?.text;
+      if (text === "use strict") return true;
+    }
+    current = parentOf(current);
+  }
+  return false;
+}
+
+function containsLegacyOctalEscape(text: string): boolean {
+  return /(^|[^\\])\\[0-7]/u.test(text);
+}
+
+function isDeclarationFile(node: AstNode): boolean {
+  const fileName = (sourceFileOf(node) as unknown as { fileName?: string; path?: string } | undefined)?.fileName
+    ?? (sourceFileOf(node) as unknown as { fileName?: string; path?: string } | undefined)?.path
+    ?? "";
+  return /\.d\.[cm]?ts$/iu.test(fileName);
+}
+
+function isTopLevel(node: AstNode): boolean {
+  return parentOf(node)?.kind === Kind.SourceFile;
+}
+
+function isValueDeclarationKind(kind: Kind): boolean {
+  return kind === Kind.VariableStatement
+    || kind === Kind.FunctionDeclaration
+    || kind === Kind.ClassDeclaration
+    || kind === Kind.EnumDeclaration
+    || kind === Kind.ModuleDeclaration;
+}
+
+function sourceFileStatements(file: AstNode): readonly AstNode[] {
+  const statements = (file as unknown as { statements?: readonly AstNode[] | { nodes?: readonly AstNode[] } }).statements;
+  if (statements === undefined) return [];
+  if (Array.isArray(statements)) return statements as readonly AstNode[];
+  return (statements as { nodes?: readonly AstNode[] }).nodes ?? [];
+}
+
+function childNodes(node: AstNode): readonly AstNode[] {
+  const out: AstNode[] = [];
+  for (const value of Object.values(node as object)) {
+    if (isNode(value)) out.push(value);
+    else if (Array.isArray(value)) {
+      for (const item of value) if (isNode(item)) out.push(item);
+    } else if (isNodeList(value)) {
+      out.push(...value.nodes.filter(isNode));
+    }
+  }
+  return out;
+}
+
+function isNode(value: unknown): value is AstNode {
+  return typeof value === "object" && value !== null && typeof (value as { kind?: unknown }).kind === "number";
+}
+
+function isNodeList(value: unknown): value is { nodes: readonly unknown[] } {
+  return typeof value === "object" && value !== null && Array.isArray((value as { nodes?: unknown }).nodes);
 }

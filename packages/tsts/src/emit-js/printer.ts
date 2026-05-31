@@ -80,6 +80,7 @@ import {
   type ForInitializer,
   type FunctionDeclaration,
   type HeritageClause,
+  type IfStatement,
   type ImportClause,
   type ImportDeclaration,
   type ImportSpecifier,
@@ -99,6 +100,10 @@ import {
   type VariableDeclarationList,
   type WhileStatement,
 } from "../ast/index.js";
+
+function kindDebugName(kind: Kind): string {
+  return String(kind);
+}
 
 const binaryOperatorText = new Map<Kind, string>([
   [Kind.AsteriskAsteriskToken, "**"],
@@ -254,7 +259,7 @@ function printStatement(statement: Statement, context: PrintContext, depth: numb
   if (isBlock(statement)) {
     return printBlock(statement.statements, context, depth);
   }
-  throw new Error(`Unsupported statement kind ${Kind[statement.kind]}`);
+  throw new Error(`Unsupported statement kind ${kindDebugName(statement.kind)}`);
 }
 
 function printImportDeclaration(importDeclaration: ImportDeclaration): string | undefined {
@@ -291,7 +296,7 @@ function printNamedImportBindings(namedBindings: NamedImportBindings): string | 
     const elements = namedBindings.elements.flatMap(specifier => specifier.isTypeOnly ? [] : [printImportSpecifier(specifier)]);
     return elements.length === 0 ? undefined : `{ ${elements.join(", ")} }`;
   }
-  throw new Error(`Unsupported named import bindings kind ${Kind[(namedBindings as Node).kind]}`);
+  throw new Error(`Unsupported named import bindings kind ${kindDebugName((namedBindings as Node).kind)}`);
 }
 
 function printImportSpecifier(specifier: ImportSpecifier): string {
@@ -316,7 +321,7 @@ function printNamedExportBindings(namedBindings: NamedExportBindings): string {
       return `${printModuleExportName(specifier.propertyName)} as ${printModuleExportName(specifier.name)}`;
     }).join(", ")} }`;
   }
-  throw new Error(`Unsupported named export bindings kind ${Kind[namedBindings.kind]}`);
+  throw new Error(`Unsupported named export bindings kind ${kindDebugName(namedBindings.kind)}`);
 }
 
 function printVariableStatement(modifiers: NodeArray<ModifierLike> | undefined, declarationList: VariableDeclarationList): string {
@@ -439,7 +444,7 @@ function printClassElement(member: ClassElement, context: PrintContext, depth: n
   if (member.kind === Kind.SemicolonClassElement) {
     return ";";
   }
-  throw new Error(`Unsupported class element kind ${Kind[member.kind]}`);
+  throw new Error(`Unsupported class element kind ${kindDebugName(member.kind)}`);
 }
 
 function printConstructorDeclaration(constructorDeclaration: ConstructorDeclaration, context: PrintContext, depth: number): string {
@@ -464,7 +469,7 @@ function printPropertyDeclaration(propertyDeclaration: PropertyDeclaration): str
   return `${prefix}${printPropertyName(propertyDeclaration.name)}${initializer};`;
 }
 
-function printIfStatement(ifStatement: Extract<Statement, { readonly kind: Kind.IfStatement }>, context: PrintContext, depth: number): string {
+function printIfStatement(ifStatement: IfStatement, context: PrintContext, depth: number): string {
   const thenStatement = printEmbeddedStatement(ifStatement.thenStatement, context, depth);
   const elseStatement = ifStatement.elseStatement === undefined ? "" : ` else ${printEmbeddedStatement(ifStatement.elseStatement, context, depth)}`;
   return `if (${printExpression(ifStatement.expression)}) ${thenStatement}${elseStatement}`;
@@ -561,7 +566,7 @@ function printDeclarationModifier(modifier: ModifierLike): string | undefined {
     case Kind.DeclareKeyword:
       return undefined;
     default:
-      throw new Error(`Unsupported modifier kind ${Kind[modifier.kind]}`);
+      throw new Error(`Unsupported modifier kind ${kindDebugName(modifier.kind)}`);
   }
 }
 
@@ -572,7 +577,7 @@ function printModuleExportName(name: ModuleExportName): string {
   if (isStringLiteral(name)) {
     return JSON.stringify(name.text);
   }
-  throw new Error(`Unsupported module export name kind ${Kind[(name as Node).kind]}`);
+  throw new Error(`Unsupported module export name kind ${kindDebugName((name as Node).kind)}`);
 }
 
 function printBindingName(name: Node): string {
@@ -588,7 +593,7 @@ function printBindingName(name: Node): string {
   if (isArrayBindingPattern(name)) {
     return `[${name.elements.map(printBindingElement).join(", ")}]`;
   }
-  throw new Error(`Unsupported binding name kind ${Kind[name.kind]}`);
+  throw new Error(`Unsupported binding name kind ${kindDebugName(name.kind)}`);
 }
 
 function printBindingElement(element: BindingElement): string {
@@ -615,7 +620,7 @@ function printPropertyName(name: Node): string {
   if (isComputedPropertyName(name)) {
     return `[${printExpression(name.expression)}]`;
   }
-  throw new Error(`Unsupported property name kind ${Kind[name.kind]}`);
+  throw new Error(`Unsupported property name kind ${kindDebugName(name.kind)}`);
 }
 
 function printExpression(expression: Expression): string {
@@ -723,7 +728,7 @@ function printExpression(expression: Expression): string {
   if (isBinaryExpression(expression)) {
     return `${printExpression(expression.left)} ${printBinaryOperator(expression.operatorToken)} ${printExpression(expression.right)}`;
   }
-  throw new Error(`Unsupported expression kind ${Kind[expression.kind]}`);
+  throw new Error(`Unsupported expression kind ${kindDebugName(expression.kind)}`);
 }
 
 function printArrowFunction(arrowFunction: ArrowFunction): string {
@@ -744,7 +749,7 @@ function printObjectLiteralElement(element: ObjectLiteralElementLike): string {
   if (isSpreadAssignment(element)) {
     return `...${printExpression(element.expression)}`;
   }
-  throw new Error(`Unsupported object literal element kind ${Kind[element.kind]}`);
+  throw new Error(`Unsupported object literal element kind ${kindDebugName(element.kind)}`);
 }
 
 function hasModifier(modifiers: NodeArray<ModifierLike> | undefined, kind: Kind): boolean {
@@ -754,7 +759,7 @@ function hasModifier(modifiers: NodeArray<ModifierLike> | undefined, kind: Kind)
 function printBinaryOperator(operatorToken: BinaryOperatorToken): string {
   const text = binaryOperatorText.get(operatorToken.kind);
   if (text === undefined) {
-    throw new Error(`Unsupported binary operator ${Kind[operatorToken.kind]}`);
+    throw new Error(`Unsupported binary operator ${kindDebugName(operatorToken.kind)}`);
   }
   return text;
 }
@@ -762,7 +767,7 @@ function printBinaryOperator(operatorToken: BinaryOperatorToken): string {
 function printPrefixUnaryOperator(operator: Kind): string {
   const text = prefixUnaryOperatorText.get(operator);
   if (text === undefined) {
-    throw new Error(`Unsupported prefix unary operator ${Kind[operator]}`);
+    throw new Error(`Unsupported prefix unary operator ${kindDebugName(operator)}`);
   }
   return text;
 }

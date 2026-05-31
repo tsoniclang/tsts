@@ -25,7 +25,7 @@ import {
 import { Kind, functionDeclarationBody, nodeBody } from "../../ast/index.js";
 import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
 
-// Strada helpers backed by Kind dispatch and small field reads:
+// TS-Go helpers backed by Kind dispatch and small field reads:
 function isAnyImportOrReExport(node: AstNode | undefined): boolean {
   if (node === undefined) return false;
   const k = (node as { kind?: number }).kind;

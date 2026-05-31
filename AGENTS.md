@@ -25,6 +25,13 @@ This repo is airplane-grade. Correctness and contract exactness matter more than
 - Do not target Go memory layout or pointer identity.
 - If the local schema or generated output drifts from the pinned TS-Go contract, fail hard.
 
+## Compiler State Mutation
+
+- TSTS allows controlled compiler-state mutation **only where TS-Go mutates the equivalent** AST `Node`, `Symbol`, `Type`, `FlowNode`, `Program`, or `EmitContext` state (e.g. `node.parent`, `node.symbol`, `node.locals`, `node.flowNode`, `node.nextContainer`, `symbol.declarations`, `symbol.members`).
+- The mutable fields must be declared **centrally** on the corresponding interfaces/types, not bolted on ad hoc.
+- Banned: arbitrary ad-hoc mutation, `as any` / `as unknown as` writes, and parallel **side-table substitutes** (e.g. `symbolByNodeId.set(getNodeId(node), symbol)`) — unless upstream TS-Go itself uses an equivalent separate table/link object for that exact state.
+- Rationale: the binder/checker/transformer/emitter port is 1:1 with TS-Go, which shares state through AST/Symbol/Flow/links. Side tables create a permanent translation layer that diverges from upstream and hides silent misses. (Decision: codex review-036, AST option A.)
+
 ## Truth Over Heuristics
 
 - Do not add heuristic resolution, guessing, name-based inference, or fallback binding in compiler code.

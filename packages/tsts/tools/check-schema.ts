@@ -1,5 +1,8 @@
+import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { sha256 } from "./common.js";
 import { normalizeKinds, normalizeNodes, readAstSchema } from "./schema.js";
@@ -34,37 +37,67 @@ async function assertChecksum(file: string, expected: string): Promise<void> {
   }
 }
 
+const UPSTREAM_FILES: Record<string, string> = {
+  "ast.json": "_scripts/ast.json",
+  "ast.schema.json": "_scripts/ast.schema.json",
+  "protocol.ts": "_packages/native-preview/src/api/node/protocol.ts",
+  "nodeflags.go": "internal/ast/nodeflags.go",
+  "symbolflags.go": "internal/ast/symbolflags.go",
+};
+
+function resolveUpstreamRepo(): string {
+  return process.env.TSGO_REPO ?? join(homedir(), "repos/microsoft/typescript-go");
+}
+
+function commitExists(upstream: string, commit: string): boolean {
+  const result = spawnSync("git", ["-C", upstream, "cat-file", "-e", `${commit}^{commit}`], { stdio: "ignore" });
+  return result.status === 0;
+}
+
+// Read a file's bytes as recorded at a specific commit (not the working tree),
+// so the comparison proves the recorded snapshot regardless of the checkout.
+function readBlobAtCommit(upstream: string, commit: string, relativePath: string): Buffer | undefined {
+  const result = spawnSync("git", ["-C", upstream, "show", `${commit}:${relativePath}`], { maxBuffer: 128 * 1024 * 1024 });
+  if (result.status !== 0) {
+    return undefined;
+  }
+  return result.stdout;
+}
+
+function sha256Buffer(bytes: Buffer): string {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
 async function compareUpstreamIfAvailable(version: VersionInfo): Promise<void> {
-  const upstream = process.env.TSGO_REPO ?? "/home/jester/repos/microsoft/typescript-go";
+  const upstream = resolveUpstreamRepo();
+  const commit = version.upstreamCommit;
+
   if (!existsSync(upstream)) {
-    console.log(`TS-Go upstream repo not found at ${upstream}; checksum-only schema validation completed.`);
+    console.log(`No TS-Go upstream repo at ${upstream} (set TSGO_REPO to override): checksum-only schema validation completed.`);
+    return;
+  }
+  if (!existsSync(join(upstream, ".git"))) {
+    console.log(`TS-Go upstream path ${upstream} is not a git repository: checksum-only schema validation completed.`);
+    return;
+  }
+  if (!commitExists(upstream, commit)) {
+    console.log(`TS-Go upstream repo found at ${upstream} but recorded commit ${commit} is absent locally: checksum-only validation, upstream comparison skipped.`);
     return;
   }
 
-  const upstreamFiles: Record<string, string> = {
-    "ast.json": "_scripts/ast.json",
-    "ast.schema.json": "_scripts/ast.schema.json",
-    "protocol.ts": "_packages/native-preview/src/api/node/protocol.ts",
-    "nodeflags.go": "internal/ast/nodeflags.go",
-    "symbolflags.go": "internal/ast/symbolflags.go",
-  };
-
-  for (const [localName, upstreamRelative] of Object.entries(upstreamFiles)) {
+  for (const [localName, upstreamRelative] of Object.entries(UPSTREAM_FILES)) {
     const localHash = await sha256(`schema/tsgo/${localName}`);
-    const upstreamPath = join(upstream, upstreamRelative);
-    if (!existsSync(upstreamPath)) {
-      throw new Error(`Expected upstream schema file does not exist: ${upstreamPath}`);
+    const blob = readBlobAtCommit(upstream, commit, upstreamRelative);
+    if (blob === undefined) {
+      throw new Error(`Upstream file ${upstreamRelative} does not exist at commit ${commit} in ${upstream}.`);
     }
-    const upstreamHash = await sha256(upstreamPath);
+    const upstreamHash = sha256Buffer(blob);
     if (localHash !== upstreamHash) {
-      throw new Error(`${localName} differs from ${upstreamPath}: local ${localHash}, upstream ${upstreamHash}`);
+      throw new Error(`${localName} differs from ${upstreamRelative}@${commit}: local ${localHash}, upstream ${upstreamHash}`);
     }
   }
 
-  const headPath = join(upstream, ".git", "HEAD");
-  if (existsSync(headPath)) {
-    console.log(`Validated local schema checksums against TS-Go repo at ${upstream}.`);
-  }
+  console.log(`Validated local schema checksums against TS-Go ${upstream} at commit ${commit}.`);
 }
 
 async function main(): Promise<void> {

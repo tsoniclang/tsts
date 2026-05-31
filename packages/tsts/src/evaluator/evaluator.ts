@@ -16,6 +16,7 @@
  */
 
 import { numberToString, fromString } from "../jsnum/string.js";
+import type { int } from "@tsonic/core/types.js";
 import type { Node as AstNode } from "../ast/index.js";
 import {
   nodeText, skipOuterExpressions,
@@ -27,22 +28,21 @@ import {
 } from "../ast/index.js";
 import { Kind } from "../ast/index.js";
 
+const outerExpressionKindParentheses: int = 1 << 0;
+
 function memberAccessExpression(node: AstNode): AstNode {
   return (node as unknown as { expression: AstNode }).expression;
 }
 function isEntityNameExpression(node: AstNode | undefined): boolean {
   if (node === undefined) return false;
-  const k = (node as { kind?: number }).kind;
+  const k = (node as { kind?: Kind }).kind;
   return k === Kind.Identifier || k === Kind.PropertyAccessExpression;
 }
 function templateExpressionHead(node: AstNode): AstNode {
   return (node as unknown as { head: AstNode }).head;
 }
 function templateExpressionSpans(node: AstNode): readonly AstNode[] {
-  const spans = (node as unknown as { templateSpans?: { nodes?: readonly AstNode[] } | readonly AstNode[] }).templateSpans;
-  if (spans === undefined) return [];
-  const inner = (spans as { nodes?: readonly AstNode[] }).nodes;
-  return inner ?? (spans as readonly AstNode[]);
+  return (node as unknown as { templateSpans?: readonly AstNode[] }).templateSpans ?? [];
 }
 function templateSpanExpression(span: AstNode): AstNode {
   return (span as unknown as { expression: AstNode }).expression;
@@ -79,9 +79,9 @@ export type Evaluator = (expr: AstNode, location: AstNode | undefined) => Evalua
  */
 export function newEvaluator(
   evaluateEntity: Evaluator,
-  outerExpressionsToSkip: number,
+  outerExpressionsToSkip: int,
 ): Evaluator {
-  const skip = outerExpressionsToSkip | OuterExpressionKinds.Parentheses;
+  const skip = outerExpressionsToSkip | outerExpressionKindParentheses;
 
   const evaluate: Evaluator = (initialExpr, location) => {
     let isSyntacticallyString = false;
@@ -221,5 +221,4 @@ export function isTruthy(v: EvaluatorResult["value"]): boolean {
 // Forward-declared cross-module AST surface
 // ---------------------------------------------------------------------------
 
-const OuterExpressionKinds = { Parentheses: 1 << 0 } as const;
-// Strada-specific accessors not yet wired to ast/index.js.
+// TS-Go-specific accessors not yet wired to ast/index.js.

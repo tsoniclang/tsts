@@ -1,3 +1,4 @@
+import type { int } from "@tsonic/core/types.js";
 import {
   ChildPropertiesByKind,
   DataEncodingByKind,
@@ -74,7 +75,7 @@ function isChildPresent(value: unknown): boolean {
 }
 
 function childMask(node: Node): number {
-  const properties = ChildPropertiesByKind[node.kind] ?? [];
+  const properties = ChildPropertiesByKind.get(node.kind) ?? [];
   const record = node as unknown as Record<string, unknown>;
   let mask = 0;
   for (let index = 0; index < properties.length; index += 1) {
@@ -87,7 +88,7 @@ function childMask(node: Node): number {
 }
 
 function nodeDataType(kind: Kind): number {
-  switch (DataEncodingByKind[kind]) {
+  switch (DataEncodingByKind.get(kind)) {
     case NodeDataEncoding.string:
       return NODE_DATA_TYPE_STRING;
     case NodeDataEncoding.extended:
@@ -96,6 +97,7 @@ function nodeDataType(kind: Kind): number {
     case undefined:
       return NODE_DATA_TYPE_CHILDREN;
   }
+  return NODE_DATA_TYPE_CHILDREN;
 }
 
 function recordStringNode(node: Node, strings: StringTable): number {
@@ -214,7 +216,7 @@ export function encodeNode(root: Node): Uint8Array {
   };
 
   const visitChildren = (node: Node): void => {
-    const properties = ChildPropertiesByKind[node.kind] ?? [];
+    const properties = ChildPropertiesByKind.get(node.kind) ?? [];
     const record = node as unknown as Record<string, unknown>;
     for (const property of properties) {
       const child = record[property];
@@ -247,11 +249,11 @@ export function encodeNode(root: Node): Uint8Array {
     nodeView.setUint32(index * 4, nodeValues[index]! >>> 0, true);
   }
 
-  const offsetStringTableOffsets = HEADER_SIZE;
-  const offsetStringTable = HEADER_SIZE + strings.offsetsCount() * 4;
-  const offsetExtendedData = offsetStringTable + strings.stringByteLength();
-  const offsetStructuredData = offsetExtendedData + extendedDataBytes.length;
-  const offsetNodes = offsetStructuredData;
+  const offsetStringTableOffsets: int = HEADER_SIZE;
+  const offsetStringTable: int = (HEADER_SIZE + strings.offsetsCount() * 4) | 0;
+  const offsetExtendedData: int = (offsetStringTable + strings.stringByteLength()) | 0;
+  const offsetStructuredData: int = (offsetExtendedData + extendedDataBytes.length) | 0;
+  const offsetNodes: int = offsetStructuredData;
 
   const header = new Uint8Array(HEADER_SIZE);
   const headerView = new DataView(header.buffer);

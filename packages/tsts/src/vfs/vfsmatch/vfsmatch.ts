@@ -70,18 +70,17 @@ export interface SpecMatcher {
  */
 export function newSpecMatcher(
   specs: readonly string[],
-  _currentDirectory: string,
-  _usage: Usage,
-  _caseSensitive: boolean,
+  currentDirectory: string,
+  usage: Usage,
+  caseSensitive: boolean,
 ): SpecMatcher | undefined {
   if (specs.length === 0) return undefined;
-  // TODO: port the full algorithm from MATCHING_ALGORITHM.md
-  // (component decomposition + segment compilation + recursive walk).
-  // For now we return a placeholder that never matches; this is the
-  // safe-by-default behavior — once the full matcher is in, the
-  // upstream MATCHING_ALGORITHM.md governs.
+  const globs = specs
+    .map((spec) => compileGlobForUsage(spec, currentDirectory, usage))
+    .filter((glob): glob is CompiledGlob => glob !== undefined);
+  if (globs.length === 0) return undefined;
   return {
-    matchString: (_s: string): boolean => false,
+    matchString: (s: string): boolean => globs.some((glob) => matchesGlob(s, glob, caseSensitive)),
   };
 }
 
@@ -160,9 +159,18 @@ export function getBasePaths(
 }
 
 function compileGlob(spec: string, basePath: string): CompiledGlob {
+  return compileGlobForUsage(spec, basePath, Usage.Files) ?? { basePath, components: [] };
+}
+
+function compileGlobForUsage(spec: string, basePath: string, usage: Usage): CompiledGlob | undefined {
   const absolute = isRootedDiskPath(spec) ? spec : normalizePath(combinePaths(basePath, spec));
   const components: GlobComponent[] = [];
-  for (const segment of absolute.split("/")) {
+  const parts = absolute.split("/").filter((segment) => segment.length > 0);
+  if (usage !== Usage.Exclude && parts[parts.length - 1] === "**") return undefined;
+  if (parts.length > 0 && isImplicitGlob(parts[parts.length - 1]!)) {
+    parts.push("**", "*");
+  }
+  for (const segment of parts) {
     if (segment === "") continue;
     components.push({ text: segment, isRecursive: segment === "**" });
   }
@@ -197,7 +205,7 @@ function matchesGlob(filePath: string, glob: CompiledGlob, caseSensitive: boolea
       // ** matches zero or more path segments.
       if (j === glob.components.length - 1) return true;
       const next = glob.components[j + 1]!;
-      while (i < segments.length && !matchSegment(segments[i]!, next)) i += 1;
+      while (i < segments.length && (shouldSkipRecursiveSegment(segments[i]!, c) || !matchSegment(segments[i]!, next))) i += 1;
       if (i >= segments.length) return false;
       j += 1;
       continue;
@@ -207,6 +215,10 @@ function matchesGlob(filePath: string, glob: CompiledGlob, caseSensitive: boolea
     j += 1;
   }
   return j >= glob.components.length;
+}
+
+function shouldSkipRecursiveSegment(segment: string, component: GlobComponent): boolean {
+  return component.isRecursive && (segment === "node_modules" || segment === "bower_components" || segment === "jspm_packages" || segment.startsWith("."));
 }
 
 function matchFiles(
@@ -219,15 +231,15 @@ function matchFiles(
   depth: number,
   host: FS,
 ): readonly string[] {
-  void path; void currentDirectory; void depth; // delegated to host.walkDir below
   const includeGlobs = includes.map((i) => compileGlob(i, currentDirectory));
   const excludeGlobs = excludes.map((e) => compileGlob(e, currentDirectory));
   const matchedFiles: string[] = [];
   const basePaths = getBasePaths(path, includes, useCaseSensitiveFileNames);
 
   for (const basePath of basePaths) {
-    host.walkDir(basePath, (filePath, isDir) => {
-      if (isDir) return undefined;
+    host.walkDir(basePath, (filePath, entry) => {
+      if (depth !== UnlimitedDepth && relativeDepth(basePath, filePath) > depth) return "skip-dir";
+      if (entry.isDirectory) return undefined;
       if (extensions.length > 0 && !extensions.some((ext) => filePath.endsWith(ext))) return undefined;
       if (excludeGlobs.some((g) => matchesGlob(filePath, g, useCaseSensitiveFileNames))) return undefined;
       if (includeGlobs.length === 0 || includeGlobs.some((g) => matchesGlob(filePath, g, useCaseSensitiveFileNames))) {
@@ -236,10 +248,31 @@ function matchFiles(
       return undefined;
     });
   }
-  return matchedFiles;
+  return matchedFiles.sort((a, b) => comparePathsByParts(a, b));
+}
+
+function relativeDepth(basePath: string, filePath: string): number {
+  const base = removeTrailingDirectorySeparator(normalizePath(basePath));
+  const path = normalizePath(filePath);
+  if (path === base) return 0;
+  const prefix = base.endsWith("/") ? base : base + "/";
+  if (!path.startsWith(prefix)) return 0;
+  return path.slice(prefix.length).split("/").filter((part) => part.length > 0).length;
+}
+
+function comparePathsByParts(a: string, b: string): number {
+  const aParts = a.split("/");
+  const bParts = b.split("/");
+  const count = Math.min(aParts.length, bParts.length);
+  for (let index = 0; index < count; index += 1) {
+    const aPart = aParts[index]!;
+    const bPart = bParts[index]!;
+    if (aPart < bPart) return -1;
+    if (aPart > bPart) return 1;
+  }
+  return aParts.length - bParts.length;
 }
 
 // ---------------------------------------------------------------------------
 // Forward-declared tspath surface
 // ---------------------------------------------------------------------------
-

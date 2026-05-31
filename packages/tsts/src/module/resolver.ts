@@ -219,7 +219,7 @@ function getModuleResolutionKind(opts: CompilerOptions): ModuleResolutionKind {
 }
 
 function getConditions(opts: CompilerOptions, resolutionMode: ResolutionMode | undefined): readonly string[] {
-  // Strada default conditions ordering:
+  // TS-Go default conditions ordering:
   //   ESM: ["types", "node", "import", "default"]
   //   CJS: ["types", "node", "require", "default"]
   // Plus `customConditions` from compiler options when provided.
@@ -360,7 +360,7 @@ export class Resolver {
 // ---------------------------------------------------------------------------
 
 function createResolvedModule(resolved: ResolvedInternal, host: ResolverHost): ResolvedModule {
-  // Symlink-realpath chasing happens here in Strada; until our realpath
+  // Symlink-realpath chasing happens here in TS-Go; until our realpath
   // wiring lands we surface the path as-is.
   const original = host.realpath?.(resolved.path);
   const finalPath = original ?? resolved.path;
@@ -563,7 +563,7 @@ function loadNodeModuleFromDirectory(
   considerPackageJson: boolean,
 ): ResolvedInternal | undefined {
   void considerPackageJson;
-  // Full Strada implementation reads package.json first (when
+  // Full TS-Go implementation reads package.json first (when
   // considerPackageJson is true) to look up `main`/`types`/`typings`
   // fields. Until our packagejson port lands, we fall back to the
   // index-file probe which handles the common case of `./dir` resolving

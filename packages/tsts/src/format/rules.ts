@@ -2,7 +2,7 @@
  * Format rule table.
  *
  * Port skeleton of TS-Go `internal/format/rules.go` (450 LoC). The
- * Strada source enumerates ~250 rule entries that the formatter
+ * TS-Go source enumerates ~250 rule entries that the formatter
  * consults for every (left-token, right-token) pair. Each rule binds
  * a token-range trigger, a context-predicate list, and a rule action
  * (space, newline, delete, indent, etc.).

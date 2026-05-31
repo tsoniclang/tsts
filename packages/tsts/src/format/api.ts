@@ -27,7 +27,7 @@ function sourceFileLanguageVariant(file: SourceFile): number {
   return (file as unknown as { languageVariant?: number }).languageVariant ?? 0;
 }
 function sourceFileDiagnostics(file: SourceFile): readonly unknown[] {
-  return (file as unknown as { parseDiagnostics?: readonly unknown[] }).parseDiagnostics ?? [];
+  return file.parseDiagnostics;
 }
 // ECMA line tables — derived lazily from sourceFileText.
 function getECMALineStarts(file: SourceFile): readonly number[] {

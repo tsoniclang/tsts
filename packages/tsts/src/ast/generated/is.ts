@@ -805,128 +805,128 @@ export function isJSDocParameterOrPropertyTag(node: Node): node is Ast.JSDocPara
   return node.kind === Kind.JSDocParameterTag || node.kind === Kind.JSDocPropertyTag;
 }
 
-export function isEndOfFile(_node: Node): _node is Ast.EndOfFile {
-  return false;
+export function isEndOfFile(node: Node): node is Ast.EndOfFile {
+  return node.kind === Kind.EndOfFile;
 }
 
-export function isDotToken(_node: Node): _node is Ast.DotToken {
-  return false;
+export function isDotToken(node: Node): node is Ast.DotToken {
+  return node.kind === Kind.DotToken;
 }
 
-export function isDotDotDotToken(_node: Node): _node is Ast.DotDotDotToken {
-  return false;
+export function isDotDotDotToken(node: Node): node is Ast.DotDotDotToken {
+  return node.kind === Kind.DotDotDotToken;
 }
 
-export function isQuestionToken(_node: Node): _node is Ast.QuestionToken {
-  return false;
+export function isQuestionToken(node: Node): node is Ast.QuestionToken {
+  return node.kind === Kind.QuestionToken;
 }
 
-export function isExclamationToken(_node: Node): _node is Ast.ExclamationToken {
-  return false;
+export function isExclamationToken(node: Node): node is Ast.ExclamationToken {
+  return node.kind === Kind.ExclamationToken;
 }
 
-export function isColonToken(_node: Node): _node is Ast.ColonToken {
-  return false;
+export function isColonToken(node: Node): node is Ast.ColonToken {
+  return node.kind === Kind.ColonToken;
 }
 
-export function isEqualsToken(_node: Node): _node is Ast.EqualsToken {
-  return false;
+export function isEqualsToken(node: Node): node is Ast.EqualsToken {
+  return node.kind === Kind.EqualsToken;
 }
 
-export function isAsteriskToken(_node: Node): _node is Ast.AsteriskToken {
-  return false;
+export function isAsteriskToken(node: Node): node is Ast.AsteriskToken {
+  return node.kind === Kind.AsteriskToken;
 }
 
-export function isEqualsGreaterThanToken(_node: Node): _node is Ast.EqualsGreaterThanToken {
-  return false;
+export function isEqualsGreaterThanToken(node: Node): node is Ast.EqualsGreaterThanToken {
+  return node.kind === Kind.EqualsGreaterThanToken;
 }
 
-export function isPlusToken(_node: Node): _node is Ast.PlusToken {
-  return false;
+export function isPlusToken(node: Node): node is Ast.PlusToken {
+  return node.kind === Kind.PlusToken;
 }
 
-export function isMinusToken(_node: Node): _node is Ast.MinusToken {
-  return false;
+export function isMinusToken(node: Node): node is Ast.MinusToken {
+  return node.kind === Kind.MinusToken;
 }
 
-export function isQuestionDotToken(_node: Node): _node is Ast.QuestionDotToken {
-  return false;
+export function isQuestionDotToken(node: Node): node is Ast.QuestionDotToken {
+  return node.kind === Kind.QuestionDotToken;
 }
 
-export function isAssertsKeyword(_node: Node): _node is Ast.AssertsKeyword {
-  return false;
+export function isAssertsKeyword(node: Node): node is Ast.AssertsKeyword {
+  return node.kind === Kind.AssertsKeyword;
 }
 
-export function isAssertKeyword(_node: Node): _node is Ast.AssertKeyword {
-  return false;
+export function isAssertKeyword(node: Node): node is Ast.AssertKeyword {
+  return node.kind === Kind.AssertKeyword;
 }
 
-export function isAwaitKeyword(_node: Node): _node is Ast.AwaitKeyword {
-  return false;
+export function isAwaitKeyword(node: Node): node is Ast.AwaitKeyword {
+  return node.kind === Kind.AwaitKeyword;
 }
 
-export function isCaseKeyword(_node: Node): _node is Ast.CaseKeyword {
-  return false;
+export function isCaseKeyword(node: Node): node is Ast.CaseKeyword {
+  return node.kind === Kind.CaseKeyword;
 }
 
-export function isAbstractKeyword(_node: Node): _node is Ast.AbstractKeyword {
-  return false;
+export function isAbstractKeyword(node: Node): node is Ast.AbstractKeyword {
+  return node.kind === Kind.AbstractKeyword;
 }
 
-export function isAccessorKeyword(_node: Node): _node is Ast.AccessorKeyword {
-  return false;
+export function isAccessorKeyword(node: Node): node is Ast.AccessorKeyword {
+  return node.kind === Kind.AccessorKeyword;
 }
 
-export function isAsyncKeyword(_node: Node): _node is Ast.AsyncKeyword {
-  return false;
+export function isAsyncKeyword(node: Node): node is Ast.AsyncKeyword {
+  return node.kind === Kind.AsyncKeyword;
 }
 
-export function isConstKeyword(_node: Node): _node is Ast.ConstKeyword {
-  return false;
+export function isConstKeyword(node: Node): node is Ast.ConstKeyword {
+  return node.kind === Kind.ConstKeyword;
 }
 
-export function isDeclareKeyword(_node: Node): _node is Ast.DeclareKeyword {
-  return false;
+export function isDeclareKeyword(node: Node): node is Ast.DeclareKeyword {
+  return node.kind === Kind.DeclareKeyword;
 }
 
-export function isDefaultKeyword(_node: Node): _node is Ast.DefaultKeyword {
-  return false;
+export function isDefaultKeyword(node: Node): node is Ast.DefaultKeyword {
+  return node.kind === Kind.DefaultKeyword;
 }
 
-export function isExportKeyword(_node: Node): _node is Ast.ExportKeyword {
-  return false;
+export function isExportKeyword(node: Node): node is Ast.ExportKeyword {
+  return node.kind === Kind.ExportKeyword;
 }
 
-export function isInKeyword(_node: Node): _node is Ast.InKeyword {
-  return false;
+export function isInKeyword(node: Node): node is Ast.InKeyword {
+  return node.kind === Kind.InKeyword;
 }
 
-export function isPrivateKeyword(_node: Node): _node is Ast.PrivateKeyword {
-  return false;
+export function isPrivateKeyword(node: Node): node is Ast.PrivateKeyword {
+  return node.kind === Kind.PrivateKeyword;
 }
 
-export function isProtectedKeyword(_node: Node): _node is Ast.ProtectedKeyword {
-  return false;
+export function isProtectedKeyword(node: Node): node is Ast.ProtectedKeyword {
+  return node.kind === Kind.ProtectedKeyword;
 }
 
-export function isPublicKeyword(_node: Node): _node is Ast.PublicKeyword {
-  return false;
+export function isPublicKeyword(node: Node): node is Ast.PublicKeyword {
+  return node.kind === Kind.PublicKeyword;
 }
 
-export function isReadonlyKeyword(_node: Node): _node is Ast.ReadonlyKeyword {
-  return false;
+export function isReadonlyKeyword(node: Node): node is Ast.ReadonlyKeyword {
+  return node.kind === Kind.ReadonlyKeyword;
 }
 
-export function isOutKeyword(_node: Node): _node is Ast.OutKeyword {
-  return false;
+export function isOutKeyword(node: Node): node is Ast.OutKeyword {
+  return node.kind === Kind.OutKeyword;
 }
 
-export function isOverrideKeyword(_node: Node): _node is Ast.OverrideKeyword {
-  return false;
+export function isOverrideKeyword(node: Node): node is Ast.OverrideKeyword {
+  return node.kind === Kind.OverrideKeyword;
 }
 
-export function isStaticKeyword(_node: Node): _node is Ast.StaticKeyword {
-  return false;
+export function isStaticKeyword(node: Node): node is Ast.StaticKeyword {
+  return node.kind === Kind.StaticKeyword;
 }
 
 export function isBinaryOperatorToken(node: Node): node is Ast.BinaryOperatorToken {
@@ -937,28 +937,28 @@ export function isAssignmentOperatorToken(node: Node): node is Ast.AssignmentOpe
   return node.kind === Kind.EqualsToken || node.kind === Kind.PlusEqualsToken || node.kind === Kind.MinusEqualsToken || node.kind === Kind.AsteriskAsteriskEqualsToken || node.kind === Kind.AsteriskEqualsToken || node.kind === Kind.SlashEqualsToken || node.kind === Kind.PercentEqualsToken || node.kind === Kind.AmpersandEqualsToken || node.kind === Kind.BarEqualsToken || node.kind === Kind.CaretEqualsToken || node.kind === Kind.LessThanLessThanEqualsToken || node.kind === Kind.GreaterThanGreaterThanGreaterThanEqualsToken || node.kind === Kind.GreaterThanGreaterThanEqualsToken || node.kind === Kind.BarBarEqualsToken || node.kind === Kind.AmpersandAmpersandEqualsToken || node.kind === Kind.QuestionQuestionEqualsToken;
 }
 
-export function isNullLiteral(_node: Node): _node is Ast.NullLiteral {
-  return false;
+export function isNullLiteral(node: Node): node is Ast.NullLiteral {
+  return node.kind === Kind.NullKeyword;
 }
 
-export function isTrueLiteral(_node: Node): _node is Ast.TrueLiteral {
-  return false;
+export function isTrueLiteral(node: Node): node is Ast.TrueLiteral {
+  return node.kind === Kind.TrueKeyword;
 }
 
-export function isFalseLiteral(_node: Node): _node is Ast.FalseLiteral {
-  return false;
+export function isFalseLiteral(node: Node): node is Ast.FalseLiteral {
+  return node.kind === Kind.FalseKeyword;
 }
 
-export function isThisExpression(_node: Node): _node is Ast.ThisExpression {
-  return false;
+export function isThisExpression(node: Node): node is Ast.ThisExpression {
+  return node.kind === Kind.ThisKeyword;
 }
 
-export function isSuperExpression(_node: Node): _node is Ast.SuperExpression {
-  return false;
+export function isSuperExpression(node: Node): node is Ast.SuperExpression {
+  return node.kind === Kind.SuperKeyword;
 }
 
-export function isImportExpression(_node: Node): _node is Ast.ImportExpression {
-  return false;
+export function isImportExpression(node: Node): node is Ast.ImportExpression {
+  return node.kind === Kind.ImportKeyword;
 }
 
 export function isExpression(node: Node): node is Ast.Expression {
@@ -1034,7 +1034,7 @@ export function isBindingName(node: Node): node is Ast.BindingName {
 }
 
 export function isModifierLike(node: Node): node is Ast.ModifierLike {
-  return node.kind === Kind.Decorator;
+  return node.kind === Kind.AbstractKeyword || node.kind === Kind.AccessorKeyword || node.kind === Kind.AsyncKeyword || node.kind === Kind.ConstKeyword || node.kind === Kind.DeclareKeyword || node.kind === Kind.DefaultKeyword || node.kind === Kind.ExportKeyword || node.kind === Kind.InKeyword || node.kind === Kind.PrivateKeyword || node.kind === Kind.ProtectedKeyword || node.kind === Kind.PublicKeyword || node.kind === Kind.ReadonlyKeyword || node.kind === Kind.OutKeyword || node.kind === Kind.OverrideKeyword || node.kind === Kind.StaticKeyword || node.kind === Kind.Decorator;
 }
 
 export function isJsxChild(node: Node): node is Ast.JsxChild {
@@ -1193,8 +1193,8 @@ export function isAssertionExpression(node: Node): node is Ast.AssertionExpressi
   return node.kind === Kind.TypeAssertionExpression || node.kind === Kind.AsExpression;
 }
 
-export function isBooleanLiteral(_node: Node): _node is Ast.BooleanLiteral {
-  return false;
+export function isBooleanLiteral(node: Node): node is Ast.BooleanLiteral {
+  return node.kind === Kind.TrueKeyword || node.kind === Kind.FalseKeyword;
 }
 
 export function isConciseBody(node: Node): node is Ast.ConciseBody {
@@ -1209,8 +1209,8 @@ export function isLiteralToken(node: Node): node is Ast.LiteralToken {
   return node.kind === Kind.NumericLiteral || node.kind === Kind.BigIntLiteral || node.kind === Kind.StringLiteral || node.kind === Kind.JsxText || node.kind === Kind.RegularExpressionLiteral || node.kind === Kind.NoSubstitutionTemplateLiteral;
 }
 
-export function isModifier(_node: Node): _node is Ast.Modifier {
-  return false;
+export function isModifier(node: Node): node is Ast.Modifier {
+  return node.kind === Kind.AbstractKeyword || node.kind === Kind.AccessorKeyword || node.kind === Kind.AsyncKeyword || node.kind === Kind.ConstKeyword || node.kind === Kind.DeclareKeyword || node.kind === Kind.DefaultKeyword || node.kind === Kind.ExportKeyword || node.kind === Kind.InKeyword || node.kind === Kind.PrivateKeyword || node.kind === Kind.ProtectedKeyword || node.kind === Kind.PublicKeyword || node.kind === Kind.ReadonlyKeyword || node.kind === Kind.OutKeyword || node.kind === Kind.OverrideKeyword || node.kind === Kind.StaticKeyword;
 }
 
 export function isObjectLiteralElementLike(node: Node): node is Ast.ObjectLiteralElementLike {

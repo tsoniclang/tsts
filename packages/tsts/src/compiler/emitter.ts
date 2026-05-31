@@ -10,6 +10,20 @@
 
 import type { SourceFile, Diagnostic } from "../ast/index.js";
 import { printFile } from "../printer/printer.js";
+import {
+  getDeclarationEmitOutputFilePath,
+  getOutputJSFileNameWorker,
+  getSourceMapFilePath,
+  getSourceFilePathInNewDirWorker,
+  type CompilerOptionsSubset,
+} from "../outputpaths/index.js";
+import {
+  extensionJson,
+  fileExtensionIs,
+  getDirectoryPath,
+  normalizePath,
+} from "../tspath/index.js";
+import { Tristate, tristateIsTrue } from "../core/tristate.js";
 
 export type EmitOnly = 0 | 1 | 2 | 3;
 export const EmitOnly = {
@@ -110,10 +124,29 @@ export class Emitter {
     return undefined;
   }
 
-  private jsFilePathFor(file: SourceFile): string { void file; return ""; }
-  private sourceMapPathFor(file: SourceFile): string { void file; return ""; }
-  private dtsPathFor(file: SourceFile): string { void file; return ""; }
-  private dtsMapPathFor(file: SourceFile): string { void file; return ""; }
+  private jsFilePathFor(file: SourceFile): string {
+    const options = this.opts.host.getCompilerOptions();
+    if (tristateIsTrue(options.emitDeclarationOnly ?? Tristate.False)) return "";
+    return getOutputJSFileNameWorker(file.fileName, options, this.opts.host);
+  }
+
+  private sourceMapPathFor(file: SourceFile): string {
+    const jsFilePath = this.jsFilePathFor(file);
+    if (jsFilePath === "") return "";
+    return getSourceMapFilePath(jsFilePath, this.opts.host.getCompilerOptions());
+  }
+
+  private dtsPathFor(file: SourceFile): string {
+    const options = this.opts.host.getCompilerOptions();
+    if (!declarationsEnabled(options) && this.opts.emitOnly !== EmitOnly.BuilderSignature) return "";
+    return getDeclarationEmitOutputFilePath(file.fileName, options, this.opts.host);
+  }
+
+  private dtsMapPathFor(file: SourceFile): string {
+    const dtsFilePath = this.dtsPathFor(file);
+    if (dtsFilePath === "" || !shouldEmitDeclarationSourceMaps(this.opts.host.getCompilerOptions(), file)) return "";
+    return dtsFilePath + ".map";
+  }
 }
 
 export function getModuleTransformer(opts: TransformOptions): unknown {
@@ -129,18 +162,18 @@ export function getScriptTransformers(
 }
 
 export function shouldEmitSourceMaps(mapOptions: CompilerOptions, sourceFile: SourceFile): boolean {
-  void mapOptions; void sourceFile;
-  return false;
+  return (tristateIsTrue(mapOptions.sourceMap ?? Tristate.False) || tristateIsTrue(mapOptions.inlineSourceMap ?? Tristate.False))
+    && !fileExtensionIs(sourceFile.fileName, extensionJson);
 }
 
 export function shouldEmitDeclarationSourceMaps(mapOptions: CompilerOptions, sourceFile: SourceFile): boolean {
-  void mapOptions; void sourceFile;
-  return false;
+  return tristateIsTrue(mapOptions.declarationMap ?? Tristate.False) && !fileExtensionIs(sourceFile.fileName, extensionJson);
 }
 
 export function getSourceRoot(mapOptions: CompilerOptions): string {
-  void mapOptions;
-  return "";
+  const sourceRoot = normalizePath(mapOptions.sourceRoot ?? "");
+  if (sourceRoot === "") return "";
+  return sourceRoot.endsWith("/") ? sourceRoot : sourceRoot + "/";
 }
 
 export interface SourceFileMayBeEmittedHost {
@@ -148,12 +181,34 @@ export interface SourceFileMayBeEmittedHost {
   getSourceFiles(): readonly SourceFile[];
   getCanonicalFileName(fileName: string): string;
   isSourceOfProjectReferenceRedirect(fileName: string): boolean;
+  getCurrentDirectory(): string;
+  commonSourceDirectory(): string;
+  useCaseSensitiveFileNames(): boolean;
+  isSourceFileFromExternalLibrary?(file: SourceFile): boolean;
+  getProjectReferenceFromSource?(path: string): unknown;
 }
 
 export function sourceFileMayBeEmitted(
   sourceFile: SourceFile, host: SourceFileMayBeEmittedHost, forceDtsEmit: boolean,
 ): boolean {
-  void sourceFile; void host; void forceDtsEmit;
+  const options = host.getCompilerOptions();
+  if (tristateIsTrue(options.noEmitForJsFiles ?? Tristate.False) && isSourceFileJS(sourceFile)) return false;
+  if (sourceFile.isDeclarationFile) return false;
+  if (host.isSourceFileFromExternalLibrary?.(sourceFile) === true) return false;
+  if (forceDtsEmit) return true;
+  if (host.getProjectReferenceFromSource?.(sourceFile.path) !== undefined) return false;
+  if (isSourceFileNotJson(sourceFile)) return true;
+  if (options.outDir === undefined || options.outDir === "") return false;
+  if ((options.rootDir !== undefined && options.rootDir !== "") || (options.configFilePath !== undefined && options.configFilePath !== "")) {
+    const outputPath = getSourceFilePathInNewDirWorker(
+      sourceFile.fileName,
+      options.outDir,
+      host.getCurrentDirectory(),
+      host.commonSourceDirectory(),
+      host.useCaseSensitiveFileNames(),
+    );
+    if (host.getCanonicalFileName(sourceFile.fileName) === host.getCanonicalFileName(outputPath)) return false;
+  }
   return true;
 }
 
@@ -167,8 +222,7 @@ export function getSourceFilesToEmit(
 }
 
 export function isSourceFileNotJson(file: SourceFile): boolean {
-  void file;
-  return true;
+  return !fileExtensionIs(file.fileName, extensionJson);
 }
 
 export function getDeclarationDiagnostics(host: EmitHost, file: SourceFile): readonly Diagnostic[] {
@@ -181,7 +235,28 @@ export function getDeclarationDiagnostics(host: EmitHost, file: SourceFile): rea
 // ---------------------------------------------------------------------------
 
 interface EmitContext { readonly _ec?: unknown }
-interface EmitHost { readonly _h?: unknown; getCompilerOptions(): CompilerOptions; getSourceFiles(): readonly SourceFile[]; getCanonicalFileName(fileName: string): string; isSourceOfProjectReferenceRedirect(fileName: string): boolean }
-interface CompilerOptions { readonly _opts?: unknown }
+interface EmitHost extends SourceFileMayBeEmittedHost {
+  readonly _h?: unknown;
+  writeFile?(fileName: string, text: string): void;
+}
+interface CompilerOptions extends CompilerOptionsSubset {
+  readonly configFilePath?: string;
+  readonly declarationMap?: Tristate;
+  readonly emitDeclarationOnly?: Tristate;
+  readonly inlineSourceMap?: Tristate;
+  readonly noEmitForJsFiles?: Tristate;
+  readonly sourceMap?: Tristate;
+  readonly sourceRoot?: string;
+}
 interface TransformOptions { readonly _tx?: unknown }
 interface Printer { readonly _p?: unknown }
+
+function declarationsEnabled(options: CompilerOptions): boolean {
+  return tristateIsTrue(options.declaration ?? Tristate.False)
+    || tristateIsTrue(options.emitDeclaration ?? Tristate.False)
+    || options.getEmitDeclarations?.() === true;
+}
+
+function isSourceFileJS(file: SourceFile): boolean {
+  return file.fileName.endsWith(".js") || file.fileName.endsWith(".jsx") || file.fileName.endsWith(".mjs") || file.fileName.endsWith(".cjs");
+}

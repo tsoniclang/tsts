@@ -11,22 +11,44 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
-import type { Type, Signature, VarianceFlags } from "./types.js";
-import { TypeFlags } from "./types.js";
+import { SymbolFlags } from "../ast/index.js";
+import type { Type, Signature, UnionOrIntersectionType, LiteralType, ObjectType, IndexInfo, InterfaceType, TypeParameter, TypeReference, IndexedAccessType } from "./types.js";
+import { TypeFlags, SignatureKind, ObjectFlags, VarianceFlags, getTypeOfSymbol } from "./types.js";
 
-// Composite TypeFlags masks (mirror TS-Go's `TypeFlags*Like`; not
-// pre-defined in types.ts, so derived here from the base bits).
-const StringLikeFlags = TypeFlags.String | TypeFlags.StringLiteral;
-const NumberLikeFlags = TypeFlags.Number | TypeFlags.NumberLiteral;
-const BigIntLikeFlags = TypeFlags.BigInt | TypeFlags.BigIntLiteral;
-const BooleanLikeFlags = TypeFlags.Boolean | TypeFlags.BooleanLiteral;
-const ESSymbolLikeFlags = TypeFlags.ESSymbol | TypeFlags.UniqueESSymbol;
-const UnionOrIntersectionFlags = TypeFlags.Union | TypeFlags.Intersection;
+// Composite TypeFlags masks (now defined 1:1 in types.ts); aliased locally
+// to keep the ported relation logic readable.
+const StringLikeFlags = TypeFlags.StringLike;
+const NumberLikeFlags = TypeFlags.NumberLike;
+const BigIntLikeFlags = TypeFlags.BigIntLike;
+const BooleanLikeFlags = TypeFlags.BooleanLike;
+const ESSymbolLikeFlags = TypeFlags.ESSymbolLike;
+const UnionOrIntersectionFlags = TypeFlags.UnionOrIntersection;
+// Mask of types that may simplify to other forms — matches TS-Go's
+// isTypeRelatedTo identity branch exactly (NOT TypeFlags.Simplifiable).
 const SimplifiableFlags =
   UnionOrIntersectionFlags | TypeFlags.IndexedAccess | TypeFlags.Conditional | TypeFlags.Substitution;
+const ModifierFlagsIn = 1 << 18;
+const ModifierFlagsOut = 1 << 19;
 
 function literalValueOf(t: Type): unknown {
-  return (t as unknown as { value?: unknown }).value;
+  return (t.data as LiteralType | undefined)?.value;
+}
+
+// Constituents of a union or intersection type, stored on `Type.data`
+// (mirrors TS-Go's `t.AsUnionOrIntersectionType().Types()`).
+function constituentTypes(t: Type): readonly Type[] | undefined {
+  return (t.data as UnionOrIntersectionType | undefined)?.types;
+}
+
+// Call/construct signatures of an object type, stored on `Type.data`
+// (mirrors TS-Go's `t.AsObjectType()` signature lists).
+function signaturesOf(t: Type, kind: SignatureKind): readonly Signature[] | undefined {
+  const data = t.data as ObjectType | undefined;
+  return kind === SignatureKind.Call ? data?.declaredCallSignatures : data?.declaredConstructSignatures;
+}
+
+function indexInfosOf(t: Type): readonly IndexInfo[] | undefined {
+  return (t.data as ObjectType | undefined)?.indexInfos;
 }
 
 function getRelationKey(source: Type, target: Type, isIdentity: boolean): string {
@@ -40,13 +62,20 @@ function getRelationKey(source: Type, target: Type, isIdentity: boolean): string
 // ---------------------------------------------------------------------------
 
 export type RelationKind = 0 | 1 | 2 | 3 | 4;
-export const RelationKind = {
+interface RelationKindTable {
+  readonly Identity: RelationKind;
+  readonly Subtype: RelationKind;
+  readonly StrictSubtype: RelationKind;
+  readonly Assignable: RelationKind;
+  readonly Comparable: RelationKind;
+}
+export const RelationKind: RelationKindTable = {
   Identity: 0 as RelationKind,
   Subtype: 1 as RelationKind,
   StrictSubtype: 2 as RelationKind,
   Assignable: 3 as RelationKind,
   Comparable: 4 as RelationKind,
-} as const;
+};
 
 export interface Relation {
   kind: RelationKind;
@@ -54,29 +83,54 @@ export interface Relation {
   errorCache?: Map<string, readonly unknown[]>;
 }
 
-export type RelationComparisonResult = 0 | 1 | 2 | 3;
-export const RelationComparisonResult = {
+export type RelationComparisonResult = number;
+interface RelationComparisonResultTable {
+  readonly None: RelationComparisonResult;
+  readonly Succeeded: RelationComparisonResult;
+  readonly Failed: RelationComparisonResult;
+  readonly ReportsUnmeasurable: RelationComparisonResult;
+  readonly ReportsUnreliable: RelationComparisonResult;
+  readonly ReportsMask: RelationComparisonResult;
+}
+// 1:1 with TS-Go relater.go RelationComparisonResult.
+export const RelationComparisonResult: RelationComparisonResultTable = {
   None: 0 as RelationComparisonResult,
-  Succeeded: 1 as RelationComparisonResult,
-  Failed: 2 as RelationComparisonResult,
-  Reported: 3 as RelationComparisonResult,
-} as const;
+  Succeeded: (1 << 0) as RelationComparisonResult,
+  Failed: (1 << 1) as RelationComparisonResult,
+  ReportsUnmeasurable: (1 << 3) as RelationComparisonResult,
+  ReportsUnreliable: (1 << 4) as RelationComparisonResult,
+  ReportsMask: 24 as RelationComparisonResult, // ReportsUnmeasurable|ReportsUnreliable
+};
 
 export type RecursionFlags = number;
-export const RecursionFlags = {
+interface RecursionFlagsTable {
+  readonly None: RecursionFlags;
+  readonly Source: RecursionFlags;
+  readonly Target: RecursionFlags;
+  readonly Both: RecursionFlags;
+}
+export const RecursionFlags: RecursionFlagsTable = {
   None: 0 as RecursionFlags,
   Source: (1 << 0) as RecursionFlags,
   Target: (1 << 1) as RecursionFlags,
   Both: 3 as RecursionFlags,
-} as const;
+};
 
-export type Ternary = -1 | 0 | 1 | 2;
-export const Ternary = {
+export type Ternary = -1 | 0 | 1 | 3;
+interface TernaryTable {
+  readonly False: Ternary;
+  readonly Unknown: Ternary;
+  readonly Maybe: Ternary;
+  readonly True: Ternary;
+}
+// 1:1 with TS-Go: True=-1, False=0, Unknown=1, Maybe=3. The values are
+// chosen so bitwise-AND of results composes correctly (Maybe MUST be 3).
+export const Ternary: TernaryTable = {
   False: 0 as Ternary,
   Unknown: 1 as Ternary,
-  Maybe: 2 as Ternary,
+  Maybe: 3 as Ternary,
   True: -1 as Ternary,
-} as const;
+};
 
 // ---------------------------------------------------------------------------
 // Relater
@@ -94,11 +148,23 @@ export class Relater {
   // assignable. Modern default is on; the checker can flip it.
   strictNullChecks = true;
 
+  // The deepest failing object property of the most recent assignability check,
+  // recorded by propertyRelatedTo. The checker (which owns displayType) reads it
+  // to elaborate "Types of property 'X' are incompatible." It carries Types, not
+  // strings, so the relater stays free of the checker's display layer.
+  failingProperty: { readonly name: string; readonly source: Type; readonly target: Type } | undefined = undefined;
+
+  // Excess property of a fresh object literal relative to its target, recorded
+  // for the checker to format the "may only specify known properties" message.
+  excessProperty: { readonly name: string; readonly target: Type } | undefined = undefined;
+
   // -------------------------------------------------------------------------
   // Public entry points
   // -------------------------------------------------------------------------
 
   isTypeAssignableTo(source: Type, target: Type): boolean {
+    this.failingProperty = undefined;
+    this.excessProperty = undefined;
     return this.isTypeRelatedTo(source, target, this.assignableRelation);
   }
   isTypeSubtypeOf(source: Type, target: Type): boolean {
@@ -139,8 +205,9 @@ export class Relater {
       // Excluding types that may simplify, identical types must have
       // identical flags.
       if (sf !== tf) return false;
-      // Intrinsic singletons with equal flags are identical.
-      if ((sf & TypeFlags.Primitive) !== 0) return true;
+      // Singleton intrinsics with equal flags are identical (literals are
+      // NOT singletons — two literals with equal flags may differ by value).
+      if ((sf & TypeFlags.Singleton) !== 0) return true;
     }
     if ((sf & TypeFlags.Object) !== 0 && (tf & TypeFlags.Object) !== 0) {
       const id = getRelationKey(source, target, relation.kind === RelationKind.Identity);
@@ -196,14 +263,29 @@ export class Relater {
     void recursionFlags; void relation;
     const sf = (source as { flags?: number }).flags ?? 0;
     const tf = (target as { flags?: number }).flags ?? 0;
+    // Dispatch order mirrors TS-Go relater.go exactly: source union, then
+    // target union, then target intersection, then source intersection. The
+    // source-union-first rule makes union-source-to-union-target relate each
+    // source constituent to the whole target union; keeping source-intersection
+    // LAST preserves "does the whole source relate to some target constituent"
+    // for the `(A & B) -> (C | D)` shape.
+    // Source union: every constituent must relate to the target.
+    if ((sf & TypeFlags.Union) !== 0) return this.eachTypeRelatedToType(source, target, reportErrors);
     // Target union: source must relate to at least one constituent.
     if ((tf & TypeFlags.Union) !== 0) return this.typeRelatedToSomeType(source, target, reportErrors);
     // Target intersection: source must relate to every constituent.
     if ((tf & TypeFlags.Intersection) !== 0) return this.typeRelatedToEachType(source, target, reportErrors);
-    // Source union: every constituent must relate to target.
-    if ((sf & TypeFlags.Union) !== 0) return this.eachTypeRelatedToType(source, target, reportErrors);
-    // Source intersection: some constituent must relate to target.
+    // Source intersection: some constituent must relate to the target.
     if ((sf & TypeFlags.Intersection) !== 0) return this.someTypeRelatedToType(source, target, reportErrors);
+    // Broad empty object `{}` target: accepts any non-nullish, known source
+    // (string/number/boolean/array/function/object). This mirrors TS-Go, where
+    // a primitive's apparent (wrapper) type satisfies `{}`'s absent required
+    // members. null/undefined/void/unknown are rejected here (any/never are
+    // already handled by isSimpleTypeRelatedTo).
+    if (this.isBroadEmptyObjectType(target)
+      && (sf & (TypeFlags.Null | TypeFlags.Undefined | TypeFlags.Void | TypeFlags.Unknown)) === 0) {
+      return Ternary.True;
+    }
     // Both object: structural comparison.
     if ((sf & TypeFlags.Object) !== 0 && (tf & TypeFlags.Object) !== 0) {
       return this.structuredTypeRelatedTo(source, target, reportErrors, intersectionState);
@@ -215,7 +297,7 @@ export class Relater {
     // source is related to target (a union) if related to at least one
     // of the union's constituents.
     void reportErrors;
-    const types = (target as unknown as { types?: readonly Type[] }).types;
+    const types = constituentTypes(target);
     if (types === undefined) return Ternary.False;
     for (const t of types) {
       if (this.isTypeAssignableTo(source, t)) return Ternary.True;
@@ -226,7 +308,7 @@ export class Relater {
     // source is related to target (an intersection) iff related to all
     // of its constituents.
     void reportErrors;
-    const types = (target as unknown as { types?: readonly Type[] }).types;
+    const types = constituentTypes(target);
     if (types === undefined) return Ternary.True;
     for (const t of types) {
       if (!this.isTypeAssignableTo(source, t)) return Ternary.False;
@@ -236,7 +318,7 @@ export class Relater {
   someTypeRelatedToType(source: Type, target: Type, reportErrors: boolean): Ternary {
     // Source is a union; succeed if any constituent is related to target.
     void reportErrors;
-    const types = (source as unknown as { types?: readonly Type[] }).types;
+    const types = constituentTypes(source);
     if (types === undefined) return Ternary.False;
     for (const t of types) {
       if (this.isTypeAssignableTo(t, target)) return Ternary.True;
@@ -247,7 +329,7 @@ export class Relater {
     // Every constituent of source must be related to some constituent
     // of target.
     void reportErrors;
-    const sourceTypes = (source as unknown as { types?: readonly Type[] }).types;
+    const sourceTypes = constituentTypes(source);
     if (sourceTypes === undefined) return Ternary.False;
     for (const s of sourceTypes) {
       if (!this.isTypeAssignableTo(s, target)) return Ternary.False;
@@ -263,6 +345,30 @@ export class Relater {
     source: Type, target: Type, reportErrors: boolean, intersectionState: number,
   ): Ternary {
     void intersectionState;
+    // Excess-property check: a fresh object literal may not carry properties
+    // absent from the target object type (TS-Go hasExcessProperties).
+    if (this.isFreshObjectLiteral(source)) {
+      const sourceMembers = (source.symbol as unknown as { readonly members?: Map<string, AstSymbol> } | undefined)?.members;
+      const targetMembers = (target.symbol as unknown as { readonly members?: Map<string, AstSymbol> } | undefined)?.members;
+      // Skip excess checking against the broad empty object type `{}` (no known
+      // properties) — it accepts any non-nullish value, including extra props.
+      if (sourceMembers !== undefined && targetMembers !== undefined && targetMembers.size > 0) {
+        for (const name of sourceMembers.keys()) {
+          if (!targetMembers.has(name)) {
+            this.excessProperty = { name, target };
+            return Ternary.False;
+          }
+        }
+      }
+    }
+    // Array types relate element-wise (covariant here; readonly/mutable variance
+    // not modeled). A non-array source is not assignable to an array target.
+    const targetElement = this.arrayElementType(target);
+    if (targetElement !== undefined) {
+      const sourceElement = this.arrayElementType(source);
+      if (sourceElement === undefined) return Ternary.False;
+      return this.isTypeAssignableTo(sourceElement, targetElement) ? Ternary.True : Ternary.False;
+    }
     // For object types: properties, call signatures, construct
     // signatures, index signatures all relate.
     const propsResult = this.propertiesRelatedTo(source, target, reportErrors);
@@ -277,14 +383,14 @@ export class Relater {
   membersRelatedToIndexInfo(source: Type, target: Type, reportErrors: boolean): Ternary {
     // Each member of source's type must satisfy target's index signature.
     void reportErrors;
-    const indexInfos = (target as unknown as { indexInfos?: readonly { keyType: Type; type: Type }[] }).indexInfos;
+    const indexInfos = indexInfosOf(target);
     const sourceMembers = (source as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members;
     if (indexInfos === undefined || sourceMembers === undefined) return Ternary.True;
     for (const [, sym] of sourceMembers) {
       const memberType = (sym as unknown as { type?: Type }).type;
       if (memberType === undefined) continue;
       for (const info of indexInfos) {
-        if (!this.isTypeAssignableTo(memberType, info.type)) return Ternary.False;
+        if (!this.isTypeAssignableTo(memberType, info.valueType)) return Ternary.False;
       }
     }
     return Ternary.True;
@@ -295,33 +401,44 @@ export class Relater {
     // is related.
     const targetProps = (target as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members;
     const sourceProps = (source as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members;
-    if (targetProps === undefined) return Ternary.True;
+    // A target with no known properties is the broad empty object `{}`, which
+    // accepts any non-nullish value (incl. arrays / property-less sources).
+    if (targetProps === undefined || targetProps.size === 0) return Ternary.True;
     if (sourceProps === undefined) return Ternary.False;
     for (const [name, targetProp] of targetProps) {
       const sourceProp = sourceProps.get(name);
-      if (sourceProp === undefined) return Ternary.False;
-      const r = this.propertyRelatedTo(source, target, sourceProp, targetProp, reportErrors);
+      if (sourceProp === undefined) {
+        // A missing source property is only acceptable when the target
+        // property is optional (mirrors TS-Go propertiesRelatedTo).
+        if (((targetProp.flags ?? 0) & SymbolFlags.Optional) !== 0) continue;
+        return Ternary.False;
+      }
+      const r = this.propertyRelatedTo(name, sourceProp, targetProp, reportErrors);
       if (r === Ternary.False) return r;
     }
     return Ternary.True;
   }
 
   propertyRelatedTo(
-    source: Type, target: Type, sourceProp: AstSymbol, targetProp: AstSymbol, reportErrors: boolean,
+    name: string, sourceProp: AstSymbol, targetProp: AstSymbol, reportErrors: boolean,
   ): Ternary {
-    void source; void target; void reportErrors;
-    const sourceType = (sourceProp as unknown as { type?: Type }).type;
-    const targetType = (targetProp as unknown as { type?: Type }).type;
+    void reportErrors;
+    const sourceType = getTypeOfSymbol(sourceProp);
+    const targetType = getTypeOfSymbol(targetProp);
     if (sourceType === undefined || targetType === undefined) return Ternary.True;
-    return this.isTypeAssignableTo(sourceType, targetType) ? Ternary.True : Ternary.False;
+    if (this.isTypeAssignableTo(sourceType, targetType)) return Ternary.True;
+    // Record the failing property (name + the incompatible types) for the
+    // checker to elaborate. Set after the inner relation so the outermost
+    // failing property wins.
+    this.failingProperty = { name, source: sourceType, target: targetType };
+    return Ternary.False;
   }
 
   signaturesRelatedTo(
-    source: Type, target: Type, kind: number, reportErrors: boolean,
+    source: Type, target: Type, kind: SignatureKind, reportErrors: boolean,
   ): Ternary {
-    const which = kind === 0 ? "callSignatures" : "constructSignatures";
-    const sourceSigs = (source as unknown as Record<string, readonly Signature[] | undefined>)[which];
-    const targetSigs = (target as unknown as Record<string, readonly Signature[] | undefined>)[which];
+    const sourceSigs = signaturesOf(source, kind);
+    const targetSigs = signaturesOf(target, kind);
     if (targetSigs === undefined || targetSigs.length === 0) return Ternary.True;
     if (sourceSigs === undefined || sourceSigs.length === 0) return Ternary.False;
     // For each target sig, source must have at least one related sig.
@@ -359,18 +476,19 @@ export class Relater {
     source: Type, target: Type, sourceIsPrimitive: boolean, reportErrors: boolean,
   ): Ternary {
     void sourceIsPrimitive;
-    const targetInfos = (target as unknown as { indexInfos?: readonly { keyType: Type; type: Type }[] }).indexInfos;
+    const targetInfos = indexInfosOf(target);
     if (targetInfos === undefined || targetInfos.length === 0) return Ternary.True;
-    const sourceInfos = (source as unknown as { indexInfos?: readonly { keyType: Type; type: Type }[] }).indexInfos;
+    const sourceInfos = indexInfosOf(source);
     if (sourceInfos === undefined) {
       // Members of source must satisfy target's index signature.
       return this.membersRelatedToIndexInfo(source, target, reportErrors);
     }
-    // Match per keyType.
+    // Match per keyType: each target index info needs a source info whose key
+    // relates and whose value is assignable.
     for (const ti of targetInfos) {
       let found = false;
       for (const si of sourceInfos) {
-        if (this.indexInfoRelatedTo(si as unknown as Type, ti as unknown as Type, reportErrors) !== Ternary.False) {
+        if (this.indexInfoRelatedTo(si, ti, reportErrors) !== Ternary.False) {
           found = true; break;
         }
       }
@@ -379,12 +497,10 @@ export class Relater {
     return Ternary.True;
   }
 
-  indexInfoRelatedTo(source: Type, target: Type, reportErrors: boolean): Ternary {
+  indexInfoRelatedTo(source: IndexInfo, target: IndexInfo, reportErrors: boolean): Ternary {
     void reportErrors;
-    const sourceType = (source as unknown as { type?: Type }).type;
-    const targetType = (target as unknown as { type?: Type }).type;
-    if (sourceType === undefined || targetType === undefined) return Ternary.True;
-    return this.isTypeAssignableTo(sourceType, targetType) ? Ternary.True : Ternary.False;
+    if (!this.isTypeAssignableTo(target.keyType, source.keyType)) return Ternary.False;
+    return this.isTypeAssignableTo(source.valueType, target.valueType) ? Ternary.True : Ternary.False;
   }
 
   // -------------------------------------------------------------------------
@@ -392,24 +508,92 @@ export class Relater {
   // -------------------------------------------------------------------------
 
   getVariances(t: Type): readonly VarianceFlags[] {
-    void t;
-    return [];
+    const data = t.data as InterfaceType | TypeReference | undefined;
+    const typeParameters = (data as InterfaceType | undefined)?.typeParameters
+      ?? ((data as TypeReference | undefined)?.target as InterfaceType | undefined)?.typeParameters
+      ?? [];
+    if (typeParameters.length === 0) return [];
+    if ((objectFlagsOf(t) & ObjectFlags.Tuple) !== 0 || isGlobalArrayLikeName(symbolNameOf(t.symbol))) {
+      return typeParameters.map(() => VarianceFlags.Covariant);
+    }
+    return typeParameters.map((typeParameter) => this.getDeclaredVariance(typeParameter));
+  }
+
+  getDeclaredVariance(typeParameter: TypeParameter): VarianceFlags {
+    const declaredVariance = (typeParameter as { variance?: VarianceFlags }).variance;
+    if (declaredVariance !== undefined) return declaredVariance;
+    const modifiers = getTypeParameterModifierFlags(typeParameter);
+    const hasOut = (modifiers & ModifierFlagsOut) !== 0;
+    const hasIn = (modifiers & ModifierFlagsIn) !== 0;
+    if (hasOut && hasIn) return VarianceFlags.Invariant;
+    if (hasOut) return VarianceFlags.Covariant;
+    if (hasIn) return VarianceFlags.Contravariant;
+    return VarianceFlags.Bivariant;
   }
 
   hasCovariantVoidArgument(typeArguments: readonly Type[], variances: readonly VarianceFlags[]): boolean {
-    void typeArguments; void variances;
+    const count = Math.min(typeArguments.length, variances.length);
+    for (let index = 0; index < count; index++) {
+      if ((variances[index]! & VarianceFlags.VarianceMask) === VarianceFlags.Covariant
+        && (typeArguments[index]!.flags & TypeFlags.Void) !== 0) {
+        return true;
+      }
+    }
     return false;
   }
 
-  isUnconstrainedTypeParameter(t: Type): boolean { void t; return false; }
-  isNonDeferredTypeReference(t: Type): boolean { void t; return false; }
-  isTypeReferenceWithGenericArguments(t: Type): boolean { void t; return false; }
+  isUnconstrainedTypeParameter(t: Type): boolean {
+    if ((t.flags & TypeFlags.TypeParameter) === 0) return false;
+    const data = t.data as TypeParameter | undefined;
+    return data?.constraint === undefined;
+  }
+  isNonDeferredTypeReference(t: Type): boolean {
+    if ((t.flags & TypeFlags.Object) === 0) return false;
+    const data = t.data as TypeReference | undefined;
+    return (objectFlagsOf(t) & ObjectFlags.Reference) !== 0 && data?.target !== undefined && t.pattern === undefined;
+  }
+  isTypeReferenceWithGenericArguments(t: Type): boolean {
+    if ((t.flags & TypeFlags.Object) === 0 || (objectFlagsOf(t) & ObjectFlags.Reference) === 0) return false;
+    const data = t.data as TypeReference | undefined;
+    const typeArguments = data?.resolvedTypeArguments ?? data?.resolvedTypeArguments_;
+    return typeArguments !== undefined && typeArguments.length > 0;
+  }
 
   // -------------------------------------------------------------------------
   // Apparent type computation + cache
   // -------------------------------------------------------------------------
 
-  getRecursionIdentity(t: Type): unknown { void t; return undefined; }
+  getRecursionIdentity(t: Type): unknown {
+    if ((t.flags & TypeFlags.Object) !== 0 && !isObjectOrArrayLiteralTypeLocal(t)) {
+      const objectFlags = objectFlagsOf(t);
+      if ((objectFlags & ObjectFlags.Reference) !== 0 && t.pattern !== undefined) {
+        return t.pattern;
+      }
+      if (t.symbol !== undefined && !((objectFlags & ObjectFlags.Anonymous) !== 0
+        && ((t.symbol.flags ?? 0) & SymbolFlags.Class) !== 0)) {
+        return t.symbol;
+      }
+      const data = t.data as TypeReference | undefined;
+      if ((objectFlags & ObjectFlags.Tuple) !== 0 && data?.target !== undefined) {
+        return data.target;
+      }
+    }
+    if ((t.flags & TypeFlags.TypeParameter) !== 0 && t.symbol !== undefined) {
+      return t.symbol;
+    }
+    if ((t.flags & TypeFlags.IndexedAccess) !== 0) {
+      let objectType = (t.data as IndexedAccessType | undefined)?.objectType;
+      while (objectType !== undefined && (objectType.flags & TypeFlags.IndexedAccess) !== 0) {
+        objectType = (objectType.data as IndexedAccessType | undefined)?.objectType;
+      }
+      return objectType ?? t;
+    }
+    if ((t.flags & TypeFlags.Conditional) !== 0) {
+      const root = (t.data as { root?: { node?: AstNode } } | undefined)?.root;
+      return root?.node ?? t;
+    }
+    return t;
+  }
 
   reportRelationError(
     headMessage: { code: number; message: string } | undefined,
@@ -419,14 +603,21 @@ export class Relater {
   }
 
   isWeakType(t: Type): boolean {
+    if ((t.flags & TypeFlags.Substitution) !== 0) {
+      const baseType = (t.data as { baseType?: Type } | undefined)?.baseType;
+      return baseType !== undefined && this.isWeakType(baseType);
+    }
+    if ((t.flags & TypeFlags.Intersection) !== 0) {
+      const types = constituentTypes(t);
+      return types !== undefined && types.length > 0 && types.every((type) => this.isWeakType(type));
+    }
     // A weak type has only optional properties (or no required ones).
     const symbol = (t as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol;
     const members = symbol?.members;
     if (members === undefined || members.size === 0) return false;
     for (const [, sym] of members) {
       const flags = (sym as unknown as { flags?: number }).flags ?? 0;
-      // SymbolFlags.Optional = 16777216
-      if ((flags & 16777216) === 0) return false;
+      if ((flags & SymbolFlags.Optional) === 0) return false;
     }
     return true;
   }
@@ -557,12 +748,81 @@ export class Relater {
     return this.isTypeSubtypeOf(source, target);
   }
   isExcessPropertyCheckTarget(t: Type): boolean {
-    // A type is a target for excess-property check if it's an object
-    // literal type and not a union containing 'any'.
-    const flags = (t as { flags?: number }).flags ?? 0;
-    return (flags & (1 << 19)) !== 0 && (flags & 1) === 0;
+    return ((t.flags & TypeFlags.Object) !== 0
+      && (objectFlagsOf(t) & ObjectFlags.ObjectLiteralPatternWithComputedProperties) === 0)
+      || (t.flags & TypeFlags.NonPrimitive) !== 0
+      || ((t.flags & TypeFlags.Substitution) !== 0
+        && this.isExcessPropertyCheckTarget((t.data as { baseType?: Type } | undefined)?.baseType ?? t))
+      || ((t.flags & TypeFlags.Union) !== 0
+        && (constituentTypes(t)?.some((type) => this.isExcessPropertyCheckTarget(type)) ?? false))
+      || ((t.flags & TypeFlags.Intersection) !== 0
+        && (constituentTypes(t)?.every((type) => this.isExcessPropertyCheckTarget(type)) ?? false));
   }
-  isObjectLiteralType(t: Type): boolean { void t; return (t.flags & TypeFlags.Object) !== 0; }
+  isObjectLiteralType(t: Type): boolean {
+    return (t.flags & TypeFlags.Object) !== 0
+      && (objectFlagsOf(t) & ObjectFlags.ObjectLiteral) !== 0;
+  }
+  isFreshObjectLiteral(t: Type): boolean {
+    return (t.flags & TypeFlags.Object) !== 0
+      && (((t.data as { objectFlags?: ObjectFlags } | undefined)?.objectFlags ?? 0) & ObjectFlags.FreshLiteral) !== 0;
+  }
+  arrayElementType(t: Type): Type | undefined {
+    const data = t.data as { elementType?: Type; resolvedTypeArguments?: readonly Type[]; resolvedTypeArguments_?: readonly Type[] } | undefined;
+    if (data?.elementType !== undefined) return data.elementType;
+    if ((objectFlagsOf(t) & ObjectFlags.Reference) !== 0 && isGlobalArrayLikeName(symbolNameOf(t.symbol))) {
+      return (data?.resolvedTypeArguments ?? data?.resolvedTypeArguments_)?.[0];
+    }
+    return undefined;
+  }
+  isBroadEmptyObjectType(t: Type): boolean {
+    // The broad empty object `{}`: an object type with no required structure —
+    // no members, not an array, no call/construct signatures, no index info.
+    if ((t.flags & TypeFlags.Object) === 0) return false;
+    if (this.arrayElementType(t) !== undefined) return false;
+    const members = (t as unknown as { symbol?: { members?: Map<string, AstSymbol> } }).symbol?.members;
+    if (members !== undefined && members.size > 0) return false;
+    const callSigs = signaturesOf(t, SignatureKind.Call);
+    if (callSigs !== undefined && callSigs.length > 0) return false;
+    const constructSigs = signaturesOf(t, SignatureKind.Construct);
+    if (constructSigs !== undefined && constructSigs.length > 0) return false;
+    const indexInfos = indexInfosOf(t);
+    if (indexInfos !== undefined && indexInfos.length > 0) return false;
+    return true;
+  }
+}
+
+function objectFlagsOf(t: Type): ObjectFlags {
+  return (t.data as ObjectType | UnionOrIntersectionType | undefined)?.objectFlags ?? 0;
+}
+
+function symbolNameOf(symbol: AstSymbol | undefined): string {
+  return (symbol as { name?: string } | undefined)?.name ?? "";
+}
+
+function isGlobalArrayLikeName(name: string): boolean {
+  return name === "Array" || name === "ReadonlyArray" || name === "ArrayLike";
+}
+
+function isObjectOrArrayLiteralTypeLocal(t: Type): boolean {
+  if ((t.flags & TypeFlags.Object) === 0) return false;
+  const flags = objectFlagsOf(t);
+  return (flags & (ObjectFlags.ObjectLiteral | ObjectFlags.ArrayLiteral)) !== 0;
+}
+
+function getTypeParameterModifierFlags(typeParameter: TypeParameter): number {
+  let flags = 0;
+  for (const declaration of symbolDeclarations(typeParameterSymbol(typeParameter))) {
+    flags |= (declaration as { modifierFlags?: number; flags?: number }).modifierFlags ?? 0;
+  }
+  return flags;
+}
+
+function typeParameterSymbol(typeParameter: TypeParameter): AstSymbol | undefined {
+  return (typeParameter as { symbol?: AstSymbol }).symbol;
+}
+
+function symbolDeclarations(symbol: AstSymbol | undefined): readonly AstNode[] {
+  return (symbol as { declarations?: readonly AstNode[] } | undefined)?.declarations ?? [];
 }
 
 export function newRelater(): Relater {

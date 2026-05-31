@@ -17,9 +17,10 @@
  * call sites in `program/program.ts` and the checker tests.
  */
 
-import type { SourceFile } from "../ast/index.js";
+import { nodeSymbol, type SourceFile } from "../ast/index.js";
+import { bindSourceFile } from "../binder/index.js";
 import type { Program, ProgramDiagnostic } from "../program/index.js";
-import { type CheckResult, type CheckState } from "./checker.checkedtype.js";
+import { type CheckResult, newCheckState, wireBinderSymbolResolution } from "./checker.checkedtype.js";
 import { checkStatements } from "./checker.statements.js";
 
 export type { CheckDiagnostic, CheckResult } from "./checker.checkedtype.js";
@@ -32,8 +33,20 @@ export class Checker {
   }
 
   checkSourceFile(sourceFile: SourceFile): CheckResult {
-    const state: CheckState = { diagnostics: [] };
-    checkStatements(sourceFile.statements, state, new Map(), undefined);
+    // BIND-BEFORE-CHECK (M5a): the checker resolves value names through the
+    // binder symbol graph (container.locals / symbol.exports / symbol.members),
+    // so the file must be bound first. The program LIVE path binds during
+    // createProgram; this guard makes the direct checkSourceFile entry (tests,
+    // probes, single-file checks) bind idempotently — a file whose SourceFile
+    // symbol is already populated was bound by the program path.
+    const bindDiagnostics = nodeSymbol(sourceFile) === undefined && sourceFile.locals === undefined
+      ? bindSourceFile(sourceFile)
+      : [];
+    const state = newCheckState();
+    state.diagnostics.push(...bindDiagnostics.map(diagnostic => ({ message: diagnostic.message })));
+    // Make getTypeOfSymbol's binder flag-dispatch see this check's state.
+    wireBinderSymbolResolution(state);
+    checkStatements(sourceFile.statements, state, undefined);
     return { diagnostics: state.diagnostics };
   }
 }

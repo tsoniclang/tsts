@@ -5,10 +5,14 @@
  */
 
 export type LanguageVariant = number;
-export const LanguageVariant = {
+export interface LanguageVariantTable {
+  readonly Standard: LanguageVariant;
+  readonly JSX: LanguageVariant;
+}
+export const LanguageVariant: LanguageVariantTable = {
   Standard: 0,
   JSX: 1,
-} as const;
+};
 
 export function languageVariantToString(v: LanguageVariant): string {
   return v === LanguageVariant.JSX ? "JSX" : "Standard";

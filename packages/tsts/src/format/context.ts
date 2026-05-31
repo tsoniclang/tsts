@@ -20,7 +20,7 @@ import { rangeIsOnOneLine } from "./util.js";
 const KindOpenBraceToken = Kind.OpenBraceToken;
 const KindCloseBraceToken = Kind.CloseBraceToken;
 
-// Strada helpers awaiting scanner-side ports. Until findChildOfKind
+// TS-Go helpers awaiting scanner-side ports. Until findChildOfKind
 // lands, return undefined — formatting rules will fall back to the
 // general path. getTokenPosOfNode uses nodePos until JSDoc handling lands.
 function getTokenPosOfNode(node: AstNode, _file: SourceFile, _includeJSDoc: boolean): number {

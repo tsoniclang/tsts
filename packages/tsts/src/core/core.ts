@@ -6,6 +6,7 @@
  * otherwise the helper is implemented to match Go semantics exactly.
  */
 
+import type { int } from "@tsonic/core/types.js";
 import type { TextPos } from "./text.js";
 import { isLineBreak } from "../stringutil/util.js";
 
@@ -145,7 +146,7 @@ export function lastOrNil<T>(slice: readonly T[]): T | undefined {
   return slice.length > 0 ? slice[slice.length - 1] : undefined;
 }
 
-export function elementOrNil<T>(slice: readonly T[], index: number): T | undefined {
+export function elementOrNil<T>(slice: readonly T[], index: int): T | undefined {
   return index < slice.length ? slice[index] : undefined;
 }
 
@@ -215,14 +216,15 @@ export function concatenate<T>(s1: readonly T[] | undefined, s2: readonly T[] | 
   return [...s1, ...s2];
 }
 
-export function splice<T>(s1: readonly T[], start: number, deleteCount: number, ...items: readonly T[]): readonly T[] {
-  let s = start;
-  let dc = deleteCount;
+export function splice<T>(s1: readonly T[], start: int, deleteCount: int, ...items: readonly T[]): readonly T[] {
+  let s: int = start;
+  let dc: int = deleteCount;
   if (s < 0) s = s1.length + s;
   if (s < 0) s = 0;
   if (s > s1.length) s = s1.length;
   if (dc < 0) dc = 0;
-  const end = Math.min(s + Math.max(dc, 0), s1.length);
+  let end: int = s + dc;
+  if (end > s1.length) end = s1.length;
   if (s === end && items.length === 0) return s1;
   return [...s1.slice(0, s), ...items, ...s1.slice(end)];
 }
@@ -233,7 +235,7 @@ export function countWhere<T>(slice: readonly T[], f: (item: T) => boolean): num
   return count;
 }
 
-export function replaceElement<T>(slice: readonly T[], index: number, value: T): readonly T[] {
+export function replaceElement<T>(slice: readonly T[], index: int, value: T): readonly T[] {
   const result = slice.slice();
   result[index] = value;
   return result;
@@ -417,12 +419,60 @@ export function indexAfter(s: string, pattern: string, startIndex: number): numb
   return matched;
 }
 
-export function stringifyJson(input: unknown, prefix: string, indent: string): string {
-  if (prefix === "" && indent === "") return JSON.stringify(input);
-  if (prefix === "") return JSON.stringify(input, undefined, indent);
-  // Custom prefix per line — emulate Strada's strings.NewReplacer(..., prefix + "\n")
-  const out = JSON.stringify(input, undefined, indent);
+export type JsonSerializable =
+  | string
+  | number
+  | boolean
+  | null
+  | readonly JsonSerializable[]
+  | { readonly [key: string]: JsonSerializable };
+
+export function stringifyJson(input: JsonSerializable, prefix: string, indent: string): string {
+  const out = indent === "" ? stringifyJsonCompact(input) : stringifyJsonIndented(input, indent, 0);
+  if (prefix === "") return out;
+  // Custom prefix per line — emulate TS-Go's strings.NewReplacer(..., prefix + "\n")
   return out.split("\n").join("\n" + prefix);
+}
+
+function stringifyJsonCompact(input: JsonSerializable): string {
+  if (input === null) return "null";
+  if (typeof input === "string") return JSON.stringify(input);
+  if (typeof input === "number") return Number.isFinite(input) ? String(input) : "null";
+  if (typeof input === "boolean") return input ? "true" : "false";
+  if (Array.isArray(input)) {
+    const items: string[] = [];
+    for (const item of input) items.push(stringifyJsonCompact(item));
+    return "[" + items.join(",") + "]";
+  }
+  const object = input as { readonly [key: string]: JsonSerializable };
+  const fields: string[] = [];
+  for (const key of Object.keys(object)) {
+    const value = object[key];
+    if (value !== undefined) fields.push(JSON.stringify(key) + ":" + stringifyJsonCompact(value));
+  }
+  return "{" + fields.join(",") + "}";
+}
+
+function stringifyJsonIndented(input: JsonSerializable, indent: string, depth: number): string {
+  if (input === null || typeof input === "string" || typeof input === "number" || typeof input === "boolean") {
+    return stringifyJsonCompact(input);
+  }
+  const childIndent = indent.repeat(depth + 1);
+  const currentIndent = indent.repeat(depth);
+  if (Array.isArray(input)) {
+    if (input.length === 0) return "[]";
+    const items: string[] = [];
+    for (const item of input) items.push(childIndent + stringifyJsonIndented(item, indent, depth + 1));
+    return "[\n" + items.join(",\n") + "\n" + currentIndent + "]";
+  }
+  const object = input as { readonly [key: string]: JsonSerializable };
+  const fields: string[] = [];
+  for (const key of Object.keys(object)) {
+    const value = object[key];
+    if (value !== undefined) fields.push(childIndent + JSON.stringify(key) + ": " + stringifyJsonIndented(value, indent, depth + 1));
+  }
+  if (fields.length === 0) return "{}";
+  return "{\n" + fields.join(",\n") + "\n" + currentIndent + "}";
 }
 
 // ---------------------------------------------------------------------------
@@ -463,7 +513,7 @@ export function positionToLineAndByteOffset(
     if ((lineStarts[mid] as unknown as number) > position) hi = mid;
     else lo = mid + 1;
   }
-  const line = Math.max(lo - 1, 0);
+  const line: int = Math.max(lo - 1, 0) | 0;
   return { line, byteOffset: position - (lineStarts[line] as unknown as number) };
 }
 
@@ -532,21 +582,21 @@ export function getSpellingSuggestionForStrings(name: string, candidates: Iterab
 
 function levenshteinWithMax(s1: string, s2: string, maxValue: number): number {
   const big = maxValue + 0.01;
-  const len1 = s1.length;
-  const len2 = s2.length;
+  const len1: int = s1.length;
+  const len2: int = s2.length;
   let previous = new Array<number>(len2 + 1);
   let current = new Array<number>(len2 + 1);
-  for (let i = 0; i <= len2; i++) previous[i] = i;
+  for (let i: int = 0; i <= len2; i++) previous[i] = i;
 
-  for (let i = 1; i <= len1; i++) {
+  for (let i: int = 1; i <= len1; i++) {
     const c1 = s1[i - 1]!;
     const c1Lower = c1.toLowerCase();
-    const minJ = Math.max(Math.ceil(i - maxValue), 1);
-    const maxJ = Math.min(Math.floor(maxValue + i), len2);
-    let colMin = i;
+    const minJ: int = Math.max(Math.ceil(i - maxValue), 1) | 0;
+    const maxJ: int = Math.min(Math.floor(maxValue + i), len2) | 0;
+    let colMin: number = i;
     current[0] = colMin;
-    for (let j = 1; j < minJ; j++) current[j] = big;
-    for (let j = minJ; j <= maxJ; j++) {
+    for (let j: int = 1; j < minJ; j++) current[j] = big;
+    for (let j: int = minJ; j <= maxJ; j++) {
       const c2 = s2[j - 1]!;
       let substitutionDistance: number;
       if (c1Lower === c2.toLowerCase()) substitutionDistance = previous[j - 1]! + 0.1;
@@ -557,7 +607,7 @@ function levenshteinWithMax(s1: string, s2: string, maxValue: number): number {
       current[j] = dist;
       if (dist < colMin) colMin = dist;
     }
-    for (let j = maxJ + 1; j <= len2; j++) current[j] = big;
+    for (let j: int = maxJ + 1; j <= len2; j++) current[j] = big;
     if (colMin > maxValue) return -1;
     const tmp = previous;
     previous = current;
@@ -571,8 +621,18 @@ function levenshteinWithMax(s1: string, s2: string, maxValue: number): number {
 // ScriptKind from filename
 // ---------------------------------------------------------------------------
 
-export type ScriptKind = number;
-export const ScriptKind = {
+export type ScriptKind = int;
+export interface ScriptKindTable {
+  readonly Unknown: ScriptKind;
+  readonly JS: ScriptKind;
+  readonly JSX: ScriptKind;
+  readonly TS: ScriptKind;
+  readonly TSX: ScriptKind;
+  readonly External: ScriptKind;
+  readonly JSON: ScriptKind;
+  readonly Deferred: ScriptKind;
+}
+export const ScriptKind: ScriptKindTable = {
   Unknown: 0 as ScriptKind,
   JS: 1 as ScriptKind,
   JSX: 2 as ScriptKind,
@@ -581,7 +641,30 @@ export const ScriptKind = {
   External: 5 as ScriptKind,
   JSON: 6 as ScriptKind,
   Deferred: 7 as ScriptKind,
-} as const;
+};
+
+const scriptKindNames: readonly string[] = [
+  "ScriptKindUnknown",
+  "ScriptKindJS",
+  "ScriptKindJSX",
+  "ScriptKindTS",
+  "ScriptKindTSX",
+  "ScriptKindExternal",
+  "ScriptKindJSON",
+  "ScriptKindDeferred",
+];
+
+export function scriptKindToString(i: ScriptKind): string {
+  if (i === ScriptKind.Unknown) return "ScriptKindUnknown";
+  if (i === ScriptKind.JS) return "ScriptKindJS";
+  if (i === ScriptKind.JSX) return "ScriptKindJSX";
+  if (i === ScriptKind.TS) return "ScriptKindTS";
+  if (i === ScriptKind.TSX) return "ScriptKindTSX";
+  if (i === ScriptKind.External) return "ScriptKindExternal";
+  if (i === ScriptKind.JSON) return "ScriptKindJSON";
+  if (i === ScriptKind.Deferred) return "ScriptKindDeferred";
+  return "ScriptKind(" + String(i) + ")";
+}
 
 const EXT_TO_SCRIPT: ReadonlyMap<string, ScriptKind> = new Map([
   [".js", ScriptKind.JS], [".cjs", ScriptKind.JS], [".mjs", ScriptKind.JS],
@@ -594,7 +677,9 @@ const EXT_TO_SCRIPT: ReadonlyMap<string, ScriptKind> = new Map([
 export function getScriptKindFromFileName(fileName: string): ScriptKind {
   const dot = fileName.lastIndexOf(".");
   if (dot < 0) return ScriptKind.Unknown;
-  return EXT_TO_SCRIPT.get(fileName.slice(dot).toLowerCase()) ?? ScriptKind.Unknown;
+  const ext = fileName.slice(dot).toLowerCase();
+  if (!EXT_TO_SCRIPT.has(ext)) return ScriptKind.Unknown;
+  return EXT_TO_SCRIPT.get(ext)!;
 }
 
 // ---------------------------------------------------------------------------

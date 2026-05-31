@@ -3,697 +3,500 @@
 
 import { Kind } from "./kind.js";
 
-export const NodeDataEncoding = {
+export type NodeDataEncoding = "children" | "string" | "extended";
+export interface NodeDataEncodingTable {
+  readonly children: NodeDataEncoding;
+  readonly string: NodeDataEncoding;
+  readonly extended: NodeDataEncoding;
+}
+export const NodeDataEncoding: NodeDataEncodingTable = {
   children: "children",
   string: "string",
   extended: "extended",
-} as const;
+};
 
-export type NodeDataEncoding = typeof NodeDataEncoding[keyof typeof NodeDataEncoding];
-
-const childPropertiesByKind: (readonly string[] | undefined)[] = [];
-const dataEncodingByKind: (NodeDataEncoding | undefined)[] = [];
-
-childPropertiesByKind[Kind.Unknown] = []
-;
-dataEncodingByKind[Kind.Unknown] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.EndOfFile] = []
-;
-dataEncodingByKind[Kind.EndOfFile] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SingleLineCommentTrivia] = []
-;
-dataEncodingByKind[Kind.SingleLineCommentTrivia] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.MultiLineCommentTrivia] = []
-;
-dataEncodingByKind[Kind.MultiLineCommentTrivia] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NewLineTrivia] = []
-;
-dataEncodingByKind[Kind.NewLineTrivia] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.WhitespaceTrivia] = []
-;
-dataEncodingByKind[Kind.WhitespaceTrivia] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ConflictMarkerTrivia] = []
-;
-dataEncodingByKind[Kind.ConflictMarkerTrivia] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NonTextFileMarkerTrivia] = []
-;
-dataEncodingByKind[Kind.NonTextFileMarkerTrivia] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NumericLiteral] = []
-;
-dataEncodingByKind[Kind.NumericLiteral] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.BigIntLiteral] = []
-;
-dataEncodingByKind[Kind.BigIntLiteral] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.StringLiteral] = []
-;
-dataEncodingByKind[Kind.StringLiteral] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JsxText] = []
-;
-dataEncodingByKind[Kind.JsxText] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JsxTextAllWhiteSpaces] = []
-;
-dataEncodingByKind[Kind.JsxTextAllWhiteSpaces] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.RegularExpressionLiteral] = []
-;
-dataEncodingByKind[Kind.RegularExpressionLiteral] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NoSubstitutionTemplateLiteral] = []
-;
-dataEncodingByKind[Kind.NoSubstitutionTemplateLiteral] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TemplateHead] = []
-;
-dataEncodingByKind[Kind.TemplateHead] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TemplateMiddle] = []
-;
-dataEncodingByKind[Kind.TemplateMiddle] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TemplateTail] = []
-;
-dataEncodingByKind[Kind.TemplateTail] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.OpenBraceToken] = []
-;
-dataEncodingByKind[Kind.OpenBraceToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.CloseBraceToken] = []
-;
-dataEncodingByKind[Kind.CloseBraceToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.OpenParenToken] = []
-;
-dataEncodingByKind[Kind.OpenParenToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.CloseParenToken] = []
-;
-dataEncodingByKind[Kind.CloseParenToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.OpenBracketToken] = []
-;
-dataEncodingByKind[Kind.OpenBracketToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.CloseBracketToken] = []
-;
-dataEncodingByKind[Kind.CloseBracketToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.DotToken] = []
-;
-dataEncodingByKind[Kind.DotToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.DotDotDotToken] = []
-;
-dataEncodingByKind[Kind.DotDotDotToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SemicolonToken] = []
-;
-dataEncodingByKind[Kind.SemicolonToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.CommaToken] = []
-;
-dataEncodingByKind[Kind.CommaToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.QuestionDotToken] = []
-;
-dataEncodingByKind[Kind.QuestionDotToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.LessThanToken] = []
-;
-dataEncodingByKind[Kind.LessThanToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.LessThanSlashToken] = []
-;
-dataEncodingByKind[Kind.LessThanSlashToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.GreaterThanToken] = []
-;
-dataEncodingByKind[Kind.GreaterThanToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.LessThanEqualsToken] = []
-;
-dataEncodingByKind[Kind.LessThanEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.GreaterThanEqualsToken] = []
-;
-dataEncodingByKind[Kind.GreaterThanEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.EqualsEqualsToken] = []
-;
-dataEncodingByKind[Kind.EqualsEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ExclamationEqualsToken] = []
-;
-dataEncodingByKind[Kind.ExclamationEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.EqualsEqualsEqualsToken] = []
-;
-dataEncodingByKind[Kind.EqualsEqualsEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ExclamationEqualsEqualsToken] = []
-;
-dataEncodingByKind[Kind.ExclamationEqualsEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.EqualsGreaterThanToken] = []
-;
-dataEncodingByKind[Kind.EqualsGreaterThanToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.PlusToken] = []
-;
-dataEncodingByKind[Kind.PlusToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.MinusToken] = []
-;
-dataEncodingByKind[Kind.MinusToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AsteriskToken] = []
-;
-dataEncodingByKind[Kind.AsteriskToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AsteriskAsteriskToken] = []
-;
-dataEncodingByKind[Kind.AsteriskAsteriskToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SlashToken] = []
-;
-dataEncodingByKind[Kind.SlashToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.PercentToken] = []
-;
-dataEncodingByKind[Kind.PercentToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.PlusPlusToken] = []
-;
-dataEncodingByKind[Kind.PlusPlusToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.MinusMinusToken] = []
-;
-dataEncodingByKind[Kind.MinusMinusToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.LessThanLessThanToken] = []
-;
-dataEncodingByKind[Kind.LessThanLessThanToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.GreaterThanGreaterThanToken] = []
-;
-dataEncodingByKind[Kind.GreaterThanGreaterThanToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.GreaterThanGreaterThanGreaterThanToken] = []
-;
-dataEncodingByKind[Kind.GreaterThanGreaterThanGreaterThanToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AmpersandToken] = []
-;
-dataEncodingByKind[Kind.AmpersandToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.BarToken] = []
-;
-dataEncodingByKind[Kind.BarToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.CaretToken] = []
-;
-dataEncodingByKind[Kind.CaretToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ExclamationToken] = []
-;
-dataEncodingByKind[Kind.ExclamationToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TildeToken] = []
-;
-dataEncodingByKind[Kind.TildeToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AmpersandAmpersandToken] = []
-;
-dataEncodingByKind[Kind.AmpersandAmpersandToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.BarBarToken] = []
-;
-dataEncodingByKind[Kind.BarBarToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.QuestionToken] = []
-;
-dataEncodingByKind[Kind.QuestionToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ColonToken] = []
-;
-dataEncodingByKind[Kind.ColonToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AtToken] = []
-;
-dataEncodingByKind[Kind.AtToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.QuestionQuestionToken] = []
-;
-dataEncodingByKind[Kind.QuestionQuestionToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.BacktickToken] = []
-;
-dataEncodingByKind[Kind.BacktickToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.HashToken] = []
-;
-dataEncodingByKind[Kind.HashToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.EqualsToken] = []
-;
-dataEncodingByKind[Kind.EqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.PlusEqualsToken] = []
-;
-dataEncodingByKind[Kind.PlusEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.MinusEqualsToken] = []
-;
-dataEncodingByKind[Kind.MinusEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AsteriskEqualsToken] = []
-;
-dataEncodingByKind[Kind.AsteriskEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AsteriskAsteriskEqualsToken] = []
-;
-dataEncodingByKind[Kind.AsteriskAsteriskEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SlashEqualsToken] = []
-;
-dataEncodingByKind[Kind.SlashEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.PercentEqualsToken] = []
-;
-dataEncodingByKind[Kind.PercentEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.LessThanLessThanEqualsToken] = []
-;
-dataEncodingByKind[Kind.LessThanLessThanEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.GreaterThanGreaterThanEqualsToken] = []
-;
-dataEncodingByKind[Kind.GreaterThanGreaterThanEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.GreaterThanGreaterThanGreaterThanEqualsToken] = []
-;
-dataEncodingByKind[Kind.GreaterThanGreaterThanGreaterThanEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AmpersandEqualsToken] = []
-;
-dataEncodingByKind[Kind.AmpersandEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.BarEqualsToken] = []
-;
-dataEncodingByKind[Kind.BarEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.BarBarEqualsToken] = []
-;
-dataEncodingByKind[Kind.BarBarEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AmpersandAmpersandEqualsToken] = []
-;
-dataEncodingByKind[Kind.AmpersandAmpersandEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.QuestionQuestionEqualsToken] = []
-;
-dataEncodingByKind[Kind.QuestionQuestionEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.CaretEqualsToken] = []
-;
-dataEncodingByKind[Kind.CaretEqualsToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.Identifier] = []
-;
-dataEncodingByKind[Kind.Identifier] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.PrivateIdentifier] = []
-;
-dataEncodingByKind[Kind.PrivateIdentifier] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocCommentTextToken] = []
-;
-dataEncodingByKind[Kind.JSDocCommentTextToken] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.BreakKeyword] = []
-;
-dataEncodingByKind[Kind.BreakKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.CaseKeyword] = []
-;
-dataEncodingByKind[Kind.CaseKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.CatchKeyword] = []
-;
-dataEncodingByKind[Kind.CatchKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ClassKeyword] = []
-;
-dataEncodingByKind[Kind.ClassKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ConstKeyword] = []
-;
-dataEncodingByKind[Kind.ConstKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ContinueKeyword] = []
-;
-dataEncodingByKind[Kind.ContinueKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.DebuggerKeyword] = []
-;
-dataEncodingByKind[Kind.DebuggerKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.DefaultKeyword] = []
-;
-dataEncodingByKind[Kind.DefaultKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.DeleteKeyword] = []
-;
-dataEncodingByKind[Kind.DeleteKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.DoKeyword] = []
-;
-dataEncodingByKind[Kind.DoKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ElseKeyword] = []
-;
-dataEncodingByKind[Kind.ElseKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.EnumKeyword] = []
-;
-dataEncodingByKind[Kind.EnumKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ExportKeyword] = []
-;
-dataEncodingByKind[Kind.ExportKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ExtendsKeyword] = []
-;
-dataEncodingByKind[Kind.ExtendsKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.FalseKeyword] = []
-;
-dataEncodingByKind[Kind.FalseKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.FinallyKeyword] = []
-;
-dataEncodingByKind[Kind.FinallyKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ForKeyword] = []
-;
-dataEncodingByKind[Kind.ForKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.FunctionKeyword] = []
-;
-dataEncodingByKind[Kind.FunctionKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.IfKeyword] = []
-;
-dataEncodingByKind[Kind.IfKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ImportKeyword] = []
-;
-dataEncodingByKind[Kind.ImportKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.InKeyword] = []
-;
-dataEncodingByKind[Kind.InKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.InstanceOfKeyword] = []
-;
-dataEncodingByKind[Kind.InstanceOfKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NewKeyword] = []
-;
-dataEncodingByKind[Kind.NewKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NullKeyword] = []
-;
-dataEncodingByKind[Kind.NullKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ReturnKeyword] = []
-;
-dataEncodingByKind[Kind.ReturnKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SuperKeyword] = []
-;
-dataEncodingByKind[Kind.SuperKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SwitchKeyword] = []
-;
-dataEncodingByKind[Kind.SwitchKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ThisKeyword] = []
-;
-dataEncodingByKind[Kind.ThisKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ThrowKeyword] = []
-;
-dataEncodingByKind[Kind.ThrowKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TrueKeyword] = []
-;
-dataEncodingByKind[Kind.TrueKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TryKeyword] = []
-;
-dataEncodingByKind[Kind.TryKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TypeOfKeyword] = []
-;
-dataEncodingByKind[Kind.TypeOfKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.VarKeyword] = []
-;
-dataEncodingByKind[Kind.VarKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.VoidKeyword] = []
-;
-dataEncodingByKind[Kind.VoidKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.WhileKeyword] = []
-;
-dataEncodingByKind[Kind.WhileKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.WithKeyword] = []
-;
-dataEncodingByKind[Kind.WithKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ImplementsKeyword] = []
-;
-dataEncodingByKind[Kind.ImplementsKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.InterfaceKeyword] = []
-;
-dataEncodingByKind[Kind.InterfaceKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.LetKeyword] = []
-;
-dataEncodingByKind[Kind.LetKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.PackageKeyword] = []
-;
-dataEncodingByKind[Kind.PackageKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.PrivateKeyword] = []
-;
-dataEncodingByKind[Kind.PrivateKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ProtectedKeyword] = []
-;
-dataEncodingByKind[Kind.ProtectedKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.PublicKeyword] = []
-;
-dataEncodingByKind[Kind.PublicKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.StaticKeyword] = []
-;
-dataEncodingByKind[Kind.StaticKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.YieldKeyword] = []
-;
-dataEncodingByKind[Kind.YieldKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AbstractKeyword] = []
-;
-dataEncodingByKind[Kind.AbstractKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AccessorKeyword] = []
-;
-dataEncodingByKind[Kind.AccessorKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AsKeyword] = []
-;
-dataEncodingByKind[Kind.AsKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AssertsKeyword] = []
-;
-dataEncodingByKind[Kind.AssertsKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AssertKeyword] = []
-;
-dataEncodingByKind[Kind.AssertKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AnyKeyword] = []
-;
-dataEncodingByKind[Kind.AnyKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AsyncKeyword] = []
-;
-dataEncodingByKind[Kind.AsyncKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AwaitKeyword] = []
-;
-dataEncodingByKind[Kind.AwaitKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.BooleanKeyword] = []
-;
-dataEncodingByKind[Kind.BooleanKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ConstructorKeyword] = []
-;
-dataEncodingByKind[Kind.ConstructorKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.DeclareKeyword] = []
-;
-dataEncodingByKind[Kind.DeclareKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.GetKeyword] = []
-;
-dataEncodingByKind[Kind.GetKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ImmediateKeyword] = []
-;
-dataEncodingByKind[Kind.ImmediateKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.InferKeyword] = []
-;
-dataEncodingByKind[Kind.InferKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.IntrinsicKeyword] = []
-;
-dataEncodingByKind[Kind.IntrinsicKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.IsKeyword] = []
-;
-dataEncodingByKind[Kind.IsKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.KeyOfKeyword] = []
-;
-dataEncodingByKind[Kind.KeyOfKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ModuleKeyword] = []
-;
-dataEncodingByKind[Kind.ModuleKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NamespaceKeyword] = []
-;
-dataEncodingByKind[Kind.NamespaceKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NeverKeyword] = []
-;
-dataEncodingByKind[Kind.NeverKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.OutKeyword] = []
-;
-dataEncodingByKind[Kind.OutKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ReadonlyKeyword] = []
-;
-dataEncodingByKind[Kind.ReadonlyKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.RequireKeyword] = []
-;
-dataEncodingByKind[Kind.RequireKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NumberKeyword] = []
-;
-dataEncodingByKind[Kind.NumberKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ObjectKeyword] = []
-;
-dataEncodingByKind[Kind.ObjectKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SatisfiesKeyword] = []
-;
-dataEncodingByKind[Kind.SatisfiesKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SetKeyword] = []
-;
-dataEncodingByKind[Kind.SetKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.StringKeyword] = []
-;
-dataEncodingByKind[Kind.StringKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SymbolKeyword] = []
-;
-dataEncodingByKind[Kind.SymbolKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TypeKeyword] = []
-;
-dataEncodingByKind[Kind.TypeKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.UndefinedKeyword] = []
-;
-dataEncodingByKind[Kind.UndefinedKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.UniqueKeyword] = []
-;
-dataEncodingByKind[Kind.UniqueKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.UnknownKeyword] = []
-;
-dataEncodingByKind[Kind.UnknownKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.UsingKeyword] = []
-;
-dataEncodingByKind[Kind.UsingKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.FromKeyword] = []
-;
-dataEncodingByKind[Kind.FromKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.GlobalKeyword] = []
-;
-dataEncodingByKind[Kind.GlobalKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.BigIntKeyword] = []
-;
-dataEncodingByKind[Kind.BigIntKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.OverrideKeyword] = []
-;
-dataEncodingByKind[Kind.OverrideKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.OfKeyword] = []
-;
-dataEncodingByKind[Kind.OfKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.DeferKeyword] = []
-;
-dataEncodingByKind[Kind.DeferKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.Identifier] = []
-;
-dataEncodingByKind[Kind.Identifier] = NodeDataEncoding.string;
-childPropertiesByKind[Kind.PrivateIdentifier] = []
-;
-dataEncodingByKind[Kind.PrivateIdentifier] = NodeDataEncoding.string;
-childPropertiesByKind[Kind.QualifiedName] = [
+const childPropertiesByKind: ReadonlyMap<Kind, readonly string[]> = new Map([
+  [Kind.Unknown, []
+],
+  [Kind.EndOfFile, []
+],
+  [Kind.SingleLineCommentTrivia, []
+],
+  [Kind.MultiLineCommentTrivia, []
+],
+  [Kind.NewLineTrivia, []
+],
+  [Kind.WhitespaceTrivia, []
+],
+  [Kind.ConflictMarkerTrivia, []
+],
+  [Kind.NonTextFileMarkerTrivia, []
+],
+  [Kind.NumericLiteral, []
+],
+  [Kind.BigIntLiteral, []
+],
+  [Kind.StringLiteral, []
+],
+  [Kind.JsxText, []
+],
+  [Kind.JsxTextAllWhiteSpaces, []
+],
+  [Kind.RegularExpressionLiteral, []
+],
+  [Kind.NoSubstitutionTemplateLiteral, []
+],
+  [Kind.TemplateHead, []
+],
+  [Kind.TemplateMiddle, []
+],
+  [Kind.TemplateTail, []
+],
+  [Kind.OpenBraceToken, []
+],
+  [Kind.CloseBraceToken, []
+],
+  [Kind.OpenParenToken, []
+],
+  [Kind.CloseParenToken, []
+],
+  [Kind.OpenBracketToken, []
+],
+  [Kind.CloseBracketToken, []
+],
+  [Kind.DotToken, []
+],
+  [Kind.DotDotDotToken, []
+],
+  [Kind.SemicolonToken, []
+],
+  [Kind.CommaToken, []
+],
+  [Kind.QuestionDotToken, []
+],
+  [Kind.LessThanToken, []
+],
+  [Kind.LessThanSlashToken, []
+],
+  [Kind.GreaterThanToken, []
+],
+  [Kind.LessThanEqualsToken, []
+],
+  [Kind.GreaterThanEqualsToken, []
+],
+  [Kind.EqualsEqualsToken, []
+],
+  [Kind.ExclamationEqualsToken, []
+],
+  [Kind.EqualsEqualsEqualsToken, []
+],
+  [Kind.ExclamationEqualsEqualsToken, []
+],
+  [Kind.EqualsGreaterThanToken, []
+],
+  [Kind.PlusToken, []
+],
+  [Kind.MinusToken, []
+],
+  [Kind.AsteriskToken, []
+],
+  [Kind.AsteriskAsteriskToken, []
+],
+  [Kind.SlashToken, []
+],
+  [Kind.PercentToken, []
+],
+  [Kind.PlusPlusToken, []
+],
+  [Kind.MinusMinusToken, []
+],
+  [Kind.LessThanLessThanToken, []
+],
+  [Kind.GreaterThanGreaterThanToken, []
+],
+  [Kind.GreaterThanGreaterThanGreaterThanToken, []
+],
+  [Kind.AmpersandToken, []
+],
+  [Kind.BarToken, []
+],
+  [Kind.CaretToken, []
+],
+  [Kind.ExclamationToken, []
+],
+  [Kind.TildeToken, []
+],
+  [Kind.AmpersandAmpersandToken, []
+],
+  [Kind.BarBarToken, []
+],
+  [Kind.QuestionToken, []
+],
+  [Kind.ColonToken, []
+],
+  [Kind.AtToken, []
+],
+  [Kind.QuestionQuestionToken, []
+],
+  [Kind.BacktickToken, []
+],
+  [Kind.HashToken, []
+],
+  [Kind.EqualsToken, []
+],
+  [Kind.PlusEqualsToken, []
+],
+  [Kind.MinusEqualsToken, []
+],
+  [Kind.AsteriskEqualsToken, []
+],
+  [Kind.AsteriskAsteriskEqualsToken, []
+],
+  [Kind.SlashEqualsToken, []
+],
+  [Kind.PercentEqualsToken, []
+],
+  [Kind.LessThanLessThanEqualsToken, []
+],
+  [Kind.GreaterThanGreaterThanEqualsToken, []
+],
+  [Kind.GreaterThanGreaterThanGreaterThanEqualsToken, []
+],
+  [Kind.AmpersandEqualsToken, []
+],
+  [Kind.BarEqualsToken, []
+],
+  [Kind.BarBarEqualsToken, []
+],
+  [Kind.AmpersandAmpersandEqualsToken, []
+],
+  [Kind.QuestionQuestionEqualsToken, []
+],
+  [Kind.CaretEqualsToken, []
+],
+  [Kind.Identifier, []
+],
+  [Kind.PrivateIdentifier, []
+],
+  [Kind.JSDocCommentTextToken, []
+],
+  [Kind.BreakKeyword, []
+],
+  [Kind.CaseKeyword, []
+],
+  [Kind.CatchKeyword, []
+],
+  [Kind.ClassKeyword, []
+],
+  [Kind.ConstKeyword, []
+],
+  [Kind.ContinueKeyword, []
+],
+  [Kind.DebuggerKeyword, []
+],
+  [Kind.DefaultKeyword, []
+],
+  [Kind.DeleteKeyword, []
+],
+  [Kind.DoKeyword, []
+],
+  [Kind.ElseKeyword, []
+],
+  [Kind.EnumKeyword, []
+],
+  [Kind.ExportKeyword, []
+],
+  [Kind.ExtendsKeyword, []
+],
+  [Kind.FalseKeyword, []
+],
+  [Kind.FinallyKeyword, []
+],
+  [Kind.ForKeyword, []
+],
+  [Kind.FunctionKeyword, []
+],
+  [Kind.IfKeyword, []
+],
+  [Kind.ImportKeyword, []
+],
+  [Kind.InKeyword, []
+],
+  [Kind.InstanceOfKeyword, []
+],
+  [Kind.NewKeyword, []
+],
+  [Kind.NullKeyword, []
+],
+  [Kind.ReturnKeyword, []
+],
+  [Kind.SuperKeyword, []
+],
+  [Kind.SwitchKeyword, []
+],
+  [Kind.ThisKeyword, []
+],
+  [Kind.ThrowKeyword, []
+],
+  [Kind.TrueKeyword, []
+],
+  [Kind.TryKeyword, []
+],
+  [Kind.TypeOfKeyword, []
+],
+  [Kind.VarKeyword, []
+],
+  [Kind.VoidKeyword, []
+],
+  [Kind.WhileKeyword, []
+],
+  [Kind.WithKeyword, []
+],
+  [Kind.ImplementsKeyword, []
+],
+  [Kind.InterfaceKeyword, []
+],
+  [Kind.LetKeyword, []
+],
+  [Kind.PackageKeyword, []
+],
+  [Kind.PrivateKeyword, []
+],
+  [Kind.ProtectedKeyword, []
+],
+  [Kind.PublicKeyword, []
+],
+  [Kind.StaticKeyword, []
+],
+  [Kind.YieldKeyword, []
+],
+  [Kind.AbstractKeyword, []
+],
+  [Kind.AccessorKeyword, []
+],
+  [Kind.AsKeyword, []
+],
+  [Kind.AssertsKeyword, []
+],
+  [Kind.AssertKeyword, []
+],
+  [Kind.AnyKeyword, []
+],
+  [Kind.AsyncKeyword, []
+],
+  [Kind.AwaitKeyword, []
+],
+  [Kind.BooleanKeyword, []
+],
+  [Kind.ConstructorKeyword, []
+],
+  [Kind.DeclareKeyword, []
+],
+  [Kind.GetKeyword, []
+],
+  [Kind.ImmediateKeyword, []
+],
+  [Kind.InferKeyword, []
+],
+  [Kind.IntrinsicKeyword, []
+],
+  [Kind.IsKeyword, []
+],
+  [Kind.KeyOfKeyword, []
+],
+  [Kind.ModuleKeyword, []
+],
+  [Kind.NamespaceKeyword, []
+],
+  [Kind.NeverKeyword, []
+],
+  [Kind.OutKeyword, []
+],
+  [Kind.ReadonlyKeyword, []
+],
+  [Kind.RequireKeyword, []
+],
+  [Kind.NumberKeyword, []
+],
+  [Kind.ObjectKeyword, []
+],
+  [Kind.SatisfiesKeyword, []
+],
+  [Kind.SetKeyword, []
+],
+  [Kind.StringKeyword, []
+],
+  [Kind.SymbolKeyword, []
+],
+  [Kind.TypeKeyword, []
+],
+  [Kind.UndefinedKeyword, []
+],
+  [Kind.UniqueKeyword, []
+],
+  [Kind.UnknownKeyword, []
+],
+  [Kind.UsingKeyword, []
+],
+  [Kind.FromKeyword, []
+],
+  [Kind.GlobalKeyword, []
+],
+  [Kind.BigIntKeyword, []
+],
+  [Kind.OverrideKeyword, []
+],
+  [Kind.OfKeyword, []
+],
+  [Kind.DeferKeyword, []
+],
+  [Kind.Identifier, []
+],
+  [Kind.PrivateIdentifier, []
+],
+  [Kind.QualifiedName, [
   "left",
   "right"
 ]
-;
-dataEncodingByKind[Kind.QualifiedName] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ComputedPropertyName] = [
+],
+  [Kind.ComputedPropertyName, [
   "expression"
 ]
-;
-dataEncodingByKind[Kind.ComputedPropertyName] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.Decorator] = [
+],
+  [Kind.Decorator, [
   "expression"
 ]
-;
-dataEncodingByKind[Kind.Decorator] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.EmptyStatement] = []
-;
-dataEncodingByKind[Kind.EmptyStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.IfStatement] = [
+],
+  [Kind.EmptyStatement, []
+],
+  [Kind.IfStatement, [
   "expression",
   "thenStatement",
   "elseStatement"
 ]
-;
-dataEncodingByKind[Kind.IfStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.DoStatement] = [
+],
+  [Kind.DoStatement, [
   "statement",
   "expression"
 ]
-;
-dataEncodingByKind[Kind.DoStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.WhileStatement] = [
+],
+  [Kind.WhileStatement, [
   "expression",
   "statement"
 ]
-;
-dataEncodingByKind[Kind.WhileStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ForStatement] = [
+],
+  [Kind.ForStatement, [
   "initializer",
   "condition",
   "incrementor",
   "statement"
 ]
-;
-dataEncodingByKind[Kind.ForStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ForInStatement] = [
+],
+  [Kind.ForInStatement, [
   "awaitModifier",
   "initializer",
   "expression",
   "statement"
 ]
-;
-dataEncodingByKind[Kind.ForInStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ForOfStatement] = [
+],
+  [Kind.ForOfStatement, [
   "awaitModifier",
   "initializer",
   "expression",
   "statement"
 ]
-;
-dataEncodingByKind[Kind.ForOfStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.BreakStatement] = [
+],
+  [Kind.BreakStatement, [
   "label"
 ]
-;
-dataEncodingByKind[Kind.BreakStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ContinueStatement] = [
+],
+  [Kind.ContinueStatement, [
   "label"
 ]
-;
-dataEncodingByKind[Kind.ContinueStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ReturnStatement] = [
+],
+  [Kind.ReturnStatement, [
   "expression"
 ]
-;
-dataEncodingByKind[Kind.ReturnStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.WithStatement] = [
+],
+  [Kind.WithStatement, [
   "expression",
   "statement"
 ]
-;
-dataEncodingByKind[Kind.WithStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SwitchStatement] = [
+],
+  [Kind.SwitchStatement, [
   "expression",
   "caseBlock"
 ]
-;
-dataEncodingByKind[Kind.SwitchStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.CaseBlock] = [
+],
+  [Kind.CaseBlock, [
   "clauses"
 ]
-;
-dataEncodingByKind[Kind.CaseBlock] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.CaseClause] = [
+],
+  [Kind.CaseClause, [
   "expression",
   "statements"
 ]
-;
-dataEncodingByKind[Kind.CaseClause] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.DefaultClause] = [
+],
+  [Kind.DefaultClause, [
   "expression",
   "statements"
 ]
-;
-dataEncodingByKind[Kind.DefaultClause] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ThrowStatement] = [
+],
+  [Kind.ThrowStatement, [
   "expression"
 ]
-;
-dataEncodingByKind[Kind.ThrowStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TryStatement] = [
+],
+  [Kind.TryStatement, [
   "tryBlock",
   "catchClause",
   "finallyBlock"
 ]
-;
-dataEncodingByKind[Kind.TryStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.CatchClause] = [
+],
+  [Kind.CatchClause, [
   "variableDeclaration",
   "block"
 ]
-;
-dataEncodingByKind[Kind.CatchClause] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.DebuggerStatement] = []
-;
-dataEncodingByKind[Kind.DebuggerStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.LabeledStatement] = [
+],
+  [Kind.DebuggerStatement, []
+],
+  [Kind.LabeledStatement, [
   "label",
   "statement"
 ]
-;
-dataEncodingByKind[Kind.LabeledStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ExpressionStatement] = [
+],
+  [Kind.ExpressionStatement, [
   "expression"
 ]
-;
-dataEncodingByKind[Kind.ExpressionStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.Block] = [
+],
+  [Kind.Block, [
   "statements"
 ]
-;
-dataEncodingByKind[Kind.Block] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.VariableStatement] = [
+],
+  [Kind.VariableStatement, [
   "modifiers",
   "declarationList"
 ]
-;
-dataEncodingByKind[Kind.VariableStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.VariableDeclaration] = [
+],
+  [Kind.VariableDeclaration, [
   "name",
   "exclamationToken",
   "type",
   "initializer"
 ]
-;
-dataEncodingByKind[Kind.VariableDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.VariableDeclarationList] = [
+],
+  [Kind.VariableDeclarationList, [
   "declarations"
 ]
-;
-dataEncodingByKind[Kind.VariableDeclarationList] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ObjectBindingPattern] = [
+],
+  [Kind.ObjectBindingPattern, [
   "elements"
 ]
-;
-dataEncodingByKind[Kind.ObjectBindingPattern] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ArrayBindingPattern] = [
+],
+  [Kind.ArrayBindingPattern, [
   "elements"
 ]
-;
-dataEncodingByKind[Kind.ArrayBindingPattern] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.Parameter] = [
+],
+  [Kind.Parameter, [
   "modifiers",
   "dotDotDotToken",
   "name",
@@ -701,22 +504,19 @@ childPropertiesByKind[Kind.Parameter] = [
   "type",
   "initializer"
 ]
-;
-dataEncodingByKind[Kind.Parameter] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.BindingElement] = [
+],
+  [Kind.BindingElement, [
   "dotDotDotToken",
   "propertyName",
   "name",
   "initializer"
 ]
-;
-dataEncodingByKind[Kind.BindingElement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.MissingDeclaration] = [
+],
+  [Kind.MissingDeclaration, [
   "modifiers"
 ]
-;
-dataEncodingByKind[Kind.MissingDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.FunctionDeclaration] = [
+],
+  [Kind.FunctionDeclaration, [
   "modifiers",
   "asteriskToken",
   "name",
@@ -725,164 +525,139 @@ childPropertiesByKind[Kind.FunctionDeclaration] = [
   "type",
   "body"
 ]
-;
-dataEncodingByKind[Kind.FunctionDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ClassDeclaration] = [
+],
+  [Kind.ClassDeclaration, [
   "modifiers",
   "name",
   "typeParameters",
   "heritageClauses",
   "members"
 ]
-;
-dataEncodingByKind[Kind.ClassDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ClassExpression] = [
+],
+  [Kind.ClassExpression, [
   "modifiers",
   "name",
   "typeParameters",
   "heritageClauses",
   "members"
 ]
-;
-dataEncodingByKind[Kind.ClassExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.HeritageClause] = [
+],
+  [Kind.HeritageClause, [
   "types"
 ]
-;
-dataEncodingByKind[Kind.HeritageClause] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.InterfaceDeclaration] = [
+],
+  [Kind.InterfaceDeclaration, [
   "modifiers",
   "name",
   "typeParameters",
   "heritageClauses",
   "members"
 ]
-;
-dataEncodingByKind[Kind.InterfaceDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TypeAliasDeclaration] = [
+],
+  [Kind.TypeAliasDeclaration, [
   "modifiers",
   "name",
   "typeParameters",
   "type"
 ]
-;
-dataEncodingByKind[Kind.TypeAliasDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSTypeAliasDeclaration] = [
+],
+  [Kind.JSTypeAliasDeclaration, [
   "modifiers",
   "name",
   "typeParameters",
   "type"
 ]
-;
-dataEncodingByKind[Kind.JSTypeAliasDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.EnumMember] = [
+],
+  [Kind.EnumMember, [
   "name",
   "initializer"
 ]
-;
-dataEncodingByKind[Kind.EnumMember] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.EnumDeclaration] = [
+],
+  [Kind.EnumDeclaration, [
   "modifiers",
   "name",
   "members"
 ]
-;
-dataEncodingByKind[Kind.EnumDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ModuleBlock] = [
+],
+  [Kind.ModuleBlock, [
   "statements"
 ]
-;
-dataEncodingByKind[Kind.ModuleBlock] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NotEmittedStatement] = []
-;
-dataEncodingByKind[Kind.NotEmittedStatement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NotEmittedTypeElement] = []
-;
-dataEncodingByKind[Kind.NotEmittedTypeElement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ImportDeclaration] = [
+],
+  [Kind.NotEmittedStatement, []
+],
+  [Kind.NotEmittedTypeElement, []
+],
+  [Kind.ImportDeclaration, [
   "modifiers",
   "importClause",
   "moduleSpecifier",
   "attributes"
 ]
-;
-dataEncodingByKind[Kind.ImportDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSImportDeclaration] = [
+],
+  [Kind.JSImportDeclaration, [
   "modifiers",
   "importClause",
   "moduleSpecifier",
   "attributes"
 ]
-;
-dataEncodingByKind[Kind.JSImportDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ExternalModuleReference] = [
+],
+  [Kind.ExternalModuleReference, [
   "expression"
 ]
-;
-dataEncodingByKind[Kind.ExternalModuleReference] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NamespaceImport] = [
+],
+  [Kind.NamespaceImport, [
   "name"
 ]
-;
-dataEncodingByKind[Kind.NamespaceImport] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NamedImports] = [
+],
+  [Kind.NamedImports, [
   "elements"
 ]
-;
-dataEncodingByKind[Kind.NamedImports] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ExportAssignment] = [
+],
+  [Kind.ExportAssignment, [
   "modifiers",
   "type",
   "expression"
 ]
-;
-dataEncodingByKind[Kind.ExportAssignment] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NamespaceExportDeclaration] = [
+],
+  [Kind.NamespaceExportDeclaration, [
   "modifiers",
   "name"
 ]
-;
-dataEncodingByKind[Kind.NamespaceExportDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NamespaceExport] = [
+],
+  [Kind.NamespaceExport, [
   "name"
 ]
-;
-dataEncodingByKind[Kind.NamespaceExport] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NamedExports] = [
+],
+  [Kind.NamedExports, [
   "elements"
 ]
-;
-dataEncodingByKind[Kind.NamedExports] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ExportSpecifier] = [
+],
+  [Kind.ExportSpecifier, [
   "propertyName",
   "name"
 ]
-;
-dataEncodingByKind[Kind.ExportSpecifier] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.CallSignature] = [
+],
+  [Kind.CallSignature, [
   "typeParameters",
   "parameters",
   "type"
 ]
-;
-dataEncodingByKind[Kind.CallSignature] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ConstructSignature] = [
+],
+  [Kind.ConstructSignature, [
   "typeParameters",
   "parameters",
   "type"
 ]
-;
-dataEncodingByKind[Kind.ConstructSignature] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.Constructor] = [
+],
+  [Kind.Constructor, [
   "modifiers",
   "typeParameters",
   "parameters",
   "type",
   "body"
 ]
-;
-dataEncodingByKind[Kind.Constructor] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.GetAccessor] = [
+],
+  [Kind.GetAccessor, [
   "modifiers",
   "name",
   "typeParameters",
@@ -890,9 +665,8 @@ childPropertiesByKind[Kind.GetAccessor] = [
   "type",
   "body"
 ]
-;
-dataEncodingByKind[Kind.GetAccessor] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SetAccessor] = [
+],
+  [Kind.SetAccessor, [
   "modifiers",
   "name",
   "typeParameters",
@@ -900,16 +674,14 @@ childPropertiesByKind[Kind.SetAccessor] = [
   "type",
   "body"
 ]
-;
-dataEncodingByKind[Kind.SetAccessor] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.IndexSignature] = [
+],
+  [Kind.IndexSignature, [
   "modifiers",
   "parameters",
   "type"
 ]
-;
-dataEncodingByKind[Kind.IndexSignature] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.MethodSignature] = [
+],
+  [Kind.MethodSignature, [
   "modifiers",
   "name",
   "postfixToken",
@@ -917,9 +689,8 @@ childPropertiesByKind[Kind.MethodSignature] = [
   "parameters",
   "type"
 ]
-;
-dataEncodingByKind[Kind.MethodSignature] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.MethodDeclaration] = [
+],
+  [Kind.MethodDeclaration, [
   "modifiers",
   "asteriskToken",
   "name",
@@ -929,97 +700,76 @@ childPropertiesByKind[Kind.MethodDeclaration] = [
   "type",
   "body"
 ]
-;
-dataEncodingByKind[Kind.MethodDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.PropertySignature] = [
+],
+  [Kind.PropertySignature, [
   "modifiers",
   "name",
   "postfixToken",
   "type",
   "initializer"
 ]
-;
-dataEncodingByKind[Kind.PropertySignature] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.PropertyDeclaration] = [
+],
+  [Kind.PropertyDeclaration, [
   "modifiers",
   "name",
   "postfixToken",
   "type",
   "initializer"
 ]
-;
-dataEncodingByKind[Kind.PropertyDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SemicolonClassElement] = []
-;
-dataEncodingByKind[Kind.SemicolonClassElement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ClassStaticBlockDeclaration] = [
+],
+  [Kind.SemicolonClassElement, []
+],
+  [Kind.ClassStaticBlockDeclaration, [
   "modifiers",
   "body"
 ]
-;
-dataEncodingByKind[Kind.ClassStaticBlockDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.OmittedExpression] = []
-;
-dataEncodingByKind[Kind.OmittedExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NullKeyword] = []
-;
-dataEncodingByKind[Kind.NullKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TrueKeyword] = []
-;
-dataEncodingByKind[Kind.TrueKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.FalseKeyword] = []
-;
-dataEncodingByKind[Kind.FalseKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ThisKeyword] = []
-;
-dataEncodingByKind[Kind.ThisKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SuperKeyword] = []
-;
-dataEncodingByKind[Kind.SuperKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ImportKeyword] = []
-;
-dataEncodingByKind[Kind.ImportKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.StringLiteral] = []
-;
-dataEncodingByKind[Kind.StringLiteral] = NodeDataEncoding.extended;
-childPropertiesByKind[Kind.NumericLiteral] = []
-;
-dataEncodingByKind[Kind.NumericLiteral] = NodeDataEncoding.extended;
-childPropertiesByKind[Kind.BigIntLiteral] = []
-;
-dataEncodingByKind[Kind.BigIntLiteral] = NodeDataEncoding.extended;
-childPropertiesByKind[Kind.RegularExpressionLiteral] = []
-;
-dataEncodingByKind[Kind.RegularExpressionLiteral] = NodeDataEncoding.extended;
-childPropertiesByKind[Kind.NoSubstitutionTemplateLiteral] = []
-;
-dataEncodingByKind[Kind.NoSubstitutionTemplateLiteral] = NodeDataEncoding.extended;
-childPropertiesByKind[Kind.BinaryExpression] = [
+],
+  [Kind.OmittedExpression, []
+],
+  [Kind.NullKeyword, []
+],
+  [Kind.TrueKeyword, []
+],
+  [Kind.FalseKeyword, []
+],
+  [Kind.ThisKeyword, []
+],
+  [Kind.SuperKeyword, []
+],
+  [Kind.ImportKeyword, []
+],
+  [Kind.StringLiteral, []
+],
+  [Kind.NumericLiteral, []
+],
+  [Kind.BigIntLiteral, []
+],
+  [Kind.RegularExpressionLiteral, []
+],
+  [Kind.NoSubstitutionTemplateLiteral, []
+],
+  [Kind.BinaryExpression, [
   "modifiers",
   "left",
   "type",
   "operatorToken",
   "right"
 ]
-;
-dataEncodingByKind[Kind.BinaryExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.PrefixUnaryExpression] = [
+],
+  [Kind.PrefixUnaryExpression, [
   "operand"
 ]
-;
-dataEncodingByKind[Kind.PrefixUnaryExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.PostfixUnaryExpression] = [
+],
+  [Kind.PostfixUnaryExpression, [
   "operand"
 ]
-;
-dataEncodingByKind[Kind.PostfixUnaryExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.YieldExpression] = [
+],
+  [Kind.YieldExpression, [
   "asteriskToken",
   "expression"
 ]
-;
-dataEncodingByKind[Kind.YieldExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ArrowFunction] = [
+],
+  [Kind.ArrowFunction, [
   "modifiers",
   "typeParameters",
   "parameters",
@@ -1027,9 +777,8 @@ childPropertiesByKind[Kind.ArrowFunction] = [
   "equalsGreaterThanToken",
   "body"
 ]
-;
-dataEncodingByKind[Kind.ArrowFunction] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.FunctionExpression] = [
+],
+  [Kind.FunctionExpression, [
   "modifiers",
   "asteriskToken",
   "name",
@@ -1038,123 +787,104 @@ childPropertiesByKind[Kind.FunctionExpression] = [
   "type",
   "body"
 ]
-;
-dataEncodingByKind[Kind.FunctionExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AsExpression] = [
+],
+  [Kind.AsExpression, [
   "expression",
   "type"
 ]
-;
-dataEncodingByKind[Kind.AsExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SatisfiesExpression] = [
+],
+  [Kind.SatisfiesExpression, [
   "expression",
   "type"
 ]
-;
-dataEncodingByKind[Kind.SatisfiesExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ConditionalExpression] = [
+],
+  [Kind.ConditionalExpression, [
   "condition",
   "questionToken",
   "whenTrue",
   "colonToken",
   "whenFalse"
 ]
-;
-dataEncodingByKind[Kind.ConditionalExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.PropertyAccessExpression] = [
+],
+  [Kind.PropertyAccessExpression, [
   "expression",
   "questionDotToken",
   "name"
 ]
-;
-dataEncodingByKind[Kind.PropertyAccessExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ElementAccessExpression] = [
+],
+  [Kind.ElementAccessExpression, [
   "expression",
   "questionDotToken",
   "argumentExpression"
 ]
-;
-dataEncodingByKind[Kind.ElementAccessExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.CallExpression] = [
+],
+  [Kind.CallExpression, [
   "expression",
   "questionDotToken",
   "typeArguments",
   "arguments"
 ]
-;
-dataEncodingByKind[Kind.CallExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NewExpression] = [
+],
+  [Kind.NewExpression, [
   "expression",
   "typeArguments",
   "arguments"
 ]
-;
-dataEncodingByKind[Kind.NewExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.MetaProperty] = [
+],
+  [Kind.MetaProperty, [
   "name"
 ]
-;
-dataEncodingByKind[Kind.MetaProperty] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NonNullExpression] = [
+],
+  [Kind.NonNullExpression, [
   "expression"
 ]
-;
-dataEncodingByKind[Kind.NonNullExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SpreadElement] = [
+],
+  [Kind.SpreadElement, [
   "expression"
 ]
-;
-dataEncodingByKind[Kind.SpreadElement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TemplateExpression] = [
+],
+  [Kind.TemplateExpression, [
   "head",
   "templateSpans"
 ]
-;
-dataEncodingByKind[Kind.TemplateExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TemplateSpan] = [
+],
+  [Kind.TemplateSpan, [
   "expression",
   "literal"
 ]
-;
-dataEncodingByKind[Kind.TemplateSpan] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TaggedTemplateExpression] = [
+],
+  [Kind.TaggedTemplateExpression, [
   "tag",
   "questionDotToken",
   "typeArguments",
   "template"
 ]
-;
-dataEncodingByKind[Kind.TaggedTemplateExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ParenthesizedExpression] = [
+],
+  [Kind.ParenthesizedExpression, [
   "expression"
 ]
-;
-dataEncodingByKind[Kind.ParenthesizedExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ArrayLiteralExpression] = [
+],
+  [Kind.ArrayLiteralExpression, [
   "elements"
 ]
-;
-dataEncodingByKind[Kind.ArrayLiteralExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ObjectLiteralExpression] = [
+],
+  [Kind.ObjectLiteralExpression, [
   "properties"
 ]
-;
-dataEncodingByKind[Kind.ObjectLiteralExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SpreadAssignment] = [
+],
+  [Kind.SpreadAssignment, [
   "expression"
 ]
-;
-dataEncodingByKind[Kind.SpreadAssignment] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.PropertyAssignment] = [
+],
+  [Kind.PropertyAssignment, [
   "modifiers",
   "name",
   "postfixToken",
   "type",
   "initializer"
 ]
-;
-dataEncodingByKind[Kind.PropertyAssignment] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ShorthandPropertyAssignment] = [
+],
+  [Kind.ShorthandPropertyAssignment, [
   "modifiers",
   "name",
   "postfixToken",
@@ -1162,154 +892,121 @@ childPropertiesByKind[Kind.ShorthandPropertyAssignment] = [
   "equalsToken",
   "objectAssignmentInitializer"
 ]
-;
-dataEncodingByKind[Kind.ShorthandPropertyAssignment] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.DeleteExpression] = [
+],
+  [Kind.DeleteExpression, [
   "expression"
 ]
-;
-dataEncodingByKind[Kind.DeleteExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TypeOfExpression] = [
+],
+  [Kind.TypeOfExpression, [
   "expression"
 ]
-;
-dataEncodingByKind[Kind.TypeOfExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.VoidExpression] = [
+],
+  [Kind.VoidExpression, [
   "expression"
 ]
-;
-dataEncodingByKind[Kind.VoidExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AwaitExpression] = [
+],
+  [Kind.AwaitExpression, [
   "expression"
 ]
-;
-dataEncodingByKind[Kind.AwaitExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TypeAssertionExpression] = [
+],
+  [Kind.TypeAssertionExpression, [
   "type",
   "expression"
 ]
-;
-dataEncodingByKind[Kind.TypeAssertionExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.AnyKeyword] = []
-;
-dataEncodingByKind[Kind.AnyKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.BigIntKeyword] = []
-;
-dataEncodingByKind[Kind.BigIntKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.BooleanKeyword] = []
-;
-dataEncodingByKind[Kind.BooleanKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.IntrinsicKeyword] = []
-;
-dataEncodingByKind[Kind.IntrinsicKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NeverKeyword] = []
-;
-dataEncodingByKind[Kind.NeverKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NumberKeyword] = []
-;
-dataEncodingByKind[Kind.NumberKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ObjectKeyword] = []
-;
-dataEncodingByKind[Kind.ObjectKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.StringKeyword] = []
-;
-dataEncodingByKind[Kind.StringKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SymbolKeyword] = []
-;
-dataEncodingByKind[Kind.SymbolKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.UndefinedKeyword] = []
-;
-dataEncodingByKind[Kind.UndefinedKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.UnknownKeyword] = []
-;
-dataEncodingByKind[Kind.UnknownKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.VoidKeyword] = []
-;
-dataEncodingByKind[Kind.VoidKeyword] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.UnionType] = [
+],
+  [Kind.AnyKeyword, []
+],
+  [Kind.BigIntKeyword, []
+],
+  [Kind.BooleanKeyword, []
+],
+  [Kind.IntrinsicKeyword, []
+],
+  [Kind.NeverKeyword, []
+],
+  [Kind.NumberKeyword, []
+],
+  [Kind.ObjectKeyword, []
+],
+  [Kind.StringKeyword, []
+],
+  [Kind.SymbolKeyword, []
+],
+  [Kind.UndefinedKeyword, []
+],
+  [Kind.UnknownKeyword, []
+],
+  [Kind.VoidKeyword, []
+],
+  [Kind.UnionType, [
   "types"
 ]
-;
-dataEncodingByKind[Kind.UnionType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.IntersectionType] = [
+],
+  [Kind.IntersectionType, [
   "types"
 ]
-;
-dataEncodingByKind[Kind.IntersectionType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ConditionalType] = [
+],
+  [Kind.ConditionalType, [
   "checkType",
   "extendsType",
   "trueType",
   "falseType"
 ]
-;
-dataEncodingByKind[Kind.ConditionalType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TypeOperator] = [
+],
+  [Kind.TypeOperator, [
   "type"
 ]
-;
-dataEncodingByKind[Kind.TypeOperator] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.InferType] = [
+],
+  [Kind.InferType, [
   "typeParameter"
 ]
-;
-dataEncodingByKind[Kind.InferType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ArrayType] = [
+],
+  [Kind.ArrayType, [
   "elementType"
 ]
-;
-dataEncodingByKind[Kind.ArrayType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.IndexedAccessType] = [
+],
+  [Kind.IndexedAccessType, [
   "objectType",
   "indexType"
 ]
-;
-dataEncodingByKind[Kind.IndexedAccessType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TypeReference] = [
+],
+  [Kind.TypeReference, [
   "typeName",
   "typeArguments"
 ]
-;
-dataEncodingByKind[Kind.TypeReference] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ExpressionWithTypeArguments] = [
+],
+  [Kind.ExpressionWithTypeArguments, [
   "expression",
   "typeArguments"
 ]
-;
-dataEncodingByKind[Kind.ExpressionWithTypeArguments] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.LiteralType] = [
+],
+  [Kind.LiteralType, [
   "literal"
 ]
-;
-dataEncodingByKind[Kind.LiteralType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ThisType] = []
-;
-dataEncodingByKind[Kind.ThisType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TypePredicate] = [
+],
+  [Kind.ThisType, []
+],
+  [Kind.TypePredicate, [
   "assertsModifier",
   "parameterName",
   "type"
 ]
-;
-dataEncodingByKind[Kind.TypePredicate] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ImportAttribute] = [
+],
+  [Kind.ImportAttribute, [
   "name",
   "value"
 ]
-;
-dataEncodingByKind[Kind.ImportAttribute] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ImportAttributes] = [
+],
+  [Kind.ImportAttributes, [
   "attributes"
 ]
-;
-dataEncodingByKind[Kind.ImportAttributes] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TypeQuery] = [
+],
+  [Kind.TypeQuery, [
   "exprName",
   "typeArguments"
 ]
-;
-dataEncodingByKind[Kind.TypeQuery] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.MappedType] = [
+],
+  [Kind.MappedType, [
   "readonlyToken",
   "typeParameter",
   "nameType",
@@ -1317,448 +1014,757 @@ childPropertiesByKind[Kind.MappedType] = [
   "type",
   "members"
 ]
-;
-dataEncodingByKind[Kind.MappedType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TypeLiteral] = [
+],
+  [Kind.TypeLiteral, [
   "members"
 ]
-;
-dataEncodingByKind[Kind.TypeLiteral] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TupleType] = [
+],
+  [Kind.TupleType, [
   "elements"
 ]
-;
-dataEncodingByKind[Kind.TupleType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.NamedTupleMember] = [
+],
+  [Kind.NamedTupleMember, [
   "dotDotDotToken",
   "name",
   "questionToken",
   "type"
 ]
-;
-dataEncodingByKind[Kind.NamedTupleMember] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.OptionalType] = [
+],
+  [Kind.OptionalType, [
   "type"
 ]
-;
-dataEncodingByKind[Kind.OptionalType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.RestType] = [
+],
+  [Kind.RestType, [
   "type"
 ]
-;
-dataEncodingByKind[Kind.RestType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ParenthesizedType] = [
+],
+  [Kind.ParenthesizedType, [
   "type"
 ]
-;
-dataEncodingByKind[Kind.ParenthesizedType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.FunctionType] = [
+],
+  [Kind.FunctionType, [
   "typeParameters",
   "parameters",
   "type"
 ]
-;
-dataEncodingByKind[Kind.FunctionType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ConstructorType] = [
+],
+  [Kind.ConstructorType, [
   "modifiers",
   "typeParameters",
   "parameters",
   "type"
 ]
-;
-dataEncodingByKind[Kind.ConstructorType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TemplateHead] = []
-;
-dataEncodingByKind[Kind.TemplateHead] = NodeDataEncoding.extended;
-childPropertiesByKind[Kind.TemplateMiddle] = []
-;
-dataEncodingByKind[Kind.TemplateMiddle] = NodeDataEncoding.extended;
-childPropertiesByKind[Kind.TemplateTail] = []
-;
-dataEncodingByKind[Kind.TemplateTail] = NodeDataEncoding.extended;
-childPropertiesByKind[Kind.TemplateLiteralType] = [
+],
+  [Kind.TemplateHead, []
+],
+  [Kind.TemplateMiddle, []
+],
+  [Kind.TemplateTail, []
+],
+  [Kind.TemplateLiteralType, [
   "head",
   "templateSpans"
 ]
-;
-dataEncodingByKind[Kind.TemplateLiteralType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TemplateLiteralTypeSpan] = [
+],
+  [Kind.TemplateLiteralTypeSpan, [
   "type",
   "literal"
 ]
-;
-dataEncodingByKind[Kind.TemplateLiteralTypeSpan] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SyntheticExpression] = [
+],
+  [Kind.SyntheticExpression, [
   "tupleNameSource"
 ]
-;
-dataEncodingByKind[Kind.SyntheticExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.PartiallyEmittedExpression] = [
+],
+  [Kind.PartiallyEmittedExpression, [
   "expression"
 ]
-;
-dataEncodingByKind[Kind.PartiallyEmittedExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JsxElement] = [
+],
+  [Kind.JsxElement, [
   "openingElement",
   "children",
   "closingElement"
 ]
-;
-dataEncodingByKind[Kind.JsxElement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JsxAttributes] = [
+],
+  [Kind.JsxAttributes, [
   "properties"
 ]
-;
-dataEncodingByKind[Kind.JsxAttributes] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JsxNamespacedName] = [
+],
+  [Kind.JsxNamespacedName, [
   "namespace",
   "name"
 ]
-;
-dataEncodingByKind[Kind.JsxNamespacedName] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JsxOpeningElement] = [
+],
+  [Kind.JsxOpeningElement, [
   "tagName",
   "typeArguments",
   "attributes"
 ]
-;
-dataEncodingByKind[Kind.JsxOpeningElement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JsxSelfClosingElement] = [
+],
+  [Kind.JsxSelfClosingElement, [
   "tagName",
   "typeArguments",
   "attributes"
 ]
-;
-dataEncodingByKind[Kind.JsxSelfClosingElement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JsxFragment] = [
+],
+  [Kind.JsxFragment, [
   "openingFragment",
   "children",
   "closingFragment"
 ]
-;
-dataEncodingByKind[Kind.JsxFragment] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JsxOpeningFragment] = []
-;
-dataEncodingByKind[Kind.JsxOpeningFragment] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JsxClosingFragment] = []
-;
-dataEncodingByKind[Kind.JsxClosingFragment] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JsxAttribute] = [
+],
+  [Kind.JsxOpeningFragment, []
+],
+  [Kind.JsxClosingFragment, []
+],
+  [Kind.JsxAttribute, [
   "name",
   "initializer"
 ]
-;
-dataEncodingByKind[Kind.JsxAttribute] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JsxSpreadAttribute] = [
+],
+  [Kind.JsxSpreadAttribute, [
   "expression"
 ]
-;
-dataEncodingByKind[Kind.JsxSpreadAttribute] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JsxClosingElement] = [
+],
+  [Kind.JsxClosingElement, [
   "tagName"
 ]
-;
-dataEncodingByKind[Kind.JsxClosingElement] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JsxExpression] = [
+],
+  [Kind.JsxExpression, [
   "dotDotDotToken",
   "expression"
 ]
-;
-dataEncodingByKind[Kind.JsxExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JsxText] = []
-;
-dataEncodingByKind[Kind.JsxText] = NodeDataEncoding.string;
-childPropertiesByKind[Kind.SyntaxList] = [
+],
+  [Kind.JsxText, []
+],
+  [Kind.SyntaxList, [
   "children"
 ]
-;
-dataEncodingByKind[Kind.SyntaxList] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDoc] = [
+],
+  [Kind.JSDoc, [
   "comment",
   "tags"
 ]
-;
-dataEncodingByKind[Kind.JSDoc] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocTypeExpression] = [
+],
+  [Kind.JSDocTypeExpression, [
   "type"
 ]
-;
-dataEncodingByKind[Kind.JSDocTypeExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocNonNullableType] = [
+],
+  [Kind.JSDocNonNullableType, [
   "type"
 ]
-;
-dataEncodingByKind[Kind.JSDocNonNullableType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocNullableType] = [
+],
+  [Kind.JSDocNullableType, [
   "type"
 ]
-;
-dataEncodingByKind[Kind.JSDocNullableType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocAllType] = []
-;
-dataEncodingByKind[Kind.JSDocAllType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocVariadicType] = [
+],
+  [Kind.JSDocAllType, []
+],
+  [Kind.JSDocVariadicType, [
   "type"
 ]
-;
-dataEncodingByKind[Kind.JSDocVariadicType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocOptionalType] = [
+],
+  [Kind.JSDocOptionalType, [
   "type"
 ]
-;
-dataEncodingByKind[Kind.JSDocOptionalType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocTypeTag] = [
+],
+  [Kind.JSDocTypeTag, [
   "tagName",
   "typeExpression",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocTypeTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocUnknownTag] = [
+],
+  [Kind.JSDocUnknownTag, [
   "tagName",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocUnknownTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocTemplateTag] = [
+],
+  [Kind.JSDocTemplateTag, [
   "tagName",
   "constraint",
   "typeParameters",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocTemplateTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocReturnTag] = [
+],
+  [Kind.JSDocReturnTag, [
   "tagName",
   "typeExpression",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocReturnTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocPublicTag] = [
+],
+  [Kind.JSDocPublicTag, [
   "tagName",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocPublicTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocPrivateTag] = [
+],
+  [Kind.JSDocPrivateTag, [
   "tagName",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocPrivateTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocProtectedTag] = [
+],
+  [Kind.JSDocProtectedTag, [
   "tagName",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocProtectedTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocReadonlyTag] = [
+],
+  [Kind.JSDocReadonlyTag, [
   "tagName",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocReadonlyTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocOverrideTag] = [
+],
+  [Kind.JSDocOverrideTag, [
   "tagName",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocOverrideTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocDeprecatedTag] = [
+],
+  [Kind.JSDocDeprecatedTag, [
   "tagName",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocDeprecatedTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocSeeTag] = [
+],
+  [Kind.JSDocSeeTag, [
   "tagName",
   "nameExpression",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocSeeTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocImplementsTag] = [
+],
+  [Kind.JSDocImplementsTag, [
   "tagName",
   "className",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocImplementsTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocAugmentsTag] = [
+],
+  [Kind.JSDocAugmentsTag, [
   "tagName",
   "className",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocAugmentsTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocSatisfiesTag] = [
+],
+  [Kind.JSDocSatisfiesTag, [
   "tagName",
   "typeExpression",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocSatisfiesTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocThrowsTag] = [
+],
+  [Kind.JSDocThrowsTag, [
   "tagName",
   "typeExpression",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocThrowsTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocThisTag] = [
+],
+  [Kind.JSDocThisTag, [
   "tagName",
   "typeExpression",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocThisTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocImportTag] = [
+],
+  [Kind.JSDocImportTag, [
   "tagName",
   "importClause",
   "moduleSpecifier",
   "attributes",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocImportTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocCallbackTag] = [
+],
+  [Kind.JSDocCallbackTag, [
   "tagName",
   "typeExpression",
   "fullName",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocCallbackTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocOverloadTag] = [
+],
+  [Kind.JSDocOverloadTag, [
   "tagName",
   "typeExpression",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocOverloadTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocTypedefTag] = [
+],
+  [Kind.JSDocTypedefTag, [
   "tagName",
   "typeExpression",
   "name",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocTypedefTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocSignature] = [
+],
+  [Kind.JSDocSignature, [
   "typeParameters",
   "parameters",
   "type"
 ]
-;
-dataEncodingByKind[Kind.JSDocSignature] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocNameReference] = [
+],
+  [Kind.JSDocNameReference, [
   "name"
 ]
-;
-dataEncodingByKind[Kind.JSDocNameReference] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SourceFile] = [
+],
+  [Kind.SourceFile, [
   "statements",
   "endOfFileToken"
 ]
-;
-dataEncodingByKind[Kind.SourceFile] = NodeDataEncoding.extended;
-childPropertiesByKind[Kind.ModuleDeclaration] = [
+],
+  [Kind.ModuleDeclaration, [
   "modifiers",
   "name",
   "body"
 ]
-;
-dataEncodingByKind[Kind.ModuleDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ImportEqualsDeclaration] = [
+],
+  [Kind.ImportEqualsDeclaration, [
   "modifiers",
   "name",
   "moduleReference"
 ]
-;
-dataEncodingByKind[Kind.ImportEqualsDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ExportDeclaration] = [
+],
+  [Kind.ExportDeclaration, [
   "modifiers",
   "exportClause",
   "moduleSpecifier",
   "attributes"
 ]
-;
-dataEncodingByKind[Kind.ExportDeclaration] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ImportType] = [
+],
+  [Kind.ImportType, [
   "argument",
   "attributes",
   "qualifier",
   "typeArguments"
 ]
-;
-dataEncodingByKind[Kind.ImportType] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ImportClause] = [
+],
+  [Kind.ImportClause, [
   "name",
   "namedBindings"
 ]
-;
-dataEncodingByKind[Kind.ImportClause] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.ImportSpecifier] = [
+],
+  [Kind.ImportSpecifier, [
   "propertyName",
   "name"
 ]
-;
-dataEncodingByKind[Kind.ImportSpecifier] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocText] = []
-;
-dataEncodingByKind[Kind.JSDocText] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocLink] = [
+],
+  [Kind.JSDocText, []
+],
+  [Kind.JSDocLink, [
   "name"
 ]
-;
-dataEncodingByKind[Kind.JSDocLink] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocLinkPlain] = [
+],
+  [Kind.JSDocLinkPlain, [
   "name"
 ]
-;
-dataEncodingByKind[Kind.JSDocLinkPlain] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocLinkCode] = [
+],
+  [Kind.JSDocLinkCode, [
   "name"
 ]
-;
-dataEncodingByKind[Kind.JSDocLinkCode] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.TypeParameter] = [
+],
+  [Kind.TypeParameter, [
   "modifiers",
   "name",
   "constraint",
   "expression",
   "defaultType"
 ]
-;
-dataEncodingByKind[Kind.TypeParameter] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.SyntheticReferenceExpression] = [
+],
+  [Kind.SyntheticReferenceExpression, [
   "expression",
   "thisArg"
 ]
-;
-dataEncodingByKind[Kind.SyntheticReferenceExpression] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocTypeLiteral] = [
+],
+  [Kind.JSDocTypeLiteral, [
   "jSDocPropertyTags"
 ]
-;
-dataEncodingByKind[Kind.JSDocTypeLiteral] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocParameterTag] = [
+],
+  [Kind.JSDocParameterTag, [
   "tagName",
   "name",
   "typeExpression",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocParameterTag] = NodeDataEncoding.children;
-childPropertiesByKind[Kind.JSDocPropertyTag] = [
+],
+  [Kind.JSDocPropertyTag, [
   "tagName",
   "name",
   "typeExpression",
   "comment"
 ]
-;
-dataEncodingByKind[Kind.JSDocPropertyTag] = NodeDataEncoding.children;
+],
+]);
+
+const dataEncodingByKind: ReadonlyMap<Kind, NodeDataEncoding> = new Map([
+  [Kind.Unknown, NodeDataEncoding.children],
+  [Kind.EndOfFile, NodeDataEncoding.children],
+  [Kind.SingleLineCommentTrivia, NodeDataEncoding.children],
+  [Kind.MultiLineCommentTrivia, NodeDataEncoding.children],
+  [Kind.NewLineTrivia, NodeDataEncoding.children],
+  [Kind.WhitespaceTrivia, NodeDataEncoding.children],
+  [Kind.ConflictMarkerTrivia, NodeDataEncoding.children],
+  [Kind.NonTextFileMarkerTrivia, NodeDataEncoding.children],
+  [Kind.NumericLiteral, NodeDataEncoding.children],
+  [Kind.BigIntLiteral, NodeDataEncoding.children],
+  [Kind.StringLiteral, NodeDataEncoding.children],
+  [Kind.JsxText, NodeDataEncoding.children],
+  [Kind.JsxTextAllWhiteSpaces, NodeDataEncoding.children],
+  [Kind.RegularExpressionLiteral, NodeDataEncoding.children],
+  [Kind.NoSubstitutionTemplateLiteral, NodeDataEncoding.children],
+  [Kind.TemplateHead, NodeDataEncoding.children],
+  [Kind.TemplateMiddle, NodeDataEncoding.children],
+  [Kind.TemplateTail, NodeDataEncoding.children],
+  [Kind.OpenBraceToken, NodeDataEncoding.children],
+  [Kind.CloseBraceToken, NodeDataEncoding.children],
+  [Kind.OpenParenToken, NodeDataEncoding.children],
+  [Kind.CloseParenToken, NodeDataEncoding.children],
+  [Kind.OpenBracketToken, NodeDataEncoding.children],
+  [Kind.CloseBracketToken, NodeDataEncoding.children],
+  [Kind.DotToken, NodeDataEncoding.children],
+  [Kind.DotDotDotToken, NodeDataEncoding.children],
+  [Kind.SemicolonToken, NodeDataEncoding.children],
+  [Kind.CommaToken, NodeDataEncoding.children],
+  [Kind.QuestionDotToken, NodeDataEncoding.children],
+  [Kind.LessThanToken, NodeDataEncoding.children],
+  [Kind.LessThanSlashToken, NodeDataEncoding.children],
+  [Kind.GreaterThanToken, NodeDataEncoding.children],
+  [Kind.LessThanEqualsToken, NodeDataEncoding.children],
+  [Kind.GreaterThanEqualsToken, NodeDataEncoding.children],
+  [Kind.EqualsEqualsToken, NodeDataEncoding.children],
+  [Kind.ExclamationEqualsToken, NodeDataEncoding.children],
+  [Kind.EqualsEqualsEqualsToken, NodeDataEncoding.children],
+  [Kind.ExclamationEqualsEqualsToken, NodeDataEncoding.children],
+  [Kind.EqualsGreaterThanToken, NodeDataEncoding.children],
+  [Kind.PlusToken, NodeDataEncoding.children],
+  [Kind.MinusToken, NodeDataEncoding.children],
+  [Kind.AsteriskToken, NodeDataEncoding.children],
+  [Kind.AsteriskAsteriskToken, NodeDataEncoding.children],
+  [Kind.SlashToken, NodeDataEncoding.children],
+  [Kind.PercentToken, NodeDataEncoding.children],
+  [Kind.PlusPlusToken, NodeDataEncoding.children],
+  [Kind.MinusMinusToken, NodeDataEncoding.children],
+  [Kind.LessThanLessThanToken, NodeDataEncoding.children],
+  [Kind.GreaterThanGreaterThanToken, NodeDataEncoding.children],
+  [Kind.GreaterThanGreaterThanGreaterThanToken, NodeDataEncoding.children],
+  [Kind.AmpersandToken, NodeDataEncoding.children],
+  [Kind.BarToken, NodeDataEncoding.children],
+  [Kind.CaretToken, NodeDataEncoding.children],
+  [Kind.ExclamationToken, NodeDataEncoding.children],
+  [Kind.TildeToken, NodeDataEncoding.children],
+  [Kind.AmpersandAmpersandToken, NodeDataEncoding.children],
+  [Kind.BarBarToken, NodeDataEncoding.children],
+  [Kind.QuestionToken, NodeDataEncoding.children],
+  [Kind.ColonToken, NodeDataEncoding.children],
+  [Kind.AtToken, NodeDataEncoding.children],
+  [Kind.QuestionQuestionToken, NodeDataEncoding.children],
+  [Kind.BacktickToken, NodeDataEncoding.children],
+  [Kind.HashToken, NodeDataEncoding.children],
+  [Kind.EqualsToken, NodeDataEncoding.children],
+  [Kind.PlusEqualsToken, NodeDataEncoding.children],
+  [Kind.MinusEqualsToken, NodeDataEncoding.children],
+  [Kind.AsteriskEqualsToken, NodeDataEncoding.children],
+  [Kind.AsteriskAsteriskEqualsToken, NodeDataEncoding.children],
+  [Kind.SlashEqualsToken, NodeDataEncoding.children],
+  [Kind.PercentEqualsToken, NodeDataEncoding.children],
+  [Kind.LessThanLessThanEqualsToken, NodeDataEncoding.children],
+  [Kind.GreaterThanGreaterThanEqualsToken, NodeDataEncoding.children],
+  [Kind.GreaterThanGreaterThanGreaterThanEqualsToken, NodeDataEncoding.children],
+  [Kind.AmpersandEqualsToken, NodeDataEncoding.children],
+  [Kind.BarEqualsToken, NodeDataEncoding.children],
+  [Kind.BarBarEqualsToken, NodeDataEncoding.children],
+  [Kind.AmpersandAmpersandEqualsToken, NodeDataEncoding.children],
+  [Kind.QuestionQuestionEqualsToken, NodeDataEncoding.children],
+  [Kind.CaretEqualsToken, NodeDataEncoding.children],
+  [Kind.Identifier, NodeDataEncoding.children],
+  [Kind.PrivateIdentifier, NodeDataEncoding.children],
+  [Kind.JSDocCommentTextToken, NodeDataEncoding.children],
+  [Kind.BreakKeyword, NodeDataEncoding.children],
+  [Kind.CaseKeyword, NodeDataEncoding.children],
+  [Kind.CatchKeyword, NodeDataEncoding.children],
+  [Kind.ClassKeyword, NodeDataEncoding.children],
+  [Kind.ConstKeyword, NodeDataEncoding.children],
+  [Kind.ContinueKeyword, NodeDataEncoding.children],
+  [Kind.DebuggerKeyword, NodeDataEncoding.children],
+  [Kind.DefaultKeyword, NodeDataEncoding.children],
+  [Kind.DeleteKeyword, NodeDataEncoding.children],
+  [Kind.DoKeyword, NodeDataEncoding.children],
+  [Kind.ElseKeyword, NodeDataEncoding.children],
+  [Kind.EnumKeyword, NodeDataEncoding.children],
+  [Kind.ExportKeyword, NodeDataEncoding.children],
+  [Kind.ExtendsKeyword, NodeDataEncoding.children],
+  [Kind.FalseKeyword, NodeDataEncoding.children],
+  [Kind.FinallyKeyword, NodeDataEncoding.children],
+  [Kind.ForKeyword, NodeDataEncoding.children],
+  [Kind.FunctionKeyword, NodeDataEncoding.children],
+  [Kind.IfKeyword, NodeDataEncoding.children],
+  [Kind.ImportKeyword, NodeDataEncoding.children],
+  [Kind.InKeyword, NodeDataEncoding.children],
+  [Kind.InstanceOfKeyword, NodeDataEncoding.children],
+  [Kind.NewKeyword, NodeDataEncoding.children],
+  [Kind.NullKeyword, NodeDataEncoding.children],
+  [Kind.ReturnKeyword, NodeDataEncoding.children],
+  [Kind.SuperKeyword, NodeDataEncoding.children],
+  [Kind.SwitchKeyword, NodeDataEncoding.children],
+  [Kind.ThisKeyword, NodeDataEncoding.children],
+  [Kind.ThrowKeyword, NodeDataEncoding.children],
+  [Kind.TrueKeyword, NodeDataEncoding.children],
+  [Kind.TryKeyword, NodeDataEncoding.children],
+  [Kind.TypeOfKeyword, NodeDataEncoding.children],
+  [Kind.VarKeyword, NodeDataEncoding.children],
+  [Kind.VoidKeyword, NodeDataEncoding.children],
+  [Kind.WhileKeyword, NodeDataEncoding.children],
+  [Kind.WithKeyword, NodeDataEncoding.children],
+  [Kind.ImplementsKeyword, NodeDataEncoding.children],
+  [Kind.InterfaceKeyword, NodeDataEncoding.children],
+  [Kind.LetKeyword, NodeDataEncoding.children],
+  [Kind.PackageKeyword, NodeDataEncoding.children],
+  [Kind.PrivateKeyword, NodeDataEncoding.children],
+  [Kind.ProtectedKeyword, NodeDataEncoding.children],
+  [Kind.PublicKeyword, NodeDataEncoding.children],
+  [Kind.StaticKeyword, NodeDataEncoding.children],
+  [Kind.YieldKeyword, NodeDataEncoding.children],
+  [Kind.AbstractKeyword, NodeDataEncoding.children],
+  [Kind.AccessorKeyword, NodeDataEncoding.children],
+  [Kind.AsKeyword, NodeDataEncoding.children],
+  [Kind.AssertsKeyword, NodeDataEncoding.children],
+  [Kind.AssertKeyword, NodeDataEncoding.children],
+  [Kind.AnyKeyword, NodeDataEncoding.children],
+  [Kind.AsyncKeyword, NodeDataEncoding.children],
+  [Kind.AwaitKeyword, NodeDataEncoding.children],
+  [Kind.BooleanKeyword, NodeDataEncoding.children],
+  [Kind.ConstructorKeyword, NodeDataEncoding.children],
+  [Kind.DeclareKeyword, NodeDataEncoding.children],
+  [Kind.GetKeyword, NodeDataEncoding.children],
+  [Kind.ImmediateKeyword, NodeDataEncoding.children],
+  [Kind.InferKeyword, NodeDataEncoding.children],
+  [Kind.IntrinsicKeyword, NodeDataEncoding.children],
+  [Kind.IsKeyword, NodeDataEncoding.children],
+  [Kind.KeyOfKeyword, NodeDataEncoding.children],
+  [Kind.ModuleKeyword, NodeDataEncoding.children],
+  [Kind.NamespaceKeyword, NodeDataEncoding.children],
+  [Kind.NeverKeyword, NodeDataEncoding.children],
+  [Kind.OutKeyword, NodeDataEncoding.children],
+  [Kind.ReadonlyKeyword, NodeDataEncoding.children],
+  [Kind.RequireKeyword, NodeDataEncoding.children],
+  [Kind.NumberKeyword, NodeDataEncoding.children],
+  [Kind.ObjectKeyword, NodeDataEncoding.children],
+  [Kind.SatisfiesKeyword, NodeDataEncoding.children],
+  [Kind.SetKeyword, NodeDataEncoding.children],
+  [Kind.StringKeyword, NodeDataEncoding.children],
+  [Kind.SymbolKeyword, NodeDataEncoding.children],
+  [Kind.TypeKeyword, NodeDataEncoding.children],
+  [Kind.UndefinedKeyword, NodeDataEncoding.children],
+  [Kind.UniqueKeyword, NodeDataEncoding.children],
+  [Kind.UnknownKeyword, NodeDataEncoding.children],
+  [Kind.UsingKeyword, NodeDataEncoding.children],
+  [Kind.FromKeyword, NodeDataEncoding.children],
+  [Kind.GlobalKeyword, NodeDataEncoding.children],
+  [Kind.BigIntKeyword, NodeDataEncoding.children],
+  [Kind.OverrideKeyword, NodeDataEncoding.children],
+  [Kind.OfKeyword, NodeDataEncoding.children],
+  [Kind.DeferKeyword, NodeDataEncoding.children],
+  [Kind.Identifier, NodeDataEncoding.string],
+  [Kind.PrivateIdentifier, NodeDataEncoding.string],
+  [Kind.QualifiedName, NodeDataEncoding.children],
+  [Kind.ComputedPropertyName, NodeDataEncoding.children],
+  [Kind.Decorator, NodeDataEncoding.children],
+  [Kind.EmptyStatement, NodeDataEncoding.children],
+  [Kind.IfStatement, NodeDataEncoding.children],
+  [Kind.DoStatement, NodeDataEncoding.children],
+  [Kind.WhileStatement, NodeDataEncoding.children],
+  [Kind.ForStatement, NodeDataEncoding.children],
+  [Kind.ForInStatement, NodeDataEncoding.children],
+  [Kind.ForOfStatement, NodeDataEncoding.children],
+  [Kind.BreakStatement, NodeDataEncoding.children],
+  [Kind.ContinueStatement, NodeDataEncoding.children],
+  [Kind.ReturnStatement, NodeDataEncoding.children],
+  [Kind.WithStatement, NodeDataEncoding.children],
+  [Kind.SwitchStatement, NodeDataEncoding.children],
+  [Kind.CaseBlock, NodeDataEncoding.children],
+  [Kind.CaseClause, NodeDataEncoding.children],
+  [Kind.DefaultClause, NodeDataEncoding.children],
+  [Kind.ThrowStatement, NodeDataEncoding.children],
+  [Kind.TryStatement, NodeDataEncoding.children],
+  [Kind.CatchClause, NodeDataEncoding.children],
+  [Kind.DebuggerStatement, NodeDataEncoding.children],
+  [Kind.LabeledStatement, NodeDataEncoding.children],
+  [Kind.ExpressionStatement, NodeDataEncoding.children],
+  [Kind.Block, NodeDataEncoding.children],
+  [Kind.VariableStatement, NodeDataEncoding.children],
+  [Kind.VariableDeclaration, NodeDataEncoding.children],
+  [Kind.VariableDeclarationList, NodeDataEncoding.children],
+  [Kind.ObjectBindingPattern, NodeDataEncoding.children],
+  [Kind.ArrayBindingPattern, NodeDataEncoding.children],
+  [Kind.Parameter, NodeDataEncoding.children],
+  [Kind.BindingElement, NodeDataEncoding.children],
+  [Kind.MissingDeclaration, NodeDataEncoding.children],
+  [Kind.FunctionDeclaration, NodeDataEncoding.children],
+  [Kind.ClassDeclaration, NodeDataEncoding.children],
+  [Kind.ClassExpression, NodeDataEncoding.children],
+  [Kind.HeritageClause, NodeDataEncoding.children],
+  [Kind.InterfaceDeclaration, NodeDataEncoding.children],
+  [Kind.TypeAliasDeclaration, NodeDataEncoding.children],
+  [Kind.JSTypeAliasDeclaration, NodeDataEncoding.children],
+  [Kind.EnumMember, NodeDataEncoding.children],
+  [Kind.EnumDeclaration, NodeDataEncoding.children],
+  [Kind.ModuleBlock, NodeDataEncoding.children],
+  [Kind.NotEmittedStatement, NodeDataEncoding.children],
+  [Kind.NotEmittedTypeElement, NodeDataEncoding.children],
+  [Kind.ImportDeclaration, NodeDataEncoding.children],
+  [Kind.JSImportDeclaration, NodeDataEncoding.children],
+  [Kind.ExternalModuleReference, NodeDataEncoding.children],
+  [Kind.NamespaceImport, NodeDataEncoding.children],
+  [Kind.NamedImports, NodeDataEncoding.children],
+  [Kind.ExportAssignment, NodeDataEncoding.children],
+  [Kind.NamespaceExportDeclaration, NodeDataEncoding.children],
+  [Kind.NamespaceExport, NodeDataEncoding.children],
+  [Kind.NamedExports, NodeDataEncoding.children],
+  [Kind.ExportSpecifier, NodeDataEncoding.children],
+  [Kind.CallSignature, NodeDataEncoding.children],
+  [Kind.ConstructSignature, NodeDataEncoding.children],
+  [Kind.Constructor, NodeDataEncoding.children],
+  [Kind.GetAccessor, NodeDataEncoding.children],
+  [Kind.SetAccessor, NodeDataEncoding.children],
+  [Kind.IndexSignature, NodeDataEncoding.children],
+  [Kind.MethodSignature, NodeDataEncoding.children],
+  [Kind.MethodDeclaration, NodeDataEncoding.children],
+  [Kind.PropertySignature, NodeDataEncoding.children],
+  [Kind.PropertyDeclaration, NodeDataEncoding.children],
+  [Kind.SemicolonClassElement, NodeDataEncoding.children],
+  [Kind.ClassStaticBlockDeclaration, NodeDataEncoding.children],
+  [Kind.OmittedExpression, NodeDataEncoding.children],
+  [Kind.NullKeyword, NodeDataEncoding.children],
+  [Kind.TrueKeyword, NodeDataEncoding.children],
+  [Kind.FalseKeyword, NodeDataEncoding.children],
+  [Kind.ThisKeyword, NodeDataEncoding.children],
+  [Kind.SuperKeyword, NodeDataEncoding.children],
+  [Kind.ImportKeyword, NodeDataEncoding.children],
+  [Kind.StringLiteral, NodeDataEncoding.extended],
+  [Kind.NumericLiteral, NodeDataEncoding.extended],
+  [Kind.BigIntLiteral, NodeDataEncoding.extended],
+  [Kind.RegularExpressionLiteral, NodeDataEncoding.extended],
+  [Kind.NoSubstitutionTemplateLiteral, NodeDataEncoding.extended],
+  [Kind.BinaryExpression, NodeDataEncoding.children],
+  [Kind.PrefixUnaryExpression, NodeDataEncoding.children],
+  [Kind.PostfixUnaryExpression, NodeDataEncoding.children],
+  [Kind.YieldExpression, NodeDataEncoding.children],
+  [Kind.ArrowFunction, NodeDataEncoding.children],
+  [Kind.FunctionExpression, NodeDataEncoding.children],
+  [Kind.AsExpression, NodeDataEncoding.children],
+  [Kind.SatisfiesExpression, NodeDataEncoding.children],
+  [Kind.ConditionalExpression, NodeDataEncoding.children],
+  [Kind.PropertyAccessExpression, NodeDataEncoding.children],
+  [Kind.ElementAccessExpression, NodeDataEncoding.children],
+  [Kind.CallExpression, NodeDataEncoding.children],
+  [Kind.NewExpression, NodeDataEncoding.children],
+  [Kind.MetaProperty, NodeDataEncoding.children],
+  [Kind.NonNullExpression, NodeDataEncoding.children],
+  [Kind.SpreadElement, NodeDataEncoding.children],
+  [Kind.TemplateExpression, NodeDataEncoding.children],
+  [Kind.TemplateSpan, NodeDataEncoding.children],
+  [Kind.TaggedTemplateExpression, NodeDataEncoding.children],
+  [Kind.ParenthesizedExpression, NodeDataEncoding.children],
+  [Kind.ArrayLiteralExpression, NodeDataEncoding.children],
+  [Kind.ObjectLiteralExpression, NodeDataEncoding.children],
+  [Kind.SpreadAssignment, NodeDataEncoding.children],
+  [Kind.PropertyAssignment, NodeDataEncoding.children],
+  [Kind.ShorthandPropertyAssignment, NodeDataEncoding.children],
+  [Kind.DeleteExpression, NodeDataEncoding.children],
+  [Kind.TypeOfExpression, NodeDataEncoding.children],
+  [Kind.VoidExpression, NodeDataEncoding.children],
+  [Kind.AwaitExpression, NodeDataEncoding.children],
+  [Kind.TypeAssertionExpression, NodeDataEncoding.children],
+  [Kind.AnyKeyword, NodeDataEncoding.children],
+  [Kind.BigIntKeyword, NodeDataEncoding.children],
+  [Kind.BooleanKeyword, NodeDataEncoding.children],
+  [Kind.IntrinsicKeyword, NodeDataEncoding.children],
+  [Kind.NeverKeyword, NodeDataEncoding.children],
+  [Kind.NumberKeyword, NodeDataEncoding.children],
+  [Kind.ObjectKeyword, NodeDataEncoding.children],
+  [Kind.StringKeyword, NodeDataEncoding.children],
+  [Kind.SymbolKeyword, NodeDataEncoding.children],
+  [Kind.UndefinedKeyword, NodeDataEncoding.children],
+  [Kind.UnknownKeyword, NodeDataEncoding.children],
+  [Kind.VoidKeyword, NodeDataEncoding.children],
+  [Kind.UnionType, NodeDataEncoding.children],
+  [Kind.IntersectionType, NodeDataEncoding.children],
+  [Kind.ConditionalType, NodeDataEncoding.children],
+  [Kind.TypeOperator, NodeDataEncoding.children],
+  [Kind.InferType, NodeDataEncoding.children],
+  [Kind.ArrayType, NodeDataEncoding.children],
+  [Kind.IndexedAccessType, NodeDataEncoding.children],
+  [Kind.TypeReference, NodeDataEncoding.children],
+  [Kind.ExpressionWithTypeArguments, NodeDataEncoding.children],
+  [Kind.LiteralType, NodeDataEncoding.children],
+  [Kind.ThisType, NodeDataEncoding.children],
+  [Kind.TypePredicate, NodeDataEncoding.children],
+  [Kind.ImportAttribute, NodeDataEncoding.children],
+  [Kind.ImportAttributes, NodeDataEncoding.children],
+  [Kind.TypeQuery, NodeDataEncoding.children],
+  [Kind.MappedType, NodeDataEncoding.children],
+  [Kind.TypeLiteral, NodeDataEncoding.children],
+  [Kind.TupleType, NodeDataEncoding.children],
+  [Kind.NamedTupleMember, NodeDataEncoding.children],
+  [Kind.OptionalType, NodeDataEncoding.children],
+  [Kind.RestType, NodeDataEncoding.children],
+  [Kind.ParenthesizedType, NodeDataEncoding.children],
+  [Kind.FunctionType, NodeDataEncoding.children],
+  [Kind.ConstructorType, NodeDataEncoding.children],
+  [Kind.TemplateHead, NodeDataEncoding.extended],
+  [Kind.TemplateMiddle, NodeDataEncoding.extended],
+  [Kind.TemplateTail, NodeDataEncoding.extended],
+  [Kind.TemplateLiteralType, NodeDataEncoding.children],
+  [Kind.TemplateLiteralTypeSpan, NodeDataEncoding.children],
+  [Kind.SyntheticExpression, NodeDataEncoding.children],
+  [Kind.PartiallyEmittedExpression, NodeDataEncoding.children],
+  [Kind.JsxElement, NodeDataEncoding.children],
+  [Kind.JsxAttributes, NodeDataEncoding.children],
+  [Kind.JsxNamespacedName, NodeDataEncoding.children],
+  [Kind.JsxOpeningElement, NodeDataEncoding.children],
+  [Kind.JsxSelfClosingElement, NodeDataEncoding.children],
+  [Kind.JsxFragment, NodeDataEncoding.children],
+  [Kind.JsxOpeningFragment, NodeDataEncoding.children],
+  [Kind.JsxClosingFragment, NodeDataEncoding.children],
+  [Kind.JsxAttribute, NodeDataEncoding.children],
+  [Kind.JsxSpreadAttribute, NodeDataEncoding.children],
+  [Kind.JsxClosingElement, NodeDataEncoding.children],
+  [Kind.JsxExpression, NodeDataEncoding.children],
+  [Kind.JsxText, NodeDataEncoding.string],
+  [Kind.SyntaxList, NodeDataEncoding.children],
+  [Kind.JSDoc, NodeDataEncoding.children],
+  [Kind.JSDocTypeExpression, NodeDataEncoding.children],
+  [Kind.JSDocNonNullableType, NodeDataEncoding.children],
+  [Kind.JSDocNullableType, NodeDataEncoding.children],
+  [Kind.JSDocAllType, NodeDataEncoding.children],
+  [Kind.JSDocVariadicType, NodeDataEncoding.children],
+  [Kind.JSDocOptionalType, NodeDataEncoding.children],
+  [Kind.JSDocTypeTag, NodeDataEncoding.children],
+  [Kind.JSDocUnknownTag, NodeDataEncoding.children],
+  [Kind.JSDocTemplateTag, NodeDataEncoding.children],
+  [Kind.JSDocReturnTag, NodeDataEncoding.children],
+  [Kind.JSDocPublicTag, NodeDataEncoding.children],
+  [Kind.JSDocPrivateTag, NodeDataEncoding.children],
+  [Kind.JSDocProtectedTag, NodeDataEncoding.children],
+  [Kind.JSDocReadonlyTag, NodeDataEncoding.children],
+  [Kind.JSDocOverrideTag, NodeDataEncoding.children],
+  [Kind.JSDocDeprecatedTag, NodeDataEncoding.children],
+  [Kind.JSDocSeeTag, NodeDataEncoding.children],
+  [Kind.JSDocImplementsTag, NodeDataEncoding.children],
+  [Kind.JSDocAugmentsTag, NodeDataEncoding.children],
+  [Kind.JSDocSatisfiesTag, NodeDataEncoding.children],
+  [Kind.JSDocThrowsTag, NodeDataEncoding.children],
+  [Kind.JSDocThisTag, NodeDataEncoding.children],
+  [Kind.JSDocImportTag, NodeDataEncoding.children],
+  [Kind.JSDocCallbackTag, NodeDataEncoding.children],
+  [Kind.JSDocOverloadTag, NodeDataEncoding.children],
+  [Kind.JSDocTypedefTag, NodeDataEncoding.children],
+  [Kind.JSDocSignature, NodeDataEncoding.children],
+  [Kind.JSDocNameReference, NodeDataEncoding.children],
+  [Kind.SourceFile, NodeDataEncoding.extended],
+  [Kind.ModuleDeclaration, NodeDataEncoding.children],
+  [Kind.ImportEqualsDeclaration, NodeDataEncoding.children],
+  [Kind.ExportDeclaration, NodeDataEncoding.children],
+  [Kind.ImportType, NodeDataEncoding.children],
+  [Kind.ImportClause, NodeDataEncoding.children],
+  [Kind.ImportSpecifier, NodeDataEncoding.children],
+  [Kind.JSDocText, NodeDataEncoding.children],
+  [Kind.JSDocLink, NodeDataEncoding.children],
+  [Kind.JSDocLinkPlain, NodeDataEncoding.children],
+  [Kind.JSDocLinkCode, NodeDataEncoding.children],
+  [Kind.TypeParameter, NodeDataEncoding.children],
+  [Kind.SyntheticReferenceExpression, NodeDataEncoding.children],
+  [Kind.JSDocTypeLiteral, NodeDataEncoding.children],
+  [Kind.JSDocParameterTag, NodeDataEncoding.children],
+  [Kind.JSDocPropertyTag, NodeDataEncoding.children],
+]);
 
 export { childPropertiesByKind as ChildPropertiesByKind, dataEncodingByKind as DataEncodingByKind };
 

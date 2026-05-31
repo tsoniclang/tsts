@@ -11,7 +11,7 @@
 import type { Node as AstNode, CommentRange } from "../ast/index.js";
 import { Kind, isKeywordKind, nodePos as getNodePos, nodeEnd as getNodeEnd } from "../ast/index.js";
 
-// Strada returns CommentRange[]; ours is empty until the scanner's
+// TS-Go returns CommentRange[]; ours is empty until the scanner's
 // comment-range pass lands. Field-by-field shape isn't relied on here.
 function getTrailingCommentRanges(_factory: NodeFactory, _text: string, _pos: number): readonly CommentRange[] {
   return [];
@@ -26,13 +26,27 @@ function isPunctuationKind(token: number): boolean {
 }
 
 export type LanguageVariant = 0 | 1;
-export const LanguageVariant = {
+export interface LanguageVariantTable {
+  readonly Standard: LanguageVariant;
+  readonly JSX: LanguageVariant;
+}
+export const LanguageVariant: LanguageVariantTable = {
   Standard: 0 as LanguageVariant,
   JSX: 1 as LanguageVariant,
-} as const;
+};
 
 export type ScriptKind = number;
-export const ScriptKind = {
+export interface ScriptKindTable {
+  readonly Unknown: ScriptKind;
+  readonly JS: ScriptKind;
+  readonly JSX: ScriptKind;
+  readonly TS: ScriptKind;
+  readonly TSX: ScriptKind;
+  readonly External: ScriptKind;
+  readonly JSON: ScriptKind;
+  readonly Deferred: ScriptKind;
+}
+export const ScriptKind: ScriptKindTable = {
   Unknown: 0 as ScriptKind,
   JS: 1 as ScriptKind,
   JSX: 2 as ScriptKind,
@@ -41,7 +55,7 @@ export const ScriptKind = {
   External: 5 as ScriptKind,
   JSON: 6 as ScriptKind,
   Deferred: 7 as ScriptKind,
-} as const;
+};
 
 export function getLanguageVariant(scriptKind: ScriptKind): LanguageVariant {
   switch (scriptKind) {
@@ -108,4 +122,3 @@ export function isJSDocLikeText(text: string): boolean {
 // ---------------------------------------------------------------------------
 
 interface NodeFactory { readonly _f?: unknown }
-

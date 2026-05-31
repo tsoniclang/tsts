@@ -12,7 +12,7 @@ if (result.status !== 0) {
   if (result.stderr) {
     process.stderr.write(result.stderr);
   }
-  throw new Error("Generated AST files are out of date. Run `npm run generate` and commit the result.");
+  throw new Error("Generated AST files are out of date. Run `npm run ast:generate` and commit the result.");
 }
 
 console.log("Generated AST files are current.");

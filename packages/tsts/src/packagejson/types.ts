@@ -9,8 +9,6 @@
  * are accessible via the raw JSON parse if needed.
  */
 
-import type { JsonValue } from "../json/index.js";
-
 // ────────────────────────────────────────────────────────────────────────────
 // Field-presence model
 // ────────────────────────────────────────────────────────────────────────────
@@ -69,7 +67,7 @@ export type JSONValueShape =
   | { readonly type: "array"; readonly value: readonly JSONValueShape[] }
   | { readonly type: "object"; readonly value: ReadonlyMap<string, JSONValueShape> };
 
-export function jsonValueFromJSON(raw: JsonValue | undefined): JSONValueShape {
+export function jsonValueFromJSON(raw: unknown | undefined): JSONValueShape {
   if (raw === undefined) return { type: "not-present" };
   if (raw === null) return { type: "null", value: null };
   switch (typeof raw) {
@@ -85,7 +83,7 @@ export function jsonValueFromJSON(raw: JsonValue | undefined): JSONValueShape {
       }
       {
         const map = new Map<string, JSONValueShape>();
-        for (const [k, v] of Object.entries(raw)) {
+        for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
           map.set(k, jsonValueFromJSON(v));
         }
         return { type: "object", value: map };
@@ -141,7 +139,7 @@ export interface DependencyFields {
 export interface PackageJSON
   extends HeaderFields, PathFields, DependencyFields {
   /** Raw parsed JSON for accessing fields not covered above. */
-  readonly raw: JsonValue;
+  readonly raw: unknown;
 }
 
 /** Returns true if `name` appears in any of the dependency-flavored fields. */

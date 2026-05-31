@@ -2,7 +2,7 @@
  * Regular-expression literal scanner.
  *
  * Port skeleton of TS-Go `internal/scanner/regexp.go` (1071 LoC).
- * The Strada regex parser walks a `/.../flags` literal validating
+ * The TS-Go regex parser walks a `/.../flags` literal validating
  * syntax, Unicode/UnicodeSets modes, class-set expressions, group
  * names, decimal-escape backreferences, Annex B compatibility, etc.
  *
@@ -109,7 +109,7 @@ export interface RegExpParser {
  * Walks the body of a regex literal until the closing `/`, then
  * returns the body start/end positions and the parsed flags.
  *
- * Stub: the full Strada parser validates each character against the
+ * Stub: the full TS-Go parser validates each character against the
  * UnicodeMode / UnicodeSetsMode / AnnexB grammar trees. Until that
  * full grammar is ported, this fast-path scans for the closing `/`
  * respecting character classes and escape sequences.

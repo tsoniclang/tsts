@@ -2,13 +2,13 @@
  * Formatting scanner.
  *
  * Substantive port of TS-Go `internal/format/scanner.go` (~356 LoC).
- * Wraps the core `Scanner` (which already yields kind+pos+text incl.
+ * Wraps the live scanner (which already yields kind+pos+text incl.
  * trivia) and tracks the line-break / trivia information the format
  * rule engine consults to decide indent and space rules.
  */
 
 import { Kind, type Node as AstNode, type SourceFile } from "../ast/index.js";
-import { Scanner as CoreScanner } from "../scanner/scanner.js";
+import { createLiveScanner } from "../scanner/index.js";
 
 export interface FormatScanner {
   advance(): boolean;
@@ -70,7 +70,7 @@ export function createFormatScanner(
   // so this is safe.
   const sub = text.slice(startPos);
   const offset = startPos;
-  const inner = new CoreScanner(sub, { skipTrivia: false });
+  const inner = createLiveScanner(sub, { skipTrivia: false });
 
   const state: ScannerState = {
     current: undefined,
@@ -88,18 +88,19 @@ export function createFormatScanner(
     if (state.endOfFile) return false;
     const leading: TextRangeWithKind[] = [];
     let sawLineBreak = false;
-    let scanned = inner.scan();
-    while (isTriviaKind(scanned.kind)) {
-      if (scanned.kind === Kind.NewLineTrivia) sawLineBreak = true;
-      leading.push({ kind: scanned.kind, pos: scanned.pos + offset, end: scanned.end + offset });
-      scanned = inner.scan();
+    let kind = inner.scan();
+    while (isTriviaKind(kind)) {
+      if (kind === Kind.NewLineTrivia) sawLineBreak = true;
+      leading.push({ kind, pos: inner.getTokenStart() + offset, end: inner.getTokenEnd() + offset });
+      kind = inner.scan();
     }
-    if (scanned.kind === Kind.EndOfFile) {
+    if (kind === Kind.EndOfFile) {
+      const eofPos = inner.getTokenStart() + offset;
       state.endOfFile = true;
       state.current = undefined;
-      state.fullStart = scanned.pos + offset;
-      state.start = scanned.pos + offset;
-      state.end = scanned.end + offset;
+      state.fullStart = eofPos;
+      state.start = eofPos;
+      state.end = inner.getTokenEnd() + offset;
       state.text = "";
       state.hasLineBreak = sawLineBreak;
       state.leading = leading.length > 0 ? leading : undefined;
@@ -107,15 +108,15 @@ export function createFormatScanner(
       return false;
     }
     const tokenRange: TextRangeWithKind = {
-      kind: scanned.kind,
-      pos: scanned.pos + offset,
-      end: scanned.end + offset,
+      kind,
+      pos: inner.getTokenStart() + offset,
+      end: inner.getTokenEnd() + offset,
     };
     state.current = tokenRange;
     state.fullStart = leading.length > 0 ? leading[0]!.pos : tokenRange.pos;
     state.start = tokenRange.pos;
     state.end = tokenRange.end;
-    state.text = scanned.text;
+    state.text = inner.getTokenText();
     state.hasLineBreak = sawLineBreak;
     state.leading = leading.length > 0 ? leading : undefined;
     state.trailing = undefined;

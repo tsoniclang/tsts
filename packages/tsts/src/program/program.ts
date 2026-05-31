@@ -1,5 +1,5 @@
 import { dirname, extname, join, normalize, relative } from "node:path";
-import { bindSourceFile, type BindDiagnostic, type BindResult } from "../binder/index.js";
+import { bindSourceFile, type BindDiagnostic } from "../binder/index.js";
 import { checkSourceFile } from "../checker/index.js";
 import { printSourceFile } from "../emit-js/index.js";
 import { parseSourceFile } from "../parser/index.js";
@@ -21,7 +21,10 @@ export interface ProgramSourceFile {
   readonly fileName: string;
   readonly sourceText: string;
   readonly sourceFile: SourceFile;
-  readonly bindResult: BindResult;
+  // The source file is bound IN PLACE (node.symbol / node.locals / node.parent
+  // are populated on `sourceFile`); the binder returns its diagnostics, which
+  // tsgo stores via SourceFile.SetBindDiagnostics().
+  readonly bindDiagnostics: readonly BindDiagnostic[];
 }
 
 export interface ProgramDiagnostic {
@@ -78,8 +81,8 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
       });
       continue;
     }
-    const bindResult = bindSourceFile(sourceFile);
-    diagnostics.push(...bindResult.diagnostics.map(diagnostic => convertBindDiagnostic(rootName, diagnostic)));
+    const bindDiagnostics = bindSourceFile(sourceFile);
+    diagnostics.push(...bindDiagnostics.map(diagnostic => convertBindDiagnostic(rootName, diagnostic)));
     for (const moduleSpecifier of sourceFileModuleSpecifiers(sourceFile)) {
       const resolved = resolveModuleName(moduleSpecifier, rootName, host, fileTextCache);
       if (resolved === undefined) {
@@ -99,7 +102,7 @@ export function createProgram(rootNames: readonly string[], options: CompilerOpt
       fileName: rootName,
       sourceText,
       sourceFile,
-      bindResult,
+      bindDiagnostics,
     });
   }
   return {

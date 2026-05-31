@@ -179,7 +179,7 @@ export const isUnaryContext: ContextPredicate = (ctx) => {
 };
 
 // ---------------------------------------------------------------------------
-// Misc predicate exports — each follows the same Strada-mirror shape
+// Misc predicate exports — each follows the same TS-Go-mirror shape
 // ---------------------------------------------------------------------------
 
 export const isAfterCodeBlockContext: ContextPredicate = (ctx) => isBlockContext(ctx);

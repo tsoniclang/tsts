@@ -9,6 +9,12 @@
  */
 
 import type { FS } from "../vfs/index.js";
+import {
+  supportedTSImplementationExtensions,
+  supportedJSExtensionsFlat,
+  supportedDeclarationExtensions,
+  extensionJson,
+} from "../tspath/index.js";
 
 /**
  * Host providing FS access and current-directory awareness to the
@@ -43,25 +49,26 @@ export interface ResolvedProjectReference {
 
 /**
  * Bit flags for Node-resolution features enabled by a given resolution
- * mode. Mirrors TS-Go's NodeResolutionFeatures.
+ * mode. Mirrors TS-Go's NodeResolutionFeatures (an `int32` flag set).
  */
-export enum NodeResolutionFeatures {
-  None = 0,
-  Imports = 1 << 0,
-  SelfName = 1 << 1,
-  Exports = 1 << 2,
-  ExportsPatternTrailers = 1 << 3,
+export type NodeResolutionFeatures = number;
+export const NodeResolutionFeatures = {
+  None: 0,
+  Imports: 1 << 0,
+  SelfName: 1 << 1,
+  Exports: 1 << 2,
+  ExportsPatternTrailers: 1 << 3,
   /**
    * Allows `#/` root imports in package.json `imports` field.
    * Not yet supported widely; see nodejs/node#60864.
    */
-  ImportsPatternRoot = 1 << 4,
+  ImportsPatternRoot: 1 << 4,
 
-  All = Imports | SelfName | Exports | ExportsPatternTrailers | ImportsPatternRoot,
-  Node16Default = Imports | SelfName | Exports | ExportsPatternTrailers,
-  NodeNextDefault = All,
-  BundlerDefault = Imports | SelfName | Exports | ExportsPatternTrailers | ImportsPatternRoot,
-}
+  All: (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4),
+  Node16Default: (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3),
+  NodeNextDefault: (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4),
+  BundlerDefault: (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4),
+} as const;
 
 /**
  * Identifies a module by its package, sub-path, version, and peer deps.
@@ -118,15 +125,51 @@ export function isResolvedTypeRef(r: ResolvedTypeReferenceDirective | undefined)
 
 /**
  * Bit flags for which extensions the resolver should look for during
- * each pass.
+ * each pass. Mirrors TS-Go's unexported `extensions` (an `int32` flag
+ * set); kept module-private to match upstream visibility.
  */
-export enum ResolutionExtensions {
-  TypeScript = 1 << 0,
-  JavaScript = 1 << 1,
-  Declaration = 1 << 2,
-  Json = 1 << 3,
+type extensions = number;
+const extensions = {
+  TypeScript: 1 << 0,
+  JavaScript: 1 << 1,
+  Declaration: 1 << 2,
+  Json: 1 << 3,
 
-  ImplementationFiles = TypeScript | JavaScript,
-  TsTypings = TypeScript | Declaration,
-  All = TypeScript | JavaScript | Declaration | Json,
+  ImplementationFiles: (1 << 0) | (1 << 1),
+} as const;
+
+/** Mirrors TS-Go `extensions.String()`. */
+function extensionsString(e: extensions): string {
+  const result: string[] = [];
+  if ((e & extensions.TypeScript) !== 0) {
+    result.push("TypeScript");
+  }
+  if ((e & extensions.JavaScript) !== 0) {
+    result.push("JavaScript");
+  }
+  if ((e & extensions.Declaration) !== 0) {
+    result.push("Declaration");
+  }
+  if ((e & extensions.Json) !== 0) {
+    result.push("JSON");
+  }
+  return result.join(", ");
+}
+
+/** Mirrors TS-Go `extensions.Array()`. */
+function extensionsArray(e: extensions): readonly string[] {
+  const result: string[] = [];
+  if ((e & extensions.TypeScript) !== 0) {
+    result.push(...supportedTSImplementationExtensions);
+  }
+  if ((e & extensions.JavaScript) !== 0) {
+    result.push(...supportedJSExtensionsFlat);
+  }
+  if ((e & extensions.Declaration) !== 0) {
+    result.push(...supportedDeclarationExtensions);
+  }
+  if ((e & extensions.Json) !== 0) {
+    result.push(extensionJson);
+  }
+  return result;
 }

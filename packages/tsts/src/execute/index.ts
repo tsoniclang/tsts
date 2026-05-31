@@ -1,11 +1,11 @@
 /**
  * Compilation execution pipeline orchestration.
  *
- * Mirrors TS-Go internal/execute/.
- *
- * Status: empty placeholder. Port from Go.
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
+ * Mirrors TS-Go `internal/execute/`.
  */
 
-export {};
+export * from "./build/index.js";
+export * from "./incremental/index.js";
+export * from "./tsc.js";
+export * from "./tsc/index.js";
+export * from "./watcher.js";

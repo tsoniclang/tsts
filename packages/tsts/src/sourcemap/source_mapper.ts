@@ -15,20 +15,29 @@ import {
   type NameIndex,
   MissingSource,
 } from "./decoder.js";
+import type { RawSourceMap } from "./generator.js";
 import type { ECMALineInfo } from "./lineinfo.js";
 import { tryGetSourceMappingURL } from "./util.js";
-import { unmarshal } from "../json/json.js";
+import { unmarshal, isJsonObject, isJsonArray, type JsonValue } from "../json/json.js";
 import { getDirectoryPath, getNormalizedAbsolutePath } from "../tspath/path.js";
+import { computePositionOfLineAndUTF16Character as scannerComputePositionOfLineAndUTF16Character } from "../scanner/index.js";
 
 function computePositionOfLineAndUTF16Character(
   lineInfo: ECMALineInfo | undefined,
   line: number,
   character: number,
 ): number {
+  // Mirrors source_mapper.go: position is -1 unless the file has line info,
+  // in which case it is computed via the faithful scanner helper with
+  // allowEdits=true.
   if (lineInfo === undefined) return -1;
-  const lineStart = (lineInfo as unknown as { lineStarts?: readonly number[] }).lineStarts?.[line];
-  if (lineStart === undefined) return -1;
-  return lineStart + character;
+  return scannerComputePositionOfLineAndUTF16Character(
+    lineInfo.lineStarts,
+    line,
+    character,
+    lineInfo.text,
+    true /*allowEdits*/,
+  );
 }
 
 const MISSING_POSITION = -1;
@@ -55,16 +64,6 @@ function isSourceMappedPosition(m: MappedPosition): boolean {
 export interface DocumentPosition {
   fileName: string;
   pos: number;
-}
-
-export interface RawSourceMap {
-  version: number;
-  file: string;
-  sourceRoot?: string;
-  sources: readonly string[];
-  sourcesContent?: readonly (string | null)[];
-  names: readonly string[];
-  mappings: string;
 }
 
 export class DocumentPositionMapper {
@@ -265,13 +264,84 @@ function convertDocumentToSourceMapper(host: Host, contents: string, mapFileName
 }
 
 function tryParseRawSourceMap(contents: string): RawSourceMap | undefined {
+  // Mirrors source_mapper.go: json.Unmarshal into a RawSourceMap struct.
+  // A decode error (invalid JSON syntax, non-object top level, or a present
+  // field whose JSON type is incompatible with the struct field) yields nil;
+  // missing fields take Go's zero values. Then Version != 3 yields nil.
+  let parsed: JsonValue;
   try {
-    const obj = unmarshal(contents) as unknown as RawSourceMap;
-    if (obj.version !== 3) return undefined;
-    return obj;
+    parsed = unmarshal(contents);
   } catch {
     return undefined;
   }
+  if (!isJsonObject(parsed)) return undefined;
+
+  const version = decodeNumberField(parsed, "version");
+  if (version === undefined) return undefined;
+  const file = decodeStringField(parsed, "file");
+  if (file === undefined) return undefined;
+  const sourceRoot = decodeStringField(parsed, "sourceRoot");
+  if (sourceRoot === undefined) return undefined;
+  const sources = decodeStringArrayField(parsed, "sources");
+  if (sources === undefined) return undefined;
+  const names = decodeStringArrayField(parsed, "names");
+  if (names === undefined) return undefined;
+  const mappings = decodeStringField(parsed, "mappings");
+  if (mappings === undefined) return undefined;
+  const sourcesContent = decodeNullableStringArrayField(parsed, "sourcesContent");
+  if (sourcesContent === undefined) return undefined;
+
+  if (version !== 3) return undefined;
+  const base: RawSourceMap = { version: 3, file, sourceRoot, sources, names, mappings };
+  if (sourcesContent.length === 0) return base;
+  return { ...base, sourcesContent };
+}
+
+// json.Unmarshal field decoders: an absent field takes Go's zero value; a
+// present field of an incompatible JSON type is a decode error (undefined).
+function decodeStringField(obj: { readonly [key: string]: JsonValue }, key: string): string | undefined {
+  const v = obj[key];
+  if (v === undefined || v === null) return "";
+  if (typeof v !== "string") return undefined;
+  return v;
+}
+
+function decodeNumberField(obj: { readonly [key: string]: JsonValue }, key: string): number | undefined {
+  const v = obj[key];
+  if (v === undefined || v === null) return 0;
+  if (typeof v !== "number") return undefined;
+  return v;
+}
+
+function decodeStringArrayField(obj: { readonly [key: string]: JsonValue }, key: string): readonly string[] | undefined {
+  const v = obj[key];
+  if (v === undefined || v === null) return [];
+  if (!isJsonArray(v)) return undefined;
+  const out: string[] = [];
+  for (const item of v) {
+    if (typeof item !== "string") return undefined;
+    out.push(item);
+  }
+  return out;
+}
+
+function decodeNullableStringArrayField(
+  obj: { readonly [key: string]: JsonValue },
+  key: string,
+): readonly (string | null)[] | undefined {
+  const v = obj[key];
+  if (v === undefined || v === null) return [];
+  if (!isJsonArray(v)) return undefined;
+  const out: (string | null)[] = [];
+  for (const item of v) {
+    if (item === null) {
+      out.push(null);
+      continue;
+    }
+    if (typeof item !== "string") return undefined;
+    out.push(item);
+  }
+  return out;
 }
 
 function tryGetSourceMappingURLFromHost(host: Host, fileName: string): string {
@@ -301,8 +371,3 @@ function tryParseBase64Url(url: string): { base64Object: string; matched: boolea
   }
   return { base64Object: rest, matched: true };
 }
-
-// ---------------------------------------------------------------------------
-// Forward-declared cross-module deps
-// ---------------------------------------------------------------------------
-

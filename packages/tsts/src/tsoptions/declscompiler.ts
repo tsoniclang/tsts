@@ -7,9 +7,9 @@
  * description, defaultValueDescription, and validation hints.
  *
  * Skeleton exposes the `optionDeclarations` slice with the most
- * commonly-referenced options; the full Strada table will be filled
+ * commonly-referenced options; the full TS-Go table will be filled
  * in incrementally as CLI integration tests demand. Each entry is
- * a faithful translation of the Strada CommandLineOption shape.
+ * a faithful translation of the TS-Go CommandLineOption shape.
  */
 
 import type { CommandLineOption } from "./commandlineoption.js";
@@ -97,7 +97,7 @@ export const optionDeclarations: readonly CommandLineOption[] = [
   { name: "explainFiles", type: "boolean" },
   { name: "newLine", type: "string" },
 
-  // === Additional options to reach Strada parity (135 total) ===
+  // === Additional options to reach TS-Go parity (135 total) ===
 
   { name: "allowArbitraryExtensions", type: "boolean" },
   { name: "allowUmdGlobalAccess", type: "boolean" },

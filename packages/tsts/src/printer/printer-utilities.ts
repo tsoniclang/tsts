@@ -449,12 +449,52 @@ export function getTag(node: AstNode): AstNode {
 export function getTemplate(node: AstNode): AstNode {
   return (node as unknown as { template?: AstNode }).template ?? ({} as AstNode);
 }
-export function getTypeAnnotation(node: AstNode): AstNode | undefined { void node; return undefined; }
-export function getHeritageToken(node: AstNode): number { void node; return 0; }
-export function getHeritageTypes(node: AstNode): NodeList | undefined { void node; return undefined; }
-export function getHeritageClauses(node: AstNode): NodeList | undefined { void node; return undefined; }
-export function getClassMembers(node: AstNode): readonly AstNode[] { void node; return []; }
-export function getJsxTagName(node: AstNode): AstNode { void node; return {} as AstNode; }
-export function getJsxAttributes(node: AstNode): AstNode { void node; return {} as AstNode; }
+export function getTypeAnnotation(node: AstNode): AstNode | undefined {
+  return (node as unknown as { type?: AstNode }).type;
+}
+
+export function getHeritageToken(node: AstNode): number {
+  const token = (node as unknown as { token?: number }).token;
+  if (token !== undefined) return token;
+  const types = (node as unknown as { types?: NodeList }).types;
+  if (types !== undefined) {
+    const parent = (node as unknown as { parent?: AstNode }).parent;
+    const clauses = (parent as unknown as { heritageClauses?: NodeList | readonly AstNode[] | undefined }).heritageClauses;
+    const nodes = nodeListNodes(clauses);
+    const index = nodes.indexOf(node);
+    return index === 0 ? Kind.ExtendsKeyword : Kind.ImplementsKeyword;
+  }
+  return 0;
+}
+
+export function getHeritageTypes(node: AstNode): NodeList | undefined {
+  return (node as unknown as { types?: NodeList }).types;
+}
+
+export function getHeritageClauses(node: AstNode): NodeList | undefined {
+  const clauses = (node as unknown as { heritageClauses?: NodeList }).heritageClauses;
+  if (clauses !== undefined) return clauses;
+  return (node as unknown as { heritageClause?: NodeList }).heritageClause;
+}
+
+export function getClassMembers(node: AstNode): readonly AstNode[] {
+  return nodeListNodes((node as unknown as { members?: NodeList | readonly AstNode[] }).members);
+}
+
+export function getJsxTagName(node: AstNode): AstNode {
+  return (node as unknown as { tagName?: AstNode; name?: AstNode }).tagName
+    ?? (node as unknown as { name?: AstNode }).name
+    ?? ({} as AstNode);
+}
+
+export function getJsxAttributes(node: AstNode): AstNode {
+  return (node as unknown as { attributes?: AstNode }).attributes ?? ({} as AstNode);
+}
+
+function nodeListNodes(value: NodeList | readonly AstNode[] | undefined): readonly AstNode[] {
+  if (value === undefined) return [];
+  if (Array.isArray(value)) return value;
+  return (value as unknown as { nodes?: readonly AstNode[] }).nodes ?? [];
+}
 
 interface TextRange { pos: number; end: number }

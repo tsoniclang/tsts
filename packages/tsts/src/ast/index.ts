@@ -2,15 +2,18 @@
 // Source: schema/tsgo/ast.json
 export * from "./flags.js";
 export * from "./generated/kind.js";
-export * from "./generated/schema.js";
 export * from "./generated/types.js";
 export * from "./generated/nodes.js";
 export * from "./generated/factory.js";
 export * from "./generated/visitor.js";
 export * from "./generated/is.js";
 export * from "./generated/metadata.js";
-// Naming aliases + Strada-side types (SymbolTable, FlowLabel, etc.)
+// Faithful 1:1 AST utility helpers (sole owner of the shared predicates).
+export * from "./utilities.js";
+// Naming aliases + TS-Go-side types (SymbolTable, FlowLabel, etc.)
 export * from "./aliases.js";
-// Strada-style accessor functions (nodeKind, nodeParent, etc.) so
+// TS-Go-style accessor functions (nodeKind, nodeParent, etc.) so
 // transformer files can ESM-import them instead of `declare`ing.
 export * from "./accessors.js";
+// FlowFlags const-bitset (control-flow-graph node flags; flow.go:5-23).
+export * from "./flowflags.js";

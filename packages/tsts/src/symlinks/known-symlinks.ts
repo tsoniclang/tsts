@@ -10,10 +10,10 @@
  * TS-Go uses sync.Map for concurrent access; TypeScript is single-threaded
  * so we use plain Map.
  *
- * NOTE: `setSymlinksFromResolutions` and `processResolution` depend on the
- * module-resolution data structures (`ResolvedModule`, etc.) which aren't
- * ported yet. The data-structure methods are complete; the resolution
- * integration is stubbed pending module/ port.
+ * `setSymlinksFromResolutions` takes higher-order `forEachResolvedModule` /
+ * `forEachResolvedTypeReferenceDirective` callbacks supplied by the
+ * resolver/program; it only references the already-ported `ResolvedModule`
+ * and `ResolvedTypeReferenceDirective` shapes from `module/types`.
  */
 
 import {
@@ -26,6 +26,9 @@ import {
   type Path,
   toPath,
 } from "../tspath/index.js";
+import type { ResolvedModule, ResolvedTypeReferenceDirective } from "../module/types.js";
+import type { ResolutionMode } from "../core/compileroptions.js";
+import type { SourceFile } from "../ast/index.js";
 
 export interface KnownDirectoryLink {
   /**
@@ -62,7 +65,7 @@ export class KnownSymlinks {
     return this.directories;
   }
 
-  getDirectoriesByRealpath(): ReadonlyMap<Path, ReadonlySet<string>> {
+  getDirectoriesByRealpath(): ReadonlyMap<Path, Set<string>> {
     return this.directoriesByRealpath;
   }
 
@@ -72,7 +75,7 @@ export class KnownSymlinks {
   }
 
   /** Realpath → set of symlink strings. */
-  getFilesByRealpath(): ReadonlyMap<Path, ReadonlySet<string>> {
+  getFilesByRealpath(): ReadonlyMap<Path, Set<string>> {
     return this.filesByRealpath;
   }
 
@@ -105,6 +108,41 @@ export class KnownSymlinks {
       set.add(symlink);
     }
     this.files.set(symlinkPath, realpath);
+  }
+
+  /**
+   * Walks every resolved module and type-reference directive (via the
+   * higher-order callbacks supplied by the resolver/program) and records
+   * each `originalPath → resolvedFileName` symlink mapping.
+   *
+   * Mirrors TS-Go `KnownSymlinks.SetSymlinksFromResolutions`.
+   */
+  setSymlinksFromResolutions(
+    forEachResolvedModule: (
+      callback: (
+        resolution: ResolvedModule,
+        moduleName: string,
+        mode: ResolutionMode,
+        filePath: Path
+      ) => void,
+      file: SourceFile | undefined
+    ) => void,
+    forEachResolvedTypeReferenceDirective: (
+      callback: (
+        resolution: ResolvedTypeReferenceDirective,
+        moduleName: string,
+        mode: ResolutionMode,
+        filePath: Path
+      ) => void,
+      file: SourceFile | undefined
+    ) => void
+  ): void {
+    forEachResolvedModule((resolution) => {
+      this.processResolution(resolution.originalPath, resolution.resolvedFileName);
+    }, undefined);
+    forEachResolvedTypeReferenceDirective((resolution) => {
+      this.processResolution(resolution.originalPath, resolution.resolvedFileName);
+    }, undefined);
   }
 
   /**

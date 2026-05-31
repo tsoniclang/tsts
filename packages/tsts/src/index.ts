@@ -8,3 +8,19 @@ export * from "./emit-js/index.js";
 export * from "./parser/index.js";
 export * from "./program/index.js";
 export * from "./scanner/index.js";
+
+// `skipTrivia`, `getECMALineOfPosition`, and `getECMALineAndUTF16CharacterOfPosition`
+// are re-exported by both `./ast/index.js` (AstNode-adapted shims that delegate
+// here) and `./scanner/index.js` (the canonical, faithful scanner.go ports). The
+// scanner is the canonical owner, so disambiguate the package root in its favor.
+export {
+  skipTrivia,
+  getECMALineOfPosition,
+  getECMALineAndUTF16CharacterOfPosition,
+} from "./scanner/index.js";
+
+// `TokenFlags` is exported as a bare `type` alias by `./ast/index.js`
+// (generated) and as a runtime const-map + type by `./scanner/token-flags.js`
+// (the faithful tokenflags.go port). The scanner owns the canonical values, so
+// disambiguate the package root in its favor.
+export { TokenFlags } from "./scanner/index.js";

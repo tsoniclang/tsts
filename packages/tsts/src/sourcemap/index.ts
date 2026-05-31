@@ -7,3 +7,4 @@
  */
 
 export * from "./generator.js";
+export * from "./source_mapper.js";

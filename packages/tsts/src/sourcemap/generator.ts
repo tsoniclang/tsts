@@ -12,7 +12,7 @@ import {
   type ComparePathsOptions,
   getRelativePathToDirectoryOrUrl,
 } from "../tspath/index.js";
-import { marshal } from "../json/index.js";
+import { marshal, type JsonValue } from "../json/index.js";
 
 export type SourceIndex = number & { readonly __sourceIndex: unique symbol };
 export type NameIndex = number & { readonly __nameIndex: unique symbol };
@@ -298,7 +298,7 @@ export class Generator {
   }
 
   toString(): string {
-    return marshal(this.rawSourceMap());
+    return marshal(rawSourceMapJson(this.rawSourceMap()));
   }
 
   toBase64DataURL(): string {
@@ -306,6 +306,21 @@ export class Generator {
     const base64 = Buffer.from(json, "utf8").toString("base64");
     return "data:application/json;base64," + base64;
   }
+}
+
+function rawSourceMapJson(sourceMap: RawSourceMap): JsonValue {
+  const result: { [key: string]: JsonValue } = {
+    version: sourceMap.version,
+    file: sourceMap.file,
+    sourceRoot: sourceMap.sourceRoot,
+    sources: sourceMap.sources,
+    names: sourceMap.names,
+    mappings: sourceMap.mappings,
+  };
+  if (sourceMap.sourcesContent !== undefined) {
+    result["sourcesContent"] = sourceMap.sourcesContent;
+  }
+  return result;
 }
 
 const BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

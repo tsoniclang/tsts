@@ -68,12 +68,13 @@ export function formatDiagnosticWithSource(d: Diagnostic): string {
 
   const source = file.text();
   const lineMap = file.ecmaLineMap();
-  const startLine = loc.line;
-  const endLine = endLoc.line;
+  const startLine: int = loc.line;
+  const endLine: int = endLoc.line;
 
-  for (let lineNo = startLine; lineNo <= endLine; lineNo += 1) {
+  for (let lineNo: int = startLine; lineNo <= endLine; lineNo = (lineNo + 1) | 0) {
+    const nextLineNo: int = (lineNo + 1) | 0;
     const lineStart = lineMap[lineNo] ?? 0;
-    const lineEnd = lineMap[lineNo + 1] ?? source.length;
+    const lineEnd = lineMap[nextLineNo] ?? source.length;
     const lineText = source.slice(lineStart, lineEnd).replace(/[\r\n]$/, "");
 
     const lineNoStr = String(lineNo + 1).padStart(4);
@@ -172,7 +173,7 @@ function repeat(s: string, n: number): string {
   return s.repeat(n);
 }
 
-function padLeft(text: string, width: number, pad = " "): string {
+function padLeft(text: string, width: number, pad: string = " "): string {
   if (text.length >= width) return text;
   return repeat(pad, width - text.length) + text;
 }
@@ -213,7 +214,7 @@ export function formatDiagnosticsWithColorAndContext(
   return diags.map((d) => formatDiagnosticWithColorAndContext(d, opts)).join(opts.newLine);
 }
 
-function writeLocation(file: FileLike, pos: number, opts: FormattingOptions): string {
+function writeLocation(file: FileLike, pos: int, opts: FormattingOptions): string {
   const { line, column } = locationForFileAndPos(file, pos);
   const relPath = relativizePath(file.fileName(), opts);
   return styled(relPath, FG_CYAN) + ":" + styled(String(line + 1), FG_YELLOW) + ":" + styled(String(column + 1), FG_YELLOW);
@@ -221,14 +222,14 @@ function writeLocation(file: FileLike, pos: number, opts: FormattingOptions): st
 
 function writeCodeSnippet(
   file: FileLike,
-  start: number,
-  length: number,
+  start: int,
+  length: int,
   squiggleColor: string,
   indent: string,
   opts: FormattingOptions,
 ): string {
   const { line: firstLine, column: firstChar } = locationForFileAndPos(file, start);
-  const endLoc = locationForFileAndPos(file, start + length);
+  const endLoc = locationForFileAndPos(file, (start + length) | 0);
   let lastLineChar = endLoc.column;
   const lastLine = endLoc.line;
   if (length === 0) lastLineChar += 1;
@@ -237,16 +238,16 @@ function writeCodeSnippet(
   const lastLineOfFile = lineMap.length - 1;
   const source = file.text();
 
-  const hasMoreThanFiveLines = lastLine - firstLine >= 4;
-  let gutterWidth = String(lastLine + 1).length;
-  if (hasMoreThanFiveLines) gutterWidth = Math.max(ELLIPSIS.length, gutterWidth);
+  const hasMoreThanFiveLines: boolean = lastLine - firstLine >= 4;
+  let gutterWidth: number = String(lastLine + 1).length;
+  if (hasMoreThanFiveLines === true) gutterWidth = Math.max(ELLIPSIS.length, gutterWidth);
 
   const out: string[] = [];
 
   let i = firstLine;
   while (i <= lastLine) {
     out.push(opts.newLine);
-    if (hasMoreThanFiveLines && firstLine + 1 < i && i < lastLine - 1) {
+    if (hasMoreThanFiveLines === true && firstLine + 1 < i && i < lastLine - 1) {
       out.push(indent);
       out.push(GUTTER_STYLE);
       out.push(padLeft(ELLIPSIS, gutterWidth));

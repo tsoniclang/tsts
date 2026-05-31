@@ -896,7 +896,7 @@ function decodeEntity(entity: string): number | undefined {
   return entities.get(entity);
 }
 
-// XML/HTML named entity table (cf. Strada `entities`).
+// XML/HTML named entity table (cf. TS-Go `entities`).
 const entities: Map<string, number> = new Map([
   ["quot", 0x0022], ["amp", 0x0026], ["apos", 0x0027], ["lt", 0x003C], ["gt", 0x003E],
   ["nbsp", 0x00A0], ["iexcl", 0x00A1], ["cent", 0x00A2], ["pound", 0x00A3], ["curren", 0x00A4],

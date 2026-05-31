@@ -26,13 +26,14 @@ import {
   isExpressionWithTypeArguments, isImportEqualsDeclaration,
   isTypeAliasDeclaration,
   isDeclaration,
+  isClassDeclaration, isHeritageClause,
 } from "../../ast/index.js";
 import { isParameterPropertyDeclaration } from "../../ast/index.js";
 import { Kind } from "../../ast/index.js";
 
 const SymbolAccessibility = { CannotBeNamed: 1 } as const;
 
-// Strada predicates we implement locally — kind-dispatch + field reads.
+// TS-Go predicates we implement locally — kind-dispatch + field reads.
 function isFunctionLike(node: AstNode | undefined): boolean {
   if (node === undefined) return false;
   const k = (node as { kind?: number }).kind ?? 0;
@@ -40,8 +41,8 @@ function isFunctionLike(node: AstNode | undefined): boolean {
     || k === Kind.ArrowFunction || k === Kind.MethodDeclaration
     || k === Kind.Constructor || k === Kind.GetAccessor || k === Kind.SetAccessor;
 }
-function makeDiagnostic(node: AstNode, message: DiagnosticMessage): Diagnostic {
-  return { file: node, start: 0, length: 0, messageText: message.message, category: 1, code: message.code } as unknown as Diagnostic;
+function makeDiagnostic(node: AstNode, message: DiagnosticMessage | undefined): Diagnostic {
+  return { file: node, start: 0, length: 0, messageText: message?.message, category: 1, code: message?.code } as unknown as Diagnostic;
 }
 function getNameOfDeclaration(node: AstNode | undefined): AstNode | undefined {
   if (node === undefined) return undefined;
@@ -166,28 +167,42 @@ export function createGetSymbolAccessibilityDiagnosticForNode(node: AstNode): Ge
     return wrapSimpleDiagnosticSelector(node, getTypeParameterConstraintVisibilityDiagnosticMessage);
   }
   if (isExpressionWithTypeArguments(node)) {
-    return (_result) => ({
-      errorNode: node,
-      diagnosticMessage: Diagnostics.Generic_inaccessible_symbol_error,
-      typeName: undefined,
-    } as unknown as SymbolAccessibilityErrorInfo);
+    // unique node selection behavior, inline closure
+    return (_result) => {
+      const parent = nodeParent(node);
+      const grandParent = parent !== undefined ? nodeParent(parent) : undefined;
+      // Heritage clause is written by user so it can always be named
+      const diagnosticMessage = grandParent !== undefined && isClassDeclaration(grandParent)
+        ? (parent !== undefined && isHeritageClause(parent) && parent.token === Kind.ImplementsKeyword
+            ? Diagnostics.Implements_clause_of_exported_class_0_has_or_is_using_private_name_1
+            : (getNameOfDeclaration(grandParent) !== undefined
+                ? Diagnostics.X_extends_clause_of_exported_class_0_has_or_is_using_private_name_1
+                : Diagnostics.X_extends_clause_of_exported_class_has_or_is_using_private_name_0))
+        : Diagnostics.X_extends_clause_of_exported_interface_0_has_or_is_using_private_name_1;
+      return {
+        errorNode: node,
+        diagnosticMessage,
+        typeName: grandParent !== undefined ? getNameOfDeclaration(grandParent) : undefined,
+      } as unknown as SymbolAccessibilityErrorInfo;
+    };
   }
   if (isImportEqualsDeclaration(node)) {
     return wrapSimpleDiagnosticSelector(node, () => Diagnostics.Import_declaration_0_is_using_private_name_1);
   }
   if (isTypeAliasDeclaration(node) || isJSTypeAliasDeclaration(node)) {
-    return (_result) => ({
+    // unique node selection behavior, inline closure
+    return (result) => ({
       errorNode: nodeType(node) ?? node,
-      diagnosticMessage: Diagnostics.Generic_inaccessible_symbol_error,
+      diagnosticMessage: selectDiagnosticBasedOnModuleNameNoNameCheck(result,
+        Diagnostics.Exported_type_alias_0_has_or_is_using_private_name_1_from_module_2,
+        Diagnostics.Exported_type_alias_0_has_or_is_using_private_name_1),
       typeName: nodeName(node),
     } as unknown as SymbolAccessibilityErrorInfo);
   }
-  // Fallback for unhandled node kinds.
-  return (_result) => ({
-    errorNode: node,
-    diagnosticMessage: Diagnostics.Generic_inaccessible_symbol_error,
-    typeName: undefined,
-  } as unknown as SymbolAccessibilityErrorInfo);
+  // Unhandled node kind: upstream panics here ("Attempted to set a declaration
+  // diagnostic context for unhandled node kind"). Mirror that as a thrown error
+  // rather than inventing a generic diagnostic message.
+  throw new Error("Attempted to set a declaration diagnostic context for unhandled node kind: " + String(node.kind));
 }
 
 function getAccessorNameVisibilityDiagnosticMessage(node: AstNode, result: SymbolAccessibilityResult): DiagnosticMessage {
@@ -228,11 +243,13 @@ function getMethodNameVisibilityDiagnosticMessage(node: AstNode, result: SymbolA
     Diagnostics.Method_0_of_exported_interface_has_or_is_using_private_name_1);
 }
 
-// Type-visibility message selectors. Mirror Strada's per-node-kind
+// Type-visibility message selectors. Mirror TS-Go's per-node-kind
 // switch over modifier flags + parent kind to pick the most specific
-// message. Each fall-back goes to Generic_inaccessible_symbol_error.
+// message. Where TS-Go returns nil the selector returns undefined (the
+// wrappers suppress the diagnostic); where TS-Go panics on an unreachable
+// node kind, the selector throws.
 
-function getVariableDeclarationTypeVisibilityDiagnosticMessage(node: AstNode, result: SymbolAccessibilityResult): DiagnosticMessage {
+function getVariableDeclarationTypeVisibilityDiagnosticMessage(node: AstNode, result: SymbolAccessibilityResult): DiagnosticMessage | undefined {
   if (isVariableDeclaration(node) || isBindingElement(node) || isPropertyAccessExpression(node) || isElementAccessExpression(node) || isBinaryExpression(node)) {
     return selectDiagnosticBasedOnModuleName(result,
       Diagnostics.Exported_variable_0_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
@@ -257,19 +274,20 @@ function getVariableDeclarationTypeVisibilityDiagnosticMessage(node: AstNode, re
       Diagnostics.Property_0_of_exported_interface_has_or_is_using_name_1_from_private_module_2,
       Diagnostics.Property_0_of_exported_interface_has_or_is_using_private_name_1);
   }
-  return Diagnostics.Generic_inaccessible_symbol_error;
+  // TS-Go returns nil here (potential silent error state in strada).
+  return undefined;
 }
 
 function getAccessorDeclarationTypeVisibilityDiagnosticMessage(node: AstNode, result: SymbolAccessibilityResult): DiagnosticMessage {
   if (isSetAccessorDeclaration(node)) {
+    // Getters can infer the return type from the returned expression, but setters cannot, so the
+    // "_from_external_module_1_but_cannot_be_named" case cannot occur.
     if (isStatic(node)) {
-      return selectDiagnosticBasedOnModuleName(result,
-        Diagnostics.Parameter_type_of_public_static_setter_0_from_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
+      return selectDiagnosticBasedOnModuleNameNoNameCheck(result,
         Diagnostics.Parameter_type_of_public_static_setter_0_from_exported_class_has_or_is_using_name_1_from_private_module_2,
         Diagnostics.Parameter_type_of_public_static_setter_0_from_exported_class_has_or_is_using_private_name_1);
     }
-    return selectDiagnosticBasedOnModuleName(result,
-      Diagnostics.Parameter_type_of_public_setter_0_from_exported_class_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
+    return selectDiagnosticBasedOnModuleNameNoNameCheck(result,
       Diagnostics.Parameter_type_of_public_setter_0_from_exported_class_has_or_is_using_name_1_from_private_module_2,
       Diagnostics.Parameter_type_of_public_setter_0_from_exported_class_has_or_is_using_private_name_1);
   }
@@ -324,12 +342,16 @@ function getReturnTypeVisibilityDiagnosticMessage(node: AstNode, result: SymbolA
       Diagnostics.Return_type_of_exported_function_has_or_is_using_name_0_from_private_module_1,
       Diagnostics.Return_type_of_exported_function_has_or_is_using_private_name_0);
   }
-  return Diagnostics.Generic_inaccessible_symbol_error;
+  // TS-Go panics on unknown signature kind here.
+  throw new Error("This is unknown kind for signature: " + String(node.kind));
 }
 
 function getParameterDeclarationTypeVisibilityDiagnosticMessage(node: AstNode, result: SymbolAccessibilityResult): DiagnosticMessage {
   const parent = nodeParent(node);
-  if (parent === undefined) return Diagnostics.Generic_inaccessible_symbol_error;
+  // TS-Go switches on node.Parent.Kind directly; a missing parent is unreachable.
+  if (parent === undefined) {
+    throw new Error("Unknown parent for parameter: undefined");
+  }
   if (isConstructorDeclaration(parent)) {
     if (isStatic(parent)) {
       return selectDiagnosticBasedOnModuleName(result,
@@ -365,12 +387,23 @@ function getParameterDeclarationTypeVisibilityDiagnosticMessage(node: AstNode, r
       Diagnostics.Parameter_0_of_exported_function_has_or_is_using_name_1_from_private_module_2,
       Diagnostics.Parameter_0_of_exported_function_has_or_is_using_private_name_1);
   }
-  return Diagnostics.Generic_inaccessible_symbol_error;
+  if (isSetAccessorDeclaration(parent) || isGetAccessorDeclaration(parent)) {
+    return selectDiagnosticBasedOnModuleName(result,
+      Diagnostics.Parameter_0_of_accessor_has_or_is_using_name_1_from_external_module_2_but_cannot_be_named,
+      Diagnostics.Parameter_0_of_accessor_has_or_is_using_name_1_from_private_module_2,
+      Diagnostics.Parameter_0_of_accessor_has_or_is_using_private_name_1);
+  }
+  // TS-Go panics on unknown parent kind here.
+  throw new Error("Unknown parent for parameter: " + String(parent.kind));
 }
 
 function getTypeParameterConstraintVisibilityDiagnosticMessage(node: AstNode, _result: SymbolAccessibilityResult): DiagnosticMessage {
+  // Type parameter constraints are named by user so we should always be able to name it.
   const parent = nodeParent(node);
-  if (parent === undefined) return Diagnostics.Generic_inaccessible_symbol_error;
+  // TS-Go switches on node.Parent.Kind directly; a missing parent is unreachable.
+  if (parent === undefined) {
+    throw new Error("This is unknown parent for type parameter: undefined");
+  }
   switch (parent.kind) {
     case Kind.ClassDeclaration:
       return Diagnostics.Type_parameter_0_of_exported_class_has_or_is_using_private_name_1;
@@ -401,7 +434,8 @@ function getTypeParameterConstraintVisibilityDiagnosticMessage(node: AstNode, _r
     case Kind.JSTypeAliasDeclaration:
       return Diagnostics.Type_parameter_0_of_exported_type_alias_has_or_is_using_private_name_1;
     default:
-      return Diagnostics.Generic_inaccessible_symbol_error;
+      // TS-Go panics on unknown parent kind here.
+      throw new Error("This is unknown parent for type parameter: " + String(parent.kind));
   }
 }
 
@@ -411,45 +445,70 @@ function getTypeParameterConstraintVisibilityDiagnosticMessage(node: AstNode, _r
 
 export function getRelatedSuggestionByDeclarationKind(kind: number): DiagnosticMessage | undefined {
   switch (kind) {
+    case Kind.ArrowFunction:
+      return Diagnostics.Add_a_return_type_to_the_function_expression;
+    case Kind.FunctionExpression:
+      return Diagnostics.Add_a_return_type_to_the_function_expression;
+    case Kind.MethodDeclaration:
+      return Diagnostics.Add_a_return_type_to_the_method;
+    case Kind.GetAccessor:
+      return Diagnostics.Add_a_return_type_to_the_get_accessor_declaration;
+    case Kind.SetAccessor:
+      return Diagnostics.Add_a_type_to_parameter_of_the_set_accessor_declaration;
+    case Kind.FunctionDeclaration:
+      return Diagnostics.Add_a_return_type_to_the_function_declaration;
+    case Kind.ConstructSignature:
+      return Diagnostics.Add_a_return_type_to_the_function_declaration;
     case Kind.Parameter:
       return Diagnostics.Add_a_type_annotation_to_the_parameter_0;
     case Kind.VariableDeclaration:
-    case Kind.BindingElement:
       return Diagnostics.Add_a_type_annotation_to_the_variable_0;
     case Kind.PropertyDeclaration:
+      return Diagnostics.Add_a_type_annotation_to_the_property_0;
     case Kind.PropertySignature:
       return Diagnostics.Add_a_type_annotation_to_the_property_0;
-    case Kind.GetAccessor:
-    case Kind.SetAccessor:
-      return Diagnostics.Add_a_return_type_to_the_accessor_0;
-    case Kind.MethodDeclaration:
-    case Kind.MethodSignature:
-      return Diagnostics.Add_a_return_type_to_the_method;
-    case Kind.FunctionDeclaration:
-    case Kind.FunctionExpression:
-    case Kind.ArrowFunction:
-      return Diagnostics.Add_a_return_type_to_the_function;
+    case Kind.ExportAssignment:
+      return Diagnostics.Move_the_expression_in_default_export_to_a_variable_and_add_a_type_annotation_to_it;
   }
   return undefined;
 }
 
 export function getErrorByDeclarationKind(kind: number): DiagnosticMessage | undefined {
   switch (kind) {
-    case Kind.VariableDeclaration:
-    case Kind.BindingElement:
-      return Diagnostics.Variable_must_have_an_explicit_type_annotation_with_isolatedDeclarations;
-    case Kind.Parameter:
-      return Diagnostics.Parameter_must_have_an_explicit_type_annotation_with_isolatedDeclarations;
-    case Kind.PropertyDeclaration:
-    case Kind.PropertySignature:
-      return Diagnostics.Property_must_have_an_explicit_type_annotation_with_isolatedDeclarations;
+    case Kind.FunctionExpression:
+      return Diagnostics.Function_must_have_an_explicit_return_type_annotation_with_isolatedDeclarations;
+    case Kind.FunctionDeclaration:
+      return Diagnostics.Function_must_have_an_explicit_return_type_annotation_with_isolatedDeclarations;
+    case Kind.ArrowFunction:
+      return Diagnostics.Function_must_have_an_explicit_return_type_annotation_with_isolatedDeclarations;
+    case Kind.MethodDeclaration:
+      return Diagnostics.Method_must_have_an_explicit_return_type_annotation_with_isolatedDeclarations;
+    case Kind.ConstructSignature:
+      return Diagnostics.Method_must_have_an_explicit_return_type_annotation_with_isolatedDeclarations;
     case Kind.GetAccessor:
+      return Diagnostics.At_least_one_accessor_must_have_an_explicit_type_annotation_with_isolatedDeclarations;
     case Kind.SetAccessor:
       return Diagnostics.At_least_one_accessor_must_have_an_explicit_type_annotation_with_isolatedDeclarations;
-    case Kind.MethodDeclaration:
-    case Kind.FunctionDeclaration:
-    case Kind.MethodSignature:
-      return Diagnostics.Function_must_have_an_explicit_return_type_annotation_with_isolatedDeclarations;
+    case Kind.Parameter:
+      return Diagnostics.Parameter_must_have_an_explicit_type_annotation_with_isolatedDeclarations;
+    case Kind.VariableDeclaration:
+      return Diagnostics.Variable_must_have_an_explicit_type_annotation_with_isolatedDeclarations;
+    case Kind.PropertyDeclaration:
+      return Diagnostics.Property_must_have_an_explicit_type_annotation_with_isolatedDeclarations;
+    case Kind.PropertySignature:
+      return Diagnostics.Property_must_have_an_explicit_type_annotation_with_isolatedDeclarations;
+    case Kind.ComputedPropertyName:
+      return Diagnostics.Computed_property_names_on_class_or_object_literals_cannot_be_inferred_with_isolatedDeclarations;
+    case Kind.SpreadAssignment:
+      return Diagnostics.Objects_that_contain_spread_assignments_can_t_be_inferred_with_isolatedDeclarations;
+    case Kind.ShorthandPropertyAssignment:
+      return Diagnostics.Objects_that_contain_shorthand_properties_can_t_be_inferred_with_isolatedDeclarations;
+    case Kind.ArrayLiteralExpression:
+      return Diagnostics.Only_const_arrays_can_be_inferred_with_isolatedDeclarations;
+    case Kind.ExportAssignment:
+      return Diagnostics.Default_exports_can_t_be_inferred_with_isolatedDeclarations;
+    case Kind.SpreadElement:
+      return Diagnostics.Arrays_with_spread_elements_can_t_inferred_with_isolatedDeclarations;
   }
   return undefined;
 }
@@ -493,11 +552,15 @@ export function createAccessorTypeError(node: AstNode): Diagnostic {
 }
 
 export function createObjectLiteralError(node: AstNode): Diagnostic {
-  return makeDiagnostic(node, Diagnostics.Object_literal_must_be_cast_to_an_explicit_type_with_isolatedDeclarations);
+  const diag = makeDiagnostic(node, getErrorByDeclarationKind(node.kind));
+  addParentDeclarationRelatedInfo(node, diag);
+  return diag;
 }
 
 export function createArrayLiteralError(node: AstNode): Diagnostic {
-  return makeDiagnostic(node, Diagnostics.Array_literal_must_be_cast_to_an_explicit_type_with_isolatedDeclarations);
+  const diag = makeDiagnostic(node, getErrorByDeclarationKind(node.kind));
+  addParentDeclarationRelatedInfo(node, diag);
+  return diag;
 }
 
 export function createReturnTypeError(node: AstNode): Diagnostic {
