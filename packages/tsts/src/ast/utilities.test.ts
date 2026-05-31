@@ -46,6 +46,7 @@ import {
   nodeIsPresent,
   nodeIsSynthesized,
   modifiersToFlags,
+  type BinaryOperatorToken,
   type ModifierSyntaxKind,
   type Node,
 } from "./index.js";
@@ -114,8 +115,8 @@ export class AstUtilitiesParityTests {
   // Kind enum rather than the stub's hardcoded numbers (226/64/79).
   is_assignment_expression_branches_on_compound_and_lhs_guard(): void {
     const lhs = createIdentifier("a");
-    const eq = createBinaryExpression(undefined, lhs, undefined, createToken(Kind.EqualsToken), createNumericLiteral("1", 0));
-    const plusEq = createBinaryExpression(undefined, createIdentifier("a"), undefined, createToken(Kind.PlusEqualsToken), createNumericLiteral("1", 0));
+    const eq = createBinaryExpression(undefined, lhs, undefined, createToken(Kind.EqualsToken) as BinaryOperatorToken, createNumericLiteral("1", 0));
+    const plusEq = createBinaryExpression(undefined, createIdentifier("a"), undefined, createToken(Kind.PlusEqualsToken) as BinaryOperatorToken, createNumericLiteral("1", 0));
 
     // `=` is an assignment under either excludeCompoundAssignment value.
     Assert.True(isAssignmentExpression(eq, /*excludeCompoundAssignment*/ true));
@@ -126,9 +127,9 @@ export class AstUtilitiesParityTests {
     Assert.True(isAssignmentExpression(plusEq, /*excludeCompoundAssignment*/ false));
 
     // LHS guard: left must be a LeftHandSideExpression. `(a + b)` is not.
-    const innerSum = createBinaryExpression(undefined, createIdentifier("a"), undefined, createToken(Kind.PlusToken), createIdentifier("b"));
+    const innerSum = createBinaryExpression(undefined, createIdentifier("a"), undefined, createToken(Kind.PlusToken) as BinaryOperatorToken, createIdentifier("b"));
     Assert.False(isLeftHandSideExpression(innerSum));
-    const badLhs = createBinaryExpression(undefined, innerSum, undefined, createToken(Kind.EqualsToken), createNumericLiteral("2", 0));
+    const badLhs = createBinaryExpression(undefined, innerSum, undefined, createToken(Kind.EqualsToken) as BinaryOperatorToken, createNumericLiteral("2", 0));
     Assert.False(isAssignmentExpression(badLhs, /*excludeCompoundAssignment*/ false));
 
     // Not a BinaryExpression at all.
@@ -136,8 +137,8 @@ export class AstUtilitiesParityTests {
   }
 
   is_comma_expression_matches_only_comma_operator(): void {
-    const comma = createBinaryExpression(undefined, createIdentifier("a"), undefined, createToken(Kind.CommaToken), createIdentifier("b"));
-    const eq = createBinaryExpression(undefined, createIdentifier("a"), undefined, createToken(Kind.EqualsToken), createIdentifier("b"));
+    const comma = createBinaryExpression(undefined, createIdentifier("a"), undefined, createToken(Kind.CommaToken) as BinaryOperatorToken, createIdentifier("b"));
+    const eq = createBinaryExpression(undefined, createIdentifier("a"), undefined, createToken(Kind.EqualsToken) as BinaryOperatorToken, createIdentifier("b"));
     Assert.True(isCommaExpression(comma));
     Assert.False(isCommaExpression(eq));
     Assert.False(isCommaExpression(createIdentifier("a")));

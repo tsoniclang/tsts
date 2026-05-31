@@ -75,10 +75,11 @@ function concreteKindNames(schema: AstSchema): Set<string> {
 }
 
 function typeParameters(schema: AstSchema, definition: NodeDefinition): string {
-  if (!definition.typeParameters?.length) {
+  const paramsSource = (definition.typeParameters ?? []).filter(param => param.name !== "TKind");
+  if (!paramsSource.length) {
     return "";
   }
-  const params = definition.typeParameters.map(param => {
+  const params = paramsSource.map(param => {
     const constraint = formatType(schema, param.constraint);
     const defaultType = param.default === undefined ? "" : ` = ${formatType(schema, param.default)}`;
     return `${param.name} extends ${constraint}${defaultType}`;
@@ -91,11 +92,31 @@ function formatKindType(name: string): string {
   return `Kind.${enumMemberName(kindName)}`;
 }
 
+function tokenAliasNames(schema: AstSchema): ReadonlySet<string> {
+  const aliases = new Set<string>(["Token"]);
+  for (const definition of Object.values(schema.nodes.definitions)) {
+    for (const aliasName of Object.keys(definition.instantiationAliases ?? {})) {
+      aliases.add(aliasName);
+    }
+  }
+  return aliases;
+}
+
+function isTokenAliasType(schema: AstSchema, type: string): boolean {
+  return tokenAliasNames(schema).has(type.startsWith("*") ? type.slice(1) : type);
+}
+
 function formatType(schema: AstSchema, type: string | readonly string[] | undefined): string {
   if (type === undefined) {
     return "unknown";
   }
   if (isReadonlyArray(type)) {
+    if (type.every(item => isTokenAliasType(schema, item))) {
+      return "Token";
+    }
+    if (type.every(item => item.startsWith("SyntaxKind."))) {
+      return "Kind";
+    }
     return type.map(item => formatType(schema, item)).join(" | ");
   }
   if (type.startsWith("SyntaxKind.")) {
@@ -111,7 +132,7 @@ function formatType(schema: AstSchema, type: string | readonly string[] | undefi
     case "bool":
       return "boolean";
     case "int":
-      return "number";
+      return "int";
     case "string":
     case "unknown":
       return type;
@@ -125,7 +146,7 @@ function formatType(schema: AstSchema, type: string | readonly string[] | undefi
     case "CheckFlags":
     case "FunctionFlags":
     case "TransformFlags":
-      return "number";
+      return "int";
     default:
       return type;
   }
@@ -163,13 +184,13 @@ function generateKind(schema: AstSchema): string {
   lines.push("export { Kind as SyntaxKind };");
   lines.push("");
 
-  lines.push("export const KindNames = [");
+  lines.push("export const KindNames: readonly string[] = [");
   for (const kind of kinds) {
     lines.push(`  ${JSON.stringify(kind.name)},`);
   }
-  lines.push("] as const;");
+  lines.push("];");
   lines.push("");
-  lines.push("export type KindName = typeof KindNames[number];");
+  lines.push("export type KindName = string;");
   lines.push("");
 
   lines.push("export const KindValues = {");
@@ -241,7 +262,8 @@ function generateSchemaContract(schema: AstSchema): string {
 }
 
 function generateRuntimeTypes(): string {
-  return `${generatedHeader("schema/tsgo/ast.json")}import { Kind } from "./kind.js";
+  return `${generatedHeader("schema/tsgo/ast.json")}import type { int } from "@tsonic/core/types.js";
+import { Kind } from "./kind.js";
 import type { EndOfFile, Statement } from "./nodes.js";
 import type { Diagnostic } from "../../diagnostics/types.js";
 
@@ -249,8 +271,8 @@ export interface TextRange {
   // codex-048 Stage-1a: pos/end are MUTABLE parse-state. tsgo treats node
   // Loc/range as mutable (parser.go:5904-5917) so a faithful finishNode can
   // stamp ranges post-construction; same category as the M2 mutable slots.
-  pos: number;
-  end: number;
+  pos: int;
+  end: int;
 }
 
 export interface Node extends TextRange {
@@ -260,7 +282,7 @@ export interface Node extends TextRange {
   // contextFlags into the node post-construction; a faithful #finishNode must write
   // node.flags after createX builds the node. Same controlled mutable-compiler-state
   // category as the pos/end TextRange slots above (codex-048) and the parent slot below.
-  flags: number;
+  flags: int;
   // codex-043 M2 Fork A: parent is a mutable binder-set slot.
   parent: Node;
   // codex-032140 ruling B: binder-owned slots surfaced on the shared Node
@@ -282,20 +304,20 @@ export interface Node extends TextRange {
   // of an \`as unknown as { field }\` structural-erasure cast.
   localSymbol?: Symbol;
   readonly jsDoc?: readonly Node[];
-  forEachChild<T>(visitor: (node: Node) => T, visitArray?: (nodes: NodeArray<Node>) => T): T | undefined;
+  forEachChild(visitor: (node: Node) => boolean | undefined, visitArray?: (nodes: NodeArray<Node>) => boolean | undefined): boolean | undefined;
   getSourceFile(): SourceFile;
 }
 
-export interface NodeArray<TNode extends Node = Node> extends ReadonlyArray<TNode>, TextRange {
+export interface NodeArray<T extends Node = Node> extends ReadonlyArray<T>, TextRange {
   readonly hasTrailingComma?: boolean;
-  readonly transformFlags: number;
+  readonly transformFlags: int;
 }
 
-export type NodeList<TNode extends Node = Node> = NodeArray<TNode>;
+export type NodeList<T extends Node = Node> = NodeArray<T>;
 
 export interface FileReference extends TextRange {
   readonly fileName: string;
-  readonly resolutionMode: number;
+  readonly resolutionMode: int;
   readonly preserve: boolean;
 }
 
@@ -308,8 +330,8 @@ export interface SourceFile extends Node {
   readonly text: string;
   readonly fileName: string;
   readonly path: Path;
-  readonly languageVariant: number;
-  readonly scriptKind: number;
+  readonly languageVariant: int;
+  readonly scriptKind: int;
   readonly isDeclarationFile: boolean;
   readonly referencedFiles: readonly FileReference[];
   readonly typeReferenceDirectives: readonly FileReference[];
@@ -317,7 +339,7 @@ export interface SourceFile extends Node {
   readonly imports: readonly Node[];
   readonly moduleAugmentations: readonly Node[];
   readonly ambientModuleNames: readonly string[];
-  readonly externalModuleIndicator: Node | true | undefined;
+  readonly externalModuleIndicator: unknown | undefined;
   readonly parseDiagnostics: readonly Diagnostic[];
   readonly tokenCache?: Map<string, Node>;
   // codex-021307 M4a Fork A: SourceFile is a HasLocals control-flow container
@@ -328,7 +350,7 @@ export interface SourceFile extends Node {
 }
 
 export interface FlowNode {
-  readonly flags: number;
+  readonly flags: int;
   readonly node?: Node;
   readonly antecedent?: FlowNode;
   readonly antecedents?: unknown;
@@ -339,7 +361,7 @@ export interface Symbol {
   readonly escapedName?: string;
   // codex-021307 M4a Fork A: flags is a mutable binder slot — addDeclarationToSymbol
   // does \`symbol.Flags |= symbolFlags\` (binder.go:2531).
-  flags?: number;
+  flags?: int;
   // codex-043 M2 Fork A: binder-mutated symbol slots (declarations are pushed,
   // member/export tables are populated in place) — mirror TS-Go []*Node + maps.
   declarations: Node[];
@@ -456,6 +478,12 @@ function baseExtendsTransitive(schema: AstSchema, nodeDefinition: NodeDefinition
 function kindType(schema: AstSchema, name: string, definition: NodeDefinition): string {
   const kindMember = definition.members?.find(member => member.name === "Kind" || member.name === "kind");
   if (kindMember?.type !== undefined) {
+    if (typeof kindMember.type === "string") {
+      const typeParameter = definition.typeParameters?.find(param => param.name === kindMember.type);
+      if (typeParameter !== undefined) {
+        return formatType(schema, typeParameter.constraint);
+      }
+    }
     return formatType(schema, kindMember.type);
   }
 
@@ -668,6 +696,12 @@ function formatRuntimeType(schema: AstSchema, type: string | readonly string[] |
     return "unknown";
   }
   if (isReadonlyArray(type)) {
+    if (type.every(item => isTokenAliasType(schema, item))) {
+      return "Ast.Token";
+    }
+    if (type.every(item => item.startsWith("SyntaxKind."))) {
+      return "Kind";
+    }
     return type.map(item => formatRuntimeType(schema, item)).join(" | ");
   }
   if (type.startsWith("SyntaxKind.")) {
@@ -687,6 +721,9 @@ function formatRuntimeType(schema: AstSchema, type: string | readonly string[] |
     case "Symbol":
       return type;
     default:
+      if (type === "TKind") {
+        return "Ast.TokenSyntaxKind";
+      }
       return `Ast.${type}`;
   }
 }
@@ -705,10 +742,11 @@ function formatRuntimeMemberType(schema: AstSchema, member: MemberDefinition): s
 }
 
 function runtimeTypeParameters(schema: AstSchema, definition: NodeDefinition): string {
-  if (!definition.typeParameters?.length) {
+  const paramsSource = (definition.typeParameters ?? []).filter(param => param.name !== "TKind");
+  if (!paramsSource.length) {
     return "";
   }
-  const params = definition.typeParameters.map(param => {
+  const params = paramsSource.map(param => {
     const constraint = formatRuntimeType(schema, param.constraint);
     const defaultType = param.default === undefined ? "" : ` = ${formatRuntimeType(schema, param.default)}`;
     return `${param.name} extends ${constraint}${defaultType}`;
@@ -794,7 +832,8 @@ function concreteNodeEntries(schema: AstSchema): {
       continue;
     }
 
-    const params = definition.typeParameters ?? [];
+    const params = (definition.typeParameters ?? []).filter(param => param.name !== "TKind");
+    const hasKindTypeParameter = definition.typeParameters?.some(param => param.name === "TKind") === true;
     const kindNames = (isReadonlyArray(definition.kind) ? definition.kind : [definition.kind ?? name])
       .map(kindName => kindName.startsWith("SyntaxKind.") ? kindName.slice("SyntaxKind.".length) : kindName);
     const returnType = `Ast.${name}${params.length > 0 ? `<${params.map(param => param.name).join(", ")}>` : ""}`;
@@ -803,7 +842,7 @@ function concreteNodeEntries(schema: AstSchema): {
         name: index === 0 ? name : kindName,
         definitionName: name,
         returnType,
-        kindType: formatKindType(kindName),
+        kindType: hasKindTypeParameter ? kindType(schema, name, definition) : formatKindType(kindName),
         kindNames,
         definition,
         members: runtimeMembers(schema, definition),
@@ -826,26 +865,20 @@ function generateFactory(schema: AstSchema): string {
   lines.push("import type { Node, NodeArray, Path, SourceFile, Symbol } from \"./types.js\";");
   lines.push("import type { Diagnostic } from \"../../diagnostics/types.js\";");
   lines.push("");
-  lines.push("type NodeDataValue =");
-  lines.push("  | Node");
-  lines.push("  | readonly NodeDataValue[]");
-  lines.push("  | string");
-  lines.push("  | int");
-  lines.push("  | boolean");
-  lines.push("  | bigint");
-  lines.push("  | unknown");
-  lines.push("  | undefined;");
-  lines.push("");
-  lines.push("type NodeData = Record<string, NodeDataValue>;");
+  lines.push("type NodeData = Record<string, unknown>;");
   lines.push("");
   lines.push("export class NodeObject implements Node {");
   lines.push("  readonly kind: Kind;");
   lines.push("  flags = 0;");
   lines.push("  // codex-048 Stage-1a: pos/end are MUTABLE parse-state (tsgo");
   lines.push("  // parser.go:5904-5917) so finishNode can stamp ranges post-construction.");
-  lines.push("  pos: number;");
-  lines.push("  end: number;");
+  lines.push("  pos: int;");
+  lines.push("  end: int;");
   lines.push("  parent: Node = undefined!;");
+  lines.push("  symbol?: Symbol;");
+  lines.push("  locals?: Map<string, Symbol>;");
+  lines.push("  nextContainer?: Node;");
+  lines.push("  localSymbol?: Symbol;");
   lines.push("  readonly jsDoc?: readonly Node[];");
   lines.push("  readonly #data: NodeData;");
   lines.push("");
@@ -895,7 +928,7 @@ function generateFactory(schema: AstSchema): string {
     lines.push(`  get ${getterName}(): unknown { return this.#data[${JSON.stringify(getterName)}]; }`);
   }
   lines.push("");
-  lines.push("  forEachChild<T>(visitor: (node: Node) => T, visitArray?: (nodes: NodeArray<Node>) => T): T | undefined {");
+  lines.push("  forEachChild(visitor: (node: Node) => boolean | undefined, visitArray?: (nodes: NodeArray<Node>) => boolean | undefined): boolean | undefined {");
   lines.push("    return forEachChild(this, visitor, visitArray);");
   lines.push("  }");
   lines.push("");
@@ -908,64 +941,66 @@ function generateFactory(schema: AstSchema): string {
   lines.push("  }");
   lines.push("}");
   lines.push("");
-  lines.push("export function createNode<TNode extends Node>(kind: Kind, data: NodeData = {}, pos: int = -1, end: int = -1): TNode {");
-  lines.push("  const node = new NodeObject(kind, data, pos, end) as unknown as TNode;");
-  lines.push("  const flags = data[\"flags\"];");
-  lines.push("  if (typeof flags === \"number\") {");
-  lines.push("    (node as { flags: number }).flags = flags;");
-  lines.push("  }");
-  lines.push("  for (const value of Object.values(data)) {");
-  lines.push("    attachParent(node, value);");
-  lines.push("  }");
-  lines.push("  return node;");
+  lines.push("export function createNode(kind: Kind, data: NodeData = {}, pos: int = -1, end: int = -1): Node {");
+  lines.push("  return new NodeObject(kind, data, pos, end);");
   lines.push("}");
   lines.push("");
-  lines.push("function isNode(value: NodeDataValue): value is Node {");
-  lines.push("  return value instanceof NodeObject;");
+  lines.push("function kindDebugName(kind: Kind): string {");
+  lines.push("  return String(kind);");
   lines.push("}");
   lines.push("");
-  lines.push("function attachParent(parent: Node, value: NodeDataValue): void {");
-  lines.push("  if (isNode(value)) {");
-  lines.push("    (value as { parent: Node }).parent = parent;");
-  lines.push("    return;");
-  lines.push("  }");
-  lines.push("  if (Array.isArray(value)) {");
-  lines.push("    for (const element of value) {");
-  lines.push("      attachParent(parent, element);");
-  lines.push("    }");
-  lines.push("  }");
+  lines.push("function sameValue(left: unknown, right: unknown): boolean {");
+  lines.push("  return left === right;");
   lines.push("}");
   lines.push("");
-  lines.push("function isNodeArray<TNode extends Node>(array: readonly TNode[]): array is NodeArray<TNode> {");
-  lines.push("  const marker = array as unknown as { readonly pos?: int; readonly end?: int; readonly transformFlags?: int };");
-  lines.push("  return marker.pos !== undefined && marker.end !== undefined && marker.transformFlags !== undefined;");
+  lines.push("function nodeField(node: Node, key: string): unknown {");
+  lines.push("  return (node as unknown as Record<string, unknown>)[key];");
   lines.push("}");
   lines.push("");
-  lines.push("export function createNodeArray<TNode extends Node>(elements: readonly TNode[], pos: int = -1, end: int = -1): NodeArray<TNode> {");
-  lines.push("  if (isNodeArray(elements)) {");
-  lines.push("    return elements;");
-  lines.push("  }");
-  lines.push("  const array = elements.slice() as unknown as TNode[] & { pos: number; end: number; transformFlags: number; hasTrailingComma?: boolean };");
-  lines.push("  array.pos = pos;");
-  lines.push("  array.end = end;");
-  lines.push("  array.transformFlags = 0;");
-  lines.push("  return array as unknown as NodeArray<TNode>;");
+  lines.push("function valueAsUnknown<T>(value: T): unknown {");
+  lines.push("  return value as unknown;");
   lines.push("}");
+  lines.push("");
+  lines.push("function attachChildren(parent: Node): void {");
+  lines.push("  forEachChild(parent, (child) => {");
+  lines.push("    child.parent = parent;");
+  lines.push("    return undefined;");
+  lines.push("  });");
+  lines.push("}");
+  lines.push("");
+  lines.push("function createNodeArrayImpl<T extends Node>(elements: readonly T[], pos: int = -1, end: int = -1): NodeArray<T> {");
+  lines.push("  void pos;");
+  lines.push("  void end;");
+  lines.push("  return elements.slice() as unknown as NodeArray<T>;");
+  lines.push("}");
+  lines.push("");
+  lines.push("export const createNodeArray = createNodeArrayImpl;");
   lines.push("");
 
   for (const entry of concreteNodeEntries(schema)) {
-    const hasKindTypeParameter = entry.definition.typeParameters?.some(param => param.name === "TKind") === true;
     const memberParams = entry.members.map(member => {
       const type = formatRuntimeMemberType(schema, member);
       const optionalType = member.optional === true ? `${type} | undefined` : type;
       return `${parameterName(member.name)}: ${optionalType}`;
     });
-    const params = hasKindTypeParameter ? ["kind: TKind", ...memberParams] : memberParams;
-    const kindExpression = hasKindTypeParameter ? "kind as Kind" : entry.kindType;
-    const dataEntries = entry.members.map(member => `${JSON.stringify(dataPropertyName(member.name))}: ${parameterName(member.name)}`);
+    const kindTypeParameter = entry.definition.typeParameters?.find(param => param.name === "TKind");
+    const acceptsKindParameter = kindTypeParameter !== undefined;
+    const kindParameterType = kindTypeParameter === undefined ? entry.kindType : `Ast.${kindTypeParameter.constraint}`;
+    const params = acceptsKindParameter ? [`kind: ${kindParameterType}`, ...memberParams] : memberParams;
+    const kindExpression = acceptsKindParameter ? "kind as Kind" : entry.kindType;
+    const dataMembers = entry.members.filter(member => dataPropertyName(member.name) !== "flags");
+    const dataEntries = dataMembers.map(member => `${JSON.stringify(dataPropertyName(member.name))}: ${parameterName(member.name)}`);
     const dataExpression = dataEntries.length === 0 ? "{}" : `{ ${dataEntries.join(", ")} }`;
+    const flagsMember = entry.members.find(member => dataPropertyName(member.name) === "flags");
     lines.push(`export function create${entry.name}${entry.typeParameters}(${params.join(", ")}): ${entry.returnType} {`);
-    lines.push(`  return createNode<${entry.returnType}>(${kindExpression}, ${dataExpression});`);
+    lines.push(`  const node = createNode(${kindExpression}, ${dataExpression}) as ${entry.returnType};`);
+    if (flagsMember !== undefined) {
+      lines.push(`  node.flags = ${parameterName(flagsMember.name)};`);
+    }
+    if (dataMembers.some(member => isNodeMember(schema, member))) {
+      lines.push("  attachChildren(node);");
+    }
+    lines.push("  return node;");
     lines.push("}");
     lines.push("");
     const updateParams = [`node: ${entry.returnType}`, ...memberParams];
@@ -973,11 +1008,11 @@ function generateFactory(schema: AstSchema): string {
     if (entry.members.length === 0) {
       lines.push("  return node;");
     } else {
-      const comparisons = entry.members.map(member => `node.${dataPropertyName(member.name)} === ${parameterName(member.name)}`);
+      const comparisons = entry.members.map(member => `sameValue(nodeField(node, ${JSON.stringify(dataPropertyName(member.name))}), valueAsUnknown(${parameterName(member.name)}))`);
       lines.push(`  if (${comparisons.join(" && ")}) {`);
       lines.push("    return node;");
       lines.push("  }");
-      const createArgs = hasKindTypeParameter ? ["node.kind", ...entry.members.map(member => parameterName(member.name))] : entry.members.map(member => parameterName(member.name));
+      const createArgs = acceptsKindParameter ? ["node.kind", ...entry.members.map(member => parameterName(member.name))] : entry.members.map(member => parameterName(member.name));
       if (entry.kindNames.length > 1 && entry.name === entry.definitionName) {
         lines.push("  switch (node.kind) {");
         for (const kindName of entry.kindNames) {
@@ -985,7 +1020,7 @@ function generateFactory(schema: AstSchema): string {
           lines.push(`      return create${kindName}${entry.typeArguments}(${createArgs.join(", ")});`);
         }
         lines.push("    default:");
-        lines.push(`      throw new Error(\`Unexpected kind in update${entry.name}: \${Kind[node.kind]}\`);`);
+        lines.push(`      throw new Error(\`Unexpected kind in update${entry.name}: \${kindDebugName(node.kind)}\`);`);
         lines.push("  }");
       } else {
         lines.push(`  return create${entry.name}${entry.typeArguments}(${createArgs.join(", ")});`);
@@ -995,8 +1030,8 @@ function generateFactory(schema: AstSchema): string {
     lines.push("");
   }
 
-  lines.push("export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile, parseDiagnostics: readonly Diagnostic[], languageVariant: number, scriptKind: number, externalModuleIndicator: Node | true | undefined = undefined): SourceFile {");
-  lines.push("  return createNode<SourceFile>(Kind.SourceFile, {");
+  lines.push("export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile, parseDiagnostics: readonly Diagnostic[], languageVariant: int, scriptKind: int, externalModuleIndicator: unknown | undefined = undefined): SourceFile {");
+  lines.push("  const node = createNode(Kind.SourceFile, {");
   lines.push("    fileName,");
   lines.push("    path,");
   lines.push("    text,");
@@ -1013,7 +1048,9 @@ function generateFactory(schema: AstSchema): string {
   lines.push("    ambientModuleNames: [],");
   lines.push("    externalModuleIndicator,");
   lines.push("    parseDiagnostics,");
-  lines.push("  });");
+  lines.push("  }) as SourceFile;");
+  lines.push("  attachChildren(node);");
+  lines.push("  return node;");
   lines.push("}");
   lines.push("");
   lines.push("export function updateSourceFile(node: SourceFile, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile): SourceFile {");
@@ -1024,13 +1061,13 @@ function generateFactory(schema: AstSchema): string {
   lines.push("  return updated;");
   lines.push("}");
   lines.push("");
-  lines.push("export function cloneNode<TNode extends Node>(node: TNode): TNode {");
+  lines.push("export function cloneNode(node: Node): Node {");
   lines.push("  const data: NodeData = {};");
   for (const getterName of [...getterNames].sort()) {
     lines.push(`  if ((node as { readonly ${getterName}?: unknown }).${getterName} !== undefined) data[${JSON.stringify(getterName)}] = (node as { readonly ${getterName}?: unknown }).${getterName};`);
   }
-  lines.push("  const clone = createNode<TNode>(node.kind, data, node.pos, node.end);");
-  lines.push("  (clone as { flags: number }).flags = node.flags;");
+  lines.push("  const clone = createNode(node.kind, data, node.pos, node.end);");
+  lines.push("  (clone as { flags: int }).flags = node.flags;");
   lines.push("  return clone;");
   lines.push("}");
   lines.push("");
@@ -1097,14 +1134,15 @@ function nodeKindCases(schema: AstSchema, name: string, definition: NodeDefiniti
 
 function generateVisitor(schema: AstSchema): string {
   const lines: string[] = [generatedHeader("schema/tsgo/ast.json")];
+  lines.push("import type { int } from \"@tsonic/core/types.js\";");
   lines.push("import { Kind } from \"./kind.js\";");
   lines.push("import type { Node, NodeArray } from \"./types.js\";");
   lines.push("");
-  lines.push("function visitNode<T>(node: Node | undefined, visitor: (node: Node) => T): T | undefined {");
+  lines.push("function visitNode(node: Node | undefined, visitor: (node: Node) => boolean | undefined): boolean | undefined {");
   lines.push("  return node === undefined ? undefined : visitor(node);");
   lines.push("}");
   lines.push("");
-  lines.push("function visitNodes<T>(nodes: NodeArray<Node> | undefined, visitor: (node: Node) => T, visitArray?: (nodes: NodeArray<Node>) => T): T | undefined {");
+  lines.push("function visitNodes(nodes: NodeArray<Node> | undefined, visitor: (node: Node) => boolean | undefined, visitArray?: (nodes: NodeArray<Node>) => boolean | undefined): boolean | undefined {");
   lines.push("  if (nodes === undefined) {");
   lines.push("    return undefined;");
   lines.push("  }");
@@ -1121,7 +1159,7 @@ function generateVisitor(schema: AstSchema): string {
   lines.push("  return undefined;");
   lines.push("}");
   lines.push("");
-  lines.push("export function forEachChild<T>(node: Node, visitor: (node: Node) => T, visitArray?: (nodes: NodeArray<Node>) => T): T | undefined {");
+  lines.push("export function forEachChild(node: Node, visitor: (node: Node) => boolean | undefined, visitArray?: (nodes: NodeArray<Node>) => boolean | undefined): boolean | undefined {");
   lines.push("  switch (node.kind) {");
 
   const entries = Object.entries(schema.nodes.definitions);
@@ -1279,17 +1317,20 @@ function generateMetadata(schema: AstSchema): string {
   const lines: string[] = [generatedHeader("schema/tsgo/ast.json")];
   lines.push("import { Kind } from \"./kind.js\";");
   lines.push("");
-  lines.push("export const NodeDataEncoding = {");
+  lines.push("export type NodeDataEncoding = \"children\" | \"string\" | \"extended\";");
+  lines.push("export interface NodeDataEncodingTable {");
+  lines.push("  readonly children: NodeDataEncoding;");
+  lines.push("  readonly string: NodeDataEncoding;");
+  lines.push("  readonly extended: NodeDataEncoding;");
+  lines.push("}");
+  lines.push("export const NodeDataEncoding: NodeDataEncodingTable = {");
   lines.push("  children: \"children\",");
   lines.push("  string: \"string\",");
   lines.push("  extended: \"extended\",");
-  lines.push("} as const;");
+  lines.push("};");
   lines.push("");
-  lines.push("export type NodeDataEncoding = typeof NodeDataEncoding[keyof typeof NodeDataEncoding];");
-  lines.push("");
-  lines.push("const childPropertiesByKind: (readonly string[] | undefined)[] = [];");
-  lines.push("const dataEncodingByKind: (NodeDataEncoding | undefined)[] = [];");
-  lines.push("");
+  const childPropertyLines: string[] = [];
+  const dataEncodingLines: string[] = [];
 
   for (const [name, definition] of Object.entries(schema.nodes.definitions)) {
     const childProperties = runtimeMembers(schema, definition)
@@ -1297,10 +1338,17 @@ function generateMetadata(schema: AstSchema): string {
       .map(member => dataPropertyName(member.name));
     const encoding = nodeDataEncoding(schema, name, definition);
     for (const kindName of nodeKindCases(schema, name, definition)) {
-      lines.push(`childPropertiesByKind[Kind.${enumMemberName(kindName)}] = ${stableJson(childProperties)};`);
-      lines.push(`dataEncodingByKind[Kind.${enumMemberName(kindName)}] = NodeDataEncoding.${encoding};`);
+      childPropertyLines.push(`  [Kind.${enumMemberName(kindName)}, ${stableJson(childProperties)}],`);
+      dataEncodingLines.push(`  [Kind.${enumMemberName(kindName)}, NodeDataEncoding.${encoding}],`);
     }
   }
+  lines.push("const childPropertiesByKind: ReadonlyMap<Kind, readonly string[]> = new Map([");
+  lines.push(...childPropertyLines);
+  lines.push("]);");
+  lines.push("");
+  lines.push("const dataEncodingByKind: ReadonlyMap<Kind, NodeDataEncoding> = new Map([");
+  lines.push(...dataEncodingLines);
+  lines.push("]);");
   lines.push("");
   lines.push("export { childPropertiesByKind as ChildPropertiesByKind, dataEncodingByKind as DataEncodingByKind };");
   lines.push("");
@@ -1310,6 +1358,7 @@ function generateMetadata(schema: AstSchema): string {
 
 function generateNodeTypes(schema: AstSchema): string {
   const lines: string[] = [generatedHeader("schema/tsgo/ast.json")];
+  lines.push("import type { int } from \"@tsonic/core/types.js\";");
   lines.push("import { Kind } from \"./kind.js\";");
   lines.push("import type { FlowNode, Node, NodeArray, SourceFile, Symbol } from \"./types.js\";");
   // codex-043 mutable slots: LocalsContainerBase.Locals is `SymbolTable`, which
@@ -1317,11 +1366,11 @@ function generateNodeTypes(schema: AstSchema): string {
   // import is type-only, so the nodes.ts <-> aliases.ts cycle is erased.
   lines.push("import type { SymbolTable } from \"../aliases.js\";");
   lines.push("");
-  lines.push("export type ModifierFlags = number;");
-  lines.push("export type TokenFlags = number;");
-  lines.push("export type TransformFlags = number;");
-  lines.push("export type CheckFlags = number;");
-  lines.push("export type FunctionFlags = number;");
+  lines.push("export type ModifierFlags = int;");
+  lines.push("export type TokenFlags = int;");
+  lines.push("export type TransformFlags = int;");
+  lines.push("export type CheckFlags = int;");
+  lines.push("export type FunctionFlags = int;");
   lines.push("");
 
   for (const [name, alias] of Object.entries(schema.kinds.aliases ?? {})) {
@@ -1399,17 +1448,10 @@ function generateNodeTypes(schema: AstSchema): string {
   const kindToNodeType = syntaxKindToNodeType(schema);
 
   for (const [name, alias] of Object.entries(schema.nodes.aliases)) {
-    if (!isBaseNodeAlias(alias)) {
-      lines.push(`export type ${name} = ${expandNodeAliasMembers(schema, alias, kindToNodeType).join(" | ")};`);
-      continue;
-    }
-    const members = Object.entries(schema.nodes.definitions)
-      .filter(([, definition]) => !definition.handWritten && baseExtendsTransitive(schema, definition, alias.base))
-      .map(([nodeName]) => nodeName);
-    if (members.length === 0) {
-      lines.push(`export type ${name} = never;`);
+    if (isBaseNodeAlias(alias)) {
+      lines.push(`export type ${name} = ${typeNameForBase(alias.base)};`);
     } else {
-      lines.push(`export type ${name} = ${members.join(" | ")};`);
+      lines.push(`export type ${name} = ${expandNodeAliasMembers(schema, alias, kindToNodeType).join(" | ")};`);
     }
   }
   lines.push("");
@@ -1438,8 +1480,10 @@ function generateNodeTypes(schema: AstSchema): string {
       continue;
     }
     for (const [aliasName, kindName] of Object.entries(definition.instantiationAliases)) {
-      const typeArg = kindAliasNames(schema).has(kindName) ? kindName : formatKindType(kindName);
-      lines.push(`export type ${aliasName} = ${name}<${typeArg}>;`);
+      const kindType = kindAliasNames(schema).has(kindName) ? kindName : formatKindType(kindName);
+      lines.push(`export interface ${aliasName} extends ${name} {`);
+      lines.push(`  readonly kind: ${kindType};`);
+      lines.push("}");
     }
   }
   lines.push("");
@@ -1463,7 +1507,6 @@ function generateIndex(): string {
     generatedHeader("schema/tsgo/ast.json").trimEnd(),
     `export * from "./flags.js";`,
     `export * from "./generated/kind.js";`,
-    `export * from "./generated/schema.js";`,
     `export * from "./generated/types.js";`,
     `export * from "./generated/nodes.js";`,
     `export * from "./generated/factory.js";`,

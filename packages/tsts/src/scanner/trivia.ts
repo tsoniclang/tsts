@@ -17,11 +17,14 @@
  * mirrored here as UTF-16 code-unit / code-point iteration.
  */
 
-import * as debug from "../debug/index.js";
+import { assert as debugAssert, fail as debugFail } from "../debug/index.js";
+import type { int } from "@tsonic/core/types.js";
 import type { DiagnosticMessage } from "../diagnostics/types.js";
 import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
 import { isLineBreak, isWhiteSpaceLike } from "../stringutil/util.js";
 import type { TextPos, UTF16Offset } from "../core/index.js";
+
+const mergeConflictMarkerEncountered: DiagnosticMessage = Diagnostics.Merge_conflict_marker_encountered;
 
 // ---------------------------------------------------------------------------
 // SourceFileLike — the minimal surface the ECMA* helpers read.
@@ -198,7 +201,7 @@ export function skipTriviaEx(text: string, pos: number, options: SkipTriviaOptio
 // ---------------------------------------------------------------------------
 
 export function isConflictMarkerTrivia(text: string, pos: number): boolean {
-  debug.assert(pos >= 0, "pos < 0");
+  debugAssert(pos >= 0, "pos < 0");
 
   // Conflict markers must be at the start of a line.
   let prev = -1;
@@ -228,7 +231,7 @@ export function scanConflictMarkerTrivia(
   reportError: ((diag: DiagnosticMessage, pos: number, length: number) => void) | undefined,
 ): number {
   if (reportError !== undefined) {
-    reportError(Diagnostics.Merge_conflict_marker_encountered, pos, mergeConflictMarkerLength);
+    reportError(mergeConflictMarkerEncountered, pos, mergeConflictMarkerLength);
   }
   let ch = text.codePointAt(pos);
   const length = text.length;
@@ -239,7 +242,7 @@ export function scanConflictMarkerTrivia(
       ch = text.codePointAt(pos);
     }
   } else {
-    debug.assert(ch === 0x7c /* | */ || ch === 0x3d /* = */, "Assertion failed: ch must be either '|' or '='");
+    debugAssert(ch === 0x7c /* | */ || ch === 0x3d /* = */, "Assertion failed: ch must be either '|' or '='");
     // Consume everything from the start of a ||||||| or ======= marker to the start
     // of the next ======= or >>>>>>> marker.
     while (pos < length) {
@@ -263,7 +266,7 @@ export function isShebangTrivia(text: string, pos: number): boolean {
   if (text.length < 2) {
     return false;
   }
-  debug.assert(pos === 0, "Shebangs check must only be done at the start of the file");
+  debugAssert(pos === 0, "Shebangs check must only be done at the start of the file");
   return text.charCodeAt(0) === 0x23 /* # */ && text.charCodeAt(1) === 0x21 /* ! */;
 }
 
@@ -292,28 +295,28 @@ export function getShebang(text: string): string {
 // Position <-> line/character (scanner.go:2568-2708)
 // ---------------------------------------------------------------------------
 
-export function computeLineOfPosition(lineStarts: readonly TextPos[], pos: number): number {
-  let low = 0;
-  let high = lineStarts.length - 1;
+export function computeLineOfPosition(lineStarts: readonly TextPos[], pos: number): int {
+  let low: int = 0;
+  let high: int = (lineStarts.length - 1) | 0;
   while (low <= high) {
-    const middle = low + ((high - low) >> 1);
+    const middle: int = (low + ((high - low) >> 1)) | 0;
     const value = lineStarts[middle] as number;
     if (value < pos) {
-      low = middle + 1;
+      low = (middle + 1) | 0;
     } else if (value > pos) {
-      high = middle - 1;
+      high = (middle - 1) | 0;
     } else {
       return middle;
     }
   }
-  return low - 1;
+  return (low - 1) | 0;
 }
 
 export function getECMALineStarts(sourceFile: SourceFileLike): readonly TextPos[] {
   return sourceFile.ecmaLineMap();
 }
 
-export function getECMALineOfPosition(sourceFile: SourceFileLike, pos: number): number {
+export function getECMALineOfPosition(sourceFile: SourceFileLike, pos: number): int {
   const lineMap = getECMALineStarts(sourceFile);
   return computeLineOfPosition(lineMap, pos);
 }
@@ -326,7 +329,7 @@ export function getECMALineOfPosition(sourceFile: SourceFileLike, pos: number): 
 export function getECMALineAndUTF16CharacterOfPosition(
   sourceFile: SourceFileLike,
   pos: number,
-): { line: number; character: UTF16Offset } {
+): { line: int; character: UTF16Offset } {
   const lineMap = getECMALineStarts(sourceFile);
   const line = computeLineOfPosition(lineMap, pos);
   const character = (sourceFile.text().slice(lineMap[line] as number, pos)).length;
@@ -341,7 +344,7 @@ export function getECMALineAndUTF16CharacterOfPosition(
 export function getECMALineAndByteOffsetOfPosition(
   sourceFile: SourceFileLike,
   pos: number,
-): { line: number; byteOffset: number } {
+): { line: int; byteOffset: number } {
   const lineMap = getECMALineStarts(sourceFile);
   const line = computeLineOfPosition(lineMap, pos);
   const byteOffset = pos - (lineMap[line] as number);
@@ -357,7 +360,7 @@ export function getECMALineAndByteOffsetOfPosition(
  */
 export function computePositionOfLineAndUTF16Character(
   lineStarts: readonly TextPos[],
-  line: number,
+  line: int,
   character: UTF16Offset,
   text: string,
   allowEdits: boolean,
@@ -366,12 +369,12 @@ export function computePositionOfLineAndUTF16Character(
     if (allowEdits) {
       // Clamp line to nearest allowable value
       if (line < 0) {
-        line = 0;
+      line = 0;
       } else if (line >= lineStarts.length) {
-        line = lineStarts.length - 1;
+      line = (lineStarts.length - 1) | 0;
       }
     } else {
-      debug.fail(`Bad line number. Line: ${line}, lineStarts.length: ${lineStarts.length}.`);
+      debugFail(`Bad line number. Line: ${line}, lineStarts.length: ${lineStarts.length}.`);
     }
   }
 
@@ -380,8 +383,9 @@ export function computePositionOfLineAndUTF16Character(
   if (character > 0) {
     // UTF-16 character offset: scan from line start counting UTF-16 code units.
     let lineEnd = text.length;
-    if (line + 1 < lineStarts.length) {
-      lineEnd = lineStarts[line + 1] as number;
+    const nextLine: int = (line + 1) | 0;
+    if (nextLine < lineStarts.length) {
+      lineEnd = lineStarts[nextLine] as number;
     }
     let utf16Count = 0;
     let pos = lineStart;
@@ -396,9 +400,9 @@ export function computePositionOfLineAndUTF16Character(
     }
     if (!allowEdits) {
       if (pos === lineEnd && utf16Count < character) {
-        debug.fail(`Bad UTF-16 character offset. Line: ${line}, character: ${character}.`);
+        debugFail(`Bad UTF-16 character offset. Line: ${line}, character: ${character}.`);
       }
-      debug.assert(pos <= text.length);
+      debugAssert(pos <= text.length);
       return pos;
     }
     if (pos > text.length) {
@@ -416,6 +420,6 @@ export function computePositionOfLineAndUTF16Character(
     }
     return res;
   }
-  debug.assert(res <= text.length); // Allow single character overflow for trailing newline
+  debugAssert(res <= text.length); // Allow single character overflow for trailing newline
   return res;
 }

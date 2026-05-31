@@ -1,3 +1,4 @@
+import type { int } from "@tsonic/core/types.js";
 import {
   Kind,
   KindNames,
@@ -90,6 +91,8 @@ import {
   createMethodDeclaration,
   createMethodSignatureDeclaration,
   createMissingDeclaration,
+  createModuleBlock,
+  createModuleDeclaration,
   createNamedExports,
   createNamedImports,
   createNamespaceExportDeclaration,
@@ -169,12 +172,22 @@ import {
   type ConciseBody,
   type ClassElement,
   type CaseOrDefaultClause,
+  type AsteriskToken,
+  type AssertsKeyword,
+  type ColonToken,
   type Decorator,
+  type DotDotDotToken,
+  type EndOfFile,
+  type EqualsGreaterThanToken,
+  type EnumMember,
   type Expression,
   type ExpressionWithTypeArguments,
   type EntityName,
+  type ExportSpecifier,
   type ForInitializer,
+  type HeritageClause,
   type Identifier,
+  type ImportAttribute,
   type ImportAttributeName,
   type ImportSpecifier,
   type ImportPhaseModifierSyntaxKind,
@@ -197,6 +210,7 @@ import {
   type ModifierLike,
   type MinusToken,
   type ModuleExportName,
+  type ModuleName,
   type ModuleReference,
   type NamedImportBindings,
   type Node,
@@ -207,13 +221,16 @@ import {
   type ExclamationToken,
   type PrivateIdentifier,
   type PropertyName,
+  type QuestionDotToken,
   type QuestionToken,
+  type ReadonlyKeyword,
   type SourceFile,
   type Statement,
-  type Token,
   type TypeElement,
   type TypeNode,
   type TemplateMiddleOrTail,
+  type TemplateSpan,
+  type TemplateLiteralTypeSpan,
   type TypeParameterDeclaration,
   type VariableDeclaration,
 } from "../ast/index.js";
@@ -258,7 +275,7 @@ interface TokenSnapshot extends ScannedToken {
   // M3 4c: the trivia-inclusive full-start of this token (tsgo
   // scanner.TokenFullStart(), read by nodePos()=parser.go nodePos). Captured at
   // the moment this token was scanned, parallel to hasPrecedingLineBreak.
-  readonly fullStart: number;
+  readonly fullStart: int;
   // M3 6a: the scanner's preceding-JSDoc state for THIS token, captured the
   // moment it was scanned — parallel to hasPrecedingLineBreak. Feeds the
   // withJSDoc flag-stamp (tsgo jsdocScannerInfo, parser.go:414-426), which is
@@ -291,7 +308,7 @@ interface ParserMark {
   // codex Stage-3a: snapshot of #diagnostics.length so #rewind can discard any
   // diagnostics pushed during a speculative probe (tsgo ParserState.diagnosticsLen,
   // parser.go:353/366). Inert in 3a (no throw flipped => #diagnostics stays empty).
-  readonly diagnosticsLen: number;
+  readonly diagnosticsLen: int;
   // M3 6b: tsgo ParserState.statementHasAwaitIdentifier (parser.go:345/357/370) — a
   // speculative probe that builds an `await` identifier must not leak the flag into
   // the rewound cursor, so it is snapshot here and restored by #rewind.
@@ -575,6 +592,10 @@ function tokenToString(kind: Kind): string | undefined {
   return tokenToText.get(kind);
 }
 
+function kindDebugName(kind: Kind): string {
+  return String(kind);
+}
+
 export class Parser {
   readonly #sourceText: string;
   readonly #fileName: string;
@@ -633,7 +654,7 @@ export class Parser {
   // [startIndex, endIndex) statement-index spans recorded by #parseToplevelStatement
   // for every top-level statement that contained an `await` identifier (outside
   // AwaitContext). Consumed by #reparseTopLevelAwait. Same parse-state category.
-  #possibleAwaitSpans: number[] = [];
+  #possibleAwaitSpans: int[] = [];
 
   constructor(sourceText: string, options: ParseSourceFileOptions = {}) {
     this.#sourceText = sourceText;
@@ -673,8 +694,8 @@ export class Parser {
     const kind = this.#scanner.scan();
     this.#token = {
       kind,
-      pos: this.#scanner.getTokenStart(),
-      end: this.#scanner.getTokenEnd(),
+      pos: this.#scanner.getTokenStart() | 0,
+      end: this.#scanner.getTokenEnd() | 0,
       text: this.#scanner.getTokenText(),
       // M3 3b-list-model: capture the scanner's preceding-line-break bit at the
       // moment this token is scanned (tsgo p.scanner.HasPrecedingLineBreak(),
@@ -685,7 +706,7 @@ export class Parser {
       // ACTUAL scanned EOF token at end-of-input — is built here, so the EOF
       // token gets its real full-start (NOT hardcoded 0). The reader #nodePos()
       // reads this.
-      fullStart: this.#scanner.getTokenFullStart(),
+      fullStart: this.#scanner.getTokenFullStart() | 0,
       // M3 6a: capture the scanner's preceding-JSDoc state at the moment this
       // token is scanned (tsgo p.scanner.HasPrecedingJSDocComment() /
       // HasPrecedingJSDocWithDeprecatedTag(), read by jsdocScannerInfo at
@@ -702,8 +723,8 @@ export class Parser {
   #refreshTokenFromScanner(kind: Kind): void {
     this.#token = {
       kind,
-      pos: this.#scanner.getTokenStart(),
-      end: this.#scanner.getTokenEnd(),
+      pos: this.#scanner.getTokenStart() | 0,
+      end: this.#scanner.getTokenEnd() | 0,
       text: this.#scanner.getTokenText(),
       // M3 3b-list-model: reScan* keeps tokenStart, so the preceding-trivia
       // line-break status of the current token is unchanged; read it from the
@@ -712,7 +733,7 @@ export class Parser {
       // M3 4c: reScan* re-reads from fullStartPos and keeps it, so
       // getTokenFullStart() returns the same trivia-inclusive full-start of the
       // current token — correct for an in-place re-tokenization.
-      fullStart: this.#scanner.getTokenFullStart(),
+      fullStart: this.#scanner.getTokenFullStart() | 0,
       // M3 6a: reScan* keeps the current token's trivia (tokenStart/fullStartPos
       // unchanged), so its preceding-JSDoc state is unchanged — re-read it from
       // the scanner, parallel to hasPrecedingLineBreak.
@@ -792,7 +813,7 @@ export class Parser {
     // (synthetic, no finishNode), so the stamp ORs the flag bits onto it directly —
     // range-neutral (no pos/end touched).
     const endJSDoc = this.#jsdocScannerInfo();
-    const endOfFileToken = this.#withJSDoc(createToken(Kind.EndOfFile), endJSDoc);
+    const endOfFileToken = this.#withJSDoc(createToken(Kind.EndOfFile) as EndOfFile, endJSDoc);
     // codex Stage-3a: attach the parser-owned diagnostics buffer onto the
     // SourceFile at end-of-parse, mirroring tsgo finishSourceFile's
     // result.SetDiagnostics(...) (parser.go:466) which runs AFTER the parse loop.
@@ -860,7 +881,7 @@ export class Parser {
         const followerKind = this.#peekKind();
         if (followerKind === Kind.FunctionKeyword || followerKind === Kind.ClassKeyword) {
           this.#advance();
-          const defaultModifiers = createNodeArray([...modifiers, createToken(Kind.DefaultKeyword) as ModifierLike]);
+          const defaultModifiers = createNodeArray([...modifiers, createToken(Kind.DefaultKeyword) as ModifierLike]) as NodeArray<ModifierLike>;
           if (this.#current().kind === Kind.FunctionKeyword) {
             return this.#parseFunctionDeclaration(pos, jsdoc, defaultModifiers);
           }
@@ -902,6 +923,9 @@ export class Parser {
         break;
       case Kind.EnumKeyword:
         return this.#parseEnumDeclaration(pos, jsdoc, modifiers);
+      case Kind.ModuleKeyword:
+      case Kind.NamespaceKeyword:
+        return this.#parseModuleDeclaration(pos, jsdoc, modifiers);
       case Kind.IfKeyword:
         return this.#parseIfStatement();
       case Kind.WhileKeyword:
@@ -1138,7 +1162,7 @@ export class Parser {
     // element: (From&&lookAhead(stringLit)?false : String?true : tokenIsIdentifierOrKeyword);
     // terminator: CloseBrace (or EOF). On valid input identical to the prior loop.
     const elements = this.#parseBracketedList(PCImportOrExportSpecifiers, () => this.#parseImportSpecifier(), Kind.OpenBraceToken, Kind.CloseBraceToken);
-    return this.#finishNode(createNamedImports(elements ?? createNodeArray<ImportSpecifier>([])), pos);
+    return this.#finishNode(createNamedImports(elements ?? createNodeArray([]) as NodeArray<ImportSpecifier>), pos);
   }
 
   #parseImportSpecifier(): ImportSpecifier {
@@ -1187,7 +1211,7 @@ export class Parser {
     // Same predicates as #18. On valid input identical to the prior loop.
     const namedExportsPos = this.#nodePos();
     const elements = this.#parseBracketedList(PCImportOrExportSpecifiers, () => this.#parseExportSpecifier(), Kind.OpenBraceToken, Kind.CloseBraceToken);
-    const namedExports = this.#finishNode(createNamedExports(elements ?? createNodeArray<ReturnType<typeof createExportSpecifier>>([])), namedExportsPos);
+    const namedExports = this.#finishNode(createNamedExports(elements ?? createNodeArray([]) as NodeArray<ExportSpecifier>), namedExportsPos);
     const moduleSpecifier = this.#consumeOptional(Kind.FromKeyword) ? this.#parseStringLiteralExpression() : undefined;
     const attributes = moduleSpecifier !== undefined ? this.#tryParseImportAttributes() : undefined;
     this.#consumeOptional(Kind.SemicolonToken);
@@ -1252,7 +1276,7 @@ export class Parser {
     return undefined;
   }
 
-  #parseImportAttributes(token: Kind, skipKeyword = false): ReturnType<typeof createImportAttributes> {
+  #parseImportAttributes(token: Kind, skipKeyword: boolean = false): ReturnType<typeof createImportAttributes> {
     // tsgo parseImportAttributes (parser.go:3085): `with|assert { name: value, ... }`. Start
     // pos at the with/assert keyword (or, when skipKeyword=true for the import-type form, at
     // the `{` — the keyword + `:` were already consumed by #parseImportType); finishNode after
@@ -1274,7 +1298,7 @@ export class Parser {
     const multiLine = this.#sourceText.slice(openBrace.pos, closeBrace.end).includes("\n");
     // The factory's token param is narrowed to WithKeyword|AssertKeyword; the guard in
     // #tryParseImportAttributes ensures `token` is exactly one of those.
-    return this.#finishNode(createImportAttributes(token as Kind.WithKeyword | Kind.AssertKeyword, elements ?? createNodeArray<ReturnType<typeof createImportAttribute>>([]), multiLine), pos);
+    return this.#finishNode(createImportAttributes(token as Kind.WithKeyword | Kind.AssertKeyword, elements ?? createNodeArray([]) as NodeArray<ImportAttribute>, multiLine), pos);
   }
 
   #parseImportAttribute(): ReturnType<typeof createImportAttribute> {
@@ -1297,7 +1321,7 @@ export class Parser {
   // (#parseTypeElement et al.) never mis-consume a stray `@`, mirroring tsgo's parseModifiers
   // (allowDecorators=false) vs parseModifiersEx(true). The grammar-level legality of
   // interleavings/orderings is deferred to the checker, exactly as tsgo does.
-  #parseModifiers(allowDecorators = false): NodeArray<ModifierLike> | undefined {
+  #parseModifiers(allowDecorators: boolean = false): NodeArray<ModifierLike> | undefined {
     const modifiers: ModifierLike[] = [];
     while (true) {
       if (allowDecorators && this.#current().kind === Kind.AtToken) {
@@ -1310,7 +1334,7 @@ export class Parser {
       modifiers.push(createToken(this.#current().kind as ModifierSyntaxKind) as ModifierLike);
       this.#advance();
     }
-    return modifiers.length === 0 ? undefined : createNodeArray(modifiers);
+    return modifiers.length === 0 ? undefined : createNodeArray(modifiers) as NodeArray<ModifierLike>;
   }
 
   // tsgo parseDecorator (parser.go:3898): pos at the `@`, consume it, then parse the
@@ -1409,6 +1433,42 @@ export class Parser {
     return this.#withJSDoc(this.#finishNode(createTypeAliasDeclaration(modifiers, name, typeParameters, type), pos), jsdoc);
   }
 
+  #parseModuleDeclaration(pos: number, jsdoc: JSDocScannerInfo, modifiers: NodeArray<ModifierLike> | undefined): Statement {
+    // tsgo parseModuleDeclaration: declaration start is the #parseStatement-top pos.
+    // Supports `namespace A { ... }`, `module A { ... }`, and the dotted namespace
+    // spelling by nesting ModuleDeclaration bodies (`namespace A.B {}` =>
+    // `A` whose body is module `B`). The module body's statement list reuses the
+    // normal block-statement context, matching TS-Go's parseModuleBlock.
+    const saveHasAwaitIdentifier = this.#statementHasAwaitIdentifier;
+    const keyword = this.#current().kind;
+    this.#advance();
+    const name = this.#current().kind === Kind.StringLiteral
+      ? this.#parseStringLiteralExpression()
+      : this.#parseIdentifier();
+    const body = this.#consumeOptional(Kind.DotToken)
+      ? this.#parseNestedModuleDeclaration(keyword, jsdoc, undefined)
+      : this.#parseModuleBlock();
+    this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
+    return this.#withJSDoc(this.#finishNode(createModuleDeclaration(modifiers, keyword, name as ModuleName, body), pos), jsdoc);
+  }
+
+  #parseNestedModuleDeclaration(keyword: Kind, jsdoc: JSDocScannerInfo, modifiers: NodeArray<ModifierLike> | undefined): ReturnType<typeof createModuleDeclaration> {
+    const pos = this.#nodePos();
+    const name = this.#parseIdentifier();
+    const body = this.#consumeOptional(Kind.DotToken)
+      ? this.#parseNestedModuleDeclaration(keyword, jsdoc, undefined)
+      : this.#parseModuleBlock();
+    return this.#withJSDoc(this.#finishNode(createModuleDeclaration(modifiers, keyword, name, body), pos), jsdoc);
+  }
+
+  #parseModuleBlock(): ReturnType<typeof createModuleBlock> {
+    const pos = this.#nodePos();
+    this.#expect(Kind.OpenBraceToken);
+    const statements = this.#parseList(PCBlockStatements, () => this.#parseStatement());
+    this.#expect(Kind.CloseBraceToken);
+    return this.#finishNode(createModuleBlock(statements), pos);
+  }
+
   #parseEnumDeclaration(pos: number, jsdoc: JSDocScannerInfo, modifiers: NodeArray<ModifierLike> | undefined): Statement {
     // tsgo parseEnumDeclaration: declaration start is the #parseStatement-top pos.
     // M3 6b: tsgo (parser.go:2132/2148) saves/restores statementHasAwaitIdentifier across
@@ -1429,7 +1489,7 @@ export class Parser {
     this.#expect(Kind.CloseBraceToken);
     this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
     // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:1625).
-    return this.#withJSDoc(this.#finishNode(createEnumDeclaration(modifiers, name, members ?? createNodeArray<ReturnType<typeof createEnumMember>>([])), pos), jsdoc);
+    return this.#withJSDoc(this.#finishNode(createEnumDeclaration(modifiers, name, members ?? createNodeArray([]) as NodeArray<EnumMember>), pos), jsdoc);
   }
 
   #parseEnumMember(): ReturnType<typeof createEnumMember> {
@@ -1591,7 +1651,7 @@ export class Parser {
         : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
       // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:1925, tryParseConstructorDeclaration).
-      return this.#withJSDoc(this.#finishNode(createConstructorDeclaration(modifiers, undefined, createNodeArray(parameters), undefined, body), pos), jsdoc);
+      return this.#withJSDoc(this.#finishNode(createConstructorDeclaration(modifiers, undefined, createNodeArray(parameters) as NodeArray<ParameterDeclaration>, undefined, body), pos), jsdoc);
     }
 
     // codex-054 M3 Stage-2: tsgo parses get/set accessors with ParseFlagsNone
@@ -1612,7 +1672,7 @@ export class Parser {
       const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseFunctionBlock(false, false) : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
       // M3 6a: tsgo withJSDoc(p.finishNode(result, pos), jsdoc) (parser.go:3438, parseAccessorDeclaration).
-      return this.#withJSDoc(this.#finishNode(createGetAccessorDeclaration(modifiers, name, undefined, createNodeArray([]), type, body), pos), jsdoc);
+      return this.#withJSDoc(this.#finishNode(createGetAccessorDeclaration(modifiers, name, undefined, createNodeArray([]) as NodeArray<ParameterDeclaration>, type, body), pos), jsdoc);
     }
 
     if (this.#current().kind === Kind.SetKeyword && this.#peekKind() !== Kind.OpenParenToken) {
@@ -1626,7 +1686,7 @@ export class Parser {
       const body = this.#current().kind === Kind.OpenBraceToken ? this.#parseFunctionBlock(false, false) : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
       // M3 6a: tsgo withJSDoc(p.finishNode(result, pos), jsdoc) (parser.go:3438, parseAccessorDeclaration).
-      return this.#withJSDoc(this.#finishNode(createSetAccessorDeclaration(modifiers, name, undefined, createNodeArray(parameters), undefined, body), pos), jsdoc);
+      return this.#withJSDoc(this.#finishNode(createSetAccessorDeclaration(modifiers, name, undefined, createNodeArray(parameters) as NodeArray<ParameterDeclaration>, undefined, body), pos), jsdoc);
     }
 
     const name = this.#parsePropertyName();
@@ -1650,7 +1710,7 @@ export class Parser {
         : undefined;
       this.#consumeOptional(Kind.SemicolonToken);
       // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:1956, parseMethodDeclaration).
-      return this.#withJSDoc(this.#finishNode(createMethodDeclaration(modifiers, undefined, name, postfixToken, typeParameters, createNodeArray(parameters), type, body), pos), jsdoc);
+      return this.#withJSDoc(this.#finishNode(createMethodDeclaration(modifiers, undefined, name, postfixToken, typeParameters, createNodeArray(parameters) as NodeArray<ParameterDeclaration>, type, body), pos), jsdoc);
     }
 
     const type = this.#parseOptionalTypeAnnotation();
@@ -1691,7 +1751,7 @@ export class Parser {
       this.#consumeOptional(Kind.SemicolonToken);
       this.#consumeOptional(Kind.CommaToken);
       // M3 6a: tsgo withJSDoc(p.finishNode(result, pos), jsdoc) (parser.go:3593, parsePropertyOrMethodSignature).
-      return this.#withJSDoc(this.#finishNode(createMethodSignatureDeclaration(modifiers, name, postfixToken, typeParameters, createNodeArray(parameters), type), pos), jsdoc);
+      return this.#withJSDoc(this.#finishNode(createMethodSignatureDeclaration(modifiers, name, postfixToken, typeParameters, createNodeArray(parameters) as NodeArray<ParameterDeclaration>, type), pos), jsdoc);
     }
     const type = this.#parseOptionalTypeAnnotation();
     this.#consumeOptional(Kind.SemicolonToken);
@@ -1720,8 +1780,8 @@ export class Parser {
     this.#consumeOptional(Kind.CommaToken);
     // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:3217).
     return kind === Kind.CallSignature
-      ? this.#withJSDoc(this.#finishNode(createCallSignatureDeclaration(typeParameters, createNodeArray(parameters), type), pos), jsdoc)
-      : this.#withJSDoc(this.#finishNode(createConstructSignatureDeclaration(typeParameters, createNodeArray(parameters), type), pos), jsdoc);
+      ? this.#withJSDoc(this.#finishNode(createCallSignatureDeclaration(typeParameters, createNodeArray(parameters) as NodeArray<ParameterDeclaration>, type), pos), jsdoc)
+      : this.#withJSDoc(this.#finishNode(createConstructSignatureDeclaration(typeParameters, createNodeArray(parameters) as NodeArray<ParameterDeclaration>, type), pos), jsdoc);
   }
 
   // `{ [key: K]: V }` index signature.
@@ -1735,7 +1795,7 @@ export class Parser {
     this.#consumeOptional(Kind.SemicolonToken);
     this.#consumeOptional(Kind.CommaToken);
     // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:3566).
-    return this.#withJSDoc(this.#finishNode(createIndexSignatureDeclaration(modifiers, createNodeArray(parameters), type as never), pos), jsdoc);
+    return this.#withJSDoc(this.#finishNode(createIndexSignatureDeclaration(modifiers, createNodeArray(parameters) as NodeArray<ParameterDeclaration>, type as never), pos), jsdoc);
   }
 
   #nextTokenIsOpenParenOrLessThan(): boolean {
@@ -1819,7 +1879,7 @@ export class Parser {
     const token = this.#current().kind as Kind.ExtendsKeyword | Kind.ImplementsKeyword;
     this.#advance();
     const types = this.#parseDelimitedList(PCHeritageClauseElement, () => this.#parseExpressionWithTypeArguments());
-    return this.#finishNode(createHeritageClause(token, types ?? createNodeArray<ExpressionWithTypeArguments>([])), clausePos);
+    return this.#finishNode(createHeritageClause(token, types ?? createNodeArray([]) as NodeArray<ExpressionWithTypeArguments>), clausePos);
   }
 
   #parseExpressionWithTypeArguments(): ExpressionWithTypeArguments {
@@ -1871,7 +1931,7 @@ export class Parser {
     // outer statement's modifier start). When no modifiers precede, this equals the
     // variable-statement pos; with modifiers it starts later (at var/let/const).
     const pos = this.#nodePos();
-    const flags = this.#parseVariableDeclarationListFlags();
+    const flags: int = this.#parseVariableDeclarationListFlags();
     // M3 3b-list-model retrofit (loop #11): tsgo parseVariableDeclarationList uses
     // parseDelimitedList(PCVariableDeclarations, parseVariableDeclaration...).
     // element: isBindingIdentifierOrPrivateIdentifierOrPattern; terminator:
@@ -1880,10 +1940,10 @@ export class Parser {
     // loop retrofit (separate scope); the existing single element parser is kept,
     // so valid-input ASTs are unchanged.
     const declarations = this.#parseDelimitedList(PCVariableDeclarations, () => this.#parseVariableDeclaration());
-    return this.#finishNode(createVariableDeclarationList(declarations ?? createNodeArray<VariableDeclaration>([]), flags), pos);
+    return this.#finishNode(createVariableDeclarationList(declarations ?? createNodeArray([]) as NodeArray<VariableDeclaration>, flags), pos);
   }
 
-  #parseVariableDeclarationListFlags(): number {
+  #parseVariableDeclarationListFlags(): int {
     const token = this.#current();
     switch (token.kind) {
       case Kind.VarKeyword:
@@ -1917,7 +1977,7 @@ export class Parser {
     // tsgo parseFunctionDeclaration(pos, ...): the declaration start is the
     // #parseStatement-top pos (covering modifiers, incl. the default-export path).
     this.#expect(Kind.FunctionKeyword);
-    const asteriskToken = this.#consumeOptional(Kind.AsteriskToken) ? createToken(Kind.AsteriskToken) : undefined;
+    const asteriskToken = this.#consumeOptional(Kind.AsteriskToken) ? createToken(Kind.AsteriskToken) as AsteriskToken : undefined;
     // codex-054 M3 Stage-2: tsgo computes signatureFlags = IfElse(asterisk, Yield) |
     // IfElse(async modifier, Await) (parser.go:1719) and threads them through
     // parseParameters/parseFunctionBlock; the worker converts them to Yield/Await
@@ -1943,7 +2003,7 @@ export class Parser {
       // declaration for reparse. #parseFunctionBlock wraps all three.
       const body = this.#parseFunctionBlock(isGenerator, isAsync);
       // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:1730).
-      return this.#withJSDoc(this.#finishNode(createFunctionDeclaration(modifiers, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body), pos), jsdoc);
+      return this.#withJSDoc(this.#finishNode(createFunctionDeclaration(modifiers, asteriskToken, name, typeParameters, createNodeArray(parameters) as NodeArray<ParameterDeclaration>, type, body), pos), jsdoc);
     };
     return isExported ? this.#doInContext(NodeFlags.AwaitContext, true, build) : build();
   }
@@ -1972,9 +2032,9 @@ export class Parser {
     // (public/private/protected/readonly) into the ParameterDeclaration's modifiers list
     // (previously hard-coded undefined, silently dropping them).
     const modifiers = this.#parseModifiers(true);
-    const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
+    const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) as DotDotDotToken : undefined;
     const name = this.#parseBindingName();
-    const questionToken = this.#consumeOptional(Kind.QuestionToken) ? createToken(Kind.QuestionToken) : undefined;
+    const questionToken = this.#consumeOptional(Kind.QuestionToken) ? createToken(Kind.QuestionToken) as QuestionToken : undefined;
     const type = this.#parseOptionalTypeAnnotation();
     const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
     // M3 6a: tsgo withJSDoc(p.finishNode(result, pos), jsdoc) (parser.go:3336/3350).
@@ -2120,7 +2180,7 @@ export class Parser {
     // entry on Case||Default). Match the dormant PCSwitchClauses parsingContextErrors
     // (X_case_or_default_expected, 1130) and return a benign empty default clause.
     this.#parseErrorAtCurrentToken(Diagnostics.X_case_or_default_expected);
-    return this.#finishNode(createDefaultClause(undefined as never, createNodeArray<Statement>([])), clausePos);
+    return this.#finishNode(createDefaultClause(undefined as never, createNodeArray([]) as NodeArray<Statement>), clausePos);
   }
 
   #parseCaseClauseStatements(): NodeArray<Statement> {
@@ -2167,7 +2227,7 @@ export class Parser {
       }
       this.#advance();
       const right = this.#parseExpression(operatorPrecedence);
-      const token = createToken(operatorToken.kind as BinaryOperator);
+      const token = createToken(operatorToken.kind as BinaryOperator) as BinaryOperatorToken;
       if (!isBinaryOperatorToken(token)) {
         // codex Stage-3b 3b-flip: UNREACHABLE internal invariant. The loop is entered
         // only when binaryPrecedence.get(operatorToken.kind) consumes (> precedence),
@@ -2189,7 +2249,7 @@ export class Parser {
       const whenTrue = this.#parseExpression();
       this.#expect(Kind.ColonToken);
       const whenFalse = this.#parseExpression();
-      left = this.#finishNode(createConditionalExpression(left, createToken(Kind.QuestionToken), whenTrue, createToken(Kind.ColonToken), whenFalse), pos);
+      left = this.#finishNode(createConditionalExpression(left, createToken(Kind.QuestionToken) as QuestionToken, whenTrue, createToken(Kind.ColonToken) as ColonToken, whenFalse), pos);
     }
     return left;
   }
@@ -2280,7 +2340,7 @@ export class Parser {
     }
     this.#expect(Kind.EqualsGreaterThanToken);
     const body = this.#parseArrowBody(isAsync);
-    return this.#finishNode(createArrowFunction(undefined, undefined, createNodeArray(parameters), type, createToken(Kind.EqualsGreaterThanToken), body), pos);
+    return this.#finishNode(createArrowFunction(undefined, undefined, createNodeArray(parameters) as NodeArray<ParameterDeclaration>, type, createToken(Kind.EqualsGreaterThanToken) as EqualsGreaterThanToken, body), pos);
   }
 
   #parseArrowBody(isAsync: boolean): ConciseBody {
@@ -2299,11 +2359,12 @@ export class Parser {
     return this.#withSignatureContext(false, isAsync, () => this.#parseExpression());
   }
 
-  // tsgo isUpdateExpression (parser.go:4692-4700). Returns false ONLY for the
-  // simple-unary operators (+ - ~ ! delete typeof void await), and — for the
-  // LessThanToken — true exactly in the JSX variant (a leading `<` is then a JSX
-  // element, an UpdateExpression-level construct); in the Standard variant a leading
-  // `<` is a type assertion (a SimpleUnaryExpression), so this returns false.
+  // tsgo isUpdateExpression (parser.go:4692-4700). Returns false for the
+  // simple-unary entry tokens (+ - ~ ! delete typeof void await) and for `new`,
+  // which is parsed by the NewExpression path below. For LessThanToken, it returns
+  // true exactly in the JSX variant (a leading `<` is then a JSX element, an
+  // UpdateExpression-level construct); in the Standard variant a leading `<` is a
+  // type assertion (a SimpleUnaryExpression), so this returns false.
   #isUpdateExpression(): boolean {
     switch (this.#current().kind) {
       case Kind.PlusToken:
@@ -2314,6 +2375,7 @@ export class Parser {
       case Kind.TypeOfKeyword:
       case Kind.VoidKeyword:
       case Kind.AwaitKeyword:
+      case Kind.NewKeyword:
         return false;
       case Kind.LessThanToken:
         return this.#languageVariant === LanguageVariant.JSX;
@@ -2551,7 +2613,7 @@ export class Parser {
           end,
         );
         const rebuilt = [...children.slice(0, children.length - 1), newLast];
-        children = createNodeArray(rebuilt as readonly JsxChild[], children.pos, newLast.end);
+        children = createNodeArray(rebuilt as readonly JsxChild[], children.pos, newLast.end) as NodeArray<JsxChild>;
         closingElement = lastChild.closingElement;
       } else {
         closingElement = this.#parseJsxClosingElement(openingElement, inExpressionContext);
@@ -2586,7 +2648,7 @@ export class Parser {
     if (!mustBeUnary && inExpressionContext && this.#current().kind === Kind.LessThanToken) {
       const topBadPos = topInvalidNodePosition < 0 ? result.pos : topInvalidNodePosition;
       const invalidElement = this.#parseJsxElementOrSelfClosingElementOrFragment(true /*inExpressionContext*/, topBadPos, undefined, false);
-      const operatorToken = createToken(Kind.CommaToken);
+      const operatorToken = createToken(Kind.CommaToken) as BinaryOperatorToken;
       operatorToken.pos = invalidElement.pos;
       operatorToken.end = invalidElement.pos;
       this.#parseErrorAt(skipTrivia(this.#sourceText, topBadPos), invalidElement.end, Diagnostics.JSX_expressions_must_have_one_parent_element);
@@ -2627,7 +2689,7 @@ export class Parser {
       }
     }
     this.#parsingContexts = save;
-    return createNodeArray(list, pos, this.#nodePos());
+    return createNodeArray(list, pos, this.#nodePos()) as NodeArray<JsxChild>;
   }
 
   // tsgo parseJsxChild (parser.go:4824-4850). TERMINATION cases — EofToken (closing-tag-
@@ -2724,7 +2786,7 @@ export class Parser {
     if (this.#current().kind === Kind.GreaterThanToken) {
       return true;
     }
-    this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, [tokenToString(Kind.GreaterThanToken) ?? KindNames[Kind.GreaterThanToken]]);
+    this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, [tokenToString(Kind.GreaterThanToken) ?? kindDebugName(Kind.GreaterThanToken)]);
     return false;
   }
 
@@ -2847,15 +2909,15 @@ export class Parser {
   #parseJsxExpression(inExpressionContext: boolean): JsxExpression {
     const pos = this.#nodePos();
     if (!this.#consumeOptional(Kind.OpenBraceToken)) {
-      this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, [tokenToString(Kind.OpenBraceToken) ?? KindNames[Kind.OpenBraceToken]]);
+      this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, [tokenToString(Kind.OpenBraceToken) ?? kindDebugName(Kind.OpenBraceToken)]);
       return this.#finishNode(createJsxExpression(undefined, undefined), pos);
     }
-    let dotDotDotToken: Token<Kind.DotDotDotToken> | undefined;
+    let dotDotDotToken: DotDotDotToken | undefined;
     let expression: Expression | undefined;
     if (this.#current().kind !== Kind.CloseBraceToken) {
       if (!inExpressionContext) {
         // Child position: a spread child `{...expr}` is permitted (tsgo 4867-4869).
-        dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
+        dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) as DotDotDotToken : undefined;
       }
       // Only an AssignmentExpression is valid per the JSX spec, but a comma sequence is
       // parsed unambiguously here so grammar checking can give a better error (tsgo 4870-4873).
@@ -2876,7 +2938,7 @@ export class Parser {
     if (this.#current().kind === Kind.CloseBraceToken) {
       return true;
     }
-    this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, [tokenToString(Kind.CloseBraceToken) ?? KindNames[Kind.CloseBraceToken]]);
+    this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, [tokenToString(Kind.CloseBraceToken) ?? kindDebugName(Kind.CloseBraceToken)]);
     return false;
   }
 
@@ -3010,7 +3072,7 @@ export class Parser {
     const typeArguments = this.#parseOptionalTypeArguments();
     let arguments_: NodeArray<Expression> | undefined;
     if (this.#consumeOptional(Kind.OpenParenToken)) {
-      arguments_ = createNodeArray(this.#parseArgumentList());
+      arguments_ = createNodeArray(this.#parseArgumentList()) as NodeArray<Expression>;
       this.#expect(Kind.CloseParenToken);
     }
     return this.#parseMemberSuffixes(this.#finishNode(createNewExpression(expression, typeArguments, arguments_), pos), pos);
@@ -3031,7 +3093,7 @@ export class Parser {
     // so #nodeEnd() (the just-consumed last token's end) covers the closer.
     let expression = initialExpression;
     while (true) {
-      const questionDotToken = this.#consumeOptional(Kind.QuestionDotToken) ? createToken(Kind.QuestionDotToken) : undefined;
+      const questionDotToken = this.#consumeOptional(Kind.QuestionDotToken) ? createToken(Kind.QuestionDotToken) as QuestionDotToken : undefined;
       if (questionDotToken !== undefined && this.#current().kind !== Kind.OpenParenToken && this.#current().kind !== Kind.OpenBracketToken) {
         expression = this.#finishNode(createPropertyAccessExpression(expression, questionDotToken, this.#parseMemberName(), NodeFlags.None), pos);
         continue;
@@ -3043,13 +3105,13 @@ export class Parser {
       const typeArguments = this.#tryParseCallTypeArguments();
       if (questionDotToken !== undefined && this.#current().kind === Kind.OpenParenToken || typeArguments !== undefined && this.#current().kind === Kind.OpenParenToken) {
         this.#expect(Kind.OpenParenToken);
-        const callee = createCallExpression(expression, questionDotToken, typeArguments, createNodeArray(this.#parseArgumentList()), NodeFlags.None);
+        const callee = createCallExpression(expression, questionDotToken, typeArguments, createNodeArray(this.#parseArgumentList()) as NodeArray<Expression>, NodeFlags.None);
         this.#expect(Kind.CloseParenToken);
         expression = this.#finishNode(callee, pos);
         continue;
       }
       if (this.#consumeOptional(Kind.OpenParenToken)) {
-        const callee = createCallExpression(expression, undefined, undefined, createNodeArray(this.#parseArgumentList()), NodeFlags.None);
+        const callee = createCallExpression(expression, undefined, undefined, createNodeArray(this.#parseArgumentList()) as NodeArray<Expression>, NodeFlags.None);
         this.#expect(Kind.CloseParenToken);
         expression = this.#finishNode(callee, pos);
         continue;
@@ -3259,7 +3321,7 @@ export class Parser {
     // tsgo parseFunctionExpression: node start is the 'function' keyword.
     const pos = this.#nodePos();
     this.#expect(Kind.FunctionKeyword);
-    const asteriskToken = this.#consumeOptional(Kind.AsteriskToken) ? createToken(Kind.AsteriskToken) : undefined;
+    const asteriskToken = this.#consumeOptional(Kind.AsteriskToken) ? createToken(Kind.AsteriskToken) as AsteriskToken : undefined;
     // codex-054 M3 Stage-2: tsgo signatureFlags = IfElse(asterisk, Yield) |
     // IfElse(async modifier, Await) (parser.go:1950). tsts builds function expressions with
     // no modifiers list (createFunctionExpression(undefined, ...)) so it has no async-modifier
@@ -3277,7 +3339,7 @@ export class Parser {
     // which saves/restores statementHasAwaitIdentifier (a body `await` identifier must not
     // mark the enclosing top-level statement for reparse).
     const body = this.#parseFunctionBlock(isGenerator, isAsync);
-    return this.#finishNode(createFunctionExpression(undefined, asteriskToken, name, typeParameters, createNodeArray(parameters), type, body), pos);
+    return this.#finishNode(createFunctionExpression(undefined, asteriskToken, name, typeParameters, createNodeArray(parameters) as NodeArray<ParameterDeclaration>, type, body), pos);
   }
 
   #parseTemplateExpression(): Expression {
@@ -3301,7 +3363,7 @@ export class Parser {
       }
     }
     // tsgo parseTemplateExpression: node start is the TemplateHead start (reuse headPos).
-    return this.#finishNode(createTemplateExpression(head, createNodeArray(spans)), headPos);
+    return this.#finishNode(createTemplateExpression(head, createNodeArray(spans) as NodeArray<TemplateSpan>), headPos);
   }
 
   // wave 4b-swap: tsgo parseLiteralOfTemplateSpan (parser.go:3727-3745). After a
@@ -3345,7 +3407,7 @@ export class Parser {
     // scope for this loop retrofit). On valid input identical to the prior loop.
     const elements = this.#parseDelimitedList(PCArrayLiteralMembers, () => this.#parseArgumentExpression());
     this.#expect(Kind.CloseBracketToken);
-    return this.#finishNode(createArrayLiteralExpression(elements ?? createNodeArray<Expression>([]), this.#sourceText.includes("\n")), pos);
+    return this.#finishNode(createArrayLiteralExpression(elements ?? createNodeArray([]) as NodeArray<Expression>, this.#sourceText.includes("\n")), pos);
   }
 
   #parseObjectLiteralExpression(): Expression {
@@ -3362,7 +3424,7 @@ export class Parser {
     // loop no longer owns the trailing comma).
     const properties = this.#parseDelimitedList(PCObjectLiteralMembers, () => this.#parseObjectLiteralElement());
     const closeBrace = this.#expect(Kind.CloseBraceToken);
-    return this.#finishNode(createObjectLiteralExpression(properties ?? createNodeArray<ObjectLiteralElementLike>([]), this.#sourceText.slice(openBrace.pos, closeBrace.end).includes("\n")), pos);
+    return this.#finishNode(createObjectLiteralExpression(properties ?? createNodeArray([]) as NodeArray<ObjectLiteralElementLike>, this.#sourceText.slice(openBrace.pos, closeBrace.end).includes("\n")), pos);
   }
 
   #parseObjectLiteralElement(): ObjectLiteralElementLike {
@@ -3410,14 +3472,15 @@ export class Parser {
     // OpenBracket||DotDotDot||isLiteralPropertyName; terminator: CloseBrace (or EOF).
     const elements = this.#parseDelimitedList(PCObjectBindingElements, () => this.#parseObjectBindingElement());
     this.#expect(Kind.CloseBraceToken);
-    return this.#finishNode(createObjectBindingPattern(elements ?? createNodeArray<BindingElement>([])), pos);
+    const node = createObjectBindingPattern(elements ?? createNodeArray([]) as NodeArray<BindingElement>);
+    return this.#finishNode(node, pos);
   }
 
   #parseObjectBindingElement(): BindingElement {
     // tsgo parseObjectBindingElement (1680): pos at the top of the iteration,
     // BEFORE the optional `...`; finishNode after the optional initializer.
     const elementPos = this.#nodePos();
-    const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
+    const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) as DotDotDotToken : undefined;
     const firstName = this.#parsePropertyName();
     const propertyName = this.#consumeOptional(Kind.ColonToken) ? firstName : undefined;
     if (propertyName === undefined && firstName.kind !== Kind.Identifier) {
@@ -3457,14 +3520,15 @@ export class Parser {
         elements.push(this.#finishNode(createBindingElement(undefined, undefined, undefined, undefined), elementPos));
         continue;
       }
-      const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
+      const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) as DotDotDotToken : undefined;
       const name = this.#parseBindingName();
       const initializer = this.#consumeOptional(Kind.EqualsToken) ? this.#parseExpression() : undefined;
       elements.push(this.#finishNode(createBindingElement(dotDotDotToken, undefined, name, initializer), elementPos));
       this.#consumeOptional(Kind.CommaToken);
     }
     this.#expect(Kind.CloseBracketToken);
-    return this.#finishNode(createArrayBindingPattern(createNodeArray(elements)), pos);
+    const node = createArrayBindingPattern(createNodeArray(elements) as NodeArray<BindingElement>);
+    return this.#finishNode(node, pos);
   }
 
   #parsePropertyName(): PropertyName {
@@ -3516,10 +3580,10 @@ export class Parser {
 
   #parseOptionalPostfixToken(): QuestionToken | ExclamationToken | undefined {
     if (this.#consumeOptional(Kind.QuestionToken)) {
-      return createToken(Kind.QuestionToken);
+      return createToken(Kind.QuestionToken) as QuestionToken;
     }
     if (this.#consumeOptional(Kind.ExclamationToken)) {
-      return createToken(Kind.ExclamationToken);
+      return createToken(Kind.ExclamationToken) as ExclamationToken;
     }
     return undefined;
   }
@@ -3600,7 +3664,7 @@ export class Parser {
     while (this.#consumeOptional(Kind.BarToken)) {
       types.push(this.#parseIntersectionType());
     }
-    return !hasLeadingBar && types.length === 1 ? types[0]! : this.#finishNode(createUnionTypeNode(createNodeArray(types)), pos);
+    return !hasLeadingBar && types.length === 1 ? types[0]! : this.#finishNode(createUnionTypeNode(createNodeArray(types) as NodeArray<TypeNode>), pos);
   }
 
   #parseIntersectionType(): TypeNode {
@@ -3611,7 +3675,7 @@ export class Parser {
     while (this.#consumeOptional(Kind.AmpersandToken)) {
       types.push(this.#parsePostfixType());
     }
-    return types.length === 1 ? types[0]! : this.#finishNode(createIntersectionTypeNode(createNodeArray(types)), pos);
+    return types.length === 1 ? types[0]! : this.#finishNode(createIntersectionTypeNode(createNodeArray(types) as NodeArray<TypeNode>), pos);
   }
 
   #parsePostfixType(): TypeNode {
@@ -3693,7 +3757,7 @@ export class Parser {
       const parameters = this.#parseParameterList();
       this.#expect(Kind.CloseParenToken);
       this.#expect(Kind.EqualsGreaterThanToken);
-      return this.#finishNode(createConstructorTypeNode(undefined, undefined, createNodeArray(parameters), this.#parseType()), pos);
+      return this.#finishNode(createConstructorTypeNode(undefined, undefined, createNodeArray(parameters) as NodeArray<ParameterDeclaration>, this.#parseType()), pos);
     }
     if (token.kind === Kind.OpenBracketToken) {
       // M3 3b-list-model retrofit (loop #21): tsgo parseTupleType uses
@@ -3702,7 +3766,7 @@ export class Parser {
       // (or EOF). #parseBracketedList consumes the opening `[` itself. On valid
       // input identical to the prior loop.
       const elements = this.#parseBracketedList(PCTupleElementTypes, () => this.#parseTupleElementNameOrTupleElementType(), Kind.OpenBracketToken, Kind.CloseBracketToken);
-      return this.#finishNode(createTupleTypeNode(elements ?? createNodeArray<TypeNode>([])), pos);
+      return this.#finishNode(createTupleTypeNode(elements ?? createNodeArray([]) as NodeArray<TypeNode>), pos);
     }
     if (token.kind === Kind.OpenBraceToken) {
       // tsgo parseNonArrayType (2810-2814): `{` dispatches to parseMappedType when the
@@ -3866,12 +3930,12 @@ export class Parser {
     // tsgo parseMappedType (3134): node start at the `{`; finishNode after the closing `}`.
     const pos = this.#nodePos();
     this.#expect(Kind.OpenBraceToken);
-    const readonlyToken = this.#parseMappedTypeModifierToken(Kind.ReadonlyKeyword);
+    const readonlyToken = this.#parseMappedTypeReadonlyModifierToken();
     this.#expect(Kind.OpenBracketToken);
     const typeParameter = this.#parseMappedTypeParameter();
     const nameType = this.#consumeOptional(Kind.AsKeyword) ? this.#parseType() : undefined;
     this.#expect(Kind.CloseBracketToken);
-    const questionToken = this.#parseMappedTypeModifierToken(Kind.QuestionToken);
+    const questionToken = this.#parseMappedTypeQuestionModifierToken();
     const type = this.#parseOptionalTypeAnnotation();
     this.#consumeOptional(Kind.SemicolonToken);
     // M3 3b-list-model retrofit (loop #7): tsgo parseMappedType uses
@@ -3882,7 +3946,15 @@ export class Parser {
     return this.#finishNode(createMappedTypeNode(readonlyToken, typeParameter, nameType, questionToken, type, members), pos);
   }
 
-  #parseMappedTypeModifierToken<TExpected extends Kind.ReadonlyKeyword | Kind.QuestionToken>(expected: TExpected): Token<TExpected> | PlusToken | MinusToken | undefined {
+  #parseMappedTypeReadonlyModifierToken(): ReadonlyKeyword | PlusToken | MinusToken | undefined {
+    return this.#parseMappedTypeModifierToken(Kind.ReadonlyKeyword) as ReadonlyKeyword | PlusToken | MinusToken | undefined;
+  }
+
+  #parseMappedTypeQuestionModifierToken(): QuestionToken | PlusToken | MinusToken | undefined {
+    return this.#parseMappedTypeModifierToken(Kind.QuestionToken) as QuestionToken | PlusToken | MinusToken | undefined;
+  }
+
+  #parseMappedTypeModifierToken(expected: Kind.ReadonlyKeyword | Kind.QuestionToken): ReadonlyKeyword | QuestionToken | PlusToken | MinusToken | undefined {
     // tsgo parseMappedType (3137-3143 / 3151-3157): the readonly/question slot accepts an
     // optional `+`/`-` prefix OR the bare keyword/question token. When a `+`/`-` is seen tsgo
     // parses the token, then expects the keyword/question to follow — here we faithfully
@@ -3892,16 +3964,18 @@ export class Parser {
     if (current === Kind.PlusToken) {
       this.#advance();
       this.#expect(expected);
-      return createToken(Kind.PlusToken);
+      return createToken(Kind.PlusToken) as PlusToken;
     }
     if (current === Kind.MinusToken) {
       this.#advance();
       this.#expect(expected);
-      return createToken(Kind.MinusToken);
+      return createToken(Kind.MinusToken) as MinusToken;
     }
     if (current === expected) {
       this.#advance();
-      return createToken(expected);
+      return expected === Kind.ReadonlyKeyword
+        ? createToken(Kind.ReadonlyKeyword) as ReadonlyKeyword
+        : createToken(Kind.QuestionToken) as QuestionToken;
     }
     return undefined;
   }
@@ -3966,7 +4040,7 @@ export class Parser {
         break;
       }
     }
-    return this.#finishNode(createTemplateLiteralTypeNode(head, createNodeArray(spans)), headPos);
+    return this.#finishNode(createTemplateLiteralTypeNode(head, createNodeArray(spans) as NodeArray<TemplateLiteralTypeSpan>), headPos);
   }
 
   #parseTupleElementNameOrTupleElementType(): TypeNode {
@@ -3976,9 +4050,9 @@ export class Parser {
     // the plain element parse (which itself handles leading `...` rest / trailing `?` optional).
     if (this.#scanStartOfNamedTupleElement()) {
       const pos = this.#nodePos();
-      const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) : undefined;
+      const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) as DotDotDotToken : undefined;
       const name = this.#parseIdentifier();
-      const questionToken = this.#consumeOptional(Kind.QuestionToken) ? createToken(Kind.QuestionToken) : undefined;
+      const questionToken = this.#consumeOptional(Kind.QuestionToken) ? createToken(Kind.QuestionToken) as QuestionToken : undefined;
       this.#expect(Kind.ColonToken);
       const type = this.#parseTupleElementType();
       return this.#finishNode(createNamedTupleMember(dotDotDotToken, name, questionToken, type), pos);
@@ -4045,7 +4119,7 @@ export class Parser {
     const parameters = this.#parseParameterList();
     this.#expect(Kind.CloseParenToken);
     this.#expect(Kind.EqualsGreaterThanToken);
-    return this.#finishNode(createFunctionTypeNode(undefined, createNodeArray(parameters), this.#parseType()), pos);
+    return this.#finishNode(createFunctionTypeNode(undefined, createNodeArray(parameters) as NodeArray<ParameterDeclaration>, this.#parseType()), pos);
   }
 
   #nextIsUnambiguouslyStartOfFunctionType(): boolean {
@@ -4105,7 +4179,7 @@ export class Parser {
     const parameters = this.#parseParameterList();
     this.#expect(Kind.CloseParenToken);
     this.#expect(Kind.EqualsGreaterThanToken);
-    return this.#finishNode(createFunctionTypeNode(typeParameters, createNodeArray(parameters), this.#parseType()), pos);
+    return this.#finishNode(createFunctionTypeNode(typeParameters, createNodeArray(parameters) as NodeArray<ParameterDeclaration>, this.#parseType()), pos);
   }
 
   #tryParseTypePredicate(): TypeNode | undefined {
@@ -4115,7 +4189,7 @@ export class Parser {
     // without creating a node, so no stray stamp.
     const mark = this.#mark();
     const pos = this.#nodePos();
-    const assertsModifier = this.#consumeOptional(Kind.AssertsKeyword) ? createToken(Kind.AssertsKeyword) : undefined;
+      const assertsModifier = this.#consumeOptional(Kind.AssertsKeyword) ? createToken(Kind.AssertsKeyword) as AssertsKeyword : undefined;
     let parameterName: ReturnType<typeof createThisTypeNode> | Identifier;
     if (this.#current().kind === Kind.ThisKeyword) {
       // Inner this-type leaf used as the predicate parameter: capture pos before
@@ -4170,7 +4244,7 @@ export class Parser {
     // the return or read .text/.pos, which are caller-compatible here).
     const token = this.#current();
     if (token.kind !== kind) {
-      this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, [tokenToString(kind) ?? Kind[kind]]);
+      this.#parseErrorAtCurrentToken(Diagnostics.X_0_expected, [tokenToString(kind) ?? kindDebugName(kind)]);
       return { kind, pos: this.#current().pos, end: this.#current().pos, text: "" };
     }
     this.#advance();
@@ -4236,7 +4310,7 @@ export class Parser {
       token: this.#token,
       prevTokenEnd: this.#prevTokenEnd,
       contextFlags: this.#contextFlags,
-      diagnosticsLen: this.#diagnostics.length,
+      diagnosticsLen: this.#diagnostics.length | 0,
       statementHasAwaitIdentifier: this.#statementHasAwaitIdentifier,
     };
   }
@@ -4279,8 +4353,8 @@ export class Parser {
     return this.#token.fullStart;
   }
 
-  #nodeEnd(): number {
-    return this.#prevTokenEnd;
+  #nodeEnd(): int {
+    return this.#prevTokenEnd | 0;
   }
 
   // M3 6a: tsgo jsdocScannerInfo (parser.go:414-426). Capture the current
@@ -4931,7 +5005,7 @@ export class Parser {
       }
     }
     this.#parsingContexts = save;
-    return createNodeArray(list, pos, this.#nodePos());
+    return createNodeArray(list, pos, this.#nodePos()) as NodeArray<T>;
   }
 
   // M3 6b: tsgo parseListIndex (parser.go:609-638, minus the JSDoc-only reparseList
@@ -4939,14 +5013,15 @@ export class Parser {
   // the element parser receives the element's INDEX in the list (the same `len(list)`
   // tsgo passes), used by #parseToplevelStatement to record possibleAwaitSpans by
   // statement index. Used only by parseSourceFile (PCSourceElements).
-  #parseListIndex<T extends Node>(kind: ParsingContext, parseElement: (index: number) => T): NodeArray<T> {
+  #parseListIndex<T extends Node>(kind: ParsingContext, parseElement: (index: int) => T): NodeArray<T> {
     const pos = this.#nodePos();
     const save = this.#parsingContexts;
     this.#parsingContexts |= (1 << kind);
     const list: T[] = [];
     while (!this.#isListTerminator(kind)) {
       if (this.#isListElement(kind, false)) {
-        list.push(parseElement(list.length));
+        const index: int = list.length | 0;
+        list.push(parseElement(index));
         continue;
       }
       if (this.#abortParsingListOrMoveToNextToken(kind)) {
@@ -4954,7 +5029,7 @@ export class Parser {
       }
     }
     this.#parsingContexts = save;
-    return createNodeArray(list, pos, this.#nodePos());
+    return createNodeArray(list, pos, this.#nodePos()) as NodeArray<T>;
   }
 
   // M3 6b: tsgo parseToplevelStatement (parser.go:500-511). Parse one top-level
@@ -4962,7 +5037,7 @@ export class Parser {
   // an `await` identifier AND was not already parsed in AwaitContext — record/extend
   // its [i, i+1) span in #possibleAwaitSpans (merging into the previous span when the
   // statements are adjacent), exactly mirroring tsgo's index bookkeeping.
-  #parseToplevelStatement(i: number): Statement {
+  #parseToplevelStatement(i: int): Statement {
     this.#statementHasAwaitIdentifier = false;
     const statement = this.#parseStatement();
     if (this.#statementHasAwaitIdentifier && (statement.flags & NodeFlags.AwaitContext) === 0) {
@@ -4999,24 +5074,24 @@ export class Parser {
     const savedParseDiagnostics: readonly Diagnostic[] = [...this.#diagnostics];
     this.#diagnostics.length = 0;
 
-    const diagStart = (fromPos: number): number =>
-      savedParseDiagnostics.findIndex((d) => (d.start ?? 0) >= fromPos);
+    const diagStart = (fromPos: number): int =>
+      savedParseDiagnostics.findIndex((diagnostic) => (diagnostic.start ?? 0) >= fromPos) | 0;
 
-    let afterAwaitStatement = 0;
-    for (let i = 0; i < spans.length; i += 2) {
-      const nextAwaitStatement = spans[i]!;
+    let afterAwaitStatement: int = 0;
+    for (let i: int = 0; i < spans.length; i = (i + 2) | 0) {
+      const nextAwaitStatement: int = spans[i]!;
       const prevStatement = sourceStatements[afterAwaitStatement]!;
       const nextStatement = sourceStatements[nextAwaitStatement]!;
       // append all non-await statements between afterAwaitStatement and nextAwaitStatement
-      for (let s = afterAwaitStatement; s < nextAwaitStatement; s += 1) {
+      for (let s: int = afterAwaitStatement; s < nextAwaitStatement; s = (s + 1) | 0) {
         statements.push(sourceStatements[s]!);
       }
 
       // append all diagnostics associated with the copied range (tsgo 530-549)
       const diagnosticStart = diagStart(prevStatement.pos);
       if (diagnosticStart >= 0) {
-        let diagnosticEnd = -1;
-        for (let d = 0; d < diagnosticStart; d += 1) {
+        let diagnosticEnd: int = -1;
+        for (let d: int = 0; d < diagnosticStart; d = (d + 1) | 0) {
           if ((savedParseDiagnostics[d]!.start ?? 0) >= nextStatement.pos) {
             diagnosticEnd = d;
             break;
@@ -5037,7 +5112,7 @@ export class Parser {
       this.#scanner.resetPos(nextStatement.pos);
       this.#nextToken();
 
-      afterAwaitStatement = spans[i + 1]!;
+      afterAwaitStatement = spans[(i + 1) | 0]!;
       while (this.#current().kind !== Kind.EndOfFile) {
         const startPos = this.#scanner.getTokenFullStart();
         const statement = this.#parseStatement();
@@ -5053,9 +5128,9 @@ export class Parser {
           }
           if (statement.end > nonAwaitStatement.pos) {
             // we ate into the next statement, so we must continue reparsing the next span
-            i += 2;
+            i = (i + 2) | 0;
             if (i < spans.length) {
-              afterAwaitStatement = spans[i + 1]!;
+              afterAwaitStatement = spans[(i + 1) | 0]!;
             } else {
               afterAwaitStatement = sourceStatements.length;
             }
@@ -5072,7 +5147,7 @@ export class Parser {
     // append all statements between pos and the end of the list (tsgo 588-600)
     if (afterAwaitStatement < sourceStatements.length) {
       const prevStatement = sourceStatements[afterAwaitStatement]!;
-      for (let s = afterAwaitStatement; s < sourceStatements.length; s += 1) {
+      for (let s: int = afterAwaitStatement; s < sourceStatements.length; s = (s + 1) | 0) {
         statements.push(sourceStatements[s]!);
       }
       const diagnosticStart = diagStart(prevStatement.pos);
@@ -5087,7 +5162,7 @@ export class Parser {
       sourceFile.fileName,
       sourceFile.path,
       sourceFile.text,
-      createNodeArray(statements, sourceFile.statements.pos, sourceFile.statements.end),
+      createNodeArray(statements, sourceFile.statements.pos, sourceFile.statements.end) as NodeArray<Statement>,
       sourceFile.endOfFileToken,
       this.#diagnostics,
       sourceFile.languageVariant,
@@ -5150,7 +5225,7 @@ export class Parser {
       }
     }
     this.#parsingContexts = save;
-    return createNodeArray(list, pos, this.#nodePos());
+    return createNodeArray(list, pos, this.#nodePos()) as NodeArray<T>;
   }
 
   // tsgo parseBracketedList (parser.go:707-714). PROBLEM: tsts #expect THROWS on
@@ -5179,7 +5254,7 @@ export class Parser {
   // tsgo createMissingList (parser.go:720-724). tsts has no missingListNodes
   // sentinel; an empty NodeArray at pos..pos is the faithful empty list.
   #createMissingList<T extends Node>(): NodeArray<T> {
-    return createNodeArray<T>([], this.#nodePos(), this.#nodePos());
+    return createNodeArray([], this.#nodePos(), this.#nodePos()) as NodeArray<T>;
   }
 
   // tsgo abortParsingListOrMoveToNextToken (parser.go:727-734). #parsingContextErrors
@@ -5460,7 +5535,7 @@ export class Parser {
   }
 
   #finishNode<T extends Node>(node: T, pos: number): T {
-    node.pos = pos;
+    node.pos = pos | 0;
     node.end = this.#nodeEnd();
     // codex-054 M3 Stage-2: tsgo finishNodeWithEnd (parser.go:5910)
     // `node.Flags |= p.contextFlags`. OR the parser's current contextFlags into the
@@ -5485,8 +5560,8 @@ export class Parser {
   // #prevTokenEnd and is NOT a JSX-local span mode — the explicit end always comes
   // from an already-finished node's .end (a real token-tight position).
   #finishNodeWithEnd<T extends Node>(node: T, pos: number, end: number): T {
-    node.pos = pos;
-    node.end = end;
+    node.pos = pos | 0;
+    node.end = end | 0;
     node.flags |= this.#contextFlags;
     return node;
   }

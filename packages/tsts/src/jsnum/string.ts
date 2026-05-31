@@ -33,8 +33,8 @@ export function numberToString(n: number): string {
   return n.toString();
 }
 
-const maxSafeInteger = Number.MAX_SAFE_INTEGER;
-const minSafeInteger = -Number.MAX_SAFE_INTEGER;
+const maxSafeInteger = 9007199254740991;
+const minSafeInteger = -9007199254740991;
 
 /**
  * TC39 StringToNumber abstract operation.

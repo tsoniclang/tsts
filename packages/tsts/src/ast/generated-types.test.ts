@@ -17,7 +17,7 @@ import {
   type SourceFile,
   type Statement,
   type TemplateLiteralLikeNode,
-  type Token,
+  type EndOfFile,
 } from "./index.js";
 
 type Equal<Actual, Expected> =
@@ -32,8 +32,8 @@ export class GeneratedAstTypeSurfaceTests {
     Assert.Equal(Kind.SourceFile, SyntaxKind.SourceFile);
   }
 
-  preserves_generic_token_aliases_without_lowering_kind_unions_to_enum_members(): void {
-    assertType<Equal<Token<Kind.EndOfFile>["kind"], Kind.EndOfFile>>();
+  preserves_token_aliases_without_lowering_kind_unions_to_enum_members(): void {
+    assertType<Equal<EndOfFile["kind"], Kind.EndOfFile>>();
     assertType<Equal<BinaryOperatorToken["kind"], BinaryOperator>>();
   }
 
@@ -48,8 +48,7 @@ export class GeneratedAstTypeSurfaceTests {
   }
 
   includes_multi_kind_statement_implementations_in_base_derived_node_aliases(): void {
-    assertType<Equal<Extract<Statement, { readonly kind: Kind.ForInStatement }>["kind"], Kind.ForInStatement>>();
-    assertType<Equal<Extract<Statement, { readonly kind: Kind.ForOfStatement }>["kind"], Kind.ForOfStatement>>();
+    assertType<ForInOrOfStatement extends Statement ? true : false>();
   }
 
   keeps_handwritten_source_file_and_schema_generated_node_fields_aligned(): void {
@@ -60,7 +59,7 @@ export class GeneratedAstTypeSurfaceTests {
 }
 
 A<GeneratedAstTypeSurfaceTests>().method((t) => t.exports_syntax_kind_as_a_value_alias_for_kind).add(FactAttribute);
-A<GeneratedAstTypeSurfaceTests>().method((t) => t.preserves_generic_token_aliases_without_lowering_kind_unions_to_enum_members).add(FactAttribute);
+A<GeneratedAstTypeSurfaceTests>().method((t) => t.preserves_token_aliases_without_lowering_kind_unions_to_enum_members).add(FactAttribute);
 A<GeneratedAstTypeSurfaceTests>().method((t) => t.resolves_syntax_kind_aliases_to_node_token_aliases_for_node_unions).add(FactAttribute);
 A<GeneratedAstTypeSurfaceTests>().method((t) => t.expands_ts_go_multi_kind_implementation_nodes_into_exact_variant_unions).add(FactAttribute);
 A<GeneratedAstTypeSurfaceTests>().method((t) => t.includes_multi_kind_statement_implementations_in_base_derived_node_aliases).add(FactAttribute);

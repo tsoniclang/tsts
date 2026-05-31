@@ -981,8 +981,12 @@ function getDisplayName(node: Node): string {
   return declarationName === InternalSymbolNameMissing ? "(Missing)" : declarationName;
 }
 
+interface PropertyNameTextNode extends Node {
+  readonly text: string;
+}
+
 // True when a property/declaration name is a literal whose `.text` is its name.
-function isPropertyNameLiteralLike(name: Node): name is Node & { readonly text: string } {
+function isPropertyNameLiteralLike(name: Node): name is PropertyNameTextNode {
   return (
     isIdentifier(name)
     || isStringLiteral(name)

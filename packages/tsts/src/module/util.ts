@@ -46,6 +46,12 @@ import type { DiagnosticMessage } from "../diagnostics/types.js";
 
 export const inferredTypesContainingFile = "__inferred type names__.ts";
 
+const jsxEmitNone: CoreJsxEmit = 0;
+const moduleResolvedButJsxNotSet: DiagnosticMessage = Diagnostics.Module_0_was_resolved_to_1_but_jsx_is_not_set;
+const declarationFileNotFoundImplicitAny: DiagnosticMessage = Diagnostics.Could_not_find_a_declaration_file_for_module_0_1_implicitly_has_an_any_type;
+const moduleResolvedButResolveJsonModuleNotUsed: DiagnosticMessage = Diagnostics.Module_0_was_resolved_to_1_but_resolveJsonModule_is_not_used;
+const moduleResolvedButAllowArbitraryExtensionsNotSet: DiagnosticMessage = Diagnostics.Module_0_was_resolved_to_1_but_allowArbitraryExtensions_is_not_set;
+
 let cachedTypeScriptVersion: Version | undefined;
 function getTypeScriptVersion(): Version {
   cachedTypeScriptVersion ??= mustParse(version());
@@ -214,10 +220,10 @@ export function getResolutionDiagnostic(
   file: SourceFile
 ): DiagnosticMessage | undefined {
   const needJsx = (): DiagnosticMessage | undefined => {
-    if ((options.jsx ?? CoreJsxEmit.None) !== CoreJsxEmit.None) {
+    if ((options.jsx ?? jsxEmitNone) !== jsxEmitNone) {
       return undefined;
     }
-    return Diagnostics.Module_0_was_resolved_to_1_but_jsx_is_not_set;
+    return moduleResolvedButJsxNotSet;
   };
 
   const needAllowJs = (): DiagnosticMessage | undefined => {
@@ -227,21 +233,21 @@ export function getResolutionDiagnostic(
     ) {
       return undefined;
     }
-    return Diagnostics.Could_not_find_a_declaration_file_for_module_0_1_implicitly_has_an_any_type;
+    return declarationFileNotFoundImplicitAny;
   };
 
   const needResolveJsonModule = (): DiagnosticMessage | undefined => {
     if (getResolveJsonModule(options)) {
       return undefined;
     }
-    return Diagnostics.Module_0_was_resolved_to_1_but_resolveJsonModule_is_not_used;
+    return moduleResolvedButResolveJsonModuleNotUsed;
   };
 
   const needAllowArbitraryExtensions = (): DiagnosticMessage | undefined => {
     if (file.isDeclarationFile || tristateIsTrue(options.allowArbitraryExtensions ?? Tristate.Unknown)) {
       return undefined;
     }
-    return Diagnostics.Module_0_was_resolved_to_1_but_allowArbitraryExtensions_is_not_set;
+    return moduleResolvedButAllowArbitraryExtensionsNotSet;
   };
 
   switch (resolvedModule.extension) {

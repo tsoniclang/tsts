@@ -23,7 +23,7 @@ import type {
   IdentifierNode,
   ElementAccessExpression,
 } from "../ast/index.js";
-import { isIdentifier, isNumericLiteral, isStringLiteral } from "../ast/index.js";
+import { Kind, SymbolFlags, isIdentifier, isNumericLiteral, isStringLiteral, nodeParent } from "../ast/index.js";
 
 // ---------------------------------------------------------------------------
 // Public interface + hooks
@@ -38,6 +38,7 @@ export interface ReferenceResolver {
 }
 
 export interface ReferenceResolverHooks {
+  resolveName?: (location: AstNode | undefined, name: string, meaning: number, nameNotFoundMessage: unknown, isUse: boolean, excludeGlobals: boolean) => AstSymbol | undefined;
   getMergedSymbol(symbol: AstSymbol): AstSymbol;
   getParentOfSymbol(symbol: AstSymbol): AstSymbol | undefined;
   getSymbolOfDeclaration(declaration: Declaration): AstSymbol | undefined;
@@ -81,12 +82,15 @@ class ReferenceResolverImpl implements ReferenceResolver {
   }
 
   getReferencedValueSymbol(reference: IdentifierNode, startInDeclarationContainer: boolean): AstSymbol | undefined {
-    void startInDeclarationContainer;
     // Look up the resolved symbol attached to this identifier by the
     // binder. If the symbol is an alias, follow it via
     // getDeclarationOfAliasSymbol to its target value declaration; the
     // merged-symbol step normalizes across declaration merging.
-    const resolved = this.getResolvedSymbol(reference);
+    const location = startInDeclarationContainer && nodeParent(reference) !== undefined && isDeclarationName(reference, nodeParent(reference)!)
+      ? declarationContainer(nodeParent(reference)!)
+      : reference;
+    const resolved = this.getResolvedSymbol(reference)
+      ?? this.hooks.resolveName?.(location, reference.text, SymbolFlags.Value | SymbolFlags.ExportValue | SymbolFlags.Alias, undefined, false, false);
     if (resolved === undefined) return undefined;
     let sym = this.getMergedSymbol(resolved);
     if (this.isTypeOnlyAliasDeclaration(sym)) return undefined;
@@ -97,7 +101,28 @@ class ReferenceResolverImpl implements ReferenceResolver {
   }
 
   isTypeOnlyAliasDeclaration(symbol: AstSymbol): boolean {
-    return this.hooks.isTypeOnlyAliasDeclaration(symbol);
+    if (this.hooks.isTypeOnlyAliasDeclaration(symbol)) return true;
+    let node = this.getDeclarationOfAliasSymbol(symbol);
+    while (node !== undefined) {
+      const isTypeOnly = (node as unknown as { isTypeOnly?: boolean }).isTypeOnly === true;
+      switch (node.kind) {
+        case Kind.ImportEqualsDeclaration:
+        case Kind.ExportDeclaration:
+          return isTypeOnly;
+        case Kind.ImportClause:
+        case Kind.ImportSpecifier:
+        case Kind.ExportSpecifier:
+          if (isTypeOnly) return true;
+          node = nodeParent(node) as Declaration | undefined;
+          continue;
+        case Kind.NamedImports:
+        case Kind.NamedExports:
+          node = nodeParent(node) as Declaration | undefined;
+          continue;
+      }
+      break;
+    }
+    return false;
   }
 
   getDeclarationOfAliasSymbol(symbol: AstSymbol): Declaration | undefined {
@@ -113,11 +138,21 @@ class ReferenceResolverImpl implements ReferenceResolver {
   // -------------------------------------------------------------------------
 
   getReferencedExportContainer(node: IdentifierNode, prefixLocals: boolean): AstNode | undefined {
-    void prefixLocals;
+    const parentNode = nodeParent(node);
+    const startInDeclarationContainer = parentNode !== undefined
+      && (parentNode.kind === Kind.ModuleDeclaration || parentNode.kind === Kind.EnumDeclaration)
+      && isDeclarationName(node, parentNode);
     // The container of an exported symbol is the symbol's parent's
     // first declaration (the module/namespace declaration node).
-    const sym = this.getReferencedValueSymbol(node, false);
+    let sym = this.getReferencedValueSymbol(node, startInDeclarationContainer);
     if (sym === undefined) return undefined;
+    if (((sym.flags ?? 0) & SymbolFlags.ExportValue) !== 0 && sym.exportSymbol !== undefined) {
+      const exportSymbol = this.getMergedSymbol(sym.exportSymbol);
+      if (!prefixLocals && ((exportSymbol.flags ?? 0) & SymbolFlags.ExportHasLocal) !== 0 && ((exportSymbol.flags ?? 0) & SymbolFlags.Variable) === 0) {
+        return undefined;
+      }
+      sym = exportSymbol;
+    }
     const parent = this.getParentOfSymbol(sym);
     if (parent === undefined) return undefined;
     const parentDecls = parent.declarations;
@@ -127,14 +162,10 @@ class ReferenceResolverImpl implements ReferenceResolver {
 
   getReferencedImportDeclaration(node: IdentifierNode): Declaration | undefined {
     // If the resolved symbol is an alias, return its alias declaration.
-    const resolved = this.getResolvedSymbol(node);
-    if (resolved === undefined) return undefined;
-    const sym = this.getMergedSymbol(resolved);
-    if (!this.isTypeOnlyAliasDeclaration(sym)) {
-      // Still might be a value-side alias (import { x }).
-      const decl = this.getDeclarationOfAliasSymbol(sym);
-      if (decl !== undefined) return decl;
-    }
+    const sym = this.getReferencedValueSymbol(node, false);
+    if (sym === undefined) return undefined;
+    if (((sym.flags ?? 0) & SymbolFlags.Alias) === 0) return undefined;
+    if (this.isTypeOnlyAliasDeclaration(sym)) return undefined;
     return this.getDeclarationOfAliasSymbol(sym);
   }
 
@@ -152,7 +183,7 @@ class ReferenceResolverImpl implements ReferenceResolver {
     // Narrow each entry to `Declaration` the same way the single-declaration
     // accessor above does; this mirrors TS-Go treating *ast.Node and
     // *ast.Declaration as the same underlying node pointer.
-    return symbol.declarations.map(declaration => declaration as Declaration);
+    return symbol.declarations.filter(isValueDeclarationKind).map(declaration => declaration as Declaration);
   }
 
   getElementAccessExpressionName(expression: ElementAccessExpression): string {
@@ -164,6 +195,51 @@ class ReferenceResolverImpl implements ReferenceResolver {
     }
     return "";
   }
+}
+
+function isDeclarationName(node: AstNode, declaration: AstNode): boolean {
+  return (declaration as unknown as { name?: AstNode }).name === node;
+}
+
+function declarationContainer(declaration: AstNode): AstNode | undefined {
+  let current = nodeParent(declaration);
+  while (current !== undefined) {
+    switch (current.kind) {
+      case Kind.SourceFile:
+      case Kind.ModuleDeclaration:
+      case Kind.EnumDeclaration:
+      case Kind.Block:
+      case Kind.ModuleBlock:
+        return current;
+    }
+    current = nodeParent(current);
+  }
+  return undefined;
+}
+
+function isValueDeclarationKind(node: AstNode): boolean {
+  switch (node.kind) {
+    case Kind.VariableDeclaration:
+    case Kind.Parameter:
+    case Kind.BindingElement:
+    case Kind.PropertyDeclaration:
+    case Kind.PropertyAssignment:
+    case Kind.ShorthandPropertyAssignment:
+    case Kind.EnumMember:
+    case Kind.ObjectLiteralExpression:
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.ArrowFunction:
+    case Kind.ClassDeclaration:
+    case Kind.ClassExpression:
+    case Kind.EnumDeclaration:
+    case Kind.MethodDeclaration:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+    case Kind.ModuleDeclaration:
+      return true;
+  }
+  return false;
 }
 
 export function newReferenceResolver(

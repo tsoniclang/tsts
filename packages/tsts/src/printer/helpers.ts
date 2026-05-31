@@ -10,7 +10,7 @@
  */
 
 import type { Node as AstNode, Expression, Statement } from "../ast/index.js";
-import { Kind } from "../ast/index.js";
+import { createParenthesizedExpression, Kind, NodeFlags } from "../ast/index.js";
 
 // Precedence ranks (TC39 spec). Mirrors ts-go OperatorPrecedence.
 function operatorPrecedence(op: number): number {
@@ -142,35 +142,42 @@ export function needsParensForSpread(expression: Expression): boolean {
     || k === Kind.YieldExpression;
 }
 
-// The parenthesize* family wraps an expression in a synthetic
-// ParenthesizedExpression when needed. Without the factory wired,
-// we return the input unchanged and let the parent emit-method's
-// needsParens* predicates decide whether to write parens at emit time
-// (which matches TS-Go's pragmatic "lift parens to emit, not AST").
 export function parenthesizeExpressionForExportDefault(expression: Expression): Expression {
-  return expression;
+  return needsParensForExpressionStatement(expression) ? createParenthesizedExpression(expression) : expression;
 }
 export function parenthesizeBinaryOperand(operand: Expression, operator: number, isLeftSide: boolean): Expression {
-  void operator; void isLeftSide;
+  const operandPrecedence = expressionPrecedence(operand);
+  const opPrecedence = operatorPrecedence(operator);
+  if (operandPrecedence < opPrecedence || !isLeftSide && operandPrecedence === opPrecedence) {
+    return createParenthesizedExpression(operand);
+  }
   return operand;
 }
 export function parenthesizeExpressionOfComputedPropertyName(expression: Expression): Expression {
-  return expression;
+  return expression.kind === Kind.CommaToken || expression.kind === Kind.BinaryExpression && ((expression as unknown as { operatorToken?: { kind?: number } }).operatorToken?.kind === Kind.CommaToken)
+    ? createParenthesizedExpression(expression)
+    : expression;
 }
 export function parenthesizeConditionOfConditionalExpression(condition: Expression): Expression {
-  return condition;
+  return needsParensInConditional(condition) ? createParenthesizedExpression(condition) : condition;
 }
 export function parenthesizeBranchOfConditionalExpression(branch: Expression): Expression {
-  return branch;
+  return branch.kind === Kind.BinaryExpression && ((branch as unknown as { operatorToken?: { kind?: number } }).operatorToken?.kind === Kind.CommaToken)
+    ? createParenthesizedExpression(branch)
+    : branch;
 }
 export function parenthesizeExpressionForDisallowedComma(expression: Expression): Expression {
-  return expression;
+  return expression.kind === Kind.BinaryExpression && ((expression as unknown as { operatorToken?: { kind?: number } }).operatorToken?.kind === Kind.CommaToken)
+    ? createParenthesizedExpression(expression)
+    : expression;
 }
 export function parenthesizeMemberOfElementType(member: AstNode): AstNode {
-  return member;
+  return member.kind === Kind.UnionType || member.kind === Kind.IntersectionType || member.kind === Kind.FunctionType
+    ? createParenthesizedExpression(member as Expression)
+    : member;
 }
 export function parenthesizeMemberOfConditionalType(member: AstNode): AstNode {
-  return member;
+  return member.kind === Kind.ConditionalType ? createParenthesizedExpression(member as Expression) : member;
 }
 
 export function chainBundle(transform: (node: AstNode) => AstNode): (node: AstNode) => AstNode {
@@ -206,7 +213,7 @@ export function isCustomPrologue(node: Statement): boolean {
   // True for prologue-directive ExpressionStatement marked synthesized
   // by the compiler (e.g. emit-helpers shim like '"use strict";').
   if (!isPrologueDirective(node)) return false;
-  return ((node as unknown as { flags?: number }).flags ?? 0) & (1 << 9) /* Synthesized */ ? true : false;
+  return (((node as unknown as { flags?: number }).flags ?? 0) & NodeFlags.Synthesized) !== 0;
 }
 export function isPrologueDirective(node: Statement): boolean {
   if ((node as { kind?: number }).kind !== Kind.ExpressionStatement) return false;

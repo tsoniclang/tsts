@@ -4,6 +4,7 @@
  * Port of TS-Go `internal/sourcemap/lineinfo.go` (30 LoC).
  */
 
+import type { int } from "@tsonic/core/types.js";
 import type { TextPos } from "../core/text.js";
 
 export class ECMALineInfo {
@@ -19,9 +20,10 @@ export class ECMALineInfo {
     return this.lineStarts.length;
   }
 
-  lineText(line: number): string {
+  lineText(line: int): string {
     const pos = this.lineStarts[line]!;
-    const end = line + 1 < this.lineStarts.length ? this.lineStarts[line + 1]! : this.text.length;
+    const nextLine: int = (line + 1) | 0;
+    const end = nextLine < this.lineStarts.length ? this.lineStarts[nextLine]! : this.text.length;
     return this.text.slice(pos as unknown as number, end as unknown as number);
   }
 }

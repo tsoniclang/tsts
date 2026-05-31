@@ -10,7 +10,7 @@
  * that consume the generated catalog.
  */
 
-import type { JsValue } from "@tsonic/core/types.js";
+import type { int, JsValue } from "@tsonic/core/types.js";
 
 import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
 import type { DiagnosticMessage } from "./types.js";
@@ -92,7 +92,7 @@ export function format(text: string, args: readonly string[]): string {
   if (args.length === 0) return text;
   const sanitized = args.map(replaceInvalidUtf8);
   return text.replace(placeholderPattern, (match: string, indexStr: string): string => {
-    const index = Number.parseInt(indexStr, 10);
+    const index: int = Number.parseInt(indexStr, 10) | 0;
     if (!Number.isFinite(index) || index >= sanitized.length) {
       throw new Error("Invalid formatting placeholder");
     }

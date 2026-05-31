@@ -232,31 +232,57 @@ interface MessageFlags {
 }
 
 function msg(code: number, category: DiagnosticCategory, key: string, text: string, flags?: MessageFlags): Message {
+  const reportsUnnecessary = flags?.reportsUnnecessary === true;
+  const reportsDeprecated = flags?.reportsDeprecated === true;
+  const elidedInCompatibilityPyramid = flags?.elidedInCompatibilityPyramid === true;
+  if (reportsUnnecessary && reportsDeprecated && elidedInCompatibilityPyramid) {
+    return { code, category, key, message: text, reportsUnnecessary: true, reportsDeprecated: true, elidedInCompatibilityPyramid: true };
+  }
+  if (reportsUnnecessary && reportsDeprecated) {
+    return { code, category, key, message: text, reportsUnnecessary: true, reportsDeprecated: true };
+  }
+  if (reportsUnnecessary && elidedInCompatibilityPyramid) {
+    return { code, category, key, message: text, reportsUnnecessary: true, elidedInCompatibilityPyramid: true };
+  }
+  if (reportsDeprecated && elidedInCompatibilityPyramid) {
+    return { code, category, key, message: text, reportsDeprecated: true, elidedInCompatibilityPyramid: true };
+  }
+  if (reportsUnnecessary) {
+    return { code, category, key, message: text, reportsUnnecessary: true };
+  }
+  if (reportsDeprecated) {
+    return { code, category, key, message: text, reportsDeprecated: true };
+  }
+  if (elidedInCompatibilityPyramid) {
+    return { code, category, key, message: text, elidedInCompatibilityPyramid: true };
+  }
   return {
     code,
     category,
     key,
     message: text,
-    ...(flags?.reportsUnnecessary === true ? { reportsUnnecessary: true } : {}),
-    ...(flags?.reportsDeprecated === true ? { reportsDeprecated: true } : {}),
-    ...(flags?.elidedInCompatibilityPyramid === true ? { elidedInCompatibilityPyramid: true } : {}),
   };
 }
 `;
 }
 
 function generateCatalog(entries: readonly DiagnosticEntry[], upstreamRelative: string): string {
+  const catalogLines = entries.map((entry) => `  readonly ${entry.name}: Message;`);
   const tableLines = entries.map(
     (entry) =>
       `  ${entry.name}: msg(${entry.code}, Category.${entry.category}, ${jsonString(entry.key)}, ${jsonString(entry.text)}${flagsArg(entry)}),`,
   );
 
   const table = `
-export const Diagnostics = {
-${tableLines.join("\n")}
-} as const;
+export interface DiagnosticsCatalog {
+${catalogLines.join("\n")}
+}
 
-export type DiagnosticsKey = keyof typeof Diagnostics;
+export const Diagnostics: DiagnosticsCatalog = {
+${tableLines.join("\n")}
+};
+
+export type DiagnosticsKey = keyof DiagnosticsCatalog;
 `;
 
   const caseLines = entries.map(

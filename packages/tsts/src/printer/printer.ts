@@ -330,8 +330,8 @@ export class Printer {
     // Block / object literal / array literal contents always get an
     // indent step. (Caller is responsible for the single-line case.)
     const k = (node as { kind?: number }).kind;
-    return k === 242 /* Block */ || k === 210 /* ObjectLiteralExpression */ ||
-      k === 209 /* ArrayLiteralExpression */;
+    return k === Kind.Block || k === Kind.ModuleBlock || k === Kind.ObjectLiteralExpression ||
+      k === Kind.ArrayLiteralExpression;
   }
   shouldElideIndentation(node: AstNode): boolean {
     void node; return false;
@@ -379,10 +379,10 @@ export class Printer {
     // Trailing commas are allowed in array literals, object literals,
     // call expression arguments, parameters, and function body.
     const k = (node as { kind?: number }).kind;
-    return k === 209 /* ArrayLiteralExpression */ ||
-      k === 210 /* ObjectLiteralExpression */ ||
-      k === 213 /* CallExpression */ ||
-      k === 214 /* NewExpression */;
+    return k === Kind.ArrayLiteralExpression ||
+      k === Kind.ObjectLiteralExpression ||
+      k === Kind.CallExpression ||
+      k === Kind.NewExpression;
   }
 
   // -------------------------------------------------------------------------
@@ -439,7 +439,9 @@ export class Printer {
     // For the basic cases we delegate to the per-kind emit method.
     const k = (node as { kind?: number }).kind ?? 0;
     switch (k) {
+      case Kind.SourceFile: return this.emitSourceFile(node);
       case Kind.Identifier: return this.emitIdentifier(node);
+      case Kind.PrivateIdentifier: return this.emitIdentifier(node);
       case Kind.StringLiteral: return this.emitStringLiteral(node);
       case Kind.NumericLiteral: return this.emitNumericLiteral(node);
       case Kind.BigIntLiteral: return this.emitBigIntLiteral(node);
@@ -447,7 +449,9 @@ export class Printer {
       case Kind.NoSubstitutionTemplateLiteral: return this.emitTemplateLiteral(node);
       case Kind.TemplateExpression: return this.emitTemplateExpression(node);
       case Kind.Block: return this.emitBlock(node);
+      case Kind.ModuleBlock: return this.emitModuleBlock(node);
       case Kind.VariableStatement: return this.emitVariableStatement(node);
+      case Kind.VariableDeclaration: return this.emitVariableDeclaration(node);
       case Kind.ExpressionStatement: return this.emitExpressionStatement(node);
       case Kind.IfStatement: return this.emitIfStatement(node);
       case Kind.DoStatement: return this.emitDoStatement(node);
@@ -466,16 +470,33 @@ export class Printer {
       case Kind.WithStatement: return this.emitWithStatement(node);
       case Kind.ClassDeclaration: return this.emitClassDeclaration(node);
       case Kind.ClassExpression: return this.emitClassExpression(node);
+      case Kind.Constructor: return this.emitConstructorDeclaration(node);
+      case Kind.MethodDeclaration:
+      case Kind.MethodSignature: return this.emitMethodDeclaration(node);
+      case Kind.PropertyDeclaration:
+      case Kind.PropertySignature: return this.emitPropertyDeclaration(node);
+      case Kind.GetAccessor: return this.emitGetAccessor(node);
+      case Kind.SetAccessor: return this.emitSetAccessor(node);
       case Kind.FunctionDeclaration: return this.emitFunctionDeclaration(node);
       case Kind.FunctionExpression: return this.emitFunctionExpression(node);
       case Kind.ArrowFunction: return this.emitArrowFunction(node);
+      case Kind.Parameter: return this.emitParameter(node);
       case Kind.InterfaceDeclaration: return this.emitInterfaceDeclaration(node);
       case Kind.TypeAliasDeclaration: return this.emitTypeAliasDeclaration(node);
       case Kind.EnumDeclaration: return this.emitEnumDeclaration(node);
+      case Kind.EnumMember: return this.emitEnumMember(node);
       case Kind.ModuleDeclaration: return this.emitModuleDeclaration(node);
       case Kind.ImportDeclaration: return this.emitImportDeclaration(node);
+      case Kind.ImportClause: return this.emitImportClause(node);
+      case Kind.NamespaceImport: return this.emitNamespaceImport(node);
+      case Kind.NamedImports: return this.emitNamedImports(node);
+      case Kind.ImportSpecifier: return this.emitImportSpecifier(node);
       case Kind.ImportEqualsDeclaration: return this.emitImportEqualsDeclaration(node);
+      case Kind.ExternalModuleReference: return this.emitExternalModuleReference(node);
       case Kind.ExportDeclaration: return this.emitExportDeclaration(node);
+      case Kind.NamedExports: return this.emitNamedExports(node);
+      case Kind.ExportSpecifier: return this.emitExportSpecifier(node);
+      case Kind.NamespaceExport: return this.emitNamespaceExport(node);
       case Kind.ExportAssignment: return this.emitExportAssignment(node);
       case Kind.CallExpression: return this.emitCallExpression(node);
       case Kind.NewExpression: return this.emitNewExpression(node);
@@ -498,6 +519,29 @@ export class Printer {
       case Kind.TypeAssertionExpression: return this.emitTypeAssertionExpression(node);
       case Kind.ObjectLiteralExpression: return this.emitObjectLiteralExpression(node);
       case Kind.ArrayLiteralExpression: return this.emitArrayLiteralExpression(node);
+      case Kind.PropertyAssignment: return this.emitPropertyAssignment(node);
+      case Kind.ShorthandPropertyAssignment: return this.emitShorthandPropertyAssignment(node);
+      case Kind.SpreadAssignment: return this.emitSpreadAssignment(node);
+      case Kind.ComputedPropertyName: return this.emitComputedPropertyName(node);
+      case Kind.Decorator: return this.emitDecorator(node);
+      case Kind.HeritageClause: return this.emitHeritageClause(node);
+      case Kind.JsxElement: return this.emitJsxElement(node);
+      case Kind.JsxSelfClosingElement: return this.emitJsxSelfClosingElement(node);
+      case Kind.JsxOpeningElement: return this.emitJsxOpeningElement(node);
+      case Kind.JsxClosingElement: return this.emitJsxClosingElement(node);
+      case Kind.JsxFragment: return this.emitJsxFragment(node);
+      case Kind.JsxText: return this.emitJsxText(node);
+      case Kind.JsxExpression: return this.emitJsxExpression(node);
+      case Kind.JsxAttribute: return this.emitJsxAttribute(node);
+      case Kind.JsxSpreadAttribute: return this.emitJsxSpreadAttribute(node);
+    }
+    if (isTypeNodeKind(k)) return this.emitTypeNode(node);
+  }
+  emitSourceFile(node: AstNode): void {
+    const statements = (node as unknown as { statements?: { nodes?: readonly AstNode[] } }).statements?.nodes ?? [];
+    for (let i = 0; i < statements.length; i++) {
+      if (i > 0) this.writeLine();
+      this.emit(0, statements[i]);
     }
   }
   emitIdentifier(node: AstNode): void {
@@ -638,6 +682,20 @@ export class Printer {
       }
     }
     this.writeTrailingSemicolon();
+  }
+  emitVariableDeclaration(node: AstNode): void {
+    const name = (node as unknown as { name?: AstNode }).name;
+    if (name !== undefined) this.emit(0, name);
+    const type = (node as unknown as { type?: AstNode }).type;
+    if (type !== undefined) {
+      this.writePunctuation(": ");
+      this.emit(0, type);
+    }
+    const initializer = (node as unknown as { initializer?: AstNode }).initializer;
+    if (initializer !== undefined) {
+      this.writeOperator(" = ");
+      this.emit(0, initializer);
+    }
   }
   emitExpressionStatement(node: AstNode): void {
     const expr = (node as unknown as { expression?: AstNode }).expression;
@@ -951,6 +1009,14 @@ export class Printer {
     this.writeLine();
     this.writePunctuation("}");
   }
+  emitEnumMember(node: AstNode): void {
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+    const initializer = (node as unknown as { initializer?: AstNode }).initializer;
+    if (initializer !== undefined) {
+      this.writeOperator(" = ");
+      this.emit(0, initializer);
+    }
+  }
   emitModuleDeclaration(node: AstNode): void {
     this.writeKeyword("namespace ");
     this.emit(0, (node as unknown as { name?: AstNode }).name);
@@ -979,6 +1045,11 @@ export class Printer {
       this.emit(0, namedBindings);
     }
   }
+  emitNamespaceImport(node: AstNode): void {
+    this.writeOperator("*");
+    this.writeKeyword(" as ");
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+  }
   emitNamedImports(node: AstNode): void {
     this.writePunctuation("{ ");
     const elements = (node as unknown as { elements?: { nodes?: readonly AstNode[] } }).elements?.nodes ?? [];
@@ -1002,6 +1073,12 @@ export class Printer {
     this.writeOperator(" = ");
     this.emit(0, (node as unknown as { moduleReference?: AstNode }).moduleReference);
     this.writeTrailingSemicolon();
+  }
+  emitExternalModuleReference(node: AstNode): void {
+    this.writeKeyword("require");
+    this.writePunctuation("(");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writePunctuation(")");
   }
   emitExportDeclaration(node: AstNode): void {
     this.writeKeyword("export ");
@@ -1037,6 +1114,11 @@ export class Printer {
       this.emit(0, propertyName);
       this.writeKeyword(" as ");
     }
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+  }
+  emitNamespaceExport(node: AstNode): void {
+    this.writeOperator("*");
+    this.writeKeyword(" as ");
     this.emit(0, (node as unknown as { name?: AstNode }).name);
   }
   emitCallExpression(node: AstNode): void {
@@ -1078,6 +1160,28 @@ export class Printer {
     }
     if (props.length > 0) this.writeSpace();
     this.writePunctuation("}");
+  }
+  emitPropertyAssignment(node: AstNode): void {
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+    const type = (node as unknown as { type?: AstNode }).type;
+    if (type !== undefined) {
+      this.writePunctuation(": ");
+      this.emit(0, type);
+    }
+    this.writePunctuation(": ");
+    this.emit(0, (node as unknown as { initializer?: AstNode }).initializer);
+  }
+  emitShorthandPropertyAssignment(node: AstNode): void {
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+    const initializer = (node as unknown as { objectAssignmentInitializer?: AstNode }).objectAssignmentInitializer;
+    if (initializer !== undefined) {
+      this.writeOperator(" = ");
+      this.emit(0, initializer);
+    }
+  }
+  emitSpreadAssignment(node: AstNode): void {
+    this.writePunctuation("...");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
   }
   emitArrayLiteralExpression(node: AstNode): void {
     this.writePunctuation("[");
@@ -1536,65 +1640,101 @@ interface EmitContext { readonly _ec?: unknown }
  */
 function printerTokenToString(token: number): string | undefined {
   switch (token) {
-    case 18 /* OpenBraceToken */: return "{";
-    case 19 /* CloseBraceToken */: return "}";
-    case 20 /* OpenParenToken */: return "(";
-    case 21 /* CloseParenToken */: return ")";
-    case 22 /* OpenBracketToken */: return "[";
-    case 23 /* CloseBracketToken */: return "]";
-    case 24 /* DotToken */: return ".";
-    case 25 /* DotDotDotToken */: return "...";
-    case 26 /* SemicolonToken */: return ";";
-    case 27 /* CommaToken */: return ",";
-    case 28 /* QuestionDotToken */: return "?.";
-    case 29 /* LessThanToken */: return "<";
-    case 30 /* LessThanSlashToken */: return "</";
-    case 31 /* GreaterThanToken */: return ">";
-    case 32 /* LessThanEqualsToken */: return "<=";
-    case 33 /* GreaterThanEqualsToken */: return ">=";
-    case 34 /* EqualsEqualsToken */: return "==";
-    case 35 /* ExclamationEqualsToken */: return "!=";
-    case 36 /* EqualsEqualsEqualsToken */: return "===";
-    case 37 /* ExclamationEqualsEqualsToken */: return "!==";
-    case 38 /* EqualsGreaterThanToken */: return "=>";
-    case 39 /* PlusToken */: return "+";
-    case 40 /* MinusToken */: return "-";
-    case 41 /* AsteriskToken */: return "*";
-    case 42 /* AsteriskAsteriskToken */: return "**";
-    case 43 /* SlashToken */: return "/";
-    case 44 /* PercentToken */: return "%";
-    case 45 /* PlusPlusToken */: return "++";
-    case 46 /* MinusMinusToken */: return "--";
-    case 47 /* LessThanLessThanToken */: return "<<";
-    case 48 /* GreaterThanGreaterThanToken */: return ">>";
-    case 49 /* GreaterThanGreaterThanGreaterThanToken */: return ">>>";
-    case 50 /* AmpersandToken */: return "&";
-    case 51 /* BarToken */: return "|";
-    case 52 /* CaretToken */: return "^";
-    case 53 /* ExclamationToken */: return "!";
-    case 54 /* TildeToken */: return "~";
-    case 55 /* AmpersandAmpersandToken */: return "&&";
-    case 56 /* BarBarToken */: return "||";
-    case 57 /* QuestionToken */: return "?";
-    case 58 /* ColonToken */: return ":";
-    case 59 /* AtToken */: return "@";
-    case 60 /* QuestionQuestionToken */: return "??";
-    case 63 /* EqualsToken */: return "=";
-    case 64 /* PlusEqualsToken */: return "+=";
-    case 65 /* MinusEqualsToken */: return "-=";
-    case 66 /* AsteriskEqualsToken */: return "*=";
-    case 67 /* AsteriskAsteriskEqualsToken */: return "**=";
-    case 68 /* SlashEqualsToken */: return "/=";
-    case 69 /* PercentEqualsToken */: return "%=";
-    case 70 /* LessThanLessThanEqualsToken */: return "<<=";
-    case 71 /* GreaterThanGreaterThanEqualsToken */: return ">>=";
-    case 72 /* GreaterThanGreaterThanGreaterThanEqualsToken */: return ">>>=";
-    case 73 /* AmpersandEqualsToken */: return "&=";
-    case 74 /* BarEqualsToken */: return "|=";
-    case 75 /* CaretEqualsToken */: return "^=";
-    case 76 /* BarBarEqualsToken */: return "||=";
-    case 77 /* AmpersandAmpersandEqualsToken */: return "&&=";
-    case 78 /* QuestionQuestionEqualsToken */: return "??=";
+    case Kind.OpenBraceToken: return "{";
+    case Kind.CloseBraceToken: return "}";
+    case Kind.OpenParenToken: return "(";
+    case Kind.CloseParenToken: return ")";
+    case Kind.OpenBracketToken: return "[";
+    case Kind.CloseBracketToken: return "]";
+    case Kind.DotToken: return ".";
+    case Kind.DotDotDotToken: return "...";
+    case Kind.SemicolonToken: return ";";
+    case Kind.CommaToken: return ",";
+    case Kind.QuestionDotToken: return "?.";
+    case Kind.LessThanToken: return "<";
+    case Kind.LessThanSlashToken: return "</";
+    case Kind.GreaterThanToken: return ">";
+    case Kind.LessThanEqualsToken: return "<=";
+    case Kind.GreaterThanEqualsToken: return ">=";
+    case Kind.EqualsEqualsToken: return "==";
+    case Kind.ExclamationEqualsToken: return "!=";
+    case Kind.EqualsEqualsEqualsToken: return "===";
+    case Kind.ExclamationEqualsEqualsToken: return "!==";
+    case Kind.EqualsGreaterThanToken: return "=>";
+    case Kind.PlusToken: return "+";
+    case Kind.MinusToken: return "-";
+    case Kind.AsteriskToken: return "*";
+    case Kind.AsteriskAsteriskToken: return "**";
+    case Kind.SlashToken: return "/";
+    case Kind.PercentToken: return "%";
+    case Kind.PlusPlusToken: return "++";
+    case Kind.MinusMinusToken: return "--";
+    case Kind.LessThanLessThanToken: return "<<";
+    case Kind.GreaterThanGreaterThanToken: return ">>";
+    case Kind.GreaterThanGreaterThanGreaterThanToken: return ">>>";
+    case Kind.AmpersandToken: return "&";
+    case Kind.BarToken: return "|";
+    case Kind.CaretToken: return "^";
+    case Kind.ExclamationToken: return "!";
+    case Kind.TildeToken: return "~";
+    case Kind.AmpersandAmpersandToken: return "&&";
+    case Kind.BarBarToken: return "||";
+    case Kind.QuestionToken: return "?";
+    case Kind.ColonToken: return ":";
+    case Kind.AtToken: return "@";
+    case Kind.QuestionQuestionToken: return "??";
+    case Kind.EqualsToken: return "=";
+    case Kind.PlusEqualsToken: return "+=";
+    case Kind.MinusEqualsToken: return "-=";
+    case Kind.AsteriskEqualsToken: return "*=";
+    case Kind.AsteriskAsteriskEqualsToken: return "**=";
+    case Kind.SlashEqualsToken: return "/=";
+    case Kind.PercentEqualsToken: return "%=";
+    case Kind.LessThanLessThanEqualsToken: return "<<=";
+    case Kind.GreaterThanGreaterThanEqualsToken: return ">>=";
+    case Kind.GreaterThanGreaterThanGreaterThanEqualsToken: return ">>>=";
+    case Kind.AmpersandEqualsToken: return "&=";
+    case Kind.BarEqualsToken: return "|=";
+    case Kind.BarBarEqualsToken: return "||=";
+    case Kind.AmpersandAmpersandEqualsToken: return "&&=";
+    case Kind.QuestionQuestionEqualsToken: return "??=";
+    case Kind.CaretEqualsToken: return "^=";
     default: return undefined;
   }
+}
+
+function isTypeNodeKind(kind: number): boolean {
+  return kind === Kind.TypeReference
+    || kind === Kind.TypeLiteral
+    || kind === Kind.TypePredicate
+    || kind === Kind.FunctionType
+    || kind === Kind.ConstructorType
+    || kind === Kind.ArrayType
+    || kind === Kind.TupleType
+    || kind === Kind.UnionType
+    || kind === Kind.IntersectionType
+    || kind === Kind.ConditionalType
+    || kind === Kind.MappedType
+    || kind === Kind.InferType
+    || kind === Kind.ParenthesizedType
+    || kind === Kind.LiteralType
+    || kind === Kind.TemplateLiteralType
+    || kind === Kind.ImportType
+    || kind === Kind.TypeOperator
+    || kind === Kind.IndexedAccessType
+    || kind === Kind.TypeQuery
+    || kind === Kind.TypeParameter
+    || kind === Kind.AnyKeyword
+    || kind === Kind.UnknownKeyword
+    || kind === Kind.NumberKeyword
+    || kind === Kind.StringKeyword
+    || kind === Kind.BooleanKeyword
+    || kind === Kind.VoidKeyword
+    || kind === Kind.NeverKeyword
+    || kind === Kind.UndefinedKeyword
+    || kind === Kind.NullKeyword
+    || kind === Kind.ObjectKeyword
+    || kind === Kind.BigIntKeyword
+    || kind === Kind.SymbolKeyword
+    || kind === Kind.ThisType;
 }

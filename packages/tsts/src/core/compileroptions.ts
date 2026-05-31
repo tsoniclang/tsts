@@ -55,15 +55,20 @@ const moduleKindNamesNodeNext: readonly string[] = [
 ];
 
 export function moduleKindToString(i: ModuleKind): string {
-  if (i >= 0 && i <= 7) {
-    return moduleKindNames[i]!;
-  }
-  if (i >= 99 && i <= 102) {
-    return moduleKindNamesEsm[i - 99]!;
-  }
-  if (i >= 199 && i <= 200) {
-    return moduleKindNamesNodeNext[i - 199]!;
-  }
+  if (i === ModuleKind.None) return "None";
+  if (i === ModuleKind.CommonJS) return "CommonJS";
+  if (i === ModuleKind.AMD) return "AMD";
+  if (i === ModuleKind.UMD) return "UMD";
+  if (i === ModuleKind.System) return "System";
+  if (i === ModuleKind.ES2015) return "ES2015";
+  if (i === ModuleKind.ES2020) return "ES2020";
+  if (i === ModuleKind.ES2022) return "ES2022";
+  if (i === ModuleKind.ESNext) return "ESNext";
+  if (i === ModuleKind.Node16) return "Node16";
+  if (i === ModuleKind.Node18) return "Node18";
+  if (i === ModuleKind.Node20) return "Node20";
+  if (i === ModuleKind.NodeNext) return "NodeNext";
+  if (i === ModuleKind.Preserve) return "Preserve";
   return "ModuleKind(" + String(i) + ")";
 }
 
@@ -146,12 +151,21 @@ const scriptTargetNamesEsm: readonly string[] = [
 ];
 
 export function scriptTargetToString(i: ScriptTarget): string {
-  if (i >= 0 && i <= 12) {
-    return scriptTargetNames[i]!;
-  }
-  if (i >= 99 && i <= 100) {
-    return scriptTargetNamesEsm[i - 99]!;
-  }
+  if (i === ScriptTarget.None) return "None";
+  if (i === ScriptTarget.ES5) return "ES5";
+  if (i === ScriptTarget.ES2015) return "ES2015";
+  if (i === ScriptTarget.ES2016) return "ES2016";
+  if (i === ScriptTarget.ES2017) return "ES2017";
+  if (i === ScriptTarget.ES2018) return "ES2018";
+  if (i === ScriptTarget.ES2019) return "ES2019";
+  if (i === ScriptTarget.ES2020) return "ES2020";
+  if (i === ScriptTarget.ES2021) return "ES2021";
+  if (i === ScriptTarget.ES2022) return "ES2022";
+  if (i === ScriptTarget.ES2023) return "ES2023";
+  if (i === ScriptTarget.ES2024) return "ES2024";
+  if (i === ScriptTarget.ES2025) return "ES2025";
+  if (i === ScriptTarget.ESNext) return "ESNext";
+  if (i === ScriptTarget.JSON) return "JSON";
   return "ScriptTarget(" + String(i) + ")";
 }
 
@@ -166,25 +180,21 @@ export const JsxEmit = {
 } as const;
 
 export function jsxEmitToString(j: JsxEmit): string {
-  switch (j) {
-    case JsxEmit.Preserve: return "preserve";
-    case JsxEmit.ReactNative: return "react-native";
-    case JsxEmit.React: return "react";
-    case JsxEmit.ReactJSX: return "react-jsx";
-    case JsxEmit.ReactJSXDev: return "react-jsxdev";
-    default: throw new Error("unhandled case in jsxEmitToString");
-  }
+  if (j === JsxEmit.Preserve) return "preserve";
+  if (j === JsxEmit.ReactNative) return "react-native";
+  if (j === JsxEmit.React) return "react";
+  if (j === JsxEmit.ReactJSX) return "react-jsx";
+  if (j === JsxEmit.ReactJSXDev) return "react-jsxdev";
+  throw new Error("unhandled case in jsxEmitToString");
 }
 
 export function moduleResolutionKindToString(m: ModuleResolutionKind): string {
-  switch (m) {
-    case ModuleResolutionKind.Classic: return "Classic";
-    case ModuleResolutionKind.Node10: return "Node10";
-    case ModuleResolutionKind.Node16: return "Node16";
-    case ModuleResolutionKind.NodeNext: return "NodeNext";
-    case ModuleResolutionKind.Bundler: return "Bundler";
-    default: throw new Error("unhandled ModuleResolutionKind");
-  }
+  if (m === ModuleResolutionKind.Classic) return "Classic";
+  if (m === ModuleResolutionKind.Node10) return "Node10";
+  if (m === ModuleResolutionKind.Node16) return "Node16";
+  if (m === ModuleResolutionKind.NodeNext) return "NodeNext";
+  if (m === ModuleResolutionKind.Bundler) return "Bundler";
+  throw new Error("unhandled ModuleResolutionKind");
 }
 
 export function moduleKindIsNonNodeESM(k: ModuleKind): boolean {
@@ -341,7 +351,7 @@ export interface CompilerOptions {
   checkers?: number;
 }
 
-export const emptyCompilerOptions: CompilerOptions = Object.freeze({});
+export const emptyCompilerOptions: CompilerOptions = {};
 
 export function cloneCompilerOptions(options: CompilerOptions): CompilerOptions {
   return { ...options };
@@ -511,4 +521,3 @@ export function getPathsBasePath(options: CompilerOptions, currentDirectory: str
 // ---------------------------------------------------------------------------
 // Forward-declared tspath helpers (cross-module dep)
 // ---------------------------------------------------------------------------
-

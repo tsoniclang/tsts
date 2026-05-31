@@ -7,6 +7,8 @@
  * by-index lookup) and to expose the same method surface.
  */
 
+import type { int } from "@tsonic/core/types.js";
+
 export interface MapEntry<K, V> {
   readonly key: K;
   readonly value: V;
@@ -16,16 +18,14 @@ export class OrderedMap<K, V> {
   private keys_: K[] = [];
   private mp = new Map<K, V>();
 
-  constructor(hint?: number) {
+  constructor(hint?: int) {
     if (hint !== undefined && hint > 0) {
       // No native size hint in JS Map; keep API parity.
-      this.keys_ = new Array<K>(hint).fill(undefined as unknown as K);
-      this.keys_.length = 0;
     }
   }
 
   static fromEntries<K, V>(items: readonly MapEntry<K, V>[]): OrderedMap<K, V> {
-    const m = new OrderedMap<K, V>(items.length);
+    const m = new OrderedMap<K, V>(items.length as int);
     for (const item of items) m.set(item.key, item.value);
     return m;
   }
@@ -47,7 +47,7 @@ export class OrderedMap<K, V> {
     return this.mp.get(key) as V;
   }
 
-  entryAt(index: number): { key: K; value: V; ok: boolean } {
+  entryAt(index: int): { key: K; value: V; ok: boolean } {
     if (index < 0 || index >= this.keys_.length) {
       return { key: undefined as unknown as K, value: undefined as unknown as V, ok: false };
     }
@@ -97,8 +97,8 @@ export class OrderedMap<K, V> {
     this.mp.clear();
   }
 
-  get size(): number {
-    return this.keys_.length;
+  get size(): int {
+    return this.keys_.length as int;
   }
 
   clone(): OrderedMap<K, V> {

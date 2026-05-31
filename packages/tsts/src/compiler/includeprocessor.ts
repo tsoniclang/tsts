@@ -7,7 +7,7 @@
  */
 
 import type { SourceFile, Diagnostic } from "../ast/index.js";
-import type { FileIncludeReason } from "./fileinclude.js";
+import type { FileIncludeReason } from "./fileInclude.js";
 
 export class IncludeProcessor {
   reasons: Map<string, FileIncludeReason[]> = new Map();

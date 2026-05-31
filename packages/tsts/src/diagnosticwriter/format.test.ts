@@ -31,18 +31,26 @@ interface DiagOpts {
   readonly message: string;
 }
 
+class TestDiagnostic implements Diagnostic {
+  readonly #opts: DiagOpts;
+
+  constructor(opts: DiagOpts) {
+    this.#opts = opts;
+  }
+
+  file(): FileLike | undefined { return this.#opts.file; }
+  pos(): int { return this.#opts.pos; }
+  end(): int { return this.#opts.end; }
+  len(): int { return this.#opts.end - this.#opts.pos; }
+  code(): int { return this.#opts.code; }
+  category(): DiagnosticCategory { return this.#opts.category; }
+  localize(_locale?: string): string { return this.#opts.message; }
+  messageChain(): readonly Diagnostic[] { return []; }
+  relatedInformation(): readonly Diagnostic[] { return []; }
+}
+
 function makeDiag(opts: DiagOpts): Diagnostic {
-  return {
-    file: () => opts.file,
-    pos: () => opts.pos,
-    end: () => opts.end,
-    len: () => opts.end - opts.pos,
-    code: () => opts.code,
-    category: () => opts.category,
-    localize: (_locale?: string) => opts.message,
-    messageChain: () => [],
-    relatedInformation: () => [],
-  };
+  return new TestDiagnostic(opts);
 }
 
 export class FormatDiagnosticTests {

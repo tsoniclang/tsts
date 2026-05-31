@@ -65,7 +65,7 @@ export class KnownSymlinks {
     return this.directories;
   }
 
-  getDirectoriesByRealpath(): ReadonlyMap<Path, ReadonlySet<string>> {
+  getDirectoriesByRealpath(): ReadonlyMap<Path, Set<string>> {
     return this.directoriesByRealpath;
   }
 
@@ -75,7 +75,7 @@ export class KnownSymlinks {
   }
 
   /** Realpath → set of symlink strings. */
-  getFilesByRealpath(): ReadonlyMap<Path, ReadonlySet<string>> {
+  getFilesByRealpath(): ReadonlyMap<Path, Set<string>> {
     return this.filesByRealpath;
   }
 

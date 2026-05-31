@@ -11,6 +11,7 @@
 // here; import them from "./generated/is.js" instead.
 
 import { Kind } from "./generated/kind.js";
+import type { int } from "@tsonic/core/types.js";
 import { NodeFlags } from "./flags.js";
 import { ModifierFlags } from "../enums/modifierFlags.enum.js";
 import type {
@@ -19,16 +20,18 @@ import type {
 } from "./generated/types.js";
 import type {
   BinaryExpression,
-  ForInOrOfStatement,
+  ExpressionStatement,
+  ForInStatement,
+  ForOfStatement,
   Identifier,
   JsxNamespacedName,
-  JsxTagNameExpression,
   LabeledStatement,
   ModifiersBase,
   ParenthesizedExpression,
   ParenthesizedTypeNode,
   PostfixUnaryExpression,
   PrefixUnaryExpression,
+  ModifierLike,
   PropertyAccessExpression,
   PropertyAssignment,
   ShorthandPropertyAssignment,
@@ -40,18 +43,28 @@ import {
   isClassStaticBlockDeclaration,
   isClassElement,
   isElementAccessExpression,
+  isForInStatement,
+  isForOfStatement,
   isFunctionLikeDeclaration,
   isIdentifier,
+  isJsxNamespacedName,
   isLeftHandSideExpression,
   isNonNullExpression,
   isNumericLiteral,
   isParameterDeclaration,
   isParenthesizedTypeNode,
+  isExpressionStatement,
   isPropertyAccessExpression,
   isPropertyDeclaration,
   isSourceFile,
   isVariableDeclaration,
 } from "./generated/is.js";
+
+function sameReference(left: unknown, right: unknown): boolean {
+  return left === right;
+}
+
+const nodeFlagOptionalChain: int = 1 << 5;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal typed accessors mirroring upstream polymorphic *Node accessors.
@@ -66,19 +79,64 @@ import {
 // to Node.ModifierFlags() this reads the cache when present (fast path) and
 // otherwise computes the flags from the modifier list directly, exactly as
 // tsgo's ModifiersToFlags would. Returns None when the node has no modifiers.
-function nodeModifierFlags(node: Node): ModifierFlags {
-  const cached = "modifierFlags" in node ? (node as ModifiersBase).modifierFlags : undefined;
-  if (typeof cached === "number") {
-    return cached;
+function modifierStorage(node: Node): ModifiersBase | undefined {
+  switch (node.kind) {
+    case Kind.TypeParameter:
+    case Kind.Parameter:
+    case Kind.PropertySignature:
+    case Kind.PropertyDeclaration:
+    case Kind.MethodSignature:
+    case Kind.MethodDeclaration:
+    case Kind.Constructor:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+    case Kind.IndexSignature:
+    case Kind.ClassStaticBlockDeclaration:
+    case Kind.BinaryExpression:
+    case Kind.FunctionType:
+    case Kind.ConstructorType:
+    case Kind.FunctionExpression:
+    case Kind.ArrowFunction:
+    case Kind.ClassExpression:
+    case Kind.VariableStatement:
+    case Kind.FunctionDeclaration:
+    case Kind.ClassDeclaration:
+    case Kind.InterfaceDeclaration:
+    case Kind.TypeAliasDeclaration:
+    case Kind.EnumDeclaration:
+    case Kind.ModuleDeclaration:
+    case Kind.ImportEqualsDeclaration:
+    case Kind.ImportDeclaration:
+    case Kind.JSImportDeclaration:
+    case Kind.ExportAssignment:
+    case Kind.NamespaceExportDeclaration:
+    case Kind.ExportDeclaration:
+      return node as ModifiersBase;
   }
-  const modifiers = "modifiers" in node ? (node as ModifiersBase).modifiers : undefined;
-  return modifiers === undefined ? ModifierFlags.None : modifiersToFlags(modifiers);
+  return undefined;
+}
+
+function nodeModifierFlags(node: Node): ModifierFlags {
+  const carrier = modifierStorage(node);
+  if (carrier === undefined) return ModifierFlags.None;
+  const cached = carrier.modifierFlags;
+  if (typeof cached === "number") {
+    return cached as ModifierFlags;
+  }
+  const modifiers = carrier.modifiers;
+  return modifiers === undefined ? ModifierFlags.None : modifierLikesToFlags(modifiers);
 }
 
 // Mirrors getQuestionDotToken / the QuestionDotToken() accessor for the kinds
 // that participate in an optional chain.
 function optionalChainQuestionDotToken(node: Node): Node | undefined {
-  if (isPropertyAccessExpression(node) || isElementAccessExpression(node) || isCallExpression(node)) {
+  if (isPropertyAccessExpression(node)) {
+    return node.questionDotToken;
+  }
+  if (isElementAccessExpression(node)) {
+    return node.questionDotToken;
+  }
+  if (isCallExpression(node)) {
     return node.questionDotToken;
   }
   return undefined;
@@ -108,7 +166,7 @@ export function rangeIsSynthesized(loc: TextRange): boolean {
 }
 
 // Determines whether a position is synthetic.
-export function positionIsSynthesized(pos: number): boolean {
+export function positionIsSynthesized(pos: int): boolean {
   return pos < 0;
 }
 
@@ -209,8 +267,10 @@ export function getAssignmentTarget(node: Node): Node | undefined {
       }
       case Kind.ForInStatement:
       case Kind.ForOfStatement: {
-        const forStatement = parent as ForInOrOfStatement;
-        if (forStatement.initializer === current) {
+        const initializer = isForInStatement(parent)
+          ? (parent as ForInStatement).initializer
+          : (parent as ForOfStatement).initializer;
+        if (sameReference(initializer, current)) {
           return parent;
         }
         return undefined;
@@ -226,7 +286,7 @@ export function getAssignmentTarget(node: Node): Node | undefined {
         break;
       case Kind.ShorthandPropertyAssignment: {
         const shorthand = parent as ShorthandPropertyAssignment;
-        if (shorthand.name !== current) {
+        if (!sameReference(shorthand.name, current)) {
           return undefined;
         }
         current = parent.parent;
@@ -234,7 +294,7 @@ export function getAssignmentTarget(node: Node): Node | undefined {
       }
       case Kind.PropertyAssignment: {
         const property = parent as PropertyAssignment;
-        if (property.name === current) {
+        if (sameReference(property.name, current)) {
           return undefined;
         }
         current = parent.parent;
@@ -293,7 +353,7 @@ export function isSignedNumericLiteral(node: Node): boolean {
 
 // Determines if a node is part of an OptionalChain.
 export function isOptionalChain(node: Node): boolean {
-  if ((node.flags & NodeFlags.OptionalChain) !== 0) {
+  if ((node.flags & nodeFlagOptionalChain) !== 0) {
     switch (node.kind) {
       case Kind.PropertyAccessExpression:
       case Kind.ElementAccessExpression:
@@ -357,30 +417,27 @@ export function isCommaSequence(node: Node): boolean {
 // mismatch restructure. Compares exactly the tsgo-compared forms: Identifier text,
 // `this` keyword (KeywordExpression with Kind.ThisKeyword), PropertyAccessExpression
 // (name text + recursive expression), and JsxNamespacedName (namespace + name text).
-export function tagNamesAreEquivalent(lhs: JsxTagNameExpression, rhs: JsxTagNameExpression): boolean {
+export function tagNamesAreEquivalent(lhs: Node, rhs: Node): boolean {
   if (lhs.kind !== rhs.kind) {
     return false;
   }
-  switch (lhs.kind) {
-    case Kind.Identifier:
-      return (lhs as Identifier).text === (rhs as Identifier).text;
-    case Kind.ThisKeyword:
-      return true;
-    case Kind.JsxNamespacedName:
-      return (lhs as JsxNamespacedName).namespace.text === (rhs as JsxNamespacedName).namespace.text
-        && (lhs as JsxNamespacedName).name.text === (rhs as JsxNamespacedName).name.text;
-    case Kind.PropertyAccessExpression:
-      return (lhs as PropertyAccessExpression).name.text === (rhs as PropertyAccessExpression).name.text
-        && tagNamesAreEquivalent(
-          (lhs as PropertyAccessExpression).expression as JsxTagNameExpression,
-          (rhs as PropertyAccessExpression).expression as JsxTagNameExpression,
-        );
-    default:
-      // tsgo panic("Unhandled case in TagNamesAreEquivalent"). A JsxTagNameExpression
-      // is only ever one of the four forms above; any other kind is an internal
-      // invariant violation (the faithful panic-equivalent is a thrown Error).
-      throw new Error("Unhandled case in tagNamesAreEquivalent");
+  if (isIdentifier(lhs) && isIdentifier(rhs)) {
+    return lhs.text === rhs.text;
   }
+  if (lhs.kind === Kind.ThisKeyword && rhs.kind === Kind.ThisKeyword) {
+    return true;
+  }
+  if (isJsxNamespacedName(lhs) && isJsxNamespacedName(rhs)) {
+    return lhs.namespace.text === rhs.namespace.text && lhs.name.text === rhs.name.text;
+  }
+  if (isPropertyAccessExpression(lhs) && isPropertyAccessExpression(rhs)) {
+    return lhs.name.text === rhs.name.text
+      && tagNamesAreEquivalent(lhs.expression, rhs.expression);
+  }
+  // tsgo panic("Unhandled case in TagNamesAreEquivalent"). A JsxTagNameExpression
+  // is only ever one of the four forms above; any other kind is an internal
+  // invariant violation (the faithful panic-equivalent is a thrown Error).
+  throw new Error("Unhandled case in tagNamesAreEquivalent");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -495,7 +552,7 @@ export function isPrologueDirective(node: Node): boolean {
 }
 
 function expressionStatementExpressionKind(node: Node): Kind | undefined {
-  return "expression" in node ? (node as { readonly expression: Node }).expression.kind : undefined;
+  return isExpressionStatement(node) ? (node as ExpressionStatement).expression.kind : undefined;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -568,6 +625,14 @@ export function modifierToFlag(token: Kind): ModifierFlags {
       return ModifierFlags.Decorator;
   }
   return ModifierFlags.None;
+}
+
+function modifierLikesToFlags(modifiers: readonly ModifierLike[]): ModifierFlags {
+  let flags = ModifierFlags.None;
+  for (const modifier of modifiers) {
+    flags |= modifierToFlag(modifier.kind);
+  }
+  return flags;
 }
 
 export function modifiersToFlags(modifiers: readonly Node[]): ModifierFlags {
@@ -753,7 +818,7 @@ function isPropertyAccessEntityNameExpression(node: Node): boolean {
     return false;
   }
   const access = node as PropertyAccessExpression;
-  return isIdentifier(access.name) && isEntityNameExpression(access.expression);
+  return access.name.kind === Kind.Identifier && isEntityNameExpression(access.expression);
 }
 
 // IsCatchClauseVariableDeclarationOrBindingElement (utilities.go:721).

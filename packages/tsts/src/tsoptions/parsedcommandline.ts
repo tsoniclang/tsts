@@ -9,7 +9,8 @@
  */
 
 import type { Diagnostic } from "../diagnostics/types.js";
-import type { ComparePathsOptions } from "../tspath/index.js";
+import { toPath, type ComparePathsOptions } from "../tspath/index.js";
+import { getCommonSourceDirectory } from "../outputpaths/commonsourcedirectory.js";
 
 /**
  * The literal glob patterns the parser uses to expand `include` /
@@ -25,6 +26,8 @@ export const RECURSIVE_FILE_GLOB_PATTERN = "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,
 export interface CompilerOptionsHandle {
   // Many fields; consumers reference them directly. Full shape lands
   // with the core port.
+  readonly rootDir?: string;
+  readonly configFilePath?: string;
 }
 
 export interface ParsedOptions {
@@ -118,11 +121,30 @@ export class ParsedCommandLine {
    * once the underlying `outputpaths.GetCommonSourceDirectory` lands.
    */
   commonSourceDirectory(): string | undefined {
+    if (this.commonSourceDirectoryCache === undefined) {
+      this.commonSourceDirectoryCache = getCommonSourceDirectory(
+        this.parsedConfig.compilerOptions,
+        () => this.parsedConfig.fileNames,
+        this.comparePathsOptions.currentDirectory,
+        this.comparePathsOptions.useCaseSensitiveFileNames,
+      );
+    }
     return this.commonSourceDirectoryCache;
   }
 
   /** Cached file names → path map for quick lookups. */
   fileNamesByPath(): Map<string, string> | undefined {
+    if (this.fileNamesByPathMap === undefined) {
+      const map = new Map<string, string>();
+      for (const fileName of this.parsedConfig.fileNames) {
+        map.set(toPath(
+          fileName,
+          this.comparePathsOptions.currentDirectory,
+          this.comparePathsOptions.useCaseSensitiveFileNames,
+        ), fileName);
+      }
+      this.fileNamesByPathMap = map;
+    }
     return this.fileNamesByPathMap;
   }
 

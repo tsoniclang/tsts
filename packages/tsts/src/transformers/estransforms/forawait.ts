@@ -12,7 +12,7 @@
  */
 
 import { SuperAccessState } from "./utilities.js";
-import type { Node as AstNode, NodeArray, NodeList, SourceFile, AwaitExpression, YieldExpression, ReturnStatement, LabeledStatement, ForInOrOfStatement, ModifierList, ConstructorDeclaration, GetAccessorDeclaration, SetAccessorDeclaration, MethodDeclaration, FunctionDeclaration, ArrowFunction, FunctionExpression, Block, TextRange } from "../../ast/index.js";
+import type { Node as AstNode, NodeArray, NodeList, SourceFile, AwaitExpression, YieldExpression, ReturnStatement, LabeledStatement, ForInOrOfStatement, ModifierList, ConstructorDeclaration, GetAccessorDeclaration, SetAccessorDeclaration, MethodDeclaration, FunctionDeclaration, ArrowFunction, FunctionExpression, Block, TextRange, NodeLoc } from "../../ast/index.js";
 import {
   nodeLoc, setLoc, nodeBody, nodeName, isBlockNode,
   blockStatements, blockStatementList, blockStatementListLoc, blockMultiLine,
@@ -406,8 +406,8 @@ export class ForAwaitTransformer extends Transformer {
     const binding = this.factory().createForOfBindingStatement(forInOrOfInitializer(node), value);
     statements.push(this.visitor().visitNode(binding));
 
-    let bodyLocation: unknown;
-    let statementsLocation: unknown;
+    let bodyLocation: NodeLoc | undefined;
+    let statementsLocation: NodeLoc | undefined;
     const statement = this.visitor().visitEmbeddedStatement(forInOrOfStatementBody(node));
     if (isBlockNode(statement)) {
       for (const s of blockStatements(statement)) statements.push(s);

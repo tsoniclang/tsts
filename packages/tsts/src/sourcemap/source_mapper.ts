@@ -18,8 +18,7 @@ import {
 import type { RawSourceMap } from "./generator.js";
 import type { ECMALineInfo } from "./lineinfo.js";
 import { tryGetSourceMappingURL } from "./util.js";
-import { unmarshal, isJsonObject, isJsonArray } from "../json/json.js";
-import type { JsValue } from "@tsonic/core/types.js";
+import { unmarshal, isJsonObject, isJsonArray, type JsonValue } from "../json/json.js";
 import { getDirectoryPath, getNormalizedAbsolutePath } from "../tspath/path.js";
 import { computePositionOfLineAndUTF16Character as scannerComputePositionOfLineAndUTF16Character } from "../scanner/index.js";
 
@@ -269,7 +268,7 @@ function tryParseRawSourceMap(contents: string): RawSourceMap | undefined {
   // A decode error (invalid JSON syntax, non-object top level, or a present
   // field whose JSON type is incompatible with the struct field) yields nil;
   // missing fields take Go's zero values. Then Version != 3 yields nil.
-  let parsed: JsValue;
+  let parsed: JsonValue;
   try {
     parsed = unmarshal(contents);
   } catch {
@@ -300,21 +299,21 @@ function tryParseRawSourceMap(contents: string): RawSourceMap | undefined {
 
 // json.Unmarshal field decoders: an absent field takes Go's zero value; a
 // present field of an incompatible JSON type is a decode error (undefined).
-function decodeStringField(obj: { readonly [key: string]: JsValue }, key: string): string | undefined {
+function decodeStringField(obj: { readonly [key: string]: JsonValue }, key: string): string | undefined {
   const v = obj[key];
   if (v === undefined || v === null) return "";
   if (typeof v !== "string") return undefined;
   return v;
 }
 
-function decodeNumberField(obj: { readonly [key: string]: JsValue }, key: string): number | undefined {
+function decodeNumberField(obj: { readonly [key: string]: JsonValue }, key: string): number | undefined {
   const v = obj[key];
   if (v === undefined || v === null) return 0;
   if (typeof v !== "number") return undefined;
   return v;
 }
 
-function decodeStringArrayField(obj: { readonly [key: string]: JsValue }, key: string): readonly string[] | undefined {
+function decodeStringArrayField(obj: { readonly [key: string]: JsonValue }, key: string): readonly string[] | undefined {
   const v = obj[key];
   if (v === undefined || v === null) return [];
   if (!isJsonArray(v)) return undefined;
@@ -327,7 +326,7 @@ function decodeStringArrayField(obj: { readonly [key: string]: JsValue }, key: s
 }
 
 function decodeNullableStringArrayField(
-  obj: { readonly [key: string]: JsValue },
+  obj: { readonly [key: string]: JsonValue },
   key: string,
 ): readonly (string | null)[] | undefined {
   const v = obj[key];
@@ -372,4 +371,3 @@ function tryParseBase64Url(url: string): { base64Object: string; matched: boolea
   }
   return { base64Object: rest, matched: true };
 }
-

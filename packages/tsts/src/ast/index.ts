@@ -2,7 +2,6 @@
 // Source: schema/tsgo/ast.json
 export * from "./flags.js";
 export * from "./generated/kind.js";
-export * from "./generated/schema.js";
 export * from "./generated/types.js";
 export * from "./generated/nodes.js";
 export * from "./generated/factory.js";

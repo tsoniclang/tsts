@@ -1,3 +1,5 @@
+import type { int } from "@tsonic/core/types.js";
+
 /**
  * Scanner utility helpers.
  *
@@ -122,8 +124,8 @@ export function getTextOfNodeFromSourceText(
   includeTrivia: boolean,
 ): string {
   if (nodeIsMissing(node)) return "";
-  let pos = nodePos(node);
-  if (!includeTrivia) pos = skipTrivia(sourceText, pos);
+  let pos: int = nodePos(node);
+  if (!includeTrivia) pos = skipTrivia(sourceText, pos) | 0;
   return sourceText.slice(pos, nodeEnd(node));
 }
 
@@ -160,4 +162,3 @@ export function isIntrinsicJsxName(name: string): boolean {
 // ---------------------------------------------------------------------------
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
-

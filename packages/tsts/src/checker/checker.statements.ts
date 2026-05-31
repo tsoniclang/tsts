@@ -7,7 +7,6 @@
  */
 
 import {
-  Kind,
   isBlock,
   isBreakStatement,
   isClassDeclaration,
@@ -21,11 +20,13 @@ import {
   isIfStatement,
   isMissingDeclaration,
   isReturnStatement,
+  isTypeAliasDeclaration,
   isVariableStatement,
   isVariableDeclarationList,
   isWhileStatement,
   type Block,
   type Expression,
+  type ForInitializer,
   type Statement,
   type TypeNode,
 } from "../ast/index.js";
@@ -36,8 +37,6 @@ import {
   checkAssignable,
   getWidenedLiteralLikeTypeForContextualType,
   typeFromTypeNode,
-  enterLocalAliasScope,
-  exitLocalAliasScope,
 } from "./checker.checkedtype.js";
 import { inferExpression } from "./checker.expressions.js";
 import { checkClassDeclaration, checkFunctionDeclaration } from "./checker.declarations.js";
@@ -64,6 +63,10 @@ export function checkStatement(statement: Statement, state: CheckState, expected
   }
   if (isClassDeclaration(statement)) {
     checkClassDeclaration(statement, state);
+    return;
+  }
+  if (isTypeAliasDeclaration(statement)) {
+    typeFromTypeNode(statement.type, state);
     return;
   }
   if (isIfStatement(statement)) {
@@ -134,7 +137,7 @@ function checkVariableDeclaration(typeNode: TypeNode | undefined, initializer: E
   }
 }
 
-export function checkForInitializer(initializer: Extract<Statement, { readonly kind: Kind.ForStatement }>["initializer"] | Extract<Statement, { readonly kind: Kind.ForInStatement }>["initializer"], state: CheckState): void {
+export function checkForInitializer(initializer: ForInitializer | undefined, state: CheckState): void {
   if (initializer === undefined) {
     return;
   }
@@ -151,10 +154,5 @@ export function checkForInitializer(initializer: Extract<Statement, { readonly k
 }
 
 export function checkBlock(block: Block, state: CheckState, expectedReturnType: Type | undefined): void {
-  // Block-local `type` aliases shadow outer aliases within this block (their
-  // full lexical scoping is deferred); register before checking so forward
-  // references inside the block are shadowed too.
-  const shadowed = enterLocalAliasScope(block.statements, state);
   checkStatements(block.statements, state, expectedReturnType);
-  exitLocalAliasScope(shadowed, state);
 }

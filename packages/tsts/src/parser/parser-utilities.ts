@@ -26,13 +26,27 @@ function isPunctuationKind(token: number): boolean {
 }
 
 export type LanguageVariant = 0 | 1;
-export const LanguageVariant = {
+export interface LanguageVariantTable {
+  readonly Standard: LanguageVariant;
+  readonly JSX: LanguageVariant;
+}
+export const LanguageVariant: LanguageVariantTable = {
   Standard: 0 as LanguageVariant,
   JSX: 1 as LanguageVariant,
-} as const;
+};
 
 export type ScriptKind = number;
-export const ScriptKind = {
+export interface ScriptKindTable {
+  readonly Unknown: ScriptKind;
+  readonly JS: ScriptKind;
+  readonly JSX: ScriptKind;
+  readonly TS: ScriptKind;
+  readonly TSX: ScriptKind;
+  readonly External: ScriptKind;
+  readonly JSON: ScriptKind;
+  readonly Deferred: ScriptKind;
+}
+export const ScriptKind: ScriptKindTable = {
   Unknown: 0 as ScriptKind,
   JS: 1 as ScriptKind,
   JSX: 2 as ScriptKind,
@@ -41,7 +55,7 @@ export const ScriptKind = {
   External: 5 as ScriptKind,
   JSON: 6 as ScriptKind,
   Deferred: 7 as ScriptKind,
-} as const;
+};
 
 export function getLanguageVariant(scriptKind: ScriptKind): LanguageVariant {
   switch (scriptKind) {
@@ -108,4 +122,3 @@ export function isJSDocLikeText(text: string): boolean {
 // ---------------------------------------------------------------------------
 
 interface NodeFactory { readonly _f?: unknown }
-

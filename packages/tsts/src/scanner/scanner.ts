@@ -52,7 +52,7 @@ export function scanAll(text: string, options?: ScannerOptions): readonly Scanne
       break;
     }
   }
-  return Object.freeze(tokens);
+  return tokens;
 }
 
 export function isTrivia(kind: Kind): boolean {
@@ -83,7 +83,18 @@ export function isTrivia(kind: Kind): boolean {
 
 // EscapeSequenceScanningFlags — faithful to scanner.go:21-32. Only the subset
 // the CORE wave needs (string + template literals); regex modes land in 4a-2.
-const EscapeSequenceScanningFlags = {
+type EscapeSequenceScanningFlags = number;
+interface EscapeSequenceScanningFlagsTable {
+  readonly String: EscapeSequenceScanningFlags;
+  readonly ReportErrors: EscapeSequenceScanningFlags;
+  readonly RegularExpression: EscapeSequenceScanningFlags;
+  readonly AnnexB: EscapeSequenceScanningFlags;
+  readonly AnyUnicodeMode: EscapeSequenceScanningFlags;
+  readonly AtomEscape: EscapeSequenceScanningFlags;
+  readonly ReportInvalidEscapeErrors: EscapeSequenceScanningFlags;
+  readonly AllowExtendedUnicodeEscape: EscapeSequenceScanningFlags;
+}
+const EscapeSequenceScanningFlags: EscapeSequenceScanningFlagsTable = {
   String: 1 << 0,
   ReportErrors: 1 << 1,
   RegularExpression: 1 << 2,
@@ -94,12 +105,25 @@ const EscapeSequenceScanningFlags = {
   ReportInvalidEscapeErrors: (1 << 2) | (1 << 1),
   // AllowExtendedUnicodeEscape = String | AnyUnicodeMode
   AllowExtendedUnicodeEscape: (1 << 0) | (1 << 4),
-} as const;
+};
 
 // regularExpressionFlags — faithful to regexp.go:16-41 (NO enum). Only the bits
 // the reScanSlashToken flag-error loop needs (the deep regExpParser validation
 // path of scanner.go:1171-1192 is DEFERRED — see reScanSlashToken below).
-const regularExpressionFlags = {
+type RegularExpressionFlags = number;
+interface RegularExpressionFlagsTable {
+  readonly None: RegularExpressionFlags;
+  readonly HasIndices: RegularExpressionFlags;
+  readonly Global: RegularExpressionFlags;
+  readonly IgnoreCase: RegularExpressionFlags;
+  readonly Multiline: RegularExpressionFlags;
+  readonly DotAll: RegularExpressionFlags;
+  readonly Unicode: RegularExpressionFlags;
+  readonly UnicodeSets: RegularExpressionFlags;
+  readonly Sticky: RegularExpressionFlags;
+  readonly AnyUnicodeMode: RegularExpressionFlags;
+}
+const regularExpressionFlags: RegularExpressionFlagsTable = {
   None: 0,
   HasIndices: 1 << 0, // d
   Global: 1 << 1, // g
@@ -111,7 +135,7 @@ const regularExpressionFlags = {
   Sticky: 1 << 7, // y
   // AnyUnicodeMode = Unicode | UnicodeSets
   AnyUnicodeMode: (1 << 5) | (1 << 6),
-} as const;
+};
 
 // charCodeToRegExpFlag — faithful to regexp.go:33-42 (keyed by char code).
 const charCodeToRegExpFlag: ReadonlyMap<number, number> = new Map<number, number>([
@@ -288,6 +312,13 @@ export interface ScannerState {
   skipJSDocLeadingAsterisks: number;
 }
 
+interface ScannerConfig {
+  text: string;
+  end: number;
+  languageVariant: LanguageVariant;
+  skipTrivia: boolean;
+}
+
 export interface LiveScannerOptions {
   readonly languageVariant?: LanguageVariant;
   readonly skipTrivia?: boolean;
@@ -352,7 +383,7 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
     commentDirectives: undefined,
     skipJSDocLeadingAsterisks: 0,
   };
-  const config = {
+  const config: ScannerConfig = {
     text,
     end: text.length,
     languageVariant: options?.languageVariant ?? LanguageVariant.Standard,

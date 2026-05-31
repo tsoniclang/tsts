@@ -24,7 +24,7 @@ import type {
   SymbolTable,
   IdentifierNode,
 } from "../ast/index.js";
-import { nodeLocals, nodeParent, nodeSymbol } from "../ast/index.js";
+import { Kind, nodeLocals, nodeParent, nodeSymbol } from "../ast/index.js";
 
 // ---------------------------------------------------------------------------
 // NameResolver
@@ -100,8 +100,30 @@ export class NameResolver {
   }
 
   requiresScopeChangeWorker(node: AstNode): boolean {
-    void node;
-    return false;
+    switch (node.kind) {
+      case Kind.SourceFile:
+      case Kind.ModuleDeclaration:
+      case Kind.Block:
+      case Kind.CaseBlock:
+      case Kind.CatchClause:
+      case Kind.ForStatement:
+      case Kind.ForInStatement:
+      case Kind.ForOfStatement:
+      case Kind.FunctionDeclaration:
+      case Kind.FunctionExpression:
+      case Kind.ArrowFunction:
+      case Kind.MethodDeclaration:
+      case Kind.GetAccessor:
+      case Kind.SetAccessor:
+      case Kind.Constructor:
+      case Kind.ClassDeclaration:
+      case Kind.ClassExpression:
+      case Kind.InterfaceDeclaration:
+      case Kind.TypeAliasDeclaration:
+      case Kind.ConditionalType:
+        return true;
+    }
+    return nodeLocals(node) !== undefined || nodeSymbol(node)?.exports !== undefined || nodeSymbol(node)?.members !== undefined;
   }
 
   error(location: AstNode, message: DiagnosticMessage, ...args: unknown[]): void {
@@ -136,27 +158,61 @@ export class NameResolver {
 // ---------------------------------------------------------------------------
 
 export function getLocalSymbolForExportDefault(symbol: AstSymbol): AstSymbol | undefined {
-  void symbol;
+  const direct = (symbol as unknown as { localSymbol?: AstSymbol }).localSymbol;
+  if (direct !== undefined) return direct;
+  for (const declaration of symbol.declarations ?? []) {
+    const local = (declaration as unknown as { localSymbol?: AstSymbol }).localSymbol;
+    if (local !== undefined) return local;
+    const declarationSymbol = nodeSymbol(declaration);
+    if (declarationSymbol !== undefined && declarationSymbol !== symbol) return declarationSymbol;
+  }
   return undefined;
 }
 
 export function isExportDefaultSymbol(symbol: AstSymbol): boolean {
-  void symbol;
-  return false;
+  const name = (symbol as unknown as { name?: string; escapedName?: string }).name
+    ?? (symbol as unknown as { escapedName?: string }).escapedName
+    ?? "";
+  if (name === "default" || name === "export default") return true;
+  return (symbol.declarations ?? []).some((declaration) => declaration.kind === Kind.ExportAssignment
+    || ((declaration as unknown as { modifiers?: { nodes?: readonly AstNode[] } }).modifiers?.nodes ?? [])
+      .some((modifier) => modifier.kind === Kind.DefaultKeyword));
 }
 
 export function getIsDeferredContext(location: AstNode, lastLocation: AstNode | undefined): boolean {
-  void location; void lastLocation;
+  if (location.kind === Kind.ConditionalType) {
+    const trueType = (location as unknown as { trueType?: AstNode }).trueType;
+    const falseType = (location as unknown as { falseType?: AstNode }).falseType;
+    return lastLocation !== undefined && lastLocation !== trueType && lastLocation !== falseType;
+  }
+  if (location.kind === Kind.MappedType) return true;
+  if (location.kind === Kind.TypeQuery) return true;
   return false;
 }
 
 export function isTypeParameterSymbolDeclaredInContainer(symbol: AstSymbol, container: AstNode): boolean {
-  void symbol; void container;
-  return false;
+  return (symbol.declarations ?? []).some((declaration) => {
+    if (declaration.kind !== Kind.TypeParameter) return false;
+    let parent = nodeParent(declaration);
+    while (parent !== undefined) {
+      if (parent === container) return true;
+      if (parent.kind === Kind.SourceFile || parent.kind === Kind.Block || parent.kind === Kind.ModuleBlock) return false;
+      parent = nodeParent(parent);
+    }
+    return false;
+  });
 }
 
 export function isSelfReferenceLocation(node: AstNode, lastLocation: AstNode | undefined): boolean {
-  void node; void lastLocation;
+  if (lastLocation === undefined) return false;
+  const name = (node as unknown as { name?: AstNode }).name;
+  if (name === lastLocation) return true;
+  if (node.kind === Kind.ClassDeclaration || node.kind === Kind.ClassExpression
+      || node.kind === Kind.InterfaceDeclaration || node.kind === Kind.TypeAliasDeclaration
+      || node.kind === Kind.FunctionDeclaration || node.kind === Kind.EnumDeclaration
+      || node.kind === Kind.ModuleDeclaration) {
+    return name === lastLocation;
+  }
   return false;
 }
 

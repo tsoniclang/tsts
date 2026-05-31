@@ -14,6 +14,8 @@ import {
   isInterfaceDeclaration,
   isNamedExports,
   isNamedImports,
+  isMethodDeclaration,
+  isPropertyDeclaration,
   isTypeAliasDeclaration,
   isVariableStatement,
 } from "../ast/index.js";
@@ -270,6 +272,8 @@ export class BinderGroundworkTests {
     // value declaration points at the declaring member.
     const staticMember = classDeclaration.members[0]!;
     const instanceMember = classDeclaration.members[1]!;
+    if (!isPropertyDeclaration(staticMember)) throw new Exception("Expected static property");
+    if (!isMethodDeclaration(instanceMember)) throw new Exception("Expected instance method");
     Assert.True(getSymbol(staticMember) === staticS);
     Assert.True(getSymbol(instanceMember) === instanceM);
     Assert.True(staticS?.valueDeclaration === staticMember);

@@ -125,14 +125,24 @@ export class MemoryFS implements FS {
   stat(path: string): FileInfo | undefined {
     const e = this.entries.get(this.normalizeKey(path));
     if (e === undefined) return undefined;
-    const isFile = e.kind === "file";
+    const name = e.path.split("/").pop() ?? "";
+    if (e.kind === "file") {
+      return {
+        name,
+        size: e.content.length,
+        mode: 0o644,
+        mtime: e.mtime,
+        isDirectory: false,
+        isRegularFile: true,
+      };
+    }
     return {
-      name: e.path.split("/").pop() ?? "",
-      size: isFile ? (e as { content: string }).content.length : 0,
+      name,
+      size: 0,
       mode: 0o644,
-      mtime: isFile ? (e as { mtime: Date }).mtime : new Date(),
-      isDirectory: !isFile,
-      isRegularFile: isFile,
+      mtime: new Date(),
+      isDirectory: true,
+      isRegularFile: false,
     };
   }
 

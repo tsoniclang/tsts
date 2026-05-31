@@ -11,7 +11,37 @@
 
 export type TokenFlags = number;
 
-export const TokenFlags = {
+export interface TokenFlagsTable {
+  readonly None: TokenFlags;
+  readonly PrecedingLineBreak: TokenFlags;
+  readonly PrecedingJSDocComment: TokenFlags;
+  readonly Unterminated: TokenFlags;
+  readonly ExtendedUnicodeEscape: TokenFlags;
+  readonly Scientific: TokenFlags;
+  readonly Octal: TokenFlags;
+  readonly HexSpecifier: TokenFlags;
+  readonly BinarySpecifier: TokenFlags;
+  readonly OctalSpecifier: TokenFlags;
+  readonly ContainsSeparator: TokenFlags;
+  readonly UnicodeEscape: TokenFlags;
+  readonly ContainsInvalidEscape: TokenFlags;
+  readonly HexEscape: TokenFlags;
+  readonly ContainsLeadingZero: TokenFlags;
+  readonly ContainsInvalidSeparator: TokenFlags;
+  readonly PrecedingJSDocLeadingAsterisks: TokenFlags;
+  readonly SingleQuote: TokenFlags;
+  readonly PrecedingJSDocWithDeprecated: TokenFlags;
+  readonly PrecedingJSDocWithSeeOrLink: TokenFlags;
+  readonly BinaryOrOctalSpecifier: TokenFlags;
+  readonly WithSpecifier: TokenFlags;
+  readonly StringLiteralFlags: TokenFlags;
+  readonly NumericLiteralFlags: TokenFlags;
+  readonly TemplateLiteralLikeFlags: TokenFlags;
+  readonly RegularExpressionLiteralFlags: TokenFlags;
+  readonly IsInvalid: TokenFlags;
+}
+
+export const TokenFlags: TokenFlagsTable = {
   None: 0,
   PrecedingLineBreak: 1 << 0, // 1
   PrecedingJSDocComment: 1 << 1, // 2
@@ -64,7 +94,7 @@ export const TokenFlags = {
     (1 << 13) /* ContainsLeadingZero */ |
     (1 << 14) /* ContainsInvalidSeparator */ |
     (1 << 11) /* ContainsInvalidEscape */, // 26656
-} as const;
+};
 
 /**
  * CommentDirectiveType — kind of `// @ts-...` directive line.

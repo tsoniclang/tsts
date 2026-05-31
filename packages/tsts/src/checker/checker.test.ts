@@ -355,21 +355,23 @@ export class CheckerGroundworkTests {
 
   extends_object_member_support(): void {
     // void nullish facts; shorthand properties; type-literal method signatures;
-    // optional properties (relater skips a missing optional); unsupported
-    // members are surfaced explicitly, never silently dropped.
+    // optional properties (relater skips a missing optional); object spreads
+    // merge known source properties without silently dropping members.
     const voidNullish = checkSourceFile(parseSourceFile("function f(x: void, y: number): number { return x ?? y; }"));
     const shorthand = checkSourceFile(parseSourceFile("function f(a: number): { a: number } { return { a }; }"));
     const methodSignature = checkSourceFile(parseSourceFile("function f(o: { kindString(): string }): string { return o.kindString(); }"));
     const optionalAbsent = checkSourceFile(parseSourceFile("function f(): void { const o: { a?: number } = { }; }"));
     const requiredAbsent = checkSourceFile(parseSourceFile("function f(): void { const o: { a: number } = { }; }"));
-    const spreadSurfaced = checkSourceFile(parseSourceFile("function f(b: { a: number }): void { const o = { ...b }; }"));
+    const spreadOk = checkSourceFile(parseSourceFile("function f(b: { a: number }): { a: number; label: string } { return { ...b, label: \"x\" }; }"));
+    const spreadMismatch = checkSourceFile(parseSourceFile("function f(b: { a: number }): { a: string } { return { ...b }; }"));
 
     Assert.Equal(0, voidNullish.diagnostics.length);
     Assert.Equal(0, shorthand.diagnostics.length);
     Assert.Equal(0, methodSignature.diagnostics.length);
     Assert.Equal(0, optionalAbsent.diagnostics.length);
     Assert.Equal<readonly string[]>(["Type '{}' is not assignable to type '{ a: number }'."], requiredAbsent.diagnostics.map((d) => d.message));
-    Assert.Equal<readonly string[]>(["Object member kind 'SpreadAssignment' is not yet supported by the checker."], spreadSurfaced.diagnostics.map((d) => d.message));
+    Assert.Equal(0, spreadOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type '{ a: number }' is not assignable to type '{ a: string }'.\n  Types of property 'a' are incompatible.\n    Type 'number' is not assignable to type 'string'."], spreadMismatch.diagnostics.map((d) => d.message));
   }
 
   deepens_object_member_typing(): void {
@@ -489,6 +491,55 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type 'string[]' is not assignable to type 'number[]'."], readonlyMismatch.diagnostics.map((d) => d.message));
   }
 
+  checks_string_indexing_and_builtin_method_shapes(): void {
+    // Strings are readonly indexable by number; string/array/static built-ins
+    // expose real signatures so bad arguments are reported instead of being
+    // swallowed by any-rest placeholders.
+    const stringIndexOk = checkSourceFile(parseSourceFile("function f(text: string, index: number): string { return text[index]; }"));
+    const stringIndexBad = checkSourceFile(parseSourceFile("function f(text: string): string { return text[\"x\"]; }"));
+    const charCodeOk = checkSourceFile(parseSourceFile("function f(text: string): number { return text.charCodeAt(0); }"));
+    const charCodeBad = checkSourceFile(parseSourceFile("function f(text: string): number { return text.charCodeAt(\"x\"); }"));
+    const splitOk = checkSourceFile(parseSourceFile("function f(text: string): string[] { return text.split(\".\"); }"));
+    const arrayPushBad = checkSourceFile(parseSourceFile("function f(xs: string[]): number { return xs.push(1); }"));
+    const objectIsOk = checkSourceFile(parseSourceFile("function f(a: string, b: number): boolean { return Object.is(a, b); }"));
+    const fromCharCodeOk = checkSourceFile(parseSourceFile("function f(code: number): string { return String.fromCharCode(code); }"));
+
+    Assert.Equal(0, stringIndexOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type '\"x\"' cannot be used to index type 'string'."], stringIndexBad.diagnostics.map((d) => d.message));
+    Assert.Equal(0, charCodeOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number | undefined'."], charCodeBad.diagnostics.map((d) => d.message));
+    Assert.Equal(0, splitOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], arrayPushBad.diagnostics.map((d) => d.message));
+    Assert.Equal(0, objectIsOk.diagnostics.length);
+    Assert.Equal(0, fromCharCodeOk.diagnostics.length);
+  }
+
+  checks_additional_expression_forms(): void {
+    // Template/type/void/delete/non-null/yield/await/new expression nodes are
+    // visited and typed instead of falling through to the unresolved sentinel.
+    const templateOk = checkSourceFile(parseSourceFile("function f(name: string): string { return `hello ${name}`; }"));
+    const typeOfOk = checkSourceFile(parseSourceFile("function f(value: unknown): string { return typeof value; }"));
+    const voidOk = checkSourceFile(parseSourceFile("function f(): undefined { return void 1; }"));
+    const deleteOk = checkSourceFile(parseSourceFile("function f(box: { value?: number }): boolean { return delete box.value; }"));
+    const nonNullOk = checkSourceFile(parseSourceFile("function f(value: string | null): string { return value!; }"));
+    const newOk = checkSourceFile(parseSourceFile("class Box { value: number; constructor(value: number) { this.value = value; } } function f(): Box { return new Box(1); }"));
+    const newArgMismatch = checkSourceFile(parseSourceFile("class Box { constructor(value: number) { } } function f(): Box { return new Box(\"x\"); }"));
+    const staticMemberOk = checkSourceFile(parseSourceFile("class Box { static version: number; static create(value: number): Box { return new Box(); } } function f(): number { return Box.version; }"));
+    const staticCallMismatch = checkSourceFile(parseSourceFile("class Box { static create(value: number): Box { return new Box(); } } function f(): Box { return Box.create(\"x\"); }"));
+    const staticNotInstance = checkSourceFile(parseSourceFile("class Box { static version: number; } function f(box: Box): number { return box.version; }"));
+
+    Assert.Equal(0, templateOk.diagnostics.length);
+    Assert.Equal(0, typeOfOk.diagnostics.length);
+    Assert.Equal(0, voidOk.diagnostics.length);
+    Assert.Equal(0, deleteOk.diagnostics.length);
+    Assert.Equal(0, nonNullOk.diagnostics.length);
+    Assert.Equal(0, newOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], newArgMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, staticMemberOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], staticCallMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Property 'version' does not exist on type 'Box'."], staticNotInstance.diagnostics.map((d) => d.message));
+  }
+
   checks_array_spread_index_and_broad_object(): void {
     // Array spreads contribute their element type (not silently skipped); array
     // element access requires a numeric index; the broad `{}` accepts arrays.
@@ -536,9 +587,8 @@ export class CheckerGroundworkTests {
   }
 
   checks_object_type_signatures(): void {
-    // Index signatures `{ [k: K]: V }`, object call signatures `{ (a): R }`, and
-    // named array `length`. Construct signatures parse but are deferred by the
-    // checker with a deliberate diagnostic.
+    // Index signatures `{ [k: K]: V }`, call signatures `{ (a): R }`,
+    // construct signatures `{ new (a): R }`, and named array `length`.
     const indexOk = checkSourceFile(parseSourceFile("function f(d: { [key: string]: number }, key: string): number { return d[key]; }"));
     const indexValueMismatch = checkSourceFile(parseSourceFile("function f(d: { [key: string]: number }, key: string): string { return d[key]; }"));
     const indexNumericKeyOk = checkSourceFile(parseSourceFile("function f(d: { [key: string]: number }, key: number): number { return d[key]; }"));
@@ -546,7 +596,7 @@ export class CheckerGroundworkTests {
     const callOk = checkSourceFile(parseSourceFile("function f(fn: { (text: string): number }): number { return fn(\"x\"); }"));
     const callReturnMismatch = checkSourceFile(parseSourceFile("function f(fn: { (text: string): number }): string { return fn(\"x\"); }"));
     const callArgMismatch = checkSourceFile(parseSourceFile("function f(fn: { (text: string): number }): number { return fn(1); }"));
-    const constructDeferred = checkSourceFile(parseSourceFile("function f(c: { new (text: string): Widget }): void { }"));
+    const constructOk = checkSourceFile(parseSourceFile("interface Widget { value: number; } function f(c: { new (text: string): Widget }): void { }"));
     const arrayLengthOk = checkSourceFile(parseSourceFile("function f(xs: string[]): number { return xs.length; }"));
     const arrayLengthMismatch = checkSourceFile(parseSourceFile("function f(xs: string[]): string { return xs.length; }"));
 
@@ -557,9 +607,26 @@ export class CheckerGroundworkTests {
     Assert.Equal(0, callOk.diagnostics.length);
     Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], callReturnMismatch.diagnostics.map((d) => d.message));
     Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], callArgMismatch.diagnostics.map((d) => d.message));
-    Assert.Equal<readonly string[]>(["Type member kind 'ConstructSignature' is not yet supported by the checker."], constructDeferred.diagnostics.map((d) => d.message));
+    Assert.Equal(0, constructOk.diagnostics.length);
     Assert.Equal(0, arrayLengthOk.diagnostics.length);
     Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], arrayLengthMismatch.diagnostics.map((d) => d.message));
+  }
+
+  checks_literal_named_object_members(): void {
+    // String/numeric property names and accessor members contribute real object
+    // properties. Bracket access with a literal name reads the same property
+    // table as dot access, so the checker does not require identifier-only keys.
+    const objectStringNameOk = checkSourceFile(parseSourceFile("function f(): number { const obj = { \"answer\": 42 }; return obj[\"answer\"]; }"));
+    const objectNumericNameOk = checkSourceFile(parseSourceFile("function f(): string { const obj = { 0: \"zero\" }; return obj[0]; }"));
+    const objectAccessorOk = checkSourceFile(parseSourceFile("function f(): number { const obj = { get value(): number { return 1; }, set value(v: number) { } }; return obj.value; }"));
+    const typeStringNameOk = checkSourceFile(parseSourceFile("function f(x: { \"answer\": number }): number { return x[\"answer\"]; }"));
+    const typeNumericNameMismatch = checkSourceFile(parseSourceFile("function f(x: { 0: string }): number { return x[0]; }"));
+
+    Assert.Equal(0, objectStringNameOk.diagnostics.length);
+    Assert.Equal(0, objectNumericNameOk.diagnostics.length);
+    Assert.Equal(0, objectAccessorOk.diagnostics.length);
+    Assert.Equal(0, typeStringNameOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], typeNumericNameMismatch.diagnostics.map((d) => d.message));
   }
 
   resolves_type_alias_references(): void {
@@ -580,28 +647,95 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], aliasToPrimitiveMismatch.diagnostics.map((d) => d.message));
     Assert.Equal(0, aliasOfAliasOk.diagnostics.length);
     Assert.Equal<readonly string[]>(["Cannot find name 'MissingType'."], unresolved.diagnostics.map((d) => d.message));
-    Assert.Equal<readonly string[]>(["Type alias 'A' circularly references itself."], circular.diagnostics.map((d) => d.message));
-    Assert.Equal<readonly string[]>(["Generic type alias 'Box' is not yet supported by the checker."], genericUsage.diagnostics.map((d) => d.message));
-    Assert.Equal<readonly string[]>(["Generic type alias 'Box' is not yet supported by the checker."], genericBareUsage.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type alias 'B' circularly references itself.", "Type alias 'A' circularly references itself."], circular.diagnostics.map((d) => d.message));
+    Assert.Equal(0, genericUsage.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type alias 'Box' requires 1 type argument."], genericBareUsage.diagnostics.map((d) => d.message));
+  }
+
+  resolves_qualified_type_names_through_namespace_exports(): void {
+    // Qualified type references walk the binder's namespace export tables rather
+    // than being rejected or resolved by string heuristics.
+    const interfaceOk = checkSourceFile(parseSourceFile("namespace Shapes { export interface Box { value: number; } } function f(box: Shapes.Box): number { return box.value; }"));
+    const aliasOk = checkSourceFile(parseSourceFile("namespace Shapes { export type Box = { value: string }; } function f(box: Shapes.Box): string { return box.value; }"));
+    const missing = checkSourceFile(parseSourceFile("namespace Shapes { export interface Box { value: number; } } function f(box: Shapes.Missing): number { return 1; }"));
+
+    Assert.Equal(0, interfaceOk.diagnostics.length);
+    Assert.Equal(0, aliasOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Cannot find name 'Shapes.Missing'."], missing.diagnostics.map((d) => d.message));
+  }
+
+  checks_nominal_object_signatures(): void {
+    // Interface/class object types carry call, construct, and index signatures
+    // through the same structured-type extras used by anonymous type literals.
+    const callOk = checkSourceFile(parseSourceFile("interface Parser { (text: string): number; } function f(parse: Parser): number { return parse(\"x\"); }"));
+    const callArgMismatch = checkSourceFile(parseSourceFile("interface Parser { (text: string): number; } function f(parse: Parser): number { return parse(1); }"));
+    const indexOk = checkSourceFile(parseSourceFile("interface Dict { [key: string]: number; } function f(d: Dict, key: string): number { return d[key]; }"));
+    const indexValueMismatch = checkSourceFile(parseSourceFile("interface Dict { [key: string]: number; } function f(d: Dict, key: string): string { return d[key]; }"));
+    const constructOk = checkSourceFile(parseSourceFile("interface Widget { value: number; } interface WidgetFactory { new (value: number): Widget; } function f(factory: WidgetFactory): Widget { return new factory(1); }"));
+
+    Assert.Equal(0, callOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], callArgMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, indexOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], indexValueMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, constructOk.diagnostics.length);
   }
 
   enforces_type_alias_scoping_rules(): void {
-    // Duplicate top-level aliases are a duplicate-identifier error (first kept
-    // as recovery). Block-local aliases are deferred-with-diagnostic and shadow
-    // the name so a reference cannot silently bind to a same-named outer alias.
+    // Duplicate aliases now come from the binder's declaration-merge diagnostics
+    // instead of the old checker-owned string map. Block-local aliases resolve
+    // through the same binder symbol graph as values, including forward refs and
+    // shadowing.
     const duplicate = checkSourceFile(parseSourceFile("type A = number; type A = string;"));
     const duplicateRecovery = checkSourceFile(parseSourceFile("type A = number; type A = string; function f(x: A): string { return x; }"));
     const localShadow = checkSourceFile(parseSourceFile("type X = number; function f(): string { type X = string; const x: X = \"a\"; return x; }"));
     const localForwardRef = checkSourceFile(parseSourceFile("function f(): number { const x: Local = 1; type Local = number; return x; }"));
     const shadowNoLeak = checkSourceFile(parseSourceFile("type X = number; function f(): void { type X = string; const a: X = \"z\"; } function g(y: X): string { return y; }"));
 
-    Assert.Equal<readonly string[]>(["Duplicate identifier 'A'."], duplicate.diagnostics.map((d) => d.message));
-    Assert.Equal<readonly string[]>(["Duplicate identifier 'A'.", "Type 'number' is not assignable to type 'string'."], duplicateRecovery.diagnostics.map((d) => d.message));
-    Assert.Equal<readonly string[]>(["Local type alias declarations are not yet supported by the checker."], localShadow.diagnostics.map((d) => d.message));
-    Assert.Equal<readonly string[]>(["Local type alias declarations are not yet supported by the checker."], localForwardRef.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Duplicate identifier 'A'.", "Duplicate identifier 'A'."], duplicate.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Duplicate identifier 'A'.", "Duplicate identifier 'A'.", "Type 'number' is not assignable to type 'string'."], duplicateRecovery.diagnostics.map((d) => d.message));
+    Assert.Equal(0, localShadow.diagnostics.length);
+    Assert.Equal(0, localForwardRef.diagnostics.length);
     // The local shadow inside f must not leak: g's `y: X` resolves to the outer
     // `number`, so returning it as `string` is still a mismatch.
-    Assert.Equal<readonly string[]>(["Local type alias declarations are not yet supported by the checker.", "Type 'number' is not assignable to type 'string'."], shadowNoLeak.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], shadowNoLeak.diagnostics.map((d) => d.message));
+  }
+
+  m5b_resolves_nominal_interface_and_class_members(): void {
+    // Type references resolve through binder Type-meaning symbols, not through a
+    // string alias map. Interface/class member tables become nominal object
+    // types, so property access is checked against the declared member shape.
+    const interfaceOk = checkSourceFile(parseSourceFile("interface Point { x: number; label(): string; } function f(p: Point): string { return p.label(); }"));
+    const interfaceMismatch = checkSourceFile(parseSourceFile("interface Point { x: number; } function f(p: Point): string { return p.x; }"));
+    const classOk = checkSourceFile(parseSourceFile("class Box { value: number; get(): number { return this.value; } } function f(b: Box): number { return b.value; }"));
+    const classMismatch = checkSourceFile(parseSourceFile("class Box { value: number; } function f(b: Box): string { return b.value; }"));
+
+    Assert.Equal(0, interfaceOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], interfaceMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, classOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], classMismatch.diagnostics.map((d) => d.message));
+  }
+
+  m5c_instantiates_generic_aliases_interfaces_and_classes(): void {
+    // Generic type references substitute type-parameter symbols through the
+    // binder graph. The substitution is shared by aliases, interfaces, classes,
+    // nested object members, method parameters, and defaulted parameters.
+    const aliasOk = checkSourceFile(parseSourceFile("type Box<T> = { value: T }; function f(b: Box<number>): number { return b.value; }"));
+    const aliasMismatch = checkSourceFile(parseSourceFile("type Box<T> = { value: T }; function f(b: Box<number>): string { return b.value; }"));
+    const nestedAlias = checkSourceFile(parseSourceFile("type Pair<T> = { left: T; right: { value: T } }; function f(p: Pair<string>): string { return p.right.value; }"));
+    const interfaceOk = checkSourceFile(parseSourceFile("interface Box<T> { value: T; get(): T; set(value: T): void; } function f(b: Box<string>): string { b.set(\"x\"); return b.get(); }"));
+    const interfaceArgMismatch = checkSourceFile(parseSourceFile("interface Box<T> { set(value: T): void; } function f(b: Box<string>): void { b.set(1); }"));
+    const classOk = checkSourceFile(parseSourceFile("class Box<T> { value: T; get(): T { return this.value; } } function f(b: Box<boolean>): boolean { return b.value; }"));
+    const defaultTypeArg = checkSourceFile(parseSourceFile("type Box<T = string> = { value: T }; function f(b: Box): string { return b.value; }"));
+    const extraTypeArg = checkSourceFile(parseSourceFile("type Box<T> = { value: T }; function f(b: Box<number, string>): void { }"));
+
+    Assert.Equal(0, aliasOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], aliasMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, nestedAlias.diagnostics.length);
+    Assert.Equal(0, interfaceOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], interfaceArgMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, classOk.diagnostics.length);
+    Assert.Equal(0, defaultTypeArg.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type alias 'Box' requires 1 type argument, but got 2."], extraTypeArg.diagnostics.map((d) => d.message));
   }
 
   accepts_union_type_node_return_types(): void {
@@ -638,8 +772,8 @@ export class CheckerGroundworkTests {
 
     // `super` and `import` are not valid standalone expression statements, so
     // exercise their predicates with directly constructed keyword nodes.
-    const superExpression = createNode<SuperExpression>(Kind.SuperKeyword);
-    const importExpression = createNode<ImportExpression>(Kind.ImportKeyword);
+    const superExpression = createNode(Kind.SuperKeyword) as SuperExpression;
+    const importExpression = createNode(Kind.ImportKeyword) as ImportExpression;
 
     Assert.Equal(true, isSuperExpression(superExpression));
     Assert.Equal(false, isImportExpression(superExpression));
@@ -839,6 +973,8 @@ A<CheckerGroundworkTests>().method((t) => t.checks_broad_empty_object_and_index_
 A<CheckerGroundworkTests>().method((t) => t.checks_object_type_signatures).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.resolves_type_alias_references).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.enforces_type_alias_scoping_rules).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.m5b_resolves_nominal_interface_and_class_members).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.m5c_instantiates_generic_aliases_interfaces_and_classes).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);

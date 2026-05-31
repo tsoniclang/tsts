@@ -157,7 +157,7 @@ export class NormalizePathTests {
 export class GetDirectoryAndBaseTests {
   returns_directory_part(): void {
     Assert.Equal("/path/to", getDirectoryPath("/path/to/file.ext"));
-    Assert.Equal("file.ext", getDirectoryPath("file.ext"));
+    Assert.Equal("", getDirectoryPath("file.ext"));
   }
 
   returns_base_filename(): void {

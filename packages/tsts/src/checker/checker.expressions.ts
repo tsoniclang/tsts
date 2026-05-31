@@ -1,3 +1,5 @@
+import type { int } from "@tsonic/core/types.js";
+
 /**
  * Checker — expression inference.
  *
@@ -9,6 +11,7 @@
 
 import {
   Kind,
+  KindNames,
   isArrayLiteralExpression,
   isArrowFunction,
   isAsExpression,
@@ -16,8 +19,11 @@ import {
   isBlock,
   isCallExpression,
   isConditionalExpression,
+  isDeleteExpression,
   isElementAccessExpression,
   isIdentifier,
+  isNewExpression,
+  isNonNullExpression,
   isObjectLiteralExpression,
   isParenthesizedExpression,
   isPostfixUnaryExpression,
@@ -26,11 +32,33 @@ import {
   isPropertyAssignment,
   isSatisfiesExpression,
   isShorthandPropertyAssignment,
+  isSpreadAssignment,
   isSpreadElement,
+  isMethodDeclaration,
+  isGetAccessorDeclaration,
+  isSetAccessorDeclaration,
+  isStringLiteral,
+  isNumericLiteral,
+  isBigIntLiteral,
+  isNoSubstitutionTemplateLiteral,
+  isPrivateIdentifier,
+  isComputedPropertyName,
+  isTaggedTemplateExpression,
+  isTemplateExpression,
+  isTypeOfExpression,
+  isVoidExpression,
+  isAwaitExpression,
+  isYieldExpression,
   type ArrowFunction,
   type ConciseBody,
   type Expression,
+  type ParameterDeclaration,
+  type PropertyName,
 } from "../ast/index.js";
+
+function kindDebugName(kind: Kind): string {
+  return KindNames[kind] ?? String(kind);
+}
 import {
   type Type,
   type CheckState,
@@ -69,6 +97,7 @@ import {
   isOptionalSymbol,
   isRestSymbol,
   getCallSignature,
+  getConstructSignature,
   getArrayElementType,
   getIndexInfos,
   makeArrayType,
@@ -82,6 +111,8 @@ import {
   setInitializerInferrer,
 } from "./checker.checkedtype.js";
 import { checkBlock } from "./checker.statements.js";
+import { getPropertyNameFromType, isTypeUsableAsPropertyName } from "./utilities.js";
+import type { Signature } from "./types.js";
 
 // Infer an object-literal property value, contextually typed by the matching
 // target property when present (preserving primitive literals the target asks
@@ -145,6 +176,36 @@ export function inferExpression(expression: Expression, state: CheckState, conte
   }
   if (isSpreadElement(expression)) {
     return inferExpression(expression.expression, state);
+  }
+  if (isNonNullExpression(expression)) {
+    return getNonNullableType(inferExpression(expression.expression, state), state);
+  }
+  if (isTemplateExpression(expression)) {
+    for (const span of expression.templateSpans) inferExpression(span.expression, state);
+    return stringType;
+  }
+  if (isTaggedTemplateExpression(expression)) {
+    inferExpression(expression.tag, state);
+    return anyType;
+  }
+  if (isTypeOfExpression(expression)) {
+    inferExpression(expression.expression, state);
+    return stringType;
+  }
+  if (isVoidExpression(expression)) {
+    inferExpression(expression.expression, state);
+    return undefinedType;
+  }
+  if (isDeleteExpression(expression)) {
+    inferExpression(expression.expression, state);
+    return booleanType;
+  }
+  if (isAwaitExpression(expression)) {
+    return awaitedTypeOf(inferExpression(expression.expression, state));
+  }
+  if (isYieldExpression(expression)) {
+    if (expression.expression !== undefined) inferExpression(expression.expression, state);
+    return anyType;
   }
   if (isAsExpression(expression)) {
     inferExpression(expression.expression, state);
@@ -218,25 +279,50 @@ export function inferExpression(expression: Expression, state: CheckState, conte
     return unresolvedType;
   }
   if (isObjectLiteralExpression(expression)) {
-    // Anonymous object type from property + shorthand assignments. Spread /
-    // computed / non-identifier members aren't modeled yet — surfaced
-    // explicitly rather than silently dropped (which would falsify the type).
-    const properties: ObjectProperty[] = [];
+    // Anonymous object type from property + shorthand/method/spread members.
+    // Later properties override earlier spreads, matching JS object literal
+    // semantics and TS-Go's anonymous-object construction.
+    const properties = new Map<string, ObjectProperty>();
     for (const property of expression.properties) {
       // Each property is contextually typed by the target property type when a
       // contextual object type is present (so `{ port: 8080 }` against
       // `{ port: 8080 }` preserves the literal); otherwise its primitive-literal
       // type widens (`{ port: 8080 }` alone has property `port: number`).
-      if (isPropertyAssignment(property) && isIdentifier(property.name)) {
-        properties.push({ name: property.name.text, type: contextualPropertyType(property.initializer, property.name.text, contextualType, state) });
+      if (isPropertyAssignment(property)) {
+        const name = propertyNameText(property.name, state);
+        if (name === undefined) continue;
+        properties.set(name, { name, type: contextualPropertyType(property.initializer, name, contextualType, state) });
       } else if (isShorthandPropertyAssignment(property) && isIdentifier(property.name)) {
-        properties.push({ name: property.name.text, type: contextualPropertyType(property.name, property.name.text, contextualType, state) });
+        properties.set(property.name.text, { name: property.name.text, type: contextualPropertyType(property.name, property.name.text, contextualType, state) });
+      } else if (isMethodDeclaration(property)) {
+        const name = propertyNameText(property.name, state);
+        if (name === undefined) continue;
+        const returnType = property.type === undefined ? anyType : typeFromTypeNode(property.type, state);
+        properties.set(name, {
+          name,
+          type: makeFunctionType(returnType, state, functionParametersFromNode(property.parameters, state)),
+        });
+      } else if (isGetAccessorDeclaration(property)) {
+        const name = propertyNameText(property.name, state);
+        if (name === undefined) continue;
+        const returnType = property.type === undefined ? anyType : typeFromTypeNode(property.type, state);
+        properties.set(name, { name, type: returnType });
+      } else if (isSetAccessorDeclaration(property)) {
+        const name = propertyNameText(property.name, state);
+        if (name === undefined) continue;
+        const parameter = property.parameters[0];
+        const parameterType = parameter?.type === undefined ? anyType : typeFromTypeNode(parameter.type, state);
+        properties.set(name, { name, type: parameterType });
+      } else if (isSpreadAssignment(property)) {
+        for (const spreadProperty of objectPropertiesOfType(inferExpression(property.expression, state), state)) {
+          properties.set(spreadProperty.name, spreadProperty);
+        }
       } else {
-        state.diagnostics.push({ message: `Object member kind '${Kind[property.kind]}' is not yet supported by the checker.` });
+        state.diagnostics.push({ message: `Object member kind '${kindDebugName(property.kind)}' is not yet supported by the checker.` });
       }
     }
     // Mark the direct object literal fresh so the relation can excess-check it.
-    return makeObjectType(properties, state, true);
+    return makeObjectType([...properties.values()], state, true);
   }
   if (isArrayLiteralExpression(expression)) {
     // Element type = union of the (contextually typed, else widened) element
@@ -266,6 +352,14 @@ export function inferExpression(expression: Expression, state: CheckState, conte
   if (isElementAccessExpression(expression)) {
     const receiverType = inferExpression(expression.expression, state);
     const indexType = inferExpression(expression.argumentExpression, state);
+    if (isStringType(getApparentType(receiverType))) {
+      const indexOk = isNumberType(getApparentType(indexType)) || isAnyType(indexType) || isUnresolvedType(indexType);
+      if (!indexOk) {
+        state.diagnostics.push({ message: `Type '${displayType(indexType)}' cannot be used to index type '${displayType(receiverType)}'.` });
+        return unresolvedType;
+      }
+      return stringType;
+    }
     const elementType = getArrayElementType(receiverType);
     if (elementType !== undefined) {
       // Numeric element access only; non-numeric indexes (e.g. `xs["bad"]`,
@@ -279,6 +373,10 @@ export function inferExpression(expression: Expression, state: CheckState, conte
         return unresolvedType;
       }
       return elementType;
+    }
+    if (isTypeUsableAsPropertyName(indexType)) {
+      const propertyType = getPropertyTypeOfType(receiverType, getPropertyNameFromType(indexType));
+      if (propertyType !== undefined) return propertyType;
     }
     // Index-signature access: `d[k]` returns the matching index info's value
     // type when the index relates to the key type. A string index signature is
@@ -300,59 +398,29 @@ export function inferExpression(expression: Expression, state: CheckState, conte
   }
   if (isCallExpression(expression)) {
     const calleeType = inferExpression(expression.expression, state);
-    // Check each argument against the call signature's parameter type
-    // (positionally; rest/overload resolution is not modeled yet).
     const signature = getCallSignature(calleeType);
-    const parameters = signature?.parameters ?? [];
-    const hasRest = parameters.length > 0 && isRestSymbol(parameters[parameters.length - 1]);
-    const restIndexForContext = hasRest ? parameters.length - 1 : -1;
-    // Arguments are contextually typed by their parameter type (so object/array
-    // literal arguments preserve target-driven literals + get excess-checked).
-    const contextualParameterType = (index: number): Type | undefined => {
-      if (restIndexForContext >= 0 && index >= restIndexForContext) {
-        const restType = getTypeOfSymbol(parameters[restIndexForContext]!);
-        return restType === undefined ? undefined : getArrayElementType(restType);
-      }
-      const parameter = parameters[index];
-      return parameter === undefined ? undefined : getTypeOfSymbol(parameter);
-    };
-    const argumentTypes = expression.arguments.map((argument, index) => inferExpression(argument, state, contextualParameterType(index)));
     if (signature !== undefined) {
-      const maxArguments = hasRest ? Number.POSITIVE_INFINITY : parameters.length;
-      if (argumentTypes.length < signature.minArgumentCount || argumentTypes.length > maxArguments) {
-        const expected = hasRest
-          ? `at least ${signature.minArgumentCount}`
-          : signature.minArgumentCount === parameters.length
-            ? `${signature.minArgumentCount}`
-            : `${signature.minArgumentCount}-${parameters.length}`;
-        state.diagnostics.push({ message: `Expected ${expected} arguments, but got ${argumentTypes.length}.` });
-      } else {
-        const restIndex = hasRest ? parameters.length - 1 : -1;
-        parameters.forEach((parameter, index) => {
-          const parameterType = getTypeOfSymbol(parameter);
-          if (parameterType === undefined) return;
-          if (index === restIndex) {
-            // Each rest argument is checked against the array element type.
-            const elementType = getArrayElementType(parameterType);
-            if (elementType !== undefined) {
-              argumentTypes.slice(index).forEach((argumentType) => {
-                checkAssignable(getWidenedLiteralLikeTypeForContextualType(argumentType, elementType, state), elementType, state);
-              });
-            }
-            return;
-          }
-          const argumentType = argumentTypes[index];
-          if (argumentType === undefined) return;
-          // An optional parameter also accepts an explicit `undefined` argument.
-          const target = isOptionalSymbol(parameter) ? getUnionType([parameterType, undefinedType], state) : parameterType;
-          checkAssignable(getWidenedLiteralLikeTypeForContextualType(argumentType, target, state), target, state);
-        });
-      }
+      checkSignatureArguments(expression.arguments, signature, state);
+    } else {
+      for (const argument of expression.arguments) inferExpression(argument, state);
     }
     if (isAnyType(calleeType) || isUnknownType(calleeType) || isUnresolvedType(calleeType)) {
       return anyType;
     }
     return isFunctionType(calleeType) ? getFunctionReturnType(calleeType) : unresolvedType;
+  }
+  if (isNewExpression(expression)) {
+    const calleeType = inferExpression(expression.expression, state);
+    const signature = getConstructSignature(calleeType);
+    if (signature !== undefined) {
+      checkSignatureArguments(expression.arguments ?? [], signature, state);
+    } else {
+      for (const argument of expression.arguments ?? []) inferExpression(argument, state);
+    }
+    if (isAnyType(calleeType) || isUnknownType(calleeType) || isUnresolvedType(calleeType)) {
+      return anyType;
+    }
+    return signature?.resolvedReturnType ?? unresolvedType;
   }
   return unresolvedType;
 }
@@ -386,15 +454,66 @@ export function inferConciseBody(body: ConciseBody, state: CheckState, expectedR
   return bodyType;
 }
 
-// Primitive built-in methods (toFixed, string methods) are placeholders whose
-// real parameter lists aren't modeled yet, so they accept any arguments (a rest
-// `any`) rather than enforcing arity. Real declared signatures still enforce it.
+function checkSignatureArguments(arguments_: readonly Expression[], signature: Signature, state: CheckState): void {
+  const parameters = signature.parameters;
+  const lastParameterIndex: int = (parameters.length - 1) | 0;
+  const hasRest = parameters.length > 0 && isRestSymbol(parameters[lastParameterIndex]!);
+  const restIndexForContext: int = hasRest ? lastParameterIndex : -1;
+  const contextualParameterType = (index: int): Type | undefined => {
+    if (restIndexForContext >= 0 && index >= restIndexForContext) {
+      const restType = getTypeOfSymbol(parameters[restIndexForContext]!);
+      return restType === undefined ? undefined : getArrayElementType(restType);
+    }
+    const parameter = parameters[index];
+    return parameter === undefined ? undefined : getTypeOfSymbol(parameter);
+  };
+  const argumentTypes = arguments_.map((argument, index) => {
+    const argumentIndex: int = index | 0;
+    return inferExpression(argument, state, contextualParameterType(argumentIndex));
+  });
+  const maxArguments = hasRest ? Number.POSITIVE_INFINITY : parameters.length;
+  if (argumentTypes.length < signature.minArgumentCount || argumentTypes.length > maxArguments) {
+    const expected = hasRest
+      ? `at least ${signature.minArgumentCount}`
+      : signature.minArgumentCount === parameters.length
+        ? `${signature.minArgumentCount}`
+        : `${signature.minArgumentCount}-${parameters.length}`;
+    state.diagnostics.push({ message: `Expected ${expected} arguments, but got ${argumentTypes.length}.` });
+    return;
+  }
+  parameters.forEach((parameter, index) => {
+    const parameterIndex: int = index | 0;
+    const parameterType = getTypeOfSymbol(parameter);
+    if (parameterType === undefined) return;
+    if (parameterIndex === restIndexForContext) {
+      const elementType = getArrayElementType(parameterType);
+      if (elementType !== undefined) {
+        argumentTypes.slice(parameterIndex).forEach((argumentType) => {
+          checkAssignable(getWidenedLiteralLikeTypeForContextualType(argumentType, elementType, state), elementType, state);
+        });
+      }
+      return;
+    }
+    const argumentType = argumentTypes[parameterIndex];
+    if (argumentType === undefined) return;
+    const target = isOptionalSymbol(parameter) ? getUnionType([parameterType, undefinedType], state) : parameterType;
+    checkAssignable(getWidenedLiteralLikeTypeForContextualType(argumentType, target, state), target, state);
+  });
+}
+
+// Primitive built-in methods are modeled directly here until the lib declaration
+// model lands. Keep concrete signatures where the standard surface is fixed; use
+// an `any[]` rest only for overload families that need richer lib types.
 const placeholderRestParameters: readonly FunctionParameter[] = [{ name: "args", type: anyType, rest: true }];
 
 export function inferPropertyAccess(expression: Expression, propertyName: string, state: CheckState): Type {
+  if (isIdentifier(expression)) {
+    const globalStatic = inferGlobalStaticProperty(expression.text, propertyName, state);
+    if (globalStatic !== undefined) return globalStatic;
+  }
   const receiverType = getApparentType(inferExpression(expression, state));
   if (isNumberType(receiverType) && propertyName === "toFixed") {
-    return makeFunctionType(stringType, state, placeholderRestParameters);
+    return makeFunctionType(stringType, state, [{ name: "fractionDigits", type: numberType, optional: true }]);
   }
   if (isStringType(receiverType) && propertyName === "length") {
     return numberType;
@@ -402,8 +521,14 @@ export function inferPropertyAccess(expression: Expression, propertyName: string
   if (getArrayElementType(receiverType) !== undefined && propertyName === "length") {
     return numberType;
   }
-  if (isStringType(receiverType) && stringMethodReturnTypes.has(propertyName)) {
-    return makeFunctionType(stringMethodReturnTypes.get(propertyName)!, state, placeholderRestParameters);
+  const arrayElement = getArrayElementType(receiverType);
+  if (arrayElement !== undefined) {
+    const arrayMethod = inferArrayMethod(propertyName, arrayElement, state);
+    if (arrayMethod !== undefined) return arrayMethod;
+  }
+  if (isStringType(receiverType)) {
+    const stringMethod = inferStringMethod(propertyName, state);
+    if (stringMethod !== undefined) return stringMethod;
   }
   if (isUnknownType(receiverType) || isUnresolvedType(receiverType)) {
     return anyType;
@@ -440,6 +565,159 @@ const stringMethodReturnTypes = new Map<string, Type>([
   ["startsWith", booleanType],
   ["toLowerCase", stringType],
 ]);
+
+function functionParametersFromNode(parameters: readonly ParameterDeclaration[], state: CheckState): FunctionParameter[] {
+  return parameters
+    .filter((parameter) => isIdentifier(parameter.name))
+    .map((parameter) => ({
+      name: (parameter.name as { readonly text: string }).text,
+      type: parameter.type === undefined ? anyType : typeFromTypeNode(parameter.type, state),
+      optional: parameter.questionToken !== undefined || parameter.initializer !== undefined,
+      rest: parameter.dotDotDotToken !== undefined,
+    }));
+}
+
+function propertyNameText(name: PropertyName, state: CheckState): string | undefined {
+  if (isIdentifier(name) || isPrivateIdentifier(name)) return name.text;
+  if (isStringLiteral(name) || isNoSubstitutionTemplateLiteral(name) || isNumericLiteral(name) || isBigIntLiteral(name)) return name.text;
+  if (isComputedPropertyName(name)) {
+    const literalName = literalTypeFromLiteralExpression(name.expression, state);
+    if (literalName !== undefined && isTypeUsableAsPropertyName(literalName)) return getPropertyNameFromType(literalName);
+    state.diagnostics.push({ message: "Computed property names in object literals must resolve to a string or number literal for checker object construction." });
+    return undefined;
+  }
+  state.diagnostics.push({ message: `Property name kind '${kindDebugName((name as { readonly kind: Kind }).kind)}' is not yet supported by the checker.` });
+  return undefined;
+}
+
+function objectPropertiesOfType(type: Type, state: CheckState): readonly ObjectProperty[] {
+  const members = (type.symbol as unknown as { members?: Map<string, unknown> } | undefined)?.members;
+  if (members === undefined) {
+    if (isUnknownType(type) || isUnresolvedType(type) || isAnyType(type)) return [];
+    state.diagnostics.push({ message: `Object spread of type '${displayType(type)}' is not yet supported by the checker.` });
+    return [];
+  }
+  const properties: ObjectProperty[] = [];
+  for (const [name, symbol] of members) {
+    const propertyType = getTypeOfSymbol(symbol as never);
+    if (propertyType === undefined) continue;
+    properties.push({ name, type: propertyType, optional: isOptionalSymbol(symbol as never) });
+  }
+  return properties;
+}
+
+function inferStringMethod(propertyName: string, state: CheckState): Type | undefined {
+  switch (propertyName) {
+    case "charAt":
+      return makeFunctionType(stringType, state, [{ name: "index", type: numberType, optional: true }]);
+    case "charCodeAt":
+    case "codePointAt":
+      return makeFunctionType(numberType, state, [{ name: "index", type: numberType, optional: true }]);
+    case "concat":
+      return makeFunctionType(stringType, state, [{ name: "strings", type: makeArrayType(stringType, state), rest: true }]);
+    case "endsWith":
+    case "includes":
+    case "startsWith":
+      return makeFunctionType(booleanType, state, [
+        { name: "searchString", type: stringType },
+        { name: "position", type: numberType, optional: true },
+      ]);
+    case "indexOf":
+    case "lastIndexOf":
+      return makeFunctionType(numberType, state, [
+        { name: "searchString", type: stringType },
+        { name: "position", type: numberType, optional: true },
+      ]);
+    case "match":
+    case "matchAll":
+      return makeFunctionType(anyType, state, placeholderRestParameters);
+    case "replace":
+    case "replaceAll":
+      return makeFunctionType(stringType, state, [
+        { name: "searchValue", type: anyType },
+        { name: "replaceValue", type: anyType },
+      ]);
+    case "slice":
+    case "substring":
+    case "substr":
+      return makeFunctionType(stringType, state, [
+        { name: "start", type: numberType, optional: true },
+        { name: "end", type: numberType, optional: true },
+      ]);
+    case "split":
+      return makeFunctionType(makeArrayType(stringType, state), state, [
+        { name: "separator", type: stringType, optional: true },
+        { name: "limit", type: numberType, optional: true },
+      ]);
+    case "toLowerCase":
+    case "toLocaleLowerCase":
+    case "toUpperCase":
+    case "toLocaleUpperCase":
+    case "trim":
+    case "trimStart":
+    case "trimEnd":
+    case "normalize":
+      return makeFunctionType(stringType, state, []);
+  }
+  const returnType = stringMethodReturnTypes.get(propertyName);
+  return returnType === undefined ? undefined : makeFunctionType(returnType, state, placeholderRestParameters);
+}
+
+function inferArrayMethod(propertyName: string, elementType: Type, state: CheckState): Type | undefined {
+  switch (propertyName) {
+    case "at":
+    case "pop":
+    case "shift":
+      return makeFunctionType(getUnionType([elementType, undefinedType], state), state, [{ name: "index", type: numberType, optional: true }]);
+    case "concat":
+      return makeFunctionType(makeArrayType(elementType, state), state, [{ name: "items", type: makeArrayType(elementType, state), rest: true }]);
+    case "includes":
+      return makeFunctionType(booleanType, state, [
+        { name: "searchElement", type: elementType },
+        { name: "fromIndex", type: numberType, optional: true },
+      ]);
+    case "indexOf":
+    case "lastIndexOf":
+      return makeFunctionType(numberType, state, [
+        { name: "searchElement", type: elementType },
+        { name: "fromIndex", type: numberType, optional: true },
+      ]);
+    case "join":
+      return makeFunctionType(stringType, state, [{ name: "separator", type: stringType, optional: true }]);
+    case "push":
+    case "unshift":
+      return makeFunctionType(numberType, state, [{ name: "items", type: makeArrayType(elementType, state), rest: true }]);
+    case "reverse":
+    case "slice":
+    case "toReversed":
+    case "toSorted":
+      return makeFunctionType(makeArrayType(elementType, state), state, placeholderRestParameters);
+  }
+  return undefined;
+}
+
+function inferGlobalStaticProperty(receiverName: string, propertyName: string, state: CheckState): Type | undefined {
+  if (receiverName === "Object" && propertyName === "is") {
+    return makeFunctionType(booleanType, state, [
+      { name: "value1", type: anyType },
+      { name: "value2", type: anyType },
+    ]);
+  }
+  if (receiverName === "String" && propertyName === "fromCharCode") {
+    return makeFunctionType(stringType, state, [{ name: "codes", type: makeArrayType(numberType, state), rest: true }]);
+  }
+  if (receiverName === "Number" && (propertyName === "isFinite" || propertyName === "isNaN" || propertyName === "isInteger")) {
+    return makeFunctionType(booleanType, state, [{ name: "value", type: anyType }]);
+  }
+  return undefined;
+}
+
+function awaitedTypeOf(type: Type): Type {
+  if (isAnyType(type) || isUnknownType(type) || isUnresolvedType(type)) return type;
+  const then = getPropertyTypeOfType(getApparentType(type), "then");
+  if (then === undefined) return type;
+  return anyType;
+}
 
 export function isComparisonOperator(kind: Kind): boolean {
   return kind === Kind.EqualsEqualsToken

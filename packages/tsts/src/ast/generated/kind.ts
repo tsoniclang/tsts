@@ -391,7 +391,7 @@ export enum Kind {
 
 export { Kind as SyntaxKind };
 
-export const KindNames = [
+export const KindNames: readonly string[] = [
   "Unknown",
   "EndOfFile",
   "SingleLineCommentTrivia",
@@ -743,9 +743,9 @@ export const KindNames = [
   "PartiallyEmittedExpression",
   "SyntheticReferenceExpression",
   "NotEmittedTypeElement",
-] as const;
+];
 
-export type KindName = typeof KindNames[number];
+export type KindName = string;
 
 export const KindValues = {
   "Unknown": 0,

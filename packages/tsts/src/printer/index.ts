@@ -1,11 +1,21 @@
-/**
- * JS/TS source emission from AST.
- *
- * Mirrors TS-Go internal/printer/.
- *
- * Status: empty placeholder. Port from Go (existing src/emit-js to be merged here).
- *
- * See docs/tsgo-mapping.md for the full TS-Go ↔ TSTS file map.
- */
-
-export {};
+export type { EmitHost } from "./emithost.js";
+export type { EmitResolver, SymbolAccessibilityResult } from "./emitresolver.js";
+export { SymbolAccessibility } from "./emitresolver.js";
+export type { EmitTextWriter } from "./textwriter.js";
+export { TextWriter, newTextWriter } from "./textwriter.js";
+export { SingleLineStringWriter, newSingleLineStringWriter } from "./singlelinestringwriter.js";
+export { ChangeTrackerWriter, newChangeTrackerWriter } from "./changetrackerwriter.js";
+export { EmitContext, EnvironmentFlags, getEmitContext, newEmitContext } from "./emitcontext.js";
+export type { AutoGenerateId, AutoGenerateInfo, AutoGenerateOptions } from "./emitcontext.js";
+export { EmitFlags } from "./emitflags.js";
+export type { EmitFlags as EmitFlagsType } from "./emitflags.js";
+export { GeneratedIdentifierFlags, NameGenerator, newNameGenerator } from "./namegenerator.js";
+export type { GeneratedIdentifierFlags as GeneratedIdentifierFlagsType } from "./namegenerator.js";
+export { NodeFactory, newNodeFactory } from "./factory.js";
+export type { AssignedNameOptions, AutoGenerateOptions as FactoryAutoGenerateOptions, NameOptions, PrivateIdentifierKindStr } from "./factory.js";
+export { Printer, WriteKind, newPrinter, printFile } from "./printer.js";
+export type { CommentState, DetachedCommentsInfo, PrintHandlers, PrinterOptions, PrinterState, PrinterWriter, SourceMapState, WriteKind as WriteKindType } from "./printer.js";
+export type { SourceFileMetadataProvider } from "./sourcefilemetadataprovider.js";
+export * from "./helpers.js";
+export * from "./printer-utilities.js";
+export * from "./factory-helpers.js";

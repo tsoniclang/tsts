@@ -5,7 +5,7 @@
  * present with the wrong type, or present with the expected type.
  */
 
-import { isJsonObject, unmarshal, type JsonValue } from "../json/index.js";
+import { unmarshal } from "../json/index.js";
 import {
   absent,
   expectedOf,
@@ -25,12 +25,18 @@ import {
  * states rather than throwing.
  */
 export function parsePackageJSON(text: string): PackageJSON {
-  const raw = unmarshal(text) as JsonValue;
+  const raw: unknown = unmarshal(text);
   return packageJSONFromValue(raw);
 }
 
-export function packageJSONFromValue(raw: JsonValue): PackageJSON {
-  const obj = isJsonObject(raw) ? raw : {};
+type JsonObject = { readonly [key: string]: unknown };
+
+function isPlainJsonObject(value: unknown): value is JsonObject {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function packageJSONFromValue(raw: unknown): PackageJSON {
+  const obj: JsonObject = isPlainJsonObject(raw) ? raw : {};
   return {
     name: readString(obj, "name"),
     version: readString(obj, "version"),
@@ -39,9 +45,9 @@ export function packageJSONFromValue(raw: JsonValue): PackageJSON {
     main: readString(obj, "main"),
     types: readString(obj, "types"),
     typings: readString(obj, "typings"),
-    typesVersions: jsonValueFromJSON((obj as Record<string, JsonValue>)["typesVersions"]),
-    imports: jsonValueFromJSON((obj as Record<string, JsonValue>)["imports"]),
-    exports: jsonValueFromJSON((obj as Record<string, JsonValue>)["exports"]),
+    typesVersions: jsonValueFromJSON(obj["typesVersions"]),
+    imports: jsonValueFromJSON(obj["imports"]),
+    exports: jsonValueFromJSON(obj["exports"]),
     dependencies: readStringMap(obj, "dependencies"),
     devDependencies: readStringMap(obj, "devDependencies"),
     peerDependencies: readStringMap(obj, "peerDependencies"),
@@ -50,7 +56,7 @@ export function packageJSONFromValue(raw: JsonValue): PackageJSON {
   };
 }
 
-function readString(obj: { readonly [key: string]: JsonValue }, key: string): Expected<string> {
+function readString(obj: JsonObject, key: string): Expected<string> {
   const v = obj[key];
   if (v === undefined) return absent;
   if (v === null) return { state: "null", actualJSONType: "null" };
@@ -60,14 +66,14 @@ function readString(obj: { readonly [key: string]: JsonValue }, key: string): Ex
 }
 
 function readStringMap(
-  obj: { readonly [key: string]: JsonValue },
+  obj: JsonObject,
   key: string
 ): Expected<ReadonlyMap<string, string>> {
   const v = obj[key];
   if (v === undefined) return absent;
   if (v === null) return { state: "null", actualJSONType: "null" };
   const actual = jsonTypeOf(v);
-  if (!isJsonObject(v)) return { state: "wrong-type", actualJSONType: actual };
+  if (!isPlainJsonObject(v)) return { state: "wrong-type", actualJSONType: actual };
   // Only string-valued entries; others ignored
   const map = new Map<string, string>();
   for (const [k, val] of Object.entries(v)) {
@@ -78,7 +84,7 @@ function readStringMap(
   return expectedOf(map, "object");
 }
 
-function jsonTypeOf(v: JsonValue): JsonTypeName {
+function jsonTypeOf(v: unknown): JsonTypeName {
   if (v === null) return "null";
   if (typeof v === "string") return "string";
   if (typeof v === "number") return "number";

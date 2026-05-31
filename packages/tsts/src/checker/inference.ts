@@ -8,7 +8,8 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
-import type { Type, Signature, SignatureKind, VarianceFlags, TypeFlags } from "./types.js";
+import type { Type, Signature, SignatureKind, VarianceFlags, TypeFlags as TypeFlagsType } from "./types.js";
+import { ObjectFlags, TypeFlags, getTypeOfSymbol } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // InferencePriority constant-union
@@ -124,18 +125,50 @@ export class Inferer {
   }
 
   inferFromTypes(n: InferenceState, source: Type, target: Type): void {
+    this.invokeOnce(n, source, target, (inferer, state, sourceType, targetType) => {
+      inferer.inferFromTypesWorker(state, sourceType, targetType);
+    });
+  }
+
+  private inferFromTypesWorker(n: InferenceState, source: Type, target: Type): void {
     // Naked-type-variable case: if `target` is one of the inference's
     // type parameters, record `source` as a candidate.
     const info = n.inferences.find((i) => i.typeParameter === target);
     if (info !== undefined && !info.isFixed) {
-      if (n.contravariant) {
-        if (info.contraCandidates === undefined) info.contraCandidates = [];
-        info.contraCandidates.push(source);
-      } else {
-        if (info.candidates === undefined) info.candidates = [];
-        info.candidates.push(source);
-      }
+      addInferenceCandidate(info, source, n.contravariant);
       if (n.priority < info.priority) info.priority = n.priority;
+      return;
+    }
+
+    const sourceFlags = source.flags;
+    const targetFlags = target.flags;
+    if ((targetFlags & TypeFlags.Union) !== 0) {
+      this.inferToMultipleTypes(n, source, constituentTypes(target), targetFlags);
+      return;
+    }
+    if ((sourceFlags & TypeFlags.Union) !== 0) {
+      for (const sourceConstituent of constituentTypes(source)) this.inferFromTypes(n, sourceConstituent, target);
+      return;
+    }
+    if ((targetFlags & TypeFlags.Intersection) !== 0) {
+      for (const targetConstituent of constituentTypes(target)) this.inferFromTypes(n, source, targetConstituent);
+      return;
+    }
+    if ((sourceFlags & TypeFlags.Intersection) !== 0) {
+      for (const sourceConstituent of constituentTypes(source)) this.inferFromTypes(n, sourceConstituent, target);
+      return;
+    }
+    if ((targetFlags & TypeFlags.Conditional) !== 0) {
+      this.inferToConditionalType(n, source, target);
+      return;
+    }
+    const sourceArgs = typeArgumentsOf(source);
+    const targetArgs = typeArgumentsOf(target);
+    if (sourceArgs.length !== 0 || targetArgs.length !== 0) {
+      this.inferFromTypeArguments(n, sourceArgs, targetArgs, []);
+    }
+    if ((sourceFlags & TypeFlags.Object) !== 0 && (targetFlags & TypeFlags.Object) !== 0) {
+      this.inferFromObjectTypes(n, source, target);
     }
   }
 
@@ -145,10 +178,14 @@ export class Inferer {
   ): void {
     // Iterate paired type arguments, flipping contravariance when the
     // variance flag is set.
-    void variances;
     const len = Math.min(sourceTypes.length, targetTypes.length);
     for (let i = 0; i < len; i++) {
-      this.inferFromTypes(n, sourceTypes[i]!, targetTypes[i]!);
+      const variance = variances[i] ?? VarianceFlagsCovariant;
+      if ((variance & VarianceFlagsContravariant) !== 0 && (variance & VarianceFlagsCovariant) === 0) {
+        this.inferFromContravariantTypes(n, sourceTypes[i]!, targetTypes[i]!);
+      } else {
+        this.inferFromTypes(n, sourceTypes[i]!, targetTypes[i]!);
+      }
     }
   }
 
@@ -197,6 +234,9 @@ export class Inferer {
   ): void {
     // De-dupe by (source, target) in the visited map.
     const key: InferenceKey = { source, target };
+    const stableKey = `${source.id}->${target.id}`;
+    if ((n.visited as unknown as Map<string, InferencePriority>).has(stableKey)) return;
+    (n.visited as unknown as Map<string, InferencePriority>).set(stableKey, n.priority);
     if (n.visited.has(key)) return;
     n.visited.set(key, n.priority);
     action(this, n, source, target);
@@ -206,18 +246,28 @@ export class Inferer {
     n: InferenceState, sources: readonly Type[], targets: readonly Type[],
     matches: (i: Inferer, s: Type, t: Type) => boolean,
   ): { unmatched: readonly Type[]; remainingTargets: readonly Type[] } {
-    void n; void matches;
-    return { unmatched: sources, remainingTargets: targets };
+    const unmatched: Type[] = [];
+    const remainingTargets = [...targets];
+    for (const source of sources) {
+      const index = remainingTargets.findIndex((target) => matches(this, source, target));
+      if (index < 0) {
+        unmatched.push(source);
+        continue;
+      }
+      this.inferFromTypes(n, source, remainingTargets[index]!);
+      remainingTargets.splice(index, 1);
+    }
+    return { unmatched, remainingTargets };
   }
 
-  inferToMultipleTypes(n: InferenceState, source: Type, targets: readonly Type[], targetFlags: TypeFlags): void {
+  inferToMultipleTypes(n: InferenceState, source: Type, targets: readonly Type[], targetFlags: TypeFlagsType): void {
     // For each target in a union, infer source against it.
     void targetFlags;
     for (const t of targets) this.inferFromTypes(n, source, t);
   }
 
   inferToMultipleTypesWithPriority(
-    n: InferenceState, source: Type, targets: readonly Type[], targetFlags: TypeFlags, newPriority: InferencePriority,
+    n: InferenceState, source: Type, targets: readonly Type[], targetFlags: TypeFlagsType, newPriority: InferencePriority,
   ): void {
     const saved = n.priority;
     n.priority = newPriority;
@@ -230,9 +280,10 @@ export class Inferer {
 
   inferToConditionalType(n: InferenceState, source: Type, target: Type): void {
     // Conditional type: source → checkType, trueType, falseType.
-    const checkType = (target as unknown as { checkType?: Type }).checkType;
-    const trueType = (target as unknown as { trueType?: Type }).trueType;
-    const falseType = (target as unknown as { falseType?: Type }).falseType;
+    const data = target.data as { checkType?: Type; trueType?: Type; falseType?: Type; root?: { checkType?: Type; trueType?: Type; falseType?: Type } } | undefined;
+    const checkType = data?.checkType ?? data?.root?.checkType;
+    const trueType = data?.trueType ?? data?.root?.trueType;
+    const falseType = data?.falseType ?? data?.root?.falseType;
     if (checkType !== undefined) this.inferFromTypes(n, source, checkType);
     if (trueType !== undefined) this.inferFromTypes(n, source, trueType);
     if (falseType !== undefined) this.inferFromTypes(n, source, falseType);
@@ -246,8 +297,9 @@ export class Inferer {
 
   inferFromGenericMappedTypes(n: InferenceState, source: Type, target: Type): void {
     // Mapped type's constraint + template; conservative pair forward.
-    const constraint = (target as unknown as { constraintType?: Type }).constraintType;
-    const template = (target as unknown as { templateType?: Type }).templateType;
+    const data = target.data as { constraintType?: Type; templateType?: Type } | undefined;
+    const constraint = data?.constraintType;
+    const template = data?.templateType;
     if (constraint !== undefined) this.inferFromTypes(n, source, constraint);
     if (template !== undefined) this.inferFromTypes(n, source, template);
   }
@@ -274,9 +326,8 @@ export class Inferer {
   }
 
   inferFromSignatures(n: InferenceState, source: Type, target: Type, kind: SignatureKind): void {
-    const which = kind === 0 ? "callSignatures" : "constructSignatures";
-    const sourceSigs = (source as unknown as Record<string, readonly Signature[] | undefined>)[which];
-    const targetSigs = (target as unknown as Record<string, readonly Signature[] | undefined>)[which];
+    const sourceSigs = signaturesOf(source, kind);
+    const targetSigs = signaturesOf(target, kind);
     if (sourceSigs === undefined || targetSigs === undefined) return;
     const len = Math.min(sourceSigs.length, targetSigs.length);
     for (let i = 0; i < len; i++) {
@@ -294,8 +345,8 @@ export class Inferer {
     const targetParams = (target as unknown as { parameters?: readonly AstSymbol[] }).parameters ?? [];
     const len = Math.min(sourceParams.length, targetParams.length);
     for (let i = 0; i < len; i++) {
-      const sourceType = (sourceParams[i] as unknown as { type?: Type }).type;
-      const targetType = (targetParams[i] as unknown as { type?: Type }).type;
+      const sourceType = getTypeOfSymbol(sourceParams[i]);
+      const targetType = getTypeOfSymbol(targetParams[i]);
       if (sourceType !== undefined && targetType !== undefined) callback(sourceType, targetType);
     }
   }
@@ -308,51 +359,85 @@ export class Inferer {
 
   inferFromIndexTypes(n: InferenceState, source: Type, target: Type): void {
     // Pull index infos off both types and pair-infer.
-    const sourceInfos = (source as unknown as { indexInfos?: readonly { keyType: Type; type: Type }[] }).indexInfos;
-    const targetInfos = (target as unknown as { indexInfos?: readonly { keyType: Type; type: Type }[] }).indexInfos;
+    const sourceInfos = indexInfosOf(source);
+    const targetInfos = indexInfosOf(target);
     if (sourceInfos === undefined || targetInfos === undefined) return;
     const len = Math.min(sourceInfos.length, targetInfos.length);
     for (let i = 0; i < len; i++) {
-      this.inferFromTypes(n, sourceInfos[i]!.type, targetInfos[i]!.type);
+      this.inferFromTypes(n, sourceInfos[i]!.valueType, targetInfos[i]!.valueType);
     }
   }
 
   inferToMappedType(n: InferenceState, source: Type, target: Type, constraintType: Type): boolean {
-    void n; void source; void target; void constraintType;
-    return false;
+    this.inferFromTypes(n, source, constraintType);
+    const data = target.data as { typeParameter?: Type; templateType?: Type; nameType?: Type } | undefined;
+    if (data?.typeParameter !== undefined) this.inferFromTypes(n, source, data.typeParameter);
+    if (data?.templateType !== undefined) this.inferFromTypes(n, source, data.templateType);
+    if (data?.nameType !== undefined) this.inferFromTypes(n, source, data.nameType);
+    return true;
   }
 
   inferTypeForHomomorphicMappedType(source: Type, target: Type, constraint: Type): Type | undefined {
-    void source; void target; void constraint;
-    return undefined;
+    if ((target.flags & TypeFlags.Object) === 0) return undefined;
+    if ((objectFlagsOf(target) & ObjectFlags.Mapped) === 0) return undefined;
+    if (!this.isPartiallyInferableType(source)) return undefined;
+    return constraint;
   }
 
   createReverseMappedType(source: Type, target: Type, constraint: Type): Type | undefined {
-    void source; void target; void constraint;
-    return undefined;
+    return {
+      flags: TypeFlags.Object,
+      id: nextSyntheticTypeId(),
+      symbol: source.symbol,
+      data: {
+        objectFlags: ObjectFlags.ReverseMapped,
+        source,
+        mappedType: target.data,
+        constraintType: constraint,
+      },
+    } as Type;
   }
 
   isPartiallyInferableType(t: Type): boolean {
     // A type is partially inferable if it has at least one inferable
     // type parameter. Without the full inference machinery, conservative
     // true for object types (they may contain inferables).
-    const flags = (t as { flags?: number }).flags ?? 0;
-    return (flags & (1 << 19)) !== 0; // Object
+    if ((t.flags & TypeFlags.TypeParameter) !== 0) return true;
+    if ((t.flags & TypeFlags.Object) !== 0) {
+      const members = (t.symbol as unknown as { members?: Map<string, AstSymbol> } | undefined)?.members;
+      if (members === undefined || members.size === 0) return true;
+      for (const symbol of members.values()) {
+        const type = getTypeOfSymbol(symbol);
+        if (type !== undefined && this.isPartiallyInferableType(type)) return true;
+      }
+    }
+    if ((t.flags & TypeFlags.UnionOrIntersection) !== 0) {
+      return constituentTypes(t).some((type) => this.isPartiallyInferableType(type));
+    }
+    return false;
   }
 
   inferReverseMappedType(source: Type, target: Type, constraint: Type): Type | undefined {
-    void source; void target; void constraint;
-    return undefined;
+    return this.inferReverseMappedTypeWorker(source, target, constraint);
   }
 
   inferReverseMappedTypeWorker(source: Type, target: Type, constraint: Type): Type | undefined {
-    void source; void target; void constraint;
+    const inferred = this.inferTypeForHomomorphicMappedType(source, target, constraint);
+    if (inferred !== undefined) return this.createReverseMappedType(source, target, inferred);
     return undefined;
   }
 
-  resolveReverseMappedTypeMembers(t: Type): void { void t; }
-  getTypeOfReverseMappedSymbol(symbol: AstSymbol): Type | undefined { void symbol; return undefined; }
-  getLimitedConstraint(t: Type): Type | undefined { void t; return undefined; }
+  resolveReverseMappedTypeMembers(t: Type): void {
+    const data = t.data as { source?: Type } | undefined;
+    if (t.symbol === undefined && data?.source?.symbol !== undefined) t.symbol = data.source.symbol;
+  }
+  getTypeOfReverseMappedSymbol(symbol: AstSymbol): Type | undefined {
+    return getTypeOfSymbol(symbol);
+  }
+  getLimitedConstraint(t: Type): Type | undefined {
+    return (t.data as { constraint?: Type; constraintType?: Type } | undefined)?.constraint
+      ?? (t.data as { constraintType?: Type } | undefined)?.constraintType;
+  }
   replaceIndexedAccess(instantiable: Type, t: Type, replacement: Type): Type {
     void instantiable; void t; return replacement;
   }
@@ -363,9 +448,9 @@ export class Inferer {
     const sf = (source as { flags?: number }).flags ?? 0;
     const tf = (target as { flags?: number }).flags ?? 0;
     // Any/Unknown/Never relate to everything.
-    if ((sf & ((1 << 0) | (1 << 1) | (1 << 17))) !== 0) return false;
-    if ((tf & ((1 << 0) | (1 << 1) | (1 << 17))) !== 0) return false;
-    const primitiveMask = (1 << 2) | (1 << 3) | (1 << 4) | (1 << 6) | (1 << 12);
+    if ((sf & (TypeFlags.Any | TypeFlags.Unknown | TypeFlags.Never)) !== 0) return false;
+    if ((tf & (TypeFlags.Any | TypeFlags.Unknown | TypeFlags.Never)) !== 0) return false;
+    const primitiveMask = TypeFlags.StringLike | TypeFlags.NumberLike | TypeFlags.BigIntLike | TypeFlags.BooleanLike | TypeFlags.ESSymbolLike;
     if ((sf & primitiveMask) !== 0 && (tf & primitiveMask) !== 0 && (sf & tf & primitiveMask) === 0) {
       return true;
     }
@@ -373,9 +458,7 @@ export class Inferer {
   }
 
   isTupleTypeStructureMatching(t1: Type, t2: Type): boolean {
-    const ta1 = (t1 as unknown as { typeArguments?: readonly Type[] }).typeArguments;
-    const ta2 = (t2 as unknown as { typeArguments?: readonly Type[] }).typeArguments;
-    return (ta1?.length ?? 0) === (ta2?.length ?? 0);
+    return tupleElementInfos(t1).length === tupleElementInfos(t2).length;
   }
   isTypeOrBaseIdenticalTo(s: Type, t: Type): boolean {
     return s === t || (s as { flags?: number }).flags === (t as { flags?: number }).flags;
@@ -443,9 +526,9 @@ export class Inferer {
     // full algorithm unions candidates with widening / fixing rules;
     // this approximation suffices for unambiguous single-candidate
     // inferences.
-    const cand = info.candidates;
-    if (cand !== undefined && cand.length > 0) {
-      const first = cand[0]!;
+    const candidates = bestInferenceCandidates(info);
+    if (candidates.length > 0) {
+      const first = candidates[0]!;
       info.inferredType = first;
       return first;
     }
@@ -469,14 +552,75 @@ export class Inferer {
 export function getSingleTypeVariableFromIntersectionTypes(
   n: InferenceState, types: readonly Type[],
 ): Type | undefined {
-  void n; void types;
-  return undefined;
+  void n;
+  let result: Type | undefined;
+  for (const type of types) {
+    if ((type.flags & TypeFlags.TypeParameter) === 0) continue;
+    if (result !== undefined) return undefined;
+    result = type;
+  }
+  return result;
 }
 
 export function tupleTypesDefinitelyUnrelated(source: Type, target: Type): boolean {
-  void source; void target;
+  const sourceElements = tupleElementInfos(source);
+  const targetElements = tupleElementInfos(target);
+  if (sourceElements.length !== targetElements.length) return true;
+  for (let i = 0; i < sourceElements.length; i += 1) {
+    const sourceFlags = sourceElements[i]?.flags ?? 0;
+    const targetFlags = targetElements[i]?.flags ?? 0;
+    if ((sourceFlags & targetFlags) === 0) return true;
+  }
   return false;
 }
+
+function addInferenceCandidate(info: InferenceInfo, candidate: Type, contravariant: boolean): void {
+  const candidates = contravariant ? (info.contraCandidates ??= []) : (info.candidates ??= []);
+  if (!candidates.includes(candidate)) candidates.push(candidate);
+}
+
+function constituentTypes(type: Type): readonly Type[] {
+  return (type.data as { types?: readonly Type[] } | undefined)?.types ?? [];
+}
+
+function typeArgumentsOf(type: Type): readonly Type[] {
+  return (type.data as { resolvedTypeArguments?: readonly Type[]; resolvedTypeArguments_?: readonly Type[] } | undefined)?.resolvedTypeArguments
+    ?? (type.data as { resolvedTypeArguments_?: readonly Type[] } | undefined)?.resolvedTypeArguments_
+    ?? type.aliasTypeArguments
+    ?? [];
+}
+
+function signaturesOf(type: Type, kind: SignatureKind): readonly Signature[] | undefined {
+  const data = type.data as { declaredCallSignatures?: readonly Signature[]; declaredConstructSignatures?: readonly Signature[] } | undefined;
+  return kind === 0 ? data?.declaredCallSignatures : data?.declaredConstructSignatures;
+}
+
+function indexInfosOf(type: Type): readonly { keyType: Type; valueType: Type }[] | undefined {
+  return (type.data as { indexInfos?: readonly { keyType: Type; valueType: Type }[] } | undefined)?.indexInfos;
+}
+
+function objectFlagsOf(type: Type): ObjectFlags {
+  return ((type.data as { objectFlags?: ObjectFlags } | undefined)?.objectFlags ?? 0) as ObjectFlags;
+}
+
+function tupleElementInfos(type: Type): readonly { flags: number }[] {
+  return (type.data as { elementInfo?: readonly { flags: number }[] } | undefined)?.elementInfo ?? [];
+}
+
+function bestInferenceCandidates(info: InferenceInfo): readonly Type[] {
+  if (info.candidates !== undefined && info.candidates.length !== 0) return info.candidates;
+  if (info.contraCandidates !== undefined && info.contraCandidates.length !== 0) return info.contraCandidates;
+  return [];
+}
+
+let syntheticTypeId = -1;
+function nextSyntheticTypeId(): number {
+  syntheticTypeId -= 1;
+  return syntheticTypeId;
+}
+
+const VarianceFlagsCovariant = 1 << 0;
+const VarianceFlagsContravariant = 1 << 1;
 
 export function newInferer(): Inferer {
   return new Inferer();

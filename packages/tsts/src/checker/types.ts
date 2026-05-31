@@ -30,10 +30,14 @@ export const ParseFlags = {
 } as const;
 
 export type SignatureKind = 0 | 1;
-export const SignatureKind = {
+export interface SignatureKindTable {
+  readonly Call: SignatureKind;
+  readonly Construct: SignatureKind;
+}
+export const SignatureKind: SignatureKindTable = {
   Call: 0 as SignatureKind,
   Construct: 1 as SignatureKind,
-} as const;
+};
 
 export type ContextFlags = number;
 export const ContextFlags = {
@@ -169,11 +173,77 @@ export const NodeCheckFlags = {
 } as const;
 
 export type TypeFlags = number;
+export interface TypeFlagsTable {
+  readonly None: TypeFlags;
+  readonly Any: TypeFlags;
+  readonly Unknown: TypeFlags;
+  readonly Undefined: TypeFlags;
+  readonly Null: TypeFlags;
+  readonly Void: TypeFlags;
+  readonly String: TypeFlags;
+  readonly Number: TypeFlags;
+  readonly BigInt: TypeFlags;
+  readonly Boolean: TypeFlags;
+  readonly ESSymbol: TypeFlags;
+  readonly StringLiteral: TypeFlags;
+  readonly NumberLiteral: TypeFlags;
+  readonly BigIntLiteral: TypeFlags;
+  readonly BooleanLiteral: TypeFlags;
+  readonly UniqueESSymbol: TypeFlags;
+  readonly EnumLiteral: TypeFlags;
+  readonly Enum: TypeFlags;
+  readonly NonPrimitive: TypeFlags;
+  readonly Never: TypeFlags;
+  readonly TypeParameter: TypeFlags;
+  readonly Object: TypeFlags;
+  readonly Index: TypeFlags;
+  readonly TemplateLiteral: TypeFlags;
+  readonly StringMapping: TypeFlags;
+  readonly Substitution: TypeFlags;
+  readonly IndexedAccess: TypeFlags;
+  readonly Conditional: TypeFlags;
+  readonly Union: TypeFlags;
+  readonly Intersection: TypeFlags;
+  readonly Reserved1: TypeFlags;
+  readonly Reserved2: TypeFlags;
+  readonly Reserved3: TypeFlags;
+  readonly AnyOrUnknown: TypeFlags;
+  readonly Nullable: TypeFlags;
+  readonly Literal: TypeFlags;
+  readonly Unit: TypeFlags;
+  readonly Freshable: TypeFlags;
+  readonly StringOrNumberLiteral: TypeFlags;
+  readonly StringOrNumberLiteralOrUnique: TypeFlags;
+  readonly DefinitelyFalsy: TypeFlags;
+  readonly PossiblyFalsy: TypeFlags;
+  readonly Intrinsic: TypeFlags;
+  readonly StringLike: TypeFlags;
+  readonly NumberLike: TypeFlags;
+  readonly BigIntLike: TypeFlags;
+  readonly BooleanLike: TypeFlags;
+  readonly EnumLike: TypeFlags;
+  readonly ESSymbolLike: TypeFlags;
+  readonly VoidLike: TypeFlags;
+  readonly Primitive: TypeFlags;
+  readonly DefinitelyNonNullable: TypeFlags;
+  readonly DisjointDomains: TypeFlags;
+  readonly UnionOrIntersection: TypeFlags;
+  readonly StructuredType: TypeFlags;
+  readonly TypeVariable: TypeFlags;
+  readonly InstantiableNonPrimitive: TypeFlags;
+  readonly InstantiablePrimitive: TypeFlags;
+  readonly Instantiable: TypeFlags;
+  readonly StructuredOrInstantiable: TypeFlags;
+  readonly ObjectFlagsType: TypeFlags;
+  readonly Simplifiable: TypeFlags;
+  readonly Singleton: TypeFlags;
+  readonly Narrowable: TypeFlags;
+}
 // 1:1 with TS-Go `internal/checker/types.go` TypeFlags (NOT the Strada/JS
 // layout). Bit positions and composite masks match upstream exactly;
 // composite values are the precomputed bit-unions of the formulas in the
 // trailing comments.
-export const TypeFlags = {
+export const TypeFlags: TypeFlagsTable = {
   None: 0 as TypeFlags,
   Any: (1 << 0) as TypeFlags,
   Unknown: (1 << 1) as TypeFlags,
@@ -238,13 +308,61 @@ export const TypeFlags = {
   Simplifiable: 102760448 as TypeFlags, // IndexedAccess|Conditional|Index
   Singleton: 394239 as TypeFlags,
   Narrowable: 536575971 as TypeFlags,
-} as const;
+};
 
 export type ObjectFlags = number;
+export interface ObjectFlagsTable {
+  readonly None: ObjectFlags;
+  readonly Class: ObjectFlags;
+  readonly Interface: ObjectFlags;
+  readonly Reference: ObjectFlags;
+  readonly Tuple: ObjectFlags;
+  readonly Anonymous: ObjectFlags;
+  readonly Mapped: ObjectFlags;
+  readonly Instantiated: ObjectFlags;
+  readonly ObjectLiteral: ObjectFlags;
+  readonly EvolvingArray: ObjectFlags;
+  readonly ObjectLiteralPatternWithComputedProperties: ObjectFlags;
+  readonly ReverseMapped: ObjectFlags;
+  readonly JsxAttributes: ObjectFlags;
+  readonly JSLiteral: ObjectFlags;
+  readonly FreshLiteral: ObjectFlags;
+  readonly ArrayLiteral: ObjectFlags;
+  readonly PrimitiveUnion: ObjectFlags;
+  readonly ContainsWideningType: ObjectFlags;
+  readonly ContainsObjectOrArrayLiteral: ObjectFlags;
+  readonly NonInferrableType: ObjectFlags;
+  readonly CouldContainTypeVariablesComputed: ObjectFlags;
+  readonly CouldContainTypeVariables: ObjectFlags;
+  readonly MembersResolved: ObjectFlags;
+  readonly ClassOrInterface: ObjectFlags;
+  readonly RequiresWidening: ObjectFlags;
+  readonly PropagatingFlags: ObjectFlags;
+  readonly InstantiatedMapped: ObjectFlags;
+  readonly ObjectTypeKindMask: ObjectFlags;
+  readonly ContainsSpread: ObjectFlags;
+  readonly ObjectRestType: ObjectFlags;
+  readonly InstantiationExpressionType: ObjectFlags;
+  readonly SingleSignatureType: ObjectFlags;
+  readonly IsClassInstanceClone: ObjectFlags;
+  readonly IdenticalBaseTypeCalculated: ObjectFlags;
+  readonly IdenticalBaseTypeExists: ObjectFlags;
+  readonly UnresolvedMembers: ObjectFlags;
+  readonly IsGenericTypeComputed: ObjectFlags;
+  readonly IsGenericObjectType: ObjectFlags;
+  readonly IsGenericIndexType: ObjectFlags;
+  readonly IsGenericType: ObjectFlags;
+  readonly ContainsIntersections: ObjectFlags;
+  readonly IsUnknownLikeUnionComputed: ObjectFlags;
+  readonly IsUnknownLikeUnion: ObjectFlags;
+  readonly IsNeverIntersectionComputed: ObjectFlags;
+  readonly IsNeverIntersection: ObjectFlags;
+  readonly IsConstrainedTypeVariable: ObjectFlags;
+}
 // 1:1 with TS-Go `internal/checker/types.go` ObjectFlags. Bits 22+ are
 // context-overloaded upstream (their meaning depends on the type's
 // TypeFlags), reproduced here with the same names + values.
-export const ObjectFlags = {
+export const ObjectFlags: ObjectFlagsTable = {
   None: 0 as ObjectFlags,
   Class: (1 << 0) as ObjectFlags,
   Interface: (1 << 1) as ObjectFlags,
@@ -296,7 +414,7 @@ export const ObjectFlags = {
   IsNeverIntersectionComputed: (1 << 25) as ObjectFlags,
   IsNeverIntersection: (1 << 26) as ObjectFlags,
   IsConstrainedTypeVariable: (1 << 27) as ObjectFlags,
-} as const;
+};
 
 export type ElementFlags = number;
 export const ElementFlags = {

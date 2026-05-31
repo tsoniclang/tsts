@@ -8,6 +8,7 @@ import "./core/core.test.js";
 import "./core/pattern.test.js";
 import "./debug/debug.test.js";
 import "./diagnosticwriter/format.test.js";
+import "./execute/execute.test.js";
 import "./evaluator/evaluator.test.js";
 import "./glob/glob.test.js";
 import "./jsnum/jsnum.test.js";
@@ -19,23 +20,15 @@ import "./stringutil/stringutil.test.js";
 import "./symlinks/symlinks.test.js";
 import "./tspath/path.test.js";
 
-// === Still blocked after batch 114500 codex completion + clean rebuild ===
-// Codex's tuple-to-tuple unification fix targets `parameterType.kind ===
-// "tupleType" && argumentType.kind === "tupleType"` only. But the Map
-// constructor parameter is `Iterable<readonly [K, V]>` — a referenceType
-// over a tuple, not a tuple. So the fix doesn't reach this path.
-// The narrowing residuals were not addressed at all.
-// See batch 2026-05-26-153800/ for the follow-up reports.
-//
-// import "./ast/generated-types.test.ts";
-// import "./ast/runtime.test.ts";
-// import "./binder/binder.test.ts";
-// import "./checker/checker.test.ts";
-// import "./emit-js/printer.test.ts";
-// import "./parser/parser.test.ts";
-// import "./program/program.test.ts";
-// import "./scanner/scanner.test.ts";
-// import "./json/json.test.ts";
+import "./ast/generated-types.test.js";
+import "./ast/runtime.test.js";
+import "./binder/binder.test.js";
+import "./checker/checker.test.js";
+import "./emit-js/printer.test.js";
+import "./parser/parser.test.js";
+import "./program/program.test.js";
+import "./scanner/scanner.test.js";
+import "./json/json.test.js";
 
 // === Still disabled (TSTS source incompleteness; not tsonic blockers) ===
 

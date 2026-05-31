@@ -11,43 +11,63 @@
 
 import {
   Kind,
+  KindNames,
   NodeFlags,
   SymbolFlags,
+  hasModifier,
   isArrayTypeNode,
   isBigIntLiteral,
   isBindingElement,
   isCallSignatureDeclaration,
+  isClassDeclaration,
+  isComputedPropertyName,
+  isConstructorDeclaration,
+  isConstructSignatureDeclaration,
+  isFunctionDeclaration,
+  isGetAccessorDeclaration,
   isIdentifier,
   isIndexSignatureDeclaration,
+  isInterfaceDeclaration,
   isKeywordTypeNode,
   isLiteralTypeNode,
+  isMethodDeclaration,
   isMethodSignatureDeclaration,
   isNumericLiteral,
   isParameterDeclaration,
   isPrefixUnaryExpression,
   isPropertyDeclaration,
   isPropertySignatureDeclaration,
+  isQualifiedName,
+  isPrivateIdentifier,
+  isNoSubstitutionTemplateLiteral,
+  isSetAccessorDeclaration,
   isStringLiteral,
   isTypeAliasDeclaration,
   isTypeLiteralNode,
   isTypeOperatorNode,
   isTypeReferenceNode,
+  isTypeParameterDeclaration,
   isUnionTypeNode,
   isVariableDeclaration,
   type BindingElement,
+  type ClassDeclaration,
+  type EntityName,
   type Expression,
   type LiteralTypeNode,
   type Node as AstNode,
   type ParameterDeclaration,
+  type PropertyName,
   type Statement,
   type Symbol as AstSymbol,
   type TypeAliasDeclaration,
   type TypeLiteralNode,
   type TypeNode,
+  type TypeParameterDeclaration,
   type TypeReferenceNode,
   type UnionTypeNode,
 } from "../ast/index.js";
 import { nodeParent, nodeSymbol } from "../ast/index.js";
+import { ModifierFlags } from "../enums/modifierFlags.enum.js";
 import { NameResolver } from "../binder/index.js";
 import { fromString, newPseudoBigInt, parsePseudoBigInt, parseValidBigInt, pseudoBigIntToString, type PseudoBigInt } from "../jsnum/index.js";
 import {
@@ -69,6 +89,10 @@ export { getTypeOfSymbol, getPropertySymbolOfType, getPropertyTypeOfType } from 
 
 export type { Type } from "./types.js";
 
+function kindDebugName(kind: Kind): string {
+  return KindNames[kind] ?? String(kind);
+}
+
 export interface CheckDiagnostic {
   readonly message: string;
 }
@@ -88,17 +112,14 @@ export interface CheckState {
   // Union interning by sorted constituent type ids (mirrors TS-Go's unionTypes
   // cache). Preseeded with the canonical `false | true` -> booleanType entry.
   readonly unionTypes: Map<string, Type>;
-  // Type-alias environment: name -> declaration (collected before checking
-  // bodies), the resolved-type cache, and the in-progress set for cycle
-  // detection (mirrors TS-Go's symbol-table + getDeclaredTypeOfTypeAlias
-  // circularity guard).
-  readonly typeAliases: Map<string, TypeAliasDeclaration>;
-  readonly typeAliasResolutions: Map<string, Type>;
-  readonly aliasResolutionStack: Set<string>;
-  // Names currently shadowed by a block-local `type` declaration. Full lexical
-  // type-alias scoping needs the binder's symbol tables (deferred); until then,
-  // a shadowed name must NOT resolve to a same-named outer alias.
-  readonly shadowedAliasNames: Set<string>;
+  // Type-declaration caches keyed by binder symbols. Names are resolved through
+  // the binder graph, not through a checker-owned string environment.
+  readonly declaredTypeResolutions: Map<AstSymbol, Type>;
+  readonly genericTypeInstantiations: Map<AstSymbol, Map<string, Type>>;
+  readonly typeParameterSubstitutions: Map<AstSymbol, Type>[];
+  readonly typeResolutionStack: Set<AstSymbol>;
+  readonly cyclicTypeAliases: Set<AstSymbol>;
+  readonly reportedCyclicTypeAliases: Set<AstSymbol>;
   nextTypeId(): number;
 }
 
@@ -111,61 +132,17 @@ export function newCheckState(): CheckState {
     numberLiteralTypes: new Map<number, Type>(),
     bigintLiteralTypes: new Map<string, Type>(),
     unionTypes: new Map<string, Type>([[unionTypeKey([regularFalseType, regularTrueType]), booleanType]]),
-    typeAliases: new Map<string, TypeAliasDeclaration>(),
-    typeAliasResolutions: new Map<string, Type>(),
-    aliasResolutionStack: new Set<string>(),
-    shadowedAliasNames: new Set<string>(),
+    declaredTypeResolutions: new Map<AstSymbol, Type>(),
+    genericTypeInstantiations: new Map<AstSymbol, Map<string, Type>>(),
+    typeParameterSubstitutions: [],
+    typeResolutionStack: new Set<AstSymbol>(),
+    cyclicTypeAliases: new Set<AstSymbol>(),
+    reportedCyclicTypeAliases: new Set<AstSymbol>(),
     nextTypeId: () => {
       idSource.value += 1;
       return idSource.value;
     },
   };
-}
-
-// Collect top-level type aliases into the check state's alias environment
-// before any body is checked, so a forward reference (`d: Dict` declared above
-// `type Dict = …`) resolves. Mirrors TS-Go, where the binder populates the
-// symbol table before the checker resolves type references.
-export function collectTypeAliases(statements: readonly Statement[], state: CheckState): void {
-  for (const statement of statements) {
-    if (isTypeAliasDeclaration(statement) && isIdentifier(statement.name)) {
-      const name = statement.name.text;
-      if (state.typeAliases.has(name)) {
-        // A second top-level alias of the same name is a duplicate identifier;
-        // keep the first declaration as the recovery type (mirrors TS2300).
-        state.diagnostics.push({ message: `Duplicate identifier '${name}'.` });
-        continue;
-      }
-      state.typeAliases.set(name, statement);
-    }
-  }
-}
-
-// Enter a block scope: register its block-local `type` declarations. Full
-// lexical type-alias scoping is deferred to the binder, so each local alias
-// gets an explicit unsupported diagnostic and its name is shadowed — a
-// reference within the block then resolves to the error type rather than
-// silently binding to a same-named OUTER alias (which would check against the
-// wrong type). Returns the names this scope newly shadowed (to unshadow on exit).
-export function enterLocalAliasScope(statements: readonly Statement[], state: CheckState): readonly string[] {
-  const added: string[] = [];
-  for (const statement of statements) {
-    if (isTypeAliasDeclaration(statement) && isIdentifier(statement.name)) {
-      state.diagnostics.push({ message: `Local type alias declarations are not yet supported by the checker.` });
-      const name = statement.name.text;
-      if (!state.shadowedAliasNames.has(name)) {
-        state.shadowedAliasNames.add(name);
-        added.push(name);
-      }
-    }
-  }
-  return added;
-}
-
-export function exitLocalAliasScope(added: readonly string[], state: CheckState): void {
-  for (const name of added) {
-    state.shadowedAliasNames.delete(name);
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -296,11 +273,19 @@ export function getCallSignature(type: Type): Signature | undefined {
   return (type.data as ObjectType | undefined)?.declaredCallSignatures?.[0];
 }
 
+export function getConstructSignature(type: Type): Signature | undefined {
+  return (type.data as ObjectType | undefined)?.declaredConstructSignatures?.[0];
+}
+
 // Minimal array type: an object type carrying its element type. Enough to
 // extract a rest-parameter element type and to display `T[]`; full element-wise
 // array relating is a later tranche.
+interface ArrayObjectType extends ObjectType {
+  readonly elementType: Type;
+}
+
 export function makeArrayType(elementType: Type, state: CheckState): Type {
-  const data = { objectFlags: ObjectFlags.Anonymous, elementType } as unknown as ObjectType;
+  const data: ArrayObjectType = { objectFlags: ObjectFlags.Anonymous, elementType };
   return { flags: TypeFlags.Object, id: state.nextTypeId(), data };
 }
 
@@ -353,10 +338,11 @@ export interface ObjectProperty {
 
 export interface ObjectTypeExtras {
   readonly callSignatures?: readonly Signature[];
+  readonly constructSignatures?: readonly Signature[];
   readonly indexInfos?: readonly IndexInfo[];
 }
 
-export function makeObjectType(properties: readonly ObjectProperty[], state: CheckState, fresh = false, extras?: ObjectTypeExtras): Type {
+export function makeObjectType(properties: readonly ObjectProperty[], state: CheckState, fresh: boolean = false, extras?: ObjectTypeExtras): Type {
   const members = new Map<string, AstSymbol>();
   for (const property of properties) {
     const symbol: PropertySymbol = {
@@ -372,10 +358,17 @@ export function makeObjectType(properties: readonly ObjectProperty[], state: Che
   // freshness to gate excess-property checking. Type-literal types are not fresh.
   const data: ObjectType = {
     objectFlags: fresh ? (ObjectFlags.Anonymous | ObjectFlags.FreshLiteral) : ObjectFlags.Anonymous,
-    ...(extras?.callSignatures !== undefined ? { declaredCallSignatures: extras.callSignatures } : {}),
-    ...(extras?.indexInfos !== undefined ? { indexInfos: extras.indexInfos } : {}),
   };
-  const typeSymbol = { name: "__object", declarations: [], members } as unknown as AstSymbol;
+  if (extras?.callSignatures !== undefined) {
+    data.declaredCallSignatures = extras.callSignatures;
+  }
+  if (extras?.constructSignatures !== undefined) {
+    data.declaredConstructSignatures = extras.constructSignatures;
+  }
+  if (extras?.indexInfos !== undefined) {
+    data.indexInfos = extras.indexInfos;
+  }
+  const typeSymbol: AstSymbol = { name: "__object", declarations: [], members };
   return { flags: TypeFlags.Object, id: state.nextTypeId(), data, symbol: typeSymbol };
 }
 
@@ -415,11 +408,16 @@ export function getRegularTypeOfObjectLiteral(type: Type, state: CheckState): Ty
 // ---------------------------------------------------------------------------
 
 export type UnionReduction = 0 | 1 | 2;
-export const UnionReduction = {
+interface UnionReductionTable {
+  readonly None: UnionReduction;
+  readonly Literal: UnionReduction;
+  readonly Subtype: UnionReduction;
+}
+export const UnionReduction: UnionReductionTable = {
   None: 0 as UnionReduction,
   Literal: 1 as UnionReduction,
   Subtype: 2 as UnionReduction,
-} as const;
+};
 
 // Stable interning key: sorted constituent type ids. `false | true` in either
 // order maps to the same key (and to the preseeded booleanType).
@@ -825,72 +823,397 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
   return anyType;
 }
 
-// Resolve a named type reference through the type-alias environment. A named
-// reference must NEVER silently become `any`: an unresolved name, a generic
-// alias (not yet modeled), or a circular alias each produces a deliberate
-// diagnostic and returns the error type. Mirrors TS-Go getTypeFromTypeReference
-// + getDeclaredTypeOfTypeAlias (with its circularity guard).
+// Resolve a named type reference through the binder symbol graph. A named
+// reference must NEVER silently become `any`: unresolved names, unsupported
+// generic aliases, and circular aliases each produce a deliberate diagnostic
+// and return the error type. Mirrors TS-Go getTypeFromTypeReference plus
+// getDeclaredTypeOfTypeAlias/getDeclaredTypeOfClassOrInterface.
 function typeFromTypeReferenceNode(type: TypeReferenceNode, state: CheckState): Type {
-  if (!isIdentifier(type.typeName)) {
-    // Qualified names (`A.B`) are not modeled yet.
-    state.diagnostics.push({ message: `Qualified type names are not yet supported by the checker.` });
+  const symbol = getTypeSymbolFromEntityName(type.typeName);
+  if (symbol === undefined) {
+    state.diagnostics.push({ message: `Cannot find name '${entityNameText(type.typeName)}'.` });
     return unresolvedType;
   }
-  const name = type.typeName.text;
-  // A block-local alias shadows this name: its declaration already emitted the
-  // unsupported diagnostic, so the reference resolves to the error type rather
-  // than binding to a same-named outer alias.
-  if (state.shadowedAliasNames.has(name)) {
-    return unresolvedType;
+  return getDeclaredTypeOfTypeSymbol(symbol, type.typeArguments, state);
+}
+
+function getTypeSymbolFromEntityName(name: EntityName): AstSymbol | undefined {
+  if (isIdentifier(name)) {
+    return getResolvedTypeSymbol(name.text, name);
   }
-  const declaration = state.typeAliases.get(name);
-  if (declaration === undefined) {
-    state.diagnostics.push({ message: `Cannot find name '${name}'.` });
-    return unresolvedType;
+  if (isQualifiedName(name)) {
+    const left = getTypeSymbolFromEntityName(name.left);
+    return left?.exports?.get(name.right.text) ?? left?.members?.get(name.right.text);
   }
-  // A reference supplying type arguments is a generic usage — deferred with an
-  // explicit diagnostic rather than erased to `any`.
-  if (type.typeArguments !== undefined && type.typeArguments.length > 0) {
-    state.diagnostics.push({ message: `Generic type alias '${name}' is not yet supported by the checker.` });
-    return unresolvedType;
+  return undefined;
+}
+
+function entityNameText(name: EntityName): string {
+  if (isIdentifier(name)) return name.text;
+  return `${entityNameText(name.left)}.${name.right.text}`;
+}
+
+function typeAliasDeclarationOfSymbol(symbol: AstSymbol): TypeAliasDeclaration | undefined {
+  const valueDeclaration = symbol.valueDeclaration;
+  if (valueDeclaration !== undefined && isTypeAliasDeclaration(valueDeclaration)) {
+    return valueDeclaration;
   }
-  return resolveTypeAlias(name, declaration, state);
+  return symbol.declarations?.find(isTypeAliasDeclaration);
+}
+
+function declarationName(symbol: AstSymbol): string {
+  return symbol.name ?? "<anonymous>";
+}
+
+function getDeclaredTypeOfTypeSymbol(symbol: AstSymbol, typeArguments: readonly TypeNode[] | undefined, state: CheckState): Type {
+  const flags = symbol.flags ?? 0;
+  if ((flags & SymbolFlags.TypeAlias) !== 0) {
+    const declaration = typeAliasDeclarationOfSymbol(symbol);
+    if (declaration === undefined) {
+      return unresolvedType;
+    }
+    return getDeclaredTypeOfTypeAlias(symbol, declaration, typeArguments, state);
+  }
+  if ((flags & (SymbolFlags.Interface | SymbolFlags.Class)) !== 0) {
+    return getDeclaredTypeOfClassOrInterface(symbol, typeArguments, state);
+  }
+  if ((flags & SymbolFlags.TypeParameter) !== 0) {
+    return lookupTypeParameterSubstitution(symbol, state) ?? makeTypeParameterType(symbol, state);
+  }
+  if ((flags & SymbolFlags.Alias) !== 0) {
+    return anyType;
+  }
+  state.diagnostics.push({ message: `Symbol '${declarationName(symbol)}' does not refer to a type.` });
+  return unresolvedType;
 }
 
 // Resolve an alias declaration to its target type, with cycle protection and
 // caching. A generic alias (declaring type parameters) is a deferred-with-
 // diagnostic usage; a self/mutually-referential alias is diagnosed once.
-function resolveTypeAlias(name: string, declaration: TypeAliasDeclaration, state: CheckState): Type {
+function getDeclaredTypeOfTypeAlias(
+  symbol: AstSymbol,
+  declaration: TypeAliasDeclaration,
+  typeArguments: readonly TypeNode[] | undefined,
+  state: CheckState,
+): Type {
   if (declaration.typeParameters !== undefined && declaration.typeParameters.length > 0) {
-    state.diagnostics.push({ message: `Generic type alias '${name}' is not yet supported by the checker.` });
+    return instantiateGenericType(
+      symbol,
+      "type alias",
+      declaration.typeParameters,
+      typeArguments,
+      state,
+      () => getDeclaredTypeOfTypeAliasCore(symbol, declaration, state, false),
+    );
+  }
+  if (typeArguments !== undefined && typeArguments.length > 0) {
+    state.diagnostics.push({ message: `Type alias '${declarationName(symbol)}' is not generic.` });
     return unresolvedType;
   }
-  const cached = state.typeAliasResolutions.get(name);
-  if (cached !== undefined) {
-    return cached;
-  }
-  if (state.aliasResolutionStack.has(name)) {
-    state.diagnostics.push({ message: `Type alias '${name}' circularly references itself.` });
+  return getDeclaredTypeOfTypeAliasCore(symbol, declaration, state);
+}
+
+function getDeclaredTypeOfTypeAliasCore(symbol: AstSymbol, declaration: TypeAliasDeclaration, state: CheckState, cacheable: boolean = true): Type {
+  if (state.cyclicTypeAliases.has(symbol)) {
+    reportCyclicTypeAlias(symbol, state);
     return unresolvedType;
   }
-  state.aliasResolutionStack.add(name);
+  if (cacheable) {
+    const cached = state.declaredTypeResolutions.get(symbol);
+    if (cached !== undefined) {
+      if (state.cyclicTypeAliases.has(symbol)) {
+        reportCyclicTypeAlias(symbol, state);
+      }
+      return cached;
+    }
+  }
+  if (state.typeResolutionStack.has(symbol)) {
+    markTypeAliasCycle(symbol, state);
+    reportCyclicTypeAlias(symbol, state);
+    return unresolvedType;
+  }
+  state.typeResolutionStack.add(symbol);
   const resolved = typeFromTypeNode(declaration.type, state);
-  state.aliasResolutionStack.delete(name);
-  state.typeAliasResolutions.set(name, resolved);
+  state.typeResolutionStack.delete(symbol);
+  if (cacheable) {
+    state.declaredTypeResolutions.set(symbol, resolved);
+  }
   return resolved;
 }
 
-// Eagerly resolve every collected non-generic alias so cycles and target errors
-// are reported even when the alias is never referenced from a body (mirrors
-// TS-Go checkTypeAliasDeclaration). Generic aliases are left for their usage
-// sites, where the deferred-generic diagnostic fires.
-export function resolveCollectedTypeAliases(state: CheckState): void {
-  for (const [name, declaration] of state.typeAliases) {
-    if (declaration.typeParameters !== undefined && declaration.typeParameters.length > 0) {
+function markTypeAliasCycle(symbol: AstSymbol, state: CheckState): void {
+  let inCycle = false;
+  for (const active of state.typeResolutionStack) {
+    if (active === symbol) {
+      inCycle = true;
+    }
+    if (inCycle && ((active.flags ?? 0) & SymbolFlags.TypeAlias) !== 0) {
+      state.cyclicTypeAliases.add(active);
+    }
+  }
+  state.cyclicTypeAliases.add(symbol);
+}
+
+function reportCyclicTypeAlias(symbol: AstSymbol, state: CheckState): void {
+  if (!state.reportedCyclicTypeAliases.has(symbol)) {
+    state.reportedCyclicTypeAliases.add(symbol);
+    state.diagnostics.push({ message: `Type alias '${declarationName(symbol)}' circularly references itself.` });
+  }
+}
+
+function getDeclaredTypeOfClassOrInterface(
+  symbol: AstSymbol,
+  typeArguments: readonly TypeNode[] | undefined,
+  state: CheckState,
+): Type {
+  const declaration = symbol.declarations?.find((node): node is AstNode =>
+    isInterfaceDeclaration(node) || isClassDeclaration(node)
+  );
+  const typeParameters = declaration !== undefined && (isInterfaceDeclaration(declaration) || isClassDeclaration(declaration))
+    ? declaration.typeParameters
+    : undefined;
+  if (typeParameters !== undefined && typeParameters.length > 0) {
+    return instantiateGenericType(
+      symbol,
+      "type",
+      typeParameters,
+      typeArguments,
+      state,
+      () => getDeclaredTypeOfClassOrInterfaceCore(symbol, declaration, state, false),
+    );
+  }
+  if (typeArguments !== undefined && typeArguments.length > 0) {
+    state.diagnostics.push({ message: `Type '${declarationName(symbol)}' is not generic.` });
+    return unresolvedType;
+  }
+  return getDeclaredTypeOfClassOrInterfaceCore(symbol, declaration, state);
+}
+
+function getDeclaredTypeOfClassOrInterfaceCore(symbol: AstSymbol, declaration: AstNode | undefined, state: CheckState, cacheable: boolean = true): Type {
+  if (cacheable) {
+    const cached = state.declaredTypeResolutions.get(symbol);
+    if (cached !== undefined) {
+      return cached;
+    }
+  }
+  if (state.typeResolutionStack.has(symbol)) {
+    return anyType;
+  }
+  state.typeResolutionStack.add(symbol);
+  const type = declaration === undefined
+    ? anyType
+    : makeNominalObjectType(symbol, declaration, state);
+  state.typeResolutionStack.delete(symbol);
+  if (cacheable) {
+    state.declaredTypeResolutions.set(symbol, type);
+  }
+  return type;
+}
+
+function instantiateGenericType(
+  symbol: AstSymbol,
+  declarationKind: "type" | "type alias",
+  typeParameters: readonly TypeParameterDeclaration[],
+  typeArguments: readonly TypeNode[] | undefined,
+  state: CheckState,
+  produce: () => Type,
+): Type {
+  const substitutions = buildTypeParameterSubstitutions(symbol, declarationKind, typeParameters, typeArguments, state);
+  if (substitutions === undefined) return unresolvedType;
+  const key = genericInstantiationKey(substitutions);
+  let instantiations = state.genericTypeInstantiations.get(symbol);
+  if (instantiations === undefined) {
+    instantiations = new Map<string, Type>();
+    state.genericTypeInstantiations.set(symbol, instantiations);
+  }
+  const cached = instantiations.get(key);
+  if (cached !== undefined) return cached;
+
+  state.typeParameterSubstitutions.push(substitutions);
+  const type = produce();
+  state.typeParameterSubstitutions.pop();
+  instantiations.set(key, type);
+  return type;
+}
+
+function buildTypeParameterSubstitutions(
+  symbol: AstSymbol,
+  declarationKind: "type" | "type alias",
+  typeParameters: readonly TypeParameterDeclaration[],
+  typeArguments: readonly TypeNode[] | undefined,
+  state: CheckState,
+): Map<AstSymbol, Type> | undefined {
+  const provided = typeArguments ?? [];
+  if (provided.length > typeParameters.length) {
+    state.diagnostics.push({
+      message: `${capitalize(declarationKind)} '${declarationName(symbol)}' requires ${typeParameters.length} type argument${typeParameters.length === 1 ? "" : "s"}, but got ${provided.length}.`,
+    });
+    return undefined;
+  }
+
+  const substitutions = new Map<AstSymbol, Type>();
+  state.typeParameterSubstitutions.push(substitutions);
+  for (let index = 0; index < typeParameters.length; index += 1) {
+    const parameter = typeParameters[index]!;
+    const parameterSymbol = nodeSymbol(parameter);
+    if (parameterSymbol === undefined) continue;
+
+    const argument = provided[index];
+    if (argument !== undefined) {
+      substitutions.set(parameterSymbol, typeFromTypeNode(argument, state));
       continue;
     }
-    resolveTypeAlias(name, declaration, state);
+    if (parameter.defaultType !== undefined) {
+      substitutions.set(parameterSymbol, typeFromTypeNode(parameter.defaultType, state));
+      continue;
+    }
+
+    state.typeParameterSubstitutions.pop();
+    state.diagnostics.push({
+      message: `${capitalize(declarationKind)} '${declarationName(symbol)}' requires ${typeParameters.length} type argument${typeParameters.length === 1 ? "" : "s"}.`,
+    });
+    return undefined;
   }
+  state.typeParameterSubstitutions.pop();
+  return substitutions;
+}
+
+function lookupTypeParameterSubstitution(symbol: AstSymbol, state: CheckState): Type | undefined {
+  for (let index = state.typeParameterSubstitutions.length - 1; index >= 0; index -= 1) {
+    const substitution = state.typeParameterSubstitutions[index]!.get(symbol);
+    if (substitution !== undefined) return substitution;
+  }
+  return undefined;
+}
+
+function genericInstantiationKey(substitutions: ReadonlyMap<AstSymbol, Type>): string {
+  const parts: string[] = [];
+  for (const [symbol, type] of substitutions) {
+    parts.push(`${symbol.name ?? ""}:${type.id}`);
+  }
+  return parts.join(",");
+}
+
+function capitalize(value: string): string {
+  return value.length === 0 ? value : value[0]!.toUpperCase() + value.slice(1);
+}
+
+function makeNominalObjectType(symbol: AstSymbol, declaration: AstNode, state: CheckState): Type {
+  const properties: ObjectProperty[] = [];
+  let extras: ObjectTypeExtras | undefined;
+  if (isInterfaceDeclaration(declaration)) {
+    collectTypeMembers(declaration.members, properties, state);
+    extras = collectTypeMemberExtras(declaration.members, state);
+  } else if (isClassDeclaration(declaration)) {
+    const instanceMember = (member: AstNode): boolean => !isStaticClassMember(member);
+    collectTypeMembers(declaration.members, properties, state, instanceMember);
+    extras = collectTypeMemberExtras(declaration.members, state, instanceMember);
+  }
+  const type = makeObjectType(properties, state, false, extras);
+  type.aliasSymbol = symbol;
+  return type;
+}
+
+function makeTypeParameterType(symbol: AstSymbol, state: CheckState): Type {
+  const cached = state.declaredTypeResolutions.get(symbol);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const type: Type = {
+    flags: TypeFlags.TypeParameter,
+    id: state.nextTypeId(),
+    symbol,
+    data: {},
+  };
+  state.declaredTypeResolutions.set(symbol, type);
+  return type;
+}
+
+function propertyNameText(name: PropertyName, state: CheckState): string | undefined {
+  if (isIdentifier(name) || isPrivateIdentifier(name)) return name.text;
+  if (isStringLiteral(name) || isNoSubstitutionTemplateLiteral(name) || isNumericLiteral(name) || isBigIntLiteral(name)) return name.text;
+  if (isComputedPropertyName(name)) {
+    const literalName = literalPropertyNameFromExpression(name.expression);
+    if (literalName !== undefined) return literalName;
+    state.diagnostics.push({ message: "Computed property names in type declarations must be literal string, number, or bigint names for checker object construction." });
+    return undefined;
+  }
+  state.diagnostics.push({ message: `Property name kind '${kindDebugName((name as { readonly kind: Kind }).kind)}' is not yet supported by the checker.` });
+  return undefined;
+}
+
+function literalPropertyNameFromExpression(expression: Expression): string | undefined {
+  if (isStringLiteral(expression) || isNoSubstitutionTemplateLiteral(expression) || isNumericLiteral(expression) || isBigIntLiteral(expression)) {
+    return expression.text;
+  }
+  return undefined;
+}
+
+function collectTypeMembers(members: readonly AstNode[], properties: ObjectProperty[], state: CheckState, includeMember: (member: AstNode) => boolean = () => true): void {
+  for (const member of members) {
+    if (!includeMember(member)) continue;
+    if (isPropertySignatureDeclaration(member) || isPropertyDeclaration(member)) {
+      const name = propertyNameText(member.name, state);
+      if (name === undefined) continue;
+      properties.push({
+        name,
+        type: member.type === undefined ? anyType : typeFromTypeNode(member.type, state),
+        optional: member.postfixToken?.kind === Kind.QuestionToken,
+      });
+    } else if (isMethodSignatureDeclaration(member) || isMethodDeclaration(member)) {
+      const name = propertyNameText(member.name, state);
+      if (name === undefined) continue;
+      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
+      properties.push({
+        name,
+        type: makeFunctionType(returnType, state, functionParametersFromNode(member.parameters, state)),
+        optional: member.postfixToken?.kind === Kind.QuestionToken,
+      });
+    } else if (isGetAccessorDeclaration(member)) {
+      const name = propertyNameText(member.name, state);
+      if (name === undefined) continue;
+      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
+      properties.push({ name, type: returnType });
+    } else if (isSetAccessorDeclaration(member)) {
+      const name = propertyNameText(member.name, state);
+      if (name === undefined) continue;
+      const parameter = member.parameters[0];
+      const parameterType = parameter?.type === undefined ? anyType : typeFromTypeNode(parameter.type, state);
+      properties.push({ name, type: parameterType });
+    }
+  }
+}
+
+function isStaticClassMember(member: AstNode): boolean {
+  return (isPropertyDeclaration(member) || isMethodDeclaration(member) || isGetAccessorDeclaration(member) || isSetAccessorDeclaration(member))
+    && hasModifier(member, ModifierFlags.Static);
+}
+
+function collectTypeMemberExtras(members: readonly AstNode[], state: CheckState, includeMember: (member: AstNode) => boolean = () => true): ObjectTypeExtras | undefined {
+  const callSignatures: Signature[] = [];
+  const constructSignatures: Signature[] = [];
+  const indexInfos: IndexInfo[] = [];
+  for (const member of members) {
+    if (!includeMember(member)) continue;
+    if (isCallSignatureDeclaration(member)) {
+      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
+      callSignatures.push(makeCallSignature(returnType, functionParametersFromNode(member.parameters, state)));
+    } else if (isConstructSignatureDeclaration(member)) {
+      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
+      constructSignatures.push(makeCallSignature(returnType, functionParametersFromNode(member.parameters, state)));
+    } else if (isIndexSignatureDeclaration(member)) {
+      const keyParameter = member.parameters[0];
+      const keyType = keyParameter?.type === undefined ? anyType : typeFromTypeNode(keyParameter.type, state);
+      const valueType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
+      indexInfos.push({ keyType, valueType, declaration: member });
+    }
+  }
+  if (callSignatures.length === 0 && constructSignatures.length === 0 && indexInfos.length === 0) return undefined;
+  return {
+    ...(callSignatures.length > 0 ? { callSignatures } : {}),
+    ...(constructSignatures.length > 0 ? { constructSignatures } : {}),
+    ...(indexInfos.length > 0 ? { indexInfos } : {}),
+  };
 }
 
 // Build the FunctionParameter list for a signature/method declaration's
@@ -907,23 +1230,28 @@ function functionParametersFromNode(parameters: readonly ParameterDeclaration[],
 }
 
 // `{ name: T; ... }` type literals: build an anonymous object type from the
-// property/method signatures, call signatures, and index signatures. Construct
-// signatures and non-identifier names are still deferred.
+// property/method signatures, call signatures, construct signatures, and index
+// signatures.
 function typeFromTypeLiteralNode(node: TypeLiteralNode, state: CheckState): Type {
   const properties: ObjectProperty[] = [];
   const callSignatures: Signature[] = [];
+  const constructSignatures: Signature[] = [];
   const indexInfos: IndexInfo[] = [];
   for (const member of node.members) {
-    if (isPropertySignatureDeclaration(member) && isIdentifier(member.name)) {
+    if (isPropertySignatureDeclaration(member)) {
+      const name = propertyNameText(member.name, state);
+      if (name === undefined) continue;
       properties.push({
-        name: member.name.text,
+        name,
         type: typeFromTypeNode(member.type, state),
         optional: member.postfixToken?.kind === Kind.QuestionToken,
       });
-    } else if (isMethodSignatureDeclaration(member) && isIdentifier(member.name)) {
+    } else if (isMethodSignatureDeclaration(member)) {
+      const name = propertyNameText(member.name, state);
+      if (name === undefined) continue;
       const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
       properties.push({
-        name: member.name.text,
+        name,
         type: makeFunctionType(returnType, state, functionParametersFromNode(member.parameters, state)),
         optional: member.postfixToken?.kind === Kind.QuestionToken,
       });
@@ -931,6 +1259,10 @@ function typeFromTypeLiteralNode(node: TypeLiteralNode, state: CheckState): Type
       // `{ (args): R }` — an object type carrying a bare call signature.
       const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
       callSignatures.push(makeCallSignature(returnType, functionParametersFromNode(member.parameters, state)));
+    } else if (isConstructSignatureDeclaration(member)) {
+      // `{ new (args): R }` — object type carrying a construct signature.
+      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
+      constructSignatures.push(makeCallSignature(returnType, functionParametersFromNode(member.parameters, state)));
     } else if (isIndexSignatureDeclaration(member)) {
       // `{ [key: K]: V }` — the index parameter's type is the key, member.type
       // is the value. A missing key/value type defaults to `any`.
@@ -939,13 +1271,12 @@ function typeFromTypeLiteralNode(node: TypeLiteralNode, state: CheckState): Type
       const valueType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
       indexInfos.push({ keyType, valueType, declaration: member });
     } else {
-      // Construct signatures + non-identifier names aren't modeled yet; surface
-      // explicitly rather than silently dropping the member.
-      state.diagnostics.push({ message: `Type member kind '${Kind[member.kind]}' is not yet supported by the checker.` });
+      state.diagnostics.push({ message: `Type member kind '${kindDebugName(member.kind)}' is not yet supported by the checker.` });
     }
   }
   const extras: ObjectTypeExtras = {
     ...(callSignatures.length > 0 ? { callSignatures } : {}),
+    ...(constructSignatures.length > 0 ? { constructSignatures } : {}),
     ...(indexInfos.length > 0 ? { indexInfos } : {}),
   };
   return makeObjectType(properties, state, false, extras);
@@ -1026,6 +1357,10 @@ export function getResolvedSymbol(identifierText: string, location: AstNode): As
   return sharedNameResolver.resolve(location, identifierText, SymbolFlags.Value | SymbolFlags.Alias, undefined, true, false);
 }
 
+function getResolvedTypeSymbol(identifierText: string, location: AstNode): AstSymbol | undefined {
+  return sharedNameResolver.resolve(location, identifierText, SymbolFlags.Type | SymbolFlags.Namespace | SymbolFlags.Alias, undefined, true, false);
+}
+
 // Initializer inference is injected by checker.expressions.ts (which owns
 // inferExpression) to avoid a checkedtype → expressions import cycle at module
 // load; the runtime call cycle is fine (ESM supports it).
@@ -1047,7 +1382,7 @@ function getTypeOfBinderSymbol(symbol: AstSymbol, state: CheckState): Type | und
   if ((flags & (SymbolFlags.Variable | SymbolFlags.Property)) !== 0) {
     return getTypeOfVariableOrParameterOrProperty(symbol, state);
   }
-  if ((flags & (SymbolFlags.Function | SymbolFlags.Class | SymbolFlags.Enum | SymbolFlags.Module)) !== 0) {
+  if ((flags & (SymbolFlags.Function | SymbolFlags.Method | SymbolFlags.Class | SymbolFlags.Enum | SymbolFlags.Module)) !== 0) {
     return getTypeOfFuncClassEnumModule(symbol, state);
   }
   if ((flags & SymbolFlags.Alias) !== 0) {
@@ -1071,7 +1406,7 @@ function getTypeOfBinderSymbol(symbol: AstSymbol, state: CheckState): Type | und
 function getTypeOfVariableOrParameterOrProperty(symbol: AstSymbol, state: CheckState): Type | undefined {
   const declaration = symbol.valueDeclaration;
   if (declaration === undefined) return undefined;
-  if (isVariableDeclaration(declaration) || isParameterDeclaration(declaration) || isPropertyDeclaration(declaration)) {
+  if (isVariableDeclaration(declaration) || isParameterDeclaration(declaration) || isPropertyDeclaration(declaration) || isPropertySignatureDeclaration(declaration)) {
     if (declaration.type !== undefined) {
       return typeFromTypeNode(declaration.type, state);
     }
@@ -1135,11 +1470,24 @@ function getTypeOfDestructuredBindingElement(element: BindingElement, state: Che
 // direct `f()` call still type-checks.
 function getTypeOfFuncClassEnumModule(symbol: AstSymbol, state: CheckState): Type | undefined {
   const flags = symbol.flags ?? 0;
-  if ((flags & SymbolFlags.Function) !== 0) {
-    // The function's declared signature drives its callable value type. Parameter
-    // + return typing of the declaration is a later slice; a placeholder callable
-    // keeps `f(...)` calls flowing without false arity errors.
+  if ((flags & (SymbolFlags.Function | SymbolFlags.Method)) !== 0) {
+    const declaration = symbol.valueDeclaration;
+    if (declaration !== undefined && (isFunctionDeclaration(declaration) || isMethodDeclaration(declaration) || isMethodSignatureDeclaration(declaration))) {
+      const returnType = declaration.type === undefined ? anyType : typeFromTypeNode(declaration.type, state);
+      return makeFunctionType(returnType, state, functionParametersFromNode(declaration.parameters, state));
+    }
     return makeFunctionType(anyType, state, [{ name: "args", type: anyType, rest: true }]);
+  }
+  if ((flags & SymbolFlags.Class) !== 0) {
+    const declaration = symbol.declarations?.find((node): node is ClassDeclaration => isClassDeclaration(node));
+    const instanceType = getDeclaredTypeOfClassOrInterfaceCore(symbol, declaration, state);
+    const constructor = declaration?.members.find((member) => isConstructorDeclaration(member));
+    const parameters = constructor === undefined ? [] : functionParametersFromNode(constructor.parameters, state);
+    const staticProperties: ObjectProperty[] = [];
+    if (declaration !== undefined) {
+      collectTypeMembers(declaration.members, staticProperties, state, isStaticClassMember);
+    }
+    return makeObjectType(staticProperties, state, false, { constructSignatures: [makeCallSignature(instanceType, parameters)] });
   }
   void state;
   return anyType;
@@ -1178,10 +1526,11 @@ export function displayType(type: Type): string {
       )
       .join(" | ");
   }
-  if ((type.flags & TypeFlags.StringLiteral) !== 0) return JSON.stringify((type.data as LiteralType).value);
+  if ((type.flags & TypeFlags.StringLiteral) !== 0) return quoteStringLiteral(String((type.data as LiteralType).value));
   if ((type.flags & TypeFlags.NumberLiteral) !== 0) return String((type.data as LiteralType).value);
   if ((type.flags & TypeFlags.BooleanLiteral) !== 0) return String((type.data as LiteralType).value);
   if ((type.flags & TypeFlags.BigIntLiteral) !== 0) return `${pseudoBigIntToString((type.data as LiteralType).value as PseudoBigInt)}n`;
+  if ((type.flags & TypeFlags.TypeParameter) !== 0) return type.symbol?.name ?? "T";
   if (isFunctionType(type)) return "function";
   const elementType = getArrayElementType(type);
   if (elementType !== undefined) {
@@ -1190,6 +1539,9 @@ export function displayType(type: Type): string {
     return (elementType.flags & TypeFlags.Union) !== 0 ? `(${rendered})[]` : `${rendered}[]`;
   }
   if ((type.flags & TypeFlags.Object) !== 0) {
+    if (type.aliasSymbol !== undefined && (((type.aliasSymbol.flags ?? 0) & (SymbolFlags.Class | SymbolFlags.Interface)) !== 0)) {
+      return declarationName(type.aliasSymbol);
+    }
     const members = objectTypeMembers(type);
     if (members !== undefined) {
       const entries = [...members.values()].map((m) => `${m.name}: ${displayType(m.syntheticType)}`);
@@ -1204,4 +1556,38 @@ export function displayType(type: Type): string {
   const name = (type.data as IntrinsicType | undefined)?.intrinsicName;
   if (name === undefined || name === "error") return "unknown";
   return name;
+}
+
+function quoteStringLiteral(value: string): string {
+  let result = "\"";
+  for (let index = 0; index < value.length; index += 1) {
+    const ch = value[index]!;
+    switch (ch) {
+      case "\"":
+        result += "\\\"";
+        break;
+      case "\\":
+        result += "\\\\";
+        break;
+      case "\b":
+        result += "\\b";
+        break;
+      case "\f":
+        result += "\\f";
+        break;
+      case "\n":
+        result += "\\n";
+        break;
+      case "\r":
+        result += "\\r";
+        break;
+      case "\t":
+        result += "\\t";
+        break;
+      default:
+        result += ch;
+        break;
+    }
+  }
+  return result + "\"";
 }

@@ -841,10 +841,20 @@ export function getRelativePathToDirectoryOrUrl(
  * Returns `{ result, ok }` where `ok` indicates whether `callback`
  * signaled a stop. Mirrors TS-Go `ForEachAncestorDirectory`.
  */
+export interface AncestorDirectoryCallbackResult<T> {
+  readonly result: T;
+  readonly stop: boolean;
+}
+
+export interface AncestorDirectoryResult<T> {
+  readonly result: T | undefined;
+  readonly ok: boolean;
+}
+
 export function forEachAncestorDirectory<T>(
   directory: string,
-  callback: (directory: string) => { result: T; stop: boolean },
-): { result: T | undefined; ok: boolean } {
+  callback: (directory: string) => AncestorDirectoryCallbackResult<T>,
+): AncestorDirectoryResult<T> {
   let dir = directory;
   for (;;) {
     const { result, stop } = callback(dir);
@@ -862,7 +872,7 @@ export function forEachAncestorDirectory<T>(
 export function forEachAncestorDirectoryStoppingAtGlobalCache<T>(
   globalCacheLocation: string,
   directory: string,
-  callback: (directory: string) => { result: T; stop: boolean },
+  callback: (directory: string) => AncestorDirectoryCallbackResult<T>,
 ): T | undefined {
   const { result } = forEachAncestorDirectory<T>(directory, (ancestor) => {
     const r = callback(ancestor);
@@ -877,8 +887,8 @@ export function forEachAncestorDirectoryStoppingAtGlobalCache<T>(
 /** Path-typed variant; mirrors TS-Go `ForEachAncestorDirectoryPath`. */
 export function forEachAncestorDirectoryPath<T>(
   directory: Path,
-  callback: (directory: Path) => { result: T; stop: boolean },
-): { result: T | undefined; ok: boolean } {
+  callback: (directory: Path) => AncestorDirectoryCallbackResult<T>,
+): AncestorDirectoryResult<T> {
   return forEachAncestorDirectory(directory, (d) => callback(d as Path));
 }
 
@@ -1033,8 +1043,8 @@ function getCommonParentsWorker(
   }
 
   const equality = options.useCaseSensitiveFileNames
-    ? (a: string, b: string) => a === b
-    : (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+    ? (a: string, b: string): boolean => a === b
+    : (a: string, b: string): boolean => a.toLowerCase() === b.toLowerCase();
 
   for (let lastCommonIndex = 0; lastCommonIndex < maxDepth; lastCommonIndex++) {
     const candidate = componentGroups[0]![lastCommonIndex]!;

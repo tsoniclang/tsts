@@ -40,18 +40,22 @@ import {
 } from "../tspath/index.js";
 import { Tristate, tristateIsTrue } from "../core/tristate.js";
 
-/**
- * JSX emit modes mirror TS-Go core.JsxEmit. The actual enum lives in
- * core/ once CompilerOptions is ported.
- */
-export enum JsxEmit {
-  None = 0,
-  Preserve = 1,
-  React = 2,
-  ReactNative = 3,
-  ReactJSX = 4,
-  ReactJSXDev = 5,
-}
+export type JsxEmit = number;
+export const JsxEmit: {
+  readonly None: JsxEmit;
+  readonly Preserve: JsxEmit;
+  readonly React: JsxEmit;
+  readonly ReactNative: JsxEmit;
+  readonly ReactJSX: JsxEmit;
+  readonly ReactJSXDev: JsxEmit;
+} = {
+  None: 0,
+  Preserve: 1,
+  React: 2,
+  ReactNative: 3,
+  ReactJSX: 4,
+  ReactJSXDev: 5,
+} as const;
 
 /**
  * Minimal CompilerOptions shape needed by outputpaths.

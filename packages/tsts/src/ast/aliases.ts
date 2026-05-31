@@ -17,6 +17,8 @@
  * No declares, no runtime — pure types.
  */
 
+import type { int } from "@tsonic/core/types.js";
+
 import type {
   Identifier,
   StringLiteral,
@@ -255,6 +257,8 @@ export interface PositionMap {
 // ---------------------------------------------------------------------------
 
 export interface CommentRange extends TextRange {
+  pos: int;
+  end: int;
   hasTrailingNewLine?: boolean;
   kind: number;
 }

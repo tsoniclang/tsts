@@ -11,9 +11,13 @@
  * No declares, no runtime side effects — just typed pass-throughs.
  */
 
-import type { Node as AstNode, NodeArray, Symbol as AstSymbol } from "./generated/types.js";
+import type { int } from "@tsonic/core/types.js";
+import type { Node as AstNode, NodeArray, Symbol as AstSymbol, TextRange } from "./generated/types.js";
+import type { ModifierLike } from "./generated/nodes.js";
 import type { ModifierList, SymbolTable } from "./aliases.js";
+import type { ModifierFlags } from "../enums/modifierFlags.enum.js";
 import { Kind } from "./generated/kind.js";
+import { createIdentifier } from "./generated/factory.js";
 import {
   type SourceFileLike,
   getECMALineOfPosition as scannerGetECMALineOfPosition,
@@ -37,7 +41,7 @@ function sourceFileLike(file: AstNode | undefined): SourceFileLike {
   };
 }
 
-type NodeList<T extends AstNode = AstNode> = NodeArray<T>;
+type NodeList = NodeArray<AstNode>;
 
 // Generic untyped property read. Bridges the gap between TS-Go's
 // polymorphic `*ast.Node` and our typed AST nodes; once a transformer
@@ -47,16 +51,25 @@ function f<T = AstNode>(node: AstNode | undefined, key: string): T | undefined {
   return (node as unknown as Record<string, T>)[key];
 }
 
+function nodeArray(value: unknown): readonly AstNode[] {
+  return value === undefined ? [] : value as readonly AstNode[];
+}
+
+function modifierArray(value: readonly ModifierLike[] | undefined): readonly ModifierLike[] {
+  if (value === undefined) return [];
+  return value;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Generic node accessors
 // ─────────────────────────────────────────────────────────────────────────────
-export function nodeKind(node: AstNode): number { return node.kind; }
+export function nodeKind(node: AstNode): Kind { return node.kind; }
 export function nodeParent(node: AstNode | undefined): AstNode | undefined { return node?.parent; }
-export function nodePos(node: AstNode | undefined): number { return node?.pos ?? -1; }
-export function nodeEnd(node: AstNode | undefined): number { return node?.end ?? -1; }
-export function nodeFlags(node: AstNode | undefined): number {
+export function nodePos(node: AstNode | undefined): int { return node?.pos ?? -1; }
+export function nodeEnd(node: AstNode | undefined): int { return node?.end ?? -1; }
+export function nodeFlags(node: AstNode | undefined): int {
   if (node === undefined) return 0;
-  return (node as unknown as { flags?: number }).flags ?? 0;
+  return node.flags;
 }
 export function nodeText(node: AstNode | undefined): string {
   const t = (node as { text?: unknown } | undefined)?.text;
@@ -70,20 +83,29 @@ export function nodeLocals(node: AstNode | undefined): SymbolTable | undefined {
 export function nodeSymbol(node: AstNode | undefined): AstSymbol | undefined { return f<AstSymbol>(node, "symbol"); }
 export function nodeBody(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "body"); }
 export function nodeInitializerOf(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "initializer"); }
-export interface NodeLoc { readonly pos: number; readonly end: number }
-export function nodeLoc(node: AstNode | undefined): NodeLoc | undefined {
+export interface NodeLoc { readonly pos: int; readonly end: int }
+export function nodeLoc(node: TextRange | undefined): NodeLoc | undefined {
   if (node === undefined) return undefined;
   return { pos: node.pos, end: node.end };
+}
+
+class TextRangeObject implements TextRange {
+  pos: int;
+  end: int;
+
+  constructor(pos: int, end: int) {
+    this.pos = pos;
+    this.end = end;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Setters used by transformers when synthesizing new nodes
 // ─────────────────────────────────────────────────────────────────────────────
-export function setLoc(node: AstNode | NodeList | undefined, loc: unknown): void {
-  if (node === undefined || loc === undefined || loc === null) return;
-  const l = loc as { pos?: number; end?: number };
-  if (typeof l.pos === "number") (node as unknown as { pos: number }).pos = l.pos;
-  if (typeof l.end === "number") (node as unknown as { end: number }).end = l.end;
+export function setLoc(node: TextRange | undefined, loc: NodeLoc | undefined): void {
+  if (node === undefined || loc === undefined) return;
+  node.pos = loc.pos;
+  node.end = loc.end;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -97,16 +119,16 @@ export function identifierText(node: AstNode | undefined): string { return nodeT
 export function binaryLeft(node: AstNode): AstNode { return f<AstNode>(node, "left")!; }
 export function binaryRight(node: AstNode): AstNode { return f<AstNode>(node, "right")!; }
 export function binaryOperatorToken(node: AstNode): AstNode { return f<AstNode>(node, "operatorToken")!; }
-export function binaryOperatorTokenKind(node: AstNode): number {
-  return f<AstNode>(node, "operatorToken")?.kind ?? 0;
+export function binaryOperatorTokenKind(node: AstNode): Kind {
+  return f<AstNode>(node, "operatorToken")?.kind ?? Kind.Unknown;
 }
-export function binaryOperatorKind(node: AstNode): number { return binaryOperatorTokenKind(node); }
-export function prefixUnaryOperatorRO(node: AstNode): number {
-  return (node as unknown as { operator?: number }).operator ?? 0;
+export function binaryOperatorKind(node: AstNode): Kind { return binaryOperatorTokenKind(node); }
+export function prefixUnaryOperatorRO(node: AstNode): Kind {
+  return (node as unknown as { operator?: Kind }).operator ?? Kind.Unknown;
 }
 export function prefixUnaryOperandRO(node: AstNode): AstNode { return f<AstNode>(node, "operand")!; }
-export function postfixUnaryOperatorRO(node: AstNode): number {
-  return (node as unknown as { operator?: number }).operator ?? 0;
+export function postfixUnaryOperatorRO(node: AstNode): Kind {
+  return (node as unknown as { operator?: Kind }).operator ?? Kind.Unknown;
 }
 export function postfixUnaryOperandRO(node: AstNode): AstNode { return f<AstNode>(node, "operand")!; }
 
@@ -116,9 +138,8 @@ export function postfixUnaryOperandRO(node: AstNode): AstNode { return f<AstNode
 // hasSyntacticModifier / canHaveModifiers are owned by ./utilities.js (faithful
 // 1:1) and re-exported through the ast barrel; the former non-faithful copies
 // here were removed during the M2 Fork B migration to avoid duplicate exports.
-export function getModifierListNodes(modifiers: ModifierList | AstNode | undefined): readonly AstNode[] {
-  if (modifiers === undefined) return [];
-  return ((modifiers as unknown as { items?: readonly AstNode[] }).items ?? modifiers) as readonly AstNode[];
+export function getModifierListNodes(modifiers: ModifierList | undefined): readonly ModifierLike[] {
+  return modifierArray(modifiers);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -128,9 +149,9 @@ export function sourceFileIsDeclarationFile(node: AstNode): boolean {
   return Boolean((node as unknown as { isDeclarationFile?: boolean }).isDeclarationFile);
 }
 export function sourceFileEndOfFileToken(node: AstNode): AstNode | undefined { return f<AstNode>(node, "endOfFileToken"); }
-export function sourceFileStatementsLoc(node: AstNode): unknown { return nodeLoc(node); }
+export function sourceFileStatementsLoc(node: AstNode): NodeLoc | undefined { return nodeLoc(node); }
 export function sourceFileStatementsRO(node: AstNode): readonly AstNode[] {
-  return f<readonly AstNode[]>(node, "statements") ?? [];
+  return nodeArray(f<readonly AstNode[]>(node, "statements"));
 }
 export function sourceFileFileName(node: AstNode): string {
   return (node as unknown as { fileName?: string }).fileName ?? "";
@@ -145,10 +166,10 @@ export function isExternalModule(node: AstNode): boolean {
 // Binding patterns
 // ─────────────────────────────────────────────────────────────────────────────
 export function bindingPatternElements(node: AstNode): readonly AstNode[] {
-  return f<readonly AstNode[]>(node, "elements") ?? [];
+  return nodeArray(f<readonly AstNode[]>(node, "elements"));
 }
 export function bindingPatternElementsRO(node: AstNode): readonly AstNode[] { return bindingPatternElements(node); }
-export function bindingPatternElementsLoc(node: AstNode): unknown { return nodeLoc(node); }
+export function bindingPatternElementsLoc(node: AstNode): NodeLoc | undefined { return nodeLoc(node); }
 export function bindingElementName(node: AstNode): AstNode { return f<AstNode>(node, "name")!; }
 export function bindingElementInitializer(node: AstNode): AstNode | undefined { return f<AstNode>(node, "initializer"); }
 export function bindingElementDotDotDotToken(node: AstNode): AstNode | undefined { return f<AstNode>(node, "dotDotDotToken"); }
@@ -160,9 +181,9 @@ export function parameterDotDotDotToken(node: AstNode): AstNode | undefined { re
 
 // `getX` style accessors used by the typeeraser port.
 export function getNodeName(node: AstNode | undefined): AstNode | undefined { return nodeName(node); }
-export function getNodeFlags(node: AstNode | undefined): number { return nodeFlags(node); }
-export function getNodeLoc(node: AstNode | undefined): unknown { return nodeLoc(node); }
-export function setNodeLoc(node: AstNode | undefined, loc: unknown): void { setLoc(node, loc); }
+export function getNodeFlags(node: AstNode | undefined): int { return nodeFlags(node); }
+export function getNodeLoc(node: AstNode | undefined): NodeLoc | undefined { return nodeLoc(node); }
+export function setNodeLoc(node: AstNode | undefined, loc: NodeLoc | undefined): void { setLoc(node, loc); }
 export function getModifiers(node: AstNode | undefined): ModifierList | undefined { return f<ModifierList>(node, "modifiers"); }
 export function getInitializer(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "initializer"); }
 export function getBody(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "body"); }
@@ -176,7 +197,7 @@ export function getArguments(node: AstNode | undefined): NodeList | undefined { 
 export function getTag(node: AstNode): AstNode { return f<AstNode>(node, "tag")!; }
 export function getTemplate(node: AstNode): AstNode { return f<AstNode>(node, "template")!; }
 export function getTypeAnnotation(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "type"); }
-export function getHeritageToken(node: AstNode): number { return (node as unknown as { token?: number }).token ?? 0; }
+export function getHeritageToken(node: AstNode): Kind { return (node as unknown as { token?: Kind }).token ?? Kind.Unknown; }
 export function getHeritageTypes(node: AstNode | undefined): NodeList | undefined { return f<NodeList>(node, "types"); }
 export function getHeritageClauses(node: AstNode | undefined): NodeList | undefined { return f<NodeList>(node, "heritageClauses"); }
 export function getClassMembers(node: AstNode | undefined): NodeList | undefined { return f<NodeList>(node, "members"); }
@@ -190,10 +211,8 @@ export function getPhaseModifier(node: AstNode | undefined): AstNode | undefined
 export function getNamedImportElements(node: AstNode): NodeList { return (f<NodeList>(node, "elements") ?? []) as NodeList; }
 export function getNamedExportElements(node: AstNode): NodeList { return (f<NodeList>(node, "elements") ?? []) as NodeList; }
 export function getExportClause(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "exportClause"); }
-export function getNodeListLength(list: unknown): number {
-  if (list === undefined || list === null) return 0;
-  if (Array.isArray(list)) return list.length;
-  return (list as { items?: { length: number } }).items?.length ?? 0;
+export function getNodeListLength(list: readonly unknown[] | undefined): number {
+  return list?.length ?? 0;
 }
 // nodeIsMissing is owned by ./utilities.js (faithful 1:1) and re-exported
 // through the ast barrel; the non-faithful copy here was removed during the
@@ -232,7 +251,7 @@ export function getInnermostModuleBody(node: AstNode | undefined): AstNode | und
 export function variableStatementDeclarationListRO(node: AstNode): AstNode { return f<AstNode>(node, "declarationList")!; }
 export function variableStatementModifiers(node: AstNode): ModifierList | undefined { return f<ModifierList>(node, "modifiers"); }
 export function variableDeclarationListDeclarationsRO(node: AstNode): readonly AstNode[] {
-  return f<readonly AstNode[]>(node, "declarations") ?? [];
+  return nodeArray(f<readonly AstNode[]>(node, "declarations"));
 }
 export function variableDeclarationNameRO(node: AstNode): AstNode { return f<AstNode>(node, "name")!; }
 export function variableDeclarationName(node: AstNode): AstNode { return variableDeclarationNameRO(node); }
@@ -255,7 +274,7 @@ export function importSpecifierPropertyNameOrNameRO(node: AstNode): AstNode { re
 export function importEqualsName(node: AstNode): AstNode { return f<AstNode>(node, "name")!; }
 export function importEqualsModuleReference(node: AstNode): AstNode { return f<AstNode>(node, "moduleReference")!; }
 export function namedElements(node: AstNode): readonly AstNode[] {
-  return f<readonly AstNode[]>(node, "elements") ?? [];
+  return nodeArray(f<readonly AstNode[]>(node, "elements"));
 }
 export function namedExportsElements(node: AstNode): readonly AstNode[] { return namedElements(node); }
 export function exportSpecifierName(node: AstNode): AstNode { return f<AstNode>(node, "name")!; }
@@ -334,11 +353,11 @@ export function catchClauseBlock(node: AstNode): AstNode { return f<AstNode>(nod
 // ─────────────────────────────────────────────────────────────────────────────
 // Block
 // ─────────────────────────────────────────────────────────────────────────────
-export function blockStatements(node: AstNode | undefined): readonly AstNode[] { return f<readonly AstNode[]>(node, "statements") ?? []; }
+export function blockStatements(node: AstNode | undefined): readonly AstNode[] { return nodeArray(f<readonly AstNode[]>(node, "statements")); }
 export function blockStatementsRO(node: AstNode | undefined): readonly AstNode[] { return blockStatements(node); }
 export function blockStatementList(node: AstNode | undefined): NodeList | undefined { return f<NodeList>(node, "statements"); }
-export function blockStatementListLoc(node: AstNode | undefined): unknown { return nodeLoc(node); }
-export function blockStatementsLoc(node: AstNode | undefined): unknown { return nodeLoc(node); }
+export function blockStatementListLoc(node: AstNode | undefined): NodeLoc | undefined { return nodeLoc(node); }
+export function blockStatementsLoc(node: AstNode | undefined): NodeLoc | undefined { return nodeLoc(node); }
 export function blockMultiLine(node: AstNode | undefined): boolean { return Boolean((node as unknown as { multiLine?: boolean } | undefined)?.multiLine); }
 export function blockMultiLineRO(node: AstNode | undefined): boolean { return blockMultiLine(node); }
 
@@ -354,11 +373,11 @@ export function awaitExpressionOf(node: AstNode): AstNode { return f<AstNode>(no
 // ─────────────────────────────────────────────────────────────────────────────
 export function callExpressionExpression(node: AstNode): AstNode { return f<AstNode>(node, "expression")!; }
 export function callExpressionExpressionRO(node: AstNode): AstNode { return callExpressionExpression(node); }
-export function callExpressionArgumentsRO(node: AstNode): readonly AstNode[] { return f<readonly AstNode[]>(node, "arguments") ?? []; }
+export function callExpressionArgumentsRO(node: AstNode): readonly AstNode[] { return nodeArray(f<readonly AstNode[]>(node, "arguments")); }
 export function callExpressionArguments(node: AstNode): readonly AstNode[] { return callExpressionArgumentsRO(node); }
 export function callExpressionArgumentsListRO(node: AstNode): NodeList | undefined { return f<NodeList>(node, "arguments"); }
-export function callExpressionArgumentsLocRO(node: AstNode): unknown { return nodeLoc(node); }
-export function callExpressionArgumentsLoc(node: AstNode): unknown { return callExpressionArgumentsLocRO(node); }
+export function callExpressionArgumentsLocRO(node: AstNode): NodeLoc | undefined { return nodeLoc(node); }
+export function callExpressionArgumentsLoc(node: AstNode): NodeLoc | undefined { return callExpressionArgumentsLocRO(node); }
 export function callExpressionQuestionDotToken(node: AstNode): AstNode | undefined { return f<AstNode>(node, "questionDotToken"); }
 export function callExpressionQuestionDotTokenRO(node: AstNode): AstNode | undefined { return callExpressionQuestionDotToken(node); }
 export function taggedTemplateTagRO(node: AstNode): AstNode { return f<AstNode>(node, "tag")!; }
@@ -374,10 +393,7 @@ export function functionExpressionBody(node: AstNode): AstNode | undefined { ret
 export function functionExpressionAsteriskToken(node: AstNode): AstNode | undefined { return f<AstNode>(node, "asteriskToken"); }
 export function functionAsteriskToken(node: AstNode): AstNode | undefined { return functionAsteriskTokenRO(node); }
 export function nodeParameters(node: AstNode): readonly AstNode[] {
-  const list = f<NodeList>(node, "parameters");
-  if (list === undefined) return [];
-  const inner = (list as unknown as { nodes?: readonly AstNode[] }).nodes;
-  return inner ?? [];
+  return nodeArray(f<NodeList>(node, "parameters"));
 }
 export function nodeParameterList(node: AstNode): NodeList | undefined { return f<NodeList>(node, "parameters"); }
 export function forInOrOfInitializerNode(node: AstNode): AstNode { return forInOrOfInitializer(node); }
@@ -390,12 +406,11 @@ export function propertyAssignmentInitializer(node: AstNode): AstNode { return p
 export function shorthandPropertyAssignmentName(node: AstNode): AstNode { return shorthandPropertyAssignmentNameRO(node); }
 export function spreadAssignmentExpression(node: AstNode): AstNode { return spreadAssignmentExpressionRO(node); }
 export function spreadElementExpression(node: AstNode): AstNode { return spreadElementExpressionRO(node); }
-export function prefixUnaryOperator(node: AstNode): number { return prefixUnaryOperatorRO(node); }
-export function postfixUnaryOperator(node: AstNode): number { return postfixUnaryOperatorRO(node); }
+export function prefixUnaryOperator(node: AstNode): Kind { return prefixUnaryOperatorRO(node); }
+export function postfixUnaryOperator(node: AstNode): Kind { return postfixUnaryOperatorRO(node); }
 export function unaryOperand(node: AstNode): AstNode { return f<AstNode>(node, "operand")!; }
-export function nodeListNodes(list: AstNode): readonly AstNode[] {
-  const inner = (list as unknown as { nodes?: readonly AstNode[] }).nodes;
-  return inner ?? [];
+export function nodeListNodes(list: AstNode | readonly AstNode[]): readonly AstNode[] {
+  return nodeArray(list as unknown);
 }
 export function propertyDeclarationName(node: AstNode): AstNode { return f<AstNode>(node, "name")!; }
 export function propertyDeclarationInitializer(node: AstNode): AstNode | undefined { return f<AstNode>(node, "initializer"); }
@@ -407,19 +422,15 @@ export function nodeQuestionToken(node: AstNode | undefined): AstNode | undefine
 export function classStaticBlockBodyStatements(node: AstNode): readonly AstNode[] {
   const body = f<AstNode>(node, "body");
   if (body === undefined) return [];
-  const stmts = f<NodeList | readonly AstNode[]>(body, "statements");
-  if (stmts === undefined) return [];
-  const inner = (stmts as unknown as { nodes?: readonly AstNode[] }).nodes;
-  return inner ?? (stmts as unknown as readonly AstNode[]);
+  return nodeArray(f<NodeList | readonly AstNode[]>(body, "statements"));
 }
 export function expressionOfStatement(node: AstNode): AstNode { return f<AstNode>(node, "expression")!; }
 export function stringLiteralText(node: AstNode): string {
   const t = (node as unknown as { text?: string }).text;
   return t ?? "";
 }
-export function classMemberListLoc(node: AstNode): unknown {
-  const members = f<NodeList>(node, "members");
-  return members !== undefined ? nodeLoc(members as unknown as AstNode) : nodeLoc(node);
+export function classMemberListLoc(node: AstNode): NodeLoc | undefined {
+  return nodeLoc(node);
 }
 export function classTypeParameterList(node: AstNode): NodeList | undefined {
   return f<NodeList>(node, "typeParameters");
@@ -441,31 +452,31 @@ export function shorthandName(node: AstNode): AstNode { return shorthandProperty
 export function shorthandObjectAssignmentInitializer(node: AstNode): AstNode | undefined { return shorthandObjectAssignmentInitializerRO(node); }
 export function shorthandEqualsToken(node: AstNode): AstNode | undefined { return shorthandEqualsTokenRO(node); }
 export function cloneIdentifier(node: AstNode, _factory?: unknown): AstNode {
-  return { ...(node as unknown as Record<string, unknown>) } as unknown as AstNode;
+  const clone = createIdentifier(nodeText(node));
+  clone.pos = node.pos;
+  clone.end = node.end;
+  clone.flags = node.flags;
+  return clone;
 }
 export function getQualifiedNameLeft(node: AstNode): AstNode { return f<AstNode>(node, "left")!; }
 export function getQualifiedNameRight(node: AstNode): AstNode { return f<AstNode>(node, "right")!; }
 export function getParenthesizedTypeType(node: AstNode): AstNode { return f<AstNode>(node, "type")!; }
 export function getUnionOrIntersectionTypes(node: AstNode): readonly AstNode[] {
-  const types = f<NodeList | readonly AstNode[]>(node, "types");
-  if (types === undefined) return [];
-  const inner = (types as unknown as { nodes?: readonly AstNode[] }).nodes;
-  return inner ?? (types as unknown as readonly AstNode[]);
+  return nodeArray(f<NodeList | readonly AstNode[]>(node, "types"));
 }
 export function getConditionalTrueType(node: AstNode): AstNode { return f<AstNode>(node, "trueType")!; }
 export function getConditionalFalseType(node: AstNode): AstNode { return f<AstNode>(node, "falseType")!; }
-export function getTypeOperatorOperator(node: AstNode): number { return f<number>(node, "operator") ?? 0; }
+export function getTypeOperatorOperator(node: AstNode): Kind {
+  return (node as unknown as { operator?: Kind }).operator ?? Kind.Unknown;
+}
 export function getTypeOperatorType(node: AstNode): AstNode { return f<AstNode>(node, "type")!; }
 export function getAccessorParameters(node: AstNode): readonly AstNode[] {
-  const list = f<NodeList>(node, "parameters");
-  if (list === undefined) return [];
-  const inner = (list as unknown as { nodes?: readonly AstNode[] }).nodes;
-  return inner ?? [];
+  return nodeArray(f<NodeList>(node, "parameters"));
 }
 export function getParameterType(node: AstNode): AstNode | undefined { return f<AstNode>(node, "type"); }
 export function getReturnType(node: AstNode): AstNode | undefined { return f<AstNode>(node, "type"); }
 // Delegates to the faithful hasSyntacticModifier (sole owner in ./utilities.js).
-export function hasModifier(node: AstNode, flag: number): boolean { return hasSyntacticModifier(node, flag); }
+export function hasModifier(node: AstNode, flag: ModifierFlags): boolean { return hasSyntacticModifier(node, flag); }
 // hasStaticModifier is owned by ./utilities.js (faithful 1:1) and re-exported
 // through the ast barrel; the non-faithful copy here was removed during the
 // M2 Fork B migration to avoid duplicate exports.
@@ -473,10 +484,7 @@ export function parentExpression(parent: AstNode): AstNode | undefined { return 
 export function parentInitializer(parent: AstNode): AstNode | undefined { return f<AstNode>(parent, "initializer"); }
 export function parentBody(parent: AstNode): AstNode | undefined { return f<AstNode>(parent, "body"); }
 export function parentArguments(parent: AstNode): readonly AstNode[] {
-  const args = f<NodeList | readonly AstNode[]>(parent, "arguments");
-  if (args === undefined) return [];
-  const inner = (args as unknown as { nodes?: readonly AstNode[] }).nodes;
-  return inner ?? (args as unknown as readonly AstNode[]);
+  return nodeArray(f<NodeList | readonly AstNode[]>(parent, "arguments"));
 }
 export function conditionalCondition(node: AstNode): AstNode { return f<AstNode>(node, "condition")!; }
 export function conditionalWhenTrue(node: AstNode): AstNode { return f<AstNode>(node, "whenTrue")!; }
@@ -491,16 +499,15 @@ export function isSuperCall(node: AstNode | undefined): boolean {
   const expr = f<AstNode>(node, "expression");
   return expr !== undefined && nodeKind(expr) === Kind.SuperKeyword;
 }
-export function modifierNodes(node: AstNode | undefined): readonly AstNode[] | undefined {
+export function modifierNodes(node: AstNode | undefined): readonly ModifierLike[] | undefined {
   const list = f<ModifierList>(node, "modifiers");
   if (list === undefined) return undefined;
-  const inner = (list as unknown as { nodes?: readonly AstNode[] }).nodes;
-  return inner;
+  return modifierArray(list);
 }
 // positionIsSynthesized is owned by ./utilities.js (faithful 1:1) and
 // re-exported through the ast barrel; the non-faithful copy here was removed
 // during the M2 Fork B migration to avoid duplicate exports.
-export function isKeywordKind(kind: number): boolean {
+export function isKeywordKind(kind: Kind): boolean {
   return kind >= Kind.BreakKeyword && kind <= Kind.OfKeyword;
 }
 export function isAssignmentPattern(node: AstNode | undefined): boolean {
@@ -520,20 +527,18 @@ export function getSourceFileOfNode(node: AstNode | undefined): AstNode | undefi
   }
   return cur;
 }
-export function getECMALineOfPosition(sourceFile: AstNode | undefined, pos: number): number {
+export function getECMALineOfPosition(sourceFile: AstNode | undefined, pos: int): int {
   return scannerGetECMALineOfPosition(sourceFileLike(sourceFile), pos);
 }
 export function getPropertyAccessExpression(node: AstNode): AstNode { return f<AstNode>(node, "expression")!; }
 export function getPropertyAccessName(node: AstNode): AstNode { return f<AstNode>(node, "name")!; }
-export function getModifierListLength(list: unknown): number {
-  if (list === undefined || list === null) return 0;
-  const nodes = (list as unknown as { nodes?: readonly AstNode[] }).nodes;
-  return nodes?.length ?? 0;
+export function getModifierListLength(list: readonly unknown[] | undefined): number {
+  return list?.length ?? 0;
 }
-export function moveRangePastModifiers(node: AstNode): unknown {
+export function moveRangePastModifiers(node: AstNode): NodeLoc | undefined {
   const mods = f<ModifierList>(node, "modifiers");
   if (mods === undefined) return nodeLoc(node);
-  return nodeLoc(mods as unknown as AstNode);
+  return nodeLoc(node);
 }
 export function copyNodeListLoc(_src: unknown, _dst: unknown): void { /* loc handled via setLoc elsewhere */ }
 export function copyModifierListLoc(_src: unknown, _dst: unknown): void { /* loc handled via setLoc elsewhere */ }
@@ -556,7 +561,7 @@ export function isUpdateExpression(node: AstNode | undefined): boolean {
   if (node === undefined) return false;
   const k = nodeKind(node);
   if (k !== Kind.PrefixUnaryExpression && k !== Kind.PostfixUnaryExpression) return false;
-  const op = f<number>(node, "operator");
+  const op = f<Kind>(node, "operator");
   return op === Kind.PlusPlusToken || op === Kind.MinusMinusToken;
 }
 export function isSimpleCopiableExpression(node: AstNode | undefined): boolean {
@@ -584,8 +589,8 @@ export function shorthandObjectAssignmentInitializerRO(node: AstNode): AstNode |
 export function shorthandEqualsTokenRO(node: AstNode): AstNode | undefined { return f<AstNode>(node, "equalsToken"); }
 export function spreadAssignmentExpressionRO(node: AstNode): AstNode { return f<AstNode>(node, "expression")!; }
 export function spreadElementExpressionRO(node: AstNode): AstNode { return f<AstNode>(node, "expression")!; }
-export function objectLiteralProperties(node: AstNode): readonly AstNode[] { return f<readonly AstNode[]>(node, "properties") ?? []; }
-export function arrayLiteralElements(node: AstNode): readonly AstNode[] { return f<readonly AstNode[]>(node, "elements") ?? []; }
+export function objectLiteralProperties(node: AstNode): readonly AstNode[] { return nodeArray(f<readonly AstNode[]>(node, "properties")); }
+export function arrayLiteralElements(node: AstNode): readonly AstNode[] { return nodeArray(f<readonly AstNode[]>(node, "elements")); }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // JSX
@@ -600,9 +605,9 @@ export function jsxNamespacedNameText(node: AstNode): string {
   return nodeText(name);
 }
 export function jsxOpeningElement(node: AstNode): AstNode { return f<AstNode>(node, "openingElement")!; }
-export function jsxChildren(node: AstNode): readonly AstNode[] { return f<readonly AstNode[]>(node, "children") ?? []; }
+export function jsxChildren(node: AstNode): readonly AstNode[] { return nodeArray(f<readonly AstNode[]>(node, "children")); }
 export function jsxFragmentOpeningFragment(node: AstNode): AstNode { return f<AstNode>(node, "openingFragment")!; }
-export function jsxFragmentChildren(node: AstNode): readonly AstNode[] { return f<readonly AstNode[]>(node, "children") ?? []; }
+export function jsxFragmentChildren(node: AstNode): readonly AstNode[] { return nodeArray(f<readonly AstNode[]>(node, "children")); }
 export function jsxAttributeName(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "name"); }
 export function jsxAttributeInitializer(node: AstNode): AstNode | undefined { return f<AstNode>(node, "initializer"); }
 export function jsxExpressionExpression(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "expression"); }
@@ -622,7 +627,7 @@ export function setNodeParent(node: AstNode, parent: AstNode): void { (node as u
 // node.Flags = flags — the binder writes the export-context flag in
 // setExportContextFlag (binder.go:893-900). `flags` is a mutable number slot on
 // the typed Node contract (codex-054), so this writes without any cast.
-export function setNodeFlags(node: AstNode, flags: number): void { node.flags = flags; }
+export function setNodeFlags(node: AstNode, flags: int): void { node.flags = flags; }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Binder-set slot writers + symbol-table getters (tsgo node.DeclarationData(),
@@ -755,13 +760,13 @@ export function skipTrivia(text: string, pos: number): number {
   return scannerSkipTrivia(text, pos);
 }
 export function getSemanticJsxChildren(children: readonly AstNode[]): readonly AstNode[] {
-  return children.filter((c) => !(c.kind === 14 /* JsxText */ && nodeText(c).trim() === ""));
+  return children.filter((c) => !(c.kind === Kind.JsxText && nodeText(c).trim() === ""));
 }
 export function compareStringsCaseSensitive(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
-export function newTextRange(pos: number, end: number): { pos: number; end: number } {
-  return { pos, end };
+export function newTextRange(pos: int, end: int): TextRange {
+  return new TextRangeObject(pos, end);
 }
 export function getECMALineAndUTF16CharacterOfPosition(file: AstNode, pos: number): { line: number; character: number } {
   return scannerGetECMALineAndUTF16CharacterOfPosition(sourceFileLike(file), pos);
@@ -771,8 +776,11 @@ export function getECMALineAndUTF16CharacterOfPosition(file: AstNode, pos: numbe
 // Subtree facts + emit
 // ─────────────────────────────────────────────────────────────────────────────
 export function subtreeFacts(node: AstNode): number {
-  return (node as unknown as { transformFlags?: number; subtreeFacts?: number }).subtreeFacts
-    ?? (node as unknown as { transformFlags?: number }).transformFlags ?? 0;
+  const facts = f<number>(node, "subtreeFacts");
+  if (facts !== undefined) return facts;
+  const flags = f<number>(node, "transformFlags");
+  if (flags !== undefined) return flags;
+  return 0;
 }
 export function getSubtreeFacts(node: AstNode): number { return subtreeFacts(node); }
 
@@ -780,25 +788,29 @@ export function getSubtreeFacts(node: AstNode): number { return subtreeFacts(nod
 // AutoGenerate (generated identifier info)
 // ─────────────────────────────────────────────────────────────────────────────
 export function autoGenInfoIsFileLevel(info: unknown): boolean {
-  return Boolean((info as { flags?: number } | undefined)?.flags ?? 0 & /* FileLevel */ 0x20);
+  const flags = (info as { flags?: int } | undefined)?.flags ?? 0;
+  return (flags & 0x20) !== 0;
 }
 export function autoGenInfoIsOptimistic(info: unknown): boolean {
-  return Boolean((info as { flags?: number } | undefined)?.flags ?? 0 & /* Optimistic */ 0x10);
+  const flags = (info as { flags?: int } | undefined)?.flags ?? 0;
+  return (flags & 0x10) !== 0;
 }
 export function autoGenInfoIsReservedInNestedScopes(info: unknown): boolean {
-  return Boolean((info as { flags?: number } | undefined)?.flags ?? 0 & /* ReservedInNestedScopes */ 0x8);
+  const flags = (info as { flags?: int } | undefined)?.flags ?? 0;
+  return (flags & 0x8) !== 0;
 }
 export function autoGenInfoHasAllowNameSubstitution(info: unknown): boolean {
-  return Boolean((info as { flags?: number } | undefined)?.flags ?? 0 & /* AllowNameSubstitution */ 0x40);
+  const flags = (info as { flags?: int } | undefined)?.flags ?? 0;
+  return (flags & 0x40) !== 0;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Predicates not in generated/is.ts
 // ─────────────────────────────────────────────────────────────────────────────
-export function isBlockNode(node: AstNode | undefined): boolean { return node !== undefined && node.kind === /* Kind.Block */ 234; }
+export function isBlockNode(node: AstNode | undefined): boolean { return node !== undefined && node.kind === Kind.Block; }
 export function isStringLiteralLike(node: AstNode | undefined): boolean {
   if (node === undefined) return false;
-  return node.kind === /* StringLiteral */ 11 || node.kind === /* NoSubstitutionTemplateLiteral */ 14;
+  return node.kind === Kind.StringLiteral || node.kind === Kind.NoSubstitutionTemplateLiteral;
 }
 // isAssignmentExpression / isCommaExpression are owned by ./utilities.js
 // (faithful 1:1) and re-exported through the ast barrel; the non-faithful
@@ -811,15 +823,15 @@ export function isDefaultImport(node: AstNode | undefined): boolean {
 }
 export function isImportCall(node: AstNode | undefined): boolean {
   if (node === undefined) return false;
-  if (node.kind !== /* CallExpression */ 213) return false;
+  if (node.kind !== Kind.CallExpression) return false;
   const exp = callExpressionExpression(node);
-  return exp.kind === /* ImportKeyword */ 102;
+  return exp.kind === Kind.ImportKeyword;
 }
 export function isRequireCall(node: AstNode | undefined, _requireStringLiteralLikeArgument: boolean): boolean {
   if (node === undefined) return false;
-  if (node.kind !== /* CallExpression */ 213) return false;
+  if (node.kind !== Kind.CallExpression) return false;
   const exp = callExpressionExpression(node);
-  return exp.kind === /* Identifier */ 80 && nodeText(exp) === "require";
+  return exp.kind === Kind.Identifier && nodeText(exp) === "require";
 }
 export function isExternalModuleImportEqualsDeclaration(_node: AstNode | undefined): boolean { return false; }
 // isDestructuringAssignment lives in generated/is.ts
@@ -868,7 +880,7 @@ export function shouldTransformImportCallStandalone(_fileName: string, _opts: un
 // Misc small helpers
 // ─────────────────────────────────────────────────────────────────────────────
 // cloneNode lives in generated/factory.ts
-export function appendVariableDeclaration<T>(arr: T[], decl: T): T[] {
+export function appendVariableDeclaration(arr: AstNode[], decl: AstNode): AstNode[] {
   return [...arr, decl];
 }
 // nodeIsSynthesized is owned by ./utilities.js (faithful 1:1) and re-exported

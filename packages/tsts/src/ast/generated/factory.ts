@@ -9,26 +9,20 @@ import type * as Ast from "./nodes.js";
 import type { Node, NodeArray, Path, SourceFile, Symbol } from "./types.js";
 import type { Diagnostic } from "../../diagnostics/types.js";
 
-type NodeDataValue =
-  | Node
-  | readonly NodeDataValue[]
-  | string
-  | int
-  | boolean
-  | bigint
-  | unknown
-  | undefined;
-
-type NodeData = Record<string, NodeDataValue>;
+type NodeData = Record<string, unknown>;
 
 export class NodeObject implements Node {
   readonly kind: Kind;
   flags = 0;
   // codex-048 Stage-1a: pos/end are MUTABLE parse-state (tsgo
   // parser.go:5904-5917) so finishNode can stamp ranges post-construction.
-  pos: number;
-  end: number;
+  pos: int;
+  end: int;
   parent: Node = undefined!;
+  symbol?: Symbol;
+  locals?: Map<string, Symbol>;
+  nextContainer?: Node;
+  localSymbol?: Symbol;
   readonly jsDoc?: readonly Node[];
   readonly #data: NodeData;
 
@@ -171,7 +165,7 @@ export class NodeObject implements Node {
   get whenFalse(): unknown { return this.#data["whenFalse"]; }
   get whenTrue(): unknown { return this.#data["whenTrue"]; }
 
-  forEachChild<T>(visitor: (node: Node) => T, visitArray?: (nodes: NodeArray<Node>) => T): T | undefined {
+  forEachChild(visitor: (node: Node) => boolean | undefined, visitArray?: (nodes: NodeArray<Node>) => boolean | undefined): boolean | undefined {
     return forEachChild(this, visitor, visitArray);
   }
 
@@ -184,115 +178,116 @@ export class NodeObject implements Node {
   }
 }
 
-export function createNode<TNode extends Node>(kind: Kind, data: NodeData = {}, pos: int = -1, end: int = -1): TNode {
-  const node = new NodeObject(kind, data, pos, end) as unknown as TNode;
-  const flags = data["flags"];
-  if (typeof flags === "number") {
-    (node as { flags: number }).flags = flags;
-  }
-  for (const value of Object.values(data)) {
-    attachParent(node, value);
-  }
+export function createNode(kind: Kind, data: NodeData = {}, pos: int = -1, end: int = -1): Node {
+  return new NodeObject(kind, data, pos, end);
+}
+
+function kindDebugName(kind: Kind): string {
+  return String(kind);
+}
+
+function sameValue(left: unknown, right: unknown): boolean {
+  return left === right;
+}
+
+function nodeField(node: Node, key: string): unknown {
+  return (node as unknown as Record<string, unknown>)[key];
+}
+
+function valueAsUnknown<T>(value: T): unknown {
+  return value as unknown;
+}
+
+function attachChildren(parent: Node): void {
+  forEachChild(parent, (child) => {
+    child.parent = parent;
+    return undefined;
+  });
+}
+
+function createNodeArrayImpl<T extends Node>(elements: readonly T[], pos: int = -1, end: int = -1): NodeArray<T> {
+  void pos;
+  void end;
+  return elements.slice() as unknown as NodeArray<T>;
+}
+
+export const createNodeArray = createNodeArrayImpl;
+
+export function createToken(kind: Ast.TokenSyntaxKind): Ast.Token {
+  const node = createNode(kind as Kind, {}) as Ast.Token;
   return node;
 }
 
-function isNode(value: NodeDataValue): value is Node {
-  return value instanceof NodeObject;
-}
-
-function attachParent(parent: Node, value: NodeDataValue): void {
-  if (isNode(value)) {
-    (value as { parent: Node }).parent = parent;
-    return;
-  }
-  if (Array.isArray(value)) {
-    for (const element of value) {
-      attachParent(parent, element);
-    }
-  }
-}
-
-function isNodeArray<TNode extends Node>(array: readonly TNode[]): array is NodeArray<TNode> {
-  const marker = array as unknown as { readonly pos?: int; readonly end?: int; readonly transformFlags?: int };
-  return marker.pos !== undefined && marker.end !== undefined && marker.transformFlags !== undefined;
-}
-
-export function createNodeArray<TNode extends Node>(elements: readonly TNode[], pos: int = -1, end: int = -1): NodeArray<TNode> {
-  if (isNodeArray(elements)) {
-    return elements;
-  }
-  const array = elements.slice() as unknown as TNode[] & { pos: number; end: number; transformFlags: number; hasTrailingComma?: boolean };
-  array.pos = pos;
-  array.end = end;
-  array.transformFlags = 0;
-  return array as unknown as NodeArray<TNode>;
-}
-
-export function createToken<TKind extends Ast.TokenSyntaxKind = Ast.TokenSyntaxKind>(kind: TKind): Ast.Token<TKind> {
-  return createNode<Ast.Token<TKind>>(kind as Kind, {});
-}
-
-export function updateToken<TKind extends Ast.TokenSyntaxKind = Ast.TokenSyntaxKind>(node: Ast.Token<TKind>): Ast.Token<TKind> {
+export function updateToken(node: Ast.Token): Ast.Token {
   return node;
 }
 
 export function createIdentifier(text: string): Ast.Identifier {
-  return createNode<Ast.Identifier>(Kind.Identifier, { "text": text });
+  const node = createNode(Kind.Identifier, { "text": text }) as Ast.Identifier;
+  return node;
 }
 
 export function updateIdentifier(node: Ast.Identifier, text: string): Ast.Identifier {
-  if (node.text === text) {
+  if (sameValue(nodeField(node, "text"), valueAsUnknown(text))) {
     return node;
   }
   return createIdentifier(text);
 }
 
 export function createPrivateIdentifier(text: string): Ast.PrivateIdentifier {
-  return createNode<Ast.PrivateIdentifier>(Kind.PrivateIdentifier, { "text": text });
+  const node = createNode(Kind.PrivateIdentifier, { "text": text }) as Ast.PrivateIdentifier;
+  return node;
 }
 
 export function updatePrivateIdentifier(node: Ast.PrivateIdentifier, text: string): Ast.PrivateIdentifier {
-  if (node.text === text) {
+  if (sameValue(nodeField(node, "text"), valueAsUnknown(text))) {
     return node;
   }
   return createPrivateIdentifier(text);
 }
 
 export function createQualifiedName(left: Ast.EntityName, right: Ast.Identifier): Ast.QualifiedName {
-  return createNode<Ast.QualifiedName>(Kind.QualifiedName, { "left": left, "right": right });
+  const node = createNode(Kind.QualifiedName, { "left": left, "right": right }) as Ast.QualifiedName;
+  attachChildren(node);
+  return node;
 }
 
 export function updateQualifiedName(node: Ast.QualifiedName, left: Ast.EntityName, right: Ast.Identifier): Ast.QualifiedName {
-  if (node.left === left && node.right === right) {
+  if (sameValue(nodeField(node, "left"), valueAsUnknown(left)) && sameValue(nodeField(node, "right"), valueAsUnknown(right))) {
     return node;
   }
   return createQualifiedName(left, right);
 }
 
 export function createComputedPropertyName(expression: Ast.Expression): Ast.ComputedPropertyName {
-  return createNode<Ast.ComputedPropertyName>(Kind.ComputedPropertyName, { "expression": expression });
+  const node = createNode(Kind.ComputedPropertyName, { "expression": expression }) as Ast.ComputedPropertyName;
+  attachChildren(node);
+  return node;
 }
 
 export function updateComputedPropertyName(node: Ast.ComputedPropertyName, expression: Ast.Expression): Ast.ComputedPropertyName {
-  if (node.expression === expression) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createComputedPropertyName(expression);
 }
 
 export function createDecorator(expression: Ast.LeftHandSideExpression): Ast.Decorator {
-  return createNode<Ast.Decorator>(Kind.Decorator, { "expression": expression });
+  const node = createNode(Kind.Decorator, { "expression": expression }) as Ast.Decorator;
+  attachChildren(node);
+  return node;
 }
 
 export function updateDecorator(node: Ast.Decorator, expression: Ast.LeftHandSideExpression): Ast.Decorator {
-  if (node.expression === expression) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createDecorator(expression);
 }
 
 export function createEmptyStatement(): Ast.EmptyStatement {
-  return createNode<Ast.EmptyStatement>(Kind.EmptyStatement, {});
+  const node = createNode(Kind.EmptyStatement, {}) as Ast.EmptyStatement;
+  return node;
 }
 
 export function updateEmptyStatement(node: Ast.EmptyStatement): Ast.EmptyStatement {
@@ -300,194 +295,229 @@ export function updateEmptyStatement(node: Ast.EmptyStatement): Ast.EmptyStateme
 }
 
 export function createIfStatement(expression: Ast.Expression, thenStatement: Ast.Statement, elseStatement: Ast.Statement | undefined): Ast.IfStatement {
-  return createNode<Ast.IfStatement>(Kind.IfStatement, { "expression": expression, "thenStatement": thenStatement, "elseStatement": elseStatement });
+  const node = createNode(Kind.IfStatement, { "expression": expression, "thenStatement": thenStatement, "elseStatement": elseStatement }) as Ast.IfStatement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateIfStatement(node: Ast.IfStatement, expression: Ast.Expression, thenStatement: Ast.Statement, elseStatement: Ast.Statement | undefined): Ast.IfStatement {
-  if (node.expression === expression && node.thenStatement === thenStatement && node.elseStatement === elseStatement) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "thenStatement"), valueAsUnknown(thenStatement)) && sameValue(nodeField(node, "elseStatement"), valueAsUnknown(elseStatement))) {
     return node;
   }
   return createIfStatement(expression, thenStatement, elseStatement);
 }
 
 export function createDoStatement(statement: Ast.Statement, expression: Ast.Expression): Ast.DoStatement {
-  return createNode<Ast.DoStatement>(Kind.DoStatement, { "statement": statement, "expression": expression });
+  const node = createNode(Kind.DoStatement, { "statement": statement, "expression": expression }) as Ast.DoStatement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateDoStatement(node: Ast.DoStatement, statement: Ast.Statement, expression: Ast.Expression): Ast.DoStatement {
-  if (node.statement === statement && node.expression === expression) {
+  if (sameValue(nodeField(node, "statement"), valueAsUnknown(statement)) && sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createDoStatement(statement, expression);
 }
 
 export function createWhileStatement(expression: Ast.Expression, statement: Ast.Statement): Ast.WhileStatement {
-  return createNode<Ast.WhileStatement>(Kind.WhileStatement, { "expression": expression, "statement": statement });
+  const node = createNode(Kind.WhileStatement, { "expression": expression, "statement": statement }) as Ast.WhileStatement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateWhileStatement(node: Ast.WhileStatement, expression: Ast.Expression, statement: Ast.Statement): Ast.WhileStatement {
-  if (node.expression === expression && node.statement === statement) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "statement"), valueAsUnknown(statement))) {
     return node;
   }
   return createWhileStatement(expression, statement);
 }
 
 export function createForStatement(initializer: Ast.ForInitializer | undefined, condition: Ast.Expression | undefined, incrementor: Ast.Expression | undefined, statement: Ast.Statement): Ast.ForStatement {
-  return createNode<Ast.ForStatement>(Kind.ForStatement, { "initializer": initializer, "condition": condition, "incrementor": incrementor, "statement": statement });
+  const node = createNode(Kind.ForStatement, { "initializer": initializer, "condition": condition, "incrementor": incrementor, "statement": statement }) as Ast.ForStatement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateForStatement(node: Ast.ForStatement, initializer: Ast.ForInitializer | undefined, condition: Ast.Expression | undefined, incrementor: Ast.Expression | undefined, statement: Ast.Statement): Ast.ForStatement {
-  if (node.initializer === initializer && node.condition === condition && node.incrementor === incrementor && node.statement === statement) {
+  if (sameValue(nodeField(node, "initializer"), valueAsUnknown(initializer)) && sameValue(nodeField(node, "condition"), valueAsUnknown(condition)) && sameValue(nodeField(node, "incrementor"), valueAsUnknown(incrementor)) && sameValue(nodeField(node, "statement"), valueAsUnknown(statement))) {
     return node;
   }
   return createForStatement(initializer, condition, incrementor, statement);
 }
 
 export function createForInStatement(awaitModifier: Ast.AwaitKeyword | undefined, initializer: Ast.ForInitializer, expression: Ast.Expression, statement: Ast.Statement): Ast.ForInStatement {
-  return createNode<Ast.ForInStatement>(Kind.ForInStatement, { "awaitModifier": awaitModifier, "initializer": initializer, "expression": expression, "statement": statement });
+  const node = createNode(Kind.ForInStatement, { "awaitModifier": awaitModifier, "initializer": initializer, "expression": expression, "statement": statement }) as Ast.ForInStatement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateForInStatement(node: Ast.ForInStatement, awaitModifier: Ast.AwaitKeyword | undefined, initializer: Ast.ForInitializer, expression: Ast.Expression, statement: Ast.Statement): Ast.ForInStatement {
-  if (node.awaitModifier === awaitModifier && node.initializer === initializer && node.expression === expression && node.statement === statement) {
+  if (sameValue(nodeField(node, "awaitModifier"), valueAsUnknown(awaitModifier)) && sameValue(nodeField(node, "initializer"), valueAsUnknown(initializer)) && sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "statement"), valueAsUnknown(statement))) {
     return node;
   }
   return createForInStatement(awaitModifier, initializer, expression, statement);
 }
 
 export function createForOfStatement(awaitModifier: Ast.AwaitKeyword | undefined, initializer: Ast.ForInitializer, expression: Ast.Expression, statement: Ast.Statement): Ast.ForOfStatement {
-  return createNode<Ast.ForOfStatement>(Kind.ForOfStatement, { "awaitModifier": awaitModifier, "initializer": initializer, "expression": expression, "statement": statement });
+  const node = createNode(Kind.ForOfStatement, { "awaitModifier": awaitModifier, "initializer": initializer, "expression": expression, "statement": statement }) as Ast.ForOfStatement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateForOfStatement(node: Ast.ForOfStatement, awaitModifier: Ast.AwaitKeyword | undefined, initializer: Ast.ForInitializer, expression: Ast.Expression, statement: Ast.Statement): Ast.ForOfStatement {
-  if (node.awaitModifier === awaitModifier && node.initializer === initializer && node.expression === expression && node.statement === statement) {
+  if (sameValue(nodeField(node, "awaitModifier"), valueAsUnknown(awaitModifier)) && sameValue(nodeField(node, "initializer"), valueAsUnknown(initializer)) && sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "statement"), valueAsUnknown(statement))) {
     return node;
   }
   return createForOfStatement(awaitModifier, initializer, expression, statement);
 }
 
 export function createBreakStatement(label: Ast.Identifier | undefined): Ast.BreakStatement {
-  return createNode<Ast.BreakStatement>(Kind.BreakStatement, { "label": label });
+  const node = createNode(Kind.BreakStatement, { "label": label }) as Ast.BreakStatement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateBreakStatement(node: Ast.BreakStatement, label: Ast.Identifier | undefined): Ast.BreakStatement {
-  if (node.label === label) {
+  if (sameValue(nodeField(node, "label"), valueAsUnknown(label))) {
     return node;
   }
   return createBreakStatement(label);
 }
 
 export function createContinueStatement(label: Ast.Identifier | undefined): Ast.ContinueStatement {
-  return createNode<Ast.ContinueStatement>(Kind.ContinueStatement, { "label": label });
+  const node = createNode(Kind.ContinueStatement, { "label": label }) as Ast.ContinueStatement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateContinueStatement(node: Ast.ContinueStatement, label: Ast.Identifier | undefined): Ast.ContinueStatement {
-  if (node.label === label) {
+  if (sameValue(nodeField(node, "label"), valueAsUnknown(label))) {
     return node;
   }
   return createContinueStatement(label);
 }
 
 export function createReturnStatement(expression: Ast.Expression | undefined): Ast.ReturnStatement {
-  return createNode<Ast.ReturnStatement>(Kind.ReturnStatement, { "expression": expression });
+  const node = createNode(Kind.ReturnStatement, { "expression": expression }) as Ast.ReturnStatement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateReturnStatement(node: Ast.ReturnStatement, expression: Ast.Expression | undefined): Ast.ReturnStatement {
-  if (node.expression === expression) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createReturnStatement(expression);
 }
 
 export function createWithStatement(expression: Ast.Expression, statement: Ast.Statement): Ast.WithStatement {
-  return createNode<Ast.WithStatement>(Kind.WithStatement, { "expression": expression, "statement": statement });
+  const node = createNode(Kind.WithStatement, { "expression": expression, "statement": statement }) as Ast.WithStatement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateWithStatement(node: Ast.WithStatement, expression: Ast.Expression, statement: Ast.Statement): Ast.WithStatement {
-  if (node.expression === expression && node.statement === statement) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "statement"), valueAsUnknown(statement))) {
     return node;
   }
   return createWithStatement(expression, statement);
 }
 
 export function createSwitchStatement(expression: Ast.Expression, caseBlock: Ast.CaseBlock): Ast.SwitchStatement {
-  return createNode<Ast.SwitchStatement>(Kind.SwitchStatement, { "expression": expression, "caseBlock": caseBlock });
+  const node = createNode(Kind.SwitchStatement, { "expression": expression, "caseBlock": caseBlock }) as Ast.SwitchStatement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateSwitchStatement(node: Ast.SwitchStatement, expression: Ast.Expression, caseBlock: Ast.CaseBlock): Ast.SwitchStatement {
-  if (node.expression === expression && node.caseBlock === caseBlock) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "caseBlock"), valueAsUnknown(caseBlock))) {
     return node;
   }
   return createSwitchStatement(expression, caseBlock);
 }
 
 export function createCaseBlock(clauses: NodeArray<Ast.CaseOrDefaultClause>): Ast.CaseBlock {
-  return createNode<Ast.CaseBlock>(Kind.CaseBlock, { "clauses": clauses });
+  const node = createNode(Kind.CaseBlock, { "clauses": clauses }) as Ast.CaseBlock;
+  attachChildren(node);
+  return node;
 }
 
 export function updateCaseBlock(node: Ast.CaseBlock, clauses: NodeArray<Ast.CaseOrDefaultClause>): Ast.CaseBlock {
-  if (node.clauses === clauses) {
+  if (sameValue(nodeField(node, "clauses"), valueAsUnknown(clauses))) {
     return node;
   }
   return createCaseBlock(clauses);
 }
 
 export function createCaseClause(expression: Ast.Expression, statements: NodeArray<Ast.Statement>): Ast.CaseClause {
-  return createNode<Ast.CaseClause>(Kind.CaseClause, { "expression": expression, "statements": statements });
+  const node = createNode(Kind.CaseClause, { "expression": expression, "statements": statements }) as Ast.CaseClause;
+  attachChildren(node);
+  return node;
 }
 
 export function updateCaseClause(node: Ast.CaseClause, expression: Ast.Expression, statements: NodeArray<Ast.Statement>): Ast.CaseClause {
-  if (node.expression === expression && node.statements === statements) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "statements"), valueAsUnknown(statements))) {
     return node;
   }
   return createCaseClause(expression, statements);
 }
 
 export function createDefaultClause(expression: Ast.Expression, statements: NodeArray<Ast.Statement>): Ast.DefaultClause {
-  return createNode<Ast.DefaultClause>(Kind.DefaultClause, { "expression": expression, "statements": statements });
+  const node = createNode(Kind.DefaultClause, { "expression": expression, "statements": statements }) as Ast.DefaultClause;
+  attachChildren(node);
+  return node;
 }
 
 export function updateDefaultClause(node: Ast.DefaultClause, expression: Ast.Expression, statements: NodeArray<Ast.Statement>): Ast.DefaultClause {
-  if (node.expression === expression && node.statements === statements) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "statements"), valueAsUnknown(statements))) {
     return node;
   }
   return createDefaultClause(expression, statements);
 }
 
 export function createThrowStatement(expression: Ast.Expression): Ast.ThrowStatement {
-  return createNode<Ast.ThrowStatement>(Kind.ThrowStatement, { "expression": expression });
+  const node = createNode(Kind.ThrowStatement, { "expression": expression }) as Ast.ThrowStatement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateThrowStatement(node: Ast.ThrowStatement, expression: Ast.Expression): Ast.ThrowStatement {
-  if (node.expression === expression) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createThrowStatement(expression);
 }
 
 export function createTryStatement(tryBlock: Ast.Block, catchClause: Ast.CatchClause | undefined, finallyBlock: Ast.Block | undefined): Ast.TryStatement {
-  return createNode<Ast.TryStatement>(Kind.TryStatement, { "tryBlock": tryBlock, "catchClause": catchClause, "finallyBlock": finallyBlock });
+  const node = createNode(Kind.TryStatement, { "tryBlock": tryBlock, "catchClause": catchClause, "finallyBlock": finallyBlock }) as Ast.TryStatement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateTryStatement(node: Ast.TryStatement, tryBlock: Ast.Block, catchClause: Ast.CatchClause | undefined, finallyBlock: Ast.Block | undefined): Ast.TryStatement {
-  if (node.tryBlock === tryBlock && node.catchClause === catchClause && node.finallyBlock === finallyBlock) {
+  if (sameValue(nodeField(node, "tryBlock"), valueAsUnknown(tryBlock)) && sameValue(nodeField(node, "catchClause"), valueAsUnknown(catchClause)) && sameValue(nodeField(node, "finallyBlock"), valueAsUnknown(finallyBlock))) {
     return node;
   }
   return createTryStatement(tryBlock, catchClause, finallyBlock);
 }
 
 export function createCatchClause(variableDeclaration: Ast.VariableDeclaration | undefined, block: Ast.Block): Ast.CatchClause {
-  return createNode<Ast.CatchClause>(Kind.CatchClause, { "variableDeclaration": variableDeclaration, "block": block });
+  const node = createNode(Kind.CatchClause, { "variableDeclaration": variableDeclaration, "block": block }) as Ast.CatchClause;
+  attachChildren(node);
+  return node;
 }
 
 export function updateCatchClause(node: Ast.CatchClause, variableDeclaration: Ast.VariableDeclaration | undefined, block: Ast.Block): Ast.CatchClause {
-  if (node.variableDeclaration === variableDeclaration && node.block === block) {
+  if (sameValue(nodeField(node, "variableDeclaration"), valueAsUnknown(variableDeclaration)) && sameValue(nodeField(node, "block"), valueAsUnknown(block))) {
     return node;
   }
   return createCatchClause(variableDeclaration, block);
 }
 
 export function createDebuggerStatement(): Ast.DebuggerStatement {
-  return createNode<Ast.DebuggerStatement>(Kind.DebuggerStatement, {});
+  const node = createNode(Kind.DebuggerStatement, {}) as Ast.DebuggerStatement;
+  return node;
 }
 
 export function updateDebuggerStatement(node: Ast.DebuggerStatement): Ast.DebuggerStatement {
@@ -495,187 +525,222 @@ export function updateDebuggerStatement(node: Ast.DebuggerStatement): Ast.Debugg
 }
 
 export function createLabeledStatement(label: Ast.Identifier, statement: Ast.Statement): Ast.LabeledStatement {
-  return createNode<Ast.LabeledStatement>(Kind.LabeledStatement, { "label": label, "statement": statement });
+  const node = createNode(Kind.LabeledStatement, { "label": label, "statement": statement }) as Ast.LabeledStatement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateLabeledStatement(node: Ast.LabeledStatement, label: Ast.Identifier, statement: Ast.Statement): Ast.LabeledStatement {
-  if (node.label === label && node.statement === statement) {
+  if (sameValue(nodeField(node, "label"), valueAsUnknown(label)) && sameValue(nodeField(node, "statement"), valueAsUnknown(statement))) {
     return node;
   }
   return createLabeledStatement(label, statement);
 }
 
 export function createExpressionStatement(expression: Ast.Expression): Ast.ExpressionStatement {
-  return createNode<Ast.ExpressionStatement>(Kind.ExpressionStatement, { "expression": expression });
+  const node = createNode(Kind.ExpressionStatement, { "expression": expression }) as Ast.ExpressionStatement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateExpressionStatement(node: Ast.ExpressionStatement, expression: Ast.Expression): Ast.ExpressionStatement {
-  if (node.expression === expression) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createExpressionStatement(expression);
 }
 
 export function createBlock(statements: NodeArray<Ast.Statement>, multiLine: boolean): Ast.Block {
-  return createNode<Ast.Block>(Kind.Block, { "statements": statements, "multiLine": multiLine });
+  const node = createNode(Kind.Block, { "statements": statements, "multiLine": multiLine }) as Ast.Block;
+  attachChildren(node);
+  return node;
 }
 
 export function updateBlock(node: Ast.Block, statements: NodeArray<Ast.Statement>, multiLine: boolean): Ast.Block {
-  if (node.statements === statements && node.multiLine === multiLine) {
+  if (sameValue(nodeField(node, "statements"), valueAsUnknown(statements)) && sameValue(nodeField(node, "multiLine"), valueAsUnknown(multiLine))) {
     return node;
   }
   return createBlock(statements, multiLine);
 }
 
 export function createVariableStatement(modifiers: NodeArray<Ast.ModifierLike> | undefined, declarationList: Ast.VariableDeclarationList): Ast.VariableStatement {
-  return createNode<Ast.VariableStatement>(Kind.VariableStatement, { "modifiers": modifiers, "declarationList": declarationList });
+  const node = createNode(Kind.VariableStatement, { "modifiers": modifiers, "declarationList": declarationList }) as Ast.VariableStatement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateVariableStatement(node: Ast.VariableStatement, modifiers: NodeArray<Ast.ModifierLike> | undefined, declarationList: Ast.VariableDeclarationList): Ast.VariableStatement {
-  if (node.modifiers === modifiers && node.declarationList === declarationList) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "declarationList"), valueAsUnknown(declarationList))) {
     return node;
   }
   return createVariableStatement(modifiers, declarationList);
 }
 
 export function createVariableDeclaration(name: Ast.BindingName, exclamationToken: Ast.ExclamationToken | undefined, type: Ast.TypeNode | undefined, initializer: Ast.Expression | undefined): Ast.VariableDeclaration {
-  return createNode<Ast.VariableDeclaration>(Kind.VariableDeclaration, { "name": name, "exclamationToken": exclamationToken, "type": type, "initializer": initializer });
+  const node = createNode(Kind.VariableDeclaration, { "name": name, "exclamationToken": exclamationToken, "type": type, "initializer": initializer }) as Ast.VariableDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateVariableDeclaration(node: Ast.VariableDeclaration, name: Ast.BindingName, exclamationToken: Ast.ExclamationToken | undefined, type: Ast.TypeNode | undefined, initializer: Ast.Expression | undefined): Ast.VariableDeclaration {
-  if (node.name === name && node.exclamationToken === exclamationToken && node.type === type && node.initializer === initializer) {
+  if (sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "exclamationToken"), valueAsUnknown(exclamationToken)) && sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "initializer"), valueAsUnknown(initializer))) {
     return node;
   }
   return createVariableDeclaration(name, exclamationToken, type, initializer);
 }
 
-export function createVariableDeclarationList(declarations: NodeArray<Ast.VariableDeclaration>, flags: number): Ast.VariableDeclarationList {
-  return createNode<Ast.VariableDeclarationList>(Kind.VariableDeclarationList, { "declarations": declarations, "flags": flags });
+export function createVariableDeclarationList(declarations: NodeArray<Ast.VariableDeclaration>, flags: int): Ast.VariableDeclarationList {
+  const node = createNode(Kind.VariableDeclarationList, { "declarations": declarations }) as Ast.VariableDeclarationList;
+  node.flags = flags;
+  attachChildren(node);
+  return node;
 }
 
-export function updateVariableDeclarationList(node: Ast.VariableDeclarationList, declarations: NodeArray<Ast.VariableDeclaration>, flags: number): Ast.VariableDeclarationList {
-  if (node.declarations === declarations && node.flags === flags) {
+export function updateVariableDeclarationList(node: Ast.VariableDeclarationList, declarations: NodeArray<Ast.VariableDeclaration>, flags: int): Ast.VariableDeclarationList {
+  if (sameValue(nodeField(node, "declarations"), valueAsUnknown(declarations)) && sameValue(nodeField(node, "flags"), valueAsUnknown(flags))) {
     return node;
   }
   return createVariableDeclarationList(declarations, flags);
 }
 
 export function createObjectBindingPattern(elements: NodeArray<Ast.BindingElement>): Ast.ObjectBindingPattern {
-  return createNode<Ast.ObjectBindingPattern>(Kind.ObjectBindingPattern, { "elements": elements });
+  const node = createNode(Kind.ObjectBindingPattern, { "elements": elements }) as Ast.ObjectBindingPattern;
+  attachChildren(node);
+  return node;
 }
 
 export function updateObjectBindingPattern(node: Ast.ObjectBindingPattern, elements: NodeArray<Ast.BindingElement>): Ast.ObjectBindingPattern {
-  if (node.elements === elements) {
+  if (sameValue(nodeField(node, "elements"), valueAsUnknown(elements))) {
     return node;
   }
   return createObjectBindingPattern(elements);
 }
 
 export function createArrayBindingPattern(elements: NodeArray<Ast.BindingElement>): Ast.ArrayBindingPattern {
-  return createNode<Ast.ArrayBindingPattern>(Kind.ArrayBindingPattern, { "elements": elements });
+  const node = createNode(Kind.ArrayBindingPattern, { "elements": elements }) as Ast.ArrayBindingPattern;
+  attachChildren(node);
+  return node;
 }
 
 export function updateArrayBindingPattern(node: Ast.ArrayBindingPattern, elements: NodeArray<Ast.BindingElement>): Ast.ArrayBindingPattern {
-  if (node.elements === elements) {
+  if (sameValue(nodeField(node, "elements"), valueAsUnknown(elements))) {
     return node;
   }
   return createArrayBindingPattern(elements);
 }
 
 export function createParameterDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, dotDotDotToken: Ast.DotDotDotToken | undefined, name: Ast.BindingName, questionToken: Ast.QuestionToken | undefined, type: Ast.TypeNode | undefined, initializer: Ast.Expression | undefined): Ast.ParameterDeclaration {
-  return createNode<Ast.ParameterDeclaration>(Kind.Parameter, { "modifiers": modifiers, "dotDotDotToken": dotDotDotToken, "name": name, "questionToken": questionToken, "type": type, "initializer": initializer });
+  const node = createNode(Kind.Parameter, { "modifiers": modifiers, "dotDotDotToken": dotDotDotToken, "name": name, "questionToken": questionToken, "type": type, "initializer": initializer }) as Ast.ParameterDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateParameterDeclaration(node: Ast.ParameterDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, dotDotDotToken: Ast.DotDotDotToken | undefined, name: Ast.BindingName, questionToken: Ast.QuestionToken | undefined, type: Ast.TypeNode | undefined, initializer: Ast.Expression | undefined): Ast.ParameterDeclaration {
-  if (node.modifiers === modifiers && node.dotDotDotToken === dotDotDotToken && node.name === name && node.questionToken === questionToken && node.type === type && node.initializer === initializer) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "dotDotDotToken"), valueAsUnknown(dotDotDotToken)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "questionToken"), valueAsUnknown(questionToken)) && sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "initializer"), valueAsUnknown(initializer))) {
     return node;
   }
   return createParameterDeclaration(modifiers, dotDotDotToken, name, questionToken, type, initializer);
 }
 
 export function createBindingElement(dotDotDotToken: Ast.DotDotDotToken | undefined, propertyName: Ast.PropertyName | undefined, name: Ast.BindingName | undefined, initializer: Ast.Expression | undefined): Ast.BindingElement {
-  return createNode<Ast.BindingElement>(Kind.BindingElement, { "dotDotDotToken": dotDotDotToken, "propertyName": propertyName, "name": name, "initializer": initializer });
+  const node = createNode(Kind.BindingElement, { "dotDotDotToken": dotDotDotToken, "propertyName": propertyName, "name": name, "initializer": initializer }) as Ast.BindingElement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateBindingElement(node: Ast.BindingElement, dotDotDotToken: Ast.DotDotDotToken | undefined, propertyName: Ast.PropertyName | undefined, name: Ast.BindingName | undefined, initializer: Ast.Expression | undefined): Ast.BindingElement {
-  if (node.dotDotDotToken === dotDotDotToken && node.propertyName === propertyName && node.name === name && node.initializer === initializer) {
+  if (sameValue(nodeField(node, "dotDotDotToken"), valueAsUnknown(dotDotDotToken)) && sameValue(nodeField(node, "propertyName"), valueAsUnknown(propertyName)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "initializer"), valueAsUnknown(initializer))) {
     return node;
   }
   return createBindingElement(dotDotDotToken, propertyName, name, initializer);
 }
 
 export function createMissingDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined): Ast.MissingDeclaration {
-  return createNode<Ast.MissingDeclaration>(Kind.MissingDeclaration, { "modifiers": modifiers });
+  const node = createNode(Kind.MissingDeclaration, { "modifiers": modifiers }) as Ast.MissingDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateMissingDeclaration(node: Ast.MissingDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined): Ast.MissingDeclaration {
-  if (node.modifiers === modifiers) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers))) {
     return node;
   }
   return createMissingDeclaration(modifiers);
 }
 
 export function createFunctionDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, asteriskToken: Ast.AsteriskToken | undefined, name: Ast.Identifier | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined, body: Ast.FunctionBody | undefined): Ast.FunctionDeclaration {
-  return createNode<Ast.FunctionDeclaration>(Kind.FunctionDeclaration, { "modifiers": modifiers, "asteriskToken": asteriskToken, "name": name, "typeParameters": typeParameters, "parameters": parameters, "type": type, "body": body });
+  const node = createNode(Kind.FunctionDeclaration, { "modifiers": modifiers, "asteriskToken": asteriskToken, "name": name, "typeParameters": typeParameters, "parameters": parameters, "type": type, "body": body }) as Ast.FunctionDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateFunctionDeclaration(node: Ast.FunctionDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, asteriskToken: Ast.AsteriskToken | undefined, name: Ast.Identifier | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined, body: Ast.FunctionBody | undefined): Ast.FunctionDeclaration {
-  if (node.modifiers === modifiers && node.asteriskToken === asteriskToken && node.name === name && node.typeParameters === typeParameters && node.parameters === parameters && node.type === type && node.body === body) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "asteriskToken"), valueAsUnknown(asteriskToken)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "parameters"), valueAsUnknown(parameters)) && sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "body"), valueAsUnknown(body))) {
     return node;
   }
   return createFunctionDeclaration(modifiers, asteriskToken, name, typeParameters, parameters, type, body);
 }
 
 export function createClassDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, heritageClauses: NodeArray<Ast.HeritageClause> | undefined, members: NodeArray<Ast.ClassElement>): Ast.ClassDeclaration {
-  return createNode<Ast.ClassDeclaration>(Kind.ClassDeclaration, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "heritageClauses": heritageClauses, "members": members });
+  const node = createNode(Kind.ClassDeclaration, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "heritageClauses": heritageClauses, "members": members }) as Ast.ClassDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateClassDeclaration(node: Ast.ClassDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, heritageClauses: NodeArray<Ast.HeritageClause> | undefined, members: NodeArray<Ast.ClassElement>): Ast.ClassDeclaration {
-  if (node.modifiers === modifiers && node.name === name && node.typeParameters === typeParameters && node.heritageClauses === heritageClauses && node.members === members) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "heritageClauses"), valueAsUnknown(heritageClauses)) && sameValue(nodeField(node, "members"), valueAsUnknown(members))) {
     return node;
   }
   return createClassDeclaration(modifiers, name, typeParameters, heritageClauses, members);
 }
 
 export function createClassExpression(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, heritageClauses: NodeArray<Ast.HeritageClause> | undefined, members: NodeArray<Ast.ClassElement>): Ast.ClassExpression {
-  return createNode<Ast.ClassExpression>(Kind.ClassExpression, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "heritageClauses": heritageClauses, "members": members });
+  const node = createNode(Kind.ClassExpression, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "heritageClauses": heritageClauses, "members": members }) as Ast.ClassExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateClassExpression(node: Ast.ClassExpression, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, heritageClauses: NodeArray<Ast.HeritageClause> | undefined, members: NodeArray<Ast.ClassElement>): Ast.ClassExpression {
-  if (node.modifiers === modifiers && node.name === name && node.typeParameters === typeParameters && node.heritageClauses === heritageClauses && node.members === members) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "heritageClauses"), valueAsUnknown(heritageClauses)) && sameValue(nodeField(node, "members"), valueAsUnknown(members))) {
     return node;
   }
   return createClassExpression(modifiers, name, typeParameters, heritageClauses, members);
 }
 
-export function createHeritageClause(token: Kind.ExtendsKeyword | Kind.ImplementsKeyword, types: NodeArray<Ast.ExpressionWithTypeArguments>): Ast.HeritageClause {
-  return createNode<Ast.HeritageClause>(Kind.HeritageClause, { "token": token, "types": types });
+export function createHeritageClause(token: Kind, types: NodeArray<Ast.ExpressionWithTypeArguments>): Ast.HeritageClause {
+  const node = createNode(Kind.HeritageClause, { "token": token, "types": types }) as Ast.HeritageClause;
+  attachChildren(node);
+  return node;
 }
 
-export function updateHeritageClause(node: Ast.HeritageClause, token: Kind.ExtendsKeyword | Kind.ImplementsKeyword, types: NodeArray<Ast.ExpressionWithTypeArguments>): Ast.HeritageClause {
-  if (node.token === token && node.types === types) {
+export function updateHeritageClause(node: Ast.HeritageClause, token: Kind, types: NodeArray<Ast.ExpressionWithTypeArguments>): Ast.HeritageClause {
+  if (sameValue(nodeField(node, "token"), valueAsUnknown(token)) && sameValue(nodeField(node, "types"), valueAsUnknown(types))) {
     return node;
   }
   return createHeritageClause(token, types);
 }
 
 export function createInterfaceDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, heritageClauses: NodeArray<Ast.HeritageClause> | undefined, members: NodeArray<Ast.TypeElement>): Ast.InterfaceDeclaration {
-  return createNode<Ast.InterfaceDeclaration>(Kind.InterfaceDeclaration, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "heritageClauses": heritageClauses, "members": members });
+  const node = createNode(Kind.InterfaceDeclaration, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "heritageClauses": heritageClauses, "members": members }) as Ast.InterfaceDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateInterfaceDeclaration(node: Ast.InterfaceDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, heritageClauses: NodeArray<Ast.HeritageClause> | undefined, members: NodeArray<Ast.TypeElement>): Ast.InterfaceDeclaration {
-  if (node.modifiers === modifiers && node.name === name && node.typeParameters === typeParameters && node.heritageClauses === heritageClauses && node.members === members) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "heritageClauses"), valueAsUnknown(heritageClauses)) && sameValue(nodeField(node, "members"), valueAsUnknown(members))) {
     return node;
   }
   return createInterfaceDeclaration(modifiers, name, typeParameters, heritageClauses, members);
 }
 
 export function createTypeAliasDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, type: Ast.TypeNode): Ast.TypeAliasDeclaration {
-  return createNode<Ast.TypeAliasDeclaration>(Kind.TypeAliasDeclaration, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "type": type });
+  const node = createNode(Kind.TypeAliasDeclaration, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "type": type }) as Ast.TypeAliasDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateTypeAliasDeclaration(node: Ast.TypeAliasDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, type: Ast.TypeNode): Ast.TypeAliasDeclaration {
-  if (node.modifiers === modifiers && node.name === name && node.typeParameters === typeParameters && node.type === type) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   switch (node.kind) {
@@ -684,56 +749,65 @@ export function updateTypeAliasDeclaration(node: Ast.TypeAliasDeclaration, modif
     case Kind.JSTypeAliasDeclaration:
       return createJSTypeAliasDeclaration(modifiers, name, typeParameters, type);
     default:
-      throw new Error(`Unexpected kind in updateTypeAliasDeclaration: ${Kind[node.kind]}`);
+      throw new Error(`Unexpected kind in updateTypeAliasDeclaration: ${kindDebugName(node.kind)}`);
   }
 }
 
 export function createJSTypeAliasDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, type: Ast.TypeNode): Ast.TypeAliasDeclaration {
-  return createNode<Ast.TypeAliasDeclaration>(Kind.JSTypeAliasDeclaration, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "type": type });
+  const node = createNode(Kind.JSTypeAliasDeclaration, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "type": type }) as Ast.TypeAliasDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSTypeAliasDeclaration(node: Ast.TypeAliasDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, type: Ast.TypeNode): Ast.TypeAliasDeclaration {
-  if (node.modifiers === modifiers && node.name === name && node.typeParameters === typeParameters && node.type === type) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createJSTypeAliasDeclaration(modifiers, name, typeParameters, type);
 }
 
 export function createEnumMember(name: Ast.PropertyName, initializer: Ast.Expression | undefined): Ast.EnumMember {
-  return createNode<Ast.EnumMember>(Kind.EnumMember, { "name": name, "initializer": initializer });
+  const node = createNode(Kind.EnumMember, { "name": name, "initializer": initializer }) as Ast.EnumMember;
+  attachChildren(node);
+  return node;
 }
 
 export function updateEnumMember(node: Ast.EnumMember, name: Ast.PropertyName, initializer: Ast.Expression | undefined): Ast.EnumMember {
-  if (node.name === name && node.initializer === initializer) {
+  if (sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "initializer"), valueAsUnknown(initializer))) {
     return node;
   }
   return createEnumMember(name, initializer);
 }
 
 export function createEnumDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier, members: NodeArray<Ast.EnumMember>): Ast.EnumDeclaration {
-  return createNode<Ast.EnumDeclaration>(Kind.EnumDeclaration, { "modifiers": modifiers, "name": name, "members": members });
+  const node = createNode(Kind.EnumDeclaration, { "modifiers": modifiers, "name": name, "members": members }) as Ast.EnumDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateEnumDeclaration(node: Ast.EnumDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier, members: NodeArray<Ast.EnumMember>): Ast.EnumDeclaration {
-  if (node.modifiers === modifiers && node.name === name && node.members === members) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "members"), valueAsUnknown(members))) {
     return node;
   }
   return createEnumDeclaration(modifiers, name, members);
 }
 
 export function createModuleBlock(statements: NodeArray<Ast.Statement>): Ast.ModuleBlock {
-  return createNode<Ast.ModuleBlock>(Kind.ModuleBlock, { "statements": statements });
+  const node = createNode(Kind.ModuleBlock, { "statements": statements }) as Ast.ModuleBlock;
+  attachChildren(node);
+  return node;
 }
 
 export function updateModuleBlock(node: Ast.ModuleBlock, statements: NodeArray<Ast.Statement>): Ast.ModuleBlock {
-  if (node.statements === statements) {
+  if (sameValue(nodeField(node, "statements"), valueAsUnknown(statements))) {
     return node;
   }
   return createModuleBlock(statements);
 }
 
 export function createNotEmittedStatement(): Ast.NotEmittedStatement {
-  return createNode<Ast.NotEmittedStatement>(Kind.NotEmittedStatement, {});
+  const node = createNode(Kind.NotEmittedStatement, {}) as Ast.NotEmittedStatement;
+  return node;
 }
 
 export function updateNotEmittedStatement(node: Ast.NotEmittedStatement): Ast.NotEmittedStatement {
@@ -741,7 +815,8 @@ export function updateNotEmittedStatement(node: Ast.NotEmittedStatement): Ast.No
 }
 
 export function createNotEmittedTypeElement(): Ast.NotEmittedTypeElement {
-  return createNode<Ast.NotEmittedTypeElement>(Kind.NotEmittedTypeElement, {});
+  const node = createNode(Kind.NotEmittedTypeElement, {}) as Ast.NotEmittedTypeElement;
+  return node;
 }
 
 export function updateNotEmittedTypeElement(node: Ast.NotEmittedTypeElement): Ast.NotEmittedTypeElement {
@@ -749,11 +824,13 @@ export function updateNotEmittedTypeElement(node: Ast.NotEmittedTypeElement): As
 }
 
 export function createImportDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, importClause: Ast.ImportClause | undefined, moduleSpecifier: Ast.Expression, attributes: Ast.ImportAttributes | undefined): Ast.ImportDeclaration {
-  return createNode<Ast.ImportDeclaration>(Kind.ImportDeclaration, { "modifiers": modifiers, "importClause": importClause, "moduleSpecifier": moduleSpecifier, "attributes": attributes });
+  const node = createNode(Kind.ImportDeclaration, { "modifiers": modifiers, "importClause": importClause, "moduleSpecifier": moduleSpecifier, "attributes": attributes }) as Ast.ImportDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateImportDeclaration(node: Ast.ImportDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, importClause: Ast.ImportClause | undefined, moduleSpecifier: Ast.Expression, attributes: Ast.ImportAttributes | undefined): Ast.ImportDeclaration {
-  if (node.modifiers === modifiers && node.importClause === importClause && node.moduleSpecifier === moduleSpecifier && node.attributes === attributes) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "importClause"), valueAsUnknown(importClause)) && sameValue(nodeField(node, "moduleSpecifier"), valueAsUnknown(moduleSpecifier)) && sameValue(nodeField(node, "attributes"), valueAsUnknown(attributes))) {
     return node;
   }
   switch (node.kind) {
@@ -762,221 +839,260 @@ export function updateImportDeclaration(node: Ast.ImportDeclaration, modifiers: 
     case Kind.JSImportDeclaration:
       return createJSImportDeclaration(modifiers, importClause, moduleSpecifier, attributes);
     default:
-      throw new Error(`Unexpected kind in updateImportDeclaration: ${Kind[node.kind]}`);
+      throw new Error(`Unexpected kind in updateImportDeclaration: ${kindDebugName(node.kind)}`);
   }
 }
 
 export function createJSImportDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, importClause: Ast.ImportClause | undefined, moduleSpecifier: Ast.Expression, attributes: Ast.ImportAttributes | undefined): Ast.ImportDeclaration {
-  return createNode<Ast.ImportDeclaration>(Kind.JSImportDeclaration, { "modifiers": modifiers, "importClause": importClause, "moduleSpecifier": moduleSpecifier, "attributes": attributes });
+  const node = createNode(Kind.JSImportDeclaration, { "modifiers": modifiers, "importClause": importClause, "moduleSpecifier": moduleSpecifier, "attributes": attributes }) as Ast.ImportDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSImportDeclaration(node: Ast.ImportDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, importClause: Ast.ImportClause | undefined, moduleSpecifier: Ast.Expression, attributes: Ast.ImportAttributes | undefined): Ast.ImportDeclaration {
-  if (node.modifiers === modifiers && node.importClause === importClause && node.moduleSpecifier === moduleSpecifier && node.attributes === attributes) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "importClause"), valueAsUnknown(importClause)) && sameValue(nodeField(node, "moduleSpecifier"), valueAsUnknown(moduleSpecifier)) && sameValue(nodeField(node, "attributes"), valueAsUnknown(attributes))) {
     return node;
   }
   return createJSImportDeclaration(modifiers, importClause, moduleSpecifier, attributes);
 }
 
 export function createExternalModuleReference(expression: Ast.Expression): Ast.ExternalModuleReference {
-  return createNode<Ast.ExternalModuleReference>(Kind.ExternalModuleReference, { "expression": expression });
+  const node = createNode(Kind.ExternalModuleReference, { "expression": expression }) as Ast.ExternalModuleReference;
+  attachChildren(node);
+  return node;
 }
 
 export function updateExternalModuleReference(node: Ast.ExternalModuleReference, expression: Ast.Expression): Ast.ExternalModuleReference {
-  if (node.expression === expression) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createExternalModuleReference(expression);
 }
 
 export function createNamespaceImport(name: Ast.Identifier): Ast.NamespaceImport {
-  return createNode<Ast.NamespaceImport>(Kind.NamespaceImport, { "name": name });
+  const node = createNode(Kind.NamespaceImport, { "name": name }) as Ast.NamespaceImport;
+  attachChildren(node);
+  return node;
 }
 
 export function updateNamespaceImport(node: Ast.NamespaceImport, name: Ast.Identifier): Ast.NamespaceImport {
-  if (node.name === name) {
+  if (sameValue(nodeField(node, "name"), valueAsUnknown(name))) {
     return node;
   }
   return createNamespaceImport(name);
 }
 
 export function createNamedImports(elements: NodeArray<Ast.ImportSpecifier>): Ast.NamedImports {
-  return createNode<Ast.NamedImports>(Kind.NamedImports, { "elements": elements });
+  const node = createNode(Kind.NamedImports, { "elements": elements }) as Ast.NamedImports;
+  attachChildren(node);
+  return node;
 }
 
 export function updateNamedImports(node: Ast.NamedImports, elements: NodeArray<Ast.ImportSpecifier>): Ast.NamedImports {
-  if (node.elements === elements) {
+  if (sameValue(nodeField(node, "elements"), valueAsUnknown(elements))) {
     return node;
   }
   return createNamedImports(elements);
 }
 
 export function createExportAssignment(modifiers: NodeArray<Ast.ModifierLike> | undefined, isExportEquals: boolean, type: Ast.TypeNode, expression: Ast.Expression): Ast.ExportAssignment {
-  return createNode<Ast.ExportAssignment>(Kind.ExportAssignment, { "modifiers": modifiers, "isExportEquals": isExportEquals, "type": type, "expression": expression });
+  const node = createNode(Kind.ExportAssignment, { "modifiers": modifiers, "isExportEquals": isExportEquals, "type": type, "expression": expression }) as Ast.ExportAssignment;
+  attachChildren(node);
+  return node;
 }
 
 export function updateExportAssignment(node: Ast.ExportAssignment, modifiers: NodeArray<Ast.ModifierLike> | undefined, isExportEquals: boolean, type: Ast.TypeNode, expression: Ast.Expression): Ast.ExportAssignment {
-  if (node.modifiers === modifiers && node.isExportEquals === isExportEquals && node.type === type && node.expression === expression) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "isExportEquals"), valueAsUnknown(isExportEquals)) && sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createExportAssignment(modifiers, isExportEquals, type, expression);
 }
 
 export function createNamespaceExportDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier): Ast.NamespaceExportDeclaration {
-  return createNode<Ast.NamespaceExportDeclaration>(Kind.NamespaceExportDeclaration, { "modifiers": modifiers, "name": name });
+  const node = createNode(Kind.NamespaceExportDeclaration, { "modifiers": modifiers, "name": name }) as Ast.NamespaceExportDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateNamespaceExportDeclaration(node: Ast.NamespaceExportDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier): Ast.NamespaceExportDeclaration {
-  if (node.modifiers === modifiers && node.name === name) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "name"), valueAsUnknown(name))) {
     return node;
   }
   return createNamespaceExportDeclaration(modifiers, name);
 }
 
 export function createNamespaceExport(name: Ast.ModuleExportName): Ast.NamespaceExport {
-  return createNode<Ast.NamespaceExport>(Kind.NamespaceExport, { "name": name });
+  const node = createNode(Kind.NamespaceExport, { "name": name }) as Ast.NamespaceExport;
+  attachChildren(node);
+  return node;
 }
 
 export function updateNamespaceExport(node: Ast.NamespaceExport, name: Ast.ModuleExportName): Ast.NamespaceExport {
-  if (node.name === name) {
+  if (sameValue(nodeField(node, "name"), valueAsUnknown(name))) {
     return node;
   }
   return createNamespaceExport(name);
 }
 
 export function createNamedExports(elements: NodeArray<Ast.ExportSpecifier>): Ast.NamedExports {
-  return createNode<Ast.NamedExports>(Kind.NamedExports, { "elements": elements });
+  const node = createNode(Kind.NamedExports, { "elements": elements }) as Ast.NamedExports;
+  attachChildren(node);
+  return node;
 }
 
 export function updateNamedExports(node: Ast.NamedExports, elements: NodeArray<Ast.ExportSpecifier>): Ast.NamedExports {
-  if (node.elements === elements) {
+  if (sameValue(nodeField(node, "elements"), valueAsUnknown(elements))) {
     return node;
   }
   return createNamedExports(elements);
 }
 
 export function createExportSpecifier(isTypeOnly: boolean, propertyName: Ast.ModuleExportName | undefined, name: Ast.ModuleExportName): Ast.ExportSpecifier {
-  return createNode<Ast.ExportSpecifier>(Kind.ExportSpecifier, { "isTypeOnly": isTypeOnly, "propertyName": propertyName, "name": name });
+  const node = createNode(Kind.ExportSpecifier, { "isTypeOnly": isTypeOnly, "propertyName": propertyName, "name": name }) as Ast.ExportSpecifier;
+  attachChildren(node);
+  return node;
 }
 
 export function updateExportSpecifier(node: Ast.ExportSpecifier, isTypeOnly: boolean, propertyName: Ast.ModuleExportName | undefined, name: Ast.ModuleExportName): Ast.ExportSpecifier {
-  if (node.isTypeOnly === isTypeOnly && node.propertyName === propertyName && node.name === name) {
+  if (sameValue(nodeField(node, "isTypeOnly"), valueAsUnknown(isTypeOnly)) && sameValue(nodeField(node, "propertyName"), valueAsUnknown(propertyName)) && sameValue(nodeField(node, "name"), valueAsUnknown(name))) {
     return node;
   }
   return createExportSpecifier(isTypeOnly, propertyName, name);
 }
 
 export function createCallSignatureDeclaration(typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined): Ast.CallSignatureDeclaration {
-  return createNode<Ast.CallSignatureDeclaration>(Kind.CallSignature, { "typeParameters": typeParameters, "parameters": parameters, "type": type });
+  const node = createNode(Kind.CallSignature, { "typeParameters": typeParameters, "parameters": parameters, "type": type }) as Ast.CallSignatureDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateCallSignatureDeclaration(node: Ast.CallSignatureDeclaration, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined): Ast.CallSignatureDeclaration {
-  if (node.typeParameters === typeParameters && node.parameters === parameters && node.type === type) {
+  if (sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "parameters"), valueAsUnknown(parameters)) && sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createCallSignatureDeclaration(typeParameters, parameters, type);
 }
 
 export function createConstructSignatureDeclaration(typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined): Ast.ConstructSignatureDeclaration {
-  return createNode<Ast.ConstructSignatureDeclaration>(Kind.ConstructSignature, { "typeParameters": typeParameters, "parameters": parameters, "type": type });
+  const node = createNode(Kind.ConstructSignature, { "typeParameters": typeParameters, "parameters": parameters, "type": type }) as Ast.ConstructSignatureDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateConstructSignatureDeclaration(node: Ast.ConstructSignatureDeclaration, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined): Ast.ConstructSignatureDeclaration {
-  if (node.typeParameters === typeParameters && node.parameters === parameters && node.type === type) {
+  if (sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "parameters"), valueAsUnknown(parameters)) && sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createConstructSignatureDeclaration(typeParameters, parameters, type);
 }
 
 export function createConstructorDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined, body: Ast.FunctionBody | undefined): Ast.ConstructorDeclaration {
-  return createNode<Ast.ConstructorDeclaration>(Kind.Constructor, { "modifiers": modifiers, "typeParameters": typeParameters, "parameters": parameters, "type": type, "body": body });
+  const node = createNode(Kind.Constructor, { "modifiers": modifiers, "typeParameters": typeParameters, "parameters": parameters, "type": type, "body": body }) as Ast.ConstructorDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateConstructorDeclaration(node: Ast.ConstructorDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined, body: Ast.FunctionBody | undefined): Ast.ConstructorDeclaration {
-  if (node.modifiers === modifiers && node.typeParameters === typeParameters && node.parameters === parameters && node.type === type && node.body === body) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "parameters"), valueAsUnknown(parameters)) && sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "body"), valueAsUnknown(body))) {
     return node;
   }
   return createConstructorDeclaration(modifiers, typeParameters, parameters, type, body);
 }
 
 export function createGetAccessorDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined, body: Ast.FunctionBody | undefined): Ast.GetAccessorDeclaration {
-  return createNode<Ast.GetAccessorDeclaration>(Kind.GetAccessor, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "parameters": parameters, "type": type, "body": body });
+  const node = createNode(Kind.GetAccessor, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "parameters": parameters, "type": type, "body": body }) as Ast.GetAccessorDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateGetAccessorDeclaration(node: Ast.GetAccessorDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined, body: Ast.FunctionBody | undefined): Ast.GetAccessorDeclaration {
-  if (node.modifiers === modifiers && node.name === name && node.typeParameters === typeParameters && node.parameters === parameters && node.type === type && node.body === body) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "parameters"), valueAsUnknown(parameters)) && sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "body"), valueAsUnknown(body))) {
     return node;
   }
   return createGetAccessorDeclaration(modifiers, name, typeParameters, parameters, type, body);
 }
 
 export function createSetAccessorDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined, body: Ast.FunctionBody | undefined): Ast.SetAccessorDeclaration {
-  return createNode<Ast.SetAccessorDeclaration>(Kind.SetAccessor, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "parameters": parameters, "type": type, "body": body });
+  const node = createNode(Kind.SetAccessor, { "modifiers": modifiers, "name": name, "typeParameters": typeParameters, "parameters": parameters, "type": type, "body": body }) as Ast.SetAccessorDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateSetAccessorDeclaration(node: Ast.SetAccessorDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined, body: Ast.FunctionBody | undefined): Ast.SetAccessorDeclaration {
-  if (node.modifiers === modifiers && node.name === name && node.typeParameters === typeParameters && node.parameters === parameters && node.type === type && node.body === body) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "parameters"), valueAsUnknown(parameters)) && sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "body"), valueAsUnknown(body))) {
     return node;
   }
   return createSetAccessorDeclaration(modifiers, name, typeParameters, parameters, type, body);
 }
 
 export function createIndexSignatureDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode): Ast.IndexSignatureDeclaration {
-  return createNode<Ast.IndexSignatureDeclaration>(Kind.IndexSignature, { "modifiers": modifiers, "parameters": parameters, "type": type });
+  const node = createNode(Kind.IndexSignature, { "modifiers": modifiers, "parameters": parameters, "type": type }) as Ast.IndexSignatureDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateIndexSignatureDeclaration(node: Ast.IndexSignatureDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode): Ast.IndexSignatureDeclaration {
-  if (node.modifiers === modifiers && node.parameters === parameters && node.type === type) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "parameters"), valueAsUnknown(parameters)) && sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createIndexSignatureDeclaration(modifiers, parameters, type);
 }
 
-export function createMethodSignatureDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.QuestionToken | Ast.ExclamationToken | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined): Ast.MethodSignatureDeclaration {
-  return createNode<Ast.MethodSignatureDeclaration>(Kind.MethodSignature, { "modifiers": modifiers, "name": name, "postfixToken": postfixToken, "typeParameters": typeParameters, "parameters": parameters, "type": type });
+export function createMethodSignatureDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.Token | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined): Ast.MethodSignatureDeclaration {
+  const node = createNode(Kind.MethodSignature, { "modifiers": modifiers, "name": name, "postfixToken": postfixToken, "typeParameters": typeParameters, "parameters": parameters, "type": type }) as Ast.MethodSignatureDeclaration;
+  attachChildren(node);
+  return node;
 }
 
-export function updateMethodSignatureDeclaration(node: Ast.MethodSignatureDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.QuestionToken | Ast.ExclamationToken | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined): Ast.MethodSignatureDeclaration {
-  if (node.modifiers === modifiers && node.name === name && node.postfixToken === postfixToken && node.typeParameters === typeParameters && node.parameters === parameters && node.type === type) {
+export function updateMethodSignatureDeclaration(node: Ast.MethodSignatureDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.Token | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined): Ast.MethodSignatureDeclaration {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "postfixToken"), valueAsUnknown(postfixToken)) && sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "parameters"), valueAsUnknown(parameters)) && sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createMethodSignatureDeclaration(modifiers, name, postfixToken, typeParameters, parameters, type);
 }
 
-export function createMethodDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, asteriskToken: Ast.AsteriskToken | undefined, name: Ast.PropertyName, postfixToken: Ast.QuestionToken | Ast.ExclamationToken | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined, body: Ast.FunctionBody | undefined): Ast.MethodDeclaration {
-  return createNode<Ast.MethodDeclaration>(Kind.MethodDeclaration, { "modifiers": modifiers, "asteriskToken": asteriskToken, "name": name, "postfixToken": postfixToken, "typeParameters": typeParameters, "parameters": parameters, "type": type, "body": body });
+export function createMethodDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, asteriskToken: Ast.AsteriskToken | undefined, name: Ast.PropertyName, postfixToken: Ast.Token | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined, body: Ast.FunctionBody | undefined): Ast.MethodDeclaration {
+  const node = createNode(Kind.MethodDeclaration, { "modifiers": modifiers, "asteriskToken": asteriskToken, "name": name, "postfixToken": postfixToken, "typeParameters": typeParameters, "parameters": parameters, "type": type, "body": body }) as Ast.MethodDeclaration;
+  attachChildren(node);
+  return node;
 }
 
-export function updateMethodDeclaration(node: Ast.MethodDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, asteriskToken: Ast.AsteriskToken | undefined, name: Ast.PropertyName, postfixToken: Ast.QuestionToken | Ast.ExclamationToken | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined, body: Ast.FunctionBody | undefined): Ast.MethodDeclaration {
-  if (node.modifiers === modifiers && node.asteriskToken === asteriskToken && node.name === name && node.postfixToken === postfixToken && node.typeParameters === typeParameters && node.parameters === parameters && node.type === type && node.body === body) {
+export function updateMethodDeclaration(node: Ast.MethodDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, asteriskToken: Ast.AsteriskToken | undefined, name: Ast.PropertyName, postfixToken: Ast.Token | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined, body: Ast.FunctionBody | undefined): Ast.MethodDeclaration {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "asteriskToken"), valueAsUnknown(asteriskToken)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "postfixToken"), valueAsUnknown(postfixToken)) && sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "parameters"), valueAsUnknown(parameters)) && sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "body"), valueAsUnknown(body))) {
     return node;
   }
   return createMethodDeclaration(modifiers, asteriskToken, name, postfixToken, typeParameters, parameters, type, body);
 }
 
-export function createPropertySignatureDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.QuestionToken | Ast.ExclamationToken | undefined, type: Ast.TypeNode, initializer: Ast.Expression): Ast.PropertySignatureDeclaration {
-  return createNode<Ast.PropertySignatureDeclaration>(Kind.PropertySignature, { "modifiers": modifiers, "name": name, "postfixToken": postfixToken, "type": type, "initializer": initializer });
+export function createPropertySignatureDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.Token | undefined, type: Ast.TypeNode, initializer: Ast.Expression): Ast.PropertySignatureDeclaration {
+  const node = createNode(Kind.PropertySignature, { "modifiers": modifiers, "name": name, "postfixToken": postfixToken, "type": type, "initializer": initializer }) as Ast.PropertySignatureDeclaration;
+  attachChildren(node);
+  return node;
 }
 
-export function updatePropertySignatureDeclaration(node: Ast.PropertySignatureDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.QuestionToken | Ast.ExclamationToken | undefined, type: Ast.TypeNode, initializer: Ast.Expression): Ast.PropertySignatureDeclaration {
-  if (node.modifiers === modifiers && node.name === name && node.postfixToken === postfixToken && node.type === type && node.initializer === initializer) {
+export function updatePropertySignatureDeclaration(node: Ast.PropertySignatureDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.Token | undefined, type: Ast.TypeNode, initializer: Ast.Expression): Ast.PropertySignatureDeclaration {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "postfixToken"), valueAsUnknown(postfixToken)) && sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "initializer"), valueAsUnknown(initializer))) {
     return node;
   }
   return createPropertySignatureDeclaration(modifiers, name, postfixToken, type, initializer);
 }
 
-export function createPropertyDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.QuestionToken | Ast.ExclamationToken | undefined, type: Ast.TypeNode | undefined, initializer: Ast.Expression | undefined): Ast.PropertyDeclaration {
-  return createNode<Ast.PropertyDeclaration>(Kind.PropertyDeclaration, { "modifiers": modifiers, "name": name, "postfixToken": postfixToken, "type": type, "initializer": initializer });
+export function createPropertyDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.Token | undefined, type: Ast.TypeNode | undefined, initializer: Ast.Expression | undefined): Ast.PropertyDeclaration {
+  const node = createNode(Kind.PropertyDeclaration, { "modifiers": modifiers, "name": name, "postfixToken": postfixToken, "type": type, "initializer": initializer }) as Ast.PropertyDeclaration;
+  attachChildren(node);
+  return node;
 }
 
-export function updatePropertyDeclaration(node: Ast.PropertyDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.QuestionToken | Ast.ExclamationToken | undefined, type: Ast.TypeNode | undefined, initializer: Ast.Expression | undefined): Ast.PropertyDeclaration {
-  if (node.modifiers === modifiers && node.name === name && node.postfixToken === postfixToken && node.type === type && node.initializer === initializer) {
+export function updatePropertyDeclaration(node: Ast.PropertyDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.Token | undefined, type: Ast.TypeNode | undefined, initializer: Ast.Expression | undefined): Ast.PropertyDeclaration {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "postfixToken"), valueAsUnknown(postfixToken)) && sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "initializer"), valueAsUnknown(initializer))) {
     return node;
   }
   return createPropertyDeclaration(modifiers, name, postfixToken, type, initializer);
 }
 
 export function createSemicolonClassElement(): Ast.SemicolonClassElement {
-  return createNode<Ast.SemicolonClassElement>(Kind.SemicolonClassElement, {});
+  const node = createNode(Kind.SemicolonClassElement, {}) as Ast.SemicolonClassElement;
+  return node;
 }
 
 export function updateSemicolonClassElement(node: Ast.SemicolonClassElement): Ast.SemicolonClassElement {
@@ -984,537 +1100,633 @@ export function updateSemicolonClassElement(node: Ast.SemicolonClassElement): As
 }
 
 export function createClassStaticBlockDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, body: Ast.Block): Ast.ClassStaticBlockDeclaration {
-  return createNode<Ast.ClassStaticBlockDeclaration>(Kind.ClassStaticBlockDeclaration, { "modifiers": modifiers, "body": body });
+  const node = createNode(Kind.ClassStaticBlockDeclaration, { "modifiers": modifiers, "body": body }) as Ast.ClassStaticBlockDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateClassStaticBlockDeclaration(node: Ast.ClassStaticBlockDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, body: Ast.Block): Ast.ClassStaticBlockDeclaration {
-  if (node.modifiers === modifiers && node.body === body) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "body"), valueAsUnknown(body))) {
     return node;
   }
   return createClassStaticBlockDeclaration(modifiers, body);
 }
 
 export function createOmittedExpression(): Ast.OmittedExpression {
-  return createNode<Ast.OmittedExpression>(Kind.OmittedExpression, {});
+  const node = createNode(Kind.OmittedExpression, {}) as Ast.OmittedExpression;
+  return node;
 }
 
 export function updateOmittedExpression(node: Ast.OmittedExpression): Ast.OmittedExpression {
   return node;
 }
 
-export function createKeywordExpression<TKind extends Ast.KeywordExpressionSyntaxKind = Ast.KeywordExpressionSyntaxKind>(kind: TKind): Ast.KeywordExpression<TKind> {
-  return createNode<Ast.KeywordExpression<TKind>>(kind as Kind, {});
-}
-
-export function updateKeywordExpression<TKind extends Ast.KeywordExpressionSyntaxKind = Ast.KeywordExpressionSyntaxKind>(node: Ast.KeywordExpression<TKind>): Ast.KeywordExpression<TKind> {
+export function createKeywordExpression(kind: Ast.KeywordExpressionSyntaxKind): Ast.KeywordExpression {
+  const node = createNode(kind as Kind, {}) as Ast.KeywordExpression;
   return node;
 }
 
-export function createStringLiteral(text: string, tokenFlags: number): Ast.StringLiteral {
-  return createNode<Ast.StringLiteral>(Kind.StringLiteral, { "text": text, "tokenFlags": tokenFlags });
+export function updateKeywordExpression(node: Ast.KeywordExpression): Ast.KeywordExpression {
+  return node;
 }
 
-export function updateStringLiteral(node: Ast.StringLiteral, text: string, tokenFlags: number): Ast.StringLiteral {
-  if (node.text === text && node.tokenFlags === tokenFlags) {
+export function createStringLiteral(text: string, tokenFlags: int): Ast.StringLiteral {
+  const node = createNode(Kind.StringLiteral, { "text": text, "tokenFlags": tokenFlags }) as Ast.StringLiteral;
+  return node;
+}
+
+export function updateStringLiteral(node: Ast.StringLiteral, text: string, tokenFlags: int): Ast.StringLiteral {
+  if (sameValue(nodeField(node, "text"), valueAsUnknown(text)) && sameValue(nodeField(node, "tokenFlags"), valueAsUnknown(tokenFlags))) {
     return node;
   }
   return createStringLiteral(text, tokenFlags);
 }
 
-export function createNumericLiteral(text: string, tokenFlags: number): Ast.NumericLiteral {
-  return createNode<Ast.NumericLiteral>(Kind.NumericLiteral, { "text": text, "tokenFlags": tokenFlags });
+export function createNumericLiteral(text: string, tokenFlags: int): Ast.NumericLiteral {
+  const node = createNode(Kind.NumericLiteral, { "text": text, "tokenFlags": tokenFlags }) as Ast.NumericLiteral;
+  return node;
 }
 
-export function updateNumericLiteral(node: Ast.NumericLiteral, text: string, tokenFlags: number): Ast.NumericLiteral {
-  if (node.text === text && node.tokenFlags === tokenFlags) {
+export function updateNumericLiteral(node: Ast.NumericLiteral, text: string, tokenFlags: int): Ast.NumericLiteral {
+  if (sameValue(nodeField(node, "text"), valueAsUnknown(text)) && sameValue(nodeField(node, "tokenFlags"), valueAsUnknown(tokenFlags))) {
     return node;
   }
   return createNumericLiteral(text, tokenFlags);
 }
 
-export function createBigIntLiteral(text: string, tokenFlags: number): Ast.BigIntLiteral {
-  return createNode<Ast.BigIntLiteral>(Kind.BigIntLiteral, { "text": text, "tokenFlags": tokenFlags });
+export function createBigIntLiteral(text: string, tokenFlags: int): Ast.BigIntLiteral {
+  const node = createNode(Kind.BigIntLiteral, { "text": text, "tokenFlags": tokenFlags }) as Ast.BigIntLiteral;
+  return node;
 }
 
-export function updateBigIntLiteral(node: Ast.BigIntLiteral, text: string, tokenFlags: number): Ast.BigIntLiteral {
-  if (node.text === text && node.tokenFlags === tokenFlags) {
+export function updateBigIntLiteral(node: Ast.BigIntLiteral, text: string, tokenFlags: int): Ast.BigIntLiteral {
+  if (sameValue(nodeField(node, "text"), valueAsUnknown(text)) && sameValue(nodeField(node, "tokenFlags"), valueAsUnknown(tokenFlags))) {
     return node;
   }
   return createBigIntLiteral(text, tokenFlags);
 }
 
-export function createRegularExpressionLiteral(text: string, tokenFlags: number): Ast.RegularExpressionLiteral {
-  return createNode<Ast.RegularExpressionLiteral>(Kind.RegularExpressionLiteral, { "text": text, "tokenFlags": tokenFlags });
+export function createRegularExpressionLiteral(text: string, tokenFlags: int): Ast.RegularExpressionLiteral {
+  const node = createNode(Kind.RegularExpressionLiteral, { "text": text, "tokenFlags": tokenFlags }) as Ast.RegularExpressionLiteral;
+  return node;
 }
 
-export function updateRegularExpressionLiteral(node: Ast.RegularExpressionLiteral, text: string, tokenFlags: number): Ast.RegularExpressionLiteral {
-  if (node.text === text && node.tokenFlags === tokenFlags) {
+export function updateRegularExpressionLiteral(node: Ast.RegularExpressionLiteral, text: string, tokenFlags: int): Ast.RegularExpressionLiteral {
+  if (sameValue(nodeField(node, "text"), valueAsUnknown(text)) && sameValue(nodeField(node, "tokenFlags"), valueAsUnknown(tokenFlags))) {
     return node;
   }
   return createRegularExpressionLiteral(text, tokenFlags);
 }
 
-export function createNoSubstitutionTemplateLiteral(text: string, templateFlags: number): Ast.NoSubstitutionTemplateLiteral {
-  return createNode<Ast.NoSubstitutionTemplateLiteral>(Kind.NoSubstitutionTemplateLiteral, { "text": text, "templateFlags": templateFlags });
+export function createNoSubstitutionTemplateLiteral(text: string, templateFlags: int): Ast.NoSubstitutionTemplateLiteral {
+  const node = createNode(Kind.NoSubstitutionTemplateLiteral, { "text": text, "templateFlags": templateFlags }) as Ast.NoSubstitutionTemplateLiteral;
+  return node;
 }
 
-export function updateNoSubstitutionTemplateLiteral(node: Ast.NoSubstitutionTemplateLiteral, text: string, templateFlags: number): Ast.NoSubstitutionTemplateLiteral {
-  if (node.text === text && node.templateFlags === templateFlags) {
+export function updateNoSubstitutionTemplateLiteral(node: Ast.NoSubstitutionTemplateLiteral, text: string, templateFlags: int): Ast.NoSubstitutionTemplateLiteral {
+  if (sameValue(nodeField(node, "text"), valueAsUnknown(text)) && sameValue(nodeField(node, "templateFlags"), valueAsUnknown(templateFlags))) {
     return node;
   }
   return createNoSubstitutionTemplateLiteral(text, templateFlags);
 }
 
 export function createBinaryExpression(modifiers: NodeArray<Ast.ModifierLike> | undefined, left: Ast.Expression, type: Ast.TypeNode | undefined, operatorToken: Ast.BinaryOperatorToken, right: Ast.Expression): Ast.BinaryExpression {
-  return createNode<Ast.BinaryExpression>(Kind.BinaryExpression, { "modifiers": modifiers, "left": left, "type": type, "operatorToken": operatorToken, "right": right });
+  const node = createNode(Kind.BinaryExpression, { "modifiers": modifiers, "left": left, "type": type, "operatorToken": operatorToken, "right": right }) as Ast.BinaryExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateBinaryExpression(node: Ast.BinaryExpression, modifiers: NodeArray<Ast.ModifierLike> | undefined, left: Ast.Expression, type: Ast.TypeNode | undefined, operatorToken: Ast.BinaryOperatorToken, right: Ast.Expression): Ast.BinaryExpression {
-  if (node.modifiers === modifiers && node.left === left && node.type === type && node.operatorToken === operatorToken && node.right === right) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "left"), valueAsUnknown(left)) && sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "operatorToken"), valueAsUnknown(operatorToken)) && sameValue(nodeField(node, "right"), valueAsUnknown(right))) {
     return node;
   }
   return createBinaryExpression(modifiers, left, type, operatorToken, right);
 }
 
-export function createPrefixUnaryExpression(operator: Kind.PlusToken | Kind.MinusToken | Kind.TildeToken | Kind.ExclamationToken | Kind.PlusPlusToken | Kind.MinusMinusToken, operand: Ast.Expression): Ast.PrefixUnaryExpression {
-  return createNode<Ast.PrefixUnaryExpression>(Kind.PrefixUnaryExpression, { "operator": operator, "operand": operand });
+export function createPrefixUnaryExpression(operator: Kind, operand: Ast.Expression): Ast.PrefixUnaryExpression {
+  const node = createNode(Kind.PrefixUnaryExpression, { "operator": operator, "operand": operand }) as Ast.PrefixUnaryExpression;
+  attachChildren(node);
+  return node;
 }
 
-export function updatePrefixUnaryExpression(node: Ast.PrefixUnaryExpression, operator: Kind.PlusToken | Kind.MinusToken | Kind.TildeToken | Kind.ExclamationToken | Kind.PlusPlusToken | Kind.MinusMinusToken, operand: Ast.Expression): Ast.PrefixUnaryExpression {
-  if (node.operator === operator && node.operand === operand) {
+export function updatePrefixUnaryExpression(node: Ast.PrefixUnaryExpression, operator: Kind, operand: Ast.Expression): Ast.PrefixUnaryExpression {
+  if (sameValue(nodeField(node, "operator"), valueAsUnknown(operator)) && sameValue(nodeField(node, "operand"), valueAsUnknown(operand))) {
     return node;
   }
   return createPrefixUnaryExpression(operator, operand);
 }
 
-export function createPostfixUnaryExpression(operand: Ast.Expression, operator: Kind.PlusPlusToken | Kind.MinusMinusToken): Ast.PostfixUnaryExpression {
-  return createNode<Ast.PostfixUnaryExpression>(Kind.PostfixUnaryExpression, { "operand": operand, "operator": operator });
+export function createPostfixUnaryExpression(operand: Ast.Expression, operator: Kind): Ast.PostfixUnaryExpression {
+  const node = createNode(Kind.PostfixUnaryExpression, { "operand": operand, "operator": operator }) as Ast.PostfixUnaryExpression;
+  attachChildren(node);
+  return node;
 }
 
-export function updatePostfixUnaryExpression(node: Ast.PostfixUnaryExpression, operand: Ast.Expression, operator: Kind.PlusPlusToken | Kind.MinusMinusToken): Ast.PostfixUnaryExpression {
-  if (node.operand === operand && node.operator === operator) {
+export function updatePostfixUnaryExpression(node: Ast.PostfixUnaryExpression, operand: Ast.Expression, operator: Kind): Ast.PostfixUnaryExpression {
+  if (sameValue(nodeField(node, "operand"), valueAsUnknown(operand)) && sameValue(nodeField(node, "operator"), valueAsUnknown(operator))) {
     return node;
   }
   return createPostfixUnaryExpression(operand, operator);
 }
 
 export function createYieldExpression(asteriskToken: Ast.AsteriskToken | undefined, expression: Ast.Expression | undefined): Ast.YieldExpression {
-  return createNode<Ast.YieldExpression>(Kind.YieldExpression, { "asteriskToken": asteriskToken, "expression": expression });
+  const node = createNode(Kind.YieldExpression, { "asteriskToken": asteriskToken, "expression": expression }) as Ast.YieldExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateYieldExpression(node: Ast.YieldExpression, asteriskToken: Ast.AsteriskToken | undefined, expression: Ast.Expression | undefined): Ast.YieldExpression {
-  if (node.asteriskToken === asteriskToken && node.expression === expression) {
+  if (sameValue(nodeField(node, "asteriskToken"), valueAsUnknown(asteriskToken)) && sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createYieldExpression(asteriskToken, expression);
 }
 
 export function createArrowFunction(modifiers: NodeArray<Ast.ModifierLike> | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined, equalsGreaterThanToken: Ast.EqualsGreaterThanToken, body: Ast.ConciseBody): Ast.ArrowFunction {
-  return createNode<Ast.ArrowFunction>(Kind.ArrowFunction, { "modifiers": modifiers, "typeParameters": typeParameters, "parameters": parameters, "type": type, "equalsGreaterThanToken": equalsGreaterThanToken, "body": body });
+  const node = createNode(Kind.ArrowFunction, { "modifiers": modifiers, "typeParameters": typeParameters, "parameters": parameters, "type": type, "equalsGreaterThanToken": equalsGreaterThanToken, "body": body }) as Ast.ArrowFunction;
+  attachChildren(node);
+  return node;
 }
 
 export function updateArrowFunction(node: Ast.ArrowFunction, modifiers: NodeArray<Ast.ModifierLike> | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined, equalsGreaterThanToken: Ast.EqualsGreaterThanToken, body: Ast.ConciseBody): Ast.ArrowFunction {
-  if (node.modifiers === modifiers && node.typeParameters === typeParameters && node.parameters === parameters && node.type === type && node.equalsGreaterThanToken === equalsGreaterThanToken && node.body === body) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "parameters"), valueAsUnknown(parameters)) && sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "equalsGreaterThanToken"), valueAsUnknown(equalsGreaterThanToken)) && sameValue(nodeField(node, "body"), valueAsUnknown(body))) {
     return node;
   }
   return createArrowFunction(modifiers, typeParameters, parameters, type, equalsGreaterThanToken, body);
 }
 
 export function createFunctionExpression(modifiers: NodeArray<Ast.ModifierLike> | undefined, asteriskToken: Ast.AsteriskToken | undefined, name: Ast.Identifier | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined, body: Ast.FunctionBody): Ast.FunctionExpression {
-  return createNode<Ast.FunctionExpression>(Kind.FunctionExpression, { "modifiers": modifiers, "asteriskToken": asteriskToken, "name": name, "typeParameters": typeParameters, "parameters": parameters, "type": type, "body": body });
+  const node = createNode(Kind.FunctionExpression, { "modifiers": modifiers, "asteriskToken": asteriskToken, "name": name, "typeParameters": typeParameters, "parameters": parameters, "type": type, "body": body }) as Ast.FunctionExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateFunctionExpression(node: Ast.FunctionExpression, modifiers: NodeArray<Ast.ModifierLike> | undefined, asteriskToken: Ast.AsteriskToken | undefined, name: Ast.Identifier | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined, body: Ast.FunctionBody): Ast.FunctionExpression {
-  if (node.modifiers === modifiers && node.asteriskToken === asteriskToken && node.name === name && node.typeParameters === typeParameters && node.parameters === parameters && node.type === type && node.body === body) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "asteriskToken"), valueAsUnknown(asteriskToken)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "parameters"), valueAsUnknown(parameters)) && sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "body"), valueAsUnknown(body))) {
     return node;
   }
   return createFunctionExpression(modifiers, asteriskToken, name, typeParameters, parameters, type, body);
 }
 
 export function createAsExpression(expression: Ast.Expression, type: Ast.TypeNode): Ast.AsExpression {
-  return createNode<Ast.AsExpression>(Kind.AsExpression, { "expression": expression, "type": type });
+  const node = createNode(Kind.AsExpression, { "expression": expression, "type": type }) as Ast.AsExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateAsExpression(node: Ast.AsExpression, expression: Ast.Expression, type: Ast.TypeNode): Ast.AsExpression {
-  if (node.expression === expression && node.type === type) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createAsExpression(expression, type);
 }
 
 export function createSatisfiesExpression(expression: Ast.Expression, type: Ast.TypeNode): Ast.SatisfiesExpression {
-  return createNode<Ast.SatisfiesExpression>(Kind.SatisfiesExpression, { "expression": expression, "type": type });
+  const node = createNode(Kind.SatisfiesExpression, { "expression": expression, "type": type }) as Ast.SatisfiesExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateSatisfiesExpression(node: Ast.SatisfiesExpression, expression: Ast.Expression, type: Ast.TypeNode): Ast.SatisfiesExpression {
-  if (node.expression === expression && node.type === type) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createSatisfiesExpression(expression, type);
 }
 
 export function createConditionalExpression(condition: Ast.Expression, questionToken: Ast.QuestionToken, whenTrue: Ast.Expression, colonToken: Ast.ColonToken, whenFalse: Ast.Expression): Ast.ConditionalExpression {
-  return createNode<Ast.ConditionalExpression>(Kind.ConditionalExpression, { "condition": condition, "questionToken": questionToken, "whenTrue": whenTrue, "colonToken": colonToken, "whenFalse": whenFalse });
+  const node = createNode(Kind.ConditionalExpression, { "condition": condition, "questionToken": questionToken, "whenTrue": whenTrue, "colonToken": colonToken, "whenFalse": whenFalse }) as Ast.ConditionalExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateConditionalExpression(node: Ast.ConditionalExpression, condition: Ast.Expression, questionToken: Ast.QuestionToken, whenTrue: Ast.Expression, colonToken: Ast.ColonToken, whenFalse: Ast.Expression): Ast.ConditionalExpression {
-  if (node.condition === condition && node.questionToken === questionToken && node.whenTrue === whenTrue && node.colonToken === colonToken && node.whenFalse === whenFalse) {
+  if (sameValue(nodeField(node, "condition"), valueAsUnknown(condition)) && sameValue(nodeField(node, "questionToken"), valueAsUnknown(questionToken)) && sameValue(nodeField(node, "whenTrue"), valueAsUnknown(whenTrue)) && sameValue(nodeField(node, "colonToken"), valueAsUnknown(colonToken)) && sameValue(nodeField(node, "whenFalse"), valueAsUnknown(whenFalse))) {
     return node;
   }
   return createConditionalExpression(condition, questionToken, whenTrue, colonToken, whenFalse);
 }
 
-export function createPropertyAccessExpression(expression: Ast.Expression, questionDotToken: Ast.QuestionDotToken | undefined, name: Ast.MemberName, flags: number): Ast.PropertyAccessExpression {
-  return createNode<Ast.PropertyAccessExpression>(Kind.PropertyAccessExpression, { "expression": expression, "questionDotToken": questionDotToken, "name": name, "flags": flags });
+export function createPropertyAccessExpression(expression: Ast.Expression, questionDotToken: Ast.QuestionDotToken | undefined, name: Ast.MemberName, flags: int): Ast.PropertyAccessExpression {
+  const node = createNode(Kind.PropertyAccessExpression, { "expression": expression, "questionDotToken": questionDotToken, "name": name }) as Ast.PropertyAccessExpression;
+  node.flags = flags;
+  attachChildren(node);
+  return node;
 }
 
-export function updatePropertyAccessExpression(node: Ast.PropertyAccessExpression, expression: Ast.Expression, questionDotToken: Ast.QuestionDotToken | undefined, name: Ast.MemberName, flags: number): Ast.PropertyAccessExpression {
-  if (node.expression === expression && node.questionDotToken === questionDotToken && node.name === name && node.flags === flags) {
+export function updatePropertyAccessExpression(node: Ast.PropertyAccessExpression, expression: Ast.Expression, questionDotToken: Ast.QuestionDotToken | undefined, name: Ast.MemberName, flags: int): Ast.PropertyAccessExpression {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "questionDotToken"), valueAsUnknown(questionDotToken)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "flags"), valueAsUnknown(flags))) {
     return node;
   }
   return createPropertyAccessExpression(expression, questionDotToken, name, flags);
 }
 
-export function createElementAccessExpression(expression: Ast.Expression, questionDotToken: Ast.QuestionDotToken | undefined, argumentExpression: Ast.Expression, flags: number): Ast.ElementAccessExpression {
-  return createNode<Ast.ElementAccessExpression>(Kind.ElementAccessExpression, { "expression": expression, "questionDotToken": questionDotToken, "argumentExpression": argumentExpression, "flags": flags });
+export function createElementAccessExpression(expression: Ast.Expression, questionDotToken: Ast.QuestionDotToken | undefined, argumentExpression: Ast.Expression, flags: int): Ast.ElementAccessExpression {
+  const node = createNode(Kind.ElementAccessExpression, { "expression": expression, "questionDotToken": questionDotToken, "argumentExpression": argumentExpression }) as Ast.ElementAccessExpression;
+  node.flags = flags;
+  attachChildren(node);
+  return node;
 }
 
-export function updateElementAccessExpression(node: Ast.ElementAccessExpression, expression: Ast.Expression, questionDotToken: Ast.QuestionDotToken | undefined, argumentExpression: Ast.Expression, flags: number): Ast.ElementAccessExpression {
-  if (node.expression === expression && node.questionDotToken === questionDotToken && node.argumentExpression === argumentExpression && node.flags === flags) {
+export function updateElementAccessExpression(node: Ast.ElementAccessExpression, expression: Ast.Expression, questionDotToken: Ast.QuestionDotToken | undefined, argumentExpression: Ast.Expression, flags: int): Ast.ElementAccessExpression {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "questionDotToken"), valueAsUnknown(questionDotToken)) && sameValue(nodeField(node, "argumentExpression"), valueAsUnknown(argumentExpression)) && sameValue(nodeField(node, "flags"), valueAsUnknown(flags))) {
     return node;
   }
   return createElementAccessExpression(expression, questionDotToken, argumentExpression, flags);
 }
 
-export function createCallExpression(expression: Ast.Expression, questionDotToken: Ast.QuestionDotToken | undefined, typeArguments: NodeArray<Ast.TypeNode> | undefined, arguments_: NodeArray<Ast.Expression>, flags: number): Ast.CallExpression {
-  return createNode<Ast.CallExpression>(Kind.CallExpression, { "expression": expression, "questionDotToken": questionDotToken, "typeArguments": typeArguments, "arguments": arguments_, "flags": flags });
+export function createCallExpression(expression: Ast.Expression, questionDotToken: Ast.QuestionDotToken | undefined, typeArguments: NodeArray<Ast.TypeNode> | undefined, arguments_: NodeArray<Ast.Expression>, flags: int): Ast.CallExpression {
+  const node = createNode(Kind.CallExpression, { "expression": expression, "questionDotToken": questionDotToken, "typeArguments": typeArguments, "arguments": arguments_ }) as Ast.CallExpression;
+  node.flags = flags;
+  attachChildren(node);
+  return node;
 }
 
-export function updateCallExpression(node: Ast.CallExpression, expression: Ast.Expression, questionDotToken: Ast.QuestionDotToken | undefined, typeArguments: NodeArray<Ast.TypeNode> | undefined, arguments_: NodeArray<Ast.Expression>, flags: number): Ast.CallExpression {
-  if (node.expression === expression && node.questionDotToken === questionDotToken && node.typeArguments === typeArguments && node.arguments === arguments_ && node.flags === flags) {
+export function updateCallExpression(node: Ast.CallExpression, expression: Ast.Expression, questionDotToken: Ast.QuestionDotToken | undefined, typeArguments: NodeArray<Ast.TypeNode> | undefined, arguments_: NodeArray<Ast.Expression>, flags: int): Ast.CallExpression {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "questionDotToken"), valueAsUnknown(questionDotToken)) && sameValue(nodeField(node, "typeArguments"), valueAsUnknown(typeArguments)) && sameValue(nodeField(node, "arguments"), valueAsUnknown(arguments_)) && sameValue(nodeField(node, "flags"), valueAsUnknown(flags))) {
     return node;
   }
   return createCallExpression(expression, questionDotToken, typeArguments, arguments_, flags);
 }
 
 export function createNewExpression(expression: Ast.Expression, typeArguments: NodeArray<Ast.TypeNode> | undefined, arguments_: NodeArray<Ast.Expression> | undefined): Ast.NewExpression {
-  return createNode<Ast.NewExpression>(Kind.NewExpression, { "expression": expression, "typeArguments": typeArguments, "arguments": arguments_ });
+  const node = createNode(Kind.NewExpression, { "expression": expression, "typeArguments": typeArguments, "arguments": arguments_ }) as Ast.NewExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateNewExpression(node: Ast.NewExpression, expression: Ast.Expression, typeArguments: NodeArray<Ast.TypeNode> | undefined, arguments_: NodeArray<Ast.Expression> | undefined): Ast.NewExpression {
-  if (node.expression === expression && node.typeArguments === typeArguments && node.arguments === arguments_) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "typeArguments"), valueAsUnknown(typeArguments)) && sameValue(nodeField(node, "arguments"), valueAsUnknown(arguments_))) {
     return node;
   }
   return createNewExpression(expression, typeArguments, arguments_);
 }
 
-export function createMetaProperty(keywordToken: Kind.ImportKeyword | Kind.NewKeyword, name: Ast.Identifier): Ast.MetaProperty {
-  return createNode<Ast.MetaProperty>(Kind.MetaProperty, { "keywordToken": keywordToken, "name": name });
+export function createMetaProperty(keywordToken: Kind, name: Ast.Identifier): Ast.MetaProperty {
+  const node = createNode(Kind.MetaProperty, { "keywordToken": keywordToken, "name": name }) as Ast.MetaProperty;
+  attachChildren(node);
+  return node;
 }
 
-export function updateMetaProperty(node: Ast.MetaProperty, keywordToken: Kind.ImportKeyword | Kind.NewKeyword, name: Ast.Identifier): Ast.MetaProperty {
-  if (node.keywordToken === keywordToken && node.name === name) {
+export function updateMetaProperty(node: Ast.MetaProperty, keywordToken: Kind, name: Ast.Identifier): Ast.MetaProperty {
+  if (sameValue(nodeField(node, "keywordToken"), valueAsUnknown(keywordToken)) && sameValue(nodeField(node, "name"), valueAsUnknown(name))) {
     return node;
   }
   return createMetaProperty(keywordToken, name);
 }
 
-export function createNonNullExpression(expression: Ast.Expression, flags: number): Ast.NonNullExpression {
-  return createNode<Ast.NonNullExpression>(Kind.NonNullExpression, { "expression": expression, "flags": flags });
+export function createNonNullExpression(expression: Ast.Expression, flags: int): Ast.NonNullExpression {
+  const node = createNode(Kind.NonNullExpression, { "expression": expression }) as Ast.NonNullExpression;
+  node.flags = flags;
+  attachChildren(node);
+  return node;
 }
 
-export function updateNonNullExpression(node: Ast.NonNullExpression, expression: Ast.Expression, flags: number): Ast.NonNullExpression {
-  if (node.expression === expression && node.flags === flags) {
+export function updateNonNullExpression(node: Ast.NonNullExpression, expression: Ast.Expression, flags: int): Ast.NonNullExpression {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "flags"), valueAsUnknown(flags))) {
     return node;
   }
   return createNonNullExpression(expression, flags);
 }
 
 export function createSpreadElement(expression: Ast.Expression): Ast.SpreadElement {
-  return createNode<Ast.SpreadElement>(Kind.SpreadElement, { "expression": expression });
+  const node = createNode(Kind.SpreadElement, { "expression": expression }) as Ast.SpreadElement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateSpreadElement(node: Ast.SpreadElement, expression: Ast.Expression): Ast.SpreadElement {
-  if (node.expression === expression) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createSpreadElement(expression);
 }
 
 export function createTemplateExpression(head: Ast.TemplateHead, templateSpans: NodeArray<Ast.TemplateSpan>): Ast.TemplateExpression {
-  return createNode<Ast.TemplateExpression>(Kind.TemplateExpression, { "head": head, "templateSpans": templateSpans });
+  const node = createNode(Kind.TemplateExpression, { "head": head, "templateSpans": templateSpans }) as Ast.TemplateExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateTemplateExpression(node: Ast.TemplateExpression, head: Ast.TemplateHead, templateSpans: NodeArray<Ast.TemplateSpan>): Ast.TemplateExpression {
-  if (node.head === head && node.templateSpans === templateSpans) {
+  if (sameValue(nodeField(node, "head"), valueAsUnknown(head)) && sameValue(nodeField(node, "templateSpans"), valueAsUnknown(templateSpans))) {
     return node;
   }
   return createTemplateExpression(head, templateSpans);
 }
 
 export function createTemplateSpan(expression: Ast.Expression, literal: Ast.TemplateMiddleOrTail): Ast.TemplateSpan {
-  return createNode<Ast.TemplateSpan>(Kind.TemplateSpan, { "expression": expression, "literal": literal });
+  const node = createNode(Kind.TemplateSpan, { "expression": expression, "literal": literal }) as Ast.TemplateSpan;
+  attachChildren(node);
+  return node;
 }
 
 export function updateTemplateSpan(node: Ast.TemplateSpan, expression: Ast.Expression, literal: Ast.TemplateMiddleOrTail): Ast.TemplateSpan {
-  if (node.expression === expression && node.literal === literal) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "literal"), valueAsUnknown(literal))) {
     return node;
   }
   return createTemplateSpan(expression, literal);
 }
 
-export function createTaggedTemplateExpression(tag: Ast.Expression, questionDotToken: Ast.QuestionDotToken, typeArguments: NodeArray<Ast.TypeNode> | undefined, template: Ast.TemplateLiteral, flags: number): Ast.TaggedTemplateExpression {
-  return createNode<Ast.TaggedTemplateExpression>(Kind.TaggedTemplateExpression, { "tag": tag, "questionDotToken": questionDotToken, "typeArguments": typeArguments, "template": template, "flags": flags });
+export function createTaggedTemplateExpression(tag: Ast.Expression, questionDotToken: Ast.QuestionDotToken, typeArguments: NodeArray<Ast.TypeNode> | undefined, template: Ast.TemplateLiteral, flags: int): Ast.TaggedTemplateExpression {
+  const node = createNode(Kind.TaggedTemplateExpression, { "tag": tag, "questionDotToken": questionDotToken, "typeArguments": typeArguments, "template": template }) as Ast.TaggedTemplateExpression;
+  node.flags = flags;
+  attachChildren(node);
+  return node;
 }
 
-export function updateTaggedTemplateExpression(node: Ast.TaggedTemplateExpression, tag: Ast.Expression, questionDotToken: Ast.QuestionDotToken, typeArguments: NodeArray<Ast.TypeNode> | undefined, template: Ast.TemplateLiteral, flags: number): Ast.TaggedTemplateExpression {
-  if (node.tag === tag && node.questionDotToken === questionDotToken && node.typeArguments === typeArguments && node.template === template && node.flags === flags) {
+export function updateTaggedTemplateExpression(node: Ast.TaggedTemplateExpression, tag: Ast.Expression, questionDotToken: Ast.QuestionDotToken, typeArguments: NodeArray<Ast.TypeNode> | undefined, template: Ast.TemplateLiteral, flags: int): Ast.TaggedTemplateExpression {
+  if (sameValue(nodeField(node, "tag"), valueAsUnknown(tag)) && sameValue(nodeField(node, "questionDotToken"), valueAsUnknown(questionDotToken)) && sameValue(nodeField(node, "typeArguments"), valueAsUnknown(typeArguments)) && sameValue(nodeField(node, "template"), valueAsUnknown(template)) && sameValue(nodeField(node, "flags"), valueAsUnknown(flags))) {
     return node;
   }
   return createTaggedTemplateExpression(tag, questionDotToken, typeArguments, template, flags);
 }
 
 export function createParenthesizedExpression(expression: Ast.Expression): Ast.ParenthesizedExpression {
-  return createNode<Ast.ParenthesizedExpression>(Kind.ParenthesizedExpression, { "expression": expression });
+  const node = createNode(Kind.ParenthesizedExpression, { "expression": expression }) as Ast.ParenthesizedExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateParenthesizedExpression(node: Ast.ParenthesizedExpression, expression: Ast.Expression): Ast.ParenthesizedExpression {
-  if (node.expression === expression) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createParenthesizedExpression(expression);
 }
 
 export function createArrayLiteralExpression(elements: NodeArray<Ast.Expression>, multiLine: boolean): Ast.ArrayLiteralExpression {
-  return createNode<Ast.ArrayLiteralExpression>(Kind.ArrayLiteralExpression, { "elements": elements, "multiLine": multiLine });
+  const node = createNode(Kind.ArrayLiteralExpression, { "elements": elements, "multiLine": multiLine }) as Ast.ArrayLiteralExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateArrayLiteralExpression(node: Ast.ArrayLiteralExpression, elements: NodeArray<Ast.Expression>, multiLine: boolean): Ast.ArrayLiteralExpression {
-  if (node.elements === elements && node.multiLine === multiLine) {
+  if (sameValue(nodeField(node, "elements"), valueAsUnknown(elements)) && sameValue(nodeField(node, "multiLine"), valueAsUnknown(multiLine))) {
     return node;
   }
   return createArrayLiteralExpression(elements, multiLine);
 }
 
 export function createObjectLiteralExpression(properties: NodeArray<Ast.ObjectLiteralElementLike>, multiLine: boolean): Ast.ObjectLiteralExpression {
-  return createNode<Ast.ObjectLiteralExpression>(Kind.ObjectLiteralExpression, { "properties": properties, "multiLine": multiLine });
+  const node = createNode(Kind.ObjectLiteralExpression, { "properties": properties, "multiLine": multiLine }) as Ast.ObjectLiteralExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateObjectLiteralExpression(node: Ast.ObjectLiteralExpression, properties: NodeArray<Ast.ObjectLiteralElementLike>, multiLine: boolean): Ast.ObjectLiteralExpression {
-  if (node.properties === properties && node.multiLine === multiLine) {
+  if (sameValue(nodeField(node, "properties"), valueAsUnknown(properties)) && sameValue(nodeField(node, "multiLine"), valueAsUnknown(multiLine))) {
     return node;
   }
   return createObjectLiteralExpression(properties, multiLine);
 }
 
 export function createSpreadAssignment(expression: Ast.Expression): Ast.SpreadAssignment {
-  return createNode<Ast.SpreadAssignment>(Kind.SpreadAssignment, { "expression": expression });
+  const node = createNode(Kind.SpreadAssignment, { "expression": expression }) as Ast.SpreadAssignment;
+  attachChildren(node);
+  return node;
 }
 
 export function updateSpreadAssignment(node: Ast.SpreadAssignment, expression: Ast.Expression): Ast.SpreadAssignment {
-  if (node.expression === expression) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createSpreadAssignment(expression);
 }
 
-export function createPropertyAssignment(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.QuestionToken | Ast.ExclamationToken | undefined, type: Ast.TypeNode, initializer: Ast.Expression): Ast.PropertyAssignment {
-  return createNode<Ast.PropertyAssignment>(Kind.PropertyAssignment, { "modifiers": modifiers, "name": name, "postfixToken": postfixToken, "type": type, "initializer": initializer });
+export function createPropertyAssignment(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.Token | undefined, type: Ast.TypeNode, initializer: Ast.Expression): Ast.PropertyAssignment {
+  const node = createNode(Kind.PropertyAssignment, { "modifiers": modifiers, "name": name, "postfixToken": postfixToken, "type": type, "initializer": initializer }) as Ast.PropertyAssignment;
+  attachChildren(node);
+  return node;
 }
 
-export function updatePropertyAssignment(node: Ast.PropertyAssignment, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.QuestionToken | Ast.ExclamationToken | undefined, type: Ast.TypeNode, initializer: Ast.Expression): Ast.PropertyAssignment {
-  if (node.modifiers === modifiers && node.name === name && node.postfixToken === postfixToken && node.type === type && node.initializer === initializer) {
+export function updatePropertyAssignment(node: Ast.PropertyAssignment, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.Token | undefined, type: Ast.TypeNode, initializer: Ast.Expression): Ast.PropertyAssignment {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "postfixToken"), valueAsUnknown(postfixToken)) && sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "initializer"), valueAsUnknown(initializer))) {
     return node;
   }
   return createPropertyAssignment(modifiers, name, postfixToken, type, initializer);
 }
 
-export function createShorthandPropertyAssignment(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.QuestionToken | Ast.ExclamationToken | undefined, type: Ast.TypeNode, equalsToken: Ast.EqualsToken | undefined, objectAssignmentInitializer: Ast.Expression | undefined): Ast.ShorthandPropertyAssignment {
-  return createNode<Ast.ShorthandPropertyAssignment>(Kind.ShorthandPropertyAssignment, { "modifiers": modifiers, "name": name, "postfixToken": postfixToken, "type": type, "equalsToken": equalsToken, "objectAssignmentInitializer": objectAssignmentInitializer });
+export function createShorthandPropertyAssignment(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.Token | undefined, type: Ast.TypeNode, equalsToken: Ast.EqualsToken | undefined, objectAssignmentInitializer: Ast.Expression | undefined): Ast.ShorthandPropertyAssignment {
+  const node = createNode(Kind.ShorthandPropertyAssignment, { "modifiers": modifiers, "name": name, "postfixToken": postfixToken, "type": type, "equalsToken": equalsToken, "objectAssignmentInitializer": objectAssignmentInitializer }) as Ast.ShorthandPropertyAssignment;
+  attachChildren(node);
+  return node;
 }
 
-export function updateShorthandPropertyAssignment(node: Ast.ShorthandPropertyAssignment, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.QuestionToken | Ast.ExclamationToken | undefined, type: Ast.TypeNode, equalsToken: Ast.EqualsToken | undefined, objectAssignmentInitializer: Ast.Expression | undefined): Ast.ShorthandPropertyAssignment {
-  if (node.modifiers === modifiers && node.name === name && node.postfixToken === postfixToken && node.type === type && node.equalsToken === equalsToken && node.objectAssignmentInitializer === objectAssignmentInitializer) {
+export function updateShorthandPropertyAssignment(node: Ast.ShorthandPropertyAssignment, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.PropertyName, postfixToken: Ast.Token | undefined, type: Ast.TypeNode, equalsToken: Ast.EqualsToken | undefined, objectAssignmentInitializer: Ast.Expression | undefined): Ast.ShorthandPropertyAssignment {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "postfixToken"), valueAsUnknown(postfixToken)) && sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "equalsToken"), valueAsUnknown(equalsToken)) && sameValue(nodeField(node, "objectAssignmentInitializer"), valueAsUnknown(objectAssignmentInitializer))) {
     return node;
   }
   return createShorthandPropertyAssignment(modifiers, name, postfixToken, type, equalsToken, objectAssignmentInitializer);
 }
 
 export function createDeleteExpression(expression: Ast.Expression): Ast.DeleteExpression {
-  return createNode<Ast.DeleteExpression>(Kind.DeleteExpression, { "expression": expression });
+  const node = createNode(Kind.DeleteExpression, { "expression": expression }) as Ast.DeleteExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateDeleteExpression(node: Ast.DeleteExpression, expression: Ast.Expression): Ast.DeleteExpression {
-  if (node.expression === expression) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createDeleteExpression(expression);
 }
 
 export function createTypeOfExpression(expression: Ast.Expression): Ast.TypeOfExpression {
-  return createNode<Ast.TypeOfExpression>(Kind.TypeOfExpression, { "expression": expression });
+  const node = createNode(Kind.TypeOfExpression, { "expression": expression }) as Ast.TypeOfExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateTypeOfExpression(node: Ast.TypeOfExpression, expression: Ast.Expression): Ast.TypeOfExpression {
-  if (node.expression === expression) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createTypeOfExpression(expression);
 }
 
 export function createVoidExpression(expression: Ast.Expression): Ast.VoidExpression {
-  return createNode<Ast.VoidExpression>(Kind.VoidExpression, { "expression": expression });
+  const node = createNode(Kind.VoidExpression, { "expression": expression }) as Ast.VoidExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateVoidExpression(node: Ast.VoidExpression, expression: Ast.Expression): Ast.VoidExpression {
-  if (node.expression === expression) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createVoidExpression(expression);
 }
 
 export function createAwaitExpression(expression: Ast.Expression): Ast.AwaitExpression {
-  return createNode<Ast.AwaitExpression>(Kind.AwaitExpression, { "expression": expression });
+  const node = createNode(Kind.AwaitExpression, { "expression": expression }) as Ast.AwaitExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateAwaitExpression(node: Ast.AwaitExpression, expression: Ast.Expression): Ast.AwaitExpression {
-  if (node.expression === expression) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createAwaitExpression(expression);
 }
 
 export function createTypeAssertion(type: Ast.TypeNode, expression: Ast.Expression): Ast.TypeAssertion {
-  return createNode<Ast.TypeAssertion>(Kind.TypeAssertionExpression, { "type": type, "expression": expression });
+  const node = createNode(Kind.TypeAssertionExpression, { "type": type, "expression": expression }) as Ast.TypeAssertion;
+  attachChildren(node);
+  return node;
 }
 
 export function updateTypeAssertion(node: Ast.TypeAssertion, type: Ast.TypeNode, expression: Ast.Expression): Ast.TypeAssertion {
-  if (node.type === type && node.expression === expression) {
+  if (sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createTypeAssertion(type, expression);
 }
 
-export function createKeywordTypeNode<TKind extends Ast.KeywordTypeSyntaxKind = Ast.KeywordTypeSyntaxKind>(kind: TKind): Ast.KeywordTypeNode<TKind> {
-  return createNode<Ast.KeywordTypeNode<TKind>>(kind as Kind, {});
+export function createKeywordTypeNode(kind: Ast.KeywordTypeSyntaxKind): Ast.KeywordTypeNode {
+  const node = createNode(kind as Kind, {}) as Ast.KeywordTypeNode;
+  return node;
 }
 
-export function updateKeywordTypeNode<TKind extends Ast.KeywordTypeSyntaxKind = Ast.KeywordTypeSyntaxKind>(node: Ast.KeywordTypeNode<TKind>): Ast.KeywordTypeNode<TKind> {
+export function updateKeywordTypeNode(node: Ast.KeywordTypeNode): Ast.KeywordTypeNode {
   return node;
 }
 
 export function createUnionTypeNode(types: NodeArray<Ast.TypeNode>): Ast.UnionTypeNode {
-  return createNode<Ast.UnionTypeNode>(Kind.UnionType, { "types": types });
+  const node = createNode(Kind.UnionType, { "types": types }) as Ast.UnionTypeNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateUnionTypeNode(node: Ast.UnionTypeNode, types: NodeArray<Ast.TypeNode>): Ast.UnionTypeNode {
-  if (node.types === types) {
+  if (sameValue(nodeField(node, "types"), valueAsUnknown(types))) {
     return node;
   }
   return createUnionTypeNode(types);
 }
 
 export function createIntersectionTypeNode(types: NodeArray<Ast.TypeNode>): Ast.IntersectionTypeNode {
-  return createNode<Ast.IntersectionTypeNode>(Kind.IntersectionType, { "types": types });
+  const node = createNode(Kind.IntersectionType, { "types": types }) as Ast.IntersectionTypeNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateIntersectionTypeNode(node: Ast.IntersectionTypeNode, types: NodeArray<Ast.TypeNode>): Ast.IntersectionTypeNode {
-  if (node.types === types) {
+  if (sameValue(nodeField(node, "types"), valueAsUnknown(types))) {
     return node;
   }
   return createIntersectionTypeNode(types);
 }
 
 export function createConditionalTypeNode(checkType: Ast.TypeNode, extendsType: Ast.TypeNode, trueType: Ast.TypeNode, falseType: Ast.TypeNode): Ast.ConditionalTypeNode {
-  return createNode<Ast.ConditionalTypeNode>(Kind.ConditionalType, { "checkType": checkType, "extendsType": extendsType, "trueType": trueType, "falseType": falseType });
+  const node = createNode(Kind.ConditionalType, { "checkType": checkType, "extendsType": extendsType, "trueType": trueType, "falseType": falseType }) as Ast.ConditionalTypeNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateConditionalTypeNode(node: Ast.ConditionalTypeNode, checkType: Ast.TypeNode, extendsType: Ast.TypeNode, trueType: Ast.TypeNode, falseType: Ast.TypeNode): Ast.ConditionalTypeNode {
-  if (node.checkType === checkType && node.extendsType === extendsType && node.trueType === trueType && node.falseType === falseType) {
+  if (sameValue(nodeField(node, "checkType"), valueAsUnknown(checkType)) && sameValue(nodeField(node, "extendsType"), valueAsUnknown(extendsType)) && sameValue(nodeField(node, "trueType"), valueAsUnknown(trueType)) && sameValue(nodeField(node, "falseType"), valueAsUnknown(falseType))) {
     return node;
   }
   return createConditionalTypeNode(checkType, extendsType, trueType, falseType);
 }
 
-export function createTypeOperatorNode(operator: Kind.KeyOfKeyword | Kind.ReadonlyKeyword | Kind.UniqueKeyword, type: Ast.TypeNode): Ast.TypeOperatorNode {
-  return createNode<Ast.TypeOperatorNode>(Kind.TypeOperator, { "operator": operator, "type": type });
+export function createTypeOperatorNode(operator: Kind, type: Ast.TypeNode): Ast.TypeOperatorNode {
+  const node = createNode(Kind.TypeOperator, { "operator": operator, "type": type }) as Ast.TypeOperatorNode;
+  attachChildren(node);
+  return node;
 }
 
-export function updateTypeOperatorNode(node: Ast.TypeOperatorNode, operator: Kind.KeyOfKeyword | Kind.ReadonlyKeyword | Kind.UniqueKeyword, type: Ast.TypeNode): Ast.TypeOperatorNode {
-  if (node.operator === operator && node.type === type) {
+export function updateTypeOperatorNode(node: Ast.TypeOperatorNode, operator: Kind, type: Ast.TypeNode): Ast.TypeOperatorNode {
+  if (sameValue(nodeField(node, "operator"), valueAsUnknown(operator)) && sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createTypeOperatorNode(operator, type);
 }
 
 export function createInferTypeNode(typeParameter: Ast.TypeParameterDeclaration): Ast.InferTypeNode {
-  return createNode<Ast.InferTypeNode>(Kind.InferType, { "typeParameter": typeParameter });
+  const node = createNode(Kind.InferType, { "typeParameter": typeParameter }) as Ast.InferTypeNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateInferTypeNode(node: Ast.InferTypeNode, typeParameter: Ast.TypeParameterDeclaration): Ast.InferTypeNode {
-  if (node.typeParameter === typeParameter) {
+  if (sameValue(nodeField(node, "typeParameter"), valueAsUnknown(typeParameter))) {
     return node;
   }
   return createInferTypeNode(typeParameter);
 }
 
 export function createArrayTypeNode(elementType: Ast.TypeNode): Ast.ArrayTypeNode {
-  return createNode<Ast.ArrayTypeNode>(Kind.ArrayType, { "elementType": elementType });
+  const node = createNode(Kind.ArrayType, { "elementType": elementType }) as Ast.ArrayTypeNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateArrayTypeNode(node: Ast.ArrayTypeNode, elementType: Ast.TypeNode): Ast.ArrayTypeNode {
-  if (node.elementType === elementType) {
+  if (sameValue(nodeField(node, "elementType"), valueAsUnknown(elementType))) {
     return node;
   }
   return createArrayTypeNode(elementType);
 }
 
 export function createIndexedAccessTypeNode(objectType: Ast.TypeNode, indexType: Ast.TypeNode): Ast.IndexedAccessTypeNode {
-  return createNode<Ast.IndexedAccessTypeNode>(Kind.IndexedAccessType, { "objectType": objectType, "indexType": indexType });
+  const node = createNode(Kind.IndexedAccessType, { "objectType": objectType, "indexType": indexType }) as Ast.IndexedAccessTypeNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateIndexedAccessTypeNode(node: Ast.IndexedAccessTypeNode, objectType: Ast.TypeNode, indexType: Ast.TypeNode): Ast.IndexedAccessTypeNode {
-  if (node.objectType === objectType && node.indexType === indexType) {
+  if (sameValue(nodeField(node, "objectType"), valueAsUnknown(objectType)) && sameValue(nodeField(node, "indexType"), valueAsUnknown(indexType))) {
     return node;
   }
   return createIndexedAccessTypeNode(objectType, indexType);
 }
 
 export function createTypeReferenceNode(typeName: Ast.EntityName, typeArguments: NodeArray<Ast.TypeNode> | undefined): Ast.TypeReferenceNode {
-  return createNode<Ast.TypeReferenceNode>(Kind.TypeReference, { "typeName": typeName, "typeArguments": typeArguments });
+  const node = createNode(Kind.TypeReference, { "typeName": typeName, "typeArguments": typeArguments }) as Ast.TypeReferenceNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateTypeReferenceNode(node: Ast.TypeReferenceNode, typeName: Ast.EntityName, typeArguments: NodeArray<Ast.TypeNode> | undefined): Ast.TypeReferenceNode {
-  if (node.typeName === typeName && node.typeArguments === typeArguments) {
+  if (sameValue(nodeField(node, "typeName"), valueAsUnknown(typeName)) && sameValue(nodeField(node, "typeArguments"), valueAsUnknown(typeArguments))) {
     return node;
   }
   return createTypeReferenceNode(typeName, typeArguments);
 }
 
 export function createExpressionWithTypeArguments(expression: Ast.Expression, typeArguments: NodeArray<Ast.TypeNode> | undefined): Ast.ExpressionWithTypeArguments {
-  return createNode<Ast.ExpressionWithTypeArguments>(Kind.ExpressionWithTypeArguments, { "expression": expression, "typeArguments": typeArguments });
+  const node = createNode(Kind.ExpressionWithTypeArguments, { "expression": expression, "typeArguments": typeArguments }) as Ast.ExpressionWithTypeArguments;
+  attachChildren(node);
+  return node;
 }
 
 export function updateExpressionWithTypeArguments(node: Ast.ExpressionWithTypeArguments, expression: Ast.Expression, typeArguments: NodeArray<Ast.TypeNode> | undefined): Ast.ExpressionWithTypeArguments {
-  if (node.expression === expression && node.typeArguments === typeArguments) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "typeArguments"), valueAsUnknown(typeArguments))) {
     return node;
   }
   return createExpressionWithTypeArguments(expression, typeArguments);
 }
 
 export function createLiteralTypeNode(literal: Node): Ast.LiteralTypeNode {
-  return createNode<Ast.LiteralTypeNode>(Kind.LiteralType, { "literal": literal });
+  const node = createNode(Kind.LiteralType, { "literal": literal }) as Ast.LiteralTypeNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateLiteralTypeNode(node: Ast.LiteralTypeNode, literal: Node): Ast.LiteralTypeNode {
-  if (node.literal === literal) {
+  if (sameValue(nodeField(node, "literal"), valueAsUnknown(literal))) {
     return node;
   }
   return createLiteralTypeNode(literal);
 }
 
 export function createThisTypeNode(): Ast.ThisTypeNode {
-  return createNode<Ast.ThisTypeNode>(Kind.ThisType, {});
+  const node = createNode(Kind.ThisType, {}) as Ast.ThisTypeNode;
+  return node;
 }
 
 export function updateThisTypeNode(node: Ast.ThisTypeNode): Ast.ThisTypeNode {
@@ -1522,293 +1734,343 @@ export function updateThisTypeNode(node: Ast.ThisTypeNode): Ast.ThisTypeNode {
 }
 
 export function createTypePredicateNode(assertsModifier: Ast.AssertsKeyword | undefined, parameterName: Ast.TypePredicateParameterName, type: Ast.TypeNode | undefined): Ast.TypePredicateNode {
-  return createNode<Ast.TypePredicateNode>(Kind.TypePredicate, { "assertsModifier": assertsModifier, "parameterName": parameterName, "type": type });
+  const node = createNode(Kind.TypePredicate, { "assertsModifier": assertsModifier, "parameterName": parameterName, "type": type }) as Ast.TypePredicateNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateTypePredicateNode(node: Ast.TypePredicateNode, assertsModifier: Ast.AssertsKeyword | undefined, parameterName: Ast.TypePredicateParameterName, type: Ast.TypeNode | undefined): Ast.TypePredicateNode {
-  if (node.assertsModifier === assertsModifier && node.parameterName === parameterName && node.type === type) {
+  if (sameValue(nodeField(node, "assertsModifier"), valueAsUnknown(assertsModifier)) && sameValue(nodeField(node, "parameterName"), valueAsUnknown(parameterName)) && sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createTypePredicateNode(assertsModifier, parameterName, type);
 }
 
 export function createImportAttribute(name: Ast.ImportAttributeName, value: Ast.Expression): Ast.ImportAttribute {
-  return createNode<Ast.ImportAttribute>(Kind.ImportAttribute, { "name": name, "value": value });
+  const node = createNode(Kind.ImportAttribute, { "name": name, "value": value }) as Ast.ImportAttribute;
+  attachChildren(node);
+  return node;
 }
 
 export function updateImportAttribute(node: Ast.ImportAttribute, name: Ast.ImportAttributeName, value: Ast.Expression): Ast.ImportAttribute {
-  if (node.name === name && node.value === value) {
+  if (sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "value"), valueAsUnknown(value))) {
     return node;
   }
   return createImportAttribute(name, value);
 }
 
-export function createImportAttributes(token: Kind.WithKeyword | Kind.AssertKeyword, attributes: NodeArray<Ast.ImportAttribute>, multiLine: boolean): Ast.ImportAttributes {
-  return createNode<Ast.ImportAttributes>(Kind.ImportAttributes, { "token": token, "attributes": attributes, "multiLine": multiLine });
+export function createImportAttributes(token: Kind, attributes: NodeArray<Ast.ImportAttribute>, multiLine: boolean): Ast.ImportAttributes {
+  const node = createNode(Kind.ImportAttributes, { "token": token, "attributes": attributes, "multiLine": multiLine }) as Ast.ImportAttributes;
+  attachChildren(node);
+  return node;
 }
 
-export function updateImportAttributes(node: Ast.ImportAttributes, token: Kind.WithKeyword | Kind.AssertKeyword, attributes: NodeArray<Ast.ImportAttribute>, multiLine: boolean): Ast.ImportAttributes {
-  if (node.token === token && node.attributes === attributes && node.multiLine === multiLine) {
+export function updateImportAttributes(node: Ast.ImportAttributes, token: Kind, attributes: NodeArray<Ast.ImportAttribute>, multiLine: boolean): Ast.ImportAttributes {
+  if (sameValue(nodeField(node, "token"), valueAsUnknown(token)) && sameValue(nodeField(node, "attributes"), valueAsUnknown(attributes)) && sameValue(nodeField(node, "multiLine"), valueAsUnknown(multiLine))) {
     return node;
   }
   return createImportAttributes(token, attributes, multiLine);
 }
 
 export function createTypeQueryNode(exprName: Ast.EntityName, typeArguments: NodeArray<Ast.TypeNode> | undefined): Ast.TypeQueryNode {
-  return createNode<Ast.TypeQueryNode>(Kind.TypeQuery, { "exprName": exprName, "typeArguments": typeArguments });
+  const node = createNode(Kind.TypeQuery, { "exprName": exprName, "typeArguments": typeArguments }) as Ast.TypeQueryNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateTypeQueryNode(node: Ast.TypeQueryNode, exprName: Ast.EntityName, typeArguments: NodeArray<Ast.TypeNode> | undefined): Ast.TypeQueryNode {
-  if (node.exprName === exprName && node.typeArguments === typeArguments) {
+  if (sameValue(nodeField(node, "exprName"), valueAsUnknown(exprName)) && sameValue(nodeField(node, "typeArguments"), valueAsUnknown(typeArguments))) {
     return node;
   }
   return createTypeQueryNode(exprName, typeArguments);
 }
 
-export function createMappedTypeNode(readonlyToken: Ast.ReadonlyKeyword | Ast.PlusToken | Ast.MinusToken | undefined, typeParameter: Ast.TypeParameterDeclaration, nameType: Ast.TypeNode | undefined, questionToken: Ast.QuestionToken | Ast.PlusToken | Ast.MinusToken | undefined, type: Ast.TypeNode | undefined, members: NodeArray<Ast.TypeElement> | undefined): Ast.MappedTypeNode {
-  return createNode<Ast.MappedTypeNode>(Kind.MappedType, { "readonlyToken": readonlyToken, "typeParameter": typeParameter, "nameType": nameType, "questionToken": questionToken, "type": type, "members": members });
+export function createMappedTypeNode(readonlyToken: Ast.Token | undefined, typeParameter: Ast.TypeParameterDeclaration, nameType: Ast.TypeNode | undefined, questionToken: Ast.Token | undefined, type: Ast.TypeNode | undefined, members: NodeArray<Ast.TypeElement> | undefined): Ast.MappedTypeNode {
+  const node = createNode(Kind.MappedType, { "readonlyToken": readonlyToken, "typeParameter": typeParameter, "nameType": nameType, "questionToken": questionToken, "type": type, "members": members }) as Ast.MappedTypeNode;
+  attachChildren(node);
+  return node;
 }
 
-export function updateMappedTypeNode(node: Ast.MappedTypeNode, readonlyToken: Ast.ReadonlyKeyword | Ast.PlusToken | Ast.MinusToken | undefined, typeParameter: Ast.TypeParameterDeclaration, nameType: Ast.TypeNode | undefined, questionToken: Ast.QuestionToken | Ast.PlusToken | Ast.MinusToken | undefined, type: Ast.TypeNode | undefined, members: NodeArray<Ast.TypeElement> | undefined): Ast.MappedTypeNode {
-  if (node.readonlyToken === readonlyToken && node.typeParameter === typeParameter && node.nameType === nameType && node.questionToken === questionToken && node.type === type && node.members === members) {
+export function updateMappedTypeNode(node: Ast.MappedTypeNode, readonlyToken: Ast.Token | undefined, typeParameter: Ast.TypeParameterDeclaration, nameType: Ast.TypeNode | undefined, questionToken: Ast.Token | undefined, type: Ast.TypeNode | undefined, members: NodeArray<Ast.TypeElement> | undefined): Ast.MappedTypeNode {
+  if (sameValue(nodeField(node, "readonlyToken"), valueAsUnknown(readonlyToken)) && sameValue(nodeField(node, "typeParameter"), valueAsUnknown(typeParameter)) && sameValue(nodeField(node, "nameType"), valueAsUnknown(nameType)) && sameValue(nodeField(node, "questionToken"), valueAsUnknown(questionToken)) && sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "members"), valueAsUnknown(members))) {
     return node;
   }
   return createMappedTypeNode(readonlyToken, typeParameter, nameType, questionToken, type, members);
 }
 
 export function createTypeLiteralNode(members: NodeArray<Ast.TypeElement>): Ast.TypeLiteralNode {
-  return createNode<Ast.TypeLiteralNode>(Kind.TypeLiteral, { "members": members });
+  const node = createNode(Kind.TypeLiteral, { "members": members }) as Ast.TypeLiteralNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateTypeLiteralNode(node: Ast.TypeLiteralNode, members: NodeArray<Ast.TypeElement>): Ast.TypeLiteralNode {
-  if (node.members === members) {
+  if (sameValue(nodeField(node, "members"), valueAsUnknown(members))) {
     return node;
   }
   return createTypeLiteralNode(members);
 }
 
 export function createTupleTypeNode(elements: NodeArray<Ast.TypeNode>): Ast.TupleTypeNode {
-  return createNode<Ast.TupleTypeNode>(Kind.TupleType, { "elements": elements });
+  const node = createNode(Kind.TupleType, { "elements": elements }) as Ast.TupleTypeNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateTupleTypeNode(node: Ast.TupleTypeNode, elements: NodeArray<Ast.TypeNode>): Ast.TupleTypeNode {
-  if (node.elements === elements) {
+  if (sameValue(nodeField(node, "elements"), valueAsUnknown(elements))) {
     return node;
   }
   return createTupleTypeNode(elements);
 }
 
 export function createNamedTupleMember(dotDotDotToken: Ast.DotDotDotToken | undefined, name: Ast.Identifier, questionToken: Ast.QuestionToken | undefined, type: Ast.TypeNode): Ast.NamedTupleMember {
-  return createNode<Ast.NamedTupleMember>(Kind.NamedTupleMember, { "dotDotDotToken": dotDotDotToken, "name": name, "questionToken": questionToken, "type": type });
+  const node = createNode(Kind.NamedTupleMember, { "dotDotDotToken": dotDotDotToken, "name": name, "questionToken": questionToken, "type": type }) as Ast.NamedTupleMember;
+  attachChildren(node);
+  return node;
 }
 
 export function updateNamedTupleMember(node: Ast.NamedTupleMember, dotDotDotToken: Ast.DotDotDotToken | undefined, name: Ast.Identifier, questionToken: Ast.QuestionToken | undefined, type: Ast.TypeNode): Ast.NamedTupleMember {
-  if (node.dotDotDotToken === dotDotDotToken && node.name === name && node.questionToken === questionToken && node.type === type) {
+  if (sameValue(nodeField(node, "dotDotDotToken"), valueAsUnknown(dotDotDotToken)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "questionToken"), valueAsUnknown(questionToken)) && sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createNamedTupleMember(dotDotDotToken, name, questionToken, type);
 }
 
 export function createOptionalTypeNode(type: Ast.TypeNode): Ast.OptionalTypeNode {
-  return createNode<Ast.OptionalTypeNode>(Kind.OptionalType, { "type": type });
+  const node = createNode(Kind.OptionalType, { "type": type }) as Ast.OptionalTypeNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateOptionalTypeNode(node: Ast.OptionalTypeNode, type: Ast.TypeNode): Ast.OptionalTypeNode {
-  if (node.type === type) {
+  if (sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createOptionalTypeNode(type);
 }
 
 export function createRestTypeNode(type: Ast.TypeNode): Ast.RestTypeNode {
-  return createNode<Ast.RestTypeNode>(Kind.RestType, { "type": type });
+  const node = createNode(Kind.RestType, { "type": type }) as Ast.RestTypeNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateRestTypeNode(node: Ast.RestTypeNode, type: Ast.TypeNode): Ast.RestTypeNode {
-  if (node.type === type) {
+  if (sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createRestTypeNode(type);
 }
 
 export function createParenthesizedTypeNode(type: Ast.TypeNode): Ast.ParenthesizedTypeNode {
-  return createNode<Ast.ParenthesizedTypeNode>(Kind.ParenthesizedType, { "type": type });
+  const node = createNode(Kind.ParenthesizedType, { "type": type }) as Ast.ParenthesizedTypeNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateParenthesizedTypeNode(node: Ast.ParenthesizedTypeNode, type: Ast.TypeNode): Ast.ParenthesizedTypeNode {
-  if (node.type === type) {
+  if (sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createParenthesizedTypeNode(type);
 }
 
 export function createFunctionTypeNode(typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined): Ast.FunctionTypeNode {
-  return createNode<Ast.FunctionTypeNode>(Kind.FunctionType, { "typeParameters": typeParameters, "parameters": parameters, "type": type });
+  const node = createNode(Kind.FunctionType, { "typeParameters": typeParameters, "parameters": parameters, "type": type }) as Ast.FunctionTypeNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateFunctionTypeNode(node: Ast.FunctionTypeNode, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined): Ast.FunctionTypeNode {
-  if (node.typeParameters === typeParameters && node.parameters === parameters && node.type === type) {
+  if (sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "parameters"), valueAsUnknown(parameters)) && sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createFunctionTypeNode(typeParameters, parameters, type);
 }
 
 export function createConstructorTypeNode(modifiers: NodeArray<Ast.ModifierLike> | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined): Ast.ConstructorTypeNode {
-  return createNode<Ast.ConstructorTypeNode>(Kind.ConstructorType, { "modifiers": modifiers, "typeParameters": typeParameters, "parameters": parameters, "type": type });
+  const node = createNode(Kind.ConstructorType, { "modifiers": modifiers, "typeParameters": typeParameters, "parameters": parameters, "type": type }) as Ast.ConstructorTypeNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateConstructorTypeNode(node: Ast.ConstructorTypeNode, modifiers: NodeArray<Ast.ModifierLike> | undefined, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined): Ast.ConstructorTypeNode {
-  if (node.modifiers === modifiers && node.typeParameters === typeParameters && node.parameters === parameters && node.type === type) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "parameters"), valueAsUnknown(parameters)) && sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createConstructorTypeNode(modifiers, typeParameters, parameters, type);
 }
 
-export function createTemplateHead(text: string, rawText: string, templateFlags: number): Ast.TemplateHead {
-  return createNode<Ast.TemplateHead>(Kind.TemplateHead, { "text": text, "rawText": rawText, "templateFlags": templateFlags });
+export function createTemplateHead(text: string, rawText: string, templateFlags: int): Ast.TemplateHead {
+  const node = createNode(Kind.TemplateHead, { "text": text, "rawText": rawText, "templateFlags": templateFlags }) as Ast.TemplateHead;
+  return node;
 }
 
-export function updateTemplateHead(node: Ast.TemplateHead, text: string, rawText: string, templateFlags: number): Ast.TemplateHead {
-  if (node.text === text && node.rawText === rawText && node.templateFlags === templateFlags) {
+export function updateTemplateHead(node: Ast.TemplateHead, text: string, rawText: string, templateFlags: int): Ast.TemplateHead {
+  if (sameValue(nodeField(node, "text"), valueAsUnknown(text)) && sameValue(nodeField(node, "rawText"), valueAsUnknown(rawText)) && sameValue(nodeField(node, "templateFlags"), valueAsUnknown(templateFlags))) {
     return node;
   }
   return createTemplateHead(text, rawText, templateFlags);
 }
 
-export function createTemplateMiddle(text: string, rawText: string, templateFlags: number): Ast.TemplateMiddle {
-  return createNode<Ast.TemplateMiddle>(Kind.TemplateMiddle, { "text": text, "rawText": rawText, "templateFlags": templateFlags });
+export function createTemplateMiddle(text: string, rawText: string, templateFlags: int): Ast.TemplateMiddle {
+  const node = createNode(Kind.TemplateMiddle, { "text": text, "rawText": rawText, "templateFlags": templateFlags }) as Ast.TemplateMiddle;
+  return node;
 }
 
-export function updateTemplateMiddle(node: Ast.TemplateMiddle, text: string, rawText: string, templateFlags: number): Ast.TemplateMiddle {
-  if (node.text === text && node.rawText === rawText && node.templateFlags === templateFlags) {
+export function updateTemplateMiddle(node: Ast.TemplateMiddle, text: string, rawText: string, templateFlags: int): Ast.TemplateMiddle {
+  if (sameValue(nodeField(node, "text"), valueAsUnknown(text)) && sameValue(nodeField(node, "rawText"), valueAsUnknown(rawText)) && sameValue(nodeField(node, "templateFlags"), valueAsUnknown(templateFlags))) {
     return node;
   }
   return createTemplateMiddle(text, rawText, templateFlags);
 }
 
-export function createTemplateTail(text: string, rawText: string, templateFlags: number): Ast.TemplateTail {
-  return createNode<Ast.TemplateTail>(Kind.TemplateTail, { "text": text, "rawText": rawText, "templateFlags": templateFlags });
+export function createTemplateTail(text: string, rawText: string, templateFlags: int): Ast.TemplateTail {
+  const node = createNode(Kind.TemplateTail, { "text": text, "rawText": rawText, "templateFlags": templateFlags }) as Ast.TemplateTail;
+  return node;
 }
 
-export function updateTemplateTail(node: Ast.TemplateTail, text: string, rawText: string, templateFlags: number): Ast.TemplateTail {
-  if (node.text === text && node.rawText === rawText && node.templateFlags === templateFlags) {
+export function updateTemplateTail(node: Ast.TemplateTail, text: string, rawText: string, templateFlags: int): Ast.TemplateTail {
+  if (sameValue(nodeField(node, "text"), valueAsUnknown(text)) && sameValue(nodeField(node, "rawText"), valueAsUnknown(rawText)) && sameValue(nodeField(node, "templateFlags"), valueAsUnknown(templateFlags))) {
     return node;
   }
   return createTemplateTail(text, rawText, templateFlags);
 }
 
 export function createTemplateLiteralTypeNode(head: Ast.TemplateHead, templateSpans: NodeArray<Ast.TemplateLiteralTypeSpan>): Ast.TemplateLiteralTypeNode {
-  return createNode<Ast.TemplateLiteralTypeNode>(Kind.TemplateLiteralType, { "head": head, "templateSpans": templateSpans });
+  const node = createNode(Kind.TemplateLiteralType, { "head": head, "templateSpans": templateSpans }) as Ast.TemplateLiteralTypeNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateTemplateLiteralTypeNode(node: Ast.TemplateLiteralTypeNode, head: Ast.TemplateHead, templateSpans: NodeArray<Ast.TemplateLiteralTypeSpan>): Ast.TemplateLiteralTypeNode {
-  if (node.head === head && node.templateSpans === templateSpans) {
+  if (sameValue(nodeField(node, "head"), valueAsUnknown(head)) && sameValue(nodeField(node, "templateSpans"), valueAsUnknown(templateSpans))) {
     return node;
   }
   return createTemplateLiteralTypeNode(head, templateSpans);
 }
 
 export function createTemplateLiteralTypeSpan(type: Ast.TypeNode, literal: Ast.TemplateMiddleOrTail): Ast.TemplateLiteralTypeSpan {
-  return createNode<Ast.TemplateLiteralTypeSpan>(Kind.TemplateLiteralTypeSpan, { "type": type, "literal": literal });
+  const node = createNode(Kind.TemplateLiteralTypeSpan, { "type": type, "literal": literal }) as Ast.TemplateLiteralTypeSpan;
+  attachChildren(node);
+  return node;
 }
 
 export function updateTemplateLiteralTypeSpan(node: Ast.TemplateLiteralTypeSpan, type: Ast.TypeNode, literal: Ast.TemplateMiddleOrTail): Ast.TemplateLiteralTypeSpan {
-  if (node.type === type && node.literal === literal) {
+  if (sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "literal"), valueAsUnknown(literal))) {
     return node;
   }
   return createTemplateLiteralTypeSpan(type, literal);
 }
 
 export function createSyntheticExpression(type: unknown, isSpread: boolean, tupleNameSource: Node | undefined): Ast.SyntheticExpression {
-  return createNode<Ast.SyntheticExpression>(Kind.SyntheticExpression, { "type": type, "isSpread": isSpread, "tupleNameSource": tupleNameSource });
+  const node = createNode(Kind.SyntheticExpression, { "type": type, "isSpread": isSpread, "tupleNameSource": tupleNameSource }) as Ast.SyntheticExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateSyntheticExpression(node: Ast.SyntheticExpression, type: unknown, isSpread: boolean, tupleNameSource: Node | undefined): Ast.SyntheticExpression {
-  if (node.type === type && node.isSpread === isSpread && node.tupleNameSource === tupleNameSource) {
+  if (sameValue(nodeField(node, "type"), valueAsUnknown(type)) && sameValue(nodeField(node, "isSpread"), valueAsUnknown(isSpread)) && sameValue(nodeField(node, "tupleNameSource"), valueAsUnknown(tupleNameSource))) {
     return node;
   }
   return createSyntheticExpression(type, isSpread, tupleNameSource);
 }
 
 export function createPartiallyEmittedExpression(expression: Ast.Expression): Ast.PartiallyEmittedExpression {
-  return createNode<Ast.PartiallyEmittedExpression>(Kind.PartiallyEmittedExpression, { "expression": expression });
+  const node = createNode(Kind.PartiallyEmittedExpression, { "expression": expression }) as Ast.PartiallyEmittedExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updatePartiallyEmittedExpression(node: Ast.PartiallyEmittedExpression, expression: Ast.Expression): Ast.PartiallyEmittedExpression {
-  if (node.expression === expression) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createPartiallyEmittedExpression(expression);
 }
 
 export function createJsxElement(openingElement: Ast.JsxOpeningElement, children: NodeArray<Ast.JsxChild>, closingElement: Ast.JsxClosingElement): Ast.JsxElement {
-  return createNode<Ast.JsxElement>(Kind.JsxElement, { "openingElement": openingElement, "children": children, "closingElement": closingElement });
+  const node = createNode(Kind.JsxElement, { "openingElement": openingElement, "children": children, "closingElement": closingElement }) as Ast.JsxElement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJsxElement(node: Ast.JsxElement, openingElement: Ast.JsxOpeningElement, children: NodeArray<Ast.JsxChild>, closingElement: Ast.JsxClosingElement): Ast.JsxElement {
-  if (node.openingElement === openingElement && node.children === children && node.closingElement === closingElement) {
+  if (sameValue(nodeField(node, "openingElement"), valueAsUnknown(openingElement)) && sameValue(nodeField(node, "children"), valueAsUnknown(children)) && sameValue(nodeField(node, "closingElement"), valueAsUnknown(closingElement))) {
     return node;
   }
   return createJsxElement(openingElement, children, closingElement);
 }
 
 export function createJsxAttributes(properties: NodeArray<Ast.JsxAttributeLike>): Ast.JsxAttributes {
-  return createNode<Ast.JsxAttributes>(Kind.JsxAttributes, { "properties": properties });
+  const node = createNode(Kind.JsxAttributes, { "properties": properties }) as Ast.JsxAttributes;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJsxAttributes(node: Ast.JsxAttributes, properties: NodeArray<Ast.JsxAttributeLike>): Ast.JsxAttributes {
-  if (node.properties === properties) {
+  if (sameValue(nodeField(node, "properties"), valueAsUnknown(properties))) {
     return node;
   }
   return createJsxAttributes(properties);
 }
 
 export function createJsxNamespacedName(namespace: Ast.Identifier, name: Ast.Identifier): Ast.JsxNamespacedName {
-  return createNode<Ast.JsxNamespacedName>(Kind.JsxNamespacedName, { "namespace": namespace, "name": name });
+  const node = createNode(Kind.JsxNamespacedName, { "namespace": namespace, "name": name }) as Ast.JsxNamespacedName;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJsxNamespacedName(node: Ast.JsxNamespacedName, namespace: Ast.Identifier, name: Ast.Identifier): Ast.JsxNamespacedName {
-  if (node.namespace === namespace && node.name === name) {
+  if (sameValue(nodeField(node, "namespace"), valueAsUnknown(namespace)) && sameValue(nodeField(node, "name"), valueAsUnknown(name))) {
     return node;
   }
   return createJsxNamespacedName(namespace, name);
 }
 
 export function createJsxOpeningElement(tagName: Ast.JsxTagNameExpression, typeArguments: NodeArray<Ast.TypeNode> | undefined, attributes: Ast.JsxAttributes): Ast.JsxOpeningElement {
-  return createNode<Ast.JsxOpeningElement>(Kind.JsxOpeningElement, { "tagName": tagName, "typeArguments": typeArguments, "attributes": attributes });
+  const node = createNode(Kind.JsxOpeningElement, { "tagName": tagName, "typeArguments": typeArguments, "attributes": attributes }) as Ast.JsxOpeningElement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJsxOpeningElement(node: Ast.JsxOpeningElement, tagName: Ast.JsxTagNameExpression, typeArguments: NodeArray<Ast.TypeNode> | undefined, attributes: Ast.JsxAttributes): Ast.JsxOpeningElement {
-  if (node.tagName === tagName && node.typeArguments === typeArguments && node.attributes === attributes) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "typeArguments"), valueAsUnknown(typeArguments)) && sameValue(nodeField(node, "attributes"), valueAsUnknown(attributes))) {
     return node;
   }
   return createJsxOpeningElement(tagName, typeArguments, attributes);
 }
 
 export function createJsxSelfClosingElement(tagName: Ast.JsxTagNameExpression, typeArguments: NodeArray<Ast.TypeNode> | undefined, attributes: Ast.JsxAttributes): Ast.JsxSelfClosingElement {
-  return createNode<Ast.JsxSelfClosingElement>(Kind.JsxSelfClosingElement, { "tagName": tagName, "typeArguments": typeArguments, "attributes": attributes });
+  const node = createNode(Kind.JsxSelfClosingElement, { "tagName": tagName, "typeArguments": typeArguments, "attributes": attributes }) as Ast.JsxSelfClosingElement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJsxSelfClosingElement(node: Ast.JsxSelfClosingElement, tagName: Ast.JsxTagNameExpression, typeArguments: NodeArray<Ast.TypeNode> | undefined, attributes: Ast.JsxAttributes): Ast.JsxSelfClosingElement {
-  if (node.tagName === tagName && node.typeArguments === typeArguments && node.attributes === attributes) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "typeArguments"), valueAsUnknown(typeArguments)) && sameValue(nodeField(node, "attributes"), valueAsUnknown(attributes))) {
     return node;
   }
   return createJsxSelfClosingElement(tagName, typeArguments, attributes);
 }
 
 export function createJsxFragment(openingFragment: Ast.JsxOpeningFragment, children: NodeArray<Ast.JsxChild>, closingFragment: Ast.JsxClosingFragment): Ast.JsxFragment {
-  return createNode<Ast.JsxFragment>(Kind.JsxFragment, { "openingFragment": openingFragment, "children": children, "closingFragment": closingFragment });
+  const node = createNode(Kind.JsxFragment, { "openingFragment": openingFragment, "children": children, "closingFragment": closingFragment }) as Ast.JsxFragment;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJsxFragment(node: Ast.JsxFragment, openingFragment: Ast.JsxOpeningFragment, children: NodeArray<Ast.JsxChild>, closingFragment: Ast.JsxClosingFragment): Ast.JsxFragment {
-  if (node.openingFragment === openingFragment && node.children === children && node.closingFragment === closingFragment) {
+  if (sameValue(nodeField(node, "openingFragment"), valueAsUnknown(openingFragment)) && sameValue(nodeField(node, "children"), valueAsUnknown(children)) && sameValue(nodeField(node, "closingFragment"), valueAsUnknown(closingFragment))) {
     return node;
   }
   return createJsxFragment(openingFragment, children, closingFragment);
 }
 
 export function createJsxOpeningFragment(): Ast.JsxOpeningFragment {
-  return createNode<Ast.JsxOpeningFragment>(Kind.JsxOpeningFragment, {});
+  const node = createNode(Kind.JsxOpeningFragment, {}) as Ast.JsxOpeningFragment;
+  return node;
 }
 
 export function updateJsxOpeningFragment(node: Ast.JsxOpeningFragment): Ast.JsxOpeningFragment {
@@ -1816,7 +2078,8 @@ export function updateJsxOpeningFragment(node: Ast.JsxOpeningFragment): Ast.JsxO
 }
 
 export function createJsxClosingFragment(): Ast.JsxClosingFragment {
-  return createNode<Ast.JsxClosingFragment>(Kind.JsxClosingFragment, {});
+  const node = createNode(Kind.JsxClosingFragment, {}) as Ast.JsxClosingFragment;
+  return node;
 }
 
 export function updateJsxClosingFragment(node: Ast.JsxClosingFragment): Ast.JsxClosingFragment {
@@ -1824,117 +2087,137 @@ export function updateJsxClosingFragment(node: Ast.JsxClosingFragment): Ast.JsxC
 }
 
 export function createJsxAttribute(name: Ast.JsxAttributeName, initializer: Ast.JsxAttributeValue | undefined): Ast.JsxAttribute {
-  return createNode<Ast.JsxAttribute>(Kind.JsxAttribute, { "name": name, "initializer": initializer });
+  const node = createNode(Kind.JsxAttribute, { "name": name, "initializer": initializer }) as Ast.JsxAttribute;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJsxAttribute(node: Ast.JsxAttribute, name: Ast.JsxAttributeName, initializer: Ast.JsxAttributeValue | undefined): Ast.JsxAttribute {
-  if (node.name === name && node.initializer === initializer) {
+  if (sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "initializer"), valueAsUnknown(initializer))) {
     return node;
   }
   return createJsxAttribute(name, initializer);
 }
 
 export function createJsxSpreadAttribute(expression: Ast.Expression): Ast.JsxSpreadAttribute {
-  return createNode<Ast.JsxSpreadAttribute>(Kind.JsxSpreadAttribute, { "expression": expression });
+  const node = createNode(Kind.JsxSpreadAttribute, { "expression": expression }) as Ast.JsxSpreadAttribute;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJsxSpreadAttribute(node: Ast.JsxSpreadAttribute, expression: Ast.Expression): Ast.JsxSpreadAttribute {
-  if (node.expression === expression) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createJsxSpreadAttribute(expression);
 }
 
 export function createJsxClosingElement(tagName: Ast.JsxTagNameExpression): Ast.JsxClosingElement {
-  return createNode<Ast.JsxClosingElement>(Kind.JsxClosingElement, { "tagName": tagName });
+  const node = createNode(Kind.JsxClosingElement, { "tagName": tagName }) as Ast.JsxClosingElement;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJsxClosingElement(node: Ast.JsxClosingElement, tagName: Ast.JsxTagNameExpression): Ast.JsxClosingElement {
-  if (node.tagName === tagName) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName))) {
     return node;
   }
   return createJsxClosingElement(tagName);
 }
 
 export function createJsxExpression(dotDotDotToken: Ast.DotDotDotToken | undefined, expression: Ast.Expression | undefined): Ast.JsxExpression {
-  return createNode<Ast.JsxExpression>(Kind.JsxExpression, { "dotDotDotToken": dotDotDotToken, "expression": expression });
+  const node = createNode(Kind.JsxExpression, { "dotDotDotToken": dotDotDotToken, "expression": expression }) as Ast.JsxExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJsxExpression(node: Ast.JsxExpression, dotDotDotToken: Ast.DotDotDotToken | undefined, expression: Ast.Expression | undefined): Ast.JsxExpression {
-  if (node.dotDotDotToken === dotDotDotToken && node.expression === expression) {
+  if (sameValue(nodeField(node, "dotDotDotToken"), valueAsUnknown(dotDotDotToken)) && sameValue(nodeField(node, "expression"), valueAsUnknown(expression))) {
     return node;
   }
   return createJsxExpression(dotDotDotToken, expression);
 }
 
 export function createJsxText(text: string, containsOnlyTriviaWhiteSpaces: boolean): Ast.JsxText {
-  return createNode<Ast.JsxText>(Kind.JsxText, { "text": text, "containsOnlyTriviaWhiteSpaces": containsOnlyTriviaWhiteSpaces });
+  const node = createNode(Kind.JsxText, { "text": text, "containsOnlyTriviaWhiteSpaces": containsOnlyTriviaWhiteSpaces }) as Ast.JsxText;
+  return node;
 }
 
 export function updateJsxText(node: Ast.JsxText, text: string, containsOnlyTriviaWhiteSpaces: boolean): Ast.JsxText {
-  if (node.text === text && node.containsOnlyTriviaWhiteSpaces === containsOnlyTriviaWhiteSpaces) {
+  if (sameValue(nodeField(node, "text"), valueAsUnknown(text)) && sameValue(nodeField(node, "containsOnlyTriviaWhiteSpaces"), valueAsUnknown(containsOnlyTriviaWhiteSpaces))) {
     return node;
   }
   return createJsxText(text, containsOnlyTriviaWhiteSpaces);
 }
 
 export function createSyntaxList(children: readonly Node[]): Ast.SyntaxList {
-  return createNode<Ast.SyntaxList>(Kind.SyntaxList, { "children": children });
+  const node = createNode(Kind.SyntaxList, { "children": children }) as Ast.SyntaxList;
+  attachChildren(node);
+  return node;
 }
 
 export function updateSyntaxList(node: Ast.SyntaxList, children: readonly Node[]): Ast.SyntaxList {
-  if (node.children === children) {
+  if (sameValue(nodeField(node, "children"), valueAsUnknown(children))) {
     return node;
   }
   return createSyntaxList(children);
 }
 
 export function createJSDoc(comment: NodeArray<Ast.JSDocComment>, tags: NodeArray<Ast.JSDocTag> | undefined): Ast.JSDoc {
-  return createNode<Ast.JSDoc>(Kind.JSDoc, { "comment": comment, "tags": tags });
+  const node = createNode(Kind.JSDoc, { "comment": comment, "tags": tags }) as Ast.JSDoc;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDoc(node: Ast.JSDoc, comment: NodeArray<Ast.JSDocComment>, tags: NodeArray<Ast.JSDocTag> | undefined): Ast.JSDoc {
-  if (node.comment === comment && node.tags === tags) {
+  if (sameValue(nodeField(node, "comment"), valueAsUnknown(comment)) && sameValue(nodeField(node, "tags"), valueAsUnknown(tags))) {
     return node;
   }
   return createJSDoc(comment, tags);
 }
 
 export function createJSDocTypeExpression(type: Ast.TypeNode): Ast.JSDocTypeExpression {
-  return createNode<Ast.JSDocTypeExpression>(Kind.JSDocTypeExpression, { "type": type });
+  const node = createNode(Kind.JSDocTypeExpression, { "type": type }) as Ast.JSDocTypeExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocTypeExpression(node: Ast.JSDocTypeExpression, type: Ast.TypeNode): Ast.JSDocTypeExpression {
-  if (node.type === type) {
+  if (sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createJSDocTypeExpression(type);
 }
 
 export function createJSDocNonNullableType(type: Ast.TypeNode): Ast.JSDocNonNullableType {
-  return createNode<Ast.JSDocNonNullableType>(Kind.JSDocNonNullableType, { "type": type });
+  const node = createNode(Kind.JSDocNonNullableType, { "type": type }) as Ast.JSDocNonNullableType;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocNonNullableType(node: Ast.JSDocNonNullableType, type: Ast.TypeNode): Ast.JSDocNonNullableType {
-  if (node.type === type) {
+  if (sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createJSDocNonNullableType(type);
 }
 
 export function createJSDocNullableType(type: Ast.TypeNode): Ast.JSDocNullableType {
-  return createNode<Ast.JSDocNullableType>(Kind.JSDocNullableType, { "type": type });
+  const node = createNode(Kind.JSDocNullableType, { "type": type }) as Ast.JSDocNullableType;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocNullableType(node: Ast.JSDocNullableType, type: Ast.TypeNode): Ast.JSDocNullableType {
-  if (node.type === type) {
+  if (sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createJSDocNullableType(type);
 }
 
 export function createJSDocAllType(): Ast.JSDocAllType {
-  return createNode<Ast.JSDocAllType>(Kind.JSDocAllType, {});
+  const node = createNode(Kind.JSDocAllType, {}) as Ast.JSDocAllType;
+  return node;
 }
 
 export function updateJSDocAllType(node: Ast.JSDocAllType): Ast.JSDocAllType {
@@ -1942,436 +2225,513 @@ export function updateJSDocAllType(node: Ast.JSDocAllType): Ast.JSDocAllType {
 }
 
 export function createJSDocVariadicType(type: Ast.TypeNode): Ast.JSDocVariadicType {
-  return createNode<Ast.JSDocVariadicType>(Kind.JSDocVariadicType, { "type": type });
+  const node = createNode(Kind.JSDocVariadicType, { "type": type }) as Ast.JSDocVariadicType;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocVariadicType(node: Ast.JSDocVariadicType, type: Ast.TypeNode): Ast.JSDocVariadicType {
-  if (node.type === type) {
+  if (sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createJSDocVariadicType(type);
 }
 
 export function createJSDocOptionalType(type: Ast.TypeNode): Ast.JSDocOptionalType {
-  return createNode<Ast.JSDocOptionalType>(Kind.JSDocOptionalType, { "type": type });
+  const node = createNode(Kind.JSDocOptionalType, { "type": type }) as Ast.JSDocOptionalType;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocOptionalType(node: Ast.JSDocOptionalType, type: Ast.TypeNode): Ast.JSDocOptionalType {
-  if (node.type === type) {
+  if (sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createJSDocOptionalType(type);
 }
 
 export function createJSDocTypeTag(tagName: Ast.Identifier, typeExpression: Node, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocTypeTag {
-  return createNode<Ast.JSDocTypeTag>(Kind.JSDocTypeTag, { "tagName": tagName, "typeExpression": typeExpression, "comment": comment });
+  const node = createNode(Kind.JSDocTypeTag, { "tagName": tagName, "typeExpression": typeExpression, "comment": comment }) as Ast.JSDocTypeTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocTypeTag(node: Ast.JSDocTypeTag, tagName: Ast.Identifier, typeExpression: Node, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocTypeTag {
-  if (node.tagName === tagName && node.typeExpression === typeExpression && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "typeExpression"), valueAsUnknown(typeExpression)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocTypeTag(tagName, typeExpression, comment);
 }
 
 export function createJSDocUnknownTag(tagName: Ast.Identifier, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocUnknownTag {
-  return createNode<Ast.JSDocUnknownTag>(Kind.JSDocUnknownTag, { "tagName": tagName, "comment": comment });
+  const node = createNode(Kind.JSDocUnknownTag, { "tagName": tagName, "comment": comment }) as Ast.JSDocUnknownTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocUnknownTag(node: Ast.JSDocUnknownTag, tagName: Ast.Identifier, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocUnknownTag {
-  if (node.tagName === tagName && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocUnknownTag(tagName, comment);
 }
 
 export function createJSDocTemplateTag(tagName: Ast.Identifier, constraint: Node, typeParameters: NodeArray<Ast.TypeParameterDeclaration>, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocTemplateTag {
-  return createNode<Ast.JSDocTemplateTag>(Kind.JSDocTemplateTag, { "tagName": tagName, "constraint": constraint, "typeParameters": typeParameters, "comment": comment });
+  const node = createNode(Kind.JSDocTemplateTag, { "tagName": tagName, "constraint": constraint, "typeParameters": typeParameters, "comment": comment }) as Ast.JSDocTemplateTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocTemplateTag(node: Ast.JSDocTemplateTag, tagName: Ast.Identifier, constraint: Node, typeParameters: NodeArray<Ast.TypeParameterDeclaration>, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocTemplateTag {
-  if (node.tagName === tagName && node.constraint === constraint && node.typeParameters === typeParameters && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "constraint"), valueAsUnknown(constraint)) && sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocTemplateTag(tagName, constraint, typeParameters, comment);
 }
 
 export function createJSDocReturnTag(tagName: Ast.Identifier, typeExpression: Ast.TypeNode | undefined, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocReturnTag {
-  return createNode<Ast.JSDocReturnTag>(Kind.JSDocReturnTag, { "tagName": tagName, "typeExpression": typeExpression, "comment": comment });
+  const node = createNode(Kind.JSDocReturnTag, { "tagName": tagName, "typeExpression": typeExpression, "comment": comment }) as Ast.JSDocReturnTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocReturnTag(node: Ast.JSDocReturnTag, tagName: Ast.Identifier, typeExpression: Ast.TypeNode | undefined, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocReturnTag {
-  if (node.tagName === tagName && node.typeExpression === typeExpression && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "typeExpression"), valueAsUnknown(typeExpression)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocReturnTag(tagName, typeExpression, comment);
 }
 
 export function createJSDocPublicTag(tagName: Ast.Identifier, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocPublicTag {
-  return createNode<Ast.JSDocPublicTag>(Kind.JSDocPublicTag, { "tagName": tagName, "comment": comment });
+  const node = createNode(Kind.JSDocPublicTag, { "tagName": tagName, "comment": comment }) as Ast.JSDocPublicTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocPublicTag(node: Ast.JSDocPublicTag, tagName: Ast.Identifier, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocPublicTag {
-  if (node.tagName === tagName && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocPublicTag(tagName, comment);
 }
 
 export function createJSDocPrivateTag(tagName: Ast.Identifier, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocPrivateTag {
-  return createNode<Ast.JSDocPrivateTag>(Kind.JSDocPrivateTag, { "tagName": tagName, "comment": comment });
+  const node = createNode(Kind.JSDocPrivateTag, { "tagName": tagName, "comment": comment }) as Ast.JSDocPrivateTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocPrivateTag(node: Ast.JSDocPrivateTag, tagName: Ast.Identifier, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocPrivateTag {
-  if (node.tagName === tagName && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocPrivateTag(tagName, comment);
 }
 
 export function createJSDocProtectedTag(tagName: Ast.Identifier, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocProtectedTag {
-  return createNode<Ast.JSDocProtectedTag>(Kind.JSDocProtectedTag, { "tagName": tagName, "comment": comment });
+  const node = createNode(Kind.JSDocProtectedTag, { "tagName": tagName, "comment": comment }) as Ast.JSDocProtectedTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocProtectedTag(node: Ast.JSDocProtectedTag, tagName: Ast.Identifier, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocProtectedTag {
-  if (node.tagName === tagName && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocProtectedTag(tagName, comment);
 }
 
 export function createJSDocReadonlyTag(tagName: Ast.Identifier, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocReadonlyTag {
-  return createNode<Ast.JSDocReadonlyTag>(Kind.JSDocReadonlyTag, { "tagName": tagName, "comment": comment });
+  const node = createNode(Kind.JSDocReadonlyTag, { "tagName": tagName, "comment": comment }) as Ast.JSDocReadonlyTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocReadonlyTag(node: Ast.JSDocReadonlyTag, tagName: Ast.Identifier, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocReadonlyTag {
-  if (node.tagName === tagName && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocReadonlyTag(tagName, comment);
 }
 
 export function createJSDocOverrideTag(tagName: Ast.Identifier, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocOverrideTag {
-  return createNode<Ast.JSDocOverrideTag>(Kind.JSDocOverrideTag, { "tagName": tagName, "comment": comment });
+  const node = createNode(Kind.JSDocOverrideTag, { "tagName": tagName, "comment": comment }) as Ast.JSDocOverrideTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocOverrideTag(node: Ast.JSDocOverrideTag, tagName: Ast.Identifier, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocOverrideTag {
-  if (node.tagName === tagName && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocOverrideTag(tagName, comment);
 }
 
 export function createJSDocDeprecatedTag(tagName: Ast.Identifier, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocDeprecatedTag {
-  return createNode<Ast.JSDocDeprecatedTag>(Kind.JSDocDeprecatedTag, { "tagName": tagName, "comment": comment });
+  const node = createNode(Kind.JSDocDeprecatedTag, { "tagName": tagName, "comment": comment }) as Ast.JSDocDeprecatedTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocDeprecatedTag(node: Ast.JSDocDeprecatedTag, tagName: Ast.Identifier, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocDeprecatedTag {
-  if (node.tagName === tagName && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocDeprecatedTag(tagName, comment);
 }
 
 export function createJSDocSeeTag(tagName: Ast.Identifier, nameExpression: Ast.TypeNode, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocSeeTag {
-  return createNode<Ast.JSDocSeeTag>(Kind.JSDocSeeTag, { "tagName": tagName, "nameExpression": nameExpression, "comment": comment });
+  const node = createNode(Kind.JSDocSeeTag, { "tagName": tagName, "nameExpression": nameExpression, "comment": comment }) as Ast.JSDocSeeTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocSeeTag(node: Ast.JSDocSeeTag, tagName: Ast.Identifier, nameExpression: Ast.TypeNode, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocSeeTag {
-  if (node.tagName === tagName && node.nameExpression === nameExpression && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "nameExpression"), valueAsUnknown(nameExpression)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocSeeTag(tagName, nameExpression, comment);
 }
 
 export function createJSDocImplementsTag(tagName: Ast.Identifier, className: Ast.ExpressionWithTypeArguments, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocImplementsTag {
-  return createNode<Ast.JSDocImplementsTag>(Kind.JSDocImplementsTag, { "tagName": tagName, "className": className, "comment": comment });
+  const node = createNode(Kind.JSDocImplementsTag, { "tagName": tagName, "className": className, "comment": comment }) as Ast.JSDocImplementsTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocImplementsTag(node: Ast.JSDocImplementsTag, tagName: Ast.Identifier, className: Ast.ExpressionWithTypeArguments, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocImplementsTag {
-  if (node.tagName === tagName && node.className === className && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "className"), valueAsUnknown(className)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocImplementsTag(tagName, className, comment);
 }
 
 export function createJSDocAugmentsTag(tagName: Ast.Identifier, className: Ast.ExpressionWithTypeArguments, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocAugmentsTag {
-  return createNode<Ast.JSDocAugmentsTag>(Kind.JSDocAugmentsTag, { "tagName": tagName, "className": className, "comment": comment });
+  const node = createNode(Kind.JSDocAugmentsTag, { "tagName": tagName, "className": className, "comment": comment }) as Ast.JSDocAugmentsTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocAugmentsTag(node: Ast.JSDocAugmentsTag, tagName: Ast.Identifier, className: Ast.ExpressionWithTypeArguments, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocAugmentsTag {
-  if (node.tagName === tagName && node.className === className && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "className"), valueAsUnknown(className)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocAugmentsTag(tagName, className, comment);
 }
 
 export function createJSDocSatisfiesTag(tagName: Ast.Identifier, typeExpression: Ast.TypeNode, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocSatisfiesTag {
-  return createNode<Ast.JSDocSatisfiesTag>(Kind.JSDocSatisfiesTag, { "tagName": tagName, "typeExpression": typeExpression, "comment": comment });
+  const node = createNode(Kind.JSDocSatisfiesTag, { "tagName": tagName, "typeExpression": typeExpression, "comment": comment }) as Ast.JSDocSatisfiesTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocSatisfiesTag(node: Ast.JSDocSatisfiesTag, tagName: Ast.Identifier, typeExpression: Ast.TypeNode, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocSatisfiesTag {
-  if (node.tagName === tagName && node.typeExpression === typeExpression && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "typeExpression"), valueAsUnknown(typeExpression)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocSatisfiesTag(tagName, typeExpression, comment);
 }
 
 export function createJSDocThrowsTag(tagName: Ast.Identifier, typeExpression: Ast.TypeNode | undefined, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocThrowsTag {
-  return createNode<Ast.JSDocThrowsTag>(Kind.JSDocThrowsTag, { "tagName": tagName, "typeExpression": typeExpression, "comment": comment });
+  const node = createNode(Kind.JSDocThrowsTag, { "tagName": tagName, "typeExpression": typeExpression, "comment": comment }) as Ast.JSDocThrowsTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocThrowsTag(node: Ast.JSDocThrowsTag, tagName: Ast.Identifier, typeExpression: Ast.TypeNode | undefined, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocThrowsTag {
-  if (node.tagName === tagName && node.typeExpression === typeExpression && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "typeExpression"), valueAsUnknown(typeExpression)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocThrowsTag(tagName, typeExpression, comment);
 }
 
 export function createJSDocThisTag(tagName: Ast.Identifier, typeExpression: Ast.TypeNode, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocThisTag {
-  return createNode<Ast.JSDocThisTag>(Kind.JSDocThisTag, { "tagName": tagName, "typeExpression": typeExpression, "comment": comment });
+  const node = createNode(Kind.JSDocThisTag, { "tagName": tagName, "typeExpression": typeExpression, "comment": comment }) as Ast.JSDocThisTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocThisTag(node: Ast.JSDocThisTag, tagName: Ast.Identifier, typeExpression: Ast.TypeNode, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocThisTag {
-  if (node.tagName === tagName && node.typeExpression === typeExpression && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "typeExpression"), valueAsUnknown(typeExpression)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocThisTag(tagName, typeExpression, comment);
 }
 
 export function createJSDocImportTag(tagName: Ast.Identifier, importClause: Ast.ImportClause | undefined, moduleSpecifier: Ast.Expression, attributes: Ast.ImportAttributes | undefined, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocImportTag {
-  return createNode<Ast.JSDocImportTag>(Kind.JSDocImportTag, { "tagName": tagName, "importClause": importClause, "moduleSpecifier": moduleSpecifier, "attributes": attributes, "comment": comment });
+  const node = createNode(Kind.JSDocImportTag, { "tagName": tagName, "importClause": importClause, "moduleSpecifier": moduleSpecifier, "attributes": attributes, "comment": comment }) as Ast.JSDocImportTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocImportTag(node: Ast.JSDocImportTag, tagName: Ast.Identifier, importClause: Ast.ImportClause | undefined, moduleSpecifier: Ast.Expression, attributes: Ast.ImportAttributes | undefined, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocImportTag {
-  if (node.tagName === tagName && node.importClause === importClause && node.moduleSpecifier === moduleSpecifier && node.attributes === attributes && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "importClause"), valueAsUnknown(importClause)) && sameValue(nodeField(node, "moduleSpecifier"), valueAsUnknown(moduleSpecifier)) && sameValue(nodeField(node, "attributes"), valueAsUnknown(attributes)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocImportTag(tagName, importClause, moduleSpecifier, attributes, comment);
 }
 
 export function createJSDocCallbackTag(tagName: Ast.Identifier, typeExpression: Ast.TypeNode, fullName: Node | undefined, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocCallbackTag {
-  return createNode<Ast.JSDocCallbackTag>(Kind.JSDocCallbackTag, { "tagName": tagName, "typeExpression": typeExpression, "fullName": fullName, "comment": comment });
+  const node = createNode(Kind.JSDocCallbackTag, { "tagName": tagName, "typeExpression": typeExpression, "fullName": fullName, "comment": comment }) as Ast.JSDocCallbackTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocCallbackTag(node: Ast.JSDocCallbackTag, tagName: Ast.Identifier, typeExpression: Ast.TypeNode, fullName: Node | undefined, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocCallbackTag {
-  if (node.tagName === tagName && node.typeExpression === typeExpression && node.fullName === fullName && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "typeExpression"), valueAsUnknown(typeExpression)) && sameValue(nodeField(node, "fullName"), valueAsUnknown(fullName)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocCallbackTag(tagName, typeExpression, fullName, comment);
 }
 
 export function createJSDocOverloadTag(tagName: Ast.Identifier, typeExpression: Ast.TypeNode, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocOverloadTag {
-  return createNode<Ast.JSDocOverloadTag>(Kind.JSDocOverloadTag, { "tagName": tagName, "typeExpression": typeExpression, "comment": comment });
+  const node = createNode(Kind.JSDocOverloadTag, { "tagName": tagName, "typeExpression": typeExpression, "comment": comment }) as Ast.JSDocOverloadTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocOverloadTag(node: Ast.JSDocOverloadTag, tagName: Ast.Identifier, typeExpression: Ast.TypeNode, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocOverloadTag {
-  if (node.tagName === tagName && node.typeExpression === typeExpression && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "typeExpression"), valueAsUnknown(typeExpression)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocOverloadTag(tagName, typeExpression, comment);
 }
 
 export function createJSDocTypedefTag(tagName: Ast.Identifier, typeExpression: Node | undefined, name: Ast.Identifier | undefined, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocTypedefTag {
-  return createNode<Ast.JSDocTypedefTag>(Kind.JSDocTypedefTag, { "tagName": tagName, "typeExpression": typeExpression, "name": name, "comment": comment });
+  const node = createNode(Kind.JSDocTypedefTag, { "tagName": tagName, "typeExpression": typeExpression, "name": name, "comment": comment }) as Ast.JSDocTypedefTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocTypedefTag(node: Ast.JSDocTypedefTag, tagName: Ast.Identifier, typeExpression: Node | undefined, name: Ast.Identifier | undefined, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocTypedefTag {
-  if (node.tagName === tagName && node.typeExpression === typeExpression && node.name === name && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "typeExpression"), valueAsUnknown(typeExpression)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocTypedefTag(tagName, typeExpression, name, comment);
 }
 
 export function createJSDocSignature(typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined): Ast.JSDocSignature {
-  return createNode<Ast.JSDocSignature>(Kind.JSDocSignature, { "typeParameters": typeParameters, "parameters": parameters, "type": type });
+  const node = createNode(Kind.JSDocSignature, { "typeParameters": typeParameters, "parameters": parameters, "type": type }) as Ast.JSDocSignature;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocSignature(node: Ast.JSDocSignature, typeParameters: NodeArray<Ast.TypeParameterDeclaration> | undefined, parameters: NodeArray<Ast.ParameterDeclaration>, type: Ast.TypeNode | undefined): Ast.JSDocSignature {
-  if (node.typeParameters === typeParameters && node.parameters === parameters && node.type === type) {
+  if (sameValue(nodeField(node, "typeParameters"), valueAsUnknown(typeParameters)) && sameValue(nodeField(node, "parameters"), valueAsUnknown(parameters)) && sameValue(nodeField(node, "type"), valueAsUnknown(type))) {
     return node;
   }
   return createJSDocSignature(typeParameters, parameters, type);
 }
 
 export function createJSDocNameReference(name: Ast.EntityName): Ast.JSDocNameReference {
-  return createNode<Ast.JSDocNameReference>(Kind.JSDocNameReference, { "name": name });
+  const node = createNode(Kind.JSDocNameReference, { "name": name }) as Ast.JSDocNameReference;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocNameReference(node: Ast.JSDocNameReference, name: Ast.EntityName): Ast.JSDocNameReference {
-  if (node.name === name) {
+  if (sameValue(nodeField(node, "name"), valueAsUnknown(name))) {
     return node;
   }
   return createJSDocNameReference(name);
 }
 
-export function createModuleDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, keyword: Kind.ModuleKeyword | Kind.NamespaceKeyword, name: Ast.ModuleName, body: Ast.ModuleBody): Ast.ModuleDeclaration {
-  return createNode<Ast.ModuleDeclaration>(Kind.ModuleDeclaration, { "modifiers": modifiers, "keyword": keyword, "name": name, "body": body });
+export function createModuleDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, keyword: Kind, name: Ast.ModuleName, body: Ast.ModuleBody): Ast.ModuleDeclaration {
+  const node = createNode(Kind.ModuleDeclaration, { "modifiers": modifiers, "keyword": keyword, "name": name, "body": body }) as Ast.ModuleDeclaration;
+  attachChildren(node);
+  return node;
 }
 
-export function updateModuleDeclaration(node: Ast.ModuleDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, keyword: Kind.ModuleKeyword | Kind.NamespaceKeyword, name: Ast.ModuleName, body: Ast.ModuleBody): Ast.ModuleDeclaration {
-  if (node.modifiers === modifiers && node.keyword === keyword && node.name === name && node.body === body) {
+export function updateModuleDeclaration(node: Ast.ModuleDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, keyword: Kind, name: Ast.ModuleName, body: Ast.ModuleBody): Ast.ModuleDeclaration {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "keyword"), valueAsUnknown(keyword)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "body"), valueAsUnknown(body))) {
     return node;
   }
   return createModuleDeclaration(modifiers, keyword, name, body);
 }
 
 export function createImportEqualsDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, isTypeOnly: boolean, name: Ast.Identifier, moduleReference: Ast.ModuleReference): Ast.ImportEqualsDeclaration {
-  return createNode<Ast.ImportEqualsDeclaration>(Kind.ImportEqualsDeclaration, { "modifiers": modifiers, "isTypeOnly": isTypeOnly, "name": name, "moduleReference": moduleReference });
+  const node = createNode(Kind.ImportEqualsDeclaration, { "modifiers": modifiers, "isTypeOnly": isTypeOnly, "name": name, "moduleReference": moduleReference }) as Ast.ImportEqualsDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateImportEqualsDeclaration(node: Ast.ImportEqualsDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, isTypeOnly: boolean, name: Ast.Identifier, moduleReference: Ast.ModuleReference): Ast.ImportEqualsDeclaration {
-  if (node.modifiers === modifiers && node.isTypeOnly === isTypeOnly && node.name === name && node.moduleReference === moduleReference) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "isTypeOnly"), valueAsUnknown(isTypeOnly)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "moduleReference"), valueAsUnknown(moduleReference))) {
     return node;
   }
   return createImportEqualsDeclaration(modifiers, isTypeOnly, name, moduleReference);
 }
 
 export function createExportDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, isTypeOnly: boolean, exportClause: Ast.NamedExportBindings | undefined, moduleSpecifier: Ast.Expression | undefined, attributes: Ast.ImportAttributes | undefined): Ast.ExportDeclaration {
-  return createNode<Ast.ExportDeclaration>(Kind.ExportDeclaration, { "modifiers": modifiers, "isTypeOnly": isTypeOnly, "exportClause": exportClause, "moduleSpecifier": moduleSpecifier, "attributes": attributes });
+  const node = createNode(Kind.ExportDeclaration, { "modifiers": modifiers, "isTypeOnly": isTypeOnly, "exportClause": exportClause, "moduleSpecifier": moduleSpecifier, "attributes": attributes }) as Ast.ExportDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateExportDeclaration(node: Ast.ExportDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, isTypeOnly: boolean, exportClause: Ast.NamedExportBindings | undefined, moduleSpecifier: Ast.Expression | undefined, attributes: Ast.ImportAttributes | undefined): Ast.ExportDeclaration {
-  if (node.modifiers === modifiers && node.isTypeOnly === isTypeOnly && node.exportClause === exportClause && node.moduleSpecifier === moduleSpecifier && node.attributes === attributes) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "isTypeOnly"), valueAsUnknown(isTypeOnly)) && sameValue(nodeField(node, "exportClause"), valueAsUnknown(exportClause)) && sameValue(nodeField(node, "moduleSpecifier"), valueAsUnknown(moduleSpecifier)) && sameValue(nodeField(node, "attributes"), valueAsUnknown(attributes))) {
     return node;
   }
   return createExportDeclaration(modifiers, isTypeOnly, exportClause, moduleSpecifier, attributes);
 }
 
 export function createImportTypeNode(isTypeOf: boolean, argument: Ast.TypeNode, attributes: Ast.ImportAttributes | undefined, qualifier: Ast.EntityName | undefined, typeArguments: NodeArray<Ast.TypeNode> | undefined): Ast.ImportTypeNode {
-  return createNode<Ast.ImportTypeNode>(Kind.ImportType, { "isTypeOf": isTypeOf, "argument": argument, "attributes": attributes, "qualifier": qualifier, "typeArguments": typeArguments });
+  const node = createNode(Kind.ImportType, { "isTypeOf": isTypeOf, "argument": argument, "attributes": attributes, "qualifier": qualifier, "typeArguments": typeArguments }) as Ast.ImportTypeNode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateImportTypeNode(node: Ast.ImportTypeNode, isTypeOf: boolean, argument: Ast.TypeNode, attributes: Ast.ImportAttributes | undefined, qualifier: Ast.EntityName | undefined, typeArguments: NodeArray<Ast.TypeNode> | undefined): Ast.ImportTypeNode {
-  if (node.isTypeOf === isTypeOf && node.argument === argument && node.attributes === attributes && node.qualifier === qualifier && node.typeArguments === typeArguments) {
+  if (sameValue(nodeField(node, "isTypeOf"), valueAsUnknown(isTypeOf)) && sameValue(nodeField(node, "argument"), valueAsUnknown(argument)) && sameValue(nodeField(node, "attributes"), valueAsUnknown(attributes)) && sameValue(nodeField(node, "qualifier"), valueAsUnknown(qualifier)) && sameValue(nodeField(node, "typeArguments"), valueAsUnknown(typeArguments))) {
     return node;
   }
   return createImportTypeNode(isTypeOf, argument, attributes, qualifier, typeArguments);
 }
 
 export function createImportClause(phaseModifier: Ast.ImportPhaseModifierSyntaxKind | undefined, name: Ast.Identifier | undefined, namedBindings: Ast.NamedImportBindings | undefined): Ast.ImportClause {
-  return createNode<Ast.ImportClause>(Kind.ImportClause, { "phaseModifier": phaseModifier, "name": name, "namedBindings": namedBindings });
+  const node = createNode(Kind.ImportClause, { "phaseModifier": phaseModifier, "name": name, "namedBindings": namedBindings }) as Ast.ImportClause;
+  attachChildren(node);
+  return node;
 }
 
 export function updateImportClause(node: Ast.ImportClause, phaseModifier: Ast.ImportPhaseModifierSyntaxKind | undefined, name: Ast.Identifier | undefined, namedBindings: Ast.NamedImportBindings | undefined): Ast.ImportClause {
-  if (node.phaseModifier === phaseModifier && node.name === name && node.namedBindings === namedBindings) {
+  if (sameValue(nodeField(node, "phaseModifier"), valueAsUnknown(phaseModifier)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "namedBindings"), valueAsUnknown(namedBindings))) {
     return node;
   }
   return createImportClause(phaseModifier, name, namedBindings);
 }
 
 export function createImportSpecifier(isTypeOnly: boolean, propertyName: Ast.ModuleExportName | undefined, name: Ast.Identifier): Ast.ImportSpecifier {
-  return createNode<Ast.ImportSpecifier>(Kind.ImportSpecifier, { "isTypeOnly": isTypeOnly, "propertyName": propertyName, "name": name });
+  const node = createNode(Kind.ImportSpecifier, { "isTypeOnly": isTypeOnly, "propertyName": propertyName, "name": name }) as Ast.ImportSpecifier;
+  attachChildren(node);
+  return node;
 }
 
 export function updateImportSpecifier(node: Ast.ImportSpecifier, isTypeOnly: boolean, propertyName: Ast.ModuleExportName | undefined, name: Ast.Identifier): Ast.ImportSpecifier {
-  if (node.isTypeOnly === isTypeOnly && node.propertyName === propertyName && node.name === name) {
+  if (sameValue(nodeField(node, "isTypeOnly"), valueAsUnknown(isTypeOnly)) && sameValue(nodeField(node, "propertyName"), valueAsUnknown(propertyName)) && sameValue(nodeField(node, "name"), valueAsUnknown(name))) {
     return node;
   }
   return createImportSpecifier(isTypeOnly, propertyName, name);
 }
 
 export function createJSDocText(text: readonly string[]): Ast.JSDocText {
-  return createNode<Ast.JSDocText>(Kind.JSDocText, { "text": text });
+  const node = createNode(Kind.JSDocText, { "text": text }) as Ast.JSDocText;
+  return node;
 }
 
 export function updateJSDocText(node: Ast.JSDocText, text: readonly string[]): Ast.JSDocText {
-  if (node.text === text) {
+  if (sameValue(nodeField(node, "text"), valueAsUnknown(text))) {
     return node;
   }
   return createJSDocText(text);
 }
 
 export function createJSDocLink(name: Ast.EntityName | undefined, text: readonly string[]): Ast.JSDocLink {
-  return createNode<Ast.JSDocLink>(Kind.JSDocLink, { "name": name, "text": text });
+  const node = createNode(Kind.JSDocLink, { "name": name, "text": text }) as Ast.JSDocLink;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocLink(node: Ast.JSDocLink, name: Ast.EntityName | undefined, text: readonly string[]): Ast.JSDocLink {
-  if (node.name === name && node.text === text) {
+  if (sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "text"), valueAsUnknown(text))) {
     return node;
   }
   return createJSDocLink(name, text);
 }
 
 export function createJSDocLinkPlain(name: Ast.EntityName | undefined, text: readonly string[]): Ast.JSDocLinkPlain {
-  return createNode<Ast.JSDocLinkPlain>(Kind.JSDocLinkPlain, { "name": name, "text": text });
+  const node = createNode(Kind.JSDocLinkPlain, { "name": name, "text": text }) as Ast.JSDocLinkPlain;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocLinkPlain(node: Ast.JSDocLinkPlain, name: Ast.EntityName | undefined, text: readonly string[]): Ast.JSDocLinkPlain {
-  if (node.name === name && node.text === text) {
+  if (sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "text"), valueAsUnknown(text))) {
     return node;
   }
   return createJSDocLinkPlain(name, text);
 }
 
 export function createJSDocLinkCode(name: Ast.EntityName | undefined, text: readonly string[]): Ast.JSDocLinkCode {
-  return createNode<Ast.JSDocLinkCode>(Kind.JSDocLinkCode, { "name": name, "text": text });
+  const node = createNode(Kind.JSDocLinkCode, { "name": name, "text": text }) as Ast.JSDocLinkCode;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocLinkCode(node: Ast.JSDocLinkCode, name: Ast.EntityName | undefined, text: readonly string[]): Ast.JSDocLinkCode {
-  if (node.name === name && node.text === text) {
+  if (sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "text"), valueAsUnknown(text))) {
     return node;
   }
   return createJSDocLinkCode(name, text);
 }
 
 export function createTypeParameterDeclaration(modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier, constraint: Ast.TypeNode | undefined, expression: Ast.Expression | undefined, defaultType: Ast.TypeNode | undefined): Ast.TypeParameterDeclaration {
-  return createNode<Ast.TypeParameterDeclaration>(Kind.TypeParameter, { "modifiers": modifiers, "name": name, "constraint": constraint, "expression": expression, "defaultType": defaultType });
+  const node = createNode(Kind.TypeParameter, { "modifiers": modifiers, "name": name, "constraint": constraint, "expression": expression, "defaultType": defaultType }) as Ast.TypeParameterDeclaration;
+  attachChildren(node);
+  return node;
 }
 
 export function updateTypeParameterDeclaration(node: Ast.TypeParameterDeclaration, modifiers: NodeArray<Ast.ModifierLike> | undefined, name: Ast.Identifier, constraint: Ast.TypeNode | undefined, expression: Ast.Expression | undefined, defaultType: Ast.TypeNode | undefined): Ast.TypeParameterDeclaration {
-  if (node.modifiers === modifiers && node.name === name && node.constraint === constraint && node.expression === expression && node.defaultType === defaultType) {
+  if (sameValue(nodeField(node, "modifiers"), valueAsUnknown(modifiers)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "constraint"), valueAsUnknown(constraint)) && sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "defaultType"), valueAsUnknown(defaultType))) {
     return node;
   }
   return createTypeParameterDeclaration(modifiers, name, constraint, expression, defaultType);
 }
 
 export function createSyntheticReferenceExpression(expression: Ast.Expression, thisArg: Ast.Expression): Ast.SyntheticReferenceExpression {
-  return createNode<Ast.SyntheticReferenceExpression>(Kind.SyntheticReferenceExpression, { "expression": expression, "thisArg": thisArg });
+  const node = createNode(Kind.SyntheticReferenceExpression, { "expression": expression, "thisArg": thisArg }) as Ast.SyntheticReferenceExpression;
+  attachChildren(node);
+  return node;
 }
 
 export function updateSyntheticReferenceExpression(node: Ast.SyntheticReferenceExpression, expression: Ast.Expression, thisArg: Ast.Expression): Ast.SyntheticReferenceExpression {
-  if (node.expression === expression && node.thisArg === thisArg) {
+  if (sameValue(nodeField(node, "expression"), valueAsUnknown(expression)) && sameValue(nodeField(node, "thisArg"), valueAsUnknown(thisArg))) {
     return node;
   }
   return createSyntheticReferenceExpression(expression, thisArg);
 }
 
 export function createJSDocTypeLiteral(jSDocPropertyTags: readonly Ast.JSDocTag[] | undefined, isArrayType: boolean): Ast.JSDocTypeLiteral {
-  return createNode<Ast.JSDocTypeLiteral>(Kind.JSDocTypeLiteral, { "jSDocPropertyTags": jSDocPropertyTags, "isArrayType": isArrayType });
+  const node = createNode(Kind.JSDocTypeLiteral, { "jSDocPropertyTags": jSDocPropertyTags, "isArrayType": isArrayType }) as Ast.JSDocTypeLiteral;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocTypeLiteral(node: Ast.JSDocTypeLiteral, jSDocPropertyTags: readonly Ast.JSDocTag[] | undefined, isArrayType: boolean): Ast.JSDocTypeLiteral {
-  if (node.jSDocPropertyTags === jSDocPropertyTags && node.isArrayType === isArrayType) {
+  if (sameValue(nodeField(node, "jSDocPropertyTags"), valueAsUnknown(jSDocPropertyTags)) && sameValue(nodeField(node, "isArrayType"), valueAsUnknown(isArrayType))) {
     return node;
   }
   return createJSDocTypeLiteral(jSDocPropertyTags, isArrayType);
 }
 
 export function createJSDocParameterTag(tagName: Ast.Identifier, name: Ast.EntityName, isBracketed: boolean, typeExpression: Ast.TypeNode | undefined, isNameFirst: boolean, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocParameterTag {
-  return createNode<Ast.JSDocParameterTag>(Kind.JSDocParameterTag, { "tagName": tagName, "name": name, "isBracketed": isBracketed, "typeExpression": typeExpression, "isNameFirst": isNameFirst, "comment": comment });
+  const node = createNode(Kind.JSDocParameterTag, { "tagName": tagName, "name": name, "isBracketed": isBracketed, "typeExpression": typeExpression, "isNameFirst": isNameFirst, "comment": comment }) as Ast.JSDocParameterTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocParameterTag(node: Ast.JSDocParameterTag, tagName: Ast.Identifier, name: Ast.EntityName, isBracketed: boolean, typeExpression: Ast.TypeNode | undefined, isNameFirst: boolean, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocParameterTag {
-  if (node.tagName === tagName && node.name === name && node.isBracketed === isBracketed && node.typeExpression === typeExpression && node.isNameFirst === isNameFirst && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "isBracketed"), valueAsUnknown(isBracketed)) && sameValue(nodeField(node, "typeExpression"), valueAsUnknown(typeExpression)) && sameValue(nodeField(node, "isNameFirst"), valueAsUnknown(isNameFirst)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocParameterTag(tagName, name, isBracketed, typeExpression, isNameFirst, comment);
 }
 
 export function createJSDocPropertyTag(tagName: Ast.Identifier, name: Ast.EntityName, isBracketed: boolean, typeExpression: Ast.TypeNode | undefined, isNameFirst: boolean, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocPropertyTag {
-  return createNode<Ast.JSDocPropertyTag>(Kind.JSDocPropertyTag, { "tagName": tagName, "name": name, "isBracketed": isBracketed, "typeExpression": typeExpression, "isNameFirst": isNameFirst, "comment": comment });
+  const node = createNode(Kind.JSDocPropertyTag, { "tagName": tagName, "name": name, "isBracketed": isBracketed, "typeExpression": typeExpression, "isNameFirst": isNameFirst, "comment": comment }) as Ast.JSDocPropertyTag;
+  attachChildren(node);
+  return node;
 }
 
 export function updateJSDocPropertyTag(node: Ast.JSDocPropertyTag, tagName: Ast.Identifier, name: Ast.EntityName, isBracketed: boolean, typeExpression: Ast.TypeNode | undefined, isNameFirst: boolean, comment: NodeArray<Ast.JSDocComment> | undefined): Ast.JSDocPropertyTag {
-  if (node.tagName === tagName && node.name === name && node.isBracketed === isBracketed && node.typeExpression === typeExpression && node.isNameFirst === isNameFirst && node.comment === comment) {
+  if (sameValue(nodeField(node, "tagName"), valueAsUnknown(tagName)) && sameValue(nodeField(node, "name"), valueAsUnknown(name)) && sameValue(nodeField(node, "isBracketed"), valueAsUnknown(isBracketed)) && sameValue(nodeField(node, "typeExpression"), valueAsUnknown(typeExpression)) && sameValue(nodeField(node, "isNameFirst"), valueAsUnknown(isNameFirst)) && sameValue(nodeField(node, "comment"), valueAsUnknown(comment))) {
     return node;
   }
   return createJSDocPropertyTag(tagName, name, isBracketed, typeExpression, isNameFirst, comment);
 }
 
-export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile, parseDiagnostics: readonly Diagnostic[], languageVariant: number, scriptKind: number, externalModuleIndicator: Node | true | undefined = undefined): SourceFile {
-  return createNode<SourceFile>(Kind.SourceFile, {
+export function createSourceFile(fileName: string, path: Path, text: string, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile, parseDiagnostics: readonly Diagnostic[], languageVariant: int, scriptKind: int, externalModuleIndicator: unknown | undefined = undefined): SourceFile {
+  const node = createNode(Kind.SourceFile, {
     fileName,
     path,
     text,
@@ -2388,7 +2748,9 @@ export function createSourceFile(fileName: string, path: Path, text: string, sta
     ambientModuleNames: [],
     externalModuleIndicator,
     parseDiagnostics,
-  });
+  }) as SourceFile;
+  attachChildren(node);
+  return node;
 }
 
 export function updateSourceFile(node: SourceFile, statements: NodeArray<Ast.Statement>, endOfFileToken: Ast.EndOfFile): SourceFile {
@@ -2399,7 +2761,7 @@ export function updateSourceFile(node: SourceFile, statements: NodeArray<Ast.Sta
   return updated;
 }
 
-export function cloneNode<TNode extends Node>(node: TNode): TNode {
+export function cloneNode(node: Node): Node {
   const data: NodeData = {};
   if ((node as { readonly ambientModuleNames?: unknown }).ambientModuleNames !== undefined) data["ambientModuleNames"] = (node as { readonly ambientModuleNames?: unknown }).ambientModuleNames;
   if ((node as { readonly argument?: unknown }).argument !== undefined) data["argument"] = (node as { readonly argument?: unknown }).argument;
@@ -2532,8 +2894,8 @@ export function cloneNode<TNode extends Node>(node: TNode): TNode {
   if ((node as { readonly variableDeclaration?: unknown }).variableDeclaration !== undefined) data["variableDeclaration"] = (node as { readonly variableDeclaration?: unknown }).variableDeclaration;
   if ((node as { readonly whenFalse?: unknown }).whenFalse !== undefined) data["whenFalse"] = (node as { readonly whenFalse?: unknown }).whenFalse;
   if ((node as { readonly whenTrue?: unknown }).whenTrue !== undefined) data["whenTrue"] = (node as { readonly whenTrue?: unknown }).whenTrue;
-  const clone = createNode<TNode>(node.kind, data, node.pos, node.end);
-  (clone as { flags: number }).flags = node.flags;
+  const clone = createNode(node.kind, data, node.pos, node.end);
+  (clone as { flags: int }).flags = node.flags;
   return clone;
 }
 
