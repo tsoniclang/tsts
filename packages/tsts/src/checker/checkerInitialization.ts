@@ -1,4 +1,5 @@
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
+import { SymbolFlags } from "../ast/index.js";
 import {
   anyType,
   bigintType,
@@ -25,6 +26,7 @@ import {
   type CheckerProgram,
 } from "./checkerCore.js";
 import type { Signature, Type, TypeMapper } from "./types.js";
+import { addUndefinedToGlobalsOrErrorOnRedeclaration, mergeGlobalSymbol } from "./globalResolution.js";
 
 let nextCheckerId = 1;
 
@@ -359,11 +361,101 @@ export function createCheckerCoreState(program: CheckerProgram | undefined): Che
     }, names, arity, reportErrors),
     getAwaitedType: type => type,
   });
+  initializeGlobalSymbols(state);
   return state;
+}
+
+export function initializeGlobalSymbols(state: CheckerCoreState): void {
+  const ambientModuleSymbols: AstSymbol[] = [];
+  const augmentations: AstNode[] = [];
+  for (const file of state.files) {
+    if (!isExternalOrCommonJSModule(file)) {
+      const locals = symbolTableOf(file, "locals");
+      const globalThis = locals.get("globalThis");
+      if (globalThis !== undefined) {
+        for (const declaration of globalThis.declarations ?? []) {
+          pushDiagnostic(state, declaration, "Declaration_name_conflicts_with_built_in_global_identifier_0", "globalThis");
+        }
+      }
+      for (const symbol of locals.values()) {
+        if (((symbol.flags ?? 0) & SymbolFlags.Module) !== 0 && isAmbientModuleSymbolName(symbolName(symbol))) {
+          ambientModuleSymbols.push(symbol);
+        } else {
+          mergeGlobalSymbol(state.globals, symbol);
+        }
+      }
+    }
+    const patterns = (file as { readonly patternAmbientModules?: readonly unknown[] }).patternAmbientModules ?? [];
+    state.patternAmbientModules = [...state.patternAmbientModules, ...patterns];
+    augmentations.push(...((file as { readonly moduleAugmentations?: readonly AstNode[] }).moduleAugmentations ?? []));
+    const globalExports = symbolTableOf(file, "globalExports");
+    for (const [name, symbol] of globalExports) if (!state.globals.has(name)) state.globals.set(name, symbol);
+  }
+  for (const augmentation of augmentations) {
+    if (isGlobalScopeAugmentation(parentOf(augmentation))) {
+      const exports = symbolTableOf(moduleSymbolOf(augmentation), "exports");
+      for (const symbol of exports.values()) mergeGlobalSymbol(state.globals, symbol);
+    }
+  }
+  addUndefinedToGlobalsOrErrorOnRedeclaration(state as unknown as Parameters<typeof addUndefinedToGlobalsOrErrorOnRedeclaration>[0]);
+  for (const symbol of ambientModuleSymbols) mergeGlobalSymbol(state.globals, symbol);
+  for (const augmentation of augmentations) {
+    if (!isGlobalScopeAugmentation(parentOf(augmentation))) mergeModuleAugmentationSymbol(state, augmentation);
+  }
 }
 
 function createMissingSymbol(): AstSymbol {
   return { name: "__missing", escapedName: "__missing", flags: 0, declarations: [] } as unknown as AstSymbol;
+}
+
+function isExternalOrCommonJSModule(file: AstNode): boolean {
+  return (file as { readonly externalModuleIndicator?: unknown }).externalModuleIndicator !== undefined
+    || (file as { readonly commonJsModuleIndicator?: unknown }).commonJsModuleIndicator !== undefined;
+}
+
+function symbolTableOf(node: unknown, field: string): Map<string, AstSymbol> {
+  const table = (node as Record<string, unknown> | undefined)?.[field];
+  return table instanceof Map ? table as Map<string, AstSymbol> : new Map<string, AstSymbol>();
+}
+
+function moduleSymbolOf(node: AstNode): AstSymbol | undefined {
+  return (node as { readonly symbol?: AstSymbol }).symbol;
+}
+
+function parentOf(node: AstNode | undefined): AstNode | undefined {
+  return (node as { readonly parent?: AstNode } | undefined)?.parent;
+}
+
+function isGlobalScopeAugmentation(node: AstNode | undefined): boolean {
+  return (node as { readonly globalScopeAugmentation?: boolean } | undefined)?.globalScopeAugmentation === true
+    || (node as { readonly name?: { readonly text?: string } } | undefined)?.name?.text === "global";
+}
+
+function isAmbientModuleSymbolName(name: string): boolean {
+  return name.startsWith("\"") || name.includes("*");
+}
+
+function mergeModuleAugmentationSymbol(state: CheckerCoreState, augmentation: AstNode): void {
+  const symbol = moduleSymbolOf(augmentation);
+  const nameNode = (augmentation as { readonly name?: { readonly text?: string } }).name;
+  const name = nameNode?.text ?? symbolName(symbol);
+  if (symbol === undefined || name.length === 0) return;
+  let target = state.globals.get(name);
+  if (target === undefined) {
+    target = { name, escapedName: name, flags: SymbolFlags.Module, declarations: [], exports: new Map() } as AstSymbol;
+    state.globals.set(name, target);
+  }
+  target.exports = mergeSymbolTableInto(target.exports, symbolTableOf(symbol, "exports"));
+}
+
+function mergeSymbolTableInto(target: Map<string, AstSymbol> | undefined, source: Map<string, AstSymbol>): Map<string, AstSymbol> {
+  const result = target ?? new Map<string, AstSymbol>();
+  for (const symbol of source.values()) mergeGlobalSymbol(result, symbol);
+  return result;
+}
+
+function pushDiagnostic(state: CheckerCoreState, node: AstNode, message: string, ...args: readonly unknown[]): void {
+  (state.diagnostics as unknown[]).push({ file: node, message, args });
 }
 
 function compareSymbolsBySourceOrder(left: AstSymbol, right: AstSymbol): number {
@@ -391,6 +483,10 @@ function compareNodesBySourceOrder(left: AstNode | undefined, right: AstNode | u
 
 function sourceFileName(file: AstNode | undefined): string {
   return (file as { fileName?: string } | undefined)?.fileName ?? "";
+}
+
+function symbolName(symbol: AstSymbol | undefined): string {
+  return symbol?.escapedName ?? symbol?.name ?? "";
 }
 
 function nodePos(node: AstNode): number {
