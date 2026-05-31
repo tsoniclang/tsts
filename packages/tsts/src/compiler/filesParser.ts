@@ -6,9 +6,18 @@
  * potentially in parallel via a work-stealing parse pool.
  */
 
-import type { SourceFile } from "../ast/index.js";
+import type { Node as AstNode, SourceFile, Diagnostic } from "../ast/index.js";
 import { normalizePath } from "../tspath/index.js";
-import type { FileLoader, LibFile, FileIncludeReason, ProcessedFiles, ResolvedModule } from "./fileLoader.js";
+import {
+  FileIncludeKind,
+  type FileLoader,
+  type JsxRuntimeImportSpecifier,
+  type LibFile,
+  type FileIncludeReason,
+  type ProcessedFiles,
+  type ResolvedModule,
+  type ResolvedTypeReferenceDirective,
+} from "./fileLoader.js";
 
 export interface ResolvedRef {
   fileName: string;
@@ -16,7 +25,7 @@ export interface ResolvedRef {
   increaseDepth?: boolean;
   elideOnDepth?: boolean;
   includeReason?: FileIncludeReason;
-  packageId?: string;
+  packageId?: unknown;
 }
 
 export class ParseTask {
@@ -28,13 +37,18 @@ export class ParseTask {
   redirectedParseTask: ParseTask | undefined;
   subTasks: ParseTask[] = [];
   resolvedModules: Map<string, ResolvedModule> = new Map();
+  typeResolutions: Map<string, ResolvedTypeReferenceDirective> = new Map();
+  metadata: SourceFileMetaData | undefined;
+  processingDiagnostics: Diagnostic[] = [];
+  importHelpersImportSpecifier: AstNode | undefined;
+  jsxRuntimeImportSpecifier: JsxRuntimeImportSpecifier | undefined;
   loaded = false;
   startedSubTasks = false;
   isForAutomaticTypeDirective = false;
   increaseDepth = false;
   elideOnDepth = false;
   loadedTask: ParseTask | undefined;
-  packageId = "";
+  packageId: unknown;
   allIncludeReasons: FileIncludeReason[] = [];
 
   constructor(fileName: string, includeReason: FileIncludeReason, libFile?: LibFile) {
@@ -53,11 +67,67 @@ export class ParseTask {
       this.loadAutomaticTypeDirectives(loader);
       return;
     }
-    this.parsedFile = loader.parseSourceFile({
+
+    const redirect = parseFileRedirect(loader, this);
+    if (redirect !== "") {
+      this.redirect(loader, redirect);
+      return;
+    }
+
+    this.metadata = loader.loadSourceFileMetaData(this.normalizedFilePath);
+    const taskForLoader = {
       fileName: this.normalizedFilePath,
+      normalizedFilePath: this.normalizedFilePath,
+      path: this.path_,
       libFile: this.libFile,
       includeReason: this.includeReason,
-    } as unknown as never);
+      isForAutomaticTypeDirective: false,
+      depth: 0,
+      elideOnDepth: this.elideOnDepth,
+      packageId: this.packageId,
+      metadata: this.metadata,
+    };
+    this.parsedFile = loader.parseSourceFile(taskForLoader as Parameters<FileLoader["parseSourceFile"]>[0]);
+    if (this.parsedFile === undefined) return;
+
+    const compilerOptions = loader.options;
+    if (compilerOptions.noResolve !== 2) {
+      for (let index = 0; index < this.parsedFile.referencedFiles.length; index++) {
+        const ref = this.parsedFile.referencedFiles[index]!;
+        const resolved = loader.resolveTripleslashPathReference(ref.fileName, this.parsedFile.fileName, index);
+        if (resolved.resolved !== undefined) {
+          this.addSubTask({
+            fileName: resolved.resolved.fileName,
+            includeReason: {
+              kind: FileIncludeKind.ReferenceFile,
+              referencingFile: this.parsedFile.fileName,
+              ref,
+            },
+          }, undefined);
+        }
+      }
+      const mutableTask = taskForLoader as Parameters<FileLoader["resolveTypeReferenceDirectives"]>[0];
+      mutableTask.file = this.parsedFile;
+      loader.resolveTypeReferenceDirectives(mutableTask);
+      this.typeResolutions = mutableTask.typeResolutionsInFile ?? new Map();
+    }
+
+    if (compilerOptions.noLib !== 2) {
+      for (let index = 0; index < this.parsedFile.libReferenceDirectives.length; index++) {
+        const lib = this.parsedFile.libReferenceDirectives[index]!;
+        const libName = loader.pathForLibFile(lib.fileName);
+        if (libName !== undefined) {
+          this.addSubTask({
+            fileName: libName.path,
+            includeReason: {
+              kind: FileIncludeKind.LibReferenceDirective,
+              referencingFile: this.parsedFile.fileName,
+              ref: lib,
+            },
+          }, libName);
+        }
+      }
+    }
   }
 
   redirect(loader: FileLoader, fileName: string): void {
@@ -67,7 +137,11 @@ export class ParseTask {
   }
 
   loadAutomaticTypeDirectives(loader: FileLoader): void {
-    loader.addAutomaticTypeDirectiveTasks();
+    const result = loader.resolveAutomaticTypeDirectives(this.normalizedFilePath);
+    this.typeResolutions = result.resolutions;
+    for (const ref of result.directives) {
+      this.addSubTask(ref, undefined);
+    }
   }
 
   addSubTask(ref: ResolvedRef, libFile: LibFile | undefined): void {
@@ -78,7 +152,7 @@ export class ParseTask {
     );
     task.increaseDepth = ref.increaseDepth === true;
     task.elideOnDepth = ref.elideOnDepth === true;
-    task.packageId = ref.packageId ?? "";
+    task.packageId = ref.packageId;
     this.subTasks.push(task);
   }
 }
@@ -87,7 +161,7 @@ export interface ParseTaskData {
   readonly tasks: Map<string, ParseTask>;
   lowestDepth: number;
   startedSubTasks: boolean;
-  packageId: string;
+  packageId: unknown;
 }
 
 const parseTaskDataPool: ParseTaskData[] = [];
@@ -98,14 +172,14 @@ export function getParseTaskData(task: ParseTask): ParseTaskData {
     td.tasks.set(task.normalizedFilePath, task);
     td.lowestDepth = Number.MAX_SAFE_INTEGER;
     td.startedSubTasks = false;
-    td.packageId = "";
+    td.packageId = undefined;
     return td;
   }
   return {
     tasks: new Map([[task.normalizedFilePath, task]]),
     lowestDepth: Number.MAX_SAFE_INTEGER,
     startedSubTasks: false,
-    packageId: "",
+    packageId: undefined,
   };
 }
 
@@ -140,7 +214,7 @@ export class FilesParser {
         this.taskDataByPath.set(task.path_, data);
       }
 
-      if (data.packageId === "" && task.packageId !== "") data.packageId = task.packageId;
+      if (data.packageId === undefined && task.packageId !== undefined) data.packageId = task.packageId;
       const currentDepth = task.increaseDepth ? depth + 1 : depth;
       let startSubtasks = data.startedSubTasks;
       if (currentDepth < data.lowestDepth) {
@@ -170,6 +244,13 @@ export class FilesParser {
   getProcessedFiles(loader: FileLoader): ProcessedFiles {
     const duplicateSourceFiles = [...loader.duplicateFiles];
     const seenByPath = new Map<string, SourceFile>();
+    const orderedFiles: SourceFile[] = [];
+    const orderedLibFiles: SourceFile[] = [];
+    const typeResolutionsInFile = new Map<string, Map<string, ResolvedTypeReferenceDirective>>();
+    const jsxRuntimeImportSpecifiers = new Map<string, JsxRuntimeImportSpecifier>();
+    const importHelpersImportSpecifiers = new Map<string, AstNode>();
+    const libFiles = new Map<string, LibFile>();
+
     for (const file of loader.files) {
       const path = loader.toPath(file.fileName);
       const previous = seenByPath.get(path);
@@ -179,17 +260,60 @@ export class FilesParser {
         seenByPath.set(path, file);
       }
     }
+
+    const collect = (task: ParseTask, seen: Set<ParseTask>): void => {
+      const actualTask = task.loadedTask ?? task;
+      if (seen.has(actualTask)) return;
+      seen.add(actualTask);
+      this.addIncludeReason({ addReason: (fileName, reason) => {
+        const existing = loader.fileReasons.get(fileName);
+        if (existing === undefined) loader.fileReasons.set(fileName, [reason]);
+        else existing.push(reason);
+      } }, actualTask, task.includeReason);
+
+      if (actualTask.redirectedParseTask !== undefined) {
+        collect(actualTask.redirectedParseTask, seen);
+        return;
+      }
+      for (const subTask of actualTask.subTasks) collect(subTask, seen);
+
+      if (actualTask.isForAutomaticTypeDirective) {
+        typeResolutionsInFile.set(actualTask.path_, actualTask.typeResolutions);
+        return;
+      }
+      const parsedFile = actualTask.parsedFile;
+      if (parsedFile === undefined) return;
+      seenByPath.set(actualTask.path_, parsedFile);
+      if (actualTask.libFile !== undefined) {
+        orderedLibFiles.push(parsedFile);
+        libFiles.set(actualTask.path_, actualTask.libFile);
+      } else {
+        orderedFiles.push(parsedFile);
+      }
+      if (actualTask.typeResolutions.size > 0) typeResolutionsInFile.set(actualTask.path_, actualTask.typeResolutions);
+      if (actualTask.importHelpersImportSpecifier !== undefined) importHelpersImportSpecifiers.set(actualTask.path_, actualTask.importHelpersImportSpecifier);
+      if (actualTask.jsxRuntimeImportSpecifier !== undefined) jsxRuntimeImportSpecifiers.set(actualTask.path_, actualTask.jsxRuntimeImportSpecifier);
+    };
+
+    for (const task of loader.rootTasks as unknown as ParseTask[]) collect(task, new Set());
+    if (orderedFiles.length === 0 && orderedLibFiles.length === 0) {
+      orderedFiles.push(...loader.files.filter(file => !loader.libFiles.has(loader.toPath(file.fileName))));
+      orderedLibFiles.push(...loader.files.filter(file => loader.libFiles.has(loader.toPath(file.fileName))));
+      for (const [path, libFile] of loader.libFiles) libFiles.set(path, libFile);
+    }
+    loader.sortLibs(orderedLibFiles);
+
     return {
-      files: loader.files,
+      files: [...orderedLibFiles, ...orderedFiles],
       duplicateSourceFiles,
       filesByPath: seenByPath,
-      unresolvedImports: new Set(),
+      unresolvedImports: new Set(loader.unresolvedImports),
       resolvedModulesMap: loader.resolvedModulesMap,
-      typeResolutionsInFile: loader.typeResolutionsInFile,
-      jsxRuntimeImportSpecifiers: loader.jsxRuntimeImportSpecifiers,
-      importHelpersImportSpecifiers: loader.importHelpersImportSpecifiers,
-      libFiles: loader.libFiles,
-      packageNamesInfo: { unresolvedImports: new Set(), packagesMap: new Map() },
+      typeResolutionsInFile: typeResolutionsInFile.size === 0 ? loader.typeResolutionsInFile : typeResolutionsInFile,
+      jsxRuntimeImportSpecifiers: jsxRuntimeImportSpecifiers.size === 0 ? loader.jsxRuntimeImportSpecifiers : jsxRuntimeImportSpecifiers,
+      importHelpersImportSpecifiers: importHelpersImportSpecifiers.size === 0 ? loader.importHelpersImportSpecifiers : importHelpersImportSpecifiers,
+      libFiles: libFiles.size === 0 ? loader.libFiles : libFiles,
+      packageNamesInfo: { unresolvedImports: new Set(loader.unresolvedImports), packagesMap: new Map() },
       fileReasons: loader.fileReasons,
       diagnostics: loader.diagnostics,
     };
@@ -208,4 +332,17 @@ export class FilesParser {
 
 interface IncludeProcessor {
   addReason(fileName: string, reason: FileIncludeReason): void;
+}
+
+interface SourceFileMetaData {
+  readonly packageJsonType?: string;
+  readonly packageJsonDirectory?: string;
+  readonly impliedNodeFormat?: number;
+}
+
+function parseFileRedirect(loader: FileLoader, task: ParseTask): string {
+  const mapper = loader as unknown as {
+    projectReferenceFileMapper?: { getParseFileRedirect(task: ParseTask): string };
+  };
+  return mapper.projectReferenceFileMapper?.getParseFileRedirect(task) ?? "";
 }
