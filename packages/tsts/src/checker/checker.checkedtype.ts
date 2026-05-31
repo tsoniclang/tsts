@@ -33,6 +33,8 @@ import {
   isMethodDeclaration,
   isMethodSignatureDeclaration,
   isNumericLiteral,
+  isObjectBindingPattern,
+  isArrayBindingPattern,
   isParameterDeclaration,
   isPrefixUnaryExpression,
   isPropertyDeclaration,
@@ -81,6 +83,7 @@ import {
   type UnionOrIntersectionType,
   TypeFlags,
   ObjectFlags,
+  getPropertyTypeOfType,
   setBinderSymbolTypeResolver,
 } from "./types.js";
 import { type Relater, newRelater } from "./relater.js";
@@ -104,6 +107,7 @@ export interface CheckResult {
 export interface CheckState {
   readonly diagnostics: CheckDiagnostic[];
   readonly relater: Relater;
+  readonly narrowedSymbolTypes: Map<AstSymbol, Type>[];
   // Literal-type caches (mirror checker.go's stringLiteralTypes /
   // numberLiteralTypes maps), keyed by literal value.
   readonly stringLiteralTypes: Map<string, Type>;
@@ -128,6 +132,7 @@ export function newCheckState(): CheckState {
   return {
     diagnostics: [],
     relater: newRelater(),
+    narrowedSymbolTypes: [],
     stringLiteralTypes: new Map<string, Type>(),
     numberLiteralTypes: new Map<number, Type>(),
     bigintLiteralTypes: new Map<string, Type>(),
@@ -143,6 +148,16 @@ export function newCheckState(): CheckState {
       return idSource.value;
     },
   };
+}
+
+export function withNarrowedSymbolTypes<T>(state: CheckState, narrowedTypes: ReadonlyMap<AstSymbol, Type>, body: () => T): T {
+  if (narrowedTypes.size === 0) return body();
+  state.narrowedSymbolTypes.push(new Map(narrowedTypes));
+  try {
+    return body();
+  } finally {
+    state.narrowedSymbolTypes.pop();
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1378,6 +1393,10 @@ export function wireBinderSymbolResolution(state: CheckState): void {
 }
 
 function getTypeOfBinderSymbol(symbol: AstSymbol, state: CheckState): Type | undefined {
+  for (let index = state.narrowedSymbolTypes.length - 1; index >= 0; index -= 1) {
+    const narrowedType = state.narrowedSymbolTypes[index]!.get(symbol);
+    if (narrowedType !== undefined) return narrowedType;
+  }
   const flags = symbol.flags ?? 0;
   if ((flags & (SymbolFlags.Variable | SymbolFlags.Property)) !== 0) {
     return getTypeOfVariableOrParameterOrProperty(symbol, state);
@@ -1443,21 +1462,38 @@ function widenedVariableType(initializerType: Type, declaration: AstNode, state:
   return getRegularTypeOfObjectLiteral(literalAdjusted, state);
 }
 
-// A binding-element name (`const { value } = …` / `function f({ value }: T)`)
-// resolves through the pattern's annotated parent declaration. Element-wise
-// destructured typing is a later slice; the whole-pattern type is returned (the
-// behavior the prior setBindingNameType pattern-binding produced).
 function getTypeOfDestructuredBindingElement(element: BindingElement, state: CheckState): Type | undefined {
-  let node: AstNode | undefined = nodeParent(element);
-  while (node !== undefined) {
-    if (isParameterDeclaration(node) || isVariableDeclaration(node)) {
-      if (node.type !== undefined) return typeFromTypeNode(node.type, state);
-      if (node.initializer !== undefined && inferInitializerType !== undefined) {
-        return getWidenedType(inferInitializerType(node.initializer, state), state);
-      }
-      return isParameterDeclaration(node) ? unresolvedType : anyType;
+  const pattern = nodeParent(element);
+  if (pattern === undefined) return undefined;
+  const containingType = getTypeOfBindingPattern(pattern, state);
+  if (containingType === undefined) return undefined;
+  if (isObjectBindingPattern(pattern)) {
+    const propertyName = element.propertyName !== undefined
+      ? propertyNameText(element.propertyName, state)
+      : element.name !== undefined && isIdentifier(element.name)
+        ? element.name.text
+        : undefined;
+    if (propertyName === undefined) return anyType;
+    return getPropertyTypeOfType(containingType, propertyName) ?? anyType;
+  }
+  if (isArrayBindingPattern(pattern)) {
+    return getArrayElementType(containingType) ?? anyType;
+  }
+  return undefined;
+}
+
+function getTypeOfBindingPattern(pattern: AstNode, state: CheckState): Type | undefined {
+  const owner = nodeParent(pattern);
+  if (owner === undefined) return undefined;
+  if (isParameterDeclaration(owner) || isVariableDeclaration(owner)) {
+    if (owner.type !== undefined) return typeFromTypeNode(owner.type, state);
+    if (owner.initializer !== undefined && inferInitializerType !== undefined) {
+      return getWidenedType(inferInitializerType(owner.initializer, state), state);
     }
-    node = nodeParent(node);
+    return isParameterDeclaration(owner) ? unresolvedType : anyType;
+  }
+  if (isBindingElement(owner)) {
+    return getTypeOfDestructuredBindingElement(owner, state);
   }
   return undefined;
 }

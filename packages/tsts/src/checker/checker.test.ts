@@ -514,6 +514,36 @@ export class CheckerGroundworkTests {
     Assert.Equal(0, fromCharCodeOk.diagnostics.length);
   }
 
+  narrows_branch_types_from_control_flow_conditions(): void {
+    const typeofThen = checkSourceFile(parseSourceFile("function f(x: string | number): string { if (typeof x === \"string\") { return x; } return \"fallback\"; }"));
+    const typeofElse = checkSourceFile(parseSourceFile("function f(x: string | number): number { if (typeof x === \"string\") { return 1; } return x; }"));
+    const nullish = checkSourceFile(parseSourceFile("function f(x: string | undefined): string { if (x !== undefined) { return x; } return \"fallback\"; }"));
+    const truthy = checkSourceFile(parseSourceFile("function f(x: \"\" | \"ok\"): \"ok\" { if (x) { return x; } return \"ok\"; }"));
+    const negated = checkSourceFile(parseSourceFile("function f(x: string | null): string { if (!x) { return \"fallback\"; } return x; }"));
+    const noLeak = checkSourceFile(parseSourceFile("function f(x: string | undefined): string { if (x !== undefined) { } return x; }"));
+
+    Assert.Equal(0, typeofThen.diagnostics.length);
+    Assert.Equal(0, typeofElse.diagnostics.length);
+    Assert.Equal(0, nullish.diagnostics.length);
+    Assert.Equal(0, truthy.diagnostics.length);
+    Assert.Equal(0, negated.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'string | undefined' is not assignable to type 'string'."], noLeak.diagnostics.map((d) => d.message));
+  }
+
+  narrows_switch_clause_types_from_discriminants(): void {
+    const stringCase = checkSourceFile(parseSourceFile("function f(x: \"a\" | \"b\" | 1): \"a\" { switch (x) { case \"a\": return x; default: return \"a\"; } }"));
+    const numberCase = checkSourceFile(parseSourceFile("function f(x: \"a\" | 1 | 2): 1 { switch (x) { case 1: return x; default: return 1; } }"));
+    const defaultCase = checkSourceFile(parseSourceFile("function f(x: \"a\" | \"b\" | \"c\"): \"c\" { switch (x) { case \"a\": return \"c\"; case \"b\": return \"c\"; default: return x; } }"));
+    const mismatch = checkSourceFile(parseSourceFile("function f(x: \"a\" | \"b\"): \"a\" { switch (x) { case \"b\": return x; default: return \"a\"; } }"));
+    const fallthrough = checkSourceFile(parseSourceFile("function f(x: \"a\" | \"b\" | \"c\"): \"a\" | \"b\" { switch (x) { case \"a\": case \"b\": return x; default: return \"a\"; } }"));
+
+    Assert.Equal(0, stringCase.diagnostics.length);
+    Assert.Equal(0, numberCase.diagnostics.length);
+    Assert.Equal(0, defaultCase.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type '\"b\"' is not assignable to type '\"a\"'."], mismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, fallthrough.diagnostics.length);
+  }
+
   checks_additional_expression_forms(): void {
     // Template/type/void/delete/non-null/yield/await/new expression nodes are
     // visited and typed instead of falling through to the unresolved sentinel.
@@ -816,6 +846,20 @@ export class CheckerGroundworkTests {
     Assert.Equal(0, result.diagnostics.length);
   }
 
+  checks_destructured_binding_element_types(): void {
+    const parameterOk = checkSourceFile(parseSourceFile("function f({ value }: { value: number }): number { return value; }"));
+    const parameterMismatch = checkSourceFile(parseSourceFile("function f({ value }: { value: number }): string { return value; }"));
+    const renamedProperty = checkSourceFile(parseSourceFile("function f({ value: renamed }: { value: string }): string { return renamed; }"));
+    const variableOk = checkSourceFile(parseSourceFile("function f(): number { const { value } = { value: 1 }; return value; }"));
+    const arrayOk = checkSourceFile(parseSourceFile("function f(xs: number[]): number { const [first] = xs; return first; }"));
+
+    Assert.Equal(0, parameterOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], parameterMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, renamedProperty.diagnostics.length);
+    Assert.Equal(0, variableOk.diagnostics.length);
+    Assert.Equal(0, arrayOk.diagnostics.length);
+  }
+
   checker_class_entry_reports_assignment_mismatches(): void {
     const sourceFile = parseSourceFile("const x: number = \"a\";");
     const result = newChecker().checkSourceFile(sourceFile);
@@ -968,6 +1012,9 @@ A<CheckerGroundworkTests>().method((t) => t.checks_optional_and_rest_parameter_s
 A<CheckerGroundworkTests>().method((t) => t.checks_contextual_object_literals_and_excess).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.excess_check_regularization_and_empty_target).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_array_types).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_string_indexing_and_builtin_method_shapes).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.narrows_branch_types_from_control_flow_conditions).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.narrows_switch_clause_types_from_discriminants).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_array_spread_index_and_broad_object).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_broad_empty_object_and_index_validation).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_object_type_signatures).add(FactAttribute);
@@ -982,6 +1029,7 @@ A<CheckerGroundworkTests>().method((t) => t.union_reduction_none_keeps_redundant
 A<CheckerGroundworkTests>().method((t) => t.fresh_plus_regular_same_literal_reduces_to_regular).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reduces_redundant_literal_union_members).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.makes_destructured_binding_names_available_to_checked_bodies).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_destructured_binding_element_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_reports_assignment_mismatches).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checker_class_entry_accepts_well_typed_assignment).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.m5a_import_alias_and_export_resolve_to_distinct_binder_symbols).add(FactAttribute);
