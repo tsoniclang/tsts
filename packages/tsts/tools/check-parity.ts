@@ -23,6 +23,19 @@ const DEFAULT_TSGO_REPO = "/home/jeswin/temp/typescript-go";
 const DEFAULT_THRESHOLD = 0.9;
 const MAX_REASONABLE_SIZE_RATIO = 1.5;
 
+const EXCLUDED_TSTS_SOURCE_FILES = new Set<string>([
+  "ast/ast.ts",
+  "ast/ast.generated.ts",
+  "ast/factory.generated.ts",
+  "ast/is.generated.ts",
+  "ast/is.ts",
+  "ast/visitor.generated.ts",
+  "ast/clone.ts",
+  "ast/utils.ts",
+  "astnav/astnav.ts",
+  "scanner/scanner.native-preview.ts",
+]);
+
 type ModuleScope = "required" | "deferred";
 
 interface ModuleSpec {
@@ -180,7 +193,7 @@ function collectStats(root: string, modules: readonly string[], predicate: (path
   const files: string[] = [];
   for (const moduleName of modules) {
     const dir = join(root, moduleName);
-    files.push(...walk(dir, predicate));
+    files.push(...walk(dir, predicate).filter((file) => !EXCLUDED_TSTS_SOURCE_FILES.has(relative(root, file).replace(/\\/g, "/"))));
   }
   const unique = [...new Set(files)].sort();
   return {
@@ -192,10 +205,11 @@ function collectStats(root: string, modules: readonly string[], predicate: (path
 }
 
 function comparableName(path: string): string {
-  const slash = path.lastIndexOf("/");
-  const base = slash === -1 ? path : path.slice(slash + 1);
-  const dot = base.lastIndexOf(".");
-  return dot === -1 ? base : base.slice(0, dot);
+  const withoutExtension = path.replace(/\.(go|ts)$/, "");
+  return withoutExtension
+    .split("/")
+    .map((segment) => segment.toLowerCase().replace(/[-_]/g, ""))
+    .join("/");
 }
 
 function missingComparableFiles(upstreamFiles: readonly string[], localFiles: readonly string[]): readonly string[] {
