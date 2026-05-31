@@ -72,8 +72,8 @@ export function typeParameterToDeclarationWithConstraint(host: NodeBuilderExtraH
   } as unknown as AstNode;
 }
 
-export function setTextRange<T extends AstNode>(node: T, range: AstNode | undefined): T {
-  return setCommentRange(node, range) as T;
+export function setTextRange(node: AstNode, range: AstNode | undefined): AstNode {
+  return setCommentRange(node, range);
 }
 
 export function typeParameterShadowsOtherTypeParameterInScope(typeParameter: TypeParameter, scope: readonly TypeParameter[]): boolean {
