@@ -186,6 +186,10 @@ export class Project {
     this.potentialProjectReferences.add(path);
   }
 
+  potentialProjectReferencePaths(): readonly string[] {
+    return [...this.potentialProjectReferences].sort();
+  }
+
   hasPotentialProjectReference(request: { readonly isAllProjects?: () => boolean; readonly isProjectReferenced?: (path: string) => boolean }): boolean {
     if (request.isAllProjects?.() === true) return true;
     for (const reference of this.potentialProjectReferences) {
@@ -196,6 +200,14 @@ export class Project {
 
   setResolvedProjectReference(path: string): void {
     this.referencedProjects.add(path);
+  }
+
+  resolvedProjectReferencePaths(): readonly string[] {
+    return [...this.referencedProjects].sort();
+  }
+
+  hasResolvedProjectReference(path: string): boolean {
+    return this.referencedProjects.has(path);
   }
 
   clearPotentialProjectReferences(): void {

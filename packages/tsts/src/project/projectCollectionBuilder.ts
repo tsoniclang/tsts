@@ -190,9 +190,8 @@ export class ProjectCollectionBuilder {
   didRequestProjectTrees(request: ProjectTreeRequest, snapshot?: Snapshot, logger: LogTree = this.logger): readonly Project[] {
     const projects: Project[] = [];
     for (const project of this.collection.configuredProjects()) {
-      if (request.isAllProjects() || request.isProjectReferenced(project.id())) {
-        this.updateProgram(project, snapshot);
-        projects.push(project);
+      if (request.isAllProjects() || project.hasPotentialProjectReference(request) || request.isProjectReferenced(project.id())) {
+        this.ensureProjectTree(project, request, new Set(), projects, snapshot, logger);
       }
     }
     logger.log(`Completed project tree request for ${request.projects().join(",")}`);
@@ -277,6 +276,47 @@ export class ProjectCollectionBuilder {
     project.setProgram(program, snapshot?.id() ?? 0, updateKind);
     this.programStructureChanged = this.programStructureChanged || updateKind !== ProgramUpdateKind.SameFileNames;
     return true;
+  }
+
+  private forEachProject(callback: (project: Project) => boolean | void): void {
+    for (const project of this.collection.projects()) {
+      if (callback(project) === false) return;
+    }
+  }
+
+  private ensureProjectTree(
+    project: Project,
+    request: ProjectTreeRequest,
+    seenProjects: Set<string>,
+    output: Project[],
+    snapshot: Snapshot | undefined,
+    logger: LogTree,
+  ): void {
+    if (seenProjects.has(project.id())) return;
+    seenProjects.add(project.id());
+    this.updateProgram(project, snapshot);
+    output.push(project);
+    if (!request.isAllProjects() && !request.isProjectReferenced(project.id()) && !project.hasPotentialProjectReference(request)) return;
+
+    const childReferences = new Set<string>([
+      ...project.potentialProjectReferencePaths(),
+      ...project.resolvedProjectReferencePaths(),
+      ...this.projectReferenceConfigNames(project.compilerOptions === undefined
+        ? {
+          configFileName: project.name(),
+          rootFileNames: project.rootFileNames,
+        }
+        : {
+          configFileName: project.name(),
+          rootFileNames: project.rootFileNames,
+          compilerOptions: project.compilerOptions as CompilerOptions,
+        }),
+    ].map(reference => this.toPath(reference)));
+    for (const reference of childReferences) {
+      if (!request.isAllProjects() && !request.isProjectReferenced(reference)) continue;
+      const child = this.findOrCreateProject(reference, reference, logger, undefined, ProjectLoadKind.Create);
+      if (child !== undefined) this.ensureProjectTree(child, request, seenProjects, output, snapshot, logger);
+    }
   }
 
   private markFilesChanged(project: Project, paths: readonly string[], reload: PendingReload, logger: LogTree): void {
