@@ -18,8 +18,19 @@ import type {
   FileReference,
 } from "../ast/index.js";
 import { bindSourceFile } from "../binder/index.js";
-import { newChecker, type Checker } from "../checker/index.js";
-import { processAllProgramFiles, type CompilerHost as LoaderCompilerHost, type ResolvedModule } from "./fileLoader.js";
+import type { Checker } from "../checker/index.js";
+import {
+  processAllProgramFiles,
+  type CompilerHost as LoaderCompilerHost,
+  type FileIncludeReason,
+  type JsxRuntimeImportSpecifier,
+  type LibFile,
+  type ResolvedModule,
+  type ResolvedTypeReferenceDirective,
+} from "./fileLoader.js";
+import { newCheckerPool, type CheckerPool } from "./checkerPool.js";
+import { getDeclarationDiagnostics as getDeclarationDiagnosticsForEmit } from "./emitter.js";
+import { newProgramEmitHost } from "./emitHost.js";
 import { ParsedCommandLine } from "../tsoptions/parsedCommandLine.js";
 import type { CompilerOptions } from "../core/compilerOptions.js";
 import { getDirectoryPath, toPath as toCanonicalPath } from "../tspath/index.js";
@@ -110,6 +121,12 @@ export class Program {
   duplicateSourceFiles: DuplicateSourceFile[];
   resolvedProjectReferences: ParsedCommandLine[] = [];
   resolvedModulesCache: Map<string, Map<string, ResolvedModule>>;
+  typeResolutionsInFile: Map<string, Map<string, ResolvedTypeReferenceDirective>>;
+  jsxRuntimeImportSpecifiers: Map<string, JsxRuntimeImportSpecifier>;
+  importHelpersImportSpecifiers: Map<string, AstNode>;
+  libFiles: Map<string, LibFile>;
+  fileReasons: Map<string, FileIncludeReason[]>;
+  missingPaths: Set<string> = new Set();
   configFileParsingDiagnostics: Diagnostic[];
   packageNamesInfo: PackageNamesInfo | undefined;
   checkerPool: CheckerPool | undefined;
@@ -135,6 +152,11 @@ export class Program {
     this.files = [...loaded.files];
     this.duplicateSourceFiles = [...loaded.duplicateSourceFiles];
     this.resolvedModulesCache = loaded.resolvedModulesMap;
+    this.typeResolutionsInFile = loaded.typeResolutionsInFile;
+    this.jsxRuntimeImportSpecifiers = loaded.jsxRuntimeImportSpecifiers;
+    this.importHelpersImportSpecifiers = loaded.importHelpersImportSpecifiers;
+    this.libFiles = loaded.libFiles;
+    this.fileReasons = loaded.fileReasons;
     this.packageNamesInfo = loaded.packageNamesInfo;
     this.configFileParsingDiagnostics = [
       ...(opts.config.errors ?? []),
@@ -280,6 +302,12 @@ export class Program {
         reused.files = this.files;
         reused.filesByPath = new Map(this.filesByPath);
         reused.resolvedModulesCache = new Map(this.resolvedModulesCache);
+        reused.typeResolutionsInFile = new Map(this.typeResolutionsInFile);
+        reused.jsxRuntimeImportSpecifiers = new Map(this.jsxRuntimeImportSpecifiers);
+        reused.importHelpersImportSpecifiers = new Map(this.importHelpersImportSpecifiers);
+        reused.libFiles = new Map(this.libFiles);
+        reused.fileReasons = new Map(this.fileReasons);
+        reused.missingPaths = new Set(this.missingPaths);
         reused.duplicateSourceFiles = this.duplicateSourceFiles;
         reused.configFileParsingDiagnostics = this.configFileParsingDiagnostics;
         reused.packageNamesInfo = this.packageNamesInfo;
@@ -293,7 +321,7 @@ export class Program {
   }
 
   initCheckerPool(): void {
-    this.checkerPool = { _pool: "checker" };
+    this.checkerPool = newCheckerPool(this);
   }
 
   // -------------------------------------------------------------------------
@@ -343,17 +371,18 @@ export class Program {
   }
 
   getTypeChecker(ctx: Context): { checker: Checker; release: () => void } {
-    void ctx;
-    return { checker: newChecker(), release: () => undefined };
+    this.checkerPool ??= newCheckerPool(this);
+    return this.checkerPool.getChecker(ctx, undefined);
   }
 
   forEachCheckerParallel(cb: (idx: number, c: Checker) => void): void {
-    cb(0, newChecker());
+    this.checkerPool ??= newCheckerPool(this);
+    this.checkerPool.forEachParallel(cb);
   }
 
   getTypeCheckerForFile(ctx: Context, file: SourceFile): { checker: Checker; release: () => void } {
-    void ctx; void file;
-    return { checker: newChecker(), release: () => undefined };
+    this.checkerPool ??= newCheckerPool(this);
+    return this.checkerPool.getCheckerForFileExclusive(ctx, file);
   }
 
   getTypeCheckerForFileExclusive(ctx: Context, file: SourceFile): { checker: Checker; release: () => void } {
@@ -451,7 +480,11 @@ export class Program {
     });
   }
 
-  getGlobalDiagnostics(ctx: Context): readonly Diagnostic[] { void ctx; return []; }
+  getGlobalDiagnostics(ctx: Context): readonly Diagnostic[] {
+    void ctx;
+    this.checkerPool ??= newCheckerPool(this);
+    return this.checkerPool.getGlobalDiagnostics();
+  }
 
   getBindDiagnostics(ctx: Context, sourceFile: SourceFile | undefined): readonly Diagnostic[] {
     void ctx;
@@ -463,18 +496,101 @@ export class Program {
   }
 
   getDeclarationDiagnostics(ctx: Context, sourceFile: SourceFile | undefined): readonly Diagnostic[] {
-    return this.collectDiagnostics(ctx, sourceFile, false, () => []);
+    return this.collectDiagnostics(ctx, sourceFile, true, (_ctx, file) => this.getDeclarationDiagnosticsForFile(_ctx, file));
   }
 
   getSemanticDiagnostics(ctx: Context, sourceFile: SourceFile | undefined): readonly Diagnostic[] {
+    return this.collectCheckerDiagnostics(ctx, sourceFile, (diagnosticContext, checker, file) => {
+      return this.getSemanticDiagnosticsWithChecker(diagnosticContext, checker, file);
+    });
+  }
+
+  getSemanticDiagnosticsWithChecker(ctx: Context, checker: Checker, file: SourceFile): readonly Diagnostic[] {
+    void ctx;
+    const diagnostics = this.getBindAndCheckDiagnosticsWithChecker(ctx, checker, file);
+    return [
+      ...filterNoEmitSemanticDiagnostics(diagnostics, this.options()),
+      ...this.getIncludeProcessorDiagnostics(file),
+    ];
+  }
+
+  getBindAndCheckDiagnosticsWithChecker(ctx: Context, checker: Checker, file: SourceFile): readonly Diagnostic[] {
+    void ctx;
+    if (this.skipTypeChecking(file, false)) return [];
+    const bindDiagnostics = bindSourceFile(file).map(diagnostic => diagnosticFromText(diagnostic.message, file));
+    const result = checker.checkSourceFile(file);
+    const checkDiagnostics = result.diagnostics.map(diagnostic => diagnosticFromText(diagnostic.message, file));
+    const diagnostics = [...bindDiagnostics, ...checkDiagnostics];
+    if (isPlainJSFile(file, this.options())) {
+      return diagnostics.filter(diagnostic => plainJSErrors.has(diagnostic.code));
+    }
+    if (isCheckJSEnabledForFile(file, this.options())) {
+      const jsDocDiagnostics = (file as unknown as { readonly jsDocDiagnostics?: readonly Diagnostic[] }).jsDocDiagnostics ?? [];
+      diagnostics.push(...jsDocDiagnostics);
+    }
+    const filtered = this.getDiagnosticsWithPrecedingDirectives(file, diagnostics);
+    return filtered.diagnostics;
+  }
+
+  getDiagnosticsWithPrecedingDirectives(
+    sourceFile: SourceFile,
+    diagnostics: readonly Diagnostic[],
+  ): { diagnostics: readonly Diagnostic[]; directivesByLine: ReadonlyMap<number, CommentDirectiveLike> } {
+    const commentDirectives = (sourceFile as unknown as { readonly commentDirectives?: readonly CommentDirectiveLike[] }).commentDirectives ?? [];
+    if (commentDirectives.length === 0) return { diagnostics, directivesByLine: new Map() };
+    const directivesByLine = new Map<number, CommentDirectiveLike>();
+    const lineStarts = getLineStarts(sourceFile.text);
+    for (const directive of commentDirectives) {
+      directivesByLine.set(computeLineOfPosition(lineStarts, directive.pos), directive);
+    }
+    const filtered: Diagnostic[] = [];
+    for (const diagnostic of diagnostics) {
+      let ignoreDiagnostic = false;
+      const diagnosticLine = computeLineOfPosition(lineStarts, diagnostic.start ?? 0);
+      for (let line = diagnosticLine - 1; line >= 0; line -= 1) {
+        const directive = directivesByLine.get(line);
+        if (directive !== undefined) {
+          ignoreDiagnostic = true;
+          directivesByLine.set(line, { ...directive, kind: "ignore" });
+          break;
+        }
+        if (!isCommentOrBlankLine(sourceFile.text, lineStarts[line] ?? 0)) break;
+      }
+      if (!ignoreDiagnostic) filtered.push(diagnostic);
+    }
+    for (const directive of directivesByLine.values()) {
+      if (directive.kind === "expect-error") filtered.push(diagnosticFromText("Unused '@ts-expect-error' directive.", sourceFile));
+    }
+    return { diagnostics: filtered, directivesByLine };
+  }
+
+  getDeclarationDiagnosticsForFile(ctx: Context, sourceFile: SourceFile): readonly Diagnostic[] {
+    void ctx;
+    if (isDeclarationFile(sourceFile)) return [];
+    const host = newProgramEmitHost(this);
+    return getDeclarationDiagnosticsForEmit(host, sourceFile);
+  }
+
+  getSuggestionDiagnostics(ctx: Context, sourceFile: SourceFile | undefined): readonly Diagnostic[] {
+    return this.collectCheckerDiagnostics(ctx, sourceFile, (diagnosticContext, checker, file) => {
+      return this.getSuggestionDiagnosticsWithChecker(diagnosticContext, checker, file);
+    });
+  }
+
+  getSuggestionDiagnosticsWithChecker(ctx: Context, fileChecker: Checker, sourceFile: SourceFile): readonly Diagnostic[] {
+    void ctx;
+    if (this.skipTypeChecking(sourceFile, false)) return [];
+    const bindSuggestionDiagnostics = (sourceFile as unknown as { readonly bindSuggestionDiagnostics?: readonly Diagnostic[] }).bindSuggestionDiagnostics ?? [];
+    const checkerDiagnostics = ((fileChecker as unknown as { getSuggestionDiagnostics?: (ctx: Context, file: SourceFile) => readonly Diagnostic[] })
+      .getSuggestionDiagnostics?.(ctx, sourceFile)) ?? [];
+    return [...bindSuggestionDiagnostics, ...checkerDiagnostics];
+  }
+
+  getLegacySemanticDiagnostics(ctx: Context, sourceFile: SourceFile | undefined): readonly Diagnostic[] {
     return this.collectCheckerDiagnostics(ctx, sourceFile, (_c, checker, file) => {
       const result = checker.checkSourceFile(file);
       return result.diagnostics.map(diagnostic => diagnosticFromText(diagnostic.message, file));
     });
-  }
-
-  getSuggestionDiagnostics(ctx: Context, sourceFile: SourceFile | undefined): readonly Diagnostic[] {
-    return this.collectCheckerDiagnostics(ctx, sourceFile, () => []);
   }
 
   getOptionsDiagnostics(ctx: Context): readonly Diagnostic[] { void ctx; return []; }
@@ -713,6 +829,43 @@ export class Program {
     return record.impliedNodeFormat ?? 0;
   }
 
+  getSourceFileMetaData(path: string): SourceFileMetaData {
+    const file = this.filesByPath.get(path);
+    const record = file as unknown as { readonly impliedNodeFormat?: number; readonly packageJsonType?: string; readonly packageJsonDirectory?: string } | undefined;
+    return {
+      impliedNodeFormat: record?.impliedNodeFormat ?? 0,
+      packageJsonType: record?.packageJsonType ?? "",
+      packageJsonDirectory: record?.packageJsonDirectory ?? "",
+    };
+  }
+
+  getEmitModuleFormatOfFile(sourceFile: SourceFile): number {
+    return this.getImpliedNodeFormatForEmit(sourceFile);
+  }
+
+  getEmitSyntaxForUsageLocation(sourceFile: SourceFile, location: AstNode | undefined): number {
+    return this.getModeForUsageLocation(sourceFile, location);
+  }
+
+  getImpliedNodeFormatForEmit(sourceFile: SourceFile): number {
+    const metadata = this.getSourceFileMetaData(this.toPath(sourceFile.fileName));
+    return metadata.impliedNodeFormat ?? this.getDefaultResolutionModeForFile(sourceFile);
+  }
+
+  getDefaultResolutionModeForFile(sourceFile: SourceFile): number {
+    const metadata = this.getSourceFileMetaData(this.toPath(sourceFile.fileName));
+    return metadata.impliedNodeFormat ?? 0;
+  }
+
+  isGlobalTypingsFile(fileName: string): boolean {
+    const path = this.toPath(fileName);
+    return path.includes("/@types/") || path.endsWith("/node_modules/@types/index.d.ts");
+  }
+
+  getDefaultLibFile(path: string): LibFile | undefined {
+    return this.libFiles.get(this.toPath(path));
+  }
+
   emit(ctx: Context, options: EmitOptions = {}): EmitResult {
     const noEmit = handleNoEmitOnError(ctx, this, options.targetSourceFile);
     if (noEmit !== undefined) return noEmit;
@@ -756,6 +909,146 @@ export class Program {
 
   program(): Program {
     return this;
+  }
+
+  checkSourceFilesBelongToPath(sourceFiles: readonly string[], rootDirectory: string): boolean {
+    const root = this.toPath(rootDirectory.endsWith("/") ? rootDirectory : `${rootDirectory}/`);
+    for (const file of sourceFiles) {
+      if (!this.toPath(file).startsWith(root)) return false;
+    }
+    return true;
+  }
+
+  getIncludeReasons(): ReadonlyMap<string, readonly FileIncludeReason[]> {
+    return this.fileReasons;
+  }
+
+  isMissingPath(path: string): boolean {
+    return this.missingPaths.has(this.toPath(path));
+  }
+
+  explainFiles(write: (text: string) => void): void {
+    const reasons = this.getIncludeReasons();
+    for (const file of this.files) {
+      write(file.fileName);
+      const fileReasons = reasons.get(this.toPath(file.fileName)) ?? [];
+      for (const reason of fileReasons) {
+        write(`\n  ${formatIncludeReason(reason)}`);
+      }
+      write("\n");
+    }
+  }
+
+  getLibFileFromReference(ref: FileReference): SourceFile | undefined {
+    const libName = ref.fileName;
+    for (const [path, libFile] of this.libFiles) {
+      if (libFile.name === libName || libFile.fileName === libName || path.endsWith(`/${libName}`)) {
+        return this.filesByPath.get(path);
+      }
+    }
+    return undefined;
+  }
+
+  getResolvedTypeReferenceDirectiveFromTypeReferenceDirective(
+    typeRef: FileReference,
+    sourceFile: SourceFile,
+  ): ResolvedTypeReferenceDirective | undefined {
+    return this.typeResolutionsInFile.get(this.toPath(sourceFile.fileName))?.get(typeRef.fileName);
+  }
+
+  getResolvedTypeReferenceDirectives(): ReadonlyMap<string, ReadonlyMap<string, ResolvedTypeReferenceDirective>> {
+    return this.typeResolutionsInFile;
+  }
+
+  getModeForTypeReferenceDirectiveInFile(ref: FileReference, sourceFile: SourceFile): number {
+    return ref.resolutionMode !== 0 ? ref.resolutionMode : this.getDefaultResolutionModeForFile(sourceFile);
+  }
+
+  isSourceFileFromExternalLibrary(file: SourceFile): boolean {
+    const path = this.toPath(file.fileName);
+    return path.includes("/node_modules/") && !this.isSourceFileDefaultLibrary(path);
+  }
+
+  getJSXRuntimeImportSpecifier(path: string): { moduleReference: string; specifier: AstNode } | undefined {
+    return this.jsxRuntimeImportSpecifiers.get(this.toPath(path));
+  }
+
+  getImportHelpersImportSpecifier(path: string): AstNode | undefined {
+    return this.importHelpersImportSpecifiers.get(this.toPath(path));
+  }
+
+  resolvedPackageNames(): Set<string> {
+    return this.collectPackageNames().resolved;
+  }
+
+  unresolvedPackageNames(): Set<string> {
+    return this.collectPackageNames().unresolved;
+  }
+
+  deepImportPackageNames(): Set<string> {
+    return this.collectPackageNames().deepImports;
+  }
+
+  collectPackageNames(): PackageNameSets {
+    const resolved = new Set<string>();
+    const unresolved = new Set(this.getUnresolvedImports());
+    const deepImports = new Set<string>();
+    for (const modules of this.resolvedModulesCache.values()) {
+      for (const [moduleName, resolvedModule] of modules) {
+        const packageName = getPackageNameFromModuleName(moduleName);
+        if (packageName === "") continue;
+        if (moduleIsResolved(resolvedModule)) resolved.add(packageName);
+        else unresolved.add(packageName);
+        if (moduleName !== packageName) deepImports.add(packageName);
+      }
+    }
+    return { resolved, unresolved, deepImports };
+  }
+
+  isLibFile(sourceFile: SourceFile): boolean {
+    return this.libFiles.has(this.toPath(sourceFile.fileName));
+  }
+
+  getSymlinkCache(): undefined {
+    return undefined;
+  }
+
+  resolveModuleName(moduleName: string, containingFile: string, resolutionMode: number): ResolvedModule | undefined {
+    const sourceFile = this.getSourceFile(containingFile);
+    if (sourceFile === undefined) return undefined;
+    return this.getResolvedModule(sourceFile, moduleName, resolutionMode);
+  }
+
+  forEachResolvedModule(
+    callback: (resolution: ResolvedModule, moduleName: string, mode: number, filePath: string) => void,
+    file: SourceFile | undefined,
+  ): void {
+    const visit = (filePath: string, modules: ReadonlyMap<string, ResolvedModule>) => {
+      for (const [moduleName, resolution] of modules) callback(resolution, moduleName, 0, filePath);
+    };
+    if (file !== undefined) {
+      const filePath = this.toPath(file.fileName);
+      const modules = this.resolvedModulesCache.get(filePath);
+      if (modules !== undefined) visit(filePath, modules);
+      return;
+    }
+    for (const [filePath, modules] of this.resolvedModulesCache) visit(filePath, modules);
+  }
+
+  forEachResolvedTypeReferenceDirective(
+    callback: (resolution: ResolvedTypeReferenceDirective, moduleName: string, mode: number, filePath: string) => void,
+    file: SourceFile | undefined,
+  ): void {
+    const visit = (filePath: string, resolutions: ReadonlyMap<string, ResolvedTypeReferenceDirective>) => {
+      for (const [moduleName, resolution] of resolutions) callback(resolution, moduleName, 0, filePath);
+    };
+    if (file !== undefined) {
+      const filePath = this.toPath(file.fileName);
+      const resolutions = this.typeResolutionsInFile.get(filePath);
+      if (resolutions !== undefined) visit(filePath, resolutions);
+      return;
+    }
+    for (const [filePath, resolutions] of this.typeResolutionsInFile) visit(filePath, resolutions);
   }
 
   private verifyPathsOptions(options: CompilerOptions, addDiagnostic: (message: string) => void): void {
@@ -1029,9 +1322,32 @@ export interface SourceMapEmitResult {
 // ---------------------------------------------------------------------------
 
 interface Tracing { readonly _trace?: unknown }
-interface CheckerPool { readonly _pool?: unknown }
 interface Context { readonly _ctx?: unknown }
 type EmitOnly = "none" | "dts" | "forcedDts";
+
+interface SourceFileMetaData {
+  readonly packageJsonType: string;
+  readonly packageJsonDirectory: string;
+  readonly impliedNodeFormat: number;
+}
+
+interface PackageNameSets {
+  readonly resolved: Set<string>;
+  readonly unresolved: Set<string>;
+  readonly deepImports: Set<string>;
+}
+
+interface CommentDirectiveLike {
+  readonly pos: number;
+  readonly kind: "ignore" | "expect-error";
+}
+
+const plainJSErrors = new Set<number>([
+  80002,
+  80004,
+  80006,
+  80007,
+]);
 
 function moduleIsResolved(resolved: ResolvedModule): boolean {
   return (resolved as { readonly resolvedFileName?: string; readonly fileName?: string }).resolvedFileName !== undefined
@@ -1040,6 +1356,30 @@ function moduleIsResolved(resolved: ResolvedModule): boolean {
 
 function isExternalModuleNameRelative(moduleName: string): boolean {
   return moduleName.startsWith("./") || moduleName.startsWith("../") || moduleName === "." || moduleName === "..";
+}
+
+function getPackageNameFromModuleName(moduleName: string): string {
+  if (moduleName === "" || isExternalModuleNameRelative(moduleName) || moduleName.startsWith("/")) return "";
+  const parts = moduleName.split("/");
+  if (moduleName.startsWith("@")) {
+    return parts.length >= 2 ? `${parts[0]}/${parts[1]}` : moduleName;
+  }
+  return parts[0] ?? "";
+}
+
+function formatIncludeReason(reason: FileIncludeReason): string {
+  switch (reason.kind) {
+    case 0: return `Root file specified for compilation${reason.fileName === undefined ? "" : `: ${reason.fileName}`}.`;
+    case 1: return `Source from project reference${reason.fileName === undefined ? "" : `: ${reason.fileName}`}.`;
+    case 2: return `Output from project reference${reason.fileName === undefined ? "" : `: ${reason.fileName}`}.`;
+    case 3: return `Imported by ${reason.referencingFile ?? "unknown source"}${reason.fileName === undefined ? "" : ` as ${reason.fileName}`}.`;
+    case 4: return `Referenced by ${reason.referencingFile ?? "unknown source"}${reason.ref?.fileName === undefined ? "" : ` through ${reason.ref.fileName}`}.`;
+    case 5: return `Type reference directive from ${reason.referencingFile ?? "unknown source"}${reason.ref?.fileName === undefined ? "" : `: ${reason.ref.fileName}`}.`;
+    case 6: return `Default library file${reason.fileName === undefined ? "" : `: ${reason.fileName}`}.`;
+    case 7: return `Library reference directive from ${reason.referencingFile ?? "unknown source"}${reason.ref?.fileName === undefined ? "" : `: ${reason.ref.fileName}`}.`;
+    case 8: return `Automatic type directive file${reason.fileName === undefined ? "" : `: ${reason.fileName}`}.`;
+    default: return "File included by compiler graph traversal.";
+  }
 }
 
 function diagnosticFromText(text: string, file?: SourceFile): Diagnostic {
@@ -1062,6 +1402,55 @@ function compareDiagnostics(left: Diagnostic, right: Diagnostic): number {
     || (left.start ?? -1) - (right.start ?? -1)
     || left.code - right.code
     || left.text.localeCompare(right.text);
+}
+
+function filterNoEmitSemanticDiagnostics(diagnostics: readonly Diagnostic[], options: CompilerOptions): readonly Diagnostic[] {
+  if (!booleanCompilerOption(options, "noEmit")) return diagnostics;
+  return diagnostics.filter((diagnostic) => (diagnostic as { readonly skippedOnNoEmit?: boolean }).skippedOnNoEmit !== true);
+}
+
+function isPlainJSFile(file: SourceFile, options: CompilerOptions): boolean {
+  return isSourceFileJS(file) && (file as { readonly checkJsDirective?: { readonly enabled?: boolean } }).checkJsDirective?.enabled !== true
+    && booleanOption(options, "checkJs") !== true;
+}
+
+function isCheckJSEnabledForFile(file: SourceFile, options: CompilerOptions): boolean {
+  return isSourceFileJS(file)
+    && ((file as { readonly checkJsDirective?: { readonly enabled?: boolean } }).checkJsDirective?.enabled === true || booleanOption(options, "checkJs") === true);
+}
+
+function getLineStarts(text: string): readonly number[] {
+  const starts = [0];
+  for (let index = 0; index < text.length; index += 1) {
+    const ch = text.charCodeAt(index);
+    if (ch === 13 || ch === 10) {
+      if (ch === 13 && text.charCodeAt(index + 1) === 10) index += 1;
+      starts.push(index + 1);
+    }
+  }
+  return starts;
+}
+
+function computeLineOfPosition(lineStarts: readonly number[], position: number): number {
+  let low = 0;
+  let high = lineStarts.length - 1;
+  while (low <= high) {
+    const middle = (low + high) >> 1;
+    const start = lineStarts[middle]!;
+    const next = middle + 1 < lineStarts.length ? lineStarts[middle + 1]! : Number.MAX_SAFE_INTEGER;
+    if (position < start) high = middle - 1;
+    else if (position >= next) low = middle + 1;
+    else return middle;
+  }
+  return Math.max(0, Math.min(lineStarts.length - 1, low));
+}
+
+function isCommentOrBlankLine(text: string, pos: number): boolean {
+  let index = pos;
+  while (index < text.length && (text.charCodeAt(index) === 32 || text.charCodeAt(index) === 9)) index += 1;
+  if (index >= text.length) return true;
+  const ch = text.charCodeAt(index);
+  return ch === 13 || ch === 10 || (ch === 47 && text.charCodeAt(index + 1) === 47);
 }
 
 function isDeclarationFile(file: SourceFile): boolean {
