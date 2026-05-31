@@ -8,6 +8,7 @@ import { newLogTree, type LogTree } from "./logging/logtree.js";
 import { inferredProjectName, Kind, PendingReload, ProgramUpdateKind, Project } from "./project.js";
 import { ProjectCollection } from "./projectCollection.js";
 import { ProjectTreeRequest, type APISnapshotRequest, type Snapshot } from "./snapshot.js";
+import type { ConfigFileChangeResult } from "./configFileRegistryBuilder.js";
 
 export interface ProjectConfig {
   readonly configFileName: string;
@@ -154,6 +155,9 @@ export class ProjectCollectionBuilder {
       this.collection.closeFile(fileName);
       this.fileDefaultProjects.delete(this.toPath(fileName));
     }
+    if (openedFile !== undefined) {
+      this.retainProjectsForOpenFiles(snapshot, logger);
+    }
     if (this.openFilesChanged) this.cleanupInferredProject(snapshot, logger);
   }
 
@@ -203,6 +207,59 @@ export class ProjectCollectionBuilder {
     this.defaultProjectsInvalidated = true;
     this.programStructureChanged = true;
     logger.log("Invalidated default projects after custom config file-name change");
+  }
+
+  markProjectsAffectedByConfigChanges(result: ConfigFileChangeResult, snapshot?: Snapshot, logger: LogTree = this.logger): boolean {
+    let changed = false;
+    for (const projectPath of result.affectedProjects) {
+      const project = this.collection.get(projectPath);
+      if (project === undefined) {
+        throw new Error(`project ${projectPath} affected by config change not found`);
+      }
+      if (!project.dirty || project.dirtyFilePath !== undefined) {
+        project.markDirty(undefined, PendingReload.Full);
+        logger.log(`Marking project ${projectPath} as dirty due to change affecting config`);
+        changed = true;
+      }
+    }
+    for (const filePath of result.affectedFiles) {
+      if (this.fileDefaultProjects.delete(filePath)) this.defaultProjectsInvalidated = true;
+      const fileName = this.fileNameFromPath(filePath);
+      const opened = this.ensureConfiguredProjectAndAncestorsForFile(fileName, filePath, snapshot, logger);
+      if (opened.project !== undefined) {
+        this.fileDefaultProjects.set(filePath, opened.project.id());
+        changed = true;
+      }
+    }
+    this.programStructureChanged = this.programStructureChanged || changed;
+    return changed;
+  }
+
+  deleteConfiguredProject(project: Project, logger: LogTree = this.logger): boolean {
+    if (project.kind !== Kind.Configured) return false;
+    logger.log(`Deleting configured project: ${project.name()}`);
+    const removed = this.collection.removeProject(project.id());
+    if (!removed) return false;
+    this.apiOpenedProjects.delete(project.id());
+    for (const [filePath, defaultProject] of [...this.fileDefaultProjects]) {
+      if (defaultProject === project.id()) this.fileDefaultProjects.delete(filePath);
+    }
+    this.programStructureChanged = true;
+    this.defaultProjectsInvalidated = true;
+    return true;
+  }
+
+  logChangeFileResult(summary: FileChangeSummary, logger: LogTree = this.logger): void {
+    const sections: string[] = [];
+    if (summary.opened !== undefined) sections.push(`opened=${summary.opened}`);
+    if (summary.reopened !== undefined) sections.push(`reopened=${summary.reopened}`);
+    if (summary.closed.size > 0) sections.push(`closed=${[...summary.closed].sort().join(",")}`);
+    if (summary.changed.size > 0) sections.push(`changed=${[...summary.changed].sort().join(",")}`);
+    if (summary.created.size > 0) sections.push(`created=${[...summary.created].sort().join(",")}`);
+    if (summary.deleted.size > 0) sections.push(`deleted=${[...summary.deleted].sort().join(",")}`);
+    if (summary.invalidateAll) sections.push("invalidateAll=true");
+    if (summary.includesWatchChangeOutsideNodeModules) sections.push("outsideNodeModules=true");
+    logger.log(sections.length === 0 ? "File change summary: empty" : `File change summary: ${sections.join("; ")}`);
   }
 
   didUpdateAtaState(changes: ReadonlyMap<string, { readonly typingsFiles: readonly string[] }>, snapshot?: Snapshot, logger: LogTree = this.logger): void {
@@ -282,6 +339,98 @@ export class ProjectCollectionBuilder {
     for (const project of this.collection.projects()) {
       if (callback(project) === false) return;
     }
+  }
+
+  private retainProjectsForOpenFiles(snapshot: Snapshot | undefined, logger: LogTree): void {
+    const retain = new Set<string>();
+    const inferredProjectFiles: string[] = [];
+
+    for (const openFile of this.collection.openFilePaths()) {
+      const openFilePath = this.toPath(openFile);
+      const configured = this.findDefaultConfiguredProject(openFilePath);
+      if (configured === undefined) {
+        inferredProjectFiles.push(openFile);
+        continue;
+      }
+      this.retainDefaultConfiguredProject(openFile, openFilePath, configured, retain, snapshot, logger);
+    }
+
+    this.removeUnretainedConfiguredProjects(retain, logger);
+    this.updateInferredProjectRoots(inferredProjectFiles, snapshot, logger);
+  }
+
+  private retainDefaultConfiguredProject(
+    openFile: string,
+    openFilePath: string,
+    project: Project,
+    retain: Set<string>,
+    snapshot: Snapshot | undefined,
+    logger: LogTree,
+  ): void {
+    this.retainProjectAndReferences(project, retain);
+    let currentProject = project;
+    while (true) {
+      const ancestorConfigName = this.getAncestorConfigFileName(openFile, openFilePath, currentProject.configFileNameValue);
+      if (ancestorConfigName === undefined) return;
+      const ancestorPath = this.toPath(ancestorConfigName);
+      const ancestor = this.findOrCreateProject(ancestorConfigName, ancestorPath, logger, undefined, ProjectLoadKind.Find);
+      if (ancestor === undefined) return;
+      ancestor.addPotentialProjectReference(currentProject.id());
+      retain.add(ancestor.id());
+      this.updateProgram(ancestor, snapshot);
+      currentProject = ancestor;
+    }
+  }
+
+  private retainProjectAndReferences(project: Project, retain: Set<string>): void {
+    this.retainProjectAndReferencesWorker(project, retain, new Set());
+  }
+
+  private retainProjectAndReferencesWorker(project: Project, retain: Set<string>, seen: Set<string>): void {
+    if (seen.has(project.id())) return;
+    seen.add(project.id());
+    retain.add(project.id());
+    for (const referencePath of project.resolvedProjectReferencePaths()) {
+      const reference = this.collection.get(referencePath);
+      if (reference !== undefined) this.retainProjectAndReferencesWorker(reference, retain, seen);
+    }
+    for (const referencePath of project.potentialProjectReferencePaths()) {
+      const reference = this.collection.get(referencePath);
+      if (reference !== undefined) this.retainProjectAndReferencesWorker(reference, retain, seen);
+    }
+  }
+
+  private removeUnretainedConfiguredProjects(retain: ReadonlySet<string>, logger: LogTree): void {
+    const apiOpenedProjects = new Set(this.apiOpenedProjects);
+    for (const project of this.collection.configuredProjects()) {
+      if (retain.has(project.id()) || apiOpenedProjects.has(project.id())) continue;
+      if (this.isProjectReferencedByRetainedProject(project.id(), retain)) continue;
+      this.deleteConfiguredProject(project, logger);
+    }
+  }
+
+  private isProjectReferencedByRetainedProject(projectId: string, retain: ReadonlySet<string>): boolean {
+    for (const retainedProjectId of retain) {
+      const retainedProject = this.collection.get(retainedProjectId);
+      if (retainedProject !== undefined && this.isReferencedBy(retainedProject, projectId, new Set())) return true;
+    }
+    return false;
+  }
+
+  private isReferencedBy(project: Project, referencePath: string, seenProjects: Set<string>): boolean {
+    if (seenProjects.has(project.id())) return false;
+    seenProjects.add(project.id());
+    for (const potentialRef of project.potentialProjectReferencePaths()) {
+      if (potentialRef === referencePath) return true;
+      const referencedProject = this.collection.get(potentialRef);
+      if (referencedProject !== undefined && this.isReferencedBy(referencedProject, referencePath, seenProjects)) return true;
+    }
+    for (const resolvedRef of project.resolvedProjectReferencePaths()) {
+      if (resolvedRef === referencePath) return true;
+      const referencedProject = this.collection.get(resolvedRef);
+      if (referencedProject !== undefined && this.isReferencedBy(referencedProject, referencePath, seenProjects)) return true;
+    }
+    return false;
   }
 
   private ensureProjectTree(
@@ -480,6 +629,14 @@ export class ProjectCollectionBuilder {
   private fileDefaultProjectsHasProject(projectId: string): boolean {
     for (const value of this.fileDefaultProjects.values()) if (value === projectId) return true;
     return false;
+  }
+
+  private fileNameFromPath(path: string): string {
+    if (path.startsWith(this.currentDirectory)) {
+      const relative = path.slice(this.currentDirectory.length).replace(/^\/+/u, "");
+      return relative === "" ? path : relative;
+    }
+    return path;
   }
 
   private uriFileName(uri: string): string {

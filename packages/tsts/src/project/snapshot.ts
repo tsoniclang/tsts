@@ -126,11 +126,22 @@ export class Snapshot {
   deref(): boolean {
     this.refs -= 1;
     if (this.refs < 0) throw new Error("snapshot refcount went below zero");
+    if (this.refs === 0) this.dispose();
     return this.refs === 0;
   }
 
   refCount(): number {
     return this.refs;
+  }
+
+  isDisposed(): boolean {
+    return this.refs === 0;
+  }
+
+  dispose(): void {
+    if (this.refs < 0) throw new Error("snapshot refcount went below zero");
+    this.refs = 0;
+    this.cleanUnreferencedDiskState();
   }
 
   getFile(fileName: string): FileHandle | undefined {
@@ -150,6 +161,10 @@ export class Snapshot {
   }
 
   userPreferencesSnapshot(): ReadonlyMap<string, unknown> {
+    return this.userPreferences;
+  }
+
+  userPreferencesValue(): ReadonlyMap<string, unknown> {
     return this.userPreferences;
   }
 
@@ -195,6 +210,15 @@ export class Snapshot {
     return this.fs.readFile(fileName);
   }
 
+  readFileResult(fileName: string): readonly [string, boolean] {
+    const text = this.readFile(fileName);
+    return text === undefined ? ["", false] : [text, true];
+  }
+
+  tryGetFileContent(fileName: string): readonly [string, boolean] {
+    return this.readFileResult(fileName);
+  }
+
   fileExists(fileName: string): boolean {
     return this.fs.fileExists(fileName);
   }
@@ -217,6 +241,19 @@ export class Snapshot {
 
   getProjectsContainingFile(uri: string) {
     return this.projectCollection.getProjectsContainingFile(this.toPath(uri));
+  }
+
+  projectPaths(): readonly string[] {
+    return [...this.projectCollection.projectsByPath().keys()];
+  }
+
+  changedProjectStructure(): ReadonlyMap<string, boolean> {
+    return projectsWithNewProgramStructure(this.projectCollection, this.snapshotId);
+  }
+
+  projectTreeProjects(request: ProjectTreeRequest): readonly string[] {
+    if (request.isAllProjects()) return this.projectCollection.configuredProjects().map(project => project.id());
+    return request.projects();
   }
 
   useCaseSensitiveFileNames(): boolean {
@@ -264,6 +301,14 @@ export class Snapshot {
       this.fs.getFile(fileName);
     }
   }
+}
+
+export function newSnapshot(options: SnapshotOptions): Snapshot {
+  return new Snapshot(options);
+}
+
+export function cloneSnapshot(snapshot: Snapshot, change: SnapshotChange, init?: Partial<SnapshotOptions>): Snapshot {
+  return snapshot.clone(change, init);
 }
 
 export function describeResourceRequest(request: ResourceRequest): string {

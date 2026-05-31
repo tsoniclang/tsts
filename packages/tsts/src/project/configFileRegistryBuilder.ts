@@ -262,6 +262,38 @@ export class ConfigFileRegistryBuilder {
     return registry;
   }
 
+  isEmpty(): boolean {
+    return this.registry.keys().length === 0
+      && this.configFileNames.size === 0
+      && this.retainingOpenFiles.size === 0
+      && this.pendingReloads.size === 0;
+  }
+
+  fs(): ConfigFileRegistryBuilderHost | undefined {
+    return this.host;
+  }
+
+  getCurrentDirectory(): string {
+    return this.sessionCurrentDirectory();
+  }
+
+  getExtendedConfig(configFileName: string): unknown {
+    const path = normalizePath(configFileName);
+    return this.registry.getConfig(path);
+  }
+
+  configFileNameCacheSize(): number {
+    return this.configFileNames.size;
+  }
+
+  pendingReload(configFileName: string): PendingReload {
+    return this.pendingReloads.get(normalizePath(configFileName)) ?? PendingReload.None;
+  }
+
+  retainedOpenFiles(configFileName: string): readonly string[] {
+    return [...(this.retainingOpenFiles.get(normalizePath(configFileName)) ?? emptySet)].sort();
+  }
+
   findOrAcquireConfigForFile(
     configFileName: string,
     configFilePath: string,

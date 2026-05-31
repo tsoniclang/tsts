@@ -551,7 +551,13 @@ export class Session {
   }
 
   updateWatches(): void {
-    if (this.options.watchEnabled === true) this.trace("Updated file watches");
+    if (this.options.watchEnabled !== true) return;
+    const errors = this.updateProjectWatches(this.snapshotValue);
+    if (errors.length > 0) {
+      this.logger.log(`Errors updating watches: ${errors.map(error => error.message).join("; ")}`);
+    } else {
+      this.trace("Updated file watches");
+    }
   }
 
   close(): void {
@@ -617,7 +623,12 @@ export class Session {
   }
 
   publishProgramDiagnostics(): void {
-    if (this.shouldPublishProgramDiagnostics()) void this.client?.refreshDiagnostics(undefined);
+    if (!this.shouldPublishProgramDiagnostics()) return;
+    for (const project of this.snapshotValue.projectCollection.configuredProjects()) {
+      if (this.shouldPublishProgramDiagnosticsForProject(project, this.snapshotValue.id())) {
+        this.publishProjectDiagnostics(project);
+      }
+    }
   }
 
   shouldPublishProgramDiagnostics(): boolean {
@@ -625,7 +636,12 @@ export class Session {
   }
 
   publishProjectDiagnostics(project: unknown): void {
-    if (this.shouldPublishProgramDiagnostics()) void this.client?.refreshDiagnostics(project);
+    if (!this.shouldPublishProgramDiagnostics()) return;
+    const diagnostics = this.projectDiagnosticsForPublish(project);
+    void this.client?.publishDiagnostics(undefined, {
+      uri: this.projectDiagnosticsUri(project),
+      diagnostics,
+    });
   }
 
   enqueuePublishGlobalDiagnostics(): void {
@@ -825,10 +841,88 @@ export class Session {
         + (this.scheduledUpdate?.fileChanges.deleted.size ?? 0),
     };
   }
+
+  private updateProjectWatches(snapshot: Snapshot): readonly Error[] {
+    const errors: Error[] = [];
+    for (const project of snapshot.projectCollection.configuredProjects()) {
+      const projectErrors = this.updateWatch(project.name(), project.programFilesWatch.value);
+      errors.push(...projectErrors);
+      if (project.typingsWatch !== undefined) {
+        errors.push(...this.updateWatch(project.typingsWatch.description, project.typingsWatch.value));
+      }
+    }
+    return errors;
+  }
+
+  private updateWatch(ownerId: string, patterns: unknown): readonly Error[] {
+    if (this.client === undefined) return [];
+    const watchers = this.fileSystemWatchersFromPatterns(ownerId, patterns);
+    const errors: Error[] = [];
+    for (const watcher of watchers) {
+      try {
+        void this.client.watchFiles(undefined, watcher.id, [watcher]);
+      } catch (error) {
+        errors.push(error instanceof Error ? error : new Error(String(error)));
+      }
+    }
+    return errors;
+  }
+
+  private fileSystemWatchersFromPatterns(ownerId: string, patterns: unknown): readonly FileSystemWatcherSpec[] {
+    if (patterns === undefined || patterns === null || typeof patterns !== "object") return [];
+    const record = patterns as {
+      readonly patternsInsideWorkspace?: readonly string[];
+      readonly patternsOutsideWorkspace?: readonly string[];
+      readonly ignored?: readonly string[] | Readonly<Record<string, unknown>>;
+    };
+    const ignored = Array.isArray(record.ignored)
+      ? record.ignored
+      : record.ignored === undefined ? [] : Object.keys(record.ignored);
+    const watchers: FileSystemWatcherSpec[] = [];
+    for (const [scope, values] of [
+      ["workspace", record.patternsInsideWorkspace ?? []],
+      ["external", record.patternsOutsideWorkspace ?? []],
+    ] as const) {
+      for (const [index, glob] of values.entries()) {
+        watchers.push({
+          id: `${ownerId}:${scope}:${index}`,
+          globPattern: glob,
+          watchKind: "create-change-delete",
+          ignored,
+        });
+      }
+    }
+    return watchers;
+  }
+
+  private shouldPublishProgramDiagnosticsForProject(project: { readonly kind: number; readonly program?: unknown; readonly programLastUpdate?: number; readonly programUpdateKind?: number }, snapshotId: number): boolean {
+    return project.kind === 1
+      && project.program !== undefined
+      && project.programLastUpdate === snapshotId
+      && (project.programUpdateKind ?? 0) > 1;
+  }
+
+  private projectDiagnosticsForPublish(project: unknown): readonly unknown[] {
+    const candidate = project as { getProjectDiagnostics?: () => readonly unknown[]; program?: { diagnostics?: readonly unknown[] } };
+    return candidate.getProjectDiagnostics?.() ?? candidate.program?.diagnostics ?? [];
+  }
+
+  private projectDiagnosticsUri(project: unknown): string {
+    const candidate = project as { id?: () => string; name?: () => string };
+    const path = candidate.id?.() ?? candidate.name?.() ?? "";
+    return path.startsWith("file://") ? path : `file://${path}`;
+  }
 }
 
 export function newSession(init: SessionInit): Session {
   return new Session(init);
+}
+
+interface FileSystemWatcherSpec {
+  readonly id: string;
+  readonly globPattern: string;
+  readonly watchKind: "create-change-delete";
+  readonly ignored: readonly string[];
 }
 
 function normalizePathSegments(path: string): string {

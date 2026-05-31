@@ -14,11 +14,8 @@ export class OwnerCache<K, V, LoadArgs> {
   }
 
   loadAndAcquire(identity: K, owner: number, loadArgs: LoadArgs): V {
-    let entry = this.entries.get(identity);
-    if (entry === undefined) {
-      entry = { value: this.parse(identity, loadArgs), owners: new Set() };
-      this.entries.set(identity, entry);
-    } else if (this.isExpired?.(identity, entry.value, loadArgs) === true) {
+    const [entry, loaded] = this.loadOrStoreEntry(identity);
+    if (!loaded || this.isExpired?.(identity, entry.value, loadArgs) === true) {
       entry.value = this.parse(identity, loadArgs);
     }
     entry.owners.add(owner);
@@ -26,11 +23,8 @@ export class OwnerCache<K, V, LoadArgs> {
   }
 
   acquire(identity: K, owner: number, value: V): void {
-    let entry = this.entries.get(identity);
-    if (entry === undefined) {
-      entry = { value, owners: new Set() };
-      this.entries.set(identity, entry);
-    }
+    const [entry, loaded] = this.loadOrStoreEntry(identity);
+    if (!loaded) entry.value = value;
     entry.owners.add(owner);
   }
 
@@ -50,6 +44,28 @@ export class OwnerCache<K, V, LoadArgs> {
     if (entry === undefined) return;
     entry.owners.delete(owner);
     if (entry.owners.size === 0) this.entries.delete(identity);
+  }
+
+  owners(identity: K): readonly number[] {
+    return [...this.entries.get(identity)?.owners ?? []].sort((left, right) => left - right);
+  }
+
+  size(): number {
+    return this.entries.size;
+  }
+
+  entriesSnapshot(): readonly (readonly [K, V, readonly number[]])[] {
+    const snapshot: (readonly [K, V, readonly number[]])[] = [];
+    for (const [key, entry] of this.entries) snapshot.push([key, entry.value, [...entry.owners].sort((left, right) => left - right)]);
+    return snapshot;
+  }
+
+  private loadOrStoreEntry(identity: K): readonly [OwnerCacheEntry<V>, boolean] {
+    const existing = this.entries.get(identity);
+    if (existing !== undefined && existing.owners.size > 0) return [existing, true];
+    const entry = { value: undefined as V, owners: new Set<number>() };
+    this.entries.set(identity, entry);
+    return [entry, false];
   }
 }
 

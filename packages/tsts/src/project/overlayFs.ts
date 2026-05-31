@@ -47,6 +47,63 @@ export class OverlayFS {
     return new Map(this.overlays);
   }
 
+  overlaysSnapshot(): readonly Overlay[] {
+    return [...this.overlays.values()].map(cloneOverlay).sort((left, right) => left.fileName.localeCompare(right.fileName));
+  }
+
+  getOverlay(fileName: string): Overlay | undefined {
+    const overlay = this.overlays.get(normalize(fileName));
+    return overlay === undefined ? undefined : cloneOverlay(overlay);
+  }
+
+  isOpenFile(fileName: string): boolean {
+    return this.overlays.has(normalize(fileName));
+  }
+
+  version(fileName: string): number {
+    return this.overlays.get(normalize(fileName))?.version ?? 0;
+  }
+
+  text(fileName: string): string | undefined {
+    return this.overlays.get(normalize(fileName))?.content;
+  }
+
+  kind(fileName: string): string {
+    return this.overlays.get(normalize(fileName))?.kind ?? scriptKindFromFileName(fileName);
+  }
+
+  matchesDiskText(fileName: string): boolean {
+    const overlay = this.overlays.get(normalize(fileName));
+    if (overlay === undefined) return true;
+    return overlay.matchesDiskText ?? this.base.readFile(fileName) === overlay.content;
+  }
+
+  computeMatchesDiskText(fileName: string): readonly [boolean, boolean] {
+    const overlay = this.overlays.get(normalize(fileName));
+    if (overlay === undefined) return [true, this.base.fileExists(fileName)];
+    const diskContent = this.base.readFile(fileName);
+    if (diskContent === undefined) return [false, false];
+    return [diskContent === overlay.content, true];
+  }
+
+  contentHash(fileName: string): string | undefined {
+    const content = this.readFile(fileName);
+    return content === undefined ? undefined : hashString(content);
+  }
+
+  lspLineMap(fileName: string): readonly number[] | undefined {
+    const content = this.readFile(fileName);
+    return content === undefined ? undefined : lineStarts(content);
+  }
+
+  ecmaLineInfo(fileName: string): readonly number[] | undefined {
+    return this.lspLineMap(fileName);
+  }
+
+  closeAll(): void {
+    this.overlays.clear();
+  }
+
   getFile(fileName: string): FileHandle | undefined {
     const overlay = this.overlays.get(normalize(fileName));
     if (overlay !== undefined) {
@@ -218,6 +275,47 @@ function cloneOverlay(overlay: Overlay): Overlay {
     ...(overlay.matchesDiskText === undefined ? {} : { matchesDiskText: overlay.matchesDiskText }),
   };
   return overlay.kind === undefined ? clone : { ...clone, kind: overlay.kind };
+}
+
+function scriptKindFromFileName(fileName: string): string {
+  const extension = /\.[^.\\/]+$/u.exec(fileName)?.[0].toLowerCase();
+  switch (extension) {
+    case ".js":
+    case ".jsx":
+    case ".mjs":
+    case ".cjs":
+    case ".json":
+    case ".ts":
+    case ".tsx":
+    case ".mts":
+    case ".cts":
+      return extension.slice(1);
+    default:
+      return "unknown";
+  }
+}
+
+function lineStarts(text: string): readonly number[] {
+  const starts = [0];
+  for (let index = 0; index < text.length; index += 1) {
+    const ch = text.charCodeAt(index);
+    if (ch === 13) {
+      if (text.charCodeAt(index + 1) === 10) index += 1;
+      starts.push(index + 1);
+    } else if (ch === 10) {
+      starts.push(index + 1);
+    }
+  }
+  return starts;
+}
+
+function hashString(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
 }
 
 function isWatchKind(kind: FileChange["kind"]): boolean {
