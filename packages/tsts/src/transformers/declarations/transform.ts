@@ -994,10 +994,145 @@ export class DeclarationTransformer extends Transformer {
   // JSDoc node transforms
   // -------------------------------------------------------------------------
 
-  transformJSDocTypeExpression(input: JSDocTypeExpression): AstNode { return input as unknown as AstNode; }
-  transformJSDocTypeLiteral(input: JSDocTypeLiteral): AstNode { return input as unknown as AstNode; }
-  transformJSDocPropertyTag(input: AstNode): AstNode { return input; }
-  transformJSDocAllType(input: JSDocAllType): AstNode { return input as unknown as AstNode; }
+  transformJSDocTypeExpression(input: JSDocTypeExpression): AstNode {
+    return visitOptional(this, nodeField(input, "type")) ?? input as unknown as AstNode;
+  }
+
+  transformJSDocTypeLiteral(input: JSDocTypeLiteral): AstNode {
+    const propertyTags = nodeArray(nodeField(input, "jsDocPropertyTags"))
+      .map((tag) => this.visitor().visit(tag))
+      .filter((tag): tag is AstNode => tag !== undefined);
+    const replacement = factoryCall(this.factory(), "newTypeLiteralNode", input as unknown as AstNode, this.factory().newNodeList(propertyTags));
+    this.emitContext().setOriginal(replacement, input as unknown as AstNode);
+    return replacement;
+  }
+
+  transformJSDocPropertyTag(input: AstNode): AstNode {
+    const name = visitOptional(this, nodeField(input, "tagName")) ?? nodeField(input, "name") ?? this.factory().newIdentifier("");
+    const type = visitOptional(this, nodeField(input, "typeExpression")) ?? this.factory().newAnyKeyword();
+    const replacement = factoryCall(
+      this.factory(),
+      "newPropertySignatureDeclaration",
+      input,
+      undefined,
+      name,
+      undefined,
+      type,
+      undefined,
+    );
+    this.emitContext().setOriginal(replacement, input);
+    return replacement;
+  }
+
+  transformJSDocAllType(input: JSDocAllType): AstNode {
+    const replacement = this.factory().newAnyKeyword();
+    this.emitContext().setOriginal(replacement, input as unknown as AstNode);
+    return replacement;
+  }
+
+  transformJSDocNullableType(input: AstNode): AstNode {
+    const type = visitOptional(this, nodeField(input, "type")) ?? this.factory().newAnyKeyword();
+    const nullType = factoryCall(
+      this.factory(),
+      "newLiteralTypeNode",
+      input,
+      this.factory().newToken(Kind.NullKeyword),
+    );
+    const replacement = factoryCall(
+      this.factory(),
+      "newUnionTypeNode",
+      input,
+      this.factory().newNodeList([type, nullType]),
+    );
+    this.emitContext().setOriginal(replacement, input);
+    return replacement;
+  }
+
+  transformJSDocNonNullableType(input: AstNode): AstNode {
+    return visitOptional(this, nodeField(input, "type")) ?? input;
+  }
+
+  transformJSDocVariadicType(input: AstNode): AstNode {
+    const type = visitOptional(this, nodeField(input, "type")) ?? this.factory().newAnyKeyword();
+    const replacement = factoryCall(this.factory(), "newArrayTypeNode", input, type);
+    this.emitContext().setOriginal(replacement, input);
+    return replacement;
+  }
+
+  transformJSDocOptionalType(input: AstNode): AstNode {
+    const type = visitOptional(this, nodeField(input, "type")) ?? this.factory().newAnyKeyword();
+    const undefinedType = factoryCall(this.factory(), "newKeywordTypeNode", input, Kind.UndefinedKeyword);
+    const replacement = factoryCall(
+      this.factory(),
+      "newUnionTypeNode",
+      input,
+      this.factory().newNodeList([type, undefinedType]),
+    );
+    this.emitContext().setOriginal(replacement, input);
+    return replacement;
+  }
+
+  getNameExpressionPreferringIdentifier(nameExpr: AstNode | undefined): AstNode | undefined {
+    if (nameExpr === undefined) return undefined;
+    if (nameExpr.kind === Kind.NumericLiteral) {
+      return this.factory().newStringLiteral(nodeTextLocal(nameExpr), 0);
+    }
+    if (isStringLiteralLikeLocal(nameExpr) && isIdentifierTextLocal(nodeTextLocal(nameExpr))) {
+      const identifier = this.factory().newIdentifier(nodeTextLocal(nameExpr));
+      const keywordKind = keywordKindForIdentifierText(nodeTextLocal(nameExpr));
+      if (keywordKind === Kind.Unknown || keywordKind === Kind.DefaultKeyword) {
+        setNodeParentLocal(identifier, nodeParentLocal(nameExpr));
+        return identifier;
+      }
+    }
+    return nameExpr;
+  }
+
+  visitBindingName(node: AstNode): AstNode {
+    if (isBindingPattern(node)) return this.recreateBindingPattern(node as unknown as BindingPattern);
+    return this.visitor().visitEachChild(node);
+  }
+
+  transformCjsRequireVariableDeclaration(input: VariableDeclaration): AstNode | undefined {
+    const initializer = nodeField<AstNode>(input, "initializer");
+    const args = nodeArray(nodeField(initializer, "arguments"));
+    const specifier = args[0];
+    const name = nodeField<AstNode>(input, "name");
+    if (specifier === undefined || name === undefined) return undefined;
+    const rewrittenSpecifier = this.rewriteModuleSpecifier(input as unknown as AstNode, specifier);
+    if (name.kind === Kind.Identifier) {
+      return factoryCall(
+        this.factory(),
+        "newImportEqualsDeclaration",
+        input as unknown as AstNode,
+        undefined,
+        false,
+        name,
+        factoryCall(this.factory(), "newExternalModuleReference", input as unknown as AstNode, rewrittenSpecifier),
+      );
+    }
+    if (name.kind === Kind.ArrayBindingPattern) return undefined;
+    const importSpecifiers: AstNode[] = [];
+    for (const element of nodeArray(nodeField(name, "elements"))) {
+      const elementName = nodeField<AstNode>(element, "name");
+      if (elementName?.kind !== Kind.Identifier) continue;
+      importSpecifiers.push(this.factory().newImportSpecifier(
+        false,
+        nodeField(element, "propertyName") as never,
+        elementName as never,
+      ));
+    }
+    return this.factory().newImportDeclaration(
+      undefined,
+      this.factory().newImportClause(
+        Kind.Unknown,
+        undefined,
+        this.factory().newNamedImports(this.factory().newNodeList(importSpecifiers)),
+      ),
+      rewrittenSpecifier,
+      undefined,
+    );
+  }
 
   // -------------------------------------------------------------------------
   // Expando function reporting
@@ -1005,6 +1140,131 @@ export class DeclarationTransformer extends Transformer {
 
   reportExpandoFunctionErrors(node: AstNode): void {
     void node;
+  }
+
+  transformExpandoAssignment(node: AstNode): AstNode | undefined {
+    const left = nodeField<AstNode>(node, "left");
+    if (left === undefined) return undefined;
+    const namespace = leftmostAccessExpression(left);
+    if (namespace?.kind !== Kind.Identifier) return undefined;
+    const declaration = (this.resolver as unknown as {
+      getReferencedValueDeclaration?: (node: AstNode) => AstNode | undefined;
+    }).getReferencedValueDeclaration?.(namespace);
+    if (declaration === undefined) return undefined;
+    if (!this.expandoDeclarationCanReceiveNamespace(declaration)) return undefined;
+    const property = this.tryGetPropertyName(left);
+    if (property === "" || !isIdentifierTextLocal(property)) return undefined;
+    if (isDeclaration(declaration) && isDeclarationAndNotVisible(this.emitContext(), this.resolver, declaration)) {
+      return undefined;
+    }
+    const name = this.factory().newIdentifier(nodeTextLocal(namespace));
+    this.transformExpandoHost(name, declaration);
+    return this.createExpandoNamespace(name, declaration, property, node);
+  }
+
+  expandoDeclarationCanReceiveNamespace(declaration: AstNode): boolean {
+    if (declaration.kind === Kind.VariableDeclaration && nodeField(declaration, "type") !== undefined) return false;
+    if (declaration.kind === Kind.FunctionDeclaration && nodeField(declaration, "fullSignature") !== undefined) return false;
+    if (declaration.kind === Kind.VariableDeclaration && !isFunctionLike(nodeField(declaration, "initializer") as AstNode)) return false;
+    return true;
+  }
+
+  transformExpandoHost(name: AstNode, declaration: AstNode): void {
+    const root = declaration.kind === Kind.VariableDeclaration
+      ? nodeParentLocal(nodeParentLocal(declaration) ?? declaration) ?? declaration
+      : declaration;
+    const id = getNodeId(this.emitContext().mostOriginal(root) as Parameters<typeof getNodeId>[0]);
+    if (this.expandoHosts.has(id)) return;
+    const savedNeedsDeclare = this.needsDeclare;
+    this.needsDeclare = true;
+    const modifierFlags = this.ensureModifierFlags(root);
+    this.needsDeclare = savedNeedsDeclare;
+    const replacement = this.createExpandoHostReplacement(name, declaration, modifierFlags);
+    if (replacement === undefined) return;
+    this.expandoHosts.add(id);
+    this.lateStatementReplacementMap.set(id, replacement);
+  }
+
+  createExpandoHostReplacement(name: AstNode, declaration: AstNode, modifierFlags: number): AstNode | undefined {
+    const params = extractExpandoHostParams(declaration);
+    const modifiers = createModifiersFromFlagsLocal(this.factory(), modifierFlags);
+    if (declaration.kind === Kind.FunctionDeclaration) {
+      return updateWithFactory(
+        this.factory(),
+        "updateFunctionDeclaration",
+        declaration,
+        modifiers,
+        params.asteriskToken,
+        nodeField(declaration, "name"),
+        this.ensureTypeParams(declaration, params.typeParameters as TypeParameterList | undefined),
+        this.updateParamList(declaration, params.parameters as ParameterList | undefined),
+        this.ensureType(declaration, false),
+        undefined,
+      );
+    }
+    if (declaration.kind === Kind.VariableDeclaration && isFunctionLike(nodeField(declaration, "initializer") as AstNode)) {
+      const initializer = nodeField<AstNode>(declaration, "initializer")!;
+      return factoryCall(
+        this.factory(),
+        "newFunctionDeclaration",
+        declaration,
+        modifiers,
+        params.asteriskToken,
+        this.factory().newIdentifier(nodeTextLocal(name)),
+        this.ensureTypeParams(initializer, params.typeParameters as TypeParameterList | undefined),
+        this.updateParamList(initializer, params.parameters as ParameterList | undefined),
+        this.ensureType(initializer, false),
+        undefined,
+        undefined,
+      );
+    }
+    return undefined;
+  }
+
+  createExpandoNamespace(name: AstNode, declaration: AstNode, property: string, original: AstNode): AstNode {
+    const exportName = this.factory().newIdentifier(property);
+    const variable = this.factory().newVariableStatement(
+      undefined,
+      this.factory().newVariableDeclarationList(
+        this.factory().newNodeList([
+          this.factory().newVariableDeclaration(exportName, undefined, this.ensureType(original, false), undefined),
+        ]),
+        0,
+      ),
+    );
+    const moduleBlock = factoryCall(
+      this.factory(),
+      "newModuleBlock",
+      original,
+      this.factory().newNodeList([variable]),
+    );
+    const namespace = factoryCall(
+      this.factory(),
+      "newModuleDeclaration",
+      original,
+      createModifiersFromFlagsLocal(this.factory(), ModifierFlags.Ambient),
+      Kind.NamespaceKeyword,
+      name,
+      moduleBlock,
+    );
+    this.emitContext().setOriginal(namespace, declaration);
+    return namespace;
+  }
+
+  tryGetPropertyName(node: AstNode | undefined): string {
+    if (node === undefined) return "";
+    if (node.kind === Kind.PropertyAccessExpression) {
+      return nodeTextLocal(nodeField(node, "name"));
+    }
+    if (node.kind === Kind.ElementAccessExpression) {
+      const resolverName = (this.resolver as unknown as {
+        getElementAccessExpressionName?: (node: AstNode) => string | undefined;
+      }).getElementAccessExpressionName?.(node);
+      if (resolverName !== undefined) return resolverName;
+      const argument = nodeField<AstNode>(node, "argumentExpression");
+      return isStringLiteralLikeLocal(argument) ? nodeTextLocal(argument) : "";
+    }
+    return "";
   }
 }
 
@@ -1126,6 +1386,11 @@ function updateWithFactory(factory: unknown, method: string, fallback: AstNode, 
   return typeof fn === "function" ? (fn as (...callArgs: unknown[]) => AstNode).call(factory, fallback, ...args) : fallback;
 }
 
+function factoryCall(factory: unknown, method: string, fallback: AstNode, ...args: readonly unknown[]): AstNode {
+  const fn = (factory as Record<string, unknown>)[method];
+  return typeof fn === "function" ? (fn as (...callArgs: unknown[]) => AstNode).call(factory, ...args) : fallback;
+}
+
 function getBindingNameVisible(resolver: EmitResolver, node: AstNode): boolean {
   const symbol = (node as unknown as { readonly symbol?: unknown }).symbol;
   if (symbol === undefined) return true;
@@ -1145,6 +1410,97 @@ function effectiveDeclarationFlags(tx: DeclarationTransformer, node: AstNode, fl
 
 function getThisParameter(node: AstNode): AstNode | undefined {
   return nodeArray(nodeField(node, "parameters")).find(parameter => nodeField(parameter, "name")?.kind === Kind.ThisKeyword);
+}
+
+function nodeTextLocal(node: AstNode | undefined): string {
+  if (node === undefined) return "";
+  return (node as unknown as { readonly text?: string; readonly escapedText?: string }).text
+    ?? (node as unknown as { readonly escapedText?: string }).escapedText
+    ?? "";
+}
+
+function nodeParentLocal(node: AstNode | undefined): AstNode | undefined {
+  return (node as unknown as { readonly parent?: AstNode } | undefined)?.parent;
+}
+
+function setNodeParentLocal(node: AstNode, parent: AstNode | undefined): void {
+  if (parent === undefined) {
+    delete (node as unknown as { parent?: AstNode }).parent;
+    return;
+  }
+  (node as unknown as { parent?: AstNode }).parent = parent;
+}
+
+function isStringLiteralLikeLocal(node: AstNode | undefined): boolean {
+  if (node === undefined) return false;
+  return node.kind === Kind.StringLiteral
+    || node.kind === Kind.NoSubstitutionTemplateLiteral
+    || node.kind === Kind.NumericLiteral;
+}
+
+function isIdentifierTextLocal(text: string): boolean {
+  if (text.length === 0) return false;
+  if (!/^[$A-Z_a-z][$\w]*$/.test(text)) return false;
+  return keywordKindForIdentifierText(text) === Kind.Unknown
+    || keywordKindForIdentifierText(text) === Kind.DefaultKeyword;
+}
+
+function keywordKindForIdentifierText(text: string): number {
+  switch (text) {
+    case "default": return Kind.DefaultKeyword;
+    case "class": return Kind.ClassKeyword;
+    case "function": return Kind.FunctionKeyword;
+    case "var": return Kind.VarKeyword;
+    case "let": return Kind.LetKeyword;
+    case "const": return Kind.ConstKeyword;
+    case "namespace": return Kind.NamespaceKeyword;
+    case "import": return Kind.ImportKeyword;
+    case "export": return Kind.ExportKeyword;
+    default: return Kind.Unknown;
+  }
+}
+
+function leftmostAccessExpression(node: AstNode): AstNode | undefined {
+  let current: AstNode | undefined = node;
+  while (current !== undefined) {
+    if (current.kind === Kind.Identifier) return current;
+    if (current.kind === Kind.PropertyAccessExpression || current.kind === Kind.ElementAccessExpression) {
+      current = nodeField(current, "expression");
+      continue;
+    }
+    return undefined;
+  }
+  return undefined;
+}
+
+function createModifiersFromFlagsLocal(factory: NodeFactory, flags: number): ModifierList | undefined {
+  if (flags === 0) return undefined;
+  const createModifierList = (factory as unknown as {
+    newModifierList?: (modifiers: readonly AstNode[]) => ModifierList;
+    newModifier?: (kind: number) => AstNode;
+  });
+  if (createModifierList.newModifierList === undefined || createModifierList.newModifier === undefined) {
+    return undefined;
+  }
+  const modifiers: AstNode[] = [];
+  if ((flags & ModifierFlags.Export) !== 0) modifiers.push(createModifierList.newModifier(Kind.ExportKeyword));
+  if ((flags & ModifierFlags.Default) !== 0) modifiers.push(createModifierList.newModifier(Kind.DefaultKeyword));
+  if ((flags & ModifierFlags.Ambient) !== 0) modifiers.push(createModifierList.newModifier(Kind.DeclareKeyword));
+  return createModifierList.newModifierList(modifiers);
+}
+
+function extractExpandoHostParams(node: AstNode): {
+  readonly typeParameters: AstNode | undefined;
+  readonly parameters: AstNode | undefined;
+  readonly asteriskToken: AstNode | undefined;
+} {
+  const initializer = node.kind === Kind.VariableDeclaration ? nodeField<AstNode>(node, "initializer") : undefined;
+  const target = initializer ?? node;
+  return {
+    typeParameters: nodeField(target, "typeParameters"),
+    parameters: nodeField(target, "parameters"),
+    asteriskToken: nodeField(target, "asteriskToken"),
+  };
 }
 
 // ---------------------------------------------------------------------------

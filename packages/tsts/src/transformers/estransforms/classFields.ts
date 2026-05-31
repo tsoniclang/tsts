@@ -136,6 +136,39 @@ export interface ClassLexicalEnv {
 
 interface AnonymousFunctionDefinition { readonly _afd: unknown }
 
+export interface ClassMemberBuckets {
+  readonly constructors: readonly AstNode[];
+  readonly instanceProperties: readonly AstNode[];
+  readonly staticProperties: readonly AstNode[];
+  readonly privateInstanceMethodsAndAccessors: readonly AstNode[];
+  readonly privateStaticMethodsAndAccessors: readonly AstNode[];
+  readonly staticBlocks: readonly AstNode[];
+  readonly otherMembers: readonly AstNode[];
+}
+
+export interface PrivateElementRegistrationPlan {
+  readonly member: AstNode;
+  readonly name: AstNode;
+  readonly isStatic: boolean;
+  readonly isValid: boolean;
+  readonly previousInfo: PrivateIdentifierInfo | undefined;
+  readonly kind: PrivateIdentifierKind;
+}
+
+export interface ClassStaticEvaluationPlan {
+  readonly leadingStatements: readonly Statement[];
+  readonly members: readonly AstNode[];
+  readonly trailingStatements: readonly Statement[];
+  readonly hasStaticEvaluation: boolean;
+}
+
+export interface ClassInitializerPlan {
+  readonly constructor: AstNode | undefined;
+  readonly instanceInitializers: readonly AstNode[];
+  readonly staticInitializers: readonly AstNode[];
+  readonly privateInstanceMethodsAndAccessors: readonly AstNode[];
+}
+
 // ---------------------------------------------------------------------------
 // Transformer
 // ---------------------------------------------------------------------------
@@ -859,23 +892,40 @@ export class ClassFieldsTransformer extends Transformer {
   // -------------------------------------------------------------------------
 
   getPrivateInstanceMethodsAndAccessors(node: AstNode): readonly AstNode[] {
-    void node;
-    return [];
+    return this.collectClassMemberBuckets(node).privateInstanceMethodsAndAccessors;
   }
 
   memberContainsConstructorReference(member: AstNode, classDecl: AstNode): boolean {
-    void member; void classDecl;
-    return false;
+    const declarationName = getNodeName(classDecl);
+    if (declarationName === undefined) return false;
+    return nodeContainsReferenceToName(member, nodeText(declarationName));
   }
 
   classContainsConstructorReference(node: AstNode): boolean {
-    void node;
-    return false;
+    return classMemberArray(node).some((member) => this.memberContainsConstructorReference(member, node));
   }
 
   getClassFacts(node: AstNode): ClassFacts {
-    void node;
-    return ClassFacts.None;
+    const buckets = this.collectClassMemberBuckets(node);
+    let facts = ClassFacts.None;
+    if (classHasDecoratorsLocal(node)) {
+      facts |= ClassFacts.ClassWasDecorated;
+    }
+    if (this.classContainsConstructorReference(node)) {
+      facts |= ClassFacts.NeedsClassConstructorReference;
+    }
+    if (classHasExtendsClause(node)) {
+      facts |= ClassFacts.NeedsClassSuperReference;
+    }
+    if (buckets.staticProperties.some((member) => getSubtreeFacts(member) !== 0)
+      || buckets.staticBlocks.some((member) => getSubtreeFacts(member) !== 0)) {
+      facts |= ClassFacts.NeedsSubstitutionForThisInClassStaticField;
+    }
+    if (this.shouldTransformInitializersUsingSet
+      && buckets.instanceProperties.some((member) => !isAutoAccessorPropertyDeclaration(member))) {
+      facts |= ClassFacts.WillHoistInitializersToConstructor;
+    }
+    return facts;
   }
 
   // -------------------------------------------------------------------------
@@ -945,8 +995,22 @@ export class ClassFieldsTransformer extends Transformer {
   // -------------------------------------------------------------------------
 
   transformClassMembers(node: AstNode): { members: AstNode[]; prologue: Expression | undefined } {
-    void node;
-    return { members: [], prologue: undefined };
+    const buckets = this.collectClassMemberBuckets(node);
+    const transformedMembers: AstNode[] = [];
+    let prologue: Expression | undefined;
+    for (const member of classMemberArray(node)) {
+      if (buckets.privateInstanceMethodsAndAccessors.includes(member)
+        || buckets.privateStaticMethodsAndAccessors.includes(member)) {
+        this.addPrivateIdentifierToEnvironment(member);
+      }
+      const transformed = this.classElementVisitor.visitNode(member);
+      if (transformed !== undefined) transformedMembers.push(transformed);
+    }
+    if (this.pendingExpressions.length > 0) {
+      prologue = this.factory().inlineExpressions(this.pendingExpressions) as Expression;
+      this.pendingExpressions = [];
+    }
+    return { members: transformedMembers, prologue };
   }
 
   createBrandCheckWeakSetForPrivateMethods(): void {
@@ -1588,6 +1652,349 @@ export class ClassFieldsTransformer extends Transformer {
       binary as unknown as AstNode,
     ) as unknown as Expression;
   }
+
+  collectClassMemberBuckets(node: AstNode): ClassMemberBuckets {
+    const constructors: AstNode[] = [];
+    const instanceProperties: AstNode[] = [];
+    const staticProperties: AstNode[] = [];
+    const privateInstanceMethodsAndAccessors: AstNode[] = [];
+    const privateStaticMethodsAndAccessors: AstNode[] = [];
+    const staticBlocks: AstNode[] = [];
+    const otherMembers: AstNode[] = [];
+    for (const member of classMemberArray(node)) {
+      if (member.kind === Kind.Constructor) {
+        constructors.push(member);
+        continue;
+      }
+      if (member.kind === Kind.ClassStaticBlockDeclaration) {
+        staticBlocks.push(member);
+        continue;
+      }
+      if (isPropertyDeclaration(member)) {
+        if (hasStaticModifier(member)) staticProperties.push(member);
+        else instanceProperties.push(member);
+        continue;
+      }
+      if (this.isPrivateMethodOrAccessor(member)) {
+        if (hasStaticModifier(member)) privateStaticMethodsAndAccessors.push(member);
+        else privateInstanceMethodsAndAccessors.push(member);
+        continue;
+      }
+      otherMembers.push(member);
+    }
+    return {
+      constructors,
+      instanceProperties,
+      staticProperties,
+      privateInstanceMethodsAndAccessors,
+      privateStaticMethodsAndAccessors,
+      staticBlocks,
+      otherMembers,
+    };
+  }
+
+  isPrivateMethodOrAccessor(node: AstNode): boolean {
+    const kind = node.kind;
+    if (kind !== Kind.MethodDeclaration && kind !== Kind.GetAccessor && kind !== Kind.SetAccessor) return false;
+    const name = getNodeName(node);
+    return name !== undefined && isPrivateIdentifier(name);
+  }
+
+  isPrivateClassElement(node: AstNode): boolean {
+    const name = getNodeName(node);
+    return name !== undefined && isPrivateIdentifier(name)
+      && (isPropertyDeclaration(node) || this.isPrivateMethodOrAccessor(node) || isAutoAccessorPropertyDeclaration(node));
+  }
+
+  createPrivateElementRegistrationPlan(node: AstNode): PrivateElementRegistrationPlan | undefined {
+    const name = getNodeName(node);
+    if (name === undefined || !isPrivateIdentifier(name)) return undefined;
+    const env = this.getPrivateIdentifierEnvironment();
+    const previousInfo = this.getPrivateIdentifier(env, name).info;
+    const isValid = !this.isReservedPrivateName(name) && previousInfo === undefined;
+    let kind: PrivateIdentifierKind;
+    if (isPropertyDeclaration(node)) kind = PrivateIdentifierKind.Field;
+    else if (isAutoAccessorPropertyDeclaration(node)) kind = PrivateIdentifierKind.AutoAccessor;
+    else if (isMethodDeclaration(node)) kind = PrivateIdentifierKind.Method;
+    else kind = PrivateIdentifierKind.Accessor;
+    return {
+      member: node,
+      name,
+      isStatic: hasStaticModifier(node),
+      isValid,
+      previousInfo,
+      kind,
+    };
+  }
+
+  registerPrivateElementPlan(plan: PrivateElementRegistrationPlan): void {
+    const lex = this.getClassLexicalEnvironment();
+    const env = this.getPrivateIdentifierEnvironment();
+    if (plan.kind === PrivateIdentifierKind.Field) {
+      this.addPrivateIdentifierPropertyDeclarationToEnvironment(plan.member, plan.name);
+      return;
+    }
+    if (plan.kind === PrivateIdentifierKind.AutoAccessor) {
+      this.addPrivateIdentifierAutoAccessorToEnvironment(
+        plan.member,
+        plan.name,
+        lex,
+        env,
+        plan.isStatic,
+        plan.isValid,
+      );
+      return;
+    }
+    if (plan.kind === PrivateIdentifierKind.Method) {
+      this.addPrivateIdentifierMethodToEnvironment(plan.name, lex, env, plan.isStatic, plan.isValid);
+      return;
+    }
+    if (plan.member.kind === Kind.GetAccessor) {
+      this.addPrivateIdentifierGetAccessorToEnvironment(
+        plan.name,
+        lex,
+        env,
+        plan.isStatic,
+        plan.isValid,
+        plan.previousInfo,
+      );
+      return;
+    }
+    this.addPrivateIdentifierSetAccessorToEnvironment(
+      plan.name,
+      lex,
+      env,
+      plan.isStatic,
+      plan.isValid,
+      plan.previousInfo,
+    );
+  }
+
+  registerPrivateElementsForClass(node: AstNode): void {
+    for (const member of classMemberArray(node)) {
+      const plan = this.createPrivateElementRegistrationPlan(member);
+      if (plan !== undefined) this.registerPrivateElementPlan(plan);
+    }
+  }
+
+  initializeClassLexicalEnvironment(node: AstNode, facts: ClassFacts): ClassLexicalEnvironment {
+    const data = this.getClassLexicalEnvironment();
+    data.facts = facts;
+    const className = getNodeName(node);
+    if (className !== undefined && isIdentifier(className)) {
+      this.getPrivateIdentifierEnvironment().data.className = className as unknown as IdentifierNode;
+    }
+    if ((facts & ClassFacts.NeedsClassConstructorReference) !== 0) {
+      data.classConstructor = this.createClassConstructorReference(node);
+    }
+    if ((facts & ClassFacts.NeedsSubstitutionForThisInClassStaticField) !== 0
+      || (facts & ClassFacts.ClassWasDecorated) !== 0) {
+      data.classThis = this.createClassThisReference(node);
+    }
+    if ((facts & ClassFacts.NeedsClassSuperReference) !== 0) {
+      data.superClassReference = this.createSuperClassReference(node);
+    }
+    this.registerPrivateElementsForClass(node);
+    return data;
+  }
+
+  createClassConstructorReference(node: AstNode): IdentifierNode {
+    const name = getNodeName(node);
+    if (name !== undefined && isIdentifier(name)) {
+      return cloneIdentifier(name as unknown as IdentifierNode, this.factory()) as unknown as IdentifierNode;
+    }
+    const temp = this.factory().newUniqueNameEx("_class", {
+      flags: GeneratedIdentifierFlags.Optimistic | GeneratedIdentifierFlags.ReservedInNestedScopes,
+    }) as unknown as IdentifierNode;
+    if (this.requiresBlockScopedVar()) this.emitContext().addLexicalDeclaration(temp);
+    else this.emitContext().addVariableDeclaration(temp);
+    return temp;
+  }
+
+  createClassThisReference(node: AstNode): IdentifierNode {
+    const name = getNodeName(node);
+    const baseText = name === undefined ? "_classThis" : `_${nodeText(name)}_classThis`;
+    const temp = this.factory().newUniqueNameEx(baseText, {
+      flags: GeneratedIdentifierFlags.Optimistic | GeneratedIdentifierFlags.ReservedInNestedScopes,
+    }) as unknown as IdentifierNode;
+    if (this.requiresBlockScopedVar()) this.emitContext().addLexicalDeclaration(temp);
+    else this.emitContext().addVariableDeclaration(temp);
+    return temp;
+  }
+
+  createSuperClassReference(node: AstNode): IdentifierNode {
+    const name = getNodeName(node);
+    const baseText = name === undefined ? "_super" : `_${nodeText(name)}_super`;
+    const temp = this.factory().newUniqueNameEx(baseText, {
+      flags: GeneratedIdentifierFlags.Optimistic | GeneratedIdentifierFlags.ReservedInNestedScopes,
+    }) as unknown as IdentifierNode;
+    if (this.requiresBlockScopedVar()) this.emitContext().addLexicalDeclaration(temp);
+    else this.emitContext().addVariableDeclaration(temp);
+    return temp;
+  }
+
+  createClassInitializerPlan(node: AstNode): ClassInitializerPlan {
+    const buckets = this.collectClassMemberBuckets(node);
+    const instanceInitializers = buckets.instanceProperties.filter((member) =>
+      this.shouldHoistInstanceInitializer(member));
+    const staticInitializers = [
+      ...buckets.staticProperties.filter((member) => this.shouldEmitStaticInitializer(member)),
+      ...buckets.staticBlocks,
+    ];
+    return {
+      constructor: buckets.constructors[0],
+      instanceInitializers,
+      staticInitializers,
+      privateInstanceMethodsAndAccessors: buckets.privateInstanceMethodsAndAccessors,
+    };
+  }
+
+  shouldHoistInstanceInitializer(member: AstNode): boolean {
+    if (!isPropertyDeclaration(member)) return false;
+    if (hasStaticModifier(member)) return false;
+    if (isAutoAccessorPropertyDeclaration(member)) return this.shouldTransformAutoAccessorsInCurrentClass();
+    return this.shouldTransformInitializersUsingSet
+      || this.shouldTransformInitializersUsingDefine
+      || this.isPrivateClassElement(member);
+  }
+
+  shouldEmitStaticInitializer(member: AstNode): boolean {
+    if (member.kind === Kind.ClassStaticBlockDeclaration) return true;
+    if (!isPropertyDeclaration(member) || !hasStaticModifier(member)) return false;
+    if (isAutoAccessorPropertyDeclaration(member)) return this.shouldTransformAutoAccessorsInCurrentClass();
+    if (this.isPrivateClassElement(member)) return this.shouldTransformClassElementToWeakMap(member);
+    return this.shouldTransformInitializers;
+  }
+
+  createClassStaticEvaluationPlan(node: AstNode): ClassStaticEvaluationPlan {
+    const initializerPlan = this.createClassInitializerPlan(node);
+    const leadingStatements = this.flushPendingExpressionsAsStatements();
+    const trailingStatements: Statement[] = [];
+    const members: AstNode[] = [];
+    const receiver = (this.tryGetClassThis() ?? this.factory().newThisExpression()) as Expression;
+    for (const member of classMemberArray(node)) {
+      if (initializerPlan.staticInitializers.includes(member)) {
+        const statement = this.transformPropertyOrClassStaticBlock(member, receiver);
+        if (statement !== undefined) trailingStatements.push(statement as unknown as Statement);
+        continue;
+      }
+      members.push(member);
+    }
+    return {
+      leadingStatements,
+      members,
+      trailingStatements,
+      hasStaticEvaluation: leadingStatements.length > 0 || trailingStatements.length > 0,
+    };
+  }
+
+  flushPendingExpressionsAsStatements(): Statement[] {
+    if (this.pendingExpressions.length === 0) return [];
+    const statements = this.pendingExpressions.map((expression) =>
+      this.factory().newExpressionStatement(expression) as Statement);
+    this.pendingExpressions = [];
+    return statements;
+  }
+
+  createConstructorInitializerStatements(plan: ClassInitializerPlan, receiver: Expression): Statement[] {
+    const statements: Statement[] = [];
+    const withPrivateMethods = this.addInstanceMethodStatements(
+      [],
+      plan.privateInstanceMethodsAndAccessors,
+      receiver,
+    );
+    statements.push(...withPrivateMethods);
+    for (const property of plan.instanceInitializers) {
+      const statement = this.transformPropertyOrClassStaticBlock(property, receiver);
+      if (statement !== undefined) statements.push(statement as unknown as Statement);
+    }
+    return statements;
+  }
+
+  needsSyntheticConstructor(plan: ClassInitializerPlan): boolean {
+    return plan.constructor === undefined
+      && (plan.instanceInitializers.length > 0 || plan.privateInstanceMethodsAndAccessors.length > 0);
+  }
+
+  classNeedsPrivateEnvironment(node: AstNode): boolean {
+    return classMemberArray(node).some((member) => this.isPrivateClassElement(member));
+  }
+
+  classNeedsWeakSetForPrivateMethods(node: AstNode): boolean {
+    return this.collectClassMemberBuckets(node).privateInstanceMethodsAndAccessors.length > 0;
+  }
+
+  classNeedsClassAlias(node: AstNode, facts: ClassFacts): boolean {
+    return (facts & ClassFacts.NeedsClassConstructorReference) !== 0
+      || (facts & ClassFacts.NeedsSubstitutionForThisInClassStaticField) !== 0
+      || this.classNeedsPrivateEnvironment(node);
+  }
+
+  noteClassAliasIfNeeded(node: AstNode, facts: ClassFacts): void {
+    if (!this.classNeedsClassAlias(node, facts)) return;
+    const name = getNodeName(node);
+    if (name === undefined || !isIdentifier(name)) return;
+    const alias = this.createClassConstructorReference(node);
+    this.classAliases.set(node, alias);
+    this.enclosingClassDeclarations.add(node);
+  }
+
+  collectStaticPrivateElements(node: AstNode): readonly AstNode[] {
+    return classMemberArray(node).filter((member) =>
+      this.isPrivateClassElement(member) && hasStaticModifier(member));
+  }
+
+  collectInstancePrivateElements(node: AstNode): readonly AstNode[] {
+    return classMemberArray(node).filter((member) =>
+      this.isPrivateClassElement(member) && !hasStaticModifier(member));
+  }
+
+  privateEnvironmentSummary(node: AstNode): {
+    readonly hasPrivateElements: boolean;
+    readonly staticElements: readonly AstNode[];
+    readonly instanceElements: readonly AstNode[];
+    readonly needsWeakSet: boolean;
+  } {
+    const staticElements = this.collectStaticPrivateElements(node);
+    const instanceElements = this.collectInstancePrivateElements(node);
+    return {
+      hasPrivateElements: staticElements.length > 0 || instanceElements.length > 0,
+      staticElements,
+      instanceElements,
+      needsWeakSet: this.classNeedsWeakSetForPrivateMethods(node),
+    };
+  }
+
+  buildPrivateEnvironmentInitializers(node: AstNode): readonly Statement[] {
+    const summary = this.privateEnvironmentSummary(node);
+    if (!summary.hasPrivateElements) return [];
+    const statements: Statement[] = [];
+    if (summary.needsWeakSet) {
+      this.createBrandCheckWeakSetForPrivateMethods();
+      const weakSetName = this.getPrivateIdentifierEnvironment().data.weakSetName;
+      if (weakSetName !== undefined) {
+        const assignment = this.factory().newAssignmentExpression(
+          weakSetName,
+          this.factory().newNewExpression(this.factory().newIdentifier("WeakSet"), undefined, this.factory().newNodeList([])),
+        ) as Expression;
+        statements.push(this.factory().newExpressionStatement(assignment) as Statement);
+      }
+    }
+    for (const element of summary.instanceElements) {
+      const name = getNodeName(element);
+      if (name === undefined || !isPropertyDeclaration(element)) continue;
+      const info = this.accessPrivateIdentifier(name);
+      if (info?.brandCheckIdentifier === undefined) continue;
+      if (info.kind === PrivateIdentifierKind.Field) {
+        const assignment = this.factory().newAssignmentExpression(
+          info.brandCheckIdentifier,
+          this.factory().newNewExpression(this.factory().newIdentifier("WeakMap"), undefined, this.factory().newNodeList([])),
+        ) as Expression;
+        statements.push(this.factory().newExpressionStatement(assignment) as Statement);
+      }
+    }
+    return statements;
+  }
 }
 
 export function newClassFieldsTransformer(opts: TransformOptions): Transformer | undefined {
@@ -1735,4 +2142,49 @@ function transformNamedEvaluation(
   _assignedName: string,
 ): AstNode {
   return node;
+}
+
+function classHasDecoratorsLocal(node: AstNode): boolean {
+  if (nodeHasDecoratorLocal(node)) return true;
+  return classMemberArray(node).some((member) => nodeHasDecoratorLocal(member));
+}
+
+function nodeHasDecoratorLocal(node: AstNode): boolean {
+  const directDecorators = (node as unknown as { decorators?: readonly AstNode[] }).decorators;
+  if (directDecorators !== undefined && directDecorators.length > 0) return true;
+  const modifiers = (node as unknown as { modifiers?: readonly AstNode[] | { nodes?: readonly AstNode[] } }).modifiers;
+  const modifierArray = modifiers === undefined
+    ? []
+    : ((modifiers as { nodes?: readonly AstNode[] }).nodes ?? modifiers as readonly AstNode[]);
+  return modifierArray.some((modifier) => modifier.kind === Kind.Decorator);
+}
+
+function classHasExtendsClause(node: AstNode): boolean {
+  const heritageClauses = (node as unknown as { heritageClauses?: readonly AstNode[] | { nodes?: readonly AstNode[] } }).heritageClauses;
+  const clauses = heritageClauses === undefined
+    ? []
+    : ((heritageClauses as { nodes?: readonly AstNode[] }).nodes ?? heritageClauses as readonly AstNode[]);
+  return clauses.some((clause) => {
+    const token = (clause as unknown as { token?: number }).token;
+    return token === Kind.ExtendsKeyword || token === undefined;
+  });
+}
+
+function nodeContainsReferenceToName(node: AstNode, name: string): boolean {
+  const seen = new Set<AstNode>();
+  return nodeContainsReferenceToNameWorker(node, name, seen);
+}
+
+function nodeContainsReferenceToNameWorker(node: AstNode | undefined, name: string, seen: Set<AstNode>): boolean {
+  if (node === undefined || seen.has(node)) return false;
+  seen.add(node);
+  if (node.kind === Kind.Identifier && nodeText(node) === name) return true;
+  const forEachChild = (node as unknown as {
+    forEachChild?: (visitor: (child: AstNode) => boolean | undefined) => boolean | undefined;
+  }).forEachChild;
+  if (forEachChild !== undefined) {
+    const found = forEachChild((child) => nodeContainsReferenceToNameWorker(child, name, seen) || undefined);
+    if (found === true) return true;
+  }
+  return false;
 }

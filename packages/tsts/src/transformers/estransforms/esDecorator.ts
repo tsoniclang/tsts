@@ -20,6 +20,9 @@
 import { Transformer, type TransformOptions, type NodeVisitor } from "../transformer.js";
 import {
   Kind, isTrue, getSubtreeFacts, hasStaticModifier,
+  getNodeName, nodeText, isIdentifier, isPrivateIdentifier, isStringLiteral,
+  isMethodDeclaration, isGetAccessorDeclaration, isSetAccessorDeclaration,
+  isAutoAccessorPropertyDeclaration, isClassLikeDeclaration,
 } from "../../ast/index.js";
 import { isClassStaticBlockDeclaration, isPropertyDeclaration } from "../../ast/index.js";
 import { getEmitScriptTarget, getUseDefineForClassFields } from "../../core/compilerOptions.js";
@@ -117,6 +120,44 @@ export interface DecoratorContext {
   isStatic: boolean;
   isPrivate: boolean;
   metadata: Record<string, unknown>;
+}
+
+export interface DecoratedMemberFacts {
+  readonly member: AstNode;
+  readonly decorators: readonly AstNode[];
+  readonly contextKind: ESDecoratorKind;
+  readonly isStatic: boolean;
+  readonly isPrivate: boolean;
+  readonly hasComputedName: boolean;
+  readonly needsDescriptor: boolean;
+  readonly needsInitializers: boolean;
+  readonly needsExtraInitializers: boolean;
+}
+
+export interface DecoratedClassFacts {
+  readonly classDecorators: readonly AstNode[];
+  readonly memberFacts: readonly DecoratedMemberFacts[];
+  readonly hasStaticPrivateClassElements: boolean;
+  readonly hasStaticInitializers: boolean;
+  readonly hasNonAmbientInstanceFields: boolean;
+  readonly needsClassThis: boolean;
+  readonly needsClassSuper: boolean;
+  readonly needsMetadata: boolean;
+}
+
+export interface DecoratorStatementBuckets {
+  readonly staticNonField: readonly Statement[];
+  readonly nonStaticNonField: readonly Statement[];
+  readonly staticField: readonly Statement[];
+  readonly nonStaticField: readonly Statement[];
+}
+
+export interface DecoratorEvaluationPlan {
+  readonly classInfo: ClassInfo;
+  readonly facts: DecoratedClassFacts;
+  readonly leadingStatements: readonly Statement[];
+  readonly memberStatements: DecoratorStatementBuckets;
+  readonly trailingStatements: readonly Statement[];
 }
 
 // ---------------------------------------------------------------------------
@@ -451,8 +492,7 @@ export class ESDecoratorTransformer extends Transformer {
   // -------------------------------------------------------------------------
 
   createHelperVariable(node: AstNode, suffix: string): IdentifierNode {
-    void node; void suffix;
-    return this.factory().newUniqueName(suffix);
+    return this.factory().newUniqueName(`${getHelperVariableName(this.emitContext(), node)}_${suffix}`);
   }
 
   createLet(name: IdentifierNode, initializer: Expression | undefined): Statement {
@@ -460,6 +500,7 @@ export class ESDecoratorTransformer extends Transformer {
   }
 
   createClassInfo(node: AstNode): ClassInfo {
+    const facts = this.collectDecoratedClassFacts(node);
     return {
       class: node,
       classDecoratorsName: undefined,
@@ -467,7 +508,7 @@ export class ESDecoratorTransformer extends Transformer {
       classExtraInitializersName: undefined,
       classThis: undefined,
       classSuper: undefined,
-      metadataReference: undefined,
+      metadataReference: facts.needsMetadata ? this.factory().newUniqueName("_metadata") : undefined,
       memberInfos: new Map(),
       instanceMethodExtraInitializersName: undefined,
       staticMethodExtraInitializersName: undefined,
@@ -475,12 +516,176 @@ export class ESDecoratorTransformer extends Transformer {
       nonStaticNonFieldDecorationStatements: [],
       staticFieldDecorationStatements: [],
       nonStaticFieldDecorationStatements: [],
-      hasStaticInitializers: false,
-      hasNonAmbientInstanceFields: false,
-      hasStaticPrivateClassElements: false,
+      hasStaticInitializers: facts.hasStaticInitializers,
+      hasNonAmbientInstanceFields: facts.hasNonAmbientInstanceFields,
+      hasStaticPrivateClassElements: facts.hasStaticPrivateClassElements,
       pendingStaticInitializers: [],
       pendingInstanceInitializers: [],
     };
+  }
+
+  collectDecoratedClassFacts(node: AstNode): DecoratedClassFacts {
+    const classDecorators = decoratorsOf(node);
+    const memberFacts = this.collectDecoratedMemberFacts(node);
+    const members = classMemberArrayLocal(node);
+    const hasStaticPrivateClassElements = members.some((member) =>
+      this.isPrivateOrAutoAccessorStaticClassElement(member));
+    const hasStaticInitializers = members.some((member) =>
+      member.kind === Kind.ClassStaticBlockDeclaration
+      || (isPropertyDeclaration(member) && hasStaticModifier(member)
+        && (propertyInitializerOfLocal(member) !== undefined || decoratorsOf(member).length > 0)));
+    const hasNonAmbientInstanceFields = members.some((member) =>
+      isPropertyDeclaration(member) && !hasStaticModifier(member) && !hasAmbientModifierLocal(member));
+    const needsClassThis = classDecorators.length > 0
+      || memberFacts.some((fact) => fact.isStatic && (fact.needsDescriptor || fact.needsInitializers));
+    const needsClassSuper = classHasExtendsClauseLocal(node)
+      && memberFacts.some((fact) => fact.isStatic || fact.hasComputedName);
+    const needsMetadata = classDecorators.length > 0 || memberFacts.length > 0;
+    return {
+      classDecorators,
+      memberFacts,
+      hasStaticPrivateClassElements,
+      hasStaticInitializers,
+      hasNonAmbientInstanceFields,
+      needsClassThis,
+      needsClassSuper,
+      needsMetadata,
+    };
+  }
+
+  collectDecoratedMemberFacts(node: AstNode): DecoratedMemberFacts[] {
+    const facts: DecoratedMemberFacts[] = [];
+    for (const member of classMemberArrayLocal(node)) {
+      const decorators = decoratorsOf(member);
+      if (decorators.length === 0 && !classElementNameIsComputed(member)) continue;
+      facts.push({
+        member,
+        decorators,
+        contextKind: this.getDecoratorContextKind(member),
+        isStatic: hasStaticModifier(member),
+        isPrivate: this.memberHasPrivateName(member),
+        hasComputedName: classElementNameIsComputed(member),
+        needsDescriptor: this.memberNeedsDescriptor(member),
+        needsInitializers: this.memberNeedsInitializers(member),
+        needsExtraInitializers: this.memberNeedsExtraInitializers(member),
+      });
+    }
+    return facts;
+  }
+
+  getDecoratorContextKind(member: AstNode): ESDecoratorKind {
+    if (isGetAccessorDeclaration(member)) return "getter";
+    if (isSetAccessorDeclaration(member)) return "setter";
+    if (isAutoAccessorPropertyDeclaration(member)) return "accessor";
+    if (isPropertyDeclaration(member)) return "field";
+    if (isMethodDeclaration(member)) return "method";
+    return "field";
+  }
+
+  memberHasPrivateName(member: AstNode): boolean {
+    const name = getNodeName(member);
+    return name !== undefined && isPrivateIdentifier(name);
+  }
+
+  memberNeedsDescriptor(member: AstNode): boolean {
+    return isMethodDeclaration(member)
+      || isGetAccessorDeclaration(member)
+      || isSetAccessorDeclaration(member)
+      || isAutoAccessorPropertyDeclaration(member);
+  }
+
+  memberNeedsInitializers(member: AstNode): boolean {
+    return isPropertyDeclaration(member) || isAutoAccessorPropertyDeclaration(member);
+  }
+
+  memberNeedsExtraInitializers(member: AstNode): boolean {
+    return this.memberNeedsDescriptor(member) || this.memberNeedsInitializers(member);
+  }
+
+  isPrivateOrAutoAccessorStaticClassElement(member: AstNode): boolean {
+    if (!hasStaticModifier(member)) return false;
+    if (isAutoAccessorPropertyDeclaration(member)) return true;
+    return this.memberHasPrivateName(member);
+  }
+
+  ensureClassDecorationState(ci: ClassInfo, facts: DecoratedClassFacts): void {
+    if (facts.classDecorators.length === 0) return;
+    if (ci.classDecoratorsName === undefined) {
+      ci.classDecoratorsName = this.factory().newUniqueName("_classDecorators");
+    }
+    if (ci.classDescriptorName === undefined) {
+      ci.classDescriptorName = this.factory().newUniqueName("_classDescriptor");
+    }
+    if (ci.classExtraInitializersName === undefined) {
+      ci.classExtraInitializersName = this.factory().newUniqueName("_classExtraInitializers");
+    }
+    if (ci.classThis === undefined) {
+      ci.classThis = this.factory().newUniqueName("_classThis");
+    }
+  }
+
+  ensureMemberInfo(ci: ClassInfo, fact: DecoratedMemberFacts): MemberInfo {
+    const existing = ci.memberInfos.get(fact.member);
+    if (existing !== undefined) return existing;
+    const memberInfo = this.createMemberInfo(fact.member, fact);
+    ci.memberInfos.set(fact.member, memberInfo);
+    return memberInfo;
+  }
+
+  createMemberInfo(member: AstNode, fact: DecoratedMemberFacts): MemberInfo {
+    return {
+      memberDecoratorsName: fact.decorators.length > 0 ? this.createHelperVariable(member, "decorators") : undefined,
+      memberInitializersName: fact.needsInitializers ? this.createHelperVariable(member, "initializers") : undefined,
+      memberExtraInitializersName: fact.needsExtraInitializers ? this.createHelperVariable(member, "extraInitializers") : undefined,
+      memberDescriptorName: fact.needsDescriptor ? this.createHelperVariable(member, "descriptor") : undefined,
+    };
+  }
+
+  createDecoratorEvaluationPlan(node: AstNode): DecoratorEvaluationPlan {
+    const facts = this.collectDecoratedClassFacts(node);
+    const classInfo = this.createClassInfo(node);
+    this.ensureClassDecorationState(classInfo, facts);
+    const leadingStatements: Statement[] = [];
+    const trailingStatements: Statement[] = [];
+    const buckets: DecoratorStatementBuckets = {
+      staticNonField: classInfo.staticNonFieldDecorationStatements,
+      nonStaticNonField: classInfo.nonStaticNonFieldDecorationStatements,
+      staticField: classInfo.staticFieldDecorationStatements,
+      nonStaticField: classInfo.nonStaticFieldDecorationStatements,
+    };
+    for (const fact of facts.memberFacts) {
+      const memberInfo = this.ensureMemberInfo(classInfo, fact);
+      const decorators = this.transformAllDecoratorsOfDeclaration(fact.decorators);
+      if (memberInfo.memberDecoratorsName !== undefined && decorators.length > 0) {
+        leadingStatements.push(this.createLet(
+          memberInfo.memberDecoratorsName,
+          this.factory().newArrayLiteralExpression(this.factory().newNodeList(decorators), false) as Expression,
+        ));
+      }
+      if (memberInfo.memberInitializersName !== undefined) {
+        leadingStatements.push(this.createLet(
+          memberInfo.memberInitializersName,
+          this.factory().newArrayLiteralExpression(this.factory().newNodeList([]), false) as Expression,
+        ));
+      }
+      if (memberInfo.memberExtraInitializersName !== undefined) {
+        leadingStatements.push(this.createLet(
+          memberInfo.memberExtraInitializersName,
+          this.factory().newArrayLiteralExpression(this.factory().newNodeList([]), false) as Expression,
+        ));
+      }
+      const statement = this.createDecoratorApplicationStatement(classInfo, fact, memberInfo);
+      this.appendDecorationStatement(classInfo, fact.member, statement);
+    }
+    if (classInfo.classExtraInitializersName !== undefined && classInfo.classThis !== undefined) {
+      const runInitializers = (this.factory() as unknown as {
+        newRunInitializersHelper(receiver: Expression, initializers: Expression, value: Expression | undefined): Expression;
+      }).newRunInitializersHelper;
+      trailingStatements.push(this.factory().newExpressionStatement(
+        runInitializers(classInfo.classThis, classInfo.classExtraInitializersName, undefined),
+      ) as Statement);
+    }
+    return { classInfo, facts, leadingStatements, memberStatements: buckets, trailingStatements };
   }
 
   transformClassLike(node: AstNode): Expression {
@@ -490,8 +695,29 @@ export class ESDecoratorTransformer extends Transformer {
   }
 
   emitMemberInfoDeclarations(ci: ClassInfo, isStatic: boolean): Statement[] {
-    void ci; void isStatic;
-    return [];
+    const statements: Statement[] = [];
+    for (const [member, info] of ci.memberInfos) {
+      if (hasStaticModifier(member) !== isStatic) continue;
+      if (info.memberDecoratorsName !== undefined) {
+        statements.push(this.createLet(info.memberDecoratorsName, undefined));
+      }
+      if (info.memberInitializersName !== undefined) {
+        statements.push(this.createLet(
+          info.memberInitializersName,
+          this.factory().newArrayLiteralExpression(this.factory().newNodeList([]), false) as Expression,
+        ));
+      }
+      if (info.memberExtraInitializersName !== undefined) {
+        statements.push(this.createLet(
+          info.memberExtraInitializersName,
+          this.factory().newArrayLiteralExpression(this.factory().newNodeList([]), false) as Expression,
+        ));
+      }
+      if (info.memberDescriptorName !== undefined) {
+        statements.push(this.createLet(info.memberDescriptorName, undefined));
+      }
+    }
+    return statements;
   }
 
   // -------------------------------------------------------------------------
@@ -542,7 +768,138 @@ export class ESDecoratorTransformer extends Transformer {
   }
 
   appendDecorationStatement(ci: ClassInfo, member: AstNode, stmt: Statement): void {
-    void ci; void member; void stmt;
+    const fact = this.createDecoratedMemberFact(member);
+    if (fact === undefined) return;
+    if (fact.isStatic && fact.contextKind !== "field") {
+      ci.staticNonFieldDecorationStatements.push(stmt);
+    } else if (!fact.isStatic && fact.contextKind !== "field") {
+      ci.nonStaticNonFieldDecorationStatements.push(stmt);
+    } else if (fact.isStatic) {
+      ci.staticFieldDecorationStatements.push(stmt);
+    } else {
+      ci.nonStaticFieldDecorationStatements.push(stmt);
+    }
+  }
+
+  createDecoratedMemberFact(member: AstNode): DecoratedMemberFacts | undefined {
+    const decorators = decoratorsOf(member);
+    if (decorators.length === 0 && !classElementNameIsComputed(member)) return undefined;
+    return {
+      member,
+      decorators,
+      contextKind: this.getDecoratorContextKind(member),
+      isStatic: hasStaticModifier(member),
+      isPrivate: this.memberHasPrivateName(member),
+      hasComputedName: classElementNameIsComputed(member),
+      needsDescriptor: this.memberNeedsDescriptor(member),
+      needsInitializers: this.memberNeedsInitializers(member),
+      needsExtraInitializers: this.memberNeedsExtraInitializers(member),
+    };
+  }
+
+  createDecoratorApplicationStatement(
+    ci: ClassInfo,
+    fact: DecoratedMemberFacts,
+    info: MemberInfo,
+  ): Statement {
+    const decoratorsName = info.memberDecoratorsName
+      ?? this.factory().newArrayLiteralExpression(this.factory().newNodeList([]), false) as Expression;
+    const descriptor = info.memberDescriptorName
+      ?? this.createDescriptorPlaceholder(fact.member, fact);
+    const context = this.createDecoratorContextObject(ci, fact);
+    const initializers = info.memberInitializersName
+      ?? this.factory().newToken(Kind.NullKeyword) as unknown as Expression;
+    const extraInitializers = info.memberExtraInitializersName
+      ?? this.factory().newToken(Kind.NullKeyword) as unknown as Expression;
+    const target = fact.isStatic
+      ? ci.classThis ?? this.factory().newThisExpression()
+      : this.factory().newToken(Kind.NullKeyword);
+    const esDecorate = (this.factory() as unknown as {
+      newESDecorateHelper(
+        target: Expression,
+        descriptor: Expression,
+        decorators: Expression,
+        context: Expression,
+        initializers: Expression,
+        extraInitializers: Expression,
+      ): Expression;
+    }).newESDecorateHelper;
+    const call = esDecorate(
+      target as Expression,
+      descriptor as Expression,
+      decoratorsName,
+      context,
+      initializers,
+      extraInitializers,
+    );
+    return this.factory().newExpressionStatement(call) as Statement;
+  }
+
+  createDescriptorPlaceholder(member: AstNode, fact: DecoratedMemberFacts): Expression {
+    if (fact.contextKind === "field") {
+      return this.factory().newToken(Kind.NullKeyword) as unknown as Expression;
+    }
+    const name = getNodeName(member);
+    const value = name !== undefined
+      ? this.createMemberNameExpression(name)
+      : this.factory().newStringLiteral("", 0) as Expression;
+    return this.factory().newObjectLiteralExpression(this.factory().newNodeList([
+      this.factory().newPropertyAssignment(undefined, this.factory().newIdentifier("value"), undefined, undefined, value),
+    ]), false) as Expression;
+  }
+
+  createDecoratorContextObject(ci: ClassInfo, fact: DecoratedMemberFacts): Expression {
+    const properties: AstNode[] = [
+      this.factory().newPropertyAssignment(
+        undefined,
+        this.factory().newIdentifier("kind"),
+        undefined,
+        undefined,
+        this.factory().newStringLiteral(fact.contextKind, 0),
+      ),
+      this.factory().newPropertyAssignment(
+        undefined,
+        this.factory().newIdentifier("name"),
+        undefined,
+        undefined,
+        this.createMemberNameExpression(getNodeName(fact.member)),
+      ),
+      this.factory().newPropertyAssignment(
+        undefined,
+        this.factory().newIdentifier("static"),
+        undefined,
+        undefined,
+        fact.isStatic ? this.factory().newTrueExpression() : this.factory().newFalseExpression(),
+      ),
+      this.factory().newPropertyAssignment(
+        undefined,
+        this.factory().newIdentifier("private"),
+        undefined,
+        undefined,
+        fact.isPrivate ? this.factory().newTrueExpression() : this.factory().newFalseExpression(),
+      ),
+    ];
+    if (ci.metadataReference !== undefined) {
+      properties.push(this.factory().newPropertyAssignment(
+        undefined,
+        this.factory().newIdentifier("metadata"),
+        undefined,
+        undefined,
+        ci.metadataReference,
+      ));
+    }
+    return this.factory().newObjectLiteralExpression(this.factory().newNodeList(properties), true) as Expression;
+  }
+
+  createMemberNameExpression(name: AstNode | undefined): Expression {
+    if (name === undefined) return this.factory().newStringLiteral("", 0) as Expression;
+    if (isComputedPropertyNameLocal(name)) {
+      return expressionOfNodeLocal(name) ?? this.factory().newStringLiteral("", 0) as Expression;
+    }
+    if (isIdentifier(name) || isPrivateIdentifier(name) || isStringLiteral(name)) {
+      return this.factory().newStringLiteral(nodeText(name).replace(/^#/, ""), 0) as Expression;
+    }
+    return name as unknown as Expression;
   }
 
   visitMethodDeclaration(node: AstNode): AstNode {
@@ -703,8 +1060,9 @@ export class ESDecoratorTransformer extends Transformer {
   }
 
   transformDecorator(decorator: AstNode): Expression {
-    void decorator;
-    return this.factory().newIdentifier("") as unknown as Expression;
+    const expression = expressionOfNodeLocal(decorator);
+    if (expression !== undefined) return this.visitor().visitNode(expression) as Expression;
+    return this.visitor().visitNode(decorator) as Expression;
   }
 
   createCallBinding(expression: Expression): { thisArg: Expression; target: Expression } {
@@ -801,9 +1159,135 @@ export function newESDecoratorTransformer(opts: TransformOptions): Transformer |
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
+export function getHelperVariableName(_emitContext: unknown, node: AstNode): string {
+  const name = getNodeName(node);
+  let declarationName = "";
+  if (name !== undefined && isIdentifier(name)) {
+    declarationName = nodeText(name);
+  } else if (name !== undefined && isPrivateIdentifier(name)) {
+    declarationName = nodeText(name).replace(/^#/, "");
+  } else if (name !== undefined && isStringLiteral(name)) {
+    declarationName = nodeText(name);
+  } else if (isClassLikeDeclaration(node)) {
+    declarationName = "class";
+  } else {
+    declarationName = "member";
+  }
+  if (isGetAccessorDeclaration(node)) declarationName = `get_${declarationName}`;
+  if (isSetAccessorDeclaration(node)) declarationName = `set_${declarationName}`;
+  if (name !== undefined && isPrivateIdentifier(name)) declarationName = `private_${declarationName}`;
+  if (hasStaticModifier(node)) declarationName = `static_${declarationName}`;
+  return `_${sanitizeHelperVariableName(declarationName)}`;
+}
+
+export function isDecoratedClassLike(node: AstNode): boolean {
+  return decoratorsOf(node).length > 0
+    || classMemberArrayLocal(node).some((member) => decoratorsOf(member).length > 0);
+}
+
+export function isAnonymousClassNeedingAssignedName(node: AstNode): boolean {
+  return isClassLikeDeclaration(node)
+    && getNodeName(node) === undefined
+    && isDecoratedClassLike(node);
+}
+
+export function canIgnoreEmptyStringLiteralInAssignedName(node: AstNode): boolean {
+  return isClassLikeDeclaration(node) && decoratorsOf(node).length === 0;
+}
+
+export function injectClassThisAssignmentIfMissing(
+  _emitContext: unknown,
+  _factory: unknown,
+  node: AstNode,
+  classThis: IdentifierNode,
+): AstNode {
+  if (classHasClassThisAssignmentLocal(node, classThis)) return node;
+  return node;
+}
+
+function sanitizeHelperVariableName(text: string): string {
+  const sanitized = text.replace(/[^A-Za-z0-9_$]/g, "_");
+  if (sanitized.length === 0) return "member";
+  return /^[A-Za-z_$]/.test(sanitized) ? sanitized : `_${sanitized}`;
+}
+
+function classMemberArrayLocal(node: AstNode): readonly AstNode[] {
+  const members = (node as unknown as { members?: readonly AstNode[] | { nodes?: readonly AstNode[] } }).members;
+  if (members === undefined) return [];
+  return (members as { nodes?: readonly AstNode[] }).nodes ?? members as readonly AstNode[];
+}
+
+function decoratorsOf(node: AstNode): readonly AstNode[] {
+  const decorators = (node as unknown as { decorators?: readonly AstNode[] | { nodes?: readonly AstNode[] } }).decorators;
+  if (decorators !== undefined) {
+    return (decorators as { nodes?: readonly AstNode[] }).nodes ?? decorators as readonly AstNode[];
+  }
+  const modifiers = (node as unknown as { modifiers?: readonly AstNode[] | { nodes?: readonly AstNode[] } }).modifiers;
+  const modifierArray = modifiers === undefined
+    ? []
+    : ((modifiers as { nodes?: readonly AstNode[] }).nodes ?? modifiers as readonly AstNode[]);
+  return modifierArray.filter((modifier) => modifier.kind === Kind.Decorator);
+}
+
+function hasAmbientModifierLocal(node: AstNode): boolean {
+  const modifiers = (node as unknown as { modifiers?: readonly AstNode[] | { nodes?: readonly AstNode[] } }).modifiers;
+  const modifierArray = modifiers === undefined
+    ? []
+    : ((modifiers as { nodes?: readonly AstNode[] }).nodes ?? modifiers as readonly AstNode[]);
+  return modifierArray.some((modifier) => modifier.kind === Kind.DeclareKeyword);
+}
+
+function classElementNameIsComputed(node: AstNode): boolean {
+  const name = getNodeName(node);
+  return name !== undefined && isComputedPropertyNameLocal(name);
+}
+
+function propertyInitializerOfLocal(node: AstNode): Expression | undefined {
+  return (node as unknown as { initializer?: Expression }).initializer;
+}
+
+function expressionOfNodeLocal(node: AstNode | undefined): Expression | undefined {
+  return (node as unknown as { expression?: Expression } | undefined)?.expression;
+}
+
+function isComputedPropertyNameLocal(node: AstNode): boolean {
+  return node.kind === Kind.ComputedPropertyName;
+}
+
+function classHasExtendsClauseLocal(node: AstNode): boolean {
+  const heritageClauses = (node as unknown as { heritageClauses?: readonly AstNode[] | { nodes?: readonly AstNode[] } }).heritageClauses;
+  const clauses = heritageClauses === undefined
+    ? []
+    : ((heritageClauses as { nodes?: readonly AstNode[] }).nodes ?? heritageClauses as readonly AstNode[]);
+  return clauses.some((clause) => {
+    const token = (clause as unknown as { token?: number }).token;
+    return token === Kind.ExtendsKeyword || token === undefined;
+  });
+}
+
+function classHasClassThisAssignmentLocal(node: AstNode, classThis: IdentifierNode): boolean {
+  const targetName = nodeText(classThis as unknown as AstNode);
+  return nodeContainsIdentifierLocal(node, targetName);
+}
+
+function nodeContainsIdentifierLocal(node: AstNode, name: string): boolean {
+  const seen = new Set<AstNode>();
+  return nodeContainsIdentifierWorker(node, name, seen);
+}
+
+function nodeContainsIdentifierWorker(node: AstNode | undefined, name: string, seen: Set<AstNode>): boolean {
+  if (node === undefined || seen.has(node)) return false;
+  seen.add(node);
+  if (node.kind === Kind.Identifier && nodeText(node) === name) return true;
+  const forEachChild = (node as unknown as {
+    forEachChild?: (visitor: (child: AstNode) => boolean | undefined) => boolean | undefined;
+  }).forEachChild;
+  if (forEachChild === undefined) return false;
+  return forEachChild((child) => nodeContainsIdentifierWorker(child, name, seen) || undefined) === true;
+}
+
 interface CompilerOptions {
   experimentalDecorators?: unknown;
   readonly _opts?: unknown;
 }
 // NodeVisitor type comes from transformer.ts via the Transformer base.
-
