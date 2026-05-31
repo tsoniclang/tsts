@@ -93,6 +93,12 @@ export class SemverParseError extends Error {
   }
 }
 
+export interface VersionParseResult {
+  readonly version: Version;
+  readonly ok: boolean;
+  readonly error?: SemverParseError;
+}
+
 /**
  * Parse a version string into a Version, throwing SemverParseError on
  * invalid input. Allows partial X or X.Y forms (missing fields default
@@ -133,6 +139,35 @@ export function tryParseVersion(text: string): Version {
 export function mustParse(text: string): Version {
   return tryParseVersion(text);
 }
+
+export function tryParseVersionResult(text: string): VersionParseResult {
+  try {
+    return { version: tryParseVersion(text), ok: true };
+  } catch (error) {
+    if (error instanceof SemverParseError) {
+      return { version: new Version(0), ok: false, error };
+    }
+    throw error;
+  }
+}
+
+export function compareVersions(left: Version | undefined, right: Version | undefined): int {
+  if (left === right) return 0;
+  if (left === undefined) return -1;
+  if (right === undefined) return 1;
+  return left.compare(right);
+}
+
+export function comparePrereleaseParts(left: readonly string[], right: readonly string[]): int {
+  return comparePrereleaseIdentifiers(left, right);
+}
+
+export function comparePrereleasePart(left: string, right: string): int {
+  return comparePrereleaseIdentifier(left, right);
+}
+
+export const TryParseVersion = tryParseVersionResult;
+export const MustParse = mustParse;
 
 function isUint32Range(value: number): value is int {
   return Number.isInteger(value) && value >= 0 && value <= 0x7FFF_FFFF;

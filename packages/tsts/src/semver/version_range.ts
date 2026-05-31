@@ -58,6 +58,29 @@ export class VersionRange {
   }
 }
 
+export interface VersionRangeParseResult {
+  readonly range: VersionRange;
+  readonly ok: boolean;
+}
+
+export function tryParseVersionRangeResult(text: string): VersionRangeParseResult {
+  const range = tryParseVersionRange(text);
+  if (range === undefined) {
+    return { range: new VersionRange([]), ok: false };
+  }
+  return { range, ok: true };
+}
+
+export function testVersionRange(range: VersionRange, version: Version): boolean {
+  return range.test(version);
+}
+
+export function formatVersionRange(range: VersionRange): string {
+  return range.toString();
+}
+
+export const TryParseVersionRange = tryParseVersionRangeResult;
+
 function formatAlternative(comparators: readonly VersionComparator[]): string {
   return comparators.map(formatComparator).join(" ");
 }
