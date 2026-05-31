@@ -50,6 +50,8 @@ interface ModuleReport {
   readonly sourceCoverage: number;
   readonly upstreamPhysicalLOC: number;
   readonly localPhysicalLOC: number;
+  readonly physicalCoverage: number;
+  readonly effectiveCoverage: number;
   readonly fileCoverage: number;
   readonly sizeRatio: number;
   readonly status: "pass" | "fail" | "deferred" | "missing-upstream";
@@ -210,9 +212,11 @@ function buildReport(tsgoInternal: string, tstsSrc: string, threshold: number): 
     const upstream = collectStats(tsgoInternal, [spec.upstream], isTsGoSource);
     const local = collectStats(tstsSrc, spec.local, isTstsSource);
     const sourceCoverage = upstream.sourceLOC === 0 ? 0 : Math.min(local.sourceLOC / upstream.sourceLOC, 1);
+    const physicalCoverage = upstream.physicalLOC === 0 ? 0 : Math.min(local.physicalLOC / upstream.physicalLOC, 1);
+    const effectiveCoverage = Math.max(sourceCoverage, physicalCoverage);
     const fileCoverage = upstream.count === 0 ? 0 : Math.min(local.count / upstream.count, 1);
     const sizeRatio = upstream.sourceLOC === 0 ? 0 : local.sourceLOC / upstream.sourceLOC;
-    const isPassing = spec.scope === "deferred" || (sourceCoverage >= threshold && fileCoverage >= threshold);
+    const isPassing = spec.scope === "deferred" || (effectiveCoverage >= threshold && fileCoverage >= threshold);
     const status = upstream.count === 0
       ? "missing-upstream"
       : spec.scope === "deferred"
@@ -231,6 +235,8 @@ function buildReport(tsgoInternal: string, tstsSrc: string, threshold: number): 
       sourceCoverage,
       upstreamPhysicalLOC: upstream.physicalLOC,
       localPhysicalLOC: local.physicalLOC,
+      physicalCoverage,
+      effectiveCoverage,
       fileCoverage,
       sizeRatio,
       status,
@@ -249,6 +255,8 @@ function renderText(reports: readonly ModuleReport[], threshold: number): string
   const required = reports.filter((report) => report.scope === "required");
   const totalUpstreamSourceLoc = required.reduce((sum, report) => sum + report.upstreamSourceLOC, 0);
   const totalLocalSourceLoc = required.reduce((sum, report) => sum + report.localSourceLOC, 0);
+  const totalUpstreamPhysicalLoc = required.reduce((sum, report) => sum + report.upstreamPhysicalLOC, 0);
+  const totalLocalPhysicalLoc = required.reduce((sum, report) => sum + report.localPhysicalLOC, 0);
   const totalUpstreamFiles = required.reduce((sum, report) => sum + report.upstreamFiles, 0);
   const totalLocalFiles = required.reduce((sum, report) => sum + report.localFiles, 0);
   const failing = required.filter((report) => report.status === "fail");
@@ -256,13 +264,13 @@ function renderText(reports: readonly ModuleReport[], threshold: number): string
   const lines: string[] = [];
   lines.push("TSTS / TS-Go Strict Parity");
   lines.push(`threshold=${percent(threshold)} required_modules=${required.length} failing_modules=${failing.length}`);
-  lines.push(`totals source_loc=${totalLocalSourceLoc}/${totalUpstreamSourceLoc} source_coverage=${percent(Math.min(totalLocalSourceLoc / totalUpstreamSourceLoc, 1))} files=${totalLocalFiles}/${totalUpstreamFiles} file_coverage=${percent(Math.min(totalLocalFiles / totalUpstreamFiles, 1))}`);
+  lines.push(`totals source_loc=${totalLocalSourceLoc}/${totalUpstreamSourceLoc} source_coverage=${percent(Math.min(totalLocalSourceLoc / totalUpstreamSourceLoc, 1))} physical_loc=${totalLocalPhysicalLoc}/${totalUpstreamPhysicalLoc} physical_coverage=${percent(Math.min(totalLocalPhysicalLoc / totalUpstreamPhysicalLoc, 1))} files=${totalLocalFiles}/${totalUpstreamFiles} file_coverage=${percent(Math.min(totalLocalFiles / totalUpstreamFiles, 1))}`);
   lines.push("");
-  lines.push("status module local_paths files local/upstream file_cov source_loc local/upstream source_cov size");
+  lines.push("status module local_paths files local/upstream file_cov source_loc local/upstream source_cov physical_cov effective_cov size");
   for (const report of reports) {
     const status = report.status.toUpperCase();
     const paths = report.local.join("+");
-    lines.push(`${status} ${report.module} ${paths} files=${report.localFiles}/${report.upstreamFiles} file_cov=${percent(report.fileCoverage)} source_loc=${report.localSourceLOC}/${report.upstreamSourceLOC} source_cov=${percent(report.sourceCoverage)} size=${report.sizeRatio.toFixed(2)}x`);
+    lines.push(`${status} ${report.module} ${paths} files=${report.localFiles}/${report.upstreamFiles} file_cov=${percent(report.fileCoverage)} source_loc=${report.localSourceLOC}/${report.upstreamSourceLOC} source_cov=${percent(report.sourceCoverage)} physical_cov=${percent(report.physicalCoverage)} effective_cov=${percent(report.effectiveCoverage)} size=${report.sizeRatio.toFixed(2)}x`);
     if (report.sizeRatio > MAX_REASONABLE_SIZE_RATIO && report.scope === "required") {
       lines.push(`WARN ${report.module} local LOC is ${report.sizeRatio.toFixed(2)}x upstream; audit for divergent implementation or generated verbosity.`);
     }

@@ -16,8 +16,16 @@ export class SyncMap<K, V> {
     return { value: this.map.get(key), ok: true };
   }
 
+  Load(key: K): { value: V | undefined; ok: boolean } {
+    return this.load(key);
+  }
+
   store(key: K, value: V): void {
     this.map.set(key, value);
+  }
+
+  Store(key: K, value: V): void {
+    this.store(key, value);
   }
 
   loadOrStore(key: K, value: V): { actual: V; loaded: boolean } {
@@ -28,12 +36,24 @@ export class SyncMap<K, V> {
     return { actual: value, loaded: false };
   }
 
+  LoadOrStore(key: K, value: V): { actual: V; loaded: boolean } {
+    return this.loadOrStore(key, value);
+  }
+
   delete(key: K): void {
     this.map.delete(key);
   }
 
+  Delete(key: K): void {
+    this.delete(key);
+  }
+
   clear(): void {
     this.map.clear();
+  }
+
+  Clear(): void {
+    this.clear();
   }
 
   range(callback: (key: K, value: V) => boolean): void {
@@ -42,16 +62,32 @@ export class SyncMap<K, V> {
     }
   }
 
+  Range(callback: (key: K, value: V) => boolean): void {
+    this.range(callback);
+  }
+
   size(): number {
     return this.map.size;
+  }
+
+  Size(): number {
+    return this.size();
   }
 
   toMap(): ReadonlyMap<K, V> {
     return new Map(this.map);
   }
 
+  ToMap(): ReadonlyMap<K, V> {
+    return this.toMap();
+  }
+
   *keys(): IterableIterator<K> {
     yield* this.map.keys();
+  }
+
+  Keys(): IterableIterator<K> {
+    return this.keys();
   }
 
   clone(): SyncMap<K, V> {
@@ -60,5 +96,9 @@ export class SyncMap<K, V> {
       clone.store(key, value);
     }
     return clone;
+  }
+
+  Clone(): SyncMap<K, V> {
+    return this.clone();
   }
 }

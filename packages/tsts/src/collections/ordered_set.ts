@@ -9,6 +9,10 @@
 export class OrderedSet<T> {
   private readonly set = new Set<T>();
 
+  static withSizeHint<T>(_hint: number): OrderedSet<T> {
+    return new OrderedSet<T>();
+  }
+
   add(value: T): boolean {
     if (this.set.has(value)) return false;
     this.set.add(value);
@@ -48,4 +52,8 @@ export class OrderedSet<T> {
     for (const v of this.set) s.add(v);
     return s;
   }
+}
+
+export function newOrderedSetWithSizeHint<T>(hint: number): OrderedSet<T> {
+  return OrderedSet.withSizeHint<T>(hint);
 }

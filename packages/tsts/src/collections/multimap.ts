@@ -79,3 +79,11 @@ export class MultiMap<K, V> {
     this.m.clear();
   }
 }
+
+export function newMultiMapWithSizeHint<K, V>(hint: number): MultiMap<K, V> {
+  return new MultiMap<K, V>(hint);
+}
+
+export function groupBy<K, V>(items: Iterable<V>, groupId: (item: V) => K): MultiMap<K, V> {
+  return MultiMap.groupBy(items, groupId);
+}
