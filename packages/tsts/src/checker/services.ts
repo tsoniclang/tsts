@@ -8,7 +8,7 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol, SymbolTable } from "../ast/index.js";
-import { NodeFlags, SymbolFlags } from "../ast/index.js";
+import { Kind, NodeFlags, SymbolFlags } from "../ast/index.js";
 import type { Type, Signature, ObjectType, UnionOrIntersectionType, IndexInfo } from "./types.js";
 import { ObjectFlags, SignatureKind, TypeFlags, getTypeOfSymbol } from "./types.js";
 
@@ -101,6 +101,31 @@ export class CheckerServices {
     if (parent === undefined) return undefined;
     const map = (parent as unknown as { contextualTypes?: Map<AstNode, Type> }).contextualTypes;
     return map?.get(node);
+  }
+  isValidPropertyAccess(node: AstNode, propertyName: string): boolean {
+    const receiver = propertyAccessReceiver(node)
+      ?? (node.kind === Kind.QualifiedName ? (node as { readonly left?: AstNode }).left : undefined)
+      ?? (node.kind === Kind.ImportType ? node : undefined);
+    if (receiver === undefined) return false;
+    const receiverType = this.getTypeAtLocation(receiver);
+    return receiverType !== undefined && this.isValidPropertyAccessWithType(node, isSuperPropertyAccess(node), propertyName, receiverType);
+  }
+  isValidPropertyAccessWithType(node: AstNode, isSuper: boolean, propertyName: string, type: Type): boolean {
+    void node; void isSuper;
+    if ((type.flags & TypeFlags.Any) !== 0) return true;
+    return this.getPropertyOfType(type, propertyName) !== undefined;
+  }
+  isValidPropertyAccessForCompletions(node: AstNode, type: Type, property: AstSymbol): boolean {
+    return this.isValidPropertyAccessWithType(node, isSuperPropertyAccess(node), symbolName(property), type);
+  }
+  isUnknownSymbol(symbol: AstSymbol | undefined): boolean {
+    return symbolName(symbol) === "unknown";
+  }
+  isUndefinedSymbol(symbol: AstSymbol | undefined): boolean {
+    return symbolName(symbol) === "undefined";
+  }
+  isArgumentsSymbol(symbol: AstSymbol | undefined): boolean {
+    return symbolName(symbol) === "arguments";
   }
   getApparentType(t: Type): Type {
     // Apparent type unwraps type parameters to their constraint, but
@@ -214,6 +239,24 @@ export class CheckerServices {
     const named = infos.find((info) => ((info.keyType.flags & kind) !== 0));
     return (named ?? infos[0])?.valueType;
   }
+  getStringIndexType(type: Type): Type | undefined {
+    return this.getIndexTypeOfType(type, TypeFlags.StringLike);
+  }
+  getNumberIndexType(type: Type): Type | undefined {
+    return this.getIndexTypeOfType(type, TypeFlags.NumberLike);
+  }
+  getElementTypeOfArrayType(type: Type): Type | undefined {
+    return this.arrayElementType(type);
+  }
+  getCallSignatures(type: Type): readonly Signature[] {
+    return this.getCallSignaturesOfType(type);
+  }
+  getConstructSignatures(type: Type): readonly Signature[] {
+    return this.getConstructSignaturesOfType(type);
+  }
+  getApparentProperties(type: Type): readonly AstSymbol[] {
+    return this.getAugmentedPropertiesOfType(type);
+  }
   getCallSignaturesOfType(t: Type): readonly Signature[] {
     return (t.data as ObjectType | undefined)?.declaredCallSignatures
       ?? (t as unknown as { callSignatures?: readonly Signature[] }).callSignatures
@@ -298,6 +341,83 @@ export class CheckerServices {
     if (!isKnownGenericTypeName(name)) return undefined;
     const data = type.data as ObjectType | undefined;
     return (data?.resolvedTypeArguments ?? type.aliasTypeArguments)?.[0];
+  }
+  skipAlias(symbol: AstSymbol): AstSymbol {
+    return ((symbol.flags ?? 0) & SymbolFlags.Alias) !== 0
+      ? (symbol as { readonly target?: AstSymbol; readonly aliasTarget?: AstSymbol }).aliasTarget
+        ?? (symbol as { readonly target?: AstSymbol; readonly aliasTarget?: AstSymbol }).target
+        ?? symbol
+      : symbol;
+  }
+  getRootSymbols(symbol: AstSymbol): readonly AstSymbol[] {
+    const immediate = this.getImmediateRootSymbols(symbol);
+    if (immediate.length === 0) return [symbol];
+    return immediate.flatMap(root => this.getRootSymbols(root));
+  }
+  getMappedTypeSymbolOfProperty(symbol: AstSymbol): AstSymbol | undefined {
+    const containingType = (symbol as { readonly containingType?: Type }).containingType;
+    return containingType?.symbol;
+  }
+  getImmediateRootSymbols(symbol: AstSymbol): readonly AstSymbol[] {
+    const roots = (symbol as { readonly roots?: readonly AstSymbol[]; readonly syntheticOrigin?: AstSymbol }).roots;
+    if (roots !== undefined) return roots;
+    const syntheticOrigin = (symbol as { readonly roots?: readonly AstSymbol[]; readonly syntheticOrigin?: AstSymbol }).syntheticOrigin;
+    if (syntheticOrigin !== undefined) return [syntheticOrigin];
+    const target = this.tryGetTarget(symbol);
+    return target === undefined ? [] : [target];
+  }
+  tryGetTarget(symbol: AstSymbol): AstSymbol | undefined {
+    const seen = new Set<AstSymbol>();
+    let current: AstSymbol | undefined = symbol;
+    let target: AstSymbol | undefined;
+    while (current !== undefined && !seen.has(current)) {
+      seen.add(current);
+      const next: AstSymbol | undefined = (current as { readonly target?: AstSymbol; readonly exportTarget?: AstSymbol }).target
+        ?? (current as { readonly target?: AstSymbol; readonly exportTarget?: AstSymbol }).exportTarget;
+      if (next === undefined) break;
+      target = next;
+      current = next;
+    }
+    return target;
+  }
+  getExportSymbolOfSymbol(symbol: AstSymbol): AstSymbol {
+    return symbol.exportSymbol ?? symbol;
+  }
+  getExportSpecifierLocalTargetSymbol(node: AstNode): AstSymbol | undefined {
+    if (node.kind === Kind.ExportSpecifier) {
+      const propertyName = (node as { readonly propertyName?: AstNode }).propertyName;
+      return propertyName === undefined ? nodeSymbol((node as { readonly name?: AstNode }).name) : nodeSymbol(propertyName);
+    }
+    return this.getSymbolAtLocation(node);
+  }
+  getShorthandAssignmentValueSymbol(location: AstNode | undefined): AstSymbol | undefined {
+    if (location?.kind !== Kind.ShorthandPropertyAssignment) return undefined;
+    return this.getSymbolAtLocation((location as { readonly name?: AstNode }).name ?? location);
+  }
+  getSymbolsOfParameterPropertyDeclaration(parameter: AstNode, parameterName: string): readonly [AstSymbol | undefined, AstSymbol | undefined] {
+    const constructorSymbol = localsOf(parentOf(parameter))?.get(parameterName);
+    const classSymbol = membersOf(nodeSymbol(parentOf(parentOf(parameter))))?.get(parameterName);
+    return [constructorSymbol, classSymbol];
+  }
+  isDeclarationUsed(sourceFile: AstNode, identifier: AstNode, jsxElementsPresent: boolean, jsxModeNeedsExplicitImport: boolean): boolean {
+    if (jsxElementsPresent && jsxModeNeedsExplicitImport) {
+      const text = nodeText(identifier);
+      if (text === "JSX" || text === "React") return true;
+    }
+    const symbol = this.getSymbolAtLocation(identifier);
+    return symbol === undefined || this.isSymbolReferencedInFile(sourceFile, identifier, symbol);
+  }
+  isSymbolReferencedInFile(sourceFile: AstNode, definition: AstNode, symbol: AstSymbol): boolean {
+    const identifierText = nodeText(definition);
+    if (identifierText.length === 0) return false;
+    return getPossibleSymbolReferenceNodes(sourceFile, identifierText, sourceFile)
+      .some(token => token !== definition && this.getSymbolAtLocation(token) === symbol);
+  }
+  getPossibleSymbolReferenceNodes(sourceFile: AstNode, symbolName: string, container: AstNode): readonly AstNode[] {
+    return getPossibleSymbolReferenceNodes(sourceFile, symbolName, container);
+  }
+  getPossibleSymbolReferencePositions(sourceFile: AstNode, symbolName: string, container: AstNode): readonly number[] {
+    return getPossibleSymbolReferencePositions(sourceFile, symbolName, container);
   }
 
   getTypeParameterAtPosition(signature: Signature, position: number): Type | undefined {
@@ -651,4 +771,42 @@ const knownGenericTypeNames = new Set([
 
 function isKnownGenericTypeName(name: string): boolean {
   return knownGenericTypeNames.has(name);
+}
+
+function isSuperPropertyAccess(node: AstNode): boolean {
+  const expression = (node as { readonly expression?: AstNode }).expression;
+  return expression?.kind === Kind.SuperKeyword;
+}
+
+function getPossibleSymbolReferenceNodes(sourceFile: AstNode, symbolName: string, container: AstNode): readonly AstNode[] {
+  const positions = new Set(getPossibleSymbolReferencePositions(sourceFile, symbolName, container));
+  return collectNodes(container, node => positions.has(nodePos(node)) && nodeText(node) === symbolName);
+}
+
+function getPossibleSymbolReferencePositions(sourceFile: AstNode, symbolName: string, container: AstNode): readonly number[] {
+  if (symbolName.length === 0) return [];
+  const text = (sourceFile as { readonly text?: string }).text;
+  if (text === undefined) return collectNodes(container, node => nodeText(node) === symbolName).map(nodePos);
+  const positions: number[] = [];
+  let searchFrom = Math.max(0, nodePos(container));
+  const searchEnd = Math.min(text.length, nodeEnd(container));
+  while (searchFrom < searchEnd) {
+    const position = text.indexOf(symbolName, searchFrom);
+    if (position < 0 || position >= searchEnd) break;
+    if (isIdentifierBoundary(text, position - 1) && isIdentifierBoundary(text, position + symbolName.length)) {
+      positions.push(position);
+    }
+    searchFrom = position + symbolName.length;
+  }
+  return positions;
+}
+
+function isIdentifierBoundary(text: string, position: number): boolean {
+  if (position < 0 || position >= text.length) return true;
+  const code = text.charCodeAt(position);
+  return !((code >= 48 && code <= 57)
+    || (code >= 65 && code <= 90)
+    || (code >= 97 && code <= 122)
+    || code === 95
+    || code === 36);
 }
