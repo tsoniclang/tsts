@@ -8,7 +8,10 @@
 
 import {
   Kind,
+  SymbolFlags,
+  isClassDeclaration,
   isConstructorDeclaration,
+  isFunctionDeclaration,
   isGetAccessorDeclaration,
   isMethodDeclaration,
   isPropertyDeclaration,
@@ -16,6 +19,7 @@ import {
   isStatic,
   isTypeParameterDeclaration,
   nodeSymbol,
+  type Block,
   type Node as AstNode,
   type ClassDeclaration,
   type ClassElement,
@@ -28,6 +32,7 @@ import {
   type ParameterDeclaration,
   type PropertyDeclaration,
   type SetAccessorDeclaration,
+  type TypeNode,
   type TypeParameterDeclaration,
 } from "../ast/index.js";
 import {
@@ -253,4 +258,409 @@ function isAccessorPairCompatible(member: ClassElement, members: readonly ClassE
 export function getDeclaredTypeOfClassMember(member: ClassElement): Type | undefined {
   const symbol = nodeSymbol(member);
   return symbol === undefined ? undefined : getTypeOfSymbol(symbol);
+}
+
+export function checkFunctionOrMethodDeclaration(node: AstNode, state: CheckState): void {
+  if (isFunctionDeclaration(node)) {
+    checkFunctionDeclaration(node, state);
+    checkFunctionOrConstructorSymbol(nodeSymbol(node), state);
+    return;
+  }
+  if (isMethodDeclaration(node)) {
+    checkMethodDeclaration(node, state);
+    checkFunctionOrConstructorSymbol(nodeSymbol(node), state);
+  }
+}
+
+export function checkFunctionOrConstructorSymbol(symbol: ReturnType<typeof nodeSymbol>, state: CheckState): void {
+  if (symbol === undefined) return;
+  checkFunctionOrConstructorSymbolWorker(symbol, state);
+}
+
+export function checkFunctionOrConstructorSymbolWorker(symbol: NonNullable<ReturnType<typeof nodeSymbol>>, state: CheckState): void {
+  const declarations = symbol.declarations ?? [];
+  const implementation = declarations.find(hasBody);
+  const overloads = declarations.filter(declaration => !hasBody(declaration));
+  if (implementation === undefined || overloads.length === 0) return;
+  for (const overload of overloads) {
+    if (!isImplementationCompatibleWithOverload(implementation, overload, state)) {
+      state.diagnostics.push({ message: `This overload signature is not compatible with its implementation signature.` });
+    }
+  }
+}
+
+export function getEffectiveDeclarationFlags(node: AstNode, modifierMask: number): number {
+  return modifierFlags(node) & modifierMask;
+}
+
+export function isImplementationCompatibleWithOverload(
+  implementation: AstNode,
+  overload: AstNode,
+  state: CheckState,
+): boolean {
+  const implementationParameters = parametersOf(implementation);
+  const overloadParameters = parametersOf(overload);
+  const minimumImplementationParameters = implementationParameters.filter(parameter => !isOptionalParameter(parameter)).length;
+  const maximumImplementationParameters = hasRestParameter(implementationParameters) ? Number.POSITIVE_INFINITY : implementationParameters.length;
+  if (overloadParameters.length < minimumImplementationParameters || overloadParameters.length > maximumImplementationParameters) return false;
+  for (let index = 0; index < overloadParameters.length; index++) {
+    const overloadType = parameterType(overloadParameters[index]!, state);
+    const implementationType = parameterType(implementationParameters[Math.min(index, implementationParameters.length - 1)]!, state);
+    if (overloadType !== undefined && implementationType !== undefined) checkAssignable(overloadType, implementationType, state);
+  }
+  const overloadReturn = returnTypeOfSignatureNode(overload, state);
+  const implementationReturn = returnTypeOfSignatureNode(implementation, state);
+  if (overloadReturn !== undefined && implementationReturn !== undefined) checkAssignable(implementationReturn, overloadReturn, state);
+  return true;
+}
+
+export function checkAllCodePathsInNonVoidFunctionReturnOrThrow(
+  node: AstNode,
+  returnType: Type | undefined,
+  state: CheckState,
+): void {
+  if (returnType === undefined || isUnwrappedReturnTypeUndefinedVoidOrAny(node, returnType)) return;
+  const body = bodyOf(node);
+  if (body === undefined) return;
+  const exits = checkBlock(body, state, returnType);
+  if (!exits) state.diagnostics.push({ message: "Not_all_code_paths_return_a_value" });
+}
+
+export function isUnwrappedReturnTypeUndefinedVoidOrAny(_container: AstNode, returnType: Type | undefined): boolean {
+  const display = String((returnType as { readonly intrinsicName?: string; readonly name?: string } | undefined)?.intrinsicName
+    ?? (returnType as { readonly name?: string } | undefined)?.name
+    ?? "");
+  return display === "undefined" || display === "void" || display === "any";
+}
+
+export function checkClassLikeDeclaration(node: AstNode, state: CheckState): void {
+  if (!isClassDeclaration(node)) return;
+  checkClassDeclaration(node, state);
+  checkClassForStaticPropertyNameConflicts(node, state);
+  checkMembersForOverrideModifier(node, state);
+  checkPropertyInitialization(node, state);
+}
+
+export function checkClassForStaticPropertyNameConflicts(node: AstNode, state: CheckState): void {
+  for (const member of membersOf(node)) {
+    if (isStatic(member) && classMemberName(member as ClassElement) === "prototype") {
+      state.diagnostics.push({ message: "Static_property_0_conflicts_with_built_in_property_Function_0_of_constructor_function_1" });
+    }
+  }
+}
+
+export function checkTypeParameterListsIdentical(left: readonly AstNode[] | undefined, right: readonly AstNode[] | undefined, state: CheckState): boolean {
+  const leftParams = left ?? [];
+  const rightParams = right ?? [];
+  if (leftParams.length !== rightParams.length) {
+    state.diagnostics.push({ message: "All_declarations_must_have_identical_type_parameters" });
+    return false;
+  }
+  return areTypeParametersIdentical(leftParams, rightParams, state);
+}
+
+export function getClassOrInterfaceDeclarationsOfSymbol(symbol: AstSymbolLike | undefined): readonly AstNode[] {
+  return (symbol?.declarations ?? []).filter(declaration => declaration.kind === Kind.ClassDeclaration || declaration.kind === Kind.InterfaceDeclaration);
+}
+
+export function areTypeParametersIdentical(
+  declarations: readonly AstNode[],
+  targetTypeParameters: readonly AstNode[],
+  state: CheckState,
+): boolean {
+  if (declarations.length !== targetTypeParameters.length) return false;
+  let identical = true;
+  for (let index = 0; index < declarations.length; index++) {
+    const left = declarations[index]!;
+    const right = targetTypeParameters[index]!;
+    const leftConstraint = (left as { readonly constraint?: AstNode }).constraint;
+    const rightConstraint = (right as { readonly constraint?: AstNode }).constraint;
+    const leftDefault = (left as { readonly defaultType?: AstNode }).defaultType;
+    const rightDefault = (right as { readonly defaultType?: AstNode }).defaultType;
+    if ((leftConstraint === undefined) !== (rightConstraint === undefined) || (leftDefault === undefined) !== (rightDefault === undefined)) identical = false;
+    if (leftConstraint !== undefined) typeFromTypeNode(leftConstraint as TypeNode, state);
+    if (rightConstraint !== undefined) typeFromTypeNode(rightConstraint as TypeNode, state);
+  }
+  return identical;
+}
+
+export function checkBaseTypeAccessibility(node: AstNode, baseTypes: readonly Type[], state: CheckState): void {
+  void node;
+  for (const baseType of baseTypes) {
+    const symbol = (baseType as { readonly symbol?: AstSymbolLike }).symbol;
+    if (symbol !== undefined && ((symbol.flags ?? 0) & SymbolFlags.Type) === 0) {
+      state.diagnostics.push({ message: "Base_type_is_not_accessible" });
+    }
+  }
+}
+
+export function issueMemberSpecificError(
+  node: AstNode,
+  members: readonly AstNode[],
+  message: string,
+  state: CheckState,
+): void {
+  void node;
+  for (const member of members) state.diagnostics.push({ message: `${message}: ${classMemberName(member as ClassElement) ?? "<computed>"}` });
+}
+
+export function getTypeWithoutSignatures(type: Type): Type {
+  return {
+    ...type,
+    data: {
+      ...(type.data as Record<string, unknown> | undefined),
+      callSignatures: [],
+      constructSignatures: [],
+    },
+  } as Type;
+}
+
+export function checkKindsOfPropertyMemberOverrides(
+  baseMember: AstNode,
+  derivedMember: AstNode,
+  state: CheckState,
+): void {
+  const baseKind = memberKind(baseMember);
+  const derivedKind = memberKind(derivedMember);
+  if (baseKind !== derivedKind && !arePropertiesAbstractOrInterface(baseMember, derivedMember)) {
+    state.diagnostics.push({ message: "Class_member_kind_must_match_base_member_kind" });
+  }
+}
+
+export function arePropertiesAbstractOrInterface(left: AstNode, right: AstNode): boolean {
+  return isPropertyAbstractOrInterface(left) && isPropertyAbstractOrInterface(right);
+}
+
+export function isPropertyAbstractOrInterface(node: AstNode): boolean {
+  const parent = parentOf(node);
+  return parent?.kind === Kind.InterfaceDeclaration || modifierKinds(node).includes(Kind.AbstractKeyword);
+}
+
+export function checkMembersForOverrideModifier(node: AstNode, state: CheckState): void {
+  for (const member of membersOf(node)) checkMemberForOverrideModifier(member, state);
+}
+
+export function checkMemberForOverrideModifier(member: AstNode, state: CheckState): void {
+  const hasOverride = modifierKinds(member).includes(Kind.OverrideKeyword);
+  const parent = parentOf(member);
+  const hasExtends = (parent as { readonly heritageClauses?: readonly HeritageClause[] } | undefined)?.heritageClauses
+    ?.some(clause => clause.token === Kind.ExtendsKeyword) ?? false;
+  if (hasOverride && !hasExtends) state.diagnostics.push({ message: "This_member_cannot_have_an_override_modifier_because_its_containing_class_does_not_extend_another_class" });
+}
+
+export function getSuggestedSymbolForNonexistentClassMember(
+  name: string,
+  members: Iterable<AstSymbolLike>,
+): AstSymbolLike | undefined {
+  let best: AstSymbolLike | undefined;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (const member of members) {
+    const candidate = member.name ?? member.escapedName ?? "";
+    if (candidate.length === 0) continue;
+    const distance = levenshteinDistance(name.toLowerCase(), candidate.toLowerCase());
+    if (distance < bestDistance) {
+      best = member;
+      bestDistance = distance;
+    }
+  }
+  return bestDistance <= Math.max(1, Math.floor(name.length * 0.4)) ? best : undefined;
+}
+
+export function checkIndexConstraints(type: Type, symbol: AstSymbolLike | undefined, isStaticIndex: boolean, state: CheckState): void {
+  void type;
+  const members = symbol?.members?.values() ?? [];
+  for (const member of members) checkIndexConstraintForProperty(type, member, isStaticIndex, state);
+}
+
+export function checkIndexConstraintForProperty(
+  type: Type,
+  property: AstSymbolLike,
+  isStaticIndex: boolean,
+  state: CheckState,
+): void {
+  void type;
+  void isStaticIndex;
+  if (((property.flags ?? 0) & SymbolFlags.Property) === 0) return;
+  for (const declaration of property.declarations ?? []) {
+    const propertyType = (declaration as { readonly type?: AstNode }).type;
+    if (propertyType !== undefined) typeFromTypeNode(propertyType as TypeNode, state);
+  }
+}
+
+export function checkIndexConstraintForIndexSignature(
+  type: Type,
+  indexSignature: AstNode,
+  state: CheckState,
+): void {
+  void type;
+  for (const parameter of parametersOf(indexSignature)) {
+    const typeNode = (parameter as { readonly type?: AstNode }).type;
+    if (typeNode !== undefined) typeFromTypeNode(typeNode as TypeNode, state);
+  }
+}
+
+export function checkClassOrInterfaceForDuplicateIndexSignatures(node: AstNode, state: CheckState): void {
+  checkTypeForDuplicateIndexSignatures(node, state);
+}
+
+export function checkTypeForDuplicateIndexSignatures(node: AstNode, state: CheckState): void {
+  const seen = new Set<string>();
+  for (const member of membersOf(node)) {
+    if (member.kind !== Kind.IndexSignature) continue;
+    const parameter = parametersOf(member)[0];
+    const key = parameter === undefined ? "unknown" : declarationName(parameter);
+    if (seen.has(key)) state.diagnostics.push({ message: "Duplicate_index_signature_for_type_0" });
+    seen.add(key);
+  }
+}
+
+export function checkPropertyInitialization(node: AstNode, state: CheckState): void {
+  for (const member of membersOf(node)) {
+    if (isPropertyWithoutInitializer(member) && !isPropertyInitializedInConstructor(member, node)) {
+      state.diagnostics.push({ message: `Property '${classMemberName(member as ClassElement) ?? "<computed>"}' has no initializer and is not definitely assigned in the constructor.` });
+    }
+  }
+}
+
+export function isPropertyWithoutInitializer(member: AstNode): boolean {
+  return member.kind === Kind.PropertyDeclaration
+    && (member as { readonly initializer?: AstNode }).initializer === undefined
+    && !modifierKinds(member).includes(Kind.AbstractKeyword)
+    && !modifierKinds(member).includes(Kind.DeclareKeyword)
+    && !modifierKinds(member).includes(Kind.StaticKeyword);
+}
+
+export function isPropertyInitializedInStaticBlocks(propName: AstNode, _type: Type | undefined, staticBlocks: readonly AstNode[], classStart: number, propertyStart: number): boolean {
+  const name = declarationNameFromNode(propName);
+  return staticBlocks.some(block => posOf(block) >= classStart && posOf(block) <= propertyStart && nodeText(block).includes(name));
+}
+
+export function isPropertyInitializedInConstructor(property: AstNode, containingClass: AstNode): boolean {
+  const name = classMemberName(property as ClassElement);
+  if (name === undefined) return false;
+  for (const member of membersOf(containingClass)) {
+    if (member.kind === Kind.Constructor && nodeText(bodyOf(member)).includes(`this.${name}`)) return true;
+  }
+  return false;
+}
+
+export function checkInheritedPropertiesAreIdentical(
+  inherited: readonly AstSymbolLike[],
+  state: CheckState,
+): boolean {
+  let identical = true;
+  for (let index = 1; index < inherited.length; index++) {
+    if (!isPropertyIdenticalTo(inherited[0]!, inherited[index]!)) {
+      state.diagnostics.push({ message: `Named property '${inherited[index]!.name ?? inherited[index]!.escapedName ?? ""}' of types is not identical.` });
+      identical = false;
+    }
+  }
+  return identical;
+}
+
+export function isPropertyIdenticalTo(left: AstSymbolLike, right: AstSymbolLike): boolean {
+  const leftName = left.name ?? left.escapedName ?? "";
+  const rightName = right.name ?? right.escapedName ?? "";
+  if (leftName !== rightName) return false;
+  const leftDeclarations = left.declarations ?? [];
+  const rightDeclarations = right.declarations ?? [];
+  if (leftDeclarations.length !== rightDeclarations.length) return false;
+  return leftDeclarations.every((declaration, index) => memberKind(declaration) === memberKind(rightDeclarations[index]!));
+}
+
+interface AstSymbolLike {
+  readonly name?: string;
+  readonly escapedName?: string;
+  readonly flags?: number;
+  readonly declarations?: readonly AstNode[];
+  readonly members?: Map<string, AstSymbolLike>;
+}
+
+function hasBody(node: AstNode): boolean {
+  return bodyOf(node) !== undefined;
+}
+
+function bodyOf(node: AstNode | undefined): Block | undefined {
+  return (node as { readonly body?: Block } | undefined)?.body;
+}
+
+function parametersOf(node: AstNode | undefined): readonly ParameterDeclaration[] {
+  return (node as { readonly parameters?: readonly ParameterDeclaration[] } | undefined)?.parameters ?? [];
+}
+
+function isOptionalParameter(parameter: ParameterDeclaration): boolean {
+  return parameter.questionToken !== undefined || parameter.initializer !== undefined || parameter.dotDotDotToken !== undefined;
+}
+
+function hasRestParameter(parameters: readonly ParameterDeclaration[]): boolean {
+  return parameters.some(parameter => parameter.dotDotDotToken !== undefined);
+}
+
+function parameterType(parameter: ParameterDeclaration, state: CheckState): Type | undefined {
+  return parameter.type === undefined ? undefined : typeFromTypeNode(parameter.type, state);
+}
+
+function returnTypeOfSignatureNode(node: AstNode, state: CheckState): Type | undefined {
+  const typeNode = (node as { readonly type?: AstNode }).type;
+  return typeNode === undefined ? undefined : typeFromTypeNode(typeNode as TypeNode, state);
+}
+
+function parentOf(node: AstNode): AstNode | undefined {
+  return (node as { readonly parent?: AstNode }).parent;
+}
+
+function membersOf(node: AstNode | undefined): readonly AstNode[] {
+  return (node as { readonly members?: readonly AstNode[] } | undefined)?.members ?? [];
+}
+
+function modifierKinds(node: AstNode): readonly Kind[] {
+  const modifiers = (node as { readonly modifiers?: readonly AstNode[] | { readonly nodes?: readonly AstNode[] } }).modifiers;
+  const nodes: readonly AstNode[] = Array.isArray(modifiers) ? modifiers : (modifiers as { readonly nodes?: readonly AstNode[] } | undefined)?.nodes ?? [];
+  return nodes.map(modifier => modifier.kind);
+}
+
+function modifierFlags(node: AstNode): number {
+  let flags = 0;
+  for (const kind of modifierKinds(node)) flags |= 1 << kind;
+  return flags;
+}
+
+function memberKind(member: AstNode): string {
+  if (member.kind === Kind.GetAccessor) return "get";
+  if (member.kind === Kind.SetAccessor) return "set";
+  if (member.kind === Kind.MethodDeclaration || member.kind === Kind.MethodSignature) return "method";
+  if (member.kind === Kind.PropertyDeclaration || member.kind === Kind.PropertySignature) return "property";
+  return String(member.kind);
+}
+
+function declarationName(node: AstNode): string {
+  return declarationNameFromNode((node as { readonly name?: AstNode }).name ?? node);
+}
+
+function declarationNameFromNode(node: AstNode | undefined): string {
+  return (node as { readonly text?: string } | undefined)?.text ?? "";
+}
+
+function nodeText(node: AstNode | undefined): string {
+  return (node as { readonly text?: string } | undefined)?.text ?? "";
+}
+
+function posOf(node: AstNode | undefined): number {
+  return (node as { readonly pos?: number } | undefined)?.pos ?? 0;
+}
+
+function levenshteinDistance(left: string, right: string): number {
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex++) {
+    let lastDiagonal = previous[0]!;
+    previous[0] = leftIndex;
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex++) {
+      const insertion = previous[rightIndex]! + 1;
+      const deletion = previous[rightIndex - 1]! + 1;
+      const substitution = lastDiagonal + (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1);
+      lastDiagonal = previous[rightIndex]!;
+      previous[rightIndex] = Math.min(insertion, deletion, substitution);
+    }
+  }
+  return previous[right.length]!;
 }
