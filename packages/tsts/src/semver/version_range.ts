@@ -18,9 +18,9 @@
  */
 
 import type { int } from "@tsonic/core/types.js";
-import { Version } from "./version.js";
+import { Version, versionZero } from "./version.js";
 
-const versionZero = new Version(0, 0, 0, ["0"]);
+export { versionZero };
 
 const LOGICAL_OR_REGEX = /\|\|/;
 const WHITESPACE_REGEX = /\s+/;
@@ -51,10 +51,18 @@ export class VersionRange {
     return this.alternatives.map(formatAlternative).join(" || ");
   }
 
+  String(): string {
+    return this.toString();
+  }
+
   test(version: Version): boolean {
     // empty disjunction matches all
     if (this.alternatives.length === 0) return true;
     return this.alternatives.some((alt) => testAlternative(alt, version));
+  }
+
+  Test(version: Version): boolean {
+    return this.test(version);
   }
 }
 
@@ -77,6 +85,10 @@ export function testVersionRange(range: VersionRange, version: Version): boolean
 
 export function formatVersionRange(range: VersionRange): string {
   return range.toString();
+}
+
+export function isValidVersionRange(text: string): boolean {
+  return tryParseVersionRange(text) !== undefined;
 }
 
 export const TryParseVersionRange = tryParseVersionRangeResult;
@@ -329,6 +341,10 @@ function withPrerelease(v: Version, prerelease: readonly string[]): Version {
 
 function isWildcard(text: string): boolean {
   return text === "*" || text === "x" || text === "X";
+}
+
+export function isWildcardVersionPart(text: string): boolean {
+  return isWildcard(text);
 }
 
 function isUint32Range(value: number): value is int {
