@@ -19,13 +19,21 @@
 import { Transformer } from "../transformer.js";
 import {
   Kind,
+  isBindingPattern,
   isDeclaration,
+  isEntityName,
+  isEntityNameExpression,
   isExternalOrCommonJSModule,
   isFunctionLike,
+  isHeritageClause,
+  isPrivateIdentifier,
   sourceFileEndOfFileToken,
   sourceFileIsDeclarationFile,
 } from "../../ast/index.js";
 import { getNodeId } from "../../ast/ids.js";
+import { getDirectoryPath, getRelativePathToDirectoryOrUrl, normalizeSlashes } from "../../tspath/index.js";
+import { getLeadingCommentRanges } from "../../printer/comments.js";
+import { EmitFlags } from "../../printer/emitFlags.js";
 import {
   newSymbolTracker,
   type SymbolTrackerImpl,
@@ -33,7 +41,7 @@ import {
   type EmitResolver,
   type DeclarationEmitHost,
 } from "./tracker.js";
-import { createGetSymbolAccessibilityDiagnosticForNode } from "./diagnostics.js";
+import { createExpressionError, createGetSymbolAccessibilityDiagnosticForNode, createGetSymbolAccessibilityDiagnosticForNodeName } from "./diagnostics.js";
 import { canProduceDiagnostics, isDeclarationAndNotVisible, isEnclosingDeclaration } from "./util.js";
 import type {
   Node as AstNode,
@@ -178,8 +186,8 @@ export class DeclarationTransformer extends Transformer {
   }
 
   getLeadingCommentRangesOfNode(node: AstNode, sourceFile: SourceFile): readonly CommentRange[] {
-    void node; void sourceFile;
-    return [];
+    if (node === undefined || node.kind === Kind.JsxText) return [];
+    return getLeadingCommentRanges(sourceFile, node) as readonly CommentRange[];
   }
 
   // -------------------------------------------------------------------------
@@ -316,16 +324,45 @@ export class DeclarationTransformer extends Transformer {
   }
 
   getReferencedFiles(outputFilePath: string): FileReference[] {
-    void outputFilePath;
-    return [];
+    const results: FileReference[] = [];
+    const host = this.host as unknown as {
+      getSourceFileFromReference?: (origin: SourceFile, ref: FileReference) => SourceFile | undefined;
+      getOutputPathsFor?: (file: SourceFile, forceDtsPaths: boolean) => OutputPaths;
+      getCurrentDirectory?: () => string;
+      useCaseSensitiveFileNames?: () => boolean;
+    };
+    const outputDirectory = getDirectoryPath(normalizeSlashes(outputFilePath));
+    for (const pair of this.rawReferencedFiles) {
+      if (!fileReferencePreserve(pair.ref)) continue;
+      const file = host.getSourceFileFromReference?.(pair.file, pair.ref);
+      if (file === undefined) continue;
+      let declarationFileName = sourceFileIsDeclarationFile(file)
+        ? sourceFileFileName(file)
+        : host.getOutputPathsFor?.(file, true)?.declarationFilePath() ?? "";
+      if (declarationFileName.length === 0 && !sourceFileIsDeclarationFile(file)) {
+        declarationFileName = host.getOutputPathsFor?.(file, true)?.jsFilePath() ?? "";
+      }
+      if (declarationFileName.length === 0) declarationFileName = sourceFileFileName(file);
+      if (declarationFileName.length === 0) continue;
+      const fileName = getRelativePathToDirectoryOrUrl(outputDirectory, declarationFileName, false, {
+        currentDirectory: host.getCurrentDirectory?.() ?? "",
+        useCaseSensitiveFileNames: host.useCaseSensitiveFileNames?.() ?? true,
+      });
+      results.push(cloneFileReference(pair.ref, fileName));
+    }
+    return results;
   }
 
   getLibReferences(): FileReference[] {
-    return [...this.rawLibReferenceDirectives];
+    return this.rawLibReferenceDirectives
+      .filter(fileReferencePreserve)
+      .map(ref => cloneFileReference(ref, fileReferenceFileName(ref)));
   }
 
   getTypeReferences(): FileReference[] {
-    return [...this.rawTypeReferenceDirectives];
+    return this.rawTypeReferenceDirectives
+      .filter(fileReferencePreserve)
+      .map(ref => cloneFileReference(ref, fileReferenceFileName(ref)));
   }
 
   // -------------------------------------------------------------------------
@@ -333,25 +370,241 @@ export class DeclarationTransformer extends Transformer {
   // -------------------------------------------------------------------------
 
   visitDeclarationSubtree(input: AstNode): AstNode {
-    return this.visitor().visitEachChild(input);
+    if (this.shouldStripInternal(input)) return undefined as unknown as AstNode;
+    if (isDeclaration(input)) {
+      if (isDeclarationAndNotVisible(this.emitContext(), this.resolver, input)) {
+        return undefined as unknown as AstNode;
+      }
+      if (hasDynamicName(input)) {
+        if (this.state.isolatedDeclarations) {
+          const expression = declarationName(input)?.expression;
+          const parent = input.parent;
+          const objectReferenceOk = expression === undefined
+            || (this.resolver as unknown as { isDefinitelyReferenceToGlobalSymbolObject?: (node: AstNode) => boolean })
+              .isDefinitelyReferenceToGlobalSymbolObject?.(expression) === true;
+          if (!objectReferenceOk && (parent?.kind === Kind.ClassDeclaration || parent?.kind === Kind.ObjectLiteralExpression)) {
+            this.state.diagnostics.push(createExpressionError(input));
+            return undefined as unknown as AstNode;
+          }
+          if (!objectReferenceOk
+            && (parent?.kind === Kind.InterfaceDeclaration || parent?.kind === Kind.TypeLiteral)
+            && expression !== undefined
+            && !isEntityNameExpression(expression)) {
+            this.state.diagnostics.push(createExpressionError(input));
+            return undefined as unknown as AstNode;
+          }
+        } else {
+          const parseNode = this.emitContext().parseNode(input);
+          const lateBound = (this.resolver as unknown as { isLateBound?: (node: AstNode | undefined) => boolean }).isLateBound?.(parseNode) === true;
+          const expression = declarationName(input)?.expression;
+          if (!lateBound || expression === undefined || !isEntityNameExpression(expression)) return undefined as unknown as AstNode;
+        }
+      }
+    }
+    if (isFunctionLike(input)
+      && (this.resolver as unknown as { isImplementationOfOverload?: (node: AstNode) => boolean }).isImplementationOfOverload?.(input) === true) {
+      return undefined as unknown as AstNode;
+    }
+    if (input.kind === Kind.SemicolonClassElement) return undefined as unknown as AstNode;
+    if (isHeritageClause(input) && heritageClauseIsEmpty(input)) return undefined as unknown as AstNode;
+
+    const previousEnclosingDeclaration = this.enclosingDeclaration;
+    if (isEnclosingDeclaration(input)) this.enclosingDeclaration = input;
+    const canProduceDiagnostic = canProduceDiagnostics(input);
+    const oldSuppress = this.suppressNewDiagnosticContexts;
+    const shouldSuppress = (input.kind === Kind.TypeLiteral || input.kind === Kind.MappedType)
+      && input.parent?.kind !== Kind.TypeAliasDeclaration
+      && input.parent?.kind !== Kind.JSTypeAliasDeclaration;
+    const oldDiagnostic = this.state.getSymbolAccessibilityDiagnostic;
+    const oldName = this.state.errorNameNode;
+    if (canProduceDiagnostic && !this.suppressNewDiagnosticContexts) {
+      this.state.getSymbolAccessibilityDiagnostic = createGetSymbolAccessibilityDiagnosticForNode(input);
+    }
+    if (shouldSuppress) this.suppressNewDiagnosticContexts = true;
+
+    let result: AstNode | undefined;
+    switch (input.kind) {
+      case Kind.MappedType:
+        result = this.transformMappedTypeNode(input as unknown as MappedTypeNode);
+        break;
+      case Kind.HeritageClause:
+        result = this.transformHeritageClause(input as unknown as HeritageClause);
+        break;
+      case Kind.MethodSignature:
+        result = this.transformMethodSignatureDeclaration(input as unknown as MethodSignatureDeclaration);
+        break;
+      case Kind.MethodDeclaration:
+        result = this.transformMethodDeclaration(input as unknown as MethodDeclaration);
+        break;
+      case Kind.ConstructSignature:
+        result = this.transformConstructSignatureDeclaration(input as unknown as ConstructSignatureDeclaration);
+        break;
+      case Kind.Constructor:
+        result = this.transformConstructorDeclaration(input as unknown as ConstructorDeclaration);
+        break;
+      case Kind.GetAccessor:
+        result = this.transformGetAccessorDeclaration(input as unknown as GetAccessorDeclaration);
+        break;
+      case Kind.SetAccessor:
+        result = this.transformSetAccessorDeclaration(input as unknown as SetAccessorDeclaration);
+        break;
+      case Kind.PropertyDeclaration:
+        result = this.transformPropertyDeclaration(input as unknown as PropertyDeclaration);
+        break;
+      case Kind.PropertySignature:
+        result = this.transformPropertySignatureDeclaration(input as unknown as PropertySignatureDeclaration);
+        break;
+      case Kind.CallSignature:
+        result = this.transformCallSignatureDeclaration(input as unknown as CallSignatureDeclaration);
+        break;
+      case Kind.IndexSignature:
+        result = this.transformIndexSignatureDeclaration(input as unknown as IndexSignatureDeclaration);
+        break;
+      case Kind.VariableDeclaration:
+        result = this.transformVariableDeclaration(input as unknown as VariableDeclaration);
+        break;
+      case Kind.TypeParameter:
+        result = this.transformTypeParameterDeclaration(input as unknown as TypeParameterDeclaration);
+        break;
+      case Kind.ExpressionWithTypeArguments:
+        result = this.transformExpressionWithTypeArguments(input as unknown as ExpressionWithTypeArguments);
+        break;
+      case Kind.TypeReference:
+        result = this.transformTypeReference(input as unknown as TypeReferenceNode);
+        break;
+      case Kind.ConditionalType:
+        result = this.transformConditionalTypeNode(input as unknown as ConditionalTypeNode);
+        break;
+      case Kind.FunctionType:
+        result = this.transformFunctionTypeNode(input as unknown as FunctionTypeNode);
+        break;
+      case Kind.ConstructorType:
+        result = this.transformConstructorTypeNode(input as unknown as ConstructorTypeNode);
+        break;
+      case Kind.ImportType:
+        result = this.transformImportTypeNode(input as unknown as ImportTypeNode);
+        break;
+      case Kind.TypeQuery:
+        this.checkEntityNameVisibility((input as unknown as { readonly exprName?: AstNode }).exprName as AstNode, this.enclosingDeclaration);
+        result = this.visitor().visitEachChild(input);
+        break;
+      case Kind.TupleType:
+        result = this.visitor().visitEachChild(input);
+        if (result !== undefined && isOriginalNodeSingleLine(this.emitContext(), input)) this.emitContext().addEmitFlags(result, EmitFlags.SingleLine);
+        break;
+      case Kind.JSDocTypeExpression:
+        result = this.transformJSDocTypeExpression(input as unknown as JSDocTypeExpression);
+        break;
+      case Kind.JSDocTypeLiteral:
+        result = this.transformJSDocTypeLiteral(input as unknown as JSDocTypeLiteral);
+        break;
+      case Kind.JSDocPropertyTag:
+        result = this.transformJSDocPropertyTag(input);
+        break;
+      case Kind.JSDocAllType:
+        result = this.transformJSDocAllType(input as unknown as JSDocAllType);
+        break;
+      default:
+        result = this.visitor().visitEachChild(input);
+        break;
+    }
+
+    if (result !== undefined && canProduceDiagnostic && hasDynamicName(input)) this.checkName(input);
+    this.enclosingDeclaration = previousEnclosingDeclaration;
+    this.state.getSymbolAccessibilityDiagnostic = oldDiagnostic;
+    this.state.errorNameNode = oldName;
+    this.suppressNewDiagnosticContexts = oldSuppress;
+    return result as AstNode;
   }
 
   checkName(node: AstNode): void {
-    void node;
+    const oldDiagnostic = this.state.getSymbolAccessibilityDiagnostic;
+    if (!this.suppressNewDiagnosticContexts) {
+      this.state.getSymbolAccessibilityDiagnostic = createGetSymbolAccessibilityDiagnosticForNodeName(node);
+    }
+    const name = declarationName(node);
+    this.state.errorNameNode = name;
+    const expression = name?.expression;
+    if (expression !== undefined) this.checkEntityNameVisibility(expression, this.enclosingDeclaration);
+    if (!this.suppressNewDiagnosticContexts) this.state.getSymbolAccessibilityDiagnostic = oldDiagnostic;
+    this.state.errorNameNode = undefined;
   }
 
   // -------------------------------------------------------------------------
   // Type node transforms
   // -------------------------------------------------------------------------
 
-  transformMappedTypeNode(input: MappedTypeNode): AstNode { return input as unknown as AstNode; }
-  transformHeritageClause(clause: HeritageClause): AstNode { return clause as unknown as AstNode; }
-  transformImportTypeNode(input: ImportTypeNode): AstNode { return input as unknown as AstNode; }
-  transformConstructorTypeNode(input: ConstructorTypeNode): AstNode { return input as unknown as AstNode; }
-  transformFunctionTypeNode(input: FunctionTypeNode): AstNode { return input as unknown as AstNode; }
-  transformConditionalTypeNode(input: ConditionalTypeNode): AstNode { return input as unknown as AstNode; }
-  transformTypeReference(input: TypeReferenceNode): AstNode { return input as unknown as AstNode; }
-  transformExpressionWithTypeArguments(input: ExpressionWithTypeArguments): AstNode { return input as unknown as AstNode; }
+  transformMappedTypeNode(input: MappedTypeNode): AstNode {
+    const typeNode = visitOptional(this, nodeField(input, "type")) ?? this.factory().newAnyKeyword();
+    return updateWithFactory(this.factory(), "updateMappedTypeNode", input as unknown as AstNode,
+      nodeField(input, "readonlyToken"),
+      visitOptional(this, nodeField(input, "typeParameter")),
+      visitOptional(this, nodeField(input, "nameType")),
+      nodeField(input, "questionToken"),
+      typeNode,
+      undefined,
+    );
+  }
+  transformHeritageClause(clause: HeritageClause): AstNode {
+    const types = nodeArray(nodeField(clause, "types")).filter(type => {
+      const expression = nodeField(type, "expression");
+      return expression !== undefined
+        && (isEntityNameExpression(expression) || ((clause as unknown as { readonly token?: number }).token === Kind.ExtendsKeyword && expression.kind === Kind.NullKeyword));
+    });
+    if (types.length === 0) return undefined as unknown as AstNode;
+    if (types.length === nodeArray(nodeField(clause, "types")).length) return this.visitor().visitEachChild(clause as unknown as AstNode);
+    return updateWithFactory(this.factory(), "updateHeritageClause", clause as unknown as AstNode, (clause as unknown as { readonly token?: number }).token, this.visitor().visitNodes(this.factory().newNodeList(types)));
+  }
+  transformImportTypeNode(input: ImportTypeNode): AstNode {
+    const argument = nodeField(input, "argument");
+    const literal = nodeField(argument, "literal");
+    if (literal === undefined) return input as unknown as AstNode;
+    const updatedLiteral = updateWithFactory(this.factory(), "updateLiteralTypeNode", argument as AstNode, this.rewriteModuleSpecifier(input as unknown as AstNode, literal));
+    return updateWithFactory(this.factory(), "updateImportTypeNode", input as unknown as AstNode,
+      boolField(input, "isTypeOf"),
+      updatedLiteral,
+      nodeField(input, "attributes"),
+      nodeField(input, "qualifier"),
+      this.visitor().visitNodes(nodeField(input, "typeArguments")),
+    );
+  }
+  transformConstructorTypeNode(input: ConstructorTypeNode): AstNode {
+    return updateWithFactory(this.factory(), "updateConstructorTypeNode", input as unknown as AstNode,
+      this.ensureModifiers(input as unknown as AstNode),
+      this.visitor().visitNodes(nodeField(input, "typeParameters")),
+      this.updateParamList(input as unknown as AstNode, nodeField(input, "parameters") as ParameterList | undefined),
+      visitOptional(this, nodeField(input, "type")),
+    );
+  }
+  transformFunctionTypeNode(input: FunctionTypeNode): AstNode {
+    return updateWithFactory(this.factory(), "updateFunctionTypeNode", input as unknown as AstNode,
+      this.visitor().visitNodes(nodeField(input, "typeParameters")),
+      this.updateParamList(input as unknown as AstNode, nodeField(input, "parameters") as ParameterList | undefined),
+      visitOptional(this, nodeField(input, "type")),
+    );
+  }
+  transformConditionalTypeNode(input: ConditionalTypeNode): AstNode {
+    const checkType = visitOptional(this, nodeField(input, "checkType"));
+    const extendsType = visitOptional(this, nodeField(input, "extendsType"));
+    const oldEnclosingDeclaration = this.enclosingDeclaration;
+    this.enclosingDeclaration = nodeField(input, "trueType");
+    const trueType = visitOptional(this, nodeField(input, "trueType"));
+    this.enclosingDeclaration = oldEnclosingDeclaration;
+    const falseType = visitOptional(this, nodeField(input, "falseType"));
+    return updateWithFactory(this.factory(), "updateConditionalTypeNode", input as unknown as AstNode, checkType, extendsType, trueType, falseType);
+  }
+  transformTypeReference(input: TypeReferenceNode): AstNode {
+    const typeName = nodeField(input, "typeName");
+    if (typeName !== undefined) this.checkEntityNameVisibility(typeName, this.enclosingDeclaration);
+    return this.visitor().visitEachChild(input as unknown as AstNode);
+  }
+  transformExpressionWithTypeArguments(input: ExpressionWithTypeArguments): AstNode {
+    const expression = nodeField(input, "expression");
+    if (expression !== undefined && (isEntityName(expression) || isEntityNameExpression(expression))) {
+      this.checkEntityNameVisibility(expression, this.enclosingDeclaration);
+    }
+    return this.visitor().visitEachChild(input as unknown as AstNode);
+  }
   transformTypeParameterDeclaration(input: TypeParameterDeclaration): AstNode { return input as unknown as AstNode; }
 
   // -------------------------------------------------------------------------
@@ -431,10 +684,10 @@ export class DeclarationTransformer extends Transformer {
   }
 
   preserveJsDoc(updated: AstNode, original: AstNode): void {
-    void updated; void original;
+    this.emitContext().assignCommentAndSourceMapRanges(updated, original);
   }
 
-  removeAllComments(node: AstNode): void { void node; }
+  removeAllComments(node: AstNode): void { this.emitContext().addEmitFlags(node, EmitFlags.NoComments); }
 
   ensureType(node: AstNode, ignorePrivate: boolean): AstNode {
     void node; void ignorePrivate;
@@ -447,7 +700,9 @@ export class DeclarationTransformer extends Transformer {
   }
 
   checkEntityNameVisibility(entityName: AstNode, enclosingDeclaration: AstNode | undefined): void {
-    void entityName; void enclosingDeclaration;
+    const visibility = (this.resolver as unknown as { isEntityNameVisible?: (node: AstNode, enclosingDeclaration: AstNode | undefined) => unknown })
+      .isEntityNameVisible?.(entityName, enclosingDeclaration);
+    if (visibility !== undefined) this.tracker.handleSymbolAccessibilityError(visibility as Parameters<SymbolTrackerImpl["handleSymbolAccessibilityError"]>[0]);
   }
 
   // -------------------------------------------------------------------------
@@ -643,6 +898,83 @@ function statementListNodes(statements: StatementList): readonly Statement[] {
 
 function sourceFileText(sourceFile: SourceFile): string {
   return (sourceFile as unknown as { readonly text?: string }).text ?? "";
+}
+
+function fileReferencePreserve(ref: FileReference): boolean {
+  return (ref as unknown as { readonly preserve?: boolean }).preserve === true;
+}
+
+function fileReferenceFileName(ref: FileReference): string {
+  return (ref as unknown as { readonly fileName?: string; readonly FileName?: string }).fileName
+    ?? (ref as unknown as { readonly FileName?: string }).FileName
+    ?? "";
+}
+
+function cloneFileReference(ref: FileReference, fileName: string): FileReference {
+  return {
+    ...(ref as object),
+    pos: -1,
+    end: -1,
+    fileName,
+    preserve: fileReferencePreserve(ref),
+    resolutionMode: (ref as unknown as { readonly resolutionMode?: unknown }).resolutionMode,
+  } as FileReference;
+}
+
+function sourceFileFileName(file: SourceFile): string {
+  return (file as unknown as { readonly fileName?: string; readonly FileName?: string }).fileName
+    ?? (file as unknown as { readonly FileName?: string }).FileName
+    ?? "";
+}
+
+function hasDynamicName(node: AstNode): boolean {
+  const name = declarationName(node);
+  return name !== undefined && name.kind === Kind.ComputedPropertyName;
+}
+
+function declarationName(node: AstNode): (AstNode & { readonly expression?: AstNode }) | undefined {
+  return (node as unknown as { readonly name?: AstNode & { readonly expression?: AstNode } }).name;
+}
+
+function heritageClauseIsEmpty(node: AstNode): boolean {
+  const types = nodeArray(nodeField(node, "types"));
+  return types.length === 0 || (types.length === 1 && nodeIsMissing(types[0]!));
+}
+
+function nodeIsMissing(node: AstNode): boolean {
+  return (node as unknown as { readonly missing?: boolean }).missing === true
+    || (node as unknown as { readonly pos?: number; readonly end?: number }).pos === (node as unknown as { readonly end?: number }).end;
+}
+
+function isOriginalNodeSingleLine(emitContext: { mostOriginal(node: AstNode): AstNode }, node: AstNode): boolean {
+  const original = emitContext.mostOriginal(node);
+  const source = sourceFileText((original as unknown as { readonly sourceFile?: SourceFile }).sourceFile as SourceFile);
+  const pos = (original as unknown as { readonly pos?: number }).pos ?? 0;
+  const end = (original as unknown as { readonly end?: number }).end ?? pos;
+  return source.slice(pos, end).indexOf("\n") < 0 && source.slice(pos, end).indexOf("\r") < 0;
+}
+
+function nodeField<T = AstNode>(node: unknown, field: string): T | undefined {
+  return (node as Record<string, T | undefined> | undefined)?.[field];
+}
+
+function boolField(node: unknown, field: string): boolean {
+  return (node as Record<string, boolean | undefined> | undefined)?.[field] === true;
+}
+
+function nodeArray(node: unknown): readonly AstNode[] {
+  if (node === undefined) return [];
+  if (Array.isArray(node)) return node as readonly AstNode[];
+  return (node as { readonly nodes?: readonly AstNode[] }).nodes ?? [];
+}
+
+function visitOptional(tx: DeclarationTransformer, node: AstNode | undefined): AstNode | undefined {
+  return node === undefined ? undefined : tx.visitor().visit(node);
+}
+
+function updateWithFactory(factory: unknown, method: string, fallback: AstNode, ...args: readonly unknown[]): AstNode {
+  const fn = (factory as Record<string, unknown>)[method];
+  return typeof fn === "function" ? (fn as (...callArgs: unknown[]) => AstNode).call(factory, fallback, ...args) : fallback;
 }
 
 // ---------------------------------------------------------------------------
