@@ -1,4 +1,4 @@
-import type { Node as AstNode, SourceFile } from "../../ast/index.js";
+import { forEachChild, type Node as AstNode, type SourceFile } from "../../ast/index.js";
 import { parseSourceFile } from "../../parser/index.js";
 
 export interface ParseTestCase<TNode> {
@@ -30,14 +30,39 @@ export function checkDiagnosticsMessage(file: SourceFile, message: string): void
   throw new Error(message + formatParseDiagnostics(diagnostics));
 }
 
+export interface SyntheticRecursiveVisitor {
+  visitNode(node: AstNode | undefined): AstNode | undefined;
+  visitEachChild(node: AstNode): AstNode;
+}
+
+export function newSyntheticRecursiveVisitor(): SyntheticRecursiveVisitor {
+  const visitor: SyntheticRecursiveVisitor = {
+    visitNode(node: AstNode | undefined): AstNode | undefined {
+      if (node === undefined) return undefined;
+      markSyntheticNode(node);
+      return visitor.visitEachChild(node);
+    },
+    visitEachChild(node: AstNode): AstNode {
+      forEachChild(node, child => {
+        visitor.visitNode(child);
+        return false;
+      });
+      return node;
+    },
+  };
+  return visitor;
+}
+
 export function markSyntheticRecursive(node: AstNode | undefined): void {
+  newSyntheticRecursiveVisitor().visitNode(node);
+}
+
+function markSyntheticNode(node: AstNode): void {
   if (node === undefined) return;
-  const mutable = node as { pos?: number; end?: number; fullStart?: number; loc?: unknown };
-  mutable.pos = -1;
-  mutable.end = -1;
-  mutable.fullStart = -1;
-  mutable.loc = undefined;
-  for (const child of childNodes(node)) markSyntheticRecursive(child);
+  node.pos = -1;
+  node.end = -1;
+  Reflect.set(node, "fullStart", -1);
+  Reflect.set(node, "loc", undefined);
 }
 
 function formatParseDiagnostics(diagnostics: readonly unknown[]): string {
@@ -45,21 +70,4 @@ function formatParseDiagnostics(diagnostics: readonly unknown[]): string {
     const record = diagnostic as { readonly text?: string; readonly messageText?: string; readonly message?: { readonly message?: string } };
     return record.text ?? record.messageText ?? record.message?.message ?? String(diagnostic);
   }).join("\n");
-}
-
-function childNodes(node: AstNode): readonly AstNode[] {
-  const children: AstNode[] = [];
-  for (const value of Object.values(node)) {
-    if (isNode(value)) children.push(value);
-    else if (Array.isArray(value)) {
-      for (const item of value) if (isNode(item)) children.push(item);
-    } else if (typeof value === "object" && value !== null && Array.isArray((value as { nodes?: unknown }).nodes)) {
-      for (const item of (value as { nodes: unknown[] }).nodes) if (isNode(item)) children.push(item);
-    }
-  }
-  return children;
-}
-
-function isNode(value: unknown): value is AstNode {
-  return typeof value === "object" && value !== null && typeof (value as { kind?: unknown }).kind === "number";
 }
