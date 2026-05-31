@@ -153,6 +153,120 @@ export class CheckerEmitResolver implements EmitResolver {
     }
     return result;
   }
+  markLinkedAliases(node: IdentifierNode): void {
+    this.collectLinkedAliases(node, true);
+  }
+  aliasMarkingVisitorWorker(node: AstNode): boolean {
+    if (node.kind === Kind.ExportSpecifier) {
+      const name = (node as { readonly propertyName?: IdentifierNode; readonly name?: IdentifierNode }).propertyName
+        ?? (node as { readonly name?: IdentifierNode }).name;
+      if (name !== undefined) this.markLinkedAliases(name);
+    } else if (node.kind === Kind.ExportAssignment || isCommonJSModuleExports(node)) {
+      const expression = (node as { readonly expression?: IdentifierNode; readonly right?: IdentifierNode }).expression
+        ?? (node as { readonly right?: IdentifierNode }).right;
+      if (expression?.kind === Kind.Identifier) this.markLinkedAliases(expression);
+    }
+    return true;
+  }
+  getMeaningOfEntityNameReference(entityName: AstNode): number {
+    const parent = (entityName as { readonly parent?: AstNode }).parent;
+    if (parent?.kind === Kind.TypeQuery
+      || parent?.kind === Kind.ComputedPropertyName
+      || parent?.kind === Kind.TypePredicate) {
+      return SymbolFlags.Value | SymbolFlags.ExportValue;
+    }
+    if (entityName.kind === Kind.QualifiedName
+      || entityName.kind === Kind.PropertyAccessExpression
+      || parent?.kind === Kind.ImportEqualsDeclaration
+      || parent?.kind === Kind.QualifiedName
+      || parent?.kind === Kind.PropertyAccessExpression
+      || parent?.kind === Kind.ElementAccessExpression) {
+      return SymbolFlags.Namespace;
+    }
+    return SymbolFlags.Type;
+  }
+  isEntityNameVisible(entityName: AstNode, enclosingDeclaration: AstNode | undefined): SymbolAccessibilityResult {
+    const firstIdentifier = firstIdentifierOf(entityName);
+    const symbol = firstIdentifier === undefined ? undefined : declarationSymbol(firstIdentifier);
+    if (symbol === undefined) {
+      const result: SymbolAccessibilityResult = {
+        accessibility: SymbolAccessibility.NotResolved,
+        errorSymbolName: nodeText(firstIdentifier),
+      };
+      if (firstIdentifier !== undefined) result.errorNode = firstIdentifier;
+      return result;
+    }
+    return this.hasVisibleDeclarations(symbol, true, enclosingDeclaration);
+  }
+  hasVisibleDeclarations(symbol: AstSymbol, shouldComputeAliasToMakeVisible: boolean, enclosingDeclaration: AstNode | undefined): SymbolAccessibilityResult {
+    const aliasesToMakeVisible: AstNode[] = [];
+    for (const declaration of symbol.declarations ?? []) {
+      if (this.isDeclarationVisible(declaration)) continue;
+      const importSyntax = getAnyImportSyntax(declaration);
+      if (shouldComputeAliasToMakeVisible && importSyntax !== undefined && this.isDeclarationVisible(parentOrSelf(importSyntax))) {
+        aliasesToMakeVisible.push(importSyntax);
+        continue;
+      }
+      const result: SymbolAccessibilityResult = {
+        accessibility: SymbolAccessibility.NotAccessible,
+        errorSymbolName: symbol.name ?? symbol.escapedName ?? "",
+      };
+      if (enclosingDeclaration !== undefined) result.errorNode = enclosingDeclaration;
+      return result;
+    }
+    return { accessibility: SymbolAccessibility.Accessible, aliasesToMakeVisible };
+  }
+  isDeclarationVisible(node: AstNode): boolean {
+    return this.determineIfDeclarationIsVisible(node);
+  }
+  determineIfDeclarationIsVisible(node: AstNode): boolean {
+    switch (node.kind) {
+      case Kind.SourceFile:
+      case Kind.NamespaceExportDeclaration:
+      case Kind.TypeParameter:
+        return true;
+      case Kind.ImportClause:
+      case Kind.NamespaceImport:
+      case Kind.ImportSpecifier:
+      case Kind.ExportAssignment:
+        return false;
+      case Kind.BindingElement:
+        return parentOf(parentOf(node)) === undefined ? false : this.isDeclarationVisible(parentOf(parentOf(node))!);
+      case Kind.PropertyDeclaration:
+      case Kind.PropertySignature:
+      case Kind.GetAccessor:
+      case Kind.SetAccessor:
+      case Kind.MethodDeclaration:
+      case Kind.MethodSignature:
+        if (hasSyntacticModifier(node, ModifierFlags.Private | ModifierFlags.Protected)) return false;
+        return parentOf(node) === undefined || this.isDeclarationVisible(parentOf(node)!);
+      case Kind.Parameter:
+      case Kind.Constructor:
+      case Kind.ConstructSignature:
+      case Kind.CallSignature:
+      case Kind.IndexSignature:
+      case Kind.FunctionType:
+      case Kind.ConstructorType:
+      case Kind.TypeLiteral:
+      case Kind.TypeReference:
+      case Kind.ArrayType:
+      case Kind.TupleType:
+      case Kind.UnionType:
+      case Kind.IntersectionType:
+      case Kind.ParenthesizedType:
+      case Kind.NamedTupleMember:
+        return parentOf(node) === undefined || this.isDeclarationVisible(parentOf(node)!);
+      default:
+        if (hasExportModifier(node)) return parentOf(node) === undefined || this.isDeclarationVisible(parentOf(node)!);
+        return parentOf(node)?.kind === Kind.SourceFile && isGlobalSourceFile(parentOf(node)!);
+    }
+  }
+  precalculateDeclarationEmitVisibility(file: AstNode): void {
+    forEachChild(file, node => {
+      this.aliasMarkingVisitorWorker(node);
+      return true;
+    });
+  }
 
   // Overload classification
   isImplementationOfOverload(node: AstNode): boolean {
@@ -210,6 +324,97 @@ export class CheckerEmitResolver implements EmitResolver {
     for (const member of members.values()) result.push(...member.declarations);
     return result;
   }
+  isImportRequiredByAugmentation(node: AstNode): boolean {
+    const sourceFile = sourceFileOf(node);
+    const target = this.getExternalModuleFileFromDeclaration(node);
+    return sourceFile !== undefined && target !== undefined && sourceFile !== target;
+  }
+  isDefinitelyReferenceToGlobalSymbolObject(node: AstNode): boolean {
+    if (node.kind !== Kind.PropertyAccessExpression) return false;
+    const expression = (node as { readonly expression?: AstNode }).expression;
+    if (expression?.kind === Kind.Identifier) return nodeText(expression) === "Symbol";
+    if (expression?.kind !== Kind.PropertyAccessExpression) return false;
+    const base = (expression as { readonly expression?: AstNode }).expression;
+    const name = (expression as { readonly name?: AstNode }).name;
+    return base?.kind === Kind.Identifier && nodeText(base) === "globalThis" && nodeText(name) === "Symbol";
+  }
+  requiresAddingImplicitUndefined(declaration: AstNode, symbol: AstSymbol | undefined, enclosingDeclaration: AstNode | undefined): boolean {
+    switch (declaration.kind) {
+      case Kind.PropertyDeclaration:
+      case Kind.PropertySignature:
+        return ((symbol?.flags ?? declarationSymbol(declaration)?.flags ?? 0) & SymbolFlags.Optional) !== 0
+          && isOptionalDeclaration(declaration);
+      case Kind.Parameter:
+        return this.requiresAddingImplicitUndefinedWorker(declaration, enclosingDeclaration);
+      default:
+        return false;
+    }
+  }
+  requiresAddingImplicitUndefinedWorker(parameter: AstNode, enclosingDeclaration: AstNode | undefined): boolean {
+    return (this.isRequiredInitializedParameter(parameter) || this.isOptionalUninitializedParameterProperty(parameter))
+      && !this.declaredParameterTypeContainsUndefined(parameter, enclosingDeclaration);
+  }
+  declaredParameterTypeContainsUndefined(parameter: AstNode, enclosingDeclaration?: AstNode): boolean {
+    void enclosingDeclaration;
+    const typeNode = (parameter as { readonly type?: AstNode }).type;
+    return typeNode !== undefined && containsUndefinedTypeNode(typeNode);
+  }
+  requiresAddingImplicitUndefinedUnsafe(declaration: AstNode, symbol: AstSymbol | undefined, enclosingDeclaration: AstNode | undefined): boolean {
+    return this.requiresAddingImplicitUndefined(declaration, symbol, enclosingDeclaration);
+  }
+  isLiteralConstDeclaration(node: AstNode): boolean {
+    const initializer = (node as { readonly initializer?: AstNode }).initializer;
+    return initializer !== undefined && isLiteralExpression(initializer) && hasSyntacticModifier(node, ModifierFlags.Const);
+  }
+  isExpandoFunctionDeclarationUnsafe(node: AstNode): boolean {
+    return this.isExpandoFunctionDeclaration(node);
+  }
+  getExternalModuleFileFromDeclaration(node: AstNode): AstNode | undefined {
+    const moduleSpecifier = (node as { readonly moduleSpecifier?: AstNode }).moduleSpecifier;
+    const symbol = moduleSpecifier === undefined ? undefined : declarationSymbol(moduleSpecifier);
+    return symbol?.declarations?.find(declaration => declaration.kind === Kind.SourceFile);
+  }
+  setReferencedImportDeclaration(node: IdentifierNode, declaration: Declaration | undefined): void {
+    const target = node as unknown as { referencedImportDeclaration?: Declaration };
+    if (declaration === undefined) {
+      delete target.referencedImportDeclaration;
+    } else {
+      target.referencedImportDeclaration = declaration;
+    }
+  }
+  getReferencedValueDeclaration(node: IdentifierNode): Declaration | undefined {
+    const symbol = declarationSymbol(node);
+    return symbol?.declarations?.find(declarationHasValueMeaning) as Declaration | undefined;
+  }
+  getReferencedValueDeclarations(node: IdentifierNode): readonly Declaration[] {
+    return (declarationSymbol(node)?.declarations ?? []).filter(declarationHasValueMeaning) as unknown as readonly Declaration[];
+  }
+  getElementAccessExpressionName(node: AstNode): string | undefined {
+    if (node.kind !== Kind.ElementAccessExpression) return undefined;
+    const argument = (node as { readonly argumentExpression?: AstNode }).argumentExpression;
+    if (argument?.kind === Kind.StringLiteral || argument?.kind === Kind.NumericLiteral) return nodeText(argument);
+    return undefined;
+  }
+  getReferencedMemberValueDeclaration(node: IdentifierNode): Declaration | undefined {
+    const symbol = declarationSymbol(node);
+    return symbol?.declarations?.find(declaration => declaration.kind === Kind.PropertyDeclaration || declaration.kind === Kind.MethodDeclaration) as Declaration | undefined;
+  }
+  createTypeParametersOfSignatureDeclaration(signatureDeclaration: AstNode): readonly AstNode[] {
+    return nodeArray((signatureDeclaration as { readonly typeParameters?: unknown }).typeParameters);
+  }
+  createLiteralConstValue(node: AstNode): string | number | undefined {
+    return this.getConstantValue(node);
+  }
+  createLateBoundIndexSignatures(node: AstNode): readonly AstNode[] {
+    return nodeArray((node as { readonly members?: unknown }).members).filter(member => this.isLateBound((member as { readonly name?: AstNode }).name ?? member));
+  }
+  getEffectiveDeclarationFlags(node: AstNode, flagsToCheck: ModifierFlags): ModifierFlags {
+    return hasSyntacticModifier(node, flagsToCheck) ? flagsToCheck : ModifierFlags.None;
+  }
+  getResolutionModeOverride(node: AstNode | undefined, reportErrors: boolean): unknown {
+    void reportErrors;
+    return (node as { readonly resolutionMode?: unknown } | undefined)?.resolutionMode;
+  }
 
   // Declaration emit support
   createTypeOfDeclaration(declaration: AstNode): AstNode {
@@ -245,6 +450,109 @@ export class CheckerEmitResolver implements EmitResolver {
 
 function declarationSymbol(node: AstNode): AstSymbol | undefined {
   return node.symbol ?? (node as unknown as { localSymbol?: AstSymbol }).localSymbol;
+}
+
+function parentOf(node: AstNode | undefined): AstNode | undefined {
+  return (node as { readonly parent?: AstNode } | undefined)?.parent;
+}
+
+function parentOrSelf(node: AstNode): AstNode {
+  return parentOf(node) ?? node;
+}
+
+function sourceFileOf(node: AstNode | undefined): AstNode | undefined {
+  let current = node;
+  while (current !== undefined) {
+    if (current.kind === Kind.SourceFile) return current;
+    current = parentOf(current);
+  }
+  return undefined;
+}
+
+function isGlobalSourceFile(node: AstNode): boolean {
+  return node.kind === Kind.SourceFile && (node as { readonly externalModuleIndicator?: AstNode }).externalModuleIndicator === undefined;
+}
+
+function firstIdentifierOf(node: AstNode | undefined): IdentifierNode | undefined {
+  if (node?.kind === Kind.Identifier) return node as IdentifierNode;
+  for (const child of childrenOf(node)) {
+    const identifier = firstIdentifierOf(child);
+    if (identifier !== undefined) return identifier;
+  }
+  return undefined;
+}
+
+function getAnyImportSyntax(node: AstNode): AstNode | undefined {
+  let current: AstNode | undefined = node;
+  while (current !== undefined) {
+    if (current.kind === Kind.ImportDeclaration
+      || current.kind === Kind.ImportEqualsDeclaration
+      || current.kind === Kind.ImportClause
+      || current.kind === Kind.ImportSpecifier
+      || current.kind === Kind.NamespaceImport) {
+      return current;
+    }
+    current = parentOf(current);
+  }
+  return undefined;
+}
+
+function isOptionalDeclaration(node: AstNode): boolean {
+  return (node as { readonly questionToken?: AstNode }).questionToken !== undefined
+    || ((node.symbol?.flags ?? 0) & SymbolFlags.Optional) !== 0;
+}
+
+function containsUndefinedTypeNode(node: AstNode): boolean {
+  if (node.kind === Kind.UndefinedKeyword) return true;
+  return childrenOf(node).some(containsUndefinedTypeNode);
+}
+
+function isLiteralExpression(node: AstNode): boolean {
+  return node.kind === Kind.StringLiteral
+    || node.kind === Kind.NumericLiteral
+    || node.kind === Kind.BigIntLiteral
+    || node.kind === Kind.TrueKeyword
+    || node.kind === Kind.FalseKeyword
+    || node.kind === Kind.NullKeyword
+    || node.kind === Kind.NoSubstitutionTemplateLiteral;
+}
+
+function forEachChild(node: AstNode, cb: (node: AstNode) => boolean): void {
+  for (const child of childrenOf(node)) {
+    if (cb(child)) forEachChild(child, cb);
+  }
+}
+
+function childrenOf(node: AstNode | undefined): readonly AstNode[] {
+  if (node === undefined) return [];
+  const result: AstNode[] = [];
+  for (const key of Object.keys(node as object)) {
+    if (key === "parent" || key === "symbol" || key === "locals") continue;
+    const value = (node as unknown as Record<string, unknown>)[key];
+    if (isAstNode(value)) result.push(value);
+    else if (Array.isArray(value)) result.push(...value.filter(isAstNode));
+    else if (isNodeArray(value)) result.push(...value.nodes);
+  }
+  return result;
+}
+
+function nodeArray(value: unknown): readonly AstNode[] {
+  if (Array.isArray(value)) return value.filter(isAstNode);
+  if (isNodeArray(value)) return value.nodes;
+  return [];
+}
+
+function isNodeArray(value: unknown): value is { readonly nodes: readonly AstNode[] } {
+  return typeof value === "object"
+    && value !== null
+    && Array.isArray((value as { readonly nodes?: unknown }).nodes)
+    && (value as { readonly nodes: readonly unknown[] }).nodes.every(isAstNode);
+}
+
+function isAstNode(value: unknown): value is AstNode {
+  return typeof value === "object"
+    && value !== null
+    && typeof (value as { readonly kind?: unknown }).kind === "number";
 }
 
 function nodeText(node: AstNode | undefined): string {
