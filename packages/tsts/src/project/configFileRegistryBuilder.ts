@@ -15,7 +15,9 @@ import type { ProjectCollection } from "./projectCollection.js";
 
 export interface ConfigFileRegistryBuilderHost {
   fileExists(fileName: string): boolean;
+  readFile?(fileName: string): string | undefined;
   directoryExists?(fileName: string): boolean;
+  readDirectory?(rootDir: string, extensions: readonly string[], excludes: readonly string[], includes: readonly string[]): readonly string[];
 }
 
 export interface ConfigFileNames {
@@ -27,6 +29,12 @@ export interface ConfigFileChangeResult {
   readonly affectedProjects: ReadonlySet<string>;
   readonly affectedFiles: ReadonlySet<string>;
 }
+
+export type ProjectLoadKind = 0 | 1;
+export const ProjectLoadKind = {
+  Find: 0 as ProjectLoadKind,
+  Create: 1 as ProjectLoadKind,
+} as const;
 
 export class ConfigFileRegistryBuilder {
   private readonly base: ConfigFileRegistry;
@@ -249,6 +257,98 @@ export class ConfigFileRegistryBuilder {
     return [this.registry, before !== after || this.customConfigFileName !== this.oldCustomConfigFileName];
   }
 
+  finalize(): ConfigFileRegistry {
+    const [registry] = this.build();
+    return registry;
+  }
+
+  findOrAcquireConfigForFile(
+    configFileName: string,
+    configFilePath: string,
+    filePath: string,
+    loadKind: ProjectLoadKind,
+    logger?: LogTree,
+  ): unknown {
+    switch (loadKind) {
+      case ProjectLoadKind.Find:
+        return this.registry.getConfig(configFilePath);
+      case ProjectLoadKind.Create:
+        return this.acquireConfigForFile(configFileName, configFilePath, filePath), this.registry.getConfig(configFilePath);
+      default:
+        throw new Error(`unknown project load kind: ${loadKind}`);
+    }
+  }
+
+  updateExtendingConfigs(extendingConfigPath: string, newCommandLine: ParsedConfigLike | undefined, oldCommandLine: ParsedConfigLike | undefined): void {
+    const nextExtended = new Set<string>();
+    for (const extendedConfig of newCommandLine?.extendedSourceFiles?.() ?? []) {
+      const path = normalizePath(extendedConfig);
+      nextExtended.add(path);
+      this.registry.addExtendingConfig(path, extendedConfig, extendingConfigPath);
+    }
+    for (const extendedConfig of oldCommandLine?.extendedSourceFiles?.() ?? []) {
+      const path = normalizePath(extendedConfig);
+      if (nextExtended.has(path)) continue;
+      const current = this.registry.get(path);
+      if (current === undefined) continue;
+      const retainingConfigs = new Set(current.retainingConfigs);
+      retainingConfigs.delete(extendingConfigPath);
+      this.registry.delete(path);
+      if (current.projectIds.size > 0 || current.retainingOpenFiles.size > 0 || retainingConfigs.size > 0) {
+        this.registry.set(path, current.configFileName, current.projectIds, current.commandLine, current.pendingReload);
+        for (const retained of retainingConfigs) this.registry.addExtendingConfig(path, current.configFileName, retained);
+      }
+    }
+  }
+
+  updateRootFilesWatch(configFileName: string, commandLine: ParsedConfigLike | undefined): PatternsAndIgnored {
+    const tsconfigDir = getDirectoryPath(configFileName);
+    const wildcardDirectories = commandLine?.wildcardDirectories?.() ?? new Map<string, unknown>();
+    const literalFileNames = commandLine?.literalFileNames?.() ?? [];
+    const extendedSourceFiles = commandLine?.extendedSourceFiles?.() ?? [];
+    const patternsInsideWorkspace: string[] = [];
+    const ignored: Record<string, true> = {};
+    let includeWorkspace = false;
+    let includeTsconfigDir = false;
+    const externalDirectories: string[] = [];
+
+    for (const directory of wildcardDirectories.keys()) {
+      if (containsPath(this.sessionCurrentDirectory(), directory, pathCompareOptions())) includeWorkspace = true;
+      else if (containsPath(tsconfigDir, directory, pathCompareOptions())) includeTsconfigDir = true;
+      else externalDirectories.push(directory);
+    }
+    for (const fileName of literalFileNames) {
+      if (containsPath(this.sessionCurrentDirectory(), fileName, pathCompareOptions())) includeWorkspace = true;
+      else if (containsPath(tsconfigDir, fileName, pathCompareOptions())) includeTsconfigDir = true;
+      else externalDirectories.push(getDirectoryPath(fileName));
+    }
+    if (includeWorkspace) patternsInsideWorkspace.push(getRecursiveGlobPattern(this.sessionCurrentDirectory()));
+    if (includeTsconfigDir) patternsInsideWorkspace.push(getRecursiveGlobPattern(tsconfigDir));
+    for (const fileName of extendedSourceFiles) {
+      if (includeWorkspace && containsPath(this.sessionCurrentDirectory(), fileName, pathCompareOptions())) continue;
+      patternsInsideWorkspace.push(fileName);
+    }
+    for (const directory of externalDirectories) ignored[directory] = true;
+    patternsInsideWorkspace.sort();
+    return { patternsInsideWorkspace, ignored };
+  }
+
+  getAccessibleEntries(path: string): { readonly files: readonly string[]; readonly directories: readonly string[] } {
+    const entries = this.host?.readDirectory?.(path, [], [], ["*"]) ?? [];
+    const files: string[] = [];
+    const directories: string[] = [];
+    for (const entry of entries) {
+      const base = getBaseFileName(entry);
+      if (this.directoryExists(entry)) directories.push(base);
+      else files.push(base);
+    }
+    return { files: files.sort(), directories: directories.sort() };
+  }
+
+  readFile(fileName: string): string | undefined {
+    return this.host?.readFile?.(fileName);
+  }
+
   private collectChangedFiles(
     files: ReadonlySet<string>,
     createdOrChangedOrDeletedFiles: Set<string>,
@@ -347,9 +447,24 @@ export class ConfigFileRegistryBuilder {
   private directoryExists(fileName: string): boolean {
     return this.host?.directoryExists?.(fileName) ?? false;
   }
+
+  private sessionCurrentDirectory(): string {
+    return "";
+  }
 }
 
 const emptySet: ReadonlySet<string> = new Set<string>();
+
+interface ParsedConfigLike {
+  extendedSourceFiles?(): readonly string[];
+  wildcardDirectories?(): ReadonlyMap<string, unknown>;
+  literalFileNames?(): readonly string[];
+}
+
+interface PatternsAndIgnored {
+  readonly patternsInsideWorkspace: readonly string[];
+  readonly ignored?: Readonly<Record<string, true>>;
+}
 
 function isDynamicFileName(path: string): boolean {
   return path.startsWith("^") || path.includes("/^");
@@ -361,4 +476,12 @@ function sameDirectoryOrDescendant(directory: string, filePath: string): boolean
     currentDirectory: "",
     useCaseSensitiveFileNames: true,
   });
+}
+
+function getRecursiveGlobPattern(directory: string): string {
+  return `${directory.replace(/\/+$/, "")}/**/*`;
+}
+
+function pathCompareOptions(): { currentDirectory: string; useCaseSensitiveFileNames: boolean } {
+  return { currentDirectory: "", useCaseSensitiveFileNames: true };
 }

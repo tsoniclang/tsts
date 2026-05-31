@@ -71,6 +71,14 @@ export interface SessionTelemetry {
   readonly openFiles: number;
 }
 
+export interface SessionStatus {
+  readonly snapshotId: number;
+  readonly scheduledSnapshotUpdate: ScheduledUpdate | undefined;
+  readonly pendingFileChanges: readonly FileChange[];
+  readonly pendingUserConfigChanges: boolean;
+  readonly pendingAtaChanges: ReadonlyMap<string, unknown>;
+}
+
 export class Session {
   readonly options: SessionOptions;
   readonly fs: SnapshotFS;
@@ -105,6 +113,30 @@ export class Session {
 
   snapshot(): Snapshot {
     return this.snapshotValue;
+  }
+
+  fsHandle(): SnapshotFS {
+    return this.fs;
+  }
+
+  getCurrentDirectory(): string {
+    return this.options.currentDirectory;
+  }
+
+  getDefaultLibraryPath(): string {
+    return this.options.defaultLibraryPath ?? "";
+  }
+
+  getTypingsLocation(): string {
+    return this.options.typingsLocation ?? "";
+  }
+
+  getLogger(): LogTree {
+    return this.logger;
+  }
+
+  getParseCache(): ParseCache {
+    return this.parseCache;
   }
 
   config(): ReadonlyMap<string, unknown> {
@@ -219,6 +251,60 @@ export class Session {
     return this.scheduledUpdate;
   }
 
+  status(): SessionStatus {
+    return {
+      snapshotId: this.snapshotId,
+      scheduledSnapshotUpdate: this.scheduledUpdate,
+      pendingFileChanges: [...this.pendingFileChanges],
+      pendingUserConfigChanges: this.pendingUserConfigChanges,
+      pendingAtaChanges: new Map(this.pendingAtaChanges),
+    };
+  }
+
+  requestLanguageService(fileName: string, withAutoImports = false): Snapshot {
+    const file = this.snapshotValue.getFile(fileName);
+    if (file === undefined) {
+      return this.updateSnapshot(UpdateReason.RequestedLanguageServiceForFileNotOpen);
+    }
+    if (withAutoImports) {
+      this.cancelWarmAutoImportCache();
+      return this.updateSnapshot(UpdateReason.RequestedLanguageServiceWithAutoImports);
+    }
+    return this.updateSnapshot(UpdateReason.RequestedLanguageServicePendingChanges);
+  }
+
+  requestProjectTree(): Snapshot {
+    return this.updateSnapshot(UpdateReason.RequestedLoadProjectTree);
+  }
+
+  requestProjectNotLoaded(): Snapshot {
+    return this.updateSnapshot(UpdateReason.RequestedLanguageServiceProjectNotLoaded);
+  }
+
+  requestProjectDirty(): Snapshot {
+    return this.updateSnapshot(UpdateReason.RequestedLanguageServiceProjectDirty);
+  }
+
+  applyAtaChanges(changes: ReadonlyMap<string, unknown>): Snapshot {
+    for (const [path, change] of changes) this.pendingAtaChanges.set(path, change);
+    this.scheduleDiagnosticsRefresh();
+    return this.updateSnapshotWithChange({
+      reason: UpdateReason.RequestedLanguageServicePendingChanges,
+      fileChanges: this.consumePendingSummary(true),
+    });
+  }
+
+  takePendingAtaChanges(): ReadonlyMap<string, unknown> {
+    const changes = new Map(this.pendingAtaChanges);
+    this.pendingAtaChanges.clear();
+    return changes;
+  }
+
+  updateUserPreferences(config: ReadonlyMap<string, unknown>): Snapshot {
+    this.configure(config);
+    return this.updateSnapshot(UpdateReason.RequestedLanguageServicePendingChanges);
+  }
+
   scheduleDiagnosticsRefresh(): void {
     this.cancelDiagnosticsRefresh();
     this.diagnosticsGeneration += 1;
@@ -269,6 +355,8 @@ export class Session {
     this.cancelScheduledSnapshotUpdate();
     this.cancelIdleCacheClean();
     this.stopPerformanceTelemetry();
+    this.pendingFileChanges.length = 0;
+    this.pendingAtaChanges.clear();
   }
 
   private updateSnapshotWithChange(change: SnapshotChange): Snapshot {
