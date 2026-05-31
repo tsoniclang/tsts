@@ -43,6 +43,22 @@ export interface SharedFlow {
   flowType: FlowType;
 }
 
+export interface FlowState {
+  reference: AstNode | undefined;
+  declaredType: Type | undefined;
+  initialType: Type | undefined;
+  flowContainer: AstNode | undefined;
+  refKey: string | undefined;
+  depth: number;
+  sharedFlowStart: number;
+  reduceLabels: FlowNode[];
+  next: FlowState | undefined;
+}
+
+export function isNil(flowType: FlowType | undefined): boolean {
+  return flowType === undefined || flowType.type === undefined;
+}
+
 export type AssignmentDeclarationKind = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 export const AssignmentDeclarationKind = {
   None: 0 as AssignmentDeclarationKind,
@@ -68,12 +84,75 @@ export class FlowAnalyzer {
   lastFlowNodeReachable = true;
   flowTypeCache: Map<AstNode, Type> = new Map();
   sharedFlows: SharedFlow[] = [];
+  freeFlowState: FlowState | undefined;
 
   // -------------------------------------------------------------------------
   // Top-level reachability + type narrowing
   // -------------------------------------------------------------------------
 
   private readonly reachableCache = new WeakMap<FlowNode, boolean>();
+
+  getFlowState(): FlowState {
+    const state = this.freeFlowState ?? newFlowState();
+    this.freeFlowState = state.next;
+    state.reference = undefined;
+    state.declaredType = undefined;
+    state.initialType = undefined;
+    state.flowContainer = undefined;
+    state.refKey = undefined;
+    state.depth = 0;
+    state.sharedFlowStart = this.sharedFlows.length;
+    state.reduceLabels.length = 0;
+    state.next = undefined;
+    return state;
+  }
+
+  putFlowState(state: FlowState): void {
+    state.reference = undefined;
+    state.declaredType = undefined;
+    state.initialType = undefined;
+    state.flowContainer = undefined;
+    state.refKey = undefined;
+    state.depth = 0;
+    state.sharedFlowStart = 0;
+    state.reduceLabels.length = 0;
+    state.next = this.freeFlowState;
+    this.freeFlowState = state;
+  }
+
+  getFlowTypeOfReference(reference: AstNode, declaredType: Type): Type {
+    return this.getFlowTypeOfReferenceEx(reference, declaredType, declaredType, undefined, undefined);
+  }
+
+  getFlowTypeOfReferenceEx(
+    reference: AstNode,
+    declaredType: Type,
+    initialType: Type | undefined,
+    flowContainer: AstNode | undefined,
+    flowNode: FlowNode | undefined,
+  ): Type {
+    if (this.flowAnalysisDisabled) return unknownType();
+    const activeFlowNode = flowNode ?? getFlowNodeOfNode(reference);
+    if (activeFlowNode === undefined) return declaredType;
+    const state = this.getFlowState();
+    state.reference = reference;
+    state.declaredType = declaredType;
+    state.initialType = initialType ?? declaredType;
+    state.flowContainer = flowContainer;
+    state.sharedFlowStart = this.sharedFlows.length;
+    this.flowInvocationCount += 1;
+    const evolvedType = this.getTypeAtFlowNode(reference, activeFlowNode).type;
+    this.sharedFlows.length = state.sharedFlowStart;
+    this.putFlowState(state);
+    if (isEvolvingArrayType(evolvedType) && this.isEvolvingArrayOperationTarget(reference)) {
+      return typeOfNode(reference);
+    }
+    const resultType = this.finalizeEvolvingArrayType(evolvedType);
+    if ((resultType.flags & TypeFlags.Never) !== 0 && nodeParent(reference)?.kind === Kind.NonNullExpression) {
+      return declaredType;
+    }
+    return resultType;
+  }
 
   isReachableFlowNode(flow: FlowNode): boolean {
     const cached = this.reachableCache.get(flow);
@@ -338,9 +417,50 @@ export class FlowAnalyzer {
     }
     return false;
   }
-  getInitialTypeOfBindingElement(node: AstNode): Type { void node; return {} as Type; }
-  getInitialTypeOfVariableDeclaration(node: AstNode): Type { void node; return {} as Type; }
-  getInitialOrAssignedType(node: AstNode): Type { void node; return {} as Type; }
+  isEmptyArrayAssignment(node: AstNode): boolean {
+    if (node.kind === Kind.VariableDeclaration || node.kind === Kind.BindingElement) {
+      return isEmptyArrayLiteral(initializerOf(node));
+    }
+    const parent = nodeParent(node);
+    return parent?.kind === Kind.BinaryExpression && isEmptyArrayLiteral(rightOf(parent));
+  }
+
+  getInitialTypeOfBindingElement(node: AstNode): Type {
+    const initializer = initializerOf(node);
+    if (initializer !== undefined) return typeOfNode(initializer);
+    const parent = nodeParent(node);
+    if (parent?.kind === Kind.ObjectBindingPattern || parent?.kind === Kind.ArrayBindingPattern) {
+      const owner = nodeParent(parent);
+      return owner === undefined ? unknownType() : this.getInitialType(owner);
+    }
+    return typeOfNode(node);
+  }
+
+  getInitialTypeOfVariableDeclaration(node: AstNode): Type {
+    const initializer = initializerOf(node);
+    return initializer === undefined ? typeOfNode(node) : typeOfNode(initializer);
+  }
+
+  getInitialType(node: AstNode): Type {
+    if (node.kind === Kind.BindingElement) return this.getInitialTypeOfBindingElement(node);
+    if (node.kind === Kind.VariableDeclaration || node.kind === Kind.Parameter || node.kind === Kind.PropertyDeclaration) {
+      return this.getInitialTypeOfVariableDeclaration(node);
+    }
+    return typeOfNode(node);
+  }
+
+  getAssignedType(node: AstNode): Type {
+    if (node.kind === Kind.BinaryExpression) return typeOfNode(rightOf(node));
+    const parent = nodeParent(node);
+    if (parent?.kind === Kind.BinaryExpression && leftOf(parent) === node) return typeOfNode(rightOf(parent));
+    return typeOfNode(node);
+  }
+
+  getInitialOrAssignedType(node: AstNode): Type {
+    return node.kind === Kind.VariableDeclaration || node.kind === Kind.BindingElement
+      ? this.getInitialType(node)
+      : this.getAssignedType(node);
+  }
   isMatchingReferenceDiscriminant(expr: AstNode, computedType: Type): boolean {
     void expr; void computedType; return false;
   }
@@ -555,6 +675,31 @@ function flowAntecedents(flow: FlowNode): readonly FlowNode[] {
   return result;
 }
 
+export function getBranchLabelAntecedents(flow: FlowNode, reduceLabels: readonly FlowNode[] = []): readonly FlowNode[] {
+  for (let index = reduceLabels.length - 1; index >= 0; index -= 1) {
+    const candidate = reduceLabels[index] as FlowNode & { target?: FlowNode; antecedents?: unknown };
+    if (candidate.target === flow) {
+      const antecedents = candidate.antecedents;
+      if (Array.isArray(antecedents)) return antecedents.filter(isFlowNode);
+    }
+  }
+  return flowAntecedents(flow);
+}
+
+function newFlowState(): FlowState {
+  return {
+    reference: undefined,
+    declaredType: undefined,
+    initialType: undefined,
+    flowContainer: undefined,
+    refKey: undefined,
+    depth: 0,
+    sharedFlowStart: 0,
+    reduceLabels: [],
+    next: undefined,
+  };
+}
+
 function isFlowNode(value: unknown): value is FlowNode {
   return typeof value === "object" && value !== null && typeof (value as { flags?: unknown }).flags === "number";
 }
@@ -571,6 +716,18 @@ function literalText(node: AstNode): string {
 
 function expressionOf(node: AstNode): AstNode | undefined {
   return (node as unknown as { expression?: AstNode }).expression;
+}
+
+function initializerOf(node: AstNode | undefined): AstNode | undefined {
+  return (node as unknown as { initializer?: AstNode } | undefined)?.initializer;
+}
+
+function leftOf(node: AstNode | undefined): AstNode | undefined {
+  return (node as unknown as { left?: AstNode } | undefined)?.left;
+}
+
+function rightOf(node: AstNode | undefined): AstNode | undefined {
+  return (node as unknown as { right?: AstNode } | undefined)?.right;
 }
 
 function operatorKind(node: AstNode): Kind {
@@ -676,6 +833,15 @@ function typeOfNode(node: AstNode | undefined): Type {
 
 function neverType(): Type {
   return intrinsicType(TypeFlags.Never, "never");
+}
+
+function isEvolvingArrayType(type: Type): boolean {
+  const objectFlags = (type.data as { objectFlags?: ObjectFlags } | undefined)?.objectFlags ?? ObjectFlags.None;
+  return (objectFlags & ObjectFlags.EvolvingArray) !== 0;
+}
+
+function isEmptyArrayLiteral(node: AstNode | undefined): boolean {
+  return node?.kind === Kind.ArrayLiteralExpression && nodeArrayOrList((node as unknown as { elements?: readonly AstNode[] | { nodes?: readonly AstNode[] } }).elements).length === 0;
 }
 
 function unknownType(): Type {
