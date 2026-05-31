@@ -792,12 +792,16 @@ export class CheckerGroundworkTests {
     const genericBase = checkSourceFile(parseSourceFile("interface Box<T> { value: T; } interface StringBox extends Box<string> { } function f(box: StringBox): string { return box.value; }"));
     const classBase = checkSourceFile(parseSourceFile("class Base { value: number; get(): number { return this.value; } } class Derived extends Base { label: string; } function f(d: Derived): number { return d.get(); }"));
     const classMismatch = checkSourceFile(parseSourceFile("class Base { value: number; } class Derived extends Base { } function f(d: Derived): string { return d.value; }"));
+    const implementsOk = checkSourceFile(parseSourceFile("interface Service { run(): number; } class Good implements Service { run(): number { return 1; } }"));
+    const implementsMismatch = checkSourceFile(parseSourceFile("interface Service { run(): number; } class Bad implements Service { run(): string { return \"x\"; } }"));
 
     Assert.Equal(0, interfaceBase.diagnostics.length);
     Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], interfaceMismatch.diagnostics.map((d) => d.message));
     Assert.Equal(0, genericBase.diagnostics.length);
     Assert.Equal(0, classBase.diagnostics.length);
     Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], classMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, implementsOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'Bad' is not assignable to type 'Service'.\n  Types of property 'run' are incompatible.\n    Type 'function' is not assignable to type 'function'."], implementsMismatch.diagnostics.map((d) => d.message));
   }
 
   accepts_union_type_node_return_types(): void {

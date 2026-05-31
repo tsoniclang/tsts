@@ -57,6 +57,7 @@ import {
   type EntityName,
   type Expression,
   type ExpressionWithTypeArguments,
+  type InterfaceDeclaration,
   type LiteralTypeNode,
   type Node as AstNode,
   type ParameterDeclaration,
@@ -1145,18 +1146,23 @@ function collectHeritageMembers(
   for (const clause of heritageClauses ?? []) {
     if (clause.token !== token) continue;
     for (const heritageType of clause.types) {
-      addObjectTypeMembers(typeFromHeritageType(heritageType, state), properties, extraParts);
+      addObjectTypeMembers(typeFromExpressionWithTypeArguments(heritageType, state), properties, extraParts);
     }
   }
 }
 
-function typeFromHeritageType(heritageType: ExpressionWithTypeArguments, state: CheckState): Type {
+export function typeFromExpressionWithTypeArguments(heritageType: ExpressionWithTypeArguments, state: CheckState): Type {
   const symbol = typeSymbolFromHeritageExpression(heritageType.expression);
   if (symbol === undefined) {
     state.diagnostics.push({ message: `Cannot find name '${expressionNameText(heritageType.expression)}'.` });
     return unresolvedType;
   }
   return getDeclaredTypeOfTypeSymbol(symbol, heritageType.typeArguments, state);
+}
+
+export function typeFromClassOrInterfaceDeclaration(declaration: ClassDeclaration | InterfaceDeclaration, state: CheckState): Type {
+  const symbol = nodeSymbol(declaration);
+  return symbol === undefined ? anyType : getDeclaredTypeOfClassOrInterfaceCore(symbol, declaration, state);
 }
 
 function typeSymbolFromHeritageExpression(expression: Expression): AstSymbol | undefined {
