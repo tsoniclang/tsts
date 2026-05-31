@@ -10,6 +10,8 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
+import { Kind } from "../ast/index.js";
+import { SymbolFlags } from "../ast/flags.js";
 import type { Type, Signature, TypeMapper } from "./types.js";
 
 export type TypeComparer = (source: Type, target: Type) => boolean;
@@ -808,4 +810,103 @@ export function reportUnreliableWorker(type: Type, state: Pick<CheckerCoreState,
 export function reportUnmeasurableWorker(type: Type, state: Pick<CheckerCoreState, "markerSuperType" | "markerSubType" | "markerOtherType" | "reliabilityFlags">): Type {
   if (type === state.markerSuperType || type === state.markerSubType || type === state.markerOtherType) state.reliabilityFlags |= 2;
   return type;
+}
+
+export interface GlobalResolverState {
+  readonly emptyObjectType: Type;
+  readonly emptyGenericType: Type;
+  readonly resolveName: (location: AstNode | undefined, name: string, meaning: number, diagnostic: string | undefined, isUse: boolean, excludeGlobals: boolean) => AstSymbol | undefined;
+  readonly getDeclaredTypeOfSymbol: (symbol: AstSymbol) => Type;
+  readonly getTypeAliasTypeParameters: (symbol: AstSymbol) => readonly Type[];
+  readonly error?: (node: AstNode | undefined, diagnostic: string, ...args: readonly unknown[]) => void;
+}
+
+export function getGlobalTypeResolver(state: GlobalResolverState, name: string, arity: number, reportErrors: boolean): () => Type {
+  return memoize(() => getGlobalType(state, name, arity, reportErrors));
+}
+
+export function getGlobalTypeAliasResolver(state: GlobalResolverState, name: string, arity: number, reportErrors: boolean): () => AstSymbol | undefined {
+  return memoize(() => getGlobalTypeAliasSymbol(state, name, arity, reportErrors));
+}
+
+export function getGlobalValueSymbolResolver(state: GlobalResolverState, name: string, reportErrors: boolean): () => AstSymbol | undefined {
+  return memoize(() => getGlobalSymbol(state, name, SymbolFlags.Value, reportErrors ? "Cannot_find_global_value_0" : undefined));
+}
+
+export function getGlobalTypeSymbolResolver(state: GlobalResolverState, name: string, reportErrors: boolean): () => AstSymbol | undefined {
+  return memoize(() => getGlobalSymbol(state, name, SymbolFlags.Type, reportErrors ? "Cannot_find_global_type_0" : undefined));
+}
+
+export function getGlobalTypesResolver(state: GlobalResolverState, names: readonly string[], arity: number, reportErrors: boolean): () => readonly Type[] {
+  return memoize(() => names.map(name => getGlobalType(state, name, arity, reportErrors)));
+}
+
+export function getGlobalTypeAliasSymbol(
+  state: GlobalResolverState,
+  name: string,
+  arity: number,
+  reportErrors: boolean,
+): AstSymbol | undefined {
+  const symbol = getGlobalSymbol(state, name, SymbolFlags.TypeAlias, reportErrors ? "Cannot_find_global_type_0" : undefined);
+  if (symbol === undefined) return undefined;
+  state.getDeclaredTypeOfSymbol(symbol);
+  if (state.getTypeAliasTypeParameters(symbol).length === arity) return symbol;
+  if (reportErrors) state.error?.(findGlobalTypeDeclaration(symbol), "Global_type_0_must_have_1_type_parameter_s", symbolName(symbol), arity);
+  return undefined;
+}
+
+export function getGlobalType(state: GlobalResolverState, name: string, arity: number, reportErrors: boolean): Type {
+  const symbol = getGlobalSymbol(state, name, SymbolFlags.Type, reportErrors ? "Cannot_find_global_type_0" : undefined);
+  if (symbol !== undefined) {
+    const flags = symbol.flags ?? 0;
+    if ((flags & (SymbolFlags.Class | SymbolFlags.Interface)) !== 0) {
+      const type = state.getDeclaredTypeOfSymbol(symbol);
+      if (interfaceTypeArity(type) === arity) return type;
+      if (reportErrors) state.error?.(findGlobalTypeDeclaration(symbol), "Global_type_0_must_have_1_type_parameter_s", symbolName(symbol), arity);
+    } else if (reportErrors) {
+      state.error?.(findGlobalTypeDeclaration(symbol), "Global_type_0_must_be_a_class_or_interface_type", symbolName(symbol));
+    }
+  }
+  return arity === 0 ? state.emptyObjectType : state.emptyGenericType;
+}
+
+export function findGlobalTypeDeclaration(symbol: AstSymbol): AstNode | undefined {
+  return symbol.declarations.find(declaration =>
+    declaration.kind === Kind.ClassDeclaration
+    || declaration.kind === Kind.InterfaceDeclaration
+    || declaration.kind === Kind.EnumDeclaration
+    || declaration.kind === Kind.TypeAliasDeclaration);
+}
+
+export function getGlobalSymbol(
+  state: GlobalResolverState,
+  name: string,
+  meaning: number,
+  diagnostic: string | undefined,
+): AstSymbol | undefined {
+  return state.resolveName(undefined, name, meaning, diagnostic, false, false);
+}
+
+function memoize<T>(factory: () => T): () => T {
+  let hasValue = false;
+  let value: T;
+  return () => {
+    if (!hasValue) {
+      value = factory();
+      hasValue = true;
+    }
+    return value;
+  };
+}
+
+function interfaceTypeArity(type: Type): number {
+  const data = type.data;
+  if (data !== undefined && "typeParameters" in data && Array.isArray(data.typeParameters)) {
+    return data.typeParameters.length;
+  }
+  return 0;
+}
+
+function symbolName(symbol: AstSymbol): string {
+  return symbol.escapedName ?? symbol.name ?? "";
 }
