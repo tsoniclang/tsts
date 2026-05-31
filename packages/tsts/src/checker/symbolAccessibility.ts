@@ -8,7 +8,7 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol, SymbolTable } from "../ast/index.js";
-import { NodeFlags, SymbolFlags } from "../ast/index.js";
+import { Kind, NodeFlags, SymbolFlags } from "../ast/index.js";
 
 // ---------------------------------------------------------------------------
 // SymbolAccessibility result
@@ -42,6 +42,16 @@ export interface SymbolVisibilityResult {
 // ---------------------------------------------------------------------------
 
 export class AccessibilityResolver {
+  isValueSymbolAccessible(symbol: AstSymbol, enclosingDeclaration: AstNode | undefined): boolean {
+    return this.isSymbolAccessibleWorker(symbol, enclosingDeclaration, SymbolFlags.Value, false, true)
+      .accessibility === SymbolAccessibility.Accessible;
+  }
+
+  isSymbolAccessibleByFlags(symbol: AstSymbol, enclosingDeclaration: AstNode | undefined, flags: number): boolean {
+    return this.isSymbolAccessibleWorker(symbol, enclosingDeclaration, flags, false, false)
+      .accessibility === SymbolAccessibility.Accessible;
+  }
+
   isSymbolAccessible(
     symbol: AstSymbol, enclosingDeclaration: AstNode | undefined,
     meaning: number, shouldComputeAliasesToMakeVisible: boolean,
@@ -247,6 +257,204 @@ export class AccessibilityResolver {
     if (!out.includes(container)) out.push(container);
     return dedupeSymbols(out);
   }
+
+  getExternalModuleContainer(declaration: AstNode | undefined): AstSymbol | undefined {
+    const node = findAncestor(declaration, hasNonGlobalAugmentationExternalModuleSymbol);
+    return nodeSymbol(node);
+  }
+
+  getFileSymbolIfFileSymbolExportEqualsContainer(declaration: AstNode, container: AstSymbol): AstSymbol | undefined {
+    const fileSymbol = this.getExternalModuleContainer(declaration);
+    const exportEquals = exportsOf(fileSymbol)?.get("export=");
+    if (fileSymbol === undefined || exportEquals === undefined) return undefined;
+    return symbolsSameReference(exportEquals, container) ? fileSymbol : undefined;
+  }
+
+  getAliasForSymbolInContainer(container: AstSymbol, symbol: AstSymbol): AstSymbol | undefined {
+    if (container === symbolParent(symbol)) return symbol;
+    const exportEquals = exportsOf(container)?.get("export=");
+    if (exportEquals !== undefined && symbolsSameReference(exportEquals, symbol)) return container;
+    const exports = exportsOf(container);
+    const quick = exports?.get(symbolToString(symbol));
+    if (quick !== undefined && symbolsSameReference(quick, symbol)) return quick;
+    if (exports === undefined) return undefined;
+    const candidates: AstSymbol[] = [];
+    for (const exported of exports.values()) {
+      if (symbolsSameReference(exported, symbol)) candidates.push(exported);
+    }
+    return candidates.sort(compareSymbols)[0];
+  }
+
+  getAccessibleSymbolChainEx(ctx: AccessibleSymbolChainContext): readonly AstSymbol[] | undefined {
+    if (ctx.symbol === undefined || isPropertyOrMethodDeclarationSymbol(ctx.symbol)) return undefined;
+    let result: readonly AstSymbol[] | undefined;
+    this.someSymbolTableInScope(ctx.enclosingDeclaration, (table, tableId, ignoreQualification, isLocalNameLookup) => {
+      const candidate = this.getAccessibleSymbolChainFromSymbolTable(ctx, table, tableId, ignoreQualification, isLocalNameLookup);
+      if (candidate !== undefined && candidate.length > 0) {
+        result = candidate;
+        return true;
+      }
+      return false;
+    });
+    return result;
+  }
+
+  getAccessibleSymbolChainFromSymbolTable(
+    ctx: AccessibleSymbolChainContext,
+    table: SymbolTable,
+    tableId: SymbolTableID,
+    ignoreQualification: boolean,
+    isLocalNameLookup: boolean,
+  ): readonly AstSymbol[] | undefined {
+    const symbolId = getStableSymbolId(ctx.symbol);
+    let visited = ctx.visitedSymbolTablesMap.get(symbolId);
+    if (visited === undefined) {
+      visited = new Set();
+      ctx.visitedSymbolTablesMap.set(symbolId, visited);
+    }
+    if (visited.has(tableId)) return undefined;
+    visited.add(tableId);
+    const result = this.trySymbolTable(ctx, table, tableId, ignoreQualification, isLocalNameLookup);
+    visited.delete(tableId);
+    return result;
+  }
+
+  getSymbolTableAliases(symbols: SymbolTable, tableId: SymbolTableID): readonly AstSymbol[] {
+    if (symbolTableKind(tableId) === SymbolTableKind.Members) return [];
+    return [...symbols.values()].filter((symbol) => (symbolFlags(symbol) & SymbolFlags.Alias) !== 0);
+  }
+
+  trySymbolTable(
+    ctx: AccessibleSymbolChainContext,
+    symbols: SymbolTable,
+    tableId: SymbolTableID,
+    ignoreQualification: boolean,
+    isLocalNameLookup: boolean,
+  ): readonly AstSymbol[] | undefined {
+    const direct = symbols.get(symbolToString(ctx.symbol));
+    if (direct !== undefined && this.isAccessible(ctx, direct, undefined, ignoreQualification)) return [ctx.symbol];
+    const candidateChains: AstSymbol[][] = [];
+    if (direct?.exportSymbol !== undefined && this.isAccessible(ctx, direct.exportSymbol, undefined, ignoreQualification)) {
+      candidateChains.push([ctx.symbol]);
+    }
+    for (const symbolFromTable of this.getSymbolTableAliases(symbols, tableId)) {
+      if (symbolToString(symbolFromTable) === "export=" || symbolToString(symbolFromTable) === "default") continue;
+      if (isLocalNameLookup && declarationsOf(symbolFromTable).some(isNamespaceReexportDeclaration)) continue;
+      const resolvedImportedSymbol = resolveAlias(symbolFromTable);
+      const candidate = this.getCandidateListForSymbol(ctx, symbolFromTable, resolvedImportedSymbol, ignoreQualification);
+      if (candidate !== undefined && candidate.length > 0) candidateChains.push([...candidate]);
+    }
+    if (candidateChains.length > 0) return candidateChains.sort(compareSymbolChains)[0];
+    if (tableId === symbolTableIDFromGlobals()) {
+      const globalThis = symbols.get("globalThis");
+      if (globalThis !== undefined) return this.getCandidateListForSymbol(ctx, globalThis, globalThis, ignoreQualification);
+    }
+    return undefined;
+  }
+
+  compareSymbolChainsWorker(left: readonly AstSymbol[], right: readonly AstSymbol[]): number {
+    return compareSymbolChains(left, right);
+  }
+
+  getCandidateListForSymbol(
+    ctx: AccessibleSymbolChainContext,
+    symbolFromSymbolTable: AstSymbol,
+    resolvedImportedSymbol: AstSymbol,
+    ignoreQualification: boolean,
+  ): readonly AstSymbol[] | undefined {
+    if (this.isAccessible(ctx, symbolFromSymbolTable, resolvedImportedSymbol, ignoreQualification)) return [symbolFromSymbolTable];
+    const exports = exportsOf(resolvedImportedSymbol);
+    if (exports === undefined) return undefined;
+    const chain = this.getAccessibleSymbolChainFromSymbolTable(
+      ctx,
+      exports,
+      symbolTableIDFromResolvedExports(resolvedImportedSymbol),
+      true,
+      false,
+    );
+    if (chain === undefined || chain.length === 0) return undefined;
+    if (!this.canQualifySymbol(ctx, symbolFromSymbolTable, getQualifiedLeftMeaning(ctx.meaning))) return undefined;
+    return [symbolFromSymbolTable, ...chain];
+  }
+
+  isAccessible(
+    ctx: AccessibleSymbolChainContext,
+    symbolFromSymbolTable: AstSymbol,
+    resolvedAliasSymbol: AstSymbol | undefined,
+    ignoreQualification: boolean,
+  ): boolean {
+    const target = resolveAlias(ctx.symbol);
+    const fromTable = resolveAlias(symbolFromSymbolTable);
+    const aliasTarget = resolvedAliasSymbol === undefined ? undefined : resolveAlias(resolvedAliasSymbol);
+    const likeSymbols = symbolsSameReference(ctx.symbol, symbolFromSymbolTable)
+      || symbolsSameReference(target, fromTable)
+      || aliasTarget !== undefined && symbolsSameReference(target, aliasTarget);
+    if (!likeSymbols) return false;
+    return !declarationsOf(symbolFromSymbolTable).some(hasNonGlobalAugmentationExternalModuleSymbol)
+      && (ignoreQualification || this.canQualifySymbol(ctx, symbolFromSymbolTable, ctx.meaning));
+  }
+
+  canQualifySymbol(ctx: AccessibleSymbolChainContext, symbolFromSymbolTable: AstSymbol, meaning: number): boolean {
+    if (!this.needsQualification(symbolFromSymbolTable, ctx.enclosingDeclaration, meaning)) return true;
+    const parent = symbolParent(symbolFromSymbolTable);
+    if (parent === undefined) return false;
+    const parentCtx: AccessibleSymbolChainContext = {
+      symbol: parent,
+      enclosingDeclaration: ctx.enclosingDeclaration,
+      meaning: getQualifiedLeftMeaning(meaning),
+      useOnlyExternalAliasing: ctx.useOnlyExternalAliasing,
+      visitedSymbolTablesMap: ctx.visitedSymbolTablesMap,
+    };
+    const chain = this.getAccessibleSymbolChainEx(parentCtx);
+    return chain !== undefined && chain.length > 0;
+  }
+
+  needsQualification(symbol: AstSymbol, enclosingDeclaration: AstNode | undefined, meaning: number): boolean {
+    let qualify = false;
+    this.someSymbolTableInScope(enclosingDeclaration, (table) => {
+      const sameName = table.get(symbolToString(symbol));
+      if (sameName === undefined) return false;
+      const resolved = resolveAlias(sameName);
+      if (symbolsSameReference(resolved, symbol)) return true;
+      if ((symbolFlags(resolved) & meaning) !== 0) {
+        qualify = true;
+        return true;
+      }
+      return false;
+    });
+    return qualify;
+  }
+
+  someSymbolTableInScope(
+    enclosingDeclaration: AstNode | undefined,
+    callback: (
+      symbolTable: SymbolTable,
+      tableId: SymbolTableID,
+      ignoreQualification: boolean,
+      isLocalNameLookup: boolean,
+      scopeNode: AstNode | undefined,
+    ) => boolean,
+  ): boolean {
+    let location = enclosingDeclaration;
+    while (location !== undefined) {
+      const locals = localsOf(location);
+      if (locals !== undefined && !isGlobalSourceFile(location)) {
+        if (callback(locals, symbolTableIDFromLocals(location), false, true, location)) return true;
+      }
+      if (location.kind === Kind.SourceFile || location.kind === Kind.ModuleDeclaration) {
+        const symbol = nodeSymbol(location);
+        const exports = exportsOf(symbol);
+        if (exports !== undefined && callback(exports, symbolTableIDFromExports(symbol!), false, true, location)) return true;
+      }
+      if (location.kind === Kind.ClassDeclaration || location.kind === Kind.ClassExpression || location.kind === Kind.InterfaceDeclaration) {
+        const symbol = nodeSymbol(location);
+        const members = membersOf(symbol);
+        if (members !== undefined && callback(filterTypeMembers(members), symbolTableIDFromMembers(symbol!), false, false, location)) return true;
+      }
+      location = parentOf(location);
+    }
+    return false;
+  }
 }
 
 export function newAccessibilityResolver(): AccessibilityResolver {
@@ -256,6 +464,74 @@ export function newAccessibilityResolver(): AccessibilityResolver {
 // ---------------------------------------------------------------------------
 // Module-level helpers
 // ---------------------------------------------------------------------------
+
+export interface AccessibleSymbolChainContext {
+  readonly symbol: AstSymbol;
+  readonly enclosingDeclaration: AstNode | undefined;
+  readonly meaning: number;
+  readonly useOnlyExternalAliasing: boolean;
+  readonly visitedSymbolTablesMap: Map<number, Set<SymbolTableID>>;
+}
+
+export type SymbolTableID = number;
+
+export const SymbolTableKind = {
+  Locals: 0,
+  Exports: 1,
+  Members: 2,
+  Globals: 3,
+  ResolvedExports: 4,
+} as const;
+
+const symbolTableIdKindMultiplier = 1_000_000_000;
+const symbolIds = new WeakMap<AstSymbol, number>();
+const nodeIds = new WeakMap<AstNode, number>();
+let nextSymbolId = 1;
+let nextNodeId = 1;
+
+export function symbolTableIDFromLocals(node: AstNode): SymbolTableID {
+  return SymbolTableKind.Locals * symbolTableIdKindMultiplier + getStableNodeId(node);
+}
+
+export function symbolTableIDFromExports(symbol: AstSymbol): SymbolTableID {
+  return SymbolTableKind.Exports * symbolTableIdKindMultiplier + getStableSymbolId(symbol);
+}
+
+export function symbolTableIDFromResolvedExports(symbol: AstSymbol): SymbolTableID {
+  return SymbolTableKind.ResolvedExports * symbolTableIdKindMultiplier + getStableSymbolId(symbol);
+}
+
+export function symbolTableIDFromMembers(symbol: AstSymbol): SymbolTableID {
+  return SymbolTableKind.Members * symbolTableIdKindMultiplier + getStableSymbolId(symbol);
+}
+
+export function symbolTableIDFromGlobals(): SymbolTableID {
+  return SymbolTableKind.Globals * symbolTableIdKindMultiplier;
+}
+
+export function hasNonGlobalAugmentationExternalModuleSymbol(declaration: AstNode | undefined): boolean {
+  if (declaration === undefined) return false;
+  if (declaration.kind === Kind.ModuleDeclaration && ((declaration as { readonly name?: AstNode }).name?.kind === Kind.StringLiteral)) return true;
+  return declaration.kind === Kind.SourceFile && isExternalModule(declaration);
+}
+
+export function isUMDExportSymbol(symbol: AstSymbol | undefined): boolean {
+  const declaration = firstDeclaration(symbol);
+  return declaration?.kind === Kind.NamespaceExportDeclaration;
+}
+
+export function isNamespaceReexportDeclaration(node: AstNode | undefined): boolean {
+  return node?.kind === Kind.NamespaceExport && (parentOf(node) as { readonly moduleSpecifier?: AstNode } | undefined)?.moduleSpecifier !== undefined;
+}
+
+export function isPropertyOrMethodDeclarationSymbol(symbol: AstSymbol | undefined): boolean {
+  const declarations = declarationsOf(symbol);
+  return declarations.length > 0 && declarations.every((declaration) =>
+    declaration.kind === Kind.PropertyDeclaration
+    || declaration.kind === Kind.MethodDeclaration
+    || declaration.kind === Kind.GetAccessor
+    || declaration.kind === Kind.SetAccessor);
+}
 
 export function getNonModuleParentOfSymbol(symbol: AstSymbol): AstSymbol | undefined {
   // Walk parent-of-symbol chain until we find a non-module parent.
@@ -306,6 +582,34 @@ function symbolToString(symbol: AstSymbol | undefined): string {
     ?? "<anonymous>";
 }
 
+function symbolParent(symbol: AstSymbol | undefined): AstSymbol | undefined {
+  return (symbol as { parent?: AstSymbol } | undefined)?.parent;
+}
+
+function getStableSymbolId(symbol: AstSymbol): number {
+  const existing = symbolIds.get(symbol);
+  if (existing !== undefined) return existing;
+  const id = nextSymbolId;
+  nextSymbolId += 1;
+  symbolIds.set(symbol, id);
+  return id;
+}
+
+function getStableNodeId(node: AstNode): number {
+  const id = (node as { readonly id?: number }).id;
+  if (id !== undefined) return id;
+  const existing = nodeIds.get(node);
+  if (existing !== undefined) return existing;
+  const next = nextNodeId;
+  nextNodeId += 1;
+  nodeIds.set(node, next);
+  return next;
+}
+
+function symbolTableKind(tableId: SymbolTableID): number {
+  return Math.floor(tableId / symbolTableIdKindMultiplier);
+}
+
 function nodeSymbol(node: AstNode | undefined): AstSymbol | undefined {
   return (node as { symbol?: AstSymbol } | undefined)?.symbol;
 }
@@ -332,6 +636,15 @@ function exportsOf(symbol: AstSymbol | undefined): SymbolTable | undefined {
 
 function localsOf(node: AstNode | undefined): SymbolTable | undefined {
   return (node as { locals?: SymbolTable } | undefined)?.locals;
+}
+
+function findAncestor(node: AstNode | undefined, predicate: (node: AstNode) => boolean): AstNode | undefined {
+  let current = node;
+  while (current !== undefined) {
+    if (predicate(current)) return current;
+    current = parentOf(current);
+  }
+  return undefined;
 }
 
 function lookupName(name: string, enclosingDeclaration: AstNode | undefined): AstSymbol | undefined {
@@ -400,6 +713,53 @@ function isExternalModule(file: AstNode): boolean {
   return (file as { externalModuleIndicator?: AstNode }).externalModuleIndicator !== undefined
     || ((file as { imports?: readonly AstNode[] }).imports?.length ?? 0) > 0
     || ((file as { exports?: readonly AstNode[] }).exports?.length ?? 0) > 0;
+}
+
+function isGlobalSourceFile(node: AstNode): boolean {
+  return node.kind === Kind.SourceFile && !isExternalModule(node);
+}
+
+function resolveAlias(symbol: AstSymbol): AstSymbol {
+  return (symbol as { readonly aliasTarget?: AstSymbol; readonly target?: AstSymbol }).aliasTarget
+    ?? (symbol as { readonly aliasTarget?: AstSymbol; readonly target?: AstSymbol }).target
+    ?? symbol.exportSymbol
+    ?? symbol;
+}
+
+function symbolsSameReference(left: AstSymbol | undefined, right: AstSymbol | undefined): boolean {
+  if (left === undefined || right === undefined) return false;
+  const resolvedLeft = resolveAlias(left);
+  const resolvedRight = resolveAlias(right);
+  return left === right
+    || resolvedLeft === resolvedRight
+    || left.exportSymbol === right
+    || right.exportSymbol === left
+    || left.exportSymbol !== undefined && left.exportSymbol === right.exportSymbol;
+}
+
+function compareSymbols(left: AstSymbol, right: AstSymbol): number {
+  const byName = symbolToString(left).localeCompare(symbolToString(right));
+  if (byName !== 0) return byName;
+  return getStableSymbolId(left) - getStableSymbolId(right);
+}
+
+function compareSymbolChains(left: readonly AstSymbol[], right: readonly AstSymbol[]): number {
+  const byLength = left.length - right.length;
+  if (byLength !== 0) return byLength;
+  for (let index = 0; index < left.length; index += 1) {
+    const comparison = compareSymbols(left[index]!, right[index]!);
+    if (comparison !== 0) return comparison;
+  }
+  return 0;
+}
+
+function filterTypeMembers(members: SymbolTable): SymbolTable {
+  const table: SymbolTable = new Map();
+  const assignmentFlag = (SymbolFlags as unknown as { readonly Assignment?: number }).Assignment ?? 0;
+  for (const [key, symbol] of members) {
+    if ((symbolFlags(symbol) & (SymbolFlags.Type & ~assignmentFlag)) !== 0) table.set(key, symbol);
+  }
+  return table;
 }
 
 function findVisibleAlias(symbol: AstSymbol, enclosingDeclaration: AstNode | undefined, meaning: number): AstSymbol | undefined {
