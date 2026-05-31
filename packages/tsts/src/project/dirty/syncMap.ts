@@ -1,5 +1,5 @@
 import type { Cloneable, Value } from "./interfaces.js";
-import { MapEntry } from "./map.js";
+import { MapEntry, type DirtyMapOwner } from "./map.js";
 
 export interface FinalizationHooks<K, V> {
   readonly onDelete?: (key: K, value: V) => void;
@@ -8,37 +8,142 @@ export interface FinalizationHooks<K, V> {
 }
 
 export class SyncMapEntry<K, V extends Cloneable<V>> extends MapEntry<K, V> {
+  private readonly syncOwner: SyncMapOwner<K, V>;
+  private proxyFor: SyncMapEntry<K, V> | undefined;
+
+  constructor(owner: SyncMapOwner<K, V>, key: K, original: V, value: V, dirty: boolean, deleted = false) {
+    super(owner, key, original, value, dirty, deleted);
+    this.syncOwner = owner;
+  }
+
+  value(): V {
+    const target = this.target();
+    return target === this ? super.value() : target.value();
+  }
+
+  original(): V {
+    const target = this.target();
+    return target === this ? super.original() : target.original();
+  }
+
+  dirty(): boolean {
+    const target = this.target();
+    return target === this ? super.dirty() : target.dirty();
+  }
+
+  change(apply: (value: V) => void): void {
+    this.changeLocked(apply);
+  }
+
+  changeIf(cond: (value: V) => boolean, apply: (value: V) => void): boolean {
+    return this.changeIfLocked(cond, apply);
+  }
+
+  delete(): void {
+    this.deleteLocked();
+  }
+
+  isDeleted(): boolean {
+    const target = this.target();
+    return target === this ? super.isDeleted() : target.isDeleted();
+  }
+
+  finalValue(): V {
+    const target = this.target();
+    return target === this ? super.finalValue() : target.finalValue();
+  }
+
   valueLocked(): V {
-    return this.value();
+    return this.target().value();
   }
 
   originalLocked(): V {
-    return this.original();
+    return this.target().original();
   }
 
   dirtyLocked(): boolean {
-    return this.dirty();
+    return this.target().dirty();
   }
 
   locked(fn: (value: Value<V>) => void): void {
-    fn(this);
+    const target = this.target();
+    fn(target === this ? this : target);
   }
 
   deleteIf(cond: (value: V) => boolean): void {
-    if (cond(this.value())) this.delete();
+    const target = this.target();
+    if (cond(target.value())) target.deleteLocked();
   }
 
   changeLocked(apply: (value: V) => void): void {
-    this.change(apply);
+    const target = this.target();
+    if (target !== this) {
+      target.changeLocked(apply);
+      this.syncToProxy(target);
+      return;
+    }
+    if (this.entryDeleted) throw new Error("tried to change a deleted entry");
+    if (this.entryDirty) {
+      apply(this.entryValue);
+      return;
+    }
+    const existing = this.syncOwner.dirtyEntry(this.entryKey);
+    if (existing !== undefined && existing !== this) {
+      this.proxyFor = existing;
+      existing.changeLocked(apply);
+      this.syncToProxy(existing);
+      return;
+    }
+    this.entryValue = this.entryValue.clone();
+    this.entryDirty = true;
+    this.syncOwner.markDirty(this.entryKey, this);
+    apply(this.entryValue);
   }
 
   changeIfLocked(cond: (value: V) => boolean, apply: (value: V) => void): boolean {
-    return this.changeIf(cond, apply);
+    const target = this.target();
+    if (!cond(target.value())) return false;
+    target.changeLocked(apply);
+    if (target !== this) this.syncToProxy(target);
+    return true;
   }
 
   deleteLocked(): void {
-    this.delete();
+    const target = this.target();
+    if (target !== this) {
+      target.deleteLocked();
+      this.syncToProxy(target);
+      return;
+    }
+    if (this.entryDirty) {
+      this.entryDeleted = true;
+      this.syncOwner.markDirty(this.entryKey, this);
+      return;
+    }
+    const existing = this.syncOwner.dirtyEntry(this.entryKey);
+    if (existing !== undefined && existing !== this) {
+      this.proxyFor = existing;
+      existing.deleteLocked();
+      this.syncToProxy(existing);
+      return;
+    }
+    this.entryDeleted = true;
+    this.syncOwner.markDirty(this.entryKey, this);
   }
+
+  private target(): SyncMapEntry<K, V> {
+    return this.proxyFor?.target() ?? this;
+  }
+
+  private syncToProxy(target: SyncMapEntry<K, V>): void {
+    this.entryValue = target.entryValue;
+    this.entryDirty = target.entryDirty;
+    this.entryDeleted = target.entryDeleted;
+  }
+}
+
+interface SyncMapOwner<K, V extends Cloneable<V>> extends DirtyMapOwner<K, V> {
+  dirtyEntry(key: K): SyncMapEntry<K, V> | undefined;
 }
 
 export class SyncMap<K, V extends Cloneable<V>> {
@@ -65,11 +170,11 @@ export class SyncMap<K, V extends Cloneable<V>> {
     const existingBase = this.base.get(key);
     if (existingBase !== undefined) {
       const dirty = this.dirty.get(key);
-      if (dirty !== undefined) return [dirty.isDeleted() ? undefined : dirty, true];
+      if (dirty !== undefined) return dirty.isDeleted() ? [undefined, false] : [dirty, true];
       return [new SyncMapEntry(this.asOwner(), key, existingBase, existingBase, false), true];
     }
     const existingDirty = this.dirty.get(key);
-    if (existingDirty !== undefined) return [existingDirty.isDeleted() ? undefined : existingDirty, true];
+    if (existingDirty !== undefined) return existingDirty.isDeleted() ? [undefined, false] : [existingDirty, true];
     const entry = new SyncMapEntry(this.asOwner(), key, value, value, true);
     this.dirty.set(key, entry);
     return [entry, false];
@@ -180,6 +285,7 @@ export class SyncMap<K, V extends Cloneable<V>> {
   private asOwner() {
     return {
       markDirty: (key: K, entry: SyncMapEntry<K, V>) => this.dirty.set(key, entry),
+      dirtyEntry: (key: K) => this.dirty.get(key),
     };
   }
 }
