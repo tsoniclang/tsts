@@ -17,19 +17,68 @@
  * call sites in `program/program.ts` and the checker tests.
  */
 
-import { nodeSymbol, type SourceFile } from "../ast/index.js";
+import {
+  Kind,
+  isExpression,
+  isIdentifier,
+  isTypeNode,
+  nodeSymbol,
+  type Node as AstNode,
+  type SourceFile,
+  type Symbol as AstSymbol,
+} from "../ast/index.js";
 import { bindSourceFile } from "../binder/index.js";
 import type { Program, ProgramDiagnostic } from "../program/index.js";
-import { type CheckResult, newCheckState, wireBinderSymbolResolution } from "./checker.checkedtype.js";
+import {
+  anyType,
+  bigintType,
+  booleanType,
+  displayType,
+  getArrayElementType,
+  getCallSignature,
+  getConstructSignature,
+  getIndexInfos,
+  getNonNullableType,
+  getResolvedSymbol,
+  getWidenedType,
+  neverType,
+  nullType,
+  numberType,
+  stringType,
+  typeFromTypeNode,
+  undefinedType,
+  unknownType,
+  voidType,
+  type CheckResult,
+  type CheckState,
+  newCheckState,
+  wireBinderSymbolResolution,
+} from "./checker.checkedtype.js";
+import { inferExpression } from "./checker.expressions.js";
 import { checkStatements } from "./checker.statements.js";
+import {
+  getPropertySymbolOfType,
+  getTypeOfSymbol,
+  ObjectFlags,
+  SignatureKind,
+  TypeFlags,
+  type IndexInfo,
+  type Signature,
+  type Type,
+  type TypeReference,
+  type UnionOrIntersectionType,
+} from "./types.js";
 
 export type { CheckDiagnostic, CheckResult } from "./checker.checkedtype.js";
 
 export class Checker {
   readonly program: Program | undefined;
+  readonly state: CheckState;
 
   constructor(program?: Program) {
     this.program = program;
+    this.state = newCheckState();
+    wireBinderSymbolResolution(this.state);
   }
 
   checkSourceFile(sourceFile: SourceFile): CheckResult {
@@ -42,13 +91,166 @@ export class Checker {
     const bindDiagnostics = nodeSymbol(sourceFile) === undefined && sourceFile.locals === undefined
       ? bindSourceFile(sourceFile)
       : [];
-    const state = newCheckState();
+    const state = this.state;
+    state.diagnostics.length = 0;
     state.diagnostics.push(...bindDiagnostics.map(diagnostic => ({ message: diagnostic.message })));
-    // Make getTypeOfSymbol's binder flag-dispatch see this check's state.
-    wireBinderSymbolResolution(state);
     checkStatements(sourceFile.statements, state, undefined);
     return { diagnostics: state.diagnostics };
   }
+
+  getTypeOfSymbol(symbol: AstSymbol): Type | undefined {
+    return getTypeOfSymbol(symbol);
+  }
+
+  getDeclaredTypeOfSymbol(symbol: AstSymbol): Type | undefined {
+    return getTypeOfSymbol(symbol);
+  }
+
+  resolveName(name: string, location: AstNode | undefined): AstSymbol | undefined {
+    if (location === undefined) return undefined;
+    return getResolvedSymbol(name, location);
+  }
+
+  getSymbolAtLocation(node: AstNode): AstSymbol | undefined {
+    if (isIdentifier(node)) return getResolvedSymbol(node.text, node);
+    return nodeSymbol(node);
+  }
+
+  getSignaturesOfType(type: Type, kind: SignatureKind): readonly Signature[] {
+    const signature = kind === SignatureKind.Construct ? getConstructSignature(type) : getCallSignature(type);
+    return signature === undefined ? [] : [signature];
+  }
+
+  getTypeAtLocation(node: AstNode): Type | undefined {
+    if (isTypeNode(node)) return typeFromTypeNode(node, this.state);
+    if (isExpression(node)) return inferExpression(node, this.state);
+    const symbol = this.getSymbolAtLocation(node);
+    return symbol === undefined ? undefined : getTypeOfSymbol(symbol);
+  }
+
+  getContextualType(node: AstNode): Type | undefined {
+    return this.getTypeAtLocation(node);
+  }
+
+  getBaseTypeOfLiteralType(type: Type): Type {
+    return getBaseTypeOfLiteralTypeLocal(type);
+  }
+
+  getNonNullableType(type: Type): Type {
+    return getNonNullableType(type, this.state);
+  }
+
+  getTypeFromTypeNode(node: AstNode): Type | undefined {
+    return isTypeNode(node) ? typeFromTypeNode(node, this.state) : undefined;
+  }
+
+  getWidenedType(type: Type): Type {
+    return getWidenedType(type, this.state);
+  }
+
+  getTypeAtPosition(signature: Signature, position: number): Type | undefined {
+    const parameter = signature.parameters[position];
+    return getTypeOfSymbol(parameter);
+  }
+
+  isArrayLikeType(type: Type): boolean {
+    return getArrayElementType(type) !== undefined;
+  }
+
+  getShorthandAssignmentValueSymbol(node: AstNode): AstSymbol | undefined {
+    return this.getSymbolAtLocation(node);
+  }
+
+  getTypeOfSymbolAtLocation(symbol: AstSymbol, location: AstNode): Type | undefined {
+    void location;
+    return getTypeOfSymbol(symbol);
+  }
+
+  typeToString(type: Type): string {
+    return displayType(type);
+  }
+
+  typeToStringEx(type: Type): string {
+    return displayType(type);
+  }
+
+  getAnyType(): Type { return anyType; }
+  getStringType(): Type { return stringType; }
+  getNumberType(): Type { return numberType; }
+  getBooleanType(): Type { return booleanType; }
+  getVoidType(): Type { return voidType; }
+  getUndefinedType(): Type { return undefinedType; }
+  getNullType(): Type { return nullType; }
+  getNeverType(): Type { return neverType; }
+  getUnknownType(): Type { return unknownType; }
+  getBigIntType(): Type { return bigintType; }
+  getESSymbolType(): Type { return unknownType; }
+
+  isContextSensitive(node: AstNode): boolean {
+    return node.kind === Kind.ArrowFunction || node.kind === Kind.FunctionExpression;
+  }
+
+  getReturnTypeOfSignature(signature: Signature): Type | undefined {
+    return signature.resolvedReturnType;
+  }
+
+  getRestTypeOfSignature(signature: Signature): Type | undefined {
+    const restParameter = signature.parameters.findLast((parameter) =>
+      ((parameter as { rest?: boolean; isRest?: boolean }).rest ?? (parameter as { isRest?: boolean }).isRest) === true,
+    ) ?? signature.parameters[signature.parameters.length - 1];
+    return getTypeOfSymbol(restParameter);
+  }
+
+  getTypePredicateOfSignature(signature: Signature): unknown {
+    return signature.resolvedTypePredicate;
+  }
+
+  getBaseTypes(type: Type): readonly Type[] {
+    return (type.data as { resolvedBaseTypes?: readonly Type[] } | undefined)?.resolvedBaseTypes ?? [];
+  }
+
+  getPropertiesOfType(type: Type): readonly AstSymbol[] {
+    const properties = new Map<string, AstSymbol>();
+    const declared = (type.data as UnionOrIntersectionType | undefined)?.resolvedProperties
+      ?? (type.data as { declaredProperties?: readonly AstSymbol[] } | undefined)?.declaredProperties
+      ?? [];
+    for (const symbol of declared) properties.set(symbol.name ?? "", symbol);
+    const members = (type.symbol as { members?: Map<string, AstSymbol> } | undefined)?.members;
+    if (members !== undefined) for (const [name, symbol] of members) properties.set(name, symbol);
+    return [...properties.values()];
+  }
+
+  getIndexInfosOfType(type: Type): readonly IndexInfo[] {
+    return getIndexInfos(type) ?? [];
+  }
+
+  getConstraintOfTypeParameter(type: Type): Type | undefined {
+    return (type.data as { constraint?: Type } | undefined)?.constraint;
+  }
+
+  getTypeArguments(type: Type): readonly Type[] {
+    const data = type.data as TypeReference | undefined;
+    return data?.resolvedTypeArguments ?? data?.resolvedTypeArguments_ ?? [];
+  }
+
+  getPropertyOfType(type: Type, name: string): AstSymbol | undefined {
+    return getPropertySymbolOfType(type, name);
+  }
+}
+
+function getBaseTypeOfLiteralTypeLocal(type: Type): Type {
+  if ((type.flags & TypeFlags.StringLiteral) !== 0) return stringType;
+  if ((type.flags & TypeFlags.NumberLiteral) !== 0) return numberType;
+  if ((type.flags & TypeFlags.BigIntLiteral) !== 0) return bigintType;
+  if ((type.flags & TypeFlags.BooleanLiteral) !== 0) return booleanType;
+  if ((type.flags & TypeFlags.Union) !== 0) {
+    const types = (type.data as UnionOrIntersectionType | undefined)?.types ?? [];
+    return types.length === 0 ? type : getBaseTypeOfLiteralTypeLocal(types[0]!);
+  }
+  if ((type.flags & TypeFlags.Object) !== 0 && (((type.data as { objectFlags?: ObjectFlags } | undefined)?.objectFlags ?? 0) & ObjectFlags.ArrayLiteral) !== 0) {
+    return type;
+  }
+  return type;
 }
 
 export function newChecker(program?: Program): Checker {
