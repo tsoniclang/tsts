@@ -37,12 +37,16 @@ import {
 } from "../ast/index.js";
 import {
   type CheckState,
+  anyType,
   checkAssignable,
   getTypeOfSymbol,
   getWidenedLiteralLikeTypeForContextualType,
+  makeFunctionType,
   typeFromClassOrInterfaceDeclaration,
   typeFromExpressionWithTypeArguments,
   typeFromTypeNode,
+  unresolvedType,
+  type FunctionParameter,
 } from "./checker.checkedtype.js";
 import { inferExpression } from "./checker.expressions.js";
 import { checkBlock } from "./checker.statements.js";
@@ -111,6 +115,152 @@ export function checkInterfaceDeclaration(interfaceDeclaration: InterfaceDeclara
   for (const member of interfaceDeclaration.members) {
     checkInterfaceMember(member, state);
   }
+}
+
+export function checkAsyncFunctionReturnType(node: AstNode, returnTypeNode: AstNode | undefined, state: CheckState): void {
+  const returnType = returnTypeNode === undefined ? undefined : typeFromTypeNode(returnTypeNode as TypeNode, state);
+  if (returnType === undefined) return;
+  const name = String((returnType.symbol as { readonly name?: string } | undefined)?.name ?? (returnType as { readonly name?: string }).name ?? "");
+  if (name !== "" && name !== "Promise" && name !== "PromiseLike") {
+    state.diagnostics.push({ message: `Async function return type must be Promise-like; got '${name}'.` });
+  }
+  checkAllCodePathsInNonVoidFunctionReturnOrThrow(node, returnType, state);
+}
+
+export function checkDecorators(node: AstNode, state: CheckState): void {
+  for (const modifier of modifierNodes(node)) {
+    if (modifier.kind === Kind.Decorator) checkDecorator(modifier, state);
+  }
+}
+
+export function checkDecorator(node: AstNode, state: CheckState): void {
+  const expression = (node as { readonly expression?: AstNode }).expression;
+  if (expression !== undefined) inferExpression(expression as never, state);
+}
+
+export function checkClassExpression(node: AstNode, state: CheckState): Type {
+  checkClassExpressionExternalHelpers(node, state);
+  checkClassExpressionDeferred(node, state);
+  return typeFromClassOrInterfaceDeclaration(node as ClassDeclaration, state);
+}
+
+export function getFirstTransformableStaticClassElement(node: AstNode): AstNode | undefined {
+  return membersOf(node).find(member => modifierKinds(member).includes(Kind.StaticKeyword));
+}
+
+export function checkClassExpressionExternalHelpers(node: AstNode, state: CheckState): void {
+  const staticElement = getFirstTransformableStaticClassElement(node);
+  if (staticElement !== undefined) checkClassNameCollisionWithObject((node as { readonly name?: AstNode }).name, state);
+}
+
+export function checkClassExpressionDeferred(node: AstNode, state: CheckState): void {
+  for (const member of membersOf(node)) checkClassElement(member as ClassElement, state);
+}
+
+export function checkFunctionExpressionOrObjectLiteralMethod(node: AstNode, state: CheckState): Type {
+  contextuallyCheckFunctionExpressionOrObjectLiteralMethod(node, state);
+  return signatureTypeFromDeclaration(node, state);
+}
+
+export function contextuallyCheckFunctionExpressionOrObjectLiteralMethod(node: AstNode, state: CheckState): void {
+  for (const parameter of parametersOf(node)) checkParameterDeclaration(parameter, state);
+  const returnType = returnTypeOfSignatureNode(node, state);
+  const body = bodyOf(node);
+  if (body !== undefined) checkBlock(body, state, returnType);
+}
+
+export function checkFunctionExpressionOrObjectLiteralMethodDeferred(node: AstNode, state: CheckState): void {
+  contextuallyCheckFunctionExpressionOrObjectLiteralMethod(node, state);
+}
+
+export function inferFromAnnotatedParametersAndReturn(node: AstNode, state: CheckState): readonly Type[] {
+  const inferred = parametersOf(node).map(parameter => parameterType(parameter, state)).filter((type): type is Type => type !== undefined);
+  const returnType = returnTypeOfSignatureNode(node, state);
+  return returnType === undefined ? inferred : [...inferred, returnType];
+}
+
+export function assignContextualParameterTypes(node: AstNode, contextualTypes: readonly Type[], state: CheckState): void {
+  parametersOf(node).forEach((parameter, index) => assignParameterType(parameter, contextualTypes[index], state));
+}
+
+export function assignNonContextualParameterTypes(node: AstNode, state: CheckState): void {
+  for (const parameter of parametersOf(node)) assignParameterType(parameter, parameterType(parameter, state) ?? anyType, state);
+}
+
+export function assignParameterType(parameter: ParameterDeclaration, contextualType: Type | undefined, state: CheckState): Type {
+  const declared = parameterType(parameter, state);
+  const initializer = parameter.initializer === undefined ? undefined : inferExpression(parameter.initializer, state, contextualType ?? declared);
+  const resolved = declared ?? initializer ?? contextualType ?? unresolvedType;
+  if (declared !== undefined && initializer !== undefined) checkAssignable(getWidenedLiteralLikeTypeForContextualType(initializer, declared, state), declared, state);
+  return resolved;
+}
+
+export function assignBindingElementTypes(pattern: AstNode, parentType: Type, state: CheckState): void {
+  void parentType;
+  for (const child of childrenOf(pattern)) {
+    if (child.kind === Kind.BindingElement || child.kind === Kind.Parameter) {
+      const typeNode = (child as { readonly type?: AstNode }).type;
+      if (typeNode !== undefined) typeFromTypeNode(typeNode as TypeNode, state);
+    }
+    assignBindingElementTypes(child, parentType, state);
+  }
+}
+
+export function checkCollisionsForDeclarationName(node: AstNode, name: AstNode | undefined, state: CheckState): void {
+  if (name === undefined) return;
+  checkCollisionWithRequireExportsInGeneratedCode(node, name, state);
+  checkCollisionWithGlobalObjectInGeneratedCode(node, name, state);
+  checkCollisionWithGlobalPromiseInGeneratedCode(node, name, state);
+  checkClassNameCollisionWithObject(name, state);
+}
+
+export function checkCollisionWithRequireExportsInGeneratedCode(node: AstNode, name: AstNode, state: CheckState): void {
+  if (needCollisionCheckForIdentifier(node, name, "exports")) state.diagnostics.push({ message: "Declaration_name_conflicts_with_generated_exports." });
+  if (needCollisionCheckForIdentifier(node, name, "require")) state.diagnostics.push({ message: "Declaration_name_conflicts_with_generated_require." });
+}
+
+export function checkCollisionWithGlobalObjectInGeneratedCode(node: AstNode, name: AstNode, state: CheckState): void {
+  if (needCollisionCheckForIdentifier(node, name, "Object")) state.diagnostics.push({ message: "Declaration_name_conflicts_with_global_Object." });
+}
+
+export function needCollisionCheckForIdentifier(_node: AstNode, identifier: AstNode, name: string): boolean {
+  return declarationNameFromNode(identifier) === name;
+}
+
+export function setNodeLinksForPrivateIdentifierScope(node: AstNode, scope: AstNode): void {
+  (node as unknown as { privateIdentifierScope?: AstNode }).privateIdentifierScope = scope;
+}
+
+export function recordPotentialCollisionWithWeakMapSetInGeneratedCode(node: AstNode, name: AstNode, state: CheckState): void {
+  if (needCollisionCheckForIdentifier(node, name, "WeakMap") || needCollisionCheckForIdentifier(node, name, "WeakSet")) {
+    state.diagnostics.push({ message: "Declaration_name_conflicts_with_generated_private_identifier_storage." });
+  }
+}
+
+export function checkWeakMapSetCollision(node: AstNode, name: AstNode, state: CheckState): void {
+  recordPotentialCollisionWithWeakMapSetInGeneratedCode(node, name, state);
+}
+
+export function checkCollisionWithGlobalPromiseInGeneratedCode(node: AstNode, name: AstNode, state: CheckState): void {
+  if (needCollisionCheckForIdentifier(node, name, "Promise")) state.diagnostics.push({ message: "Declaration_name_conflicts_with_global_Promise." });
+}
+
+export function recordPotentialCollisionWithReflectInGeneratedCode(node: AstNode, name: AstNode, state: CheckState): void {
+  if (needCollisionCheckForIdentifier(node, name, "Reflect")) state.diagnostics.push({ message: "Declaration_name_conflicts_with_global_Reflect." });
+}
+
+export function checkReflectCollision(node: AstNode, name: AstNode, state: CheckState): void {
+  recordPotentialCollisionWithReflectInGeneratedCode(node, name, state);
+}
+
+export function checkClassNameCollisionWithObject(name: AstNode | undefined, state: CheckState): void {
+  if (name !== undefined && declarationNameFromNode(name) === "Object") {
+    state.diagnostics.push({ message: "Class_name_conflicts_with_global_Object." });
+  }
+}
+
+export function checkObjectLiteralMethod(node: AstNode, state: CheckState): Type {
+  return checkFunctionExpressionOrObjectLiteralMethod(node, state);
 }
 
 function checkClassHeritageClauses(classDeclaration: ClassDeclaration, state: CheckState): void {
@@ -614,9 +764,12 @@ function membersOf(node: AstNode | undefined): readonly AstNode[] {
 }
 
 function modifierKinds(node: AstNode): readonly Kind[] {
+  return modifierNodes(node).map(modifier => modifier.kind);
+}
+
+function modifierNodes(node: AstNode): readonly AstNode[] {
   const modifiers = (node as { readonly modifiers?: readonly AstNode[] | { readonly nodes?: readonly AstNode[] } }).modifiers;
-  const nodes: readonly AstNode[] = Array.isArray(modifiers) ? modifiers : (modifiers as { readonly nodes?: readonly AstNode[] } | undefined)?.nodes ?? [];
-  return nodes.map(modifier => modifier.kind);
+  return Array.isArray(modifiers) ? modifiers : (modifiers as { readonly nodes?: readonly AstNode[] } | undefined)?.nodes ?? [];
 }
 
 function modifierFlags(node: AstNode): number {
@@ -635,6 +788,36 @@ function memberKind(member: AstNode): string {
 
 function declarationName(node: AstNode): string {
   return declarationNameFromNode((node as { readonly name?: AstNode }).name ?? node);
+}
+
+function signatureTypeFromDeclaration(node: AstNode, state: CheckState): Type {
+  const returnType = returnTypeOfSignatureNode(node, state) ?? anyType;
+  const parameters: FunctionParameter[] = parametersOf(node).map(parameter => ({
+    name: declarationName(parameter),
+    type: parameterType(parameter, state) ?? anyType,
+    optional: parameter.questionToken !== undefined || parameter.initializer !== undefined,
+    rest: parameter.dotDotDotToken !== undefined,
+  }));
+  return makeFunctionType(returnType, state, parameters);
+}
+
+function childrenOf(node: AstNode): readonly AstNode[] {
+  const record = node as unknown as Record<string, unknown>;
+  const children: AstNode[] = [];
+  for (const value of Object.values(record)) {
+    if (isAstNode(value)) children.push(value);
+    else if (Array.isArray(value)) children.push(...value.filter(isAstNode));
+    else if (isNodeArray(value)) children.push(...value.nodes.filter(isAstNode));
+  }
+  return children;
+}
+
+function isAstNode(value: unknown): value is AstNode {
+  return typeof value === "object" && value !== null && typeof (value as { readonly kind?: unknown }).kind === "number";
+}
+
+function isNodeArray(value: unknown): value is { readonly nodes: readonly AstNode[] } {
+  return typeof value === "object" && value !== null && Array.isArray((value as { readonly nodes?: unknown }).nodes);
 }
 
 function declarationNameFromNode(node: AstNode | undefined): string {
