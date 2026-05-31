@@ -36,9 +36,9 @@ export function checkGrammarAwaitOrAwaitUsing(node: AstNode, inAsyncContext: boo
     : [];
 }
 
-export function invokeOnce<T>(callback: () => T): () => T {
+export function invokeOnce(callback: () => unknown): () => unknown {
   let called = false;
-  let value: T;
+  let value: unknown;
   return () => {
     if (!called) {
       value = callback();
@@ -101,7 +101,7 @@ export function kind(mapper: TypeMapper | undefined): number {
   return mapper?.kind ?? 0;
 }
 
-export function enterNewScope<T>(stack: AstNode[], scope: AstNode, body: () => T): T {
+export function enterNewScope(stack: AstNode[], scope: AstNode, body: () => unknown): unknown {
   stack.push(scope);
   try {
     return body();
@@ -116,17 +116,17 @@ export function walkNodeForExpandability(node: AstNode | undefined, visit: (node
   for (const child of childNodes(node)) walkNodeForExpandability(child, visit);
 }
 
-export function markError<T extends { error?: boolean }>(state: T): T {
+export function markError(state: { error?: boolean }): { error?: boolean } {
   state.error = true;
   return state;
 }
 
-export function startRecoveryScope<T extends { recoveryDepth?: number }>(state: T): T {
+export function startRecoveryScope(state: { recoveryDepth?: number }): { recoveryDepth?: number } {
   state.recoveryDepth = (state.recoveryDepth ?? 0) + 1;
   return state;
 }
 
-export function endRecoveryScope<T extends { recoveryDepth?: number }>(state: T): T {
+export function endRecoveryScope(state: { recoveryDepth?: number }): { recoveryDepth?: number } {
   state.recoveryDepth = Math.max(0, (state.recoveryDepth ?? 0) - 1);
   return state;
 }
@@ -232,11 +232,11 @@ export function distributed(type: Type): boolean {
   return Boolean(read(type.data, "distributed"));
 }
 
-export function target<T extends { readonly target?: unknown }>(value: T): T["target"] {
+export function target(value: { readonly target?: unknown }): unknown {
   return value.target;
 }
 
-export function mapper<T extends { readonly mapper?: unknown }>(value: T): T["mapper"] {
+export function mapper(value: { readonly mapper?: unknown }): unknown {
   return value.mapper;
 }
 
