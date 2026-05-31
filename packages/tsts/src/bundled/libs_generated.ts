@@ -1,14 +1,7 @@
-/**
- * The list of all bundled `lib.d.ts` files, sorted by name.
- *
- * Generated from upstream TypeScript's `src/lib/`. For the list sorted by
- * load order, use `tsoptions.libs` (forthcoming).
- *
- * Port of TS-Go `internal/bundled/libs_generated.go`. The upstream list is
- * regenerated whenever TypeScript adds a new lib file; this constant is
- * vendored here to keep the bundled subsystem testable without the
- * TypeScript submodule.
- */
+// Code generated from TS-Go internal/bundled/libs_generated.go. DO NOT EDIT.
+
+// LibNames is the list of all bundled lib files, sorted by name.
+// For the list of libs sorted by load order, use tsoptions.Libs.
 export const LibNames: readonly string[] = [
   "lib.d.ts",
   "lib.decorators.d.ts",
