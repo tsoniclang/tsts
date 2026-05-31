@@ -104,7 +104,6 @@ const CONCEPT_ALIASES = new Map<string, readonly string[]>([
   ["checker:pseudotypenodebuilder", ["nodebuilder"]],
   ["diagnosticwriter:diagnosticwriter", ["format", "types"]],
   ["execute:build/compilerHost", ["build/host"]],
-  ["printer:utilities", ["printerUtilities"]],
 ]);
 
 const EXCLUDED_TSTS_SOURCE_FILES = new Set<string>([

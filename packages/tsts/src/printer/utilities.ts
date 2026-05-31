@@ -37,6 +37,124 @@ import {
   isArrowFunction as astIsArrowFunction,
   isSatisfiesExpression as astIsSatisfiesExpression,
 } from "../ast/generated/is.js";
+import { isDigit } from "../stringutil/util.js";
+
+export type GetLiteralTextFlags = number;
+export const GetLiteralTextFlags = {
+  None: 0,
+  NeverAsciiEscape: 1 << 0,
+  JsxAttributeEscape: 1 << 1,
+  TerminateUnterminatedLiterals: 1 << 2,
+  AllowNumericSeparator: 1 << 3,
+} as const;
+
+export type QuoteChar = "'" | "\"" | "`";
+export const QuoteChar = {
+  SingleQuote: "'" as QuoteChar,
+  DoubleQuote: "\"" as QuoteChar,
+  Backtick: "`" as QuoteChar,
+} as const;
+
+const jsxEscapedCharsMap: ReadonlyMap<string, string> = new Map([
+  ["\"", "&quot;"],
+  ["'", "&apos;"],
+]);
+
+const escapedCharsMap: ReadonlyMap<string, string> = new Map([
+  ["\t", "\\t"],
+  ["\v", "\\v"],
+  ["\f", "\\f"],
+  ["\b", "\\b"],
+  ["\r", "\\r"],
+  ["\n", "\\n"],
+  ["\\", "\\\\"],
+  ["\"", "\\\""],
+  ["'", "\\'"],
+  ["`", "\\`"],
+  ["$", "\\$"],
+  ["\u2028", "\\u2028"],
+  ["\u2029", "\\u2029"],
+  ["\u0085", "\\u0085"],
+]);
+
+function upperHex(codePoint: number): string {
+  return codePoint.toString(16).toUpperCase();
+}
+
+function encodeJsxCharacterEntity(codePoint: number): string {
+  return `&#x${upperHex(codePoint)};`;
+}
+
+function encodeUtf16EscapeSequence(codePoint: number): string {
+  return `\\u${upperHex(codePoint).padStart(4, "0")}`;
+}
+
+function escapeStringWorker(source: string, quoteChar: QuoteChar, flags: GetLiteralTextFlags): string {
+  let result = "";
+  let pos = 0;
+  for (let index = 0; index < source.length;) {
+    const codePoint = source.codePointAt(index)!;
+    const size = codePoint > 0xffff ? 2 : 1;
+    const ch = String.fromCodePoint(codePoint);
+    let escape = false;
+    switch (ch) {
+      case "\\":
+        escape = (flags & GetLiteralTextFlags.JsxAttributeEscape) === 0;
+        break;
+      case "$":
+        escape = quoteChar === QuoteChar.Backtick && index + 1 < source.length && source.charCodeAt(index + 1) === 0x7b;
+        break;
+      case "\u2028":
+      case "\u2029":
+      case "\u0085":
+      case "\r":
+        escape = true;
+        break;
+      case "\n":
+        escape = quoteChar !== QuoteChar.Backtick;
+        break;
+      default:
+        escape = ch === quoteChar
+          || codePoint <= 0x1f
+          || ((flags & GetLiteralTextFlags.NeverAsciiEscape) === 0 && codePoint > 0x7f);
+        break;
+    }
+    if (escape) {
+      if (pos < index) result += source.slice(pos, index);
+      if ((flags & GetLiteralTextFlags.JsxAttributeEscape) !== 0) {
+        result += codePoint === 0 ? "&#0;" : jsxEscapedCharsMap.get(ch) ?? encodeJsxCharacterEntity(codePoint);
+      } else if (ch === "\r" && quoteChar === QuoteChar.Backtick && index + 1 < source.length && source.charCodeAt(index + 1) === 0x0a) {
+        result += "\\r\\n";
+        index += 1;
+        pos = index + 1;
+      } else if (codePoint > 0xffff) {
+        const scalar = codePoint - 0x10000;
+        result += encodeUtf16EscapeSequence(((scalar & 0b11111111110000000000) >> 10) + 0xd800);
+        result += encodeUtf16EscapeSequence((scalar & 0b00000000001111111111) + 0xdc00);
+      } else if (codePoint === 0) {
+        result += index + 1 < source.length && isDigit(source.charCodeAt(index + 1)) ? "\\x00" : "\\0";
+      } else {
+        result += escapedCharsMap.get(ch) ?? encodeUtf16EscapeSequence(codePoint);
+      }
+      pos = index + size;
+    }
+    index += size;
+  }
+  if (pos < source.length) result += source.slice(pos);
+  return result;
+}
+
+export function escapeString(source: string, quoteChar: QuoteChar): string {
+  return escapeStringWorker(source, quoteChar, GetLiteralTextFlags.NeverAsciiEscape);
+}
+
+export function escapeNonAsciiString(source: string, quoteChar: QuoteChar): string {
+  return escapeStringWorker(source, quoteChar, GetLiteralTextFlags.None);
+}
+
+export function escapeJsxAttributeString(source: string, quoteChar: QuoteChar): string {
+  return escapeStringWorker(source, quoteChar, GetLiteralTextFlags.JsxAttributeEscape | GetLiteralTextFlags.NeverAsciiEscape);
+}
 
 export function getNodeName(node: AstNode): AstNode | undefined {
   return (node as unknown as { name?: AstNode }).name;

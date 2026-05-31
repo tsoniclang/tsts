@@ -17,5 +17,5 @@ export { Printer, WriteKind, newPrinter, printFile } from "./printer.js";
 export type { CommentState, DetachedCommentsInfo, PrintHandlers, PrinterOptions, PrinterState, PrinterWriter, SourceMapState, WriteKind as WriteKindType } from "./printer.js";
 export type { SourceFileMetadataProvider } from "./sourceFileMetadataProvider.js";
 export * from "./helpers.js";
-export * from "./printerUtilities.js";
+export * from "./utilities.js";
 export * from "./factoryHelpers.js";

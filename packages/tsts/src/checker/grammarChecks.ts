@@ -20,7 +20,7 @@ const ScriptTargetES2020 = 7;
 const TokenFlagsUnterminated = 1 << 0;
 
 // Compute modifier flags from a node's modifiers list. Mirrors
-// printerUtilities' getSyntacticModifierFlags so grammar checks can be
+// printer utilities' getSyntacticModifierFlags so grammar checks can be
 // modifier-aware without taking a printer dependency.
 function getModifierFlagsOf(node: AstNode): number {
   const mods = (node as unknown as { modifiers?: { nodes?: readonly AstNode[] } }).modifiers?.nodes;

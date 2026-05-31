@@ -28,6 +28,7 @@ import "./emit-js/printer.test.js";
 import "./parser/parser.test.js";
 import "./program/program.test.js";
 import "./scanner/scanner.test.js";
+import "./scanner/regexp.test.js";
 import "./json/json.test.js";
 
 // === Still disabled (TSTS source incompleteness; not tsonic blockers) ===
