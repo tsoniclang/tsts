@@ -26,6 +26,28 @@ import type {
 } from "../ast/index.js";
 import { Kind } from "../ast/index.js";
 import { EmitFlags } from "./emitFlags.js";
+import {
+  LFAmpersandDelimited,
+  LFAsteriskDelimited,
+  LFBarDelimited,
+  LFBracketsMask,
+  LFCommaDelimited,
+  LFDelimitersMask,
+  LFIndented,
+  LFMultiLine,
+  LFNoInterveningComments,
+  LFNoSpaceIfEmpty,
+  LFOptionalIfEmpty,
+  LFOptionalIfNil,
+  LFPreferNewLine,
+  LFSpaceAfterList,
+  LFSpaceBetweenBraces,
+  LFSpaceBetweenSiblings,
+  LFAllowTrailingComma,
+  getClosingBracket as getListClosingBracket,
+  getOpeningBracket as getListOpeningBracket,
+  type ListFormat,
+} from "./listFormat.js";
 import { NameGenerator } from "./nameGenerator.js";
 
 // ---------------------------------------------------------------------------
@@ -589,52 +611,131 @@ export class Printer {
     if (node === undefined) return;
     this.emitWorker(hint, node);
   }
-  emitNodeList(parentNode: AstNode | undefined, nodes: NodeList | undefined, format: number): void {
-    void parentNode; void format;
+  emitNodeList(parentNode: AstNode | undefined, nodes: NodeList | undefined, format: ListFormat): void {
     if (nodes === undefined) return;
     const inner = (nodes as unknown as { nodes?: readonly AstNode[] }).nodes ?? [];
     this.emitList(parentNode, nodes, format, 0, inner.length);
   }
-  emitList(parentNode: AstNode | undefined, nodes: NodeList | undefined, format: number, start: number, count: number): void {
-    void parentNode; void format;
-    if (nodes === undefined) return;
-    const inner = (nodes as unknown as { nodes?: readonly AstNode[] }).nodes ?? [];
-    for (let i = 0; i < count; i++) {
-      const idx = start + i;
-      if (idx >= inner.length) break;
-      if (i > 0) this.writePunctuation(", ");
-      this.emit(0, inner[idx]);
-    }
+  emitList(parentNode: AstNode | undefined, nodes: NodeList | undefined, format: ListFormat, start: number, count: number): void {
+    let nextFormat = format;
+    if (parentNode !== undefined && this.shouldEmitOnMultipleLines(parentNode)) nextFormat |= LFPreferNewLine | LFIndented;
+    this.emitListRange(parentNode, nodes, nextFormat, start, count);
   }
-  emitListRange(parentNode: AstNode | undefined, nodes: NodeList | undefined, format: number, start: number, count: number): void {
-    this.emitList(parentNode, nodes, format, start, count);
+  emitListRange(parentNode: AstNode | undefined, nodes: NodeList | undefined, format: ListFormat, start: number, count: number): void {
+    const isNil = nodes === undefined;
+    const inner = getNodeArray(nodes);
+    const actualStart = start < 0 ? 0 : start;
+    const actualCount = count < 0 ? inner.length - actualStart : count;
+    if (isNil && (format & LFOptionalIfNil) !== 0) return;
+    const isEmpty = isNil || actualStart >= inner.length || actualCount <= 0;
+    if (isEmpty && (format & LFOptionalIfEmpty) !== 0) return;
+    if ((format & LFBracketsMask) !== 0) {
+      this.writePunctuation(getListOpeningBracket(format));
+      if (isEmpty && (format & LFSpaceBetweenBraces) !== 0 && (format & LFNoSpaceIfEmpty) === 0) this.writeSpace();
+    }
+    if (isEmpty) {
+      if ((format & LFMultiLine) !== 0) this.writeLine();
+      else if ((format & LFSpaceBetweenBraces) !== 0 && (format & LFNoSpaceIfEmpty) === 0) this.writeSpace();
+    } else {
+      this.emitListItems(
+        (printer, child) => printer.emit(0, child),
+        parentNode,
+        { nodes: inner.slice(actualStart, Math.min(actualStart + actualCount, inner.length)) } as unknown as NodeList,
+        format,
+        0,
+        Math.min(actualCount, inner.length - actualStart),
+      );
+    }
+    if ((format & LFBracketsMask) !== 0) this.writePunctuation(getListClosingBracket(format));
   }
   emitListItems(
     emit: (printer: Printer, node: AstNode) => void,
     parentNode: AstNode | undefined,
     nodes: NodeList | undefined,
-    format: number,
+    format: ListFormat,
     start = 0,
     count = getNodeArray(nodes).length - start,
   ): void {
-    void parentNode; void format;
     const inner = getNodeArray(nodes);
+    let shouldEmitInterveningComments = (format & LFNoInterveningComments) === 0;
+    const firstChild = inner[start];
+    const leadingLineTerminatorCount = firstChild === undefined ? 0 : this.getLeadingLineTerminatorCount(parentNode, firstChild, format);
+    if (leadingLineTerminatorCount > 0) {
+      this.writeLineRepeat(leadingLineTerminatorCount);
+      shouldEmitInterveningComments = false;
+    } else if ((format & LFSpaceBetweenBraces) !== 0) {
+      this.writeSpace();
+    }
+    if ((format & LFIndented) !== 0) this.increaseIndent();
+    let previousSibling: AstNode | undefined;
+    let decreasedIndentAfterEmit = false;
     for (let index = 0; index < count; index += 1) {
       const child = inner[start + index];
       if (child === undefined) break;
-      if (index > 0) this.writeDelimiter(format);
+      if ((format & LFAsteriskDelimited) !== 0) {
+        this.writeLine();
+        this.writeDelimiter(format);
+      } else if (previousSibling !== undefined) {
+        this.writeDelimiter(format);
+        const separatingLineTerminatorCount = this.getSeparatingLineTerminatorCount(previousSibling, child, format);
+        if (separatingLineTerminatorCount > 0) {
+          if ((format & (LFMultiLine | LFIndented)) === 0) {
+            this.increaseIndent();
+            decreasedIndentAfterEmit = true;
+          }
+          this.writeLineRepeat(separatingLineTerminatorCount);
+          shouldEmitInterveningComments = false;
+        } else if ((format & LFSpaceBetweenSiblings) !== 0) {
+          this.writeSpace();
+        }
+      }
+      void shouldEmitInterveningComments;
       emit(this, child);
+      if (decreasedIndentAfterEmit) {
+        this.decreaseIndent();
+        decreasedIndentAfterEmit = false;
+      }
+      previousSibling = child;
     }
+    if (this.hasTrailingComma(parentNode, nodes) && (format & LFAllowTrailingComma) !== 0 && (format & LFCommaDelimited) !== 0) {
+      this.writePunctuation(",");
+    }
+    if ((format & LFIndented) !== 0) this.decreaseIndent();
+    const lastChild = previousSibling;
+    const closingLineTerminatorCount = lastChild === undefined ? 0 : this.getClosingLineTerminatorCount(parentNode, lastChild, format, textRangeOf(nodes));
+    if (closingLineTerminatorCount > 0) this.writeLineRepeat(closingLineTerminatorCount);
+    else if ((format & (LFSpaceAfterList | LFSpaceBetweenBraces)) !== 0) this.writeSpace();
   }
   hasTrailingComma(parentNode: AstNode | undefined, children: NodeList | undefined): boolean {
     void parentNode;
     return (children as unknown as { readonly hasTrailingComma?: boolean } | undefined)?.hasTrailingComma === true;
   }
-  writeDelimiter(format: number): void {
-    void format;
-    this.writePunctuation(", ");
+  writeDelimiter(format: ListFormat): void {
+    switch (format & LFDelimitersMask) {
+      case 0:
+        return;
+      case LFCommaDelimited:
+        this.writePunctuation(",");
+        return;
+      case LFBarDelimited:
+        this.writeSpace();
+        this.writePunctuation("|");
+        return;
+      case LFAsteriskDelimited:
+        this.writeSpace();
+        this.writePunctuation("*");
+        this.writeSpace();
+        return;
+      case LFAmpersandDelimited:
+        this.writeSpace();
+        this.writePunctuation("&");
+        return;
+      default:
+        return;
+    }
   }
   private emitCommaList(nodes: readonly AstNode[]): void {
+    if (nodes === undefined) return;
     for (let index = 0; index < nodes.length; index += 1) {
       if (index > 0) this.writePunctuation(", ");
       this.emit(0, nodes[index]);
@@ -2241,6 +2342,11 @@ function getNodeArray(nodes: unknown): readonly AstNode[] {
   if (nodes === undefined) return [];
   if (Array.isArray(nodes)) return nodes as readonly AstNode[];
   return (nodes as { readonly nodes?: readonly AstNode[] }).nodes ?? [];
+}
+
+function textRangeOf(nodes: unknown): TextRange {
+  const range = nodes as { readonly pos?: number; readonly end?: number } | undefined;
+  return { pos: range?.pos ?? 0, end: range?.end ?? 0 } as TextRange;
 }
 
 export function canEmitSimpleArrowHead(node: AstNode): boolean {
