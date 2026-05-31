@@ -6,3 +6,4 @@
  */
 
 export * from "./vfsmatch.js";
+export * from "./stringer_generated.js";
