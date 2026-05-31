@@ -38,40 +38,44 @@ export type PrivateIdentifierKindStr = "field" | "method" | "accessor" | "auto-a
 // ---------------------------------------------------------------------------
 
 export class NodeFactory {
+  private nextAutoGenerateId = 0;
+  private readonly autoGenerate = new Map<AstNode, AutoGenerateOptions & { readonly id: number; readonly node?: AstNode | undefined }>();
+
   // -------------------------------------------------------------------------
   // Temp / loop / unique / generated names
   // -------------------------------------------------------------------------
 
   newTempVariable(): IdentifierNode {
-    return { kind: 80, text: "_tmp" } as unknown as IdentifierNode;
+    return this.newTempVariableEx({});
   }
   newTempVariableEx(options: AutoGenerateOptions): IdentifierNode {
-    void options; return this.newTempVariable();
+    return this.newGeneratedIdentifier("(auto)", undefined, options);
   }
-  newLoopVariable(): IdentifierNode { return this.newTempVariable(); }
+  newLoopVariable(): IdentifierNode { return this.newLoopVariableEx({}); }
   newLoopVariableEx(options: AutoGenerateOptions): IdentifierNode {
-    void options; return this.newTempVariable();
+    return this.newGeneratedIdentifier("(loop)", undefined, options);
   }
-  newUniqueName(text: string): IdentifierNode { void text; return this.newTempVariable(); }
+  newUniqueName(text: string): IdentifierNode { return this.newUniqueNameEx(text, {}); }
   newUniqueNameEx(text: string, options: AutoGenerateOptions): IdentifierNode {
-    void text; void options; return this.newTempVariable();
+    return this.newGeneratedIdentifier(text, undefined, options);
   }
-  newGeneratedNameForNode(node: AstNode): IdentifierNode { void node; return this.newTempVariable(); }
+  newGeneratedNameForNode(node: AstNode): IdentifierNode { return this.newGeneratedNameForNodeEx(node, {}); }
   newGeneratedNameForNodeEx(node: AstNode, options: AutoGenerateOptions): IdentifierNode {
-    void node; void options; return this.newTempVariable();
+    const text = memberNameText(node) ?? `(generated@${this.nextAutoGenerateId + 1})`;
+    return this.newGeneratedIdentifier(text, node, options);
   }
   newUniquePrivateName(text: string): PrivateIdentifierNode {
-    void text;
-    return { kind: 81, text: "#tmp" } as unknown as PrivateIdentifierNode;
+    return this.newUniquePrivateNameEx(text, {});
   }
   newUniquePrivateNameEx(text: string, options: AutoGenerateOptions): PrivateIdentifierNode {
-    void text; void options; return this.newUniquePrivateName("");
+    return this.newGeneratedPrivateIdentifier(text, undefined, options);
   }
   newGeneratedPrivateNameForNode(node: AstNode): PrivateIdentifierNode {
-    void node; return this.newUniquePrivateName("");
+    return this.newGeneratedPrivateNameForNodeEx(node, {});
   }
   newGeneratedPrivateNameForNodeEx(node: AstNode, options: AutoGenerateOptions): PrivateIdentifierNode {
-    void node; void options; return this.newUniquePrivateName("");
+    const text = memberNameText(node) ?? `(generated@${this.nextAutoGenerateId + 1})`;
+    return this.newGeneratedPrivateIdentifier(text, node, options);
   }
 
   newStringLiteralFromNode(textSourceNode: AstNode): AstNode {
@@ -244,7 +248,11 @@ export class NodeFactory {
     return this.newMethodCall(array, this.newIdentifier("slice"), [this.newNumericLiteral(`${start}`, 0)]);
   }
   inlineExpressions(expressions: readonly Expression[]): Expression {
-    return expressions[expressions.length - 1] ?? ({} as Expression);
+    if (expressions.length === 0) return undefined as unknown as Expression;
+    const flattened = flattenCommaElements(expressions);
+    let expression = flattened[0]!;
+    for (const next of flattened.slice(1)) expression = this.newCommaExpression(expression, next);
+    return expression;
   }
 
   // -------------------------------------------------------------------------
@@ -372,6 +380,55 @@ export class NodeFactory {
     if (fn !== undefined) args.push(fn);
     return this.newCallExpression(this.newUnscopedHelperName("__classPrivateFieldSet"), args);
   }
+
+  private newGeneratedIdentifier(text: string, node: AstNode | undefined, options: AutoGenerateOptions): IdentifierNode {
+    const id = this.nextAutoGenerateId + 1;
+    this.nextAutoGenerateId = id;
+    const nameText = formatGeneratedName(false, options.prefix, text === "" ? `(auto@${id})` : text, options.suffix);
+    const name = { kind: 80 /* Identifier */, text: nameText } as unknown as IdentifierNode;
+    this.autoGenerate.set(name, { ...options, id, node });
+    return name;
+  }
+
+  private newGeneratedPrivateIdentifier(text: string, node: AstNode | undefined, options: AutoGenerateOptions): PrivateIdentifierNode {
+    const id = this.nextAutoGenerateId + 1;
+    this.nextAutoGenerateId = id;
+    const candidate = text === "" ? `(auto@${id})` : text;
+    if (candidate.startsWith("#")) {
+      const name = { kind: 81 /* PrivateIdentifier */, text: candidate } as unknown as PrivateIdentifierNode;
+      this.autoGenerate.set(name, { ...options, id, node });
+      return name;
+    }
+    const name = { kind: 81 /* PrivateIdentifier */, text: formatGeneratedName(true, options.prefix, candidate, options.suffix) } as unknown as PrivateIdentifierNode;
+    this.autoGenerate.set(name, { ...options, id, node });
+    return name;
+  }
+}
+
+function flattenCommaElements(expressions: readonly Expression[]): readonly Expression[] {
+  const result: Expression[] = [];
+  for (const expression of expressions) flattenCommaElement(expression, result);
+  return result;
+}
+
+function flattenCommaElement(expression: Expression, result: Expression[]): void {
+  const binary = expression as unknown as { kind?: number; operatorToken?: { kind?: number }; left?: Expression; right?: Expression };
+  if (binary.kind === 225 /* BinaryExpression */ && binary.operatorToken?.kind === 28 /* CommaToken */ && binary.left !== undefined && binary.right !== undefined) {
+    flattenCommaElement(binary.left, result);
+    flattenCommaElement(binary.right, result);
+    return;
+  }
+  result.push(expression);
+}
+
+function memberNameText(node: AstNode): string | undefined {
+  const text = (node as unknown as { text?: string }).text;
+  return text === undefined || text === "" ? undefined : text;
+}
+
+function formatGeneratedName(privateName: boolean, prefix: string | undefined, text: string, suffix: string | undefined): string {
+  const body = `${prefix ?? ""}${text}${suffix ?? ""}`;
+  return privateName ? `#${body.replace(/^#/, "")}` : body;
 }
 
 export function newNodeFactory(): NodeFactory {
