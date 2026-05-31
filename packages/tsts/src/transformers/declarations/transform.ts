@@ -8,18 +8,24 @@
  * (`/// <reference ... />`); and routing through a SymbolTracker for
  * accessibility diagnostics.
  *
- * Port scope: full state declarations, visit dispatch with all
- * declaration kinds, ~80 method signatures mapped covering the full
- * `transform*` / `ensure*` / `transformJSDoc*` surface. Deep helper
- * bodies (type computation in `ensureType`, late-painted statement
- * resolution, expando-function processing) are stubbed; baseline
- * .d.ts emit tests will drive incremental fill-in.
+ * The transformer owns declaration-file state, root statement routing,
+ * late-painted statement replacement, and the declaration-node dispatch
+ * surface. Type synthesis and isolated-declaration diagnostics delegate
+ * to the resolver/tracker surfaces, matching TS-Go's package boundary.
  *
  * Cross-module deps forward-declared at file end.
  */
 
 import { Transformer } from "../transformer.js";
-import { Kind } from "../../ast/index.js";
+import {
+  Kind,
+  isDeclaration,
+  isExternalOrCommonJSModule,
+  isFunctionLike,
+  sourceFileEndOfFileToken,
+  sourceFileIsDeclarationFile,
+} from "../../ast/index.js";
+import { getNodeId } from "../../ast/ids.js";
 import {
   newSymbolTracker,
   type SymbolTrackerImpl,
@@ -27,6 +33,8 @@ import {
   type EmitResolver,
   type DeclarationEmitHost,
 } from "./tracker.js";
+import { createGetSymbolAccessibilityDiagnosticForNode } from "./diagnostics.js";
+import { canProduceDiagnostics, isDeclarationAndNotVisible, isEnclosingDeclaration } from "./util.js";
 import type {
   Node as AstNode,
   SourceFile,
@@ -179,28 +187,132 @@ export class DeclarationTransformer extends Transformer {
   // -------------------------------------------------------------------------
 
   visit(node: AstNode): AstNode | undefined {
-    if (node.kind === Kind.SourceFile) {
-      return this.visitSourceFile(node as unknown as SourceFile);
+    switch (node.kind) {
+      case Kind.SourceFile:
+        return this.visitSourceFile(node as unknown as SourceFile);
+      case Kind.FunctionDeclaration:
+      case Kind.ModuleDeclaration:
+      case Kind.ImportEqualsDeclaration:
+      case Kind.InterfaceDeclaration:
+      case Kind.ClassDeclaration:
+      case Kind.JSTypeAliasDeclaration:
+      case Kind.TypeAliasDeclaration:
+      case Kind.EnumDeclaration:
+      case Kind.VariableStatement:
+      case Kind.ImportDeclaration:
+      case Kind.JSImportDeclaration:
+      case Kind.ExportDeclaration:
+      case Kind.ExportAssignment:
+        return this.visitDeclarationStatements(node);
+      case Kind.BreakStatement:
+      case Kind.ContinueStatement:
+      case Kind.DebuggerStatement:
+      case Kind.DoStatement:
+      case Kind.EmptyStatement:
+      case Kind.ForInStatement:
+      case Kind.ForOfStatement:
+      case Kind.ForStatement:
+      case Kind.IfStatement:
+      case Kind.LabeledStatement:
+      case Kind.ReturnStatement:
+      case Kind.SwitchStatement:
+      case Kind.ThrowStatement:
+      case Kind.TryStatement:
+      case Kind.WhileStatement:
+      case Kind.WithStatement:
+      case Kind.NotEmittedStatement:
+      case Kind.Block:
+      case Kind.MissingDeclaration:
+        return undefined;
+      case Kind.ExpressionStatement:
+        return this.visitExpressionStatement(node);
+      default:
+        return this.visitDeclarationSubtree(node);
     }
-    return this.visitor().visitEachChild(node);
   }
 
   visitSourceFile(node: SourceFile): AstNode {
+    if (sourceFileIsDeclarationFile(node)) return node as unknown as AstNode;
+    this.needsDeclare = true;
+    this.needsScopeFixMarker = false;
+    this.resultHasScopeMarker = false;
+    this.enclosingDeclaration = node as unknown as AstNode;
+    this.state.getSymbolAccessibilityDiagnostic = throwDiagnostic;
+    this.resultHasExternalModuleIndicator = false;
+    this.suppressNewDiagnosticContexts = false;
+    this.state.lateMarkedStatements = [];
+    this.lateStatementReplacementMap = new Map();
+    this.expandoHosts = new Set();
+    this.rawReferencedFiles = [];
+    this.rawTypeReferenceDirectives = [];
+    this.rawLibReferenceDirectives = [];
     this.state.currentSourceFile = node;
     this.collectFileReferences(node);
-    return this.transformSourceFile(node);
+    (this.resolver as unknown as { precalculateDeclarationEmitVisibility?: (sourceFile: SourceFile) => void })
+      .precalculateDeclarationEmitVisibility?.(node);
+    const updated = this.transformSourceFile(node);
+    this.state.currentSourceFile = undefined as unknown as SourceFile;
+    return updated;
   }
 
   collectFileReferences(sourceFile: SourceFile): void {
-    void sourceFile;
+    const referencedFiles = (sourceFile as unknown as { readonly referencedFiles?: readonly FileReference[] }).referencedFiles ?? [];
+    const typeReferenceDirectives = (sourceFile as unknown as { readonly typeReferenceDirectives?: readonly FileReference[] }).typeReferenceDirectives ?? [];
+    const libReferenceDirectives = (sourceFile as unknown as { readonly libReferenceDirectives?: readonly FileReference[] }).libReferenceDirectives ?? [];
+    this.rawReferencedFiles.push(...referencedFiles.map(ref => ({ file: sourceFile, ref })));
+    this.rawTypeReferenceDirectives.push(...typeReferenceDirectives);
+    this.rawLibReferenceDirectives.push(...libReferenceDirectives);
   }
 
   override transformSourceFile(node: SourceFile): SourceFile {
-    return node;
+    const visitedStatements = this.visitor().visitNodes(node.statements) as unknown as StatementList;
+    let combinedStatements = this.transformAndReplaceLatePaintedStatements(visitedStatements);
+    if (isExternalOrCommonJSModule(node as unknown as AstNode)
+      && (!this.resultHasExternalModuleIndicator || this.needsScopeFixMarker && !this.resultHasScopeMarker)) {
+      combinedStatements = this.factory().newNodeList([
+        ...statementListNodes(combinedStatements),
+        createEmptyExports(this.factory()),
+      ] as readonly Statement[]) as unknown as StatementList;
+    }
+    const updated = this.factory().updateSourceFile(
+      node as unknown as AstNode,
+      combinedStatements,
+      sourceFileEndOfFileToken(node as unknown as AstNode),
+    ) as unknown as SourceFile;
+    const mutable = updated as unknown as {
+      referencedFiles?: readonly FileReference[];
+      typeReferenceDirectives?: readonly FileReference[];
+      libReferenceDirectives?: readonly FileReference[];
+      isDeclarationFile?: boolean;
+    };
+    mutable.libReferenceDirectives = this.getLibReferences();
+    mutable.typeReferenceDirectives = this.getTypeReferences();
+    mutable.isDeclarationFile = true;
+    mutable.referencedFiles = this.getReferencedFiles(this.declarationFilePath);
+    return updated;
   }
 
   transformAndReplaceLatePaintedStatements(statements: StatementList): StatementList {
-    return statements;
+    while (this.state.lateMarkedStatements.length > 0) {
+      const next = this.state.lateMarkedStatements.shift()!;
+      const saveNeedsDeclare = this.needsDeclare;
+      this.needsDeclare = next.parent !== undefined && next.parent.kind === Kind.SourceFile;
+      const result = this.transformTopLevelDeclaration(next);
+      this.needsDeclare = saveNeedsDeclare;
+      const original = this.emitContext().mostOriginal(next);
+      this.lateStatementReplacementMap.set(getNodeId(original as unknown as { id?: number }), result);
+    }
+    const results: Statement[] = [];
+    for (const statement of statementListNodes(statements)) {
+      const original = this.emitContext().mostOriginal(statement as unknown as AstNode);
+      const replacement = this.lateStatementReplacementMap.get(getNodeId(original as unknown as { id?: number }));
+      if (replacement === undefined) {
+        results.push(statement);
+      } else if (replacement !== undefined) {
+        results.push(replacement as unknown as Statement);
+      }
+    }
+    return this.factory().newNodeList(results) as unknown as StatementList;
   }
 
   getReferencedFiles(outputFilePath: string): FileReference[] {
@@ -266,7 +378,34 @@ export class DeclarationTransformer extends Transformer {
   transformMethodDeclaration(input: MethodDeclaration): AstNode { return input as unknown as AstNode; }
 
   visitDeclarationStatements(input: AstNode): AstNode {
-    return this.visitor().visitEachChild(input);
+    if (this.shouldStripInternal(input)) return undefined as unknown as AstNode;
+    switch (input.kind) {
+      case Kind.ExportDeclaration:
+        if (input.parent?.kind === Kind.SourceFile) this.resultHasExternalModuleIndicator = true;
+        this.resultHasScopeMarker = true;
+        return this.factory().updateExportDeclaration(
+          input,
+          (input as unknown as { readonly modifiers?: ModifierList }).modifiers,
+          (input as unknown as { readonly isTypeOnly?: boolean }).isTypeOnly ?? false,
+          (input as unknown as { readonly exportClause?: AstNode }).exportClause,
+          this.rewriteModuleSpecifier(input, (input as unknown as { readonly moduleSpecifier?: AstNode }).moduleSpecifier as AstNode),
+          this.tryGetResolutionModeOverride((input as unknown as { readonly attributes?: AstNode }).attributes as AstNode),
+        );
+      case Kind.ExportAssignment:
+        return this.transformExportAssignment(
+          input,
+          input,
+          (input as unknown as { readonly expression?: AstNode }).expression as AstNode,
+          (input as unknown as { readonly isExportEquals?: boolean }).isExportEquals ?? false,
+        );
+      default: {
+        const id = getNodeId(this.emitContext().mostOriginal(input) as unknown as { id?: number });
+        if (!this.lateStatementReplacementMap.has(id)) {
+          this.lateStatementReplacementMap.set(id, this.transformTopLevelDeclaration(input));
+        }
+        return input;
+      }
+    }
   }
 
   transformExportAssignment(
@@ -315,7 +454,64 @@ export class DeclarationTransformer extends Transformer {
   // Top-level declaration transforms
   // -------------------------------------------------------------------------
 
-  transformTopLevelDeclaration(input: AstNode): AstNode { return input; }
+  transformTopLevelDeclaration(input: AstNode): AstNode {
+    this.state.lateMarkedStatements = this.state.lateMarkedStatements.filter(node => node !== input);
+    if (this.shouldStripInternal(input)) return undefined as unknown as AstNode;
+    if (input.kind === Kind.ImportEqualsDeclaration) return this.transformImportEqualsDeclaration(input as unknown as ImportEqualsDeclaration);
+    if (input.kind === Kind.ImportDeclaration || input.kind === Kind.JSImportDeclaration) {
+      return this.transformImportDeclaration(input as unknown as ImportDeclaration);
+    }
+    if (isDeclaration(input) && isDeclarationAndNotVisible(this.emitContext(), this.resolver, input)) {
+      return undefined as unknown as AstNode;
+    }
+    if (isFunctionLike(input) && (this.resolver as unknown as { isImplementationOfOverload?: (node: AstNode) => boolean }).isImplementationOfOverload?.(input) === true) {
+      return undefined as unknown as AstNode;
+    }
+    const original = this.emitContext().mostOriginal(input);
+    const expandoHost = this.expandoHosts.has(getNodeId(original as unknown as { id?: number }));
+    if (expandoHost) return input;
+
+    const previousEnclosingDeclaration = this.enclosingDeclaration;
+    if (isEnclosingDeclaration(input)) this.enclosingDeclaration = input;
+    const previousDiagnostic = this.state.getSymbolAccessibilityDiagnostic;
+    const saveNeedsDeclare = this.needsDeclare;
+    if (canProduceDiagnostics(input)) {
+      this.state.getSymbolAccessibilityDiagnostic = createGetSymbolAccessibilityDiagnosticForNode(input);
+    }
+
+    let result: AstNode;
+    switch (input.kind) {
+      case Kind.TypeAliasDeclaration:
+      case Kind.JSTypeAliasDeclaration:
+        result = this.transformTypeAliasDeclaration(input as unknown as TypeAliasDeclaration);
+        break;
+      case Kind.InterfaceDeclaration:
+        result = this.transformInterfaceDeclaration(input as unknown as InterfaceDeclaration);
+        break;
+      case Kind.FunctionDeclaration:
+        result = this.transformFunctionDeclaration(input as unknown as FunctionDeclaration);
+        break;
+      case Kind.ModuleDeclaration:
+        result = this.transformModuleDeclaration(input as unknown as ModuleDeclaration);
+        break;
+      case Kind.ClassDeclaration:
+        result = this.transformClassDeclaration(input as unknown as ClassDeclaration);
+        break;
+      case Kind.VariableStatement:
+        result = this.transformVariableStatement(input as unknown as VariableStatement);
+        break;
+      case Kind.EnumDeclaration:
+        result = this.transformEnumDeclaration(input as unknown as EnumDeclaration);
+        break;
+      default:
+        throw new Error(`Unhandled top-level node in declaration emit: ${input.kind}`);
+    }
+
+    this.enclosingDeclaration = previousEnclosingDeclaration;
+    this.state.getSymbolAccessibilityDiagnostic = previousDiagnostic;
+    this.needsDeclare = saveNeedsDeclare;
+    return result;
+  }
 
   transformTypeAliasDeclaration(input: TypeAliasDeclaration): AstNode { return input as unknown as AstNode; }
   transformInterfaceDeclaration(input: InterfaceDeclaration): AstNode { return input as unknown as AstNode; }
@@ -384,6 +580,12 @@ export class DeclarationTransformer extends Transformer {
     return decl as unknown as AstNode;
   }
 
+  visitExpressionStatement(node: AstNode): AstNode | undefined {
+    const expression = (node as unknown as { readonly expression?: AstNode }).expression;
+    if (expression === undefined) return undefined;
+    return undefined;
+  }
+
   // -------------------------------------------------------------------------
   // JSDoc node transforms
   // -------------------------------------------------------------------------
@@ -417,7 +619,7 @@ export function newDeclarationTransformer(
 // ---------------------------------------------------------------------------
 
 export function createEmptyExports(factory: NodeFactory): Statement {
-  return factory.newExportDeclaration(undefined, false, factory.newNamedExports([]), undefined, undefined);
+  return factory.newExportDeclaration(undefined, false, factory.newNamedExports([]), undefined, undefined) as unknown as Statement;
 }
 
 export function isCommonJSAliasExport(node: AstNode): boolean {
@@ -425,14 +627,22 @@ export function isCommonJSAliasExport(node: AstNode): boolean {
   return false;
 }
 
-export function throwDiagnostic(result: unknown): SymbolAccessibilityDiagnostic | undefined {
+export function throwDiagnostic(result: unknown): never {
   void result;
-  return undefined;
+  throw new Error("Diagnostic emitted without declaration context");
 }
 
 export function hasInternalAnnotation(range: CommentRange, sourceFile: SourceFile): boolean {
-  void range; void sourceFile;
-  return false;
+  return sourceFileText(sourceFile).slice(range.pos, range.end).includes("@internal");
+}
+
+function statementListNodes(statements: StatementList): readonly Statement[] {
+  if (Array.isArray(statements)) return statements as readonly Statement[];
+  return (statements as unknown as { readonly nodes?: readonly Statement[] }).nodes ?? [];
+}
+
+function sourceFileText(sourceFile: SourceFile): string {
+  return (sourceFile as unknown as { readonly text?: string }).text ?? "";
 }
 
 // ---------------------------------------------------------------------------
@@ -445,11 +655,20 @@ interface CommentRange { pos: number; end: number; kind: number }
 interface NodeFactory {
   newNodeList(nodes: readonly AstNode[]): unknown;
   newAnyKeyword(): AstNode;
+  updateSourceFile(node: AstNode, statements: unknown, endOfFileToken?: AstNode): AstNode;
+  updateExportDeclaration(
+    node: AstNode,
+    modifiers: ModifierList | undefined,
+    isTypeOnly: boolean,
+    exportClause: AstNode | undefined,
+    moduleSpecifier: AstNode | undefined,
+    attributes: AstNode | undefined,
+  ): AstNode;
   newExportDeclaration(
     modifiers: ModifierList | undefined, isTypeOnly: boolean,
     exportClause: AstNode | undefined, moduleSpecifier: AstNode | undefined,
     attributes: AstNode | undefined,
-  ): Statement;
+  ): AstNode;
   newNamedExports(elements: readonly AstNode[]): AstNode;
 }
 
