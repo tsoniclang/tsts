@@ -12,20 +12,26 @@ import {
   isClassDeclaration,
   isContinueStatement,
   isCaseClause,
+  isDebuggerStatement,
   isDoStatement,
+  isEmptyStatement,
   isExpressionStatement,
   isForInStatement,
   isForOfStatement,
   isForStatement,
   isFunctionDeclaration,
   isIfStatement,
+  isLabeledStatement,
   isMissingDeclaration,
   isReturnStatement,
   isSwitchStatement,
+  isThrowStatement,
+  isTryStatement,
   isTypeAliasDeclaration,
   isVariableStatement,
   isVariableDeclarationList,
   isWhileStatement,
+  isWithStatement,
   type CaseOrDefaultClause,
   type Block,
   type Expression,
@@ -114,6 +120,10 @@ export function checkStatement(statement: Statement, state: CheckState, expected
     }
     return thenFlow.exits ? { exits: false, fallthroughNarrowings: whenFalse } : continuesFlow;
   }
+  if (isWithStatement(statement)) {
+    inferExpression(statement.expression, state);
+    return checkStatement(statement.statement, state, expectedReturnType);
+  }
   if (isWhileStatement(statement)) {
     inferExpression(statement.expression, state);
     checkStatement(statement.statement, state, expectedReturnType);
@@ -145,6 +155,19 @@ export function checkStatement(statement: Statement, state: CheckState, expected
   }
   if (isSwitchStatement(statement)) {
     checkSwitchStatement(statement.expression, statement.caseBlock.clauses, state, expectedReturnType);
+    return continuesFlow;
+  }
+  if (isThrowStatement(statement)) {
+    inferExpression(statement.expression, state);
+    return exitsFlow;
+  }
+  if (isTryStatement(statement)) {
+    return checkTryStatement(statement.tryBlock, statement.catchClause, statement.finallyBlock, state, expectedReturnType);
+  }
+  if (isLabeledStatement(statement)) {
+    return checkStatement(statement.statement, state, expectedReturnType);
+  }
+  if (isEmptyStatement(statement) || isDebuggerStatement(statement)) {
     return continuesFlow;
   }
   if (isBreakStatement(statement) || isContinueStatement(statement)) {
@@ -219,6 +242,27 @@ function checkSwitchStatement(
     const exits = withNarrowedSymbolTypes(state, clauseNarrowings, () => checkStatements(clause.statements, state, expectedReturnType));
     fallthroughNarrowings = exits ? new Map() : clauseNarrowings;
   }
+}
+
+function checkTryStatement(
+  tryBlock: Block,
+  catchClause: { readonly variableDeclaration?: { readonly type?: TypeNode }; readonly block: Block } | undefined,
+  finallyBlock: Block | undefined,
+  state: CheckState,
+  expectedReturnType: Type | undefined,
+): StatementFlow {
+  const tryExits = checkBlock(tryBlock, state, expectedReturnType);
+  let catchExits = false;
+  if (catchClause !== undefined) {
+    if (catchClause.variableDeclaration?.type !== undefined) {
+      typeFromTypeNode(catchClause.variableDeclaration.type, state);
+    }
+    catchExits = checkBlock(catchClause.block, state, expectedReturnType);
+  }
+  const finallyExits = finallyBlock === undefined ? false : checkBlock(finallyBlock, state, expectedReturnType);
+  if (finallyExits) return exitsFlow;
+  if (catchClause !== undefined && tryExits && catchExits) return exitsFlow;
+  return continuesFlow;
 }
 
 function combineNarrowings(left: ReadonlyMap<unknown, Type>, right: NarrowingMap): Map<AstSymbol, Type> {

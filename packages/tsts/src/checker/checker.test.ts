@@ -544,6 +544,24 @@ export class CheckerGroundworkTests {
     Assert.Equal(0, fallthrough.diagnostics.length);
   }
 
+  checks_try_throw_labeled_with_and_empty_statements(): void {
+    const tryBlock = checkSourceFile(parseSourceFile("function f(): number { try { return \"x\"; } catch (e) { return 1; } }"));
+    const catchBlock = checkSourceFile(parseSourceFile("function f(): number { try { throw \"x\"; } catch (e) { return \"bad\"; } }"));
+    const finallyBlock = checkSourceFile(parseSourceFile("function f(): void { try { } finally { const value: number = \"x\"; } }"));
+    const throwExpression = checkSourceFile(parseSourceFile("function f(value: string): void { throw value.toFixed(); }"));
+    const labeled = checkSourceFile(parseSourceFile("function f(): number { label: return \"x\"; }"));
+    const withStatement = checkSourceFile(parseSourceFile("function f(box: { value: number }): number { with (box) { return \"x\"; } }"));
+    const emptyAndDebugger = checkSourceFile(parseSourceFile("function f(): number { ; debugger; return 1; }"));
+
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], tryBlock.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], catchBlock.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], finallyBlock.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Property 'toFixed' does not exist on type 'string'."], throwExpression.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], labeled.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], withStatement.diagnostics.map((d) => d.message));
+    Assert.Equal(0, emptyAndDebugger.diagnostics.length);
+  }
+
   checks_additional_expression_forms(): void {
     // Template/type/void/delete/non-null/yield/await/new expression nodes are
     // visited and typed instead of falling through to the unresolved sentinel.
@@ -1015,6 +1033,7 @@ A<CheckerGroundworkTests>().method((t) => t.checks_array_types).add(FactAttribut
 A<CheckerGroundworkTests>().method((t) => t.checks_string_indexing_and_builtin_method_shapes).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.narrows_branch_types_from_control_flow_conditions).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.narrows_switch_clause_types_from_discriminants).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_try_throw_labeled_with_and_empty_statements).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_array_spread_index_and_broad_object).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_broad_empty_object_and_index_validation).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_object_type_signatures).add(FactAttribute);
