@@ -543,6 +543,110 @@ export class Inferer {
     }
     return result;
   }
+
+  getMapperFromContext(n: InferenceContext): unknown {
+    return n.mapper ?? this.getInferredTypes(n);
+  }
+
+  createOuterReturnMapper(n: InferenceContext): unknown {
+    n.returnMapper ??= n.inferences.map((info) => info.inferredType ?? bestInferenceCandidates(info)[0] ?? info.typeParameter);
+    return n.returnMapper;
+  }
+
+  getCovariantInference(info: InferenceInfo): Type | undefined {
+    return info.candidates?.[0] ?? info.inferredType;
+  }
+
+  getContravariantInference(info: InferenceInfo): Type | undefined {
+    return info.contraCandidates?.[0] ?? info.inferredType;
+  }
+
+  unionObjectAndArrayLiteralCandidates(candidates: readonly Type[]): readonly Type[] {
+    const objectCandidates = candidates.filter((candidate) => (candidate.flags & TypeFlags.Object) !== 0);
+    return objectCandidates.length === 0 ? candidates : dedupeTypes([...objectCandidates, ...candidates]);
+  }
+
+  hasPrimitiveConstraint(type: Type | undefined): boolean {
+    const constraint = (type?.data as { constraint?: Type } | undefined)?.constraint;
+    return constraint !== undefined && (constraint.flags & TypeFlags.Primitive) !== 0;
+  }
+
+  isTypeParameterAtTopLevel(typeParameter: Type, target: Type): boolean {
+    if (typeParameter === target) return true;
+    return constituentTypes(target).some((candidate) => this.isTypeParameterAtTopLevel(typeParameter, candidate));
+  }
+
+  isTypeParameterAtTopLevelInReturnType(typeParameter: Type, signature: Signature): boolean {
+    return signature.resolvedReturnType !== undefined && this.isTypeParameterAtTopLevel(typeParameter, signature.resolvedReturnType);
+  }
+
+  getTypeFromInference(info: InferenceInfo): Type | undefined {
+    return info.inferredType ?? bestInferenceCandidates(info)[0];
+  }
+
+  getInferenceInfoForType(n: InferenceContext | InferenceState, type: Type): InferenceInfo | undefined {
+    return n.inferences.find((info) => info.typeParameter === type);
+  }
+
+  getSingleCommonSupertype(types: readonly Type[]): Type | undefined {
+    if (types.length === 0) return undefined;
+    const [first, ...rest] = types;
+    return rest.every((type) => (type.flags & first!.flags) !== 0 || type.symbol === first!.symbol) ? first : undefined;
+  }
+
+  findLeftmostType(types: readonly Type[], predicate: (type: Type) => boolean): Type | undefined {
+    return types.find(predicate);
+  }
+
+  getCombinedTypeFlags(types: readonly Type[]): TypeFlagsType {
+    return types.reduce((flags, type) => flags | type.flags, TypeFlags.None as TypeFlagsType);
+  }
+
+  literalTypesWithSameBaseType(types: readonly Type[]): boolean {
+    if (types.length < 2) return true;
+    const baseFlags = literalBaseFlags(types[0]!);
+    return types.every((type) => literalBaseFlags(type) === baseFlags);
+  }
+
+  isFromInferenceBlockedSource(node: AstNode | undefined): boolean {
+    return (node as unknown as { inferenceBlocked?: boolean } | undefined)?.inferenceBlocked === true;
+  }
+
+  isSkipDirectInferenceNode(node: AstNode | undefined): boolean {
+    return (node as unknown as { skipDirectInference?: boolean } | undefined)?.skipDirectInference === true;
+  }
+
+  newInferenceInfo(typeParameter: Type): InferenceInfo {
+    return newInferenceInfo(typeParameter);
+  }
+
+  cloneInferenceInfo(info: InferenceInfo): InferenceInfo {
+    return cloneInferenceInfo(info);
+  }
+
+  clearCachedInferences(n: InferenceContext): void {
+    clearCachedInferences(n.inferences);
+  }
+
+  hasInferenceCandidates(info: InferenceInfo): boolean {
+    return hasInferenceCandidates(info);
+  }
+
+  hasInferenceCandidatesOrDefault(info: InferenceInfo): boolean {
+    return hasInferenceCandidatesOrDefault(info);
+  }
+
+  hasTypeParameterDefault(typeParameter: Type): boolean {
+    return (typeParameter as { default?: Type }).default !== undefined;
+  }
+
+  hasOverlappingInferences(left: InferenceInfo, right: InferenceInfo): boolean {
+    return hasOverlappingInferences(left, right);
+  }
+
+  mergeInferences(target: InferenceInfo, source: InferenceInfo): void {
+    mergeInferences(target, source);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -611,6 +715,69 @@ function bestInferenceCandidates(info: InferenceInfo): readonly Type[] {
   if (info.candidates !== undefined && info.candidates.length !== 0) return info.candidates;
   if (info.contraCandidates !== undefined && info.contraCandidates.length !== 0) return info.contraCandidates;
   return [];
+}
+
+export function newInferenceInfo(typeParameter: Type): InferenceInfo {
+  return {
+    typeParameter,
+    priority: InferencePriority.None,
+    topLevel: true,
+    isFixed: false,
+  };
+}
+
+export function cloneInferenceInfo(info: InferenceInfo): InferenceInfo {
+  return {
+    ...info,
+    ...(info.candidates === undefined ? {} : { candidates: [...info.candidates] }),
+    ...(info.contraCandidates === undefined ? {} : { contraCandidates: [...info.contraCandidates] }),
+  };
+}
+
+export function clearCachedInferences(inferences: readonly InferenceInfo[]): void {
+  for (const info of inferences) {
+    delete info.inferredType;
+    info.priority = InferencePriority.None;
+    info.isFixed = false;
+  }
+}
+
+export function hasInferenceCandidates(info: InferenceInfo): boolean {
+  return (info.candidates?.length ?? 0) > 0 || (info.contraCandidates?.length ?? 0) > 0;
+}
+
+export function hasInferenceCandidatesOrDefault(info: InferenceInfo): boolean {
+  return hasInferenceCandidates(info) || (info.typeParameter as { default?: Type }).default !== undefined;
+}
+
+export function hasTypeParameterDefault(typeParameter: Type): boolean {
+  return (typeParameter as { default?: Type }).default !== undefined;
+}
+
+export function hasOverlappingInferences(left: InferenceInfo, right: InferenceInfo): boolean {
+  const leftCandidates = new Set(bestInferenceCandidates(left));
+  return bestInferenceCandidates(right).some((candidate) => leftCandidates.has(candidate));
+}
+
+export function mergeInferences(target: InferenceInfo, source: InferenceInfo): void {
+  for (const candidate of source.candidates ?? []) addInferenceCandidate(target, candidate, false);
+  for (const candidate of source.contraCandidates ?? []) addInferenceCandidate(target, candidate, true);
+  target.priority = Math.min(target.priority, source.priority);
+  target.topLevel = target.topLevel && source.topLevel;
+}
+
+function dedupeTypes(types: readonly Type[]): readonly Type[] {
+  const out: Type[] = [];
+  for (const type of types) if (!out.includes(type)) out.push(type);
+  return out;
+}
+
+function literalBaseFlags(type: Type): TypeFlagsType {
+  if ((type.flags & TypeFlags.StringLiteral) !== 0) return TypeFlags.String;
+  if ((type.flags & TypeFlags.NumberLiteral) !== 0) return TypeFlags.Number;
+  if ((type.flags & TypeFlags.BigIntLiteral) !== 0) return TypeFlags.BigInt;
+  if ((type.flags & TypeFlags.BooleanLiteral) !== 0) return TypeFlags.Boolean;
+  return type.flags;
 }
 
 let syntheticTypeId = -1;
