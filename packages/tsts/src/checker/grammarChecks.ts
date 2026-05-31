@@ -19,6 +19,13 @@ const ScriptTargetES2018 = 5;
 const ScriptTargetES2020 = 7;
 const TokenFlagsUnterminated = 1 << 0;
 
+export interface GrammarDiagnostic {
+  readonly message: string;
+  readonly node?: AstNode;
+  readonly pos?: number;
+  readonly length?: number;
+}
+
 // Compute modifier flags from a node's modifiers list. Mirrors
 // printer utilities' getSyntacticModifierFlags so grammar checks can be
 // modifier-aware without taking a printer dependency.
@@ -48,6 +55,209 @@ function getModifierFlagsOf(node: AstNode): number {
 }
 
 export class GrammarChecker {
+  readonly diagnostics: GrammarDiagnostic[] = [];
+
+  grammarErrorOnFirstToken(node: AstNode, message = "Grammar_error"): boolean {
+    const first = firstToken(node) ?? node;
+    return this.grammarErrorOnNode(first, message);
+  }
+
+  grammarErrorAtPos(sourceFile: AstNode | undefined, pos: number, length: number, message = "Grammar_error"): boolean {
+    void sourceFile;
+    this.diagnostics.push({ message, pos, length });
+    return true;
+  }
+
+  grammarErrorOnNode(node: AstNode | undefined, message = "Grammar_error"): boolean {
+    if (node === undefined) return false;
+    this.diagnostics.push({ message, node });
+    return true;
+  }
+
+  grammarErrorOnNodeSkippedOnNoEmit(node: AstNode | undefined, message = "Grammar_error"): boolean {
+    return this.grammarErrorOnNode(node, message);
+  }
+
+  getIdentifierFromEntityNameExpression(node: AstNode | undefined): AstNode | undefined {
+    let current = node;
+    while (current !== undefined) {
+      if (current.kind === Kind.Identifier || current.kind === Kind.PrivateIdentifier) return current;
+      current = (current as unknown as { right?: AstNode; name?: AstNode; expression?: AstNode }).right
+        ?? (current as unknown as { right?: AstNode; name?: AstNode; expression?: AstNode }).name
+        ?? (current as unknown as { right?: AstNode; name?: AstNode; expression?: AstNode }).expression;
+    }
+    return undefined;
+  }
+
+  checkGrammarPrivateIdentifierExpression(node: AstNode): boolean {
+    return this.checkGrammarPrivateIdentifier(node);
+  }
+
+  checkGrammarMappedType(node: AstNode): boolean {
+    const typeParameter = (node as unknown as { typeParameter?: AstNode }).typeParameter;
+    return typeParameter === undefined || (typeParameter as { kind?: Kind }).kind !== Kind.TypeParameter;
+  }
+
+  checkGrammarModuleElementContext(node: AstNode): boolean {
+    return this.checkGrammarStatementInAmbientContext(node);
+  }
+
+  isJSDocTypedefTag(node: AstNode | undefined): boolean {
+    return node?.kind === Kind.JSDocTypedefTag;
+  }
+
+  reportObviousModifierErrors(node: AstNode): boolean {
+    return this.checkGrammarModifiers(node);
+  }
+
+  findFirstModifierExcept(node: AstNode, allowed: readonly Kind[]): AstNode | undefined {
+    return modifiersOf(node).find((modifier) => !allowed.includes(modifier.kind));
+  }
+
+  findFirstIllegalModifier(node: AstNode): AstNode | undefined {
+    const allowed = allowedModifiersForKind(node.kind);
+    return this.findFirstModifierExcept(node, allowed);
+  }
+
+  reportObviousDecoratorErrors(node: AstNode): boolean {
+    return this.checkGrammarDecorators(node);
+  }
+
+  findFirstIllegalDecorator(node: AstNode): AstNode | undefined {
+    if (!this.checkGrammarDecorators(node)) return undefined;
+    return modifiersOf(node).find((modifier) => modifier.kind === Kind.Decorator);
+  }
+
+  checkGrammarForDisallowedTrailingComma(node: AstNode): boolean {
+    const trailingComma = (node as unknown as { hasTrailingComma?: boolean; trailingComma?: AstNode }).hasTrailingComma
+      ?? ((node as unknown as { hasTrailingComma?: boolean; trailingComma?: AstNode }).trailingComma !== undefined);
+    return trailingComma === true;
+  }
+
+  checkGrammarForUseStrictSimpleParameterList(node: AstNode): boolean {
+    if (!hasUseStrictDirective(node)) return false;
+    const parameters = nodeArray((node as unknown as { parameters?: readonly AstNode[] | { nodes?: readonly AstNode[] } }).parameters);
+    return parameters.some((parameter) =>
+      field<AstNode>(parameter, "initializer") !== undefined
+      || field<AstNode>(parameter, "dotDotDotToken") !== undefined
+      || isBindingPattern(field(parameter, "name")));
+  }
+
+  checkGrammarArrowFunction(node: AstNode): boolean {
+    return this.checkGrammarParameterList((node as unknown as { parameters?: AstNode }).parameters ?? node)
+      || this.checkGrammarForUseStrictSimpleParameterList(node);
+  }
+
+  checkGrammarIndexSignatureParameters(node: AstNode): boolean {
+    return this.checkGrammarIndexSignature(node);
+  }
+
+  checkGrammarForAtLeastOneTypeArgument(node: AstNode): boolean {
+    const args = nodeArray((node as unknown as { typeArguments?: readonly AstNode[] | { nodes?: readonly AstNode[] } }).typeArguments);
+    return args.length === 0;
+  }
+
+  checkGrammarTypeArguments(node: AstNode): boolean {
+    const args = nodeArray((node as unknown as { typeArguments?: readonly AstNode[] | { nodes?: readonly AstNode[] } }).typeArguments);
+    return args.some((arg) => arg.kind === Kind.MissingDeclaration);
+  }
+
+  checkGrammarClassDeclarationHeritageClauses(node: AstNode): boolean {
+    return this.checkGrammarClassLikeDeclaration(node);
+  }
+
+  checkGrammarForGenerator(node: AstNode): boolean {
+    return field<AstNode>(node, "asteriskToken") !== undefined && scriptTargetOf(node) < ScriptTargetES2018;
+  }
+
+  checkGrammarForInvalidQuestionMark(node: AstNode): boolean {
+    return field<AstNode>(node, "questionToken") !== undefined
+      && !(node.kind === Kind.Parameter || node.kind === Kind.PropertyDeclaration || node.kind === Kind.PropertySignature);
+  }
+
+  checkGrammarForInvalidExclamationToken(node: AstNode): boolean {
+    return field<AstNode>(node, "exclamationToken") !== undefined
+      && !(node.kind === Kind.PropertyDeclaration || node.kind === Kind.VariableDeclaration);
+  }
+
+  checkGrammarJsxName(node: AstNode): boolean {
+    const text = (node as unknown as { text?: string }).text ?? "";
+    return text.length === 0 || /\s/u.test(text);
+  }
+
+  doesAccessorHaveCorrectParameterCount(node: AstNode): boolean {
+    const parameters = nodeArray((node as unknown as { parameters?: readonly AstNode[] | { nodes?: readonly AstNode[] } }).parameters);
+    if (node.kind === Kind.GetAccessor) return parameters.length === 0;
+    if (node.kind === Kind.SetAccessor) return parameters.length === 1;
+    return true;
+  }
+
+  checkGrammarTypeOperatorNode(node: AstNode): boolean {
+    const operator = (node as unknown as { operator?: Kind; operatorToken?: { kind?: Kind } }).operator
+      ?? (node as unknown as { operator?: Kind; operatorToken?: { kind?: Kind } }).operatorToken?.kind;
+    return operator === Kind.ReadonlyKeyword && field<AstNode>(node, "type")?.kind !== Kind.ArrayType;
+  }
+
+  checkGrammarForInvalidDynamicName(node: AstNode): boolean {
+    const name = field<AstNode>(node, "name");
+    return name?.kind === Kind.ComputedPropertyName && this.isNonBindableDynamicName(name);
+  }
+
+  isNonBindableDynamicName(name: AstNode): boolean {
+    const expression = field<AstNode>(name, "expression");
+    return expression === undefined || !(expression.kind === Kind.StringLiteral || expression.kind === Kind.NumericLiteral || expression.kind === Kind.NoSubstitutionTemplateLiteral);
+  }
+
+  checkGrammarForEsModuleMarkerInBindingName(node: AstNode): boolean {
+    const name = field<AstNode>(node, "name");
+    return nodeText(name) === "__esModule";
+  }
+
+  checkGrammarNameInLetOrConstDeclarations(node: AstNode): boolean {
+    const name = field<AstNode>(node, "name");
+    return name === undefined || name.kind === Kind.MissingDeclaration;
+  }
+
+  checkGrammarForDisallowedBlockScopedVariableStatement(node: AstNode): boolean {
+    const declarationList = field<AstNode>(node, "declarationList");
+    return declarationList !== undefined
+      && (((declarationList as unknown as { flags?: number }).flags ?? 0) & 3) !== 0
+      && !this.containerAllowsBlockScopedVariable(parentOf(node));
+  }
+
+  containerAllowsBlockScopedVariable(node: AstNode | undefined): boolean {
+    return node?.kind === Kind.SourceFile
+      || node?.kind === Kind.Block
+      || node?.kind === Kind.ModuleBlock
+      || node?.kind === Kind.CaseBlock;
+  }
+
+  checkGrammarProperty(node: AstNode): boolean {
+    return this.checkGrammarPropertyDeclaration(node) || this.checkGrammarForInvalidDynamicName(node);
+  }
+
+  checkAmbientInitializer(node: AstNode): boolean {
+    return this.checkGrammarPropertyDeclaration(node) || this.checkGrammarFunctionLikeDeclaration(node);
+  }
+
+  isInitializerStringOrNumberLiteralExpression(node: AstNode | undefined): boolean {
+    return node?.kind === Kind.StringLiteral || node?.kind === Kind.NumericLiteral;
+  }
+
+  isInitializerBigIntLiteralExpression(node: AstNode | undefined): boolean {
+    return node?.kind === Kind.BigIntLiteral;
+  }
+
+  isInitializerSimpleLiteralEnumReference(node: AstNode | undefined): boolean {
+    return node?.kind === Kind.Identifier || node?.kind === Kind.PropertyAccessExpression;
+  }
+
+  checkGrammarTypeOnlyNamedImportsOrExports(node: AstNode): boolean {
+    if ((node as unknown as { isTypeOnly?: boolean }).isTypeOnly !== true) return false;
+    const name = field<AstNode>(node, "name");
+    return nodeText(name) === "default";
+  }
+
   // -------------------------------------------------------------------------
   // Modifier rules
   // -------------------------------------------------------------------------
@@ -801,6 +1011,58 @@ export function newGrammarChecker(): GrammarChecker {
 
 function parentOf(node: AstNode | undefined): AstNode | undefined {
   return (node as unknown as { parent?: AstNode } | undefined)?.parent;
+}
+
+function firstToken(node: AstNode): AstNode | undefined {
+  return childNodes(node)[0] ?? node;
+}
+
+function modifiersOf(node: AstNode): readonly AstNode[] {
+  return (node as unknown as { modifiers?: readonly AstNode[] | { nodes?: readonly AstNode[] } }).modifiers === undefined
+    ? []
+    : nodeArray((node as unknown as { modifiers?: readonly AstNode[] | { nodes?: readonly AstNode[] } }).modifiers);
+}
+
+function allowedModifiersForKind(kind: Kind): readonly Kind[] {
+  switch (kind) {
+    case Kind.ClassDeclaration:
+      return [Kind.ExportKeyword, Kind.DefaultKeyword, Kind.AbstractKeyword, Kind.DeclareKeyword, Kind.Decorator];
+    case Kind.MethodDeclaration:
+    case Kind.PropertyDeclaration:
+      return [Kind.PublicKeyword, Kind.PrivateKeyword, Kind.ProtectedKeyword, Kind.StaticKeyword, Kind.ReadonlyKeyword, Kind.OverrideKeyword, Kind.AbstractKeyword, Kind.AccessorKeyword, Kind.Decorator];
+    case Kind.FunctionDeclaration:
+      return [Kind.ExportKeyword, Kind.DefaultKeyword, Kind.DeclareKeyword, Kind.AsyncKeyword];
+    case Kind.Parameter:
+      return [Kind.PublicKeyword, Kind.PrivateKeyword, Kind.ProtectedKeyword, Kind.ReadonlyKeyword, Kind.Decorator];
+    default:
+      return [Kind.ExportKeyword, Kind.DeclareKeyword, Kind.AsyncKeyword, Kind.ReadonlyKeyword, Kind.Decorator];
+  }
+}
+
+function hasUseStrictDirective(node: AstNode): boolean {
+  const body = field<AstNode>(node, "body") ?? node;
+  return sourceFileStatements(body).some((statement) =>
+    (statement as unknown as { expression?: { text?: string } }).expression?.text === "use strict");
+}
+
+function nodeArray(value: readonly AstNode[] | { nodes?: readonly AstNode[] } | undefined): readonly AstNode[] {
+  if (value === undefined) return [];
+  if (Array.isArray(value)) return value as readonly AstNode[];
+  return (value as { nodes?: readonly AstNode[] }).nodes ?? [];
+}
+
+function field<T>(node: unknown, name: string): T | undefined {
+  return (node as Record<string, T | undefined> | undefined)?.[name];
+}
+
+function isBindingPattern(node: AstNode | undefined): boolean {
+  return node?.kind === Kind.ObjectBindingPattern || node?.kind === Kind.ArrayBindingPattern;
+}
+
+function nodeText(node: AstNode | undefined): string {
+  return (node as unknown as { text?: string; escapedText?: string } | undefined)?.text
+    ?? (node as unknown as { escapedText?: string } | undefined)?.escapedText
+    ?? "";
 }
 
 function sourceFileOf(node: AstNode | undefined): AstNode | undefined {
