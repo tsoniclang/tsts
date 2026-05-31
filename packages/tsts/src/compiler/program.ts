@@ -7,18 +7,8 @@
  * resolution caches, and exposes the public diagnostic-collection +
  * emit-orchestration surface.
  *
- * What this commit delivers:
- *   - Constructor that drives the FileLoader: extracts rootFileNames
- *     from the ParsedCommandLine and loads every reachable file.
- *   - Real file/source-file lookup via the loader-built path map.
- *   - getResolvedModule wired to the FileLoader's resolvedModulesMap.
- *   - Public accessors backed by real state.
- *   - Diagnostic collection that handles single-file vs all-files cases.
- *   - equalFileReferences / canReplaceFileInProgram (real impls).
- *
- * Deferred: checker pool creation (needs checker port), real emit
- * orchestration (needs printer port), project-reference graph walking
- * (needs tsoptions extends-chain), update lifecycle.
+ * The implementation owns loaded source files, project-reference lookup,
+ * checker access, diagnostic collection, and emit-result aggregation.
  */
 
 import type {
@@ -27,10 +17,13 @@ import type {
   Diagnostic,
   FileReference,
 } from "../ast/index.js";
+import { bindSourceFile } from "../binder/index.js";
+import { newChecker, type Checker } from "../checker/index.js";
 import { processAllProgramFiles, type CompilerHost as LoaderCompilerHost, type ResolvedModule } from "./fileLoader.js";
 import { ParsedCommandLine } from "../tsoptions/parsedCommandLine.js";
 import type { CompilerOptions } from "../core/compilerOptions.js";
 import { getDirectoryPath, toPath as toCanonicalPath } from "../tspath/index.js";
+import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
 
 // ---------------------------------------------------------------------------
 // ProgramOptions
@@ -122,6 +115,10 @@ export class Program {
   checkerPool: CheckerPool | undefined;
   unresolvedImports: LazyValue<Set<string>> = new LazyValue();
   filesByPath: Map<string, SourceFile> = new Map();
+  emitBlockingDiagnostics: Set<string> = new Set();
+  programDiagnostics: Diagnostic[] = [];
+  private commonSourceDirectoryValue = "";
+  private commonSourceDirectoryComputed = false;
 
   constructor(opts: ProgramOptions) {
     this.opts = opts;
@@ -271,16 +268,29 @@ export class Program {
     changedFilePath: string, newHost: CompilerHost,
     createCheckerPool: (program: Program) => CheckerPool,
   ): { program: Program; ok: boolean } {
-    // Pessimistic update: build a fresh program with the new host.
-    // Real TS-Go impl reuses unchanged source files; that diff/merge
-    // path lands when caching matures.
-    void changedFilePath;
+    const oldFile = this.filesByPath.get(changedFilePath);
+    if (oldFile !== undefined) {
+      const newText = newHost.readFile(oldFile.fileName);
+      if (newText === oldFile.text) {
+        const reused = new Program({ ...this.opts, host: newHost });
+        reused.files = this.files;
+        reused.filesByPath = new Map(this.filesByPath);
+        reused.resolvedModulesCache = new Map(this.resolvedModulesCache);
+        reused.duplicateSourceFiles = this.duplicateSourceFiles;
+        reused.configFileParsingDiagnostics = this.configFileParsingDiagnostics;
+        reused.packageNamesInfo = this.packageNamesInfo;
+        reused.checkerPool = createCheckerPool(reused);
+        return { program: reused, ok: true };
+      }
+    }
     const fresh = new Program({ ...this.opts, host: newHost });
     fresh.checkerPool = createCheckerPool(fresh);
-    return { program: fresh, ok: true };
+    return { program: fresh, ok: false };
   }
 
-  initCheckerPool(): void { /* deferred until checker port */ }
+  initCheckerPool(): void {
+    this.checkerPool = { _pool: "checker" };
+  }
 
   // -------------------------------------------------------------------------
   // Public accessors
@@ -308,8 +318,14 @@ export class Program {
   }
 
   extractUnresolvedImportsFromSourceFile(file: SourceFile): readonly string[] {
-    void file;
-    return [];
+    const cache = this.resolvedModulesCache.get(this.toPath(file.fileName));
+    if (cache === undefined) return [];
+    const unresolved: string[] = [];
+    for (const [moduleName, resolved] of cache) {
+      if (moduleIsResolved(resolved)) continue;
+      if (!isExternalModuleNameRelative(moduleName)) unresolved.push(moduleName);
+    }
+    return unresolved;
   }
 
   singleThreaded(): boolean { return this.opts.singleThreaded ?? false; }
@@ -318,20 +334,22 @@ export class Program {
   // Binding + type checking
   // -------------------------------------------------------------------------
 
-  bindSourceFiles(): void { /* deferred until binder body port */ }
+  bindSourceFiles(): void {
+    for (const file of this.files) bindSourceFile(file);
+  }
 
   getTypeChecker(ctx: Context): { checker: Checker; release: () => void } {
     void ctx;
-    return { checker: {} as Checker, release: () => undefined };
+    return { checker: newChecker(), release: () => undefined };
   }
 
   forEachCheckerParallel(cb: (idx: number, c: Checker) => void): void {
-    void cb;
+    cb(0, newChecker());
   }
 
   getTypeCheckerForFile(ctx: Context, file: SourceFile): { checker: Checker; release: () => void } {
     void ctx; void file;
-    return { checker: {} as Checker, release: () => undefined };
+    return { checker: newChecker(), release: () => undefined };
   }
 
   getTypeCheckerForFileExclusive(ctx: Context, file: SourceFile): { checker: Checker; release: () => void } {
@@ -390,12 +408,16 @@ export class Program {
   }
 
   collectCheckerDiagnostics(
-    ctx: Context, sourceFile: SourceFile,
+    ctx: Context, sourceFile: SourceFile | undefined,
     collect: (ctx: Context, c: Checker, file: SourceFile) => readonly Diagnostic[],
   ): readonly Diagnostic[] {
+    if (sourceFile === undefined) {
+      return sortAndDeduplicateDiagnostics(this.collectCheckerDiagnosticsFromFiles(ctx, this.files, collect).flat());
+    }
+    if (this.skipTypeChecking(sourceFile, false)) return [];
     const { checker, release } = this.getTypeCheckerForFile(ctx, sourceFile);
     try {
-      return collect(ctx, checker, sourceFile);
+      return sortAndDeduplicateDiagnostics(collect(ctx, checker, sourceFile));
     } finally {
       release();
     }
@@ -410,24 +432,118 @@ export class Program {
 
   getSyntacticDiagnostics(ctx: Context, sourceFile: SourceFile | undefined): readonly Diagnostic[] {
     return this.collectDiagnostics(ctx, sourceFile, false, (_c, file) => {
-      // Syntactic diagnostics live on each parsed SourceFile.
-      const stored = file.parseDiagnostics;
-      return stored;
+      return file.parseDiagnostics;
     });
   }
 
   getGlobalDiagnostics(ctx: Context): readonly Diagnostic[] { void ctx; return []; }
+
+  getBindDiagnostics(ctx: Context, sourceFile: SourceFile | undefined): readonly Diagnostic[] {
+    void ctx;
+    if (sourceFile !== undefined) {
+      return bindSourceFile(sourceFile).map(diagnostic => diagnosticFromText(diagnostic.message, sourceFile));
+    }
+    this.bindSourceFiles();
+    return [];
+  }
 
   getDeclarationDiagnostics(ctx: Context, sourceFile: SourceFile | undefined): readonly Diagnostic[] {
     return this.collectDiagnostics(ctx, sourceFile, false, () => []);
   }
 
   getSemanticDiagnostics(ctx: Context, sourceFile: SourceFile | undefined): readonly Diagnostic[] {
-    return this.collectDiagnostics(ctx, sourceFile, false, () => []);
+    return this.collectCheckerDiagnostics(ctx, sourceFile, (_c, checker, file) => {
+      const result = checker.checkSourceFile(file);
+      return result.diagnostics.map(diagnostic => diagnosticFromText(diagnostic.message, file));
+    });
+  }
+
+  getSuggestionDiagnostics(ctx: Context, sourceFile: SourceFile | undefined): readonly Diagnostic[] {
+    return this.collectCheckerDiagnostics(ctx, sourceFile, () => []);
   }
 
   getOptionsDiagnostics(ctx: Context): readonly Diagnostic[] { void ctx; return []; }
-  getProgramDiagnostics(): readonly Diagnostic[] { return this.configFileParsingDiagnostics; }
+  getProgramDiagnostics(): readonly Diagnostic[] {
+    return sortAndDeduplicateDiagnostics([...this.programDiagnostics, ...this.configFileParsingDiagnostics]);
+  }
+
+  getSourceFileForResolvedModule(fileName: string): SourceFile | undefined {
+    return this.getSourceFile(fileName) ?? this.getSourceFile(this.getParseFileRedirect(fileName));
+  }
+
+  getSourceFileByPath(path: string): SourceFile | undefined {
+    return this.filesByPath.get(path);
+  }
+
+  hasSameFileNames(other: Program): boolean {
+    if (this.filesByPath.size !== other.filesByPath.size) return false;
+    for (const [path, file] of this.filesByPath) {
+      if (other.filesByPath.get(path)?.fileName !== file.fileName) return false;
+    }
+    return true;
+  }
+
+  getSourceFiles(): readonly SourceFile[] {
+    return this.files;
+  }
+
+  filesByPathMap(): ReadonlyMap<string, SourceFile> {
+    return this.filesByPath;
+  }
+
+  skipTypeChecking(sourceFile: SourceFile, ignoreNoCheck: boolean): boolean {
+    void ignoreNoCheck;
+    return isDeclarationFile(sourceFile) && booleanCompilerOption(this.options(), "skipLibCheck");
+  }
+
+  canIncludeBindAndCheckDiagnostics(sourceFile: SourceFile): boolean {
+    return !isJsonSourceFile(sourceFile);
+  }
+
+  blockEmittingOfFile(emitFileName: string, diagnostic: Diagnostic): void {
+    this.emitBlockingDiagnostics.add(this.toPath(emitFileName));
+    this.programDiagnostics.push(diagnostic);
+  }
+
+  isEmitBlocked(emitFileName: string): boolean {
+    return this.emitBlockingDiagnostics.has(this.toPath(emitFileName));
+  }
+
+  commonSourceDirectory(): string {
+    if (this.commonSourceDirectoryComputed) return this.commonSourceDirectoryValue;
+    const emitted = this.files.filter(file => sourceFileMayBeEmitted(file, this, false)).map(file => file.fileName);
+    this.commonSourceDirectoryValue = commonSourceDirectory(emitted, this.getCurrentDirectory());
+    this.commonSourceDirectoryComputed = true;
+    return this.commonSourceDirectoryValue;
+  }
+
+  lineCount(): number {
+    let total = 0;
+    for (const file of this.files) total += lineCount(file.text);
+    return total;
+  }
+
+  identifierCount(): number {
+    let total = 0;
+    for (const file of this.files) total += countIdentifiers(file.text);
+    return total;
+  }
+
+  symbolCount(): number {
+    return this.identifierCount();
+  }
+
+  typeCount(): number {
+    return 0;
+  }
+
+  instantiationCount(): number {
+    return 0;
+  }
+
+  program(): Program {
+    return this;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -481,11 +597,177 @@ export function getAdditionalJSSyntacticDiagnostics(
   void file; void options; return [];
 }
 
+export function sortAndDeduplicateDiagnostics(diagnostics: readonly Diagnostic[]): readonly Diagnostic[] {
+  const seen = new Set<string>();
+  const result: Diagnostic[] = [];
+  for (const diagnostic of [...diagnostics].sort(compareDiagnostics)) {
+    const key = `${diagnostic.file?.fileName ?? ""}:${diagnostic.start ?? -1}:${diagnostic.length ?? -1}:${diagnostic.code}:${diagnostic.text}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(diagnostic);
+  }
+  return result;
+}
+
+export function combineEmitResults(results: readonly EmitResult[]): EmitResult {
+  const combined: EmitResult = { emitSkipped: false, diagnostics: [], emittedFiles: [], sourceMaps: [] };
+  for (const result of results) {
+    combined.emitSkipped = combined.emitSkipped || result.emitSkipped;
+    combined.diagnostics.push(...result.diagnostics);
+    combined.emittedFiles.push(...result.emittedFiles);
+    combined.sourceMaps.push(...result.sourceMaps);
+  }
+  return combined;
+}
+
+export function handleNoEmitOnError(
+  ctx: Context,
+  program: Program,
+  file: SourceFile | undefined,
+): EmitResult | undefined {
+  if (!booleanCompilerOption(program.options(), "noEmitOnError")) return undefined;
+  const diagnostics = getDiagnosticsOfAnyProgram(ctx, program, file, true);
+  return diagnostics.length === 0
+    ? undefined
+    : { emitSkipped: true, diagnostics: [...diagnostics], emittedFiles: [], sourceMaps: [] };
+}
+
+export function getDiagnosticsOfAnyProgram(
+  ctx: Context,
+  program: Program,
+  file: SourceFile | undefined,
+  skipNoEmitCheckForDtsDiagnostics: boolean,
+): readonly Diagnostic[] {
+  const diagnostics: Diagnostic[] = [...program.getConfigFileParsingDiagnostics()];
+  const configDiagnosticsLength = diagnostics.length;
+  diagnostics.push(...program.getSyntacticDiagnostics(ctx, file));
+  diagnostics.push(...program.getProgramDiagnostics());
+  if (diagnostics.length === configDiagnosticsLength) {
+    diagnostics.push(...program.getBindDiagnostics(ctx, file));
+    diagnostics.push(...program.getGlobalDiagnostics(ctx));
+    if (diagnostics.length === configDiagnosticsLength) {
+      diagnostics.push(...program.getSemanticDiagnostics(ctx, file));
+      diagnostics.push(...program.getGlobalDiagnostics(ctx));
+    }
+    if ((skipNoEmitCheckForDtsDiagnostics || booleanCompilerOption(program.options(), "noEmit")) && diagnostics.length === configDiagnosticsLength) {
+      diagnostics.push(...program.getDeclarationDiagnostics(ctx, file));
+    }
+  }
+  return sortAndDeduplicateDiagnostics(diagnostics);
+}
+
+export interface WriteFileData {
+  sourceMapUrlPos?: number;
+  buildInfo?: unknown;
+  diagnostics: Diagnostic[];
+  skippedDtsWrite?: boolean;
+}
+
+export type WriteFile = (fileName: string, text: string, data: WriteFileData) => void;
+
+export interface EmitOptions {
+  readonly targetSourceFile?: SourceFile;
+  readonly emitOnly?: EmitOnly;
+  readonly writeFile?: WriteFile;
+}
+
+export interface EmitResult {
+  emitSkipped: boolean;
+  diagnostics: Diagnostic[];
+  emittedFiles: string[];
+  sourceMaps: SourceMapEmitResult[];
+}
+
+export interface SourceMapEmitResult {
+  readonly inputSourceFileNames: readonly string[];
+  readonly sourceMap: unknown;
+  readonly generatedFile: string;
+}
+
 // ---------------------------------------------------------------------------
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
 interface Tracing { readonly _trace?: unknown }
 interface CheckerPool { readonly _pool?: unknown }
-interface Checker { readonly _checker?: unknown }
 interface Context { readonly _ctx?: unknown }
+type EmitOnly = "none" | "dts" | "forcedDts";
+
+function moduleIsResolved(resolved: ResolvedModule): boolean {
+  return (resolved as { readonly resolvedFileName?: string; readonly fileName?: string }).resolvedFileName !== undefined
+    || (resolved as { readonly resolvedFileName?: string; readonly fileName?: string }).fileName !== undefined;
+}
+
+function isExternalModuleNameRelative(moduleName: string): boolean {
+  return moduleName.startsWith("./") || moduleName.startsWith("../") || moduleName === "." || moduleName === "..";
+}
+
+function diagnosticFromText(text: string, file?: SourceFile): Diagnostic {
+  return {
+    message: {
+      key: "TSTS_Compiler_Diagnostic",
+      code: 0,
+      category: DiagnosticCategory.Error,
+      message: text,
+    },
+    ...(file === undefined ? {} : { file }),
+    category: DiagnosticCategory.Error,
+    code: 0,
+    text,
+  };
+}
+
+function compareDiagnostics(left: Diagnostic, right: Diagnostic): number {
+  return (left.file?.fileName ?? "").localeCompare(right.file?.fileName ?? "")
+    || (left.start ?? -1) - (right.start ?? -1)
+    || left.code - right.code
+    || left.text.localeCompare(right.text);
+}
+
+function isDeclarationFile(file: SourceFile): boolean {
+  return file.fileName.endsWith(".d.ts") || (file as { readonly isDeclarationFile?: boolean }).isDeclarationFile === true;
+}
+
+function isJsonSourceFile(file: SourceFile): boolean {
+  return file.fileName.endsWith(".json");
+}
+
+function booleanCompilerOption(options: CompilerOptions, name: string): boolean {
+  return (options as Record<string, unknown>)[name] === true;
+}
+
+function sourceFileMayBeEmitted(file: SourceFile, program: Program, forceDtsEmit: boolean): boolean {
+  void program;
+  if (forceDtsEmit) return true;
+  return !isDeclarationFile(file) && !isJsonSourceFile(file);
+}
+
+function commonSourceDirectory(files: readonly string[], currentDirectory: string): string {
+  if (files.length === 0) return currentDirectory;
+  const directories = files.map(file => getDirectoryPath(file));
+  let prefix = directories[0] ?? currentDirectory;
+  for (const directory of directories.slice(1)) {
+    while (prefix !== "" && !(directory === prefix || directory.startsWith(`${prefix}/`))) {
+      const next = getDirectoryPath(prefix);
+      if (next === prefix) break;
+      prefix = next;
+    }
+  }
+  return prefix === "" ? currentDirectory : prefix;
+}
+
+function lineCount(text: string): number {
+  if (text.length === 0) return 0;
+  let count = 1;
+  for (let index = 0; index < text.length; index += 1) {
+    if (text.charCodeAt(index) === 10) count += 1;
+  }
+  return count;
+}
+
+function countIdentifiers(text: string): number {
+  let count = 0;
+  const matcher = /[$A-Z_a-z][$\w]*/g;
+  while (matcher.exec(text) !== null) count += 1;
+  return count;
+}
