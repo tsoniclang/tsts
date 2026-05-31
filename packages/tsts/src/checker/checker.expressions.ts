@@ -12,6 +12,7 @@ import type { int } from "@tsonic/core/types.js";
 import {
   Kind,
   KindNames,
+  SymbolFlags,
   isArrayLiteralExpression,
   isArrowFunction,
   isAsExpression,
@@ -55,6 +56,7 @@ import {
   type Node as AstNode,
   type ParameterDeclaration,
   type PropertyName,
+  type Symbol as AstSymbol,
   type TypeNode,
 } from "../ast/index.js";
 
@@ -1175,6 +1177,153 @@ export function createUnionOfSignaturesForOverloadFailure(signatures: readonly S
     compositeKind: SignatureKindCall,
     compositeSignatures: signatures,
   };
+}
+
+export function createCombinedSymbolFromTypes(types: readonly Type[], name: string = "__combined"): AstSymbol {
+  const declarations = types.flatMap(type => type.symbol?.declarations ?? []);
+  const flags = types.reduce((result, type) => (result | (type.symbol?.flags ?? SymbolFlags.None)) as SymbolFlags, SymbolFlags.None as SymbolFlags);
+  return {
+    name,
+    escapedName: name,
+    flags,
+    declarations,
+  } as AstSymbol;
+}
+
+export function createCombinedSymbolForOverloadFailure(signatures: readonly Signature[], name: string = "__overload"): AstSymbol {
+  return {
+    name,
+    escapedName: name,
+    flags: SymbolFlags.Signature,
+    declarations: signatures.flatMap(signature => signature.declaration === undefined ? [] : [signature.declaration]),
+  } as AstSymbol;
+}
+
+export function reportCallResolutionErrors(
+  node: AstNode,
+  candidates: readonly Signature[],
+  arguments_: readonly Expression[],
+  state: CheckState,
+): void {
+  const arityError = getArgumentArityError(candidates, arguments_.length);
+  if (arityError !== undefined) {
+    state.diagnostics.push({ message: arityError });
+    return;
+  }
+  const typeArgumentError = getTypeArgumentArityError(candidates, (node as { readonly typeArguments?: readonly AstNode[] }).typeArguments?.length ?? 0);
+  if (typeArgumentError !== undefined) {
+    state.diagnostics.push({ message: typeArgumentError });
+    return;
+  }
+  state.diagnostics.push({ message: invocationErrorDetails(node, candidates.length === 0 ? "call" : "overload") });
+}
+
+export function addImplementationSuccessElaboration(
+  node: AstNode,
+  implementation: Signature | undefined,
+  state: CheckState,
+): void {
+  if (implementation?.declaration !== undefined) {
+    state.diagnostics.push({ message: `The call would have succeeded against implementation signature ${signatureToString(implementation)}.` });
+    void node;
+  }
+}
+
+export function getArgumentArityError(candidates: readonly Signature[], argumentCount: number): string | undefined {
+  if (candidates.length === 0) return undefined;
+  if (candidates.some(signature => hasCorrectArity(signature, argumentCount))) return undefined;
+  const min = Math.min(...candidates.map(signature => signature.minArgumentCount));
+  const max = candidates.some(signature => tryGetRestTypeOfSignature(signature) !== undefined)
+    ? Number.POSITIVE_INFINITY
+    : Math.max(...candidates.map(signature => signature.parameters.length));
+  return max === Number.POSITIVE_INFINITY
+    ? `Expected at least ${min} arguments, but got ${argumentCount}.`
+    : min === max
+      ? `Expected ${min} arguments, but got ${argumentCount}.`
+      : `Expected ${min}-${max} arguments, but got ${argumentCount}.`;
+}
+
+export function isPromiseResolveArityError(signature: Signature, argumentCount: number): boolean {
+  const declarationName = (signature.declaration as { readonly name?: { readonly text?: string } } | undefined)?.name?.text;
+  return declarationName === "resolve" && argumentCount > signature.parameters.length;
+}
+
+export function getTypeArgumentArityError(candidates: readonly Signature[], typeArgumentCount: number): string | undefined {
+  if (typeArgumentCount === 0 || candidates.length === 0) return undefined;
+  if (candidates.some(signature => hasCorrectTypeArgumentArity(signature, typeArgumentCount))) return undefined;
+  const expected = candidates[0]!.typeParameters?.length ?? 0;
+  return `Expected ${expected} type arguments, but got ${typeArgumentCount}.`;
+}
+
+export function reportCannotInvokePossiblyNullOrUndefinedError(node: AstNode, type: Type, state: CheckState): void {
+  state.diagnostics.push({ message: `Cannot invoke an object which is possibly 'null' or 'undefined': ${displayType(type)}.` });
+  void node;
+}
+
+export function invocationErrorDetails(node: AstNode, kind: string): string {
+  return `This expression is not ${kind === "construct" ? "constructable" : "callable"}: ${tryGetPropertyAccessOrIdentifierToString(invokedExpression(node))}`;
+}
+
+export function invocationError(node: AstNode, type: Type, kind: SignatureKindValue, state: CheckState): void {
+  const description = kind === SignatureKindConstruct ? "construct" : "call";
+  state.diagnostics.push({ message: `${invocationErrorDetails(node, description)}. Type '${displayType(type)}' has no ${description} signatures.` });
+}
+
+export function invocationErrorRecovery(node: AstNode, type: Type, kind: SignatureKindValue, state: CheckState): Type {
+  invocationError(node, type, kind, state);
+  return unresolvedType;
+}
+
+export function isGenericFunctionReturningFunction(signature: Signature): boolean {
+  return (signature.typeParameters?.length ?? 0) > 0
+    && signature.resolvedReturnType !== undefined
+    && isFunctionType(signature.resolvedReturnType);
+}
+
+export function skippedGenericFunction(node: AstNode, state: CheckState): Signature {
+  state.diagnostics.push({ message: "Generic function call deferred because its contextual return function type is still being resolved." });
+  void node;
+  return {
+    flags: SignatureFlags.IsNonInferrable,
+    parameters: [],
+    minArgumentCount: 0,
+    resolvedReturnType: neverType,
+  };
+}
+
+export function checkTaggedTemplateExpression(expression: Expression, state: CheckState): Type {
+  return isTaggedTemplateExpression(expression) ? inferExpression(expression, state) : unresolvedType;
+}
+
+export function checkParenthesizedExpression(expression: Expression, state: CheckState): Type {
+  return isParenthesizedExpression(expression) ? inferExpression(expression.expression, state) : inferExpression(expression, state);
+}
+
+export function getContextualSignature(node: AstNode, state: CheckState): Signature | undefined {
+  const type = inferExpression(expressionNode(node), state);
+  return getCallSignature(type);
+}
+
+export function createUnionSignature(signatures: readonly Signature[], state: CheckState): Signature | undefined {
+  return createUnionOfSignaturesForOverloadFailure(signatures, state);
+}
+
+export function getContextualCallSignature(node: AstNode, state: CheckState): Signature | undefined {
+  const signature = getContextualSignature(node, state);
+  return signature?.compositeKind === SignatureKindConstruct ? undefined : signature;
+}
+
+export function getIntersectedSignatures(signatures: readonly Signature[]): readonly Signature[] {
+  return reorderCandidates(signatures);
+}
+
+export function isAritySmaller(left: Signature, right: Signature): boolean {
+  return left.minArgumentCount < right.minArgumentCount
+    || (left.minArgumentCount === right.minArgumentCount && left.parameters.length < right.parameters.length);
+}
+
+export function getInstantiationExpressionType(expression: Expression, state: CheckState): Type {
+  return inferExpression(expression, state);
 }
 
 export function tryGetRestTypeOfSignature(signature: Signature): Type | undefined {
