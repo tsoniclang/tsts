@@ -25,6 +25,8 @@ import type {
   Symbol as AstSymbol,
 } from "../ast/index.js";
 import { Kind } from "../ast/index.js";
+import { EmitFlags } from "./emitFlags.js";
+import { NameGenerator } from "./nameGenerator.js";
 
 // ---------------------------------------------------------------------------
 // Public option types
@@ -123,6 +125,7 @@ export class Printer {
   options: PrinterOptions;
   handlers: PrintHandlers;
   emitContext: EmitContext;
+  nameGenerator: NameGenerator;
   currentSourceFile: SourceFile | undefined;
   state: PrinterState = {
     writer: undefined, ownWriter: undefined,
@@ -135,6 +138,7 @@ export class Printer {
     this.options = options;
     this.handlers = handlers;
     this.emitContext = emitContext;
+    this.nameGenerator = new NameGenerator();
   }
 
   // -------------------------------------------------------------------------
@@ -602,6 +606,34 @@ export class Printer {
       this.emit(0, inner[idx]);
     }
   }
+  emitListRange(parentNode: AstNode | undefined, nodes: NodeList | undefined, format: number, start: number, count: number): void {
+    this.emitList(parentNode, nodes, format, start, count);
+  }
+  emitListItems(
+    emit: (printer: Printer, node: AstNode) => void,
+    parentNode: AstNode | undefined,
+    nodes: NodeList | undefined,
+    format: number,
+    start = 0,
+    count = getNodeArray(nodes).length - start,
+  ): void {
+    void parentNode; void format;
+    const inner = getNodeArray(nodes);
+    for (let index = 0; index < count; index += 1) {
+      const child = inner[start + index];
+      if (child === undefined) break;
+      if (index > 0) this.writeDelimiter(format);
+      emit(this, child);
+    }
+  }
+  hasTrailingComma(parentNode: AstNode | undefined, children: NodeList | undefined): boolean {
+    void parentNode;
+    return (children as unknown as { readonly hasTrailingComma?: boolean } | undefined)?.hasTrailingComma === true;
+  }
+  writeDelimiter(format: number): void {
+    void format;
+    this.writePunctuation(", ");
+  }
   private emitCommaList(nodes: readonly AstNode[]): void {
     for (let index = 0; index < nodes.length; index += 1) {
       if (index > 0) this.writePunctuation(", ");
@@ -668,13 +700,18 @@ export class Printer {
       case Kind.NamespaceImport: return this.emitNamespaceImport(node);
       case Kind.NamedImports: return this.emitNamedImports(node);
       case Kind.ImportSpecifier: return this.emitImportSpecifier(node);
+      case Kind.ImportAttributes: return this.emitImportAttributes(node);
+      case Kind.ImportAttribute: return this.emitImportAttribute(node);
       case Kind.ImportEqualsDeclaration: return this.emitImportEqualsDeclaration(node);
       case Kind.ExternalModuleReference: return this.emitExternalModuleReference(node);
       case Kind.ExportDeclaration: return this.emitExportDeclaration(node);
       case Kind.NamedExports: return this.emitNamedExports(node);
       case Kind.ExportSpecifier: return this.emitExportSpecifier(node);
       case Kind.NamespaceExport: return this.emitNamespaceExport(node);
+      case Kind.NamespaceExportDeclaration: return this.emitNamespaceExportDeclaration(node);
       case Kind.ExportAssignment: return this.emitExportAssignment(node);
+      case Kind.NotEmittedStatement: return this.emitNotEmittedStatement(node);
+      case Kind.NotEmittedTypeElement: return this.emitNotEmittedTypeElement(node);
       case Kind.CallExpression: return this.emitCallExpression(node);
       case Kind.NewExpression: return this.emitNewExpression(node);
       case Kind.PropertyAccessExpression: return this.emitPropertyAccessExpression(node);
@@ -702,10 +739,15 @@ export class Printer {
       case Kind.ComputedPropertyName: return this.emitComputedPropertyName(node);
       case Kind.Decorator: return this.emitDecorator(node);
       case Kind.HeritageClause: return this.emitHeritageClause(node);
+      case Kind.CaseClause: return this.emitCaseClause(node);
+      case Kind.DefaultClause: return this.emitDefaultClause(node);
+      case Kind.CatchClause: return this.emitCatchClause(node);
       case Kind.JsxElement: return this.emitJsxElement(node);
       case Kind.JsxSelfClosingElement: return this.emitJsxSelfClosingElement(node);
       case Kind.JsxOpeningElement: return this.emitJsxOpeningElement(node);
       case Kind.JsxClosingElement: return this.emitJsxClosingElement(node);
+      case Kind.JsxOpeningFragment: return this.emitJsxOpeningFragment(node);
+      case Kind.JsxClosingFragment: return this.emitJsxClosingFragment(node);
       case Kind.JsxFragment: return this.emitJsxFragment(node);
       case Kind.JsxText: return this.emitJsxText(node);
       case Kind.JsxExpression: return this.emitJsxExpression(node);
@@ -715,8 +757,12 @@ export class Printer {
     if (isTypeNodeKind(k)) return this.emitTypeNode(node);
   }
   emitSourceFile(node: AstNode): void {
+    this.emitShebangIfNeeded(node as SourceFile);
+    this.emitTripleSlashDirectives(node as SourceFile);
+    this.emitHelpers(node);
     const statements = (node as unknown as { statements?: { nodes?: readonly AstNode[] } }).statements?.nodes ?? [];
-    for (let i = 0; i < statements.length; i++) {
+    const prologueEnd = this.emitPrologueDirectives((node as unknown as { statements?: NodeList }).statements);
+    for (let i = prologueEnd; i < statements.length; i++) {
       if (i > 0) this.writeLine();
       this.emit(0, statements[i]);
     }
@@ -820,6 +866,12 @@ export class Printer {
     if (children !== undefined) for (const c of children) this.emit(0, c);
     this.writePunctuation("</>");
   }
+  emitJsxOpeningFragment(_node: AstNode): void {
+    this.writePunctuation("<>");
+  }
+  emitJsxClosingFragment(_node: AstNode): void {
+    this.writePunctuation("</>");
+  }
   emitJsxText(node: AstNode): void {
     this.write((node as unknown as { text?: string }).text ?? "");
   }
@@ -843,6 +895,26 @@ export class Printer {
     const expr = (node as unknown as { expression?: AstNode }).expression;
     if (expr !== undefined) this.emit(0, expr);
     this.writePunctuation("}");
+  }
+  emitJsxAttributeLike(node: AstNode): void {
+    this.emit(0, node);
+  }
+  emitJsxNamespacedName(node: AstNode): void {
+    this.emit(0, (node as unknown as { namespace?: AstNode }).namespace);
+    this.writePunctuation(":");
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+  }
+  emitJsxChild(node: AstNode): void {
+    this.emit(0, node);
+  }
+  emitJsxTagName(node: AstNode): void {
+    this.emit(0, node);
+  }
+  emitJsxAttributeName(node: AstNode): void {
+    this.emit(0, node);
+  }
+  emitJsxAttributeValue(node: AstNode): void {
+    this.emit(0, node);
   }
   emitBlock(node: AstNode): void {
     this.writePunctuation("{");
@@ -1025,15 +1097,7 @@ export class Printer {
     const catchClause = (node as unknown as { catchClause?: AstNode }).catchClause;
     if (catchClause !== undefined) {
       this.writeSpace();
-      this.writeKeyword("catch ");
-      const varDecl = (catchClause as unknown as { variableDeclaration?: AstNode }).variableDeclaration;
-      if (varDecl !== undefined) {
-        this.writePunctuation("(");
-        const name = (varDecl as unknown as { name?: AstNode }).name;
-        if (name !== undefined) this.emit(0, name);
-        this.writePunctuation(") ");
-      }
-      this.emit(0, (catchClause as unknown as { block?: AstNode }).block);
+      this.emitCatchClause(catchClause);
     }
     const finallyBlock = (node as unknown as { finallyBlock?: AstNode }).finallyBlock;
     if (finallyBlock !== undefined) {
@@ -1046,6 +1110,8 @@ export class Printer {
     this.writeKeyword("debugger");
     this.writeTrailingSemicolon();
   }
+  emitNotEmittedStatement(_node: AstNode): void {}
+  emitNotEmittedTypeElement(_node: AstNode): void {}
   emitClassDeclaration(node: AstNode): void {
     this.emitClassLike(node, /*isExpression*/ false);
   }
@@ -1234,6 +1300,7 @@ export class Printer {
       this.writeKeyword(" from ");
     }
     this.emit(0, (node as unknown as { moduleSpecifier?: AstNode }).moduleSpecifier);
+    this.emitImportTypeNodeAttributes((node as unknown as { attributes?: AstNode }).attributes);
     this.writeTrailingSemicolon();
   }
   emitImportClause(node: AstNode): void {
@@ -1258,6 +1325,9 @@ export class Printer {
       this.emit(0, elements[i]);
     }
     this.writePunctuation(" }");
+  }
+  emitNamedImportBindings(node: AstNode): void {
+    this.emit(0, node);
   }
   emitImportSpecifier(node: AstNode): void {
     const propertyName = (node as unknown as { propertyName?: AstNode }).propertyName;
@@ -1290,6 +1360,7 @@ export class Printer {
       this.writeKeyword(" from ");
       this.emit(0, moduleSpecifier);
     }
+    this.emitImportTypeNodeAttributes((node as unknown as { attributes?: AstNode }).attributes);
     this.writeTrailingSemicolon();
   }
   emitExportAssignment(node: AstNode): void {
@@ -1308,6 +1379,9 @@ export class Printer {
     }
     this.writePunctuation(" }");
   }
+  emitNamedExportBindings(node: AstNode): void {
+    this.emit(0, node);
+  }
   emitExportSpecifier(node: AstNode): void {
     const propertyName = (node as unknown as { propertyName?: AstNode }).propertyName;
     if (propertyName !== undefined) {
@@ -1320,6 +1394,30 @@ export class Printer {
     this.writeOperator("*");
     this.writeKeyword(" as ");
     this.emit(0, (node as unknown as { name?: AstNode }).name);
+  }
+  emitNamespaceExportDeclaration(node: AstNode): void {
+    this.writeKeyword("export as namespace ");
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+    this.writeTrailingSemicolon();
+  }
+  emitImportAttributes(node: AstNode): void {
+    const elements = (node as unknown as { elements?: { nodes?: readonly AstNode[] } }).elements?.nodes ?? [];
+    if (elements.length === 0) return;
+    this.writeKeyword(" with ");
+    this.writePunctuation("{ ");
+    for (let index = 0; index < elements.length; index += 1) {
+      if (index > 0) this.writePunctuation(", ");
+      this.emit(0, elements[index]);
+    }
+    this.writePunctuation(" }");
+  }
+  emitImportAttribute(node: AstNode): void {
+    this.emitImportAttributeName((node as unknown as { name?: AstNode }).name ?? node);
+    this.writePunctuation(": ");
+    this.emit(0, (node as unknown as { value?: AstNode }).value);
+  }
+  emitImportAttributeNode(node: AstNode): void {
+    this.emitImportAttribute(node);
   }
   emitCallExpression(node: AstNode): void {
     this.emit(0, (node as unknown as { expression?: AstNode }).expression);
@@ -1653,6 +1751,7 @@ export class Printer {
     this.writePunctuation("(");
     this.emit(0, (node as unknown as { argument?: AstNode }).argument);
     this.writePunctuation(")");
+    this.emitImportTypeNodeAttributes((node as unknown as { attributes?: AstNode }).attributes);
     const qualifier = (node as unknown as { qualifier?: AstNode }).qualifier;
     if (qualifier !== undefined) {
       this.writePunctuation(".");
@@ -1750,6 +1849,216 @@ export class Printer {
   emitSemicolon(): void {
     this.writeTrailingSemicolon();
   }
+  emitStatement(node: AstNode): void {
+    this.emit(0, node);
+  }
+  emitEmbeddedStatement(_parentNode: AstNode, node: AstNode): void {
+    if (node.kind === Kind.Block) {
+      this.emitBlock(node);
+      return;
+    }
+    this.writeLine();
+    this.increaseIndent();
+    this.emitStatement(node);
+    this.decreaseIndent();
+  }
+  emitHeritageClauseNode(node: AstNode): void {
+    this.emitHeritageClause(node);
+  }
+  emitCaseOrDefaultClauseStatements(node: AstNode, colonPos = node.pos): void {
+    void colonPos;
+    const statements = getNodeArray((node as unknown as { statements?: unknown }).statements);
+    if (statements.length === 0) return;
+    this.writeLine();
+    this.increaseIndent();
+    for (const statement of statements) {
+      this.emitStatement(statement);
+      this.writeLine();
+    }
+    this.decreaseIndent();
+  }
+  emitCaseClause(node: AstNode): void {
+    this.writeKeyword("case ");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writePunctuation(":");
+    this.emitCaseOrDefaultClauseStatements(node);
+  }
+  emitDefaultClause(node: AstNode): void {
+    this.writeKeyword("default");
+    this.writePunctuation(":");
+    this.emitCaseOrDefaultClauseStatements(node);
+  }
+  emitCaseOrDefaultClauseNode(node: AstNode): void {
+    if (node.kind === Kind.CaseClause) this.emitCaseClause(node);
+    else this.emitDefaultClause(node);
+  }
+  emitCatchClause(node: AstNode): void {
+    this.writeKeyword("catch");
+    const variable = (node as unknown as { variableDeclaration?: AstNode }).variableDeclaration;
+    if (variable !== undefined) {
+      this.writeSpace();
+      this.writePunctuation("(");
+      this.emit(0, variable);
+      this.writePunctuation(")");
+    }
+    this.writeSpace();
+    this.emitBlock((node as unknown as { block?: AstNode }).block ?? node);
+  }
+  emitShebangIfNeeded(node: SourceFile): void {
+    const text = (node as unknown as { text?: string }).text ?? "";
+    if (!text.startsWith("#!")) return;
+    const end = text.indexOf("\n");
+    this.writeComment(end === -1 ? text : text.slice(0, end));
+    this.writeLine();
+  }
+  emitPrologueDirectives(statements: NodeList | undefined): number {
+    const nodes = getNodeArray(statements);
+    let index = 0;
+    for (; index < nodes.length; index += 1) {
+      const statement = nodes[index]!;
+      const expression = (statement as unknown as { expression?: AstNode }).expression;
+      if (statement.kind !== Kind.ExpressionStatement || expression?.kind !== Kind.StringLiteral) break;
+      if (index > 0) this.writeLine();
+      this.emitExpressionStatement(statement);
+    }
+    return index;
+  }
+  emitHelpers(node: AstNode): boolean {
+    const helpers = this.emitContext.getEmitHelpers?.(node) ?? [];
+    for (const helper of helpers) {
+      const text = (helper as unknown as { readonly text?: string; readonly name?: string }).text
+        ?? (helper as unknown as { readonly name?: string }).name;
+      if (text !== undefined && text.length > 0) {
+        this.write(text);
+        this.writeLine();
+      }
+    }
+    return helpers.length > 0;
+  }
+  emitTripleSlashDirectives(node: SourceFile): void {
+    for (const directive of (node as unknown as { readonly referencedFiles?: readonly FileReference[] }).referencedFiles ?? []) {
+      this.emitDirective("reference", [directive]);
+    }
+    for (const directive of (node as unknown as { readonly typeReferenceDirectives?: readonly FileReference[] }).typeReferenceDirectives ?? []) {
+      this.emitDirective("types", [directive]);
+    }
+    for (const directive of (node as unknown as { readonly libReferenceDirectives?: readonly FileReference[] }).libReferenceDirectives ?? []) {
+      this.emitDirective("lib", [directive]);
+    }
+  }
+  emitDirective(kind: string, refs: readonly FileReference[]): void {
+    for (const ref of refs) {
+      const fileName = ref.fileName ?? ref.path;
+      if (fileName === undefined) continue;
+      const attribute = kind === "reference" ? "path" : kind;
+      this.writeComment(`/// <reference ${attribute}="${fileName}" />`);
+      this.writeLine();
+    }
+  }
+  emitImportTypeNodeAttributes(node: AstNode | undefined): void {
+    if (node !== undefined) this.emitImportAttributes(node);
+  }
+  emitJSDocNode(node: AstNode): void {
+    throw new Error(`JSDoc emit is not implemented for node kind ${node.kind}`);
+  }
+  emitCommentsBeforeNode(node: AstNode): CommentState {
+    const state = { ...this.state.comments };
+    this.emitLeadingSyntheticCommentsOfNode(node, this.emitContext.emitFlags?.(node) ?? EmitFlags.None);
+    return state;
+  }
+  emitCommentsAfterNode(node: AstNode, state: CommentState): void {
+    void state;
+    this.emitTrailingSyntheticCommentsOfNode(node, this.emitContext.emitFlags?.(node) ?? EmitFlags.None);
+  }
+  emitLeadingSyntheticCommentsOfNode(node: AstNode, emitFlags: number): void {
+    if ((emitFlags & (EmitFlags.NoLeadingComments | EmitFlags.NoComments)) !== 0) return;
+    for (const comment of this.emitContext.getSyntheticLeadingComments?.(node) ?? []) {
+      this.emitLeadingSynthesizedComment(comment);
+    }
+  }
+  emitLeadingSynthesizedComment(comment: SynthesizedComment): void {
+    this.writeSynthesizedComment(comment);
+    if (this.syntheticCommentWillEmitNewLine(comment)) this.writeLine();
+  }
+  emitTrailingSyntheticCommentsOfNode(node: AstNode, emitFlags: number): void {
+    if ((emitFlags & (EmitFlags.NoTrailingComments | EmitFlags.NoComments)) !== 0) return;
+    for (const comment of this.emitContext.getSyntheticTrailingComments?.(node) ?? []) {
+      this.emitTrailingSynthesizedComment(comment);
+    }
+  }
+  emitTrailingSynthesizedComment(comment: SynthesizedComment): void {
+    this.writeSynthesizedComment(comment);
+    if (this.syntheticCommentWillEmitNewLine(comment)) this.writeLine();
+  }
+  writeSynthesizedComment(comment: SynthesizedComment): void {
+    this.writeComment(formatSynthesizedComment(comment));
+  }
+  syntheticCommentWillEmitNewLine(comment: SynthesizedComment): boolean {
+    return comment.hasTrailingNewLine === true || comment.text.includes("\n");
+  }
+  emitSourceMapsBeforeNode(node: AstNode): SourceMapState {
+    const previous = { ...this.state.sourceMap };
+    if (this.shouldEmitSourceMaps(node)) {
+      this.state.sourceMap.lastEmittedNodePos = node.pos;
+      this.state.sourceMap.lastEmittedNodeEnd = node.end;
+    }
+    return previous;
+  }
+  emitSourceMapsAfterNode(node: AstNode, previousState: SourceMapState): void {
+    void node;
+    this.state.sourceMap = previousState;
+  }
+  emitSourceMapsBeforeToken(token: number, pos: number, contextNode: AstNode, flags: number): SourceMapState {
+    void token; void flags;
+    const previous = { ...this.state.sourceMap };
+    if (this.shouldEmitSourceMaps(contextNode)) {
+      this.state.sourceMap.lastEmittedNodePos = pos;
+      this.state.sourceMap.lastEmittedNodeEnd = pos;
+    }
+    return previous;
+  }
+  emitSourceMapsAfterToken(token: number, pos: number, contextNode: AstNode, previousState: SourceMapState): void {
+    void token; void pos; void contextNode;
+    this.state.sourceMap = previousState;
+  }
+  shouldReuseTempVariableScope(node: AstNode): boolean {
+    return ((this.emitContext.emitFlags?.(node) ?? 0) & EmitFlags.ReuseTempVariableScope) !== 0;
+  }
+  pushNameGenerationScope(node: AstNode): void {
+    this.nameGenerator.pushScope(this.shouldReuseTempVariableScope(node));
+  }
+  popNameGenerationScope(node: AstNode): void {
+    this.nameGenerator.popScope(this.shouldReuseTempVariableScope(node));
+  }
+  generateAllNames(nodes: NodeList | undefined): void {
+    for (const node of getNodeArray(nodes)) this.generateNames(node);
+  }
+  generateNames(node: AstNode): void {
+    const name = (node as unknown as { readonly name?: AstNode }).name;
+    if (name !== undefined) this.generateNameIfNeeded(name);
+  }
+  generateAllMemberNames(nodes: NodeList | undefined): void {
+    for (const node of getNodeArray(nodes)) this.generateMemberNames(node);
+  }
+  generateMemberNames(node: AstNode): void {
+    const name = (node as unknown as { readonly name?: AstNode }).name;
+    if (name !== undefined) this.generateName(name);
+  }
+  generateNameIfNeeded(name: AstNode): void {
+    this.generateName(name);
+  }
+  generateName(name: AstNode): void {
+    const info = this.emitContext.getAutoGenerateInfo?.(name) as AutoGenerateInfo | undefined;
+    if (info === undefined) return;
+    const generated = info.nodeForGeneratedName === undefined
+      ? this.nameGenerator.generateName(info.flags, info.prefix, info.suffix)
+      : this.nameGenerator.generateNameForNode(info.nodeForGeneratedName, info.flags, info.prefix, info.suffix);
+    (name as unknown as { text?: string }).text = generated;
+  }
+  isFileLevelUniqueNameInCurrentFile(name: string, optimistic: boolean): boolean {
+    void optimistic;
+    return this.handlers.hasGlobalName?.(name) !== true;
+  }
 
   // -------------------------------------------------------------------------
   // High-level entry: print a whole SourceFile to a text writer.
@@ -1830,7 +2139,32 @@ export function printFile(
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-interface EmitContext { readonly _ec?: unknown }
+interface EmitContext {
+  readonly _ec?: unknown;
+  getEmitHelpers?(node: AstNode): readonly AstNode[];
+  emitFlags?(node: AstNode): number;
+  getAutoGenerateInfo?(node: AstNode): unknown;
+  getSyntheticLeadingComments?(node: AstNode): readonly SynthesizedComment[];
+  getSyntheticTrailingComments?(node: AstNode): readonly SynthesizedComment[];
+}
+
+interface SynthesizedComment {
+  readonly kind?: number;
+  readonly text: string;
+  readonly hasTrailingNewLine?: boolean;
+}
+
+interface FileReference {
+  readonly fileName?: string;
+  readonly path?: string;
+}
+
+interface AutoGenerateInfo {
+  readonly flags: number;
+  readonly prefix: string;
+  readonly suffix: string;
+  readonly nodeForGeneratedName?: AstNode;
+}
 
 /**
  * Maps a Kind value to its canonical source-text representation.
@@ -1919,7 +2253,8 @@ export function canEmitSimpleArrowHead(node: AstNode): boolean {
     && (parameter.name as { kind?: number } | undefined)?.kind === Kind.Identifier;
 }
 
-export function formatSynthesizedComment(text: string): string {
+export function formatSynthesizedComment(comment: string | SynthesizedComment): string {
+  const text = typeof comment === "string" ? comment : comment.text;
   return text.includes("\n") ? `/*${text}*/` : `//${text}`;
 }
 
