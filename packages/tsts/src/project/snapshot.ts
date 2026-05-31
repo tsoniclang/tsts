@@ -5,8 +5,8 @@ import type { FileChangeSummary } from "./fileChange.js";
 import { SnapshotFS, type FileHandle } from "./snapshotFs.js";
 import type { ATAStateChange } from "./ata/ata.js";
 import type { LogTree } from "./logging/logtree.js";
-import type { UpdateReason } from "./session.js";
-import type { WatchedFiles } from "./project.js";
+import { UpdateReason, type UpdateReason as UpdateReasonValue } from "./session.js";
+import { ProgramUpdateKind, type WatchedFiles } from "./project.js";
 
 export interface SnapshotOptions {
   readonly id: number;
@@ -59,7 +59,7 @@ export interface ResourceRequest {
 }
 
 export interface SnapshotChange extends ResourceRequest {
-  readonly reason: UpdateReason;
+  readonly reason: UpdateReasonValue;
   readonly fileChanges: FileChangeSummary;
   readonly compilerOptionsForInferredProjects?: CompilerOptions;
   readonly userPreferences?: ReadonlyMap<string, unknown>;
@@ -163,6 +163,8 @@ export class Snapshot {
 
   clone(change: SnapshotChange, init?: Partial<SnapshotOptions>): Snapshot {
     const parentId = this.snapshotId;
+    const builderLogs = init?.builderLogs ?? this.builderLogs;
+    builderLogs?.log(describeSnapshotChangeReason(change));
     const nextOptions: SnapshotOptions = {
       id: init?.id ?? parentId + 1,
       parentId,
@@ -175,7 +177,7 @@ export class Snapshot {
       userPreferences: change.userPreferences ?? this.userPreferences,
       autoImports: init?.autoImports ?? this.autoImports,
       autoImportsWatch: init?.autoImportsWatch ?? this.autoImportsWatch,
-      builderLogs: init?.builderLogs ?? this.builderLogs,
+      builderLogs,
       apiError: init?.apiError ?? this.apiError,
       ...(change.compilerOptionsForInferredProjects !== undefined
         ? { compilerOptionsForInferredProjects: change.compilerOptionsForInferredProjects }
@@ -185,6 +187,7 @@ export class Snapshot {
     };
     const snapshot = new Snapshot(nextOptions);
     snapshot.applyResourceRequest(change);
+    snapshot.logCloneSummary(change);
     return snapshot;
   }
 
@@ -238,11 +241,86 @@ export class Snapshot {
     for (const document of change.documents ?? []) this.projectCollection.getDefaultProject(document);
     for (const document of change.configuredProjectDocuments ?? []) this.projectCollection.getProjectsContainingFile(document);
     for (const projectId of change.projects ?? []) this.projectCollection.getProjectByPath(projectId);
-    change.projectTree?.projects();
-    change.autoImports;
-    change.ataChanges;
-    change.cleanDiskCache;
+    if (change.projectTree !== undefined) {
+      for (const projectId of change.projectTree.projects()) this.projectCollection.getProjectByPath(projectId);
+    }
+    if (change.cleanDiskCache === true) this.cleanUnreferencedDiskState();
+    void change.autoImports;
+    void change.ataChanges;
   }
+
+  private logCloneSummary(change: SnapshotChange): void {
+    if (this.builderLogs === undefined) return;
+    const changedProjects = projectsWithNewProgramStructure(this.projectCollection, this.snapshotId);
+    this.builderLogs.logf("Resource request:%s", describeResourceRequest(change));
+    this.builderLogs.logf("Projects with new program structure: %d", changedProjects.size);
+    if (shouldCleanDiskCache(change, changedProjects)) {
+      this.builderLogs.log("Disk-cache cleanup was requested for this snapshot");
+    }
+  }
+
+  private cleanUnreferencedDiskState(): void {
+    for (const fileName of this.projectCollection.openFilePaths()) {
+      this.fs.getFile(fileName);
+    }
+  }
+}
+
+export function describeResourceRequest(request: ResourceRequest): string {
+  const details: string[] = [];
+  if ((request.documents?.length ?? 0) > 0) details.push(` Documents: ${request.documents!.join(",")}`);
+  if ((request.configuredProjectDocuments?.length ?? 0) > 0) details.push(` ConfiguredProjectDocuments: ${request.configuredProjectDocuments!.join(",")}`);
+  if ((request.projects?.length ?? 0) > 0) details.push(` Projects: ${request.projects!.join(",")}`);
+  if (request.projectTree !== undefined) details.push(` ProjectTree: ${request.projectTree.projects().join(",")}`);
+  if (request.autoImports !== undefined && request.autoImports !== "") details.push(` AutoImports: ${request.autoImports}`);
+  return details.join("");
+}
+
+export function describeSnapshotChangeReason(change: SnapshotChange): string {
+  const details = describeResourceRequest(change);
+  switch (change.reason) {
+    case UpdateReason.DidOpenFile:
+      return `Reason: DidOpenFile - ${change.fileChanges.opened ?? ""}`;
+    case UpdateReason.DidCloseFile:
+      return `Reason: DidCloseFile - ${[...change.fileChanges.closed].join(",")}`;
+    case UpdateReason.DidChangeCompilerOptionsForInferredProjects:
+      return "Reason: DidChangeCompilerOptionsForInferredProjects";
+    case UpdateReason.RequestedLanguageServicePendingChanges:
+      return `Reason: RequestedLanguageService (pending file changes) - ${details}`;
+    case UpdateReason.RequestedLanguageServiceProjectNotLoaded:
+      return `Reason: RequestedLanguageService (project not loaded) - ${details}`;
+    case UpdateReason.RequestedLanguageServiceForFileNotOpen:
+      return `Reason: RequestedLanguageService (file not open) - ${details}`;
+    case UpdateReason.RequestedLanguageServiceProjectDirty:
+      return `Reason: RequestedLanguageService (project dirty) - ${details}`;
+    case UpdateReason.RequestedLoadProjectTree:
+      return `Reason: RequestedLoadProjectTree - ${details}`;
+    case UpdateReason.RequestedLanguageServiceWithAutoImports:
+      return `Reason: RequestedLanguageService (auto imports) - ${details}`;
+    case UpdateReason.IdleCleanDiskCache:
+      return "Reason: IdleCleanDiskCache";
+    default:
+      return `Reason: Unknown - ${details}`;
+  }
+}
+
+export function projectsWithNewProgramStructure(collection: ProjectCollection, snapshotId: number): ReadonlyMap<string, boolean> {
+  const result = new Map<string, boolean>();
+  for (const project of collection.projects()) {
+    if (project.programLastUpdate === snapshotId && project.programUpdateKind !== ProgramUpdateKind.Cloned) {
+      result.set(project.id(), project.programUpdateKind === ProgramUpdateKind.NewFiles);
+    }
+  }
+  return result;
+}
+
+export function shouldCleanDiskCache(change: SnapshotChange, changedProjects: ReadonlyMap<string, boolean>): boolean {
+  return change.cleanDiskCache === true
+    || change.fileChanges.opened !== undefined
+    || change.fileChanges.reopened !== undefined
+    || change.fileChanges.closed.size > 0
+    || change.fileChanges.deleted.size > 0
+    || changedProjects.size > 0;
 }
 
 export class SnapshotConverters {
