@@ -426,6 +426,242 @@ export function inferExpression(expression: Expression, state: CheckState, conte
   return unresolvedType;
 }
 
+export function getTypeOfExpression(expression: Expression, state: CheckState): Type {
+  return checkExpression(expression, state);
+}
+
+export function getQuickTypeOfExpression(expression: Expression, state: CheckState): Type | undefined {
+  if (isIdentifier(expression)) {
+    const symbol = getResolvedSymbol(expression.text, expression);
+    return symbol === undefined ? undefined : getTypeOfSymbol(symbol);
+  }
+  if (isStringLiteral(expression) || isNoSubstitutionTemplateLiteral(expression)) return stringType;
+  if (isNumericLiteral(expression)) return numberType;
+  if (isBigIntLiteral(expression)) return anyType;
+  return undefined;
+}
+
+export function getReturnTypeOfSingleNonGenericSignature(type: Type): Type | undefined {
+  return getReturnTypeOfSingleNonGenericSignatureOfCallChain(type);
+}
+
+export function getReturnTypeOfSingleNonGenericSignatureOfCallChain(type: Type): Type | undefined {
+  const signature = getCallSignature(type) ?? getConstructSignature(type);
+  const typeParameters = (signature as { readonly typeParameters?: readonly Type[] } | undefined)?.typeParameters ?? [];
+  return typeParameters.length === 0 ? signature?.resolvedReturnType : undefined;
+}
+
+export function checkNonNullExpression(expression: Expression, state: CheckState): Type {
+  return checkNonNullType(inferExpression(expression, state), expression, state);
+}
+
+export function checkNonNullType(type: Type, node: Expression, state: CheckState): Type {
+  return checkNonNullTypeWithReporter(type, node, state, reportObjectPossiblyNullOrUndefinedError);
+}
+
+export function checkNonNullTypeWithReporter(
+  type: Type,
+  node: Expression,
+  state: CheckState,
+  reportError: (node: Expression, type: Type, state: CheckState) => void,
+): Type {
+  if (isPossiblyNullOrUndefined(type)) reportError(node, type, state);
+  return getNonNullableType(type, state);
+}
+
+export function checkNonNullNonVoidType(type: Type, node: Expression, state: CheckState): Type {
+  if ((type.flags & (1 << 4)) !== 0) state.diagnostics.push({ message: "Object_is_possibly_void" });
+  return checkNonNullType(type, node, state);
+}
+
+export function reportObjectPossiblyNullOrUndefinedError(node: Expression, type: Type, state: CheckState): void {
+  void node;
+  state.diagnostics.push({ message: `Object is possibly '${displayType(type)}'.` });
+}
+
+export function checkExpressionWithContextualType(expression: Expression, contextualType: Type | undefined, state: CheckState): Type {
+  return inferExpression(expression, state, contextualType);
+}
+
+export function getContextNode(node: Expression): Expression {
+  return skipOuterExpressions(node);
+}
+
+export function checkExpressionCached(expression: Expression, state: CheckState): Type {
+  return inferExpression(expression, state);
+}
+
+export function checkExpressionCachedEx(expression: Expression, state: CheckState, contextualType: Type | undefined): Type {
+  return inferExpression(expression, state, contextualType);
+}
+
+export function getContextFreeTypeOfExpression(expression: Expression, state: CheckState): Type {
+  return inferExpression(expression, state);
+}
+
+export function checkExpression(expression: Expression, state: CheckState): Type {
+  return inferExpression(expression, state);
+}
+
+export function checkExpressionEx(expression: Expression, state: CheckState, contextualType: Type | undefined): Type {
+  return inferExpression(expression, state, contextualType);
+}
+
+export function checkConstEnumAccess(node: Expression, state: CheckState): void {
+  if (isPropertyAccessExpression(node)) inferExpression(node.expression, state);
+}
+
+export function instantiateTypeWithSingleGenericCallSignature(type: Type, _node: Expression, _state: CheckState): Type {
+  return type;
+}
+
+export function getOuterInferenceTypeParameters(node: Expression): readonly Type[] {
+  void node;
+  return [];
+}
+
+export function getUniqueTypeParameters(typeParameters: readonly Type[]): readonly Type[] {
+  const seen = new Set<Type>();
+  const result: Type[] = [];
+  for (const typeParameter of typeParameters) {
+    if (seen.has(typeParameter)) continue;
+    seen.add(typeParameter);
+    result.push(typeParameter);
+  }
+  return result;
+}
+
+export function hasTypeParameterByName(typeParameters: readonly Type[], name: string): boolean {
+  return typeParameters.some(typeParameter => getUniqueTypeParameterName(typeParameter) === name);
+}
+
+export function getUniqueTypeParameterName(typeParameter: Type): string {
+  return (typeParameter.symbol as { readonly name?: string } | undefined)?.name ?? "";
+}
+
+export function checkExpressionWorker(expression: Expression, state: CheckState, contextualType?: Type): Type {
+  return inferExpression(expression, state, contextualType);
+}
+
+export function checkPrivateIdentifierExpression(expression: Expression, state: CheckState): Type {
+  const symbol = getSymbolForPrivateIdentifierExpression(expression);
+  return symbol === undefined ? unresolvedType : getTypeOfSymbol(symbol) ?? unresolvedType;
+}
+
+export function getSymbolForPrivateIdentifierExpression(expression: Expression): ReturnType<typeof getResolvedSymbol> {
+  if (!isPrivateIdentifier(expression)) return undefined;
+  return getResolvedSymbol(expression.text, expression);
+}
+
+export function checkSuperExpression(expression: Expression, state: CheckState): Type {
+  void expression;
+  return anyTypeFromState(state);
+}
+
+export function isInConstructorArgumentInitializer(node: Expression): boolean {
+  for (let current: Expression | undefined = node; current !== undefined; current = parentOf(current) as Expression | undefined) {
+    if (current.kind === Kind.Constructor) return true;
+    if (current.kind === Kind.FunctionDeclaration || current.kind === Kind.FunctionExpression || current.kind === Kind.ArrowFunction) return false;
+  }
+  return false;
+}
+
+export function checkTemplateExpression(expression: Expression, state: CheckState): Type {
+  if (isTemplateExpression(expression)) {
+    for (const span of expression.templateSpans) inferExpression(span.expression, state);
+  }
+  return stringType;
+}
+
+export function isTemplateLiteralContext(node: Expression): boolean {
+  return parentOf(node)?.kind === Kind.TemplateExpression || isTemplateLiteralContextualType(node);
+}
+
+export function isTemplateLiteralContextualType(node: Expression): boolean {
+  void node;
+  return false;
+}
+
+export function checkRegularExpressionLiteral(expression: Expression, state: CheckState): Type {
+  void expression;
+  return inferGlobalStaticProperty("RegExp", "prototype", state) ?? anyType;
+}
+
+export function checkArrayLiteral(expression: Expression, state: CheckState, contextualType?: Type): Type {
+  if (!isArrayLiteralExpression(expression)) return inferExpression(expression, state, contextualType);
+  return createArrayLiteralType(expression.elements.map(element => inferExpression(element, state)), state);
+}
+
+export function createArrayLiteralType(elementTypes: readonly Type[], state: CheckState): Type {
+  return makeArrayType(elementTypes.length === 0 ? neverType : getUnionType(elementTypes, state), state);
+}
+
+export function isSpreadIntoCallOrNew(node: Expression): boolean {
+  const parent = parentOf(node);
+  return isSpreadElement(node) && (parent?.kind === Kind.CallExpression || parent?.kind === Kind.NewExpression);
+}
+
+export function checkQualifiedName(node: Expression, state: CheckState): Type {
+  const left = (node as { readonly left?: Expression }).left;
+  const right = (node as { readonly right?: { readonly text?: string } }).right;
+  if (left === undefined || right?.text === undefined) return unresolvedType;
+  return inferPropertyAccess(left, right.text, state);
+}
+
+export function checkIndexedAccess(receiverType: Type, indexType: Type, state: CheckState): Type {
+  const elementType = getArrayElementType(receiverType);
+  if (elementType !== undefined && isNumberType(getApparentType(indexType))) return elementType;
+  if (isTypeUsableAsPropertyName(indexType)) {
+    const property = getPropertyTypeOfType(receiverType, getPropertyNameFromType(indexType));
+    if (property !== undefined) return property;
+  }
+  for (const info of getIndexInfos(receiverType) ?? []) {
+    if (state.relater.isTypeAssignableTo(indexType, info.keyType)) return info.valueType;
+  }
+  return unresolvedType;
+}
+
+export function checkElementAccessChain(expression: Expression, state: CheckState): Type {
+  return checkElementAccessExpression(expression, state);
+}
+
+export function checkElementAccessExpression(expression: Expression, state: CheckState): Type {
+  if (!isElementAccessExpression(expression)) return inferExpression(expression, state);
+  return checkIndexedAccess(inferExpression(expression.expression, state), inferExpression(expression.argumentExpression, state), state);
+}
+
+export function isForInVariableForNumericPropertyNames(node: Expression): boolean {
+  const parent = parentOf(node);
+  return parent?.kind === Kind.ForInStatement;
+}
+
+export function getForInVariableSymbol(node: Expression): ReturnType<typeof getResolvedSymbol> {
+  return isIdentifier(node) ? getResolvedSymbol(node.text, node) : undefined;
+}
+
+export function hasNumericPropertyNames(type: Type): boolean {
+  return getIndexInfos(type)?.some(info => isNumberType(getApparentType(info.keyType))) ?? false;
+}
+
+export function checkIndexedAccessIndexType(receiverType: Type, indexType: Type, state: CheckState): boolean {
+  return checkIndexedAccess(receiverType, indexType, state) !== unresolvedType;
+}
+
+export function getConstituentProperty(type: Type, name: string): ReturnType<typeof getPropertySymbolOfType> {
+  return getPropertySymbolOfType(type, name);
+}
+
+export function checkImportCallExpression(expression: Expression, state: CheckState): Type {
+  if (!isCallExpression(expression)) return unresolvedType;
+  for (const argument of expression.arguments) inferExpression(argument, state);
+  return anyType;
+}
+
+export function checkCallExpression(expression: Expression, state: CheckState): Type {
+  if (!isCallExpression(expression)) return inferExpression(expression, state);
+  return inferExpression(expression, state);
+}
+
 export function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState): Type {
   // The arrow's parameters were bound into its own `locals` by the binder; a
   // reference inside the body resolves through them (no checker-side parameter
@@ -711,6 +947,25 @@ function inferGlobalStaticProperty(receiverName: string, propertyName: string, s
     return makeFunctionType(booleanType, state, [{ name: "value", type: anyType }]);
   }
   return undefined;
+}
+
+function parentOf(node: Expression | undefined): Expression | undefined {
+  return (node as { readonly parent?: Expression } | undefined)?.parent;
+}
+
+function skipOuterExpressions<T extends Expression>(node: T): T {
+  let current: Expression = node;
+  while (isParenthesizedExpression(current) || isNonNullExpression(current) || isAsExpression(current) || isSatisfiesExpression(current)) {
+    const inner = (current as { readonly expression?: Expression }).expression;
+    if (inner === undefined) break;
+    current = inner;
+  }
+  return current as T;
+}
+
+function anyTypeFromState(state: CheckState): Type {
+  void state;
+  return anyType;
 }
 
 function awaitedTypeOf(type: Type): Type {
