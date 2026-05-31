@@ -406,6 +406,171 @@ export class Printer {
     }
     return pos;
   }
+  emitTokenEx(token: number, pos: number, writeKind: WriteKind, contextNode: AstNode | undefined, emitFlags: number): number {
+    void emitFlags;
+    return this.emitToken(token, pos, writeKind, contextNode);
+  }
+  emitKeywordNode(node: AstNode): void { this.emitKeywordNodeEx(node, WriteKind.Keyword); }
+  emitKeywordNodeEx(node: AstNode, writeKind: WriteKind): void {
+    const text = printerTokenToString((node as { kind?: number }).kind ?? 0);
+    if (text !== undefined) this.writeAs(text, writeKind);
+  }
+  emitPunctuationNode(node: AstNode): void { this.emitPunctuationNodeEx(node, WriteKind.Punctuation); }
+  emitPunctuationNodeEx(node: AstNode, writeKind: WriteKind): void {
+    const text = printerTokenToString((node as { kind?: number }).kind ?? 0);
+    if (text !== undefined) this.writeAs(text, writeKind);
+  }
+  emitTokenNode(node: AstNode): void { this.emitTokenNodeEx(node, WriteKind.Punctuation); }
+  emitTokenNodeEx(node: AstNode, writeKind: WriteKind): void {
+    const text = printerTokenToString((node as { kind?: number }).kind ?? 0);
+    if (text !== undefined) this.writeAs(text, writeKind);
+  }
+  emitLiteral(node: AstNode): void {
+    switch ((node as { kind?: number }).kind) {
+      case Kind.StringLiteral:
+        this.emitStringLiteral(node);
+        break;
+      case Kind.NumericLiteral:
+        this.emitNumericLiteral(node);
+        break;
+      case Kind.BigIntLiteral:
+        this.emitBigIntLiteral(node);
+        break;
+      case Kind.RegularExpressionLiteral:
+        this.emitRegularExpressionLiteral(node);
+        break;
+      case Kind.NoSubstitutionTemplateLiteral:
+        this.emitNoSubstitutionTemplateLiteral(node);
+        break;
+      default:
+        this.write((node as { text?: string }).text ?? "");
+        break;
+    }
+  }
+  emitNoSubstitutionTemplateLiteral(node: AstNode): void { this.emitTemplateLiteral(node); }
+  emitTemplateHead(node: AstNode): void { this.write((node as { text?: string }).text ?? ""); }
+  emitTemplateMiddle(node: AstNode): void { this.write((node as { text?: string }).text ?? ""); }
+  emitTemplateTail(node: AstNode): void { this.write((node as { text?: string }).text ?? ""); }
+  emitTemplateMiddleTail(node: AstNode): void { this.write((node as { text?: string }).text ?? ""); }
+  emitIdentifierText(text: string): void { this.writeSymbol(text, undefined); }
+  emitIdentifierName(text: string): void { this.emitIdentifierText(text); }
+  emitIdentifierNameNode(node: AstNode): void { this.emitIdentifierText((node as { text?: string }).text ?? ""); }
+  getUniqueHelperName(name: string): string {
+    return this.handlers.hasGlobalName?.(name) === true ? `_${name}` : name;
+  }
+  emitIdentifierReference(node: AstNode): void { this.emitIdentifierNameNode(node); }
+  emitBindingIdentifier(node: AstNode): void { this.emitIdentifierNameNode(node); }
+  emitLabelIdentifier(node: AstNode): void { this.emitIdentifierNameNode(node); }
+  emitPrivateIdentifier(node: AstNode): void { this.emitIdentifierNameNode(node); }
+  emitQualifiedName(node: AstNode): void {
+    const qualified = node as { left?: AstNode; right?: AstNode };
+    if (qualified.left !== undefined) this.emitEntityName(qualified.left);
+    this.writePunctuation(".");
+    if (qualified.right !== undefined) this.emitIdentifierNameNode(qualified.right);
+  }
+  emitEntityName(node: AstNode): void {
+    if ((node as { kind?: number }).kind === Kind.QualifiedName) this.emitQualifiedName(node);
+    else this.emitIdentifierNameNode(node);
+  }
+  emitBindingName(node: AstNode): void {
+    switch ((node as { kind?: number }).kind) {
+      case Kind.ObjectBindingPattern:
+        this.emitObjectBindingPattern(node);
+        break;
+      case Kind.ArrayBindingPattern:
+        this.emitArrayBindingPattern(node);
+        break;
+      default:
+        this.emitBindingIdentifier(node);
+        break;
+    }
+  }
+  emitMemberName(node: AstNode): void {
+    if ((node as { kind?: number }).kind === Kind.ComputedPropertyName) this.emitComputedPropertyName(node);
+    else this.emitEntityName(node);
+  }
+  emitModuleName(node: AstNode): void {
+    if ((node as { kind?: number }).kind === Kind.StringLiteral) this.emitStringLiteral(node);
+    else this.emitEntityName(node);
+  }
+  emitModuleExportName(node: AstNode): void { this.emitModuleName(node); }
+  emitImportAttributeName(node: AstNode): void { this.emitModuleName(node); }
+  emitNestedModuleName(node: AstNode): void { this.emitModuleName(node); }
+  emitModifierList(node: AstNode | undefined): void {
+    const modifiers = getNodeArray((node as { modifiers?: unknown } | undefined)?.modifiers);
+    for (const modifier of modifiers) this.emitModifierLike(modifier);
+  }
+  emitModifierLike(node: AstNode): void {
+    this.emit(0, node);
+    this.writeSpace();
+  }
+  emitTypeParameters(node: AstNode): void {
+    const params = getNodeArray((node as { typeParameters?: unknown }).typeParameters);
+    if (params.length === 0) return;
+    this.writePunctuation("<");
+    this.emitCommaList(params);
+    this.writePunctuation(">");
+  }
+  emitTypeParameterDeclarationNode(node: AstNode): void { this.emitTypeParameter(node); }
+  emitTypeAnnotation(node: AstNode | undefined): void {
+    if (node === undefined) return;
+    this.writePunctuation(": ");
+    this.emit(0, node);
+  }
+  emitInitializer(node: AstNode | undefined): void {
+    if (node === undefined) return;
+    this.writeOperator(" = ");
+    this.emit(0, node);
+  }
+  emitParameterName(node: AstNode): void {
+    const name = (node as { name?: AstNode }).name;
+    if (name !== undefined) this.emitBindingName(name);
+  }
+  emitParameterDeclarationNode(node: AstNode): void { this.emitParameter(node); }
+  emitParameters(node: AstNode): void { this.emitParameterList(node); }
+  emitParametersForArrow(node: AstNode): void { this.emitParameterList(node); }
+  emitParametersForIndexSignature(node: AstNode): void { this.emitParameterList(node); }
+  emitSignature(node: AstNode): void {
+    this.emitTypeParameters(node);
+    this.emitParameterList(node);
+    this.emitTypeAnnotation((node as { type?: AstNode }).type);
+  }
+  emitFunctionBody(node: AstNode): void {
+    const body = (node as { body?: AstNode }).body;
+    if (body !== undefined) {
+      this.writeSpace();
+      this.emit(0, body);
+    } else {
+      this.writeTrailingSemicolon();
+    }
+  }
+  emitFunctionBodyNode(node: AstNode): void { this.emitFunctionBody(node); }
+  emitPropertySignature(node: AstNode): void { this.emitPropertyDeclaration(node); }
+  emitMethodSignature(node: AstNode): void { this.emitMethodDeclaration(node); }
+  emitClassStaticBlockDeclaration(node: AstNode): void { this.emitBlock((node as { body?: AstNode }).body ?? node); }
+  emitConstructor(node: AstNode): void { this.emitConstructorDeclaration(node); }
+  emitAccessorDeclaration(node: AstNode): void {
+    if ((node as { kind?: number }).kind === Kind.GetAccessor) this.emitGetAccessorDeclaration(node);
+    else this.emitSetAccessorDeclaration(node);
+  }
+  emitGetAccessorDeclaration(node: AstNode): void { this.emitGetAccessor(node); }
+  emitSetAccessorDeclaration(node: AstNode): void { this.emitSetAccessor(node); }
+  emitCallSignature(node: AstNode): void { this.emitSignature(node); this.writeTrailingSemicolon(); }
+  emitConstructSignature(node: AstNode): void {
+    this.writeKeyword("new ");
+    this.emitSignature(node);
+    this.writeTrailingSemicolon();
+  }
+  emitIndexSignature(node: AstNode): void {
+    this.writePunctuation("[");
+    this.emitCommaList(getNodeArray((node as { parameters?: unknown }).parameters));
+    this.writePunctuation("]");
+    this.emitTypeAnnotation((node as { type?: AstNode }).type);
+    this.writeTrailingSemicolon();
+  }
+  emitClassElement(node: AstNode): void { this.emit(0, node); }
+  emitTypeElement(node: AstNode): void { this.emit(0, node); }
+  emitObjectLiteralElement(node: AstNode): void { this.emit(0, node); }
 
   // -------------------------------------------------------------------------
   // Public entry points
@@ -437,6 +602,12 @@ export class Printer {
       this.emit(0, inner[idx]);
     }
   }
+  private emitCommaList(nodes: readonly AstNode[]): void {
+    for (let index = 0; index < nodes.length; index += 1) {
+      if (index > 0) this.writePunctuation(", ");
+      this.emit(0, nodes[index]);
+    }
+  }
   emitWorker(hint: number, node: AstNode): void {
     // Dispatch by node.kind. This is the giant switch in TS-Go.
     // For the basic cases we delegate to the per-kind emit method.
@@ -455,6 +626,9 @@ export class Printer {
       case Kind.ModuleBlock: return this.emitModuleBlock(node);
       case Kind.VariableStatement: return this.emitVariableStatement(node);
       case Kind.VariableDeclaration: return this.emitVariableDeclaration(node);
+      case Kind.ObjectBindingPattern: return this.emitObjectBindingPattern(node);
+      case Kind.ArrayBindingPattern: return this.emitArrayBindingPattern(node);
+      case Kind.BindingElement: return this.emitBindingElement(node);
       case Kind.ExpressionStatement: return this.emitExpressionStatement(node);
       case Kind.IfStatement: return this.emitIfStatement(node);
       case Kind.DoStatement: return this.emitDoStatement(node);
@@ -587,6 +761,29 @@ export class Printer {
     const literal = (node as unknown as { literal?: AstNode }).literal;
     if (literal !== undefined) this.write((literal as unknown as { text?: string }).text ?? "");
   }
+  emitObjectBindingPattern(node: AstNode): void {
+    this.writePunctuation("{");
+    this.emitCommaList(getNodeArray((node as { elements?: unknown }).elements));
+    this.writePunctuation("}");
+  }
+  emitArrayBindingPattern(node: AstNode): void {
+    this.writePunctuation("[");
+    this.emitCommaList(getNodeArray((node as { elements?: unknown }).elements));
+    this.writePunctuation("]");
+  }
+  emitBindingElement(node: AstNode): void {
+    const dotDotDot = (node as { dotDotDotToken?: AstNode }).dotDotDotToken;
+    if (dotDotDot !== undefined) this.writePunctuation("...");
+    const propertyName = (node as { propertyName?: AstNode }).propertyName;
+    if (propertyName !== undefined) {
+      this.emit(0, propertyName);
+      this.writePunctuation(": ");
+    }
+    const name = (node as { name?: AstNode }).name;
+    if (name !== undefined) this.emitBindingName(name);
+    this.emitInitializer((node as { initializer?: AstNode }).initializer);
+  }
+  emitBindingElementNode(node: AstNode): void { this.emitBindingElement(node); }
   emitJsxElement(node: AstNode): void {
     const opening = (node as unknown as { openingElement?: AstNode }).openingElement;
     if (opening !== undefined) this.emit(0, opening);
@@ -1703,6 +1900,64 @@ function printerTokenToString(token: number): string | undefined {
     case Kind.QuestionQuestionEqualsToken: return "??=";
     case Kind.CaretEqualsToken: return "^=";
     default: return undefined;
+  }
+}
+
+function getNodeArray(nodes: unknown): readonly AstNode[] {
+  if (nodes === undefined) return [];
+  if (Array.isArray(nodes)) return nodes as readonly AstNode[];
+  return (nodes as { readonly nodes?: readonly AstNode[] }).nodes ?? [];
+}
+
+export function canEmitSimpleArrowHead(node: AstNode): boolean {
+  const parameters = getNodeArray((node as { parameters?: unknown }).parameters);
+  if (parameters.length !== 1) return false;
+  const parameter = parameters[0] as { name?: AstNode; type?: AstNode; initializer?: AstNode; dotDotDotToken?: AstNode };
+  return parameter.type === undefined
+    && parameter.initializer === undefined
+    && parameter.dotDotDotToken === undefined
+    && (parameter.name as { kind?: number } | undefined)?.kind === Kind.Identifier;
+}
+
+export function formatSynthesizedComment(text: string): string {
+  return text.includes("\n") ? `/*${text}*/` : `//${text}`;
+}
+
+export function getOpeningBracket(kind: number): string {
+  switch (kind) {
+    case Kind.OpenParenToken:
+    case Kind.CloseParenToken:
+      return "(";
+    case Kind.OpenBracketToken:
+    case Kind.CloseBracketToken:
+      return "[";
+    case Kind.OpenBraceToken:
+    case Kind.CloseBraceToken:
+      return "{";
+    case Kind.LessThanToken:
+    case Kind.GreaterThanToken:
+      return "<";
+    default:
+      return "";
+  }
+}
+
+export function getClosingBracket(kind: number): string {
+  switch (kind) {
+    case Kind.OpenParenToken:
+    case Kind.CloseParenToken:
+      return ")";
+    case Kind.OpenBracketToken:
+    case Kind.CloseBracketToken:
+      return "]";
+    case Kind.OpenBraceToken:
+    case Kind.CloseBraceToken:
+      return "}";
+    case Kind.LessThanToken:
+    case Kind.GreaterThanToken:
+      return ">";
+    default:
+      return "";
   }
 }
 
