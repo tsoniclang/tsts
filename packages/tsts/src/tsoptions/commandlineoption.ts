@@ -8,8 +8,9 @@
  * later commits.
  */
 
-import type { DiagnosticMessage } from "../diagnostics/types.js";
 import type { OrderedMap } from "../collections/index.js";
+import type { Tristate } from "../core/tristate.js";
+import type { DiagnosticMessage } from "../diagnostics/types.js";
 
 /**
  * The kind of value a command-line option accepts. Mirrors TS-Go
@@ -53,9 +54,10 @@ export interface CommandLineOption {
   readonly affectsBindDiagnostics?: boolean;
   readonly affectsSourceFile?: boolean;
   readonly affectsProgramStructure?: boolean;
+  readonly affectsDeclarationPath?: boolean;
   readonly affectsBuildInfo?: boolean;
-  readonly transpileOptionValue?: boolean;
-  readonly extraValidation?: (value: unknown) => readonly [DiagnosticMessage, readonly string[]] | undefined;
+  readonly transpileOptionValue?: Tristate;
+  readonly extraValidation?: "spec" | "locale" | ((value: unknown) => readonly [DiagnosticMessage, readonly string[]] | undefined);
   readonly strictFlag?: boolean;
   readonly allowJsFlag?: boolean;
   readonly deprecated?: boolean;
