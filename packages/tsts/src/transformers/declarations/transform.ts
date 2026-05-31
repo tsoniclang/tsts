@@ -34,6 +34,7 @@ import { getNodeId } from "../../ast/ids.js";
 import { getDirectoryPath, getRelativePathToDirectoryOrUrl, normalizeSlashes } from "../../tspath/index.js";
 import { getLeadingCommentRanges } from "../../printer/comments.js";
 import { EmitFlags } from "../../printer/emitFlags.js";
+import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
 import {
   newSymbolTracker,
   type SymbolTrackerImpl,
@@ -611,24 +612,172 @@ export class DeclarationTransformer extends Transformer {
   // Declaration-level transforms
   // -------------------------------------------------------------------------
 
-  transformVariableDeclaration(input: VariableDeclaration): AstNode { return input as unknown as AstNode; }
-  recreateBindingPattern(input: BindingPattern): AstNode { return input as unknown as AstNode; }
-  recreateBindingElement(e: BindingElement): AstNode { return e as unknown as AstNode; }
-  transformIndexSignatureDeclaration(input: IndexSignatureDeclaration): AstNode { return input as unknown as AstNode; }
-  transformCallSignatureDeclaration(input: CallSignatureDeclaration): AstNode { return input as unknown as AstNode; }
-  transformPropertySignatureDeclaration(input: PropertySignatureDeclaration): AstNode { return input as unknown as AstNode; }
-  transformPropertyDeclaration(input: PropertyDeclaration): AstNode { return input as unknown as AstNode; }
-  transformSetAccessorDeclaration(input: SetAccessorDeclaration): AstNode { return input as unknown as AstNode; }
-  transformGetAccessorDeclaration(input: GetAccessorDeclaration): AstNode { return input as unknown as AstNode; }
-  updateAccessorParamList(input: AstNode, isPrivate: boolean): ParameterList {
-    void input; void isPrivate;
-    return this.factory().newNodeList([]) as unknown as ParameterList;
+  transformVariableDeclaration(input: VariableDeclaration): AstNode {
+    const name = nodeField(input, "name");
+    if (name !== undefined && isBindingPattern(name)) return this.recreateBindingPattern(name as unknown as BindingPattern);
+    this.suppressNewDiagnosticContexts = true;
+    return updateWithFactory(this.factory(), "updateVariableDeclaration", input as unknown as AstNode,
+      name,
+      undefined,
+      this.ensureType(input as unknown as AstNode, false),
+      this.ensureNoInitializer(input as unknown as AstNode),
+    );
   }
-  transformConstructorDeclaration(input: ConstructorDeclaration): AstNode { return input as unknown as AstNode; }
-  transformConstructSignatureDeclaration(input: ConstructSignatureDeclaration): AstNode { return input as unknown as AstNode; }
-  omitPrivateMethodType(input: AstNode): AstNode { return input; }
-  transformMethodSignatureDeclaration(input: MethodSignatureDeclaration): AstNode { return input as unknown as AstNode; }
-  transformMethodDeclaration(input: MethodDeclaration): AstNode { return input as unknown as AstNode; }
+  recreateBindingPattern(input: BindingPattern): AstNode {
+    const results: AstNode[] = [];
+    for (const element of nodeArray(nodeField(input, "elements"))) {
+      const result = this.recreateBindingElement(element as unknown as BindingElement);
+      if (result === undefined) continue;
+      if (result.kind === Kind.SyntaxList) results.push(...nodeArray(nodeField(result, "children")));
+      else results.push(result);
+    }
+    if (results.length === 0) return undefined as unknown as AstNode;
+    if (results.length === 1) return results[0]!;
+    return this.factory().newSyntaxList(results);
+  }
+  recreateBindingElement(e: BindingElement): AstNode {
+    const name = nodeField(e, "name");
+    if (name === undefined) return undefined as unknown as AstNode;
+    if (!getBindingNameVisible(this.resolver, e as unknown as AstNode)) return undefined as unknown as AstNode;
+    if (isBindingPattern(name)) return this.recreateBindingPattern(name as unknown as BindingPattern);
+    return this.factory().newVariableDeclaration(name, undefined, this.ensureType(e as unknown as AstNode, false), undefined);
+  }
+  transformIndexSignatureDeclaration(input: IndexSignatureDeclaration): AstNode {
+    const type = visitOptional(this, nodeField(input, "type")) ?? this.factory().newAnyKeyword();
+    return updateWithFactory(this.factory(), "updateIndexSignatureDeclaration", input as unknown as AstNode,
+      this.ensureModifiers(input as unknown as AstNode),
+      this.updateParamList(input as unknown as AstNode, nodeField(input, "parameters") as ParameterList | undefined),
+      type,
+    );
+  }
+  transformCallSignatureDeclaration(input: CallSignatureDeclaration): AstNode {
+    return updateWithFactory(this.factory(), "updateCallSignatureDeclaration", input as unknown as AstNode,
+      this.ensureTypeParams(input as unknown as AstNode, nodeField(input, "typeParameters") as TypeParameterList | undefined),
+      this.updateParamList(input as unknown as AstNode, nodeField(input, "parameters") as ParameterList | undefined),
+      this.ensureType(input as unknown as AstNode, false),
+    );
+  }
+  transformPropertySignatureDeclaration(input: PropertySignatureDeclaration): AstNode {
+    const name = nodeField(input, "name");
+    if (isPrivateIdentifierNode(name)) return undefined as unknown as AstNode;
+    return updateWithFactory(this.factory(), "updatePropertySignatureDeclaration", input as unknown as AstNode,
+      this.ensureModifiers(input as unknown as AstNode),
+      name,
+      nodeField(input, "postfixToken"),
+      this.ensureType(input as unknown as AstNode, false),
+      this.ensureNoInitializer(input as unknown as AstNode),
+    );
+  }
+  transformPropertyDeclaration(input: PropertyDeclaration): AstNode {
+    const name = nodeField(input, "name");
+    if (isPrivateIdentifierNode(name)) return undefined as unknown as AstNode;
+    const postfixToken = nodeField(input, "postfixToken")?.kind === Kind.ExclamationToken ? undefined : nodeField(input, "postfixToken");
+    return updateWithFactory(this.factory(), "updatePropertyDeclaration", input as unknown as AstNode,
+      this.ensureModifiers(input as unknown as AstNode),
+      name,
+      postfixToken,
+      this.ensureType(input as unknown as AstNode, false),
+      this.ensureNoInitializer(input as unknown as AstNode),
+    );
+  }
+  transformSetAccessorDeclaration(input: SetAccessorDeclaration): AstNode {
+    const name = nodeField(input, "name");
+    if (isPrivateIdentifierNode(name)) return undefined as unknown as AstNode;
+    const isPrivate = (effectiveDeclarationFlags(this, input as unknown as AstNode, ModifierFlags.Private) & ModifierFlags.Private) !== 0;
+    return updateWithFactory(this.factory(), "updateSetAccessorDeclaration", input as unknown as AstNode,
+      this.ensureModifiers(input as unknown as AstNode),
+      name,
+      undefined,
+      this.updateAccessorParamList(input as unknown as AstNode, isPrivate),
+      undefined,
+      undefined,
+    );
+  }
+  transformGetAccessorDeclaration(input: GetAccessorDeclaration): AstNode {
+    const name = nodeField(input, "name");
+    if (isPrivateIdentifierNode(name)) return undefined as unknown as AstNode;
+    const isPrivate = (effectiveDeclarationFlags(this, input as unknown as AstNode, ModifierFlags.Private) & ModifierFlags.Private) !== 0;
+    return updateWithFactory(this.factory(), "updateGetAccessorDeclaration", input as unknown as AstNode,
+      this.ensureModifiers(input as unknown as AstNode),
+      name,
+      undefined,
+      this.updateAccessorParamList(input as unknown as AstNode, isPrivate),
+      this.ensureType(input as unknown as AstNode, false),
+      undefined,
+    );
+  }
+  updateAccessorParamList(input: AstNode, isPrivate: boolean): ParameterList {
+    const newParams: AstNode[] = [];
+    if (!isPrivate) {
+      const thisParam = getThisParameter(input);
+      if (thisParam !== undefined) newParams.push(this.ensureParameter(thisParam as unknown as ParameterDeclaration));
+    }
+    if (input.kind === Kind.SetAccessor) {
+      const parameters = nodeArray(nodeField(input, "parameters"));
+      let valueParam: AstNode | undefined;
+      if (!isPrivate) {
+        if (newParams.length === 1 && parameters.length >= 2) valueParam = this.ensureParameter(parameters[1] as unknown as ParameterDeclaration);
+        else if (newParams.length === 0 && parameters.length >= 1) valueParam = this.ensureParameter(parameters[0] as unknown as ParameterDeclaration);
+      }
+      if (valueParam === undefined) {
+        const type = isPrivate ? undefined : this.factory().newAnyKeyword();
+        valueParam = this.factory().newParameterDeclaration(undefined, undefined, this.factory().newIdentifier("value"), undefined, type, undefined);
+      }
+      newParams.push(valueParam);
+    }
+    return this.factory().newNodeList(newParams) as unknown as ParameterList;
+  }
+  transformConstructorDeclaration(input: ConstructorDeclaration): AstNode {
+    return updateWithFactory(this.factory(), "updateConstructorDeclaration", input as unknown as AstNode,
+      this.ensureModifiers(input as unknown as AstNode),
+      undefined,
+      this.updateParamList(input as unknown as AstNode, nodeField(input, "parameters") as ParameterList | undefined),
+      undefined,
+      undefined,
+    );
+  }
+  transformConstructSignatureDeclaration(input: ConstructSignatureDeclaration): AstNode {
+    return updateWithFactory(this.factory(), "updateConstructSignatureDeclaration", input as unknown as AstNode,
+      this.ensureTypeParams(input as unknown as AstNode, nodeField(input, "typeParameters") as TypeParameterList | undefined),
+      this.updateParamList(input as unknown as AstNode, nodeField(input, "parameters") as ParameterList | undefined),
+      this.ensureType(input as unknown as AstNode, false),
+    );
+  }
+  omitPrivateMethodType(input: AstNode): AstNode {
+    const symbol = (input as unknown as { readonly symbol?: { readonly declarations?: readonly AstNode[] } }).symbol;
+    if (symbol?.declarations !== undefined && symbol.declarations.length > 0 && symbol.declarations[0] !== input) return undefined as unknown as AstNode;
+    const result = this.factory().newPropertyDeclaration(this.ensureModifiers(input), nodeField(input, "name"), undefined, undefined, undefined);
+    this.preserveJsDoc(result, input);
+    return result;
+  }
+  transformMethodSignatureDeclaration(input: MethodSignatureDeclaration): AstNode {
+    const name = nodeField(input, "name");
+    if ((effectiveDeclarationFlags(this, input as unknown as AstNode, ModifierFlags.Private) & ModifierFlags.Private) !== 0) return this.omitPrivateMethodType(input as unknown as AstNode);
+    if (isPrivateIdentifierNode(name)) return undefined as unknown as AstNode;
+    return updateWithFactory(this.factory(), "updateMethodSignatureDeclaration", input as unknown as AstNode,
+      this.ensureModifiers(input as unknown as AstNode),
+      name,
+      nodeField(input, "postfixToken"),
+      this.ensureTypeParams(input as unknown as AstNode, nodeField(input, "typeParameters") as TypeParameterList | undefined),
+      this.updateParamList(input as unknown as AstNode, nodeField(input, "parameters") as ParameterList | undefined),
+      this.ensureType(input as unknown as AstNode, false),
+    );
+  }
+  transformMethodDeclaration(input: MethodDeclaration): AstNode {
+    const name = nodeField(input, "name");
+    if ((effectiveDeclarationFlags(this, input as unknown as AstNode, ModifierFlags.Private) & ModifierFlags.Private) !== 0) return this.omitPrivateMethodType(input as unknown as AstNode);
+    if (isPrivateIdentifierNode(name)) return undefined as unknown as AstNode;
+    return updateWithFactory(this.factory(), "updateMethodDeclaration", input as unknown as AstNode,
+      this.ensureModifiers(input as unknown as AstNode),
+      undefined,
+      name,
+      nodeField(input, "postfixToken"),
+      this.ensureTypeParams(input as unknown as AstNode, nodeField(input, "typeParameters") as TypeParameterList | undefined),
+      this.updateParamList(input as unknown as AstNode, nodeField(input, "parameters") as ParameterList | undefined),
+      this.ensureType(input as unknown as AstNode, false),
+      undefined,
+    );
+  }
 
   visitDeclarationStatements(input: AstNode): AstNode {
     if (this.shouldStripInternal(input)) return undefined as unknown as AstNode;
@@ -975,6 +1124,27 @@ function visitOptional(tx: DeclarationTransformer, node: AstNode | undefined): A
 function updateWithFactory(factory: unknown, method: string, fallback: AstNode, ...args: readonly unknown[]): AstNode {
   const fn = (factory as Record<string, unknown>)[method];
   return typeof fn === "function" ? (fn as (...callArgs: unknown[]) => AstNode).call(factory, fallback, ...args) : fallback;
+}
+
+function getBindingNameVisible(resolver: EmitResolver, node: AstNode): boolean {
+  const symbol = (node as unknown as { readonly symbol?: unknown }).symbol;
+  if (symbol === undefined) return true;
+  const result = (resolver as unknown as { isDeclarationVisible?: (node: AstNode) => boolean }).isDeclarationVisible?.(node);
+  return result !== false;
+}
+
+function isPrivateIdentifierNode(node: AstNode | undefined): boolean {
+  return node !== undefined && isPrivateIdentifier(node);
+}
+
+function effectiveDeclarationFlags(tx: DeclarationTransformer, node: AstNode, flags: number): number {
+  const parseNode = tx.emitContext().parseNode(node) ?? node;
+  return (tx.host as unknown as { getEffectiveDeclarationFlags?: (node: AstNode, flags: number) => number })
+    .getEffectiveDeclarationFlags?.(parseNode, flags) ?? 0;
+}
+
+function getThisParameter(node: AstNode): AstNode | undefined {
+  return nodeArray(nodeField(node, "parameters")).find(parameter => nodeField(parameter, "name")?.kind === Kind.ThisKeyword);
 }
 
 // ---------------------------------------------------------------------------
