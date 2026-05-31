@@ -30,7 +30,7 @@ import {
   isArrayLiteralExpression, isPropertyAccessExpression,
   isAutoAccessorPropertyDeclaration, isMethodDeclaration,
   isGetAccessorDeclaration, isSetAccessorDeclaration,
-  nodeText,
+  hasAccessorModifier, nodeText,
 } from "../../ast/index.js";
 import { Kind } from "../../ast/index.js";
 import { EmitFlags } from "../../printer/emitFlags.js";
@@ -673,6 +673,7 @@ export class ClassFieldsTransformer extends Transformer {
       if (info === undefined || !info.isValid) return astNode;
       if (info.isStatic && !this.shouldTransformPrivateElementsOrClassStaticBlocks) {
         const statement = this.transformPropertyOrClassStaticBlock(astNode, this.factory().newThisExpression() as Expression);
+        if (statement === undefined) return this.factory().newSyntaxList([]);
         const block = this.factory().newBlock([statement], true);
         const staticBlock = this.factory().newClassStaticBlockDeclaration(block);
         this.emitContext().setOriginal(staticBlock, astNode);
@@ -722,6 +723,7 @@ export class ClassFieldsTransformer extends Transformer {
 
       if (hasStaticModifier(astNode) && !this.shouldTransformPrivateElementsOrClassStaticBlocks) {
         const statement = this.transformPropertyOrClassStaticBlock(astNode, this.factory().newThisExpression() as Expression);
+        if (statement === undefined) return this.factory().newSyntaxList([]);
         this.emitContext().addEmitFlags(statement, EmitFlags.NoComments);
         const staticBlock = this.factory().newClassStaticBlockDeclaration(this.factory().newBlock([statement], false));
         this.emitContext().setOriginal(staticBlock, astNode);
@@ -981,42 +983,182 @@ export class ClassFieldsTransformer extends Transformer {
     properties: readonly AstNode[],
     receiver: Expression,
   ): AstNode[] {
-    void properties; void receiver;
-    return statements;
+    const out = [...statements];
+    for (const property of properties) {
+      const statement = this.transformPropertyOrClassStaticBlock(property, receiver);
+      if (statement !== undefined) out.push(statement);
+    }
+    return out;
   }
 
-  transformPropertyOrClassStaticBlock(property: AstNode, receiver: Expression): AstNode {
-    void receiver;
-    return property;
+  transformPropertyOrClassStaticBlock(property: AstNode, receiver: Expression): AstNode | undefined {
+    if (property.kind === Kind.ClassStaticBlockDeclaration) {
+      const expression = this.setCurrentClassElementAnd(
+        property as unknown as ClassElement,
+        (tx, n) => tx.transformClassStaticBlockDeclaration(n),
+        property,
+      );
+      return this.factory().newExpressionStatement(expression);
+    }
+    const expression = this.transformProperty(property as unknown as PropertyDeclaration, receiver);
+    return expression === undefined ? undefined : this.factory().newExpressionStatement(expression);
   }
 
   generateInitializedPropertyExpressionsOrClassStaticBlock(
     property: AstNode,
     receiver: Expression,
-  ): Expression {
-    void property; void receiver;
-    return this.factory().newIdentifier("") as unknown as Expression;
+  ): Expression | undefined {
+    if (property.kind === Kind.ClassStaticBlockDeclaration) {
+      return this.setCurrentClassElementAnd(
+        property as unknown as ClassElement,
+        (tx, n) => tx.transformClassStaticBlockDeclaration(n),
+        property,
+      ) as Expression;
+    }
+    return this.transformProperty(property as unknown as PropertyDeclaration, receiver);
   }
 
-  transformProperty(property: PropertyDeclaration, receiver: Expression): Expression {
-    return this.transformPropertyWorker(property, receiver);
+  transformProperty(property: PropertyDeclaration, receiver: Expression): Expression | undefined {
+    const saved = this.currentClassElement;
+    const transformed = this.transformPropertyWorker(property, receiver);
+    if (transformed !== undefined && hasStaticModifier(property as unknown as AstNode)
+      && this.lexicalEnvironment?.data !== undefined && this.lexicalEnvironment.data.facts !== ClassFacts.None) {
+      this.emitContext().setOriginal(transformed as unknown as AstNode, property as unknown as AstNode);
+      const name = getNodeName(property as unknown as AstNode);
+      if (name !== undefined) this.emitContext().setSourceMapRange(transformed as unknown as AstNode, getNodeLoc(name));
+    }
+    this.currentClassElement = saved;
+    return transformed;
   }
 
-  transformPropertyWorker(property: PropertyDeclaration, receiver: Expression): Expression {
-    void property; void receiver;
-    return this.factory().newIdentifier("") as unknown as Expression;
+  transformPropertyWorker(property: PropertyDeclaration, receiver: Expression): Expression | undefined {
+    let astNode = property as unknown as AstNode;
+    const emitAssignment = !getUseDefineForClassFields(this.compilerOptions as unknown as Parameters<typeof getUseDefineForClassFields>[0]);
+
+    if (isNamedEvaluationAnd(this.emitContext(), astNode, this.isAnonymousClassNeedingAssignedName)) {
+      astNode = transformNamedEvaluation(this.emitContext(), astNode, false, "");
+    }
+
+    let propertyName = getNodeName(astNode);
+    if (propertyName === undefined) return undefined;
+    if (hasAccessorModifier(astNode)) {
+      propertyName = this.factory().newGeneratedPrivateNameForNode(propertyName);
+    } else if (isComputedPropertyName(propertyName) && !isSimpleInlineableExpressionLocal(expressionOfNode(propertyName))) {
+      propertyName = this.factory().newComputedPropertyName(this.factory().newGeneratedNameForNode(propertyName));
+    }
+
+    if (hasStaticModifier(astNode)) this.currentClassElement = astNode as unknown as ClassElement;
+
+    if (isPrivateIdentifier(propertyName) && this.shouldTransformClassElementToWeakMap(astNode)) {
+      const info = this.accessPrivateIdentifier(propertyName);
+      if (info === undefined) return undefined;
+      if (info.kind !== PrivateIdentifierKind.Field) return undefined;
+      const initializer = propertyInitializerOf(astNode);
+      const value = initializer === undefined ? undefined : this.visitor().visitNode(initializer) as Expression;
+      return info.isStatic
+        ? this.createPrivateStaticFieldInitializer(info, receiver, value) as Expression
+        : this.createPrivateInstanceFieldInitializer(info, receiver, value) as Expression;
+    }
+
+    const initializerNode = propertyInitializerOf(astNode);
+    if ((isPrivateIdentifier(propertyName) || hasStaticModifier(astNode)) && initializerNode === undefined) {
+      return undefined;
+    }
+
+    let initializer = initializerNode === undefined
+      ? this.factory().newVoidZeroExpression() as Expression
+      : this.visitor().visitNode(initializerNode) as Expression;
+
+    if (isParameterPropertyOriginal(astNode) && isIdentifier(propertyName)) {
+      const localName = cloneIdentifier(propertyName as unknown as IdentifierNode, this.factory()) as unknown as Expression;
+      initializer = initializerNode === undefined
+        ? localName
+        : this.factory().inlineExpressions([initializer, localName]) as Expression;
+      this.emitContext().addEmitFlags(propertyName, EmitFlags.NoComments | EmitFlags.NoSourceMap);
+      this.emitContext().addEmitFlags(localName as unknown as AstNode, EmitFlags.NoComments);
+    }
+
+    if (emitAssignment || isPrivateIdentifier(propertyName)) {
+      const memberAccess = this.createMemberAccessForPropertyName(receiver, propertyName);
+      this.emitContext().addEmitFlags(memberAccess as unknown as AstNode, EmitFlags.NoLeadingComments);
+      return this.factory().newAssignmentExpression(memberAccess, initializer) as Expression;
+    }
+
+    const nameExpression = propertyNameExpression(this.factory(), propertyName);
+    const descriptor = this.factory().newObjectLiteralExpression(this.factory().newNodeList([
+      this.factory().newPropertyAssignment(undefined, this.factory().newIdentifier("enumerable"), undefined, undefined, this.factory().newTrueExpression()),
+      this.factory().newPropertyAssignment(undefined, this.factory().newIdentifier("configurable"), undefined, undefined, this.factory().newTrueExpression()),
+      this.factory().newPropertyAssignment(undefined, this.factory().newIdentifier("writable"), undefined, undefined, this.factory().newTrueExpression()),
+      this.factory().newPropertyAssignment(undefined, this.factory().newIdentifier("value"), undefined, undefined, initializer),
+    ]), true);
+    return (this.factory() as unknown as {
+      newObjectDefinePropertyCall(target: Expression, propertyName: Expression, attributes: AstNode): Expression;
+    }).newObjectDefinePropertyCall(receiver, nameExpression, descriptor);
   }
 
   addInstanceMethodStatements(statements: Statement[], methods: readonly AstNode[], receiver: Expression): Statement[] {
-    void methods; void receiver;
-    return statements;
+    if (!this.shouldTransformPrivateElementsOrClassStaticBlocks || methods.length === 0) return statements;
+    const weakSetName = this.getPrivateIdentifierEnvironment().data.weakSetName;
+    if (weakSetName === undefined) return statements;
+    return [
+      ...statements,
+      this.factory().newExpressionStatement(
+        this.createPrivateInstanceMethodInitializer({
+          kind: PrivateIdentifierKind.Method,
+          brandCheckIdentifier: weakSetName,
+          isStatic: false,
+          isValid: true,
+        }, receiver),
+      ) as Statement,
+    ];
   }
 
-  visitInvalidSuperProperty(node: AstNode): AstNode { return node; }
+  visitInvalidSuperProperty(node: AstNode): AstNode {
+    if (isPropertyAccessExpression(node as unknown as PropertyAccessExpression)) {
+      return this.factory().updatePropertyAccessExpression(
+        node,
+        this.factory().newVoidZeroExpression(),
+        undefined,
+        getPropertyAccessName(node as unknown as PropertyAccessExpression),
+        (node as { flags?: number }).flags ?? 0,
+      );
+    }
+    return (this.factory() as unknown as {
+      updateElementAccessExpression(node: AstNode, expression: AstNode, questionDotToken: AstNode | undefined, argumentExpression: AstNode, flags: number): AstNode;
+    }).updateElementAccessExpression(
+      node,
+      this.factory().newVoidZeroExpression(),
+      undefined,
+      elementArgumentExpressionOf(node) ?? this.factory().newVoidZeroExpression(),
+      (node as { flags?: number }).flags ?? 0,
+    );
+  }
 
   getPropertyNameExpressionIfNeeded(name: PropertyName, shouldHoist: boolean): Expression | undefined {
-    void name; void shouldHoist;
-    return undefined;
+    if (!isComputedPropertyName(name as unknown as AstNode)) return undefined;
+    const cacheAssignment = this.findComputedPropertyNameCacheAssignment(name as unknown as AstNode);
+    const savedLexicalEnvironment = this.lexicalEnvironment;
+    const savedInsideComputedPropertyName = this.insideComputedPropertyName;
+    this.insideComputedPropertyName = true;
+    if (this.lexicalEnvironment?.previous !== undefined) {
+      this.lexicalEnvironment = this.lexicalEnvironment.previous;
+    }
+    const expression = this.visitor().visitNode(expressionOfNode(name as unknown as AstNode));
+    this.lexicalEnvironment = savedLexicalEnvironment;
+    this.insideComputedPropertyName = savedInsideComputedPropertyName;
+
+    const inner = skipPartiallyEmittedExpressionsLocal(expression);
+    const inlinable = isSimpleInlineableExpressionLocal(inner);
+    const alreadyTransformed = cacheAssignment !== undefined
+      || (isSimpleAssignmentToIdentifier(inner) && isGeneratedIdentifierLocal(this.emitContext(), getBinaryLeft(inner as unknown as BinaryExpression)));
+    if (!alreadyTransformed && !inlinable && shouldHoist) {
+      const generatedName = this.factory().newGeneratedNameForNode(name as unknown as AstNode);
+      if (this.requiresBlockScopedVar()) this.emitContext().addLexicalDeclaration(generatedName);
+      else this.emitContext().addVariableDeclaration(generatedName);
+      return this.factory().newAssignmentExpression(generatedName, expression) as Expression;
+    }
+    if (inlinable || inner.kind === Kind.Identifier) return undefined;
+    return expression as Expression;
   }
 
   // -------------------------------------------------------------------------
@@ -1513,6 +1655,14 @@ function propertyInitializerOf(node: AstNode): Expression | undefined {
   return (node as unknown as { initializer?: Expression }).initializer;
 }
 
+function expressionOfNode(node: AstNode | undefined): Expression | undefined {
+  return (node as unknown as { expression?: Expression } | undefined)?.expression;
+}
+
+function elementArgumentExpressionOf(node: AstNode): Expression | undefined {
+  return (node as unknown as { argumentExpression?: Expression }).argumentExpression;
+}
+
 function classMemberArray(node: AstNode): readonly AstNode[] {
   const members = getClassMembers(node);
   if (members === undefined) return [];
@@ -1521,6 +1671,54 @@ function classMemberArray(node: AstNode): readonly AstNode[] {
 
 function stripPrivateIdentifierPrefix(text: string): string {
   return text.startsWith("#") ? text.slice(1) : text;
+}
+
+function isSimpleInlineableExpressionLocal(expression: AstNode | undefined): boolean {
+  if (expression === undefined) return true;
+  switch (expression.kind) {
+    case Kind.Identifier:
+    case Kind.PrivateIdentifier:
+    case Kind.ThisKeyword:
+    case Kind.SuperKeyword:
+    case Kind.NullKeyword:
+    case Kind.TrueKeyword:
+    case Kind.FalseKeyword:
+    case Kind.NumericLiteral:
+    case Kind.BigIntLiteral:
+    case Kind.StringLiteral:
+      return true;
+    default:
+      return false;
+  }
+}
+
+function skipPartiallyEmittedExpressionsLocal(expression: AstNode): AstNode {
+  let current = expression;
+  while (current.kind === Kind.PartiallyEmittedExpression && expressionOfNode(current) !== undefined) {
+    current = expressionOfNode(current)!;
+  }
+  return current;
+}
+
+function isSimpleAssignmentToIdentifier(node: AstNode): boolean {
+  return node.kind === Kind.BinaryExpression
+    && ((node as unknown as { operatorToken?: { kind?: number } }).operatorToken?.kind ?? 0) === Kind.EqualsToken
+    && getBinaryLeft(node as unknown as BinaryExpression)?.kind === Kind.Identifier;
+}
+
+function isGeneratedIdentifierLocal(emitContext: { hasAutoGenerateInfo(node: AstNode): boolean }, node: AstNode | undefined): boolean {
+  return node !== undefined && node.kind === Kind.Identifier && emitContext.hasAutoGenerateInfo(node);
+}
+
+function propertyNameExpression(factory: { newStringLiteral(text: string, flags?: number): AstNode }, name: AstNode): Expression {
+  if (isComputedPropertyName(name)) return expressionOfNode(name) ?? factory.newStringLiteral("", 0) as Expression;
+  if (isIdentifier(name)) return factory.newStringLiteral(nodeText(name), 0) as Expression;
+  return name as unknown as Expression;
+}
+
+function isParameterPropertyOriginal(node: AstNode): boolean {
+  return (node as unknown as { parameterProperty?: boolean; isParameterProperty?: boolean }).parameterProperty === true
+    || (node as unknown as { parameterProperty?: boolean; isParameterProperty?: boolean }).isParameterProperty === true;
 }
 
 function isNamedEvaluationAnd(
