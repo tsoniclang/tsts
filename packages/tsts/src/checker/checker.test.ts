@@ -660,6 +660,22 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], arrayLengthMismatch.diagnostics.map((d) => d.message));
   }
 
+  checks_function_constructor_and_parenthesized_type_nodes(): void {
+    const functionTypeOk = checkSourceFile(parseSourceFile("function f(callback: (value: string) => number): number { return callback(\"x\"); }"));
+    const functionArgMismatch = checkSourceFile(parseSourceFile("function f(callback: (value: string) => number): number { return callback(1); }"));
+    const functionReturnMismatch = checkSourceFile(parseSourceFile("function f(callback: (value: string) => number): string { return callback(\"x\"); }"));
+    const constructorTypeOk = checkSourceFile(parseSourceFile("interface Widget { value: number; } function f(factory: new (value: number) => Widget): Widget { return new factory(1); }"));
+    const constructorArgMismatch = checkSourceFile(parseSourceFile("interface Widget { value: number; } function f(factory: new (value: number) => Widget): Widget { return new factory(\"x\"); }"));
+    const parenthesized = checkSourceFile(parseSourceFile("type Count = (number); function f(value: Count): number { return value; }"));
+
+    Assert.Equal(0, functionTypeOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], functionArgMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], functionReturnMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, constructorTypeOk.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'string' is not assignable to type 'number'."], constructorArgMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, parenthesized.diagnostics.length);
+  }
+
   checks_literal_named_object_members(): void {
     // String/numeric property names and accessor members contribute real object
     // properties. Bracket access with a literal name reads the same property
@@ -1055,6 +1071,7 @@ A<CheckerGroundworkTests>().method((t) => t.checks_try_throw_labeled_with_and_em
 A<CheckerGroundworkTests>().method((t) => t.checks_array_spread_index_and_broad_object).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_broad_empty_object_and_index_validation).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.checks_object_type_signatures).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_function_constructor_and_parenthesized_type_nodes).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.resolves_type_alias_references).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.enforces_type_alias_scoping_rules).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.m5b_resolves_nominal_interface_and_class_members).add(FactAttribute);

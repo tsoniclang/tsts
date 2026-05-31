@@ -21,7 +21,9 @@ import {
   isCallSignatureDeclaration,
   isClassDeclaration,
   isComputedPropertyName,
+  isConstructorTypeNode,
   isConstructorDeclaration,
+  isFunctionTypeNode,
   isConstructSignatureDeclaration,
   isFunctionDeclaration,
   isGetAccessorDeclaration,
@@ -36,6 +38,7 @@ import {
   isObjectBindingPattern,
   isArrayBindingPattern,
   isParameterDeclaration,
+  isParenthesizedTypeNode,
   isPrefixUnaryExpression,
   isPropertyAccessExpression,
   isPropertyDeclaration,
@@ -823,6 +826,18 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
   }
   if (isUnionTypeNode(type)) {
     return getUnionType((type as UnionTypeNode).types.map((member) => typeFromTypeNode(member, state)), state);
+  }
+  if (isParenthesizedTypeNode(type)) {
+    return typeFromTypeNode(type.type, state);
+  }
+  if (isFunctionTypeNode(type)) {
+    return makeFunctionType(type.type === undefined ? anyType : typeFromTypeNode(type.type, state), state, functionParametersFromNode(type.parameters, state));
+  }
+  if (isConstructorTypeNode(type)) {
+    const returnType = type.type === undefined ? anyType : typeFromTypeNode(type.type, state);
+    return makeObjectType([], state, false, {
+      constructSignatures: [makeCallSignature(returnType, functionParametersFromNode(type.parameters, state))],
+    });
   }
   if (isTypeLiteralNode(type)) {
     return typeFromTypeLiteralNode(type, state);
