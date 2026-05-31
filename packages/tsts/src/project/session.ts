@@ -63,12 +63,32 @@ export interface SnapshotChange {
   readonly cleanDiskCache?: boolean;
 }
 
+export interface SessionResourceRequest {
+  readonly documents?: readonly string[];
+  readonly configuredProjectDocuments?: readonly string[];
+  readonly projects?: readonly string[];
+  readonly projectTree?: { isAllProjects(): boolean; isProjectReferenced(path: string): boolean };
+  readonly autoImports?: string;
+}
+
 export interface SessionTelemetry {
   readonly uptimeMs: number;
   readonly heapUsed: number;
   readonly heapTotal: number;
+  readonly heapExternal: number;
+  readonly rss: number;
+  readonly arrayBuffers: number;
+  readonly userCPUSeconds: number;
+  readonly systemCPUSeconds: number;
   readonly snapshots: number;
   readonly openFiles: number;
+  readonly pendingFileChanges: number;
+  readonly pendingAtaChanges: number;
+  readonly projectCount: number;
+  readonly configuredProjectCount: number;
+  readonly inferredProjectCount: number;
+  readonly cachedDiskFiles: number;
+  readonly watchedFiles: number;
 }
 
 export interface SessionStatus {
@@ -261,6 +281,37 @@ export class Session {
     };
   }
 
+  apiOpenProject(configFileName: string, apiFileChanges: FileChangeSummary): readonly [unknown, Snapshot] {
+    this.cancelScheduledSnapshotUpdate();
+    const fileChanges = this.consumePendingSummary(true);
+    mergeFileChangeSummary(fileChanges, apiFileChanges);
+    const newSnapshot = this.updateSnapshotWithChange({
+      reason: UpdateReason.RequestedLoadProjectTree,
+      fileChanges,
+    });
+    newSnapshot.ref();
+    if (newSnapshot.apiError !== undefined) throw newSnapshot.apiError;
+    const project = newSnapshot.projectCollection.getProjectByPath(this.toPath(configFileName))
+      ?? newSnapshot.projectCollection.getProjectByPath(configFileName);
+    if (project === undefined) {
+      newSnapshot.deref();
+      throw new Error(`OpenProject request returned no error but project not present in snapshot: ${configFileName}`);
+    }
+    return [project, newSnapshot];
+  }
+
+  apiUpdateWithFileChanges(apiFileChanges: FileChangeSummary): Snapshot {
+    this.cancelScheduledSnapshotUpdate();
+    const fileChanges = this.consumePendingSummary(true);
+    mergeFileChangeSummary(fileChanges, apiFileChanges);
+    const newSnapshot = this.updateSnapshotWithChange({
+      reason: UpdateReason.RequestedLanguageServicePendingChanges,
+      fileChanges,
+    });
+    newSnapshot.ref();
+    return newSnapshot;
+  }
+
   requestLanguageService(fileName: string, withAutoImports = false): Snapshot {
     const file = this.snapshotValue.getFile(fileName);
     if (file === undefined) {
@@ -271,6 +322,45 @@ export class Session {
       return this.updateSnapshot(UpdateReason.RequestedLanguageServiceWithAutoImports);
     }
     return this.updateSnapshot(UpdateReason.RequestedLanguageServicePendingChanges);
+  }
+
+  getSnapshotForRequest(request: SessionResourceRequest, callerRef = false): Snapshot {
+    this.cancelScheduledSnapshotUpdate();
+    const fileChanges = this.consumePendingSummary(true);
+    if (!fileChangeSummaryIsEmpty(fileChanges)) {
+      const snapshot = this.updateSnapshotWithChange({
+        reason: UpdateReason.RequestedLanguageServicePendingChanges,
+        fileChanges,
+      });
+      if (callerRef) snapshot.ref();
+      return snapshot;
+    }
+    const reason = this.resolveUpdateReasonForRequest(request);
+    if (reason === UpdateReason.Unknown) {
+      if (callerRef) this.snapshotValue.ref();
+      return this.snapshotValue;
+    }
+    const snapshot = this.updateSnapshotWithChange({ reason, fileChanges });
+    if (callerRef) snapshot.ref();
+    return snapshot;
+  }
+
+  private resolveUpdateReasonForRequest(request: SessionResourceRequest): UpdateReason {
+    if ((request.projects?.length ?? 0) > 0) return UpdateReason.RequestedLanguageServiceProjectDirty;
+    if (request.projectTree !== undefined) return UpdateReason.RequestedLoadProjectTree;
+    if (request.autoImports !== undefined && request.autoImports !== "") return UpdateReason.RequestedLanguageServiceWithAutoImports;
+    for (const document of request.documents ?? []) {
+      const project = this.snapshotValue.projectCollection.getDefaultProject(document);
+      if (project === undefined) return UpdateReason.RequestedLanguageServiceProjectNotLoaded;
+      if (project.dirty) return UpdateReason.RequestedLanguageServiceProjectDirty;
+    }
+    for (const document of request.configuredProjectDocuments ?? []) {
+      if (this.snapshotValue.fs.getFile(document) === undefined) return UpdateReason.RequestedLanguageServiceForFileNotOpen;
+      const project = this.snapshotValue.projectCollection.getDefaultProject(document);
+      if (project === undefined) return UpdateReason.RequestedLanguageServiceProjectNotLoaded;
+      if (project.dirty) return UpdateReason.RequestedLanguageServiceProjectDirty;
+    }
+    return UpdateReason.Unknown;
   }
 
   requestProjectTree(): Snapshot {
@@ -483,12 +573,38 @@ export class Session {
 
   logRuntimeMetrics(): void {
     const telemetry = this.collectPerformanceTelemetry();
-    this.logger.log(`Runtime heap ${telemetry.heapUsed}/${telemetry.heapTotal}`);
+    this.logger.log([
+      "======== Runtime Metrics ========",
+      `uptimeMs = ${telemetry.uptimeMs}`,
+      `rss = ${telemetry.rss}`,
+      `heapUsed = ${telemetry.heapUsed}`,
+      `heapTotal = ${telemetry.heapTotal}`,
+      `heapExternal = ${telemetry.heapExternal}`,
+      `arrayBuffers = ${telemetry.arrayBuffers}`,
+      `userCPUSeconds = ${telemetry.userCPUSeconds}`,
+      `systemCPUSeconds = ${telemetry.systemCPUSeconds}`,
+      `snapshots = ${telemetry.snapshots}`,
+      `openFiles = ${telemetry.openFiles}`,
+      `projectCount = ${telemetry.projectCount}`,
+      `configuredProjectCount = ${telemetry.configuredProjectCount}`,
+      `inferredProjectCount = ${telemetry.inferredProjectCount}`,
+      `cachedDiskFiles = ${telemetry.cachedDiskFiles}`,
+      `watchedFiles = ${telemetry.watchedFiles}`,
+    ].join("\n"));
   }
 
   logCacheStats(): void {
     const stats = this.countFileStats();
-    this.logger.log(`Cache snapshot=${stats.get("snapshotId") ?? 0} openFiles=${stats.get("openFiles") ?? 0}`);
+    this.logger.log([
+      "======== Cache Statistics ========",
+      `Open file count:   ${stats.get("openFiles") ?? 0}`,
+      `Pending changes:   ${stats.get("pendingChanges") ?? 0}`,
+      `Pending ATA:       ${stats.get("pendingAtaChanges") ?? 0}`,
+      `Snapshot ID:       ${stats.get("snapshotId") ?? 0}`,
+      `Configured count:  ${this.snapshotValue.projectCollection.configuredProjects().length}`,
+      `Inferred count:    ${this.snapshotValue.projectCollection.inferredProjects().length}`,
+      `API-open count:    ${this.snapshotValue.projectCollection.apiOpenedProjectPaths().length}`,
+    ].join("\n"));
   }
 
   npmInstall(packageNames: readonly string[]): Promise<readonly string[]> {
@@ -570,6 +686,12 @@ export class Session {
       snapshotId: this.snapshotValue.id(),
       currentDirectory: this.options.currentDirectory,
     };
+  }
+
+  private toPath(fileName: string): string {
+    const normalized = fileName.replaceAll("\\", "/");
+    if (normalized.startsWith("/")) return normalizePathSegments(normalized);
+    return normalizePathSegments(`${this.options.currentDirectory}/${normalized}`);
   }
 
   private createSnapshot(parentId = 0, fileChanges: FileChangeSummary = newFileChangeSummary()): Snapshot {
@@ -665,18 +787,56 @@ export class Session {
   }
 
   private collectPerformanceTelemetry(): SessionTelemetry {
-    const memory = (globalThis as unknown as { process?: { memoryUsage?: () => { heapUsed: number; heapTotal: number } } }).process?.memoryUsage?.()
-      ?? { heapUsed: 0, heapTotal: 0 };
+    const processLike = (globalThis as unknown as {
+      process?: {
+        memoryUsage?: () => {
+          heapUsed: number;
+          heapTotal: number;
+          external?: number;
+          rss?: number;
+          arrayBuffers?: number;
+        };
+        cpuUsage?: () => { user: number; system: number };
+      };
+    }).process;
+    const memory = processLike?.memoryUsage?.()
+      ?? { heapUsed: 0, heapTotal: 0, external: 0, rss: 0, arrayBuffers: 0 };
+    const cpu = processLike?.cpuUsage?.() ?? { user: 0, system: 0 };
+    const collection = this.snapshotValue.projectCollection;
     return {
       uptimeMs: Date.now() - this.startTime,
       heapUsed: memory.heapUsed,
       heapTotal: memory.heapTotal,
+      heapExternal: memory.external ?? 0,
+      rss: memory.rss ?? 0,
+      arrayBuffers: memory.arrayBuffers ?? 0,
+      userCPUSeconds: cpu.user / 1_000_000,
+      systemCPUSeconds: cpu.system / 1_000_000,
       snapshots: this.snapshotId,
       openFiles: this.fs.openFiles().length,
+      pendingFileChanges: this.pendingFileChanges.length,
+      pendingAtaChanges: this.pendingAtaChanges.size,
+      projectCount: collection.projects().length,
+      configuredProjectCount: collection.configuredProjects().length,
+      inferredProjectCount: collection.inferredProjects().length,
+      cachedDiskFiles: this.countFileStats().get("openFiles") ?? 0,
+      watchedFiles: (this.scheduledUpdate?.fileChanges.changed.size ?? 0)
+        + (this.scheduledUpdate?.fileChanges.created.size ?? 0)
+        + (this.scheduledUpdate?.fileChanges.deleted.size ?? 0),
     };
   }
 }
 
 export function newSession(init: SessionInit): Session {
   return new Session(init);
+}
+
+function normalizePathSegments(path: string): string {
+  const parts: string[] = [];
+  for (const part of path.split("/")) {
+    if (part.length === 0 || part === ".") continue;
+    if (part === "..") parts.pop();
+    else parts.push(part);
+  }
+  return path.startsWith("/") ? `/${parts.join("/")}` : parts.join("/");
 }
