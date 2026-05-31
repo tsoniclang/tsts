@@ -27,7 +27,9 @@ import {
   type SourceFile,
   type Symbol as AstSymbol,
 } from "../ast/index.js";
+import { SymbolFlags } from "../ast/flags.js";
 import { bindSourceFile } from "../binder/index.js";
+import { getSpellingSuggestion } from "../core/index.js";
 import type { Program, ProgramDiagnostic } from "../program/index.js";
 import {
   anyType,
@@ -236,6 +238,18 @@ export class Checker {
   getPropertyOfType(type: Type, name: string): AstSymbol | undefined {
     return getPropertySymbolOfType(type, name);
   }
+
+  getSuggestedSymbolForNonexistentSymbol(
+    name: string,
+    symbols: Iterable<AstSymbol>,
+    meaning: number,
+  ): AstSymbol | undefined {
+    return getSpellingSuggestionForName(name, symbols, meaning, this.compareSymbols.bind(this));
+  }
+
+  compareSymbols(left: AstSymbol, right: AstSymbol): number {
+    return symbolDisplayName(left).localeCompare(symbolDisplayName(right));
+  }
 }
 
 function getBaseTypeOfLiteralTypeLocal(type: Type): Type {
@@ -259,6 +273,66 @@ export function newChecker(program?: Program): Checker {
 
 export function checkSourceFile(sourceFile: SourceFile): CheckResult {
   return new Checker().checkSourceFile(sourceFile);
+}
+
+export function isPrimitiveTypeName(name: string): boolean {
+  return name === "any"
+    || name === "string"
+    || name === "number"
+    || name === "boolean"
+    || name === "never"
+    || name === "unknown";
+}
+
+export function isES2015OrLaterConstructorName(name: string): boolean {
+  return name === "Promise"
+    || name === "Symbol"
+    || name === "Map"
+    || name === "WeakMap"
+    || name === "Set"
+    || name === "WeakSet";
+}
+
+export function primitiveTypeAliasSuggestions(symbols: ReadonlyMap<string, AstSymbol>): readonly AstSymbol[] {
+  const result: AstSymbol[] = [];
+  for (const [builtin, primitive] of [
+    ["String", "string"],
+    ["Number", "number"],
+    ["Boolean", "boolean"],
+    ["Object", "object"],
+    ["BigInt", "bigint"],
+    ["Symbol", "symbol"],
+  ] as const) {
+    if (symbols.has(builtin)) {
+      result.push({ name: primitive, escapedName: primitive, flags: SymbolFlags.TypeAlias | SymbolFlags.Transient, declarations: [] });
+    }
+  }
+  return result;
+}
+
+export function getSpellingSuggestionForName(
+  name: string,
+  symbols: Iterable<AstSymbol>,
+  meaning: number,
+  compareSymbols: (left: AstSymbol, right: AstSymbol) => number,
+): AstSymbol | undefined {
+  return getSpellingSuggestion(name, symbols, candidate => candidateNameForMeaning(candidate, meaning), compareSymbols);
+}
+
+function candidateNameForMeaning(candidate: AstSymbol, meaning: number): string {
+  const candidateName = symbolDisplayName(candidate);
+  if (candidateName.length === 0 || candidateName.startsWith("\"") || candidateName.charCodeAt(0) === 0xfe) return "";
+  const flags = candidate.flags ?? 0;
+  if ((flags & meaning) !== 0) return candidateName;
+  const exportSymbol = candidate.exportSymbol;
+  if ((flags & SymbolFlags.Alias) !== 0 && exportSymbol !== undefined && ((exportSymbol.flags ?? 0) & meaning) !== 0) {
+    return candidateName;
+  }
+  return "";
+}
+
+function symbolDisplayName(symbol: AstSymbol): string {
+  return symbol.escapedName ?? symbol.name ?? "";
 }
 
 export function checkProgram(program: Program): readonly ProgramDiagnostic[] {
