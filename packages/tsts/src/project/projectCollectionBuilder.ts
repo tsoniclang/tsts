@@ -21,6 +21,23 @@ export interface ProjectCollectionBuilderOptions {
   readonly logger?: LogTree;
 }
 
+type ProjectLoadKind = 0 | 1;
+const ProjectLoadKind = {
+  Find: 0 as ProjectLoadKind,
+  Create: 1 as ProjectLoadKind,
+} as const;
+
+interface SearchNode {
+  readonly configFileName: string;
+  readonly loadKind: ProjectLoadKind;
+  readonly depth: number;
+}
+
+interface SearchResult {
+  readonly project?: Project;
+  readonly retain: ReadonlySet<string>;
+}
+
 export class ProjectCollectionBuilder {
   readonly currentDirectory: string;
   readonly host: CompilerHost;
@@ -95,6 +112,7 @@ export class ProjectCollectionBuilder {
     }
     for (const projectName of apiRequest.openProjects ?? []) {
       const project = this.findOrCreateProject(projectName, this.toPath(projectName), logger);
+      if (project === undefined) continue;
       this.apiOpenedProjects.add(project.id());
       this.updateProgram(project, snapshot);
       logger.log(`Opened API project ${projectName}`);
@@ -127,7 +145,8 @@ export class ProjectCollectionBuilder {
     const openedFile = summary.opened ?? summary.reopened;
     if (openedFile !== undefined) {
       const openedPath = this.toPath(openedFile);
-      const project = this.ensureDefaultProjectForFile(openedFile, openedPath, snapshot, logger);
+      const project = this.ensureConfiguredProjectAndAncestorsForFile(openedFile, openedPath, snapshot, logger).project
+        ?? this.ensureInferredProjectIncludesFile(openedFile, snapshot, logger);
       this.collection.openFile(openedFile, project);
       this.fileDefaultProjects.set(openedPath, project.id());
     }
@@ -142,7 +161,7 @@ export class ProjectCollectionBuilder {
     const fileName = this.uriFileName(fileNameOrUri);
     const path = this.toPath(fileName);
     if (this.defaultProjectsInvalidated) {
-      this.ensureDefaultProjectForFile(fileName, path, snapshot, logger);
+      this.ensureConfiguredProjectAndAncestorsForFile(fileName, path, snapshot, logger);
       this.defaultProjectsInvalidated = false;
     }
     const defaultProject = this.findDefaultProject(path);
@@ -185,6 +204,29 @@ export class ProjectCollectionBuilder {
     this.defaultProjectsInvalidated = true;
     this.programStructureChanged = true;
     logger.log("Invalidated default projects after custom config file-name change");
+  }
+
+  didUpdateAtaState(changes: ReadonlyMap<string, { readonly typingsFiles: readonly string[] }>, snapshot?: Snapshot, logger: LogTree = this.logger): void {
+    for (const [projectId, change] of changes) {
+      const project = projectId === inferredProjectName
+        ? this.collection.inferredProjects()[0]
+        : this.collection.get(projectId);
+      if (project === undefined) continue;
+      const roots = [...new Set([...project.rootFileNames, ...change.typingsFiles])].sort();
+      const replacement = new Project({
+        configFileName: project.name(),
+        configFilePath: project.id(),
+        kind: project.kind,
+        currentDirectory: project.currentDirectory,
+        rootFileNames: roots,
+        compilerOptions: project.compilerOptions,
+        logger,
+      });
+      this.collection.removeProject(project.id());
+      this.collection.addProject(replacement);
+      this.updateProgram(replacement, snapshot);
+      logger.log(`Updated ATA state for project ${project.id()}`);
+    }
   }
 
   didUpdateCompilerOptionsForInferredProjects(compilerOptions: CompilerOptions, snapshot?: Snapshot, logger: LogTree = this.logger): Project | undefined {
@@ -247,33 +289,109 @@ export class ProjectCollectionBuilder {
     }
   }
 
-  private ensureDefaultProjectForFile(fileName: string, path: string, snapshot: Snapshot | undefined, logger: LogTree): Project {
-    const existing = this.findDefaultProject(path);
-    if (existing !== undefined) {
-      this.updateProgram(existing, snapshot);
-      return existing;
-    }
-    const configured = this.configs.find(config => config.rootFileNames.some(root => this.toPath(root) === path));
-    if (configured !== undefined) {
-      const project = this.findOrCreateProject(configured.configFileName, this.toPath(configured.configFileName), logger, configured);
-      this.updateProgram(project, snapshot);
-      return project;
-    }
-    return this.ensureInferredProjectIncludesFile(fileName, snapshot, logger);
+  private findDefaultProject(path: string): Project | undefined {
+    return this.findDefaultConfiguredProject(path) ?? this.findDefaultInferredProject(path);
   }
 
-  private findDefaultProject(path: string): Project | undefined {
+  private findDefaultConfiguredProject(path: string): Project | undefined {
     const explicit = this.fileDefaultProjects.get(path);
-    if (explicit !== undefined) {
+    if (explicit !== undefined && explicit !== inferredProjectName) {
       const project = this.collection.get(explicit);
       if (project !== undefined) return project;
     }
-    return this.collection.getDefaultProject(path);
+    const configuredProjects = [...this.collection.configuredProjects()].sort((left, right) => left.id().localeCompare(right.id()));
+    const [project, multipleCandidates] = findDefaultConfiguredProjectFromProgramInclusion(path, configuredProjects);
+    if (multipleCandidates) {
+      const direct = this.configs.find(config => config.rootFileNames.some(root => this.toPath(root) === path));
+      if (direct !== undefined) return this.collection.get(this.toPath(direct.configFileName)) ?? project;
+    }
+    return project;
   }
 
-  private findOrCreateProject(configFileName: string, configPath: string, logger: LogTree, config?: ProjectConfig): Project {
+  private findDefaultInferredProject(path: string): Project | undefined {
+    const explicit = this.fileDefaultProjects.get(path);
+    if (explicit === inferredProjectName) return this.collection.inferredProjects()[0];
+    const inferred = this.collection.inferredProjects()[0];
+    if (inferred !== undefined && inferred.containsFile(path)) {
+      this.fileDefaultProjects.set(path, inferredProjectName);
+      return inferred;
+    }
+    return undefined;
+  }
+
+  private ensureConfiguredProjectAndAncestorsForFile(fileName: string, path: string, snapshot: Snapshot | undefined, logger: LogTree): SearchResult {
+    const result = this.findOrCreateDefaultConfiguredProjectForFile(fileName, path, ProjectLoadKind.Create, snapshot, logger);
+    if (result.project !== undefined) this.createAncestorTree(fileName, path, result, snapshot, logger);
+    return result;
+  }
+
+  private createAncestorTree(fileName: string, path: string, openResult: SearchResult, snapshot: Snapshot | undefined, logger: LogTree): void {
+    let current = openResult.project;
+    const retain = new Set(openResult.retain);
+    while (current !== undefined) {
+      const ancestorConfigName = this.getAncestorConfigFileName(fileName, path, current.configFileNameValue);
+      if (ancestorConfigName === undefined) return;
+      const ancestorPath = this.toPath(ancestorConfigName);
+      const ancestor = this.findOrCreateProject(ancestorConfigName, ancestorPath, logger);
+      if (ancestor === undefined) return;
+      retain.add(ancestorPath);
+      ancestor.addPotentialProjectReference(current.id());
+      this.updateProgram(ancestor, snapshot);
+      current = ancestor;
+    }
+  }
+
+  private findOrCreateDefaultConfiguredProjectForFile(fileName: string, path: string, loadKind: ProjectLoadKind, snapshot: Snapshot | undefined, logger: LogTree): SearchResult {
+    const explicit = this.fileDefaultProjects.get(path);
+    if (explicit !== undefined) {
+      if (explicit === inferredProjectName) return { retain: new Set() };
+      const project = this.collection.get(explicit);
+      return project === undefined ? { retain: new Set([explicit]) } : { project, retain: new Set([explicit]) };
+    }
+    const directConfig = this.getConfigFileNameForFile(fileName, path);
+    if (directConfig === undefined) return { retain: new Set() };
+    const result = this.findOrCreateDefaultConfiguredProjectWorker(fileName, path, directConfig, loadKind, snapshot, logger);
+    if (result.project !== undefined) this.fileDefaultProjects.set(path, result.project.id());
+    logger.log(result.project === undefined
+      ? `No default configured project found for ${fileName}`
+      : `Found default configured project for ${fileName}: ${result.project.name()}`);
+    return result;
+  }
+
+  private findOrCreateDefaultConfiguredProjectWorker(fileName: string, path: string, configFileName: string, loadKind: ProjectLoadKind, snapshot: Snapshot | undefined, logger: LogTree): SearchResult {
+    const visited = new Set<string>();
+    const queue: SearchNode[] = [{ configFileName, loadKind, depth: 0 }];
+    const retain = new Set<string>();
+    let fallback: Project | undefined;
+    while (queue.length > 0) {
+      const node = queue.shift()!;
+      const key = `${node.loadKind}:${this.toPath(node.configFileName)}`;
+      if (visited.has(key)) continue;
+      visited.add(key);
+      const configPath = this.toPath(node.configFileName);
+      const config = this.configs.find(candidate => this.toPath(candidate.configFileName) === configPath);
+      if (config === undefined) continue;
+      retain.add(configPath);
+      const project = this.findOrCreateProject(node.configFileName, configPath, logger, config, node.loadKind);
+      if (project === undefined) continue;
+      if (node.loadKind === ProjectLoadKind.Create) this.updateProgram(project, snapshot);
+      const contains = project.containsFile(path) || config.rootFileNames.some(root => this.toPath(root) === path);
+      if (contains && !project.isSourceFromProjectReference(path)) return { project, retain };
+      if (contains) fallback ??= project;
+      for (const reference of this.projectReferenceConfigNames(config)) {
+        queue.push({ configFileName: reference, loadKind: node.loadKind, depth: node.depth + 1 });
+      }
+    }
+    if (fallback !== undefined) return { project: fallback, retain };
+    const ancestor = this.getAncestorConfigFileName(fileName, path, configFileName);
+    if (ancestor !== undefined) return this.findOrCreateDefaultConfiguredProjectWorker(fileName, path, ancestor, loadKind, snapshot, logger);
+    return { retain };
+  }
+
+  private findOrCreateProject(configFileName: string, configPath: string, logger: LogTree, config?: ProjectConfig, loadKind: ProjectLoadKind = ProjectLoadKind.Create): Project | undefined {
     const existing = this.collection.get(configPath);
     if (existing !== undefined) return existing;
+    if (loadKind === ProjectLoadKind.Find) return undefined;
     const selected = config ?? this.configs.find(candidate => this.toPath(candidate.configFileName) === configPath);
     const project = new Project({
       configFileName,
@@ -334,6 +452,48 @@ export class ProjectCollectionBuilder {
     if (normalized.startsWith("/")) return normalize(normalized);
     return normalize(`${this.currentDirectory}/${normalized}`);
   }
+
+  private getConfigFileNameForFile(fileName: string, path: string): string | undefined {
+    const direct = this.configs.find(config => config.rootFileNames.some(root => this.toPath(root) === path));
+    if (direct !== undefined) return direct.configFileName;
+    let current = dirname(fileName);
+    while (current !== "") {
+      const candidate = normalize(`${current}/tsconfig.json`);
+      if (this.configs.some(config => this.toPath(config.configFileName) === this.toPath(candidate))) return candidate;
+      const parent = dirname(current);
+      if (parent === current) break;
+      current = parent;
+    }
+    return undefined;
+  }
+
+  private getAncestorConfigFileName(fileName: string, path: string, currentConfigFileName: string): string | undefined {
+    let current = dirname(dirname(currentConfigFileName));
+    while (current !== "") {
+      const candidate = normalize(`${current}/tsconfig.json`);
+      if (this.toPath(candidate) !== this.toPath(currentConfigFileName)
+        && this.configs.some(config => this.toPath(config.configFileName) === this.toPath(candidate))
+        && this.configCouldReferenceFile(candidate, fileName, path)) {
+        return candidate;
+      }
+      const parent = dirname(current);
+      if (parent === current) break;
+      current = parent;
+    }
+    return undefined;
+  }
+
+  private configCouldReferenceFile(configFileName: string, fileName: string, path: string): boolean {
+    const config = this.configs.find(candidate => this.toPath(candidate.configFileName) === this.toPath(configFileName));
+    if (config === undefined) return false;
+    if (config.rootFileNames.some(root => this.toPath(root) === path)) return true;
+    return this.projectReferenceConfigNames(config).some(reference => this.toPath(reference) === this.toPath(fileName));
+  }
+
+  private projectReferenceConfigNames(config: ProjectConfig): readonly string[] {
+    const references = (config.compilerOptions as { readonly projectReferences?: readonly string[] } | undefined)?.projectReferences;
+    return references ?? [];
+  }
 }
 
 function normalize(path: string): string {
@@ -354,4 +514,26 @@ function sameRootFiles(left: readonly string[], right: readonly string[]): boole
     if (a[index] !== b[index]) return false;
   }
   return true;
+}
+
+function findDefaultConfiguredProjectFromProgramInclusion(path: string, projects: readonly Project[]): readonly [Project | undefined, boolean] {
+  let first: Project | undefined;
+  let multiple = false;
+  for (const project of projects) {
+    if (!project.containsFile(path)) continue;
+    if (first === undefined) {
+      first = project;
+    } else {
+      multiple = true;
+      if (!project.isSourceFromProjectReference(path)) return [project, true];
+    }
+  }
+  return [first, multiple];
+}
+
+function dirname(path: string): string {
+  const normalized = normalize(path);
+  const index = normalized.lastIndexOf("/");
+  if (index <= 0) return normalized.startsWith("/") ? "/" : "";
+  return normalized.slice(0, index);
 }
