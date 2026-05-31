@@ -8,6 +8,9 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol, SymbolTable } from "../ast/index.js";
+import { SymbolFlags } from "../ast/index.js";
+import type { IndexInfo, Signature, Type, TypeParameter } from "./types.js";
+import { TypeFlags, getPropertySymbolOfType, getTypeOfSymbol } from "./types.js";
 
 export interface ExportsResolver {
   getExportsOfModule(moduleSymbol: AstSymbol): SymbolTable;
@@ -123,4 +126,179 @@ export function markExportAsReferenced(symbol: AstSymbol): void {
 
 export function shouldPreserveImport(symbol: AstSymbol): boolean {
   return (symbol as unknown as { isReferenced?: boolean }).isReferenced === true;
+}
+
+export function getErrorType(): Type {
+  return intrinsicType(TypeFlags.Any, "error");
+}
+
+export function getUnknownSymbol(): AstSymbol {
+  return {
+    name: "unknown",
+    escapedName: "unknown",
+    flags: SymbolFlags.None,
+    declarations: [],
+  };
+}
+
+export function getNameTypeOfSymbol(symbol: AstSymbol | undefined): Type | undefined {
+  return (symbol as unknown as { nameType?: Type; escapedName?: string; name?: string } | undefined)?.nameType
+    ?? stringLiteralType((symbol?.escapedName ?? symbol?.name) || undefined);
+}
+
+export function typeHasCallOrConstructSignatures(type: Type): boolean {
+  const data = type.data as { declaredCallSignatures?: readonly Signature[]; declaredConstructSignatures?: readonly Signature[] } | undefined;
+  return (data?.declaredCallSignatures?.length ?? 0) > 0 || (data?.declaredConstructSignatures?.length ?? 0) > 0;
+}
+
+export function getTypeOfPropertyOfContextualType(type: Type | undefined, name: string): Type | undefined {
+  return type === undefined ? undefined : getTypeOfPropertyOfType(type, name);
+}
+
+export function wasCanceled(host: { isCanceled?: () => boolean } | undefined): boolean {
+  return host?.isCanceled?.() === true;
+}
+
+export function getDefaultFromTypeParameter(typeParameter: TypeParameter | undefined): Type | undefined {
+  return (typeParameter as { default?: Type } | undefined)?.default;
+}
+
+export function getBaseConstraintOfType(type: Type | undefined): Type | undefined {
+  if (type === undefined) return undefined;
+  return (type.data as { constraint?: Type; baseConstraint?: Type } | undefined)?.constraint
+    ?? (type.data as { constraint?: Type; baseConstraint?: Type } | undefined)?.baseConstraint;
+}
+
+export function getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(symbol: AstSymbol | undefined): readonly TypeParameter[] {
+  const declaration = symbol?.declarations.find((node) =>
+    node.kind === 263 /* ClassDeclaration */
+    || node.kind === 264 /* ClassExpression */
+    || node.kind === 265 /* InterfaceDeclaration */
+    || node.kind === 266 /* TypeAliasDeclaration */);
+  return (declaration as unknown as { localTypeParameters?: readonly TypeParameter[]; typeParameters?: { nodes?: readonly TypeParameter[] } } | undefined)?.localTypeParameters
+    ?? (declaration as unknown as { localTypeParameters?: readonly TypeParameter[]; typeParameters?: { nodes?: readonly TypeParameter[] } } | undefined)?.typeParameters?.nodes
+    ?? [];
+}
+
+export function getContextualTypeForObjectLiteralElement(element: AstNode, contextualType: Type | undefined): Type | undefined {
+  const name = propertyNameText(element);
+  if (name === undefined) return undefined;
+  return getTypeOfPropertyOfContextualType(contextualType, name);
+}
+
+export function typePredicateToString(predicate: { parameterName?: string; type?: Type } | undefined): string {
+  if (predicate === undefined) return "";
+  return predicate.type === undefined ? `${predicate.parameterName ?? "this"} is unknown` : `${predicate.parameterName ?? "this"} is ${typeName(predicate.type)}`;
+}
+
+export function getExpandedParameters(signature: Signature): readonly AstSymbol[] {
+  return signature.parameters;
+}
+
+export function getTypeOfPropertyOfType(type: Type, name: string): Type | undefined {
+  return getTypeOfSymbol(getPropertySymbolOfType(type, name))
+    ?? declaredPropertyTypeOf(type, name);
+}
+
+export function getContextualTypeForArgumentAtIndex(signature: Signature | undefined, index: number): Type | undefined {
+  const parameter = signature?.parameters[index];
+  if (parameter !== undefined) return getTypeOfSymbol(parameter);
+  const rest = (signature as { restType?: Type } | undefined)?.restType;
+  return rest;
+}
+
+export function getIndexSignaturesAtLocation(type: Type | undefined): readonly IndexInfo[] {
+  return (type?.data as { indexInfos?: readonly IndexInfo[] } | undefined)?.indexInfos ?? [];
+}
+
+export function getJsxFragmentFactory(options: { jsxFragmentFactory?: string } | undefined): string | undefined {
+  return options?.jsxFragmentFactory;
+}
+
+export function getBaseConstructorTypeOfClass(type: Type | undefined): Type | undefined {
+  return (type?.data as { baseConstructorType?: Type; resolvedBaseTypes?: readonly Type[] } | undefined)?.baseConstructorType
+    ?? (type?.data as { resolvedBaseTypes?: readonly Type[] } | undefined)?.resolvedBaseTypes?.[0];
+}
+
+export function getIndexInfoOfType(type: Type | undefined, keyType: Type | undefined): IndexInfo | undefined {
+  const infos = getIndexSignaturesAtLocation(type);
+  if (keyType === undefined) return infos[0];
+  return infos.find((info) => (info.keyType.flags & keyType.flags) !== 0);
+}
+
+export function fillMissingTypeArguments(typeArguments: readonly Type[], typeParameters: readonly TypeParameter[]): readonly Type[] {
+  if (typeArguments.length >= typeParameters.length) return typeArguments;
+  const filled = [...typeArguments];
+  for (let index = typeArguments.length; index < typeParameters.length; index++) {
+    filled.push(getDefaultFromTypeParameter(typeParameters[index]) ?? getBaseConstraintOfType(typeParameters[index] as Type) ?? intrinsicType(TypeFlags.Any, "any"));
+  }
+  return filled;
+}
+
+export function getMinTypeArgumentCount(typeParameters: readonly TypeParameter[]): number {
+  let min = typeParameters.length;
+  while (min > 0) {
+    const typeParameter = typeParameters[min - 1];
+    if (getDefaultFromTypeParameter(typeParameter) === undefined) break;
+    min -= 1;
+  }
+  return min;
+}
+
+export function removeMissingOrUndefinedType(type: Type): Type {
+  if ((type.flags & TypeFlags.Union) === 0) {
+    return (type.flags & (TypeFlags.Undefined | TypeFlags.Void)) !== 0 ? intrinsicType(TypeFlags.Never, "never") : type;
+  }
+  const types = (type.data as { types?: readonly Type[] } | undefined)?.types ?? [];
+  const filtered = types.filter((candidate) => (candidate.flags & (TypeFlags.Undefined | TypeFlags.Void)) === 0);
+  if (filtered.length === 0) return intrinsicType(TypeFlags.Never, "never");
+  if (filtered.length === 1) return filtered[0]!;
+  return {
+    flags: TypeFlags.Union,
+    id: nextExportSyntheticTypeId(),
+    data: { types: filtered },
+  };
+}
+
+function declaredPropertyTypeOf(type: Type, name: string): Type | undefined {
+  const property = (type.data as { declaredProperties?: readonly AstSymbol[] } | undefined)?.declaredProperties
+    ?.find((symbol) => symbol.name === name || symbol.escapedName === name);
+  return getTypeOfSymbol(property);
+}
+
+function propertyNameText(node: AstNode): string | undefined {
+  const name = (node as unknown as { name?: { text?: string; escapedText?: string } }).name;
+  return name?.text ?? name?.escapedText;
+}
+
+function stringLiteralType(value: string | undefined): Type | undefined {
+  if (value === undefined || value.length === 0) return undefined;
+  return {
+    flags: TypeFlags.StringLiteral,
+    id: nextExportSyntheticTypeId(),
+    data: { value },
+  };
+}
+
+function intrinsicType(flags: TypeFlags, intrinsicName: string): Type {
+  return {
+    flags,
+    id: nextExportSyntheticTypeId(),
+    data: { intrinsicName, objectFlags: 0 },
+  };
+}
+
+function typeName(type: Type): string {
+  const intrinsicName = (type.data as { intrinsicName?: string } | undefined)?.intrinsicName;
+  if (intrinsicName !== undefined) return intrinsicName;
+  if (type.symbol?.name !== undefined) return type.symbol.name;
+  return `type(${type.flags})`;
+}
+
+let exportSyntheticTypeId = -1;
+
+function nextExportSyntheticTypeId(): number {
+  const id = exportSyntheticTypeId;
+  exportSyntheticTypeId -= 1;
+  return id;
 }
