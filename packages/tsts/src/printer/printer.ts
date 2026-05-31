@@ -139,6 +139,23 @@ export interface PrinterWriter {
   decreaseIndent(): void;
 }
 
+export interface StringPrinterWriter extends PrinterWriter {
+  getText(): string;
+}
+
+export interface PrinterFrameState {
+  commentState: CommentState | undefined;
+  sourceMapState: SourceMapState | undefined;
+}
+
+export type TokenEmitFlags = number;
+export const TokenEmitFlags = {
+  None: 0 as TokenEmitFlags,
+  NoComments: 1 as TokenEmitFlags,
+  IndentLeadingComments: 2 as TokenEmitFlags,
+  NoSourceMaps: 4 as TokenEmitFlags,
+} as const;
+
 // ---------------------------------------------------------------------------
 // Printer class
 // ---------------------------------------------------------------------------
@@ -2173,7 +2190,9 @@ export class Printer {
    * when `emitTrailingNewlines` is enabled.
    */
   printFile(sourceFile: SourceFile): string {
-    const writer = this.state.writer ?? this.ensureOwnWriter();
+    const previousWriter = this.state.writer;
+    const previousSourceFile = this.currentSourceFile;
+    const writer = previousWriter ?? createStringPrinterWriter();
     this.state.writer = writer;
     this.currentSourceFile = sourceFile;
     const statements = (sourceFile as unknown as { statements?: { nodes?: readonly AstNode[] } }).statements?.nodes ?? [];
@@ -2184,34 +2203,222 @@ export class Printer {
     if (this.options.emitTrailingNewlines !== false) {
       this.writeLine();
     }
-    const text = (writer as unknown as { getText?(): string }).getText?.() ?? "";
+    const text = getStringPrinterText(writer);
+    this.state.writer = previousWriter;
+    this.currentSourceFile = previousSourceFile;
     return text;
   }
 
-  private ensureOwnWriter(): PrinterWriter {
-    if (this.state.ownWriter !== undefined) return this.state.ownWriter;
-    // Minimal text writer fallback so printFile can be called without
-    // explicit writer wiring. Mirrors EmitTextWriter (TextWriter)
-    // semantics: indent + line tracking + buffer.
-    const w: PrinterWriter & { getText(): string } = (() => {
-      let buf = "";
-      let indent = 0;
-      let lineStart = true;
-      const indentSize = 4;
-      return {
-        write(text: string): void {
-          if (lineStart) { buf += " ".repeat(indent * indentSize); lineStart = false; }
-          buf += text;
-        },
-        writeLine(): void { buf += "\n"; lineStart = true; },
-        increaseIndent(): void { indent += 1; },
-        decreaseIndent(): void { indent = Math.max(0, indent - 1); },
-        getText(): string { return buf; },
-      };
-    })();
-    this.state.ownWriter = w;
-    return w;
+  printNode(node: AstNode, sourceFile: SourceFile | undefined = undefined): string {
+    const previousWriter = this.state.writer;
+    const previousSourceFile = this.currentSourceFile;
+    const writer = createStringPrinterWriter();
+    this.state.writer = writer;
+    this.currentSourceFile = sourceFile;
+    this.emit(0, node);
+    const text = writer.getText();
+    this.state.writer = previousWriter;
+    this.currentSourceFile = previousSourceFile;
+    return text;
   }
+
+  enterNode(node: AstNode): PrinterFrameState {
+    this.handlers.onBeforeEmitNode?.(node);
+    return {
+      commentState: this.emitCommentsBeforeNode(node),
+      sourceMapState: this.emitSourceMapsBeforeNode(node),
+    };
+  }
+  exitNode(node: AstNode, previousState: PrinterFrameState): void {
+    if (previousState.sourceMapState !== undefined) this.emitSourceMapsAfterNode(node, previousState.sourceMapState);
+    if (previousState.commentState !== undefined) this.emitCommentsAfterNode(node, previousState.commentState);
+    this.handlers.onAfterEmitNode?.(node);
+  }
+  enterTokenNode(node: AstNode, flags: TokenEmitFlags = TokenEmitFlags.None): PrinterFrameState {
+    this.handlers.onBeforeEmitToken?.(node);
+    return {
+      commentState: (flags & TokenEmitFlags.NoComments) === 0 ? this.emitCommentsBeforeNode(node) : undefined,
+      sourceMapState: (flags & TokenEmitFlags.NoSourceMaps) === 0 ? this.emitSourceMapsBeforeNode(node) : undefined,
+    };
+  }
+  exitTokenNode(node: AstNode, previousState: PrinterFrameState): void {
+    this.exitNode(node, previousState);
+    this.handlers.onAfterEmitToken?.(node);
+  }
+  enterToken(token: number, pos: number, contextNode: AstNode, flags: TokenEmitFlags = TokenEmitFlags.None): { state: PrinterFrameState; pos: number } {
+    const commentResult = this.emitCommentsBeforeToken(token, pos, contextNode, flags);
+    return {
+      state: {
+        commentState: commentResult.state,
+        sourceMapState: (flags & TokenEmitFlags.NoSourceMaps) === 0 ? this.emitSourceMapsBeforeToken(token, commentResult.pos, contextNode, flags) : undefined,
+      },
+      pos: commentResult.pos,
+    };
+  }
+  exitToken(token: number, pos: number, contextNode: AstNode, previousState: PrinterFrameState): void {
+    if (previousState.sourceMapState !== undefined) this.emitSourceMapsAfterToken(token, pos, contextNode, previousState.sourceMapState);
+    if (previousState.commentState !== undefined) this.emitCommentsAfterToken(token, pos, contextNode, previousState.commentState);
+  }
+  emitCommentsBeforeToken(token: number, pos: number, contextNode: AstNode, flags: TokenEmitFlags = TokenEmitFlags.None): { state: CommentState | undefined; pos: number } {
+    void token;
+    if ((flags & TokenEmitFlags.NoComments) !== 0 || this.options.removeComments === true) {
+      return { state: undefined, pos: this.skipTriviaAt(pos) };
+    }
+    return { state: this.emitCommentsBeforeNode(contextNode), pos: this.skipTriviaAt(pos) };
+  }
+  emitCommentsAfterToken(token: number, pos: number, contextNode: AstNode, state: CommentState): void {
+    void token; void pos;
+    this.emitCommentsAfterNode(contextNode, state);
+  }
+  emitDetachedCommentsBeforeStatementList(node: AstNode, detachedRange: TextRange): CommentState | undefined {
+    void detachedRange;
+    if (!this.shouldEmitDetachedComments(node)) return undefined;
+    return this.emitCommentsBeforeNode(node);
+  }
+  emitDetachedCommentsAfterStatementList(node: AstNode, detachedRange: TextRange, state: CommentState | undefined): void {
+    void detachedRange;
+    if (state !== undefined) this.emitCommentsAfterNode(node, state);
+  }
+  emitLeadingCommentsOfNode(node: AstNode, emitFlags: number): void {
+    this.emitLeadingSyntheticCommentsOfNode(node, emitFlags);
+  }
+  emitTrailingCommentsOfNode(node: AstNode, emitFlags: number): void {
+    this.emitTrailingSyntheticCommentsOfNode(node, emitFlags);
+  }
+  shouldEmitCommentIfTripleSlash(comment: CommentRange, tripleSlash: boolean | undefined): boolean {
+    if (tripleSlash === undefined) return true;
+    return this.isTripleSlashComment(comment) === tripleSlash;
+  }
+  shouldEmitNewLineBeforeLeadingCommentOfPosition(pos: number, commentPos: number): boolean {
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    if (text === undefined || pos === commentPos) return false;
+    return lineOfPosition(text, pos) !== lineOfPosition(text, commentPos);
+  }
+  emitLeadingCommentsOfPosition(pos: number): void {
+    if (this.options.removeComments === true || pos < 0) return;
+    this.emitSourceCommentAt(pos, true);
+  }
+  emitTrailingCommentsOfPosition(pos: number, prefixSpace: boolean, forceNoNewline: boolean): void {
+    if (this.options.removeComments === true || pos < 0) return;
+    if (prefixSpace) this.writeSpace();
+    this.emitSourceCommentAt(pos, forceNoNewline);
+  }
+  emitDetachedCommentsAndUpdateCommentsInfo(textRange: TextRange): void {
+    this.state.detachedComments.push({ nodePos: textRange.pos, detachedCommentEndPos: textRange.end });
+  }
+  emitComments(comments: readonly CommentRange[], commentSeparator: number): boolean {
+    if (comments.length === 0) return false;
+    if (commentSeparator === 1) this.writeSpace();
+    for (let index = 0; index < comments.length; index += 1) {
+      const comment = comments[index];
+      if (comment === undefined) continue;
+      if (index > 0) this.writeSpace();
+      this.emitComment(comment);
+      if (comment.kind === Kind.SingleLineCommentTrivia || comment.hasTrailingNewLine === true) this.writeLine();
+    }
+    if (commentSeparator === 2) this.writeSpace();
+    return true;
+  }
+  emitComment(comment: CommentRange): void {
+    this.emitPos(comment.pos);
+    this.writeCommentRange(comment);
+    this.emitPos(comment.end);
+  }
+  isTripleSlashComment(comment: CommentRange): boolean {
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    return text?.startsWith("///", comment.pos) === true;
+  }
+  setSourceMapSource(source: SourceFile | undefined): void {
+    this.currentSourceFile = source;
+  }
+  emitPos(pos: number): void {
+    if (this.options.sourceMap !== true || pos < 0) return;
+    this.state.sourceMap.lastEmittedNodePos = pos;
+    this.state.sourceMap.lastEmittedNodeEnd = pos;
+  }
+  emitPosName(pos: number, name: string): void {
+    void name;
+    this.emitPos(pos);
+  }
+  emitSourcePos(source: SourceFile | undefined, pos: number): void {
+    const previousSourceFile = this.currentSourceFile;
+    this.setSourceMapSource(source);
+    this.emitPos(pos);
+    this.currentSourceFile = previousSourceFile;
+  }
+  emitSourcePosName(source: SourceFile | undefined, pos: number, name: string): void {
+    void name;
+    this.emitSourcePos(source, pos);
+  }
+  private skipTriviaAt(pos: number): number {
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    if (text === undefined || pos < 0) return pos;
+    let current = pos;
+    while (current < text.length) {
+      const code = text.charCodeAt(current);
+      if (code !== 0x20 && code !== 0x09 && code !== 0x0a && code !== 0x0d) break;
+      current += 1;
+    }
+    return current;
+  }
+  private emitSourceCommentAt(pos: number, forceNoNewline: boolean): void {
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    if (text === undefined) return;
+    if (text.startsWith("//", pos)) {
+      const end = text.indexOf("\n", pos);
+      this.writeComment(text.slice(pos, end < 0 ? text.length : end));
+      if (forceNoNewline || end >= 0) this.writeLine();
+      return;
+    }
+    if (text.startsWith("/*", pos)) {
+      const close = text.indexOf("*/", pos + 2);
+      const end = close < 0 ? text.length : close + 2;
+      this.writeComment(text.slice(pos, end));
+      if (forceNoNewline || /\r|\n/u.test(text.slice(pos, end))) this.writeLine();
+    }
+  }
+}
+
+function createStringPrinterWriter(): StringPrinterWriter {
+  let buffer = "";
+  let indent = 0;
+  let lineStart = true;
+  const indentSize = 4;
+  return {
+    write(text: string): void {
+      if (lineStart) {
+        buffer += " ".repeat(indent * indentSize);
+        lineStart = false;
+      }
+      buffer += text;
+    },
+    writeLine(): void {
+      buffer += "\n";
+      lineStart = true;
+    },
+    increaseIndent(): void {
+      indent += 1;
+    },
+    decreaseIndent(): void {
+      indent = Math.max(0, indent - 1);
+    },
+    getText(): string {
+      return buffer;
+    },
+  };
+}
+
+function getStringPrinterText(writer: PrinterWriter): string {
+  const stringWriter = writer as Partial<StringPrinterWriter>;
+  return typeof stringWriter.getText === "function" ? stringWriter.getText() : "";
+}
+
+function lineOfPosition(text: string, position: number): number {
+  let line = 0;
+  for (let index = 0; index < Math.min(position, text.length); index += 1) {
+    if (text.charCodeAt(index) === 0x0a) line += 1;
+  }
+  return line;
 }
 
 // ---------------------------------------------------------------------------
@@ -2220,6 +2427,140 @@ export class Printer {
 
 export function newPrinter(options: PrinterOptions, handlers: PrintHandlers, emitContext: EmitContext): Printer {
   return new Printer(options, handlers, emitContext);
+}
+
+export function NewPrinter(options: PrinterOptions, handlers: PrintHandlers = {}, emitContext: EmitContext = {}): Printer {
+  return newPrinter(options, handlers, emitContext);
+}
+
+export function nodeToInlineStr(node: AstNode): string {
+  return nodeToStr(node, { removeComments: true, emitTrailingNewlines: false });
+}
+
+export function nodeToStr(node: AstNode, options: PrinterOptions = {}): string {
+  const printer = NewPrinter(options);
+  const sourceFile = node.kind === Kind.SourceFile ? node as SourceFile : undefined;
+  if (sourceFile !== undefined) return printer.printFile(sourceFile);
+  return printer.printNode(node);
+}
+
+export function emitKeywordTypeNode(printer: Printer, node: AstNode): void { printer.writeKeyword(keywordText(node.kind) ?? "unknown"); }
+export function emitTypePredicateParameterName(printer: Printer, node: AstNode): void { printer.emit(0, (node as { parameterName?: AstNode }).parameterName); }
+export function emitTypeArgument(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitReturnType(printer: Printer, node: AstNode | undefined): void { if (node !== undefined) { printer.writePunctuation(":"); printer.writeSpace(); printer.emit(0, node); } }
+export function emitPostfixTypeOperand(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitTupleElementType(printer: Printer, node: AstNode): void { printer.emit(0, (node as { type?: AstNode }).type ?? node); }
+export function emitRestType(printer: Printer, node: AstNode): void { printer.writePunctuation("..."); printer.emit(0, (node as { type?: AstNode }).type ?? node); }
+export function emitOptionalType(printer: Printer, node: AstNode): void { printer.emit(0, (node as { type?: AstNode }).type ?? node); printer.writePunctuation("?"); }
+export function emitNamedTupleMember(printer: Printer, node: AstNode): void { printer.emit(0, (node as { name?: AstNode }).name); if ((node as { questionToken?: AstNode }).questionToken !== undefined) printer.writePunctuation("?"); emitReturnType(printer, (node as { type?: AstNode }).type); }
+export function emitUnionTypeConstituent(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitIntersectionTypeConstituent(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitInferTypeParameter(printer: Printer, node: AstNode): void { printer.writeKeyword("infer"); printer.writeSpace(); printer.emit(0, node); }
+export function emitThisType(printer: Printer): void { printer.writeKeyword("this"); }
+export function emitMappedTypeParameter(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitTemplateTypeSpan(printer: Printer, node: AstNode): void { printer.writePunctuation("${"); printer.emit(0, (node as { type?: AstNode }).type); printer.writePunctuation("}"); printer.emit(0, (node as { literal?: AstNode }).literal); }
+export function emitTemplateTypeSpanNode(printer: Printer, node: AstNode): void { emitTemplateTypeSpan(printer, node); }
+export function emitTemplateType(printer: Printer, node: AstNode): void { printer.emit(0, (node as { head?: AstNode }).head); for (const span of getNodeArray((node as { templateSpans?: unknown }).templateSpans)) emitTemplateTypeSpan(printer, span); }
+export function emitImportTypeNode(printer: Printer, node: AstNode): void { printer.writeKeyword("import"); printer.writePunctuation("("); printer.emit(0, (node as { argument?: AstNode }).argument); printer.writePunctuation(")"); }
+export function emitTypeNodeInExtends(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitTypeNodeOutsideExtends(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitTypeNodePreservingExtends(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitJSDocAllType(printer: Printer): void { printer.writePunctuation("*"); }
+export function emitJSDocNonNullableType(printer: Printer, node: AstNode): void { printer.writePunctuation("!"); printer.emit(0, (node as { type?: AstNode }).type); }
+export function emitJSDocNullableType(printer: Printer, node: AstNode): void { printer.writePunctuation("?"); printer.emit(0, (node as { type?: AstNode }).type); }
+export function emitJSDocOptionalType(printer: Printer, node: AstNode): void { printer.emit(0, (node as { type?: AstNode }).type); printer.writePunctuation("="); }
+export function emitJSDocVariadicType(printer: Printer, node: AstNode): void { printer.writePunctuation("..."); printer.emit(0, (node as { type?: AstNode }).type); }
+export function emitKeywordExpression(printer: Printer, node: AstNode): void { printer.writeKeyword(keywordText(node.kind) ?? "undefined"); }
+export function emitArrayLiteralExpressionElement(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function mayNeedDotDotForPropertyAccess(node: AstNode): boolean { return node.kind === Kind.NumericLiteral; }
+export function emitArgument(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitCallee(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitConciseBody(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function getLiteralKindOfBinaryPlusOperand(node: AstNode): Kind | undefined { return node.kind === Kind.StringLiteral || node.kind === Kind.NumericLiteral ? node.kind : undefined; }
+export function getBinaryExpressionPrecedence(node: AstNode): number { return binaryPrecedence((node as { operatorToken?: { kind?: Kind } }).operatorToken?.kind); }
+export function emitShortCircuitExpression(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitOmittedExpression(_printer: Printer): void { /* omitted expressions intentionally write nothing */ }
+export function emitExpressionWithTypeArguments(printer: Printer, node: AstNode): void { printer.emit(0, (node as { expression?: AstNode }).expression); const typeArguments = getNodeArray((node as { typeArguments?: unknown }).typeArguments); if (typeArguments.length > 0) { printer.writePunctuation("<"); typeArguments.forEach((arg, index) => { if (index > 0) printer.writePunctuation(","); printer.emit(0, arg); }); printer.writePunctuation(">"); } }
+export function emitExpressionWithTypeArgumentsNode(printer: Printer, node: AstNode): void { emitExpressionWithTypeArguments(printer, node); }
+export function emitMetaProperty(printer: Printer, node: AstNode): void { printer.emit(0, (node as { keywordToken?: AstNode }).keywordToken); printer.writePunctuation("."); printer.emit(0, (node as { name?: AstNode }).name); }
+export function emitPartiallyEmittedExpression(printer: Printer, node: AstNode): void { printer.emit(0, (node as { expression?: AstNode }).expression); }
+export function commentWillEmitNewLine(comment: CommentRange): boolean { return /\r|\n/u.test((comment as { text?: string }).text ?? ""); }
+export function willEmitLeadingNewLine(node: AstNode): boolean { return ((node as { pos?: number }).pos ?? 0) >= 0; }
+export function parenthesizeExpressionForNoAsi(node: AstNode): AstNode { return node; }
+export function emitExpressionNoASI(printer: Printer, node: AstNode): void { printer.emit(0, parenthesizeExpressionForNoAsi(node)); }
+export function emitExpression(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitTemplateSpanNode(printer: Printer, node: AstNode): void { printer.emit(0, (node as { expression?: AstNode }).expression); printer.emit(0, (node as { literal?: AstNode }).literal); }
+export function emitSemicolonClassElement(printer: Printer): void { printer.writeTrailingSemicolon(); }
+export function isEmptyBlock(node: AstNode): boolean { return getNodeArray((node as { statements?: unknown }).statements).length === 0; }
+export function emitEmptyStatement(printer: Printer): void { printer.writeTrailingSemicolon(); }
+export function emitIIFEWithParenthesizedCallee(printer: Printer, node: AstNode): void { printer.writePunctuation("("); printer.emit(0, (node as { expression?: AstNode }).expression); printer.writePunctuation(")"); }
+export function emitWhileClause(printer: Printer, node: AstNode): void { printer.writeKeyword("while"); printer.writeSpace(); printer.writePunctuation("("); printer.emit(0, (node as { expression?: AstNode }).expression); printer.writePunctuation(")"); }
+export function emitForInitializer(printer: Printer, node: AstNode | undefined): void { printer.emit(0, node); }
+export function emitVariableDeclarationNode(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitVariableDeclarationList(printer: Printer, node: AstNode): void { getNodeArray((node as { declarations?: unknown }).declarations).forEach((decl, index) => { if (index > 0) printer.writePunctuation(","); printer.emit(0, decl); }); }
+export function emitCaseBlock(printer: Printer, node: AstNode): void { printer.writePunctuation("{"); printer.writeLine(); printer.increaseIndent(); getNodeArray((node as { clauses?: unknown }).clauses).forEach(clause => printer.emit(0, clause)); printer.decreaseIndent(); printer.writePunctuation("}"); }
+export function emitModuleReference(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitImportSpecifierNode(printer: Printer, node: AstNode): void { printer.emit(0, (node as { propertyName?: AstNode }).propertyName); if ((node as { propertyName?: AstNode }).propertyName !== undefined) { printer.writeSpace(); printer.writeKeyword("as"); printer.writeSpace(); } printer.emit(0, (node as { name?: AstNode }).name); }
+export function emitExportSpecifierNode(printer: Printer, node: AstNode): void { emitImportSpecifierNode(printer, node); }
+export function emitJsxAttributes(printer: Printer, node: AstNode): void { getNodeArray((node as { properties?: unknown }).properties).forEach(attr => { printer.writeSpace(); printer.emit(0, attr); }); }
+export function emitEnumMemberNode(printer: Printer, node: AstNode): void { printer.emit(0, (node as { name?: AstNode }).name); const initializer = (node as { initializer?: AstNode }).initializer; if (initializer !== undefined) { printer.writeSpace(); printer.writeOperator("="); printer.writeSpace(); printer.emit(0, initializer); } }
+export function EmitSourceFile(printer: Printer, sourceFile: SourceFile): string { return printer.printFile(sourceFile); }
+export function setSourceFile(printer: Printer, sourceFile: SourceFile | undefined): void { printer.currentSourceFile = sourceFile; }
+export function emitCommentsBeforeToken(printer: Printer, token: number, pos: number, contextNode: AstNode, flags: TokenEmitFlags = TokenEmitFlags.None): { state: CommentState | undefined; pos: number } { return printer.emitCommentsBeforeToken(token, pos, contextNode, flags); }
+export function emitCommentsAfterToken(printer: Printer, token: number, pos: number, contextNode: AstNode, state: CommentState): void { printer.emitCommentsAfterToken(token, pos, contextNode, state); }
+export function emitDetachedCommentsBeforeStatementList(printer: Printer, node: AstNode, detachedRange: TextRange): CommentState | undefined { return printer.emitDetachedCommentsBeforeStatementList(node, detachedRange); }
+export function emitDetachedCommentsAfterStatementList(printer: Printer, node: AstNode, detachedRange: TextRange, state: CommentState | undefined): void { printer.emitDetachedCommentsAfterStatementList(node, detachedRange, state); }
+export function emitLeadingCommentsOfNode(printer: Printer, node: AstNode, emitFlags: number): void { printer.emitLeadingCommentsOfNode(node, emitFlags); }
+export function emitTrailingCommentsOfNode(printer: Printer, node: AstNode, emitFlags: number): void { printer.emitTrailingCommentsOfNode(node, emitFlags); }
+export function shouldEmitCommentIfTripleSlash(printer: Printer, comment: CommentRange, tripleSlash: boolean | undefined): boolean { return printer.shouldEmitCommentIfTripleSlash(comment, tripleSlash); }
+export function shouldEmitNewLineBeforeLeadingCommentOfPosition(printer: Printer, pos: number, commentPos: number): boolean { return printer.shouldEmitNewLineBeforeLeadingCommentOfPosition(pos, commentPos); }
+export function emitLeadingCommentsOfPosition(printer: Printer, pos: number): void { printer.emitLeadingCommentsOfPosition(pos); }
+export function emitTrailingCommentsOfPosition(printer: Printer, pos: number, prefixSpace = false, forceNoNewline = false): void { printer.emitTrailingCommentsOfPosition(pos, prefixSpace, forceNoNewline); }
+export function emitDetachedCommentsAndUpdateCommentsInfo(printer: Printer, textRange: TextRange): void { printer.emitDetachedCommentsAndUpdateCommentsInfo(textRange); }
+export function emitComments(printer: Printer, comments: readonly CommentRange[], commentSeparator: number): boolean { return printer.emitComments(comments, commentSeparator); }
+export function emitComment(printer: Printer, comment: CommentRange): void { printer.emitComment(comment); }
+export function isTripleSlashComment(printer: Printer, comment: CommentRange): boolean { return printer.isTripleSlashComment(comment); }
+export function setSourceMapSource(printer: Printer, source: SourceFile | undefined): void { printer.setSourceMapSource(source); }
+export function emitPos(printer: Printer, pos: number): void { printer.emitPos(pos); }
+export function emitPosName(printer: Printer, pos: number, name: string): void { printer.emitPosName(pos, name); }
+export function emitSourcePos(printer: Printer, source: SourceFile | undefined, pos: number): void { printer.emitSourcePos(source, pos); }
+export function emitSourcePosName(printer: Printer, source: SourceFile | undefined, pos: number, name: string): void { printer.emitSourcePosName(source, pos, name); }
+export function enterNode(printer: Printer, node: AstNode): PrinterFrameState { return printer.enterNode(node); }
+export function exitNode(printer: Printer, node: AstNode, previousState: PrinterFrameState): void { printer.exitNode(node, previousState); }
+export function enterTokenNode(printer: Printer, node: AstNode, flags: TokenEmitFlags = TokenEmitFlags.None): PrinterFrameState { return printer.enterTokenNode(node, flags); }
+export function exitTokenNode(printer: Printer, node: AstNode, previousState: PrinterFrameState): void { printer.exitTokenNode(node, previousState); }
+export function enterToken(printer: Printer, token: number, pos: number, contextNode: AstNode, flags: TokenEmitFlags = TokenEmitFlags.None): { state: PrinterFrameState; pos: number } { return printer.enterToken(token, pos, contextNode, flags); }
+export function exitToken(printer: Printer, token: number, pos: number, contextNode: AstNode, previousState: PrinterFrameState): void { printer.exitToken(token, pos, contextNode, previousState); }
+
+function keywordText(kind: Kind): string | undefined {
+  return kind >= Kind.FirstKeyword && kind <= Kind.LastKeyword ? Kind[kind]?.replace(/Keyword$/u, "").toLowerCase() : undefined;
+}
+
+function binaryPrecedence(kind: Kind | undefined): number {
+  switch (kind) {
+    case Kind.AsteriskToken:
+    case Kind.SlashToken:
+    case Kind.PercentToken:
+      return 13;
+    case Kind.PlusToken:
+    case Kind.MinusToken:
+      return 12;
+    case Kind.LessThanToken:
+    case Kind.GreaterThanToken:
+      return 10;
+    case Kind.EqualsEqualsToken:
+    case Kind.EqualsEqualsEqualsToken:
+    case Kind.ExclamationEqualsToken:
+    case Kind.ExclamationEqualsEqualsToken:
+      return 9;
+    case Kind.AmpersandAmpersandToken:
+      return 5;
+    case Kind.BarBarToken:
+    case Kind.QuestionQuestionToken:
+      return 4;
+    default:
+      return 0;
+  }
 }
 
 /**
