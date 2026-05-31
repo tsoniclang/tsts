@@ -117,7 +117,7 @@ import {
 } from "./checker.checkedtype.js";
 import { checkBlock } from "./checker.statements.js";
 import { getPropertyNameFromType, isTypeUsableAsPropertyName } from "./utilities.js";
-import { SignatureFlags, SignatureKind, type Signature } from "./types.js";
+import { SignatureFlags, SignatureKind, TypeFlags, type Signature } from "./types.js";
 
 type SignatureKindValue = typeof SignatureKind.Call | typeof SignatureKind.Construct;
 const SignatureKindCall = SignatureKind.Call;
@@ -730,8 +730,190 @@ export function containerSeemsToBeEmptyDomElement(receiverType: Type): boolean {
 }
 
 export function checkThisExpression(node: AstNode, state: CheckState): Type {
-  void node;
-  return anyTypeFromState(state);
+  const container = containingThisContainer(node, true);
+  if (container?.kind === Kind.Constructor) {
+    checkThisBeforeSuper(node, container, "super must be called before accessing this in a derived class constructor", state);
+  }
+  checkThisInStaticClassFieldInitializerInDecoratedClass(node, container, state);
+  return tryGetThisTypeAtEx(node, true, container, state) ?? anyTypeFromState(state);
+}
+
+export function getEnclosingClassFromThisParameter(node: AstNode, state: CheckState): Type | undefined {
+  const thisParameter = getThisParameterFromNodeContext(node);
+  const annotated = thisParameter?.type === undefined ? undefined : typeFromTypeNode(thisParameter.type, state);
+  return annotated ?? getContextualThisParameterType(containingThisContainer(node, false), state);
+}
+
+export function getContextualThisParameterType(fn: AstNode | undefined, state: CheckState): Type | undefined {
+  if (fn === undefined || isArrowFunction(fn)) return undefined;
+  const thisParameter = firstThisParameter(fn);
+  if (thisParameter?.type !== undefined) return typeFromTypeNode(thisParameter.type, state);
+  const parent = parentOf(expressionNode(fn));
+  if (parent !== undefined && isObjectLiteralExpression(parent)) return inferExpression(parent, state);
+  return undefined;
+}
+
+export function tryGetThisTypeAt(node: AstNode, state: CheckState): Type | undefined {
+  return tryGetThisTypeAtEx(node, true, undefined, state);
+}
+
+export function tryGetThisTypeAtEx(
+  node: AstNode,
+  includeGlobalThis: boolean,
+  container: AstNode | undefined,
+  state: CheckState,
+): Type | undefined {
+  const actualContainer = container ?? containingThisContainer(node, false);
+  if (actualContainer !== undefined && isFunctionLikeNode(actualContainer)) {
+    const contextualThis = getContextualThisParameterType(actualContainer, state);
+    if (contextualThis !== undefined) return contextualThis;
+  }
+  const classContainer = containingClassNode(actualContainer ?? node);
+  if (classContainer !== undefined) {
+    const symbol = (classContainer as { readonly symbol?: AstSymbol }).symbol;
+    const symbolType = symbol === undefined ? undefined : getTypeOfSymbol(symbol);
+    if (symbolType !== undefined) return symbolType;
+  }
+  return includeGlobalThis ? anyType : undefined;
+}
+
+export function isInParameterInitializerBeforeContainingFunction(node: AstNode): boolean {
+  const parameter = findAncestorNode(node, candidate => candidate.kind === Kind.Parameter);
+  return parameter !== undefined
+    && (parameter as { readonly initializer?: AstNode }).initializer !== undefined
+    && containsNode((parameter as { readonly initializer?: AstNode }).initializer, node);
+}
+
+export function checkThisInStaticClassFieldInitializerInDecoratedClass(
+  thisExpression: AstNode,
+  container: AstNode | undefined,
+  state: CheckState,
+): void {
+  if (container?.kind !== Kind.PropertyDeclaration) return;
+  if (!hasModifierKind(container, Kind.StaticKeyword)) return;
+  const classNode = containingClassNode(container);
+  if (classNode !== undefined && hasDecorator(classNode)) {
+    state.diagnostics.push({ message: "this cannot be referenced in a static class field initializer in a decorated class." });
+    void thisExpression;
+  }
+}
+
+export function checkThisBeforeSuper(node: AstNode, container: AstNode | undefined, diagnosticMessage: string, state: CheckState): void {
+  if (container === undefined || !classDeclarationExtendsNonNull(containingClassNode(container))) return;
+  const body = (container as { readonly body?: AstNode }).body;
+  const nodePos = (node as { readonly pos?: number }).pos ?? 0;
+  const firstSuper = body === undefined ? undefined : findDescendantNode(body, candidate => candidate.kind === Kind.SuperKeyword);
+  const superPos = (firstSuper as { readonly pos?: number } | undefined)?.pos ?? Number.POSITIVE_INFINITY;
+  if (nodePos < superPos) state.diagnostics.push({ message: diagnosticMessage });
+}
+
+export function classDeclarationExtendsNull(classDeclaration: AstNode | undefined): boolean {
+  return heritageExpressions(classDeclaration).some(expression => nodeText(expression) === "null");
+}
+
+export function checkAssertion(node: AstNode, state: CheckState): Type {
+  if (isAsExpression(node) || isSatisfiesExpression(node)) return inferExpression(node, state);
+  const expression = (node as { readonly expression?: Expression }).expression;
+  return expression === undefined ? unresolvedType : inferExpression(expression, state);
+}
+
+export function checkAssertionDeferred(node: AstNode, state: CheckState): void {
+  checkAssertion(node, state);
+}
+
+export function checkDestructuringAssignment(node: AstNode, sourceType: Type, state: CheckState): Type {
+  if (isObjectLiteralExpression(node)) return checkObjectLiteralAssignment(node, sourceType, false, state);
+  if (isArrayLiteralExpression(node)) return checkArrayLiteralAssignment(node, sourceType, state);
+  return checkReferenceAssignment(node, sourceType, state);
+}
+
+export function checkObjectLiteralAssignment(node: AstNode, sourceType: Type, rightIsThis: boolean, state: CheckState): Type {
+  void rightIsThis;
+  if (!isObjectLiteralExpression(node)) return checkReferenceAssignment(node, sourceType, state);
+  node.properties.forEach((property, index) => checkObjectLiteralDestructuringPropertyAssignment(property, sourceType, index, node.properties, rightIsThis, state));
+  return sourceType;
+}
+
+export function checkObjectLiteralDestructuringPropertyAssignment(
+  node: AstNode,
+  objectLiteralType: Type,
+  propertyIndex: number,
+  allProperties: readonly AstNode[],
+  rightIsThis: boolean,
+  state: CheckState,
+): Type {
+  void propertyIndex; void allProperties; void rightIsThis;
+  if (isPropertyAssignment(node)) return checkDestructuringAssignment(node.initializer, getPropertyTypeForAssignmentTarget(objectLiteralType, node.name, state), state);
+  if (isShorthandPropertyAssignment(node)) return checkReferenceAssignment(node.name, getPropertyTypeForAssignmentTarget(objectLiteralType, node.name, state), state);
+  return objectLiteralType;
+}
+
+export function checkArrayLiteralAssignment(node: AstNode, sourceType: Type, state: CheckState): Type {
+  if (!isArrayLiteralExpression(node)) return checkReferenceAssignment(node, sourceType, state);
+  const elementType = getArrayElementType(sourceType) ?? anyType;
+  node.elements.forEach((element, index) => checkArrayLiteralDestructuringElementAssignment(element, sourceType, index, elementType, state));
+  return sourceType;
+}
+
+export function checkArrayLiteralDestructuringElementAssignment(
+  node: AstNode,
+  sourceType: Type,
+  elementIndex: number,
+  elementType: Type,
+  state: CheckState,
+): Type {
+  void sourceType; void elementIndex;
+  return checkReferenceAssignment(node, elementType, state);
+}
+
+export function checkReferenceAssignment(target: AstNode, sourceType: Type, state: CheckState): Type {
+  const targetType = inferExpression(expressionNode(target), state, sourceType);
+  checkAssignable(getWidenedLiteralLikeTypeForContextualType(sourceType, targetType, state), targetType, state);
+  return sourceType;
+}
+
+export function reportOperatorError(leftType: Type, operator: Kind, rightType: Type, errorNode: AstNode, state: CheckState): void {
+  state.diagnostics.push({ message: `Operator '${kindDebugName(operator)}' cannot be applied to types '${displayType(leftType)}' and '${displayType(rightType)}'.` });
+  void errorNode;
+}
+
+export function reportOperatorErrorUnless(
+  leftType: Type,
+  operator: Kind,
+  rightType: Type,
+  errorNode: AstNode,
+  typesAreCompatible: (left: Type, right: Type) => boolean,
+  state: CheckState,
+): void {
+  if (!typesAreCompatible(leftType, rightType)) reportOperatorError(leftType, operator, rightType, errorNode, state);
+}
+
+export function getBaseTypesIfUnrelated(leftType: Type, rightType: Type, isRelated: (left: Type, right: Type) => boolean): readonly [Type, Type] {
+  return isRelated(leftType, rightType) ? [leftType, rightType] : [getApparentType(leftType), getApparentType(rightType)];
+}
+
+export function checkAssignmentOperator(left: AstNode, operator: Kind, right: AstNode, leftType: Type, rightType: Type, state: CheckState): void {
+  void left; void right;
+  if (operator === Kind.PlusEqualsToken && (isStringType(getApparentType(leftType)) || isStringType(getApparentType(rightType)))) return;
+  if (!state.relater.isTypeAssignableTo(rightType, leftType)) reportOperatorError(leftType, operator, rightType, right, state);
+}
+
+export function bothAreBigIntLike(left: Type, right: Type): boolean {
+  return (left.flags & TypeFlags.BigIntLike) !== 0 && (right.flags & TypeFlags.BigIntLike) !== 0;
+}
+
+export function getSuggestedBooleanOperator(operator: Kind): Kind {
+  if (operator === Kind.AmpersandToken) return Kind.AmpersandAmpersandToken;
+  if (operator === Kind.BarToken) return Kind.BarBarToken;
+  return operator;
+}
+
+export function checkArithmeticOperandType(operand: AstNode, type: Type, diagnostic: string, state: CheckState): boolean {
+  const apparent = getApparentType(type);
+  const ok = isNumberType(apparent) || (apparent.flags & TypeFlags.BigIntLike) !== 0 || isAnyType(apparent);
+  if (!ok) state.diagnostics.push({ message: diagnostic });
+  void operand;
+  return ok;
 }
 
 export function checkBinaryExpression(node: AstNode, state: CheckState): Type {
@@ -1633,6 +1815,116 @@ function inferGlobalStaticProperty(receiverName: string, propertyName: string, s
     return makeFunctionType(booleanType, state, [{ name: "value", type: anyType }]);
   }
   return undefined;
+}
+
+function containingThisContainer(node: AstNode, includeArrowFunctions: boolean): AstNode | undefined {
+  return findAncestorNode(node, candidate =>
+    candidate.kind === Kind.SourceFile
+    || candidate.kind === Kind.ModuleDeclaration
+    || candidate.kind === Kind.ClassDeclaration
+    || candidate.kind === Kind.ClassExpression
+    || candidate.kind === Kind.Constructor
+    || candidate.kind === Kind.FunctionDeclaration
+    || candidate.kind === Kind.FunctionExpression
+    || candidate.kind === Kind.MethodDeclaration
+    || candidate.kind === Kind.GetAccessor
+    || candidate.kind === Kind.SetAccessor
+    || (includeArrowFunctions && candidate.kind === Kind.ArrowFunction));
+}
+
+function containingClassNode(node: AstNode | undefined): AstNode | undefined {
+  return findAncestorNode(node, candidate => candidate.kind === Kind.ClassDeclaration || candidate.kind === Kind.ClassExpression);
+}
+
+function isFunctionLikeNode(node: AstNode): boolean {
+  return node.kind === Kind.FunctionDeclaration
+    || node.kind === Kind.FunctionExpression
+    || node.kind === Kind.ArrowFunction
+    || node.kind === Kind.MethodDeclaration
+    || node.kind === Kind.GetAccessor
+    || node.kind === Kind.SetAccessor
+    || node.kind === Kind.Constructor;
+}
+
+function firstThisParameter(node: AstNode): ParameterDeclaration | undefined {
+  return ((node as { readonly parameters?: readonly ParameterDeclaration[] }).parameters ?? [])
+    .find(parameter => isIdentifier(parameter.name) && parameter.name.text === "this");
+}
+
+function getThisParameterFromNodeContext(node: AstNode): ParameterDeclaration | undefined {
+  const container = containingThisContainer(node, false);
+  return container === undefined || !isFunctionLikeNode(container) ? undefined : firstThisParameter(container);
+}
+
+function findAncestorNode(node: AstNode | undefined, predicate: (node: AstNode) => boolean): AstNode | undefined {
+  for (let current = node === undefined ? undefined : astParentOf(node); current !== undefined; current = astParentOf(current)) {
+    if (predicate(current)) return current;
+  }
+  return undefined;
+}
+
+function findDescendantNode(node: AstNode, predicate: (node: AstNode) => boolean): AstNode | undefined {
+  if (predicate(node)) return node;
+  for (const child of childNodesOf(node)) {
+    const found = findDescendantNode(child, predicate);
+    if (found !== undefined) return found;
+  }
+  return undefined;
+}
+
+function containsNode(root: AstNode | undefined, target: AstNode): boolean {
+  return root !== undefined && (root === target || childNodesOf(root).some(child => containsNode(child, target)));
+}
+
+function childNodesOf(node: AstNode): readonly AstNode[] {
+  const result: AstNode[] = [];
+  for (const value of Object.values(node as object)) {
+    if (isAstNode(value)) result.push(value);
+    else if (Array.isArray(value)) result.push(...value.filter(isAstNode));
+    else if (isNodeArrayLike(value)) result.push(...value.nodes.filter(isAstNode));
+  }
+  return result;
+}
+
+function isAstNode(value: unknown): value is AstNode {
+  return typeof value === "object" && value !== null && typeof (value as { readonly kind?: unknown }).kind === "number";
+}
+
+function isNodeArrayLike(value: unknown): value is { readonly nodes: readonly unknown[] } {
+  return typeof value === "object" && value !== null && Array.isArray((value as { readonly nodes?: unknown }).nodes);
+}
+
+function astParentOf(node: AstNode | undefined): AstNode | undefined {
+  return (node as { readonly parent?: AstNode } | undefined)?.parent;
+}
+
+function hasDecorator(node: AstNode): boolean {
+  return ((node as { readonly modifiers?: readonly AstNode[] | { readonly nodes?: readonly AstNode[] } }).modifiers as readonly AstNode[] | undefined)?.some(modifier => modifier.kind === Kind.Decorator) === true
+    || (((node as { readonly modifiers?: { readonly nodes?: readonly AstNode[] } }).modifiers)?.nodes?.some(modifier => modifier.kind === Kind.Decorator) ?? false);
+}
+
+function heritageExpressions(node: AstNode | undefined): readonly AstNode[] {
+  return ((node as { readonly heritageClauses?: readonly { readonly token?: Kind; readonly types?: readonly { readonly expression?: AstNode }[] }[] } | undefined)?.heritageClauses ?? [])
+    .filter(clause => clause.token === Kind.ExtendsKeyword)
+    .flatMap(clause => clause.types ?? [])
+    .map(type => type.expression)
+    .filter((expression): expression is AstNode => expression !== undefined);
+}
+
+function classDeclarationExtendsNonNull(classDeclaration: AstNode | undefined): boolean {
+  const expressions = heritageExpressions(classDeclaration);
+  return expressions.length > 0 && !expressions.some(expression => nodeText(expression) === "null");
+}
+
+function nodeText(node: AstNode | undefined): string {
+  return (node as { readonly text?: string; readonly escapedText?: string } | undefined)?.text
+    ?? (node as { readonly text?: string; readonly escapedText?: string } | undefined)?.escapedText
+    ?? "";
+}
+
+function getPropertyTypeForAssignmentTarget(sourceType: Type, propertyName: PropertyName, state: CheckState): Type {
+  const name = propertyNameText(propertyName, state);
+  return name === undefined ? anyType : getPropertyTypeOfType(sourceType, name) ?? anyType;
 }
 
 function isDeprecatedDeclaration(node: AstNode): boolean {

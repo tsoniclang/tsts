@@ -734,6 +734,16 @@ export function isPropertyInClassDerivedFrom(prop: AstSymbolLike, baseClass: Typ
   });
 }
 
+export function isClassDerivedFromDeclaringClasses(checkClass: Type, prop: AstSymbolLike, writing: boolean): boolean {
+  void writing;
+  return !forEachProperty(prop, property => {
+    if (declarationAccessibility(property.valueDeclaration ?? property.declarations?.[0]) === Kind.ProtectedKeyword) {
+      return !hasBaseType(checkClass, getDeclaringClass(property));
+    }
+    return false;
+  });
+}
+
 export function isNodeUsedDuringClassInitialization(node: AstNode): boolean {
   return findAncestor(node, element =>
     element.kind === Kind.Constructor || element.kind === Kind.PropertyDeclaration || element.kind === Kind.ClassStaticBlockDeclaration) !== undefined;
