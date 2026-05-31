@@ -15,6 +15,14 @@ export interface MapEntry<K, V> {
   readonly value: V;
 }
 
+export function newOrderedMapWithSizeHint<K, V>(hint: int): OrderedMap<K, V> {
+  return new OrderedMap<K, V>(hint);
+}
+
+export function newOrderedMapFromList<K, V>(items: readonly MapEntry<K, V>[]): OrderedMap<K, V> {
+  return OrderedMap.fromEntries(items);
+}
+
 export class OrderedMap<K, V> {
   private keys_: K[] = [];
   private mp = new Map<K, V>();
@@ -29,6 +37,19 @@ export class OrderedMap<K, V> {
     const m = new OrderedMap<K, V>(items.length as int);
     for (const item of items) m.set(item.key, item.value);
     return m;
+  }
+
+  static fromPairs<K, V>(items: Iterable<readonly [K, V]>): OrderedMap<K, V> {
+    const map = new OrderedMap<K, V>();
+    for (const item of items) {
+      map.set(item[0], item[1]);
+    }
+    return map;
+  }
+
+  static cloneOf<K, V>(source: OrderedMap<K, V> | undefined): OrderedMap<K, V> | undefined {
+    if (source === undefined) return undefined;
+    return source.clone();
   }
 
   set(key: K, value: V): void {
@@ -46,6 +67,14 @@ export class OrderedMap<K, V> {
 
   getOrZero(key: K): V {
     return this.mp.get(key) as V;
+  }
+
+  getOrSet(key: K, createValue: () => V): V {
+    const existing = this.get(key);
+    if (existing.ok) return existing.value;
+    const value = createValue();
+    this.set(key, value);
+    return value;
   }
 
   entryAt(index: int): { key: K; value: V; ok: boolean } {
@@ -78,8 +107,18 @@ export class OrderedMap<K, V> {
     for (let i = 0; i < this.keys_.length; i++) yield this.keys_[i]!;
   }
 
+  keysArray(): readonly K[] {
+    return this.keys_.slice();
+  }
+
   *values(): IterableIterator<V> {
     for (let i = 0; i < this.keys_.length; i++) yield this.mp.get(this.keys_[i]!) as V;
+  }
+
+  valuesArray(): readonly V[] {
+    const result: V[] = [];
+    for (const value of this.values()) result.push(value);
+    return result;
   }
 
   *entries(): IterableIterator<readonly [K, V]> {
@@ -89,8 +128,22 @@ export class OrderedMap<K, V> {
     }
   }
 
+  entriesArray(): readonly MapEntry<K, V>[] {
+    const result: MapEntry<K, V>[] = [];
+    for (const [key, value] of this.entries()) {
+      result.push({ key, value });
+    }
+    return result;
+  }
+
   [Symbol.iterator](): IterableIterator<readonly [K, V]> {
     return this.entries();
+  }
+
+  forEach(callback: (value: V, key: K) => void): void {
+    for (const [key, value] of this.entries()) {
+      callback(value, key);
+    }
   }
 
   clear(): void {
@@ -109,6 +162,13 @@ export class OrderedMap<K, V> {
     return m;
   }
 
+  assignFrom(source: OrderedMap<K, V>): void {
+    this.clear();
+    for (const [key, value] of source.entries()) {
+      this.set(key, value);
+    }
+  }
+
   toJsonValue(valueToJson: (value: V) => JsonValue): JsonValue {
     const result: { [key: string]: JsonValue } = {};
     for (const key of this.keys_) {
@@ -125,6 +185,7 @@ export class OrderedMap<K, V> {
     value: JsonValue,
     valueFromJson: (value: JsonValue) => V,
   ): OrderedMap<string, V> {
+    if (value === null) return new OrderedMap<string, V>();
     if (!isJsonObject(value)) {
       throw new Error("cannot unmarshal non-object JSON value into OrderedMap");
     }
@@ -140,6 +201,29 @@ export class OrderedMap<K, V> {
     valueFromJson: (value: JsonValue) => V,
   ): OrderedMap<string, V> {
     return OrderedMap.fromJsonObject(unmarshal(text), valueFromJson);
+  }
+
+  replaceFromJsonObject(
+    value: JsonValue,
+    keyFromJson: (key: string) => K,
+    valueFromJson: (value: JsonValue) => V,
+  ): void {
+    if (value === null) return;
+    if (!isJsonObject(value)) {
+      throw new Error("cannot unmarshal non-object JSON value into OrderedMap");
+    }
+    this.clear();
+    for (const key of Object.keys(value)) {
+      this.set(keyFromJson(key), valueFromJson(value[key]!));
+    }
+  }
+
+  replaceFromJsonString(
+    text: string,
+    keyFromJson: (key: string) => K,
+    valueFromJson: (value: JsonValue) => V,
+  ): void {
+    this.replaceFromJsonObject(unmarshal(text), keyFromJson, valueFromJson);
   }
 }
 
