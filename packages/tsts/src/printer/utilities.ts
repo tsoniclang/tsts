@@ -10,7 +10,7 @@
  * Cross-module deps forward-declared at file end.
  */
 
-import type { Node as AstNode, ModifierList, NodeList, Block, FunctionLikeDeclaration, SourceFile } from "../ast/index.js";
+import type { Node as AstNode, ModifierList, NodeList, Block, FunctionLikeDeclaration, SourceFile, CommentRange } from "../ast/index.js";
 import { Kind } from "../ast/index.js";
 import {
   isIdentifier as astIsIdentifier,
@@ -616,3 +616,307 @@ function nodeListNodes(value: NodeList | readonly AstNode[] | undefined): readon
 }
 
 interface TextRange { pos: number; end: number }
+
+export function canUseOriginalText(node: AstNode, sourceFile: SourceFile | undefined): boolean {
+  return sourceFile !== undefined
+    && !nodeIsSynthesized(node)
+    && getNodePos(node) >= 0
+    && getNodeEnd(node) <= ((sourceFile as unknown as { readonly text?: string }).text?.length ?? 0);
+}
+
+export function getLiteralText(node: AstNode, sourceFile: SourceFile | undefined, flags: GetLiteralTextFlags = GetLiteralTextFlags.None): string {
+  const text = (node as { readonly text?: string }).text;
+  if (text !== undefined) return escapeStringWorker(text, QuoteChar.DoubleQuote, flags);
+  const sourceText = (sourceFile as unknown as { readonly text?: string } | undefined)?.text;
+  if (sourceText === undefined) return "";
+  return sourceText.slice(getNodePos(node), getNodeEnd(node));
+}
+
+export function isNotPrologueDirective(node: AstNode): boolean {
+  return node.kind !== Kind.ExpressionStatement
+    || ((node as { readonly expression?: AstNode }).expression?.kind !== Kind.StringLiteral
+      && (node as { readonly expression?: AstNode }).expression?.kind !== Kind.NoSubstitutionTemplateLiteral);
+}
+
+export function rangeIsOnSingleLine(range: TextRange, sourceFile: SourceFile): boolean {
+  return positionsAreOnSameLine(range.pos, range.end, sourceFile);
+}
+
+export function rangeStartPositionsAreOnSameLine(left: TextRange, right: TextRange, sourceFile: SourceFile): boolean {
+  return positionsAreOnSameLine(left.pos, right.pos, sourceFile);
+}
+
+export function rangeEndPositionsAreOnSameLine(left: TextRange, right: TextRange, sourceFile: SourceFile): boolean {
+  return positionsAreOnSameLine(left.end, right.end, sourceFile);
+}
+
+export function rangeStartIsOnSameLineAsRangeEnd(left: TextRange, right: TextRange, sourceFile: SourceFile): boolean {
+  return positionsAreOnSameLine(left.pos, right.end, sourceFile);
+}
+
+export function rangeEndIsOnSameLineAsRangeStart(left: TextRange, right: TextRange, sourceFile: SourceFile): boolean {
+  return positionsAreOnSameLine(left.end, right.pos, sourceFile);
+}
+
+export function getStartPositionOfRange(range: TextRange, sourceFile: SourceFile, includeComments: boolean): number {
+  void sourceFile; void includeComments;
+  return range.pos;
+}
+
+export function positionsAreOnSameLine(left: number, right: number, sourceFile: SourceFile): boolean {
+  return getLineAndCharacter(sourceFile, left).line === getLineAndCharacter(sourceFile, right).line;
+}
+
+export function getLinesBetweenPositions(sourceFile: SourceFile, start: number, end: number): number {
+  return Math.max(0, getLineAndCharacter(sourceFile, end).line - getLineAndCharacter(sourceFile, start).line);
+}
+
+export function getLinesBetweenRangeEndAndRangeStart(sourceFile: SourceFile, left: TextRange, right: TextRange): number {
+  return getLinesBetweenPositions(sourceFile, left.end, right.pos);
+}
+
+export function getLinesBetweenPositionAndPrecedingNonWhitespaceCharacter(sourceFile: SourceFile, position: number): number {
+  return getLinesBetweenPositions(sourceFile, getPreviousNonWhitespacePosition(sourceFile, position), position);
+}
+
+export function getLinesBetweenPositionAndNextNonWhitespaceCharacter(sourceFile: SourceFile, position: number): number {
+  const text = sourceTextOf(sourceFile);
+  let next = Math.max(0, position);
+  while (next < text.length && /\s/u.test(text[next]!)) next += 1;
+  return getLinesBetweenPositions(sourceFile, position, next);
+}
+
+export function getPreviousNonWhitespacePosition(sourceFile: SourceFile, position: number): number {
+  const text = sourceTextOf(sourceFile);
+  let previous = Math.min(position - 1, text.length - 1);
+  while (previous >= 0 && /\s/u.test(text[previous]!)) previous -= 1;
+  return Math.max(0, previous);
+}
+
+export function siblingNodePositionsAreComparable(left: AstNode, right: AstNode): boolean {
+  const leftParent = (left as { readonly parent?: AstNode }).parent;
+  const rightParent = (right as { readonly parent?: AstNode }).parent;
+  return leftParent === rightParent && getNodePos(left) <= getNodePos(right);
+}
+
+export function getContainingNodeArray(node: AstNode): readonly AstNode[] | undefined {
+  const parent = (node as { readonly parent?: AstNode }).parent;
+  if (parent === undefined) return undefined;
+  for (const value of Object.values(parent as object)) {
+    if (Array.isArray(value) && value.includes(node)) return value as readonly AstNode[];
+    const nodes = (value as { readonly nodes?: readonly AstNode[] } | undefined)?.nodes;
+    if (nodes?.includes(node) === true) return nodes;
+  }
+  return undefined;
+}
+
+export function canHaveDecorators(node: AstNode): boolean {
+  return node.kind === Kind.ClassDeclaration
+    || node.kind === Kind.ClassExpression
+    || node.kind === Kind.MethodDeclaration
+    || node.kind === Kind.GetAccessor
+    || node.kind === Kind.SetAccessor
+    || node.kind === Kind.PropertyDeclaration
+    || node.kind === Kind.Parameter;
+}
+
+export function originalNodesHaveSameParent(left: AstNode, right: AstNode): boolean {
+  const originalLeft = (left as { readonly original?: AstNode }).original ?? left;
+  if ((originalLeft as { readonly parent?: AstNode }).parent === undefined) return false;
+  const originalRight = (right as { readonly original?: AstNode }).original ?? right;
+  return (originalLeft as { readonly parent?: AstNode }).parent === (originalRight as { readonly parent?: AstNode }).parent;
+}
+
+export function tryGetEnd(node: AstNode | undefined): number | undefined {
+  return node === undefined ? undefined : getNodeEnd(node);
+}
+
+export function greatestEnd(nodes: readonly AstNode[]): number {
+  return nodes.reduce((end, node) => Math.max(end, getNodeEnd(node)), 0);
+}
+
+export function skipSynthesizedParentheses(node: AstNode): AstNode {
+  let current = node;
+  while (current.kind === Kind.ParenthesizedExpression && nodeIsSynthesized(current)) {
+    const expression = (current as { readonly expression?: AstNode }).expression;
+    if (expression === undefined) break;
+    current = expression;
+  }
+  return current;
+}
+
+export function isNewExpressionWithoutArguments(node: AstNode): boolean {
+  return node.kind === Kind.NewExpression && getNodeListLength(getArguments(node)) === 0;
+}
+
+export function isBinaryOperation(node: AstNode): boolean {
+  return node.kind === Kind.BinaryExpression;
+}
+
+export function mixingBinaryOperatorsRequiresParentheses(leftOperator: Kind, rightOperator: Kind): boolean {
+  return leftOperator !== rightOperator
+    && ((leftOperator === Kind.AmpersandAmpersandToken && rightOperator === Kind.BarBarToken)
+      || (leftOperator === Kind.BarBarToken && rightOperator === Kind.AmpersandAmpersandToken)
+      || leftOperator === Kind.QuestionQuestionToken
+      || rightOperator === Kind.QuestionQuestionToken);
+}
+
+export function isImmediatelyInvokedFunctionExpressionOrArrowFunction(node: AstNode): boolean {
+  const parent = (node as { readonly parent?: AstNode }).parent;
+  return (node.kind === Kind.FunctionExpression || node.kind === Kind.ArrowFunction)
+    && parent?.kind === Kind.CallExpression
+    && (parent as { readonly expression?: AstNode }).expression === node;
+}
+
+export function isFileLevelUniqueName(node: AstNode): boolean {
+  return ((node as { readonly autoGenerate?: { readonly flags?: number } }).autoGenerate?.flags ?? 0) !== 0
+    && (node as { readonly parent?: AstNode }).parent?.kind === Kind.SourceFile;
+}
+
+export function hasLeadingHash(text: string): boolean {
+  return text.startsWith("#");
+}
+
+export function isASCIIWordCharacter(ch: number): boolean {
+  return (ch >= 48 && ch <= 57) || (ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122) || ch === 95 || ch === 36;
+}
+
+export function makeIdentifierFromModuleName(moduleName: string): string {
+  const base = moduleName.split(/[\\/]/u).pop() ?? moduleName;
+  const text = base.replace(/\.[^.]+$/u, "").replace(/[^A-Za-z0-9_$]/gu, "_");
+  return /^[A-Za-z_$]/u.test(text) ? text : `_${text}`;
+}
+
+export function skipWhiteSpaceSingleLine(text: string, position: number): number {
+  let index = position;
+  while (index < text.length && (text[index] === " " || text[index] === "\t" || text[index] === "\v" || text[index] === "\f")) index += 1;
+  return index;
+}
+
+export function matchWhiteSpaceSingleLine(text: string, position: number): number {
+  const next = skipWhiteSpaceSingleLine(text, position);
+  return next === position ? -1 : next;
+}
+
+export function matchRune(text: string, position: number, ch: string): number {
+  return text[position] === ch ? position + ch.length : -1;
+}
+
+export function matchString(text: string, position: number, value: string): number {
+  return text.startsWith(value, position) ? position + value.length : -1;
+}
+
+export function matchQuotedString(text: string, position: number): { readonly text: string; readonly end: number } | undefined {
+  const quote = text[position];
+  if (quote !== "\"" && quote !== "'") return undefined;
+  let index = position + 1;
+  let result = "";
+  while (index < text.length && text[index] !== quote) {
+    if (text[index] === "\\" && index + 1 < text.length) index += 1;
+    result += text[index]!;
+    index += 1;
+  }
+  return index < text.length ? { text: result, end: index + 1 } : undefined;
+}
+
+export function isRecognizedTripleSlashComment(text: string, commentRange?: CommentRange): boolean {
+  const commentText = commentRange === undefined
+    ? text
+    : text.slice(commentRange.pos, commentRange.end);
+  if (!commentText.startsWith("///")) return false;
+  let position = skipWhiteSpaceSingleLine(commentText, 3);
+  position = matchRune(commentText, position, "<");
+  if (position < 0) return false;
+  const referencePosition = matchString(commentText, position, "reference");
+  if (referencePosition >= 0) {
+    position = matchWhiteSpaceSingleLine(commentText, referencePosition);
+    if (position < 0) return false;
+    const afterAttribute = matchString(commentText, position, "path")
+      >= 0 ? matchString(commentText, position, "path")
+      : matchString(commentText, position, "types") >= 0 ? matchString(commentText, position, "types")
+        : matchString(commentText, position, "lib") >= 0 ? matchString(commentText, position, "lib")
+          : matchString(commentText, position, "no-default-lib");
+    if (afterAttribute < 0) return false;
+    return matchTripleSlashAssignment(commentText, afterAttribute);
+  }
+  const dependencyPosition = matchString(commentText, position, "amd-dependency");
+  if (dependencyPosition >= 0) {
+    position = matchWhiteSpaceSingleLine(commentText, dependencyPosition);
+    if (position < 0) return false;
+    const afterPath = matchString(commentText, position, "path");
+    return afterPath >= 0 && matchTripleSlashAssignment(commentText, afterPath);
+  }
+  const modulePosition = matchString(commentText, position, "amd-module");
+  if (modulePosition >= 0) {
+    position = skipWhiteSpaceSingleLine(commentText, modulePosition);
+    return commentText.indexOf("/>", position) >= 0;
+  }
+  return false;
+}
+
+function matchTripleSlashAssignment(text: string, position: number): boolean {
+  let current = skipWhiteSpaceSingleLine(text, position);
+  current = matchRune(text, current, "=");
+  if (current < 0) return false;
+  current = skipWhiteSpaceSingleLine(text, current);
+  const quoted = matchQuotedString(text, current);
+  return quoted !== undefined && text.indexOf("/>", quoted.end) >= 0;
+}
+
+export function isJSDocLikeText(text: string, commentRange?: CommentRange): boolean {
+  const commentText = commentRange === undefined
+    ? text
+    : text.slice(commentRange.pos, commentRange.end);
+  return commentText.startsWith("/**") && !commentText.startsWith("/**/");
+}
+
+export function isPinnedComment(text: string, commentRange?: CommentRange): boolean {
+  const commentText = commentRange === undefined
+    ? text
+    : text.slice(commentRange.pos, commentRange.end);
+  return commentText.startsWith("/*!");
+}
+
+export function calculateIndent(text: string, position: number): number {
+  let lineStart = position;
+  while (lineStart > 0 && text[lineStart - 1] !== "\n" && text[lineStart - 1] !== "\r") lineStart -= 1;
+  let indent = 0;
+  while (lineStart + indent < text.length && text[lineStart + indent] === " ") indent += 1;
+  return indent;
+}
+
+export function newLineCharacterCache(sourceFile: SourceFile): readonly number[] {
+  return lineStartsOf(sourceFile);
+}
+
+export function getLineAndCharacter(sourceFile: SourceFile, position: number): { readonly line: number; readonly character: number } {
+  const lineStarts = lineStartsOf(sourceFile);
+  let low = 0;
+  let high = lineStarts.length - 1;
+  while (low <= high) {
+    const mid = (low + high) >> 1;
+    if (lineStarts[mid]! <= position) low = mid + 1;
+    else high = mid - 1;
+  }
+  const line = Math.max(0, low - 1);
+  return { line, character: Math.max(0, position - lineStarts[line]!) };
+}
+
+function sourceTextOf(sourceFile: SourceFile): string {
+  return (sourceFile as unknown as { readonly text?: string }).text ?? "";
+}
+
+function lineStartsOf(sourceFile: SourceFile): readonly number[] {
+  const existing = (sourceFile as unknown as { readonly lineStarts?: readonly number[] }).lineStarts;
+  if (existing !== undefined) return existing;
+  const text = sourceTextOf(sourceFile);
+  const starts = [0];
+  for (let index = 0; index < text.length; index += 1) {
+    const ch = text.charCodeAt(index);
+    if (ch === 13 || ch === 10) {
+      if (ch === 13 && text.charCodeAt(index + 1) === 10) index += 1;
+      starts.push(index + 1);
+    }
+  }
+  return starts;
+}
