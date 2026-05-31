@@ -11,9 +11,60 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
-import { SymbolFlags } from "../ast/index.js";
+import { Kind, SymbolFlags } from "../ast/index.js";
 import type { Type, Signature, UnionOrIntersectionType, LiteralType, ObjectType, IndexInfo, InterfaceType, TypeParameter, TypeReference, IndexedAccessType } from "./types.js";
 import { TypeFlags, SignatureKind, ObjectFlags, VarianceFlags, getTypeOfSymbol } from "./types.js";
+
+export type SignatureCheckMode = number;
+export const SignatureCheckMode = {
+  None: 0 as SignatureCheckMode,
+  BivariantCallback: (1 << 0) as SignatureCheckMode,
+  StrictCallback: (1 << 1) as SignatureCheckMode,
+  IgnoreReturnTypes: (1 << 2) as SignatureCheckMode,
+  StrictArity: (1 << 3) as SignatureCheckMode,
+  StrictTopSignature: (1 << 4) as SignatureCheckMode,
+  Callback: ((1 << 0) | (1 << 1)) as SignatureCheckMode,
+} as const;
+
+export type MinArgumentCountFlags = number;
+export const MinArgumentCountFlags = {
+  None: 0 as MinArgumentCountFlags,
+  StrongArityForUntypedJS: (1 << 0) as MinArgumentCountFlags,
+  VoidIsNonOptional: (1 << 1) as MinArgumentCountFlags,
+} as const;
+
+export type IntersectionState = number;
+export const IntersectionState = {
+  None: 0 as IntersectionState,
+  Source: (1 << 0) as IntersectionState,
+  Target: (1 << 1) as IntersectionState,
+} as const;
+
+export type ExpandingFlags = number;
+export const ExpandingFlags = {
+  None: 0 as ExpandingFlags,
+  Source: (1 << 0) as ExpandingFlags,
+  Target: (1 << 1) as ExpandingFlags,
+  Both: 3 as ExpandingFlags,
+} as const;
+
+export interface DiagnosticAndArguments {
+  readonly message: { readonly code?: number; readonly message?: string } | string;
+  readonly arguments: readonly unknown[];
+}
+
+export interface ErrorOutputContainer {
+  errors: DiagnosticAndArguments[];
+  skipLogging: boolean;
+}
+
+export type ErrorReporter = (message: DiagnosticAndArguments["message"], ...args: readonly unknown[]) => void;
+export type RecursionIdentity = AstNode | AstSymbol | Type;
+export interface RecursionId { readonly value: RecursionIdentity }
+
+export function asRecursionId(value: RecursionIdentity): RecursionId {
+  return { value };
+}
 
 // Composite TypeFlags masks (now defined 1:1 in types.ts); aliased locally
 // to keep the ported relation logic readable.
@@ -90,7 +141,10 @@ interface RelationComparisonResultTable {
   readonly Failed: RelationComparisonResult;
   readonly ReportsUnmeasurable: RelationComparisonResult;
   readonly ReportsUnreliable: RelationComparisonResult;
+  readonly ComplexityOverflow: RelationComparisonResult;
+  readonly StackDepthOverflow: RelationComparisonResult;
   readonly ReportsMask: RelationComparisonResult;
+  readonly Overflow: RelationComparisonResult;
 }
 // 1:1 with TS-Go relater.go RelationComparisonResult.
 export const RelationComparisonResult: RelationComparisonResultTable = {
@@ -99,7 +153,10 @@ export const RelationComparisonResult: RelationComparisonResultTable = {
   Failed: (1 << 1) as RelationComparisonResult,
   ReportsUnmeasurable: (1 << 3) as RelationComparisonResult,
   ReportsUnreliable: (1 << 4) as RelationComparisonResult,
+  ComplexityOverflow: (1 << 5) as RelationComparisonResult,
+  StackDepthOverflow: (1 << 6) as RelationComparisonResult,
   ReportsMask: 24 as RelationComparisonResult, // ReportsUnmeasurable|ReportsUnreliable
+  Overflow: 96 as RelationComparisonResult, // ComplexityOverflow|StackDepthOverflow
 };
 
 export type RecursionFlags = number;
@@ -185,6 +242,22 @@ export class Relater {
   isTypeComparableTo(source: Type, target: Type): boolean {
     return this.isTypeRelatedTo(source, target, this.comparableRelation);
   }
+  areTypesComparable(type1: Type, type2: Type): boolean {
+    return this.isTypeComparableTo(type1, type2) || this.isTypeComparableTo(type2, type1);
+  }
+  compareTypesIdentical(source: Type, target: Type): Ternary {
+    return this.isTypeRelatedTo(source, target, this.identityRelation) ? Ternary.True : Ternary.False;
+  }
+  compareTypesAssignableSimple(source: Type, target: Type): Ternary {
+    return this.isTypeRelatedTo(source, target, this.assignableRelation) ? Ternary.True : Ternary.False;
+  }
+  compareTypesAssignableWorker(source: Type, target: Type, reportErrors: boolean): Ternary {
+    void reportErrors;
+    return this.isTypeRelatedTo(source, target, this.assignableRelation) ? Ternary.True : Ternary.False;
+  }
+  compareTypesSubtypeOf(source: Type, target: Type): Ternary {
+    return this.isTypeRelatedTo(source, target, this.subtypeRelation) ? Ternary.True : Ternary.False;
+  }
   isTypeRelatedTo(source: Type, target: Type, relation: Relation): boolean {
     // Faithful port of relater.go isTypeRelatedTo. (Fresh-literal
     // normalization is deferred — it affects only literal-identity
@@ -225,17 +298,45 @@ export class Relater {
     source: Type, target: Type, errorNode: AstNode | undefined,
     headMessage?: { code: number; message: string },
   ): boolean {
-    void errorNode; void headMessage;
-    return this.isTypeAssignableTo(source, target);
+    return this.checkTypeAssignableToEx(source, target, errorNode, headMessage, undefined);
+  }
+  checkTypeAssignableToEx(
+    source: Type,
+    target: Type,
+    errorNode: AstNode | undefined,
+    headMessage: { code: number; message: string } | undefined,
+    diagnosticOutput: DiagnosticAndArguments[] | undefined,
+  ): boolean {
+    return this.checkTypeRelatedToEx(source, target, this.assignableRelation, errorNode, headMessage, diagnosticOutput);
+  }
+  checkTypeComparableTo(
+    source: Type,
+    target: Type,
+    errorNode: AstNode | undefined,
+    headMessage?: { code: number; message: string },
+  ): boolean {
+    return this.checkTypeRelatedToEx(source, target, this.comparableRelation, errorNode, headMessage, undefined);
   }
   checkTypeRelatedTo(
     source: Type, target: Type, relation: Relation, errorNode: AstNode | undefined,
+  ): boolean {
+    return this.checkTypeRelatedToEx(source, target, relation, errorNode, undefined, undefined);
+  }
+  checkTypeRelatedToEx(
+    source: Type,
+    target: Type,
+    relation: Relation,
+    errorNode: AstNode | undefined,
+    headMessage: { code: number; message: string } | undefined,
+    diagnosticOutput: DiagnosticAndArguments[] | undefined,
   ): boolean {
     void errorNode;
     if (this.isSimpleTypeRelatedTo(source, target, relation)) return true;
     const sf = (source as { flags?: number }).flags ?? 0;
     const tf = (target as { flags?: number }).flags ?? 0;
     if ((sf & TypeFlags.StructuredOrInstantiable) === 0 && (tf & TypeFlags.StructuredOrInstantiable) === 0) {
+      const diagnostic = this.createDiagnosticChainFromErrorChain(headMessage, source, target);
+      if (diagnosticOutput !== undefined) diagnosticOutput.push(diagnostic);
       return false;
     }
     const key = getRelationKey(source, target, relation.kind === RelationKind.Identity);
@@ -249,7 +350,110 @@ export class Relater {
     const result = this.recursiveTypeRelatedTo(source, target, false, 0, RecursionFlags.Both, relation);
     const ok = result !== Ternary.False;
     relation.cache.set(key, ok ? RelationComparisonResult.Succeeded : RelationComparisonResult.Failed);
+    if (!ok) {
+      const diagnostic = this.createDiagnosticChainFromErrorChain(headMessage, source, target);
+      this.reportDiagnostic(diagnosticOutput, diagnostic);
+    }
     return ok;
+  }
+  createDiagnosticChainFromErrorChain(
+    headMessage: { code: number; message: string } | undefined,
+    source: Type,
+    target: Type,
+  ): DiagnosticAndArguments {
+    return {
+      message: headMessage ?? "Type_0_is_not_assignable_to_type_1",
+      arguments: [typeDisplayName(source), typeDisplayName(target)],
+    };
+  }
+  reportDiagnostic(diagnosticOutput: DiagnosticAndArguments[] | undefined, diagnostic: DiagnosticAndArguments): void {
+    diagnosticOutput?.push(diagnostic);
+  }
+  checkTypeAssignableToAndOptionallyElaborate(
+    source: Type,
+    target: Type,
+    errorNode: AstNode | undefined,
+    expression: AstNode | undefined,
+    headMessage: { code: number; message: string } | undefined,
+    containingMessageChain: DiagnosticAndArguments[] | undefined,
+  ): boolean {
+    return this.checkTypeRelatedToAndOptionallyElaborate(source, target, this.assignableRelation, errorNode, expression, headMessage, containingMessageChain);
+  }
+  checkTypeRelatedToAndOptionallyElaborate(
+    source: Type,
+    target: Type,
+    relation: Relation,
+    errorNode: AstNode | undefined,
+    expression: AstNode | undefined,
+    headMessage: { code: number; message: string } | undefined,
+    containingMessageChain: DiagnosticAndArguments[] | undefined,
+  ): boolean {
+    const diagnostics: DiagnosticAndArguments[] = [];
+    const related = this.checkTypeRelatedToEx(source, target, relation, errorNode, headMessage, diagnostics);
+    if (related) return true;
+    this.elaborateError(expression, source, target, diagnostics);
+    if (containingMessageChain !== undefined) containingMessageChain.push(...diagnostics);
+    return false;
+  }
+  elaborateError(
+    expression: AstNode | undefined,
+    source: Type,
+    target: Type,
+    diagnostics: DiagnosticAndArguments[],
+  ): void {
+    if (expression !== undefined && this.elaborateDidYouMeanToCallOrConstruct(expression, source, target, diagnostics)) return;
+    if (expression !== undefined && expression.kind === Kind.ObjectLiteralExpression) this.elaborateObjectLiteral(expression, source, target, diagnostics);
+    if (expression !== undefined && expression.kind === Kind.ArrayLiteralExpression) this.elaborateArrayLiteral(expression, source, target, diagnostics);
+  }
+  isOrHasGenericConditional(type: Type): boolean {
+    if ((type.flags & TypeFlags.Conditional) !== 0) return true;
+    const types = constituentTypes(type);
+    return types?.some((candidate) => this.isOrHasGenericConditional(candidate)) ?? false;
+  }
+  elaborateDidYouMeanToCallOrConstruct(
+    expression: AstNode,
+    source: Type,
+    target: Type,
+    diagnostics: DiagnosticAndArguments[],
+  ): boolean {
+    void expression;
+    const callSignatures = signaturesOf(source, SignatureKind.Call) ?? [];
+    const constructSignatures = signaturesOf(source, SignatureKind.Construct) ?? [];
+    if (callSignatures.length === 0 && constructSignatures.length === 0) return false;
+    const returnTypes = [...callSignatures, ...constructSignatures].map(signature => signature.resolvedReturnType).filter((type): type is Type => type !== undefined);
+    if (!returnTypes.some(returnType => this.isTypeAssignableTo(returnType, target))) return false;
+    diagnostics.push({ message: "Did_you_mean_to_call_this_expression", arguments: [typeDisplayName(source), typeDisplayName(target)] });
+    return true;
+  }
+  elaborateObjectLiteral(
+    expression: AstNode,
+    source: Type,
+    target: Type,
+    diagnostics: DiagnosticAndArguments[],
+  ): boolean {
+    void expression;
+    if (this.excessProperty !== undefined) {
+      diagnostics.push({ message: "Object_literal_may_only_specify_known_properties", arguments: [this.excessProperty.name, typeDisplayName(target)] });
+      return true;
+    }
+    return this.elaborateElement(source, target, diagnostics);
+  }
+  elaborateArrayLiteral(
+    expression: AstNode,
+    source: Type,
+    target: Type,
+    diagnostics: DiagnosticAndArguments[],
+  ): boolean {
+    void expression;
+    return this.elaborateElement(source, target, diagnostics);
+  }
+  elaborateElement(source: Type, target: Type, diagnostics: DiagnosticAndArguments[]): boolean {
+    const sourceElement = this.arrayElementType(source);
+    const targetElement = this.arrayElementType(target);
+    if (sourceElement === undefined || targetElement === undefined) return false;
+    if (this.isTypeAssignableTo(sourceElement, targetElement)) return false;
+    diagnostics.push({ message: "Type_0_is_not_assignable_to_type_1", arguments: [typeDisplayName(sourceElement), typeDisplayName(targetElement)] });
+    return true;
   }
 
   // -------------------------------------------------------------------------
@@ -420,6 +624,23 @@ export class Relater {
     }
     return Ternary.True;
   }
+  hasCommonProperties(source: Type, target: Type): boolean {
+    const sourceProps = propertyMapOf(source);
+    const targetProps = propertyMapOf(target);
+    if (sourceProps === undefined || targetProps === undefined) return false;
+    for (const name of sourceProps.keys()) if (targetProps.has(name)) return true;
+    return false;
+  }
+  isKnownProperty(target: Type, name: string): boolean {
+    return propertyMapOf(target)?.has(name) === true
+      || (indexInfosOf(target)?.some(info => this.isTypeAssignableTo(stringKeyType(name), info.keyType)) ?? false);
+  }
+  isHyphenatedJsxName(name: string): boolean {
+    return name.includes("-");
+  }
+  isDeeplyNestedType(type: Type): boolean {
+    return typeNestingDepth(type, 0) > 8;
+  }
 
   propertyRelatedTo(
     name: string, sourceProp: AstSymbol, targetProp: AstSymbol, reportErrors: boolean,
@@ -455,6 +676,82 @@ export class Relater {
       if (!found) return Ternary.False;
     }
     return Ternary.True;
+  }
+  isSignatureAssignableTo(source: Signature, target: Signature): boolean {
+    return this.compareSignaturesRelated(source, target, SignatureCheckMode.None, false) !== Ternary.False;
+  }
+  compareSignaturesRelated(
+    source: Signature,
+    target: Signature,
+    checkMode: SignatureCheckMode,
+    reportErrors: boolean,
+  ): Ternary {
+    if ((checkMode & SignatureCheckMode.StrictArity) !== 0 && this.getParameterCount(source) !== this.getParameterCount(target)) return Ternary.False;
+    const minTarget = this.getMinArgumentCount(target, MinArgumentCountFlags.None);
+    if (this.getParameterCount(source) < minTarget) return Ternary.False;
+    const count = Math.min(this.getParameterCount(source), this.getParameterCount(target));
+    for (let index = 0; index < count; index++) {
+      const sourceType = this.tryGetTypeAtPosition(source, index);
+      const targetType = this.tryGetTypeAtPosition(target, index);
+      if (sourceType !== undefined && targetType !== undefined && !this.isTypeAssignableTo(targetType, sourceType)) return Ternary.False;
+    }
+    if ((checkMode & SignatureCheckMode.IgnoreReturnTypes) === 0) {
+      const sourceReturn = source.resolvedReturnType;
+      const targetReturn = target.resolvedReturnType;
+      if (sourceReturn !== undefined && targetReturn !== undefined && !this.isTypeAssignableTo(sourceReturn, targetReturn)) return Ternary.False;
+    }
+    void reportErrors;
+    return Ternary.True;
+  }
+  compareTypePredicateRelatedTo(source: unknown, target: unknown): Ternary {
+    return JSON.stringify(source) === JSON.stringify(target) ? Ternary.True : Ternary.False;
+  }
+  isTopSignature(signature: Signature): boolean {
+    return this.getParameterCount(signature) === 0 && signature.resolvedReturnType !== undefined && (signature.resolvedReturnType.flags & TypeFlags.AnyOrUnknown) !== 0;
+  }
+  getParameterCount(signature: Signature): number {
+    return (signature.parameters as readonly AstSymbol[] | undefined)?.length ?? 0;
+  }
+  getMinArgumentCount(signature: Signature, flags: MinArgumentCountFlags): number {
+    return this.getMinArgumentCountEx(signature, flags);
+  }
+  getMinArgumentCountEx(signature: Signature, flags: MinArgumentCountFlags): number {
+    const parameters = (signature.parameters as readonly AstSymbol[] | undefined) ?? [];
+    let count = parameters.length;
+    while (count > 0) {
+      const parameterType = getTypeOfSymbol(parameters[count - 1]!);
+      const optional = ((parameters[count - 1]!.flags ?? 0) & SymbolFlags.Optional) !== 0
+        || (parameterType !== undefined && (parameterType.flags & TypeFlags.VoidLike) !== 0 && (flags & MinArgumentCountFlags.VoidIsNonOptional) === 0);
+      if (!optional) break;
+      count--;
+    }
+    return count;
+  }
+  hasEffectiveRestParameter(signature: Signature): boolean {
+    return this.getEffectiveRestType(signature) !== undefined;
+  }
+  getEffectiveRestType(signature: Signature): Type | undefined {
+    return (signature as { readonly restType?: Type }).restType ?? this.getNonArrayRestType(signature);
+  }
+  getNonArrayRestType(signature: Signature): Type | undefined {
+    const rest = (signature as { readonly restType?: Type }).restType;
+    if (rest === undefined) return undefined;
+    return this.arrayElementType(rest) === undefined ? rest : undefined;
+  }
+  getTypeAtPosition(signature: Signature, position: number): Type {
+    return this.tryGetTypeAtPosition(signature, position) ?? this.getRestOrAnyTypeAtPosition(signature, position);
+  }
+  tryGetTypeAtPosition(signature: Signature, position: number): Type | undefined {
+    const parameter = (signature.parameters as readonly AstSymbol[] | undefined)?.[position];
+    return parameter === undefined ? this.getRestTypeAtPosition(signature, position) : getTypeOfSymbol(parameter);
+  }
+  getRestOrAnyTypeAtPosition(signature: Signature, position: number): Type {
+    return this.getRestTypeAtPosition(signature, position) ?? signature.resolvedReturnType ?? { flags: TypeFlags.Any } as Type;
+  }
+  getRestTypeAtPosition(signature: Signature, position: number): Type | undefined {
+    const rest = (signature as { readonly restType?: Type; readonly minArgumentCount?: number }).restType;
+    const minArgumentCount = (signature as { readonly minArgumentCount?: number }).minArgumentCount ?? this.getParameterCount(signature);
+    return position >= minArgumentCount ? rest : undefined;
   }
 
   signatureRelatedTo(
@@ -809,6 +1106,37 @@ function isObjectOrArrayLiteralTypeLocal(t: Type): boolean {
   if ((t.flags & TypeFlags.Object) === 0) return false;
   const flags = objectFlagsOf(t);
   return (flags & (ObjectFlags.ObjectLiteral | ObjectFlags.ArrayLiteral)) !== 0;
+}
+
+function propertyMapOf(type: Type): Map<string, AstSymbol> | undefined {
+  return (type as { readonly symbol?: { readonly members?: Map<string, AstSymbol> } }).symbol?.members;
+}
+
+function stringKeyType(value: string): Type {
+  return {
+    flags: TypeFlags.StringLiteral,
+    data: { value } as LiteralType,
+  } as Type;
+}
+
+function typeDisplayName(type: Type): string {
+  const intrinsic = (type as { readonly intrinsicName?: string }).intrinsicName;
+  if (intrinsic !== undefined) return intrinsic;
+  const symbolName = symbolNameOf(type.symbol);
+  if (symbolName.length > 0) return symbolName;
+  if ((type.flags & TypeFlags.StringLiteral) !== 0) return JSON.stringify(literalValueOf(type));
+  if ((type.flags & TypeFlags.NumberLiteral) !== 0 || (type.flags & TypeFlags.BigIntLiteral) !== 0) return String(literalValueOf(type));
+  return `type(${type.flags})`;
+}
+
+function typeNestingDepth(type: Type, depth: number): number {
+  if (depth > 16) return depth;
+  const children = constituentTypes(type)
+    ?? (type.data as { readonly resolvedTypeArguments?: readonly Type[]; readonly resolvedTypeArguments_?: readonly Type[] } | undefined)?.resolvedTypeArguments
+    ?? (type.data as { readonly resolvedTypeArguments_?: readonly Type[] } | undefined)?.resolvedTypeArguments_
+    ?? [];
+  if (children.length === 0) return depth;
+  return Math.max(...children.map(child => typeNestingDepth(child, depth + 1)));
 }
 
 function getTypeParameterModifierFlags(typeParameter: TypeParameter): number {
