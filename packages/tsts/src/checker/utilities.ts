@@ -17,6 +17,7 @@ import type {
   Diagnostic,
   ParameterDeclaration,
 } from "../ast/index.js";
+import type { int } from "@tsonic/core/types.js";
 import type { IndexInfo, Signature, Type, TypeMapper, TypeParameter } from "./types.js";
 import {
   Kind,
@@ -26,6 +27,7 @@ import {
   nodeParent,
   hasSyntacticModifier,
 } from "../ast/index.js";
+import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
 import { ModifierFlags } from "../enums/modifierFlags.enum.js";
 import { ObjectFlags, TypeFlags, getTypeOfSymbol } from "./types.js";
 import { MapperKind } from "./mapper.js";
@@ -51,17 +53,23 @@ export function newDiagnosticForNode(
 ): Diagnostic {
   // Locate the containing SourceFile and resolve pos/length from the
   // node so callers get a diagnostic anchored at the right location.
-  let sf: AstNode | undefined = node;
-  while (sf !== undefined && (sf as { kind?: number }).kind !== Kind.SourceFile) {
-    sf = (sf as unknown as { parent?: AstNode }).parent;
-  }
   const pos = (node as unknown as { pos?: number }).pos ?? 0;
   const end = (node as unknown as { end?: number }).end ?? pos;
   const formatted = formatDiagnosticMessage(message.message, args);
+  const diagnosticMessage = {
+    key: message.message,
+    code: message.code,
+    category: DiagnosticCategory.Error,
+    message: formatted,
+  };
   return {
-    file: sf, start: pos, length: Math.max(0, end - pos),
-    messageText: formatted, category: 1, code: message.code,
-  } as unknown as Diagnostic;
+    message: diagnosticMessage,
+    start: pos,
+    length: Math.max(0, end - pos),
+    category: DiagnosticCategory.Error,
+    code: message.code,
+    text: formatted,
+  };
 }
 
 export function newDiagnosticChainForNode(
@@ -71,14 +79,13 @@ export function newDiagnosticChainForNode(
   // previous diagnostic becomes the .next link (matches ts-go's
   // DiagnosticMessageChain shape).
   const base = newDiagnosticForNode(node, message, ...args);
-  (base as unknown as { next?: Diagnostic }).next = chain;
-  return base;
+  return { ...base, chainedDiagnostics: [chain] };
 }
 
 function formatDiagnosticMessage(template: string, args: readonly unknown[]): string {
   // Interpolate {0}, {1}, … placeholders with String(args[i]).
   return template.replace(/\{(\d+)\}/g, (_match, idx) => {
-    const i = Number(idx);
+    const i: int = Number(idx) | 0;
     return i < args.length ? String(args[i]) : `{${idx}}`;
   });
 }

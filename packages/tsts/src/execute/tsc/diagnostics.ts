@@ -144,7 +144,8 @@ export function createWatchStatusReporter<Diagnostic extends DiagnosticLike>(
   const writer = sys.writer();
   return (diagnostic: Diagnostic) => {
     if (testing !== undefined) testing.onWatchStatusReportStart();
-    createBuilderStatusReporter(sys, writer, options).call(undefined, diagnostic);
+    const reporter: DiagnosticReporter<Diagnostic> = createBuilderStatusReporter(sys, writer, options);
+    reporter(diagnostic);
     if (testing !== undefined) testing.onWatchStatusReportEnd();
   };
 }

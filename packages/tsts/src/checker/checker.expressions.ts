@@ -57,7 +57,8 @@ import {
 } from "../ast/index.js";
 
 function kindDebugName(kind: Kind): string {
-  return KindNames[kind] ?? String(kind);
+  const index: int = kind | 0;
+  return KindNames[index] ?? String(kind);
 }
 import {
   type Type,

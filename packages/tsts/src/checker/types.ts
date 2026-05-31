@@ -129,7 +129,18 @@ export const MembersOrExportsResolutionKind = {
 } as const;
 
 export type VarianceFlags = number;
-export const VarianceFlags = {
+export interface VarianceFlagsTable {
+  readonly Invariant: VarianceFlags;
+  readonly Covariant: VarianceFlags;
+  readonly Contravariant: VarianceFlags;
+  readonly Bivariant: VarianceFlags;
+  readonly Independent: VarianceFlags;
+  readonly VarianceMask: VarianceFlags;
+  readonly Unmeasurable: VarianceFlags;
+  readonly Unreliable: VarianceFlags;
+  readonly AllowsStructuralFallback: VarianceFlags;
+}
+export const VarianceFlags: VarianceFlagsTable = {
   Invariant: 0 as VarianceFlags,
   Covariant: (1 << 0) as VarianceFlags,
   Contravariant: (1 << 1) as VarianceFlags,
@@ -417,7 +428,17 @@ export const ObjectFlags: ObjectFlagsTable = {
 };
 
 export type ElementFlags = number;
-export const ElementFlags = {
+export interface ElementFlagsTable {
+  readonly Required: ElementFlags;
+  readonly Optional: ElementFlags;
+  readonly Rest: ElementFlags;
+  readonly Variadic: ElementFlags;
+  readonly Fixed: ElementFlags;
+  readonly Variable: ElementFlags;
+  readonly NonRequired: ElementFlags;
+  readonly NonRest: ElementFlags;
+}
+export const ElementFlags: ElementFlagsTable = {
   Required: (1 << 0) as ElementFlags,
   Optional: (1 << 1) as ElementFlags,
   Rest: (1 << 2) as ElementFlags,

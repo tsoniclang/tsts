@@ -1,7 +1,7 @@
 import {
   SnapshotFileEmitKind,
   buildReferencedByMap,
-  type FileInfo,
+  type ProgramSnapshotFileInfo,
   type ProgramSnapshot,
 } from "./snapshot.js";
 
@@ -153,7 +153,7 @@ export class AffectedFilesHandler<SourceFile = unknown, Diagnostic = unknown> {
     });
   }
 
-  private computeSignature(file: SourceFile, oldInfo: FileInfo | undefined, useFileVersionAsSignature: boolean): string {
+  private computeSignature(file: SourceFile, oldInfo: ProgramSnapshotFileInfo | undefined, useFileVersionAsSignature: boolean): string {
     if (!useFileVersionAsSignature) {
       const signature = this.state.program.computeDtsSignature(file);
       if (signature !== undefined && signature !== "") return signature;

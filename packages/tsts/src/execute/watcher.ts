@@ -26,7 +26,7 @@ export class BuildWatcher implements Watcher {
   private timer: unknown;
   private closed = false;
 
-  constructor(host: WatchHost, cycle: () => void, delayMs = 250) {
+  constructor(host: WatchHost, cycle: () => void, delayMs: number = 250) {
     this.host = host;
     this.cycle = cycle;
     this.delayMs = delayMs;

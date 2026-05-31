@@ -25,7 +25,23 @@ const isTrueOrUnknown = tristateIsTrueOrUnknown;
 // ---------------------------------------------------------------------------
 
 export type ModuleKind = number;
-export const ModuleKind = {
+export interface ModuleKindTable {
+  readonly None: ModuleKind;
+  readonly CommonJS: ModuleKind;
+  readonly AMD: ModuleKind;
+  readonly UMD: ModuleKind;
+  readonly System: ModuleKind;
+  readonly ES2015: ModuleKind;
+  readonly ES2020: ModuleKind;
+  readonly ES2022: ModuleKind;
+  readonly ESNext: ModuleKind;
+  readonly Node16: ModuleKind;
+  readonly Node18: ModuleKind;
+  readonly Node20: ModuleKind;
+  readonly NodeNext: ModuleKind;
+  readonly Preserve: ModuleKind;
+}
+export const ModuleKind: ModuleKindTable = {
   None: 0,
   CommonJS: 1,
   AMD: 2,
@@ -73,7 +89,12 @@ export function moduleKindToString(i: ModuleKind): string {
 }
 
 export type ResolutionMode = ModuleKind;
-export const ResolutionMode = {
+export interface ResolutionModeTable {
+  readonly None: ResolutionMode;
+  readonly CommonJS: ResolutionMode;
+  readonly ESM: ResolutionMode;
+}
+export const ResolutionMode: ResolutionModeTable = {
   None: ModuleKind.None,
   CommonJS: ModuleKind.CommonJS,
   ESM: ModuleKind.ESNext,

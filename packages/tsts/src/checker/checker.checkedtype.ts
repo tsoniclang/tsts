@@ -58,6 +58,8 @@ import {
   isVariableDeclaration,
   type BindingElement,
   type ClassDeclaration,
+  type ClassElement,
+  type ConstructorDeclaration,
   type EntityName,
   type Expression,
   type ExpressionWithTypeArguments,
@@ -75,6 +77,7 @@ import {
   type TypeReferenceNode,
   type UnionTypeNode,
 } from "../ast/index.js";
+import type { int } from "@tsonic/core/types.js";
 import { nodeParent, nodeSymbol } from "../ast/index.js";
 import { ModifierFlags } from "../enums/modifierFlags.enum.js";
 import { NameResolver } from "../binder/index.js";
@@ -101,7 +104,8 @@ export { getTypeOfSymbol, getPropertySymbolOfType, getPropertyTypeOfType } from 
 export type { Type } from "./types.js";
 
 function kindDebugName(kind: Kind): string {
-  return KindNames[kind] ?? String(kind);
+  const index: int = kind | 0;
+  return KindNames[index] ?? String(kind);
 }
 
 export interface CheckDiagnostic {
@@ -1311,7 +1315,20 @@ function literalPropertyNameFromExpression(expression: Expression): string | und
   return undefined;
 }
 
-function collectTypeMembers(members: readonly AstNode[], properties: ObjectProperty[], state: CheckState, includeMember: (member: AstNode) => boolean = () => true): void {
+function includeEveryMember(_member: AstNode): boolean {
+  return true;
+}
+
+function classDeclarationMembers(declaration: ClassDeclaration): readonly ClassElement[] {
+  return (declaration as unknown as { readonly members: readonly ClassElement[] }).members;
+}
+
+function collectTypeMembers(
+  members: readonly AstNode[],
+  properties: ObjectProperty[],
+  state: CheckState,
+  includeMember: (member: AstNode) => boolean = includeEveryMember,
+): void {
   for (const member of members) {
     if (!includeMember(member)) continue;
     if (isPropertySignatureDeclaration(member) || isPropertyDeclaration(member)) {
@@ -1351,7 +1368,11 @@ function isStaticClassMember(member: AstNode): boolean {
     && hasModifier(member, ModifierFlags.Static);
 }
 
-function collectTypeMemberExtras(members: readonly AstNode[], state: CheckState, includeMember: (member: AstNode) => boolean = () => true): ObjectTypeExtras | undefined {
+function collectTypeMemberExtras(
+  members: readonly AstNode[],
+  state: CheckState,
+  includeMember: (member: AstNode) => boolean = includeEveryMember,
+): ObjectTypeExtras | undefined {
   const callSignatures: Signature[] = [];
   const constructSignatures: Signature[] = [];
   const indexInfos: IndexInfo[] = [];
@@ -1662,14 +1683,19 @@ function getTypeOfFuncClassEnumModule(symbol: AstSymbol, state: CheckState): Typ
     return makeFunctionType(anyType, state, [{ name: "args", type: anyType, rest: true }]);
   }
   if ((flags & SymbolFlags.Class) !== 0) {
-    const declaration = symbol.declarations?.find((node): node is ClassDeclaration => isClassDeclaration(node));
+    const declarations: readonly AstNode[] = symbol.declarations ?? [];
+    const declaration = declarations.find((node: AstNode): node is ClassDeclaration => isClassDeclaration(node));
     const instanceType = getDeclaredTypeOfClassOrInterfaceCore(symbol, declaration, state);
-    const constructor = declaration?.members.find((member) => isConstructorDeclaration(member));
-    const parameters = constructor === undefined ? [] : functionParametersFromNode(constructor.parameters, state);
+    let constructor: ConstructorDeclaration | undefined = undefined;
     const staticProperties: ObjectProperty[] = [];
     if (declaration !== undefined) {
-      collectTypeMembers(declaration.members, staticProperties, state, isStaticClassMember);
+      const classMembers: readonly ClassElement[] = classDeclarationMembers(declaration);
+      for (const member of classMembers) {
+        if (isConstructorDeclaration(member)) constructor = member;
+      }
+      collectTypeMembers(classMembers, staticProperties, state, isStaticClassMember);
     }
+    const parameters = constructor === undefined ? [] : functionParametersFromNode(constructor.parameters, state);
     return makeObjectType(staticProperties, state, false, { constructSignatures: [makeCallSignature(instanceType, parameters)] });
   }
   void state;

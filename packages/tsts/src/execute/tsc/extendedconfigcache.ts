@@ -12,11 +12,15 @@ export interface ExtendedConfigCacheEntry {
   readonly value: unknown;
 }
 
+export interface ExtendedConfigHost {
+  readonly readFile?: (fileName: string) => string | undefined;
+}
+
 export type ParseExtendedConfig = (
   fileName: string,
   path: Path,
   resolutionStack: readonly string[],
-  host: unknown,
+  host: ExtendedConfigHost,
   cache: ExtendedConfigCache,
 ) => ExtendedConfigCacheEntry;
 
@@ -32,7 +36,7 @@ export class ExtendedConfigCache {
     fileName: string,
     path: Path,
     resolutionStack: readonly string[],
-    host: unknown,
+    host: ExtendedConfigHost,
   ): ExtendedConfigCacheEntry {
     const existing = this.entries.get(path);
     if (existing !== undefined) return existing;

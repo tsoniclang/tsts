@@ -35,8 +35,8 @@ export class Orchestrator implements Watcher {
   readonly tasks = new Map<string, BuildTask>();
   order: string[] = [];
   errors: DiagnosticLike[] = [];
-  errorSummaryReporter: DiagnosticsReporter<DiagnosticLike> = () => undefined;
-  watchStatusReporter: DiagnosticReporter<DiagnosticLike> = () => undefined;
+  errorSummaryReporter: DiagnosticsReporter<DiagnosticLike> = (_diagnostics: readonly DiagnosticLike[]): void => {};
+  watchStatusReporter: DiagnosticReporter<DiagnosticLike> = (_diagnostic: DiagnosticLike): void => {};
 
   constructor(opts: BuildOptions) {
     this.opts = opts;
@@ -142,6 +142,8 @@ export class Orchestrator implements Watcher {
   }
 
   buildOrClean(status: ExitStatus): BuildResult {
+    const relativeFileName = (fileName: string): string => this.relativeFileName(fileName);
+    const toPath = (fileName: string): string => this.toPath(fileName);
     const aggregate: BuildAggregateResult = {
       errors: [...this.errors],
       status,
@@ -153,18 +155,18 @@ export class Orchestrator implements Watcher {
       task.buildProject({
         force: false,
         now: this.opts.now,
-        relativeFileName: this.relativeFileName.bind(this),
+        relativeFileName,
         stopBuildOnErrors: false,
-        toPath: this.toPath.bind(this),
+        toPath,
         verbose: false,
         write: this.opts.writer,
       }, this.toPath(config));
       task.report({
         force: false,
         now: this.opts.now,
-        relativeFileName: this.relativeFileName.bind(this),
+        relativeFileName,
         stopBuildOnErrors: false,
-        toPath: this.toPath.bind(this),
+        toPath,
         verbose: false,
         write: this.opts.writer,
       }, aggregate);

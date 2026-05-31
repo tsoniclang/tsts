@@ -6,10 +6,11 @@
 
 import { version } from "../../core/version.js";
 import { ResolutionMode, type CompilerOptions } from "../../core/compileroptions.js";
+import type { int } from "@tsonic/core/types.js";
 import type { Path } from "../../tspath/index.js";
 
-export type BuildInfoFileId = number;
-export type BuildInfoFileIdListId = number;
+export type BuildInfoFileId = int;
+export type BuildInfoFileIdListId = int;
 
 export interface FileInfo {
   readonly version: string;
@@ -38,10 +39,13 @@ export class BuildInfoRoot {
   }
 
   static fromJSON(value: unknown): BuildInfoRoot {
-    if (Array.isArray(value) && value.length === 2 && typeof value[0] === "number" && typeof value[1] === "number") {
-      return new BuildInfoRoot(value[0], value[1]);
+    const array = jsonArray(value);
+    if (array !== undefined && array.length === 2) {
+      const start = numberAt(array, 0 as int);
+      const end = numberAt(array, 1 as int);
+      if (start !== undefined && end !== undefined) return new BuildInfoRoot(start as BuildInfoFileId, end as BuildInfoFileId);
     }
-    if (typeof value === "number") return new BuildInfoRoot(value);
+    if (typeof value === "number") return new BuildInfoRoot(value as BuildInfoFileId);
     if (typeof value === "string") return new BuildInfoRoot(0, 0, value);
     throw new Error("invalid BuildInfoRoot");
   }
@@ -171,10 +175,14 @@ export class BuildInfoReferenceMapEntry {
   }
 
   static fromJSON(value: unknown): BuildInfoReferenceMapEntry {
-    if (!Array.isArray(value) || value.length !== 2 || typeof value[0] !== "number" || typeof value[1] !== "number") {
+    const array = jsonArray(value);
+    if (array === undefined || array.length !== 2) {
       throw new Error("invalid BuildInfoReferenceMapEntry");
     }
-    return new BuildInfoReferenceMapEntry(value[0], value[1]);
+    const fileId = numberAt(array, 0 as int);
+    const fileIdListId = numberAt(array, 1 as int);
+    if (fileId === undefined || fileIdListId === undefined) throw new Error("invalid BuildInfoReferenceMapEntry");
+    return new BuildInfoReferenceMapEntry(fileId as BuildInfoFileId, fileIdListId as BuildInfoFileIdListId);
   }
 }
 
@@ -216,10 +224,14 @@ export class BuildInfoDiagnosticsOfFile {
   }
 
   static fromJSON(value: unknown): BuildInfoDiagnosticsOfFile {
-    if (!Array.isArray(value) || value.length !== 2 || typeof value[0] !== "number" || !Array.isArray(value[1])) {
+    const array = jsonArray(value);
+    if (array === undefined || array.length !== 2) {
       throw new Error("invalid BuildInfoDiagnosticsOfFile");
     }
-    return new BuildInfoDiagnosticsOfFile(value[0], value[1] as readonly BuildInfoDiagnostic[]);
+    const fileId = numberAt(array, 0 as int);
+    const diagnostics = jsonArray(valueAt(array, 1 as int));
+    if (fileId === undefined || diagnostics === undefined) throw new Error("invalid BuildInfoDiagnosticsOfFile");
+    return new BuildInfoDiagnosticsOfFile(fileId as BuildInfoFileId, diagnostics as readonly BuildInfoDiagnostic[]);
   }
 }
 
@@ -266,12 +278,18 @@ export class BuildInfoFilePendingEmit {
   }
 
   static fromJSON(value: unknown): BuildInfoFilePendingEmit {
-    if (typeof value === "number") return new BuildInfoFilePendingEmit(value);
-    if (Array.isArray(value) && value.length === 1 && typeof value[0] === "number") {
-      return new BuildInfoFilePendingEmit(value[0], FileEmitKind.Dts);
+    if (typeof value === "number") return new BuildInfoFilePendingEmit(value as BuildInfoFileId);
+    const array = jsonArray(value);
+    if (array !== undefined && array.length === 1) {
+      const fileId = numberAt(array, 0 as int);
+      if (fileId !== undefined) return new BuildInfoFilePendingEmit(fileId as BuildInfoFileId, FileEmitKind.Dts);
     }
-    if (Array.isArray(value) && value.length === 2 && typeof value[0] === "number" && typeof value[1] === "number") {
-      return new BuildInfoFilePendingEmit(value[0], value[1] as FileEmitKind);
+    if (array !== undefined && array.length === 2) {
+      const fileId = numberAt(array, 0 as int);
+      const emitKind = numberAt(array, 1 as int);
+      if (fileId !== undefined && emitKind !== undefined) {
+        return new BuildInfoFilePendingEmit(fileId as BuildInfoFileId, emitKind as FileEmitKind);
+      }
     }
     throw new Error("invalid BuildInfoFilePendingEmit");
   }
@@ -302,15 +320,20 @@ export class BuildInfoEmitSignature {
   }
 
   static fromJSON(value: unknown): BuildInfoEmitSignature {
-    if (typeof value === "number") return new BuildInfoEmitSignature(value);
-    if (!Array.isArray(value) || value.length !== 2 || typeof value[0] !== "number") {
+    if (typeof value === "number") return new BuildInfoEmitSignature(value as BuildInfoFileId);
+    const array = jsonArray(value);
+    if (array === undefined || array.length !== 2) {
       throw new Error("invalid BuildInfoEmitSignature");
     }
-    const payload = value[1];
-    if (typeof payload === "string") return new BuildInfoEmitSignature(value[0], payload);
-    if (Array.isArray(payload) && payload.length === 0) return new BuildInfoEmitSignature(value[0], "", true, false);
-    if (Array.isArray(payload) && payload.length === 1 && typeof payload[0] === "string") {
-      return new BuildInfoEmitSignature(value[0], payload[0], false, true);
+    const fileId = numberAt(array, 0 as int);
+    if (fileId === undefined) throw new Error("invalid BuildInfoEmitSignature");
+    const payload = valueAt(array, 1 as int);
+    if (typeof payload === "string") return new BuildInfoEmitSignature(fileId as BuildInfoFileId, payload);
+    const payloadArray = jsonArray(payload);
+    if (payloadArray !== undefined && payloadArray.length === 0) return new BuildInfoEmitSignature(fileId as BuildInfoFileId, "", true, false);
+    if (payloadArray !== undefined && payloadArray.length === 1) {
+      const signature = stringAt(payloadArray, 0 as int);
+      if (signature !== undefined) return new BuildInfoEmitSignature(fileId as BuildInfoFileId, signature, false, true);
     }
     throw new Error("invalid BuildInfoEmitSignature");
   }
@@ -330,10 +353,14 @@ export class BuildInfoResolvedRoot {
   }
 
   static fromJSON(value: unknown): BuildInfoResolvedRoot {
-    if (!Array.isArray(value) || value.length !== 2 || typeof value[0] !== "number" || typeof value[1] !== "number") {
+    const array = jsonArray(value);
+    if (array === undefined || array.length !== 2) {
       throw new Error("invalid BuildInfoResolvedRoot");
     }
-    return new BuildInfoResolvedRoot(value[0], value[1]);
+    const resolved = numberAt(array, 0 as int);
+    const root = numberAt(array, 1 as int);
+    if (resolved === undefined || root === undefined) throw new Error("invalid BuildInfoResolvedRoot");
+    return new BuildInfoResolvedRoot(resolved as BuildInfoFileId, root as BuildInfoFileId);
   }
 }
 
@@ -405,11 +432,13 @@ export class BuildInfo {
   }
 
   fileName(fileId: BuildInfoFileId): string {
-    return this.fileNames[fileId - 1] ?? "";
+    const index = (fileId - 1) as int;
+    return this.fileNames[index] ?? "";
   }
 
   fileInfo(fileId: BuildInfoFileId): BuildInfoFileInfo | undefined {
-    return this.fileInfos[fileId - 1];
+    const index = (fileId - 1) as int;
+    return this.fileInfos[index];
   }
 
   getCompilerOptions(_buildInfoDirectory: string): CompilerOptions {
@@ -495,6 +524,24 @@ function numberOrUndefined(value: unknown): number | undefined {
 
 function booleanOrUndefined(value: unknown): boolean | undefined {
   return typeof value === "boolean" ? value : undefined;
+}
+
+function jsonArray(value: unknown): readonly unknown[] | undefined {
+  return Array.isArray(value) ? value as readonly unknown[] : undefined;
+}
+
+function valueAt(array: readonly unknown[], index: int): unknown {
+  return array[index];
+}
+
+function numberAt(array: readonly unknown[], index: int): number | undefined {
+  const value = valueAt(array, index);
+  return typeof value === "number" ? value : undefined;
+}
+
+function stringAt(array: readonly unknown[], index: int): string | undefined {
+  const value = valueAt(array, index);
+  return typeof value === "string" ? value : undefined;
 }
 
 function stripUndefined(record: Record<string, unknown>): Record<string, unknown> {

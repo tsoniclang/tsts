@@ -10,7 +10,16 @@
 import type { Type, TypeMapper, TypeParameter } from "./types.js";
 
 export type MapperKind = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-export const MapperKind = {
+export interface MapperKindTable {
+  readonly Unknown: MapperKind;
+  readonly Simple: MapperKind;
+  readonly Array: MapperKind;
+  readonly Merged: MapperKind;
+  readonly ArrayToSingle: MapperKind;
+  readonly Deferred: MapperKind;
+  readonly Function: MapperKind;
+}
+export const MapperKind: MapperKindTable = {
   Unknown: 0 as MapperKind,
   Simple: 1 as MapperKind,
   Array: 2 as MapperKind,

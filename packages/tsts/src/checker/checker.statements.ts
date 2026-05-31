@@ -68,7 +68,7 @@ const continuesFlow: StatementFlow = { exits: false };
 const exitsFlow: StatementFlow = { exits: true };
 
 export function checkStatements(statements: readonly Statement[], state: CheckState, expectedReturnType: Type | undefined): boolean {
-  let activeNarrowings = new Map();
+  let activeNarrowings: NarrowingMap = new Map<AstSymbol, Type>();
   for (const statement of statements) {
     const flow = withNarrowedSymbolTypes(state, activeNarrowings, () => checkStatement(statement, state, expectedReturnType));
     if (flow.exits) return true;
