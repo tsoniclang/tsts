@@ -119,6 +119,9 @@ export class Program {
   programDiagnostics: Diagnostic[] = [];
   private commonSourceDirectoryValue = "";
   private commonSourceDirectoryComputed = false;
+  private sourceFilesToEmitValue: SourceFile[] | undefined;
+  private hasTSFileValue: boolean | undefined;
+  private packagesMapValue: Map<string, boolean> | undefined;
 
   constructor(opts: ProgramOptions) {
     this.opts = opts;
@@ -151,7 +154,7 @@ export class Program {
     this.verifyCompilerOptions();
   }
 
-  private toPath(file: string): string {
+  toPath(file: string): string {
     return toCanonicalPath(file, this.opts.host.getCurrentDirectory(), this.opts.host.useCaseSensitiveFileNames());
   }
 
@@ -380,7 +383,18 @@ export class Program {
   }
 
   getPackagesMap(): Map<string, boolean> {
-    return this.packageNamesInfo?.packagesMap ?? new Map();
+    if (this.packagesMapValue !== undefined) return this.packagesMapValue;
+    const packages = new Map<string, boolean>(this.packageNamesInfo?.packagesMap ?? []);
+    for (const resolvedModulesInFile of this.resolvedModulesCache.values()) {
+      for (const resolved of resolvedModulesInFile.values()) {
+        const record = resolved as unknown as { readonly packageId?: { readonly name?: string }; readonly extension?: string };
+        const packageName = record.packageId?.name;
+        if (packageName === undefined || packageName === "") continue;
+        packages.set(packageName, packages.get(packageName) === true || record.extension === ".d.ts");
+      }
+    }
+    this.packagesMapValue = packages;
+    return packages;
   }
 
   // -------------------------------------------------------------------------
@@ -484,6 +498,24 @@ export class Program {
     return true;
   }
 
+  getSemanticDiagnosticsWithoutNoEmitFiltering(ctx: Context, sourceFiles: readonly SourceFile[]): ReadonlyMap<SourceFile, readonly Diagnostic[]> {
+    const diagnostics = this.collectCheckerDiagnosticsFromFiles(ctx, sourceFiles, (_c, checker, file) => {
+      const result = checker.checkSourceFile(file);
+      return result.diagnostics.map(diagnostic => diagnosticFromText(diagnostic.message, file));
+    });
+    const result = new Map<SourceFile, readonly Diagnostic[]>();
+    for (let index = 0; index < sourceFiles.length; index += 1) {
+      result.set(sourceFiles[index]!, sortAndDeduplicateDiagnostics(diagnostics[index] ?? []));
+    }
+    return result;
+  }
+
+  getIncludeProcessorDiagnostics(sourceFile: SourceFile): readonly Diagnostic[] {
+    if (this.skipTypeChecking(sourceFile, false)) return [];
+    const record = sourceFile as unknown as { readonly includeDiagnostics?: readonly Diagnostic[] };
+    return sortAndDeduplicateDiagnostics(record.includeDiagnostics ?? []);
+  }
+
   getSourceFiles(): readonly SourceFile[] {
     return this.files;
   }
@@ -493,12 +525,34 @@ export class Program {
   }
 
   skipTypeChecking(sourceFile: SourceFile, ignoreNoCheck: boolean): boolean {
-    void ignoreNoCheck;
-    return isDeclarationFile(sourceFile) && booleanCompilerOption(this.options(), "skipLibCheck");
+    if (!ignoreNoCheck && booleanCompilerOption(this.options(), "noCheck")) return true;
+    if (isDeclarationFile(sourceFile) && booleanCompilerOption(this.options(), "skipLibCheck")) return true;
+    if (this.isSourceFileDefaultLibrary(this.toPath(sourceFile.fileName)) && booleanCompilerOption(this.options(), "skipDefaultLibCheck")) return true;
+    if (this.isSourceFromProjectReference(this.toPath(sourceFile.fileName))) return true;
+    return !this.canIncludeBindAndCheckDiagnostics(sourceFile);
   }
 
   canIncludeBindAndCheckDiagnostics(sourceFile: SourceFile): boolean {
-    return !isJsonSourceFile(sourceFile);
+    const record = sourceFile as unknown as {
+      readonly scriptKind?: string | number;
+      readonly checkJsDirective?: { readonly enabled?: boolean };
+      readonly isDeclarationFile?: boolean;
+    };
+    if (record.checkJsDirective?.enabled === false) return false;
+    if (isJsonSourceFile(sourceFile)) return false;
+    if (record.isDeclarationFile === true || isDeclarationFile(sourceFile)) return true;
+    if (typeof record.scriptKind === "string") {
+      const kind = record.scriptKind.toLowerCase();
+      return kind === "ts" || kind === "tsx" || kind === "external" || kind === "deferred"
+        || kind === "js" && (record.checkJsDirective?.enabled === true || booleanOption(this.options(), "checkJs") === true);
+    }
+    const extension = lowerExtension(sourceFile.fileName);
+    if (extension === ".ts" || extension === ".tsx" || extension === ".mts" || extension === ".cts") return true;
+    if ((extension === ".js" || extension === ".jsx" || extension === ".mjs" || extension === ".cjs")
+      && (record.checkJsDirective?.enabled === true || booleanOption(this.options(), "checkJs") === true || booleanOption(this.options(), "allowJs") === true)) {
+      return true;
+    }
+    return false;
   }
 
   blockEmittingOfFile(emitFileName: string, diagnostic: Diagnostic): void {
@@ -616,6 +670,64 @@ export class Program {
     this.commonSourceDirectoryValue = commonSourceDirectory(emitted, this.getCurrentDirectory());
     this.commonSourceDirectoryComputed = true;
     return this.commonSourceDirectoryValue;
+  }
+
+  getSourceFilesToEmit(targetSourceFile: SourceFile | undefined, forceDtsEmit: boolean): readonly SourceFile[] {
+    if (targetSourceFile === undefined && !forceDtsEmit) {
+      this.sourceFilesToEmitValue ??= getSourceFilesToEmit(this, undefined, false);
+      return this.sourceFilesToEmitValue;
+    }
+    return getSourceFilesToEmit(this, targetSourceFile, forceDtsEmit);
+  }
+
+  sourceFileMayBeEmitted(sourceFile: SourceFile, forceDtsEmit: boolean): boolean {
+    return sourceFileMayBeEmitted(sourceFile, this, forceDtsEmit);
+  }
+
+  isSourceFileDefaultLibrary(path: string): boolean {
+    const defaultLibraryPath = this.defaultLibraryPath();
+    return defaultLibraryPath !== "" && this.toPath(path).startsWith(this.toPath(defaultLibraryPath));
+  }
+
+  defaultLibraryPath(): string {
+    const host = this.opts.host as CompilerHost & { defaultLibraryPath?: string; getDefaultLibraryPath?: () => string };
+    return host.getDefaultLibraryPath?.() ?? host.defaultLibraryPath ?? "";
+  }
+
+  getCanonicalFileName(fileName: string): string {
+    return this.useCaseSensitiveFileNames() ? fileName : fileName.toLowerCase();
+  }
+
+  hasTSFile(): boolean {
+    if (this.hasTSFileValue !== undefined) return this.hasTSFileValue;
+    this.hasTSFileValue = this.files.some(file => {
+      const extension = lowerExtension(file.fileName);
+      return extension === ".ts" || extension === ".tsx" || extension === ".mts" || extension === ".cts";
+    });
+    return this.hasTSFileValue;
+  }
+
+  getModeForUsageLocation(file: SourceFile, moduleSpecifier: AstNode | undefined): number {
+    void moduleSpecifier;
+    const record = file as unknown as { readonly impliedNodeFormat?: number };
+    return record.impliedNodeFormat ?? 0;
+  }
+
+  emit(ctx: Context, options: EmitOptions = {}): EmitResult {
+    const noEmit = handleNoEmitOnError(ctx, this, options.targetSourceFile);
+    if (noEmit !== undefined) return noEmit;
+    const files = this.getSourceFilesToEmit(options.targetSourceFile, options.emitOnly === "forcedDts");
+    const emittedFiles: string[] = [];
+    const diagnostics: Diagnostic[] = [];
+    for (const file of files) {
+      if (this.isEmitBlocked(file.fileName)) continue;
+      for (const output of this.emitFileNames(file)) {
+        if (output === "") continue;
+        options.writeFile?.(output, file.text, { diagnostics: [] });
+        emittedFiles.push(output);
+      }
+    }
+    return { emitSkipped: false, diagnostics, emittedFiles, sourceMaps: [] };
   }
 
   lineCount(): number {
@@ -984,9 +1096,34 @@ function hasOwnOption(options: CompilerOptions, name: string): boolean {
 }
 
 function sourceFileMayBeEmitted(file: SourceFile, program: Program, forceDtsEmit: boolean): boolean {
-  void program;
   if (forceDtsEmit) return true;
-  return !isDeclarationFile(file) && !isJsonSourceFile(file);
+  if (booleanCompilerOption(program.options(), "noEmitForJsFiles") && isSourceFileJS(file)) return false;
+  if (isDeclarationFile(file)) return false;
+  if (program.isSourceFileDefaultLibrary(program.toPath(file.fileName))) return false;
+  if (program.getProjectReferenceFromSource?.(program.toPath(file.fileName)) !== undefined) return false;
+  return isSourceFileNotJson(file);
+}
+
+function getSourceFilesToEmit(program: Program, targetSourceFile: SourceFile | undefined, forceDtsEmit: boolean): SourceFile[] {
+  if (targetSourceFile !== undefined) {
+    return sourceFileMayBeEmitted(targetSourceFile, program, forceDtsEmit) ? [targetSourceFile] : [];
+  }
+  return program.getSourceFiles().filter(file => sourceFileMayBeEmitted(file, program, forceDtsEmit));
+}
+
+function isSourceFileJS(file: SourceFile): boolean {
+  const extension = lowerExtension(file.fileName);
+  return extension === ".js" || extension === ".jsx" || extension === ".mjs" || extension === ".cjs";
+}
+
+function isSourceFileNotJson(file: SourceFile): boolean {
+  return !isJsonSourceFile(file);
+}
+
+function lowerExtension(fileName: string): string {
+  const slash = Math.max(fileName.lastIndexOf("/"), fileName.lastIndexOf("\\"));
+  const dot = fileName.lastIndexOf(".");
+  return dot > slash ? fileName.slice(dot).toLowerCase() : "";
 }
 
 function hasZeroOrOneAsteriskCharacter(text: string): boolean {
