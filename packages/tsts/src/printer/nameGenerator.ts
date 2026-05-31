@@ -60,6 +60,10 @@ export class NameGenerator {
   }
 
   generateNameForNode(node: AstNode, kind: GeneratedIdentifierFlags, prefix: string, suffix: string): string {
+    return this.generateNameForNodeCached(node, kind, prefix, suffix);
+  }
+
+  generateNameForNodeCached(node: AstNode, kind: GeneratedIdentifierFlags, prefix: string, suffix: string): string {
     const cached = this.generatedNames.get(node);
     if (cached !== undefined) return cached;
     const baseName = memberNameText(node) ?? nodeKindBaseName(node);
@@ -68,6 +72,39 @@ export class NameGenerator {
       : this.generateName(kind, prefix, suffix);
     this.generatedNames.set(node, name);
     return name;
+  }
+
+  generateNameForModuleOrEnum(node: AstNode, prefix = "", suffix = ""): string {
+    return this.generateNameForNodeCached(node, GeneratedIdentifierFlags.Node | GeneratedIdentifierFlags.Optimistic, prefix, suffix);
+  }
+
+  generateNameForImportOrExportDeclaration(node: AstNode, prefix = "", suffix = ""): string {
+    return this.generateNameForNodeCached(node, GeneratedIdentifierFlags.Unique | GeneratedIdentifierFlags.ReservedInNestedScopes, prefix, suffix);
+  }
+
+  generateNameForExportDefault(node: AstNode, prefix = "", suffix = ""): string {
+    return this.generateNameForNodeCached(node, GeneratedIdentifierFlags.Unique | GeneratedIdentifierFlags.FileLevel, prefix, suffix);
+  }
+
+  generateNameForClassExpression(node: AstNode, prefix = "", suffix = ""): string {
+    return this.generateNameForNodeCached(node, GeneratedIdentifierFlags.Node | GeneratedIdentifierFlags.Optimistic, prefix, suffix);
+  }
+
+  generateNameForMethodOrAccessor(node: AstNode, prefix = "", suffix = ""): string {
+    return this.generateNameForNodeCached(node, GeneratedIdentifierFlags.Node, prefix, suffix);
+  }
+
+  checkUniqueName(name: string, privateName = false): boolean {
+    return this.isUniqueName(name, privateName);
+  }
+
+  nextContainer(): void {
+    this.pushScope(false);
+  }
+
+  isUniqueLocalName(name: string): boolean {
+    const scope = this.activeScope(false);
+    return !scope.reservedNames.has(name) && !this.reservedNames.has(name);
   }
 
   pushScope(reuseTempVariableScope = false): void {

@@ -2350,6 +2350,108 @@ export class Printer {
     void name;
     this.emitSourcePos(source, pos);
   }
+  emitLeadingComments(pos: number, end: number, emitFlags: number = EmitFlags.None): void {
+    if (this.options.removeComments === true || (emitFlags & EmitFlags.NoLeadingComments) !== 0) return;
+    const comments = this.collectLeadingComments(pos, end);
+    if (comments.length === 0) return;
+    let previousEnd = pos;
+    for (const comment of comments) {
+      if (!this.shouldWriteComment(comment)) continue;
+      if (this.shouldEmitNewLineBeforeLeadingCommentOfPosition(previousEnd, comment.pos)) this.writeLine();
+      this.emitComment(comment);
+      if (commentWillEmitNewLine(comment) || comment.kind === Kind.SingleLineCommentTrivia) this.writeLine();
+      previousEnd = comment.end;
+    }
+  }
+  emitTrailingComments(pos: number, end: number, emitFlags: number = EmitFlags.None): void {
+    if (this.options.removeComments === true || (emitFlags & EmitFlags.NoTrailingComments) !== 0) return;
+    const comments = this.collectTrailingComments(pos, end);
+    if (comments.length === 0) return;
+    let wroteComment = false;
+    for (const comment of comments) {
+      if (!this.shouldWriteComment(comment)) continue;
+      if (!wroteComment) this.writeSpace();
+      else if (comment.kind !== Kind.SingleLineCommentTrivia) this.writeSpace();
+      this.emitComment(comment);
+      wroteComment = true;
+      if (comment.kind === Kind.SingleLineCommentTrivia || commentWillEmitNewLine(comment)) this.writeLine();
+    }
+  }
+  emitDetachedComments(pos: number, end: number): void {
+    const comments = this.collectLeadingComments(pos, end);
+    let lastEnd = pos;
+    for (const comment of comments) {
+      if (!this.shouldWriteComment(comment)) continue;
+      const detached = this.hasBlankLineBetween(lastEnd, comment.pos);
+      if (!detached) {
+        lastEnd = comment.end;
+        continue;
+      }
+      if (this.state.detachedComments.some(info => info.nodePos === pos && info.detachedCommentEndPos >= comment.end)) continue;
+      this.emitComment(comment);
+      this.writeLine();
+      this.state.detachedComments.push({ nodePos: pos, detachedCommentEndPos: comment.end });
+      lastEnd = comment.end;
+    }
+  }
+  private collectLeadingComments(pos: number, end: number): readonly CommentRange[] {
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    if (text === undefined) return [];
+    const comments: CommentRange[] = [];
+    let current = Math.max(0, pos);
+    const limit = Math.min(Math.max(current, end), text.length);
+    while (current < limit) {
+      const next = this.skipTriviaAt(current);
+      if (next > current) {
+        current = next;
+        continue;
+      }
+      const comment = scanCommentRange(text, current);
+      if (comment === undefined || comment.pos >= limit) break;
+      comments.push(comment);
+      current = Math.max(comment.end, current + 1);
+    }
+    return comments;
+  }
+  private collectTrailingComments(pos: number, end: number): readonly CommentRange[] {
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    if (text === undefined) return [];
+    const comments: CommentRange[] = [];
+    let current = Math.max(0, pos);
+    const limit = Math.min(Math.max(current, end), text.length);
+    const startLine = lineOfPosition(text, current);
+    while (current < limit) {
+      const comment = scanCommentRange(text, current);
+      if (comment !== undefined) {
+        if (lineOfPosition(text, comment.pos) !== startLine) break;
+        comments.push(comment);
+        current = Math.max(comment.end, current + 1);
+        if (comment.kind === Kind.SingleLineCommentTrivia) break;
+        continue;
+      }
+      const code = text.charCodeAt(current);
+      if (code === 0x0a || code === 0x0d) break;
+      if (code !== 0x20 && code !== 0x09) break;
+      current += 1;
+    }
+    return comments;
+  }
+  private hasBlankLineBetween(left: number, right: number): boolean {
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    if (text === undefined) return false;
+    let lineBreaks = 0;
+    for (let index = Math.max(0, left); index < Math.min(right, text.length); index += 1) {
+      const ch = text.charCodeAt(index);
+      if (ch === 13) {
+        if (text.charCodeAt(index + 1) === 10) index += 1;
+        lineBreaks += 1;
+      } else if (ch === 10) {
+        lineBreaks += 1;
+      }
+      if (lineBreaks >= 2) return true;
+    }
+    return false;
+  }
   private skipTriviaAt(pos: number): number {
     const text = (this.currentSourceFile as unknown as { text?: string })?.text;
     if (text === undefined || pos < 0) return pos;
@@ -2419,6 +2521,30 @@ function lineOfPosition(text: string, position: number): number {
     if (text.charCodeAt(index) === 0x0a) line += 1;
   }
   return line;
+}
+
+function scanCommentRange(text: string, position: number): CommentRange | undefined {
+  if (text.startsWith("//", position)) {
+    const end = text.indexOf("\n", position + 2);
+    const commentEnd = end < 0 ? text.length : end;
+    return {
+      kind: Kind.SingleLineCommentTrivia,
+      pos: position,
+      end: commentEnd,
+      hasTrailingNewLine: end >= 0,
+    } as CommentRange;
+  }
+  if (text.startsWith("/*", position)) {
+    const close = text.indexOf("*/", position + 2);
+    const commentEnd = close < 0 ? text.length : close + 2;
+    return {
+      kind: Kind.MultiLineCommentTrivia,
+      pos: position,
+      end: commentEnd,
+      hasTrailingNewLine: /\r|\n/u.test(text.slice(position, commentEnd)),
+    } as CommentRange;
+  }
+  return undefined;
 }
 
 // ---------------------------------------------------------------------------

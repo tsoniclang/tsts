@@ -804,6 +804,153 @@ export class NodeFactory {
     return this.newIdentifier(name) as unknown as IdentifierNode;
   }
 
+  newAssignHelper(attributesSegments: readonly AstNode[]): Expression {
+    return this.newCallExpression(this.newUnscopedHelperName("__assign"), attributesSegments);
+  }
+
+  newRestHelper(value: AstNode, elements: readonly AstNode[]): Expression {
+    return this.newCallExpression(this.newUnscopedHelperName("__rest"), [
+      value,
+      this.newArrayLiteralExpression(elements as readonly Expression[]) as AstNode,
+    ]);
+  }
+
+  newAwaitHelper(expression: AstNode): Expression {
+    return this.newCallExpression(this.newUnscopedHelperName("__await"), [expression]);
+  }
+
+  newAsyncGeneratorHelper(thisArg: AstNode, argumentsExpression: AstNode, generator: AstNode): Expression {
+    return this.newCallExpression(this.newUnscopedHelperName("__asyncGenerator"), [
+      thisArg,
+      argumentsExpression,
+      generator,
+    ]);
+  }
+
+  newAsyncDelegatorHelper(expression: AstNode): Expression {
+    return this.newCallExpression(this.newUnscopedHelperName("__asyncDelegator"), [expression]);
+  }
+
+  newAsyncValuesHelper(expression: AstNode): Expression {
+    return this.newCallExpression(this.newUnscopedHelperName("__asyncValues"), [expression]);
+  }
+
+  newAwaiterHelper(thisArg: AstNode, argumentsExpression: AstNode, promiseConstructor: AstNode, generator: AstNode): Expression {
+    return this.newCallExpression(this.newUnscopedHelperName("__awaiter"), [
+      thisArg,
+      argumentsExpression,
+      promiseConstructor,
+      generator,
+    ]);
+  }
+
+  newESDecorateClassContextObject(className: AstNode, metadata: AstNode | undefined): AstNode {
+    const properties: AstNode[] = [
+      this.newPropertyAssignment(this.newIdentifier("kind"), this.newStringLiteral("class", 0)),
+      this.newPropertyAssignment(this.newIdentifier("name"), className),
+    ];
+    if (metadata !== undefined) properties.push(this.newPropertyAssignment(this.newIdentifier("metadata"), metadata));
+    return this.newObjectLiteralExpression(properties, true);
+  }
+
+  newESDecorateClassElementAccessGetMethod(name: AstNode, isStatic: boolean): AstNode {
+    void isStatic;
+    return this.newPropertyAssignment(this.newIdentifier("get"), this.newFunctionExpression(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      [],
+      undefined,
+      this.newBlock([this.newReturnStatement(name as Expression)] as unknown as readonly Statement[]),
+    ));
+  }
+
+  newESDecorateClassElementAccessSetMethod(name: AstNode, isStatic: boolean): AstNode {
+    void isStatic;
+    const value = this.newIdentifier("value") as IdentifierNode;
+    return this.newPropertyAssignment(this.newIdentifier("set"), this.newFunctionExpression(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      [this.newParameterDeclaration(undefined, undefined, value, undefined, undefined, undefined)],
+      undefined,
+      this.newBlock([this.newExpressionStatement(this.newAssignmentExpression(name as Expression, value as unknown as Expression))] as readonly Statement[]),
+    ));
+  }
+
+  newESDecorateClassElementAccessHasMethod(name: AstNode, isStatic: boolean): AstNode {
+    void name;
+    return this.newPropertyAssignment(this.newIdentifier("has"), this.newFunctionExpression(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      [this.newParameterDeclaration(undefined, undefined, this.newIdentifier("obj") as IdentifierNode, undefined, undefined, undefined)],
+      undefined,
+      this.newBlock([this.newReturnStatement(isStatic ? this.newTrueExpression() : this.newFalseExpression())] as unknown as readonly Statement[]),
+    ));
+  }
+
+  newESDecorateClassElementAccessObject(name: AstNode, isStatic: boolean): AstNode {
+    return this.newObjectLiteralExpression([
+      this.newESDecorateClassElementAccessGetMethod(name, isStatic),
+      this.newESDecorateClassElementAccessSetMethod(name, isStatic),
+      this.newESDecorateClassElementAccessHasMethod(name, isStatic),
+    ], true);
+  }
+
+  newESDecorateClassElementContextObject(kind: string, name: AstNode, isStatic: boolean, isPrivate: boolean, access: AstNode | undefined, metadata: AstNode | undefined): AstNode {
+    const properties: AstNode[] = [
+      this.newPropertyAssignment(this.newIdentifier("kind"), this.newStringLiteral(kind, 0)),
+      this.newPropertyAssignment(this.newIdentifier("name"), name),
+      this.newPropertyAssignment(this.newIdentifier("static"), isStatic ? this.newTrueExpression() : this.newFalseExpression()),
+      this.newPropertyAssignment(this.newIdentifier("private"), isPrivate ? this.newTrueExpression() : this.newFalseExpression()),
+    ];
+    if (access !== undefined) properties.push(this.newPropertyAssignment(this.newIdentifier("access"), access));
+    if (metadata !== undefined) properties.push(this.newPropertyAssignment(this.newIdentifier("metadata"), metadata));
+    return this.newObjectLiteralExpression(properties, true);
+  }
+
+  newESDecorateHelper(args: readonly AstNode[]): Expression {
+    return this.newCallExpression(this.newUnscopedHelperName("__esDecorate"), args);
+  }
+
+  newRunInitializersHelper(args: readonly AstNode[]): Expression {
+    return this.newCallExpression(this.newUnscopedHelperName("__runInitializers"), args);
+  }
+
+  newTemplateObjectHelper(cooked: AstNode, raw: AstNode): Expression {
+    return this.newCallExpression(this.newUnscopedHelperName("__makeTemplateObject"), [cooked, raw]);
+  }
+
+  newPropKeyHelper(expression: AstNode): Expression {
+    return this.newCallExpression(this.newUnscopedHelperName("__propKey"), [expression]);
+  }
+
+  newSetFunctionNameHelper(functionExpression: AstNode, name: AstNode, prefix?: AstNode): Expression {
+    const args = prefix === undefined ? [functionExpression, name] : [functionExpression, name, prefix];
+    return this.newCallExpression(this.newUnscopedHelperName("__setFunctionName"), args);
+  }
+
+  newImportDefaultHelper(expression: AstNode): Expression {
+    return this.newCallExpression(this.newUnscopedHelperName("__importDefault"), [expression]);
+  }
+
+  newImportStarHelper(expression: AstNode): Expression {
+    return this.newCallExpression(this.newUnscopedHelperName("__importStar"), [expression]);
+  }
+
+  newExportStarHelper(moduleExpression: AstNode, exportsExpression: AstNode): Expression {
+    return this.newCallExpression(this.newUnscopedHelperName("__exportStar"), [moduleExpression, exportsExpression]);
+  }
+
+  newRewriteRelativeImportExtensionsHelper(path: AstNode, preserveJsx?: AstNode): Expression {
+    const args = preserveJsx === undefined ? [path] : [path, preserveJsx];
+    return this.newCallExpression(this.newUnscopedHelperName("__rewriteRelativeImportExtension"), args);
+  }
+
   newDecorateHelper(
     decoratorExpressions: readonly AstNode[], target: AstNode, memberName: AstNode | undefined, descriptor: AstNode | undefined,
   ): Expression {

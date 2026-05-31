@@ -47,3 +47,39 @@ export function generatedIdentifierIsFileLevel(flags: GeneratedIdentifierFlags):
 export function generatedIdentifierHasAllowNameSubstitution(flags: GeneratedIdentifierFlags): boolean {
   return (flags & GeneratedIdentifierFlags.AllowNameSubstitution) !== 0;
 }
+
+export function kind(flags: GeneratedIdentifierFlags): GeneratedIdentifierFlags {
+  return generatedIdentifierKind(flags);
+}
+
+export function isAuto(flags: GeneratedIdentifierFlags): boolean {
+  return generatedIdentifierIsAuto(flags);
+}
+
+export function isLoop(flags: GeneratedIdentifierFlags): boolean {
+  return generatedIdentifierIsLoop(flags);
+}
+
+export function isUnique(flags: GeneratedIdentifierFlags): boolean {
+  return generatedIdentifierIsUnique(flags);
+}
+
+export function isNode(flags: GeneratedIdentifierFlags): boolean {
+  return generatedIdentifierIsNode(flags);
+}
+
+export function isReservedInNestedScopes(flags: GeneratedIdentifierFlags): boolean {
+  return generatedIdentifierIsReservedInNestedScopes(flags);
+}
+
+export function isOptimistic(flags: GeneratedIdentifierFlags): boolean {
+  return generatedIdentifierIsOptimistic(flags);
+}
+
+export function isFileLevel(flags: GeneratedIdentifierFlags): boolean {
+  return generatedIdentifierIsFileLevel(flags);
+}
+
+export function hasAllowNameSubstitution(flags: GeneratedIdentifierFlags): boolean {
+  return generatedIdentifierHasAllowNameSubstitution(flags);
+}

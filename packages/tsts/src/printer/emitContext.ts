@@ -332,8 +332,45 @@ export class EmitContext {
   }
 
   getNodeForGeneratedName(name: AstNode): AstNode | undefined {
+    return this.getNodeForGeneratedNameWorker(name, new Set());
+  }
+
+  private getNodeForGeneratedNameWorker(name: AstNode, seen: Set<AstNode>): AstNode | undefined {
+    if (seen.has(name)) return undefined;
+    seen.add(name);
     const info = this.autoGenerateMap.get(name);
-    return info?.nodeForGeneratedName;
+    if (info?.nodeForGeneratedName !== undefined) return info.nodeForGeneratedName;
+    const original = this.originalMap.get(name);
+    if (original !== undefined) return this.getNodeForGeneratedNameWorker(original, seen);
+    return undefined;
+  }
+
+  copyFrom(source: EmitContext): void {
+    this.emitHelpers = [...source.emitHelpers];
+    this.emitHelpersMap = cloneMapOfArrays(source.emitHelpersMap);
+    this.emitFlagsMap = new Map(source.emitFlagsMap);
+    this.commentRangeMap = new Map(source.commentRangeMap);
+    this.sourceMapRangeMap = new Map(source.sourceMapRangeMap);
+    this.tokenSourceMapRangeMap = cloneNestedMap(source.tokenSourceMapRangeMap);
+    this.originalMap = new Map(source.originalMap);
+    this.parseNodeMap = new Map(source.parseNodeMap);
+    this.typeNodeMap = new Map(source.typeNodeMap);
+    this.assignedNameMap = new Map(source.assignedNameMap);
+    this.textSourceMap = new Map(source.textSourceMap);
+    this.classThisMap = new Map(source.classThisMap);
+    this.externalHelpersModuleNameMap = new Map(source.externalHelpersModuleNameMap);
+    this.recordedExternalHelpers = new Set(source.recordedExternalHelpers);
+    this.syntheticLeadingCommentsMap = new Map(source.syntheticLeadingCommentsMap);
+    this.syntheticTrailingCommentsMap = new Map(source.syntheticTrailingCommentsMap);
+    this.varStack = source.varStack.map(scope => ({
+      variables: [...scope.variables],
+      functions: [...scope.functions],
+      flags: scope.flags,
+      initializationStatements: [...scope.initializationStatements],
+    }));
+    this.lexicalStack = source.lexicalStack.map(scope => ({ declarations: [...scope.declarations] }));
+    this.autoGenerateMap = new Map(source.autoGenerateMap);
+    this.nextAutoGenerateId = source.nextAutoGenerateId;
   }
 
   // -------------------------------------------------------------------------
@@ -806,6 +843,18 @@ function isHoistedVariable(node: AstNode): boolean {
 
 function appendUnique<T>(target: T[], item: T): void {
   if (!target.includes(item)) target.push(item);
+}
+
+function cloneMapOfArrays<K, V>(source: ReadonlyMap<K, readonly V[]>): Map<K, V[]> {
+  const clone = new Map<K, V[]>();
+  for (const [key, values] of source) clone.set(key, [...values]);
+  return clone;
+}
+
+function cloneNestedMap<K, K2, V>(source: ReadonlyMap<K, ReadonlyMap<K2, V>>): Map<K, Map<K2, V>> {
+  const clone = new Map<K, Map<K2, V>>();
+  for (const [key, values] of source) clone.set(key, new Map(values));
+  return clone;
 }
 
 function nodeText(node: AstNode): string {

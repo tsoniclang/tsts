@@ -158,6 +158,32 @@ export class ChangeTrackerWriter implements EmitTextWriter {
     return this.changes;
   }
 
+  assignPositionsToNode(node: TriviaPositionKey | undefined): void {
+    this.assignPositionsToNodeWorker(node, new Set<object>());
+  }
+
+  assignPositionsToNodeArray(nodes: readonly TriviaPositionKey[] | undefined): void {
+    if (nodes === undefined) return;
+    for (const node of nodes) this.assignPositionsToNodeWorker(node, new Set<object>());
+  }
+
+  private assignPositionsToNodeWorker(node: TriviaPositionKey | undefined, seen: Set<object>): void {
+    if (node === undefined || typeof node !== "object" || seen.has(node)) return;
+    seen.add(node);
+    const mutable = node as { pos?: number; end?: number; [key: string]: unknown };
+    mutable.pos = this.getPos(node);
+    mutable.end = this.getEnd(node);
+    for (const value of Object.values(mutable)) {
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          if (item !== null && typeof item === "object") this.assignPositionsToNodeWorker(item as TriviaPositionKey, seen);
+        }
+      } else if (value !== null && typeof value === "object") {
+        this.assignPositionsToNodeWorker(value as TriviaPositionKey, seen);
+      }
+    }
+  }
+
   private setLastNonTriviaPosition(text: string, force: boolean): void {
     if (!force && skipTrivia(text, 0) === text.length) return;
     let trimmedEnd = text.length;

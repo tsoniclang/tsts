@@ -902,6 +902,19 @@ export function getLineAndCharacter(sourceFile: SourceFile, position: number): {
   return { line, character: Math.max(0, position - lineStarts[line]!) };
 }
 
+export function removeLeadingHash(text: string): string {
+  return text.startsWith("#") ? text.slice(1) : text;
+}
+
+export function ensureLeadingHash(text: string): string {
+  return text.startsWith("#") ? text : `#${text}`;
+}
+
+export function formatGeneratedName(privateName: boolean, prefix: string, baseName: string, suffix: string): string {
+  const text = `${prefix}${baseName}${suffix}`;
+  return privateName ? ensureLeadingHash(text) : text;
+}
+
 function sourceTextOf(sourceFile: SourceFile): string {
   return (sourceFile as unknown as { readonly text?: string }).text ?? "";
 }
