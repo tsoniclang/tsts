@@ -594,6 +594,107 @@ export function checkPropertyAccessExpressionOrQualifiedName(
   return leftExpression === undefined ? unresolvedType : inferPropertyAccess(leftExpression, propertyName, state);
 }
 
+export function getFlowTypeOfAccessExpression(node: AstNode, state: CheckState): Type {
+  return inferExpression(expressionNode(node), state);
+}
+
+export function getControlFlowContainer(node: AstNode): AstNode | undefined {
+  let current = parentOf(expressionNode(node));
+  while (current !== undefined) {
+    if (current.kind === Kind.FunctionDeclaration
+      || current.kind === Kind.FunctionExpression
+      || current.kind === Kind.ArrowFunction
+      || current.kind === Kind.SourceFile
+      || current.kind === Kind.ModuleBlock) {
+      return current as AstNode;
+    }
+    current = parentOf(current);
+  }
+  return undefined;
+}
+
+export function getFlowTypeOfProperty(receiverType: Type, propertyName: string): Type | undefined {
+  return getPropertyTypeOfType(getApparentType(receiverType), propertyName);
+}
+
+export function getTypeOfPropertyInBaseClass(receiverType: Type, propertyName: string): Type | undefined {
+  const baseTypes = (receiverType.data as { readonly resolvedBaseTypes?: readonly Type[] } | undefined)?.resolvedBaseTypes ?? [];
+  for (const baseType of baseTypes) {
+    const propertyType = getPropertyTypeOfType(baseType, propertyName);
+    if (propertyType !== undefined) return propertyType;
+  }
+  return undefined;
+}
+
+export function isMethodAccessForCall(node: AstNode): boolean {
+  const parent = parentOf(expressionNode(node));
+  return parent !== undefined && isCallExpression(parent) && parent.expression === node;
+}
+
+export function lookupSymbolForPrivateIdentifierDeclaration(receiverType: Type, privateIdentifier: AstNode): ReturnType<typeof getPropertySymbolOfType> {
+  const name = identifierText(privateIdentifier);
+  return name === undefined ? undefined : getPrivateIdentifierPropertyOfType(receiverType, name);
+}
+
+export function getPrivateIdentifierPropertyOfType(receiverType: Type, privateName: string): ReturnType<typeof getPropertySymbolOfType> {
+  return getPropertySymbolOfType(getApparentType(receiverType), privateName);
+}
+
+export function checkPrivateIdentifierPropertyAccess(receiverType: Type, privateIdentifier: AstNode, state: CheckState): Type {
+  const name = identifierText(privateIdentifier);
+  if (name === undefined) return unresolvedType;
+  const symbol = getPrivateIdentifierPropertyOfType(receiverType, name);
+  if (symbol === undefined) {
+    reportNonexistentProperty(privateIdentifier, receiverType, name, state);
+    return unresolvedType;
+  }
+  return getTypeOfSymbol(symbol) ?? anyType;
+}
+
+export function reportNonexistentProperty(node: AstNode, receiverType: Type, propertyName: string, state: CheckState): void {
+  const suggestion = getSuggestedSymbolForNonexistentProperty(propertyName, receiverType);
+  const suggestionText = suggestion === undefined ? "" : ` Did you mean '${suggestion.name ?? suggestion.escapedName}'?`;
+  state.diagnostics.push({ message: `Property '${propertyName}' does not exist on type '${displayType(receiverType)}'.${suggestionText}` });
+  const lib = getSuggestedLibForNonExistentProperty(propertyName);
+  if (lib !== undefined) state.diagnostics.push({ message: `Property '${propertyName}' is available when including library '${lib}'.` });
+  void node;
+}
+
+export function getSuggestedLibForNonExistentProperty(propertyName: string): string | undefined {
+  if (propertyName === "flat" || propertyName === "flatMap") return "es2019.array";
+  if (propertyName === "at") return "es2022";
+  if (propertyName === "replaceAll") return "es2021.string";
+  if (propertyName === "includes") return "es2016.array.include";
+  return undefined;
+}
+
+export function getSuggestedSymbolForNonexistentProperty(propertyName: string, receiverType: Type): ReturnType<typeof getPropertySymbolOfType> {
+  const properties = (receiverType.data as { readonly declaredProperties?: readonly ReturnType<typeof getPropertySymbolOfType>[] } | undefined)?.declaredProperties ?? [];
+  let best: ReturnType<typeof getPropertySymbolOfType>;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (const property of properties) {
+    const candidate = property?.name ?? property?.escapedName ?? "";
+    if (candidate === "") continue;
+    const distance = levenshteinDistance(propertyName.toLowerCase(), candidate.toLowerCase());
+    if (distance < bestDistance) {
+      best = property;
+      bestDistance = distance;
+    }
+  }
+  return bestDistance <= Math.max(1, Math.floor(propertyName.length * 0.4)) ? best : undefined;
+}
+
+export function isPropertyAccessible(property: ReturnType<typeof getPropertySymbolOfType>, _location: AstNode | undefined): boolean {
+  if (property === undefined) return false;
+  const declarations = property.declarations ?? [];
+  return declarations.every(declaration => !hasModifierKind(declaration, Kind.PrivateKeyword) && !hasModifierKind(declaration, Kind.ProtectedKeyword));
+}
+
+export function containerSeemsToBeEmptyDomElement(receiverType: Type): boolean {
+  const name = receiverType.symbol?.name ?? receiverType.aliasSymbol?.name ?? "";
+  return name.endsWith("Element") && ((receiverType.data as { readonly declaredProperties?: readonly unknown[] } | undefined)?.declaredProperties?.length ?? 0) === 0;
+}
+
 export function checkThisExpression(node: AstNode, state: CheckState): Type {
   void node;
   return anyTypeFromState(state);
@@ -1390,6 +1491,28 @@ function specificityScore(signature: Signature): number {
   const arity = signature.parameters.length;
   const typed = signature.parameters.filter(parameter => getTypeOfSymbol(parameter) !== undefined).length;
   return required * 4 + arity * 2 + typed;
+}
+
+function hasModifierKind(node: AstNode, kind: Kind): boolean {
+  const modifiers = (node as { readonly modifiers?: readonly AstNode[] | { readonly nodes?: readonly AstNode[] } }).modifiers;
+  const nodes: readonly AstNode[] = Array.isArray(modifiers) ? modifiers : (modifiers as { readonly nodes?: readonly AstNode[] } | undefined)?.nodes ?? [];
+  return nodes.some(modifier => modifier.kind === kind);
+}
+
+function levenshteinDistance(left: string, right: string): number {
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    let lastDiagonal = previous[0]!;
+    previous[0] = leftIndex;
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      const insertion = previous[rightIndex]! + 1;
+      const deletion = previous[rightIndex - 1]! + 1;
+      const substitution = lastDiagonal + (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1);
+      lastDiagonal = previous[rightIndex]!;
+      previous[rightIndex] = Math.min(insertion, deletion, substitution);
+    }
+  }
+  return previous[right.length]!;
 }
 
 function awaitedTypeOf(type: Type): Type {
