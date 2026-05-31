@@ -892,6 +892,288 @@ export class FlowAnalyzer {
       return candidate;
     });
   }
+
+  narrowTypeByDiscriminantProperty(type: Type, access: AstNode, operator: Kind, value: AstNode, assumeTrue: boolean): Type {
+    const propertyName = this.getAccessedPropertyName(access);
+    if (propertyName === undefined) return type;
+    const literal = literalValueOfNode(value);
+    const equality = operator === Kind.EqualsEqualsToken || operator === Kind.EqualsEqualsEqualsToken;
+    const inequality = operator === Kind.ExclamationEqualsToken || operator === Kind.ExclamationEqualsEqualsToken;
+    if (!equality && !inequality) return type;
+    const shouldMatch = equality === assumeTrue;
+    return filterType(type, (candidate) => {
+      const property = propertyType(candidate, propertyName);
+      const propertyLiteral = literalValueOfType(property);
+      const matches = propertyLiteral === literal;
+      return shouldMatch ? matches : !matches;
+    }) ?? type;
+  }
+
+  narrowTypeByDiscriminant(type: Type, access: AstNode, narrowType: (type: Type) => Type): Type {
+    const propertyName = this.getAccessedPropertyName(access);
+    if (propertyName === undefined) return type;
+    return mapType(type, (candidate) => {
+      const property = propertyType(candidate, propertyName);
+      if (property === undefined) return candidate;
+      const narrowedProperty = narrowType(property);
+      return (narrowedProperty.flags & TypeFlags.Never) !== 0 ? neverType() : candidate;
+    });
+  }
+
+  isMatchingConstructorReference(left: AstNode, right: AstNode): boolean {
+    const leftName = nodeText(left);
+    const rightName = nodeText(right);
+    if (leftName.length === 0 || rightName.length === 0) return false;
+    return leftName === rightName || rightName.endsWith(`.${leftName}`);
+  }
+
+  isConstructedBy(type: Type, constructor: AstNode): boolean {
+    const constructorName = nodeText(constructor);
+    if (constructorName.length === 0) return false;
+    return symbolName(type.symbol) === constructorName
+      || constituentTypes(type).some((candidate) => symbolName(candidate.symbol) === constructorName);
+  }
+
+  narrowTypeByBooleanComparison(type: Type, expr: AstNode, bool: boolean, assumeTrue: boolean): Type {
+    const shouldBeTruthy = bool === assumeTrue;
+    return this.narrowTypeByTruthiness(type, expr, shouldBeTruthy);
+  }
+
+  getInstanceType(constructorType: Type): Type {
+    return (constructorType.data as { readonly instanceType?: Type; readonly prototypeType?: Type } | undefined)?.instanceType
+      ?? (constructorType.data as { readonly instanceType?: Type; readonly prototypeType?: Type } | undefined)?.prototypeType
+      ?? constructorType;
+  }
+
+  isTypePresencePossible(type: Type, propertyName: string, assumeTrue: boolean): boolean {
+    const present = hasProperty(type, propertyName);
+    const optional = (propertyType(type, propertyName)?.flags ?? 0) & TypeFlags.Undefined;
+    return assumeTrue ? present || optional !== 0 : !present || optional !== 0;
+  }
+
+  getTypeAtSwitchClause(type: Type, switchStatement: AstNode, clauseStart: number, clauseEnd: number): Type {
+    return this.narrowTypeBySwitchOnDiscriminant(type, switchStatement, clauseStart, clauseEnd);
+  }
+
+  narrowTypeBySwitchOnTypeOf(type: Type, switchStatement: AstNode, clauseStart = 0, clauseEnd = Number.MAX_SAFE_INTEGER): Type {
+    const witnesses = this.getSwitchClauseTypeOfWitnesses(switchStatement);
+    if (witnesses === undefined) return type;
+    const slice = witnesses.slice(clauseStart, Math.min(clauseEnd, witnesses.length)).filter((witness) => witness.length > 0);
+    if (slice.length === 0) return type;
+    return unionType(slice.map((name) => this.narrowTypeByTypeName(type, name)));
+  }
+
+  narrowTypeBySwitchOnTrue(type: Type, switchStatement: AstNode, clauseStart = 0, clauseEnd = Number.MAX_SAFE_INTEGER): Type {
+    const clauses = switchClausesOf(switchStatement);
+    let current = type;
+    for (let index = 0; index < clauseStart; index += 1) {
+      const expression = (clauses[index] as { readonly expression?: AstNode } | undefined)?.expression;
+      if (expression !== undefined) current = this.narrowType(current, expression, false);
+    }
+    const selected = clauses.slice(clauseStart, Math.min(clauseEnd, clauses.length))
+      .map((clause) => (clause as { readonly expression?: AstNode }).expression)
+      .filter((expression): expression is AstNode => expression !== undefined)
+      .map((expression) => this.narrowType(current, expression, true));
+    return selected.length === 0 ? current : unionType(selected);
+  }
+
+  narrowTypeBySwitchOptionalChainContainment(type: Type, switchStatement: AstNode, clauseStart: number, clauseEnd: number, clauseCheck: (type: Type) => boolean): Type {
+    const clauseTypes = this.getSwitchClauseTypes(switchStatement).slice(clauseStart, clauseEnd);
+    return clauseTypes.length > 0 && clauseTypes.every(clauseCheck) ? removeNullable(type) : type;
+  }
+
+  narrowTypeBySwitchOnDiscriminantProperty(type: Type, access: AstNode, switchStatement: AstNode, clauseStart: number, clauseEnd: number): Type {
+    const propertyName = this.getAccessedPropertyName(access);
+    if (propertyName === undefined) return type;
+    const clauseTypes = this.getSwitchClauseTypes(switchStatement).slice(clauseStart, clauseEnd);
+    if (clauseTypes.length === 0) return type;
+    return filterType(type, (candidate) => {
+      const property = propertyType(candidate, propertyName);
+      return property !== undefined && clauseTypes.some((clauseType) => isTypeOverlap(property, clauseType));
+    }) ?? type;
+  }
+
+  getUnionOrEvolvingArrayType(types: readonly Type[]): Type {
+    if (isEvolvingArrayTypeList(types)) {
+      return this.getEvolvingArrayType(unionType(types.map((type) => this.getElementTypeOfEvolvingArrayType(type))));
+    }
+    return unionType(types.map((type) => this.finalizeEvolvingArrayType(type)));
+  }
+
+  getCandidateVariableDeclarationInitializer(node: AstNode | undefined): AstNode | undefined {
+    if (node?.kind !== Kind.VariableDeclaration) return undefined;
+    if ((node as { readonly type?: AstNode }).type !== undefined) return undefined;
+    const initializer = initializerOf(node);
+    return initializer === undefined ? undefined : skipParentheses(initializer);
+  }
+
+  getElementTypeOfEvolvingArrayType(type: Type): Type {
+    return elementTypeOfEvolvingArrayType(type);
+  }
+
+  addEvolvingArrayElementType(evolvingArrayType: Type, node: AstNode): Type {
+    const newElementType = typeOfNode(node);
+    const elementType = this.getElementTypeOfEvolvingArrayType(evolvingArrayType);
+    if (isTypeOverlap(newElementType, elementType)) return evolvingArrayType;
+    return this.getEvolvingArrayType(unionType([elementType, newElementType]));
+  }
+
+  getFinalArrayType(type: Type): Type {
+    return this.createFinalArrayType(this.getElementTypeOfEvolvingArrayType(type));
+  }
+
+  createFinalArrayType(elementType: Type): Type {
+    if ((elementType.flags & TypeFlags.Never) !== 0) return { flags: TypeFlags.Object, id: nextSyntheticTypeId(), data: { objectFlags: ObjectFlags.Reference, elementType: neverType() } };
+    return { flags: TypeFlags.Object, id: nextSyntheticTypeId(), data: { objectFlags: ObjectFlags.Reference, elementType } };
+  }
+
+  reportFlowControlError(node: AstNode): { readonly node: AstNode; readonly message: string } {
+    return { node, message: "The containing function or module body is too large for control flow analysis." };
+  }
+
+  getFlowReferenceKey(state: FlowState): string {
+    return this.writeFlowCacheKey(state.reference, state.declaredType, state.initialType, state.flowContainer) ?? nonDottedNameCacheKey;
+  }
+
+  writeFlowCacheKey(node: AstNode | undefined, declaredType: Type | undefined, initialType: Type | undefined, flowContainer: AstNode | undefined): string | undefined {
+    if (node === undefined || declaredType === undefined) return undefined;
+    switch (node.kind) {
+      case Kind.Identifier:
+      case Kind.ThisKeyword:
+        return `${nodeText(node)}:${typeCacheName(declaredType)}${initialType !== undefined && initialType !== declaredType ? `=${typeCacheName(initialType)}` : ""}${flowContainer === undefined ? "" : `@${nodeCacheName(flowContainer)}`}`;
+      case Kind.NonNullExpression:
+      case Kind.ParenthesizedExpression:
+        return this.writeFlowCacheKey(expressionOf(node), declaredType, initialType, flowContainer);
+      case Kind.QualifiedName: {
+        const left = this.writeFlowCacheKey((node as { readonly left?: AstNode }).left, declaredType, initialType, flowContainer);
+        const right = nodeText((node as { readonly right?: AstNode }).right);
+        return left === undefined || right.length === 0 ? undefined : `${left}.${right}`;
+      }
+      case Kind.PropertyAccessExpression:
+      case Kind.ElementAccessExpression: {
+        const propertyName = this.getAccessedPropertyName(node);
+        const left = this.writeFlowCacheKey(expressionOf(node), declaredType, initialType, flowContainer);
+        return left === undefined || propertyName === undefined ? undefined : `${left}.${propertyName}`;
+      }
+      case Kind.ObjectBindingPattern:
+      case Kind.ArrayBindingPattern:
+      case Kind.FunctionDeclaration:
+      case Kind.FunctionExpression:
+      case Kind.ArrowFunction:
+      case Kind.MethodDeclaration:
+        return `${nodeCacheName(node)}#${typeCacheName(declaredType)}`;
+    }
+    return undefined;
+  }
+
+  isCoercibleUnderDoubleEquals(source: Type, target: Type): boolean {
+    return isCoercibleUnderDoubleEqualsTypes(source, target);
+  }
+
+  eachTypeContainedIn(source: Type, types: readonly Type[]): boolean {
+    return (source.flags & TypeFlags.Union) !== 0
+      ? constituentTypes(source).every((type) => types.includes(type))
+      : types.includes(source);
+  }
+
+  getSwitchClauseTypeOfWitnesses(node: AstNode): readonly string[] | undefined {
+    const clauses = switchClausesOf(node);
+    const witnesses: string[] = [];
+    const seen = new Set<string>();
+    for (const clause of clauses) {
+      if (clause.kind !== Kind.CaseClause) {
+        witnesses.push("");
+        continue;
+      }
+      const expression = (clause as { readonly expression?: AstNode }).expression;
+      if (expression?.kind !== Kind.StringLiteral && expression?.kind !== Kind.NoSubstitutionTemplateLiteral) return undefined;
+      const text = literalText(expression);
+      witnesses.push(seen.has(text) ? "" : text);
+      seen.add(text);
+    }
+    return witnesses;
+  }
+
+  getNotEqualFactsFromTypeofSwitch(start: number, end: number, witnesses: readonly string[]): TypeFacts {
+    let facts = TypeFacts.None;
+    for (let index = 0; index < witnesses.length; index += 1) {
+      const witness = witnesses[index]!;
+      if (index >= start && index < end || witness.length === 0) continue;
+      facts |= typeofNegativeFacts.get(witness) ?? TypeFacts.TypeofNEHostObject;
+    }
+    return facts;
+  }
+
+  getSwitchClauseTypes(node: AstNode): readonly Type[] {
+    return switchClausesOf(node).map((clause) => this.getTypeOfSwitchClause(clause));
+  }
+
+  getTypeOfSwitchClause(clause: AstNode): Type {
+    if (clause.kind !== Kind.CaseClause) return neverType();
+    return typeOfNode((clause as { readonly expression?: AstNode }).expression);
+  }
+
+  getEffectsSignature(node: AstNode): unknown {
+    return (node as { readonly effectsSignature?: unknown; readonly resolvedSignature?: unknown }).effectsSignature
+      ?? (node as { readonly effectsSignature?: unknown; readonly resolvedSignature?: unknown }).resolvedSignature;
+  }
+
+  getSymbolHasInstanceMethodOfObjectType(type: Type): Type | undefined {
+    const propertyName = this.getPropertyNameForKnownSymbolName("hasInstance");
+    return propertyType(type, propertyName);
+  }
+
+  getPropertyNameForKnownSymbolName(symbolName: string): string {
+    return `__@${symbolName}`;
+  }
+
+  getTypeOfDottedName(node: AstNode): Type | undefined {
+    if (((node as { readonly flags?: number }).flags ?? 0) & NodeFlags.InWithStatement) return undefined;
+    switch (node.kind) {
+      case Kind.Identifier:
+        return this.getExplicitTypeOfSymbol(node.symbol);
+      case Kind.ThisKeyword:
+      case Kind.SuperKeyword:
+        return typeOfNode(node);
+      case Kind.PropertyAccessExpression: {
+        const base = this.getTypeOfDottedName(expressionOf(node) ?? node);
+        const name = nodeText((node as { readonly name?: AstNode }).name);
+        return base === undefined || name.length === 0 ? undefined : propertyType(base, name);
+      }
+      case Kind.ParenthesizedExpression:
+        return this.getTypeOfDottedName(expressionOf(node) ?? node);
+    }
+    return undefined;
+  }
+
+  getExplicitTypeOfSymbol(symbol: AstSymbol | undefined): Type | undefined {
+    if (symbol === undefined) return undefined;
+    const flags = symbol.flags ?? 0;
+    if ((flags & (SymbolFlags.Function | SymbolFlags.Method | SymbolFlags.Class | SymbolFlags.ValueModule)) !== 0) {
+      return getTypeOfSymbol(symbol);
+    }
+    if ((flags & (SymbolFlags.Variable | SymbolFlags.Property)) !== 0) {
+      const declaration = symbol.valueDeclaration ?? symbol.declarations[0];
+      if (declaration !== undefined && this.isDeclarationWithExplicitTypeAnnotation(declaration)) return getTypeOfSymbol(symbol);
+    }
+    return undefined;
+  }
+
+  isDeclarationWithExplicitTypeAnnotation(node: AstNode): boolean {
+    return (node.kind === Kind.VariableDeclaration
+      || node.kind === Kind.PropertyDeclaration
+      || node.kind === Kind.PropertySignature
+      || node.kind === Kind.Parameter) && (node as { readonly type?: AstNode }).type !== undefined
+      || this.isExpandoPropertyFunctionWithReturnTypeAnnotation(node);
+  }
+
+  isExpandoPropertyFunctionWithReturnTypeAnnotation(node: AstNode): boolean {
+    if (node.kind !== Kind.BinaryExpression) return false;
+    const right = (node as { readonly right?: AstNode }).right;
+    return right !== undefined
+      && (right.kind === Kind.FunctionExpression || right.kind === Kind.ArrowFunction)
+      && (right as { readonly type?: AstNode }).type !== undefined;
+  }
 }
 
 export function newFlowAnalyzer(): FlowAnalyzer {
@@ -1079,6 +1361,39 @@ function neverType(): Type {
 function isEvolvingArrayType(type: Type): boolean {
   const objectFlags = (type.data as { objectFlags?: ObjectFlags } | undefined)?.objectFlags ?? ObjectFlags.None;
   return (objectFlags & ObjectFlags.EvolvingArray) !== 0;
+}
+
+function isEvolvingArrayTypeList(types: readonly Type[]): boolean {
+  let hasEvolvingArray = false;
+  for (const type of types) {
+    if ((type.flags & TypeFlags.Never) !== 0) continue;
+    if (!isEvolvingArrayType(type)) return false;
+    hasEvolvingArray = true;
+  }
+  return hasEvolvingArray;
+}
+
+function elementTypeOfEvolvingArrayType(type: Type): Type {
+  return isEvolvingArrayType(type)
+    ? (type.data as { readonly elementType?: Type }).elementType ?? neverType()
+    : neverType();
+}
+
+const nonDottedNameCacheKey = "?";
+
+function typeCacheName(type: Type): string {
+  const intrinsicName = (type.data as { readonly intrinsicName?: string } | undefined)?.intrinsicName ?? "";
+  return `${type.id ?? 0}:${type.flags}:${symbolName(type.symbol) || intrinsicName}`;
+}
+
+function nodeCacheName(node: AstNode): string {
+  const id = (node as { readonly id?: number }).id;
+  return `${node.kind}:${id ?? nodeText(node)}`;
+}
+
+function isCoercibleUnderDoubleEqualsTypes(source: Type, target: Type): boolean {
+  return (source.flags & (TypeFlags.Number | TypeFlags.String | TypeFlags.BooleanLiteral)) !== 0
+    && (target.flags & (TypeFlags.Number | TypeFlags.String | TypeFlags.Boolean)) !== 0;
 }
 
 function isEmptyArrayLiteral(node: AstNode | undefined): boolean {
