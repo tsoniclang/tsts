@@ -58,6 +58,7 @@ import {
 } from "./checker.checkedtype.js";
 import { inferExpression } from "./checker.expressions.js";
 import { checkStatements } from "./checker.statements.js";
+import { checkSourceElements } from "./sourceElements.js";
 import {
   getPropertySymbolOfType,
   getTypeOfSymbol,
@@ -96,7 +97,7 @@ export class Checker {
     const state = this.state;
     state.diagnostics.length = 0;
     state.diagnostics.push(...bindDiagnostics.map(diagnostic => ({ message: diagnostic.message })));
-    checkStatements(sourceFile.statements, state, undefined);
+    checkSourceElements(sourceFile.statements, state);
     return { diagnostics: state.diagnostics };
   }
 
