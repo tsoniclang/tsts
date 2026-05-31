@@ -24,6 +24,7 @@ export const PendingReload = {
 } as const;
 
 export const inferredProjectName = "/dev/null/inferred";
+const hr = "-----------------------------------------------";
 
 export interface ProjectOptions {
   readonly configFileName: string;
@@ -42,6 +43,13 @@ export interface ProjectDiagnostic {
   readonly message: string;
 }
 
+export interface ParsedProjectCommandLine {
+  readonly fileNames: readonly string[];
+  readonly compilerOptions: object | undefined;
+  readonly typeAcquisition?: { readonly enable?: boolean };
+  readonly resolvedProjectReferencePaths?: readonly string[];
+}
+
 export interface TypingsInfo {
   readonly compilerOptions: ReadonlyMap<string, unknown>;
   readonly unresolvedImports: readonly string[];
@@ -54,6 +62,12 @@ export interface TypingsState {
   readonly info: TypingsInfo;
   readonly files: readonly string[];
   readonly filesToWatch: readonly string[];
+}
+
+export interface CreateProgramResult {
+  readonly program: Program | undefined;
+  readonly updateKind: ProgramUpdateKind;
+  readonly checkerPool: unknown;
 }
 
 export interface WatchPatternSet {
@@ -250,6 +264,77 @@ export class Project {
     })) ?? [];
   }
 
+  getCommandLineWithTypingsFiles(): ParsedProjectCommandLine {
+    const typeAcquisition = this.getTypeAcquisition();
+    return {
+      fileNames: this.commandLineRootFileNames(),
+      compilerOptions: this.compilerOptions,
+      resolvedProjectReferencePaths: this.resolvedProjectReferencePaths(),
+      ...(typeAcquisition === undefined ? {} : { typeAcquisition }),
+    };
+  }
+
+  createProgram(create?: (project: Project, commandLine: ParsedProjectCommandLine) => Program): CreateProgramResult {
+    const previous = this.program;
+    const program = create?.(this, this.getCommandLineWithTypingsFiles()) ?? previous;
+    if (program === undefined) {
+      throw new Error("Project.createProgram requires an existing program or an explicit create callback.");
+    }
+    const updateKind = previous === undefined
+      ? ProgramUpdateKind.NewFiles
+      : sameProgramFileNames(previous, program)
+        ? ProgramUpdateKind.SameFileNames
+        : ProgramUpdateKind.NewFiles;
+    this.setProgram(program, this.programLastUpdate + 1, updateKind);
+    return { program, updateKind, checkerPool: this.checkerPool };
+  }
+
+  cloneWatchers(): WatchedFiles<WatchPatternSet> {
+    return this.programFilesWatch.clone(this.programFilesWatch.value);
+  }
+
+  print(writeFileNames = false, writeFileExplanation = false): string {
+    const lines = [``, `Project '${this.name()}'`];
+    const sourceFiles = this.program?.sourceFiles ?? [];
+    if (sourceFiles.length === 0) {
+      lines.push("\tFiles (0) NoProgram");
+    } else {
+      lines.push(`\tFiles (${sourceFiles.length})`);
+      if (writeFileNames) {
+        for (const sourceFile of sourceFiles) {
+          lines.push(`\t\t${sourceFile.fileName}`);
+          if (writeFileExplanation) lines.push("\t\t  reason: project root or dependency");
+        }
+      }
+    }
+    lines.push(hr);
+    return lines.join("\n");
+  }
+
+  getTypeAcquisition(): { readonly enable: boolean; readonly include?: readonly string[]; readonly exclude?: readonly string[] } | undefined {
+    if (this.kind === Kind.Inferred) return { enable: true };
+    const options = this.compilerOptions as { readonly typeAcquisition?: { readonly enable?: boolean; readonly include?: readonly string[]; readonly exclude?: readonly string[] } } | undefined;
+    const typeAcquisition = options?.typeAcquisition;
+    if (typeAcquisition === undefined) return undefined;
+    const result: { enable: boolean; include?: readonly string[]; exclude?: readonly string[] } = { enable: typeAcquisition.enable === true };
+    if (typeAcquisition.include !== undefined) result.include = typeAcquisition.include;
+    if (typeAcquisition.exclude !== undefined) result.exclude = typeAcquisition.exclude;
+    return result;
+  }
+
+  getUnresolvedImports(): ReadonlySet<string> {
+    const unresolvedImports = (this.program as { readonly unresolvedImports?: Iterable<string> } | undefined)?.unresolvedImports;
+    return new Set(unresolvedImports ?? []);
+  }
+
+  shouldTriggerATA(snapshotId: number): boolean {
+    if (this.program === undefined) return false;
+    if (this.getTypeAcquisition()?.enable !== true) return false;
+    if (this.installedTypingsInfo === undefined) return true;
+    if (this.programLastUpdate === snapshotId && this.programUpdateKind === ProgramUpdateKind.NewFiles) return true;
+    return !typingsInfoEquals(this.installedTypingsInfo, this.computeTypingsInfo([...this.getUnresolvedImports()]));
+  }
+
   applyFileChanges(summary: FileChangeSummary): void {
     if (summary.invalidateAll || summary.changed.size > 0 || summary.created.size > 0 || summary.deleted.size > 0) {
       this.markDirty(undefined, summary.invalidateAll ? PendingReload.Full : PendingReload.FileNames);
@@ -410,4 +495,10 @@ function sameRootFiles(left: readonly string[], right: readonly string[]): boole
     if (a[index] !== b[index]) return false;
   }
   return true;
+}
+
+function sameProgramFileNames(left: Program, right: Program): boolean {
+  const leftFiles = left.sourceFiles.map(file => normalizeSlashes(file.fileName)).sort();
+  const rightFiles = right.sourceFiles.map(file => normalizeSlashes(file.fileName)).sort();
+  return sameRootFiles(leftFiles, rightFiles);
 }
