@@ -12,7 +12,7 @@ export interface SourceMapRecord {
   readonly sourceMap: string;
 }
 
-export interface TestFile {
+interface TestFile {
   readonly unitName: string;
   readonly content: string;
 }
