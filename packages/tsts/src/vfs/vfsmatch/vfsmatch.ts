@@ -58,6 +58,59 @@ export function isImplicitGlob(lastPathComponent: string): boolean {
  */
 export interface SpecMatcher {
   matchString(s: string): boolean;
+  matchIndex?(s: string): number;
+}
+
+export interface GlobMatchResult {
+  readonly matched: boolean;
+  readonly includeIndex: number;
+}
+
+export class GlobMatcher {
+  private readonly includes: readonly CompiledGlob[];
+  private readonly excludes: readonly CompiledGlob[];
+  private readonly hadIncludes: boolean;
+  private readonly caseSensitive: boolean;
+
+  constructor(
+    includeSpecs: readonly string[],
+    excludeSpecs: readonly string[],
+    basePath: string,
+    usage: Usage,
+    caseSensitive: boolean,
+  ) {
+    this.caseSensitive = caseSensitive;
+    this.hadIncludes = includeSpecs.length > 0;
+    this.includes = includeSpecs
+      .map(spec => compileGlobForUsage(spec, basePath, usage))
+      .filter((glob): glob is CompiledGlob => glob !== undefined);
+    this.excludes = excludeSpecs
+      .map(spec => compileGlobForUsage(spec, basePath, Usage.Exclude))
+      .filter((glob): glob is CompiledGlob => glob !== undefined);
+  }
+
+  matchesFile(path: string): GlobMatchResult {
+    for (const exclude of this.excludes) {
+      if (matchesGlob(path, exclude, this.caseSensitive)) return { matched: false, includeIndex: -1 };
+    }
+    if (this.includes.length === 0) {
+      return { matched: !this.hadIncludes, includeIndex: this.hadIncludes ? -1 : 0 };
+    }
+    for (let index = 0; index < this.includes.length; index += 1) {
+      if (matchesGlob(path, this.includes[index]!, this.caseSensitive)) {
+        return { matched: true, includeIndex: index };
+      }
+    }
+    return { matched: false, includeIndex: -1 };
+  }
+
+  matchesDirectory(path: string): boolean {
+    for (const exclude of this.excludes) {
+      if (matchesGlob(path, exclude, this.caseSensitive)) return false;
+    }
+    if (this.includes.length === 0) return !this.hadIncludes;
+    return this.includes.some(include => matchesGlobPrefix(path, include, this.caseSensitive));
+  }
 }
 
 /**
@@ -81,6 +134,12 @@ export function newSpecMatcher(
   if (globs.length === 0) return undefined;
   return {
     matchString: (s: string): boolean => globs.some((glob) => matchesGlob(s, glob, caseSensitive)),
+    matchIndex: (s: string): number => {
+      for (let index = 0; index < globs.length; index += 1) {
+        if (matchesGlob(s, globs[index]!, caseSensitive)) return index;
+      }
+      return -1;
+    },
   };
 }
 
@@ -185,6 +244,12 @@ function compileGlobForUsage(spec: string, basePath: string, usage: Usage): Comp
 const caseSensitiveDefault = true;
 
 function matchesGlob(filePath: string, glob: CompiledGlob, caseSensitive: boolean): boolean {
+  const normalizedFilePath = normalizePath(filePath);
+  const normalizedBase = normalizePath(glob.basePath);
+  if (normalizedBase.length > 0 && !pathStartsWith(normalizedFilePath, normalizedBase, caseSensitive)) {
+    const hasWildcardBase = glob.components.some(component => component.isRecursive || component.text.includes("*") || component.text.includes("?"));
+    if (!hasWildcardBase) return false;
+  }
   const cmp = (a: string, b: string) => caseSensitive ? a === b : a.toLowerCase() === b.toLowerCase();
   const matchSegment = (segment: string, component: GlobComponent): boolean => {
     if (component.isRecursive) return true;
@@ -213,6 +278,94 @@ function matchesGlob(filePath: string, glob: CompiledGlob, caseSensitive: boolea
     j += 1;
   }
   return j >= glob.components.length;
+}
+
+function matchesGlobPrefix(directoryPath: string, glob: CompiledGlob, caseSensitive: boolean): boolean {
+  const directorySegments = normalizePath(directoryPath).split("/").filter((s) => s.length > 0);
+  const components = glob.components;
+  let pathIndex = 0;
+  let componentIndex = 0;
+  while (pathIndex < directorySegments.length && componentIndex < components.length) {
+    const component = components[componentIndex]!;
+    if (component.isRecursive) return true;
+    const regex = caseSensitive
+      ? (component.regex ?? globSegmentToRegExp(component.text, true))
+      : globSegmentToRegExp(component.text, false);
+    if (!regex.test(directorySegments[pathIndex]!)) return false;
+    pathIndex += 1;
+    componentIndex += 1;
+  }
+  return pathIndex >= directorySegments.length;
+}
+
+export function nextPathPart(path: string, offset: number): readonly [string, number, boolean] {
+  if (offset >= path.length) return ["", offset, false];
+  if (offset === 0 && path.startsWith("/")) return ["", 1, true];
+  let start = offset;
+  while (start < path.length && path[start] === "/") start += 1;
+  if (start >= path.length) return ["", start, false];
+  const slash = path.indexOf("/", start);
+  if (slash === -1) return [path.slice(start), path.length, true];
+  return [path.slice(start, slash), slash, true];
+}
+
+export function nextPathPartParts(prefix: string, suffix: string, offset: number): readonly [string, number, boolean] {
+  if (suffix.length === 0) return nextPathPart(prefix, offset);
+  if (prefix.length === 0) return nextPathPart(suffix, offset);
+  const totalLength = prefix.length + suffix.length;
+  if (offset >= totalLength) return ["", offset, false];
+  if (offset === 0 && prefix.startsWith("/")) return ["", 1, true];
+  if (offset < prefix.length) {
+    let start = offset;
+    while (start < prefix.length && prefix[start] === "/") start += 1;
+    if (start < prefix.length) {
+      const slash = prefix.indexOf("/", start);
+      if (slash !== -1) return [prefix.slice(start, slash), slash, true];
+      return [prefix.slice(start) + suffix, totalLength, true];
+    }
+  }
+  const suffixOffset = Math.max(0, offset - prefix.length);
+  if (suffixOffset >= suffix.length) return ["", offset, false];
+  return [suffix.slice(suffixOffset), totalLength, true];
+}
+
+export function matchPathParts(
+  prefix: string,
+  suffix: string,
+  glob: CompiledGlob,
+  caseSensitive: boolean,
+  prefixOnly: boolean,
+): boolean {
+  let pathOffset = 0;
+  let componentIndex = 0;
+  while (true) {
+    const [pathPart, nextOffset, ok] = nextPathPartParts(prefix, suffix, pathOffset);
+    if (!ok) return prefixOnly || patternSatisfied(glob.components, componentIndex);
+    if (componentIndex >= glob.components.length) return false;
+    const component = glob.components[componentIndex]!;
+    if (component.isRecursive) {
+      if (matchPathParts(prefix.slice(pathOffset), suffix, {
+        basePath: glob.basePath,
+        components: glob.components.slice(componentIndex + 1),
+      }, caseSensitive, prefixOnly)) return true;
+      if (isHiddenPath(pathPart) || isPackageFolder(pathPart)) return false;
+      pathOffset = nextOffset;
+      continue;
+    }
+    const regex = caseSensitive
+      ? (component.regex ?? globSegmentToRegExp(component.text, true))
+      : globSegmentToRegExp(component.text, false);
+    if (!regex.test(pathPart)) return false;
+    pathOffset = nextOffset;
+    componentIndex += 1;
+  }
+}
+
+function patternSatisfied(components: readonly GlobComponent[], componentIndex: number): boolean {
+  for (let index = componentIndex; index < components.length; index += 1) {
+    if (!components[index]!.isRecursive) return false;
+  }
+  return true;
 }
 
 export function isFileNameMatchedBySpecs(
@@ -301,6 +454,22 @@ function escapeRegExpChar(ch: string): string {
 
 function shouldSkipRecursiveSegment(segment: string, component: GlobComponent): boolean {
   return component.isRecursive && (segment === "node_modules" || segment === "bower_components" || segment === "jspm_packages" || segment.startsWith("."));
+}
+
+function isHiddenPath(name: string): boolean {
+  return name.length > 0 && name[0] === ".";
+}
+
+function isPackageFolder(name: string): boolean {
+  return name.localeCompare("node_modules", undefined, { sensitivity: "accent" }) === 0
+    || name.localeCompare("jspm_packages", undefined, { sensitivity: "accent" }) === 0
+    || name.localeCompare("bower_components", undefined, { sensitivity: "accent" }) === 0;
+}
+
+function pathStartsWith(path: string, prefix: string, caseSensitive: boolean): boolean {
+  const normalizedPath = caseSensitive ? path : path.toLowerCase();
+  const normalizedPrefix = caseSensitive ? prefix : prefix.toLowerCase();
+  return normalizedPath === normalizedPrefix || normalizedPath.startsWith(normalizedPrefix.endsWith("/") ? normalizedPrefix : `${normalizedPrefix}/`);
 }
 
 function matchFiles(
