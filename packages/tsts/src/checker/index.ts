@@ -8,6 +8,7 @@ export * as moduleResolution from "./moduleResolution.js";
 export * as iteration from "./checker.iteration.js";
 export * as unused from "./checker.unused.js";
 export * as symbolResolution from "./symbolResolution.js";
+export * as symbolTypes from "./symbolTypes.js";
 export * from "./nodeBuilder.js";
 export * from "./nodeBuilderHover.js";
 export * from "./nodeBuilderImpl.js";
