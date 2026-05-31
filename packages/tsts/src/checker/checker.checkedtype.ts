@@ -37,6 +37,7 @@ import {
   isArrayBindingPattern,
   isParameterDeclaration,
   isPrefixUnaryExpression,
+  isPropertyAccessExpression,
   isPropertyDeclaration,
   isPropertySignatureDeclaration,
   isQualifiedName,
@@ -55,6 +56,7 @@ import {
   type ClassDeclaration,
   type EntityName,
   type Expression,
+  type ExpressionWithTypeArguments,
   type LiteralTypeNode,
   type Node as AstNode,
   type ParameterDeclaration,
@@ -83,6 +85,7 @@ import {
   type UnionOrIntersectionType,
   TypeFlags,
   ObjectFlags,
+  getTypeOfSymbol,
   getPropertyTypeOfType,
   setBinderSymbolTypeResolver,
 } from "./types.js";
@@ -1115,18 +1118,106 @@ function capitalize(value: string): string {
 
 function makeNominalObjectType(symbol: AstSymbol, declaration: AstNode, state: CheckState): Type {
   const properties: ObjectProperty[] = [];
-  let extras: ObjectTypeExtras | undefined;
+  const extraParts: ObjectTypeExtras[] = [];
   if (isInterfaceDeclaration(declaration)) {
+    collectHeritageMembers(declaration.heritageClauses, Kind.ExtendsKeyword, properties, extraParts, state);
     collectTypeMembers(declaration.members, properties, state);
-    extras = collectTypeMemberExtras(declaration.members, state);
+    pushExtras(extraParts, collectTypeMemberExtras(declaration.members, state));
   } else if (isClassDeclaration(declaration)) {
     const instanceMember = (member: AstNode): boolean => !isStaticClassMember(member);
+    collectHeritageMembers(declaration.heritageClauses, Kind.ExtendsKeyword, properties, extraParts, state);
     collectTypeMembers(declaration.members, properties, state, instanceMember);
-    extras = collectTypeMemberExtras(declaration.members, state, instanceMember);
+    pushExtras(extraParts, collectTypeMemberExtras(declaration.members, state, instanceMember));
   }
+  const extras = mergeObjectTypeExtras(extraParts);
   const type = makeObjectType(properties, state, false, extras);
   type.aliasSymbol = symbol;
   return type;
+}
+
+function collectHeritageMembers(
+  heritageClauses: readonly { readonly token: Kind; readonly types: readonly ExpressionWithTypeArguments[] }[] | undefined,
+  token: Kind,
+  properties: ObjectProperty[],
+  extraParts: ObjectTypeExtras[],
+  state: CheckState,
+): void {
+  for (const clause of heritageClauses ?? []) {
+    if (clause.token !== token) continue;
+    for (const heritageType of clause.types) {
+      addObjectTypeMembers(typeFromHeritageType(heritageType, state), properties, extraParts);
+    }
+  }
+}
+
+function typeFromHeritageType(heritageType: ExpressionWithTypeArguments, state: CheckState): Type {
+  const symbol = typeSymbolFromHeritageExpression(heritageType.expression);
+  if (symbol === undefined) {
+    state.diagnostics.push({ message: `Cannot find name '${expressionNameText(heritageType.expression)}'.` });
+    return unresolvedType;
+  }
+  return getDeclaredTypeOfTypeSymbol(symbol, heritageType.typeArguments, state);
+}
+
+function typeSymbolFromHeritageExpression(expression: Expression): AstSymbol | undefined {
+  if (isIdentifier(expression)) {
+    return getResolvedTypeSymbol(expression.text, expression);
+  }
+  if (isPropertyAccessExpression(expression)) {
+    const left = typeSymbolFromHeritageExpression(expression.expression);
+    return left?.exports?.get(expression.name.text) ?? left?.members?.get(expression.name.text);
+  }
+  return undefined;
+}
+
+function expressionNameText(expression: Expression): string {
+  if (isIdentifier(expression)) return expression.text;
+  if (isPropertyAccessExpression(expression)) return `${expressionNameText(expression.expression)}.${expression.name.text}`;
+  return kindDebugName(expression.kind);
+}
+
+function addObjectTypeMembers(type: Type, properties: ObjectProperty[], extraParts: ObjectTypeExtras[]): void {
+  const members = (type.symbol as { readonly members?: ReadonlyMap<string, AstSymbol> } | undefined)?.members;
+  if (members !== undefined) {
+    for (const [name, symbol] of members) {
+      const propertyType = getTypeOfSymbol(symbol);
+      if (propertyType !== undefined) {
+        properties.push({
+          name,
+          type: propertyType,
+          optional: ((symbol.flags ?? 0) & SymbolFlags.Optional) !== 0,
+        });
+      }
+    }
+  }
+  const data = type.data as ObjectType | undefined;
+  pushExtras(extraParts, {
+    ...(data?.declaredCallSignatures !== undefined ? { callSignatures: data.declaredCallSignatures } : {}),
+    ...(data?.declaredConstructSignatures !== undefined ? { constructSignatures: data.declaredConstructSignatures } : {}),
+    ...(data?.indexInfos !== undefined ? { indexInfos: data.indexInfos } : {}),
+  });
+}
+
+function pushExtras(extraParts: ObjectTypeExtras[], extras: ObjectTypeExtras | undefined): void {
+  if (extras === undefined) return;
+  if ((extras.callSignatures?.length ?? 0) === 0
+    && (extras.constructSignatures?.length ?? 0) === 0
+    && (extras.indexInfos?.length ?? 0) === 0) {
+    return;
+  }
+  extraParts.push(extras);
+}
+
+function mergeObjectTypeExtras(extraParts: readonly ObjectTypeExtras[]): ObjectTypeExtras | undefined {
+  const callSignatures = extraParts.flatMap((extras) => extras.callSignatures ?? []);
+  const constructSignatures = extraParts.flatMap((extras) => extras.constructSignatures ?? []);
+  const indexInfos = extraParts.flatMap((extras) => extras.indexInfos ?? []);
+  if (callSignatures.length === 0 && constructSignatures.length === 0 && indexInfos.length === 0) return undefined;
+  return {
+    ...(callSignatures.length > 0 ? { callSignatures } : {}),
+    ...(constructSignatures.length > 0 ? { constructSignatures } : {}),
+    ...(indexInfos.length > 0 ? { indexInfos } : {}),
+  };
 }
 
 function makeTypeParameterType(symbol: AstSymbol, state: CheckState): Type {

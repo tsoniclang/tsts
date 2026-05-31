@@ -786,6 +786,20 @@ export class CheckerGroundworkTests {
     Assert.Equal<readonly string[]>(["Type alias 'Box' requires 1 type argument, but got 2."], extraTypeArg.diagnostics.map((d) => d.message));
   }
 
+  checks_interface_and_class_heritage_members(): void {
+    const interfaceBase = checkSourceFile(parseSourceFile("interface Base { value: number; } interface Derived extends Base { label: string; } function f(d: Derived): number { return d.value; }"));
+    const interfaceMismatch = checkSourceFile(parseSourceFile("interface Base { value: number; } interface Derived extends Base { } function f(d: Derived): string { return d.value; }"));
+    const genericBase = checkSourceFile(parseSourceFile("interface Box<T> { value: T; } interface StringBox extends Box<string> { } function f(box: StringBox): string { return box.value; }"));
+    const classBase = checkSourceFile(parseSourceFile("class Base { value: number; get(): number { return this.value; } } class Derived extends Base { label: string; } function f(d: Derived): number { return d.get(); }"));
+    const classMismatch = checkSourceFile(parseSourceFile("class Base { value: number; } class Derived extends Base { } function f(d: Derived): string { return d.value; }"));
+
+    Assert.Equal(0, interfaceBase.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], interfaceMismatch.diagnostics.map((d) => d.message));
+    Assert.Equal(0, genericBase.diagnostics.length);
+    Assert.Equal(0, classBase.diagnostics.length);
+    Assert.Equal<readonly string[]>(["Type 'number' is not assignable to type 'string'."], classMismatch.diagnostics.map((d) => d.message));
+  }
+
   accepts_union_type_node_return_types(): void {
     const baseCase = checkSourceFile(parseSourceFile("function g(flag: boolean): string | number { return flag ? \"x\" : 1; }"));
     const literalCase = checkSourceFile(parseSourceFile("function f(flag: boolean): \"a\" | \"b\" { return flag ? \"a\" : \"b\"; }"));
@@ -1041,6 +1055,7 @@ A<CheckerGroundworkTests>().method((t) => t.resolves_type_alias_references).add(
 A<CheckerGroundworkTests>().method((t) => t.enforces_type_alias_scoping_rules).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.m5b_resolves_nominal_interface_and_class_members).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.m5c_instantiates_generic_aliases_interfaces_and_classes).add(FactAttribute);
+A<CheckerGroundworkTests>().method((t) => t.checks_interface_and_class_heritage_members).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.accepts_union_type_node_return_types).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.reports_union_type_node_mismatch).add(FactAttribute);
 A<CheckerGroundworkTests>().method((t) => t.recognizes_keyword_literal_predicates).add(FactAttribute);
