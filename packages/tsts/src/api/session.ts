@@ -25,6 +25,43 @@ import type { Node as AstNode } from "../ast/index.js";
 // ---------------------------------------------------------------------------
 
 export type Handle<T> = string & { readonly __t?: T };
+const HandlePrefix = {
+  Project: "p",
+  Snapshot: "n",
+  Symbol: "s",
+  Type: "t",
+  Signature: "g",
+} as const;
+let sessionIdCounter = 0;
+let objectHandleCounter = 0;
+const objectHandleIds = new WeakMap<object, number>();
+
+function handleId(value: unknown): string {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.trunc(value).toString(16).padStart(16, "0");
+  }
+  if (typeof value === "bigint") {
+    return value.toString(16).padStart(16, "0");
+  }
+  if (typeof value === "string" && value.length > 0) {
+    return value;
+  }
+  if (typeof value === "object" && value !== null) {
+    let id = objectHandleIds.get(value);
+    if (id === undefined) {
+      objectHandleCounter += 1;
+      id = objectHandleCounter;
+      objectHandleIds.set(value, id);
+    }
+    return id.toString(16).padStart(16, "0");
+  }
+  objectHandleCounter += 1;
+  return objectHandleCounter.toString(16).padStart(16, "0");
+}
+
+function prefixedHandle<T>(prefix: string, value: unknown): Handle<T> {
+  return `${prefix}${handleId(value)}` as Handle<T>;
+}
 
 // ---------------------------------------------------------------------------
 // SnapshotData
@@ -38,6 +75,69 @@ export interface SnapshotData {
   resolveTypeHandle(handle: Handle<TypeType>): TypeType | { error: string };
   resolveSignatureHandle(handle: Handle<SignatureType>): SignatureType | { error: string };
   registerSignature(sig: SignatureType): SignatureResponse;
+}
+
+class SnapshotDataRecord implements SnapshotData {
+  readonly snapshot: Snapshot;
+  refCount = 1;
+  readonly symbolRegistry = new Map<Handle<SymbolType>, SymbolType>();
+  readonly typeRegistry = new Map<Handle<TypeType>, TypeType>();
+  readonly signatureRegistry = new Map<Handle<SignatureType>, SignatureType>();
+  signatureNextId = 0;
+
+  constructor(snapshot: Snapshot) {
+    this.snapshot = snapshot;
+  }
+
+  getProgram(projectHandle: Handle<Project>): Program | { error: string } {
+    const projectName = parseProjectHandle(projectHandle);
+    const collection = readProperty(this.snapshot, "projectCollection") ?? readProperty(this.snapshot, "ProjectCollection");
+    const project = callMethod(collection, "getProjectByPath", projectName)
+      ?? callMethod(collection, "GetProjectByPath", projectName)
+      ?? readMapValue(readProperty(collection, "projects"), projectName);
+    if (project === undefined) {
+      return { error: `project ${projectName} not found` };
+    }
+    const program = callMethod(project, "getProgram") ?? callMethod(project, "GetProgram") ?? readProperty(project, "program");
+    if (program === undefined) {
+      return { error: "project has no program" };
+    }
+    return program as Program;
+  }
+
+  registerSymbol(symbol: SymbolType): SymbolResponse {
+    const response = newSymbolResponse(symbol);
+    this.symbolRegistry.set(response.id, symbol);
+    return response;
+  }
+
+  registerType(targetType: TypeType): TypeResponse {
+    const response = newTypeResponse(targetType);
+    this.typeRegistry.set(response.id, targetType);
+    return response;
+  }
+
+  resolveSymbolHandle(handle: Handle<SymbolType>): SymbolType | { error: string } {
+    const symbol = this.symbolRegistry.get(handle);
+    return symbol ?? { error: `symbol handle ${handle} not found in snapshot registry` };
+  }
+
+  resolveTypeHandle(handle: Handle<TypeType>): TypeType | { error: string } {
+    const targetType = this.typeRegistry.get(handle);
+    return targetType ?? { error: `type handle ${handle} not found in snapshot registry` };
+  }
+
+  resolveSignatureHandle(handle: Handle<SignatureType>): SignatureType | { error: string } {
+    const signature = this.signatureRegistry.get(handle);
+    return signature ?? { error: `signature handle ${handle} not found in snapshot registry` };
+  }
+
+  registerSignature(signature: SignatureType): SignatureResponse {
+    this.signatureNextId += 1;
+    const response = newSignatureResponse(signature, this.signatureNextId, this);
+    this.signatureRegistry.set(response.id, signature);
+    return response;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -57,30 +157,46 @@ export interface CheckerSetup {
 export interface SessionOptions {
   defaultLibraryPath?: string;
   emitMessageHandler?: (msg: unknown) => void;
+  useBinaryResponses?: boolean;
 }
 
 export class Session {
   readonly id: string;
   readonly projectSession: ProjectSession;
   readonly options: SessionOptions;
+  readonly snapshots = new Map<Handle<Snapshot>, SnapshotDataRecord>();
+  latestSnapshot: Handle<Snapshot> | undefined;
+  readonly useBinaryResponses: boolean;
 
   constructor(projectSession: ProjectSession, options: SessionOptions) {
     this.id = generateSessionId();
     this.projectSession = projectSession;
     this.options = options;
+    this.useBinaryResponses = options.useBinaryResponses === true;
   }
 
   ID(): string { return this.id; }
   ProjectSession(): ProjectSession { return this.projectSession; }
 
   getSnapshotData(handle: Handle<Snapshot>): SnapshotData | { error: string } {
-    void handle;
-    return { error: "no snapshot data" };
+    const data = this.snapshots.get(handle);
+    return data ?? { error: `snapshot ${handle} not found` };
   }
 
   setupChecker(ctx: Context, snapshot: Handle<Snapshot>, projectHandle: Handle<Project>): CheckerSetup {
-    void ctx; void snapshot; void projectHandle;
-    return { checker: undefined, program: undefined, snapshotData: undefined };
+    void ctx;
+    const snapshotData = this.getSnapshotData(snapshot);
+    if (isError(snapshotData)) {
+      return { checker: undefined, program: undefined, snapshotData: undefined };
+    }
+    const program = snapshotData.getProgram(projectHandle);
+    if (isError(program)) {
+      return { checker: undefined, program: undefined, snapshotData };
+    }
+    const checker = callMethod(program, "getTypeChecker", ctx)
+      ?? callMethod(program, "GetTypeChecker", ctx)
+      ?? readProperty(program, "checker");
+    return { checker: checker as Checker | undefined, program, snapshotData };
   }
 
   // -------------------------------------------------------------------------
@@ -88,6 +204,12 @@ export class Session {
   // -------------------------------------------------------------------------
 
   HandleRequest(ctx: Context, method: string, params: unknown): { result?: unknown; error?: string } {
+    if (method === "echo") {
+      return { result: this.useBinaryResponses ? params : params };
+    }
+    if (method === "ping") {
+      return { result: "pong" };
+    }
     switch (method) {
       case "initialize": return { result: this.handleInitialize(ctx) };
       case "updateSnapshot": return { result: this.handleUpdateSnapshot(ctx, params as UpdateSnapshotParams) };
@@ -179,16 +301,53 @@ export class Session {
 
   handleInitialize(ctx: Context): InitializeResponse {
     void ctx;
-    return { sessionId: this.id };
+    return {
+      sessionId: this.id,
+      useCaseSensitiveFileNames: readBoolean(this.projectSession, "useCaseSensitiveFileNames", true),
+      currentDirectory: readString(this.projectSession, "currentDirectory", process.cwd()),
+    };
   }
   handleUpdateSnapshot(ctx: Context, params: UpdateSnapshotParams): UpdateSnapshotResponse {
-    void ctx; void params; return { snapshot: "" as Handle<Snapshot> };
+    void ctx;
+    const previousSnapshotHandle = this.latestSnapshot;
+    const previousSnapshot = previousSnapshotHandle === undefined ? undefined : this.snapshots.get(previousSnapshotHandle)?.snapshot;
+    const snapshot = callMethod(this.projectSession, "updateSnapshot", params)
+      ?? callMethod(this.projectSession, "UpdateSnapshot", params)
+      ?? readProperty(this.projectSession, "snapshot")
+      ?? { id: this.snapshots.size + 1, projectCollection: readProperty(this.projectSession, "projectCollection") };
+    const handle = snapshotHandle(snapshot as Snapshot);
+    const snapshotData = new SnapshotDataRecord(snapshot as Snapshot);
+    this.snapshots.set(handle, snapshotData);
+    this.latestSnapshot = handle;
+    const response: UpdateSnapshotResponse = {
+      snapshot: handle,
+      projects: projectResponsesForSnapshot(snapshot),
+    };
+    const changes = computeSnapshotChanges(previousSnapshot, snapshot);
+    if (changes !== undefined) {
+      response.changes = changes;
+    }
+    return response;
   }
   handleRelease(ctx: Context, params: ReleaseParams): unknown {
-    void ctx; void params; return undefined;
+    void ctx;
+    const handle = params.handle as Handle<Snapshot>;
+    const snapshotData = this.snapshots.get(handle);
+    if (snapshotData === undefined) {
+      return undefined;
+    }
+    snapshotData.refCount -= 1;
+    if (snapshotData.refCount <= 0) {
+      this.snapshots.delete(handle);
+      if (this.latestSnapshot === handle) {
+        this.latestSnapshot = undefined;
+      }
+    }
+    return undefined;
   }
   handleGetDefaultProjectForFile(ctx: Context, params: GetDefaultProjectForFileParams): ProjectResponse {
-    void ctx; void params; return { project: "" as Handle<Project> };
+    void ctx; void params;
+    return { id: "" as Handle<Project>, configFileName: "", rootFiles: [], compilerOptions: undefined };
   }
   handleParseConfigFile(ctx: Context, params: ParseConfigFileParams): ConfigFileResponse {
     void ctx; void params; return { config: "" };
@@ -299,13 +458,22 @@ export class Session {
   resolveTypeProperty(
     params: GetTypePropertyParams, getter: (t: TypeType) => TypeType | undefined,
   ): TypeResponse | undefined {
-    void params; void getter; return undefined;
+    const snapshotData = this.getSnapshotData(params.snapshot);
+    if (isError(snapshotData)) return undefined;
+    const targetType = snapshotData.resolveTypeHandle(params.type);
+    if (isError(targetType)) return undefined;
+    const propertyType = getter(targetType);
+    return propertyType === undefined ? undefined : snapshotData.registerType(propertyType);
   }
 
   resolveTypeArrayProperty(
     params: GetTypePropertyParams, getter: (t: TypeType) => readonly TypeType[],
   ): readonly TypeResponse[] {
-    void params; void getter; return [];
+    const snapshotData = this.getSnapshotData(params.snapshot);
+    if (isError(snapshotData)) return [];
+    const targetType = snapshotData.resolveTypeHandle(params.type);
+    if (isError(targetType)) return [];
+    return getter(targetType).map((propertyType) => snapshotData.registerType(propertyType));
   }
 }
 
@@ -314,12 +482,150 @@ export function newSession(projectSession: ProjectSession, options: SessionOptio
 }
 
 export function snapshotHandle(snapshot: Snapshot): Handle<Snapshot> {
-  void snapshot;
-  return "" as Handle<Snapshot>;
+  return prefixedHandle<Snapshot>(HandlePrefix.Snapshot, readProperty(snapshot, "id") ?? readProperty(snapshot, "ID") ?? snapshot);
 }
 
 function generateSessionId(): string {
-  return `s-${Math.random().toString(36).slice(2)}`;
+  sessionIdCounter += 1;
+  return `s-${sessionIdCounter.toString(16).padStart(16, "0")}`;
+}
+
+function parseProjectHandle(handle: Handle<Project>): string {
+  const text = handle as unknown as string;
+  if (text.startsWith(`${HandlePrefix.Project}.`)) return text.slice(2);
+  if (text.startsWith(HandlePrefix.Project)) return text.slice(1);
+  return text;
+}
+
+function symbolHandle(symbol: SymbolType): Handle<SymbolType> {
+  return prefixedHandle<SymbolType>(HandlePrefix.Symbol, readProperty(symbol, "id") ?? symbol);
+}
+
+function typeHandle(targetType: TypeType): Handle<TypeType> {
+  return prefixedHandle<TypeType>(HandlePrefix.Type, readProperty(targetType, "id") ?? targetType);
+}
+
+function signatureHandle(id: number): Handle<SignatureType> {
+  return prefixedHandle<SignatureType>(HandlePrefix.Signature, id);
+}
+
+function newSymbolResponse(symbol: SymbolType): SymbolResponse {
+  const response: SymbolResponse = {
+    id: symbolHandle(symbol),
+    name: readString(symbol, "name", readString(symbol, "escapedName", "")),
+    flags: readNumber(symbol, "flags", 0),
+    checkFlags: readNumber(symbol, "checkFlags", 0),
+  };
+  const declarations = readArray<AstNode>(symbol, "declarations");
+  if (declarations.length > 0) {
+    response.declarations = declarations.map(nodeHandleFrom);
+  }
+  const valueDeclaration = readProperty(symbol, "valueDeclaration");
+  if (valueDeclaration !== undefined) {
+    response.valueDeclaration = nodeHandleFrom(valueDeclaration as AstNode);
+  }
+  return response;
+}
+
+function newTypeResponse(targetType: TypeType): TypeResponse {
+  const response: TypeResponse = {
+    id: typeHandle(targetType),
+    flags: readNumber(targetType, "flags", 0),
+  };
+  const objectFlags = readProperty(targetType, "objectFlags");
+  if (typeof objectFlags === "number") response.objectFlags = objectFlags;
+  const symbol = readProperty(targetType, "symbol");
+  if (symbol !== undefined) response.symbol = symbolHandle(symbol as SymbolType);
+  return response;
+}
+
+function newSignatureResponse(signature: SignatureType, id: number, snapshotData: SnapshotDataRecord): SignatureResponse {
+  const response: SignatureResponse = {
+    id: signatureHandle(id),
+    flags: readNumber(signature, "flags", 0),
+  };
+  const declaration = readProperty(signature, "declaration");
+  if (declaration !== undefined) response.declaration = nodeHandleFrom(declaration as AstNode);
+  const typeParameters = readArray<TypeType>(signature, "typeParameters");
+  if (typeParameters.length > 0) {
+    response.typeParameters = typeParameters.map((targetType) => snapshotData.registerType(targetType).id);
+  }
+  const parameters = readArray<SymbolType>(signature, "parameters");
+  if (parameters.length > 0) {
+    response.parameters = parameters.map((symbol) => snapshotData.registerSymbol(symbol).id);
+  }
+  const thisParameter = readProperty(signature, "thisParameter");
+  if (thisParameter !== undefined) response.thisParameter = snapshotData.registerSymbol(thisParameter as SymbolType).id;
+  const target = readProperty(signature, "target");
+  if (target !== undefined) response.target = snapshotData.registerSignature(target as SignatureType).id;
+  return response;
+}
+
+function nodeHandleFrom(node: AstNode): Handle<AstNode> {
+  const path = readString(node.getSourceFile?.(), "path", "");
+  return `${node.pos}.${node.end}.${node.kind}.${path}` as Handle<AstNode>;
+}
+
+function projectResponsesForSnapshot(snapshot: unknown): readonly ProjectResponse[] {
+  const collection = readProperty(snapshot, "projectCollection") ?? readProperty(snapshot, "ProjectCollection");
+  const projects = readArray<Project>(collection, "projects");
+  if (projects.length > 0) return projects.map(newProjectResponse);
+  const projectMap = readProperty(collection, "projects");
+  if (projectMap instanceof Map) return Array.from(projectMap.values()).map((project) => newProjectResponse(project as Project));
+  return [];
+}
+
+function newProjectResponse(project: Project): ProjectResponse {
+  return {
+    id: prefixedHandle<Project>(HandlePrefix.Project, readProperty(project, "id") ?? readProperty(project, "configFileName") ?? project),
+    configFileName: readString(project, "configFileName", ""),
+    rootFiles: readArray<string>(project, "rootFiles"),
+    compilerOptions: readProperty(project, "compilerOptions"),
+  };
+}
+
+function computeSnapshotChanges(previousSnapshot: Snapshot | undefined, nextSnapshot: unknown): SnapshotChanges | undefined {
+  if (previousSnapshot === undefined || previousSnapshot === nextSnapshot) return undefined;
+  return { changedProjects: new Map(), removedProjects: [] };
+}
+
+function isError<T>(value: T | { error: string }): value is { error: string } {
+  return typeof value === "object" && value !== null && "error" in value;
+}
+
+function readProperty(value: unknown, key: string): unknown {
+  if (typeof value !== "object" || value === null) return undefined;
+  return (value as Record<string, unknown>)[key];
+}
+
+function readMapValue(value: unknown, key: string): unknown {
+  if (value instanceof Map) return value.get(key);
+  return undefined;
+}
+
+function callMethod(value: unknown, name: string, ...args: readonly unknown[]): unknown {
+  const method = readProperty(value, name);
+  return typeof method === "function" ? method.apply(value, args) : undefined;
+}
+
+function readString(value: unknown, key: string, fallback: string): string {
+  const property = readProperty(value, key);
+  return typeof property === "string" ? property : fallback;
+}
+
+function readBoolean(value: unknown, key: string, fallback: boolean): boolean {
+  const property = readProperty(value, key);
+  return typeof property === "boolean" ? property : fallback;
+}
+
+function readNumber(value: unknown, key: string, fallback: number): number {
+  const property = readProperty(value, key);
+  return typeof property === "number" ? property : fallback;
+}
+
+function readArray<T>(value: unknown, key: string): readonly T[] {
+  const property = readProperty(value, key);
+  return Array.isArray(property) ? property as readonly T[] : [];
 }
 
 // ---------------------------------------------------------------------------
@@ -332,24 +638,55 @@ interface ProjectSession { readonly _session?: unknown }
 interface Snapshot { readonly _snapshot?: unknown }
 interface Program { readonly _program?: unknown }
 interface Checker { readonly _checker?: unknown }
-interface SymbolType { readonly _symbol?: unknown }
-interface SignatureType { readonly _sig?: unknown }
+interface SymbolType {
+  readonly id?: unknown;
+  readonly name?: string;
+  readonly escapedName?: string;
+  readonly flags?: number;
+  readonly checkFlags?: number;
+  readonly declarations?: readonly AstNode[];
+  readonly valueDeclaration?: AstNode;
+}
+interface SignatureType {
+  readonly id?: unknown;
+  readonly flags?: number;
+  readonly declaration?: AstNode;
+  readonly typeParameters?: readonly TypeType[];
+  readonly parameters?: readonly SymbolType[];
+  readonly thisParameter?: SymbolType;
+  readonly target?: SignatureType;
+}
 interface TypeType {
+  id?: unknown; flags?: number; objectFlags?: number; symbol?: SymbolType;
   target?: TypeType; types?: readonly TypeType[];
   typeParameters?: readonly TypeType[]; outerTypeParameters?: readonly TypeType[];
   localTypeParameters?: readonly TypeType[]; objectType?: TypeType;
   indexType?: TypeType; checkType?: TypeType; extendsType?: TypeType;
   baseType?: TypeType; constraint?: TypeType;
 }
-interface SymbolResponse { readonly _symbol?: unknown }
-interface TypeResponse { readonly _type?: unknown }
-interface SignatureResponse { readonly _sig?: unknown }
-interface InitializeResponse { sessionId: string }
+interface SymbolResponse {
+  id: Handle<SymbolType>; name: string; flags: number; checkFlags: number;
+  declarations?: readonly Handle<AstNode>[]; valueDeclaration?: Handle<AstNode>;
+}
+interface TypeResponse {
+  id: Handle<TypeType>; flags: number; objectFlags?: number; symbol?: Handle<SymbolType>;
+}
+interface SignatureResponse {
+  id: Handle<SignatureType>; flags: number; declaration?: Handle<AstNode>;
+  typeParameters?: readonly Handle<TypeType>[]; parameters?: readonly Handle<SymbolType>[];
+  thisParameter?: Handle<SymbolType>; target?: Handle<SignatureType>;
+}
+interface InitializeResponse { sessionId: string; useCaseSensitiveFileNames: boolean; currentDirectory: string }
 interface UpdateSnapshotParams { readonly _p?: unknown }
-interface UpdateSnapshotResponse { snapshot: Handle<Snapshot> }
-interface ReleaseParams { readonly _p?: unknown }
+interface SnapshotChanges {
+  changedProjects?: ReadonlyMap<Handle<Project>, ProjectFileChanges>;
+  removedProjects?: readonly Handle<Project>[];
+}
+interface ProjectFileChanges { changedFiles?: readonly string[]; deletedFiles?: readonly string[] }
+interface UpdateSnapshotResponse { snapshot: Handle<Snapshot>; projects: readonly ProjectResponse[]; changes?: SnapshotChanges }
+interface ReleaseParams { handle: string }
 interface GetDefaultProjectForFileParams { readonly _p?: unknown }
-interface ProjectResponse { project: Handle<Project> }
+interface ProjectResponse { id: Handle<Project>; configFileName: string; rootFiles: readonly string[]; compilerOptions: unknown }
 interface ParseConfigFileParams { readonly _p?: unknown }
 interface ConfigFileResponse { config: string }
 interface GetSourceFileParams { readonly _p?: unknown }
@@ -370,7 +707,7 @@ interface GetTypeAtLocationParams { readonly _p?: unknown }
 interface GetTypeAtLocationsParams { readonly _p?: unknown }
 interface GetTypeAtPositionParams { readonly _p?: unknown }
 interface GetTypesAtPositionsParams { readonly _p?: unknown }
-interface GetTypePropertyParams { readonly _p?: unknown }
+interface GetTypePropertyParams { snapshot: Handle<Snapshot>; type: Handle<TypeType> }
 interface GetContextualTypeParams { readonly _p?: unknown }
 interface GetBaseTypeOfLiteralTypeParams { readonly _p?: unknown }
 interface GetTypeOfSymbolAtLocationParams { readonly _p?: unknown }
