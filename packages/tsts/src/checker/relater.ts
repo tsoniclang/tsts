@@ -12,7 +12,7 @@
 
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
 import { Kind, SymbolFlags } from "../ast/index.js";
-import type { Type, Signature, UnionOrIntersectionType, LiteralType, ObjectType, IndexInfo, InterfaceType, TypeParameter, TypeReference, IndexedAccessType } from "./types.js";
+import type { Type, Signature, UnionOrIntersectionType, LiteralType, ObjectType, IndexInfo, InterfaceType, TypeParameter, TypeReference, IndexedAccessType, TypePredicate } from "./types.js";
 import { TypeFlags, SignatureKind, ObjectFlags, VarianceFlags, getTypeOfSymbol } from "./types.js";
 
 export type SignatureCheckMode = number;
@@ -1088,6 +1088,205 @@ export class Relater {
     if (indexInfos !== undefined && indexInfos.length > 0) return false;
     return true;
   }
+
+  getBestMatchIndexedAccessTypeOrUndefined(source: Type, target: Type): Type | undefined {
+    if ((target.flags & TypeFlags.IndexedAccess) !== 0 && this.isTypeAssignableTo(source, target)) return target;
+    const targetTypes = constituentTypes(target);
+    if (targetTypes !== undefined) {
+      return targetTypes.find((candidate) => this.getBestMatchIndexedAccessTypeOrUndefined(source, candidate) !== undefined);
+    }
+    return undefined;
+  }
+
+  checkExpressionForMutableLocationWithContextualType(
+    expression: AstNode | undefined,
+    type: Type,
+    contextualType: Type | undefined,
+  ): Type {
+    void expression;
+    if (contextualType === undefined) return type;
+    return this.isTypeAssignableTo(type, contextualType) ? contextualType : type;
+  }
+
+  elaborateArrowFunction(source: Type, target: Type, diagnostics: DiagnosticAndArguments[]): boolean {
+    const sourceSignatures = signaturesOf(source, SignatureKind.Call) ?? [];
+    const targetSignatures = signaturesOf(target, SignatureKind.Call) ?? [];
+    if (sourceSignatures.length === 0 || targetSignatures.length === 0) return false;
+    const sourceReturn = sourceSignatures[0]?.resolvedReturnType;
+    const targetReturn = targetSignatures[0]?.resolvedReturnType;
+    if (sourceReturn === undefined || targetReturn === undefined || this.isTypeAssignableTo(sourceReturn, targetReturn)) return false;
+    diagnostics.push({ message: "Type_0_is_not_assignable_to_type_1", arguments: [typeDisplayName(sourceReturn), typeDisplayName(targetReturn)] });
+    return true;
+  }
+
+  getMappedTargetWithSymbol(source: Type, target: Type, symbol: AstSymbol | undefined): Type | undefined {
+    if (symbol === undefined) return undefined;
+    const sourceProperty = propertyMapOf(source)?.get(symbolNameOf(symbol));
+    const targetProperty = propertyMapOf(target)?.get(symbolNameOf(symbol));
+    if (sourceProperty === undefined || targetProperty === undefined) return undefined;
+    const sourceType = getTypeOfSymbol(sourceProperty);
+    const targetType = getTypeOfSymbol(targetProperty);
+    return sourceType !== undefined && targetType !== undefined && this.isTypeAssignableTo(sourceType, targetType) ? targetType : undefined;
+  }
+
+  hasMatchingRecursionIdentity(source: Type, target: Type): boolean {
+    return this.getRecursionIdentity(source) === this.getRecursionIdentity(target);
+  }
+
+  getBestMatchingType(source: Type, target: Type): Type | undefined {
+    const direct = this.findMatchingTypeReferenceOrTypeAliasReference(source, target);
+    if (direct !== undefined) return direct;
+    if (this.isTypeAssignableTo(source, target)) return target;
+    if (this.isTypeAssignableTo(target, source)) return source;
+    return this.findMostOverlappyType(source, target);
+  }
+
+  findMatchingTypeReferenceOrTypeAliasReference(source: Type, target: Type): Type | undefined {
+    if (source.symbol !== undefined && source.symbol === target.symbol) return target;
+    if (source.aliasSymbol !== undefined && source.aliasSymbol === target.aliasSymbol) return target;
+    const targetTypes = constituentTypes(target);
+    return targetTypes?.find((candidate) => this.findMatchingTypeReferenceOrTypeAliasReference(source, candidate) !== undefined);
+  }
+
+  findBestTypeForInvokable(source: Type, target: Type): Type | undefined {
+    const sourceCalls = signaturesOf(source, SignatureKind.Call)?.length ?? 0;
+    const targetCalls = signaturesOf(target, SignatureKind.Call)?.length ?? 0;
+    if (sourceCalls > 0 && targetCalls > 0) return target;
+    const sourceConstructs = signaturesOf(source, SignatureKind.Construct)?.length ?? 0;
+    const targetConstructs = signaturesOf(target, SignatureKind.Construct)?.length ?? 0;
+    return sourceConstructs > 0 && targetConstructs > 0 ? target : undefined;
+  }
+
+  findMostOverlappyType(source: Type, target: Type): Type | undefined {
+    const sourceTypes = constituentTypes(source) ?? [source];
+    const targetTypes = constituentTypes(target) ?? [target];
+    let best: Type | undefined;
+    let bestScore = -1;
+    for (const sourceType of sourceTypes) {
+      for (const targetType of targetTypes) {
+        const score = overlapScore(sourceType, targetType);
+        if (score > bestScore) {
+          best = targetType;
+          bestScore = score;
+        }
+      }
+    }
+    return bestScore <= 0 ? undefined : best;
+  }
+
+  findBestTypeForObjectLiteral(source: Type, target: Type): Type | undefined {
+    const sourceMembers = propertyMapOf(source);
+    const targetTypes = constituentTypes(target) ?? [target];
+    if (sourceMembers === undefined) return undefined;
+    let best: Type | undefined;
+    let bestMatches = -1;
+    for (const candidate of targetTypes) {
+      const candidateMembers = propertyMapOf(candidate);
+      if (candidateMembers === undefined) continue;
+      let matches = 0;
+      for (const name of sourceMembers.keys()) if (candidateMembers.has(name)) matches += 1;
+      if (matches > bestMatches) {
+        best = candidate;
+        bestMatches = matches;
+      }
+    }
+    return bestMatches <= 0 ? undefined : best;
+  }
+
+  getUnmatchedPropertiesWorker(source: Type, target: Type, requireOptionalProperties: boolean): readonly AstSymbol[] {
+    const sourceMembers = propertyMapOf(source);
+    const targetMembers = propertyMapOf(target);
+    if (targetMembers === undefined) return [];
+    const missing: AstSymbol[] = [];
+    for (const [name, targetProperty] of targetMembers) {
+      if (!requireOptionalProperties && ((targetProperty.flags ?? 0) & SymbolFlags.Optional) !== 0) continue;
+      if (sourceMembers?.has(name) !== true) missing.push(targetProperty);
+    }
+    return missing;
+  }
+
+  symbolValueDeclarationIsContextSensitive(symbol: AstSymbol | undefined): boolean {
+    const declaration = symbol?.valueDeclaration ?? symbol?.declarations[0];
+    if (declaration === undefined) return false;
+    return declaration.kind === Kind.FunctionExpression
+      || declaration.kind === Kind.ArrowFunction
+      || declaration.kind === Kind.MethodDeclaration
+      || declaration.kind === Kind.ObjectLiteralExpression;
+  }
+
+  typeCouldHaveTopLevelSingletonTypes(type: Type): boolean {
+    if ((type.flags & (TypeFlags.Unit | TypeFlags.BooleanLiteral | TypeFlags.UniqueESSymbol)) !== 0) return true;
+    return constituentTypes(type)?.some((candidate) => this.typeCouldHaveTopLevelSingletonTypes(candidate)) ?? false;
+  }
+
+  getAliasVariances(type: Type): readonly VarianceFlags[] | undefined {
+    const args = type.aliasTypeArguments;
+    if (args === undefined) return undefined;
+    return args.map((arg) => (arg.flags & TypeFlags.TypeParameter) !== 0 ? VarianceFlags.Invariant : VarianceFlags.Covariant);
+  }
+
+  getVariancesWorker(type: Type): readonly VarianceFlags[] {
+    return this.getVariances(type);
+  }
+
+  createMarkerType(symbol: AstSymbol | undefined, flags: TypeFlags = TypeFlags.Object): Type {
+    return {
+      flags,
+      id: nextMarkerTypeId(),
+      ...(symbol === undefined ? {} : { symbol }),
+      data: { objectFlags: ObjectFlags.Anonymous },
+    };
+  }
+
+  isMarkerType(type: Type): boolean {
+    return type.id < 0 && (type.data as ObjectType | undefined)?.objectFlags === ObjectFlags.Anonymous;
+  }
+
+  getTypeParameterModifiers(typeParameter: TypeParameter): number {
+    return getTypeParameterModifierFlags(typeParameter);
+  }
+
+  getUnionOrIntersectionTypePredicate(type: Type): TypePredicate | undefined {
+    const types = constituentTypes(type);
+    if (types === undefined) return undefined;
+    const predicates = types
+      .map((candidate) => (candidate as { predicate?: TypePredicate }).predicate)
+      .filter((predicate): predicate is TypePredicate => predicate !== undefined);
+    return predicates.length === 0 ? undefined : predicates[0];
+  }
+
+  createTypePredicateFromTypePredicateNode(node: AstNode | undefined): TypePredicate | undefined {
+    if (node === undefined) return undefined;
+    const parameterName = (node as unknown as { parameterName?: { text?: string } }).parameterName?.text ?? "this";
+    const parameterIndex = Number((node as unknown as { parameterIndex?: number }).parameterIndex ?? 0);
+    return { kind: 0, parameterIndex, parameterName };
+  }
+
+  instantiateTypePredicate(predicate: TypePredicate | undefined, mapper: (type: Type) => Type): TypePredicate | undefined {
+    if (predicate === undefined) return undefined;
+    return {
+      ...predicate,
+      ...(predicate.type === undefined ? {} : { type: mapper(predicate.type) }),
+    };
+  }
+
+  isResolvingReturnTypeOfSignature(signature: Signature): boolean {
+    return (signature as { resolvingReturnType?: boolean }).resolvingReturnType === true;
+  }
+
+  getEffectiveConstraintOfIntersection(type: Type): Type | undefined {
+    if ((type.flags & TypeFlags.Intersection) === 0) return undefined;
+    const constrained = (constituentTypes(type) ?? [])
+      .map((candidate) => (candidate.data as TypeParameter | undefined)?.constraint)
+      .filter((candidate): candidate is Type => candidate !== undefined);
+    return constrained.length === 0 ? undefined : constrained.reduce((left, right) => this.getCommonSubtype([left, right]) ?? left);
+  }
+
+  visibilityToString(visibility: number): "private" | "protected" | "public" {
+    if ((visibility & (1 << 0)) !== 0) return "private";
+    if ((visibility & (1 << 1)) !== 0) return "protected";
+    return "public";
+  }
 }
 
 function objectFlagsOf(t: Type): ObjectFlags {
@@ -1153,6 +1352,42 @@ function typeParameterSymbol(typeParameter: TypeParameter): AstSymbol | undefine
 
 function symbolDeclarations(symbol: AstSymbol | undefined): readonly AstNode[] {
   return (symbol as { declarations?: readonly AstNode[] } | undefined)?.declarations ?? [];
+}
+
+function overlapScore(source: Type, target: Type): number {
+  let score = 0;
+  if ((source.flags & target.flags) !== 0) score += 1;
+  if (source.symbol !== undefined && source.symbol === target.symbol) score += 4;
+  if (source.aliasSymbol !== undefined && source.aliasSymbol === target.aliasSymbol) score += 3;
+  const sourceMembers = propertyMapOf(source);
+  const targetMembers = propertyMapOf(target);
+  if (sourceMembers !== undefined && targetMembers !== undefined) {
+    for (const name of sourceMembers.keys()) if (targetMembers.has(name)) score += 1;
+  }
+  return score;
+}
+
+const pooledRelaters: Relater[] = [];
+let markerTypeId = -1;
+
+function nextMarkerTypeId(): number {
+  const id = markerTypeId;
+  markerTypeId -= 1;
+  return id;
+}
+
+export function getRelater(): Relater {
+  return pooledRelaters.pop() ?? new Relater();
+}
+
+export function putRelater(relater: Relater): void {
+  relater.identityRelation.cache.clear();
+  relater.subtypeRelation.cache.clear();
+  relater.strictSubtypeRelation.cache.clear();
+  relater.assignableRelation.cache.clear();
+  relater.comparableRelation.cache.clear();
+  relater.enumRelation.clear();
+  pooledRelaters.push(relater);
 }
 
 export function newRelater(): Relater {
