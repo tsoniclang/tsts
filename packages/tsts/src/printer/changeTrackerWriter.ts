@@ -35,10 +35,12 @@ export class ChangeTrackerWriter implements EmitTextWriter {
   writeProperty(text: string): void { this.inner.writeProperty(text); }
   writeComment(text: string): void { this.inner.writeComment(text); }
   writeLine(): void { this.inner.writeLine(); }
+  writeLineForce(force: boolean): void { this.inner.writeLineForce(force); }
   writeLineRepeat(count: number): void { this.inner.writeLineRepeat(count); }
   increaseIndent(): void { this.inner.increaseIndent(); }
   decreaseIndent(): void { this.inner.decreaseIndent(); }
   getText(): string { return this.inner.getText(); }
+  toString(): string { return this.inner.toString(); }
   getTextPos(): number { return this.inner.getTextPos(); }
   getLine(): number { return this.inner.getLine(); }
   getColumn(): number { return this.inner.getColumn(); }
@@ -48,6 +50,7 @@ export class ChangeTrackerWriter implements EmitTextWriter {
   writeLiteralStringLiteral(text: string): void { this.inner.writeLiteralStringLiteral(text); }
   hasTrailingComment(): boolean { return this.inner.hasTrailingComment(); }
   hasTrailingWhitespace(): boolean { return this.inner.hasTrailingWhitespace(); }
+  grow(size: number): void { this.inner.grow(size); }
   clear(): void { this.inner.clear(); this.changes = []; this.currentChange = undefined; }
 
   startChange(start: number, length: number): void {
