@@ -115,7 +115,11 @@ import {
 } from "./checker.checkedtype.js";
 import { checkBlock } from "./checker.statements.js";
 import { getPropertyNameFromType, isTypeUsableAsPropertyName } from "./utilities.js";
-import type { Signature } from "./types.js";
+import { SignatureKind, type Signature } from "./types.js";
+
+type SignatureKindValue = typeof SignatureKind.Call | typeof SignatureKind.Construct;
+const SignatureKindCall = SignatureKind.Call;
+const SignatureKindConstruct = SignatureKind.Construct;
 
 // Infer an object-literal property value, contextually typed by the matching
 // target property when present (preserving primitive literals the target asks
@@ -853,6 +857,215 @@ export function checkCallExpression(expression: Expression, state: CheckState): 
   return inferExpression(expression, state);
 }
 
+export function resolveSignature(node: AstNode, state: CheckState): Signature | undefined {
+  const expression = expressionNode(node);
+  if (isCallExpression(expression)) return resolveCallExpression(expression, state);
+  if (isNewExpression(expression)) return resolveNewExpression(expression, state);
+  if (isTaggedTemplateExpression(expression)) return resolveTaggedTemplateExpression(expression, state);
+  return undefined;
+}
+
+export function resolveCallExpression(expression: Expression, state: CheckState): Signature | undefined {
+  if (!isCallExpression(expression)) return undefined;
+  return resolveCall(expression.expression, expression.arguments, SignatureKindCall, state);
+}
+
+export function resolveNewExpression(expression: Expression, state: CheckState): Signature | undefined {
+  if (!isNewExpression(expression)) return undefined;
+  return resolveCall(expression.expression, expression.arguments ?? [], SignatureKindConstruct, state);
+}
+
+export function resolveTaggedTemplateExpression(expression: Expression, state: CheckState): Signature | undefined {
+  if (!isTaggedTemplateExpression(expression)) return undefined;
+  return resolveCall(expression.tag, [], SignatureKindCall, state);
+}
+
+export function resolveDecorator(node: AstNode, state: CheckState): Signature | undefined {
+  const expression = expressionOf((node as { readonly expression?: AstNode }).expression ?? node);
+  return expression === undefined ? undefined : resolveCall(expression, [], SignatureKindCall, state);
+}
+
+export function resolveInstanceofExpression(node: AstNode, state: CheckState): Type {
+  const expression = expressionNode(node);
+  if (isBinaryExpression(expression)) {
+    inferExpression(expression.left, state);
+    inferExpression(expression.right, state);
+  }
+  return booleanType;
+}
+
+export function resolveCall(
+  callee: Expression,
+  arguments_: readonly Expression[],
+  kind: SignatureKindValue,
+  state: CheckState,
+): Signature | undefined {
+  const calleeType = inferExpression(callee, state);
+  const signature = kind === SignatureKindConstruct ? getConstructSignature(calleeType) : getCallSignature(calleeType);
+  if (signature === undefined) {
+    for (const argument of arguments_) inferExpression(argument, state);
+    return undefined;
+  }
+  checkSignatureArguments(arguments_, signature, state);
+  return signature;
+}
+
+export function reorderCandidates(signatures: readonly Signature[]): readonly Signature[] {
+  return [...signatures].sort((left, right) => specificityScore(right) - specificityScore(left));
+}
+
+export function getOptionalCallSignature(type: Type): Signature | undefined {
+  return getCallSignature(type) ?? getCallSignature(getApparentType(type));
+}
+
+export function chooseOverload(
+  candidates: readonly Signature[],
+  arguments_: readonly Expression[],
+  state: CheckState,
+): Signature | undefined {
+  for (const candidate of reorderCandidates(candidates)) {
+    if (isSignatureApplicable(candidate, arguments_, state)) return candidate;
+  }
+  return undefined;
+}
+
+export function hasCorrectArity(signature: Signature, argumentCount: number): boolean {
+  const hasRest = tryGetRestTypeOfSignature(signature) !== undefined;
+  return argumentCount >= signature.minArgumentCount && (hasRest || argumentCount <= signature.parameters.length);
+}
+
+export function getDecoratorArgumentCount(node: AstNode): number {
+  const expression = expressionOf((node as { readonly expression?: AstNode }).expression ?? node);
+  return expression !== undefined && isCallExpression(expression) ? expression.arguments.length : 1;
+}
+
+export function getLegacyDecoratorArgumentCount(node: AstNode): number {
+  switch ((node as { readonly parent?: AstNode }).parent?.kind) {
+    case Kind.ClassDeclaration:
+    case Kind.ClassExpression:
+      return 1;
+    case Kind.Parameter:
+      return 3;
+    default:
+      return 2;
+  }
+}
+
+export function hasCorrectTypeArgumentArity(signature: Signature, typeArgumentCount: number): boolean {
+  const typeParameters = signature.typeParameters ?? [];
+  return typeArgumentCount === 0 || typeArgumentCount === typeParameters.length;
+}
+
+export function checkTypeArguments(typeArguments: readonly AstNode[] | undefined, signature: Signature, state: CheckState): readonly Type[] {
+  const checked = (typeArguments ?? []).map(typeArgument => typeFromTypeNode(typeArgument as TypeNode, state));
+  if (!hasCorrectTypeArgumentArity(signature, checked.length)) {
+    state.diagnostics.push({ message: `Expected ${signature.typeParameters?.length ?? 0} type arguments, but got ${checked.length}.` });
+  }
+  return checked;
+}
+
+export function isSignatureApplicable(signature: Signature, arguments_: readonly Expression[], state: CheckState): boolean {
+  if (!hasCorrectArity(signature, arguments_.length)) return false;
+  for (let index = 0; index < arguments_.length; index += 1) {
+    const parameter = signature.parameters[Math.min(index, signature.parameters.length - 1)];
+    const parameterType = parameter === undefined ? undefined : getTypeOfSymbol(parameter);
+    if (parameterType === undefined) continue;
+    const argumentType = inferExpression(arguments_[index]!, state, parameterType);
+    if (!state.relater.isTypeAssignableTo(getWidenedLiteralLikeTypeForContextualType(argumentType, parameterType, state), parameterType)) return false;
+  }
+  return true;
+}
+
+export function getThisArgumentOfCall(node: AstNode): Expression | undefined {
+  const expression = expressionOf((node as { readonly expression?: AstNode }).expression ?? node);
+  if (expression !== undefined && (isPropertyAccessExpression(expression) || isElementAccessExpression(expression))) return expression.expression;
+  return undefined;
+}
+
+export function getThisArgumentType(node: AstNode, state: CheckState): Type | undefined {
+  const thisArgument = getThisArgumentOfCall(node);
+  return thisArgument === undefined ? undefined : inferExpression(thisArgument, state);
+}
+
+export function getEffectiveCheckNode(node: AstNode): AstNode {
+  return skipOuterExpressions(expressionNode(node));
+}
+
+export function inferTypeArguments(
+  signature: Signature,
+  arguments_: readonly Expression[],
+  state: CheckState,
+): readonly Type[] {
+  void signature;
+  return arguments_.map(argument => inferExpression(argument, state));
+}
+
+export function getCandidateForOverloadFailure(candidates: readonly Signature[], arguments_: readonly Expression[]): Signature | undefined {
+  return pickLongestCandidateSignature(candidates, arguments_.length);
+}
+
+export function pickLongestCandidateSignature(candidates: readonly Signature[], argumentCount: number): Signature | undefined {
+  const index = getLongestCandidateIndex(candidates, argumentCount);
+  return index < 0 ? undefined : candidates[index];
+}
+
+export function getLongestCandidateIndex(candidates: readonly Signature[], argumentCount: number): number {
+  let bestIndex = -1;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (let index = 0; index < candidates.length; index += 1) {
+    const distance = Math.abs(candidates[index]!.parameters.length - argumentCount);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestIndex = index;
+    }
+  }
+  return bestIndex;
+}
+
+export function getTypeArgumentsFromNodes(typeArguments: readonly AstNode[] | undefined, state: CheckState): readonly Type[] {
+  return (typeArguments ?? []).map(typeArgument => typeFromTypeNode(typeArgument as TypeNode, state));
+}
+
+export function inferSignatureInstantiationForOverloadFailure(signature: Signature): Signature {
+  return signature;
+}
+
+export function createUnionOfSignaturesForOverloadFailure(signatures: readonly Signature[], state: CheckState): Signature | undefined {
+  if (signatures.length === 0) return undefined;
+  if (signatures.length === 1) return signatures[0];
+  const returnTypes = signatures.map(signature => signature.resolvedReturnType).filter((type): type is Type => type !== undefined);
+  return {
+    flags: 0,
+    parameters: signatures[0]!.parameters,
+    minArgumentCount: Math.min(...signatures.map(signature => signature.minArgumentCount)),
+    resolvedReturnType: returnTypes.length === 0 ? anyType : getUnionTypeEx(returnTypes, UnionReduction.Subtype, state),
+    compositeKind: SignatureKindCall,
+    compositeSignatures: signatures,
+  };
+}
+
+export function tryGetRestTypeOfSignature(signature: Signature): Type | undefined {
+  const last = signature.parameters[signature.parameters.length - 1];
+  if (last !== undefined && isRestSymbol(last)) return getTypeOfSymbol(last);
+  return (signature as { readonly restType?: Type }).restType;
+}
+
+export function resolveUntypedCall(callee: Expression, arguments_: readonly Expression[], state: CheckState): Type {
+  inferExpression(callee, state);
+  for (const argument of arguments_) inferExpression(argument, state);
+  return anyType;
+}
+
+export function resolveErrorCall(callee: Expression, arguments_: readonly Expression[], state: CheckState): Type {
+  inferExpression(callee, state);
+  for (const argument of arguments_) inferExpression(argument, state);
+  return unresolvedType;
+}
+
+export function isUntypedFunctionCall(calleeType: Type): boolean {
+  return isAnyType(calleeType) || isUnknownType(calleeType) || isUnresolvedType(calleeType);
+}
+
 export function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckState): Type {
   // The arrow's parameters were bound into its own `locals` by the binder; a
   // reference inside the body resolves through them (no checker-side parameter
@@ -1170,6 +1383,13 @@ function expressionOf(node: AstNode | undefined): Expression | undefined {
 function identifierText(node: AstNode | undefined): string | undefined {
   if (node === undefined) return undefined;
   return isIdentifier(node) || isPrivateIdentifier(node) ? node.text : undefined;
+}
+
+function specificityScore(signature: Signature): number {
+  const required = signature.minArgumentCount;
+  const arity = signature.parameters.length;
+  const typed = signature.parameters.filter(parameter => getTypeOfSymbol(parameter) !== undefined).length;
+  return required * 4 + arity * 2 + typed;
 }
 
 function awaitedTypeOf(type: Type): Type {
