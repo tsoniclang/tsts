@@ -10,7 +10,7 @@ import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
 import { SymbolFlags } from "../ast/index.js";
 import type { Signature, Type, TypeMapper, TypeParameter } from "./types.js";
 import { SignatureFlags, SignatureKind, TypeFlags, getTypeOfSymbol } from "./types.js";
-import { getMappedType, newTypeMapper } from "./mapper.js";
+import { getMappedType, newArrayToSingleTypeMapper, newTypeMapper } from "./mapper.js";
 
 export function getSignaturesOfType(type: Type, kind: SignatureKind): readonly Signature[] {
   const data = type.data as { readonly declaredCallSignatures?: readonly Signature[]; readonly declaredConstructSignatures?: readonly Signature[] } | undefined;
@@ -69,11 +69,112 @@ export function instantiateSignatures(signatures: readonly Signature[], mapper: 
   return signatures.map((signature) => instantiateSignature(signature, mapper));
 }
 
+export function createSignatureInstantiation(signature: Signature, typeArguments: readonly Type[]): Signature {
+  return instantiateSignature(signature, createSignatureTypeMapper(signature, typeArguments));
+}
+
+export function createSignatureTypeMapper(signature: Signature, typeArguments: readonly Type[]): TypeMapper {
+  return newTypeMapper(getTypeParametersForMapper(signature) as readonly Type[], typeArguments);
+}
+
+export function getTypeParametersForMapper(signature: Signature): readonly TypeParameter[] {
+  return (signature.typeParameters ?? []).map((typeParameter) => {
+    const mapper = typeParameter.mapper;
+    return mapper === undefined ? typeParameter : instantiateType(typeParameterAsType(typeParameter), mapper).data as TypeParameter;
+  });
+}
+
+export function getSingleCallSignature(type: Type): Signature | undefined {
+  return getSingleSignature(type, SignatureKind.Call, false);
+}
+
+export function getSingleSignature(type: Type, kind: SignatureKind, allowMembers: boolean): Signature | undefined {
+  const data = type.data as {
+    readonly declaredProperties?: readonly AstSymbol[];
+    readonly indexInfos?: readonly unknown[];
+    readonly declaredCallSignatures?: readonly Signature[];
+    readonly declaredConstructSignatures?: readonly Signature[];
+  } | undefined;
+  if (data === undefined) return undefined;
+  const callSignatures = data.declaredCallSignatures ?? [];
+  const constructSignatures = data.declaredConstructSignatures ?? [];
+  const hasMembers = (data.declaredProperties?.length ?? 0) !== 0 || (data.indexInfos?.length ?? 0) !== 0;
+  if (!allowMembers && hasMembers) return undefined;
+  if (kind === SignatureKind.Call && callSignatures.length === 1 && constructSignatures.length === 0) return callSignatures[0];
+  if (kind === SignatureKind.Construct && constructSignatures.length === 1 && callSignatures.length === 0) return constructSignatures[0];
+  return undefined;
+}
+
 export function getSingleCallOrConstructSignature(type: Type): Signature | undefined {
-  const calls = getSignaturesOfType(type, SignatureKind.Call);
-  const constructs = getSignaturesOfType(type, SignatureKind.Construct);
-  if (calls.length + constructs.length !== 1) return undefined;
-  return calls[0] ?? constructs[0];
+  return getSingleSignature(type, SignatureKind.Call, false)
+    ?? getSingleSignature(type, SignatureKind.Construct, false);
+}
+
+export function getErasedSignature(signature: Signature): Signature {
+  const typeParameters = signature.typeParameters ?? [];
+  if (typeParameters.length === 0) return signature;
+  return instantiateSignature(signature, newArrayToSingleTypeMapper(typeParameters.map(typeParameterAsType), intrinsicType(TypeFlags.Any, "any")));
+}
+
+export function getCanonicalSignature(signature: Signature): Signature {
+  const typeParameters = signature.typeParameters ?? [];
+  if (typeParameters.length === 0) return signature;
+  return createCanonicalSignature(signature);
+}
+
+export function createCanonicalSignature(signature: Signature): Signature {
+  const typeArguments = (signature.typeParameters ?? []).map((typeParameter) => {
+    const target = typeParameter.target;
+    if (target !== undefined && target.constraint === undefined) return typeParameterAsType(target);
+    return typeParameterAsType(typeParameter);
+  });
+  return getSignatureInstantiation(signature, typeArguments, isInJavaScriptFile(signature.declaration), []);
+}
+
+export function getBaseSignature(signature: Signature): Signature {
+  const typeParameters = signature.typeParameters ?? [];
+  if (typeParameters.length === 0) return signature;
+  const unknown = intrinsicType(TypeFlags.Unknown, "unknown");
+  const any = intrinsicType(TypeFlags.Any, "any");
+  const baseConstraints = typeParameters.map((typeParameter) => typeParameter.constraint ?? unknown);
+  const immediateMapper = newTypeMapper(typeParameters as unknown as readonly Type[], baseConstraints);
+  let instantiatedConstraints = baseConstraints.map((constraint) => instantiateType(constraint, immediateMapper));
+  for (let iteration = 1; iteration < typeParameters.length; iteration += 1) {
+    instantiatedConstraints = instantiatedConstraints.map((constraint) => instantiateType(constraint, immediateMapper));
+  }
+  const erased = newArrayToSingleTypeMapper(typeParameters.map(typeParameterAsType), any);
+  instantiatedConstraints = instantiatedConstraints.map((constraint) => instantiateType(constraint, erased));
+  return instantiateSignature(signature, newTypeMapper(typeParameters as unknown as readonly Type[], instantiatedConstraints));
+}
+
+export type SignatureTypeComparer = (source: Type, target: Type) => boolean;
+
+export interface SignatureInferenceContext {
+  readonly mapper?: TypeMapper;
+  readonly nonFixingMapper?: TypeMapper;
+  readonly inferredTypes?: readonly Type[];
+  readonly inferences?: unknown;
+}
+
+export function instantiateSignatureInContextOf(
+  signature: Signature,
+  contextualSignature: Signature,
+  inferenceContext: SignatureInferenceContext | undefined,
+  compareTypes: SignatureTypeComparer,
+): Signature {
+  const context = newSignatureInferenceContext(getTypeParametersForMapper(signature), compareTypes);
+  const restType = getEffectiveRestType(contextualSignature);
+  const mapper = inferenceContext === undefined
+    ? undefined
+    : restType !== undefined && (restType.flags & TypeFlags.TypeParameter) !== 0
+      ? inferenceContext.nonFixingMapper
+      : inferenceContext.mapper;
+  const sourceSignature = mapper === undefined ? contextualSignature : instantiateSignature(contextualSignature, mapper);
+  applyToParameterTypes(sourceSignature, signature, (source, target) => inferSignatureTypes(context, source, target));
+  if (inferenceContext === undefined) {
+    applyToReturnTypes(contextualSignature, signature, (source, target) => inferSignatureTypes(context, source, target));
+  }
+  return getSignatureInstantiation(signature, context.inferredTypes, isInJavaScriptFile(contextualSignature.declaration), []);
 }
 
 export function getReturnTypeOfSignature(signature: Signature): Type {
@@ -257,6 +358,64 @@ export function includeMixinType(type: Type, types: readonly Type[], mixinFlags:
     }
   }
   return intersectionType(mixed);
+}
+
+function typeParameterAsType(typeParameter: TypeParameter): Type {
+  const symbol = (typeParameter as { readonly symbol?: AstSymbol }).symbol;
+  return {
+    flags: TypeFlags.TypeParameter,
+    id: nextSyntheticTypeId(),
+    ...(symbol === undefined ? {} : { symbol }),
+    data: typeParameter,
+  };
+}
+
+function isInJavaScriptFile(node: AstNode | undefined): boolean {
+  const fileName = sourceFileName(node);
+  return fileName.endsWith(".js") || fileName.endsWith(".jsx") || fileName.endsWith(".mjs") || fileName.endsWith(".cjs");
+}
+
+function sourceFileName(node: AstNode | undefined): string {
+  for (let current = node; current !== undefined; current = (current as { readonly parent?: AstNode }).parent) {
+    const fileName = (current as { readonly fileName?: string }).fileName;
+    if (fileName !== undefined) return fileName;
+  }
+  return "";
+}
+
+function newSignatureInferenceContext(
+  typeParameters: readonly TypeParameter[],
+  compareTypes: SignatureTypeComparer,
+): { readonly typeParameters: readonly TypeParameter[]; readonly compareTypes: SignatureTypeComparer; inferredTypes: Type[] } {
+  return { typeParameters, compareTypes, inferredTypes: [] };
+}
+
+function inferSignatureTypes(
+  context: { readonly compareTypes: SignatureTypeComparer; inferredTypes: Type[] },
+  source: Type,
+  target: Type,
+): void {
+  if (context.compareTypes(source, target) && !context.inferredTypes.includes(source)) {
+    context.inferredTypes.push(source);
+  }
+}
+
+function applyToParameterTypes(source: Signature, target: Signature, callback: (source: Type, target: Type) => void): void {
+  const count = Math.min(source.parameters.length, target.parameters.length);
+  for (let index = 0; index < count; index += 1) {
+    const sourceType = getTypeOfSymbol(source.parameters[index]) ?? intrinsicType(TypeFlags.Unknown, "unknown");
+    const targetType = getTypeOfSymbol(target.parameters[index]) ?? intrinsicType(TypeFlags.Unknown, "unknown");
+    callback(sourceType, targetType);
+  }
+  const sourceRest = getEffectiveRestType(source);
+  const targetRest = getEffectiveRestType(target);
+  if (sourceRest !== undefined && targetRest !== undefined) callback(sourceRest, targetRest);
+}
+
+function applyToReturnTypes(source: Signature, target: Signature, callback: (source: Type, target: Type) => void): void {
+  const sourceReturn = source.resolvedReturnType;
+  const targetReturn = target.resolvedReturnType;
+  if (sourceReturn !== undefined && targetReturn !== undefined) callback(sourceReturn, targetReturn);
 }
 
 function instantiateSymbol(symbol: AstSymbol, mapper: TypeMapper): AstSymbol {
