@@ -12,3 +12,8 @@ export const typeAcquisitionDeclarations: readonly CommandLineOption[] = [
   { name: "exclude", type: "list", element: { name: "exclude", type: "string" } },
   { name: "disableFilenameBasedTypeAcquisition", type: "boolean" },
 ];
+
+export const typeAcquisitionDeclaration: CommandLineOption = {
+  name: "typeAcquisition",
+  type: "object",
+};

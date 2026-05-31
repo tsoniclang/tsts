@@ -23,7 +23,13 @@
  */
 
 export * from "./commandlineoption.js";
+export * from "./declsbuild.js";
+export * from "./declscompiler.js";
+export * from "./declstypeacquisition.js";
+export * from "./declswatch.js";
 export * from "./diagnostics.js";
+export * from "./enummaps.js";
+export * from "./errors.js";
 export * from "./namemap.js";
 export * from "./parsedbuildcommandline.js";
 export * from "./wildcarddirectories.js";

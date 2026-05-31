@@ -7,10 +7,25 @@
 import type { CommandLineOption } from "./commandlineoption.js";
 
 export const watchOptions: readonly CommandLineOption[] = [
+  { name: "watchInterval", type: "number" },
   { name: "watchFile", type: "string" },
   { name: "watchDirectory", type: "string" },
   { name: "fallbackPolling", type: "string" },
   { name: "synchronousWatchDirectory", type: "boolean" },
-  { name: "excludeDirectories", type: "list", element: { name: "excludeDirectories", type: "string", isFilePath: true } },
-  { name: "excludeFiles", type: "list", element: { name: "excludeFiles", type: "string", isFilePath: true } },
+  {
+    name: "excludeDirectories",
+    type: "list",
+    allowConfigDirTemplateSubstitution: true,
+    element: { name: "excludeDirectory", type: "string", isFilePath: true },
+  },
+  {
+    name: "excludeFiles",
+    type: "list",
+    allowConfigDirTemplateSubstitution: true,
+    element: { name: "excludeFile", type: "string", isFilePath: true },
+  },
 ];
+
+export function isWatchOption(name: string): boolean {
+  return watchOptions.some((option) => option.name.toLowerCase() === name.toLowerCase());
+}

@@ -60,11 +60,20 @@ export interface CommandLineOption {
   readonly allowJsFlag?: boolean;
   readonly deprecated?: boolean;
   readonly defaultValueDescription?: string | number | boolean | DiagnosticMessage;
+  readonly showInSimplifiedHelpView?: boolean;
+  readonly minValue?: number;
+  readonly allowConfigDirTemplateSubstitution?: boolean;
+  readonly listPreserveFalsyValues?: boolean;
+  readonly disallowNullOrUndefined?: boolean;
 
   /** Optional methods that some kinds provide. */
   enumMap?(): OrderedMap<string, unknown>;
   deprecatedKeys?(): { has(key: string): boolean } | undefined;
   elements?(): CommandLineOption;
+}
+
+export function commandLineOptionDisallowNullOrUndefined(option: CommandLineOption): boolean {
+  return option.disallowNullOrUndefined === true || option.name === "extends";
 }
 
 /** Backward-compat alias for callers that referred to it as `kind`. */
