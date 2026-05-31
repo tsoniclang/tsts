@@ -182,8 +182,13 @@ export class FilesParser {
     return {
       files: loader.files,
       duplicateSourceFiles,
+      filesByPath: seenByPath,
       unresolvedImports: new Set(),
       resolvedModulesMap: loader.resolvedModulesMap,
+      typeResolutionsInFile: loader.typeResolutionsInFile,
+      jsxRuntimeImportSpecifiers: loader.jsxRuntimeImportSpecifiers,
+      importHelpersImportSpecifiers: loader.importHelpersImportSpecifiers,
+      libFiles: loader.libFiles,
       packageNamesInfo: { unresolvedImports: new Set(), packagesMap: new Map() },
       fileReasons: loader.fileReasons,
       diagnostics: loader.diagnostics,
