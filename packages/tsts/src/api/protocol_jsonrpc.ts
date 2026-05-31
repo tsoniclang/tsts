@@ -6,7 +6,7 @@
  * with Content-Length headers (matches LSP framing).
  */
 
-import type { MsgpackProtocolHandler, DecodedMessage } from "./protocol-msgpack.js";
+import type { MsgpackProtocolHandler, DecodedMessage } from "./protocol_msgpack.js";
 import type { Method } from "./proto.js";
 
 export class JSONRPCProtocol implements MsgpackProtocolHandler {

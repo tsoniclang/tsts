@@ -94,7 +94,7 @@ import {
 import { parseSourceFile } from "./index.js";
 // M3 Stage-5 pre-wave: ScriptKind/languageVariant plumbing probes.
 import { ScriptKind, getScriptKindFromFileName } from "../core/core.js";
-import { LanguageVariant } from "./parser-utilities.js";
+import { LanguageVariant } from "./utilities.js";
 
 export class ParserParityTests {
   // ── Helpers ──────────────────────────────────────────────────────────────

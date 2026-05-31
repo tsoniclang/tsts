@@ -8,7 +8,7 @@
 
 import { Session } from "./session.js";
 import type { Connection } from "./conn.js";
-import type { MsgpackProtocolHandler } from "./protocol-msgpack.js";
+import type { MsgpackProtocolHandler } from "./protocol_msgpack.js";
 
 export interface ServerOptions {
   session: Session;

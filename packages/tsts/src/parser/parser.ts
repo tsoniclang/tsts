@@ -251,7 +251,7 @@ import type { Diagnostic, DiagnosticMessage } from "../diagnostics/types.js";
 // LanguageVariant mirror tsgo parser.getLanguageVariant (parser/utilities.go:11)
 // returning core.LanguageVariant (core/languagevariant.go).
 import { ScriptKind, getScriptKindFromFileName } from "../core/core.js";
-import { LanguageVariant, getLanguageVariant, tokenIsIdentifierOrKeywordOrGreaterThan } from "./parser-utilities.js";
+import { LanguageVariant, getLanguageVariant, tokenIsIdentifierOrKeywordOrGreaterThan } from "./utilities.js";
 
 export interface ParseSourceFileOptions {
   readonly fileName?: string;
