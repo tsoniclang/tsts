@@ -48,15 +48,23 @@ export function generateBaseline(
   header: string,
   isSymbolBaseline: boolean,
 ): string {
-  const byFile = groupEntriesByFile(entries, isSymbolBaseline);
-  const sections: string[] = [];
-  for (const file of files) {
-    const fileEntries = byFile.get(normalizeKey(file.name)) ?? [];
-    const section = generateFileBaseline(file, fileEntries, isSymbolBaseline);
-    if (section.length > 0) sections.push(section);
-  }
+  const sections = iterateBaseline(files, groupEntriesByFile(entries, isSymbolBaseline), isSymbolBaseline);
   if (sections.length === 0) return noContent;
   return `//// [${header}] ////${harnessNewLine}${harnessNewLine}${sections.join("")}`;
+}
+
+export function iterateBaseline(
+  files: readonly NamedSource[],
+  entriesByFile: ReadonlyMap<string, readonly TypeSymbolEntry[]>,
+  isSymbolBaseline: boolean,
+): readonly string[] {
+  const baselines: string[] = [];
+  for (const file of files) {
+    const fileEntries = entriesByFile.get(normalizeKey(file.name)) ?? [];
+    const section = generateFileBaseline(file, fileEntries, isSymbolBaseline);
+    if (section.length > 0) baselines.push(section);
+  }
+  return baselines;
 }
 
 function generateFileBaseline(file: NamedSource, entries: readonly TypeSymbolEntry[], isSymbolBaseline: boolean): string {
@@ -107,9 +115,57 @@ function groupEntriesByFile(entries: readonly TypeSymbolEntry[], isSymbolBaselin
 
 export function isTypeBaselineNodeReuseLine(line: string): boolean {
   if (!line.startsWith(">")) return false;
-  const marker = line.indexOf(":");
-  if (marker === -1) return false;
-  return /^[\s^\r]*$/.test(line.slice(marker + 1));
+  const afterPrefix = line.slice(1);
+  if (afterPrefix.length === 0) return false;
+  const afterSourceText = afterPrefix.slice(1).replace(/^[ ]+/, "");
+  if (!afterSourceText.startsWith(":")) return false;
+  for (const char of afterSourceText.slice(1)) {
+    if (char !== " " && char !== "^" && char !== "\r") return false;
+  }
+  return true;
+}
+
+export function diffFixupOldTypeBaseline(text: string): string {
+  const output: string[] = [];
+  let perfStats = false;
+  for (let line of text.split("\n")) {
+    if (isTypeBaselineNodeReuseLine(line)) continue;
+    if (!perfStats && line.startsWith("=== Performance Stats ===")) {
+      perfStats = true;
+      continue;
+    }
+    if (perfStats) {
+      if (line.startsWith("=== ")) perfStats = false;
+      else continue;
+    }
+
+    const relativePrefixNew = "=== ";
+    const relativePrefixOld = `${relativePrefixNew}./`;
+    if (line.startsWith(relativePrefixOld)) {
+      line = `${relativePrefixNew}${line.slice(relativePrefixOld.length)}`;
+    }
+    output.push(line);
+  }
+  return output.join("\n");
+}
+
+export interface TypeWriterResult {
+  readonly line: number;
+  readonly sourceText: string;
+  readonly symbol: string;
+  readonly type: string;
+  readonly underline: string;
+}
+
+export function typeWriterResultToEntry(fileName: string, result: TypeWriterResult): TypeSymbolEntry {
+  return {
+    fileName,
+    line: result.line,
+    sourceText: result.sourceText,
+    symbol: result.symbol,
+    type: result.type,
+    underline: result.underline,
+  };
 }
 
 function isBracketOrBlank(line: string): boolean {
