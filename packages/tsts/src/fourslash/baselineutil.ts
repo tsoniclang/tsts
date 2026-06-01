@@ -4,7 +4,31 @@
  * Porting surface for TS-Go `internal/fourslash/baselineutil.go`.
  */
 
+import type { DocumentUri, Location, Position, Range } from "../lsp/lsproto/index.js";
+import { comparePositions } from "../lsp/lsproto/index.js";
+import { lowerFirstChar } from "../stringutil/index.js";
 import type { Marker, RangeMarker } from "./testParser.js";
+
+export type FourslashBaselineCommand = string;
+
+export const autoImportsCmd: FourslashBaselineCommand = "Auto Imports";
+export const callHierarchyCmd: FourslashBaselineCommand = "Call Hierarchy";
+export const closingTagCmd: FourslashBaselineCommand = "Closing Tag";
+export const documentHighlightsCmd: FourslashBaselineCommand = "documentHighlights";
+export const findAllReferencesCmd: FourslashBaselineCommand = "findAllReferences";
+export const goToDefinitionCmd: FourslashBaselineCommand = "goToDefinition";
+export const goToImplementationCmd: FourslashBaselineCommand = "goToImplementation";
+export const goToSourceDefinitionCmd: FourslashBaselineCommand = "goToSourceDefinition";
+export const goToTypeDefinitionCmd: FourslashBaselineCommand = "goToType";
+export const inlayHintsCmd: FourslashBaselineCommand = "Inlay Hints";
+export const nonSuggestionDiagnosticsCmd: FourslashBaselineCommand = "Syntax and Semantic Diagnostics";
+export const quickInfoCmd: FourslashBaselineCommand = "QuickInfo";
+export const linkedEditingCmd: FourslashBaselineCommand = "linkedEditing";
+export const renameCmd: FourslashBaselineCommand = "findRenameLocations";
+export const signatureHelpCmd: FourslashBaselineCommand = "SignatureHelp";
+export const smartSelectionCmd: FourslashBaselineCommand = "Smart Selection";
+export const codeLensesCmd: FourslashBaselineCommand = "Code Lenses";
+export const documentSymbolsCmd: FourslashBaselineCommand = "Document Symbols";
 
 export interface BaselineWriter {
   writeLine(text?: string): void;
@@ -21,6 +45,154 @@ export class StringBaselineWriter implements BaselineWriter {
   text(): string {
     return this.lines.join("\n");
   }
+}
+
+export function getBaselineFileName(baseFileName: string, command: FourslashBaselineCommand): string {
+  return `${baseFileName}.${getBaselineExtension(command)}`;
+}
+
+export function getBaselineExtension(command: FourslashBaselineCommand): string {
+  switch (command) {
+    case quickInfoCmd:
+    case signatureHelpCmd:
+    case smartSelectionCmd:
+    case inlayHintsCmd:
+    case nonSuggestionDiagnosticsCmd:
+    case documentSymbolsCmd:
+    case closingTagCmd:
+      return "baseline";
+    case callHierarchyCmd:
+      return "callHierarchy.txt";
+    case autoImportsCmd:
+      return "baseline.md";
+    case linkedEditingCmd:
+      return "linkedEditing.txt";
+    default:
+      return "baseline.jsonc";
+  }
+}
+
+export function dropTrailingEmptyLines(lines: readonly string[]): readonly string[] {
+  let lastNonEmpty = -1;
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    if (lines[index] !== "") {
+      lastNonEmpty = index;
+      break;
+    }
+  }
+  return lines.slice(0, lastNonEmpty + 1);
+}
+
+export function isSubmoduleTest(testPath: string): boolean {
+  return testPath.includes("fourslash/tests/gen") || testPath.includes("fourslash/tests/manual");
+}
+
+export function normalizeCommandName(command: string): string {
+  return lowerFirstChar(command.trim().split(/\s+/).filter((word) => word.length !== 0).join(""));
+}
+
+export interface DocumentSpan {
+  readonly uri: DocumentUri;
+  readonly textSpan: Range;
+  readonly contextSpan?: Range;
+}
+
+export interface BaselineFourslashLocationsOptions {
+  readonly marker?: Marker | RangeMarker;
+  readonly markerName?: string;
+  readonly endMarker?: string;
+  readonly startMarkerPrefix?: (span: DocumentSpan) => string | undefined;
+  readonly endMarkerSuffix?: (span: DocumentSpan) => string | undefined;
+  readonly getLocationData?: (span: DocumentSpan) => string;
+  readonly additionalSpan?: DocumentSpan;
+  readonly preserveResultOrder?: boolean;
+  readonly orderedFiles?: readonly DocumentUri[];
+}
+
+export function locationToSpan(location: Location): DocumentSpan {
+  return {
+    uri: location.uri,
+    textSpan: location.range,
+  };
+}
+
+export function uniqueFilesInSpanOrder(spans: readonly DocumentSpan[]): readonly DocumentUri[] {
+  if (spans.length === 0) return [];
+  const seen = new Set<DocumentUri>();
+  const result: DocumentUri[] = [];
+  for (const span of spans) {
+    if (seen.has(span.uri)) continue;
+    seen.add(span.uri);
+    result.push(span.uri);
+  }
+  return result;
+}
+
+export enum DetailKind {
+  Marker = 0,
+  ContextStart = 1,
+  TextStart = 2,
+  TextEnd = 3,
+  ContextEnd = 4,
+}
+
+export function detailKindIsEnd(kind: DetailKind): boolean {
+  return kind === DetailKind.ContextEnd || kind === DetailKind.TextEnd;
+}
+
+export function detailKindIsStart(kind: DetailKind): boolean {
+  return kind === DetailKind.ContextStart || kind === DetailKind.TextStart;
+}
+
+export interface BaselineDetail {
+  readonly pos: Position;
+  readonly positionMarker: string;
+  readonly span?: DocumentSpan;
+  readonly kind: DetailKind;
+}
+
+export function getRange(detail: BaselineDetail): Range {
+  switch (detail.kind) {
+    case DetailKind.ContextStart:
+    case DetailKind.ContextEnd:
+      if (detail.span?.contextSpan === undefined) throw new Error("baseline detail requires a context span");
+      return detail.span.contextSpan;
+    case DetailKind.TextStart:
+    case DetailKind.TextEnd:
+      if (detail.span === undefined) throw new Error("baseline detail requires a text span");
+      return detail.span.textSpan;
+    case DetailKind.Marker:
+      return { start: detail.pos, end: detail.pos };
+    default:
+      throw new Error(`unknown detail kind: ${detail.kind}`);
+  }
+}
+
+export function compareBaselineDetails(left: BaselineDetail, right: BaselineDetail): number {
+  const positionComparison = comparePositions(left.pos, right.pos);
+  if (positionComparison !== 0 || (left.kind === DetailKind.Marker && right.kind === DetailKind.Marker)) {
+    return positionComparison;
+  }
+
+  if (left.kind === DetailKind.Marker && detailKindIsStart(right.kind)) return -1;
+  if (right.kind === DetailKind.Marker && detailKindIsStart(left.kind)) return 1;
+  if (left.kind === DetailKind.Marker && detailKindIsEnd(right.kind)) return 1;
+  if (right.kind === DetailKind.Marker && detailKindIsEnd(left.kind)) return -1;
+  if (left.span !== undefined && left.span === right.span) return left.kind - right.kind;
+  if (detailKindIsStart(left.kind) && detailKindIsEnd(right.kind)) return 1;
+  if (detailKindIsEnd(left.kind) && detailKindIsStart(right.kind)) return -1;
+
+  if (detailKindIsEnd(left.kind) && detailKindIsEnd(right.kind)) {
+    const rangeComparison = comparePositions(getRange(right).start, getRange(left).start);
+    return rangeComparison || left.kind - right.kind;
+  }
+
+  if (detailKindIsStart(left.kind) && detailKindIsStart(right.kind)) {
+    const rangeComparison = comparePositions(getRange(right).end, getRange(left).end);
+    return rangeComparison || left.kind - right.kind;
+  }
+
+  return 0;
 }
 
 export interface MarkerSummary {
