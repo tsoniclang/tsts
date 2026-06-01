@@ -70,8 +70,10 @@ import {
   CompletionItemKindProperty,
   CompletionItemKindText,
   CompletionItemKindVariable,
+  CompletionItemTagDeprecated,
+  InsertTextFormatSnippet,
 } from "../lsp/lsproto/index.js";
-import type { CompletionContext, CompletionItem, CompletionItemData, CompletionItemKind, CompletionItemLabelDetails, CompletionItemsOrListOrNull, CompletionList, DocumentUri, Position, Range } from "../lsp/lsproto/index.js";
+import type { ClientCapabilities, CompletionContext, CompletionItem, CompletionItemData, CompletionItemDefaults, CompletionItemKind, CompletionItemLabelDetails, CompletionItemsOrListOrNull, CompletionList, DocumentUri, Position, Range } from "../lsp/lsproto/index.js";
 import { findPrecedingToken, getStartOfNode, getTokenAtPositionPublic, getTouchingPropertyName } from "../astnav/index.js";
 import { isInComment } from "./format.js";
 import { getStringLiteralCompletions, type StringCompletionChecker, type StringCompletionProgram, type StringLiteralCompletionService } from "./stringCompletions.js";
@@ -110,6 +112,7 @@ import {
 } from "./lsutil/index.js";
 import {
   createLspRangeFromBounds,
+  createLspPosition,
   getPossibleGenericSignatures,
   getPossibleTypeArgumentsInfo,
   positionBelongsToNode,
@@ -707,6 +710,108 @@ export function getDefaultCommitCharacters(isNewIdentifierLocation: boolean): re
   return isNewIdentifierLocation ? emptyCommitCharacters : [...allCommitCharacters];
 }
 
+export interface CompletionClientCapabilityProvider {
+  readonly clientCapabilities?: ClientCapabilities;
+}
+
+export function setItemDefaults(
+  service: LspRangeService,
+  capabilities: ClientCapabilities | undefined,
+  position: number,
+  file: SourceFile,
+  items: readonly CompletionItem[],
+  defaultCommitCharacters: readonly string[] | undefined,
+  optionalReplacementSpan: Range | undefined,
+): CompletionItemDefaults | undefined {
+  let itemDefaults: CompletionItemDefaults | undefined;
+  if (defaultCommitCharacters !== undefined) {
+    const supportsItemCommitCharacters = clientSupportsItemCommitCharacters(capabilities);
+    if (clientSupportsDefaultCommitCharacters(capabilities) && supportsItemCommitCharacters) {
+      itemDefaults = { commitCharacters: defaultCommitCharacters };
+    } else if (supportsItemCommitCharacters) {
+      for (const item of items) {
+        if (item.commitCharacters === undefined) mutableCompletionItem(item).commitCharacters = defaultCommitCharacters;
+      }
+    }
+  }
+
+  if (optionalReplacementSpan !== undefined) {
+    const insertRange = {
+      start: optionalReplacementSpan.start,
+      end: createLspPosition(service, position, file),
+    };
+    if (clientSupportsDefaultEditRange(capabilities)) {
+      itemDefaults = {
+        ...(itemDefaults ?? {}),
+        editRange: {
+          editRangeWithInsertReplace: {
+            insert: insertRange,
+            replace: optionalReplacementSpan,
+          },
+        },
+      };
+      for (const item of items) {
+        if (item.insertText !== undefined && item.textEdit === undefined) {
+          mutableCompletionItem(item).textEdit = {
+            insertReplaceEdit: {
+              newText: item.insertText,
+              insert: insertRange,
+              replace: optionalReplacementSpan,
+            },
+          };
+          delete mutableCompletionItem(item).insertText;
+        }
+      }
+    } else if (clientSupportsItemInsertReplace(capabilities)) {
+      for (const item of items) {
+        if (item.textEdit === undefined) {
+          mutableCompletionItem(item).textEdit = {
+            insertReplaceEdit: {
+              newText: item.insertText ?? item.label,
+              insert: insertRange,
+              replace: optionalReplacementSpan,
+            },
+          };
+        }
+      }
+    }
+  }
+
+  return itemDefaults;
+}
+
+export function clientSupportsItemLabelDetails(capabilities: ClientCapabilities | undefined): boolean {
+  return capabilities?.textDocument?.completion?.completionItem?.labelDetailsSupport === true;
+}
+
+export function clientSupportsItemSnippet(capabilities: ClientCapabilities | undefined): boolean {
+  return capabilities?.textDocument?.completion?.completionItem?.snippetSupport === true;
+}
+
+export function clientSupportsItemCommitCharacters(capabilities: ClientCapabilities | undefined): boolean {
+  return capabilities?.textDocument?.completion?.completionItem?.commitCharactersSupport === true;
+}
+
+export function clientSupportsItemInsertReplace(capabilities: ClientCapabilities | undefined): boolean {
+  return capabilities?.textDocument?.completion?.completionItem?.insertReplaceSupport === true;
+}
+
+export function clientSupportsDefaultCommitCharacters(capabilities: ClientCapabilities | undefined): boolean {
+  return capabilities?.textDocument?.completion?.completionList?.itemDefaults?.includes("commitCharacters") === true;
+}
+
+export function clientSupportsDefaultEditRange(capabilities: ClientCapabilities | undefined): boolean {
+  return capabilities?.textDocument?.completion?.completionList?.itemDefaults?.includes("editRange") === true;
+}
+
+function mutableCompletionItem(item: CompletionItem): MutableCompletionItem {
+  return item as MutableCompletionItem;
+}
+
+type MutableCompletionItem = {
+  -readonly [K in keyof CompletionItem]: CompletionItem[K];
+};
+
 export interface CompletionInfoHost {
   readonly userPreferences?: UserPreferences;
   readonly compilerOptions?: CompilerOptions;
@@ -731,6 +836,7 @@ export interface CompletionService extends LspRangeService {
   getProgramAndFile(documentURI: DocumentUri): readonly [CompletionProgram, SourceFile];
   getProgram?(): CompletionProgram | undefined;
   userPreferences(): UserPreferences;
+  clientCapabilities?(): ClientCapabilities | undefined;
   readonly createCompletionItem?: CompletionInfoHost["createCompletionItem"];
   readonly getTripleSlashReferenceCompletions?: StringLiteralCompletionService["getTripleSlashReferenceCompletions"];
   readonly getStringLiteralCompletionsFromModuleNamesWorker?: StringLiteralCompletionService["getStringLiteralCompletionsFromModuleNamesWorker"];
@@ -836,6 +942,7 @@ export function getCompletionsAtPosition(
     }
     if (isCompletionDataKeyword(data)) {
       return specificKeywordCompletionInfo(
+        service,
         file,
         position,
         data.keywordCompletions,
@@ -1102,6 +1209,74 @@ export function createCompletionItemForLiteral(file: SourceFile, preferences: Us
   };
 }
 
+export interface CompletionKindModifiers {
+  readonly optional?: boolean;
+  readonly deprecated?: boolean;
+}
+
+export function createLSPCompletionItem(
+  name: string,
+  insertText: string,
+  filterText: string,
+  sortText: SortText,
+  elementKind: ScriptElementKind,
+  kindModifiers: CompletionKindModifiers | undefined,
+  replacementSpan: Range | undefined,
+  commitCharacters: readonly string[] | undefined,
+  labelDetails: CompletionItemLabelDetails | undefined,
+  file: SourceFile,
+  position: number,
+  isMemberCompletion: boolean,
+  isSnippet: boolean,
+  hasAction: boolean,
+  preselect: boolean,
+  source: string,
+  autoImportFix: CompletionItemData["autoImport"] | undefined,
+  detail: string | undefined,
+): CompletionItem {
+  const kind = getCompletionsSymbolKind(elementKind);
+  const data = completionItemData(file.fileName, position, name);
+  const textEdit = replacementSpan === undefined
+    ? undefined
+    : {
+        textEdit: {
+          newText: insertText === "" ? name : insertText,
+          range: replacementSpan,
+        },
+      };
+
+  const word = getWordLengthAndStart(file, position);
+  const computedFilterText = filterText === ""
+    ? getFilterText(insertText, name, word.wordStart, getDotAccessor(file, Math.max(0, position - word.wordLength)))
+    : filterText;
+  const optional = kindModifiers?.optional === true;
+  const deprecated = kindModifiers?.deprecated === true;
+  const label = optional ? `${name}?` : name;
+  const finalInsertText = optional && insertText === "" ? name : insertText;
+  const finalFilterText = optional && computedFilterText === "" ? name : computedFilterText;
+  const itemData = {
+    ...data,
+    ...(source === "" ? {} : { source }),
+    ...(autoImportFix === undefined ? {} : { autoImport: autoImportFix }),
+  };
+
+  return {
+    label,
+    kind,
+    ...(labelDetails === undefined ? {} : { labelDetails }),
+    ...(deprecated ? { tags: [CompletionItemTagDeprecated] } : {}),
+    ...(detail === undefined || detail === "" ? {} : { detail }),
+    ...(preselect ? { preselect } : {}),
+    sortText,
+    ...(finalFilterText === "" || finalFilterText === finalInsertText ? {} : { filterText: finalFilterText }),
+    ...(finalInsertText === "" ? {} : { insertText: finalInsertText }),
+    ...(isSnippet ? { insertTextFormat: InsertTextFormatSnippet } : {}),
+    ...(textEdit === undefined ? {} : { textEdit }),
+    ...(commitCharacters === undefined ? {} : { commitCharacters }),
+    ...(!isMemberCompletion && !hasAction && source === "" && autoImportFix === undefined ? {} : { data: itemData }),
+  };
+}
+
 export function createCompletionItem(
   symbol: CompletionSymbol,
   sortText: SortText,
@@ -1146,17 +1321,59 @@ export function createCompletionItem(
   const word = getWordLengthAndStart(file, position);
   filterText = getFilterText(insertText, name, word.wordStart, getDotAccessor(file, position));
 
-  return {
-    label: name,
-    ...(insertText === "" ? {} : { insertText }),
-    ...(filterText === "" || filterText === insertText ? {} : { filterText }),
+  return createLSPCompletionItem(
+    name,
+    insertText,
+    filterText,
     sortText,
-    ...(labelDetails === undefined ? {} : { labelDetails }),
-    ...(data.defaultCommitCharacters.length === 0 ? { commitCharacters: [] } : {}),
-    ...(source === "" ? {} : { source }),
-    ...(isSnippet ? { insertTextFormat: 2 } : {}),
-    ...(isMemberCompletion ? { data: completionItemData(file.fileName, position, symbolName(symbol)) } : {}),
-  };
+    completionElementKindForSymbol(symbol, isMemberCompletion),
+    completionKindModifiersForSymbol(symbol),
+    undefined,
+    data.defaultCommitCharacters.length === 0 ? [] : undefined,
+    labelDetails,
+    file,
+    position,
+    isMemberCompletion,
+    isSnippet,
+    false,
+    isRecommendedCompletionMatch(symbol, data.recommendedCompletion as CompletionSymbol | undefined),
+    source,
+    undefined,
+    undefined,
+  );
+}
+
+function completionElementKindForSymbol(symbol: CompletionSymbol, isMemberCompletion: boolean): ScriptElementKind {
+  const flags = symbol.flags ?? 0;
+  if ((flags & SymbolFlags.Method) !== 0) return ScriptElementKindMemberFunctionElement;
+  if ((flags & SymbolFlags.Function) !== 0) return ScriptElementKindFunctionElement;
+  if ((flags & SymbolFlags.Class) !== 0) return ScriptElementKindClassElement;
+  if ((flags & SymbolFlags.Interface) !== 0) return ScriptElementKindInterfaceElement;
+  if ((flags & SymbolFlags.EnumMember) !== 0) return ScriptElementKindEnumMemberElement;
+  if ((flags & SymbolFlags.Enum) !== 0) return ScriptElementKindEnumElement;
+  if ((flags & SymbolFlags.Module) !== 0) return ScriptElementKindModuleElement;
+  if ((flags & SymbolFlags.TypeAlias) !== 0) return ScriptElementKindTypeElement;
+  if ((flags & SymbolFlags.GetAccessor) !== 0) return ScriptElementKindMemberGetAccessorElement;
+  if ((flags & SymbolFlags.SetAccessor) !== 0) return ScriptElementKindMemberSetAccessorElement;
+  if ((flags & SymbolFlags.Property) !== 0) return isMemberCompletion ? ScriptElementKindMemberVariableElement : ScriptElementKindVariableElement;
+  return isMemberCompletion ? ScriptElementKindMemberVariableElement : ScriptElementKindVariableElement;
+}
+
+function completionKindModifiersForSymbol(symbol: CompletionSymbol): CompletionKindModifiers | undefined {
+  const flags = symbol.flags ?? 0;
+  const optional = (flags & SymbolFlags.Optional) !== 0;
+  const deprecated = symbol.declarations.some(declaration => hasJSDocDeprecatedTag(declaration));
+  return optional || deprecated ? { optional, deprecated } : undefined;
+}
+
+function hasJSDocDeprecatedTag(node: Node): boolean {
+  for (const jsDoc of nodeArray(node, "jsDoc")) {
+    for (const tag of nodeArray(jsDoc, "tags")) {
+      if (tag.kind === Kind.JSDocDeprecatedTag) return true;
+      if (nodeTextOf(nodeName(tag)) === "deprecated") return true;
+    }
+  }
+  return false;
 }
 
 export function isRecommendedCompletionMatch(localSymbol: CompletionSymbol, recommendedCompletion: CompletionSymbol | undefined): boolean {
@@ -1804,20 +2021,20 @@ function isCompletionDataJSDocParameterName(data: CompletionData): data is Compl
 }
 
 function specificKeywordCompletionInfo(
-  _file: SourceFile,
-  _position: number,
+  service: CompletionService,
+  file: SourceFile,
+  position: number,
   keywordCompletions: readonly CompletionItem[],
   isNewIdentifierLocation: boolean,
   optionalReplacementSpan: Range | undefined,
 ): CompletionList {
   const commitCharacters = getDefaultCommitCharacters(isNewIdentifierLocation);
+  const items = keywordCompletions.map(item => ({ ...item }));
+  const itemDefaults = setItemDefaults(service, service.clientCapabilities?.(), position, file, items, commitCharacters, optionalReplacementSpan);
   return {
     isIncomplete: false,
-    ...(optionalReplacementSpan === undefined ? {} : { itemDefaults: { editRange: { range: optionalReplacementSpan } } }),
-    items: keywordCompletions.map((item) => ({
-      ...item,
-      ...(commitCharacters.length === 0 ? { commitCharacters: [] } : {}),
-    })),
+    ...(itemDefaults === undefined ? {} : { itemDefaults }),
+    items,
   };
 }
 
@@ -1826,6 +2043,11 @@ function jsDocCompletionInfo(_position: number, _file: SourceFile, items: readon
     isIncomplete: false,
     items,
   };
+}
+
+export function getReplacementRangeForContextToken(service: CompletionService, file: SourceFile, contextToken: Node | undefined, position: number): Range | undefined {
+  if (contextToken === undefined) return undefined;
+  return getOptionalReplacementSpan(service, contextToken, file) ?? service.createRangeFromStringLiteralLikeContent?.(file, contextToken, position);
 }
 
 function getOptionalReplacementSpan(service: CompletionService, location: Node | undefined, file: SourceFile): Range | undefined {
