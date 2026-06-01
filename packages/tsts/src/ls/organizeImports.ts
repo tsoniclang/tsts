@@ -1,3 +1,246 @@
+import {
+  Kind,
+  isExportDeclaration,
+  isImportDeclaration,
+  isNamedExports,
+  isNamedImports,
+  isStringLiteralLikeNode,
+  type ExportDeclaration,
+  type ImportAttributes,
+  type ImportDeclaration,
+  type ImportSpecifier,
+  type Node,
+  type SourceFile,
+  type Statement,
+} from "../ast/index.js";
+import { skipTrivia } from "../scanner/index.js";
+import { compareStringsCaseSensitive } from "../stringutil/index.js";
+import {
+  getExternalModuleName,
+  type SpecifierComparer,
+  type StringComparer,
+} from "./lsutil/organizeImports.js";
+import { type OrganizeImportsTypeOrder } from "./lsutil/userpreferences.js";
+
+export interface OrganizeImportsComparerSettings {
+  readonly moduleSpecifierComparer: StringComparer;
+  readonly namedImportComparer: StringComparer;
+  readonly typeOrder: OrganizeImportsTypeOrder;
+}
+
+export function groupByModuleSpecifier(imports: readonly ImportDeclaration[]): ImportDeclaration[][] {
+  const groups = new Map<string, ImportDeclaration[]>();
+  const order: string[] = [];
+
+  for (const importDeclaration of imports) {
+    const specifier = getExternalModuleName(importDeclaration.moduleSpecifier);
+    if (!groups.has(specifier)) order.push(specifier);
+    const group = groups.get(specifier);
+    if (group === undefined) groups.set(specifier, [importDeclaration]);
+    else group.push(importDeclaration);
+  }
+
+  return order.map((key) => groups.get(key) ?? []);
+}
+
+export function getImportAttributesKey(attributes: ImportAttributes | undefined): string {
+  if (attributes === undefined) return "";
+  const sortedAttributes = [...attributes.attributes].sort((left, right) => {
+    return compareStringsCaseSensitive(importAttributeNameText(left), importAttributeNameText(right));
+  });
+  let key = String(attributes.token) + " ";
+  for (const attribute of sortedAttributes) {
+    key += importAttributeNameText(attribute) + ":";
+    key += isStringLiteralLikeNode(attribute.value)
+      ? "\"" + attribute.value.text + "\""
+      : nodeText(attribute.value);
+    key += " ";
+  }
+  return key;
+}
+
+export function groupByNewlineContiguous<T extends Statement>(
+  sourceFile: SourceFile,
+  declarations: readonly T[],
+): T[][] {
+  const groups: T[][] = [];
+  let currentGroup: T[] = [];
+
+  for (const declaration of declarations) {
+    if (currentGroup.length > 0 && isNewGroup(sourceFile, declaration)) {
+      groups.push(currentGroup);
+      currentGroup = [];
+    }
+    currentGroup.push(declaration);
+  }
+
+  if (currentGroup.length > 0) groups.push(currentGroup);
+  return groups;
+}
+
+export function isNewGroup(sourceFile: SourceFile, declaration: Statement): boolean {
+  const fullStart = declaration.pos;
+  if (fullStart < 0) return false;
+  const text = sourceFile.text;
+  if (fullStart >= text.length) return false;
+  const startPos = skipTrivia(text, fullStart);
+  if (startPos <= fullStart) return false;
+  return countNewlines(text.slice(fullStart, startPos)) >= 2;
+}
+
+export interface CategorizedImports {
+  readonly importWithoutClause?: ImportDeclaration;
+  readonly typeOnlyImports: ImportGroup;
+  readonly regularImports: ImportGroup;
+}
+
+export interface ImportGroup {
+  readonly defaultImports: ImportDeclaration[];
+  readonly namespaceImports: ImportDeclaration[];
+  readonly namedImports: ImportDeclaration[];
+}
+
+export function isImportGroupEmpty(group: ImportGroup): boolean {
+  return group.defaultImports.length === 0
+    && group.namespaceImports.length === 0
+    && group.namedImports.length === 0;
+}
+
+export function getCategorizedImports(importDeclarations: readonly ImportDeclaration[]): CategorizedImports {
+  let importWithoutClause: ImportDeclaration | undefined;
+  const typeOnlyImports: ImportGroup = { defaultImports: [], namespaceImports: [], namedImports: [] };
+  const regularImports: ImportGroup = { defaultImports: [], namespaceImports: [], namedImports: [] };
+
+  for (const importDeclaration of importDeclarations) {
+    const clause = importDeclaration.importClause;
+    if (clause === undefined) {
+      importWithoutClause ??= importDeclaration;
+      continue;
+    }
+
+    const group = clause.phaseModifier === Kind.TypeKeyword ? typeOnlyImports : regularImports;
+    if (clause.name !== undefined) group.defaultImports.push(importDeclaration);
+    if (clause.namedBindings?.kind === Kind.NamespaceImport) group.namespaceImports.push(importDeclaration);
+    if (clause.namedBindings?.kind === Kind.NamedImports) group.namedImports.push(importDeclaration);
+  }
+
+  const result: CategorizedImports = {
+    typeOnlyImports,
+    regularImports,
+  };
+  return importWithoutClause === undefined ? result : { ...result, importWithoutClause };
+}
+
+export function getNewImportSpecifiers(namedImports: readonly ImportDeclaration[]): ImportSpecifier[] {
+  const result: ImportSpecifier[] = [];
+  for (const namedImport of namedImports) {
+    const elements = tryGetNamedBindingElements(namedImport);
+    if (elements === undefined) continue;
+    for (const element of elements) result.push(element);
+  }
+  return result;
+}
+
+export function tryGetNamedBindingElements(namedImport: Statement): readonly ImportSpecifier[] | undefined {
+  if (!isImportDeclaration(namedImport)) return undefined;
+  const namedBindings = namedImport.importClause?.namedBindings;
+  return namedBindings !== undefined && isNamedImports(namedBindings) ? namedBindings.elements : undefined;
+}
+
+export function getTopLevelExportGroups(sourceFile: SourceFile): ExportDeclaration[][] {
+  const topLevelExportGroups: ExportDeclaration[][] = [];
+  const statements = sourceFile.statements;
+  let index = 0;
+  let groupIndex = 0;
+
+  while (index < statements.length) {
+    const statement = statements[index]!;
+    if (isExportDeclaration(statement)) {
+      if (topLevelExportGroups[groupIndex] === undefined) topLevelExportGroups.push([]);
+      if (statement.moduleSpecifier !== undefined) {
+        topLevelExportGroups[groupIndex]!.push(statement);
+        index += 1;
+      } else {
+        while (index < statements.length && isExportDeclaration(statements[index]!)) {
+          topLevelExportGroups[groupIndex]!.push(statements[index]! as ExportDeclaration);
+          index += 1;
+        }
+        groupIndex += 1;
+      }
+    } else {
+      index += 1;
+      if ((topLevelExportGroups[groupIndex]?.length ?? 0) > 0) groupIndex += 1;
+    }
+  }
+
+  const result: ExportDeclaration[][] = [];
+  for (const exportGroup of topLevelExportGroups) {
+    result.push(...groupByNewlineContiguous(sourceFile, exportGroup));
+  }
+  return result;
+}
+
+export interface CategorizedExports {
+  readonly exportWithoutClause?: ExportDeclaration;
+  readonly namedExports: ExportDeclaration[];
+  readonly typeOnlyExports: ExportDeclaration[];
+}
+
+export function getCategorizedExports(exportGroup: readonly ExportDeclaration[]): CategorizedExports {
+  let exportWithoutClause: ExportDeclaration | undefined;
+  const namedExports: ExportDeclaration[] = [];
+  const typeOnlyExports: ExportDeclaration[] = [];
+
+  for (const exportDeclaration of exportGroup) {
+    if (exportDeclaration.exportClause === undefined) {
+      exportWithoutClause ??= exportDeclaration;
+    } else if (exportDeclaration.isTypeOnly) {
+      typeOnlyExports.push(exportDeclaration);
+    } else {
+      namedExports.push(exportDeclaration);
+    }
+  }
+
+  const result: CategorizedExports = {
+    namedExports,
+    typeOnlyExports,
+  };
+  return exportWithoutClause === undefined ? result : { ...result, exportWithoutClause };
+}
+
+export function collectExportSpecifiers(
+  exportDeclarations: readonly ExportDeclaration[],
+  specifierComparer: SpecifierComparer,
+): Node[] {
+  const specifiers: Node[] = [];
+  for (const exportDeclaration of exportDeclarations) {
+    const exportClause = exportDeclaration.exportClause;
+    if (exportClause !== undefined && isNamedExports(exportClause)) specifiers.push(...exportClause.elements);
+  }
+  return specifiers.sort(specifierComparer);
+}
+
+function importAttributeNameText(attribute: { readonly name: Node }): string {
+  return nodeText(attribute.name);
+}
+
+function nodeText(node: Node | undefined): string {
+  return node !== undefined && "text" in node && typeof node.text === "string" ? node.text : "";
+}
+
+function countNewlines(text: string): number {
+  let count = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    const ch = text.charCodeAt(index);
+    if (ch === 10) count += 1;
+    else if (ch === 13) {
+      count += 1;
+      if (text.charCodeAt(index + 1) === 10) index += 1;
+    }
+  }
+  return count;
+}
+
 // Language-service parity map: internal/ls/organizeimports.go
 /**
  * Language-service parity map for TS-Go `ls/organizeimports.go`.

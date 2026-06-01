@@ -13,6 +13,13 @@ export interface UserPreferences {
   readonly includePackageJsonAutoImports?: "auto" | "on" | "off";
   readonly importModuleSpecifierPreference?: "shortest" | "project-relative" | "relative" | "non-relative";
   readonly importModuleSpecifierEnding?: "auto" | "minimal" | "index" | "js";
+  readonly organizeImportsIgnoreCase?: TristateValue;
+  readonly organizeImportsCollation?: OrganizeImportsCollation;
+  readonly organizeImportsLocale?: string;
+  readonly organizeImportsNumericCollation?: TristateValue;
+  readonly organizeImportsAccentCollation?: TristateValue;
+  readonly organizeImportsCaseFirst?: OrganizeImportsCaseFirst;
+  readonly organizeImportsTypeOrder?: OrganizeImportsTypeOrder;
   readonly allowTextChangesInNewFiles?: boolean;
   readonly allowRenameOfImportPath?: TristateValue;
   readonly useAliasesForRename?: TristateValue;
@@ -25,6 +32,21 @@ export const QuotePreferenceUnknown: QuotePreference = "";
 export const QuotePreferenceAuto: QuotePreference = "auto";
 export const QuotePreferenceDouble: QuotePreference = "double";
 export const QuotePreferenceSingle: QuotePreference = "single";
+
+export type OrganizeImportsCollation = "ordinal" | "unicode";
+export const OrganizeImportsCollationOrdinal: OrganizeImportsCollation = "ordinal";
+export const OrganizeImportsCollationUnicode: OrganizeImportsCollation = "unicode";
+
+export type OrganizeImportsCaseFirst = "" | "lower" | "upper";
+export const OrganizeImportsCaseFirstFalse: OrganizeImportsCaseFirst = "";
+export const OrganizeImportsCaseFirstLower: OrganizeImportsCaseFirst = "lower";
+export const OrganizeImportsCaseFirstUpper: OrganizeImportsCaseFirst = "upper";
+
+export type OrganizeImportsTypeOrder = "auto" | "last" | "inline" | "first";
+export const OrganizeImportsTypeOrderAuto: OrganizeImportsTypeOrder = "auto";
+export const OrganizeImportsTypeOrderLast: OrganizeImportsTypeOrder = "last";
+export const OrganizeImportsTypeOrderInline: OrganizeImportsTypeOrder = "inline";
+export const OrganizeImportsTypeOrderFirst: OrganizeImportsTypeOrder = "first";
 
 export type IncludeInlayParameterNameHints = "" | "all" | "literals";
 export const IncludeInlayParameterNameHintsNone: IncludeInlayParameterNameHints = "";

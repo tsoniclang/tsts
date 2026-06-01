@@ -1,3 +1,476 @@
+import {
+  Kind,
+  isExportSpecifier,
+  isImportDeclaration,
+  isImportEqualsDeclaration,
+  isImportSpecifier,
+  isCallExpression,
+  isNamedImports,
+  isStringLiteralLikeNode,
+  isVariableStatement,
+  type Expression,
+  type ImportDeclaration,
+  type Node,
+  type SourceFile,
+  type Statement,
+} from "../../ast/index.js";
+import {
+  Tristate,
+  binarySearchUniqueFunc,
+  boolToTristate,
+  compareBooleans,
+  tristateIsFalse,
+  tristateIsTrue,
+  tristateIsUnknown,
+  type Tristate as TristateValue,
+} from "../../core/index.js";
+import {
+  compareStringsCaseInsensitiveEslintCompatible,
+  compareStringsCaseSensitive,
+  type Comparison,
+} from "../../stringutil/index.js";
+import { isExternalModuleNameRelative } from "../../tspath/index.js";
+import {
+  OrganizeImportsCaseFirstLower,
+  OrganizeImportsCaseFirstUpper,
+  OrganizeImportsCollationUnicode,
+  OrganizeImportsTypeOrderAuto,
+  OrganizeImportsTypeOrderFirst,
+  OrganizeImportsTypeOrderInline,
+  OrganizeImportsTypeOrderLast,
+  type OrganizeImportsTypeOrder,
+  type UserPreferences,
+} from "./userpreferences.js";
+
+export type StringComparer = (a: string, b: string) => number;
+export type SpecifierComparer = (s1: Node, s2: Node) => number;
+
+const caseInsensitiveOrganizeImportsComparer: readonly StringComparer[] = [getOrganizeImportsOrdinalStringComparer(true)];
+const caseSensitiveOrganizeImportsComparer: readonly StringComparer[] = [getOrganizeImportsOrdinalStringComparer(false)];
+const organizeImportsComparers: readonly StringComparer[] = [
+  caseInsensitiveOrganizeImportsComparer[0]!,
+  caseSensitiveOrganizeImportsComparer[0]!,
+];
+
+export function filterImportDeclarations(statements: readonly Statement[]): ImportDeclaration[] {
+  return statements.filter(isImportDeclaration);
+}
+
+export interface OrganizeImportsDetectionLists {
+  readonly comparersToTest: readonly StringComparer[];
+  readonly typeOrdersToTest: readonly OrganizeImportsTypeOrder[];
+}
+
+export function getDetectionLists(preferences: UserPreferences): OrganizeImportsDetectionLists {
+  const ignoreCasePreference = preferences.organizeImportsIgnoreCase ?? Tristate.Unknown;
+  const comparersToTest = tristateIsUnknown(ignoreCasePreference)
+    ? [
+        getOrganizeImportsStringComparer(preferences, true),
+        getOrganizeImportsStringComparer(preferences, false),
+      ]
+    : [getOrganizeImportsStringComparer(preferences, tristateIsTrue(ignoreCasePreference))];
+
+  const typeOrderPreference = preferences.organizeImportsTypeOrder ?? OrganizeImportsTypeOrderAuto;
+  const typeOrdersToTest = typeOrderPreference === OrganizeImportsTypeOrderAuto
+    ? [
+        OrganizeImportsTypeOrderLast,
+        OrganizeImportsTypeOrderInline,
+        OrganizeImportsTypeOrderFirst,
+      ]
+    : [typeOrderPreference];
+
+  return { comparersToTest, typeOrdersToTest };
+}
+
+export function getOrganizeImportsOrdinalStringComparer(ignoreCase: boolean): StringComparer {
+  return ignoreCase ? compareStringsCaseInsensitiveEslintCompatible : compareStringsCaseSensitive;
+}
+
+export function getOrganizeImportsUnicodeStringComparer(
+  ignoreCase: boolean,
+  preferences: UserPreferences,
+): StringComparer {
+  const caseFirstPreference = preferences.organizeImportsCaseFirst ?? "";
+  const caseFirst: Intl.CollatorOptions["caseFirst"] =
+    caseFirstPreference === OrganizeImportsCaseFirstUpper ? "upper"
+    : caseFirstPreference === OrganizeImportsCaseFirstLower ? "lower"
+    : "false";
+  const collator = new Intl.Collator(getOrganizeImportsLocale(preferences), {
+    caseFirst,
+    numeric: tristateIsTrue(preferences.organizeImportsNumericCollation),
+    sensitivity: ignoreCase
+      ? (tristateIsFalse(preferences.organizeImportsAccentCollation ?? Tristate.Unknown) ? "base" : "accent")
+      : (tristateIsFalse(preferences.organizeImportsAccentCollation ?? Tristate.Unknown) ? "case" : "variant"),
+    usage: "sort",
+  });
+  return (a, b) => normalizeComparison(collator.compare(a, b));
+}
+
+export function getOrganizeImportsLocale(preferences: UserPreferences): string {
+  const locale = preferences.organizeImportsLocale;
+  if (locale === undefined || locale === "" || locale === "auto") return "en";
+  try {
+    return Intl.getCanonicalLocales(locale)[0] ?? "en";
+  } catch {
+    return "en";
+  }
+}
+
+export function getOrganizeImportsStringComparer(
+  preferences: UserPreferences,
+  ignoreCase: boolean,
+): StringComparer {
+  return preferences.organizeImportsCollation === OrganizeImportsCollationUnicode
+    ? getOrganizeImportsUnicodeStringComparer(ignoreCase, preferences)
+    : getOrganizeImportsOrdinalStringComparer(ignoreCase);
+}
+
+export function getModuleSpecifierExpression(declaration: Statement): Expression | undefined {
+  if (isImportEqualsDeclaration(declaration)) {
+    const moduleReference = declaration.moduleReference;
+    return moduleReference.kind === Kind.ExternalModuleReference ? moduleReference.expression : undefined;
+  }
+  if (isImportDeclaration(declaration)) return declaration.moduleSpecifier;
+  if (isVariableStatement(declaration)) {
+    const firstDeclaration = declaration.declarationList.declarations[0];
+    const initializer = firstDeclaration?.initializer;
+    if (initializer !== undefined && isCallExpression(initializer)) return initializer.arguments[0];
+  }
+  return undefined;
+}
+
+export function getExternalModuleName(specifier: Expression | undefined): string {
+  return specifier !== undefined && isStringLiteralLikeNode(specifier) ? specifier.text : "";
+}
+
+export function compareModuleSpecifiers(
+  m1: Expression | undefined,
+  m2: Expression | undefined,
+  comparer: StringComparer,
+): number {
+  const name1 = getExternalModuleName(m1);
+  const name2 = getExternalModuleName(m2);
+  const emptyComparison = compareBooleans(name1 === "", name2 === "");
+  if (emptyComparison !== 0) return emptyComparison;
+  const relativeComparison = compareBooleans(isExternalModuleNameRelative(name1), isExternalModuleNameRelative(name2));
+  if (relativeComparison !== 0) return relativeComparison;
+  return comparer(name1, name2);
+}
+
+export const importKindOrderSideEffect = 0;
+export const importKindOrderTypeOnly = 1;
+export const importKindOrderNamespace = 2;
+export const importKindOrderDefault = 3;
+export const importKindOrderNamed = 4;
+export const importKindOrderImportEquals = 5;
+export const importKindOrderRequire = 6;
+export const importKindOrderUnknown = 7;
+
+export function getImportKindOrder(statement: Statement): number {
+  if (isImportDeclaration(statement)) {
+    const importClause = statement.importClause;
+    if (importClause === undefined) return importKindOrderSideEffect;
+    if (importClause.phaseModifier === Kind.TypeKeyword) return importKindOrderTypeOnly;
+    if (importClause.namedBindings?.kind === Kind.NamespaceImport) return importKindOrderNamespace;
+    if (importClause.name !== undefined) return importKindOrderDefault;
+    return importKindOrderNamed;
+  }
+  if (isImportEqualsDeclaration(statement)) return importKindOrderImportEquals;
+  if (isVariableStatement(statement)) return importKindOrderRequire;
+  return importKindOrderUnknown;
+}
+
+export function compareImportKind(s1: Statement, s2: Statement): number {
+  return getImportKindOrder(s1) - getImportKindOrder(s2);
+}
+
+export function compareImportsOrRequireStatements(
+  s1: Statement,
+  s2: Statement,
+  comparer: StringComparer,
+): number {
+  const moduleComparison = compareModuleSpecifiers(
+    getModuleSpecifierExpression(s1),
+    getModuleSpecifierExpression(s2),
+    comparer,
+  );
+  if (moduleComparison !== 0) return moduleComparison;
+  return compareImportKind(s1, s2);
+}
+
+export function compareImportOrExportSpecifiers(
+  s1: Node,
+  s2: Node,
+  comparer: StringComparer,
+  preferences: UserPreferences,
+): number {
+  const typeOrder = preferences.organizeImportsTypeOrder ?? OrganizeImportsTypeOrderLast;
+  const s1Name = specifierNameText(s1);
+  const s2Name = specifierNameText(s2);
+
+  if (typeOrder === OrganizeImportsTypeOrderFirst) {
+    const typeComparison = compareBooleans(specifierIsTypeOnly(s2), specifierIsTypeOnly(s1));
+    return typeComparison !== 0 ? typeComparison : comparer(s1Name, s2Name);
+  }
+  if (typeOrder === OrganizeImportsTypeOrderInline) {
+    return comparer(s1Name, s2Name);
+  }
+  const typeComparison = compareBooleans(specifierIsTypeOnly(s1), specifierIsTypeOnly(s2));
+  return typeComparison !== 0 ? typeComparison : comparer(s1Name, s2Name);
+}
+
+export function getNamedImportSpecifierComparer(
+  preferences: UserPreferences,
+  comparer: StringComparer | undefined,
+): SpecifierComparer {
+  const resolvedComparer = comparer ?? getOrganizeImportsOrdinalStringComparer(
+    tristateIsTrue(preferences.organizeImportsIgnoreCase ?? Tristate.False),
+  );
+  return (s1, s2) => compareImportOrExportSpecifiers(s1, s2, resolvedComparer, preferences);
+}
+
+export function getImportSpecifierInsertionIndex(
+  sortedImports: readonly Node[],
+  newImport: Node,
+  comparer: SpecifierComparer,
+): number {
+  return binarySearchUniqueFunc(sortedImports, (_mid, value) => comparer(value, newImport)).index;
+}
+
+export function getImportDeclarationInsertIndex(
+  sortedImports: readonly Statement[],
+  newImport: Statement,
+  comparer: (a: Statement, b: Statement) => number,
+): number {
+  return binarySearchUniqueFunc(sortedImports, (_mid, value) => comparer(value, newImport)).index;
+}
+
+export function getOrganizeImportsStringComparerWithDetection(
+  originalImportDecls: readonly Statement[],
+  preferences: UserPreferences,
+): readonly [StringComparer, boolean] {
+  return detectModuleSpecifierCaseBySort([originalImportDecls], getComparers(preferences));
+}
+
+export function getComparers(preferences: UserPreferences): readonly StringComparer[] {
+  const ignoreCase = preferences.organizeImportsIgnoreCase ?? Tristate.Unknown;
+  if (ignoreCase === Tristate.True) return caseInsensitiveOrganizeImportsComparer;
+  if (ignoreCase === Tristate.False) return caseSensitiveOrganizeImportsComparer;
+  return organizeImportsComparers;
+}
+
+export interface NamedImportSortResult {
+  readonly namedImportComparer: StringComparer;
+  readonly typeOrder: OrganizeImportsTypeOrder;
+  readonly isSorted: boolean;
+}
+
+export function detectNamedImportOrganizationBySortPublic(
+  originalGroups: readonly Statement[],
+  comparersToTest: readonly StringComparer[],
+  typesToTest: readonly OrganizeImportsTypeOrder[],
+): NamedImportSortResult | undefined {
+  return detectNamedImportOrganizationBySort(originalGroups, comparersToTest, typesToTest);
+}
+
+export function detectNamedImportOrganizationBySort(
+  originalGroups: readonly Statement[],
+  comparersToTest: readonly StringComparer[],
+  typesToTest: readonly OrganizeImportsTypeOrder[],
+): NamedImportSortResult | undefined {
+  const importDeclsWithNamed: ImportDeclaration[] = [];
+  let bothNamedImports = false;
+
+  for (const statement of originalGroups) {
+    if (!isImportDeclaration(statement)) continue;
+    const namedBindings = statement.importClause?.namedBindings;
+    if (namedBindings === undefined || !isNamedImports(namedBindings) || namedBindings.elements.length === 0) continue;
+    if (!bothNamedImports) {
+      let hasTypeOnly = false;
+      let hasRegular = false;
+      for (const element of namedBindings.elements) {
+        if (element.isTypeOnly) hasTypeOnly = true;
+        else hasRegular = true;
+      }
+      bothNamedImports = hasTypeOnly && hasRegular;
+    }
+    importDeclsWithNamed.push(statement);
+  }
+
+  if (importDeclsWithNamed.length === 0) return undefined;
+
+  const namedImportsByDecl = importDeclsWithNamed.map((importDecl) => {
+    const namedBindings = importDecl.importClause?.namedBindings;
+    return namedBindings !== undefined && isNamedImports(namedBindings) ? [...namedBindings.elements] : [];
+  });
+
+  if (!bothNamedImports || typesToTest.length === 0) {
+    const namesList = namedImportsByDecl.map((imports) => imports.map((importSpecifier) => importSpecifier.name.text));
+    const sortState = detectCaseSensitivityBySort(namesList, comparersToTest);
+    return {
+      namedImportComparer: sortState.comparer,
+      typeOrder: typesToTest.length === 1 ? typesToTest[0]! : OrganizeImportsTypeOrderLast,
+      isSorted: sortState.isSorted,
+    };
+  }
+
+  const bestDiff = new Map<OrganizeImportsTypeOrder, number>();
+  const bestComparer = new Map<OrganizeImportsTypeOrder, StringComparer>();
+  for (const typeOrder of [OrganizeImportsTypeOrderFirst, OrganizeImportsTypeOrderLast, OrganizeImportsTypeOrderInline]) {
+    bestDiff.set(typeOrder, Number.MAX_SAFE_INTEGER);
+    bestComparer.set(typeOrder, comparersToTest[0] ?? getOrganizeImportsOrdinalStringComparer(false));
+  }
+
+  for (const currentComparer of comparersToTest) {
+    const currentDiff = new Map<OrganizeImportsTypeOrder, number>();
+    for (const typeOrder of [OrganizeImportsTypeOrderFirst, OrganizeImportsTypeOrderLast, OrganizeImportsTypeOrderInline]) {
+      currentDiff.set(typeOrder, 0);
+    }
+
+    for (const importDecl of namedImportsByDecl) {
+      for (const typeOrder of typesToTest) {
+        const preferencesForTypeOrder: UserPreferences = { organizeImportsTypeOrder: typeOrder };
+        const diff = measureSortedness(importDecl, (n1, n2) => compareImportOrExportSpecifiers(n1, n2, currentComparer, preferencesForTypeOrder));
+        currentDiff.set(typeOrder, (currentDiff.get(typeOrder) ?? 0) + diff);
+      }
+    }
+
+    for (const typeOrder of typesToTest) {
+      const diff = currentDiff.get(typeOrder) ?? Number.MAX_SAFE_INTEGER;
+      if (diff < (bestDiff.get(typeOrder) ?? Number.MAX_SAFE_INTEGER)) {
+        bestDiff.set(typeOrder, diff);
+        bestComparer.set(typeOrder, currentComparer);
+      }
+    }
+  }
+
+  for (const bestTypeOrder of typesToTest) {
+    let isBest = true;
+    for (const testTypeOrder of typesToTest) {
+      if ((bestDiff.get(testTypeOrder) ?? Number.MAX_SAFE_INTEGER) < (bestDiff.get(bestTypeOrder) ?? Number.MAX_SAFE_INTEGER)) {
+        isBest = false;
+        break;
+      }
+    }
+    if (isBest) {
+      return {
+        namedImportComparer: bestComparer.get(bestTypeOrder) ?? getOrganizeImportsOrdinalStringComparer(false),
+        typeOrder: bestTypeOrder,
+        isSorted: (bestDiff.get(bestTypeOrder) ?? 0) === 0,
+      };
+    }
+  }
+
+  return {
+    namedImportComparer: bestComparer.get(OrganizeImportsTypeOrderLast) ?? getOrganizeImportsOrdinalStringComparer(false),
+    typeOrder: OrganizeImportsTypeOrderLast,
+    isSorted: (bestDiff.get(OrganizeImportsTypeOrderLast) ?? 0) === 0,
+  };
+}
+
+export interface CaseSensitivityDetectionResult {
+  readonly comparer: StringComparer;
+  readonly isSorted: boolean;
+}
+
+export function detectModuleSpecifierCaseBySort(
+  importDeclsByGroup: readonly (readonly Statement[])[],
+  comparersToTest: readonly StringComparer[],
+): readonly [StringComparer, boolean] {
+  const moduleSpecifiersByGroup = importDeclsByGroup.map((importGroup) => {
+    return importGroup.map((declaration) => getExternalModuleName(getModuleSpecifierExpression(declaration)));
+  });
+  const result = detectCaseSensitivityBySort(moduleSpecifiersByGroup, comparersToTest);
+  return [result.comparer, result.isSorted];
+}
+
+export function detectCaseSensitivityBySort(
+  originalGroups: readonly (readonly string[])[],
+  comparersToTest: readonly StringComparer[],
+): CaseSensitivityDetectionResult {
+  let bestComparer = comparersToTest[0] ?? getOrganizeImportsOrdinalStringComparer(false);
+  let bestDiff = Number.MAX_SAFE_INTEGER;
+
+  for (const currentComparer of comparersToTest) {
+    let diffOfCurrentComparer = 0;
+    for (const listToSort of originalGroups) {
+      if (listToSort.length <= 1) continue;
+      diffOfCurrentComparer += measureSortedness(listToSort, currentComparer);
+    }
+    if (diffOfCurrentComparer < bestDiff) {
+      bestDiff = diffOfCurrentComparer;
+      bestComparer = currentComparer;
+    }
+  }
+
+  return {
+    comparer: bestComparer,
+    isSorted: bestDiff === 0,
+  };
+}
+
+export function measureSortedness<T>(arr: readonly T[], comparer: (a: T, b: T) => number): number {
+  let inversions = 0;
+  for (let index = 0; index < arr.length - 1; index += 1) {
+    if (comparer(arr[index]!, arr[index + 1]!) > 0) inversions += 1;
+  }
+  return inversions;
+}
+
+export function getNamedImportSpecifierComparerWithDetection(
+  importDecl: Node,
+  sourceFile: SourceFile | undefined,
+  preferences: UserPreferences,
+): readonly [SpecifierComparer, TristateValue] {
+  const { comparersToTest, typeOrdersToTest } = getDetectionLists(preferences);
+  const importStatement = isImportDeclaration(importDecl) ? importDecl : undefined;
+  let specifierComparer = getNamedImportSpecifierComparer(preferences, comparersToTest[0]);
+  let isSorted = Tristate.Unknown;
+
+  if (
+    (tristateIsUnknown(preferences.organizeImportsIgnoreCase ?? Tristate.Unknown)
+      || (preferences.organizeImportsTypeOrder ?? OrganizeImportsTypeOrderAuto) === OrganizeImportsTypeOrderAuto)
+    && importStatement !== undefined
+  ) {
+    const detectFromDecl = detectNamedImportOrganizationBySort([importStatement], comparersToTest, typeOrdersToTest);
+    if (detectFromDecl !== undefined) {
+      isSorted = boolToTristate(detectFromDecl.isSorted);
+      specifierComparer = getNamedImportSpecifierComparer(
+        { organizeImportsTypeOrder: detectFromDecl.typeOrder },
+        detectFromDecl.namedImportComparer,
+      );
+    } else if (sourceFile !== undefined) {
+      const detectFromFile = detectNamedImportOrganizationBySort(filterImportDeclarations(sourceFile.statements), comparersToTest, typeOrdersToTest);
+      if (detectFromFile !== undefined) {
+        isSorted = boolToTristate(detectFromFile.isSorted);
+        specifierComparer = getNamedImportSpecifierComparer(
+          { organizeImportsTypeOrder: detectFromFile.typeOrder },
+          detectFromFile.namedImportComparer,
+        );
+      }
+    }
+  }
+
+  return [specifierComparer, isSorted];
+}
+
+function specifierNameText(specifier: Node): string {
+  if (isImportSpecifier(specifier) || isExportSpecifier(specifier)) return specifier.name.text;
+  const name = (specifier as { readonly name?: Node }).name;
+  return name !== undefined && "text" in name && typeof name.text === "string" ? name.text : "";
+}
+
+function specifierIsTypeOnly(specifier: Node): boolean {
+  if (isImportSpecifier(specifier) || isExportSpecifier(specifier)) return specifier.isTypeOnly;
+  return (specifier as { readonly isTypeOnly?: boolean }).isTypeOnly === true;
+}
+
+function normalizeComparison(value: number): Comparison {
+  if (value < 0) return -1;
+  if (value > 0) return 1;
+  return 0;
+}
+
 // Language-service parity map: internal/ls/lsutil/organizeimports.go
 /**
  * Language-service parity map for TS-Go `ls/lsutil/organizeimports.go`.
