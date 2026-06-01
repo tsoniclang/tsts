@@ -27,7 +27,7 @@ import {
   type SourceFile,
   type Symbol,
 } from "../ast/index.js";
-import { tristateIsTrue, type CompilerOptions } from "../core/index.js";
+import { tristateIsTrue, type CompilerOptions, type Tristate } from "../core/index.js";
 import { LanguageVariant } from "../core/languageVariant.js";
 import { isIdentifierPartCodePoint, isIdentifierStartCodePoint } from "../scanner/index.js";
 import { compareStringsCaseInsensitiveThenSensitive, ComparisonEqual } from "../stringutil/index.js";
@@ -106,16 +106,16 @@ export interface CompletionDataData {
   readonly autoImports: readonly unknown[];
   readonly completionKind: CompletionKind;
   readonly isInSnippetScope: boolean;
-  readonly propertyAccessToConvert?: unknown;
+  readonly propertyAccessToConvert?: Node;
   readonly isNewIdentifierLocation: boolean;
-  readonly location?: unknown;
+  readonly location?: Node;
   readonly keywordFilters: KeywordCompletionFilters;
   readonly literals: readonly LiteralValue[];
   readonly symbolToOriginInfoMap: ReadonlyMap<number, SymbolOriginInfo>;
   readonly symbolToSortTextMap: ReadonlyMap<number, SortText>;
   readonly recommendedCompletion?: unknown;
-  readonly previousToken?: unknown;
-  readonly contextToken?: unknown;
+  readonly previousToken?: Node;
+  readonly contextToken?: Node;
   readonly jsxInitializer: JsxInitializer;
   readonly insideJSDocTagTypeExpression: boolean;
   readonly isTypeOnlyLocation: boolean;
@@ -677,6 +677,7 @@ export function getDefaultCommitCharacters(isNewIdentifierLocation: boolean): re
 
 export interface CompletionInfoHost {
   readonly userPreferences?: UserPreferences;
+  readonly compilerOptions?: CompilerOptions;
   readonly createCompletionItem?: (input: CompletionItemCreateInput) => CompletionItem | undefined;
 }
 
@@ -937,6 +938,12 @@ export function completionInfoFromData(
   const uniqueNames = new Set<string>();
   let sortedEntries = getCompletionEntriesFromSymbols(host, data, position, file);
   for (const entry of sortedEntries) uniqueNames.add(entry.label);
+  const contextToken = data.contextToken;
+
+  const isChecked = isCheckedFile(file, host.compilerOptions ?? {});
+  if (isChecked && !data.isNewIdentifierLocation && data.symbols.length === 0 && data.keywordFilters === KeywordCompletionFilters.None) {
+    return undefined;
+  }
 
   if (data.keywordFilters !== KeywordCompletionFilters.None) {
     for (const keywordEntry of getKeywordCompletions(data.keywordFilters, false)) {
@@ -950,10 +957,21 @@ export function completionInfoFromData(
     }
   }
 
+  for (const keywordEntry of getContextualKeywords(file, contextToken, position)) {
+    if (!uniqueNames.has(keywordEntry.label)) {
+      uniqueNames.add(keywordEntry.label);
+      sortedEntries = [...sortedEntries, keywordEntry];
+    }
+  }
+
   for (const literal of data.literals) {
     const literalEntry = createCompletionItemForLiteral(file, preferences, literal);
     uniqueNames.add(literalEntry.label);
     sortedEntries = [...sortedEntries, literalEntry];
+  }
+
+  if (isJavaScriptSourceFile(file)) {
+    sortedEntries = getJSCompletionEntries(file as JavaScriptNameTableSourceFile, position, uniqueNames, sortedEntries);
   }
 
   return {
@@ -1236,9 +1254,10 @@ export function getRelevantTokens(position: number, file: SourceFile): RelevantT
 
 export function isCheckedFile(
   file: SourceFile & { readonly isJavaScriptFile?: boolean },
-  compilerOptions: { readonly checkJs?: boolean | undefined },
+  compilerOptions: { readonly checkJs?: boolean | Tristate | undefined },
 ): boolean {
-  return !file.isDeclarationFile && (!file.isJavaScriptFile || compilerOptions.checkJs === true);
+  const checkJs = compilerOptions.checkJs;
+  return !file.isDeclarationFile && (!file.isJavaScriptFile || checkJs === true || typeof checkJs === "number" && tristateIsTrue(checkJs));
 }
 
 export function isContextTokenValueLocation(contextToken: Node): boolean {
@@ -1622,8 +1641,10 @@ function normalizeCompletionCheckerLease(lease: CompletionCheckerLease): { reado
 }
 
 function completionInfoHost(service: CompletionService, preferences: UserPreferences): CompletionInfoHost {
+  const compilerOptions = service.getProgram?.()?.options?.();
   return {
     userPreferences: preferences,
+    ...(compilerOptions === undefined ? {} : { compilerOptions }),
     ...(service.createCompletionItem === undefined ? {} : { createCompletionItem: service.createCompletionItem }),
   };
 }
