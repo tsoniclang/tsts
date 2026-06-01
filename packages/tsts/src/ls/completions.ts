@@ -728,6 +728,7 @@ export interface CompletionDataRequest {
   readonly insideJSDocImportTag: boolean;
   readonly isTypeOnlyLocation: boolean;
   readonly isNewIdentifierLocation: boolean;
+  readonly defaultCommitCharacters: readonly string[];
 }
 
 export function provideCompletion(
@@ -881,7 +882,9 @@ export function getCompletionData(
   const keywordFilters = keywordFiltersForCompletionContext(contextToken, location, insideJSDocTagTypeExpression, insideJSDocImportTag);
   const isTypeOnlyLocation = insideJSDocTagTypeExpression || insideJSDocImportTag
     || (location !== undefined && (isContextTokenTypeLocation(location) || isTypeLocationNode(location)));
-  const isNewIdentifierLocation = isNewIdentifierCompletionLocation(contextToken, previousToken, location);
+  const commitCharacterDecision = computeCommitCharactersAndIsNewIdentifier(contextToken, file, position);
+  const isNewIdentifierLocation = isNewIdentifierCompletionLocation(contextToken, previousToken, location)
+    || commitCharacterDecision.isNewIdentifierLocation;
 
   const serviceData = service.getCompletionDataAtPosition?.({
     checker,
@@ -898,6 +901,7 @@ export function getCompletionData(
     insideJSDocImportTag,
     isTypeOnlyLocation,
     isNewIdentifierLocation,
+    defaultCommitCharacters: commitCharacterDecision.defaultCommitCharacters,
   });
   if (serviceData !== undefined) return serviceData;
   if (keywordFilters !== KeywordCompletionFilters.None) {
@@ -1803,6 +1807,70 @@ function isNewIdentifierCompletionLocation(contextToken: Node | undefined, previ
   return contextToken.end < previousToken.pos || previousToken.kind === Kind.OpenBraceToken || previousToken.kind === Kind.CommaToken;
 }
 
+export interface CommitCharacterDecision {
+  readonly isNewIdentifierLocation: boolean;
+  readonly defaultCommitCharacters: readonly string[];
+}
+
+export function computeCommitCharactersAndIsNewIdentifier(
+  contextToken: Node | undefined,
+  file: SourceFile,
+  position: number,
+): CommitCharacterDecision {
+  if (contextToken === undefined) {
+    return { isNewIdentifierLocation: true, defaultCommitCharacters: emptyCommitCharacters };
+  }
+  const keyword = keywordForNode(contextToken);
+  if (keyword !== undefined) {
+    return {
+      isNewIdentifierLocation: keyword !== Kind.ThisKeyword && keyword !== Kind.SuperKeyword,
+      defaultCommitCharacters: keyword === Kind.ThisKeyword || keyword === Kind.SuperKeyword ? noCommaCommitCharacters : emptyCommitCharacters,
+    };
+  }
+  if (isSolelyIdentifierDefinitionLocation(contextToken, file, position)) {
+    return { isNewIdentifierLocation: true, defaultCommitCharacters: emptyCommitCharacters };
+  }
+  if (contextToken.kind === Kind.CommaToken || contextToken.kind === Kind.OpenParenToken) {
+    return { isNewIdentifierLocation: false, defaultCommitCharacters: noCommaCommitCharacters };
+  }
+  return { isNewIdentifierLocation: false, defaultCommitCharacters: allCommitCharacters };
+}
+
+export function keywordForNode(node: Node | undefined): Kind | undefined {
+  if (node === undefined) return undefined;
+  return isKeywordKind(node.kind) ? node.kind : undefined;
+}
+
+export function getScopeNode(contextToken: Node | undefined, adjustedPosition: number, file: SourceFile): Node {
+  let best: Node = file;
+  visitNodeTree(file, node => {
+    if (node.pos <= adjustedPosition && adjustedPosition <= node.end) best = node;
+  });
+  if (contextToken !== undefined && contextToken.pos <= adjustedPosition && adjustedPosition <= contextToken.end) return contextToken;
+  return best;
+}
+
+export function isSnippetScope(node: Node): boolean {
+  for (let current: Node | undefined = node; current !== undefined; current = current.parent) {
+    switch (current.kind) {
+      case Kind.FunctionDeclaration:
+      case Kind.FunctionExpression:
+      case Kind.ArrowFunction:
+      case Kind.MethodDeclaration:
+      case Kind.Constructor:
+      case Kind.GetAccessor:
+      case Kind.SetAccessor:
+      case Kind.ClassStaticBlockDeclaration:
+        return true;
+      case Kind.SourceFile:
+        return false;
+      default:
+        break;
+    }
+  }
+  return false;
+}
+
 function isTypeLocationNode(node: Node | undefined): boolean {
   if (node === undefined) return false;
   return isTypeQueryNode(node)
@@ -1814,6 +1882,38 @@ function isTypeLocationNode(node: Node | undefined): boolean {
 
 function isJavaScriptSourceFile(file: SourceFile): boolean {
   return Boolean((file as { readonly isJavaScriptFile?: boolean }).isJavaScriptFile);
+}
+
+export function isSolelyIdentifierDefinitionLocation(node: Node, _file: SourceFile, position: number): boolean {
+  if (node.kind !== Kind.Identifier && node.kind !== Kind.PrivateIdentifier) return false;
+  if (position < node.pos || position > node.end) return false;
+  const parent = node.parent;
+  if (parent === undefined || nodeName(parent) !== node) return false;
+  switch (parent.kind) {
+    case Kind.VariableDeclaration:
+    case Kind.Parameter:
+    case Kind.FunctionDeclaration:
+    case Kind.ClassDeclaration:
+    case Kind.InterfaceDeclaration:
+    case Kind.TypeAliasDeclaration:
+    case Kind.PropertyDeclaration:
+    case Kind.PropertySignature:
+    case Kind.MethodDeclaration:
+    case Kind.MethodSignature:
+    case Kind.EnumDeclaration:
+    case Kind.EnumMember:
+    case Kind.ModuleDeclaration:
+      return true;
+    default:
+      return false;
+  }
+}
+
+function visitNodeTree(root: Node, visitor: (node: Node) => void): void {
+  visitor(root);
+  root.forEachChild(child => {
+    visitNodeTree(child, visitor);
+  });
 }
 
 function computeLineStarts(text: string): readonly number[] {
@@ -1839,8 +1939,67 @@ function symbolName(symbol: CompletionSymbol): string {
 }
 
 function symbolCanBeReferencedAtTypeLocation(symbol: CompletionSymbol): boolean {
+  if ((symbol.flags ?? 0) & SymbolFlags.Alias) return true;
+  return nonAliasCanBeReferencedAtTypeLocation(symbol);
+}
+
+export function nonAliasCanBeReferencedAtTypeLocation(symbol: CompletionSymbol): boolean {
   const flags = symbol.flags ?? 0;
-  return (flags & (SymbolFlags.Type | SymbolFlags.Namespace | SymbolFlags.Alias)) !== 0;
+  return (flags & (SymbolFlags.Type | SymbolFlags.Namespace)) !== 0 || isAbstractConstructorSymbol(symbol);
+}
+
+export function isAbstractConstructorSymbol(symbol: CompletionSymbol): boolean {
+  const declaration = symbol.valueDeclaration ?? symbol.declarations[0];
+  if (declaration === undefined) return false;
+  const modifiers = nodeArray(declaration, "modifiers");
+  return modifiers.some(modifier => modifier.kind === Kind.AbstractKeyword) && declaration.kind === Kind.ClassDeclaration;
+}
+
+export function getPropertiesForCompletion(type: unknown, checker: CompletionChecker): readonly CompletionSymbol[] {
+  const typedChecker = checker as {
+    readonly getApparentProperties?: (type: unknown) => readonly CompletionSymbol[];
+    readonly getPropertiesOfType?: (type: unknown) => readonly CompletionSymbol[];
+  };
+  return typedChecker.getApparentProperties?.(type) ?? typedChecker.getPropertiesOfType?.(type) ?? [];
+}
+
+export function getLeftMostName(expression: Node | undefined): Node | undefined {
+  let current = expression;
+  while (current !== undefined) {
+    switch (current.kind) {
+      case Kind.PropertyAccessExpression:
+        current = nodeProperty<Node>(current, "expression");
+        break;
+      case Kind.QualifiedName:
+        current = nodeProperty<Node>(current, "left");
+        break;
+      case Kind.ElementAccessExpression:
+        current = nodeProperty<Node>(current, "expression");
+        break;
+      default:
+        return current;
+    }
+  }
+  return undefined;
+}
+
+export function getFirstSymbolInChain(symbol: CompletionSymbol | undefined, _contextToken: Node | undefined, _checker: CompletionChecker): CompletionSymbol | undefined {
+  let current = symbol;
+  let first = symbol;
+  while (current?.parent !== undefined) {
+    first = current.parent;
+    current = current.parent;
+  }
+  return first;
+}
+
+export function isModuleSymbol(symbol: CompletionSymbol | undefined): boolean {
+  return symbol !== undefined && ((symbol.flags ?? 0) & SymbolFlags.Module) !== 0;
+}
+
+export function isStaticProperty(symbol: CompletionSymbol): boolean {
+  const declaration = symbol.valueDeclaration ?? symbol.declarations[0];
+  return declaration !== undefined && nodeArray(declaration, "modifiers").some(modifier => modifier.kind === Kind.StaticKeyword);
 }
 
 function isIdentifierText(text: string, variant: LanguageVariant): boolean {
