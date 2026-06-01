@@ -24,8 +24,10 @@ import {
   type Symbol,
   type TextRange,
 } from "../ast/index.js";
-import type { DocumentUri, Location, Range } from "../lsp/lsproto/index.js";
+import type { DocumentUri, Location, LocationLink, Range } from "../lsp/lsproto/index.js";
+import { compareRanges } from "../lsp/lsproto/util.js";
 import { getStartOfNode } from "../astnav/index.js";
+import { fileNameToDocumentURI } from "./lsconv/index.js";
 import { isExpressionOfExternalModuleImportEqualsDeclaration, isLiteralNameOfPropertyDeclarationOrIndexAccess, isNameOfModuleDeclaration } from "./utilities.js";
 
 export enum ReferenceUse {
@@ -359,6 +361,208 @@ export function getSymbolScope(symbol: Symbol, checker?: ReferenceChecker): Node
   return scope;
 }
 
+export interface TextDocumentPositionCarrier {
+  textDocumentURI(): DocumentUri;
+  textDocumentPosition(): Location["range"]["start"];
+}
+
+export class ReferencePosition implements TextDocumentPositionCarrier {
+  readonly uri: DocumentUri;
+  readonly pos: Location["range"]["start"];
+
+  constructor(uri: DocumentUri, pos: Location["range"]["start"]) {
+    this.uri = uri;
+    this.pos = pos;
+  }
+
+  textDocumentURI(): DocumentUri {
+    return this.uri;
+  }
+
+  textDocumentPosition(): Location["range"]["start"] {
+    return this.pos;
+  }
+}
+
+export interface NonLocalDefinition extends ReferencePosition {
+  getSourcePosition(): TextDocumentPositionCarrier | undefined;
+  getGeneratedPosition(): TextDocumentPositionCarrier | undefined;
+}
+
+export function getFileAndStartPosFromDeclaration(declaration: Node): readonly [SourceFile, number] {
+  const file = getNodeSourceFile(declaration);
+  const name = nodeName(declaration) ?? declaration;
+  const textRange = getRangeOfNode(name, file, undefined);
+  return [file, textRange.pos];
+}
+
+export interface DefinitionVisibilityResolver {
+  isDeclarationVisible(declaration: Node): boolean;
+}
+
+export function isDefinitionVisible(emitResolver: DefinitionVisibilityResolver, declaration: Node): boolean {
+  if (emitResolver.isDeclarationVisible(declaration)) return true;
+  const parent = declaration.parent;
+  if (parent === undefined) return false;
+  if (nodeInitializer(parent) === declaration) return isDefinitionVisible(emitResolver, parent);
+  switch (declaration.kind) {
+    case Kind.PropertyDeclaration:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+    case Kind.MethodDeclaration:
+      if (hasPrivateModifier(declaration) || nodeName(declaration)?.kind === Kind.PrivateIdentifier) return false;
+      return isDefinitionVisible(emitResolver, parent);
+    case Kind.Constructor:
+    case Kind.PropertyAssignment:
+    case Kind.ShorthandPropertyAssignment:
+    case Kind.ObjectLiteralExpression:
+    case Kind.ClassExpression:
+    case Kind.ArrowFunction:
+    case Kind.FunctionExpression:
+      return isDefinitionVisible(emitResolver, parent);
+    default:
+      return false;
+  }
+}
+
+export interface SymbolEntryTransformOptions {
+  readonly requireLocationsResult: boolean;
+  readonly dropOriginNodes: boolean;
+}
+
+export interface SymbolAndEntriesData {
+  readonly originalNode?: Node;
+  readonly symbolsAndEntries: readonly SymbolAndEntries[];
+  readonly position: number;
+}
+
+export function symbolAndEntriesToReferences(
+  service: ReferenceLocationService,
+  data: SymbolAndEntriesData,
+  includeDeclarations: boolean,
+): readonly Location[] {
+  return data.symbolsAndEntries.flatMap(symbolAndEntries => convertSymbolAndEntriesToLocations(service, symbolAndEntries, includeDeclarations));
+}
+
+export function symbolAndEntriesToImplementations(
+  service: ReferenceLocationService,
+  data: SymbolAndEntriesData,
+  options: SymbolEntryTransformOptions,
+  asLocationLinks: boolean,
+): readonly Location[] | readonly LocationLink[] {
+  const seenNodes = new Set<Node>();
+  const entries: ReferenceEntry[] = [];
+  for (const symbolAndEntries of data.symbolsAndEntries) {
+    for (const reference of symbolAndEntries.references) {
+      if (reference.node === undefined) continue;
+      if (seenNodes.has(reference.node)) continue;
+      seenNodes.add(reference.node);
+      if (options.dropOriginNodes && reference.node.pos <= data.position && data.position <= reference.node.end) continue;
+      entries.push(reference);
+    }
+  }
+  return asLocationLinks ? convertEntriesToLocationLinks(service, entries) : convertEntriesToLocations(service, entries);
+}
+
+export function convertSymbolAndEntriesToLocations(
+  service: ReferenceLocationService,
+  symbolAndEntries: SymbolAndEntries,
+  includeDeclarations: boolean,
+): readonly Location[] {
+  let references = symbolAndEntries.references;
+  if (!includeDeclarations && symbolAndEntries.definition !== undefined) {
+    references = references.filter(entry => !isDeclarationOfSymbol(entry.node, symbolAndEntries.definition?.symbol));
+  }
+  return convertEntriesToLocations(service, references);
+}
+
+export function isDeclarationOfSymbol(node: Node | undefined, target: Symbol | undefined): boolean {
+  if (node === undefined || target === undefined) return false;
+  let source: Node | undefined;
+  const declaration = getDeclarationFromName(node);
+  if (declaration !== undefined) {
+    source = declaration;
+  } else if (node.kind === Kind.DefaultKeyword) {
+    source = node.parent;
+  } else if (isLiteralComputedPropertyDeclarationName(node)) {
+    source = node.parent.parent;
+  } else if (node.kind === Kind.ConstructorKeyword && node.parent.kind === Kind.Constructor) {
+    source = node.parent.parent;
+  }
+  return source !== undefined && target.declarations.some(declarationNode => declarationNode === source);
+}
+
+export function convertEntriesToLocations(service: ReferenceLocationService, entries: readonly ReferenceEntry[]): readonly Location[] {
+  return entries.map(entry => resolveEntry(service, entry).lspRange!);
+}
+
+export function convertEntriesToLocationLinks(service: ReferenceLocationService, entries: readonly ReferenceEntry[]): readonly LocationLink[] {
+  return entries.map(entry => {
+    const resolved = resolveEntry(service, entry);
+    const location = resolved.lspRange!;
+    let targetRange = location.range;
+    if (resolved.node !== undefined && resolved.context !== undefined && resolved.fileName !== undefined && resolved.textRange !== undefined) {
+      const sourceFile = getNodeSourceFile(resolved.node);
+      const contextTextRange = toContextRange(resolved.textRange, sourceFile, resolved.context);
+      if (contextTextRange !== undefined) targetRange = service.getMappedLocation(resolved.fileName, contextTextRange).range;
+    }
+    return {
+      targetUri: resolved.fileName === undefined ? location.uri : fileNameToDocumentURI(resolved.fileName),
+      targetRange,
+      targetSelectionRange: location.range,
+    };
+  });
+}
+
+export interface ReferenceMergeProgram {
+  sourceFiles(): readonly SourceFile[];
+  getSourceFile(fileName: string): SourceFile | undefined;
+}
+
+export function mergeReferences(
+  service: ReferenceLocationService,
+  program: ReferenceMergeProgram,
+  ...referencesToMerge: readonly (readonly SymbolAndEntries[])[]
+): readonly SymbolAndEntries[] {
+  const result: SymbolAndEntries[] = [];
+  const sourceFileIndexOfEntry = (entry: ReferenceEntry): number => {
+    const sourceFile = entry.kind === EntryKind.Range && entry.fileName !== undefined
+      ? program.getSourceFile(entry.fileName)
+      : entry.node === undefined ? undefined : getNodeSourceFile(entry.node);
+    return sourceFile === undefined ? -1 : program.sourceFiles().indexOf(sourceFile);
+  };
+  for (const references of referencesToMerge) {
+    if (references.length === 0) continue;
+    if (result.length === 0) {
+      result.push(...references);
+      continue;
+    }
+    for (const entry of references) {
+      if (entry.definition === undefined || entry.definition.kind !== DefinitionKind.Symbol) {
+        result.push(entry);
+        continue;
+      }
+      const symbol = entry.definition.symbol;
+      const refIndex = result.findIndex(ref => ref.definition?.kind === DefinitionKind.Symbol && ref.definition.symbol === symbol);
+      if (refIndex < 0) {
+        result.push(entry);
+        continue;
+      }
+      const reference = result[refIndex]!;
+      const sortedReferences = [...reference.references, ...entry.references].sort((left, right) => {
+        const leftFile = sourceFileIndexOfEntry(left);
+        const rightFile = sourceFileIndexOfEntry(right);
+        return leftFile - rightFile || compareRanges(resolveEntry(service, left).lspRange!.range, resolveEntry(service, right).lspRange!.range);
+      });
+      result[refIndex] = {
+        ...(reference.definition === undefined ? {} : { definition: reference.definition }),
+        references: sortedReferences,
+      };
+    }
+  }
+  return result;
+}
+
 function getNodeSourceFile(node: Node): SourceFile {
   const sourceFile = getSourceFileOfNode(node);
   if (sourceFile === undefined || !isSourceFile(sourceFile)) throw new Error("node is not contained in a source file");
@@ -367,6 +571,10 @@ function getNodeSourceFile(node: Node): SourceFile {
 
 function nodeName(node: Node | undefined): Node | undefined {
   return nodeProperty(node, "name");
+}
+
+function nodeInitializer(node: Node | undefined): Node | undefined {
+  return nodeProperty(node, "initializer");
 }
 
 function nodeProperty<T = Node>(node: Node | undefined, key: string): T | undefined {
@@ -434,6 +642,23 @@ function isPrivateIdentifierClassElementDeclaration(node: Node): boolean {
 
 function isObjectBindingElementWithoutPropertyNameLocal(node: Node): boolean {
   return node.kind === Kind.BindingElement && node.parent.kind === Kind.ObjectBindingPattern && nodeProperty(node, "propertyName") === undefined;
+}
+
+function getDeclarationFromName(node: Node): Node | undefined {
+  const parent = node.parent;
+  if (parent === undefined) return undefined;
+  return nodeName(parent) === node && isDeclaration(parent) ? parent : undefined;
+}
+
+function isLiteralComputedPropertyDeclarationName(node: Node): boolean {
+  return node.parent.kind === Kind.ComputedPropertyName && isDeclaration(node.parent.parent);
+}
+
+function toContextRange(textRange: TextRange, _sourceFile: SourceFile, context: Node | undefined): TextRange | undefined {
+  if (context === undefined) return undefined;
+  const contextStart = Math.min(context.pos, textRange.pos);
+  const contextEnd = Math.max(context.end, textRange.end);
+  return { pos: contextStart, end: contextEnd };
 }
 
 function getContainerNodeLocal(node: Node): Node | undefined {
