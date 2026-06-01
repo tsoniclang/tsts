@@ -29,7 +29,10 @@ import type { Type } from "../checker/types.js";
 import { isInfinityOrNaNString } from "../checker/utilities.js";
 import { tristateIsTrue } from "../core/index.js";
 import {
+  InlayHintKindParameter,
+  InlayHintKindType,
   type InlayHintLabelPart,
+  type InlayHint,
   type Location,
   type Range,
   type StringOrInlayHintLabelParts,
@@ -57,6 +60,12 @@ export interface ParameterInfo {
 
 export interface InlayHintLabelPartState {
   readonly file?: SourceFile;
+  readonly quotePreference?: QuotePreference;
+}
+
+export interface InlayHintAppendState {
+  readonly file: SourceFile;
+  readonly result: InlayHint[];
   readonly quotePreference?: QuotePreference;
 }
 
@@ -478,6 +487,95 @@ export function stringToInlayHintParts(text: string): StringOrInlayHintLabelPart
   return { string: text };
 }
 
+export function addTypeHints(state: InlayHintAppendState, hint: StringOrInlayHintLabelParts, position: number): void {
+  state.result.push({
+    label: prependInlayHintLabel(": ", hint),
+    position: positionFromSourceOffset(state.file, position),
+    kind: InlayHintKindType,
+    paddingLeft: true,
+  });
+}
+
+export function addEnumMemberValueHints(state: InlayHintAppendState, text: string, position: number): void {
+  state.result.push({
+    label: { string: `= ${text}` },
+    position: positionFromSourceOffset(state.file, position),
+    paddingLeft: true,
+  });
+}
+
+export function addParameterHints(
+  state: InlayHintAppendState,
+  text: string,
+  parameter: Identifier,
+  position: number,
+  isFirstVariadicArgument: boolean,
+): void {
+  const hintText = `${isFirstVariadicArgument ? "..." : ""}${text}`;
+  state.result.push({
+    label: {
+      inlayHintLabelParts: [
+        getNodeDisplayPart(hintText, parameter, state.file),
+        { value: ":" },
+      ],
+    },
+    position: positionFromSourceOffset(state.file, position),
+    kind: InlayHintKindParameter,
+    paddingRight: true,
+  });
+}
+
+export function getParameterIdentifierInfoAtPosition(
+  parameters: readonly Symbol[],
+  position: number,
+  hasRestParameter: boolean,
+  restTupleNames: readonly Identifier[] = [],
+): ParameterInfo | undefined {
+  const parameterCount = parameters.length - (hasRestParameter ? 1 : 0);
+  if (position < parameterCount) {
+    const parameter = getParameterDeclarationIdentifier(parameters[position]);
+    return parameter === undefined ? undefined : { parameter, name: parameter.text, isRestParameter: false };
+  }
+
+  const restParameter = hasRestParameter ? parameters[parameterCount] : undefined;
+  const restIdentifier = getParameterDeclarationIdentifier(restParameter);
+  if (restIdentifier === undefined) return undefined;
+
+  const tupleIndex = position - parameterCount;
+  const tupleName = restTupleNames[tupleIndex];
+  if (tupleName !== undefined) return { parameter: tupleName, name: tupleName.text, isRestParameter: false };
+
+  return position === parameterCount
+    ? { parameter: restIdentifier, name: restParameter?.name ?? restIdentifier.text, isRestParameter: true }
+    : undefined;
+}
+
+export function leadingCommentsContainsParameterName(file: SourceFile, node: Node, name: string): boolean {
+  if (!isIdentifierName(name)) return false;
+  const prefix = file.text.slice(node.pos, node.end);
+  const commentPattern = /^(?:\s*(?:\/\/([^\r\n]*)|\/\*([\s\S]*?)\*\/))+/;
+  const match = commentPattern.exec(prefix);
+  if (match === null) return false;
+  const comments = match[0].match(/\/\/[^\r\n]*|\/\*[\s\S]*?\*\//g) ?? [];
+  return comments.some(comment => trimCommentText(comment) === name);
+}
+
+export function getTypeAnnotationPosition(file: SourceFile, declaration: Node): number {
+  const text = file.text.slice(declaration.pos, declaration.end);
+  let depth = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    const ch = text[index]!;
+    if (ch === "(") depth += 1;
+    else if (ch === ")") {
+      depth -= 1;
+      if (depth === 0) return declaration.pos + index + 1;
+    }
+  }
+  const parameters = nodeArray(declaration, "parameters");
+  if (parameters.length > 0) return parameters[parameters.length - 1]!.end;
+  return declaration.pos;
+}
+
 export function getParameterDeclarationIdentifier(symbol: Symbol | undefined): Identifier | undefined {
   const declaration = symbol?.valueDeclaration;
   const name = declaration === undefined ? undefined : nodeName(declaration);
@@ -626,6 +724,33 @@ function escapeQuotedText(text: string, quote: string): string {
     result += ch;
   }
   return result;
+}
+
+function prependInlayHintLabel(prefix: string, hint: StringOrInlayHintLabelParts): StringOrInlayHintLabelParts {
+  if (hint.string !== undefined) return { string: `${prefix}${hint.string}` };
+  return {
+    inlayHintLabelParts: [
+      { value: prefix },
+      ...(hint.inlayHintLabelParts ?? []),
+    ],
+  };
+}
+
+function isIdentifierName(text: string): boolean {
+  if (text.length === 0) return false;
+  if (!/[A-Za-z_$]/.test(text[0]!)) return false;
+  for (let index = 1; index < text.length; index += 1) {
+    if (!/[A-Za-z0-9_$]/.test(text[index]!)) return false;
+  }
+  return true;
+}
+
+function trimCommentText(comment: string): string {
+  return comment
+    .replace(/^\/\//, "")
+    .replace(/^\/\*/, "")
+    .replace(/\*\/$/, "")
+    .trim();
 }
 
 // Language-service parity map: internal/ls/inlay_hints.go
