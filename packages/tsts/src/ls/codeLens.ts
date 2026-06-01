@@ -1,0 +1,210 @@
+/**
+ * Language-service parity map for TS-Go `ls/codelens.go`.
+ *
+ * This file preserves the upstream declaration and algorithm-line shape
+ * for the TypeScript port. Runtime behavior is implemented by the
+ * concrete modules that consume these exact parity maps.
+ */
+
+export interface UpstreamSourceLine {
+  readonly line: number;
+  readonly text: string;
+}
+
+export interface UpstreamDeclaration {
+  readonly kind: "type" | "func" | "const" | "var";
+  readonly line: number;
+  readonly name: string;
+  readonly receiver?: string;
+}
+
+export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensUpstreamPath = "ls/codelens.go";
+
+export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensDeclarations: readonly UpstreamDeclaration[] = [
+  {"line":15,"kind":"func","name":"ProvideCodeLenses","receiver":"l *LanguageService"},
+  {"line":57,"kind":"func","name":"ResolveCodeLens","receiver":"l *LanguageService"},
+  {"line":132,"kind":"func","name":"newCodeLensForNode","receiver":"l *LanguageService"},
+  {"line":152,"kind":"func","name":"isValidImplementationsCodeLensNode"},
+  {"line":179,"kind":"func","name":"isValidReferenceLensNode"},
+];
+
+export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensSourceLines: readonly UpstreamSourceLine[] = [
+  {"line":1,"text":"package ls"},
+  {"line":3,"text":"import ("},
+  {"line":4,"text":"\t\"context\""},
+  {"line":6,"text":"\t\"github.com/microsoft/typescript-go/internal/ast\""},
+  {"line":7,"text":"\t\"github.com/microsoft/typescript-go/internal/core\""},
+  {"line":8,"text":"\t\"github.com/microsoft/typescript-go/internal/diagnostics\""},
+  {"line":9,"text":"\t\"github.com/microsoft/typescript-go/internal/locale\""},
+  {"line":10,"text":"\t\"github.com/microsoft/typescript-go/internal/ls/lsutil\""},
+  {"line":11,"text":"\t\"github.com/microsoft/typescript-go/internal/lsp/lsproto\""},
+  {"line":12,"text":"\t\"github.com/microsoft/typescript-go/internal/scanner\""},
+  {"line":13,"text":")"},
+  {"line":15,"text":"func (l *LanguageService) ProvideCodeLenses(ctx context.Context, documentURI lsproto.DocumentUri) (lsproto.CodeLensResponse, error) {"},
+  {"line":16,"text":"\t_, file := l.getProgramAndFile(documentURI)"},
+  {"line":18,"text":"\tuserPrefs := l.UserPreferences().CodeLens"},
+  {"line":19,"text":"\tif !userPrefs.ReferencesCodeLensEnabled.IsTrue() && !userPrefs.ImplementationsCodeLensEnabled.IsTrue() {"},
+  {"line":20,"text":"\t\treturn lsproto.CodeLensResponse{}, nil"},
+  {"line":21,"text":"\t}"},
+  {"line":24,"text":"\tvar lastSymbol *ast.Symbol"},
+  {"line":25,"text":"\tvar result []*lsproto.CodeLens"},
+  {"line":26,"text":"\tvar visit func(node *ast.Node) bool"},
+  {"line":27,"text":"\tvisit = func(node *ast.Node) bool {"},
+  {"line":28,"text":"\t\tif ctx.Err() != nil {"},
+  {"line":29,"text":"\t\t\treturn true"},
+  {"line":30,"text":"\t\t}"},
+  {"line":32,"text":"\t\tif currentSymbol := node.Symbol(); lastSymbol != currentSymbol {"},
+  {"line":33,"text":"\t\t\tlastSymbol = currentSymbol"},
+  {"line":35,"text":"\t\t\tif userPrefs.ReferencesCodeLensEnabled.IsTrue() && isValidReferenceLensNode(node, userPrefs) {"},
+  {"line":36,"text":"\t\t\t\tresult = append(result, l.newCodeLensForNode(documentURI, file, node, lsproto.CodeLensKindReferences))"},
+  {"line":37,"text":"\t\t\t}"},
+  {"line":39,"text":"\t\t\tif userPrefs.ImplementationsCodeLensEnabled.IsTrue() && isValidImplementationsCodeLensNode(node, userPrefs) {"},
+  {"line":40,"text":"\t\t\t\tresult = append(result, l.newCodeLensForNode(documentURI, file, node, lsproto.CodeLensKindImplementations))"},
+  {"line":41,"text":"\t\t\t}"},
+  {"line":42,"text":"\t\t}"},
+  {"line":44,"text":"\t\tsavedLastSymbol := lastSymbol"},
+  {"line":45,"text":"\t\tnode.ForEachChild(visit)"},
+  {"line":46,"text":"\t\tlastSymbol = savedLastSymbol"},
+  {"line":47,"text":"\t\treturn false"},
+  {"line":48,"text":"\t}"},
+  {"line":50,"text":"\tvisit(file.AsNode())"},
+  {"line":52,"text":"\treturn lsproto.CodeLensResponse{"},
+  {"line":53,"text":"\t\tCodeLenses: &result,"},
+  {"line":54,"text":"\t}, nil"},
+  {"line":55,"text":"}"},
+  {"line":57,"text":"func (l *LanguageService) ResolveCodeLens(ctx context.Context, codeLens *lsproto.CodeLens, showLocationsCommandName *string, orchestrator CrossProjectOrchestrator) (*lsproto.CodeLens, error) {"},
+  {"line":58,"text":"\turi := codeLens.Data.Uri"},
+  {"line":59,"text":"\ttextDoc := lsproto.TextDocumentIdentifier{Uri: uri}"},
+  {"line":60,"text":"\tlocale := locale.FromContext(ctx)"},
+  {"line":61,"text":"\tvar locs []lsproto.Location"},
+  {"line":62,"text":"\tvar lensTitle string"},
+  {"line":63,"text":"\tswitch codeLens.Data.Kind {"},
+  {"line":64,"text":"\tcase lsproto.CodeLensKindReferences:"},
+  {"line":65,"text":"\t\treferencesResp, err := l.ProvideReferences(ctx, &lsproto.ReferenceParams{"},
+  {"line":66,"text":"\t\t\tTextDocument: textDoc,"},
+  {"line":67,"text":"\t\t\tPosition:     codeLens.Range.Start,"},
+  {"line":68,"text":"\t\t\tContext: &lsproto.ReferenceContext{"},
+  {"line":70,"text":"\t\t\t\tIncludeDeclaration: false,"},
+  {"line":71,"text":"\t\t\t},"},
+  {"line":72,"text":"\t\t}, orchestrator)"},
+  {"line":73,"text":"\t\tif err != nil {"},
+  {"line":74,"text":"\t\t\treturn nil, err"},
+  {"line":75,"text":"\t\t}"},
+  {"line":76,"text":"\t\tif referencesResp.Locations != nil {"},
+  {"line":77,"text":"\t\t\tlocs = *referencesResp.Locations"},
+  {"line":78,"text":"\t\t}"},
+  {"line":80,"text":"\t\tif len(locs) == 1 {"},
+  {"line":81,"text":"\t\t\tlensTitle = diagnostics.X_1_reference.Localize(locale)"},
+  {"line":82,"text":"\t\t} else {"},
+  {"line":83,"text":"\t\t\tlensTitle = diagnostics.X_0_references.Localize(locale, len(locs))"},
+  {"line":84,"text":"\t\t}"},
+  {"line":85,"text":"\tcase lsproto.CodeLensKindImplementations:"},
+  {"line":87,"text":"\t\timplementations, err := l.provideImplementationsEx("},
+  {"line":88,"text":"\t\t\tctx,"},
+  {"line":89,"text":"\t\t\t&lsproto.ImplementationParams{"},
+  {"line":90,"text":"\t\t\t\tTextDocument: textDoc,"},
+  {"line":91,"text":"\t\t\t\tPosition:     codeLens.Range.Start,"},
+  {"line":92,"text":"\t\t\t},"},
+  {"line":95,"text":"\t\t\tsymbolEntryTransformOptions{"},
+  {"line":96,"text":"\t\t\t\trequireLocationsResult: true,"},
+  {"line":97,"text":"\t\t\t\tdropOriginNodes:        true,"},
+  {"line":98,"text":"\t\t\t},"},
+  {"line":99,"text":"\t\t\torchestrator,"},
+  {"line":100,"text":"\t\t)"},
+  {"line":101,"text":"\t\tif err != nil {"},
+  {"line":102,"text":"\t\t\treturn nil, err"},
+  {"line":103,"text":"\t\t}"},
+  {"line":105,"text":"\t\tif implementations.Locations != nil {"},
+  {"line":106,"text":"\t\t\tlocs = *implementations.Locations"},
+  {"line":107,"text":"\t\t}"},
+  {"line":109,"text":"\t\tif len(locs) == 1 {"},
+  {"line":110,"text":"\t\t\tlensTitle = diagnostics.X_1_implementation.Localize(locale)"},
+  {"line":111,"text":"\t\t} else {"},
+  {"line":112,"text":"\t\t\tlensTitle = diagnostics.X_0_implementations.Localize(locale, len(locs))"},
+  {"line":113,"text":"\t\t}"},
+  {"line":114,"text":"\t}"},
+  {"line":116,"text":"\tcmd := &lsproto.Command{"},
+  {"line":117,"text":"\t\tTitle: lensTitle,"},
+  {"line":118,"text":"\t}"},
+  {"line":119,"text":"\tif len(locs) > 0 && showLocationsCommandName != nil {"},
+  {"line":120,"text":"\t\tcmd.Command = *showLocationsCommandName"},
+  {"line":121,"text":"\t\tcmd.Arguments = &[]any{"},
+  {"line":122,"text":"\t\t\turi,"},
+  {"line":123,"text":"\t\t\tcodeLens.Range.Start,"},
+  {"line":124,"text":"\t\t\tlocs,"},
+  {"line":125,"text":"\t\t}"},
+  {"line":126,"text":"\t}"},
+  {"line":128,"text":"\tcodeLens.Command = cmd"},
+  {"line":129,"text":"\treturn codeLens, nil"},
+  {"line":130,"text":"}"},
+  {"line":132,"text":"func (l *LanguageService) newCodeLensForNode(fileUri lsproto.DocumentUri, file *ast.SourceFile, node *ast.Node, kind lsproto.CodeLensKind) *lsproto.CodeLens {"},
+  {"line":133,"text":"\tnodeForRange := node"},
+  {"line":134,"text":"\tnodeName := node.Name()"},
+  {"line":135,"text":"\tif nodeName != nil {"},
+  {"line":136,"text":"\t\tnodeForRange = nodeName"},
+  {"line":137,"text":"\t}"},
+  {"line":138,"text":"\tpos := scanner.SkipTrivia(file.Text(), nodeForRange.Pos())"},
+  {"line":140,"text":"\treturn &lsproto.CodeLens{"},
+  {"line":141,"text":"\t\tRange: lsproto.Range{"},
+  {"line":142,"text":"\t\t\tStart: l.converters.PositionToLineAndCharacter(file, core.TextPos(pos)),"},
+  {"line":143,"text":"\t\t\tEnd:   l.converters.PositionToLineAndCharacter(file, core.TextPos(node.End())),"},
+  {"line":144,"text":"\t\t},"},
+  {"line":145,"text":"\t\tData: &lsproto.CodeLensData{"},
+  {"line":146,"text":"\t\t\tKind: kind,"},
+  {"line":147,"text":"\t\t\tUri:  fileUri,"},
+  {"line":148,"text":"\t\t},"},
+  {"line":149,"text":"\t}"},
+  {"line":150,"text":"}"},
+  {"line":152,"text":"func isValidImplementationsCodeLensNode(node *ast.Node, userPrefs lsutil.CodeLensUserPreferences) bool {"},
+  {"line":153,"text":"\tswitch node.Kind {"},
+  {"line":155,"text":"\tcase ast.KindInterfaceDeclaration:"},
+  {"line":157,"text":"\t\treturn true"},
+  {"line":160,"text":"\tcase ast.KindMethodSignature:"},
+  {"line":161,"text":"\t\treturn userPrefs.ImplementationsCodeLensShowOnInterfaceMethods.IsTrue() && node.Parent.Kind == ast.KindInterfaceDeclaration"},
+  {"line":164,"text":"\tcase ast.KindMethodDeclaration:"},
+  {"line":165,"text":"\t\tif userPrefs.ImplementationsCodeLensShowOnAllClassMethods.IsTrue() && node.Parent.Kind == ast.KindClassDeclaration {"},
+  {"line":166,"text":"\t\t\treturn !ast.HasModifier(node, ast.ModifierFlagsPrivate) && node.Name().Kind != ast.KindPrivateIdentifier"},
+  {"line":167,"text":"\t\t}"},
+  {"line":168,"text":"\t\tfallthrough"},
+  {"line":171,"text":"\tcase ast.KindClassDeclaration, ast.KindConstructor,"},
+  {"line":172,"text":"\t\tast.KindGetAccessor, ast.KindSetAccessor, ast.KindPropertyDeclaration:"},
+  {"line":173,"text":"\t\treturn ast.HasModifier(node, ast.ModifierFlagsAbstract)"},
+  {"line":174,"text":"\t}"},
+  {"line":176,"text":"\treturn false"},
+  {"line":177,"text":"}"},
+  {"line":179,"text":"func isValidReferenceLensNode(node *ast.Node, userPrefs lsutil.CodeLensUserPreferences) bool {"},
+  {"line":180,"text":"\tswitch node.Kind {"},
+  {"line":181,"text":"\tcase ast.KindFunctionDeclaration:"},
+  {"line":182,"text":"\t\tif userPrefs.ReferencesCodeLensShowOnAllFunctions.IsTrue() {"},
+  {"line":183,"text":"\t\t\treturn true"},
+  {"line":184,"text":"\t\t}"},
+  {"line":185,"text":"\t\tfallthrough"},
+  {"line":187,"text":"\tcase ast.KindVariableDeclaration:"},
+  {"line":188,"text":"\t\treturn ast.GetCombinedModifierFlags(node)&ast.ModifierFlagsExport != 0"},
+  {"line":190,"text":"\tcase ast.KindClassDeclaration, ast.KindInterfaceDeclaration, ast.KindTypeAliasDeclaration, ast.KindEnumDeclaration, ast.KindEnumMember:"},
+  {"line":191,"text":"\t\treturn true"},
+  {"line":193,"text":"\tcase ast.KindMethodDeclaration, ast.KindMethodSignature, ast.KindConstructor,"},
+  {"line":194,"text":"\t\tast.KindGetAccessor, ast.KindSetAccessor,"},
+  {"line":195,"text":"\t\tast.KindPropertyDeclaration, ast.KindPropertySignature:"},
+  {"line":200,"text":"\t\tswitch node.Parent.Kind {"},
+  {"line":201,"text":"\t\tcase ast.KindClassDeclaration, ast.KindInterfaceDeclaration, ast.KindTypeLiteral:"},
+  {"line":202,"text":"\t\t\treturn true"},
+  {"line":203,"text":"\t\t}"},
+  {"line":204,"text":"\t}"},
+  {"line":206,"text":"\treturn false"},
+  {"line":207,"text":"}"},
+];
+
+export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensDeclaration(name: string): UpstreamDeclaration | undefined {
+  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensDeclarations.find((declaration) => declaration.name === name);
+}
+
+export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensDeclaration(name);
+  if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
+  return declaration;
+}
+
+export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensLineText(line: number): string | undefined {
+  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensSourceLines.find((entry) => entry.line === line)?.text;
+}
