@@ -1,6 +1,59 @@
-import { Kind, type Node, type SourceFile } from "../ast/index.js";
-import { getStartOfNode } from "../astnav/index.js";
+import {
+  getCombinedModifierFlags,
+  isArrayLiteralExpression,
+  isArrowFunction,
+  isBreakOrContinueStatement,
+  isClassDeclaration,
+  isClassExpression,
+  isClassLikeDeclaration,
+  isComputedPropertyName,
+  isElementAccessExpression,
+  isEnumDeclaration,
+  isEnumMember,
+  isExternalModuleImportEqualsDeclaration,
+  isFunctionDeclaration,
+  isFunctionExpression,
+  isFunctionLikeDeclaration,
+  isGetAccessorDeclaration,
+  isIdentifier,
+  isImportCall,
+  isImportClause,
+  isImportDeclaration,
+  isImportEqualsDeclaration,
+  isImportTypeNode,
+  isInterfaceDeclaration,
+  isLiteralExpression,
+  isLiteralTypeNode,
+  isMethodDeclaration,
+  isMethodSignatureDeclaration,
+  isModuleDeclaration,
+  isObjectBindingPattern,
+  isObjectLiteralExpression,
+  isParameterDeclaration,
+  isParenthesizedExpression,
+  isPropertyAccessExpression,
+  isPropertyAssignment,
+  isPropertyDeclaration,
+  isPropertySignatureDeclaration,
+  isRequireCall,
+  isSetAccessorDeclaration,
+  isSourceFile,
+  isStringLiteralLike,
+  isTypeAliasDeclaration,
+  isTypeParameterDeclaration,
+  isVariableDeclaration,
+  Kind,
+  NodeFlags,
+  nodeText,
+  SymbolFlags,
+  type FileReference,
+  type Node,
+  type SourceFile,
+  type Symbol,
+} from "../ast/index.js";
+import { findPrecedingTokenEx, getStartOfNode } from "../astnav/index.js";
 import type { TextRange } from "../core/index.js";
+import { ModifierFlags } from "../enums/index.js";
 import { TokenFlags } from "../scanner/tokenFlags.js";
 import { stripQuotes } from "../stringutil/index.js";
 import { getQuotePreference, QuotePreferenceSingle, type UserPreferences } from "./lsutil/index.js";
@@ -53,6 +106,235 @@ export function isSeparator(node: Node, candidate: Node | undefined): boolean {
     && (candidate.kind === Kind.CommaToken || (candidate.kind === Kind.SemicolonToken && node.parent.kind === Kind.ObjectLiteralExpression));
 }
 
+export function isInString(sourceFile: SourceFile, position: number, previousToken: Node | undefined): boolean {
+  if (previousToken !== undefined && isStringTextContainingNode(previousToken)) {
+    const start = getStartOfNode(previousToken, sourceFile, false);
+    const end = previousToken.end;
+    if (start < position && position < end) return true;
+    if (position === end) return isUnterminatedLiteral(previousToken);
+  }
+  return false;
+}
+
+export function isModuleSpecifierLike(node: Node): boolean {
+  if (!isStringLiteralLike(node)) return false;
+  const parent = node.parent;
+  if (isRequireCall(parent, false) || isImportCall(parent)) return nodeArray(parent, "arguments")[0] === node;
+  return parent.kind === Kind.ExternalModuleReference
+    || parent.kind === Kind.ImportDeclaration
+    || parent.kind === Kind.JSImportDeclaration;
+}
+
+export function getNonModuleSymbolOfMergedModuleSymbol(symbol: Symbol): Symbol | undefined {
+  if (symbol.declarations.length === 0 || (((symbol.flags ?? 0) & (SymbolFlags.Module | SymbolFlags.Transient)) === 0)) return undefined;
+  for (const declaration of symbol.declarations) {
+    if (!isSourceFile(declaration) && !isModuleDeclaration(declaration)) return declaration.symbol;
+  }
+  return undefined;
+}
+
+export interface ExportSpecifierLike extends Node {
+  readonly propertyName?: Node;
+  readonly name?: Node;
+}
+
+export interface ExportSpecifierChecker {
+  getExportSpecifierLocalTargetSymbol?(specifier: Node): Symbol | undefined;
+}
+
+export function getLocalSymbolForExportSpecifier(
+  referenceLocation: Node,
+  referenceSymbol: Symbol,
+  exportSpecifier: ExportSpecifierLike,
+  checker: ExportSpecifierChecker,
+): Symbol {
+  if (isExportSpecifierAlias(referenceLocation, exportSpecifier)) {
+    const symbol = checker.getExportSpecifierLocalTargetSymbol?.(exportSpecifier);
+    if (symbol !== undefined) return symbol;
+  }
+  return referenceSymbol;
+}
+
+export function isExportSpecifierAlias(referenceLocation: Node, exportSpecifier: ExportSpecifierLike): boolean {
+  const propertyName = exportSpecifier.propertyName;
+  if (propertyName !== undefined) return propertyName === referenceLocation;
+  const parent = exportSpecifier.parent?.parent;
+  return nodeProperty(parent, "moduleSpecifier") === undefined;
+}
+
+export function positionBelongsToNode(candidate: Node, position: number): boolean {
+  return candidate.pos <= position && position <= candidate.end;
+}
+
+export function isNameOfModuleDeclaration(node: Node): boolean {
+  return node.parent.kind === Kind.ModuleDeclaration && nodeName(node.parent) === node;
+}
+
+export function isExpressionOfExternalModuleImportEqualsDeclaration(node: Node): boolean {
+  const declaration = node.parent?.parent;
+  return declaration !== undefined
+    && isExternalModuleImportEqualsDeclaration(declaration)
+    && nodeProperty(declaration, "moduleReference") === node.parent;
+}
+
+export function isNamespaceReference(node: Node): boolean {
+  return isQualifiedNameNamespaceReference(node) || isPropertyAccessNamespaceReference(node);
+}
+
+export function isQualifiedNameNamespaceReference(node: Node): boolean {
+  let root = node;
+  let isLastClause = true;
+  if (root.parent.kind === Kind.QualifiedName) {
+    while (root.parent !== undefined && root.parent.kind === Kind.QualifiedName) root = root.parent;
+    isLastClause = nodeProperty(root, "right") === node;
+  }
+  return root.parent.kind === Kind.TypeReference && !isLastClause;
+}
+
+export function isPropertyAccessNamespaceReference(node: Node): boolean {
+  let root = node;
+  let isLastClause = true;
+  if (root.parent.kind === Kind.PropertyAccessExpression) {
+    while (root.parent !== undefined && root.parent.kind === Kind.PropertyAccessExpression) root = root.parent;
+    isLastClause = nodeName(root) === node;
+  }
+  if (!isLastClause && root.parent.kind === Kind.ExpressionWithTypeArguments && root.parent.parent.kind === Kind.HeritageClause) {
+    const declaration = root.parent.parent.parent;
+    return declaration.kind === Kind.ClassDeclaration && nodeProperty<Kind>(root.parent.parent, "token") === Kind.ImplementsKeyword
+      || declaration.kind === Kind.InterfaceDeclaration && nodeProperty<Kind>(root.parent.parent, "token") === Kind.ExtendsKeyword;
+  }
+  return false;
+}
+
+export function isThis(node: Node): boolean {
+  return node.kind === Kind.ThisKeyword || isIdentifier(node) && node.text === "this" && node.parent.kind === Kind.Parameter;
+}
+
+export function isTypeReference(node: Node): boolean {
+  let current = node;
+  if (isRightSideOfQualifiedNameOrPropertyAccess(current)) current = current.parent;
+  if (current.kind === Kind.ThisKeyword) return !isExpressionNode(current);
+  if (current.kind === Kind.ThisType) return true;
+  switch (current.parent.kind) {
+    case Kind.TypeReference:
+      return true;
+    case Kind.ImportType:
+      return isImportTypeNode(current.parent) && !current.parent.isTypeOf;
+    case Kind.ExpressionWithTypeArguments:
+      return isPartOfTypeNode(current.parent);
+    default:
+      return false;
+  }
+}
+
+export function isInRightSideOfInternalImportEqualsDeclaration(node: Node): boolean {
+  let current = node;
+  while (current.parent !== undefined && current.parent.kind === Kind.QualifiedName) current = current.parent;
+  return current.parent.kind === Kind.ImportEqualsDeclaration && nodeProperty(current.parent, "moduleReference") === current;
+}
+
+export function isLiteralNameOfPropertyDeclarationOrIndexAccess(node: Node): boolean {
+  const parent = node.parent;
+  switch (parent.kind) {
+    case Kind.PropertyDeclaration:
+    case Kind.PropertySignature:
+    case Kind.PropertyAssignment:
+    case Kind.EnumMember:
+    case Kind.MethodDeclaration:
+    case Kind.MethodSignature:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+    case Kind.ModuleDeclaration:
+      return nodeName(parent) === node;
+    case Kind.ElementAccessExpression:
+      return nodeProperty(parent, "argumentExpression") === node;
+    case Kind.ComputedPropertyName:
+      return true;
+    case Kind.LiteralType:
+      return parent.parent.kind === Kind.IndexedAccessType;
+    default:
+      return false;
+  }
+}
+
+export function isObjectBindingElementWithoutPropertyName(bindingElement: Node): boolean {
+  return bindingElement.kind === Kind.BindingElement
+    && bindingElement.parent.kind === Kind.ObjectBindingPattern
+    && nodeName(bindingElement)?.kind === Kind.Identifier
+    && nodeProperty(bindingElement, "propertyName") === undefined;
+}
+
+export function isRightSideOfPropertyAccess(node: Node): boolean {
+  return node.parent.kind === Kind.PropertyAccessExpression && nodeName(node.parent) === node;
+}
+
+export function isStaticSymbol(symbol: Symbol): boolean {
+  return symbol.valueDeclaration !== undefined
+    && (getCombinedModifierFlags(symbol.valueDeclaration) & ModifierFlags.Static) !== 0;
+}
+
+export function isImplementation(node: Node): boolean {
+  if ((node.flags & NodeFlags.Ambient) !== 0) return !(node.kind === Kind.InterfaceDeclaration || node.kind === Kind.TypeAliasDeclaration);
+  if (isVariableLike(node)) return nodeInitializer(node) !== undefined;
+  if (isFunctionLikeDeclaration(node)) return nodeProperty(node, "body") !== undefined;
+  return isClassLikeDeclaration(node) || isModuleOrEnumDeclaration(node);
+}
+
+export function isImplementationExpression(node: Node): boolean {
+  if (isParenthesizedExpression(node)) return isImplementationExpression(node.expression);
+  return isArrowFunction(node)
+    || isFunctionExpression(node)
+    || isObjectLiteralExpression(node)
+    || isClassExpression(node)
+    || isArrayLiteralExpression(node);
+}
+
+export function isReadonlyTypeOperator(node: Node): boolean {
+  return node.kind === Kind.ReadonlyKeyword
+    && node.parent.kind === Kind.TypeOperator
+    && nodeProperty<Kind>(node.parent, "operator") === Kind.ReadonlyKeyword;
+}
+
+export function isJumpStatementTarget(node: Node): boolean {
+  return isIdentifier(node) && isBreakOrContinueStatement(node.parent) && nodeProperty(node.parent, "label") === node;
+}
+
+export function isLabelOfLabeledStatement(node: Node): boolean {
+  return isIdentifier(node) && node.parent.kind === Kind.LabeledStatement && nodeProperty(node.parent, "label") === node;
+}
+
+export function findReferenceInPosition(refs: readonly FileReference[], pos: number): FileReference | undefined {
+  return refs.find(ref => ref.pos <= pos && pos <= ref.end);
+}
+
+export function getContainingNodeIfInHeritageClause(node: Node): Node | undefined {
+  if (node.kind === Kind.Identifier || node.kind === Kind.PropertyAccessExpression) return getContainingNodeIfInHeritageClause(node.parent);
+  if (node.kind === Kind.ExpressionWithTypeArguments && (isClassLikeDeclaration(node.parent.parent) || node.parent.parent.kind === Kind.InterfaceDeclaration)) {
+    return node.parent.parent;
+  }
+  return undefined;
+}
+
+export function getContainerNode(node: Node): Node | undefined {
+  for (let parent = node.parent; parent !== undefined; parent = parent.parent) {
+    switch (parent.kind) {
+      case Kind.SourceFile:
+      case Kind.MethodDeclaration:
+      case Kind.MethodSignature:
+      case Kind.FunctionDeclaration:
+      case Kind.FunctionExpression:
+      case Kind.GetAccessor:
+      case Kind.SetAccessor:
+      case Kind.ClassDeclaration:
+      case Kind.InterfaceDeclaration:
+      case Kind.EnumDeclaration:
+      case Kind.ModuleDeclaration:
+        return parent;
+    }
+  }
+  return undefined;
+}
+
 export function rangeContainsRange(left: TextRange, right: TextRange): boolean {
   return startEndContainsRange(left.pos, left.end, right);
 }
@@ -103,6 +385,93 @@ function isTemplateLiteralKind(kind: Kind): boolean {
 
 function isUnterminatedLiteral(node: Node): boolean {
   return (((node as { readonly tokenFlags?: number }).tokenFlags ?? 0) & TokenFlags.Unterminated) !== 0;
+}
+
+function isStringTextContainingNode(node: Node): boolean {
+  return node.kind === Kind.StringLiteral
+    || node.kind === Kind.NoSubstitutionTemplateLiteral
+    || node.kind === Kind.TemplateHead
+    || node.kind === Kind.TemplateMiddle
+    || node.kind === Kind.TemplateTail;
+}
+
+function nodeArray(node: Node | undefined, key: string): readonly Node[] {
+  const value = (node as Record<string, unknown> | undefined)?.[key];
+  return Array.isArray(value) ? value as readonly Node[] : [];
+}
+
+function nodeProperty<T = Node>(node: Node | undefined, key: string): T | undefined {
+  return (node as Record<string, T | undefined> | undefined)?.[key];
+}
+
+function nodeName(node: Node | undefined): Node | undefined {
+  return nodeProperty(node, "name");
+}
+
+function nodeInitializer(node: Node | undefined): Node | undefined {
+  return nodeProperty(node, "initializer");
+}
+
+function isRightSideOfQualifiedNameOrPropertyAccess(node: Node): boolean {
+  return node.parent.kind === Kind.QualifiedName && nodeProperty(node.parent, "right") === node
+    || node.parent.kind === Kind.PropertyAccessExpression && nodeName(node.parent) === node;
+}
+
+function isExpressionNode(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.Identifier:
+    case Kind.ThisKeyword:
+    case Kind.SuperKeyword:
+    case Kind.PropertyAccessExpression:
+    case Kind.ElementAccessExpression:
+    case Kind.CallExpression:
+    case Kind.NewExpression:
+    case Kind.ParenthesizedExpression:
+    case Kind.FunctionExpression:
+    case Kind.ArrowFunction:
+    case Kind.ClassExpression:
+    case Kind.ObjectLiteralExpression:
+    case Kind.ArrayLiteralExpression:
+      return true;
+    default:
+      return isLiteralExpression(node);
+  }
+}
+
+function isPartOfTypeNode(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.TypeReference:
+    case Kind.TypePredicate:
+    case Kind.TypeQuery:
+    case Kind.TypeLiteral:
+    case Kind.ArrayType:
+    case Kind.TupleType:
+    case Kind.OptionalType:
+    case Kind.RestType:
+    case Kind.UnionType:
+    case Kind.IntersectionType:
+    case Kind.ConditionalType:
+    case Kind.InferType:
+    case Kind.ParenthesizedType:
+    case Kind.TypeOperator:
+    case Kind.IndexedAccessType:
+    case Kind.MappedType:
+    case Kind.LiteralType:
+    case Kind.FunctionType:
+    case Kind.ConstructorType:
+    case Kind.ImportType:
+      return true;
+    default:
+      return false;
+  }
+}
+
+function isVariableLike(node: Node): boolean {
+  return isVariableDeclaration(node) || isParameterDeclaration(node) || isPropertyDeclaration(node) || node.kind === Kind.BindingElement;
+}
+
+function isModuleOrEnumDeclaration(node: Node): boolean {
+  return isModuleDeclaration(node) || isEnumDeclaration(node);
 }
 
 // Language-service parity map: internal/ls/utilities.go
