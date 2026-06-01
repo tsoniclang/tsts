@@ -1,3 +1,29 @@
+import {
+  isVariableDeclarationList,
+  Kind,
+  type Node,
+} from "../ast/index.js";
+import { firstOrNil, type TextRange } from "../core/index.js";
+
+export function getDeclarationNameForKeyword(node: Node): Node {
+  if (node.kind >= Kind.FirstKeyword && node.kind <= Kind.LastKeyword) {
+    const parent = node.parent;
+    if (parent !== undefined && isVariableDeclarationList(parent)) {
+      const declaration = firstOrNil(parent.declarations);
+      if (declaration !== undefined) return declaration.name;
+    } else if (parent !== undefined) {
+      const name = (parent as { readonly name?: Node }).name;
+      if (name !== undefined && node.pos < name.pos) return name;
+    }
+  }
+  return node;
+}
+
+export interface FileRange {
+  readonly fileName: string;
+  readonly fileRange: TextRange;
+}
+
 // Language-service parity map: internal/ls/definition.go
 /**
  * Language-service parity map for TS-Go `ls/definition.go`.

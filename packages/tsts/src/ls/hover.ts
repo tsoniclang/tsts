@@ -1,3 +1,260 @@
+import {
+  isCallExpression,
+  isIdentifier,
+  isJSDoc,
+  isJSDocParameterTag,
+  isJSDocTemplateTag,
+  isJSDocTypedefTag,
+  isJSDocCallbackTag,
+  isJSDocNameReference,
+  isLabeledStatement,
+  isJsxNamespacedName,
+  isJsxOpeningElement,
+  isJsxSelfClosingElement,
+  isJsxClosingElement,
+  isBreakStatement,
+  isContinueStatement,
+  isExpressionWithTypeArguments,
+  isNamedTupleMember,
+  isNewExpression,
+  isParenthesizedExpression,
+  isPropertyAccessExpression,
+  isQualifiedName,
+  isSourceFile,
+  isTypeReferenceNode,
+  Kind,
+  NodeFlags,
+  type EntityName,
+  type JSDoc,
+  type JSDocComment,
+  type Node,
+  type TypeReferenceNode,
+} from "../ast/index.js";
+import { SymbolFormatFlags, TypeFormatFlags } from "../checker/types.js";
+import { getTextOfNode } from "../scanner/utilities.js";
+
+export const symbolFormatFlags =
+  SymbolFormatFlags.WriteTypeParametersOrArguments
+  | SymbolFormatFlags.UseOnlyExternalAliasing
+  | SymbolFormatFlags.AllowAnyNodeKind
+  | SymbolFormatFlags.UseAliasDefinedOutsideCurrentScope;
+
+export const typeFormatFlags =
+  TypeFormatFlags.UseAliasDefinedOutsideCurrentScope
+  | TypeFormatFlags.UseInstantiationExpressions;
+
+export function getCommentText(comments: readonly JSDocComment[]): string {
+  const parts: string[] = [];
+  for (const comment of comments) {
+    switch (comment.kind) {
+      case Kind.JSDocText:
+        parts.push(comment.text.join(""));
+        break;
+      case Kind.JSDocLink:
+      case Kind.JSDocLinkCode:
+      case Kind.JSDocLinkPlain:
+        parts.push(getTextOfNode(comment));
+        break;
+    }
+  }
+  return parts.join("");
+}
+
+export function formatQuickInfo(quickInfo: string): string {
+  const parts: string[] = [];
+  writeCode(parts, "typescript", quickInfo);
+  return parts.join("");
+}
+
+export function shouldGetType(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.Identifier:
+      return !((node.flags & NodeFlags.JSDoc) !== 0 && isDeclarationNameLike(node))
+        && !isLabelName(node)
+        && !isTagName(node)
+        && !isConstTypeReference(node.parent);
+    case Kind.ThisKeyword:
+    case Kind.ThisType:
+    case Kind.SuperKeyword:
+    case Kind.NamedTupleMember:
+      return true;
+    case Kind.MetaProperty:
+      return isImportMeta(node);
+    default:
+      return false;
+  }
+}
+
+export function getNodeForQuickInfo(node: Node): Node {
+  const parent = node.parent;
+  if (parent === undefined) return node;
+  if (isNewExpression(parent) && node.pos === parent.pos) {
+    return parent.expression;
+  }
+  if (isNamedTupleMember(parent) && node.pos === parent.pos) {
+    return parent;
+  }
+  if (isImportMeta(parent) && parent.name === node) {
+    return parent;
+  }
+  if (isJsxNamespacedName(parent)) {
+    return parent;
+  }
+  return node;
+}
+
+export function getCallOrNewExpression(node: Node): Node | undefined {
+  if (isSourceFile(node)) return undefined;
+  let current = node;
+  const firstParent = current.parent;
+  if (firstParent !== undefined && isPropertyAccessExpression(firstParent) && firstParent.name === current) {
+    current = firstParent;
+  }
+  const parent = current.parent;
+  if (parent !== undefined && (isCallExpression(parent) || isNewExpression(parent)) && parent.expression === current) {
+    return parent;
+  }
+  return undefined;
+}
+
+export function containsTypedefTag(jsdoc: Node): boolean {
+  if (!isJSDoc(jsdoc)) return false;
+  const tags = jsdoc.tags;
+  if (tags === undefined) return false;
+  for (const tag of tags) {
+    if (isJSDocTypedefTag(tag) || isJSDocCallbackTag(tag)) return true;
+  }
+  return false;
+}
+
+export function getJSDoc(node: Node): JSDoc | undefined {
+  const jsDoc = node.jsDoc;
+  if (jsDoc === undefined || jsDoc.length === 0) return undefined;
+  const last = jsDoc[jsDoc.length - 1]!;
+  return isJSDoc(last) ? last : undefined;
+}
+
+export function isMatchingParameterTag(tag: Node, name: string): boolean {
+  return isJSDocParameterTag(tag) && isNodeWithName(tag, name);
+}
+
+export function isMatchingTemplateTag(tag: Node, name: string): boolean {
+  return isJSDocTemplateTag(tag) && tag.typeParameters.some((typeParameter) => isNodeWithName(typeParameter, name));
+}
+
+export function isNodeWithName(node: Node, name: string): boolean {
+  const named = node as { readonly name?: Node };
+  return named.name !== undefined && isIdentifier(named.name) && named.name.text === name;
+}
+
+export function writeCode(parts: string[], language: string, code: string): void {
+  if (code === "") return;
+  let tickCount = 3;
+  while (code.includes("`".repeat(tickCount))) {
+    tickCount += 1;
+  }
+  const ticks = "`".repeat(tickCount);
+  parts.push(ticks, language, "\n", code, "\n", ticks, "\n");
+}
+
+export function trimCommentPrefix(text: string): string {
+  return text.trimStart().replace(/^\|/, "").trimStart();
+}
+
+export function writeMarkdownLink(parts: string[], text: string, uri: string, quote: boolean): void {
+  parts.push("[");
+  writeQuotedString(parts, text, quote);
+  parts.push("](", uri, ")");
+}
+
+export function writeOptionalEntityName(parts: string[], name: Node | undefined): void {
+  if (name === undefined) return;
+  parts.push(" ");
+  writeQuotedString(parts, getEntityNameString(name), true);
+}
+
+export function writeQuotedString(parts: string[], value: string, quote: boolean): void {
+  if (quote && !value.includes("`")) {
+    parts.push("`", value, "`");
+    return;
+  }
+  parts.push(value);
+}
+
+export function getEntityNameString(name: Node): string {
+  const parts: string[] = [];
+  writeEntityNameParts(parts, name);
+  return parts.join("");
+}
+
+export function writeEntityNameParts(parts: string[], node: Node): void {
+  if (isIdentifier(node)) {
+    parts.push(node.text);
+    return;
+  }
+  if (isQualifiedName(node)) {
+    writeEntityNameParts(parts, node.left);
+    parts.push(".");
+    writeEntityNameParts(parts, node.right);
+    return;
+  }
+  if (isPropertyAccessExpression(node)) {
+    writeEntityNameParts(parts, node.expression);
+    parts.push(".");
+    writeEntityNameParts(parts, node.name);
+    return;
+  }
+  if (isParenthesizedExpression(node) || isExpressionWithTypeArguments(node)) {
+    writeEntityNameParts(parts, node.expression);
+    return;
+  }
+  if (isJSDocNameReference(node)) {
+    writeEntityNameParts(parts, node.name);
+  }
+}
+
+function isDeclarationNameLike(node: Node): boolean {
+  const parent = node.parent;
+  return parent !== undefined && (parent as { readonly name?: Node }).name === node;
+}
+
+function isLabelName(node: Node): boolean {
+  const parent = node.parent;
+  return parent !== undefined && (
+    isLabeledStatement(parent) && parent.label === node
+    || (isBreakStatement(parent) || isContinueStatement(parent)) && parent.label === node
+  );
+}
+
+function isTagName(node: Node): boolean {
+  const parent = node.parent;
+  if (parent === undefined) return false;
+  switch (parent.kind) {
+    case Kind.JsxOpeningElement:
+    case Kind.JsxSelfClosingElement:
+    case Kind.JsxClosingElement:
+      return (isJsxOpeningElement(parent) || isJsxSelfClosingElement(parent) || isJsxClosingElement(parent)) && parent.tagName === node;
+    case Kind.JsxNamespacedName:
+      return isJsxNamespacedName(parent) && (parent.namespace === node || parent.name === node);
+    default:
+      return false;
+  }
+}
+
+function isConstTypeReference(node: Node | undefined): node is TypeReferenceNode {
+  return node !== undefined
+    && isTypeReferenceNode(node)
+    && node.typeArguments === undefined
+    && isIdentifier(node.typeName)
+    && node.typeName.text === "const";
+}
+
+function isImportMeta(node: Node): node is Node & { readonly name: EntityName } {
+  if (node.kind !== Kind.MetaProperty) return false;
+  const meta = node as unknown as { readonly keywordToken: Kind; readonly name: Node };
+  return meta.keywordToken === Kind.ImportKeyword && isIdentifier(meta.name) && meta.name.text === "meta";
+}
+
 // Language-service parity map: internal/ls/hover.go
 /**
  * Language-service parity map for TS-Go `ls/hover.go`.
