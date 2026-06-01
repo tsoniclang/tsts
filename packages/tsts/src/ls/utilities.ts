@@ -1,3 +1,91 @@
+import { Kind, type Node, type SourceFile } from "../ast/index.js";
+import type { TextRange } from "../core/index.js";
+import { stripQuotes } from "../stringutil/index.js";
+import { getQuotePreference, QuotePreferenceSingle, type UserPreferences } from "./lsutil/index.js";
+
+export const quoteReplacer = new Map<string, string>([
+  ["'", "\\'"],
+  ["\\\"", "\""],
+]);
+
+export function quote(file: SourceFile, preferences: UserPreferences, text: string): string {
+  const quotePreference = getQuotePreference(file, preferences);
+  let quoted = JSON.stringify(text);
+  if (quotePreference === QuotePreferenceSingle) {
+    const inner = stripQuotes(quoted);
+    quoted = inner.replace(/'/g, "\\'").replace(/\\"/g, "\"");
+  }
+  return quoted;
+}
+
+export const typeKeywords: ReadonlySet<Kind> = new Set([
+  Kind.AnyKeyword,
+  Kind.AssertsKeyword,
+  Kind.BigIntKeyword,
+  Kind.BooleanKeyword,
+  Kind.FalseKeyword,
+  Kind.InferKeyword,
+  Kind.KeyOfKeyword,
+  Kind.NeverKeyword,
+  Kind.NullKeyword,
+  Kind.NumberKeyword,
+  Kind.ObjectKeyword,
+  Kind.ReadonlyKeyword,
+  Kind.StringKeyword,
+  Kind.SymbolKeyword,
+  Kind.TypeOfKeyword,
+  Kind.TrueKeyword,
+  Kind.VoidKeyword,
+  Kind.UndefinedKeyword,
+  Kind.UniqueKeyword,
+  Kind.UnknownKeyword,
+]);
+
+export function isTypeKeyword(kind: Kind): boolean {
+  return typeKeywords.has(kind);
+}
+
+export function isSeparator(node: Node, candidate: Node | undefined): boolean {
+  return candidate !== undefined
+    && node.parent !== undefined
+    && (candidate.kind === Kind.CommaToken || (candidate.kind === Kind.SemicolonToken && node.parent.kind === Kind.ObjectLiteralExpression));
+}
+
+export function rangeContainsRange(left: TextRange, right: TextRange): boolean {
+  return startEndContainsRange(left.pos, left.end, right);
+}
+
+export function startEndContainsRange(start: number, end: number, textRange: TextRange): boolean {
+  return start <= textRange.pos && end >= textRange.end;
+}
+
+export function removeOptionality<T>(type: T, isOptionalExpression: boolean, isOptionalChain: boolean, checker: OptionalityChecker<T>): T {
+  if (isOptionalExpression) return checker.getNonNullableType(type);
+  if (isOptionalChain) return checker.getNonOptionalType(type);
+  return type;
+}
+
+export interface OptionalityChecker<T> {
+  getNonNullableType(type: T): T;
+  getNonOptionalType(type: T): T;
+}
+
+export function isNoSubstitutionTemplateLiteral(node: Node): boolean {
+  return node.kind === Kind.NoSubstitutionTemplateLiteral;
+}
+
+export function isTaggedTemplateExpression(node: Node): boolean {
+  return node.kind === Kind.TaggedTemplateExpression;
+}
+
+export function isTemplateHead(node: Node): boolean {
+  return node.kind === Kind.TemplateHead;
+}
+
+export function isTemplateTail(node: Node): boolean {
+  return node.kind === Kind.TemplateTail;
+}
+
 // Language-service parity map: internal/ls/utilities.go
 /**
  * Language-service parity map for TS-Go `ls/utilities.go`.
