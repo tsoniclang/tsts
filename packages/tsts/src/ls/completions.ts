@@ -1,9 +1,12 @@
-import { Kind, KindNames, type SourceFile } from "../ast/index.js";
+import { Kind, KindNames, SymbolFlags, nodeText, type Node, type SourceFile, type Symbol } from "../ast/index.js";
 import { LanguageVariant } from "../core/languageVariant.js";
 import { isIdentifierPartCodePoint, isIdentifierStartCodePoint } from "../scanner/index.js";
 import { compareStringsCaseInsensitiveThenSensitive, ComparisonEqual } from "../stringutil/index.js";
-import { CompletionItemKindKeyword } from "../lsp/lsproto/index.js";
+import { CompletionItemKindConstant, CompletionItemKindKeyword } from "../lsp/lsproto/index.js";
 import type { CompletionItem, CompletionItemData, CompletionItemLabelDetails, CompletionList, Range } from "../lsp/lsproto/index.js";
+import { findPrecedingToken } from "../astnav/index.js";
+import type { UserPreferences } from "./lsutil/index.js";
+import { quote } from "./utilities.js";
 
 /**
  * Completion constants and ordering helpers.
@@ -573,6 +576,445 @@ function isParameterPropertyModifier(kind: Kind): boolean {
     || kind === Kind.PrivateKeyword
     || kind === Kind.ReadonlyKeyword
     || kind === Kind.OverrideKeyword;
+}
+
+export function keywordCompletionData(
+  keywordFilters: KeywordCompletionFilters,
+  filterOutTSOnlyKeywords: boolean,
+  isNewIdentifierLocation: boolean,
+): CompletionDataKeyword {
+  return {
+    keywordCompletions: getKeywordCompletions(keywordFilters, filterOutTSOnlyKeywords),
+    isNewIdentifierLocation,
+  };
+}
+
+export function getDefaultCommitCharacters(isNewIdentifierLocation: boolean): readonly string[] {
+  return isNewIdentifierLocation ? emptyCommitCharacters : [...allCommitCharacters];
+}
+
+export interface CompletionInfoHost {
+  readonly userPreferences?: UserPreferences;
+  readonly createCompletionItem?: (input: CompletionItemCreateInput) => CompletionItem | undefined;
+}
+
+export interface CompletionItemCreateInput {
+  readonly symbol: CompletionSymbol;
+  readonly sortText: SortText;
+  readonly data: CompletionDataData;
+  readonly position: number;
+  readonly file: SourceFile;
+  readonly name: string;
+  readonly needsConvertPropertyAccess: boolean;
+  readonly origin?: SymbolOriginInfo;
+  readonly isMemberCompletion: boolean;
+}
+
+export interface CompletionSymbol extends Partial<Symbol> {
+  readonly name?: string;
+  readonly escapedName?: string;
+  readonly declarations: Node[];
+  readonly valueDeclaration?: Node;
+  readonly parent?: CompletionSymbol;
+  readonly flags?: number;
+}
+
+export function completionInfoFromData(
+  host: CompletionInfoHost,
+  file: SourceFile,
+  data: CompletionDataData,
+  position: number,
+  optionalReplacementSpan?: Range,
+): CompletionList | undefined {
+  const preferences = host.userPreferences ?? {};
+  const uniqueNames = new Set<string>();
+  let sortedEntries = getCompletionEntriesFromSymbols(host, data, position, file);
+  for (const entry of sortedEntries) uniqueNames.add(entry.label);
+
+  if (data.keywordFilters !== KeywordCompletionFilters.None) {
+    for (const keywordEntry of getKeywordCompletions(data.keywordFilters, false)) {
+      const isTypeKeywordEntry = isTypeKeyword(stringToKeywordKind(keywordEntry.label));
+      if (data.isTypeOnlyLocation && isTypeKeywordEntry
+        || !data.isTypeOnlyLocation && isContextualKeywordInAutoImportableExpressionSpace(keywordEntry.label)
+        || !uniqueNames.has(keywordEntry.label)) {
+        uniqueNames.add(keywordEntry.label);
+        sortedEntries = [...sortedEntries, keywordEntry];
+      }
+    }
+  }
+
+  for (const literal of data.literals) {
+    const literalEntry = createCompletionItemForLiteral(file, preferences, literal);
+    uniqueNames.add(literalEntry.label);
+    sortedEntries = [...sortedEntries, literalEntry];
+  }
+
+  return {
+    isIncomplete: data.hasUnresolvedAutoImports,
+    ...(optionalReplacementSpan === undefined ? {} : { itemDefaults: { editRange: { range: optionalReplacementSpan } } }),
+    items: sortedEntries,
+  };
+}
+
+export function getCompletionEntriesFromSymbols(
+  host: CompletionInfoHost,
+  data: CompletionDataData,
+  position: number,
+  file: SourceFile,
+): readonly CompletionItem[] {
+  const uniques = new Map<string, boolean>();
+  const sortedEntries: CompletionItem[] = [];
+  const isMemberCompletion = isMemberCompletionKind(data.completionKind);
+
+  for (let index = 0; index < data.symbols.length; index += 1) {
+    const symbol = data.symbols[index] as CompletionSymbol;
+    const origin = data.symbolToOriginInfoMap.get(index);
+    const display = getCompletionEntryDisplayNameForSymbol(symbol, origin, data.completionKind, data.isJsxIdentifierExpected);
+    if (display.displayName === "") continue;
+    if (uniques.get(display.displayName) === true && (origin === undefined || !originIsObjectLiteralMethod(origin))) continue;
+    if (data.completionKind === CompletionKind.Global && !shouldIncludeSymbol(symbol, data, file)) continue;
+
+    const originalSortText = data.symbolToSortTextMap.get(symbolId(symbol)) ?? SortTextLocationPriority;
+    const entry = host.createCompletionItem?.({
+      symbol,
+      sortText: originalSortText,
+      data,
+      position,
+      file,
+      name: display.displayName,
+      needsConvertPropertyAccess: display.needsConvertPropertyAccess,
+      ...(origin === undefined ? {} : { origin }),
+      isMemberCompletion,
+    }) ?? createCompletionItem(
+      symbol,
+      originalSortText,
+      data,
+      position,
+      file,
+      display.displayName,
+      display.needsConvertPropertyAccess,
+      origin,
+      isMemberCompletion,
+    );
+    if (entry === undefined) continue;
+
+    const shouldShadowLaterSymbols = (origin === undefined || originIsTypeOnlyAlias(origin))
+      && !(symbol.parent === undefined && symbol.declarations.some(declaration => declaration.getSourceFile() === file));
+    uniques.set(display.displayName, shouldShadowLaterSymbols);
+    sortedEntries.push(entry);
+  }
+
+  for (const autoImport of data.autoImports) {
+    const candidate = autoImport as { readonly fix?: { readonly name?: string; readonly moduleSpecifier?: string }; readonly name?: string };
+    const name = candidate.fix?.name ?? candidate.name ?? "";
+    if (name === "" || uniques.get(name) === true) continue;
+    uniques.set(name, false);
+    sortedEntries.push({
+      label: name,
+      sortText: SortTextAutoImportSuggestions,
+      ...(candidate.fix?.moduleSpecifier === undefined ? {} : { labelDetails: { description: candidate.fix.moduleSpecifier } }),
+    });
+  }
+
+  return sortedEntries.sort(CompareCompletionEntries);
+}
+
+export function completionNameForLiteral(file: SourceFile, preferences: UserPreferences, literal: LiteralValue): string {
+  switch (typeof literal) {
+    case "string":
+      return quote(file, preferences, literal);
+    case "number":
+      return JSON.stringify(literal);
+    case "bigint":
+      return `${literal.toString()}n`;
+    default:
+      throw new Error(`Unhandled literal value: ${String(literal)}`);
+  }
+}
+
+export function createCompletionItemForLiteral(file: SourceFile, preferences: UserPreferences, literal: LiteralValue): CompletionItem {
+  return {
+    label: completionNameForLiteral(file, preferences, literal),
+    kind: CompletionItemKindConstant,
+    sortText: SortTextLocationPriority,
+    commitCharacters: [],
+  };
+}
+
+export function createCompletionItem(
+  symbol: CompletionSymbol,
+  sortText: SortText,
+  data: CompletionDataData,
+  position: number,
+  file: SourceFile,
+  name: string,
+  needsConvertPropertyAccess: boolean,
+  origin: SymbolOriginInfo | undefined,
+  isMemberCompletion: boolean,
+): CompletionItem | undefined {
+  let insertText = "";
+  let filterText = "";
+  let source = getSourceFromOrigin(origin);
+  let labelDetails: CompletionItemLabelDetails | undefined;
+  let isSnippet = false;
+
+  const insertQuestionDot = originIsNullableMember(origin);
+  const useBraces = originIsSymbolMember(origin) || needsConvertPropertyAccess;
+  if (originIsThisTypeNode(origin)) {
+    insertText = needsConvertPropertyAccess
+      ? `this${insertQuestionDot ? "?." : ""}[${quotePropertyName(file, data.defaultCommitCharacters.length === 0 ? {} : {}, name)}]`
+      : `this${insertQuestionDot ? "?." : "."}${name}`;
+  } else if (data.propertyAccessToConvert !== undefined && (useBraces || insertQuestionDot)) {
+    insertText = useBraces ? `[${needsConvertPropertyAccess ? quotePropertyName(file, {}, name) : name}]` : name;
+    if (insertQuestionDot) insertText = `?.${insertText}`;
+  }
+
+  if (data.jsxInitializer.isInitializer) {
+    if (insertText === "") insertText = name;
+    insertText = `{${insertText}}`;
+  }
+
+  if (origin !== undefined && originIsObjectLiteralMethod(origin)) {
+    const method = symbolOriginInfoAsObjectLiteralMethod(origin);
+    insertText = method.insertText;
+    isSnippet = method.isSnippet;
+    labelDetails = method.labelDetails;
+    source = completionSourceObjectLiteralMethodSnippet;
+  }
+
+  const word = getWordLengthAndStart(file, position);
+  filterText = getFilterText(insertText, name, word.wordStart, getDotAccessor(file, position));
+
+  return {
+    label: name,
+    ...(insertText === "" ? {} : { insertText }),
+    ...(filterText === "" || filterText === insertText ? {} : { filterText }),
+    sortText,
+    ...(labelDetails === undefined ? {} : { labelDetails }),
+    ...(data.defaultCommitCharacters.length === 0 ? { commitCharacters: [] } : {}),
+    ...(source === "" ? {} : { source }),
+    ...(isSnippet ? { insertTextFormat: 2 } : {}),
+    ...(isMemberCompletion ? { data: completionItemData(file.fileName, position, symbolName(symbol)) } : {}),
+  };
+}
+
+export function isRecommendedCompletionMatch(localSymbol: CompletionSymbol, recommendedCompletion: CompletionSymbol | undefined): boolean {
+  return localSymbol === recommendedCompletion
+    || ((localSymbol.flags ?? 0) & SymbolFlags.ExportValue) !== 0 && localSymbol.exportSymbol === recommendedCompletion;
+}
+
+export function getLineOfPosition(file: SourceFile, pos: number): number {
+  return computeLineStarts(file.text).findLastIndex(start => start <= pos);
+}
+
+export function getLineEndOfPosition(file: SourceFile, pos: number): number {
+  const line = getLineOfPosition(file, pos);
+  const lineStarts = computeLineStarts(file.text);
+  let lastCharPos = line + 1 >= lineStarts.length ? file.end : lineStarts[line + 1]! - 1;
+  if (lastCharPos > 0 && lastCharPos < file.text.length && file.text[lastCharPos] === "\n" && file.text[lastCharPos - 1] === "\r") {
+    lastCharPos -= 1;
+  }
+  return lastCharPos;
+}
+
+export function isClassLikeMemberCompletion(_symbol: CompletionSymbol, _location: unknown, _file: SourceFile): boolean {
+  return false;
+}
+
+export function symbolAppearsToBeTypeOnly(symbol: CompletionSymbol): boolean {
+  const flags = symbol.flags ?? 0;
+  return (flags & SymbolFlags.Value) === 0
+    && (symbol.declarations.length === 0 || (flags & SymbolFlags.Type) !== 0);
+}
+
+export function shouldIncludeSymbol(symbol: CompletionSymbol, data: CompletionDataData, file: SourceFile): boolean {
+  const location = data.location as Node | undefined;
+  if (location?.parent?.kind === Kind.ExportAssignment) return true;
+  if (!data.isTypeOnlyLocation) return ((symbol.flags ?? 0) & SymbolFlags.Value) !== 0;
+  return symbolCanBeReferencedAtTypeLocation(symbol);
+}
+
+export interface CompletionDisplayName {
+  readonly displayName: string;
+  readonly needsConvertPropertyAccess: boolean;
+}
+
+export function getCompletionEntryDisplayNameForSymbol(
+  symbol: CompletionSymbol,
+  origin: SymbolOriginInfo | undefined,
+  completionKind: CompletionKind,
+  isJsxIdentifierExpected: boolean,
+): CompletionDisplayName {
+  if (originIsIgnore(origin)) return { displayName: "", needsConvertPropertyAccess: false };
+  const name = originIncludesSymbolName(origin) ? symbolOriginInfoSymbolName(origin!) : symbolName(symbol);
+  if (name === "" || ((symbol.flags ?? 0) & SymbolFlags.Module) !== 0 && startsWithQuote(name)) {
+    return { displayName: "", needsConvertPropertyAccess: false };
+  }
+  if (isIdentifierText(name, isJsxIdentifierExpected ? LanguageVariant.JSX : LanguageVariant.Standard)
+    || symbol.valueDeclaration?.kind === Kind.PrivateIdentifier) {
+    return { displayName: name, needsConvertPropertyAccess: false };
+  }
+  if (((symbol.flags ?? 0) & SymbolFlags.Alias) !== 0) return { displayName: name, needsConvertPropertyAccess: true };
+  switch (completionKind) {
+    case CompletionKind.MemberLike:
+      return originIsComputedPropertyName(origin) ? { displayName: symbolOriginInfoSymbolName(origin!), needsConvertPropertyAccess: false } : { displayName: "", needsConvertPropertyAccess: false };
+    case CompletionKind.ObjectPropertyDeclaration:
+      return { displayName: JSON.stringify(name), needsConvertPropertyAccess: false };
+    case CompletionKind.PropertyAccess:
+    case CompletionKind.Global:
+      return name.startsWith(" ") ? { displayName: "", needsConvertPropertyAccess: false } : { displayName: name, needsConvertPropertyAccess: true };
+    case CompletionKind.None:
+    case CompletionKind.String:
+      return { displayName: name, needsConvertPropertyAccess: false };
+    default:
+      throw new Error(`Unexpected completion kind: ${completionKind}`);
+  }
+}
+
+export function originIsIgnore(origin: SymbolOriginInfo | undefined): boolean {
+  return origin !== undefined && (origin.kind & SymbolOriginInfoKind.Ignore) !== 0;
+}
+
+export function originIncludesSymbolName(origin: SymbolOriginInfo | undefined): boolean {
+  return originIsComputedPropertyName(origin);
+}
+
+export function originIsComputedPropertyName(origin: SymbolOriginInfo | undefined): boolean {
+  return origin !== undefined && (origin.kind & SymbolOriginInfoKind.ComputedPropertyName) !== 0;
+}
+
+export function originIsObjectLiteralMethod(origin: SymbolOriginInfo | undefined): boolean {
+  return origin !== undefined && (origin.kind & SymbolOriginInfoKind.ObjectLiteralMethod) !== 0;
+}
+
+export function originIsThisTypeNode(origin: SymbolOriginInfo | undefined): boolean {
+  return origin !== undefined && (origin.kind & SymbolOriginInfoKind.ThisType) !== 0;
+}
+
+export function originIsTypeOnlyAlias(origin: SymbolOriginInfo | undefined): boolean {
+  return origin !== undefined && (origin.kind & SymbolOriginInfoKind.TypeOnlyAlias) !== 0;
+}
+
+export function originIsSymbolMember(origin: SymbolOriginInfo | undefined): boolean {
+  return origin !== undefined && (origin.kind & SymbolOriginInfoKind.SymbolMember) !== 0;
+}
+
+export function originIsNullableMember(origin: SymbolOriginInfo | undefined): boolean {
+  return origin !== undefined && (origin.kind & SymbolOriginInfoKind.Nullable) !== 0;
+}
+
+export function originIsPromise(origin: SymbolOriginInfo | undefined): boolean {
+  return origin !== undefined && (origin.kind & SymbolOriginInfoKind.Promise) !== 0;
+}
+
+export function getSourceFromOrigin(origin: SymbolOriginInfo | undefined): string {
+  if (originIsThisTypeNode(origin)) return completionSourceThisProperty;
+  if (originIsTypeOnlyAlias(origin)) return completionSourceTypeOnlyAlias;
+  return "";
+}
+
+export interface RelevantTokens {
+  readonly contextToken?: Node;
+  readonly previousToken?: Node;
+}
+
+export function getRelevantTokens(position: number, file: SourceFile): RelevantTokens {
+  const previousToken = findPrecedingToken(file, position);
+  if (previousToken !== undefined && position <= previousToken.end && (isMemberName(previousToken) || isKeywordKind(previousToken.kind))) {
+    const contextToken = findPrecedingToken(file, previousToken.pos);
+    return contextToken === undefined ? { previousToken } : { contextToken, previousToken };
+  }
+  return previousToken === undefined ? {} : { contextToken: previousToken, previousToken };
+}
+
+export type CompletionsTriggerCharacter = "." | "\"" | "'" | "`" | "/" | "@" | "<" | "#" | " ";
+
+export function isValidTrigger(file: SourceFile, triggerCharacter: CompletionsTriggerCharacter, contextToken: Node | undefined, position: number): boolean {
+  switch (triggerCharacter) {
+    case ".":
+    case "@":
+      return true;
+    case "\"":
+    case "'":
+    case "`":
+      return contextToken !== undefined && isStringLiteralOrTemplate(contextToken) && position === contextToken.pos + 1;
+    case "#":
+      return contextToken?.kind === Kind.PrivateIdentifier && getContainingClass(contextToken) !== undefined;
+    case "<":
+      return contextToken !== undefined && (contextToken.kind === Kind.JsxText || contextToken.kind === Kind.LessThanToken);
+    case "/":
+      return contextToken !== undefined && contextToken.kind === Kind.JsxText;
+    case " ":
+      return contextToken !== undefined;
+    default:
+      return false;
+  }
+}
+
+function quotePropertyName(file: SourceFile, preferences: UserPreferences, name: string): string {
+  return quote(file, preferences, name);
+}
+
+function computeLineStarts(text: string): readonly number[] {
+  const starts = [0];
+  for (let index = 0; index < text.length; index += 1) {
+    const ch = text[index]!;
+    if (ch === "\r") {
+      if (text[index + 1] === "\n") index += 1;
+      starts.push(index + 1);
+    } else if (ch === "\n") {
+      starts.push(index + 1);
+    }
+  }
+  return starts;
+}
+
+function symbolId(symbol: CompletionSymbol): number {
+  return Number((symbol as { readonly id?: number }).id ?? 0);
+}
+
+function symbolName(symbol: CompletionSymbol): string {
+  return symbol.name ?? symbol.escapedName ?? "";
+}
+
+function symbolCanBeReferencedAtTypeLocation(symbol: CompletionSymbol): boolean {
+  const flags = symbol.flags ?? 0;
+  return (flags & (SymbolFlags.Type | SymbolFlags.Namespace | SymbolFlags.Alias)) !== 0;
+}
+
+function isIdentifierText(text: string, variant: LanguageVariant): boolean {
+  if (text.length === 0) return false;
+  const first = text.codePointAt(0);
+  if (first === undefined || !isIdentifierStartCodePoint(first)) return false;
+  for (let index = String.fromCodePoint(first).length; index < text.length;) {
+    const codePoint = text.codePointAt(index);
+    if (codePoint === undefined || !isIdentifierPartCodePoint(codePoint, variant)) return false;
+    index += String.fromCodePoint(codePoint).length;
+  }
+  return true;
+}
+
+function isMemberName(node: Node): boolean {
+  return node.kind === Kind.Identifier || node.kind === Kind.PrivateIdentifier || node.kind === Kind.StringLiteral || node.kind === Kind.NumericLiteral;
+}
+
+function isKeywordKind(kind: Kind): boolean {
+  return Kind.FirstKeyword <= kind && kind <= Kind.LastKeyword;
+}
+
+function isStringLiteralOrTemplate(node: Node): boolean {
+  return node.kind === Kind.StringLiteral
+    || node.kind === Kind.NoSubstitutionTemplateLiteral
+    || node.kind === Kind.TemplateHead
+    || node.kind === Kind.TemplateMiddle
+    || node.kind === Kind.TemplateTail;
+}
+
+function getContainingClass(node: Node): Node | undefined {
+  for (let current = node.parent; current !== undefined; current = current.parent) {
+    if (current.kind === Kind.ClassDeclaration || current.kind === Kind.ClassExpression) return current;
+  }
+  return undefined;
 }
 
 // Language-service parity map: internal/ls/completions.go
