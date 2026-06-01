@@ -1,3 +1,365 @@
+import type { Node, Symbol as AstSymbol } from "../../ast/index.js";
+import {
+  AddAsTypeOnlyAllowed,
+  AddAsTypeOnlyNotAllowed,
+  AddAsTypeOnlyRequired,
+  AutoImportFixKindAddNew,
+  AutoImportFixKindAddToExisting,
+  AutoImportFixKindJsdocTypeImport,
+  AutoImportFixKindPromoteTypeOnly,
+  AutoImportFixKindUseNamespace,
+  ImportKindCommonJS,
+  ImportKindDefault,
+  ImportKindNamed,
+  ImportKindNamespace,
+  type AddAsTypeOnly,
+  type ImportKind,
+  type TextEdit,
+} from "../../lsp/lsproto/index.js";
+import type { ExportEntry } from "./export.js";
+import type { Fix, NewImportBinding } from "./fix.js";
+
+export interface ImportAdder {
+  hasFixes(): boolean;
+  addImportFromExportedSymbol(symbol: AstSymbol, isValidTypeOnlyUseSite: boolean): void;
+  addImportFix(fix: Fix): void;
+  edits(): readonly TextEdit[];
+}
+
+export interface AddToExistingState {
+  readonly importClauseOrBindingPattern: Node;
+  defaultImport?: NewImportBinding;
+  readonly namedImports: Map<string, NewImportBinding>;
+}
+
+export interface ImportsCollection {
+  defaultImport?: NewImportBinding;
+  readonly namedImports: Map<string, NewImportBinding>;
+  namespaceLikeImport?: NewImportBinding;
+  readonly useRequire: boolean;
+}
+
+export interface ImportAdderChecker {
+  getMergedSymbol?(symbol: AstSymbol): AstSymbol;
+  skipAlias?(symbol: AstSymbol): AstSymbol;
+}
+
+export interface ImportAdderView {
+  getFixes?(
+    exportEntry: ExportEntry,
+    forJsx: boolean,
+    isTypeOnlyLocation: boolean,
+    usagePosition: unknown,
+  ): readonly Fix[];
+  compareFixesForRanking?(left: Fix, right: Fix): number;
+}
+
+export interface ImportAdderOptions {
+  readonly checker?: ImportAdderChecker;
+  readonly view?: ImportAdderView;
+  readonly existingImportResolver?: (fix: Fix) => readonly [Node, NewImportBinding | undefined, NewImportBinding | undefined];
+  readonly symbolExports?: (symbol: AstSymbol) => readonly ExportEntry[];
+}
+
+export function newImportsKey(moduleSpecifier: string, topLevelTypeOnly: boolean): string {
+  return (topLevelTypeOnly ? "1|" : "0|") + moduleSpecifier;
+}
+
+export class ImportAdderImpl implements ImportAdder {
+  readonly addToNamespace: Fix[] = [];
+  readonly importType: Fix[] = [];
+  readonly addToExisting = new Map<Node, AddToExistingState>();
+  readonly newImports = new Map<string, ImportsCollection>();
+  readonly #checker: ImportAdderChecker | undefined;
+  readonly #view: ImportAdderView | undefined;
+  readonly #existingImportResolver: ((fix: Fix) => readonly [Node, NewImportBinding | undefined, NewImportBinding | undefined]) | undefined;
+  readonly #symbolExports: ((symbol: AstSymbol) => readonly ExportEntry[]) | undefined;
+
+  constructor(options: ImportAdderOptions = {}) {
+    this.#checker = options.checker;
+    this.#view = options.view;
+    this.#existingImportResolver = options.existingImportResolver;
+    this.#symbolExports = options.symbolExports;
+  }
+
+  hasFixes(): boolean {
+    return this.addToNamespace.length > 0
+      || this.importType.length > 0
+      || this.addToExisting.size > 0
+      || this.newImports.size > 0;
+  }
+
+  addImportFromExportedSymbol(exportedSymbol: AstSymbol, isValidTypeOnlyUseSite: boolean): void {
+    const skipped = this.#checker?.skipAlias?.(exportedSymbol) ?? exportedSymbol;
+    const symbol = this.#checker?.getMergedSymbol?.(skipped) ?? skipped;
+    const exportInfos = this.getAllExportsForSymbol(symbol);
+    if (exportInfos.length === 0) return;
+    const fix = this.getImportFixForSymbol(exportInfos, isValidTypeOnlyUseSite);
+    if (fix !== undefined) this.addImportFix(fix);
+  }
+
+  edits(): readonly TextEdit[] {
+    throw new Error("ImportAdder edits require change-tracker integration");
+  }
+
+  addImportFix(fix: Fix): void {
+    const symbolName = requireFixName(fix);
+    switch (fix.kind) {
+      case AutoImportFixKindUseNamespace:
+        this.addToNamespace.push(fix);
+        return;
+      case AutoImportFixKindJsdocTypeImport:
+        this.importType.push(fix);
+        return;
+      case AutoImportFixKindAddToExisting:
+        this.addToExistingImport(fix, symbolName);
+        return;
+      case AutoImportFixKindAddNew:
+        this.addNewImport(fix, symbolName);
+        return;
+      case AutoImportFixKindPromoteTypeOnly:
+        return;
+      default:
+        throw new Error(`Unexpected auto-import fix kind: ${fix.kind}`);
+    }
+  }
+
+  getNewImportEntry(
+    moduleSpecifier: string,
+    importKind: ImportKind,
+    useRequire: boolean,
+    addAsTypeOnly: AddAsTypeOnly,
+  ): ImportsCollection {
+    const typeOnlyKey = newImportsKey(moduleSpecifier, true);
+    const nonTypeOnlyKey = newImportsKey(moduleSpecifier, false);
+    const typeOnlyEntry = this.newImports.get(typeOnlyKey);
+    const nonTypeOnlyEntry = this.newImports.get(nonTypeOnlyKey);
+    const newEntry: ImportsCollection = {
+      namedImports: new Map<string, NewImportBinding>(),
+      useRequire,
+    };
+
+    if (importKind === ImportKindDefault && addAsTypeOnly === AddAsTypeOnlyRequired) {
+      if (typeOnlyEntry !== undefined) return typeOnlyEntry;
+      this.newImports.set(typeOnlyKey, newEntry);
+      return newEntry;
+    }
+
+    if (addAsTypeOnly === AddAsTypeOnlyAllowed && (typeOnlyEntry !== undefined || nonTypeOnlyEntry !== undefined)) {
+      return typeOnlyEntry ?? nonTypeOnlyEntry!;
+    }
+
+    if (nonTypeOnlyEntry !== undefined) return nonTypeOnlyEntry;
+    this.newImports.set(nonTypeOnlyKey, newEntry);
+    return newEntry;
+  }
+
+  getAllExportsForSymbol(symbol: AstSymbol): readonly ExportEntry[] {
+    return this.#symbolExports?.(symbol) ?? [];
+  }
+
+  getImportFixForSymbol(exports: readonly ExportEntry[], isValidTypeOnlyUseSite: boolean): Fix | undefined {
+    const fixes: Fix[] = [];
+    for (const exportEntry of exports) {
+      fixes.push(...(this.#view?.getFixes?.(exportEntry, false, isValidTypeOnlyUseSite, undefined) ?? []));
+    }
+    fixes.sort((left, right) => this.#view?.compareFixesForRanking?.(left, right) ?? 0);
+    return fixes[0];
+  }
+
+  private addToExistingImport(fix: Fix, symbolName: string): void {
+    if (this.#existingImportResolver === undefined) {
+      throw new Error("Add-to-existing auto-import fix requires an import-clause resolver");
+    }
+    const [importClauseOrBindingPattern, defaultImport, namedImport] = this.#existingImportResolver(fix);
+    let entry = this.addToExisting.get(importClauseOrBindingPattern);
+    if (entry === undefined) {
+      entry = {
+        importClauseOrBindingPattern,
+        namedImports: new Map<string, NewImportBinding>(),
+      };
+      this.addToExisting.set(importClauseOrBindingPattern, entry);
+    }
+
+    if (fix.importKind === ImportKindNamed) {
+      const previous = entry.namedImports.get(symbolName);
+      entry.namedImports.set(symbolName, {
+        kind: ImportKindNamed,
+        propertyName: namedImport?.propertyName ?? "",
+        name: symbolName,
+        addAsTypeOnly: reduceAddAsTypeOnlyValues(previous?.addAsTypeOnly ?? 0, fix.addAsTypeOnly),
+      });
+      return;
+    }
+
+    if (entry.defaultImport !== undefined && entry.defaultImport.name !== symbolName) {
+      throw new Error("(Add to Existing) default import should be missing or match symbolName");
+    }
+    entry.defaultImport = {
+      kind: ImportKindDefault,
+      propertyName: defaultImport?.propertyName ?? "",
+      name: symbolName,
+      addAsTypeOnly: reduceAddAsTypeOnlyValues(entry.defaultImport?.addAsTypeOnly ?? 0, fix.addAsTypeOnly),
+    };
+  }
+
+  private addNewImport(fix: Fix, symbolName: string): void {
+    const moduleSpecifier = requireModuleSpecifier(fix);
+    const entry = this.getNewImportEntry(moduleSpecifier, fix.importKind, fix.useRequire === true, fix.addAsTypeOnly);
+    if (entry.useRequire !== (fix.useRequire === true)) {
+      throw new Error("(Add new) tried to add an import and a require for the same module");
+    }
+
+    switch (fix.importKind) {
+      case ImportKindDefault:
+        if (entry.defaultImport !== undefined && entry.defaultImport.name !== symbolName) {
+          throw new Error("(Add new) default import should be missing or match symbolName");
+        }
+        entry.defaultImport = {
+          kind: ImportKindDefault,
+          propertyName: "",
+          name: symbolName,
+          addAsTypeOnly: reduceAddAsTypeOnlyValues(entry.defaultImport?.addAsTypeOnly ?? 0, fix.addAsTypeOnly),
+        };
+        return;
+      case ImportKindNamed: {
+        const previous = entry.namedImports.get(symbolName);
+        entry.namedImports.set(symbolName, {
+          kind: ImportKindNamed,
+          propertyName: "",
+          name: symbolName,
+          addAsTypeOnly: reduceAddAsTypeOnlyValues(previous?.addAsTypeOnly ?? 0, fix.addAsTypeOnly),
+        });
+        return;
+      }
+      case ImportKindCommonJS:
+        if (fix.addAsTypeOnly === AddAsTypeOnlyNotAllowed) {
+          this.setNamespaceLikeImport(entry, ImportKindCommonJS, symbolName, fix.addAsTypeOnly);
+        } else {
+          const previous = entry.namedImports.get(symbolName);
+          entry.namedImports.set(symbolName, {
+            kind: ImportKindCommonJS,
+            propertyName: "",
+            name: symbolName,
+            addAsTypeOnly: reduceAddAsTypeOnlyValues(previous?.addAsTypeOnly ?? 0, fix.addAsTypeOnly),
+          });
+        }
+        return;
+      case ImportKindNamespace:
+        this.setNamespaceLikeImport(entry, ImportKindNamespace, symbolName, fix.addAsTypeOnly);
+        return;
+    }
+  }
+
+  private setNamespaceLikeImport(
+    entry: ImportsCollection,
+    importKind: ImportKind,
+    symbolName: string,
+    addAsTypeOnly: AddAsTypeOnly,
+  ): void {
+    if (entry.namespaceLikeImport !== undefined && entry.namespaceLikeImport.name !== symbolName) {
+      throw new Error("Namespacelike import should be missing or match symbolName");
+    }
+    entry.namespaceLikeImport = {
+      kind: importKind,
+      propertyName: "",
+      name: symbolName,
+      addAsTypeOnly,
+    };
+  }
+}
+
+export function newImportAdder(options: ImportAdderOptions = {}): ImportAdder {
+  return new ImportAdderImpl(options);
+}
+
+export function sortedNamedImports(map: ReadonlyMap<string, NewImportBinding>): readonly NewImportBinding[] {
+  return [...map]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([, value]) => value);
+}
+
+export function reduceAddAsTypeOnlyValues(prevValue: AddAsTypeOnly, newValue: AddAsTypeOnly): AddAsTypeOnly {
+  return newValue > prevValue ? newValue : prevValue;
+}
+
+export function typeToAutoImportableTypeNode(
+  _checker: unknown,
+  _importAdder: ImportAdder | undefined,
+  type: unknown,
+  _contextNode: Node,
+): unknown {
+  return type;
+}
+
+export function typeNodeToAutoImportableTypeNode(
+  typeNode: Node,
+  importAdder: ImportAdder | undefined,
+  idToSymbol: ReadonlyMap<Node, AstSymbol>,
+): Node {
+  const [referenceTypeNode, importableSymbols] = tryGetAutoImportableReferenceFromTypeNode(typeNode, idToSymbol);
+  if (importableSymbols.length > 0 && importAdder !== undefined) importSymbols(importAdder, importableSymbols);
+  return referenceTypeNode ?? typeNode;
+}
+
+export function importSymbols(importAdder: ImportAdder, symbols: readonly AstSymbol[]): void {
+  for (const symbol of symbols) importAdder.addImportFromExportedSymbol(symbol, true);
+}
+
+export function tryGetAutoImportableReferenceFromTypeNode(
+  importTypeNode: Node,
+  _idToSymbol: ReadonlyMap<Node, AstSymbol>,
+): readonly [Node | undefined, readonly AstSymbol[]] {
+  return [importTypeNode, []];
+}
+
+export function getNameForExportedSymbol(symbol: AstSymbol, preferCapitalized: boolean): string {
+  const symbolName = symbol.name ?? symbol.escapedName ?? "";
+  if (symbolName === "export=" || symbolName === "default") {
+    const name = getDefaultLikeExportNameFromDeclaration(symbol);
+    if (name !== "") return name;
+    const parentName = symbol.parent?.name ?? symbol.parent?.escapedName ?? "";
+    return moduleSymbolToValidIdentifier(parentName, preferCapitalized);
+  }
+  return symbolName;
+}
+
+export function replaceFirstIdentifierOfEntityName(_factory: unknown, name: Node, _newIdentifier: Node): Node {
+  return name;
+}
+
+function requireFixName(fix: Fix): string {
+  if (fix.name === undefined || fix.name === "") throw new Error("auto-import fix requires a symbol name");
+  return fix.name;
+}
+
+function requireModuleSpecifier(fix: Fix): string {
+  if (fix.moduleSpecifier === undefined || fix.moduleSpecifier === "") {
+    throw new Error("new auto-import fix requires a module specifier");
+  }
+  return fix.moduleSpecifier;
+}
+
+function getDefaultLikeExportNameFromDeclaration(symbol: AstSymbol): string {
+  for (const declaration of symbol.declarations) {
+    const name = (declaration as { readonly name?: Node }).name;
+    const text = (name as { readonly text?: string } | undefined)?.text;
+    if (text !== undefined && text !== "") return text;
+  }
+  return "";
+}
+
+function moduleSymbolToValidIdentifier(name: string, preferCapitalized: boolean): string {
+  const words = name.split(/[^A-Za-z0-9_$]+/u).filter((part) => part.length > 0);
+  const raw = words.length === 0 ? "module" : words.map(capitalize).join("");
+  const identifier = preferCapitalized ? capitalize(raw) : raw.charAt(0).toLowerCase() + raw.slice(1);
+  return /^[A-Za-z_$]/u.test(identifier) ? identifier : "_" + identifier;
+}
+
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 // Language-service parity map: internal/ls/autoimport/import_adder.go
 /**
  * Language-service parity map for TS-Go `ls/autoimport/import_adder.go`.
