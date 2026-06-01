@@ -1,3 +1,117 @@
+import type { FileReference, Node, SourceFile, Symbol, TextRange } from "../ast/index.js";
+import type { DocumentUri, Location } from "../lsp/lsproto/index.js";
+
+export enum ReferenceUse {
+  None = 0,
+  Other = 1,
+  References = 2,
+  Rename = 3,
+}
+
+export interface RefOptions {
+  readonly findInStrings: boolean;
+  readonly findInComments: boolean;
+  readonly use: ReferenceUse;
+  readonly implementations: boolean;
+  readonly useAliasesForRename: boolean;
+}
+
+export interface RefInfo {
+  readonly file: SourceFile;
+  readonly fileName: string;
+  readonly reference: FileReference;
+  readonly unverified: boolean;
+}
+
+export interface SymbolAndEntries {
+  readonly definition?: Definition;
+  readonly references: readonly ReferenceEntry[];
+}
+
+export function newSymbolAndEntries(
+  kind: DefinitionKind,
+  node: Node | undefined,
+  symbol: Symbol | undefined,
+  references: readonly ReferenceEntry[],
+): SymbolAndEntries {
+  const definition: Definition = {
+    kind,
+    ...(node === undefined ? {} : { node }),
+    ...(symbol === undefined ? {} : { symbol }),
+  };
+  return {
+    definition,
+    references,
+  };
+}
+
+export enum DefinitionKind {
+  Symbol = 0,
+  Label = 1,
+  Keyword = 2,
+  This = 3,
+  String = 4,
+  TripleSlashReference = 5,
+}
+
+export interface Definition {
+  readonly kind: DefinitionKind;
+  readonly symbol?: Symbol;
+  readonly node?: Node;
+  readonly tripleSlashFileRef?: TripleSlashDefinition;
+}
+
+export interface TripleSlashDefinition {
+  readonly reference: FileReference;
+  readonly file: SourceFile;
+}
+
+export enum EntryKind {
+  None = 0,
+  Range = 1,
+  Node = 2,
+  StringLiteral = 3,
+  SearchedLocalFoundProperty = 4,
+  SearchedPropertyFoundLocal = 5,
+}
+
+export interface ReferenceEntry {
+  kind: EntryKind;
+  node?: Node;
+  context?: Node;
+  fileName?: string;
+  textRange?: TextRange;
+  lspRange?: Location;
+}
+
+export function canUseDefinitionSymbol(entry: SymbolAndEntries): boolean {
+  if (entry.definition === undefined) return false;
+  switch (entry.definition.kind) {
+    case DefinitionKind.Symbol:
+    case DefinitionKind.This:
+      return entry.definition.symbol !== undefined;
+    case DefinitionKind.TripleSlashReference:
+      return false;
+    default:
+      return false;
+  }
+}
+
+export function getRangeOfEntry(entry: ReferenceEntry): Location["range"] {
+  if (entry.lspRange === undefined) throw new Error("reference entry has not been resolved to an LSP range");
+  return entry.lspRange.range;
+}
+
+export function getFileNameOfEntry(entry: ReferenceEntry): DocumentUri {
+  if (entry.lspRange === undefined) throw new Error("reference entry has not been resolved to an LSP location");
+  return entry.lspRange.uri;
+}
+
+export function getLocationOfEntry(entry: ReferenceEntry): Location {
+  if (entry.lspRange === undefined) throw new Error("reference entry has not been resolved to an LSP location");
+  return entry.lspRange;
+}
+
 // Language-service parity map: internal/ls/findallreferences.go
 /**
  * Language-service parity map for TS-Go `ls/findallreferences.go`.
