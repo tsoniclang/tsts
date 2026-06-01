@@ -1,6 +1,19 @@
-import { Kind } from "../ast/index.js";
+import { Kind, type Node } from "../ast/index.js";
+import { TextRange } from "../core/index.js";
 import { Diagnostics } from "../diagnostics/diagnostics.generated.js";
+import type { TextEdit } from "../lsp/lsproto/index.js";
 import { NodeBuilderFlags } from "../nodebuilder/index.js";
+import {
+  type CodeAction,
+  type CodeActionLanguageService,
+  type CodeActionProgram,
+  type CodeActionSourceFile,
+  type CodeFixContext,
+  type CodeFixProvider,
+  type CombinedCodeActions,
+  containsErrorCode,
+} from "./codeActions.js";
+import { getAllDiagnostics } from "./diagnostics.js";
 
 export const isolatedDeclarationsFixErrorCodes: readonly number[] = [
   Diagnostics.Function_must_have_an_explicit_return_type_annotation_with_isolatedDeclarations.code,
@@ -56,6 +69,246 @@ export enum TypePrintMode {
   Full = 0,
   Relative = 1,
   Widened = 2,
+}
+
+export interface IsolatedDeclarationsSourceFile extends CodeActionSourceFile {
+  readonly root?: Node;
+}
+
+export interface IsolatedDeclarationsChecker {}
+
+export interface IsolatedDeclarationsProgram<TFile extends IsolatedDeclarationsSourceFile = IsolatedDeclarationsSourceFile>
+  extends CodeActionProgram<TFile> {
+  getTypeCheckerForFile?(file: TFile): readonly [IsolatedDeclarationsChecker, () => void];
+}
+
+export interface IsolatedDeclarationsChangeTracker<TFile extends IsolatedDeclarationsSourceFile = IsolatedDeclarationsSourceFile> {
+  getChanges(): ReadonlyMap<string, readonly TextEdit[]> | Readonly<Record<string, readonly TextEdit[]>>;
+}
+
+export interface IsolatedDeclarationsFixer {
+  typePrintMode: TypePrintMode;
+  readonly symbolsToImport?: readonly unknown[];
+  addTypeAnnotation(span: TextRange): string;
+  addInlineAssertion(span: TextRange): string;
+  extractAsVariable(span: TextRange): string;
+  addSymbolToExistingImport?(symbol: unknown): void;
+}
+
+export interface IsolatedDeclarationsLanguageService<
+  TProgram extends IsolatedDeclarationsProgram<TFile> = IsolatedDeclarationsProgram,
+  TFile extends IsolatedDeclarationsSourceFile = IsolatedDeclarationsSourceFile,
+> extends CodeActionLanguageService<TProgram, TFile> {
+  createChangeTracker(fixContext: CodeFixContext<TProgram, TFile>): IsolatedDeclarationsChangeTracker<TFile>;
+  createIsolatedDeclarationsFixer(
+    fixContext: CodeFixContext<TProgram, TFile>,
+    changeTracker: IsolatedDeclarationsChangeTracker<TFile>,
+    checker: IsolatedDeclarationsChecker,
+  ): IsolatedDeclarationsFixer;
+}
+
+export const IsolatedDeclarationsFixProvider:
+  CodeFixProvider<IsolatedDeclarationsProgram, IsolatedDeclarationsSourceFile> = {
+    errorCodes: isolatedDeclarationsFixErrorCodes,
+    getCodeActions: getIsolatedDeclarationsCodeActions,
+    fixIds: [fixMissingTypeAnnotationOnExportsFixID],
+    getAllCodeActions: getAllIsolatedDeclarationsCodeActions,
+  };
+
+export function getIsolatedDeclarationsCodeActions<
+  TProgram extends IsolatedDeclarationsProgram<TFile>,
+  TFile extends IsolatedDeclarationsSourceFile,
+>(fixContext: CodeFixContext<TProgram, TFile>): readonly CodeAction[] {
+  if (fixContext.span === undefined) return [];
+  const [checker, done] = getTypeChecker(fixContext);
+  try {
+    const fixes: CodeAction[] = [];
+    const seen = new Set<string>();
+    const addFix = (action: CodeAction | undefined): void => {
+      if (action === undefined) return;
+      const key = `${action.description}\0${JSON.stringify(action.changes)}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      fixes.push(action);
+    };
+
+    const modes: readonly TypePrintMode[] = [TypePrintMode.Full, TypePrintMode.Relative, TypePrintMode.Widened];
+    for (const mode of modes) {
+      addFix(tryCodeAction(fixContext, checker, (fixer) => {
+        fixer.typePrintMode = mode;
+        return fixer.addTypeAnnotation(fixContext.span!);
+      }));
+    }
+    for (const mode of modes) {
+      addFix(tryCodeAction(fixContext, checker, (fixer) => {
+        fixer.typePrintMode = mode;
+        return fixer.addInlineAssertion(fixContext.span!);
+      }));
+    }
+    addFix(tryCodeAction(fixContext, checker, (fixer) => {
+      fixer.typePrintMode = TypePrintMode.Full;
+      return fixer.extractAsVariable(fixContext.span!);
+    }));
+    return fixes;
+  } finally {
+    done();
+  }
+}
+
+export function getAllIsolatedDeclarationsCodeActions<
+  TProgram extends IsolatedDeclarationsProgram<TFile>,
+  TFile extends IsolatedDeclarationsSourceFile,
+>(fixContext: CodeFixContext<TProgram, TFile>): CombinedCodeActions | undefined {
+  const [checker, done] = getTypeChecker(fixContext);
+  try {
+    const service = getIsolatedDeclarationsLanguageService(fixContext);
+    const changeTracker = service.createChangeTracker(fixContext);
+    const fixer = service.createIsolatedDeclarationsFixer(fixContext, changeTracker, checker);
+    fixer.typePrintMode = TypePrintMode.Full;
+
+    for (const diagnostic of getAllDiagnostics(fixContext.program, fixContext.sourceFile)) {
+      if (!containsErrorCode(isolatedDeclarationsFixErrorCodes, diagnostic.code)) continue;
+      const start = diagnostic.start ?? 0;
+      fixer.addTypeAnnotation(new TextRange(start, start + (diagnostic.length ?? 0)));
+    }
+    for (const symbol of fixer.symbolsToImport ?? []) fixer.addSymbolToExistingImport?.(symbol);
+
+    const changes = changesForSourceFile(changeTracker, fixContext.sourceFile.fileName);
+    if (changes.length === 0) return undefined;
+    return {
+      description: Diagnostics.Add_all_missing_type_annotations.message,
+      changes,
+    };
+  } finally {
+    done();
+  }
+}
+
+export function tryCodeAction<
+  TProgram extends IsolatedDeclarationsProgram<TFile>,
+  TFile extends IsolatedDeclarationsSourceFile,
+>(
+  fixContext: CodeFixContext<TProgram, TFile>,
+  checker: IsolatedDeclarationsChecker,
+  apply: (fixer: IsolatedDeclarationsFixer) => string,
+): CodeAction | undefined {
+  const service = getIsolatedDeclarationsLanguageService(fixContext);
+  const changeTracker = service.createChangeTracker(fixContext);
+  const fixer = service.createIsolatedDeclarationsFixer(fixContext, changeTracker, checker);
+  const description = apply(fixer);
+  if (description === "") return undefined;
+
+  for (const symbol of fixer.symbolsToImport ?? []) fixer.addSymbolToExistingImport?.(symbol);
+  const changes = changesForSourceFile(changeTracker, fixContext.sourceFile.fileName);
+  if (changes.length === 0) return undefined;
+
+  return {
+    description,
+    changes,
+    fixId: fixMissingTypeAnnotationOnExportsFixID,
+    fixAllDescription: Diagnostics.Add_all_missing_type_annotations.message,
+  };
+}
+
+export function findAncestorWithMissingType(node: Node | undefined): Node | undefined {
+  let current = node;
+  while (current !== undefined) {
+    if (canHaveTypeAnnotationKinds.has(current.kind) && nodeType(current) === undefined) return current;
+    current = current.parent;
+  }
+  return undefined;
+}
+
+export function findBestFittingNode(node: Node | undefined, span: TextRange): Node | undefined {
+  let best: Node | undefined;
+  let current = node;
+  while (current !== undefined) {
+    if (current.pos <= span.pos && current.end >= span.end) best = current;
+    current = current.parent;
+  }
+  return best;
+}
+
+export function isNamedDeclarationKind(kind: Kind): boolean {
+  switch (kind) {
+    case Kind.ClassDeclaration:
+    case Kind.FunctionDeclaration:
+    case Kind.MethodDeclaration:
+    case Kind.PropertyDeclaration:
+    case Kind.VariableDeclaration:
+    case Kind.Parameter:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function isValueSignatureDeclaration(kind: Kind): boolean {
+  switch (kind) {
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.MethodDeclaration:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+    case Kind.ArrowFunction:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function getIdentifierNameForNode(node: Node): string {
+  const name = nodeName(node);
+  return name?.kind === Kind.Identifier ? nodeText(name) : "";
+}
+
+function getTypeChecker<
+  TProgram extends IsolatedDeclarationsProgram<TFile>,
+  TFile extends IsolatedDeclarationsSourceFile,
+>(fixContext: CodeFixContext<TProgram, TFile>): readonly [IsolatedDeclarationsChecker, () => void] {
+  const result = fixContext.program.getTypeCheckerForFile?.(fixContext.sourceFile);
+  if (result === undefined) throw new Error("isolated declaration fixes require Program.getTypeCheckerForFile");
+  return result;
+}
+
+function getIsolatedDeclarationsLanguageService<
+  TProgram extends IsolatedDeclarationsProgram<TFile>,
+  TFile extends IsolatedDeclarationsSourceFile,
+>(fixContext: CodeFixContext<TProgram, TFile>): IsolatedDeclarationsLanguageService<TProgram, TFile> {
+  const service = fixContext.languageService as Partial<IsolatedDeclarationsLanguageService<TProgram, TFile>>;
+  if (service.createChangeTracker === undefined || service.createIsolatedDeclarationsFixer === undefined) {
+    throw new Error("isolated declaration fixes require language-service fixer hooks");
+  }
+  return service as IsolatedDeclarationsLanguageService<TProgram, TFile>;
+}
+
+function changesForSourceFile<TFile extends IsolatedDeclarationsSourceFile>(
+  changeTracker: IsolatedDeclarationsChangeTracker<TFile>,
+  fileName: string,
+): readonly TextEdit[] {
+  const changes = changeTracker.getChanges();
+  if (isReadonlyMap(changes)) return changes.get(fileName) ?? [];
+  return changes[fileName] ?? [];
+}
+
+function isReadonlyMap(value: unknown): value is ReadonlyMap<string, readonly TextEdit[]> {
+  return value instanceof Map;
+}
+
+function nodeName(node: Node): Node | undefined {
+  return nodeProperty<Node>(node, "name");
+}
+
+function nodeType(node: Node): Node | undefined {
+  return nodeProperty<Node>(node, "type");
+}
+
+function nodeProperty<T>(node: Node, propertyName: string): T | undefined {
+  return (node as unknown as Record<string, T | undefined>)[propertyName];
+}
+
+function nodeText(node: Node): string {
+  return nodeProperty<string>(node, "text") ?? nodeProperty<string>(node, "escapedText") ?? "";
 }
 
 // Language-service parity map: internal/ls/codeactions_fixmissingtypeannotation.go
