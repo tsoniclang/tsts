@@ -79,6 +79,17 @@ const REQUIRED_MODULES: readonly ModuleSpec[] = [
   { upstream: "vfs", local: ["vfs"] },
 ];
 
+const DEFERRED_MODULES: readonly ModuleSpec[] = [
+  { upstream: "fourslash", local: ["fourslash"] },
+  { upstream: "jsonrpc", local: ["jsonrpc"] },
+  { upstream: "locale", local: ["locale"] },
+  { upstream: "ls", local: ["ls"] },
+  { upstream: "lsp", local: ["lsp"] },
+  { upstream: "pprof", local: ["pprof"] },
+  { upstream: "repo", local: ["repo"] },
+  { upstream: "tracing", local: ["tracing"] },
+];
+
 const IGNORED_UPSTREAM_CONCEPTS = new Set<string>([
   "compiler:pkg",
 ]);
@@ -121,6 +132,10 @@ const EXCLUDED_TSTS_SOURCE_FILES = new Set<string>([
 
 function useJson(): boolean {
   return process.argv.includes("--json");
+}
+
+function includeDeferred(): boolean {
+  return process.argv.includes("--full") || process.argv.includes("--all");
 }
 
 function walk(dir: string, predicate: (path: string) => boolean): readonly string[] {
@@ -191,7 +206,8 @@ function collectLocalFiles(tstsSrc: string, localModules: readonly string[]): re
 }
 
 function buildReports(tsgoInternal: string, tstsSrc: string): readonly ModuleStructureReport[] {
-  return REQUIRED_MODULES.map((spec) => {
+  const modules = includeDeferred() ? [...REQUIRED_MODULES, ...DEFERRED_MODULES] : REQUIRED_MODULES;
+  return modules.map((spec) => {
     const upstream = collectUpstreamFiles(tsgoInternal, spec.upstream);
     const local = collectLocalFiles(tstsSrc, spec.local);
     const localConcepts = new Set(local.map(normalizedConceptPath));
