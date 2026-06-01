@@ -1,399 +1,532 @@
 /**
- * Language-service parity map for TS-Go `ls/crossproject.go`.
+ * Cross-project language-service request orchestration.
  *
- * This file preserves the upstream declaration and algorithm-line shape
- * for the TypeScript port. Runtime behavior is implemented by the
- * concrete modules that consume these exact parity maps.
+ * Port of TS-Go `internal/ls/crossproject.go`.
  */
 
-export interface UpstreamSourceLine {
-  readonly line: number;
-  readonly text: string;
+import {
+  documentUriFileName,
+  type CallHierarchyIncomingCall,
+  type CallHierarchyIncomingCallsResponse,
+  type DocumentUri,
+  type HasTextDocumentPosition,
+  type ImplementationResponse,
+  type Location,
+  type LocationLink,
+  type Position,
+  type Range,
+  type ReferencesResponse,
+  type RenameResponse,
+  type TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile,
+  type TextEdit,
+} from "../lsp/lsproto/index.js";
+import type { Path } from "../tspath/index.js";
+
+export interface Project {
+  id(): Path;
+  getProgram(): unknown | undefined;
+  hasFile(fileName: string): boolean;
 }
 
-export interface UpstreamDeclaration {
-  readonly kind: "type" | "func" | "const" | "var";
-  readonly line: number;
-  readonly name: string;
-  readonly receiver?: string;
+interface ProjectAndTextDocumentPosition<LanguageService> {
+  readonly project: Project;
+  readonly languageService?: LanguageService;
+  readonly uri: DocumentUri;
+  readonly position: Position;
+  readonly forOriginalLocation: boolean;
 }
 
-export const lsCrossProjectUpstreamPath = "ls/crossproject.go";
-
-export const lsCrossProjectDeclarations: readonly UpstreamDeclaration[] = [
-  {"line":17,"kind":"type","name":"Project"},
-  {"line":23,"kind":"type","name":"projectAndTextDocumentPosition"},
-  {"line":31,"kind":"type","name":"response"},
-  {"line":37,"kind":"type","name":"CrossProjectOrchestrator"},
-  {"line":307,"kind":"func","name":"combineReferences"},
-  {"line":311,"kind":"func","name":"combineImplementations"},
-  {"line":324,"kind":"func","name":"combineRenameResponse"},
-  {"line":380,"kind":"func","name":"combineIncomingCalls"},
-];
-
-export const lsCrossProjectSourceLines: readonly UpstreamSourceLine[] = [
-  {"line":1,"text":"package ls"},
-  {"line":3,"text":"import ("},
-  {"line":4,"text":"\t\"context\""},
-  {"line":5,"text":"\t\"fmt\""},
-  {"line":6,"text":"\t\"iter\""},
-  {"line":7,"text":"\t\"runtime/debug\""},
-  {"line":8,"text":"\t\"sync\""},
-  {"line":10,"text":"\t\"github.com/microsoft/typescript-go/internal/collections\""},
-  {"line":11,"text":"\t\"github.com/microsoft/typescript-go/internal/compiler\""},
-  {"line":12,"text":"\t\"github.com/microsoft/typescript-go/internal/core\""},
-  {"line":13,"text":"\t\"github.com/microsoft/typescript-go/internal/lsp/lsproto\""},
-  {"line":14,"text":"\t\"github.com/microsoft/typescript-go/internal/tspath\""},
-  {"line":15,"text":")"},
-  {"line":17,"text":"type Project interface {"},
-  {"line":18,"text":"\tId() tspath.Path"},
-  {"line":19,"text":"\tGetProgram() *compiler.Program"},
-  {"line":20,"text":"\tHasFile(fileName string) bool"},
-  {"line":21,"text":"}"},
-  {"line":23,"text":"type projectAndTextDocumentPosition struct {"},
-  {"line":24,"text":"\tproject             Project"},
-  {"line":25,"text":"\tls                  *LanguageService"},
-  {"line":26,"text":"\tUri                 lsproto.DocumentUri"},
-  {"line":27,"text":"\tPosition            lsproto.Position"},
-  {"line":28,"text":"\tforOriginalLocation bool"},
-  {"line":29,"text":"}"},
-  {"line":31,"text":"type response[Resp any] struct {"},
-  {"line":32,"text":"\tcomplete            bool"},
-  {"line":33,"text":"\tresult              Resp"},
-  {"line":34,"text":"\tforOriginalLocation bool"},
-  {"line":35,"text":"}"},
-  {"line":37,"text":"type CrossProjectOrchestrator interface {"},
-  {"line":38,"text":"\tGetDefaultProject() Project"},
-  {"line":39,"text":"\tGetAllProjectsForInitialRequest() []Project"},
-  {"line":40,"text":"\tGetLanguageServiceForProjectWithFile(ctx context.Context, project Project, uri lsproto.DocumentUri) *LanguageService"},
-  {"line":41,"text":"\tGetProjectsForFile(ctx context.Context, uri lsproto.DocumentUri) ([]Project, error)"},
-  {"line":42,"text":"\tGetProjectsLoadingProjectTree(ctx context.Context, requestedProjectTrees *collections.Set[tspath.Path]) iter.Seq[Project]"},
-  {"line":43,"text":"}"},
-  {"line":45,"text":"func handleCrossProject[Req lsproto.HasTextDocumentPosition, Resp any]("},
-  {"line":46,"text":"\tdefaultLs *LanguageService,"},
-  {"line":47,"text":"\tctx context.Context,"},
-  {"line":48,"text":"\tparams Req,"},
-  {"line":49,"text":"\torchestrator CrossProjectOrchestrator,"},
-  {"line":50,"text":"\tsymbolAndEntriesToResp func(*LanguageService, context.Context, Req, SymbolAndEntriesData, symbolEntryTransformOptions) (Resp, error),"},
-  {"line":51,"text":"\tcombineResults func(iter.Seq[Resp]) Resp,"},
-  {"line":52,"text":"\tisRename bool,"},
-  {"line":53,"text":"\timplementations bool,"},
-  {"line":54,"text":"\toptions symbolEntryTransformOptions,"},
-  {"line":55,"text":") (Resp, error) {"},
-  {"line":56,"text":"\tvar resp Resp"},
-  {"line":57,"text":"\tvar err error"},
-  {"line":60,"text":"\tif orchestrator == nil {"},
-  {"line":61,"text":"\t\tdata, _ := defaultLs.provideSymbolsAndEntries(ctx, params.TextDocumentURI(), params.TextDocumentPosition(), isRename, implementations)"},
-  {"line":62,"text":"\t\treturn symbolAndEntriesToResp(defaultLs, ctx, params, data, options)"},
-  {"line":63,"text":"\t}"},
-  {"line":65,"text":"\tdefaultProject := orchestrator.GetDefaultProject()"},
-  {"line":66,"text":"\tallProjects := orchestrator.GetAllProjectsForInitialRequest()"},
-  {"line":67,"text":"\tvar results collections.SyncMap[tspath.Path, *response[Resp]]"},
-  {"line":68,"text":"\tvar defaultDefinition *nonLocalDefinition"},
-  {"line":69,"text":"\tcanSearchProject := func(project Project) bool {"},
-  {"line":70,"text":"\t\t_, searched := results.Load(project.Id())"},
-  {"line":71,"text":"\t\treturn !searched"},
-  {"line":72,"text":"\t}"},
-  {"line":73,"text":"\twg := core.NewWorkGroup(false)"},
-  {"line":74,"text":"\tvar errMu sync.Mutex"},
-  {"line":75,"text":"\tvar enqueueItem func(item projectAndTextDocumentPosition)"},
-  {"line":76,"text":"\tvar panicsOccured []string"},
-  {"line":77,"text":"\tvar panicMu sync.Mutex"},
-  {"line":78,"text":"\tenqueueItem = func(item projectAndTextDocumentPosition) {"},
-  {"line":79,"text":"\t\tvar response response[Resp]"},
-  {"line":80,"text":"\t\tif _, loaded := results.LoadOrStore(item.project.Id(), &response); loaded {"},
-  {"line":81,"text":"\t\t\treturn"},
-  {"line":82,"text":"\t\t}"},
-  {"line":83,"text":"\t\twg.Queue(func() {"},
-  {"line":84,"text":"\t\t\tif ctx.Err() != nil {"},
-  {"line":85,"text":"\t\t\t\treturn"},
-  {"line":86,"text":"\t\t\t}"},
-  {"line":87,"text":"\t\t\tdefer func() {"},
-  {"line":88,"text":"\t\t\t\tif r := recover(); r != nil {"},
-  {"line":89,"text":"\t\t\t\t\tstack := debug.Stack()"},
-  {"line":90,"text":"\t\t\t\t\tpanicOccured := fmt.Sprintf(\"panic handling request: %v\\n%s\", r, string(stack))"},
-  {"line":91,"text":"\t\t\t\t\tpanicMu.Lock()"},
-  {"line":92,"text":"\t\t\t\t\tpanicsOccured = append(panicsOccured, panicOccured)"},
-  {"line":93,"text":"\t\t\t\t\tpanicMu.Unlock()"},
-  {"line":94,"text":"\t\t\t\t}"},
-  {"line":95,"text":"\t\t\t}()"},
-  {"line":97,"text":"\t\t\tls := item.ls"},
-  {"line":98,"text":"\t\t\tif ls == nil {"},
-  {"line":100,"text":"\t\t\t\tls = orchestrator.GetLanguageServiceForProjectWithFile(ctx, item.project, item.Uri)"},
-  {"line":101,"text":"\t\t\t\tif ls == nil {"},
-  {"line":102,"text":"\t\t\t\t\treturn"},
-  {"line":103,"text":"\t\t\t\t}"},
-  {"line":104,"text":"\t\t\t}"},
-  {"line":105,"text":"\t\t\tdata, ok := ls.provideSymbolsAndEntries(ctx, item.Uri, item.Position, isRename, implementations)"},
-  {"line":106,"text":"\t\t\tif ctx.Err() != nil {"},
-  {"line":107,"text":"\t\t\t\treturn"},
-  {"line":108,"text":"\t\t\t}"},
-  {"line":109,"text":"\t\t\tif ok {"},
-  {"line":110,"text":"\t\t\t\tfor _, entry := range data.SymbolsAndEntries {"},
-  {"line":113,"text":"\t\t\t\t\tif item.project == defaultProject && defaultDefinition == nil {"},
-  {"line":114,"text":"\t\t\t\t\t\tdefaultDefinition = ls.getNonLocalDefinition(ctx, entry)"},
-  {"line":115,"text":"\t\t\t\t\t}"},
-  {"line":116,"text":"\t\t\t\t\tls.forEachOriginalDefinitionLocation(ctx, entry, func(uri lsproto.DocumentUri, position lsproto.Position) {"},
-  {"line":118,"text":"\t\t\t\t\t\tdefProjects, errProjects := orchestrator.GetProjectsForFile(ctx, uri)"},
-  {"line":119,"text":"\t\t\t\t\t\tif errProjects != nil {"},
-  {"line":120,"text":"\t\t\t\t\t\t\treturn"},
-  {"line":121,"text":"\t\t\t\t\t\t}"},
-  {"line":122,"text":"\t\t\t\t\t\tfor _, defProject := range defProjects {"},
-  {"line":124,"text":"\t\t\t\t\t\t\tif canSearchProject(defProject) {"},
-  {"line":125,"text":"\t\t\t\t\t\t\t\tenqueueItem(projectAndTextDocumentPosition{"},
-  {"line":126,"text":"\t\t\t\t\t\t\t\t\tproject:             defProject,"},
-  {"line":127,"text":"\t\t\t\t\t\t\t\t\tUri:                 uri,"},
-  {"line":128,"text":"\t\t\t\t\t\t\t\t\tPosition:            position,"},
-  {"line":129,"text":"\t\t\t\t\t\t\t\t\tforOriginalLocation: true,"},
-  {"line":130,"text":"\t\t\t\t\t\t\t\t})"},
-  {"line":131,"text":"\t\t\t\t\t\t\t}"},
-  {"line":132,"text":"\t\t\t\t\t\t}"},
-  {"line":133,"text":"\t\t\t\t\t})"},
-  {"line":134,"text":"\t\t\t\t}"},
-  {"line":135,"text":"\t\t\t}"},
-  {"line":137,"text":"\t\t\tif result, errSearch := symbolAndEntriesToResp(ls, ctx, params, data, options); errSearch == nil {"},
-  {"line":138,"text":"\t\t\t\tresponse.complete = true"},
-  {"line":139,"text":"\t\t\t\tresponse.result = result"},
-  {"line":140,"text":"\t\t\t\tresponse.forOriginalLocation = item.forOriginalLocation"},
-  {"line":141,"text":"\t\t\t} else {"},
-  {"line":142,"text":"\t\t\t\terrMu.Lock()"},
-  {"line":143,"text":"\t\t\t\tdefer errMu.Unlock()"},
-  {"line":144,"text":"\t\t\t\tif err == nil {"},
-  {"line":145,"text":"\t\t\t\t\terr = errSearch"},
-  {"line":146,"text":"\t\t\t\t}"},
-  {"line":147,"text":"\t\t\t}"},
-  {"line":148,"text":"\t\t})"},
-  {"line":149,"text":"\t}"},
-  {"line":152,"text":"\tenqueueItem(projectAndTextDocumentPosition{"},
-  {"line":153,"text":"\t\tproject:  defaultProject,"},
-  {"line":154,"text":"\t\tls:       defaultLs,"},
-  {"line":155,"text":"\t\tUri:      params.TextDocumentURI(),"},
-  {"line":156,"text":"\t\tPosition: params.TextDocumentPosition(),"},
-  {"line":157,"text":"\t})"},
-  {"line":158,"text":"\tfor _, project := range allProjects {"},
-  {"line":159,"text":"\t\tif project != defaultProject {"},
-  {"line":160,"text":"\t\t\tenqueueItem(projectAndTextDocumentPosition{"},
-  {"line":161,"text":"\t\t\t\tproject: project,"},
-  {"line":163,"text":"\t\t\t\tUri:      params.TextDocumentURI(),"},
-  {"line":164,"text":"\t\t\t\tPosition: params.TextDocumentPosition(),"},
-  {"line":165,"text":"\t\t\t})"},
-  {"line":166,"text":"\t\t}"},
-  {"line":167,"text":"\t}"},
-  {"line":169,"text":"\tgetResultsIterator := func() iter.Seq[Resp] {"},
-  {"line":170,"text":"\t\treturn func(yield func(Resp) bool) {"},
-  {"line":171,"text":"\t\t\tvar seenProjects collections.SyncSet[tspath.Path]"},
-  {"line":172,"text":"\t\t\tif response, loaded := results.Load(defaultProject.Id()); loaded && response.complete {"},
-  {"line":173,"text":"\t\t\t\tif !yield(response.result) {"},
-  {"line":174,"text":"\t\t\t\t\treturn"},
-  {"line":175,"text":"\t\t\t\t}"},
-  {"line":176,"text":"\t\t\t}"},
-  {"line":177,"text":"\t\t\tseenProjects.Add(defaultProject.Id())"},
-  {"line":178,"text":"\t\t\tfor _, project := range allProjects {"},
-  {"line":179,"text":"\t\t\t\tif seenProjects.AddIfAbsent(project.Id()) {"},
-  {"line":180,"text":"\t\t\t\t\tif response, loaded := results.Load(project.Id()); loaded && response.complete {"},
-  {"line":181,"text":"\t\t\t\t\t\tif !yield(response.result) {"},
-  {"line":182,"text":"\t\t\t\t\t\t\treturn"},
-  {"line":183,"text":"\t\t\t\t\t\t}"},
-  {"line":184,"text":"\t\t\t\t\t}"},
-  {"line":185,"text":"\t\t\t\t}"},
-  {"line":186,"text":"\t\t\t}"},
-  {"line":188,"text":"\t\t\tresults.Range(func(key tspath.Path, response *response[Resp]) bool {"},
-  {"line":189,"text":"\t\t\t\tif !response.forOriginalLocation && seenProjects.AddIfAbsent(key) && response.complete {"},
-  {"line":190,"text":"\t\t\t\t\treturn yield(response.result)"},
-  {"line":191,"text":"\t\t\t\t}"},
-  {"line":192,"text":"\t\t\t\treturn true"},
-  {"line":193,"text":"\t\t\t})"},
-  {"line":195,"text":"\t\t\tresults.Range(func(key tspath.Path, response *response[Resp]) bool {"},
-  {"line":196,"text":"\t\t\t\tif response.forOriginalLocation && seenProjects.AddIfAbsent(key) && response.complete {"},
-  {"line":197,"text":"\t\t\t\t\treturn yield(response.result)"},
-  {"line":198,"text":"\t\t\t\t}"},
-  {"line":199,"text":"\t\t\t\treturn true"},
-  {"line":200,"text":"\t\t\t})"},
-  {"line":201,"text":"\t\t}"},
-  {"line":202,"text":"\t}"},
-  {"line":205,"text":"\tfor {"},
-  {"line":207,"text":"\t\twg.RunAndWait()"},
-  {"line":209,"text":"\t\tif panicsOccured != nil {"},
-  {"line":210,"text":"\t\t\tpanic(fmt.Sprintf(\"Panics occurred during cross-project handling: %v\", panicsOccured))"},
-  {"line":211,"text":"\t\t}"},
-  {"line":212,"text":"\t\tif ctx.Err() != nil {"},
-  {"line":213,"text":"\t\t\treturn resp, ctx.Err()"},
-  {"line":214,"text":"\t\t}"},
-  {"line":215,"text":"\t\tif err != nil {"},
-  {"line":216,"text":"\t\t\treturn resp, err"},
-  {"line":217,"text":"\t\t}"},
-  {"line":219,"text":"\t\twg = core.NewWorkGroup(false)"},
-  {"line":220,"text":"\t\thasMoreWork := false"},
-  {"line":221,"text":"\t\tif defaultDefinition != nil {"},
-  {"line":222,"text":"\t\t\tvar requestedProjectTrees collections.Set[tspath.Path]"},
-  {"line":223,"text":"\t\t\tresults.Range(func(key tspath.Path, response *response[Resp]) bool {"},
-  {"line":224,"text":"\t\t\t\tif response.complete {"},
-  {"line":225,"text":"\t\t\t\t\trequestedProjectTrees.Add(key)"},
-  {"line":226,"text":"\t\t\t\t}"},
-  {"line":227,"text":"\t\t\t\treturn true"},
-  {"line":228,"text":"\t\t\t})"},
-  {"line":231,"text":"\t\t\tfor loadedProject := range orchestrator.GetProjectsLoadingProjectTree(ctx, &requestedProjectTrees) {"},
-  {"line":232,"text":"\t\t\t\tif ctx.Err() != nil {"},
-  {"line":233,"text":"\t\t\t\t\treturn resp, ctx.Err()"},
-  {"line":234,"text":"\t\t\t\t}"},
-  {"line":237,"text":"\t\t\t\tif !canSearchProject(loadedProject) || loadedProject.GetProgram() == nil {"},
-  {"line":238,"text":"\t\t\t\t\tcontinue"},
-  {"line":239,"text":"\t\t\t\t}"},
-  {"line":242,"text":"\t\t\t\tif loadedProject.HasFile(defaultDefinition.TextDocumentURI().FileName()) {"},
-  {"line":243,"text":"\t\t\t\t\tenqueueItem(projectAndTextDocumentPosition{"},
-  {"line":244,"text":"\t\t\t\t\t\tproject:  loadedProject,"},
-  {"line":245,"text":"\t\t\t\t\t\tUri:      defaultDefinition.TextDocumentURI(),"},
-  {"line":246,"text":"\t\t\t\t\t\tPosition: defaultDefinition.TextDocumentPosition(),"},
-  {"line":247,"text":"\t\t\t\t\t})"},
-  {"line":248,"text":"\t\t\t\t\thasMoreWork = true"},
-  {"line":249,"text":"\t\t\t\t} else if sourcePos := defaultDefinition.GetSourcePosition(); sourcePos != nil && loadedProject.HasFile(sourcePos.TextDocumentURI().FileName()) {"},
-  {"line":250,"text":"\t\t\t\t\tenqueueItem(projectAndTextDocumentPosition{"},
-  {"line":251,"text":"\t\t\t\t\t\tproject:  loadedProject,"},
-  {"line":252,"text":"\t\t\t\t\t\tUri:      sourcePos.TextDocumentURI(),"},
-  {"line":253,"text":"\t\t\t\t\t\tPosition: sourcePos.TextDocumentPosition(),"},
-  {"line":254,"text":"\t\t\t\t\t})"},
-  {"line":255,"text":"\t\t\t\t\thasMoreWork = true"},
-  {"line":256,"text":"\t\t\t\t} else if generatedPos := defaultDefinition.GetGeneratedPosition(); generatedPos != nil && loadedProject.HasFile(generatedPos.TextDocumentURI().FileName()) {"},
-  {"line":257,"text":"\t\t\t\t\tenqueueItem(projectAndTextDocumentPosition{"},
-  {"line":258,"text":"\t\t\t\t\t\tproject:  loadedProject,"},
-  {"line":259,"text":"\t\t\t\t\t\tUri:      generatedPos.TextDocumentURI(),"},
-  {"line":260,"text":"\t\t\t\t\t\tPosition: generatedPos.TextDocumentPosition(),"},
-  {"line":261,"text":"\t\t\t\t\t})"},
-  {"line":262,"text":"\t\t\t\t\thasMoreWork = true"},
-  {"line":263,"text":"\t\t\t\t}"},
-  {"line":264,"text":"\t\t\t}"},
-  {"line":265,"text":"\t\t}"},
-  {"line":266,"text":"\t\tif !hasMoreWork {"},
-  {"line":267,"text":"\t\t\tbreak"},
-  {"line":268,"text":"\t\t}"},
-  {"line":269,"text":"\t}"},
-  {"line":271,"text":"\tif results.Size() > 1 {"},
-  {"line":272,"text":"\t\tresp = combineResults(getResultsIterator())"},
-  {"line":273,"text":"\t} else {"},
-  {"line":275,"text":"\t\tfor value := range getResultsIterator() {"},
-  {"line":276,"text":"\t\t\tresp = value"},
-  {"line":277,"text":"\t\t\tbreak"},
-  {"line":278,"text":"\t\t}"},
-  {"line":279,"text":"\t}"},
-  {"line":280,"text":"\treturn resp, nil"},
-  {"line":281,"text":"}"},
-  {"line":283,"text":"func combineLocationArray[T lsproto.HasLocation]("},
-  {"line":284,"text":"\tcombined []T,"},
-  {"line":285,"text":"\tlocations *[]T,"},
-  {"line":286,"text":"\tseen *collections.Set[lsproto.Location],"},
-  {"line":287,"text":") []T {"},
-  {"line":288,"text":"\tfor _, loc := range *locations {"},
-  {"line":289,"text":"\t\tif seen.AddIfAbsent(loc.GetLocation()) {"},
-  {"line":290,"text":"\t\t\tcombined = append(combined, loc)"},
-  {"line":291,"text":"\t\t}"},
-  {"line":292,"text":"\t}"},
-  {"line":293,"text":"\treturn combined"},
-  {"line":294,"text":"}"},
-  {"line":296,"text":"func combineResponseLocations[T lsproto.HasLocations](results iter.Seq[T]) *[]lsproto.Location {"},
-  {"line":297,"text":"\tvar combined []lsproto.Location"},
-  {"line":298,"text":"\tvar seenLocations collections.Set[lsproto.Location]"},
-  {"line":299,"text":"\tfor resp := range results {"},
-  {"line":300,"text":"\t\tif locations := resp.GetLocations(); locations != nil {"},
-  {"line":301,"text":"\t\t\tcombined = combineLocationArray(combined, locations, &seenLocations)"},
-  {"line":302,"text":"\t\t}"},
-  {"line":303,"text":"\t}"},
-  {"line":304,"text":"\treturn &combined"},
-  {"line":305,"text":"}"},
-  {"line":307,"text":"func combineReferences(results iter.Seq[lsproto.ReferencesResponse]) lsproto.ReferencesResponse {"},
-  {"line":308,"text":"\treturn lsproto.LocationsOrNull{Locations: combineResponseLocations(results)}"},
-  {"line":309,"text":"}"},
-  {"line":311,"text":"func combineImplementations(results iter.Seq[lsproto.ImplementationResponse]) lsproto.ImplementationResponse {"},
-  {"line":312,"text":"\tvar combined []*lsproto.LocationLink"},
-  {"line":313,"text":"\tvar seenLocations collections.Set[lsproto.Location]"},
-  {"line":314,"text":"\tfor resp := range results {"},
-  {"line":315,"text":"\t\tif definitionLinks := resp.DefinitionLinks; definitionLinks != nil {"},
-  {"line":316,"text":"\t\t\tcombined = combineLocationArray(combined, definitionLinks, &seenLocations)"},
-  {"line":317,"text":"\t\t} else if locations := resp.Locations; locations != nil {"},
-  {"line":318,"text":"\t\t\treturn lsproto.LocationOrLocationsOrDefinitionLinksOrNull{Locations: combineResponseLocations(results)}"},
-  {"line":319,"text":"\t\t}"},
-  {"line":320,"text":"\t}"},
-  {"line":321,"text":"\treturn lsproto.LocationOrLocationsOrDefinitionLinksOrNull{DefinitionLinks: &combined}"},
-  {"line":322,"text":"}"},
-  {"line":324,"text":"func combineRenameResponse(results iter.Seq[lsproto.RenameResponse]) lsproto.RenameResponse {"},
-  {"line":325,"text":"\tcombined := make(map[lsproto.DocumentUri][]*lsproto.TextEdit)"},
-  {"line":326,"text":"\tseenChanges := make(map[lsproto.DocumentUri]*collections.Set[lsproto.Range])"},
-  {"line":327,"text":"\tvar documentChanges []lsproto.TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile"},
-  {"line":328,"text":"\tseenRenames := collections.Set[[2]lsproto.DocumentUri]{}"},
-  {"line":330,"text":"\tfor resp := range results {"},
-  {"line":331,"text":"\t\tif resp.WorkspaceEdit != nil && resp.WorkspaceEdit.DocumentChanges != nil {"},
-  {"line":332,"text":"\t\t\tfor _, change := range *resp.WorkspaceEdit.DocumentChanges {"},
-  {"line":333,"text":"\t\t\t\tswitch {"},
-  {"line":334,"text":"\t\t\t\tcase change.RenameFile != nil:"},
-  {"line":335,"text":"\t\t\t\t\tkey := [2]lsproto.DocumentUri{change.RenameFile.OldUri, change.RenameFile.NewUri}"},
-  {"line":336,"text":"\t\t\t\t\tif seenRenames.AddIfAbsent(key) {"},
-  {"line":337,"text":"\t\t\t\t\t\tdocumentChanges = append(documentChanges, change)"},
-  {"line":338,"text":"\t\t\t\t\t}"},
-  {"line":339,"text":"\t\t\t\tdefault:"},
-  {"line":340,"text":"\t\t\t\t\tdocumentChanges = append(documentChanges, change)"},
-  {"line":341,"text":"\t\t\t\t}"},
-  {"line":342,"text":"\t\t\t}"},
-  {"line":343,"text":"\t\t}"},
-  {"line":344,"text":"\t\tif resp.WorkspaceEdit != nil && resp.WorkspaceEdit.Changes != nil {"},
-  {"line":345,"text":"\t\t\tfor doc, changes := range *resp.WorkspaceEdit.Changes {"},
-  {"line":346,"text":"\t\t\t\tseenSet, ok := seenChanges[doc]"},
-  {"line":347,"text":"\t\t\t\tif !ok {"},
-  {"line":348,"text":"\t\t\t\t\tseenSet = &collections.Set[lsproto.Range]{}"},
-  {"line":349,"text":"\t\t\t\t\tseenChanges[doc] = seenSet"},
-  {"line":350,"text":"\t\t\t\t}"},
-  {"line":351,"text":"\t\t\t\tchangesForDoc, exists := combined[doc]"},
-  {"line":352,"text":"\t\t\t\tif !exists {"},
-  {"line":353,"text":"\t\t\t\t\tchangesForDoc = []*lsproto.TextEdit{}"},
-  {"line":354,"text":"\t\t\t\t}"},
-  {"line":355,"text":"\t\t\t\tfor _, change := range changes {"},
-  {"line":356,"text":"\t\t\t\t\tif !seenSet.Has(change.Range) {"},
-  {"line":357,"text":"\t\t\t\t\t\tseenSet.Add(change.Range)"},
-  {"line":358,"text":"\t\t\t\t\t\tchangesForDoc = append(changesForDoc, change)"},
-  {"line":359,"text":"\t\t\t\t\t}"},
-  {"line":360,"text":"\t\t\t\t}"},
-  {"line":361,"text":"\t\t\t\tcombined[doc] = changesForDoc"},
-  {"line":362,"text":"\t\t\t}"},
-  {"line":363,"text":"\t\t}"},
-  {"line":364,"text":"\t}"},
-  {"line":365,"text":"\tif len(documentChanges) > 0 || len(combined) > 0 {"},
-  {"line":366,"text":"\t\tworkspaceEdit := &lsproto.WorkspaceEdit{}"},
-  {"line":367,"text":"\t\tif len(documentChanges) > 0 {"},
-  {"line":368,"text":"\t\t\tworkspaceEdit.DocumentChanges = &documentChanges"},
-  {"line":369,"text":"\t\t}"},
-  {"line":370,"text":"\t\tif len(combined) > 0 {"},
-  {"line":371,"text":"\t\t\tworkspaceEdit.Changes = &combined"},
-  {"line":372,"text":"\t\t}"},
-  {"line":373,"text":"\t\treturn lsproto.RenameResponse{"},
-  {"line":374,"text":"\t\t\tWorkspaceEdit: workspaceEdit,"},
-  {"line":375,"text":"\t\t}"},
-  {"line":376,"text":"\t}"},
-  {"line":377,"text":"\treturn lsproto.RenameResponse{}"},
-  {"line":378,"text":"}"},
-  {"line":380,"text":"func combineIncomingCalls(results iter.Seq[lsproto.CallHierarchyIncomingCallsResponse]) lsproto.CallHierarchyIncomingCallsResponse {"},
-  {"line":381,"text":"\tvar combined []*lsproto.CallHierarchyIncomingCall"},
-  {"line":382,"text":"\tvar seenCalls collections.Set[lsproto.Location]"},
-  {"line":383,"text":"\tfor resp := range results {"},
-  {"line":384,"text":"\t\tif resp.CallHierarchyIncomingCalls != nil {"},
-  {"line":385,"text":"\t\t\tfor _, call := range *resp.CallHierarchyIncomingCalls {"},
-  {"line":386,"text":"\t\t\t\tif seenCalls.AddIfAbsent(call.From.GetLocation()) {"},
-  {"line":387,"text":"\t\t\t\t\tcombined = append(combined, call)"},
-  {"line":388,"text":"\t\t\t\t}"},
-  {"line":389,"text":"\t\t\t}"},
-  {"line":390,"text":"\t\t}"},
-  {"line":391,"text":"\t}"},
-  {"line":392,"text":"\treturn lsproto.CallHierarchyIncomingCallsResponse{CallHierarchyIncomingCalls: &combined}"},
-  {"line":393,"text":"}"},
-];
-
-export function findLsCrossProjectDeclaration(name: string): UpstreamDeclaration | undefined {
-  return lsCrossProjectDeclarations.find((declaration) => declaration.name === name);
+interface CrossProjectResponse<Response> {
+  complete: boolean;
+  result?: Response;
+  forOriginalLocation: boolean;
 }
 
-export function requireLsCrossProjectDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findLsCrossProjectDeclaration(name);
-  if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
-  return declaration;
+export interface SymbolEntryTransformOptions {
+  readonly requireLocationsResult?: boolean;
+  readonly dropOriginNodes?: boolean;
 }
 
-export function lsCrossProjectLineText(line: number): string | undefined {
-  return lsCrossProjectSourceLines.find((entry) => entry.line === line)?.text;
+export interface SymbolAndEntriesData<Entry = unknown> {
+  readonly originalNode?: unknown;
+  readonly symbolsAndEntries?: readonly Entry[];
+  readonly position?: number;
+}
+
+export interface NonLocalDefinition extends HasTextDocumentPosition {
+  getSourcePosition?(): HasTextDocumentPosition | undefined;
+  getGeneratedPosition?(): HasTextDocumentPosition | undefined;
+}
+
+export interface CrossProjectLanguageService<Entry = unknown> {
+  provideSymbolsAndEntries(
+    context: unknown,
+    uri: DocumentUri,
+    position: Position,
+    isRename: boolean,
+    implementations: boolean,
+  ): readonly [SymbolAndEntriesData<Entry>, boolean];
+
+  getNonLocalDefinition(context: unknown, entry: Entry): NonLocalDefinition | undefined;
+
+  forEachOriginalDefinitionLocation(
+    context: unknown,
+    entry: Entry,
+    callback: (uri: DocumentUri, position: Position) => void,
+  ): void;
+}
+
+export interface CrossProjectOrchestrator<
+  LanguageService extends CrossProjectLanguageService<Entry>,
+  Entry = unknown,
+> {
+  getDefaultProject(): Project;
+  getAllProjectsForInitialRequest(): readonly Project[];
+  getLanguageServiceForProjectWithFile(
+    context: unknown,
+    project: Project,
+    uri: DocumentUri,
+  ): LanguageService | undefined;
+  getProjectsForFile(context: unknown, uri: DocumentUri): readonly Project[];
+  getProjectsLoadingProjectTree(context: unknown, requestedProjectTrees: ReadonlySet<Path>): Iterable<Project>;
+}
+
+export type SymbolAndEntriesToResponse<
+  Request extends HasTextDocumentPosition,
+  Response,
+  Entry,
+  LanguageService extends CrossProjectLanguageService<Entry>,
+> = (
+  languageService: LanguageService,
+  context: unknown,
+  params: Request,
+  data: SymbolAndEntriesData<Entry>,
+  options: SymbolEntryTransformOptions,
+) => Response;
+
+export function handleCrossProject<
+  Request extends HasTextDocumentPosition,
+  Response,
+  Entry = unknown,
+  LanguageService extends CrossProjectLanguageService<Entry> = CrossProjectLanguageService<Entry>,
+>(
+  defaultLanguageService: LanguageService,
+  context: unknown,
+  params: Request,
+  orchestrator: CrossProjectOrchestrator<LanguageService, Entry> | undefined,
+  symbolAndEntriesToResponse: SymbolAndEntriesToResponse<Request, Response, Entry, LanguageService>,
+  combineResults: (results: Iterable<Response>) => Response,
+  isRename: boolean,
+  implementations: boolean,
+  options: SymbolEntryTransformOptions,
+): Response {
+  if (orchestrator === undefined) {
+    const [data] = defaultLanguageService.provideSymbolsAndEntries(
+      context,
+      params.textDocumentURI(),
+      params.textDocumentPosition(),
+      isRename,
+      implementations,
+    );
+    return symbolAndEntriesToResponse(defaultLanguageService, context, params, data, options);
+  }
+
+  const defaultProject = orchestrator.getDefaultProject();
+  const allProjects = orchestrator.getAllProjectsForInitialRequest();
+  const results = new Map<Path, CrossProjectResponse<Response>>();
+  const pending: ProjectAndTextDocumentPosition<LanguageService>[] = [];
+  let defaultDefinition: NonLocalDefinition | undefined;
+  let firstError: Error | undefined;
+
+  const canSearchProject = (project: Project): boolean => !results.has(project.id());
+
+  const enqueueItem = (item: ProjectAndTextDocumentPosition<LanguageService>): boolean => {
+    const projectID = item.project.id();
+    if (results.has(projectID)) return false;
+    results.set(projectID, {
+      complete: false,
+      forOriginalLocation: item.forOriginalLocation,
+    });
+    pending.push(item);
+    return true;
+  };
+
+  const processPending = (): void => {
+    while (pending.length > 0) {
+      throwIfContextCancelled(context);
+      const item = pending.shift();
+      if (item === undefined) return;
+      const response = results.get(item.project.id());
+      if (response === undefined) continue;
+
+      const languageService = item.languageService
+        ?? orchestrator.getLanguageServiceForProjectWithFile(context, item.project, item.uri);
+      if (languageService === undefined) continue;
+
+      const [data, ok] = languageService.provideSymbolsAndEntries(
+        context,
+        item.uri,
+        item.position,
+        isRename,
+        implementations,
+      );
+      throwIfContextCancelled(context);
+
+      if (ok) {
+        const entries = data.symbolsAndEntries ?? [];
+        for (const entry of entries) {
+          if (item.project === defaultProject && defaultDefinition === undefined) {
+            defaultDefinition = languageService.getNonLocalDefinition(context, entry);
+          }
+          languageService.forEachOriginalDefinitionLocation(context, entry, (uri, position) => {
+            let definitionProjects: readonly Project[] = [];
+            try {
+              definitionProjects = orchestrator.getProjectsForFile(context, uri);
+            } catch {
+              return;
+            }
+            for (const definitionProject of definitionProjects) {
+              if (canSearchProject(definitionProject)) {
+                enqueueItem({
+                  project: definitionProject,
+                  uri,
+                  position,
+                  forOriginalLocation: true,
+                });
+              }
+            }
+          });
+        }
+      }
+
+      try {
+        response.result = symbolAndEntriesToResponse(languageService, context, params, data, options);
+        response.complete = true;
+        response.forOriginalLocation = item.forOriginalLocation;
+      } catch (error) {
+        if (firstError === undefined) {
+          firstError = error instanceof Error ? error : new Error(String(error));
+        }
+      }
+    }
+  };
+
+  enqueueItem({
+    project: defaultProject,
+    languageService: defaultLanguageService,
+    uri: params.textDocumentURI(),
+    position: params.textDocumentPosition(),
+    forOriginalLocation: false,
+  });
+  for (const project of allProjects) {
+    if (project !== defaultProject) {
+      enqueueItem({
+        project,
+        uri: params.textDocumentURI(),
+        position: params.textDocumentPosition(),
+        forOriginalLocation: false,
+      });
+    }
+  }
+
+  while (true) {
+    processPending();
+    throwIfContextCancelled(context);
+    if (firstError !== undefined) throw firstError;
+
+    let hasMoreWork = false;
+    if (defaultDefinition !== undefined) {
+      const requestedProjectTrees = completeProjectIDs(results);
+      for (const loadedProject of orchestrator.getProjectsLoadingProjectTree(context, requestedProjectTrees)) {
+        throwIfContextCancelled(context);
+        if (!canSearchProject(loadedProject) || loadedProject.getProgram() === undefined) continue;
+        const item = itemForNonLocalDefinitionProject<LanguageService>(loadedProject, defaultDefinition);
+        if (item !== undefined && enqueueItem(item)) {
+          hasMoreWork = true;
+        }
+      }
+    }
+
+    if (!hasMoreWork) break;
+  }
+
+  const orderedResults = orderedCompleteResults(results, defaultProject, allProjects);
+  if (results.size > 1) {
+    return combineResults(orderedResults);
+  }
+  for (const result of orderedResults) {
+    return result;
+  }
+  throw new Error("No complete cross-project response was produced");
+}
+
+function itemForNonLocalDefinitionProject<LanguageService>(
+  project: Project,
+  definition: NonLocalDefinition,
+): ProjectAndTextDocumentPosition<LanguageService> | undefined {
+  const definitionUri = definition.textDocumentURI();
+  if (project.hasFile(documentUriFileName(definitionUri))) {
+    return {
+      project,
+      uri: definitionUri,
+      position: definition.textDocumentPosition(),
+      forOriginalLocation: false,
+    };
+  }
+
+  const sourcePosition = definition.getSourcePosition?.();
+  if (sourcePosition !== undefined) {
+    const sourceUri = sourcePosition.textDocumentURI();
+    if (project.hasFile(documentUriFileName(sourceUri))) {
+      return {
+        project,
+        uri: sourceUri,
+        position: sourcePosition.textDocumentPosition(),
+        forOriginalLocation: false,
+      };
+    }
+  }
+
+  const generatedPosition = definition.getGeneratedPosition?.();
+  if (generatedPosition !== undefined) {
+    const generatedUri = generatedPosition.textDocumentURI();
+    if (project.hasFile(documentUriFileName(generatedUri))) {
+      return {
+        project,
+        uri: generatedUri,
+        position: generatedPosition.textDocumentPosition(),
+        forOriginalLocation: false,
+      };
+    }
+  }
+
+  return undefined;
+}
+
+function completeProjectIDs<Response>(results: ReadonlyMap<Path, CrossProjectResponse<Response>>): ReadonlySet<Path> {
+  const requestedProjectTrees = new Set<Path>();
+  for (const [projectID, response] of results) {
+    if (response.complete) {
+      requestedProjectTrees.add(projectID);
+    }
+  }
+  return requestedProjectTrees;
+}
+
+function orderedCompleteResults<Response>(
+  results: ReadonlyMap<Path, CrossProjectResponse<Response>>,
+  defaultProject: Project,
+  allProjects: readonly Project[],
+): readonly Response[] {
+  const ordered: Response[] = [];
+  const seenProjects = new Set<Path>();
+
+  appendProjectResponse(ordered, seenProjects, results, defaultProject.id());
+  for (const project of allProjects) {
+    appendProjectResponse(ordered, seenProjects, results, project.id());
+  }
+  for (const [projectID, response] of results) {
+    if (!response.forOriginalLocation) {
+      appendProjectResponse(ordered, seenProjects, results, projectID);
+    }
+  }
+  for (const [projectID, response] of results) {
+    if (response.forOriginalLocation) {
+      appendProjectResponse(ordered, seenProjects, results, projectID);
+    }
+  }
+
+  return ordered;
+}
+
+function appendProjectResponse<Response>(
+  ordered: Response[],
+  seenProjects: Set<Path>,
+  results: ReadonlyMap<Path, CrossProjectResponse<Response>>,
+  projectID: Path,
+): void {
+  if (seenProjects.has(projectID)) return;
+  seenProjects.add(projectID);
+  const response = results.get(projectID);
+  if (response !== undefined && response.complete && response.result !== undefined) {
+    ordered.push(response.result);
+  }
+}
+
+interface ContextWithError {
+  readonly err?: () => Error | undefined;
+}
+
+function throwIfContextCancelled(context: unknown): void {
+  if (context === undefined || context === null) return;
+  const contextWithError = context as ContextWithError;
+  const error = contextWithError.err?.();
+  if (error !== undefined) throw error;
+}
+
+function combineLocationArray<T>(
+  combined: T[],
+  locations: readonly T[],
+  seen: Set<string>,
+  getLocation: (value: T) => Location,
+): T[] {
+  for (const location of locations) {
+    const key = locationKey(getLocation(location));
+    if (!seen.has(key)) {
+      seen.add(key);
+      combined.push(location);
+    }
+  }
+  return combined;
+}
+
+function combineResponseLocations(results: Iterable<{ readonly locations?: readonly Location[] }>): readonly Location[] {
+  let combined: Location[] = [];
+  const seenLocations = new Set<string>();
+  for (const response of results) {
+    if (response.locations !== undefined) {
+      combined = combineLocationArray(combined, response.locations, seenLocations, location => location);
+    }
+  }
+  return combined;
+}
+
+export function combineReferences(results: Iterable<ReferencesResponse>): ReferencesResponse {
+  return { locations: combineResponseLocations(results) };
+}
+
+export function combineImplementations(results: Iterable<ImplementationResponse>): ImplementationResponse {
+  const cachedResults = cacheIterable(results);
+  for (const response of cachedResults) {
+    if (response.locations !== undefined) {
+      return { locations: combineResponseLocations(cachedResults) };
+    }
+  }
+
+  let combined: LocationLink[] = [];
+  const seenLocations = new Set<string>();
+  for (const response of cachedResults) {
+    if (response.definitionLinks !== undefined) {
+      combined = combineLocationArray(combined, response.definitionLinks, seenLocations, locationFromLink);
+    }
+  }
+  return { definitionLinks: combined };
+}
+
+export function combineRenameResponse(results: Iterable<RenameResponse>): RenameResponse {
+  const combinedChanges: Record<string, TextEdit[]> = {};
+  const seenChanges = new Map<DocumentUri, Set<string>>();
+  const documentChanges: TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile[] = [];
+  const seenRenames = new Set<string>();
+  let hasTextChanges = false;
+
+  for (const response of results) {
+    const workspaceEdit = response.workspaceEdit;
+    if (workspaceEdit === undefined) continue;
+
+    const responseDocumentChanges = workspaceEdit.documentChanges;
+    if (responseDocumentChanges !== undefined) {
+      for (const change of responseDocumentChanges) {
+        const rename = change.renameFile;
+        if (rename !== undefined) {
+          const renameKey = `${rename.oldUri}\n${rename.newUri}`;
+          if (!seenRenames.has(renameKey)) {
+            seenRenames.add(renameKey);
+            documentChanges.push(change);
+          }
+        } else {
+          documentChanges.push(change);
+        }
+      }
+    }
+
+    const responseChanges = workspaceEdit.changes;
+    if (responseChanges !== undefined) {
+      for (const [documentUri, changes] of Object.entries(responseChanges)) {
+        let seenForDocument = seenChanges.get(documentUri);
+        if (seenForDocument === undefined) {
+          seenForDocument = new Set<string>();
+          seenChanges.set(documentUri, seenForDocument);
+        }
+
+        let changesForDocument = combinedChanges[documentUri];
+        if (changesForDocument === undefined) {
+          changesForDocument = [];
+          combinedChanges[documentUri] = changesForDocument;
+        }
+
+        for (const change of changes) {
+          const key = rangeKey(change.range);
+          if (!seenForDocument.has(key)) {
+            seenForDocument.add(key);
+            changesForDocument.push(change);
+            hasTextChanges = true;
+          }
+        }
+      }
+    }
+  }
+
+  if (documentChanges.length === 0 && !hasTextChanges) {
+    return {};
+  }
+  if (documentChanges.length !== 0 && hasTextChanges) {
+    return { workspaceEdit: { documentChanges, changes: combinedChanges } };
+  }
+  if (documentChanges.length !== 0) {
+    return { workspaceEdit: { documentChanges } };
+  }
+  return { workspaceEdit: { changes: combinedChanges } };
+}
+
+export function combineIncomingCalls(
+  results: Iterable<CallHierarchyIncomingCallsResponse>,
+): CallHierarchyIncomingCallsResponse {
+  const combined: CallHierarchyIncomingCall[] = [];
+  const seenCalls = new Set<string>();
+  for (const response of results) {
+    const incomingCalls = response.callHierarchyIncomingCalls;
+    if (incomingCalls === undefined) continue;
+    for (const call of incomingCalls) {
+      if (call.from === undefined) {
+        throw new Error("CallHierarchyIncomingCall.from is required");
+      }
+      const key = locationKey({
+        uri: call.from.uri,
+        range: call.from.range,
+      });
+      if (!seenCalls.has(key)) {
+        seenCalls.add(key);
+        combined.push(call);
+      }
+    }
+  }
+  return { callHierarchyIncomingCalls: combined };
+}
+
+function cacheIterable<T>(results: Iterable<T>): readonly T[] {
+  const cached: T[] = [];
+  for (const result of results) {
+    cached.push(result);
+  }
+  return cached;
+}
+
+function locationFromLink(link: LocationLink): Location {
+  return {
+    uri: link.targetUri,
+    range: link.targetRange,
+  };
+}
+
+function locationKey(location: Location): string {
+  return `${location.uri}\n${rangeKey(location.range)}`;
+}
+
+function rangeKey(range: Range): string {
+  return `${positionKey(range.start)}:${positionKey(range.end)}`;
+}
+
+function positionKey(position: Position): string {
+  return `${position.line}:${position.character}`;
 }

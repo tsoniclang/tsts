@@ -39,6 +39,7 @@ import "./ls/autoimport/specifiers.test.js";
 import "./ls/autoimport/util.test.js";
 import "./ls/codeActions.test.js";
 import "./ls/codeLens.test.js";
+import "./ls/crossProject.test.js";
 import "./ls/displayPartsWriter.test.js";
 import "./ls/format.test.js";
 import "./ls/lsconv/lineMap.test.js";
