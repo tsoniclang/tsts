@@ -26,9 +26,17 @@ import {
 } from "../ast/index.js";
 import { LanguageVariant } from "../core/languageVariant.js";
 import { isIdentifierPartCodePoint } from "../scanner/index.js";
-import type { DocumentUri, Location, LocationLink, Range } from "../lsp/lsproto/index.js";
+import type { DocumentUri, ImplementationParams, ImplementationResponse, Location, LocationLink, Position, ReferenceParams, ReferencesResponse, Range } from "../lsp/lsproto/index.js";
 import { compareRanges } from "../lsp/lsproto/util.js";
 import { getStartOfNode, getTouchingPropertyName } from "../astnav/index.js";
+import {
+  combineImplementations,
+  combineReferences,
+  handleCrossProject,
+  type CrossProjectLanguageService,
+  type CrossProjectOrchestrator,
+  type SymbolAndEntriesData as CrossProjectSymbolAndEntriesData,
+} from "./crossProject.js";
 import { fileNameToDocumentURI } from "./lsconv/index.js";
 import { isExpressionOfExternalModuleImportEqualsDeclaration, isLiteralNameOfPropertyDeclarationOrIndexAccess, isNameOfModuleDeclaration } from "./utilities.js";
 
@@ -485,15 +493,206 @@ export function isDefinitionVisible(emitResolver: DefinitionVisibilityResolver, 
   }
 }
 
+export interface ReferenceProgram extends ReferenceMergeProgram {
+  sourceFiles(): readonly SourceFile[];
+}
+
+export interface ReferenceLanguageService
+  extends ReferenceLocationService, CrossProjectLanguageService<SymbolAndEntries> {
+  getProgramAndFile(documentURI: DocumentUri): readonly [ReferenceProgram, SourceFile];
+  lineAndCharacterToPosition(sourceFile: SourceFile, position: Position): number;
+  adjustReferenceLocation?(node: Node, forRename: boolean, sourceFile: SourceFile): Node | undefined;
+  nodeIsEligibleForRename?(node: Node): boolean;
+  getSymbolAndEntries?(
+    position: number,
+    node: Node,
+    program: ReferenceProgram,
+    isRename: boolean,
+    implementations: boolean,
+  ): readonly SymbolAndEntries[];
+}
+
+interface ReferenceRequest extends ReferenceParams {
+  textDocumentURI(): DocumentUri;
+  textDocumentPosition(): Position;
+}
+
+interface ImplementationRequest extends ImplementationParams {
+  textDocumentURI(): DocumentUri;
+  textDocumentPosition(): Position;
+}
+
+export function provideSymbolsAndEntries(
+  service: ReferenceLanguageService,
+  _context: unknown,
+  uri: DocumentUri,
+  documentPosition: Position,
+  isRename: boolean,
+  implementations: boolean,
+): readonly [SymbolAndEntriesData, boolean] {
+  const [program, sourceFile] = service.getProgramAndFile(uri);
+  const position = service.lineAndCharacterToPosition(sourceFile, documentPosition);
+  const touchingNode = getTouchingPropertyName(sourceFile, position);
+  const node = touchingNode === undefined
+    ? sourceFile
+    : isRename
+      ? service.adjustReferenceLocation?.(touchingNode, true, sourceFile) ?? touchingNode
+      : touchingNode;
+
+  if (isRename && (node === sourceFile || service.nodeIsEligibleForRename?.(node) !== true)
+    || implementations && isSourceFile(node)) {
+    return [{ originalNode: node, symbolsAndEntries: [], position }, false];
+  }
+
+  const entries = getSymbolAndEntries(service, position, node, program, isRename, implementations);
+  if (!implementations) {
+    return [{ originalNode: node, symbolsAndEntries: entries, position }, true];
+  }
+
+  const implementationEntries: SymbolAndEntries[] = [];
+  const queue: ReferenceEntry[] = [];
+  const seenNodes = new Set<Node>();
+  const addToQueue = (symbolsAndEntries: readonly SymbolAndEntries[]): void => {
+    implementationEntries.push(...symbolsAndEntries);
+    for (const symbolAndEntries of symbolsAndEntries) queue.push(...symbolAndEntries.references);
+  };
+
+  addToQueue(entries);
+  while (queue.length !== 0) {
+    const entry = queue.shift()!;
+    if (entry.node === undefined || seenNodes.has(entry.node)) continue;
+    seenNodes.add(entry.node);
+    addToQueue(getSymbolAndEntries(service, entry.node.pos, entry.node, program, isRename, implementations));
+  }
+  return [{ originalNode: node, symbolsAndEntries: implementationEntries, position }, true];
+}
+
+export function getSymbolAndEntries(
+  service: ReferenceLanguageService,
+  position: number,
+  node: Node,
+  program: ReferenceProgram,
+  isRename: boolean,
+  implementations: boolean,
+): readonly SymbolAndEntries[] {
+  if (service.getSymbolAndEntries !== undefined) {
+    return service.getSymbolAndEntries(position, node, program, isRename, implementations);
+  }
+  return [];
+}
+
+export function provideReferences<LanguageService extends ReferenceLanguageService>(
+  service: LanguageService,
+  context: unknown,
+  params: ReferenceParams,
+  orchestrator?: CrossProjectOrchestrator<LanguageService, SymbolAndEntries>,
+): ReferencesResponse {
+  return handleCrossProject(
+    service,
+    context,
+    referenceRequest(params),
+    orchestrator,
+    referencesResponseFromSymbolsAndEntries,
+    combineReferences,
+    false,
+    false,
+    {},
+  );
+}
+
+export function referencesResponseFromSymbolsAndEntries(
+  service: ReferenceLanguageService,
+  _context: unknown,
+  params: ReferenceRequest,
+  data: CrossProjectSymbolAndEntriesData<SymbolAndEntries>,
+  _options: SymbolEntryTransformOptions,
+): ReferencesResponse {
+  return {
+    locations: symbolAndEntriesToReferences(
+      service,
+      concreteSymbolAndEntriesData(data),
+      params.context?.includeDeclaration ?? false,
+    ),
+  };
+}
+
+export function provideImplementations<LanguageService extends ReferenceLanguageService>(
+  service: LanguageService,
+  context: unknown,
+  params: ImplementationParams,
+  orchestrator?: CrossProjectOrchestrator<LanguageService, SymbolAndEntries>,
+): ImplementationResponse {
+  return provideImplementationsEx(service, context, params, {}, orchestrator);
+}
+
+export function provideImplementationsEx<LanguageService extends ReferenceLanguageService>(
+  service: LanguageService,
+  context: unknown,
+  params: ImplementationParams,
+  options: SymbolEntryTransformOptions,
+  orchestrator?: CrossProjectOrchestrator<LanguageService, SymbolAndEntries>,
+): ImplementationResponse {
+  return handleCrossProject(
+    service,
+    context,
+    implementationRequest(params),
+    orchestrator,
+    implementationsResponseFromSymbolsAndEntries,
+    combineImplementations,
+    false,
+    true,
+    options,
+  );
+}
+
+export function implementationsResponseFromSymbolsAndEntries(
+  service: ReferenceLanguageService,
+  _context: unknown,
+  _params: ImplementationRequest,
+  data: CrossProjectSymbolAndEntriesData<SymbolAndEntries>,
+  options: SymbolEntryTransformOptions,
+): ImplementationResponse {
+  return symbolAndEntriesToImplementations(
+    service,
+    concreteSymbolAndEntriesData(data),
+    options,
+    options.requireLocationsResult !== true,
+  ) as ImplementationResponse;
+}
+
+function referenceRequest(params: ReferenceParams): ReferenceRequest {
+  return {
+    ...params,
+    textDocumentURI: () => params.textDocument.uri,
+    textDocumentPosition: () => params.position,
+  };
+}
+
+function implementationRequest(params: ImplementationParams): ImplementationRequest {
+  return {
+    ...params,
+    textDocumentURI: () => params.textDocument.uri,
+    textDocumentPosition: () => params.position,
+  };
+}
+
 export interface SymbolEntryTransformOptions {
-  readonly requireLocationsResult: boolean;
-  readonly dropOriginNodes: boolean;
+  readonly requireLocationsResult?: boolean;
+  readonly dropOriginNodes?: boolean;
 }
 
 export interface SymbolAndEntriesData {
   readonly originalNode?: Node;
   readonly symbolsAndEntries: readonly SymbolAndEntries[];
   readonly position: number;
+}
+
+function concreteSymbolAndEntriesData(data: CrossProjectSymbolAndEntriesData<SymbolAndEntries>): SymbolAndEntriesData {
+  if (data.position === undefined) throw new Error("cross-project symbol entries are missing the request position");
+  return {
+    symbolsAndEntries: data.symbolsAndEntries ?? [],
+    position: data.position,
+  };
 }
 
 export function symbolAndEntriesToReferences(
