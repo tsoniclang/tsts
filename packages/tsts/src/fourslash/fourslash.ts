@@ -9,11 +9,55 @@
 
 import { TextRange } from "../core/index.js";
 import {
+  DiagnosticTagDeprecated,
+  DiagnosticTagUnnecessary,
+  FoldingRangeKindComment,
+  FoldingRangeKindImports,
+  FoldingRangeKindRegion,
   LanguageKindJavaScript,
   LanguageKindJavaScriptReact,
   LanguageKindJSON,
   LanguageKindTypeScript,
   LanguageKindTypeScriptReact,
+  MarkupKindMarkdown,
+  MarkupKindPlainText,
+  PositionEncodingKindUTF8,
+  ResourceOperationKindRename,
+  SemanticTokenModifierAbstract,
+  SemanticTokenModifierAsync,
+  SemanticTokenModifierDeclaration,
+  SemanticTokenModifierDefaultLibrary,
+  SemanticTokenModifierDefinition,
+  SemanticTokenModifierDeprecated,
+  SemanticTokenModifierDocumentation,
+  SemanticTokenModifierModification,
+  SemanticTokenModifierReadonly,
+  SemanticTokenModifierStatic,
+  SemanticTokenTypeClass,
+  SemanticTokenTypeComment,
+  SemanticTokenTypeDecorator,
+  SemanticTokenTypeEnum,
+  SemanticTokenTypeEnumMember,
+  SemanticTokenTypeEvent,
+  SemanticTokenTypeFunction,
+  SemanticTokenTypeInterface,
+  SemanticTokenTypeKeyword,
+  SemanticTokenTypeLabel,
+  SemanticTokenTypeMacro,
+  SemanticTokenTypeMethod,
+  SemanticTokenTypeNamespace,
+  SemanticTokenTypeNumber,
+  SemanticTokenTypeOperator,
+  SemanticTokenTypeParameter,
+  SemanticTokenTypeProperty,
+  SemanticTokenTypeRegexp,
+  SemanticTokenTypeString,
+  SemanticTokenTypeStruct,
+  SemanticTokenTypeType,
+  SemanticTokenTypeTypeParameter,
+  SemanticTokenTypeVariable,
+  TokenFormatRelative,
+  type ClientCapabilities,
   type CompletionItem,
   type CompletionItemDefaults,
   type LanguageKind,
@@ -39,13 +83,9 @@ import {
 import { parseTestData, type Marker, type MarkerOrRange, type RangeMarker, type TestData, type TestFileInfo } from "./testParser.js";
 
 export const rootDir = "/";
+export const showCodeLensLocationsCommandName = "typescript.showCodeLensLocations";
 
-export interface FourslashCapabilities {
-  readonly completion?: boolean;
-  readonly semanticTokens?: boolean;
-  readonly codeActions?: boolean;
-  readonly rename?: boolean;
-}
+export type FourslashCapabilities = ClientCapabilities;
 
 export interface UserPreferences {
   readonly includeCompletionsForModuleExports?: boolean;
@@ -136,7 +176,7 @@ export class FourslashTest {
 
   constructor(options: FourslashOptions) {
     const fileName = options.fileName ?? "fourslash.ts";
-    this.capabilities = options.capabilities ?? {};
+    this.capabilities = getCapabilitiesWithDefaults(options.capabilities);
     this.testData = parseTestData(options.content, fileName);
     this.activeFilename = this.testData.files[0]?.fileName ?? fileName;
 
@@ -357,6 +397,197 @@ export class FourslashTest {
 
 export function newFourslash(content: string, capabilities: FourslashCapabilities = {}, fileName?: string): FourslashTest {
   return new FourslashTest(fileName === undefined ? { capabilities, content } : { capabilities, content, fileName });
+}
+
+export function defaultSemanticTokenTypes(): string[] {
+  return [
+    SemanticTokenTypeNamespace,
+    SemanticTokenTypeClass,
+    SemanticTokenTypeEnum,
+    SemanticTokenTypeInterface,
+    SemanticTokenTypeStruct,
+    SemanticTokenTypeTypeParameter,
+    SemanticTokenTypeType,
+    SemanticTokenTypeParameter,
+    SemanticTokenTypeVariable,
+    SemanticTokenTypeProperty,
+    SemanticTokenTypeEnumMember,
+    SemanticTokenTypeDecorator,
+    SemanticTokenTypeEvent,
+    SemanticTokenTypeFunction,
+    SemanticTokenTypeMethod,
+    SemanticTokenTypeMacro,
+    SemanticTokenTypeLabel,
+    SemanticTokenTypeComment,
+    SemanticTokenTypeString,
+    SemanticTokenTypeKeyword,
+    SemanticTokenTypeNumber,
+    SemanticTokenTypeRegexp,
+    SemanticTokenTypeOperator,
+  ];
+}
+
+export function defaultSemanticTokenModifiers(): string[] {
+  return [
+    SemanticTokenModifierDeclaration,
+    SemanticTokenModifierDefinition,
+    SemanticTokenModifierReadonly,
+    SemanticTokenModifierStatic,
+    SemanticTokenModifierDeprecated,
+    SemanticTokenModifierAbstract,
+    SemanticTokenModifierAsync,
+    SemanticTokenModifierModification,
+    SemanticTokenModifierDocumentation,
+    SemanticTokenModifierDefaultLibrary,
+    "local",
+  ];
+}
+
+export const defaultCompletionCapabilities = {
+  completionItem: {
+    snippetSupport: true,
+    commitCharactersSupport: true,
+    preselectSupport: true,
+    labelDetailsSupport: true,
+    insertReplaceSupport: true,
+    documentationFormat: [MarkupKindMarkdown, MarkupKindPlainText],
+  },
+  completionList: {
+    itemDefaults: ["commitCharacters", "editRange"],
+  },
+} satisfies NonNullable<ClientCapabilities["textDocument"]>["completion"];
+
+export const defaultDefinitionCapabilities = {
+  linkSupport: true,
+} satisfies NonNullable<ClientCapabilities["textDocument"]>["definition"];
+
+export const defaultTypeDefinitionCapabilities = {
+  linkSupport: true,
+} satisfies NonNullable<ClientCapabilities["textDocument"]>["typeDefinition"];
+
+export const defaultImplementationCapabilities = {
+  linkSupport: true,
+} satisfies NonNullable<ClientCapabilities["textDocument"]>["implementation"];
+
+export const defaultHoverCapabilities = {
+  contentFormat: [MarkupKindMarkdown, MarkupKindPlainText],
+  verbosityLevel: true,
+} satisfies NonNullable<ClientCapabilities["textDocument"]>["hover"];
+
+export const defaultSignatureHelpCapabilities = {
+  signatureInformation: {
+    documentationFormat: [MarkupKindMarkdown, MarkupKindPlainText],
+    parameterInformation: {
+      labelOffsetSupport: true,
+    },
+    activeParameterSupport: true,
+  },
+  contextSupport: true,
+} satisfies NonNullable<ClientCapabilities["textDocument"]>["signatureHelp"];
+
+export const defaultDocumentSymbolCapabilities = {
+  hierarchicalDocumentSymbolSupport: true,
+} satisfies NonNullable<ClientCapabilities["textDocument"]>["documentSymbol"];
+
+export const defaultFoldingRangeCapabilities = {
+  rangeLimit: 5000,
+  foldingRangeKind: {
+    valueSet: [FoldingRangeKindComment, FoldingRangeKindImports, FoldingRangeKindRegion],
+  },
+  foldingRange: {
+    collapsedText: true,
+  },
+} satisfies NonNullable<ClientCapabilities["textDocument"]>["foldingRange"];
+
+export const defaultDiagnosticCapabilities = {
+  relatedInformation: true,
+  tagSupport: {
+    valueSet: [DiagnosticTagUnnecessary, DiagnosticTagDeprecated],
+  },
+} satisfies NonNullable<ClientCapabilities["textDocument"]>["diagnostic"];
+
+export const defaultPublishDiagnosticCapabilities = {
+  relatedInformation: true,
+  tagSupport: {
+    valueSet: [DiagnosticTagUnnecessary, DiagnosticTagDeprecated],
+  },
+} satisfies NonNullable<ClientCapabilities["textDocument"]>["publishDiagnostics"];
+
+export const defaultWorkspaceEditCapabilities = {
+  documentChanges: true,
+  resourceOperations: [ResourceOperationKindRename],
+} satisfies NonNullable<ClientCapabilities["workspace"]>["workspaceEdit"];
+
+export function getDefaultCapabilities(): ClientCapabilities {
+  return {
+    general: {
+      positionEncodings: [PositionEncodingKindUTF8],
+    },
+    textDocument: {
+      completion: defaultCompletionCapabilities,
+      diagnostic: defaultDiagnosticCapabilities,
+      publishDiagnostics: defaultPublishDiagnosticCapabilities,
+      definition: defaultDefinitionCapabilities,
+      typeDefinition: defaultTypeDefinitionCapabilities,
+      implementation: defaultImplementationCapabilities,
+      hover: defaultHoverCapabilities,
+      signatureHelp: defaultSignatureHelpCapabilities,
+      documentSymbol: defaultDocumentSymbolCapabilities,
+      foldingRange: defaultFoldingRangeCapabilities,
+      semanticTokens: {
+        requests: {
+          full: { boolean: true },
+        },
+        tokenTypes: defaultSemanticTokenTypes(),
+        tokenModifiers: defaultSemanticTokenModifiers(),
+        formats: [TokenFormatRelative],
+      },
+    },
+    workspace: {
+      configuration: true,
+      fileOperations: {
+        willRename: true,
+      },
+      workspaceEdit: defaultWorkspaceEditCapabilities,
+    },
+  };
+}
+
+export function getCapabilitiesWithDefaults(capabilities: ClientCapabilities | undefined): ClientCapabilities {
+  const textDocument = capabilities?.textDocument ?? {};
+  const workspace = capabilities?.workspace ?? {};
+  return {
+    ...capabilities,
+    general: {
+      ...capabilities?.general,
+      positionEncodings: [PositionEncodingKindUTF8],
+    },
+    textDocument: {
+      ...textDocument,
+      completion: textDocument.completion ?? defaultCompletionCapabilities,
+      diagnostic: textDocument.diagnostic ?? defaultDiagnosticCapabilities,
+      publishDiagnostics: textDocument.publishDiagnostics ?? defaultPublishDiagnosticCapabilities,
+      semanticTokens: textDocument.semanticTokens ?? {
+        requests: { full: { boolean: true } },
+        tokenTypes: defaultSemanticTokenTypes(),
+        tokenModifiers: defaultSemanticTokenModifiers(),
+        formats: [TokenFormatRelative],
+      },
+      definition: textDocument.definition ?? defaultDefinitionCapabilities,
+      typeDefinition: textDocument.typeDefinition ?? defaultTypeDefinitionCapabilities,
+      implementation: textDocument.implementation ?? defaultImplementationCapabilities,
+      hover: textDocument.hover ?? defaultHoverCapabilities,
+      signatureHelp: textDocument.signatureHelp ?? defaultSignatureHelpCapabilities,
+      documentSymbol: textDocument.documentSymbol ?? defaultDocumentSymbolCapabilities,
+      foldingRange: textDocument.foldingRange ?? defaultFoldingRangeCapabilities,
+    },
+    workspace: {
+      ...workspace,
+      fileOperations: workspace.fileOperations ?? { willRename: true },
+      workspaceEdit: workspace.workspaceEdit ?? defaultWorkspaceEditCapabilities,
+      configuration: workspace.configuration ?? true,
+    },
+  };
 }
 
 export function newScriptInfo(fileName: string, content: string): ScriptInfo {
