@@ -358,7 +358,7 @@ function generateLsMaps() {
     "autoimport/extract.go", "autoimport/fix.go", "autoimport/import_adder.go",
     "autoimport/util.go", "autoimport/view.go", "callhierarchy.go", "codeactions.go",
     "codeactions_fixclassincorrectlyimplementsinterface.go", "codeactions_fixmissingtypeannotation.go",
-    "codeactions_importfixes.go", "codeactions_missingmemberfixer.go", "codelens.go", "completions.go",
+    "codeactions_importfixes.go", "codeactions_missingmemberfixer.go", "completions.go",
     "crossproject.go", "definition.go", "displaypartswriter.go", "documenthighlights.go",
     "file_rename.go", "findallreferences.go", "folding.go", "hover.go", "importTracker.go",
     "inlay_hints.go",
