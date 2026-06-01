@@ -7,7 +7,8 @@
 import type { DocumentUri, Location, Position, Range } from "../lsp/lsproto/index.js";
 import { comparePositions } from "../lsp/lsproto/index.js";
 import { lowerFirstChar } from "../stringutil/index.js";
-import type { Marker, RangeMarker } from "./testParser.js";
+import { testDataStateBaseliningEnabled, type Marker, type RangeMarker } from "./testParser.js";
+import { baselineCommandKey, type FourslashTest } from "./fourslash.js";
 
 export type FourslashBaselineCommand = string;
 
@@ -47,6 +48,43 @@ export class StringBaselineWriter implements BaselineWriter {
   }
 }
 
+export interface BaselineOptions {
+  readonly subfolder: string;
+  readonly isSubmodule?: boolean;
+  readonly diffFixupOld?: (text: string) => string;
+  readonly diffFixupNew?: (text: string) => string;
+}
+
+function commandKey(command: FourslashBaselineCommand): string {
+  return baselineCommandKey({ name: command, arguments: [] });
+}
+
+export function addResultToBaseline(
+  test: Pick<FourslashTest, "baselines" | "testData">,
+  command: FourslashBaselineCommand,
+  actual: string,
+): void {
+  const key = commandKey(command);
+  const lines = test.baselines.get(key) ?? [];
+  if (lines.length !== 0) lines.push("\n\n\n");
+  lines.push(`// === ${command} ===\n${actual}`);
+  test.baselines.set(key, lines);
+  if (testDataStateBaseliningEnabled(test.testData)) {
+    return;
+  }
+}
+
+export function writeToBaseline(
+  test: Pick<FourslashTest, "baselines">,
+  command: FourslashBaselineCommand,
+  content: string,
+): void {
+  const key = commandKey(command);
+  const lines = test.baselines.get(key) ?? [];
+  lines.push(content);
+  test.baselines.set(key, lines);
+}
+
 export function getBaselineFileName(baseFileName: string, command: FourslashBaselineCommand): string {
   return `${baseFileName}.${getBaselineExtension(command)}`;
 }
@@ -70,6 +108,318 @@ export function getBaselineExtension(command: FourslashBaselineCommand): string 
     default:
       return "baseline.jsonc";
   }
+}
+
+export function getBaselineOptions(command: FourslashBaselineCommand, testPath: string): BaselineOptions {
+  const subfolder = "fourslash/" + normalizeCommandName(command);
+  if (!isSubmoduleTest(testPath)) return { subfolder };
+
+  switch (command) {
+    case smartSelectionCmd:
+      return { subfolder, isSubmodule: true };
+    case callHierarchyCmd:
+      return {
+        subfolder,
+        isSubmodule: true,
+        diffFixupOld: fixupCallHierarchyBaseline,
+      };
+    case renameCmd:
+      return {
+        subfolder,
+        isSubmodule: true,
+        diffFixupOld: (text) => fixupSingleCommandBaseline(text, command, {
+          skipLine: (line) => line.startsWith("// @findInStrings: ") || line.startsWith("// @findInComments: "),
+          replace: (line) => replaceAllMany(line, [
+            ["/tests/cases/fourslash", ""],
+            ["/server", ""],
+            ["<|", ""],
+            ["|>", ""],
+            ["providePrefixAndSuffixTextForRename", "useAliasesForRename"],
+          ]),
+        }),
+      };
+    case inlayHintsCmd:
+      return {
+        subfolder,
+        isSubmodule: true,
+        diffFixupOld: fixupOldInlayHintsBaseline,
+        diffFixupNew: fixupNewInlayHintsBaseline,
+      };
+    case goToDefinitionCmd:
+    case goToTypeDefinitionCmd:
+    case goToImplementationCmd:
+    case goToSourceDefinitionCmd:
+      return {
+        subfolder,
+        isSubmodule: true,
+        diffFixupOld: (text) => fixupGoToBaseline(text, command),
+        diffFixupNew: (text) => text.replaceAll("bundled:///libs/", ""),
+      };
+    case findAllReferencesCmd:
+      return {
+        subfolder,
+        isSubmodule: true,
+        diffFixupOld: fixupFindAllReferencesBaseline,
+      };
+    case linkedEditingCmd:
+      return {
+        subfolder,
+        isSubmodule: true,
+        diffFixupOld: deleteLinkedEditingInfo,
+        diffFixupNew: deleteLinkedEditingInfo,
+      };
+    default:
+      return { subfolder };
+  }
+}
+
+interface SingleCommandFixupOptions {
+  readonly skipLine?: (line: string) => boolean;
+  readonly replace?: (line: string) => string;
+}
+
+const commandHeaderPattern = /^\/\/ === ([a-z\sA-Z]*) ===/u;
+
+function fixupSingleCommandBaseline(
+  text: string,
+  command: FourslashBaselineCommand,
+  options: SingleCommandFixupOptions = {},
+): string {
+  const commandLines: string[] = [];
+  let isInCommand = false;
+  for (const line of text.split("\n")) {
+    if (options.skipLine?.(line) === true) continue;
+    const matches = commandHeaderPattern.exec(line);
+    if (matches !== null) {
+      isInCommand = matches[1] === command;
+    }
+    if (isInCommand) {
+      commandLines.push(options.replace?.(line) ?? line);
+    }
+  }
+  return dropTrailingEmptyLines(commandLines).join("\n");
+}
+
+function replaceAllMany(text: string, replacements: readonly (readonly [string, string])[]): string {
+  let result = text;
+  for (const [search, replacement] of replacements) {
+    result = result.replaceAll(search, replacement);
+  }
+  return result;
+}
+
+function fixupCallHierarchyBaseline(text: string): string {
+  return replaceAllMany(text, [
+    ["/tests/cases/fourslash/server/", "/"],
+    ["/tests/cases/fourslash/", "/"],
+    ["kind: getter", "kind: property"],
+    ["kind: script", "kind: file"],
+  ]);
+}
+
+function fixupOldInlayHintsBaseline(text: string): string {
+  const commandLines: string[] = [];
+  const lines = text.split("\n");
+  let isInCommand = false;
+  let hintStart = -1;
+  for (let index = 0; index < lines.length; index += 1) {
+    let line = lines[index]!;
+    const matches = commandHeaderPattern.exec(line);
+    if (matches !== null) {
+      isInCommand = matches[1] === inlayHintsCmd;
+    }
+    if (!isInCommand) continue;
+
+    if (line === "{") hintStart = commandLines.length;
+    if (line === "}" && commandLines[commandLines.length - 1]?.endsWith(",") === true) {
+      commandLines[commandLines.length - 1] = commandLines[commandLines.length - 1]!.replace(/,$/u, "");
+    }
+
+    const trimmedLine = line.trim();
+    if (trimmedLine.startsWith('"position": ')) continue;
+    if (trimmedLine.startsWith('"text": ')) {
+      if (trimmedLine === '"text": "",') continue;
+      line = line.replace('"text":', '"label":');
+    }
+    if (trimmedLine.startsWith('"kind": ')) {
+      if (trimmedLine === '"kind": "Parameter",') {
+        line = line.replace('"kind": "Parameter",', '"kind": 2,');
+      } else if (trimmedLine === '"kind": "Type",') {
+        line = line.replace('"kind": "Type",', '"kind": 1,');
+      } else {
+        continue;
+      }
+    }
+    if (trimmedLine.startsWith('"displayParts": ')) {
+      const displayPartLines: string[] = [line.replace("displayParts", "label")];
+      let displayPartEnd = index + 1;
+      for (; displayPartEnd < lines.length; displayPartEnd += 1) {
+        let displayLine = lines[displayPartEnd]!;
+        const displayTrimmed = displayLine.trim();
+        if (displayTrimmed.startsWith('"text": ')) {
+          displayLine = displayLine.replace('"text":', '"value":');
+        } else if (displayTrimmed.startsWith('"span": ')) {
+          displayPartLines.push(displayLine.replace("span", "location") + "},");
+          displayPartEnd += 3;
+          continue;
+        } else if (displayTrimmed.startsWith('"file": ')) {
+          continue;
+        }
+        if (displayTrimmed === "]" || displayTrimmed === "],") {
+          displayPartLines.push(displayTrimmed === "]" ? displayLine + "," : displayLine);
+          break;
+        }
+        displayPartLines.push(displayLine);
+      }
+      commandLines.splice(Math.max(0, hintStart + 1), 0, ...displayPartLines);
+      index = displayPartEnd;
+      continue;
+    }
+    commandLines.push(replaceAllMany(line, [
+      ['"whitespaceAfter"', '"paddingRight"'],
+      ['"whitespaceBefore"', '"paddingLeft"'],
+    ]));
+  }
+  return dropTrailingEmptyLines(commandLines).join("\n");
+}
+
+function fixupNewInlayHintsBaseline(text: string): string {
+  const fixedLines: string[] = [];
+  const lines = text.split("\n");
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index]!;
+    const trimmedLine = line.trim();
+    if (trimmedLine.startsWith('"position": ')) {
+      index += 3;
+      continue;
+    }
+    if (trimmedLine.startsWith('"location": ')) {
+      fixedLines.push(line + "},");
+      index += 12;
+      continue;
+    }
+    fixedLines.push(line);
+  }
+  return fixedLines.join("\n");
+}
+
+function fixupGoToBaseline(text: string, command: FourslashBaselineCommand): string {
+  const commandLines: string[] = [];
+  const objectRangePattern = /\{\| [^|]* \|\}/gu;
+  const detailsHeader = "// === Details ===";
+  let isInCommand = false;
+  let isInDetails = false;
+  for (const line of text.split("\n")) {
+    const matches = commandHeaderPattern.exec(line);
+    if (matches !== null) {
+      isInDetails = false;
+      isInCommand = matches[1] === command || command === goToDefinitionCmd && matches[1] === "getDefinitionAtPosition";
+    }
+    if (!isInCommand) continue;
+    if (line.includes(detailsHeader)) {
+      if (commandLines[commandLines.length - 1] === "") commandLines.pop();
+      isInDetails = true;
+    }
+    if (!isInDetails) {
+      commandLines.push(replaceAllMany(line, [
+        ["/tests/cases/fourslash", ""],
+        ["/server", ""],
+        ["getDefinitionAtPosition", goToDefinitionCmd],
+        ["/*GOTO DEF POS*/", "/*GOTO DEF*/"],
+      ]).replace(objectRangePattern, ""));
+    } else if (line === "  ]") {
+      isInDetails = false;
+    }
+  }
+  return dropTrailingEmptyLines(commandLines).join("\n");
+}
+
+function fixupFindAllReferencesBaseline(text: string): string {
+  const commandLines: string[] = [];
+  const fileHeaderPattern = /^\/\/ === ([^ ]*) ===/u;
+  const objectRangePattern = /\{\| [^|]* \|\}/gu;
+  const sections: { fileName: string; lines: string[] }[] = [];
+  let currentFileName = "";
+  let currentFileLines: string[] = [];
+  let isInCommand = false;
+  let isInDetails = false;
+  let isInDefinitions = false;
+
+  const flush = (): void => {
+    if (currentFileName !== "") {
+      sections.push({ fileName: currentFileName, lines: currentFileLines });
+      currentFileName = "";
+      currentFileLines = [];
+    }
+  };
+  const emitSections = (): void => {
+    sections.sort((left, right) => left.fileName.localeCompare(right.fileName));
+    for (const section of sections.splice(0)) {
+      commandLines.push(...dropTrailingEmptyLines(section.lines), "");
+    }
+  };
+
+  for (const line of text.split("\n")) {
+    const commandMatches = commandHeaderPattern.exec(line);
+    if (commandMatches !== null) {
+      isInDetails = false;
+      isInDefinitions = false;
+      if (commandMatches[1] === findAllReferencesCmd) {
+        isInCommand = true;
+        flush();
+        emitSections();
+        if (commandLines.length > 0) commandLines.push("", "");
+        commandLines.push(replaceAllMany(line, [["/tests/cases/fourslash", ""], ["/server", ""]]));
+        continue;
+      }
+      isInCommand = false;
+    }
+    if (!isInCommand) continue;
+    if (line.includes("// === Definitions ===") || line.includes("// === Details ===")) {
+      isInDefinitions = line.includes("// === Definitions ===");
+      isInDetails = line.includes("// === Details ===");
+      if (currentFileLines[currentFileLines.length - 1] === "") currentFileLines.pop();
+    }
+    if (isInDefinitions || isInDetails) {
+      if (isInDetails && line === "  ]") isInDetails = false;
+      continue;
+    }
+
+    const fixedLine = replaceAllMany(line, [["/tests/cases/fourslash", ""], ["/server", ""], ["<|", ""], ["|>", ""]])
+      .replace(objectRangePattern, "");
+    const fileMatches = fileHeaderPattern.exec(fixedLine);
+    if (fileMatches !== null) {
+      flush();
+      currentFileName = fileMatches[1]!;
+      currentFileLines = [fixedLine];
+    } else {
+      currentFileLines.push(fixedLine);
+    }
+  }
+
+  flush();
+  emitSections();
+  return dropTrailingEmptyLines(commandLines).join("\n");
+}
+
+function deleteLinkedEditingInfo(text: string): string {
+  const lines = text.split("\n");
+  const linkedEditingInfoHeader = /^=== [0-9]+ ===/u;
+  const fileNameHeader = /^=== [\w,\s-]+\.[A-Za-z]+ ===/u;
+  let inLinkedEditingInfo = false;
+  const keptLines: string[] = [];
+  for (const line of lines) {
+    if (linkedEditingInfoHeader.test(line)) {
+      inLinkedEditingInfo = true;
+      continue;
+    }
+    if (fileNameHeader.test(line)) {
+      inLinkedEditingInfo = false;
+      continue;
+    }
+    if (!inLinkedEditingInfo) keptLines.push(line);
+  }
+  return dropTrailingEmptyLines(keptLines).join("\n");
 }
 
 export function dropTrailingEmptyLines(lines: readonly string[]): readonly string[] {
