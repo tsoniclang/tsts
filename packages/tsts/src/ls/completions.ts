@@ -73,7 +73,7 @@ import {
   CompletionItemTagDeprecated,
   InsertTextFormatSnippet,
 } from "../lsp/lsproto/index.js";
-import type { ClientCapabilities, CompletionContext, CompletionItem, CompletionItemData, CompletionItemDefaults, CompletionItemKind, CompletionItemLabelDetails, CompletionItemsOrListOrNull, CompletionList, DocumentUri, Position, Range } from "../lsp/lsproto/index.js";
+import type { AutoImportFix, ClientCapabilities, CompletionContext, CompletionItem, CompletionItemData, CompletionItemDefaults, CompletionItemKind, CompletionItemLabelDetails, CompletionItemsOrListOrNull, CompletionList, DocumentUri, Position, Range } from "../lsp/lsproto/index.js";
 import { findPrecedingToken, getStartOfNode, getTokenAtPositionPublic, getTouchingPropertyName } from "../astnav/index.js";
 import { isInComment } from "./format.js";
 import { getStringLiteralCompletions, type StringCompletionChecker, type StringCompletionProgram, type StringLiteralCompletionService } from "./stringCompletions.js";
@@ -98,6 +98,8 @@ import {
   ScriptElementKindMemberGetAccessorElement,
   ScriptElementKindMemberSetAccessorElement,
   ScriptElementKindMemberVariableElement,
+  ScriptElementKindModifierDeprecated,
+  ScriptElementKindModifierOptional,
   ScriptElementKindModuleElement,
   ScriptElementKindParameterElement,
   ScriptElementKindPrimitiveType,
@@ -108,6 +110,7 @@ import {
   ScriptElementKindWarning,
   type ScriptElementKind,
   type UserPreferences,
+  isNonContextualKeyword,
   getLastToken,
 } from "./lsutil/index.js";
 import {
@@ -815,6 +818,8 @@ type MutableCompletionItem = {
 export interface CompletionInfoHost {
   readonly userPreferences?: UserPreferences;
   readonly compilerOptions?: CompilerOptions;
+  readonly rangeService?: LspRangeService;
+  readonly clientCapabilities?: ClientCapabilities;
   readonly createCompletionItem?: (input: CompletionItemCreateInput) => CompletionItem | undefined;
 }
 
@@ -1117,9 +1122,21 @@ export function completionInfoFromData(
     sortedEntries = getJSCompletionEntries(file as JavaScriptNameTableSourceFile, position, uniqueNames, sortedEntries);
   }
 
+  const itemDefaults = host.rangeService === undefined
+    ? optionalReplacementSpan === undefined ? undefined : { editRange: { range: optionalReplacementSpan } }
+    : setItemDefaults(
+        host.rangeService,
+        host.clientCapabilities,
+        position,
+        file,
+        sortedEntries,
+        data.defaultCommitCharacters,
+        optionalReplacementSpan,
+      );
+
   return {
     isIncomplete: data.hasUnresolvedAutoImports,
-    ...(optionalReplacementSpan === undefined ? {} : { itemDefaults: { editRange: { range: optionalReplacementSpan } } }),
+    ...(itemDefaults === undefined ? {} : { itemDefaults }),
     items: sortedEntries,
   };
 }
@@ -1173,18 +1190,73 @@ export function getCompletionEntriesFromSymbols(
   }
 
   for (const autoImport of data.autoImports) {
-    const candidate = autoImport as { readonly fix?: { readonly name?: string; readonly moduleSpecifier?: string }; readonly name?: string };
+    const candidate = asAutoImportCompletion(autoImport);
     const name = candidate.fix?.name ?? candidate.name ?? "";
     if (name === "" || uniques.get(name) === true) continue;
+
+    const token = stringToKeywordKind(name);
+    if (token !== Kind.Unknown && isNonContextualKeyword(token)) continue;
+    if (!autoImportIsUsableAtLocation(candidate, data.isTypeOnlyLocation)) continue;
+
+    const moduleSpecifier = candidate.fix?.moduleSpecifier ?? candidate.moduleSpecifier ?? "";
+    const exportEntry = candidate.exportEntry;
+    const elementKind = exportEntry?.scriptElementKind as ScriptElementKind | undefined;
+    const kindModifiers = completionKindModifiersFromScriptElement(exportEntry?.scriptElementKindModifiers);
     uniques.set(name, false);
-    sortedEntries.push({
-      label: name,
-      sortText: SortTextAutoImportSuggestions,
-      ...(candidate.fix?.moduleSpecifier === undefined ? {} : { labelDetails: { description: candidate.fix.moduleSpecifier } }),
-    });
+    sortedEntries.push(createLSPCompletionItem(
+      name,
+      "",
+      "",
+      SortTextAutoImportSuggestions,
+      elementKind ?? ScriptElementKindAlias,
+      kindModifiers,
+      undefined,
+      undefined,
+      moduleSpecifier === "" ? undefined : { description: moduleSpecifier },
+      file,
+      position,
+      false,
+      false,
+      true,
+      false,
+      moduleSpecifier,
+      candidate.fix,
+      undefined,
+    ));
   }
 
   return sortedEntries.sort(CompareCompletionEntries);
+}
+
+interface AutoImportCompletion {
+  readonly fix?: AutoImportFix;
+  readonly exportEntry?: AutoImportExportEntry;
+  readonly name?: string;
+  readonly moduleSpecifier?: string;
+}
+
+interface AutoImportExportEntry {
+  readonly flags?: number;
+  readonly scriptElementKind?: number;
+  readonly scriptElementKindModifiers?: number;
+}
+
+function asAutoImportCompletion(value: unknown): AutoImportCompletion {
+  return value as AutoImportCompletion;
+}
+
+function autoImportIsUsableAtLocation(autoImport: AutoImportCompletion, isTypeOnlyLocation: boolean): boolean {
+  const flags = autoImport.exportEntry?.flags;
+  if (flags === undefined) return true;
+  if (isTypeOnlyLocation) return (flags & (SymbolFlags.Type | SymbolFlags.Module)) !== 0;
+  return (flags & SymbolFlags.Value) !== 0;
+}
+
+function completionKindModifiersFromScriptElement(modifiers: number | undefined): CompletionKindModifiers | undefined {
+  if (modifiers === undefined) return undefined;
+  const optional = (modifiers & ScriptElementKindModifierOptional) !== 0;
+  const deprecated = (modifiers & ScriptElementKindModifierDeprecated) !== 0;
+  return optional || deprecated ? { optional, deprecated } : undefined;
 }
 
 export function completionNameForLiteral(file: SourceFile, preferences: UserPreferences, literal: LiteralValue): string {
@@ -1976,8 +2048,11 @@ function normalizeCompletionCheckerLease(lease: CompletionCheckerLease): { reado
 
 function completionInfoHost(service: CompletionService, preferences: UserPreferences): CompletionInfoHost {
   const compilerOptions = service.getProgram?.()?.options?.();
+  const clientCapabilities = service.clientCapabilities?.();
   return {
     userPreferences: preferences,
+    rangeService: service,
+    ...(clientCapabilities === undefined ? {} : { clientCapabilities }),
     ...(compilerOptions === undefined ? {} : { compilerOptions }),
     ...(service.createCompletionItem === undefined ? {} : { createCompletionItem: service.createCompletionItem }),
   };
