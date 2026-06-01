@@ -14,6 +14,8 @@ export interface UserPreferences {
   readonly importModuleSpecifierPreference?: "shortest" | "project-relative" | "relative" | "non-relative";
   readonly importModuleSpecifierEnding?: "auto" | "minimal" | "index" | "js";
   readonly allowTextChangesInNewFiles?: boolean;
+  readonly allowRenameOfImportPath?: TristateValue;
+  readonly useAliasesForRename?: TristateValue;
   readonly codeLens?: CodeLensUserPreferences;
 }
 

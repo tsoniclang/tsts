@@ -1,367 +1,666 @@
 /**
- * Language-service parity map for TS-Go `ls/rename.go`.
+ * Rename validation and workspace-edit generation.
  *
- * This file preserves the upstream declaration and algorithm-line shape
- * for the TypeScript port. Runtime behavior is implemented by the
- * concrete modules that consume these exact parity maps.
+ * Concrete port of TS-Go `internal/ls/rename.go`.
  */
 
-export interface UpstreamSourceLine {
-  readonly line: number;
-  readonly text: string;
+import {
+  Kind,
+  SymbolFlags,
+  getSourceFileOfNode,
+  isAccessExpression,
+  isBinaryExpression,
+  isExportSpecifier,
+  isIdentifier,
+  isImportSpecifier,
+  isNoSubstitutionTemplateLiteral,
+  isNumericLiteral,
+  isObjectLiteralExpression,
+  isShorthandPropertyAssignment,
+  isStringLiteral,
+  isStringLiteralLike,
+  nodeName,
+  nodeText,
+  sourceFileFileName,
+  type Node as AstNode,
+  type SourceFile,
+  type Symbol as AstSymbol,
+} from "../ast/index.js";
+import { getStartOfNode, getTouchingPropertyName } from "../astnav/index.js";
+import { asUnionType, isStringLiteral as isStringLiteralType, type Type } from "../checker/types.js";
+import { Tristate, newTextRange, tristateIsTrue, type Tristate as TristateValue } from "../core/index.js";
+import { Diagnostics } from "../diagnostics/diagnostics.generated.js";
+import { formatDiagnosticMessage } from "../diagnostics/loc.generated.js";
+import {
+  ResourceOperationKindRename,
+  getClientCapabilities,
+  type ClientCapabilitiesContext,
+  type DocumentUri,
+  type HasTextDocumentPosition,
+  type Position,
+  type Range,
+  type RenameParams,
+  type RenameResponse,
+  type TextEdit,
+} from "../lsp/lsproto/index.js";
+import { fileNameToDocumentURI, type LineMapCarrier } from "./lsconv/converters.js";
+import { getQuotePreference, QuotePreferenceSingle, type QuotePreference, type UserPreferences } from "./lsutil/index.js";
+import { parseNodeModuleFromPath } from "../module/index.js";
+import {
+  changeAnyExtension,
+  combinePaths,
+  getAnyExtensionFromPath,
+  getDeclarationFileExtension,
+  getDirectoryPath,
+  hasExtension,
+  isDeclarationFileName,
+  isExternalModuleNameRelative,
+  removeFileExtension,
+} from "../tspath/index.js";
+import {
+  combineRenameResponse,
+  handleCrossProject,
+  type CrossProjectLanguageService,
+  type CrossProjectOrchestrator,
+  type SymbolAndEntriesData,
+  type SymbolEntryTransformOptions,
+} from "./crossProject.js";
+
+export interface RenameInfo {
+  readonly canRename: boolean;
+  readonly localizedErrorMessage?: string;
+  readonly displayName?: string;
+  readonly triggerSpan?: Range;
+  readonly fileToRename?: string;
+  readonly newFileName?: string;
 }
 
-export interface UpstreamDeclaration {
-  readonly kind: "type" | "func" | "const" | "var";
-  readonly line: number;
-  readonly name: string;
-  readonly receiver?: string;
+export const entryKindNone = 0;
+export const entryKindRange = 1;
+export const entryKindNode = 2;
+export const entryKindStringLiteral = 3;
+export const entryKindSearchedLocalFoundProperty = 4;
+export const entryKindSearchedPropertyFoundLocal = 5;
+
+export type EntryKind =
+  | typeof entryKindNone
+  | typeof entryKindRange
+  | typeof entryKindNode
+  | typeof entryKindStringLiteral
+  | typeof entryKindSearchedLocalFoundProperty
+  | typeof entryKindSearchedPropertyFoundLocal;
+
+export interface ReferenceEntry {
+  readonly kind: EntryKind;
+  readonly node?: AstNode;
+  readonly context?: AstNode;
+  readonly fileName?: string;
+  readonly textRange?: { readonly pos: number; readonly end: number };
+  readonly lspRange?: { readonly uri: DocumentUri; readonly range: Range };
 }
 
-export const lsRenameUpstreamPath = "ls/rename.go";
-
-export const lsRenameDeclarations: readonly UpstreamDeclaration[] = [
-  {"line":24,"kind":"type","name":"RenameInfo"},
-  {"line":33,"kind":"func","name":"ProvideRename","receiver":"l *LanguageService"},
-  {"line":47,"kind":"func","name":"GetRenameInfo","receiver":"l *LanguageService"},
-  {"line":62,"kind":"func","name":"symbolAndEntriesToRename","receiver":"l *LanguageService"},
-  {"line":103,"kind":"func","name":"getRenameInfoForNode","receiver":"l *LanguageService"},
-  {"line":144,"kind":"func","name":"nodeIsEligibleForRename"},
-  {"line":161,"kind":"func","name":"renameBlockedReason","receiver":"l *LanguageService"},
-  {"line":181,"kind":"func","name":"isDefinedInLibraryFile"},
-  {"line":187,"kind":"func","name":"wouldRenameInOtherNodeModules"},
-  {"line":222,"kind":"func","name":"ClientSupportsWillRenameFiles"},
-  {"line":226,"kind":"func","name":"ClientSupportsDocumentChanges"},
-  {"line":230,"kind":"func","name":"ClientSupportsRenameResourceOperations"},
-  {"line":235,"kind":"func","name":"getRenameInfoForModule","receiver":"l *LanguageService"},
-  {"line":279,"kind":"func","name":"getNewFileNameForModuleRename","receiver":"l *LanguageService"},
-  {"line":296,"kind":"func","name":"getTextForRename","receiver":"l *LanguageService"},
-  {"line":351,"kind":"func","name":"getQuoteFromPreference"},
-  {"line":358,"kind":"func","name":"getRenameInfoError"},
-  {"line":365,"kind":"func","name":"getRenameInfoSuccess"},
-];
-
-export const lsRenameSourceLines: readonly UpstreamSourceLine[] = [
-  {"line":1,"text":"package ls"},
-  {"line":3,"text":"import ("},
-  {"line":4,"text":"\t\"context\""},
-  {"line":5,"text":"\t\"slices\""},
-  {"line":6,"text":"\t\"strings\""},
-  {"line":8,"text":"\t\"github.com/microsoft/typescript-go/internal/ast\""},
-  {"line":9,"text":"\t\"github.com/microsoft/typescript-go/internal/astnav\""},
-  {"line":10,"text":"\t\"github.com/microsoft/typescript-go/internal/checker\""},
-  {"line":11,"text":"\t\"github.com/microsoft/typescript-go/internal/compiler\""},
-  {"line":12,"text":"\t\"github.com/microsoft/typescript-go/internal/core\""},
-  {"line":13,"text":"\t\"github.com/microsoft/typescript-go/internal/diagnostics\""},
-  {"line":14,"text":"\t\"github.com/microsoft/typescript-go/internal/locale\""},
-  {"line":15,"text":"\t\"github.com/microsoft/typescript-go/internal/ls/lsconv\""},
-  {"line":16,"text":"\t\"github.com/microsoft/typescript-go/internal/ls/lsutil\""},
-  {"line":17,"text":"\t\"github.com/microsoft/typescript-go/internal/lsp/lsproto\""},
-  {"line":18,"text":"\t\"github.com/microsoft/typescript-go/internal/module\""},
-  {"line":19,"text":"\t\"github.com/microsoft/typescript-go/internal/tspath\""},
-  {"line":20,"text":")"},
-  {"line":24,"text":"type RenameInfo struct {"},
-  {"line":25,"text":"\tCanRename             bool"},
-  {"line":26,"text":"\tLocalizedErrorMessage string"},
-  {"line":27,"text":"\tDisplayName           string"},
-  {"line":28,"text":"\tTriggerSpan           lsproto.Range"},
-  {"line":29,"text":"\tFileToRename          string"},
-  {"line":30,"text":"\tNewFileName           string"},
-  {"line":31,"text":"}"},
-  {"line":33,"text":"func (l *LanguageService) ProvideRename(ctx context.Context, params *lsproto.RenameParams, orchestrator CrossProjectOrchestrator) (lsproto.WorkspaceEditOrNull, error) {"},
-  {"line":34,"text":"\treturn handleCrossProject("},
-  {"line":35,"text":"\t\tl,"},
-  {"line":36,"text":"\t\tctx,"},
-  {"line":37,"text":"\t\tparams,"},
-  {"line":38,"text":"\t\torchestrator,"},
-  {"line":39,"text":"\t\t(*LanguageService).symbolAndEntriesToRename,"},
-  {"line":40,"text":"\t\tcombineRenameResponse,"},
-  {"line":41,"text":"\t\ttrue,  /*isRename*/"},
-  {"line":42,"text":"\t\tfalse, /*implementations*/"},
-  {"line":43,"text":"\t\tsymbolEntryTransformOptions{},"},
-  {"line":44,"text":"\t)"},
-  {"line":45,"text":"}"},
-  {"line":47,"text":"func (l *LanguageService) GetRenameInfo(ctx context.Context, newName string, documentURI lsproto.DocumentUri, position lsproto.Position) RenameInfo {"},
-  {"line":48,"text":"\tprogram, sourceFile := l.getProgramAndFile(documentURI)"},
-  {"line":49,"text":"\tpos := int(l.converters.LineAndCharacterToPosition(sourceFile, position))"},
-  {"line":51,"text":"\tnode := astnav.GetTouchingPropertyName(sourceFile, pos)"},
-  {"line":52,"text":"\tnode = getAdjustedLocation(node, true /*forRename*/, sourceFile)"},
-  {"line":54,"text":"\tif nodeIsEligibleForRename(node) {"},
-  {"line":55,"text":"\t\tif renameInfo, ok := l.getRenameInfoForNode(ctx, newName, node, sourceFile, program); ok {"},
-  {"line":56,"text":"\t\t\treturn renameInfo"},
-  {"line":57,"text":"\t\t}"},
-  {"line":58,"text":"\t}"},
-  {"line":59,"text":"\treturn getRenameInfoError(ctx, diagnostics.You_cannot_rename_this_element)"},
-  {"line":60,"text":"}"},
-  {"line":62,"text":"func (l *LanguageService) symbolAndEntriesToRename(ctx context.Context, params *lsproto.RenameParams, data SymbolAndEntriesData, options symbolEntryTransformOptions) (lsproto.WorkspaceEditOrNull, error) {"},
-  {"line":63,"text":"\tif !nodeIsEligibleForRename(data.OriginalNode) {"},
-  {"line":64,"text":"\t\treturn lsproto.WorkspaceEditOrNull{}, nil"},
-  {"line":65,"text":"\t}"},
-  {"line":67,"text":"\tprogram := l.GetProgram()"},
-  {"line":72,"text":"\tsourceFile := ast.GetSourceFileOfNode(data.OriginalNode)"},
-  {"line":73,"text":"\tif info, ok := l.getRenameInfoForNode(ctx, params.NewName, data.OriginalNode, sourceFile, program); !ok || !info.CanRename {"},
-  {"line":74,"text":"\t\treturn lsproto.WorkspaceEditOrNull{}, nil"},
-  {"line":75,"text":"\t}"},
-  {"line":77,"text":"\tentries := core.FlatMap(data.SymbolsAndEntries, func(s *SymbolAndEntries) []*ReferenceEntry { return s.references })"},
-  {"line":78,"text":"\tchanges := make(map[lsproto.DocumentUri][]*lsproto.TextEdit)"},
-  {"line":79,"text":"\tch, done := program.GetTypeChecker(ctx)"},
-  {"line":80,"text":"\tdefer done()"},
-  {"line":82,"text":"\tquotePreference := lsutil.GetQuotePreference(sourceFile, l.UserPreferences())"},
-  {"line":84,"text":"\tfor _, entry := range entries {"},
-  {"line":85,"text":"\t\turi := l.getFileNameOfEntry(entry)"},
-  {"line":86,"text":"\t\tif l.UserPreferences().AllowRenameOfImportPath != core.TSTrue && entry.node != nil && ast.IsStringLiteralLike(entry.node) && ast.TryGetImportFromModuleSpecifier(entry.node) != nil {"},
-  {"line":87,"text":"\t\t\tcontinue"},
-  {"line":88,"text":"\t\t}"},
-  {"line":89,"text":"\t\ttextEdit := &lsproto.TextEdit{"},
-  {"line":90,"text":"\t\t\tRange:   l.getRangeOfEntry(entry),"},
-  {"line":91,"text":"\t\t\tNewText: l.getTextForRename(data.OriginalNode, entry, params.NewName, ch, quotePreference),"},
-  {"line":92,"text":"\t\t}"},
-  {"line":93,"text":"\t\tchanges[uri] = append(changes[uri], textEdit)"},
-  {"line":94,"text":"\t}"},
-  {"line":95,"text":"\treturn lsproto.WorkspaceEditOrNull{"},
-  {"line":96,"text":"\t\tWorkspaceEdit: &lsproto.WorkspaceEdit{"},
-  {"line":97,"text":"\t\t\tChanges: &changes,"},
-  {"line":98,"text":"\t\t},"},
-  {"line":99,"text":"\t}, nil"},
-  {"line":100,"text":"}"},
-  {"line":103,"text":"func (l *LanguageService) getRenameInfoForNode(ctx context.Context, newName string, node *ast.Node, sourceFile *ast.SourceFile, program *compiler.Program) (RenameInfo, bool) {"},
-  {"line":104,"text":"\tch, done := program.GetTypeChecker(ctx)"},
-  {"line":105,"text":"\tdefer done()"},
-  {"line":107,"text":"\tsymbol := ch.GetSymbolAtLocation(node)"},
-  {"line":108,"text":"\tif symbol == nil {"},
-  {"line":109,"text":"\t\tif ast.IsStringLiteralLike(node) {"},
-  {"line":111,"text":"\t\t\ttyp := getContextualTypeFromParentOrAncestorTypeNode(node, ch)"},
-  {"line":112,"text":"\t\t\tif typ != nil && (typ.IsStringLiteral() ||"},
-  {"line":113,"text":"\t\t\t\t(typ.IsUnion() && core.Every(typ.Types(), func(t *checker.Type) bool {"},
-  {"line":114,"text":"\t\t\t\t\treturn t.IsStringLiteral()"},
-  {"line":115,"text":"\t\t\t\t}))) {"},
-  {"line":116,"text":"\t\t\t\treturn getRenameInfoSuccess(node, sourceFile, node.Text(), l.converters), true"},
-  {"line":117,"text":"\t\t\t}"},
-  {"line":118,"text":"\t\t} else if ast.IsLabelName(node) {"},
-  {"line":119,"text":"\t\t\tname := node.Text()"},
-  {"line":120,"text":"\t\t\treturn getRenameInfoSuccess(node, sourceFile, name, l.converters), true"},
-  {"line":121,"text":"\t\t}"},
-  {"line":122,"text":"\t\treturn RenameInfo{}, false"},
-  {"line":123,"text":"\t}"},
-  {"line":126,"text":"\tif len(symbol.Declarations) == 0 {"},
-  {"line":127,"text":"\t\treturn RenameInfo{}, false"},
-  {"line":128,"text":"\t}"},
-  {"line":130,"text":"\tif msg := l.renameBlockedReason(sourceFile, node, symbol, ch, program); msg != nil {"},
-  {"line":131,"text":"\t\treturn getRenameInfoError(ctx, msg), true"},
-  {"line":132,"text":"\t}"},
-  {"line":134,"text":"\tif ast.IsStringLiteralLike(node) && ast.TryGetImportFromModuleSpecifier(node) != nil {"},
-  {"line":135,"text":"\t\tif l.UserPreferences().AllowRenameOfImportPath.IsTrue() {"},
-  {"line":136,"text":"\t\t\treturn l.getRenameInfoForModule(ctx, newName, node, sourceFile, symbol)"},
-  {"line":137,"text":"\t\t}"},
-  {"line":138,"text":"\t\treturn RenameInfo{}, false"},
-  {"line":139,"text":"\t}"},
-  {"line":141,"text":"\treturn getRenameInfoSuccess(node, sourceFile, ch.SymbolToString(symbol), l.converters), true"},
-  {"line":142,"text":"}"},
-  {"line":144,"text":"func nodeIsEligibleForRename(node *ast.Node) bool {"},
-  {"line":145,"text":"\tswitch node.Kind {"},
-  {"line":146,"text":"\tcase ast.KindIdentifier,"},
-  {"line":147,"text":"\t\tast.KindPrivateIdentifier,"},
-  {"line":148,"text":"\t\tast.KindStringLiteral,"},
-  {"line":149,"text":"\t\tast.KindNoSubstitutionTemplateLiteral,"},
-  {"line":150,"text":"\t\tast.KindThisKeyword:"},
-  {"line":151,"text":"\t\treturn true"},
-  {"line":152,"text":"\tcase ast.KindNumericLiteral:"},
-  {"line":153,"text":"\t\treturn isLiteralNameOfPropertyDeclarationOrIndexAccess(node)"},
-  {"line":154,"text":"\tdefault:"},
-  {"line":155,"text":"\t\treturn false"},
-  {"line":156,"text":"\t}"},
-  {"line":157,"text":"}"},
-  {"line":161,"text":"func (l *LanguageService) renameBlockedReason(sourceFile *ast.SourceFile, node *ast.Node, symbol *ast.Symbol, ch *checker.Checker, program *compiler.Program) *diagnostics.Message {"},
-  {"line":162,"text":"\tfor _, declaration := range symbol.Declarations {"},
-  {"line":163,"text":"\t\tif isDefinedInLibraryFile(program, declaration) {"},
-  {"line":164,"text":"\t\t\treturn diagnostics.You_cannot_rename_elements_that_are_defined_in_the_standard_TypeScript_library"},
-  {"line":165,"text":"\t\t}"},
-  {"line":166,"text":"\t}"},
-  {"line":169,"text":"\tif ast.IsIdentifier(node) && node.Text() == \"default\" && symbol.Parent != nil && symbol.Parent.Flags&ast.SymbolFlagsModule != 0 {"},
-  {"line":170,"text":"\t\treturn diagnostics.You_cannot_rename_this_element"},
-  {"line":171,"text":"\t}"},
-  {"line":173,"text":"\tif msg := wouldRenameInOtherNodeModules(sourceFile, symbol, ch, l.UserPreferences()); msg != nil {"},
-  {"line":174,"text":"\t\treturn msg"},
-  {"line":175,"text":"\t}"},
-  {"line":177,"text":"\treturn nil"},
-  {"line":178,"text":"}"},
-  {"line":181,"text":"func isDefinedInLibraryFile(program *compiler.Program, declaration *ast.Node) bool {"},
-  {"line":182,"text":"\tdeclSourceFile := ast.GetSourceFileOfNode(declaration)"},
-  {"line":183,"text":"\treturn program.IsSourceFileDefaultLibrary(declSourceFile.Path()) && tspath.IsDeclarationFileName(declSourceFile.FileName())"},
-  {"line":184,"text":"}"},
-  {"line":187,"text":"func wouldRenameInOtherNodeModules(originalFile *ast.SourceFile, symbol *ast.Symbol, ch *checker.Checker, preferences lsutil.UserPreferences) *diagnostics.Message {"},
-  {"line":188,"text":"\tsym := symbol"},
-  {"line":189,"text":"\tif !preferences.UseAliasesForRename.IsTrue() && sym.Flags&ast.SymbolFlagsAlias != 0 {"},
-  {"line":190,"text":"\t\timportSpecifier := core.Find(sym.Declarations, ast.IsImportSpecifier)"},
-  {"line":191,"text":"\t\tif importSpecifier != nil && importSpecifier.AsImportSpecifier().PropertyName == nil {"},
-  {"line":192,"text":"\t\t\tsym = ch.GetAliasedSymbol(sym)"},
-  {"line":193,"text":"\t\t}"},
-  {"line":194,"text":"\t}"},
-  {"line":196,"text":"\tdeclarations := sym.Declarations"},
-  {"line":197,"text":"\tif len(declarations) == 0 {"},
-  {"line":198,"text":"\t\treturn nil"},
-  {"line":199,"text":"\t}"},
-  {"line":201,"text":"\toriginalPackage := module.ParseNodeModuleFromPath(originalFile.FileName(), false /*isFolder*/)"},
-  {"line":202,"text":"\tif originalPackage == \"\" {"},
-  {"line":204,"text":"\t\tfor _, declaration := range declarations {"},
-  {"line":205,"text":"\t\t\tif isInsideNodeModules(ast.GetSourceFileOfNode(declaration).FileName()) {"},
-  {"line":206,"text":"\t\t\t\treturn diagnostics.You_cannot_rename_elements_that_are_defined_in_a_node_modules_folder"},
-  {"line":207,"text":"\t\t\t}"},
-  {"line":208,"text":"\t\t}"},
-  {"line":209,"text":"\t\treturn nil"},
-  {"line":210,"text":"\t}"},
-  {"line":213,"text":"\tfor _, declaration := range declarations {"},
-  {"line":214,"text":"\t\tdeclPackage := module.ParseNodeModuleFromPath(ast.GetSourceFileOfNode(declaration).FileName(), false /*isFolder*/)"},
-  {"line":215,"text":"\t\tif declPackage != \"\" && declPackage != originalPackage {"},
-  {"line":216,"text":"\t\t\treturn diagnostics.You_cannot_rename_elements_that_are_defined_in_another_node_modules_folder"},
-  {"line":217,"text":"\t\t}"},
-  {"line":218,"text":"\t}"},
-  {"line":219,"text":"\treturn nil"},
-  {"line":220,"text":"}"},
-  {"line":222,"text":"func ClientSupportsWillRenameFiles(ctx context.Context) bool {"},
-  {"line":223,"text":"\treturn lsproto.GetClientCapabilities(ctx).Workspace.FileOperations.WillRename"},
-  {"line":224,"text":"}"},
-  {"line":226,"text":"func ClientSupportsDocumentChanges(ctx context.Context) bool {"},
-  {"line":227,"text":"\treturn lsproto.GetClientCapabilities(ctx).Workspace.WorkspaceEdit.DocumentChanges"},
-  {"line":228,"text":"}"},
-  {"line":230,"text":"func ClientSupportsRenameResourceOperations(ctx context.Context) bool {"},
-  {"line":231,"text":"\treturn slices.Contains(lsproto.GetClientCapabilities(ctx).Workspace.WorkspaceEdit.ResourceOperations, lsproto.ResourceOperationKindRename)"},
-  {"line":232,"text":"}"},
-  {"line":235,"text":"func (l *LanguageService) getRenameInfoForModule(ctx context.Context, newName string, specifier *ast.StringLiteralLike, sourceFile *ast.SourceFile, moduleSymbol *ast.Symbol) (RenameInfo, bool) {"},
-  {"line":236,"text":"\tif !tspath.IsExternalModuleNameRelative(specifier.Text()) {"},
-  {"line":237,"text":"\t\treturn getRenameInfoError(ctx, diagnostics.You_cannot_rename_a_module_via_a_global_import), true"},
-  {"line":238,"text":"\t}"},
-  {"line":239,"text":"\tif !ClientSupportsDocumentChanges(ctx) || !ClientSupportsRenameResourceOperations(ctx) {"},
-  {"line":240,"text":"\t\treturn getRenameInfoError(ctx, diagnostics.File_rename_is_not_supported_by_the_editor), true"},
-  {"line":241,"text":"\t}"},
-  {"line":243,"text":"\tmoduleSourceFile := core.Find(moduleSymbol.Declarations, ast.IsSourceFile)"},
-  {"line":244,"text":"\tif moduleSourceFile == nil {"},
-  {"line":245,"text":"\t\treturn RenameInfo{}, false"},
-  {"line":246,"text":"\t}"},
-  {"line":248,"text":"\tfileName := moduleSourceFile.AsSourceFile().FileName()"},
-  {"line":249,"text":"\twithoutIndex := \"\""},
-  {"line":250,"text":"\tif !strings.HasSuffix(specifier.Text(), \"/index\") && !strings.HasSuffix(specifier.Text(), \"/index.js\") {"},
-  {"line":251,"text":"\t\tcandidate := tspath.RemoveFileExtension(fileName)"},
-  {"line":252,"text":"\t\tif trimmed, ok := strings.CutSuffix(candidate, \"/index\"); ok {"},
-  {"line":253,"text":"\t\t\twithoutIndex = trimmed"},
-  {"line":254,"text":"\t\t}"},
-  {"line":255,"text":"\t}"},
-  {"line":257,"text":"\tdisplayName := fileName"},
-  {"line":258,"text":"\tif withoutIndex != \"\" {"},
-  {"line":259,"text":"\t\tdisplayName = withoutIndex"},
-  {"line":260,"text":"\t}"},
-  {"line":261,"text":"\tnewFileName := l.getNewFileNameForModuleRename(displayName, specifier.Text(), newName)"},
-  {"line":264,"text":"\tindexAfterLastSlash := strings.LastIndex(specifier.Text(), \"/\") + 1"},
-  {"line":265,"text":"\tstart := specifier.Pos() + 1 + indexAfterLastSlash"},
-  {"line":266,"text":"\tlength := len(specifier.Text()) - indexAfterLastSlash"},
-  {"line":268,"text":"\treturn RenameInfo{"},
-  {"line":269,"text":"\t\tCanRename:    true,"},
-  {"line":270,"text":"\t\tDisplayName:  specifier.Text()[indexAfterLastSlash:],"},
-  {"line":271,"text":"\t\tTriggerSpan:  l.converters.ToLSPRange(sourceFile, core.NewTextRange(start, start+length)),"},
-  {"line":272,"text":"\t\tFileToRename: displayName,"},
-  {"line":273,"text":"\t\tNewFileName:  newFileName,"},
-  {"line":274,"text":"\t}, true"},
-  {"line":275,"text":"}"},
-  {"line":279,"text":"func (l *LanguageService) getNewFileNameForModuleRename(oldPath, specifierText, newName string) string {"},
-  {"line":280,"text":"\tnewPath := tspath.CombinePaths(tspath.GetDirectoryPath(oldPath), newName)"},
-  {"line":281,"text":"\tignoreCase := !l.host.UseCaseSensitiveFileNames()"},
-  {"line":282,"text":"\tvar oldExt string"},
-  {"line":283,"text":"\tif tspath.IsDeclarationFileName(oldPath) {"},
-  {"line":284,"text":"\t\toldExt = tspath.GetDeclarationFileExtension(oldPath)"},
-  {"line":285,"text":"\t} else {"},
-  {"line":286,"text":"\t\toldExt = tspath.GetAnyExtensionFromPath(oldPath, nil /*extensions*/, ignoreCase)"},
-  {"line":287,"text":"\t}"},
-  {"line":288,"text":"\tif !tspath.HasExtension(newPath) {"},
-  {"line":289,"text":"\t\tnewPath = newPath + oldExt"},
-  {"line":290,"text":"\t} else if tspath.GetAnyExtensionFromPath(newPath, nil /*extensions*/, ignoreCase) == tspath.GetAnyExtensionFromPath(specifierText, nil /*extensions*/, ignoreCase) {"},
-  {"line":291,"text":"\t\tnewPath = tspath.ChangeAnyExtension(newPath, oldExt, nil /*extensions*/, ignoreCase)"},
-  {"line":292,"text":"\t}"},
-  {"line":293,"text":"\treturn newPath"},
-  {"line":294,"text":"}"},
-  {"line":296,"text":"func (l *LanguageService) getTextForRename(originalNode *ast.Node, entry *ReferenceEntry, newText string, ch *checker.Checker, quotePreference lsutil.QuotePreference) string {"},
-  {"line":297,"text":"\tif entry.kind != entryKindRange && (ast.IsIdentifier(originalNode) || ast.IsStringLiteralLike(originalNode)) {"},
-  {"line":298,"text":"\t\tnode := ast.GetReparsedNodeForNode(entry.node)"},
-  {"line":299,"text":"\t\tkind := entry.kind"},
-  {"line":300,"text":"\t\tparent := node.Parent"},
-  {"line":301,"text":"\t\tname := originalNode.Text()"},
-  {"line":302,"text":"\t\tisShorthandAssignment := ast.IsShorthandPropertyAssignment(parent)"},
-  {"line":303,"text":"\t\tswitch {"},
-  {"line":304,"text":"\t\tcase isShorthandAssignment || (isObjectBindingElementWithoutPropertyName(parent) && parent.Name() == node && parent.AsBindingElement().DotDotDotToken == nil):"},
-  {"line":305,"text":"\t\t\tif kind == entryKindSearchedLocalFoundProperty {"},
-  {"line":306,"text":"\t\t\t\treturn name + \": \" + newText"},
-  {"line":307,"text":"\t\t\t}"},
-  {"line":308,"text":"\t\t\tif kind == entryKindSearchedPropertyFoundLocal {"},
-  {"line":309,"text":"\t\t\t\treturn newText + \": \" + name"},
-  {"line":310,"text":"\t\t\t}"},
-  {"line":313,"text":"\t\t\tif isShorthandAssignment {"},
-  {"line":314,"text":"\t\t\t\tgrandParent := parent.Parent"},
-  {"line":315,"text":"\t\t\t\tif ast.IsObjectLiteralExpression(grandParent) && ast.IsBinaryExpression(grandParent.Parent) && ast.IsModuleExportsAccessExpression(grandParent.Parent.AsBinaryExpression().Left) {"},
-  {"line":316,"text":"\t\t\t\t\treturn name + \": \" + newText"},
-  {"line":317,"text":"\t\t\t\t}"},
-  {"line":318,"text":"\t\t\t\treturn newText + \": \" + name"},
-  {"line":319,"text":"\t\t\t}"},
-  {"line":320,"text":"\t\t\treturn name + \": \" + newText"},
-  {"line":321,"text":"\t\tcase ast.IsImportSpecifier(parent) && parent.PropertyName() == nil:"},
-  {"line":323,"text":"\t\t\tvar originalSymbol *ast.Symbol"},
-  {"line":324,"text":"\t\t\tif ast.IsExportSpecifier(originalNode.Parent) {"},
-  {"line":325,"text":"\t\t\t\toriginalSymbol = ch.GetExportSpecifierLocalTargetSymbol(originalNode.Parent)"},
-  {"line":326,"text":"\t\t\t} else {"},
-  {"line":327,"text":"\t\t\t\toriginalSymbol = ch.GetSymbolAtLocation(originalNode)"},
-  {"line":328,"text":"\t\t\t}"},
-  {"line":329,"text":"\t\t\tif originalSymbol != nil && slices.Contains(originalSymbol.Declarations, parent) {"},
-  {"line":330,"text":"\t\t\t\treturn name + \" as \" + newText"},
-  {"line":331,"text":"\t\t\t}"},
-  {"line":332,"text":"\t\t\treturn newText"},
-  {"line":333,"text":"\t\tcase ast.IsExportSpecifier(parent) && parent.PropertyName() == nil:"},
-  {"line":335,"text":"\t\t\tif originalNode == entry.node || ch.GetSymbolAtLocation(originalNode) == ch.GetSymbolAtLocation(entry.node) {"},
-  {"line":336,"text":"\t\t\t\treturn name + \" as \" + newText"},
-  {"line":337,"text":"\t\t\t}"},
-  {"line":338,"text":"\t\t\treturn newText + \" as \" + name"},
-  {"line":339,"text":"\t\t}"},
-  {"line":340,"text":"\t}"},
-  {"line":343,"text":"\tif entry.kind != entryKindRange && ast.IsNumericLiteral(entry.node) && ast.IsAccessExpression(entry.node.Parent) {"},
-  {"line":344,"text":"\t\tquote := getQuoteFromPreference(quotePreference)"},
-  {"line":345,"text":"\t\treturn quote + newText + quote"},
-  {"line":346,"text":"\t}"},
-  {"line":348,"text":"\treturn newText"},
-  {"line":349,"text":"}"},
-  {"line":351,"text":"func getQuoteFromPreference(quotePreference lsutil.QuotePreference) string {"},
-  {"line":352,"text":"\tif quotePreference == lsutil.QuotePreferenceSingle {"},
-  {"line":353,"text":"\t\treturn \"'\""},
-  {"line":354,"text":"\t}"},
-  {"line":355,"text":"\treturn `\"`"},
-  {"line":356,"text":"}"},
-  {"line":358,"text":"func getRenameInfoError(ctx context.Context, message *diagnostics.Message) RenameInfo {"},
-  {"line":359,"text":"\treturn RenameInfo{"},
-  {"line":360,"text":"\t\tCanRename:             false,"},
-  {"line":361,"text":"\t\tLocalizedErrorMessage: message.Localize(locale.FromContext(ctx)),"},
-  {"line":362,"text":"\t}"},
-  {"line":363,"text":"}"},
-  {"line":365,"text":"func getRenameInfoSuccess(node *ast.Node, sourceFile *ast.SourceFile, displayName string, converters *lsconv.Converters) RenameInfo {"},
-  {"line":366,"text":"\tstart := astnav.GetStartOfNode(node, sourceFile, false /*includeJSDoc*/)"},
-  {"line":367,"text":"\tend := node.End()"},
-  {"line":368,"text":"\tif ast.IsStringLiteralLike(node) {"},
-  {"line":370,"text":"\t\tstart++"},
-  {"line":371,"text":"\t\tend--"},
-  {"line":372,"text":"\t}"},
-  {"line":373,"text":"\treturn RenameInfo{"},
-  {"line":374,"text":"\t\tCanRename:   true,"},
-  {"line":375,"text":"\t\tDisplayName: displayName,"},
-  {"line":376,"text":"\t\tTriggerSpan: converters.ToLSPRange(sourceFile, core.NewTextRange(start, end)),"},
-  {"line":377,"text":"\t}"},
-  {"line":378,"text":"}"},
-];
-
-export function findLsRenameDeclaration(name: string): UpstreamDeclaration | undefined {
-  return lsRenameDeclarations.find((declaration) => declaration.name === name);
+export interface SymbolAndEntries {
+  readonly references: readonly ReferenceEntry[];
 }
 
-export function requireLsRenameDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findLsRenameDeclaration(name);
-  if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
-  return declaration;
+export interface RenameSourceFile extends SourceFile, LineMapCarrier {}
+
+export interface RenameChecker {
+  getSymbolAtLocation(node: AstNode): AstSymbol | undefined;
+  getAliasedSymbol(symbol: AstSymbol): AstSymbol;
+  getExportSpecifierLocalTargetSymbol(node: AstNode): AstSymbol | undefined;
+  getContextualTypeFromParentOrAncestorTypeNode(node: AstNode): Type | undefined;
+  symbolToString(symbol: AstSymbol): string;
 }
 
-export function lsRenameLineText(line: number): string | undefined {
-  return lsRenameSourceLines.find((entry) => entry.line === line)?.text;
+export interface RenameProgram {
+  getTypeChecker(context: unknown): { readonly checker: RenameChecker; readonly release: () => void };
+  isSourceFileDefaultLibrary(path: string): boolean;
+}
+
+export interface RenameHost {
+  useCaseSensitiveFileNames(): boolean;
+}
+
+export interface RenameConverters {
+  lineAndCharacterToPosition(file: LineMapCarrier, position: Position): number;
+  toLSPRange(file: LineMapCarrier, range: { readonly pos: number; readonly end: number }): Range;
+}
+
+export interface RenameUserPreferences extends UserPreferences {
+  readonly allowRenameOfImportPath?: TristateValue;
+  readonly useAliasesForRename?: TristateValue;
+}
+
+export interface RenameLanguageService extends CrossProjectLanguageService<SymbolAndEntries> {
+  readonly host: RenameHost;
+  readonly converters: RenameConverters;
+  getProgram(): RenameProgram;
+  getProgramAndFile(documentURI: DocumentUri): readonly [RenameProgram, RenameSourceFile];
+  userPreferences(): RenameUserPreferences;
+  getFileNameOfEntry?(entry: ReferenceEntry): DocumentUri;
+  getRangeOfEntry?(entry: ReferenceEntry): Range;
+}
+
+interface RenameRequest extends RenameParams, HasTextDocumentPosition {}
+
+export function provideRename<LanguageService extends RenameLanguageService>(
+  service: LanguageService,
+  context: ClientCapabilitiesContext | undefined,
+  params: RenameParams,
+  orchestrator?: CrossProjectOrchestrator<LanguageService, SymbolAndEntries>,
+): RenameResponse {
+  return handleCrossProject(
+    service,
+    context,
+    renameRequest(params),
+    orchestrator,
+    symbolAndEntriesToRename,
+    combineRenameResponse,
+    true,
+    false,
+    {},
+  );
+}
+
+export function getRenameInfo(
+  service: RenameLanguageService,
+  context: ClientCapabilitiesContext | undefined,
+  newName: string,
+  documentURI: DocumentUri,
+  position: Position,
+): RenameInfo {
+  const [program, sourceFile] = service.getProgramAndFile(documentURI);
+  const pos = service.converters.lineAndCharacterToPosition(sourceFile, position);
+  const touching = getTouchingPropertyName(sourceFile, pos);
+  const node = touching === undefined ? undefined : getAdjustedLocation(touching, true);
+
+  if (node !== undefined && nodeIsEligibleForRename(node)) {
+    const renameInfo = getRenameInfoForNode(service, context, newName, node, sourceFile, program);
+    if (renameInfo !== undefined) return renameInfo;
+  }
+  return getRenameInfoError(Diagnostics.You_cannot_rename_this_element);
+}
+
+export function symbolAndEntriesToRename<LanguageService extends RenameLanguageService>(
+  service: LanguageService,
+  context: unknown,
+  params: RenameRequest,
+  data: SymbolAndEntriesData<SymbolAndEntries>,
+  _options: SymbolEntryTransformOptions,
+): RenameResponse {
+  const clientContext = asClientCapabilitiesContext(context);
+  const originalNode = asNode(data.originalNode);
+  if (originalNode === undefined || !nodeIsEligibleForRename(originalNode)) return {};
+
+  const program = service.getProgram();
+  const sourceFile = asRenameSourceFile(getSourceFileOfNode(originalNode));
+  if (sourceFile === undefined) return {};
+
+  const info = getRenameInfoForNode(service, clientContext, params.newName, originalNode, sourceFile, program);
+  if (info === undefined || !info.canRename) return {};
+
+  const checkerLease = program.getTypeChecker(clientContext);
+  try {
+    const quotePreference = getQuotePreference(sourceFile, service.userPreferences());
+    const changes: Record<string, TextEdit[]> = {};
+
+    for (const entryGroup of data.symbolsAndEntries ?? []) {
+      for (const entry of entryGroup.references) {
+        if (shouldSkipImportPathRename(service, entry)) continue;
+        const uri = getFileNameOfEntry(service, entry);
+        const textEdit: TextEdit = {
+          range: getRangeOfEntry(service, entry),
+          newText: getTextForRename(originalNode, entry, params.newName, checkerLease.checker, quotePreference),
+        };
+        (changes[uri] ??= []).push(textEdit);
+      }
+    }
+
+    return { workspaceEdit: { changes } };
+  } finally {
+    checkerLease.release();
+  }
+}
+
+export function nodeIsEligibleForRename(node: AstNode): boolean {
+  switch (node.kind) {
+    case Kind.Identifier:
+    case Kind.PrivateIdentifier:
+    case Kind.StringLiteral:
+    case Kind.NoSubstitutionTemplateLiteral:
+    case Kind.ThisKeyword:
+      return true;
+    case Kind.NumericLiteral:
+      return isLiteralNameOfPropertyDeclarationOrIndexAccess(node);
+    default:
+      return false;
+  }
+}
+
+export function renameBlockedReason(
+  sourceFile: SourceFile,
+  node: AstNode,
+  symbol: AstSymbol,
+  checker: RenameChecker,
+  program: RenameProgram,
+  preferences: RenameUserPreferences,
+): typeof Diagnostics.You_cannot_rename_this_element | undefined {
+  for (const declaration of symbol.declarations) {
+    if (isDefinedInLibraryFile(program, declaration)) {
+      return Diagnostics.You_cannot_rename_elements_that_are_defined_in_the_standard_TypeScript_library;
+    }
+  }
+
+  if (
+    isIdentifier(node)
+    && node.text === "default"
+    && symbol.parent !== undefined
+    && ((symbol.parent.flags ?? SymbolFlags.None) & SymbolFlags.Module) !== 0
+  ) {
+    return Diagnostics.You_cannot_rename_this_element;
+  }
+
+  return wouldRenameInOtherNodeModules(sourceFile, symbol, checker, preferences);
+}
+
+export function isDefinedInLibraryFile(program: RenameProgram, declaration: AstNode): boolean {
+  const sourceFile = asSourceFile(getSourceFileOfNode(declaration));
+  return sourceFile !== undefined
+    && program.isSourceFileDefaultLibrary(sourceFile.path)
+    && isDeclarationFileName(sourceFile.fileName);
+}
+
+export function wouldRenameInOtherNodeModules(
+  originalFile: SourceFile,
+  symbol: AstSymbol,
+  checker: RenameChecker,
+  preferences: RenameUserPreferences,
+): typeof Diagnostics.You_cannot_rename_this_element | undefined {
+  let sym = symbol;
+  if (!tristateIsTrue(preferences.useAliasesForRename) && ((sym.flags ?? SymbolFlags.None) & SymbolFlags.Alias) !== 0) {
+    const importSpecifier = sym.declarations.find(isImportSpecifier);
+    if (importSpecifier !== undefined && importSpecifier.propertyName === undefined) {
+      sym = checker.getAliasedSymbol(sym);
+    }
+  }
+
+  if (sym.declarations.length === 0) return undefined;
+
+  const originalPackage = parseNodeModuleFromPath(originalFile.fileName, false);
+  if (originalPackage === "") {
+    for (const declaration of sym.declarations) {
+      const declarationSourceFile = asSourceFile(getSourceFileOfNode(declaration));
+      if (declarationSourceFile !== undefined && isInsideNodeModules(declarationSourceFile.fileName)) {
+        return Diagnostics.You_cannot_rename_elements_that_are_defined_in_a_node_modules_folder;
+      }
+    }
+    return undefined;
+  }
+
+  for (const declaration of sym.declarations) {
+    const declarationSourceFile = asSourceFile(getSourceFileOfNode(declaration));
+    if (declarationSourceFile === undefined) continue;
+    const declarationPackage = parseNodeModuleFromPath(declarationSourceFile.fileName, false);
+    if (declarationPackage !== "" && declarationPackage !== originalPackage) {
+      return Diagnostics.You_cannot_rename_elements_that_are_defined_in_another_node_modules_folder;
+    }
+  }
+  return undefined;
+}
+
+export function clientSupportsWillRenameFiles(context: ClientCapabilitiesContext | undefined): boolean {
+  return getClientCapabilities(context).workspace?.fileOperations?.willRename === true;
+}
+
+export function clientSupportsDocumentChanges(context: ClientCapabilitiesContext | undefined): boolean {
+  return getClientCapabilities(context).workspace?.workspaceEdit?.documentChanges === true;
+}
+
+export function clientSupportsRenameResourceOperations(context: ClientCapabilitiesContext | undefined): boolean {
+  return getClientCapabilities(context).workspace?.workspaceEdit?.resourceOperations?.includes(ResourceOperationKindRename) === true;
+}
+
+export function getRenameInfoForModule(
+  service: RenameLanguageService,
+  context: ClientCapabilitiesContext | undefined,
+  newName: string,
+  specifier: AstNode,
+  sourceFile: RenameSourceFile,
+  moduleSymbol: AstSymbol,
+): RenameInfo | undefined {
+  const specifierText = nodeText(specifier);
+  if (!isExternalModuleNameRelative(specifierText)) {
+    return getRenameInfoError(Diagnostics.You_cannot_rename_a_module_via_a_global_import);
+  }
+  if (!clientSupportsDocumentChanges(context) || !clientSupportsRenameResourceOperations(context)) {
+    return getRenameInfoError(Diagnostics.File_rename_is_not_supported_by_the_editor);
+  }
+
+  const moduleSourceFile = moduleSymbol.declarations.find(isSourceFileNode);
+  if (moduleSourceFile === undefined) return undefined;
+
+  const fileName = sourceFileFileName(moduleSourceFile);
+  let withoutIndex = "";
+  if (!specifierText.endsWith("/index") && !specifierText.endsWith("/index.js")) {
+    const candidate = removeFileExtension(fileName);
+    if (candidate.endsWith("/index")) {
+      withoutIndex = candidate.slice(0, -"/index".length);
+    }
+  }
+
+  const displayName = withoutIndex !== "" ? withoutIndex : fileName;
+  const newFileName = getNewFileNameForModuleRename(service, displayName, specifierText, newName);
+
+  const indexAfterLastSlash = specifierText.lastIndexOf("/") + 1;
+  const start = specifier.pos + 1 + indexAfterLastSlash;
+  const length = specifierText.length - indexAfterLastSlash;
+  return {
+    canRename: true,
+    displayName: specifierText.slice(indexAfterLastSlash),
+    triggerSpan: service.converters.toLSPRange(sourceFile, newTextRange(start, start + length)),
+    fileToRename: displayName,
+    newFileName,
+  };
+}
+
+export function getNewFileNameForModuleRename(
+  service: RenameLanguageService,
+  oldPath: string,
+  specifierText: string,
+  newName: string,
+): string {
+  let newPath = combinePaths(getDirectoryPath(oldPath), newName);
+  const ignoreCase = !service.host.useCaseSensitiveFileNames();
+  const oldExt = isDeclarationFileName(oldPath)
+    ? getDeclarationFileExtension(oldPath)
+    : getAnyExtensionFromPath(oldPath, undefined, ignoreCase);
+  if (!hasExtension(newPath)) {
+    newPath += oldExt;
+  } else if (
+    getAnyExtensionFromPath(newPath, undefined, ignoreCase) === getAnyExtensionFromPath(specifierText, undefined, ignoreCase)
+  ) {
+    newPath = changeAnyExtension(newPath, oldExt, undefined, ignoreCase);
+  }
+  return newPath;
+}
+
+export function getTextForRename(
+  originalNode: AstNode,
+  entry: ReferenceEntry,
+  newText: string,
+  checker: RenameChecker,
+  quotePreference: QuotePreference,
+): string {
+  if (entry.kind !== entryKindRange && (isIdentifier(originalNode) || isStringLiteralLike(originalNode))) {
+    const node = getReparsedNodeForNode(entry.node);
+    if (node !== undefined) {
+      const kind = entry.kind;
+      const parent = node.parent;
+      const name = nodeText(originalNode);
+      const isShorthandAssignment = isShorthandPropertyAssignment(parent);
+      if (
+        isShorthandAssignment
+        || (isObjectBindingElementWithoutPropertyName(parent) && nodeName(parent) === node && property(parent, "dotDotDotToken") === undefined)
+      ) {
+        if (kind === entryKindSearchedLocalFoundProperty) return `${name}: ${newText}`;
+        if (kind === entryKindSearchedPropertyFoundLocal) return `${newText}: ${name}`;
+        if (isShorthandAssignment) {
+          const grandParent = parent.parent;
+          if (
+            isObjectLiteralExpression(grandParent)
+            && isBinaryExpression(grandParent.parent)
+            && isModuleExportsAccessExpression(grandParent.parent.left)
+          ) {
+            return `${name}: ${newText}`;
+          }
+          return `${newText}: ${name}`;
+        }
+        return `${name}: ${newText}`;
+      }
+      if (isImportSpecifier(parent) && parent.propertyName === undefined) {
+        const originalSymbol = isExportSpecifier(originalNode.parent)
+          ? checker.getExportSpecifierLocalTargetSymbol(originalNode.parent)
+          : checker.getSymbolAtLocation(originalNode);
+        if (originalSymbol !== undefined && originalSymbol.declarations.includes(parent)) {
+          return `${name} as ${newText}`;
+        }
+        return newText;
+      }
+      if (isExportSpecifier(parent) && parent.propertyName === undefined) {
+        if (originalNode === entry.node || checker.getSymbolAtLocation(originalNode) === checker.getSymbolAtLocation(entry.node ?? originalNode)) {
+          return `${name} as ${newText}`;
+        }
+        return `${newText} as ${name}`;
+      }
+    }
+  }
+
+  if (entry.kind !== entryKindRange && entry.node !== undefined && isNumericLiteral(entry.node) && isAccessExpression(entry.node.parent)) {
+    const quote = getQuoteFromPreference(quotePreference);
+    return `${quote}${newText}${quote}`;
+  }
+
+  return newText;
+}
+
+export function getQuoteFromPreference(quotePreference: QuotePreference): string {
+  return quotePreference === QuotePreferenceSingle ? "'" : "\"";
+}
+
+export function getRenameInfoError(message: typeof Diagnostics.You_cannot_rename_this_element): RenameInfo {
+  return {
+    canRename: false,
+    localizedErrorMessage: formatDiagnosticMessage(message),
+  };
+}
+
+export function getRenameInfoSuccess(
+  service: Pick<RenameLanguageService, "converters">,
+  node: AstNode,
+  sourceFile: RenameSourceFile,
+  displayName: string,
+): RenameInfo {
+  let start = getStartOfNode(node, sourceFile, false);
+  let end = node.end;
+  if (isStringLiteralLike(node)) {
+    start += 1;
+    end -= 1;
+  }
+  return {
+    canRename: true,
+    displayName,
+    triggerSpan: service.converters.toLSPRange(sourceFile, newTextRange(start, end)),
+  };
+}
+
+function getRenameInfoForNode(
+  service: RenameLanguageService,
+  context: ClientCapabilitiesContext | undefined,
+  newName: string,
+  node: AstNode,
+  sourceFile: RenameSourceFile,
+  program: RenameProgram,
+): RenameInfo | undefined {
+  const checkerLease = program.getTypeChecker(context);
+  try {
+    const checker = checkerLease.checker;
+    const symbol = checker.getSymbolAtLocation(node);
+    if (symbol === undefined) {
+      if (isStringLiteralLike(node)) {
+        const typ = checker.getContextualTypeFromParentOrAncestorTypeNode(node);
+        if (typ !== undefined && isStringLiteralOrUnionOfStringLiterals(typ)) {
+          return getRenameInfoSuccess(service, node, sourceFile, nodeText(node));
+        }
+      } else if (isLabelName(node)) {
+        return getRenameInfoSuccess(service, node, sourceFile, nodeText(node));
+      }
+      return undefined;
+    }
+
+    if (symbol.declarations.length === 0) return undefined;
+
+    const blockedReason = renameBlockedReason(sourceFile, node, symbol, checker, program, service.userPreferences());
+    if (blockedReason !== undefined) return getRenameInfoError(blockedReason);
+
+    if (isStringLiteralLike(node) && tryGetImportFromModuleSpecifier(node) !== undefined) {
+      if (tristateIsTrue(service.userPreferences().allowRenameOfImportPath)) {
+        return getRenameInfoForModule(service, context, newName, node, sourceFile, symbol);
+      }
+      return undefined;
+    }
+
+    return getRenameInfoSuccess(service, node, sourceFile, checker.symbolToString(symbol));
+  } finally {
+    checkerLease.release();
+  }
+}
+
+function renameRequest(params: RenameParams): RenameRequest {
+  return {
+    ...params,
+    textDocumentURI(): DocumentUri {
+      return params.textDocument.uri;
+    },
+    textDocumentPosition(): Position {
+      return params.position;
+    },
+  };
+}
+
+function shouldSkipImportPathRename(service: RenameLanguageService, entry: ReferenceEntry): boolean {
+  return !tristateIsTrue(service.userPreferences().allowRenameOfImportPath)
+    && entry.node !== undefined
+    && isStringLiteralLike(entry.node)
+    && tryGetImportFromModuleSpecifier(entry.node) !== undefined;
+}
+
+function getFileNameOfEntry(service: RenameLanguageService, entry: ReferenceEntry): DocumentUri {
+  if (service.getFileNameOfEntry !== undefined) return service.getFileNameOfEntry(entry);
+  if (entry.lspRange !== undefined) return entry.lspRange.uri;
+  if (entry.fileName !== undefined) return fileNameToDocumentURI(entry.fileName);
+  const sourceFile = asSourceFile(getSourceFileOfNode(entry.node));
+  if (sourceFile !== undefined) return fileNameToDocumentURI(sourceFile.fileName);
+  throw new Error("rename entry has no source file");
+}
+
+function getRangeOfEntry(service: RenameLanguageService, entry: ReferenceEntry): Range {
+  if (service.getRangeOfEntry !== undefined) return service.getRangeOfEntry(entry);
+  if (entry.lspRange !== undefined) return entry.lspRange.range;
+  const sourceFile = asRenameSourceFile(getSourceFileOfNode(entry.node));
+  const range = entry.textRange ?? entry.node;
+  if (sourceFile !== undefined && range !== undefined) {
+    return service.converters.toLSPRange(sourceFile, range);
+  }
+  throw new Error("rename entry has no range");
+}
+
+function isStringLiteralOrUnionOfStringLiterals(type: Type): boolean {
+  if (isStringLiteralType(type)) return true;
+  const union = asUnionType(type);
+  return union !== undefined && union.types.every(isStringLiteralType);
+}
+
+function isLiteralNameOfPropertyDeclarationOrIndexAccess(node: AstNode): boolean {
+  const parent = node.parent;
+  return (
+    parent.kind === Kind.PropertyDeclaration
+    || parent.kind === Kind.PropertySignature
+    || parent.kind === Kind.MethodDeclaration
+    || parent.kind === Kind.MethodSignature
+    || parent.kind === Kind.GetAccessor
+    || parent.kind === Kind.SetAccessor
+    || parent.kind === Kind.PropertyAssignment
+    || parent.kind === Kind.EnumMember
+  ) && nodeName(parent) === node
+    || parent.kind === Kind.ElementAccessExpression && property(parent, "argumentExpression") === node;
+}
+
+function isObjectBindingElementWithoutPropertyName(node: AstNode): boolean {
+  return node.kind === Kind.BindingElement && property(node, "propertyName") === undefined && node.parent.kind === Kind.ObjectBindingPattern;
+}
+
+function isModuleExportsAccessExpression(node: AstNode): boolean {
+  if (node.kind !== Kind.PropertyAccessExpression) return false;
+  const expression = property<AstNode>(node, "expression");
+  const name = property<AstNode>(node, "name");
+  if (nodeText(name) !== "exports" || expression === undefined) return false;
+  return expression.kind === Kind.Identifier && nodeText(expression) === "module";
+}
+
+function tryGetImportFromModuleSpecifier(node: AstNode): AstNode | undefined {
+  const parent = node.parent;
+  if ((parent.kind === Kind.ImportDeclaration || parent.kind === Kind.JSImportDeclaration) && property(parent, "moduleSpecifier") === node) {
+    return parent;
+  }
+  if (parent.kind === Kind.ExportDeclaration && property(parent, "moduleSpecifier") === node) {
+    return parent;
+  }
+  if (parent.kind === Kind.ExternalModuleReference && property(parent, "expression") === node) {
+    return parent;
+  }
+  return undefined;
+}
+
+function getAdjustedLocation(node: AstNode, _forRename: boolean): AstNode {
+  if (node.kind === Kind.FromKeyword) {
+    const moduleSpecifier = property<AstNode>(node.parent, "moduleSpecifier");
+    if (moduleSpecifier !== undefined) return moduleSpecifier;
+  }
+  if (node.kind === Kind.ImportKeyword && node.parent.kind === Kind.ImportDeclaration) {
+    const importClause = property<AstNode>(node.parent, "importClause");
+    const name = nodeName(importClause);
+    if (name !== undefined) return name;
+    const moduleSpecifier = property<AstNode>(node.parent, "moduleSpecifier");
+    if (moduleSpecifier !== undefined) return moduleSpecifier;
+  }
+  if (node.kind === Kind.ExportKeyword) {
+    const moduleSpecifier = property<AstNode>(node.parent, "moduleSpecifier");
+    if (moduleSpecifier !== undefined) return moduleSpecifier;
+  }
+  return node;
+}
+
+function getReparsedNodeForNode(node: AstNode | undefined): AstNode | undefined {
+  return node;
+}
+
+function isLabelName(node: AstNode): boolean {
+  return node.kind === Kind.Identifier && node.parent.kind === Kind.LabeledStatement && property(node.parent, "label") === node;
+}
+
+function isInsideNodeModules(fileName: string): boolean {
+  return fileName.includes("/node_modules/");
+}
+
+function isSourceFileNode(node: AstNode): boolean {
+  return node.kind === Kind.SourceFile;
+}
+
+function asNode(value: unknown): AstNode | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  const candidate = value as { readonly kind?: unknown; readonly pos?: unknown; readonly end?: unknown };
+  return typeof candidate.kind === "number" && typeof candidate.pos === "number" && typeof candidate.end === "number"
+    ? value as AstNode
+    : undefined;
+}
+
+function asClientCapabilitiesContext(context: unknown): ClientCapabilitiesContext | undefined {
+  return typeof context === "object" && context !== null ? context as ClientCapabilitiesContext : undefined;
+}
+
+function asSourceFile(node: AstNode | undefined): SourceFile | undefined {
+  return node !== undefined && node.kind === Kind.SourceFile ? node as SourceFile : undefined;
+}
+
+function asRenameSourceFile(node: AstNode | undefined): RenameSourceFile | undefined {
+  const sourceFile = asSourceFile(node);
+  return sourceFile !== undefined && Array.isArray((sourceFile as { readonly lineStarts?: unknown }).lineStarts)
+    ? sourceFile as RenameSourceFile
+    : undefined;
+}
+
+function property<T = unknown>(node: AstNode | undefined, name: string): T | undefined {
+  if (node === undefined) return undefined;
+  return (node as unknown as Readonly<Record<string, T | undefined>>)[name];
 }

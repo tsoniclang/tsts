@@ -362,7 +362,7 @@ function generateLsMaps() {
     "file_rename.go", "findallreferences.go", "folding.go", "hover.go", "importTracker.go",
     "inlay_hints.go",
     "lsutil/organizeimports.go",
-    "organizeimports.go", "rename.go",
+    "organizeimports.go",
     "signaturehelp.go", "sourcedefinition.go",
     "string_completions.go", "symbols.go", "utilities.go",
   ];
