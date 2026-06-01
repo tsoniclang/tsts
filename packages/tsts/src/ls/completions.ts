@@ -1,3 +1,9 @@
+import type { SourceFile } from "../ast/index.js";
+import { LanguageVariant } from "../core/languageVariant.js";
+import { isIdentifierPartCodePoint, isIdentifierStartCodePoint } from "../scanner/index.js";
+import { compareStringsCaseInsensitiveThenSensitive, ComparisonEqual } from "../stringutil/index.js";
+import type { CompletionItem, CompletionItemLabelDetails } from "../lsp/lsproto/index.js";
+
 /**
  * Completion constants and ordering helpers.
  *
@@ -37,6 +43,210 @@ export function DeprecateSortText(original: SortText): SortText {
 
 export function sortBelow(original: SortText): SortText {
   return `${original}1`;
+}
+
+export enum SymbolOriginInfoKind {
+  ThisType = 1 << 0,
+  SymbolMember = 1 << 1,
+  Promise = 1 << 2,
+  Nullable = 1 << 3,
+  TypeOnlyAlias = 1 << 4,
+  ObjectLiteralMethod = 1 << 5,
+  Ignore = 1 << 6,
+  ComputedPropertyName = 1 << 7,
+}
+
+export interface SymbolOriginInfo {
+  readonly kind: SymbolOriginInfoKind;
+  readonly isDefaultExport: boolean;
+  readonly isFromPackageJson: boolean;
+  readonly fileName: string;
+  readonly data?: SymbolOriginInfoData;
+}
+
+export type SymbolOriginInfoData =
+  | SymbolOriginInfoObjectLiteralMethod
+  | SymbolOriginInfoTypeOnlyAlias
+  | SymbolOriginInfoComputedPropertyName;
+
+export interface SymbolOriginInfoObjectLiteralMethod {
+  readonly insertText: string;
+  readonly labelDetails?: CompletionItemLabelDetails;
+  readonly isSnippet: boolean;
+}
+
+export interface SymbolOriginInfoTypeOnlyAlias {
+  readonly declaration: unknown;
+}
+
+export interface SymbolOriginInfoComputedPropertyName {
+  readonly symbolName: string;
+}
+
+export function symbolOriginInfoSymbolName(origin: SymbolOriginInfo): string {
+  if (origin.data !== undefined && "symbolName" in origin.data) {
+    return origin.data.symbolName;
+  }
+  throw new Error(`symbolOriginInfo: unknown data type for symbolName(): ${typeof origin.data}`);
+}
+
+export function symbolOriginInfoAsObjectLiteralMethod(origin: SymbolOriginInfo): SymbolOriginInfoObjectLiteralMethod {
+  if (origin.data !== undefined && "insertText" in origin.data) {
+    return origin.data;
+  }
+  throw new Error(`symbolOriginInfo: data is not an object literal method`);
+}
+
+export type CompletionSource = string;
+
+export const completionSourceThisProperty: CompletionSource = "ThisProperty/";
+export const completionSourceClassMemberSnippet: CompletionSource = "ClassMemberSnippet/";
+export const completionSourceTypeOnlyAlias: CompletionSource = "TypeOnlyAlias/";
+export const completionSourceObjectLiteralMethodSnippet: CompletionSource = "ObjectLiteralMethodSnippet/";
+export const completionSourceSwitchCases: CompletionSource = "SwitchCases/";
+export const completionSourceObjectLiteralMemberWithComma: CompletionSource = "ObjectLiteralMemberWithComma/";
+
+export type UniqueNamesMap = Map<string, boolean>;
+export type LiteralValue = string | number | bigint;
+
+export enum GlobalsSearch {
+  Continue = 0,
+  Success = 1,
+  Fail = 2,
+}
+
+export const wordSeparators: ReadonlySet<string> = new Set([
+  "`", "~", "!", "@", "%", "^", "&", "*", "(", ")", "-", "=", "+", "[", "{", "]", "}", "\\", "|",
+  ";", ":", "'", "\"", ",", ".", "<", ">", "/", "?",
+]);
+
+export interface WordLengthAndStart {
+  readonly wordLength: number;
+  readonly wordStart: string;
+}
+
+export function getWordLengthAndStart(sourceFile: SourceFile, position: number): WordLengthAndStart {
+  const text = sourceFile.text.slice(0, position);
+  let totalSize = 0;
+  let firstRune = "";
+  const runes = Array.from(text);
+  for (let index = runes.length - 1; index >= 0; index -= 1) {
+    const rune = runes[index]!;
+    if (wordSeparators.has(rune) || /\s/u.test(rune)) break;
+    totalSize += rune.length;
+    firstRune = rune;
+  }
+  if (firstRune === "@") {
+    totalSize -= 1;
+    firstRune = Array.from(text.slice(text.length - totalSize))[0] ?? "";
+  }
+  return { wordLength: totalSize, wordStart: firstRune };
+}
+
+export function trimElementAccess(text: string): string {
+  let result = text.startsWith("[") ? text.slice(1) : text;
+  result = result.endsWith("]") ? result.slice(0, -1) : result;
+  if (result.startsWith("'") && result.endsWith("'")) {
+    result = result.slice(1, -1);
+  }
+  if (result.startsWith("\"") && result.endsWith("\"")) {
+    result = result.slice(1, -1);
+  }
+  return result;
+}
+
+export function getFilterText(
+  insertText: string,
+  label: string,
+  wordStart: string,
+  dotAccessor: string,
+): string {
+  if (label.startsWith("#")) {
+    const after = label.slice(1);
+    if (insertText !== "") {
+      if (insertText.startsWith("this.#")) {
+        return wordStart === "#" ? "" : insertText.slice("this.#".length);
+      }
+    } else {
+      return wordStart === "#" ? "" : after;
+    }
+  }
+
+  if (insertText.startsWith("this.")) {
+    return "";
+  }
+  if (insertText.startsWith("[")) {
+    return dotAccessor + trimElementAccess(insertText);
+  }
+  if (insertText.startsWith("?.")) {
+    return insertText.startsWith("?.[")
+      ? dotAccessor + trimElementAccess(insertText.slice(2))
+      : dotAccessor + insertText.slice(2);
+  }
+  return insertText;
+}
+
+export function getDotAccessor(file: SourceFile, position: number): string {
+  const text = file.text.slice(0, position);
+  if (text.endsWith("?.")) return file.text.slice(position - 2, position);
+  if (text.endsWith(".")) return file.text.slice(position - 1, position);
+  return "";
+}
+
+export function strPtrIsEmpty(value: string | undefined): boolean {
+  return value === undefined || value === "";
+}
+
+export function strPtrTo(value: string): string | undefined {
+  return value === "" ? undefined : value;
+}
+
+export function boolToPtr(value: boolean): true | undefined {
+  return value ? true : undefined;
+}
+
+export function startsWithQuote(text: string): boolean {
+  const first = Array.from(text)[0];
+  return first === "\"" || first === "'";
+}
+
+export function escapeSnippetText(text: string): string {
+  return text.replaceAll("$", "\\$");
+}
+
+export function generateIdentifierForArbitraryString(text: string): string {
+  let needsUnderscore = false;
+  let identifier = "";
+  for (let position = 0; position < text.length;) {
+    const codePoint = text.codePointAt(position);
+    if (codePoint === undefined) break;
+    const character = String.fromCodePoint(codePoint);
+    const validChar = position === 0
+      ? isIdentifierStartCodePoint(codePoint)
+      : isIdentifierPartCodePoint(codePoint, LanguageVariant.Standard);
+    if (validChar) {
+      if (needsUnderscore) {
+        identifier += "_";
+        needsUnderscore = false;
+      }
+      identifier += character;
+    } else {
+      needsUnderscore = identifier.length > 0;
+    }
+    position += character.length;
+  }
+  if (needsUnderscore) identifier += "_";
+  return identifier === "" ? "_" : identifier;
+}
+
+export function CompareCompletionEntries(left: CompletionItem, right: CompletionItem): number {
+  const leftSortText = left.sortText ?? "";
+  const rightSortText = right.sortText ?? "";
+  let result = compareStringsCaseInsensitiveThenSensitive(leftSortText, rightSortText);
+  if (result === ComparisonEqual) {
+    result = compareStringsCaseInsensitiveThenSensitive(left.label, right.label);
+  }
+  return result;
 }
 
 // Language-service parity map: internal/ls/completions.go

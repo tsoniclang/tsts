@@ -4,6 +4,26 @@
  * Porting surface for TS-Go `internal/fourslash/tests/util/util.go`.
  */
 
+import {
+  DeprecateSortText,
+  SortTextGlobalsOrKeywords,
+  SortTextLocationPriority,
+} from "../../../ls/completions.js";
+import {
+  CompletionItemKindClass,
+  CompletionItemKindField,
+  CompletionItemKindFunction,
+  CompletionItemKindInterface,
+  CompletionItemKindKeyword,
+  CompletionItemKindMethod,
+  CompletionItemKindModule,
+  CompletionItemKindVariable,
+  CompletionItemTagDeprecated,
+  type CompletionItem,
+  type CompletionItemKind,
+  type CompletionItemTag,
+} from "../../../lsp/lsproto/index.js";
+import { compareStringsCaseInsensitiveThenSensitive } from "../../../stringutil/index.js";
 import { newFourslash, type FourslashCapabilities, type FourslashTest } from "../../fourslash.js";
 
 export interface FourslashFixture {
@@ -31,6 +51,420 @@ export function assertMarker(fixture: FourslashTest, name: string): void {
 
 export function assertRangeText(fixture: FourslashTest, text: string): void {
   fixture.rangeByText(text);
+}
+
+export const Ignored = {};
+export const DefaultCommitCharacters: readonly string[] = [".", ",", ";"];
+
+export type CompletionsExpectedItem = CompletionItem | string;
+
+interface CompletionItemSpec {
+  readonly label: string;
+  readonly kind?: CompletionItemKind;
+  readonly sortText?: string;
+  readonly tags?: readonly CompletionItemTag[];
+  readonly detail?: string;
+}
+
+function completionItem(spec: CompletionItemSpec): CompletionItem {
+  return {
+    label: spec.label,
+    ...(spec.kind === undefined ? {} : { kind: spec.kind }),
+    ...(spec.sortText === undefined ? {} : { sortText: spec.sortText }),
+    ...(spec.tags === undefined ? {} : { tags: spec.tags }),
+    ...(spec.detail === undefined ? {} : { detail: spec.detail }),
+  };
+}
+
+function completionLabel(item: CompletionsExpectedItem): string {
+  return typeof item === "string" ? item : item.label;
+}
+
+function completionSortText(item: CompletionsExpectedItem): string {
+  return typeof item === "string" ? SortTextLocationPriority : item.sortText ?? SortTextLocationPriority;
+}
+
+export const CompletionGlobalThisItem: CompletionItem = completionItem({
+  label: "globalThis",
+  kind: CompletionItemKindModule,
+  sortText: SortTextGlobalsOrKeywords,
+});
+
+export const CompletionUndefinedVarItem: CompletionItem = completionItem({
+  label: "undefined",
+  kind: CompletionItemKindVariable,
+  sortText: SortTextGlobalsOrKeywords,
+});
+
+export const CompletionGlobalVars: readonly CompletionsExpectedItem[] = [
+  completionItem({ label: "Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ArrayBuffer", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Boolean", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "DataView", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Date", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Error", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "EvalError", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Float32Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Float64Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Function", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Infinity", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Int16Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Int32Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Int8Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Intl", kind: CompletionItemKindModule, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "JSON", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Math", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "NaN", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Number", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Object", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "RangeError", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ReferenceError", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "RegExp", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "String", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "SyntaxError", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "TypeError", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "URIError", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Uint16Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Uint32Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Uint8Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Uint8ClampedArray", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "decodeURI", kind: CompletionItemKindFunction, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "decodeURIComponent", kind: CompletionItemKindFunction, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "encodeURI", kind: CompletionItemKindFunction, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "encodeURIComponent", kind: CompletionItemKindFunction, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "eval", kind: CompletionItemKindFunction, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "isFinite", kind: CompletionItemKindFunction, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "isNaN", kind: CompletionItemKindFunction, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "parseFloat", kind: CompletionItemKindFunction, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "parseInt", kind: CompletionItemKindFunction, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "escape", kind: CompletionItemKindFunction, sortText: DeprecateSortText(SortTextGlobalsOrKeywords), tags: [CompletionItemTagDeprecated] }),
+  completionItem({ label: "unescape", kind: CompletionItemKindFunction, sortText: DeprecateSortText(SortTextGlobalsOrKeywords), tags: [CompletionItemTagDeprecated] }),
+];
+
+export const CompletionGlobalKeywords: readonly CompletionsExpectedItem[] = [
+  completionItem({ label: "abstract", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "any", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "as", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "asserts", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "async", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "await", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "bigint", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "boolean", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "break", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "case", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "catch", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "class", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "const", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "continue", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "debugger", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "declare", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "default", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "delete", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "do", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "else", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "enum", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "export", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "extends", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "false", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "finally", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "for", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "function", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "if", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "implements", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "import", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "in", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "infer", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "instanceof", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "interface", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "keyof", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "let", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "module", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "namespace", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "never", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "new", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "null", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "number", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "object", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "package", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "readonly", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "return", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "satisfies", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "string", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "super", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "switch", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "symbol", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "this", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "throw", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "true", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "try", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "type", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "typeof", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "unique", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "unknown", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "using", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "var", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "void", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "while", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "with", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "yield", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+];
+
+export const CompletionGlobalTypeDecls: readonly CompletionsExpectedItem[] = [
+  completionItem({ label: "Symbol", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "PropertyKey", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "PropertyDescriptor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "PropertyDescriptorMap", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Object", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ObjectConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Function", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "FunctionConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ThisParameterType", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "OmitThisParameter", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "CallableFunction", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "NewableFunction", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "IArguments", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "String", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "StringConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Boolean", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "BooleanConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Number", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "NumberConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "TemplateStringsArray", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ImportMeta", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ImportCallOptions", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ImportAssertions", kind: CompletionItemKindInterface, sortText: DeprecateSortText(SortTextGlobalsOrKeywords), tags: [CompletionItemTagDeprecated] }),
+  completionItem({ label: "ImportAttributes", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Math", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Date", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "DateConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "RegExpMatchArray", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "RegExpExecArray", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "RegExp", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "RegExpConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Error", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ErrorConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "EvalError", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "EvalErrorConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "RangeError", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "RangeErrorConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ReferenceError", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ReferenceErrorConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "SyntaxError", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "SyntaxErrorConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "TypeError", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "TypeErrorConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "URIError", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "URIErrorConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "JSON", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ReadonlyArray", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ConcatArray", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ArrayConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "TypedPropertyDescriptor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ClassDecorator", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "PropertyDecorator", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "MethodDecorator", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ParameterDecorator", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ClassMemberDecoratorContext", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "DecoratorContext", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "DecoratorMetadata", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "DecoratorMetadataObject", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ClassDecoratorContext", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ClassMethodDecoratorContext", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ClassGetterDecoratorContext", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ClassSetterDecoratorContext", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ClassAccessorDecoratorContext", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ClassAccessorDecoratorTarget", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ClassAccessorDecoratorResult", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ClassFieldDecoratorContext", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "PromiseConstructorLike", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "PromiseLike", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Promise", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Awaited", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ArrayLike", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Partial", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Required", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Readonly", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Pick", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Record", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Exclude", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Extract", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Omit", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "NonNullable", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Parameters", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ConstructorParameters", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ReturnType", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "InstanceType", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Uppercase", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Lowercase", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Capitalize", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Uncapitalize", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "NoInfer", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ThisType", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ArrayBuffer", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ArrayBufferTypes", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ArrayBufferLike", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ArrayBufferConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "ArrayBufferView", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "DataView", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "DataViewConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Int8Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Int8ArrayConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Uint8Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Uint8ArrayConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Uint8ClampedArray", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Uint8ClampedArrayConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Int16Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Int16ArrayConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Uint16Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Uint16ArrayConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Int32Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Int32ArrayConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Uint32Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Uint32ArrayConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Float32Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Float32ArrayConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Float64Array", kind: CompletionItemKindVariable, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Float64ArrayConstructor", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "Intl", kind: CompletionItemKindModule, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "WeakKey", kind: CompletionItemKindClass, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "WeakKeyTypes", kind: CompletionItemKindInterface, sortText: SortTextGlobalsOrKeywords }),
+];
+
+export const CompletionTypeKeywords: readonly CompletionsExpectedItem[] = [
+  completionItem({ label: "any", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "asserts", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "bigint", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "boolean", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "false", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "infer", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "keyof", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "never", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "null", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "number", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "object", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "readonly", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "string", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "symbol", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "true", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "typeof", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "undefined", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "unique", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "unknown", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "void", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+];
+
+export const CompletionClassElementKeywords: readonly CompletionsExpectedItem[] = [
+  completionItem({ label: "abstract", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "accessor", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "async", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "constructor", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "declare", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "get", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "override", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "private", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "protected", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "public", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "readonly", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "set", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "static", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+];
+
+export const CompletionConstructorParameterKeywords: readonly CompletionsExpectedItem[] = [
+  completionItem({ label: "override", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "private", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "protected", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "public", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+  completionItem({ label: "readonly", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+];
+
+export const CompletionFunctionMembers: readonly CompletionsExpectedItem[] = [
+  completionItem({ label: "apply", kind: CompletionItemKindMethod }),
+  completionItem({ label: "arguments", kind: CompletionItemKindField }),
+  completionItem({ label: "bind", kind: CompletionItemKindMethod }),
+  completionItem({ label: "call", kind: CompletionItemKindMethod }),
+  completionItem({ label: "caller", kind: CompletionItemKindField }),
+  completionItem({ label: "length", kind: CompletionItemKindField }),
+  completionItem({ label: "toString", kind: CompletionItemKindMethod }),
+];
+
+const inJavaScriptKeywordExclusions: ReadonlySet<string> = new Set([
+  "enum", "interface", "implements", "private", "protected", "public", "abstract",
+  "any", "boolean", "declare", "infer", "is", "keyof", "module", "namespace", "never",
+  "readonly", "number", "object", "string", "symbol", "type", "unique", "override",
+  "unknown", "global", "bigint",
+]);
+
+export const CompletionClassElementInJSKeywords: readonly CompletionsExpectedItem[] = getInJSKeywords(CompletionClassElementKeywords);
+
+export const CompletionGlobals: readonly CompletionsExpectedItem[] = sortCompletionItems([
+  ...CompletionGlobalVars,
+  ...CompletionGlobalKeywords,
+  CompletionGlobalThisItem,
+  CompletionUndefinedVarItem,
+]);
+
+export function sortCompletionItems(items: readonly CompletionsExpectedItem[]): readonly CompletionsExpectedItem[] {
+  return [...items].sort((left, right) => {
+    const bySortText = compareStringsCaseInsensitiveThenSensitive(completionSortText(left), completionSortText(right));
+    return bySortText === 0
+      ? compareStringsCaseInsensitiveThenSensitive(completionLabel(left), completionLabel(right))
+      : bySortText;
+  });
+}
+
+export function CompletionGlobalsPlus(items: readonly CompletionsExpectedItem[], noLib: boolean): readonly CompletionsExpectedItem[] {
+  return sortCompletionItems(noLib
+    ? [...items, CompletionGlobalThisItem, CompletionUndefinedVarItem, ...CompletionGlobalKeywords]
+    : [...items, ...CompletionGlobals]);
+}
+
+export function CompletionGlobalTypesPlus(items: readonly CompletionsExpectedItem[]): readonly CompletionsExpectedItem[] {
+  return sortCompletionItems([
+    ...CompletionGlobalTypeDecls,
+    CompletionGlobalThisItem,
+    ...CompletionTypeKeywords,
+    ...items,
+  ]);
+}
+
+export const CompletionGlobalTypes: readonly CompletionsExpectedItem[] = CompletionGlobalTypesPlus([]);
+
+export function getInJSKeywords(keywords: readonly CompletionsExpectedItem[]): readonly CompletionsExpectedItem[] {
+  return keywords.filter((item) => !inJavaScriptKeywordExclusions.has(completionLabel(item)));
+}
+
+export const CompletionGlobalInJSKeywords: readonly CompletionsExpectedItem[] = getInJSKeywords(CompletionGlobalKeywords);
+
+export function CompletionGlobalsInJSPlus(items: readonly CompletionsExpectedItem[], noLib: boolean): readonly CompletionsExpectedItem[] {
+  return sortCompletionItems(noLib
+    ? [...items, CompletionGlobalThisItem, CompletionUndefinedVarItem, ...CompletionGlobalInJSKeywords]
+    : [...items, CompletionGlobalThisItem, CompletionUndefinedVarItem, ...CompletionGlobalInJSKeywords, ...CompletionGlobalVars]);
+}
+
+export function CompletionFunctionMembersPlus(items: readonly CompletionsExpectedItem[]): readonly CompletionsExpectedItem[] {
+  return sortCompletionItems([...CompletionFunctionMembers, ...items]);
+}
+
+export const CompletionFunctionMembersWithPrototype: readonly CompletionsExpectedItem[] = sortCompletionItems([
+  ...CompletionFunctionMembers,
+  completionItem({ label: "prototype", kind: CompletionItemKindField }),
+]);
+
+export function CompletionFunctionMembersWithPrototypePlus(items: readonly CompletionsExpectedItem[]): readonly CompletionsExpectedItem[] {
+  return sortCompletionItems([...CompletionFunctionMembersWithPrototype, ...items]);
+}
+
+export function CompletionTypeKeywordsPlus(items: readonly CompletionsExpectedItem[]): readonly CompletionsExpectedItem[] {
+  return sortCompletionItems([...CompletionTypeKeywords, ...items]);
+}
+
+export const CompletionTypeAssertionKeywords: readonly CompletionsExpectedItem[] = CompletionGlobalTypesPlus([
+  completionItem({ label: "const", kind: CompletionItemKindKeyword, sortText: SortTextGlobalsOrKeywords }),
+]);
+
+export function ToAny<T>(items: readonly T[]): readonly unknown[] {
+  return items;
 }
 
 // Source parity map: internal/fourslash/tests/util/util.go
