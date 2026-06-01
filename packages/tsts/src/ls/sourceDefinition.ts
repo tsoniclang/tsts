@@ -31,6 +31,7 @@ import {
   type Node,
   type SourceFile,
 } from "../ast/index.js";
+import { getTouchingPropertyName } from "../astnav/index.js";
 import { ModifierFlags } from "../enums/index.js";
 import { getTextOfNode } from "../scanner/utilities.js";
 
@@ -135,6 +136,41 @@ export function uniqueDeclarationNodes(nodes: readonly (Node | undefined)[]): re
   return result;
 }
 
+export function findDeclarationNodesByName(sourceFile: SourceFile, names: readonly string[]): readonly Node[] {
+  const filteredNames = [...new Set(names.filter(name => name !== ""))];
+  if (filteredNames.length === 0) return [];
+
+  const wanted = new Set(filteredNames.filter(name => name !== "default"));
+  const wantDefault = filteredNames.includes("default");
+  const candidates: { readonly node: Node; readonly depth: number }[] = [];
+  let minDepth = Number.MAX_SAFE_INTEGER;
+
+  const visit = (node: Node): boolean | undefined => {
+    let matched = false;
+    const name = getNameOfDeclaration(node);
+    if (name !== undefined) {
+      const text = getTextOfPropertyName(name);
+      if (text !== "" && wanted.has(text)) matched = true;
+    }
+    if (wantDefault && isExportAssignment(node)) matched = true;
+    if (wantDefault
+      && (isFunctionDeclaration(node) || isClassDeclaration(node))
+      && (getCombinedModifierFlags(node) & ModifierFlags.ExportDefault) === ModifierFlags.ExportDefault) {
+      matched = true;
+    }
+    if (matched) {
+      const depth = getContainerDepth(node);
+      candidates.push({ node, depth });
+      if (depth < minDepth) minDepth = depth;
+    }
+    node.forEachChild(visit);
+    return undefined;
+  };
+
+  sourceFile.forEachChild(visit);
+  return uniqueDeclarationNodes(candidates.filter(candidate => candidate.depth === minDepth).map(candidate => candidate.node));
+}
+
 export function getContainerDepth(node: Node): number {
   let depth = 0;
   let current: Node | undefined = node;
@@ -143,6 +179,14 @@ export function getContainerDepth(node: Node): number {
     depth += 1;
   }
   return depth;
+}
+
+export function findClosestDeclarationNode(sourceFile: SourceFile, pos: number): Node {
+  const node = getTouchingPropertyName(sourceFile, pos);
+  for (let current = node; current !== undefined; current = current.parent) {
+    if (isDeclaration(current) || current.kind === Kind.ExportAssignment) return current;
+  }
+  return getSourceDefinitionEntryNode(sourceFile);
 }
 
 function getContainerNode(node: Node): Node | undefined {
