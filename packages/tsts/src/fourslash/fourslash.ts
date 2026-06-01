@@ -60,9 +60,11 @@ import {
   type ClientCapabilities,
   type CompletionItem,
   type CompletionItemDefaults,
+  type CompletionList,
   type LanguageKind,
   type Position,
   type Range,
+  type TextEdit,
 } from "../lsp/lsproto/index.js";
 import {
   extensionCjs,
@@ -153,6 +155,19 @@ export interface FourslashOptions {
   readonly capabilities?: FourslashCapabilities;
   readonly content: string;
   readonly fileName?: string;
+  readonly completionProvider?: FourslashCompletionProvider;
+}
+
+export interface FourslashCompletionRequest {
+  readonly fileName: string;
+  readonly position: Position;
+  readonly offset: number;
+  readonly userPreferences: UserPreferences;
+}
+
+export interface FourslashCompletionProvider {
+  getCompletions(request: FourslashCompletionRequest): CompletionList | undefined;
+  resolveCompletionItem?(item: CompletionItem, request: FourslashCompletionRequest): CompletionItem;
 }
 
 export class FourslashTest {
@@ -164,6 +179,7 @@ export class FourslashTest {
   readonly capabilities: FourslashCapabilities;
   readonly semanticTokenTypes: string[] = [];
   readonly semanticTokenModifiers: string[] = [];
+  completionProvider: FourslashCompletionProvider | undefined;
 
   stateEnableFormatting = false;
   reportFormatOnTypeCrash = false;
@@ -177,6 +193,7 @@ export class FourslashTest {
   constructor(options: FourslashOptions) {
     const fileName = options.fileName ?? "fourslash.ts";
     this.capabilities = getCapabilitiesWithDefaults(options.capabilities);
+    this.completionProvider = options.completionProvider;
     this.testData = parseTestData(options.content, fileName);
     this.activeFilename = this.testData.files[0]?.fileName ?? fileName;
 
@@ -349,6 +366,10 @@ export class FourslashTest {
     this.userPreferences = { ...this.userPreferences, ...preferences };
   }
 
+  setCompletionProvider(provider: FourslashCompletionProvider | undefined): void {
+    this.completionProvider = provider;
+  }
+
   setSelection(start: Position, end: Position): void {
     this.currentCaretPosition = start;
     this.selectionEnd = end;
@@ -499,6 +520,222 @@ export class FourslashTest {
       this.scriptInfos.set(fileName, info);
     }
     return info;
+  }
+
+  verifyCompletions(markerInput: MarkerInput, expected: CompletionsExpectedList | undefined): VerifyCompletionsResult {
+    let list: CompletionList | undefined;
+    if (typeof markerInput === "string") {
+      this.goToMarker(markerInput);
+      list = this.verifyCompletionsWorker(expected);
+    } else if (markerInput instanceof Array) {
+      for (const marker of markerInput) {
+        if (typeof marker === "string") this.goToMarker(marker);
+        else this.goToMarkerOrRange(marker);
+        list = this.verifyCompletionsWorker(expected);
+      }
+    } else if (markerInput !== undefined) {
+      this.goToMarkerOrRange(markerInput);
+      list = this.verifyCompletionsWorker(expected);
+    } else {
+      list = this.verifyCompletionsWorker(expected);
+    }
+
+    return {
+      andApplyCodeAction: (expectedAction) => {
+        const item = list?.items.find(candidate =>
+          candidate.label === expectedAction.name
+          && candidate.data?.autoImport?.moduleSpecifier === expectedAction.source);
+        if (item === undefined) {
+          fail(`Code action '${expectedAction.name}' from '${expectedAction.source}' not found in completions.`);
+        }
+        if (item.detail !== undefined && !item.detail.includes(expectedAction.description)) {
+          fail(`Completion detail for '${expectedAction.name}' does not contain '${expectedAction.description}'.`);
+        }
+        if (item.additionalTextEdits === undefined) {
+          fail(`Completion '${expectedAction.name}' has no additional text edits.`);
+        }
+        this.applyTextEdits(this.activeFilename, textEditsToTextChanges(this.file(), item.additionalTextEdits));
+        this.verifyCurrentFileContent(expectedAction.newFileContent);
+      },
+      andHasNoCodeAction: (unexpectedAction) => {
+        const item = list?.items.find(candidate =>
+          candidate.label === unexpectedAction.name
+          && candidate.data?.autoImport?.moduleSpecifier === unexpectedAction.source);
+        if (item !== undefined) {
+          fail(`Unexpected code action '${unexpectedAction.name}' from '${unexpectedAction.source}' found in completions.`);
+        }
+      },
+    };
+  }
+
+  verifyCompletionsWorker(expected: CompletionsExpectedList | undefined): CompletionList | undefined {
+    const list = this.getCompletions(expected?.userPreferences);
+    this.verifyCompletionsResult(list, expected, this.getCurrentPositionPrefix());
+    return list;
+  }
+
+  getCompletions(userPreferences?: UserPreferences): CompletionList | undefined {
+    const provider = this.completionProvider;
+    if (provider === undefined) {
+      throw new Error("Fourslash completion provider is not configured.");
+    }
+    const originalPreferences = this.userPreferences;
+    if (userPreferences !== undefined) this.setUserPreferences(userPreferences);
+    try {
+      const list = provider.getCompletions(this.completionRequest());
+      if (list === undefined) return undefined;
+      return {
+        ...list,
+        items: [...list.items].sort(compareCompletionItems),
+      };
+    } finally {
+      this.userPreferences = originalPreferences;
+    }
+  }
+
+  verifyCompletionsResult(
+    actual: CompletionList | undefined,
+    expected: CompletionsExpectedList | undefined,
+    prefix: string,
+  ): void {
+    if (actual === undefined) {
+      if (!isEmptyExpectedList(expected)) fail(`${prefix}Expected completion list but got undefined.`);
+      return;
+    }
+    if (expected === undefined) {
+      if (actual.items.length === 0) return;
+      fail(`${prefix}Expected undefined completion list but got ${stableStringify(actual)}.`);
+    }
+    if (actual.isIncomplete !== expected.isIncomplete) {
+      fail(`${prefix}IsIncomplete mismatch: actual=${actual.isIncomplete} expected=${expected.isIncomplete}`);
+    }
+    verifyCompletionsItemDefaults(actual.itemDefaults, expected.itemDefaults, `${prefix}ItemDefaults mismatch: `);
+    this.verifyCompletionsItems(prefix, actual.items, expected.items);
+  }
+
+  verifyCompletionsItems(
+    prefix: string,
+    actual: readonly CompletionItem[],
+    expected: CompletionsExpectedItems | undefined,
+  ): void {
+    if (expected === undefined) {
+      if (actual.length !== 0) fail(`${prefix}Expected no completions but got ${actual.length}.`);
+      return;
+    }
+    if (expected.exact.length !== 0) {
+      if (expected.includes.length !== 0 || expected.excludes.length !== 0 || expected.unsorted.length !== 0) {
+        fail(`${prefix}Exact completions cannot be combined with includes, excludes, or unsorted.`);
+      }
+      if (actual.length !== expected.exact.length) {
+        fail(`${prefix}Expected ${expected.exact.length} exact completion items but got ${actual.length}.`);
+      }
+      this.verifyCompletionsAreExactly(prefix, actual, expected.exact);
+      return;
+    }
+
+    const nameToActualItems = completionItemsByLabel(actual);
+    if (expected.unsorted.length !== 0) {
+      if (expected.includes.length !== 0 || expected.excludes.length !== 0) {
+        fail(`${prefix}Unsorted completions cannot be combined with includes or excludes.`);
+      }
+      for (const item of expected.unsorted) {
+        removeMatchingCompletionItem(this, prefix, nameToActualItems, item);
+      }
+      if (actual.length !== expected.unsorted.length) {
+        fail(`${prefix}Additional completions found but not included in unsorted: ${[...nameToActualItems.keys()].join(", ")}`);
+      }
+      return;
+    }
+
+    for (const item of expected.includes) {
+      removeMatchingCompletionItem(this, prefix, nameToActualItems, item, false);
+    }
+    for (const exclude of expected.excludes) {
+      if (nameToActualItems.has(exclude)) fail(`${prefix}Label '${exclude}' should not be in actual items but was found.`);
+    }
+  }
+
+  verifyCompletionsAreExactly(
+    prefix: string,
+    actual: readonly CompletionItem[],
+    expected: readonly CompletionsExpectedItem[],
+  ): void {
+    const actualLabels = actual.map(item => item.label);
+    const expectedLabels = expected.map(getExpectedLabel);
+    assertDeepEqual(actualLabels, expectedLabels, `${prefix}Labels mismatch`);
+    for (let index = 0; index < actual.length; index += 1) {
+      const expectedItem = expected[index]!;
+      if (typeof expectedItem === "string") continue;
+      const error = this.verifyCompletionItem(`${prefix}Completion item mismatch for label ${actual[index]!.label}`, actual[index]!, expectedItem);
+      if (error !== "") fail(`${prefix}Completion item mismatch for label ${actual[index]!.label}:\n${error}`);
+    }
+  }
+
+  verifyCompletionItem(prefix: string, actualInput: CompletionItem, expected: CompletionItem): string {
+    let actual = actualInput;
+    const actualAutoImportFix = actual.data?.autoImport;
+    const expectedAutoImportFix = expected.data?.autoImport;
+    if ((actualAutoImportFix === undefined) !== (expectedAutoImportFix === undefined)) {
+      return "Mismatch in auto-import data presence";
+    }
+    if (expected.detail !== undefined || expected.documentation !== undefined || actualAutoImportFix !== undefined) {
+      actual = this.resolveCompletionItem(actual);
+    }
+    if (actualAutoImportFix !== undefined && expectedAutoImportFix !== undefined) {
+      const diff = diffJson(
+        omitCompletionFields(actual, autoImportCompletionIgnoreFields),
+        omitCompletionFields(expected, autoImportCompletionIgnoreFields),
+      );
+      if (diff !== "") return diff;
+      if (expected.additionalTextEdits === AnyTextEdits && (actual.additionalTextEdits?.length ?? 0) === 0) {
+        return "Expected non-empty AdditionalTextEdits for auto-import completion item";
+      }
+      if (expected.labelDetails !== undefined) {
+        const labelDiff = diffJson(actual.labelDetails, expected.labelDetails);
+        if (labelDiff !== "") return `LabelDetails mismatch:\n${labelDiff}`;
+      }
+      if (actualAutoImportFix.moduleSpecifier !== expectedAutoImportFix.moduleSpecifier) return "ModuleSpecifier mismatch";
+    } else {
+      const diff = diffJson(
+        omitCompletionFields(actual, completionIgnoreFields),
+        omitCompletionFields(expected, completionIgnoreFields),
+      );
+      if (diff !== "") return diff;
+      if (expected.additionalTextEdits !== AnyTextEdits) {
+        const editDiff = diffJson(actual.additionalTextEdits, expected.additionalTextEdits);
+        if (editDiff !== "") return `AdditionalTextEdits mismatch:\n${editDiff}`;
+      }
+    }
+    if (expected.filterText !== undefined) {
+      const diff = diffJson(actual.filterText, expected.filterText);
+      if (diff !== "") return `FilterText mismatch:\n${diff}`;
+    }
+    if (expected.kind !== undefined) {
+      const diff = diffJson(actual.kind, expected.kind);
+      if (diff !== "") return `Kind mismatch:\n${diff}`;
+    }
+    const sortTextDiff = diffJson(actual.sortText, expected.sortText ?? defaultCompletionSortText);
+    if (sortTextDiff !== "") return `SortText mismatch:\n${sortTextDiff}`;
+    return prefix.length >= 0 ? "" : "";
+  }
+
+  resolveCompletionItem(item: CompletionItem): CompletionItem {
+    const provider = this.completionProvider;
+    if (provider?.resolveCompletionItem === undefined) return item;
+    return provider.resolveCompletionItem(item, this.completionRequest());
+  }
+
+  getCurrentPositionPrefix(): string {
+    return `${this.activeFilename}:${this.currentCaretPosition.line + 1}:${this.currentCaretPosition.character + 1}: `;
+  }
+
+  private completionRequest(): FourslashCompletionRequest {
+    return {
+      fileName: this.activeFilename,
+      position: this.currentCaretPosition,
+      offset: offsetFromPosition(this.file(), this.currentCaretPosition),
+      userPreferences: this.userPreferences,
+    };
   }
 }
 
@@ -843,6 +1080,152 @@ export interface VerifyCompletionsResult {
 export interface CompletionVerificationResult {
   readonly itemDefaults?: CompletionItemDefaults;
   readonly items: readonly CompletionItem[];
+}
+
+export type MarkerInput = string | Marker | readonly string[] | readonly Marker[] | undefined;
+export const AnyTextEdits: readonly TextEdit[] = Object.freeze([]);
+const defaultCompletionSortText = "11";
+const completionIgnoreFields = new Set<keyof CompletionItem>(["kind", "sortText", "filterText", "data", "additionalTextEdits"]);
+const autoImportCompletionIgnoreFields = new Set<keyof CompletionItem>([
+  "kind",
+  "sortText",
+  "filterText",
+  "data",
+  "labelDetails",
+  "detail",
+  "additionalTextEdits",
+]);
+
+export function isEmptyExpectedList(expected: CompletionsExpectedList | undefined): boolean {
+  return expected === undefined
+    || expected.items === undefined
+    || (expected.items.exact.length === 0
+      && expected.items.includes.length === 0
+      && expected.items.excludes.length === 0);
+}
+
+export function verifyCompletionsItemDefaults(
+  actual: CompletionItemDefaults | undefined,
+  expected: CompletionsExpectedItemDefaults | undefined,
+  prefix: string,
+): void {
+  if (actual === undefined) {
+    if (expected !== undefined) fail(`${prefix}Expected non-undefined completion item defaults but got undefined.`);
+    return;
+  }
+  if (expected === undefined) {
+    fail(`${prefix}Expected undefined completion item defaults but got ${stableStringify(actual)}.`);
+  }
+  assertDeepEqual(actual.commitCharacters, expected.commitCharacters, `${prefix}CommitCharacters mismatch`);
+  const editRange = expected.editRange;
+  if (editRange === Ignored) return;
+  if (editRange === undefined) {
+    if (actual.editRange !== undefined) fail(`${prefix}Expected undefined EditRange but got ${stableStringify(actual.editRange)}.`);
+    return;
+  }
+  if (!isEditRange(editRange)) fail(`${prefix}Expected EditRange or Ignored.`);
+  if (actual.editRange === undefined) fail(`${prefix}Expected non-undefined EditRange but got undefined.`);
+  assertDeepEqual(actual.editRange, {
+    editRangeWithInsertReplace: {
+      insert: editRange.insert?.lsRange,
+      replace: editRange.replace?.lsRange,
+    },
+  }, `${prefix}EditRange mismatch`);
+}
+
+function completionItemsByLabel(items: readonly CompletionItem[]): Map<string, CompletionItem[]> {
+  const result = new Map<string, CompletionItem[]>();
+  for (const item of items) {
+    const bucket = result.get(item.label) ?? [];
+    bucket.push(item);
+    result.set(item.label, bucket);
+  }
+  return result;
+}
+
+function removeMatchingCompletionItem(
+  harness: FourslashTest,
+  prefix: string,
+  nameToActualItems: Map<string, CompletionItem[]>,
+  expected: CompletionsExpectedItem,
+  deleteThroughMatch = true,
+): void {
+  const label = getExpectedLabel(expected);
+  const actualItems = nameToActualItems.get(label);
+  if (actualItems === undefined) fail(`${prefix}Label '${label}' not found in actual items.`);
+  if (typeof expected === "string") return;
+  let mismatchPrefix = actualItems.length > 1
+    ? `${prefix}No completion item match for label ${label} (multiple candidates found): `
+    : `${prefix}Includes completion item mismatch for label ${label}: `;
+  const itemIndex = actualItems.findIndex(actualItem => {
+    const error = harness.verifyCompletionItem(prefix, actualItem, expected);
+    if (error !== "") {
+      mismatchPrefix += `\n    ${error}`;
+      return false;
+    }
+    return true;
+  });
+  if (itemIndex < 0) fail(mismatchPrefix);
+  if (actualItems.length === 1 || itemIndex === actualItems.length - 1) {
+    nameToActualItems.delete(label);
+  } else if (deleteThroughMatch) {
+    nameToActualItems.set(label, actualItems.slice(itemIndex + 1));
+  } else {
+    nameToActualItems.set(label, actualItems.slice(itemIndex));
+  }
+}
+
+function getExpectedLabel(item: CompletionsExpectedItem): string {
+  return typeof item === "string" ? item : item.label;
+}
+
+function isEditRange(value: ExpectedCompletionEditRange): value is EditRange {
+  return value !== Ignored;
+}
+
+function assertDeepEqual(actual: unknown, expected: unknown, prefix: string): void {
+  const diff = diffJson(actual, expected);
+  if (diff !== "") fail(`${prefix}:\n${diff}`);
+}
+
+function diffJson(actual: unknown, expected: unknown): string {
+  const actualText = stableStringify(actual);
+  const expectedText = stableStringify(expected);
+  return actualText === expectedText ? "" : `actual: ${actualText}\nexpected: ${expectedText}`;
+}
+
+function stableStringify(value: unknown): string {
+  return JSON.stringify(value, (_key, item: unknown) => {
+    if (item === undefined) return "__undefined__";
+    if (item === AnyTextEdits) return "__AnyTextEdits__";
+    if (item === null || typeof item !== "object" || Array.isArray(item)) return item;
+    return Object.fromEntries(Object.entries(item as Record<string, unknown>).sort(([left], [right]) => left.localeCompare(right)));
+  }, 2);
+}
+
+function omitCompletionFields(item: CompletionItem, fields: ReadonlySet<keyof CompletionItem>): Partial<CompletionItem> {
+  const result: Partial<CompletionItem> = {};
+  for (const [key, value] of Object.entries(item) as [keyof CompletionItem, CompletionItem[keyof CompletionItem]][]) {
+    if (!fields.has(key)) {
+      (result as Record<string, unknown>)[key] = value;
+    }
+  }
+  return result;
+}
+
+function compareCompletionItems(left: CompletionItem, right: CompletionItem): number {
+  return (left.sortText ?? "").localeCompare(right.sortText ?? "")
+    || left.label.localeCompare(right.label);
+}
+
+function textEditsToTextChanges(script: ScriptInfo, edits: readonly TextEdit[]): readonly TextChange[] {
+  return edits.map(edit => ({
+    span: new TextRange(
+      offsetFromPosition(script, edit.range.start),
+      offsetFromPosition(script, edit.range.end),
+    ),
+    newText: edit.newText,
+  }));
 }
 
 function fail(message: string): never {
