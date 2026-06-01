@@ -8,7 +8,34 @@
  */
 
 import { TextRange } from "../core/index.js";
-import type { Position, Range } from "../lsp/lsproto/index.js";
+import {
+  LanguageKindJavaScript,
+  LanguageKindJavaScriptReact,
+  LanguageKindJSON,
+  LanguageKindTypeScript,
+  LanguageKindTypeScriptReact,
+  type CompletionItem,
+  type CompletionItemDefaults,
+  type LanguageKind,
+  type Position,
+  type Range,
+} from "../lsp/lsproto/index.js";
+import {
+  extensionCjs,
+  extensionCts,
+  extensionDcts,
+  extensionDmts,
+  extensionDts,
+  extensionJs,
+  extensionJson,
+  extensionJsx,
+  extensionMjs,
+  extensionMts,
+  extensionTs,
+  extensionTsx,
+  fileExtensionIs,
+  fileExtensionIsOneOf,
+} from "../tspath/index.js";
 import { parseTestData, type Marker, type MarkerOrRange, type RangeMarker, type TestData, type TestFileInfo } from "./testParser.js";
 
 export const rootDir = "/";
@@ -164,6 +191,75 @@ export class FourslashTest {
     return this.testData.markerPositions.get(name) ?? this.rangesByText.get(name)?.[0] ?? fail(`Unknown marker or range: ${name}`);
   }
 
+  goToMarkerOrRange(markerOrRange: MarkerOrRange): void {
+    this.activeFilename = markerOrRange.fileName();
+    this.currentCaretPosition = markerOrRange.lsPos();
+    this.lastKnownMarkerName = markerOrRange.getName();
+    this.selectionEnd = undefined;
+  }
+
+  goToEOF(): void {
+    this.currentCaretPosition = positionFromOffset(this.file(), this.file().text().length);
+    this.selectionEnd = undefined;
+  }
+
+  goToBOF(): void {
+    this.currentCaretPosition = { line: 0, character: 0 };
+    this.selectionEnd = undefined;
+  }
+
+  goToPosition(position: number): void {
+    this.currentCaretPosition = positionFromOffset(this.file(), position);
+    this.selectionEnd = undefined;
+  }
+
+  goToEachMarker(markerNames: readonly string[], action: (marker: Marker, index: number) => void): void {
+    markerNames.forEach((markerName, index) => {
+      const marker = this.goToMarker(markerName);
+      action(marker, index);
+    });
+  }
+
+  goToEachRange(action: (rangeMarker: RangeMarker) => void): void {
+    this.testData.ranges.forEach((rangeMarker) => {
+      this.goToRange(rangeMarker);
+      action(rangeMarker);
+    });
+  }
+
+  goToRangeStart(rangeMarker: RangeMarker): void {
+    this.activeFilename = rangeMarker.fileName();
+    this.currentCaretPosition = rangeMarker.lsRange.start;
+    this.selectionEnd = undefined;
+  }
+
+  goToSelect(startMarkerName: string, endMarkerName: string): void {
+    const startMarker = this.marker(startMarkerName);
+    const endMarker = this.marker(endMarkerName);
+    if (startMarker.fileName() !== endMarker.fileName()) {
+      throw new Error(`Markers '${startMarkerName}' and '${endMarkerName}' are in different files`);
+    }
+    this.activeFilename = startMarker.fileName();
+    this.currentCaretPosition = startMarker.lsPosition;
+    this.selectionEnd = endMarker.lsPosition;
+  }
+
+  goToSelectRange(rangeMarker: RangeMarker): void {
+    this.activeFilename = rangeMarker.fileName();
+    this.currentCaretPosition = rangeMarker.lsRange.start;
+    this.selectionEnd = rangeMarker.lsRange.end;
+  }
+
+  goToFile(filename: string): void {
+    this.ensureActiveFile(filename);
+  }
+
+  goToFileNumber(index: number): void {
+    const file = this.testData.files[index];
+    if (file === undefined) throw new Error(`Fourslash file index ${index} is out of range`);
+    this.ensureActiveFile(file.fileName);
+  }
+
   rangeByText(text: string): RangeMarker {
     const ranges = this.rangesByText.get(text) ?? [];
     if (ranges.length !== 1) throw new Error(`Expected exactly one range with text ${JSON.stringify(text)}, got ${ranges.length}`);
@@ -176,6 +272,37 @@ export class FourslashTest {
 
   markers(): readonly Marker[] {
     return this.testData.markers;
+  }
+
+  markerNames(): readonly string[] {
+    return [...this.testData.markerPositions.keys()].sort();
+  }
+
+  getRangesInFile(fileName: string): readonly RangeMarker[] {
+    return this.testData.ranges.filter((rangeMarker) => rangeMarker.fileName() === fileName);
+  }
+
+  ensureActiveFile(filename: string): void {
+    if (!this.scriptInfos.has(filename)) throw new Error(`Unknown fourslash file: ${filename}`);
+    this.activeFilename = filename;
+    this.currentCaretPosition = { line: 0, character: 0 };
+    this.selectionEnd = undefined;
+    this.openFiles.add(filename);
+  }
+
+  closeFileOfMarker(markerName: string): void {
+    const marker = this.marker(markerName);
+    this.openFiles.delete(marker.fileName());
+    if (this.activeFilename === marker.fileName()) {
+      const next = this.openFiles.values().next().value as string | undefined;
+      if (next !== undefined) this.activeFilename = next;
+    }
+  }
+
+  openFile(filename: string): void {
+    if (!this.scriptInfos.has(filename)) throw new Error(`Unknown fourslash file: ${filename}`);
+    this.openFiles.add(filename);
+    this.activeFilename = filename;
   }
 
   setUserPreferences(preferences: UserPreferences): void {
@@ -207,6 +334,24 @@ export class FourslashTest {
   activeRange(): Range | undefined {
     if (this.selectionEnd === undefined) return undefined;
     return { start: this.currentCaretPosition, end: this.selectionEnd };
+  }
+
+  verifyCurrentFileContent(expectedContent: string): void {
+    const actualContent = this.file().text();
+    if (actualContent !== expectedContent) {
+      throw new Error(`Current file content mismatch\nactual:\n${actualContent}\nexpected:\n${expectedContent}`);
+    }
+  }
+
+  verifyCurrentLineContent(expectedContent: string): void {
+    const actualContent = this.file().getLineContent(this.currentCaretPosition.line);
+    if (actualContent !== expectedContent) {
+      throw new Error(`Current line content mismatch\n  actual line: "${actualContent}"\nexpected line: "${expectedContent}"`);
+    }
+  }
+
+  verifyIndentation(_numSpaces: number): void {
+    return;
   }
 }
 
@@ -253,6 +398,90 @@ export function computeLineStarts(text: string): readonly number[] {
     }
   }
   return starts;
+}
+
+function positionFromOffset(scriptInfo: ScriptInfo, offset: number): Position {
+  const lineStarts = scriptInfo.lineStarts();
+  let line = 0;
+  for (let index = 0; index < lineStarts.length; index += 1) {
+    const start = lineStarts[index]!;
+    if (start > offset) break;
+    line = index;
+  }
+  return { line, character: offset - lineStarts[line]! };
+}
+
+export function getLanguageKind(filename: string): LanguageKind {
+  if (fileExtensionIsOneOf(filename, [
+    extensionTs,
+    extensionMts,
+    extensionCts,
+    extensionDmts,
+    extensionDcts,
+    extensionDts,
+  ])) {
+    return LanguageKindTypeScript;
+  }
+  if (fileExtensionIsOneOf(filename, [extensionJs, extensionMjs, extensionCjs])) {
+    return LanguageKindJavaScript;
+  }
+  if (fileExtensionIs(filename, extensionJsx)) {
+    return LanguageKindJavaScriptReact;
+  }
+  if (fileExtensionIs(filename, extensionTsx)) {
+    return LanguageKindTypeScriptReact;
+  }
+  if (fileExtensionIs(filename, extensionJson)) {
+    return LanguageKindJSON;
+  }
+  return LanguageKindTypeScript;
+}
+
+export interface CompletionsExpectedList {
+  readonly isIncomplete: boolean;
+  readonly itemDefaults?: CompletionsExpectedItemDefaults;
+  readonly items?: CompletionsExpectedItems;
+  readonly userPreferences?: UserPreferences;
+}
+
+export type ExpectedCompletionEditRange = EditRange | typeof Ignored;
+
+export const Ignored = {};
+
+export interface EditRange {
+  readonly insert?: RangeMarker;
+  readonly replace?: RangeMarker;
+}
+
+export interface CompletionsExpectedItemDefaults {
+  readonly commitCharacters?: readonly string[];
+  readonly editRange?: ExpectedCompletionEditRange;
+}
+
+export type CompletionsExpectedItem = CompletionItem | string;
+
+export interface CompletionsExpectedItems {
+  readonly includes: readonly CompletionsExpectedItem[];
+  readonly excludes: readonly string[];
+  readonly exact: readonly CompletionsExpectedItem[];
+  readonly unsorted: readonly CompletionsExpectedItem[];
+}
+
+export interface CompletionsExpectedCodeAction {
+  readonly name: string;
+  readonly source: string;
+  readonly description: string;
+  readonly newFileContent: string;
+}
+
+export interface VerifyCompletionsResult {
+  readonly andApplyCodeAction: (expectedAction: CompletionsExpectedCodeAction) => void;
+  readonly andHasNoCodeAction: (unexpectedAction: CompletionsExpectedCodeAction) => void;
+}
+
+export interface CompletionVerificationResult {
+  readonly itemDefaults?: CompletionItemDefaults;
+  readonly items: readonly CompletionItem[];
 }
 
 function fail(message: string): never {
