@@ -1,4 +1,8 @@
+import { Kind, type Node, type SourceFile } from "../ast/index.js";
+import { TypeFlags, literalValue, type Type } from "../checker/types.js";
 import { ModuleResolutionKind, Tristate, newTextRange, type CompilerOptions, type ResolutionMode, type TextRange } from "../core/index.js";
+import { isApplicableVersionedTypesKey } from "../module/util.js";
+import { JSONValueType, asObject, asString, type JSONValue } from "../packagejson/jsonValue.js";
 import {
   ScriptElementKindDirectory,
   ScriptElementKindExternalModuleName,
@@ -120,6 +124,9 @@ export interface StringCompletionAmbientModule {
 
 export interface StringCompletionChecker {
   getAmbientModules?(): readonly StringCompletionAmbientModule[];
+  getBaseConstraintOfType?(type: Type): Type | undefined;
+  getStringIndexType?(type: Type): Type | undefined;
+  getNumberIndexType?(type: Type): Type | undefined;
 }
 
 export enum ReferenceKind {
@@ -200,6 +207,46 @@ export function getFragmentDirectory(fragment: string): string {
   if (!containsSlash(fragment)) return "";
   if (hasTrailingDirectorySeparator(fragment)) return fragment;
   return getDirectoryPath(fragment);
+}
+
+export function getPatternFromFirstMatchingCondition(target: JSONValue, conditions: readonly string[]): string {
+  if (target.type === JSONValueType.String) return asString(target);
+  if (target.type !== JSONValueType.Object) return "";
+
+  const object = asObject(target);
+  for (const [condition, pattern] of object) {
+    if (
+      condition === "default"
+      || conditions.includes(condition)
+      || conditions.includes("types") && isApplicableVersionedTypesKey(condition)
+    ) {
+      const nestedPattern = getPatternFromFirstMatchingCondition(pattern, conditions);
+      if (nestedPattern !== "") return nestedPattern;
+    }
+  }
+  return "";
+}
+
+export function getAmbientModuleCompletions(
+  fragment: string,
+  fragmentDirectory: string,
+  checker: StringCompletionChecker,
+): readonly string[] {
+  const completions: string[] = [];
+  for (const symbol of checker.getAmbientModules?.() ?? []) {
+    const moduleName = stripQuotes(symbol.name);
+    if (moduleName.startsWith(fragment) && !moduleName.includes("*")) {
+      completions.push(moduleName);
+    }
+  }
+
+  if (fragmentDirectory === "") return completions;
+  const moduleNameWithSeparator = ensureTrailingDirectorySeparator(fragmentDirectory);
+  return completions.map((moduleName) =>
+    moduleName.startsWith(moduleNameWithSeparator)
+      ? moduleName.slice(moduleNameWithSeparator.length)
+      : moduleName,
+  );
 }
 
 export function tryRemoveDirectoryPrefix(
@@ -345,6 +392,71 @@ export function getFilenameWithExtensionOptionForFileNameReference(name: string)
   return [name, tryGetExtensionFromPath(name)];
 }
 
+export function walkUpParentheses(node: Node): Node {
+  let current = node;
+  while (current.parent !== undefined) {
+    if (current.kind === Kind.ParenthesizedType && current.parent.kind === Kind.ParenthesizedType) {
+      current = current.parent;
+      continue;
+    }
+    if (current.kind === Kind.ParenthesizedExpression && current.parent.kind === Kind.ParenthesizedExpression) {
+      current = current.parent;
+      continue;
+    }
+    break;
+  }
+  return current;
+}
+
+export function getStringLiteralTypes(
+  type: Type | undefined,
+  uniques: Set<string> | undefined,
+  checker: StringCompletionChecker,
+): readonly Type[] {
+  if (type === undefined) return [];
+  const seen = uniques ?? new Set<string>();
+  const constrainedType = checker.getBaseConstraintOfType?.(type) ?? type;
+  if ((constrainedType.flags & TypeFlags.Union) !== 0) {
+    return typeArray(constrainedType).flatMap((elementType) =>
+      getStringLiteralTypes(elementType, seen, checker),
+    );
+  }
+  if ((constrainedType.flags & TypeFlags.StringLiteral) === 0 || (constrainedType.flags & TypeFlags.EnumLiteral) !== 0) {
+    return [];
+  }
+  const value = literalValue(constrainedType);
+  if (typeof value !== "string" || seen.has(value)) return [];
+  seen.add(value);
+  return [constrainedType];
+}
+
+export function getAlreadyUsedTypesInStringLiteralUnion(union: Node, current: Node): readonly string[] {
+  const values: string[] = [];
+  for (const typeNode of nodeArray(union, "types")) {
+    if (typeNode === current || typeNode.kind !== Kind.LiteralType) continue;
+    const literal = nodeProperty<Node>(typeNode, "literal");
+    if (literal?.kind === Kind.StringLiteral) values.push(nodeText(literal));
+  }
+  return values;
+}
+
+export function hasIndexSignature(type: Type, checker: StringCompletionChecker): boolean {
+  return checker.getStringIndexType?.(type) !== undefined || checker.getNumberIndexType?.(type) !== undefined;
+}
+
+export function isRequireCallArgument(node: Node): boolean {
+  const parent = node.parent;
+  if (parent?.kind !== Kind.CallExpression) return false;
+  const argumentsList = nodeArray(parent, "arguments");
+  const expression = nodeProperty<Node>(parent, "expression");
+  return argumentsList[0] === node && expression?.kind === Kind.Identifier && nodeText(expression) === "require";
+}
+
+export function isInReferenceComment(file: SourceFile, position: number): boolean {
+  const lineStart = lineStartOfPosition(file.text, position);
+  return hasTripleSlashPrefix(file.text.slice(lineStart, position));
+}
+
 export interface TripleSlashDirectiveFragment {
   readonly prefix: string;
   readonly kind: "path" | "types";
@@ -427,6 +539,36 @@ export function kindModifiersFromExtension(extension: string): ScriptElementKind
 
 function isWhiteSpaceLike(character: string): boolean {
   return /\s/u.test(character);
+}
+
+function typeArray(type: Type): readonly Type[] {
+  return (type.data as { readonly types?: readonly Type[] } | undefined)?.types ?? [];
+}
+
+function nodeArray(node: Node, propertyName: string): readonly Node[] {
+  const value = nodeProperty<readonly Node[] | { readonly nodes?: readonly Node[] }>(node, propertyName);
+  if (Array.isArray(value)) return value;
+  if (value !== undefined && "nodes" in value) return value.nodes ?? [];
+  return [];
+}
+
+function nodeProperty<T>(node: Node | undefined, propertyName: string): T | undefined {
+  if (node === undefined) return undefined;
+  return (node as unknown as Record<string, T | undefined>)[propertyName];
+}
+
+function nodeText(node: Node): string {
+  return nodeProperty<string>(node, "text") ?? nodeProperty<string>(node, "escapedText") ?? "";
+}
+
+function lineStartOfPosition(text: string, position: number): number {
+  let index = Math.min(Math.max(position, 0), text.length);
+  while (index > 0) {
+    const previous = text.charCodeAt(index - 1);
+    if (previous === 10 || previous === 13) break;
+    index -= 1;
+  }
+  return index;
 }
 
 // Language-service parity map: internal/ls/string_completions.go
