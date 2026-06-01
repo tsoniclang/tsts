@@ -1,8 +1,21 @@
-import { Kind, type Node, type SourceFile } from "../ast/index.js";
+import { isStringLiteralLike, Kind, type Node, type SourceFile, type Symbol } from "../ast/index.js";
 import { TypeFlags, literalValue, type Type } from "../checker/types.js";
 import { ModuleResolutionKind, Tristate, newTextRange, type CompilerOptions, type ResolutionMode, type TextRange } from "../core/index.js";
+import type { CompletionItem, CompletionList, Range } from "../lsp/lsproto/index.js";
+import { CompletionItemKindText } from "../lsp/lsproto/index.js";
 import { isApplicableVersionedTypesKey } from "../module/util.js";
 import { JSONValueType, asObject, asString, type JSONValue } from "../packagejson/jsonValue.js";
+import { getStartOfNode } from "../astnav/index.js";
+import {
+  CompletionKind,
+  KeywordCompletionFilters,
+  SortTextLocationPriority,
+  completionInfoFromData,
+  getCompletionsSymbolKind,
+  getDefaultCommitCharacters,
+  type CompletionDataData,
+  type CompletionInfoHost,
+} from "./completions.js";
 import {
   ScriptElementKindDirectory,
   ScriptElementKindExternalModuleName,
@@ -55,6 +68,7 @@ import {
   tryGetExtensionFromPath,
 } from "../tspath/index.js";
 import { stripQuotes } from "../stringutil/index.js";
+import { isInString } from "./utilities.js";
 
 export interface CompletionsFromTypes {
   readonly types: readonly unknown[];
@@ -127,11 +141,397 @@ export interface StringCompletionChecker {
   getBaseConstraintOfType?(type: Type): Type | undefined;
   getStringIndexType?(type: Type): Type | undefined;
   getNumberIndexType?(type: Type): Type | undefined;
+  getContextualType?(node: Node, flags: StringCompletionContextFlags): Type | undefined;
+  getTypeAtLocation?(node: Node): Type | undefined;
+  getTypeFromTypeNode?(node: Node): Type | undefined;
+  getTypeArgumentConstraint?(node: Node): Type | undefined;
+  getConstraintOfTypeArgumentProperty?(node: Node): Type | undefined;
+  getApparentProperties?(type: Type): readonly Symbol[];
+  getPropertiesForCompletion?(type: Type): readonly Symbol[];
+  getPropertiesForObjectExpression?(contextualType: Type, completionsType: Type | undefined, objectLiteralExpression: Node): readonly Symbol[];
+  getPropertyOfType?(type: Type, propertyName: string): Symbol | undefined;
+  getSymbolAtLocation?(node: Node): Symbol | undefined;
+  getExportsAndPropertiesOfModule?(symbol: Symbol): readonly Symbol[];
+  getCandidateSignaturesForStringLiteralCompletions?(invocation: unknown, editingArgument: Node): readonly unknown[];
+  getTypeOfParameterAtPosition?(signature: unknown, argumentIndex: number): Type | undefined;
 }
 
 export enum ReferenceKind {
   FileName = 0,
   ModuleSpecifier = 1,
+}
+
+export enum StringCompletionContextFlags {
+  None = 0,
+  IgnoreNodeInferences = 1 << 0,
+}
+
+export interface StringCompletionArgumentInfo {
+  readonly invocation: unknown;
+  readonly argumentIndex: number;
+}
+
+export interface StringCompletionProgram {
+  options?(): CompilerOptions;
+  getModeForUsageLocation?(file: SourceFile, node: Node): ResolutionMode;
+}
+
+export interface StringLiteralCompletionService extends CompletionInfoHost {
+  getProgram?(): StringCompletionProgram | undefined;
+  getTripleSlashReferenceCompletions?(
+    file: SourceFile,
+    position: number,
+    program: StringCompletionProgram | undefined,
+    checker: StringCompletionChecker,
+  ): readonly PathCompletion[];
+  getStringLiteralCompletionsFromModuleNamesWorker?(
+    file: SourceFile,
+    node: Node,
+    program: StringCompletionProgram | undefined,
+    checker: StringCompletionChecker,
+  ): readonly ModuleCompletionNameAndKind[];
+  getArgumentInfoForCompletions?(
+    node: Node,
+    position: number,
+    file: SourceFile,
+    checker: StringCompletionChecker,
+  ): StringCompletionArgumentInfo | undefined;
+  createRangeFromStringLiteralLikeContent?(file: SourceFile, node: Node, position: number): Range | undefined;
+}
+
+export function getStringLiteralCompletions(
+  service: StringLiteralCompletionService,
+  file: SourceFile,
+  position: number,
+  contextToken: Node | undefined,
+  checker: StringCompletionChecker,
+  compilerOptions: CompilerOptions,
+): CompletionList | undefined {
+  if (isInReferenceComment(file, position)) {
+    const entries = service.getTripleSlashReferenceCompletions?.(file, position, service.getProgram?.(), checker) ?? [];
+    return convertPathCompletions(entries, file, position);
+  }
+  if (!isInString(file, position, contextToken)) return undefined;
+  if (contextToken === undefined || !isStringLiteralLike(contextToken)) return undefined;
+  const entries = getStringLiteralCompletionEntries(service, file, contextToken, position, checker);
+  return convertStringLiteralCompletions(service, entries, contextToken, file, position, checker, compilerOptions);
+}
+
+export function convertStringLiteralCompletions(
+  service: StringLiteralCompletionService,
+  completion: StringLiteralCompletions | undefined,
+  contextToken: Node,
+  file: SourceFile,
+  position: number,
+  _checker: StringCompletionChecker,
+  _options: CompilerOptions,
+): CompletionList | undefined {
+  if (completion === undefined) return undefined;
+
+  const optionalReplacementRange = service.createRangeFromStringLiteralLikeContent?.(file, contextToken, position)
+    ?? createRangeFromStringLiteralLikeContent(file, contextToken);
+  if (completion.fromPaths !== undefined) {
+    return convertPathCompletions(completion.fromPaths, file, position);
+  }
+  if (completion.fromProperties !== undefined) {
+    const data = stringCompletionDataForProperties(completion.fromProperties, file, contextToken);
+    return completionInfoFromData(service, file, data, position, optionalReplacementRange);
+  }
+  if (completion.fromTypes !== undefined) {
+    const quoteChar = quoteCharacterForStringLiteralLike(contextToken);
+    const items = completion.fromTypes.types
+      .map((type): CompletionItem | undefined => {
+        const value = literalValue(type as Type);
+        return typeof value === "string"
+          ? {
+            label: escapeStringLiteralCompletionValue(value, quoteChar),
+            kind: CompletionItemKindText,
+            sortText: SortTextLocationPriority,
+          }
+          : undefined;
+      })
+      .filter((item): item is CompletionItem => item !== undefined);
+    return {
+      isIncomplete: false,
+      itemDefaults: {
+        commitCharacters: getDefaultCommitCharacters(completion.fromTypes.isNewIdentifier),
+      },
+      items,
+    };
+  }
+  return undefined;
+}
+
+export function convertPathCompletions(
+  pathCompletions: readonly PathCompletion[],
+  _file: SourceFile,
+  _position: number,
+): CompletionList {
+  return {
+    isIncomplete: false,
+    itemDefaults: {
+      commitCharacters: getDefaultCommitCharacters(true),
+    },
+    items: pathCompletions.map((pathCompletion): CompletionItem => {
+      const detail = pathCompletion.name.endsWith(pathCompletion.extension)
+        ? pathCompletion.name
+        : `${pathCompletion.name}${pathCompletion.extension}`;
+      return {
+        label: pathCompletion.name,
+        kind: getCompletionsSymbolKind(pathCompletion.kind),
+        sortText: SortTextLocationPriority,
+        detail,
+        ...(pathCompletion.textRange === undefined ? {} : { textEdit: { textEdit: { range: rangeFromTextRange(pathCompletion.textRange, _file), newText: pathCompletion.name } } }),
+      };
+    }),
+  };
+}
+
+export function getStringLiteralCompletionEntries(
+  service: StringLiteralCompletionService,
+  file: SourceFile,
+  node: Node,
+  position: number,
+  checker: StringCompletionChecker,
+): StringLiteralCompletions | undefined {
+  const parent = node.parent === undefined ? undefined : walkUpParentheses(node.parent);
+  if (parent === undefined) return undefined;
+
+  switch (parent.kind) {
+    case Kind.LiteralType: {
+      const grandparent = parent.parent === undefined ? undefined : walkUpParentheses(parent.parent);
+      if (grandparent === undefined) return undefined;
+      if (grandparent.kind === Kind.ImportType) {
+        return getStringLiteralCompletionsFromModuleNames(service, file, node, service.getProgram?.(), checker);
+      }
+      return fromUnionableLiteralType(grandparent, parent, position, checker);
+    }
+    case Kind.PropertyAssignment: {
+      if (parent.parent?.kind === Kind.ObjectLiteralExpression && nodeProperty(parent, "name") === node) {
+        const fromProperties = stringLiteralCompletionsForObjectLiteral(checker, parent.parent);
+        return fromProperties === undefined ? undefined : { fromProperties };
+      }
+      if (findAncestor(parent.parent, isCallLikeExpressionKind) !== undefined) {
+        const unique = new Set<string>();
+        const stringLiteralTypes = [
+          ...getStringLiteralTypes(checker.getContextualType?.(node, StringCompletionContextFlags.None), unique, checker),
+          ...getStringLiteralTypes(checker.getContextualType?.(node, StringCompletionContextFlags.IgnoreNodeInferences), unique, checker),
+        ];
+        return toStringLiteralCompletionsFromTypes(stringLiteralTypes);
+      }
+      const fromTypes = fromContextualType(StringCompletionContextFlags.None, node, checker);
+      return fromTypes === undefined ? undefined : { fromTypes };
+    }
+    case Kind.ElementAccessExpression: {
+      const expression = nodeProperty<Node>(parent, "expression");
+      const argumentExpression = nodeProperty<Node>(parent, "argumentExpression");
+      if (expression !== undefined && node === skipParentheses(argumentExpression)) {
+        const type = checker.getTypeAtLocation?.(expression);
+        return type === undefined ? undefined : { fromProperties: stringLiteralCompletionsFromProperties(type, checker) };
+      }
+      return undefined;
+    }
+    case Kind.CallExpression:
+    case Kind.NewExpression:
+    case Kind.JsxAttribute: {
+      if (!isRequireCallArgument(node) && !isImportCallKind(parent)) {
+        const argumentNode = parent.kind === Kind.JsxAttribute ? parent.parent ?? parent : node;
+        const argumentInfo = service.getArgumentInfoForCompletions?.(argumentNode, position, file, checker);
+        if (argumentInfo === undefined) return undefined;
+        const result = getStringLiteralCompletionsFromSignature(argumentInfo.invocation, node, argumentInfo, checker);
+        if (result !== undefined) return { fromTypes: result };
+        const fromTypes = fromContextualType(StringCompletionContextFlags.None, node, checker);
+        return fromTypes === undefined ? undefined : { fromTypes };
+      }
+      return getStringLiteralCompletionsFromModuleNames(service, file, node, service.getProgram?.(), checker);
+    }
+    case Kind.ImportDeclaration:
+    case Kind.ExportDeclaration:
+    case Kind.ExternalModuleReference:
+    case Kind.JSDocImportTag:
+      return getStringLiteralCompletionsFromModuleNames(service, file, node, service.getProgram?.(), checker);
+    case Kind.CaseClause: {
+      const contextualTypes = fromContextualType(StringCompletionContextFlags.IgnoreNodeInferences, node, checker);
+      if (contextualTypes === undefined) return undefined;
+      const usedValues = caseBlockStringLiteralValues(parent.parent);
+      return {
+        fromTypes: {
+          types: contextualTypes.types.filter(type => {
+            const value = literalValue(type as Type);
+            return typeof value !== "string" || !usedValues.has(value);
+          }),
+          isNewIdentifier: false,
+        },
+      };
+    }
+    case Kind.ImportSpecifier:
+    case Kind.ExportSpecifier:
+      return stringLiteralCompletionsForImportOrExportSpecifier(parent, node, checker);
+    case Kind.BinaryExpression:
+      if (nodeProperty<Node>(parent, "operatorToken")?.kind === Kind.InKeyword) {
+        const right = nodeProperty<Node>(parent, "right");
+        const type = right === undefined ? undefined : checker.getTypeAtLocation?.(right);
+        const properties = type === undefined ? [] : getPropertiesForCompletion(type, checker);
+        return {
+          fromProperties: {
+            symbols: properties.filter(symbol => !isPrivateClassElementDeclaration(symbol.valueDeclaration)),
+            hasIndexSignature: false,
+          },
+        };
+      }
+      const binaryFromTypes = fromContextualType(StringCompletionContextFlags.None, node, checker);
+      return binaryFromTypes === undefined ? undefined : { fromTypes: binaryFromTypes };
+    default: {
+      const ignoredInferenceResult = fromContextualType(StringCompletionContextFlags.IgnoreNodeInferences, node, checker);
+      if (ignoredInferenceResult !== undefined) return { fromTypes: ignoredInferenceResult };
+      const fromTypes = fromContextualType(StringCompletionContextFlags.None, node, checker);
+      return fromTypes === undefined ? undefined : { fromTypes };
+    }
+  }
+}
+
+export function fromContextualType(
+  contextFlags: StringCompletionContextFlags,
+  node: Node,
+  checker: StringCompletionChecker,
+): CompletionsFromTypes | undefined {
+  return toCompletionsFromTypes(getStringLiteralTypes(checker.getContextualType?.(node, contextFlags), undefined, checker));
+}
+
+export function toCompletionsFromTypes(types: readonly Type[]): CompletionsFromTypes | undefined {
+  if (types.length === 0) return undefined;
+  return {
+    types,
+    isNewIdentifier: false,
+  };
+}
+
+export function toStringLiteralCompletionsFromTypes(types: readonly Type[]): StringLiteralCompletions | undefined {
+  const result = toCompletionsFromTypes(types);
+  return result === undefined ? undefined : { fromTypes: result };
+}
+
+export function fromUnionableLiteralType(
+  grandparent: Node,
+  parent: Node,
+  position: number,
+  checker: StringCompletionChecker,
+): StringLiteralCompletions | undefined {
+  switch (grandparent.kind) {
+    case Kind.CallExpression:
+    case Kind.ExpressionWithTypeArguments:
+    case Kind.JsxOpeningElement:
+    case Kind.JsxSelfClosingElement:
+    case Kind.NewExpression:
+    case Kind.TaggedTemplateExpression:
+    case Kind.TypeReference: {
+      const typeArgument = findAncestor(parent, candidate => candidate.parent === grandparent);
+      if (typeArgument === undefined) return undefined;
+      return {
+        fromTypes: {
+          types: getStringLiteralTypes(checker.getTypeArgumentConstraint?.(typeArgument), undefined, checker),
+          isNewIdentifier: false,
+        },
+      };
+    }
+    case Kind.IndexedAccessType: {
+      const indexType = nodeProperty<Node>(grandparent, "indexType");
+      const objectType = nodeProperty<Node>(grandparent, "objectType");
+      if (indexType === undefined || objectType === undefined || !containsPosition(indexType, position)) return undefined;
+      const type = checker.getTypeFromTypeNode?.(objectType);
+      return type === undefined ? undefined : { fromProperties: stringLiteralCompletionsFromProperties(type, checker) };
+    }
+    case Kind.UnionType: {
+      const nextGrandparent = grandparent.parent === undefined ? undefined : walkUpParentheses(grandparent.parent);
+      if (nextGrandparent === undefined) return undefined;
+      const result = fromUnionableLiteralType(nextGrandparent, parent, position, checker);
+      if (result === undefined) return undefined;
+      const alreadyUsedTypes = new Set(getAlreadyUsedTypesInStringLiteralUnion(grandparent, parent));
+      if (result.fromProperties !== undefined) {
+        return {
+          fromProperties: {
+            symbols: result.fromProperties.symbols.filter(symbol => !alreadyUsedTypes.has(symbolName(symbol))),
+            hasIndexSignature: result.fromProperties.hasIndexSignature,
+          },
+        };
+      }
+      if (result.fromTypes !== undefined) {
+        return {
+          fromTypes: {
+            types: result.fromTypes.types.filter(type => {
+              const value = literalValue(type as Type);
+              return typeof value !== "string" || !alreadyUsedTypes.has(value);
+            }),
+            isNewIdentifier: false,
+          },
+        };
+      }
+      return undefined;
+    }
+    case Kind.PropertySignature:
+      return {
+        fromTypes: {
+          types: getStringLiteralTypes(checker.getConstraintOfTypeArgumentProperty?.(grandparent), undefined, checker),
+          isNewIdentifier: false,
+        },
+      };
+    default:
+      return undefined;
+  }
+}
+
+export function stringLiteralCompletionsForObjectLiteral(
+  checker: StringCompletionChecker,
+  objectLiteralExpression: Node,
+): CompletionsFromProperties | undefined {
+  const contextualType = checker.getContextualType?.(objectLiteralExpression, StringCompletionContextFlags.None);
+  if (contextualType === undefined) return undefined;
+  const completionsType = checker.getContextualType?.(objectLiteralExpression, StringCompletionContextFlags.IgnoreNodeInferences);
+  const symbols = checker.getPropertiesForObjectExpression?.(contextualType, completionsType, objectLiteralExpression)
+    ?? getPropertiesForCompletion(completionsType ?? contextualType, checker);
+  return {
+    symbols,
+    hasIndexSignature: hasIndexSignature(contextualType, checker),
+  };
+}
+
+export function stringLiteralCompletionsFromProperties(
+  type: Type,
+  checker: StringCompletionChecker,
+): CompletionsFromProperties {
+  return {
+    symbols: getPropertiesForCompletion(type, checker).filter(symbol => !isPrivateClassElementDeclaration(symbol.valueDeclaration)),
+    hasIndexSignature: hasIndexSignature(type, checker),
+  };
+}
+
+export function getStringLiteralCompletionsFromModuleNames(
+  service: StringLiteralCompletionService,
+  file: SourceFile,
+  node: Node,
+  program: StringCompletionProgram | undefined,
+  checker: StringCompletionChecker,
+): StringLiteralCompletions {
+  const nameAndKinds = service.getStringLiteralCompletionsFromModuleNamesWorker?.(file, node, program, checker) ?? [];
+  const textStart = getStartOfNode(node, file, false) + 1;
+  return {
+    fromPaths: addReplacementSpans(nodeText(node), textStart, nameAndKinds),
+  };
+}
+
+export function getStringLiteralCompletionsFromSignature(
+  invocation: unknown,
+  editingArgument: Node,
+  argumentInfo: StringCompletionArgumentInfo,
+  checker: StringCompletionChecker,
+): CompletionsFromTypes | undefined {
+  const candidates = checker.getCandidateSignaturesForStringLiteralCompletions?.(invocation, editingArgument) ?? [];
+  if (candidates.length === 0) return undefined;
+  const unique = new Set<string>();
+  const types = candidates.flatMap(signature =>
+    getStringLiteralTypes(checker.getTypeOfParameterAtPosition?.(signature, argumentInfo.argumentIndex), unique, checker),
+  );
+  return toCompletionsFromTypes(types);
 }
 
 export function deduplicateStrings(slice: readonly string[]): readonly string[] {
@@ -442,6 +842,201 @@ export function getAlreadyUsedTypesInStringLiteralUnion(union: Node, current: No
 
 export function hasIndexSignature(type: Type, checker: StringCompletionChecker): boolean {
   return checker.getStringIndexType?.(type) !== undefined || checker.getNumberIndexType?.(type) !== undefined;
+}
+
+function stringCompletionDataForProperties(
+  completion: CompletionsFromProperties,
+  file: SourceFile,
+  contextToken: Node,
+): CompletionDataData {
+  return {
+    symbols: completion.symbols,
+    autoImports: [],
+    completionKind: CompletionKind.String,
+    isInSnippetScope: false,
+    isNewIdentifierLocation: completion.hasIndexSignature,
+    location: file,
+    keywordFilters: KeywordCompletionFilters.None,
+    literals: [],
+    symbolToOriginInfoMap: new Map(),
+    symbolToSortTextMap: new Map(),
+    previousToken: contextToken,
+    contextToken,
+    jsxInitializer: { isInitializer: false },
+    insideJSDocTagTypeExpression: false,
+    isTypeOnlyLocation: false,
+    isJsxIdentifierExpected: false,
+    isRightOfOpenTag: false,
+    isRightOfDotOrQuestionDot: false,
+    hasUnresolvedAutoImports: false,
+    defaultCommitCharacters: getDefaultCommitCharacters(completion.hasIndexSignature),
+  };
+}
+
+function quoteCharacterForStringLiteralLike(node: Node): "\"" | "'" | "`" {
+  if (node.kind === Kind.NoSubstitutionTemplateLiteral) return "`";
+  return nodeText(node).startsWith("'") ? "'" : "\"";
+}
+
+function escapeStringLiteralCompletionValue(value: string, quoteChar: "\"" | "'" | "`"): string {
+  let result = "";
+  for (const character of value) {
+    if (character === "\\" || character === quoteChar) {
+      result += `\\${character}`;
+    } else if (character === "\n") {
+      result += "\\n";
+    } else if (character === "\r") {
+      result += "\\r";
+    } else if (character === "\t") {
+      result += "\\t";
+    } else {
+      result += character;
+    }
+  }
+  return result;
+}
+
+function createRangeFromStringLiteralLikeContent(file: SourceFile, node: Node): Range | undefined {
+  const start = getStartOfNode(node, file, false) + 1;
+  const end = Math.max(start, node.end - 1);
+  return createLspRangeFromBounds(start, end, file);
+}
+
+function rangeFromTextRange(textRange: TextRange, file: SourceFile): Range {
+  return createLspRangeFromBounds(textRange.pos, textRange.end, file);
+}
+
+function createLspRangeFromBounds(start: number, end: number, file: SourceFile): Range {
+  return {
+    start: positionToLineAndCharacter(file, start),
+    end: positionToLineAndCharacter(file, end),
+  };
+}
+
+function positionToLineAndCharacter(file: SourceFile, position: number): Range["start"] {
+  const lineStarts = lineStartsOf(file);
+  let line = 0;
+  for (let index = 0; index < lineStarts.length; index += 1) {
+    if (lineStarts[index]! > position) break;
+    line = index;
+  }
+  return { line, character: position - lineStarts[line]! };
+}
+
+function lineStartsOf(file: SourceFile): readonly number[] {
+  const lineStarts = (file as { readonly lineStarts?: readonly number[] }).lineStarts;
+  return lineStarts !== undefined && lineStarts.length > 0 ? lineStarts : computeLineStarts(file.text);
+}
+
+function computeLineStarts(text: string): readonly number[] {
+  const starts = [0];
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text.charCodeAt(index);
+    if (char === 13 || char === 10) {
+      if (char === 13 && text.charCodeAt(index + 1) === 10) index += 1;
+      starts.push(index + 1);
+    }
+  }
+  return starts;
+}
+
+function findAncestor(node: Node | undefined, predicate: (node: Node) => boolean): Node | undefined {
+  for (let current = node; current !== undefined; current = current.parent) {
+    if (predicate(current)) return current;
+  }
+  return undefined;
+}
+
+function isCallLikeExpressionKind(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.CallExpression:
+    case Kind.NewExpression:
+    case Kind.TaggedTemplateExpression:
+    case Kind.JsxOpeningElement:
+    case Kind.JsxSelfClosingElement:
+      return true;
+    default:
+      return false;
+  }
+}
+
+function skipParentheses(node: Node | undefined): Node | undefined {
+  let current = node;
+  while (current?.kind === Kind.ParenthesizedExpression || current?.kind === Kind.ParenthesizedType) {
+    current = nodeProperty(current, "expression") ?? nodeProperty(current, "type");
+  }
+  return current;
+}
+
+function isImportCallKind(node: Node): boolean {
+  return node.kind === Kind.CallExpression && nodeProperty<Node>(node, "expression")?.kind === Kind.ImportKeyword;
+}
+
+function caseBlockStringLiteralValues(caseBlock: Node | undefined): ReadonlySet<string> {
+  const values = new Set<string>();
+  if (caseBlock === undefined) return values;
+  for (const clause of nodeArray(caseBlock, "clauses")) {
+    const expression = nodeProperty<Node>(clause, "expression");
+    if (expression?.kind === Kind.StringLiteral || expression?.kind === Kind.NoSubstitutionTemplateLiteral) {
+      values.add(nodeText(expression));
+    }
+  }
+  return values;
+}
+
+function stringLiteralCompletionsForImportOrExportSpecifier(
+  specifier: Node,
+  node: Node,
+  checker: StringCompletionChecker,
+): StringLiteralCompletions | undefined {
+  const propertyName = nodeProperty<Node>(specifier, "propertyName");
+  if (propertyName !== undefined && node !== propertyName) return undefined;
+
+  const namedImportsOrExports = specifier.parent;
+  let moduleSpecifier: Node | undefined;
+  if (namedImportsOrExports?.kind === Kind.NamedImports) {
+    moduleSpecifier = namedImportsOrExports.parent?.parent;
+  } else {
+    moduleSpecifier = namedImportsOrExports?.parent;
+  }
+  if (moduleSpecifier === undefined) return undefined;
+
+  const moduleSpecifierSymbol = checker.getSymbolAtLocation?.(moduleSpecifier);
+  if (moduleSpecifierSymbol === undefined) return undefined;
+
+  const existing = new Set(
+    nodeArray(namedImportsOrExports, "elements")
+      .map(element => nodeText(nodeProperty<Node>(element, "propertyName") ?? nodeProperty<Node>(element, "name") ?? element)),
+  );
+  const exports = checker.getExportsAndPropertiesOfModule?.(moduleSpecifierSymbol) ?? [];
+  return {
+    fromProperties: {
+      symbols: exports.filter(symbol => symbolName(symbol) !== "default" && !existing.has(symbolName(symbol))),
+      hasIndexSignature: false,
+    },
+  };
+}
+
+function getPropertiesForCompletion(type: Type, checker: StringCompletionChecker): readonly Symbol[] {
+  return checker.getPropertiesForCompletion?.(type) ?? checker.getApparentProperties?.(type) ?? [];
+}
+
+function containsPosition(node: Node, position: number): boolean {
+  return node.pos <= position && position <= node.end;
+}
+
+function symbolName(symbol: Symbol | unknown): string {
+  const candidate = symbol as { readonly name?: string; readonly escapedName?: string };
+  return candidate.name ?? candidate.escapedName ?? "";
+}
+
+function isPrivateClassElementDeclaration(node: Node | undefined): boolean {
+  return node?.kind === Kind.PropertyDeclaration
+    || node?.kind === Kind.MethodDeclaration
+    || node?.kind === Kind.GetAccessor
+    || node?.kind === Kind.SetAccessor
+    ? nodeProperty<Node>(node, "name")?.kind === Kind.PrivateIdentifier
+    : false;
 }
 
 export function isRequireCallArgument(node: Node): boolean {
