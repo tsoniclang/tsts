@@ -361,7 +361,7 @@ function generateLsMaps() {
     "codeactions_importfixes.go", "codeactions_missingmemberfixer.go", "codelens.go", "completions.go",
     "crossproject.go", "definition.go", "displaypartswriter.go", "documenthighlights.go",
     "file_rename.go", "findallreferences.go", "folding.go", "format.go", "hover.go", "importTracker.go",
-    "inlay_hints.go", "linkedediting.go", "lsutil/asi.go", "lsutil/children.go",
+    "inlay_hints.go", "linkedediting.go",
     "lsutil/completednode.go", "lsutil/formatcodeoptions.go", "lsutil/organizeimports.go",
     "lsutil/symbol_display.go", "lsutil/utilities.go", "organizeimports.go", "rename.go",
     "selectionranges.go", "semantictokens.go", "signaturehelp.go", "source_map.go", "sourcedefinition.go",
