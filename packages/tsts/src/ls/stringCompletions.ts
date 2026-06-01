@@ -1,4 +1,4 @@
-import type { TextRange } from "../core/index.js";
+import { ModuleResolutionKind, Tristate, newTextRange, type CompilerOptions, type ResolutionMode, type TextRange } from "../core/index.js";
 import {
   ScriptElementKindDirectory,
   ScriptElementKindExternalModuleName,
@@ -20,7 +20,10 @@ import {
   type ScriptElementKindModifier,
 } from "./lsutil/index.js";
 import {
+  combinePaths,
+  containsPath,
   directorySeparator,
+  ensureTrailingDirectorySeparator,
   extensionCjs,
   extensionCts,
   extensionDcts,
@@ -35,10 +38,19 @@ import {
   extensionTsBuildInfo,
   extensionTsx,
   getAnyExtensionFromPath,
+  getCanonicalFileName,
+  getDirectoryPath,
   getRelativePathFromDirectory,
+  hasTrailingDirectorySeparator,
+  isRootedDiskPath,
+  normalizePath,
+  removeTrailingDirectorySeparator,
   resolvePath,
+  supportedJSExtensionsFlat,
+  supportedTSExtensionsFlat,
   tryGetExtensionFromPath,
 } from "../tspath/index.js";
+import { stripQuotes } from "../stringutil/index.js";
 
 export interface CompletionsFromTypes {
   readonly types: readonly unknown[];
@@ -98,6 +110,18 @@ export interface ExtensionOptions {
   readonly resolutionMode?: unknown;
 }
 
+export interface StringCompletionUserPreferences {
+  readonly importModuleSpecifierEnding?: unknown;
+}
+
+export interface StringCompletionAmbientModule {
+  readonly name: string;
+}
+
+export interface StringCompletionChecker {
+  getAmbientModules?(): readonly StringCompletionAmbientModule[];
+}
+
 export enum ReferenceKind {
   FileName = 0,
   ModuleSpecifier = 1,
@@ -142,6 +166,141 @@ export function moduleToScriptElementKind(kind: ModuleCompletionKind): ScriptEle
     default:
       return ScriptElementKindScriptElement;
   }
+}
+
+export function addReplacementSpans(
+  text: string,
+  textStart: number,
+  names: readonly ModuleCompletionNameAndKind[],
+): readonly PathCompletion[] {
+  const textRange = getDirectoryFragmentRange(text, textStart);
+  return names.map((nameAndKind): PathCompletion => {
+    const completion = {
+      name: nameAndKind.name,
+      kind: moduleToScriptElementKind(nameAndKind.kind),
+      extension: nameAndKind.extension,
+    };
+    return textRange === undefined ? completion : { ...completion, textRange };
+  });
+}
+
+export function isAnyDirectorySeparator(character: string): boolean {
+  return character === "/" || character === "\\";
+}
+
+export function getDirectoryFragmentRange(text: string, textStart: number): TextRange | undefined {
+  const slash = Math.max(text.lastIndexOf("/"), text.lastIndexOf("\\"));
+  const offset = slash === -1 ? 0 : slash + 1;
+  const length = text.length - offset;
+  if (length === 0) return undefined;
+  return newTextRange(textStart + offset, textStart + offset + length);
+}
+
+export function getFragmentDirectory(fragment: string): string {
+  if (!containsSlash(fragment)) return "";
+  if (hasTrailingDirectorySeparator(fragment)) return fragment;
+  return getDirectoryPath(fragment);
+}
+
+export function tryRemoveDirectoryPrefix(
+  path: string,
+  prefix: string,
+  useCaseSensitiveFileNames: boolean,
+): string | undefined {
+  const canonicalPath = getCanonicalFileName(path, useCaseSensitiveFileNames);
+  const canonicalPrefix = getCanonicalFileName(prefix, useCaseSensitiveFileNames);
+  if (!canonicalPath.startsWith(canonicalPrefix)) return undefined;
+  let withoutPrefix = path.slice(prefix.length);
+  if (withoutPrefix.startsWith("/") || withoutPrefix.startsWith("\\")) {
+    withoutPrefix = withoutPrefix.slice(1);
+  }
+  return withoutPrefix;
+}
+
+export function getExtensionOptions(
+  options: CompilerOptions,
+  referenceKind: ReferenceKind,
+  file: unknown,
+  mode: ResolutionMode,
+  checker: StringCompletionChecker | undefined,
+  userPreferences: StringCompletionUserPreferences = {},
+): ExtensionOptions {
+  return {
+    extensionsToSearch: getSupportedExtensionsForModuleResolution(options, checker),
+    referenceKind,
+    importingSourceFile: file,
+    endingPreference: userPreferences.importModuleSpecifierEnding,
+    resolutionMode: mode,
+  };
+}
+
+export function getSupportedExtensionsForModuleResolution(
+  options: CompilerOptions,
+  checker: StringCompletionChecker | undefined,
+): readonly string[] {
+  const extensions: string[] = [];
+  const ambientModules = checker?.getAmbientModules?.() ?? [];
+  for (const module of ambientModules) {
+    const name = stripQuotes(module.name);
+    if (!name.startsWith("*.") || name.includes("/")) continue;
+    extensions.push(name.slice(1));
+  }
+
+  for (const extension of supportedTSExtensionsFlat) extensions.push(extension);
+  if (options.allowJs === Tristate.True) {
+    for (const extension of supportedJSExtensionsFlat) extensions.push(extension);
+  }
+  if (moduleResolutionUsesNodeModules(options.moduleResolution ?? ModuleResolutionKind.Unknown)
+    && options.resolveJsonModule === Tristate.True) {
+    extensions.push(extensionJson);
+  }
+
+  return deduplicateStrings(extensions);
+}
+
+export function moduleResolutionUsesNodeModules(moduleResolution: number): boolean {
+  return (
+    moduleResolution >= ModuleResolutionKind.Node16 &&
+    moduleResolution <= ModuleResolutionKind.NodeNext
+  ) || moduleResolution === ModuleResolutionKind.Bundler;
+}
+
+export function isPathRelativeToScript(path: string): boolean {
+  return path.startsWith("./") || path.startsWith("../");
+}
+
+export function getBaseDirectoriesFromRootDirs(
+  rootDirs: readonly string[],
+  basePath: string,
+  scriptDirectory: string,
+  ignoreCase: boolean,
+): readonly string[] {
+  const normalizedRootDirs = rootDirs.map((rootDirectory) => {
+    const normalizedPath = isRootedDiskPath(rootDirectory)
+      ? rootDirectory
+      : combinePaths(basePath, rootDirectory);
+    return ensureTrailingDirectorySeparator(normalizePath(normalizedPath));
+  });
+
+  let relativeDirectory = "";
+  const comparePathsOptions = {
+    currentDirectory: basePath,
+    useCaseSensitiveFileNames: !ignoreCase,
+  };
+  for (const rootDirectory of normalizedRootDirs) {
+    if (containsPath(rootDirectory, scriptDirectory, comparePathsOptions)) {
+      relativeDirectory = rootDirectory.length > scriptDirectory.length
+        ? ""
+        : scriptDirectory.slice(rootDirectory.length);
+      break;
+    }
+  }
+
+  const directories = normalizedRootDirs.map((rootDirectory) =>
+    removeTrailingDirectorySeparator(combinePaths(rootDirectory, relativeDirectory)),
+  );
+  directories.push(removeTrailingDirectorySeparator(scriptDirectory));
+  return deduplicateStrings(directories);
 }
 
 export function containsSlash(fragment: string): boolean {
