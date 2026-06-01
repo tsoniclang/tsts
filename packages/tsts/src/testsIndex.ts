@@ -30,27 +30,6 @@ import "./program/program.test.js";
 import "./scanner/scanner.test.js";
 import "./scanner/regexp.test.js";
 import "./json/json.test.js";
-import "./lsp/lsproto/lsp.test.js";
-import "./ls/diagnostics.test.js";
-import "./ls/autoInsert.test.js";
-import "./ls/autoimport/aliasResolver.test.js";
-import "./ls/autoimport/export.test.js";
-import "./ls/autoimport/specifiers.test.js";
-import "./ls/autoimport/util.test.js";
-import "./ls/codeActions.test.js";
-import "./ls/codeLens.test.js";
-import "./ls/crossProject.test.js";
-import "./ls/displayPartsWriter.test.js";
-import "./ls/format.test.js";
-import "./ls/lsconv/lineMap.test.js";
-import "./ls/lsutil/asi.test.js";
-import "./ls/lsutil/completedNode.test.js";
-import "./ls/lsutil/formatCodeOptions.test.js";
-import "./ls/lsutil/symbolDisplay.test.js";
-import "./ls/lsutil/utilities.test.js";
-import "./ls/linkedEditing.test.js";
-import "./ls/selectionRanges.test.js";
-import "./ls/sourceMap.test.js";
 
 // === Still disabled (TSTS source incompleteness; not tsonic blockers) ===
 

@@ -38,6 +38,10 @@ const EXCLUDED_TSTS_SOURCE_FILES = new Set<string>([
   "scanner/scanner.nativePreview.ts",
 ]);
 
+const EXCLUDED_TSGO_SOURCE_FILES = new Set<string>([
+  "testutil/lsptestutil/lspclient.go",
+]);
+
 type ModuleScope = "required" | "deferred";
 
 interface ModuleSpec {
@@ -117,11 +121,7 @@ const REQUIRED_MODULES: readonly ModuleSpec[] = [
 ];
 
 const DEFERRED_MODULES: readonly ModuleSpec[] = [
-  { upstream: "fourslash", local: ["fourslash"], scope: "deferred", notes: "IDE test harness; parity is useful but not compiler-runtime blocking." },
-  { upstream: "jsonrpc", local: ["jsonrpc"], scope: "deferred", notes: "LSP transport." },
   { upstream: "locale", local: ["locale"], scope: "deferred", notes: "Localization data." },
-  { upstream: "ls", local: ["ls"], scope: "deferred", notes: "Language service." },
-  { upstream: "lsp", local: ["lsp"], scope: "deferred", notes: "LSP server." },
   { upstream: "pprof", local: ["pprof"], scope: "deferred", notes: "Go profiling adapter." },
   { upstream: "repo", local: ["repo"], scope: "deferred", notes: "Repository tooling." },
   { upstream: "tracing", local: ["tracing"], scope: "deferred", notes: "Optional tracing infrastructure." },
@@ -207,7 +207,10 @@ function collectStats(root: string, modules: readonly string[], predicate: (path
   const files: string[] = [];
   for (const moduleName of modules) {
     const dir = join(root, moduleName);
-    files.push(...walk(dir, predicate).filter((file) => !EXCLUDED_TSTS_SOURCE_FILES.has(relative(root, file).replace(/\\/g, "/"))));
+    files.push(...walk(dir, predicate).filter((file) => {
+      const rootRelative = relative(root, file).replace(/\\/g, "/");
+      return !EXCLUDED_TSTS_SOURCE_FILES.has(rootRelative) && !EXCLUDED_TSGO_SOURCE_FILES.has(rootRelative);
+    }));
   }
   const unique = [...new Set(files)].sort();
   return {

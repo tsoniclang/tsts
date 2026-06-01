@@ -14,7 +14,6 @@ export * from "./fixtures/index.js";
 export * from "./fsbaselineutil/index.js";
 export * from "./harnessutil/index.js";
 export * from "./jstest/index.js";
-export * from "./lsptestutil/index.js";
 export * from "./parsetestutil/index.js";
 export * from "./projecttestutil/index.js";
 export * from "./race/index.js";

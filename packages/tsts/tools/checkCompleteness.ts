@@ -80,14 +80,14 @@ const MODULES: readonly ModuleSpec[] = [
   { name: "tspath", inScope: true },
   { name: "vfs", inScope: true },
 
-  // Out of scope: LSP / IDE
+  // Out of scope: non-compiler surfaces
   { name: "api", inScope: false, notes: "IPC API to Go binary; TSTS has no Go binary" },
   { name: "format", inScope: false, notes: "Code formatter; out of scope" },
-  { name: "fourslash", inScope: false, notes: "IDE-feature test infrastructure" },
-  { name: "jsonrpc", inScope: false, notes: "LSP-related" },
+  { name: "fourslash", inScope: false, notes: "Unsupported IDE test harness" },
+  { name: "jsonrpc", inScope: false, notes: "Unsupported LSP transport" },
   { name: "locale", inScope: false, notes: "i18n; deferred" },
-  { name: "ls", inScope: false, notes: "Language Service" },
-  { name: "lsp", inScope: false, notes: "LSP server" },
+  { name: "ls", inScope: false, notes: "Unsupported Language Service" },
+  { name: "lsp", inScope: false, notes: "Unsupported LSP server" },
   { name: "pprof", inScope: false, notes: "Go profiling" },
   { name: "project", inScope: false, notes: "IDE project management" },
   { name: "pseudochecker", inScope: false, notes: "Optional lightweight pre-checker" },
