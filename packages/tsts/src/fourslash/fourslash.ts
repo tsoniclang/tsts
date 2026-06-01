@@ -59,13 +59,28 @@ import {
   TokenFormatRelative,
   type ClientCapabilities,
   type CodeAction,
+  type CodeActionKind,
   type CompletionItem,
   type CompletionItemDefaults,
   type CompletionList,
+  type Diagnostic,
+  type DocumentHighlight,
+  type DocumentSymbol,
+  type DocumentUri,
+  type FoldingRange,
+  type Hover,
+  type InlayHint,
   type LanguageKind,
+  type LinkedEditingRanges,
+  type Location,
   type Position,
   type Range,
+  type SelectionRange,
+  type SignatureHelp,
+  type SymbolInformation,
   type TextEdit,
+  type WorkspaceEdit,
+  type WorkspaceSymbol,
 } from "../lsp/lsproto/index.js";
 import { fileNameToDocumentURI } from "../ls/lsconv/index.js";
 import {
@@ -84,7 +99,7 @@ import {
   fileExtensionIs,
   fileExtensionIsOneOf,
 } from "../tspath/index.js";
-import { parseTestData, type Marker, type MarkerOrRange, type RangeMarker, type TestData, type TestFileInfo } from "./testParser.js";
+import { RangeMarker, parseTestData, type Marker, type MarkerOrRange, type TestData, type TestFileInfo } from "./testParser.js";
 
 export const rootDir = "/";
 export const showCodeLensLocationsCommandName = "typescript.showCodeLensLocations";
@@ -159,6 +174,7 @@ export interface FourslashOptions {
   readonly fileName?: string;
   readonly completionProvider?: FourslashCompletionProvider;
   readonly codeFixProvider?: FourslashCodeFixProvider;
+  readonly languageProvider?: FourslashLanguageProvider;
 }
 
 export interface FourslashCompletionRequest {
@@ -187,6 +203,35 @@ export interface FourslashCodeFixProvider {
   getSourceFixAllActions?(request: FourslashCodeFixRequest): readonly CodeAction[];
 }
 
+export interface FourslashLanguageRequest {
+  readonly fileName: string;
+  readonly uri: DocumentUri;
+  readonly position: Position;
+  readonly range: Range | undefined;
+  readonly offset: number;
+  readonly userPreferences: UserPreferences;
+}
+
+export interface FourslashLanguageProvider {
+  organizeImports?(fileName: string, kind: CodeActionKind, preferences: UserPreferences): CodeAction | undefined;
+  getImportFixes?(request: FourslashLanguageRequest, diagnostics: readonly Diagnostic[]): readonly CodeAction[];
+  getReferences?(request: FourslashLanguageRequest, includeDeclaration: boolean): readonly Location[];
+  getDefinition?(request: FourslashLanguageRequest): readonly Location[];
+  getTypeDefinition?(request: FourslashLanguageRequest): readonly Location[];
+  getSourceDefinition?(request: FourslashLanguageRequest): readonly Location[];
+  getWorkspaceSymbols?(query: string): readonly SymbolInformation[];
+  getFoldingRanges?(fileName: string): readonly FoldingRange[] | undefined;
+  getHover?(request: FourslashLanguageRequest, verbosityLevel?: number): Hover | undefined;
+  getSignatureHelp?(request: FourslashLanguageRequest): SignatureHelp | undefined;
+  getSelectionRanges?(fileName: string, positions: readonly Position[]): readonly SelectionRange[];
+  getDocumentHighlights?(request: FourslashLanguageRequest, filesToSearch?: readonly DocumentUri[]): readonly Location[];
+  getDocumentSymbols?(fileName: string): readonly DocumentSymbol[] | readonly SymbolInformation[] | undefined;
+  getDiagnostics?(fileName: string): readonly Diagnostic[];
+  getInlayHints?(fileName: string, range: Range): readonly InlayHint[];
+  getLinkedEditingRanges?(request: FourslashLanguageRequest): LinkedEditingRanges | undefined;
+  rename?(request: FourslashLanguageRequest, newName: string): WorkspaceEdit | undefined;
+}
+
 export class FourslashTest {
   readonly testData: TestData;
   readonly rangesByText = new Map<string, RangeMarker[]>();
@@ -198,6 +243,7 @@ export class FourslashTest {
   readonly semanticTokenModifiers: string[] = [];
   completionProvider: FourslashCompletionProvider | undefined;
   codeFixProvider: FourslashCodeFixProvider | undefined;
+  languageProvider: FourslashLanguageProvider | undefined;
 
   stateEnableFormatting = false;
   reportFormatOnTypeCrash = false;
@@ -213,6 +259,7 @@ export class FourslashTest {
     this.capabilities = getCapabilitiesWithDefaults(options.capabilities);
     this.completionProvider = options.completionProvider;
     this.codeFixProvider = options.codeFixProvider;
+    this.languageProvider = options.languageProvider;
     this.testData = parseTestData(options.content, fileName);
     this.activeFilename = this.testData.files[0]?.fileName ?? fileName;
 
@@ -391,6 +438,10 @@ export class FourslashTest {
 
   setCodeFixProvider(provider: FourslashCodeFixProvider | undefined): void {
     this.codeFixProvider = provider;
+  }
+
+  setLanguageProvider(provider: FourslashLanguageProvider | undefined): void {
+    this.languageProvider = provider;
   }
 
   setSelection(start: Position, end: Position): void {
@@ -912,8 +963,485 @@ export class FourslashTest {
     return result;
   }
 
+  verifyOrganizeImports(expectedContent: string, codeActionKind: CodeActionKind = "source.organizeImports", preferences?: UserPreferences): void {
+    const provider = this.languageProviderRequired("organize imports");
+    const originalPreferences = this.userPreferences;
+    if (preferences !== undefined) this.setUserPreferences(preferences);
+    try {
+      const action = provider.organizeImports?.(this.activeFilename, codeActionKind, this.userPreferences);
+      if (action === undefined) fail(`No organize imports code action found for ${codeActionKind}.`);
+      this.applyCodeActionEditsForActiveFile(action);
+      this.verifyCurrentFileContent(expectedContent);
+    } finally {
+      this.userPreferences = originalPreferences;
+    }
+  }
+
+  verifyApplyCodeActionFromCompletion(markerName: string | undefined, options: ApplyCodeActionFromCompletionOptions): void {
+    if (markerName !== undefined) this.goToMarker(markerName);
+    const originalPreferences = this.userPreferences;
+    this.setUserPreferences(options.userPreferences ?? { includeCompletionsForModuleExports: true });
+    try {
+      const completions = this.getCompletions();
+      const matchingItems = completions?.items.filter(item => {
+        const autoImport = item.data?.autoImport;
+        if (item.label !== options.name) return false;
+        if (autoImport?.moduleSpecifier === options.source) return true;
+        const source = item.data?.source;
+        return autoImport === undefined && source === options.source;
+      }) ?? [];
+      if (matchingItems.length === 0) {
+        fail(`Code action '${options.name}' from source '${options.source}' not found in completions.`);
+      }
+
+      const resolved = matchingItems
+        .map(item => this.resolveCompletionItem(item))
+        .find(item => (item.detail ?? "").includes(options.description) && (item.additionalTextEdits?.length ?? 0) > 0);
+      if (resolved === undefined) {
+        fail(`No completion code action matched '${options.description}' for '${options.name}' from '${options.source}'.`);
+      }
+
+      this.applyTextEdits(this.activeFilename, textEditsToTextChanges(this.file(), resolved.additionalTextEdits ?? []));
+      if (options.newFileContent !== undefined) {
+        this.verifyCurrentFileContent(options.newFileContent);
+      } else if (options.newRangeContent !== undefined) {
+        const expected = this.expectedContentWithRangeReplacement(this.file().text(), options.newRangeContent);
+        this.verifyCurrentFileContent(expected);
+      }
+    } finally {
+      this.userPreferences = originalPreferences;
+    }
+  }
+
+  verifyImportFixAtPosition(expectedTexts: readonly string[], preferences?: UserPreferences): void {
+    const provider = this.languageProviderRequired("import fixes");
+    const originalPreferences = this.userPreferences;
+    if (preferences !== undefined) this.setUserPreferences(preferences);
+    try {
+      const request = this.languageRequest();
+      const actions = provider.getImportFixes?.(request, this.getDiagnostics(this.activeFilename)) ?? [];
+      if (actions.length === 0) {
+        if (expectedTexts.length !== 0) fail("No import fixes returned.");
+        return;
+      }
+
+      const range = this.getRangesInFile(this.activeFilename)[0];
+      const originalContent = this.file().text();
+      const actualTexts: string[] = [];
+      for (const action of actions) {
+        this.applyWorkspaceEditFromAction(action);
+        actualTexts.push(range === undefined ? this.file().text() : this.file().text().slice(range.range.pos, range.range.end));
+        this.replaceWorker(this.activeFilename, 0, this.file().text().length, originalContent);
+        this.currentCaretPosition = request.position;
+      }
+      assertDeepEqual(actualTexts, expectedTexts, "Import fix text mismatch");
+    } finally {
+      this.userPreferences = originalPreferences;
+    }
+  }
+
+  verifyImportFixModuleSpecifiers(markerName: string, expectedModuleSpecifiers: readonly string[], preferences?: UserPreferences): void {
+    this.goToMarker(markerName);
+    const provider = this.languageProviderRequired("import fixes");
+    const originalPreferences = this.userPreferences;
+    if (preferences !== undefined) this.setUserPreferences(preferences);
+    try {
+      const actions = provider.getImportFixes?.(this.languageRequest(), this.getDiagnostics(this.activeFilename)) ?? [];
+      const actual = uniqueStrings(actions.flatMap(action => {
+        const edits = this.getWorkspaceEditTextEdits(action.edit);
+        return edits.map(edit => extractModuleSpecifier(edit.newText)).filter(value => value !== "");
+      }));
+      assertDeepEqual(actual, expectedModuleSpecifiers, "Import fix module specifier mismatch");
+    } finally {
+      this.userPreferences = originalPreferences;
+    }
+  }
+
+  verifyBaselineFindAllReferences(...markers: readonly string[]): void {
+    const provider = this.languageProviderRequired("find all references");
+    for (const markerOrRange of this.lookupMarkersOrGetRanges(markers)) {
+      this.goToMarkerOrRange(markerOrRange);
+      const locations = provider.getReferences?.(this.languageRequest(), true) ?? [];
+      this.baseline({ name: "findAllReferences", arguments: [] }, this.formatLocationsBaseline("/*FIND ALL REFS*/", locations));
+    }
+  }
+
+  verifyBaselineGoToDefinition(includeOriginalSelectionRange = false, ...markers: readonly string[]): void {
+    this.verifyBaselineDefinitionWorker("goToDefinition", "/*GOTO DEF*/", provider => provider.getDefinition, includeOriginalSelectionRange, markers);
+  }
+
+  verifyBaselineGoToTypeDefinition(...markers: readonly string[]): void {
+    this.verifyBaselineDefinitionWorker("goToTypeDefinition", "/*GOTO TYPE*/", provider => provider.getTypeDefinition, false, markers);
+  }
+
+  verifyBaselineGoToSourceDefinition(...markers: readonly string[]): void {
+    this.verifyBaselineDefinitionWorker("goToSourceDefinition", "/*GOTO SOURCE DEF*/", provider => provider.getSourceDefinition, false, markers);
+  }
+
+  verifyBaselineWorkspaceSymbol(query: string): void {
+    const provider = this.languageProviderRequired("workspace symbols");
+    const symbols = provider.getWorkspaceSymbols?.(query) ?? [];
+    this.baseline({ name: "workspaceSymbol", arguments: [query] }, symbols.map(symbol => {
+      return `${symbol.name} ${symbolKindName(symbol.kind)} ${symbol.location.uri}:${formatRange(symbol.location.range)}${symbol.containerName === undefined ? "" : ` ${symbol.containerName}`}`;
+    }).join("\n"));
+  }
+
+  verifyWorkspaceSymbol(cases: readonly VerifyWorkspaceSymbolCase[]): void {
+    const provider = this.languageProviderRequired("workspace symbols");
+    const symbols = provider.getWorkspaceSymbols?.("") ?? [];
+    for (const expected of cases) {
+      const match = symbols.find(symbol =>
+        symbol.name === expected.name
+        && (expected.kind === undefined || symbol.kind === expected.kind)
+        && (expected.containerName === undefined || symbol.containerName === expected.containerName)
+        && (expected.fileName === undefined || symbol.location.uri === expected.fileName || symbol.location.uri === fileNameToDocumentURI(expected.fileName)));
+      if (match === undefined) fail(`Workspace symbol ${JSON.stringify(expected)} not found.`);
+    }
+  }
+
+  verifyOutliningSpans(kind?: string): void {
+    const provider = this.languageProviderRequired("folding ranges");
+    const ranges = provider.getFoldingRanges?.(this.activeFilename) ?? [];
+    const actual = kind === undefined ? ranges : ranges.filter(range => range.kind === kind);
+    const expected = [...this.ranges()].sort((left, right) => comparePositions(left.lsRange.start, right.lsRange.start));
+    if (actual.length !== expected.length) {
+      fail(`Expected ${expected.length} folding ranges, got ${actual.length}.`);
+    }
+    for (let index = 0; index < expected.length; index += 1) {
+      const got = actual[index]!;
+      const want = expected[index]!.lsRange;
+      const start = { line: got.startLine, character: got.startCharacter ?? 0 };
+      const end = { line: got.endLine, character: got.endCharacter ?? 0 };
+      if (comparePositions(start, want.start) !== 0 || comparePositions(end, want.end) !== 0) {
+        fail(`Folding range ${index} mismatch: actual=${formatRange({ start, end })} expected=${formatRange(want)}`);
+      }
+    }
+  }
+
+  verifyFoldingRangeLines(expected: readonly FoldingRangeLineExpected[]): void {
+    const provider = this.languageProviderRequired("folding ranges");
+    const actual = provider.getFoldingRanges?.(this.activeFilename) ?? [];
+    if (actual.length !== expected.length) fail(`Expected ${expected.length} folding ranges, got ${actual.length}.`);
+    for (let index = 0; index < expected.length; index += 1) {
+      const got = actual[index]!;
+      const want = expected[index]!;
+      if (got.startLine !== want.startLine || got.endLine !== want.endLine) {
+        fail(`Folding range ${index} line mismatch: actual=${got.startLine}-${got.endLine} expected=${want.startLine}-${want.endLine}`);
+      }
+    }
+  }
+
+  verifyBaselineHover(): void {
+    const provider = this.languageProviderRequired("hover");
+    const rows = this.markers()
+      .filter(marker => marker.getName() !== undefined)
+      .map(marker => {
+        const hover = provider.getHover?.(this.languageRequestAt(marker.fileName(), marker.lsPos()));
+        return `${marker.getName() ?? ""}: ${hover === undefined ? "No hover" : hoverContentString(hover)}`;
+      });
+    this.baseline({ name: "quickInfo", arguments: [] }, rows.join("\n"));
+  }
+
+  verifyBaselineHoverWithVerbosity(verbosityLevels: ReadonlyMap<string, readonly number[]> | Readonly<Record<string, readonly number[]>>): void {
+    const provider = this.languageProviderRequired("hover");
+    const rows: string[] = [];
+    for (const marker of this.markers()) {
+      const name = marker.getName();
+      if (name === undefined) continue;
+      const levels = verbosityLookup(verbosityLevels, name) ?? [0];
+      let previous: Hover | undefined;
+      for (const level of levels) {
+        const hover = provider.getHover?.(this.languageRequestAt(marker.fileName(), marker.lsPos()), level);
+        if (previous !== undefined && previous.canIncreaseVerbosity === false && hoverContentString(previous) !== hoverContentString(hover)) {
+          fail(`Hover at ${name} changed at verbosity ${level} after canIncreaseVerbosity=false.`);
+        }
+        rows.push(`${name}@${level}: ${hover === undefined ? "No hover" : hoverContentString(hover)}`);
+        previous = hover;
+      }
+    }
+    this.baseline({ name: "quickInfo", arguments: ["verbosity"] }, rows.join("\n"));
+  }
+
+  verifyBaselineSignatureHelp(): void {
+    const provider = this.languageProviderRequired("signature help");
+    const rows = this.markers()
+      .filter(marker => marker.getName() !== undefined)
+      .map(marker => {
+        const help = provider.getSignatureHelp?.(this.languageRequestAt(marker.fileName(), marker.lsPos()));
+        return `${marker.getName() ?? ""}: ${formatSignatureHelp(help).join("\n")}`;
+      });
+    this.baseline({ name: "signatureHelp", arguments: [] }, rows.join("\n\n"));
+  }
+
+  verifySignatureHelp(expected: VerifySignatureHelpOptions): void {
+    const help = this.getSignatureHelpAtCurrentPosition();
+    if (help === undefined) fail("Expected signature help but got none.");
+    const labels = help.signatures.map(signature => signature.label);
+    assertDeepEqual(labels, expected.signatures, "Signature help labels mismatch");
+    if (expected.activeSignature !== undefined && help.activeSignature !== expected.activeSignature) {
+      fail(`Active signature mismatch: actual=${String(help.activeSignature)} expected=${expected.activeSignature}`);
+    }
+    const active = activeSignature(help);
+    const activeParameter = activeParameterIndex(help, active);
+    if (expected.activeParameter !== undefined && activeParameter !== expected.activeParameter) {
+      fail(`Active parameter mismatch: actual=${String(activeParameter)} expected=${expected.activeParameter}`);
+    }
+    if (expected.docComment !== undefined && !documentationText(active?.documentation).includes(expected.docComment)) {
+      fail(`Signature documentation did not contain ${JSON.stringify(expected.docComment)}.`);
+    }
+    if (expected.parameterDocComment !== undefined) {
+      const parameter = active?.parameters?.[activeParameter ?? -1];
+      if (!documentationText(parameter?.documentation).includes(expected.parameterDocComment)) {
+        fail(`Parameter documentation did not contain ${JSON.stringify(expected.parameterDocComment)}.`);
+      }
+    }
+  }
+
+  verifyNoSignatureHelp(): void {
+    if (this.getSignatureHelpAtCurrentPosition() !== undefined) fail("Expected no signature help.");
+  }
+
+  verifySignatureHelpPresent(): void {
+    if (this.getSignatureHelpAtCurrentPosition() === undefined) fail("Expected signature help.");
+  }
+
+  verifyBaselineSelectionRanges(): void {
+    const provider = this.languageProviderRequired("selection ranges");
+    const rows: string[] = [];
+    for (const marker of this.markers()) {
+      const ranges = provider.getSelectionRanges?.(marker.fileName(), [marker.lsPos()]) ?? [];
+      rows.push(`${marker.getName() ?? "<anonymous>"}:\n${ranges.map(range => formatSelectionRangeChain(range)).join("\n")}`);
+    }
+    this.baseline({ name: "smartSelection", arguments: [] }, rows.join("\n\n"));
+  }
+
+  verifyBaselineDocumentHighlights(preferences?: UserPreferences, ...markerOrRangeOrNames: readonly MarkerOrRangeOrName[]): void {
+    this.verifyBaselineDocumentHighlightsWithOptions(preferences, undefined, ...markerOrRangeOrNames);
+  }
+
+  verifyBaselineDocumentHighlightsWithOptions(
+    preferences: UserPreferences | undefined,
+    filesToSearch: readonly string[] | undefined,
+    ...markerOrRangeOrNames: readonly MarkerOrRangeOrName[]
+  ): void {
+    const provider = this.languageProviderRequired("document highlights");
+    const originalPreferences = this.userPreferences;
+    if (preferences !== undefined) this.setUserPreferences(preferences);
+    try {
+      const locations = markerOrRangeOrNames.length === 0 ? this.lookupMarkersOrGetRanges([]) : markerOrRangeOrNames.map(item => this.resolveMarkerOrRange(item));
+      for (const markerOrRange of locations) {
+        this.goToMarkerOrRange(markerOrRange);
+        const searchUris = filesToSearch?.map(fileName => fileNameToDocumentURI(fileName));
+        const highlights = provider.getDocumentHighlights?.(this.languageRequest(), searchUris) ?? [];
+        const header = filesToSearch === undefined ? "" : `// filesToSearch:\n${filesToSearch.map(fileName => `//   ${fileName}`).join("\n")}\n\n`;
+        this.baseline({ name: "documentHighlights", arguments: [] }, header + this.formatLocationsBaseline("/*HIGHLIGHTS*/", highlights));
+      }
+    } finally {
+      this.userPreferences = originalPreferences;
+    }
+  }
+
+  verifyDiagnostics(expected: readonly Diagnostic[]): void {
+    assertDeepEqual(this.getDiagnostics(this.activeFilename), expected, "Diagnostics mismatch");
+  }
+
+  verifyNonSuggestionDiagnostics(expected: readonly Diagnostic[]): void {
+    this.verifyDiagnostics(expected);
+  }
+
+  verifySuggestionDiagnostics(expected: readonly Diagnostic[]): void {
+    this.verifyDiagnostics(expected);
+  }
+
+  verifyBaselineNonSuggestionDiagnostics(): void {
+    const diagnostics = this.getDiagnostics(this.activeFilename);
+    this.baseline({ name: "errors", arguments: [] }, diagnostics.map(formatDiagnostic).join("\n"));
+  }
+
+  verifyBaselineDocumentSymbol(): void {
+    const provider = this.languageProviderRequired("document symbols");
+    const result = provider.getDocumentSymbols?.(this.activeFilename) ?? [];
+    this.baseline({ name: "documentSymbol", arguments: [] }, formatDocumentSymbols(result));
+  }
+
+  verifyNumberOfErrorsInCurrentFile(expectedCount: number): void {
+    const count = this.getDiagnostics(this.activeFilename).length;
+    if (count !== expectedCount) fail(`Expected ${expectedCount} diagnostics in current file, got ${count}.`);
+  }
+
+  verifyNoErrors(): void {
+    this.verifyNumberOfErrorsInCurrentFile(0);
+  }
+
+  verifyQuickInfoAt(marker: string, expectedText: string, expectedDocumentation = ""): void {
+    this.goToMarker(marker);
+    this.verifyQuickInfoIs(expectedText, expectedDocumentation);
+  }
+
+  verifyQuickInfoExists(): void {
+    if (this.getHoverAtCurrentPosition() === undefined) fail("Expected quick info.");
+  }
+
+  verifyNotQuickInfoExists(): void {
+    if (this.getHoverAtCurrentPosition() !== undefined) fail("Expected no quick info.");
+  }
+
+  verifyQuickInfoIs(expectedText: string, expectedDocumentation = ""): void {
+    const hover = this.getHoverAtCurrentPosition();
+    if (hover === undefined) fail("Expected quick info but got none.");
+    const content = hoverContentString(hover);
+    if (!content.includes(expectedText)) fail(`Quick info text mismatch. Expected content to contain ${JSON.stringify(expectedText)}; got ${JSON.stringify(content)}.`);
+    if (expectedDocumentation !== "" && !content.includes(expectedDocumentation)) {
+      fail(`Quick info documentation mismatch. Expected content to contain ${JSON.stringify(expectedDocumentation)}; got ${JSON.stringify(content)}.`);
+    }
+  }
+
+  verifyLinkedEditing(markerNamesToExpected: Readonly<Record<string, readonly Range[]>>): void {
+    const provider = this.languageProviderRequired("linked editing");
+    for (const [markerName, expected] of Object.entries(markerNamesToExpected)) {
+      this.goToMarker(markerName);
+      const actual = provider.getLinkedEditingRanges?.(this.languageRequest())?.ranges ?? [];
+      assertDeepEqual(actual, expected, `Linked editing ranges mismatch at ${markerName}`);
+    }
+  }
+
+  verifyBaselineLinkedEditing(): void {
+    const provider = this.languageProviderRequired("linked editing");
+    const rows = this.markers().map(marker => {
+      const ranges = provider.getLinkedEditingRanges?.(this.languageRequestAt(marker.fileName(), marker.lsPos()))?.ranges ?? [];
+      return `${marker.getName() ?? "<anonymous>"}:\n${ranges.map(formatRange).join("\n")}`;
+    });
+    this.baseline({ name: "linkedEditing", arguments: [] }, rows.join("\n\n"));
+  }
+
+  verifyBaselineInlayHints(): void {
+    const provider = this.languageProviderRequired("inlay hints");
+    const script = this.file();
+    const hints = provider.getInlayHints?.(this.activeFilename, { start: { line: 0, character: 0 }, end: positionFromOffset(script, script.text().length) }) ?? [];
+    this.baseline({ name: "inlayHints", arguments: [] }, hints.map(hint => `${formatPosition(hint.position)} ${stableStringify(hint.label)}`).join("\n"));
+  }
+
+  renameAtCaret(newName: string): WorkspaceEdit | undefined {
+    const provider = this.languageProviderRequired("rename");
+    return provider.rename?.(this.languageRequest(), newName);
+  }
+
+  verifyRename(markerName: string, newName: string, expectedFileContents: Readonly<Record<string, string>>): void {
+    this.goToMarker(markerName);
+    const edit = this.renameAtCaret(newName);
+    if (edit === undefined) fail("Expected rename to succeed.");
+    this.applyWorkspaceEdit(edit);
+    for (const [fileName, content] of Object.entries(expectedFileContents)) {
+      this.file(fileName).text() === content || fail(`Renamed content mismatch for ${fileName}.`);
+    }
+  }
+
+  verifyRenameFailed(): void {
+    const edit = this.renameAtCaret("__newName__");
+    if (edit !== undefined) fail("Expected rename to fail.");
+  }
+
   private applyCodeActionEditsForActiveFile(action: CodeAction): void {
     this.applyTextEdits(this.activeFilename, textEditsToTextChanges(this.file(), this.getCodeActionEditsForActiveFile(action)));
+  }
+
+  private applyWorkspaceEditFromAction(action: CodeAction): void {
+    if (action.edit === undefined) fail(`Code action ${JSON.stringify(action.title)} did not return an edit.`);
+    this.applyWorkspaceEdit(action.edit);
+  }
+
+  private applyWorkspaceEdit(edit: WorkspaceEdit): void {
+    for (const [uri, edits] of Object.entries(edit.changes ?? {})) {
+      this.applyTextEdits(uriToFileName(uri), textEditsToTextChanges(this.file(uriToFileName(uri)), edits));
+    }
+    for (const change of edit.documentChanges ?? []) {
+      const textDocumentEdit = change.textDocumentEdit;
+      if (textDocumentEdit === undefined) continue;
+      const fileName = uriToFileName(textDocumentEdit.textDocument.uri);
+      const edits = textDocumentEdit.edits.map(edit => textEditFromUnion(edit));
+      this.applyTextEdits(fileName, textEditsToTextChanges(this.file(fileName), edits));
+    }
+  }
+
+  private getWorkspaceEditTextEdits(edit: WorkspaceEdit | undefined): readonly TextEdit[] {
+    if (edit === undefined) return [];
+    const fromChanges = Object.values(edit.changes ?? {}).flat();
+    const fromDocumentChanges = (edit.documentChanges ?? [])
+      .flatMap(change => change.textDocumentEdit?.edits.map(textEditFromUnion) ?? []);
+    return [...fromChanges, ...fromDocumentChanges];
+  }
+
+  private languageProviderRequired(feature: string): FourslashLanguageProvider {
+    if (this.languageProvider === undefined) throw new Error(`Fourslash ${feature} provider is not configured.`);
+    return this.languageProvider;
+  }
+
+  private languageRequest(): FourslashLanguageRequest {
+    return this.languageRequestAt(this.activeFilename, this.currentCaretPosition, this.activeRange());
+  }
+
+  private languageRequestAt(fileName: string, position: Position, range?: Range): FourslashLanguageRequest {
+    return {
+      fileName,
+      uri: fileNameToDocumentURI(fileName),
+      position,
+      range,
+      offset: offsetFromPosition(this.file(fileName), position),
+      userPreferences: this.userPreferences,
+    };
+  }
+
+  private getDiagnostics(fileName: string): readonly Diagnostic[] {
+    return this.languageProviderRequired("diagnostics").getDiagnostics?.(fileName) ?? [];
+  }
+
+  private getHoverAtCurrentPosition(): Hover | undefined {
+    return this.languageProviderRequired("hover").getHover?.(this.languageRequest());
+  }
+
+  private getSignatureHelpAtCurrentPosition(): SignatureHelp | undefined {
+    return this.languageProviderRequired("signature help").getSignatureHelp?.(this.languageRequest());
+  }
+
+  private verifyBaselineDefinitionWorker(
+    commandName: string,
+    markerName: string,
+    selector: (provider: FourslashLanguageProvider) => ((request: FourslashLanguageRequest) => readonly Location[]) | undefined,
+    includeOriginalSelectionRange: boolean,
+    markers: readonly string[],
+  ): void {
+    const provider = this.languageProviderRequired(commandName);
+    const getDefinitions = selector(provider);
+    if (getDefinitions === undefined) throw new Error(`Fourslash ${commandName} provider is not configured.`);
+    for (const markerOrRange of this.lookupMarkersOrGetRanges(markers)) {
+      this.goToMarkerOrRange(markerOrRange);
+      const locations = getDefinitions(this.languageRequest());
+      const original = includeOriginalSelectionRange ? [{ uri: fileNameToDocumentURI(this.activeFilename), range: markerOrRangeToRange(markerOrRange) }] : [];
+      this.baseline({ name: commandName, arguments: [] }, this.formatLocationsBaseline(markerName, [...original, ...locations]));
+    }
+  }
+
+  private formatLocationsBaseline(markerName: string, locations: readonly Location[]): string {
+    return locations.map(location => `${markerName} ${location.uri}:${formatRange(location.range)}\n${this.locationSourceLine(location)}`).join("\n");
+  }
+
+  private locationSourceLine(location: Location): string {
+    const fileName = uriToFileName(location.uri);
+    const script = this.scriptInfos.get(fileName);
+    if (script === undefined) return "";
+    const start = offsetFromPosition(script, location.range.start);
+    const end = offsetFromPosition(script, location.range.end);
+    return script.text().slice(start, end);
+  }
+
+  private lookupMarkersOrGetRanges(markers: readonly string[]): readonly MarkerOrRange[] {
+    return markers.length === 0
+      ? this.ranges()
+      : markers.map(marker => this.marker(marker));
+  }
+
+  private resolveMarkerOrRange(markerOrRangeOrName: MarkerOrRangeOrName): MarkerOrRange {
+    return typeof markerOrRangeOrName === "string" ? this.marker(markerOrRangeOrName) : markerOrRangeOrName;
   }
 
   private expectedContentWithRangeReplacement(originalContent: string, newRangeContent: string): string {
@@ -1316,7 +1844,37 @@ export interface CompletionVerificationResult {
   readonly items: readonly CompletionItem[];
 }
 
+export interface ApplyCodeActionFromCompletionOptions {
+  readonly name: string;
+  readonly source: string;
+  readonly description: string;
+  readonly newFileContent?: string;
+  readonly newRangeContent?: string;
+  readonly userPreferences?: UserPreferences;
+}
+
+export interface FoldingRangeLineExpected {
+  readonly startLine: number;
+  readonly endLine: number;
+}
+
+export interface VerifySignatureHelpOptions {
+  readonly signatures: readonly string[];
+  readonly activeSignature?: number;
+  readonly activeParameter?: number;
+  readonly parameterDocComment?: string;
+  readonly docComment?: string;
+}
+
+export interface VerifyWorkspaceSymbolCase {
+  readonly name: string;
+  readonly kind?: number;
+  readonly containerName?: string;
+  readonly fileName?: string;
+}
+
 export type MarkerInput = string | Marker | readonly string[] | readonly Marker[] | undefined;
+export type MarkerOrRangeOrName = string | Marker | RangeMarker;
 export const AnyTextEdits: readonly TextEdit[] = Object.freeze([]);
 const defaultCompletionSortText = "11";
 const completionIgnoreFields = new Set<keyof CompletionItem>(["kind", "sortText", "filterText", "data", "additionalTextEdits"]);
@@ -1482,6 +2040,209 @@ function textEditEndOffset(script: ScriptInfo, edit: TextEdit): number {
 
 function removeWhitespace(text: string): string {
   return text.replace(/\s+/gu, "");
+}
+
+function uriToFileName(uri: DocumentUri): string {
+  if (uri.startsWith("file://")) {
+    const path = uri.slice("file://".length);
+    return decodeURIComponent(path.startsWith("/") ? path : `/${path}`);
+  }
+  return uri;
+}
+
+function textEditFromUnion(value: unknown): TextEdit {
+  if (isTextEdit(value)) return value;
+  if (!isRecord(value)) throw new Error("Invalid text edit union.");
+  const textEdit = value["textEdit"];
+  if (isTextEdit(textEdit)) return textEdit;
+  const annotated = value["annotatedTextEdit"];
+  if (isTextEdit(annotated)) return annotated;
+  const snippet = value["snippetTextEdit"];
+  if (isRecord(snippet) && isRange(snippet["range"])) {
+    const snippetValue = snippet["snippet"];
+    const newText = isRecord(snippetValue) && typeof snippetValue["value"] === "string" ? snippetValue["value"] : "";
+    return { range: snippet["range"], newText };
+  }
+  throw new Error("Text document edit entry did not contain a text edit.");
+}
+
+function isTextEdit(value: unknown): value is TextEdit {
+  return isRecord(value) && isRange(value["range"]) && typeof value["newText"] === "string";
+}
+
+function isRange(value: unknown): value is Range {
+  return isRecord(value) && isPosition(value["start"]) && isPosition(value["end"]);
+}
+
+function isPosition(value: unknown): value is Position {
+  return isRecord(value) && typeof value["line"] === "number" && typeof value["character"] === "number";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function uniqueStrings(values: readonly string[]): readonly string[] {
+  const result: string[] = [];
+  for (const value of values) {
+    if (!result.includes(value)) result.push(value);
+  }
+  return result;
+}
+
+function extractModuleSpecifier(text: string): string {
+  for (const prefix of ["from \"", "from '", "require(\"", "require('"]) {
+    const start = text.indexOf(prefix);
+    if (start < 0) continue;
+    const quote = prefix.endsWith("'") ? "'" : "\"";
+    const specifierStart = start + prefix.length;
+    const end = text.indexOf(quote, specifierStart);
+    if (end >= 0) return text.slice(specifierStart, end);
+  }
+  return "";
+}
+
+function comparePositions(left: Position, right: Position): number {
+  return left.line - right.line || left.character - right.character;
+}
+
+function formatPosition(position: Position): string {
+  return `${position.line + 1}:${position.character + 1}`;
+}
+
+function formatRange(range: Range): string {
+  return `${formatPosition(range.start)}-${formatPosition(range.end)}`;
+}
+
+function markerOrRangeToRange(markerOrRange: MarkerOrRange): Range {
+  if (markerOrRange instanceof RangeMarker) return markerOrRange.lsRange;
+  const position = markerOrRange.lsPos();
+  return { start: position, end: position };
+}
+
+function symbolKindName(kind: number): string {
+  const names: Readonly<Record<number, string>> = {
+    1: "file",
+    2: "module",
+    3: "namespace",
+    4: "package",
+    5: "class",
+    6: "method",
+    7: "property",
+    8: "field",
+    9: "constructor",
+    10: "enum",
+    11: "interface",
+    12: "function",
+    13: "variable",
+    14: "constant",
+    15: "string",
+    16: "number",
+    17: "boolean",
+    18: "array",
+    19: "object",
+    20: "key",
+    21: "null",
+    22: "enumMember",
+    23: "struct",
+    24: "event",
+    25: "operator",
+    26: "typeParameter",
+  };
+  return names[kind] ?? String(kind);
+}
+
+function hoverContentString(hover: Hover | undefined): string {
+  if (hover === undefined) return "";
+  return markupUnionText(hover.contents);
+}
+
+function markupUnionText(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (!isRecord(value)) return "";
+  if (typeof value["string"] === "string") return value["string"];
+  const markup = value["markupContent"];
+  if (isRecord(markup) && typeof markup["value"] === "string") return markup["value"];
+  const marked = value["markedStringWithLanguage"];
+  if (isRecord(marked) && typeof marked["language"] === "string" && typeof marked["value"] === "string") {
+    return `\`\`\`${marked["language"]}\n${marked["value"]}\n\`\`\``;
+  }
+  const markedStrings = value["markedStrings"];
+  if (Array.isArray(markedStrings)) return markedStrings.map(markupUnionText).join("\n");
+  return "";
+}
+
+function verbosityLookup(
+  levels: ReadonlyMap<string, readonly number[]> | Readonly<Record<string, readonly number[]>>,
+  name: string,
+): readonly number[] | undefined {
+  if ("get" in levels && typeof levels.get === "function") return levels.get(name);
+  return (levels as Readonly<Record<string, readonly number[]>>)[name];
+}
+
+function activeSignature(help: SignatureHelp | undefined) {
+  if (help === undefined || help.signatures.length === 0) return undefined;
+  return help.signatures[help.activeSignature ?? 0] ?? help.signatures[0];
+}
+
+function activeParameterIndex(help: SignatureHelp, signature: ReturnType<typeof activeSignature>): number | undefined {
+  const active = signature?.activeParameter ?? help.activeParameter;
+  if (active === undefined) return undefined;
+  if ("uinteger" in active && typeof active.uinteger === "number") return active.uinteger;
+  if ("integer" in active && typeof active.integer === "number") return active.integer;
+  if ("number" in active && typeof active.number === "number") return active.number;
+  return undefined;
+}
+
+function documentationText(value: unknown): string {
+  return markupUnionText(value);
+}
+
+function formatSignatureHelp(help: SignatureHelp | undefined): readonly string[] {
+  if (help === undefined || help.signatures.length === 0) return ["No signature help available"];
+  const signature = activeSignature(help);
+  if (signature === undefined) return ["No signature help available"];
+  const activeParameter = activeParameterIndex(help, signature);
+  const parameter = activeParameter === undefined ? undefined : signature.parameters?.[activeParameter];
+  const result = [signature.label];
+  const parameterDoc = documentationText(parameter?.documentation);
+  if (parameterDoc !== "") result.push(parameterDoc);
+  const signatureDoc = documentationText(signature.documentation);
+  if (signatureDoc !== "") result.push(signatureDoc);
+  return result;
+}
+
+function formatSelectionRangeChain(range: SelectionRange): string {
+  const rows: string[] = [];
+  let current: SelectionRange | undefined = range;
+  while (current !== undefined) {
+    rows.push(formatRange(current.range));
+    current = current.parent;
+  }
+  return rows.join(" -> ");
+}
+
+function formatDiagnostic(diagnostic: Diagnostic): string {
+  const code = diagnostic.code === undefined ? "" : ` TS${stableStringify(diagnostic.code)}`;
+  return `${formatRange(diagnostic.range)}${code}: ${diagnostic.message}`;
+}
+
+function formatDocumentSymbols(symbols: readonly DocumentSymbol[] | readonly SymbolInformation[]): string {
+  if (symbols.length === 0) return "";
+  const first = symbols[0]!;
+  if ("selectionRange" in first) {
+    return (symbols as readonly DocumentSymbol[]).map(symbol => formatDocumentSymbol(symbol, 0)).join("\n");
+  }
+  return (symbols as readonly SymbolInformation[])
+    .map(symbol => `${symbol.name} ${symbolKindName(symbol.kind)} ${symbol.location.uri}:${formatRange(symbol.location.range)}`)
+    .join("\n");
+}
+
+function formatDocumentSymbol(symbol: DocumentSymbol, depth: number): string {
+  const prefix = "  ".repeat(depth);
+  const line = `${prefix}${symbol.name} ${symbolKindName(symbol.kind)} ${formatRange(symbol.selectionRange)}`;
+  const children = symbol.children?.map(child => formatDocumentSymbol(child, depth + 1)) ?? [];
+  return [line, ...children].join("\n");
 }
 
 function fail(message: string): never {
