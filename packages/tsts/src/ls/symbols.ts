@@ -1,3 +1,603 @@
+import {
+  Kind,
+  NodeFlags,
+  hasSyntacticModifier,
+  isAccessExpression,
+  isCallExpression,
+  isExportAssignment,
+  isExternalModule,
+  isIdentifier,
+  isModuleDeclaration,
+  isNoSubstitutionTemplateLiteral,
+  isParameterPropertyDeclaration,
+  isPropertyAccessExpression,
+  isStringLiteral,
+  isStringOrNumericLiteralLike,
+  isTemplateExpression,
+  nodeText,
+  walkUpParenthesizedExpressions,
+  type CallExpression,
+  type ExportAssignment,
+  type ModuleDeclaration,
+  type Node,
+  type SourceFile,
+} from "../ast/index.js";
+import { ModifierFlags } from "../enums/modifierFlags.enum.js";
+import {
+  SymbolKindClass,
+  SymbolKindConstructor,
+  SymbolKindEnum,
+  SymbolKindEnumMember,
+  SymbolKindFile,
+  SymbolKindFunction,
+  SymbolKindInterface,
+  SymbolKindMethod,
+  SymbolKindModule,
+  SymbolKindNamespace,
+  SymbolKindProperty,
+  SymbolKindTypeParameter,
+  SymbolKindVariable,
+  compareRanges,
+  type DocumentSymbol,
+  type Location,
+  type Range,
+  type SymbolInformation,
+  type SymbolKind,
+} from "../lsp/lsproto/index.js";
+import {
+  compareStringsCaseInsensitive,
+  compareStringsCaseSensitive,
+} from "../stringutil/index.js";
+
+export const maxLength = 150;
+
+export function getDocumentSymbolInformations(
+  documentSymbols: readonly DocumentSymbol[],
+  documentUri: string,
+): SymbolInformation[] {
+  const result: SymbolInformation[] = [];
+  const flatten = (symbols: readonly DocumentSymbol[], containerName: string | undefined): void => {
+    for (const symbol of symbols) {
+      const location: Location = { uri: documentUri, range: symbol.range };
+      result.push(symbolInformation(symbol, location, containerName));
+      if (symbol.children !== undefined && symbol.children.length > 0) flatten(symbol.children, symbol.name);
+    }
+  };
+  flatten(documentSymbols, undefined);
+  return result;
+}
+
+export function getDocumentSymbolsForChildren(node: Node, file: SourceFile): DocumentSymbol[] {
+  const symbols: DocumentSymbol[] = [];
+  const visit = (candidate: Node): void => {
+    if ((candidate.flags & NodeFlags.Reparsed) !== 0) return;
+    const childSymbols = childDocumentSymbols(candidate, file);
+    if (isDocumentSymbolNode(candidate)) {
+      const symbol = newDocumentSymbol(candidate, undefined, childSymbols);
+      if (symbol !== undefined) {
+        symbols.push(symbol);
+        return;
+      }
+    }
+    for (const child of directChildren(candidate)) visit(child);
+  };
+  for (const child of directChildren(node)) visit(child);
+  return mergeExpandos(symbols);
+}
+
+export function isPrototypeExpando(target: Node | undefined): boolean {
+  if (target === undefined || !isAccessExpression(target)) return false;
+  const accessName = getElementOrPropertyAccessName(target);
+  return accessName !== undefined && nodeText(accessName) === "prototype";
+}
+
+export function newDocumentSymbol(
+  node: Node,
+  name: Node | undefined,
+  children: readonly DocumentSymbol[] | undefined,
+): DocumentSymbol | undefined {
+  const file = node.getSourceFile();
+  const nodeStartPos = skipTrivia(file.text, node.pos);
+  const resolvedName = name ?? getNameOfDeclaration(node);
+  let text = "";
+  let nameStartPos = nodeStartPos;
+  let nameEndPos = nodeStartPos;
+
+  if (isModuleDeclaration(node) && !isAmbientModule(node)) {
+    text = getModuleName(node);
+    const moduleName = getNameOfDeclaration(node);
+    nameStartPos = moduleName === undefined ? nodeStartPos : skipTrivia(file.text, moduleName.pos);
+    nameEndPos = getInteriorModule(node).name.end;
+  } else if (isExportEqualsAssignment(node)) {
+    text = "export=";
+    const assignmentName = resolvedName;
+    if (assignmentName !== undefined && !nodeIsMissing(assignmentName)) {
+      nameStartPos = skipTrivia(file.text, assignmentName.pos);
+      nameEndPos = assignmentName.end;
+    } else {
+      nameEndPos = node.end;
+    }
+  } else if (resolvedName !== undefined) {
+    text = getTextOfName(resolvedName);
+    nameStartPos = Math.max(skipTrivia(file.text, resolvedName.pos), nodeStartPos);
+    nameEndPos = Math.max(resolvedName.end, nodeStartPos);
+  } else {
+    text = getUnnamedNodeLabel(node);
+  }
+
+  if (text === "") return undefined;
+  text = cleanCallbackText(text);
+  return {
+    name: text,
+    kind: getSymbolKindFromNode(node),
+    range: createLspRangeFromBounds(nodeStartPos, node.end, file),
+    selectionRange: createLspRangeFromBounds(nameStartPos, nameEndPos, file),
+    children: children ?? [],
+  };
+}
+
+export function mergeExpandos(symbols: readonly DocumentSymbol[]): DocumentSymbol[] {
+  const mutable = symbols.map(cloneDocumentSymbolShallow);
+  const nameToExpandoTargetIndex = new Map<string, number[]>();
+  const nameToNamespaceIndex = new Map<string, number>();
+
+  for (let index = 0; index < mutable.length; index += 1) {
+    const symbol = mutable[index]!;
+    if (isAnonymousName(symbol.name)) continue;
+    if (symbol.kind === SymbolKindClass || symbol.kind === SymbolKindFunction || symbol.kind === SymbolKindVariable) {
+      const bucket = nameToExpandoTargetIndex.get(symbol.name) ?? [];
+      bucket.push(index);
+      nameToExpandoTargetIndex.set(symbol.name, bucket);
+    }
+    if (symbol.kind === SymbolKindNamespace && !nameToNamespaceIndex.has(symbol.name)) {
+      nameToNamespaceIndex.set(symbol.name, index);
+    }
+  }
+
+  const merged = new Set<number>();
+  for (let index = 0; index < mutable.length; index += 1) {
+    const symbol = mutable[index]!;
+    if (symbol.children !== undefined) {
+      mutable[index] = { ...symbol, children: mergeExpandos(symbol.children) };
+    }
+    if (isAnonymousName(symbol.name)) continue;
+
+    if (symbol.kind === SymbolKindProperty) {
+      const targets = nameToExpandoTargetIndex.get(symbol.name) ?? [];
+      for (let targetIndex = targets.length - 1; targetIndex >= 0; targetIndex -= 1) {
+        mergeChildren(mutable[targets[targetIndex]!]!, symbol);
+        merged.add(index);
+      }
+    }
+    if (symbol.kind === SymbolKindNamespace) {
+      const targetIndex = nameToNamespaceIndex.get(symbol.name);
+      if (targetIndex !== undefined && targetIndex !== index) {
+        mergeChildren(mutable[targetIndex]!, symbol);
+        merged.add(index);
+      }
+    }
+  }
+
+  return mutable.filter((_symbol, index) => !merged.has(index));
+}
+
+export function mergeChildren(target: MutableDocumentSymbol, source: DocumentSymbol): void {
+  if (source.children === undefined) return;
+  const combined = [...(target.children ?? []), ...source.children];
+  target.children = mergeExpandos(combined).sort((left, right) => compareRanges(left.range, right.range));
+}
+
+export function isAnonymousName(name: string): boolean {
+  return name === "<function>"
+    || name === "<class>"
+    || name === "export="
+    || name === "default"
+    || name === "constructor"
+    || name === "()"
+    || name === "new()"
+    || name === "[]"
+    || name.endsWith(") callback");
+}
+
+export function getTextOfName(node: Node): string {
+  if (isIdentifier(node) || node.kind === Kind.PrivateIdentifier || node.kind === Kind.NumericLiteral) {
+    return nodeText(node);
+  }
+  if (isStringLiteral(node)) return "\"" + escapeString(node.text, "\"") + "\"";
+  if (isNoSubstitutionTemplateLiteral(node)) return "`" + escapeString(node.text, "`") + "`";
+  if (node.kind === Kind.ComputedPropertyName) {
+    const expression = nodeExpression(node);
+    if (expression !== undefined && isStringOrNumericLiteralLike(expression)) return getTextOfName(expression);
+  }
+  return sourceTextOfNode(node);
+}
+
+export function getUnnamedNodeLabel(node: Node): string {
+  const parent = walkUpParenthesizedExpressions(node.parent);
+  if (parent !== undefined && isExportAssignment(parent)) {
+    return parent.isExportEquals ? "export=" : "default";
+  }
+  switch (node.kind) {
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.ArrowFunction:
+      if (nodeModifierFlags(node, ModifierFlags.Default)) return "default";
+      if (isCallExpression(node.parent)) {
+        let name = getCallExpressionName(node.parent.expression);
+        if (name !== "") {
+          name = cleanCallbackText(name);
+          const args = cleanCallbackText(getCallExpressionLiteralArgs(node.parent));
+          return name + "(" + args + ") callback";
+        }
+      }
+      return "<function>";
+    case Kind.ClassDeclaration:
+    case Kind.ClassExpression:
+      return nodeModifierFlags(node, ModifierFlags.Default) ? "default" : "<class>";
+    case Kind.Constructor:
+      return "constructor";
+    case Kind.CallSignature:
+      return "()";
+    case Kind.ConstructSignature:
+      return "new()";
+    case Kind.IndexSignature:
+      return "[]";
+  }
+  return "";
+}
+
+export function getCallExpressionName(node: Node | undefined): string {
+  if (node === undefined) return "";
+  if (isIdentifier(node) || node.kind === Kind.PrivateIdentifier) return nodeText(node);
+  if (isPropertyAccessExpression(node)) {
+    const left = getCallExpressionName(node.expression);
+    const right = getCallExpressionName(node.name);
+    return left === "" ? right : left + "." + right;
+  }
+  return "";
+}
+
+export function getCallExpressionLiteralArgs(callExpression: CallExpression): string {
+  const parts: string[] = [];
+  for (const argument of callExpression.arguments) {
+    if (isStringLiteral(argument) || isNoSubstitutionTemplateLiteral(argument) || isTemplateExpression(argument)) {
+      parts.push(sourceTextOfNode(argument));
+    }
+  }
+  return parts.join(", ");
+}
+
+export function cleanCallbackText(text: string): string {
+  const truncated = truncateByCodePoints(text, maxLength);
+  return truncated.replace(/[\r\n\u2028\u2029]/gu, "");
+}
+
+export function getInteriorModule(node: ModuleDeclaration): ModuleDeclaration {
+  let current: ModuleDeclaration = node;
+  while (current.body !== undefined && isModuleDeclaration(current.body)) current = current.body;
+  return current;
+}
+
+export function getModuleName(node: ModuleDeclaration): string {
+  let current: ModuleDeclaration = node;
+  let result = nodeText(current.name);
+  while (current.body !== undefined && isModuleDeclaration(current.body)) {
+    current = current.body;
+    result += "." + nodeText(current.name);
+  }
+  return result;
+}
+
+export interface DeclarationInfo {
+  readonly name: string;
+  readonly declaration: Node;
+  readonly matchScore: number;
+}
+
+export function shouldExcludeFile(file: SourceFile, program: ProgramLike, excludeLibrarySymbols: boolean): boolean {
+  return excludeLibrarySymbols && (isInsideNodeModules(file.fileName) || program.isLibFile(file));
+}
+
+export function isInsideNodeModules(fileName: string): boolean {
+  return fileName.includes("/node_modules/");
+}
+
+export function getMatchScore(value: string, pattern: string): number {
+  let score = 0;
+  let rest = value;
+  for (const patternChar of pattern) {
+    const exact = patternChar.toUpperCase() === patternChar && patternChar.toLowerCase() !== patternChar;
+    let matched = false;
+    for (let index = 0; index < rest.length;) {
+      const sourceChar = codePointAt(rest, index);
+      index += sourceChar.length;
+      score += 1;
+      if ((exact && sourceChar === patternChar) || (!exact && sourceChar.toLowerCase() === patternChar.toLowerCase())) {
+        rest = rest.slice(index);
+        score -= 1;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) return -1;
+  }
+  return score;
+}
+
+export function compareDeclarationInfos(left: DeclarationInfo, right: DeclarationInfo): number {
+  if (left.matchScore !== right.matchScore) return left.matchScore - right.matchScore;
+  const insensitive = compareStringsCaseInsensitive(left.name, right.name);
+  if (insensitive !== 0) return insensitive;
+  const sensitive = compareStringsCaseSensitive(left.name, right.name);
+  if (sensitive !== 0) return sensitive;
+  const leftFile = left.declaration.getSourceFile();
+  const rightFile = right.declaration.getSourceFile();
+  if (leftFile !== rightFile) return compareStringsCaseSensitive(leftFile.path, rightFile.path);
+  return left.declaration.pos - right.declaration.pos;
+}
+
+export function getSymbolKindFromNode(node: Node): SymbolKind {
+  switch (node.kind) {
+    case Kind.SourceFile:
+      return isExternalModule(node) ? SymbolKindModule : SymbolKindFile;
+    case Kind.ModuleDeclaration:
+      return SymbolKindNamespace;
+    case Kind.ClassDeclaration:
+    case Kind.ClassExpression:
+      return SymbolKindClass;
+    case Kind.InterfaceDeclaration:
+      return SymbolKindInterface;
+    case Kind.TypeAliasDeclaration:
+    case Kind.JSDocTypedefTag:
+    case Kind.JSDocCallbackTag:
+      return SymbolKindClass;
+    case Kind.EnumDeclaration:
+      return SymbolKindEnum;
+    case Kind.VariableDeclaration:
+      return SymbolKindVariable;
+    case Kind.ArrowFunction:
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+      return SymbolKindFunction;
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+      return SymbolKindProperty;
+    case Kind.MethodDeclaration:
+    case Kind.MethodSignature:
+      return SymbolKindMethod;
+    case Kind.PropertyDeclaration:
+    case Kind.PropertySignature:
+    case Kind.PropertyAssignment:
+    case Kind.ShorthandPropertyAssignment:
+    case Kind.SpreadAssignment:
+    case Kind.IndexSignature:
+      return SymbolKindProperty;
+    case Kind.CallSignature:
+      return SymbolKindMethod;
+    case Kind.ConstructSignature:
+    case Kind.Constructor:
+    case Kind.ClassStaticBlockDeclaration:
+      return SymbolKindConstructor;
+    case Kind.TypeParameter:
+      return SymbolKindTypeParameter;
+    case Kind.EnumMember:
+      return SymbolKindEnumMember;
+    case Kind.Parameter:
+      return isParameterPropertyDeclaration(node, node.parent) ? SymbolKindProperty : SymbolKindVariable;
+    case Kind.StringLiteral:
+    case Kind.NoSubstitutionTemplateLiteral:
+    case Kind.NumericLiteral:
+      return SymbolKindProperty;
+  }
+  return SymbolKindVariable;
+}
+
+interface MutableDocumentSymbol {
+  name: string;
+  detail?: string;
+  kind: SymbolKind;
+  range: Range;
+  selectionRange: Range;
+  children?: DocumentSymbol[];
+}
+
+export interface ProgramLike {
+  isLibFile(file: SourceFile): boolean;
+}
+
+function symbolInformation(
+  symbol: DocumentSymbol,
+  location: Location,
+  containerName: string | undefined,
+): SymbolInformation {
+  const result: {
+    name: string;
+    kind: SymbolKind;
+    location: Location;
+    containerName?: string;
+  } = {
+    name: symbol.name,
+    kind: symbol.kind,
+    location,
+  };
+  if (containerName !== undefined) result.containerName = containerName;
+  return result;
+}
+
+function childDocumentSymbols(node: Node, file: SourceFile): DocumentSymbol[] {
+  const body = nodeBody(node);
+  if (body !== undefined) return getDocumentSymbolsForChildren(body, file);
+  return [];
+}
+
+function isDocumentSymbolNode(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.ClassDeclaration:
+    case Kind.ClassExpression:
+    case Kind.InterfaceDeclaration:
+    case Kind.EnumDeclaration:
+    case Kind.ModuleDeclaration:
+    case Kind.Constructor:
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.ArrowFunction:
+    case Kind.MethodDeclaration:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+    case Kind.VariableDeclaration:
+    case Kind.BindingElement:
+    case Kind.PropertyAssignment:
+    case Kind.PropertyDeclaration:
+    case Kind.SpreadAssignment:
+    case Kind.MethodSignature:
+    case Kind.PropertySignature:
+    case Kind.CallSignature:
+    case Kind.ConstructSignature:
+    case Kind.IndexSignature:
+    case Kind.EnumMember:
+    case Kind.ShorthandPropertyAssignment:
+    case Kind.TypeAliasDeclaration:
+    case Kind.ImportEqualsDeclaration:
+    case Kind.ExportSpecifier:
+      return true;
+  }
+  return false;
+}
+
+function getNameOfDeclaration(node: Node): Node | undefined {
+  if (isExportEqualsAssignment(node)) return node.expression;
+  return (node as { readonly name?: Node }).name;
+}
+
+function nodeExpression(node: Node): Node | undefined {
+  return (node as { readonly expression?: Node }).expression;
+}
+
+function nodeBody(node: Node): Node | undefined {
+  return (node as { readonly body?: Node }).body;
+}
+
+function nodeModifierFlags(node: Node, flag: ModifierFlags): boolean {
+  return hasSyntacticModifier(node, flag);
+}
+
+function isExportEqualsAssignment(node: Node): node is ExportAssignment {
+  return isExportAssignment(node) && node.isExportEquals;
+}
+
+function isAmbientModule(_node: ModuleDeclaration): boolean {
+  return false;
+}
+
+function nodeIsMissing(node: Node): boolean {
+  return node.pos < 0 || node.end < 0;
+}
+
+function directChildren(node: Node): Node[] {
+  const children: Node[] = [];
+  node.forEachChild((child) => {
+    children.push(child);
+    return undefined;
+  }, (nodes) => {
+    children.push(...nodes);
+    return undefined;
+  });
+  return children;
+}
+
+function getElementOrPropertyAccessName(node: Node): Node | undefined {
+  if (isPropertyAccessExpression(node)) return node.name;
+  return (node as { readonly argumentExpression?: Node }).argumentExpression;
+}
+
+function sourceTextOfNode(node: Node): string {
+  const file = node.getSourceFile();
+  return file.text.slice(Math.max(0, node.pos), Math.max(0, node.end));
+}
+
+function escapeString(text: string, quote: string): string {
+  return text.replaceAll("\\", "\\\\").replaceAll(quote, "\\" + quote);
+}
+
+function truncateByCodePoints(text: string, maxCodePoints: number): string {
+  const chars = [...text];
+  if (chars.length <= maxCodePoints) return text;
+  return chars.slice(0, maxCodePoints).join("") + "...";
+}
+
+function createLspRangeFromBounds(start: number, end: number, sourceFile: SourceFile): Range {
+  return {
+    start: positionToLineAndCharacter(sourceFile, start),
+    end: positionToLineAndCharacter(sourceFile, end),
+  };
+}
+
+function positionToLineAndCharacter(sourceFile: SourceFile, position: number): Range["start"] {
+  const lineStarts = sourceFileTextLineStarts(sourceFile.text);
+  let line = 0;
+  for (let index = 0; index < lineStarts.length; index += 1) {
+    if (lineStarts[index]! <= position) line = index;
+    else break;
+  }
+  return { line, character: position - lineStarts[line]! };
+}
+
+function sourceFileTextLineStarts(text: string): number[] {
+  const starts = [0];
+  for (let index = 0; index < text.length; index += 1) {
+    const ch = text.charCodeAt(index);
+    if (ch === 13) {
+      if (text.charCodeAt(index + 1) === 10) index += 1;
+      starts.push(index + 1);
+    } else if (ch === 10) {
+      starts.push(index + 1);
+    }
+  }
+  return starts;
+}
+
+function skipTrivia(text: string, start: number): number {
+  let index = start;
+  while (index < text.length) {
+    const ch = text[index];
+    if (ch === " " || ch === "\t" || ch === "\r" || ch === "\n" || ch === "\v" || ch === "\f") {
+      index += 1;
+      continue;
+    }
+    if (ch === "/" && text[index + 1] === "/") {
+      index += 2;
+      while (index < text.length && text[index] !== "\n" && text[index] !== "\r") index += 1;
+      continue;
+    }
+    if (ch === "/" && text[index + 1] === "*") {
+      index += 2;
+      while (index + 1 < text.length && !(text[index] === "*" && text[index + 1] === "/")) index += 1;
+      index = Math.min(index + 2, text.length);
+      continue;
+    }
+    break;
+  }
+  return index;
+}
+
+function codePointAt(text: string, index: number): string {
+  const codePoint = text.codePointAt(index);
+  if (codePoint === undefined) return "";
+  return String.fromCodePoint(codePoint);
+}
+
+function cloneDocumentSymbolShallow(symbol: DocumentSymbol): MutableDocumentSymbol {
+  const result: MutableDocumentSymbol = {
+    name: symbol.name,
+    kind: symbol.kind,
+    range: symbol.range,
+    selectionRange: symbol.selectionRange,
+  };
+  if (symbol.detail !== undefined) result.detail = symbol.detail;
+  if (symbol.children !== undefined) result.children = [...symbol.children];
+  return result;
+}
+
 // Language-service parity map: internal/ls/symbols.go
 /**
  * Language-service parity map for TS-Go `ls/symbols.go`.
