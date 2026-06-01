@@ -8,17 +8,32 @@ import {
   isNewExpression,
   isSourceFile,
   isTypeNode,
+  nodeText,
   type Identifier,
   type Node,
   type NodeArray,
   type SourceFile,
   type Symbol,
 } from "../ast/index.js";
+import { CheckFlags } from "../ast/checkFlags.js";
 import { findPrecedingTokenEx } from "../astnav/index.js";
-import type { Signature, Type } from "../checker/types.js";
+import { SignatureFlags, TypeFormatFlags, type Signature, type Type, type TypeParameter } from "../checker/types.js";
 import { TextRange } from "../core/index.js";
-import type { ClassifiedTextRun, ParameterInformation, SignatureHelpContext } from "../lsp/lsproto/index.js";
+import {
+  ClassificationTypeNameTypeParameterName,
+  MarkupKindMarkdown,
+  type ClassifiedTextElement,
+  type ClassifiedTextRun,
+  type MarkupKind,
+  type ParameterInformation,
+  type SignatureHelp,
+  type SignatureHelpContext,
+  type SignatureInformation,
+  type StringOrMarkupContent,
+  type UintegerOrNull,
+} from "../lsp/lsproto/index.js";
 import { skipTrivia } from "../scanner/trivia.js";
+import { newDisplayPartsWriter, type DisplayPartsWriter } from "./displayPartsWriter.js";
 import {
   isInsideTemplateLiteral,
   isNoSubstitutionTemplateLiteral,
@@ -58,7 +73,7 @@ export interface SignatureHelpInformation {
 export interface SignatureHelpItemInfo {
   readonly isVariadic: boolean;
   readonly parameters: readonly SignatureHelpParameter[];
-  readonly writer: unknown;
+  readonly writer: DisplayPartsWriter;
 }
 
 export interface SignatureHelpParameter {
@@ -121,13 +136,30 @@ export interface SignatureHelpChecker {
   getSymbolAtLocation?(node: Node): Symbol | undefined;
   getResolvedSignatureForSignatureHelp?(node: Node, argumentCount: number): readonly [Signature | undefined, readonly Signature[]];
   getContextualSignatureLocationInfo?(node: Node, sourceFile: SourceFile, argumentsSpan: TextRange, argumentIndex: number, argumentCount: number): ContextualSignatureLocationInfo | undefined;
+  getLocalTypeParametersOfClassOrInterfaceOrTypeAlias?(symbol: Symbol): readonly TypeParameter[] | undefined;
+  getExpandedParameters?(signature: Signature, preserveRestParameter: boolean): readonly (readonly Symbol[])[];
+  hasEffectiveRestParameter?(signature: Signature): boolean;
+  getReturnTypeOfSignature?(signature: Signature): Type | undefined;
+  getTypePredicateOfSignature?(signature: Signature): unknown;
+  typePredicateToString?(predicate: unknown): string;
+  typeToString?(type: Type, enclosingDeclaration?: Node, flags?: TypeFormatFlags): string;
+  symbolToString?(symbol: Symbol, enclosingDeclaration?: Node, meaning?: number, flags?: number): string;
+  signatureToString?(signature: Signature, enclosingDeclaration?: Node, flags?: TypeFormatFlags): string;
 }
 
 export interface SignatureHelpService {
   getProgramAndFile(documentURI: string): readonly [SignatureHelpProgram, SourceFile];
+  readonly clientCapabilities?: SignatureHelpClientCapabilities;
   converters: {
     lineAndCharacterToPosition(file: SourceFile, position: { readonly line: number; readonly character: number }): number;
   };
+}
+
+export interface SignatureHelpClientCapabilities {
+  readonly documentationFormat?: MarkupKind;
+  readonly supportsPerSignatureActiveParameter?: boolean;
+  readonly supportsNullActiveParameter?: boolean;
+  readonly supportsColorizedLabel?: boolean;
 }
 
 export function provideSignatureHelp(
@@ -142,6 +174,7 @@ export function provideSignatureHelp(
     program,
     sourceFile,
     context,
+    service.clientCapabilities,
   );
 }
 
@@ -150,7 +183,8 @@ export function getSignatureHelpItems(
   program: SignatureHelpProgram,
   sourceFile: SourceFile,
   context: SignatureHelpContext | undefined,
-): CandidateOrTypeInfo | undefined {
+  capabilities: SignatureHelpClientCapabilities = {},
+): SignatureHelp | undefined {
   const lease = program.getTypeCheckerForFile?.(undefined, sourceFile);
   if (lease === undefined) return undefined;
   const normalized = normalizeSignatureHelpCheckerLease(lease);
@@ -161,7 +195,21 @@ export function getSignatureHelpItems(
     if (startingToken === undefined) return undefined;
     const manuallyInvoked = context?.triggerKind === undefined || context.triggerKind === 1;
     const argumentInfo = getContainingArgumentInfo(startingToken, sourceFile, checker, manuallyInvoked, position);
-    return argumentInfo === undefined ? undefined : getCandidateOrTypeInfo(argumentInfo, checker, sourceFile, startingToken, !manuallyInvoked);
+    if (argumentInfo === undefined) return undefined;
+    const candidateOrTypeInfo = getCandidateOrTypeInfo(argumentInfo, checker, sourceFile, startingToken, !manuallyInvoked);
+    if (candidateOrTypeInfo === undefined) return undefined;
+    if (candidateOrTypeInfo.candidateInfo !== undefined) {
+      return createSignatureHelpItems(
+        candidateOrTypeInfo.candidateInfo.candidates,
+        candidateOrTypeInfo.candidateInfo.resolvedSignature,
+        argumentInfo,
+        sourceFile,
+        checker,
+        !manuallyInvoked,
+        capabilities,
+      );
+    }
+    return createTypeHelpItems(candidateOrTypeInfo.typeInfo, argumentInfo, sourceFile, checker, capabilities);
   } finally {
     release();
   }
@@ -170,6 +218,294 @@ export function getSignatureHelpItems(
 export function ensureMinimumSpanSize(start: number, end: number): number {
   if (end <= start) return start + 1;
   return end;
+}
+
+export function createTypeHelpItems(
+  symbol: Symbol | undefined,
+  argumentInfo: ArgumentListInfo,
+  sourceFile: SourceFile,
+  checker: SignatureHelpChecker,
+  capabilities: SignatureHelpClientCapabilities = {},
+): SignatureHelp | undefined {
+  if (symbol === undefined) return undefined;
+  const typeParameters = checker.getLocalTypeParametersOfClassOrInterfaceOrTypeAlias?.(symbol);
+  if (typeParameters === undefined || typeParameters.length === 0) return undefined;
+  const item = getTypeHelpItem(symbol, typeParameters, getEnclosingDeclarationFromInvocation(argumentInfo.invocation), sourceFile, checker, capabilities);
+  const signature = signatureInformationToLsp(item, argumentInfo.argumentIndex, capabilities);
+  const help: { signatures: readonly SignatureInformation[]; activeSignature?: number; activeParameter?: UintegerOrNull } = {
+    signatures: [signature],
+    activeSignature: 0,
+  };
+  if (capabilities.supportsPerSignatureActiveParameter !== true && item.parameters.length > 0) {
+    const activeParameter = computeActiveParameter(item, argumentInfo.argumentIndex, capabilities.supportsNullActiveParameter === true);
+    if (activeParameter !== undefined) help.activeParameter = activeParameter;
+  }
+  return help;
+}
+
+export function getTypeHelpItem(
+  symbol: Symbol,
+  typeParameters: readonly TypeParameter[],
+  enclosingDeclaration: Node,
+  _sourceFile: SourceFile,
+  checker: SignatureHelpChecker,
+  capabilities: SignatureHelpClientCapabilities = {},
+): SignatureHelpInformation {
+  const parameters = typeParameters.map(typeParameter => createSignatureHelpParameterForTypeParameter(typeParameter, enclosingDeclaration, checker));
+  const writer = newDisplayPartsWriter(capabilities.supportsColorizedLabel === true);
+  writer.writeSymbol(symbolDisplayName(symbol, checker), symbol);
+  if (parameters.length > 0) {
+    writer.writePunctuation("<");
+    for (let index = 0; index < parameters.length; index += 1) {
+      if (index > 0) {
+        writer.writePunctuation(",");
+        writer.writeSpace(" ");
+      }
+      writer.writeClassified(parameterLabelText(parameters[index]!), ClassificationTypeNameTypeParameterName);
+    }
+    writer.writePunctuation(">");
+  }
+  return {
+    label: writer.toString(),
+    parameters,
+    isVariadic: false,
+    colorizedRuns: writer.getRuns(),
+  };
+}
+
+export function createSignatureHelpItems(
+  candidates: readonly Signature[],
+  resolvedSignature: Signature | undefined,
+  argumentInfo: ArgumentListInfo,
+  sourceFile: SourceFile,
+  checker: SignatureHelpChecker,
+  useFullPrefix: boolean,
+  capabilities: SignatureHelpClientCapabilities = {},
+): SignatureHelp | undefined {
+  const enclosingDeclaration = getEnclosingDeclarationFromInvocation(argumentInfo.invocation);
+  const callTargetSymbol = callTargetSymbolFromInvocation(argumentInfo, resolvedSignature, checker, useFullPrefix);
+  const callTargetDisplay = callTargetSymbol === undefined ? "" : symbolDisplayName(callTargetSymbol, checker, enclosingDeclaration);
+  const signatureItemGroups = candidates.map(candidate =>
+    getSignatureHelpItem(candidate, argumentInfo.isTypeParameterList, callTargetDisplay, callTargetSymbol, enclosingDeclaration, sourceFile, checker, capabilities));
+  const signatureItems = signatureItemGroups.flat();
+  if (signatureItems.length === 0) return undefined;
+
+  const selectedItemIndex = selectSignatureHelpItemIndex(candidates, resolvedSignature, signatureItemGroups, argumentInfo.argumentCount);
+  const signatureInformation = signatureItems.map(item => signatureInformationToLsp(item, argumentInfo.argumentIndex, capabilities));
+  const help: { signatures: readonly SignatureInformation[]; activeSignature?: number; activeParameter?: UintegerOrNull } = {
+    signatures: signatureInformation,
+    activeSignature: selectedItemIndex,
+  };
+  if (capabilities.supportsPerSignatureActiveParameter !== true) {
+    const activeParameter = computeActiveParameter(signatureItems[selectedItemIndex]!, argumentInfo.argumentIndex, capabilities.supportsNullActiveParameter === true);
+    if (activeParameter !== undefined) help.activeParameter = activeParameter;
+  }
+  return help;
+}
+
+export function computeActiveParameter(
+  signature: SignatureHelpInformation,
+  argumentIndex: number,
+  supportsNull: boolean,
+): UintegerOrNull | undefined {
+  const paramCount = signature.parameters.length;
+  if (paramCount === 0) return undefined;
+  let activeParameter = argumentIndex;
+  if (signature.isVariadic) {
+    const firstRest = signature.parameters.findIndex(parameter => parameter.isRest);
+    if (firstRest > -1 && firstRest < paramCount - 1) {
+      return supportsNull ? {} : { uinteger: paramCount };
+    }
+    if (activeParameter > paramCount - 1) activeParameter = paramCount - 1;
+  }
+  return { uinteger: activeParameter };
+}
+
+export function getSignatureHelpItem(
+  candidate: Signature,
+  isTypeParameterList: boolean,
+  callTargetSymbolText: string,
+  callTargetSymbol: Symbol | undefined,
+  enclosingDeclaration: Node,
+  sourceFile: SourceFile,
+  checker: SignatureHelpChecker,
+  capabilities: SignatureHelpClientCapabilities = {},
+): readonly SignatureHelpInformation[] {
+  const infos = isTypeParameterList
+    ? itemInfoForTypeParameters(candidate, enclosingDeclaration, sourceFile, checker, capabilities)
+    : itemInfoForParameters(candidate, enclosingDeclaration, sourceFile, checker, capabilities);
+  const suffixWriter = returnTypeToDisplayParts(candidate, checker, enclosingDeclaration, capabilities);
+  const documentation = getSignatureDocumentation(candidate, capabilities);
+
+  return infos.map(info => {
+    const labelWriter = newDisplayPartsWriter(capabilities.supportsColorizedLabel === true);
+    if (callTargetSymbolText !== "") labelWriter.writeSymbol(callTargetSymbolText, callTargetSymbol);
+    labelWriter.writeFrom(info.writer);
+    labelWriter.writeFrom(suffixWriter);
+    return {
+      label: labelWriter.toString(),
+      ...(documentation === undefined ? {} : { documentation }),
+      parameters: info.parameters,
+      isVariadic: info.isVariadic,
+      colorizedRuns: labelWriter.getRuns(),
+    };
+  });
+}
+
+export function returnTypeToDisplayParts(
+  candidateSignature: Signature,
+  checker: SignatureHelpChecker,
+  enclosingDeclaration: Node,
+  capabilities: SignatureHelpClientCapabilities = {},
+): DisplayPartsWriter {
+  const writer = newDisplayPartsWriter(capabilities.supportsColorizedLabel === true);
+  const predicate = checker.getTypePredicateOfSignature?.(candidateSignature);
+  const predicateText = predicate === undefined ? undefined : checker.typePredicateToString?.(predicate);
+  const returnType = checker.getReturnTypeOfSignature?.(candidateSignature) ?? candidateSignature.resolvedReturnType;
+  const returnTypeText = predicateText ?? (returnType === undefined ? undefined : checker.typeToString?.(returnType, enclosingDeclaration, TypeFormatFlags.UseAliasDefinedOutsideCurrentScope));
+  if (returnTypeText === undefined || returnTypeText === "") return writer;
+  writer.writePunctuation(":");
+  writer.writeSpace(" ");
+  writer.write(returnTypeText);
+  return writer;
+}
+
+export function itemInfoForTypeParameters(
+  candidateSignature: Signature,
+  enclosingDeclaration: Node,
+  sourceFile: SourceFile,
+  checker: SignatureHelpChecker,
+  capabilities: SignatureHelpClientCapabilities = {},
+): readonly SignatureHelpItemInfo[] {
+  const typeParameters = candidateSignature.target?.typeParameters ?? candidateSignature.typeParameters ?? [];
+  const signatureHelpTypeParameters = typeParameters.map(typeParameter => createSignatureHelpParameterForTypeParameter(typeParameter, enclosingDeclaration, checker));
+  const thisParameters = candidateSignature.thisParameter === undefined
+    ? []
+    : [createSignatureHelpParameterForParameter(candidateSignature.thisParameter, enclosingDeclaration, checker, capabilities)];
+  const writer = newDisplayPartsWriter(capabilities.supportsColorizedLabel === true);
+  writer.writePunctuation("<");
+  for (let index = 0; index < signatureHelpTypeParameters.length; index += 1) {
+    if (index > 0) {
+      writer.writePunctuation(",");
+      writer.writeSpace(" ");
+    }
+    writer.writeClassified(parameterLabelText(signatureHelpTypeParameters[index]!), ClassificationTypeNameTypeParameterName);
+  }
+  writer.writePunctuation(">");
+
+  const lists = expandedParameterLists(candidateSignature, checker);
+  if (lists.length === 0) return [{ isVariadic: false, parameters: signatureHelpTypeParameters, writer }];
+  return lists.map(parameterList => {
+    const parameterWriter = newDisplayPartsWriter(capabilities.supportsColorizedLabel === true);
+    parameterWriter.writeFrom(writer);
+    parameterWriter.writePunctuation("(");
+    const parameters = [...thisParameters];
+    for (let index = 0; index < parameterList.length; index += 1) {
+      if (index > 0) {
+        parameterWriter.writePunctuation(",");
+        parameterWriter.writeSpace(" ");
+      }
+      const parameter = createSignatureHelpParameterForParameter(parameterList[index]!, enclosingDeclaration, checker, capabilities);
+      parameters.push(parameter);
+      parameterWriter.write(parameterLabelText(parameter));
+    }
+    parameterWriter.writePunctuation(")");
+    void sourceFile;
+    return {
+      isVariadic: false,
+      parameters: signatureHelpTypeParameters,
+      writer: parameterWriter,
+    };
+  });
+}
+
+export function itemInfoForParameters(
+  candidateSignature: Signature,
+  enclosingDeclaration: Node,
+  sourceFile: SourceFile,
+  checker: SignatureHelpChecker,
+  capabilities: SignatureHelpClientCapabilities = {},
+): readonly SignatureHelpItemInfo[] {
+  const typeParameters = candidateSignature.typeParameters ?? [];
+  const signatureHelpTypeParameters = typeParameters.map(typeParameter => createSignatureHelpParameterForTypeParameter(typeParameter, enclosingDeclaration, checker));
+  const prefixWriter = newDisplayPartsWriter(capabilities.supportsColorizedLabel === true);
+  if (signatureHelpTypeParameters.length > 0) {
+    prefixWriter.writePunctuation("<");
+    for (let index = 0; index < signatureHelpTypeParameters.length; index += 1) {
+      if (index > 0) {
+        prefixWriter.writePunctuation(",");
+        prefixWriter.writeSpace(" ");
+      }
+      prefixWriter.writeClassified(parameterLabelText(signatureHelpTypeParameters[index]!), ClassificationTypeNameTypeParameterName);
+    }
+    prefixWriter.writePunctuation(">");
+  }
+
+  const lists = expandedParameterLists(candidateSignature, checker);
+  if (lists.length === 0) return [{ isVariadic: false, parameters: [], writer: prefixWriter }];
+  return lists.map(parameterList => {
+    const parameterWriter = newDisplayPartsWriter(capabilities.supportsColorizedLabel === true);
+    parameterWriter.writeFrom(prefixWriter);
+    parameterWriter.writePunctuation("(");
+    const parameters: SignatureHelpParameter[] = [];
+    for (let index = 0; index < parameterList.length; index += 1) {
+      if (index > 0) {
+        parameterWriter.writePunctuation(",");
+        parameterWriter.writeSpace(" ");
+      }
+      const parameter = createSignatureHelpParameterForParameter(parameterList[index]!, enclosingDeclaration, checker, capabilities);
+      parameters.push(parameter);
+      parameterWriter.write(parameterLabelText(parameter));
+    }
+    parameterWriter.writePunctuation(")");
+    void sourceFile;
+    return {
+      isVariadic: isVariadicParameterList(candidateSignature, parameterList, lists, checker),
+      parameters,
+      writer: parameterWriter,
+    };
+  });
+}
+
+export function createSignatureHelpParameterFromLabel(
+  parameter: Symbol | undefined,
+  label: string,
+  capabilities: SignatureHelpClientCapabilities = {},
+): SignatureHelpParameter {
+  const checkFlags = symbolCheckFlags(parameter);
+  const documentation = parameterDocumentation(parameter, capabilities);
+  const parameterInfo: { label: { string: string }; documentation?: StringOrMarkupContent } = {
+    label: { string: label },
+  };
+  if (documentation !== undefined) parameterInfo.documentation = documentation;
+  return {
+    parameterInfo,
+    isRest: (checkFlags & CheckFlags.RestParameter) !== 0,
+    isOptional: (checkFlags & CheckFlags.OptionalParameter) !== 0,
+  };
+}
+
+export function createSignatureHelpParameterForParameter(
+  parameter: Symbol,
+  enclosingDeclaration: Node,
+  checker: SignatureHelpChecker,
+  capabilities: SignatureHelpClientCapabilities = {},
+): SignatureHelpParameter {
+  void enclosingDeclaration;
+  return createSignatureHelpParameterFromLabel(parameter, parameterLabel(parameter, checker), capabilities);
+}
+
+export function createSignatureHelpParameterForTypeParameter(
+  typeParameter: TypeParameter,
+  enclosingDeclaration: Node,
+  checker: SignatureHelpChecker,
+): SignatureHelpParameter {
+  const label = typeParameterLabel(typeParameter, enclosingDeclaration, checker);
+  return {
+    parameterInfo: { label: { string: label } },
+    isRest: false,
+    isOptional: false,
+  };
 }
 
 export function getArgumentIndexOrCount(argumentsList: readonly Node[], node: Node | undefined, spreadElementCounter: (node: Node) => number): number {
@@ -661,6 +997,156 @@ function isTemplateLiteralToken(node: Node): boolean {
 
 function isNode(value: unknown): value is Node {
   return typeof value === "object" && value !== null && typeof (value as { readonly kind?: unknown }).kind === "number";
+}
+
+function signatureInformationToLsp(
+  item: SignatureHelpInformation,
+  argumentIndex: number,
+  capabilities: SignatureHelpClientCapabilities,
+): SignatureInformation {
+  const signature: {
+    label: string;
+    documentation?: StringOrMarkupContent;
+    parameters?: readonly ParameterInformation[];
+    activeParameter?: UintegerOrNull;
+    _vs_colorizedLabel?: ClassifiedTextElement;
+  } = {
+    label: item.label,
+    parameters: item.parameters.map(parameter => parameter.parameterInfo),
+  };
+  if (item.documentation !== undefined) {
+    signature.documentation = {
+      markupContent: {
+        kind: capabilities.documentationFormat ?? MarkupKindMarkdown,
+        value: item.documentation,
+      },
+    };
+  }
+  if (capabilities.supportsColorizedLabel === true && item.colorizedRuns.length > 0) {
+    signature._vs_colorizedLabel = { Runs: item.colorizedRuns };
+  }
+  if (capabilities.supportsPerSignatureActiveParameter === true) {
+    const activeParameter = computeActiveParameter(item, argumentIndex, capabilities.supportsNullActiveParameter === true);
+    if (activeParameter !== undefined) signature.activeParameter = activeParameter;
+  }
+  return signature;
+}
+
+function callTargetSymbolFromInvocation(
+  argumentInfo: ArgumentListInfo,
+  resolvedSignature: Signature | undefined,
+  checker: SignatureHelpChecker,
+  useFullPrefix: boolean,
+): Symbol | undefined {
+  const contextual = argumentInfo.invocation.contextualInvocation?.symbol;
+  if (contextual !== undefined) return contextual;
+  const expression = getExpressionFromInvocation(argumentInfo);
+  const expressionSymbol = checker.getSymbolAtLocation?.(expression);
+  if (expressionSymbol !== undefined) return expressionSymbol;
+  if (useFullPrefix && resolvedSignature?.declaration !== undefined) {
+    return nodeProperty<Symbol>(resolvedSignature.declaration, "symbol");
+  }
+  return undefined;
+}
+
+function selectSignatureHelpItemIndex(
+  candidates: readonly Signature[],
+  resolvedSignature: Signature | undefined,
+  groupedItems: readonly (readonly SignatureHelpInformation[])[],
+  argumentCount: number,
+): number {
+  if (resolvedSignature === undefined) return 0;
+  let selectedItemIndex = 0;
+  let itemSeen = 0;
+  for (let candidateIndex = 0; candidateIndex < candidates.length; candidateIndex += 1) {
+    const candidate = candidates[candidateIndex]!;
+    const matchingItems = groupedItems[candidateIndex] ?? [];
+    if (candidate === resolvedSignature) {
+      selectedItemIndex = itemSeen;
+      const overloadIndex = matchingItems.findIndex(item => item.isVariadic || item.parameters.length >= argumentCount);
+      if (overloadIndex >= 0) selectedItemIndex = itemSeen + overloadIndex;
+      break;
+    }
+    itemSeen += matchingItems.length;
+  }
+  const flattenedLength = groupedItems.reduce((count, group) => count + group.length, 0);
+  return Math.min(selectedItemIndex, Math.max(0, flattenedLength - 1));
+}
+
+function getSignatureDocumentation(
+  signature: Signature,
+  capabilities: SignatureHelpClientCapabilities,
+): string | undefined {
+  void capabilities;
+  const declaration = signature.declaration;
+  if (declaration === undefined) return undefined;
+  const jsDoc = nodeArray(declaration, "jsDoc");
+  const last = jsDoc[jsDoc.length - 1];
+  const comments = last === undefined ? [] : nodeArray(last, "comments");
+  return comments.map(comment => nodeText(comment)).join("");
+}
+
+function expandedParameterLists(signature: Signature, checker: SignatureHelpChecker): readonly (readonly Symbol[])[] {
+  const expanded = checker.getExpandedParameters?.(signature, false);
+  if (expanded !== undefined) return expanded;
+  return [signature.parameters];
+}
+
+function isVariadicParameterList(
+  signature: Signature,
+  parameterList: readonly Symbol[],
+  lists: readonly (readonly Symbol[])[],
+  checker: SignatureHelpChecker,
+): boolean {
+  if (checker.hasEffectiveRestParameter?.(signature) !== true && (signature.flags & SignatureFlags.HasRestParameter) === 0) return false;
+  if (lists.length === 1) return true;
+  const last = parameterList[parameterList.length - 1];
+  return last !== undefined && (symbolCheckFlags(last) & CheckFlags.RestParameter) !== 0;
+}
+
+function parameterLabelText(parameter: SignatureHelpParameter): string {
+  return parameter.parameterInfo.label.string ?? parameter.parameterInfo.label.tuple?.join(",") ?? "";
+}
+
+function parameterLabel(parameter: Symbol, checker: SignatureHelpChecker): string {
+  const name = symbolDisplayName(parameter, checker);
+  if (name === "") throw new Error("signature help parameter is missing a symbol name");
+  const prefix = (symbolCheckFlags(parameter) & CheckFlags.RestParameter) !== 0 ? "..." : "";
+  const optional = (symbolCheckFlags(parameter) & CheckFlags.OptionalParameter) !== 0 ? "?" : "";
+  return `${prefix}${name}${optional}`;
+}
+
+function typeParameterLabel(typeParameter: TypeParameter, enclosingDeclaration: Node, checker: SignatureHelpChecker): string {
+  const typeParameterType = typeParameter as Type;
+  const symbolName = typeParameterType.symbol === undefined ? "" : symbolDisplayName(typeParameterType.symbol, checker, enclosingDeclaration);
+  if (symbolName !== "") return symbolName;
+  const text = checker.typeToString?.(typeParameter as Type, enclosingDeclaration, TypeFormatFlags.UseAliasDefinedOutsideCurrentScope);
+  if (text !== undefined && text !== "") return text;
+  throw new Error("signature help type parameter is missing a printable name");
+}
+
+function parameterDocumentation(
+  parameter: Symbol | undefined,
+  capabilities: SignatureHelpClientCapabilities,
+): StringOrMarkupContent | undefined {
+  void capabilities;
+  const declaration = parameter?.valueDeclaration ?? parameter?.declarations[0];
+  if (declaration === undefined) return undefined;
+  const jsDoc = nodeArray(declaration, "jsDoc");
+  const last = jsDoc[jsDoc.length - 1];
+  const comments = last === undefined ? [] : nodeArray(last, "comments");
+  const value = comments.map(comment => nodeText(comment)).join("");
+  return value === "" ? undefined : { markupContent: { kind: capabilities.documentationFormat ?? MarkupKindMarkdown, value } };
+}
+
+function symbolDisplayName(symbol: Symbol, checker: SignatureHelpChecker, enclosingDeclaration?: Node): string {
+  const checkerText = checker.symbolToString?.(symbol, enclosingDeclaration);
+  if (checkerText !== undefined && checkerText !== "") return checkerText;
+  return symbol.name ?? symbol.escapedName ?? "";
+}
+
+function symbolCheckFlags(symbol: Symbol | undefined): number {
+  return (symbol as unknown as { readonly checkFlags?: number } | undefined)?.checkFlags ?? CheckFlags.None;
 }
 
 function normalizeSignatureHelpCheckerLease(
