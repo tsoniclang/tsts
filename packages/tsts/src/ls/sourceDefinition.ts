@@ -1,3 +1,192 @@
+import {
+  getCombinedModifierFlags,
+  isAccessExpression,
+  isBindingElement,
+  isBinaryExpression,
+  isCallExpression,
+  isClassDeclaration,
+  isDeclaration,
+  isElementAccessExpression,
+  isEnumMember,
+  isExportAssignment,
+  isExportSpecifier,
+  isFunctionDeclaration,
+  isGetAccessorDeclaration,
+  isIdentifier,
+  isImportClause,
+  isImportSpecifier,
+  isMethodDeclaration,
+  isMethodSignatureDeclaration,
+  isNamespaceImport,
+  isParameterDeclaration,
+  isPrivateIdentifier,
+  isPropertyAccessExpression,
+  isPropertyAssignment,
+  isPropertyDeclaration,
+  isPropertySignatureDeclaration,
+  isSetAccessorDeclaration,
+  isShorthandPropertyAssignment,
+  isTypeParameterDeclaration,
+  Kind,
+  type Node,
+  type SourceFile,
+} from "../ast/index.js";
+import { ModifierFlags } from "../enums/index.js";
+import { getTextOfNode } from "../scanner/utilities.js";
+
+export function isDefaultImportName(node: Node): boolean {
+  const parent = node.parent;
+  return parent !== undefined && isImportClause(parent) && parent.name === node;
+}
+
+export function getSourceDefinitionEntryNode(sourceFile: SourceFile): Node {
+  return sourceFile.statements.length > 0 ? sourceFile.statements[0]! : sourceFile;
+}
+
+export function getSourceDefinitionEntryDeclarations(sourceFile: SourceFile): readonly Node[] {
+  return [getSourceDefinitionEntryNode(sourceFile)];
+}
+
+export function getCandidateSourceDeclarationNames(originalNode: Node | undefined, declaration: Node | undefined): readonly string[] {
+  const names: string[] = [];
+  if (declaration !== undefined) {
+    const declarationName = getNameOfDeclaration(declaration);
+    const declarationNameText = declarationName === undefined ? "" : getTextOfPropertyName(declarationName);
+    if (declarationNameText !== "") names.push(declarationNameText);
+
+    if (isExportAssignment(declaration)) names.push("default");
+    if ((isFunctionDeclaration(declaration) || isClassDeclaration(declaration))
+      && (getCombinedModifierFlags(declaration) & ModifierFlags.ExportDefault) === ModifierFlags.ExportDefault) {
+      names.push("default");
+    }
+    if ((isImportSpecifier(declaration) || isExportSpecifier(declaration)) && declaration.propertyName !== undefined) {
+      names.push(getTextOfPropertyName(declaration.propertyName));
+    }
+  }
+  if (originalNode !== undefined) {
+    if (isIdentifier(originalNode) || isPrivateIdentifier(originalNode)) {
+      names.push(originalNode.text);
+    }
+    if (isDefaultImportName(originalNode)) {
+      names.push("default");
+    }
+    const parent = originalNode.parent;
+    if (parent !== undefined && (isImportSpecifier(parent) || isExportSpecifier(parent)) && parent.propertyName !== undefined) {
+      names.push(getTextOfPropertyName(parent.propertyName));
+    }
+  }
+  return names;
+}
+
+export function filterPreferredSourceDeclarations(originalNode: Node | undefined, declarations: readonly Node[]): readonly Node[] {
+  if (declarations.length <= 1 || originalNode === undefined) return declarations;
+  const propertyLike = getPropertyLikeSourceDeclarations(originalNode, declarations);
+  if (propertyLike.length !== 0) return propertyLike;
+  const concrete = declarations.filter(isConcreteSourceDeclaration);
+  if (concrete.length !== 0) return concrete;
+  return declarations;
+}
+
+export function getPropertyLikeSourceDeclarations(originalNode: Node, declarations: readonly Node[]): readonly Node[] {
+  const parent = originalNode.parent;
+  if (parent === undefined || !isAccessExpression(parent) || accessExpressionName(parent) !== originalNode) return [];
+  return declarations.filter((node) =>
+    isPropertyAssignment(node)
+    || isShorthandPropertyAssignment(node)
+    || isPropertyDeclaration(node)
+    || isPropertySignatureDeclaration(node)
+    || isMethodDeclaration(node)
+    || isMethodSignatureDeclaration(node)
+    || isGetAccessorDeclaration(node)
+    || isSetAccessorDeclaration(node)
+    || isEnumMember(node),
+  );
+}
+
+export function hasConcreteSourceDeclarations(declarations: readonly Node[]): boolean {
+  return declarations.some(isConcreteSourceDeclaration);
+}
+
+export function isConcreteSourceDeclaration(node: Node): boolean {
+  if (!isDeclaration(node) || isExportAssignment(node)) return false;
+  if ((isBinaryExpression(node) || isCallExpression(node)) && hasJavaScriptAssignmentDeclarationKind(node)) return false;
+  return !(isParameterDeclaration(node)
+    || isTypeParameterDeclaration(node)
+    || isBindingElement(node)
+    || isImportClause(node)
+    || isImportSpecifier(node)
+    || isNamespaceImport(node)
+    || isExportSpecifier(node)
+    || isPropertyAccessExpression(node)
+    || isElementAccessExpression(node));
+}
+
+export function uniqueDeclarationNodes(nodes: readonly (Node | undefined)[]): readonly Node[] {
+  const seen = new Set<string>();
+  const result: Node[] = [];
+  for (const node of nodes) {
+    if (node === undefined) continue;
+    const sourceFile = node.getSourceFile();
+    const key = `${sourceFile.fileName}:${node.pos}:${node.end}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(node);
+  }
+  return result;
+}
+
+export function getContainerDepth(node: Node): number {
+  let depth = 0;
+  let current: Node | undefined = node;
+  while (current !== undefined) {
+    current = getContainerNode(current);
+    depth += 1;
+  }
+  return depth;
+}
+
+function getContainerNode(node: Node): Node | undefined {
+  let current = node.parent;
+  while (current !== undefined) {
+    switch (current.kind) {
+      case Kind.SourceFile:
+      case Kind.ModuleDeclaration:
+      case Kind.ClassDeclaration:
+      case Kind.ClassExpression:
+      case Kind.FunctionDeclaration:
+      case Kind.FunctionExpression:
+      case Kind.ArrowFunction:
+      case Kind.MethodDeclaration:
+      case Kind.GetAccessor:
+      case Kind.SetAccessor:
+      case Kind.Constructor:
+        return current;
+    }
+    current = current.parent;
+  }
+  return undefined;
+}
+
+function getNameOfDeclaration(node: Node): Node | undefined {
+  return (node as { readonly name?: Node }).name;
+}
+
+function getTextOfPropertyName(node: Node): string {
+  if (isIdentifier(node) || isPrivateIdentifier(node)) return node.text;
+  return getTextOfNode(node);
+}
+
+function accessExpressionName(node: Node): Node | undefined {
+  if (isPropertyAccessExpression(node)) return node.name;
+  if (isElementAccessExpression(node)) return node.argumentExpression;
+  return undefined;
+}
+
+function hasJavaScriptAssignmentDeclarationKind(node: Node): boolean {
+  return (node as { readonly jsDeclarationKind?: number }).jsDeclarationKind !== undefined
+    && (node as { readonly jsDeclarationKind?: number }).jsDeclarationKind !== 0;
+}
+
 // Language-service parity map: internal/ls/sourcedefinition.go
 /**
  * Language-service parity map for TS-Go `ls/sourcedefinition.go`.
