@@ -8,6 +8,7 @@
 import type { Position, Range, TextEdit } from "../../lsp/lsproto/index.js";
 import { comparePositions } from "../../lsp/lsproto/index.js";
 import { Kind, type Node, type SourceFile } from "../../ast/index.js";
+import { nodeToStr } from "../../printer/printer.js";
 
 export interface NodeOptions {
   readonly prefix?: string;
@@ -239,6 +240,15 @@ export class Tracker {
     this.changes.set(fileName, [...list, edit]);
   }
 
+  setEmitFlags(node: Node, flags: number): void {
+    (node as { emitFlags?: number }).emitFlags = flags;
+  }
+
+  addEmitFlags(node: Node, flags: number): void {
+    const mutable = node as { emitFlags?: number };
+    mutable.emitFlags = (mutable.emitFlags ?? 0) | flags;
+  }
+
   private finishDeleteDeclarations(): void {
     for (const deleted of this.deletedNodes) {
       if (this.deletedNodes.some(other => other !== deleted && other.sourceFile === deleted.sourceFile && rangeContainsNode(other.node, deleted.node))) {
@@ -373,6 +383,11 @@ function withPrefixAndSuffix(text: string, options: NodeOptions): string {
 
 function printNode(node: Node | undefined): string {
   if (node === undefined) return "";
+  try {
+    const text = nodeToStr(node, { removeComments: true, emitTrailingNewlines: false });
+    if (text !== "") return text;
+  } catch {
+  }
   const text = (node as { readonly text?: unknown }).text;
   if (typeof text === "string") return text;
   const escapedText = (node as { readonly escapedText?: unknown }).escapedText;

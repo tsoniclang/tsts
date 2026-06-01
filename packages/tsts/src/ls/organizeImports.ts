@@ -1,31 +1,243 @@
 import {
   Kind,
+  createIdentifier,
+  createImportClause,
+  createImportSpecifier,
+  createNamedImports,
+  createNodeArray,
+  isModuleBlock,
+  isModuleDeclaration,
   isExportDeclaration,
   isImportDeclaration,
   isNamedExports,
   isNamedImports,
+  isNamespaceImport,
+  isStringLiteral,
   isStringLiteralLikeNode,
+  subtreeFacts,
+  updateExportDeclaration,
+  updateImportClause,
+  updateImportDeclaration,
+  updateImportSpecifier,
+  updateNamedExports,
+  updateNamedImports,
+  type Expression,
   type ExportDeclaration,
+  type ExportSpecifier,
+  type Identifier,
   type ImportAttributes,
   type ImportDeclaration,
   type ImportSpecifier,
+  type NamedExportBindings,
+  type NamedImports,
+  type NamedImportBindings,
   type Node,
   type SourceFile,
   type Statement,
 } from "../ast/index.js";
+import { SubtreeFacts } from "../ast/subtreeFacts.js";
+import { JsxEmit } from "../core/compilerOptions.js";
 import { skipTrivia } from "../scanner/index.js";
 import { compareStringsCaseSensitive } from "../stringutil/index.js";
 import {
+  CodeActionKindSourceOrganizeImports,
+  CodeActionKindSourceRemoveUnusedImports,
+  CodeActionKindSourceSortImports,
+  type CodeActionKind,
+  type TextEdit,
+} from "../lsp/lsproto/index.js";
+import { LeadingTriviaOption, TrailingTriviaOption, newTracker, type Tracker } from "./change/index.js";
+import { isAmbientModuleDeclaration } from "./importTracker.js";
+import {
+  compareImportsOrRequireStatements,
+  compareModuleSpecifiers,
+  detectModuleSpecifierCaseBySort,
+  detectNamedImportOrganizationBySort,
+  filterImportDeclarations,
+  getDetectionLists,
   getExternalModuleName,
+  getNamedImportSpecifierComparer,
   type SpecifierComparer,
   type StringComparer,
 } from "./lsutil/organizeImports.js";
-import { type OrganizeImportsTypeOrder } from "./lsutil/userpreferences.js";
+import {
+  OrganizeImportsTypeOrderAuto,
+  type OrganizeImportsTypeOrder,
+  type UserPreferences,
+} from "./lsutil/userpreferences.js";
+
+export interface OrganizeImportsLanguageService {
+  userPreferences(): UserPreferences;
+}
+
+export type OrganizeImportsCheckerLease =
+  | readonly [OrganizeImportsChecker, () => void]
+  | { readonly checker: OrganizeImportsChecker; readonly release: () => void };
+
+export interface OrganizeImportsChecker {
+  isDeclarationUsed(sourceFile: SourceFile, identifier: Identifier, jsxElementsPresent: boolean, jsxModeNeedsExplicitImport: boolean): boolean;
+}
+
+export interface OrganizeImportsProgram {
+  options?(): unknown;
+  getTypeCheckerForFile?(context: unknown, sourceFile: SourceFile): OrganizeImportsCheckerLease;
+  getTypeChecker?(context: unknown): OrganizeImportsCheckerLease;
+}
 
 export interface OrganizeImportsComparerSettings {
   readonly moduleSpecifierComparer: StringComparer;
   readonly namedImportComparer: StringComparer;
   readonly typeOrder: OrganizeImportsTypeOrder;
+}
+
+export function organizeImports(
+  languageService: OrganizeImportsLanguageService,
+  sourceFile: SourceFile,
+  program: OrganizeImportsProgram,
+  kind: CodeActionKind,
+  context: unknown = undefined,
+): ReadonlyMap<string, readonly TextEdit[]> {
+  const changeTracker = newTracker();
+  const shouldSort = kind === CodeActionKindSourceSortImports || kind === CodeActionKindSourceOrganizeImports;
+  const shouldCombine = shouldSort;
+  const shouldRemove = kind === CodeActionKindSourceRemoveUnusedImports || kind === CodeActionKindSourceOrganizeImports;
+  const topLevelImportDecls = filterImportDeclarations(sourceFile.statements);
+  const topLevelImportGroupDecls = groupByNewlineContiguous(sourceFile, topLevelImportDecls);
+
+  const preferences = languageService.userPreferences();
+  const { comparersToTest, typeOrdersToTest } = getDetectionLists(preferences);
+  const defaultComparer = comparersToTest[0] ?? compareStringsCaseSensitive;
+  let moduleSpecifierComparer: StringComparer | undefined;
+  let namedImportComparer: StringComparer | undefined;
+  let typeOrder = preferences.organizeImportsTypeOrder ?? OrganizeImportsTypeOrderAuto;
+
+  if (preferences.organizeImportsIgnoreCase !== undefined && preferences.organizeImportsIgnoreCase !== 0) {
+    moduleSpecifierComparer = defaultComparer;
+    namedImportComparer = defaultComparer;
+  }
+
+  if (moduleSpecifierComparer === undefined) {
+    const [detectedComparer] = detectModuleSpecifierCaseBySort(topLevelImportGroupDecls, comparersToTest);
+    moduleSpecifierComparer = detectedComparer;
+  }
+
+  if (typeOrder === OrganizeImportsTypeOrderAuto || namedImportComparer === undefined) {
+    const detected = detectNamedImportOrganizationBySort(topLevelImportDecls, comparersToTest, typeOrdersToTest);
+    if (detected !== undefined) {
+      namedImportComparer ??= detected.namedImportComparer;
+      if (typeOrder === OrganizeImportsTypeOrderAuto) typeOrder = detected.typeOrder;
+    }
+  }
+
+  const comparer: OrganizeImportsComparerSettings = {
+    moduleSpecifierComparer,
+    namedImportComparer: namedImportComparer ?? defaultComparer,
+    typeOrder,
+  };
+
+  for (const importGroupDecl of topLevelImportGroupDecls) {
+    organizeImportsWorker(importGroupDecl, comparer, shouldSort, shouldCombine, shouldRemove, sourceFile, program, changeTracker, context);
+  }
+
+  if (kind !== CodeActionKindSourceRemoveUnusedImports) {
+    for (const exportGroupDecl of getTopLevelExportGroups(sourceFile)) {
+      organizeExportsWorker(exportGroupDecl, comparer, sourceFile, changeTracker);
+    }
+  }
+
+  for (const statement of sourceFile.statements) {
+    if (!isModuleDeclaration(statement) || !isAmbientModuleDeclaration(statement)) continue;
+    const moduleBody = statement.body;
+    if (moduleBody === undefined || !isModuleBlock(moduleBody)) continue;
+    const ambientModuleImportDecls = filterImportDeclarations(moduleBody.statements);
+    const ambientModuleImportGroupDecls = groupByNewlineContiguous(sourceFile, ambientModuleImportDecls);
+    for (const importGroupDecl of ambientModuleImportGroupDecls) {
+      organizeImportsWorker(importGroupDecl, comparer, shouldSort, shouldCombine, shouldRemove, sourceFile, program, changeTracker, context);
+    }
+    if (kind !== CodeActionKindSourceRemoveUnusedImports) {
+      const ambientModuleExportDecls = moduleBody.statements.filter(isExportDeclaration);
+      organizeExportsWorker(ambientModuleExportDecls, comparer, sourceFile, changeTracker);
+    }
+  }
+
+  return changeTracker.getChanges();
+}
+
+export function organizeImportsWorker(
+  oldImportDeclarations: readonly ImportDeclaration[],
+  comparer: OrganizeImportsComparerSettings,
+  shouldSort: boolean,
+  shouldCombine: boolean,
+  shouldRemove: boolean,
+  sourceFile: SourceFile,
+  program: OrganizeImportsProgram,
+  changeTracker: Tracker,
+  context: unknown = undefined,
+): void {
+  if (oldImportDeclarations.length === 0) return;
+
+  let processedImports = [...oldImportDeclarations];
+  if (shouldRemove) {
+    const lease = getTypeCheckerForOrganizeImports(program, context, sourceFile);
+    try {
+      processedImports = removeUnusedImports(processedImports, sourceFile, lease.checker, program, changeTracker);
+    } finally {
+      lease.release();
+    }
+  }
+
+  let newImportDeclarations: ImportDeclaration[] = [];
+  if (shouldCombine) {
+    const grouped = groupByModuleSpecifier(processedImports);
+    if (shouldSort) {
+      grouped.sort((left, right) => {
+        if (left.length === 0 || right.length === 0) return 0;
+        return compareModuleSpecifiers(left[0]?.moduleSpecifier, right[0]?.moduleSpecifier, comparer.moduleSpecifierComparer);
+      });
+    }
+
+    const specifierComparer = getNamedImportSpecifierComparer(
+      { organizeImportsTypeOrder: comparer.typeOrder },
+      comparer.namedImportComparer,
+    );
+
+    for (const importGroup of grouped) {
+      const coalesced = coalesceImportsWorker(importGroup, comparer.moduleSpecifierComparer, specifierComparer, sourceFile, changeTracker);
+      if (shouldSort) {
+        coalesced.sort((left, right) => compareImportsOrRequireStatements(left, right, comparer.moduleSpecifierComparer));
+      }
+      newImportDeclarations.push(...coalesced);
+    }
+  } else {
+    newImportDeclarations = processedImports;
+  }
+
+  if (shouldSort && !shouldCombine) {
+    newImportDeclarations.sort((left, right) => compareImportsOrRequireStatements(left, right, comparer.moduleSpecifierComparer));
+  }
+
+  const firstOldImport = oldImportDeclarations[0]!;
+  const lastOldImport = oldImportDeclarations[oldImportDeclarations.length - 1]!;
+  if (newImportDeclarations.length === 0) {
+    changeTracker.deleteNodeRange(
+      sourceFile,
+      firstOldImport,
+      lastOldImport,
+      LeadingTriviaOption.Exclude,
+      TrailingTriviaOption.Include,
+    );
+    return;
+  }
+
+  const options = {
+    leadingTriviaOption: LeadingTriviaOption.Exclude,
+    trailingTriviaOption: TrailingTriviaOption.Include,
+    suffix: "\n",
+  };
+  changeTracker.replaceNodeWithNodes(sourceFile, firstOldImport, newImportDeclarations, options);
+  for (let index = 1; index < oldImportDeclarations.length; index += 1) {
+    changeTracker.delete(sourceFile, oldImportDeclarations[index]!);
+  }
 }
 
 export function groupByModuleSpecifier(imports: readonly ImportDeclaration[]): ImportDeclaration[][] {
@@ -131,12 +343,262 @@ export function getCategorizedImports(importDeclarations: readonly ImportDeclara
   return importWithoutClause === undefined ? result : { ...result, importWithoutClause };
 }
 
+export function removeUnusedImports(
+  oldImports: readonly ImportDeclaration[],
+  sourceFile: SourceFile,
+  typeChecker: OrganizeImportsChecker,
+  program: OrganizeImportsProgram,
+  _changeTracker: Tracker,
+): ImportDeclaration[] {
+  const compilerOptions = optionsRecord(program.options?.());
+  const jsxElementsPresent = (subtreeFacts(sourceFile) & SubtreeFacts.ContainsJsx) !== 0;
+  const jsxModeNeedsExplicitImport = compilerOptions.jsx === JsxEmit.React || compilerOptions.jsx === JsxEmit.ReactNative;
+  const usedImports: ImportDeclaration[] = [];
+
+  for (const importDeclaration of oldImports) {
+    const importClause = importDeclaration.importClause;
+    if (importClause === undefined) {
+      usedImports.push(importDeclaration);
+      continue;
+    }
+
+    let name = importClause.name;
+    let namedBindings: NamedImportBindings | undefined = importClause.namedBindings;
+
+    if (name !== undefined && !typeChecker.isDeclarationUsed(sourceFile, name, jsxElementsPresent, jsxModeNeedsExplicitImport)) {
+      name = undefined;
+    }
+
+    if (namedBindings !== undefined) {
+      switch (namedBindings.kind) {
+        case Kind.NamespaceImport:
+          if (!typeChecker.isDeclarationUsed(sourceFile, namedBindings.name, jsxElementsPresent, jsxModeNeedsExplicitImport)) {
+            namedBindings = undefined;
+          }
+          break;
+        case Kind.NamedImports: {
+          const newElements = filterUsedImportSpecifiers(
+            namedBindings.elements,
+            typeChecker,
+            sourceFile,
+            jsxElementsPresent,
+            jsxModeNeedsExplicitImport,
+          );
+          if (newElements.length === 0) {
+            namedBindings = undefined;
+          } else if (newElements.length < namedBindings.elements.length) {
+            namedBindings = updateNamedImports(namedBindings, createNodeArray(newElements));
+          }
+          break;
+        }
+        default:
+          break;
+      }
+    }
+
+    if (name !== undefined || namedBindings !== undefined) {
+      const newClause = updateImportClause(importClause, importClause.phaseModifier, name, namedBindings);
+      usedImports.push(updateImportDeclaration(
+        importDeclaration,
+        importDeclaration.modifiers,
+        newClause,
+        importDeclaration.moduleSpecifier,
+        importDeclaration.attributes,
+      ));
+      continue;
+    }
+
+    const moduleSpecifier = importDeclaration.moduleSpecifier;
+    if (hasModuleDeclarationMatchingSpecifier(sourceFile, moduleSpecifier)) {
+      if (sourceFile.isDeclarationFile) {
+        usedImports.push(updateImportDeclaration(
+          importDeclaration,
+          importDeclaration.modifiers,
+          undefined,
+          importDeclaration.moduleSpecifier,
+          importDeclaration.attributes,
+        ));
+      } else {
+        usedImports.push(importDeclaration);
+      }
+    }
+  }
+
+  return usedImports;
+}
+
+export function filterUsedImportSpecifiers(
+  elements: readonly ImportSpecifier[],
+  typeChecker: OrganizeImportsChecker,
+  sourceFile: SourceFile,
+  jsxElementsPresent: boolean,
+  jsxModeNeedsExplicitImport: boolean,
+): ImportSpecifier[] {
+  const result: ImportSpecifier[] = [];
+  for (const element of elements) {
+    if (typeChecker.isDeclarationUsed(sourceFile, element.name, jsxElementsPresent, jsxModeNeedsExplicitImport)) {
+      result.push(element);
+    }
+  }
+  return result;
+}
+
+export function hasModuleDeclarationMatchingSpecifier(sourceFile: SourceFile, moduleSpecifier: Expression | undefined): boolean {
+  if (moduleSpecifier === undefined || !isStringLiteral(moduleSpecifier)) return false;
+  for (const moduleName of sourceFile.moduleAugmentations) {
+    if (isStringLiteral(moduleName) && moduleName.text === moduleSpecifier.text) return true;
+  }
+  return false;
+}
+
+export function coalesceImportsWorker(
+  importDeclarations: readonly ImportDeclaration[],
+  comparer: StringComparer,
+  specifierComparer: SpecifierComparer,
+  _sourceFile: SourceFile,
+  _changeTracker: Tracker,
+): ImportDeclaration[] {
+  if (importDeclarations.length === 0) return [...importDeclarations];
+
+  const importGroupsByAttributes = new Map<string, ImportDeclaration[]>();
+  const attributeKeys: string[] = [];
+  for (const importDeclaration of importDeclarations) {
+    const key = getImportAttributesKey(importDeclaration.attributes);
+    if (!importGroupsByAttributes.has(key)) attributeKeys.push(key);
+    const group = importGroupsByAttributes.get(key);
+    if (group === undefined) importGroupsByAttributes.set(key, [importDeclaration]);
+    else group.push(importDeclaration);
+  }
+
+  const coalescedImports: ImportDeclaration[] = [];
+  for (const attributeKey of attributeKeys) {
+    const importGroupSameAttrs = importGroupsByAttributes.get(attributeKey) ?? [];
+    const categorized = getCategorizedImports(importGroupSameAttrs);
+    if (categorized.importWithoutClause !== undefined) coalescedImports.push(categorized.importWithoutClause);
+
+    const groups: readonly ImportGroup[] = [categorized.regularImports, categorized.typeOnlyImports];
+    for (let groupIndex = 0; groupIndex < groups.length; groupIndex += 1) {
+      const group = groups[groupIndex]!;
+      if (isImportGroupEmpty(group)) continue;
+      const isTypeOnly = groupIndex === 1;
+
+      if (!isTypeOnly && group.defaultImports.length === 1 && group.namespaceImports.length === 1 && group.namedImports.length === 0) {
+        const defaultImport = group.defaultImports[0]!;
+        const namespaceImport = group.namespaceImports[0]!;
+        const defaultClause = defaultImport.importClause;
+        const namespaceBindings = namespaceImport.importClause?.namedBindings;
+        if (defaultClause !== undefined && namespaceBindings !== undefined) {
+          const newClause = updateImportClause(defaultClause, defaultClause.phaseModifier, defaultClause.name, namespaceBindings);
+          coalescedImports.push(updateImportDeclaration(
+            defaultImport,
+            defaultImport.modifiers,
+            newClause,
+            defaultImport.moduleSpecifier,
+            defaultImport.attributes,
+          ));
+          continue;
+        }
+      }
+
+      group.namespaceImports.sort((left, right) => {
+        const leftName = namespaceImportNameText(left);
+        const rightName = namespaceImportNameText(right);
+        return comparer(leftName, rightName);
+      });
+
+      for (const namespaceImport of group.namespaceImports) {
+        const clause = namespaceImport.importClause;
+        if (clause === undefined) continue;
+        const newClause = updateImportClause(clause, clause.phaseModifier, undefined, clause.namedBindings);
+        coalescedImports.push(updateImportDeclaration(
+          namespaceImport,
+          namespaceImport.modifiers,
+          newClause,
+          namespaceImport.moduleSpecifier,
+          namespaceImport.attributes,
+        ));
+      }
+
+      const firstDefaultImport = group.defaultImports[0];
+      const firstNamedImport = group.namedImports[0];
+      const importDeclaration = firstDefaultImport ?? firstNamedImport;
+      if (importDeclaration === undefined) continue;
+
+      let newDefaultImport: Identifier | undefined;
+      const newImportSpecifiers: ImportSpecifier[] = [];
+      if (group.defaultImports.length === 1) {
+        newDefaultImport = group.defaultImports[0]?.importClause?.name;
+      } else {
+        for (const defaultImport of group.defaultImports) {
+          const defaultName = defaultImport.importClause?.name;
+          if (defaultName === undefined) continue;
+          newImportSpecifiers.push(createImportSpecifier(false, createIdentifier("default"), defaultName));
+        }
+      }
+
+      newImportSpecifiers.push(...getNewImportSpecifiers(group.namedImports));
+      newImportSpecifiers.sort(specifierComparer);
+
+      let newNamedImports: NamedImports | undefined;
+      if (newImportSpecifiers.length === 0) {
+        newNamedImports = newDefaultImport === undefined ? createNamedImports(createNodeArray([])) : undefined;
+      } else {
+        const sortedList = createNodeArray(newImportSpecifiers);
+        const firstNamedBindings = firstNamedImport?.importClause?.namedBindings;
+        newNamedImports = firstNamedBindings !== undefined && isNamedImports(firstNamedBindings)
+          ? updateNamedImports(firstNamedBindings, sortedList)
+          : createNamedImports(sortedList);
+      }
+
+      if (isTypeOnly && newDefaultImport !== undefined && newNamedImports !== undefined) {
+        const defaultClause = createImportClause(importDeclaration.importClause?.phaseModifier, newDefaultImport, undefined);
+        coalescedImports.push(updateImportDeclaration(
+          importDeclaration,
+          importDeclaration.modifiers,
+          defaultClause,
+          importDeclaration.moduleSpecifier,
+          importDeclaration.attributes,
+        ));
+
+        const namedDeclaration = firstNamedImport ?? importDeclaration;
+        const namedClause = createImportClause(namedDeclaration.importClause?.phaseModifier, undefined, newNamedImports);
+        coalescedImports.push(updateImportDeclaration(
+          namedDeclaration,
+          namedDeclaration.modifiers,
+          namedClause,
+          namedDeclaration.moduleSpecifier,
+          namedDeclaration.attributes,
+        ));
+      } else {
+        const clause = importDeclaration.importClause;
+        if (clause === undefined) continue;
+        const newClause = updateImportClause(clause, clause.phaseModifier, newDefaultImport, newNamedImports);
+        coalescedImports.push(updateImportDeclaration(
+          importDeclaration,
+          importDeclaration.modifiers,
+          newClause,
+          importDeclaration.moduleSpecifier,
+          importDeclaration.attributes,
+        ));
+      }
+    }
+  }
+
+  return coalescedImports;
+}
+
 export function getNewImportSpecifiers(namedImports: readonly ImportDeclaration[]): ImportSpecifier[] {
   const result: ImportSpecifier[] = [];
   for (const namedImport of namedImports) {
     const elements = tryGetNamedBindingElements(namedImport);
     if (elements === undefined) continue;
-    for (const element of elements) result.push(element);
+    for (const element of elements) {
+      if (element.propertyName !== undefined && nodeText(element.propertyName) === nodeText(element.name)) {
+        result.push(updateImportSpecifier(element, element.isTypeOnly, undefined, element.name));
+      } else {
+        result.push(element);
+      }
+    }
   }
   return result;
 }
@@ -211,13 +673,140 @@ export function getCategorizedExports(exportGroup: readonly ExportDeclaration[])
 export function collectExportSpecifiers(
   exportDeclarations: readonly ExportDeclaration[],
   specifierComparer: SpecifierComparer,
-): Node[] {
-  const specifiers: Node[] = [];
+): ExportSpecifier[] {
+  const specifiers: ExportSpecifier[] = [];
   for (const exportDeclaration of exportDeclarations) {
     const exportClause = exportDeclaration.exportClause;
     if (exportClause !== undefined && isNamedExports(exportClause)) specifiers.push(...exportClause.elements);
   }
   return specifiers.sort(specifierComparer);
+}
+
+export function organizeExportsWorker(
+  oldExportDeclarations: readonly ExportDeclaration[],
+  comparer: OrganizeImportsComparerSettings,
+  sourceFile: SourceFile,
+  changeTracker: Tracker,
+): void {
+  if (oldExportDeclarations.length === 0) return;
+
+  const specifierComparer = getNamedImportSpecifierComparer(
+    { organizeImportsTypeOrder: comparer.typeOrder },
+    comparer.namedImportComparer,
+  );
+  const newExportDeclarations = coalesceExportsWorker(
+    oldExportDeclarations,
+    specifierComparer,
+    comparer.moduleSpecifierComparer,
+    sourceFile,
+    changeTracker,
+  );
+
+  const firstOldExport = oldExportDeclarations[0]!;
+  const lastOldExport = oldExportDeclarations[oldExportDeclarations.length - 1]!;
+  if (newExportDeclarations.length === 0) {
+    changeTracker.deleteNodeRange(
+      sourceFile,
+      firstOldExport,
+      lastOldExport,
+      LeadingTriviaOption.Exclude,
+      TrailingTriviaOption.Include,
+    );
+    return;
+  }
+
+  changeTracker.replaceNodeWithNodes(sourceFile, firstOldExport, newExportDeclarations, {
+    leadingTriviaOption: LeadingTriviaOption.Exclude,
+    trailingTriviaOption: TrailingTriviaOption.Include,
+    suffix: "\n",
+  });
+  for (let index = 1; index < oldExportDeclarations.length; index += 1) {
+    changeTracker.delete(sourceFile, oldExportDeclarations[index]!);
+  }
+}
+
+export function coalesceExportsWorker(
+  exportGroup: readonly ExportDeclaration[],
+  specifierComparer: SpecifierComparer,
+  moduleSpecifierComparer: StringComparer,
+  _sourceFile: SourceFile,
+  _changeTracker: Tracker,
+): ExportDeclaration[] {
+  if (exportGroup.length === 0) return [...exportGroup];
+
+  const exportsByModuleSpecifier = new Map<string, ExportDeclaration[]>();
+  const moduleSpecifierOrder: string[] = [];
+  for (const exportDeclaration of exportGroup) {
+    const moduleSpecifier = exportDeclaration.moduleSpecifier !== undefined && isStringLiteralLikeNode(exportDeclaration.moduleSpecifier)
+      ? exportDeclaration.moduleSpecifier.text
+      : "";
+    if (!exportsByModuleSpecifier.has(moduleSpecifier)) moduleSpecifierOrder.push(moduleSpecifier);
+    const group = exportsByModuleSpecifier.get(moduleSpecifier);
+    if (group === undefined) exportsByModuleSpecifier.set(moduleSpecifier, [exportDeclaration]);
+    else group.push(exportDeclaration);
+  }
+
+  moduleSpecifierOrder.sort((left, right) => {
+    if (left === "" && right !== "") return 1;
+    if (left !== "" && right === "") return -1;
+    return moduleSpecifierComparer(left, right);
+  });
+
+  const coalescedExports: ExportDeclaration[] = [];
+  for (const moduleSpecifier of moduleSpecifierOrder) {
+    const group = exportsByModuleSpecifier.get(moduleSpecifier) ?? [];
+    const categorized = getCategorizedExports(group);
+    if (categorized.exportWithoutClause !== undefined) coalescedExports.push(categorized.exportWithoutClause);
+
+    for (const subGroup of [categorized.namedExports, categorized.typeOnlyExports]) {
+      if (subGroup.length === 0) continue;
+      const newExportSpecifiers = collectExportSpecifiers(subGroup, specifierComparer);
+      const exportDeclaration = subGroup[0]!;
+      let updatedExportClause: NamedExportBindings | undefined;
+      const exportClause = exportDeclaration.exportClause;
+      if (exportClause !== undefined) {
+        updatedExportClause = isNamedExports(exportClause)
+          ? updateNamedExports(exportClause, createNodeArray(newExportSpecifiers))
+          : exportClause;
+      }
+      coalescedExports.push(updateExportDeclaration(
+        exportDeclaration,
+        exportDeclaration.modifiers,
+        exportDeclaration.isTypeOnly,
+        updatedExportClause,
+        exportDeclaration.moduleSpecifier,
+        exportDeclaration.attributes,
+      ));
+    }
+  }
+
+  return coalescedExports;
+}
+
+function getTypeCheckerForOrganizeImports(
+  program: OrganizeImportsProgram,
+  context: unknown,
+  sourceFile: SourceFile,
+): { readonly checker: OrganizeImportsChecker; readonly release: () => void } {
+  const lease = program.getTypeCheckerForFile?.(context, sourceFile) ?? program.getTypeChecker?.(context);
+  if (lease === undefined) {
+    throw new Error("organize imports remove-unused requires a type checker");
+  }
+  return normalizeCheckerLease(lease);
+}
+
+function normalizeCheckerLease(lease: OrganizeImportsCheckerLease): { readonly checker: OrganizeImportsChecker; readonly release: () => void } {
+  if ("checker" in lease) return lease;
+  return { checker: lease[0], release: lease[1] };
+}
+
+function namespaceImportNameText(importDeclaration: ImportDeclaration): string {
+  const namedBindings = importDeclaration.importClause?.namedBindings;
+  return namedBindings !== undefined && isNamespaceImport(namedBindings) ? namedBindings.name.text : "";
+}
+
+function optionsRecord(options: unknown): { readonly jsx?: unknown } {
+  return options !== null && typeof options === "object" ? options as { readonly jsx?: unknown } : {};
 }
 
 function importAttributeNameText(attribute: { readonly name: Node }): string {
