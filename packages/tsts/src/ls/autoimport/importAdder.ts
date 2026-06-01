@@ -1,4 +1,4 @@
-import type { Node, Symbol as AstSymbol } from "../../ast/index.js";
+import { Kind, type Node, type SourceFile, type Symbol as AstSymbol } from "../../ast/index.js";
 import {
   AddAsTypeOnlyAllowed,
   AddAsTypeOnlyNotAllowed,
@@ -14,6 +14,7 @@ import {
   ImportKindNamespace,
   type AddAsTypeOnly,
   type ImportKind,
+  type Position,
   type TextEdit,
 } from "../../lsp/lsproto/index.js";
 import type { ExportEntry } from "./export.js";
@@ -57,6 +58,7 @@ export interface ImportAdderView {
 export interface ImportAdderOptions {
   readonly checker?: ImportAdderChecker;
   readonly view?: ImportAdderView;
+  readonly sourceFile?: SourceFile;
   readonly existingImportResolver?: (fix: Fix) => readonly [Node, NewImportBinding | undefined, NewImportBinding | undefined];
   readonly symbolExports?: (symbol: AstSymbol) => readonly ExportEntry[];
 }
@@ -72,12 +74,14 @@ export class ImportAdderImpl implements ImportAdder {
   readonly newImports = new Map<string, ImportsCollection>();
   readonly #checker: ImportAdderChecker | undefined;
   readonly #view: ImportAdderView | undefined;
+  readonly #sourceFile: SourceFile | undefined;
   readonly #existingImportResolver: ((fix: Fix) => readonly [Node, NewImportBinding | undefined, NewImportBinding | undefined]) | undefined;
   readonly #symbolExports: ((symbol: AstSymbol) => readonly ExportEntry[]) | undefined;
 
   constructor(options: ImportAdderOptions = {}) {
     this.#checker = options.checker;
     this.#view = options.view;
+    this.#sourceFile = options.sourceFile;
     this.#existingImportResolver = options.existingImportResolver;
     this.#symbolExports = options.symbolExports;
   }
@@ -99,7 +103,35 @@ export class ImportAdderImpl implements ImportAdder {
   }
 
   edits(): readonly TextEdit[] {
-    throw new Error("ImportAdder edits require change-tracker integration");
+    if (this.#sourceFile === undefined) {
+      if (!this.hasFixes()) return [];
+      throw new Error("ImportAdder edits require a source file");
+    }
+
+    const edits: TextEdit[] = [];
+    for (const fix of this.addToNamespace) addNamespaceQualifierEdit(edits, fix);
+    for (const fix of this.importType) addImportTypeEdit(edits, fix);
+    for (const [importClauseOrBindingPattern, entry] of this.addToExisting) {
+      addToExistingImportEdits(
+        edits,
+        this.#sourceFile,
+        importClauseOrBindingPattern,
+        entry.defaultImport,
+        sortedNamedImports(entry.namedImports),
+      );
+    }
+
+    const newImportStatements: string[] = [];
+    for (const [key, newImport] of [...this.newImports].sort(([left], [right]) => left.localeCompare(right))) {
+      const moduleSpecifier = key.slice(2);
+      const topLevelTypeOnly = key.startsWith("1|");
+      newImportStatements.push(...getNewImportStatements(moduleSpecifier, newImport, topLevelTypeOnly));
+    }
+    if (newImportStatements.length > 0) {
+      edits.push(insertImportsEdit(this.#sourceFile, newImportStatements));
+    }
+
+    return edits.sort(compareTextEdits);
   }
 
   addImportFix(fix: Fix): void {
@@ -168,10 +200,11 @@ export class ImportAdderImpl implements ImportAdder {
   }
 
   private addToExistingImport(fix: Fix, symbolName: string): void {
-    if (this.#existingImportResolver === undefined) {
+    if (this.#existingImportResolver === undefined && this.#sourceFile === undefined) {
       throw new Error("Add-to-existing auto-import fix requires an import-clause resolver");
     }
-    const [importClauseOrBindingPattern, defaultImport, namedImport] = this.#existingImportResolver(fix);
+    const [importClauseOrBindingPattern, defaultImport, namedImport] = this.#existingImportResolver?.(fix)
+      ?? resolveExistingImportFix(this.#sourceFile!, fix);
     let entry = this.addToExisting.get(importClauseOrBindingPattern);
     if (entry === undefined) {
       entry = {
@@ -328,6 +361,210 @@ export function replaceFirstIdentifierOfEntityName(_factory: unknown, name: Node
   return name;
 }
 
+function addNamespaceQualifierEdit(edits: TextEdit[], fix: Fix): void {
+  const usagePosition = fix.usagePosition;
+  const namespacePrefix = fix.namespacePrefix;
+  if (usagePosition === undefined || namespacePrefix === undefined || namespacePrefix === "") {
+    throw new Error("namespace auto-import fix requires usagePosition and namespacePrefix");
+  }
+  edits.push(insertTextEdit(usagePosition, `${namespacePrefix}.`));
+}
+
+function addImportTypeEdit(edits: TextEdit[], fix: Fix): void {
+  const usagePosition = fix.usagePosition;
+  const moduleSpecifier = fix.moduleSpecifier;
+  if (usagePosition === undefined || moduleSpecifier === undefined || moduleSpecifier === "") {
+    throw new Error("JSDoc import-type fix requires usagePosition and moduleSpecifier");
+  }
+  edits.push(insertTextEdit(usagePosition, `import(${quoteModuleSpecifier(moduleSpecifier)}).`));
+}
+
+function addToExistingImportEdits(
+  edits: TextEdit[],
+  sourceFile: SourceFile,
+  importClauseOrBindingPattern: Node,
+  defaultImport: NewImportBinding | undefined,
+  namedImports: readonly NewImportBinding[],
+): void {
+  const declaration = importDeclarationFromNode(importClauseOrBindingPattern);
+  if (declaration === undefined) throw new Error("add-to-existing import fix requires an import declaration");
+
+  const text = sourceFile.text.slice(declaration.pos, declaration.end);
+  const declarationStart = declaration.pos;
+  if (defaultImport !== undefined) {
+    const importKeyword = text.indexOf("import");
+    if (importKeyword < 0) throw new Error("default import insertion requires an import declaration");
+    const afterImport = declarationStart + importKeyword + "import".length;
+    edits.push(insertTextEdit(positionAt(sourceFile, afterImport), ` ${defaultImport.name},`));
+  }
+
+  if (namedImports.length === 0) return;
+  const namedText = namedImports.map(binding => formatNamedImportBinding(binding)).join(", ");
+  const openBrace = text.indexOf("{");
+  const closeBrace = text.indexOf("}", Math.max(0, openBrace));
+  if (openBrace >= 0 && closeBrace >= 0) {
+    const existingContent = text.slice(openBrace + 1, closeBrace).trim();
+    const insertText = existingContent === "" ? namedText : `, ${namedText}`;
+    edits.push(insertTextEdit(positionAt(sourceFile, declarationStart + closeBrace), insertText));
+    return;
+  }
+
+  const fromIndex = text.indexOf(" from ");
+  if (fromIndex < 0) throw new Error("named import insertion requires an import declaration with a module specifier");
+  const hasDefault = text.slice("import".length, fromIndex).trim() !== "";
+  const insertText = hasDefault ? `, { ${namedText} }` : `{ ${namedText} } `;
+  edits.push(insertTextEdit(positionAt(sourceFile, declarationStart + fromIndex), insertText));
+}
+
+function getNewImportStatements(
+  moduleSpecifier: string,
+  importsCollection: ImportsCollection,
+  topLevelTypeOnly: boolean,
+): readonly string[] {
+  const statements: string[] = [];
+  const moduleText = quoteModuleSpecifier(moduleSpecifier);
+  const namedImports = sortedNamedImports(importsCollection.namedImports);
+  const defaultImport = importsCollection.defaultImport;
+  const namespaceLikeImport = importsCollection.namespaceLikeImport;
+
+  if (importsCollection.useRequire) {
+    if (namespaceLikeImport !== undefined) {
+      statements.push(`import ${namespaceLikeImport.name} = require(${moduleText});`);
+    }
+    if (defaultImport !== undefined) {
+      statements.push(`import ${defaultImport.name} = require(${moduleText});`);
+    }
+    if (namedImports.length > 0) {
+      statements.push(`const { ${namedImports.map(formatRequireBinding).join(", ")} } = require(${moduleText});`);
+    }
+    return statements;
+  }
+
+  if (namespaceLikeImport !== undefined) {
+    statements.push(`${topLevelTypeOnly ? "import type" : "import"} * as ${namespaceLikeImport.name} from ${moduleText};`);
+  }
+
+  const importClauseParts: string[] = [];
+  if (defaultImport !== undefined) importClauseParts.push(defaultImport.name);
+  if (namedImports.length > 0) importClauseParts.push(`{ ${namedImports.map(binding => formatNamedImportBinding(binding, topLevelTypeOnly)).join(", ")} }`);
+  if (importClauseParts.length > 0) {
+    statements.push(`${topLevelTypeOnly ? "import type" : "import"} ${importClauseParts.join(", ")} from ${moduleText};`);
+  }
+  return statements;
+}
+
+function insertImportsEdit(sourceFile: SourceFile, statements: readonly string[]): TextEdit {
+  const position = getImportInsertionPosition(sourceFile);
+  let newText = statements.join("\n") + "\n";
+  if (position > 0 && sourceFile.text[position - 1] !== "\n") newText = `\n${newText}`;
+  if (position < sourceFile.text.length && sourceFile.text[position] !== "\n") newText += "\n";
+  return insertTextEdit(positionAt(sourceFile, position), newText);
+}
+
+function resolveExistingImportFix(sourceFile: SourceFile, fix: Fix): readonly [Node, NewImportBinding | undefined, NewImportBinding | undefined] {
+  const importLiteral = sourceFile.imports[fix.importIndex];
+  if (importLiteral === undefined) throw new Error("add-to-existing import fix import index out of range");
+  const declaration = importDeclarationFromNode(importLiteral);
+  if (declaration === undefined) throw new Error("add-to-existing import fix could not resolve an import declaration");
+  const symbolName = requireFixName(fix);
+  const binding: NewImportBinding = {
+    kind: fix.importKind,
+    propertyName: "",
+    name: symbolName,
+    addAsTypeOnly: fix.addAsTypeOnly,
+  };
+  return fix.importKind === ImportKindNamed
+    ? [declaration, undefined, binding]
+    : [declaration, binding, undefined];
+}
+
+function importDeclarationFromNode(node: Node): Node | undefined {
+  for (let current: Node | undefined = node; current !== undefined; current = current.parent) {
+    switch (current.kind) {
+      case Kind.ImportDeclaration:
+      case Kind.JSImportDeclaration:
+      case Kind.ImportEqualsDeclaration:
+      case Kind.VariableDeclaration:
+        return current;
+      default:
+        break;
+    }
+  }
+  return undefined;
+}
+
+function getImportInsertionPosition(sourceFile: SourceFile): number {
+  let position = sourceFile.statements[0]?.pos ?? 0;
+  for (const statement of sourceFile.statements) {
+    if (isPrologueDirective(statement) || isImportLikeStatement(statement)) {
+      position = statement.end;
+      continue;
+    }
+    break;
+  }
+  return skipTrailingLineBreak(sourceFile.text, position);
+}
+
+function isImportLikeStatement(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.ImportDeclaration:
+    case Kind.JSImportDeclaration:
+    case Kind.ImportEqualsDeclaration:
+      return true;
+    default:
+      return false;
+  }
+}
+
+function isPrologueDirective(node: Node): boolean {
+  if (node.kind !== Kind.ExpressionStatement) return false;
+  return nodeProperty<Node>(node, "expression")?.kind === Kind.StringLiteral;
+}
+
+function skipTrailingLineBreak(text: string, position: number): number {
+  if (text.charCodeAt(position) === 13 && text.charCodeAt(position + 1) === 10) return position + 2;
+  if (text.charCodeAt(position) === 10 || text.charCodeAt(position) === 13) return position + 1;
+  return position;
+}
+
+function formatNamedImportBinding(binding: NewImportBinding, topLevelTypeOnly = false): string {
+  const propertyPrefix = binding.propertyName === "" ? "" : `${binding.propertyName} as `;
+  const typePrefix = !topLevelTypeOnly && binding.addAsTypeOnly === AddAsTypeOnlyRequired ? "type " : "";
+  return `${typePrefix}${propertyPrefix}${binding.name}`;
+}
+
+function formatRequireBinding(binding: NewImportBinding): string {
+  return binding.propertyName === "" ? binding.name : `${binding.propertyName}: ${binding.name}`;
+}
+
+function quoteModuleSpecifier(moduleSpecifier: string): string {
+  return JSON.stringify(moduleSpecifier).replace(/^"/u, "'").replace(/"$/u, "'");
+}
+
+function insertTextEdit(position: Position, newText: string): TextEdit {
+  return { range: { start: position, end: position }, newText };
+}
+
+function positionAt(sourceFile: SourceFile, offset: number): Position {
+  const text = sourceFile.text;
+  let line = 0;
+  let lineStart = 0;
+  for (let index = 0; index < offset && index < text.length; index += 1) {
+    const ch = text.charCodeAt(index);
+    if (ch === 13 || ch === 10) {
+      if (ch === 13 && text.charCodeAt(index + 1) === 10) index += 1;
+      line += 1;
+      lineStart = index + 1;
+    }
+  }
+  return { line, character: Math.max(0, offset - lineStart) };
+}
+
+function compareTextEdits(left: TextEdit, right: TextEdit): number {
+  if (left.range.start.line !== right.range.start.line) return left.range.start.line - right.range.start.line;
+  return left.range.start.character - right.range.start.character;
+}
+
 function requireFixName(fix: Fix): string {
   if (fix.name === undefined || fix.name === "") throw new Error("auto-import fix requires a symbol name");
   return fix.name;
@@ -342,11 +579,16 @@ function requireModuleSpecifier(fix: Fix): string {
 
 function getDefaultLikeExportNameFromDeclaration(symbol: AstSymbol): string {
   for (const declaration of symbol.declarations) {
-    const name = (declaration as { readonly name?: Node }).name;
-    const text = (name as { readonly text?: string } | undefined)?.text;
+    const name = nodeProperty<Node>(declaration, "name");
+    const text = nodeProperty<string>(name, "text");
     if (text !== undefined && text !== "") return text;
   }
   return "";
+}
+
+function nodeProperty<T>(node: Node | undefined, propertyName: string): T | undefined {
+  if (node === undefined) return undefined;
+  return (node as unknown as Record<string, T | undefined>)[propertyName];
 }
 
 function moduleSymbolToValidIdentifier(name: string, preferCapitalized: boolean): string {

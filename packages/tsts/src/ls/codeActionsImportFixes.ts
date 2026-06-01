@@ -52,6 +52,7 @@ import {
 import {
   newImportAdder,
   type ImportAdder,
+  type ImportAdderOptions,
 } from "./autoimport/importAdder.js";
 import type { Fix } from "./autoimport/fix.js";
 
@@ -132,10 +133,12 @@ export const ImportFixProvider: CodeFixProvider<ImportFixProgram, ImportFixSourc
 export function getImportCodeActions(fixContext: ImportFixContext): readonly CodeAction[] {
   const info = getFixInfos(fixContext, fixContext.errorCode ?? 0, fixContext.span?.pos ?? 0);
   if (info.length === 0) return [];
+  const astSourceFile = sourceFileForAst(fixContext.sourceFile);
+  if (astSourceFile === undefined) return [];
 
   const actions: CodeAction[] = [];
   for (const fixInfo of info) {
-    const editResult = editsForFix(fixInfo.fix);
+    const editResult = editsForFix(fixInfo.fix, astSourceFile);
     actions.push({
       description: editResult.description,
       changes: editResult.changes,
@@ -156,9 +159,12 @@ export function getAllImportCodeActions(fixContext: ImportFixContext): CombinedC
   const view = fixContext.languageService.getPreparedAutoImportView?.(fixContext.sourceFile)
     ?? fixContext.languageService.getCurrentAutoImportView?.(fixContext.sourceFile);
   if (view === undefined) return undefined;
+  const astSourceFile = sourceFileForAst(fixContext.sourceFile);
+  if (astSourceFile === undefined) return undefined;
 
-  const importAdderOptions = {
+  const importAdderOptions: ImportAdderOptions = {
     view: viewForImportAdder(view),
+    sourceFile: astSourceFile,
   };
   const checker = checkerForImportAdder(fixContext.program);
   const importAdder = checker === undefined
@@ -489,16 +495,18 @@ function compareFixesForSorting(view: View, left: Fix, right: Fix): number {
   return view.fixProvider?.compareFixesForSorting(view, left, right) ?? compareFixesForRanking(view, left, right);
 }
 
-function editsForFix(fix: Fix): { readonly changes: readonly TextEdit[]; readonly description: string } {
+function editsForFix(fix: Fix, sourceFile: SourceFile): { readonly changes: readonly TextEdit[]; readonly description: string } {
   if (fix.kind === AutoImportFixKindPromoteTypeOnly) {
     return {
       changes: [],
       description: Diagnostics.Use_import_type.message,
     };
   }
+  const importAdder = newImportAdder({ sourceFile });
+  importAdder.addImportFix(fix);
   const moduleSpecifier = fix.moduleSpecifier === undefined || fix.moduleSpecifier === "" ? "" : ` from '${fix.moduleSpecifier}'`;
   return {
-    changes: [],
+    changes: importAdder.edits(),
     description: `Add import for '${fix.name ?? ""}'${moduleSpecifier}`,
   };
 }
