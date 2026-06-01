@@ -134,6 +134,17 @@ export interface PrinterState {
 
 export interface PrinterWriter {
   write(text: string): void;
+  writeTrailingSemicolon?(text: string): void;
+  writeKeyword?(text: string): void;
+  writeOperator?(text: string): void;
+  writePunctuation?(text: string): void;
+  writeParameter?(text: string): void;
+  writeSpace?(text: string): void;
+  writeStringLiteral?(text: string): void;
+  writeLiteral?(text: string): void;
+  writeSymbol?(text: string, symbol: AstSymbol | undefined): void;
+  writeProperty?(text: string): void;
+  writeComment?(text: string): void;
   writeLine(): void;
   increaseIndent(): void;
   decreaseIndent(): void;
@@ -221,8 +232,37 @@ export class Printer {
    * `writeAs`. Mirrors ts-go `(*Printer).writeAs`.
    */
   writeAs(text: string, writeKind: WriteKind): void {
-    void writeKind;
-    this.state.writer?.write(text);
+    switch (writeKind) {
+      case WriteKind.Literal:
+        this.writeLiteral(text);
+        return;
+      case WriteKind.Punctuation:
+        this.writePunctuation(text);
+        return;
+      case WriteKind.Operator:
+        this.writeOperator(text);
+        return;
+      case WriteKind.Keyword:
+        this.writeKeyword(text);
+        return;
+      case WriteKind.Property:
+        this.writeProperty(text);
+        return;
+      case WriteKind.Parameter:
+        this.writeParameter(text);
+        return;
+      case WriteKind.Comment:
+        this.writeComment(text);
+        return;
+      case WriteKind.Space:
+        this.writeSpaceText(text);
+        return;
+      case WriteKind.Line:
+        this.writeLine();
+        return;
+      default:
+        this.state.writer?.write(text);
+    }
   }
   write(text: string): void {
     this.state.writer?.write(text);
@@ -233,17 +273,54 @@ export class Printer {
     return prev;
   }
   writeSymbol(text: string, optSymbol: AstSymbol | undefined): void {
-    void optSymbol;
-    this.state.writer?.write(text);
+    const writer = this.state.writer;
+    if (optSymbol === undefined || writer?.writeSymbol === undefined) {
+      this.state.writer?.write(text);
+    } else {
+      writer.writeSymbol(text, optSymbol);
+    }
   }
-  writeLiteral(text: string): void { this.state.writer?.write(text); }
-  writePunctuation(text: string): void { this.state.writer?.write(text); }
-  writeOperator(text: string): void { this.state.writer?.write(text); }
-  writeKeyword(text: string): void { this.state.writer?.write(text); }
-  writeProperty(text: string): void { this.state.writer?.write(text); }
-  writeParameter(text: string): void { this.state.writer?.write(text); }
-  writeComment(text: string): void { this.state.writer?.write(text); }
-  writeSpace(): void { this.state.writer?.write(" "); }
+  writeLiteral(text: string): void {
+    const writer = this.state.writer;
+    if (writer?.writeLiteral === undefined) writer?.write(text);
+    else writer.writeLiteral(text);
+  }
+  writePunctuation(text: string): void {
+    const writer = this.state.writer;
+    if (writer?.writePunctuation === undefined) writer?.write(text);
+    else writer.writePunctuation(text);
+  }
+  writeOperator(text: string): void {
+    const writer = this.state.writer;
+    if (writer?.writeOperator === undefined) writer?.write(text);
+    else writer.writeOperator(text);
+  }
+  writeKeyword(text: string): void {
+    const writer = this.state.writer;
+    if (writer?.writeKeyword === undefined) writer?.write(text);
+    else writer.writeKeyword(text);
+  }
+  writeProperty(text: string): void {
+    const writer = this.state.writer;
+    if (writer?.writeProperty === undefined) writer?.write(text);
+    else writer.writeProperty(text);
+  }
+  writeParameter(text: string): void {
+    const writer = this.state.writer;
+    if (writer?.writeParameter === undefined) writer?.write(text);
+    else writer.writeParameter(text);
+  }
+  writeComment(text: string): void {
+    const writer = this.state.writer;
+    if (writer?.writeComment === undefined) writer?.write(text);
+    else writer.writeComment(text);
+  }
+  writeSpaceText(text: string): void {
+    const writer = this.state.writer;
+    if (writer?.writeSpace === undefined) writer?.write(text);
+    else writer.writeSpace(text);
+  }
+  writeSpace(): void { this.writeSpaceText(" "); }
   writeLine(): void { this.state.writer?.writeLine(); }
   writeLineRepeat(count: number): void {
     for (let i = 0; i < count; i++) this.state.writer?.writeLine();
@@ -257,7 +334,9 @@ export class Printer {
   }
   writeTrailingSemicolon(): void {
     if (this.options.omitTrailingSemicolon !== true) {
-      this.state.writer?.write(";");
+      const writer = this.state.writer;
+      if (writer?.writeTrailingSemicolon === undefined) writer?.write(";");
+      else writer.writeTrailingSemicolon(";");
     }
   }
   increaseIndent(): void { this.state.writer?.increaseIndent(); }

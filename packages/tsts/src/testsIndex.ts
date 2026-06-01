@@ -35,6 +35,7 @@ import "./ls/autoInsert.test.js";
 import "./ls/autoimport/export.test.js";
 import "./ls/autoimport/specifiers.test.js";
 import "./ls/codeLens.test.js";
+import "./ls/displayPartsWriter.test.js";
 import "./ls/format.test.js";
 import "./ls/lsconv/lineMap.test.js";
 import "./ls/lsutil/asi.test.js";

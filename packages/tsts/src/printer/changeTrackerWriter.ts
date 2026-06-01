@@ -9,6 +9,7 @@
 import type { EmitTextWriter } from "./textWriter.js";
 import { newTextWriter } from "./textWriter.js";
 import { skipTrivia } from "../scanner/trivia.js";
+import type { Symbol as AstSymbol } from "../ast/index.js";
 
 export interface TextChange {
   span: { start: number; length: number };
@@ -77,7 +78,7 @@ export class ChangeTrackerWriter implements EmitTextWriter {
     this.inner.writeLiteral(text);
     this.setLastNonTriviaPosition(text, true);
   }
-  writeSymbol(text: string, symbol: unknown): void {
+  writeSymbol(text: string, symbol: AstSymbol | undefined): void {
     this.inner.writeSymbol(text, symbol);
     this.setLastNonTriviaPosition(text, false);
   }

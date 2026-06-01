@@ -7,6 +7,8 @@
  * output (with a single-line variant in singlelinestringwriter.ts).
  */
 
+import type { Symbol as AstSymbol } from "../ast/index.js";
+
 export interface EmitTextWriter {
   write(s: string): void;
   writeTrailingSemicolon(text: string): void;
@@ -17,7 +19,7 @@ export interface EmitTextWriter {
   writeSpace(text: string): void;
   writeStringLiteral(text: string): void;
   writeLiteral(text: string): void;
-  writeSymbol(text: string, symbol: unknown): void;
+  writeSymbol(text: string, symbol: AstSymbol | undefined): void;
   writeProperty(text: string): void;
   writeComment(text: string): void;
   writeLine(): void;
@@ -79,7 +81,7 @@ export class TextWriter implements EmitTextWriter {
   writeSpace(text: string): void { this.writeText(text); }
   writeStringLiteral(text: string): void { this.writeText(text); }
   writeLiteral(text: string): void { this.write(text); }
-  writeSymbol(text: string, _symbol: unknown): void { this.writeText(text); }
+  writeSymbol(text: string, _symbol: AstSymbol | undefined): void { this.writeText(text); }
   writeProperty(text: string): void { this.writeText(text); }
   writeComment(text: string): void {
     if (text.length > 0) this.trailingComment = true;
