@@ -1,5 +1,7 @@
 import { Kind, type Node, type SourceFile } from "../ast/index.js";
+import { getStartOfNode } from "../astnav/index.js";
 import type { TextRange } from "../core/index.js";
+import { TokenFlags } from "../scanner/tokenFlags.js";
 import { stripQuotes } from "../stringutil/index.js";
 import { getQuotePreference, QuotePreferenceSingle, type UserPreferences } from "./lsutil/index.js";
 
@@ -78,12 +80,29 @@ export function isTaggedTemplateExpression(node: Node): boolean {
   return node.kind === Kind.TaggedTemplateExpression;
 }
 
+export function isInsideTemplateLiteral(node: Node, position: number, sourceFile: SourceFile): boolean {
+  return isTemplateLiteralKind(node.kind)
+    && (getStartOfNode(node, sourceFile, false) < position && position < node.end
+      || isUnterminatedLiteral(node) && position === node.end);
+}
+
 export function isTemplateHead(node: Node): boolean {
   return node.kind === Kind.TemplateHead;
 }
 
 export function isTemplateTail(node: Node): boolean {
   return node.kind === Kind.TemplateTail;
+}
+
+function isTemplateLiteralKind(kind: Kind): boolean {
+  return kind === Kind.NoSubstitutionTemplateLiteral
+    || kind === Kind.TemplateHead
+    || kind === Kind.TemplateMiddle
+    || kind === Kind.TemplateTail;
+}
+
+function isUnterminatedLiteral(node: Node): boolean {
+  return (((node as { readonly tokenFlags?: number }).tokenFlags ?? 0) & TokenFlags.Unterminated) !== 0;
 }
 
 // Language-service parity map: internal/ls/utilities.go

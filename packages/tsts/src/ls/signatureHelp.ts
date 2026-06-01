@@ -1,7 +1,31 @@
-import { Kind, type Identifier, type Node, type Symbol } from "../ast/index.js";
+import {
+  Kind,
+  isBlock,
+  isCallExpression,
+  isCallOrNewExpression,
+  isDeclarationName,
+  isIdentifier,
+  isNewExpression,
+  isSourceFile,
+  isTypeNode,
+  type Identifier,
+  type Node,
+  type NodeArray,
+  type SourceFile,
+  type Symbol,
+} from "../ast/index.js";
+import { findPrecedingTokenEx } from "../astnav/index.js";
 import type { Signature, Type } from "../checker/types.js";
-import type { TextRange } from "../core/index.js";
-import type { ClassifiedTextRun, ParameterInformation } from "../lsp/lsproto/index.js";
+import { TextRange } from "../core/index.js";
+import type { ClassifiedTextRun, ParameterInformation, SignatureHelpContext } from "../lsp/lsproto/index.js";
+import { skipTrivia } from "../scanner/trivia.js";
+import {
+  isInsideTemplateLiteral,
+  isNoSubstitutionTemplateLiteral,
+  isTaggedTemplateExpression,
+  isTemplateHead,
+  isTemplateTail,
+} from "./utilities.js";
 
 export interface CallInvocation {
   readonly node: Node;
@@ -63,6 +87,8 @@ export interface ArgumentListInfo {
 
 export interface ContextualSignatureLocationInfo {
   readonly contextualType: Type;
+  readonly signature?: Signature;
+  readonly symbol?: Symbol;
   readonly argumentIndex: number;
   readonly argumentCount: number;
   readonly argumentsSpan: TextRange;
@@ -78,6 +104,67 @@ export interface ArgumentOrParameterListInfo {
 export interface ArgumentOrParameterListAndIndex {
   readonly list: readonly Node[];
   readonly argumentIndex: number;
+}
+
+export interface SignatureHelpProgram {
+  getTypeCheckerForFile?(context: unknown, sourceFile: SourceFile): readonly [SignatureHelpChecker, () => void] | { readonly checker: SignatureHelpChecker; readonly release: () => void };
+}
+
+export interface PossibleTypeArgumentInfo {
+  readonly called: Identifier;
+  readonly nTypeArguments: number;
+}
+
+export interface SignatureHelpChecker {
+  getTypeAtLocation?(node: Node): Type | undefined;
+  getSignaturesOfType?(type: Type, kind: number): readonly Signature[];
+  getSymbolAtLocation?(node: Node): Symbol | undefined;
+  getResolvedSignatureForSignatureHelp?(node: Node, argumentCount: number): readonly [Signature | undefined, readonly Signature[]];
+  getContextualSignatureLocationInfo?(node: Node, sourceFile: SourceFile, argumentsSpan: TextRange, argumentIndex: number, argumentCount: number): ContextualSignatureLocationInfo | undefined;
+}
+
+export interface SignatureHelpService {
+  getProgramAndFile(documentURI: string): readonly [SignatureHelpProgram, SourceFile];
+  converters: {
+    lineAndCharacterToPosition(file: SourceFile, position: { readonly line: number; readonly character: number }): number;
+  };
+}
+
+export function provideSignatureHelp(
+  service: SignatureHelpService,
+  documentURI: string,
+  position: { readonly line: number; readonly character: number },
+  context: SignatureHelpContext | undefined,
+): unknown {
+  const [program, sourceFile] = service.getProgramAndFile(documentURI);
+  return getSignatureHelpItems(
+    service.converters.lineAndCharacterToPosition(sourceFile, position),
+    program,
+    sourceFile,
+    context,
+  );
+}
+
+export function getSignatureHelpItems(
+  position: number,
+  program: SignatureHelpProgram,
+  sourceFile: SourceFile,
+  context: SignatureHelpContext | undefined,
+): CandidateOrTypeInfo | undefined {
+  const lease = program.getTypeCheckerForFile?.(undefined, sourceFile);
+  if (lease === undefined) return undefined;
+  const normalized = normalizeSignatureHelpCheckerLease(lease);
+  const checker = normalized.checker;
+  const release = normalized.release;
+  try {
+    const startingToken = findPrecedingTokenEx(sourceFile, position, undefined, true);
+    if (startingToken === undefined) return undefined;
+    const manuallyInvoked = context?.triggerKind === undefined || context.triggerKind === 1;
+    const argumentInfo = getContainingArgumentInfo(startingToken, sourceFile, checker, manuallyInvoked, position);
+    return argumentInfo === undefined ? undefined : getCandidateOrTypeInfo(argumentInfo, checker, sourceFile, startingToken, !manuallyInvoked);
+  } finally {
+    release();
+  }
 }
 
 export function ensureMinimumSpanSize(start: number, end: number): number {
@@ -113,6 +200,474 @@ export function getArgumentIndexOrCount(argumentsList: readonly Node[], node: No
   return argumentsList.length > 0 && argumentsList[argumentsList.length - 1]!.kind === Kind.CommaToken
     ? argumentIndex + 1
     : argumentIndex;
+}
+
+export function getEnclosingDeclarationFromInvocation(invocation: Invocation): Node {
+  if (invocation.callInvocation !== undefined) return invocation.callInvocation.node;
+  if (invocation.typeArgsInvocation !== undefined) return invocation.typeArgsInvocation.called;
+  if (invocation.contextualInvocation !== undefined) return invocation.contextualInvocation.node;
+  throw new Error("invocation has no source");
+}
+
+export function getExpressionFromInvocation(argumentInfo: ArgumentListInfo): Node {
+  const callNode = argumentInfo.invocation.callInvocation?.node;
+  if (callNode !== undefined) return getInvokedExpression(callNode);
+  const called = argumentInfo.invocation.typeArgsInvocation?.called;
+  if (called !== undefined) return called;
+  throw new Error("invocation has no expression");
+}
+
+export function getCandidateOrTypeInfo(
+  info: ArgumentListInfo,
+  checker: SignatureHelpChecker,
+  sourceFile: SourceFile,
+  startingToken: Node,
+  onlyUseSyntacticOwners: boolean,
+): CandidateOrTypeInfo | undefined {
+  const callInvocation = info.invocation.callInvocation;
+  if (callInvocation !== undefined) {
+    if (onlyUseSyntacticOwners && !isSyntacticOwner(startingToken, callInvocation.node, sourceFile)) return undefined;
+    const [resolvedSignature, candidates] = checker.getResolvedSignatureForSignatureHelp?.(callInvocation.node, info.argumentCount) ?? [undefined, []];
+    if (candidates.length === 0) return undefined;
+    return {
+      candidateInfo: {
+        candidates,
+        ...(resolvedSignature === undefined ? {} : { resolvedSignature }),
+      },
+    };
+  }
+
+  const typeArgsInvocation = info.invocation.typeArgsInvocation;
+  if (typeArgsInvocation !== undefined) {
+    const called = typeArgsInvocation.called;
+    const container = called.parent?.kind === Kind.Identifier ? called.parent : called;
+    if (onlyUseSyntacticOwners && !containsPrecedingToken(startingToken, sourceFile, container)) return undefined;
+    const symbol = checker.getSymbolAtLocation?.(called);
+    return symbol === undefined ? undefined : { typeInfo: symbol };
+  }
+
+  const contextualInvocation = info.invocation.contextualInvocation;
+  if (contextualInvocation !== undefined) {
+    return {
+      candidateInfo: {
+        candidates: [contextualInvocation.signature],
+        resolvedSignature: contextualInvocation.signature,
+      },
+    };
+  }
+  throw new Error("unknown invocation kind");
+}
+
+export function isSyntacticOwner(startingToken: Node, node: Node, sourceFile: SourceFile): boolean {
+  if (!isCallOrNewExpression(node)) return false;
+  const invocationChildren = getChildrenFromNonJSDocNode(node);
+  switch (startingToken.kind) {
+    case Kind.OpenParenToken:
+    case Kind.CommaToken:
+      return invocationChildren.includes(startingToken);
+    case Kind.LessThanToken:
+      return containsPrecedingToken(startingToken, sourceFile, nodeProperty<Node>(node, "expression") ?? node);
+    default:
+      return false;
+  }
+}
+
+export function containsPrecedingToken(startingToken: Node, sourceFile: SourceFile, container: Node): boolean {
+  let currentParent = startingToken.parent;
+  while (currentParent !== undefined) {
+    const precedingToken = findPrecedingTokenEx(sourceFile, startingToken.pos, currentParent, true);
+    if (precedingToken !== undefined) return rangeContainsNode(container, precedingToken);
+    currentParent = currentParent.parent;
+  }
+  return false;
+}
+
+export function getContainingArgumentInfo(
+  node: Node,
+  sourceFile: SourceFile,
+  checker: SignatureHelpChecker,
+  isManuallyInvoked: boolean,
+  position: number,
+): ArgumentListInfo | undefined {
+  let firstArgumentInfo: ArgumentListInfo | undefined;
+  for (let current: Node | undefined = node; current !== undefined && !isSourceFile(current) && (isManuallyInvoked || !isBlock(current)); current = current.parent) {
+    const argumentInfo = getImmediatelyContainingArgumentOrContextualParameterInfo(current, position, sourceFile, checker);
+    if (argumentInfo !== undefined) {
+      if (argumentInfo.invocation.contextualInvocation !== undefined) return argumentInfo;
+      firstArgumentInfo ??= argumentInfo;
+      if (argumentInfo.argumentsSpan.end === position || argumentInfo.argumentsSpan.contains(position)) return argumentInfo;
+    }
+  }
+  return firstArgumentInfo;
+}
+
+export function getImmediatelyContainingArgumentOrContextualParameterInfo(
+  node: Node,
+  position: number,
+  sourceFile: SourceFile,
+  checker: SignatureHelpChecker,
+): ArgumentListInfo | undefined {
+  return tryGetParameterInfo(node, sourceFile, checker) ?? getImmediatelyContainingArgumentInfo(node, position, sourceFile, checker);
+}
+
+export function getImmediatelyContainingArgumentInfo(
+  node: Node,
+  position: number,
+  sourceFile: SourceFile,
+  checker: SignatureHelpChecker,
+): ArgumentListInfo | undefined {
+  const parent = node.parent;
+  if (parent !== undefined && isCallOrNewExpression(parent)) {
+    const info = getArgumentOrParameterListInfo(node, sourceFile, checker);
+    if (info === undefined) return undefined;
+    const typeArguments = nodeArray(parent, "typeArguments");
+    return {
+      isTypeParameterList: typeArguments.length > 0 && sameNodeArray(typeArguments, info.list),
+      invocation: { callInvocation: { node: parent } },
+      argumentsSpan: info.argumentsSpan,
+      argumentIndex: info.argumentIndex,
+      argumentCount: info.argumentCount,
+    };
+  }
+
+  if (parent !== undefined && isNoSubstitutionTemplateLiteral(node) && isTaggedTemplateExpression(parent)) {
+    return isInsideTemplateLiteral(node, position, sourceFile)
+      ? getArgumentListInfoForTemplate(parent, 0, sourceFile)
+      : undefined;
+  }
+
+  if (parent?.parent !== undefined && isTemplateHead(node) && isTaggedTemplateExpression(parent.parent)) {
+    return getArgumentListInfoForTemplate(parent.parent, isInsideTemplateLiteral(node, position, sourceFile) ? 0 : 1, sourceFile);
+  }
+
+  const possible = getPossibleTypeArgumentsInfo(node, sourceFile);
+  if (possible !== undefined) {
+    return {
+      isTypeParameterList: true,
+      invocation: { typeArgsInvocation: { called: possible.called } },
+      argumentsSpan: new TextRange(possible.called.pos, node.end),
+      argumentIndex: possible.nTypeArguments,
+      argumentCount: possible.nTypeArguments + 1,
+    };
+  }
+  return undefined;
+}
+
+export function getArgumentIndexForTemplatePiece(spanIndex: number, node: Node, position: number, sourceFile: SourceFile): number {
+  if (position < node.pos) throw new Error("position cannot occur before node");
+  if (isTemplateLiteralToken(node)) {
+    return isInsideTemplateLiteral(node, position, sourceFile) ? 0 : spanIndex + 2;
+  }
+  return spanIndex + 1;
+}
+
+export function getAdjustedNode(node: Node): Node | undefined {
+  switch (node.kind) {
+    case Kind.OpenParenToken:
+    case Kind.CommaToken:
+      return node;
+    default:
+      return findAncestor(node.parent, candidate => candidate.kind === Kind.Parameter);
+  }
+}
+
+export function getArgumentIndex(node: Node, argumentsList: readonly Node[], sourceFile: SourceFile, checker: SignatureHelpChecker): number {
+  return getArgumentIndexOrCount(getTokenFromNodeList(argumentsList, node.parent, sourceFile), node, spreadElement => getSpreadElementCount(spreadElement, checker));
+}
+
+export function getArgumentCount(node: Node, argumentsList: readonly Node[], sourceFile: SourceFile, checker: SignatureHelpChecker): number {
+  return getArgumentIndexOrCount(getTokenFromNodeList(argumentsList, node.parent, sourceFile), undefined, spreadElement => getSpreadElementCount(spreadElement, checker));
+}
+
+export function getArgumentOrParameterListInfo(
+  node: Node,
+  sourceFile: SourceFile,
+  checker: SignatureHelpChecker,
+): ArgumentOrParameterListInfo | undefined {
+  const info = getArgumentOrParameterListAndIndex(node, sourceFile, checker);
+  if (info === undefined) return undefined;
+  return {
+    list: info.list,
+    argumentIndex: info.argumentIndex,
+    argumentCount: getArgumentCount(node, info.list, sourceFile, checker),
+    argumentsSpan: getApplicableSpanForArguments(info.list, node, sourceFile),
+  };
+}
+
+export function getApplicableSpanForArguments(argumentList: readonly Node[] | undefined, node: Node | undefined, sourceFile: SourceFile): TextRange {
+  if (argumentList === undefined && node !== undefined) {
+    const spanStart = node.end;
+    const spanEnd = ensureMinimumSpanSize(spanStart, skipTrivia(sourceFile.text, node.end));
+    return new TextRange(spanStart, spanEnd);
+  }
+  const spanStart = listPosition(argumentList);
+  const spanEnd = ensureMinimumSpanSize(spanStart, skipTrivia(sourceFile.text, listEnd(argumentList)));
+  return new TextRange(spanStart, spanEnd);
+}
+
+export function getArgumentOrParameterListAndIndex(
+  node: Node,
+  sourceFile: SourceFile,
+  checker: SignatureHelpChecker,
+): ArgumentOrParameterListAndIndex | undefined {
+  if (node.kind === Kind.LessThanToken || node.kind === Kind.OpenParenToken) {
+    return { list: getChildListThatStartsWithOpenerToken(node.parent, node) ?? [], argumentIndex: 0 };
+  }
+  const list = findContainingList(node);
+  if (list === undefined) return undefined;
+  return { list, argumentIndex: getArgumentIndex(node, list, sourceFile, checker) };
+}
+
+export function getChildListThatStartsWithOpenerToken(parent: Node | undefined, openerToken: Node): readonly Node[] | undefined {
+  if (parent === undefined) return undefined;
+  if (isCallExpression(parent)) return openerToken.kind === Kind.LessThanToken ? parent.typeArguments : parent.arguments;
+  if (isNewExpression(parent)) return openerToken.kind === Kind.LessThanToken ? parent.typeArguments : parent.arguments;
+  return undefined;
+}
+
+export function tryGetParameterInfo(
+  startingToken: Node,
+  sourceFile: SourceFile,
+  checker: SignatureHelpChecker,
+): ArgumentListInfo | undefined {
+  const node = getAdjustedNode(startingToken);
+  if (node === undefined) return undefined;
+  const info = getContextualSignatureLocationInfo(node, sourceFile, checker);
+  if (info === undefined || info.signature === undefined || info.symbol === undefined) return undefined;
+  return {
+    isTypeParameterList: false,
+    invocation: {
+      contextualInvocation: {
+        signature: info.signature,
+        node: startingToken,
+        symbol: info.symbol,
+      },
+    },
+    argumentsSpan: info.argumentsSpan,
+    argumentIndex: info.argumentIndex,
+    argumentCount: info.argumentCount,
+  };
+}
+
+export function getContextualSignatureLocationInfo(
+  node: Node,
+  sourceFile: SourceFile,
+  checker: SignatureHelpChecker,
+): ContextualSignatureLocationInfo | undefined {
+  const parent = node.parent;
+  if (parent === undefined) return undefined;
+  switch (parent.kind) {
+    case Kind.ParenthesizedExpression:
+    case Kind.MethodDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.ArrowFunction: {
+      const info = getArgumentOrParameterListInfo(node, sourceFile, checker);
+      if (info === undefined) return undefined;
+      return checker.getContextualSignatureLocationInfo?.(node, sourceFile, info.argumentsSpan, info.argumentIndex, info.argumentCount);
+    }
+    default:
+      return undefined;
+  }
+}
+
+export function getTokenFromNodeList(nodeList: readonly Node[] | undefined, nodeListParent: Node | undefined, _sourceFile: SourceFile): readonly Node[] {
+  void nodeListParent;
+  return nodeList ?? [];
+}
+
+export function getArgumentListInfoForTemplate(tagExpression: Node, argumentIndex: number, sourceFile: SourceFile): ArgumentListInfo {
+  const template = nodeProperty<Node>(tagExpression, "template") ?? tagExpression;
+  const templateSpans = nodeArray(template, "templateSpans");
+  const argumentCount = isNoSubstitutionTemplateLiteral(template) ? 1 : templateSpans.length + 1;
+  if (argumentIndex !== 0 && argumentIndex >= argumentCount) throw new Error("template argument index out of range");
+  return {
+    isTypeParameterList: false,
+    invocation: { callInvocation: { node: tagExpression } },
+    argumentIndex,
+    argumentCount,
+    argumentsSpan: getApplicableRangeForTaggedTemplate(tagExpression, sourceFile),
+  };
+}
+
+export function getApplicableRangeForTaggedTemplate(taggedTemplate: Node, sourceFile: SourceFile): TextRange {
+  const template = nodeProperty<Node>(taggedTemplate, "template") ?? taggedTemplate;
+  let applicableSpanEnd = template.end;
+  if (template.kind === Kind.TemplateExpression) {
+    const templateSpans = nodeArray(template, "templateSpans");
+    const lastSpan = templateSpans[templateSpans.length - 1];
+    const literal = lastSpan === undefined ? undefined : nodeProperty<Node>(lastSpan, "literal");
+    if (literal !== undefined && literal.end - literal.pos === 0) {
+      applicableSpanEnd = skipTrivia(sourceFile.text, applicableSpanEnd);
+    }
+  }
+  return new TextRange(template.pos, applicableSpanEnd);
+}
+
+function getSpreadElementCount(node: Node, checker: SignatureHelpChecker): number {
+  void checker;
+  return node.kind === Kind.SpreadElement ? 1 : 0;
+}
+
+function findContainingList(node: Node): readonly Node[] | undefined {
+  const parent = node.parent;
+  if (parent === undefined) return undefined;
+  for (const value of Object.values(parent as unknown as Record<string, unknown>)) {
+    if (Array.isArray(value) && value.includes(node)) return value.filter(isNode);
+  }
+  return undefined;
+}
+
+function findAncestor(node: Node | undefined, predicate: (node: Node) => boolean): Node | undefined {
+  let current = node;
+  while (current !== undefined) {
+    if (predicate(current)) return current;
+    current = current.parent;
+  }
+  return undefined;
+}
+
+function getInvokedExpression(node: Node): Node {
+  return nodeProperty<Node>(node, "expression") ?? node;
+}
+
+function getPossibleTypeArgumentsInfo(tokenIn: Node, sourceFile: SourceFile): PossibleTypeArgumentInfo | undefined {
+  if (!sourceFile.text.includes("<")) return undefined;
+
+  let token: Node | undefined = tokenIn;
+  let remainingLessThanTokens = 0;
+  let nTypeArguments = 0;
+  while (token !== undefined) {
+    switch (token.kind) {
+      case Kind.LessThanToken: {
+        token = findPrecedingTokenEx(sourceFile, token.pos, undefined, true);
+        if (token?.kind === Kind.QuestionDotToken) token = findPrecedingTokenEx(sourceFile, token.pos, undefined, true);
+        if (token === undefined || !isIdentifier(token)) return undefined;
+        if (remainingLessThanTokens === 0) {
+          if (isDeclarationName(token)) return undefined;
+          return { called: token, nTypeArguments };
+        }
+        remainingLessThanTokens -= 1;
+        break;
+      }
+      case Kind.GreaterThanGreaterThanGreaterThanToken:
+        remainingLessThanTokens += 3;
+        break;
+      case Kind.GreaterThanGreaterThanToken:
+        remainingLessThanTokens += 2;
+        break;
+      case Kind.GreaterThanToken:
+        remainingLessThanTokens += 1;
+        break;
+      case Kind.CloseBraceToken:
+        token = findPrecedingMatchingToken(token, Kind.OpenBraceToken, sourceFile);
+        if (token === undefined) return undefined;
+        break;
+      case Kind.CloseParenToken:
+        token = findPrecedingMatchingToken(token, Kind.OpenParenToken, sourceFile);
+        if (token === undefined) return undefined;
+        break;
+      case Kind.CloseBracketToken:
+        token = findPrecedingMatchingToken(token, Kind.OpenBracketToken, sourceFile);
+        if (token === undefined) return undefined;
+        break;
+      case Kind.CommaToken:
+        nTypeArguments += 1;
+        break;
+      case Kind.EqualsGreaterThanToken:
+      case Kind.Identifier:
+      case Kind.StringLiteral:
+      case Kind.NumericLiteral:
+      case Kind.BigIntLiteral:
+      case Kind.TrueKeyword:
+      case Kind.FalseKeyword:
+      case Kind.TypeOfKeyword:
+      case Kind.ExtendsKeyword:
+      case Kind.KeyOfKeyword:
+      case Kind.DotToken:
+      case Kind.BarToken:
+      case Kind.QuestionToken:
+      case Kind.ColonToken:
+        break;
+      default:
+        if (!isTypeNode(token)) return undefined;
+    }
+    token = findPrecedingTokenEx(sourceFile, token.pos, undefined, true);
+  }
+  return undefined;
+}
+
+function findPrecedingMatchingToken(token: Node, matchingTokenKind: Kind, sourceFile: SourceFile): Node | undefined {
+  const closeKind = token.kind;
+  let depth = 0;
+  let current = findPrecedingTokenEx(sourceFile, token.pos, undefined, true);
+  while (current !== undefined) {
+    if (current.kind === closeKind) {
+      depth += 1;
+    } else if (current.kind === matchingTokenKind) {
+      if (depth === 0) return current;
+      depth -= 1;
+    }
+    current = findPrecedingTokenEx(sourceFile, current.pos, undefined, true);
+  }
+  return undefined;
+}
+
+function getChildrenFromNonJSDocNode(node: Node): readonly Node[] {
+  const children: Node[] = [];
+  node.forEachChild(child => {
+    children.push(child);
+    return undefined;
+  });
+  return children;
+}
+
+function rangeContainsNode(container: Node, candidate: Node): boolean {
+  return container.pos <= candidate.pos && container.end >= candidate.end;
+}
+
+function listPosition(list: readonly Node[] | undefined): number {
+  return nodeArrayBounds(list).pos;
+}
+
+function listEnd(list: readonly Node[] | undefined): number {
+  return nodeArrayBounds(list).end;
+}
+
+function nodeArrayBounds(list: readonly Node[] | undefined): { readonly pos: number; readonly end: number } {
+  const array = list as NodeArray | undefined;
+  if (array !== undefined && typeof array.pos === "number" && typeof array.end === "number") return array;
+  if (list === undefined || list.length === 0) return { pos: 0, end: 0 };
+  return { pos: list[0]!.pos, end: list[list.length - 1]!.end };
+}
+
+function sameNodeArray(left: readonly Node[] | undefined, right: readonly Node[]): boolean {
+  return left !== undefined && left.length === right.length && left.every((node, index) => node === right[index]);
+}
+
+function nodeProperty<T>(node: Node, key: string): T | undefined {
+  return (node as unknown as Record<string, T | undefined>)[key];
+}
+
+function nodeArray(node: Node, key: string): readonly Node[] {
+  return nodeProperty<readonly Node[]>(node, key) ?? [];
+}
+
+function isTemplateLiteralToken(node: Node): boolean {
+  return node.kind === Kind.NoSubstitutionTemplateLiteral
+    || node.kind === Kind.TemplateHead
+    || node.kind === Kind.TemplateMiddle
+    || node.kind === Kind.TemplateTail;
+}
+
+function isNode(value: unknown): value is Node {
+  return typeof value === "object" && value !== null && typeof (value as { readonly kind?: unknown }).kind === "number";
+}
+
+function normalizeSignatureHelpCheckerLease(
+  lease: readonly [SignatureHelpChecker, () => void] | { readonly checker: SignatureHelpChecker; readonly release: () => void },
+): { readonly checker: SignatureHelpChecker; readonly release: () => void } {
+  if (Array.isArray(lease)) return { checker: lease[0], release: lease[1] };
+  return lease as { readonly checker: SignatureHelpChecker; readonly release: () => void };
 }
 
 // Language-service parity map: internal/ls/signaturehelp.go
