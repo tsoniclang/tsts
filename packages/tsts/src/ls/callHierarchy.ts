@@ -1,3 +1,124 @@
+import {
+  getCombinedNodeFlags,
+  isArrowFunction,
+  isClassDeclaration,
+  isClassExpression,
+  isClassStaticBlockDeclaration,
+  isFunctionDeclaration,
+  isFunctionExpression,
+  isGetAccessorDeclaration,
+  isIdentifier,
+  isMethodDeclaration,
+  isMethodSignatureDeclaration,
+  isModuleDeclaration,
+  isPropertyDeclaration,
+  isSetAccessorDeclaration,
+  isSourceFile,
+  isVariableDeclaration,
+  Kind,
+  NodeFlags,
+  type Node,
+} from "../ast/index.js";
+
+export type CallHierarchyDeclaration = Node;
+
+interface CallHierarchyNodeWithName extends Node {
+  readonly name?: Node;
+  readonly initializer?: Node;
+  readonly modifiers?: readonly Node[];
+}
+
+function callHierarchyName(node: Node): Node | undefined {
+  return (node as CallHierarchyNodeWithName).name;
+}
+
+function callHierarchyInitializer(node: Node): Node | undefined {
+  return (node as CallHierarchyNodeWithName).initializer;
+}
+
+function callHierarchyModifiers(node: Node): readonly Node[] | undefined {
+  return (node as CallHierarchyNodeWithName).modifiers;
+}
+
+export function isNamedExpression(node: Node | undefined): boolean {
+  if (node === undefined) return false;
+  if (!isFunctionExpression(node) && !isClassExpression(node)) return false;
+  const name = callHierarchyName(node);
+  return name !== undefined && isIdentifier(name);
+}
+
+export function isVariableLike(node: Node | undefined): boolean {
+  if (node === undefined) return false;
+  return isPropertyDeclaration(node) || isVariableDeclaration(node);
+}
+
+export function isAssignedExpression(node: Node | undefined): boolean {
+  if (node === undefined) return false;
+  if (!isFunctionExpression(node) && !isArrowFunction(node) && !isClassExpression(node)) return false;
+  if (callHierarchyName(node) !== undefined) return false;
+
+  const parent = node.parent;
+  if (!isVariableLike(parent)) return false;
+  if (callHierarchyInitializer(parent) !== node) return false;
+
+  const name = callHierarchyName(parent);
+  if (name === undefined || !isIdentifier(name)) return false;
+
+  return (getCombinedNodeFlags(parent) & NodeFlags.Const) !== 0 || isPropertyDeclaration(parent);
+}
+
+export function isPossibleCallHierarchyDeclaration(node: Node | undefined): boolean {
+  if (node === undefined) return false;
+  return isSourceFile(node)
+    || isModuleDeclaration(node)
+    || isFunctionDeclaration(node)
+    || isFunctionExpression(node)
+    || isClassDeclaration(node)
+    || isClassExpression(node)
+    || isClassStaticBlockDeclaration(node)
+    || isMethodDeclaration(node)
+    || isMethodSignatureDeclaration(node)
+    || isGetAccessorDeclaration(node)
+    || isSetAccessorDeclaration(node);
+}
+
+export function isValidCallHierarchyDeclaration(node: Node | undefined): boolean {
+  if (node === undefined) return false;
+  if (isSourceFile(node)) return true;
+  if (isModuleDeclaration(node)) {
+    const name = callHierarchyName(node);
+    return name !== undefined && isIdentifier(name);
+  }
+  return isFunctionDeclaration(node)
+    || isClassDeclaration(node)
+    || isClassStaticBlockDeclaration(node)
+    || isMethodDeclaration(node)
+    || isMethodSignatureDeclaration(node)
+    || isGetAccessorDeclaration(node)
+    || isSetAccessorDeclaration(node)
+    || isNamedExpression(node)
+    || isAssignedExpression(node);
+}
+
+export function getCallHierarchyDeclarationReferenceNode(node: Node | undefined): Node | undefined {
+  if (node === undefined) return undefined;
+  if (isSourceFile(node)) return node;
+
+  const name = callHierarchyName(node);
+  if (name !== undefined) return name;
+
+  if (isAssignedExpression(node)) return callHierarchyName(node.parent);
+
+  const modifiers = callHierarchyModifiers(node);
+  if (modifiers !== undefined) {
+    for (const modifier of modifiers) {
+      if (modifier.kind === Kind.DefaultKeyword) return modifier;
+    }
+  }
+
+  return undefined;
+}
+
 // Language-service parity map: internal/ls/callhierarchy.go
 /**
  * Language-service parity map for TS-Go `ls/callhierarchy.go`.
