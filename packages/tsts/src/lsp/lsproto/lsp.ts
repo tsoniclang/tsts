@@ -5,7 +5,14 @@
  */
 
 import { isBundled } from "../../bundled/index.js";
+import type { ID } from "../../jsonrpc/index.js";
 import { splitVolumePath, toPath, type Path } from "../../tspath/index.js";
+import { RequestMessage } from "./jsonrpc.js";
+import {
+  MarkupKindPlainText,
+  type MarkupKind,
+  type ResolvedClientCapabilities,
+} from "./lspGenerated.js";
 
 export type DocumentUri = string;
 export type URI = string;
@@ -59,6 +66,10 @@ export interface HasLocations {
 
 export interface HasLocation {
   getLocation(): Location;
+}
+
+export function unmarshalPtrTo<T>(data: string): T {
+  return JSON.parse(data) as T;
 }
 
 export function unmarshalValue<T>(data: string): T {
@@ -124,6 +135,56 @@ export function jsonObjectHasKey(data: string, ...keys: readonly string[]): numb
   const value = JSON.parse(data) as unknown;
   if (!isObject(value)) return -1;
   return keys.findIndex(key => Object.hasOwn(value, key));
+}
+
+export class RequestInfo<Params, Resp> {
+  readonly method: Method;
+
+  constructor(method: Method) {
+    this.method = method;
+  }
+
+  unmarshalResult(result: unknown): Resp {
+    if (typeof result === "string") {
+      return unmarshalValue<Resp>(result);
+    }
+    return result as Resp;
+  }
+
+  newRequestMessage(id: ID | undefined, params: Params): RequestMessage {
+    return new RequestMessage(id, this.method, params);
+  }
+}
+
+export class NotificationInfo<Params> {
+  readonly method: Method;
+
+  constructor(method: Method) {
+    this.method = method;
+  }
+
+  newNotificationMessage(params: Params): RequestMessage {
+    return new RequestMessage(undefined, this.method, params);
+  }
+}
+
+export interface ClientCapabilitiesContext {
+  readonly clientCapabilities?: ResolvedClientCapabilities;
+}
+
+export function withClientCapabilities<TContext extends object>(
+  context: TContext,
+  capabilities: ResolvedClientCapabilities,
+): TContext & ClientCapabilitiesContext {
+  return Object.assign({}, context, { clientCapabilities: capabilities });
+}
+
+export function getClientCapabilities(context: ClientCapabilitiesContext | undefined): ResolvedClientCapabilities {
+  return context?.clientCapabilities ?? {};
+}
+
+export function preferredMarkupKind(formats: readonly MarkupKind[]): MarkupKind {
+  return formats.length > 0 ? formats[0]! : MarkupKindPlainText;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
