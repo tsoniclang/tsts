@@ -9,7 +9,10 @@
 
 import { TextRange } from "../core/index.js";
 import {
+  DiagnosticSeverityError,
   DiagnosticSeverityHint,
+  DiagnosticSeverityInformation,
+  DiagnosticSeverityWarning,
   DiagnosticTagDeprecated,
   DiagnosticTagUnnecessary,
   FoldingRangeKindComment,
@@ -129,6 +132,21 @@ export interface UserPreferences {
 export interface BaselineCommand {
   readonly name: string;
   readonly arguments: readonly string[];
+}
+
+export interface FourslashBaselineResult {
+  readonly testPath: string;
+  readonly command: BaselineCommand;
+  readonly text: string;
+}
+
+export interface FourslashServerResponse {
+  readonly result?: unknown;
+  readonly error?: {
+    readonly code: number;
+    readonly message: string;
+    readonly data?: unknown;
+  };
 }
 
 export class ScriptInfo {
@@ -534,6 +552,52 @@ export class FourslashTest {
     return (this.baselines.get(baselineCommandKey(command)) ?? []).join("\n");
   }
 
+  verifyBaselines(testPath = ""): readonly FourslashBaselineResult[] {
+    const results: FourslashBaselineResult[] = [];
+    for (const [key, texts] of [...this.baselines].sort(([left], [right]) => left.localeCompare(right))) {
+      const [name = "", ...args] = key.split("\0");
+      results.push({
+        testPath,
+        command: { name, arguments: args },
+        text: texts.join("\n"),
+      });
+    }
+    return results;
+  }
+
+  handleServerRequest(method: string, params: unknown): FourslashServerResponse {
+    switch (method) {
+      case "workspace/configuration":
+        return { result: [{ ...this.userPreferences }] };
+      case "client/registerCapability":
+      case "client/unregisterCapability":
+        return { result: null };
+      default:
+        return {
+          error: {
+            code: -32601,
+            message: `Unknown method: ${method}`,
+            data: params,
+          },
+        };
+    }
+  }
+
+  initialize(capabilities?: FourslashCapabilities): FourslashCapabilities {
+    return getCapabilitiesWithDefaults(capabilities ?? this.capabilities);
+  }
+
+  updateState(method: string, params: unknown): void {
+    if (!isRecord(params)) return;
+    if (method === "textDocument/didOpen") {
+      const document = params["textDocument"];
+      if (isRecord(document) && typeof document["uri"] === "string") this.openFiles.add(uriToFileName(document["uri"]));
+    } else if (method === "textDocument/didClose") {
+      const document = params["textDocument"];
+      if (isRecord(document) && typeof document["uri"] === "string") this.openFiles.delete(uriToFileName(document["uri"]));
+    }
+  }
+
   activeRange(): Range | undefined {
     if (this.selectionEnd === undefined) return undefined;
     return { start: this.currentCaretPosition, end: this.selectionEnd };
@@ -905,9 +969,7 @@ export class FourslashTest {
     if (ranges.length !== 1) fail(`Expected exactly one range in ${this.activeFilename}, got ${ranges.length}.`);
     const edits = this.getCodeActionEditsForActiveFile(actions[index]!);
     const updatedRange = this.updateTextRangeForTextEdits(ranges[0]!.range, edits);
-    if (updatedRange === undefined) {
-      fail(`Code fix ${JSON.stringify(actions[index]!.title)} replaced part of the expected range; unable to compute rangeAfterCodeFix result.`);
-    }
+    assertValidTextRange(updatedRange, `Code fix ${JSON.stringify(actions[index]!.title)} replaced part of the expected range; unable to compute rangeAfterCodeFix result.`);
     this.applyTextEdits(this.activeFilename, textEditsToTextChanges(this.file(), edits));
     let actual = this.file().text().slice(updatedRange.pos, updatedRange.end);
     let expected = expectedText;
@@ -998,7 +1060,10 @@ export class FourslashTest {
     const provider = this.codeFixProvider;
     if (provider === undefined) throw new Error("Fourslash code-fix provider is not configured.");
     const request = this.codeFixRequest(errorCode);
-    return provider.getAllQuickFixActions?.(request) ?? provider.getCodeFixActions(request);
+    const actions = provider.getAllQuickFixActions?.(request) ?? provider.getCodeFixActions(request);
+    const diagnostic = selectCodeFixDiagnostic(this.getDiagnostics(this.activeFilename), errorCode);
+    if (diagnostic === undefined) return actions;
+    return actions.filter(action => (action.diagnostics ?? []).length === 0 || (action.diagnostics ?? []).some(candidate => diagnosticCode(candidate) === diagnosticCode(diagnostic)));
   }
 
   updateTextRangeForTextEdits(range: TextRange, edits: readonly TextEdit[]): TextRange | undefined {
@@ -1007,10 +1072,10 @@ export class FourslashTest {
     for (const edit of [...edits].sort((left, right) => textEditStartOffset(this.file(), left) - textEditStartOffset(this.file(), right))) {
       const editStart = textEditStartOffset(this.file(), edit);
       const editEnd = textEditEndOffset(this.file(), edit);
-      const lengthDelta = edit.newText.length - (editEnd - editStart);
       if (editEnd <= start) {
-        start += lengthDelta;
-        end += lengthDelta;
+        start = updatePositionForTextEdit(start, editStart, editEnd, edit.newText.length);
+        end = updatePositionForTextEdit(end, editStart, editEnd, edit.newText.length);
+        if (start < 0 || end < 0) return undefined;
       } else if (editStart >= end) {
         continue;
       } else if (editStart <= start && editEnd >= end) {
@@ -1154,14 +1219,25 @@ export class FourslashTest {
     const provider = this.languageProviderRequired("workspace symbols");
     const symbols = provider.getWorkspaceSymbols?.(query) ?? [];
     this.baseline({ name: "workspaceSymbol", arguments: [query] }, symbols.map(symbol => {
-      return `${symbol.name} ${symbolKindName(symbol.kind)} ${symbol.location.uri}:${formatRange(symbol.location.range)}${symbol.containerName === undefined ? "" : ` ${symbol.containerName}`}`;
+      return `${symbol.name} ${symbolKindToLowercase(symbol.kind)} ${symbol.location.uri}:${formatRange(symbol.location.range)}${symbol.containerName === undefined ? "" : ` ${symbol.containerName}`}`;
     }).join("\n"));
   }
 
   verifyWorkspaceSymbol(cases: readonly VerifyWorkspaceSymbolCase[]): void {
     const provider = this.languageProviderRequired("workspace symbols");
-    const symbols = provider.getWorkspaceSymbols?.("") ?? [];
     for (const expected of cases) {
+      const pattern = expected.pattern ?? "";
+      const symbols = provider.getWorkspaceSymbols?.(pattern) ?? [];
+      if (expected.includes !== undefined) {
+        if (expected.exact !== undefined) fail("Workspace symbol case cannot have both includes and exact expectations.");
+        verifyIncludesSymbols(symbols, expected.includes, `Workspace symbols mismatch with pattern '${pattern}'`);
+        continue;
+      }
+      if (expected.exact !== undefined) {
+        verifyExactSymbols(symbols, expected.exact, `Workspace symbols mismatch with pattern '${pattern}'`);
+        continue;
+      }
+      if (expected.name === undefined) fail("Workspace symbol case must provide name, includes, or exact.");
       const match = symbols.find(symbol =>
         symbol.name === expected.name
         && (expected.kind === undefined || symbol.kind === expected.kind)
@@ -1477,14 +1553,37 @@ export class FourslashTest {
   }
 
   verifyBaselineNonSuggestionDiagnostics(): void {
-    const diagnostics = this.getDiagnostics(this.activeFilename);
-    this.baseline({ name: "errors", arguments: [] }, diagnostics.map(formatDiagnostic).join("\n"));
+    const files: FourslashDiagnosticFile[] = [];
+    const diagnostics: FourslashDiagnostic[] = [];
+    for (const [fileName, scriptInfo] of [...this.scriptInfos].sort(([left], [right]) => left.localeCompare(right))) {
+      if (fileExtensionIs(fileName, extensionJson)) continue;
+      files.push(new FourslashDiagnosticFile(fileName, scriptInfo.text()));
+      for (const diagnostic of this.getDiagnostics(fileName)) {
+        if (!isSuggestionDiagnostic(diagnostic)) diagnostics.push(this.toDiagnostic(scriptInfo, diagnostic));
+      }
+    }
+    diagnostics.sort(compareDiagnostics);
+    const fileHeaders = files.map(file => `// @FileName: ${file.fileName()}`).join("\n");
+    const diagnosticText = diagnostics.map(formatFourslashDiagnostic).join("\n");
+    this.baseline({ name: "errors", arguments: [] }, [fileHeaders, diagnosticText].filter(text => text !== "").join("\n\n"));
   }
 
   verifyBaselineDocumentSymbol(): void {
     const provider = this.languageProviderRequired("document symbols");
     const result = provider.getDocumentSymbols?.(this.activeFilename) ?? [];
-    this.baseline({ name: "documentSymbol", arguments: [] }, formatDocumentSymbols(result));
+    if (isDocumentSymbolList(result)) {
+      const uri = fileNameToDocumentURI(this.activeFilename);
+      const spansToSymbol = new Map<string, readonly [DocumentSpan, DocumentSymbol]>();
+      for (const symbol of result) collectDocumentSymbolSpans(uri, symbol, spansToSymbol);
+      const locations = [...spansToSymbol.values()].map(([span, symbol]) => {
+        const location = { uri: span.uri, range: span.textSpan };
+        return `${symbolLocationData(symbol)} ${span.uri}:${formatRange(span.textSpan)}\n${this.locationSourceLine(location)}`;
+      }).join("\n");
+      const details = writeDocumentSymbolDetails(result, 0);
+      this.baseline({ name: "documentSymbol", arguments: [] }, `${locations}\n\n// === Details ===\n${details}`.trim());
+    } else {
+      this.baseline({ name: "documentSymbol", arguments: [] }, formatDocumentSymbols(result));
+    }
   }
 
   verifyNumberOfErrorsInCurrentFile(expectedCount: number): void {
@@ -1812,6 +1911,36 @@ export class FourslashTest {
 
   private getDiagnostics(fileName: string): readonly Diagnostic[] {
     return this.languageProviderRequired("diagnostics").getDiagnostics?.(fileName) ?? [];
+  }
+
+  private toDiagnostic(scriptInfo: ScriptInfo, diagnostic: Diagnostic): FourslashDiagnostic {
+    const code = diagnosticCode(diagnostic) ?? 0;
+    const category = diagnosticCategory(diagnostic);
+    const relatedDiagnostics = diagnostic.relatedInformation?.flatMap(info => {
+      const relatedFileName = uriToFileName(info.location.uri);
+      const relatedScriptInfo = this.scriptInfos.get(relatedFileName);
+      if (relatedScriptInfo === undefined) return [];
+      return [new FourslashDiagnostic(
+        new FourslashDiagnosticFile(relatedScriptInfo.fileName, relatedScriptInfo.text()),
+        new TextRange(offsetFromPosition(relatedScriptInfo, info.location.range.start), offsetFromPosition(relatedScriptInfo, info.location.range.end)),
+        code,
+        category,
+        info.message,
+        [],
+        false,
+        false,
+      )];
+    }) ?? [];
+    return new FourslashDiagnostic(
+      new FourslashDiagnosticFile(scriptInfo.fileName, scriptInfo.text()),
+      new TextRange(offsetFromPosition(scriptInfo, diagnostic.range.start), offsetFromPosition(scriptInfo, diagnostic.range.end)),
+      code,
+      category,
+      diagnostic.message,
+      relatedDiagnostics,
+      diagnostic.tags?.includes(DiagnosticTagUnnecessary) ?? false,
+      diagnostic.tags?.includes(DiagnosticTagDeprecated) ?? false,
+    );
   }
 
   private getHoverAtCurrentPosition(): Hover | undefined {
@@ -2326,7 +2455,10 @@ export interface SignatureHelpCase {
 }
 
 export interface VerifyWorkspaceSymbolCase {
-  readonly name: string;
+  readonly pattern?: string;
+  readonly includes?: readonly SymbolInformation[];
+  readonly exact?: readonly SymbolInformation[];
+  readonly name?: string;
   readonly kind?: number;
   readonly containerName?: string;
   readonly fileName?: string;
@@ -2655,7 +2787,7 @@ function formatCallHierarchyItem(
   const trailingPrefix = prefix;
 
   rows.push(`${prefix}╭ name: ${item.name}`);
-  rows.push(`${prefix}├ kind: ${symbolKindName(item.kind).toLowerCase()}`);
+  rows.push(`${prefix}├ kind: ${symbolKindToLowercase(item.kind)}`);
   if (item.detail !== undefined && item.detail !== "") rows.push(`${prefix}├ containerName: ${item.detail}`);
   rows.push(`${prefix}├ file: ${uriToFileName(item.uri)}`);
   rows.push(`${prefix}├ span:`);
@@ -2805,6 +2937,10 @@ function symbolKindName(kind: number): string {
   return names[kind] ?? String(kind);
 }
 
+function symbolKindToLowercase(kind: number): string {
+  return symbolKindName(kind).toLowerCase();
+}
+
 function hoverContentString(hover: Hover | undefined): string {
   if (hover === undefined) return "";
   return markupUnionText(hover.contents);
@@ -2818,11 +2954,23 @@ function markupUnionText(value: unknown): string {
   if (isRecord(markup) && typeof markup["value"] === "string") return markup["value"];
   const marked = value["markedStringWithLanguage"];
   if (isRecord(marked) && typeof marked["language"] === "string" && typeof marked["value"] === "string") {
-    return `\`\`\`${marked["language"]}\n${marked["value"]}\n\`\`\``;
+    return appendLinesForMarkedStringWithLanguage([], { language: marked["language"], value: marked["value"] }).join("\n");
   }
   const markedStrings = value["markedStrings"];
   if (Array.isArray(markedStrings)) return markedStrings.map(markupUnionText).join("\n");
   return "";
+}
+
+function appendLinesForMarkedStringWithLanguage(result: string[], markedString: MarkedStringWithLanguage): string[] {
+  result.push(`\`\`\`${markedString.language}`);
+  result.push(markedString.value);
+  result.push("```");
+  return result;
+}
+
+interface MarkedStringWithLanguage {
+  readonly language: string;
+  readonly value: string;
 }
 
 function verbosityLookup(
@@ -2896,6 +3044,134 @@ function isSuggestionDiagnostic(diagnostic: Diagnostic): boolean {
   return diagnostic.severity === DiagnosticSeverityHint;
 }
 
+type FourslashDiagnosticCategory = "error" | "warning" | "message" | "suggestion";
+
+class FourslashDiagnosticFile {
+  private readonly lineMapText: string;
+  private ecmaLineMapValue: readonly number[] | undefined;
+
+  constructor(
+    private readonly unitName: string,
+    content: string,
+  ) {
+    this.lineMapText = content;
+  }
+
+  fileName(): string {
+    return this.unitName;
+  }
+
+  text(): string {
+    return this.lineMapText;
+  }
+
+  ecmaLineMap(): readonly number[] {
+    this.ecmaLineMapValue ??= computeLineStarts(this.lineMapText);
+    return this.ecmaLineMapValue;
+  }
+}
+
+class FourslashDiagnostic {
+  constructor(
+    readonly file: FourslashDiagnosticFile,
+    readonly loc: TextRange,
+    readonly code: number,
+    readonly category: FourslashDiagnosticCategory,
+    readonly message: string,
+    readonly relatedDiagnostics: readonly FourslashDiagnostic[],
+    readonly reportsUnnecessary: boolean,
+    readonly reportsDeprecated: boolean,
+  ) {}
+
+  pos(): number {
+    return this.loc.pos;
+  }
+
+  end(): number {
+    return this.loc.end;
+  }
+
+  len(): number {
+    return this.loc.end - this.loc.pos;
+  }
+
+  localize(): string {
+    return this.message;
+  }
+
+  messageChain(): readonly FourslashDiagnostic[] {
+    return [];
+  }
+
+  relatedInformation(): readonly FourslashDiagnostic[] {
+    return this.relatedDiagnostics;
+  }
+}
+
+function diagnosticCategory(diagnostic: Diagnostic): FourslashDiagnosticCategory {
+  switch (diagnostic.severity) {
+    case DiagnosticSeverityWarning:
+      return "warning";
+    case DiagnosticSeverityInformation:
+      return "message";
+    case DiagnosticSeverityHint:
+      return "suggestion";
+    case DiagnosticSeverityError:
+    default:
+      return "error";
+  }
+}
+
+function formatFourslashDiagnostic(diagnostic: FourslashDiagnostic): string {
+  const script = newScriptInfo(diagnostic.file.fileName(), diagnostic.file.text());
+  const range = {
+    start: positionFromOffset(script, diagnostic.pos()),
+    end: positionFromOffset(script, diagnostic.end()),
+  };
+  const tags = [
+    diagnostic.reportsUnnecessary ? "unnecessary" : "",
+    diagnostic.reportsDeprecated ? "deprecated" : "",
+  ].filter(tag => tag !== "");
+  const tagText = tags.length === 0 ? "" : ` [${tags.join(", ")}]`;
+  const related = diagnostic.relatedInformation().map(info => {
+    const relatedScript = newScriptInfo(info.file.fileName(), info.file.text());
+    const relatedRange = {
+      start: positionFromOffset(relatedScript, info.pos()),
+      end: positionFromOffset(relatedScript, info.end()),
+    };
+    return `  Related ${info.file.fileName()}:${formatRange(relatedRange)} ${info.localize()}`;
+  });
+  return [
+    `${diagnostic.file.fileName()}:${formatRange(range)} TS${diagnostic.code} ${diagnostic.category}${tagText}: ${diagnostic.localize()}`,
+    ...related,
+  ].join("\n");
+}
+
+function compareDiagnostics(left: FourslashDiagnostic, right: FourslashDiagnostic): number {
+  return left.file.fileName().localeCompare(right.file.fileName())
+    || left.pos() - right.pos()
+    || left.end() - right.end()
+    || left.code - right.code
+    || left.message.localeCompare(right.message)
+    || compareRelatedDiagnostics(left.relatedDiagnostics, right.relatedDiagnostics);
+}
+
+function compareRelatedDiagnostics(left: readonly FourslashDiagnostic[], right: readonly FourslashDiagnostic[]): number {
+  const lengthCompare = right.length - left.length;
+  if (lengthCompare !== 0) return lengthCompare;
+  for (let index = 0; index < left.length; index += 1) {
+    const comparison = compareDiagnostics(left[index]!, right[index]!);
+    if (comparison !== 0) return comparison;
+  }
+  return 0;
+}
+
+function isLibFile(fileName: string): boolean {
+  const slash = Math.max(fileName.lastIndexOf("/"), fileName.lastIndexOf("\\"));
+  const baseName = slash < 0 ? fileName : fileName.slice(slash + 1);
+  return baseName.startsWith("lib.") && baseName.endsWith(".d.ts");
+}
+
 function formatDocumentSymbols(symbols: readonly DocumentSymbol[] | readonly SymbolInformation[]): string {
   if (symbols.length === 0) return "";
   const first = symbols[0]!;
@@ -2903,15 +3179,88 @@ function formatDocumentSymbols(symbols: readonly DocumentSymbol[] | readonly Sym
     return (symbols as readonly DocumentSymbol[]).map(symbol => formatDocumentSymbol(symbol, 0)).join("\n");
   }
   return (symbols as readonly SymbolInformation[])
-    .map(symbol => `${symbol.name} ${symbolKindName(symbol.kind)} ${symbol.location.uri}:${formatRange(symbol.location.range)}`)
+    .map(symbol => `${symbol.name} ${symbolKindToLowercase(symbol.kind)} ${symbol.location.uri}:${formatRange(symbol.location.range)}`)
     .join("\n");
 }
 
 function formatDocumentSymbol(symbol: DocumentSymbol, depth: number): string {
   const prefix = "  ".repeat(depth);
-  const line = `${prefix}${symbol.name} ${symbolKindName(symbol.kind)} ${formatRange(symbol.selectionRange)}`;
+  const line = `${prefix}${symbol.name} ${symbolKindToLowercase(symbol.kind)} ${formatRange(symbol.selectionRange)}`;
   const children = symbol.children?.map(child => formatDocumentSymbol(child, depth + 1)) ?? [];
   return [line, ...children].join("\n");
+}
+
+function isDocumentSymbolList(symbols: readonly DocumentSymbol[] | readonly SymbolInformation[]): symbols is readonly DocumentSymbol[] {
+  return symbols.length === 0 || "selectionRange" in symbols[0]!;
+}
+
+interface DocumentSpan {
+  readonly uri: DocumentUri;
+  readonly textSpan: Range;
+  readonly contextSpan?: Range;
+}
+
+function documentSpanKey(span: DocumentSpan): string {
+  return `${span.uri}\0${formatRange(span.textSpan)}\0${span.contextSpan === undefined ? "" : formatRange(span.contextSpan)}`;
+}
+
+function symbolLocationData(symbol: DocumentSymbol): string {
+  return `{| name: ${symbol.name}, kind: ${symbolKindToLowercase(symbol.kind)} |}`;
+}
+
+function writeDocumentSymbolDetails(symbols: readonly DocumentSymbol[], indent: number): string {
+  const rows: string[] = [];
+  for (const symbol of symbols) {
+    rows.push(`${"  ".repeat(indent)}(${symbolKindToLowercase(symbol.kind)}) ${symbol.name}`);
+    if ((symbol.children?.length ?? 0) !== 0) rows.push(writeDocumentSymbolDetails(symbol.children ?? [], indent + 1));
+  }
+  return rows.filter(row => row !== "").join("\n");
+}
+
+function collectDocumentSymbolSpans(uri: DocumentUri, symbol: DocumentSymbol, spansToSymbol: Map<string, readonly [DocumentSpan, DocumentSymbol]>): void {
+  const span = { uri, textSpan: symbol.selectionRange, contextSpan: symbol.range };
+  spansToSymbol.set(documentSpanKey(span), [span, symbol]);
+  for (const child of symbol.children ?? []) collectDocumentSymbolSpans(uri, child, spansToSymbol);
+}
+
+function verifyExactSymbols(actual: readonly SymbolInformation[], expected: readonly SymbolInformation[], prefix: string): void {
+  if (actual.length !== expected.length) {
+    fail(`${prefix}: Expected ${expected.length} symbols, but got ${actual.length}:\n${diffJson(actual, expected)}`);
+  }
+  for (let index = 0; index < actual.length; index += 1) {
+    assertDeepEqual(actual[index], expected[index], prefix);
+  }
+}
+
+function verifyIncludesSymbols(actual: readonly SymbolInformation[], includes: readonly SymbolInformation[], prefix: string): void {
+  const nameAndLocationToSymbol = new Map<string, SymbolInformation>();
+  for (const symbol of actual) nameAndLocationToSymbol.set(symbolInformationKey(symbol), symbol);
+  for (const symbol of includes) {
+    const actualSymbol = nameAndLocationToSymbol.get(symbolInformationKey(symbol));
+    if (actualSymbol === undefined) fail(`${prefix}: Expected symbol '${symbol.name}' at location '${stableStringify(symbol.location)}' not found`);
+    assertDeepEqual(actualSymbol, symbol, `${prefix}: Symbol '${symbol.name}' at location '${stableStringify(symbol.location)}' mismatch`);
+  }
+}
+
+function symbolInformationKey(symbol: SymbolInformation): string {
+  return `${symbol.name}\0${symbol.location.uri}\0${formatRange(symbol.location.range)}`;
+}
+
+function updatePositionForTextEdit(position: number, editStart: number, editEnd: number, newTextLength: number): number {
+  if (position <= editStart) return position;
+  if (position < editEnd) return -1;
+  return position + newTextLength - (editEnd - editStart);
+}
+
+function assertValidTextRange(textRange: TextRange | undefined, message: string): asserts textRange is TextRange {
+  if (textRange !== undefined && textRange.pos >= 0 && textRange.end >= 0) return;
+  fail(message);
+}
+
+function selectCodeFixDiagnostic(diagnostics: readonly Diagnostic[], errorCode: number | undefined): Diagnostic | undefined {
+  if (diagnostics.length === 0) return undefined;
+  if (errorCode === undefined) return diagnostics[0];
+  return diagnostics.find(diagnostic => diagnosticCode(diagnostic) === errorCode);
 }
 
 function fail(message: string): never {
