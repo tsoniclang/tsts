@@ -69,6 +69,16 @@ export interface InlayHintAppendState {
   readonly quotePreference?: QuotePreference;
 }
 
+export interface InlayHintVisitState extends InlayHintAppendState {
+  readonly preferences: InlayHintsPreferences;
+  readonly span?: { readonly pos: number; readonly end: number };
+  readonly getReturnTypeHint?: (node: Node) => StringOrInlayHintLabelParts | undefined;
+  readonly getDeclarationTypeHint?: (node: Node) => StringOrInlayHintLabelParts | undefined;
+  readonly getEnumMemberValueHint?: (node: Node) => string | undefined;
+  readonly getCallParameterInfo?: (node: Node, parameterPosition: number) => ParameterInfo | undefined;
+  readonly getParameterTypeHint?: (node: Node) => StringOrInlayHintLabelParts | undefined;
+}
+
 export function shouldShowParameterNameHints(preferences: InlayHintsPreferences): boolean {
   return preferences.includeInlayParameterNameHints === IncludeInlayParameterNameHintsLiterals
     || preferences.includeInlayParameterNameHints === IncludeInlayParameterNameHintsAll;
@@ -458,6 +468,94 @@ export function getInlayHintLabelParts(
   return parts;
 }
 
+export function visitInlayHintTree(state: InlayHintVisitState, node: Node | undefined): void {
+  if (node === undefined || node.end - node.pos === 0 || (node.flags & NodeFlags.Reparsed) !== 0) return;
+  if (state.span !== undefined && !rangesIntersect(state.span, node)) return;
+  if (isTypeNodeForInlayTraversal(node) && node.kind !== Kind.ExpressionWithTypeArguments) return;
+
+  if (tristateIsTrue(state.preferences.includeInlayVariableTypeHints) && isVariableDeclaration(node)) {
+    visitVariableLikeDeclaration(state, node);
+  } else if (tristateIsTrue(state.preferences.includeInlayPropertyDeclarationTypeHints) && isPropertyDeclarationNode(node)) {
+    visitVariableLikeDeclaration(state, node);
+  } else if (tristateIsTrue(state.preferences.includeInlayEnumMemberValueHints) && node.kind === Kind.EnumMember) {
+    visitEnumMember(state, node);
+  } else if (shouldShowParameterNameHints(state.preferences) && (node.kind === Kind.CallExpression || node.kind === Kind.NewExpression)) {
+    visitCallOrNewExpression(state, node);
+  } else {
+    if (tristateIsTrue(state.preferences.includeInlayFunctionParameterTypeHints) && isFunctionLikeForInlay(node)) {
+      visitFunctionLikeForParameterType(state, node);
+    }
+    if (tristateIsTrue(state.preferences.includeInlayFunctionLikeReturnTypeHints) && isSignatureSupportingReturnAnnotation(node)) {
+      visitFunctionDeclarationLikeForReturnType(state, node);
+    }
+  }
+
+  node.forEachChild(child => {
+    visitInlayHintTree(state, child);
+    return undefined;
+  });
+}
+
+export function visitFunctionDeclarationLikeForReturnType(state: InlayHintVisitState, declaration: Node): void {
+  if (isArrowFunction(declaration) && !sourceSlice(state.file, declaration).includes("(")) return;
+  if (nodeProperty(declaration, "type") !== undefined || nodeProperty(declaration, "body") === undefined) return;
+  const hint = state.getReturnTypeHint?.(declaration);
+  if (hint !== undefined) addTypeHints(state, hint, getTypeAnnotationPosition(state.file, declaration));
+}
+
+export function visitCallOrNewExpression(state: InlayHintVisitState, expression: Node): void {
+  const args = nodeArray(expression, "arguments");
+  if (args.length === 0) return;
+
+  let signatureParameterPosition = 0;
+  for (const originalArgument of args) {
+    const argument = skipParentheses(originalArgument) as Node;
+    if (shouldShowLiteralParameterNameHintsOnly(state.preferences) && !isHintableLiteral(argument)) {
+      signatureParameterPosition += 1;
+      continue;
+    }
+
+    const parameterInfo = state.getCallParameterInfo?.(expression, signatureParameterPosition);
+    signatureParameterPosition += 1;
+    if (parameterInfo === undefined) return;
+
+    if (!tristateIsTrue(state.preferences.includeInlayParameterNameHintsWhenArgumentMatchesName)
+      && !parameterInfo.isRestParameter
+      && identifierOrAccessExpressionPostfixMatchesParameterName(argument, parameterInfo.name)) {
+      continue;
+    }
+    if (leadingCommentsContainsParameterName(state.file, argument, parameterInfo.name)) continue;
+    addParameterHints(state, parameterInfo.name, parameterInfo.parameter, originalArgument.pos, parameterInfo.isRestParameter);
+  }
+}
+
+export function visitEnumMember(state: InlayHintVisitState, member: Node): void {
+  if (nodeProperty(member, "initializer") !== undefined) return;
+  const text = state.getEnumMemberValueHint?.(member);
+  if (text !== undefined) addEnumMemberValueHints(state, text, member.end);
+}
+
+export function visitVariableLikeDeclaration(state: InlayHintVisitState, declaration: Node): void {
+  const initializer = nodeInitializer(declaration);
+  if (initializer === undefined && !isPropertyDeclarationNode(declaration)) return;
+  if (isBindingPatternNode(nodeName(declaration)) || isVariableDeclaration(declaration) && !isHintableDeclaration(declaration)) return;
+  if (nodeProperty(declaration, "type") !== undefined) return;
+  const hint = state.getDeclarationTypeHint?.(declaration);
+  if (hint === undefined) return;
+  const name = nodeName(declaration);
+  addTypeHints(state, hint, name?.end ?? declaration.end);
+}
+
+export function visitFunctionLikeForParameterType(state: InlayHintVisitState, declaration: Node): void {
+  for (const parameter of nodeArray(declaration, "parameters")) {
+    if (!isHintableDeclaration(parameter)) continue;
+    const hint = state.getParameterTypeHint?.(parameter);
+    if (hint === undefined) continue;
+    const questionToken = nodeProperty(parameter, "questionToken");
+    addTypeHints(state, hint, questionToken?.end ?? nodeName(parameter)?.end ?? parameter.end);
+  }
+}
+
 export function getNodeDisplayPart(text: string, node: Node, file: SourceFile | undefined = node.getSourceFile()): InlayHintLabelPart {
   return {
     value: text,
@@ -751,6 +849,66 @@ function trimCommentText(comment: string): string {
     .replace(/^\/\*/, "")
     .replace(/\*\/$/, "")
     .trim();
+}
+
+function rangesIntersect(left: { readonly pos: number; readonly end: number }, right: { readonly pos: number; readonly end: number }): boolean {
+  return left.pos <= right.end && right.pos <= left.end;
+}
+
+function isTypeNodeForInlayTraversal(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.TypeReference:
+    case Kind.TypePredicate:
+    case Kind.TypeQuery:
+    case Kind.TypeLiteral:
+    case Kind.ArrayType:
+    case Kind.TupleType:
+    case Kind.OptionalType:
+    case Kind.RestType:
+    case Kind.UnionType:
+    case Kind.IntersectionType:
+    case Kind.ConditionalType:
+    case Kind.InferType:
+    case Kind.ParenthesizedType:
+    case Kind.TypeOperator:
+    case Kind.IndexedAccessType:
+    case Kind.MappedType:
+    case Kind.LiteralType:
+    case Kind.FunctionType:
+    case Kind.ConstructorType:
+    case Kind.ImportType:
+    case Kind.TemplateLiteralType:
+      return true;
+    default:
+      return false;
+  }
+}
+
+function isPropertyDeclarationNode(node: Node): boolean {
+  return node.kind === Kind.PropertyDeclaration;
+}
+
+function isFunctionLikeForInlay(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.ArrowFunction:
+    case Kind.MethodDeclaration:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+    case Kind.Constructor:
+      return true;
+    default:
+      return false;
+  }
+}
+
+function sourceSlice(file: SourceFile, node: Node): string {
+  return file.text.slice(node.pos, node.end);
+}
+
+function isBindingPatternNode(node: Node | undefined): boolean {
+  return node !== undefined && (node.kind === Kind.ObjectBindingPattern || node.kind === Kind.ArrayBindingPattern);
 }
 
 // Language-service parity map: internal/ls/inlay_hints.go
