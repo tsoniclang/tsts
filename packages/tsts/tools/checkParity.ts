@@ -10,6 +10,7 @@
  * Usage:
  *   node packages/tsts/tools/checkParity.ts
  *   node packages/tsts/tools/checkParity.ts --threshold=0.8
+ *   node packages/tsts/tools/checkParity.ts --full --threshold=0.95
  *   node packages/tsts/tools/checkParity.ts --json
  */
 
@@ -138,7 +139,11 @@ function parseThreshold(): number {
 }
 
 function includeDeferred(): boolean {
-  return process.argv.includes("--all");
+  return process.argv.includes("--all") || requireDeferred();
+}
+
+function requireDeferred(): boolean {
+  return process.argv.includes("--full") || process.argv.includes("--require-deferred");
 }
 
 function useJson(): boolean {
@@ -226,6 +231,7 @@ function extraComparableFiles(upstreamFiles: readonly string[], localFiles: read
 function buildReport(tsgoInternal: string, tstsSrc: string, threshold: number): readonly ModuleReport[] {
   const specs = includeDeferred() ? [...REQUIRED_MODULES, ...DEFERRED_MODULES] : REQUIRED_MODULES;
   return specs.map((spec) => {
+    const scope = requireDeferred() ? "required" : spec.scope;
     const upstream = collectStats(tsgoInternal, [spec.upstream], isTsGoSource);
     const local = collectStats(tstsSrc, spec.local, isTstsSource);
     const sourceCoverage = upstream.sourceLOC === 0 ? 0 : Math.min(local.sourceLOC / upstream.sourceLOC, 1);
@@ -233,10 +239,10 @@ function buildReport(tsgoInternal: string, tstsSrc: string, threshold: number): 
     const effectiveCoverage = Math.max(sourceCoverage, physicalCoverage);
     const fileCoverage = upstream.count === 0 ? 0 : Math.min(local.count / upstream.count, 1);
     const sizeRatio = upstream.sourceLOC === 0 ? 0 : local.sourceLOC / upstream.sourceLOC;
-    const isPassing = spec.scope === "deferred" || (effectiveCoverage >= threshold && fileCoverage >= threshold);
+    const isPassing = scope === "deferred" || (effectiveCoverage >= threshold && fileCoverage >= threshold);
     const status = upstream.count === 0
       ? "missing-upstream"
-      : spec.scope === "deferred"
+      : scope === "deferred"
         ? "deferred"
         : isPassing
           ? "pass"
@@ -244,7 +250,7 @@ function buildReport(tsgoInternal: string, tstsSrc: string, threshold: number): 
     return {
       module: spec.upstream,
       local: spec.local,
-      scope: spec.scope,
+      scope,
       upstreamFiles: upstream.count,
       localFiles: local.count,
       upstreamSourceLOC: upstream.sourceLOC,
