@@ -1,7 +1,8 @@
-import { Kind, type SourceFile } from "../ast/index.js";
+import { Kind, KindNames, type SourceFile } from "../ast/index.js";
 import { LanguageVariant } from "../core/languageVariant.js";
 import { isIdentifierPartCodePoint, isIdentifierStartCodePoint } from "../scanner/index.js";
 import { compareStringsCaseInsensitiveThenSensitive, ComparisonEqual } from "../stringutil/index.js";
+import { CompletionItemKindKeyword } from "../lsp/lsproto/index.js";
 import type { CompletionItem, CompletionItemData, CompletionItemLabelDetails, CompletionList, Range } from "../lsp/lsproto/index.js";
 
 /**
@@ -346,6 +347,232 @@ export function CompareCompletionEntries(left: CompletionItem, right: Completion
     result = compareStringsCaseInsensitiveThenSensitive(left.label, right.label);
   }
   return result;
+}
+
+const keywordCompletionsCache = new Map<string, readonly CompletionItem[]>();
+
+let allKeywordCompletionsValue: readonly CompletionItem[] | undefined;
+
+export function cloneItems(items: readonly CompletionItem[]): readonly CompletionItem[] {
+  return items.map((item) => ({ ...item }));
+}
+
+export function getKeywordCompletions(
+  keywordFilter: KeywordCompletionFilters,
+  filterOutTsOnlyKeywords: boolean,
+): readonly CompletionItem[] {
+  if (!filterOutTsOnlyKeywords) {
+    return cloneItems(getTypescriptKeywordCompletions(keywordFilter));
+  }
+
+  const cacheKey = `not-ts-only:${keywordFilter}`;
+  const cached = keywordCompletionsCache.get(cacheKey);
+  if (cached !== undefined) return cloneItems(cached);
+
+  const result = getTypescriptKeywordCompletions(keywordFilter)
+    .filter((entry) => !isTypeScriptOnlyKeyword(stringToKeywordKind(entry.label)));
+  keywordCompletionsCache.set(cacheKey, result);
+  return cloneItems(result);
+}
+
+export function getTypescriptKeywordCompletions(keywordFilter: KeywordCompletionFilters): readonly CompletionItem[] {
+  const cacheKey = `typescript:${keywordFilter}`;
+  const cached = keywordCompletionsCache.get(cacheKey);
+  if (cached !== undefined) return cached;
+
+  const result = allKeywordCompletions().filter((entry) => {
+    const kind = stringToKeywordKind(entry.label);
+    switch (keywordFilter) {
+      case KeywordCompletionFilters.None:
+        return false;
+      case KeywordCompletionFilters.All:
+        return isFunctionLikeBodyKeyword(kind)
+          || kind === Kind.DeclareKeyword
+          || kind === Kind.ModuleKeyword
+          || kind === Kind.TypeKeyword
+          || kind === Kind.NamespaceKeyword
+          || kind === Kind.AbstractKeyword
+          || (isTypeKeyword(kind) && kind !== Kind.UndefinedKeyword);
+      case KeywordCompletionFilters.FunctionLikeBodyKeywords:
+        return isFunctionLikeBodyKeyword(kind);
+      case KeywordCompletionFilters.ClassElementKeywords:
+        return isClassMemberCompletionKeyword(kind);
+      case KeywordCompletionFilters.InterfaceElementKeywords:
+        return isInterfaceOrTypeLiteralCompletionKeyword(kind);
+      case KeywordCompletionFilters.ConstructorParameterKeywords:
+        return isParameterPropertyModifier(kind);
+      case KeywordCompletionFilters.TypeAssertionKeywords:
+        return isTypeKeyword(kind) || kind === Kind.ConstKeyword;
+      case KeywordCompletionFilters.TypeKeywords:
+        return isTypeKeyword(kind);
+      case KeywordCompletionFilters.TypeKeyword:
+        return kind === Kind.TypeKeyword;
+      default:
+        throw new Error(`Unknown keyword filter: ${keywordFilter}`);
+    }
+  });
+
+  keywordCompletionsCache.set(cacheKey, result);
+  return result;
+}
+
+export function isTypeScriptOnlyKeyword(kind: Kind): boolean {
+  switch (kind) {
+    case Kind.AbstractKeyword:
+    case Kind.AnyKeyword:
+    case Kind.BigIntKeyword:
+    case Kind.BooleanKeyword:
+    case Kind.DeclareKeyword:
+    case Kind.EnumKeyword:
+    case Kind.GlobalKeyword:
+    case Kind.ImplementsKeyword:
+    case Kind.InferKeyword:
+    case Kind.InterfaceKeyword:
+    case Kind.IsKeyword:
+    case Kind.KeyOfKeyword:
+    case Kind.ModuleKeyword:
+    case Kind.NamespaceKeyword:
+    case Kind.NeverKeyword:
+    case Kind.NumberKeyword:
+    case Kind.ObjectKeyword:
+    case Kind.OverrideKeyword:
+    case Kind.PrivateKeyword:
+    case Kind.ProtectedKeyword:
+    case Kind.PublicKeyword:
+    case Kind.ReadonlyKeyword:
+    case Kind.StringKeyword:
+    case Kind.SymbolKeyword:
+    case Kind.TypeKeyword:
+    case Kind.UniqueKeyword:
+    case Kind.UnknownKeyword:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function isFunctionLikeBodyKeyword(kind: Kind): boolean {
+  return kind === Kind.AsyncKeyword
+    || kind === Kind.AwaitKeyword
+    || kind === Kind.UsingKeyword
+    || kind === Kind.AsKeyword
+    || kind === Kind.SatisfiesKeyword
+    || kind === Kind.TypeKeyword
+    || (!isContextualKeyword(kind) && !isClassMemberCompletionKeyword(kind));
+}
+
+export function isClassMemberCompletionKeyword(kind: Kind): boolean {
+  switch (kind) {
+    case Kind.AbstractKeyword:
+    case Kind.AccessorKeyword:
+    case Kind.ConstructorKeyword:
+    case Kind.GetKeyword:
+    case Kind.SetKeyword:
+    case Kind.AsyncKeyword:
+    case Kind.DeclareKeyword:
+    case Kind.OverrideKeyword:
+      return true;
+    default:
+      return isClassMemberModifier(kind);
+  }
+}
+
+export function isInterfaceOrTypeLiteralCompletionKeyword(kind: Kind): boolean {
+  return kind === Kind.ReadonlyKeyword;
+}
+
+export function isContextualKeywordInAutoImportableExpressionSpace(keyword: string): boolean {
+  return keyword === "abstract"
+    || keyword === "async"
+    || keyword === "await"
+    || keyword === "declare"
+    || keyword === "module"
+    || keyword === "namespace"
+    || keyword === "type"
+    || keyword === "satisfies"
+    || keyword === "as";
+}
+
+export function isMemberCompletionKind(kind: CompletionKind): boolean {
+  return kind === CompletionKind.ObjectPropertyDeclaration
+    || kind === CompletionKind.MemberLike
+    || kind === CompletionKind.PropertyAccess;
+}
+
+function allKeywordCompletions(): readonly CompletionItem[] {
+  if (allKeywordCompletionsValue !== undefined) return allKeywordCompletionsValue;
+  const result: CompletionItem[] = [];
+  for (let kind = Kind.FirstKeyword; kind <= Kind.LastKeyword; kind += 1) {
+    const label = tokenToString(kind);
+    if (label !== "") {
+      result.push({
+        label,
+        kind: CompletionItemKindKeyword,
+        sortText: SortTextGlobalsOrKeywords,
+      });
+    }
+  }
+  allKeywordCompletionsValue = result;
+  return result;
+}
+
+function tokenToString(kind: Kind): string {
+  const name = KindNames[kind];
+  if (name === undefined || !name.endsWith("Keyword")) return "";
+  return name.slice(0, -"Keyword".length).toLowerCase();
+}
+
+function stringToKeywordKind(text: string): Kind {
+  for (let kind = Kind.FirstKeyword; kind <= Kind.LastKeyword; kind += 1) {
+    if (tokenToString(kind) === text) return kind;
+  }
+  return Kind.Unknown;
+}
+
+const typeKeywords: ReadonlySet<Kind> = new Set([
+  Kind.AnyKeyword,
+  Kind.AssertsKeyword,
+  Kind.BigIntKeyword,
+  Kind.BooleanKeyword,
+  Kind.FalseKeyword,
+  Kind.InferKeyword,
+  Kind.KeyOfKeyword,
+  Kind.NeverKeyword,
+  Kind.NullKeyword,
+  Kind.NumberKeyword,
+  Kind.ObjectKeyword,
+  Kind.ReadonlyKeyword,
+  Kind.StringKeyword,
+  Kind.SymbolKeyword,
+  Kind.TypeOfKeyword,
+  Kind.TrueKeyword,
+  Kind.VoidKeyword,
+  Kind.UndefinedKeyword,
+  Kind.UniqueKeyword,
+  Kind.UnknownKeyword,
+]);
+
+function isTypeKeyword(kind: Kind): boolean {
+  return typeKeywords.has(kind);
+}
+
+function isContextualKeyword(kind: Kind): boolean {
+  return Kind.FirstContextualKeyword <= kind && kind <= Kind.LastContextualKeyword;
+}
+
+function isClassMemberModifier(kind: Kind): boolean {
+  return isParameterPropertyModifier(kind)
+    || kind === Kind.StaticKeyword
+    || kind === Kind.OverrideKeyword
+    || kind === Kind.AccessorKeyword;
+}
+
+function isParameterPropertyModifier(kind: Kind): boolean {
+  return kind === Kind.PublicKeyword
+    || kind === Kind.ProtectedKeyword
+    || kind === Kind.PrivateKeyword
+    || kind === Kind.ReadonlyKeyword
+    || kind === Kind.OverrideKeyword;
 }
 
 // Language-service parity map: internal/ls/completions.go
