@@ -18,16 +18,16 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilCompletedNodeUpstreamPath = "ls/lsutil/completednode.go";
+export const lsLsutilCompletedNodeUpstreamPath = "ls/lsutil/completednode.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilCompletedNodeDeclarations: readonly UpstreamDeclaration[] = [
+export const lsLsutilCompletedNodeDeclarations: readonly UpstreamDeclaration[] = [
   {"line":12,"kind":"func","name":"PositionBelongsToNode"},
   {"line":19,"kind":"func","name":"IsCompletedNode"},
   {"line":162,"kind":"func","name":"nodeEndsWith"},
   {"line":194,"kind":"func","name":"hasChildOfKind"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilCompletedNodeSourceLines: readonly UpstreamSourceLine[] = [
+export const lsLsutilCompletedNodeSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package lsutil"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"github.com/microsoft/typescript-go/internal/ast\""},
@@ -190,16 +190,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilCompletedNodeSo
   {"line":196,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilCompletedNodeDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilCompletedNodeDeclarations.find((declaration) => declaration.name === name);
+export function findLsLsutilCompletedNodeDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsLsutilCompletedNodeDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilCompletedNodeDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilCompletedNodeDeclaration(name);
+export function requireLsLsutilCompletedNodeDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsLsutilCompletedNodeDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilCompletedNodeLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilCompletedNodeSourceLines.find((entry) => entry.line === line)?.text;
+export function lsLsutilCompletedNodeLineText(line: number): string | undefined {
+  return lsLsutilCompletedNodeSourceLines.find((entry) => entry.line === line)?.text;
 }

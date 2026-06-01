@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExtractUpstreamPath = "ls/autoimport/extract.go";
+export const lsAutoimportExtractUpstreamPath = "ls/autoimport/extract.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExtractDeclarations: readonly UpstreamDeclaration[] = [
+export const lsAutoimportExtractDeclarations: readonly UpstreamDeclaration[] = [
   {"line":16,"kind":"type","name":"symbolExtractor"},
   {"line":29,"kind":"type","name":"exportExtractor"},
   {"line":34,"kind":"type","name":"extractorStats"},
@@ -44,7 +44,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExtractDecl
   {"line":451,"kind":"func","name":"fileNameForDefaultExportName"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExtractSourceLines: readonly UpstreamSourceLine[] = [
+export const lsAutoimportExtractSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package autoimport"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"slices\""},
@@ -444,16 +444,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExtractSour
   {"line":461,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExtractDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExtractDeclarations.find((declaration) => declaration.name === name);
+export function findLsAutoimportExtractDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsAutoimportExtractDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExtractDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExtractDeclaration(name);
+export function requireLsAutoimportExtractDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsAutoimportExtractDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExtractLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExtractSourceLines.find((entry) => entry.line === line)?.text;
+export function lsAutoimportExtractLineText(line: number): string | undefined {
+  return lsAutoimportExtractSourceLines.find((entry) => entry.line === line)?.text;
 }

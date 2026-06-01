@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilChildrenUpstreamPath = "ls/lsutil/children.go";
+export const lsLsutilChildrenUpstreamPath = "ls/lsutil/children.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilChildrenDeclarations: readonly UpstreamDeclaration[] = [
+export const lsLsutilChildrenDeclarations: readonly UpstreamDeclaration[] = [
   {"line":11,"kind":"func","name":"GetLastChild"},
   {"line":35,"kind":"func","name":"GetLastToken"},
   {"line":60,"kind":"func","name":"GetLastVisitedChild"},
@@ -28,7 +28,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilChildrenDeclara
   {"line":126,"kind":"func","name":"AssertHasRealPosition"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilChildrenSourceLines: readonly UpstreamSourceLine[] = [
+export const lsLsutilChildrenSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package lsutil"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"github.com/microsoft/typescript-go/internal/ast\""},
@@ -144,16 +144,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilChildrenSourceL
   {"line":130,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilChildrenDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilChildrenDeclarations.find((declaration) => declaration.name === name);
+export function findLsLsutilChildrenDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsLsutilChildrenDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilChildrenDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilChildrenDeclaration(name);
+export function requireLsLsutilChildrenDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsLsutilChildrenDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilChildrenLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilChildrenSourceLines.find((entry) => entry.line === line)?.text;
+export function lsLsutilChildrenLineText(line: number): string | undefined {
+  return lsLsutilChildrenSourceLines.find((entry) => entry.line === line)?.text;
 }

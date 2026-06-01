@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSourceMapUpstreamPath = "ls/source_map.go";
+export const lsSourceMapUpstreamPath = "ls/source_map.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSourceMapDeclarations: readonly UpstreamDeclaration[] = [
+export const lsSourceMapDeclarations: readonly UpstreamDeclaration[] = [
   {"line":12,"kind":"func","name":"getMappedLocation","receiver":"l *LanguageService"},
   {"line":39,"kind":"type","name":"script"},
   {"line":44,"kind":"func","name":"FileName","receiver":"s *script"},
@@ -32,7 +32,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSourceMapDeclarations
   {"line":105,"kind":"func","name":"tryGetGeneratedPositionWorker","receiver":"l *LanguageService"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSourceMapSourceLines: readonly UpstreamSourceLine[] = [
+export const lsSourceMapSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"github.com/microsoft/typescript-go/internal/core\""},
@@ -151,16 +151,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSourceMapSourceLines:
   {"line":134,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsSourceMapDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSourceMapDeclarations.find((declaration) => declaration.name === name);
+export function findLsSourceMapDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsSourceMapDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsSourceMapDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsSourceMapDeclaration(name);
+export function requireLsSourceMapDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsSourceMapDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSourceMapLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSourceMapSourceLines.find((entry) => entry.line === line)?.text;
+export function lsSourceMapLineText(line: number): string | undefined {
+  return lsSourceMapSourceLines.find((entry) => entry.line === line)?.text;
 }

@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilSymbolDisplayUpstreamPath = "ls/lsutil/symbol_display.go";
+export const lsLsutilSymbolDisplayUpstreamPath = "ls/lsutil/symbol_display.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilSymbolDisplayDeclarations: readonly UpstreamDeclaration[] = [
+export const lsLsutilSymbolDisplayDeclarations: readonly UpstreamDeclaration[] = [
   {"line":10,"kind":"type","name":"ScriptElementKind"},
   {"line":85,"kind":"type","name":"ScriptElementKindModifier"},
   {"line":112,"kind":"var","name":"scriptElementKindModifierNames"},
@@ -36,7 +36,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilSymbolDisplayDe
   {"line":395,"kind":"func","name":"getNodeModifiers"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilSymbolDisplaySourceLines: readonly UpstreamSourceLine[] = [
+export const lsLsutilSymbolDisplaySourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package lsutil"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"github.com/microsoft/typescript-go/internal/ast\""},
@@ -401,16 +401,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilSymbolDisplaySo
   {"line":438,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilSymbolDisplayDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilSymbolDisplayDeclarations.find((declaration) => declaration.name === name);
+export function findLsLsutilSymbolDisplayDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsLsutilSymbolDisplayDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilSymbolDisplayDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilSymbolDisplayDeclaration(name);
+export function requireLsLsutilSymbolDisplayDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsLsutilSymbolDisplayDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilSymbolDisplayLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilSymbolDisplaySourceLines.find((entry) => entry.line === line)?.text;
+export function lsLsutilSymbolDisplayLineText(line: number): string | undefined {
+  return lsLsutilSymbolDisplaySourceLines.find((entry) => entry.line === line)?.text;
 }

@@ -18,16 +18,16 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExportStringerGeneratedUpstreamPath = "ls/autoimport/export_stringer_generated.go";
+export const lsAutoimportExportStringerGeneratedUpstreamPath = "ls/autoimport/export_stringer_generated.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExportStringerGeneratedDeclarations: readonly UpstreamDeclaration[] = [
+export const lsAutoimportExportStringerGeneratedDeclarations: readonly UpstreamDeclaration[] = [
   {"line":7,"kind":"func","name":"_"},
   {"line":23,"kind":"const","name":"_ExportSyntax_name"},
   {"line":25,"kind":"var","name":"_ExportSyntax_index"},
   {"line":27,"kind":"func","name":"String","receiver":"i ExportSyntax"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExportStringerGeneratedSourceLines: readonly UpstreamSourceLine[] = [
+export const lsAutoimportExportStringerGeneratedSourceLines: readonly UpstreamSourceLine[] = [
   {"line":3,"text":"package autoimport"},
   {"line":5,"text":"import \"strconv\""},
   {"line":7,"text":"func _() {"},
@@ -54,16 +54,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExportStrin
   {"line":33,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExportStringerGeneratedDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExportStringerGeneratedDeclarations.find((declaration) => declaration.name === name);
+export function findLsAutoimportExportStringerGeneratedDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsAutoimportExportStringerGeneratedDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExportStringerGeneratedDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExportStringerGeneratedDeclaration(name);
+export function requireLsAutoimportExportStringerGeneratedDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsAutoimportExportStringerGeneratedDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExportStringerGeneratedLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportExportStringerGeneratedSourceLines.find((entry) => entry.line === line)?.text;
+export function lsAutoimportExportStringerGeneratedLineText(line: number): string | undefined {
+  return lsAutoimportExportStringerGeneratedSourceLines.find((entry) => entry.line === line)?.text;
 }

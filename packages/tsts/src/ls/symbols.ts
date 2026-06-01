@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSymbolsUpstreamPath = "ls/symbols.go";
+export const lsSymbolsUpstreamPath = "ls/symbols.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSymbolsDeclarations: readonly UpstreamDeclaration[] = [
+export const lsSymbolsDeclarations: readonly UpstreamDeclaration[] = [
   {"line":24,"kind":"func","name":"ProvideDocumentSymbols","receiver":"l *LanguageService"},
   {"line":40,"kind":"func","name":"getDocumentSymbolInformations","receiver":"l *LanguageService"},
   {"line":72,"kind":"func","name":"getDocumentSymbolsForChildren","receiver":"l *LanguageService"},
@@ -46,7 +46,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSymbolsDeclarations: 
   {"line":640,"kind":"func","name":"getSymbolKindFromNode"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSymbolsSourceLines: readonly UpstreamSourceLine[] = [
+export const lsSymbolsSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -670,16 +670,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSymbolsSourceLines: r
   {"line":694,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsSymbolsDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSymbolsDeclarations.find((declaration) => declaration.name === name);
+export function findLsSymbolsDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsSymbolsDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsSymbolsDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsSymbolsDeclaration(name);
+export function requireLsSymbolsDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsSymbolsDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSymbolsLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSymbolsSourceLines.find((entry) => entry.line === line)?.text;
+export function lsSymbolsLineText(line: number): string | undefined {
+  return lsSymbolsSourceLines.find((entry) => entry.line === line)?.text;
 }

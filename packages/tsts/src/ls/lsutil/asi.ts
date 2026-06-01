@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilAsiUpstreamPath = "ls/lsutil/asi.go";
+export const lsLsutilAsiUpstreamPath = "ls/lsutil/asi.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilAsiDeclarations: readonly UpstreamDeclaration[] = [
+export const lsLsutilAsiDeclarations: readonly UpstreamDeclaration[] = [
   {"line":9,"kind":"func","name":"PositionIsASICandidate"},
   {"line":21,"kind":"func","name":"SyntaxMayBeASICandidate"},
   {"line":28,"kind":"func","name":"SyntaxRequiresTrailingCommaOrSemicolonOrASI"},
@@ -30,7 +30,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilAsiDeclarations
   {"line":66,"kind":"func","name":"NodeIsASICandidate"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilAsiSourceLines: readonly UpstreamSourceLine[] = [
+export const lsLsutilAsiSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package lsutil"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"github.com/microsoft/typescript-go/internal/ast\""},
@@ -122,16 +122,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilAsiSourceLines:
   {"line":104,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilAsiDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilAsiDeclarations.find((declaration) => declaration.name === name);
+export function findLsLsutilAsiDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsLsutilAsiDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilAsiDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilAsiDeclaration(name);
+export function requireLsLsutilAsiDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsLsutilAsiDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilAsiLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilAsiSourceLines.find((entry) => entry.line === line)?.text;
+export function lsLsutilAsiLineText(line: number): string | undefined {
+  return lsLsutilAsiSourceLines.find((entry) => entry.line === line)?.text;
 }

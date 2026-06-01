@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsImportTrackerUpstreamPath = "ls/importTracker.go";
+export const lsImportTrackerUpstreamPath = "ls/importTracker.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsImportTrackerDeclarations: readonly UpstreamDeclaration[] = [
+export const lsImportTrackerDeclarations: readonly UpstreamDeclaration[] = [
   {"line":15,"kind":"type","name":"ImpExpKind"},
   {"line":23,"kind":"type","name":"ImportExportSymbol"},
   {"line":29,"kind":"type","name":"ExportKind"},
@@ -52,7 +52,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsImportTrackerDeclarat
   {"line":716,"kind":"func","name":"findModuleReferences"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsImportTrackerSourceLines: readonly UpstreamSourceLine[] = [
+export const lsImportTrackerSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -707,16 +707,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsImportTrackerSourceLi
   {"line":767,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsImportTrackerDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsImportTrackerDeclarations.find((declaration) => declaration.name === name);
+export function findLsImportTrackerDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsImportTrackerDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsImportTrackerDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsImportTrackerDeclaration(name);
+export function requireLsImportTrackerDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsImportTrackerDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsImportTrackerLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsImportTrackerSourceLines.find((entry) => entry.line === line)?.text;
+export function lsImportTrackerLineText(line: number): string | undefined {
+  return lsImportTrackerSourceLines.find((entry) => entry.line === line)?.text;
 }

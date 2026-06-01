@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilFormatCodeOptionsUpstreamPath = "ls/lsutil/formatcodeoptions.go";
+export const lsLsutilFormatCodeOptionsUpstreamPath = "ls/lsutil/formatcodeoptions.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilFormatCodeOptionsDeclarations: readonly UpstreamDeclaration[] = [
+export const lsLsutilFormatCodeOptionsDeclarations: readonly UpstreamDeclaration[] = [
   {"line":11,"kind":"type","name":"IndentStyle"},
   {"line":19,"kind":"func","name":"parseIndentStyle"},
   {"line":38,"kind":"type","name":"SemicolonPreference"},
@@ -32,7 +32,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilFormatCodeOptio
   {"line":114,"kind":"func","name":"GetDefaultFormatCodeSettings"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilFormatCodeOptionsSourceLines: readonly UpstreamSourceLine[] = [
+export const lsLsutilFormatCodeOptionsSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package lsutil"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"strings\""},
@@ -163,16 +163,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilFormatCodeOptio
   {"line":141,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilFormatCodeOptionsDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilFormatCodeOptionsDeclarations.find((declaration) => declaration.name === name);
+export function findLsLsutilFormatCodeOptionsDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsLsutilFormatCodeOptionsDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilFormatCodeOptionsDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilFormatCodeOptionsDeclaration(name);
+export function requireLsLsutilFormatCodeOptionsDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsLsutilFormatCodeOptionsDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilFormatCodeOptionsLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilFormatCodeOptionsSourceLines.find((entry) => entry.line === line)?.text;
+export function lsLsutilFormatCodeOptionsLineText(line: number): string | undefined {
+  return lsLsutilFormatCodeOptionsSourceLines.find((entry) => entry.line === line)?.text;
 }

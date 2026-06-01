@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDisplayPartsWriterUpstreamPath = "ls/displaypartswriter.go";
+export const lsDisplayPartsWriterUpstreamPath = "ls/displaypartswriter.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDisplayPartsWriterDeclarations: readonly UpstreamDeclaration[] = [
+export const lsDisplayPartsWriterDeclarations: readonly UpstreamDeclaration[] = [
   {"line":14,"kind":"var","name":"_"},
   {"line":19,"kind":"type","name":"displayPartsWriter"},
   {"line":26,"kind":"func","name":"newDisplayPartsWriter"},
@@ -58,7 +58,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDisplayPartsWriterDec
   {"line":211,"kind":"func","name":"isFirstDeclarationOfSymbolParameter"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDisplayPartsWriterSourceLines: readonly UpstreamSourceLine[] = [
+export const lsDisplayPartsWriterSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"strings\""},
@@ -231,16 +231,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDisplayPartsWriterSou
   {"line":217,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsDisplayPartsWriterDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDisplayPartsWriterDeclarations.find((declaration) => declaration.name === name);
+export function findLsDisplayPartsWriterDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsDisplayPartsWriterDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsDisplayPartsWriterDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsDisplayPartsWriterDeclaration(name);
+export function requireLsDisplayPartsWriterDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsDisplayPartsWriterDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDisplayPartsWriterLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDisplayPartsWriterSourceLines.find((entry) => entry.line === line)?.text;
+export function lsDisplayPartsWriterLineText(line: number): string | undefined {
+  return lsDisplayPartsWriterSourceLines.find((entry) => entry.line === line)?.text;
 }

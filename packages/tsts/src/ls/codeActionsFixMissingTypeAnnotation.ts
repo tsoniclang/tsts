@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsFixMissingTypeAnnotationUpstreamPath = "ls/codeactions_fixmissingtypeannotation.go";
+export const lsCodeActionsFixMissingTypeAnnotationUpstreamPath = "ls/codeactions_fixmissingtypeannotation.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsFixMissingTypeAnnotationDeclarations: readonly UpstreamDeclaration[] = [
+export const lsCodeActionsFixMissingTypeAnnotationDeclarations: readonly UpstreamDeclaration[] = [
   {"line":22,"kind":"var","name":"isolatedDeclarationsFixErrorCodes"},
   {"line":46,"kind":"const","name":"fixMissingTypeAnnotationOnExportsFixID"},
   {"line":49,"kind":"var","name":"IsolatedDeclarationsFixProvider"},
@@ -70,7 +70,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsFixMissing
   {"line":1385,"kind":"func","name":"addSymbolToExistingImport","receiver":"f *isolatedDeclarationsFixer"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsFixMissingTypeAnnotationSourceLines: readonly UpstreamSourceLine[] = [
+export const lsCodeActionsFixMissingTypeAnnotationSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -1227,16 +1227,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsFixMissing
   {"line":1425,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsFixMissingTypeAnnotationDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsFixMissingTypeAnnotationDeclarations.find((declaration) => declaration.name === name);
+export function findLsCodeActionsFixMissingTypeAnnotationDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsCodeActionsFixMissingTypeAnnotationDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsFixMissingTypeAnnotationDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsFixMissingTypeAnnotationDeclaration(name);
+export function requireLsCodeActionsFixMissingTypeAnnotationDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsCodeActionsFixMissingTypeAnnotationDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsFixMissingTypeAnnotationLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsFixMissingTypeAnnotationSourceLines.find((entry) => entry.line === line)?.text;
+export function lsCodeActionsFixMissingTypeAnnotationLineText(line: number): string | undefined {
+  return lsCodeActionsFixMissingTypeAnnotationSourceLines.find((entry) => entry.line === line)?.text;
 }

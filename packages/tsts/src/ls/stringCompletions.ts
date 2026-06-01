@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsStringCompletionsUpstreamPath = "ls/string_completions.go";
+export const lsStringCompletionsUpstreamPath = "ls/string_completions.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsStringCompletionsDeclarations: readonly UpstreamDeclaration[] = [
+export const lsStringCompletionsDeclarations: readonly UpstreamDeclaration[] = [
   {"line":30,"kind":"type","name":"completionsFromTypes"},
   {"line":35,"kind":"type","name":"completionsFromProperties"},
   {"line":40,"kind":"type","name":"pathCompletion"},
@@ -90,7 +90,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsStringCompletionsDecl
   {"line":2143,"kind":"func","name":"getTripleSlashReferenceCompletions","receiver":"l *LanguageService"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsStringCompletionsSourceLines: readonly UpstreamSourceLine[] = [
+export const lsStringCompletionsSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"cmp\""},
@@ -2003,16 +2003,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsStringCompletionsSour
   {"line":2195,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsStringCompletionsDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsStringCompletionsDeclarations.find((declaration) => declaration.name === name);
+export function findLsStringCompletionsDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsStringCompletionsDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsStringCompletionsDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsStringCompletionsDeclaration(name);
+export function requireLsStringCompletionsDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsStringCompletionsDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsStringCompletionsLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsStringCompletionsSourceLines.find((entry) => entry.line === line)?.text;
+export function lsStringCompletionsLineText(line: number): string | undefined {
+  return lsStringCompletionsSourceLines.find((entry) => entry.line === line)?.text;
 }

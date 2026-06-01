@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilUtilitiesUpstreamPath = "ls/lsutil/utilities.go";
+export const lsLsutilUtilitiesUpstreamPath = "ls/lsutil/utilities.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilUtilitiesDeclarations: readonly UpstreamDeclaration[] = [
+export const lsLsutilUtilitiesDeclarations: readonly UpstreamDeclaration[] = [
   {"line":16,"kind":"func","name":"ProbablyUsesSemicolons"},
   {"line":76,"kind":"func","name":"ShouldUseUriStyleNodeCoreModules"},
   {"line":90,"kind":"func","name":"QuotePreferenceFromString"},
@@ -30,7 +30,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilUtilitiesDeclar
   {"line":153,"kind":"func","name":"IsNonContextualKeyword"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilUtilitiesSourceLines: readonly UpstreamSourceLine[] = [
+export const lsLsutilUtilitiesSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package lsutil"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"strings\""},
@@ -161,16 +161,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilUtilitiesSource
   {"line":155,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilUtilitiesDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilUtilitiesDeclarations.find((declaration) => declaration.name === name);
+export function findLsLsutilUtilitiesDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsLsutilUtilitiesDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilUtilitiesDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilUtilitiesDeclaration(name);
+export function requireLsLsutilUtilitiesDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsLsutilUtilitiesDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilUtilitiesLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilUtilitiesSourceLines.find((entry) => entry.line === line)?.text;
+export function lsLsutilUtilitiesLineText(line: number): string | undefined {
+  return lsLsutilUtilitiesSourceLines.find((entry) => entry.line === line)?.text;
 }

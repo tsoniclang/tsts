@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSignatureHelpUpstreamPath = "ls/signaturehelp.go";
+export const lsSignatureHelpUpstreamPath = "ls/signaturehelp.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSignatureHelpDeclarations: readonly UpstreamDeclaration[] = [
+export const lsSignatureHelpDeclarations: readonly UpstreamDeclaration[] = [
   {"line":20,"kind":"type","name":"callInvocation"},
   {"line":24,"kind":"type","name":"typeArgsInvocation"},
   {"line":28,"kind":"type","name":"contextualInvocation"},
@@ -79,7 +79,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSignatureHelpDeclarat
   {"line":1398,"kind":"func","name":"getApplicableRangeForTaggedTemplate"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSignatureHelpSourceLines: readonly UpstreamSourceLine[] = [
+export const lsSignatureHelpSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -1205,16 +1205,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSignatureHelpSourceLi
   {"line":1420,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsSignatureHelpDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSignatureHelpDeclarations.find((declaration) => declaration.name === name);
+export function findLsSignatureHelpDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsSignatureHelpDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsSignatureHelpDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsSignatureHelpDeclaration(name);
+export function requireLsSignatureHelpDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsSignatureHelpDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSignatureHelpLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSignatureHelpSourceLines.find((entry) => entry.line === line)?.text;
+export function lsSignatureHelpLineText(line: number): string | undefined {
+  return lsSignatureHelpSourceLines.find((entry) => entry.line === line)?.text;
 }

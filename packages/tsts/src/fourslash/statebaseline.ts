@@ -82,9 +82,9 @@ interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashStatebaselineUpstreamPath = "fourslash/statebaseline.go";
+const fourslashStatebaselineUpstreamPath = "fourslash/statebaseline.go";
 
-const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashStatebaselineDeclarations: readonly UpstreamDeclaration[] = [
+const fourslashStatebaselineDeclarations: readonly UpstreamDeclaration[] = [
   {"line":26,"kind":"type","name":"stateBaseline"},
   {"line":36,"kind":"func","name":"newStateBaseline"},
   {"line":48,"kind":"type","name":"requestOrMessage"},
@@ -113,7 +113,7 @@ const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashStatebaselineDeclarat
   {"line":396,"kind":"func","name":"printConfigFileRegistryDiff","receiver":"f *FourslashTest"},
 ];
 
-const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashStatebaselineSourceLines: readonly UpstreamSourceLine[] = [
+const fourslashStatebaselineSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package fourslash"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"fmt\""},
@@ -577,16 +577,16 @@ const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashStatebaselineSourceLi
   {"line":511,"text":"}"},
 ];
 
-function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashStatebaselineDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashStatebaselineDeclarations.find((declaration) => declaration.name === name);
+function findFourslashStatebaselineDeclaration(name: string): UpstreamDeclaration | undefined {
+  return fourslashStatebaselineDeclarations.find((declaration) => declaration.name === name);
 }
 
-function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashStatebaselineDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashStatebaselineDeclaration(name);
+function requireFourslashStatebaselineDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findFourslashStatebaselineDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-function homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashStatebaselineLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashStatebaselineSourceLines.find((entry) => entry.line === line)?.text;
+function fourslashStatebaselineLineText(line: number): string | undefined {
+  return fourslashStatebaselineSourceLines.find((entry) => entry.line === line)?.text;
 }

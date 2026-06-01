@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportFixUpstreamPath = "ls/autoimport/fix.go";
+export const lsAutoimportFixUpstreamPath = "ls/autoimport/fix.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportFixDeclarations: readonly UpstreamDeclaration[] = [
+export const lsAutoimportFixDeclarations: readonly UpstreamDeclaration[] = [
   {"line":30,"kind":"type","name":"newImportBinding"},
   {"line":37,"kind":"type","name":"Fix"},
   {"line":46,"kind":"type","name":"addToExistingImportFix"},
@@ -66,7 +66,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportFixDeclarat
   {"line":1308,"kind":"func","name":"compareModuleSpecifierRelativity"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportFixSourceLines: readonly UpstreamSourceLine[] = [
+export const lsAutoimportFixSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package autoimport"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"cmp\""},
@@ -1159,16 +1159,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportFixSourceLi
   {"line":1314,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportFixDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportFixDeclarations.find((declaration) => declaration.name === name);
+export function findLsAutoimportFixDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsAutoimportFixDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportFixDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportFixDeclaration(name);
+export function requireLsAutoimportFixDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsAutoimportFixDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportFixLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportFixSourceLines.find((entry) => entry.line === line)?.text;
+export function lsAutoimportFixLineText(line: number): string | undefined {
+  return lsAutoimportFixSourceLines.find((entry) => entry.line === line)?.text;
 }

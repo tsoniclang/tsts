@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsMissingMemberFixerUpstreamPath = "ls/codeactions_missingmemberfixer.go";
+export const lsCodeActionsMissingMemberFixerUpstreamPath = "ls/codeactions_missingmemberfixer.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsMissingMemberFixerDeclarations: readonly UpstreamDeclaration[] = [
+export const lsCodeActionsMissingMemberFixerDeclarations: readonly UpstreamDeclaration[] = [
   {"line":18,"kind":"type","name":"preserveOptionalFlags"},
   {"line":26,"kind":"type","name":"missingMemberFixer"},
   {"line":35,"kind":"func","name":"newMissingMemberFixer"},
@@ -42,7 +42,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsMissingMem
   {"line":485,"kind":"func","name":"createPropertyName"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsMissingMemberFixerSourceLines: readonly UpstreamSourceLine[] = [
+export const lsCodeActionsMissingMemberFixerSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"strconv\""},
@@ -466,16 +466,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsMissingMem
   {"line":494,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsMissingMemberFixerDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsMissingMemberFixerDeclarations.find((declaration) => declaration.name === name);
+export function findLsCodeActionsMissingMemberFixerDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsCodeActionsMissingMemberFixerDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsMissingMemberFixerDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsMissingMemberFixerDeclaration(name);
+export function requireLsCodeActionsMissingMemberFixerDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsCodeActionsMissingMemberFixerDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsMissingMemberFixerLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsMissingMemberFixerSourceLines.find((entry) => entry.line === line)?.text;
+export function lsCodeActionsMissingMemberFixerLineText(line: number): string | undefined {
+  return lsCodeActionsMissingMemberFixerSourceLines.find((entry) => entry.line === line)?.text;
 }

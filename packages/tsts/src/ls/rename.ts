@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsRenameUpstreamPath = "ls/rename.go";
+export const lsRenameUpstreamPath = "ls/rename.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsRenameDeclarations: readonly UpstreamDeclaration[] = [
+export const lsRenameDeclarations: readonly UpstreamDeclaration[] = [
   {"line":24,"kind":"type","name":"RenameInfo"},
   {"line":33,"kind":"func","name":"ProvideRename","receiver":"l *LanguageService"},
   {"line":47,"kind":"func","name":"GetRenameInfo","receiver":"l *LanguageService"},
@@ -41,7 +41,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsRenameDeclarations: r
   {"line":365,"kind":"func","name":"getRenameInfoSuccess"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsRenameSourceLines: readonly UpstreamSourceLine[] = [
+export const lsRenameSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -352,16 +352,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsRenameSourceLines: re
   {"line":378,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsRenameDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsRenameDeclarations.find((declaration) => declaration.name === name);
+export function findLsRenameDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsRenameDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsRenameDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsRenameDeclaration(name);
+export function requireLsRenameDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsRenameDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsRenameLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsRenameSourceLines.find((entry) => entry.line === line)?.text;
+export function lsRenameLineText(line: number): string | undefined {
+  return lsRenameSourceLines.find((entry) => entry.line === line)?.text;
 }

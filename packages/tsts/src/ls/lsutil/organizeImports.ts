@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilOrganizeImportsUpstreamPath = "ls/lsutil/organizeimports.go";
+export const lsLsutilOrganizeImportsUpstreamPath = "ls/lsutil/organizeimports.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilOrganizeImportsDeclarations: readonly UpstreamDeclaration[] = [
+export const lsLsutilOrganizeImportsDeclarations: readonly UpstreamDeclaration[] = [
   {"line":27,"kind":"func","name":"FilterImportDeclarations"},
   {"line":34,"kind":"func","name":"GetDetectionLists"},
   {"line":58,"kind":"func","name":"getOrganizeImportsOrdinalStringComparer"},
@@ -48,7 +48,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilOrganizeImports
   {"line":574,"kind":"func","name":"GetNamedImportSpecifierComparerWithDetection"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilOrganizeImportsSourceLines: readonly UpstreamSourceLine[] = [
+export const lsLsutilOrganizeImportsSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package lsutil"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"cmp\""},
@@ -563,16 +563,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilOrganizeImports
   {"line":607,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilOrganizeImportsDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilOrganizeImportsDeclarations.find((declaration) => declaration.name === name);
+export function findLsLsutilOrganizeImportsDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsLsutilOrganizeImportsDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilOrganizeImportsDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilOrganizeImportsDeclaration(name);
+export function requireLsLsutilOrganizeImportsDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsLsutilOrganizeImportsDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilOrganizeImportsLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLsutilOrganizeImportsSourceLines.find((entry) => entry.line === line)?.text;
+export function lsLsutilOrganizeImportsLineText(line: number): string | undefined {
+  return lsLsutilOrganizeImportsSourceLines.find((entry) => entry.line === line)?.text;
 }

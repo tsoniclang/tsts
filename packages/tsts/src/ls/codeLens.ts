@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensUpstreamPath = "ls/codelens.go";
+export const lsCodeLensUpstreamPath = "ls/codelens.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensDeclarations: readonly UpstreamDeclaration[] = [
+export const lsCodeLensDeclarations: readonly UpstreamDeclaration[] = [
   {"line":15,"kind":"func","name":"ProvideCodeLenses","receiver":"l *LanguageService"},
   {"line":57,"kind":"func","name":"ResolveCodeLens","receiver":"l *LanguageService"},
   {"line":132,"kind":"func","name":"newCodeLensForNode","receiver":"l *LanguageService"},
@@ -28,7 +28,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensDeclarations:
   {"line":179,"kind":"func","name":"isValidReferenceLensNode"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensSourceLines: readonly UpstreamSourceLine[] = [
+export const lsCodeLensSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -195,16 +195,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensSourceLines: 
   {"line":207,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensDeclarations.find((declaration) => declaration.name === name);
+export function findLsCodeLensDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsCodeLensDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensDeclaration(name);
+export function requireLsCodeLensDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsCodeLensDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeLensSourceLines.find((entry) => entry.line === line)?.text;
+export function lsCodeLensLineText(line: number): string | undefined {
+  return lsCodeLensSourceLines.find((entry) => entry.line === line)?.text;
 }

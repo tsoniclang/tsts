@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFindAllReferencesUpstreamPath = "ls/findallreferences.go";
+export const lsFindAllReferencesUpstreamPath = "ls/findallreferences.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFindAllReferencesDeclarations: readonly UpstreamDeclaration[] = [
+export const lsFindAllReferencesDeclarations: readonly UpstreamDeclaration[] = [
   {"line":29,"kind":"type","name":"referenceUse"},
   {"line":38,"kind":"type","name":"refOptions"},
   {"line":48,"kind":"type","name":"refInfo"},
@@ -128,7 +128,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFindAllReferencesDecl
   {"line":2312,"kind":"func","name":"explicitlyInheritsFrom","receiver":"state *refState"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFindAllReferencesSourceLines: readonly UpstreamSourceLine[] = [
+export const lsFindAllReferencesSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"cmp\""},
@@ -1993,16 +1993,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFindAllReferencesSour
   {"line":2341,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsFindAllReferencesDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFindAllReferencesDeclarations.find((declaration) => declaration.name === name);
+export function findLsFindAllReferencesDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsFindAllReferencesDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsFindAllReferencesDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsFindAllReferencesDeclaration(name);
+export function requireLsFindAllReferencesDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsFindAllReferencesDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFindAllReferencesLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFindAllReferencesSourceLines.find((entry) => entry.line === line)?.text;
+export function lsFindAllReferencesLineText(line: number): string | undefined {
+  return lsFindAllReferencesSourceLines.find((entry) => entry.line === line)?.text;
 }

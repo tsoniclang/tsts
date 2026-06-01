@@ -18,13 +18,13 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportSpecifiersUpstreamPath = "ls/autoimport/specifiers.go";
+export const lsAutoimportSpecifiersUpstreamPath = "ls/autoimport/specifiers.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportSpecifiersDeclarations: readonly UpstreamDeclaration[] = [
+export const lsAutoimportSpecifiersDeclarations: readonly UpstreamDeclaration[] = [
   {"line":9,"kind":"func","name":"GetModuleSpecifier","receiver":"v *View"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportSpecifiersSourceLines: readonly UpstreamSourceLine[] = [
+export const lsAutoimportSpecifiersSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package autoimport"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"strings\""},
@@ -91,16 +91,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportSpecifiersS
   {"line":75,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportSpecifiersDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportSpecifiersDeclarations.find((declaration) => declaration.name === name);
+export function findLsAutoimportSpecifiersDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsAutoimportSpecifiersDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportSpecifiersDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportSpecifiersDeclaration(name);
+export function requireLsAutoimportSpecifiersDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsAutoimportSpecifiersDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportSpecifiersLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportSpecifiersSourceLines.find((entry) => entry.line === line)?.text;
+export function lsAutoimportSpecifiersLineText(line: number): string | undefined {
+  return lsAutoimportSpecifiersSourceLines.find((entry) => entry.line === line)?.text;
 }

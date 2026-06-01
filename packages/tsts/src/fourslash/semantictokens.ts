@@ -120,16 +120,16 @@ interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSemantictokensUpstreamPath = "fourslash/semantictokens.go";
+const fourslashSemantictokensUpstreamPath = "fourslash/semantictokens.go";
 
-const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSemantictokensDeclarations: readonly UpstreamDeclaration[] = [
+const fourslashSemantictokensDeclarations: readonly UpstreamDeclaration[] = [
   {"line":12,"kind":"type","name":"SemanticToken"},
   {"line":17,"kind":"func","name":"VerifySemanticTokens","receiver":"f *FourslashTest"},
   {"line":55,"kind":"func","name":"decodeSemanticTokens"},
   {"line":124,"kind":"func","name":"formatSemanticTokens"},
 ];
 
-const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSemantictokensSourceLines: readonly UpstreamSourceLine[] = [
+const fourslashSemantictokensSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package fourslash"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"fmt\""},
@@ -232,16 +232,16 @@ const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSemantictokensSourceL
   {"line":130,"text":"}"},
 ];
 
-function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSemantictokensDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSemantictokensDeclarations.find((declaration) => declaration.name === name);
+function findFourslashSemantictokensDeclaration(name: string): UpstreamDeclaration | undefined {
+  return fourslashSemantictokensDeclarations.find((declaration) => declaration.name === name);
 }
 
-function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSemantictokensDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSemantictokensDeclaration(name);
+function requireFourslashSemantictokensDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findFourslashSemantictokensDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-function homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSemantictokensLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSemantictokensSourceLines.find((entry) => entry.line === line)?.text;
+function fourslashSemantictokensLineText(line: number): string | undefined {
+  return fourslashSemantictokensSourceLines.find((entry) => entry.line === line)?.text;
 }

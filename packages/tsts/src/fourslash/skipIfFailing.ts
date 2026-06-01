@@ -57,14 +57,14 @@ interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSkipIfFailingUpstreamPath = "fourslash/skip_if_failing.go";
+const fourslashSkipIfFailingUpstreamPath = "fourslash/skip_if_failing.go";
 
-const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSkipIfFailingDeclarations: readonly UpstreamDeclaration[] = [
+const fourslashSkipIfFailingDeclarations: readonly UpstreamDeclaration[] = [
   {"line":13,"kind":"var","name":"failingTests"},
   {"line":43,"kind":"func","name":"SkipIfFailing"},
 ];
 
-const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSkipIfFailingSourceLines: readonly UpstreamSourceLine[] = [
+const fourslashSkipIfFailingSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package fourslash"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"bufio\""},
@@ -107,16 +107,16 @@ const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSkipIfFailingSourceLi
   {"line":53,"text":"}"},
 ];
 
-function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSkipIfFailingDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSkipIfFailingDeclarations.find((declaration) => declaration.name === name);
+function findFourslashSkipIfFailingDeclaration(name: string): UpstreamDeclaration | undefined {
+  return fourslashSkipIfFailingDeclarations.find((declaration) => declaration.name === name);
 }
 
-function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSkipIfFailingDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSkipIfFailingDeclaration(name);
+function requireFourslashSkipIfFailingDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findFourslashSkipIfFailingDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-function homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSkipIfFailingLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashSkipIfFailingSourceLines.find((entry) => entry.line === line)?.text;
+function fourslashSkipIfFailingLineText(line: number): string | undefined {
+  return fourslashSkipIfFailingSourceLines.find((entry) => entry.line === line)?.text;
 }

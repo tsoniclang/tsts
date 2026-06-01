@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFoldingUpstreamPath = "ls/folding.go";
+export const lsFoldingUpstreamPath = "ls/folding.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFoldingDeclarations: readonly UpstreamDeclaration[] = [
+export const lsFoldingDeclarations: readonly UpstreamDeclaration[] = [
   {"line":18,"kind":"func","name":"ProvideFoldingRange","receiver":"l *LanguageService"},
   {"line":38,"kind":"func","name":"adjustFoldingEnd","receiver":"l *LanguageService"},
   {"line":61,"kind":"func","name":"addNodeOutliningSpans","receiver":"l *LanguageService"},
@@ -49,7 +49,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFoldingDeclarations: 
   {"line":562,"kind":"func","name":"isNodeArrayMultiLine"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFoldingSourceLines: readonly UpstreamSourceLine[] = [
+export const lsFoldingSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"cmp\""},
@@ -559,16 +559,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFoldingSourceLines: r
   {"line":567,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsFoldingDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFoldingDeclarations.find((declaration) => declaration.name === name);
+export function findLsFoldingDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsFoldingDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsFoldingDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsFoldingDeclaration(name);
+export function requireLsFoldingDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsFoldingDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFoldingLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFoldingSourceLines.find((entry) => entry.line === line)?.text;
+export function lsFoldingLineText(line: number): string | undefined {
+  return lsFoldingSourceLines.find((entry) => entry.line === line)?.text;
 }

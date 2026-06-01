@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFormatUpstreamPath = "ls/format.go";
+export const lsFormatUpstreamPath = "ls/format.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFormatDeclarations: readonly UpstreamDeclaration[] = [
+export const lsFormatDeclarations: readonly UpstreamDeclaration[] = [
   {"line":16,"kind":"func","name":"toLSProtoTextEdits","receiver":"l *LanguageService"},
   {"line":27,"kind":"func","name":"ProvideFormatDocument","receiver":"l *LanguageService"},
   {"line":42,"kind":"func","name":"ProvideFormatDocumentRange","receiver":"l *LanguageService"},
@@ -31,7 +31,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFormatDeclarations: r
   {"line":128,"kind":"func","name":"getRangeOfEnclosingComment"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFormatSourceLines: readonly UpstreamSourceLine[] = [
+export const lsFormatSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -175,16 +175,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFormatSourceLines: re
   {"line":172,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsFormatDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFormatDeclarations.find((declaration) => declaration.name === name);
+export function findLsFormatDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsFormatDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsFormatDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsFormatDeclaration(name);
+export function requireLsFormatDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsFormatDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFormatLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsFormatSourceLines.find((entry) => entry.line === line)?.text;
+export function lsFormatLineText(line: number): string | undefined {
+  return lsFormatSourceLines.find((entry) => entry.line === line)?.text;
 }

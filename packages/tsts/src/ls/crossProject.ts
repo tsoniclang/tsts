@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCrossProjectUpstreamPath = "ls/crossproject.go";
+export const lsCrossProjectUpstreamPath = "ls/crossproject.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCrossProjectDeclarations: readonly UpstreamDeclaration[] = [
+export const lsCrossProjectDeclarations: readonly UpstreamDeclaration[] = [
   {"line":17,"kind":"type","name":"Project"},
   {"line":23,"kind":"type","name":"projectAndTextDocumentPosition"},
   {"line":31,"kind":"type","name":"response"},
@@ -31,7 +31,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCrossProjectDeclarati
   {"line":380,"kind":"func","name":"combineIncomingCalls"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCrossProjectSourceLines: readonly UpstreamSourceLine[] = [
+export const lsCrossProjectSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -384,16 +384,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCrossProjectSourceLin
   {"line":393,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCrossProjectDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCrossProjectDeclarations.find((declaration) => declaration.name === name);
+export function findLsCrossProjectDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsCrossProjectDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCrossProjectDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCrossProjectDeclaration(name);
+export function requireLsCrossProjectDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsCrossProjectDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCrossProjectLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCrossProjectSourceLines.find((entry) => entry.line === line)?.text;
+export function lsCrossProjectLineText(line: number): string | undefined {
+  return lsCrossProjectSourceLines.find((entry) => entry.line === line)?.text;
 }

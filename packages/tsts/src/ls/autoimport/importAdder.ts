@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportImportAdderUpstreamPath = "ls/autoimport/import_adder.go";
+export const lsAutoimportImportAdderUpstreamPath = "ls/autoimport/import_adder.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportImportAdderDeclarations: readonly UpstreamDeclaration[] = [
+export const lsAutoimportImportAdderDeclarations: readonly UpstreamDeclaration[] = [
   {"line":24,"kind":"type","name":"ImportAdder"},
   {"line":32,"kind":"type","name":"addToExistingState"},
   {"line":39,"kind":"type","name":"importsCollection"},
@@ -44,7 +44,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportImportAdder
   {"line":490,"kind":"func","name":"getImportFixForSymbol","receiver":"adder *importAdder"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportImportAdderSourceLines: readonly UpstreamSourceLine[] = [
+export const lsAutoimportImportAdderSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package autoimport"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -457,16 +457,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportImportAdder
   {"line":501,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportImportAdderDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportImportAdderDeclarations.find((declaration) => declaration.name === name);
+export function findLsAutoimportImportAdderDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsAutoimportImportAdderDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportImportAdderDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportImportAdderDeclaration(name);
+export function requireLsAutoimportImportAdderDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsAutoimportImportAdderDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportImportAdderLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportImportAdderSourceLines.find((entry) => entry.line === line)?.text;
+export function lsAutoimportImportAdderLineText(line: number): string | undefined {
+  return lsAutoimportImportAdderSourceLines.find((entry) => entry.line === line)?.text;
 }

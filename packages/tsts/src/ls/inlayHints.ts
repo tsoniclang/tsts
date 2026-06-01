@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsInlayHintsUpstreamPath = "ls/inlay_hints.go";
+export const lsInlayHintsUpstreamPath = "ls/inlay_hints.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsInlayHintsDeclarations: readonly UpstreamDeclaration[] = [
+export const lsInlayHintsDeclarations: readonly UpstreamDeclaration[] = [
   {"line":24,"kind":"func","name":"ProvideInlayHint","receiver":"l *LanguageService"},
   {"line":52,"kind":"type","name":"inlayHintState"},
   {"line":63,"kind":"func","name":"visit","receiver":"s *inlayHintState"},
@@ -54,7 +54,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsInlayHintsDeclaration
   {"line":917,"kind":"func","name":"isAnyInlayHintEnabled"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsInlayHintsSourceLines: readonly UpstreamSourceLine[] = [
+export const lsInlayHintsSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -903,16 +903,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsInlayHintsSourceLines
   {"line":924,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsInlayHintsDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsInlayHintsDeclarations.find((declaration) => declaration.name === name);
+export function findLsInlayHintsDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsInlayHintsDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsInlayHintsDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsInlayHintsDeclaration(name);
+export function requireLsInlayHintsDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsInlayHintsDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsInlayHintsLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsInlayHintsSourceLines.find((entry) => entry.line === line)?.text;
+export function lsInlayHintsLineText(line: number): string | undefined {
+  return lsInlayHintsSourceLines.find((entry) => entry.line === line)?.text;
 }

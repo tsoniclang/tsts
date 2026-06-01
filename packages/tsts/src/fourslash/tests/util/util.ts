@@ -54,9 +54,9 @@ interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashTestsUtilUtilUpstreamPath = "fourslash/tests/util/util.go";
+const fourslashTestsUtilUtilUpstreamPath = "fourslash/tests/util/util.go";
 
-const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashTestsUtilUtilDeclarations: readonly UpstreamDeclaration[] = [
+const fourslashTestsUtilUtilDeclarations: readonly UpstreamDeclaration[] = [
   {"line":14,"kind":"var","name":"Ignored"},
   {"line":16,"kind":"var","name":"DefaultCommitCharacters"},
   {"line":18,"kind":"var","name":"CompletionGlobalThisItem"},
@@ -84,7 +84,7 @@ const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashTestsUtilUtilDeclarat
   {"line":1559,"kind":"var","name":"CompletionTypeAssertionKeywords"},
 ];
 
-const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashTestsUtilUtilSourceLines: readonly UpstreamSourceLine[] = [
+const fourslashTestsUtilUtilSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package fourslash_test"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"fmt\""},
@@ -1628,16 +1628,16 @@ const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashTestsUtilUtilSourceLi
   {"line":1569,"text":"}"},
 ];
 
-function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashTestsUtilUtilDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashTestsUtilUtilDeclarations.find((declaration) => declaration.name === name);
+function findFourslashTestsUtilUtilDeclaration(name: string): UpstreamDeclaration | undefined {
+  return fourslashTestsUtilUtilDeclarations.find((declaration) => declaration.name === name);
 }
 
-function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashTestsUtilUtilDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashTestsUtilUtilDeclaration(name);
+function requireFourslashTestsUtilUtilDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findFourslashTestsUtilUtilDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-function homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashTestsUtilUtilLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashTestsUtilUtilSourceLines.find((entry) => entry.line === line)?.text;
+function fourslashTestsUtilUtilLineText(line: number): string | undefined {
+  return fourslashTestsUtilUtilSourceLines.find((entry) => entry.line === line)?.text;
 }

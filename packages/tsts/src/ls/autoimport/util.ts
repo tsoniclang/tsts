@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportUtilUpstreamPath = "ls/autoimport/util.go";
+export const lsAutoimportUtilUpstreamPath = "ls/autoimport/util.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportUtilDeclarations: readonly UpstreamDeclaration[] = [
+export const lsAutoimportUtilDeclarations: readonly UpstreamDeclaration[] = [
   {"line":24,"kind":"func","name":"tryGetModuleIDAndFileNameOfModuleSymbol"},
   {"line":41,"kind":"func","name":"getModuleIDAndFileNameOfModuleSymbol"},
   {"line":68,"kind":"func","name":"wordIndices"},
@@ -38,7 +38,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportUtilDeclara
   {"line":317,"kind":"func","name":"getModuleResolver"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportUtilSourceLines: readonly UpstreamSourceLine[] = [
+export const lsAutoimportUtilSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package autoimport"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -299,16 +299,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportUtilSourceL
   {"line":323,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportUtilDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportUtilDeclarations.find((declaration) => declaration.name === name);
+export function findLsAutoimportUtilDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsAutoimportUtilDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportUtilDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportUtilDeclaration(name);
+export function requireLsAutoimportUtilDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsAutoimportUtilDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportUtilLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportUtilSourceLines.find((entry) => entry.line === line)?.text;
+export function lsAutoimportUtilLineText(line: number): string | undefined {
+  return lsAutoimportUtilSourceLines.find((entry) => entry.line === line)?.text;
 }

@@ -18,14 +18,14 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSelectionRangesUpstreamPath = "ls/selectionranges.go";
+export const lsSelectionRangesUpstreamPath = "ls/selectionranges.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSelectionRangesDeclarations: readonly UpstreamDeclaration[] = [
+export const lsSelectionRangesDeclarations: readonly UpstreamDeclaration[] = [
   {"line":13,"kind":"func","name":"ProvideSelectionRanges","receiver":"l *LanguageService"},
   {"line":31,"kind":"func","name":"getSmartSelectionRange"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSelectionRangesSourceLines: readonly UpstreamSourceLine[] = [
+export const lsSelectionRangesSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -193,16 +193,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSelectionRangesSource
   {"line":211,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsSelectionRangesDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSelectionRangesDeclarations.find((declaration) => declaration.name === name);
+export function findLsSelectionRangesDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsSelectionRangesDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsSelectionRangesDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsSelectionRangesDeclaration(name);
+export function requireLsSelectionRangesDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsSelectionRangesDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSelectionRangesLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSelectionRangesSourceLines.find((entry) => entry.line === line)?.text;
+export function lsSelectionRangesLineText(line: number): string | undefined {
+  return lsSelectionRangesSourceLines.find((entry) => entry.line === line)?.text;
 }

@@ -300,7 +300,8 @@ function generateLspGenerated() {
 function parityMapFile(upstreamPath, localPath, heading) {
   const goText = readFileSync(upstreamPath, "utf8");
   const rel = relative(tsgoInternal, upstreamPath).replaceAll("\\", "/");
-  const name = constNameFromPath(localPath.replace(/\.ts$/u, ""));
+  const localRel = relative(tstsSrc, localPath).replaceAll("\\", "/");
+  const name = constNameFromPath(localRel.replace(/\.ts$/u, ""));
   const decls = declarations(goText);
   const lines = [];
   lines.push("/**");
@@ -360,7 +361,7 @@ function generateLsMaps() {
     "codeactions_importfixes.go", "codeactions_missingmemberfixer.go", "codelens.go", "completions.go",
     "crossproject.go", "definition.go", "diagnostics.go", "displaypartswriter.go", "documenthighlights.go",
     "file_rename.go", "findallreferences.go", "folding.go", "format.go", "hover.go", "importTracker.go",
-    "inlay_hints.go", "linkedediting.go", "lsconv/linemap.go", "lsutil/asi.go", "lsutil/children.go",
+    "inlay_hints.go", "linkedediting.go", "lsutil/asi.go", "lsutil/children.go",
     "lsutil/completednode.go", "lsutil/formatcodeoptions.go", "lsutil/organizeimports.go",
     "lsutil/symbol_display.go", "lsutil/utilities.go", "organizeimports.go", "rename.go",
     "selectionranges.go", "semantictokens.go", "signaturehelp.go", "source_map.go", "sourcedefinition.go",

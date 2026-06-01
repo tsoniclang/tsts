@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportAliasResolverUpstreamPath = "ls/autoimport/aliasresolver.go";
+export const lsAutoimportAliasResolverUpstreamPath = "ls/autoimport/aliasresolver.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportAliasResolverDeclarations: readonly UpstreamDeclaration[] = [
+export const lsAutoimportAliasResolverDeclarations: readonly UpstreamDeclaration[] = [
   {"line":16,"kind":"type","name":"pathAndFileName"},
   {"line":21,"kind":"type","name":"aliasResolver"},
   {"line":33,"kind":"func","name":"newAliasResolver"},
@@ -60,7 +60,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportAliasResolv
   {"line":236,"kind":"var","name":"_"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportAliasResolverSourceLines: readonly UpstreamSourceLine[] = [
+export const lsAutoimportAliasResolverSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package autoimport"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"github.com/microsoft/typescript-go/internal/ast\""},
@@ -222,16 +222,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportAliasResolv
   {"line":236,"text":"var _ checker.Program = (*aliasResolver)(nil)"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportAliasResolverDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportAliasResolverDeclarations.find((declaration) => declaration.name === name);
+export function findLsAutoimportAliasResolverDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsAutoimportAliasResolverDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportAliasResolverDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportAliasResolverDeclaration(name);
+export function requireLsAutoimportAliasResolverDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsAutoimportAliasResolverDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportAliasResolverLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportAliasResolverSourceLines.find((entry) => entry.line === line)?.text;
+export function lsAutoimportAliasResolverLineText(line: number): string | undefined {
+  return lsAutoimportAliasResolverSourceLines.find((entry) => entry.line === line)?.text;
 }

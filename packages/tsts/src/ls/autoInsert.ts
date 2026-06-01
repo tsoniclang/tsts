@@ -18,15 +18,15 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoInsertUpstreamPath = "ls/autoinsert.go";
+export const lsAutoInsertUpstreamPath = "ls/autoinsert.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoInsertDeclarations: readonly UpstreamDeclaration[] = [
+export const lsAutoInsertDeclarations: readonly UpstreamDeclaration[] = [
   {"line":12,"kind":"func","name":"ProvideOnAutoInsert","receiver":"l *LanguageService"},
   {"line":68,"kind":"func","name":"isUnclosedTag"},
   {"line":84,"kind":"func","name":"isUnclosedFragment"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoInsertSourceLines: readonly UpstreamSourceLine[] = [
+export const lsAutoInsertSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -105,16 +105,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoInsertSourceLines
   {"line":96,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoInsertDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoInsertDeclarations.find((declaration) => declaration.name === name);
+export function findLsAutoInsertDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsAutoInsertDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoInsertDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoInsertDeclaration(name);
+export function requireLsAutoInsertDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsAutoInsertDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoInsertLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoInsertSourceLines.find((entry) => entry.line === line)?.text;
+export function lsAutoInsertLineText(line: number): string | undefined {
+  return lsAutoInsertSourceLines.find((entry) => entry.line === line)?.text;
 }

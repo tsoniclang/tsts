@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCallHierarchyUpstreamPath = "ls/callhierarchy.go";
+export const lsCallHierarchyUpstreamPath = "ls/callhierarchy.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCallHierarchyDeclarations: readonly UpstreamDeclaration[] = [
+export const lsCallHierarchyDeclarations: readonly UpstreamDeclaration[] = [
   {"line":21,"kind":"type","name":"CallHierarchyDeclaration"},
   {"line":24,"kind":"func","name":"isNamedExpression"},
   {"line":35,"kind":"func","name":"isVariableLike"},
@@ -60,7 +60,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCallHierarchyDeclarat
   {"line":1056,"kind":"func","name":"ProvideCallHierarchyOutgoingCalls","receiver":"l *LanguageService"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCallHierarchySourceLines: readonly UpstreamSourceLine[] = [
+export const lsCallHierarchySourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -972,16 +972,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCallHierarchySourceLi
   {"line":1103,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCallHierarchyDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCallHierarchyDeclarations.find((declaration) => declaration.name === name);
+export function findLsCallHierarchyDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsCallHierarchyDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCallHierarchyDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCallHierarchyDeclaration(name);
+export function requireLsCallHierarchyDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsCallHierarchyDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCallHierarchyLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCallHierarchySourceLines.find((entry) => entry.line === line)?.text;
+export function lsCallHierarchyLineText(line: number): string | undefined {
+  return lsCallHierarchySourceLines.find((entry) => entry.line === line)?.text;
 }

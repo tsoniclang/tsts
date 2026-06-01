@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsHoverUpstreamPath = "ls/hover.go";
+export const lsHoverUpstreamPath = "ls/hover.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsHoverDeclarations: readonly UpstreamDeclaration[] = [
+export const lsHoverDeclarations: readonly UpstreamDeclaration[] = [
   {"line":22,"kind":"func","name":"ProvideHover","receiver":"l *LanguageService"},
   {"line":85,"kind":"func","name":"getQuickInfoAndDocumentationForSymbol","receiver":"l *LanguageService"},
   {"line":104,"kind":"func","name":"documentationFromSignature","receiver":"l *LanguageService"},
@@ -56,7 +56,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsHoverDeclarations: re
   {"line":1049,"kind":"func","name":"writeEntityNameParts"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsHoverSourceLines: readonly UpstreamSourceLine[] = [
+export const lsHoverSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -1029,16 +1029,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsHoverSourceLines: rea
   {"line":1066,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsHoverDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsHoverDeclarations.find((declaration) => declaration.name === name);
+export function findLsHoverDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsHoverDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsHoverDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsHoverDeclaration(name);
+export function requireLsHoverDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsHoverDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsHoverLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsHoverSourceLines.find((entry) => entry.line === line)?.text;
+export function lsHoverLineText(line: number): string | undefined {
+  return lsHoverSourceLines.find((entry) => entry.line === line)?.text;
 }

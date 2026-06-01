@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDocumentHighlightsUpstreamPath = "ls/documenthighlights.go";
+export const lsDocumentHighlightsUpstreamPath = "ls/documenthighlights.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDocumentHighlightsDeclarations: readonly UpstreamDeclaration[] = [
+export const lsDocumentHighlightsDeclarations: readonly UpstreamDeclaration[] = [
   {"line":18,"kind":"func","name":"ProvideDocumentHighlights","receiver":"l *LanguageService"},
   {"line":35,"kind":"func","name":"ProvideMultiDocumentHighlights","receiver":"l *LanguageService"},
   {"line":39,"kind":"func","name":"provideDocumentHighlightsWorker","receiver":"l *LanguageService"},
@@ -52,7 +52,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDocumentHighlightsDec
   {"line":745,"kind":"func","name":"findModifier"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDocumentHighlightsSourceLines: readonly UpstreamSourceLine[] = [
+export const lsDocumentHighlightsSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -686,16 +686,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDocumentHighlightsSou
   {"line":752,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsDocumentHighlightsDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDocumentHighlightsDeclarations.find((declaration) => declaration.name === name);
+export function findLsDocumentHighlightsDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsDocumentHighlightsDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsDocumentHighlightsDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsDocumentHighlightsDeclaration(name);
+export function requireLsDocumentHighlightsDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsDocumentHighlightsDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDocumentHighlightsLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDocumentHighlightsSourceLines.find((entry) => entry.line === line)?.text;
+export function lsDocumentHighlightsLineText(line: number): string | undefined {
+  return lsDocumentHighlightsSourceLines.find((entry) => entry.line === line)?.text;
 }

@@ -18,14 +18,14 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLinkedEditingUpstreamPath = "ls/linkedediting.go";
+export const lsLinkedEditingUpstreamPath = "ls/linkedediting.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLinkedEditingDeclarations: readonly UpstreamDeclaration[] = [
+export const lsLinkedEditingDeclarations: readonly UpstreamDeclaration[] = [
   {"line":15,"kind":"var","name":"jsxTagWordPattern"},
   {"line":17,"kind":"func","name":"ProvideLinkedEditingRange","receiver":"l *LanguageService"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLinkedEditingSourceLines: readonly UpstreamSourceLine[] = [
+export const lsLinkedEditingSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -116,16 +116,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLinkedEditingSourceLi
   {"line":107,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLinkedEditingDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLinkedEditingDeclarations.find((declaration) => declaration.name === name);
+export function findLsLinkedEditingDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsLinkedEditingDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLinkedEditingDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsLinkedEditingDeclaration(name);
+export function requireLsLinkedEditingDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsLinkedEditingDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLinkedEditingLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsLinkedEditingSourceLines.find((entry) => entry.line === line)?.text;
+export function lsLinkedEditingLineText(line: number): string | undefined {
+  return lsLinkedEditingSourceLines.find((entry) => entry.line === line)?.text;
 }

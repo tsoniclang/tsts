@@ -150,9 +150,9 @@ interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashBaselineutilUpstreamPath = "fourslash/baselineutil.go";
+const fourslashBaselineutilUpstreamPath = "fourslash/baselineutil.go";
 
-const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashBaselineutilDeclarations: readonly UpstreamDeclaration[] = [
+const fourslashBaselineutilDeclarations: readonly UpstreamDeclaration[] = [
   {"line":44,"kind":"type","name":"baselineCommand"},
   {"line":46,"kind":"func","name":"addResultToBaseline","receiver":"f *FourslashTest"},
   {"line":66,"kind":"func","name":"writeToBaseline","receiver":"f *FourslashTest"},
@@ -190,7 +190,7 @@ const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashBaselineutilDeclarati
   {"line":1178,"kind":"func","name":"symbolInformationToData"},
 ];
 
-const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashBaselineutilSourceLines: readonly UpstreamSourceLine[] = [
+const fourslashBaselineutilSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package fourslash"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"cmp\""},
@@ -1214,16 +1214,16 @@ const homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashBaselineutilSourceLin
   {"line":1180,"text":"}"},
 ];
 
-function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashBaselineutilDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashBaselineutilDeclarations.find((declaration) => declaration.name === name);
+function findFourslashBaselineutilDeclaration(name: string): UpstreamDeclaration | undefined {
+  return fourslashBaselineutilDeclarations.find((declaration) => declaration.name === name);
 }
 
-function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashBaselineutilDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashBaselineutilDeclaration(name);
+function requireFourslashBaselineutilDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findFourslashBaselineutilDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-function homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashBaselineutilLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcFourslashBaselineutilSourceLines.find((entry) => entry.line === line)?.text;
+function fourslashBaselineutilLineText(line: number): string | undefined {
+  return fourslashBaselineutilSourceLines.find((entry) => entry.line === line)?.text;
 }

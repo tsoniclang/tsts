@@ -18,15 +18,15 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDiagnosticsUpstreamPath = "ls/diagnostics.go";
+export const lsDiagnosticsUpstreamPath = "ls/diagnostics.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDiagnosticsDeclarations: readonly UpstreamDeclaration[] = [
+export const lsDiagnosticsDeclarations: readonly UpstreamDeclaration[] = [
   {"line":14,"kind":"func","name":"getAllDiagnostics"},
   {"line":25,"kind":"func","name":"ProvideDiagnostics","receiver":"l *LanguageService"},
   {"line":37,"kind":"func","name":"toLSPDiagnostics","receiver":"l *LanguageService"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDiagnosticsSourceLines: readonly UpstreamSourceLine[] = [
+export const lsDiagnosticsSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -69,16 +69,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDiagnosticsSourceLine
   {"line":49,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsDiagnosticsDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDiagnosticsDeclarations.find((declaration) => declaration.name === name);
+export function findLsDiagnosticsDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsDiagnosticsDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsDiagnosticsDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsDiagnosticsDeclaration(name);
+export function requireLsDiagnosticsDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsDiagnosticsDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDiagnosticsLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsDiagnosticsSourceLines.find((entry) => entry.line === line)?.text;
+export function lsDiagnosticsLineText(line: number): string | undefined {
+  return lsDiagnosticsSourceLines.find((entry) => entry.line === line)?.text;
 }

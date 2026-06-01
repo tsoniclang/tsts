@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSemanticTokensUpstreamPath = "ls/semantictokens.go";
+export const lsSemanticTokensUpstreamPath = "ls/semantictokens.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSemanticTokensDeclarations: readonly UpstreamDeclaration[] = [
+export const lsSemanticTokensDeclarations: readonly UpstreamDeclaration[] = [
   {"line":19,"kind":"var","name":"tokenTypes"},
   {"line":46,"kind":"var","name":"tokenModifiers"},
   {"line":60,"kind":"type","name":"tokenType"},
@@ -42,7 +42,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSemanticTokensDeclara
   {"line":480,"kind":"func","name":"encodeSemanticTokens"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSemanticTokensSourceLines: readonly UpstreamSourceLine[] = [
+export const lsSemanticTokensSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -518,16 +518,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSemanticTokensSourceL
   {"line":575,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsSemanticTokensDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSemanticTokensDeclarations.find((declaration) => declaration.name === name);
+export function findLsSemanticTokensDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsSemanticTokensDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsSemanticTokensDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsSemanticTokensDeclaration(name);
+export function requireLsSemanticTokensDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsSemanticTokensDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSemanticTokensLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsSemanticTokensSourceLines.find((entry) => entry.line === line)?.text;
+export function lsSemanticTokensLineText(line: number): string | undefined {
+  return lsSemanticTokensSourceLines.find((entry) => entry.line === line)?.text;
 }

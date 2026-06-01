@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsImportFixesUpstreamPath = "ls/codeactions_importfixes.go";
+export const lsCodeActionsImportFixesUpstreamPath = "ls/codeactions_importfixes.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsImportFixesDeclarations: readonly UpstreamDeclaration[] = [
+export const lsCodeActionsImportFixesDeclarations: readonly UpstreamDeclaration[] = [
   {"line":21,"kind":"var","name":"importFixErrorCodes"},
   {"line":50,"kind":"var","name":"ImportFixProvider"},
   {"line":57,"kind":"type","name":"fixInfo"},
@@ -40,7 +40,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsImportFixe
   {"line":431,"kind":"func","name":"sortFixInfo"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsImportFixesSourceLines: readonly UpstreamSourceLine[] = [
+export const lsCodeActionsImportFixesSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package ls"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -418,16 +418,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsImportFixe
   {"line":452,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsImportFixesDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsImportFixesDeclarations.find((declaration) => declaration.name === name);
+export function findLsCodeActionsImportFixesDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsCodeActionsImportFixesDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsImportFixesDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsImportFixesDeclaration(name);
+export function requireLsCodeActionsImportFixesDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsCodeActionsImportFixesDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsImportFixesLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsCodeActionsImportFixesSourceLines.find((entry) => entry.line === line)?.text;
+export function lsCodeActionsImportFixesLineText(line: number): string | undefined {
+  return lsCodeActionsImportFixesSourceLines.find((entry) => entry.line === line)?.text;
 }

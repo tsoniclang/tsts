@@ -18,9 +18,9 @@ export interface UpstreamDeclaration {
   readonly receiver?: string;
 }
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportViewUpstreamPath = "ls/autoimport/view.go";
+export const lsAutoimportViewUpstreamPath = "ls/autoimport/view.go";
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportViewDeclarations: readonly UpstreamDeclaration[] = [
+export const lsAutoimportViewDeclarations: readonly UpstreamDeclaration[] = [
   {"line":20,"kind":"type","name":"View"},
   {"line":34,"kind":"func","name":"NewView"},
   {"line":49,"kind":"func","name":"getAllowedEndings","receiver":"v *View"},
@@ -32,7 +32,7 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportViewDeclara
   {"line":171,"kind":"func","name":"GetCompletions","receiver":"v *View"},
 ];
 
-export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportViewSourceLines: readonly UpstreamSourceLine[] = [
+export const lsAutoimportViewSourceLines: readonly UpstreamSourceLine[] = [
   {"line":1,"text":"package autoimport"},
   {"line":3,"text":"import ("},
   {"line":4,"text":"\t\"context\""},
@@ -246,16 +246,16 @@ export const homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportViewSourceL
   {"line":252,"text":"}"},
 ];
 
-export function findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportViewDeclaration(name: string): UpstreamDeclaration | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportViewDeclarations.find((declaration) => declaration.name === name);
+export function findLsAutoimportViewDeclaration(name: string): UpstreamDeclaration | undefined {
+  return lsAutoimportViewDeclarations.find((declaration) => declaration.name === name);
 }
 
-export function requireHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportViewDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findHomeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportViewDeclaration(name);
+export function requireLsAutoimportViewDeclaration(name: string): UpstreamDeclaration {
+  const declaration = findLsAutoimportViewDeclaration(name);
   if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
   return declaration;
 }
 
-export function homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportViewLineText(line: number): string | undefined {
-  return homeJeswinReposTsoniclangTstsPackagesTstsSrcLsAutoimportViewSourceLines.find((entry) => entry.line === line)?.text;
+export function lsAutoimportViewLineText(line: number): string | undefined {
+  return lsAutoimportViewSourceLines.find((entry) => entry.line === line)?.text;
 }
