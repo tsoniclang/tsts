@@ -1,4 +1,26 @@
-import { Kind, KindNames, SymbolFlags, nodeText, type Node, type SourceFile, type Symbol } from "../ast/index.js";
+import {
+  Kind,
+  KindNames,
+  SymbolFlags,
+  isAsExpression,
+  isBinaryExpression,
+  isFunctionLike,
+  isJsxClosingElement,
+  isParameterDeclaration,
+  isPropertyDeclaration,
+  isPropertySignatureDeclaration,
+  isSatisfiesExpression,
+  isTemplateExpression,
+  isTypeParameterDeclaration,
+  isTypeQueryNode,
+  isTypeReferenceNode,
+  isTypeAssertion,
+  isVariableDeclaration,
+  nodeText,
+  type Node,
+  type SourceFile,
+  type Symbol,
+} from "../ast/index.js";
 import { LanguageVariant } from "../core/languageVariant.js";
 import { isIdentifierPartCodePoint, isIdentifierStartCodePoint } from "../scanner/index.js";
 import { compareStringsCaseInsensitiveThenSensitive, ComparisonEqual } from "../stringutil/index.js";
@@ -982,39 +1004,32 @@ export function isCheckedFile(
 }
 
 export function isContextTokenValueLocation(contextToken: Node): boolean {
-  switch (contextToken.kind) {
-    case Kind.SemicolonToken:
-    case Kind.OpenBraceToken:
-    case Kind.CloseBraceToken:
-    case Kind.CommaToken:
-    case Kind.EqualsToken:
-    case Kind.OpenParenToken:
-    case Kind.CloseParenToken:
-    case Kind.OpenBracketToken:
-    case Kind.CloseBracketToken:
-    case Kind.ColonToken:
-    case Kind.QuestionToken:
-    case Kind.QuestionDotToken:
-    case Kind.DotToken:
-      return true;
-    default:
-      return Kind.FirstBinaryOperator <= contextToken.kind && contextToken.kind <= Kind.LastBinaryOperator;
-  }
+  const parent = contextToken.parent;
+  return parent !== undefined
+    && (contextToken.kind === Kind.TypeOfKeyword && (isTypeQueryNode(parent) || parent.kind === Kind.TypeOfExpression)
+      || contextToken.kind === Kind.AssertsKeyword && parent.kind === Kind.TypePredicate);
 }
 
 export function isContextTokenTypeLocation(contextToken: Node): boolean {
+  const parent = contextToken.parent;
+  if (parent === undefined) return false;
   switch (contextToken.kind) {
     case Kind.ColonToken:
+      return isPropertyDeclaration(parent)
+        || isPropertySignatureDeclaration(parent)
+        || isParameterDeclaration(parent)
+        || isVariableDeclaration(parent)
+        || isFunctionLike(parent);
+    case Kind.EqualsToken:
+      return parent.kind === Kind.TypeAliasDeclaration || isTypeParameterDeclaration(parent);
+    case Kind.AsKeyword:
+      return isAsExpression(parent);
     case Kind.LessThanToken:
-    case Kind.GreaterThanToken:
-    case Kind.CommaToken:
+      return isTypeReferenceNode(parent) || isTypeAssertion(parent);
     case Kind.ExtendsKeyword:
-    case Kind.ImplementsKeyword:
-    case Kind.TypeOfKeyword:
-    case Kind.KeyOfKeyword:
-    case Kind.InferKeyword:
-    case Kind.ReadonlyKeyword:
-      return true;
+      return isTypeParameterDeclaration(parent);
+    case Kind.SatisfiesKeyword:
+      return isSatisfiesExpression(parent);
     default:
       return false;
   }
@@ -1097,11 +1112,14 @@ export function isValidTrigger(file: SourceFile, triggerCharacter: CompletionsTr
     case "#":
       return contextToken?.kind === Kind.PrivateIdentifier && getContainingClass(contextToken) !== undefined;
     case "<":
-      return contextToken !== undefined && (contextToken.kind === Kind.JsxText || contextToken.kind === Kind.LessThanToken);
+      return contextToken !== undefined
+        && contextToken.kind === Kind.LessThanToken
+        && (!isBinaryExpression(contextToken.parent) || binaryExpressionMayBeOpenTag(contextToken.parent));
     case "/":
-      return contextToken !== undefined && contextToken.kind === Kind.JsxText;
+      return contextToken !== undefined
+        && (isStringLiteralOrTemplate(contextToken) || contextToken.kind === Kind.LessThanSlashToken && contextToken.parent !== undefined && isJsxClosingElement(contextToken.parent));
     case " ":
-      return contextToken !== undefined;
+      return contextToken !== undefined && contextToken.kind === Kind.ImportKeyword && contextToken.parent?.kind === Kind.SourceFile;
     default:
       return false;
   }
@@ -1161,9 +1179,12 @@ function isKeywordKind(kind: Kind): boolean {
 function isStringLiteralOrTemplate(node: Node): boolean {
   return node.kind === Kind.StringLiteral
     || node.kind === Kind.NoSubstitutionTemplateLiteral
-    || node.kind === Kind.TemplateHead
-    || node.kind === Kind.TemplateMiddle
-    || node.kind === Kind.TemplateTail;
+    || isTemplateExpression(node)
+    || node.kind === Kind.TaggedTemplateExpression;
+}
+
+function binaryExpressionMayBeOpenTag(binaryExpression: Node): boolean {
+  return (binaryExpression as { readonly left?: Node | undefined }).left?.kind === Kind.MissingDeclaration;
 }
 
 function getContainingClass(node: Node): Node | undefined {
