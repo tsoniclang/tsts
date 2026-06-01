@@ -9,8 +9,11 @@ import {
   isElementAccessExpression,
   isEnumMember,
   isExportAssignment,
+  isExportDeclaration,
   isExportSpecifier,
   isFunctionDeclaration,
+  isFunctionLike,
+  isFunctionTypeNode,
   isGetAccessorDeclaration,
   isIdentifier,
   isImportCall,
@@ -30,6 +33,7 @@ import {
   isSetAccessorDeclaration,
   isShorthandPropertyAssignment,
   isStringLiteralLike,
+  isTypeNode,
   isTypeParameterDeclaration,
   Kind,
   type Node,
@@ -37,10 +41,19 @@ import {
 } from "../ast/index.js";
 import { getTouchingPropertyName } from "../astnav/index.js";
 import { ModifierFlags } from "../enums/index.js";
+import type { DefinitionResponse, DocumentUri, Location, Position, Range } from "../lsp/lsproto/index.js";
 import { getTextOfNode } from "../scanner/utilities.js";
 import { getPackageNameFromTypesPackageName, unmangleScopedPackageName } from "../module/index.js";
 import { getNodeModulePathParts } from "../modulespecifiers/index.js";
 import { changeExtension, isDeclarationFileName, removeFileExtension } from "../tspath/index.js";
+import {
+  createDefinitionLocations,
+  getDeclarationsFromLocation,
+  tryGetSignatureDeclaration,
+  type DefinitionChecker,
+  type DefinitionLocationHost,
+} from "./definition.js";
+import { createLspRangeFromBounds, createLspRangeFromNode, type LspRangeService } from "./utilities.js";
 
 export function isDefaultImportName(node: Node): boolean {
   const parent = node.parent;
@@ -59,6 +72,14 @@ export interface SourceDefinitionProgram {
   getSourceFile(fileName: string): SourceFile | undefined;
   readFile?(fileName: string): string | undefined;
   fileExists?(fileName: string): boolean;
+  getModeForUsageLocation?(file: SourceFile, moduleSpecifier: Node): ResolutionMode;
+  getTypeCheckerForFile?(context: unknown, sourceFile: SourceFile): SourceDefinitionCheckerLease;
+  getTypeChecker?(context: unknown): SourceDefinitionCheckerLease;
+  tryGetSourcePosition?(fileName: string, position: number): { readonly fileName: string; readonly pos: number } | undefined;
+  resolveModuleName?(moduleName: string, resolveFromFile: string, preferredMode: ResolutionMode): string | undefined;
+  parseSourceFile?(fileName: string, text: string): SourceFile;
+  inferImpliedNodeFormat?(fileName: string): ResolutionMode;
+  getReferenceAtPosition?(file: SourceFile, position: number): readonly [SourceFile, Node] | undefined;
 }
 
 export interface SourceDefinitionResolverHost {
@@ -71,6 +92,155 @@ export interface SourceDefinitionResolverHost {
 }
 
 export type ResolutionMode = "esnext" | "commonjs" | "preserve";
+
+export interface SourceDefinitionService extends LspRangeService, DefinitionLocationHost {
+  readonly converters: LspRangeService["converters"] & {
+    lineAndCharacterToPosition(file: SourceFile, position: Position): number;
+  };
+  getProgramAndFile(documentURI: DocumentUri): readonly [SourceDefinitionProgram, SourceFile];
+  provideDefinitionWorker?(documentURI: DocumentUri, position: Position, context?: unknown): DefinitionResponse;
+  clientSupportsDefinitionLink?(context?: unknown): boolean;
+}
+
+export type SourceDefinitionCheckerLease =
+  | readonly [SourceDefinitionChecker, () => void]
+  | { readonly checker: SourceDefinitionChecker; readonly release: () => void };
+
+export interface SourceDefinitionChecker extends DefinitionChecker {}
+
+export function provideSourceDefinition(
+  service: SourceDefinitionService,
+  documentURI: DocumentUri,
+  position: Position,
+  context: unknown = undefined,
+): DefinitionResponse {
+  const clientSupportsLink = service.clientSupportsDefinitionLink?.(context) === true;
+  const [program, file] = service.getProgramAndFile(documentURI);
+  const pos = service.converters.lineAndCharacterToPosition(file, position);
+  const resolverHost: SourceDefinitionResolverHost = {
+    program,
+    resolveFrom: file.fileName,
+  };
+  const tryGetSourcePosition = tryGetSourcePositionFromService(service) ?? program.tryGetSourcePosition?.bind(program);
+  if (tryGetSourcePosition !== undefined) resolverHost.tryGetSourcePosition = tryGetSourcePosition;
+  const resolveModuleName = resolveModuleNameFromProgram(program);
+  if (resolveModuleName !== undefined) resolverHost.resolveModuleName = resolveModuleName;
+  const parseSourceFile = parseSourceFileFromProgram(program);
+  if (parseSourceFile !== undefined) resolverHost.parseSourceFile = parseSourceFile;
+  const inferImpliedNodeFormat = inferImpliedNodeFormatFromProgram(program);
+  if (inferImpliedNodeFormat !== undefined) resolverHost.inferImpliedNodeFormat = inferImpliedNodeFormat;
+  const resolver = new SourceDefResolver(resolverHost);
+  const node = getTouchingPropertyName(file, pos) ?? file;
+
+  if (node.kind === Kind.SourceFile) {
+    const tripleSlash = resolver.resolveTripleSlashReference(file, pos, getReferenceAtPositionFromProgram(program));
+    if (tripleSlash !== undefined) {
+      const [declarations, reference] = tripleSlash;
+      const originSelectionRange = createLspRangeFromBounds(service, reference.pos, reference.end, file);
+      return createDefinitionLocations(service, originSelectionRange, clientSupportsLink, declarations, undefined);
+    }
+    return {};
+  }
+
+  const originSelectionRange = createLspRangeFromNode(service, node, file);
+  const containingModuleSpecifier = findContainingModuleSpecifier(node);
+  if (node === containingModuleSpecifier) {
+    const specifierMode = program.getModeForUsageLocation?.(file, containingModuleSpecifier) ?? resolver.inferImpliedNodeFormat(file.fileName);
+    const implementationFile = resolver.resolveImplementation(getTextOfPropertyName(containingModuleSpecifier), specifierMode);
+    if (implementationFile !== "") {
+      const sourceFile = resolver.getOrParseSourceFile(implementationFile);
+      if (sourceFile !== undefined) {
+        return createDefinitionLocations(service, originSelectionRange, clientSupportsLink, getSourceDefinitionEntryDeclarations(sourceFile), undefined);
+      }
+    }
+    return service.provideDefinitionWorker?.(documentURI, position, context) ?? {};
+  }
+
+  let resolvedImplFile = "";
+  if (containingModuleSpecifier !== undefined) {
+    const specifierMode = program.getModeForUsageLocation?.(file, containingModuleSpecifier) ?? resolver.inferImpliedNodeFormat(file.fileName);
+    resolvedImplFile = resolver.resolveImplementation(getTextOfPropertyName(containingModuleSpecifier), specifierMode);
+  }
+
+  if (resolvedImplFile !== "") {
+    const names = getCandidateSourceDeclarationNames(node, undefined);
+    const moduleResults = resolver.searchImplementationFile(node, resolvedImplFile, names);
+    if (moduleResults.length !== 0 && (!isPartOfTypePosition(node) || hasConcreteSourceDeclarations(moduleResults))) {
+      return createDefinitionLocations(service, originSelectionRange, clientSupportsLink, uniqueDeclarationNodes(moduleResults), undefined);
+    }
+  }
+
+  const checkerInfo = getSourceDefCheckerInfo(context, program, file, node);
+  if (checkerInfo === undefined) {
+    return service.provideDefinitionWorker?.(documentURI, position, context) ?? {};
+  }
+
+  const declarations = resolver.resolveFromCheckerInfo(node, resolvedImplFile, checkerInfo.declarations, checkerInfo.moduleSpecifier);
+  if (declarations.length === 0) {
+    if (containingModuleSpecifier !== undefined && resolvedImplFile !== "" && !hasConcreteSourceDeclarations(checkerInfo.declarations)) {
+      const sourceFile = resolver.getOrParseSourceFile(resolvedImplFile);
+      if (sourceFile !== undefined) {
+        return createDefinitionLocations(service, originSelectionRange, clientSupportsLink, getSourceDefinitionEntryDeclarations(sourceFile), undefined);
+      }
+    }
+    return service.provideDefinitionWorker?.(documentURI, position, context) ?? {};
+  }
+  return createDefinitionLocations(service, originSelectionRange, clientSupportsLink, declarations, undefined);
+}
+
+export interface SourceDefCheckerInfo {
+  readonly declarations: readonly Node[];
+  readonly moduleSpecifier: string;
+}
+
+export function getSourceDefCheckerInfo(
+  context: unknown,
+  program: SourceDefinitionProgram,
+  file: SourceFile,
+  node: Node,
+): SourceDefCheckerInfo | undefined {
+  const lease = program.getTypeCheckerForFile?.(context, file) ?? program.getTypeChecker?.(context);
+  if (lease === undefined) return undefined;
+  const normalized = normalizeSourceDefinitionCheckerLease(lease);
+  try {
+    const checker = normalized.checker;
+    let declarations = [...getDeclarationsFromLocation(checker, node)];
+    const isPropertyName = node.parent !== undefined && isAccessExpression(node.parent) && accessExpressionName(node.parent) === node;
+    if (declarations.length === 0 && isPropertyName) {
+      const left = accessExpressionExpression(node.parent);
+      const type = left === undefined ? undefined : checker.getTypeAtLocation?.(left);
+      const property = type === undefined ? undefined : checker.getPropertyOfType?.(type, getTextOfPropertyName(node));
+      if (property !== undefined) declarations = [...property.declarations];
+    }
+    const calledDeclaration = tryGetSignatureDeclaration(checker, node);
+    if (calledDeclaration !== undefined) {
+      declarations = [...declarations.filter(declaration => !isFunctionLike(declaration)), calledDeclaration];
+    }
+    let resolveNode = node;
+    if (isPropertyName) {
+      let expression = accessExpressionExpression(node.parent);
+      while (expression !== undefined && isAccessExpression(expression)) {
+        expression = accessExpressionExpression(expression);
+      }
+      if (expression !== undefined) resolveNode = expression;
+    }
+    let moduleSpecifier = "";
+    const symbol = checker.getSymbolAtLocation?.(resolveNode);
+    if (symbol !== undefined) {
+      for (const declaration of symbol.declarations) {
+        if (!(isImportSpecifier(declaration) || isImportClause(declaration) || isNamespaceImport(declaration) || isImportEqualsDeclaration(declaration))) continue;
+        const specifier = tryGetModuleSpecifierFromDeclaration(declaration);
+        if (specifier !== undefined) {
+          moduleSpecifier = getTextOfPropertyName(specifier);
+          break;
+        }
+      }
+    }
+    return { declarations, moduleSpecifier };
+  } finally {
+    normalized.release();
+  }
+}
 
 export class SourceDefResolver {
   readonly host: SourceDefinitionResolverHost;
@@ -360,6 +530,71 @@ export function findClosestDeclarationNode(sourceFile: SourceFile, pos: number):
     if (isDeclaration(current) || current.kind === Kind.ExportAssignment) return current;
   }
   return getSourceDefinitionEntryNode(sourceFile);
+}
+
+function normalizeSourceDefinitionCheckerLease(lease: SourceDefinitionCheckerLease): { readonly checker: SourceDefinitionChecker; readonly release: () => void } {
+  if ("checker" in lease) return lease;
+  return { checker: lease[0], release: lease[1] };
+}
+
+function tryGetSourcePositionFromService(
+  service: SourceDefinitionService,
+): ((fileName: string, position: number) => { readonly fileName: string; readonly pos: number } | undefined) | undefined {
+  const method = (service as { readonly tryGetSourcePosition?: (fileName: string, position: number) => { readonly fileName: string; readonly pos: number } | undefined }).tryGetSourcePosition;
+  return method?.bind(service);
+}
+
+function resolveModuleNameFromProgram(
+  program: SourceDefinitionProgram,
+): ((moduleName: string, resolveFromFile: string, preferredMode: ResolutionMode) => string | undefined) | undefined {
+  return program.resolveModuleName?.bind(program);
+}
+
+function parseSourceFileFromProgram(
+  program: SourceDefinitionProgram,
+): ((fileName: string, text: string) => SourceFile) | undefined {
+  return program.parseSourceFile?.bind(program);
+}
+
+function inferImpliedNodeFormatFromProgram(
+  program: SourceDefinitionProgram,
+): ((fileName: string) => ResolutionMode) | undefined {
+  return program.inferImpliedNodeFormat?.bind(program);
+}
+
+function getReferenceAtPositionFromProgram(
+  program: SourceDefinitionProgram,
+): (file: SourceFile, position: number) => readonly [SourceFile, Node] | undefined {
+  return (file, position) => program.getReferenceAtPosition?.(file, position);
+}
+
+function isPartOfTypePosition(node: Node): boolean {
+  for (let current: Node | undefined = node; current !== undefined; current = current.parent) {
+    if (isTypeNode(current)) return true;
+    if ((isImportSpecifier(current) || isExportSpecifier(current)) && current.isTypeOnly) return true;
+    if (isImportClause(current) && current.phaseModifier === Kind.TypeKeyword) return true;
+    if (isExportDeclaration(current) && current.isTypeOnly) return true;
+  }
+  return false;
+}
+
+function tryGetModuleSpecifierFromDeclaration(declaration: Node): Node | undefined {
+  for (let current: Node | undefined = declaration; current !== undefined; current = current.parent) {
+    if ((isImportDeclaration(current) || isExportDeclaration(current)) && current.moduleSpecifier !== undefined) {
+      return current.moduleSpecifier;
+    }
+    if (isImportEqualsDeclaration(current)) {
+      const moduleReference = current.moduleReference;
+      return moduleReference.kind === Kind.ExternalModuleReference ? moduleReference.expression : undefined;
+    }
+  }
+  return undefined;
+}
+
+function accessExpressionExpression(node: Node): Node | undefined {
+  if (isPropertyAccessExpression(node)) return node.expression;
+  if (isElementAccessExpression(node)) return node.expression;
+  return undefined;
 }
 
 function getContainerNode(node: Node): Node | undefined {
