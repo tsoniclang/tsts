@@ -10,6 +10,8 @@ import { splitVolumePath, toPath, type Path } from "../../tspath/index.js";
 export type DocumentUri = string;
 export type URI = string;
 export type Method = string;
+export const CodeActionKindSourceRemoveUnusedImports = "source.removeUnusedImports";
+export const CodeActionKindSourceSortImports = "source.sortImports";
 
 export function documentUriFileName(uri: DocumentUri): string {
   if (isBundled(uri)) return uri;

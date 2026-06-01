@@ -1,375 +1,319 @@
 /**
- * Language-service parity map for TS-Go `ls/codeactions.go`.
+ * Code-action orchestration.
  *
- * This file preserves the upstream declaration and algorithm-line shape
- * for the TypeScript port. Runtime behavior is implemented by the
- * concrete modules that consume these exact parity maps.
+ * Port of TS-Go `internal/ls/codeactions.go`.
  */
 
-export interface UpstreamSourceLine {
-  readonly line: number;
-  readonly text: string;
+import { TextRange } from "../core/index.js";
+import { Diagnostics } from "../diagnostics/diagnostics.generated.js";
+import type { SourceFileSlim } from "../diagnostics/types.js";
+import {
+  CodeActionKindQuickFix,
+  CodeActionKindSourceFixAll,
+  CodeActionKindSourceOrganizeImports,
+  CodeActionKindSourceRemoveUnusedImports,
+  CodeActionKindSourceSortImports,
+  type CodeActionKind,
+  type CodeActionParams,
+  type CodeActionResponse,
+  type CommandOrCodeAction,
+  type Diagnostic,
+  type DocumentUri,
+  type Position,
+  type TextEdit,
+} from "../lsp/lsproto/index.js";
+import { compareRanges } from "../lsp/lsproto/util.js";
+import { getAllDiagnostics, type DiagnosticProgram } from "./diagnostics.js";
+import { fileNameToDocumentURI } from "./lsconv/index.js";
+
+export interface CodeFixProvider<TProgram extends CodeActionProgram = CodeActionProgram, TFile extends CodeActionSourceFile = CodeActionSourceFile> {
+  readonly errorCodes: readonly number[];
+  readonly getCodeActions: (fixContext: CodeFixContext<TProgram, TFile>) => readonly CodeAction[];
+  readonly fixIds?: readonly string[];
+  readonly getAllCodeActions?: (fixContext: CodeFixContext<TProgram, TFile>) => CombinedCodeActions | undefined;
 }
 
-export interface UpstreamDeclaration {
-  readonly kind: "type" | "func" | "const" | "var";
-  readonly line: number;
-  readonly name: string;
-  readonly receiver?: string;
+export interface CodeFixContext<TProgram extends CodeActionProgram = CodeActionProgram, TFile extends CodeActionSourceFile = CodeActionSourceFile> {
+  readonly sourceFile: TFile;
+  readonly span?: TextRange;
+  readonly errorCode?: number;
+  readonly program: TProgram;
+  readonly languageService: CodeActionLanguageService<TProgram, TFile>;
+  readonly diagnostic?: Diagnostic;
+  readonly params?: CodeActionParams;
 }
 
-export const lsCodeActionsUpstreamPath = "ls/codeactions.go";
-
-export const lsCodeActionsDeclarations: readonly UpstreamDeclaration[] = [
-  {"line":20,"kind":"type","name":"CodeFixProvider"},
-  {"line":28,"kind":"type","name":"CodeFixContext"},
-  {"line":39,"kind":"type","name":"CodeAction"},
-  {"line":48,"kind":"func","name":"Compare","receiver":"a *CodeAction"},
-  {"line":64,"kind":"type","name":"CombinedCodeActions"},
-  {"line":70,"kind":"var","name":"codeFixProviders"},
-  {"line":78,"kind":"func","name":"ProvideCodeActions","receiver":"l *LanguageService"},
-  {"line":155,"kind":"func","name":"getFixAllQuickFixes","receiver":"l *LanguageService"},
-  {"line":210,"kind":"func","name":"hasMultipleFixableDiagnostics"},
-  {"line":227,"kind":"func","name":"codeActionKindContains"},
-  {"line":234,"kind":"func","name":"isFixAllKind"},
-  {"line":240,"kind":"func","name":"wantsQuickFixes"},
-  {"line":254,"kind":"func","name":"createFixAllAction","receiver":"l *LanguageService"},
-  {"line":297,"kind":"func","name":"getOrganizeImportsActionTitle"},
-  {"line":311,"kind":"func","name":"getOrganizeImportsActionsForKind"},
-  {"line":333,"kind":"func","name":"createOrganizeImportsAction","receiver":"l *LanguageService"},
-  {"line":372,"kind":"func","name":"containsErrorCode"},
-  {"line":377,"kind":"func","name":"convertToLSPCodeAction"},
-];
-
-export const lsCodeActionsSourceLines: readonly UpstreamSourceLine[] = [
-  {"line":1,"text":"package ls"},
-  {"line":3,"text":"import ("},
-  {"line":4,"text":"\t\"cmp\""},
-  {"line":5,"text":"\t\"context\""},
-  {"line":6,"text":"\t\"slices\""},
-  {"line":7,"text":"\t\"strings\""},
-  {"line":9,"text":"\t\"github.com/microsoft/typescript-go/internal/ast\""},
-  {"line":10,"text":"\t\"github.com/microsoft/typescript-go/internal/collections\""},
-  {"line":11,"text":"\t\"github.com/microsoft/typescript-go/internal/compiler\""},
-  {"line":12,"text":"\t\"github.com/microsoft/typescript-go/internal/core\""},
-  {"line":13,"text":"\t\"github.com/microsoft/typescript-go/internal/diagnostics\""},
-  {"line":14,"text":"\t\"github.com/microsoft/typescript-go/internal/locale\""},
-  {"line":15,"text":"\t\"github.com/microsoft/typescript-go/internal/ls/lsconv\""},
-  {"line":16,"text":"\t\"github.com/microsoft/typescript-go/internal/lsp/lsproto\""},
-  {"line":17,"text":")"},
-  {"line":20,"text":"type CodeFixProvider struct {"},
-  {"line":21,"text":"\tErrorCodes        []int32"},
-  {"line":22,"text":"\tGetCodeActions    func(ctx context.Context, fixContext *CodeFixContext) ([]*CodeAction, error)"},
-  {"line":23,"text":"\tFixIds            []string"},
-  {"line":24,"text":"\tGetAllCodeActions func(ctx context.Context, fixContext *CodeFixContext) (*CombinedCodeActions, error)"},
-  {"line":25,"text":"}"},
-  {"line":28,"text":"type CodeFixContext struct {"},
-  {"line":29,"text":"\tSourceFile *ast.SourceFile"},
-  {"line":30,"text":"\tSpan       core.TextRange"},
-  {"line":31,"text":"\tErrorCode  int32"},
-  {"line":32,"text":"\tProgram    *compiler.Program"},
-  {"line":33,"text":"\tLS         *LanguageService"},
-  {"line":34,"text":"\tDiagnostic *lsproto.Diagnostic"},
-  {"line":35,"text":"\tParams     *lsproto.CodeActionParams"},
-  {"line":36,"text":"}"},
-  {"line":39,"text":"type CodeAction struct {"},
-  {"line":40,"text":"\tDescription       string"},
-  {"line":41,"text":"\tChanges           []*lsproto.TextEdit"},
-  {"line":42,"text":"\tFixID             string"},
-  {"line":43,"text":"\tFixAllDescription string"},
-  {"line":44,"text":"}"},
-  {"line":48,"text":"func (a *CodeAction) Compare(b *CodeAction) int {"},
-  {"line":49,"text":"\tif c := strings.Compare(a.Description, b.Description); c != 0 {"},
-  {"line":50,"text":"\t\treturn c"},
-  {"line":51,"text":"\t}"},
-  {"line":52,"text":"\tif c := cmp.Compare(len(a.Changes), len(b.Changes)); c != 0 {"},
-  {"line":53,"text":"\t\treturn c"},
-  {"line":54,"text":"\t}"},
-  {"line":55,"text":"\tfor i, edit := range a.Changes {"},
-  {"line":56,"text":"\t\tif c := edit.Compare(b.Changes[i]); c != 0 {"},
-  {"line":57,"text":"\t\t\treturn c"},
-  {"line":58,"text":"\t\t}"},
-  {"line":59,"text":"\t}"},
-  {"line":60,"text":"\treturn 0"},
-  {"line":61,"text":"}"},
-  {"line":64,"text":"type CombinedCodeActions struct {"},
-  {"line":65,"text":"\tDescription string"},
-  {"line":66,"text":"\tChanges     []*lsproto.TextEdit"},
-  {"line":67,"text":"}"},
-  {"line":70,"text":"var codeFixProviders = []*CodeFixProvider{"},
-  {"line":71,"text":"\tImportFixProvider,"},
-  {"line":72,"text":"\tIsolatedDeclarationsFixProvider,"},
-  {"line":73,"text":"\tFixClassIncorrectlyImplementsInterfaceProvider,"},
-  {"line":75,"text":"}"},
-  {"line":78,"text":"func (l *LanguageService) ProvideCodeActions(ctx context.Context, params *lsproto.CodeActionParams) (lsproto.CodeActionResponse, error) {"},
-  {"line":79,"text":"\tprogram, file := l.getProgramAndFile(params.TextDocument.Uri)"},
-  {"line":81,"text":"\tvar actions []lsproto.CommandOrCodeAction"},
-  {"line":83,"text":"\tif params.Context != nil && params.Context.Only != nil {"},
-  {"line":84,"text":"\t\tfor _, kind := range *params.Context.Only {"},
-  {"line":85,"text":"\t\t\tmatchingKinds := getOrganizeImportsActionsForKind(kind)"},
-  {"line":86,"text":"\t\t\tfor _, matchingKind := range matchingKinds {"},
-  {"line":87,"text":"\t\t\t\torganizeAction := l.createOrganizeImportsAction(ctx, program, file, matchingKind)"},
-  {"line":88,"text":"\t\t\t\tactions = append(actions, *organizeAction)"},
-  {"line":89,"text":"\t\t\t}"},
-  {"line":91,"text":"\t\t\tif isFixAllKind(kind) {"},
-  {"line":92,"text":"\t\t\t\tfixAllAction, err := l.createFixAllAction(ctx, program, file, params.TextDocument.Uri)"},
-  {"line":93,"text":"\t\t\t\tif err != nil {"},
-  {"line":94,"text":"\t\t\t\t\treturn lsproto.CodeActionResponse{}, err"},
-  {"line":95,"text":"\t\t\t\t}"},
-  {"line":96,"text":"\t\t\t\tif fixAllAction != nil {"},
-  {"line":97,"text":"\t\t\t\t\tactions = append(actions, *fixAllAction)"},
-  {"line":98,"text":"\t\t\t\t}"},
-  {"line":99,"text":"\t\t\t}"},
-  {"line":100,"text":"\t\t}"},
-  {"line":101,"text":"\t}"},
-  {"line":103,"text":"\tif params.Context != nil && params.Context.Diagnostics != nil && wantsQuickFixes(params.Context.Only) {"},
-  {"line":104,"text":"\t\tfixIdSeen := make(map[string]*CodeFixProvider)"},
-  {"line":106,"text":"\t\tfor _, diag := range params.Context.Diagnostics {"},
-  {"line":107,"text":"\t\t\tif diag.Code == nil || diag.Code.Integer == nil {"},
-  {"line":108,"text":"\t\t\t\tcontinue"},
-  {"line":109,"text":"\t\t\t}"},
-  {"line":111,"text":"\t\t\terrorCode := *diag.Code.Integer"},
-  {"line":113,"text":"\t\t\tfor _, provider := range codeFixProviders {"},
-  {"line":114,"text":"\t\t\t\tif !containsErrorCode(provider.ErrorCodes, errorCode) {"},
-  {"line":115,"text":"\t\t\t\t\tcontinue"},
-  {"line":116,"text":"\t\t\t\t}"},
-  {"line":118,"text":"\t\t\t\tposition := l.converters.LineAndCharacterToPosition(file, diag.Range.Start)"},
-  {"line":119,"text":"\t\t\t\tendPosition := l.converters.LineAndCharacterToPosition(file, diag.Range.End)"},
-  {"line":120,"text":"\t\t\t\tfixContext := &CodeFixContext{"},
-  {"line":121,"text":"\t\t\t\t\tSourceFile: file,"},
-  {"line":122,"text":"\t\t\t\t\tSpan:       core.NewTextRange(int(position), int(endPosition)),"},
-  {"line":123,"text":"\t\t\t\t\tErrorCode:  errorCode,"},
-  {"line":124,"text":"\t\t\t\t\tProgram:    program,"},
-  {"line":125,"text":"\t\t\t\t\tLS:         l,"},
-  {"line":126,"text":"\t\t\t\t\tDiagnostic: diag,"},
-  {"line":127,"text":"\t\t\t\t\tParams:     params,"},
-  {"line":128,"text":"\t\t\t\t}"},
-  {"line":130,"text":"\t\t\t\tproviderActions, err := provider.GetCodeActions(ctx, fixContext)"},
-  {"line":131,"text":"\t\t\t\tif err != nil {"},
-  {"line":132,"text":"\t\t\t\t\treturn lsproto.CodeActionResponse{}, err"},
-  {"line":133,"text":"\t\t\t\t}"},
-  {"line":134,"text":"\t\t\t\tfor _, action := range providerActions {"},
-  {"line":135,"text":"\t\t\t\t\tactions = append(actions, convertToLSPCodeAction(action, diag, params.TextDocument.Uri))"},
-  {"line":136,"text":"\t\t\t\t\tif action.FixID != \"\" {"},
-  {"line":137,"text":"\t\t\t\t\t\tfixIdSeen[action.FixID] = provider"},
-  {"line":138,"text":"\t\t\t\t\t}"},
-  {"line":139,"text":"\t\t\t\t}"},
-  {"line":140,"text":"\t\t\t}"},
-  {"line":141,"text":"\t\t}"},
-  {"line":143,"text":"\t\tfixAllActions, err := l.getFixAllQuickFixes(ctx, program, file, params.TextDocument.Uri, fixIdSeen)"},
-  {"line":144,"text":"\t\tif err != nil {"},
-  {"line":145,"text":"\t\t\treturn lsproto.CodeActionResponse{}, err"},
-  {"line":146,"text":"\t\t}"},
-  {"line":147,"text":"\t\tactions = append(actions, fixAllActions...)"},
-  {"line":148,"text":"\t}"},
-  {"line":150,"text":"\treturn lsproto.CommandOrCodeActionArrayOrNull{CommandOrCodeActionArray: &actions}, nil"},
-  {"line":151,"text":"}"},
-  {"line":155,"text":"func (l *LanguageService) getFixAllQuickFixes("},
-  {"line":156,"text":"\tctx context.Context,"},
-  {"line":157,"text":"\tprogram *compiler.Program,"},
-  {"line":158,"text":"\tfile *ast.SourceFile,"},
-  {"line":159,"text":"\turi lsproto.DocumentUri,"},
-  {"line":160,"text":"\tfixIdSeen map[string]*CodeFixProvider,"},
-  {"line":161,"text":") ([]lsproto.CommandOrCodeAction, error) {"},
-  {"line":162,"text":"\tvar actions []lsproto.CommandOrCodeAction"},
-  {"line":165,"text":"\tvar seen collections.Set[*CodeFixProvider]"},
-  {"line":166,"text":"\tfor _, provider := range fixIdSeen {"},
-  {"line":167,"text":"\t\tif seen.Has(provider) {"},
-  {"line":168,"text":"\t\t\tcontinue"},
-  {"line":169,"text":"\t\t}"},
-  {"line":170,"text":"\t\tseen.Add(provider)"},
-  {"line":172,"text":"\t\tif provider.GetAllCodeActions == nil {"},
-  {"line":173,"text":"\t\t\tcontinue"},
-  {"line":174,"text":"\t\t}"},
-  {"line":176,"text":"\t\tif !hasMultipleFixableDiagnostics(ctx, program, file, provider.ErrorCodes) {"},
-  {"line":177,"text":"\t\t\tcontinue"},
-  {"line":178,"text":"\t\t}"},
-  {"line":180,"text":"\t\tfixContext := &CodeFixContext{"},
-  {"line":181,"text":"\t\t\tSourceFile: file,"},
-  {"line":182,"text":"\t\t\tProgram:    program,"},
-  {"line":183,"text":"\t\t\tLS:         l,"},
-  {"line":184,"text":"\t\t}"},
-  {"line":185,"text":"\t\tcombined, err := provider.GetAllCodeActions(ctx, fixContext)"},
-  {"line":186,"text":"\t\tif err != nil {"},
-  {"line":187,"text":"\t\t\treturn nil, err"},
-  {"line":188,"text":"\t\t}"},
-  {"line":189,"text":"\t\tif combined != nil && len(combined.Changes) > 0 {"},
-  {"line":190,"text":"\t\t\tkind := lsproto.CodeActionKindQuickFix"},
-  {"line":191,"text":"\t\t\tchanges := map[lsproto.DocumentUri][]*lsproto.TextEdit{"},
-  {"line":192,"text":"\t\t\t\turi: combined.Changes,"},
-  {"line":193,"text":"\t\t\t}"},
-  {"line":194,"text":"\t\t\tactions = append(actions, lsproto.CommandOrCodeAction{"},
-  {"line":195,"text":"\t\t\t\tCodeAction: &lsproto.CodeAction{"},
-  {"line":196,"text":"\t\t\t\t\tTitle: combined.Description,"},
-  {"line":197,"text":"\t\t\t\t\tKind:  &kind,"},
-  {"line":198,"text":"\t\t\t\t\tEdit:  &lsproto.WorkspaceEdit{Changes: &changes},"},
-  {"line":199,"text":"\t\t\t\t},"},
-  {"line":200,"text":"\t\t\t})"},
-  {"line":201,"text":"\t\t}"},
-  {"line":202,"text":"\t}"},
-  {"line":204,"text":"\treturn actions, nil"},
-  {"line":205,"text":"}"},
-  {"line":210,"text":"func hasMultipleFixableDiagnostics(ctx context.Context, program *compiler.Program, file *ast.SourceFile, errorCodes []int32) bool {"},
-  {"line":211,"text":"\tallDiags := getAllDiagnostics(ctx, program, file)"},
-  {"line":212,"text":"\tcount := 0"},
-  {"line":213,"text":"\tfor _, d := range allDiags {"},
-  {"line":214,"text":"\t\tif containsErrorCode(errorCodes, d.Code()) {"},
-  {"line":215,"text":"\t\t\tcount++"},
-  {"line":216,"text":"\t\t\tif count >= 2 {"},
-  {"line":217,"text":"\t\t\t\treturn true"},
-  {"line":218,"text":"\t\t\t}"},
-  {"line":219,"text":"\t\t}"},
-  {"line":220,"text":"\t}"},
-  {"line":221,"text":"\treturn false"},
-  {"line":222,"text":"}"},
-  {"line":227,"text":"func codeActionKindContains(requestedKind, actionKind lsproto.CodeActionKind) bool {"},
-  {"line":228,"text":"\treturn requestedKind == actionKind ||"},
-  {"line":229,"text":"\t\trequestedKind == \"\" ||"},
-  {"line":230,"text":"\t\tstrings.HasPrefix(string(actionKind), string(requestedKind)+\".\")"},
-  {"line":231,"text":"}"},
-  {"line":234,"text":"func isFixAllKind(kind lsproto.CodeActionKind) bool {"},
-  {"line":235,"text":"\treturn codeActionKindContains(kind, lsproto.CodeActionKindSourceFixAll)"},
-  {"line":236,"text":"}"},
-  {"line":240,"text":"func wantsQuickFixes(only *[]lsproto.CodeActionKind) bool {"},
-  {"line":241,"text":"\tif only == nil || len(*only) == 0 {"},
-  {"line":242,"text":"\t\treturn true"},
-  {"line":243,"text":"\t}"},
-  {"line":244,"text":"\tfor _, kind := range *only {"},
-  {"line":245,"text":"\t\tif codeActionKindContains(kind, lsproto.CodeActionKindQuickFix) {"},
-  {"line":246,"text":"\t\t\treturn true"},
-  {"line":247,"text":"\t\t}"},
-  {"line":248,"text":"\t}"},
-  {"line":249,"text":"\treturn false"},
-  {"line":250,"text":"}"},
-  {"line":254,"text":"func (l *LanguageService) createFixAllAction("},
-  {"line":255,"text":"\tctx context.Context,"},
-  {"line":256,"text":"\tprogram *compiler.Program,"},
-  {"line":257,"text":"\tfile *ast.SourceFile,"},
-  {"line":258,"text":"\turi lsproto.DocumentUri,"},
-  {"line":259,"text":") (*lsproto.CommandOrCodeAction, error) {"},
-  {"line":260,"text":"\tkind := lsproto.CodeActionKindSourceFixAll"},
-  {"line":261,"text":"\tlspChanges := make(map[lsproto.DocumentUri][]*lsproto.TextEdit)"},
-  {"line":263,"text":"\tfor _, provider := range codeFixProviders {"},
-  {"line":264,"text":"\t\tif provider.GetAllCodeActions == nil {"},
-  {"line":265,"text":"\t\t\tcontinue"},
-  {"line":266,"text":"\t\t}"},
-  {"line":268,"text":"\t\tfixContext := &CodeFixContext{"},
-  {"line":269,"text":"\t\t\tSourceFile: file,"},
-  {"line":270,"text":"\t\t\tProgram:    program,"},
-  {"line":271,"text":"\t\t\tLS:         l,"},
-  {"line":272,"text":"\t\t}"},
-  {"line":274,"text":"\t\tcombined, err := provider.GetAllCodeActions(ctx, fixContext)"},
-  {"line":275,"text":"\t\tif err != nil {"},
-  {"line":276,"text":"\t\t\treturn nil, err"},
-  {"line":277,"text":"\t\t}"},
-  {"line":278,"text":"\t\tif combined != nil && len(combined.Changes) > 0 {"},
-  {"line":279,"text":"\t\t\tlspChanges[uri] = append(lspChanges[uri], combined.Changes...)"},
-  {"line":280,"text":"\t\t}"},
-  {"line":281,"text":"\t}"},
-  {"line":283,"text":"\tif len(lspChanges) == 0 {"},
-  {"line":284,"text":"\t\treturn nil, nil"},
-  {"line":285,"text":"\t}"},
-  {"line":287,"text":"\treturn &lsproto.CommandOrCodeAction{"},
-  {"line":288,"text":"\t\tCodeAction: &lsproto.CodeAction{"},
-  {"line":289,"text":"\t\t\tTitle: diagnostics.Fix_All.Localize(locale.FromContext(ctx)),"},
-  {"line":290,"text":"\t\t\tKind:  &kind,"},
-  {"line":291,"text":"\t\t\tEdit:  &lsproto.WorkspaceEdit{Changes: &lspChanges},"},
-  {"line":292,"text":"\t\t},"},
-  {"line":293,"text":"\t}, nil"},
-  {"line":294,"text":"}"},
-  {"line":297,"text":"func getOrganizeImportsActionTitle(ctx context.Context, kind lsproto.CodeActionKind) string {"},
-  {"line":298,"text":"\tloc := locale.FromContext(ctx)"},
-  {"line":299,"text":"\tswitch kind {"},
-  {"line":300,"text":"\tcase lsproto.CodeActionKindSourceRemoveUnusedImports:"},
-  {"line":301,"text":"\t\treturn diagnostics.Remove_Unused_Imports.Localize(loc)"},
-  {"line":302,"text":"\tcase lsproto.CodeActionKindSourceSortImports:"},
-  {"line":303,"text":"\t\treturn diagnostics.Sort_Imports.Localize(loc)"},
-  {"line":304,"text":"\tdefault:"},
-  {"line":305,"text":"\t\treturn diagnostics.Organize_Imports.Localize(loc)"},
-  {"line":306,"text":"\t}"},
-  {"line":307,"text":"}"},
-  {"line":311,"text":"func getOrganizeImportsActionsForKind(requestedKind lsproto.CodeActionKind) []lsproto.CodeActionKind {"},
-  {"line":312,"text":"\torganizeImportsKinds := []lsproto.CodeActionKind{"},
-  {"line":313,"text":"\t\tlsproto.CodeActionKindSourceOrganizeImports,"},
-  {"line":314,"text":"\t\tlsproto.CodeActionKindSourceRemoveUnusedImports,"},
-  {"line":315,"text":"\t\tlsproto.CodeActionKindSourceSortImports,"},
-  {"line":316,"text":"\t}"},
-  {"line":318,"text":"\tvar result []lsproto.CodeActionKind"},
-  {"line":319,"text":"\tfor _, organizeKind := range organizeImportsKinds {"},
-  {"line":320,"text":"\t\tif codeActionKindContains(requestedKind, organizeKind) {"},
-  {"line":321,"text":"\t\t\tresult = append(result, organizeKind)"},
-  {"line":322,"text":"\t\t}"},
-  {"line":323,"text":"\t}"},
-  {"line":325,"text":"\tif slices.Contains(result, requestedKind) {"},
-  {"line":326,"text":"\t\treturn []lsproto.CodeActionKind{requestedKind}"},
-  {"line":327,"text":"\t}"},
-  {"line":329,"text":"\treturn result"},
-  {"line":330,"text":"}"},
-  {"line":333,"text":"func (l *LanguageService) createOrganizeImportsAction("},
-  {"line":334,"text":"\tctx context.Context,"},
-  {"line":335,"text":"\tprogram *compiler.Program,"},
-  {"line":336,"text":"\tfile *ast.SourceFile,"},
-  {"line":337,"text":"\tkind lsproto.CodeActionKind,"},
-  {"line":338,"text":") *lsproto.CommandOrCodeAction {"},
-  {"line":339,"text":"\ttitle := getOrganizeImportsActionTitle(ctx, kind)"},
-  {"line":340,"text":"\tchanges := l.OrganizeImports("},
-  {"line":341,"text":"\t\tctx,"},
-  {"line":342,"text":"\t\tfile,"},
-  {"line":343,"text":"\t\tprogram,"},
-  {"line":344,"text":"\t\tkind,"},
-  {"line":345,"text":"\t)"},
-  {"line":346,"text":"\tif len(changes) == 0 {"},
-  {"line":347,"text":"\t\treturn &lsproto.CommandOrCodeAction{"},
-  {"line":348,"text":"\t\t\tCodeAction: &lsproto.CodeAction{"},
-  {"line":349,"text":"\t\t\t\tTitle: title,"},
-  {"line":350,"text":"\t\t\t\tKind:  &kind,"},
-  {"line":351,"text":"\t\t\t\tEdit:  &lsproto.WorkspaceEdit{Changes: &map[lsproto.DocumentUri][]*lsproto.TextEdit{}},"},
-  {"line":352,"text":"\t\t\t},"},
-  {"line":353,"text":"\t\t}"},
-  {"line":354,"text":"\t}"},
-  {"line":356,"text":"\tlspChanges := make(map[lsproto.DocumentUri][]*lsproto.TextEdit)"},
-  {"line":357,"text":"\tfor fileName, edits := range changes {"},
-  {"line":358,"text":"\t\tfileURI := lsconv.FileNameToDocumentURI(fileName)"},
-  {"line":359,"text":"\t\tlspChanges[fileURI] = edits"},
-  {"line":360,"text":"\t}"},
-  {"line":362,"text":"\treturn &lsproto.CommandOrCodeAction{"},
-  {"line":363,"text":"\t\tCodeAction: &lsproto.CodeAction{"},
-  {"line":364,"text":"\t\t\tTitle: title,"},
-  {"line":365,"text":"\t\t\tKind:  &kind,"},
-  {"line":366,"text":"\t\t\tEdit:  &lsproto.WorkspaceEdit{Changes: &lspChanges},"},
-  {"line":367,"text":"\t\t},"},
-  {"line":368,"text":"\t}"},
-  {"line":369,"text":"}"},
-  {"line":372,"text":"func containsErrorCode(codes []int32, code int32) bool {"},
-  {"line":373,"text":"\treturn slices.Contains(codes, code)"},
-  {"line":374,"text":"}"},
-  {"line":377,"text":"func convertToLSPCodeAction(action *CodeAction, diag *lsproto.Diagnostic, uri lsproto.DocumentUri) lsproto.CommandOrCodeAction {"},
-  {"line":378,"text":"\tkind := lsproto.CodeActionKindQuickFix"},
-  {"line":379,"text":"\tchanges := map[lsproto.DocumentUri][]*lsproto.TextEdit{"},
-  {"line":380,"text":"\t\turi: action.Changes,"},
-  {"line":381,"text":"\t}"},
-  {"line":382,"text":"\tdiagnostics := []*lsproto.Diagnostic{diag}"},
-  {"line":384,"text":"\treturn lsproto.CommandOrCodeAction{"},
-  {"line":385,"text":"\t\tCodeAction: &lsproto.CodeAction{"},
-  {"line":386,"text":"\t\t\tTitle:       action.Description,"},
-  {"line":387,"text":"\t\t\tKind:        &kind,"},
-  {"line":388,"text":"\t\t\tEdit:        &lsproto.WorkspaceEdit{Changes: &changes},"},
-  {"line":389,"text":"\t\t\tDiagnostics: &diagnostics,"},
-  {"line":390,"text":"\t\t},"},
-  {"line":391,"text":"\t}"},
-  {"line":392,"text":"}"},
-];
-
-export function findLsCodeActionsDeclaration(name: string): UpstreamDeclaration | undefined {
-  return lsCodeActionsDeclarations.find((declaration) => declaration.name === name);
+export interface CodeAction {
+  readonly description: string;
+  readonly changes: readonly TextEdit[];
+  readonly fixId?: string;
+  readonly fixAllDescription?: string;
 }
 
-export function requireLsCodeActionsDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findLsCodeActionsDeclaration(name);
-  if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
-  return declaration;
+export interface CombinedCodeActions {
+  readonly description: string;
+  readonly changes: readonly TextEdit[];
 }
 
-export function lsCodeActionsLineText(line: number): string | undefined {
-  return lsCodeActionsSourceLines.find((entry) => entry.line === line)?.text;
+export interface CodeActionSourceFile extends SourceFileSlim {
+  readonly lineStarts: readonly number[];
+  readonly path?: string;
+}
+
+export interface CodeActionConverters<TFile extends CodeActionSourceFile = CodeActionSourceFile> {
+  lineAndCharacterToPosition(file: TFile, position: Position): number;
+}
+
+export interface CodeActionProgram<TFile extends CodeActionSourceFile = CodeActionSourceFile> extends DiagnosticProgram<TFile> {}
+
+export interface CodeActionLanguageService<TProgram extends CodeActionProgram = CodeActionProgram, TFile extends CodeActionSourceFile = CodeActionSourceFile> {
+  readonly converters: CodeActionConverters<TFile>;
+  getProgramAndFile(uri: DocumentUri): readonly [TProgram, TFile];
+  organizeImports(file: TFile, program: TProgram, kind: CodeActionKind): ReadonlyMap<string, readonly TextEdit[]>;
+}
+
+export const codeFixProviders: readonly CodeFixProvider[] = [];
+
+export function compareCodeActions(left: CodeAction, right: CodeAction): number {
+  return left.description.localeCompare(right.description)
+    || left.changes.length - right.changes.length
+    || compareTextEditLists(left.changes, right.changes);
+}
+
+export function provideCodeActions<TProgram extends CodeActionProgram<TFile>, TFile extends CodeActionSourceFile>(
+  service: CodeActionLanguageService<TProgram, TFile>,
+  params: CodeActionParams,
+  providers: readonly CodeFixProvider<TProgram, TFile>[] = codeFixProviders as readonly CodeFixProvider<TProgram, TFile>[],
+): CodeActionResponse {
+  const [program, file] = service.getProgramAndFile(params.textDocument.uri);
+  const actions: CommandOrCodeAction[] = [];
+
+  if (params.context?.only !== undefined) {
+    for (const kind of params.context.only) {
+      for (const matchingKind of getOrganizeImportsActionsForKind(kind)) {
+        actions.push(createOrganizeImportsAction(service, program, file, matchingKind));
+      }
+      if (isFixAllKind(kind)) {
+        const fixAllAction = createFixAllAction(service, program, file, params.textDocument.uri, providers);
+        if (fixAllAction !== undefined) actions.push(fixAllAction);
+      }
+    }
+  }
+
+  if (params.context?.diagnostics !== undefined && wantsQuickFixes(params.context.only)) {
+    const fixIdSeen = new Map<string, CodeFixProvider<TProgram, TFile>>();
+
+    for (const diagnostic of params.context.diagnostics) {
+      const errorCode = diagnostic.code?.integer;
+      if (errorCode === undefined) continue;
+
+      for (const provider of providers) {
+        if (!containsErrorCode(provider.errorCodes, errorCode)) continue;
+
+        const start = service.converters.lineAndCharacterToPosition(file, diagnostic.range.start);
+        const end = service.converters.lineAndCharacterToPosition(file, diagnostic.range.end);
+        const fixContext: CodeFixContext<TProgram, TFile> = {
+          sourceFile: file,
+          span: new TextRange(start, end),
+          errorCode,
+          program,
+          languageService: service,
+          diagnostic,
+          params,
+        };
+        for (const action of provider.getCodeActions(fixContext)) {
+          actions.push(convertToLSPCodeAction(action, diagnostic, params.textDocument.uri));
+          if (action.fixId !== undefined && action.fixId !== "") {
+            fixIdSeen.set(action.fixId, provider);
+          }
+        }
+      }
+    }
+
+    actions.push(...getFixAllQuickFixes(service, program, file, params.textDocument.uri, fixIdSeen));
+  }
+
+  return { commandOrCodeActionArray: actions };
+}
+
+export function getFixAllQuickFixes<TProgram extends CodeActionProgram<TFile>, TFile extends CodeActionSourceFile>(
+  service: CodeActionLanguageService<TProgram, TFile>,
+  program: TProgram,
+  file: TFile,
+  uri: DocumentUri,
+  fixIdSeen: ReadonlyMap<string, CodeFixProvider<TProgram, TFile>>,
+): readonly CommandOrCodeAction[] {
+  const actions: CommandOrCodeAction[] = [];
+  const seen = new Set<CodeFixProvider<TProgram, TFile>>();
+
+  for (const provider of fixIdSeen.values()) {
+    if (seen.has(provider)) continue;
+    seen.add(provider);
+    if (provider.getAllCodeActions === undefined) continue;
+    if (!hasMultipleFixableDiagnostics(program, file, provider.errorCodes)) continue;
+
+    const combined = provider.getAllCodeActions({
+      sourceFile: file,
+      program,
+      languageService: service,
+    });
+    if (combined !== undefined && combined.changes.length > 0) {
+      actions.push(workspaceCodeAction(combined.description, CodeActionKindQuickFix, uri, combined.changes));
+    }
+  }
+
+  return actions;
+}
+
+export function hasMultipleFixableDiagnostics<TFile extends CodeActionSourceFile>(
+  program: CodeActionProgram<TFile>,
+  file: TFile,
+  errorCodes: readonly number[],
+): boolean {
+  let count = 0;
+  for (const diagnostic of getAllDiagnostics(program, file)) {
+    if (containsErrorCode(errorCodes, diagnostic.code)) {
+      count += 1;
+      if (count >= 2) return true;
+    }
+  }
+  return false;
+}
+
+export function codeActionKindContains(requestedKind: CodeActionKind, actionKind: CodeActionKind): boolean {
+  return requestedKind === actionKind
+    || requestedKind === ""
+    || actionKind.startsWith(`${requestedKind}.`);
+}
+
+export function isFixAllKind(kind: CodeActionKind): boolean {
+  return codeActionKindContains(kind, CodeActionKindSourceFixAll);
+}
+
+export function wantsQuickFixes(only: readonly CodeActionKind[] | undefined): boolean {
+  if (only === undefined || only.length === 0) return true;
+  return only.some((kind) => codeActionKindContains(kind, CodeActionKindQuickFix));
+}
+
+export function createFixAllAction<TProgram extends CodeActionProgram<TFile>, TFile extends CodeActionSourceFile>(
+  service: CodeActionLanguageService<TProgram, TFile>,
+  program: TProgram,
+  file: TFile,
+  uri: DocumentUri,
+  providers: readonly CodeFixProvider<TProgram, TFile>[] = codeFixProviders as readonly CodeFixProvider<TProgram, TFile>[],
+): CommandOrCodeAction | undefined {
+  const changes: Record<string, readonly TextEdit[]> = {};
+
+  for (const provider of providers) {
+    if (provider.getAllCodeActions === undefined) continue;
+    const combined = provider.getAllCodeActions({
+      sourceFile: file,
+      program,
+      languageService: service,
+    });
+    if (combined !== undefined && combined.changes.length > 0) {
+      changes[uri] = [...(changes[uri] ?? []), ...combined.changes];
+    }
+  }
+
+  return Object.keys(changes).length === 0
+    ? undefined
+    : {
+      codeAction: {
+        title: Diagnostics.Fix_All.message,
+        kind: CodeActionKindSourceFixAll,
+        edit: { changes },
+      },
+    };
+}
+
+export function getOrganizeImportsActionTitle(kind: CodeActionKind): string {
+  switch (kind) {
+    case CodeActionKindSourceRemoveUnusedImports:
+      return Diagnostics.Remove_Unused_Imports.message;
+    case CodeActionKindSourceSortImports:
+      return Diagnostics.Sort_Imports.message;
+    default:
+      return Diagnostics.Organize_Imports.message;
+  }
+}
+
+export function getOrganizeImportsActionsForKind(requestedKind: CodeActionKind): readonly CodeActionKind[] {
+  const organizeImportsKinds: readonly CodeActionKind[] = [
+    CodeActionKindSourceOrganizeImports,
+    CodeActionKindSourceRemoveUnusedImports,
+    CodeActionKindSourceSortImports,
+  ];
+
+  const result = organizeImportsKinds.filter((organizeKind) => codeActionKindContains(requestedKind, organizeKind));
+  return result.includes(requestedKind) ? [requestedKind] : result;
+}
+
+export function createOrganizeImportsAction<TProgram extends CodeActionProgram<TFile>, TFile extends CodeActionSourceFile>(
+  service: CodeActionLanguageService<TProgram, TFile>,
+  program: TProgram,
+  file: TFile,
+  kind: CodeActionKind,
+): CommandOrCodeAction {
+  const title = getOrganizeImportsActionTitle(kind);
+  const changes = service.organizeImports(file, program, kind);
+  const lspChanges: Record<string, readonly TextEdit[]> = {};
+
+  for (const [fileName, edits] of changes) {
+    lspChanges[fileNameToDocumentURI(fileName)] = edits;
+  }
+
+  return {
+    codeAction: {
+      title,
+      kind,
+      edit: { changes: lspChanges },
+    },
+  };
+}
+
+export function containsErrorCode(codes: readonly number[], code: number): boolean {
+  return codes.includes(code);
+}
+
+export function convertToLSPCodeAction(action: CodeAction, diagnostic: Diagnostic, uri: DocumentUri): CommandOrCodeAction {
+  return workspaceCodeAction(action.description, CodeActionKindQuickFix, uri, action.changes, [diagnostic]);
+}
+
+function workspaceCodeAction(
+  title: string,
+  kind: CodeActionKind,
+  uri: DocumentUri,
+  edits: readonly TextEdit[],
+  diagnostics?: readonly Diagnostic[],
+): CommandOrCodeAction {
+  const changes: Record<string, readonly TextEdit[]> = {};
+  changes[uri] = edits;
+  const codeAction = {
+    title,
+    kind,
+    edit: { changes },
+  };
+  if (diagnostics === undefined) {
+    return { codeAction };
+  }
+  return {
+    codeAction: {
+      ...codeAction,
+      diagnostics,
+    },
+  };
+}
+
+function compareTextEditLists(left: readonly TextEdit[], right: readonly TextEdit[]): number {
+  for (let index = 0; index < left.length; index += 1) {
+    const comparison = compareTextEdits(left[index]!, right[index]!);
+    if (comparison !== 0) return comparison;
+  }
+  return 0;
+}
+
+function compareTextEdits(left: TextEdit, right: TextEdit): number {
+  return compareRanges(left.range, right.range)
+    || left.newText.localeCompare(right.newText);
 }

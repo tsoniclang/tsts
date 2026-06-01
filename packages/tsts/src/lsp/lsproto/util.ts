@@ -17,6 +17,11 @@ export function comparePositions(left: Position, right: Position): number {
   return left.line - right.line || left.character - right.character;
 }
 
+export function compareRanges(left: Range, right: Range): number {
+  return comparePositions(left.start, right.start)
+    || comparePositions(left.end, right.end);
+}
+
 export function rangeContainsPosition(range: Range, position: Position): boolean {
   return comparePositions(range.start, position) <= 0 && comparePositions(position, range.end) <= 0;
 }
