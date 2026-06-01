@@ -1,5 +1,32 @@
-import type { FileReference, Node, SourceFile, Symbol, TextRange } from "../ast/index.js";
-import type { DocumentUri, Location } from "../lsp/lsproto/index.js";
+import {
+  getSourceFileOfNode,
+  isAccessExpression,
+  isBinaryExpression,
+  isCallExpression,
+  isComputedPropertyName,
+  isDeclaration,
+  isExportAssignment,
+  isForInOrOfStatement,
+  isJSDocTag,
+  isSourceFile,
+  isStatement,
+  isStringLiteralLike,
+  isTypeLiteralNode,
+  isUnionTypeNode,
+  isVariableDeclarationList,
+  isVariableStatement,
+  Kind,
+  nodeText,
+  SymbolFlags,
+  type FileReference,
+  type Node,
+  type SourceFile,
+  type Symbol,
+  type TextRange,
+} from "../ast/index.js";
+import type { DocumentUri, Location, Range } from "../lsp/lsproto/index.js";
+import { getStartOfNode } from "../astnav/index.js";
+import { isExpressionOfExternalModuleImportEqualsDeclaration, isLiteralNameOfPropertyDeclarationOrIndexAccess, isNameOfModuleDeclaration } from "./utilities.js";
 
 export enum ReferenceUse {
   None = 0,
@@ -110,6 +137,334 @@ export function getFileNameOfEntry(entry: ReferenceEntry): DocumentUri {
 export function getLocationOfEntry(entry: ReferenceEntry): Location {
   if (entry.lspRange === undefined) throw new Error("reference entry has not been resolved to an LSP location");
   return entry.lspRange;
+}
+
+export interface ReferenceLocationService {
+  getMappedLocation(fileName: string, textRange: TextRange): Location;
+  createLspRangeFromBounds(start: number, end: number, sourceFile: SourceFile): Range;
+}
+
+export function resolveEntry(service: ReferenceLocationService, entry: ReferenceEntry): ReferenceEntry {
+  if (entry.textRange === undefined) {
+    if (entry.node === undefined) throw new Error("reference entry needs node or text range");
+    const sourceFile = getNodeSourceFile(entry.node);
+    const textRange = getRangeOfNode(entry.node, sourceFile, undefined);
+    entry.textRange = textRange;
+    entry.fileName = sourceFile.fileName;
+  }
+  if (entry.lspRange === undefined) {
+    if (entry.fileName === undefined) throw new Error("reference entry has no file name");
+    entry.lspRange = service.getMappedLocation(entry.fileName, entry.textRange);
+  }
+  return entry;
+}
+
+export function newNodeEntryWithKind(node: Node, kind: EntryKind): ReferenceEntry {
+  const entry = newNodeEntry(node);
+  entry.kind = kind;
+  return entry;
+}
+
+export function newNodeEntry(node: Node): ReferenceEntry {
+  const context = getContextNodeForNodeEntry(node);
+  return {
+    kind: EntryKind.Node,
+    node: nodeName(node) ?? node,
+    ...(context === undefined ? {} : { context }),
+  };
+}
+
+export function getContextNodeForNodeEntry(node: Node): Node | undefined {
+  if (isDeclaration(node)) return getContextNode(node);
+  const parent = node.parent;
+  if (parent === undefined) return undefined;
+  if (!isDeclaration(parent) && !isExportAssignment(parent)) {
+    if (isBinaryExpression(parent)) {
+      return getContextNode(parent);
+    }
+    if (isAccessExpression(parent) && isBinaryExpression(parent.parent) && nodeProperty(parent.parent, "left") === parent) {
+      return getContextNode(parent.parent);
+    }
+    switch (parent.kind) {
+      case Kind.JsxOpeningElement:
+      case Kind.JsxClosingElement:
+        return parent.parent;
+      case Kind.JsxSelfClosingElement:
+      case Kind.LabeledStatement:
+      case Kind.BreakStatement:
+      case Kind.ContinueStatement:
+        return parent;
+      case Kind.StringLiteral:
+      case Kind.NoSubstitutionTemplateLiteral: {
+        const validImport = tryGetImportFromModuleSpecifier(node);
+        if (validImport !== undefined) {
+          const declOrStatement = findAncestor(validImport, ancestor => isDeclaration(ancestor) || isStatement(ancestor) || isJSDocTag(ancestor));
+          return declOrStatement !== undefined && isDeclaration(declOrStatement) ? getContextNode(declOrStatement) : declOrStatement;
+        }
+        break;
+      }
+      default:
+        break;
+    }
+    const propertyName = findAncestor(node, isComputedPropertyName);
+    return propertyName === undefined ? undefined : getContextNode(propertyName.parent);
+  }
+  if (nodeName(parent) === node
+    || parent.kind === Kind.Constructor
+    || parent.kind === Kind.ExportAssignment
+    || ((isImportOrExportSpecifier(parent) || parent.kind === Kind.BindingElement) && nodeProperty(parent, "propertyName") === node)
+    || (node.kind === Kind.DefaultKeyword && hasSyntacticExportDefaultModifier(parent))) {
+    return getContextNode(parent);
+  }
+  return undefined;
+}
+
+export function getContextNode(node: Node | undefined): Node | undefined {
+  if (node === undefined) return undefined;
+  switch (node.kind) {
+    case Kind.VariableDeclaration:
+      if (!isVariableDeclarationList(node.parent) || nodeArray(node.parent, "declarations").length !== 1) return node;
+      if (isVariableStatement(node.parent.parent)) return node.parent.parent;
+      if (isForInOrOfStatement(node.parent.parent)) return getContextNode(node.parent.parent);
+      return node.parent;
+    case Kind.BindingElement:
+      return getContextNode(node.parent.parent);
+    case Kind.ImportSpecifier:
+      return node.parent.parent.parent;
+    case Kind.ExportSpecifier:
+    case Kind.NamespaceImport:
+      return node.parent.parent;
+    case Kind.ImportClause:
+    case Kind.NamespaceExport:
+      return node.parent;
+    case Kind.BinaryExpression:
+      return node.parent.kind === Kind.ExpressionStatement ? node.parent : node;
+    case Kind.ForOfStatement:
+    case Kind.ForInStatement:
+      return undefined;
+    case Kind.PropertyAssignment:
+    case Kind.ShorthandPropertyAssignment:
+      if (isArrayLiteralOrObjectLiteralDestructuringPattern(node.parent)) {
+        return getContextNode(findAncestor(node.parent, ancestor => ancestor.kind === Kind.BinaryExpression || isForInOrOfStatement(ancestor)));
+      }
+      return node;
+    case Kind.SwitchStatement:
+      return undefined;
+    default:
+      return node;
+  }
+}
+
+export function getLspRangeOfNode(service: ReferenceLocationService, node: Node, sourceFile: SourceFile | undefined, endNode: Node | undefined): Range {
+  const file = sourceFile ?? getNodeSourceFile(node);
+  const textRange = getRangeOfNode(node, file, endNode);
+  return service.createLspRangeFromBounds(textRange.pos, textRange.end, file);
+}
+
+export function getRangeOfNode(node: Node, sourceFile: SourceFile | undefined, endNode: Node | undefined): TextRange {
+  const file = sourceFile ?? getNodeSourceFile(node);
+  let start = getStartOfNode(node, file, false);
+  let end = (endNode ?? node).end;
+  if (isStringLiteralLike(node) && end - start > 2) {
+    if (endNode !== undefined) throw new Error("endNode is not undefined for stringLiteralLike");
+    start += 1;
+    end -= 1;
+  }
+  if (endNode?.kind === Kind.CaseBlock) end = endNode.pos;
+  return { pos: start, end };
+}
+
+export function isValidReferencePosition(node: Node, searchSymbolName: string): boolean {
+  switch (node.kind) {
+    case Kind.PrivateIdentifier:
+    case Kind.Identifier:
+      return nodeText(node).length === searchSymbolName.length;
+    case Kind.NoSubstitutionTemplateLiteral:
+    case Kind.StringLiteral:
+      return nodeText(node).length === searchSymbolName.length
+        && (isLiteralNameOfPropertyDeclarationOrIndexAccess(node)
+          || isNameOfModuleDeclaration(node)
+          || isExpressionOfExternalModuleImportEqualsDeclaration(node)
+          || isBindableObjectDefinePropertyArgument(node)
+          || isImportOrExportSpecifier(node.parent));
+    case Kind.NumericLiteral:
+      return isLiteralNameOfPropertyDeclarationOrIndexAccess(node) && nodeText(node).length === searchSymbolName.length;
+    case Kind.DefaultKeyword:
+      return "default".length === searchSymbolName.length;
+    default:
+      return false;
+  }
+}
+
+export function isForRenameWithPrefixAndSuffixText(options: RefOptions): boolean {
+  return options.use === ReferenceUse.Rename && options.useAliasesForRename;
+}
+
+export interface ReferenceChecker {
+  getExportSpecifierLocalTargetSymbol?(node: Node): Symbol | undefined;
+  getTypeFromTypeNode?(node: Node): unknown;
+  getPropertyOfType?(type: unknown, name: string): Symbol | undefined;
+  isExternalModuleSymbol?(symbol: Symbol): boolean;
+}
+
+export function skipPastExportOrImportSpecifierOrUnion(
+  symbol: Symbol,
+  node: Node | undefined,
+  checker: ReferenceChecker,
+  useLocalSymbolForExportSpecifier: boolean,
+): Symbol | undefined {
+  if (node === undefined) return undefined;
+  const parent = node.parent;
+  if (parent.kind === Kind.ExportSpecifier && useLocalSymbolForExportSpecifier) {
+    const localSymbol = checker.getExportSpecifierLocalTargetSymbol?.(parent);
+    if (localSymbol !== undefined) return localSymbol;
+  }
+  for (const declaration of symbol.declarations) {
+    if (declaration.parent === undefined) {
+      if (((symbol.flags ?? 0) & (SymbolFlags.Transient | SymbolFlags.ModuleExports)) !== 0) continue;
+      throw new Error(`Unexpected symbol at ${Kind[node.kind] ?? node.kind}: ${symbol.name}`);
+    }
+    if (isTypeLiteralNode(declaration.parent) && isUnionTypeNode(declaration.parent.parent)) {
+      return checker.getPropertyOfType?.(checker.getTypeFromTypeNode?.(declaration.parent.parent), symbol.name ?? "");
+    }
+  }
+  return undefined;
+}
+
+export function getSymbolScope(symbol: Symbol, checker?: ReferenceChecker): Node | undefined {
+  const valueDeclaration = symbol.valueDeclaration;
+  if (valueDeclaration !== undefined && (valueDeclaration.kind === Kind.FunctionExpression || valueDeclaration.kind === Kind.ClassExpression)) {
+    return valueDeclaration;
+  }
+  if (symbol.declarations.length === 0) return undefined;
+  const declarations = symbol.declarations;
+  if (((symbol.flags ?? 0) & (SymbolFlags.Property | SymbolFlags.Method)) !== 0) {
+    const privateDeclaration = declarations.find(declaration => hasPrivateModifier(declaration) || isPrivateIdentifierClassElementDeclaration(declaration));
+    if (privateDeclaration !== undefined) return findAncestorKind(privateDeclaration, Kind.ClassDeclaration);
+    return undefined;
+  }
+  if (declarations.some(isObjectBindingElementWithoutPropertyNameLocal)) return undefined;
+  const parentSymbol = symbol.parent;
+  const exposedByParent = parentSymbol !== undefined && ((symbol.flags ?? 0) & SymbolFlags.TypeParameter) === 0;
+  if (exposedByParent && !(checker?.isExternalModuleSymbol?.(parentSymbol) === true && isSourceFileWithGlobalExports(parentSymbol.valueDeclaration))) {
+    return undefined;
+  }
+  let scope: Node | undefined;
+  for (const declaration of declarations) {
+    const container = getContainerNodeLocal(declaration);
+    if (scope !== undefined && scope !== container) return undefined;
+    if (container === undefined || (isSourceFile(container) && !isExternalOrCommonJSModule(container))) return undefined;
+    scope = container;
+  }
+  return scope;
+}
+
+function getNodeSourceFile(node: Node): SourceFile {
+  const sourceFile = getSourceFileOfNode(node);
+  if (sourceFile === undefined || !isSourceFile(sourceFile)) throw new Error("node is not contained in a source file");
+  return sourceFile;
+}
+
+function nodeName(node: Node | undefined): Node | undefined {
+  return nodeProperty(node, "name");
+}
+
+function nodeProperty<T = Node>(node: Node | undefined, key: string): T | undefined {
+  return (node as Record<string, T | undefined> | undefined)?.[key];
+}
+
+function nodeArray(node: Node | undefined, key: string): readonly Node[] {
+  const value = (node as Record<string, unknown> | undefined)?.[key];
+  return Array.isArray(value) ? value as readonly Node[] : [];
+}
+
+function findAncestor(node: Node | undefined, predicate: (node: Node) => boolean): Node | undefined {
+  for (let current = node; current !== undefined; current = current.parent) {
+    if (predicate(current)) return current;
+  }
+  return undefined;
+}
+
+function findAncestorKind(node: Node | undefined, kind: Kind): Node | undefined {
+  return findAncestor(node, current => current.kind === kind);
+}
+
+function tryGetImportFromModuleSpecifier(node: Node): Node | undefined {
+  const parent = node.parent;
+  if (parent === undefined) return undefined;
+  switch (parent.kind) {
+    case Kind.ImportDeclaration:
+    case Kind.ExportDeclaration:
+    case Kind.JSImportDeclaration:
+      return nodeProperty(parent, "moduleSpecifier") === node ? parent : undefined;
+    case Kind.ExternalModuleReference:
+      return nodeProperty(parent, "expression") === node ? parent.parent : undefined;
+    default:
+      return undefined;
+  }
+}
+
+function isImportOrExportSpecifier(node: Node | undefined): boolean {
+  return node?.kind === Kind.ImportSpecifier || node?.kind === Kind.ExportSpecifier;
+}
+
+function isArrayLiteralOrObjectLiteralDestructuringPattern(node: Node | undefined): boolean {
+  return node?.kind === Kind.ArrayLiteralExpression || node?.kind === Kind.ObjectLiteralExpression;
+}
+
+function hasSyntacticExportDefaultModifier(node: Node): boolean {
+  const modifiers = nodeArray(node, "modifiers");
+  return modifiers.some(modifier => modifier.kind === Kind.ExportKeyword) && modifiers.some(modifier => modifier.kind === Kind.DefaultKeyword);
+}
+
+function isBindableObjectDefinePropertyArgument(node: Node): boolean {
+  const parent = node.parent;
+  return isCallExpression(parent) && nodeArray(parent, "arguments")[1] === node;
+}
+
+function hasPrivateModifier(node: Node): boolean {
+  return nodeArray(node, "modifiers").some(modifier => modifier.kind === Kind.PrivateKeyword);
+}
+
+function isPrivateIdentifierClassElementDeclaration(node: Node): boolean {
+  const name = nodeName(node);
+  return name?.kind === Kind.PrivateIdentifier
+    && (node.kind === Kind.PropertyDeclaration || node.kind === Kind.MethodDeclaration || node.kind === Kind.GetAccessor || node.kind === Kind.SetAccessor);
+}
+
+function isObjectBindingElementWithoutPropertyNameLocal(node: Node): boolean {
+  return node.kind === Kind.BindingElement && node.parent.kind === Kind.ObjectBindingPattern && nodeProperty(node, "propertyName") === undefined;
+}
+
+function getContainerNodeLocal(node: Node): Node | undefined {
+  for (let parent = node.parent; parent !== undefined; parent = parent.parent) {
+    switch (parent.kind) {
+      case Kind.SourceFile:
+      case Kind.MethodDeclaration:
+      case Kind.MethodSignature:
+      case Kind.FunctionDeclaration:
+      case Kind.FunctionExpression:
+      case Kind.GetAccessor:
+      case Kind.SetAccessor:
+      case Kind.ClassDeclaration:
+      case Kind.InterfaceDeclaration:
+      case Kind.EnumDeclaration:
+      case Kind.ModuleDeclaration:
+        return parent;
+      default:
+        break;
+    }
+  }
+  return undefined;
+}
+
+function isExternalOrCommonJSModule(file: SourceFile): boolean {
+  const sourceFile = file as unknown as Record<string, unknown>;
+  return Boolean(sourceFile.externalModuleIndicator) || Boolean(sourceFile.commonJsModuleIndicator);
+}
+
+function isSourceFileWithGlobalExports(node: Node | undefined): boolean {
+  return node !== undefined && isSourceFile(node) && node.symbol?.globalExports !== undefined;
 }
 
 // Language-service parity map: internal/ls/findallreferences.go
