@@ -1,26 +1,63 @@
 import {
   getCombinedNodeFlags,
+  getTextOfNode,
+  hasSyntacticModifier,
   isArrowFunction,
+  isCallExpression,
   isClassDeclaration,
   isClassExpression,
+  isClassLikeDeclaration,
   isClassStaticBlockDeclaration,
+  isConstructorDeclaration,
+  isDecorator,
+  isDeclarationName,
+  isElementAccessExpression,
   isFunctionDeclaration,
   isFunctionExpression,
+  isFunctionLikeDeclaration,
   isGetAccessorDeclaration,
   isIdentifier,
+  isJsxOpeningElement,
+  isJsxSelfClosingElement,
   isMethodDeclaration,
   isMethodSignatureDeclaration,
+  isModuleBlock,
   isModuleDeclaration,
+  isNewExpression,
+  isPropertyAccessExpression,
   isPropertyDeclaration,
   isSetAccessorDeclaration,
   isSourceFile,
+  isTaggedTemplateExpression,
   isVariableDeclaration,
   Kind,
   NodeFlags,
+  nodeText,
+  SymbolFlags,
   type Node,
+  type SourceFile,
+  type Symbol,
+  type TextRange,
 } from "../ast/index.js";
+import { ModifierFlags } from "../enums/index.js";
+import { skipTrivia } from "../scanner/trivia.js";
 
 export type CallHierarchyDeclaration = Node;
+
+export interface CallHierarchyChecker {
+  getSymbolAtLocation(location: Node): Symbol | undefined;
+  getAliasedSymbol?(symbol: Symbol): Symbol | undefined;
+}
+
+export interface CallHierarchyProgram {
+  getTypeChecker(): CallHierarchyChecker;
+}
+
+export interface CallHierarchyItemName {
+  readonly text: string;
+  readonly pos: number;
+  readonly end: number;
+}
 
 interface CallHierarchyNodeWithName extends Node {
   readonly name?: Node;
@@ -38,6 +75,34 @@ function callHierarchyInitializer(node: Node): Node | undefined {
 
 function callHierarchyModifiers(node: Node): readonly Node[] | undefined {
   return (node as CallHierarchyNodeWithName).modifiers;
+}
+
+function callHierarchyBody(node: Node): Node | undefined {
+  return (node as { readonly body?: Node }).body;
+}
+
+function callHierarchyParameters(node: Node): readonly Node[] {
+  return (node as { readonly parameters?: readonly Node[] }).parameters ?? [];
+}
+
+function callHierarchyExpression(node: Node): Node | undefined {
+  return (node as { readonly expression?: Node }).expression;
+}
+
+function callHierarchyMembers(node: Node): readonly Node[] {
+  return (node as { readonly members?: readonly Node[] }).members ?? [];
+}
+
+function callHierarchyStatements(node: Node): readonly Node[] {
+  return (node as { readonly statements?: readonly Node[] }).statements ?? [];
+}
+
+function callHierarchyTagName(node: Node): Node | undefined {
+  return (node as { readonly tagName?: Node }).tagName;
+}
+
+function sourceFileOf(node: Node): SourceFile {
+  return node.getSourceFile();
 }
 
 export function isNamedExpression(node: Node | undefined): boolean {
@@ -116,6 +181,433 @@ export function getCallHierarchyDeclarationReferenceNode(node: Node | undefined)
     }
   }
 
+  return undefined;
+}
+
+export function getSymbolOfCallHierarchyDeclaration(checker: CallHierarchyChecker, node: Node): Symbol | undefined {
+  if (isClassStaticBlockDeclaration(node)) return undefined;
+  const location = getCallHierarchyDeclarationReferenceNode(node);
+  return location === undefined ? undefined : checker.getSymbolAtLocation(location);
+}
+
+export function getCallHierarchyItemName(program: CallHierarchyProgram | undefined, node: Node): CallHierarchyItemName {
+  if (isSourceFile(node)) return { text: node.fileName, pos: 0, end: 0 };
+
+  if ((isFunctionDeclaration(node) || isClassDeclaration(node)) && callHierarchyName(node) === undefined) {
+    for (const modifier of callHierarchyModifiers(node) ?? []) {
+      if (modifier.kind === Kind.DefaultKeyword) {
+        const sourceFile = sourceFileOf(node);
+        const start = skipTrivia(sourceFile.text, modifier.pos);
+        return { text: "default", pos: start, end: modifier.end };
+      }
+    }
+  }
+
+  if (isClassStaticBlockDeclaration(node)) {
+    const sourceFile = sourceFileOf(node);
+    const pos = skipTrivia(sourceFile.text, moveRangePastModifiers(node).pos);
+    const symbol = program?.getTypeChecker().getSymbolAtLocation(node.parent);
+    const prefix = symbol?.name === undefined ? "" : `${symbol.name} `;
+    return { text: `${prefix}static {}`, pos, end: pos + "static".length };
+  }
+
+  const declarationName = isAssignedExpression(node) ? callHierarchyName(node.parent) : callHierarchyName(node);
+  if (declarationName === undefined || declarationName.pos === declarationName.end) {
+    const sourceFile = sourceFileOf(node);
+    if (isFunctionDeclaration(node) || isFunctionExpression(node)) {
+      const keywordPos = skipTrivia(sourceFile.text, moveRangePastModifiers(node).pos);
+      return { text: "(anonymous)", pos: keywordPos, end: keywordPos + "function".length };
+    }
+    if (isClassDeclaration(node) || isClassExpression(node)) {
+      const keywordPos = skipTrivia(sourceFile.text, moveRangePastModifiers(node).pos);
+      return { text: "(anonymous)", pos: keywordPos, end: keywordPos + "class".length };
+    }
+    return { text: "(anonymous)", pos: node.pos, end: node.end };
+  }
+
+  const sourceFile = sourceFileOf(node);
+  const namePos = skipTrivia(sourceFile.text, declarationName.pos);
+  return {
+    text: getTextOfCallHierarchyName(program, node, declarationName, node),
+    pos: namePos,
+    end: declarationName.end,
+  };
+}
+
+export function getTextOfCallHierarchyName(
+  program: CallHierarchyProgram | undefined,
+  sourceNode: Node,
+  name: Node,
+  printNode: Node,
+): string {
+  if (isIdentifier(name) || name.kind === Kind.StringLiteral || name.kind === Kind.NumericLiteral) return nodeText(name);
+  if (name.kind === Kind.ComputedPropertyName) {
+    const expression = callHierarchyExpression(name);
+    if (expression !== undefined && (expression.kind === Kind.StringLiteral || expression.kind === Kind.NumericLiteral)) return nodeText(expression);
+  }
+
+  const symbol = program?.getTypeChecker().getSymbolAtLocation(name);
+  if (symbol?.name !== undefined && symbol.name !== "") return symbol.name;
+
+  const printed = getTextOfNode(printNode);
+  if (printed !== "") return printed;
+  const sourceFile = sourceFileOf(sourceNode);
+  return sourceFile.text.slice(printNode.pos, printNode.end);
+}
+
+export function getCallHierarchyItemContainerName(program: CallHierarchyProgram | undefined, node: Node): string {
+  if (isAssignedExpression(node)) {
+    const parent = node.parent;
+    if (isPropertyDeclaration(parent) && isClassLikeDeclaration(parent.parent)) {
+      const className = callHierarchyName(parent.parent);
+      if (className !== undefined) return getTextOfCallHierarchyName(program, node, className, className);
+    }
+    const maybeModuleBlock = parent.parent?.parent?.parent;
+    if (maybeModuleBlock !== undefined && isModuleBlock(maybeModuleBlock)) {
+      const moduleDeclaration = maybeModuleBlock.parent;
+      const name = moduleDeclaration === undefined ? undefined : callHierarchyName(moduleDeclaration);
+      if (moduleDeclaration !== undefined && isModuleDeclaration(moduleDeclaration) && name !== undefined && isIdentifier(name)) return nodeText(name);
+    }
+    return "";
+  }
+
+  switch (node.kind) {
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+    case Kind.MethodDeclaration: {
+      if (node.parent.kind === Kind.ObjectLiteralExpression) {
+        const assignedName = getAssignedName(node.parent);
+        if (assignedName !== undefined) return getTextOfCallHierarchyName(program, node, assignedName, assignedName);
+      }
+      const name = callHierarchyName(node.parent);
+      if (name !== undefined) return getTextOfCallHierarchyName(program, node, name, name);
+      break;
+    }
+    case Kind.FunctionDeclaration:
+    case Kind.ClassDeclaration:
+    case Kind.ModuleDeclaration: {
+      if (isModuleBlock(node.parent)) {
+        const moduleDeclaration = node.parent.parent;
+        const name = moduleDeclaration === undefined ? undefined : callHierarchyName(moduleDeclaration);
+        if (moduleDeclaration !== undefined && isModuleDeclaration(moduleDeclaration) && name !== undefined && isIdentifier(name)) return nodeText(name);
+      }
+      break;
+    }
+  }
+
+  return "";
+}
+
+export function moveRangePastModifiers(node: Node): TextRange {
+  const modifiers = callHierarchyModifiers(node);
+  if (modifiers !== undefined && modifiers.length > 0) {
+    const lastModifier = modifiers[modifiers.length - 1]!;
+    return { pos: lastModifier.end, end: node.end };
+  }
+  return { pos: node.pos, end: node.end };
+}
+
+export function findImplementation(checker: CallHierarchyChecker, node: Node | undefined): Node | undefined {
+  if (node === undefined) return undefined;
+  if (!isFunctionLikeDeclaration(node)) return node;
+  if (callHierarchyBody(node) !== undefined) return node;
+  if (isConstructorDeclaration(node)) return getFirstConstructorWithBody(node.parent);
+
+  if (isFunctionDeclaration(node) || isMethodDeclaration(node)) {
+    const symbol = getSymbolOfCallHierarchyDeclaration(checker, node);
+    const valueDeclaration = symbol?.valueDeclaration;
+    if (valueDeclaration !== undefined && isFunctionLikeDeclaration(valueDeclaration) && callHierarchyBody(valueDeclaration) !== undefined) {
+      return valueDeclaration;
+    }
+    return undefined;
+  }
+
+  return node;
+}
+
+export function findAllInitialDeclarations(checker: CallHierarchyChecker, node: Node): readonly Node[] | undefined {
+  if (isClassStaticBlockDeclaration(node)) return undefined;
+  const symbol = getSymbolOfCallHierarchyDeclaration(checker, node);
+  if (symbol === undefined || symbol.declarations.length === 0) return undefined;
+
+  const declarations = symbol.declarations
+    .slice()
+    .sort((left, right) => {
+      const fileCompare = sourceFileOf(left).fileName.localeCompare(sourceFileOf(right).fileName);
+      return fileCompare !== 0 ? fileCompare : left.pos - right.pos;
+    });
+
+  const result: Node[] = [];
+  let lastDeclaration: Node | undefined;
+  for (const declaration of declarations) {
+    if (isValidCallHierarchyDeclaration(declaration)) {
+      if (lastDeclaration === undefined || lastDeclaration.parent !== declaration.parent || lastDeclaration.end !== declaration.pos) {
+        result.push(declaration);
+      }
+      lastDeclaration = declaration;
+    }
+  }
+
+  return result.length === 0 ? undefined : result;
+}
+
+export function findImplementationOrAllInitialDeclarations(checker: CallHierarchyChecker, node: Node): Node | readonly Node[] {
+  if (isClassStaticBlockDeclaration(node)) return node;
+
+  if (isFunctionLikeDeclaration(node)) {
+    const implementation = findImplementation(checker, node);
+    if (implementation !== undefined) return implementation;
+    return findAllInitialDeclarations(checker, node) ?? node;
+  }
+
+  return findAllInitialDeclarations(checker, node) ?? node;
+}
+
+export function resolveCallHierarchyDeclaration(program: CallHierarchyProgram, location: Node | undefined): Node | readonly Node[] | undefined {
+  const checker = program.getTypeChecker();
+  let followingSymbol = false;
+  let current = location;
+
+  while (current !== undefined) {
+    if (isValidCallHierarchyDeclaration(current)) return findImplementationOrAllInitialDeclarations(checker, current);
+
+    if (isPossibleCallHierarchyDeclaration(current)) {
+      const ancestor = findAncestor(current, isValidCallHierarchyDeclaration);
+      if (ancestor !== undefined) return findImplementationOrAllInitialDeclarations(checker, ancestor);
+    }
+
+    if (isDeclarationName(current)) {
+      if (isValidCallHierarchyDeclaration(current.parent)) return findImplementationOrAllInitialDeclarations(checker, current.parent);
+      if (isPossibleCallHierarchyDeclaration(current.parent)) {
+        const ancestor = findAncestor(current.parent, isValidCallHierarchyDeclaration);
+        if (ancestor !== undefined) return findImplementationOrAllInitialDeclarations(checker, ancestor);
+      }
+      if (isVariableLike(current.parent)) {
+        const initializer = callHierarchyInitializer(current.parent);
+        if (initializer !== undefined && isAssignedExpression(initializer)) return initializer;
+      }
+      return undefined;
+    }
+
+    if (isConstructorDeclaration(current)) return isValidCallHierarchyDeclaration(current.parent) ? current.parent : undefined;
+
+    if (current.kind === Kind.StaticKeyword && isClassStaticBlockDeclaration(current.parent)) {
+      current = current.parent;
+      continue;
+    }
+
+    if (isVariableDeclaration(current)) {
+      const initializer = callHierarchyInitializer(current);
+      if (initializer !== undefined && isAssignedExpression(initializer)) return initializer;
+    }
+
+    if (!followingSymbol) {
+      let symbol = checker.getSymbolAtLocation(current);
+      if (symbol !== undefined) {
+        if (((symbol.flags ?? 0) & SymbolFlags.Alias) !== 0 && checker.getAliasedSymbol !== undefined) symbol = checker.getAliasedSymbol(symbol) ?? symbol;
+        if (symbol.valueDeclaration !== undefined) {
+          followingSymbol = true;
+          current = symbol.valueDeclaration;
+          continue;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  return undefined;
+}
+
+export interface CallSite {
+  readonly declaration: Node;
+  readonly textRange: TextRange;
+  readonly sourceFile: SourceFile;
+}
+
+const callHierarchyNodeIds = new WeakMap<Node, number>();
+let nextCallHierarchyNodeId = 1;
+
+export function getCallSiteGroupKey(site: CallSite): number {
+  let id = callHierarchyNodeIds.get(site.declaration);
+  if (id === undefined) {
+    id = nextCallHierarchyNodeId;
+    nextCallHierarchyNodeId += 1;
+    callHierarchyNodeIds.set(site.declaration, id);
+  }
+  return id;
+}
+
+export function collectCallSites(program: CallHierarchyProgram, node: Node): readonly CallSite[] {
+  const collector = new CallSiteCollector(program);
+
+  switch (node.kind) {
+    case Kind.SourceFile:
+      for (const statement of callHierarchyStatements(node)) collector.collect(statement);
+      break;
+    case Kind.ModuleDeclaration: {
+      const body = callHierarchyBody(node);
+      if (!hasSyntacticModifier(node, ModifierFlags.Ambient) && body !== undefined && isModuleBlock(body)) {
+        for (const statement of callHierarchyStatements(body)) collector.collect(statement);
+      }
+      break;
+    }
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.ArrowFunction:
+    case Kind.MethodDeclaration:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor: {
+      const implementation = findImplementation(program.getTypeChecker(), node);
+      if (implementation !== undefined) {
+        for (const parameter of callHierarchyParameters(implementation)) collector.collect(parameter);
+        collector.collect(callHierarchyBody(implementation));
+      }
+      break;
+    }
+    case Kind.ClassDeclaration:
+    case Kind.ClassExpression:
+      for (const modifier of callHierarchyModifiers(node) ?? []) collector.collect(modifier);
+      for (const member of callHierarchyMembers(node)) {
+        for (const modifier of callHierarchyModifiers(member) ?? []) collector.collect(modifier);
+        if (isPropertyDeclaration(member)) {
+          collector.collect(callHierarchyInitializer(member));
+        } else if (isConstructorDeclaration(member)) {
+          if (callHierarchyBody(member) !== undefined) {
+            for (const parameter of callHierarchyParameters(member)) collector.collect(parameter);
+            collector.collect(callHierarchyBody(member));
+          }
+        } else if (isClassStaticBlockDeclaration(member)) {
+          collector.collect(member);
+        }
+      }
+      break;
+    case Kind.ClassStaticBlockDeclaration:
+      collector.collect(callHierarchyBody(node));
+      break;
+  }
+
+  return collector.callSites;
+}
+
+class CallSiteCollector {
+  readonly program: CallHierarchyProgram;
+  readonly callSites: CallSite[] = [];
+
+  constructor(program: CallHierarchyProgram) {
+    this.program = program;
+  }
+
+  recordCallSite(node: Node): void {
+    const target = getCallSiteTarget(node);
+    if (target === undefined) return;
+    const declaration = resolveCallHierarchyDeclaration(this.program, target);
+    if (declaration === undefined) return;
+
+    const sourceFile = sourceFileOf(target);
+    const start = skipTrivia(sourceFile.text, target.pos);
+    const textRange = { pos: start, end: target.end };
+    for (const item of Array.isArray(declaration) ? declaration : [declaration]) {
+      this.callSites.push({ declaration: item, textRange, sourceFile });
+    }
+  }
+
+  collect(node: Node | undefined): void {
+    if (node === undefined) return;
+    if ((node.flags & NodeFlags.Ambient) !== 0) return;
+
+    if (isValidCallHierarchyDeclaration(node)) {
+      if (isClassLikeDeclaration(node)) {
+        for (const member of callHierarchyMembers(node)) {
+          const name = callHierarchyName(member);
+          if (name !== undefined && name.kind === Kind.ComputedPropertyName) this.collect(callHierarchyExpression(name));
+        }
+      }
+      return;
+    }
+
+    switch (node.kind) {
+      case Kind.Identifier:
+      case Kind.ImportEqualsDeclaration:
+      case Kind.ImportDeclaration:
+      case Kind.ExportDeclaration:
+      case Kind.InterfaceDeclaration:
+      case Kind.TypeAliasDeclaration:
+        return;
+      case Kind.ClassStaticBlockDeclaration:
+        this.recordCallSite(node);
+        return;
+      case Kind.TypeAssertionExpression:
+      case Kind.AsExpression:
+      case Kind.SatisfiesExpression:
+        this.collect(callHierarchyExpression(node));
+        return;
+      case Kind.VariableDeclaration:
+      case Kind.Parameter:
+        this.collect(callHierarchyName(node));
+        this.collect(callHierarchyInitializer(node));
+        return;
+      case Kind.CallExpression:
+      case Kind.NewExpression:
+        this.recordCallSite(node);
+        this.collect(callHierarchyExpression(node));
+        for (const argument of (node as { readonly arguments?: readonly Node[] }).arguments ?? []) this.collect(argument);
+        return;
+      case Kind.TaggedTemplateExpression:
+        this.recordCallSite(node);
+        this.collect((node as { readonly tag?: Node }).tag);
+        this.collect((node as { readonly template?: Node }).template);
+        return;
+      case Kind.JsxOpeningElement:
+      case Kind.JsxSelfClosingElement:
+        this.recordCallSite(node);
+        this.collect(callHierarchyTagName(node));
+        this.collect((node as { readonly attributes?: Node }).attributes);
+        return;
+      case Kind.Decorator:
+        this.recordCallSite(node);
+        this.collect(callHierarchyExpression(node));
+        return;
+      case Kind.PropertyAccessExpression:
+      case Kind.ElementAccessExpression:
+        this.recordCallSite(node);
+        break;
+    }
+
+    node.forEachChild(child => {
+      this.collect(child);
+      return undefined;
+    });
+  }
+}
+
+function getCallSiteTarget(node: Node): Node | undefined {
+  if (isTaggedTemplateExpression(node)) return (node as { readonly tag?: Node }).tag;
+  if (isJsxOpeningElement(node) || isJsxSelfClosingElement(node)) return callHierarchyTagName(node);
+  if (isPropertyAccessExpression(node) || isElementAccessExpression(node) || isClassStaticBlockDeclaration(node)) return node;
+  if (isCallExpression(node) || isNewExpression(node) || isDecorator(node)) return callHierarchyExpression(node);
+  return undefined;
+}
+
+function getAssignedName(node: Node): Node | undefined {
+  const parent = node.parent;
+  if (isVariableLike(parent) && callHierarchyInitializer(parent) === node) return callHierarchyName(parent);
+  if (isPropertyDeclaration(parent) && callHierarchyInitializer(parent) === node) return callHierarchyName(parent);
+  return undefined;
+}
+
+function getFirstConstructorWithBody(node: Node | undefined): Node | undefined {
+  if (node === undefined) return undefined;
+  for (const member of callHierarchyMembers(node)) {
+    if (isConstructorDeclaration(member) && callHierarchyBody(member) !== undefined) return member;
+  }
+  return undefined;
+}
+
+function findAncestor(node: Node | undefined, predicate: (node: Node) => boolean): Node | undefined {
+  for (let current = node?.parent; current !== undefined; current = current.parent) {
+    if (predicate(current)) return current;
+  }
   return undefined;
 }
 
