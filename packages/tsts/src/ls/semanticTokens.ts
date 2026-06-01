@@ -56,6 +56,8 @@ import {
   type SemanticTokensRangeResponse,
   type SemanticTokensResponse,
 } from "../lsp/lsproto/index.js";
+import { SemanticMeaning } from "./semanticMeaning.js";
+export { SemanticMeaning } from "./semanticMeaning.js";
 
 export const semanticTokenTypes: readonly SemanticTokenType[] = [
   SemanticTokenTypeNamespace,
@@ -135,13 +137,6 @@ export enum SemanticTokenModifierFlag {
   Documentation = 1 << 8,
   DefaultLibrary = 1 << 9,
   Local = 1 << 10,
-}
-
-export enum SemanticMeaning {
-  Value = 1 << 0,
-  Type = 1 << 1,
-  Namespace = 1 << 2,
-  All = Value | Type | Namespace,
 }
 
 export interface SemanticTokenSymbol {

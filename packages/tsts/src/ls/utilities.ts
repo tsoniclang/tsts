@@ -11,6 +11,7 @@ import {
   isElementAccessExpression,
   isEnumDeclaration,
   isEnumMember,
+  isEntityName,
   isExternalModuleImportEqualsDeclaration,
   isExportAssignment,
   isExportDeclaration,
@@ -43,6 +44,7 @@ import {
   isSetAccessorDeclaration,
   isSourceFile,
   isStringLiteralLike,
+  isDefaultClause,
   isTypeAliasDeclaration,
   isTypeNode,
   isTypeParameterDeclaration,
@@ -52,6 +54,7 @@ import {
   NodeFlags,
   modifierNodes,
   nodeText,
+  skipParentheses,
   skipOuterExpressions,
   SymbolFlags,
   type FileReference,
@@ -65,7 +68,9 @@ import { ModifierFlags, OuterExpressionKinds } from "../enums/index.js";
 import type { Position, Range } from "../lsp/lsproto/index.js";
 import { TokenFlags } from "../scanner/tokenFlags.js";
 import { stripQuotes } from "../stringutil/index.js";
+import { SignatureKind, TypeFlags, type Signature, type Type } from "../checker/types.js";
 import { getQuotePreference, QuotePreferenceSingle, type UserPreferences } from "./lsutil/index.js";
+import { SemanticMeaning } from "./semanticMeaning.js";
 
 export const quoteReplacer = new Map<string, string>([
   ["'", "\\'"],
@@ -668,6 +673,308 @@ export function getAdjustedLocationForExportDeclaration(node: Node, forRename: b
   return undefined;
 }
 
+export function symbolFlagsHaveMeaning(flags: SymbolFlags, meaning: SemanticMeaning): boolean {
+  if (meaning === SemanticMeaning.All) return true;
+  if ((meaning & SemanticMeaning.Value) !== 0) return (flags & SymbolFlags.Value) !== 0;
+  if ((meaning & SemanticMeaning.Type) !== 0) return (flags & SymbolFlags.Type) !== 0;
+  if ((meaning & SemanticMeaning.Namespace) !== 0) return (flags & SymbolFlags.Namespace) !== 0;
+  return false;
+}
+
+export function getMeaningFromLocation(node: Node): SemanticMeaning {
+  const location = getAdjustedLocation(node, false);
+  const parent = location.parent;
+  if (isSourceFile(location)) return SemanticMeaning.Value;
+  if (parent === undefined) return SemanticMeaning.Value;
+  if (parent.kind === Kind.ExportAssignment
+    || parent.kind === Kind.ExportSpecifier
+    || parent.kind === Kind.ExternalModuleReference
+    || parent.kind === Kind.ImportSpecifier
+    || parent.kind === Kind.ImportClause
+    || parent.kind === Kind.ImportEqualsDeclaration && nodeName(parent) === location) {
+    return SemanticMeaning.All;
+  }
+  if (isInRightSideOfInternalImportEqualsDeclaration(location)) {
+    const name = location.kind === Kind.QualifiedName
+      ? location
+      : location.parent.kind === Kind.QualifiedName && nodeProperty(location.parent, "right") === location
+        ? location.parent
+        : undefined;
+    return name !== undefined && name.parent.kind === Kind.ImportEqualsDeclaration
+      ? SemanticMeaning.All
+      : SemanticMeaning.Namespace;
+  }
+  if (isDeclarationNameNode(location)) return getMeaningFromDeclaration(parent);
+  if (isEntityName(location) && isJSDocNameReferenceContext(location)) return SemanticMeaning.All;
+  if (isTypeReference(location)) return SemanticMeaning.Type;
+  if (isNamespaceReference(location)) return SemanticMeaning.Namespace;
+  if (isTypeParameterDeclaration(parent)) return SemanticMeaning.Type;
+  if (isLiteralTypeNode(parent)) return SemanticMeaning.Type | SemanticMeaning.Value;
+  return SemanticMeaning.Value;
+}
+
+export function getMeaningFromDeclaration(node: Node): SemanticMeaning {
+  switch (node.kind) {
+    case Kind.VariableDeclaration:
+    case Kind.Parameter:
+    case Kind.BindingElement:
+    case Kind.PropertyDeclaration:
+    case Kind.PropertySignature:
+    case Kind.PropertyAssignment:
+    case Kind.ShorthandPropertyAssignment:
+    case Kind.MethodDeclaration:
+    case Kind.MethodSignature:
+    case Kind.Constructor:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.ArrowFunction:
+    case Kind.CatchClause:
+    case Kind.JsxAttribute:
+      return SemanticMeaning.Value;
+    case Kind.TypeParameter:
+    case Kind.InterfaceDeclaration:
+    case Kind.TypeAliasDeclaration:
+    case Kind.JSTypeAliasDeclaration:
+    case Kind.TypeLiteral:
+      return SemanticMeaning.Type;
+    case Kind.EnumMember:
+    case Kind.ClassDeclaration:
+      return SemanticMeaning.Value | SemanticMeaning.Type;
+    case Kind.ModuleDeclaration:
+      return SemanticMeaning.Namespace | SemanticMeaning.Value;
+    case Kind.EnumDeclaration:
+    case Kind.NamedImports:
+    case Kind.ImportSpecifier:
+    case Kind.ImportEqualsDeclaration:
+    case Kind.ImportDeclaration:
+    case Kind.JSImportDeclaration:
+    case Kind.ExportAssignment:
+    case Kind.ExportDeclaration:
+      return SemanticMeaning.All;
+    case Kind.SourceFile:
+      return SemanticMeaning.Namespace | SemanticMeaning.Value;
+    default:
+      return SemanticMeaning.All;
+  }
+}
+
+export function getIntersectingMeaningFromDeclarations(
+  node: Node | undefined,
+  symbol: Pick<Symbol, "declarations">,
+  defaultMeaning: SemanticMeaning,
+): SemanticMeaning {
+  if (node === undefined) return defaultMeaning;
+  let meaning = getMeaningFromLocation(node);
+  const declarations = symbol.declarations;
+  if (declarations.length === 0) return meaning;
+
+  let previousMeaning: SemanticMeaning;
+  do {
+    previousMeaning = meaning;
+    for (const declaration of declarations) {
+      const declarationMeaning = getMeaningFromDeclaration(declaration);
+      if ((declarationMeaning & meaning) !== 0) meaning |= declarationMeaning;
+    }
+  } while (meaning !== previousMeaning);
+
+  return meaning;
+}
+
+export function getAllSuperTypeNodes(node: Node): readonly Node[] {
+  const heritageClauses = nodeArray(node, "heritageClauses");
+  if (isInterfaceDeclaration(node)) return heritageTypes(heritageClauses, Kind.ExtendsKeyword);
+  if (isClassLikeDeclaration(node)) {
+    return [
+      ...heritageTypes(heritageClauses, Kind.ExtendsKeyword).slice(0, 1),
+      ...heritageTypes(heritageClauses, Kind.ImplementsKeyword),
+    ];
+  }
+  return [];
+}
+
+export interface ParentSymbolType {
+  readonly flags: TypeFlags;
+  readonly symbol?: Symbol;
+  readonly types?: readonly ParentSymbolType[];
+}
+
+export interface ParentSymbolChecker<TType extends ParentSymbolType = ParentSymbolType> {
+  getTypeAtLocation(node: Node): TType | undefined;
+}
+
+export function getParentSymbolsOfPropertyAccess<TType extends ParentSymbolType>(
+  location: Node,
+  symbol: Symbol,
+  checker: ParentSymbolChecker<TType>,
+): readonly Symbol[] {
+  if (!isRightSideOfPropertyAccess(location)) return [];
+  const lhsExpression = nodeExpression(location.parent);
+  const lhsType = checker.getTypeAtLocation(lhsExpression);
+  if (lhsType === undefined) return [];
+  const possibleTypes = (lhsType.flags & TypeFlags.UnionOrIntersection) !== 0
+    ? lhsType.types ?? []
+    : lhsType.symbol !== symbol.parent
+      ? [lhsType]
+      : [];
+  return possibleTypes
+    .map(type => type.symbol)
+    .filter((candidate): candidate is Symbol => candidate !== undefined && ((candidate.flags ?? 0) & (SymbolFlags.Class | SymbolFlags.Interface)) !== 0);
+}
+
+export interface BaseTypeSymbolType {
+  readonly symbol?: Symbol;
+}
+
+export interface BaseTypeSymbolChecker<TType extends BaseTypeSymbolType = BaseTypeSymbolType> {
+  getTypeAtLocation(node: Node): TType | undefined;
+  getPropertyOfType(type: TType, propertyName: string): Symbol | undefined;
+  getRootSymbols(symbol: Symbol): readonly Symbol[];
+}
+
+export function getPropertySymbolsFromBaseTypes<TType extends BaseTypeSymbolType>(
+  symbol: Symbol,
+  propertyName: string,
+  checker: BaseTypeSymbolChecker<TType>,
+  callback: (base: Symbol) => Symbol | undefined,
+): Symbol | undefined {
+  const seen = new Set<Symbol>();
+  const recur = (current: Symbol): Symbol | undefined => {
+    if (((current.flags ?? 0) & (SymbolFlags.Class | SymbolFlags.Interface)) === 0 || seen.has(current)) return undefined;
+    seen.add(current);
+    for (const declaration of current.declarations) {
+      for (const typeReference of getAllSuperTypeNodes(declaration)) {
+        const propertyType = checker.getTypeAtLocation(typeReference);
+        if (propertyType?.symbol === undefined) continue;
+        const propertySymbol = checker.getPropertyOfType(propertyType, propertyName);
+        if (propertySymbol !== undefined) {
+          for (const rootSymbol of checker.getRootSymbols(propertySymbol)) {
+            const result = callback(rootSymbol);
+            if (result !== undefined) return result;
+          }
+        }
+        const result = recur(propertyType.symbol);
+        if (result !== undefined) return result;
+      }
+    }
+    return undefined;
+  };
+  return recur(symbol);
+}
+
+export interface BindingElementChecker<TType> {
+  getTypeAtLocation(node: Node): TType | undefined;
+  getPropertyOfType(type: TType, propertyName: string): Symbol | undefined;
+}
+
+export function getPropertySymbolFromBindingElement<TType>(
+  checker: BindingElementChecker<TType>,
+  bindingElement: Node,
+): Symbol | undefined {
+  const typeOfPattern = checker.getTypeAtLocation(bindingElement.parent);
+  const name = nodeName(bindingElement);
+  return typeOfPattern === undefined || name === undefined ? undefined : checker.getPropertyOfType(typeOfPattern, nodeText(name));
+}
+
+export function getPropertySymbolOfObjectBindingPatternWithoutPropertyName<TType>(
+  symbol: Symbol,
+  checker: BindingElementChecker<TType>,
+): Symbol | undefined {
+  const bindingElement = symbol.declarations.find(declaration => declaration.kind === Kind.BindingElement);
+  return bindingElement !== undefined && isObjectBindingElementWithoutPropertyName(bindingElement)
+    ? getPropertySymbolFromBindingElement(checker, bindingElement)
+    : undefined;
+}
+
+export function getTargetLabel(referenceNode: Node | undefined, labelName: string): Node | undefined {
+  for (let current = referenceNode; current !== undefined; current = current.parent) {
+    if (current.kind === Kind.LabeledStatement && nodeText(nodeProperty<Node>(current, "label")) === labelName) {
+      return nodeProperty(current, "label");
+    }
+  }
+  return undefined;
+}
+
+export interface ConstraintChecker<TType> {
+  getBaseConstraintOfType(type: TType): TType | undefined;
+}
+
+export function skipConstraint<TType extends { readonly flags?: number }>(type: TType, checker: ConstraintChecker<TType>): TType {
+  return ((type.flags ?? 0) & TypeFlags.TypeParameter) !== 0
+    ? checker.getBaseConstraintOfType(type) ?? type
+    : type;
+}
+
+export type TrackerAddValue = string | number;
+export type TrackerHasValue = string | number | bigint;
+
+export interface CaseClauseTracker {
+  addValue(value: TrackerAddValue): void;
+  hasValue(value: TrackerHasValue): boolean;
+}
+
+export class CaseClauseTrackerState implements CaseClauseTracker {
+  readonly existingStrings = new Set<string>();
+  readonly existingNumbers = new Set<number>();
+  readonly existingBigInts = new Set<string>();
+
+  addValue(value: TrackerAddValue): void {
+    if (typeof value === "string") {
+      this.existingStrings.add(value);
+    } else {
+      this.existingNumbers.add(value);
+    }
+  }
+
+  hasValue(value: TrackerHasValue): boolean {
+    switch (typeof value) {
+      case "string":
+        return this.existingStrings.has(value);
+      case "number":
+        return this.existingNumbers.has(value);
+      case "bigint":
+        return this.existingBigInts.has(value.toString());
+      default:
+        return false;
+    }
+  }
+}
+
+export interface CaseClauseTypeChecker {
+  getSymbolAtLocation(node: Node): Symbol | undefined;
+  getConstantValue(node: Node): string | number | undefined;
+}
+
+export function newCaseClauseTracker(typeChecker: CaseClauseTypeChecker, clauses: readonly Node[]): CaseClauseTracker {
+  const tracker = new CaseClauseTrackerState();
+  for (const clause of clauses) {
+    if (isDefaultClause(clause)) continue;
+    const expression = skipParentheses(nodeExpression(clause));
+    if (isLiteralExpression(expression)) {
+      switch (expression.kind) {
+        case Kind.NoSubstitutionTemplateLiteral:
+        case Kind.StringLiteral:
+          tracker.existingStrings.add(nodeText(expression));
+          break;
+        case Kind.NumericLiteral:
+          tracker.existingNumbers.add(Number(nodeText(expression)));
+          break;
+        case Kind.BigIntLiteral:
+          tracker.existingBigInts.add(nodeText(expression).replace(/n$/u, ""));
+          break;
+      }
+      continue;
+    }
+    const symbol = typeChecker.getSymbolAtLocation(expression);
+    if (symbol?.valueDeclaration !== undefined && isEnumMember(symbol.valueDeclaration)) {
+      const enumValue = typeChecker.getConstantValue(symbol.valueDeclaration);
+      if (enumValue !== undefined) tracker.addValue(enumValue);
+    }
+  }
+  return tracker;
+}
+
 export function rangeContainsRange(left: TextRange, right: TextRange): boolean {
   return startEndContainsRange(left.pos, left.end, right);
 }
@@ -685,6 +992,25 @@ export function removeOptionality<T>(type: T, isOptionalExpression: boolean, isO
 export interface OptionalityChecker<T> {
   getNonNullableType(type: T): T;
   getNonOptionalType(type: T): T;
+}
+
+export interface GenericSignatureChecker<TType extends Type = Type> extends OptionalityChecker<TType> {
+  getTypeAtLocation(node: Node): TType;
+  getSignaturesOfType(type: TType, kind: SignatureKind): readonly Signature[];
+}
+
+export function getPossibleGenericSignatures<TType extends Type>(
+  called: Node,
+  typeArgumentCount: number,
+  checker: GenericSignatureChecker<TType>,
+): readonly Signature[] {
+  let typeAtLocation = checker.getTypeAtLocation(called);
+  if (isOptionalChainNode(called.parent)) {
+    typeAtLocation = removeOptionality(typeAtLocation, isOptionalChainRootNode(called.parent), true, checker);
+  }
+  const kind = called.parent.kind === Kind.NewExpression ? SignatureKind.Construct : SignatureKind.Call;
+  return checker.getSignaturesOfType(typeAtLocation, kind)
+    .filter(signature => (signature.typeParameters?.length ?? 0) >= typeArgumentCount);
 }
 
 export function isNoSubstitutionTemplateLiteral(node: Node): boolean {
@@ -870,6 +1196,29 @@ function isVariableLike(node: Node): boolean {
 
 function isModuleOrEnumDeclaration(node: Node): boolean {
   return isModuleDeclaration(node) || isEnumDeclaration(node);
+}
+
+function isJSDocNameReferenceContext(node: Node): boolean {
+  for (let current = node.parent; current !== undefined; current = current.parent) {
+    if (current.kind === Kind.JSDocNameReference) return true;
+    if (!isEntityName(current)) return false;
+  }
+  return false;
+}
+
+function heritageTypes(heritageClauses: readonly Node[], token: Kind): readonly Node[] {
+  return heritageClauses
+    .filter(clause => nodeProperty<Kind>(clause, "token") === token)
+    .flatMap(clause => nodeArray(clause, "types"))
+    .map(typeNode => nodeExpression(typeNode));
+}
+
+function isOptionalChainNode(node: Node | undefined): boolean {
+  return node !== undefined && ((node.flags ?? 0) & NodeFlags.OptionalChain) !== 0;
+}
+
+function isOptionalChainRootNode(node: Node | undefined): boolean {
+  return isOptionalChainNode(node) && nodeProperty<Node>(node, "questionDotToken") !== undefined;
 }
 
 // Language-service parity map: internal/ls/utilities.go
