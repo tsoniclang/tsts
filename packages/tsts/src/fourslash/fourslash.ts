@@ -57,8 +57,12 @@ import {
   SemanticTokenTypeTypeParameter,
   SemanticTokenTypeVariable,
   TokenFormatRelative,
+  type CallHierarchyIncomingCall,
+  type CallHierarchyItem,
+  type CallHierarchyOutgoingCall,
   type ClientCapabilities,
   type CodeAction,
+  type CodeLens,
   type CodeActionKind,
   type CompletionItem,
   type CompletionItemDefaults,
@@ -68,6 +72,7 @@ import {
   type DocumentSymbol,
   type DocumentUri,
   type FoldingRange,
+  type FileRename,
   type Hover,
   type InlayHint,
   type LanguageKind,
@@ -220,9 +225,15 @@ export interface FourslashLanguageProvider {
   getTypeDefinition?(request: FourslashLanguageRequest): readonly Location[];
   getSourceDefinition?(request: FourslashLanguageRequest): readonly Location[];
   getWorkspaceSymbols?(query: string): readonly SymbolInformation[];
+  getCodeLenses?(fileName: string): readonly CodeLens[];
+  resolveCodeLens?(codeLens: CodeLens): CodeLens;
   getFoldingRanges?(fileName: string): readonly FoldingRange[] | undefined;
   getHover?(request: FourslashLanguageRequest, verbosityLevel?: number): Hover | undefined;
   getSignatureHelp?(request: FourslashLanguageRequest): SignatureHelp | undefined;
+  getJsxClosingTag?(request: FourslashLanguageRequest): string | undefined;
+  prepareCallHierarchy?(request: FourslashLanguageRequest): readonly CallHierarchyItem[];
+  getIncomingCalls?(item: CallHierarchyItem): readonly CallHierarchyIncomingCall[];
+  getOutgoingCalls?(item: CallHierarchyItem): readonly CallHierarchyOutgoingCall[];
   getSelectionRanges?(fileName: string, positions: readonly Position[]): readonly SelectionRange[];
   getDocumentHighlights?(request: FourslashLanguageRequest, filesToSearch?: readonly DocumentUri[]): readonly Location[];
   getDocumentSymbols?(fileName: string): readonly DocumentSymbol[] | readonly SymbolInformation[] | undefined;
@@ -230,6 +241,7 @@ export interface FourslashLanguageProvider {
   getInlayHints?(fileName: string, range: Range): readonly InlayHint[];
   getLinkedEditingRanges?(request: FourslashLanguageRequest): LinkedEditingRanges | undefined;
   rename?(request: FourslashLanguageRequest, newName: string): WorkspaceEdit | undefined;
+  willRenameFiles?(files: readonly FileRename[]): WorkspaceEdit | undefined;
 }
 
 export class FourslashTest {
@@ -1099,6 +1111,39 @@ export class FourslashTest {
     }
   }
 
+  verifyBaselineCodeLens(preferences?: UserPreferences): void {
+    const provider = this.languageProviderRequired("code lens");
+    const originalPreferences = this.userPreferences;
+    if (preferences !== undefined) this.setUserPreferences(preferences);
+    try {
+      let foundAtLeastOneCodeLens = false;
+      for (const fileName of [...this.openFiles].sort()) {
+        const codeLenses = provider.getCodeLenses?.(fileName) ?? [];
+        if (codeLenses.length === 0) continue;
+        foundAtLeastOneCodeLens = true;
+
+        for (const unresolvedCodeLens of codeLenses) {
+          const resolvedCodeLens = provider.resolveCodeLens?.(unresolvedCodeLens) ?? unresolvedCodeLens;
+          const command = resolvedCodeLens.command;
+          if (command === undefined) fail("Expected resolved code lens to have a command.");
+          if (command.command !== "" && command.command !== showCodeLensLocationsCommandName) {
+            fail(`Unexpected code lens command ${JSON.stringify(command.command)}.`);
+          }
+          const locations = locationsFromCodeLensArguments(command.arguments);
+          const markerName = `/*CODELENS: ${command.title}*/`;
+          this.baseline({ name: "codeLenses", arguments: [] }, this.formatLocationsBaseline(markerName, [
+            { uri: fileNameToDocumentURI(fileName), range: resolvedCodeLens.range },
+            ...locations,
+          ]));
+        }
+      }
+
+      if (!foundAtLeastOneCodeLens) fail("Expected at least one code lens in any open file, but got none.");
+    } finally {
+      this.userPreferences = originalPreferences;
+    }
+  }
+
   verifyOutliningSpans(kind?: string): void {
     const provider = this.languageProviderRequired("folding ranges");
     const ranges = provider.getFoldingRanges?.(this.activeFilename) ?? [];
@@ -1203,6 +1248,21 @@ export class FourslashTest {
 
   verifySignatureHelpPresent(): void {
     if (this.getSignatureHelpAtCurrentPosition() === undefined) fail("Expected signature help.");
+  }
+
+  verifyBaselineCallHierarchy(): void {
+    const provider = this.languageProviderRequired("call hierarchy");
+    const items = provider.prepareCallHierarchy?.(this.languageRequest()) ?? [];
+    if (items.length === 0) {
+      this.baseline({ name: "callHierarchy", arguments: [] }, "No call hierarchy items available");
+      return;
+    }
+
+    const rows: string[] = [];
+    for (const item of items) {
+      formatCallHierarchyItem(this, provider, rows, item, "root", new Set<string>(), "");
+    }
+    this.baseline({ name: "callHierarchy", arguments: [] }, rows.join("\n").replace(/\n$/u, ""));
   }
 
   verifyBaselineSelectionRanges(): void {
@@ -1332,13 +1392,57 @@ export class FourslashTest {
     if (edit === undefined) fail("Expected rename to succeed.");
     this.applyWorkspaceEdit(edit);
     for (const [fileName, content] of Object.entries(expectedFileContents)) {
-      this.file(fileName).text() === content || fail(`Renamed content mismatch for ${fileName}.`);
+      if (this.file(fileName).text() !== content) fail(`Renamed content mismatch for ${fileName}.`);
+    }
+  }
+
+  verifyBaselineRename(preferences?: UserPreferences, ...markerOrRangeOrNames: readonly MarkerOrRangeOrName[]): void {
+    const markerOrRanges = markerOrRangeOrNames.map(item => this.resolveMarkerOrRange(item));
+    this.verifyBaselineRenameWorker(preferences, markerOrRanges);
+  }
+
+  verifyBaselineRenameAtRangesWithText(preferences: UserPreferences | undefined, ...texts: readonly string[]): void {
+    const markerOrRanges = texts.flatMap(text => this.rangesByText.get(text) ?? []);
+    this.verifyBaselineRenameWorker(preferences, markerOrRanges);
+  }
+
+  verifyRenameSucceeded(preferences?: UserPreferences): void {
+    const originalPreferences = this.userPreferences;
+    if (preferences !== undefined) this.setUserPreferences(preferences);
+    try {
+      const edit = this.renameAtCaret("RENAME_SUCCEEDED_TEST");
+      if (edit === undefined || this.workspaceTextEditEntries(edit).length === 0) {
+        fail(`${this.getCurrentPositionPrefix()}Expected rename to succeed, but no rename edits were returned.`);
+      }
+    } finally {
+      this.userPreferences = originalPreferences;
     }
   }
 
   verifyRenameFailed(): void {
     const edit = this.renameAtCaret("__newName__");
     if (edit !== undefined) fail("Expected rename to fail.");
+  }
+
+  willRenameFiles(files: readonly FileRename[]): WorkspaceEdit | undefined {
+    const provider = this.languageProviderRequired("will rename files");
+    return provider.willRenameFiles?.(files);
+  }
+
+  verifyWillRenameFilesEdits(oldPath: string, newPath: string, expectedFileContents: Readonly<Record<string, string>>, preferences?: UserPreferences): void {
+    const originalPreferences = this.userPreferences;
+    if (preferences !== undefined) this.setUserPreferences(preferences);
+    try {
+      this.willRenameFilesWorker([{ oldUri: fileNameToDocumentURI(oldPath), newUri: fileNameToDocumentURI(newPath) }]);
+      for (const [fileName, expectedContent] of Object.entries(expectedFileContents)) {
+        const script = this.getOrLoadScriptInfo(fileName);
+        if (script.text() !== expectedContent) {
+          fail(`File content after workspace/willRenameFiles edits did not match expected content for ${fileName}.`);
+        }
+      }
+    } finally {
+      this.userPreferences = originalPreferences;
+    }
   }
 
   private applyCodeActionEditsForActiveFile(action: CodeAction): void {
@@ -1365,10 +1469,81 @@ export class FourslashTest {
 
   private getWorkspaceEditTextEdits(edit: WorkspaceEdit | undefined): readonly TextEdit[] {
     if (edit === undefined) return [];
-    const fromChanges = Object.values(edit.changes ?? {}).flat();
-    const fromDocumentChanges = (edit.documentChanges ?? [])
-      .flatMap(change => change.textDocumentEdit?.edits.map(textEditFromUnion) ?? []);
-    return [...fromChanges, ...fromDocumentChanges];
+    return this.workspaceTextEditEntries(edit).map(entry => entry.edit);
+  }
+
+  private workspaceTextEditEntries(edit: WorkspaceEdit | undefined): readonly WorkspaceTextEditEntry[] {
+    if (edit === undefined) return [];
+    const entries: WorkspaceTextEditEntry[] = [];
+    for (const [uri, edits] of Object.entries(edit.changes ?? {})) {
+      for (const textEdit of edits) entries.push({ uri, edit: textEdit });
+    }
+    for (const change of edit.documentChanges ?? []) {
+      const textDocumentEdit = change.textDocumentEdit;
+      if (textDocumentEdit === undefined) continue;
+      const uri = textDocumentEdit.textDocument.uri;
+      for (const editEntry of textDocumentEdit.edits) {
+        entries.push({ uri, edit: textEditFromUnion(editEntry) });
+      }
+    }
+    return entries;
+  }
+
+  private verifyBaselineRenameWorker(preferences: UserPreferences | undefined, markerOrRanges: readonly MarkerOrRange[]): void {
+    const originalPreferences = this.userPreferences;
+    if (preferences !== undefined) this.setUserPreferences(preferences);
+    try {
+      for (const markerOrRange of markerOrRanges) {
+        this.goToMarkerOrRange(markerOrRange);
+        const edit = this.renameAtCaret("?");
+        const entries = this.workspaceTextEditEntries(edit);
+        const rows = entries.map(entry => {
+          const replacement = entry.edit.newText;
+          const pieces = replacement.split("?");
+          const startPrefix = pieces[0] === undefined || pieces[0] === "" ? "" : `/*START PREFIX*/${pieces[0]}`;
+          const endSuffix = pieces.length < 2 || pieces[1] === "" ? "" : `${pieces.slice(1).join("?")}/*END SUFFIX*/`;
+          return `${entry.uri}:${formatRange(entry.edit.range)} ${startPrefix}/*RENAME*/${endSuffix}\n${this.locationSourceLine({ uri: entry.uri, range: entry.edit.range })}`;
+        });
+        const options = formatRenameOptions(preferences);
+        const baselineText = rows.join("\n");
+        this.baseline({ name: "rename", arguments: [] }, options === "" ? baselineText : `${options}\n${baselineText}`);
+      }
+    } finally {
+      this.userPreferences = originalPreferences;
+    }
+  }
+
+  private willRenameFilesWorker(files: readonly FileRename[]): void {
+    const edit = this.willRenameFiles(files);
+    if (edit !== undefined) this.applyWorkspaceEdit(edit);
+    for (const file of files) {
+      this.renameFileOrDirectory(uriToFileName(file.oldUri), uriToFileName(file.newUri));
+    }
+    for (const change of edit?.documentChanges ?? []) {
+      const renameFile = change.renameFile;
+      if (renameFile !== undefined) {
+        this.renameFileOrDirectory(uriToFileName(renameFile.oldUri), uriToFileName(renameFile.newUri));
+      }
+    }
+  }
+
+  private renameFileOrDirectory(oldPath: string, newPath: string): void {
+    const updates: [oldFileName: string, newFileName: string, content: string, wasOpen: boolean][] = [];
+    for (const [fileName, script] of this.scriptInfos) {
+      const renamed = renamedPath(fileName, oldPath, newPath);
+      if (renamed !== undefined) updates.push([fileName, renamed, script.text(), this.openFiles.has(fileName)]);
+    }
+    if (updates.length === 0) fail(`rename source ${oldPath} did not exist in test environment`);
+    for (const [oldFileName] of updates) {
+      this.scriptInfos.delete(oldFileName);
+      this.openFiles.delete(oldFileName);
+    }
+    for (const [_oldFileName, newFileName, content, wasOpen] of updates) {
+      this.scriptInfos.set(newFileName, newScriptInfo(newFileName, content));
+      if (wasOpen) this.openFiles.add(newFileName);
+    }
+    const active = renamedPath(this.activeFilename, oldPath, newPath);
+    if (active !== undefined) this.activeFilename = active;
   }
 
   private languageProviderRequired(feature: string): FourslashLanguageProvider {
@@ -1873,6 +2048,11 @@ export interface VerifyWorkspaceSymbolCase {
   readonly fileName?: string;
 }
 
+export interface VerifyBaselineRenameOptions {
+  readonly markerOrRange?: MarkerOrRangeOrName;
+  readonly newName: string;
+}
+
 export type MarkerInput = string | Marker | readonly string[] | readonly Marker[] | undefined;
 export type MarkerOrRangeOrName = string | Marker | RangeMarker;
 export const AnyTextEdits: readonly TextEdit[] = Object.freeze([]);
@@ -1980,6 +2160,11 @@ function assertDeepEqual(actual: unknown, expected: unknown, prefix: string): vo
   if (diff !== "") fail(`${prefix}:\n${diff}`);
 }
 
+interface WorkspaceTextEditEntry {
+  readonly uri: DocumentUri;
+  readonly edit: TextEdit;
+}
+
 function diffJson(actual: unknown, expected: unknown): string {
   const actualText = stableStringify(actual);
   const expectedText = stableStringify(expected);
@@ -2074,6 +2259,16 @@ function isRange(value: unknown): value is Range {
   return isRecord(value) && isPosition(value["start"]) && isPosition(value["end"]);
 }
 
+function isLocation(value: unknown): value is Location {
+  return isRecord(value) && typeof value["uri"] === "string" && isRange(value["range"]);
+}
+
+function locationsFromCodeLensArguments(args: readonly unknown[] | undefined): readonly Location[] {
+  if (args === undefined || args.length < 3) return [];
+  const locations = args[2];
+  return Array.isArray(locations) ? locations.filter(isLocation) : [];
+}
+
 function isPosition(value: unknown): value is Position {
   return isRecord(value) && typeof value["line"] === "number" && typeof value["character"] === "number";
 }
@@ -2112,6 +2307,154 @@ function formatPosition(position: Position): string {
 
 function formatRange(range: Range): string {
   return `${formatPosition(range.start)}-${formatPosition(range.end)}`;
+}
+
+function formatRenameOptions(preferences: UserPreferences | undefined): string {
+  if (preferences === undefined) return "";
+  const rows: string[] = [];
+  const useAliasesForRename = (preferences as { readonly useAliasesForRename?: boolean | undefined }).useAliasesForRename;
+  if (useAliasesForRename !== undefined) rows.push(`// @useAliasesForRename: ${String(useAliasesForRename)}`);
+  const quotePreference = (preferences as { readonly quotePreference?: string | undefined }).quotePreference;
+  if (quotePreference !== undefined) rows.push(`// @quotePreference: ${quotePreference}`);
+  return rows.join("\n");
+}
+
+type CallHierarchyDirection = "root" | "incoming" | "outgoing";
+
+function callHierarchyKey(item: CallHierarchyItem, direction: CallHierarchyDirection): string {
+  return `${direction}\0${item.uri}\0${formatRange(item.range)}`;
+}
+
+function formatCallHierarchyItem(
+  test: FourslashTest,
+  provider: FourslashLanguageProvider,
+  rows: string[],
+  item: CallHierarchyItem,
+  direction: CallHierarchyDirection,
+  seen: Set<string>,
+  prefix: string,
+): void {
+  const key = callHierarchyKey(item, direction);
+  const alreadySeen = seen.has(key);
+  seen.add(key);
+
+  const incomingSkipped = direction === "outgoing";
+  const outgoingSkipped = direction === "incoming";
+  const incomingCalls = incomingSkipped || alreadySeen ? [] : provider.getIncomingCalls?.(item) ?? [];
+  const outgoingCalls = outgoingSkipped || alreadySeen ? [] : provider.getOutgoingCalls?.(item) ?? [];
+  const trailingPrefix = prefix;
+
+  rows.push(`${prefix}╭ name: ${item.name}`);
+  rows.push(`${prefix}├ kind: ${symbolKindName(item.kind).toLowerCase()}`);
+  if (item.detail !== undefined && item.detail !== "") rows.push(`${prefix}├ containerName: ${item.detail}`);
+  rows.push(`${prefix}├ file: ${uriToFileName(item.uri)}`);
+  rows.push(`${prefix}├ span:`);
+  formatCallHierarchyItemSpan(test, rows, item.uri, item.range, `${prefix}│ `, `${prefix}│ `);
+  rows.push(`${prefix}├ selectionSpan:`);
+  formatCallHierarchyItemSpan(test, rows, item.uri, item.selectionRange, `${prefix}│ `, `${prefix}│ `);
+
+  if (alreadySeen && !incomingSkipped) {
+    rows.push(outgoingSkipped ? `${trailingPrefix}╰ incoming: ...` : `${prefix}├ incoming: ...`);
+  } else if (!incomingSkipped) {
+    if (incomingCalls.length === 0) {
+      rows.push(outgoingSkipped ? `${trailingPrefix}╰ incoming: none` : `${prefix}├ incoming: none`);
+    } else {
+      rows.push(`${prefix}├ incoming:`);
+      for (let index = 0; index < incomingCalls.length; index += 1) {
+        const incomingCall = incomingCalls[index]!;
+        if (incomingCall.from === undefined) continue;
+        rows.push(`${prefix}│ ╭ from:`);
+        formatCallHierarchyItem(test, provider, rows, incomingCall.from, "incoming", seen, `${prefix}│ │ `);
+        rows.push(`${prefix}│ ├ fromSpans:`);
+        const closingPrefix = index < incomingCalls.length - 1 || (!outgoingSkipped && (!alreadySeen || outgoingCalls.length > 0))
+          ? `${prefix}│ ╰ `
+          : `${trailingPrefix}╰ ╰ `;
+        formatCallHierarchyItemSpans(test, rows, incomingCall.from.uri, incomingCall.fromRanges, `${prefix}│ │ `, closingPrefix);
+      }
+    }
+  }
+
+  if (alreadySeen && !outgoingSkipped) {
+    rows.push(`${trailingPrefix}╰ outgoing: ...`);
+  } else if (!outgoingSkipped) {
+    if (outgoingCalls.length === 0) {
+      rows.push(`${trailingPrefix}╰ outgoing: none`);
+    } else {
+      rows.push(`${prefix}├ outgoing:`);
+      for (let index = 0; index < outgoingCalls.length; index += 1) {
+        const outgoingCall = outgoingCalls[index]!;
+        if (outgoingCall.to === undefined) continue;
+        rows.push(`${prefix}│ ╭ to:`);
+        formatCallHierarchyItem(test, provider, rows, outgoingCall.to, "outgoing", seen, `${prefix}│ │ `);
+        rows.push(`${prefix}│ ├ fromSpans:`);
+        const closingPrefix = index < outgoingCalls.length - 1 ? `${prefix}│ ╰ ` : `${trailingPrefix}╰ ╰ `;
+        formatCallHierarchyItemSpans(test, rows, item.uri, outgoingCall.fromRanges, `${prefix}│ │ `, closingPrefix);
+      }
+    }
+  }
+}
+
+function formatCallHierarchyItemSpans(
+  test: FourslashTest,
+  rows: string[],
+  uri: DocumentUri,
+  ranges: readonly Range[],
+  prefix: string,
+  trailingPrefix: string,
+): void {
+  for (let index = 0; index < ranges.length; index += 1) {
+    formatCallHierarchyItemSpan(test, rows, uri, ranges[index]!, prefix, index === ranges.length - 1 ? trailingPrefix : prefix);
+  }
+}
+
+function formatCallHierarchyItemSpan(
+  test: FourslashTest,
+  rows: string[],
+  uri: DocumentUri,
+  range: Range,
+  prefix: string,
+  closingPrefix: string,
+): void {
+  const fileName = uriToFileName(uri);
+  const script = test.getOrLoadScriptInfo(fileName);
+  const content = script.text();
+  const lineStarts = script.lineStarts();
+  const startOffset = offsetFromPosition(script, range.start);
+  const endOffset = offsetFromPosition(script, range.end);
+  let contextStart = startOffset;
+  while (contextStart > 0 && content[contextStart - 1] !== "\n" && content[contextStart - 1] !== "\r") contextStart -= 1;
+  let contextEnd = endOffset;
+  while (contextEnd < content.length && content[contextEnd] !== "\n" && content[contextEnd] !== "\r") contextEnd += 1;
+  const contextStartLine = range.start.line;
+  const contextEndLine = range.end.line;
+  const lineNumberWidth = String(contextEndLine + 1).length + 2;
+
+  rows.push(`${prefix}╭ ${fileName}:${formatRange(range)}`);
+  for (let line = contextStartLine; line <= contextEndLine; line += 1) {
+    const lineStart = lineStarts[line] ?? contextStart;
+    const lineEnd = line + 1 < lineStarts.length ? lineStarts[line + 1]! : content.length;
+    const lineContent = content.slice(lineStart, Math.min(lineEnd, contextEnd)).replace(/[\r\n]+$/u, "");
+    const lineNumber = `${line + 1}:`.padStart(lineNumberWidth - 1, " ");
+    rows.push(lineContent === "" ? `${prefix}│ ${lineNumber}` : `${prefix}│ ${lineNumber} ${lineContent}`);
+    if (line >= range.start.line && line <= range.end.line) {
+      const selectionStart = line === range.start.line ? range.start.character : 0;
+      const selectionEnd = line === range.end.line ? range.end.character : lineContent.length;
+      if (range.start.line === range.end.line && range.start.character === range.end.character) {
+        rows.push(`${prefix}│ ${" ".repeat(lineNumberWidth + selectionStart)}<`);
+      } else {
+        const selectionLength = Math.max(selectionEnd - selectionStart, 1);
+        rows.push(`${prefix}│ ${" ".repeat(lineNumberWidth + selectionStart)}${"^".repeat(selectionLength)}`);
+      }
+    }
+  }
+  rows.push(`${closingPrefix}╰`);
+}
+
+function renamedPath(path: string, oldPath: string, newPath: string): string | undefined {
+  if (path === oldPath) return newPath;
+  const normalizedOldPath = oldPath.endsWith("/") ? oldPath : `${oldPath}/`;
+  if (path.startsWith(normalizedOldPath)) return `${newPath}${path.slice(oldPath.length)}`;
+  return undefined;
 }
 
 function markerOrRangeToRange(markerOrRange: MarkerOrRange): Range {
