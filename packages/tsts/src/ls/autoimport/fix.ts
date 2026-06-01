@@ -1,3 +1,215 @@
+import type { Node } from "../../ast/index.js";
+import {
+  compareNumberOfDirectorySeparators,
+  getDirectoryPath,
+} from "../../tspath/index.js";
+import {
+  AddAsTypeOnlyNotAllowed,
+  AddAsTypeOnlyRequired,
+  AutoImportFixKindAddNew,
+  AutoImportFixKindAddToExisting,
+  AutoImportFixKindJsdocTypeImport,
+  AutoImportFixKindPromoteTypeOnly,
+  AutoImportFixKindUseNamespace,
+  type AddAsTypeOnly,
+  type AutoImportFix,
+  type AutoImportFixKind,
+  type ImportKind,
+} from "../../lsp/lsproto/index.js";
+import {
+  ImportModuleSpecifierPreference,
+  ResultKind,
+  type ResultKind as ResultKindValue,
+  type SourceFileForSpecifierGeneration,
+  type UserPreferences as ModuleSpecifierUserPreferences,
+} from "../../modulespecifiers/index.js";
+
+export interface NewImportBinding {
+  readonly kind: ImportKind;
+  readonly propertyName: string;
+  readonly name: string;
+  readonly addAsTypeOnly: AddAsTypeOnly;
+}
+
+export interface Fix extends AutoImportFix {
+  readonly kind: AutoImportFixKind;
+  readonly moduleSpecifierKind: ResultKindValue;
+  readonly isReExport: boolean;
+  readonly moduleFileName: string;
+  readonly typeOnlyAliasDeclaration?: Node;
+}
+
+export interface AddToExistingImportFix {
+  readonly importClauseOrBindingPattern: Node;
+  readonly defaultImport?: NewImportBinding;
+  readonly namedImport?: NewImportBinding;
+}
+
+export interface TypeOnlyAutoImportPreferences {
+  readonly preferTypeOnlyAutoImports?: boolean | "auto" | "on" | "off";
+}
+
+export interface AutoImportRankingView {
+  readonly preferences: ModuleSpecifierUserPreferences;
+  readonly importingFile: SourceFileForSpecifierGeneration;
+  readonly shouldUseUriStyleNodeCoreModules?: boolean | "auto" | "on" | "off";
+}
+
+export function needsTypeOnly(addAsTypeOnly: AddAsTypeOnly): boolean {
+  return addAsTypeOnly === AddAsTypeOnlyRequired;
+}
+
+export function shouldUseTypeOnly(addAsTypeOnly: AddAsTypeOnly, preferences: TypeOnlyAutoImportPreferences): boolean {
+  return needsTypeOnly(addAsTypeOnly)
+    || (addAsTypeOnly !== AddAsTypeOnlyNotAllowed && tristateIsTrue(preferences.preferTypeOnlyAutoImports));
+}
+
+export function compareFixesForSorting(view: AutoImportRankingView, left: Fix, right: Fix): number {
+  const rank = compareFixesForRanking(view, left, right);
+  if (rank !== 0) return rank;
+  return compareModuleSpecifiersForSorting(view, left, right);
+}
+
+export function compareFixesForRanking(view: AutoImportRankingView, left: Fix, right: Fix): number {
+  const fixKind = compareFixKinds(left.kind, right.kind);
+  if (fixKind !== 0) return fixKind;
+  return compareModuleSpecifiersForRanking(view, left, right);
+}
+
+export function compareFixKinds(left: AutoImportFixKind, right: AutoImportFixKind): number {
+  return fixKindOrder(left) - fixKindOrder(right);
+}
+
+export function compareModuleSpecifiersForRanking(view: AutoImportRankingView, left: Fix, right: Fix): number {
+  const relativity = compareModuleSpecifierRelativity(left, right, view.preferences);
+  if (relativity !== 0) return relativity;
+
+  if (left.moduleSpecifierKind === ResultKind.Ambient && right.moduleSpecifierKind === ResultKind.Ambient) {
+    const coreModule = compareNodeCoreModuleSpecifiers(
+      left.moduleSpecifier ?? "",
+      right.moduleSpecifier ?? "",
+      view.shouldUseUriStyleNodeCoreModules,
+    );
+    if (coreModule !== 0) return coreModule;
+  }
+
+  if (left.moduleSpecifierKind === ResultKind.Relative && right.moduleSpecifierKind === ResultKind.Relative) {
+    const reExporting = compareBooleans(
+      isFixPossiblyReExportingImportingFile(left, view.importingFile.fileName()),
+      isFixPossiblyReExportingImportingFile(right, view.importingFile.fileName()),
+    );
+    if (reExporting !== 0) return reExporting;
+  }
+
+  return compareNumberOfDirectorySeparators(left.moduleSpecifier ?? "", right.moduleSpecifier ?? "");
+}
+
+export function compareModuleSpecifiersForSorting(view: AutoImportRankingView, left: Fix, right: Fix): number {
+  const rank = compareModuleSpecifiersForRanking(view, left, right);
+  if (rank !== 0) return rank;
+
+  const leftSpecifier = left.moduleSpecifier ?? "";
+  const rightSpecifier = right.moduleSpecifier ?? "";
+  if (leftSpecifier.startsWith("./") && !rightSpecifier.startsWith("./")) return -1;
+  if (rightSpecifier.startsWith("./") && !leftSpecifier.startsWith("./")) return 1;
+
+  const specifier = leftSpecifier.localeCompare(rightSpecifier);
+  if (specifier !== 0) return specifier;
+  return left.importKind - right.importKind;
+}
+
+export function compareNodeCoreModuleSpecifiers(
+  leftSpecifier: string,
+  rightSpecifier: string,
+  shouldUseUriStyleNodeCoreModules: boolean | "auto" | "on" | "off" | undefined,
+): number {
+  const leftNode = leftSpecifier.startsWith("node:");
+  const rightNode = rightSpecifier.startsWith("node:");
+  if (leftNode === rightNode) return 0;
+  const preference = tristatePreference(shouldUseUriStyleNodeCoreModules);
+  if (preference === undefined) return 0;
+  return leftNode === preference ? -1 : 1;
+}
+
+export function isFixPossiblyReExportingImportingFile(fix: Fix, importingFileName: string): boolean {
+  if (!fix.isReExport || !isIndexFileName(fix.moduleFileName)) return false;
+  const reExportDirectory = getDirectoryPath(fix.moduleFileName);
+  return importingFileName.startsWith(reExportDirectory);
+}
+
+export function isIndexFileName(fileName: string): boolean {
+  const slash = fileName.lastIndexOf("/");
+  if (slash < 0 || fileName.length <= slash + 1) return false;
+  switch (fileName.slice(slash + 1)) {
+    case "index.js":
+    case "index.jsx":
+    case "index.d.ts":
+    case "index.ts":
+    case "index.tsx":
+      return true;
+  }
+  return false;
+}
+
+export function getModuleSpecifierText(promotedDeclaration: Node): string {
+  if (promotedDeclaration.kind === 0) return "";
+  const moduleSpecifier = (promotedDeclaration as { readonly moduleSpecifier?: Node }).moduleSpecifier
+    ?? (promotedDeclaration.parent as { readonly moduleSpecifier?: Node } | undefined)?.moduleSpecifier;
+  if (moduleSpecifier === undefined) return sourceTextOfNode(promotedDeclaration);
+  const literalText = (moduleSpecifier as { readonly text?: string }).text;
+  return literalText ?? sourceTextOfNode(moduleSpecifier);
+}
+
+export function compareModuleSpecifierRelativity(
+  left: Fix,
+  right: Fix,
+  preferences: ModuleSpecifierUserPreferences,
+): number {
+  switch (preferences.importModuleSpecifierPreference) {
+    case ImportModuleSpecifierPreference.NonRelative:
+    case ImportModuleSpecifierPreference.ProjectRelative:
+      return compareBooleans(left.moduleSpecifierKind === ResultKind.Relative, right.moduleSpecifierKind === ResultKind.Relative);
+  }
+  return 0;
+}
+
+function fixKindOrder(kind: AutoImportFixKind): number {
+  switch (kind) {
+    case AutoImportFixKindUseNamespace:
+      return 0;
+    case AutoImportFixKindJsdocTypeImport:
+      return 1;
+    case AutoImportFixKindAddToExisting:
+      return 2;
+    case AutoImportFixKindAddNew:
+      return 3;
+    case AutoImportFixKindPromoteTypeOnly:
+      return 4;
+    default:
+      return kind;
+  }
+}
+
+function compareBooleans(left: boolean, right: boolean): number {
+  if (left === right) return 0;
+  return left ? 1 : -1;
+}
+
+function tristateIsTrue(value: boolean | "auto" | "on" | "off" | undefined): boolean {
+  return value === true || value === "on";
+}
+
+function tristatePreference(value: boolean | "auto" | "on" | "off" | undefined): boolean | undefined {
+  if (value === true || value === "on") return true;
+  if (value === false || value === "off") return false;
+  return undefined;
+}
+
+function sourceTextOfNode(node: Node): string {
+  const sourceFile = node.getSourceFile();
+  return sourceFile.text.slice(Math.max(0, node.pos), Math.max(0, node.end));
+}
+
 // Language-service parity map: internal/ls/autoimport/fix.go
 /**
  * Language-service parity map for TS-Go `ls/autoimport/fix.go`.
