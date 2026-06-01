@@ -1,10 +1,126 @@
 /**
- * Language-service parity map for TS-Go `ls/folding.go`.
+ * Folding range helpers.
  *
- * This file preserves the upstream declaration and algorithm-line shape
- * for the TypeScript port. Runtime behavior is implemented by the
- * concrete modules that consume these exact parity maps.
+ * Porting surface for TS-Go `internal/ls/folding.go`.
  */
+
+import type { FoldingRange, FoldingRangeKind, Range } from "../lsp/lsproto/index.js";
+
+export interface FoldingLineMapCarrier {
+  readonly lineStarts: readonly number[];
+}
+
+export interface FoldingSourceFile extends FoldingLineMapCarrier {
+  text(): string;
+}
+
+export interface RegionDelimiterResult {
+  readonly isStart: boolean;
+  readonly name: string;
+}
+
+export interface FoldingClientCapabilities {
+  readonly collapsedText?: boolean;
+}
+
+export function adjustFoldingEnd(ranges: readonly FoldingRange[], sourceFile: FoldingSourceFile): readonly FoldingRange[] {
+  const sourceText = sourceFile.text();
+  const result: FoldingRange[] = [];
+  for (const range of ranges) {
+    if (range.endCharacter !== undefined && range.endCharacter > 0) {
+      const endOffset = lineAndCharacterToPosition(sourceFile, range.endLine, range.endCharacter);
+      if (endOffset > 0 && endOffset <= sourceText.length) {
+        const foldEndCharacter = sourceText[endOffset - 1];
+        if (foldEndCharacter === "}" || foldEndCharacter === "]" || foldEndCharacter === ")" || foldEndCharacter === "`" || foldEndCharacter === ">") {
+          result.push(range.endLine > range.startLine ? { ...range, endLine: range.endLine - 1 } : range);
+          continue;
+        }
+      }
+    }
+    result.push(range);
+  }
+  return result;
+}
+
+export function parseRegionDelimiter(lineText: string): RegionDelimiterResult | undefined {
+  let text = trimLeftUnicodeSpace(lineText);
+  if (!text.startsWith("//")) return undefined;
+  text = text.slice(2).trim().replace(/\r$/u, "");
+  if (!text.startsWith("#")) return undefined;
+  text = text.slice(1);
+
+  let isStart = true;
+  if (text.startsWith("end")) {
+    isStart = false;
+    text = text.slice(3);
+  }
+  if (!text.startsWith("region")) return undefined;
+  return { isStart, name: text.slice(6).trim() };
+}
+
+export function createFoldingRange(
+  textRange: Range,
+  foldingRangeKind: FoldingRangeKind | "",
+  collapsedText: string,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRange {
+  const range: FoldingRange = {
+    startLine: textRange.start.line,
+    startCharacter: textRange.start.character,
+    endLine: textRange.end.line,
+    endCharacter: textRange.end.character,
+    ...(foldingRangeKind === "" ? {} : { kind: foldingRangeKind }),
+    ...(collapsedText !== "" && supportsCollapsedText(capabilities) ? { collapsedText } : {}),
+  };
+  return range;
+}
+
+export function createFoldingRangeFromBounds(
+  pos: number,
+  end: number,
+  foldingRangeKind: FoldingRangeKind | "",
+  sourceFile: FoldingLineMapCarrier,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRange {
+  return createFoldingRange(
+    {
+      start: positionToLineAndCharacter(sourceFile, pos),
+      end: positionToLineAndCharacter(sourceFile, end),
+    },
+    foldingRangeKind,
+    "",
+    capabilities,
+  );
+}
+
+export function supportsCollapsedText(capabilities: FoldingClientCapabilities): boolean {
+  return capabilities.collapsedText === true;
+}
+
+function positionToLineAndCharacter(sourceFile: FoldingLineMapCarrier, position: number): { readonly line: number; readonly character: number } {
+  const starts = sourceFile.lineStarts;
+  let low = 0;
+  let high = starts.length - 1;
+  while (low <= high) {
+    const middle = (low + high) >> 1;
+    const start = starts[middle] ?? 0;
+    if (start <= position) {
+      low = middle + 1;
+    } else {
+      high = middle - 1;
+    }
+  }
+  const line = Math.max(0, high);
+  return { line, character: position - (starts[line] ?? 0) };
+}
+
+function lineAndCharacterToPosition(sourceFile: FoldingLineMapCarrier, line: number, character: number): number {
+  return (sourceFile.lineStarts[line] ?? 0) + character;
+}
+
+function trimLeftUnicodeSpace(text: string): string {
+  return text.replace(/^\s+/u, "");
+}
 
 export interface UpstreamSourceLine {
   readonly line: number;
