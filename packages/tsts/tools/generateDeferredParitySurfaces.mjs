@@ -359,7 +359,7 @@ function generateLsMaps() {
     "codeactions_fixmissingtypeannotation.go",
     "codeactions_importfixes.go", "codeactions_missingmemberfixer.go", "completions.go",
     "definition.go", "documenthighlights.go",
-    "file_rename.go", "findallreferences.go", "folding.go", "hover.go", "importTracker.go",
+    "findallreferences.go", "folding.go", "hover.go", "importTracker.go",
     "inlay_hints.go",
     "lsutil/organizeimports.go",
     "organizeimports.go",

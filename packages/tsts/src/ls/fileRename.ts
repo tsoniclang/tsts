@@ -1,392 +1,692 @@
 /**
- * Language-service parity map for TS-Go `ls/file_rename.go`.
+ * File-rename workspace edits.
  *
- * This file preserves the upstream declaration and algorithm-line shape
- * for the TypeScript port. Runtime behavior is implemented by the
- * concrete modules that consume these exact parity maps.
+ * Concrete port of TS-Go `internal/ls/file_rename.go`.
  */
 
-export interface UpstreamSourceLine {
-  readonly line: number;
-  readonly text: string;
+import {
+  Kind,
+  getExpression,
+  isArrayLiteralExpression,
+  isNoSubstitutionTemplateLiteral,
+  isObjectLiteralExpression,
+  isPropertyAssignment,
+  isStringLiteral,
+  nodeEnd,
+  nodeName,
+  nodeText,
+  type Node as AstNode,
+  type ObjectLiteralExpression,
+  type PropertyAssignment,
+  type SourceFile,
+  type StringLiteralLike,
+  type Symbol as AstSymbol,
+} from "../ast/index.js";
+import { newTextRange } from "../core/index.js";
+import {
+  documentUriFileName,
+  type DocumentUri,
+  type OptionalVersionedTextDocumentIdentifier,
+  type Range,
+  type RenameFile,
+  type TextDocumentEdit,
+  type TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile,
+  type TextEdit,
+  type TextEditOrAnnotatedTextEditOrSnippetTextEdit,
+} from "../lsp/lsproto/index.js";
+import {
+  type CompilerOptions as ModuleSpecifierCompilerOptions,
+  ImportModuleSpecifierEndingPreference,
+  ImportModuleSpecifierPreference,
+  ResolutionMode,
+  updateModuleSpecifier,
+  type ModuleSpecifierGenerationHost,
+  type ModuleSpecifierOptions,
+  type UserPreferences as ModuleSpecifierUserPreferences,
+} from "../modulespecifiers/index.js";
+import {
+  optionDeclarations,
+  type CommandLineOption,
+} from "../tsoptions/index.js";
+import * as tspath from "../tspath/index.js";
+import {
+  changeFullExtension,
+  combinePaths,
+  comparePaths,
+  ensurePathIsNonModuleName,
+  getDeclarationFileExtension,
+  getDirectoryPath,
+  getPossibleOriginalInputExtensionForExtension,
+  getRelativePathFromDirectory,
+  isDeclarationFileName,
+  isExternalModuleNameRelative,
+  normalizePath,
+  startsWithDirectory,
+} from "../tspath/index.js";
+import { fileNameToDocumentURI, type LineMapCarrier } from "./lsconv/converters.js";
+import { newTracker } from "./change/index.js";
+
+export type PathUpdater = (path: string) => readonly [updatedPath: string, updated: boolean];
+
+export interface ToImport {
+  readonly newFileName: string;
+  readonly updated: boolean;
 }
 
-export interface UpstreamDeclaration {
-  readonly kind: "type" | "func" | "const" | "var";
-  readonly line: number;
-  readonly name: string;
-  readonly receiver?: string;
+export interface FileRenameHost {
+  fileExists(path: string): boolean;
 }
 
-export const lsFileRenameUpstreamPath = "ls/file_rename.go";
+export interface FileRenameSourceFile extends SourceFile, LineMapCarrier {}
 
-export const lsFileRenameDeclarations: readonly UpstreamDeclaration[] = [
-  {"line":20,"kind":"type","name":"pathUpdater"},
-  {"line":22,"kind":"type","name":"toImport"},
-  {"line":27,"kind":"func","name":"GetEditsForFileRename","receiver":"l *LanguageService"},
-  {"line":81,"kind":"func","name":"createPathUpdater","receiver":"l *LanguageService"},
-  {"line":94,"kind":"func","name":"updateTsconfigFiles","receiver":"l *LanguageService"},
-  {"line":159,"kind":"func","name":"updatePathsProperty"},
-  {"line":172,"kind":"func","name":"tryUpdateConfigString"},
-  {"line":190,"kind":"func","name":"updateRelativePath","receiver":"l *LanguageService"},
-  {"line":199,"kind":"func","name":"updateImportsForFileRename","receiver":"l *LanguageService"},
-  {"line":233,"kind":"func","name":"getUpdatedImportSpecifier","receiver":"l *LanguageService"},
-  {"line":282,"kind":"func","name":"getSourceFileToImport"},
-  {"line":301,"kind":"func","name":"getUpdatedImportSpecifierFromMovedSourceFiles"},
-  {"line":341,"kind":"func","name":"createStringTextRange"},
-  {"line":345,"kind":"func","name":"getTsConfigObjectLiteralExpression"},
-  {"line":355,"kind":"func","name":"forEachObjectProperty"},
-  {"line":369,"kind":"func","name":"relativePathFromDirectory"},
-  {"line":373,"kind":"func","name":"relativeImportPathFromDirectory"},
-  {"line":377,"kind":"func","name":"isAmbientModuleSymbol"},
-];
-
-export const lsFileRenameSourceLines: readonly UpstreamSourceLine[] = [
-  {"line":1,"text":"package ls"},
-  {"line":3,"text":"import ("},
-  {"line":4,"text":"\t\"context\""},
-  {"line":5,"text":"\t\"slices\""},
-  {"line":7,"text":"\t\"github.com/microsoft/typescript-go/internal/ast\""},
-  {"line":8,"text":"\t\"github.com/microsoft/typescript-go/internal/checker\""},
-  {"line":9,"text":"\t\"github.com/microsoft/typescript-go/internal/compiler\""},
-  {"line":10,"text":"\t\"github.com/microsoft/typescript-go/internal/core\""},
-  {"line":11,"text":"\t\"github.com/microsoft/typescript-go/internal/ls/change\""},
-  {"line":12,"text":"\t\"github.com/microsoft/typescript-go/internal/ls/lsconv\""},
-  {"line":13,"text":"\t\"github.com/microsoft/typescript-go/internal/lsp/lsproto\""},
-  {"line":14,"text":"\t\"github.com/microsoft/typescript-go/internal/modulespecifiers\""},
-  {"line":15,"text":"\t\"github.com/microsoft/typescript-go/internal/scanner\""},
-  {"line":16,"text":"\t\"github.com/microsoft/typescript-go/internal/tsoptions\""},
-  {"line":17,"text":"\t\"github.com/microsoft/typescript-go/internal/tspath\""},
-  {"line":18,"text":")"},
-  {"line":20,"text":"type pathUpdater func(path string) (string, bool)"},
-  {"line":22,"text":"type toImport struct {"},
-  {"line":23,"text":"\tnewFileName string"},
-  {"line":24,"text":"\tupdated     bool"},
-  {"line":25,"text":"}"},
-  {"line":27,"text":"func (l *LanguageService) GetEditsForFileRename(ctx context.Context, oldURI lsproto.DocumentUri, newURI lsproto.DocumentUri) []lsproto.TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile {"},
-  {"line":28,"text":"\tprogram := l.GetProgram()"},
-  {"line":29,"text":"\toldPath := oldURI.FileName()"},
-  {"line":30,"text":"\tnewPath := newURI.FileName()"},
-  {"line":32,"text":"\toldToNew := l.createPathUpdater(oldPath, newPath)"},
-  {"line":34,"text":"\tchangeTracker := change.NewTracker(ctx, program.Options(), l.FormatOptions(), l.converters)"},
-  {"line":35,"text":"\tl.updateTsconfigFiles(program, changeTracker, oldToNew, oldPath, newPath)"},
-  {"line":36,"text":"\tl.updateImportsForFileRename(program, changeTracker, oldToNew)"},
-  {"line":38,"text":"\tvar documentChanges []lsproto.TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile"},
-  {"line":41,"text":"\tif tspath.IsDeclarationFileName(oldPath) && tspath.IsDeclarationFileName(newPath) {"},
-  {"line":42,"text":"\t\tdtsExt := tspath.GetDeclarationFileExtension(oldPath)"},
-  {"line":43,"text":"\t\toriginalExtensions := tspath.GetPossibleOriginalInputExtensionForExtension(dtsExt)"},
-  {"line":44,"text":"\t\tfor _, ext := range originalExtensions {"},
-  {"line":45,"text":"\t\t\toldOriginalPath := tspath.ChangeFullExtension(oldPath, ext)"},
-  {"line":46,"text":"\t\t\tif l.host.FileExists(oldOriginalPath) {"},
-  {"line":47,"text":"\t\t\t\tnewDtsExt := tspath.GetDeclarationFileExtension(oldPath)"},
-  {"line":48,"text":"\t\t\t\tnewOriginalExtensions := tspath.GetPossibleOriginalInputExtensionForExtension(newDtsExt)"},
-  {"line":49,"text":"\t\t\t\tif slices.Contains(newOriginalExtensions, ext) {"},
-  {"line":50,"text":"\t\t\t\t\tnewOriginalPath := tspath.ChangeFullExtension(newPath, ext)"},
-  {"line":51,"text":"\t\t\t\t\tdocumentChanges = append(documentChanges, lsproto.TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile{"},
-  {"line":52,"text":"\t\t\t\t\t\tRenameFile: &lsproto.RenameFile{"},
-  {"line":53,"text":"\t\t\t\t\t\t\tOldUri: lsconv.FileNameToDocumentURI(oldOriginalPath),"},
-  {"line":54,"text":"\t\t\t\t\t\t\tNewUri: lsconv.FileNameToDocumentURI(newOriginalPath),"},
-  {"line":55,"text":"\t\t\t\t\t\t},"},
-  {"line":56,"text":"\t\t\t\t\t})"},
-  {"line":57,"text":"\t\t\t\t}"},
-  {"line":58,"text":"\t\t\t}"},
-  {"line":59,"text":"\t\t}"},
-  {"line":60,"text":"\t}"},
-  {"line":62,"text":"\tfor fileName, edits := range changeTracker.GetChanges() {"},
-  {"line":63,"text":"\t\turi := lsconv.FileNameToDocumentURI(fileName)"},
-  {"line":64,"text":"\t\tlspEdits := make([]lsproto.TextEditOrAnnotatedTextEditOrSnippetTextEdit, 0, len(edits))"},
-  {"line":65,"text":"\t\tfor _, edit := range edits {"},
-  {"line":66,"text":"\t\t\tlspEdits = append(lspEdits, lsproto.TextEditOrAnnotatedTextEditOrSnippetTextEdit{"},
-  {"line":67,"text":"\t\t\t\tTextEdit: edit,"},
-  {"line":68,"text":"\t\t\t})"},
-  {"line":69,"text":"\t\t}"},
-  {"line":70,"text":"\t\tdocumentChanges = append(documentChanges, lsproto.TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile{"},
-  {"line":71,"text":"\t\t\tTextDocumentEdit: &lsproto.TextDocumentEdit{"},
-  {"line":72,"text":"\t\t\t\tTextDocument: lsproto.OptionalVersionedTextDocumentIdentifier{Uri: uri},"},
-  {"line":73,"text":"\t\t\t\tEdits:        lspEdits,"},
-  {"line":74,"text":"\t\t\t},"},
-  {"line":75,"text":"\t\t})"},
-  {"line":76,"text":"\t}"},
-  {"line":78,"text":"\treturn documentChanges"},
-  {"line":79,"text":"}"},
-  {"line":81,"text":"func (l *LanguageService) createPathUpdater(oldPath string, newPath string) pathUpdater {"},
-  {"line":82,"text":"\tcompareOptions := tspath.ComparePathsOptions{UseCaseSensitiveFileNames: l.UseCaseSensitiveFileNames()}"},
-  {"line":83,"text":"\treturn func(path string) (string, bool) {"},
-  {"line":84,"text":"\t\tif tspath.ComparePaths(path, oldPath, compareOptions) == 0 {"},
-  {"line":85,"text":"\t\t\treturn newPath, true"},
-  {"line":86,"text":"\t\t}"},
-  {"line":87,"text":"\t\tif tspath.StartsWithDirectory(path, oldPath, l.UseCaseSensitiveFileNames()) {"},
-  {"line":88,"text":"\t\t\treturn newPath + path[len(oldPath):], true"},
-  {"line":89,"text":"\t\t}"},
-  {"line":90,"text":"\t\treturn \"\", false"},
-  {"line":91,"text":"\t}"},
-  {"line":92,"text":"}"},
-  {"line":94,"text":"func (l *LanguageService) updateTsconfigFiles(program *compiler.Program, changeTracker *change.Tracker, oldToNew pathUpdater, oldPath string, newPath string) {"},
-  {"line":95,"text":"\tcommandLine := program.CommandLine()"},
-  {"line":96,"text":"\tif commandLine == nil || commandLine.ConfigFile == nil {"},
-  {"line":97,"text":"\t\treturn"},
-  {"line":98,"text":"\t}"},
-  {"line":100,"text":"\tconfigFile := commandLine.ConfigFile.SourceFile"},
-  {"line":101,"text":"\tif configFile == nil {"},
-  {"line":102,"text":"\t\treturn"},
-  {"line":103,"text":"\t}"},
-  {"line":104,"text":"\tconfigDir := tspath.GetDirectoryPath(configFile.FileName())"},
-  {"line":105,"text":"\tjsonObjectLiteral := getTsConfigObjectLiteralExpression(configFile)"},
-  {"line":106,"text":"\tif jsonObjectLiteral == nil {"},
-  {"line":107,"text":"\t\treturn"},
-  {"line":108,"text":"\t}"},
-  {"line":110,"text":"\tforEachObjectProperty(jsonObjectLiteral, func(property *ast.PropertyAssignment, propertyName string) {"},
-  {"line":111,"text":"\t\tswitch propertyName {"},
-  {"line":112,"text":"\t\tcase \"files\", \"include\", \"exclude\":"},
-  {"line":113,"text":"\t\t\tfoundExactMatch := updatePathsProperty(configFile, configDir, property, changeTracker, oldToNew, l.converters, l.UseCaseSensitiveFileNames())"},
-  {"line":114,"text":"\t\t\tif foundExactMatch || propertyName != \"include\" || !ast.IsArrayLiteralExpression(property.Initializer) {"},
-  {"line":115,"text":"\t\t\t\treturn"},
-  {"line":116,"text":"\t\t\t}"},
-  {"line":117,"text":"\t\t\tif oldSpec, isDefault := commandLine.GetMatchedIncludeSpec(oldPath); oldSpec != \"\" && !isDefault {"},
-  {"line":118,"text":"\t\t\t\tif newSpec, _ := commandLine.GetMatchedIncludeSpec(newPath); newSpec == \"\" {"},
-  {"line":119,"text":"\t\t\t\t\telements := property.Initializer.Elements()"},
-  {"line":120,"text":"\t\t\t\t\tif len(elements) > 0 {"},
-  {"line":121,"text":"\t\t\t\t\t\tchangeTracker.InsertNodeAfter("},
-  {"line":122,"text":"\t\t\t\t\t\t\tconfigFile,"},
-  {"line":123,"text":"\t\t\t\t\t\t\telements[len(elements)-1],"},
-  {"line":124,"text":"\t\t\t\t\t\t\tchangeTracker.NodeFactory.NewStringLiteral(relativePathFromDirectory(configDir, newPath, l.UseCaseSensitiveFileNames()), ast.TokenFlagsNone),"},
-  {"line":125,"text":"\t\t\t\t\t\t)"},
-  {"line":126,"text":"\t\t\t\t\t}"},
-  {"line":127,"text":"\t\t\t\t}"},
-  {"line":128,"text":"\t\t\t}"},
-  {"line":129,"text":"\t\tcase \"compilerOptions\":"},
-  {"line":130,"text":"\t\t\tif !ast.IsObjectLiteralExpression(property.Initializer) {"},
-  {"line":131,"text":"\t\t\t\treturn"},
-  {"line":132,"text":"\t\t\t}"},
-  {"line":133,"text":"\t\t\tforEachObjectProperty(property.Initializer.AsObjectLiteralExpression(), func(property *ast.PropertyAssignment, propertyName string) {"},
-  {"line":134,"text":"\t\t\t\toption := tsoptions.CommandLineCompilerOptionsMap.Get(propertyName)"},
-  {"line":135,"text":"\t\t\t\tif option != nil {"},
-  {"line":136,"text":"\t\t\t\t\telementOption := option.Elements()"},
-  {"line":137,"text":"\t\t\t\t\tif option.IsFilePath || (option.Kind == tsoptions.CommandLineOptionTypeList && elementOption != nil && elementOption.IsFilePath) {"},
-  {"line":138,"text":"\t\t\t\t\t\tupdatePathsProperty(configFile, configDir, property, changeTracker, oldToNew, l.converters, l.UseCaseSensitiveFileNames())"},
-  {"line":139,"text":"\t\t\t\t\t\treturn"},
-  {"line":140,"text":"\t\t\t\t\t}"},
-  {"line":141,"text":"\t\t\t\t}"},
-  {"line":143,"text":"\t\t\t\tif propertyName != \"paths\" || !ast.IsObjectLiteralExpression(property.Initializer) {"},
-  {"line":144,"text":"\t\t\t\t\treturn"},
-  {"line":145,"text":"\t\t\t\t}"},
-  {"line":146,"text":"\t\t\t\tforEachObjectProperty(property.Initializer.AsObjectLiteralExpression(), func(pathsProperty *ast.PropertyAssignment, _ string) {"},
-  {"line":147,"text":"\t\t\t\t\tif !ast.IsArrayLiteralExpression(pathsProperty.Initializer) {"},
-  {"line":148,"text":"\t\t\t\t\t\treturn"},
-  {"line":149,"text":"\t\t\t\t\t}"},
-  {"line":150,"text":"\t\t\t\t\tfor _, element := range pathsProperty.Initializer.Elements() {"},
-  {"line":151,"text":"\t\t\t\t\t\ttryUpdateConfigString(configFile, configDir, element, changeTracker, oldToNew, l.converters, l.UseCaseSensitiveFileNames())"},
-  {"line":152,"text":"\t\t\t\t\t}"},
-  {"line":153,"text":"\t\t\t\t})"},
-  {"line":154,"text":"\t\t\t})"},
-  {"line":155,"text":"\t\t}"},
-  {"line":156,"text":"\t})"},
-  {"line":157,"text":"}"},
-  {"line":159,"text":"func updatePathsProperty(configFile *ast.SourceFile, configDir string, property *ast.PropertyAssignment, changeTracker *change.Tracker, oldToNew pathUpdater, converters *lsconv.Converters, useCaseSensitiveFileNames bool) bool {"},
-  {"line":160,"text":"\telements := []*ast.Node{property.Initializer}"},
-  {"line":161,"text":"\tif ast.IsArrayLiteralExpression(property.Initializer) {"},
-  {"line":162,"text":"\t\telements = property.Initializer.Elements()"},
-  {"line":163,"text":"\t}"},
-  {"line":165,"text":"\tfoundExactMatch := false"},
-  {"line":166,"text":"\tfor _, element := range elements {"},
-  {"line":167,"text":"\t\tfoundExactMatch = tryUpdateConfigString(configFile, configDir, element, changeTracker, oldToNew, converters, useCaseSensitiveFileNames) || foundExactMatch"},
-  {"line":168,"text":"\t}"},
-  {"line":169,"text":"\treturn foundExactMatch"},
-  {"line":170,"text":"}"},
-  {"line":172,"text":"func tryUpdateConfigString(configFile *ast.SourceFile, configDir string, element *ast.Node, changeTracker *change.Tracker, oldToNew pathUpdater, converters *lsconv.Converters, useCaseSensitiveFileNames bool) bool {"},
-  {"line":173,"text":"\tif !ast.IsStringLiteral(element) {"},
-  {"line":174,"text":"\t\treturn false"},
-  {"line":175,"text":"\t}"},
-  {"line":177,"text":"\telementFileName := tspath.NormalizePath(tspath.CombinePaths(configDir, element.Text()))"},
-  {"line":178,"text":"\tupdated, ok := oldToNew(elementFileName)"},
-  {"line":179,"text":"\tif !ok {"},
-  {"line":180,"text":"\t\treturn false"},
-  {"line":181,"text":"\t}"},
-  {"line":183,"text":"\tchangeTracker.ReplaceRangeWithText(configFile, lsproto.Range{"},
-  {"line":184,"text":"\t\tStart: converters.PositionToLineAndCharacter(configFile, core.TextPos(scanner.GetTokenPosOfNode(element, configFile, false)+1)),"},
-  {"line":185,"text":"\t\tEnd:   converters.PositionToLineAndCharacter(configFile, core.TextPos(element.End()-1)),"},
-  {"line":186,"text":"\t}, relativePathFromDirectory(configDir, updated, useCaseSensitiveFileNames))"},
-  {"line":187,"text":"\treturn true"},
-  {"line":188,"text":"}"},
-  {"line":190,"text":"func (l *LanguageService) updateRelativePath(oldToNew pathUpdater, oldImportFromPath, newImportFromPath, relativeSpecifier string) string {"},
-  {"line":191,"text":"\toldAbsolute := tspath.NormalizePath(tspath.CombinePaths(tspath.GetDirectoryPath(oldImportFromPath), relativeSpecifier))"},
-  {"line":192,"text":"\tnewAbsolute, ok := oldToNew(oldAbsolute)"},
-  {"line":193,"text":"\tif !ok {"},
-  {"line":194,"text":"\t\tnewAbsolute = oldAbsolute"},
-  {"line":195,"text":"\t}"},
-  {"line":196,"text":"\treturn relativeImportPathFromDirectory(tspath.GetDirectoryPath(newImportFromPath), newAbsolute, l.UseCaseSensitiveFileNames())"},
-  {"line":197,"text":"}"},
-  {"line":199,"text":"func (l *LanguageService) updateImportsForFileRename(program *compiler.Program, changeTracker *change.Tracker, oldToNew pathUpdater) {"},
-  {"line":200,"text":"\tallFiles := program.GetSourceFiles()"},
-  {"line":201,"text":"\tchecker, done := program.GetTypeChecker(context.Background())"},
-  {"line":202,"text":"\tdefer done()"},
-  {"line":203,"text":"\tmoduleSpecifierPreferences := l.UserPreferences().ModuleSpecifierPreferences()"},
-  {"line":205,"text":"\tfor _, sourceFile := range allFiles {"},
-  {"line":206,"text":"\t\toldFileName := sourceFile.FileName()"},
-  {"line":207,"text":"\t\tnewFromOld, fileMoved := oldToNew(sourceFile.FileName())"},
-  {"line":208,"text":"\t\tnewImportFromPath := sourceFile.FileName()"},
-  {"line":209,"text":"\t\tif fileMoved {"},
-  {"line":210,"text":"\t\t\tnewImportFromPath = newFromOld"},
-  {"line":211,"text":"\t\t}"},
-  {"line":213,"text":"\t\tfor _, ref := range sourceFile.ReferencedFiles {"},
-  {"line":214,"text":"\t\t\tif !tspath.IsExternalModuleNameRelative(ref.FileName) {"},
-  {"line":215,"text":"\t\t\t\tcontinue"},
-  {"line":216,"text":"\t\t\t}"},
-  {"line":217,"text":"\t\t\tupdated := l.updateRelativePath(oldToNew, oldFileName, newImportFromPath, ref.FileName)"},
-  {"line":218,"text":"\t\t\tif updated != ref.FileName {"},
-  {"line":219,"text":"\t\t\t\tchangeTracker.ReplaceRangeWithText(sourceFile, l.converters.ToLSPRange(sourceFile, ref.TextRange), updated)"},
-  {"line":220,"text":"\t\t\t}"},
-  {"line":221,"text":"\t\t}"},
-  {"line":223,"text":"\t\tfor _, importStringLiteral := range sourceFile.Imports() {"},
-  {"line":224,"text":"\t\t\tupdated := l.getUpdatedImportSpecifier(program, checker, sourceFile, importStringLiteral, oldToNew, newImportFromPath, fileMoved, moduleSpecifierPreferences)"},
-  {"line":225,"text":"\t\t\tif updated != \"\" && updated != importStringLiteral.Text() {"},
-  {"line":226,"text":"\t\t\t\tchangeTracker.ReplaceRangeWithText(sourceFile, l.converters.ToLSPRange(sourceFile, createStringTextRange(sourceFile, importStringLiteral)), updated)"},
-  {"line":227,"text":"\t\t\t}"},
-  {"line":228,"text":"\t\t}"},
-  {"line":229,"text":"\t}"},
-  {"line":230,"text":"}"},
-  {"line":233,"text":"func (l *LanguageService) getUpdatedImportSpecifier("},
-  {"line":234,"text":"\tprogram *compiler.Program,"},
-  {"line":235,"text":"\tchecker *checker.Checker,"},
-  {"line":236,"text":"\tsourceFile *ast.SourceFile, // old importing source file"},
-  {"line":237,"text":"\timportLiteral *ast.StringLiteralLike,"},
-  {"line":238,"text":"\toldToNew pathUpdater,"},
-  {"line":239,"text":"\tnewImportFromPath string,"},
-  {"line":240,"text":"\timportingSourceFileMoved bool,"},
-  {"line":241,"text":"\tuserPreferences modulespecifiers.UserPreferences,"},
-  {"line":242,"text":") string {"},
-  {"line":243,"text":"\timportedModuleSymbol := checker.GetSymbolAtLocation(importLiteral)"},
-  {"line":244,"text":"\tif isAmbientModuleSymbol(importedModuleSymbol) {"},
-  {"line":245,"text":"\t\treturn \"\""},
-  {"line":246,"text":"\t}"},
-  {"line":248,"text":"\ttarget := getSourceFileToImport(program, sourceFile, importLiteral, oldToNew)"},
-  {"line":250,"text":"\tif target == nil {"},
-  {"line":252,"text":"\t\tif updated := getUpdatedImportSpecifierFromMovedSourceFiles(program, sourceFile, importLiteral, oldToNew, newImportFromPath, userPreferences); updated != \"\" && updated != importLiteral.Text() {"},
-  {"line":253,"text":"\t\t\treturn updated"},
-  {"line":254,"text":"\t\t}"},
-  {"line":256,"text":"\t\tif tspath.IsExternalModuleNameRelative(importLiteral.Text()) {"},
-  {"line":257,"text":"\t\t\treturn l.updateRelativePath(oldToNew, sourceFile.FileName(), newImportFromPath, importLiteral.Text())"},
-  {"line":258,"text":"\t\t}"},
-  {"line":259,"text":"\t\treturn \"\""},
-  {"line":260,"text":"\t}"},
-  {"line":263,"text":"\tif !target.updated && !(importingSourceFileMoved && tspath.IsExternalModuleNameRelative(importLiteral.Text())) {"},
-  {"line":264,"text":"\t\treturn \"\""},
-  {"line":265,"text":"\t}"},
-  {"line":267,"text":"\tupdated := modulespecifiers.UpdateModuleSpecifier("},
-  {"line":268,"text":"\t\tprogram.Options(),"},
-  {"line":269,"text":"\t\tprogram,"},
-  {"line":270,"text":"\t\tsourceFile,"},
-  {"line":271,"text":"\t\tnewImportFromPath,"},
-  {"line":272,"text":"\t\timportLiteral.Text(),"},
-  {"line":273,"text":"\t\ttarget.newFileName,"},
-  {"line":274,"text":"\t\tuserPreferences,"},
-  {"line":275,"text":"\t\tmodulespecifiers.ModuleSpecifierOptions{"},
-  {"line":276,"text":"\t\t\tOverrideImportMode: program.GetModeForUsageLocation(sourceFile, importLiteral),"},
-  {"line":277,"text":"\t\t},"},
-  {"line":278,"text":"\t)"},
-  {"line":279,"text":"\treturn updated"},
-  {"line":280,"text":"}"},
-  {"line":282,"text":"func getSourceFileToImport("},
-  {"line":283,"text":"\tprogram *compiler.Program,"},
-  {"line":284,"text":"\tsourceFile *ast.SourceFile,"},
-  {"line":285,"text":"\timportLiteral *ast.StringLiteralLike,"},
-  {"line":286,"text":"\toldToNew pathUpdater,"},
-  {"line":287,"text":") *toImport {"},
-  {"line":288,"text":"\tif resolved := program.GetResolvedModuleFromModuleSpecifier(sourceFile, importLiteral); resolved != nil && resolved.ResolvedFileName != \"\" {"},
-  {"line":289,"text":"\t\toldFileName := resolved.ResolvedFileName"},
-  {"line":290,"text":"\t\tif newFileName, ok := oldToNew(oldFileName); ok {"},
-  {"line":291,"text":"\t\t\treturn &toImport{newFileName: newFileName, updated: true}"},
-  {"line":292,"text":"\t\t}"},
-  {"line":293,"text":"\t\treturn &toImport{newFileName: oldFileName, updated: false}"},
-  {"line":294,"text":"\t}"},
-  {"line":296,"text":"\treturn nil"},
-  {"line":297,"text":"}"},
-  {"line":301,"text":"func getUpdatedImportSpecifierFromMovedSourceFiles(program *compiler.Program, sourceFile *ast.SourceFile, importLiteral *ast.StringLiteralLike, oldToNew pathUpdater, importingSourceFileName string, userPreferences modulespecifiers.UserPreferences) string {"},
-  {"line":302,"text":"\tresolutionMode := program.GetModeForUsageLocation(sourceFile, importLiteral)"},
-  {"line":303,"text":"\tfor _, candidate := range program.GetSourceFiles() {"},
-  {"line":304,"text":"\t\tnewFileName, ok := oldToNew(candidate.FileName())"},
-  {"line":305,"text":"\t\tif !ok {"},
-  {"line":306,"text":"\t\t\tcontinue"},
-  {"line":307,"text":"\t\t}"},
-  {"line":309,"text":"\t\toldSpecifier := modulespecifiers.UpdateModuleSpecifier("},
-  {"line":310,"text":"\t\t\tprogram.Options(),"},
-  {"line":311,"text":"\t\t\tprogram,"},
-  {"line":312,"text":"\t\t\tsourceFile,"},
-  {"line":313,"text":"\t\t\timportingSourceFileName,"},
-  {"line":314,"text":"\t\t\timportLiteral.Text(),"},
-  {"line":315,"text":"\t\t\tcandidate.FileName(),"},
-  {"line":316,"text":"\t\t\tuserPreferences,"},
-  {"line":317,"text":"\t\t\tmodulespecifiers.ModuleSpecifierOptions{"},
-  {"line":318,"text":"\t\t\t\tOverrideImportMode: resolutionMode,"},
-  {"line":319,"text":"\t\t\t},"},
-  {"line":320,"text":"\t\t)"},
-  {"line":321,"text":"\t\tif oldSpecifier != importLiteral.Text() {"},
-  {"line":322,"text":"\t\t\tcontinue"},
-  {"line":323,"text":"\t\t}"},
-  {"line":325,"text":"\t\treturn modulespecifiers.UpdateModuleSpecifier("},
-  {"line":326,"text":"\t\t\tprogram.Options(),"},
-  {"line":327,"text":"\t\t\tprogram,"},
-  {"line":328,"text":"\t\t\tsourceFile,"},
-  {"line":329,"text":"\t\t\timportingSourceFileName,"},
-  {"line":330,"text":"\t\t\timportLiteral.Text(),"},
-  {"line":331,"text":"\t\t\tnewFileName,"},
-  {"line":332,"text":"\t\t\tuserPreferences,"},
-  {"line":333,"text":"\t\t\tmodulespecifiers.ModuleSpecifierOptions{"},
-  {"line":334,"text":"\t\t\t\tOverrideImportMode: resolutionMode,"},
-  {"line":335,"text":"\t\t\t},"},
-  {"line":336,"text":"\t\t)"},
-  {"line":337,"text":"\t}"},
-  {"line":338,"text":"\treturn \"\""},
-  {"line":339,"text":"}"},
-  {"line":341,"text":"func createStringTextRange(sourceFile *ast.SourceFile, node *ast.LiteralLikeNode) core.TextRange {"},
-  {"line":342,"text":"\treturn core.NewTextRange(scanner.GetTokenPosOfNode(node, sourceFile, false)+1, node.End()-1)"},
-  {"line":343,"text":"}"},
-  {"line":345,"text":"func getTsConfigObjectLiteralExpression(tsConfigSourceFile *ast.SourceFile) *ast.ObjectLiteralExpression {"},
-  {"line":346,"text":"\tif tsConfigSourceFile != nil && tsConfigSourceFile.Statements != nil && len(tsConfigSourceFile.Statements.Nodes) > 0 {"},
-  {"line":347,"text":"\t\texpression := tsConfigSourceFile.Statements.Nodes[0].Expression()"},
-  {"line":348,"text":"\t\tif ast.IsObjectLiteralExpression(expression) {"},
-  {"line":349,"text":"\t\t\treturn expression.AsObjectLiteralExpression()"},
-  {"line":350,"text":"\t\t}"},
-  {"line":351,"text":"\t}"},
-  {"line":352,"text":"\treturn nil"},
-  {"line":353,"text":"}"},
-  {"line":355,"text":"func forEachObjectProperty(objectLiteral *ast.ObjectLiteralExpression, cb func(property *ast.PropertyAssignment, propertyName string)) {"},
-  {"line":356,"text":"\tif objectLiteral == nil {"},
-  {"line":357,"text":"\t\treturn"},
-  {"line":358,"text":"\t}"},
-  {"line":359,"text":"\tfor _, property := range objectLiteral.Properties.Nodes {"},
-  {"line":360,"text":"\t\tif !ast.IsPropertyAssignment(property) {"},
-  {"line":361,"text":"\t\t\tcontinue"},
-  {"line":362,"text":"\t\t}"},
-  {"line":363,"text":"\t\tif name, ok := ast.TryGetTextOfPropertyName(property.Name()); ok {"},
-  {"line":364,"text":"\t\t\tcb(property.AsPropertyAssignment(), name)"},
-  {"line":365,"text":"\t\t}"},
-  {"line":366,"text":"\t}"},
-  {"line":367,"text":"}"},
-  {"line":369,"text":"func relativePathFromDirectory(fromDirectory string, to string, useCaseSensitiveFileNames bool) string {"},
-  {"line":370,"text":"\treturn tspath.GetRelativePathFromDirectory(fromDirectory, to, tspath.ComparePathsOptions{UseCaseSensitiveFileNames: useCaseSensitiveFileNames})"},
-  {"line":371,"text":"}"},
-  {"line":373,"text":"func relativeImportPathFromDirectory(fromDirectory string, to string, useCaseSensitiveFileNames bool) string {"},
-  {"line":374,"text":"\treturn tspath.EnsurePathIsNonModuleName(relativePathFromDirectory(fromDirectory, to, useCaseSensitiveFileNames))"},
-  {"line":375,"text":"}"},
-  {"line":377,"text":"func isAmbientModuleSymbol(symbol *ast.Symbol) bool {"},
-  {"line":378,"text":"\tif symbol == nil {"},
-  {"line":379,"text":"\t\treturn false"},
-  {"line":380,"text":"\t}"},
-  {"line":381,"text":"\treturn slices.ContainsFunc(symbol.Declarations, ast.IsModuleWithStringLiteralName)"},
-  {"line":382,"text":"}"},
-];
-
-export function findLsFileRenameDeclaration(name: string): UpstreamDeclaration | undefined {
-  return lsFileRenameDeclarations.find((declaration) => declaration.name === name);
+export interface FileRenameResolvedModule {
+  readonly resolvedFileName: string;
 }
 
-export function requireLsFileRenameDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findLsFileRenameDeclaration(name);
-  if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
-  return declaration;
+export interface FileRenameChecker {
+  getSymbolAtLocation(node: AstNode): AstSymbol | undefined;
 }
 
-export function lsFileRenameLineText(line: number): string | undefined {
-  return lsFileRenameSourceLines.find((entry) => entry.line === line)?.text;
+export interface FileRenameProgram extends ModuleSpecifierGenerationHost {
+  options(): ModuleSpecifierCompilerOptions;
+  getSourceFiles(): readonly FileRenameSourceFile[];
+  getTypeChecker(context: unknown): { readonly checker: FileRenameChecker; readonly release: () => void };
+  commandLine?(): FileRenameCommandLine | undefined;
+  getResolvedModuleFromModuleSpecifier(sourceFile: FileRenameSourceFile, moduleSpecifier: StringLiteralLike): FileRenameResolvedModule | undefined;
+  getModeForUsageLocation(sourceFile: FileRenameSourceFile, moduleSpecifier: StringLiteralLike): ResolutionMode;
 }
+
+export interface FileRenameConverters {
+  positionToLineAndCharacter(file: LineMapCarrier, position: number): { readonly line: number; readonly character: number };
+  toLSPRange?(file: LineMapCarrier, range: { readonly pos: number; readonly end: number }): Range;
+}
+
+export interface FileRenameChangeTracker {
+  getChanges(): ReadonlyMap<string, readonly TextEdit[]>;
+  replaceRangeWithText(fileName: string, range: Range, text: string): void;
+  insertText?(fileName: string, position: { readonly line: number; readonly character: number }, text: string): void;
+}
+
+export interface FileRenameUserPreferences {
+  readonly importModuleSpecifierPreference?: ModuleSpecifierUserPreferences["importModuleSpecifierPreference"];
+  readonly importModuleSpecifierEnding?: ModuleSpecifierUserPreferences["importModuleSpecifierEnding"];
+  readonly autoImportSpecifierExcludeRegexes?: readonly string[];
+}
+
+export interface FileRenameLanguageService {
+  readonly host: FileRenameHost;
+  readonly converters: FileRenameConverters;
+  getProgram(): FileRenameProgram;
+  formatOptions?(): { readonly newLine?: string };
+  userPreferences(): FileRenameUserPreferences;
+  useCaseSensitiveFileNames(): boolean;
+  createChangeTracker?(): FileRenameChangeTracker;
+}
+
+export interface FileRenameCommandLine {
+  readonly configFile?: FileRenameConfigFile | FileRenameTsConfigSourceFile;
+  getMatchedIncludeSpec?(fileName: string): FileRenameIncludeSpecMatch | readonly [string, boolean] | string | undefined;
+}
+
+export interface FileRenameConfigFile {
+  readonly sourceFile?: FileRenameTsConfigSourceFile;
+}
+
+export interface FileRenameTsConfigSourceFile extends FileRenameSourceFile {}
+
+export interface FileRenameIncludeSpecMatch {
+  readonly spec: string;
+  readonly isDefault: boolean;
+}
+
+const compilerOptionsByName: ReadonlyMap<string, CommandLineOption> = new Map(
+  optionDeclarations.map((option) => [option.name.toLowerCase(), option] as const),
+);
+
+export function getEditsForFileRename(
+  service: FileRenameLanguageService,
+  context: unknown,
+  oldURI: DocumentUri,
+  newURI: DocumentUri,
+): readonly TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile[] {
+  void context;
+  const program = service.getProgram();
+  const oldPath = documentUriFileName(oldURI);
+  const newPath = documentUriFileName(newURI);
+
+  const oldToNew = createPathUpdater(service, oldPath, newPath);
+  const changeTracker = service.createChangeTracker?.() ?? newTracker(service.formatOptions?.().newLine);
+
+  updateTsconfigFiles(service, program, changeTracker, oldToNew, oldPath, newPath);
+  updateImportsForFileRename(service, program, changeTracker, oldToNew);
+
+  const documentChanges: TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile[] = [];
+
+  if (isDeclarationFileName(oldPath) && isDeclarationFileName(newPath)) {
+    const declarationExtension = getDeclarationFileExtension(oldPath);
+    const originalExtensions = getPossibleOriginalInputExtensionForExtension(declarationExtension);
+    for (const extension of originalExtensions) {
+      const oldOriginalPath = changeFullExtension(oldPath, extension);
+      if (service.host.fileExists(oldOriginalPath)) {
+        const newDeclarationExtension = getDeclarationFileExtension(oldPath);
+        const newOriginalExtensions = getPossibleOriginalInputExtensionForExtension(newDeclarationExtension);
+        if (newOriginalExtensions.includes(extension)) {
+          const newOriginalPath = changeFullExtension(newPath, extension);
+          documentChanges.push({ renameFile: renameFile(oldOriginalPath, newOriginalPath) });
+        }
+      }
+    }
+  }
+
+  for (const [fileName, edits] of changeTracker.getChanges()) {
+    const lspEdits = edits.map((edit) => ({ textEdit: edit }));
+    documentChanges.push({
+      textDocumentEdit: {
+        textDocument: optionalVersionedTextDocumentIdentifier(fileName),
+        edits: lspEdits,
+      },
+    });
+  }
+
+  return documentChanges;
+}
+
+export function createPathUpdater(
+  service: Pick<FileRenameLanguageService, "useCaseSensitiveFileNames">,
+  oldPath: string,
+  newPath: string,
+): PathUpdater {
+  const useCaseSensitiveFileNames = service.useCaseSensitiveFileNames();
+  const compareOptions = { currentDirectory: "", useCaseSensitiveFileNames };
+  return (path: string): readonly [string, boolean] => {
+    if (comparePaths(path, oldPath, compareOptions) === 0) {
+      return [newPath, true];
+    }
+    if (startsWithDirectory(path, oldPath, useCaseSensitiveFileNames)) {
+      return [newPath + path.slice(oldPath.length), true];
+    }
+    return ["", false];
+  };
+}
+
+export function updateTsconfigFiles(
+  service: FileRenameLanguageService,
+  program: FileRenameProgram,
+  changeTracker: FileRenameChangeTracker,
+  oldToNew: PathUpdater,
+  oldPath: string,
+  newPath: string,
+): void {
+  const commandLine = program.commandLine?.();
+  if (commandLine === undefined || commandLine.configFile === undefined) return;
+
+  const configFile = getCommandLineConfigSourceFile(commandLine.configFile);
+  if (configFile === undefined) return;
+
+  const configDirectory = getDirectoryPath(configFile.fileName);
+  const jsonObjectLiteral = getTsConfigObjectLiteralExpression(configFile);
+  if (jsonObjectLiteral === undefined) return;
+
+  forEachObjectProperty(jsonObjectLiteral, (property, propertyName) => {
+    switch (propertyName) {
+      case "files":
+      case "include":
+      case "exclude": {
+        const foundExactMatch = updatePathsProperty(
+          configFile,
+          configDirectory,
+          property,
+          changeTracker,
+          oldToNew,
+          service.converters,
+          service.useCaseSensitiveFileNames(),
+        );
+        if (foundExactMatch || propertyName !== "include" || !isArrayLiteralExpression(property.initializer)) return;
+
+        const oldSpec = getMatchedIncludeSpec(commandLine, oldPath);
+        if (oldSpec.spec !== "" && !oldSpec.isDefault) {
+          const newSpec = getMatchedIncludeSpec(commandLine, newPath);
+          if (newSpec.spec === "" && property.initializer.elements.length > 0) {
+            insertStringElementAfter(
+              configFile,
+              property.initializer.elements[property.initializer.elements.length - 1]!,
+              changeTracker,
+              service.converters,
+              relativePathFromDirectory(configDirectory, newPath, service.useCaseSensitiveFileNames()),
+            );
+          }
+        }
+        return;
+      }
+      case "compilerOptions": {
+        if (!isObjectLiteralExpression(property.initializer)) return;
+        forEachObjectProperty(property.initializer, (compilerOptionProperty, compilerOptionName) => {
+          const option = compilerOptionsByName.get(compilerOptionName.toLowerCase());
+          const elementOption = option?.element ?? option?.elements?.();
+          if (
+            option !== undefined
+            && (
+              option.isFilePath === true
+              || (option.type === "list" && elementOption !== undefined && elementOption.isFilePath === true)
+            )
+          ) {
+            updatePathsProperty(
+              configFile,
+              configDirectory,
+              compilerOptionProperty,
+              changeTracker,
+              oldToNew,
+              service.converters,
+              service.useCaseSensitiveFileNames(),
+            );
+            return;
+          }
+
+          if (compilerOptionName !== "paths" || !isObjectLiteralExpression(compilerOptionProperty.initializer)) return;
+          forEachObjectProperty(compilerOptionProperty.initializer, (pathsProperty) => {
+            if (!isArrayLiteralExpression(pathsProperty.initializer)) return;
+            for (const element of pathsProperty.initializer.elements) {
+              tryUpdateConfigString(
+                configFile,
+                configDirectory,
+                element,
+                changeTracker,
+                oldToNew,
+                service.converters,
+                service.useCaseSensitiveFileNames(),
+              );
+            }
+          });
+        });
+        return;
+      }
+    }
+  });
+}
+
+export function updatePathsProperty(
+  configFile: FileRenameTsConfigSourceFile,
+  configDirectory: string,
+  property: PropertyAssignment,
+  changeTracker: FileRenameChangeTracker,
+  oldToNew: PathUpdater,
+  converters: FileRenameConverters,
+  useCaseSensitiveFileNames: boolean,
+): boolean {
+  const elements = isArrayLiteralExpression(property.initializer)
+    ? property.initializer.elements
+    : [property.initializer];
+
+  let foundExactMatch = false;
+  for (const element of elements) {
+    foundExactMatch = tryUpdateConfigString(
+      configFile,
+      configDirectory,
+      element,
+      changeTracker,
+      oldToNew,
+      converters,
+      useCaseSensitiveFileNames,
+    ) || foundExactMatch;
+  }
+  return foundExactMatch;
+}
+
+export function tryUpdateConfigString(
+  configFile: FileRenameTsConfigSourceFile,
+  configDirectory: string,
+  element: AstNode,
+  changeTracker: FileRenameChangeTracker,
+  oldToNew: PathUpdater,
+  converters: FileRenameConverters,
+  useCaseSensitiveFileNames: boolean,
+): boolean {
+  if (!isStringLiteral(element)) return false;
+
+  const elementFileName = normalizePath(combinePaths(configDirectory, nodeText(element)));
+  const [updated, ok] = oldToNew(elementFileName);
+  if (!ok) return false;
+
+  changeTracker.replaceRangeWithText(
+    configFile.fileName,
+    toLSPRange(configFile, createStringTextRange(element), converters),
+    relativePathFromDirectory(configDirectory, updated, useCaseSensitiveFileNames),
+  );
+  return true;
+}
+
+export function updateRelativePath(
+  service: Pick<FileRenameLanguageService, "useCaseSensitiveFileNames">,
+  oldToNew: PathUpdater,
+  oldImportFromPath: string,
+  newImportFromPath: string,
+  relativeSpecifier: string,
+): string {
+  const oldAbsolute = normalizePath(combinePaths(getDirectoryPath(oldImportFromPath), relativeSpecifier));
+  const [newPath, ok] = oldToNew(oldAbsolute);
+  const newAbsolute = ok ? newPath : oldAbsolute;
+  return relativeImportPathFromDirectory(
+    getDirectoryPath(newImportFromPath),
+    newAbsolute,
+    service.useCaseSensitiveFileNames(),
+  );
+}
+
+export function updateImportsForFileRename(
+  service: FileRenameLanguageService,
+  program: FileRenameProgram,
+  changeTracker: FileRenameChangeTracker,
+  oldToNew: PathUpdater,
+): void {
+  const allFiles = program.getSourceFiles();
+  const checkerLease = program.getTypeChecker(undefined);
+  try {
+    const moduleSpecifierPreferences = getModuleSpecifierUserPreferences(service.userPreferences());
+
+    for (const sourceFile of allFiles) {
+      const oldFileName = sourceFile.fileName;
+      const [newFromOld, fileMoved] = oldToNew(sourceFile.fileName);
+      const newImportFromPath = fileMoved ? newFromOld : sourceFile.fileName;
+
+      for (const reference of sourceFile.referencedFiles) {
+        if (!isExternalModuleNameRelative(reference.fileName)) continue;
+        const updated = updateRelativePath(service, oldToNew, oldFileName, newImportFromPath, reference.fileName);
+        if (updated !== reference.fileName) {
+          changeTracker.replaceRangeWithText(
+            sourceFile.fileName,
+            toLSPRange(sourceFile, reference, service.converters),
+            updated,
+          );
+        }
+      }
+
+      for (const importStringLiteral of sourceFileImports(sourceFile)) {
+        const updated = getUpdatedImportSpecifier(
+          service,
+          program,
+          checkerLease.checker,
+          sourceFile,
+          importStringLiteral,
+          oldToNew,
+          newImportFromPath,
+          fileMoved,
+          moduleSpecifierPreferences,
+        );
+        if (updated !== "" && updated !== nodeText(importStringLiteral)) {
+          changeTracker.replaceRangeWithText(
+            sourceFile.fileName,
+            toLSPRange(sourceFile, createStringTextRange(importStringLiteral), service.converters),
+            updated,
+          );
+        }
+      }
+    }
+  } finally {
+    checkerLease.release();
+  }
+}
+
+export function getUpdatedImportSpecifier(
+  service: Pick<FileRenameLanguageService, "useCaseSensitiveFileNames">,
+  program: FileRenameProgram,
+  checker: FileRenameChecker,
+  sourceFile: FileRenameSourceFile,
+  importLiteral: StringLiteralLike,
+  oldToNew: PathUpdater,
+  newImportFromPath: string,
+  importingSourceFileMoved: boolean,
+  userPreferences: ModuleSpecifierUserPreferences,
+): string {
+  const importedModuleSymbol = checker.getSymbolAtLocation(importLiteral);
+  if (isAmbientModuleSymbol(importedModuleSymbol)) return "";
+
+  const target = getSourceFileToImport(program, sourceFile, importLiteral, oldToNew);
+  if (target === undefined) {
+    const updated = getUpdatedImportSpecifierFromMovedSourceFiles(
+      program,
+      sourceFile,
+      importLiteral,
+      oldToNew,
+      newImportFromPath,
+      userPreferences,
+    );
+    if (updated !== "" && updated !== nodeText(importLiteral)) return updated;
+    if (isExternalModuleNameRelative(nodeText(importLiteral))) {
+      return updateRelativePath(service, oldToNew, sourceFile.fileName, newImportFromPath, nodeText(importLiteral));
+    }
+    return "";
+  }
+
+  if (!target.updated && !(importingSourceFileMoved && isExternalModuleNameRelative(nodeText(importLiteral)))) {
+    return "";
+  }
+
+  return updateModuleSpecifier(
+    program.options(),
+    program,
+    sourceFile,
+    newImportFromPath,
+    nodeText(importLiteral),
+    target.newFileName,
+    userPreferences,
+    moduleSpecifierOptions(program, sourceFile, importLiteral),
+    tspath,
+  );
+}
+
+export function getSourceFileToImport(
+  program: FileRenameProgram,
+  sourceFile: FileRenameSourceFile,
+  importLiteral: StringLiteralLike,
+  oldToNew: PathUpdater,
+): ToImport | undefined {
+  const resolved = program.getResolvedModuleFromModuleSpecifier(sourceFile, importLiteral);
+  if (resolved !== undefined && resolved.resolvedFileName !== "") {
+    const oldFileName = resolved.resolvedFileName;
+    const [newFileName, updated] = oldToNew(oldFileName);
+    if (updated) return { newFileName, updated: true };
+    return { newFileName: oldFileName, updated: false };
+  }
+  return undefined;
+}
+
+export function getUpdatedImportSpecifierFromMovedSourceFiles(
+  program: FileRenameProgram,
+  sourceFile: FileRenameSourceFile,
+  importLiteral: StringLiteralLike,
+  oldToNew: PathUpdater,
+  importingSourceFileName: string,
+  userPreferences: ModuleSpecifierUserPreferences,
+): string {
+  const resolutionMode = program.getModeForUsageLocation(sourceFile, importLiteral);
+  for (const candidate of program.getSourceFiles()) {
+    const [newFileName, ok] = oldToNew(candidate.fileName);
+    if (!ok) continue;
+
+    const options: ModuleSpecifierOptions = { overrideImportMode: resolutionMode };
+    const oldSpecifier = updateModuleSpecifier(
+      program.options(),
+      program,
+      sourceFile,
+      importingSourceFileName,
+      nodeText(importLiteral),
+      candidate.fileName,
+      userPreferences,
+      options,
+      tspath,
+    );
+    if (oldSpecifier !== nodeText(importLiteral)) continue;
+
+    return updateModuleSpecifier(
+      program.options(),
+      program,
+      sourceFile,
+      importingSourceFileName,
+      nodeText(importLiteral),
+      newFileName,
+      userPreferences,
+      options,
+      tspath,
+    );
+  }
+  return "";
+}
+
+export function createStringTextRange(node: AstNode): { readonly pos: number; readonly end: number } {
+  return newTextRange(node.pos + 1, node.end - 1);
+}
+
+export function getTsConfigObjectLiteralExpression(tsConfigSourceFile: SourceFile | undefined): ObjectLiteralExpression | undefined {
+  if (tsConfigSourceFile !== undefined && tsConfigSourceFile.statements.length > 0) {
+    const firstStatement = tsConfigSourceFile.statements[0];
+    if (firstStatement !== undefined) {
+      const expression = getExpression(firstStatement);
+      if (expression !== undefined && isObjectLiteralExpression(expression)) return expression;
+    }
+  }
+  return undefined;
+}
+
+export function forEachObjectProperty(
+  objectLiteral: ObjectLiteralExpression | undefined,
+  callback: (property: PropertyAssignment, propertyName: string) => void,
+): void {
+  if (objectLiteral === undefined) return;
+  for (const property of objectLiteral.properties) {
+    if (!isPropertyAssignment(property)) continue;
+    const name = tryGetTextOfPropertyName(nodeName(property));
+    if (name !== undefined) callback(property, name);
+  }
+}
+
+export function relativePathFromDirectory(
+  fromDirectory: string,
+  to: string,
+  useCaseSensitiveFileNames: boolean,
+): string {
+  return getRelativePathFromDirectory(fromDirectory, to, {
+    currentDirectory: "",
+    useCaseSensitiveFileNames,
+  });
+}
+
+export function relativeImportPathFromDirectory(
+  fromDirectory: string,
+  to: string,
+  useCaseSensitiveFileNames: boolean,
+): string {
+  return ensurePathIsNonModuleName(relativePathFromDirectory(fromDirectory, to, useCaseSensitiveFileNames));
+}
+
+export function isAmbientModuleSymbol(symbol: AstSymbol | undefined): boolean {
+  if (symbol === undefined) return false;
+  for (const declaration of symbol.declarations) {
+    if (isModuleWithStringLiteralName(declaration)) return true;
+  }
+  return false;
+}
+
+function getCommandLineConfigSourceFile(configFile: FileRenameConfigFile | FileRenameTsConfigSourceFile): FileRenameTsConfigSourceFile | undefined {
+  if (isSourceFile(configFile)) return configFile;
+  return configFile.sourceFile;
+}
+
+function getMatchedIncludeSpec(commandLine: FileRenameCommandLine, fileName: string): FileRenameIncludeSpecMatch {
+  const match = commandLine.getMatchedIncludeSpec?.(fileName);
+  if (match === undefined) return { spec: "", isDefault: false };
+  if (typeof match === "string") return { spec: match, isDefault: false };
+  if (isIncludeSpecTuple(match)) return { spec: match[0] ?? "", isDefault: match[1] ?? false };
+  return match;
+}
+
+function insertStringElementAfter(
+  configFile: FileRenameTsConfigSourceFile,
+  afterElement: AstNode,
+  changeTracker: FileRenameChangeTracker,
+  converters: FileRenameConverters,
+  value: string,
+): void {
+  const position = converters.positionToLineAndCharacter(configFile, nodeEnd(afterElement));
+  const quoted = JSON.stringify(value);
+  const text = `, ${quoted}`;
+  if (changeTracker.insertText !== undefined) {
+    changeTracker.insertText(configFile.fileName, position, text);
+    return;
+  }
+  changeTracker.replaceRangeWithText(configFile.fileName, { start: position, end: position }, text);
+}
+
+function getModuleSpecifierUserPreferences(preferences: FileRenameUserPreferences): ModuleSpecifierUserPreferences {
+  return {
+    importModuleSpecifierPreference: preferences.importModuleSpecifierPreference ?? ImportModuleSpecifierPreference.None,
+    importModuleSpecifierEnding: preferences.importModuleSpecifierEnding ?? ImportModuleSpecifierEndingPreference.None,
+    autoImportSpecifierExcludeRegexes: preferences.autoImportSpecifierExcludeRegexes ?? [],
+  };
+}
+
+function moduleSpecifierOptions(
+  program: FileRenameProgram,
+  sourceFile: FileRenameSourceFile,
+  importLiteral: StringLiteralLike,
+): ModuleSpecifierOptions {
+  return { overrideImportMode: program.getModeForUsageLocation(sourceFile, importLiteral) };
+}
+
+function sourceFileImports(sourceFile: FileRenameSourceFile): readonly StringLiteralLike[] {
+  return sourceFile.imports.filter(isStringLiteralLikeNode);
+}
+
+function isStringLiteralLikeNode(node: AstNode): node is StringLiteralLike {
+  return isStringLiteral(node) || isNoSubstitutionTemplateLiteral(node);
+}
+
+function tryGetTextOfPropertyName(name: AstNode | undefined): string | undefined {
+  if (name === undefined) return undefined;
+  switch (name.kind) {
+    case Kind.Identifier:
+    case Kind.StringLiteral:
+    case Kind.NumericLiteral:
+    case Kind.NoSubstitutionTemplateLiteral:
+      return nodeText(name);
+    default:
+      return undefined;
+  }
+}
+
+function isModuleWithStringLiteralName(node: AstNode): boolean {
+  return isStringLiteralLikeNode(nodeName(node) ?? node);
+}
+
+function toLSPRange(
+  file: LineMapCarrier,
+  range: { readonly pos: number; readonly end: number },
+  converters: FileRenameConverters,
+): Range {
+  if (converters.toLSPRange !== undefined) return converters.toLSPRange(file, range);
+  return {
+    start: converters.positionToLineAndCharacter(file, range.pos),
+    end: converters.positionToLineAndCharacter(file, range.end),
+  };
+}
+
+function optionalVersionedTextDocumentIdentifier(fileName: string): OptionalVersionedTextDocumentIdentifier {
+  return { uri: fileNameToDocumentURI(fileName), version: {} };
+}
+
+function renameFile(oldPath: string, newPath: string): RenameFile {
+  return {
+    kind: "rename",
+    oldUri: fileNameToDocumentURI(oldPath),
+    newUri: fileNameToDocumentURI(newPath),
+  };
+}
+
+function isSourceFile(value: FileRenameConfigFile | FileRenameTsConfigSourceFile): value is FileRenameTsConfigSourceFile {
+  return (value as { readonly kind?: unknown }).kind === Kind.SourceFile;
+}
+
+function isIncludeSpecTuple(value: readonly [string, boolean] | FileRenameIncludeSpecMatch | string): value is readonly [string, boolean] {
+  return Array.isArray(value);
+}
+
+export type { TextDocumentEdit, TextEditOrAnnotatedTextEditOrSnippetTextEdit };
