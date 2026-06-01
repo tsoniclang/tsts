@@ -6,27 +6,42 @@ import {
   isAsExpression,
   isBinaryExpression,
   isBreakOrContinueStatement,
+  isBindingElement,
+  isConstructorDeclaration,
+  isExpression,
   isFunctionLike,
+  isGetAccessorDeclaration,
   isJSDoc,
   isJSDocImportTag,
   isJSDocParameterTag,
   isJSDocTag,
   isJsxClosingElement,
+  isJsxSpreadAttribute,
+  isMethodDeclaration,
+  isObjectBindingPattern,
+  isObjectLiteralExpression,
   isParameterDeclaration,
+  isPropertyAssignment,
   isPropertyDeclaration,
+  isPropertyNameLiteral,
   isPropertySignatureDeclaration,
+  isSetAccessorDeclaration,
   isSatisfiesExpression,
+  isShorthandPropertyAssignment,
+  isSpreadAssignment,
   isTemplateExpression,
   isTypeParameterDeclaration,
   isTypeQueryNode,
   isTypeReferenceNode,
   isTypeAssertion,
   isVariableDeclaration,
+  walkUpParenthesizedExpressions,
   nodeText,
   type Node,
   type SourceFile,
   type Symbol,
 } from "../ast/index.js";
+import { TypeFlags } from "../checker/types.js";
 import { tristateIsTrue, type CompilerOptions, type Tristate } from "../core/index.js";
 import { LanguageVariant } from "../core/languageVariant.js";
 import { isIdentifierPartCodePoint, isIdentifierStartCodePoint } from "../scanner/index.js";
@@ -83,6 +98,7 @@ import {
   ScriptElementKindWarning,
   type ScriptElementKind,
   type UserPreferences,
+  getLastToken,
 } from "./lsutil/index.js";
 import { createLspRangeFromBounds, isInString, quote, type LspRangeService } from "./utilities.js";
 
@@ -2002,11 +2018,382 @@ export function isStaticProperty(symbol: CompletionSymbol): boolean {
   return declaration !== undefined && nodeArray(declaration, "modifiers").some(modifier => modifier.kind === Kind.StaticKeyword);
 }
 
+export interface ObjectLikeCompletionChecker {
+  readonly getContextualType?: (node: Node, flags?: number) => CompletionTypeLike | undefined;
+  readonly getTypeAtLocation?: (node: Node) => CompletionTypeLike | undefined;
+  readonly getUnionType?: (types: readonly CompletionTypeLike[]) => CompletionTypeLike;
+  readonly getPromisedTypeOfPromise?: (type: CompletionTypeLike) => CompletionTypeLike | undefined;
+  readonly getApparentProperties?: (type: CompletionTypeLike) => readonly CompletionSymbol[];
+  readonly getAllPossiblePropertiesOfTypes?: (types: readonly CompletionTypeLike[]) => readonly CompletionSymbol[];
+  readonly getPropertiesOfType?: (type: CompletionTypeLike) => readonly CompletionSymbol[];
+  readonly getStringIndexType?: (type: CompletionTypeLike) => CompletionTypeLike | undefined;
+  readonly getNumberIndexType?: (type: CompletionTypeLike) => CompletionTypeLike | undefined;
+  readonly getTypeOfSymbolAtLocation?: (symbol: CompletionSymbol, location: Node) => CompletionTypeLike | undefined;
+  readonly getSymbolAtLocation?: (node: Node) => CompletionSymbol | undefined;
+  readonly isArrayLikeType?: (type: CompletionTypeLike) => boolean;
+  readonly isTypeInvalidDueToUnionDiscriminant?: (type: CompletionTypeLike, node: Node) => boolean;
+  readonly typeHasCallOrConstructSignatures?: (type: CompletionTypeLike) => boolean;
+  readonly isPropertyAccessible?: (
+    location: Node,
+    isSuper: boolean,
+    isWrite: boolean,
+    containingType: CompletionTypeLike,
+    symbol: CompletionSymbol,
+  ) => boolean;
+}
+
+export function tryGetObjectLikeCompletionContainer(
+  contextToken: Node | undefined,
+  position: number,
+  file: SourceFile,
+): Node | undefined {
+  if (contextToken === undefined) return undefined;
+
+  const parent = contextToken.parent;
+  switch (contextToken.kind) {
+    case Kind.OpenBraceToken:
+    case Kind.CommaToken:
+      return isObjectLiteralLike(parent) ? parent : undefined;
+    case Kind.AsteriskToken:
+      return parent !== undefined && isMethodDeclaration(parent) && parent.parent !== undefined && isObjectLiteralExpression(parent.parent)
+        ? parent.parent
+        : undefined;
+    case Kind.AsyncKeyword:
+      return parent?.parent !== undefined && isObjectLiteralExpression(parent.parent) ? parent.parent : undefined;
+    case Kind.Identifier:
+      if (parent !== undefined && nodeText(contextToken) === "async" && isShorthandPropertyAssignment(parent)) return parent.parent;
+      if (parent !== undefined
+        && parent.parent !== undefined
+        && isObjectLiteralExpression(parent.parent)
+        && (isSpreadAssignment(parent)
+          || isShorthandPropertyAssignment(parent) && getLineOfPosition(file, contextToken.end) !== getLineOfPosition(file, position))) {
+        return parent.parent;
+      }
+      return propertyAssignmentCompletionContainer(parent, contextToken, file);
+    default:
+      if (parent?.parent !== undefined
+        && (isMethodDeclaration(parent.parent) || isGetAccessorDeclaration(parent.parent) || isSetAccessorDeclaration(parent.parent))
+        && parent.parent.parent !== undefined
+        && isObjectLiteralExpression(parent.parent.parent)) {
+        return parent.parent.parent;
+      }
+      if (parent !== undefined && isSpreadAssignment(parent) && parent.parent !== undefined && isObjectLiteralExpression(parent.parent)) return parent.parent;
+      if (contextToken.kind !== Kind.ColonToken) return propertyAssignmentCompletionContainer(parent, contextToken, file);
+      return undefined;
+  }
+}
+
+export function tryGetObjectLiteralContextualType(
+  node: Node,
+  checker: ObjectLikeCompletionChecker,
+): CompletionTypeLike | undefined {
+  const contextualType = checker.getContextualType?.(node, 0);
+  if (contextualType !== undefined) return contextualType;
+
+  const parent = walkUpParenthesizedExpressions(node.parent);
+  if (parent?.kind === Kind.BinaryExpression
+    && nodeProperty<Node>(parent, "operatorToken")?.kind === Kind.EqualsToken
+    && nodeProperty<Node>(parent, "left") === node) {
+    return checker.getTypeAtLocation?.(parent);
+  }
+  return parent !== undefined && isExpressionLike(parent) ? checker.getContextualType?.(parent, 0) : undefined;
+}
+
+export function getPropertiesForObjectExpression(
+  contextualType: CompletionTypeLike,
+  completionsType: CompletionTypeLike | undefined,
+  objectLiteral: Node,
+  checker: ObjectLikeCompletionChecker,
+): readonly CompletionSymbol[] {
+  const hasCompletionsType = completionsType !== undefined && completionsType !== contextualType;
+  const contextualTypes = typeIsUnion(contextualType) ? typeConstituents(contextualType) : [contextualType];
+  const promiseFilteredTypes = contextualTypes.filter(type => checker.getPromisedTypeOfPromise?.(type) === undefined);
+  const promiseFilteredContextualType = getUnionType(checker, promiseFilteredTypes);
+  const type = hasCompletionsType && completionsType !== undefined && (typeFlags(completionsType) & TypeFlags.AnyOrUnknown) === 0
+    ? getUnionType(checker, [promiseFilteredContextualType, completionsType])
+    : promiseFilteredContextualType;
+
+  const properties = getApparentProperties(type, objectLiteral, checker);
+  if (typeIsClass(type) && containsNonPublicProperties(properties)) return [];
+  if (!hasCompletionsType) return properties;
+  return properties.filter(member => hasDeclarationOtherThanSelf(member, objectLiteral));
+}
+
+export function getApparentProperties(
+  type: CompletionTypeLike,
+  node: Node,
+  checker: ObjectLikeCompletionChecker,
+): readonly CompletionSymbol[] {
+  if (!typeIsUnion(type)) return checker.getApparentProperties?.(type) ?? checker.getPropertiesOfType?.(type) ?? [];
+  const eligibleTypes = typeConstituents(type).filter(memberType => !(
+    (typeFlags(memberType) & TypeFlags.Primitive) !== 0
+    || checker.isArrayLikeType?.(memberType) === true
+    || checker.isTypeInvalidDueToUnionDiscriminant?.(memberType, node) === true
+    || checker.typeHasCallOrConstructSignatures?.(memberType) === true
+    || typeIsClass(memberType) && containsNonPublicProperties(checker.getApparentProperties?.(memberType) ?? [])
+  ));
+  return checker.getAllPossiblePropertiesOfTypes?.(eligibleTypes)
+    ?? uniqueCompletionSymbols(eligibleTypes.flatMap(memberType => checker.getApparentProperties?.(memberType) ?? checker.getPropertiesOfType?.(memberType) ?? []));
+}
+
+export interface FilterObjectMembersResult {
+  readonly filteredMembers: readonly CompletionSymbol[];
+  readonly spreadMemberNames: ReadonlySet<string>;
+}
+
+export function filterObjectMembersList(
+  contextualMemberSymbols: readonly CompletionSymbol[],
+  existingMembers: readonly Node[],
+  file: SourceFile,
+  position: number,
+  checker: ObjectLikeCompletionChecker,
+): FilterObjectMembersResult {
+  if (existingMembers.length === 0) {
+    return { filteredMembers: contextualMemberSymbols, spreadMemberNames: new Set<string>() };
+  }
+
+  const membersDeclaredBySpreadAssignment = new Set<string>();
+  const existingMemberNames = new Set<string>();
+  for (const member of existingMembers) {
+    if (!isObjectMemberNameCarrier(member)) continue;
+    if (isCurrentlyEditingNode(member, file, position)) continue;
+
+    let existingName = "";
+    if (isSpreadAssignment(member)) {
+      setMemberDeclaredBySpreadAssignment(member, membersDeclaredBySpreadAssignment, checker);
+    } else if (isBindingElement(member) && nodeProperty<Node>(member, "propertyName") !== undefined) {
+      const propertyName = nodeProperty<Node>(member, "propertyName");
+      if (propertyName?.kind === Kind.Identifier) existingName = nodeText(propertyName);
+    } else {
+      const name = getNameOfDeclaration(member);
+      if (name !== undefined && isPropertyNameLiteral(name)) existingName = nodeText(name);
+    }
+
+    if (existingName !== "") existingMemberNames.add(existingName);
+  }
+
+  return {
+    filteredMembers: contextualMemberSymbols.filter(member => !existingMemberNames.has(symbolName(member))),
+    spreadMemberNames: membersDeclaredBySpreadAssignment,
+  };
+}
+
+export function isCurrentlyEditingNode(node: Node, file: SourceFile, position: number): boolean {
+  const start = getStartOfNode(node, file, false);
+  return start <= position && position <= node.end;
+}
+
+export function setMemberDeclaredBySpreadAssignment(
+  declaration: Node,
+  members: Set<string>,
+  checker: ObjectLikeCompletionChecker,
+): void {
+  const expression = nodeProperty<Node>(declaration, "expression");
+  if (expression === undefined) return;
+  const symbol = checker.getSymbolAtLocation?.(expression);
+  const type = symbol === undefined
+    ? checker.getTypeAtLocation?.(expression)
+    : checker.getTypeOfSymbolAtLocation?.(symbol, expression) ?? checker.getTypeAtLocation?.(expression);
+  for (const property of structuredCompletionProperties(type, checker)) {
+    const name = symbolName(property);
+    if (name !== "") members.add(name);
+  }
+}
+
+export function tryGetConstructorLikeCompletionContainer(contextToken: Node | undefined): Node | undefined {
+  if (contextToken === undefined) return undefined;
+  const parent = contextToken.parent;
+  switch (contextToken.kind) {
+    case Kind.OpenParenToken:
+    case Kind.CommaToken:
+      return parent !== undefined && isConstructorDeclaration(parent) ? parent : undefined;
+    default:
+      return isConstructorParameterCompletion(contextToken) ? parent?.parent : undefined;
+  }
+}
+
+export function isConstructorParameterCompletion(node: Node): boolean {
+  return isParameterDeclaration(node.parent)
+    && node.parent.parent !== undefined
+    && isConstructorDeclaration(node.parent.parent)
+    && (isParameterPropertyModifier(node.kind) || nodeName(node.parent) === node);
+}
+
+export function tryGetContainingJsxElement(contextToken: Node | undefined, file: SourceFile): Node | undefined {
+  if (contextToken === undefined) return undefined;
+  const parent = contextToken.parent;
+  switch (contextToken.kind) {
+    case Kind.GreaterThanToken:
+    case Kind.LessThanSlashToken:
+    case Kind.SlashToken:
+    case Kind.Identifier:
+    case Kind.PropertyAccessExpression:
+    case Kind.JsxAttributes:
+    case Kind.JsxAttribute:
+    case Kind.JsxSpreadAttribute:
+      if (isJsxOpeningLikeElement(parent)) {
+        if (contextToken.kind === Kind.GreaterThanToken) {
+          const precedingToken = findPrecedingToken(file, contextToken.pos);
+          if (nodeArray(parent, "typeArguments").length === 0 || precedingToken?.kind === Kind.SlashToken) return undefined;
+        }
+        return parent;
+      }
+      if (nodeKindOf(parent) === Kind.JsxAttribute) return nodeParentOf(nodeParentOf(parent));
+      return undefined;
+    case Kind.StringLiteral:
+      return nodeKindOf(parent) === Kind.JsxAttribute || parent !== undefined && isJsxSpreadAttribute(parent) ? parent?.parent?.parent : undefined;
+    case Kind.CloseBraceToken:
+      if (nodeKindOf(parent) === Kind.JsxExpression && nodeKindOf(parent?.parent) === Kind.JsxAttribute) return parent?.parent?.parent?.parent;
+      return parent !== undefined && isJsxSpreadAttribute(parent) ? parent.parent?.parent : undefined;
+    default:
+      return undefined;
+  }
+}
+
+export interface FilterJsxAttributesResult {
+  readonly filteredMembers: readonly CompletionSymbol[];
+  readonly spreadMemberNames: ReadonlySet<string>;
+}
+
+export function filterJsxAttributes(
+  symbols: readonly CompletionSymbol[],
+  attributes: readonly Node[],
+  file: SourceFile,
+  position: number,
+  checker: ObjectLikeCompletionChecker,
+): FilterJsxAttributesResult {
+  const existingNames = new Set<string>();
+  const membersDeclaredBySpreadAssignment = new Set<string>();
+  for (const attribute of attributes) {
+    if (isCurrentlyEditingNode(attribute, file, position)) continue;
+    if (attribute.kind === Kind.JsxAttribute) {
+      const name = nodeName(attribute);
+      if (name !== undefined) existingNames.add(nodeText(name));
+    } else if (isJsxSpreadAttribute(attribute)) {
+      setMemberDeclaredBySpreadAssignment(attribute, membersDeclaredBySpreadAssignment, checker);
+    }
+  }
+  return {
+    filteredMembers: symbols.filter(symbol => !existingNames.has(symbolName(symbol))),
+    spreadMemberNames: membersDeclaredBySpreadAssignment,
+  };
+}
+
+function propertyAssignmentCompletionContainer(parent: Node | undefined, contextToken: Node, file: SourceFile): Node | undefined {
+  const ancestorNode = findAncestor(parent, isPropertyAssignment);
+  return ancestorNode !== undefined
+    && getLastToken(ancestorNode, file) === contextToken
+    && ancestorNode.parent !== undefined
+    && isObjectLiteralExpression(ancestorNode.parent)
+    ? ancestorNode.parent
+    : undefined;
+}
+
+function isObjectLiteralLike(node: Node | undefined): node is Node {
+  return node !== undefined && (isObjectLiteralExpression(node) || isObjectBindingPattern(node));
+}
+
+function isExpressionLike(node: Node | undefined): node is Node {
+  return node !== undefined && isExpression(node);
+}
+
+function nodeKindOf(node: Node | undefined): Kind | undefined {
+  return node?.kind;
+}
+
+function nodeParentOf(node: Node | undefined): Node | undefined {
+  return node?.parent;
+}
+
+function getUnionType(checker: ObjectLikeCompletionChecker, types: readonly CompletionTypeLike[]): CompletionTypeLike {
+  if (types.length === 0) return { flags: TypeFlags.Never };
+  if (types.length === 1) return types[0]!;
+  return checker.getUnionType?.(types) ?? { flags: TypeFlags.Union, data: { types } };
+}
+
+function typeFlags(type: CompletionTypeLike | undefined): number {
+  if (type === undefined) return 0;
+  return typeof type.flags === "function" ? type.flags() : type.flags ?? 0;
+}
+
+function typeIsUnion(type: CompletionTypeLike): boolean {
+  return type.isUnion?.() === true || (typeFlags(type) & TypeFlags.Union) !== 0;
+}
+
+function typeConstituents(type: CompletionTypeLike): readonly CompletionTypeLike[] {
+  return type.types?.() ?? type.data?.types ?? [];
+}
+
+function typeSymbol(type: CompletionTypeLike): CompletionSymbol | undefined {
+  return typeof type.symbol === "function" ? type.symbol() : type.symbol;
+}
+
+function typeIsClass(type: CompletionTypeLike): boolean {
+  return ((typeSymbol(type)?.flags ?? 0) & SymbolFlags.Class) !== 0
+    || (type.data as { readonly class?: boolean } | undefined)?.class === true;
+}
+
+function containsNonPublicProperties(properties: readonly CompletionSymbol[]): boolean {
+  return properties.some(property => {
+    const declarations = property.declarations.length > 0 ? property.declarations : property.valueDeclaration === undefined ? [] : [property.valueDeclaration];
+    return declarations.some(declaration => nodeArray(declaration, "modifiers").some(modifier =>
+      modifier.kind === Kind.PrivateKeyword || modifier.kind === Kind.ProtectedKeyword));
+  });
+}
+
+function hasDeclarationOtherThanSelf(member: CompletionSymbol, objectLiteral: Node): boolean {
+  return member.declarations.length === 0 || member.declarations.some(declaration => declaration.parent !== objectLiteral);
+}
+
+function uniqueCompletionSymbols(symbols: readonly CompletionSymbol[]): readonly CompletionSymbol[] {
+  const seen = new Set<string>();
+  const result: CompletionSymbol[] = [];
+  for (const symbol of symbols) {
+    const name = symbolName(symbol);
+    const key = name === "" ? `#${String(symbolId(symbol))}` : name;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(symbol);
+  }
+  return result;
+}
+
+function isObjectMemberNameCarrier(node: Node): boolean {
+  return isPropertyAssignment(node)
+    || isShorthandPropertyAssignment(node)
+    || isBindingElement(node)
+    || isMethodDeclaration(node)
+    || isGetAccessorDeclaration(node)
+    || isSetAccessorDeclaration(node)
+    || isSpreadAssignment(node);
+}
+
+function getNameOfDeclaration(node: Node | undefined): Node | undefined {
+  if (node === undefined) return undefined;
+  return nodeName(node)
+    ?? nodeProperty<Node>(node, "propertyName")
+    ?? nodeProperty<Node>(node, "moduleSpecifier");
+}
+
+function structuredCompletionProperties(
+  type: CompletionTypeLike | undefined,
+  checker: ObjectLikeCompletionChecker,
+): readonly CompletionSymbol[] {
+  if (type === undefined) return [];
+  if ((typeFlags(type) & TypeFlags.StructuredType) === 0 && type.data?.declaredProperties === undefined) return [];
+  return type.data?.declaredProperties ?? checker.getPropertiesOfType?.(type) ?? checker.getApparentProperties?.(type) ?? [];
+}
+
+function isJsxOpeningLikeElement(node: Node | undefined): node is Node {
+  return node?.kind === Kind.JsxSelfClosingElement || node?.kind === Kind.JsxOpeningElement;
+}
+
 export type CompletionTypeLike = {
-  readonly flags?: () => number;
+  readonly flags?: number | (() => number);
+  readonly data?: { readonly types?: readonly CompletionTypeLike[]; readonly declaredProperties?: readonly CompletionSymbol[]; readonly objectFlags?: number };
   readonly isUnion?: () => boolean;
   readonly types?: () => readonly CompletionTypeLike[];
-  readonly symbol?: () => CompletionSymbol | undefined;
+  readonly symbol?: CompletionSymbol | (() => CompletionSymbol | undefined);
   readonly isStringLiteral?: () => boolean;
   readonly isNumberLiteral?: () => boolean;
   readonly isBigIntLiteral?: () => boolean;
@@ -2098,7 +2485,7 @@ export function getRecommendedCompletion(
 ): CompletionSymbol | undefined {
   const types = contextualType.isUnion?.() === true ? contextualType.types?.() ?? [] : [contextualType];
   for (const type of types) {
-    const symbol = type.symbol?.();
+    const symbol = typeSymbol(type);
     if (symbol === undefined) continue;
     const flags = symbol.flags ?? 0;
     if ((flags & (SymbolFlags.EnumMember | SymbolFlags.Enum | SymbolFlags.Class)) !== 0 && !isAbstractConstructorSymbol(symbol)) {
