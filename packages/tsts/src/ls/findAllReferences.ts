@@ -7,6 +7,7 @@ import {
   isDeclaration,
   isExportAssignment,
   isForInOrOfStatement,
+  isStatic,
   isJSDocTag,
   isSourceFile,
   isStatement,
@@ -16,6 +17,7 @@ import {
   isVariableDeclarationList,
   isVariableStatement,
   Kind,
+  nodeSymbol,
   nodeText,
   SymbolFlags,
   type FileReference,
@@ -38,7 +40,16 @@ import {
   type SymbolAndEntriesData as CrossProjectSymbolAndEntriesData,
 } from "./crossProject.js";
 import { fileNameToDocumentURI } from "./lsconv/index.js";
-import { isExpressionOfExternalModuleImportEqualsDeclaration, isLiteralNameOfPropertyDeclarationOrIndexAccess, isNameOfModuleDeclaration } from "./utilities.js";
+import {
+  getTargetLabel,
+  isExpressionOfExternalModuleImportEqualsDeclaration,
+  isJumpStatementTarget,
+  isLabelOfLabeledStatement,
+  isLiteralNameOfPropertyDeclarationOrIndexAccess,
+  isNameOfModuleDeclaration,
+  isThis,
+  isTypeKeyword,
+} from "./utilities.js";
 
 export enum ReferenceUse {
   None = 0,
@@ -427,6 +438,129 @@ export function getSymbolScope(symbol: Symbol, checker?: ReferenceChecker): Node
     scope = container;
   }
   return scope;
+}
+
+export function getReferencedSymbolsSpecial(node: Node, sourceFiles: readonly SourceFile[]): readonly SymbolAndEntries[] {
+  if (isTypeKeyword(node.kind)) {
+    if (node.kind === Kind.VoidKeyword && node.parent?.kind === Kind.VoidExpression) return [];
+    if (node.kind === Kind.ReadonlyKeyword && !isReadonlyTypeOperator(node)) return [];
+    return getAllReferencesForKeyword(sourceFiles, node.kind, node.kind === Kind.ReadonlyKeyword);
+  }
+
+  if (isImportMetaName(node)) {
+    return getAllReferencesForImportMeta(sourceFiles);
+  }
+
+  if (node.kind === Kind.StaticKeyword && node.parent?.kind === Kind.ClassStaticBlockDeclaration) {
+    return [newSymbolAndEntries(DefinitionKind.Keyword, node, undefined, [newNodeEntry(node)])];
+  }
+
+  if (isJumpStatementTarget(node)) {
+    const labelDefinition = getTargetLabel(node.parent, nodeText(node));
+    return labelDefinition === undefined ? [] : getLabelReferencesInNode(labelDefinition.parent, labelDefinition);
+  }
+
+  if (isLabelOfLabeledStatement(node)) {
+    return getLabelReferencesInNode(node.parent, node);
+  }
+
+  if (isThis(node)) {
+    return getReferencesForThisKeyword(node, sourceFiles);
+  }
+
+  if (node.kind === Kind.SuperKeyword) {
+    return getReferencesForSuperKeyword(node);
+  }
+
+  return [];
+}
+
+export function getLabelReferencesInNode(container: Node, targetLabel: Node): readonly SymbolAndEntries[] {
+  const sourceFile = getNodeSourceFile(container);
+  const labelName = nodeText(targetLabel);
+  const references = getPossibleSymbolReferenceNodes(sourceFile, labelName, container)
+    .flatMap(referenceLocation => {
+      if (referenceLocation === targetLabel) return [newNodeEntry(referenceLocation)];
+      if (isJumpStatementTarget(referenceLocation) && getTargetLabel(referenceLocation, labelName) === targetLabel) {
+        return [newNodeEntry(referenceLocation)];
+      }
+      return [];
+    });
+  return [newSymbolAndEntries(DefinitionKind.Label, targetLabel, undefined, references)];
+}
+
+export function getReferencesForThisKeyword(thisOrSuperKeyword: Node, sourceFiles: readonly SourceFile[]): readonly SymbolAndEntries[] {
+  const searchSpaceNode = getThisContainerForReferences(thisOrSuperKeyword);
+  if (searchSpaceNode === undefined) return [];
+
+  let effectiveSearchSpace = searchSpaceNode;
+  let staticContext = false;
+  const isParameterName = (node: Node): boolean =>
+    node.kind === Kind.Identifier && node.parent?.kind === Kind.Parameter && nodeProperty(node.parent, "name") === node;
+
+  switch (searchSpaceNode.kind) {
+    case Kind.MethodDeclaration:
+    case Kind.MethodSignature:
+    case Kind.PropertyDeclaration:
+    case Kind.PropertySignature:
+    case Kind.Constructor:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+      staticContext = isStatic(searchSpaceNode);
+      effectiveSearchSpace = searchSpaceNode.parent ?? searchSpaceNode;
+      break;
+    case Kind.SourceFile:
+      if (!isSourceFile(searchSpaceNode) || isExternalOrCommonJSModule(searchSpaceNode) || isParameterName(thisOrSuperKeyword)) return [];
+      break;
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+      break;
+    default:
+      return [];
+  }
+
+  const filesToSearch = effectiveSearchSpace.kind === Kind.SourceFile
+    ? sourceFiles
+    : [getNodeSourceFile(effectiveSearchSpace)];
+  const references = filesToSearch.flatMap(sourceFile =>
+    getPossibleSymbolReferenceNodes(sourceFile, "this", effectiveSearchSpace.kind === Kind.SourceFile ? sourceFile : effectiveSearchSpace)
+      .filter(referenceLocation => isThis(referenceLocation)
+        && thisReferenceBelongsToContainer(referenceLocation, effectiveSearchSpace, staticContext, isParameterName))
+      .map(referenceLocation => newNodeEntry(referenceLocation)));
+
+  const thisParameter = references.find(reference => reference.node?.parent?.kind === Kind.Parameter)?.node ?? thisOrSuperKeyword;
+  return [newSymbolAndEntries(DefinitionKind.This, thisParameter, nodeSymbol(effectiveSearchSpace), references)];
+}
+
+export function getReferencesForSuperKeyword(superKeyword: Node): readonly SymbolAndEntries[] {
+  const searchSpaceNode = getSuperContainerForReferences(superKeyword);
+  if (searchSpaceNode === undefined) return [];
+
+  const staticContext = isStatic(searchSpaceNode);
+  const owningClass = searchSpaceNode.parent;
+  if (owningClass === undefined) return [];
+
+  const sourceFile = getNodeSourceFile(searchSpaceNode);
+  const references = getPossibleSymbolReferenceNodes(sourceFile, "super", owningClass)
+    .flatMap(referenceLocation => {
+      if (referenceLocation.kind !== Kind.SuperKeyword) return [];
+      const container = getSuperContainerForReferences(referenceLocation);
+      if (container !== undefined && container.parent !== undefined && isStatic(container) === staticContext && nodeSymbol(container.parent) === nodeSymbol(owningClass)) {
+        return [newNodeEntry(referenceLocation)];
+      }
+      return [];
+    });
+
+  return [newSymbolAndEntries(DefinitionKind.Symbol, undefined, nodeSymbol(owningClass), references)];
+}
+
+export function getAllReferencesForImportMeta(sourceFiles: readonly SourceFile[]): readonly SymbolAndEntries[] {
+  const references = sourceFiles.flatMap(sourceFile =>
+    getPossibleSymbolReferenceNodes(sourceFile, "meta", sourceFile)
+      .flatMap(referenceLocation => isImportMetaName(referenceLocation) ? [newNodeEntry(referenceLocation.parent)] : []));
+  return references.length === 0
+    ? []
+    : [newSymbolAndEntries(DefinitionKind.Keyword, references[0]!.node, undefined, references)];
 }
 
 export interface TextDocumentPositionCarrier {
@@ -820,6 +954,85 @@ export function mergeReferences(
     }
   }
   return result;
+}
+
+function isImportMetaName(node: Node): boolean {
+  const parent = node.parent;
+  return parent !== undefined
+    && parent.kind === Kind.MetaProperty
+    && nodeProperty(parent, "name") === node;
+}
+
+function getThisContainerForReferences(node: Node): Node | undefined {
+  for (let current = node.parent; current !== undefined; current = current.parent) {
+    switch (current.kind) {
+      case Kind.MethodDeclaration:
+      case Kind.MethodSignature:
+      case Kind.PropertyDeclaration:
+      case Kind.PropertySignature:
+      case Kind.Constructor:
+      case Kind.GetAccessor:
+      case Kind.SetAccessor:
+      case Kind.FunctionDeclaration:
+      case Kind.FunctionExpression:
+      case Kind.SourceFile:
+        return current;
+      default:
+        break;
+    }
+  }
+  return undefined;
+}
+
+function thisReferenceBelongsToContainer(
+  referenceLocation: Node,
+  searchSpaceNode: Node,
+  staticContext: boolean,
+  isParameterName: (node: Node) => boolean,
+): boolean {
+  const container = getThisContainerForReferences(referenceLocation);
+  if (container === undefined) return false;
+  switch (searchSpaceNode.kind) {
+    case Kind.FunctionExpression:
+    case Kind.FunctionDeclaration:
+      return nodeSymbol(searchSpaceNode) !== undefined && nodeSymbol(searchSpaceNode) === nodeSymbol(container);
+    case Kind.MethodDeclaration:
+    case Kind.MethodSignature:
+      return nodeSymbol(searchSpaceNode) !== undefined && nodeSymbol(searchSpaceNode) === nodeSymbol(container);
+    case Kind.ClassExpression:
+    case Kind.ClassDeclaration:
+    case Kind.ObjectLiteralExpression:
+      return container.parent !== undefined
+        && nodeSymbol(searchSpaceNode) !== undefined
+        && nodeSymbol(searchSpaceNode) === nodeSymbol(container.parent)
+        && isStatic(container) === staticContext;
+    case Kind.SourceFile:
+      return isSourceFile(container) && !isExternalOrCommonJSModule(container) && !isParameterName(referenceLocation);
+    default:
+      return false;
+  }
+}
+
+function getSuperContainerForReferences(node: Node): Node | undefined {
+  for (let current = node.parent; current !== undefined; current = current.parent) {
+    switch (current.kind) {
+      case Kind.PropertyDeclaration:
+      case Kind.PropertySignature:
+      case Kind.MethodDeclaration:
+      case Kind.MethodSignature:
+      case Kind.Constructor:
+      case Kind.GetAccessor:
+      case Kind.SetAccessor:
+        return current;
+      case Kind.FunctionDeclaration:
+      case Kind.FunctionExpression:
+      case Kind.SourceFile:
+        return undefined;
+      default:
+        break;
+    }
+  }
+  return undefined;
 }
 
 function getNodeSourceFile(node: Node): SourceFile {
