@@ -29,7 +29,7 @@ import {
   newTempVariable, addVariableDeclaration,
   newAssignmentExpression, newElementAccessExpression,
   newPropertyAccessExpression, newGlobalMethodCall,
-} from "../../printer/factory-helpers.js";
+} from "../../printer/factoryHelpers.js";
 
 import { Transformer, type EmitContext } from "../transformer.js";
 import type { TransformOptions } from "../transformer.js";

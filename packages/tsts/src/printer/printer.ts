@@ -6,9 +6,9 @@
  * — given an AST and emit-context, it produces the .js/.ts text
  * output, source maps, and comment/JSDoc handling.
  *
- * Port scope: ~140 method signatures across the major write-* / emit-*
- * / should* / get* families mapped to the upstream surface. Bodies
- * are stubbed; emission integration tests drive incremental fill-in.
+ * Port scope: write-* / emit-* / should* / get* families mapped to the
+ * upstream surface, with emission handlers filled incrementally from
+ * printer and transform baselines.
  *
  * Cross-module deps forward-declared at file end.
  */
@@ -25,6 +25,30 @@ import type {
   Symbol as AstSymbol,
 } from "../ast/index.js";
 import { Kind } from "../ast/index.js";
+import { EmitFlags } from "./emitFlags.js";
+import {
+  LFAmpersandDelimited,
+  LFAsteriskDelimited,
+  LFBarDelimited,
+  LFBracketsMask,
+  LFCommaDelimited,
+  LFDelimitersMask,
+  LFIndented,
+  LFMultiLine,
+  LFNoInterveningComments,
+  LFNoSpaceIfEmpty,
+  LFOptionalIfEmpty,
+  LFOptionalIfNil,
+  LFPreferNewLine,
+  LFSpaceAfterList,
+  LFSpaceBetweenBraces,
+  LFSpaceBetweenSiblings,
+  LFAllowTrailingComma,
+  getClosingBracket as getListClosingBracket,
+  getOpeningBracket as getListOpeningBracket,
+  type ListFormat,
+} from "./listFormat.js";
+import { NameGenerator } from "./nameGenerator.js";
 
 // ---------------------------------------------------------------------------
 // Public option types
@@ -40,6 +64,9 @@ export interface PrinterOptions {
   noEmitHelpers?: boolean;
   omitTrailingSemicolon?: boolean;
   preserveConstEnums?: boolean;
+  preserveSourceNewlines?: boolean;
+  neverAsciiEscape?: boolean;
+  terminateUnterminatedLiterals?: boolean;
   pretty?: boolean;
   stripInternal?: boolean;
   target?: number;
@@ -112,6 +139,23 @@ export interface PrinterWriter {
   decreaseIndent(): void;
 }
 
+export interface StringPrinterWriter extends PrinterWriter {
+  getText(): string;
+}
+
+export interface PrinterFrameState {
+  commentState: CommentState | undefined;
+  sourceMapState: SourceMapState | undefined;
+}
+
+export type TokenEmitFlags = number;
+export const TokenEmitFlags = {
+  None: 0 as TokenEmitFlags,
+  NoComments: 1 as TokenEmitFlags,
+  IndentLeadingComments: 2 as TokenEmitFlags,
+  NoSourceMaps: 4 as TokenEmitFlags,
+} as const;
+
 // ---------------------------------------------------------------------------
 // Printer class
 // ---------------------------------------------------------------------------
@@ -120,6 +164,7 @@ export class Printer {
   options: PrinterOptions;
   handlers: PrintHandlers;
   emitContext: EmitContext;
+  nameGenerator: NameGenerator;
   currentSourceFile: SourceFile | undefined;
   state: PrinterState = {
     writer: undefined, ownWriter: undefined,
@@ -132,6 +177,7 @@ export class Printer {
     this.options = options;
     this.handlers = handlers;
     this.emitContext = emitContext;
+    this.nameGenerator = new NameGenerator();
   }
 
   // -------------------------------------------------------------------------
@@ -403,6 +449,171 @@ export class Printer {
     }
     return pos;
   }
+  emitTokenEx(token: number, pos: number, writeKind: WriteKind, contextNode: AstNode | undefined, emitFlags: number): number {
+    void emitFlags;
+    return this.emitToken(token, pos, writeKind, contextNode);
+  }
+  emitKeywordNode(node: AstNode): void { this.emitKeywordNodeEx(node, WriteKind.Keyword); }
+  emitKeywordNodeEx(node: AstNode, writeKind: WriteKind): void {
+    const text = printerTokenToString((node as { kind?: number }).kind ?? 0);
+    if (text !== undefined) this.writeAs(text, writeKind);
+  }
+  emitPunctuationNode(node: AstNode): void { this.emitPunctuationNodeEx(node, WriteKind.Punctuation); }
+  emitPunctuationNodeEx(node: AstNode, writeKind: WriteKind): void {
+    const text = printerTokenToString((node as { kind?: number }).kind ?? 0);
+    if (text !== undefined) this.writeAs(text, writeKind);
+  }
+  emitTokenNode(node: AstNode): void { this.emitTokenNodeEx(node, WriteKind.Punctuation); }
+  emitTokenNodeEx(node: AstNode, writeKind: WriteKind): void {
+    const text = printerTokenToString((node as { kind?: number }).kind ?? 0);
+    if (text !== undefined) this.writeAs(text, writeKind);
+  }
+  emitLiteral(node: AstNode): void {
+    switch ((node as { kind?: number }).kind) {
+      case Kind.StringLiteral:
+        this.emitStringLiteral(node);
+        break;
+      case Kind.NumericLiteral:
+        this.emitNumericLiteral(node);
+        break;
+      case Kind.BigIntLiteral:
+        this.emitBigIntLiteral(node);
+        break;
+      case Kind.RegularExpressionLiteral:
+        this.emitRegularExpressionLiteral(node);
+        break;
+      case Kind.NoSubstitutionTemplateLiteral:
+        this.emitNoSubstitutionTemplateLiteral(node);
+        break;
+      default:
+        this.write((node as { text?: string }).text ?? "");
+        break;
+    }
+  }
+  emitNoSubstitutionTemplateLiteral(node: AstNode): void { this.emitTemplateLiteral(node); }
+  emitTemplateHead(node: AstNode): void { this.write((node as { text?: string }).text ?? ""); }
+  emitTemplateMiddle(node: AstNode): void { this.write((node as { text?: string }).text ?? ""); }
+  emitTemplateTail(node: AstNode): void { this.write((node as { text?: string }).text ?? ""); }
+  emitTemplateMiddleTail(node: AstNode): void { this.write((node as { text?: string }).text ?? ""); }
+  emitIdentifierText(text: string): void { this.writeSymbol(text, undefined); }
+  emitIdentifierName(text: string): void { this.emitIdentifierText(text); }
+  emitIdentifierNameNode(node: AstNode): void { this.emitIdentifierText((node as { text?: string }).text ?? ""); }
+  getUniqueHelperName(name: string): string {
+    return this.handlers.hasGlobalName?.(name) === true ? `_${name}` : name;
+  }
+  emitIdentifierReference(node: AstNode): void { this.emitIdentifierNameNode(node); }
+  emitBindingIdentifier(node: AstNode): void { this.emitIdentifierNameNode(node); }
+  emitLabelIdentifier(node: AstNode): void { this.emitIdentifierNameNode(node); }
+  emitPrivateIdentifier(node: AstNode): void { this.emitIdentifierNameNode(node); }
+  emitQualifiedName(node: AstNode): void {
+    const qualified = node as { left?: AstNode; right?: AstNode };
+    if (qualified.left !== undefined) this.emitEntityName(qualified.left);
+    this.writePunctuation(".");
+    if (qualified.right !== undefined) this.emitIdentifierNameNode(qualified.right);
+  }
+  emitEntityName(node: AstNode): void {
+    if ((node as { kind?: number }).kind === Kind.QualifiedName) this.emitQualifiedName(node);
+    else this.emitIdentifierNameNode(node);
+  }
+  emitBindingName(node: AstNode): void {
+    switch ((node as { kind?: number }).kind) {
+      case Kind.ObjectBindingPattern:
+        this.emitObjectBindingPattern(node);
+        break;
+      case Kind.ArrayBindingPattern:
+        this.emitArrayBindingPattern(node);
+        break;
+      default:
+        this.emitBindingIdentifier(node);
+        break;
+    }
+  }
+  emitMemberName(node: AstNode): void {
+    if ((node as { kind?: number }).kind === Kind.ComputedPropertyName) this.emitComputedPropertyName(node);
+    else this.emitEntityName(node);
+  }
+  emitModuleName(node: AstNode): void {
+    if ((node as { kind?: number }).kind === Kind.StringLiteral) this.emitStringLiteral(node);
+    else this.emitEntityName(node);
+  }
+  emitModuleExportName(node: AstNode): void { this.emitModuleName(node); }
+  emitImportAttributeName(node: AstNode): void { this.emitModuleName(node); }
+  emitNestedModuleName(node: AstNode): void { this.emitModuleName(node); }
+  emitModifierList(node: AstNode | undefined): void {
+    const modifiers = getNodeArray((node as { modifiers?: unknown } | undefined)?.modifiers);
+    for (const modifier of modifiers) this.emitModifierLike(modifier);
+  }
+  emitModifierLike(node: AstNode): void {
+    this.emit(0, node);
+    this.writeSpace();
+  }
+  emitTypeParameters(node: AstNode): void {
+    const params = getNodeArray((node as { typeParameters?: unknown }).typeParameters);
+    if (params.length === 0) return;
+    this.writePunctuation("<");
+    this.emitCommaList(params);
+    this.writePunctuation(">");
+  }
+  emitTypeParameterDeclarationNode(node: AstNode): void { this.emitTypeParameter(node); }
+  emitTypeAnnotation(node: AstNode | undefined): void {
+    if (node === undefined) return;
+    this.writePunctuation(": ");
+    this.emit(0, node);
+  }
+  emitInitializer(node: AstNode | undefined): void {
+    if (node === undefined) return;
+    this.writeOperator(" = ");
+    this.emit(0, node);
+  }
+  emitParameterName(node: AstNode): void {
+    const name = (node as { name?: AstNode }).name;
+    if (name !== undefined) this.emitBindingName(name);
+  }
+  emitParameterDeclarationNode(node: AstNode): void { this.emitParameter(node); }
+  emitParameters(node: AstNode): void { this.emitParameterList(node); }
+  emitParametersForArrow(node: AstNode): void { this.emitParameterList(node); }
+  emitParametersForIndexSignature(node: AstNode): void { this.emitParameterList(node); }
+  emitSignature(node: AstNode): void {
+    this.emitTypeParameters(node);
+    this.emitParameterList(node);
+    this.emitTypeAnnotation((node as { type?: AstNode }).type);
+  }
+  emitFunctionBody(node: AstNode): void {
+    const body = (node as { body?: AstNode }).body;
+    if (body !== undefined) {
+      this.writeSpace();
+      this.emit(0, body);
+    } else {
+      this.writeTrailingSemicolon();
+    }
+  }
+  emitFunctionBodyNode(node: AstNode): void { this.emitFunctionBody(node); }
+  emitPropertySignature(node: AstNode): void { this.emitPropertyDeclaration(node); }
+  emitMethodSignature(node: AstNode): void { this.emitMethodDeclaration(node); }
+  emitClassStaticBlockDeclaration(node: AstNode): void { this.emitBlock((node as { body?: AstNode }).body ?? node); }
+  emitConstructor(node: AstNode): void { this.emitConstructorDeclaration(node); }
+  emitAccessorDeclaration(node: AstNode): void {
+    if ((node as { kind?: number }).kind === Kind.GetAccessor) this.emitGetAccessorDeclaration(node);
+    else this.emitSetAccessorDeclaration(node);
+  }
+  emitGetAccessorDeclaration(node: AstNode): void { this.emitGetAccessor(node); }
+  emitSetAccessorDeclaration(node: AstNode): void { this.emitSetAccessor(node); }
+  emitCallSignature(node: AstNode): void { this.emitSignature(node); this.writeTrailingSemicolon(); }
+  emitConstructSignature(node: AstNode): void {
+    this.writeKeyword("new ");
+    this.emitSignature(node);
+    this.writeTrailingSemicolon();
+  }
+  emitIndexSignature(node: AstNode): void {
+    this.writePunctuation("[");
+    this.emitCommaList(getNodeArray((node as { parameters?: unknown }).parameters));
+    this.writePunctuation("]");
+    this.emitTypeAnnotation((node as { type?: AstNode }).type);
+    this.writeTrailingSemicolon();
+  }
+  emitClassElement(node: AstNode): void { this.emit(0, node); }
+  emitTypeElement(node: AstNode): void { this.emit(0, node); }
+  emitObjectLiteralElement(node: AstNode): void { this.emit(0, node); }
 
   // -------------------------------------------------------------------------
   // Public entry points
@@ -417,21 +628,134 @@ export class Printer {
     if (node === undefined) return;
     this.emitWorker(hint, node);
   }
-  emitNodeList(parentNode: AstNode | undefined, nodes: NodeList | undefined, format: number): void {
-    void parentNode; void format;
+  emitNodeList(parentNode: AstNode | undefined, nodes: NodeList | undefined, format: ListFormat): void {
     if (nodes === undefined) return;
     const inner = (nodes as unknown as { nodes?: readonly AstNode[] }).nodes ?? [];
     this.emitList(parentNode, nodes, format, 0, inner.length);
   }
-  emitList(parentNode: AstNode | undefined, nodes: NodeList | undefined, format: number, start: number, count: number): void {
-    void parentNode; void format;
+  emitList(parentNode: AstNode | undefined, nodes: NodeList | undefined, format: ListFormat, start: number, count: number): void {
+    let nextFormat = format;
+    if (parentNode !== undefined && this.shouldEmitOnMultipleLines(parentNode)) nextFormat |= LFPreferNewLine | LFIndented;
+    this.emitListRange(parentNode, nodes, nextFormat, start, count);
+  }
+  emitListRange(parentNode: AstNode | undefined, nodes: NodeList | undefined, format: ListFormat, start: number, count: number): void {
+    const isNil = nodes === undefined;
+    const inner = getNodeArray(nodes);
+    const actualStart = start < 0 ? 0 : start;
+    const actualCount = count < 0 ? inner.length - actualStart : count;
+    if (isNil && (format & LFOptionalIfNil) !== 0) return;
+    const isEmpty = isNil || actualStart >= inner.length || actualCount <= 0;
+    if (isEmpty && (format & LFOptionalIfEmpty) !== 0) return;
+    if ((format & LFBracketsMask) !== 0) {
+      this.writePunctuation(getListOpeningBracket(format));
+      if (isEmpty && (format & LFSpaceBetweenBraces) !== 0 && (format & LFNoSpaceIfEmpty) === 0) this.writeSpace();
+    }
+    if (isEmpty) {
+      if ((format & LFMultiLine) !== 0) this.writeLine();
+      else if ((format & LFSpaceBetweenBraces) !== 0 && (format & LFNoSpaceIfEmpty) === 0) this.writeSpace();
+    } else {
+      this.emitListItems(
+        (printer, child) => printer.emit(0, child),
+        parentNode,
+        { nodes: inner.slice(actualStart, Math.min(actualStart + actualCount, inner.length)) } as unknown as NodeList,
+        format,
+        0,
+        Math.min(actualCount, inner.length - actualStart),
+      );
+    }
+    if ((format & LFBracketsMask) !== 0) this.writePunctuation(getListClosingBracket(format));
+  }
+  emitListItems(
+    emit: (printer: Printer, node: AstNode) => void,
+    parentNode: AstNode | undefined,
+    nodes: NodeList | undefined,
+    format: ListFormat,
+    start = 0,
+    count = getNodeArray(nodes).length - start,
+  ): void {
+    const inner = getNodeArray(nodes);
+    let shouldEmitInterveningComments = (format & LFNoInterveningComments) === 0;
+    const firstChild = inner[start];
+    const leadingLineTerminatorCount = firstChild === undefined ? 0 : this.getLeadingLineTerminatorCount(parentNode, firstChild, format);
+    if (leadingLineTerminatorCount > 0) {
+      this.writeLineRepeat(leadingLineTerminatorCount);
+      shouldEmitInterveningComments = false;
+    } else if ((format & LFSpaceBetweenBraces) !== 0) {
+      this.writeSpace();
+    }
+    if ((format & LFIndented) !== 0) this.increaseIndent();
+    let previousSibling: AstNode | undefined;
+    let decreasedIndentAfterEmit = false;
+    for (let index = 0; index < count; index += 1) {
+      const child = inner[start + index];
+      if (child === undefined) break;
+      if ((format & LFAsteriskDelimited) !== 0) {
+        this.writeLine();
+        this.writeDelimiter(format);
+      } else if (previousSibling !== undefined) {
+        this.writeDelimiter(format);
+        const separatingLineTerminatorCount = this.getSeparatingLineTerminatorCount(previousSibling, child, format);
+        if (separatingLineTerminatorCount > 0) {
+          if ((format & (LFMultiLine | LFIndented)) === 0) {
+            this.increaseIndent();
+            decreasedIndentAfterEmit = true;
+          }
+          this.writeLineRepeat(separatingLineTerminatorCount);
+          shouldEmitInterveningComments = false;
+        } else if ((format & LFSpaceBetweenSiblings) !== 0) {
+          this.writeSpace();
+        }
+      }
+      void shouldEmitInterveningComments;
+      emit(this, child);
+      if (decreasedIndentAfterEmit) {
+        this.decreaseIndent();
+        decreasedIndentAfterEmit = false;
+      }
+      previousSibling = child;
+    }
+    if (this.hasTrailingComma(parentNode, nodes) && (format & LFAllowTrailingComma) !== 0 && (format & LFCommaDelimited) !== 0) {
+      this.writePunctuation(",");
+    }
+    if ((format & LFIndented) !== 0) this.decreaseIndent();
+    const lastChild = previousSibling;
+    const closingLineTerminatorCount = lastChild === undefined ? 0 : this.getClosingLineTerminatorCount(parentNode, lastChild, format, textRangeOf(nodes));
+    if (closingLineTerminatorCount > 0) this.writeLineRepeat(closingLineTerminatorCount);
+    else if ((format & (LFSpaceAfterList | LFSpaceBetweenBraces)) !== 0) this.writeSpace();
+  }
+  hasTrailingComma(parentNode: AstNode | undefined, children: NodeList | undefined): boolean {
+    void parentNode;
+    return (children as unknown as { readonly hasTrailingComma?: boolean } | undefined)?.hasTrailingComma === true;
+  }
+  writeDelimiter(format: ListFormat): void {
+    switch (format & LFDelimitersMask) {
+      case 0:
+        return;
+      case LFCommaDelimited:
+        this.writePunctuation(",");
+        return;
+      case LFBarDelimited:
+        this.writeSpace();
+        this.writePunctuation("|");
+        return;
+      case LFAsteriskDelimited:
+        this.writeSpace();
+        this.writePunctuation("*");
+        this.writeSpace();
+        return;
+      case LFAmpersandDelimited:
+        this.writeSpace();
+        this.writePunctuation("&");
+        return;
+      default:
+        return;
+    }
+  }
+  private emitCommaList(nodes: readonly AstNode[]): void {
     if (nodes === undefined) return;
-    const inner = (nodes as unknown as { nodes?: readonly AstNode[] }).nodes ?? [];
-    for (let i = 0; i < count; i++) {
-      const idx = start + i;
-      if (idx >= inner.length) break;
-      if (i > 0) this.writePunctuation(", ");
-      this.emit(0, inner[idx]);
+    for (let index = 0; index < nodes.length; index += 1) {
+      if (index > 0) this.writePunctuation(", ");
+      this.emit(0, nodes[index]);
     }
   }
   emitWorker(hint: number, node: AstNode): void {
@@ -452,6 +776,9 @@ export class Printer {
       case Kind.ModuleBlock: return this.emitModuleBlock(node);
       case Kind.VariableStatement: return this.emitVariableStatement(node);
       case Kind.VariableDeclaration: return this.emitVariableDeclaration(node);
+      case Kind.ObjectBindingPattern: return this.emitObjectBindingPattern(node);
+      case Kind.ArrayBindingPattern: return this.emitArrayBindingPattern(node);
+      case Kind.BindingElement: return this.emitBindingElement(node);
       case Kind.ExpressionStatement: return this.emitExpressionStatement(node);
       case Kind.IfStatement: return this.emitIfStatement(node);
       case Kind.DoStatement: return this.emitDoStatement(node);
@@ -491,13 +818,18 @@ export class Printer {
       case Kind.NamespaceImport: return this.emitNamespaceImport(node);
       case Kind.NamedImports: return this.emitNamedImports(node);
       case Kind.ImportSpecifier: return this.emitImportSpecifier(node);
+      case Kind.ImportAttributes: return this.emitImportAttributes(node);
+      case Kind.ImportAttribute: return this.emitImportAttribute(node);
       case Kind.ImportEqualsDeclaration: return this.emitImportEqualsDeclaration(node);
       case Kind.ExternalModuleReference: return this.emitExternalModuleReference(node);
       case Kind.ExportDeclaration: return this.emitExportDeclaration(node);
       case Kind.NamedExports: return this.emitNamedExports(node);
       case Kind.ExportSpecifier: return this.emitExportSpecifier(node);
       case Kind.NamespaceExport: return this.emitNamespaceExport(node);
+      case Kind.NamespaceExportDeclaration: return this.emitNamespaceExportDeclaration(node);
       case Kind.ExportAssignment: return this.emitExportAssignment(node);
+      case Kind.NotEmittedStatement: return this.emitNotEmittedStatement(node);
+      case Kind.NotEmittedTypeElement: return this.emitNotEmittedTypeElement(node);
       case Kind.CallExpression: return this.emitCallExpression(node);
       case Kind.NewExpression: return this.emitNewExpression(node);
       case Kind.PropertyAccessExpression: return this.emitPropertyAccessExpression(node);
@@ -525,10 +857,15 @@ export class Printer {
       case Kind.ComputedPropertyName: return this.emitComputedPropertyName(node);
       case Kind.Decorator: return this.emitDecorator(node);
       case Kind.HeritageClause: return this.emitHeritageClause(node);
+      case Kind.CaseClause: return this.emitCaseClause(node);
+      case Kind.DefaultClause: return this.emitDefaultClause(node);
+      case Kind.CatchClause: return this.emitCatchClause(node);
       case Kind.JsxElement: return this.emitJsxElement(node);
       case Kind.JsxSelfClosingElement: return this.emitJsxSelfClosingElement(node);
       case Kind.JsxOpeningElement: return this.emitJsxOpeningElement(node);
       case Kind.JsxClosingElement: return this.emitJsxClosingElement(node);
+      case Kind.JsxOpeningFragment: return this.emitJsxOpeningFragment(node);
+      case Kind.JsxClosingFragment: return this.emitJsxClosingFragment(node);
       case Kind.JsxFragment: return this.emitJsxFragment(node);
       case Kind.JsxText: return this.emitJsxText(node);
       case Kind.JsxExpression: return this.emitJsxExpression(node);
@@ -538,8 +875,12 @@ export class Printer {
     if (isTypeNodeKind(k)) return this.emitTypeNode(node);
   }
   emitSourceFile(node: AstNode): void {
+    this.emitShebangIfNeeded(node as SourceFile);
+    this.emitTripleSlashDirectives(node as SourceFile);
+    this.emitHelpers(node);
     const statements = (node as unknown as { statements?: { nodes?: readonly AstNode[] } }).statements?.nodes ?? [];
-    for (let i = 0; i < statements.length; i++) {
+    const prologueEnd = this.emitPrologueDirectives((node as unknown as { statements?: NodeList }).statements);
+    for (let i = prologueEnd; i < statements.length; i++) {
       if (i > 0) this.writeLine();
       this.emit(0, statements[i]);
     }
@@ -584,6 +925,29 @@ export class Printer {
     const literal = (node as unknown as { literal?: AstNode }).literal;
     if (literal !== undefined) this.write((literal as unknown as { text?: string }).text ?? "");
   }
+  emitObjectBindingPattern(node: AstNode): void {
+    this.writePunctuation("{");
+    this.emitCommaList(getNodeArray((node as { elements?: unknown }).elements));
+    this.writePunctuation("}");
+  }
+  emitArrayBindingPattern(node: AstNode): void {
+    this.writePunctuation("[");
+    this.emitCommaList(getNodeArray((node as { elements?: unknown }).elements));
+    this.writePunctuation("]");
+  }
+  emitBindingElement(node: AstNode): void {
+    const dotDotDot = (node as { dotDotDotToken?: AstNode }).dotDotDotToken;
+    if (dotDotDot !== undefined) this.writePunctuation("...");
+    const propertyName = (node as { propertyName?: AstNode }).propertyName;
+    if (propertyName !== undefined) {
+      this.emit(0, propertyName);
+      this.writePunctuation(": ");
+    }
+    const name = (node as { name?: AstNode }).name;
+    if (name !== undefined) this.emitBindingName(name);
+    this.emitInitializer((node as { initializer?: AstNode }).initializer);
+  }
+  emitBindingElementNode(node: AstNode): void { this.emitBindingElement(node); }
   emitJsxElement(node: AstNode): void {
     const opening = (node as unknown as { openingElement?: AstNode }).openingElement;
     if (opening !== undefined) this.emit(0, opening);
@@ -620,6 +984,12 @@ export class Printer {
     if (children !== undefined) for (const c of children) this.emit(0, c);
     this.writePunctuation("</>");
   }
+  emitJsxOpeningFragment(_node: AstNode): void {
+    this.writePunctuation("<>");
+  }
+  emitJsxClosingFragment(_node: AstNode): void {
+    this.writePunctuation("</>");
+  }
   emitJsxText(node: AstNode): void {
     this.write((node as unknown as { text?: string }).text ?? "");
   }
@@ -643,6 +1013,26 @@ export class Printer {
     const expr = (node as unknown as { expression?: AstNode }).expression;
     if (expr !== undefined) this.emit(0, expr);
     this.writePunctuation("}");
+  }
+  emitJsxAttributeLike(node: AstNode): void {
+    this.emit(0, node);
+  }
+  emitJsxNamespacedName(node: AstNode): void {
+    this.emit(0, (node as unknown as { namespace?: AstNode }).namespace);
+    this.writePunctuation(":");
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+  }
+  emitJsxChild(node: AstNode): void {
+    this.emit(0, node);
+  }
+  emitJsxTagName(node: AstNode): void {
+    this.emit(0, node);
+  }
+  emitJsxAttributeName(node: AstNode): void {
+    this.emit(0, node);
+  }
+  emitJsxAttributeValue(node: AstNode): void {
+    this.emit(0, node);
   }
   emitBlock(node: AstNode): void {
     this.writePunctuation("{");
@@ -825,15 +1215,7 @@ export class Printer {
     const catchClause = (node as unknown as { catchClause?: AstNode }).catchClause;
     if (catchClause !== undefined) {
       this.writeSpace();
-      this.writeKeyword("catch ");
-      const varDecl = (catchClause as unknown as { variableDeclaration?: AstNode }).variableDeclaration;
-      if (varDecl !== undefined) {
-        this.writePunctuation("(");
-        const name = (varDecl as unknown as { name?: AstNode }).name;
-        if (name !== undefined) this.emit(0, name);
-        this.writePunctuation(") ");
-      }
-      this.emit(0, (catchClause as unknown as { block?: AstNode }).block);
+      this.emitCatchClause(catchClause);
     }
     const finallyBlock = (node as unknown as { finallyBlock?: AstNode }).finallyBlock;
     if (finallyBlock !== undefined) {
@@ -846,6 +1228,8 @@ export class Printer {
     this.writeKeyword("debugger");
     this.writeTrailingSemicolon();
   }
+  emitNotEmittedStatement(_node: AstNode): void {}
+  emitNotEmittedTypeElement(_node: AstNode): void {}
   emitClassDeclaration(node: AstNode): void {
     this.emitClassLike(node, /*isExpression*/ false);
   }
@@ -1034,6 +1418,7 @@ export class Printer {
       this.writeKeyword(" from ");
     }
     this.emit(0, (node as unknown as { moduleSpecifier?: AstNode }).moduleSpecifier);
+    this.emitImportTypeNodeAttributes((node as unknown as { attributes?: AstNode }).attributes);
     this.writeTrailingSemicolon();
   }
   emitImportClause(node: AstNode): void {
@@ -1058,6 +1443,9 @@ export class Printer {
       this.emit(0, elements[i]);
     }
     this.writePunctuation(" }");
+  }
+  emitNamedImportBindings(node: AstNode): void {
+    this.emit(0, node);
   }
   emitImportSpecifier(node: AstNode): void {
     const propertyName = (node as unknown as { propertyName?: AstNode }).propertyName;
@@ -1090,6 +1478,7 @@ export class Printer {
       this.writeKeyword(" from ");
       this.emit(0, moduleSpecifier);
     }
+    this.emitImportTypeNodeAttributes((node as unknown as { attributes?: AstNode }).attributes);
     this.writeTrailingSemicolon();
   }
   emitExportAssignment(node: AstNode): void {
@@ -1108,6 +1497,9 @@ export class Printer {
     }
     this.writePunctuation(" }");
   }
+  emitNamedExportBindings(node: AstNode): void {
+    this.emit(0, node);
+  }
   emitExportSpecifier(node: AstNode): void {
     const propertyName = (node as unknown as { propertyName?: AstNode }).propertyName;
     if (propertyName !== undefined) {
@@ -1120,6 +1512,30 @@ export class Printer {
     this.writeOperator("*");
     this.writeKeyword(" as ");
     this.emit(0, (node as unknown as { name?: AstNode }).name);
+  }
+  emitNamespaceExportDeclaration(node: AstNode): void {
+    this.writeKeyword("export as namespace ");
+    this.emit(0, (node as unknown as { name?: AstNode }).name);
+    this.writeTrailingSemicolon();
+  }
+  emitImportAttributes(node: AstNode): void {
+    const elements = (node as unknown as { elements?: { nodes?: readonly AstNode[] } }).elements?.nodes ?? [];
+    if (elements.length === 0) return;
+    this.writeKeyword(" with ");
+    this.writePunctuation("{ ");
+    for (let index = 0; index < elements.length; index += 1) {
+      if (index > 0) this.writePunctuation(", ");
+      this.emit(0, elements[index]);
+    }
+    this.writePunctuation(" }");
+  }
+  emitImportAttribute(node: AstNode): void {
+    this.emitImportAttributeName((node as unknown as { name?: AstNode }).name ?? node);
+    this.writePunctuation(": ");
+    this.emit(0, (node as unknown as { value?: AstNode }).value);
+  }
+  emitImportAttributeNode(node: AstNode): void {
+    this.emitImportAttribute(node);
   }
   emitCallExpression(node: AstNode): void {
     this.emit(0, (node as unknown as { expression?: AstNode }).expression);
@@ -1453,6 +1869,7 @@ export class Printer {
     this.writePunctuation("(");
     this.emit(0, (node as unknown as { argument?: AstNode }).argument);
     this.writePunctuation(")");
+    this.emitImportTypeNodeAttributes((node as unknown as { attributes?: AstNode }).attributes);
     const qualifier = (node as unknown as { qualifier?: AstNode }).qualifier;
     if (qualifier !== undefined) {
       this.writePunctuation(".");
@@ -1550,6 +1967,216 @@ export class Printer {
   emitSemicolon(): void {
     this.writeTrailingSemicolon();
   }
+  emitStatement(node: AstNode): void {
+    this.emit(0, node);
+  }
+  emitEmbeddedStatement(_parentNode: AstNode, node: AstNode): void {
+    if (node.kind === Kind.Block) {
+      this.emitBlock(node);
+      return;
+    }
+    this.writeLine();
+    this.increaseIndent();
+    this.emitStatement(node);
+    this.decreaseIndent();
+  }
+  emitHeritageClauseNode(node: AstNode): void {
+    this.emitHeritageClause(node);
+  }
+  emitCaseOrDefaultClauseStatements(node: AstNode, colonPos = node.pos): void {
+    void colonPos;
+    const statements = getNodeArray((node as unknown as { statements?: unknown }).statements);
+    if (statements.length === 0) return;
+    this.writeLine();
+    this.increaseIndent();
+    for (const statement of statements) {
+      this.emitStatement(statement);
+      this.writeLine();
+    }
+    this.decreaseIndent();
+  }
+  emitCaseClause(node: AstNode): void {
+    this.writeKeyword("case ");
+    this.emit(0, (node as unknown as { expression?: AstNode }).expression);
+    this.writePunctuation(":");
+    this.emitCaseOrDefaultClauseStatements(node);
+  }
+  emitDefaultClause(node: AstNode): void {
+    this.writeKeyword("default");
+    this.writePunctuation(":");
+    this.emitCaseOrDefaultClauseStatements(node);
+  }
+  emitCaseOrDefaultClauseNode(node: AstNode): void {
+    if (node.kind === Kind.CaseClause) this.emitCaseClause(node);
+    else this.emitDefaultClause(node);
+  }
+  emitCatchClause(node: AstNode): void {
+    this.writeKeyword("catch");
+    const variable = (node as unknown as { variableDeclaration?: AstNode }).variableDeclaration;
+    if (variable !== undefined) {
+      this.writeSpace();
+      this.writePunctuation("(");
+      this.emit(0, variable);
+      this.writePunctuation(")");
+    }
+    this.writeSpace();
+    this.emitBlock((node as unknown as { block?: AstNode }).block ?? node);
+  }
+  emitShebangIfNeeded(node: SourceFile): void {
+    const text = (node as unknown as { text?: string }).text ?? "";
+    if (!text.startsWith("#!")) return;
+    const end = text.indexOf("\n");
+    this.writeComment(end === -1 ? text : text.slice(0, end));
+    this.writeLine();
+  }
+  emitPrologueDirectives(statements: NodeList | undefined): number {
+    const nodes = getNodeArray(statements);
+    let index = 0;
+    for (; index < nodes.length; index += 1) {
+      const statement = nodes[index]!;
+      const expression = (statement as unknown as { expression?: AstNode }).expression;
+      if (statement.kind !== Kind.ExpressionStatement || expression?.kind !== Kind.StringLiteral) break;
+      if (index > 0) this.writeLine();
+      this.emitExpressionStatement(statement);
+    }
+    return index;
+  }
+  emitHelpers(node: AstNode): boolean {
+    const helpers = this.emitContext.getEmitHelpers?.(node) ?? [];
+    for (const helper of helpers) {
+      const text = (helper as unknown as { readonly text?: string; readonly name?: string }).text
+        ?? (helper as unknown as { readonly name?: string }).name;
+      if (text !== undefined && text.length > 0) {
+        this.write(text);
+        this.writeLine();
+      }
+    }
+    return helpers.length > 0;
+  }
+  emitTripleSlashDirectives(node: SourceFile): void {
+    for (const directive of (node as unknown as { readonly referencedFiles?: readonly FileReference[] }).referencedFiles ?? []) {
+      this.emitDirective("reference", [directive]);
+    }
+    for (const directive of (node as unknown as { readonly typeReferenceDirectives?: readonly FileReference[] }).typeReferenceDirectives ?? []) {
+      this.emitDirective("types", [directive]);
+    }
+    for (const directive of (node as unknown as { readonly libReferenceDirectives?: readonly FileReference[] }).libReferenceDirectives ?? []) {
+      this.emitDirective("lib", [directive]);
+    }
+  }
+  emitDirective(kind: string, refs: readonly FileReference[]): void {
+    for (const ref of refs) {
+      const fileName = ref.fileName ?? ref.path;
+      if (fileName === undefined) continue;
+      const attribute = kind === "reference" ? "path" : kind;
+      this.writeComment(`/// <reference ${attribute}="${fileName}" />`);
+      this.writeLine();
+    }
+  }
+  emitImportTypeNodeAttributes(node: AstNode | undefined): void {
+    if (node !== undefined) this.emitImportAttributes(node);
+  }
+  emitJSDocNode(node: AstNode): void {
+    throw new Error(`JSDoc emit is not implemented for node kind ${node.kind}`);
+  }
+  emitCommentsBeforeNode(node: AstNode): CommentState {
+    const state = { ...this.state.comments };
+    this.emitLeadingSyntheticCommentsOfNode(node, this.emitContext.emitFlags?.(node) ?? EmitFlags.None);
+    return state;
+  }
+  emitCommentsAfterNode(node: AstNode, state: CommentState): void {
+    void state;
+    this.emitTrailingSyntheticCommentsOfNode(node, this.emitContext.emitFlags?.(node) ?? EmitFlags.None);
+  }
+  emitLeadingSyntheticCommentsOfNode(node: AstNode, emitFlags: number): void {
+    if ((emitFlags & (EmitFlags.NoLeadingComments | EmitFlags.NoComments)) !== 0) return;
+    for (const comment of this.emitContext.getSyntheticLeadingComments?.(node) ?? []) {
+      this.emitLeadingSynthesizedComment(comment);
+    }
+  }
+  emitLeadingSynthesizedComment(comment: SynthesizedComment): void {
+    this.writeSynthesizedComment(comment);
+    if (this.syntheticCommentWillEmitNewLine(comment)) this.writeLine();
+  }
+  emitTrailingSyntheticCommentsOfNode(node: AstNode, emitFlags: number): void {
+    if ((emitFlags & (EmitFlags.NoTrailingComments | EmitFlags.NoComments)) !== 0) return;
+    for (const comment of this.emitContext.getSyntheticTrailingComments?.(node) ?? []) {
+      this.emitTrailingSynthesizedComment(comment);
+    }
+  }
+  emitTrailingSynthesizedComment(comment: SynthesizedComment): void {
+    this.writeSynthesizedComment(comment);
+    if (this.syntheticCommentWillEmitNewLine(comment)) this.writeLine();
+  }
+  writeSynthesizedComment(comment: SynthesizedComment): void {
+    this.writeComment(formatSynthesizedComment(comment));
+  }
+  syntheticCommentWillEmitNewLine(comment: SynthesizedComment): boolean {
+    return comment.hasTrailingNewLine === true || comment.text.includes("\n");
+  }
+  emitSourceMapsBeforeNode(node: AstNode): SourceMapState {
+    const previous = { ...this.state.sourceMap };
+    if (this.shouldEmitSourceMaps(node)) {
+      this.state.sourceMap.lastEmittedNodePos = node.pos;
+      this.state.sourceMap.lastEmittedNodeEnd = node.end;
+    }
+    return previous;
+  }
+  emitSourceMapsAfterNode(node: AstNode, previousState: SourceMapState): void {
+    void node;
+    this.state.sourceMap = previousState;
+  }
+  emitSourceMapsBeforeToken(token: number, pos: number, contextNode: AstNode, flags: number): SourceMapState {
+    void token; void flags;
+    const previous = { ...this.state.sourceMap };
+    if (this.shouldEmitSourceMaps(contextNode)) {
+      this.state.sourceMap.lastEmittedNodePos = pos;
+      this.state.sourceMap.lastEmittedNodeEnd = pos;
+    }
+    return previous;
+  }
+  emitSourceMapsAfterToken(token: number, pos: number, contextNode: AstNode, previousState: SourceMapState): void {
+    void token; void pos; void contextNode;
+    this.state.sourceMap = previousState;
+  }
+  shouldReuseTempVariableScope(node: AstNode): boolean {
+    return ((this.emitContext.emitFlags?.(node) ?? 0) & EmitFlags.ReuseTempVariableScope) !== 0;
+  }
+  pushNameGenerationScope(node: AstNode): void {
+    this.nameGenerator.pushScope(this.shouldReuseTempVariableScope(node));
+  }
+  popNameGenerationScope(node: AstNode): void {
+    this.nameGenerator.popScope(this.shouldReuseTempVariableScope(node));
+  }
+  generateAllNames(nodes: NodeList | undefined): void {
+    for (const node of getNodeArray(nodes)) this.generateNames(node);
+  }
+  generateNames(node: AstNode): void {
+    const name = (node as unknown as { readonly name?: AstNode }).name;
+    if (name !== undefined) this.generateNameIfNeeded(name);
+  }
+  generateAllMemberNames(nodes: NodeList | undefined): void {
+    for (const node of getNodeArray(nodes)) this.generateMemberNames(node);
+  }
+  generateMemberNames(node: AstNode): void {
+    const name = (node as unknown as { readonly name?: AstNode }).name;
+    if (name !== undefined) this.generateName(name);
+  }
+  generateNameIfNeeded(name: AstNode): void {
+    this.generateName(name);
+  }
+  generateName(name: AstNode): void {
+    const info = this.emitContext.getAutoGenerateInfo?.(name) as AutoGenerateInfo | undefined;
+    if (info === undefined) return;
+    const generated = info.nodeForGeneratedName === undefined
+      ? this.nameGenerator.generateName(info.flags, info.prefix, info.suffix)
+      : this.nameGenerator.generateNameForNode(info.nodeForGeneratedName, info.flags, info.prefix, info.suffix);
+    (name as unknown as { text?: string }).text = generated;
+  }
+  isFileLevelUniqueNameInCurrentFile(name: string, optimistic: boolean): boolean {
+    void optimistic;
+    return this.handlers.hasGlobalName?.(name) !== true;
+  }
 
   // -------------------------------------------------------------------------
   // High-level entry: print a whole SourceFile to a text writer.
@@ -1563,7 +2190,9 @@ export class Printer {
    * when `emitTrailingNewlines` is enabled.
    */
   printFile(sourceFile: SourceFile): string {
-    const writer = this.state.writer ?? this.ensureOwnWriter();
+    const previousWriter = this.state.writer;
+    const previousSourceFile = this.currentSourceFile;
+    const writer = previousWriter ?? createStringPrinterWriter();
     this.state.writer = writer;
     this.currentSourceFile = sourceFile;
     const statements = (sourceFile as unknown as { statements?: { nodes?: readonly AstNode[] } }).statements?.nodes ?? [];
@@ -1574,34 +2203,348 @@ export class Printer {
     if (this.options.emitTrailingNewlines !== false) {
       this.writeLine();
     }
-    const text = (writer as unknown as { getText?(): string }).getText?.() ?? "";
+    const text = getStringPrinterText(writer);
+    this.state.writer = previousWriter;
+    this.currentSourceFile = previousSourceFile;
     return text;
   }
 
-  private ensureOwnWriter(): PrinterWriter {
-    if (this.state.ownWriter !== undefined) return this.state.ownWriter;
-    // Minimal text writer fallback so printFile can be called without
-    // explicit writer wiring. Mirrors EmitTextWriter (TextWriter)
-    // semantics: indent + line tracking + buffer.
-    const w: PrinterWriter & { getText(): string } = (() => {
-      let buf = "";
-      let indent = 0;
-      let lineStart = true;
-      const indentSize = 4;
-      return {
-        write(text: string): void {
-          if (lineStart) { buf += " ".repeat(indent * indentSize); lineStart = false; }
-          buf += text;
-        },
-        writeLine(): void { buf += "\n"; lineStart = true; },
-        increaseIndent(): void { indent += 1; },
-        decreaseIndent(): void { indent = Math.max(0, indent - 1); },
-        getText(): string { return buf; },
-      };
-    })();
-    this.state.ownWriter = w;
-    return w;
+  printNode(node: AstNode, sourceFile: SourceFile | undefined = undefined): string {
+    const previousWriter = this.state.writer;
+    const previousSourceFile = this.currentSourceFile;
+    const writer = createStringPrinterWriter();
+    this.state.writer = writer;
+    this.currentSourceFile = sourceFile;
+    this.emit(0, node);
+    const text = writer.getText();
+    this.state.writer = previousWriter;
+    this.currentSourceFile = previousSourceFile;
+    return text;
   }
+
+  enterNode(node: AstNode): PrinterFrameState {
+    this.handlers.onBeforeEmitNode?.(node);
+    return {
+      commentState: this.emitCommentsBeforeNode(node),
+      sourceMapState: this.emitSourceMapsBeforeNode(node),
+    };
+  }
+  exitNode(node: AstNode, previousState: PrinterFrameState): void {
+    if (previousState.sourceMapState !== undefined) this.emitSourceMapsAfterNode(node, previousState.sourceMapState);
+    if (previousState.commentState !== undefined) this.emitCommentsAfterNode(node, previousState.commentState);
+    this.handlers.onAfterEmitNode?.(node);
+  }
+  enterTokenNode(node: AstNode, flags: TokenEmitFlags = TokenEmitFlags.None): PrinterFrameState {
+    this.handlers.onBeforeEmitToken?.(node);
+    return {
+      commentState: (flags & TokenEmitFlags.NoComments) === 0 ? this.emitCommentsBeforeNode(node) : undefined,
+      sourceMapState: (flags & TokenEmitFlags.NoSourceMaps) === 0 ? this.emitSourceMapsBeforeNode(node) : undefined,
+    };
+  }
+  exitTokenNode(node: AstNode, previousState: PrinterFrameState): void {
+    this.exitNode(node, previousState);
+    this.handlers.onAfterEmitToken?.(node);
+  }
+  enterToken(token: number, pos: number, contextNode: AstNode, flags: TokenEmitFlags = TokenEmitFlags.None): { state: PrinterFrameState; pos: number } {
+    const commentResult = this.emitCommentsBeforeToken(token, pos, contextNode, flags);
+    return {
+      state: {
+        commentState: commentResult.state,
+        sourceMapState: (flags & TokenEmitFlags.NoSourceMaps) === 0 ? this.emitSourceMapsBeforeToken(token, commentResult.pos, contextNode, flags) : undefined,
+      },
+      pos: commentResult.pos,
+    };
+  }
+  exitToken(token: number, pos: number, contextNode: AstNode, previousState: PrinterFrameState): void {
+    if (previousState.sourceMapState !== undefined) this.emitSourceMapsAfterToken(token, pos, contextNode, previousState.sourceMapState);
+    if (previousState.commentState !== undefined) this.emitCommentsAfterToken(token, pos, contextNode, previousState.commentState);
+  }
+  emitCommentsBeforeToken(token: number, pos: number, contextNode: AstNode, flags: TokenEmitFlags = TokenEmitFlags.None): { state: CommentState | undefined; pos: number } {
+    void token;
+    if ((flags & TokenEmitFlags.NoComments) !== 0 || this.options.removeComments === true) {
+      return { state: undefined, pos: this.skipTriviaAt(pos) };
+    }
+    return { state: this.emitCommentsBeforeNode(contextNode), pos: this.skipTriviaAt(pos) };
+  }
+  emitCommentsAfterToken(token: number, pos: number, contextNode: AstNode, state: CommentState): void {
+    void token; void pos;
+    this.emitCommentsAfterNode(contextNode, state);
+  }
+  emitDetachedCommentsBeforeStatementList(node: AstNode, detachedRange: TextRange): CommentState | undefined {
+    void detachedRange;
+    if (!this.shouldEmitDetachedComments(node)) return undefined;
+    return this.emitCommentsBeforeNode(node);
+  }
+  emitDetachedCommentsAfterStatementList(node: AstNode, detachedRange: TextRange, state: CommentState | undefined): void {
+    void detachedRange;
+    if (state !== undefined) this.emitCommentsAfterNode(node, state);
+  }
+  emitLeadingCommentsOfNode(node: AstNode, emitFlags: number): void {
+    this.emitLeadingSyntheticCommentsOfNode(node, emitFlags);
+  }
+  emitTrailingCommentsOfNode(node: AstNode, emitFlags: number): void {
+    this.emitTrailingSyntheticCommentsOfNode(node, emitFlags);
+  }
+  shouldEmitCommentIfTripleSlash(comment: CommentRange, tripleSlash: boolean | undefined): boolean {
+    if (tripleSlash === undefined) return true;
+    return this.isTripleSlashComment(comment) === tripleSlash;
+  }
+  shouldEmitNewLineBeforeLeadingCommentOfPosition(pos: number, commentPos: number): boolean {
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    if (text === undefined || pos === commentPos) return false;
+    return lineOfPosition(text, pos) !== lineOfPosition(text, commentPos);
+  }
+  emitLeadingCommentsOfPosition(pos: number): void {
+    if (this.options.removeComments === true || pos < 0) return;
+    this.emitSourceCommentAt(pos, true);
+  }
+  emitTrailingCommentsOfPosition(pos: number, prefixSpace: boolean, forceNoNewline: boolean): void {
+    if (this.options.removeComments === true || pos < 0) return;
+    if (prefixSpace) this.writeSpace();
+    this.emitSourceCommentAt(pos, forceNoNewline);
+  }
+  emitDetachedCommentsAndUpdateCommentsInfo(textRange: TextRange): void {
+    this.state.detachedComments.push({ nodePos: textRange.pos, detachedCommentEndPos: textRange.end });
+  }
+  emitComments(comments: readonly CommentRange[], commentSeparator: number): boolean {
+    if (comments.length === 0) return false;
+    if (commentSeparator === 1) this.writeSpace();
+    for (let index = 0; index < comments.length; index += 1) {
+      const comment = comments[index];
+      if (comment === undefined) continue;
+      if (index > 0) this.writeSpace();
+      this.emitComment(comment);
+      if (comment.kind === Kind.SingleLineCommentTrivia || comment.hasTrailingNewLine === true) this.writeLine();
+    }
+    if (commentSeparator === 2) this.writeSpace();
+    return true;
+  }
+  emitComment(comment: CommentRange): void {
+    this.emitPos(comment.pos);
+    this.writeCommentRange(comment);
+    this.emitPos(comment.end);
+  }
+  isTripleSlashComment(comment: CommentRange): boolean {
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    return text?.startsWith("///", comment.pos) === true;
+  }
+  setSourceMapSource(source: SourceFile | undefined): void {
+    this.currentSourceFile = source;
+  }
+  emitPos(pos: number): void {
+    if (this.options.sourceMap !== true || pos < 0) return;
+    this.state.sourceMap.lastEmittedNodePos = pos;
+    this.state.sourceMap.lastEmittedNodeEnd = pos;
+  }
+  emitPosName(pos: number, name: string): void {
+    void name;
+    this.emitPos(pos);
+  }
+  emitSourcePos(source: SourceFile | undefined, pos: number): void {
+    const previousSourceFile = this.currentSourceFile;
+    this.setSourceMapSource(source);
+    this.emitPos(pos);
+    this.currentSourceFile = previousSourceFile;
+  }
+  emitSourcePosName(source: SourceFile | undefined, pos: number, name: string): void {
+    void name;
+    this.emitSourcePos(source, pos);
+  }
+  emitLeadingComments(pos: number, end: number, emitFlags: number = EmitFlags.None): void {
+    if (this.options.removeComments === true || (emitFlags & EmitFlags.NoLeadingComments) !== 0) return;
+    const comments = this.collectLeadingComments(pos, end);
+    if (comments.length === 0) return;
+    let previousEnd = pos;
+    for (const comment of comments) {
+      if (!this.shouldWriteComment(comment)) continue;
+      if (this.shouldEmitNewLineBeforeLeadingCommentOfPosition(previousEnd, comment.pos)) this.writeLine();
+      this.emitComment(comment);
+      if (commentWillEmitNewLine(comment) || comment.kind === Kind.SingleLineCommentTrivia) this.writeLine();
+      previousEnd = comment.end;
+    }
+  }
+  emitTrailingComments(pos: number, end: number, emitFlags: number = EmitFlags.None): void {
+    if (this.options.removeComments === true || (emitFlags & EmitFlags.NoTrailingComments) !== 0) return;
+    const comments = this.collectTrailingComments(pos, end);
+    if (comments.length === 0) return;
+    let wroteComment = false;
+    for (const comment of comments) {
+      if (!this.shouldWriteComment(comment)) continue;
+      if (!wroteComment) this.writeSpace();
+      else if (comment.kind !== Kind.SingleLineCommentTrivia) this.writeSpace();
+      this.emitComment(comment);
+      wroteComment = true;
+      if (comment.kind === Kind.SingleLineCommentTrivia || commentWillEmitNewLine(comment)) this.writeLine();
+    }
+  }
+  emitDetachedComments(pos: number, end: number): void {
+    const comments = this.collectLeadingComments(pos, end);
+    let lastEnd = pos;
+    for (const comment of comments) {
+      if (!this.shouldWriteComment(comment)) continue;
+      const detached = this.hasBlankLineBetween(lastEnd, comment.pos);
+      if (!detached) {
+        lastEnd = comment.end;
+        continue;
+      }
+      if (this.state.detachedComments.some(info => info.nodePos === pos && info.detachedCommentEndPos >= comment.end)) continue;
+      this.emitComment(comment);
+      this.writeLine();
+      this.state.detachedComments.push({ nodePos: pos, detachedCommentEndPos: comment.end });
+      lastEnd = comment.end;
+    }
+  }
+  private collectLeadingComments(pos: number, end: number): readonly CommentRange[] {
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    if (text === undefined) return [];
+    const comments: CommentRange[] = [];
+    let current = Math.max(0, pos);
+    const limit = Math.min(Math.max(current, end), text.length);
+    while (current < limit) {
+      const next = this.skipTriviaAt(current);
+      if (next > current) {
+        current = next;
+        continue;
+      }
+      const comment = scanCommentRange(text, current);
+      if (comment === undefined || comment.pos >= limit) break;
+      comments.push(comment);
+      current = Math.max(comment.end, current + 1);
+    }
+    return comments;
+  }
+  private collectTrailingComments(pos: number, end: number): readonly CommentRange[] {
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    if (text === undefined) return [];
+    const comments: CommentRange[] = [];
+    let current = Math.max(0, pos);
+    const limit = Math.min(Math.max(current, end), text.length);
+    const startLine = lineOfPosition(text, current);
+    while (current < limit) {
+      const comment = scanCommentRange(text, current);
+      if (comment !== undefined) {
+        if (lineOfPosition(text, comment.pos) !== startLine) break;
+        comments.push(comment);
+        current = Math.max(comment.end, current + 1);
+        if (comment.kind === Kind.SingleLineCommentTrivia) break;
+        continue;
+      }
+      const code = text.charCodeAt(current);
+      if (code === 0x0a || code === 0x0d) break;
+      if (code !== 0x20 && code !== 0x09) break;
+      current += 1;
+    }
+    return comments;
+  }
+  private hasBlankLineBetween(left: number, right: number): boolean {
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    if (text === undefined) return false;
+    let lineBreaks = 0;
+    for (let index = Math.max(0, left); index < Math.min(right, text.length); index += 1) {
+      const ch = text.charCodeAt(index);
+      if (ch === 13) {
+        if (text.charCodeAt(index + 1) === 10) index += 1;
+        lineBreaks += 1;
+      } else if (ch === 10) {
+        lineBreaks += 1;
+      }
+      if (lineBreaks >= 2) return true;
+    }
+    return false;
+  }
+  private skipTriviaAt(pos: number): number {
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    if (text === undefined || pos < 0) return pos;
+    let current = pos;
+    while (current < text.length) {
+      const code = text.charCodeAt(current);
+      if (code !== 0x20 && code !== 0x09 && code !== 0x0a && code !== 0x0d) break;
+      current += 1;
+    }
+    return current;
+  }
+  private emitSourceCommentAt(pos: number, forceNoNewline: boolean): void {
+    const text = (this.currentSourceFile as unknown as { text?: string })?.text;
+    if (text === undefined) return;
+    if (text.startsWith("//", pos)) {
+      const end = text.indexOf("\n", pos);
+      this.writeComment(text.slice(pos, end < 0 ? text.length : end));
+      if (forceNoNewline || end >= 0) this.writeLine();
+      return;
+    }
+    if (text.startsWith("/*", pos)) {
+      const close = text.indexOf("*/", pos + 2);
+      const end = close < 0 ? text.length : close + 2;
+      this.writeComment(text.slice(pos, end));
+      if (forceNoNewline || /\r|\n/u.test(text.slice(pos, end))) this.writeLine();
+    }
+  }
+}
+
+function createStringPrinterWriter(): StringPrinterWriter {
+  let buffer = "";
+  let indent = 0;
+  let lineStart = true;
+  const indentSize = 4;
+  return {
+    write(text: string): void {
+      if (lineStart) {
+        buffer += " ".repeat(indent * indentSize);
+        lineStart = false;
+      }
+      buffer += text;
+    },
+    writeLine(): void {
+      buffer += "\n";
+      lineStart = true;
+    },
+    increaseIndent(): void {
+      indent += 1;
+    },
+    decreaseIndent(): void {
+      indent = Math.max(0, indent - 1);
+    },
+    getText(): string {
+      return buffer;
+    },
+  };
+}
+
+function getStringPrinterText(writer: PrinterWriter): string {
+  const stringWriter = writer as Partial<StringPrinterWriter>;
+  return typeof stringWriter.getText === "function" ? stringWriter.getText() : "";
+}
+
+function lineOfPosition(text: string, position: number): number {
+  let line = 0;
+  for (let index = 0; index < Math.min(position, text.length); index += 1) {
+    if (text.charCodeAt(index) === 0x0a) line += 1;
+  }
+  return line;
+}
+
+function scanCommentRange(text: string, position: number): CommentRange | undefined {
+  if (text.startsWith("//", position)) {
+    const end = text.indexOf("\n", position + 2);
+    const commentEnd = end < 0 ? text.length : end;
+    return {
+      kind: Kind.SingleLineCommentTrivia,
+      pos: position,
+      end: commentEnd,
+      hasTrailingNewLine: end >= 0,
+    } as CommentRange;
+  }
+  if (text.startsWith("/*", position)) {
+    const close = text.indexOf("*/", position + 2);
+    const commentEnd = close < 0 ? text.length : close + 2;
+    return {
+      kind: Kind.MultiLineCommentTrivia,
+      pos: position,
+      end: commentEnd,
+      hasTrailingNewLine: /\r|\n/u.test(text.slice(position, commentEnd)),
+    } as CommentRange;
+  }
+  return undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -1610,6 +2553,140 @@ export class Printer {
 
 export function newPrinter(options: PrinterOptions, handlers: PrintHandlers, emitContext: EmitContext): Printer {
   return new Printer(options, handlers, emitContext);
+}
+
+export function NewPrinter(options: PrinterOptions, handlers: PrintHandlers = {}, emitContext: EmitContext = {}): Printer {
+  return newPrinter(options, handlers, emitContext);
+}
+
+export function nodeToInlineStr(node: AstNode): string {
+  return nodeToStr(node, { removeComments: true, emitTrailingNewlines: false });
+}
+
+export function nodeToStr(node: AstNode, options: PrinterOptions = {}): string {
+  const printer = NewPrinter(options);
+  const sourceFile = node.kind === Kind.SourceFile ? node as SourceFile : undefined;
+  if (sourceFile !== undefined) return printer.printFile(sourceFile);
+  return printer.printNode(node);
+}
+
+export function emitKeywordTypeNode(printer: Printer, node: AstNode): void { printer.writeKeyword(keywordText(node.kind) ?? "unknown"); }
+export function emitTypePredicateParameterName(printer: Printer, node: AstNode): void { printer.emit(0, (node as { parameterName?: AstNode }).parameterName); }
+export function emitTypeArgument(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitReturnType(printer: Printer, node: AstNode | undefined): void { if (node !== undefined) { printer.writePunctuation(":"); printer.writeSpace(); printer.emit(0, node); } }
+export function emitPostfixTypeOperand(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitTupleElementType(printer: Printer, node: AstNode): void { printer.emit(0, (node as { type?: AstNode }).type ?? node); }
+export function emitRestType(printer: Printer, node: AstNode): void { printer.writePunctuation("..."); printer.emit(0, (node as { type?: AstNode }).type ?? node); }
+export function emitOptionalType(printer: Printer, node: AstNode): void { printer.emit(0, (node as { type?: AstNode }).type ?? node); printer.writePunctuation("?"); }
+export function emitNamedTupleMember(printer: Printer, node: AstNode): void { printer.emit(0, (node as { name?: AstNode }).name); if ((node as { questionToken?: AstNode }).questionToken !== undefined) printer.writePunctuation("?"); emitReturnType(printer, (node as { type?: AstNode }).type); }
+export function emitUnionTypeConstituent(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitIntersectionTypeConstituent(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitInferTypeParameter(printer: Printer, node: AstNode): void { printer.writeKeyword("infer"); printer.writeSpace(); printer.emit(0, node); }
+export function emitThisType(printer: Printer): void { printer.writeKeyword("this"); }
+export function emitMappedTypeParameter(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitTemplateTypeSpan(printer: Printer, node: AstNode): void { printer.writePunctuation("${"); printer.emit(0, (node as { type?: AstNode }).type); printer.writePunctuation("}"); printer.emit(0, (node as { literal?: AstNode }).literal); }
+export function emitTemplateTypeSpanNode(printer: Printer, node: AstNode): void { emitTemplateTypeSpan(printer, node); }
+export function emitTemplateType(printer: Printer, node: AstNode): void { printer.emit(0, (node as { head?: AstNode }).head); for (const span of getNodeArray((node as { templateSpans?: unknown }).templateSpans)) emitTemplateTypeSpan(printer, span); }
+export function emitImportTypeNode(printer: Printer, node: AstNode): void { printer.writeKeyword("import"); printer.writePunctuation("("); printer.emit(0, (node as { argument?: AstNode }).argument); printer.writePunctuation(")"); }
+export function emitTypeNodeInExtends(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitTypeNodeOutsideExtends(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitTypeNodePreservingExtends(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitJSDocAllType(printer: Printer): void { printer.writePunctuation("*"); }
+export function emitJSDocNonNullableType(printer: Printer, node: AstNode): void { printer.writePunctuation("!"); printer.emit(0, (node as { type?: AstNode }).type); }
+export function emitJSDocNullableType(printer: Printer, node: AstNode): void { printer.writePunctuation("?"); printer.emit(0, (node as { type?: AstNode }).type); }
+export function emitJSDocOptionalType(printer: Printer, node: AstNode): void { printer.emit(0, (node as { type?: AstNode }).type); printer.writePunctuation("="); }
+export function emitJSDocVariadicType(printer: Printer, node: AstNode): void { printer.writePunctuation("..."); printer.emit(0, (node as { type?: AstNode }).type); }
+export function emitKeywordExpression(printer: Printer, node: AstNode): void { printer.writeKeyword(keywordText(node.kind) ?? "undefined"); }
+export function emitArrayLiteralExpressionElement(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function mayNeedDotDotForPropertyAccess(node: AstNode): boolean { return node.kind === Kind.NumericLiteral; }
+export function emitArgument(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitCallee(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitConciseBody(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function getLiteralKindOfBinaryPlusOperand(node: AstNode): Kind | undefined { return node.kind === Kind.StringLiteral || node.kind === Kind.NumericLiteral ? node.kind : undefined; }
+export function getBinaryExpressionPrecedence(node: AstNode): number { return binaryPrecedence((node as { operatorToken?: { kind?: Kind } }).operatorToken?.kind); }
+export function emitShortCircuitExpression(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitOmittedExpression(_printer: Printer): void { /* omitted expressions intentionally write nothing */ }
+export function emitExpressionWithTypeArguments(printer: Printer, node: AstNode): void { printer.emit(0, (node as { expression?: AstNode }).expression); const typeArguments = getNodeArray((node as { typeArguments?: unknown }).typeArguments); if (typeArguments.length > 0) { printer.writePunctuation("<"); typeArguments.forEach((arg, index) => { if (index > 0) printer.writePunctuation(","); printer.emit(0, arg); }); printer.writePunctuation(">"); } }
+export function emitExpressionWithTypeArgumentsNode(printer: Printer, node: AstNode): void { emitExpressionWithTypeArguments(printer, node); }
+export function emitMetaProperty(printer: Printer, node: AstNode): void { printer.emit(0, (node as { keywordToken?: AstNode }).keywordToken); printer.writePunctuation("."); printer.emit(0, (node as { name?: AstNode }).name); }
+export function emitPartiallyEmittedExpression(printer: Printer, node: AstNode): void { printer.emit(0, (node as { expression?: AstNode }).expression); }
+export function commentWillEmitNewLine(comment: CommentRange): boolean { return /\r|\n/u.test((comment as { text?: string }).text ?? ""); }
+export function willEmitLeadingNewLine(node: AstNode): boolean { return ((node as { pos?: number }).pos ?? 0) >= 0; }
+export function parenthesizeExpressionForNoAsi(node: AstNode): AstNode { return node; }
+export function emitExpressionNoASI(printer: Printer, node: AstNode): void { printer.emit(0, parenthesizeExpressionForNoAsi(node)); }
+export function emitExpression(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitTemplateSpanNode(printer: Printer, node: AstNode): void { printer.emit(0, (node as { expression?: AstNode }).expression); printer.emit(0, (node as { literal?: AstNode }).literal); }
+export function emitSemicolonClassElement(printer: Printer): void { printer.writeTrailingSemicolon(); }
+export function isEmptyBlock(node: AstNode): boolean { return getNodeArray((node as { statements?: unknown }).statements).length === 0; }
+export function emitEmptyStatement(printer: Printer): void { printer.writeTrailingSemicolon(); }
+export function emitIIFEWithParenthesizedCallee(printer: Printer, node: AstNode): void { printer.writePunctuation("("); printer.emit(0, (node as { expression?: AstNode }).expression); printer.writePunctuation(")"); }
+export function emitWhileClause(printer: Printer, node: AstNode): void { printer.writeKeyword("while"); printer.writeSpace(); printer.writePunctuation("("); printer.emit(0, (node as { expression?: AstNode }).expression); printer.writePunctuation(")"); }
+export function emitForInitializer(printer: Printer, node: AstNode | undefined): void { printer.emit(0, node); }
+export function emitVariableDeclarationNode(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitVariableDeclarationList(printer: Printer, node: AstNode): void { getNodeArray((node as { declarations?: unknown }).declarations).forEach((decl, index) => { if (index > 0) printer.writePunctuation(","); printer.emit(0, decl); }); }
+export function emitCaseBlock(printer: Printer, node: AstNode): void { printer.writePunctuation("{"); printer.writeLine(); printer.increaseIndent(); getNodeArray((node as { clauses?: unknown }).clauses).forEach(clause => printer.emit(0, clause)); printer.decreaseIndent(); printer.writePunctuation("}"); }
+export function emitModuleReference(printer: Printer, node: AstNode): void { printer.emit(0, node); }
+export function emitImportSpecifierNode(printer: Printer, node: AstNode): void { printer.emit(0, (node as { propertyName?: AstNode }).propertyName); if ((node as { propertyName?: AstNode }).propertyName !== undefined) { printer.writeSpace(); printer.writeKeyword("as"); printer.writeSpace(); } printer.emit(0, (node as { name?: AstNode }).name); }
+export function emitExportSpecifierNode(printer: Printer, node: AstNode): void { emitImportSpecifierNode(printer, node); }
+export function emitJsxAttributes(printer: Printer, node: AstNode): void { getNodeArray((node as { properties?: unknown }).properties).forEach(attr => { printer.writeSpace(); printer.emit(0, attr); }); }
+export function emitEnumMemberNode(printer: Printer, node: AstNode): void { printer.emit(0, (node as { name?: AstNode }).name); const initializer = (node as { initializer?: AstNode }).initializer; if (initializer !== undefined) { printer.writeSpace(); printer.writeOperator("="); printer.writeSpace(); printer.emit(0, initializer); } }
+export function EmitSourceFile(printer: Printer, sourceFile: SourceFile): string { return printer.printFile(sourceFile); }
+export function setSourceFile(printer: Printer, sourceFile: SourceFile | undefined): void { printer.currentSourceFile = sourceFile; }
+export function emitCommentsBeforeToken(printer: Printer, token: number, pos: number, contextNode: AstNode, flags: TokenEmitFlags = TokenEmitFlags.None): { state: CommentState | undefined; pos: number } { return printer.emitCommentsBeforeToken(token, pos, contextNode, flags); }
+export function emitCommentsAfterToken(printer: Printer, token: number, pos: number, contextNode: AstNode, state: CommentState): void { printer.emitCommentsAfterToken(token, pos, contextNode, state); }
+export function emitDetachedCommentsBeforeStatementList(printer: Printer, node: AstNode, detachedRange: TextRange): CommentState | undefined { return printer.emitDetachedCommentsBeforeStatementList(node, detachedRange); }
+export function emitDetachedCommentsAfterStatementList(printer: Printer, node: AstNode, detachedRange: TextRange, state: CommentState | undefined): void { printer.emitDetachedCommentsAfterStatementList(node, detachedRange, state); }
+export function emitLeadingCommentsOfNode(printer: Printer, node: AstNode, emitFlags: number): void { printer.emitLeadingCommentsOfNode(node, emitFlags); }
+export function emitTrailingCommentsOfNode(printer: Printer, node: AstNode, emitFlags: number): void { printer.emitTrailingCommentsOfNode(node, emitFlags); }
+export function shouldEmitCommentIfTripleSlash(printer: Printer, comment: CommentRange, tripleSlash: boolean | undefined): boolean { return printer.shouldEmitCommentIfTripleSlash(comment, tripleSlash); }
+export function shouldEmitNewLineBeforeLeadingCommentOfPosition(printer: Printer, pos: number, commentPos: number): boolean { return printer.shouldEmitNewLineBeforeLeadingCommentOfPosition(pos, commentPos); }
+export function emitLeadingCommentsOfPosition(printer: Printer, pos: number): void { printer.emitLeadingCommentsOfPosition(pos); }
+export function emitTrailingCommentsOfPosition(printer: Printer, pos: number, prefixSpace = false, forceNoNewline = false): void { printer.emitTrailingCommentsOfPosition(pos, prefixSpace, forceNoNewline); }
+export function emitDetachedCommentsAndUpdateCommentsInfo(printer: Printer, textRange: TextRange): void { printer.emitDetachedCommentsAndUpdateCommentsInfo(textRange); }
+export function emitComments(printer: Printer, comments: readonly CommentRange[], commentSeparator: number): boolean { return printer.emitComments(comments, commentSeparator); }
+export function emitComment(printer: Printer, comment: CommentRange): void { printer.emitComment(comment); }
+export function isTripleSlashComment(printer: Printer, comment: CommentRange): boolean { return printer.isTripleSlashComment(comment); }
+export function setSourceMapSource(printer: Printer, source: SourceFile | undefined): void { printer.setSourceMapSource(source); }
+export function emitPos(printer: Printer, pos: number): void { printer.emitPos(pos); }
+export function emitPosName(printer: Printer, pos: number, name: string): void { printer.emitPosName(pos, name); }
+export function emitSourcePos(printer: Printer, source: SourceFile | undefined, pos: number): void { printer.emitSourcePos(source, pos); }
+export function emitSourcePosName(printer: Printer, source: SourceFile | undefined, pos: number, name: string): void { printer.emitSourcePosName(source, pos, name); }
+export function enterNode(printer: Printer, node: AstNode): PrinterFrameState { return printer.enterNode(node); }
+export function exitNode(printer: Printer, node: AstNode, previousState: PrinterFrameState): void { printer.exitNode(node, previousState); }
+export function enterTokenNode(printer: Printer, node: AstNode, flags: TokenEmitFlags = TokenEmitFlags.None): PrinterFrameState { return printer.enterTokenNode(node, flags); }
+export function exitTokenNode(printer: Printer, node: AstNode, previousState: PrinterFrameState): void { printer.exitTokenNode(node, previousState); }
+export function enterToken(printer: Printer, token: number, pos: number, contextNode: AstNode, flags: TokenEmitFlags = TokenEmitFlags.None): { state: PrinterFrameState; pos: number } { return printer.enterToken(token, pos, contextNode, flags); }
+export function exitToken(printer: Printer, token: number, pos: number, contextNode: AstNode, previousState: PrinterFrameState): void { printer.exitToken(token, pos, contextNode, previousState); }
+
+function keywordText(kind: Kind): string | undefined {
+  return kind >= Kind.FirstKeyword && kind <= Kind.LastKeyword ? Kind[kind]?.replace(/Keyword$/u, "").toLowerCase() : undefined;
+}
+
+function binaryPrecedence(kind: Kind | undefined): number {
+  switch (kind) {
+    case Kind.AsteriskToken:
+    case Kind.SlashToken:
+    case Kind.PercentToken:
+      return 13;
+    case Kind.PlusToken:
+    case Kind.MinusToken:
+      return 12;
+    case Kind.LessThanToken:
+    case Kind.GreaterThanToken:
+      return 10;
+    case Kind.EqualsEqualsToken:
+    case Kind.EqualsEqualsEqualsToken:
+    case Kind.ExclamationEqualsToken:
+    case Kind.ExclamationEqualsEqualsToken:
+      return 9;
+    case Kind.AmpersandAmpersandToken:
+      return 5;
+    case Kind.BarBarToken:
+    case Kind.QuestionQuestionToken:
+      return 4;
+    default:
+      return 0;
+  }
 }
 
 /**
@@ -1630,7 +2707,32 @@ export function printFile(
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-interface EmitContext { readonly _ec?: unknown }
+interface EmitContext {
+  readonly _ec?: unknown;
+  getEmitHelpers?(node: AstNode): readonly AstNode[];
+  emitFlags?(node: AstNode): number;
+  getAutoGenerateInfo?(node: AstNode): unknown;
+  getSyntheticLeadingComments?(node: AstNode): readonly SynthesizedComment[];
+  getSyntheticTrailingComments?(node: AstNode): readonly SynthesizedComment[];
+}
+
+interface SynthesizedComment {
+  readonly kind?: number;
+  readonly text: string;
+  readonly hasTrailingNewLine?: boolean;
+}
+
+interface FileReference {
+  readonly fileName?: string;
+  readonly path?: string;
+}
+
+interface AutoGenerateInfo {
+  readonly flags: number;
+  readonly prefix: string;
+  readonly suffix: string;
+  readonly nodeForGeneratedName?: AstNode;
+}
 
 /**
  * Maps a Kind value to its canonical source-text representation.
@@ -1700,6 +2802,70 @@ function printerTokenToString(token: number): string | undefined {
     case Kind.QuestionQuestionEqualsToken: return "??=";
     case Kind.CaretEqualsToken: return "^=";
     default: return undefined;
+  }
+}
+
+function getNodeArray(nodes: unknown): readonly AstNode[] {
+  if (nodes === undefined) return [];
+  if (Array.isArray(nodes)) return nodes as readonly AstNode[];
+  return (nodes as { readonly nodes?: readonly AstNode[] }).nodes ?? [];
+}
+
+function textRangeOf(nodes: unknown): TextRange {
+  const range = nodes as { readonly pos?: number; readonly end?: number } | undefined;
+  return { pos: range?.pos ?? 0, end: range?.end ?? 0 } as TextRange;
+}
+
+export function canEmitSimpleArrowHead(node: AstNode): boolean {
+  const parameters = getNodeArray((node as { parameters?: unknown }).parameters);
+  if (parameters.length !== 1) return false;
+  const parameter = parameters[0] as { name?: AstNode; type?: AstNode; initializer?: AstNode; dotDotDotToken?: AstNode };
+  return parameter.type === undefined
+    && parameter.initializer === undefined
+    && parameter.dotDotDotToken === undefined
+    && (parameter.name as { kind?: number } | undefined)?.kind === Kind.Identifier;
+}
+
+export function formatSynthesizedComment(comment: string | SynthesizedComment): string {
+  const text = typeof comment === "string" ? comment : comment.text;
+  return text.includes("\n") ? `/*${text}*/` : `//${text}`;
+}
+
+export function getOpeningBracket(kind: number): string {
+  switch (kind) {
+    case Kind.OpenParenToken:
+    case Kind.CloseParenToken:
+      return "(";
+    case Kind.OpenBracketToken:
+    case Kind.CloseBracketToken:
+      return "[";
+    case Kind.OpenBraceToken:
+    case Kind.CloseBraceToken:
+      return "{";
+    case Kind.LessThanToken:
+    case Kind.GreaterThanToken:
+      return "<";
+    default:
+      return "";
+  }
+}
+
+export function getClosingBracket(kind: number): string {
+  switch (kind) {
+    case Kind.OpenParenToken:
+    case Kind.CloseParenToken:
+      return ")";
+    case Kind.OpenBracketToken:
+    case Kind.CloseBracketToken:
+      return "]";
+    case Kind.OpenBraceToken:
+    case Kind.CloseBraceToken:
+      return "}";
+    case Kind.LessThanToken:
+    case Kind.GreaterThanToken:
+      return ">";
+    default:
+      return "";
   }
 }
 

@@ -7,6 +7,7 @@
  */
 
 import {
+  Kind,
   isBlock,
   isBreakStatement,
   isClassDeclaration,
@@ -36,6 +37,7 @@ import {
   type Block,
   type Expression,
   type ForInitializer,
+  type Node as AstNode,
   type Statement,
   type Symbol as AstSymbol,
   type TypeNode,
@@ -190,6 +192,226 @@ export function checkStatement(statement: Statement, state: CheckState, expected
   return continuesFlow;
 }
 
+export function checkExpressionStatement(node: Statement, state: CheckState): void {
+  const expression = (node as { readonly expression?: Expression }).expression;
+  if (expression !== undefined) inferExpression(expression, state);
+}
+
+export function checkIfStatement(node: Statement, state: CheckState, expectedReturnType: Type | undefined): void {
+  if (!isIfStatement(node)) return;
+  const conditionType = inferExpression(node.expression, state);
+  checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberType(node.expression, conditionType, node.thenStatement, state);
+  checkStatement(node.thenStatement, state, expectedReturnType);
+  if (isEmptyStatement(node.thenStatement)) state.diagnostics.push({ message: "The_body_of_an_if_statement_cannot_be_the_empty_statement" });
+  if (node.elseStatement !== undefined) checkStatement(node.elseStatement, state, expectedReturnType);
+}
+
+export function checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberType(
+  conditionExpression: Expression,
+  conditionType: Type,
+  body: Statement | undefined,
+  state: CheckState,
+): void {
+  checkTestingKnownTruthyTypes(conditionExpression, conditionType, body, state);
+}
+
+export function checkTestingKnownTruthyTypes(
+  conditionExpression: Expression,
+  conditionType: Type,
+  body: Statement | undefined,
+  state: CheckState,
+): void {
+  let current: Expression = skipParentheses(conditionExpression);
+  checkTestingKnownTruthyType(current, conditionType, body, state);
+  while (current.kind === Kind.BinaryExpression) {
+    const operatorKind = (current as { readonly operatorToken?: { readonly kind?: Kind }; readonly left?: Expression }).operatorToken?.kind;
+    if (operatorKind !== Kind.BarBarToken && operatorKind !== Kind.QuestionQuestionToken) break;
+    const left = (current as { readonly left?: Expression }).left;
+    if (left === undefined) break;
+    current = skipParentheses(left);
+    checkTestingKnownTruthyType(current, conditionType, body, state);
+  }
+}
+
+export function checkTestingKnownTruthyType(
+  conditionExpression: Expression,
+  conditionType: Type,
+  body: Statement | undefined,
+  state: CheckState,
+): void {
+  const location = getTruthyCheckLocation(conditionExpression);
+  if (isModuleExportsAccessExpression(location)) return;
+  if (!typeKnownTruthy(conditionType)) return;
+  const testedName = identifierLikeName(location);
+  if (testedName.length === 0) return;
+  const usedInChain = parentOf(conditionExpression)?.kind === Kind.BinaryExpression
+    && isSymbolUsedInBinaryExpressionChain(parentOf(conditionExpression)!, testedName);
+  const usedInBody = body !== undefined && isSymbolUsedInConditionBody(conditionExpression, body, location, testedName);
+  if (!usedInChain && !usedInBody) state.diagnostics.push({ message: "This_condition_will_always_return_true_since_this_function_is_always_defined_Did_you_mean_to_call_it_instead" });
+}
+
+export function isSymbolUsedInBinaryExpressionChain(node: AstNode, testedName: string): boolean {
+  let current: AstNode | undefined = node;
+  while (current?.kind === Kind.BinaryExpression) {
+    const right = (current as { readonly right?: AstNode }).right;
+    if (right !== undefined && childNodes(right).some(child => identifierLikeName(child) === testedName)) return true;
+    const operatorKind = (current as { readonly operatorToken?: { readonly kind?: Kind } }).operatorToken?.kind;
+    if (operatorKind !== Kind.AmpersandAmpersandToken) break;
+    current = parentOf(current);
+  }
+  return false;
+}
+
+export function isSymbolUsedInConditionBody(
+  _expression: AstNode,
+  body: AstNode,
+  _testedNode: AstNode,
+  testedName: string,
+): boolean {
+  return childNodes(body).some(child => identifierLikeName(child) === testedName);
+}
+
+export function checkDoStatement(node: Statement, state: CheckState, expectedReturnType: Type | undefined): void {
+  if (!isDoStatement(node)) return;
+  checkStatement(node.statement, state, expectedReturnType);
+  inferExpression(node.expression, state);
+}
+
+export function checkWhileStatement(node: Statement, state: CheckState, expectedReturnType: Type | undefined): void {
+  if (!isWhileStatement(node)) return;
+  inferExpression(node.expression, state);
+  checkStatement(node.statement, state, expectedReturnType);
+}
+
+export function checkForStatement(node: Statement, state: CheckState, expectedReturnType: Type | undefined): void {
+  if (!isForStatement(node)) return;
+  checkForInitializer(node.initializer, state);
+  if (node.condition !== undefined) inferExpression(node.condition, state);
+  if (node.incrementor !== undefined) inferExpression(node.incrementor, state);
+  checkStatement(node.statement, state, expectedReturnType);
+}
+
+export function checkForInStatement(node: Statement, state: CheckState, expectedReturnType: Type | undefined): void {
+  if (!isForInStatement(node)) return;
+  checkForInitializer(node.initializer, state);
+  const rightType = inferExpression(node.expression, state);
+  getIndexTypeOrString(rightType);
+  checkStatement(node.statement, state, expectedReturnType);
+}
+
+export function getIndexTypeOrString(type: Type): Type {
+  return type;
+}
+
+export function checkForOfStatement(node: Statement, state: CheckState, expectedReturnType: Type | undefined): void {
+  if (!isForOfStatement(node)) return;
+  checkForInitializer(node.initializer, state);
+  inferExpression(node.expression, state);
+  checkStatement(node.statement, state, expectedReturnType);
+}
+
+export function checkBreakOrContinueStatement(node: Statement, state: CheckState): void {
+  if (!isBreakStatement(node) && !isContinueStatement(node)) return;
+  if (!hasBreakOrContinueTarget(node)) state.diagnostics.push({ message: "A_break_or_continue_statement_can_only_jump_to_a_label_of_an_enclosing_statement" });
+}
+
+export function checkReturnStatement(node: Statement, state: CheckState, expectedReturnType: Type | undefined): void {
+  if (!isReturnStatement(node)) return;
+  const expressionType = node.expression === undefined ? voidType : inferExpression(node.expression, state, expectedReturnType);
+  checkReturnExpression(containingFunctionLike(node), expectedReturnType, node, node.expression, expressionType, false, state);
+}
+
+export function checkReturnExpression(
+  _container: AstNode | undefined,
+  unwrappedReturnType: Type | undefined,
+  _node: AstNode,
+  expression: AstNode | undefined,
+  expressionType: Type,
+  inConditionalExpression: boolean,
+  state: CheckState,
+): void {
+  const conditional = expression === undefined ? undefined : skipParentheses(expression);
+  if (conditional?.kind === Kind.ConditionalExpression) {
+    const whenTrue = (conditional as { readonly whenTrue?: Expression }).whenTrue;
+    const whenFalse = (conditional as { readonly whenFalse?: Expression }).whenFalse;
+    if (whenTrue !== undefined) checkReturnExpression(undefined, unwrappedReturnType, whenTrue, whenTrue, inferExpression(whenTrue, state), true, state);
+    if (whenFalse !== undefined) checkReturnExpression(undefined, unwrappedReturnType, whenFalse, whenFalse, inferExpression(whenFalse, state), true, state);
+    return;
+  }
+  void inConditionalExpression;
+  if (unwrappedReturnType !== undefined) {
+    checkAssignable(getWidenedLiteralLikeTypeForContextualType(expressionType, unwrappedReturnType, state), unwrappedReturnType, state);
+  }
+}
+
+export function checkWithStatement(node: Statement, state: CheckState, expectedReturnType: Type | undefined): void {
+  if (!isWithStatement(node)) return;
+  inferExpression(node.expression, state);
+  state.diagnostics.push({ message: "The_with_statement_is_not_supported_All_symbols_in_a_with_block_will_have_type_any" });
+  checkStatement(node.statement, state, expectedReturnType);
+}
+
+export function checkLabeledStatement(node: Statement, state: CheckState, expectedReturnType: Type | undefined): void {
+  if (!isLabeledStatement(node)) return;
+  if (hasDuplicateLabel(node)) state.diagnostics.push({ message: "Duplicate_label_0" });
+  checkStatement(node.statement, state, expectedReturnType);
+}
+
+export function checkThrowStatement(node: Statement, state: CheckState): void {
+  if (!isThrowStatement(node)) return;
+  inferExpression(node.expression, state);
+}
+
+export function checkCatchClause(node: AstNode, state: CheckState, expectedReturnType: Type | undefined): void {
+  const variable = (node as { readonly variableDeclaration?: { readonly type?: TypeNode } }).variableDeclaration;
+  if (variable?.type !== undefined) typeFromTypeNode(variable.type, state);
+  const block = (node as { readonly block?: Block }).block;
+  if (block !== undefined) checkBlock(block, state, expectedReturnType);
+}
+
+export function checkBindingElement(node: AstNode, state: CheckState): void {
+  const typeNode = (node as { readonly type?: TypeNode }).type;
+  const initializer = (node as { readonly initializer?: Expression }).initializer;
+  checkVariableDeclaration(typeNode, initializer, state);
+}
+
+export function checkVariableStatement(node: Statement, state: CheckState): void {
+  if (!isVariableStatement(node)) return;
+  checkVariableDeclarationList(node.declarationList, state);
+}
+
+export function checkVariableDeclarationList(node: AstNode, state: CheckState): void {
+  const declarations = (node as { readonly declarations?: readonly AstNode[] }).declarations ?? [];
+  const seen = new Map<string, AstNode>();
+  for (const declaration of declarations) {
+    const name = declarationName(declaration);
+    if (name.length > 0 && seen.has(name)) {
+      errorNextVariableOrPropertyDeclarationMustHaveSameType(seen.get(name)!, declaration, state);
+    }
+    if (name.length > 0) seen.set(name, declaration);
+    checkBindingElement(declaration, state);
+  }
+  checkVarDeclaredNamesNotShadowed(declarations, state);
+}
+
+export function errorNextVariableOrPropertyDeclarationMustHaveSameType(
+  _firstDeclaration: AstNode,
+  nextDeclaration: AstNode,
+  state: CheckState,
+): void {
+  state.diagnostics.push({ message: `Subsequent_variable_declarations_must_have_the_same_type: ${declarationName(nextDeclaration)}` });
+}
+
+export function checkVarDeclaredNamesNotShadowed(declarations: readonly AstNode[], state: CheckState): void {
+  const blockScoped = new Set<string>();
+  for (const declaration of declarations) {
+    const name = declarationName(declaration);
+    if (name.length === 0) continue;
+    if (blockScoped.has(name)) state.diagnostics.push({ message: `Cannot_redeclare_block_scoped_variable_0: ${name}` });
+    if (isBlockScopedDeclaration(declaration)) blockScoped.add(name);
+  }
+}
+
 // Validate a variable declaration's annotated initializer
 // (checkVariableLikeDeclaration's initializer assignability check). The bound
 // name's stored type is no longer set here — it is derived on demand from the
@@ -200,6 +422,107 @@ function checkVariableDeclaration(typeNode: TypeNode | undefined, initializer: E
   if (declaredType !== undefined && initializerType !== undefined) {
     checkAssignable(getWidenedLiteralLikeTypeForContextualType(initializerType, declaredType, state), declaredType, state);
   }
+}
+
+function parentOf(node: AstNode | undefined): AstNode | undefined {
+  return (node as { readonly parent?: AstNode } | undefined)?.parent;
+}
+
+function skipParentheses<T extends AstNode>(node: T): T {
+  let current: AstNode = node;
+  while (current.kind === Kind.ParenthesizedExpression) {
+    const expression = (current as { readonly expression?: AstNode }).expression;
+    if (expression === undefined) break;
+    current = expression;
+  }
+  return current as T;
+}
+
+function getTruthyCheckLocation(expression: AstNode): AstNode {
+  const skipped = skipParentheses(expression);
+  if (skipped.kind === Kind.BinaryExpression) return (skipped as { readonly right?: AstNode }).right ?? skipped;
+  return skipped;
+}
+
+function typeKnownTruthy(type: Type): boolean {
+  const flags = type.flags ?? 0;
+  return (flags & (1 << 18)) === 0 && String((type as { readonly intrinsicName?: string }).intrinsicName ?? "") !== "undefined";
+}
+
+function identifierLikeName(node: AstNode | undefined): string {
+  if (node === undefined) return "";
+  if (node.kind === Kind.Identifier) return (node as { readonly text?: string }).text ?? "";
+  if (node.kind === Kind.PropertyAccessExpression) return identifierLikeName((node as { readonly name?: AstNode }).name);
+  return "";
+}
+
+function isModuleExportsAccessExpression(node: AstNode): boolean {
+  return node.kind === Kind.PropertyAccessExpression
+    && identifierLikeName((node as { readonly expression?: AstNode }).expression) === "module"
+    && identifierLikeName((node as { readonly name?: AstNode }).name) === "exports";
+}
+
+function childNodes(node: AstNode): readonly AstNode[] {
+  const result: AstNode[] = [];
+  for (const value of Object.values(node as object)) {
+    if (isNode(value)) result.push(value);
+    else if (Array.isArray(value)) result.push(...value.filter(isNode));
+    else if (isNodeList(value)) result.push(...value.nodes.filter(isNode));
+  }
+  return result;
+}
+
+function isNode(value: unknown): value is AstNode {
+  return typeof value === "object" && value !== null && typeof (value as { readonly kind?: unknown }).kind === "number";
+}
+
+function isNodeList(value: unknown): value is { readonly nodes: readonly unknown[] } {
+  return typeof value === "object" && value !== null && Array.isArray((value as { readonly nodes?: unknown }).nodes);
+}
+
+function hasBreakOrContinueTarget(node: AstNode): boolean {
+  const isBreak = node.kind === Kind.BreakStatement;
+  for (let current = parentOf(node); current !== undefined; current = parentOf(current)) {
+    if (current.kind === Kind.FunctionDeclaration || current.kind === Kind.FunctionExpression || current.kind === Kind.ArrowFunction) return false;
+    if (current.kind === Kind.ForStatement || current.kind === Kind.ForInStatement || current.kind === Kind.ForOfStatement || current.kind === Kind.WhileStatement || current.kind === Kind.DoStatement) return true;
+    if (isBreak && current.kind === Kind.SwitchStatement) return true;
+  }
+  return false;
+}
+
+function containingFunctionLike(node: AstNode): AstNode | undefined {
+  for (let current = parentOf(node); current !== undefined; current = parentOf(current)) {
+    if (current.kind === Kind.FunctionDeclaration
+      || current.kind === Kind.FunctionExpression
+      || current.kind === Kind.ArrowFunction
+      || current.kind === Kind.MethodDeclaration
+      || current.kind === Kind.Constructor
+      || current.kind === Kind.GetAccessor
+      || current.kind === Kind.SetAccessor
+      || current.kind === Kind.ClassStaticBlockDeclaration) return current;
+  }
+  return undefined;
+}
+
+function hasDuplicateLabel(node: AstNode): boolean {
+  const label = (node as { readonly label?: { readonly text?: string } }).label?.text;
+  if (label === undefined) return false;
+  for (let current = parentOf(node); current !== undefined; current = parentOf(current)) {
+    if (current.kind === Kind.LabeledStatement && (current as { readonly label?: { readonly text?: string } }).label?.text === label) return true;
+    if (current.kind === Kind.FunctionDeclaration || current.kind === Kind.FunctionExpression || current.kind === Kind.ArrowFunction) return false;
+  }
+  return false;
+}
+
+function declarationName(node: AstNode): string {
+  const name = (node as { readonly name?: { readonly text?: string } }).name;
+  return name?.text ?? "";
+}
+
+function isBlockScopedDeclaration(node: AstNode): boolean {
+  const parent = parentOf(node);
+  const flags = (parent as { readonly flags?: number } | undefined)?.flags ?? 0;
+  return (flags & ((1 << 0) | (1 << 1) | (1 << 2))) !== 0;
 }
 
 export function checkForInitializer(initializer: ForInitializer | undefined, state: CheckState): void {

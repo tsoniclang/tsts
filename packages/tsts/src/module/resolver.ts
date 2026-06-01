@@ -34,8 +34,16 @@
  * where they directly correspond.
  */
 
-import type { CompilerOptions, ModuleResolutionKind } from "../core/compileroptions.js";
-import { ModuleResolutionKind as MRK, ModuleKind as MK } from "../core/compileroptions.js";
+import type { CompilerOptions, ModuleResolutionKind } from "../core/compilerOptions.js";
+import {
+  ModuleResolutionKind as MRK,
+  ModuleKind as MK,
+  getEffectiveTypeRoots,
+  getPathsBasePath,
+  getResolvePackageJsonExports,
+  getResolvePackageJsonImports,
+} from "../core/compilerOptions.js";
+import { Tristate } from "../core/tristate.js";
 import type { Diagnostic } from "../ast/index.js";
 import {
   combinePaths, getDirectoryPath, normalizePath, isRootedDiskPath,
@@ -44,7 +52,7 @@ import {
 import { removeFileExtension } from "../tspath/extension.js";
 import {
   parseNodeModuleFromPath, parsePackageName, mangleScopedPackageName,
-  getTypesPackageName,
+  comparePatternKeys, isApplicableVersionedTypesKey,
 } from "./util.js";
 
 // ---------------------------------------------------------------------------
@@ -121,6 +129,22 @@ export interface ResolvedProjectReference {
   compilerOptions?: CompilerOptions;
 }
 
+export type EntrypointEnding = number;
+export const EntrypointEnding = {
+  Fixed: 0,
+  ExtensionChangeable: 1,
+  Changeable: 2,
+} as const;
+
+export interface ResolvedEntrypoint {
+  readonly originalFileName: string | undefined;
+  readonly resolvedFileName: string;
+  readonly moduleSpecifier: string;
+  readonly ending: EntrypointEnding;
+  readonly includeConditions: ReadonlySet<string> | undefined;
+  readonly excludeConditions: ReadonlySet<string> | undefined;
+}
+
 export interface ResolverHost {
   useCaseSensitiveFileNames(): boolean;
   getCurrentDirectory(): string;
@@ -169,12 +193,12 @@ function newResolutionState(
   let extensions: Extensions;
   if (isTypeReferenceDirective) {
     extensions = Extensions.Declaration;
-  } else if ((compilerOptions as { noDtsResolution?: number }).noDtsResolution === 1) {
+  } else if (compilerOptions.noDtsResolution === Tristate.True) {
     extensions = Extensions.TypeScript | Extensions.JavaScript;
   } else {
     extensions = Extensions.TypeScript | Extensions.JavaScript | Extensions.Declaration;
   }
-  if (!isTypeReferenceDirective && (compilerOptions as { resolveJsonModule?: number }).resolveJsonModule === 1) {
+  if (!isTypeReferenceDirective && compilerOptions.resolveJsonModule === Tristate.True) {
     extensions |= Extensions.Json;
   }
 
@@ -182,13 +206,13 @@ function newResolutionState(
   let esmMode = false;
   const resolutionKind = getModuleResolutionKind(compilerOptions);
   if (resolutionKind === MRK.Node16) {
-    features = NodeResolutionFeatures.Imports | NodeResolutionFeatures.SelfName | NodeResolutionFeatures.Exports;
+    features = getNodeResolutionFeatures(compilerOptions, NodeResolutionFeatures.Imports | NodeResolutionFeatures.SelfName | NodeResolutionFeatures.Exports);
     esmMode = resolutionMode === MK.ESNext;
   } else if (resolutionKind === MRK.NodeNext) {
-    features = NodeResolutionFeatures.AllFeatures;
+    features = getNodeResolutionFeatures(compilerOptions, NodeResolutionFeatures.AllFeatures);
     esmMode = resolutionMode === MK.ESNext;
   } else if (resolutionKind === MRK.Bundler) {
-    features = NodeResolutionFeatures.AllFeatures;
+    features = getNodeResolutionFeatures(compilerOptions, NodeResolutionFeatures.AllFeatures);
   }
 
   return {
@@ -219,18 +243,39 @@ function getModuleResolutionKind(opts: CompilerOptions): ModuleResolutionKind {
 }
 
 function getConditions(opts: CompilerOptions, resolutionMode: ResolutionMode | undefined): readonly string[] {
-  // TS-Go default conditions ordering:
-  //   ESM: ["types", "node", "import", "default"]
-  //   CJS: ["types", "node", "require", "default"]
-  // Plus `customConditions` from compiler options when provided.
-  const conditions: string[] = ["types", "node"];
-  conditions.push(resolutionMode === MK.ESNext ? "import" : "require");
-  conditions.push("default");
+  const moduleResolution = getModuleResolutionKind(opts);
+  const effectiveMode = resolutionMode === MK.None && moduleResolution === MRK.Bundler
+    ? MK.ESNext
+    : resolutionMode;
+  const conditions: string[] = [];
+  conditions.push(effectiveMode === MK.ESNext ? "import" : "require");
+  if (opts.noDtsResolution !== Tristate.True) conditions.push("types");
+  if (moduleResolution !== MRK.Bundler) conditions.push("node");
   const custom = (opts as { customConditions?: readonly string[] }).customConditions;
   if (custom !== undefined) {
     for (const c of custom) if (!conditions.includes(c)) conditions.push(c);
   }
   return conditions;
+}
+
+function getNodeResolutionFeatures(opts: CompilerOptions, defaults: NodeResolutionFeatures): NodeResolutionFeatures {
+  let features = defaults;
+  if (getResolvePackageJsonExports(opts)) {
+    features |= NodeResolutionFeatures.Exports;
+  } else {
+    features &= ~NodeResolutionFeatures.Exports;
+  }
+  if (getResolvePackageJsonImports(opts)) {
+    features |= NodeResolutionFeatures.Imports;
+  } else {
+    features &= ~NodeResolutionFeatures.Imports;
+  }
+  return features;
+}
+
+function conditionMatches(conditions: readonly string[], condition: string): boolean {
+  if (condition === "default" || conditions.includes(condition)) return true;
+  return conditions.includes("types") && isApplicableVersionedTypesKey(condition);
 }
 
 // ---------------------------------------------------------------------------
@@ -321,12 +366,8 @@ export class Resolver {
       resolutionMode,
       this,
     );
-    // Type-reference resolution walks type roots first, then falls back
-    // to node-style. The full type-roots discovery is deferred; this
-    // implementation falls back to node-style which works for the
-    // common case of `///<reference types="foo"/>` resolving to
-    // `node_modules/@types/foo/`.
-    const result = nodeModuleNameResolver(state);
+    const { typeRoots, fromConfig } = getEffectiveTypeRoots(this.compilerOptions, this.host.getCurrentDirectory());
+    const result = resolveTypeReferenceDirectiveWorker(state, typeRoots, fromConfig);
     return {
       resolvedTypeReferenceDirective: result === undefined
         ? undefined
@@ -352,6 +393,80 @@ export class Resolver {
       return { resolvedFileName: candidate, isExternalLibraryImport: false };
     }
     return { resolvedFileName: undefined, isExternalLibraryImport: false };
+  }
+
+  resolvePackageDirectory(
+    moduleName: string,
+    containingFile: string,
+    resolutionMode: ResolutionMode | undefined,
+    redirectedReference: ResolvedProjectReference | undefined,
+  ): ResolvedModule | undefined {
+    void redirectedReference;
+    const state = newResolutionState(
+      moduleName,
+      getDirectoryPath(containingFile),
+      false,
+      resolutionMode,
+      this,
+    );
+    const result = loadModuleFromNearestNodeModulesDirectory(state);
+    return result === undefined ? undefined : createResolvedModule(result, this.host);
+  }
+
+  resolveConfig(moduleName: string, containingFile: string): ResolvedModule | undefined {
+    const state = newResolutionState(
+      moduleName,
+      getDirectoryPath(containingFile),
+      false,
+      MK.CommonJS,
+      this,
+    );
+    state.extensions = Extensions.Json;
+    const result = nodeModuleNameResolver(state);
+    return result === undefined ? undefined : createResolvedModule(result, this.host);
+  }
+
+  getPackageScopeForPath(directory: string): PackageScope | undefined {
+    const state = newResolutionState("", directory, false, undefined, this);
+    return getPackageScopeForPath(state, directory);
+  }
+
+  getEntrypointsFromPackageJson(
+    packageDirectory: string,
+    packageName: string,
+    enableDirectorySearch: boolean,
+  ): readonly ResolvedEntrypoint[] {
+    const state = newResolutionState(packageName, packageDirectory, false, undefined, this);
+    state.features = NodeResolutionFeatures.AllFeatures;
+    state.extensions = Extensions.TypeScript | Extensions.Declaration;
+    const packageJson = readPackageJson(state, combinePaths(packageDirectory, "package.json"));
+    if (packageJson === undefined) return [];
+    if (packageJson.exports !== undefined) {
+      return loadEntrypointsFromExportMap(state, packageDirectory, packageName, packageJson.exports);
+    }
+    const main = loadNodeModuleFromDirectory(state, packageDirectory, true);
+    const result: ResolvedEntrypoint[] = [];
+    if (main !== undefined) {
+      result.push(createResolvedEntrypoint(this.host, main.path, packageName, undefined, undefined, EntrypointEnding.Fixed));
+    }
+    if (enableDirectorySearch && this.host.directoryExists(packageDirectory)) {
+      const entries = collectPackageEntrypointFiles(this.host, packageDirectory);
+      for (const file of entries) {
+        if (main !== undefined && normalizePath(file) === normalizePath(main.path)) continue;
+        const relative = file.startsWith(`${packageDirectory}/`)
+          ? file.slice(packageDirectory.length + 1)
+          : getBaseFileName(file);
+        result.push(createResolvedEntrypoint(
+          this.host,
+          file,
+          relative === "" ? packageName : `${packageName}/${relative}`,
+          undefined,
+          undefined,
+          EntrypointEnding.Changeable,
+        ));
+      }
+    }
+    return result;
   }
 }
 
@@ -387,6 +502,72 @@ function createResolvedTypeReferenceDirective(
   };
 }
 
+function resolveTypeReferenceDirectiveWorker(
+  state: ResolutionState,
+  typeRoots: readonly string[],
+  fromConfig: boolean,
+): ResolvedInternal | undefined {
+  if (typeRoots.length > 0) {
+    for (const typeRoot of typeRoots) {
+      const candidate = getCandidateFromTypeRoot(state, typeRoot);
+      if (!state.resolver.host.directoryExists(typeRoot)) {
+        state.failedLookupLocations.push(typeRoot);
+        continue;
+      }
+      if (fromConfig) {
+        const fromFile = loadModuleFromFile(state, candidate);
+        if (fromFile !== undefined) return fromFile;
+      }
+      const fromDirectory = loadNodeModuleFromDirectory(state, candidate, true);
+      if (fromDirectory !== undefined) return fromDirectory;
+    }
+  }
+
+  if (!isExternalModuleNameRelative(state.name)) {
+    const fromNodeModules = loadModuleFromNearestNodeModulesDirectory(state);
+    if (fromNodeModules !== undefined) return fromNodeModules;
+  } else {
+    const candidate = normalizePathForCjsResolution(state.containingDirectory, state.name);
+    const fromRelative = nodeLoadModuleByRelativeName(state, candidate, true);
+    if (fromRelative !== undefined) return fromRelative;
+  }
+  return undefined;
+}
+
+function getCandidateFromTypeRoot(state: ResolutionState, typeRoot: string): string {
+  const lookupName = typeRoot.endsWith("/node_modules/@types") || typeRoot.endsWith("/node_modules/@types/")
+    ? mangleScopedPackageName(state.name)
+    : state.name;
+  return combinePaths(typeRoot, lookupName);
+}
+
+function resolveFromTypeRoot(state: ResolutionState): ResolvedInternal | undefined {
+  const typeRoots = state.compilerOptions.typeRoots;
+  if (typeRoots === undefined || typeRoots.length === 0) return undefined;
+  for (const typeRoot of typeRoots) {
+    const candidate = getCandidateFromTypeRoot(state, typeRoot);
+    if (!state.resolver.host.directoryExists(typeRoot)) {
+      state.failedLookupLocations.push(typeRoot);
+      continue;
+    }
+    const fromFile = loadModuleFromFile(state, candidate);
+    if (fromFile !== undefined) return fromFile;
+    const fromDirectory = loadNodeModuleFromDirectory(state, candidate, true);
+    if (fromDirectory !== undefined) return fromDirectory;
+  }
+  return undefined;
+}
+
+function normalizePathForCjsResolution(containingDirectory: string, moduleName: string): string {
+  const combined = combinePaths(containingDirectory, moduleName);
+  const normalized = normalizePath(combined);
+  const lastSlash = normalized.lastIndexOf("/");
+  const lastPart = lastSlash < 0 ? normalized : normalized.slice(lastSlash + 1);
+  return lastPart === "." || lastPart === ".."
+    ? `${normalized}/`
+    : normalized;
+}
+
 // ---------------------------------------------------------------------------
 // Classic resolution (legacy `--moduleResolution classic`)
 // ---------------------------------------------------------------------------
@@ -416,12 +597,102 @@ function classicNameResolver(state: ResolutionState): ResolvedInternal | undefin
 // ---------------------------------------------------------------------------
 
 function nodeModuleNameResolver(state: ResolutionState): ResolvedInternal | undefined {
+  const optional = tryLoadModuleUsingOptionalResolutionSettings(state);
+  if (optional !== undefined) return optional;
+
   if (isExternalModuleNameRelative(state.name)) {
-    const candidate = normalizePath(combinePaths(state.containingDirectory, state.name));
+    const candidate = normalizePathForCjsResolution(state.containingDirectory, state.name);
     return nodeLoadModuleByRelativeName(state, candidate, /*considerPackageJson*/ true);
   }
+
+  if ((state.features & NodeResolutionFeatures.Imports) !== 0 && state.name.startsWith("#")) {
+    const imported = loadModuleFromImports(state);
+    if (imported !== undefined) return imported;
+  }
+  if ((state.features & NodeResolutionFeatures.SelfName) !== 0) {
+    const self = loadModuleFromSelfNameReference(state);
+    if (self !== undefined) return self;
+  }
+  if (state.name.includes(":")) return undefined;
+
   // Non-relative: walk node_modules folders up the directory tree.
-  return loadModuleFromNearestNodeModulesDirectory(state);
+  const fromNodeModules = loadModuleFromNearestNodeModulesDirectory(state);
+  if (fromNodeModules !== undefined) return fromNodeModules;
+  if ((state.extensions & Extensions.Declaration) !== 0) {
+    return resolveFromTypeRoot(state);
+  }
+  return undefined;
+}
+
+function tryLoadModuleUsingOptionalResolutionSettings(state: ResolutionState): ResolvedInternal | undefined {
+  const pathMapped = tryLoadModuleUsingPathsIfEligible(state);
+  if (pathMapped !== undefined) return pathMapped;
+  if (isExternalModuleNameRelative(state.name)) {
+    return tryLoadModuleUsingRootDirs(state);
+  }
+  return undefined;
+}
+
+function tryLoadModuleUsingPathsIfEligible(state: ResolutionState): ResolvedInternal | undefined {
+  const paths = state.compilerOptions.paths;
+  if (paths === undefined || paths.size === 0 || isExternalModuleNameRelative(state.name)) return undefined;
+  const baseUrl = getPathsBasePath(state.compilerOptions, state.resolver.host.getCurrentDirectory());
+  if (baseUrl === "") return undefined;
+  const parsed = parsePatterns(paths);
+  if (parsed.matchableStringSet.has(state.name)) {
+    const substitutions = paths.get(state.name) ?? [];
+    const result = tryLoadModuleUsingPathSubstitutions(state, baseUrl, substitutions, "");
+    if (result !== undefined) return result;
+  }
+  const best = findBestPatternMatch(parsed.patterns, state.name);
+  if (best === undefined) return undefined;
+  const matchedStar = state.name.slice(best.prefix.length, state.name.length - best.suffix.length);
+  const substitutions = paths.get(`${best.prefix}*${best.suffix}`) ?? [];
+  return tryLoadModuleUsingPathSubstitutions(state, baseUrl, substitutions, matchedStar);
+}
+
+function tryLoadModuleUsingPathSubstitutions(
+  state: ResolutionState,
+  baseUrl: string,
+  substitutions: readonly string[],
+  matchedStar: string,
+): ResolvedInternal | undefined {
+  for (const substitution of substitutions) {
+    const substituted = substitution.includes("*")
+      ? substitution.replace("*", matchedStar)
+      : substitution;
+    const candidate = normalizePath(combinePaths(baseUrl, substituted));
+    const result = nodeLoadModuleByRelativeName(state, candidate, true);
+    if (result !== undefined) return result;
+  }
+  return undefined;
+}
+
+function tryLoadModuleUsingRootDirs(state: ResolutionState): ResolvedInternal | undefined {
+  const rootDirs = state.compilerOptions.rootDirs;
+  if (rootDirs === undefined || rootDirs.length === 0) return undefined;
+  const candidate = normalizePath(combinePaths(state.containingDirectory, state.name));
+  let bestRoot = "";
+  let bestPrefix = "";
+  for (const rootDir of rootDirs) {
+    let normalizedRoot = normalizePath(rootDir);
+    if (!normalizedRoot.endsWith("/")) normalizedRoot += "/";
+    if (candidate.startsWith(normalizedRoot) && normalizedRoot.length > bestPrefix.length) {
+      bestRoot = rootDir;
+      bestPrefix = normalizedRoot;
+    }
+  }
+  if (bestPrefix === "") return undefined;
+  const suffix = candidate.slice(bestPrefix.length);
+  const initial = nodeLoadModuleByRelativeName(state, candidate, true);
+  if (initial !== undefined) return initial;
+  for (const rootDir of rootDirs) {
+    if (rootDir === bestRoot) continue;
+    const alternate = normalizePath(combinePaths(rootDir, suffix));
+    const result = nodeLoadModuleByRelativeName(state, alternate, true);
+    if (result !== undefined) return result;
+  }
+  return undefined;
 }
 
 function nodeLoadModuleByRelativeName(
@@ -527,9 +798,10 @@ function tryAddingExtensions(
   for (const ext of candidatesOf(originalExtension)) {
     if (!extensionEnabled(state, ext)) continue;
     const tsExtensionPath = extensionless + ext;
-    if (state.resolver.host.fileExists(tsExtensionPath)) {
+    const actualPath = tryFile(state, tsExtensionPath);
+    if (actualPath !== undefined) {
       return {
-        path: tsExtensionPath,
+        path: actualPath,
         extension: ext,
         originalPath: undefined,
         resolvedUsingTsExtension: ext === EXT_TS || ext === EXT_TSX || ext === EXT_DTS ||
@@ -537,9 +809,28 @@ function tryAddingExtensions(
         packageId: undefined,
       };
     }
-    state.failedLookupLocations.push(tsExtensionPath);
   }
   return undefined;
+}
+
+function tryFile(state: ResolutionState, fileName: string): string | undefined {
+  const suffixes = state.compilerOptions.moduleSuffixes;
+  if (suffixes === undefined || suffixes.length === 0) {
+    return tryFileLookup(state, fileName) ? fileName : undefined;
+  }
+  const extension = fileName.slice(fileName.lastIndexOf("."));
+  const extensionless = fileName.slice(0, fileName.length - extension.length);
+  for (const suffix of suffixes) {
+    const candidate = `${extensionless}${suffix}${extension}`;
+    if (tryFileLookup(state, candidate)) return candidate;
+  }
+  return undefined;
+}
+
+function tryFileLookup(state: ResolutionState, fileName: string): boolean {
+  if (state.resolver.host.fileExists(fileName)) return true;
+  state.failedLookupLocations.push(fileName);
+  return false;
 }
 
 function extensionEnabled(state: ResolutionState, ext: string): boolean {
@@ -562,24 +853,531 @@ function loadNodeModuleFromDirectory(
   candidate: string,
   considerPackageJson: boolean,
 ): ResolvedInternal | undefined {
-  void considerPackageJson;
-  // Full TS-Go implementation reads package.json first (when
-  // considerPackageJson is true) to look up `main`/`types`/`typings`
-  // fields. Until our packagejson port lands, we fall back to the
-  // index-file probe which handles the common case of `./dir` resolving
-  // to `./dir/index.{ts,d.ts,js}`.
+  if (considerPackageJson) {
+    const packageJsonResult = loadModuleFromPackageJson(state, candidate);
+    if (packageJsonResult !== undefined) return packageJsonResult;
+  }
   const indexCandidate = combinePaths(candidate, "index");
   return tryAddingExtensions(state, indexCandidate, "");
+}
+
+interface PackageJsonLike {
+  readonly name?: string;
+  readonly version?: string;
+  readonly types?: string;
+  readonly typings?: string;
+  readonly main?: string;
+  readonly module?: string;
+  readonly imports?: PackageJsonSubpathMap;
+  readonly exports?: unknown;
+  readonly typesVersions?: Record<string, Record<string, readonly string[]>>;
+}
+
+type PackageJsonSubpathTarget =
+  | string
+  | readonly PackageJsonSubpathTarget[]
+  | { readonly [conditionOrSubpath: string]: PackageJsonSubpathTarget | undefined }
+  | null;
+
+type PackageJsonSubpathMap = Record<string, PackageJsonSubpathTarget>;
+
+function loadModuleFromPackageJson(state: ResolutionState, packageDirectory: string): ResolvedInternal | undefined {
+  const packageJsonPath = combinePaths(packageDirectory, "package.json");
+  const packageJson = readPackageJson(state, packageJsonPath);
+  if (packageJson === undefined) return undefined;
+  state.affectingLocations.push(packageJsonPath);
+  if ((state.features & NodeResolutionFeatures.Exports) !== 0) {
+    const exportsResult = loadModuleFromPackageJsonExports(state, packageDirectory, packageJson);
+    if (exportsResult !== undefined) return withPackageJsonId(exportsResult, packageJson, packageDirectory);
+  }
+  const typesVersionsResult = loadModuleFromTypesVersions(state, packageDirectory, packageJson);
+  if (typesVersionsResult !== undefined) return withPackageJsonId(typesVersionsResult, packageJson, packageDirectory);
+  const fieldResult = loadModuleFromPackageJsonFields(state, packageDirectory, packageJson);
+  if (fieldResult !== undefined) return withPackageJsonId(fieldResult, packageJson, packageDirectory);
+  return undefined;
+}
+
+interface PackageScope {
+  readonly packageDirectory: string;
+  readonly packageJsonPath: string;
+  readonly packageJson: PackageJsonLike;
+}
+
+function getPackageScopeForPath(state: ResolutionState, directory: string): PackageScope | undefined {
+  let current: string | undefined = normalizePath(directory);
+  while (current !== undefined && current !== "") {
+    if (getBaseFileName(current) === "node_modules") return undefined;
+    const packageJsonPath = combinePaths(current, "package.json");
+    const packageJson = readPackageJson(state, packageJsonPath);
+    if (packageJson !== undefined) {
+      state.affectingLocations.push(packageJsonPath);
+      return { packageDirectory: current, packageJsonPath, packageJson };
+    }
+    const parent = getDirectoryPath(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  return undefined;
+}
+
+function loadModuleFromImports(state: ResolutionState): ResolvedInternal | undefined {
+  if (state.name === "#" || state.name.startsWith("#/")) return undefined;
+  const scope = getPackageScopeForPath(state, state.containingDirectory);
+  if (scope === undefined) return undefined;
+  return loadModuleFromPackageJsonImports(state, scope.packageDirectory, scope.packageJson);
+}
+
+function loadModuleFromSelfNameReference(state: ResolutionState): ResolvedInternal | undefined {
+  const scope = getPackageScopeForPath(state, state.containingDirectory);
+  if (scope === undefined) return undefined;
+  const packageName = scope.packageJson.name;
+  if (packageName === undefined || packageName === "") return undefined;
+  if (state.name !== packageName && !state.name.startsWith(`${packageName}/`)) return undefined;
+  if (scope.packageJson.exports === undefined || scope.packageJson.exports === null) return undefined;
+  return loadModuleFromPackageJsonExports(state, scope.packageDirectory, scope.packageJson);
+}
+
+function readPackageJson(state: ResolutionState, path: string): PackageJsonLike | undefined {
+  if (!state.resolver.host.fileExists(path)) {
+    state.failedLookupLocations.push(path);
+    return undefined;
+  }
+  const text = state.resolver.host.readFile(path);
+  if (text === undefined) return undefined;
+  try {
+    const parsed = JSON.parse(text) as PackageJsonLike;
+    return typeof parsed === "object" && parsed !== null ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function loadModuleFromPackageJsonFields(
+  state: ResolutionState,
+  packageDirectory: string,
+  packageJson: PackageJsonLike,
+): ResolvedInternal | undefined {
+  const fields = state.isTypeReferenceDirective
+    ? [packageJson.types, packageJson.typings]
+    : [packageJson.types, packageJson.typings, packageJson.module, packageJson.main];
+  for (const field of fields) {
+    if (field === undefined || field === "") continue;
+    const candidate = normalizePath(combinePaths(packageDirectory, field));
+    const result = nodeLoadModuleByRelativeName(state, candidate, false);
+    if (result !== undefined) return result;
+  }
+  return undefined;
+}
+
+function loadModuleFromPackageJsonExports(
+  state: ResolutionState,
+  packageDirectory: string,
+  packageJson: PackageJsonLike,
+): ResolvedInternal | undefined {
+  if (packageJson.exports === undefined) return undefined;
+  const subpath = packageSubpathFromStateName(state, packageJson.name);
+  const target = resolvePackageTargetFromExports(packageJson.exports, subpath, state.conditions);
+  if (target === undefined) return undefined;
+  return loadPackageTarget(state, packageDirectory, target);
+}
+
+function loadModuleFromPackageJsonImports(
+  state: ResolutionState,
+  packageDirectory: string,
+  packageJson: PackageJsonLike,
+): ResolvedInternal | undefined {
+  if (packageJson.imports === undefined || !state.name.startsWith("#")) return undefined;
+  const target = resolvePackageImportsTarget(packageJson.imports, state.name, state.conditions);
+  if (target === undefined) return undefined;
+  return loadPackageTarget(state, packageDirectory, target);
+}
+
+function resolvePackageTargetFromExports(
+  exportsValue: unknown,
+  subpath: string,
+  conditions: readonly string[],
+): string | undefined {
+  if (typeof exportsValue === "string" || Array.isArray(exportsValue) || exportsValue === null) {
+    if (subpath !== ".") return undefined;
+    return resolveConditionalPackageTarget(exportsValue as PackageJsonSubpathTarget, conditions);
+  }
+  if (!isRecord(exportsValue)) return undefined;
+  const exportMap = exportsValue as PackageJsonSubpathMap;
+  if (hasPackageSubpathKeys(exportMap)) {
+    const exact = exportMap[subpath];
+    if (exact !== undefined) return resolveConditionalPackageTarget(exact, conditions);
+    const pattern = findBestPackagePattern(Object.keys(exportMap), subpath);
+    if (pattern !== undefined) {
+      const target = exportMap[pattern];
+      const matchedStar = getPackagePatternStar(pattern, subpath);
+      const resolved = resolveConditionalPackageTarget(target, conditions);
+      return resolved === undefined ? undefined : resolved.replaceAll("*", matchedStar);
+    }
+    return undefined;
+  }
+  if (subpath !== ".") return undefined;
+  return resolveConditionalPackageTarget(exportMap, conditions);
+}
+
+function resolvePackageImportsTarget(
+  importsValue: PackageJsonSubpathMap,
+  specifier: string,
+  conditions: readonly string[],
+): string | undefined {
+  const exact = importsValue[specifier];
+  if (exact !== undefined) return resolveConditionalPackageTarget(exact, conditions);
+  const pattern = findBestPackagePattern(Object.keys(importsValue), specifier);
+  if (pattern === undefined) return undefined;
+  const resolved = resolveConditionalPackageTarget(importsValue[pattern], conditions);
+  return resolved === undefined ? undefined : resolved.replaceAll("*", getPackagePatternStar(pattern, specifier));
+}
+
+function resolveConditionalPackageTarget(
+  target: PackageJsonSubpathTarget | undefined,
+  conditions: readonly string[],
+): string | undefined {
+  if (target === undefined || target === null) return undefined;
+  if (typeof target === "string") return target;
+  if (Array.isArray(target)) {
+    for (const entry of target) {
+      const resolved = resolveConditionalPackageTarget(entry, conditions);
+      if (resolved !== undefined) return resolved;
+    }
+    return undefined;
+  }
+  for (const [condition, entry] of Object.entries(target)) {
+    if (!conditionMatches(conditions, condition)) continue;
+    const resolved = resolveConditionalPackageTarget(entry, conditions);
+    if (resolved !== undefined) return resolved;
+  }
+  return undefined;
+}
+
+function loadPackageTarget(
+  state: ResolutionState,
+  packageDirectory: string,
+  target: string,
+): ResolvedInternal | undefined {
+  if (target.length === 0) return undefined;
+  if (target.startsWith("./")) {
+    if (hasInvalidPackageTargetSegment(target)) return undefined;
+    return nodeLoadModuleByRelativeName(state, normalizePath(combinePaths(packageDirectory, target)), false);
+  }
+  if (isExternalModuleNameRelative(target) || isRootedDiskPath(target)) {
+    return nodeLoadModuleByRelativeName(state, normalizePath(combinePaths(packageDirectory, target)), false);
+  }
+  const nestedState: ResolutionState = {
+    ...state,
+    name: target,
+    containingDirectory: packageDirectory,
+    failedLookupLocations: state.failedLookupLocations,
+    affectingLocations: state.affectingLocations,
+    diagnostics: state.diagnostics,
+  };
+  return nodeModuleNameResolver(nestedState);
+}
+
+function loadEntrypointsFromExportMap(
+  state: ResolutionState,
+  packageDirectory: string,
+  packageName: string,
+  exportsValue: unknown,
+): readonly ResolvedEntrypoint[] {
+  const entrypoints: ResolvedEntrypoint[] = [];
+  const includeNone: ReadonlySet<string> | undefined = undefined;
+  const excludeNone: ReadonlySet<string> | undefined = undefined;
+  const visit = (
+    subpath: string,
+    target: PackageJsonSubpathTarget | unknown,
+    includeConditions: ReadonlySet<string> | undefined,
+    excludeConditions: ReadonlySet<string> | undefined,
+  ): void => {
+    if (typeof target === "string") {
+      const resolved = resolveEntrypointTarget(state, packageDirectory, packageName, subpath, target, includeConditions, excludeConditions);
+      if (resolved !== undefined) entrypoints.push(...resolved);
+      return;
+    }
+    if (Array.isArray(target)) {
+      for (const element of target) visit(subpath, element, includeConditions, excludeConditions);
+      return;
+    }
+    if (!isRecord(target)) return;
+    const map = target as PackageJsonSubpathMap;
+    if (hasPackageSubpathKeys(map)) {
+      for (const [key, value] of Object.entries(map)) {
+        visit(key, value, includeConditions, excludeConditions);
+      }
+      return;
+    }
+    const previousConditions: string[] = [];
+    for (const [condition, value] of Object.entries(map)) {
+      if (excludeConditions?.has(condition) === true) continue;
+      const alwaysMatches = condition === "default" || condition === "types" || isApplicableVersionedTypesKey(condition);
+      const nextInclude = alwaysMatches
+        ? includeConditions
+        : addCondition(includeConditions, condition);
+      const nextExclude = alwaysMatches
+        ? excludeConditions
+        : addConditions(excludeConditions, previousConditions);
+      previousConditions.push(condition);
+      visit(subpath, value, nextInclude, nextExclude);
+      if (alwaysMatches) break;
+    }
+  };
+
+  if (typeof exportsValue === "string" || Array.isArray(exportsValue) || exportsValue === null) {
+    visit(".", exportsValue as PackageJsonSubpathTarget, includeNone, excludeNone);
+  } else if (isRecord(exportsValue) && hasPackageSubpathKeys(exportsValue as PackageJsonSubpathMap)) {
+    for (const [subpath, target] of Object.entries(exportsValue)) {
+      visit(subpath, target, includeNone, excludeNone);
+    }
+  } else {
+    visit(".", exportsValue, includeNone, excludeNone);
+  }
+  return entrypoints;
+}
+
+function resolveEntrypointTarget(
+  state: ResolutionState,
+  packageDirectory: string,
+  packageName: string,
+  subpath: string,
+  target: string,
+  includeConditions: ReadonlySet<string> | undefined,
+  excludeConditions: ReadonlySet<string> | undefined,
+): readonly ResolvedEntrypoint[] | undefined {
+  if (!target.startsWith("./") || hasInvalidPackageTargetSegment(target)) return undefined;
+  const resolved: ResolvedEntrypoint[] = [];
+  if (target.includes("*")) {
+    const patternBase = target.slice(0, target.indexOf("*"));
+    const patternTail = target.slice(target.indexOf("*") + 1);
+    const directory = normalizePath(combinePaths(packageDirectory, patternBase));
+    const searchRoot = directory.endsWith("/") ? directory.slice(0, -1) : getDirectoryPath(directory);
+    if (!state.resolver.host.directoryExists(searchRoot)) return undefined;
+    for (const file of collectPackageEntrypointFiles(state.resolver.host, searchRoot)) {
+      const normalized = normalizePath(file);
+      const leading = normalizePath(combinePaths(packageDirectory, patternBase));
+      const trailing = patternTail;
+      if (!normalized.startsWith(leading) || !normalized.endsWith(trailing)) continue;
+      const matched = normalized.slice(leading.length, normalized.length - trailing.length);
+      const moduleSpecifier = `${packageName}/${subpath.replace("./", "").replace("*", matched)}`;
+      resolved.push(createResolvedEntrypoint(
+        state.resolver.host,
+        normalized,
+        moduleSpecifier,
+        includeConditions,
+        excludeConditions,
+        target.endsWith("*") ? EntrypointEnding.ExtensionChangeable : EntrypointEnding.Fixed,
+      ));
+    }
+    return resolved;
+  }
+  const finalPath = normalizePath(combinePaths(packageDirectory, target));
+  const loaded = loadFileNameFromPackageJsonField(state, finalPath, target);
+  if (loaded === undefined) return undefined;
+  const moduleSpecifier = subpath === "." ? packageName : `${packageName}/${subpath.replace("./", "")}`;
+  resolved.push(createResolvedEntrypoint(
+    state.resolver.host,
+    loaded.path,
+    moduleSpecifier,
+    includeConditions,
+    excludeConditions,
+    target.endsWith("*") ? EntrypointEnding.ExtensionChangeable : EntrypointEnding.Fixed,
+  ));
+  return resolved;
+}
+
+function loadFileNameFromPackageJsonField(
+  state: ResolutionState,
+  candidate: string,
+  packageJsonValue: string,
+): ResolvedInternal | undefined {
+  void packageJsonValue;
+  const fromFile = loadModuleFromFileNoImplicitExtensions(state, candidate);
+  if (fromFile !== undefined) return fromFile;
+  return nodeLoadModuleByRelativeName(state, candidate, false);
+}
+
+function createResolvedEntrypoint(
+  host: ResolverHost,
+  fileName: string,
+  moduleSpecifier: string,
+  includeConditions: ReadonlySet<string> | undefined,
+  excludeConditions: ReadonlySet<string> | undefined,
+  ending: EntrypointEnding,
+): ResolvedEntrypoint {
+  const real = host.realpath?.(fileName);
+  return {
+    originalFileName: real !== undefined && real !== fileName ? fileName : undefined,
+    resolvedFileName: real ?? fileName,
+    moduleSpecifier,
+    ending,
+    includeConditions,
+    excludeConditions,
+  };
+}
+
+function addCondition(base: ReadonlySet<string> | undefined, condition: string): ReadonlySet<string> {
+  const result = new Set(base ?? []);
+  result.add(condition);
+  return result;
+}
+
+function addConditions(base: ReadonlySet<string> | undefined, conditions: readonly string[]): ReadonlySet<string> | undefined {
+  if (conditions.length === 0) return base;
+  const result = new Set(base ?? []);
+  for (const condition of conditions) result.add(condition);
+  return result;
+}
+
+function collectPackageEntrypointFiles(host: ResolverHost, root: string): readonly string[] {
+  const result: string[] = [];
+  const visit = (directory: string): void => {
+    const entries = host.getAccessibleEntries(directory);
+    for (const file of entries.files) {
+      const fullPath = normalizePath(combinePaths(directory, file));
+      if (isEntrypointExtension(fullPath)) result.push(fullPath);
+    }
+    for (const child of entries.directories) {
+      if (child === "node_modules" || child.startsWith(".")) continue;
+      visit(normalizePath(combinePaths(directory, child)));
+    }
+  };
+  visit(root);
+  return result;
+}
+
+function isEntrypointExtension(fileName: string): boolean {
+  return fileName.endsWith(EXT_TS) ||
+    fileName.endsWith(EXT_TSX) ||
+    fileName.endsWith(EXT_DTS) ||
+    fileName.endsWith(EXT_MTS) ||
+    fileName.endsWith(EXT_CTS) ||
+    fileName.endsWith(EXT_DMTS) ||
+    fileName.endsWith(EXT_DCTS);
+}
+
+function hasPackageSubpathKeys(map: PackageJsonSubpathMap): boolean {
+  return Object.keys(map).some(key => key === "." || key.startsWith("./"));
+}
+
+function findBestPackagePattern(patterns: readonly string[], candidate: string): string | undefined {
+  for (const pattern of [...patterns].sort(comparePatternKeys)) {
+    if (!pattern.includes("*")) continue;
+    const parsed = parsePattern(pattern);
+    if (patternMatches(parsed, candidate)) return pattern;
+  }
+  return undefined;
+}
+
+function getPackagePatternStar(pattern: string, candidate: string): string {
+  const parsed = parsePattern(pattern);
+  return getMatchedStar(parsed, candidate);
+}
+
+function packageSubpathFromStateName(state: ResolutionState, packageName: string | undefined): string {
+  if (packageName === undefined || packageName === "") return ".";
+  if (state.name === packageName) return ".";
+  const prefix = `${packageName}/`;
+  return state.name.startsWith(prefix) ? `./${state.name.slice(prefix.length)}` : ".";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasInvalidPackageTargetSegment(target: string): boolean {
+  const parts = normalizePath(target).split("/");
+  for (let index = 1; index < parts.length; index += 1) {
+    const part = parts[index]!;
+    if (part === "." || part === ".." || part === "node_modules") return true;
+  }
+  return false;
+}
+
+function loadModuleFromTypesVersions(
+  state: ResolutionState,
+  packageDirectory: string,
+  packageJson: PackageJsonLike,
+): ResolvedInternal | undefined {
+  if (packageJson.typesVersions === undefined) return undefined;
+  const selected = selectTypesVersion(packageJson.typesVersions);
+  if (selected === undefined) return undefined;
+  for (const [pattern, substitutions] of Object.entries(selected)) {
+    const parsed = parsePattern(pattern);
+    if (!patternMatches(parsed, state.name)) continue;
+    const matchedStar = getMatchedStar(parsed, state.name);
+    for (const substitution of substitutions) {
+      const replaced = substitution.includes("*") ? substitution.replace("*", matchedStar) : substitution;
+      const candidate = normalizePath(combinePaths(packageDirectory, replaced));
+      const result = nodeLoadModuleByRelativeName(state, candidate, false);
+      if (result !== undefined) return result;
+    }
+  }
+  return undefined;
+}
+
+function selectTypesVersion(typesVersions: Record<string, Record<string, readonly string[]>>): Record<string, readonly string[]> | undefined {
+  for (const [range, value] of Object.entries(typesVersions)) {
+    void range;
+    return value;
+  }
+  return undefined;
+}
+
+function withPackageJsonId(resolved: ResolvedInternal, packageJson: PackageJsonLike, packageDirectory: string): ResolvedInternal {
+  resolved.packageId = {
+    name: packageJson.name ?? packageDirectory.slice(packageDirectory.lastIndexOf("/") + 1),
+    subModuleName: "",
+    version: packageJson.version ?? "",
+    peerDependencies: "",
+  };
+  return resolved;
+}
+
+function parsePattern(pattern: string): ParsedPattern {
+  const index = pattern.indexOf("*");
+  if (index < 0) return { prefix: pattern, suffix: "" };
+  return { prefix: pattern.slice(0, index), suffix: pattern.slice(index + 1) };
+}
+
+function patternMatches(pattern: ParsedPattern, candidate: string): boolean {
+  return candidate.startsWith(pattern.prefix) && candidate.endsWith(pattern.suffix);
+}
+
+function getMatchedStar(pattern: ParsedPattern, candidate: string): string {
+  if (!patternMatches(pattern, candidate)) return "";
+  return candidate.slice(pattern.prefix.length, candidate.length - pattern.suffix.length);
 }
 
 function loadModuleFromNearestNodeModulesDirectory(
   state: ResolutionState,
 ): ResolvedInternal | undefined {
-  // Walks ancestor directories from `containingDirectory`, trying each
-  // `node_modules/` along the way.
+  const priorityExtensions = state.extensions & (Extensions.TypeScript | Extensions.Declaration);
+  const secondaryExtensions = state.extensions & ~(Extensions.TypeScript | Extensions.Declaration);
+  if (priorityExtensions !== 0) {
+    const result = withTemporaryExtensions(state, priorityExtensions, () => loadModuleFromNearestNodeModulesDirectoryWorker(state, false));
+    if (result !== undefined) return result;
+  }
+  if (secondaryExtensions !== 0) {
+    return withTemporaryExtensions(state, secondaryExtensions, () => loadModuleFromNearestNodeModulesDirectoryWorker(state, false));
+  }
+  return undefined;
+}
+
+function loadModuleFromNearestNodeModulesDirectoryWorker(
+  state: ResolutionState,
+  typesScopeOnly: boolean,
+): ResolvedInternal | undefined {
   let directory: string | undefined = state.containingDirectory;
   while (directory !== undefined && directory !== "") {
-    const result = loadModuleFromImmediateNodeModulesDirectory(state, directory);
+    if (getBaseFileName(directory) === "node_modules") {
+      const parent = getDirectoryPath(directory);
+      if (parent === directory) break;
+      directory = parent;
+      continue;
+    }
+    const result = loadModuleFromImmediateNodeModulesDirectory(state, directory, typesScopeOnly);
     if (result !== undefined) return result;
     const parent = getDirectoryPath(directory);
     if (parent === directory) break;
@@ -588,22 +1386,39 @@ function loadModuleFromNearestNodeModulesDirectory(
   return undefined;
 }
 
+function withTemporaryExtensions<T>(state: ResolutionState, extensions: Extensions, body: () => T): T {
+  const saved = state.extensions;
+  state.extensions = extensions;
+  try {
+    return body();
+  } finally {
+    state.extensions = saved;
+  }
+}
+
 function loadModuleFromImmediateNodeModulesDirectory(
   state: ResolutionState,
   directory: string,
+  typesScopeOnly: boolean,
 ): ResolvedInternal | undefined {
   const nodeModulesFolder = combinePaths(directory, "node_modules");
   if (!state.resolver.host.directoryExists(nodeModulesFolder)) {
     state.failedLookupLocations.push(nodeModulesFolder);
     return undefined;
   }
-  const result = loadModuleFromSpecificNodeModulesDirectory(state, state.name, nodeModulesFolder);
-  if (result !== undefined) return result;
+  if (!typesScopeOnly) {
+    const result = loadModuleFromSpecificNodeModulesDirectory(state, state.name, nodeModulesFolder);
+    if (result !== undefined) return result;
+  }
   // Try `@types/foo` fallback for non-scoped names so type-only imports
   // resolve via DefinitelyTyped.
   if ((state.extensions & Extensions.Declaration) !== 0) {
-    const typesPackageName = getTypesPackageName(state.name);
-    return loadModuleFromSpecificNodeModulesDirectory(state, typesPackageName, nodeModulesFolder);
+    const atTypes = combinePaths(nodeModulesFolder, "@types");
+    if (!state.resolver.host.directoryExists(atTypes)) {
+      state.failedLookupLocations.push(atTypes);
+      return undefined;
+    }
+    return loadModuleFromSpecificNodeModulesDirectory(state, mangleScopedPackageName(state.name), atTypes);
   }
   return undefined;
 }
@@ -614,9 +1429,26 @@ function loadModuleFromSpecificNodeModulesDirectory(
   nodeModulesFolder: string,
 ): ResolvedInternal | undefined {
   const [packageName, rest] = parsePackageName(moduleName);
+  const packageDirectory = combinePaths(nodeModulesFolder, packageName);
   const candidate = rest === ""
-    ? combinePaths(nodeModulesFolder, packageName)
-    : combinePaths(nodeModulesFolder, packageName, rest);
+    ? packageDirectory
+    : combinePaths(packageDirectory, rest);
+
+  if ((state.features & NodeResolutionFeatures.Exports) !== 0) {
+    const packageJson = readPackageJson(state, combinePaths(packageDirectory, "package.json"));
+    if (packageJson !== undefined) {
+      state.affectingLocations.push(combinePaths(packageDirectory, "package.json"));
+      const subpath = rest === "" ? "." : `./${rest}`;
+      const target = resolvePackageTargetFromExports(packageJson.exports, subpath, state.conditions);
+      if (target !== undefined) {
+        const exported = loadPackageTarget(state, packageDirectory, target);
+        if (exported !== undefined) {
+          return withPackageJsonId(exported, packageJson, packageDirectory);
+        }
+      }
+      if (packageJson.exports !== undefined && packageJson.exports !== null) return undefined;
+    }
+  }
 
   // First try file lookup (e.g. node_modules/foo.ts).
   const asFile = loadModuleFromFile(state, candidate);
@@ -732,6 +1564,108 @@ export function isExternalModuleNameRelative(moduleName: string): boolean {
 
 export function moduleHasNonRelativeName(moduleName: string): boolean {
   return !isExternalModuleNameRelative(moduleName);
+}
+
+export function getAutomaticTypeDirectiveNames(
+  options: CompilerOptions,
+  host: ResolverHost,
+): readonly string[] {
+  const explicitTypes = options.types;
+  if (explicitTypes !== undefined && !explicitTypes.includes("*")) return explicitTypes;
+  const wildcardMatches = discoverWildcardTypeDirectiveNames(options, host);
+  if (explicitTypes === undefined) return wildcardMatches;
+  const result: string[] = [];
+  for (const typeName of explicitTypes) {
+    if (typeName === "*") {
+      result.push(...wildcardMatches);
+    } else {
+      result.push(typeName);
+    }
+  }
+  return deduplicateStrings(result);
+}
+
+export function resolveConfig(
+  moduleName: string,
+  containingFile: string,
+  host: ResolverHost,
+): ResolvedModule | undefined {
+  const resolver = new Resolver(
+    host,
+    { moduleResolution: MRK.NodeNext },
+    undefined,
+    undefined,
+    undefined,
+  );
+  return resolver.resolveConfig(moduleName, containingFile);
+}
+
+export function packageIdToString(packageId: PackageId | undefined): string {
+  if (packageId === undefined || packageId.name === "") return "";
+  const packageName = packageId.subModuleName === ""
+    ? packageId.name
+    : `${packageId.name}/${packageId.subModuleName}`;
+  return `${packageName}@${packageId.version}${packageId.peerDependencies}`;
+}
+
+export function moduleSpecifierHasPackageName(moduleName: string): boolean {
+  if (isExternalModuleNameRelative(moduleName) || moduleName.startsWith("#")) return false;
+  const [packageName] = parsePackageName(moduleName);
+  return packageName !== "";
+}
+
+export function getPackageNameOfModuleSpecifier(moduleName: string): string {
+  if (!moduleSpecifierHasPackageName(moduleName)) return "";
+  const [packageName] = parsePackageName(moduleName);
+  return packageName;
+}
+
+export function getSubpathOfModuleSpecifier(moduleName: string): string {
+  if (!moduleSpecifierHasPackageName(moduleName)) return "";
+  const [, rest] = parsePackageName(moduleName);
+  return rest;
+}
+
+function discoverWildcardTypeDirectiveNames(
+  options: CompilerOptions,
+  host: ResolverHost,
+): readonly string[] {
+  const { typeRoots } = getEffectiveTypeRoots(options, host.getCurrentDirectory());
+  const matches: string[] = [];
+  for (const root of typeRoots) {
+    if (!host.directoryExists(root)) continue;
+    const entries = host.getAccessibleEntries(root);
+    for (const directory of entries.directories) {
+      if (directory.startsWith(".")) continue;
+      if (isNotNeededTypePackage(host, combinePaths(root, directory))) continue;
+      matches.push(directory);
+    }
+  }
+  return deduplicateStrings(matches);
+}
+
+function isNotNeededTypePackage(host: ResolverHost, packageDirectory: string): boolean {
+  const packageJsonPath = combinePaths(packageDirectory, "package.json");
+  if (!host.fileExists(packageJsonPath)) return false;
+  const text = host.readFile(packageJsonPath);
+  if (text === undefined) return false;
+  try {
+    const parsed = JSON.parse(text) as { typings?: unknown; types?: unknown };
+    return parsed.typings === null || parsed.types === null;
+  } catch {
+    return false;
+  }
+}
+
+function deduplicateStrings(values: readonly string[]): readonly string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const value of values) {
+    if (seen.has(value)) continue;
+    seen.add(value);
+    result.push(value);
+  }
+  return result;
 }
 
 // Re-export package-helper functions used by downstream modules.

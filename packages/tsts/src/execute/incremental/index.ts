@@ -1,11 +1,11 @@
-export * from "./affectedfileshandler.js";
-export * from "./buildinfo.js";
-export * from "./buildinfotosnapshot.js";
-export * from "./emitfileshandler.js";
+export * from "./affectedFilesHandler.js";
+export * from "./buildInfo.js";
+export * from "./buildInfoToSnapshot.js";
+export * from "./emitFilesHandler.js";
 export * from "./host.js";
 export * from "./program.js";
-export * from "./programtosnapshot.js";
-export * from "./referencemap.js";
+export * from "./programToSnapshot.js";
+export * from "./referenceMap.js";
 export {
   changedFiles,
   computeHash,
@@ -21,4 +21,4 @@ export {
   type ProgramSnapshot,
 } from "./snapshot.js";
 export { SnapshotFileEmitKind } from "./snapshot.js";
-export * from "./snapshottobuildinfo.js";
+export * from "./snapshotToBuildInfo.js";

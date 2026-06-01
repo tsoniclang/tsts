@@ -6,8 +6,8 @@
  * the checker: diagnostic creation, AST predicates, symbol-table
  * construction, type comparison, scope queries.
  *
- * Port scope: full method-API parity. Bodies are stubbed; baseline
- * checker tests drive incremental fill-in.
+ * Port scope: full method-API parity with faithful leaf behavior filled in
+ * as checker subsystems consume each helper.
  */
 
 import type {
@@ -31,7 +31,7 @@ import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
 import { ModifierFlags } from "../enums/modifierFlags.enum.js";
 import { ObjectFlags, TypeFlags, getTypeOfSymbol } from "./types.js";
 import { MapperKind } from "./mapper.js";
-import { pseudoBigIntToString, type PseudoBigInt } from "../jsnum/index.js";
+import { pseudoBigIntToString as formatPseudoBigInt, type PseudoBigInt } from "../jsnum/index.js";
 
 // ---------------------------------------------------------------------------
 // Constant-union: AssignmentKind
@@ -449,6 +449,18 @@ export function isOptionalDeclaration(declaration: AstNode): boolean {
   return qm !== undefined;
 }
 
+export function isOptionalParameter(node: AstNode): boolean {
+  if (node.kind !== Kind.Parameter) return false;
+  if (isOptionalDeclaration(node)) return true;
+  if (initializerOf(node) === undefined) return false;
+  const parent = nodeParent(node);
+  const parameters = (parent as unknown as { parameters?: readonly AstNode[] } | undefined)?.parameters ?? [];
+  const parameterIndex = parameters.indexOf(node);
+  if (parameterIndex < 0) return false;
+  const firstInitializer = parameters.findIndex((parameter) => initializerOf(parameter) !== undefined);
+  return firstInitializer >= 0 && parameterIndex >= firstInitializer;
+}
+
 // ---------------------------------------------------------------------------
 // Type-any check
 // ---------------------------------------------------------------------------
@@ -463,10 +475,12 @@ export function isTypeAny(t: Type): boolean {
 
 export function declarationBelongsToPrivateAmbientMember(declaration: AstNode): boolean {
   const root = getRootDeclaration(declaration);
+  if (root === undefined) return false;
   const memberDecl = root.kind === Kind.Parameter ? nodeParent(root) : root;
   return memberDecl !== undefined && isPrivateWithinAmbient(memberDecl);
 }
-function getRootDeclaration(node: AstNode): AstNode {
+function getRootDeclaration(node: AstNode | undefined): AstNode | undefined {
+  if (node === undefined) return undefined;
   let cur = node;
   while (cur.kind === Kind.BindingElement) {
     const p = nodeParent(cur);
@@ -610,6 +624,12 @@ export function compareTypeMappers(m1: TypeMapper | undefined, m2: TypeMapper | 
 
 export function getDeclarationModifierFlagsFromSymbol(s: AstSymbol): ModifierFlags {
   return getDeclarationModifierFlagsFromSymbolEx(s, false);
+}
+
+export function getDeclarationNodeFlagsFromSymbol(symbol: AstSymbol): NodeFlags {
+  const declaration = valueDeclarationOf(symbol) ?? symbolDeclarations(symbol)[0];
+  if (declaration === undefined) return NodeFlags.None;
+  return getCombinedNodeFlagsLite(declaration);
 }
 
 export function getDeclarationModifierFlagsFromSymbolEx(s: AstSymbol, isWrite: boolean): ModifierFlags {
@@ -833,6 +853,23 @@ export function isObjectOrArrayLiteralType(t: Type): boolean {
   return (objectFlagsOf(t) & (ObjectFlags.ObjectLiteral | ObjectFlags.ArrayLiteral)) !== 0;
 }
 
+export function getContainingClassExcludingClassDecorators(node: AstNode): AstNode | undefined {
+  let current = nodeParent(node);
+  while (current !== undefined) {
+    if (isClassLikeKind(current.kind)) return current;
+    if (current.kind === Kind.Decorator) {
+      const decorated = nodeParent(current);
+      if (decorated !== undefined && isClassLikeKind(decorated.kind)) return decorated;
+      if (decorated !== undefined && isClassElementKind(decorated.kind)) {
+        const containingClass = nodeParent(decorated);
+        if (containingClass !== undefined && isClassLikeKind(containingClass.kind)) return containingClass;
+      }
+    }
+    current = nodeParent(current);
+  }
+  return undefined;
+}
+
 export function isThisTypeParameter(t: Type): boolean {
   return (t.flags & TypeFlags.TypeParameter) !== 0 && (t.data as TypeParameter | undefined)?.isThisType === true;
 }
@@ -859,6 +896,31 @@ export function isThisInitializedDeclaration(node: AstNode | undefined): boolean
 
 export function isInfinityOrNaNString(name: string): boolean {
   return name === "Infinity" || name === "-Infinity" || name === "NaN";
+}
+
+export function isConstantVariable(symbol: AstSymbol): boolean {
+  return (symbolFlags(symbol) & SymbolFlags.Variable) !== 0
+    && (getDeclarationNodeFlagsFromSymbol(symbol) & NodeFlags.Constant) !== 0;
+}
+
+export function isParameterOrMutableLocalVariable(symbol: AstSymbol): boolean {
+  const declaration = getRootDeclaration(valueDeclarationOf(symbol) ?? symbolDeclarations(symbol)[0]);
+  if (declaration === undefined) return false;
+  return declaration.kind === Kind.Parameter
+    || (declaration.kind === Kind.VariableDeclaration
+      && (nodeParent(declaration)?.kind === Kind.CatchClause || isMutableLocalVariableDeclaration(declaration)));
+}
+
+export function isMutableLocalVariableDeclaration(declaration: AstNode): boolean {
+  const declarationList = nodeParent(declaration);
+  const statement = nodeParent(declarationList);
+  const sourceFile = nodeParent(statement);
+  const isExported = (getCombinedModifierFlags(declaration) & ModifierFlags.Export) !== 0;
+  const isGlobalVariableStatement = statement?.kind === Kind.VariableStatement && sourceFile?.kind === Kind.SourceFile;
+  return declarationList !== undefined
+    && (declarationList.flags & NodeFlags.Let) !== 0
+    && !isExported
+    && !isGlobalVariableStatement;
 }
 
 export function isInAmbientOrTypeNode(node: AstNode): boolean {
@@ -1175,9 +1237,169 @@ export function isExternalModuleSymbol(moduleSymbol: AstSymbol): boolean {
   return (symbolFlags(moduleSymbol) & SymbolFlags.Module) !== 0 && name.startsWith("\"");
 }
 
+export function sortSymbols(symbols: AstSymbol[], fileIndexMap?: ReadonlyMap<AstNode, number>): void {
+  symbols.sort((left, right) => compareSymbolsWorker(left, right, fileIndexMap));
+}
+
+export function compareSymbolsWorker(
+  left: AstSymbol | undefined,
+  right: AstSymbol | undefined,
+  fileIndexMap?: ReadonlyMap<AstNode, number>,
+): number {
+  if (left === right) return 0;
+  if (left === undefined) return 1;
+  if (right === undefined) return -1;
+  const leftDeclaration = symbolDeclarations(left)[0];
+  const rightDeclaration = symbolDeclarations(right)[0];
+  if (leftDeclaration !== undefined && rightDeclaration !== undefined) {
+    const byNode = compareNodes(leftDeclaration, rightDeclaration, fileIndexMap);
+    if (byNode !== 0) return byNode;
+  } else if (leftDeclaration !== undefined) {
+    return -1;
+  } else if (rightDeclaration !== undefined) {
+    return 1;
+  }
+  const byName = symbolName(left).localeCompare(symbolName(right));
+  if (byName !== 0) return byName;
+  return symbolId(left) - symbolId(right);
+}
+
+export function compareNodes(
+  left: AstNode | undefined,
+  right: AstNode | undefined,
+  fileIndexMap?: ReadonlyMap<AstNode, number>,
+): number {
+  if (left === right) return 0;
+  if (left === undefined) return 1;
+  if (right === undefined) return -1;
+  const leftFile = sourceFileOf(left);
+  const rightFile = sourceFileOf(right);
+  if (leftFile !== rightFile) {
+    const leftIndex = leftFile === undefined ? Number.MAX_SAFE_INTEGER : (fileIndexMap?.get(leftFile) ?? Number.MAX_SAFE_INTEGER);
+    const rightIndex = rightFile === undefined ? Number.MAX_SAFE_INTEGER : (fileIndexMap?.get(rightFile) ?? Number.MAX_SAFE_INTEGER);
+    if (leftIndex !== rightIndex) return leftIndex - rightIndex;
+  }
+  return nodePos(left) - nodePos(right);
+}
+
 export function getNonRestParameterCount(sig: Signature): number {
   return sig.parameters.length - (signatureHasRestParameter(sig) ? 1 : 0);
 }
+
+export function pseudoBigIntToString(value: PseudoBigInt): string {
+  return formatPseudoBigInt(value);
+}
+
+export function getSuperContainer(node: AstNode, stopOnFunctions: boolean): AstNode | undefined {
+  let current = nodeParent(node);
+  while (current !== undefined) {
+    switch (current.kind) {
+      case Kind.ComputedPropertyName:
+        current = nodeParent(current);
+        break;
+      case Kind.FunctionDeclaration:
+      case Kind.FunctionExpression:
+      case Kind.ArrowFunction:
+        if (!stopOnFunctions) {
+          current = nodeParent(current);
+          break;
+        }
+        return current;
+      case Kind.PropertyDeclaration:
+      case Kind.PropertySignature:
+      case Kind.MethodDeclaration:
+      case Kind.MethodSignature:
+      case Kind.Constructor:
+      case Kind.GetAccessor:
+      case Kind.SetAccessor:
+      case Kind.ClassStaticBlockDeclaration:
+        return current;
+      case Kind.Decorator: {
+        const decorated = nodeParent(current);
+        const decoratedParent = nodeParent(decorated);
+        if (decorated?.kind === Kind.Parameter && decoratedParent !== undefined && isClassElementKind(decoratedParent.kind)) {
+          current = decoratedParent;
+        } else if (decorated !== undefined && isClassElementKind(decorated.kind)) {
+          current = decorated;
+        } else {
+          current = nodeParent(current);
+        }
+        break;
+      }
+      default:
+        current = nodeParent(current);
+        break;
+    }
+  }
+  return undefined;
+}
+
+export function forEachYieldExpression(body: AstNode, visitor: (expr: AstNode) => boolean): boolean {
+  const traverse = (node: AstNode): boolean => {
+    switch (node.kind) {
+      case Kind.YieldExpression: {
+        if (visitor(node)) return true;
+        const operand = expressionOf(node);
+        return operand !== undefined && traverse(operand);
+      }
+      case Kind.EnumDeclaration:
+      case Kind.InterfaceDeclaration:
+      case Kind.ModuleDeclaration:
+      case Kind.TypeAliasDeclaration:
+        return false;
+      default:
+        if (isFunctionLikeKindLocal(node.kind)) {
+          const name = nameOf(node);
+          return name?.kind === Kind.ComputedPropertyName && expressionOf(name) !== undefined
+            ? traverse(expressionOf(name)!)
+            : false;
+        }
+        if (isTypeNodeKind(node.kind)) return false;
+        return forEachChildNode(node, traverse);
+    }
+  };
+  return traverse(body);
+}
+
+export function getEnclosingContainer(node: AstNode): AstNode | undefined {
+  let current = nodeParent(node);
+  while (current !== undefined) {
+    if (isContainerKind(current.kind)) return current;
+    current = nodeParent(current);
+  }
+  return undefined;
+}
+
+export function getDeclarationsOfKind(symbol: AstSymbol, kind: Kind): readonly AstNode[] {
+  return symbolDeclarations(symbol).filter((declaration) => declaration.kind === kind);
+}
+
+export function hasType(node: AstNode): boolean {
+  return (node as unknown as { type?: AstNode }).type !== undefined;
+}
+
+export interface DiagnosticDetails {
+  readonly message: unknown;
+  readonly args: readonly unknown[];
+}
+
+export function walkUpOuterExpressions(node: AstNode): AstNode | undefined {
+  let parent = nodeParent(node);
+  while (parent !== undefined && isOuterExpressionKind(parent.kind)) {
+    parent = nodeParent(parent);
+  }
+  return parent;
+}
+
+export function getSetAccessorValueParameter(accessor: AstNode): AstNode | undefined {
+  const parameters = (accessor as unknown as { parameters?: readonly AstNode[] }).parameters ?? [];
+  if (parameters.length === 0) return undefined;
+  const first = parameters[0];
+  const hasThis = parameters.length === 2 && first?.kind === Kind.ThisType;
+  return parameters[hasThis ? 1 : 0];
+}
+
+export const GetSetAccessorValueParameter = getSetAccessorValueParameter;
 
 export function minAndMax<T>(slice: readonly T[], getValue: (value: T) => number): { min: number; max: number } {
   if (slice.length === 0) return { min: 0, max: 0 };
@@ -1216,6 +1438,10 @@ function symbolFlags(symbol: AstSymbol | undefined): number {
   return (symbol as unknown as { flags?: number } | undefined)?.flags ?? 0;
 }
 
+function symbolId(symbol: AstSymbol | undefined): number {
+  return (symbol as unknown as { id?: number } | undefined)?.id ?? 0;
+}
+
 function symbolDeclarations(symbol: AstSymbol | undefined): readonly AstNode[] {
   return (symbol as unknown as { declarations?: readonly AstNode[] } | undefined)?.declarations ?? [];
 }
@@ -1247,6 +1473,10 @@ function sourceFileOf(node: AstNode): AstNode | undefined {
   let current: AstNode | undefined = node;
   while (current !== undefined && current.kind !== Kind.SourceFile) current = nodeParent(current);
   return current;
+}
+
+function nodePos(node: AstNode): number {
+  return (node as unknown as { pos?: number }).pos ?? 0;
 }
 
 function expressionOf(node: AstNode | undefined): AstNode | undefined {
@@ -1331,6 +1561,99 @@ function getCombinedNodeFlagsLite(node: AstNode): NodeFlags {
 
 function isClassLikeKind(kind: number): boolean {
   return kind === Kind.ClassDeclaration || kind === Kind.ClassExpression;
+}
+
+function isClassElementKind(kind: number): boolean {
+  switch (kind) {
+    case Kind.Constructor:
+    case Kind.PropertyDeclaration:
+    case Kind.MethodDeclaration:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+    case Kind.ClassStaticBlockDeclaration:
+      return true;
+  }
+  return false;
+}
+
+function isFunctionLikeKindLocal(kind: number): boolean {
+  switch (kind) {
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.ArrowFunction:
+    case Kind.MethodDeclaration:
+    case Kind.Constructor:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+    case Kind.CallSignature:
+    case Kind.ConstructSignature:
+    case Kind.FunctionType:
+    case Kind.ConstructorType:
+      return true;
+  }
+  return false;
+}
+
+function isTypeNodeKind(kind: number): boolean {
+  return kind >= Kind.FirstTypeNode && kind <= Kind.LastTypeNode;
+}
+
+function isContainerKind(kind: number): boolean {
+  switch (kind) {
+    case Kind.SourceFile:
+    case Kind.ModuleDeclaration:
+    case Kind.ClassDeclaration:
+    case Kind.ClassExpression:
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.ArrowFunction:
+    case Kind.MethodDeclaration:
+    case Kind.Constructor:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+      return true;
+  }
+  return false;
+}
+
+function isOuterExpressionKind(kind: number): boolean {
+  return kind === Kind.ParenthesizedExpression
+    || kind === Kind.TypeAssertionExpression
+    || kind === Kind.AsExpression
+    || kind === Kind.SatisfiesExpression
+    || kind === Kind.NonNullExpression
+    || kind === Kind.PartiallyEmittedExpression
+    || kind === Kind.ExpressionWithTypeArguments;
+}
+
+function forEachChildNode(node: AstNode, visitor: (node: AstNode) => boolean): boolean {
+  const children = Object.values(node as unknown as Record<string, unknown>);
+  for (const child of children) {
+    if (isNodeLike(child)) {
+      if (visitor(child)) return true;
+    } else if (Array.isArray(child)) {
+      for (const element of child) {
+        if (isNodeLike(element) && visitor(element)) return true;
+      }
+    } else if (isNodeArrayLike(child)) {
+      for (const element of child.nodes) {
+        if (visitor(element)) return true;
+      }
+    }
+  }
+  return false;
+}
+
+function isNodeLike(value: unknown): value is AstNode {
+  return typeof value === "object"
+    && value !== null
+    && typeof (value as { kind?: unknown }).kind === "number";
+}
+
+function isNodeArrayLike(value: unknown): value is { readonly nodes: readonly AstNode[] } {
+  return typeof value === "object"
+    && value !== null
+    && Array.isArray((value as { nodes?: unknown }).nodes);
 }
 
 function canHaveFlowNodeKind(kind: number): boolean {

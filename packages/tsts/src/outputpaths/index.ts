@@ -5,4 +5,4 @@
  */
 
 export * from "./outputpaths.js";
-export * from "./commonsourcedirectory.js";
+export * from "./commonSourceDirectory.js";

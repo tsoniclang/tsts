@@ -20,7 +20,8 @@ import { dirname, join } from "node:path";
 
 import type { FS, FileInfo, WalkDirFunc, DirEntry } from "../vfs/index.js";
 
-import { LibNames } from "./lib-names.js";
+import { embeddedContents } from "./embed.generated.js";
+import { LibNames } from "./libs.generated.js";
 
 /**
  * True if bundled files come from an embedded FS. When false, `LibPath`
@@ -90,7 +91,7 @@ export function wrapFS(fs: FS): FS {
  * `Embedded` becomes true and the .NET resource pipeline lands.
  * Until then this is empty and the wrappedFS behaves like a passthrough.
  */
-export const embeddedContents: ReadonlyMap<string, string> = new Map();
+export { embeddedContents };
 
 /**
  * FS overlay that intercepts paths starting with `bundled:///`, serving

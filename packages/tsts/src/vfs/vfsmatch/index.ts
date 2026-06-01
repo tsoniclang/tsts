@@ -5,4 +5,5 @@
  * entry-point surface; the full matching algorithm port is forthcoming.
  */
 
-export * from "./vfsmatch.js";
+export * from "./vfsMatch.js";
+export * from "./stringer.generated.js";

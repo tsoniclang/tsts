@@ -602,11 +602,10 @@ export function createGetIsolatedDeclarationErrors(_resolver: EmitResolver): (no
 }
 
 // Diagnostics catalog imported via a permissive Record. The actual
-// catalog lives in diagnostics/diagnostics_generated.ts; using a typed
+// catalog lives in diagnostics/diagnostics.generated.ts; using a typed
 // import here would couple this file to the catalog's exact key set.
 // Under noUncheckedIndexedAccess, untyped record lookups return
 // `T | undefined`, so the callers below treat undefined as a fallback
 // to the generic accessibility message.
-import { Diagnostics as DiagnosticsCatalog } from "../../diagnostics/diagnostics_generated.js";
+import { Diagnostics as DiagnosticsCatalog } from "../../diagnostics/diagnostics.generated.js";
 const Diagnostics = DiagnosticsCatalog;
-

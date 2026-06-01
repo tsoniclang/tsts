@@ -14,7 +14,7 @@
  */
 
 import { Transformer, type TransformOptions } from "../transformer.js";
-import { MetadataSerializer, newMetadataSerializer, type EmitResolver } from "./typeserializer.js";
+import { MetadataSerializer, newMetadataSerializer, type EmitResolver } from "./typeSerializer.js";
 import { Kind, getSubtreeFacts } from "../../ast/index.js";
 import { isSourceFile, isModuleBlock, isClassLikeDeclaration as isClassLike } from "../../ast/index.js";
 

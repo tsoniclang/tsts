@@ -61,9 +61,9 @@ export interface ProgramSnapshot<Diagnostic = unknown> {
   readonly fileInfos: ReadonlyMap<string, ProgramSnapshotFileInfo>;
   readonly options: ReadonlyMap<string, unknown>;
   readonly root: readonly string[];
-  readonly referencedBy?: ReadonlyMap<string, ReadonlySet<string>>;
-  readonly references?: ReadonlyMap<string, ReadonlySet<string>>;
-  readonly changedFilesSet?: ReadonlySet<string>;
+  readonly referencedBy: ReadonlyMap<string, ReadonlySet<string>> | undefined;
+  readonly references: ReadonlyMap<string, ReadonlySet<string>> | undefined;
+  readonly changedFilesSet: ReadonlySet<string> | undefined;
   readonly semanticDiagnosticsPerFile: ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>;
   readonly emitDiagnosticsPerFile: ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>;
   readonly pendingEmit: ReadonlyMap<string, SnapshotFileEmitKind>;

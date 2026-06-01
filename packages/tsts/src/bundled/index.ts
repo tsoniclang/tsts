@@ -7,4 +7,7 @@
  */
 
 export { Embedded, isBundled, libPath, Scheme, splitPath, testingLibPath, wrapFS } from "./bundled.js";
-export { LibNames } from "./lib-names.js";
+export * as embeddedMode from "./embed.js";
+export { embeddedContents } from "./embed.generated.js";
+export { LibNames } from "./libs.generated.js";
+export * as noEmbedMode from "./noembed.js";

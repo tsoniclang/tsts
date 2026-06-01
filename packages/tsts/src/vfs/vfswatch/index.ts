@@ -5,4 +5,4 @@
  * the language server.
  */
 
-export * from "./vfswatch.js";
+export * from "./vfsWatch.js";

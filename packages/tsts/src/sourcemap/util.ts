@@ -5,7 +5,7 @@
  * Recovers a `//# sourceMappingURL=...` comment from a generated file.
  */
 
-import type { ECMALineInfo } from "./lineinfo.js";
+import type { ECMALineInfo } from "./lineInfo.js";
 import { isLineBreak, isWhiteSpaceLike } from "../stringutil/util.js";
 
 export function tryGetSourceMappingURL(lineInfo: ECMALineInfo | undefined): string {

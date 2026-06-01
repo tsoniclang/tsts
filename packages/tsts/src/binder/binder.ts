@@ -99,7 +99,7 @@ import {
 } from "../ast/index.js";
 import { ModifierFlags } from "../enums/modifierFlags.enum.js";
 import { removeFileExtension } from "../tspath/index.js";
-import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
+import { Diagnostics } from "../diagnostics/diagnostics.generated.js";
 import { format } from "../diagnostics/index.js";
 
 export interface BindDiagnostic {

@@ -8,6 +8,7 @@
  */
 
 export type { Diagnostic, FileLike } from "./types.js";
+export * from "./diagnosticWriter.js";
 export {
   formatDiagnostic,
   formatDiagnosticWithSource,

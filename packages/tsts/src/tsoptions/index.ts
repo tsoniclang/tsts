@@ -4,26 +4,36 @@
  * Port of TS-Go `internal/tsoptions/`. Provides parsing of tsconfig
  * JSON files, `tsc` CLI arguments, and the option declaration tables.
  *
- * Current scope (committed in stages):
- *   - `commandlineoption.ts`: option declaration type
- *   - `namemap.ts`: case-insensitive name lookup with short-name aliases
- *   - `diagnostics.ts`: parser diagnostic context types
- *   - `parsedbuildcommandline.ts`: --build CLI result type
- *   - `wildcarddirectories.ts`: include/exclude → watch-dir analysis
- *
- * Forthcoming (mirrors TS-Go file layout):
- *   - `commandlineparser.ts` (commandlineparser.go, ~480 LoC)
- *   - `parsedcommandline.ts` (parsedcommandline.go, 409 LoC)
- *   - `parsinghelpers.ts` (parsinghelpers.go, 631 LoC)
- *   - `tsconfigparsing.ts` (tsconfigparsing.go, 1792 LoC)
- *   - `enummaps.ts` (enummaps.go, 255 LoC)
- *   - `showconfig.ts` (showconfig.go, 389 LoC)
- *   - `errors.ts` (errors.go, 105 LoC — depends on diagnostics catalog)
- *   - Option declaration tables (decls*.go, ~3500 LoC of static data)
+ * The package owns the same layers as TS-Go: option declarations,
+ * command-line parsing, tsconfig parsing, extends resolution,
+ * include/exclude spec normalization, project-reference parsing, and
+ * show-config serialization. Parser and project callers consume these
+ * helpers directly instead of duplicating option-shape knowledge.
  */
 
-export * from "./commandlineoption.js";
+export * from "./commandLineOption.js";
+export * from "./configSpecs.js";
+export * from "./commandLineResponse.js";
+export * from "./declsBuild.js";
+export * from "./declsCompiler.js";
+export * from "./declsTypeAcquisition.js";
+export * from "./declsWatch.js";
 export * from "./diagnostics.js";
-export * from "./namemap.js";
-export * from "./parsedbuildcommandline.js";
-export * from "./wildcarddirectories.js";
+export * from "./enumMaps.js";
+export * from "./errors.js";
+export * from "./extendsResolution.js";
+export * from "./helpView.js";
+export * as jsonOptionValidation from "./jsonOptionValidation.js";
+export * from "./nameMap.js";
+export * from "./optionCatalog.js";
+export * from "./optionDefaults.js";
+export * from "./optionEffects.js";
+export * from "./optionNormalization.js";
+export * from "./parsedBuildCommandLine.js";
+export * as parsedCommandLine from "./parsedCommandLine.js";
+export * as parsingHelpers from "./parsingHelpers.js";
+export * from "./projectReferenceParsing.js";
+export * from "./showConfig.js";
+export * from "./tsconfigRootOptions.js";
+export * as tsconfigParsing from "./tsconfigParsing.js";
+export * from "./wildcardDirectories.js";

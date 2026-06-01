@@ -7,3 +7,4 @@
  */
 
 export * from "./osvfs.js";
+export * from "./os.js";

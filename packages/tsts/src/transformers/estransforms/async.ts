@@ -40,7 +40,7 @@ import {
   subtreeFacts,
 } from "../../ast/index.js";
 import { isFunctionLikeDeclaration } from "../../ast/index.js";
-import { newOrderedSet, newSetOfString } from "../../printer/factory-helpers.js";
+import { newOrderedSet, newSetOfString } from "../../printer/factoryHelpers.js";
 import {
   isIdentifier, isBindingPattern, isOmittedExpression,
   isPropertyAccessExpression, isPropertyAssignment,
@@ -48,8 +48,8 @@ import {
   isVariableDeclarationList,
 } from "../../ast/index.js";
 import { Kind, NodeFlags } from "../../ast/index.js";
-import { EmitFlags } from "../../printer/emitflags.js";
-import { GeneratedIdentifierFlags } from "../../printer/namegenerator.js";
+import { EmitFlags } from "../../printer/emitFlags.js";
+import { GeneratedIdentifierFlags } from "../../printer/nameGenerator.js";
 import { Transformer, type TransformOptions, type NodeVisitor } from "../transformer.js";
 
 // ---------------------------------------------------------------------------

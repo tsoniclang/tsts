@@ -17,19 +17,19 @@ import { chain, type TransformerFactory } from "../chain.js";
 import { Transformer } from "../transformer.js";
 
 import type { TransformOptions } from "../transformer.js";
-import { newESDecoratorTransformer as _newESDecoratorTransformer } from "./esdecorator.js";
-import { newClassFieldsTransformer as _newClassFieldsTransformer } from "./classfields.js";
+import { newESDecoratorTransformer as _newESDecoratorTransformer } from "./esDecorator.js";
+import { newClassFieldsTransformer as _newClassFieldsTransformer } from "./classFields.js";
 const newESDecoratorTransformer: TransformerFactory = (opts) => _newESDecoratorTransformer(opts) ?? new Transformer();
 const newClassFieldsTransformer: TransformerFactory = (opts) => _newClassFieldsTransformer(opts) ?? new Transformer();
 import { newUsingDeclarationTransformer } from "./using.js";
-import { newLogicalAssignmentTransformer } from "./logicalassignment.js";
-import { newNullishCoalescingTransformer } from "./nullishcoalescing.js";
-import { newOptionalChainTransformer } from "./optionalchain.js";
-import { newOptionalCatchTransformer } from "./optionalcatch.js";
-import { newObjectRestSpreadTransformer as _newObjectRestSpreadTransformer } from "./objectrestspread.js";
+import { newLogicalAssignmentTransformer } from "./logicalAssignment.js";
+import { newNullishCoalescingTransformer } from "./nullishCoalescing.js";
+import { newOptionalChainTransformer } from "./optionalChain.js";
+import { newOptionalCatchTransformer } from "./optionalCatch.js";
+import { newObjectRestSpreadTransformer as _newObjectRestSpreadTransformer } from "./objectRestSpread.js";
 const newObjectRestSpreadTransformer: TransformerFactory = (opts) => _newObjectRestSpreadTransformer(opts as Parameters<typeof _newObjectRestSpreadTransformer>[0]);
-import { newForAwaitTransformer as newforawaitTransformer } from "./forawait.js";
-import { newTaggedTemplateLiftRestrictionTransformer } from "./taggedtemplate.js";
+import { newForAwaitTransformer as newforawaitTransformer } from "./forAwait.js";
+import { newTaggedTemplateLiftRestrictionTransformer } from "./taggedTemplate.js";
 import { newAsyncTransformer } from "./async.js";
 import { newExponentiationTransformer } from "./exponentiation.js";
 

@@ -1,1 +1,16 @@
 export * from "./checker.js";
+export * from "./checkerInitialization.js";
+export * from "./checkerCore.js";
+export * as nameResolution from "./checker.nameResolution.js";
+export * as diagnosticsPipeline from "./diagnosticsPipeline.js";
+export * as moduleChecks from "./checker.moduleChecks.js";
+export * as moduleResolution from "./moduleResolution.js";
+export * as iteration from "./checker.iteration.js";
+export * as unused from "./checker.unused.js";
+export * as symbolResolution from "./symbolResolution.js";
+export * as symbolTypes from "./symbolTypes.js";
+export * from "./nodeBuilder.js";
+export * from "./nodeBuilderHover.js";
+export * from "./nodeBuilderImpl.js";
+export * from "./nodeBuilderScopes.js";
+export * from "./pseudoTypeNodeBuilder.js";

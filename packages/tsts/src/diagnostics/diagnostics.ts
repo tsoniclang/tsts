@@ -4,7 +4,7 @@
  * Port of TS-Go internal/diagnostics/diagnostics.go (core).
  *
  * Localization tables and the full message catalog are produced by
- * tools/generate-diagnostics.ts (forthcoming) from
+ * tools/generateDiagnostics.ts (forthcoming) from
  * upstream TypeScript's diagnosticMessages.json and TS-Go's
  * extraDiagnosticMessages.json. This file ports the runtime functions
  * that consume the generated catalog.

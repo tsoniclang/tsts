@@ -175,6 +175,10 @@ function shouldEscapeForEncodeURI(ch: number): boolean {
   }
 }
 
+export function isUriUnescapedByte(byte: number): boolean {
+  return !shouldEscapeForEncodeURI(byte);
+}
+
 /** TC39 encodeURI semantics: percent-encode bytes that aren't unreserved/reserved. */
 export function encodeURIBytes(s: string): string {
   // Operate on UTF-8 byte sequence — match Go behavior, which iterates bytes.
@@ -186,9 +190,17 @@ export function encodeURIBytes(s: string): string {
       out += String.fromCharCode(b);
       continue;
     }
-    out += "%" + UPPER_HEX[(b >> 4) & 0xF] + UPPER_HEX[b & 0xF];
+    out += percentEncodeByte(b);
   }
   return out;
+}
+
+export function encodeUri(text: string): string {
+  return encodeURIBytes(text);
+}
+
+export function percentEncodeByte(byte: number): string {
+  return "%" + UPPER_HEX[(byte >> 4) & 0xF] + UPPER_HEX[byte & 0xF];
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -220,8 +232,16 @@ export function removeByteOrderMark(text: string): string {
   return length > 0 ? text.slice(length) : text;
 }
 
+export function hasByteOrderMark(text: string): boolean {
+  return getByteOrderMarkLength(text) > 0;
+}
+
 export function addUTF8ByteOrderMark(text: string): string {
   return getByteOrderMarkLength(text) === 0 ? "﻿" + text : text;
+}
+
+export function addUtf8ByteOrderMark(text: string): string {
+  return addUTF8ByteOrderMark(text);
 }
 
 // ────────────────────────────────────────────────────────────────────────────

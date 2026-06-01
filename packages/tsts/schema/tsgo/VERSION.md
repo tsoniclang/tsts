@@ -26,7 +26,7 @@ Schema drift across these 158 commits:
 
 - `ast.json` — unchanged
 - `ast.schema.json` — unchanged
-- `protocol.ts` — content unchanged; relocated upstream from `_scripts/protocol.ts` to `_packages/native-preview/src/api/node/protocol.ts`. TSTS `tools/check-schema.ts` already tracks the new location.
+- `protocol.ts` — content unchanged; relocated upstream from `_scripts/protocol.ts` to `_packages/native-preview/src/api/node/protocol.ts`. TSTS `tools/checkSchema.ts` already tracks the new location.
 - `nodeflags.go` — unchanged
 - `symbolflags.go` — changed. Accessor/property excludes semantics tightened so that accessor and property symbols correctly exclude one another and themselves where appropriate. New SHA reflects this bug fix.
 

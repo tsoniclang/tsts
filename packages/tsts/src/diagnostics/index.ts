@@ -12,7 +12,7 @@
  *     (codes 100000+; vendored at _vendor/tsgo/extraDiagnosticMessages.json)
  *
  * Both are JSON; TS-Go's generate.go produces diagnostics_generated.go from
- * them. TSTS will produce messages.generated.ts via tools/generate-diagnostics.ts
+ * them. TSTS will produce messages.generated.ts via tools/generateDiagnostics.ts
  * (forthcoming).
  *
  * The upstream diagnosticMessages.json requires the upstream TypeScript

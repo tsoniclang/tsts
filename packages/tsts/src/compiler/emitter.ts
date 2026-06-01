@@ -10,6 +10,8 @@
 
 import type { SourceFile, Diagnostic } from "../ast/index.js";
 import { printFile } from "../printer/printer.js";
+import { Generator as SourceMapGenerator, type RawSourceMap } from "../sourcemap/index.js";
+import { addUTF8ByteOrderMark, encodeUri } from "../stringutil/util.js";
 import {
   getDeclarationEmitOutputFilePath,
   getOutputJSFileNameWorker,
@@ -18,24 +20,38 @@ import {
   type CompilerOptionsSubset,
 } from "../outputpaths/index.js";
 import {
+  combinePaths,
   extensionJson,
   fileExtensionIs,
+  getBaseFileName,
   getDirectoryPath,
+  getRelativePathToDirectoryOrUrl,
+  getRootLength,
   normalizePath,
+  normalizeSlashes,
 } from "../tspath/index.js";
 import { Tristate, tristateIsTrue } from "../core/tristate.js";
+import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
 
 export type EmitOnly = 0 | 1 | 2 | 3;
 export const EmitOnly = {
-  Js: 0 as EmitOnly,
-  Dts: 1 as EmitOnly,
-  BuilderSignature: 2 as EmitOnly,
-  All: 3 as EmitOnly,
+  All: 0 as EmitOnly,
+  Js: 1 as EmitOnly,
+  Dts: 2 as EmitOnly,
+  ForcedDts: 3 as EmitOnly,
 } as const;
 
 export interface WriteFileData {
   sourceMapUrlPos?: number;
   hash?: string;
+  diagnostics?: readonly Diagnostic[];
+  skippedDtsWrite?: boolean;
+}
+
+export interface SourceMapEmitResult {
+  readonly inputSourceFileNames: readonly string[];
+  readonly sourceMap: RawSourceMap;
+  readonly generatedFile: string;
 }
 
 export interface EmitOptions {
@@ -44,18 +60,21 @@ export interface EmitOptions {
   emitOnly?: EmitOnly;
   forceDtsEmit?: boolean;
   cancellationToken?: unknown;
+  writeFile?: (fileName: string, text: string, data: WriteFileData) => void;
 }
 
 export interface EmitResult {
   emitSkipped: boolean;
   emittedFiles?: readonly string[];
   diagnostics: readonly Diagnostic[];
+  sourceMaps?: readonly SourceMapEmitResult[];
 }
 
 export class Emitter {
   readonly opts: EmitOptions;
   emittedFiles: string[] = [];
   diagnostics: Diagnostic[] = [];
+  sourceMaps: SourceMapEmitResult[] = [];
   emitSkipped = false;
 
   constructor(opts: EmitOptions) {
@@ -72,6 +91,7 @@ export class Emitter {
       emitSkipped: this.emitSkipped,
       emittedFiles: this.emittedFiles,
       diagnostics: this.diagnostics,
+      sourceMaps: this.sourceMaps,
     };
   }
 
@@ -96,32 +116,112 @@ export class Emitter {
   }
 
   emitJSFile(sourceFile: SourceFile, jsFilePath: string, sourceMapFilePath: string): void {
-    void sourceMapFilePath;
+    const options = this.opts.host.getCompilerOptions();
+    const emitOnly = this.opts.emitOnly ?? EmitOnly.All;
+    if (emitOnly !== EmitOnly.All && emitOnly !== EmitOnly.Js) return;
     if (jsFilePath === "") return;
-    const text = printFile(sourceFile);
-    const writeRes = this.writeText(jsFilePath, text, {});
-    if (writeRes === undefined) {
-      this.emittedFiles.push(jsFilePath);
+    if (tristateIsTrue(options.noEmit ?? Tristate.False) || this.opts.host.isEmitBlocked?.(jsFilePath) === true) {
+      this.emitSkipped = true;
+      return;
     }
+    const sourceMapEnabled = shouldEmitSourceMaps(options, sourceFile);
+    this.printSourceFile(jsFilePath, sourceMapFilePath, sourceFile, {} as Printer, sourceMapEnabled);
   }
 
   emitDeclarationFile(sourceFile: SourceFile, declarationFilePath: string, declarationMapPath: string): void {
-    void sourceFile; void declarationFilePath; void declarationMapPath;
+    const options = this.opts.host.getCompilerOptions();
+    const emitOnly = this.opts.emitOnly ?? EmitOnly.All;
+    if (emitOnly === EmitOnly.Js || declarationFilePath === "") return;
+    if (emitOnly !== EmitOnly.ForcedDts && (tristateIsTrue(options.noEmit ?? Tristate.False) || this.opts.host.isEmitBlocked?.(declarationFilePath) === true)) {
+      this.emitSkipped = true;
+      return;
+    }
+    const emitContext = {} as EmitContext;
+    const result = this.runDeclarationTransformers(emitContext, sourceFile, declarationFilePath, declarationMapPath);
+    this.diagnostics.push(...result.diagnostics);
+    this.printSourceFile(
+      declarationFilePath,
+      declarationMapPath,
+      result.file,
+      {} as Printer,
+      emitOnly !== EmitOnly.ForcedDts && shouldEmitDeclarationSourceMaps(options, result.file),
+    );
   }
 
   printSourceFile(
     jsFilePath: string, sourceMapFilePath: string, sourceFile: SourceFile,
     printer: Printer, shouldEmitSourceMapsFlag: boolean,
   ): void {
-    void jsFilePath; void sourceMapFilePath; void sourceFile; void printer; void shouldEmitSourceMapsFlag;
+    void printer;
+    const options = this.opts.host.getCompilerOptions();
+    const sourceMapGenerator = shouldEmitSourceMapsFlag
+      ? new SourceMapGenerator(
+        getBaseFileName(normalizeSlashes(jsFilePath)),
+        getSourceRoot(options),
+        this.getSourceMapDirectory(options, jsFilePath, sourceFile),
+        {
+          useCaseSensitiveFileNames: this.opts.host.useCaseSensitiveFileNames(),
+          currentDirectory: this.opts.host.getCurrentDirectory(),
+        },
+      )
+      : undefined;
+
+    let text = printFile(sourceFile);
+    let sourceMapUrlPos = -1;
+    if (sourceMapGenerator !== undefined) {
+      if (tristateIsTrue(options.sourceMap ?? Tristate.False)
+        || tristateIsTrue(options.inlineSourceMap ?? Tristate.False)
+        || this.getAreDeclarationMapsEnabled(options)) {
+        this.sourceMaps.push({
+          inputSourceFileNames: sourceMapGenerator.getSources(),
+          sourceMap: sourceMapGenerator.rawSourceMap(),
+          generatedFile: jsFilePath,
+        });
+      }
+
+      const sourceMappingURL = this.getSourceMappingURL(options, sourceMapGenerator, jsFilePath, sourceMapFilePath, sourceFile);
+      if (sourceMappingURL !== "") {
+        if (text.length > 0 && !text.endsWith("\n") && !text.endsWith("\r\n")) {
+          text += this.newLineText(options);
+        }
+        sourceMapUrlPos = text.length;
+        text += `//# sourceMappingURL=${sourceMappingURL}`;
+      }
+
+      if (sourceMapFilePath !== "") {
+        const error = this.writeText(sourceMapFilePath, sourceMapGenerator.toString(), { diagnostics: this.diagnostics });
+        if (error !== undefined) this.diagnostics.push(writeFileDiagnostic(sourceMapFilePath, error));
+        else this.emittedFiles.push(sourceMapFilePath);
+      }
+    } else if (!text.endsWith("\n")) {
+      text += this.newLineText(options);
+    }
+
+    if (tristateIsTrue(options.emitBOM ?? Tristate.False)) {
+      text = addUTF8ByteOrderMark(text);
+    }
+    const data: WriteFileData = { sourceMapUrlPos, diagnostics: this.diagnostics };
+    const error = this.writeText(jsFilePath, text, data);
+    if (error !== undefined) {
+      this.diagnostics.push(writeFileDiagnostic(jsFilePath, error));
+    } else if (data.skippedDtsWrite !== true) {
+      this.emittedFiles.push(jsFilePath);
+    }
   }
 
   writeText(fileName: string, text: string, data: WriteFileData): Error | undefined {
-    void data;
-    const host = this.opts.host as unknown as { writeFile?(p: string, d: string, bom: boolean): void };
-    if (host.writeFile === undefined) return undefined;
-    host.writeFile(fileName, text, false);
-    return undefined;
+    try {
+      const host = this.opts.host as EmitHost;
+      if (this.opts.writeFile !== undefined) {
+        this.opts.writeFile(fileName, text, data);
+        return undefined;
+      }
+      if (host.writeFile === undefined) return undefined;
+      host.writeFile(fileName, text, false, data);
+      return undefined;
+    } catch (error) {
+      return error instanceof Error ? error : new Error(String(error));
+    }
   }
 
   private jsFilePathFor(file: SourceFile): string {
@@ -138,7 +238,7 @@ export class Emitter {
 
   private dtsPathFor(file: SourceFile): string {
     const options = this.opts.host.getCompilerOptions();
-    if (!declarationsEnabled(options) && this.opts.emitOnly !== EmitOnly.BuilderSignature) return "";
+    if (!declarationsEnabled(options) && this.opts.emitOnly !== EmitOnly.ForcedDts) return "";
     return getDeclarationEmitOutputFilePath(file.fileName, options, this.opts.host);
   }
 
@@ -146,6 +246,77 @@ export class Emitter {
     const dtsFilePath = this.dtsPathFor(file);
     if (dtsFilePath === "" || !shouldEmitDeclarationSourceMaps(this.opts.host.getCompilerOptions(), file)) return "";
     return dtsFilePath + ".map";
+  }
+
+  private getSourceMapDirectory(mapOptions: CompilerOptions, filePath: string, sourceFile: SourceFile | undefined): string {
+    if ((mapOptions.sourceRoot ?? "") !== "") {
+      return this.opts.host.commonSourceDirectory();
+    }
+    if ((mapOptions.mapRoot ?? "") !== "") {
+      let sourceMapDir = normalizeSlashes(mapOptions.mapRoot ?? "");
+      if (sourceFile !== undefined) {
+        sourceMapDir = getDirectoryPath(getSourceFilePathInNewDirWorker(
+          sourceFile.fileName,
+          sourceMapDir,
+          this.opts.host.getCurrentDirectory(),
+          this.opts.host.commonSourceDirectory(),
+          this.opts.host.useCaseSensitiveFileNames(),
+        ));
+      }
+      if (getRootLength(sourceMapDir) === 0) {
+        sourceMapDir = combinePaths(this.opts.host.commonSourceDirectory(), sourceMapDir);
+      }
+      return sourceMapDir;
+    }
+    return getDirectoryPath(normalizePath(filePath));
+  }
+
+  private getSourceMappingURL(
+    mapOptions: CompilerOptions,
+    sourceMapGenerator: SourceMapGenerator,
+    filePath: string,
+    sourceMapFilePath: string,
+    sourceFile: SourceFile | undefined,
+  ): string {
+    if (tristateIsTrue(mapOptions.inlineSourceMap ?? Tristate.False)) {
+      return sourceMapGenerator.toBase64DataURL();
+    }
+
+    const sourceMapFile = getBaseFileName(normalizeSlashes(sourceMapFilePath));
+    if ((mapOptions.mapRoot ?? "") !== "") {
+      let sourceMapDir = normalizeSlashes(mapOptions.mapRoot ?? "");
+      if (sourceFile !== undefined) {
+        sourceMapDir = getDirectoryPath(getSourceFilePathInNewDirWorker(
+          sourceFile.fileName,
+          sourceMapDir,
+          this.opts.host.getCurrentDirectory(),
+          this.opts.host.commonSourceDirectory(),
+          this.opts.host.useCaseSensitiveFileNames(),
+        ));
+      }
+      if (getRootLength(sourceMapDir) === 0) {
+        sourceMapDir = combinePaths(this.opts.host.commonSourceDirectory(), sourceMapDir);
+        return encodeUri(getRelativePathToDirectoryOrUrl(
+          getDirectoryPath(normalizePath(filePath)),
+          combinePaths(sourceMapDir, sourceMapFile),
+          true,
+          {
+            useCaseSensitiveFileNames: this.opts.host.useCaseSensitiveFileNames(),
+            currentDirectory: this.opts.host.getCurrentDirectory(),
+          },
+        ));
+      }
+      return encodeUri(combinePaths(sourceMapDir, sourceMapFile));
+    }
+    return encodeUri(sourceMapFile);
+  }
+
+  private getAreDeclarationMapsEnabled(options: CompilerOptions): boolean {
+    return tristateIsTrue(options.declarationMap ?? Tristate.False) && declarationsEnabled(options);
+  }
+
+  private newLineText(options: CompilerOptions): string {
+    return options.newLine === 1 ? "\r\n" : "\n";
   }
 }
 
@@ -237,12 +408,17 @@ export function getDeclarationDiagnostics(host: EmitHost, file: SourceFile): rea
 interface EmitContext { readonly _ec?: unknown }
 interface EmitHost extends SourceFileMayBeEmittedHost {
   readonly _h?: unknown;
-  writeFile?(fileName: string, text: string): void;
+  writeFile?(fileName: string, text: string, writeByteOrderMark?: boolean, data?: WriteFileData): void;
+  isEmitBlocked?(fileName: string): boolean;
 }
 interface CompilerOptions extends CompilerOptionsSubset {
   readonly configFilePath?: string;
   readonly declarationMap?: Tristate;
+  readonly emitBOM?: Tristate;
   readonly emitDeclarationOnly?: Tristate;
+  readonly mapRoot?: string;
+  readonly newLine?: number;
+  readonly noEmit?: Tristate;
   readonly inlineSourceMap?: Tristate;
   readonly noEmitForJsFiles?: Tristate;
   readonly sourceMap?: Tristate;
@@ -259,4 +435,18 @@ function declarationsEnabled(options: CompilerOptions): boolean {
 
 function isSourceFileJS(file: SourceFile): boolean {
   return file.fileName.endsWith(".js") || file.fileName.endsWith(".jsx") || file.fileName.endsWith(".mjs") || file.fileName.endsWith(".cjs");
+}
+
+function writeFileDiagnostic(fileName: string, error: Error): Diagnostic {
+  return {
+    message: {
+      key: "TSTS_Could_not_write_file",
+      code: 0,
+      category: DiagnosticCategory.Error,
+      message: `Could not write file '${fileName}': ${error.message}`,
+    },
+    category: DiagnosticCategory.Error,
+    code: 0,
+    text: `Could not write file '${fileName}': ${error.message}`,
+  };
 }

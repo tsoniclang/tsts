@@ -53,6 +53,18 @@ export class CopyOnWriteMap<K, V> {
       this.owned = savedOwned;
     };
   }
+
+  entries(): IterableIterator<readonly [K, V]> {
+    return (this.m ?? new Map<K, V>()).entries() as IterableIterator<readonly [K, V]>;
+  }
+
+  keys(): IterableIterator<K> {
+    return (this.m ?? new Map<K, V>()).keys();
+  }
+
+  values(): IterableIterator<V> {
+    return (this.m ?? new Map<K, V>()).values();
+  }
 }
 
 export class CopyOnWriteSet<K> {
@@ -72,5 +84,9 @@ export class CopyOnWriteSet<K> {
 
   enterScope(): () => void {
     return this.m.enterScope();
+  }
+
+  values(): IterableIterator<K> {
+    return this.m.keys();
   }
 }

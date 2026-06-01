@@ -1,0 +1,529 @@
+/**
+ * Glob / spec matching for tsconfig `include`/`exclude` patterns.
+ *
+ * Port surface of TS-Go `internal/vfs/vfsmatch/vfsmatch.go` (1100+ LoC).
+ * Current scope:
+ *   - `Usage` enum, `UnlimitedDepth`
+ *   - `IsImplicitGlob` (sufficient for wildcarddirectories.ts)
+ *   - `NewSpecMatcher` signature
+ *
+ * The full matching algorithm (component, segment, charClass, NFA-style
+ * compilation, recursive directory walk) lands in a follow-up commit
+ * with `vfsmatch.test.ts`. See TS-Go's MATCHING_ALGORITHM.md for the
+ * specification.
+ */
+
+import type { FS } from "../vfs.js";
+import {
+  hasExtension, getDirectoryPath, removeTrailingDirectorySeparator,
+  isRootedDiskPath, normalizePath, combinePaths,
+  containsPath as _containsPath,
+} from "../../tspath/path.js";
+
+function containsPath(parent: string, child: string, useCaseSensitiveFileNames: boolean): boolean {
+  return _containsPath(parent, child, { useCaseSensitiveFileNames, currentDirectory: "" });
+}
+
+export type Usage = 0 | 1 | 2;
+export const Usage: {
+  readonly Files: Usage;
+  readonly Directories: Usage;
+  readonly Exclude: Usage;
+} = {
+  Files: 0,
+  Directories: 1,
+  Exclude: 2,
+};
+
+/** Sentinel meaning "no depth limit" for `readDirectory`. */
+export const UnlimitedDepth: number = Number.MAX_SAFE_INTEGER;
+
+/**
+ * Returns true if a path component is implicitly a glob. An includes
+ * path "foo" is implicitly "foo/** /*" if its last component has no
+ * extension and contains no glob characters.
+ *
+ * Mirrors TS-Go `IsImplicitGlob`.
+ */
+export function isImplicitGlob(lastPathComponent: string): boolean {
+  for (let i = 0; i < lastPathComponent.length; i += 1) {
+    const ch = lastPathComponent[i]!;
+    if (ch === "." || ch === "*" || ch === "?") return false;
+  }
+  return true;
+}
+
+/**
+ * A compiled multi-spec matcher. Mirrors TS-Go `SpecMatcher`.
+ */
+export interface SpecMatcher {
+  matchString(s: string): boolean;
+  matchIndex?(s: string): number;
+}
+
+export interface GlobMatchResult {
+  readonly matched: boolean;
+  readonly includeIndex: number;
+}
+
+export class GlobMatcher {
+  private readonly includes: readonly CompiledGlob[];
+  private readonly excludes: readonly CompiledGlob[];
+  private readonly hadIncludes: boolean;
+  private readonly caseSensitive: boolean;
+
+  constructor(
+    includeSpecs: readonly string[],
+    excludeSpecs: readonly string[],
+    basePath: string,
+    usage: Usage,
+    caseSensitive: boolean,
+  ) {
+    this.caseSensitive = caseSensitive;
+    this.hadIncludes = includeSpecs.length > 0;
+    this.includes = includeSpecs
+      .map(spec => compileGlobForUsage(spec, basePath, usage))
+      .filter((glob): glob is CompiledGlob => glob !== undefined);
+    this.excludes = excludeSpecs
+      .map(spec => compileGlobForUsage(spec, basePath, Usage.Exclude))
+      .filter((glob): glob is CompiledGlob => glob !== undefined);
+  }
+
+  matchesFile(path: string): GlobMatchResult {
+    for (const exclude of this.excludes) {
+      if (matchesGlob(path, exclude, this.caseSensitive)) return { matched: false, includeIndex: -1 };
+    }
+    if (this.includes.length === 0) {
+      return { matched: !this.hadIncludes, includeIndex: this.hadIncludes ? -1 : 0 };
+    }
+    for (let index = 0; index < this.includes.length; index += 1) {
+      if (matchesGlob(path, this.includes[index]!, this.caseSensitive)) {
+        return { matched: true, includeIndex: index };
+      }
+    }
+    return { matched: false, includeIndex: -1 };
+  }
+
+  matchesDirectory(path: string): boolean {
+    for (const exclude of this.excludes) {
+      if (matchesGlob(path, exclude, this.caseSensitive)) return false;
+    }
+    if (this.includes.length === 0) return !this.hadIncludes;
+    return this.includes.some(include => matchesGlobPrefix(path, include, this.caseSensitive));
+  }
+}
+
+/**
+ * Compiles a list of spec strings into a `SpecMatcher`. The full
+ * compiler lands in a follow-up commit; for now this returns `undefined`
+ * when the list is empty, matching the upstream "nothing to match"
+ * behavior.
+ *
+ * Mirrors TS-Go `NewSpecMatcher`.
+ */
+export function newSpecMatcher(
+  specs: readonly string[],
+  currentDirectory: string,
+  usage: Usage,
+  caseSensitive: boolean,
+): SpecMatcher | undefined {
+  if (specs.length === 0) return undefined;
+  const globs = specs
+    .map((spec) => compileGlobForUsage(spec, currentDirectory, usage))
+    .filter((glob): glob is CompiledGlob => glob !== undefined);
+  if (globs.length === 0) return undefined;
+  return {
+    matchString: (s: string): boolean => globs.some((glob) => matchesGlob(s, glob, caseSensitive)),
+    matchIndex: (s: string): number => {
+      for (let index = 0; index < globs.length; index += 1) {
+        if (matchesGlob(s, globs[index]!, caseSensitive)) return index;
+      }
+      return -1;
+    },
+  };
+}
+
+/**
+ * Top-level directory walker entry point. Mirrors TS-Go
+ * `ReadDirectory`. Walks `path` collecting files matching `includes`
+ * (and not in `excludes`) whose extension is in `extensions`.
+ */
+export function readDirectory(
+  host: FS,
+  currentDir: string,
+  path: string,
+  extensions: readonly string[],
+  excludes: readonly string[],
+  includes: readonly string[],
+  depth: number,
+): readonly string[] {
+  return matchFiles(path, extensions, excludes, includes, host.useCaseSensitiveFileNames(), currentDir, depth, host);
+}
+
+// ---------------------------------------------------------------------------
+// Glob compilation + base-path detection
+// ---------------------------------------------------------------------------
+
+interface GlobComponent {
+  /** Raw text of this component, e.g. "src", "**", "*.ts". */
+  readonly text: string;
+  /** True for `**` recursive wildcard. */
+  readonly isRecursive: boolean;
+  readonly regex?: RegExp;
+}
+
+interface CompiledGlob {
+  readonly basePath: string;
+  readonly components: readonly GlobComponent[];
+}
+
+const WILDCARD_RE = /[*?]/;
+
+function getIncludeBasePath(absolute: string): string {
+  const wildcardOffset = absolute.search(WILDCARD_RE);
+  if (wildcardOffset < 0) {
+    if (!hasExtension(absolute)) return absolute;
+    return removeTrailingDirectorySeparator(getDirectoryPath(absolute));
+  }
+  const lastSeparator = absolute.lastIndexOf("/", wildcardOffset);
+  return absolute.slice(0, Math.max(lastSeparator, 0));
+}
+
+/**
+ * Mirrors TS-Go `getBasePaths`. Returns the unique non-wildcard base
+ * paths derived from the include patterns.
+ */
+export function getBasePaths(
+  path: string,
+  includes: readonly string[],
+  useCaseSensitiveFileNames: boolean,
+): readonly string[] {
+  const basePaths: string[] = [path];
+  if (includes.length === 0) return basePaths;
+
+  const includeBasePaths: string[] = [];
+  for (const include of includes) {
+    const absolute = isRootedDiskPath(include)
+      ? include
+      : normalizePath(combinePaths(path, include));
+    includeBasePaths.push(getIncludeBasePath(absolute));
+  }
+  includeBasePaths.sort();
+
+  for (const includeBasePath of includeBasePaths) {
+    if (basePaths.every((basepath) => !containsPath(basepath, includeBasePath, useCaseSensitiveFileNames))) {
+      basePaths.push(includeBasePath);
+    }
+  }
+  return basePaths;
+}
+
+function compileGlob(spec: string, basePath: string): CompiledGlob {
+  return compileGlobForUsage(spec, basePath, Usage.Files) ?? { basePath, components: [] };
+}
+
+function compileGlobForUsage(spec: string, basePath: string, usage: Usage): CompiledGlob | undefined {
+  const absolute = isRootedDiskPath(spec) ? spec : normalizePath(combinePaths(basePath, spec));
+  const components: GlobComponent[] = [];
+  const parts = absolute.split("/").filter((segment) => segment.length > 0);
+  if (usage !== Usage.Exclude && parts[parts.length - 1] === "**") return undefined;
+  if (parts.length > 0 && isImplicitGlob(parts[parts.length - 1]!)) {
+    parts.push("**", "*");
+  }
+  for (const segment of parts) {
+    if (segment === "") continue;
+    components.push({
+      text: segment,
+      isRecursive: segment === "**",
+      ...(segment === "**" ? {} : { regex: globSegmentToRegExp(segment, caseSensitiveDefault) }),
+    });
+  }
+  return { basePath: getIncludeBasePath(absolute), components };
+}
+
+const caseSensitiveDefault = true;
+
+function matchesGlob(filePath: string, glob: CompiledGlob, caseSensitive: boolean): boolean {
+  const normalizedFilePath = normalizePath(filePath);
+  const normalizedBase = normalizePath(glob.basePath);
+  if (normalizedBase.length > 0 && !pathStartsWith(normalizedFilePath, normalizedBase, caseSensitive)) {
+    const hasWildcardBase = glob.components.some(component => component.isRecursive || component.text.includes("*") || component.text.includes("?"));
+    if (!hasWildcardBase) return false;
+  }
+  const cmp = (a: string, b: string) => caseSensitive ? a === b : a.toLowerCase() === b.toLowerCase();
+  const matchSegment = (segment: string, component: GlobComponent): boolean => {
+    if (component.isRecursive) return true;
+    const re = caseSensitive ? (component.regex ?? globSegmentToRegExp(component.text, true)) : globSegmentToRegExp(component.text, false);
+    void cmp;
+    return re.test(segment);
+  };
+
+  const segments = filePath.split("/").filter((s) => s.length > 0);
+  // Two-pointer match with recursive ** handling.
+  let i = 0;
+  let j = 0;
+  while (i < segments.length && j < glob.components.length) {
+    const c = glob.components[j]!;
+    if (c.isRecursive) {
+      // ** matches zero or more path segments.
+      if (j === glob.components.length - 1) return true;
+      const next = glob.components[j + 1]!;
+      while (i < segments.length && (shouldSkipRecursiveSegment(segments[i]!, c) || !matchSegment(segments[i]!, next))) i += 1;
+      if (i >= segments.length) return false;
+      j += 1;
+      continue;
+    }
+    if (!matchSegment(segments[i]!, c)) return false;
+    i += 1;
+    j += 1;
+  }
+  return j >= glob.components.length;
+}
+
+function matchesGlobPrefix(directoryPath: string, glob: CompiledGlob, caseSensitive: boolean): boolean {
+  const directorySegments = normalizePath(directoryPath).split("/").filter((s) => s.length > 0);
+  const components = glob.components;
+  let pathIndex = 0;
+  let componentIndex = 0;
+  while (pathIndex < directorySegments.length && componentIndex < components.length) {
+    const component = components[componentIndex]!;
+    if (component.isRecursive) return true;
+    const regex = caseSensitive
+      ? (component.regex ?? globSegmentToRegExp(component.text, true))
+      : globSegmentToRegExp(component.text, false);
+    if (!regex.test(directorySegments[pathIndex]!)) return false;
+    pathIndex += 1;
+    componentIndex += 1;
+  }
+  return pathIndex >= directorySegments.length;
+}
+
+export function nextPathPart(path: string, offset: number): readonly [string, number, boolean] {
+  if (offset >= path.length) return ["", offset, false];
+  if (offset === 0 && path.startsWith("/")) return ["", 1, true];
+  let start = offset;
+  while (start < path.length && path[start] === "/") start += 1;
+  if (start >= path.length) return ["", start, false];
+  const slash = path.indexOf("/", start);
+  if (slash === -1) return [path.slice(start), path.length, true];
+  return [path.slice(start, slash), slash, true];
+}
+
+export function nextPathPartParts(prefix: string, suffix: string, offset: number): readonly [string, number, boolean] {
+  if (suffix.length === 0) return nextPathPart(prefix, offset);
+  if (prefix.length === 0) return nextPathPart(suffix, offset);
+  const totalLength = prefix.length + suffix.length;
+  if (offset >= totalLength) return ["", offset, false];
+  if (offset === 0 && prefix.startsWith("/")) return ["", 1, true];
+  if (offset < prefix.length) {
+    let start = offset;
+    while (start < prefix.length && prefix[start] === "/") start += 1;
+    if (start < prefix.length) {
+      const slash = prefix.indexOf("/", start);
+      if (slash !== -1) return [prefix.slice(start, slash), slash, true];
+      return [prefix.slice(start) + suffix, totalLength, true];
+    }
+  }
+  const suffixOffset = Math.max(0, offset - prefix.length);
+  if (suffixOffset >= suffix.length) return ["", offset, false];
+  return [suffix.slice(suffixOffset), totalLength, true];
+}
+
+export function matchPathParts(
+  prefix: string,
+  suffix: string,
+  glob: CompiledGlob,
+  caseSensitive: boolean,
+  prefixOnly: boolean,
+): boolean {
+  let pathOffset = 0;
+  let componentIndex = 0;
+  while (true) {
+    const [pathPart, nextOffset, ok] = nextPathPartParts(prefix, suffix, pathOffset);
+    if (!ok) return prefixOnly || patternSatisfied(glob.components, componentIndex);
+    if (componentIndex >= glob.components.length) return false;
+    const component = glob.components[componentIndex]!;
+    if (component.isRecursive) {
+      if (matchPathParts(prefix.slice(pathOffset), suffix, {
+        basePath: glob.basePath,
+        components: glob.components.slice(componentIndex + 1),
+      }, caseSensitive, prefixOnly)) return true;
+      if (isHiddenPath(pathPart) || isPackageFolder(pathPart)) return false;
+      pathOffset = nextOffset;
+      continue;
+    }
+    const regex = caseSensitive
+      ? (component.regex ?? globSegmentToRegExp(component.text, true))
+      : globSegmentToRegExp(component.text, false);
+    if (!regex.test(pathPart)) return false;
+    pathOffset = nextOffset;
+    componentIndex += 1;
+  }
+}
+
+function patternSatisfied(components: readonly GlobComponent[], componentIndex: number): boolean {
+  for (let index = componentIndex; index < components.length; index += 1) {
+    if (!components[index]!.isRecursive) return false;
+  }
+  return true;
+}
+
+export function isFileNameMatchedBySpecs(
+  fileName: string,
+  includes: readonly string[],
+  excludes: readonly string[],
+  currentDirectory: string,
+  useCaseSensitiveFileNames: boolean,
+): boolean {
+  const includeMatcher = newSpecMatcher(includes, currentDirectory, Usage.Files, useCaseSensitiveFileNames);
+  const excludeMatcher = newSpecMatcher(excludes, currentDirectory, Usage.Exclude, useCaseSensitiveFileNames);
+  if (excludeMatcher?.matchString(fileName) === true) return false;
+  return includeMatcher === undefined || includeMatcher.matchString(fileName);
+}
+
+export function getRegularExpressionForSpec(spec: string, currentDirectory: string, usage: Usage, caseSensitive: boolean): RegExp | undefined {
+  const glob = compileGlobForUsage(spec, currentDirectory, usage);
+  if (glob === undefined) return undefined;
+  const pattern = glob.components.map((component) => {
+    if (component.isRecursive) return "(?:[^/]+/)*";
+    return globSegmentToSource(component.text);
+  }).join("/");
+  return new RegExp(`^${pattern}$`, caseSensitive ? "" : "i");
+}
+
+export function getFileMatcherPatterns(
+  path: string,
+  includes: readonly string[],
+  excludes: readonly string[],
+  caseSensitive: boolean,
+): readonly RegExp[] {
+  void excludes;
+  return includes
+    .map((include) => getRegularExpressionForSpec(include, path, Usage.Files, caseSensitive))
+    .filter((regex): regex is RegExp => regex !== undefined);
+}
+
+export function getExcludeMatcherPatterns(path: string, excludes: readonly string[], caseSensitive: boolean): readonly RegExp[] {
+  return excludes
+    .map((exclude) => getRegularExpressionForSpec(exclude, path, Usage.Exclude, caseSensitive))
+    .filter((regex): regex is RegExp => regex !== undefined);
+}
+
+export function matchesExclude(path: string, excludes: readonly string[], currentDirectory: string, caseSensitive: boolean): boolean {
+  const matcher = newSpecMatcher(excludes, currentDirectory, Usage.Exclude, caseSensitive);
+  return matcher?.matchString(path) === true;
+}
+
+export function globSegmentToRegExp(segment: string, caseSensitive: boolean): RegExp {
+  return new RegExp(`^${globSegmentToSource(segment)}$`, caseSensitive ? "" : "i");
+}
+
+export function globSegmentToSource(segment: string): string {
+  let source = "";
+  for (let index = 0; index < segment.length; index += 1) {
+    const ch = segment[index]!;
+    if (ch === "*") {
+      source += "[^/]*";
+    } else if (ch === "?") {
+      source += "[^/]";
+    } else if (ch === "[") {
+      const end = findCharClassEnd(segment, index + 1);
+      if (end > index) {
+        source += segment.slice(index, end + 1);
+        index = end;
+      } else {
+        source += "\\[";
+      }
+    } else {
+      source += escapeRegExpChar(ch);
+    }
+  }
+  return source;
+}
+
+function findCharClassEnd(segment: string, start: number): number {
+  for (let index = start; index < segment.length; index += 1) {
+    if (segment[index] === "]") return index;
+  }
+  return -1;
+}
+
+function escapeRegExpChar(ch: string): string {
+  return /[\\^$.*+?()[\]{}|]/.test(ch) ? `\\${ch}` : ch;
+}
+
+function shouldSkipRecursiveSegment(segment: string, component: GlobComponent): boolean {
+  return component.isRecursive && (segment === "node_modules" || segment === "bower_components" || segment === "jspm_packages" || segment.startsWith("."));
+}
+
+function isHiddenPath(name: string): boolean {
+  return name.length > 0 && name[0] === ".";
+}
+
+function isPackageFolder(name: string): boolean {
+  return name.localeCompare("node_modules", undefined, { sensitivity: "accent" }) === 0
+    || name.localeCompare("jspm_packages", undefined, { sensitivity: "accent" }) === 0
+    || name.localeCompare("bower_components", undefined, { sensitivity: "accent" }) === 0;
+}
+
+function pathStartsWith(path: string, prefix: string, caseSensitive: boolean): boolean {
+  const normalizedPath = caseSensitive ? path : path.toLowerCase();
+  const normalizedPrefix = caseSensitive ? prefix : prefix.toLowerCase();
+  return normalizedPath === normalizedPrefix || normalizedPath.startsWith(normalizedPrefix.endsWith("/") ? normalizedPrefix : `${normalizedPrefix}/`);
+}
+
+function matchFiles(
+  path: string,
+  extensions: readonly string[],
+  excludes: readonly string[],
+  includes: readonly string[],
+  useCaseSensitiveFileNames: boolean,
+  currentDirectory: string,
+  depth: number,
+  host: FS,
+): readonly string[] {
+  const includeGlobs = includes.map((i) => compileGlob(i, currentDirectory));
+  const excludeGlobs = excludes.map((e) => compileGlob(e, currentDirectory));
+  const matchedFiles: string[] = [];
+  const basePaths = getBasePaths(path, includes, useCaseSensitiveFileNames);
+
+  for (const basePath of basePaths) {
+    host.walkDir(basePath, (filePath, entry) => {
+      if (depth !== UnlimitedDepth && relativeDepth(basePath, filePath) > depth) return "skip-dir";
+      if (entry.isDirectory) return undefined;
+      if (extensions.length > 0 && !extensions.some((ext) => filePath.endsWith(ext))) return undefined;
+      if (excludeGlobs.some((g) => matchesGlob(filePath, g, useCaseSensitiveFileNames))) return undefined;
+      if (includeGlobs.length === 0 || includeGlobs.some((g) => matchesGlob(filePath, g, useCaseSensitiveFileNames))) {
+        matchedFiles.push(filePath);
+      }
+      return undefined;
+    });
+  }
+  return matchedFiles.sort((a, b) => comparePathsByParts(a, b));
+}
+
+function relativeDepth(basePath: string, filePath: string): number {
+  const base = removeTrailingDirectorySeparator(normalizePath(basePath));
+  const path = normalizePath(filePath);
+  if (path === base) return 0;
+  const prefix = base.endsWith("/") ? base : base + "/";
+  if (!path.startsWith(prefix)) return 0;
+  return path.slice(prefix.length).split("/").filter((part) => part.length > 0).length;
+}
+
+function comparePathsByParts(a: string, b: string): number {
+  const aParts = a.split("/");
+  const bParts = b.split("/");
+  const count = Math.min(aParts.length, bParts.length);
+  for (let index = 0; index < count; index += 1) {
+    const aPart = aParts[index]!;
+    const bPart = bParts[index]!;
+    if (aPart < bPart) return -1;
+    if (aPart > bPart) return 1;
+  }
+  return aParts.length - bParts.length;
+}
+
+// ---------------------------------------------------------------------------
+// Forward-declared tspath surface
+// ---------------------------------------------------------------------------

@@ -240,7 +240,7 @@ import {
 import { ModifierFlags } from "../enums/modifierFlags.enum.js";
 import { createLiveScanner, skipTrivia, TokenFlags, type LiveScanner, type ScannerState, type ScannedToken } from "../scanner/index.js";
 import { getTextOfNodeFromSourceText, tokenIsIdentifierOrKeyword } from "../scanner/utilities.js";
-import { Diagnostics } from "../diagnostics/diagnostics_generated.js";
+import { Diagnostics } from "../diagnostics/diagnostics.generated.js";
 import { format } from "../diagnostics/diagnostics.js";
 import type { Diagnostic, DiagnosticMessage } from "../diagnostics/types.js";
 // M3 Stage-5 pre-wave: scriptKind/languageVariant plumbing. tsgo
@@ -251,7 +251,7 @@ import type { Diagnostic, DiagnosticMessage } from "../diagnostics/types.js";
 // LanguageVariant mirror tsgo parser.getLanguageVariant (parser/utilities.go:11)
 // returning core.LanguageVariant (core/languagevariant.go).
 import { ScriptKind, getScriptKindFromFileName } from "../core/core.js";
-import { LanguageVariant, getLanguageVariant, tokenIsIdentifierOrKeywordOrGreaterThan } from "./parser-utilities.js";
+import { LanguageVariant, getLanguageVariant, tokenIsIdentifierOrKeywordOrGreaterThan } from "./utilities.js";
 
 export interface ParseSourceFileOptions {
   readonly fileName?: string;
@@ -498,7 +498,7 @@ const keywordTypeKinds = new Set<Kind>([
 // codex Stage-3a: faithful port of tsgo scanner.go textToToken (124-189) ∪
 // textToKeyword (36-122), inverted into tokenToText (scanner.go:2213-2219) and
 // surfaced via tokenToString (scanner.go:2221-2223). Used as the `{0}` arg to
-// Diagnostics.X_0_expected. The scanner.native-preview.ts tokenToString is NOT
+// Diagnostics.X_0_expected. The scanner.nativePreview.ts tokenToString is NOT
 // usable here (that file is excluded from the build, tsconfig.json), so the map
 // is rebuilt locally: punctuation lexemes from tsgo textToToken plus keyword
 // stems derived from KindNames (matching scanner.ts textToKeyword, scanner.go:36).

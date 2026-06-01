@@ -13,6 +13,7 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol, SymbolTable } from "../ast/index.js";
+import { ScriptTarget } from "../core/index.js";
 import type { PseudoBigInt } from "../jsnum/index.js";
 
 // ---------------------------------------------------------------------------
@@ -108,6 +109,38 @@ export const SymbolFormatFlags = {
   WriteComputedProps: (1 << 4) as SymbolFormatFlags,
   DoNotIncludeSymbolChain: (1 << 5) as SymbolFormatFlags,
 } as const;
+
+export type ExternalEmitHelpers = number;
+export const ExternalEmitHelpers = {
+  Rest: (1 << 0) as ExternalEmitHelpers,
+  Decorate: (1 << 1) as ExternalEmitHelpers,
+  Metadata: (1 << 2) as ExternalEmitHelpers,
+  Param: (1 << 3) as ExternalEmitHelpers,
+  Awaiter: (1 << 4) as ExternalEmitHelpers,
+  Await: (1 << 5) as ExternalEmitHelpers,
+  AsyncGenerator: (1 << 6) as ExternalEmitHelpers,
+  AsyncDelegator: (1 << 7) as ExternalEmitHelpers,
+  AsyncValues: (1 << 8) as ExternalEmitHelpers,
+  ExportStar: (1 << 9) as ExternalEmitHelpers,
+  ImportStar: (1 << 10) as ExternalEmitHelpers,
+  ImportDefault: (1 << 11) as ExternalEmitHelpers,
+  MakeTemplateObject: (1 << 12) as ExternalEmitHelpers,
+  ClassPrivateFieldGet: (1 << 13) as ExternalEmitHelpers,
+  ClassPrivateFieldSet: (1 << 14) as ExternalEmitHelpers,
+  ClassPrivateFieldIn: (1 << 15) as ExternalEmitHelpers,
+  SetFunctionName: (1 << 16) as ExternalEmitHelpers,
+  PropKey: (1 << 17) as ExternalEmitHelpers,
+  AddDisposableResourceAndDisposeResources: (1 << 18) as ExternalEmitHelpers,
+  RewriteRelativeImportExtension: (1 << 19) as ExternalEmitHelpers,
+  ESDecorateAndRunInitializers: (1 << 1) as ExternalEmitHelpers,
+  FirstEmitHelper: (1 << 0) as ExternalEmitHelpers,
+  LastEmitHelper: (1 << 19) as ExternalEmitHelpers,
+  ForAwaitOfIncludes: (1 << 8) as ExternalEmitHelpers,
+  AsyncGeneratorIncludes: ((1 << 5) | (1 << 6)) as ExternalEmitHelpers,
+  AsyncDelegatorIncludes: ((1 << 5) | (1 << 7) | (1 << 8)) as ExternalEmitHelpers,
+} as const;
+
+export const externalHelpersModuleNameText = "tslib";
 
 export type TypeId = number;
 
@@ -789,6 +822,34 @@ export interface Signature {
   compositeSignatures?: readonly Signature[];
 }
 
+export type SignatureFlags = number;
+export const SignatureFlags = {
+  None: 0 as SignatureFlags,
+  HasRestParameter: (1 << 0) as SignatureFlags,
+  HasLiteralTypes: (1 << 1) as SignatureFlags,
+  Construct: (1 << 2) as SignatureFlags,
+  Abstract: (1 << 3) as SignatureFlags,
+  IsInnerCallChain: (1 << 4) as SignatureFlags,
+  IsOuterCallChain: (1 << 5) as SignatureFlags,
+  IsUntypedSignatureInJSFile: (1 << 6) as SignatureFlags,
+  IsNonInferrable: (1 << 7) as SignatureFlags,
+  IsSignatureCandidateForOverloadFailure: (1 << 8) as SignatureFlags,
+  PropagatingFlags: ((1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 6) | (1 << 8)) as SignatureFlags,
+  CallChainFlags: ((1 << 4) | (1 << 5)) as SignatureFlags,
+} as const;
+
+export interface CompositeSignature {
+  isUnion: boolean;
+  signatures: readonly Signature[];
+}
+
+export interface TypePredicate {
+  kind: number;
+  parameterIndex: number;
+  parameterName: string;
+  type?: Type;
+}
+
 export interface TypeMapper {
   kind: number;
   sources?: readonly Type[];
@@ -866,3 +927,139 @@ export function getPropertySymbolOfType(type: Type, name: string): AstSymbol | u
 export function getPropertyTypeOfType(type: Type, name: string): Type | undefined {
   return getTypeOfSymbol(getPropertySymbolOfType(type, name));
 }
+
+const typeFlagNames: readonly { flag: TypeFlags; name: string }[] = [
+  { flag: TypeFlags.Any, name: "Any" },
+  { flag: TypeFlags.Unknown, name: "Unknown" },
+  { flag: TypeFlags.Undefined, name: "Undefined" },
+  { flag: TypeFlags.Null, name: "Null" },
+  { flag: TypeFlags.Void, name: "Void" },
+  { flag: TypeFlags.String, name: "String" },
+  { flag: TypeFlags.Number, name: "Number" },
+  { flag: TypeFlags.BigInt, name: "BigInt" },
+  { flag: TypeFlags.Boolean, name: "Boolean" },
+  { flag: TypeFlags.ESSymbol, name: "ESSymbol" },
+  { flag: TypeFlags.StringLiteral, name: "StringLiteral" },
+  { flag: TypeFlags.NumberLiteral, name: "NumberLiteral" },
+  { flag: TypeFlags.BigIntLiteral, name: "BigIntLiteral" },
+  { flag: TypeFlags.BooleanLiteral, name: "BooleanLiteral" },
+  { flag: TypeFlags.UniqueESSymbol, name: "UniqueESSymbol" },
+  { flag: TypeFlags.EnumLiteral, name: "EnumLiteral" },
+  { flag: TypeFlags.Enum, name: "Enum" },
+  { flag: TypeFlags.NonPrimitive, name: "NonPrimitive" },
+  { flag: TypeFlags.Never, name: "Never" },
+  { flag: TypeFlags.TypeParameter, name: "TypeParameter" },
+  { flag: TypeFlags.Object, name: "Object" },
+  { flag: TypeFlags.Index, name: "Index" },
+  { flag: TypeFlags.TemplateLiteral, name: "TemplateLiteral" },
+  { flag: TypeFlags.StringMapping, name: "StringMapping" },
+  { flag: TypeFlags.Substitution, name: "Substitution" },
+  { flag: TypeFlags.IndexedAccess, name: "IndexedAccess" },
+  { flag: TypeFlags.Conditional, name: "Conditional" },
+  { flag: TypeFlags.Union, name: "Union" },
+  { flag: TypeFlags.Intersection, name: "Intersection" },
+];
+
+export function formatTypeFlags(flags: TypeFlags): string {
+  if (flags === TypeFlags.None) return "None";
+  const names = typeFlagNames.filter(entry => (flags & entry.flag) !== 0).map(entry => entry.name);
+  return names.length === 0 ? String(flags) : names.join("|");
+}
+
+export function typeSymbol(type: Type): AstSymbol | undefined { return type.symbol; }
+export function typeAliasSymbol(type: Type): AstSymbol | undefined { return type.aliasSymbol; }
+export function typeArguments(type: Type): readonly Type[] | undefined { return type.aliasTypeArguments; }
+export function typeId(type: Type): TypeId { return type.id; }
+export function typeFlags(type: Type): TypeFlags { return type.flags; }
+export function asIntrinsicType(type: Type): IntrinsicType | undefined { return (type.flags & TypeFlags.Intrinsic) !== 0 ? type.data as IntrinsicType | undefined : undefined; }
+export function asLiteralType(type: Type): LiteralType | undefined { return (type.flags & TypeFlags.Literal) !== 0 ? type.data as LiteralType | undefined : undefined; }
+export function asUniqueESSymbolType(type: Type): UniqueESSymbolType | undefined { return (type.flags & TypeFlags.UniqueESSymbol) !== 0 ? type.data as UniqueESSymbolType | undefined : undefined; }
+export function asConstrainedType(type: Type): ConstrainedType | undefined { return type.data as ConstrainedType | undefined; }
+export function asStructuredType(type: Type): StructuredType | undefined { return (type.flags & TypeFlags.StructuredType) !== 0 ? type.data as StructuredType | undefined : undefined; }
+export function asObjectType(type: Type): ObjectType | undefined { return (type.flags & TypeFlags.Object) !== 0 ? type.data as ObjectType | undefined : undefined; }
+export function asTypeReference(type: Type): TypeReference | undefined { return ((type.data as ObjectType | undefined)?.objectFlags ?? 0) & ObjectFlags.Reference ? type.data as TypeReference : undefined; }
+export function asInterfaceType(type: Type): InterfaceType | undefined { return ((type.data as ObjectType | undefined)?.objectFlags ?? 0) & ObjectFlags.Interface ? type.data as InterfaceType : undefined; }
+export function asTupleType(type: Type): TupleType | undefined { return ((type.data as ObjectType | undefined)?.objectFlags ?? 0) & ObjectFlags.Tuple ? type.data as TupleType : undefined; }
+export function asUnionOrIntersectionType(type: Type): UnionOrIntersectionType | undefined { return (type.flags & TypeFlags.UnionOrIntersection) !== 0 ? type.data as UnionOrIntersectionType | undefined : undefined; }
+export function asUnionType(type: Type): UnionType | undefined { return (type.flags & TypeFlags.Union) !== 0 ? type.data as UnionType | undefined : undefined; }
+export function asIntersectionType(type: Type): IntersectionType | undefined { return (type.flags & TypeFlags.Intersection) !== 0 ? type.data as IntersectionType | undefined : undefined; }
+export function asIndexType(type: Type): IndexType | undefined { return (type.flags & TypeFlags.Index) !== 0 ? type.data as IndexType | undefined : undefined; }
+export function asIndexedAccessType(type: Type): IndexedAccessType | undefined { return (type.flags & TypeFlags.IndexedAccess) !== 0 ? type.data as IndexedAccessType | undefined : undefined; }
+export function asTemplateLiteralType(type: Type): TypeBase | undefined { return (type.flags & TypeFlags.TemplateLiteral) !== 0 ? type.data as TypeBase | undefined : undefined; }
+export function asStringMappingType(type: Type): TypeBase | undefined { return (type.flags & TypeFlags.StringMapping) !== 0 ? type.data as TypeBase | undefined : undefined; }
+export function asSubstitutionType(type: Type): TypeBase | undefined { return (type.flags & TypeFlags.Substitution) !== 0 ? type.data as TypeBase | undefined : undefined; }
+export function asConditionalType(type: Type): TypeBase | undefined { return (type.flags & TypeFlags.Conditional) !== 0 ? type.data as TypeBase | undefined : undefined; }
+export function asEvolvingArrayType(type: Type): EvolvingArrayType | undefined { return ((type.data as ObjectType | undefined)?.objectFlags ?? 0) & ObjectFlags.EvolvingArray ? type.data as EvolvingArrayType : undefined; }
+export function asMappedType(type: Type): MappedType | undefined { return ((type.data as ObjectType | undefined)?.objectFlags ?? 0) & ObjectFlags.Mapped ? type.data as MappedType : undefined; }
+export function asReverseMappedType(type: Type): ReverseMappedType | undefined { return ((type.data as ObjectType | undefined)?.objectFlags ?? 0) & ObjectFlags.ReverseMapped ? type.data as ReverseMappedType : undefined; }
+export function asTypeParameter(type: Type): TypeParameter | undefined { return (type.flags & TypeFlags.TypeParameter) !== 0 ? type.data as TypeParameter | undefined : undefined; }
+export function isUnion(type: Type): boolean { return (type.flags & TypeFlags.Union) !== 0; }
+export function isIntersection(type: Type): boolean { return (type.flags & TypeFlags.Intersection) !== 0; }
+export function isString(type: Type): boolean { return (type.flags & TypeFlags.String) !== 0; }
+export function isStringLiteral(type: Type): boolean { return (type.flags & TypeFlags.StringLiteral) !== 0; }
+export function isNumberLiteral(type: Type): boolean { return (type.flags & TypeFlags.NumberLiteral) !== 0; }
+export function isBigIntLiteral(type: Type): boolean { return (type.flags & TypeFlags.BigIntLiteral) !== 0; }
+export function isEnumLiteral(type: Type): boolean { return (type.flags & TypeFlags.EnumLiteral) !== 0; }
+export function isBooleanLike(type: Type): boolean { return (type.flags & TypeFlags.BooleanLike) !== 0; }
+export function isStringLike(type: Type): boolean { return (type.flags & TypeFlags.StringLike) !== 0; }
+export function isClass(type: Type): boolean { return ((type.data as ObjectType | undefined)?.objectFlags ?? 0) & ObjectFlags.Class ? true : false; }
+export function isTypeParameter(type: Type): boolean { return (type.flags & TypeFlags.TypeParameter) !== 0; }
+export function isIndex(type: Type): boolean { return (type.flags & TypeFlags.Index) !== 0; }
+export function isTupleObjectType(type: Type): boolean { return asTupleType(type) !== undefined; }
+export function intrinsicName(type: Type): string | undefined { return asIntrinsicType(type)?.intrinsicName; }
+export function literalValue(type: Type): LiteralType["value"] | undefined { return asLiteralType(type)?.value; }
+export function structuredCallSignatures(type: Type): readonly Signature[] { return asStructuredType(type)?.declaredCallSignatures ?? []; }
+export function structuredConstructSignatures(type: Type): readonly Signature[] { return asStructuredType(type)?.declaredConstructSignatures ?? []; }
+export function structuredProperties(type: Type): readonly AstSymbol[] { return asStructuredType(type)?.declaredProperties ?? []; }
+export function typeReferenceTarget(type: Type): ObjectType | undefined { return asTypeReference(type)?.target; }
+export function typeReferenceArguments(type: Type): readonly Type[] { return asTypeReference(type)?.resolvedTypeArguments ?? asTypeReference(type)?.resolvedTypeArguments_ ?? []; }
+export function interfaceOuterTypeParameters(type: Type): readonly TypeParameter[] { return asInterfaceType(type)?.outerTypeParameters ?? []; }
+export function interfaceLocalTypeParameters(type: Type): readonly TypeParameter[] { return asInterfaceType(type)?.localTypeParameters ?? []; }
+export function interfaceTypeParameters(type: Type): readonly TypeParameter[] { return asInterfaceType(type)?.typeParameters ?? []; }
+export function tupleElementFlags(type: Type): readonly ElementFlags[] { return asTupleType(type)?.elementInfo.map(info => info.flags) ?? []; }
+export function tupleLabeledDeclarations(type: Type): readonly (AstNode | undefined)[] { return asTupleType(type)?.elementInfo.map(info => info.labeledDeclaration) ?? []; }
+export function tupleFixedLength(type: Type): number { return asTupleType(type)?.fixedLength ?? 0; }
+export function tupleIsReadonly(type: Type): boolean { return asTupleType(type)?.readonly === true; }
+export function unionOrIntersectionTypes(type: Type): readonly Type[] { return asUnionOrIntersectionType(type)?.types ?? []; }
+export function typeParameterTarget(type: Type): TypeParameter | undefined { return asTypeParameter(type)?.target; }
+export function typeParameterMapper(type: Type): TypeMapper | undefined { return asTypeParameter(type)?.mapper; }
+export function indexObjectType(type: Type): Type | undefined { return asIndexedAccessType(type)?.objectType; }
+export function indexIndexType(type: Type): Type | undefined { return asIndexedAccessType(type)?.indexType; }
+export function signatureFlags(signature: Signature): SignatureFlags { return signature.flags; }
+export function signatureTypeParameters(signature: Signature): readonly TypeParameter[] | undefined { return signature.typeParameters; }
+export function signatureDeclaration(signature: Signature): AstNode | undefined { return signature.declaration; }
+export function signatureTarget(signature: Signature): Signature | undefined { return signature.target; }
+export function signatureThisParameter(signature: Signature): AstSymbol | undefined { return signature.thisParameter; }
+export function signatureParameters(signature: Signature): readonly AstSymbol[] { return signature.parameters; }
+export function signatureHasRestParameter(signature: Signature): boolean { return (signature.flags & SignatureFlags.HasRestParameter) !== 0; }
+export function signatureMinArgumentCount(signature: Signature): number { return signature.minArgumentCount; }
+export function typePredicateType(predicate: TypePredicate): Type | undefined { return predicate.type; }
+export function typePredicateKind(predicate: TypePredicate): number { return predicate.kind; }
+export function typePredicateParameterIndex(predicate: TypePredicate): number { return predicate.parameterIndex; }
+export function typePredicateParameterName(predicate: TypePredicate): string { return predicate.parameterName; }
+export function indexInfoKeyType(info: IndexInfo): Type { return info.keyType; }
+export function indexInfoValueType(info: IndexInfo): Type { return info.valueType; }
+export function indexInfoIsReadonly(info: IndexInfo): boolean { return info.isReadonly === true; }
+
+export const LanguageFeatureMinimumTarget = {
+  Exponentiation: ScriptTarget.ES2016,
+  AsyncFunctions: ScriptTarget.ES2017,
+  ForAwaitOf: ScriptTarget.ES2018,
+  AsyncGenerators: ScriptTarget.ES2018,
+  AsyncIteration: ScriptTarget.ES2018,
+  ObjectSpreadRest: ScriptTarget.ES2018,
+  RegularExpressionFlagsDotAll: ScriptTarget.ES2018,
+  BindinglessCatch: ScriptTarget.ES2019,
+  BigInt: ScriptTarget.ES2020,
+  NullishCoalesce: ScriptTarget.ES2020,
+  OptionalChaining: ScriptTarget.ES2020,
+  LogicalAssignment: ScriptTarget.ES2021,
+  TopLevelAwait: ScriptTarget.ES2022,
+  ClassFields: ScriptTarget.ES2022,
+  PrivateNamesAndClassStaticBlocks: ScriptTarget.ES2022,
+  RegularExpressionFlagsHasIndices: ScriptTarget.ES2022,
+  ShebangComments: ScriptTarget.ESNext,
+  UsingAndAwaitUsing: ScriptTarget.ESNext,
+  ClassAndClassElementDecorators: ScriptTarget.ESNext,
+  RegularExpressionFlagsUnicodeSets: ScriptTarget.ESNext,
+} as const;

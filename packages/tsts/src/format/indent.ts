@@ -171,10 +171,32 @@ function getIndentationForNodeWorker(
   isNextChild: boolean,
   options: FormatCodeSettings,
 ): number {
-  // Skeleton: returns the column + delta. Full version walks ancestors
-  // accumulating delta when shouldIndentChildNode is true.
-  void n; void ignoreActualIndentationRange; void isNextChild;
-  return startCol + indentationDelta;
+  let current: AstNode = n;
+  let currentStartLine = startLine;
+  let currentStartCharacter = startCol;
+  let parent = nodeParent(current);
+  while (parent !== undefined) {
+    const useActualIndentation = ignoreActualIndentationRange === undefined
+      || getTokenPosOfNode(current, sourceFile, false) < ignoreActualIndentationRange.pos
+      || getTokenPosOfNode(current, sourceFile, false) > ignoreActualIndentationRange.end;
+    const [containerLine, containerCharacter] = getContainingListOrParentStart(parent, current, sourceFile);
+    const shareLine = containerLine === currentStartLine || childStartsOnTheSameLineWithElseInIfStatement(parent, current, currentStartLine, sourceFile);
+    if (useActualIndentation) {
+      const listIndent = getActualIndentationForListItem(current, sourceFile, options, true);
+      if (listIndent !== -1) return listIndent + indentationDelta;
+      const actual = getActualIndentationForNode(current, parent, currentStartLine, currentStartCharacter, shareLine, sourceFile, options);
+      if (actual !== -1) return actual + indentationDelta;
+    }
+    if (shouldIndentChildNode(nodeKind(parent)) && !shareLine) {
+      indentationDelta += options.indentSize ?? 4;
+    }
+    current = parent;
+    parent = nodeParent(current);
+    currentStartLine = containerLine;
+    currentStartCharacter = containerCharacter;
+    void isNextChild;
+  }
+  return indentationDelta + (options.baseIndentSize ?? 0);
 }
 
 function getCommentIndent(
@@ -350,32 +372,283 @@ function isStringOrRegularExpressionOrTemplateLiteral(kind: number): boolean {
 }
 
 function getActualIndentationForListItemBeforeComma(
-  _precedingToken: AstNode,
-  _sourceFile: SourceFile,
-  _options: FormatCodeSettings,
+  precedingToken: AstNode,
+  sourceFile: SourceFile,
+  options: FormatCodeSettings,
 ): number {
-  // Skeleton — full version computes the indentation of the list item
-  // immediately before the comma so chained items line up.
+  const containingList = getContainingList(precedingToken, sourceFile);
+  if (containingList === undefined) return -1;
+  const index = containingList.nodes.indexOf(precedingToken);
+  if (index > 0) return deriveActualIndentationFromList(containingList, index - 1, sourceFile, options);
   return -1;
 }
 
 function getActualIndentationForListStartLine(
-  _list: { pos: number; end: number },
-  _sourceFile: SourceFile,
-  _options: FormatCodeSettings,
+  list: NodeListLike | undefined,
+  sourceFile: SourceFile,
+  options: FormatCodeSettings,
 ): number {
-  return -1;
+  if (list === undefined) return -1;
+  const { line, column } = getECMALineAndByteOffsetOfPosition(sourceFile, list.pos);
+  return findColumnForFirstNonWhitespaceCharacterInLine(line, column, sourceFile, options);
 }
 
 function getListByPosition(
-  _position: number,
-  _parent: AstNode | undefined,
-  _sourceFile: SourceFile,
-): { pos: number; end: number } | undefined {
+  position: number,
+  parent: AstNode | undefined,
+  sourceFile: SourceFile,
+): NodeListLike | undefined {
+  if (parent === undefined) return undefined;
+  return getListByRange(position, position, parent, sourceFile);
+}
+
+interface NodeListLike {
+  readonly pos: number;
+  readonly end: number;
+  readonly nodes: readonly AstNode[];
+}
+
+type NodeListCarrier = {
+  readonly typeArguments?: readonly AstNode[] | { readonly nodes?: readonly AstNode[]; readonly pos?: number; readonly end?: number };
+  readonly properties?: readonly AstNode[] | { readonly nodes?: readonly AstNode[]; readonly pos?: number; readonly end?: number };
+  readonly elements?: readonly AstNode[] | { readonly nodes?: readonly AstNode[]; readonly pos?: number; readonly end?: number };
+  readonly members?: readonly AstNode[] | { readonly nodes?: readonly AstNode[]; readonly pos?: number; readonly end?: number };
+  readonly parameters?: readonly AstNode[] | { readonly nodes?: readonly AstNode[]; readonly pos?: number; readonly end?: number };
+  readonly typeParameters?: readonly AstNode[] | { readonly nodes?: readonly AstNode[]; readonly pos?: number; readonly end?: number };
+  readonly arguments?: readonly AstNode[] | { readonly nodes?: readonly AstNode[]; readonly pos?: number; readonly end?: number };
+  readonly declarations?: readonly AstNode[] | { readonly nodes?: readonly AstNode[]; readonly pos?: number; readonly end?: number };
+};
+
+export type NextTokenKind = 0 | 1 | 2;
+export const NextTokenKind = {
+  Unknown: 0 as NextTokenKind,
+  OpenBrace: 1 as NextTokenKind,
+  CloseBrace: 2 as NextTokenKind,
+} as const;
+
+export function nextTokenIsCurlyBraceOnSameLineAsCursor(
+  precedingToken: AstNode,
+  current: AstNode,
+  lineAtPosition: number,
+  sourceFile: SourceFile,
+): NextTokenKind {
+  const next = findNextTokenApprox(precedingToken, current);
+  if (next === undefined) return NextTokenKind.Unknown;
+  if (nodeKind(next) === Kind.OpenBraceToken) return NextTokenKind.OpenBrace;
+  if (nodeKind(next) === Kind.CloseBraceToken && getStartLineForNode(next, sourceFile) === lineAtPosition) {
+    return NextTokenKind.CloseBrace;
+  }
+  return NextTokenKind.Unknown;
+}
+
+export function getActualIndentationForNode(
+  current: AstNode,
+  parent: AstNode,
+  currentLine: number,
+  currentCharacter: number,
+  parentAndChildShareLine: boolean,
+  sourceFile: SourceFile,
+  options: FormatCodeSettings,
+): number {
+  const useActualIndentation = isDeclarationOrStatement(current) && (nodeKind(parent) === Kind.SourceFile || !parentAndChildShareLine);
+  if (!useActualIndentation) return -1;
+  return findColumnForFirstNonWhitespaceCharacterInLine(currentLine, currentCharacter, sourceFile, options);
+}
+
+export function getActualIndentationForListItem(
+  node: AstNode,
+  sourceFile: SourceFile,
+  options: FormatCodeSettings,
+  listIndentsChild: boolean,
+): number {
+  if (nodeParent(node) !== undefined && nodeKind(nodeParent(node)!) === Kind.VariableDeclarationList) return -1;
+  const containingList = getContainingList(node, sourceFile);
+  if (containingList === undefined) return -1;
+  const index = containingList.nodes.indexOf(node);
+  if (index !== -1) {
+    const derived = deriveActualIndentationFromList(containingList, index, sourceFile, options);
+    if (derived !== -1) return derived;
+  }
+  const delta = listIndentsChild ? options.indentSize ?? 4 : 0;
+  const start = getActualIndentationForListStartLine(containingList, sourceFile, options);
+  return start === -1 ? delta : start + delta;
+}
+
+export function deriveActualIndentationFromList(
+  list: NodeListLike,
+  index: number,
+  sourceFile: SourceFile,
+  options: FormatCodeSettings,
+): number {
+  if (index < 0 || index >= list.nodes.length) return -1;
+  let node = list.nodes[index]!;
+  let { line, column } = getStartLineAndCharacterForNode(node, sourceFile);
+  for (let currentIndex = index; currentIndex >= 0; currentIndex -= 1) {
+    node = list.nodes[currentIndex]!;
+    if (nodeKind(node) === Kind.CommaToken) continue;
+    const previousEndLine = getECMALineOfPosition(sourceFile, nodeEnd(node));
+    if (previousEndLine !== line) return findColumnForFirstNonWhitespaceCharacterInLine(line, column, sourceFile, options);
+    const start = getStartLineAndCharacterForNode(node, sourceFile);
+    line = start.line;
+    column = start.column;
+  }
+  return -1;
+}
+
+export function findColumnForFirstNonWhitespaceCharacterInLine(
+  line: number,
+  character: number,
+  sourceFile: SourceFile,
+  options: FormatCodeSettings,
+): number {
+  const lineStart = getPositionOfLineAndByteOffset(sourceFile, line, 0);
+  return findFirstNonWhitespaceColumn(lineStart, lineStart + character, sourceFile, options);
+}
+
+export function childStartsOnTheSameLineWithElseInIfStatement(
+  parent: AstNode,
+  child: AstNode,
+  childStartLine: number,
+  sourceFile: SourceFile,
+): boolean {
+  if (nodeKind(parent) !== Kind.IfStatement) return false;
+  const elseStatement = (parent as unknown as { readonly elseStatement?: AstNode }).elseStatement;
+  if (elseStatement !== child) return false;
+  const elseToken = findPrecedingTokenEx(sourceFile, nodeLoc(child).pos, parent, true);
+  return elseToken !== undefined && getStartLineForNode(elseToken, sourceFile) === childStartLine;
+}
+
+export function getStartLineAndCharacterForNode(node: AstNode, sourceFile: SourceFile): { readonly line: number; readonly column: number } {
+  return getECMALineAndByteOffsetOfPosition(sourceFile, getTokenPosOfNode(node, sourceFile, false));
+}
+
+export function getStartLineForNode(node: AstNode, sourceFile: SourceFile): number {
+  return getECMALineOfPosition(sourceFile, getTokenPosOfNode(node, sourceFile, false));
+}
+
+export function getContainingList(node: AstNode, sourceFile: SourceFile): NodeListLike | undefined {
+  const parent = nodeParent(node);
+  if (parent === undefined) return undefined;
+  return getListByRange(getTokenPosOfNode(node, sourceFile, false), nodeEnd(node), parent, sourceFile);
+}
+
+export function getListByRange(start: number, end: number, node: AstNode, sourceFile: SourceFile): NodeListLike | undefined {
+  const range = { pos: start, end };
+  switch (nodeKind(node)) {
+    case Kind.TypeReference:
+      return getList(readNodeList((node as unknown as NodeListCarrier).typeArguments), range, node, sourceFile);
+    case Kind.ObjectLiteralExpression:
+      return getList(readNodeList((node as unknown as NodeListCarrier).properties), range, node, sourceFile);
+    case Kind.ArrayLiteralExpression:
+      return getList(readNodeList((node as unknown as NodeListCarrier).elements), range, node, sourceFile);
+    case Kind.TypeLiteral:
+    case Kind.ClassDeclaration:
+    case Kind.ClassExpression:
+    case Kind.InterfaceDeclaration:
+      return getList(readNodeList((node as unknown as NodeListCarrier).members), range, node, sourceFile)
+        ?? getList(readNodeList((node as unknown as NodeListCarrier).typeParameters), range, node, sourceFile);
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.ArrowFunction:
+    case Kind.MethodDeclaration:
+    case Kind.MethodSignature:
+    case Kind.CallSignature:
+    case Kind.Constructor:
+    case Kind.ConstructorType:
+    case Kind.ConstructSignature:
+      return getList(readNodeList((node as unknown as NodeListCarrier).typeParameters), range, node, sourceFile)
+        ?? getList(readNodeList((node as unknown as NodeListCarrier).parameters), range, node, sourceFile);
+    case Kind.CallExpression:
+    case Kind.NewExpression:
+      return getList(readNodeList((node as unknown as NodeListCarrier).typeArguments), range, node, sourceFile)
+        ?? getList(readNodeList((node as unknown as NodeListCarrier).arguments), range, node, sourceFile);
+    case Kind.VariableDeclarationList:
+      return getList(readNodeList((node as unknown as NodeListCarrier).declarations), range, node, sourceFile);
+    default:
+      return undefined;
+  }
+}
+
+export function getVisualListRange(node: AstNode, list: NodeListLike, _sourceFile: SourceFile): { readonly pos: number; readonly end: number } {
+  const parentStart = nodeLoc(node).pos;
+  const parentEnd = nodeEnd(node);
+  return {
+    pos: Math.max(parentStart, list.pos),
+    end: Math.min(parentEnd, list.end),
+  };
+}
+
+export function getContainingListOrParentStart(
+  parent: AstNode,
+  child: AstNode,
+  sourceFile: SourceFile,
+): readonly [number, number] {
+  const containingList = getContainingList(child, sourceFile);
+  const startPos = containingList?.pos ?? getTokenPosOfNode(parent, sourceFile, false);
+  const pos = getECMALineAndByteOffsetOfPosition(sourceFile, startPos);
+  return [pos.line, pos.column];
+}
+
+export function getLineStartPositionForPosition(position: number, sourceFile: SourceFile): number {
+  const line = getECMALineOfPosition(sourceFile, position);
+  return getPositionOfLineAndByteOffset(sourceFile, line, 0);
+}
+
+function getList(list: NodeListLike | undefined, range: { readonly pos: number; readonly end: number }, node: AstNode, sourceFile: SourceFile): NodeListLike | undefined {
+  if (list === undefined) return undefined;
+  const visualRange = getVisualListRange(node, list, sourceFile);
+  return rangeContainedBy(range, visualRange) ? list : undefined;
+}
+
+function readNodeList(value: NodeListCarrier[keyof NodeListCarrier] | undefined): NodeListLike | undefined {
+  if (value === undefined) return undefined;
+  if (Array.isArray(value)) {
+    let pos = Number.POSITIVE_INFINITY;
+    let end = 0;
+    for (const node of value) {
+      pos = Math.min(pos, nodeLoc(node).pos);
+      end = Math.max(end, nodeEnd(node));
+    }
+    if (!Number.isFinite(pos)) pos = 0;
+    return { pos, end, nodes: value };
+  }
+  const list = value as { readonly nodes?: readonly AstNode[]; readonly pos?: number; readonly end?: number };
+  const nodes = list.nodes;
+  if (nodes === undefined) return undefined;
+  let pos = list.pos ?? Number.POSITIVE_INFINITY;
+  let end = list.end ?? 0;
+  for (const node of nodes) {
+    pos = Math.min(pos, nodeLoc(node).pos);
+    end = Math.max(end, nodeEnd(node));
+  }
+  if (!Number.isFinite(pos)) pos = 0;
+  return { pos, end, nodes };
+}
+
+function getPositionOfLineAndByteOffset(sourceFile: SourceFile, line: number, offset: number): number {
+  const lineStarts = getECMALineStarts(sourceFile);
+  return (lineStarts[line] ?? 0) + offset;
+}
+
+function findNextTokenApprox(precedingToken: AstNode, current: AstNode): AstNode | undefined {
+  const children = readChildren(current);
+  const index = children.indexOf(precedingToken);
+  if (index !== -1 && index + 1 < children.length) return children[index + 1];
   return undefined;
 }
 
-// ---------------------------------------------------------------------------
-// Forward-declared cross-module surface
-// ---------------------------------------------------------------------------
+function readChildren(node: AstNode): readonly AstNode[] {
+  const carrier = node as unknown as { readonly children?: readonly AstNode[]; readonly nodes?: readonly AstNode[] };
+  return carrier.children ?? carrier.nodes ?? [];
+}
 
+function isDeclarationOrStatement(node: AstNode): boolean {
+  const kind = nodeKind(node);
+  return (kind >= Kind.FirstStatement && kind <= Kind.LastStatement)
+    || kind === Kind.ClassDeclaration
+    || kind === Kind.InterfaceDeclaration
+    || kind === Kind.TypeAliasDeclaration
+    || kind === Kind.EnumDeclaration
+    || kind === Kind.FunctionDeclaration
+    || kind === Kind.ModuleDeclaration;
+}

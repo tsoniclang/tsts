@@ -60,20 +60,40 @@ export class Version {
     return comparePrereleaseIdentifiers(this.prerelease, other.prerelease);
   }
 
+  Compare(other: Version): int {
+    return this.compare(other);
+  }
+
   equals(other: Version): boolean {
     return this.compare(other) === 0;
+  }
+
+  Equals(other: Version): boolean {
+    return this.equals(other);
   }
 
   incrementMajor(): Version {
     return new Version(this.major + 1);
   }
 
+  IncrementMajor(): Version {
+    return this.incrementMajor();
+  }
+
   incrementMinor(): Version {
     return new Version(this.major, this.minor + 1);
   }
 
+  IncrementMinor(): Version {
+    return this.incrementMinor();
+  }
+
   incrementPatch(): Version {
     return new Version(this.major, this.minor, this.patch + 1);
+  }
+
+  IncrementPatch(): Version {
+    return this.incrementPatch();
   }
 
   toString(): string {
@@ -81,6 +101,10 @@ export class Version {
     if (this.prerelease.length > 0) out += "-" + this.prerelease.join(".");
     if (this.build.length > 0) out += "+" + this.build.join(".");
     return out;
+  }
+
+  String(): string {
+    return this.toString();
   }
 }
 
@@ -91,6 +115,14 @@ export class SemverParseError extends Error {
     this.origInput = origInput;
     this.name = "SemverParseError";
   }
+}
+
+export const versionZero = new Version(0, 0, 0, ["0"]);
+
+export interface VersionParseResult {
+  readonly version: Version;
+  readonly ok: boolean;
+  readonly error?: SemverParseError;
 }
 
 /**
@@ -133,6 +165,44 @@ export function tryParseVersion(text: string): Version {
 export function mustParse(text: string): Version {
   return tryParseVersion(text);
 }
+
+export function tryParseVersionResult(text: string): VersionParseResult {
+  try {
+    return { version: tryParseVersion(text), ok: true };
+  } catch (error) {
+    if (error instanceof SemverParseError) {
+      return { version: new Version(0), ok: false, error };
+    }
+    throw error;
+  }
+}
+
+export function compareVersions(left: Version | undefined, right: Version | undefined): int {
+  if (left === right) return 0;
+  if (left === undefined) return -1;
+  if (right === undefined) return 1;
+  return left.compare(right);
+}
+
+export function comparePrereleaseParts(left: readonly string[], right: readonly string[]): int {
+  return comparePrereleaseIdentifiers(left, right);
+}
+
+export function comparePrereleasePart(left: string, right: string): int {
+  return comparePrereleaseIdentifier(left, right);
+}
+
+export function isValidVersion(text: string): boolean {
+  return tryParseVersionResult(text).ok;
+}
+
+export function parseVersionOrUndefined(text: string): Version | undefined {
+  const result = tryParseVersionResult(text);
+  return result.ok ? result.version : undefined;
+}
+
+export const TryParseVersion = tryParseVersionResult;
+export const MustParse = mustParse;
 
 function isUint32Range(value: number): value is int {
   return Number.isInteger(value) && value >= 0 && value <= 0x7FFF_FFFF;

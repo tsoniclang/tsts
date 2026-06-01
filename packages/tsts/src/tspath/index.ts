@@ -8,4 +8,4 @@
 
 export * from "./path.js";
 export * from "./extension.js";
-export * from "./ignoredpaths.js";
+export * from "./ignoredPaths.js";

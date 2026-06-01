@@ -10,12 +10,35 @@ import type { int } from "@tsonic/core/types.js";
 import type { TextPos } from "./text.js";
 import { isLineBreak } from "../stringutil/util.js";
 
+export function applyDebugStackLimit(
+  env: Readonly<Record<string, string | undefined>> = runtimeEnvironment(),
+): number | undefined {
+  const value = env["TS_GO_DEBUG_STACK_LIMIT"];
+  if (value === undefined || value === "") return undefined;
+  const limit = Number.parseInt(value, 10);
+  if (!Number.isFinite(limit) || limit <= 0) return undefined;
+  return limit;
+}
+
+function runtimeEnvironment(): Readonly<Record<string, string | undefined>> {
+  const processLike = (globalThis as { readonly process?: { readonly env?: Record<string, string | undefined> } }).process;
+  return processLike?.env ?? {};
+}
+
 // ---------------------------------------------------------------------------
 // Filter / Map family
 // ---------------------------------------------------------------------------
 
 export function filter<T>(slice: readonly T[], f: (item: T) => boolean): readonly T[] {
   return slice.filter(f);
+}
+
+export function* filterSeq<T>(slice: readonly T[], f: (item: T) => boolean): Iterable<T> {
+  for (const value of slice) {
+    if (f(value)) {
+      yield value;
+    }
+  }
 }
 
 export function filterIndex<T>(
@@ -148,6 +171,14 @@ export function lastOrNil<T>(slice: readonly T[]): T | undefined {
 
 export function elementOrNil<T>(slice: readonly T[], index: int): T | undefined {
   return index < slice.length ? slice[index] : undefined;
+}
+
+export function firstOrNilSeq<T>(seq: Iterable<T> | undefined): T | undefined {
+  if (seq === undefined) return undefined;
+  for (const value of seq) {
+    return value;
+  }
+  return undefined;
 }
 
 export function firstOrUndefined<T>(slice: readonly T[]): T | undefined {
@@ -410,6 +441,10 @@ export function copyMapInto<K, V>(dst: Map<K, V> | undefined, src: ReadonlyMap<K
   return dst;
 }
 
+export function comparableValuesEqual<T>(left: T, right: T): boolean {
+  return left === right;
+}
+
 // ---------------------------------------------------------------------------
 // String helpers
 // ---------------------------------------------------------------------------
@@ -482,23 +517,29 @@ function stringifyJsonIndented(input: JsonSerializable, indent: string, depth: n
 export type ECMALineStarts = readonly TextPos[];
 
 export function computeECMALineStarts(text: string): ECMALineStarts {
-  const result: TextPos[] = [0 as TextPos];
+  return [...computeECMALineStartsSeq(text)];
+}
+
+export function* computeECMALineStartsSeq(text: string): Iterable<TextPos> {
   const len = text.length;
   let pos = 0;
+  let lineStart = 0;
   while (pos < len) {
     const cp = text.charCodeAt(pos);
     if (cp === 0x0D) {
       pos += 1;
       if (pos < len && text.charCodeAt(pos) === 0x0A) pos += 1;
-      result.push(pos as TextPos);
+      yield lineStart as TextPos;
+      lineStart = pos;
     } else if (cp === 0x0A || cp === 0x2028 || cp === 0x2029 || isLineBreak(cp)) {
       pos += 1;
-      result.push(pos as TextPos);
+      yield lineStart as TextPos;
+      lineStart = pos;
     } else {
       pos += 1;
     }
   }
-  return result;
+  yield lineStart as TextPos;
 }
 
 export function positionToLineAndByteOffset(

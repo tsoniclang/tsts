@@ -6,7 +6,7 @@
 
 import type { ResolvedModule, ResolvedTypeReferenceDirective, ResolvedProjectReference, ParsedPatterns, ResolutionMode } from "./resolver.js";
 import { InfoCache as PackageJsonInfoCache } from "../packagejson/cache.js";
-import type { CompilerOptions } from "../core/compileroptions.js";
+import type { CompilerOptions } from "../core/compilerOptions.js";
 
 interface ModuleResolutionCacheKey {
   containingDirectory: string;

@@ -21,12 +21,15 @@
 
 import type { Node as AstNode, SourceFile } from "../ast/index.js";
 import {
-  nodeFlags, nodePos, nodeEnd, nodeParent,
+  Kind, nodeFlags, nodePos, nodeEnd, nodeParent,
   forEachChild as astForEachChild,
   getECMALineOfPosition as _astGetECMALineOfPosition,
 } from "../ast/index.js";
 import { NodeFlags } from "../ast/index.js";
 import type { FormatCodeSettings, FormatRequestKind, TextRange } from "./api.js";
+import { FormattingContext, type TextRangeWithKind } from "./context.js";
+import { RuleAction, type RuleSpec } from "./rule.js";
+import { getRules } from "./rulesMap.js";
 
 function nodeOverlaps(node: AstNode, range: TextRange): boolean {
   const p = nodePos(node);
@@ -90,6 +93,531 @@ export interface TokenInfo {
   kind: number;
   text: string;
   hasPrecedingLineBreak: boolean;
+}
+
+export function rangeHasNoErrors(_range: TextRange): boolean {
+  return false;
+}
+
+export function prepareRangeContainsErrorFunction(
+  errors: readonly { readonly pos?: number; readonly start?: number; readonly end?: number; readonly length?: number; readonly loc?: TextRange }[],
+  originalRange: TextRange,
+): (range: TextRange) => boolean {
+  const sorted = errors
+    .map(diagnosticToRange)
+    .filter((range): range is TextRange => range !== undefined && rangesOverlap(range, originalRange))
+    .sort((left, right) => left.pos - right.pos);
+  if (sorted.length === 0) return rangeHasNoErrors;
+  let index = 0;
+  return (range: TextRange): boolean => {
+    while (index < sorted.length) {
+      const errorRange = sorted[index]!;
+      if (range.end <= errorRange.pos) return false;
+      if (rangesOverlap(range, errorRange)) return true;
+      index += 1;
+    }
+    return false;
+  };
+}
+
+function diagnosticToRange(error: { readonly pos?: number; readonly start?: number; readonly end?: number; readonly length?: number; readonly loc?: TextRange }): TextRange | undefined {
+  if (error.loc !== undefined) return error.loc;
+  const pos = error.pos ?? error.start;
+  if (pos === undefined) return undefined;
+  if (error.end !== undefined) return { pos, end: error.end };
+  return { pos, end: pos + (error.length ?? 0) };
+}
+
+function rangesOverlap(left: TextRange, right: TextRange): boolean {
+  return left.pos < right.end && right.pos < left.end;
+}
+
+export class DynamicIndenter {
+  private readonly options: FormatCodeSettings;
+  private readonly baseIndentation: number;
+  private readonly delta: number;
+  private readonly lines = new Map<number, number>();
+
+  constructor(options: FormatCodeSettings, baseIndentation: number, delta: number) {
+    this.options = options;
+    this.baseIndentation = baseIndentation;
+    this.delta = delta;
+  }
+
+  indentationForLine(line: number): number {
+    return this.lines.get(line) ?? this.baseIndentation;
+  }
+
+  increase(line: number): void {
+    this.lines.set(line, this.indentationForLine(line) + this.delta);
+  }
+
+  decrease(line: number): void {
+    this.lines.set(line, Math.max(0, this.indentationForLine(line) - this.delta));
+  }
+
+  indentationString(line: number): string {
+    return indentationString(this.indentationForLine(line), this.options);
+  }
+}
+
+export function indentationString(indentation: number, options: FormatCodeSettings): string {
+  const tabSize = options.tabSize ?? options.indentSize ?? 4;
+  if (options.convertTabsToSpaces !== false) return " ".repeat(Math.max(0, indentation));
+  const tabs = Math.floor(indentation / tabSize);
+  const spaces = indentation % tabSize;
+  return "\t".repeat(tabs) + " ".repeat(spaces);
+}
+
+export function changeSpan(start: number, end: number, newText: string): TextChange {
+  return { span: { start, length: Math.max(0, end - start) }, newText };
+}
+
+export function insertText(position: number, text: string): TextChange {
+  return { span: { start: position, length: 0 }, newText: text };
+}
+
+export function deleteText(start: number, end: number): TextChange {
+  return changeSpan(start, end, "");
+}
+
+export function replaceWhitespace(
+  sourceText: string,
+  start: number,
+  end: number,
+  replacement: string,
+): TextChange | undefined {
+  const current = sourceText.slice(start, end);
+  if (current === replacement) return undefined;
+  return changeSpan(start, end, replacement);
+}
+
+export function applyTextChanges(sourceText: string, changes: readonly TextChange[]): string {
+  const sorted = [...changes].sort((left, right) => right.span.start - left.span.start);
+  let text = sourceText;
+  for (const change of sorted) {
+    const start = change.span.start;
+    const end = start + change.span.length;
+    text = text.slice(0, start) + change.newText + text.slice(end);
+  }
+  return text;
+}
+
+export function getNonDecoratorTokenPosOfNode(node: AstNode, file: SourceFile): number {
+  const modifiers = (node as unknown as { modifiers?: readonly AstNode[] }).modifiers ?? [];
+  let lastDecorator: AstNode | undefined;
+  for (const modifier of modifiers) {
+    if ((modifier as { kind?: number }).kind === 170) lastDecorator = modifier;
+  }
+  if (lastDecorator === undefined) return withTokenStart(node, file).pos;
+  return nodeEnd(lastDecorator);
+}
+
+export function isComment(token: TokenInfo): boolean {
+  const trimmed = token.text.trimStart();
+  return trimmed.startsWith("//") || (trimmed.charCodeAt(0) === 0x2F && trimmed.charCodeAt(1) === 0x2A);
+}
+
+export function tokenRange(token: TokenInfo): TextRange {
+  return { pos: token.pos, end: token.end };
+}
+
+export function tokenIsOnLine(token: TokenInfo, line: number, sourceFile: SourceFile): boolean {
+  return getECMALineOfPosition(sourceFile, token.pos) === line;
+}
+
+export function lineOfToken(token: TokenInfo, sourceFile: SourceFile): number {
+  return getECMALineOfPosition(sourceFile, token.pos);
+}
+
+export function getLineStartPositionForPosition(position: number, sourceFile: SourceFile): number {
+  const text = sourceTextOf(sourceFile);
+  let lineStart = 0;
+  let scan = 0;
+  while (scan < position && scan < text.length) {
+    const code = text.charCodeAt(scan);
+    if (code === 0x0D) {
+      scan += 1;
+      if (scan < text.length && text.charCodeAt(scan) === 0x0A) scan += 1;
+      lineStart = scan;
+      continue;
+    }
+    if (code === 0x0A || code === 0x2028 || code === 0x2029) {
+      scan += 1;
+      lineStart = scan;
+      continue;
+    }
+    scan += 1;
+  }
+  return lineStart;
+}
+
+export function findFirstNonWhitespaceColumn(
+  lineStart: number,
+  scanEnd: number,
+  sourceFile: SourceFile,
+  options: FormatCodeSettings,
+): number {
+  const text = sourceTextOf(sourceFile);
+  const tabSize = options.tabSize ?? options.indentSize ?? 4;
+  let column = 0;
+  let position = lineStart;
+  while (position < scanEnd && position < text.length) {
+    const char = text.charCodeAt(position);
+    if (char === 0x20) {
+      column += 1;
+    } else if (char === 0x09) {
+      column += tabSize - (column % tabSize);
+    } else {
+      break;
+    }
+    position += 1;
+  }
+  return column;
+}
+
+export function nodeWillIndentChild(
+  options: FormatCodeSettings,
+  parent: AstNode,
+  child: AstNode | undefined,
+  sourceFile: SourceFile,
+  isListEndToken: boolean,
+): boolean {
+  if (isListEndToken) return false;
+  return shouldIndentChildNode(options, parent, child, sourceFile);
+}
+
+export function computeChildIndentation(
+  child: AstNode,
+  childStartLine: number,
+  inheritedIndentation: number,
+  parent: AstNode,
+  parentStartLine: number,
+  parentDynamicIndentation: DynamicIndenter,
+  sourceFile: SourceFile,
+  options: FormatCodeSettings,
+): { indentation: number; delta: number } {
+  const indentSize = options.indentSize ?? 4;
+  const delta = shouldIndentChildNode(options, child, undefined, sourceFile) ? indentSize : 0;
+  if (parentStartLine === childStartLine) {
+    return {
+      indentation: parentDynamicIndentation.indentationForLine(parentStartLine),
+      delta: Math.min(indentSize, delta),
+    };
+  }
+  if (inheritedIndentation !== -1) {
+    return { indentation: inheritedIndentation, delta };
+  }
+  const parentIndentation = parentDynamicIndentation.indentationForLine(parentStartLine);
+  if (childStartsOnSameLineWithElseInIfStatement(parent, child, childStartLine)) {
+    return { indentation: parentIndentation, delta };
+  }
+  if (childIsUnindentedBranchOfConditionalExpression(parent, child, childStartLine)) {
+    return { indentation: parentIndentation, delta };
+  }
+  if (argumentStartsOnSameLineAsPreviousArgument(parent, child, childStartLine, sourceFile)) {
+    return { indentation: parentIndentation, delta };
+  }
+  return { indentation: parentIndentation + indentSize, delta };
+}
+
+export function tryComputeIndentationForListItem(
+  startPos: number,
+  endPos: number,
+  parentStartLine: number,
+  range: TextRange,
+  inheritedIndentation: number,
+  sourceFile: SourceFile,
+  options: FormatCodeSettings,
+): number {
+  const itemRange = { pos: startPos, end: endPos };
+  if (rangesOverlap(range, itemRange) || rangeContainedBy(itemRange, range)) {
+    if (inheritedIndentation !== -1) return inheritedIndentation;
+  } else {
+    const startLine = getECMALineOfPosition(sourceFile, startPos);
+    const lineStart = getLineStartPositionForPosition(startPos, sourceFile);
+    const column = findFirstNonWhitespaceColumn(lineStart, startPos, sourceFile, options);
+    if (startLine !== parentStartLine || startPos === column) {
+      const baseIndentSize = options.baseIndentSize ?? 0;
+      return Math.max(baseIndentSize, column);
+    }
+  }
+  return -1;
+}
+
+export function childStartsOnSameLineWithElseInIfStatement(
+  parent: AstNode,
+  child: AstNode,
+  childStartLine: number,
+): boolean {
+  if ((parent as { kind?: number }).kind !== Kind.IfStatement) return false;
+  const elseStatement = (parent as { elseStatement?: AstNode }).elseStatement;
+  return elseStatement === child && nodeEnd(parent) >= nodePos(child) && childStartLine >= 0;
+}
+
+export function childIsUnindentedBranchOfConditionalExpression(
+  parent: AstNode,
+  child: AstNode,
+  childStartLine: number,
+): boolean {
+  if ((parent as { kind?: number }).kind !== Kind.ConditionalExpression) return false;
+  const whenTrue = (parent as { whenTrue?: AstNode }).whenTrue;
+  const whenFalse = (parent as { whenFalse?: AstNode }).whenFalse;
+  return (child === whenTrue || child === whenFalse) && childStartLine >= 0;
+}
+
+export function argumentStartsOnSameLineAsPreviousArgument(
+  parent: AstNode,
+  child: AstNode,
+  childStartLine: number,
+  sourceFile: SourceFile,
+): boolean {
+  const argumentsList = (parent as { arguments?: readonly AstNode[] }).arguments;
+  if (argumentsList === undefined) return false;
+  const index = argumentsList.indexOf(child);
+  if (index <= 0) return false;
+  const previous = argumentsList[index - 1]!;
+  return childStartLine === getECMALineOfPosition(sourceFile, nodeEnd(previous));
+}
+
+export class FormatSpanRunner {
+  private readonly ctx: FormatContext;
+  private readonly edits: TextChange[] = [];
+  private readonly formatContext: FormattingContext;
+  private previousToken: TokenInfo | undefined;
+  private previousParent: AstNode | undefined;
+  private previousTriviaEnd = -1;
+  private lastIndentedLine = -1;
+  private indentationOnLastIndentedLine = -1;
+  private readonly dynamicIndenter: DynamicIndenter;
+
+  constructor(ctx: FormatContext) {
+    this.ctx = ctx;
+    this.formatContext = new FormattingContext(ctx.sourceFile, ctx.requestKind, ctx.options);
+    this.dynamicIndenter = new DynamicIndenter(ctx.options, ctx.initialIndentation, ctx.delta);
+  }
+
+  run(): readonly TextChange[] {
+    this.ctx.formattingScanner.readNextToken();
+    if (this.ctx.formattingScanner.isOnToken()) {
+      this.processNode(this.ctx.enclosingNode, this.ctx.initialIndentation);
+    }
+    this.finishTrailingTrivia();
+    return this.edits;
+  }
+
+  processNode(node: AstNode, indentation: number): void {
+    if (!nodeOverlaps(node, this.ctx.originalRange)) return;
+    this.consumeTokensUpTo(nodePos(node), node, indentation);
+    forEachChild(node, (child) => {
+      const childIndent = shouldIndentChildNode(this.ctx.options, node, child, this.ctx.sourceFile)
+        ? indentation + (this.ctx.options.indentSize ?? 4)
+        : indentation;
+      this.processNode(child, childIndent);
+      return false;
+    });
+    this.consumeTokensUpTo(nodeEnd(node), node, indentation);
+  }
+
+  private consumeTokensUpTo(position: number, parent: AstNode, indentation: number): void {
+    while (this.ctx.formattingScanner.isOnToken()) {
+      const token = this.ctx.formattingScanner.getCurrentTokenInfo();
+      if (token === undefined || token.pos > position) return;
+      this.processToken(token, parent, indentation);
+      this.ctx.formattingScanner.readNextToken();
+    }
+  }
+
+  private processToken(token: TokenInfo, parent: AstNode, indentation: number): void {
+    if (this.rangeContainsError(tokenRange(token))) {
+      this.previousToken = token;
+      this.previousParent = parent;
+      this.previousTriviaEnd = token.end;
+      return;
+    }
+    this.processLeadingTrivia(token, indentation);
+    if (this.previousToken !== undefined && this.previousParent !== undefined) {
+      this.applyRules(this.previousToken, token, this.previousParent, parent);
+    }
+    this.previousToken = token;
+    this.previousParent = parent;
+    this.previousTriviaEnd = token.end;
+  }
+
+  private processLeadingTrivia(token: TokenInfo, indentation: number): void {
+    const trivia = this.ctx.formattingScanner.getCurrentLeadingTrivia();
+    if (trivia.length === 0) return;
+    const first = trivia[0]!;
+    const last = trivia[trivia.length - 1]!;
+    const triviaRange = { pos: first.pos, end: last.end };
+    if (!rangesOverlap(triviaRange, this.ctx.originalRange)) return;
+    const newLine = this.newLine();
+    const text = trivia.map(part => part.text).join("");
+    if (!text.includes("\n") && !text.includes("\r")) return;
+    const line = lineOfToken(token, this.ctx.sourceFile);
+    const indentationText = indentationString(indentation, this.ctx.options);
+    this.lastIndentedLine = line;
+    this.indentationOnLastIndentedLine = indentation;
+    const replacement = normalizeTriviaIndentation(text, newLine, indentationText);
+    const change = replaceWhitespace(sourceTextOf(this.ctx.sourceFile), triviaRange.pos, triviaRange.end, replacement);
+    if (change !== undefined) this.edits.push(change);
+  }
+
+  private applyRules(left: TokenInfo, right: TokenInfo, leftParent: AstNode, rightParent: AstNode): void {
+    if (!rangesOverlap({ pos: left.end, end: right.pos }, this.ctx.originalRange)) return;
+    const commonParent = nearestCommonAncestor(leftParent, rightParent) ?? rightParent;
+    this.formatContext.updateContext(
+      toTextRangeWithKind(left),
+      leftParent,
+      toTextRangeWithKind(right),
+      rightParent,
+      commonParent,
+    );
+    const rules = getRules(this.formatContext, []);
+    const action = combineRuleActions(rules);
+    if (action === RuleAction.None) return;
+    this.applyRuleAction(action, left, right);
+  }
+
+  private applyRuleAction(action: RuleAction, left: TokenInfo, right: TokenInfo): void {
+    const start = left.end;
+    const end = right.pos;
+    const current = sourceTextOf(this.ctx.sourceFile).slice(start, end);
+    if ((action & RuleAction.DeleteToken) !== 0) {
+      this.edits.push(deleteText(right.pos, right.end));
+      return;
+    }
+    if ((action & RuleAction.InsertTrailingSemicolon) !== 0 && left.kind !== Kind.SemicolonToken) {
+      this.edits.push(insertText(left.end, ";"));
+    }
+    if ((action & RuleAction.InsertNewLine) !== 0) {
+      const line = lineOfToken(right, this.ctx.sourceFile);
+      const indentation = this.dynamicIndenter.indentationString(line);
+      this.replaceInterTokenTrivia(start, end, `${this.newLine()}${indentation}`);
+      return;
+    }
+    if ((action & RuleAction.InsertSpace) !== 0) {
+      this.replaceInterTokenTrivia(start, end, " ");
+      return;
+    }
+    if ((action & RuleAction.DeleteSpace) !== 0 && current.length > 0) {
+      this.replaceInterTokenTrivia(start, end, "");
+    }
+  }
+
+  private replaceInterTokenTrivia(start: number, end: number, replacement: string): void {
+    const change = replaceWhitespace(sourceTextOf(this.ctx.sourceFile), start, end, replacement);
+    if (change !== undefined) this.edits.push(change);
+  }
+
+  private finishTrailingTrivia(): void {
+    if (this.previousTriviaEnd < 0) return;
+    if (this.ctx.originalRange.end <= this.previousTriviaEnd) return;
+    const text = sourceTextOf(this.ctx.sourceFile);
+    const trailing = text.slice(this.previousTriviaEnd, this.ctx.originalRange.end);
+    if (this.ctx.options.trimTrailingWhitespace === true && trailing.trim().length === 0 && trailing.length > 0) {
+      const newText = trailing.includes("\n") || trailing.includes("\r") ? this.newLine() : "";
+      const change = replaceWhitespace(text, this.previousTriviaEnd, this.ctx.originalRange.end, newText);
+      if (change !== undefined) this.edits.push(change);
+    }
+  }
+
+  private rangeContainsError(range: TextRange): boolean {
+    return (this.ctx as unknown as { rangeContainsError?: (range: TextRange) => boolean }).rangeContainsError?.(range) ?? false;
+  }
+
+  private newLine(): string {
+    return this.ctx.options.newLineCharacter ?? "\n";
+  }
+}
+
+function sourceTextOf(sourceFile: SourceFile): string {
+  return (sourceFile as unknown as { text?: string }).text ?? "";
+}
+
+function normalizeTriviaIndentation(text: string, newLine: string, indentation: string): string {
+  const normalized = text.replace(/\r\n?/g, "\n");
+  const lines = normalized.split("\n");
+  if (lines.length <= 1) return text;
+  return lines.map((line, index) => {
+    if (index === 0) return line;
+    if (line.trim().length === 0) return "";
+    return indentation + line.trimStart();
+  }).join(newLine);
+}
+
+function toTextRangeWithKind(token: TokenInfo): TextRangeWithKind {
+  return { loc: { pos: token.pos, end: token.end }, kind: token.kind };
+}
+
+function combineRuleActions(rules: readonly RuleSpec[]): RuleAction {
+  let action = RuleAction.None;
+  for (const ruleSpec of rules) {
+    action |= ruleSpec.rule.action;
+    if ((ruleSpec.rule.action & RuleAction.StopProcessingSpaceActions) !== 0) break;
+  }
+  return action;
+}
+
+function nearestCommonAncestor(left: AstNode, right: AstNode): AstNode | undefined {
+  const ancestors = new Set<AstNode>();
+  let current: AstNode | undefined = left;
+  while (current !== undefined) {
+    ancestors.add(current);
+    current = nodeParent(current);
+  }
+  current = right;
+  while (current !== undefined) {
+    if (ancestors.has(current)) return current;
+    current = nodeParent(current);
+  }
+  return undefined;
+}
+
+export function sortTextChanges(changes: readonly TextChange[]): readonly TextChange[] {
+  return [...changes].sort((left, right) => left.span.start - right.span.start || left.span.length - right.span.length);
+}
+
+export function validateTextChanges(changes: readonly TextChange[]): void {
+  const sorted = sortTextChanges(changes);
+  let previousEnd = -1;
+  for (const change of sorted) {
+    if (change.span.start < previousEnd) {
+      throw new Error("Overlapping format text changes are not allowed");
+    }
+    previousEnd = change.span.start + change.span.length;
+  }
+}
+
+export function coalesceTextChanges(changes: readonly TextChange[]): readonly TextChange[] {
+  const sorted = sortTextChanges(changes);
+  const out: TextChange[] = [];
+  for (const change of sorted) {
+    const previous = out[out.length - 1];
+    if (previous !== undefined && previous.span.start + previous.span.length === change.span.start) {
+      out[out.length - 1] = {
+        span: {
+          start: previous.span.start,
+          length: previous.span.length + change.span.length,
+        },
+        newText: previous.newText + change.newText,
+      };
+      continue;
+    }
+    out.push(change);
+  }
+  return out;
+}
+
+export function applyValidatedTextChanges(sourceText: string, changes: readonly TextChange[]): string {
+  validateTextChanges(changes);
+  return applyTextChanges(sourceText, changes);
+}
+
+export function textChangesEqual(left: TextChange, right: TextChange): boolean {
+  return left.span.start === right.span.start
+    && left.span.length === right.span.length
+    && left.newText === right.newText;
 }
 
 /**
@@ -210,4 +738,3 @@ export function getOwnOrInheritedDelta(
 // ---------------------------------------------------------------------------
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
-

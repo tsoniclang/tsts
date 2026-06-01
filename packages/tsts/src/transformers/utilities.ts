@@ -35,7 +35,7 @@ import {
 } from "../ast/index.js";
 import { isStringLiteralLike } from "../ast/index.js";
 import { Kind } from "../ast/index.js";
-import { EmitFlags } from "../printer/emitflags.js";
+import { EmitFlags } from "../printer/emitFlags.js";
 
 // ---------------------------------------------------------------------------
 // Identifier predicates

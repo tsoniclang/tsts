@@ -4,4 +4,4 @@
  * Port of TS-Go internal/symlinks/.
  */
 
-export * from "./known-symlinks.js";
+export * from "./knownSymlinks.js";
