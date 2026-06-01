@@ -37,6 +37,7 @@ import "./ls/autoimport/specifiers.test.js";
 import "./ls/lsconv/lineMap.test.js";
 import "./ls/lsutil/asi.test.js";
 import "./ls/lsutil/formatCodeOptions.test.js";
+import "./ls/lsutil/utilities.test.js";
 
 // === Still disabled (TSTS source incompleteness; not tsonic blockers) ===
 
