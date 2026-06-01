@@ -1,3 +1,4 @@
+export * from "./aliasResolver.js";
 export * from "./registry.js";
 export * from "./export.js";
 export * from "./exportStringerGenerated.js";

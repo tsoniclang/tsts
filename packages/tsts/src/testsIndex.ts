@@ -32,6 +32,7 @@ import "./scanner/regexp.test.js";
 import "./json/json.test.js";
 import "./ls/diagnostics.test.js";
 import "./ls/autoInsert.test.js";
+import "./ls/autoimport/aliasResolver.test.js";
 import "./ls/autoimport/export.test.js";
 import "./ls/autoimport/specifiers.test.js";
 import "./ls/codeLens.test.js";
