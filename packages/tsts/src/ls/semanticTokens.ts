@@ -1,533 +1,878 @@
 /**
- * Language-service parity map for TS-Go `ls/semantictokens.go`.
+ * Semantic-token classification and LSP relative encoding.
  *
- * This file preserves the upstream declaration and algorithm-line shape
- * for the TypeScript port. Runtime behavior is implemented by the
- * concrete modules that consume these exact parity maps.
+ * Port of TS-Go `internal/ls/semantictokens.go`.
  */
 
-export interface UpstreamSourceLine {
-  readonly line: number;
-  readonly text: string;
-}
+import {
+  Kind,
+  NodeFlags,
+  SymbolFlags,
+  type Node as AstNode,
+  type SourceFile,
+} from "../ast/index.js";
+import { SignatureKind, TypeFlags, type Type } from "../checker/types.js";
+import { ModifierFlags } from "../enums/index.js";
+import {
+  SemanticTokenModifierAbstract,
+  SemanticTokenModifierAsync,
+  SemanticTokenModifierDeclaration,
+  SemanticTokenModifierDefaultLibrary,
+  SemanticTokenModifierDefinition,
+  SemanticTokenModifierDeprecated,
+  SemanticTokenModifierDocumentation,
+  SemanticTokenModifierModification,
+  SemanticTokenModifierReadonly,
+  SemanticTokenModifierStatic,
+  SemanticTokenTypeClass,
+  SemanticTokenTypeComment,
+  SemanticTokenTypeDecorator,
+  SemanticTokenTypeEnum,
+  SemanticTokenTypeEnumMember,
+  SemanticTokenTypeEvent,
+  SemanticTokenTypeFunction,
+  SemanticTokenTypeInterface,
+  SemanticTokenTypeKeyword,
+  SemanticTokenTypeLabel,
+  SemanticTokenTypeMacro,
+  SemanticTokenTypeMethod,
+  SemanticTokenTypeNamespace,
+  SemanticTokenTypeNumber,
+  SemanticTokenTypeOperator,
+  SemanticTokenTypeParameter,
+  SemanticTokenTypeProperty,
+  SemanticTokenTypeRegexp,
+  SemanticTokenTypeString,
+  SemanticTokenTypeStruct,
+  SemanticTokenTypeType,
+  SemanticTokenTypeTypeParameter,
+  SemanticTokenTypeVariable,
+  type Position,
+  type Range,
+  type ResolvedSemanticTokensClientCapabilities,
+  type SemanticTokenModifier,
+  type SemanticTokenType,
+  type SemanticTokensLegend,
+  type SemanticTokensRangeResponse,
+  type SemanticTokensResponse,
+} from "../lsp/lsproto/index.js";
 
-export interface UpstreamDeclaration {
-  readonly kind: "type" | "func" | "const" | "var";
-  readonly line: number;
-  readonly name: string;
-  readonly receiver?: string;
-}
-
-export const lsSemanticTokensUpstreamPath = "ls/semantictokens.go";
-
-export const lsSemanticTokensDeclarations: readonly UpstreamDeclaration[] = [
-  {"line":19,"kind":"var","name":"tokenTypes"},
-  {"line":46,"kind":"var","name":"tokenModifiers"},
-  {"line":60,"kind":"type","name":"tokenType"},
-  {"line":88,"kind":"type","name":"tokenModifier"},
-  {"line":107,"kind":"func","name":"SemanticTokensLegend"},
-  {"line":126,"kind":"func","name":"ProvideSemanticTokens","receiver":"l *LanguageService"},
-  {"line":148,"kind":"func","name":"ProvideSemanticTokensRange","receiver":"l *LanguageService"},
-  {"line":173,"kind":"type","name":"semanticToken"},
-  {"line":179,"kind":"func","name":"collectSemanticTokens","receiver":"l *LanguageService"},
-  {"line":183,"kind":"func","name":"collectSemanticTokensInRange","receiver":"l *LanguageService"},
-  {"line":299,"kind":"func","name":"classifySymbol"},
-  {"line":336,"kind":"func","name":"tokenFromDeclarationMapping"},
-  {"line":375,"kind":"func","name":"reclassifyByType"},
-  {"line":421,"kind":"func","name":"isLocalDeclaration"},
-  {"line":446,"kind":"func","name":"getDeclarationForBindingElement"},
-  {"line":461,"kind":"func","name":"isInImportClause"},
-  {"line":466,"kind":"func","name":"isExpressionInCallExpression"},
-  {"line":474,"kind":"func","name":"isInfinityOrNaNString"},
-  {"line":480,"kind":"func","name":"encodeSemanticTokens"},
+export const semanticTokenTypes: readonly SemanticTokenType[] = [
+  SemanticTokenTypeNamespace,
+  SemanticTokenTypeClass,
+  SemanticTokenTypeEnum,
+  SemanticTokenTypeInterface,
+  SemanticTokenTypeStruct,
+  SemanticTokenTypeTypeParameter,
+  SemanticTokenTypeType,
+  SemanticTokenTypeParameter,
+  SemanticTokenTypeVariable,
+  SemanticTokenTypeProperty,
+  SemanticTokenTypeEnumMember,
+  SemanticTokenTypeDecorator,
+  SemanticTokenTypeEvent,
+  SemanticTokenTypeFunction,
+  SemanticTokenTypeMethod,
+  SemanticTokenTypeMacro,
+  SemanticTokenTypeLabel,
+  SemanticTokenTypeComment,
+  SemanticTokenTypeString,
+  SemanticTokenTypeKeyword,
+  SemanticTokenTypeNumber,
+  SemanticTokenTypeRegexp,
+  SemanticTokenTypeOperator,
 ];
 
-export const lsSemanticTokensSourceLines: readonly UpstreamSourceLine[] = [
-  {"line":1,"text":"package ls"},
-  {"line":3,"text":"import ("},
-  {"line":4,"text":"\t\"context\""},
-  {"line":5,"text":"\t\"fmt\""},
-  {"line":6,"text":"\t\"slices\""},
-  {"line":8,"text":"\t\"github.com/microsoft/typescript-go/internal/ast\""},
-  {"line":9,"text":"\t\"github.com/microsoft/typescript-go/internal/checker\""},
-  {"line":10,"text":"\t\"github.com/microsoft/typescript-go/internal/compiler\""},
-  {"line":11,"text":"\t\"github.com/microsoft/typescript-go/internal/core\""},
-  {"line":12,"text":"\t\"github.com/microsoft/typescript-go/internal/ls/lsconv\""},
-  {"line":13,"text":"\t\"github.com/microsoft/typescript-go/internal/lsp/lsproto\""},
-  {"line":14,"text":"\t\"github.com/microsoft/typescript-go/internal/scanner\""},
-  {"line":15,"text":"\t\"github.com/microsoft/typescript-go/internal/tspath\""},
-  {"line":16,"text":")"},
-  {"line":19,"text":"var tokenTypes = []lsproto.SemanticTokenType{"},
-  {"line":20,"text":"\tlsproto.SemanticTokenTypeNamespace,"},
-  {"line":21,"text":"\tlsproto.SemanticTokenTypeClass,"},
-  {"line":22,"text":"\tlsproto.SemanticTokenTypeEnum,"},
-  {"line":23,"text":"\tlsproto.SemanticTokenTypeInterface,"},
-  {"line":24,"text":"\tlsproto.SemanticTokenTypeStruct,"},
-  {"line":25,"text":"\tlsproto.SemanticTokenTypeTypeParameter,"},
-  {"line":26,"text":"\tlsproto.SemanticTokenTypeType,"},
-  {"line":27,"text":"\tlsproto.SemanticTokenTypeParameter,"},
-  {"line":28,"text":"\tlsproto.SemanticTokenTypeVariable,"},
-  {"line":29,"text":"\tlsproto.SemanticTokenTypeProperty,"},
-  {"line":30,"text":"\tlsproto.SemanticTokenTypeEnumMember,"},
-  {"line":31,"text":"\tlsproto.SemanticTokenTypeDecorator,"},
-  {"line":32,"text":"\tlsproto.SemanticTokenTypeEvent,"},
-  {"line":33,"text":"\tlsproto.SemanticTokenTypeFunction,"},
-  {"line":34,"text":"\tlsproto.SemanticTokenTypeMethod,"},
-  {"line":35,"text":"\tlsproto.SemanticTokenTypeMacro,"},
-  {"line":36,"text":"\tlsproto.SemanticTokenTypeLabel,"},
-  {"line":37,"text":"\tlsproto.SemanticTokenTypeComment,"},
-  {"line":38,"text":"\tlsproto.SemanticTokenTypeString,"},
-  {"line":39,"text":"\tlsproto.SemanticTokenTypeKeyword,"},
-  {"line":40,"text":"\tlsproto.SemanticTokenTypeNumber,"},
-  {"line":41,"text":"\tlsproto.SemanticTokenTypeRegexp,"},
-  {"line":42,"text":"\tlsproto.SemanticTokenTypeOperator,"},
-  {"line":43,"text":"}"},
-  {"line":46,"text":"var tokenModifiers = []lsproto.SemanticTokenModifier{"},
-  {"line":47,"text":"\tlsproto.SemanticTokenModifierDeclaration,"},
-  {"line":48,"text":"\tlsproto.SemanticTokenModifierDefinition,"},
-  {"line":49,"text":"\tlsproto.SemanticTokenModifierReadonly,"},
-  {"line":50,"text":"\tlsproto.SemanticTokenModifierStatic,"},
-  {"line":51,"text":"\tlsproto.SemanticTokenModifierDeprecated,"},
-  {"line":52,"text":"\tlsproto.SemanticTokenModifierAbstract,"},
-  {"line":53,"text":"\tlsproto.SemanticTokenModifierAsync,"},
-  {"line":54,"text":"\tlsproto.SemanticTokenModifierModification,"},
-  {"line":55,"text":"\tlsproto.SemanticTokenModifierDocumentation,"},
-  {"line":56,"text":"\tlsproto.SemanticTokenModifierDefaultLibrary,"},
-  {"line":57,"text":"\t\"local\","},
-  {"line":58,"text":"}"},
-  {"line":60,"text":"type tokenType int"},
-  {"line":62,"text":"const ("},
-  {"line":63,"text":"\ttokenTypeNamespace tokenType = iota"},
-  {"line":64,"text":"\ttokenTypeClass"},
-  {"line":65,"text":"\ttokenTypeEnum"},
-  {"line":66,"text":"\ttokenTypeInterface"},
-  {"line":67,"text":"\ttokenTypeStruct"},
-  {"line":68,"text":"\ttokenTypeTypeParameter"},
-  {"line":69,"text":"\ttokenTypeType"},
-  {"line":70,"text":"\ttokenTypeParameter"},
-  {"line":71,"text":"\ttokenTypeVariable"},
-  {"line":72,"text":"\ttokenTypeProperty"},
-  {"line":73,"text":"\ttokenTypeEnumMember"},
-  {"line":74,"text":"\ttokenTypeDecorator"},
-  {"line":75,"text":"\ttokenTypeEvent"},
-  {"line":76,"text":"\ttokenTypeFunction"},
-  {"line":77,"text":"\ttokenTypeMethod // Previously called \"member\" in TypeScript"},
-  {"line":78,"text":"\ttokenTypeMacro"},
-  {"line":79,"text":"\ttokenTypeLabel"},
-  {"line":80,"text":"\ttokenTypeComment"},
-  {"line":81,"text":"\ttokenTypeString"},
-  {"line":82,"text":"\ttokenTypeKeyword"},
-  {"line":83,"text":"\ttokenTypeNumber"},
-  {"line":84,"text":"\ttokenTypeRegexp"},
-  {"line":85,"text":"\ttokenTypeOperator"},
-  {"line":86,"text":")"},
-  {"line":88,"text":"type tokenModifier int"},
-  {"line":90,"text":"const ("},
-  {"line":91,"text":"\ttokenModifierDeclaration tokenModifier = 1 << iota"},
-  {"line":92,"text":"\ttokenModifierDefinition"},
-  {"line":93,"text":"\ttokenModifierReadonly"},
-  {"line":94,"text":"\ttokenModifierStatic"},
-  {"line":95,"text":"\ttokenModifierDeprecated"},
-  {"line":96,"text":"\ttokenModifierAbstract"},
-  {"line":97,"text":"\ttokenModifierAsync"},
-  {"line":98,"text":"\ttokenModifierModification"},
-  {"line":99,"text":"\ttokenModifierDocumentation"},
-  {"line":100,"text":"\ttokenModifierDefaultLibrary"},
-  {"line":101,"text":"\ttokenModifierLocal"},
-  {"line":102,"text":")"},
-  {"line":107,"text":"func SemanticTokensLegend(clientCapabilities lsproto.ResolvedSemanticTokensClientCapabilities) *lsproto.SemanticTokensLegend {"},
-  {"line":108,"text":"\ttypes := make([]string, 0, len(tokenTypes))"},
-  {"line":109,"text":"\tfor _, t := range tokenTypes {"},
-  {"line":110,"text":"\t\tif slices.Contains(clientCapabilities.TokenTypes, string(t)) {"},
-  {"line":111,"text":"\t\t\ttypes = append(types, string(t))"},
-  {"line":112,"text":"\t\t}"},
-  {"line":113,"text":"\t}"},
-  {"line":114,"text":"\tmodifiers := make([]string, 0, len(tokenModifiers))"},
-  {"line":115,"text":"\tfor _, m := range tokenModifiers {"},
-  {"line":116,"text":"\t\tif slices.Contains(clientCapabilities.TokenModifiers, string(m)) {"},
-  {"line":117,"text":"\t\t\tmodifiers = append(modifiers, string(m))"},
-  {"line":118,"text":"\t\t}"},
-  {"line":119,"text":"\t}"},
-  {"line":120,"text":"\treturn &lsproto.SemanticTokensLegend{"},
-  {"line":121,"text":"\t\tTokenTypes:     types,"},
-  {"line":122,"text":"\t\tTokenModifiers: modifiers,"},
-  {"line":123,"text":"\t}"},
-  {"line":124,"text":"}"},
-  {"line":126,"text":"func (l *LanguageService) ProvideSemanticTokens(ctx context.Context, documentURI lsproto.DocumentUri) (lsproto.SemanticTokensResponse, error) {"},
-  {"line":127,"text":"\tprogram, file := l.getProgramAndFile(documentURI)"},
-  {"line":129,"text":"\tc, done := program.GetTypeCheckerForFile(ctx, file)"},
-  {"line":130,"text":"\tdefer done()"},
-  {"line":132,"text":"\ttokens := l.collectSemanticTokens(ctx, c, file, program)"},
-  {"line":134,"text":"\tif len(tokens) == 0 {"},
-  {"line":135,"text":"\t\treturn lsproto.SemanticTokensOrNull{}, nil"},
-  {"line":136,"text":"\t}"},
-  {"line":139,"text":"\tencoded := encodeSemanticTokens(ctx, tokens, file, l.converters)"},
-  {"line":141,"text":"\treturn lsproto.SemanticTokensOrNull{"},
-  {"line":142,"text":"\t\tSemanticTokens: &lsproto.SemanticTokens{"},
-  {"line":143,"text":"\t\t\tData: encoded,"},
-  {"line":144,"text":"\t\t},"},
-  {"line":145,"text":"\t}, nil"},
-  {"line":146,"text":"}"},
-  {"line":148,"text":"func (l *LanguageService) ProvideSemanticTokensRange(ctx context.Context, documentURI lsproto.DocumentUri, rng lsproto.Range) (lsproto.SemanticTokensRangeResponse, error) {"},
-  {"line":149,"text":"\tprogram, file := l.getProgramAndFile(documentURI)"},
-  {"line":151,"text":"\tc, done := program.GetTypeCheckerForFile(ctx, file)"},
-  {"line":152,"text":"\tdefer done()"},
-  {"line":154,"text":"\tstart := int(l.converters.LineAndCharacterToPosition(file, rng.Start))"},
-  {"line":155,"text":"\tend := int(l.converters.LineAndCharacterToPosition(file, rng.End))"},
-  {"line":157,"text":"\ttokens := l.collectSemanticTokensInRange(ctx, c, file, program, start, end)"},
-  {"line":159,"text":"\tif len(tokens) == 0 {"},
-  {"line":160,"text":"\t\treturn lsproto.SemanticTokensOrNull{}, nil"},
-  {"line":161,"text":"\t}"},
-  {"line":164,"text":"\tencoded := encodeSemanticTokens(ctx, tokens, file, l.converters)"},
-  {"line":166,"text":"\treturn lsproto.SemanticTokensOrNull{"},
-  {"line":167,"text":"\t\tSemanticTokens: &lsproto.SemanticTokens{"},
-  {"line":168,"text":"\t\t\tData: encoded,"},
-  {"line":169,"text":"\t\t},"},
-  {"line":170,"text":"\t}, nil"},
-  {"line":171,"text":"}"},
-  {"line":173,"text":"type semanticToken struct {"},
-  {"line":174,"text":"\tnode          *ast.Node"},
-  {"line":175,"text":"\ttokenType     tokenType"},
-  {"line":176,"text":"\ttokenModifier tokenModifier"},
-  {"line":177,"text":"}"},
-  {"line":179,"text":"func (l *LanguageService) collectSemanticTokens(ctx context.Context, c *checker.Checker, file *ast.SourceFile, program *compiler.Program) []semanticToken {"},
-  {"line":180,"text":"\treturn l.collectSemanticTokensInRange(ctx, c, file, program, file.Pos(), file.End())"},
-  {"line":181,"text":"}"},
-  {"line":183,"text":"func (l *LanguageService) collectSemanticTokensInRange(ctx context.Context, c *checker.Checker, file *ast.SourceFile, program *compiler.Program, spanStart, spanEnd int) []semanticToken {"},
-  {"line":184,"text":"\ttokens := []semanticToken{}"},
-  {"line":186,"text":"\tinJSXElement := false"},
-  {"line":188,"text":"\tvar visit func(*ast.Node) bool"},
-  {"line":189,"text":"\tvisit = func(node *ast.Node) bool {"},
-  {"line":191,"text":"\t\tif ctx.Err() != nil {"},
-  {"line":192,"text":"\t\t\treturn false"},
-  {"line":193,"text":"\t\t}"},
-  {"line":195,"text":"\t\tif node == nil {"},
-  {"line":196,"text":"\t\t\treturn false"},
-  {"line":197,"text":"\t\t}"},
-  {"line":198,"text":"\t\tif node.Flags&ast.NodeFlagsReparsed != 0 {"},
-  {"line":199,"text":"\t\t\treturn false"},
-  {"line":200,"text":"\t\t}"},
-  {"line":201,"text":"\t\tnodeEnd := node.End()"},
-  {"line":202,"text":"\t\tif node.Pos() >= spanEnd || nodeEnd <= spanStart {"},
-  {"line":203,"text":"\t\t\treturn false"},
-  {"line":204,"text":"\t\t}"},
-  {"line":206,"text":"\t\tprevInJSXElement := inJSXElement"},
-  {"line":207,"text":"\t\tif ast.IsJsxElement(node) || ast.IsJsxSelfClosingElement(node) {"},
-  {"line":208,"text":"\t\t\tinJSXElement = true"},
-  {"line":209,"text":"\t\t} else if ast.IsJsxExpression(node) {"},
-  {"line":210,"text":"\t\t\tinJSXElement = false"},
-  {"line":211,"text":"\t\t}"},
-  {"line":213,"text":"\t\tif ast.IsIdentifier(node) && node.Text() != \"\" && !inJSXElement && !isInImportClause(node) && !isInfinityOrNaNString(node.Text()) {"},
-  {"line":214,"text":"\t\t\tsymbol := c.GetSymbolAtLocation(node)"},
-  {"line":215,"text":"\t\t\tif symbol != nil {"},
-  {"line":217,"text":"\t\t\t\tif symbol.Flags&ast.SymbolFlagsAlias != 0 {"},
-  {"line":218,"text":"\t\t\t\t\tsymbol = c.GetAliasedSymbol(symbol)"},
-  {"line":219,"text":"\t\t\t\t}"},
-  {"line":221,"text":"\t\t\t\ttokenType, ok := classifySymbol(symbol, getMeaningFromLocation(node))"},
-  {"line":222,"text":"\t\t\t\tif ok {"},
-  {"line":223,"text":"\t\t\t\t\ttokenModifier := tokenModifier(0)"},
-  {"line":226,"text":"\t\t\t\t\tparent := node.Parent"},
-  {"line":227,"text":"\t\t\t\t\tif parent != nil {"},
-  {"line":228,"text":"\t\t\t\t\t\tparentIsDeclaration := ast.IsBindingElement(parent) || tokenFromDeclarationMapping(parent.Kind) == tokenType"},
-  {"line":229,"text":"\t\t\t\t\t\tif parentIsDeclaration && parent.Name() == node {"},
-  {"line":230,"text":"\t\t\t\t\t\t\ttokenModifier |= tokenModifierDeclaration"},
-  {"line":231,"text":"\t\t\t\t\t\t}"},
-  {"line":232,"text":"\t\t\t\t\t}"},
-  {"line":235,"text":"\t\t\t\t\tif tokenType == tokenTypeParameter && ast.IsRightSideOfQualifiedNameOrPropertyAccess(node) {"},
-  {"line":236,"text":"\t\t\t\t\t\ttokenType = tokenTypeProperty"},
-  {"line":237,"text":"\t\t\t\t\t}"},
-  {"line":240,"text":"\t\t\t\t\ttokenType = reclassifyByType(c, node, tokenType)"},
-  {"line":243,"text":"\t\t\t\t\tif decl := symbol.ValueDeclaration; decl != nil {"},
-  {"line":244,"text":"\t\t\t\t\t\tmodifiers := ast.GetCombinedModifierFlags(decl)"},
-  {"line":245,"text":"\t\t\t\t\t\tnodeFlags := ast.GetCombinedNodeFlags(decl)"},
-  {"line":247,"text":"\t\t\t\t\t\tif modifiers&ast.ModifierFlagsStatic != 0 {"},
-  {"line":248,"text":"\t\t\t\t\t\t\ttokenModifier |= tokenModifierStatic"},
-  {"line":249,"text":"\t\t\t\t\t\t}"},
-  {"line":250,"text":"\t\t\t\t\t\tif modifiers&ast.ModifierFlagsAsync != 0 {"},
-  {"line":251,"text":"\t\t\t\t\t\t\ttokenModifier |= tokenModifierAsync"},
-  {"line":252,"text":"\t\t\t\t\t\t}"},
-  {"line":253,"text":"\t\t\t\t\t\tif tokenType != tokenTypeClass && tokenType != tokenTypeInterface {"},
-  {"line":254,"text":"\t\t\t\t\t\t\tif (modifiers&ast.ModifierFlagsReadonly != 0) || (nodeFlags&ast.NodeFlagsConst != 0) || (symbol.Flags&ast.SymbolFlagsEnumMember != 0) {"},
-  {"line":255,"text":"\t\t\t\t\t\t\t\ttokenModifier |= tokenModifierReadonly"},
-  {"line":256,"text":"\t\t\t\t\t\t\t}"},
-  {"line":257,"text":"\t\t\t\t\t\t}"},
-  {"line":258,"text":"\t\t\t\t\t\tif (tokenType == tokenTypeVariable || tokenType == tokenTypeFunction) && isLocalDeclaration(decl, file) {"},
-  {"line":259,"text":"\t\t\t\t\t\t\ttokenModifier |= tokenModifierLocal"},
-  {"line":260,"text":"\t\t\t\t\t\t}"},
-  {"line":261,"text":"\t\t\t\t\t\tdeclSourceFile := ast.GetSourceFileOfNode(decl)"},
-  {"line":262,"text":"\t\t\t\t\t\tif declSourceFile != nil && program.IsSourceFileDefaultLibrary(tspath.Path(declSourceFile.FileName())) {"},
-  {"line":263,"text":"\t\t\t\t\t\t\ttokenModifier |= tokenModifierDefaultLibrary"},
-  {"line":264,"text":"\t\t\t\t\t\t}"},
-  {"line":265,"text":"\t\t\t\t\t} else if symbol.Declarations != nil {"},
-  {"line":266,"text":"\t\t\t\t\t\tfor _, decl := range symbol.Declarations {"},
-  {"line":267,"text":"\t\t\t\t\t\t\tdeclSourceFile := ast.GetSourceFileOfNode(decl)"},
-  {"line":268,"text":"\t\t\t\t\t\t\tif declSourceFile != nil && program.IsSourceFileDefaultLibrary(tspath.Path(declSourceFile.FileName())) {"},
-  {"line":269,"text":"\t\t\t\t\t\t\t\ttokenModifier |= tokenModifierDefaultLibrary"},
-  {"line":270,"text":"\t\t\t\t\t\t\t\tbreak"},
-  {"line":271,"text":"\t\t\t\t\t\t\t}"},
-  {"line":272,"text":"\t\t\t\t\t\t}"},
-  {"line":273,"text":"\t\t\t\t\t}"},
-  {"line":275,"text":"\t\t\t\t\ttokens = append(tokens, semanticToken{"},
-  {"line":276,"text":"\t\t\t\t\t\tnode:          node,"},
-  {"line":277,"text":"\t\t\t\t\t\ttokenType:     tokenType,"},
-  {"line":278,"text":"\t\t\t\t\t\ttokenModifier: tokenModifier,"},
-  {"line":279,"text":"\t\t\t\t\t})"},
-  {"line":280,"text":"\t\t\t\t}"},
-  {"line":281,"text":"\t\t\t}"},
-  {"line":282,"text":"\t\t}"},
-  {"line":284,"text":"\t\tnode.ForEachChild(visit)"},
-  {"line":285,"text":"\t\tinJSXElement = prevInJSXElement"},
-  {"line":286,"text":"\t\treturn false"},
-  {"line":287,"text":"\t}"},
-  {"line":289,"text":"\tvisit(file.AsNode())"},
-  {"line":292,"text":"\tif ctx.Err() != nil {"},
-  {"line":293,"text":"\t\treturn nil"},
-  {"line":294,"text":"\t}"},
-  {"line":296,"text":"\treturn tokens"},
-  {"line":297,"text":"}"},
-  {"line":299,"text":"func classifySymbol(symbol *ast.Symbol, meaning ast.SemanticMeaning) (tokenType, bool) {"},
-  {"line":300,"text":"\tflags := symbol.Flags"},
-  {"line":301,"text":"\tif flags&ast.SymbolFlagsClass != 0 {"},
-  {"line":302,"text":"\t\treturn tokenTypeClass, true"},
-  {"line":303,"text":"\t}"},
-  {"line":304,"text":"\tif flags&ast.SymbolFlagsEnum != 0 {"},
-  {"line":305,"text":"\t\treturn tokenTypeEnum, true"},
-  {"line":306,"text":"\t}"},
-  {"line":307,"text":"\tif flags&ast.SymbolFlagsTypeAlias != 0 {"},
-  {"line":308,"text":"\t\treturn tokenTypeType, true"},
-  {"line":309,"text":"\t}"},
-  {"line":310,"text":"\tif flags&ast.SymbolFlagsInterface != 0 {"},
-  {"line":311,"text":"\t\tif meaning&ast.SemanticMeaningType != 0 {"},
-  {"line":312,"text":"\t\t\treturn tokenTypeInterface, true"},
-  {"line":313,"text":"\t\t}"},
-  {"line":314,"text":"\t}"},
-  {"line":315,"text":"\tif flags&ast.SymbolFlagsTypeParameter != 0 {"},
-  {"line":316,"text":"\t\treturn tokenTypeTypeParameter, true"},
-  {"line":317,"text":"\t}"},
-  {"line":320,"text":"\tdecl := symbol.ValueDeclaration"},
-  {"line":321,"text":"\tif decl == nil && len(symbol.Declarations) > 0 {"},
-  {"line":322,"text":"\t\tdecl = symbol.Declarations[0]"},
-  {"line":323,"text":"\t}"},
-  {"line":324,"text":"\tif decl != nil {"},
-  {"line":325,"text":"\t\tif ast.IsBindingElement(decl) {"},
-  {"line":326,"text":"\t\t\tdecl = getDeclarationForBindingElement(decl)"},
-  {"line":327,"text":"\t\t}"},
-  {"line":328,"text":"\t\tif tokenType := tokenFromDeclarationMapping(decl.Kind); tokenType >= 0 {"},
-  {"line":329,"text":"\t\t\treturn tokenType, true"},
-  {"line":330,"text":"\t\t}"},
-  {"line":331,"text":"\t}"},
-  {"line":333,"text":"\treturn 0, false"},
-  {"line":334,"text":"}"},
-  {"line":336,"text":"func tokenFromDeclarationMapping(kind ast.Kind) tokenType {"},
-  {"line":337,"text":"\tswitch kind {"},
-  {"line":338,"text":"\tcase ast.KindVariableDeclaration:"},
-  {"line":339,"text":"\t\treturn tokenTypeVariable"},
-  {"line":340,"text":"\tcase ast.KindParameter:"},
-  {"line":341,"text":"\t\treturn tokenTypeParameter"},
-  {"line":342,"text":"\tcase ast.KindPropertyDeclaration:"},
-  {"line":343,"text":"\t\treturn tokenTypeProperty"},
-  {"line":344,"text":"\tcase ast.KindModuleDeclaration:"},
-  {"line":345,"text":"\t\treturn tokenTypeNamespace"},
-  {"line":346,"text":"\tcase ast.KindEnumDeclaration:"},
-  {"line":347,"text":"\t\treturn tokenTypeEnum"},
-  {"line":348,"text":"\tcase ast.KindEnumMember:"},
-  {"line":349,"text":"\t\treturn tokenTypeEnumMember"},
-  {"line":350,"text":"\tcase ast.KindClassDeclaration, ast.KindClassExpression:"},
-  {"line":351,"text":"\t\treturn tokenTypeClass"},
-  {"line":352,"text":"\tcase ast.KindMethodDeclaration:"},
-  {"line":353,"text":"\t\treturn tokenTypeMethod"},
-  {"line":354,"text":"\tcase ast.KindFunctionDeclaration, ast.KindFunctionExpression:"},
-  {"line":355,"text":"\t\treturn tokenTypeFunction"},
-  {"line":356,"text":"\tcase ast.KindMethodSignature:"},
-  {"line":357,"text":"\t\treturn tokenTypeMethod"},
-  {"line":358,"text":"\tcase ast.KindGetAccessor, ast.KindSetAccessor:"},
-  {"line":359,"text":"\t\treturn tokenTypeProperty"},
-  {"line":360,"text":"\tcase ast.KindPropertySignature:"},
-  {"line":361,"text":"\t\treturn tokenTypeProperty"},
-  {"line":362,"text":"\tcase ast.KindInterfaceDeclaration:"},
-  {"line":363,"text":"\t\treturn tokenTypeInterface"},
-  {"line":364,"text":"\tcase ast.KindTypeAliasDeclaration:"},
-  {"line":365,"text":"\t\treturn tokenTypeType"},
-  {"line":366,"text":"\tcase ast.KindTypeParameter:"},
-  {"line":367,"text":"\t\treturn tokenTypeTypeParameter"},
-  {"line":368,"text":"\tcase ast.KindPropertyAssignment, ast.KindShorthandPropertyAssignment:"},
-  {"line":369,"text":"\t\treturn tokenTypeProperty"},
-  {"line":370,"text":"\tdefault:"},
-  {"line":371,"text":"\t\treturn -1"},
-  {"line":372,"text":"\t}"},
-  {"line":373,"text":"}"},
-  {"line":375,"text":"func reclassifyByType(c *checker.Checker, node *ast.Node, tt tokenType) tokenType {"},
-  {"line":377,"text":"\tif tt == tokenTypeVariable || tt == tokenTypeProperty || tt == tokenTypeParameter {"},
-  {"line":378,"text":"\t\ttyp := c.GetTypeAtLocation(node)"},
-  {"line":379,"text":"\t\tif typ != nil {"},
-  {"line":380,"text":"\t\t\ttest := func(condition func(*checker.Type) bool) bool {"},
-  {"line":381,"text":"\t\t\t\tif condition(typ) {"},
-  {"line":382,"text":"\t\t\t\t\treturn true"},
-  {"line":383,"text":"\t\t\t\t}"},
-  {"line":384,"text":"\t\t\t\tif typ.Flags()&checker.TypeFlagsUnion != 0 {"},
-  {"line":385,"text":"\t\t\t\t\tif slices.ContainsFunc(typ.AsUnionType().Types(), condition) {"},
-  {"line":386,"text":"\t\t\t\t\t\treturn true"},
-  {"line":387,"text":"\t\t\t\t\t}"},
-  {"line":388,"text":"\t\t\t\t}"},
-  {"line":389,"text":"\t\t\t\treturn false"},
-  {"line":390,"text":"\t\t\t}"},
-  {"line":393,"text":"\t\t\tif tt != tokenTypeParameter && test(func(t *checker.Type) bool {"},
-  {"line":394,"text":"\t\t\t\treturn len(c.GetSignaturesOfType(t, checker.SignatureKindConstruct)) > 0"},
-  {"line":395,"text":"\t\t\t}) {"},
-  {"line":396,"text":"\t\t\t\treturn tokenTypeClass"},
-  {"line":397,"text":"\t\t\t}"},
-  {"line":401,"text":"\t\t\thasCallSignatures := test(func(t *checker.Type) bool {"},
-  {"line":402,"text":"\t\t\t\treturn len(c.GetSignaturesOfType(t, checker.SignatureKindCall)) > 0"},
-  {"line":403,"text":"\t\t\t})"},
-  {"line":404,"text":"\t\t\tif hasCallSignatures {"},
-  {"line":405,"text":"\t\t\t\thasNoProperties := !test(func(t *checker.Type) bool {"},
-  {"line":406,"text":"\t\t\t\t\tobjType := t.AsObjectType()"},
-  {"line":407,"text":"\t\t\t\t\treturn objType != nil && len(objType.Properties()) > 0"},
-  {"line":408,"text":"\t\t\t\t})"},
-  {"line":409,"text":"\t\t\t\tif hasNoProperties || isExpressionInCallExpression(node) {"},
-  {"line":410,"text":"\t\t\t\t\tif tt == tokenTypeProperty {"},
-  {"line":411,"text":"\t\t\t\t\t\treturn tokenTypeMethod"},
-  {"line":412,"text":"\t\t\t\t\t}"},
-  {"line":413,"text":"\t\t\t\t\treturn tokenTypeFunction"},
-  {"line":414,"text":"\t\t\t\t}"},
-  {"line":415,"text":"\t\t\t}"},
-  {"line":416,"text":"\t\t}"},
-  {"line":417,"text":"\t}"},
-  {"line":418,"text":"\treturn tt"},
-  {"line":419,"text":"}"},
-  {"line":421,"text":"func isLocalDeclaration(decl *ast.Node, sourceFile *ast.SourceFile) bool {"},
-  {"line":422,"text":"\tif ast.IsBindingElement(decl) {"},
-  {"line":423,"text":"\t\tdecl = getDeclarationForBindingElement(decl)"},
-  {"line":424,"text":"\t}"},
-  {"line":425,"text":"\tif ast.IsVariableDeclaration(decl) {"},
-  {"line":426,"text":"\t\tparent := decl.Parent"},
-  {"line":428,"text":"\t\tif parent != nil && ast.IsCatchClause(parent) {"},
-  {"line":429,"text":"\t\t\treturn ast.GetSourceFileOfNode(decl) == sourceFile"},
-  {"line":430,"text":"\t\t}"},
-  {"line":431,"text":"\t\tif parent != nil && ast.IsVariableDeclarationList(parent) {"},
-  {"line":432,"text":"\t\t\tgrandparent := parent.Parent"},
-  {"line":433,"text":"\t\t\tif grandparent != nil {"},
-  {"line":434,"text":"\t\t\t\tgreatGrandparent := grandparent.Parent"},
-  {"line":435,"text":"\t\t\t\treturn (!ast.IsSourceFile(greatGrandparent) || ast.IsCatchClause(grandparent)) &&"},
-  {"line":436,"text":"\t\t\t\t\tast.GetSourceFileOfNode(decl) == sourceFile"},
-  {"line":437,"text":"\t\t\t}"},
-  {"line":438,"text":"\t\t}"},
-  {"line":439,"text":"\t} else if ast.IsFunctionDeclaration(decl) {"},
-  {"line":440,"text":"\t\tparent := decl.Parent"},
-  {"line":441,"text":"\t\treturn parent != nil && !ast.IsSourceFile(parent) && ast.GetSourceFileOfNode(decl) == sourceFile"},
-  {"line":442,"text":"\t}"},
-  {"line":443,"text":"\treturn false"},
-  {"line":444,"text":"}"},
-  {"line":446,"text":"func getDeclarationForBindingElement(element *ast.Node) *ast.Node {"},
-  {"line":447,"text":"\tfor {"},
-  {"line":448,"text":"\t\tparent := element.Parent"},
-  {"line":449,"text":"\t\tif parent != nil && ast.IsBindingPattern(parent) {"},
-  {"line":450,"text":"\t\t\tgrandparent := parent.Parent"},
-  {"line":451,"text":"\t\t\tif grandparent != nil && ast.IsBindingElement(grandparent) {"},
-  {"line":452,"text":"\t\t\t\telement = grandparent"},
-  {"line":453,"text":"\t\t\t\tcontinue"},
-  {"line":454,"text":"\t\t\t}"},
-  {"line":455,"text":"\t\t\treturn parent.Parent"},
-  {"line":456,"text":"\t\t}"},
-  {"line":457,"text":"\t\treturn element"},
-  {"line":458,"text":"\t}"},
-  {"line":459,"text":"}"},
-  {"line":461,"text":"func isInImportClause(node *ast.Node) bool {"},
-  {"line":462,"text":"\tparent := node.Parent"},
-  {"line":463,"text":"\treturn parent != nil && (ast.IsImportClause(parent) || ast.IsImportSpecifier(parent) || ast.IsNamespaceImport(parent))"},
-  {"line":464,"text":"}"},
-  {"line":466,"text":"func isExpressionInCallExpression(node *ast.Node) bool {"},
-  {"line":467,"text":"\tfor ast.IsRightSideOfQualifiedNameOrPropertyAccess(node) {"},
-  {"line":468,"text":"\t\tnode = node.Parent"},
-  {"line":469,"text":"\t}"},
-  {"line":470,"text":"\tparent := node.Parent"},
-  {"line":471,"text":"\treturn parent != nil && ast.IsCallExpression(parent) && parent.Expression() == node"},
-  {"line":472,"text":"}"},
-  {"line":474,"text":"func isInfinityOrNaNString(text string) bool {"},
-  {"line":475,"text":"\treturn text == \"Infinity\" || text == \"NaN\""},
-  {"line":476,"text":"}"},
-  {"line":480,"text":"func encodeSemanticTokens(ctx context.Context, tokens []semanticToken, file *ast.SourceFile, converters *lsconv.Converters) []uint32 {"},
-  {"line":482,"text":"\ttypeMapping := make(map[tokenType]uint32)"},
-  {"line":483,"text":"\tmodifierMapping := make(map[lsproto.SemanticTokenModifier]uint32)"},
-  {"line":485,"text":"\tclientCapabilities := lsproto.GetClientCapabilities(ctx).TextDocument.SemanticTokens"},
-  {"line":488,"text":"\tclientIdx := uint32(0)"},
-  {"line":489,"text":"\tfor i, serverType := range tokenTypes {"},
-  {"line":490,"text":"\t\tif slices.Contains(clientCapabilities.TokenTypes, string(serverType)) {"},
-  {"line":491,"text":"\t\t\ttypeMapping[tokenType(i)] = clientIdx"},
-  {"line":492,"text":"\t\t\tclientIdx++"},
-  {"line":493,"text":"\t\t}"},
-  {"line":494,"text":"\t}"},
-  {"line":497,"text":"\tclientBit := uint32(0)"},
-  {"line":498,"text":"\tfor _, serverModifier := range tokenModifiers {"},
-  {"line":499,"text":"\t\tif slices.Contains(clientCapabilities.TokenModifiers, string(serverModifier)) {"},
-  {"line":500,"text":"\t\t\tmodifierMapping[serverModifier] = clientBit"},
-  {"line":501,"text":"\t\t\tclientBit++"},
-  {"line":502,"text":"\t\t}"},
-  {"line":503,"text":"\t}"},
-  {"line":506,"text":"\tencoded := make([]uint32, 0, len(tokens)*5)"},
-  {"line":507,"text":"\tprevLine := uint32(0)"},
-  {"line":508,"text":"\tprevChar := uint32(0)"},
-  {"line":510,"text":"\tfor _, token := range tokens {"},
-  {"line":512,"text":"\t\tclientTypeIdx, typeSupported := typeMapping[token.tokenType]"},
-  {"line":513,"text":"\t\tif !typeSupported {"},
-  {"line":514,"text":"\t\t\tcontinue"},
-  {"line":515,"text":"\t\t}"},
-  {"line":518,"text":"\t\tclientModifierMask := uint32(0)"},
-  {"line":519,"text":"\t\tfor i, serverModifier := range tokenModifiers {"},
-  {"line":520,"text":"\t\t\tif token.tokenModifier&(1<<i) != 0 {"},
-  {"line":521,"text":"\t\t\t\tif clientBit, ok := modifierMapping[serverModifier]; ok {"},
-  {"line":522,"text":"\t\t\t\t\tclientModifierMask |= 1 << clientBit"},
-  {"line":523,"text":"\t\t\t\t}"},
-  {"line":524,"text":"\t\t\t}"},
-  {"line":525,"text":"\t\t}"},
-  {"line":528,"text":"\t\ttokenStart := scanner.GetTokenPosOfNode(token.node, file, false)"},
-  {"line":529,"text":"\t\ttokenEnd := token.node.End()"},
-  {"line":532,"text":"\t\tstartPos := converters.PositionToLineAndCharacter(file, core.TextPos(tokenStart))"},
-  {"line":533,"text":"\t\tendPos := converters.PositionToLineAndCharacter(file, core.TextPos(tokenEnd))"},
-  {"line":536,"text":"\t\tvar tokenLength uint32"},
-  {"line":537,"text":"\t\tif startPos.Line == endPos.Line {"},
-  {"line":538,"text":"\t\t\ttokenLength = endPos.Character - startPos.Character"},
-  {"line":539,"text":"\t\t} else {"},
-  {"line":540,"text":"\t\t\tpanic(fmt.Sprintf(\"semantic tokens: token spans multiple lines: start=(%d,%d) end=(%d,%d) for token at offset %d\","},
-  {"line":541,"text":"\t\t\t\tstartPos.Line, startPos.Character, endPos.Line, endPos.Character, tokenStart))"},
-  {"line":542,"text":"\t\t}"},
-  {"line":544,"text":"\t\tline := startPos.Line"},
-  {"line":545,"text":"\t\tchar := startPos.Character"},
-  {"line":548,"text":"\t\tif len(encoded) > 0 && (line < prevLine || (line == prevLine && char <= prevChar)) {"},
-  {"line":549,"text":"\t\t\tpanic(fmt.Sprintf(\"semantic tokens: positions must be strictly increasing: prev=(%d,%d) current=(%d,%d) for token at offset %d\","},
-  {"line":550,"text":"\t\t\t\tprevLine, prevChar, line, char, tokenStart))"},
-  {"line":551,"text":"\t\t}"},
-  {"line":554,"text":"\t\tdeltaLine := line - prevLine"},
-  {"line":555,"text":"\t\tvar deltaChar uint32"},
-  {"line":556,"text":"\t\tif deltaLine == 0 {"},
-  {"line":557,"text":"\t\t\tdeltaChar = char - prevChar"},
-  {"line":558,"text":"\t\t} else {"},
-  {"line":559,"text":"\t\t\tdeltaChar = char"},
-  {"line":560,"text":"\t\t}"},
-  {"line":562,"text":"\t\tencoded = append(encoded,"},
-  {"line":563,"text":"\t\t\tdeltaLine,"},
-  {"line":564,"text":"\t\t\tdeltaChar,"},
-  {"line":565,"text":"\t\t\ttokenLength,"},
-  {"line":566,"text":"\t\t\tclientTypeIdx,"},
-  {"line":567,"text":"\t\t\tclientModifierMask,"},
-  {"line":568,"text":"\t\t)"},
-  {"line":570,"text":"\t\tprevLine = line"},
-  {"line":571,"text":"\t\tprevChar = char"},
-  {"line":572,"text":"\t}"},
-  {"line":574,"text":"\treturn encoded"},
-  {"line":575,"text":"}"},
+export const semanticTokenModifiers: readonly SemanticTokenModifier[] = [
+  SemanticTokenModifierDeclaration,
+  SemanticTokenModifierDefinition,
+  SemanticTokenModifierReadonly,
+  SemanticTokenModifierStatic,
+  SemanticTokenModifierDeprecated,
+  SemanticTokenModifierAbstract,
+  SemanticTokenModifierAsync,
+  SemanticTokenModifierModification,
+  SemanticTokenModifierDocumentation,
+  SemanticTokenModifierDefaultLibrary,
+  "local",
 ];
 
-export function findLsSemanticTokensDeclaration(name: string): UpstreamDeclaration | undefined {
-  return lsSemanticTokensDeclarations.find((declaration) => declaration.name === name);
+export enum SemanticTokenKind {
+  Namespace = 0,
+  Class = 1,
+  Enum = 2,
+  Interface = 3,
+  Struct = 4,
+  TypeParameter = 5,
+  Type = 6,
+  Parameter = 7,
+  Variable = 8,
+  Property = 9,
+  EnumMember = 10,
+  Decorator = 11,
+  Event = 12,
+  Function = 13,
+  Method = 14,
+  Macro = 15,
+  Label = 16,
+  Comment = 17,
+  String = 18,
+  Keyword = 19,
+  Number = 20,
+  Regexp = 21,
+  Operator = 22,
 }
 
-export function requireLsSemanticTokensDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findLsSemanticTokensDeclaration(name);
-  if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
-  return declaration;
+export enum SemanticTokenModifierFlag {
+  Declaration = 1 << 0,
+  Definition = 1 << 1,
+  Readonly = 1 << 2,
+  Static = 1 << 3,
+  Deprecated = 1 << 4,
+  Abstract = 1 << 5,
+  Async = 1 << 6,
+  Modification = 1 << 7,
+  Documentation = 1 << 8,
+  DefaultLibrary = 1 << 9,
+  Local = 1 << 10,
 }
 
-export function lsSemanticTokensLineText(line: number): string | undefined {
-  return lsSemanticTokensSourceLines.find((entry) => entry.line === line)?.text;
+export enum SemanticMeaning {
+  Value = 1 << 0,
+  Type = 1 << 1,
+  Namespace = 1 << 2,
+  All = Value | Type | Namespace,
+}
+
+export interface SemanticTokenSymbol {
+  readonly flags?: SymbolFlags;
+  readonly valueDeclaration?: SemanticTokenDeclaration;
+  readonly declarations?: readonly SemanticTokenDeclaration[];
+}
+
+export interface SemanticTokenDeclaration {
+  readonly kind: Kind;
+  readonly parent?: SemanticTokenDeclaration;
+  readonly flags?: number;
+  readonly modifierFlags?: ModifierFlags;
+  readonly nodeFlags?: NodeFlags;
+  readonly sourceFile?: unknown;
+  getSourceFile?(): unknown;
+}
+
+export interface SemanticTokenTreeNode extends SemanticTokenDeclaration {
+  readonly pos: number;
+  readonly end: number;
+  readonly parent: SemanticTokenTreeNode;
+  readonly flags: number;
+  readonly text?: string;
+  forEachChild(
+    visitor: (node: SemanticTokenTreeNode) => boolean | undefined,
+    visitArray?: (nodes: readonly SemanticTokenTreeNode[]) => boolean | undefined,
+  ): boolean | undefined;
+}
+
+export interface SemanticTokenSourceFile<Node extends SemanticTokenTreeNode = SemanticTokenTreeNode> extends SemanticTokenTreeNode {
+  readonly kind: Kind.SourceFile;
+  readonly fileName?: string;
+  readonly path?: string;
+  readonly statements?: readonly Node[];
+}
+
+export interface SemanticTokenTypeChecker<
+  Node extends SemanticTokenTreeNode = SemanticTokenTreeNode,
+  Symbol extends SemanticTokenSymbol = SemanticTokenSymbol,
+  TokenType = Type,
+> {
+  getSymbolAtLocation(node: Node): Symbol | undefined;
+  getAliasedSymbol?(symbol: Symbol): Symbol | undefined;
+  getTypeAtLocation?(node: Node): TokenType | undefined;
+  getSignaturesOfType?(type: TokenType, kind: SignatureKind): readonly unknown[];
+}
+
+export interface SemanticTokenProgram<SourceFileNode extends SemanticTokenSourceFile = SemanticTokenSourceFile> {
+  isSourceFileDefaultLibrary?(path: string): boolean;
+  sourceFilePath?(sourceFile: SourceFileNode): string;
+}
+
+export interface SemanticTokenCollectionOptions {
+  readonly isCancellationRequested?: () => boolean;
+}
+
+export interface SemanticTokenLike<Node = unknown> {
+  readonly node: Node;
+  readonly tokenType: SemanticTokenKind;
+  readonly tokenModifier: number;
+}
+
+export interface SemanticTokenNodeLocation {
+  readonly range: Range;
+  readonly offset: number;
+}
+
+export interface SemanticTokenPositionProvider<Node> {
+  tokenLocation(node: Node): SemanticTokenNodeLocation;
+}
+
+export interface SemanticTokenCollector<Node = unknown> {
+  collectSemanticTokens(): readonly SemanticTokenLike<Node>[];
+  collectSemanticTokensInRange(range: Range): readonly SemanticTokenLike<Node>[];
+}
+
+export function semanticTokensLegend(
+  clientCapabilities: ResolvedSemanticTokensClientCapabilities,
+): SemanticTokensLegend {
+  const supportedTypes = new Set<string>(clientCapabilities.tokenTypes ?? []);
+  const supportedModifiers = new Set<string>(clientCapabilities.tokenModifiers ?? []);
+  const tokenTypes: string[] = [];
+  const tokenModifiers: string[] = [];
+
+  for (const tokenType of semanticTokenTypes) {
+    if (supportedTypes.has(tokenType)) {
+      tokenTypes.push(tokenType);
+    }
+  }
+  for (const tokenModifier of semanticTokenModifiers) {
+    if (supportedModifiers.has(tokenModifier)) {
+      tokenModifiers.push(tokenModifier);
+    }
+  }
+
+  return { tokenTypes, tokenModifiers };
+}
+
+export function classifySymbol(
+  symbol: SemanticTokenSymbol,
+  meaning: SemanticMeaning,
+): readonly [SemanticTokenKind, boolean] {
+  const flags = symbol.flags ?? 0;
+  if ((flags & SymbolFlags.Class) !== 0) return [SemanticTokenKind.Class, true];
+  if ((flags & SymbolFlags.Enum) !== 0) return [SemanticTokenKind.Enum, true];
+  if ((flags & SymbolFlags.TypeAlias) !== 0) return [SemanticTokenKind.Type, true];
+  if ((flags & SymbolFlags.Interface) !== 0 && (meaning & SemanticMeaning.Type) !== 0) {
+    return [SemanticTokenKind.Interface, true];
+  }
+  if ((flags & SymbolFlags.TypeParameter) !== 0) return [SemanticTokenKind.TypeParameter, true];
+
+  let declaration = symbol.valueDeclaration;
+  if (declaration === undefined) {
+    declaration = symbol.declarations?.[0];
+  }
+  if (declaration !== undefined) {
+    const kind = tokenFromDeclarationMapping(declaration.kind);
+    if (kind !== undefined) {
+      return [kind, true];
+    }
+  }
+
+  return [SemanticTokenKind.Namespace, false];
+}
+
+export function tokenFromDeclarationMapping(kind: Kind): SemanticTokenKind | undefined {
+  switch (kind) {
+    case Kind.VariableDeclaration:
+      return SemanticTokenKind.Variable;
+    case Kind.Parameter:
+      return SemanticTokenKind.Parameter;
+    case Kind.PropertyDeclaration:
+      return SemanticTokenKind.Property;
+    case Kind.ModuleDeclaration:
+      return SemanticTokenKind.Namespace;
+    case Kind.EnumDeclaration:
+      return SemanticTokenKind.Enum;
+    case Kind.EnumMember:
+      return SemanticTokenKind.EnumMember;
+    case Kind.ClassDeclaration:
+    case Kind.ClassExpression:
+      return SemanticTokenKind.Class;
+    case Kind.MethodDeclaration:
+      return SemanticTokenKind.Method;
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+      return SemanticTokenKind.Function;
+    case Kind.MethodSignature:
+      return SemanticTokenKind.Method;
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+      return SemanticTokenKind.Property;
+    case Kind.PropertySignature:
+      return SemanticTokenKind.Property;
+    case Kind.InterfaceDeclaration:
+      return SemanticTokenKind.Interface;
+    case Kind.TypeAliasDeclaration:
+      return SemanticTokenKind.Type;
+    case Kind.TypeParameter:
+      return SemanticTokenKind.TypeParameter;
+    case Kind.PropertyAssignment:
+    case Kind.ShorthandPropertyAssignment:
+      return SemanticTokenKind.Property;
+    default:
+      return undefined;
+  }
+}
+
+export function declarationModifiers(declaration: SemanticTokenDeclaration): number {
+  let modifiers = 0;
+  const modifierFlags = combinedModifierFlags(declaration);
+  const nodeFlags = combinedNodeFlags(declaration);
+  if ((modifierFlags & ModifierFlags.Static) !== 0) modifiers |= SemanticTokenModifierFlag.Static;
+  if ((modifierFlags & ModifierFlags.Async) !== 0) modifiers |= SemanticTokenModifierFlag.Async;
+  if ((modifierFlags & ModifierFlags.Readonly) !== 0 || (nodeFlags & NodeFlags.Const) !== 0) {
+    modifiers |= SemanticTokenModifierFlag.Readonly;
+  }
+  if ((modifierFlags & ModifierFlags.Deprecated) !== 0) modifiers |= SemanticTokenModifierFlag.Deprecated;
+  if ((modifierFlags & ModifierFlags.Abstract) !== 0) modifiers |= SemanticTokenModifierFlag.Abstract;
+  return modifiers;
+}
+
+export function isLocalDeclaration(declaration: SemanticTokenDeclaration, sourceFile: unknown): boolean {
+  const localDeclaration = declaration.kind === Kind.BindingElement
+    ? getDeclarationForBindingElement(declaration)
+    : declaration;
+  const localSourceFile = sourceFileOfDeclaration(localDeclaration);
+  if (localDeclaration.kind === Kind.VariableDeclaration) {
+    const parent = localDeclaration.parent;
+    if (parent !== undefined && parent.kind === Kind.CatchClause) {
+      return localSourceFile === sourceFile;
+    }
+    if (parent !== undefined && parent.kind === Kind.VariableDeclarationList) {
+      const grandParent = parent.parent;
+      const greatGrandParent = grandParent?.parent;
+      return (
+        (greatGrandParent?.kind !== Kind.SourceFile || grandParent?.kind === Kind.CatchClause)
+        && localSourceFile === sourceFile
+      );
+    }
+  }
+  if (localDeclaration.kind === Kind.FunctionDeclaration) {
+    const parent = localDeclaration.parent;
+    return parent !== undefined && parent.kind !== Kind.SourceFile && localSourceFile === sourceFile;
+  }
+  return false;
+}
+
+export function getDeclarationForBindingElement(element: SemanticTokenDeclaration): SemanticTokenDeclaration {
+  let current = element;
+  while (true) {
+    const parent = current.parent;
+    if (parent !== undefined && isBindingPatternKind(parent.kind)) {
+      const grandParent = parent.parent;
+      if (grandParent !== undefined && grandParent.kind === Kind.BindingElement) {
+        current = grandParent;
+        continue;
+      }
+      return parent.parent ?? current;
+    }
+    return current;
+  }
+}
+
+export function isInImportClause(node: SemanticTokenDeclaration): boolean {
+  const parent = node.parent;
+  return parent !== undefined && (
+    parent.kind === Kind.ImportClause
+    || parent.kind === Kind.ImportSpecifier
+    || parent.kind === Kind.NamespaceImport
+  );
+}
+
+export function isInfinityOrNaNString(text: string): boolean {
+  return text === "Infinity" || text === "NaN";
+}
+
+export function collectSemanticTokens<
+  Node extends SemanticTokenTreeNode = AstNode,
+  SourceFileNode extends SemanticTokenSourceFile<Node> = SourceFile & SemanticTokenSourceFile<Node>,
+  Symbol extends SemanticTokenSymbol = SemanticTokenSymbol,
+  TokenType = Type,
+>(
+  checker: SemanticTokenTypeChecker<Node, Symbol, TokenType>,
+  sourceFile: SourceFileNode,
+  program?: SemanticTokenProgram<SourceFileNode>,
+  options: SemanticTokenCollectionOptions = {},
+): readonly SemanticTokenLike<Node>[] {
+  return collectSemanticTokensInRange(checker, sourceFile, program, sourceFile.pos, sourceFile.end, options);
+}
+
+export function collectSemanticTokensInRange<
+  Node extends SemanticTokenTreeNode = AstNode,
+  SourceFileNode extends SemanticTokenSourceFile<Node> = SourceFile & SemanticTokenSourceFile<Node>,
+  Symbol extends SemanticTokenSymbol = SemanticTokenSymbol,
+  TokenType = Type,
+>(
+  checker: SemanticTokenTypeChecker<Node, Symbol, TokenType>,
+  sourceFile: SourceFileNode,
+  program: SemanticTokenProgram<SourceFileNode> | undefined,
+  spanStart: number,
+  spanEnd: number,
+  options: SemanticTokenCollectionOptions = {},
+): readonly SemanticTokenLike<Node>[] {
+  const tokens: SemanticTokenLike<Node>[] = [];
+  let inJsxElement = false;
+  const visit = (node: Node): boolean | undefined => {
+    if (options.isCancellationRequested?.() === true) return false;
+    if ((node.flags & NodeFlags.Reparsed) !== 0) return false;
+    if (node.pos >= spanEnd || node.end <= spanStart) return false;
+
+    const previousInJsxElement = inJsxElement;
+    if (isJsxElementKind(node.kind) || node.kind === Kind.JsxSelfClosingElement) {
+      inJsxElement = true;
+    } else if (node.kind === Kind.JsxExpression) {
+      inJsxElement = false;
+    }
+
+    if (node.kind === Kind.Identifier && hasIdentifierText(node) && !inJsxElement && !isInImportClause(node) && !isInfinityOrNaNString(node.text ?? "")) {
+      collectIdentifierSemanticToken(checker, sourceFile, program, node, tokens);
+    }
+
+    node.forEachChild(child => visit(child as Node));
+    inJsxElement = previousInJsxElement;
+    return false;
+  };
+
+  visit(sourceFile as unknown as Node);
+  if (options.isCancellationRequested?.() === true) return [];
+  return tokens;
+}
+
+export function getMeaningFromLocation(node: SemanticTokenDeclaration): SemanticMeaning {
+  const parent = node.parent;
+  if (node.kind === Kind.SourceFile) return SemanticMeaning.Value;
+  if (parent === undefined) return SemanticMeaning.Value;
+  if (
+    nodeKindIs(parent, Kind.ExportAssignment, Kind.ExportSpecifier, Kind.ExternalModuleReference, Kind.ImportSpecifier, Kind.ImportClause)
+    || (parent.kind === Kind.ImportEqualsDeclaration && nodeName(parent) === node)
+  ) {
+    return SemanticMeaning.All;
+  }
+  if (isInRightSideOfInternalImportEqualsDeclaration(node)) {
+    const name = node.kind === Kind.QualifiedName
+      ? node
+      : parent.kind === Kind.QualifiedName && qualifiedNameRight(parent) === node
+        ? parent
+        : undefined;
+    if (name !== undefined && name.parent?.kind === Kind.ImportEqualsDeclaration) {
+      return SemanticMeaning.All;
+    }
+    return SemanticMeaning.Namespace;
+  }
+  if (isDeclarationName(node)) return getMeaningFromDeclaration(parent);
+  if (isTypeReference(node)) return SemanticMeaning.Type;
+  if (isNamespaceReference(node)) return SemanticMeaning.Namespace;
+  if (parent.kind === Kind.TypeParameter) return SemanticMeaning.Type;
+  if (parent.kind === Kind.LiteralType) return SemanticMeaning.Type | SemanticMeaning.Value;
+  return SemanticMeaning.Value;
+}
+
+export function getMeaningFromDeclaration(node: SemanticTokenDeclaration): SemanticMeaning {
+  switch (node.kind) {
+    case Kind.VariableDeclaration:
+    case Kind.Parameter:
+    case Kind.BindingElement:
+    case Kind.PropertyDeclaration:
+    case Kind.PropertySignature:
+    case Kind.PropertyAssignment:
+    case Kind.ShorthandPropertyAssignment:
+    case Kind.MethodDeclaration:
+    case Kind.MethodSignature:
+    case Kind.Constructor:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.ArrowFunction:
+    case Kind.CatchClause:
+    case Kind.JsxAttribute:
+      return SemanticMeaning.Value;
+    case Kind.TypeParameter:
+    case Kind.InterfaceDeclaration:
+    case Kind.TypeAliasDeclaration:
+    case Kind.JSTypeAliasDeclaration:
+    case Kind.TypeLiteral:
+      return SemanticMeaning.Type;
+    case Kind.EnumMember:
+    case Kind.ClassDeclaration:
+      return SemanticMeaning.Value | SemanticMeaning.Type;
+    case Kind.ModuleDeclaration:
+      return SemanticMeaning.Namespace | SemanticMeaning.Value;
+    case Kind.EnumDeclaration:
+    case Kind.NamedImports:
+    case Kind.ImportSpecifier:
+    case Kind.ImportEqualsDeclaration:
+    case Kind.ImportDeclaration:
+    case Kind.JSImportDeclaration:
+    case Kind.ExportAssignment:
+    case Kind.ExportDeclaration:
+      return SemanticMeaning.All;
+    case Kind.SourceFile:
+      return SemanticMeaning.Namespace | SemanticMeaning.Value;
+  }
+  return SemanticMeaning.All;
+}
+
+export function reclassifyByType<Node extends SemanticTokenTreeNode, TokenType = Type>(
+  checker: Pick<SemanticTokenTypeChecker<Node, SemanticTokenSymbol, TokenType>, "getTypeAtLocation" | "getSignaturesOfType">,
+  node: Node,
+  tokenType: SemanticTokenKind,
+): SemanticTokenKind {
+  if (
+    tokenType !== SemanticTokenKind.Variable
+    && tokenType !== SemanticTokenKind.Property
+    && tokenType !== SemanticTokenKind.Parameter
+  ) {
+    return tokenType;
+  }
+  const type = checker.getTypeAtLocation?.(node);
+  if (type === undefined) return tokenType;
+
+  const test = (condition: (type: TokenType) => boolean): boolean => {
+    if (condition(type)) return true;
+    const parts = unionParts(type);
+    return parts.some(part => condition(part as TokenType));
+  };
+
+  if (
+    tokenType !== SemanticTokenKind.Parameter
+    && test(part => (checker.getSignaturesOfType?.(part, SignatureKind.Construct).length ?? 0) > 0)
+  ) {
+    return SemanticTokenKind.Class;
+  }
+
+  const hasCallSignatures = test(part => (checker.getSignaturesOfType?.(part, SignatureKind.Call).length ?? 0) > 0);
+  if (hasCallSignatures) {
+    const hasNoProperties = !test(typeHasProperties);
+    if (hasNoProperties || isExpressionInCallExpression(node)) {
+      if (tokenType === SemanticTokenKind.Property) return SemanticTokenKind.Method;
+      return SemanticTokenKind.Function;
+    }
+  }
+
+  return tokenType;
+}
+
+export function encodeSemanticTokens<Node>(
+  clientCapabilities: ResolvedSemanticTokensClientCapabilities,
+  tokens: readonly SemanticTokenLike<Node>[],
+  positionProvider: SemanticTokenPositionProvider<Node>,
+): readonly number[] {
+  const typeMapping = tokenTypeMapping(clientCapabilities);
+  const modifierMapping = tokenModifierMapping(clientCapabilities);
+  const encoded: number[] = [];
+  let previousLine = 0;
+  let previousCharacter = 0;
+
+  for (const token of tokens) {
+    const clientTypeIndex = typeMapping.get(token.tokenType);
+    if (clientTypeIndex === undefined) continue;
+
+    const location = positionProvider.tokenLocation(token.node);
+    if (location.range.start.line !== location.range.end.line) {
+      throw new Error(
+        `semantic tokens: token spans multiple lines: start=(${location.range.start.line},${location.range.start.character}) end=(${location.range.end.line},${location.range.end.character}) for token at offset ${location.offset}`,
+      );
+    }
+    if (
+      encoded.length > 0
+      && (
+        location.range.start.line < previousLine
+        || (location.range.start.line === previousLine && location.range.start.character <= previousCharacter)
+      )
+    ) {
+      throw new Error(
+        `semantic tokens: positions must be strictly increasing: prev=(${previousLine},${previousCharacter}) current=(${location.range.start.line},${location.range.start.character}) for token at offset ${location.offset}`,
+      );
+    }
+
+    const deltaLine = location.range.start.line - previousLine;
+    const deltaCharacter = deltaLine === 0 ? location.range.start.character - previousCharacter : location.range.start.character;
+    encoded.push(
+      deltaLine,
+      deltaCharacter,
+      location.range.end.character - location.range.start.character,
+      clientTypeIndex,
+      clientModifierMask(token.tokenModifier, modifierMapping),
+    );
+
+    previousLine = location.range.start.line;
+    previousCharacter = location.range.start.character;
+  }
+
+  return encoded;
+}
+
+export function provideSemanticTokens<Node>(
+  collector: SemanticTokenCollector<Node>,
+  clientCapabilities: ResolvedSemanticTokensClientCapabilities,
+  positionProvider: SemanticTokenPositionProvider<Node>,
+): SemanticTokensResponse {
+  const tokens = collector.collectSemanticTokens();
+  if (tokens.length === 0) {
+    return {};
+  }
+  return {
+    semanticTokens: {
+      data: encodeSemanticTokens(clientCapabilities, tokens, positionProvider),
+    },
+  };
+}
+
+export function provideSemanticTokensRange<Node>(
+  collector: SemanticTokenCollector<Node>,
+  range: Range,
+  clientCapabilities: ResolvedSemanticTokensClientCapabilities,
+  positionProvider: SemanticTokenPositionProvider<Node>,
+): SemanticTokensRangeResponse {
+  const tokens = collector.collectSemanticTokensInRange(range);
+  if (tokens.length === 0) {
+    return {};
+  }
+  return {
+    semanticTokens: {
+      data: encodeSemanticTokens(clientCapabilities, tokens, positionProvider),
+    },
+  };
+}
+
+function tokenTypeMapping(clientCapabilities: ResolvedSemanticTokensClientCapabilities): ReadonlyMap<SemanticTokenKind, number> {
+  const mapping = new Map<SemanticTokenKind, number>();
+  const supportedTypes = clientCapabilities.tokenTypes ?? [];
+  let clientIndex = 0;
+  for (let serverIndex = 0; serverIndex < semanticTokenTypes.length; serverIndex += 1) {
+    const tokenType = semanticTokenTypes[serverIndex];
+    if (tokenType !== undefined && supportedTypes.includes(tokenType)) {
+      mapping.set(serverIndex as SemanticTokenKind, clientIndex);
+      clientIndex += 1;
+    }
+  }
+  return mapping;
+}
+
+function tokenModifierMapping(clientCapabilities: ResolvedSemanticTokensClientCapabilities): ReadonlyMap<SemanticTokenModifier, number> {
+  const mapping = new Map<SemanticTokenModifier, number>();
+  const supportedModifiers = clientCapabilities.tokenModifiers ?? [];
+  let clientBit = 0;
+  for (const serverModifier of semanticTokenModifiers) {
+    if (supportedModifiers.includes(serverModifier)) {
+      mapping.set(serverModifier, clientBit);
+      clientBit += 1;
+    }
+  }
+  return mapping;
+}
+
+function clientModifierMask(
+  tokenModifier: number,
+  modifierMapping: ReadonlyMap<SemanticTokenModifier, number>,
+): number {
+  let mask = 0;
+  for (let serverBit = 0; serverBit < semanticTokenModifiers.length; serverBit += 1) {
+    const serverModifier = semanticTokenModifiers[serverBit];
+    if (serverModifier !== undefined && (tokenModifier & (1 << serverBit)) !== 0) {
+      const clientBit = modifierMapping.get(serverModifier);
+      if (clientBit !== undefined) {
+        mask |= 1 << clientBit;
+      }
+    }
+  }
+  return mask;
+}
+
+function isBindingPatternKind(kind: Kind): boolean {
+  return kind === Kind.ArrayBindingPattern || kind === Kind.ObjectBindingPattern;
+}
+
+function collectIdentifierSemanticToken<
+  Node extends SemanticTokenTreeNode,
+  SourceFileNode extends SemanticTokenSourceFile<Node>,
+  Symbol extends SemanticTokenSymbol,
+  TokenType,
+>(
+  checker: SemanticTokenTypeChecker<Node, Symbol, TokenType>,
+  sourceFile: SourceFileNode,
+  program: SemanticTokenProgram<SourceFileNode> | undefined,
+  node: Node,
+  tokens: SemanticTokenLike<Node>[],
+): void {
+  let symbol = checker.getSymbolAtLocation(node);
+  if (symbol === undefined) return;
+  if (((symbol.flags ?? 0) & SymbolFlags.Alias) !== 0) {
+    symbol = checker.getAliasedSymbol?.(symbol) ?? symbol;
+  }
+  const classified = classifySymbol(symbol, getMeaningFromLocation(node));
+  let tokenType = classified[0];
+  if (!classified[1]) return;
+
+  let tokenModifier = 0;
+  const parent = node.parent;
+  if (parent !== undefined) {
+    const parentIsDeclaration = parent.kind === Kind.BindingElement || tokenFromDeclarationMapping(parent.kind) === tokenType;
+    if (parentIsDeclaration && nodeName(parent) === node) tokenModifier |= SemanticTokenModifierFlag.Declaration;
+  }
+
+  if (tokenType === SemanticTokenKind.Parameter && isRightSideOfQualifiedNameOrPropertyAccess(node)) {
+    tokenType = SemanticTokenKind.Property;
+  }
+  tokenType = reclassifyByType(checker, node, tokenType);
+
+  const valueDeclaration = symbol.valueDeclaration;
+  if (valueDeclaration !== undefined) {
+    tokenModifier |= declarationModifiers(valueDeclaration);
+    if (
+      tokenType !== SemanticTokenKind.Class
+      && tokenType !== SemanticTokenKind.Interface
+      && (((symbol.flags ?? 0) & SymbolFlags.EnumMember) !== 0)
+    ) {
+      tokenModifier |= SemanticTokenModifierFlag.Readonly;
+    }
+    if (
+      (tokenType === SemanticTokenKind.Variable || tokenType === SemanticTokenKind.Function)
+      && isLocalDeclaration(valueDeclaration, sourceFile)
+    ) {
+      tokenModifier |= SemanticTokenModifierFlag.Local;
+    }
+    if (isDefaultLibraryDeclaration(valueDeclaration, program)) {
+      tokenModifier |= SemanticTokenModifierFlag.DefaultLibrary;
+    }
+  } else {
+    for (const declaration of symbol.declarations ?? []) {
+      if (isDefaultLibraryDeclaration(declaration, program)) {
+        tokenModifier |= SemanticTokenModifierFlag.DefaultLibrary;
+        break;
+      }
+    }
+  }
+
+  tokens.push({ node, tokenType, tokenModifier });
+}
+
+function combinedModifierFlags(declaration: SemanticTokenDeclaration): ModifierFlags {
+  if (declaration.modifierFlags !== undefined) return declaration.modifierFlags;
+  const modifiers = nodeModifiers(declaration);
+  let flags = ModifierFlags.None;
+  for (const modifier of modifiers) {
+    switch (modifier.kind) {
+      case Kind.StaticKeyword:
+        flags |= ModifierFlags.Static;
+        break;
+      case Kind.AsyncKeyword:
+        flags |= ModifierFlags.Async;
+        break;
+      case Kind.ReadonlyKeyword:
+        flags |= ModifierFlags.Readonly;
+        break;
+      case Kind.AbstractKeyword:
+        flags |= ModifierFlags.Abstract;
+        break;
+    }
+  }
+  return flags;
+}
+
+function combinedNodeFlags(declaration: SemanticTokenDeclaration): NodeFlags {
+  return declaration.nodeFlags ?? declaration.flags ?? NodeFlags.None;
+}
+
+function nodeModifiers(declaration: SemanticTokenDeclaration): readonly SemanticTokenDeclaration[] {
+  return (declaration as { readonly modifiers?: readonly SemanticTokenDeclaration[] }).modifiers ?? [];
+}
+
+function sourceFileOfDeclaration(declaration: SemanticTokenDeclaration): unknown {
+  return declaration.sourceFile ?? declaration.getSourceFile?.();
+}
+
+function isDefaultLibraryDeclaration<SourceFileNode extends SemanticTokenSourceFile>(
+  declaration: SemanticTokenDeclaration,
+  program: SemanticTokenProgram<SourceFileNode> | undefined,
+): boolean {
+  const sourceFile = sourceFileOfDeclaration(declaration) as SourceFileNode | undefined;
+  if (sourceFile === undefined) return false;
+  const path = program?.sourceFilePath?.(sourceFile)
+    ?? sourceFile.path
+    ?? sourceFile.fileName;
+  return path !== undefined && program?.isSourceFileDefaultLibrary?.(path) === true;
+}
+
+function hasIdentifierText(node: SemanticTokenTreeNode): boolean {
+  return (node.text ?? "").length !== 0;
+}
+
+function isJsxElementKind(kind: Kind): boolean {
+  return kind === Kind.JsxElement;
+}
+
+function nodeKindIs(node: SemanticTokenDeclaration, ...kinds: readonly Kind[]): boolean {
+  return kinds.includes(node.kind);
+}
+
+function nodeName(node: SemanticTokenDeclaration): SemanticTokenDeclaration | undefined {
+  return (node as { readonly name?: SemanticTokenDeclaration }).name;
+}
+
+function qualifiedNameRight(node: SemanticTokenDeclaration): SemanticTokenDeclaration | undefined {
+  return (node as { readonly right?: SemanticTokenDeclaration }).right;
+}
+
+function nodeExpression(node: SemanticTokenDeclaration): SemanticTokenDeclaration | undefined {
+  return (node as { readonly expression?: SemanticTokenDeclaration }).expression;
+}
+
+function isDeclarationName(node: SemanticTokenDeclaration): boolean {
+  const parent = node.parent;
+  return parent !== undefined && nodeName(parent) === node;
+}
+
+function isInRightSideOfInternalImportEqualsDeclaration(node: SemanticTokenDeclaration): boolean {
+  let current: SemanticTokenDeclaration | undefined = node;
+  while (current?.parent?.kind === Kind.QualifiedName && qualifiedNameRight(current.parent) === current) {
+    current = current.parent;
+  }
+  return current?.parent?.kind === Kind.ImportEqualsDeclaration;
+}
+
+function isTypeReference(node: SemanticTokenDeclaration): boolean {
+  let current: SemanticTokenDeclaration | undefined = node;
+  while (current?.parent?.kind === Kind.QualifiedName) current = current.parent;
+  const parent = current?.parent;
+  return parent?.kind === Kind.TypeReference || parent?.kind === Kind.ExpressionWithTypeArguments;
+}
+
+function isNamespaceReference(node: SemanticTokenDeclaration): boolean {
+  return node.parent?.kind === Kind.ModuleDeclaration || isInRightSideOfInternalImportEqualsDeclaration(node);
+}
+
+function isRightSideOfQualifiedNameOrPropertyAccess(node: SemanticTokenDeclaration): boolean {
+  const parent = node.parent;
+  return (
+    parent?.kind === Kind.QualifiedName && qualifiedNameRight(parent) === node
+  ) || (
+    parent?.kind === Kind.PropertyAccessExpression && nodeName(parent) === node
+  );
+}
+
+function isExpressionInCallExpression(node: SemanticTokenDeclaration): boolean {
+  let current: SemanticTokenDeclaration = node;
+  while (isRightSideOfQualifiedNameOrPropertyAccess(current)) {
+    current = current.parent!;
+  }
+  const parent = current.parent;
+  return parent?.kind === Kind.CallExpression && nodeExpression(parent) === current;
+}
+
+function unionParts<TokenType>(type: TokenType): readonly TokenType[] {
+  const typed = type as Type;
+  if ((typed.flags & TypeFlags.Union) === 0) return [];
+  return ((typed.data as { readonly types?: readonly TokenType[] } | undefined)?.types) ?? [];
+}
+
+function typeHasProperties<TokenType>(type: TokenType): boolean {
+  const data = (type as Type).data as {
+    readonly declaredProperties?: readonly unknown[];
+    readonly resolvedProperties?: readonly unknown[];
+    readonly propertyCache?: ReadonlyMap<string, unknown>;
+  } | undefined;
+  return (
+    (data?.declaredProperties?.length ?? 0) > 0
+    || (data?.resolvedProperties?.length ?? 0) > 0
+    || (data?.propertyCache?.size ?? 0) > 0
+  );
 }

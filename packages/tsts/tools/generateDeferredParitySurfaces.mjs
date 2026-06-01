@@ -363,7 +363,7 @@ function generateLsMaps() {
     "inlay_hints.go",
     "lsutil/organizeimports.go",
     "organizeimports.go", "rename.go",
-    "semantictokens.go", "signaturehelp.go", "sourcedefinition.go",
+    "signaturehelp.go", "sourcedefinition.go",
     "string_completions.go", "symbols.go", "utilities.go",
   ];
   for (const file of files) {
