@@ -1,9 +1,37 @@
 import {
+  isAssignmentExpression,
+  isBindingElement,
+  isCallLikeExpression,
+  isClassDeclaration,
+  isClassElement,
+  isClassExpression,
+  isConstructorDeclaration,
+  isFunctionLike,
+  isFunctionTypeNode,
+  isIdentifier,
+  isJsxOpeningLikeElement,
+  isObjectBindingPattern,
+  isPropertyName,
+  isShorthandPropertyAssignment,
+  isVariableDeclaration,
   isVariableDeclarationList,
   Kind,
+  nodeText,
+  skipOuterExpressions,
   type Node,
+  type SourceFile,
+  type Symbol as AstSymbol,
 } from "../ast/index.js";
-import { firstOrNil, type TextRange } from "../core/index.js";
+import { SymbolFlags } from "../ast/flags.js";
+import { firstOrNil, newTextRange, type TextRange } from "../core/index.js";
+import type { Signature, Type } from "../checker/types.js";
+import {
+  type DefinitionResponse,
+  type Location,
+  type LocationLink,
+  type Range,
+} from "../lsp/lsproto/index.js";
+import { fileNameToDocumentURI } from "./lsconv/index.js";
 
 export function getDeclarationNameForKeyword(node: Node): Node {
   if (node.kind >= Kind.FirstKeyword && node.kind <= Kind.LastKeyword) {
@@ -22,6 +50,483 @@ export function getDeclarationNameForKeyword(node: Node): Node {
 export interface FileRange {
   readonly fileName: string;
   readonly fileRange: TextRange;
+}
+
+export interface RefInfo {
+  readonly fileName: string;
+  readonly file?: SourceFile;
+}
+
+export interface DefinitionLocationHost {
+  getMappedLocation(fileName: string, textRange: TextRange, sourceFile: SourceFile): Location;
+}
+
+export interface DefinitionChecker {
+  getResolvedSymbol?(node: Node): AstSymbol | undefined;
+  getContextualType?(node: Node, flags: number): Type | undefined;
+  getPropertySymbolsFromContextualType?(node: Node, type: Type, unionSymbolOk: boolean): readonly AstSymbol[];
+  getTypeAtLocation?(node: Node): Type;
+  getPropertyOfType?(type: Type, name: string): AstSymbol | undefined;
+  getSymbolAtLocation?(node: Node): AstSymbol | undefined;
+  resolveAlias?(symbol: AstSymbol): AstSymbol | undefined;
+  getIndexSignaturesAtLocation?(node: Node): readonly Node[];
+  getResolvedSignature?(node: Node): Signature | undefined;
+  getRootSymbols?(symbol: AstSymbol): readonly AstSymbol[];
+  getTypeOfSymbol?(symbol: AstSymbol): Type;
+  getDeclaredTypeOfSymbol?(symbol: AstSymbol): Type;
+  getTypeOfSymbolAtLocation?(symbol: AstSymbol, node: Node): Type;
+  getCallSignatures?(type: Type): readonly Signature[];
+  getReturnTypeOfSignature?(signature: Signature): Type;
+  getFirstTypeArgumentFromKnownType?(type: Type): Type | undefined;
+}
+
+export function createDefinitionLocations(
+  host: DefinitionLocationHost,
+  originSelectionRange: Range,
+  clientSupportsLink: boolean,
+  declarations: readonly Node[],
+  reference: RefInfo | undefined,
+): DefinitionResponse {
+  const links: LocationLink[] = [];
+  const locationRanges = new Set<string>();
+
+  if (reference !== undefined && reference.file !== undefined) {
+    const targetRange = zeroRange();
+    links.push({
+      originSelectionRange,
+      targetUri: fileNameToDocumentURI(reference.fileName),
+      targetRange,
+      targetSelectionRange: targetRange,
+    });
+  }
+
+  for (const declaration of declarations) {
+    const file = declaration.getSourceFile();
+    const fileName = file.fileName;
+    const name = getNameOfDeclaration(declaration) ?? declaration;
+    const nameRange = name.kind === Kind.EmptyStatement
+      ? newTextRange(name.pos, name.pos)
+      : createRangeFromNode(name);
+    const rangeKey = fileName + ":" + nameRange.pos + ":" + nameRange.end;
+    if (locationRanges.has(rangeKey)) continue;
+    locationRanges.add(rangeKey);
+
+    const contextNode = getContextNode(declaration) ?? declaration;
+    const contextRange = toContextRange(nameRange, file, contextNode) ?? nameRange;
+    const targetSelectionLocation = host.getMappedLocation(fileName, nameRange, file);
+    const targetLocation = host.getMappedLocation(fileName, contextRange, file);
+    links.push({
+      originSelectionRange,
+      targetSelectionRange: targetSelectionLocation.range,
+      targetUri: targetLocation.uri,
+      targetRange: targetLocation.range,
+    });
+  }
+
+  if (clientSupportsLink) return { definitionLinks: links };
+  return createLocationsFromLinks(links);
+}
+
+export function createLocationsFromLinks(links: readonly LocationLink[]): DefinitionResponse {
+  return {
+    locations: links.map((link): Location => ({
+      uri: link.targetUri,
+      range: link.targetSelectionRange,
+    })),
+  };
+}
+
+export function createLocationFromFileAndRange(file: SourceFile, textRange: TextRange): DefinitionResponse {
+  return {
+    location: mappedLocation(file.fileName, file, textRange),
+  };
+}
+
+export function getDeclarationsFromLocation(checker: DefinitionChecker, node: Node): readonly Node[] {
+  if (isIdentifier(node) && isShorthandPropertyAssignment(node.parent)) {
+    const shorthandSymbol = checker.getResolvedSymbol?.(node);
+    const declarations = shorthandSymbol?.declarations ?? [];
+    return [...declarations, ...getDeclarationsFromObjectLiteralElement(checker, node)];
+  }
+
+  if (isPropertyName(node) && isBindingElement(node.parent) && isObjectBindingPattern(node.parent.parent)) {
+    const bindingElement = node.parent;
+    if (bindingElement.dotDotDotToken === undefined && node === (bindingElement.propertyName ?? bindingElement.name)) {
+      const name = tryGetTextOfPropertyName(node);
+      if (name !== undefined) {
+        const bindingPatternType = checker.getTypeAtLocation?.(node.parent.parent);
+        const types = distributedTypes(bindingPatternType);
+        const result: Node[] = [];
+        for (const unionType of types) {
+          const property = checker.getPropertyOfType?.(unionType, name);
+          if (property !== undefined) result.push(...property.declarations);
+        }
+        return result;
+      }
+    }
+  }
+
+  const nameNode = getDeclarationNameForKeyword(node);
+  let symbol = checker.getSymbolAtLocation?.(nameNode);
+  if (symbol !== undefined) {
+    if (
+      ((symbol.flags ?? 0) & SymbolFlags.Class) !== 0
+      && ((symbol.flags ?? 0) & (SymbolFlags.Function | SymbolFlags.Variable)) === 0
+      && nameNode.kind === Kind.ConstructorKeyword
+    ) {
+      const constructorSymbol = symbol.members?.get("constructor");
+      if (constructorSymbol !== undefined) symbol = constructorSymbol;
+    }
+    if (((symbol.flags ?? 0) & SymbolFlags.Alias) !== 0) {
+      symbol = checker.resolveAlias?.(symbol) ?? symbol;
+    }
+    const objectLiteralElementDeclarations = getDeclarationsFromObjectLiteralElement(checker, nameNode);
+    if (objectLiteralElementDeclarations.length > 0) return objectLiteralElementDeclarations;
+    if (symbol.declarations.length > 0) return symbol.declarations;
+  }
+
+  return checker.getIndexSignaturesAtLocation?.(nameNode) ?? [];
+}
+
+export function getDeclarationsFromObjectLiteralElement(checker: DefinitionChecker, node: Node): readonly Node[] {
+  const element = getContainingObjectLiteralElement(node);
+  if (element === undefined) return [];
+
+  const contextualType = checker.getContextualType?.(element.parent, 0);
+  if (contextualType === undefined) return [];
+
+  let properties = checker.getPropertySymbolsFromContextualType?.(element, contextualType, false) ?? [];
+  if (properties.some((property) =>
+    property.valueDeclaration !== undefined
+    && property.valueDeclaration.parent.kind === Kind.ObjectLiteralExpression
+    && isObjectLiteralElement(property.valueDeclaration)
+    && getNameOfDeclaration(property.valueDeclaration) === node,
+  )) {
+    const withoutNodeInferencesType = checker.getContextualType?.(element.parent, 1);
+    if (withoutNodeInferencesType !== undefined) {
+      const withoutNodeInferenceProperties = checker.getPropertySymbolsFromContextualType?.(element, withoutNodeInferencesType, false) ?? [];
+      if (withoutNodeInferenceProperties.length > 0) properties = withoutNodeInferenceProperties;
+    }
+  }
+
+  return properties.flatMap((property) => property.declarations);
+}
+
+export function getAncestorCallLikeExpression(node: Node): Node | undefined {
+  const target = findAncestor(node, (candidate) => !isRightSideOfPropertyAccess(candidate));
+  const callLike = target?.parent;
+  if (callLike !== undefined && isCallLikeExpression(callLike) && getInvokedExpression(callLike) === target) {
+    return callLike;
+  }
+  return undefined;
+}
+
+export function tryGetSignatureDeclaration(typeChecker: DefinitionChecker, node: Node): Node | undefined {
+  const callLike = getAncestorCallLikeExpression(node);
+  const signature = callLike === undefined ? undefined : typeChecker.getResolvedSignature?.(callLike);
+  const declaration = signature?.declaration;
+  if (declaration !== undefined && isFunctionLike(declaration) && !isFunctionTypeNode(declaration)) {
+    return declaration;
+  }
+  return undefined;
+}
+
+export function isJsxConstructorLike(node: Node): boolean {
+  return isConstructorDeclaration(node)
+    || node.kind === Kind.ConstructorType
+    || node.kind === Kind.CallSignature
+    || node.kind === Kind.ConstructSignature;
+}
+
+export function shouldIncludeCalledDeclaration(
+  checker: DefinitionChecker,
+  node: Node,
+  declarations: readonly Node[],
+  calledDeclaration: Node | undefined,
+): readonly Node[] {
+  if (calledDeclaration === undefined || (isJsxOpeningLikeElement(node.parent) && isJsxConstructorLike(calledDeclaration))) {
+    return declarations;
+  }
+  const symbol = checker.getSymbolAtLocation?.(getDeclarationNameForKeyword(node));
+  const rootSymbols = symbol === undefined ? [] : checker.getRootSymbols?.(symbol) ?? [];
+  if (rootSymbols.some((rootSymbol) => symbolMatchesSignature(rootSymbol, calledDeclaration))) {
+    if (!isConstructorDeclaration(calledDeclaration)) return [calledDeclaration];
+    return [
+      ...declarations.filter((declaration) => declaration !== calledDeclaration && (isClassDeclaration(declaration) || isClassExpression(declaration))),
+      calledDeclaration,
+    ];
+  }
+  return [...declarations.filter((declaration) => declaration !== calledDeclaration), calledDeclaration];
+}
+
+export function symbolMatchesSignature(symbol: AstSymbol | undefined, calledDeclaration: Node | undefined): boolean {
+  if (symbol === undefined || calledDeclaration === undefined) return false;
+  const calledSymbol = calledDeclaration.symbol;
+  if (symbol === calledSymbol || (calledSymbol !== undefined && symbol === calledSymbol.parent)) return true;
+  const parent = calledDeclaration.parent;
+  return parent !== undefined
+    && (
+      isAssignmentExpression(parent, false)
+      || (!isCallLikeExpression(parent) && canHaveSymbol(parent) && symbol === parent.symbol)
+    );
+}
+
+export function getSymbolForOverriddenMember(typeChecker: DefinitionChecker, node: Node): AstSymbol | undefined {
+  const classElement = findAncestor(node, isClassElement);
+  if (classElement === undefined || getNameOfDeclaration(classElement) === undefined) return undefined;
+  const baseDeclaration = findAncestor(classElement, isClassLike);
+  if (baseDeclaration === undefined) return undefined;
+  const baseTypeNode = getClassExtendsHeritageElement(baseDeclaration);
+  if (baseTypeNode === undefined) return undefined;
+  const expression = skipOuterExpressions(nodeExpression(baseTypeNode), 0);
+  const base = isClassExpression(expression) ? expression.symbol : typeChecker.getSymbolAtLocation?.(expression);
+  if (base === undefined) return undefined;
+  const name = getTextOfPropertyName(getNameOfDeclaration(classElement));
+  if (name === "") return undefined;
+  const type = hasStaticModifier(classElement)
+    ? typeChecker.getTypeOfSymbol?.(base)
+    : typeChecker.getDeclaredTypeOfSymbol?.(base);
+  return type === undefined ? undefined : typeChecker.getPropertyOfType?.(type, name);
+}
+
+export function getTypeOfSymbolAtLocation(checker: DefinitionChecker, symbol: AstSymbol, node: Node): Type | undefined {
+  let type = checker.getTypeOfSymbolAtLocation?.(symbol, node);
+  if (type === undefined) return undefined;
+  const typeSymbol = type.symbol;
+  if (
+    typeSymbol === symbol
+    || (
+      typeSymbol !== undefined
+      && symbol.valueDeclaration !== undefined
+      && isVariableDeclaration(symbol.valueDeclaration)
+      && nodeInitializer(symbol.valueDeclaration) === typeSymbol.valueDeclaration
+    )
+  ) {
+    const signatures = checker.getCallSignatures?.(type) ?? [];
+    if (signatures.length === 1) type = checker.getReturnTypeOfSignature?.(signatures[0]!) ?? type;
+  }
+  return type;
+}
+
+export function getDeclarationsFromType(type: Type | undefined): readonly Node[] {
+  const result: Node[] = [];
+  for (const distributedType of distributedTypes(type)) {
+    for (const declaration of distributedType.symbol?.declarations ?? []) {
+      appendIfUnique(result, declaration);
+    }
+  }
+  return result;
+}
+
+function zeroRange(): Range {
+  return {
+    start: { line: 0, character: 0 },
+    end: { line: 0, character: 0 },
+  };
+}
+
+function mappedLocation(fileName: string, sourceFile: SourceFile, textRange: TextRange): Location {
+  return {
+    uri: fileNameToDocumentURI(fileName),
+    range: createLspRangeFromRange(textRange, sourceFile),
+  };
+}
+
+function createLspRangeFromRange(textRange: TextRange, sourceFile: SourceFile): Range {
+  return {
+    start: positionToLineAndCharacter(sourceFile, textRange.pos),
+    end: positionToLineAndCharacter(sourceFile, textRange.end),
+  };
+}
+
+function createRangeFromNode(node: Node): TextRange {
+  return newTextRange(node.pos, node.end);
+}
+
+function positionToLineAndCharacter(sourceFile: SourceFile, position: number): Range["start"] {
+  const lineStarts = sourceFileTextLineStarts(sourceFile.text);
+  let line = 0;
+  for (let index = 0; index < lineStarts.length; index += 1) {
+    if (lineStarts[index]! <= position) line = index;
+    else break;
+  }
+  return { line, character: position - lineStarts[line]! };
+}
+
+function sourceFileTextLineStarts(text: string): number[] {
+  const starts = [0];
+  for (let index = 0; index < text.length; index += 1) {
+    const ch = text.charCodeAt(index);
+    if (ch === 13) {
+      if (text.charCodeAt(index + 1) === 10) index += 1;
+      starts.push(index + 1);
+    } else if (ch === 10) {
+      starts.push(index + 1);
+    }
+  }
+  return starts;
+}
+
+function getNameOfDeclaration(node: Node): Node | undefined {
+  return (node as { readonly name?: Node }).name;
+}
+
+function nodeInitializer(node: Node): Node | undefined {
+  return (node as { readonly initializer?: Node }).initializer;
+}
+
+function nodeExpression(node: Node | undefined): Node {
+  if (node === undefined) throw new Error("expected expression node");
+  const expression = (node as { readonly expression?: Node }).expression;
+  if (expression === undefined) throw new Error("expected expression node");
+  return expression;
+}
+
+function toContextRange(textRange: TextRange, contextFile: SourceFile, context: Node): TextRange | undefined {
+  if (context.getSourceFile() !== contextFile) return undefined;
+  if (context.pos <= textRange.pos && context.end >= textRange.end) return newTextRange(context.pos, context.end);
+  return undefined;
+}
+
+function getContextNode(node: Node): Node | undefined {
+  let current: Node | undefined = node;
+  while (current !== undefined) {
+    switch (current.kind) {
+      case Kind.SourceFile:
+      case Kind.ModuleDeclaration:
+      case Kind.ClassDeclaration:
+      case Kind.ClassExpression:
+      case Kind.FunctionDeclaration:
+      case Kind.FunctionExpression:
+      case Kind.ArrowFunction:
+      case Kind.MethodDeclaration:
+      case Kind.GetAccessor:
+      case Kind.SetAccessor:
+      case Kind.Constructor:
+        return current;
+    }
+    current = current.parent;
+  }
+  return undefined;
+}
+
+function tryGetTextOfPropertyName(node: Node): string | undefined {
+  if (isIdentifier(node) || node.kind === Kind.PrivateIdentifier) return nodeText(node);
+  if (node.kind === Kind.StringLiteral || node.kind === Kind.NumericLiteral || node.kind === Kind.NoSubstitutionTemplateLiteral) {
+    return nodeText(node);
+  }
+  return undefined;
+}
+
+function getTextOfPropertyName(node: Node | undefined): string {
+  if (node === undefined) return "";
+  return tryGetTextOfPropertyName(node) ?? nodeText(node);
+}
+
+function distributedTypes(type: Type | undefined): readonly Type[] {
+  if (type === undefined) return [];
+  const unionTypes = (type as { readonly types?: readonly Type[] }).types;
+  return unionTypes ?? [type];
+}
+
+function appendIfUnique(result: Node[], declaration: Node): void {
+  if (!result.includes(declaration)) result.push(declaration);
+}
+
+function getContainingObjectLiteralElement(node: Node): Node | undefined {
+  const element = getContainingObjectLiteralElementWorker(node);
+  return element !== undefined && element.parent.kind === Kind.ObjectLiteralExpression ? element : undefined;
+}
+
+function getContainingObjectLiteralElementWorker(node: Node): Node | undefined {
+  let current: Node | undefined = node;
+  while (current !== undefined) {
+    switch (current.kind) {
+      case Kind.PropertyAssignment:
+      case Kind.ShorthandPropertyAssignment:
+      case Kind.SpreadAssignment:
+      case Kind.MethodDeclaration:
+      case Kind.GetAccessor:
+      case Kind.SetAccessor:
+        return current;
+      case Kind.SourceFile:
+      case Kind.Block:
+      case Kind.ClassDeclaration:
+      case Kind.ClassExpression:
+      case Kind.FunctionDeclaration:
+      case Kind.FunctionExpression:
+      case Kind.ArrowFunction:
+        return undefined;
+    }
+    current = current.parent;
+  }
+  return undefined;
+}
+
+function isObjectLiteralElement(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.PropertyAssignment:
+    case Kind.ShorthandPropertyAssignment:
+    case Kind.SpreadAssignment:
+    case Kind.MethodDeclaration:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+      return true;
+  }
+  return false;
+}
+
+function findAncestor(node: Node | undefined, predicate: (node: Node) => boolean): Node | undefined {
+  let current = node;
+  while (current !== undefined) {
+    if (predicate(current)) return current;
+    current = current.parent;
+  }
+  return undefined;
+}
+
+function isRightSideOfPropertyAccess(node: Node): boolean {
+  return node.parent !== undefined
+    && node.parent.kind === Kind.PropertyAccessExpression
+    && (node.parent as { readonly name?: Node }).name === node;
+}
+
+function getInvokedExpression(node: Node): Node | undefined {
+  if (node.kind === Kind.CallExpression || node.kind === Kind.NewExpression) {
+    return (node as { readonly expression?: Node }).expression;
+  }
+  if (node.kind === Kind.TaggedTemplateExpression) {
+    return (node as { readonly tag?: Node }).tag;
+  }
+  return undefined;
+}
+
+function isClassLike(node: Node): boolean {
+  return isClassDeclaration(node) || isClassExpression(node);
+}
+
+function getClassExtendsHeritageElement(node: Node): Node | undefined {
+  const heritageClauses = (node as { readonly heritageClauses?: readonly Node[] }).heritageClauses;
+  for (const clause of heritageClauses ?? []) {
+    if (clause.kind !== Kind.HeritageClause) continue;
+    const token = (clause as { readonly token?: Kind }).token;
+    if (token !== Kind.ExtendsKeyword) continue;
+    const types = (clause as { readonly types?: readonly Node[] }).types;
+    return types?.[0];
+  }
+  return undefined;
+}
+
+function hasStaticModifier(node: Node): boolean {
+  return modifiersOf(node).some((modifier) => modifier.kind === Kind.StaticKeyword);
+}
+
+function modifiersOf(node: Node): readonly Node[] {
+  return (node as { readonly modifiers?: readonly Node[] }).modifiers ?? [];
+}
+
+function canHaveSymbol(node: Node): boolean {
+  return node.symbol !== undefined;
 }
 
 // Language-service parity map: internal/ls/definition.go
