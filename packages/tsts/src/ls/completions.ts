@@ -7,6 +7,9 @@ import {
   isBinaryExpression,
   isBreakOrContinueStatement,
   isBindingElement,
+  isClassElement,
+  isClassLikeDeclaration,
+  isClassStaticBlockDeclaration,
   isConstructorDeclaration,
   isExpression,
   isFunctionLike,
@@ -20,6 +23,7 @@ import {
   isMethodDeclaration,
   isObjectBindingPattern,
   isObjectLiteralExpression,
+  isObjectTypeDeclaration,
   isParameterDeclaration,
   isPropertyAssignment,
   isPropertyDeclaration,
@@ -35,6 +39,7 @@ import {
   isTypeReferenceNode,
   isTypeAssertion,
   isVariableDeclaration,
+  hasSyntacticModifier,
   walkUpParenthesizedExpressions,
   nodeText,
   type Node,
@@ -42,6 +47,7 @@ import {
   type Symbol,
 } from "../ast/index.js";
 import { TypeFlags } from "../checker/types.js";
+import { ModifierFlags } from "../enums/modifierFlags.enum.js";
 import { tristateIsTrue, type CompilerOptions, type Tristate } from "../core/index.js";
 import { LanguageVariant } from "../core/languageVariant.js";
 import { isIdentifierPartCodePoint, isIdentifierStartCodePoint } from "../scanner/index.js";
@@ -2219,6 +2225,99 @@ export function isConstructorParameterCompletion(node: Node): boolean {
     && (isParameterPropertyModifier(node.kind) || nodeName(node.parent) === node);
 }
 
+export function tryGetObjectTypeDeclarationCompletionContainer(
+  file: SourceFile,
+  contextToken: Node | undefined,
+  location: Node | undefined,
+  position: number,
+): Node | undefined {
+  if (location !== undefined) {
+    switch (location.kind) {
+      case Kind.SyntaxList:
+        return isObjectTypeDeclarationNode(location.parent) ? location.parent : undefined;
+      case Kind.EndOfFile: {
+        const statements = nodeArray(location.parent, "statements");
+        const lastStatement = statements[statements.length - 1];
+        return lastStatement !== undefined
+          && isObjectTypeDeclaration(lastStatement)
+          && findChildOfKind(lastStatement, Kind.CloseBraceToken) === undefined
+          ? lastStatement
+          : undefined;
+      }
+      case Kind.PrivateIdentifier:
+        return isPropertyDeclaration(location.parent) ? findAncestor(location, isClassLikeDeclaration) : undefined;
+      case Kind.Identifier:
+        if (stringToKeywordKind(nodeText(location)) !== Kind.Unknown) return undefined;
+        if (isPropertyDeclaration(location.parent) && nodeProperty<Node>(location.parent, "initializer") === location) return undefined;
+        if (isFromObjectTypeDeclaration(location)) return findAncestor(location, isObjectTypeDeclaration);
+        break;
+      default:
+        break;
+    }
+  }
+
+  if (contextToken === undefined) return undefined;
+  if (location?.kind === Kind.ConstructorKeyword
+    || contextToken.kind === Kind.Identifier && isPropertyDeclaration(contextToken.parent) && isClassLikeDeclarationNode(location)) {
+    return findAncestor(contextToken, isClassLikeDeclaration);
+  }
+
+  switch (contextToken.kind) {
+    case Kind.EqualsToken:
+      return undefined;
+    case Kind.SemicolonToken:
+    case Kind.CloseBraceToken:
+      if (location !== undefined && isFromObjectTypeDeclaration(location) && nodeName(location.parent) === location) return location.parent?.parent;
+      return isObjectTypeDeclarationNode(location) ? location : undefined;
+    case Kind.OpenBraceToken:
+    case Kind.CommaToken:
+      return isObjectTypeDeclarationNode(contextToken.parent) ? contextToken.parent : undefined;
+    default:
+      if (isObjectTypeDeclarationNode(location)) {
+        if (getLineOfPosition(file, contextToken.end) !== getLineOfPosition(file, position)) return location;
+        const isValidKeyword = isClassLikeDeclarationNode(contextToken.parent?.parent)
+          ? isClassMemberCompletionKeyword
+          : isInterfaceOrTypeLiteralCompletionKeyword;
+        const tokenKind = contextToken.kind === Kind.Identifier ? stringToKeywordKind(nodeText(contextToken)) : contextToken.kind;
+        if (isValidKeyword(contextToken.kind) || contextToken.kind === Kind.AsteriskToken || tokenKind !== Kind.Unknown && isValidKeyword(tokenKind)) {
+          return contextToken.parent?.parent;
+        }
+      }
+      return undefined;
+  }
+}
+
+export function isFromObjectTypeDeclaration(node: Node | undefined): boolean {
+  return isClassOrTypeElement(node?.parent) && isObjectTypeDeclarationNode(node?.parent?.parent);
+}
+
+export function filterClassMembersList(
+  baseSymbols: readonly CompletionSymbol[],
+  existingMembers: readonly Node[],
+  classElementModifierFlags: ModifierFlags,
+  file: SourceFile,
+  position: number,
+): readonly CompletionSymbol[] {
+  const existingMemberNames = new Set<string>();
+  for (const member of existingMembers) {
+    if (!isClassCompletionMemberNameCarrier(member)) continue;
+    if (isCurrentlyEditingNode(member, file, position)) continue;
+    if (hasSyntacticModifier(member, ModifierFlags.Private)) continue;
+    if (hasSyntacticModifier(member, ModifierFlags.Static) !== ((classElementModifierFlags & ModifierFlags.Static) !== 0)) continue;
+
+    const existingName = getPropertyNameForPropertyNameNode(nodeName(member));
+    if (existingName !== "") existingMemberNames.add(existingName);
+  }
+
+  return baseSymbols.filter(symbol => {
+    const declaration = symbol.valueDeclaration ?? symbol.declarations[0];
+    return !existingMemberNames.has(symbolName(symbol))
+      && symbol.declarations.length > 0
+      && !containsNonPublicProperties([symbol])
+      && declaration?.kind !== Kind.PrivateIdentifier;
+  });
+}
+
 export function tryGetContainingJsxElement(contextToken: Node | undefined, file: SourceFile): Node | undefined {
   if (contextToken === undefined) return undefined;
   const parent = contextToken.parent;
@@ -2279,6 +2378,10 @@ export function filterJsxAttributes(
   };
 }
 
+export function isTypeKeywordTokenOrIdentifier(node: Node | undefined): boolean {
+  return node?.kind === Kind.TypeKeyword || node?.kind === Kind.Identifier && stringToKeywordKind(nodeText(node)) === Kind.TypeKeyword;
+}
+
 function propertyAssignmentCompletionContainer(parent: Node | undefined, contextToken: Node, file: SourceFile): Node | undefined {
   const ancestorNode = findAncestor(parent, isPropertyAssignment);
   return ancestorNode !== undefined
@@ -2291,6 +2394,58 @@ function propertyAssignmentCompletionContainer(parent: Node | undefined, context
 
 function isObjectLiteralLike(node: Node | undefined): node is Node {
   return node !== undefined && (isObjectLiteralExpression(node) || isObjectBindingPattern(node));
+}
+
+function isObjectTypeDeclarationNode(node: Node | undefined): node is Node {
+  return node !== undefined && isObjectTypeDeclaration(node);
+}
+
+function isClassLikeDeclarationNode(node: Node | undefined): node is Node {
+  return node !== undefined && isClassLikeDeclaration(node);
+}
+
+function isClassOrTypeElement(node: Node | undefined): node is Node {
+  if (node === undefined) return false;
+  if (isClassElement(node)) return true;
+  switch (node.kind) {
+    case Kind.CallSignature:
+    case Kind.ConstructSignature:
+    case Kind.IndexSignature:
+    case Kind.MethodSignature:
+    case Kind.PropertySignature:
+    case Kind.SemicolonClassElement:
+      return true;
+    default:
+      return false;
+  }
+}
+
+function isClassCompletionMemberNameCarrier(node: Node): boolean {
+  return isPropertyDeclaration(node)
+    || isMethodDeclaration(node)
+    || isGetAccessorDeclaration(node)
+    || isSetAccessorDeclaration(node);
+}
+
+function getPropertyNameForPropertyNameNode(name: Node | undefined): string {
+  if (name === undefined) return "";
+  switch (name.kind) {
+    case Kind.Identifier:
+    case Kind.PrivateIdentifier:
+    case Kind.StringLiteral:
+    case Kind.NumericLiteral:
+      return nodeText(name);
+    default:
+      return "";
+  }
+}
+
+function findChildOfKind(node: Node, kind: Kind): Node | undefined {
+  let found: Node | undefined;
+  node.forEachChild(child => {
+    if (found === undefined && child.kind === kind) found = child;
+  });
+  return found;
 }
 
 function isExpressionLike(node: Node | undefined): node is Node {
