@@ -83,6 +83,7 @@ import {
   type Range,
   type SelectionRange,
   type SignatureHelp,
+  type SignatureHelpContext,
   type SymbolInformation,
   type TextEdit,
   type WorkspaceEdit,
@@ -114,9 +115,15 @@ export type FourslashCapabilities = ClientCapabilities;
 
 export interface UserPreferences {
   readonly includeCompletionsForModuleExports?: boolean;
+  readonly includeCompletionsForImportStatements?: boolean;
   readonly includeCompletionsWithInsertText?: boolean;
   readonly quotePreference?: "auto" | "double" | "single";
   readonly importModuleSpecifierPreference?: "shortest" | "project-relative" | "relative" | "non-relative";
+  readonly importModuleSpecifierEnding?: "auto" | "minimal" | "index" | "js";
+  readonly autoImportSpecifierExcludeRegexes?: readonly string[];
+  readonly autoImportFileExcludePatterns?: readonly string[];
+  readonly preferTypeOnlyAutoImports?: boolean;
+  readonly autoImportEntrypointDirectorySearch?: boolean;
 }
 
 export interface BaselineCommand {
@@ -216,9 +223,12 @@ export interface FourslashLanguageRequest {
   readonly range: Range | undefined;
   readonly offset: number;
   readonly userPreferences: UserPreferences;
+  readonly signatureHelpContext?: SignatureHelpContext;
 }
 
 export interface FourslashLanguageProvider {
+  formatDocument?(fileName: string, preferences: UserPreferences): readonly TextChange[];
+  formatSelection?(fileName: string, range: Range, preferences: UserPreferences): readonly TextChange[];
   organizeImports?(fileName: string, kind: CodeActionKind, preferences: UserPreferences): CodeAction | undefined;
   getImportFixes?(request: FourslashLanguageRequest, diagnostics: readonly Diagnostic[]): readonly CodeAction[];
   getReferences?(request: FourslashLanguageRequest, includeDeclaration: boolean): readonly Location[];
@@ -446,6 +456,20 @@ export class FourslashTest {
     this.userPreferences = { ...this.userPreferences, ...preferences };
   }
 
+  getOptions(): UserPreferences {
+    return this.userPreferences;
+  }
+
+  configure(config: UserPreferences): void {
+    this.userPreferences = { ...config };
+  }
+
+  configureWithReset(config: UserPreferences): () => void {
+    const original = this.userPreferences;
+    this.configure(config);
+    return () => this.configure(original);
+  }
+
   setCompletionProvider(provider: FourslashCompletionProvider | undefined): void {
     this.completionProvider = provider;
   }
@@ -461,6 +485,36 @@ export class FourslashTest {
   setSelection(start: Position, end: Position): void {
     this.currentCaretPosition = start;
     this.selectionEnd = end;
+  }
+
+  markerByName(name: string): Marker {
+    return this.marker(name);
+  }
+
+  fileName(): string {
+    return this.activeFilename;
+  }
+
+  markTestAsStradaServer(): void {
+    this.isStradaServer = true;
+  }
+
+  formatDocument(filename = this.activeFilename): void {
+    const edits = this.languageProviderRequired("format document")
+      .formatDocument?.(filename, this.userPreferences) ?? [];
+    this.applyTextEdits(filename, edits);
+  }
+
+  formatSelection(startMarkerName: string, endMarkerName: string): void {
+    const startMarker = this.marker(startMarkerName);
+    const endMarker = this.marker(endMarkerName);
+    if (startMarker.fileName() !== endMarker.fileName()) {
+      throw new Error(`Markers '${startMarkerName}' and '${endMarkerName}' are in different files`);
+    }
+    const range = { start: startMarker.lsPosition, end: endMarker.lsPosition };
+    const edits = this.languageProviderRequired("format selection")
+      .formatSelection?.(startMarker.fileName(), range, this.userPreferences) ?? [];
+    this.applyTextEdits(startMarker.fileName(), edits);
   }
 
   applyChange(fileName: string, change: TextChange): void {
@@ -1274,8 +1328,89 @@ export class FourslashTest {
     if (this.getSignatureHelpAtCurrentPosition() !== undefined) fail("Expected no signature help.");
   }
 
-  verifySignatureHelpPresent(): void {
-    if (this.getSignatureHelpAtCurrentPosition() === undefined) fail("Expected signature help.");
+  verifyNoSignatureHelpWithContext(context?: SignatureHelpContext): void {
+    const help = this.getSignatureHelpAtCurrentPosition(context);
+    if (help !== undefined && help.signatures.length > 0) {
+      fail(`${this.getCurrentPositionPrefix()}Expected no signature help, but got ${help.signatures.length} signatures.`);
+    }
+  }
+
+  verifyNoSignatureHelpForMarkersWithContext(context: SignatureHelpContext | undefined, ...markers: readonly string[]): void {
+    for (const marker of markers) {
+      this.goToMarker(marker);
+      this.verifyNoSignatureHelpWithContext(context);
+    }
+  }
+
+  verifySignatureHelpPresent(context?: SignatureHelpContext): void {
+    const help = this.getSignatureHelpAtCurrentPosition(context);
+    if (help === undefined || help.signatures.length === 0) fail(`${this.getCurrentPositionPrefix()}Expected signature help to be present, but got none.`);
+  }
+
+  verifySignatureHelpPresentForMarkers(context: SignatureHelpContext | undefined, ...markers: readonly string[]): void {
+    for (const marker of markers) {
+      this.goToMarker(marker);
+      this.verifySignatureHelpPresent(context);
+    }
+  }
+
+  verifyNoSignatureHelpForMarkers(...markers: readonly string[]): void {
+    for (const marker of markers) {
+      this.goToMarker(marker);
+      this.verifyNoSignatureHelp();
+    }
+  }
+
+  verifySignatureHelpWithCases(...signatureHelpCases: readonly SignatureHelpCase[]): void {
+    for (const option of signatureHelpCases) {
+      this.forEachMarkerInput(option.markerInput, () => this.verifySignatureHelpResult(
+        this.getSignatureHelpAtCurrentPosition(option.context),
+        option.expected,
+        this.getCurrentPositionPrefix(),
+      ));
+    }
+  }
+
+  verifySignatureHelpResult(actual: SignatureHelp | undefined, expected: SignatureHelp | undefined, prefix: string): void {
+    assertDeepEqual(actual, expected, `${prefix} SignatureHelp mismatch`);
+  }
+
+  baselineAutoImportsCompletions(markerNames: readonly string[]): void {
+    const reset = this.configureWithReset({
+      ...this.userPreferences,
+      includeCompletionsForModuleExports: true,
+      includeCompletionsForImportStatements: true,
+    });
+    try {
+      for (const markerName of markerNames) {
+        this.goToMarker(markerName);
+        const completions = this.getCompletions();
+        const fileContent = this.file().text();
+        const marker = this.marker(markerName);
+        const language = autoImportBaselineLanguage(this.activeFilename);
+        const rows = [
+          "// === Auto Imports === ",
+          codeFence(language, `// @FileName: ${this.activeFilename}\n${fileContent.slice(0, marker.position)}/*${markerName}*/${fileContent.slice(marker.position)}`),
+        ];
+        const autoImportItems = completions?.items.filter(isAutoImportCompletionItem) ?? [];
+        if (autoImportItems.length === 0) {
+          rows.push("no autoimport completions found");
+          this.baseline({ name: "autoImports", arguments: [] }, rows.join("\n\n"));
+          continue;
+        }
+        for (const item of autoImportItems) {
+          const details = this.resolveCompletionItem(item);
+          if ((details.additionalTextEdits?.length ?? 0) === 0) {
+            fail(`At marker '${markerName}': Entry ${item.label} returned no code changes from completion details request.`);
+          }
+          const newFileContent = applyTextEditsToContent(this.file(), fileContent, details.additionalTextEdits ?? []);
+          rows.push(codeFence(language, newFileContent));
+        }
+        this.baseline({ name: "autoImports", arguments: [] }, rows.join("\n\n"));
+      }
+    } finally {
+      reset();
+    }
   }
 
   verifyBaselineCallHierarchy(): void {
@@ -1419,25 +1554,49 @@ export class FourslashTest {
 
   verifyQuickInfoAt(marker: string, expectedText: string, expectedDocumentation = ""): void {
     this.goToMarker(marker);
-    this.verifyQuickInfoIs(expectedText, expectedDocumentation);
+    const hover = this.getQuickInfoAtCurrentPosition();
+    this.verifyHoverContent(hover, expectedText, expectedDocumentation, this.getCurrentPositionPrefix());
+  }
+
+  getQuickInfoAtCurrentPosition(): Hover {
+    const hover = this.getHoverAtCurrentPosition();
+    if (hover === undefined) fail(`Expected hover result at marker '${this.lastKnownMarkerName ?? "<unknown>"}' but got undefined.`);
+    return hover;
+  }
+
+  verifyHoverContent(
+    actual: Hover | undefined,
+    expectedText: string,
+    expectedDocumentation = "",
+    prefix = this.getCurrentPositionPrefix(),
+  ): void {
+    if (actual === undefined) fail(`${prefix}Expected hover content but got undefined.`);
+    this.verifyHoverMarkdown(hoverContentString(actual), expectedText, expectedDocumentation, prefix);
+  }
+
+  verifyHoverMarkdown(actual: string, expectedText: string, expectedDocumentation = "", prefix = this.getCurrentPositionPrefix()): void {
+    const expected = `\`\`\`typescript\n${expectedText}\n\`\`\`\n${expectedDocumentation}`;
+    assertDeepEqual(actual, expected, `${prefix}Hover markdown content mismatch`);
   }
 
   verifyQuickInfoExists(): void {
-    if (this.getHoverAtCurrentPosition() === undefined) fail("Expected quick info.");
+    const [isEmpty] = this.quickInfoIsEmpty();
+    if (isEmpty) fail(`Expected non-empty hover content at marker '${this.lastKnownMarkerName ?? "<unknown>"}'.`);
   }
 
   verifyNotQuickInfoExists(): void {
-    if (this.getHoverAtCurrentPosition() !== undefined) fail("Expected no quick info.");
+    const [isEmpty, hover] = this.quickInfoIsEmpty();
+    if (!isEmpty) fail(`Expected empty hover content at marker '${this.lastKnownMarkerName ?? "<unknown>"}', got ${stableStringify(hover)}.`);
+  }
+
+  quickInfoIsEmpty(): readonly [boolean, Hover | undefined] {
+    const hover = this.getHoverAtCurrentPosition();
+    if (hover === undefined || hoverContentString(hover) === "") return [true, undefined];
+    return [false, hover];
   }
 
   verifyQuickInfoIs(expectedText: string, expectedDocumentation = ""): void {
-    const hover = this.getHoverAtCurrentPosition();
-    if (hover === undefined) fail("Expected quick info but got none.");
-    const content = hoverContentString(hover);
-    if (!content.includes(expectedText)) fail(`Quick info text mismatch. Expected content to contain ${JSON.stringify(expectedText)}; got ${JSON.stringify(content)}.`);
-    if (expectedDocumentation !== "" && !content.includes(expectedDocumentation)) {
-      fail(`Quick info documentation mismatch. Expected content to contain ${JSON.stringify(expectedDocumentation)}; got ${JSON.stringify(content)}.`);
-    }
+    this.verifyHoverContent(this.getQuickInfoAtCurrentPosition(), expectedText, expectedDocumentation, this.getCurrentPositionPrefix());
   }
 
   verifyLinkedEditing(markerNamesToExpected: Readonly<Record<string, readonly Range[]>>): void {
@@ -1635,11 +1794,11 @@ export class FourslashTest {
     return this.languageProvider;
   }
 
-  private languageRequest(): FourslashLanguageRequest {
-    return this.languageRequestAt(this.activeFilename, this.currentCaretPosition, this.activeRange());
+  private languageRequest(signatureHelpContext?: SignatureHelpContext): FourslashLanguageRequest {
+    return this.languageRequestAt(this.activeFilename, this.currentCaretPosition, this.activeRange(), signatureHelpContext);
   }
 
-  private languageRequestAt(fileName: string, position: Position, range?: Range): FourslashLanguageRequest {
+  private languageRequestAt(fileName: string, position: Position, range?: Range, signatureHelpContext?: SignatureHelpContext): FourslashLanguageRequest {
     return {
       fileName,
       uri: fileNameToDocumentURI(fileName),
@@ -1647,6 +1806,7 @@ export class FourslashTest {
       range,
       offset: offsetFromPosition(this.file(fileName), position),
       userPreferences: this.userPreferences,
+      ...(signatureHelpContext === undefined ? {} : { signatureHelpContext }),
     };
   }
 
@@ -1658,8 +1818,8 @@ export class FourslashTest {
     return this.languageProviderRequired("hover").getHover?.(this.languageRequest());
   }
 
-  private getSignatureHelpAtCurrentPosition(): SignatureHelp | undefined {
-    return this.languageProviderRequired("signature help").getSignatureHelp?.(this.languageRequest());
+  private getSignatureHelpAtCurrentPosition(context?: SignatureHelpContext): SignatureHelp | undefined {
+    return this.languageProviderRequired("signature help").getSignatureHelp?.(this.languageRequest(context));
   }
 
   private verifyBaselineDefinitionWorker(
@@ -1732,6 +1892,22 @@ export class FourslashTest {
     };
   }
 
+  getPathUpdater(oldPath: string, newPath: string): (path: string) => readonly [string, boolean] {
+    return path => {
+      const updated = renamedPath(path, oldPath, newPath);
+      return updated === undefined ? ["", false] : [updated, true];
+    };
+  }
+
+  getRangesByText(): ReadonlyMap<string, readonly RangeMarker[]> {
+    return this.rangesByText;
+  }
+
+  getRangeText(rangeMarker: RangeMarker): string {
+    const script = this.getScriptInfo(rangeMarker.fileName());
+    return script.text().slice(rangeMarker.range.pos, rangeMarker.range.end);
+  }
+
   getCurrentPositionPrefix(): string {
     return `${this.activeFilename}:${this.currentCaretPosition.line + 1}:${this.currentCaretPosition.character + 1}: `;
   }
@@ -1743,6 +1919,24 @@ export class FourslashTest {
       offset: offsetFromPosition(this.file(), this.currentCaretPosition),
       userPreferences: this.userPreferences,
     };
+  }
+
+  private forEachMarkerInput(markerInput: MarkerInput, action: () => void): void {
+    if (typeof markerInput === "string") {
+      this.goToMarker(markerInput);
+      action();
+    } else if (markerInput !== undefined && !(markerInput instanceof Array)) {
+      this.goToMarkerOrRange(markerInput);
+      action();
+    } else if (markerInput instanceof Array) {
+      for (const marker of markerInput) {
+        if (typeof marker === "string") this.goToMarker(marker);
+        else this.goToMarkerOrRange(marker);
+        action();
+      }
+    } else {
+      action();
+    }
   }
 }
 
@@ -2125,6 +2319,12 @@ export interface VerifySignatureHelpOptions {
   readonly docComment?: string;
 }
 
+export interface SignatureHelpCase {
+  readonly context?: SignatureHelpContext;
+  readonly markerInput?: MarkerInput;
+  readonly expected?: SignatureHelp;
+}
+
 export interface VerifyWorkspaceSymbolCase {
   readonly name: string;
   readonly kind?: number;
@@ -2297,6 +2497,28 @@ function findCodeActionByDescription(actions: readonly CodeAction[], description
 
 function actionTitles(actions: readonly CodeAction[]): readonly string[] {
   return actions.map(action => action.title);
+}
+
+function isAutoImportCompletionItem(item: CompletionItem): boolean {
+  return item.data?.autoImport !== undefined;
+}
+
+function codeFence(language: string, content: string): string {
+  return `\`\`\`${language}\n${content}\n\`\`\``;
+}
+
+function autoImportBaselineLanguage(fileName: string): string {
+  const extension = fileName.slice(fileName.lastIndexOf(".") + 1);
+  return extension === "mts" || extension === "cts" ? "ts" : extension;
+}
+
+function applyTextEditsToContent(script: ScriptInfo, content: string, edits: readonly TextEdit[]): string {
+  let result = content;
+  const changes = textEditsToTextChanges(script, edits)
+    .slice()
+    .sort((left, right) => right.span.pos - left.span.pos || right.span.end - left.span.end);
+  for (const change of changes) result = applyTextChange(result, change);
+  return result;
 }
 
 function textEditStartOffset(script: ScriptInfo, edit: TextEdit): number {
