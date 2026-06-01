@@ -1,4 +1,70 @@
-import type { FileReference, Node, SourceFile, Symbol } from "../ast/index.js";
+import {
+  getSourceFileOfNode,
+  hasSyntacticModifier,
+  isBinaryExpression,
+  isBindingElement,
+  isCallExpression,
+  isCatchClause,
+  isDefaultImport,
+  isExportAssignment,
+  isExportDeclaration,
+  isExportSpecifier,
+  isExternalModuleReference,
+  isIdentifier,
+  isImportCall,
+  isImportDeclaration,
+  isImportEqualsDeclaration,
+  isImportTypeNode,
+  isJSDocImportTag,
+  isModuleDeclaration,
+  isNamespaceExport,
+  isNamespaceImport,
+  isNamedExports,
+  isPrivateIdentifier,
+  isPropertyAccessExpression,
+  isShorthandPropertyAssignment,
+  isSourceFile,
+  isStringLiteral,
+  isStringLiteralLike,
+  isVariableDeclaration,
+  isVariableStatement,
+  nodeIsSynthesized,
+  nodeName,
+  nodeSymbol,
+  nodeText,
+  NodeFlags,
+  SymbolFlags,
+  Kind,
+  type FileReference,
+  type Node,
+  type SourceFile,
+  type Symbol,
+} from "../ast/index.js";
+import { isExternalModuleSymbol } from "../checker/utilities.js";
+import { ModifierFlags } from "../enums/index.js";
+
+export interface ImportTrackerContext {
+  readonly aborted?: boolean;
+  readonly signal?: { readonly aborted: boolean };
+  err?(): unknown;
+}
+
+export interface ImportTrackerProgram {
+  getJSXRuntimeImportSpecifier?(path: string): readonly [unknown, Node | undefined] | Node | undefined;
+  getImportHelpersImportSpecifier?(path: string): Node | undefined;
+  getSourceFileFromReference?(sourceFile: SourceFile, ref: FileReference): SourceFile | undefined;
+  getResolvedTypeReferenceDirectiveFromTypeReferenceDirective?(
+    ref: FileReference,
+    sourceFile: SourceFile,
+  ): { readonly resolvedFileName?: string } | undefined;
+}
+
+export interface ImportTrackerChecker {
+  getSymbolAtLocation(node: Node): Symbol | undefined;
+  getMergedSymbol?(symbol: Symbol | undefined): Symbol | undefined;
+  getImmediateAliasedSymbol?(symbol: Symbol): Symbol | undefined;
+  getExportSpecifierLocalTargetSymbol?(node: Node): Symbol | undefined;
+}
 
 export enum ImpExpKind {
   Unknown = 0,
@@ -49,6 +115,780 @@ export interface ModuleReference {
   readonly literal?: Node;
   readonly referencingFile: SourceFile;
   readonly ref?: FileReference;
+}
+
+export function createImportTracker(
+  ctx: ImportTrackerContext | undefined,
+  program: ImportTrackerProgram,
+  sourceFiles: readonly SourceFile[],
+  sourceFilesSet: ReadonlySet<string>,
+  checker: ImportTrackerChecker,
+): ImportTracker {
+  const allDirectImports = getDirectImportsMap(ctx, program, sourceFiles, checker);
+  return (exportSymbol, exportInfo, isForRename) => {
+    const [directImports, indirectUsers] = getImportersForExport(sourceFiles, sourceFilesSet, allDirectImports, exportInfo, checker);
+    const [importSearches, singleReferences] = getSearchesFromDirectImports(directImports, exportSymbol, exportInfo.exportKind, checker, isForRename);
+    return { importSearches, singleReferences, indirectUsers };
+  };
+}
+
+export function getDirectImportsMap(
+  ctx: ImportTrackerContext | undefined,
+  program: ImportTrackerProgram,
+  sourceFiles: readonly SourceFile[],
+  checker: ImportTrackerChecker,
+): Map<Symbol, Node[]> {
+  const result = new Map<Symbol, Node[]>();
+  for (const sourceFile of sourceFiles) {
+    if (contextCancelled(ctx)) return result;
+    forEachImport(program, sourceFile, (importDecl, moduleSpecifier) => {
+      const moduleSymbol = checker.getSymbolAtLocation(moduleSpecifier);
+      if (moduleSymbol === undefined) return;
+      const imports = result.get(moduleSymbol);
+      if (imports === undefined) result.set(moduleSymbol, [importDecl]);
+      else imports.push(importDecl);
+    });
+  }
+  return result;
+}
+
+export function forEachImport(
+  program: ImportTrackerProgram,
+  sourceFile: SourceFile,
+  action: (importStatement: Node, imported: Node) => void,
+): void {
+  const implicitImports: Node[] = [];
+  const jsxSpecifier = unwrapProgramSpecifier(program.getJSXRuntimeImportSpecifier?.(sourceFile.path));
+  if (jsxSpecifier !== undefined) implicitImports.push(jsxSpecifier);
+  const importHelpersSpecifier = program.getImportHelpersImportSpecifier?.(sourceFile.path);
+  if (importHelpersSpecifier !== undefined) implicitImports.push(importHelpersSpecifier);
+
+  if (sourceFile.externalModuleIndicator !== undefined || sourceFile.imports.length + implicitImports.length !== 0) {
+    for (const imported of sourceFile.imports) {
+      action(importFromModuleSpecifier(imported), imported);
+    }
+    for (const imported of implicitImports) {
+      action(importFromModuleSpecifier(imported), imported);
+    }
+    return;
+  }
+
+  forEachPossibleImportOrExportStatement(sourceFile, (node) => {
+    switch (node.kind) {
+      case Kind.ExportDeclaration:
+      case Kind.ImportDeclaration:
+      case Kind.JSImportDeclaration: {
+        const specifier = moduleSpecifierOf(node);
+        if (specifier !== undefined && isStringLiteral(specifier)) action(node, specifier);
+        break;
+      }
+      case Kind.ImportEqualsDeclaration: {
+        if (isExternalModuleImportEquals(node)) {
+          const expression = externalModuleReferenceExpression(moduleReferenceOf(node));
+          if (expression !== undefined) action(node, expression);
+        }
+        break;
+      }
+    }
+    return false;
+  });
+}
+
+export function forEachPossibleImportOrExportStatement(sourceFileLike: Node, action: (statement: Node) => boolean): boolean {
+  for (const statement of getStatementsOfSourceFileLike(sourceFileLike)) {
+    if (action(statement)) return true;
+    if (isAmbientModuleDeclaration(statement) && forEachPossibleImportOrExportStatement(statement, action)) return true;
+  }
+  return false;
+}
+
+export function getSourceFileLikeForImportDeclaration(node: Node): Node {
+  if (isCallExpression(node) || isJSDocImportTag(node)) {
+    return getSourceFileOfNode(node) ?? node.getSourceFile();
+  }
+  const parent = node.parent;
+  if (parent !== undefined && isSourceFile(parent)) return parent;
+  if (parent !== undefined && parent.kind === Kind.ModuleBlock && parent.parent !== undefined && isAmbientModuleDeclaration(parent.parent)) {
+    return parent.parent;
+  }
+  return getSourceFileOfNode(node) ?? node.getSourceFile();
+}
+
+export function isAmbientModuleDeclaration(node: Node | undefined): boolean {
+  const name = nodeName(node);
+  return node !== undefined && isModuleDeclaration(node) && name !== undefined && isStringLiteral(name);
+}
+
+export function getStatementsOfSourceFileLike(node: Node): readonly Node[] {
+  if (isSourceFile(node)) return node.statements;
+  const body = nodeBody(node);
+  return nodeStatements(body);
+}
+
+export function getImportersForExport(
+  sourceFiles: readonly SourceFile[],
+  sourceFilesSet: ReadonlySet<string>,
+  allDirectImports: ReadonlyMap<Symbol, readonly Node[]>,
+  exportInfo: ExportInfo,
+  checker: ImportTrackerChecker,
+): [readonly Node[], readonly SourceFile[]] {
+  const directImports: Node[] = [];
+  const indirectUserDeclarations: Node[] = [];
+  const markSeenDirectImport = nodeSeenTracker();
+  const markSeenIndirectUser = nodeSeenTracker();
+  const isAvailableThroughGlobal = isSourceFileWithGlobalExports(exportInfo.exportingModuleSymbol.valueDeclaration);
+
+  const getDirectImports = (moduleSymbol: Symbol | undefined): readonly Node[] => moduleSymbol === undefined ? [] : allDirectImports.get(moduleSymbol) ?? [];
+
+  const addIndirectUser = (sourceFileLike: Node, addTransitiveDependencies: boolean): void => {
+    if (isAvailableThroughGlobal) return;
+    if (!markSeenIndirectUser(sourceFileLike)) return;
+    indirectUserDeclarations.push(sourceFileLike);
+    if (!addTransitiveDependencies) return;
+    const moduleSymbol = checker.getMergedSymbol?.(nodeSymbol(sourceFileLike)) ?? nodeSymbol(sourceFileLike);
+    if (moduleSymbol === undefined) return;
+    if ((symbolFlags(moduleSymbol) & SymbolFlags.Module) === 0) return;
+    for (const directImport of getDirectImports(moduleSymbol)) {
+      if (!isImportTypeNode(directImport)) {
+        addIndirectUser(getSourceFileLikeForImportDeclaration(directImport), true);
+      }
+    }
+  };
+
+  const isExported = (node: Node | undefined, stopAtAmbientModule: boolean): boolean => {
+    let current = node;
+    while (current !== undefined && !(stopAtAmbientModule && isAmbientModuleDeclaration(current))) {
+      if (hasSyntacticModifier(current, ModifierFlags.Export)) return true;
+      current = current.parent;
+    }
+    return false;
+  };
+
+  const handleImportCall = (importCall: Node): void => {
+    const top = findAncestor(importCall, isAmbientModuleDeclaration) ?? getSourceFileOfNode(importCall) ?? importCall.getSourceFile();
+    addIndirectUser(top, isExported(importCall, true));
+  };
+
+  const handleNamespaceImport = (importDeclaration: Node, name: Node, isReExport: boolean, alreadyAddedDirect: boolean): void => {
+    if (exportInfo.exportKind === ExportKind.ExportEquals) {
+      if (!alreadyAddedDirect) directImports.push(importDeclaration);
+      return;
+    }
+    if (isAvailableThroughGlobal) return;
+    const sourceFileLike = getSourceFileLikeForImportDeclaration(importDeclaration);
+    addIndirectUser(sourceFileLike, isReExport || findNamespaceReExports(sourceFileLike, name, checker));
+  };
+
+  const handleDirectImports = (exportingModuleSymbol: Symbol | undefined): void => {
+    for (const direct of getDirectImports(exportingModuleSymbol)) {
+      if (!markSeenDirectImport(direct)) continue;
+      switch (direct.kind) {
+        case Kind.CallExpression:
+          if (isImportCall(direct)) {
+            handleImportCall(direct);
+          } else if (!isAvailableThroughGlobal) {
+            const parent = direct.parent;
+            if (exportInfo.exportKind === ExportKind.ExportEquals && parent !== undefined && isVariableDeclaration(parent)) {
+              const name = nodeName(parent);
+              if (name !== undefined && isIdentifier(name)) directImports.push(name);
+            }
+          }
+          break;
+        case Kind.Identifier:
+          break;
+        case Kind.ImportEqualsDeclaration:
+          handleNamespaceImport(direct, nodeName(direct) ?? direct, hasSyntacticModifier(direct, ModifierFlags.Export), false);
+          break;
+        case Kind.ImportDeclaration:
+        case Kind.JSImportDeclaration:
+        case Kind.JSDocImportTag: {
+          directImports.push(direct);
+          const importClause = importClauseOf(direct);
+          const namedBindings = importClause === undefined ? undefined : importClauseNamedBindings(importClause);
+          if (namedBindings !== undefined && isNamespaceImport(namedBindings)) {
+            handleNamespaceImport(direct, nodeName(namedBindings) ?? namedBindings, false, true);
+            break;
+          }
+          if (!isAvailableThroughGlobal && isDefaultImport(direct)) {
+            addIndirectUser(getSourceFileLikeForImportDeclaration(direct), false);
+          }
+          break;
+        }
+        case Kind.ExportDeclaration: {
+          const exportClause = exportClauseOf(direct);
+          if (exportClause === undefined) {
+            handleDirectImports(getContainingModuleSymbol(direct, checker));
+          } else if (isNamespaceExport(exportClause)) {
+            addIndirectUser(getSourceFileLikeForImportDeclaration(direct), true);
+          } else {
+            directImports.push(direct);
+          }
+          break;
+        }
+        case Kind.ImportType:
+          if (!isAvailableThroughGlobal && importTypeIsTypeOf(direct) && importTypeQualifier(direct) === undefined && isExported(direct, false)) {
+            addIndirectUser(getSourceFileOfNode(direct) ?? direct.getSourceFile(), true);
+          }
+          directImports.push(direct);
+          break;
+        default:
+          throw new Error(`Unexpected import kind: ${Kind[direct.kind] ?? direct.kind}`);
+      }
+    }
+  };
+
+  const getIndirectUsers = (): readonly SourceFile[] => {
+    if (isAvailableThroughGlobal) return sourceFiles;
+    for (const declaration of exportInfo.exportingModuleSymbol.declarations) {
+      if (isExternalModuleAugmentation(declaration) && sourceFilesSetHas(sourceFilesSet, declaration)) addIndirectUser(declaration, false);
+    }
+    return indirectUserDeclarations.map((node) => (getSourceFileOfNode(node) ?? node.getSourceFile()) as SourceFile);
+  };
+
+  handleDirectImports(exportInfo.exportingModuleSymbol);
+  return [directImports, getIndirectUsers()];
+}
+
+export function getContainingModuleSymbol(importer: Node, checker: ImportTrackerChecker): Symbol | undefined {
+  return checker.getMergedSymbol?.(nodeSymbol(getSourceFileLikeForImportDeclaration(importer))) ?? nodeSymbol(getSourceFileLikeForImportDeclaration(importer));
+}
+
+export function findNamespaceReExports(sourceFileLike: Node, name: Node, checker: ImportTrackerChecker): boolean {
+  const namespaceImportSymbol = checker.getSymbolAtLocation(name);
+  return forEachPossibleImportOrExportStatement(sourceFileLike, (statement) => {
+    if (!isExportDeclaration(statement)) return false;
+    const exportClause = exportClauseOf(statement);
+    const moduleSpecifier = moduleSpecifierOf(statement);
+    return moduleSpecifier === undefined
+      && exportClause !== undefined
+      && isNamedExports(exportClause)
+      && nodeElements(exportClause).some((element) => checker.getExportSpecifierLocalTargetSymbol?.(element) === namespaceImportSymbol);
+  });
+}
+
+export function getSearchesFromDirectImports(
+  directImports: readonly Node[],
+  exportSymbol: Symbol,
+  exportKind: ExportKind,
+  checker: ImportTrackerChecker,
+  isForRename: boolean,
+): [readonly LocationAndSymbol[], readonly Node[]] {
+  const importSearches: LocationAndSymbol[] = [];
+  const singleReferences: Node[] = [];
+
+  const addSearch = (location: Node, symbol: Symbol | undefined): void => {
+    if (symbol !== undefined) importSearches.push({ importLocation: location, importSymbol: symbol });
+  };
+
+  const isNameMatch = (name: string): boolean => name === symbolName(exportSymbol) || exportKind !== ExportKind.Named && name === internalSymbolNameDefault;
+
+  const handleNamespaceImportLike = (importName: Node): void => {
+    if (exportKind === ExportKind.ExportEquals && (!isForRename || isNameMatch(nodeText(importName)))) {
+      addSearch(importName, checker.getSymbolAtLocation(importName));
+    }
+  };
+
+  const searchForNamedImport = (namedBindings: Node | undefined): void => {
+    if (namedBindings === undefined) return;
+    for (const element of nodeElements(namedBindings)) {
+      const name = nodeName(element);
+      if (name === undefined) continue;
+      const propertyName = property<Node>(element, "propertyName");
+      if (!isNameMatch(nodeText(propertyName ?? name))) continue;
+      if (propertyName !== undefined) {
+        singleReferences.push(propertyName);
+        if (!isForRename || nodeText(name) === symbolName(exportSymbol)) addSearch(name, checker.getSymbolAtLocation(name));
+      } else {
+        const localSymbol = isExportSpecifier(element) && property<Node>(element, "propertyName") !== undefined
+          ? checker.getExportSpecifierLocalTargetSymbol?.(element)
+          : checker.getSymbolAtLocation(name);
+        addSearch(name, localSymbol);
+      }
+    }
+  };
+
+  const handleImport = (decl: Node): void => {
+    if (isImportEqualsDeclaration(decl)) {
+      if (isExternalModuleImportEquals(decl)) handleNamespaceImportLike(nodeName(decl) ?? decl);
+      return;
+    }
+    if (isIdentifier(decl)) {
+      handleNamespaceImportLike(decl);
+      return;
+    }
+    if (isImportTypeNode(decl)) {
+      const qualifier = importTypeQualifier(decl);
+      if (qualifier !== undefined) {
+        const firstIdentifier = getFirstIdentifier(qualifier);
+        if (firstIdentifier !== undefined && nodeText(firstIdentifier) === symbolName(exportSymbol)) singleReferences.push(firstIdentifier);
+      } else if (exportKind === ExportKind.ExportEquals) {
+        const literal = literalTypeLiteral(importTypeArgument(decl));
+        if (literal !== undefined) singleReferences.push(literal);
+      }
+      return;
+    }
+    const moduleSpecifier = moduleSpecifierOf(decl);
+    if (moduleSpecifier === undefined || !isStringLiteral(moduleSpecifier)) return;
+    if (isExportDeclaration(decl)) {
+      const exportClause = exportClauseOf(decl);
+      if (exportClause !== undefined && isNamedExports(exportClause)) searchForNamedImport(exportClause);
+      return;
+    }
+    const importClause = importClauseOf(decl);
+    if (importClause === undefined) return;
+    const namedBindings = importClauseNamedBindings(importClause);
+    if (namedBindings !== undefined) {
+      switch (namedBindings.kind) {
+        case Kind.NamespaceImport:
+          handleNamespaceImportLike(nodeName(namedBindings) ?? namedBindings);
+          break;
+        case Kind.NamedImports:
+          if (exportKind === ExportKind.Named || exportKind === ExportKind.Default) searchForNamedImport(namedBindings);
+          break;
+      }
+    }
+    const name = nodeName(importClause);
+    if (name !== undefined
+      && (exportKind === ExportKind.Default || exportKind === ExportKind.ExportEquals)
+      && (!isForRename || nodeText(name) === symbolNameNoDefault(exportSymbol))) {
+      addSearch(name, checker.getSymbolAtLocation(name));
+    }
+  };
+
+  for (const decl of directImports) handleImport(decl);
+  return [importSearches, singleReferences];
+}
+
+export function getImportOrExportSymbol(
+  node: Node,
+  symbol: Symbol,
+  checker: ImportTrackerChecker,
+  comingFromExport: boolean,
+): ImportExportSymbol | undefined {
+  const exportSymbolInfo = (candidate: Symbol, kind: ExportKind): ImportExportSymbol | undefined => {
+    const info = getExportInfo(candidate, kind, checker);
+    return info === undefined ? undefined : { kind: ImpExpKind.Export, symbol: candidate, exportInfo: info };
+  };
+
+  const getExport = (): ImportExportSymbol | undefined => {
+    const getExportAssignmentExport = (assignment: Node): ImportExportSymbol | undefined => {
+      const assignmentSymbol = nodeSymbol(assignment);
+      if (assignmentSymbol?.parent === undefined) return undefined;
+      return {
+        kind: ImpExpKind.Export,
+        symbol,
+        exportInfo: {
+          exportingModuleSymbol: assignmentSymbol.parent,
+          exportKind: exportAssignmentIsExportEquals(assignment) ? ExportKind.ExportEquals : ExportKind.Default,
+        },
+      };
+    };
+
+    const getExportKindForDeclaration = (declaration: Node): ExportKind =>
+      hasSyntacticModifier(declaration, ModifierFlags.Default) ? ExportKind.Default : ExportKind.Named;
+
+    const getSpecialPropertyExport = (declaration: Node, useLhsSymbol: boolean): ImportExportSymbol | undefined => {
+      const kind = exportKindForAssignmentDeclaration(declaration);
+      if (kind === undefined) return undefined;
+      const candidate = useLhsSymbol ? nodeSymbol(declaration) : symbol;
+      return candidate === undefined ? undefined : exportSymbolInfo(candidate, kind);
+    };
+
+    const parent = node.parent;
+    const grandparent = parent?.parent;
+    if (symbol.exportSymbol !== undefined) {
+      if (parent !== undefined && isPropertyAccessExpression(parent)) {
+        if (grandparent !== undefined && isBinaryExpression(grandparent) && symbol.declarations.includes(parent)) {
+          return getSpecialPropertyExport(grandparent, false);
+        }
+        return undefined;
+      }
+      return parent === undefined ? undefined : exportSymbolInfo(symbol.exportSymbol, getExportKindForDeclaration(parent));
+    }
+
+    const exportNode = parent === undefined ? undefined : getExportNode(parent, node);
+    if (exportNode !== undefined && (hasSyntacticModifier(exportNode, ModifierFlags.Export) || isImplicitlyExportedJSTypeAlias(exportNode))) {
+      if (isImportEqualsDeclaration(exportNode) && moduleReferenceOf(exportNode) === node) {
+        if (comingFromExport) return undefined;
+        const lhsSymbol = checker.getSymbolAtLocation(nodeName(exportNode) ?? exportNode);
+        return lhsSymbol === undefined ? undefined : { kind: ImpExpKind.Import, symbol: lhsSymbol };
+      }
+      return exportSymbolInfo(symbol, getExportKindForDeclaration(exportNode));
+    }
+    if (parent !== undefined && isNamespaceExport(parent)) return exportSymbolInfo(symbol, ExportKind.Named);
+    if (parent !== undefined && isExportAssignment(parent)) return getExportAssignmentExport(parent);
+    if (grandparent !== undefined && isExportAssignment(grandparent)) return getExportAssignmentExport(grandparent);
+    if (parent !== undefined && isBinaryExpression(parent)) return getSpecialPropertyExport(parent, true);
+    if (grandparent !== undefined && isBinaryExpression(grandparent)) return getSpecialPropertyExport(grandparent, true);
+    if (isJSDocTypedefOrCallbackTag(parent)) return exportSymbolInfo(symbol, ExportKind.Named);
+    return undefined;
+  };
+
+  const getImport = (): ImportExportSymbol | undefined => {
+    if (!isNodeImport(node)) return undefined;
+    const importedSymbol = (symbolFlags(symbol) & SymbolFlags.Alias) !== 0
+      ? checker.getImmediateAliasedSymbol?.(symbol)
+      : getPropertySymbolOfObjectBindingPatternWithoutPropertyName(symbol, checker);
+    if (importedSymbol === undefined) return undefined;
+    let skippedSymbol = skipExportSpecifierSymbol(importedSymbol, checker);
+    if (skippedSymbol === undefined) return undefined;
+    if (symbolName(skippedSymbol) === internalSymbolNameExportEquals) {
+      skippedSymbol = getExportEqualsLocalSymbol(skippedSymbol, checker);
+      if (skippedSymbol === undefined) return undefined;
+    }
+    const importedName = symbolNameNoDefault(skippedSymbol);
+    if (importedName === "" || importedName === internalSymbolNameDefault || importedName === symbolName(symbol)) {
+      return { kind: ImpExpKind.Import, symbol: skippedSymbol };
+    }
+    return undefined;
+  };
+
+  return getExport() ?? (comingFromExport ? undefined : getImport());
+}
+
+export function getExportInfo(exportSymbol: Symbol, exportKind: ExportKind, checker: ImportTrackerChecker): ExportInfo | undefined {
+  if (exportSymbol.parent === undefined) return undefined;
+  const exportingModuleSymbol = checker.getMergedSymbol?.(exportSymbol.parent) ?? exportSymbol.parent;
+  return isExternalModuleSymbol(exportingModuleSymbol) ? { exportingModuleSymbol, exportKind } : undefined;
+}
+
+export function getExportNode(parent: Node, node: Node): Node | undefined {
+  let declaration: Node | undefined;
+  if (isVariableDeclaration(parent)) declaration = parent;
+  else if (isBindingElement(parent)) declaration = walkUpBindingElementsAndPatterns(parent);
+
+  if (declaration !== undefined) {
+    if (nodeName(parent) === node && !isCatchClause(declaration.parent) && declaration.parent?.parent !== undefined && isVariableStatement(declaration.parent.parent)) {
+      return declaration.parent.parent;
+    }
+    return undefined;
+  }
+  return parent;
+}
+
+export function isNodeImport(node: Node): boolean {
+  const parent = node.parent;
+  switch (parent?.kind) {
+    case Kind.ImportEqualsDeclaration:
+      return nodeName(parent) === node && isExternalModuleImportEquals(parent);
+    case Kind.ImportSpecifier:
+      return property<Node>(parent, "propertyName") === undefined;
+    case Kind.ImportClause:
+    case Kind.NamespaceImport:
+      return nodeName(parent) === node;
+    case Kind.BindingElement:
+      return isInJSFile(node) && isVariableDeclarationInitializedToBareOrAccessedRequire(parent.parent?.parent);
+    default:
+      return false;
+  }
+}
+
+export function isExternalModuleImportEquals(node: Node | undefined): boolean {
+  if (node === undefined || !isImportEqualsDeclaration(node)) return false;
+  const moduleReference = moduleReferenceOf(node);
+  return moduleReference !== undefined
+    && isExternalModuleReference(moduleReference)
+    && externalModuleReferenceExpression(moduleReference)?.kind === Kind.StringLiteral;
+}
+
+export function skipExportSpecifierSymbol(symbol: Symbol, checker: ImportTrackerChecker): Symbol | undefined {
+  for (const declaration of symbol.declarations) {
+    if (isExportSpecifier(declaration) && property<Node>(declaration, "propertyName") === undefined && moduleSpecifierOf(declaration.parent?.parent) === undefined) {
+      return checker.getExportSpecifierLocalTargetSymbol?.(declaration) ?? symbol;
+    }
+    const declarationName = nodeName(declaration);
+    if (isPropertyAccessExpression(declaration) && isModuleExportsAccessExpression(property<Node>(declaration, "expression")) && (declarationName === undefined || !isPrivateIdentifier(declarationName))) {
+      return checker.getSymbolAtLocation(declaration);
+    }
+    if (isShorthandPropertyAssignment(declaration)
+      && declaration.parent?.parent !== undefined
+      && isBinaryExpression(declaration.parent.parent)
+      && exportKindForAssignmentDeclaration(declaration.parent.parent) === ExportKind.ExportEquals) {
+      const name = nodeName(declaration);
+      return name === undefined ? undefined : checker.getExportSpecifierLocalTargetSymbol?.(name);
+    }
+  }
+  return symbol;
+}
+
+export function getExportEqualsLocalSymbol(importedSymbol: Symbol, checker: ImportTrackerChecker): Symbol | undefined {
+  if ((symbolFlags(importedSymbol) & SymbolFlags.Alias) !== 0) return checker.getImmediateAliasedSymbol?.(importedSymbol);
+  const declaration = importedSymbol.valueDeclaration;
+  if (declaration === undefined) return undefined;
+  if (isExportAssignment(declaration)) return nodeSymbol(property<Node>(declaration, "expression"));
+  if (isBinaryExpression(declaration)) return nodeSymbol(property<Node>(declaration, "right"));
+  if (isSourceFile(declaration)) return nodeSymbol(declaration);
+  return undefined;
+}
+
+export function symbolNameNoDefault(symbol: Symbol): string {
+  if (symbolName(symbol) !== internalSymbolNameDefault) return symbolName(symbol);
+  for (const declaration of symbol.declarations) {
+    const name = getNameOfDeclaration(declaration);
+    if (name !== undefined && isIdentifier(name)) return nodeText(name);
+  }
+  return "";
+}
+
+export function findModuleReferences(
+  program: ImportTrackerProgram,
+  sourceFiles: readonly SourceFile[],
+  searchModuleSymbol: Symbol,
+  checker: ImportTrackerChecker,
+): readonly ModuleReference[] {
+  const refs: ModuleReference[] = [];
+  for (const referencingFile of sourceFiles) {
+    const searchSourceFile = searchModuleSymbol.valueDeclaration;
+    if (searchSourceFile !== undefined && isSourceFile(searchSourceFile)) {
+      for (const ref of referencingFile.referencedFiles) {
+        if (program.getSourceFileFromReference?.(referencingFile, ref) === searchSourceFile) {
+          refs.push({ kind: ModuleReferenceKind.Reference, referencingFile, ref });
+        }
+      }
+      for (const ref of referencingFile.typeReferenceDirectives) {
+        const referenced = program.getResolvedTypeReferenceDirectiveFromTypeReferenceDirective?.(ref, referencingFile);
+        if (referenced?.resolvedFileName === searchSourceFile.fileName) {
+          refs.push({ kind: ModuleReferenceKind.Reference, referencingFile, ref });
+        }
+      }
+    }
+
+    forEachImport(program, referencingFile, (importDecl, moduleSpecifier) => {
+      const moduleSymbol = checker.getSymbolAtLocation(moduleSpecifier);
+      if (moduleSymbol !== searchModuleSymbol) return;
+      if (nodeIsSynthesized(importDecl)) {
+        refs.push({ kind: ModuleReferenceKind.Implicit, literal: moduleSpecifier, referencingFile });
+      } else {
+        refs.push({ kind: ModuleReferenceKind.Import, literal: moduleSpecifier, referencingFile });
+      }
+    });
+  }
+  return refs;
+}
+
+const internalSymbolNameDefault = "default";
+const internalSymbolNameExportEquals = "export=";
+
+function contextCancelled(ctx: ImportTrackerContext | undefined): boolean {
+  return ctx?.aborted === true || ctx?.signal?.aborted === true || ctx?.err?.() !== undefined;
+}
+
+function property<T>(node: Node | undefined, key: string): T | undefined {
+  if (node === undefined) return undefined;
+  return (node as unknown as Record<string, T | undefined>)[key];
+}
+
+function nodeBody(node: Node | undefined): Node | undefined {
+  return property<Node>(node, "body");
+}
+
+function nodeStatements(node: Node | undefined): readonly Node[] {
+  return property<readonly Node[]>(node, "statements") ?? [];
+}
+
+function nodeElements(node: Node | undefined): readonly Node[] {
+  return property<readonly Node[]>(node, "elements") ?? [];
+}
+
+function moduleReferenceOf(node: Node | undefined): Node | undefined {
+  return property<Node>(node, "moduleReference");
+}
+
+function moduleSpecifierOf(node: Node | undefined): Node | undefined {
+  return property<Node>(node, "moduleSpecifier");
+}
+
+function importClauseOf(node: Node | undefined): Node | undefined {
+  return property<Node>(node, "importClause");
+}
+
+function importClauseNamedBindings(node: Node | undefined): Node | undefined {
+  return property<Node>(node, "namedBindings");
+}
+
+function exportClauseOf(node: Node | undefined): Node | undefined {
+  return property<Node>(node, "exportClause");
+}
+
+function importTypeQualifier(node: Node): Node | undefined {
+  return property<Node>(node, "qualifier");
+}
+
+function importTypeArgument(node: Node): Node | undefined {
+  return property<Node>(node, "argument");
+}
+
+function importTypeIsTypeOf(node: Node): boolean {
+  return property<boolean>(node, "isTypeOf") === true;
+}
+
+function literalTypeLiteral(node: Node | undefined): Node | undefined {
+  return property<Node>(node, "literal");
+}
+
+function externalModuleReferenceExpression(node: Node | undefined): Node | undefined {
+  return property<Node>(node, "expression");
+}
+
+function exportAssignmentIsExportEquals(node: Node): boolean {
+  return property<boolean>(node, "isExportEquals") === true;
+}
+
+function symbolName(symbol: Symbol | undefined): string {
+  if (symbol === undefined) return "";
+  return symbol.name ?? symbol.escapedName ?? "";
+}
+
+function symbolFlags(symbol: Symbol | undefined): SymbolFlags {
+  return symbol?.flags ?? SymbolFlags.None;
+}
+
+function unwrapProgramSpecifier(value: readonly [unknown, Node | undefined] | Node | undefined): Node | undefined {
+  if (value === undefined) return undefined;
+  if (isNodeLike(value)) return value;
+  return value[1];
+}
+
+function isNodeLike(value: unknown): value is Node {
+  return typeof value === "object" && value !== null && "kind" in value;
+}
+
+function importFromModuleSpecifier(moduleSpecifier: Node): Node {
+  const parent = moduleSpecifier.parent;
+  if (parent === undefined) return moduleSpecifier;
+  if (parent.kind === Kind.ImportDeclaration || parent.kind === Kind.JSImportDeclaration || parent.kind === Kind.ExportDeclaration) return parent;
+  if (parent.kind === Kind.ExternalModuleReference && parent.parent !== undefined) return parent.parent;
+  if (parent.kind === Kind.LiteralType && parent.parent !== undefined && parent.parent.kind === Kind.ImportType) return parent.parent;
+  return parent;
+}
+
+function findAncestor(node: Node | undefined, predicate: (node: Node) => boolean): Node | undefined {
+  let current = node;
+  while (current !== undefined) {
+    if (predicate(current)) return current;
+    current = current.parent;
+  }
+  return undefined;
+}
+
+function getFirstIdentifier(node: Node | undefined): Node | undefined {
+  if (node === undefined) return undefined;
+  if (isIdentifier(node)) return node;
+  return getFirstIdentifier(property<Node>(node, "left") ?? property<Node>(node, "expression") ?? property<Node>(node, "name"));
+}
+
+function getNameOfDeclaration(node: Node | undefined): Node | undefined {
+  if (node === undefined) return undefined;
+  return nodeName(node) ?? property<Node>(node, "propertyName");
+}
+
+function walkUpBindingElementsAndPatterns(node: Node): Node {
+  let current = node;
+  while (current.parent !== undefined && (current.parent.kind === Kind.ObjectBindingPattern || current.parent.kind === Kind.ArrayBindingPattern || current.parent.kind === Kind.BindingElement)) {
+    current = current.parent;
+  }
+  return current;
+}
+
+function isExternalModuleAugmentation(node: Node): boolean {
+  return isAmbientModuleDeclaration(node) && node.parent !== undefined && !isSourceFile(node.parent);
+}
+
+function isSourceFileWithGlobalExports(node: Node | undefined): boolean {
+  const sourceFile = node === undefined ? undefined : getSourceFileOfNode(node);
+  const symbol = nodeSymbol(sourceFile);
+  return (symbol?.globalExports?.size ?? 0) > 0;
+}
+
+function sourceFilesSetHas(sourceFilesSet: ReadonlySet<string>, node: Node): boolean {
+  const sourceFile = getSourceFileOfNode(node);
+  return sourceFile !== undefined
+    && isSourceFile(sourceFile)
+    && (sourceFilesSet.has(sourceFile.fileName) || sourceFilesSet.has(sourceFile.path));
+}
+
+function isImplicitlyExportedJSTypeAlias(node: Node): boolean {
+  const parent = node.parent;
+  return node.kind === Kind.JSTypeAliasDeclaration
+    && parent !== undefined
+    && isSourceFile(parent)
+    && (parent.externalModuleIndicator !== undefined || sourceFileCommonJSModuleIndicator(parent) !== undefined);
+}
+
+function isJSDocTypedefOrCallbackTag(node: Node | undefined): boolean {
+  return node?.kind === Kind.JSDocTypedefTag || node?.kind === Kind.JSDocCallbackTag;
+}
+
+function isInJSFile(node: Node): boolean {
+  const sourceFile = getSourceFileOfNode(node);
+  return sourceFile !== undefined
+    && isSourceFile(sourceFile)
+    && ((sourceFile.flags & NodeFlags.JavaScriptFile) !== 0 || sourceFile.scriptKind === 1 || sourceFile.scriptKind === 2);
+}
+
+function isVariableDeclarationInitializedToBareOrAccessedRequire(node: Node | undefined): boolean {
+  if (node === undefined || !isVariableDeclaration(node)) return false;
+  const initializer = property<Node>(node, "initializer");
+  if (initializer === undefined) return false;
+  const requireCall = getLeftmostAccessExpression(initializer);
+  if (!isCallExpression(requireCall)) return false;
+  const expression = property<Node>(requireCall, "expression");
+  const argumentsList = property<readonly Node[]>(requireCall, "arguments") ?? [];
+  return expression !== undefined
+    && isIdentifier(expression)
+    && nodeText(expression) === "require"
+    && argumentsList.length === 1
+    && isStringLiteralLike(argumentsList[0]);
+}
+
+function getPropertySymbolOfObjectBindingPatternWithoutPropertyName(symbol: Symbol, checker: ImportTrackerChecker): Symbol | undefined {
+  for (const declaration of symbol.declarations) {
+    if (!isBindingElement(declaration) || property<Node>(declaration, "propertyName") !== undefined) continue;
+    const name = nodeName(declaration);
+    if (name !== undefined) return checker.getSymbolAtLocation(name) ?? symbol;
+  }
+  return symbol;
+}
+
+function isModuleExportsAccessExpression(node: Node | undefined): boolean {
+  if (node === undefined || !isPropertyAccessExpression(node)) return false;
+  const expression = property<Node>(node, "expression");
+  return expression !== undefined && isIdentifier(expression) && nodeText(expression) === "module" && nodeText(nodeName(node)) === "exports";
+}
+
+function exportKindForAssignmentDeclaration(node: Node): ExportKind | undefined {
+  if (!isBinaryExpression(node)) return undefined;
+  const left = property<Node>(node, "left");
+  if (left === undefined || !isPropertyAccessExpression(left)) return undefined;
+  const expression = property<Node>(left, "expression");
+  const name = nodeText(nodeName(left));
+  if (expression !== undefined && isIdentifier(expression) && nodeText(expression) === "exports" && name !== "") return ExportKind.Named;
+  if (expression !== undefined && isIdentifier(expression) && nodeText(expression) === "module" && name === "exports") return ExportKind.ExportEquals;
+  if (isModuleExportsAccessExpression(expression) && name !== "") return ExportKind.Named;
+  return undefined;
+}
+
+function sourceFileCommonJSModuleIndicator(sourceFile: SourceFile): Node | undefined {
+  return property<Node>(sourceFile, "commonJSModuleIndicator");
+}
+
+function getLeftmostAccessExpression(node: Node): Node {
+  let current = node;
+  while (isPropertyAccessExpression(current) || current.kind === Kind.ElementAccessExpression) {
+    const expression = property<Node>(current, "expression");
+    if (expression === undefined) break;
+    current = expression;
+  }
+  return current;
+}
+
+function nodeSeenTracker(): (node: Node) => boolean {
+  const seen = new Set<Node>();
+  return (node) => {
+    if (seen.has(node)) return false;
+    seen.add(node);
+    return true;
+  };
 }
 
 // Language-service parity map: internal/ls/importTracker.go
