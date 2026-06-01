@@ -6,6 +6,10 @@
 
 import type { FourslashTest } from "./fourslash.js";
 
+export interface StateBaselineWriter {
+  writeLine(text?: string): void;
+}
+
 export interface StateBaselineEntry {
   readonly label: string;
   readonly activeFile: string;
@@ -59,6 +63,125 @@ export function formatStateBaselineEntry(entry: StateBaselineEntry): string {
     `caret=${entry.caretLine + 1}:${entry.caretCharacter + 1}${selection}`,
     `open=${entry.openFiles.join(", ")}`,
   ].join("\n");
+}
+
+export interface DiffTableOptions {
+  readonly indent?: string;
+  readonly sortKeys?: boolean;
+}
+
+export class DiffTable {
+  private readonly diff = new Map<string, string>();
+
+  constructor(private readonly options: DiffTableOptions = {}) {}
+
+  add(key: string, value: string): void {
+    this.diff.set(key, value);
+  }
+
+  print(writer: StateBaselineWriter, header: string): void {
+    if (this.diff.size === 0) return;
+    const baseIndent = this.options.indent ?? "";
+    if (header !== "") writer.writeLine(`${baseIndent}${header}`);
+
+    const diffKeys = [...this.diff.keys()];
+    let keyWidth = 0;
+    for (const key of diffKeys) {
+      keyWidth = Math.max(keyWidth, key.length);
+    }
+    if (this.options.sortKeys === true) diffKeys.sort();
+
+    const rowIndent = `${baseIndent}  `;
+    for (const key of diffKeys) {
+      writer.writeLine(`${rowIndent}${key.padEnd(keyWidth + 1)} ${this.diff.get(key) ?? ""}`);
+    }
+  }
+}
+
+export class DiffTableWriter {
+  private hasChange = false;
+  private readonly diffs = new Map<string, (writer: StateBaselineWriter) => void>();
+
+  constructor(private readonly header: string) {}
+
+  setHasChange(): void {
+    this.hasChange = true;
+  }
+
+  add(key: string, writeDiff: (writer: StateBaselineWriter) => void): void {
+    this.diffs.set(key, writeDiff);
+  }
+
+  print(writer: StateBaselineWriter): void {
+    if (!this.hasChange) return;
+    writer.writeLine(`${this.header}::`);
+    for (const key of [...this.diffs.keys()].sort()) {
+      this.diffs.get(key)?.(writer);
+    }
+  }
+}
+
+export function newDiffTableWriter(header: string): DiffTableWriter {
+  return new DiffTableWriter(header);
+}
+
+export function areIterSeqEqual(left: Iterable<string>, right: Iterable<string>): boolean {
+  const leftValues = [...left].sort();
+  const rightValues = [...right].sort();
+  if (leftValues.length !== rightValues.length) return false;
+  return leftValues.every((value, index) => value === rightValues[index]);
+}
+
+export function printSlicesWithDiffTable(
+  writer: StateBaselineWriter,
+  header: string,
+  newSlice: readonly string[],
+  getOldSlice: () => readonly string[],
+  options: DiffTableOptions,
+  topChange: string,
+  isDefault?: (entry: string) => boolean,
+): void {
+  const oldSlice = topChange === "*modified*" ? [...getOldSlice()] : [];
+  const oldEntries = new Set(oldSlice);
+  const newEntries = new Set(newSlice);
+  const table = new DiffTable(options);
+
+  for (const entry of newSlice) {
+    let entryChange = "";
+    if (isDefault?.(entry) === true) entryChange = "(default) ";
+    if (topChange === "*modified*" && !oldEntries.has(entry)) entryChange = "*new*";
+    table.add(entry, entryChange);
+  }
+
+  if (topChange === "*modified*") {
+    for (const entry of oldSlice) {
+      if (!newEntries.has(entry)) table.add(entry, "*deleted*");
+    }
+  }
+
+  table.print(writer, header);
+}
+
+export function sliceFromIterSeqPath(sequence: Iterable<string>): readonly string[] {
+  return [...sequence].sort();
+}
+
+export function printPathIterSeqWithDiffTable(
+  writer: StateBaselineWriter,
+  header: string,
+  newSequence: Iterable<string>,
+  getOldSequence: () => Iterable<string>,
+  options: DiffTableOptions,
+  topChange: string,
+): void {
+  printSlicesWithDiffTable(
+    writer,
+    header,
+    sliceFromIterSeqPath(newSequence),
+    () => sliceFromIterSeqPath(getOldSequence()),
+    options,
+    topChange,
+  );
 }
 
 // Source parity map: internal/fourslash/statebaseline.go
