@@ -354,9 +354,9 @@ function generateLsMaps() {
   const lsRoot = join(tsgoInternal, "ls");
   const localRoot = join(tstsSrc, "ls");
   const files = [
-    "autoimport/aliasresolver.go", "autoimport/export.go", "autoimport/export_stringer_generated.go",
-    "autoimport/extract.go", "autoimport/fix.go", "autoimport/import_adder.go", "autoimport/specifiers.go",
-    "autoimport/util.go", "autoimport/view.go", "autoinsert.go", "callhierarchy.go", "codeactions.go",
+    "autoimport/aliasresolver.go",
+    "autoimport/extract.go", "autoimport/fix.go", "autoimport/import_adder.go",
+    "autoimport/util.go", "autoimport/view.go", "callhierarchy.go", "codeactions.go",
     "codeactions_fixclassincorrectlyimplementsinterface.go", "codeactions_fixmissingtypeannotation.go",
     "codeactions_importfixes.go", "codeactions_missingmemberfixer.go", "codelens.go", "completions.go",
     "crossproject.go", "definition.go", "displaypartswriter.go", "documenthighlights.go",
