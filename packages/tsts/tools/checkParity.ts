@@ -151,12 +151,20 @@ function useJson(): boolean {
 }
 
 function countPhysicalLines(filePath: string): number {
-  const text = readFileSync(filePath, "utf8");
+  const text = stripEmbeddedParityMap(readFileSync(filePath, "utf8"));
   return text.length === 0 ? 0 : text.split("\n").length;
 }
 
+function stripEmbeddedParityMap(text: string): string {
+  const markerIndex = text.indexOf("\nexport interface UpstreamSourceLine");
+  if (markerIndex >= 0) return text.slice(0, markerIndex);
+  const privateMarkerIndex = text.indexOf("\ninterface UpstreamSourceLine");
+  if (privateMarkerIndex >= 0) return text.slice(0, privateMarkerIndex);
+  return text;
+}
+
 function countSourceLines(filePath: string): number {
-  const text = readFileSync(filePath, "utf8");
+  const text = stripEmbeddedParityMap(readFileSync(filePath, "utf8"));
   const withoutBlockComments = text.replace(/\/\*[\s\S]*?\*\//g, "");
   return withoutBlockComments
     .split("\n")
