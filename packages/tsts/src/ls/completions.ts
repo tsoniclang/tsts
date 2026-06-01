@@ -2,10 +2,57 @@ import { Kind, KindNames, SymbolFlags, nodeText, type Node, type SourceFile, typ
 import { LanguageVariant } from "../core/languageVariant.js";
 import { isIdentifierPartCodePoint, isIdentifierStartCodePoint } from "../scanner/index.js";
 import { compareStringsCaseInsensitiveThenSensitive, ComparisonEqual } from "../stringutil/index.js";
-import { CompletionItemKindConstant, CompletionItemKindKeyword } from "../lsp/lsproto/index.js";
-import type { CompletionItem, CompletionItemData, CompletionItemLabelDetails, CompletionList, Range } from "../lsp/lsproto/index.js";
+import {
+  CompletionItemKindClass,
+  CompletionItemKindConstant,
+  CompletionItemKindEnum,
+  CompletionItemKindEnumMember,
+  CompletionItemKindField,
+  CompletionItemKindFile,
+  CompletionItemKindFolder,
+  CompletionItemKindFunction,
+  CompletionItemKindInterface,
+  CompletionItemKindKeyword,
+  CompletionItemKindMethod,
+  CompletionItemKindModule,
+  CompletionItemKindProperty,
+  CompletionItemKindText,
+  CompletionItemKindVariable,
+} from "../lsp/lsproto/index.js";
+import type { CompletionItem, CompletionItemData, CompletionItemKind, CompletionItemLabelDetails, CompletionList, Range } from "../lsp/lsproto/index.js";
 import { findPrecedingToken } from "../astnav/index.js";
-import type { UserPreferences } from "./lsutil/index.js";
+import {
+  ScriptElementKindAlias,
+  ScriptElementKindCallSignatureElement,
+  ScriptElementKindClassElement,
+  ScriptElementKindConstElement,
+  ScriptElementKindConstructSignatureElement,
+  ScriptElementKindDirectory,
+  ScriptElementKindEnumElement,
+  ScriptElementKindEnumMemberElement,
+  ScriptElementKindExternalModuleName,
+  ScriptElementKindFunctionElement,
+  ScriptElementKindIndexSignatureElement,
+  ScriptElementKindInterfaceElement,
+  ScriptElementKindKeyword,
+  ScriptElementKindLetElement,
+  ScriptElementKindLocalFunctionElement,
+  ScriptElementKindLocalVariableElement,
+  ScriptElementKindMemberFunctionElement,
+  ScriptElementKindMemberGetAccessorElement,
+  ScriptElementKindMemberSetAccessorElement,
+  ScriptElementKindMemberVariableElement,
+  ScriptElementKindModuleElement,
+  ScriptElementKindParameterElement,
+  ScriptElementKindPrimitiveType,
+  ScriptElementKindScriptElement,
+  ScriptElementKindString,
+  ScriptElementKindTypeElement,
+  ScriptElementKindVariableElement,
+  ScriptElementKindWarning,
+  type ScriptElementKind,
+  type UserPreferences,
+} from "./lsutil/index.js";
 import { quote } from "./utilities.js";
 
 /**
@@ -925,6 +972,115 @@ export function getRelevantTokens(position: number, file: SourceFile): RelevantT
     return contextToken === undefined ? { previousToken } : { contextToken, previousToken };
   }
   return previousToken === undefined ? {} : { contextToken: previousToken, previousToken };
+}
+
+export function isCheckedFile(
+  file: SourceFile & { readonly isJavaScriptFile?: boolean },
+  compilerOptions: { readonly checkJs?: boolean | undefined },
+): boolean {
+  return !file.isDeclarationFile && (!file.isJavaScriptFile || compilerOptions.checkJs === true);
+}
+
+export function isContextTokenValueLocation(contextToken: Node): boolean {
+  switch (contextToken.kind) {
+    case Kind.SemicolonToken:
+    case Kind.OpenBraceToken:
+    case Kind.CloseBraceToken:
+    case Kind.CommaToken:
+    case Kind.EqualsToken:
+    case Kind.OpenParenToken:
+    case Kind.CloseParenToken:
+    case Kind.OpenBracketToken:
+    case Kind.CloseBracketToken:
+    case Kind.ColonToken:
+    case Kind.QuestionToken:
+    case Kind.QuestionDotToken:
+    case Kind.DotToken:
+      return true;
+    default:
+      return Kind.FirstBinaryOperator <= contextToken.kind && contextToken.kind <= Kind.LastBinaryOperator;
+  }
+}
+
+export function isContextTokenTypeLocation(contextToken: Node): boolean {
+  switch (contextToken.kind) {
+    case Kind.ColonToken:
+    case Kind.LessThanToken:
+    case Kind.GreaterThanToken:
+    case Kind.CommaToken:
+    case Kind.ExtendsKeyword:
+    case Kind.ImplementsKeyword:
+    case Kind.TypeOfKeyword:
+    case Kind.KeyOfKeyword:
+    case Kind.InferKeyword:
+    case Kind.ReadonlyKeyword:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function isEqualityOperatorKind(kind: Kind): boolean {
+  return kind === Kind.EqualsEqualsToken
+    || kind === Kind.EqualsEqualsEqualsToken
+    || kind === Kind.ExclamationEqualsToken
+    || kind === Kind.ExclamationEqualsEqualsToken;
+}
+
+export function getNullableSymbolOriginInfoKind(
+  kind: SymbolOriginInfoKind,
+  insertQuestionDot: boolean,
+): SymbolOriginInfoKind {
+  return insertQuestionDot ? kind | SymbolOriginInfoKind.Nullable : kind;
+}
+
+export function getCompletionsSymbolKind(kind: ScriptElementKind): CompletionItemKind {
+  switch (kind) {
+    case ScriptElementKindPrimitiveType:
+    case ScriptElementKindKeyword:
+      return CompletionItemKindKeyword;
+    case ScriptElementKindConstElement:
+    case ScriptElementKindLetElement:
+    case ScriptElementKindVariableElement:
+    case ScriptElementKindLocalVariableElement:
+    case ScriptElementKindAlias:
+    case ScriptElementKindParameterElement:
+      return CompletionItemKindVariable;
+    case ScriptElementKindMemberVariableElement:
+    case ScriptElementKindMemberGetAccessorElement:
+    case ScriptElementKindMemberSetAccessorElement:
+      return CompletionItemKindField;
+    case ScriptElementKindFunctionElement:
+    case ScriptElementKindLocalFunctionElement:
+      return CompletionItemKindFunction;
+    case ScriptElementKindMemberFunctionElement:
+    case ScriptElementKindConstructSignatureElement:
+    case ScriptElementKindCallSignatureElement:
+    case ScriptElementKindIndexSignatureElement:
+      return CompletionItemKindMethod;
+    case ScriptElementKindEnumElement:
+      return CompletionItemKindEnum;
+    case ScriptElementKindEnumMemberElement:
+      return CompletionItemKindEnumMember;
+    case ScriptElementKindModuleElement:
+    case ScriptElementKindExternalModuleName:
+      return CompletionItemKindModule;
+    case ScriptElementKindClassElement:
+    case ScriptElementKindTypeElement:
+      return CompletionItemKindClass;
+    case ScriptElementKindInterfaceElement:
+      return CompletionItemKindInterface;
+    case ScriptElementKindWarning:
+      return CompletionItemKindText;
+    case ScriptElementKindScriptElement:
+      return CompletionItemKindFile;
+    case ScriptElementKindDirectory:
+      return CompletionItemKindFolder;
+    case ScriptElementKindString:
+      return CompletionItemKindConstant;
+    default:
+      return CompletionItemKindProperty;
+  }
 }
 
 export type CompletionsTriggerCharacter = "." | "\"" | "'" | "`" | "/" | "@" | "<" | "#" | " ";
