@@ -1,3 +1,56 @@
+import type { FileReference, Node, SourceFile, Symbol } from "../ast/index.js";
+
+export enum ImpExpKind {
+  Unknown = 0,
+  Import = 1,
+  Export = 2,
+}
+
+export interface ImportExportSymbol {
+  readonly kind: ImpExpKind;
+  readonly symbol: Symbol;
+  readonly exportInfo?: ExportInfo;
+}
+
+export enum ExportKind {
+  Named = 0,
+  Default = 1,
+  ExportEquals = 2,
+  UMD = 3,
+  Module = 4,
+}
+
+export interface ExportInfo {
+  readonly exportingModuleSymbol: Symbol;
+  readonly exportKind: ExportKind;
+}
+
+export interface LocationAndSymbol {
+  readonly importLocation: Node;
+  readonly importSymbol: Symbol;
+}
+
+export interface ImportsResult {
+  readonly importSearches: readonly LocationAndSymbol[];
+  readonly singleReferences: readonly Node[];
+  readonly indirectUsers: readonly SourceFile[];
+}
+
+export type ImportTracker = (exportSymbol: Symbol, exportInfo: ExportInfo, isForRename: boolean) => ImportsResult;
+
+export enum ModuleReferenceKind {
+  Import = 0,
+  Reference = 1,
+  Implicit = 2,
+}
+
+export interface ModuleReference {
+  readonly kind: ModuleReferenceKind;
+  readonly literal?: Node;
+  readonly referencingFile: SourceFile;
+  readonly ref?: FileReference;
+}
+
 // Language-service parity map: internal/ls/importTracker.go
 /**
  * Language-service parity map for TS-Go `ls/importTracker.go`.
