@@ -16,6 +16,7 @@ export interface UserPreferences {
   readonly allowTextChangesInNewFiles?: boolean;
   readonly allowRenameOfImportPath?: TristateValue;
   readonly useAliasesForRename?: TristateValue;
+  readonly inlayHints?: InlayHintsPreferences;
   readonly codeLens?: CodeLensUserPreferences;
 }
 
@@ -24,6 +25,35 @@ export const QuotePreferenceUnknown: QuotePreference = "";
 export const QuotePreferenceAuto: QuotePreference = "auto";
 export const QuotePreferenceDouble: QuotePreference = "double";
 export const QuotePreferenceSingle: QuotePreference = "single";
+
+export type IncludeInlayParameterNameHints = "" | "all" | "literals";
+export const IncludeInlayParameterNameHintsNone: IncludeInlayParameterNameHints = "";
+export const IncludeInlayParameterNameHintsAll: IncludeInlayParameterNameHints = "all";
+export const IncludeInlayParameterNameHintsLiterals: IncludeInlayParameterNameHints = "literals";
+
+export interface InlayHintsPreferences {
+  readonly includeInlayParameterNameHints: IncludeInlayParameterNameHints;
+  readonly includeInlayParameterNameHintsWhenArgumentMatchesName: TristateValue;
+  readonly includeInlayFunctionParameterTypeHints: TristateValue;
+  readonly includeInlayVariableTypeHints: TristateValue;
+  readonly includeInlayVariableTypeHintsWhenTypeMatchesName: TristateValue;
+  readonly includeInlayPropertyDeclarationTypeHints: TristateValue;
+  readonly includeInlayFunctionLikeReturnTypeHints: TristateValue;
+  readonly includeInlayEnumMemberValueHints: TristateValue;
+}
+
+export function defaultInlayHintsPreferences(): InlayHintsPreferences {
+  return {
+    includeInlayParameterNameHints: IncludeInlayParameterNameHintsNone,
+    includeInlayParameterNameHintsWhenArgumentMatchesName: Tristate.Unknown,
+    includeInlayFunctionParameterTypeHints: Tristate.Unknown,
+    includeInlayVariableTypeHints: Tristate.Unknown,
+    includeInlayVariableTypeHintsWhenTypeMatchesName: Tristate.Unknown,
+    includeInlayPropertyDeclarationTypeHints: Tristate.Unknown,
+    includeInlayFunctionLikeReturnTypeHints: Tristate.Unknown,
+    includeInlayEnumMemberValueHints: Tristate.Unknown,
+  };
+}
 
 export interface CodeLensPreferenceFlag {
   readonly value: TristateValue;

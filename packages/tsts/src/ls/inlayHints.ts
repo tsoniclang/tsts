@@ -1,3 +1,136 @@
+import {
+  getCombinedNodeFlags,
+  isArrowFunction,
+  isAssertionExpression,
+  isFunctionDeclaration,
+  isFunctionExpression,
+  isGetAccessorDeclaration,
+  isIdentifier,
+  isLiteralExpression,
+  isMethodDeclaration,
+  isNewExpression,
+  isObjectLiteralExpression,
+  isPrefixUnaryExpression,
+  isPropertyAccessExpression,
+  isVariableDeclaration,
+  isPartOfParameterDeclaration,
+  skipParentheses,
+  Kind,
+  NodeFlags,
+  SymbolFlags,
+  type Identifier,
+  type Node,
+  type Symbol,
+} from "../ast/index.js";
+import type { Type } from "../checker/types.js";
+import { isInfinityOrNaNString } from "../checker/utilities.js";
+import { tristateIsTrue } from "../core/index.js";
+import {
+  IncludeInlayParameterNameHintsAll,
+  IncludeInlayParameterNameHintsLiterals,
+  IncludeInlayParameterNameHintsNone,
+  type InlayHintsPreferences,
+} from "./lsutil/userpreferences.js";
+
+export interface InlayHintState {
+  readonly preferences: InlayHintsPreferences;
+  readonly result: readonly unknown[];
+}
+
+export interface ParameterInfo {
+  readonly parameter: Identifier;
+  readonly name: string;
+  readonly isRestParameter: boolean;
+}
+
+export function shouldShowParameterNameHints(preferences: InlayHintsPreferences): boolean {
+  return preferences.includeInlayParameterNameHints === IncludeInlayParameterNameHintsLiterals
+    || preferences.includeInlayParameterNameHints === IncludeInlayParameterNameHintsAll;
+}
+
+export function shouldShowLiteralParameterNameHintsOnly(preferences: InlayHintsPreferences): boolean {
+  return preferences.includeInlayParameterNameHints === IncludeInlayParameterNameHintsLiterals;
+}
+
+export function isSignatureSupportingReturnAnnotation(node: Node): boolean {
+  return isArrowFunction(node)
+    || isFunctionExpression(node)
+    || isFunctionDeclaration(node)
+    || isMethodDeclaration(node)
+    || isGetAccessorDeclaration(node);
+}
+
+export function isHintableDeclaration(node: Node): boolean {
+  const initializer = nodeInitializer(node);
+  if ((isPartOfParameterDeclaration(node) || isVariableDeclaration(node) && isVarConst(node)) && initializer !== undefined) {
+    const skippedInitializer = skipParentheses(initializer) as Node;
+    return !(isHintableLiteral(skippedInitializer)
+      || isNewExpression(skippedInitializer)
+      || isObjectLiteralExpression(skippedInitializer)
+      || isAssertionExpression(skippedInitializer));
+  }
+  return true;
+}
+
+export function isHintableLiteral(node: Node): boolean {
+  if (isPrefixUnaryExpression(node)) {
+    const operand = node.operand;
+    return isLiteralExpression(operand) || isIdentifier(operand) && isInfinityOrNaNString(operand.text);
+  }
+  if (isIdentifier(node)) {
+    return node.text === "undefined" || isInfinityOrNaNString(node.text);
+  }
+  switch (node.kind) {
+    case Kind.TrueKeyword:
+    case Kind.FalseKeyword:
+    case Kind.NullKeyword:
+    case Kind.NoSubstitutionTemplateLiteral:
+    case Kind.TemplateExpression:
+      return true;
+    default:
+      return isLiteralExpression(node);
+  }
+}
+
+export function isModuleReferenceType(type: Type): boolean {
+  return type.symbol !== undefined && ((type.symbol.flags ?? 0) & SymbolFlags.Module) !== 0;
+}
+
+export function getParameterDeclarationIdentifier(symbol: Symbol | undefined): Identifier | undefined {
+  const declaration = symbol?.valueDeclaration;
+  const name = declaration === undefined ? undefined : nodeName(declaration);
+  return name !== undefined && isIdentifier(name) ? name : undefined;
+}
+
+export function identifierOrAccessExpressionPostfixMatchesParameterName(node: Node, parameterName: string): boolean {
+  if (isIdentifier(node)) return node.text === parameterName;
+  if (isPropertyAccessExpression(node)) {
+    return isIdentifier(node.name) && node.name.text === parameterName;
+  }
+  return false;
+}
+
+export function isAnyInlayHintEnabled(preferences: InlayHintsPreferences): boolean {
+  return preferences.includeInlayParameterNameHints !== IncludeInlayParameterNameHintsNone
+    || tristateIsTrue(preferences.includeInlayFunctionParameterTypeHints)
+    || tristateIsTrue(preferences.includeInlayVariableTypeHints)
+    || tristateIsTrue(preferences.includeInlayPropertyDeclarationTypeHints)
+    || tristateIsTrue(preferences.includeInlayFunctionLikeReturnTypeHints)
+    || tristateIsTrue(preferences.includeInlayEnumMemberValueHints);
+}
+
+function isVarConst(node: Node): boolean {
+  return (getCombinedNodeFlags(node) & NodeFlags.Constant) !== 0;
+}
+
+function nodeInitializer(node: Node): Node | undefined {
+  return (node as { readonly initializer?: Node }).initializer;
+}
+
+function nodeName(node: Node): Node | undefined {
+  return (node as { readonly name?: Node }).name;
+}
+
 // Language-service parity map: internal/ls/inlay_hints.go
 /**
  * Language-service parity map for TS-Go `ls/inlay_hints.go`.
