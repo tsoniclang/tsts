@@ -16,20 +16,32 @@ import {
   isPartOfParameterDeclaration,
   skipParentheses,
   Kind,
+  KindNames,
   NodeFlags,
+  nodeText,
   SymbolFlags,
   type Identifier,
   type Node,
+  type SourceFile,
   type Symbol,
 } from "../ast/index.js";
 import type { Type } from "../checker/types.js";
 import { isInfinityOrNaNString } from "../checker/utilities.js";
 import { tristateIsTrue } from "../core/index.js";
 import {
+  type InlayHintLabelPart,
+  type Location,
+  type Range,
+  type StringOrInlayHintLabelParts,
+} from "../lsp/lsproto/index.js";
+import { fileNameToDocumentURI } from "./lsconv/index.js";
+import {
   IncludeInlayParameterNameHintsAll,
   IncludeInlayParameterNameHintsLiterals,
   IncludeInlayParameterNameHintsNone,
   type InlayHintsPreferences,
+  QuotePreferenceSingle,
+  type QuotePreference,
 } from "./lsutil/userpreferences.js";
 
 export interface InlayHintState {
@@ -41,6 +53,11 @@ export interface ParameterInfo {
   readonly parameter: Identifier;
   readonly name: string;
   readonly isRestParameter: boolean;
+}
+
+export interface InlayHintLabelPartState {
+  readonly file?: SourceFile;
+  readonly quotePreference?: QuotePreference;
 }
 
 export function shouldShowParameterNameHints(preferences: InlayHintsPreferences): boolean {
@@ -96,6 +113,371 @@ export function isModuleReferenceType(type: Type): boolean {
   return type.symbol !== undefined && ((type.symbol.flags ?? 0) & SymbolFlags.Module) !== 0;
 }
 
+export function getInlayHintLabelParts(
+  node: Node,
+  idToSymbol: ReadonlyMap<Identifier, Symbol> = new Map(),
+  state: InlayHintLabelPartState = {},
+): readonly InlayHintLabelPart[] {
+  const parts: InlayHintLabelPart[] = [];
+
+  const push = (value: string): void => {
+    if (value !== "") parts.push({ value });
+  };
+  const visitDisplayPartList = (nodes: readonly Node[] | undefined, separator: string): void => {
+    if (nodes === undefined) return;
+    nodes.forEach((item, index) => {
+      if (index > 0) push(separator);
+      visitForDisplayParts(item);
+    });
+  };
+  const visitParametersAndTypeParameters = (signature: Node): void => {
+    const typeParameters = nodeArray(signature, "typeParameters");
+    if (typeParameters.length > 0) {
+      push("<");
+      visitDisplayPartList(typeParameters, ", ");
+      push(">");
+    }
+    push("(");
+    visitDisplayPartList(nodeArray(signature, "parameters"), ", ");
+    push(")");
+  };
+  const visitForDisplayParts = (current: Node | undefined): void => {
+    if (current === undefined) return;
+
+    const tokenText = tokenToString(current.kind);
+    if (tokenText !== "") {
+      push(tokenText);
+      return;
+    }
+
+    if (isLiteralExpression(current)) {
+      push(getLiteralText(current, state.quotePreference));
+      return;
+    }
+
+    switch (current.kind) {
+      case Kind.Identifier: {
+        const identifierText = nodeText(current);
+        const symbol = idToSymbol.get(current as Identifier);
+        const declarationName = symbol?.declarations[0] === undefined ? undefined : nodeName(symbol.declarations[0]);
+        parts.push(declarationName === undefined ? { value: identifierText } : getNodeDisplayPart(identifierText, declarationName, state.file));
+        return;
+      }
+      case Kind.QualifiedName:
+        visitForDisplayParts(nodeProperty(current, "left"));
+        push(".");
+        visitForDisplayParts(nodeProperty(current, "right"));
+        return;
+      case Kind.TypePredicate:
+        if (nodeProperty(current, "assertsModifier") !== undefined) push("asserts ");
+        visitForDisplayParts(nodeProperty(current, "parameterName"));
+        if (nodeProperty(current, "type") !== undefined) {
+          push(" is ");
+          visitForDisplayParts(nodeProperty(current, "type"));
+        }
+        return;
+      case Kind.TypeReference:
+        visitForDisplayParts(nodeProperty(current, "typeName"));
+        if (nodeArray(current, "typeArguments").length > 0) {
+          push("<");
+          visitDisplayPartList(nodeArray(current, "typeArguments"), ",");
+          push(">");
+        }
+        return;
+      case Kind.TypeParameter:
+        visitDisplayPartList(nodeArray(current, "modifiers"), "");
+        visitForDisplayParts(nodeName(current));
+        if (nodeProperty(current, "constraint") !== undefined) {
+          push(" extends ");
+          visitForDisplayParts(nodeProperty(current, "constraint"));
+        }
+        if (nodeProperty(current, "defaultType") !== undefined) {
+          push(" = ");
+          visitForDisplayParts(nodeProperty(current, "defaultType"));
+        }
+        return;
+      case Kind.Parameter:
+        visitDisplayPartList(nodeArray(current, "modifiers"), " ");
+        if (nodeArray(current, "modifiers").length > 0) push(" ");
+        if (nodeProperty(current, "dotDotDotToken") !== undefined) push("...");
+        visitForDisplayParts(nodeName(current));
+        if (nodeProperty(current, "questionToken") !== undefined) push("?");
+        if (nodeProperty(current, "type") !== undefined) {
+          push(": ");
+          visitForDisplayParts(nodeProperty(current, "type"));
+        }
+        return;
+      case Kind.ConstructorType:
+        push("new ");
+        visitParametersAndTypeParameters(current);
+        push(" => ");
+        visitForDisplayParts(nodeProperty(current, "type"));
+        return;
+      case Kind.TypeQuery:
+        push("typeof ");
+        visitForDisplayParts(nodeProperty(current, "exprName"));
+        if (nodeArray(current, "typeArguments").length > 0) {
+          push("<");
+          visitDisplayPartList(nodeArray(current, "typeArguments"), ", ");
+          push(">");
+        }
+        return;
+      case Kind.TypeLiteral:
+        push("{");
+        if (nodeArray(current, "members").length > 0) {
+          push(" ");
+          visitDisplayPartList(nodeArray(current, "members"), "; ");
+          push(" ");
+        }
+        push("}");
+        return;
+      case Kind.ArrayType:
+        visitForDisplayParts(nodeProperty(current, "elementType"));
+        push("[]");
+        return;
+      case Kind.TupleType:
+        push("[");
+        visitDisplayPartList(nodeArray(current, "elements"), ", ");
+        push("]");
+        return;
+      case Kind.NamedTupleMember:
+        if (nodeProperty(current, "dotDotDotToken") !== undefined) push("...");
+        visitForDisplayParts(nodeName(current));
+        if (nodeProperty(current, "questionToken") !== undefined) push("?");
+        push(": ");
+        visitForDisplayParts(nodeProperty(current, "type"));
+        return;
+      case Kind.OptionalType:
+        visitForDisplayParts(nodeProperty(current, "type"));
+        push("?");
+        return;
+      case Kind.RestType:
+        push("...");
+        visitForDisplayParts(nodeProperty(current, "type"));
+        return;
+      case Kind.UnionType:
+        visitDisplayPartList(nodeArray(current, "types"), " | ");
+        return;
+      case Kind.IntersectionType:
+        visitDisplayPartList(nodeArray(current, "types"), " & ");
+        return;
+      case Kind.ConditionalType:
+        visitForDisplayParts(nodeProperty(current, "checkType"));
+        push(" extends ");
+        visitForDisplayParts(nodeProperty(current, "extendsType"));
+        push(" ? ");
+        visitForDisplayParts(nodeProperty(current, "trueType"));
+        push(" : ");
+        visitForDisplayParts(nodeProperty(current, "falseType"));
+        return;
+      case Kind.InferType:
+        push("infer ");
+        visitForDisplayParts(nodeProperty(current, "typeParameter"));
+        return;
+      case Kind.ParenthesizedType:
+        push("(");
+        visitForDisplayParts(nodeProperty(current, "type"));
+        push(")");
+        return;
+      case Kind.TypeOperator:
+        push(tokenToString(nodeOperator(current)));
+        if (parts.length > 0 && parts[parts.length - 1]!.value !== "") push(" ");
+        visitForDisplayParts(nodeProperty(current, "type"));
+        return;
+      case Kind.IndexedAccessType:
+        visitForDisplayParts(nodeProperty(current, "objectType"));
+        push("[");
+        visitForDisplayParts(nodeProperty(current, "indexType"));
+        push("]");
+        return;
+      case Kind.MappedType:
+        push("{ ");
+        visitMappedType(current);
+        push("; }");
+        return;
+      case Kind.LiteralType:
+        visitForDisplayParts(nodeProperty(current, "literal"));
+        return;
+      case Kind.FunctionType:
+        visitParametersAndTypeParameters(current);
+        push(" => ");
+        visitForDisplayParts(nodeProperty(current, "type"));
+        return;
+      case Kind.ImportType:
+        if (Boolean(nodeProperty(current, "isTypeOf"))) push("typeof ");
+        push("import(");
+        visitForDisplayParts(nodeProperty(current, "argument"));
+        push(")");
+        if (nodeProperty(current, "qualifier") !== undefined) {
+          push(".");
+          visitForDisplayParts(nodeProperty(current, "qualifier"));
+        }
+        if (nodeArray(current, "typeArguments").length > 0) {
+          push("<");
+          visitDisplayPartList(nodeArray(current, "typeArguments"), ", ");
+          push(">");
+        }
+        return;
+      case Kind.PropertySignature:
+      case Kind.MethodSignature:
+        visitMemberSignature(current, current.kind === Kind.MethodSignature);
+        return;
+      case Kind.IndexSignature:
+        push("[");
+        visitDisplayPartList(nodeArray(current, "parameters"), ", ");
+        push("]");
+        if (nodeProperty(current, "type") !== undefined) {
+          push(": ");
+          visitForDisplayParts(nodeProperty(current, "type"));
+        }
+        return;
+      case Kind.CallSignature:
+        visitParametersAndTypeParameters(current);
+        if (nodeProperty(current, "type") !== undefined) {
+          push(": ");
+          visitForDisplayParts(nodeProperty(current, "type"));
+        }
+        return;
+      case Kind.ConstructSignature:
+        push("new ");
+        visitParametersAndTypeParameters(current);
+        if (nodeProperty(current, "type") !== undefined) {
+          push(": ");
+          visitForDisplayParts(nodeProperty(current, "type"));
+        }
+        return;
+      case Kind.ArrayBindingPattern:
+        push("[");
+        visitDisplayPartList(nodeArray(current, "elements"), ", ");
+        push("]");
+        return;
+      case Kind.ObjectBindingPattern:
+        push("{");
+        if (nodeArray(current, "elements").length > 0) {
+          push(" ");
+          visitDisplayPartList(nodeArray(current, "elements"), ", ");
+          push(" ");
+        }
+        push("}");
+        return;
+      case Kind.BindingElement:
+        visitForDisplayParts(nodeName(current));
+        return;
+      case Kind.PrefixUnaryExpression:
+        push(tokenToString(nodeOperator(current)));
+        visitForDisplayParts(nodeProperty(current, "operand"));
+        return;
+      case Kind.TemplateLiteralType:
+        visitForDisplayParts(nodeProperty(current, "head"));
+        visitDisplayPartList(nodeArray(nodeProperty(current, "templateSpans"), "nodes"), "");
+        return;
+      case Kind.TemplateHead:
+      case Kind.TemplateMiddle:
+      case Kind.TemplateTail:
+        push(getLiteralText(current, state.quotePreference));
+        return;
+      case Kind.TemplateLiteralTypeSpan:
+        visitForDisplayParts(nodeProperty(current, "type"));
+        visitForDisplayParts(nodeProperty(current, "literal"));
+        return;
+      case Kind.ThisType:
+        push("this");
+        return;
+      case Kind.ComputedPropertyName:
+        push("[");
+        visitForDisplayParts(nodeProperty(current, "expression"));
+        push("]");
+        return;
+      case Kind.PropertyAccessExpression:
+        visitForDisplayParts(nodeProperty(current, "expression"));
+        push(".");
+        visitForDisplayParts(nodeName(current));
+        return;
+      case Kind.ElementAccessExpression:
+        visitForDisplayParts(nodeProperty(current, "expression"));
+        push("[");
+        visitForDisplayParts(nodeProperty(current, "argumentExpression"));
+        push("]");
+        return;
+      default:
+        current.forEachChild(child => {
+          visitForDisplayParts(child);
+          return undefined;
+        });
+    }
+  };
+  const visitMappedType = (current: Node): void => {
+    const readonlyToken = nodeProperty(current, "readonlyToken");
+    if (readonlyToken !== undefined) {
+      if (readonlyToken.kind === Kind.PlusToken) push("+");
+      else if (readonlyToken.kind === Kind.MinusToken) push("-");
+      push("readonly ");
+    }
+    push("[");
+    visitForDisplayParts(nodeProperty(current, "typeParameter"));
+    if (nodeProperty(current, "nameType") !== undefined) {
+      push(" as ");
+      visitForDisplayParts(nodeProperty(current, "nameType"));
+    }
+    push("]");
+    const questionToken = nodeProperty(current, "questionToken");
+    if (questionToken !== undefined) {
+      if (questionToken.kind === Kind.PlusToken) push("+");
+      else if (questionToken.kind === Kind.MinusToken) push("-");
+      push("?");
+    }
+    push(": ");
+    visitForDisplayParts(nodeProperty(current, "type"));
+  };
+  const visitMemberSignature = (current: Node, includeParameters: boolean): void => {
+    const modifiers = nodeArray(current, "modifiers");
+    if (modifiers.length > 0) {
+      visitDisplayPartList(modifiers, " ");
+      push(" ");
+    }
+    visitForDisplayParts(nodeName(current));
+    const postfixToken = nodeProperty(current, "postfixToken");
+    if (postfixToken !== undefined) push(tokenToString(postfixToken.kind));
+    if (includeParameters) visitParametersAndTypeParameters(current);
+    if (nodeProperty(current, "type") !== undefined) {
+      push(": ");
+      visitForDisplayParts(nodeProperty(current, "type"));
+    }
+  };
+
+  visitForDisplayParts(node);
+  return parts;
+}
+
+export function getNodeDisplayPart(text: string, node: Node, file: SourceFile | undefined = node.getSourceFile()): InlayHintLabelPart {
+  return {
+    value: text,
+    location: getNodeLocation(node, file),
+  };
+}
+
+export function getLiteralText(node: Node, quotePreference: QuotePreference | undefined = undefined): string {
+  const text = nodeText(node);
+  switch (node.kind) {
+    case Kind.StringLiteral:
+      return quotePreference === QuotePreferenceSingle
+        ? `'${escapeQuotedText(text, "'")}'`
+        : `"${escapeQuotedText(text, "\"")}"`;
+    case Kind.TemplateHead:
+      return `\`${rawText(node) || escapeQuotedText(text, "`")}\${`;
+    case Kind.TemplateMiddle:
+      return `}${rawText(node) || escapeQuotedText(text, "`")}\${`;
+    case Kind.TemplateTail:
+      return `}${rawText(node) || escapeQuotedText(text, "`")}\``;
+    default:
+      return text;
+  }
+}
+
+export function stringToInlayHintParts(text: string): StringOrInlayHintLabelParts {
+  return { string: text };
+}
+
 export function getParameterDeclarationIdentifier(symbol: Symbol | undefined): Identifier | undefined {
   const declaration = symbol?.valueDeclaration;
   const name = declaration === undefined ? undefined : nodeName(declaration);
@@ -129,6 +511,121 @@ function nodeInitializer(node: Node): Node | undefined {
 
 function nodeName(node: Node): Node | undefined {
   return (node as { readonly name?: Node }).name;
+}
+
+function nodeProperty<T extends Node = Node>(node: Node | undefined, key: string): T | undefined {
+  return (node as Record<string, T | undefined> | undefined)?.[key];
+}
+
+function nodeArray(node: Node | undefined, key: string): readonly Node[] {
+  const value = (node as Record<string, unknown> | undefined)?.[key];
+  if (Array.isArray(value)) return value as readonly Node[];
+  if (typeof value === "object" && value !== null && Array.isArray((value as { readonly nodes?: unknown }).nodes)) {
+    return (value as { readonly nodes: readonly Node[] }).nodes;
+  }
+  return [];
+}
+
+function nodeOperator(node: Node): Kind {
+  return (node as { readonly operator?: Kind }).operator ?? Kind.Unknown;
+}
+
+function rawText(node: Node): string {
+  return (node as { readonly rawText?: string }).rawText ?? "";
+}
+
+function tokenToString(kind: Kind): string {
+  switch (kind) {
+    case Kind.AnyKeyword: return "any";
+    case Kind.AssertsKeyword: return "asserts";
+    case Kind.BigIntKeyword: return "bigint";
+    case Kind.BooleanKeyword: return "boolean";
+    case Kind.FalseKeyword: return "false";
+    case Kind.InferKeyword: return "infer";
+    case Kind.KeyOfKeyword: return "keyof";
+    case Kind.NeverKeyword: return "never";
+    case Kind.NullKeyword: return "null";
+    case Kind.NumberKeyword: return "number";
+    case Kind.ObjectKeyword: return "object";
+    case Kind.ReadonlyKeyword: return "readonly";
+    case Kind.StringKeyword: return "string";
+    case Kind.SymbolKeyword: return "symbol";
+    case Kind.TypeOfKeyword: return "typeof";
+    case Kind.TrueKeyword: return "true";
+    case Kind.UndefinedKeyword: return "undefined";
+    case Kind.UniqueKeyword: return "unique";
+    case Kind.UnknownKeyword: return "unknown";
+    case Kind.VoidKeyword: return "void";
+    case Kind.QuestionToken: return "?";
+    case Kind.ColonToken: return ":";
+    case Kind.PlusToken: return "+";
+    case Kind.MinusToken: return "-";
+    case Kind.AsteriskToken: return "*";
+    case Kind.SlashToken: return "/";
+    case Kind.PercentToken: return "%";
+    case Kind.AmpersandToken: return "&";
+    case Kind.BarToken: return "|";
+    case Kind.CaretToken: return "^";
+    case Kind.ExclamationToken: return "!";
+    case Kind.TildeToken: return "~";
+    case Kind.LessThanToken: return "<";
+    case Kind.GreaterThanToken: return ">";
+    case Kind.EqualsToken: return "=";
+    case Kind.DotToken: return ".";
+    case Kind.DotDotDotToken: return "...";
+    default: {
+      const name = KindNames[kind];
+      if (name !== undefined && name.endsWith("Keyword")) return name.slice(0, -"Keyword".length).toLowerCase();
+      return "";
+    }
+  }
+}
+
+function getNodeLocation(node: Node, file: SourceFile): Location {
+  return {
+    uri: fileNameToDocumentURI(file.fileName),
+    range: rangeFromOffsets(file, node.pos, node.end),
+  };
+}
+
+function rangeFromOffsets(file: SourceFile, start: number, end: number): Range {
+  return {
+    start: positionFromSourceOffset(file, start),
+    end: positionFromSourceOffset(file, end),
+  };
+}
+
+function positionFromSourceOffset(file: SourceFile, offset: number): { readonly line: number; readonly character: number } {
+  const lineStarts = sourceLineStarts(file.text);
+  let line = 0;
+  for (let index = 0; index < lineStarts.length; index += 1) {
+    if (lineStarts[index]! > offset) break;
+    line = index;
+  }
+  return { line, character: offset - lineStarts[line]! };
+}
+
+function sourceLineStarts(text: string): readonly number[] {
+  const starts = [0];
+  for (let index = 0; index < text.length; index += 1) {
+    const ch = text[index]!;
+    if (ch === "\r") {
+      if (text[index + 1] === "\n") index += 1;
+      starts.push(index + 1);
+    } else if (ch === "\n") {
+      starts.push(index + 1);
+    }
+  }
+  return starts;
+}
+
+function escapeQuotedText(text: string, quote: string): string {
+  let result = "";
+  for (const ch of text) {
+    if (ch === "\\" || ch === quote) result += "\\";
+    result += ch;
+  }
+  return result;
 }
 
 // Language-service parity map: internal/ls/inlay_hints.go
