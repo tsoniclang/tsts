@@ -354,7 +354,7 @@ function generateLsMaps() {
   const lsRoot = join(tsgoInternal, "ls");
   const localRoot = join(tstsSrc, "ls");
   const files = [
-    "autoimport/extract.go", "autoimport/fix.go", "autoimport/import_adder.go",
+    "autoimport/fix.go", "autoimport/import_adder.go",
     "callhierarchy.go",
     "codeactions_fixmissingtypeannotation.go",
     "codeactions_importfixes.go", "codeactions_missingmemberfixer.go", "completions.go",

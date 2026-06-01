@@ -1,459 +1,634 @@
-/**
- * Language-service parity map for TS-Go `ls/autoimport/extract.go`.
- *
- * This file preserves the upstream declaration and algorithm-line shape
- * for the TypeScript port. Runtime behavior is implemented by the
- * concrete modules that consume these exact parity maps.
- */
+import {
+  Kind,
+  SymbolFlags,
+  getCombinedModifierFlags,
+  getSourceFileOfNode,
+  isExportAssignment,
+  isExportSpecifier,
+  isIdentifier,
+  isModuleDeclaration,
+  isObjectLiteralExpression,
+  isPropertyAssignment,
+  isShorthandPropertyAssignment,
+  isSourceFile,
+  nodeText,
+  type Node,
+  type SourceFile,
+  type Symbol as AstSymbol,
+} from "../../ast/index.js";
+import type { Checker } from "../../checker/index.js";
+import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
+import type { Resolver } from "../../module/resolver.js";
+import { getDirectoryPath, isExternalModuleNameRelative, resolvePath, type Path } from "../../tspath/index.js";
+import {
+  ExportSyntaxCommonJSExportsProperty,
+  ExportSyntaxCommonJSModuleExports,
+  ExportSyntaxDefaultDeclaration,
+  ExportSyntaxDefaultModifier,
+  ExportSyntaxEquals,
+  ExportSyntaxModifier,
+  ExportSyntaxNamed,
+  ExportSyntaxNone,
+  ExportSyntaxStar,
+  ExportSyntaxUMD,
+  internalSymbolNameDefault,
+  internalSymbolNameExportEquals,
+  type ExportEntry,
+  type ExportID,
+  type ExportSyntax,
+  type ModuleID,
+} from "./export.js";
+import { getDefaultLikeExportNameFromDeclaration, tryGetModuleIDAndFileNameOfModuleSymbol } from "./util.js";
+import { moduleSpecifierToValidIdentifier } from "../lsutil/utilities.js";
+import { getSymbolKind, getSymbolModifiers, type SymbolDisplayTypeChecker } from "../lsutil/symbolDisplay.js";
 
-export interface UpstreamSourceLine {
-  readonly line: number;
-  readonly text: string;
+const internalSymbolNameExportStar = "__export";
+
+export class ExtractorStats {
+  exports = 0;
+  usedChecker = 0;
 }
 
-export interface UpstreamDeclaration {
-  readonly kind: "type" | "func" | "const" | "var";
-  readonly line: number;
-  readonly name: string;
-  readonly receiver?: string;
+class CheckerLease {
+  used = false;
+  readonly checker: Checker;
+
+  constructor(checker: Checker) {
+    this.checker = checker;
+  }
+
+  getChecker(): Checker {
+    this.used = true;
+    return this.checker;
+  }
+
+  tryChecker(): Checker | undefined {
+    return this.used ? this.checker : undefined;
+  }
 }
 
-export const lsAutoimportExtractUpstreamPath = "ls/autoimport/extract.go";
-
-export const lsAutoimportExtractDeclarations: readonly UpstreamDeclaration[] = [
-  {"line":16,"kind":"type","name":"symbolExtractor"},
-  {"line":29,"kind":"type","name":"exportExtractor"},
-  {"line":34,"kind":"type","name":"extractorStats"},
-  {"line":39,"kind":"func","name":"Stats","receiver":"e *exportExtractor"},
-  {"line":43,"kind":"type","name":"checkerLease"},
-  {"line":48,"kind":"func","name":"GetChecker","receiver":"l *checkerLease"},
-  {"line":53,"kind":"func","name":"TryChecker","receiver":"l *checkerLease"},
-  {"line":60,"kind":"func","name":"newSymbolExtractor"},
-  {"line":73,"kind":"func","name":"newExportExtractor","receiver":"b *registryBuilder"},
-  {"line":81,"kind":"func","name":"getModuleID","receiver":"e *symbolExtractor"},
-  {"line":91,"kind":"func","name":"getModuleIDForSymbol","receiver":"e *symbolExtractor"},
-  {"line":106,"kind":"func","name":"extractFromFile","receiver":"e *exportExtractor"},
-  {"line":125,"kind":"func","name":"extractFromModule","receiver":"e *exportExtractor"},
-  {"line":161,"kind":"func","name":"extractFromModuleDeclaration","receiver":"e *exportExtractor"},
-  {"line":167,"kind":"func","name":"extractFromSymbol","receiver":"e *symbolExtractor"},
-  {"line":249,"kind":"func","name":"createExport","receiver":"e *symbolExtractor"},
-  {"line":356,"kind":"func","name":"tryResolveSymbol","receiver":"e *symbolExtractor"},
-  {"line":400,"kind":"func","name":"shouldIgnoreSymbol"},
-  {"line":407,"kind":"func","name":"getSyntax"},
-  {"line":438,"kind":"func","name":"isUnusableName"},
-  {"line":451,"kind":"func","name":"fileNameForDefaultExportName"},
-];
-
-export const lsAutoimportExtractSourceLines: readonly UpstreamSourceLine[] = [
-  {"line":1,"text":"package autoimport"},
-  {"line":3,"text":"import ("},
-  {"line":4,"text":"\t\"slices\""},
-  {"line":5,"text":"\t\"sync/atomic\""},
-  {"line":7,"text":"\t\"github.com/microsoft/typescript-go/internal/ast\""},
-  {"line":8,"text":"\t\"github.com/microsoft/typescript-go/internal/binder\""},
-  {"line":9,"text":"\t\"github.com/microsoft/typescript-go/internal/checker\""},
-  {"line":10,"text":"\t\"github.com/microsoft/typescript-go/internal/core\""},
-  {"line":11,"text":"\t\"github.com/microsoft/typescript-go/internal/ls/lsutil\""},
-  {"line":12,"text":"\t\"github.com/microsoft/typescript-go/internal/module\""},
-  {"line":13,"text":"\t\"github.com/microsoft/typescript-go/internal/tspath\""},
-  {"line":14,"text":")"},
-  {"line":16,"text":"type symbolExtractor struct {"},
-  {"line":17,"text":"\tpackageName string"},
-  {"line":18,"text":"\tstats       *extractorStats"},
-  {"line":20,"text":"\tlocalNameResolver *binder.NameResolver"},
-  {"line":21,"text":"\tchecker           *checker.Checker"},
-  {"line":22,"text":"\ttoPath            func(fileName string) tspath.Path"},
-  {"line":26,"text":"\trealpath func(fileName string) string"},
-  {"line":27,"text":"}"},
-  {"line":29,"text":"type exportExtractor struct {"},
-  {"line":30,"text":"\t*symbolExtractor"},
-  {"line":31,"text":"\tmoduleResolver *module.Resolver"},
-  {"line":32,"text":"}"},
-  {"line":34,"text":"type extractorStats struct {"},
-  {"line":35,"text":"\texports     atomic.Int32"},
-  {"line":36,"text":"\tusedChecker atomic.Int32"},
-  {"line":37,"text":"}"},
-  {"line":39,"text":"func (e *exportExtractor) Stats() *extractorStats {"},
-  {"line":40,"text":"\treturn e.stats"},
-  {"line":41,"text":"}"},
-  {"line":43,"text":"type checkerLease struct {"},
-  {"line":44,"text":"\tused    bool"},
-  {"line":45,"text":"\tchecker *checker.Checker"},
-  {"line":46,"text":"}"},
-  {"line":48,"text":"func (l *checkerLease) GetChecker() *checker.Checker {"},
-  {"line":49,"text":"\tl.used = true"},
-  {"line":50,"text":"\treturn l.checker"},
-  {"line":51,"text":"}"},
-  {"line":53,"text":"func (l *checkerLease) TryChecker() *checker.Checker {"},
-  {"line":54,"text":"\tif l.used {"},
-  {"line":55,"text":"\t\treturn l.checker"},
-  {"line":56,"text":"\t}"},
-  {"line":57,"text":"\treturn nil"},
-  {"line":58,"text":"}"},
-  {"line":60,"text":"func newSymbolExtractor(packageName string, checker *checker.Checker, toPath func(string) tspath.Path, realpath func(string) string) *symbolExtractor {"},
-  {"line":61,"text":"\treturn &symbolExtractor{"},
-  {"line":62,"text":"\t\tpackageName: packageName,"},
-  {"line":63,"text":"\t\tchecker:     checker,"},
-  {"line":64,"text":"\t\tlocalNameResolver: &binder.NameResolver{"},
-  {"line":65,"text":"\t\t\tCompilerOptions: core.EmptyCompilerOptions,"},
-  {"line":66,"text":"\t\t},"},
-  {"line":67,"text":"\t\tstats:    &extractorStats{},"},
-  {"line":68,"text":"\t\ttoPath:   toPath,"},
-  {"line":69,"text":"\t\trealpath: realpath,"},
-  {"line":70,"text":"\t}"},
-  {"line":71,"text":"}"},
-  {"line":73,"text":"func (b *registryBuilder) newExportExtractor(packageName string, checker *checker.Checker, moduleResolver *module.Resolver, realpath func(string) string) *exportExtractor {"},
-  {"line":74,"text":"\treturn &exportExtractor{"},
-  {"line":75,"text":"\t\tsymbolExtractor: newSymbolExtractor(packageName, checker, b.base.toPath, realpath),"},
-  {"line":76,"text":"\t\tmoduleResolver:  moduleResolver,"},
-  {"line":77,"text":"\t}"},
-  {"line":78,"text":"}"},
-  {"line":81,"text":"func (e *symbolExtractor) getModuleID(file *ast.SourceFile) ModuleID {"},
-  {"line":82,"text":"\tif e.realpath != nil && e.toPath != nil {"},
-  {"line":83,"text":"\t\trealpath := e.realpath(file.FileName())"},
-  {"line":84,"text":"\t\treturn ModuleID(e.toPath(realpath))"},
-  {"line":85,"text":"\t}"},
-  {"line":86,"text":"\treturn ModuleID(file.Path())"},
-  {"line":87,"text":"}"},
-  {"line":91,"text":"func (e *symbolExtractor) getModuleIDForSymbol(symbol *ast.Symbol) (ModuleID, bool) {"},
-  {"line":92,"text":"\tmoduleID, fileName, ok := tryGetModuleIDAndFileNameOfModuleSymbol(symbol)"},
-  {"line":93,"text":"\tif !ok {"},
-  {"line":94,"text":"\t\treturn \"\", false"},
-  {"line":95,"text":"\t}"},
-  {"line":97,"text":"\tif fileName != \"\" && e.realpath != nil {"},
-  {"line":98,"text":"\t\tdecl := ast.GetNonAugmentationDeclaration(symbol)"},
-  {"line":99,"text":"\t\tif decl != nil && decl.Kind == ast.KindSourceFile {"},
-  {"line":100,"text":"\t\t\treturn e.getModuleID(decl.AsSourceFile()), true"},
-  {"line":101,"text":"\t\t}"},
-  {"line":102,"text":"\t}"},
-  {"line":103,"text":"\treturn moduleID, true"},
-  {"line":104,"text":"}"},
-  {"line":106,"text":"func (e *exportExtractor) extractFromFile(file *ast.SourceFile) []*Export {"},
-  {"line":107,"text":"\tif file.Symbol != nil {"},
-  {"line":108,"text":"\t\treturn e.extractFromModule(file)"},
-  {"line":109,"text":"\t}"},
-  {"line":110,"text":"\tif len(file.AmbientModuleNames) > 0 {"},
-  {"line":111,"text":"\t\tmoduleDeclarations := core.Filter(file.Statements.Nodes, ast.IsModuleWithStringLiteralName)"},
-  {"line":112,"text":"\t\tvar exportCount int"},
-  {"line":113,"text":"\t\tfor _, decl := range moduleDeclarations {"},
-  {"line":114,"text":"\t\t\texportCount += len(decl.AsModuleDeclaration().Symbol.Exports)"},
-  {"line":115,"text":"\t\t}"},
-  {"line":116,"text":"\t\texports := make([]*Export, 0, exportCount)"},
-  {"line":117,"text":"\t\tfor _, decl := range moduleDeclarations {"},
-  {"line":118,"text":"\t\t\te.extractFromModuleDeclaration(decl.AsModuleDeclaration(), file, ModuleID(decl.Name().Text()), \"\", &exports)"},
-  {"line":119,"text":"\t\t}"},
-  {"line":120,"text":"\t\treturn exports"},
-  {"line":121,"text":"\t}"},
-  {"line":122,"text":"\treturn nil"},
-  {"line":123,"text":"}"},
-  {"line":125,"text":"func (e *exportExtractor) extractFromModule(file *ast.SourceFile) []*Export {"},
-  {"line":126,"text":"\tmoduleAugmentations := core.MapNonNil(file.ModuleAugmentations, func(name *ast.ModuleName) *ast.ModuleDeclaration {"},
-  {"line":127,"text":"\t\tdecl := name.Parent"},
-  {"line":128,"text":"\t\tif ast.IsGlobalScopeAugmentation(decl) {"},
-  {"line":129,"text":"\t\t\treturn nil"},
-  {"line":130,"text":"\t\t}"},
-  {"line":131,"text":"\t\treturn decl.AsModuleDeclaration()"},
-  {"line":132,"text":"\t})"},
-  {"line":133,"text":"\tvar augmentationExportCount int"},
-  {"line":134,"text":"\tfor _, decl := range moduleAugmentations {"},
-  {"line":135,"text":"\t\taugmentationExportCount += len(decl.Symbol.Exports)"},
-  {"line":136,"text":"\t}"},
-  {"line":137,"text":"\tmoduleID := e.getModuleID(file)"},
-  {"line":138,"text":"\texports := make([]*Export, 0, len(file.Symbol.Exports)+augmentationExportCount)"},
-  {"line":139,"text":"\tfor name, symbol := range file.Symbol.Exports {"},
-  {"line":140,"text":"\t\te.extractFromSymbol(name, symbol, moduleID, file.FileName(), file, &exports)"},
-  {"line":141,"text":"\t}"},
-  {"line":142,"text":"\tfor _, decl := range moduleAugmentations {"},
-  {"line":143,"text":"\t\tname := decl.Name().AsStringLiteral().Text"},
-  {"line":144,"text":"\t\tmoduleID := ModuleID(name)"},
-  {"line":145,"text":"\t\tvar moduleFileName string"},
-  {"line":146,"text":"\t\tif tspath.IsExternalModuleNameRelative(name) {"},
-  {"line":147,"text":"\t\t\tif resolved, _ := e.moduleResolver.ResolveModuleName(name, file.FileName(), core.ModuleKindCommonJS, nil); resolved.IsResolved() {"},
-  {"line":148,"text":"\t\t\t\tmoduleFileName = resolved.ResolvedFileName"},
-  {"line":149,"text":"\t\t\t\tmoduleID = ModuleID(e.toPath(moduleFileName))"},
-  {"line":150,"text":"\t\t\t} else {"},
-  {"line":152,"text":"\t\t\t\tmoduleFileName = tspath.ResolvePath(tspath.GetDirectoryPath(file.FileName()), name)"},
-  {"line":153,"text":"\t\t\t\tmoduleID = ModuleID(e.toPath(moduleFileName))"},
-  {"line":154,"text":"\t\t\t}"},
-  {"line":155,"text":"\t\t}"},
-  {"line":156,"text":"\t\te.extractFromModuleDeclaration(decl, file, moduleID, moduleFileName, &exports)"},
-  {"line":157,"text":"\t}"},
-  {"line":158,"text":"\treturn exports"},
-  {"line":159,"text":"}"},
-  {"line":161,"text":"func (e *exportExtractor) extractFromModuleDeclaration(decl *ast.ModuleDeclaration, file *ast.SourceFile, moduleID ModuleID, moduleFileName string, exports *[]*Export) {"},
-  {"line":162,"text":"\tfor name, symbol := range decl.Symbol.Exports {"},
-  {"line":163,"text":"\t\te.extractFromSymbol(name, symbol, moduleID, moduleFileName, file, exports)"},
-  {"line":164,"text":"\t}"},
-  {"line":165,"text":"}"},
-  {"line":167,"text":"func (e *symbolExtractor) extractFromSymbol(name string, symbol *ast.Symbol, moduleID ModuleID, moduleFileName string, file *ast.SourceFile, exports *[]*Export) {"},
-  {"line":168,"text":"\tif shouldIgnoreSymbol(symbol) {"},
-  {"line":169,"text":"\t\treturn"},
-  {"line":170,"text":"\t}"},
-  {"line":172,"text":"\tif name == ast.InternalSymbolNameExportStar {"},
-  {"line":173,"text":"\t\tcheckerLease := &checkerLease{checker: e.checker}"},
-  {"line":174,"text":"\t\tallExports := e.checker.GetExportsOfModule(symbol.Parent)"},
-  {"line":177,"text":"\t\tfor name, namedExport := range symbol.Parent.Exports {"},
-  {"line":178,"text":"\t\t\tif name != ast.InternalSymbolNameExportStar {"},
-  {"line":179,"text":"\t\t\t\tidx := slices.Index(allExports, namedExport)"},
-  {"line":180,"text":"\t\t\t\tif idx >= 0 || shouldIgnoreSymbol(namedExport) {"},
-  {"line":181,"text":"\t\t\t\t\tallExports = slices.Delete(allExports, idx, idx+1)"},
-  {"line":182,"text":"\t\t\t\t}"},
-  {"line":183,"text":"\t\t\t}"},
-  {"line":184,"text":"\t\t}"},
-  {"line":186,"text":"\t\t*exports = slices.Grow(*exports, len(allExports))"},
-  {"line":187,"text":"\t\tfor _, reexportedSymbol := range allExports {"},
-  {"line":188,"text":"\t\t\texport, _ := e.createExport(reexportedSymbol, moduleID, moduleFileName, ExportSyntaxStar, file, checkerLease)"},
-  {"line":189,"text":"\t\t\tif export != nil {"},
-  {"line":190,"text":"\t\t\t\tparent := checkerLease.GetChecker().GetMergedSymbol(reexportedSymbol.Parent)"},
-  {"line":191,"text":"\t\t\t\tif parent != nil && parent.IsExternalModule() {"},
-  {"line":192,"text":"\t\t\t\t\tif targetModuleID, ok := e.getModuleIDForSymbol(parent); ok {"},
-  {"line":193,"text":"\t\t\t\t\t\texport.Target = ExportID{"},
-  {"line":194,"text":"\t\t\t\t\t\t\tExportName: reexportedSymbol.Name,"},
-  {"line":195,"text":"\t\t\t\t\t\t\tModuleID:   targetModuleID,"},
-  {"line":196,"text":"\t\t\t\t\t\t}"},
-  {"line":197,"text":"\t\t\t\t\t}"},
-  {"line":198,"text":"\t\t\t\t}"},
-  {"line":199,"text":"\t\t\t\texport.through = ast.InternalSymbolNameExportStar"},
-  {"line":200,"text":"\t\t\t\t*exports = append(*exports, export)"},
-  {"line":201,"text":"\t\t\t}"},
-  {"line":202,"text":"\t\t}"},
-  {"line":203,"text":"\t\treturn"},
-  {"line":204,"text":"\t}"},
-  {"line":206,"text":"\tsyntax := getSyntax(symbol)"},
-  {"line":207,"text":"\tcheckerLease := &checkerLease{checker: e.checker}"},
-  {"line":208,"text":"\texport, target := e.createExport(symbol, moduleID, moduleFileName, syntax, file, checkerLease)"},
-  {"line":209,"text":"\tif export == nil {"},
-  {"line":210,"text":"\t\treturn"},
-  {"line":211,"text":"\t}"},
-  {"line":213,"text":"\t*exports = append(*exports, export)"},
-  {"line":215,"text":"\tif target != nil {"},
-  {"line":216,"text":"\t\tif syntax == ExportSyntaxEquals && target.Flags&ast.SymbolFlagsNamespace != 0 {"},
-  {"line":217,"text":"\t\t\t*exports = slices.Grow(*exports, len(target.Exports))"},
-  {"line":218,"text":"\t\t\tfor innerName, namedExport := range target.Exports {"},
-  {"line":219,"text":"\t\t\t\tif innerName != ast.InternalSymbolNameExportStar {"},
-  {"line":220,"text":"\t\t\t\t\texport, _ := e.createExport(namedExport, moduleID, moduleFileName, syntax, file, checkerLease)"},
-  {"line":221,"text":"\t\t\t\t\tif export != nil {"},
-  {"line":222,"text":"\t\t\t\t\t\texport.through = name"},
-  {"line":223,"text":"\t\t\t\t\t\t*exports = append(*exports, export)"},
-  {"line":224,"text":"\t\t\t\t\t}"},
-  {"line":225,"text":"\t\t\t\t}"},
-  {"line":226,"text":"\t\t\t}"},
-  {"line":227,"text":"\t\t}"},
-  {"line":228,"text":"\t} else if syntax == ExportSyntaxCommonJSModuleExports {"},
-  {"line":229,"text":"\t\texpression := symbol.Declarations[0].AsBinaryExpression().Right"},
-  {"line":230,"text":"\t\tif expression.Kind == ast.KindObjectLiteralExpression {"},
-  {"line":234,"text":"\t\t\t*exports = slices.Grow(*exports, len(expression.AsObjectLiteralExpression().Properties.Nodes))"},
-  {"line":235,"text":"\t\t\tfor _, prop := range expression.AsObjectLiteralExpression().Properties.Nodes {"},
-  {"line":236,"text":"\t\t\t\tif ast.IsShorthandPropertyAssignment(prop) || ast.IsPropertyAssignment(prop) && prop.AsPropertyAssignment().Name().Kind == ast.KindIdentifier {"},
-  {"line":237,"text":"\t\t\t\t\texport, _ := e.createExport(expression.Symbol().Members[prop.Name().Text()], moduleID, moduleFileName, syntax, file, checkerLease)"},
-  {"line":238,"text":"\t\t\t\t\tif export != nil {"},
-  {"line":239,"text":"\t\t\t\t\t\texport.through = name"},
-  {"line":240,"text":"\t\t\t\t\t\t*exports = append(*exports, export)"},
-  {"line":241,"text":"\t\t\t\t\t}"},
-  {"line":242,"text":"\t\t\t\t}"},
-  {"line":243,"text":"\t\t\t}"},
-  {"line":244,"text":"\t\t}"},
-  {"line":245,"text":"\t}"},
-  {"line":246,"text":"}"},
-  {"line":249,"text":"func (e *symbolExtractor) createExport(symbol *ast.Symbol, moduleID ModuleID, moduleFileName string, syntax ExportSyntax, file *ast.SourceFile, checkerLease *checkerLease) (*Export, *ast.Symbol) {"},
-  {"line":250,"text":"\tif shouldIgnoreSymbol(symbol) {"},
-  {"line":251,"text":"\t\treturn nil, nil"},
-  {"line":252,"text":"\t}"},
-  {"line":254,"text":"\texport := &Export{"},
-  {"line":255,"text":"\t\tExportID: ExportID{"},
-  {"line":256,"text":"\t\t\tExportName: symbol.Name,"},
-  {"line":257,"text":"\t\t\tModuleID:   moduleID,"},
-  {"line":258,"text":"\t\t},"},
-  {"line":259,"text":"\t\tModuleFileName: moduleFileName,"},
-  {"line":260,"text":"\t\tSyntax:         syntax,"},
-  {"line":261,"text":"\t\tFlags:          symbol.CombinedLocalAndExportSymbolFlags(),"},
-  {"line":262,"text":"\t\tPath:           file.Path(),"},
-  {"line":263,"text":"\t\tPackageName:    e.packageName,"},
-  {"line":264,"text":"\t}"},
-  {"line":266,"text":"\tif syntax == ExportSyntaxUMD {"},
-  {"line":267,"text":"\t\texport.ExportName = ast.InternalSymbolNameExportEquals"},
-  {"line":268,"text":"\t\texport.localName = symbol.Name"},
-  {"line":269,"text":"\t}"},
-  {"line":271,"text":"\tvar targetSymbol *ast.Symbol"},
-  {"line":272,"text":"\tif symbol.Flags&ast.SymbolFlagsAlias != 0 {"},
-  {"line":273,"text":"\t\ttargetSymbol = e.tryResolveSymbol(symbol, syntax, checkerLease)"},
-  {"line":274,"text":"\t\tif targetSymbol != nil {"},
-  {"line":275,"text":"\t\t\tvar decl *ast.Node"},
-  {"line":276,"text":"\t\t\tif len(targetSymbol.Declarations) > 0 {"},
-  {"line":277,"text":"\t\t\t\tdecl = targetSymbol.Declarations[0]"},
-  {"line":278,"text":"\t\t\t} else if targetSymbol.CheckFlags&ast.CheckFlagsMapped != 0 {"},
-  {"line":279,"text":"\t\t\t\tif mappedDecl := checkerLease.GetChecker().GetMappedTypeSymbolOfProperty(targetSymbol); mappedDecl != nil && len(mappedDecl.Declarations) > 0 {"},
-  {"line":280,"text":"\t\t\t\t\tdecl = mappedDecl.Declarations[0]"},
-  {"line":281,"text":"\t\t\t\t}"},
-  {"line":282,"text":"\t\t\t}"},
-  {"line":283,"text":"\t\t\tif decl == nil {"},
-  {"line":285,"text":"\t\t\t\tdecl = symbol.Declarations[0]"},
-  {"line":286,"text":"\t\t\t}"},
-  {"line":287,"text":"\t\t\tif decl == nil {"},
-  {"line":288,"text":"\t\t\t\tpanic(\"no declaration for aliased symbol\")"},
-  {"line":289,"text":"\t\t\t}"},
-  {"line":291,"text":"\t\t\tparent := targetSymbol.Parent"},
-  {"line":292,"text":"\t\t\tif checker := checkerLease.TryChecker(); checker != nil {"},
-  {"line":293,"text":"\t\t\t\texport.Flags = checker.GetSymbolFlags(targetSymbol)"},
-  {"line":294,"text":"\t\t\t\texport.IsTypeOnly = checker.GetTypeOnlyAliasDeclaration(symbol) != nil"},
-  {"line":295,"text":"\t\t\t\tparent = checker.GetMergedSymbol(parent)"},
-  {"line":296,"text":"\t\t\t} else {"},
-  {"line":297,"text":"\t\t\t\texport.Flags = targetSymbol.Flags"},
-  {"line":298,"text":"\t\t\t\texport.IsTypeOnly = core.Some(symbol.Declarations, ast.IsPartOfTypeOnlyImportOrExportDeclaration)"},
-  {"line":299,"text":"\t\t\t}"},
-  {"line":300,"text":"\t\t\texport.ScriptElementKind = lsutil.GetSymbolKind(checkerLease.TryChecker(), targetSymbol, decl)"},
-  {"line":301,"text":"\t\t\texport.ScriptElementKindModifiers = lsutil.GetSymbolModifiers(checkerLease.TryChecker(), targetSymbol)"},
-  {"line":302,"text":"\t\t\ttargetModuleID := ModuleID(ast.GetSourceFileOfNode(decl).Path())"},
-  {"line":303,"text":"\t\t\tif parent != nil && parent.IsExternalModule() {"},
-  {"line":304,"text":"\t\t\t\tif id, ok := e.getModuleIDForSymbol(parent); ok {"},
-  {"line":305,"text":"\t\t\t\t\ttargetModuleID = id"},
-  {"line":306,"text":"\t\t\t\t}"},
-  {"line":307,"text":"\t\t\t}"},
-  {"line":308,"text":"\t\t\texport.Target = ExportID{"},
-  {"line":309,"text":"\t\t\t\tExportName: targetSymbol.Name,"},
-  {"line":310,"text":"\t\t\t\tModuleID:   targetModuleID,"},
-  {"line":311,"text":"\t\t\t}"},
-  {"line":312,"text":"\t\t}"},
-  {"line":313,"text":"\t} else {"},
-  {"line":314,"text":"\t\texport.ScriptElementKind = lsutil.GetSymbolKind(checkerLease.TryChecker(), symbol, symbol.Declarations[0])"},
-  {"line":315,"text":"\t\texport.ScriptElementKindModifiers = lsutil.GetSymbolModifiers(checkerLease.TryChecker(), symbol)"},
-  {"line":316,"text":"\t}"},
-  {"line":318,"text":"\tif symbol.Name == ast.InternalSymbolNameDefault || symbol.Name == ast.InternalSymbolNameExportEquals {"},
-  {"line":319,"text":"\t\tnamedSymbol := symbol"},
-  {"line":320,"text":"\t\tif s := binder.GetLocalSymbolForExportDefault(symbol); s != nil {"},
-  {"line":321,"text":"\t\t\tnamedSymbol = s"},
-  {"line":322,"text":"\t\t}"},
-  {"line":323,"text":"\t\texport.localName = getDefaultLikeExportNameFromDeclaration(namedSymbol)"},
-  {"line":324,"text":"\t\tif isUnusableName(export.localName) {"},
-  {"line":325,"text":"\t\t\texport.localName = export.Target.ExportName"},
-  {"line":326,"text":"\t\t}"},
-  {"line":327,"text":"\t\tif isUnusableName(export.localName) {"},
-  {"line":328,"text":"\t\t\tif targetSymbol != nil {"},
-  {"line":329,"text":"\t\t\t\tnamedSymbol = targetSymbol"},
-  {"line":330,"text":"\t\t\t\tif s := binder.GetLocalSymbolForExportDefault(targetSymbol); s != nil {"},
-  {"line":331,"text":"\t\t\t\t\tnamedSymbol = s"},
-  {"line":332,"text":"\t\t\t\t}"},
-  {"line":333,"text":"\t\t\t\texport.localName = getDefaultLikeExportNameFromDeclaration(namedSymbol)"},
-  {"line":334,"text":"\t\t\t}"},
-  {"line":335,"text":"\t\t}"},
-  {"line":336,"text":"\t\tif isUnusableName(export.localName) {"},
-  {"line":340,"text":"\t\t\texport.localName = lsutil.ModuleSpecifierToValidIdentifier(fileNameForDefaultExportName(targetSymbol, moduleFileName, moduleID), false)"},
-  {"line":341,"text":"\t\t}"},
-  {"line":342,"text":"\t}"},
-  {"line":344,"text":"\tif isUnusableName(export.Name()) {"},
-  {"line":345,"text":"\t\treturn nil, nil"},
-  {"line":346,"text":"\t}"},
-  {"line":348,"text":"\te.stats.exports.Add(1)"},
-  {"line":349,"text":"\tif checkerLease.TryChecker() != nil {"},
-  {"line":350,"text":"\t\te.stats.usedChecker.Add(1)"},
-  {"line":351,"text":"\t}"},
-  {"line":353,"text":"\treturn export, targetSymbol"},
-  {"line":354,"text":"}"},
-  {"line":356,"text":"func (e *symbolExtractor) tryResolveSymbol(symbol *ast.Symbol, syntax ExportSyntax, checkerLease *checkerLease) *ast.Symbol {"},
-  {"line":357,"text":"\tif !ast.IsNonLocalAlias(symbol, ast.SymbolFlagsNone) {"},
-  {"line":358,"text":"\t\treturn symbol"},
-  {"line":359,"text":"\t}"},
-  {"line":361,"text":"\tvar loc *ast.Node"},
-  {"line":362,"text":"\tvar name string"},
-  {"line":363,"text":"\tswitch syntax {"},
-  {"line":364,"text":"\tcase ExportSyntaxNamed:"},
-  {"line":365,"text":"\t\tdecl := ast.GetDeclarationOfKind(symbol, ast.KindExportSpecifier)"},
-  {"line":366,"text":"\t\tif decl.Parent.Parent.AsExportDeclaration().ModuleSpecifier == nil {"},
-  {"line":367,"text":"\t\t\tif n := core.FirstNonZero(decl.Name(), decl.PropertyName()); n.Kind == ast.KindIdentifier {"},
-  {"line":368,"text":"\t\t\t\tloc = n"},
-  {"line":369,"text":"\t\t\t\tname = n.Text()"},
-  {"line":370,"text":"\t\t\t}"},
-  {"line":371,"text":"\t\t}"},
-  {"line":373,"text":"\tcase ExportSyntaxEquals:"},
-  {"line":374,"text":"\t\tif symbol.Name != ast.InternalSymbolNameExportEquals {"},
-  {"line":375,"text":"\t\t\tbreak"},
-  {"line":376,"text":"\t\t}"},
-  {"line":377,"text":"\t\tfallthrough"},
-  {"line":378,"text":"\tcase ExportSyntaxDefaultDeclaration:"},
-  {"line":379,"text":"\t\tdecl := ast.GetDeclarationOfKind(symbol, ast.KindExportAssignment)"},
-  {"line":380,"text":"\t\tif decl.Expression().Kind == ast.KindIdentifier {"},
-  {"line":381,"text":"\t\t\tloc = decl.Expression()"},
-  {"line":382,"text":"\t\t\tname = loc.Text()"},
-  {"line":383,"text":"\t\t}"},
-  {"line":384,"text":"\t}"},
-  {"line":386,"text":"\tif loc != nil {"},
-  {"line":387,"text":"\t\tlocal := e.localNameResolver.Resolve(loc, name, ast.SymbolFlagsAll, nil, false, false)"},
-  {"line":388,"text":"\t\tif local != nil && !ast.IsNonLocalAlias(local, ast.SymbolFlagsNone) {"},
-  {"line":389,"text":"\t\t\treturn local"},
-  {"line":390,"text":"\t\t}"},
-  {"line":391,"text":"\t}"},
-  {"line":393,"text":"\tchecker := checkerLease.GetChecker()"},
-  {"line":394,"text":"\tif resolved := checker.GetAliasedSymbol(symbol); !checker.IsUnknownSymbol(resolved) {"},
-  {"line":395,"text":"\t\treturn resolved"},
-  {"line":396,"text":"\t}"},
-  {"line":397,"text":"\treturn nil"},
-  {"line":398,"text":"}"},
-  {"line":400,"text":"func shouldIgnoreSymbol(symbol *ast.Symbol) bool {"},
-  {"line":401,"text":"\tif symbol.Flags&ast.SymbolFlagsPrototype != 0 {"},
-  {"line":402,"text":"\t\treturn true"},
-  {"line":403,"text":"\t}"},
-  {"line":404,"text":"\treturn false"},
-  {"line":405,"text":"}"},
-  {"line":407,"text":"func getSyntax(symbol *ast.Symbol) ExportSyntax {"},
-  {"line":408,"text":"\tfor _, decl := range symbol.Declarations {"},
-  {"line":409,"text":"\t\tswitch decl.Kind {"},
-  {"line":410,"text":"\t\tcase ast.KindExportSpecifier:"},
-  {"line":411,"text":"\t\t\treturn ExportSyntaxNamed"},
-  {"line":412,"text":"\t\tcase ast.KindExportAssignment:"},
-  {"line":413,"text":"\t\t\treturn core.IfElse("},
-  {"line":414,"text":"\t\t\t\tdecl.AsExportAssignment().IsExportEquals,"},
-  {"line":415,"text":"\t\t\t\tExportSyntaxEquals,"},
-  {"line":416,"text":"\t\t\t\tExportSyntaxDefaultDeclaration,"},
-  {"line":417,"text":"\t\t\t)"},
-  {"line":418,"text":"\t\tcase ast.KindNamespaceExportDeclaration:"},
-  {"line":419,"text":"\t\t\treturn ExportSyntaxUMD"},
-  {"line":420,"text":"\t\tcase ast.KindBinaryExpression:"},
-  {"line":421,"text":"\t\t\tswitch ast.GetAssignmentDeclarationKind(decl) {"},
-  {"line":422,"text":"\t\t\tcase ast.JSDeclarationKindModuleExports:"},
-  {"line":423,"text":"\t\t\t\treturn ExportSyntaxCommonJSModuleExports"},
-  {"line":424,"text":"\t\t\tcase ast.JSDeclarationKindExportsProperty:"},
-  {"line":425,"text":"\t\t\t\treturn ExportSyntaxCommonJSExportsProperty"},
-  {"line":426,"text":"\t\t\t}"},
-  {"line":427,"text":"\t\tdefault:"},
-  {"line":428,"text":"\t\t\tif ast.GetCombinedModifierFlags(decl)&ast.ModifierFlagsDefault != 0 {"},
-  {"line":429,"text":"\t\t\t\treturn ExportSyntaxDefaultModifier"},
-  {"line":430,"text":"\t\t\t} else {"},
-  {"line":431,"text":"\t\t\t\treturn ExportSyntaxModifier"},
-  {"line":432,"text":"\t\t\t}"},
-  {"line":433,"text":"\t\t}"},
-  {"line":434,"text":"\t}"},
-  {"line":435,"text":"\treturn ExportSyntaxNone"},
-  {"line":436,"text":"}"},
-  {"line":438,"text":"func isUnusableName(name string) bool {"},
-  {"line":439,"text":"\treturn name == \"\" ||"},
-  {"line":440,"text":"\t\tname == \"_default\" ||"},
-  {"line":441,"text":"\t\tname == ast.InternalSymbolNameExportStar ||"},
-  {"line":442,"text":"\t\tname == ast.InternalSymbolNameDefault ||"},
-  {"line":443,"text":"\t\tname == ast.InternalSymbolNameExportEquals"},
-  {"line":444,"text":"}"},
-  {"line":451,"text":"func fileNameForDefaultExportName(targetSymbol *ast.Symbol, moduleFileName string, moduleID ModuleID) string {"},
-  {"line":452,"text":"\tif targetSymbol != nil && len(targetSymbol.Declarations) > 0 {"},
-  {"line":453,"text":"\t\tif fn := ast.GetSourceFileOfNode(targetSymbol.Declarations[0]).FileName(); fn != \"\" {"},
-  {"line":454,"text":"\t\t\treturn fn"},
-  {"line":455,"text":"\t\t}"},
-  {"line":456,"text":"\t}"},
-  {"line":457,"text":"\tif moduleFileName != \"\" {"},
-  {"line":458,"text":"\t\treturn moduleFileName"},
-  {"line":459,"text":"\t}"},
-  {"line":460,"text":"\treturn string(moduleID)"},
-  {"line":461,"text":"}"},
-];
-
-export function findLsAutoimportExtractDeclaration(name: string): UpstreamDeclaration | undefined {
-  return lsAutoimportExtractDeclarations.find((declaration) => declaration.name === name);
+export interface SymbolExtractorOptions {
+  readonly packageName: string;
+  readonly checker: Checker;
+  readonly toPath?: (fileName: string) => Path;
+  readonly realpath?: (fileName: string) => string;
 }
 
-export function requireLsAutoimportExtractDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findLsAutoimportExtractDeclaration(name);
-  if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
-  return declaration;
+export interface ExportExtractorOptions extends SymbolExtractorOptions {
+  readonly moduleResolver: Resolver;
 }
 
-export function lsAutoimportExtractLineText(line: number): string | undefined {
-  return lsAutoimportExtractSourceLines.find((entry) => entry.line === line)?.text;
+export class SymbolExtractor {
+  readonly packageName: string;
+  readonly stats: ExtractorStats;
+  readonly checker: Checker;
+  readonly toPath: ((fileName: string) => Path) | undefined;
+  readonly realpath: ((fileName: string) => string) | undefined;
+
+  constructor(options: SymbolExtractorOptions) {
+    this.packageName = options.packageName;
+    this.checker = options.checker;
+    this.stats = new ExtractorStats();
+    this.toPath = options.toPath;
+    this.realpath = options.realpath;
+  }
+
+  getModuleID(file: SourceFile): ModuleID {
+    if (this.realpath !== undefined && this.toPath !== undefined) {
+      return this.toPath(this.realpath(file.fileName));
+    }
+    return file.path;
+  }
+
+  getModuleIDForSymbol(symbol: AstSymbol): readonly [ModuleID, boolean] {
+    const [moduleID, fileName, ok] = tryGetModuleIDAndFileNameOfModuleSymbol(symbol);
+    if (!ok) return ["", false];
+    if (fileName !== "" && this.realpath !== undefined) {
+      const declaration = getNonAugmentationDeclaration(symbol);
+      if (declaration !== undefined && isSourceFile(declaration)) {
+        return [this.getModuleID(declaration), true];
+      }
+    }
+    return [moduleID, true];
+  }
+
+  extractFromSymbol(
+    name: string,
+    symbol: AstSymbol,
+    moduleID: ModuleID,
+    moduleFileName: string,
+    file: SourceFile,
+    exports: ExportEntry[],
+  ): void {
+    if (shouldIgnoreSymbol(symbol)) return;
+
+    if (name === internalSymbolNameExportStar) {
+      const checkerLease = new CheckerLease(this.checker);
+      const allExports = [...checkerExportsOfModule(this.checker, symbol.parent)];
+      for (const [exportNameText, namedExport] of symbol.parent?.exports ?? []) {
+        if (exportNameText === internalSymbolNameExportStar) continue;
+        const index = allExports.indexOf(namedExport);
+        if (index >= 0 || shouldIgnoreSymbol(namedExport)) {
+          if (index >= 0) allExports.splice(index, 1);
+        }
+      }
+
+      for (const reexportedSymbol of allExports) {
+        const [entry] = this.createExport(reexportedSymbol, moduleID, moduleFileName, ExportSyntaxStar, file, checkerLease);
+        if (entry === undefined) continue;
+        const parent = checkerMergedSymbol(checkerLease.getChecker(), reexportedSymbol.parent);
+        if (parent !== undefined && isExternalModuleSymbol(parent)) {
+          const [targetModuleID, ok] = this.getModuleIDForSymbol(parent);
+          if (ok) {
+            exports.push({
+              ...entry,
+              target: {
+                exportName: symbolName(reexportedSymbol),
+                moduleID: targetModuleID,
+              },
+              through: internalSymbolNameExportStar,
+            });
+            continue;
+          }
+        }
+        exports.push({ ...entry, through: internalSymbolNameExportStar });
+      }
+      return;
+    }
+
+    const syntax = getSyntax(symbol);
+    const checkerLease = new CheckerLease(this.checker);
+    const [entry, target] = this.createExport(symbol, moduleID, moduleFileName, syntax, file, checkerLease);
+    if (entry === undefined) return;
+    exports.push(entry);
+
+    if (target !== undefined) {
+      if (syntax === ExportSyntaxEquals && ((target.flags ?? 0) & SymbolFlags.Namespace) !== 0) {
+        for (const [innerName, namedExport] of target.exports ?? []) {
+          if (innerName === internalSymbolNameExportStar) continue;
+          const [innerEntry] = this.createExport(namedExport, moduleID, moduleFileName, syntax, file, checkerLease);
+          if (innerEntry !== undefined) exports.push({ ...innerEntry, through: name });
+        }
+      }
+      return;
+    }
+
+    if (syntax !== ExportSyntaxCommonJSModuleExports) return;
+    const declaration = symbol.declarations[0];
+    if (declaration?.kind !== Kind.BinaryExpression) return;
+    const expression = (declaration as { readonly right?: Node }).right;
+    if (expression === undefined || !isObjectLiteralExpression(expression)) return;
+    for (const property of expression.properties) {
+      if (!isShorthandPropertyAssignment(property) && !(isPropertyAssignment(property) && property.name.kind === Kind.Identifier)) {
+        continue;
+      }
+      const member = expression.symbol?.members?.get(nodeText(property.name));
+      if (member === undefined) continue;
+      const [propertyEntry] = this.createExport(member, moduleID, moduleFileName, syntax, file, checkerLease);
+      if (propertyEntry !== undefined) exports.push({ ...propertyEntry, through: name });
+    }
+  }
+
+  createExport(
+    symbol: AstSymbol,
+    moduleID: ModuleID,
+    moduleFileName: string,
+    syntax: ExportSyntax,
+    file: SourceFile,
+    checkerLease: CheckerLease,
+  ): readonly [ExportEntry | undefined, AstSymbol | undefined] {
+    if (shouldIgnoreSymbol(symbol)) return [undefined, undefined];
+
+    let entry: ExportEntry = {
+      moduleID,
+      exportName: symbolName(symbol),
+      moduleFileName,
+      syntax,
+      flags: combinedLocalAndExportSymbolFlags(symbol),
+      path: file.path,
+      packageName: this.packageName,
+      target: emptyTarget(),
+      isTypeOnly: false,
+    };
+
+    if (syntax === ExportSyntaxUMD) {
+      entry = {
+        ...entry,
+        exportName: internalSymbolNameExportEquals,
+        localName: symbolName(symbol),
+      };
+    }
+
+    let targetSymbol: AstSymbol | undefined;
+    if (((symbol.flags ?? 0) & SymbolFlags.Alias) !== 0) {
+      targetSymbol = this.tryResolveSymbol(symbol, syntax, checkerLease);
+      if (targetSymbol !== undefined) {
+        let declaration = targetSymbol.declarations[0];
+        if (declaration === undefined && hasMappedCheckFlag(targetSymbol)) {
+          const mappedSymbol = checkerMappedTypeSymbolOfProperty(checkerLease.getChecker(), targetSymbol);
+          declaration = mappedSymbol?.declarations[0];
+        }
+        declaration ??= symbol.declarations[0];
+        if (declaration === undefined) {
+          throw new Error("auto-import export extraction found an aliased symbol without a declaration");
+        }
+
+        const activeChecker = checkerLease.tryChecker();
+        const parent = activeChecker === undefined ? targetSymbol.parent : checkerMergedSymbol(activeChecker, targetSymbol.parent);
+        const sourceFile = getSourceFileOfNode(declaration);
+        let targetModuleID: ModuleID = sourceFile !== undefined && isSourceFile(sourceFile) ? sourceFile.path : moduleID;
+        if (parent !== undefined && isExternalModuleSymbol(parent)) {
+          const [candidateModuleID, ok] = this.getModuleIDForSymbol(parent);
+          if (ok) targetModuleID = candidateModuleID;
+        }
+
+        entry = {
+          ...entry,
+          flags: activeChecker === undefined ? targetSymbol.flags ?? 0 : checkerSymbolFlags(activeChecker, targetSymbol),
+          isTypeOnly: activeChecker === undefined
+            ? symbol.declarations.some(isPartOfTypeOnlyImportOrExportDeclaration)
+            : checkerTypeOnlyAliasDeclaration(activeChecker, symbol) !== undefined,
+          scriptElementKind: getSymbolKind(activeChecker as SymbolDisplayTypeChecker | undefined, targetSymbol, declaration),
+          scriptElementKindModifiers: getSymbolModifiers(activeChecker as SymbolDisplayTypeChecker | undefined, targetSymbol),
+          target: {
+            exportName: symbolName(targetSymbol),
+            moduleID: targetModuleID,
+          },
+        };
+      }
+    } else {
+      const declaration = symbol.declarations[0];
+      if (declaration !== undefined) {
+        const activeChecker = checkerLease.tryChecker() as SymbolDisplayTypeChecker | undefined;
+        entry = {
+          ...entry,
+          scriptElementKind: getSymbolKind(activeChecker, symbol, declaration),
+          scriptElementKindModifiers: getSymbolModifiers(activeChecker, symbol),
+        };
+      }
+    }
+
+    if (symbolName(symbol) === internalSymbolNameDefault || symbolName(symbol) === internalSymbolNameExportEquals) {
+      let namedSymbol = getLocalSymbolForExportDefault(symbol) ?? symbol;
+      let localName = getDefaultLikeExportNameFromDeclaration(namedSymbol);
+      if (isUnusableName(localName)) localName = entry.target.exportName;
+      if (isUnusableName(localName) && targetSymbol !== undefined) {
+        namedSymbol = getLocalSymbolForExportDefault(targetSymbol) ?? targetSymbol;
+        localName = getDefaultLikeExportNameFromDeclaration(namedSymbol);
+      }
+      if (isUnusableName(localName)) {
+        localName = moduleSpecifierToValidIdentifier(fileNameForDefaultExportName(targetSymbol, moduleFileName, moduleID), false);
+      }
+      entry = { ...entry, localName };
+    }
+
+    if (isUnusableName(exportName(entry))) return [undefined, undefined];
+
+    this.stats.exports += 1;
+    if (checkerLease.tryChecker() !== undefined) {
+      this.stats.usedChecker += 1;
+    }
+    return [entry, targetSymbol];
+  }
+
+  tryResolveSymbol(symbol: AstSymbol, syntax: ExportSyntax, checkerLease: CheckerLease): AstSymbol | undefined {
+    if (!isNonLocalAlias(symbol)) return symbol;
+
+    let location: Node | undefined;
+    let name = "";
+    if (syntax === ExportSyntaxNamed) {
+      const declaration = getDeclarationOfKind(symbol, Kind.ExportSpecifier);
+      const exportDeclaration = declaration?.parent?.parent as { readonly moduleSpecifier?: Node } | undefined;
+      if (declaration !== undefined && exportDeclaration?.moduleSpecifier === undefined) {
+        const node = (declaration as { readonly name?: Node; readonly propertyName?: Node }).name
+          ?? (declaration as { readonly name?: Node; readonly propertyName?: Node }).propertyName;
+        if (node !== undefined && isIdentifier(node)) {
+          location = node;
+          name = node.text;
+        }
+      }
+    } else if (
+      syntax === ExportSyntaxDefaultDeclaration
+      || (syntax === ExportSyntaxEquals && symbolName(symbol) === internalSymbolNameExportEquals)
+    ) {
+      const declaration = getDeclarationOfKind(symbol, Kind.ExportAssignment);
+      const expression = declaration !== undefined && isExportAssignment(declaration) ? declaration.expression : undefined;
+      if (expression !== undefined && isIdentifier(expression)) {
+        location = expression;
+        name = expression.text;
+      }
+    }
+
+    if (location !== undefined) {
+      const local = resolveLocalName(location, name);
+      if (local !== undefined && !isNonLocalAlias(local)) return local;
+    }
+
+    const checker = checkerLease.getChecker();
+    const resolved = checkerAliasedSymbol(checker, symbol);
+    if (resolved !== undefined && !checkerUnknownSymbol(checker, resolved)) return resolved;
+    return undefined;
+  }
+}
+
+export class ExportExtractor extends SymbolExtractor {
+  readonly moduleResolver: Resolver;
+
+  constructor(options: ExportExtractorOptions) {
+    super(options);
+    this.moduleResolver = options.moduleResolver;
+  }
+
+  getStats(): ExtractorStats {
+    return this.stats;
+  }
+
+  extractFromFile(file: SourceFile): readonly ExportEntry[] {
+    if (file.symbol !== undefined) return this.extractFromModule(file);
+    if (file.ambientModuleNames.length === 0) return [];
+
+    const exports: ExportEntry[] = [];
+    for (const statement of file.statements) {
+      if (!isModuleWithStringLiteralName(statement)) continue;
+      const declarationSymbol = statement.symbol;
+      if (declarationSymbol === undefined) continue;
+      this.extractFromModuleDeclaration(statement, file, nodeText(statement.name), "", exports);
+    }
+    return exports;
+  }
+
+  extractFromModule(file: SourceFile): readonly ExportEntry[] {
+    const moduleAugmentations = file.moduleAugmentations
+      .map(name => name.parent)
+      .filter((declaration): declaration is Node => declaration !== undefined && isModuleDeclaration(declaration) && !isGlobalScopeAugmentation(declaration));
+    const moduleID = this.getModuleID(file);
+    const exports: ExportEntry[] = [];
+    for (const [name, symbol] of file.symbol?.exports ?? []) {
+      this.extractFromSymbol(name, symbol, moduleID, file.fileName, file, exports);
+    }
+    for (const declaration of moduleAugmentations) {
+      const nameNode = (declaration as unknown as { readonly name: Node }).name;
+      if (nameNode.kind !== Kind.StringLiteral) continue;
+      const name = nodeText(nameNode);
+      let augmentationModuleID: ModuleID = name;
+      let moduleFileName = "";
+      if (isExternalModuleNameRelative(name) && this.toPath !== undefined) {
+        const resolved = this.moduleResolver.resolveModuleName(name, file.fileName, undefined, undefined).resolvedModule;
+        if (resolved !== undefined) {
+          moduleFileName = resolved.resolvedFileName;
+          augmentationModuleID = this.toPath(moduleFileName);
+        } else {
+          moduleFileName = resolvePath(getDirectoryPath(file.fileName), name);
+          augmentationModuleID = this.toPath(moduleFileName);
+        }
+      }
+      this.extractFromModuleDeclaration(declaration, file, augmentationModuleID, moduleFileName, exports);
+    }
+    return exports;
+  }
+
+  extractFromModuleDeclaration(
+    declaration: Node & { readonly symbol?: AstSymbol },
+    file: SourceFile,
+    moduleID: ModuleID,
+    moduleFileName: string,
+    exports: ExportEntry[],
+  ): void {
+    for (const [name, symbol] of declaration.symbol?.exports ?? []) {
+      this.extractFromSymbol(name, symbol, moduleID, moduleFileName, file, exports);
+    }
+  }
+}
+
+export function newSymbolExtractor(
+  packageName: string,
+  checker: Checker,
+  toPath?: (fileName: string) => Path,
+  realpath?: (fileName: string) => string,
+): SymbolExtractor {
+  const options: SymbolExtractorOptions = { packageName, checker };
+  if (toPath !== undefined) {
+    (options as { toPath: (fileName: string) => Path }).toPath = toPath;
+  }
+  if (realpath !== undefined) {
+    (options as { realpath: (fileName: string) => string }).realpath = realpath;
+  }
+  return new SymbolExtractor(options);
+}
+
+export function newExportExtractor(options: ExportExtractorOptions): ExportExtractor {
+  return new ExportExtractor(options);
+}
+
+export function shouldIgnoreSymbol(symbol: AstSymbol): boolean {
+  return ((symbol.flags ?? 0) & SymbolFlags.Prototype) !== 0;
+}
+
+export function getSyntax(symbol: AstSymbol): ExportSyntax {
+  for (const declaration of symbol.declarations) {
+    switch (declaration.kind) {
+      case Kind.ExportSpecifier:
+        return ExportSyntaxNamed;
+      case Kind.ExportAssignment:
+        return isExportAssignment(declaration) && declaration.isExportEquals
+          ? ExportSyntaxEquals
+          : ExportSyntaxDefaultDeclaration;
+      case Kind.NamespaceExportDeclaration:
+        return ExportSyntaxUMD;
+      case Kind.BinaryExpression: {
+        const assignmentKind = getAssignmentDeclarationKind(declaration);
+        if (assignmentKind === "moduleExports") return ExportSyntaxCommonJSModuleExports;
+        if (assignmentKind === "exportsProperty") return ExportSyntaxCommonJSExportsProperty;
+        break;
+      }
+      default:
+        return (getCombinedModifierFlags(declaration) & ModifierFlags.Default) !== 0
+          ? ExportSyntaxDefaultModifier
+          : ExportSyntaxModifier;
+    }
+  }
+  return ExportSyntaxNone;
+}
+
+export function isUnusableName(name: string | undefined): boolean {
+  return name === undefined
+    || name === ""
+    || name === "_default"
+    || name === internalSymbolNameExportStar
+    || name === internalSymbolNameDefault
+    || name === internalSymbolNameExportEquals;
+}
+
+export function fileNameForDefaultExportName(
+  targetSymbol: AstSymbol | undefined,
+  moduleFileName: string,
+  moduleID: ModuleID,
+): string {
+  const declaration = targetSymbol?.declarations[0];
+  if (declaration !== undefined) {
+    const file = getSourceFileOfNode(declaration);
+    if (file !== undefined && isSourceFile(file) && file.fileName !== "") return file.fileName;
+  }
+  if (moduleFileName !== "") return moduleFileName;
+  return moduleID;
+}
+
+function exportName(entry: ExportEntry): string {
+  if (entry.localName !== undefined && entry.localName !== "") return entry.localName;
+  if (entry.exportName === internalSymbolNameExportEquals) return entry.target.exportName;
+  return entry.exportName;
+}
+
+function emptyTarget(): ExportID {
+  return { moduleID: "", exportName: "" };
+}
+
+function getNonAugmentationDeclaration(symbol: AstSymbol): Node | undefined {
+  return symbol.declarations.find(declaration => !isGlobalScopeAugmentation(declaration));
+}
+
+function isGlobalScopeAugmentation(node: Node): boolean {
+  return node.kind === Kind.ModuleDeclaration && nodeText((node as { readonly name?: Node }).name) === "global";
+}
+
+function isModuleWithStringLiteralName(node: Node): node is Node & { readonly name: Node; readonly symbol?: AstSymbol } {
+  return node.kind === Kind.ModuleDeclaration && (node as { readonly name?: Node }).name?.kind === Kind.StringLiteral;
+}
+
+function isExternalModuleSymbol(symbol: AstSymbol): boolean {
+  const externalModuleResult = (symbol as { readonly isExternalModule?: () => boolean }).isExternalModule?.();
+  if (externalModuleResult !== undefined) return externalModuleResult;
+  return ((symbol.flags ?? 0) & SymbolFlags.Module) !== 0 && symbolName(symbol).startsWith("\"");
+}
+
+function symbolName(symbol: AstSymbol | undefined): string {
+  return symbol?.name ?? symbol?.escapedName ?? "";
+}
+
+function combinedLocalAndExportSymbolFlags(symbol: AstSymbol): SymbolFlags {
+  return ((symbol.flags ?? 0) | (symbol.exportSymbol?.flags ?? 0)) as SymbolFlags;
+}
+
+function isNonLocalAlias(symbol: AstSymbol): boolean {
+  return ((symbol.flags ?? 0) & SymbolFlags.Alias) !== 0 && symbol.declarations.some(isAliasExportOrImport);
+}
+
+function isAliasExportOrImport(node: Node): boolean {
+  return node.kind === Kind.ExportSpecifier
+    || node.kind === Kind.ExportAssignment
+    || node.kind === Kind.ImportSpecifier
+    || node.kind === Kind.ImportClause
+    || node.kind === Kind.NamespaceImport
+    || node.kind === Kind.ImportEqualsDeclaration;
+}
+
+function getDeclarationOfKind(symbol: AstSymbol, kind: Kind): Node | undefined {
+  return symbol.declarations.find(declaration => declaration.kind === kind);
+}
+
+function resolveLocalName(location: Node, name: string): AstSymbol | undefined {
+  let current: Node | undefined = location;
+  while (current !== undefined) {
+    const local = current.locals?.get(name);
+    if (local !== undefined) return local;
+    current = current.parent;
+  }
+  return undefined;
+}
+
+function checkerExportsOfModule(checker: Checker, symbol: AstSymbol | undefined): readonly AstSymbol[] {
+  if (symbol === undefined) return [];
+  const method = checker as Checker & { readonly getExportsOfModule?: (symbol: AstSymbol) => readonly AstSymbol[] | ReadonlyMap<string, AstSymbol> };
+  const exports = method.getExportsOfModule?.(symbol);
+  if (exports === undefined) return [...(symbol.exports?.values() ?? [])];
+  return isSymbolMap(exports) ? [...exports.values()] : [...exports];
+}
+
+function isSymbolMap(value: readonly AstSymbol[] | ReadonlyMap<string, AstSymbol>): value is ReadonlyMap<string, AstSymbol> {
+  return typeof (value as ReadonlyMap<string, AstSymbol>).values === "function"
+    && typeof (value as ReadonlyMap<string, AstSymbol>).get === "function";
+}
+
+function checkerMergedSymbol(checker: Checker, symbol: AstSymbol | undefined): AstSymbol | undefined {
+  if (symbol === undefined) return undefined;
+  const method = checker as Checker & { readonly getMergedSymbol?: (symbol: AstSymbol | undefined) => AstSymbol | undefined };
+  return method.getMergedSymbol?.(symbol) ?? symbol;
+}
+
+function checkerAliasedSymbol(checker: Checker, symbol: AstSymbol): AstSymbol | undefined {
+  const method = checker as Checker & { readonly getAliasedSymbol?: (symbol: AstSymbol) => AstSymbol | undefined };
+  return method.getAliasedSymbol?.(symbol)
+    ?? (symbol as { readonly aliasTarget?: AstSymbol; readonly target?: AstSymbol }).aliasTarget
+    ?? (symbol as { readonly aliasTarget?: AstSymbol; readonly target?: AstSymbol }).target
+    ?? symbol;
+}
+
+function checkerUnknownSymbol(checker: Checker, symbol: AstSymbol | undefined): boolean {
+  const method = checker as Checker & { readonly isUnknownSymbol?: (symbol: AstSymbol | undefined) => boolean };
+  return method.isUnknownSymbol?.(symbol) ?? symbolName(symbol) === "unknown";
+}
+
+function checkerSymbolFlags(checker: Checker, symbol: AstSymbol): SymbolFlags {
+  const method = checker as Checker & { readonly getSymbolFlags?: (symbol: AstSymbol) => number };
+  return (method.getSymbolFlags?.(symbol) ?? symbol.flags ?? 0) as SymbolFlags;
+}
+
+function checkerTypeOnlyAliasDeclaration(checker: Checker, symbol: AstSymbol): Node | undefined {
+  const method = checker as Checker & { readonly getTypeOnlyAliasDeclaration?: (symbol: AstSymbol) => Node | undefined };
+  return method.getTypeOnlyAliasDeclaration?.(symbol);
+}
+
+function checkerMappedTypeSymbolOfProperty(checker: Checker, symbol: AstSymbol): AstSymbol | undefined {
+  const method = checker as Checker & { readonly getMappedTypeSymbolOfProperty?: (symbol: AstSymbol) => AstSymbol | undefined };
+  return method.getMappedTypeSymbolOfProperty?.(symbol);
+}
+
+function hasMappedCheckFlag(symbol: AstSymbol): boolean {
+  return ((symbol as { readonly checkFlags?: number; readonly CheckFlags?: number }).checkFlags
+    ?? (symbol as { readonly checkFlags?: number; readonly CheckFlags?: number }).CheckFlags
+    ?? 0) !== 0;
+}
+
+function isPartOfTypeOnlyImportOrExportDeclaration(node: Node): boolean {
+  let current: Node | undefined = node;
+  while (current !== undefined) {
+    if ((isExportSpecifier(current) && current.isTypeOnly) || (current.kind === Kind.ImportSpecifier && (current as { readonly isTypeOnly?: boolean }).isTypeOnly === true)) {
+      return true;
+    }
+    if ((current.kind === Kind.ExportDeclaration || current.kind === Kind.ImportDeclaration) && (current as { readonly isTypeOnly?: boolean }).isTypeOnly === true) {
+      return true;
+    }
+    current = current.parent;
+  }
+  return false;
+}
+
+function getLocalSymbolForExportDefault(symbol: AstSymbol): AstSymbol | undefined {
+  return (symbol as { readonly localSymbol?: AstSymbol }).localSymbol
+    ?? symbol.declarations.find(declaration => declaration.localSymbol !== undefined)?.localSymbol;
+}
+
+function getAssignmentDeclarationKind(node: Node): "none" | "moduleExports" | "exportsProperty" {
+  if (node.kind !== Kind.BinaryExpression) return "none";
+  const left = (node as { readonly left?: Node }).left;
+  if (left === undefined) return "none";
+  if (isModuleExportsAccess(left)) return "moduleExports";
+  if (isExportsPropertyAccess(left)) return "exportsProperty";
+  return "none";
+}
+
+function isModuleExportsAccess(node: Node): boolean {
+  if (node.kind !== Kind.PropertyAccessExpression) return false;
+  const access = node as { readonly expression?: Node; readonly name?: Node };
+  return nodeText(access.name) === "exports"
+    && access.expression?.kind === Kind.Identifier
+    && nodeText(access.expression) === "module";
+}
+
+function isExportsPropertyAccess(node: Node): boolean {
+  if (node.kind !== Kind.PropertyAccessExpression) return false;
+  const access = node as { readonly expression?: Node; readonly name?: Node };
+  return access.name !== undefined
+    && access.expression?.kind === Kind.Identifier
+    && nodeText(access.expression) === "exports";
 }
