@@ -13,6 +13,7 @@ import {
   isConstructorDeclaration,
   isExpression,
   isFunctionLike,
+  isFunctionLikeDeclaration,
   isGetAccessorDeclaration,
   isJSDoc,
   isJSDocImportTag,
@@ -37,6 +38,7 @@ import {
   isTypeParameterDeclaration,
   isTypeQueryNode,
   isTypeReferenceNode,
+  isTypeNode,
   isTypeAssertion,
   isVariableDeclaration,
   hasSyntacticModifier,
@@ -106,7 +108,15 @@ import {
   type UserPreferences,
   getLastToken,
 } from "./lsutil/index.js";
-import { createLspRangeFromBounds, isInString, quote, type LspRangeService } from "./utilities.js";
+import {
+  createLspRangeFromBounds,
+  getPossibleGenericSignatures,
+  getPossibleTypeArgumentsInfo,
+  positionBelongsToNode,
+  isInString,
+  quote,
+  type LspRangeService,
+} from "./utilities.js";
 
 /**
  * Completion constants and ordering helpers.
@@ -1293,6 +1303,23 @@ export function isContextTokenValueLocation(contextToken: Node): boolean {
       || contextToken.kind === Kind.AssertsKeyword && parent.kind === Kind.TypePredicate);
 }
 
+export interface TypeArgumentPositionChecker {
+  readonly getTypeAtLocation?: (node: Node) => unknown;
+  readonly getSignaturesOfType?: (type: unknown, kind: number) => readonly { readonly typeParameters?: readonly unknown[] }[];
+}
+
+export function isPossiblyTypeArgumentPosition(
+  token: Node | undefined,
+  sourceFile: SourceFile,
+  checker: TypeArgumentPositionChecker,
+): boolean {
+  const info = getPossibleTypeArgumentsInfo(token, sourceFile);
+  if (info === undefined) return false;
+  return isPartOfTypeNode(info.called)
+    || possibleGenericSignatures(info.called, info.nTypeArguments, checker).length !== 0
+    || isPossiblyTypeArgumentPosition(info.called, sourceFile, checker);
+}
+
 export function isContextTokenTypeLocation(contextToken: Node): boolean {
   const parent = contextToken.parent;
   if (parent === undefined) return false;
@@ -1315,6 +1342,70 @@ export function isContextTokenTypeLocation(contextToken: Node): boolean {
       return isSatisfiesExpression(parent);
     default:
       return false;
+  }
+}
+
+export interface GlobalTypeChecker extends ObjectLikeCompletionChecker {
+  readonly getGlobalSymbol?: (name: string, meanings: SymbolFlags, diagnostic?: unknown) => CompletionSymbol | undefined;
+}
+
+export function isProbablyGlobalType(type: CompletionTypeLike, file: SourceFile, checker: GlobalTypeChecker): boolean {
+  for (const name of ["self", "global", "globalThis"]) {
+    const symbol = checker.getGlobalSymbol?.(name, SymbolFlags.Value);
+    if (symbol !== undefined && checker.getTypeOfSymbolAtLocation?.(symbol, file) === type) return true;
+  }
+  return false;
+}
+
+export function tryGetTypeLiteralNode(node: Node | undefined): Node | undefined {
+  if (node === undefined) return undefined;
+  const parent = node.parent;
+  switch (node.kind) {
+    case Kind.OpenBraceToken:
+      return parent?.kind === Kind.TypeLiteral ? parent : undefined;
+    case Kind.SemicolonToken:
+    case Kind.CommaToken:
+    case Kind.Identifier:
+      return parent?.kind === Kind.PropertySignature && parent.parent?.kind === Kind.TypeLiteral ? parent.parent : undefined;
+    default:
+      return undefined;
+  }
+}
+
+export interface TypeArgumentConstraintChecker {
+  readonly getTypeArgumentConstraint?: (node: Node) => CompletionTypeLike | undefined;
+  readonly getTypeOfPropertyOfContextualType?: (type: CompletionTypeLike, name: string) => CompletionTypeLike | undefined;
+  readonly getElementTypeOfArrayType?: (type: CompletionTypeLike) => CompletionTypeLike | undefined;
+}
+
+export function getConstraintOfTypeArgumentProperty(
+  node: Node | undefined,
+  checker: TypeArgumentConstraintChecker,
+): CompletionTypeLike | undefined {
+  if (node === undefined) return undefined;
+  if (isTypeNode(node)) {
+    const constraint = checker.getTypeArgumentConstraint?.(node);
+    if (constraint !== undefined) return constraint;
+  }
+
+  const parentConstraint = getConstraintOfTypeArgumentProperty(node.parent, checker);
+  if (parentConstraint === undefined) return undefined;
+
+  switch (node.kind) {
+    case Kind.PropertySignature: {
+      const propertyName = getPropertyNameForPropertyNameNode(nodeName(node));
+      return propertyName === "" ? undefined : checker.getTypeOfPropertyOfContextualType?.(parentConstraint, propertyName);
+    }
+    case Kind.ColonToken:
+      return node.parent?.kind === Kind.PropertySignature ? parentConstraint : undefined;
+    case Kind.IntersectionType:
+    case Kind.TypeLiteral:
+    case Kind.UnionType:
+      return parentConstraint;
+    case Kind.OpenBracketToken:
+      return checker.getElementTypeOfArrayType?.(parentConstraint);
+    default:
+      return undefined;
   }
 }
 
@@ -1864,11 +1955,15 @@ export function keywordForNode(node: Node | undefined): Kind | undefined {
 }
 
 export function getScopeNode(contextToken: Node | undefined, adjustedPosition: number, file: SourceFile): Node {
+  let scope = contextToken;
+  while (scope !== undefined && !positionBelongsToNode(scope, adjustedPosition)) {
+    scope = scope.parent;
+  }
+  if (scope !== undefined) return scope;
   let best: Node = file;
   visitNodeTree(file, node => {
-    if (node.pos <= adjustedPosition && adjustedPosition <= node.end) best = node;
+    if (positionBelongsToNode(node, adjustedPosition)) best = node;
   });
-  if (contextToken !== undefined && contextToken.pos <= adjustedPosition && adjustedPosition <= contextToken.end) return contextToken;
   return best;
 }
 
@@ -2521,6 +2616,48 @@ function isObjectMemberNameCarrier(node: Node): boolean {
     || isGetAccessorDeclaration(node)
     || isSetAccessorDeclaration(node)
     || isSpreadAssignment(node);
+}
+
+function possibleGenericSignatures(
+  called: Node,
+  typeArgumentCount: number,
+  checker: TypeArgumentPositionChecker,
+): readonly unknown[] {
+  if (checker.getTypeAtLocation === undefined || checker.getSignaturesOfType === undefined) return [];
+  return getPossibleGenericSignatures(called, typeArgumentCount, checker as Parameters<typeof getPossibleGenericSignatures>[2]);
+}
+
+function isPartOfTypeNode(node: Node | undefined): boolean {
+  if (node === undefined) return false;
+  if (isTypeNode(node)) return true;
+  const parent = node.parent;
+  if (parent === undefined) return false;
+  switch (parent.kind) {
+    case Kind.TypeReference:
+    case Kind.TypePredicate:
+    case Kind.TypeQuery:
+    case Kind.TypeLiteral:
+    case Kind.ArrayType:
+    case Kind.TupleType:
+    case Kind.OptionalType:
+    case Kind.RestType:
+    case Kind.UnionType:
+    case Kind.IntersectionType:
+    case Kind.ConditionalType:
+    case Kind.InferType:
+    case Kind.ParenthesizedType:
+    case Kind.TypeOperator:
+    case Kind.IndexedAccessType:
+    case Kind.MappedType:
+    case Kind.LiteralType:
+    case Kind.NamedTupleMember:
+    case Kind.TemplateLiteralType:
+    case Kind.TemplateLiteralTypeSpan:
+    case Kind.ImportType:
+      return true;
+    default:
+      return false;
+  }
 }
 
 function getNameOfDeclaration(node: Node | undefined): Node | undefined {
