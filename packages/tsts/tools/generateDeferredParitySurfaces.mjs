@@ -364,7 +364,7 @@ function generateLsMaps() {
     "inlay_hints.go", "linkedediting.go",
     "lsutil/completednode.go", "lsutil/organizeimports.go",
     "lsutil/symbol_display.go", "organizeimports.go", "rename.go",
-    "selectionranges.go", "semantictokens.go", "signaturehelp.go", "source_map.go", "sourcedefinition.go",
+    "selectionranges.go", "semantictokens.go", "signaturehelp.go", "sourcedefinition.go",
     "string_completions.go", "symbols.go", "utilities.go",
   ];
   for (const file of files) {
