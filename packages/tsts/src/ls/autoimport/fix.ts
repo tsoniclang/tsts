@@ -1,9 +1,18 @@
-import type { Node } from "../../ast/index.js";
+import { Kind, SymbolFlags, type Node } from "../../ast/index.js";
+import {
+  ModuleDetectionKind,
+  ModuleKind,
+  getEmitModuleDetectionKind,
+  getEmitModuleKind,
+  tristateIsTrue as coreTristateIsTrue,
+  type CompilerOptions as CoreCompilerOptions,
+} from "../../core/index.js";
 import {
   compareNumberOfDirectorySeparators,
   getDirectoryPath,
 } from "../../tspath/index.js";
 import {
+  AddAsTypeOnlyAllowed,
   AddAsTypeOnlyNotAllowed,
   AddAsTypeOnlyRequired,
   AutoImportFixKindAddNew,
@@ -11,10 +20,15 @@ import {
   AutoImportFixKindJsdocTypeImport,
   AutoImportFixKindPromoteTypeOnly,
   AutoImportFixKindUseNamespace,
+  ImportKindCommonJS,
+  ImportKindDefault,
+  ImportKindNamed,
+  ImportKindNamespace,
   type AddAsTypeOnly,
   type AutoImportFix,
   type AutoImportFixKind,
   type ImportKind,
+  type Position,
 } from "../../lsp/lsproto/index.js";
 import {
   ImportModuleSpecifierPreference,
@@ -23,6 +37,25 @@ import {
   type SourceFileForSpecifierGeneration,
   type UserPreferences as ModuleSpecifierUserPreferences,
 } from "../../modulespecifiers/index.js";
+import {
+  ExportSyntaxCommonJSExportsProperty,
+  ExportSyntaxCommonJSModuleExports,
+  ExportSyntaxDefaultDeclaration,
+  ExportSyntaxDefaultModifier,
+  ExportSyntaxEquals,
+  ExportSyntaxModifier,
+  ExportSyntaxNamed,
+  ExportSyntaxStar,
+  ExportSyntaxUMD,
+  exportIsRenameable,
+  exportIsUnresolvedAlias,
+  exportName,
+  internalSymbolNameDefault,
+  internalSymbolNameExportEquals,
+  type ExportEntry,
+} from "./export.js";
+import { getModuleSpecifier } from "./specifiers.js";
+import type { AutoImportFixProvider, View } from "./view.js";
 
 export interface NewImportBinding {
   readonly kind: ImportKind;
@@ -53,6 +86,173 @@ export interface AutoImportRankingView {
   readonly preferences: ModuleSpecifierUserPreferences;
   readonly importingFile: SourceFileForSpecifierGeneration;
   readonly shouldUseUriStyleNodeCoreModules?: boolean | "auto" | "on" | "off";
+}
+
+export interface AutoImportFixProgramWithModuleMode {
+  options(): unknown;
+  getEmitModuleFormatOfFile?(file: SourceFileForSpecifierGeneration): number;
+  getImpliedNodeFormatForEmit?(file: SourceFileForSpecifierGeneration): number;
+  getSourceFiles?(): readonly SourceFileForSpecifierGeneration[];
+  isSourceFileFromExternalLibrary?(file: SourceFileForSpecifierGeneration): boolean;
+}
+
+export const autoImportFixProvider: AutoImportFixProvider = {
+  getFixes(view, exportEntry, forJsx, isValidTypeOnlyUseSite, usagePosition) {
+    return getFixes(view, exportEntry, forJsx, isValidTypeOnlyUseSite, usagePosition);
+  },
+  compareFixesForRanking(view, left, right) {
+    return compareFixesForRanking(view, requireComparableFix(left), requireComparableFix(right));
+  },
+  compareFixesForSorting(view, left, right) {
+    return compareFixesForSorting(view, requireComparableFix(left), requireComparableFix(right));
+  },
+};
+
+export function getFixes(
+  view: View,
+  exportEntry: ExportEntry,
+  forJsx: boolean,
+  isValidTypeOnlyUseSite: boolean,
+  usagePosition: Position | undefined,
+): readonly Fix[] {
+  const fixes: Fix[] = [];
+  const [moduleSpecifier, moduleSpecifierKind] = getModuleSpecifier(view, exportEntry, view.preferences);
+
+  const namespaceFix = tryUseExistingNamespaceImport(view, exportEntry, moduleSpecifier, moduleSpecifierKind, usagePosition);
+  if (namespaceFix !== undefined) fixes.push(namespaceFix);
+
+  if (moduleSpecifier === "") return fixes;
+
+  const importedSymbolHasValueMeaning = (exportEntry.flags & SymbolFlags.Value) !== 0 || exportIsUnresolvedAlias(exportEntry);
+  if (!importedSymbolHasValueMeaning && view.importingFile.isJS() && usagePosition !== undefined) {
+    return [{
+      kind: AutoImportFixKindJsdocTypeImport,
+      importKind: ImportKindNamed,
+      importIndex: 0,
+      addAsTypeOnly: AddAsTypeOnlyAllowed,
+      moduleSpecifier,
+      name: exportName(exportEntry),
+      usagePosition,
+      moduleSpecifierKind,
+      isReExport: !sameExportID(exportEntry.target, exportEntry),
+      moduleFileName: exportEntry.moduleFileName,
+    }];
+  }
+
+  const importKind = getImportKind(view.importingFile, exportEntry, view.program as AutoImportFixProgramWithModuleMode);
+  const addAsTypeOnly = getAddAsTypeOnly(isValidTypeOnlyUseSite, exportEntry, view.program.options());
+
+  let name = exportName(exportEntry);
+  if (forJsx && !startsWithUppercase(name)) {
+    if (!exportIsRenameable(exportEntry)) return fixes;
+    name = name.charAt(0).toLocaleUpperCase() + name.slice(1);
+  }
+
+  fixes.push({
+    kind: AutoImportFixKindAddNew,
+    importKind,
+    importIndex: 0,
+    addAsTypeOnly,
+    moduleSpecifier,
+    name,
+    useRequire: shouldUseRequire(view),
+    moduleSpecifierKind,
+    isReExport: !sameExportID(exportEntry.target, exportEntry),
+    moduleFileName: exportEntry.moduleFileName,
+  });
+  return fixes;
+}
+
+export function getAddAsTypeOnly(
+  isValidTypeOnlyUseSite: boolean,
+  exportEntry: ExportEntry,
+  compilerOptions: unknown,
+): AddAsTypeOnly {
+  if (!isValidTypeOnlyUseSite) return AddAsTypeOnlyNotAllowed;
+  const options = compilerOptions as CoreCompilerOptions;
+  const exportHasValue = (exportEntry.flags & SymbolFlags.Value) !== 0;
+  if (
+    coreTristateIsTrue(options.verbatimModuleSyntax) && (exportEntry.isTypeOnly || !exportHasValue)
+    || exportEntry.isTypeOnly && exportHasValue
+  ) {
+    return AddAsTypeOnlyRequired;
+  }
+  return AddAsTypeOnlyAllowed;
+}
+
+export function getImportKind(
+  importingFile: SourceFileForSpecifierGeneration,
+  exportEntry: ExportEntry,
+  program: AutoImportFixProgramWithModuleMode,
+): ImportKind {
+  const options = program.options() as CoreCompilerOptions;
+  if (
+    coreTristateIsTrue(options.verbatimModuleSyntax)
+    && getEmitModuleFormatOfFile(program, importingFile, options) === ModuleKind.CommonJS
+  ) {
+    return ImportKindCommonJS;
+  }
+
+  switch (exportEntry.syntax) {
+    case ExportSyntaxDefaultModifier:
+    case ExportSyntaxDefaultDeclaration:
+      return ImportKindDefault;
+    case ExportSyntaxNamed:
+      return exportEntry.exportName === internalSymbolNameDefault ? ImportKindDefault : ImportKindNamed;
+    case ExportSyntaxModifier:
+    case ExportSyntaxStar:
+    case ExportSyntaxCommonJSExportsProperty:
+      return ImportKindNamed;
+    case ExportSyntaxEquals:
+    case ExportSyntaxCommonJSModuleExports:
+    case ExportSyntaxUMD:
+      if (exportEntry.exportName !== internalSymbolNameExportEquals) return ImportKindNamed;
+      if (hasImportEqualsDeclaration(importingFile)) return ImportKindCommonJS;
+      if (hasExternalModuleIndicator(importingFile) || !importingFile.isJS()) return ImportKindDefault;
+      return ImportKindCommonJS;
+    default:
+      throw new Error(`unhandled export syntax kind: ${String(exportEntry.syntax)}`);
+  }
+}
+
+export function shouldUseRequire(view: View): boolean {
+  const importingFile = view.importingFile;
+  if (!importingFile.isJS()) return false;
+
+  const program = view.program as AutoImportFixProgramWithModuleMode;
+  const options = program.options() as CoreCompilerOptions;
+  switch (detectSyntax(importingFile, options)) {
+    case FileSyntaxKind.CJS:
+      return true;
+    case FileSyntaxKind.ESM:
+      return false;
+  }
+
+  const implied = program.getImpliedNodeFormatForEmit?.(importingFile);
+  if (implied === ModuleKind.CommonJS) return true;
+  if (implied === ModuleKind.ESNext) return false;
+
+  if (options.configFilePath !== undefined && options.configFilePath !== "") {
+    return getEmitModuleKind(options) < ModuleKind.ES2015;
+  }
+
+  for (const otherFile of program.getSourceFiles?.() ?? []) {
+    if (
+      otherFile === importingFile
+      || !otherFile.isJS()
+      || program.isSourceFileFromExternalLibrary?.(otherFile) === true
+    ) {
+      continue;
+    }
+    switch (detectSyntax(otherFile, options)) {
+      case FileSyntaxKind.CJS:
+        return true;
+      case FileSyntaxKind.ESM:
+        return false;
+    }
+  }
+
+  return true;
 }
 
 export function needsTypeOnly(addAsTypeOnly: AddAsTypeOnly): boolean {
@@ -208,6 +408,230 @@ function tristatePreference(value: boolean | "auto" | "on" | "off" | undefined):
 function sourceTextOfNode(node: Node): string {
   const sourceFile = node.getSourceFile();
   return sourceFile.text.slice(Math.max(0, node.pos), Math.max(0, node.end));
+}
+
+const enum FileSyntaxKind {
+  Ambiguous = 0,
+  ESM = 1,
+  CJS = 2,
+}
+
+function requireComparableFix(fix: AutoImportFix): Fix {
+  if (fix.kind === undefined) throw new Error("Auto-import fix comparison requires a fix kind.");
+  return fix as Fix;
+}
+
+function sameExportID(left: { readonly moduleID: string; readonly exportName: string }, right: { readonly moduleID: string; readonly exportName: string }): boolean {
+  return left.moduleID === right.moduleID && left.exportName === right.exportName;
+}
+
+function startsWithUppercase(text: string): boolean {
+  if (text.length === 0) return false;
+  const first = text.charAt(0);
+  return first.toLocaleUpperCase() === first && first.toLocaleLowerCase() !== first;
+}
+
+function tryUseExistingNamespaceImport(
+  view: View,
+  exportEntry: ExportEntry,
+  moduleSpecifier: string,
+  moduleSpecifierKind: ResultKindValue,
+  usagePosition: Position | undefined,
+): Fix | undefined {
+  if (usagePosition === undefined || moduleSpecifier === "") return undefined;
+  if (getImportKind(view.importingFile, exportEntry, view.program as AutoImportFixProgramWithModuleMode) !== ImportKindNamed) return undefined;
+
+  const existingImport = findExistingNamespaceImport(view.importingFile, moduleSpecifier);
+  if (existingImport === undefined) return undefined;
+
+  return {
+    kind: AutoImportFixKindUseNamespace,
+    importKind: ImportKindNamespace,
+    importIndex: existingImport.index,
+    addAsTypeOnly: AddAsTypeOnlyAllowed,
+    moduleSpecifier,
+    name: exportName(exportEntry),
+    usagePosition,
+    namespacePrefix: existingImport.namespacePrefix,
+    moduleSpecifierKind,
+    isReExport: !sameExportID(exportEntry.target, exportEntry),
+    moduleFileName: exportEntry.moduleFileName,
+  };
+}
+
+function findExistingNamespaceImport(
+  file: SourceFileForSpecifierGeneration,
+  moduleSpecifier: string,
+): { readonly namespacePrefix: string; readonly index: number } | undefined {
+  const imports = file.imports();
+  for (let index = 0; index < imports.length; index += 1) {
+    const importLiteral = imports[index] as unknown as Node;
+    if (nodeText(importLiteral) !== moduleSpecifier) continue;
+    const declaration = importDeclarationFromModuleSpecifier(importLiteral);
+    if (declaration === undefined) continue;
+    const namespacePrefix = getNamespaceLikeImportText(declaration);
+    if (namespacePrefix !== "") return { namespacePrefix, index };
+  }
+  return undefined;
+}
+
+function getNamespaceLikeImportText(declaration: Node): string {
+  switch (declaration.kind) {
+    case Kind.VariableDeclaration: {
+      const name = nodeProperty<Node>(declaration, "name");
+      return name?.kind === Kind.Identifier ? nodeText(name) : "";
+    }
+    case Kind.ImportEqualsDeclaration: {
+      const name = nodeProperty<Node>(declaration, "name");
+      return name?.kind === Kind.Identifier ? nodeText(name) : "";
+    }
+    case Kind.JSDocImportTag:
+    case Kind.ImportDeclaration: {
+      const importClause = nodeProperty<Node>(declaration, "importClause");
+      const namedBindings = nodeProperty<Node>(importClause, "namedBindings");
+      if (namedBindings?.kind !== Kind.NamespaceImport) return "";
+      const name = nodeProperty<Node>(namedBindings, "name");
+      return name?.kind === Kind.Identifier ? nodeText(name) : "";
+    }
+    default:
+      return "";
+  }
+}
+
+function getEmitModuleFormatOfFile(
+  program: AutoImportFixProgramWithModuleMode,
+  importingFile: SourceFileForSpecifierGeneration,
+  options: CoreCompilerOptions,
+): number {
+  return program.getEmitModuleFormatOfFile?.(importingFile) ?? getEmitModuleKind(options);
+}
+
+function hasImportEqualsDeclaration(file: SourceFileForSpecifierGeneration): boolean {
+  for (const importLiteral of file.imports()) {
+    if (ancestorOfKind(importLiteral as unknown as Node, Kind.ImportEqualsDeclaration) !== undefined) return true;
+  }
+  return false;
+}
+
+function hasExternalModuleIndicator(file: SourceFileForSpecifierGeneration): boolean {
+  const sourceFile = sourceFileFromSpecifierFile(file);
+  if (sourceFile !== undefined && nodeProperty<Node>(sourceFile, "externalModuleIndicator") !== undefined) return true;
+  for (const importLiteral of file.imports()) {
+    const declaration = importDeclarationFromModuleSpecifier(importLiteral as unknown as Node);
+    if (declaration !== undefined && declaration.kind !== Kind.CallExpression && declaration.kind !== Kind.VariableDeclaration) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function detectSyntax(file: SourceFileForSpecifierGeneration, options: CoreCompilerOptions): FileSyntaxKind {
+  const [hasESM, hasCJS] = detectSyntaxIndicators(file, options);
+  if (hasCJS && !hasESM) return FileSyntaxKind.CJS;
+  if (hasESM && !hasCJS) return FileSyntaxKind.ESM;
+  return FileSyntaxKind.Ambiguous;
+}
+
+function detectSyntaxIndicators(file: SourceFileForSpecifierGeneration, options: CoreCompilerOptions): readonly [boolean, boolean] {
+  const sourceFile = sourceFileFromSpecifierFile(file);
+  let hasCJS = sourceFile !== undefined && nodeProperty<Node>(sourceFile, "commonJSModuleIndicator") !== undefined;
+
+  for (const importLiteral of file.imports()) {
+    const declaration = importDeclarationFromModuleSpecifier(importLiteral as unknown as Node);
+    if (declaration?.kind === Kind.CallExpression || declaration?.kind === Kind.VariableDeclaration) {
+      hasCJS = true;
+      break;
+    }
+  }
+
+  if (getEmitModuleDetectionKind(options) !== ModuleDetectionKind.Force) {
+    const hasESM = sourceFile !== undefined && nodeProperty<Node>(sourceFile, "externalModuleIndicator") !== undefined;
+    return [hasESM || hasEsmImportSyntax(file), hasCJS];
+  }
+
+  const externalModuleIndicator = sourceFile === undefined ? undefined : nodeProperty<Node>(sourceFile, "externalModuleIndicator");
+  if (sourceFile !== undefined && externalModuleIndicator !== undefined && externalModuleIndicator !== sourceFile) {
+    return [true, hasCJS];
+  }
+  return [hasEsmImportSyntax(file), hasCJS];
+}
+
+function hasEsmImportSyntax(file: SourceFileForSpecifierGeneration): boolean {
+  for (const importLiteral of file.imports()) {
+    const declaration = importDeclarationFromModuleSpecifier(importLiteral as unknown as Node);
+    switch (declaration?.kind) {
+      case Kind.ImportDeclaration:
+      case Kind.JSImportDeclaration:
+      case Kind.ExportDeclaration:
+      case Kind.ImportEqualsDeclaration:
+        return true;
+    }
+  }
+  return false;
+}
+
+function importDeclarationFromModuleSpecifier(moduleSpecifier: Node): Node | undefined {
+  const parent = moduleSpecifier.parent;
+  if (parent === undefined) return undefined;
+  switch (parent.kind) {
+    case Kind.ImportDeclaration:
+    case Kind.JSImportDeclaration:
+    case Kind.ExportDeclaration:
+    case Kind.JSDocImportTag:
+      return parent;
+    case Kind.ExternalModuleReference:
+      return parent.parent?.kind === Kind.ImportEqualsDeclaration ? parent.parent : parent;
+    case Kind.CallExpression:
+      return isRequireCall(parent) ? requireVariableDeclaration(parent) ?? parent : parent;
+    default:
+      return ancestorOfKind(parent, Kind.ImportDeclaration)
+        ?? ancestorOfKind(parent, Kind.ExportDeclaration)
+        ?? ancestorOfKind(parent, Kind.ImportEqualsDeclaration)
+        ?? ancestorOfKind(parent, Kind.CallExpression);
+  }
+}
+
+function requireVariableDeclaration(callExpression: Node): Node | undefined {
+  const parent = callExpression.parent;
+  return parent?.kind === Kind.VariableDeclaration ? parent : undefined;
+}
+
+function isRequireCall(callExpression: Node): boolean {
+  const expression = nodeProperty<Node>(callExpression, "expression");
+  return expression?.kind === Kind.Identifier && nodeText(expression) === "require";
+}
+
+function ancestorOfKind(node: Node, kind: Kind): Node | undefined {
+  let current: Node | undefined = node;
+  while (current !== undefined) {
+    if (current.kind === kind) return current;
+    current = current.parent;
+  }
+  return undefined;
+}
+
+function sourceFileFromSpecifierFile(file: SourceFileForSpecifierGeneration): Node | undefined {
+  const withSourceFile = file as SourceFileForSpecifierGeneration & { readonly sourceFile?: () => unknown };
+  const sourceFile = withSourceFile.sourceFile?.();
+  return isNode(sourceFile) ? sourceFile : undefined;
+}
+
+function nodeProperty<T>(node: Node | undefined, propertyName: string): T | undefined {
+  if (node === undefined) return undefined;
+  return (node as unknown as Record<string, T | undefined>)[propertyName];
+}
+
+function nodeText(node: Node): string {
+  const text = nodeProperty<string>(node, "text");
+  if (text !== undefined) return text;
+  const escapedText = nodeProperty<string>(node, "escapedText");
+  return escapedText ?? "";
+}
+
+function isNode(value: unknown): value is Node {
+  return typeof value === "object"
+    && value !== null
+    && typeof (value as { readonly kind?: unknown }).kind === "number";
 }
 
 // Language-service parity map: internal/ls/autoimport/fix.go

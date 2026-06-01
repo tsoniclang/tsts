@@ -23,6 +23,7 @@ import {
 import { UnlimitedDepth } from "../vfs/vfsmatch/index.js";
 import { ErrNeedsAutoImports } from "./completions.js";
 import type { Host } from "./host.js";
+import { autoImportFixProvider } from "./autoimport/fix.js";
 import { newView, type View, type ViewRegistry } from "./autoimport/view.js";
 import type { Registry } from "./autoimport/registry.js";
 import type { AutoImportProgram, ConditionSet } from "./autoimport/specifiers.js";
@@ -179,6 +180,7 @@ export class LanguageService {
       program: this.autoImportProgram(),
       preferences: moduleSpecifierPreferences(this.userPreferences()),
       conditions: emptyConditionSet,
+      fixProvider: autoImportFixProvider,
       tspath: {
         isDeclarationFileName: (fileName) => fileName.endsWith(".d.ts"),
         pathIsRelative,
@@ -255,7 +257,8 @@ function sourceFileForSpecifierGeneration(sourceFile: SourceFile): SourceFileFor
     fileName: () => sourceFile.fileName,
     imports: () => sourceFile.imports.filter(isStringLiteralLike) as unknown as readonly StringLiteralLike[],
     isJS: () => (sourceFile.flags & NodeFlags.JavaScriptFile) !== 0 || sourceFile.scriptKind === 1 || sourceFile.scriptKind === 2,
-  };
+    sourceFile: () => sourceFile,
+  } as SourceFileForSpecifierGeneration & { readonly sourceFile: () => SourceFile };
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
