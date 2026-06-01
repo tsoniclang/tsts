@@ -36,6 +36,7 @@ import "./ls/autoInsert.test.js";
 import "./ls/autoimport/aliasResolver.test.js";
 import "./ls/autoimport/export.test.js";
 import "./ls/autoimport/specifiers.test.js";
+import "./ls/autoimport/util.test.js";
 import "./ls/codeActions.test.js";
 import "./ls/codeLens.test.js";
 import "./ls/displayPartsWriter.test.js";

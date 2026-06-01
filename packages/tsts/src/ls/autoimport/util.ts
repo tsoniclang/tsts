@@ -1,314 +1,554 @@
-/**
- * Language-service parity map for TS-Go `ls/autoimport/util.go`.
- *
- * This file preserves the upstream declaration and algorithm-line shape
- * for the TypeScript port. Runtime behavior is implemented by the
- * concrete modules that consume these exact parity maps.
- */
+import {
+  Kind,
+  SymbolFlags,
+  isExportAssignment,
+  isExportSpecifier,
+  isIdentifier,
+  isSourceFile,
+  nodeText,
+  type Node as AstNode,
+  type SourceFile,
+  type Symbol as AstSymbol,
+} from "../../ast/index.js";
+import { type Checker, newChecker } from "../../checker/index.js";
+import { emptyCompilerOptions, identity, type CompilerOptions } from "../../core/index.js";
+import { SetCollection, newSetWithSizeHint } from "../../collections/index.js";
+import { Resolver, type ResolverHost } from "../../module/resolver.js";
+import {
+  getPackageNameFromTypesPackageName,
+  parseNodeModuleFromPath,
+} from "../../module/index.js";
+import { getPackageNameFromDirectory } from "../../modulespecifiers/index.js";
+import { forEachDependency, type PackageJSON } from "../../packagejson/index.js";
+import type { Program } from "../../program/index.js";
+import {
+  combinePaths,
+  getBaseFileName,
+  type Path,
+} from "../../tspath/index.js";
+import { errNotExist, type Entries, type FS } from "../../vfs/index.js";
+import { wrap } from "../../vfs/wrapvfs/index.js";
+import type { ModuleID } from "./export.js";
 
-export interface UpstreamSourceLine {
-  readonly line: number;
-  readonly text: string;
+export type ModuleSymbolLookupResult = readonly [ModuleID, string, boolean];
+export type ModuleSymbolResult = readonly [ModuleID, string];
+export type PackageNamesInNodeModulesResult = readonly [SetCollection<string> | undefined, Error | undefined];
+export type CheckerLease = readonly [Checker, () => void];
+export type GetChecker = () => CheckerLease;
+export type CloseCheckerPool = () => void;
+export type GetCreatedCheckerCount = () => number;
+export type CheckerPoolResult = readonly [GetChecker, CloseCheckerPool, GetCreatedCheckerCount];
+export type RealpathTransform = (fileName: string) => string;
+export type PackageRealpathFuncs = readonly [RealpathTransform, RealpathTransform];
+
+export interface AutoImportTypeChecker {
+  tryFindAmbientModule(name: string): AstSymbol | undefined;
 }
 
-export interface UpstreamDeclaration {
-  readonly kind: "type" | "func" | "const" | "var";
-  readonly line: number;
-  readonly name: string;
-  readonly receiver?: string;
+export interface AutoImportResolvedPackageProgram {
+  resolvedPackageNames(): Iterable<string> | SetCollection<string>;
+  unresolvedPackageNames(): Iterable<string> | SetCollection<string>;
+  options(): { readonly types?: readonly string[] };
+  getTypeChecker(ctx: unknown): readonly [AutoImportTypeChecker, () => void];
 }
 
-export const lsAutoimportUtilUpstreamPath = "ls/autoimport/util.go";
-
-export const lsAutoimportUtilDeclarations: readonly UpstreamDeclaration[] = [
-  {"line":24,"kind":"func","name":"tryGetModuleIDAndFileNameOfModuleSymbol"},
-  {"line":41,"kind":"func","name":"getModuleIDAndFileNameOfModuleSymbol"},
-  {"line":68,"kind":"func","name":"wordIndices"},
-  {"line":88,"kind":"func","name":"getPackageNamesInNodeModules"},
-  {"line":118,"kind":"func","name":"getDefaultLikeExportNameFromDeclaration"},
-  {"line":145,"kind":"func","name":"getResolvedPackageNames"},
-  {"line":183,"kind":"func","name":"addProjectReferenceOutputMappings"},
-  {"line":199,"kind":"func","name":"createCheckerPool"},
-  {"line":234,"kind":"func","name":"addPackageJsonDependencies"},
-  {"line":253,"kind":"func","name":"getPackageRealpathFuncs"},
-  {"line":302,"kind":"type","name":"resolutionHost"},
-  {"line":307,"kind":"var","name":"_"},
-  {"line":309,"kind":"func","name":"GetCurrentDirectory","receiver":"rh *resolutionHost"},
-  {"line":313,"kind":"func","name":"FS","receiver":"rh *resolutionHost"},
-  {"line":317,"kind":"func","name":"getModuleResolver"},
-];
-
-export const lsAutoimportUtilSourceLines: readonly UpstreamSourceLine[] = [
-  {"line":1,"text":"package autoimport"},
-  {"line":3,"text":"import ("},
-  {"line":4,"text":"\t\"context\""},
-  {"line":5,"text":"\t\"runtime\""},
-  {"line":6,"text":"\t\"strings\""},
-  {"line":7,"text":"\t\"sync/atomic\""},
-  {"line":8,"text":"\t\"unicode\""},
-  {"line":9,"text":"\t\"unicode/utf8\""},
-  {"line":11,"text":"\t\"github.com/microsoft/typescript-go/internal/ast\""},
-  {"line":12,"text":"\t\"github.com/microsoft/typescript-go/internal/checker\""},
-  {"line":13,"text":"\t\"github.com/microsoft/typescript-go/internal/collections\""},
-  {"line":14,"text":"\t\"github.com/microsoft/typescript-go/internal/compiler\""},
-  {"line":15,"text":"\t\"github.com/microsoft/typescript-go/internal/core\""},
-  {"line":16,"text":"\t\"github.com/microsoft/typescript-go/internal/module\""},
-  {"line":17,"text":"\t\"github.com/microsoft/typescript-go/internal/modulespecifiers\""},
-  {"line":18,"text":"\t\"github.com/microsoft/typescript-go/internal/packagejson\""},
-  {"line":19,"text":"\t\"github.com/microsoft/typescript-go/internal/tspath\""},
-  {"line":20,"text":"\t\"github.com/microsoft/typescript-go/internal/vfs\""},
-  {"line":21,"text":"\t\"github.com/microsoft/typescript-go/internal/vfs/wrapvfs\""},
-  {"line":22,"text":")"},
-  {"line":24,"text":"func tryGetModuleIDAndFileNameOfModuleSymbol(symbol *ast.Symbol) (ModuleID, string, bool) {"},
-  {"line":25,"text":"\tif !symbol.IsExternalModule() {"},
-  {"line":26,"text":"\t\treturn \"\", \"\", false"},
-  {"line":27,"text":"\t}"},
-  {"line":28,"text":"\tdecl := ast.GetNonAugmentationDeclaration(symbol)"},
-  {"line":29,"text":"\tif decl == nil {"},
-  {"line":30,"text":"\t\treturn \"\", \"\", false"},
-  {"line":31,"text":"\t}"},
-  {"line":32,"text":"\tif decl.Kind == ast.KindSourceFile {"},
-  {"line":33,"text":"\t\treturn ModuleID(decl.AsSourceFile().Path()), decl.AsSourceFile().FileName(), true"},
-  {"line":34,"text":"\t}"},
-  {"line":35,"text":"\tif ast.IsModuleWithStringLiteralName(decl) {"},
-  {"line":36,"text":"\t\treturn ModuleID(decl.Name().Text()), \"\", true"},
-  {"line":37,"text":"\t}"},
-  {"line":38,"text":"\treturn \"\", \"\", false"},
-  {"line":39,"text":"}"},
-  {"line":41,"text":"func getModuleIDAndFileNameOfModuleSymbol(symbol *ast.Symbol) (ModuleID, string) {"},
-  {"line":42,"text":"\tif !symbol.IsExternalModule() {"},
-  {"line":43,"text":"\t\tpanic(\"symbol is not an external module\")"},
-  {"line":44,"text":"\t}"},
-  {"line":45,"text":"\tdecl := ast.GetNonAugmentationDeclaration(symbol)"},
-  {"line":46,"text":"\tif decl == nil {"},
-  {"line":47,"text":"\t\tpanic(\"module symbol has no non-augmentation declaration\")"},
-  {"line":48,"text":"\t}"},
-  {"line":49,"text":"\tif decl.Kind == ast.KindSourceFile {"},
-  {"line":50,"text":"\t\treturn ModuleID(decl.AsSourceFile().Path()), decl.AsSourceFile().FileName()"},
-  {"line":51,"text":"\t}"},
-  {"line":52,"text":"\tif ast.IsModuleWithStringLiteralName(decl) {"},
-  {"line":53,"text":"\t\treturn ModuleID(decl.Name().Text()), \"\""},
-  {"line":54,"text":"\t}"},
-  {"line":55,"text":"\tpanic(\"could not determine module ID of module symbol\")"},
-  {"line":56,"text":"}"},
-  {"line":68,"text":"func wordIndices(s string) []int {"},
-  {"line":69,"text":"\tvar indices []int"},
-  {"line":70,"text":"\tfor byteIndex, runeValue := range s {"},
-  {"line":71,"text":"\t\tif byteIndex == 0 {"},
-  {"line":72,"text":"\t\t\tindices = append(indices, byteIndex)"},
-  {"line":73,"text":"\t\t\tcontinue"},
-  {"line":74,"text":"\t\t}"},
-  {"line":75,"text":"\t\tif runeValue == '_' {"},
-  {"line":76,"text":"\t\t\tif byteIndex+1 < len(s) && s[byteIndex+1] != '_' {"},
-  {"line":77,"text":"\t\t\t\tindices = append(indices, byteIndex+1)"},
-  {"line":78,"text":"\t\t\t}"},
-  {"line":79,"text":"\t\t\tcontinue"},
-  {"line":80,"text":"\t\t}"},
-  {"line":81,"text":"\t\tif unicode.IsUpper(runeValue) && (unicode.IsLower(core.FirstResult(utf8.DecodeLastRuneInString(s[:byteIndex]))) || (byteIndex+1 < len(s) && unicode.IsLower(core.FirstResult(utf8.DecodeRuneInString(s[byteIndex+1:]))))) {"},
-  {"line":82,"text":"\t\t\tindices = append(indices, byteIndex)"},
-  {"line":83,"text":"\t\t}"},
-  {"line":84,"text":"\t}"},
-  {"line":85,"text":"\treturn indices"},
-  {"line":86,"text":"}"},
-  {"line":88,"text":"func getPackageNamesInNodeModules(nodeModulesDir string, fs vfs.FS) (*collections.Set[string], error) {"},
-  {"line":89,"text":"\tpackageNames := &collections.Set[string]{}"},
-  {"line":90,"text":"\tif tspath.GetBaseFileName(nodeModulesDir) != \"node_modules\" {"},
-  {"line":91,"text":"\t\tpanic(\"nodeModulesDir is not a node_modules directory\")"},
-  {"line":92,"text":"\t}"},
-  {"line":93,"text":"\tif !fs.DirectoryExists(nodeModulesDir) {"},
-  {"line":94,"text":"\t\treturn nil, vfs.ErrNotExist"},
-  {"line":95,"text":"\t}"},
-  {"line":96,"text":"\tentries := fs.GetAccessibleEntries(nodeModulesDir)"},
-  {"line":97,"text":"\tfor _, baseName := range entries.Directories {"},
-  {"line":98,"text":"\t\tif baseName[0] == '.' {"},
-  {"line":99,"text":"\t\t\tcontinue"},
-  {"line":100,"text":"\t\t}"},
-  {"line":101,"text":"\t\tif baseName[0] == '@' {"},
-  {"line":102,"text":"\t\t\tscopedDirPath := tspath.CombinePaths(nodeModulesDir, baseName)"},
-  {"line":103,"text":"\t\t\tfor _, scopedPackageDirName := range fs.GetAccessibleEntries(scopedDirPath).Directories {"},
-  {"line":104,"text":"\t\t\t\tscopedBaseName := tspath.GetBaseFileName(scopedPackageDirName)"},
-  {"line":105,"text":"\t\t\t\tif baseName == \"@types\" {"},
-  {"line":106,"text":"\t\t\t\t\tpackageNames.Add(module.GetPackageNameFromTypesPackageName(tspath.CombinePaths(\"@types\", scopedBaseName)))"},
-  {"line":107,"text":"\t\t\t\t} else {"},
-  {"line":108,"text":"\t\t\t\t\tpackageNames.Add(tspath.CombinePaths(baseName, scopedBaseName))"},
-  {"line":109,"text":"\t\t\t\t}"},
-  {"line":110,"text":"\t\t\t}"},
-  {"line":111,"text":"\t\t\tcontinue"},
-  {"line":112,"text":"\t\t}"},
-  {"line":113,"text":"\t\tpackageNames.Add(baseName)"},
-  {"line":114,"text":"\t}"},
-  {"line":115,"text":"\treturn packageNames, nil"},
-  {"line":116,"text":"}"},
-  {"line":118,"text":"func getDefaultLikeExportNameFromDeclaration(symbol *ast.Symbol) string {"},
-  {"line":119,"text":"\tfor _, d := range symbol.Declarations {"},
-  {"line":121,"text":"\t\tif ast.IsExportAssignment(d) {"},
-  {"line":122,"text":"\t\t\tif innerExpression := ast.SkipOuterExpressions(d.Expression(), ast.OEKAll); ast.IsIdentifier(innerExpression) {"},
-  {"line":123,"text":"\t\t\t\treturn innerExpression.Text()"},
-  {"line":124,"text":"\t\t\t}"},
-  {"line":125,"text":"\t\t\tcontinue"},
-  {"line":126,"text":"\t\t}"},
-  {"line":128,"text":"\t\tif ast.IsExportSpecifier(d) && d.Symbol().Flags == ast.SymbolFlagsAlias && d.PropertyName() != nil {"},
-  {"line":129,"text":"\t\t\tif d.PropertyName().Kind == ast.KindIdentifier {"},
-  {"line":130,"text":"\t\t\t\treturn d.PropertyName().Text()"},
-  {"line":131,"text":"\t\t\t}"},
-  {"line":132,"text":"\t\t\tcontinue"},
-  {"line":133,"text":"\t\t}"},
-  {"line":135,"text":"\t\tif name := ast.GetNameOfDeclaration(d); name != nil && name.Kind == ast.KindIdentifier {"},
-  {"line":136,"text":"\t\t\treturn name.Text()"},
-  {"line":137,"text":"\t\t}"},
-  {"line":138,"text":"\t\tif symbol.Parent != nil && !checker.IsExternalModuleSymbol(symbol.Parent) {"},
-  {"line":139,"text":"\t\t\treturn symbol.Parent.Name"},
-  {"line":140,"text":"\t\t}"},
-  {"line":141,"text":"\t}"},
-  {"line":142,"text":"\treturn \"\""},
-  {"line":143,"text":"}"},
-  {"line":145,"text":"func getResolvedPackageNames(ctx context.Context, program *compiler.Program) *collections.Set[string] {"},
-  {"line":146,"text":"\trawNames := program.ResolvedPackageNames()"},
-  {"line":147,"text":"\tunresolvedPackageNames := program.UnresolvedPackageNames()"},
-  {"line":153,"text":"\tresolvedPackageNames := collections.NewSetWithSizeHint[string](rawNames.Len())"},
-  {"line":154,"text":"\tfor name := range rawNames.Keys() {"},
-  {"line":155,"text":"\t\tresolvedPackageNames.Add(module.GetPackageNameFromTypesPackageName(name))"},
-  {"line":156,"text":"\t}"},
-  {"line":158,"text":"\tfor _, name := range program.Options().Types {"},
-  {"line":159,"text":"\t\tif name != \"*\" {"},
-  {"line":160,"text":"\t\t\tresolvedPackageNames.Add(module.GetPackageNameFromTypesPackageName(name))"},
-  {"line":161,"text":"\t\t}"},
-  {"line":162,"text":"\t}"},
-  {"line":164,"text":"\tif unresolvedPackageNames.Len() > 0 {"},
-  {"line":165,"text":"\t\tchecker, done := program.GetTypeChecker(ctx)"},
-  {"line":166,"text":"\t\tdefer done()"},
-  {"line":167,"text":"\t\tfor name := range unresolvedPackageNames.Keys() {"},
-  {"line":168,"text":"\t\t\tif symbol := checker.TryFindAmbientModule(name); symbol != nil {"},
-  {"line":169,"text":"\t\t\t\tdeclaringFile := ast.GetSourceFileOfModule(symbol)"},
-  {"line":170,"text":"\t\t\t\tif packageName := modulespecifiers.GetPackageNameFromDirectory(declaringFile.FileName()); packageName != \"\" {"},
-  {"line":171,"text":"\t\t\t\t\tresolvedPackageNames.Add(module.GetPackageNameFromTypesPackageName(packageName))"},
-  {"line":172,"text":"\t\t\t\t}"},
-  {"line":173,"text":"\t\t\t}"},
-  {"line":174,"text":"\t\t}"},
-  {"line":175,"text":"\t}"},
-  {"line":176,"text":"\treturn resolvedPackageNames"},
-  {"line":177,"text":"}"},
-  {"line":183,"text":"func addProjectReferenceOutputMappings(program *compiler.Program, result map[tspath.Path]string) {"},
-  {"line":184,"text":"\trefs := program.GetResolvedProjectReferences()"},
-  {"line":185,"text":"\tfor _, ref := range refs {"},
-  {"line":186,"text":"\t\tif ref == nil {"},
-  {"line":187,"text":"\t\t\tcontinue"},
-  {"line":188,"text":"\t\t}"},
-  {"line":189,"text":"\t\tref.ParseInputOutputNames()"},
-  {"line":190,"text":"\t\tfor outputDtsPath, mapping := range ref.OutputDtsToProjectReference() {"},
-  {"line":192,"text":"\t\t\tif _, exists := result[outputDtsPath]; !exists {"},
-  {"line":193,"text":"\t\t\t\tresult[outputDtsPath] = mapping.Source"},
-  {"line":194,"text":"\t\t\t}"},
-  {"line":195,"text":"\t\t}"},
-  {"line":196,"text":"\t}"},
-  {"line":197,"text":"}"},
-  {"line":199,"text":"func createCheckerPool(program checker.Program) (getChecker func() (*checker.Checker, func()), closePool func(), getCreatedCount func() int32) {"},
-  {"line":200,"text":"\tmaxSize := int32(runtime.GOMAXPROCS(0))"},
-  {"line":201,"text":"\tpool := make(chan *checker.Checker, maxSize)"},
-  {"line":202,"text":"\tvar created atomic.Int32"},
-  {"line":204,"text":"\treturn func() (*checker.Checker, func()) {"},
-  {"line":206,"text":"\t\t\tselect {"},
-  {"line":207,"text":"\t\t\tcase ch := <-pool:"},
-  {"line":208,"text":"\t\t\t\treturn ch, func() { pool <- ch }"},
-  {"line":209,"text":"\t\t\tdefault:"},
-  {"line":210,"text":"\t\t\t\tbreak"},
-  {"line":211,"text":"\t\t\t}"},
-  {"line":213,"text":"\t\t\tfor {"},
-  {"line":214,"text":"\t\t\t\tcurrent := created.Load()"},
-  {"line":215,"text":"\t\t\t\tif current >= maxSize {"},
-  {"line":217,"text":"\t\t\t\t\tch := <-pool"},
-  {"line":218,"text":"\t\t\t\t\treturn ch, func() { pool <- ch }"},
-  {"line":219,"text":"\t\t\t\t}"},
-  {"line":220,"text":"\t\t\t\tif created.CompareAndSwap(current, current+1) {"},
-  {"line":221,"text":"\t\t\t\t\tch := core.FirstResult(checker.NewChecker(program, nil))"},
-  {"line":222,"text":"\t\t\t\t\treturn ch, func() { pool <- ch }"},
-  {"line":223,"text":"\t\t\t\t}"},
-  {"line":224,"text":"\t\t\t}"},
-  {"line":225,"text":"\t\t}, func() {"},
-  {"line":226,"text":"\t\t\tclose(pool)"},
-  {"line":227,"text":"\t\t}, func() int32 {"},
-  {"line":228,"text":"\t\t\treturn created.Load()"},
-  {"line":229,"text":"\t\t}"},
-  {"line":230,"text":"}"},
-  {"line":234,"text":"func addPackageJsonDependencies(contents *packagejson.PackageJson, deps *collections.Set[string]) {"},
-  {"line":235,"text":"\tcontents.RangeDependencies(func(name, _, field string) bool {"},
-  {"line":236,"text":"\t\tif name == \"\" || name == \"@types/\" || name[0] == '.' {"},
-  {"line":238,"text":"\t\t\treturn true"},
-  {"line":239,"text":"\t\t}"},
-  {"line":240,"text":"\t\tif field == \"dependencies\" || field == \"peerDependencies\" {"},
-  {"line":241,"text":"\t\t\tdeps.Add(module.GetPackageNameFromTypesPackageName(name))"},
-  {"line":242,"text":"\t\t}"},
-  {"line":243,"text":"\t\treturn true"},
-  {"line":244,"text":"\t})"},
-  {"line":245,"text":"}"},
-  {"line":253,"text":"func getPackageRealpathFuncs(fs vfs.FS, packageDir string) (toRealpath, toSymlink func(string) string) {"},
-  {"line":254,"text":"\trealPackageDir := fs.Realpath(packageDir)"},
-  {"line":255,"text":"\tisSymlinked := realPackageDir != packageDir"},
-  {"line":260,"text":"\tdirCache := make(map[string]string)"},
-  {"line":261,"text":"\ttoRealpath = func(fileName string) string {"},
-  {"line":263,"text":"\t\tif isSymlinked {"},
-  {"line":264,"text":"\t\t\tif after, ok := strings.CutPrefix(fileName, packageDir); ok {"},
-  {"line":265,"text":"\t\t\t\treturn realPackageDir + after"},
-  {"line":266,"text":"\t\t\t}"},
-  {"line":267,"text":"\t\t}"},
-  {"line":270,"text":"\t\tpkgDir := module.ParseNodeModuleFromPath(fileName, false /*isFolder*/)"},
-  {"line":271,"text":"\t\tif pkgDir == \"\" {"},
-  {"line":272,"text":"\t\t\treturn fileName"},
-  {"line":273,"text":"\t\t}"},
-  {"line":274,"text":"\t\tif realDir, ok := dirCache[pkgDir]; ok {"},
-  {"line":275,"text":"\t\t\tif realDir == pkgDir {"},
-  {"line":276,"text":"\t\t\t\treturn fileName"},
-  {"line":277,"text":"\t\t\t}"},
-  {"line":278,"text":"\t\t\treturn realDir + fileName[len(pkgDir):]"},
-  {"line":279,"text":"\t\t}"},
-  {"line":280,"text":"\t\trealDir := fs.Realpath(pkgDir)"},
-  {"line":281,"text":"\t\tdirCache[pkgDir] = realDir"},
-  {"line":282,"text":"\t\tif realDir == pkgDir {"},
-  {"line":283,"text":"\t\t\treturn fileName"},
-  {"line":284,"text":"\t\t}"},
-  {"line":285,"text":"\t\treturn realDir + fileName[len(pkgDir):]"},
-  {"line":286,"text":"\t}"},
-  {"line":287,"text":"\tif !isSymlinked {"},
-  {"line":288,"text":"\t\treturn toRealpath, core.Identity"},
-  {"line":289,"text":"\t}"},
-  {"line":293,"text":"\ttoSymlink = func(fileName string) string {"},
-  {"line":294,"text":"\t\tif after, ok := strings.CutPrefix(fileName, realPackageDir); ok {"},
-  {"line":295,"text":"\t\t\treturn packageDir + after"},
-  {"line":296,"text":"\t\t}"},
-  {"line":297,"text":"\t\treturn fileName"},
-  {"line":298,"text":"\t}"},
-  {"line":299,"text":"\treturn toRealpath, toSymlink"},
-  {"line":300,"text":"}"},
-  {"line":302,"text":"type resolutionHost struct {"},
-  {"line":303,"text":"\tfs               vfs.FS"},
-  {"line":304,"text":"\tcurrentDirectory string"},
-  {"line":305,"text":"}"},
-  {"line":307,"text":"var _ module.ResolutionHost = (*resolutionHost)(nil)"},
-  {"line":309,"text":"func (rh *resolutionHost) GetCurrentDirectory() string {"},
-  {"line":310,"text":"\treturn rh.currentDirectory"},
-  {"line":311,"text":"}"},
-  {"line":313,"text":"func (rh *resolutionHost) FS() vfs.FS {"},
-  {"line":314,"text":"\treturn rh.fs"},
-  {"line":315,"text":"}"},
-  {"line":317,"text":"func getModuleResolver(host RegistryCloneHost, realpath func(string) string, opts module.ResolverOptions) *module.Resolver {"},
-  {"line":318,"text":"\trh := &resolutionHost{"},
-  {"line":319,"text":"\t\tfs:               wrapvfs.Wrap(host.FS(), wrapvfs.Replacements{Realpath: realpath}),"},
-  {"line":320,"text":"\t\tcurrentDirectory: host.GetCurrentDirectory(),"},
-  {"line":321,"text":"\t}"},
-  {"line":322,"text":"\treturn module.NewResolverWithOptions(rh, core.EmptyCompilerOptions, \"\", \"\", opts)"},
-  {"line":323,"text":"}"},
-];
-
-export function findLsAutoimportUtilDeclaration(name: string): UpstreamDeclaration | undefined {
-  return lsAutoimportUtilDeclarations.find((declaration) => declaration.name === name);
+export interface ProjectReferenceMapping {
+  readonly source: string;
 }
 
-export function requireLsAutoimportUtilDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findLsAutoimportUtilDeclaration(name);
-  if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
-  return declaration;
+export interface ProjectReferenceForAutoImport {
+  parseInputOutputNames(): void;
+  outputDtsToProjectReference(): ReadonlyMap<Path, ProjectReferenceMapping>;
 }
 
-export function lsAutoimportUtilLineText(line: number): string | undefined {
-  return lsAutoimportUtilSourceLines.find((entry) => entry.line === line)?.text;
+export interface ProjectReferenceProgram {
+  getResolvedProjectReferences(): readonly (ProjectReferenceForAutoImport | undefined)[];
+}
+
+export interface RegistryCloneHostForModuleResolver {
+  getCurrentDirectory(): string;
+  fs(): FS;
+}
+
+export function tryGetModuleIDAndFileNameOfModuleSymbol(symbol: AstSymbol): ModuleSymbolLookupResult {
+  if (!isExternalModuleSymbol(symbol)) {
+    return ["", "", false];
+  }
+
+  const declaration = getNonAugmentationDeclaration(symbol);
+  if (declaration === undefined) {
+    return ["", "", false];
+  }
+
+  if (isSourceFile(declaration)) {
+    return [declaration.path, declaration.fileName, true];
+  }
+
+  if (isModuleWithStringLiteralName(declaration)) {
+    return [nodeText(declaration.name), "", true];
+  }
+
+  return ["", "", false];
+}
+
+export function getModuleIDAndFileNameOfModuleSymbol(symbol: AstSymbol): ModuleSymbolResult {
+  if (!isExternalModuleSymbol(symbol)) {
+    throw new Error("symbol is not an external module");
+  }
+
+  const declaration = getNonAugmentationDeclaration(symbol);
+  if (declaration === undefined) {
+    throw new Error("module symbol has no non-augmentation declaration");
+  }
+
+  if (isSourceFile(declaration)) {
+    return [declaration.path, declaration.fileName];
+  }
+
+  if (isModuleWithStringLiteralName(declaration)) {
+    return [nodeText(declaration.name), ""];
+  }
+
+  throw new Error("could not determine module ID of module symbol");
+}
+
+export function wordIndices(value: string): readonly number[] {
+  const indices: number[] = [];
+  for (let index = 0; index < value.length;) {
+    const runeValue = value.codePointAt(index);
+    if (runeValue === undefined) break;
+    const runeLength = runeValue > 0xffff ? 2 : 1;
+    if (index === 0) {
+      indices.push(index);
+      index += runeLength;
+      continue;
+    }
+    if (runeValue === 95) {
+      if (index + 1 < value.length && value.charCodeAt(index + 1) !== 95) {
+        indices.push(index + 1);
+      }
+      index += runeLength;
+      continue;
+    }
+    if (isUpperRune(runeValue) && (isLowerRune(previousRune(value, index)) || isLowerRune(nextRune(value, index + runeLength)))) {
+      indices.push(index);
+    }
+    index += runeLength;
+  }
+  return indices;
+}
+
+export function getPackageNamesInNodeModules(nodeModulesDir: string, fileSystem: FS): PackageNamesInNodeModulesResult {
+  const packageNames = new SetCollection<string>();
+  if (getBaseFileName(nodeModulesDir) !== "node_modules") {
+    throw new Error("nodeModulesDir is not a node_modules directory");
+  }
+  if (!fileSystem.directoryExists(nodeModulesDir)) {
+    return [undefined, errNotExist];
+  }
+  const entries = fileSystem.getAccessibleEntries(nodeModulesDir);
+  for (const baseName of entries.directories) {
+    if (baseName[0] === ".") {
+      continue;
+    }
+    if (baseName[0] === "@") {
+      const scopedDirPath = combinePaths(nodeModulesDir, baseName);
+      for (const scopedPackageDirName of fileSystem.getAccessibleEntries(scopedDirPath).directories) {
+        const scopedBaseName = getBaseFileName(scopedPackageDirName);
+        if (baseName === "@types") {
+          packageNames.add(getPackageNameFromTypesPackageName(combinePaths("@types", scopedBaseName)));
+        } else {
+          packageNames.add(combinePaths(baseName, scopedBaseName));
+        }
+      }
+      continue;
+    }
+    packageNames.add(baseName);
+  }
+  return [packageNames, undefined];
+}
+
+export function getDefaultLikeExportNameFromDeclaration(symbol: AstSymbol): string {
+  for (const declaration of symbol.declarations) {
+    if (isExportAssignment(declaration)) {
+      const innerExpression = skipOuterExpressions(declaration.expression);
+      if (isIdentifier(innerExpression)) {
+        return innerExpression.text;
+      }
+      continue;
+    }
+
+    if (
+      isExportSpecifier(declaration)
+      && (declaration.symbol?.flags ?? 0) === SymbolFlags.Alias
+      && declaration.propertyName !== undefined
+    ) {
+      if (declaration.propertyName.kind === Kind.Identifier) {
+        return nodeText(declaration.propertyName);
+      }
+      continue;
+    }
+
+    const name = getNameOfDeclaration(declaration);
+    if (name !== undefined && name.kind === Kind.Identifier) {
+      return nodeText(name);
+    }
+
+    if (symbol.parent !== undefined && !isExternalModuleSymbol(symbol.parent)) {
+      return symbolName(symbol.parent);
+    }
+  }
+  return "";
+}
+
+export function getResolvedPackageNames(ctx: unknown, program: AutoImportResolvedPackageProgram): SetCollection<string> {
+  const rawNames = program.resolvedPackageNames();
+  const unresolvedPackageNames = program.unresolvedPackageNames();
+  const resolvedPackageNames = newSetWithSizeHint<string>(collectionLength(rawNames));
+
+  for (const name of collectionKeys(rawNames)) {
+    resolvedPackageNames.add(getPackageNameFromTypesPackageName(name));
+  }
+
+  for (const name of program.options().types ?? []) {
+    if (name !== "*") {
+      resolvedPackageNames.add(getPackageNameFromTypesPackageName(name));
+    }
+  }
+
+  if (collectionLength(unresolvedPackageNames) > 0) {
+    const [checker, done] = program.getTypeChecker(ctx);
+    try {
+      for (const name of collectionKeys(unresolvedPackageNames)) {
+        const symbol = checker.tryFindAmbientModule(name);
+        if (symbol === undefined) {
+          continue;
+        }
+        const declaringFile = getSourceFileOfModule(symbol);
+        if (declaringFile === undefined) {
+          continue;
+        }
+        const packageName = getPackageNameFromDirectory(declaringFile.fileName);
+        if (packageName !== "") {
+          resolvedPackageNames.add(getPackageNameFromTypesPackageName(packageName));
+        }
+      }
+    } finally {
+      done();
+    }
+  }
+  return resolvedPackageNames;
+}
+
+export function addProjectReferenceOutputMappings(program: ProjectReferenceProgram, result: Map<Path, string>): void {
+  for (const reference of program.getResolvedProjectReferences()) {
+    if (reference === undefined) {
+      continue;
+    }
+    reference.parseInputOutputNames();
+    for (const [outputDtsPath, mapping] of reference.outputDtsToProjectReference()) {
+      if (!result.has(outputDtsPath)) {
+        result.set(outputDtsPath, mapping.source);
+      }
+    }
+  }
+}
+
+export function createCheckerPool(program: Program | undefined, maxSize = 1): CheckerPoolResult {
+  const limit = Math.max(1, Math.trunc(maxSize));
+  const pool: Checker[] = [];
+  let created = 0;
+  let closed = false;
+
+  const releaseChecker = (checker: Checker): void => {
+    if (closed) return;
+    pool.push(checker);
+  };
+
+  const getChecker = (): CheckerLease => {
+    if (closed) {
+      throw new Error("checker pool is closed");
+    }
+    const existing = pool.pop();
+    if (existing !== undefined) {
+      return [existing, once(() => releaseChecker(existing))];
+    }
+    if (created >= limit) {
+      throw new Error("checker pool exhausted; release a checker before acquiring another");
+    }
+    const checker = newChecker(program);
+    created += 1;
+    return [checker, once(() => releaseChecker(checker))];
+  };
+
+  return [
+    getChecker,
+    () => {
+      closed = true;
+      pool.length = 0;
+    },
+    () => created,
+  ];
+}
+
+export function addPackageJsonDependencies(contents: PackageJSON, deps: SetCollection<string>): void {
+  forEachDependency(contents, (name, _version, field) => {
+    if (name === "" || name === "@types/" || name[0] === ".") {
+      return true;
+    }
+    if (field === "dependencies" || field === "peerDependencies") {
+      deps.add(getPackageNameFromTypesPackageName(name));
+    }
+    return true;
+  });
+}
+
+export function getPackageRealpathFuncs(fileSystem: FS, packageDir: string): PackageRealpathFuncs {
+  const realPackageDir = fileSystem.realpath(packageDir);
+  const isSymlinked = realPackageDir !== packageDir;
+  const dirCache = new Map<string, string>();
+
+  const toRealpath = (fileName: string): string => {
+    if (isSymlinked && fileName.startsWith(packageDir)) {
+      return realPackageDir + fileName.slice(packageDir.length);
+    }
+
+    const pkgDir = parseNodeModuleFromPath(fileName, false);
+    if (pkgDir === "") {
+      return fileName;
+    }
+
+    const cachedRealDir = dirCache.get(pkgDir);
+    if (cachedRealDir !== undefined) {
+      if (cachedRealDir === pkgDir) {
+        return fileName;
+      }
+      return cachedRealDir + fileName.slice(pkgDir.length);
+    }
+
+    const realDir = fileSystem.realpath(pkgDir);
+    dirCache.set(pkgDir, realDir);
+    if (realDir === pkgDir) {
+      return fileName;
+    }
+    return realDir + fileName.slice(pkgDir.length);
+  };
+
+  if (!isSymlinked) {
+    return [toRealpath, identity];
+  }
+
+  const toSymlink = (fileName: string): string => {
+    if (fileName.startsWith(realPackageDir)) {
+      return packageDir + fileName.slice(realPackageDir.length);
+    }
+    return fileName;
+  };
+  return [toRealpath, toSymlink];
+}
+
+export class ResolutionHost implements ResolverHost {
+  private readonly fileSystem: FS;
+  private readonly currentDirectoryValue: string;
+
+  constructor(fileSystem: FS, currentDirectory: string) {
+    this.fileSystem = fileSystem;
+    this.currentDirectoryValue = currentDirectory;
+  }
+
+  useCaseSensitiveFileNames(): boolean {
+    return this.fileSystem.useCaseSensitiveFileNames();
+  }
+
+  getCurrentDirectory(): string {
+    return this.currentDirectoryValue;
+  }
+
+  fileExists(path: string): boolean {
+    return this.fileSystem.fileExists(path);
+  }
+
+  directoryExists(path: string): boolean {
+    return this.fileSystem.directoryExists(path);
+  }
+
+  readFile(path: string): string | undefined {
+    return this.fileSystem.readFile(path);
+  }
+
+  realpath(path: string): string {
+    return this.fileSystem.realpath(path);
+  }
+
+  getAccessibleEntries(path: string): Entries {
+    return this.fileSystem.getAccessibleEntries(path);
+  }
+}
+
+export function getModuleResolver(
+  host: RegistryCloneHostForModuleResolver,
+  realpath: (fileName: string) => string,
+  opts: Partial<CompilerOptions> = {},
+): Resolver {
+  const resolutionHost = new ResolutionHost(
+    wrap(host.fs(), { realpath }),
+    host.getCurrentDirectory(),
+  );
+  return new Resolver(
+    resolutionHost,
+    { ...emptyCompilerOptions, ...opts },
+    undefined,
+    "",
+    "",
+  );
+}
+
+function getNonAugmentationDeclaration(symbol: AstSymbol): AstNode | undefined {
+  for (const declaration of symbol.declarations) {
+    if (!isGlobalScopeAugmentation(declaration)) {
+      return declaration;
+    }
+  }
+  return undefined;
+}
+
+function isGlobalScopeAugmentation(node: AstNode): boolean {
+  return node.kind === Kind.ModuleDeclaration && nodeText((node as { readonly name?: AstNode }).name) === "global";
+}
+
+function isModuleWithStringLiteralName(node: AstNode): node is AstNode & { readonly name: AstNode } {
+  return node.kind === Kind.ModuleDeclaration && (node as { readonly name?: AstNode }).name?.kind === Kind.StringLiteral;
+}
+
+function skipOuterExpressions(node: AstNode): AstNode {
+  let current = node;
+  for (;;) {
+    if (
+      current.kind !== Kind.ParenthesizedExpression
+      && current.kind !== Kind.TypeAssertionExpression
+      && current.kind !== Kind.AsExpression
+      && current.kind !== Kind.SatisfiesExpression
+      && current.kind !== Kind.ExpressionWithTypeArguments
+      && current.kind !== Kind.NonNullExpression
+      && current.kind !== Kind.PartiallyEmittedExpression
+    ) {
+      return current;
+    }
+    const expression = (current as { readonly expression?: AstNode }).expression;
+    if (expression === undefined) {
+      return current;
+    }
+    current = expression;
+  }
+}
+
+function getNameOfDeclaration(node: AstNode): AstNode | undefined {
+  return (node as { readonly name?: AstNode }).name;
+}
+
+function getSourceFileOfModule(symbol: AstSymbol): SourceFile | undefined {
+  const declaration = getNonAugmentationDeclaration(symbol);
+  if (declaration === undefined) {
+    return undefined;
+  }
+  if (isSourceFile(declaration)) {
+    return declaration;
+  }
+
+  let current: AstNode | undefined = declaration;
+  while (current !== undefined && !isSourceFile(current)) {
+    current = current.parent;
+  }
+  return current;
+}
+
+function isExternalModuleSymbol(symbol: AstSymbol): boolean {
+  const symbolObject = symbol as AstSymbol & {
+    readonly isExternalModule?: () => boolean;
+    readonly IsExternalModule?: () => boolean;
+  };
+  const lowerResult = symbolObject.isExternalModule?.();
+  if (lowerResult !== undefined) {
+    return lowerResult;
+  }
+  const upperResult = symbolObject.IsExternalModule?.();
+  if (upperResult !== undefined) {
+    return upperResult;
+  }
+  return ((symbol.flags ?? 0) & SymbolFlags.Module) !== 0 && symbolName(symbol).startsWith("\"");
+}
+
+function symbolName(symbol: AstSymbol): string {
+  return symbol.name ?? symbol.escapedName ?? "";
+}
+
+function collectionLength<T>(collection: Iterable<T> | SetCollection<T>): number {
+  if (collection instanceof SetCollection) {
+    return collection.len();
+  }
+  if (collection instanceof Set) {
+    return collection.size;
+  }
+  if (collection instanceof Map) {
+    return collection.size;
+  }
+  let count = 0;
+  for (const _value of collection) {
+    count += 1;
+  }
+  return count;
+}
+
+function collectionKeys<T>(collection: Iterable<T> | SetCollection<T>): Iterable<T> {
+  if (collection instanceof SetCollection) {
+    return collection.keys();
+  }
+  return collection;
+}
+
+function previousRune(value: string, index: number): number | undefined {
+  if (index <= 0) {
+    return undefined;
+  }
+  const previous = value.codePointAt(index - 1);
+  const first = previous === undefined || !isLowSurrogate(previous) || index < 2
+    ? index - 1
+    : index - 2;
+  return value.codePointAt(first);
+}
+
+function nextRune(value: string, index: number): number | undefined {
+  if (index >= value.length) {
+    return undefined;
+  }
+  return value.codePointAt(index);
+}
+
+function isLowSurrogate(value: number): boolean {
+  return value >= 0xdc00 && value <= 0xdfff;
+}
+
+function isUpperRune(value: number | undefined): boolean {
+  if (value === undefined) {
+    return false;
+  }
+  const text = String.fromCodePoint(value);
+  return text.toLocaleUpperCase() === text && text.toLocaleLowerCase() !== text;
+}
+
+function isLowerRune(value: number | undefined): boolean {
+  if (value === undefined) {
+    return false;
+  }
+  const text = String.fromCodePoint(value);
+  return text.toLocaleLowerCase() === text && text.toLocaleUpperCase() !== text;
+}
+
+function once(action: () => void): () => void {
+  let done = false;
+  return () => {
+    if (done) return;
+    done = true;
+    action();
+  };
 }
