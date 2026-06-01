@@ -1,3 +1,392 @@
+import {
+  Kind,
+  NodeFlags,
+  SymbolFlags,
+  isIdentifier,
+  type Node,
+  type SourceFile,
+  type Symbol as AstSymbol,
+} from "../ast/index.js";
+import { ModifierFlags } from "../enums/index.js";
+import type { Signature, Type } from "../checker/types.js";
+import type { ImportAdder } from "./autoimport/importAdder.js";
+import { type QuotePreference, QuotePreferenceSingle, type UserPreferences, getQuotePreference } from "./lsutil/index.js";
+
+export type PreserveOptionalFlags = number;
+export const PreserveOptionalFlagsMethod: PreserveOptionalFlags = 1 << 0;
+export const PreserveOptionalFlagsProperty: PreserveOptionalFlags = 1 << 1;
+export const PreserveOptionalFlagsAll: PreserveOptionalFlags = PreserveOptionalFlagsMethod | PreserveOptionalFlagsProperty;
+
+export interface MissingMemberProgram {
+  options(): {
+    readonly noImplicitOverride?: boolean | "on" | "off" | "auto";
+  };
+}
+
+export interface MissingMemberChecker {
+  getWidenedType?(type: Type): Type;
+  getTypeOfSymbolAtLocation?(symbol: AstSymbol, node: Node): Type;
+  getCallSignatures?(type: Type): readonly Signature[];
+  getReturnTypeOfSignature?(signature: Signature): Type;
+  getUnionType?(types: readonly Type[]): Type;
+  getSignatureFromDeclaration?(node: Node): Signature | undefined;
+  getDeclarationModifierFlagsFromSymbol?(symbol: AstSymbol): ModifierFlags;
+  getNameTypeOfSymbol?(symbol: AstSymbol): Type | undefined;
+  isTypeUsableAsPropertyName?(type: Type): boolean;
+  getPropertyNameFromType?(type: Type): string;
+}
+
+export interface MissingMemberNodeBuilder {
+  typeToTypeNode?(type: Type, enclosingDeclaration: Node, flags: number): Node | undefined;
+  signatureToSignatureDeclaration?(signature: Signature, kind: Kind, enclosingDeclaration: Node, flags: number): Node | undefined;
+  indexInfoToIndexSignatureDeclaration?(indexInfo: unknown, classDeclaration: Node, flags: number): Node | undefined;
+}
+
+export interface MissingMemberFactory {
+  createIdentifier(text: string): Node;
+  cloneNode(node: Node): Node;
+  createQuestionToken?(): Node;
+}
+
+export interface MissingMemberFixerOptions {
+  readonly typeChecker: MissingMemberChecker;
+  readonly program: MissingMemberProgram;
+  readonly preferences: UserPreferences;
+  readonly importAdder?: ImportAdder;
+  readonly factory?: MissingMemberFactory;
+  readonly nodeBuilderFactory?: (idToSymbol: Map<Node, AstSymbol>) => MissingMemberNodeBuilder;
+  readonly locale?: string;
+}
+
+export interface DummyParameter {
+  readonly name: string;
+  readonly optional: boolean;
+  readonly type: Node | undefined;
+}
+
+export interface StubbedMethodBody {
+  readonly kind: "stubbed-method-body";
+  readonly message: string;
+  readonly quotePreference: QuotePreference;
+}
+
+export class MissingMemberFixer {
+  readonly #typeChecker: MissingMemberChecker;
+  readonly #program: MissingMemberProgram;
+  readonly #preferences: UserPreferences;
+  readonly #importAdder: ImportAdder | undefined;
+  readonly #factory: MissingMemberFactory | undefined;
+  readonly #nodeBuilderFactory: ((idToSymbol: Map<Node, AstSymbol>) => MissingMemberNodeBuilder) | undefined;
+  readonly #locale: string;
+
+  constructor(options: MissingMemberFixerOptions) {
+    this.#typeChecker = options.typeChecker;
+    this.#program = options.program;
+    this.#preferences = options.preferences;
+    this.#importAdder = options.importAdder;
+    this.#factory = options.factory;
+    this.#nodeBuilderFactory = options.nodeBuilderFactory;
+    this.#locale = options.locale ?? "en";
+  }
+
+  createNodeBuilder(): readonly [MissingMemberNodeBuilder, Map<Node, AstSymbol>] {
+    const idToSymbol = new Map<Node, AstSymbol>();
+    return [this.#nodeBuilderFactory?.(idToSymbol) ?? {}, idToSymbol];
+  }
+
+  createMemberFromSymbol(
+    symbol: AstSymbol,
+    enclosingDeclaration: Node,
+    sourceFile: SourceFile,
+    body: Node | undefined,
+    preserveOptional: PreserveOptionalFlags,
+  ): readonly Node[] {
+    const declarations = symbol.declarations;
+    const declaration = declarations[0];
+    const quotePreference = getQuotePreference(sourceFile, this.#preferences);
+    const optional = ((symbol.flags ?? 0) & SymbolFlags.Optional) !== 0;
+    const kind = declaration?.kind ?? Kind.PropertySignature;
+    const declarationName = this.createDeclarationName(symbol, declaration);
+    const modifiers = this.createModifiers(symbol, declaration);
+    const symbolType = this.#typeChecker.getTypeOfSymbolAtLocation?.(symbol, enclosingDeclaration);
+    const widenedType = symbolType === undefined ? undefined : this.#typeChecker.getWidenedType?.(symbolType) ?? symbolType;
+
+    switch (kind) {
+      case Kind.PropertySignature:
+      case Kind.PropertyDeclaration:
+        return declarationName === undefined || widenedType === undefined
+          ? []
+          : [this.createPropertyMemberNode(declarationName, widenedType, enclosingDeclaration, quotePreference, optional && (preserveOptional & PreserveOptionalFlagsProperty) !== 0, modifiers)];
+      case Kind.MethodSignature:
+      case Kind.MethodDeclaration: {
+        const signatures = widenedType === undefined ? [] : this.getCallSignatures(widenedType);
+        if (signatures.length === 0 || declarationName === undefined) return [];
+        const method = this.createSignatureDeclarationFromSignatures(
+          signatures,
+          declarationName,
+          optional && (preserveOptional & PreserveOptionalFlagsMethod) !== 0,
+          modifiers,
+          quotePreference,
+          body,
+          enclosingDeclaration,
+        );
+        return method === undefined ? [] : [method];
+      }
+      default:
+        return [];
+    }
+  }
+
+  getCallSignatures(type: Type): readonly Signature[] {
+    const unionTypes = (type as { readonly types?: readonly Type[] }).types;
+    if (unionTypes !== undefined) return unionTypes.flatMap((unionType) => this.#typeChecker.getCallSignatures?.(unionType) ?? []);
+    return this.#typeChecker.getCallSignatures?.(type) ?? [];
+  }
+
+  createTypeNode(type: Type, enclosingDeclaration: Node, flags: number, nodeBuilder: MissingMemberNodeBuilder, idToSymbol: ReadonlyMap<Node, AstSymbol>): Node | undefined {
+    return this.importTypeNode(nodeBuilder.typeToTypeNode?.(type, enclosingDeclaration, flags), idToSymbol);
+  }
+
+  createModifiers(symbol: AstSymbol, declaration: Node | undefined): ModifierFlags {
+    let modifierFlags = ModifierFlags.None;
+    if (declaration !== undefined) {
+      const effective = this.#typeChecker.getDeclarationModifierFlagsFromSymbol?.(symbol) ?? ModifierFlags.None;
+      modifierFlags = effective & ModifierFlags.Static;
+      if ((effective & ModifierFlags.Public) !== 0) modifierFlags |= ModifierFlags.Public;
+      else if ((effective & ModifierFlags.Protected) !== 0) modifierFlags |= ModifierFlags.Protected;
+      if (isAutoAccessorPropertyDeclaration(declaration)) modifierFlags |= ModifierFlags.Accessor;
+    }
+    if (this.shouldAddOverrideKeyword(declaration)) modifierFlags |= ModifierFlags.Override;
+    return modifierFlags;
+  }
+
+  shouldAddOverrideKeyword(declaration: Node | undefined): boolean {
+    return declaration !== undefined
+      && tristateIsTrue(this.#program.options().noImplicitOverride)
+      && hasAbstractModifier(declaration);
+  }
+
+  createSignatureDeclarationFromSignatures(
+    signatures: readonly Signature[],
+    name: Node,
+    optional: boolean,
+    _modifiers: ModifierFlags,
+    quotePreference: QuotePreference,
+    body: Node | undefined,
+    enclosingDeclaration: Node,
+  ): Node | undefined {
+    if (signatures.length === 0) return undefined;
+    const [nodeBuilder, idToSymbol] = this.createNodeBuilder();
+    let maxArgsSignature = signatures[0]!;
+    let minArgumentCount = maxArgsSignature.minArgumentCount;
+    let hasRestParameter = false;
+
+    for (const signature of signatures) {
+      minArgumentCount = Math.min(minArgumentCount, signature.minArgumentCount);
+      const signatureHasRest = hasRestParameterSignature(signature);
+      hasRestParameter ||= signatureHasRest;
+      if (signature.parameters.length >= maxArgsSignature.parameters.length && (!signatureHasRest || hasRestParameterSignature(maxArgsSignature))) {
+        maxArgsSignature = signature;
+      }
+    }
+
+    const maxNonRestArgs = maxArgsSignature.parameters.length - (hasRestParameterSignature(maxArgsSignature) ? 1 : 0);
+    const parameterNames = maxArgsSignature.parameters.map((symbol) => symbol.name ?? "");
+    const parameters = createDummyParameters(maxNonRestArgs, parameterNames, undefined, minArgumentCount, isInJSFile(enclosingDeclaration));
+
+    if (hasRestParameter) {
+      const restName = maxNonRestArgs < parameterNames.length && parameterNames[maxNonRestArgs] !== ""
+        ? parameterNames[maxNonRestArgs]!
+        : "rest";
+      parameters.push({
+        name: restName,
+        optional: maxNonRestArgs >= minArgumentCount,
+        type: undefined,
+      });
+    }
+
+    const returnType = this.getReturnTypeFromSignatures(signatures, enclosingDeclaration, nodeBuilder, idToSymbol);
+    return this.createMethodShape(name, optional, parameters, returnType, body ?? this.createBody(undefined, false, quotePreference));
+  }
+
+  getReturnTypeFromSignatures(
+    signatures: readonly Signature[],
+    enclosingDeclaration: Node,
+    nodeBuilder: MissingMemberNodeBuilder,
+    idToSymbol: ReadonlyMap<Node, AstSymbol>,
+  ): Node | undefined {
+    const returnTypes = signatures
+      .map((signature) => this.#typeChecker.getReturnTypeOfSignature?.(signature))
+      .filter((type): type is Type => type !== undefined);
+    if (returnTypes.length === 0) return undefined;
+    const unionType = this.#typeChecker.getUnionType?.(returnTypes) ?? returnTypes[0]!;
+    return this.importTypeNode(nodeBuilder.typeToTypeNode?.(unionType, enclosingDeclaration, 0), idToSymbol);
+  }
+
+  importTypeNode(typeNode: Node | undefined, idToSymbol: ReadonlyMap<Node, AstSymbol>): Node | undefined {
+    if (typeNode === undefined || this.#importAdder === undefined) return typeNode;
+    const seen = new Set<AstSymbol>();
+    for (const symbol of idToSymbol.values()) {
+      if (seen.has(symbol)) continue;
+      seen.add(symbol);
+      this.#importAdder.addImportFromExportedSymbol(symbol, true);
+    }
+    return typeNode;
+  }
+
+  createBody(body: Node | undefined, ambient: boolean, quotePreference: QuotePreference): Node | StubbedMethodBody | undefined {
+    if (ambient) return undefined;
+    if (body !== undefined) return this.#factory?.cloneNode(body) ?? body;
+    return this.createStubbedMethodBody(quotePreference);
+  }
+
+  createStubbedMethodBody(quotePreference: QuotePreference): StubbedMethodBody {
+    return {
+      kind: "stubbed-method-body",
+      message: this.#locale === "" ? "Method not implemented." : "Method not implemented.",
+      quotePreference,
+    };
+  }
+
+  createDeclarationName(symbol: AstSymbol | undefined, declaration: Node | undefined): Node | undefined {
+    const symbolCheckFlags = (symbol as { readonly checkFlags?: number } | undefined)?.checkFlags ?? 0;
+    if (symbol !== undefined && symbolCheckFlags !== 0) {
+      const nameType = this.#typeChecker.getNameTypeOfSymbol?.(symbol);
+      if (nameType !== undefined && this.#typeChecker.isTypeUsableAsPropertyName?.(nameType) === true) {
+        const name = this.#typeChecker.getPropertyNameFromType?.(nameType);
+        if (name !== undefined) return this.#factory?.createIdentifier(name);
+      }
+    }
+    const declarationName = declarationNameNode(declaration);
+    if (declarationName !== undefined) return this.#factory?.cloneNode(declarationName) ?? declarationName;
+    const symbolName = symbol?.name ?? symbol?.escapedName;
+    return symbolName === undefined ? undefined : this.#factory?.createIdentifier(symbolName);
+  }
+
+  createPropertyName(node: Node, quotePreference: QuotePreference): Node {
+    if (isIdentifier(node) && nodeText(node) === "constructor" && quotePreference === QuotePreferenceSingle) {
+      return this.#factory?.cloneNode(node) ?? node;
+    }
+    return this.#factory?.cloneNode(node) ?? node;
+  }
+
+  private createPropertyMemberNode(
+    name: Node,
+    type: Type,
+    enclosingDeclaration: Node,
+    quotePreference: QuotePreference,
+    optional: boolean,
+    modifiers: ModifierFlags,
+  ): Node {
+    const [nodeBuilder, idToSymbol] = this.createNodeBuilder();
+    const typeNode = this.createTypeNode(type, enclosingDeclaration, 0, nodeBuilder, idToSymbol);
+    return this.createMemberShape(this.createPropertyName(name, quotePreference), typeNode, optional, modifiers);
+  }
+
+  private createMemberShape(name: Node, _typeNode: Node | undefined, _optional: boolean, _modifiers: ModifierFlags): Node {
+    return this.#factory?.cloneNode(name) ?? name;
+  }
+
+  private createMethodShape(
+    name: Node,
+    _optional: boolean,
+    _parameters: readonly DummyParameter[],
+    _returnType: Node | undefined,
+    _body: Node | StubbedMethodBody | undefined,
+  ): Node {
+    return this.#factory?.cloneNode(name) ?? name;
+  }
+}
+
+export function newMissingMemberFixer(options: MissingMemberFixerOptions): MissingMemberFixer {
+  return new MissingMemberFixer(options);
+}
+
+export function createDummyParameters(
+  argCount: number,
+  names: readonly string[],
+  types: readonly Node[] | undefined,
+  minArgumentCount: number,
+  inJS: boolean,
+): DummyParameter[] {
+  const parameters: DummyParameter[] = [];
+  const parameterNameCounts = new Map<string, number>();
+  for (let index = 0; index < argCount; index += 1) {
+    let parameterName = index < names.length && names[index] !== "" ? names[index]! : "arg" + index.toString();
+    const count = parameterNameCounts.get(parameterName) ?? 0;
+    parameterNameCounts.set(parameterName, count + 1);
+    if (count > 0) parameterName += count.toString();
+    parameters.push({
+      name: parameterName,
+      optional: index >= minArgumentCount,
+      type: inJS ? undefined : types?.[index],
+    });
+  }
+  return parameters;
+}
+
+export function createDeclarationName(
+  factory: MissingMemberFactory | undefined,
+  typeChecker: MissingMemberChecker,
+  symbol: AstSymbol | undefined,
+  declaration: Node | undefined,
+): Node | undefined {
+  const options: {
+    typeChecker: MissingMemberChecker;
+    program: MissingMemberProgram;
+    preferences: UserPreferences;
+    factory?: MissingMemberFactory;
+  } = {
+    typeChecker,
+    program: { options: () => ({}) },
+    preferences: {},
+  };
+  if (factory !== undefined) options.factory = factory;
+  return new MissingMemberFixer(options).createDeclarationName(symbol, declaration);
+}
+
+export function createPropertyName(
+  factory: MissingMemberFactory | undefined,
+  node: Node,
+  quotePreference: QuotePreference,
+): Node {
+  return factory?.cloneNode(node) ?? node;
+}
+
+function declarationNameNode(node: Node | undefined): Node | undefined {
+  return (node as { readonly name?: Node } | undefined)?.name;
+}
+
+function hasAbstractModifier(node: Node): boolean {
+  return modifiersOf(node).some((modifier) => modifier.kind === Kind.AbstractKeyword);
+}
+
+function isAutoAccessorPropertyDeclaration(node: Node): boolean {
+  return modifiersOf(node).some((modifier) => modifier.kind === Kind.AccessorKeyword);
+}
+
+function modifiersOf(node: Node): readonly Node[] {
+  return (node as { readonly modifiers?: readonly Node[] }).modifiers ?? [];
+}
+
+function hasRestParameterSignature(signature: Signature): boolean {
+  return ((signature.flags ?? 0) & 1) !== 0 || signature.parameters.some((parameter) =>
+    parameter.valueDeclaration !== undefined && parameter.valueDeclaration.kind === Kind.Parameter
+    && (parameter.valueDeclaration as { readonly dotDotDotToken?: Node }).dotDotDotToken !== undefined);
+}
+
+function isInJSFile(node: Node): boolean {
+  return (node.getSourceFile().flags & NodeFlags.JavaScriptFile) !== 0;
+}
+
+function nodeText(node: Node): string {
+  return (node as { readonly text?: string }).text ?? "";
+}
+
+function tristateIsTrue(value: boolean | "on" | "off" | "auto" | undefined): boolean {
+  return value === true || value === "on";
+}
+
 // Language-service parity map: internal/ls/codeactions_missingmemberfixer.go
 /**
  * Language-service parity map for TS-Go `ls/codeactions_missingmemberfixer.go`.
