@@ -43,6 +43,7 @@ import "./ls/lsconv/lineMap.test.js";
 import "./ls/lsutil/asi.test.js";
 import "./ls/lsutil/completedNode.test.js";
 import "./ls/lsutil/formatCodeOptions.test.js";
+import "./ls/lsutil/symbolDisplay.test.js";
 import "./ls/lsutil/utilities.test.js";
 import "./ls/linkedEditing.test.js";
 import "./ls/selectionRanges.test.js";

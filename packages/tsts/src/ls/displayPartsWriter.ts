@@ -1,5 +1,4 @@
 import {
-  Kind,
   SymbolFlags,
   type Symbol,
 } from "../ast/index.js";
@@ -28,6 +27,7 @@ import {
 } from "../lsp/lsproto/index.js";
 import type { EmitTextWriter } from "../printer/index.js";
 import { isWhiteSpaceLike } from "../stringutil/util.js";
+import { isFirstDeclarationOfSymbolParameter } from "./lsutil/symbolDisplay.js";
 
 export class DisplayPartsWriter implements EmitTextWriter {
   readonly vsCapability: boolean;
@@ -249,10 +249,6 @@ export function classificationForSymbol(symbol: Symbol | undefined): Classificat
     return ClassificationTypeNameIdentifier;
   }
   return ClassificationTypeNameText;
-}
-
-export function isFirstDeclarationOfSymbolParameter(symbol: Symbol): boolean {
-  return symbol.declarations.length > 0 && symbol.declarations[0]!.kind === Kind.Parameter;
 }
 
 function lastUnicodeCodePoint(text: string): number | undefined {

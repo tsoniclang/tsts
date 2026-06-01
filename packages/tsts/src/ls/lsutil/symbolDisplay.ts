@@ -1,416 +1,440 @@
-/**
- * Language-service parity map for TS-Go `ls/lsutil/symbol_display.go`.
- *
- * This file preserves the upstream declaration and algorithm-line shape
- * for the TypeScript port. Runtime behavior is implemented by the
- * concrete modules that consume these exact parity maps.
- */
+import {
+  Kind,
+  NodeFlags,
+  SymbolFlags,
+  getCombinedModifierFlags,
+  getCombinedNodeFlags,
+  hasSyntacticModifier,
+  isArrayBindingPattern,
+  isBindingElement,
+  isDeclaration,
+  isExpression,
+  isFunctionBlock,
+  isFunctionExpression,
+  isObjectBindingPattern,
+  isParameterDeclaration,
+  type Node,
+  type Symbol,
+} from "../../ast/index.js";
+import { CheckFlags } from "../../ast/checkFlags.js";
+import { ModifierFlags } from "../../enums/modifierFlags.enum.js";
+import { SignatureKind, type SignatureKind as SignatureKindValue, type Type } from "../../checker/types.js";
 
-export interface UpstreamSourceLine {
-  readonly line: number;
-  readonly text: string;
-}
+export type ScriptElementKind = number;
 
-export interface UpstreamDeclaration {
-  readonly kind: "type" | "func" | "const" | "var";
-  readonly line: number;
+export const ScriptElementKindUnknown: ScriptElementKind = 0;
+export const ScriptElementKindWarning: ScriptElementKind = 1;
+export const ScriptElementKindKeyword: ScriptElementKind = 2;
+export const ScriptElementKindScriptElement: ScriptElementKind = 3;
+export const ScriptElementKindModuleElement: ScriptElementKind = 4;
+export const ScriptElementKindClassElement: ScriptElementKind = 5;
+export const ScriptElementKindLocalClassElement: ScriptElementKind = 6;
+export const ScriptElementKindInterfaceElement: ScriptElementKind = 7;
+export const ScriptElementKindTypeElement: ScriptElementKind = 8;
+export const ScriptElementKindEnumElement: ScriptElementKind = 9;
+export const ScriptElementKindEnumMemberElement: ScriptElementKind = 10;
+export const ScriptElementKindVariableElement: ScriptElementKind = 11;
+export const ScriptElementKindLocalVariableElement: ScriptElementKind = 12;
+export const ScriptElementKindVariableUsingElement: ScriptElementKind = 13;
+export const ScriptElementKindVariableAwaitUsingElement: ScriptElementKind = 14;
+export const ScriptElementKindFunctionElement: ScriptElementKind = 15;
+export const ScriptElementKindLocalFunctionElement: ScriptElementKind = 16;
+export const ScriptElementKindMemberFunctionElement: ScriptElementKind = 17;
+export const ScriptElementKindMemberGetAccessorElement: ScriptElementKind = 18;
+export const ScriptElementKindMemberSetAccessorElement: ScriptElementKind = 19;
+export const ScriptElementKindMemberVariableElement: ScriptElementKind = 20;
+export const ScriptElementKindMemberAccessorVariableElement: ScriptElementKind = 21;
+export const ScriptElementKindConstructorImplementationElement: ScriptElementKind = 22;
+export const ScriptElementKindCallSignatureElement: ScriptElementKind = 23;
+export const ScriptElementKindIndexSignatureElement: ScriptElementKind = 24;
+export const ScriptElementKindConstructSignatureElement: ScriptElementKind = 25;
+export const ScriptElementKindParameterElement: ScriptElementKind = 26;
+export const ScriptElementKindTypeParameterElement: ScriptElementKind = 27;
+export const ScriptElementKindPrimitiveType: ScriptElementKind = 28;
+export const ScriptElementKindLabel: ScriptElementKind = 29;
+export const ScriptElementKindAlias: ScriptElementKind = 30;
+export const ScriptElementKindConstElement: ScriptElementKind = 31;
+export const ScriptElementKindLetElement: ScriptElementKind = 32;
+export const ScriptElementKindDirectory: ScriptElementKind = 33;
+export const ScriptElementKindExternalModuleName: ScriptElementKind = 34;
+export const ScriptElementKindString: ScriptElementKind = 35;
+export const ScriptElementKindLink: ScriptElementKind = 36;
+export const ScriptElementKindLinkName: ScriptElementKind = 37;
+export const ScriptElementKindLinkText: ScriptElementKind = 38;
+
+export type ScriptElementKindModifier = number;
+
+export const ScriptElementKindModifierNone: ScriptElementKindModifier = 0;
+export const ScriptElementKindModifierPublic: ScriptElementKindModifier = 1 << 1;
+export const ScriptElementKindModifierPrivate: ScriptElementKindModifier = 1 << 2;
+export const ScriptElementKindModifierProtected: ScriptElementKindModifier = 1 << 3;
+export const ScriptElementKindModifierExported: ScriptElementKindModifier = 1 << 4;
+export const ScriptElementKindModifierAmbient: ScriptElementKindModifier = 1 << 5;
+export const ScriptElementKindModifierStatic: ScriptElementKindModifier = 1 << 6;
+export const ScriptElementKindModifierAbstract: ScriptElementKindModifier = 1 << 7;
+export const ScriptElementKindModifierOptional: ScriptElementKindModifier = 1 << 8;
+export const ScriptElementKindModifierDeprecated: ScriptElementKindModifier = 1 << 9;
+export const ScriptElementKindModifierDts: ScriptElementKindModifier = 1 << 10;
+export const ScriptElementKindModifierTs: ScriptElementKindModifier = 1 << 11;
+export const ScriptElementKindModifierTsx: ScriptElementKindModifier = 1 << 12;
+export const ScriptElementKindModifierJs: ScriptElementKindModifier = 1 << 13;
+export const ScriptElementKindModifierJsx: ScriptElementKindModifier = 1 << 14;
+export const ScriptElementKindModifierJson: ScriptElementKindModifier = 1 << 15;
+export const ScriptElementKindModifierDmts: ScriptElementKindModifier = 1 << 16;
+export const ScriptElementKindModifierMts: ScriptElementKindModifier = 1 << 17;
+export const ScriptElementKindModifierMjs: ScriptElementKindModifier = 1 << 18;
+export const ScriptElementKindModifierDcts: ScriptElementKindModifier = 1 << 19;
+export const ScriptElementKindModifierCts: ScriptElementKindModifier = 1 << 20;
+export const ScriptElementKindModifierCjs: ScriptElementKindModifier = 1 << 21;
+
+interface ScriptElementKindModifierName {
+  readonly flag: ScriptElementKindModifier;
   readonly name: string;
-  readonly receiver?: string;
 }
 
-export const lsLsutilSymbolDisplayUpstreamPath = "ls/lsutil/symbol_display.go";
-
-export const lsLsutilSymbolDisplayDeclarations: readonly UpstreamDeclaration[] = [
-  {"line":10,"kind":"type","name":"ScriptElementKind"},
-  {"line":85,"kind":"type","name":"ScriptElementKindModifier"},
-  {"line":112,"kind":"var","name":"scriptElementKindModifierNames"},
-  {"line":139,"kind":"func","name":"Strings","receiver":"m ScriptElementKindModifier"},
-  {"line":149,"kind":"var","name":"FileExtensionKindModifiers"},
-  {"line":162,"kind":"func","name":"GetSymbolKind"},
-  {"line":200,"kind":"func","name":"getSymbolKindOfConstructorPropertyMethodAccessorFunctionOrVar"},
-  {"line":299,"kind":"func","name":"isFirstDeclarationOfSymbolParameter"},
-  {"line":317,"kind":"func","name":"isLocalVariableOrFunction"},
-  {"line":349,"kind":"func","name":"GetSymbolModifiers"},
-  {"line":368,"kind":"func","name":"getNormalizedSymbolModifiers"},
-  {"line":388,"kind":"func","name":"isDeprecatedDeclaration"},
-  {"line":395,"kind":"func","name":"getNodeModifiers"},
+const scriptElementKindModifierNames: readonly ScriptElementKindModifierName[] = [
+  { flag: ScriptElementKindModifierPublic, name: "public" },
+  { flag: ScriptElementKindModifierPrivate, name: "private" },
+  { flag: ScriptElementKindModifierProtected, name: "protected" },
+  { flag: ScriptElementKindModifierExported, name: "export" },
+  { flag: ScriptElementKindModifierAmbient, name: "declare" },
+  { flag: ScriptElementKindModifierStatic, name: "static" },
+  { flag: ScriptElementKindModifierAbstract, name: "abstract" },
+  { flag: ScriptElementKindModifierOptional, name: "optional" },
+  { flag: ScriptElementKindModifierDeprecated, name: "deprecated" },
+  { flag: ScriptElementKindModifierDts, name: ".d.ts" },
+  { flag: ScriptElementKindModifierTs, name: ".ts" },
+  { flag: ScriptElementKindModifierTsx, name: ".tsx" },
+  { flag: ScriptElementKindModifierJs, name: ".js" },
+  { flag: ScriptElementKindModifierJsx, name: ".jsx" },
+  { flag: ScriptElementKindModifierJson, name: ".json" },
+  { flag: ScriptElementKindModifierDmts, name: ".d.mts" },
+  { flag: ScriptElementKindModifierMts, name: ".mts" },
+  { flag: ScriptElementKindModifierMjs, name: ".mjs" },
+  { flag: ScriptElementKindModifierDcts, name: ".d.cts" },
+  { flag: ScriptElementKindModifierCts, name: ".cts" },
+  { flag: ScriptElementKindModifierCjs, name: ".cjs" },
 ];
 
-export const lsLsutilSymbolDisplaySourceLines: readonly UpstreamSourceLine[] = [
-  {"line":1,"text":"package lsutil"},
-  {"line":3,"text":"import ("},
-  {"line":4,"text":"\t\"github.com/microsoft/typescript-go/internal/ast\""},
-  {"line":5,"text":"\t\"github.com/microsoft/typescript-go/internal/checker\""},
-  {"line":6,"text":"\t\"github.com/microsoft/typescript-go/internal/collections\""},
-  {"line":7,"text":"\t\"github.com/microsoft/typescript-go/internal/core\""},
-  {"line":8,"text":")"},
-  {"line":10,"text":"type ScriptElementKind int"},
-  {"line":12,"text":"const ("},
-  {"line":13,"text":"\tScriptElementKindUnknown ScriptElementKind = iota"},
-  {"line":14,"text":"\tScriptElementKindWarning"},
-  {"line":16,"text":"\tScriptElementKindKeyword"},
-  {"line":18,"text":"\tScriptElementKindScriptElement"},
-  {"line":20,"text":"\tScriptElementKindModuleElement"},
-  {"line":22,"text":"\tScriptElementKindClassElement"},
-  {"line":24,"text":"\tScriptElementKindLocalClassElement"},
-  {"line":26,"text":"\tScriptElementKindInterfaceElement"},
-  {"line":28,"text":"\tScriptElementKindTypeElement"},
-  {"line":30,"text":"\tScriptElementKindEnumElement"},
-  {"line":31,"text":"\tScriptElementKindEnumMemberElement"},
-  {"line":34,"text":"\tScriptElementKindVariableElement"},
-  {"line":36,"text":"\tScriptElementKindLocalVariableElement"},
-  {"line":38,"text":"\tScriptElementKindVariableUsingElement"},
-  {"line":40,"text":"\tScriptElementKindVariableAwaitUsingElement"},
-  {"line":43,"text":"\tScriptElementKindFunctionElement"},
-  {"line":45,"text":"\tScriptElementKindLocalFunctionElement"},
-  {"line":47,"text":"\tScriptElementKindMemberFunctionElement"},
-  {"line":49,"text":"\tScriptElementKindMemberGetAccessorElement"},
-  {"line":50,"text":"\tScriptElementKindMemberSetAccessorElement"},
-  {"line":53,"text":"\tScriptElementKindMemberVariableElement"},
-  {"line":55,"text":"\tScriptElementKindMemberAccessorVariableElement"},
-  {"line":58,"text":"\tScriptElementKindConstructorImplementationElement"},
-  {"line":60,"text":"\tScriptElementKindCallSignatureElement"},
-  {"line":62,"text":"\tScriptElementKindIndexSignatureElement"},
-  {"line":64,"text":"\tScriptElementKindConstructSignatureElement"},
-  {"line":66,"text":"\tScriptElementKindParameterElement"},
-  {"line":67,"text":"\tScriptElementKindTypeParameterElement"},
-  {"line":68,"text":"\tScriptElementKindPrimitiveType"},
-  {"line":69,"text":"\tScriptElementKindLabel"},
-  {"line":70,"text":"\tScriptElementKindAlias"},
-  {"line":71,"text":"\tScriptElementKindConstElement"},
-  {"line":72,"text":"\tScriptElementKindLetElement"},
-  {"line":73,"text":"\tScriptElementKindDirectory"},
-  {"line":74,"text":"\tScriptElementKindExternalModuleName"},
-  {"line":76,"text":"\tScriptElementKindString"},
-  {"line":78,"text":"\tScriptElementKindLink"},
-  {"line":80,"text":"\tScriptElementKindLinkName"},
-  {"line":82,"text":"\tScriptElementKindLinkText"},
-  {"line":83,"text":")"},
-  {"line":85,"text":"type ScriptElementKindModifier uint32"},
-  {"line":87,"text":"const ("},
-  {"line":88,"text":"\tScriptElementKindModifierNone   ScriptElementKindModifier = 0"},
-  {"line":89,"text":"\tScriptElementKindModifierPublic ScriptElementKindModifier = 1 << iota"},
-  {"line":90,"text":"\tScriptElementKindModifierPrivate"},
-  {"line":91,"text":"\tScriptElementKindModifierProtected"},
-  {"line":92,"text":"\tScriptElementKindModifierExported"},
-  {"line":93,"text":"\tScriptElementKindModifierAmbient"},
-  {"line":94,"text":"\tScriptElementKindModifierStatic"},
-  {"line":95,"text":"\tScriptElementKindModifierAbstract"},
-  {"line":96,"text":"\tScriptElementKindModifierOptional"},
-  {"line":97,"text":"\tScriptElementKindModifierDeprecated"},
-  {"line":98,"text":"\tScriptElementKindModifierDts"},
-  {"line":99,"text":"\tScriptElementKindModifierTs"},
-  {"line":100,"text":"\tScriptElementKindModifierTsx"},
-  {"line":101,"text":"\tScriptElementKindModifierJs"},
-  {"line":102,"text":"\tScriptElementKindModifierJsx"},
-  {"line":103,"text":"\tScriptElementKindModifierJson"},
-  {"line":104,"text":"\tScriptElementKindModifierDmts"},
-  {"line":105,"text":"\tScriptElementKindModifierMts"},
-  {"line":106,"text":"\tScriptElementKindModifierMjs"},
-  {"line":107,"text":"\tScriptElementKindModifierDcts"},
-  {"line":108,"text":"\tScriptElementKindModifierCts"},
-  {"line":109,"text":"\tScriptElementKindModifierCjs"},
-  {"line":110,"text":")"},
-  {"line":112,"text":"var scriptElementKindModifierNames = []struct {"},
-  {"line":113,"text":"\tflag ScriptElementKindModifier"},
-  {"line":114,"text":"\tname string"},
-  {"line":115,"text":"}{"},
-  {"line":116,"text":"\t{ScriptElementKindModifierPublic, \"public\"},"},
-  {"line":117,"text":"\t{ScriptElementKindModifierPrivate, \"private\"},"},
-  {"line":118,"text":"\t{ScriptElementKindModifierProtected, \"protected\"},"},
-  {"line":119,"text":"\t{ScriptElementKindModifierExported, \"export\"},"},
-  {"line":120,"text":"\t{ScriptElementKindModifierAmbient, \"declare\"},"},
-  {"line":121,"text":"\t{ScriptElementKindModifierStatic, \"static\"},"},
-  {"line":122,"text":"\t{ScriptElementKindModifierAbstract, \"abstract\"},"},
-  {"line":123,"text":"\t{ScriptElementKindModifierOptional, \"optional\"},"},
-  {"line":124,"text":"\t{ScriptElementKindModifierDeprecated, \"deprecated\"},"},
-  {"line":125,"text":"\t{ScriptElementKindModifierDts, \".d.ts\"},"},
-  {"line":126,"text":"\t{ScriptElementKindModifierTs, \".ts\"},"},
-  {"line":127,"text":"\t{ScriptElementKindModifierTsx, \".tsx\"},"},
-  {"line":128,"text":"\t{ScriptElementKindModifierJs, \".js\"},"},
-  {"line":129,"text":"\t{ScriptElementKindModifierJsx, \".jsx\"},"},
-  {"line":130,"text":"\t{ScriptElementKindModifierJson, \".json\"},"},
-  {"line":131,"text":"\t{ScriptElementKindModifierDmts, \".d.mts\"},"},
-  {"line":132,"text":"\t{ScriptElementKindModifierMts, \".mts\"},"},
-  {"line":133,"text":"\t{ScriptElementKindModifierMjs, \".mjs\"},"},
-  {"line":134,"text":"\t{ScriptElementKindModifierDcts, \".d.cts\"},"},
-  {"line":135,"text":"\t{ScriptElementKindModifierCts, \".cts\"},"},
-  {"line":136,"text":"\t{ScriptElementKindModifierCjs, \".cjs\"},"},
-  {"line":137,"text":"}"},
-  {"line":139,"text":"func (m ScriptElementKindModifier) Strings() collections.Set[string] {"},
-  {"line":140,"text":"\tresult := collections.Set[string]{}"},
-  {"line":141,"text":"\tfor _, entry := range scriptElementKindModifierNames {"},
-  {"line":142,"text":"\t\tif m&entry.flag != 0 {"},
-  {"line":143,"text":"\t\t\tresult.Add(entry.name)"},
-  {"line":144,"text":"\t\t}"},
-  {"line":145,"text":"\t}"},
-  {"line":146,"text":"\treturn result"},
-  {"line":147,"text":"}"},
-  {"line":149,"text":"var FileExtensionKindModifiers = ScriptElementKindModifierDts |"},
-  {"line":150,"text":"\tScriptElementKindModifierTs |"},
-  {"line":151,"text":"\tScriptElementKindModifierTsx |"},
-  {"line":152,"text":"\tScriptElementKindModifierJs |"},
-  {"line":153,"text":"\tScriptElementKindModifierJsx |"},
-  {"line":154,"text":"\tScriptElementKindModifierJson |"},
-  {"line":155,"text":"\tScriptElementKindModifierDmts |"},
-  {"line":156,"text":"\tScriptElementKindModifierMts |"},
-  {"line":157,"text":"\tScriptElementKindModifierMjs |"},
-  {"line":158,"text":"\tScriptElementKindModifierDcts |"},
-  {"line":159,"text":"\tScriptElementKindModifierCts |"},
-  {"line":160,"text":"\tScriptElementKindModifierCjs"},
-  {"line":162,"text":"func GetSymbolKind(typeChecker *checker.Checker, symbol *ast.Symbol, location *ast.Node) ScriptElementKind {"},
-  {"line":163,"text":"\tresult := getSymbolKindOfConstructorPropertyMethodAccessorFunctionOrVar(typeChecker, symbol, location)"},
-  {"line":164,"text":"\tif result != ScriptElementKindUnknown {"},
-  {"line":165,"text":"\t\treturn result"},
-  {"line":166,"text":"\t}"},
-  {"line":167,"text":"\tflags := symbol.CombinedLocalAndExportSymbolFlags()"},
-  {"line":168,"text":"\tif flags&ast.SymbolFlagsClass != 0 {"},
-  {"line":169,"text":"\t\tdecl := ast.GetDeclarationOfKind(symbol, ast.KindClassExpression)"},
-  {"line":170,"text":"\t\tif decl != nil {"},
-  {"line":171,"text":"\t\t\treturn ScriptElementKindLocalClassElement"},
-  {"line":172,"text":"\t\t}"},
-  {"line":173,"text":"\t\treturn ScriptElementKindClassElement"},
-  {"line":174,"text":"\t}"},
-  {"line":175,"text":"\tif flags&ast.SymbolFlagsEnum != 0 {"},
-  {"line":176,"text":"\t\treturn ScriptElementKindEnumElement"},
-  {"line":177,"text":"\t}"},
-  {"line":178,"text":"\tif flags&ast.SymbolFlagsTypeAlias != 0 {"},
-  {"line":179,"text":"\t\treturn ScriptElementKindTypeElement"},
-  {"line":180,"text":"\t}"},
-  {"line":181,"text":"\tif flags&ast.SymbolFlagsInterface != 0 {"},
-  {"line":182,"text":"\t\treturn ScriptElementKindInterfaceElement"},
-  {"line":183,"text":"\t}"},
-  {"line":184,"text":"\tif flags&ast.SymbolFlagsTypeParameter != 0 {"},
-  {"line":185,"text":"\t\treturn ScriptElementKindTypeParameterElement"},
-  {"line":186,"text":"\t}"},
-  {"line":187,"text":"\tif flags&ast.SymbolFlagsEnumMember != 0 {"},
-  {"line":188,"text":"\t\treturn ScriptElementKindEnumMemberElement"},
-  {"line":189,"text":"\t}"},
-  {"line":190,"text":"\tif flags&ast.SymbolFlagsAlias != 0 {"},
-  {"line":191,"text":"\t\treturn ScriptElementKindAlias"},
-  {"line":192,"text":"\t}"},
-  {"line":193,"text":"\tif flags&ast.SymbolFlagsModule != 0 {"},
-  {"line":194,"text":"\t\treturn ScriptElementKindModuleElement"},
-  {"line":195,"text":"\t}"},
-  {"line":197,"text":"\treturn ScriptElementKindUnknown"},
-  {"line":198,"text":"}"},
-  {"line":200,"text":"func getSymbolKindOfConstructorPropertyMethodAccessorFunctionOrVar(typeChecker *checker.Checker, symbol *ast.Symbol, location *ast.Node) ScriptElementKind {"},
-  {"line":201,"text":"\tvar roots []*ast.Symbol"},
-  {"line":202,"text":"\tif typeChecker != nil {"},
-  {"line":203,"text":"\t\troots = typeChecker.GetRootSymbols(symbol)"},
-  {"line":204,"text":"\t} else {"},
-  {"line":205,"text":"\t\troots = []*ast.Symbol{symbol}"},
-  {"line":206,"text":"\t}"},
-  {"line":210,"text":"\tif len(roots) == 1 &&"},
-  {"line":211,"text":"\t\troots[0].Flags&ast.SymbolFlagsMethod != 0 &&"},
-  {"line":212,"text":"\t\t(typeChecker == nil || len(typeChecker.GetCallSignatures(typeChecker.GetNonNullableType(typeChecker.GetTypeOfSymbolAtLocation(symbol, location)))) > 0) {"},
-  {"line":213,"text":"\t\treturn ScriptElementKindMemberFunctionElement"},
-  {"line":214,"text":"\t}"},
-  {"line":216,"text":"\tif typeChecker != nil {"},
-  {"line":217,"text":"\t\tif typeChecker.IsUndefinedSymbol(symbol) {"},
-  {"line":218,"text":"\t\t\treturn ScriptElementKindVariableElement"},
-  {"line":219,"text":"\t\t}"},
-  {"line":220,"text":"\t\tif typeChecker.IsArgumentsSymbol(symbol) {"},
-  {"line":221,"text":"\t\t\treturn ScriptElementKindLocalVariableElement"},
-  {"line":222,"text":"\t\t}"},
-  {"line":223,"text":"\t\tif location.Kind == ast.KindThisKeyword && ast.IsExpression(location) ||"},
-  {"line":224,"text":"\t\t\tast.IsThisInTypeQuery(location) {"},
-  {"line":225,"text":"\t\t\treturn ScriptElementKindParameterElement"},
-  {"line":226,"text":"\t\t}"},
-  {"line":227,"text":"\t}"},
-  {"line":229,"text":"\tflags := symbol.CombinedLocalAndExportSymbolFlags()"},
-  {"line":230,"text":"\tif flags&ast.SymbolFlagsVariable != 0 {"},
-  {"line":231,"text":"\t\tif isFirstDeclarationOfSymbolParameter(symbol) {"},
-  {"line":232,"text":"\t\t\treturn ScriptElementKindParameterElement"},
-  {"line":233,"text":"\t\t} else if symbol.ValueDeclaration != nil && ast.IsVarConst(symbol.ValueDeclaration) {"},
-  {"line":234,"text":"\t\t\treturn ScriptElementKindConstElement"},
-  {"line":235,"text":"\t\t} else if symbol.ValueDeclaration != nil && ast.IsVarUsing(symbol.ValueDeclaration) {"},
-  {"line":236,"text":"\t\t\treturn ScriptElementKindVariableUsingElement"},
-  {"line":237,"text":"\t\t} else if symbol.ValueDeclaration != nil && ast.IsVarAwaitUsing(symbol.ValueDeclaration) {"},
-  {"line":238,"text":"\t\t\treturn ScriptElementKindVariableAwaitUsingElement"},
-  {"line":239,"text":"\t\t} else if core.Some(symbol.Declarations, ast.IsLet) {"},
-  {"line":240,"text":"\t\t\treturn ScriptElementKindLetElement"},
-  {"line":241,"text":"\t\t}"},
-  {"line":242,"text":"\t\tif isLocalVariableOrFunction(symbol) {"},
-  {"line":243,"text":"\t\t\treturn ScriptElementKindLocalVariableElement"},
-  {"line":244,"text":"\t\t}"},
-  {"line":245,"text":"\t\treturn ScriptElementKindVariableElement"},
-  {"line":246,"text":"\t}"},
-  {"line":247,"text":"\tif flags&ast.SymbolFlagsFunction != 0 {"},
-  {"line":248,"text":"\t\tif isLocalVariableOrFunction(symbol) {"},
-  {"line":249,"text":"\t\t\treturn ScriptElementKindLocalFunctionElement"},
-  {"line":250,"text":"\t\t}"},
-  {"line":251,"text":"\t\treturn ScriptElementKindFunctionElement"},
-  {"line":252,"text":"\t}"},
-  {"line":255,"text":"\tif flags&ast.SymbolFlagsGetAccessor != 0 {"},
-  {"line":256,"text":"\t\treturn ScriptElementKindMemberGetAccessorElement"},
-  {"line":257,"text":"\t}"},
-  {"line":258,"text":"\tif flags&ast.SymbolFlagsSetAccessor != 0 {"},
-  {"line":259,"text":"\t\treturn ScriptElementKindMemberSetAccessorElement"},
-  {"line":260,"text":"\t}"},
-  {"line":261,"text":"\tif flags&ast.SymbolFlagsMethod != 0 {"},
-  {"line":262,"text":"\t\treturn ScriptElementKindMemberFunctionElement"},
-  {"line":263,"text":"\t}"},
-  {"line":264,"text":"\tif flags&ast.SymbolFlagsConstructor != 0 {"},
-  {"line":265,"text":"\t\treturn ScriptElementKindConstructorImplementationElement"},
-  {"line":266,"text":"\t}"},
-  {"line":267,"text":"\tif flags&ast.SymbolFlagsSignature != 0 {"},
-  {"line":268,"text":"\t\treturn ScriptElementKindIndexSignatureElement"},
-  {"line":269,"text":"\t}"},
-  {"line":271,"text":"\tif flags&ast.SymbolFlagsProperty != 0 {"},
-  {"line":272,"text":"\t\tif typeChecker != nil && flags&ast.SymbolFlagsTransient != 0 && symbol.CheckFlags&ast.CheckFlagsSynthetic != 0 {"},
-  {"line":274,"text":"\t\t\tvar unionPropertyKind ScriptElementKind"},
-  {"line":275,"text":"\t\t\tfor _, rootSymbol := range roots {"},
-  {"line":276,"text":"\t\t\t\tif rootSymbol.Flags&(ast.SymbolFlagsPropertyOrAccessor|ast.SymbolFlagsVariable) != 0 {"},
-  {"line":277,"text":"\t\t\t\t\tunionPropertyKind = ScriptElementKindMemberVariableElement"},
-  {"line":278,"text":"\t\t\t\t\tbreak"},
-  {"line":279,"text":"\t\t\t\t}"},
-  {"line":280,"text":"\t\t\t}"},
-  {"line":281,"text":"\t\t\tif unionPropertyKind == ScriptElementKindUnknown {"},
-  {"line":284,"text":"\t\t\t\ttypeOfUnionProperty := typeChecker.GetTypeOfSymbolAtLocation(symbol, location)"},
-  {"line":285,"text":"\t\t\t\tif len(typeChecker.GetCallSignatures(typeOfUnionProperty)) > 0 {"},
-  {"line":286,"text":"\t\t\t\t\treturn ScriptElementKindMemberFunctionElement"},
-  {"line":287,"text":"\t\t\t\t}"},
-  {"line":288,"text":"\t\t\t\treturn ScriptElementKindMemberVariableElement"},
-  {"line":289,"text":"\t\t\t}"},
-  {"line":290,"text":"\t\t\treturn unionPropertyKind"},
-  {"line":291,"text":"\t\t}"},
-  {"line":293,"text":"\t\treturn ScriptElementKindMemberVariableElement"},
-  {"line":294,"text":"\t}"},
-  {"line":296,"text":"\treturn ScriptElementKindUnknown"},
-  {"line":297,"text":"}"},
-  {"line":299,"text":"func isFirstDeclarationOfSymbolParameter(symbol *ast.Symbol) bool {"},
-  {"line":300,"text":"\tvar declaration *ast.Node"},
-  {"line":301,"text":"\tif len(symbol.Declarations) > 0 {"},
-  {"line":302,"text":"\t\tdeclaration = symbol.Declarations[0]"},
-  {"line":303,"text":"\t}"},
-  {"line":304,"text":"\tresult := ast.FindAncestorOrQuit(declaration, func(n *ast.Node) ast.FindAncestorResult {"},
-  {"line":305,"text":"\t\tif ast.IsParameterDeclaration(n) {"},
-  {"line":306,"text":"\t\t\treturn ast.FindAncestorTrue"},
-  {"line":307,"text":"\t\t}"},
-  {"line":308,"text":"\t\tif ast.IsBindingElement(n) || ast.IsObjectBindingPattern(n) || ast.IsArrayBindingPattern(n) {"},
-  {"line":309,"text":"\t\t\treturn ast.FindAncestorFalse"},
-  {"line":310,"text":"\t\t}"},
-  {"line":311,"text":"\t\treturn ast.FindAncestorQuit"},
-  {"line":312,"text":"\t})"},
-  {"line":314,"text":"\treturn result != nil"},
-  {"line":315,"text":"}"},
-  {"line":317,"text":"func isLocalVariableOrFunction(symbol *ast.Symbol) bool {"},
-  {"line":318,"text":"\tif symbol.Parent != nil {"},
-  {"line":319,"text":"\t\treturn false // This is exported symbol"},
-  {"line":320,"text":"\t}"},
-  {"line":322,"text":"\tfor _, decl := range symbol.Declarations {"},
-  {"line":324,"text":"\t\tif decl.Kind == ast.KindFunctionExpression {"},
-  {"line":325,"text":"\t\t\treturn true"},
-  {"line":326,"text":"\t\t}"},
-  {"line":328,"text":"\t\tif decl.Kind != ast.KindVariableDeclaration && decl.Kind != ast.KindFunctionDeclaration {"},
-  {"line":329,"text":"\t\t\tcontinue"},
-  {"line":330,"text":"\t\t}"},
-  {"line":333,"text":"\t\tparent := decl.Parent"},
-  {"line":334,"text":"\t\tfor ; !ast.IsFunctionBlock(parent); parent = parent.Parent {"},
-  {"line":336,"text":"\t\t\tif parent.Kind == ast.KindSourceFile || parent.Kind == ast.KindModuleBlock {"},
-  {"line":337,"text":"\t\t\t\tbreak"},
-  {"line":338,"text":"\t\t\t}"},
-  {"line":339,"text":"\t\t}"},
-  {"line":341,"text":"\t\tif ast.IsFunctionBlock(parent) {"},
-  {"line":343,"text":"\t\t\treturn true"},
-  {"line":344,"text":"\t\t}"},
-  {"line":345,"text":"\t}"},
-  {"line":346,"text":"\treturn false"},
-  {"line":347,"text":"}"},
-  {"line":349,"text":"func GetSymbolModifiers(typeChecker *checker.Checker, symbol *ast.Symbol) ScriptElementKindModifier {"},
-  {"line":350,"text":"\tif symbol == nil {"},
-  {"line":351,"text":"\t\treturn ScriptElementKindModifierNone"},
-  {"line":352,"text":"\t}"},
-  {"line":354,"text":"\tmodifiers := getNormalizedSymbolModifiers(typeChecker, symbol)"},
-  {"line":355,"text":"\tif symbol.Flags&ast.SymbolFlagsAlias != 0 && typeChecker != nil {"},
-  {"line":356,"text":"\t\tresolvedSymbol := typeChecker.GetAliasedSymbol(symbol)"},
-  {"line":357,"text":"\t\tif resolvedSymbol != symbol {"},
-  {"line":358,"text":"\t\t\tmodifiers |= getNormalizedSymbolModifiers(typeChecker, resolvedSymbol)"},
-  {"line":359,"text":"\t\t}"},
-  {"line":360,"text":"\t}"},
-  {"line":361,"text":"\tif symbol.Flags&ast.SymbolFlagsOptional != 0 {"},
-  {"line":362,"text":"\t\tmodifiers |= ScriptElementKindModifierOptional"},
-  {"line":363,"text":"\t}"},
-  {"line":365,"text":"\treturn modifiers"},
-  {"line":366,"text":"}"},
-  {"line":368,"text":"func getNormalizedSymbolModifiers(typeChecker *checker.Checker, symbol *ast.Symbol) ScriptElementKindModifier {"},
-  {"line":369,"text":"\tvar modifierSet ScriptElementKindModifier"},
-  {"line":370,"text":"\tif len(symbol.Declarations) > 0 {"},
-  {"line":371,"text":"\t\tdeclaration := symbol.Declarations[0]"},
-  {"line":372,"text":"\t\tdeclarations := symbol.Declarations[1:]"},
-  {"line":374,"text":"\t\tvar excludeFlags ast.ModifierFlags"},
-  {"line":375,"text":"\t\tif len(declarations) > 0 &&"},
-  {"line":376,"text":"\t\t\tisDeprecatedDeclaration(typeChecker, declaration) && // !!! include jsdoc node flags"},
-  {"line":377,"text":"\t\t\tcore.Some(declarations, func(d *ast.Node) bool { return !isDeprecatedDeclaration(typeChecker, d) }) {"},
-  {"line":378,"text":"\t\t\texcludeFlags = ast.ModifierFlagsDeprecated"},
-  {"line":379,"text":"\t\t} else {"},
-  {"line":380,"text":"\t\t\texcludeFlags = ast.ModifierFlagsNone"},
-  {"line":381,"text":"\t\t}"},
-  {"line":382,"text":"\t\tmodifierSet = getNodeModifiers(typeChecker, declaration, excludeFlags)"},
-  {"line":383,"text":"\t}"},
-  {"line":385,"text":"\treturn modifierSet"},
-  {"line":386,"text":"}"},
-  {"line":388,"text":"func isDeprecatedDeclaration(typeChecker *checker.Checker, declaration *ast.Node) bool {"},
-  {"line":389,"text":"\tif typeChecker != nil {"},
-  {"line":390,"text":"\t\treturn typeChecker.IsDeprecatedDeclaration(declaration)"},
-  {"line":391,"text":"\t}"},
-  {"line":392,"text":"\treturn ast.IsDeprecatedDeclaration(declaration)"},
-  {"line":393,"text":"}"},
-  {"line":395,"text":"func getNodeModifiers(typeChecker *checker.Checker, node *ast.Node, excludeFlags ast.ModifierFlags) ScriptElementKindModifier {"},
-  {"line":396,"text":"\tvar result ScriptElementKindModifier"},
-  {"line":397,"text":"\tvar flags ast.ModifierFlags"},
-  {"line":398,"text":"\tif ast.IsDeclaration(node) {"},
-  {"line":399,"text":"\t\tflags = ast.GetCombinedModifierFlags(node)"},
-  {"line":400,"text":"\t\tif isDeprecatedDeclaration(typeChecker, node) {"},
-  {"line":401,"text":"\t\t\tflags |= ast.ModifierFlagsDeprecated"},
-  {"line":402,"text":"\t\t}"},
-  {"line":403,"text":"\t\tflags &^= excludeFlags"},
-  {"line":404,"text":"\t}"},
-  {"line":406,"text":"\tif flags&ast.ModifierFlagsPrivate != 0 {"},
-  {"line":407,"text":"\t\tresult |= ScriptElementKindModifierPrivate"},
-  {"line":408,"text":"\t}"},
-  {"line":409,"text":"\tif flags&ast.ModifierFlagsProtected != 0 {"},
-  {"line":410,"text":"\t\tresult |= ScriptElementKindModifierProtected"},
-  {"line":411,"text":"\t}"},
-  {"line":412,"text":"\tif flags&ast.ModifierFlagsPublic != 0 {"},
-  {"line":413,"text":"\t\tresult |= ScriptElementKindModifierPublic"},
-  {"line":414,"text":"\t}"},
-  {"line":415,"text":"\tif flags&ast.ModifierFlagsStatic != 0 {"},
-  {"line":416,"text":"\t\tresult |= ScriptElementKindModifierStatic"},
-  {"line":417,"text":"\t}"},
-  {"line":418,"text":"\tif flags&ast.ModifierFlagsAbstract != 0 {"},
-  {"line":419,"text":"\t\tresult |= ScriptElementKindModifierAbstract"},
-  {"line":420,"text":"\t}"},
-  {"line":421,"text":"\tif flags&ast.ModifierFlagsExport != 0 {"},
-  {"line":422,"text":"\t\tresult |= ScriptElementKindModifierExported"},
-  {"line":423,"text":"\t}"},
-  {"line":424,"text":"\tif flags&ast.ModifierFlagsDeprecated != 0 {"},
-  {"line":425,"text":"\t\tresult |= ScriptElementKindModifierDeprecated"},
-  {"line":426,"text":"\t}"},
-  {"line":427,"text":"\tif flags&ast.ModifierFlagsAmbient != 0 {"},
-  {"line":428,"text":"\t\tresult |= ScriptElementKindModifierAmbient"},
-  {"line":429,"text":"\t}"},
-  {"line":430,"text":"\tif node.Flags&ast.NodeFlagsAmbient != 0 {"},
-  {"line":431,"text":"\t\tresult |= ScriptElementKindModifierAmbient"},
-  {"line":432,"text":"\t}"},
-  {"line":433,"text":"\tif node.Kind == ast.KindExportAssignment {"},
-  {"line":434,"text":"\t\tresult |= ScriptElementKindModifierExported"},
-  {"line":435,"text":"\t}"},
-  {"line":437,"text":"\treturn result"},
-  {"line":438,"text":"}"},
-];
+export const FileExtensionKindModifiers: ScriptElementKindModifier =
+  ScriptElementKindModifierDts
+  | ScriptElementKindModifierTs
+  | ScriptElementKindModifierTsx
+  | ScriptElementKindModifierJs
+  | ScriptElementKindModifierJsx
+  | ScriptElementKindModifierJson
+  | ScriptElementKindModifierDmts
+  | ScriptElementKindModifierMts
+  | ScriptElementKindModifierMjs
+  | ScriptElementKindModifierDcts
+  | ScriptElementKindModifierCts
+  | ScriptElementKindModifierCjs;
 
-export function findLsLsutilSymbolDisplayDeclaration(name: string): UpstreamDeclaration | undefined {
-  return lsLsutilSymbolDisplayDeclarations.find((declaration) => declaration.name === name);
+export interface SymbolDisplayTypeChecker {
+  getRootSymbols?(symbol: Symbol): readonly Symbol[];
+  getTypeOfSymbolAtLocation?(symbol: Symbol, location: Node): Type | undefined;
+  getNonNullableType?(type: Type): Type;
+  getCallSignatures?(type: Type): readonly unknown[];
+  getSignaturesOfType?(type: Type, kind: SignatureKindValue): readonly unknown[];
+  isUndefinedSymbol?(symbol: Symbol): boolean;
+  isArgumentsSymbol?(symbol: Symbol): boolean;
+  getAliasedSymbol?(symbol: Symbol): Symbol;
+  isDeprecatedDeclaration?(declaration: Node): boolean;
 }
 
-export function requireLsLsutilSymbolDisplayDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findLsLsutilSymbolDisplayDeclaration(name);
-  if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
-  return declaration;
+export function scriptElementKindModifierStrings(modifier: ScriptElementKindModifier): Set<string> {
+  const result = new Set<string>();
+  for (const entry of scriptElementKindModifierNames) {
+    if ((modifier & entry.flag) !== 0) {
+      result.add(entry.name);
+    }
+  }
+  return result;
 }
 
-export function lsLsutilSymbolDisplayLineText(line: number): string | undefined {
-  return lsLsutilSymbolDisplaySourceLines.find((entry) => entry.line === line)?.text;
+export function getSymbolKind(
+  typeChecker: SymbolDisplayTypeChecker | undefined,
+  symbol: Symbol,
+  location: Node,
+): ScriptElementKind {
+  const result = getSymbolKindOfConstructorPropertyMethodAccessorFunctionOrVar(typeChecker, symbol, location);
+  if (result !== ScriptElementKindUnknown) return result;
+
+  const flags = combinedLocalAndExportSymbolFlags(symbol);
+  if ((flags & SymbolFlags.Class) !== 0) {
+    const declaration = getDeclarationOfKind(symbol, Kind.ClassExpression);
+    return declaration === undefined ? ScriptElementKindClassElement : ScriptElementKindLocalClassElement;
+  }
+  if ((flags & SymbolFlags.Enum) !== 0) return ScriptElementKindEnumElement;
+  if ((flags & SymbolFlags.TypeAlias) !== 0) return ScriptElementKindTypeElement;
+  if ((flags & SymbolFlags.Interface) !== 0) return ScriptElementKindInterfaceElement;
+  if ((flags & SymbolFlags.TypeParameter) !== 0) return ScriptElementKindTypeParameterElement;
+  if ((flags & SymbolFlags.EnumMember) !== 0) return ScriptElementKindEnumMemberElement;
+  if ((flags & SymbolFlags.Alias) !== 0) return ScriptElementKindAlias;
+  if ((flags & SymbolFlags.Module) !== 0) return ScriptElementKindModuleElement;
+
+  return ScriptElementKindUnknown;
+}
+
+function getSymbolKindOfConstructorPropertyMethodAccessorFunctionOrVar(
+  typeChecker: SymbolDisplayTypeChecker | undefined,
+  symbol: Symbol,
+  location: Node,
+): ScriptElementKind {
+  const roots = typeChecker?.getRootSymbols?.(symbol) ?? [symbol];
+
+  if (roots.length === 1
+    && ((roots[0]!.flags ?? SymbolFlags.None) & SymbolFlags.Method) !== 0
+    && hasCallableType(typeChecker, symbol, location)) {
+    return ScriptElementKindMemberFunctionElement;
+  }
+
+  if (typeChecker !== undefined) {
+    if (typeChecker.isUndefinedSymbol?.(symbol) === true) return ScriptElementKindVariableElement;
+    if (typeChecker.isArgumentsSymbol?.(symbol) === true) return ScriptElementKindLocalVariableElement;
+    if ((location.kind === Kind.ThisKeyword && isExpression(location)) || isThisInTypeQuery(location)) {
+      return ScriptElementKindParameterElement;
+    }
+  }
+
+  const flags = combinedLocalAndExportSymbolFlags(symbol);
+  if ((flags & SymbolFlags.Variable) !== 0) {
+    if (isFirstDeclarationOfSymbolParameter(symbol)) return ScriptElementKindParameterElement;
+    if (symbol.valueDeclaration !== undefined && isVarConst(symbol.valueDeclaration)) return ScriptElementKindConstElement;
+    if (symbol.valueDeclaration !== undefined && isVarUsing(symbol.valueDeclaration)) return ScriptElementKindVariableUsingElement;
+    if (symbol.valueDeclaration !== undefined && isVarAwaitUsing(symbol.valueDeclaration)) return ScriptElementKindVariableAwaitUsingElement;
+    if (hasLetDeclaration(symbol)) return ScriptElementKindLetElement;
+    return isLocalVariableOrFunction(symbol) ? ScriptElementKindLocalVariableElement : ScriptElementKindVariableElement;
+  }
+  if ((flags & SymbolFlags.Function) !== 0) {
+    return isLocalVariableOrFunction(symbol) ? ScriptElementKindLocalFunctionElement : ScriptElementKindFunctionElement;
+  }
+  if ((flags & SymbolFlags.GetAccessor) !== 0) return ScriptElementKindMemberGetAccessorElement;
+  if ((flags & SymbolFlags.SetAccessor) !== 0) return ScriptElementKindMemberSetAccessorElement;
+  if ((flags & SymbolFlags.Method) !== 0) return ScriptElementKindMemberFunctionElement;
+  if ((flags & SymbolFlags.Constructor) !== 0) return ScriptElementKindConstructorImplementationElement;
+  if ((flags & SymbolFlags.Signature) !== 0) return ScriptElementKindIndexSignatureElement;
+
+  if ((flags & SymbolFlags.Property) !== 0) {
+    if (typeChecker !== undefined
+      && (flags & SymbolFlags.Transient) !== 0
+      && (symbolCheckFlags(symbol) & CheckFlags.Synthetic) !== 0) {
+      let unionPropertyKind = ScriptElementKindUnknown;
+      for (const rootSymbol of roots) {
+        const rootFlags = rootSymbol.flags ?? SymbolFlags.None;
+        if ((rootFlags & (SymbolFlags.PropertyOrAccessor | SymbolFlags.Variable)) !== 0) {
+          unionPropertyKind = ScriptElementKindMemberVariableElement;
+          break;
+        }
+      }
+      if (unionPropertyKind === ScriptElementKindUnknown) {
+        return hasCallableType(typeChecker, symbol, location)
+          ? ScriptElementKindMemberFunctionElement
+          : ScriptElementKindMemberVariableElement;
+      }
+      return unionPropertyKind;
+    }
+    return ScriptElementKindMemberVariableElement;
+  }
+
+  return ScriptElementKindUnknown;
+}
+
+export function isFirstDeclarationOfSymbolParameter(symbol: Symbol): boolean {
+  if (symbol.declarations.length === 0) return false;
+  let current: Node | undefined = symbol.declarations[0];
+  while (current !== undefined) {
+    if (isParameterDeclaration(current)) return true;
+    if (isBindingElement(current) || isObjectBindingPattern(current) || isArrayBindingPattern(current)) {
+      current = current.parent;
+      continue;
+    }
+    return false;
+  }
+  return false;
+}
+
+function isLocalVariableOrFunction(symbol: Symbol): boolean {
+  if (symbol.parent !== undefined) return false;
+
+  for (const declaration of symbol.declarations) {
+    if (isFunctionExpression(declaration)) return true;
+    if (declaration.kind !== Kind.VariableDeclaration && declaration.kind !== Kind.FunctionDeclaration) continue;
+
+    let parent = declaration.parent;
+    while (parent !== undefined && !isFunctionBlock(parent)) {
+      if (parent.kind === Kind.SourceFile || parent.kind === Kind.ModuleBlock) break;
+      parent = parent.parent;
+    }
+    if (isFunctionBlock(parent)) return true;
+  }
+
+  return false;
+}
+
+export function getSymbolModifiers(
+  typeChecker: SymbolDisplayTypeChecker | undefined,
+  symbol: Symbol | undefined,
+): ScriptElementKindModifier {
+  if (symbol === undefined) return ScriptElementKindModifierNone;
+
+  let modifiers = getNormalizedSymbolModifiers(typeChecker, symbol);
+  if (((symbol.flags ?? SymbolFlags.None) & SymbolFlags.Alias) !== 0 && typeChecker !== undefined) {
+    const resolvedSymbol = typeChecker.getAliasedSymbol?.(symbol);
+    if (resolvedSymbol !== undefined && resolvedSymbol !== symbol) {
+      modifiers |= getNormalizedSymbolModifiers(typeChecker, resolvedSymbol);
+    }
+  }
+  if (((symbol.flags ?? SymbolFlags.None) & SymbolFlags.Optional) !== 0) {
+    modifiers |= ScriptElementKindModifierOptional;
+  }
+  return modifiers;
+}
+
+function getNormalizedSymbolModifiers(
+  typeChecker: SymbolDisplayTypeChecker | undefined,
+  symbol: Symbol,
+): ScriptElementKindModifier {
+  if (symbol.declarations.length === 0) return ScriptElementKindModifierNone;
+
+  const declaration = symbol.declarations[0]!;
+  const otherDeclarations = symbol.declarations.slice(1);
+  const excludeFlags = otherDeclarations.length > 0
+    && isDeprecatedDeclaration(typeChecker, declaration)
+    && hasNonDeprecatedDeclaration(typeChecker, otherDeclarations)
+      ? ModifierFlags.Deprecated
+      : ModifierFlags.None;
+
+  return getNodeModifiers(typeChecker, declaration, excludeFlags);
+}
+
+function isDeprecatedDeclaration(typeChecker: SymbolDisplayTypeChecker | undefined, declaration: Node): boolean {
+  if (typeChecker !== undefined) {
+    const result = typeChecker.isDeprecatedDeclaration?.(declaration);
+    if (result !== undefined) return result;
+  }
+  if (hasSyntacticModifier(declaration, ModifierFlags.Deprecated)) return true;
+  if ((getCombinedNodeFlags(declaration) & NodeFlags.PossiblyContainsDeprecatedTag) === 0) return false;
+
+  let current: Node | undefined = declaration;
+  while (current !== undefined) {
+    if ((current.flags & NodeFlags.PossiblyContainsDeprecatedTag) !== 0) {
+      return hasJSDocDeprecatedTag(current);
+    }
+    current = current.parent;
+  }
+  return false;
+}
+
+function getNodeModifiers(
+  typeChecker: SymbolDisplayTypeChecker | undefined,
+  node: Node,
+  excludeFlags: ModifierFlags,
+): ScriptElementKindModifier {
+  let result = ScriptElementKindModifierNone;
+  let flags = ModifierFlags.None;
+  if (isDeclaration(node)) {
+    flags = getCombinedModifierFlags(node);
+    if (isDeprecatedDeclaration(typeChecker, node)) flags |= ModifierFlags.Deprecated;
+    flags &= ~excludeFlags;
+  }
+
+  if ((flags & ModifierFlags.Private) !== 0) result |= ScriptElementKindModifierPrivate;
+  if ((flags & ModifierFlags.Protected) !== 0) result |= ScriptElementKindModifierProtected;
+  if ((flags & ModifierFlags.Public) !== 0) result |= ScriptElementKindModifierPublic;
+  if ((flags & ModifierFlags.Static) !== 0) result |= ScriptElementKindModifierStatic;
+  if ((flags & ModifierFlags.Abstract) !== 0) result |= ScriptElementKindModifierAbstract;
+  if ((flags & ModifierFlags.Export) !== 0) result |= ScriptElementKindModifierExported;
+  if ((flags & ModifierFlags.Deprecated) !== 0) result |= ScriptElementKindModifierDeprecated;
+  if ((flags & ModifierFlags.Ambient) !== 0) result |= ScriptElementKindModifierAmbient;
+  if ((node.flags & NodeFlags.Ambient) !== 0) result |= ScriptElementKindModifierAmbient;
+  if (node.kind === Kind.ExportAssignment) result |= ScriptElementKindModifierExported;
+
+  return result;
+}
+
+function combinedLocalAndExportSymbolFlags(symbol: Symbol): SymbolFlags {
+  return (symbol.flags ?? SymbolFlags.None) | (symbol.exportSymbol?.flags ?? SymbolFlags.None);
+}
+
+function getDeclarationOfKind(symbol: Symbol, kind: Kind): Node | undefined {
+  for (const declaration of symbol.declarations) {
+    if (declaration.kind === kind) return declaration;
+  }
+  return undefined;
+}
+
+function hasCallableType(typeChecker: SymbolDisplayTypeChecker | undefined, symbol: Symbol, location: Node): boolean {
+  if (typeChecker === undefined) return true;
+  const rawType = typeChecker.getTypeOfSymbolAtLocation?.(symbol, location);
+  if (rawType === undefined) return true;
+  const type = typeChecker.getNonNullableType?.(rawType) ?? rawType;
+  const callSignatures = typeChecker.getCallSignatures?.(type);
+  if (callSignatures !== undefined) return callSignatures.length > 0;
+  const signatures = typeChecker.getSignaturesOfType?.(type, SignatureKind.Call);
+  return signatures === undefined || signatures.length > 0;
+}
+
+function symbolCheckFlags(symbol: Symbol): number {
+  return (symbol as { readonly checkFlags?: number }).checkFlags ?? CheckFlags.None;
+}
+
+function isThisInTypeQuery(node: Node): boolean {
+  return node.kind === Kind.ThisKeyword && node.parent !== undefined && node.parent.kind === Kind.TypeQuery;
+}
+
+function isVarConst(node: Node): boolean {
+  return (getCombinedNodeFlags(node) & NodeFlags.BlockScoped) === NodeFlags.Const;
+}
+
+function isVarUsing(node: Node): boolean {
+  return (getCombinedNodeFlags(node) & NodeFlags.BlockScoped) === NodeFlags.Using;
+}
+
+function isVarAwaitUsing(node: Node): boolean {
+  return (getCombinedNodeFlags(node) & NodeFlags.BlockScoped) === NodeFlags.AwaitUsing;
+}
+
+function isLet(node: Node): boolean {
+  return (getCombinedNodeFlags(node) & NodeFlags.BlockScoped) === NodeFlags.Let;
+}
+
+function hasLetDeclaration(symbol: Symbol): boolean {
+  for (const declaration of symbol.declarations) {
+    if (isLet(declaration)) return true;
+  }
+  return false;
+}
+
+function hasNonDeprecatedDeclaration(
+  typeChecker: SymbolDisplayTypeChecker | undefined,
+  declarations: readonly Node[],
+): boolean {
+  for (const declaration of declarations) {
+    if (!isDeprecatedDeclaration(typeChecker, declaration)) return true;
+  }
+  return false;
+}
+
+function hasJSDocDeprecatedTag(node: Node): boolean {
+  const carrier = node as { readonly jsDoc?: readonly Node[]; readonly jsdoc?: readonly Node[] };
+  const docs = carrier.jsDoc ?? carrier.jsdoc ?? [];
+  for (const doc of docs) {
+    const tagCarrier = doc as { readonly tags?: readonly Node[] | { readonly nodes?: readonly Node[] } };
+    const rawTags = tagCarrier.tags;
+    let tags: readonly Node[];
+    if (rawTags === undefined) {
+      tags = [];
+    } else if (Array.isArray(rawTags)) {
+      tags = rawTags;
+    } else {
+      tags = (rawTags as { readonly nodes?: readonly Node[] }).nodes ?? [];
+    }
+    for (const tag of tags) {
+      const named = tag as { readonly tagName?: { readonly text?: string }; readonly name?: { readonly text?: string } };
+      if (named.tagName?.text === "deprecated" || named.name?.text === "deprecated") return true;
+      if (tag.kind === Kind.JSDocDeprecatedTag) return true;
+    }
+  }
+  return false;
 }

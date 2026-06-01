@@ -31,9 +31,9 @@ import {
 import { parseSourceFile } from "../parser/index.js";
 import {
   classificationForSymbol,
-  isFirstDeclarationOfSymbolParameter,
   newDisplayPartsWriter,
 } from "./displayPartsWriter.js";
+import { isFirstDeclarationOfSymbolParameter } from "./lsutil/symbolDisplay.js";
 
 function findNode<T extends Node>(text: string, predicate: (node: Node) => node is T): T {
   const sourceFile = parseSourceFile(text);
