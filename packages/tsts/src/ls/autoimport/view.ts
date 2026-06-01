@@ -1,261 +1,363 @@
 /**
- * Language-service parity map for TS-Go `ls/autoimport/view.go`.
+ * Auto-import view over project and node_modules export indexes.
  *
- * This file preserves the upstream declaration and algorithm-line shape
- * for the TypeScript port. Runtime behavior is implemented by the
- * concrete modules that consume these exact parity maps.
+ * Port of TS-Go `internal/ls/autoimport/view.go`.
  */
 
-export interface UpstreamSourceLine {
-  readonly line: number;
-  readonly text: string;
+import { SetCollection } from "../../collections/index.js";
+import { unprefixedNodeCoreModules } from "../../core/index.js";
+import type { AutoImportFix, Position } from "../../lsp/lsproto/index.js";
+import type {
+  ModuleSpecifierEnding,
+  SourceFileForSpecifierGeneration,
+  TspathHelpers,
+  UserPreferences,
+} from "../../modulespecifiers/index.js";
+import type { PackageJSON } from "../../packagejson/index.js";
+import type { Path } from "../../tspath/index.js";
+import {
+  exportAmbientModuleName,
+  exportIsRenameable,
+  exportName,
+  type ExportEntry,
+  type ExportID,
+} from "./export.js";
+import { addPackageJsonDependencies } from "./util.js";
+import type {
+  AutoImportProgram,
+  AutoImportRegistry,
+  AutoImportView as AutoImportSpecifierView,
+  ConditionSet,
+} from "./specifiers.js";
+
+export interface ExportIndex {
+  readonly entries: readonly ExportEntry[];
+  searchWordPrefix(query: string): readonly ExportEntry[];
+  find(query: string, exact: boolean): readonly ExportEntry[];
 }
 
-export interface UpstreamDeclaration {
-  readonly kind: "type" | "func" | "const" | "var";
-  readonly line: number;
+export type PackageNameSet = SetCollection<string> | ReadonlySet<string> | readonly string[];
+
+export interface RegistryBucket {
+  readonly index: ExportIndex;
+  readonly resolvedPackageNames?: PackageNameSet;
+  readonly packageFiles?: PackageNameSet | ReadonlyMap<string, unknown>;
+}
+
+export interface ViewPackageJsonContents {
+  readonly parseable: boolean;
+  readonly value: PackageJSON;
+}
+
+export interface ViewPackageJsonFile {
+  exists(): boolean;
+  readonly contents: ViewPackageJsonContents;
+}
+
+export interface ViewDirectoryInfo {
+  readonly packageJson?: ViewPackageJsonFile;
+}
+
+export interface ViewRegistry extends AutoImportRegistry {
+  readonly projects: ReadonlyMap<Path, RegistryBucket>;
+  readonly nodeModules: ReadonlyMap<Path, RegistryBucket>;
+  readonly directories: ReadonlyMap<Path, ViewDirectoryInfo>;
+}
+
+export interface AutoImportFixProvider {
+  getFixes(
+    view: View,
+    exportEntry: ExportEntry,
+    forJsx: boolean,
+    isTypeOnlyLocation: boolean,
+    usagePosition: Position,
+  ): readonly AutoImportFix[];
+  compareFixesForRanking(view: View, left: AutoImportFix, right: AutoImportFix): number;
+  compareFixesForSorting(view: View, left: AutoImportFix, right: AutoImportFix): number;
+}
+
+export interface ViewOptions {
+  readonly registry: ViewRegistry;
+  readonly importingFile: SourceFileForSpecifierGeneration;
+  readonly importingFilePath: Path;
+  readonly projectKey: Path;
+  readonly program: AutoImportProgram;
+  readonly preferences: UserPreferences;
+  readonly conditions: ConditionSet;
+  readonly tspath: TspathHelpers;
+  readonly allowedEndings?: readonly ModuleSpecifierEnding[];
+  readonly fixProvider?: AutoImportFixProvider;
+}
+
+export enum QueryKind {
+  WordPrefix = 0,
+  ExactMatch = 1,
+  CaseInsensitiveMatch = 2,
+}
+
+export interface FixAndExport {
+  readonly fix: AutoImportFix;
+  readonly exportEntry: ExportEntry;
+}
+
+interface ExportGroupKey {
+  readonly target: ExportID;
   readonly name: string;
-  readonly receiver?: string;
+  readonly ambientModuleOrPackageName: string;
 }
 
-export const lsAutoimportViewUpstreamPath = "ls/autoimport/view.go";
+export class View implements AutoImportSpecifierView {
+  readonly registry: ViewRegistry;
+  readonly importingFile: SourceFileForSpecifierGeneration;
+  readonly importingFilePath: Path;
+  readonly program: AutoImportProgram;
+  readonly preferences: UserPreferences;
+  readonly projectKey: Path;
+  readonly conditions: ConditionSet;
+  readonly tspath: TspathHelpers;
+  readonly fixProvider: AutoImportFixProvider | undefined;
+  #allowedEndings: readonly ModuleSpecifierEnding[] | undefined;
 
-export const lsAutoimportViewDeclarations: readonly UpstreamDeclaration[] = [
-  {"line":20,"kind":"type","name":"View"},
-  {"line":34,"kind":"func","name":"NewView"},
-  {"line":49,"kind":"func","name":"getAllowedEndings","receiver":"v *View"},
-  {"line":64,"kind":"type","name":"QueryKind"},
-  {"line":72,"kind":"func","name":"Search","receiver":"v *View"},
-  {"line":89,"kind":"func","name":"SearchByExportID","receiver":"v *View"},
-  {"line":99,"kind":"func","name":"search","receiver":"v *View"},
-  {"line":166,"kind":"type","name":"FixAndExport"},
-  {"line":171,"kind":"func","name":"GetCompletions","receiver":"v *View"},
-];
+  constructor(options: ViewOptions) {
+    this.registry = options.registry;
+    this.importingFile = options.importingFile;
+    this.importingFilePath = options.importingFilePath;
+    this.program = options.program;
+    this.preferences = options.preferences;
+    this.projectKey = options.projectKey;
+    this.conditions = options.conditions;
+    this.tspath = options.tspath;
+    this.#allowedEndings = options.allowedEndings;
+    this.fixProvider = options.fixProvider;
+  }
 
-export const lsAutoimportViewSourceLines: readonly UpstreamSourceLine[] = [
-  {"line":1,"text":"package autoimport"},
-  {"line":3,"text":"import ("},
-  {"line":4,"text":"\t\"context\""},
-  {"line":5,"text":"\t\"slices\""},
-  {"line":6,"text":"\t\"strings\""},
-  {"line":7,"text":"\t\"unicode\""},
-  {"line":9,"text":"\t\"github.com/microsoft/typescript-go/internal/ast\""},
-  {"line":10,"text":"\t\"github.com/microsoft/typescript-go/internal/collections\""},
-  {"line":11,"text":"\t\"github.com/microsoft/typescript-go/internal/compiler\""},
-  {"line":12,"text":"\t\"github.com/microsoft/typescript-go/internal/core\""},
-  {"line":13,"text":"\t\"github.com/microsoft/typescript-go/internal/ls/lsutil\""},
-  {"line":14,"text":"\t\"github.com/microsoft/typescript-go/internal/lsp/lsproto\""},
-  {"line":15,"text":"\t\"github.com/microsoft/typescript-go/internal/module\""},
-  {"line":16,"text":"\t\"github.com/microsoft/typescript-go/internal/modulespecifiers\""},
-  {"line":17,"text":"\t\"github.com/microsoft/typescript-go/internal/tspath\""},
-  {"line":18,"text":")"},
-  {"line":20,"text":"type View struct {"},
-  {"line":21,"text":"\tregistry      *Registry"},
-  {"line":22,"text":"\timportingFile *ast.SourceFile"},
-  {"line":23,"text":"\tprogram       *compiler.Program"},
-  {"line":24,"text":"\tpreferences   modulespecifiers.UserPreferences"},
-  {"line":25,"text":"\tprojectKey    tspath.Path"},
-  {"line":27,"text":"\tallowedEndings                   []modulespecifiers.ModuleSpecifierEnding"},
-  {"line":28,"text":"\tconditions                       *collections.Set[string]"},
-  {"line":29,"text":"\tshouldUseUriStyleNodeCoreModules core.Tristate"},
-  {"line":30,"text":"\texistingImports                  *collections.MultiMap[ModuleID, existingImport]"},
-  {"line":31,"text":"\tshouldUseRequireForFixes         *bool"},
-  {"line":32,"text":"}"},
-  {"line":34,"text":"func NewView(registry *Registry, importingFile *ast.SourceFile, projectKey tspath.Path, program *compiler.Program, preferences modulespecifiers.UserPreferences) *View {"},
-  {"line":35,"text":"\treturn &View{"},
-  {"line":36,"text":"\t\tregistry:      registry,"},
-  {"line":37,"text":"\t\timportingFile: importingFile,"},
-  {"line":38,"text":"\t\tprogram:       program,"},
-  {"line":39,"text":"\t\tprojectKey:    projectKey,"},
-  {"line":40,"text":"\t\tpreferences:   preferences,"},
-  {"line":41,"text":"\t\tconditions: collections.NewSetFromItems("},
-  {"line":42,"text":"\t\t\tmodule.GetConditions(program.Options(),"},
-  {"line":43,"text":"\t\t\t\tprogram.GetDefaultResolutionModeForFile(importingFile))...,"},
-  {"line":44,"text":"\t\t),"},
-  {"line":45,"text":"\t\tshouldUseUriStyleNodeCoreModules: lsutil.ShouldUseUriStyleNodeCoreModules(importingFile, program),"},
-  {"line":46,"text":"\t}"},
-  {"line":47,"text":"}"},
-  {"line":49,"text":"func (v *View) getAllowedEndings() []modulespecifiers.ModuleSpecifierEnding {"},
-  {"line":50,"text":"\tif v.allowedEndings == nil {"},
-  {"line":51,"text":"\t\tresolutionMode := v.program.GetDefaultResolutionModeForFile(v.importingFile)"},
-  {"line":52,"text":"\t\tv.allowedEndings = modulespecifiers.GetAllowedEndingsInPreferredOrder("},
-  {"line":53,"text":"\t\t\tv.preferences,"},
-  {"line":54,"text":"\t\t\tv.program,"},
-  {"line":55,"text":"\t\t\tv.program.Options(),"},
-  {"line":56,"text":"\t\t\tv.importingFile,"},
-  {"line":57,"text":"\t\t\t\"\","},
-  {"line":58,"text":"\t\t\tresolutionMode,"},
-  {"line":59,"text":"\t\t)"},
-  {"line":60,"text":"\t}"},
-  {"line":61,"text":"\treturn v.allowedEndings"},
-  {"line":62,"text":"}"},
-  {"line":64,"text":"type QueryKind int"},
-  {"line":66,"text":"const ("},
-  {"line":67,"text":"\tQueryKindWordPrefix QueryKind = iota"},
-  {"line":68,"text":"\tQueryKindExactMatch"},
-  {"line":69,"text":"\tQueryKindCaseInsensitiveMatch"},
-  {"line":70,"text":")"},
-  {"line":72,"text":"func (v *View) Search(query string, kind QueryKind) []*Export {"},
-  {"line":73,"text":"\tsearchFn := func(bucket *RegistryBucket) []*Export {"},
-  {"line":74,"text":"\t\tswitch kind {"},
-  {"line":75,"text":"\t\tcase QueryKindWordPrefix:"},
-  {"line":76,"text":"\t\t\treturn bucket.Index.SearchWordPrefix(query)"},
-  {"line":77,"text":"\t\tcase QueryKindExactMatch:"},
-  {"line":78,"text":"\t\t\treturn bucket.Index.Find(query, true)"},
-  {"line":79,"text":"\t\tcase QueryKindCaseInsensitiveMatch:"},
-  {"line":80,"text":"\t\t\treturn bucket.Index.Find(query, false)"},
-  {"line":81,"text":"\t\tdefault:"},
-  {"line":82,"text":"\t\t\tpanic(\"unreachable\")"},
-  {"line":83,"text":"\t\t}"},
-  {"line":84,"text":"\t}"},
-  {"line":86,"text":"\treturn v.search(searchFn)"},
-  {"line":87,"text":"}"},
-  {"line":89,"text":"func (v *View) SearchByExportID(id ExportID) []*Export {"},
-  {"line":90,"text":"\tsearch := func(bucket *RegistryBucket) []*Export {"},
-  {"line":91,"text":"\t\treturn core.Filter(bucket.Index.entries, func(e *Export) bool {"},
-  {"line":92,"text":"\t\t\treturn e.ExportID == id"},
-  {"line":93,"text":"\t\t})"},
-  {"line":94,"text":"\t}"},
-  {"line":96,"text":"\treturn v.search(search)"},
-  {"line":97,"text":"}"},
-  {"line":99,"text":"func (v *View) search(searchFn func(*RegistryBucket) []*Export) []*Export {"},
-  {"line":100,"text":"\tvar results []*Export"},
-  {"line":102,"text":"\tif bucket, ok := v.registry.projects[v.projectKey]; ok {"},
-  {"line":103,"text":"\t\texports := searchFn(bucket)"},
-  {"line":104,"text":"\t\tresults = slices.Grow(results, len(exports))"},
-  {"line":105,"text":"\t\tfor _, e := range exports {"},
-  {"line":106,"text":"\t\t\tif string(e.ModuleID) == string(v.importingFile.Path()) {"},
-  {"line":108,"text":"\t\t\t\tcontinue"},
-  {"line":109,"text":"\t\t\t}"},
-  {"line":110,"text":"\t\t\tresults = append(results, e)"},
-  {"line":111,"text":"\t\t}"},
-  {"line":112,"text":"\t}"},
-  {"line":118,"text":"\tvar allowedPackages *collections.Set[string]"},
-  {"line":119,"text":"\ttspath.ForEachAncestorDirectoryPath(v.importingFile.Path().GetDirectoryPath(), func(dirPath tspath.Path) (result any, stop bool) {"},
-  {"line":120,"text":"\t\tif dir, ok := v.registry.directories[dirPath]; ok {"},
-  {"line":121,"text":"\t\t\tif pj := dir.packageJson; pj.Exists() && pj.Contents.Parseable {"},
-  {"line":123,"text":"\t\t\t\tif allowedPackages == nil {"},
-  {"line":124,"text":"\t\t\t\t\tallowedPackages = &collections.Set[string]{}"},
-  {"line":125,"text":"\t\t\t\t}"},
-  {"line":126,"text":"\t\t\t\taddPackageJsonDependencies(pj.Contents, allowedPackages)"},
-  {"line":127,"text":"\t\t\t}"},
-  {"line":128,"text":"\t\t}"},
-  {"line":129,"text":"\t\treturn nil, false"},
-  {"line":130,"text":"\t})"},
-  {"line":132,"text":"\tif allowedPackages != nil {"},
-  {"line":133,"text":"\t\tif bucket, ok := v.registry.projects[v.projectKey]; ok {"},
-  {"line":134,"text":"\t\t\tallowedPackages = allowedPackages.UnionedWith(bucket.ResolvedPackageNames)"},
-  {"line":135,"text":"\t\t}"},
-  {"line":136,"text":"\t}"},
-  {"line":138,"text":"\texcludePackages := &collections.Set[string]{}"},
-  {"line":139,"text":"\ttspath.ForEachAncestorDirectoryPath(v.importingFile.Path().GetDirectoryPath(), func(dirPath tspath.Path) (result any, stop bool) {"},
-  {"line":140,"text":"\t\tif nodeModulesBucket, ok := v.registry.nodeModules[dirPath]; ok {"},
-  {"line":141,"text":"\t\t\texports := searchFn(nodeModulesBucket)"},
-  {"line":142,"text":"\t\t\tresults = slices.Grow(results, len(exports))"},
-  {"line":143,"text":"\t\t\tfor _, e := range exports {"},
-  {"line":145,"text":"\t\t\t\tif excludePackages.Has(e.PackageName) {"},
-  {"line":146,"text":"\t\t\t\t\tcontinue"},
-  {"line":147,"text":"\t\t\t\t}"},
-  {"line":150,"text":"\t\t\t\tif allowedPackages != nil && !allowedPackages.Has(e.PackageName) {"},
-  {"line":151,"text":"\t\t\t\t\tcontinue"},
-  {"line":152,"text":"\t\t\t\t}"},
-  {"line":153,"text":"\t\t\t\tresults = append(results, e)"},
-  {"line":154,"text":"\t\t\t}"},
-  {"line":157,"text":"\t\t\tfor pkgName := range nodeModulesBucket.PackageFiles {"},
-  {"line":158,"text":"\t\t\t\texcludePackages.Add(pkgName)"},
-  {"line":159,"text":"\t\t\t}"},
-  {"line":160,"text":"\t\t}"},
-  {"line":161,"text":"\t\treturn nil, false"},
-  {"line":162,"text":"\t})"},
-  {"line":163,"text":"\treturn results"},
-  {"line":164,"text":"}"},
-  {"line":166,"text":"type FixAndExport struct {"},
-  {"line":167,"text":"\tFix    *Fix"},
-  {"line":168,"text":"\tExport *Export"},
-  {"line":169,"text":"}"},
-  {"line":171,"text":"func (v *View) GetCompletions(ctx context.Context, prefix string, position lsproto.Position, forJSX bool, isTypeOnlyLocation bool) []*FixAndExport {"},
-  {"line":172,"text":"\tresults := v.Search(prefix, QueryKindWordPrefix)"},
-  {"line":174,"text":"\ttype exportGroupKey struct {"},
-  {"line":175,"text":"\t\ttarget                     ExportID"},
-  {"line":176,"text":"\t\tname                       string"},
-  {"line":177,"text":"\t\tambientModuleOrPackageName string"},
-  {"line":178,"text":"\t}"},
-  {"line":179,"text":"\tgrouped := make(map[exportGroupKey][]*Export, len(results))"},
-  {"line":180,"text":"outer:"},
-  {"line":181,"text":"\tfor _, e := range results {"},
-  {"line":182,"text":"\t\tname := e.Name()"},
-  {"line":183,"text":"\t\tif forJSX && !(unicode.IsUpper(rune(name[0])) || e.IsRenameable()) {"},
-  {"line":184,"text":"\t\t\tcontinue"},
-  {"line":185,"text":"\t\t}"},
-  {"line":186,"text":"\t\ttarget := e.ExportID"},
-  {"line":187,"text":"\t\tif e.Target != (ExportID{}) {"},
-  {"line":188,"text":"\t\t\ttarget = e.Target"},
-  {"line":189,"text":"\t\t}"},
-  {"line":190,"text":"\t\tkey := exportGroupKey{"},
-  {"line":191,"text":"\t\t\ttarget:                     target,"},
-  {"line":192,"text":"\t\t\tname:                       name,"},
-  {"line":193,"text":"\t\t\tambientModuleOrPackageName: core.FirstNonZero(e.AmbientModuleName(), e.PackageName),"},
-  {"line":194,"text":"\t\t}"},
-  {"line":195,"text":"\t\tif e.PackageName == \"@types/node\" || strings.Contains(string(e.Path), \"/node_modules/@types/node/\") {"},
-  {"line":196,"text":"\t\t\tif _, ok := core.UnprefixedNodeCoreModules[key.ambientModuleOrPackageName]; ok {"},
-  {"line":199,"text":"\t\t\t\tkey.ambientModuleOrPackageName = \"node:\" + key.ambientModuleOrPackageName"},
-  {"line":200,"text":"\t\t\t}"},
-  {"line":201,"text":"\t\t}"},
-  {"line":202,"text":"\t\tif existing, ok := grouped[key]; ok {"},
-  {"line":203,"text":"\t\t\tfor i, ex := range existing {"},
-  {"line":204,"text":"\t\t\t\tif e.ExportID == ex.ExportID {"},
-  {"line":205,"text":"\t\t\t\t\tgrouped[key] = slices.Replace(existing, i, i+1, &Export{"},
-  {"line":206,"text":"\t\t\t\t\t\tExportID:                   e.ExportID,"},
-  {"line":207,"text":"\t\t\t\t\t\tModuleFileName:             e.ModuleFileName,"},
-  {"line":208,"text":"\t\t\t\t\t\tPackageName:                e.PackageName,"},
-  {"line":209,"text":"\t\t\t\t\t\tIsTypeOnly:                 e.IsTypeOnly || ex.IsTypeOnly,"},
-  {"line":210,"text":"\t\t\t\t\t\tSyntax:                     min(e.Syntax, ex.Syntax),"},
-  {"line":211,"text":"\t\t\t\t\t\tFlags:                      e.Flags | ex.Flags,"},
-  {"line":212,"text":"\t\t\t\t\t\tScriptElementKind:          min(e.ScriptElementKind, ex.ScriptElementKind),"},
-  {"line":213,"text":"\t\t\t\t\t\tScriptElementKindModifiers: e.ScriptElementKindModifiers | ex.ScriptElementKindModifiers,"},
-  {"line":214,"text":"\t\t\t\t\t\tlocalName:                  e.localName,"},
-  {"line":215,"text":"\t\t\t\t\t\tTarget:                     e.Target,"},
-  {"line":216,"text":"\t\t\t\t\t\tPath:                       e.Path,"},
-  {"line":217,"text":"\t\t\t\t\t})"},
-  {"line":218,"text":"\t\t\t\t\tcontinue outer"},
-  {"line":219,"text":"\t\t\t\t}"},
-  {"line":220,"text":"\t\t\t}"},
-  {"line":221,"text":"\t\t}"},
-  {"line":222,"text":"\t\tgrouped[key] = append(grouped[key], e)"},
-  {"line":223,"text":"\t}"},
-  {"line":225,"text":"\tfixes := make([]*FixAndExport, 0, len(results))"},
-  {"line":226,"text":"\tcompareFixes := func(a, b *FixAndExport) int {"},
-  {"line":227,"text":"\t\treturn v.CompareFixesForRanking(a.Fix, b.Fix)"},
-  {"line":228,"text":"\t}"},
-  {"line":230,"text":"\tfor _, exps := range grouped {"},
-  {"line":231,"text":"\t\tfixesForGroup := make([]*FixAndExport, 0, len(exps))"},
-  {"line":232,"text":"\t\tfor _, e := range exps {"},
-  {"line":233,"text":"\t\t\tfor _, fix := range v.GetFixes(ctx, e, forJSX, isTypeOnlyLocation, &position) {"},
-  {"line":234,"text":"\t\t\t\tfixesForGroup = append(fixesForGroup, &FixAndExport{"},
-  {"line":235,"text":"\t\t\t\t\tFix:    fix,"},
-  {"line":236,"text":"\t\t\t\t\tExport: e,"},
-  {"line":237,"text":"\t\t\t\t})"},
-  {"line":238,"text":"\t\t\t}"},
-  {"line":239,"text":"\t\t}"},
-  {"line":240,"text":"\t\tfixes = append(fixes, core.MinAllFunc(fixesForGroup, compareFixes)...)"},
-  {"line":241,"text":"\t}"},
-  {"line":247,"text":"\tslices.SortFunc(fixes, func(a, b *FixAndExport) int {"},
-  {"line":248,"text":"\t\treturn v.CompareFixesForSorting(a.Fix, b.Fix)"},
-  {"line":249,"text":"\t})"},
-  {"line":251,"text":"\treturn fixes"},
-  {"line":252,"text":"}"},
-];
+  getAllowedEndings(): readonly ModuleSpecifierEnding[] {
+    if (this.#allowedEndings === undefined) {
+      throw new Error("auto-import view requires allowed module-specifier endings");
+    }
+    return this.#allowedEndings;
+  }
 
-export function findLsAutoimportViewDeclaration(name: string): UpstreamDeclaration | undefined {
-  return lsAutoimportViewDeclarations.find((declaration) => declaration.name === name);
+  search(query: string, kind: QueryKind): readonly ExportEntry[] {
+    const searchBucket = (bucket: RegistryBucket): readonly ExportEntry[] => {
+      switch (kind) {
+        case QueryKind.WordPrefix:
+          return bucket.index.searchWordPrefix(query);
+        case QueryKind.ExactMatch:
+          return bucket.index.find(query, true);
+        case QueryKind.CaseInsensitiveMatch:
+          return bucket.index.find(query, false);
+      }
+    };
+    return this.searchBuckets(searchBucket);
+  }
+
+  searchByExportID(id: ExportID): readonly ExportEntry[] {
+    return this.searchBuckets(bucket => bucket.index.entries.filter(entry => sameExportID(entry, id)));
+  }
+
+  getCompletions(
+    prefix: string,
+    position: Position,
+    forJsx: boolean,
+    isTypeOnlyLocation: boolean,
+  ): readonly FixAndExport[] {
+    const provider = this.fixProvider;
+    if (provider === undefined) {
+      throw new Error("auto-import view requires an AutoImportFixProvider before completions can be ranked");
+    }
+
+    const grouped = new Map<string, ExportEntry[]>();
+    for (const entry of this.search(prefix, QueryKind.WordPrefix)) {
+      const name = exportName(entry);
+      if (forJsx && (name.length === 0 || (!isUppercaseStart(name) && !exportIsRenameable(entry)))) {
+        continue;
+      }
+      const key = this.groupKey(entry, name);
+      const existing = grouped.get(key);
+      if (existing === undefined) {
+        grouped.set(key, [entry]);
+        continue;
+      }
+      const duplicateIndex = existing.findIndex(candidate => sameExportID(candidate, entry));
+      if (duplicateIndex < 0) {
+        existing.push(entry);
+      } else {
+        existing[duplicateIndex] = mergeExportEntries(existing[duplicateIndex]!, entry);
+      }
+    }
+
+    const fixes: FixAndExport[] = [];
+    for (const entries of grouped.values()) {
+      const fixesForGroup: FixAndExport[] = [];
+      for (const entry of entries) {
+        for (const fix of provider.getFixes(this, entry, forJsx, isTypeOnlyLocation, position)) {
+          fixesForGroup.push({ fix, exportEntry: entry });
+        }
+      }
+      fixes.push(...minAllBy(fixesForGroup, (left, right) =>
+        provider.compareFixesForRanking(this, left.fix, right.fix)));
+    }
+
+    fixes.sort((left, right) => provider.compareFixesForSorting(this, left.fix, right.fix));
+    return fixes;
+  }
+
+  private searchBuckets(searchBucket: (bucket: RegistryBucket) => readonly ExportEntry[]): readonly ExportEntry[] {
+    const results: ExportEntry[] = [];
+    const projectBucket = this.registry.projects.get(this.projectKey);
+    if (projectBucket !== undefined) {
+      for (const entry of searchBucket(projectBucket)) {
+        if (entry.moduleID !== this.importingFilePath) results.push(entry);
+      }
+    }
+
+    let allowedPackages: SetCollection<string> | undefined;
+    for (const directoryPath of ancestorDirectoryPaths(getDirectoryPath(this.importingFilePath))) {
+      const packageJson = this.registry.directories.get(directoryPath)?.packageJson;
+      if (packageJson?.exists() === true && packageJson.contents.parseable) {
+        allowedPackages ??= new SetCollection<string>();
+        addPackageJsonDependencies(packageJson.contents.value, allowedPackages);
+      }
+    }
+    if (allowedPackages !== undefined && projectBucket?.resolvedPackageNames !== undefined) {
+      for (const packageName of packageNames(projectBucket.resolvedPackageNames)) {
+        allowedPackages.add(packageName);
+      }
+    }
+
+    const excludePackages = new SetCollection<string>();
+    for (const directoryPath of ancestorDirectoryPaths(getDirectoryPath(this.importingFilePath))) {
+      const nodeModulesBucket = this.registry.nodeModules.get(directoryPath);
+      if (nodeModulesBucket === undefined) continue;
+      for (const entry of searchBucket(nodeModulesBucket)) {
+        if (excludePackages.has(entry.packageName)) continue;
+        if (allowedPackages !== undefined && !allowedPackages.has(entry.packageName)) continue;
+        results.push(entry);
+      }
+      for (const packageName of packageNames(nodeModulesBucket.packageFiles)) {
+        excludePackages.add(packageName);
+      }
+    }
+
+    return results;
+  }
+
+  private groupKey(entry: ExportEntry, name: string): string {
+    const target = isEmptyExportID(entry.target) ? entry : entry.target;
+    let ambientModuleOrPackageName = exportAmbientModuleName(entry) || entry.packageName;
+    if (
+      (entry.packageName === "@types/node" || entry.path.includes("/node_modules/@types/node/"))
+      && unprefixedNodeCoreModules.has(ambientModuleOrPackageName)
+    ) {
+      ambientModuleOrPackageName = "node:" + ambientModuleOrPackageName;
+    }
+    return serializeGroupKey({ target, name, ambientModuleOrPackageName });
+  }
 }
 
-export function requireLsAutoimportViewDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findLsAutoimportViewDeclaration(name);
-  if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
-  return declaration;
+export function newView(options: ViewOptions): View {
+  return new View(options);
 }
 
-export function lsAutoimportViewLineText(line: number): string | undefined {
-  return lsAutoimportViewSourceLines.find((entry) => entry.line === line)?.text;
+function serializeGroupKey(key: ExportGroupKey): string {
+  return `${key.target.moduleID}\u0000${key.target.exportName}\u0000${key.name}\u0000${key.ambientModuleOrPackageName}`;
+}
+
+function sameExportID(left: ExportID, right: ExportID): boolean {
+  return left.moduleID === right.moduleID && left.exportName === right.exportName;
+}
+
+function isEmptyExportID(id: ExportID): boolean {
+  return id.moduleID === "" && id.exportName === "";
+}
+
+function mergeExportEntries(left: ExportEntry, right: ExportEntry): ExportEntry {
+  const localName = right.localName ?? left.localName;
+  const through = right.through ?? left.through;
+  const scriptElementKind = minOptionalNumber(left.scriptElementKind, right.scriptElementKind);
+  const scriptElementKindModifiers = (left.scriptElementKindModifiers ?? 0) | (right.scriptElementKindModifiers ?? 0);
+  return {
+    moduleID: right.moduleID,
+    exportName: right.exportName,
+    moduleFileName: right.moduleFileName,
+    isTypeOnly: left.isTypeOnly || right.isTypeOnly,
+    syntax: left.syntax < right.syntax ? left.syntax : right.syntax,
+    flags: left.flags | right.flags,
+    target: right.target,
+    path: right.path,
+    packageName: right.packageName,
+    ...(localName === undefined ? {} : { localName }),
+    ...(through === undefined ? {} : { through }),
+    ...(scriptElementKind === undefined ? {} : { scriptElementKind }),
+    scriptElementKindModifiers,
+  };
+}
+
+function minOptionalNumber(left: number | undefined, right: number | undefined): number | undefined {
+  if (left === undefined) return right;
+  if (right === undefined) return left;
+  return left < right ? left : right;
+}
+
+function minAllBy<T>(values: readonly T[], compare: (left: T, right: T) => number): readonly T[] {
+  if (values.length <= 1) return values;
+  const selected: T[] = [values[0]!];
+  for (let index = 1; index < values.length; index += 1) {
+    const value = values[index]!;
+    const comparison = compare(value, selected[0]!);
+    if (comparison < 0) {
+      selected.length = 0;
+      selected.push(value);
+    } else if (comparison === 0) {
+      selected.push(value);
+    }
+  }
+  return selected;
+}
+
+function packageNames(source: PackageNameSet | ReadonlyMap<string, unknown> | undefined): readonly string[] {
+  if (source === undefined) return [];
+  if (source instanceof SetCollection) return Array.from(source.keys());
+  if (source instanceof Set) return Array.from(source);
+  if (source instanceof Map) return Array.from(source.keys());
+  if (hasMapKeys(source)) return Array.from(source.keys());
+  return [...source];
+}
+
+function hasMapKeys(source: unknown): source is ReadonlyMap<string, unknown> {
+  return typeof (source as { keys?: unknown }).keys === "function";
+}
+
+function ancestorDirectoryPaths(start: Path): readonly Path[] {
+  const paths: Path[] = [];
+  let current = trimTrailingDirectorySeparator(start);
+  while (current !== "") {
+    paths.push(current);
+    const parent = getDirectoryPath(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  return paths;
+}
+
+function getDirectoryPath(path: Path): Path {
+  const normalized = trimTrailingDirectorySeparator(path);
+  const slash = normalized.lastIndexOf("/");
+  if (slash < 0) return "";
+  if (slash === 0) return "/";
+  return normalized.slice(0, slash);
+}
+
+function trimTrailingDirectorySeparator(path: Path): Path {
+  let end = path.length;
+  while (end > 1 && path[end - 1] === "/") end -= 1;
+  return path.slice(0, end);
+}
+
+function isUppercaseStart(value: string): boolean {
+  const first = value.codePointAt(0);
+  if (first === undefined) return false;
+  return String.fromCodePoint(first).toUpperCase() === String.fromCodePoint(first)
+    && String.fromCodePoint(first).toLowerCase() !== String.fromCodePoint(first);
 }
