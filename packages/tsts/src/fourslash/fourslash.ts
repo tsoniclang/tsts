@@ -58,6 +58,7 @@ import {
   SemanticTokenTypeVariable,
   TokenFormatRelative,
   type ClientCapabilities,
+  type CodeAction,
   type CompletionItem,
   type CompletionItemDefaults,
   type CompletionList,
@@ -66,6 +67,7 @@ import {
   type Range,
   type TextEdit,
 } from "../lsp/lsproto/index.js";
+import { fileNameToDocumentURI } from "../ls/lsconv/index.js";
 import {
   extensionCjs,
   extensionCts,
@@ -156,6 +158,7 @@ export interface FourslashOptions {
   readonly content: string;
   readonly fileName?: string;
   readonly completionProvider?: FourslashCompletionProvider;
+  readonly codeFixProvider?: FourslashCodeFixProvider;
 }
 
 export interface FourslashCompletionRequest {
@@ -170,6 +173,20 @@ export interface FourslashCompletionProvider {
   resolveCompletionItem?(item: CompletionItem, request: FourslashCompletionRequest): CompletionItem;
 }
 
+export interface FourslashCodeFixRequest {
+  readonly fileName: string;
+  readonly position: Position;
+  readonly range: Range | undefined;
+  readonly errorCode: number | undefined;
+  readonly userPreferences: UserPreferences;
+}
+
+export interface FourslashCodeFixProvider {
+  getCodeFixActions(request: FourslashCodeFixRequest): readonly CodeAction[];
+  getAllQuickFixActions?(request: FourslashCodeFixRequest): readonly CodeAction[];
+  getSourceFixAllActions?(request: FourslashCodeFixRequest): readonly CodeAction[];
+}
+
 export class FourslashTest {
   readonly testData: TestData;
   readonly rangesByText = new Map<string, RangeMarker[]>();
@@ -180,6 +197,7 @@ export class FourslashTest {
   readonly semanticTokenTypes: string[] = [];
   readonly semanticTokenModifiers: string[] = [];
   completionProvider: FourslashCompletionProvider | undefined;
+  codeFixProvider: FourslashCodeFixProvider | undefined;
 
   stateEnableFormatting = false;
   reportFormatOnTypeCrash = false;
@@ -194,6 +212,7 @@ export class FourslashTest {
     const fileName = options.fileName ?? "fourslash.ts";
     this.capabilities = getCapabilitiesWithDefaults(options.capabilities);
     this.completionProvider = options.completionProvider;
+    this.codeFixProvider = options.codeFixProvider;
     this.testData = parseTestData(options.content, fileName);
     this.activeFilename = this.testData.files[0]?.fileName ?? fileName;
 
@@ -368,6 +387,10 @@ export class FourslashTest {
 
   setCompletionProvider(provider: FourslashCompletionProvider | undefined): void {
     this.completionProvider = provider;
+  }
+
+  setCodeFixProvider(provider: FourslashCodeFixProvider | undefined): void {
+    this.codeFixProvider = provider;
   }
 
   setSelection(start: Position, end: Position): void {
@@ -725,6 +748,203 @@ export class FourslashTest {
     return provider.resolveCompletionItem(item, this.completionRequest());
   }
 
+  verifyCodeFix(options: VerifyCodeFixOptions): void {
+    const originalPreferences = this.userPreferences;
+    if (options.userPreferences !== undefined) this.setUserPreferences(options.userPreferences);
+    try {
+      const actions = this.getCodeFixActions();
+      if (actions.length === 0) fail("No code fixes returned.");
+      if (options.index >= actions.length) fail(`Code fix index ${options.index} out of range (got ${actions.length} fixes).`);
+      const action = findCodeActionByDescription(actions, options.description, options.index);
+      if (action === undefined) {
+        fail(`No code fix with description ${JSON.stringify(options.description)} at index ${options.index} found. Available fixes: ${actionTitles(actions).join(", ")}`);
+      }
+
+      const originalContent = this.file().text();
+      const expectedContent = options.newRangeContent === ""
+        ? options.newFileContent
+        : this.expectedContentWithRangeReplacement(originalContent, options.newRangeContent);
+      if (options.applyChanges) {
+        this.applyCodeActionEditsForActiveFile(action);
+        this.verifyCurrentFileContent(expectedContent);
+      } else {
+        const actual = this.applyEditsToContent(originalContent, this.getCodeActionEditsForActiveFile(action));
+        if (actual !== expectedContent) {
+          fail(`File content after applying code fix did not match expected content.\nactual:\n${actual}\nexpected:\n${expectedContent}`);
+        }
+      }
+    } finally {
+      this.userPreferences = originalPreferences;
+    }
+  }
+
+  verifyRangeAfterCodeFix(expectedText: string, includeWhitespace: boolean, errorCode: number, index: number): void {
+    const actions = this.getCodeFixActions(errorCode);
+    if (actions.length === 0) fail("No code fixes returned.");
+    if (index >= actions.length) fail(`Code fix index ${index} out of range (got ${actions.length} fixes).`);
+    const ranges = this.getRangesInFile(this.activeFilename);
+    if (ranges.length !== 1) fail(`Expected exactly one range in ${this.activeFilename}, got ${ranges.length}.`);
+    const edits = this.getCodeActionEditsForActiveFile(actions[index]!);
+    const updatedRange = this.updateTextRangeForTextEdits(ranges[0]!.range, edits);
+    if (updatedRange === undefined) {
+      fail(`Code fix ${JSON.stringify(actions[index]!.title)} replaced part of the expected range; unable to compute rangeAfterCodeFix result.`);
+    }
+    this.applyTextEdits(this.activeFilename, textEditsToTextChanges(this.file(), edits));
+    let actual = this.file().text().slice(updatedRange.pos, updatedRange.end);
+    let expected = expectedText;
+    if (!includeWhitespace) {
+      actual = removeWhitespace(actual);
+      expected = removeWhitespace(expected);
+    }
+    if (actual !== expected) fail(`Range content after applying code fix did not match.\nactual:${actual}\nexpected:${expected}`);
+  }
+
+  getCodeActionEditsForActiveFile(action: CodeAction): readonly TextEdit[] {
+    const changes = action.edit?.changes;
+    if (changes === undefined) fail(`Code fix ${JSON.stringify(action.title)} did not return text edits.`);
+    const entries = Object.entries(changes);
+    if (entries.length !== 1) fail(`Code fix ${JSON.stringify(action.title)} returned edits for multiple files.`);
+    const activeUri = fileNameToDocumentURI(this.activeFilename);
+    const edits = changes[activeUri] ?? changes[this.activeFilename];
+    if (edits === undefined) fail(`Code fix ${JSON.stringify(action.title)} did not return edits for active file ${this.activeFilename}.`);
+    return edits;
+  }
+
+  verifyCodeFixAvailable(expectedDescriptions?: readonly string[]): void {
+    const actions = this.getCodeFixActions();
+    if (expectedDescriptions === undefined) {
+      if (actions.length === 0) fail("Expected code fixes to be available, but got none.");
+      return;
+    }
+    if (expectedDescriptions.length === 0) {
+      this.verifyCodeFixNotAvailable();
+      return;
+    }
+    for (const expected of expectedDescriptions) {
+      if (!actions.some(action => action.title === expected)) {
+        fail(`Expected code fix ${JSON.stringify(expected)} not found. Available fixes: ${actionTitles(actions).join(", ")}`);
+      }
+    }
+  }
+
+  verifyCodeFixNotAvailable(...expected: readonly string[]): void {
+    const actions = this.getCodeFixActions();
+    if (expected.length === 0) {
+      if (actions.length !== 0) fail(`Expected no code fixes, but got: ${actionTitles(actions).join(", ")}`);
+      return;
+    }
+    for (const title of expected) {
+      if (actions.some(action => action.title === title)) {
+        fail(`Expected code fix with description ${JSON.stringify(title)} not to be available.`);
+      }
+    }
+  }
+
+  verifyCodeFixAvailableExact(expectedDescriptions: readonly string[]): void {
+    const actions = this.getCodeFixActions();
+    if (actions.length !== expectedDescriptions.length) {
+      fail(`Expected exactly ${expectedDescriptions.length} code fixes, got ${actions.length}. Available fixes: ${actionTitles(actions).join(", ")}`);
+    }
+    this.verifyCodeFixAvailable(expectedDescriptions);
+  }
+
+  verifyCodeFixAll(options: VerifyCodeFixAllOptions): void {
+    const actions = this.getAllQuickFixActions();
+    if (actions.length === 0) fail(`No code fixes available for fixId ${JSON.stringify(options.fixId)}.`);
+    const fixAllCandidates = actions.filter(action => (action.diagnostics?.length ?? 0) === 0);
+    const fixAllAction = fixAllCandidates.length === 1
+      ? fixAllCandidates[0]
+      : fixAllCandidates.find(action => action.title.toLowerCase().includes(options.fixId.toLowerCase()));
+    if (fixAllAction === undefined) fail(`No fix-all code action found for fixId ${JSON.stringify(options.fixId)}. Available fixes: ${actionTitles(actions).join(", ")}`);
+    this.applyCodeActionEditsForActiveFile(fixAllAction);
+    this.verifyCurrentFileContent(options.newFileContent);
+  }
+
+  verifySourceFixAll(expectedContent: string): void {
+    const provider = this.codeFixProvider;
+    if (provider?.getSourceFixAllActions === undefined) throw new Error("Fourslash source.fixAll provider is not configured.");
+    const actions = provider.getSourceFixAllActions(this.codeFixRequest(undefined));
+    const selected = actions.find(action => action.kind === "source.fixAll");
+    if (selected === undefined) fail("No source.fixAll code action found.");
+    this.applyCodeActionEditsForActiveFile(selected);
+    this.verifyCurrentFileContent(expectedContent);
+  }
+
+  getCodeFixActions(errorCode?: number): readonly CodeAction[] {
+    const actions = this.getAllQuickFixActions(errorCode);
+    return actions.filter(action => (action.diagnostics?.length ?? 0) > 0);
+  }
+
+  getAllQuickFixActions(errorCode?: number): readonly CodeAction[] {
+    const provider = this.codeFixProvider;
+    if (provider === undefined) throw new Error("Fourslash code-fix provider is not configured.");
+    const request = this.codeFixRequest(errorCode);
+    return provider.getAllQuickFixActions?.(request) ?? provider.getCodeFixActions(request);
+  }
+
+  updateTextRangeForTextEdits(range: TextRange, edits: readonly TextEdit[]): TextRange | undefined {
+    let start = range.pos;
+    let end = range.end;
+    for (const edit of [...edits].sort((left, right) => textEditStartOffset(this.file(), left) - textEditStartOffset(this.file(), right))) {
+      const editStart = textEditStartOffset(this.file(), edit);
+      const editEnd = textEditEndOffset(this.file(), edit);
+      const lengthDelta = edit.newText.length - (editEnd - editStart);
+      if (editEnd <= start) {
+        start += lengthDelta;
+        end += lengthDelta;
+      } else if (editStart >= end) {
+        continue;
+      } else if (editStart <= start && editEnd >= end) {
+        return new TextRange(editStart, editStart + edit.newText.length);
+      } else {
+        return undefined;
+      }
+    }
+    return new TextRange(start, end);
+  }
+
+  applyEditsToContent(content: string, edits: readonly TextEdit[]): string {
+    let result = content;
+    const script = this.file();
+    const changes = [...textEditsToTextChanges(script, edits)]
+      .sort((left, right) => right.span.pos - left.span.pos || right.span.end - left.span.end);
+    for (const change of changes) result = applyTextChange(result, change);
+    return result;
+  }
+
+  private applyCodeActionEditsForActiveFile(action: CodeAction): void {
+    this.applyTextEdits(this.activeFilename, textEditsToTextChanges(this.file(), this.getCodeActionEditsForActiveFile(action)));
+  }
+
+  private expectedContentWithRangeReplacement(originalContent: string, newRangeContent: string): string {
+    let selection = this.rangeFromSelection();
+    if (selection === undefined || selection.pos === selection.end) {
+      const ranges = this.getRangesInFile(this.activeFilename);
+      if (ranges.length === 0) fail("Expected a selected range or fourslash range for NewRangeContent verification.");
+      selection = ranges[0]!.range;
+    }
+    return originalContent.slice(0, selection.pos) + newRangeContent + originalContent.slice(selection.end);
+  }
+
+  private rangeFromSelection(): TextRange | undefined {
+    if (this.selectionEnd === undefined) return undefined;
+    return new TextRange(
+      offsetFromPosition(this.file(), this.currentCaretPosition),
+      offsetFromPosition(this.file(), this.selectionEnd),
+    );
+  }
+
+  private codeFixRequest(errorCode: number | undefined): FourslashCodeFixRequest {
+    const range = this.activeRange();
+    return {
+      fileName: this.activeFilename,
+      position: this.currentCaretPosition,
+      range,
+      errorCode,
+      userPreferences: this.userPreferences,
+    };
+  }
+
   getCurrentPositionPrefix(): string {
     return `${this.activeFilename}:${this.currentCaretPosition.line + 1}:${this.currentCaretPosition.character + 1}: `;
   }
@@ -1077,6 +1297,20 @@ export interface VerifyCompletionsResult {
   readonly andHasNoCodeAction: (unexpectedAction: CompletionsExpectedCodeAction) => void;
 }
 
+export interface VerifyCodeFixOptions {
+  readonly description: string;
+  readonly newFileContent: string;
+  readonly newRangeContent: string;
+  readonly index: number;
+  readonly applyChanges: boolean;
+  readonly userPreferences?: UserPreferences;
+}
+
+export interface VerifyCodeFixAllOptions {
+  readonly fixId: string;
+  readonly newFileContent: string;
+}
+
 export interface CompletionVerificationResult {
   readonly itemDefaults?: CompletionItemDefaults;
   readonly items: readonly CompletionItem[];
@@ -1226,6 +1460,28 @@ function textEditsToTextChanges(script: ScriptInfo, edits: readonly TextEdit[]):
     ),
     newText: edit.newText,
   }));
+}
+
+function findCodeActionByDescription(actions: readonly CodeAction[], description: string, index: number): CodeAction | undefined {
+  const indexed = actions[index];
+  if (indexed?.title === description) return indexed;
+  return actions.find(action => action.title === description);
+}
+
+function actionTitles(actions: readonly CodeAction[]): readonly string[] {
+  return actions.map(action => action.title);
+}
+
+function textEditStartOffset(script: ScriptInfo, edit: TextEdit): number {
+  return offsetFromPosition(script, edit.range.start);
+}
+
+function textEditEndOffset(script: ScriptInfo, edit: TextEdit): number {
+  return offsetFromPosition(script, edit.range.end);
+}
+
+function removeWhitespace(text: string): string {
+  return text.replace(/\s+/gu, "");
 }
 
 function fail(message: string): never {
