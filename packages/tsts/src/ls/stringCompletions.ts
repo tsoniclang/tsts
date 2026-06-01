@@ -1,3 +1,275 @@
+import type { TextRange } from "../core/index.js";
+import {
+  ScriptElementKindDirectory,
+  ScriptElementKindExternalModuleName,
+  ScriptElementKindScriptElement,
+  ScriptElementKindModifierCjs,
+  ScriptElementKindModifierCts,
+  ScriptElementKindModifierDcts,
+  ScriptElementKindModifierDmts,
+  ScriptElementKindModifierDts,
+  ScriptElementKindModifierJs,
+  ScriptElementKindModifierJson,
+  ScriptElementKindModifierJsx,
+  ScriptElementKindModifierMjs,
+  ScriptElementKindModifierMts,
+  ScriptElementKindModifierNone,
+  ScriptElementKindModifierTs,
+  ScriptElementKindModifierTsx,
+  type ScriptElementKind,
+  type ScriptElementKindModifier,
+} from "./lsutil/index.js";
+import {
+  directorySeparator,
+  extensionCjs,
+  extensionCts,
+  extensionDcts,
+  extensionDmts,
+  extensionDts,
+  extensionJs,
+  extensionJson,
+  extensionJsx,
+  extensionMjs,
+  extensionMts,
+  extensionTs,
+  extensionTsBuildInfo,
+  extensionTsx,
+  getAnyExtensionFromPath,
+  getRelativePathFromDirectory,
+  resolvePath,
+  tryGetExtensionFromPath,
+} from "../tspath/index.js";
+
+export interface CompletionsFromTypes {
+  readonly types: readonly unknown[];
+  readonly isNewIdentifier: boolean;
+}
+
+export interface CompletionsFromProperties {
+  readonly symbols: readonly unknown[];
+  readonly hasIndexSignature: boolean;
+}
+
+export interface PathCompletion {
+  readonly name: string;
+  readonly kind: ScriptElementKind;
+  readonly extension: string;
+  readonly textRange?: TextRange;
+}
+
+export interface StringLiteralCompletions {
+  readonly fromTypes?: CompletionsFromTypes;
+  readonly fromProperties?: CompletionsFromProperties;
+  readonly fromPaths?: readonly PathCompletion[];
+}
+
+export enum ModuleCompletionKind {
+  Directory = 0,
+  File = 1,
+  ExternalModuleName = 2,
+}
+
+export interface ModuleCompletionNameAndKind {
+  readonly name: string;
+  readonly kind: ModuleCompletionKind;
+  readonly extension: string;
+}
+
+export class ModuleCompletionNameAndKindSet {
+  readonly names = new Map<string, ModuleCompletionNameAndKind>();
+
+  add(entry: ModuleCompletionNameAndKind): void {
+    const existing = this.names.get(entry.name);
+    if (existing === undefined || existing.kind < entry.kind) {
+      this.names.set(entry.name, entry);
+    }
+  }
+
+  values(): readonly ModuleCompletionNameAndKind[] {
+    return [...this.names.values()];
+  }
+}
+
+export interface ExtensionOptions {
+  readonly extensionsToSearch: readonly string[];
+  readonly referenceKind: ReferenceKind;
+  readonly importingSourceFile?: unknown;
+  readonly endingPreference?: unknown;
+  readonly resolutionMode?: unknown;
+}
+
+export enum ReferenceKind {
+  FileName = 0,
+  ModuleSpecifier = 1,
+}
+
+export function deduplicateStrings(slice: readonly string[]): readonly string[] {
+  if (slice.length <= 1) return slice;
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const value of slice) {
+    if (!seen.has(value)) {
+      seen.add(value);
+      result.push(value);
+    }
+  }
+  return result;
+}
+
+export function deduplicateModuleCompletions(
+  completions: readonly ModuleCompletionNameAndKind[],
+): readonly ModuleCompletionNameAndKind[] {
+  if (completions.length <= 1) return completions;
+  const seen = new Set<string>();
+  const result: ModuleCompletionNameAndKind[] = [];
+  for (const completion of completions) {
+    const key = `${completion.name}\0${completion.kind}\0${completion.extension}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(completion);
+    }
+  }
+  return result;
+}
+
+export function moduleToScriptElementKind(kind: ModuleCompletionKind): ScriptElementKind {
+  switch (kind) {
+    case ModuleCompletionKind.Directory:
+      return ScriptElementKindDirectory;
+    case ModuleCompletionKind.ExternalModuleName:
+      return ScriptElementKindExternalModuleName;
+    case ModuleCompletionKind.File:
+    default:
+      return ScriptElementKindScriptElement;
+  }
+}
+
+export function containsSlash(fragment: string): boolean {
+  return fragment.includes(directorySeparator);
+}
+
+export function withoutStartAndEnd(text: string, start: string, end: string): string | undefined {
+  if (text.startsWith(start) && text.endsWith(end) && text.length >= start.length + end.length) {
+    return text.slice(start.length, text.length - end.length);
+  }
+  return undefined;
+}
+
+export function removeLeadingDirectorySeparator(path: string): string {
+  return path.startsWith(directorySeparator) ? path.slice(directorySeparator.length) : path;
+}
+
+export function getPossibleOriginalInputPathWithoutChangingExt(
+  filePath: string,
+  ignoreCase: boolean,
+  outputDir: string,
+  getCommonSourceDirectory: () => string,
+): string {
+  if (outputDir !== "") {
+    return resolvePath(
+      getCommonSourceDirectory(),
+      getRelativePathFromDirectory(outputDir, filePath, { currentDirectory: "", useCaseSensitiveFileNames: !ignoreCase }),
+    );
+  }
+  return filePath;
+}
+
+export function getFileExtension(fileName: string): string {
+  let extension = tryGetExtensionFromPath(fileName);
+  if (extension === "") {
+    extension = getAnyExtensionFromPath(fileName, undefined, false);
+  }
+  return extension;
+}
+
+export function getFilenameWithExtensionOptionForFileNameReference(name: string): readonly [string, string] {
+  return [name, tryGetExtensionFromPath(name)];
+}
+
+export interface TripleSlashDirectiveFragment {
+  readonly prefix: string;
+  readonly kind: "path" | "types";
+  readonly toComplete: string;
+}
+
+export function hasTripleSlashPrefix(commentText: string): boolean {
+  return commentText.startsWith("///") && commentText.slice(3).trimStart().startsWith("<");
+}
+
+export function parseTripleSlashDirectiveFragment(text: string): TripleSlashDirectiveFragment | undefined {
+  let rest = text;
+  if (!rest.startsWith("///")) return undefined;
+
+  rest = rest.slice("///".length).trimStart();
+  if (!rest.startsWith("<reference")) return undefined;
+  rest = rest.slice("<reference".length);
+
+  if (rest.length === 0 || !isWhiteSpaceLike(rest[0]!)) return undefined;
+  rest = rest.trimStart();
+
+  let kind: "path" | "types";
+  if (rest.startsWith("path")) {
+    kind = "path";
+    rest = rest.slice("path".length);
+  } else if (rest.startsWith("types")) {
+    kind = "types";
+    rest = rest.slice("types".length);
+  } else {
+    return undefined;
+  }
+
+  rest = rest.trimStart();
+  if (!rest.startsWith("=")) return undefined;
+  rest = rest.slice(1).trimStart();
+
+  if (rest.length === 0 || (rest[0] !== "'" && rest[0] !== "\"")) return undefined;
+  rest = rest.slice(1);
+  if (rest.includes("'") || rest.includes("\"")) return undefined;
+
+  return {
+    prefix: text.slice(0, text.length - rest.length),
+    kind,
+    toComplete: rest,
+  };
+}
+
+export function kindModifiersFromExtension(extension: string): ScriptElementKindModifier {
+  switch (extension) {
+    case extensionDts:
+      return ScriptElementKindModifierDts;
+    case extensionJs:
+      return ScriptElementKindModifierJs;
+    case extensionJson:
+      return ScriptElementKindModifierJson;
+    case extensionJsx:
+      return ScriptElementKindModifierJsx;
+    case extensionTs:
+      return ScriptElementKindModifierTs;
+    case extensionTsx:
+      return ScriptElementKindModifierTsx;
+    case extensionDmts:
+      return ScriptElementKindModifierDmts;
+    case extensionMjs:
+      return ScriptElementKindModifierMjs;
+    case extensionMts:
+      return ScriptElementKindModifierMts;
+    case extensionDcts:
+      return ScriptElementKindModifierDcts;
+    case extensionCjs:
+      return ScriptElementKindModifierCjs;
+    case extensionCts:
+      return ScriptElementKindModifierCts;
+    case extensionTsBuildInfo:
+      throw new Error(`Extension ${extensionTsBuildInfo} is unsupported.`);
+    default:
+      return ScriptElementKindModifierNone;
+  }
+}
+
+function isWhiteSpaceLike(character: string): boolean {
+  return /\s/u.test(character);
+}
+
 // Language-service parity map: internal/ls/string_completions.go
 /**
  * Language-service parity map for TS-Go `ls/string_completions.go`.
