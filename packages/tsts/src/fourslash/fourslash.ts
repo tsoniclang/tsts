@@ -393,6 +393,113 @@ export class FourslashTest {
   verifyIndentation(_numSpaces: number): void {
     return;
   }
+
+  insert(text: string): void {
+    this.typeText(text);
+  }
+
+  insertLine(text: string): void {
+    this.typeText(`${text}\n`);
+  }
+
+  backspace(count = 1): void {
+    const script = this.file();
+    const caret = offsetFromPosition(script, this.currentCaretPosition);
+    const start = Math.max(0, caret - count);
+    this.editScriptAndUpdateMarkers(script.fileName, { span: new TextRange(start, caret), newText: "" });
+  }
+
+  deleteAtCaret(count = 1): void {
+    const script = this.file();
+    const caret = offsetFromPosition(script, this.currentCaretPosition);
+    this.editScriptAndUpdateMarkers(script.fileName, { span: new TextRange(caret, Math.min(script.text().length, caret + count)), newText: "" });
+  }
+
+  paste(text: string): void {
+    this.typeText(text);
+  }
+
+  replaceLine(index: number, text: string): void {
+    const script = this.file();
+    const starts = script.lineStarts();
+    const start = starts[index];
+    if (start === undefined) throw new Error(`Line index ${index} is out of range`);
+    const end = index + 1 < starts.length ? starts[index + 1]! : script.text().length;
+    this.editScriptAndUpdateMarkers(script.fileName, { span: new TextRange(start, end), newText: text });
+  }
+
+  selectLine(index: number): void {
+    const script = this.file();
+    const starts = script.lineStarts();
+    const start = starts[index];
+    if (start === undefined) throw new Error(`Line index ${index} is out of range`);
+    const end = index + 1 < starts.length ? starts[index + 1]! : script.text().length;
+    this.currentCaretPosition = positionFromOffset(script, start);
+    this.selectionEnd = positionFromOffset(script, end);
+  }
+
+  selectRange(start: Position, end: Position): void {
+    this.currentCaretPosition = start;
+    this.selectionEnd = end;
+  }
+
+  getSelection(): Range | undefined {
+    return this.activeRange();
+  }
+
+  applyTextEdits(fileName: string, edits: readonly TextChange[]): void {
+    const sorted = [...edits].sort((left, right) => right.span.pos - left.span.pos || right.span.end - left.span.end);
+    for (const edit of sorted) this.editScriptAndUpdateMarkers(fileName, edit);
+  }
+
+  replace(start: number, length: number, text: string): void {
+    this.replaceWorker(this.activeFilename, start, start + length, text);
+  }
+
+  replaceWorker(fileName: string, start: number, end: number, text: string): void {
+    this.editScriptAndUpdateMarkers(fileName, { span: new TextRange(start, end), newText: text });
+  }
+
+  typeText(text: string): void {
+    const script = this.file();
+    const start = offsetFromPosition(script, this.currentCaretPosition);
+    const end = this.selectionEnd === undefined ? start : offsetFromPosition(script, this.selectionEnd);
+    const span = new TextRange(Math.min(start, end), Math.max(start, end));
+    this.editScriptAndUpdateMarkers(script.fileName, { span, newText: text });
+  }
+
+  editScriptAndUpdateMarkers(fileName: string, change: TextChange): void {
+    this.editScriptAndUpdateMarkersWorker(fileName, change);
+  }
+
+  editScriptAndUpdateMarkersWorker(fileName: string, change: TextChange): void {
+    const script = this.getScriptInfo(fileName);
+    const oldText = script.text();
+    script.editContent(change);
+    this.currentCaretPosition = updatePosition(this.currentCaretPosition, oldText, script, change);
+    if (this.selectionEnd !== undefined) {
+      this.selectionEnd = updatePosition(this.selectionEnd, oldText, script, change);
+    }
+  }
+
+  editScript(fileName: string, change: TextChange): void {
+    this.getScriptInfo(fileName).editContent(change);
+  }
+
+  getScriptInfo(fileName: string): ScriptInfo {
+    const info = this.scriptInfos.get(fileName);
+    if (info === undefined) throw new Error(`Unknown fourslash file: ${fileName}`);
+    return info;
+  }
+
+  getOrLoadScriptInfo(fileName: string): ScriptInfo {
+    let info = this.scriptInfos.get(fileName);
+    if (info === undefined) {
+      info = newScriptInfo(fileName, "");
+      this.scriptInfos.set(fileName, info);
+    }
+    return info;
+  }
 }
 
 export function newFourslash(content: string, capabilities: FourslashCapabilities = {}, fileName?: string): FourslashTest {
@@ -640,6 +747,29 @@ function positionFromOffset(scriptInfo: ScriptInfo, offset: number): Position {
     line = index;
   }
   return { line, character: offset - lineStarts[line]! };
+}
+
+function offsetFromPosition(scriptInfo: ScriptInfo, position: Position): number {
+  const starts = scriptInfo.lineStarts();
+  const lineStart = starts[position.line];
+  if (lineStart === undefined) return scriptInfo.text().length;
+  const lineEnd = position.line + 1 < starts.length ? starts[position.line + 1]! : scriptInfo.text().length;
+  return Math.max(lineStart, Math.min(lineStart + position.character, lineEnd));
+}
+
+export function updatePosition(position: Position, _oldText: string, scriptInfo: ScriptInfo, change: TextChange): Position {
+  const oldLineStarts = computeLineStarts(_oldText);
+  const lineStart = oldLineStarts[position.line];
+  const oldOffset = lineStart === undefined
+    ? _oldText.length
+    : Math.max(lineStart, Math.min(lineStart + position.character, position.line + 1 < oldLineStarts.length ? oldLineStarts[position.line + 1]! : _oldText.length));
+  if (oldOffset <= change.span.pos) return position;
+  const removedLength = change.span.end - change.span.pos;
+  const insertedLength = change.newText.length;
+  if (oldOffset >= change.span.end) {
+    return positionFromOffset(scriptInfo, oldOffset - removedLength + insertedLength);
+  }
+  return positionFromOffset(scriptInfo, change.span.pos + insertedLength);
 }
 
 export function getLanguageKind(filename: string): LanguageKind {
