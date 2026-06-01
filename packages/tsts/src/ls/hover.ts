@@ -15,19 +15,40 @@ import {
   isBreakStatement,
   isContinueStatement,
   isExpressionWithTypeArguments,
+  isArrowFunction,
+  isBindingElement,
+  isBindingPattern,
+  isCallSignatureDeclaration,
+  isClassExpression,
+  isClassOrInterfaceLike,
+  isConstructSignatureDeclaration,
+  isConstructorDeclaration,
+  isFunctionDeclaration,
+  isFunctionExpression,
   isNamedTupleMember,
+  isMethodDeclaration,
+  isMethodSignatureDeclaration,
   isNewExpression,
+  isObjectBindingPattern,
   isParenthesizedExpression,
+  isParameterDeclaration,
   isPropertyAccessExpression,
+  isPropertyAssignment,
+  isPropertyDeclaration,
   isQualifiedName,
   isSourceFile,
   isTypeReferenceNode,
+  isTypeParameterDeclaration,
+  isVariableDeclaration,
+  isVariableDeclarationList,
   Kind,
   NodeFlags,
+  nodeText,
   type EntityName,
   type JSDoc,
   type JSDocComment,
   type Node,
+  type Symbol,
   type TypeReferenceNode,
 } from "../ast/index.js";
 import { SymbolFormatFlags, TypeFormatFlags } from "../checker/types.js";
@@ -134,6 +155,129 @@ export function getJSDoc(node: Node): JSDoc | undefined {
   return isJSDoc(last) ? last : undefined;
 }
 
+export interface HoverType {
+  readonly types?: readonly HoverType[];
+}
+
+export interface HoverChecker {
+  getTypeAtLocation?(node: Node): HoverType | undefined;
+  getDeclaredTypeOfSymbol?(symbol: Symbol): HoverType | undefined;
+  getBaseTypes?(type: HoverType): readonly HoverType[];
+  getBaseConstructorTypeOfClass?(type: HoverType): HoverType | undefined;
+  getApparentType?(type: HoverType | undefined): HoverType | undefined;
+  getPropertyOfType?(type: HoverType, propertyName: string): Symbol | undefined;
+  getDeclarationsFromLocation?(name: Node): readonly Node[];
+}
+
+export interface HoverLinkResolver {
+  getMappedLocation?(fileName: string, range: { readonly pos: number; readonly end: number }): {
+    readonly uri: string;
+    readonly range: {
+      readonly start: { readonly line: number; readonly character: number };
+      readonly end: { readonly line: number; readonly character: number };
+    };
+  };
+}
+
+export function getJSDocOrTag(checker: HoverChecker, node: Node): Node | undefined {
+  const jsDoc = getJSDoc(node);
+  if (jsDoc !== undefined) return jsDoc;
+
+  if (isParameterDeclaration(node)) {
+    const name = nodeName(node);
+    if (name !== undefined && isBindingPattern(name)) return getJSDocParameterTagByPosition(checker, node);
+    return name === undefined ? undefined : getMatchingJSDocTag(checker, node.parent, nodeText(name), isMatchingParameterTag);
+  }
+
+  if (isTypeParameterDeclaration(node)) {
+    return getMatchingJSDocTag(checker, node.parent, nodeText(node.name), isMatchingTemplateTag);
+  }
+
+  if (isVariableDeclaration(node) && node.parent !== undefined && isVariableDeclarationList(node.parent) && nodeArray(node.parent, "declarations")[0] === node) {
+    return node.parent.parent === undefined ? undefined : getJSDocOrTag(checker, node.parent.parent);
+  }
+
+  const parent = node.parent;
+  if (
+    (isFunctionExpression(node) || isArrowFunction(node) || isClassExpression(node))
+    && parent !== undefined
+    && (isVariableDeclaration(parent) || isPropertyDeclaration(parent) || isPropertyAssignment(parent))
+    && nodeInitializer(parent) === node
+  ) {
+    return getJSDocOrTag(checker, parent);
+  }
+
+  const symbol = nodeSymbol(node);
+  if (symbol === undefined || parent === undefined) return undefined;
+
+  if (
+    isFunctionDeclaration(node)
+    || isMethodDeclaration(node)
+    || isMethodSignatureDeclaration(node)
+    || isConstructorDeclaration(node)
+    || isConstructSignatureDeclaration(node)
+  ) {
+    const firstSignature = symbol.declarations.find(isFunctionLikeForHover);
+    if (firstSignature !== undefined && firstSignature !== node) {
+      const inherited = getJSDocOrTag(checker, firstSignature);
+      if (inherited !== undefined) return inherited;
+    }
+  }
+
+  if (isClassOrInterfaceLike(parent)) {
+    const parentSymbol = nodeSymbol(parent);
+    const classType = parentSymbol === undefined ? undefined : checker.getDeclaredTypeOfSymbol?.(parentSymbol);
+    if (classType !== undefined) {
+      const baseTypes = hasStaticModifier(node)
+        ? [checker.getApparentType?.(checker.getBaseConstructorTypeOfClass?.(classType))].filter((type): type is HoverType => type !== undefined)
+        : checker.getBaseTypes?.(classType) ?? [];
+      for (const baseType of baseTypes) {
+        const property = checker.getPropertyOfType?.(baseType, symbolName(symbol));
+        const declaration = property?.valueDeclaration ?? property?.declarations[0];
+        if (declaration === undefined) continue;
+        const inherited = getJSDocOrTag(checker, declaration);
+        if (inherited !== undefined) return inherited;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+export function getMatchingJSDocTag(
+  checker: HoverChecker,
+  node: Node | undefined,
+  name: string,
+  match: (tag: Node, name: string) => boolean,
+): Node | undefined {
+  if (node === undefined) return undefined;
+  const jsDoc = getJSDocOrTag(checker, node);
+  if (jsDoc === undefined || jsDoc.kind !== Kind.JSDoc) return undefined;
+  for (const tag of nodeArray(jsDoc, "tags")) {
+    if (match(tag, name)) return tag;
+  }
+  return undefined;
+}
+
+export function getJSDocParameterTagByPosition(checker: HoverChecker, parameter: Node): Node | undefined {
+  const parent = parameter.parent;
+  if (parent === undefined) return undefined;
+  const parameters = nodeArray(parent, "parameters");
+  const parameterIndex = parameters.indexOf(parameter);
+  if (parameterIndex < 0) return undefined;
+
+  const jsDoc = getJSDocOrTag(checker, parent);
+  if (jsDoc === undefined || jsDoc.kind !== Kind.JSDoc) return undefined;
+
+  let parameterTagIndex = 0;
+  for (const tag of nodeArray(jsDoc, "tags")) {
+    if (tag.kind !== Kind.JSDocParameterTag) continue;
+    if (parameterTagIndex === parameterIndex) return tag;
+    parameterTagIndex += 1;
+  }
+  return undefined;
+}
+
 export function isMatchingParameterTag(tag: Node, name: string): boolean {
   return isJSDocParameterTag(tag) && isNodeWithName(tag, name);
 }
@@ -143,8 +287,8 @@ export function isMatchingTemplateTag(tag: Node, name: string): boolean {
 }
 
 export function isNodeWithName(node: Node, name: string): boolean {
-  const named = node as { readonly name?: Node };
-  return named.name !== undefined && isIdentifier(named.name) && named.name.text === name;
+  const named = nodeName(node);
+  return named !== undefined && isIdentifier(named) && named.text === name;
 }
 
 export function writeCode(parts: string[], language: string, code: string): void {
@@ -155,6 +299,85 @@ export function writeCode(parts: string[], language: string, code: string): void
   }
   const ticks = "`".repeat(tickCount);
   parts.push(ticks, language, "\n", code, "\n", ticks, "\n");
+}
+
+export function writeComments(
+  parts: string[],
+  checker: HoverChecker,
+  comments: readonly Node[],
+  isMarkdown: boolean,
+  resolver?: HoverLinkResolver,
+): void {
+  for (const comment of comments) {
+    switch (comment.kind) {
+      case Kind.JSDocText:
+        parts.push(nodeText(comment));
+        break;
+      case Kind.JSDocLink:
+      case Kind.JSDocLinkPlain:
+        writeJSDocLink(parts, checker, comment, false, isMarkdown, resolver);
+        break;
+      case Kind.JSDocLinkCode:
+        writeJSDocLink(parts, checker, comment, true, isMarkdown, resolver);
+        break;
+    }
+  }
+}
+
+export function writeJSDocLink(
+  parts: string[],
+  checker: HoverChecker,
+  link: Node,
+  quote: boolean,
+  isMarkdown: boolean,
+  resolver?: HoverLinkResolver,
+): void {
+  const name = nodeName(link);
+  const text = nodeText(link).trim();
+  if (name === undefined) {
+    writeQuotedString(parts, text, quote && isMarkdown);
+    return;
+  }
+  if (isIdentifier(name) && (name.text === "http" || name.text === "https") && text.startsWith("://")) {
+    const [linkUri, linkText] = splitJSDocHttpLink(name.text + text);
+    if (isMarkdown) writeMarkdownLink(parts, linkText, linkUri, quote);
+    else {
+      writeQuotedString(parts, linkText, false);
+      if (linkText !== linkUri) parts.push(" (", linkUri, ")");
+    }
+    return;
+  }
+  writeNameLink(parts, checker, name, text, quote, isMarkdown, resolver);
+}
+
+export function writeNameLink(
+  parts: string[],
+  checker: HoverChecker,
+  name: Node,
+  text: string,
+  quote: boolean,
+  isMarkdown: boolean,
+  resolver?: HoverLinkResolver,
+): void {
+  const declarations = checker.getDeclarationsFromLocation?.(name) ?? [];
+  if (declarations.length !== 0) {
+    const declaration = declarations[0]!;
+    const file = declaration.getSourceFile();
+    const linkNode = nodeName(declaration) ?? declaration;
+    const location = resolver?.getMappedLocation?.(file.fileName, { pos: linkNode.pos, end: linkNode.end });
+    const prefixLength = text.startsWith("()") ? 2 : 0;
+    let linkText = trimCommentPrefix(text.slice(prefixLength));
+    if (linkText === "") linkText = getEntityNameString(name) + text.slice(0, prefixLength);
+    if (isMarkdown && location !== undefined) {
+      const range = location.range;
+      const uri = `${location.uri}#${range.start.line + 1},${range.start.character + 1}-${range.end.line + 1},${range.end.character + 1}`;
+      writeMarkdownLink(parts, linkText, uri, quote);
+    } else {
+      writeQuotedString(parts, linkText, false);
+    }
+    return;
+  }
+  writeQuotedString(parts, getEntityNameString(name) + (text === "" ? "" : " ") + text, quote && isMarkdown);
 }
 
 export function trimCommentPrefix(text: string): string {
@@ -211,6 +434,63 @@ export function writeEntityNameParts(parts: string[], node: Node): void {
   if (isJSDocNameReference(node)) {
     writeEntityNameParts(parts, node.name);
   }
+}
+
+export function findPropertyInType(checker: HoverChecker, objectType: HoverType, propertyName: string): Symbol | undefined {
+  for (const type of objectType.types ?? [objectType]) {
+    const property = checker.getPropertyOfType?.(type, propertyName);
+    if (property !== undefined) return property;
+  }
+  return undefined;
+}
+
+function splitJSDocHttpLink(linkText: string): readonly [string, string] {
+  const commentPosition = linkText.search(/[ |]/u);
+  if (commentPosition < 0) return [linkText, linkText];
+  const linkUri = linkText.slice(0, commentPosition);
+  const display = trimCommentPrefix(linkText.slice(commentPosition));
+  return [linkUri, display === "" ? linkUri : display];
+}
+
+function isFunctionLikeForHover(node: Node): boolean {
+  return isFunctionDeclaration(node)
+    || isFunctionExpression(node)
+    || isArrowFunction(node)
+    || isMethodDeclaration(node)
+    || isMethodSignatureDeclaration(node)
+    || isConstructorDeclaration(node)
+    || isCallSignatureDeclaration(node)
+    || isConstructSignatureDeclaration(node);
+}
+
+function nodeArray(node: Node, propertyName: string): readonly Node[] {
+  return nodeProperty<readonly Node[]>(node, propertyName) ?? [];
+}
+
+function nodeName(node: Node): Node | undefined {
+  return nodeProperty<Node>(node, "name");
+}
+
+function nodeInitializer(node: Node): Node | undefined {
+  return nodeProperty<Node>(node, "initializer");
+}
+
+function nodeSymbol(node: Node): Symbol | undefined {
+  return nodeProperty<Symbol>(node, "symbol");
+}
+
+function symbolName(symbol: Symbol): string {
+  return symbol.name ?? symbol.escapedName ?? "";
+}
+
+function hasStaticModifier(node: Node): boolean {
+  return ((nodeProperty<number>(node, "modifierFlagsCache") ?? 0) & 256) !== 0
+    || nodeArray(node, "modifiers").some(modifier => modifier.kind === Kind.StaticKeyword);
+}
+
+function nodeProperty<T>(node: Node | undefined, propertyName: string): T | undefined {
+  if (node === undefined) return undefined;
+  return (node as unknown as Record<string, T | undefined>)[propertyName];
 }
 
 function isDeclarationNameLike(node: Node): boolean {
