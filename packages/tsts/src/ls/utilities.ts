@@ -26,6 +26,9 @@ import {
   isImportEqualsDeclaration,
   isImportTypeNode,
   isInterfaceDeclaration,
+  isJsxAttribute,
+  isJsxAttributes,
+  isJsxSpreadAttribute,
   isLiteralExpression,
   isLiteralTypeNode,
   isMethodDeclaration,
@@ -448,6 +451,52 @@ export function getContainerNode(node: Node): Node | undefined {
     }
   }
   return undefined;
+}
+
+// Returns the containing object literal property declaration given a possible name node, e.g. "a" in x = { "a": 1 }.
+export function getContainingObjectLiteralElement(node: Node): Node | undefined {
+  const element = getContainingObjectLiteralElementWorker(node);
+  if (element !== undefined && (isObjectLiteralExpression(element.parent) || isJsxAttributes(element.parent))) return element;
+  return undefined;
+}
+
+function getContainingObjectLiteralElementWorker(node: Node): Node | undefined {
+  switch (node.kind) {
+    case Kind.StringLiteral:
+    case Kind.NoSubstitutionTemplateLiteral:
+    case Kind.NumericLiteral:
+      if (isComputedPropertyName(node.parent)) {
+        const parent = node.parent.parent;
+        return parent !== undefined && isObjectLiteralOrJsxElement(parent) ? parent : undefined;
+      }
+      // falls through
+    case Kind.Identifier:
+      return isObjectLiteralOrJsxElement(node.parent)
+        && (isObjectLiteralExpression(node.parent.parent) || isJsxAttributes(node.parent.parent))
+        && nodeName(node.parent) === node
+        ? node.parent
+        : undefined;
+    default:
+      return undefined;
+  }
+}
+
+function isObjectLiteralOrJsxElement(node: Node | undefined): node is Node {
+  return node !== undefined && (isObjectLiteralElement(node) || isJsxAttribute(node) || isJsxSpreadAttribute(node));
+}
+
+function isObjectLiteralElement(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.PropertyAssignment:
+    case Kind.ShorthandPropertyAssignment:
+    case Kind.SpreadAssignment:
+    case Kind.MethodDeclaration:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+      return true;
+    default:
+      return false;
+  }
 }
 
 export function getAdjustedLocation(node: Node, forRename: boolean, sourceFile?: SourceFile): Node {

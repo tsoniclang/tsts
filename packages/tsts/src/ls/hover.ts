@@ -1,4 +1,13 @@
 import {
+  getCombinedNodeFlags,
+  getRootDeclaration,
+} from "../ast/utilities.js";
+import { CheckFlags } from "../ast/checkFlags.js";
+import {
+  getContainerNode,
+  getContainingObjectLiteralElement,
+} from "./utilities.js";
+import {
   isCallExpression,
   isIdentifier,
   isJSDoc,
@@ -43,6 +52,7 @@ import {
   isVariableDeclarationList,
   Kind,
   NodeFlags,
+  SymbolFlags,
   nodeText,
   type EntityName,
   type JSDoc,
@@ -155,18 +165,235 @@ export function getJSDoc(node: Node): JSDoc | undefined {
   return isJSDoc(last) ? last : undefined;
 }
 
+export function getQuickInfoAndDeclarationAtLocation(
+  checker: HoverChecker,
+  symbol: Symbol | undefined,
+  node: Node,
+): readonly [string, Node | undefined] {
+  const container = getContainerNode(node);
+  const typeToString = (type: HoverType | undefined, enclosing: Node | undefined, flags: TypeFormatFlags): string =>
+    type === undefined ? "" : checker.typeToString?.(type, enclosing, flags | TypeFormatFlags.MultilineObjectLiterals) ?? "";
+  const signatureToString = (signature: HoverSignature | undefined, enclosing: Node | undefined, flags: TypeFormatFlags): string =>
+    signature === undefined ? "" : checker.signatureToString?.(signature, enclosing, flags | TypeFormatFlags.MultilineObjectLiterals) ?? "";
+
+  if (node.kind === Kind.ThisKeyword || node.kind === Kind.ThisType) {
+    const typeText = typeToString(checker.getTypeAtLocation?.(node), container, typeFormatFlags);
+    return typeText === "" ? ["", undefined] : [`this: ${typeText}`, undefined];
+  }
+
+  if (symbol === undefined) {
+    if (!shouldGetType(node)) return ["", undefined];
+    return [typeToString(checker.getTypeAtLocation?.(node), container, typeFormatFlags), undefined];
+  }
+
+  const parts: string[] = [];
+  let firstDeclaration: Node | undefined;
+  const visitedAliases = new Set<Symbol>();
+
+  const setDeclaration = (declaration: Node | undefined): void => {
+    firstDeclaration ??= declaration;
+  };
+  const writeNewLine = (): void => {
+    if (parts.length !== 0) parts.push("\n");
+  };
+  const symbolText = (target: Symbol): string =>
+    checker.symbolToString?.(target, container, SymbolFlags.None, symbolFormatFlags) ?? symbolName(target);
+  const writeSignatures = (signatures: readonly HoverSignature[], prefix: string, target: Symbol): void => {
+    for (let index = 0; index < signatures.length; index += 1) {
+      writeNewLine();
+      if (index === 3 && signatures.length >= 5) {
+        parts.push(`// +${signatures.length - 3} more overloads`);
+        break;
+      }
+      parts.push(prefix, symbolText(target));
+      if (((target.flags ?? 0) & SymbolFlags.Optional) !== 0) parts.push("?");
+      parts.push(signatureToString(signatures[index], container, typeFormatFlags | TypeFormatFlags.WriteCallStyleSignature | TypeFormatFlags.WriteTypeArgumentsOfSignature));
+    }
+  };
+  const writeTypeParams = (parameters: readonly HoverType[] | undefined): void => {
+    if (parameters === undefined || parameters.length === 0) return;
+    parts.push("<");
+    parameters.forEach((parameter, index) => {
+      if (index !== 0) parts.push(", ");
+      parts.push(typeParameterToString(checker, parameter, container));
+    });
+    parts.push(">");
+  };
+
+  const writeSymbol = (target: Symbol): void => {
+    if (((target.flags ?? 0) & SymbolFlags.Alias) !== 0 && !visitedAliases.has(target)) {
+      visitedAliases.add(target);
+      const aliased = checker.getAliasedSymbol?.(target);
+      if (aliased !== undefined && aliased !== checker.getUnknownSymbol?.()) writeSymbol(aliased);
+    }
+
+    const flags = target.flags ?? SymbolFlags.None;
+    if ((flags & (SymbolFlags.Variable | SymbolFlags.Property | SymbolFlags.Accessor)) !== 0) {
+      writeNewLine();
+      if ((symbolCheckFlags(target) & CheckFlags.IndexSymbol) === 0) {
+        if ((flags & SymbolFlags.Property) !== 0) parts.push("(property) ");
+        else if ((flags & SymbolFlags.Accessor) !== 0) parts.push("(accessor) ");
+        else parts.push(variableDeclarationPrefix(target));
+        parts.push(symbolText(target));
+        if ((flags & SymbolFlags.Optional) !== 0) parts.push("?");
+        parts.push(": ");
+      }
+      const callNode = getCallOrNewExpression(node);
+      if (callNode !== undefined) {
+        parts.push(signatureToString(checker.getResolvedSignature?.(callNode), container, typeFormatFlags | TypeFormatFlags.WriteTypeArgumentsOfSignature | TypeFormatFlags.WriteArrowStyleSignature));
+      } else {
+        parts.push(typeToString(checker.getTypeOfSymbolAtLocation?.(target, node) ?? checker.getTypeOfSymbol?.(target), container, typeFormatFlags));
+      }
+      setDeclaration(target.valueDeclaration ?? target.declarations[0]);
+    }
+
+    if ((flags & SymbolFlags.EnumMember) !== 0) {
+      writeNewLine();
+      parts.push("(enum member) ", typeToString(checker.getTypeOfSymbol?.(target), container, typeFormatFlags));
+      setDeclaration(target.valueDeclaration ?? target.declarations[0]);
+    }
+
+    if ((flags & (SymbolFlags.Function | SymbolFlags.Method)) !== 0) {
+      const prefix = (flags & SymbolFlags.Method) !== 0 ? "(method) " : "function ";
+      const declarationSignature = isIdentifier(node)
+        && node.parent !== undefined
+        && isFunctionLikeForHover(node.parent)
+        && nodeName(node.parent) === node
+        ? checker.getSignatureFromDeclaration?.(node.parent)
+        : undefined;
+      if (declarationSignature !== undefined) {
+        setDeclaration(node.parent);
+        writeSignatures([declarationSignature], prefix, target);
+      } else {
+        const signatures = getSignaturesAtLocation(checker, target, 0, node);
+        if (signatures.length === 1) setDeclaration(signatures[0]!.declaration);
+        writeSignatures(signatures, prefix, target);
+      }
+      setDeclaration(target.valueDeclaration ?? target.declarations[0]);
+    }
+
+    if ((flags & (SymbolFlags.Class | SymbolFlags.Interface)) !== 0) {
+      writeNewLine();
+      parts.push((flags & SymbolFlags.Class) !== 0 ? "class " : "interface ", symbolText(target));
+      writeTypeParams(checker.getDeclaredTypeOfSymbol?.(target)?.types);
+      setDeclaration(target.valueDeclaration ?? target.declarations[0]);
+    }
+
+    if ((flags & SymbolFlags.Enum) !== 0) {
+      writeNewLine();
+      parts.push("enum ", symbolText(target));
+      setDeclaration(target.valueDeclaration ?? target.declarations[0]);
+    }
+
+    if ((flags & SymbolFlags.Module) !== 0) {
+      writeNewLine();
+      parts.push("namespace ", symbolText(target));
+      setDeclaration(target.valueDeclaration ?? target.declarations[0]);
+    }
+
+    if ((flags & SymbolFlags.TypeParameter) !== 0) {
+      writeNewLine();
+      parts.push("(type parameter) ", symbolText(target));
+      const type = checker.getDeclaredTypeOfSymbol?.(target);
+      const constraint = type === undefined ? undefined : checker.getConstraintOfTypeParameter?.(type);
+      if (constraint !== undefined) parts.push(" extends ", typeToString(constraint, container, typeFormatFlags));
+      setDeclaration(target.declarations.find(isTypeParameterDeclaration) ?? target.declarations[0]);
+    }
+
+    if ((flags & SymbolFlags.TypeAlias) !== 0) {
+      writeNewLine();
+      parts.push("type ", symbolText(target));
+      const declared = checker.getDeclaredTypeOfSymbol?.(target);
+      writeTypeParams(declared?.types);
+      if (declared !== undefined) parts.push(" = ", typeToString(declared, container, typeFormatFlags | TypeFormatFlags.InTypeAlias));
+      setDeclaration(target.declarations.find(declaration => declaration.kind === Kind.TypeAliasDeclaration) ?? target.declarations[0]);
+    }
+  };
+
+  writeSymbol(symbol);
+  return [parts.join(""), firstDeclaration];
+}
+
+export function typeParameterToString(
+  checker: HoverChecker,
+  type: HoverType,
+  enclosingDeclaration: Node | undefined,
+): string {
+  const name = type.symbol === undefined ? "" : checker.symbolToString?.(type.symbol, enclosingDeclaration, SymbolFlags.None, symbolFormatFlags) ?? symbolName(type.symbol);
+  const pieces = [name === "" ? checker.typeToString?.(type, enclosingDeclaration, typeFormatFlags) ?? "" : name];
+  const constraint = checker.getConstraintOfTypeParameter?.(type) ?? type.constraint;
+  if (constraint !== undefined) pieces.push(" extends ", checker.typeToString?.(constraint, enclosingDeclaration, typeFormatFlags) ?? "");
+  const defaultType = checker.getDefaultFromTypeParameter?.(type) ?? type.default;
+  if (defaultType !== undefined) pieces.push(" = ", checker.typeToString?.(defaultType, enclosingDeclaration, typeFormatFlags) ?? "");
+  return pieces.join("");
+}
+
+export function getSymbolAtLocationForQuickInfo(checker: HoverChecker, node: Node): Symbol | undefined {
+  const objectElement = getContainingObjectLiteralElement(node);
+  if (objectElement !== undefined) {
+    const contextualType = checker.getContextualType?.(objectElement.parent);
+    if (contextualType !== undefined) {
+      const properties = checker.getPropertySymbolsFromContextualType?.(objectElement, contextualType, false) ?? [];
+      if (properties.length === 1) return properties[0];
+    }
+  }
+  return checker.getSymbolAtLocation?.(node);
+}
+
+export function getSignaturesAtLocation(
+  checker: HoverChecker,
+  symbol: Symbol,
+  kind: number,
+  node: Node,
+): readonly HoverSignature[] {
+  const type = checker.getTypeOfSymbol?.(symbol);
+  const signatures = type === undefined
+    ? []
+    : checker.getSignaturesOfType?.(checker.removeMissingOrUndefinedType?.(type) ?? type, kind) ?? [];
+  if (signatures.length > 1 || signatures.length === 1 && (signatures[0]!.typeParameters?.length ?? 0) !== 0) {
+    const callNode = getCallOrNewExpression(node);
+    const resolved = callNode === undefined ? undefined : checker.getResolvedSignature?.(callNode);
+    if (resolved !== undefined) return [resolved];
+  }
+  return signatures;
+}
+
 export interface HoverType {
   readonly types?: readonly HoverType[];
+  readonly symbol?: Symbol;
+  readonly constraint?: HoverType;
+  readonly default?: HoverType;
+}
+
+export interface HoverSignature {
+  readonly declaration?: Node;
+  readonly typeParameters?: readonly HoverType[];
 }
 
 export interface HoverChecker {
   getTypeAtLocation?(node: Node): HoverType | undefined;
   getDeclaredTypeOfSymbol?(symbol: Symbol): HoverType | undefined;
+  getTypeOfSymbol?(symbol: Symbol): HoverType | undefined;
+  getTypeOfSymbolAtLocation?(symbol: Symbol, node: Node): HoverType | undefined;
+  removeMissingOrUndefinedType?(type: HoverType): HoverType;
+  getSignaturesOfType?(type: HoverType, kind: number): readonly HoverSignature[];
+  getResolvedSignature?(node: Node): HoverSignature | undefined;
+  getSignatureFromDeclaration?(node: Node): HoverSignature | undefined;
+  typeToString?(type: HoverType, enclosingDeclaration?: Node, flags?: TypeFormatFlags): string;
+  signatureToString?(signature: HoverSignature, enclosingDeclaration?: Node, flags?: TypeFormatFlags): string;
+  symbolToString?(symbol: Symbol, enclosingDeclaration?: Node, meaning?: SymbolFlags, flags?: SymbolFormatFlags): string;
+  getAliasedSymbol?(symbol: Symbol): Symbol | undefined;
+  getUnknownSymbol?(): Symbol | undefined;
+  getConstraintOfTypeParameter?(type: HoverType): HoverType | undefined;
+  getDefaultFromTypeParameter?(type: HoverType): HoverType | undefined;
   getBaseTypes?(type: HoverType): readonly HoverType[];
   getBaseConstructorTypeOfClass?(type: HoverType): HoverType | undefined;
   getApparentType?(type: HoverType | undefined): HoverType | undefined;
   getPropertyOfType?(type: HoverType, propertyName: string): Symbol | undefined;
   getDeclarationsFromLocation?(name: Node): readonly Node[];
+  getSymbolAtLocation?(node: Node): Symbol | undefined;
+  getContextualType?(node: Node): HoverType | undefined;
+  getPropertySymbolsFromContextualType?(node: Node, contextualType: HoverType, unionSymbolOk: boolean): readonly Symbol[];
 }
 
 export interface HoverLinkResolver {
@@ -481,6 +708,22 @@ function nodeSymbol(node: Node): Symbol | undefined {
 
 function symbolName(symbol: Symbol): string {
   return symbol.name ?? symbol.escapedName ?? "";
+}
+
+function symbolCheckFlags(symbol: Symbol): CheckFlags {
+  return (symbol as { readonly checkFlags?: CheckFlags }).checkFlags ?? CheckFlags.None;
+}
+
+function variableDeclarationPrefix(symbol: Symbol): string {
+  const declaration = symbol.valueDeclaration === undefined ? undefined : getRootDeclaration(symbol.valueDeclaration);
+  if (declaration === undefined) return "var ";
+  if (isParameterDeclaration(declaration)) return "(parameter) ";
+  const flags = getCombinedNodeFlags(declaration);
+  if ((flags & NodeFlags.BlockScoped) === NodeFlags.Let) return "let ";
+  if ((flags & NodeFlags.BlockScoped) === NodeFlags.Const) return "const ";
+  if ((flags & NodeFlags.BlockScoped) === NodeFlags.Using) return "using ";
+  if ((flags & NodeFlags.BlockScoped) === NodeFlags.AwaitUsing) return "await using ";
+  return "var ";
 }
 
 function hasStaticModifier(node: Node): boolean {
