@@ -1098,6 +1098,255 @@ export function getCompletionsSymbolKind(kind: ScriptElementKind): CompletionIte
   }
 }
 
+export const jsDocTagNames: readonly string[] = [
+  "abstract",
+  "access",
+  "alias",
+  "argument",
+  "async",
+  "augments",
+  "author",
+  "borrows",
+  "callback",
+  "class",
+  "classdesc",
+  "constant",
+  "constructor",
+  "constructs",
+  "copyright",
+  "default",
+  "deprecated",
+  "description",
+  "emits",
+  "enum",
+  "event",
+  "example",
+  "exports",
+  "extends",
+  "external",
+  "field",
+  "file",
+  "fileoverview",
+  "fires",
+  "function",
+  "generator",
+  "global",
+  "hideconstructor",
+  "host",
+  "ignore",
+  "implements",
+  "import",
+  "inheritdoc",
+  "inner",
+  "instance",
+  "interface",
+  "kind",
+  "lends",
+  "license",
+  "link",
+  "linkcode",
+  "linkplain",
+  "listens",
+  "member",
+  "memberof",
+  "method",
+  "mixes",
+  "module",
+  "name",
+  "namespace",
+  "overload",
+  "override",
+  "package",
+  "param",
+  "private",
+  "prop",
+  "property",
+  "protected",
+  "public",
+  "readonly",
+  "requires",
+  "returns",
+  "satisfies",
+  "see",
+  "since",
+  "static",
+  "summary",
+  "template",
+  "this",
+  "throws",
+  "todo",
+  "tutorial",
+  "type",
+  "typedef",
+  "var",
+  "variation",
+  "version",
+  "virtual",
+  "yields",
+];
+
+let jsDocTagNameCompletionItemsValue: readonly CompletionItem[] | undefined;
+let jsDocTagCompletionItemsValue: readonly CompletionItem[] | undefined;
+
+export function getContextualKeywords(file: SourceFile, contextToken: Node | undefined, position: number): readonly CompletionItem[] {
+  if (contextToken === undefined || contextToken.parent === undefined) return [];
+  const parent = contextToken.parent;
+  const sameLine = getLineOfPosition(file, contextToken.end) === getLineOfPosition(file, position);
+  if (!sameLine || moduleSpecifierOf(parent) !== contextToken) return [];
+  if (parent.kind !== Kind.ImportDeclaration && parent.kind !== Kind.ExportDeclaration) return [];
+  return [{
+    label: "assert",
+    kind: CompletionItemKindKeyword,
+    sortText: SortTextGlobalsOrKeywords,
+  }];
+}
+
+export interface JavaScriptNameTableSourceFile extends SourceFile {
+  getNameTable?(): ReadonlyMap<string, number> | Readonly<Record<string, number>>;
+}
+
+export function getJSCompletionEntries(
+  file: JavaScriptNameTableSourceFile,
+  position: number,
+  uniqueNames: Set<string>,
+  sortedEntries: readonly CompletionItem[],
+): readonly CompletionItem[] {
+  const entries = [...sortedEntries];
+  for (const [name, declarationPosition] of nameTableEntries(file)) {
+    if (declarationPosition === position || uniqueNames.has(name) || !isIdentifierText(name, LanguageVariant.Standard)) continue;
+    uniqueNames.add(name);
+    entries.push({
+      label: name,
+      kind: CompletionItemKindText,
+      sortText: SortTextJavascriptIdentifiers,
+      commitCharacters: [],
+    });
+  }
+  return entries;
+}
+
+export function getJSDocTagNameCompletions(): readonly CompletionItem[] {
+  jsDocTagNameCompletionItemsValue ??= jsDocTagNames.map((tagName): CompletionItem => ({
+    label: tagName,
+    kind: CompletionItemKindKeyword,
+    sortText: SortTextLocationPriority,
+  }));
+  return cloneItems(jsDocTagNameCompletionItemsValue);
+}
+
+export function getJSDocTagCompletions(): readonly CompletionItem[] {
+  jsDocTagCompletionItemsValue ??= jsDocTagNames.map((tagName): CompletionItem => ({
+    label: `@${tagName}`,
+    kind: CompletionItemKindKeyword,
+    sortText: SortTextLocationPriority,
+  }));
+  return cloneItems(jsDocTagCompletionItemsValue);
+}
+
+export interface JSDocParameterCompletionOptions {
+  readonly isJavaScript?: boolean;
+  readonly tagNameOnly?: boolean;
+  readonly newLine?: string;
+}
+
+export function getJSDocParameterCompletions(
+  jsDoc: Node,
+  functionLike: Node,
+  options: JSDocParameterCompletionOptions = {},
+): readonly CompletionItem[] {
+  const tags = nodeArray(jsDoc, "tags");
+  let parameterTagCount = 0;
+  for (const tag of tags) {
+    if (tag.kind === Kind.JSDocParameterTag && nodeName(tag)?.kind === Kind.Identifier) parameterTagCount += 1;
+  }
+
+  const items: CompletionItem[] = [];
+  const parameters = nodeArray(functionLike, "parameters");
+  for (let parameterIndex = 0; parameterIndex < parameters.length; parameterIndex += 1) {
+    const parameter = parameters[parameterIndex]!;
+    if (parameterIndex < parameterTagCount) continue;
+    const name = nodeName(parameter);
+    const initializer = nodeProperty<Node>(parameter, "initializer");
+    const dotDotDotToken = nodeProperty<Node>(parameter, "dotDotDotToken");
+    if (name?.kind === Kind.Identifier) {
+      let label = getJSDocParamAnnotation(
+        nodeTextOf(name),
+        initializer,
+        dotDotDotToken,
+        options.isJavaScript === true,
+        false,
+      );
+      if (options.tagNameOnly === true) label = label.replace(/^@/u, "");
+      items.push({ label, kind: CompletionItemKindVariable, sortText: SortTextLocationPriority });
+    } else if (parameterIndex === parameterTagCount && name !== undefined) {
+      const labels = generateJSDocParamTagsForDestructuring(
+        `param${parameterIndex}`,
+        name,
+        initializer,
+        dotDotDotToken,
+        options.isJavaScript === true,
+      );
+      const joiner = `${options.newLine ?? "\n"}* `;
+      let label = labels.join(joiner);
+      if (options.tagNameOnly === true) label = label.replace(/^@/u, "");
+      items.push({ label, kind: CompletionItemKindVariable, sortText: SortTextLocationPriority });
+    }
+  }
+  return items;
+}
+
+export function getJSDocParameterNameCompletions(tag: Node): readonly CompletionItem[] {
+  const name = nodeName(tag);
+  if (name?.kind !== Kind.Identifier) return [];
+  const nameThusFar = nodeTextOf(name);
+  const jsDoc = tag.parent;
+  const functionLike = jsDoc?.parent;
+  if (jsDoc === undefined || functionLike === undefined) return [];
+
+  const tags = nodeArray(jsDoc, "tags");
+  const items: CompletionItem[] = [];
+  for (const parameter of nodeArray(functionLike, "parameters")) {
+    const parameterName = nodeName(parameter);
+    if (parameterName?.kind !== Kind.Identifier) continue;
+    const text = nodeTextOf(parameterName);
+    const alreadyTagged = tags.some(existing => existing !== tag && existing.kind === Kind.JSDocParameterTag && nodeTextOf(nodeName(existing)) === text);
+    if (alreadyTagged || nameThusFar !== "" && !text.startsWith(nameThusFar)) continue;
+    items.push({ label: text, kind: CompletionItemKindVariable, sortText: SortTextLocationPriority });
+  }
+  return items;
+}
+
+export function getJSDocParamAnnotation(
+  parameterName: string,
+  initializer: Node | undefined,
+  dotDotDotToken: Node | undefined,
+  isJavaScript: boolean,
+  isObject: boolean,
+): string {
+  const actualParameterName = initializer === undefined ? parameterName : getJSDocParamNameWithInitializer(parameterName, initializer);
+  if (!isJavaScript) return `@param ${actualParameterName} `;
+  const typeText = isObject ? "object" : "*";
+  const dotDotDot = !isObject && dotDotDotToken !== undefined ? "..." : "";
+  return `@param {${dotDotDot}${typeText}} ${actualParameterName} `;
+}
+
+export function getJSDocParamNameWithInitializer(parameterName: string, initializer: Node): string {
+  const initializerText = sourceText(initializer).trim();
+  if (initializerText.includes("\n") || initializerText.length > 80) return `[${parameterName}]`;
+  return `[${parameterName}=${initializerText}]`;
+}
+
+export function generateJSDocParamTagsForDestructuring(
+  path: string,
+  pattern: Node,
+  initializer: Node | undefined,
+  dotDotDotToken: Node | undefined,
+  isJavaScript: boolean,
+): readonly string[] {
+  if (!isJavaScript) return [getJSDocParamAnnotation(path, initializer, dotDotDotToken, false, false)];
+  return jsDocParamPatternWorker(path, pattern, initializer, dotDotDotToken, true);
+}
+
 export type CompletionsTriggerCharacter = "." | "\"" | "'" | "`" | "/" | "@" | "<" | "#" | " ";
 
 export function isValidTrigger(file: SourceFile, triggerCharacter: CompletionsTriggerCharacter, contextToken: Node | undefined, position: number): boolean {
@@ -1192,6 +1441,84 @@ function getContainingClass(node: Node): Node | undefined {
     if (current.kind === Kind.ClassDeclaration || current.kind === Kind.ClassExpression) return current;
   }
   return undefined;
+}
+
+function nameTableEntries(file: JavaScriptNameTableSourceFile): readonly [string, number][] {
+  const table = file.getNameTable?.();
+  if (table === undefined) return [];
+  if (table instanceof Map) return [...table.entries()];
+  return Object.entries(table);
+}
+
+function moduleSpecifierOf(node: Node): Node | undefined {
+  return nodeProperty<Node>(node, "moduleSpecifier");
+}
+
+function nodeArray(node: Node, propertyName: string): readonly Node[] {
+  return nodeProperty<readonly Node[]>(node, propertyName) ?? [];
+}
+
+function nodeName(node: Node | undefined): Node | undefined {
+  return nodeProperty<Node>(node, "name");
+}
+
+function nodeProperty<T>(node: Node | undefined, propertyName: string): T | undefined {
+  if (node === undefined) return undefined;
+  return (node as unknown as Record<string, T | undefined>)[propertyName];
+}
+
+function nodeTextOf(node: Node | undefined): string {
+  return node === undefined ? "" : nodeText(node);
+}
+
+function sourceText(node: Node): string {
+  const sourceFile = node.getSourceFile();
+  return sourceFile.text.slice(Math.max(0, node.pos), Math.max(0, node.end));
+}
+
+function jsDocParamPatternWorker(
+  path: string,
+  pattern: Node,
+  initializer: Node | undefined,
+  dotDotDotToken: Node | undefined,
+  isJavaScript: boolean,
+): readonly string[] {
+  if (pattern.kind === Kind.ObjectBindingPattern && dotDotDotToken === undefined) {
+    const childTags: string[] = [];
+    for (const element of nodeArray(pattern, "elements")) {
+      const elementTags = jsDocParamElementWorker(path, element, initializer, dotDotDotToken, isJavaScript);
+      if (elementTags.length === 0) return [getJSDocParamAnnotation(path, initializer, dotDotDotToken, isJavaScript, false)];
+      childTags.push(...elementTags);
+    }
+    if (childTags.length > 0) {
+      return [getJSDocParamAnnotation(path, initializer, dotDotDotToken, isJavaScript, true), ...childTags];
+    }
+  }
+  return [getJSDocParamAnnotation(path, initializer, dotDotDotToken, isJavaScript, false)];
+}
+
+function jsDocParamElementWorker(
+  path: string,
+  element: Node,
+  initializer: Node | undefined,
+  dotDotDotToken: Node | undefined,
+  isJavaScript: boolean,
+): readonly string[] {
+  const name = nodeName(element);
+  const propertyName = nodeProperty<Node>(element, "propertyName");
+  const elementInitializer = nodeProperty<Node>(element, "initializer") ?? initializer;
+  const elementDotDotDotToken = nodeProperty<Node>(element, "dotDotDotToken") ?? dotDotDotToken;
+  if (name?.kind === Kind.Identifier) {
+    const segment = propertyName === undefined ? nodeTextOf(name) : nodeTextOf(propertyName);
+    if (segment === "") return [];
+    return [getJSDocParamAnnotation(`${path}.${segment}`, elementInitializer, elementDotDotDotToken, isJavaScript, false)];
+  }
+  if (propertyName !== undefined && name !== undefined) {
+    const segment = nodeTextOf(propertyName);
+    if (segment === "") return [];
+    return jsDocParamPatternWorker(`${path}.${segment}`, name, elementInitializer, elementDotDotDotToken, isJavaScript);
+  }
+  return [];
 }
 
 // Language-service parity map: internal/ls/completions.go
