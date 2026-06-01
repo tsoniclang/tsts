@@ -1,3 +1,660 @@
+import {
+  Kind,
+  findAncestor,
+  isAccessorDeclaration,
+  isAwaitExpression,
+  isBreakOrContinueStatement,
+  isCaseClause,
+  isClassLikeDeclaration,
+  isConstructorDeclaration,
+  isDeclaration,
+  isDefaultClause,
+  isFunctionBlock,
+  isFunctionLike,
+  isIfStatement,
+  isInterfaceDeclaration,
+  isIterationStatement,
+  isModuleDeclaration,
+  isReturnStatement,
+  isSwitchStatement,
+  isThrowStatement,
+  isTryStatement,
+  isTypeAliasDeclaration,
+  isTypeNode,
+  isVariableStatement,
+  isYieldExpression,
+  modifierToFlag,
+  nodeSymbol,
+  type Block,
+  type BreakOrContinueStatement,
+  type IfStatement,
+  type Modifier,
+  type Node,
+  type SourceFile,
+  type Statement,
+  type SwitchStatement,
+} from "../ast/index.js";
+import { ModifierFlags } from "../enums/modifierFlags.enum.js";
+import { findChildOfKind } from "../astnav/index.js";
+import {
+  DocumentHighlightKindRead,
+  DocumentHighlightKindWrite,
+  type DocumentHighlight,
+  type Range,
+} from "../lsp/lsproto/index.js";
+
+export interface MultiDocumentHighlight {
+  readonly uri: string;
+  readonly highlights: readonly DocumentHighlight[];
+}
+
+export interface ReferenceEntryLike {
+  readonly fileName: string;
+  readonly node?: Node;
+  readonly range?: Range;
+  readonly kind?: "range" | "node";
+}
+
+export function toDocumentHighlight(entry: ReferenceEntryLike): readonly [string, DocumentHighlight] {
+  if (entry.range !== undefined || entry.kind === "range") {
+    return [
+      entry.fileName,
+      { range: entry.range ?? emptyRange(), kind: DocumentHighlightKindRead },
+    ];
+  }
+  const node = entry.node;
+  return [
+    entry.fileName,
+    {
+      range: node === undefined ? emptyRange() : createLspRangeFromNode(node, node.getSourceFile()),
+      kind: node !== undefined && isWriteAccessForReference(node) ? DocumentHighlightKindWrite : DocumentHighlightKindRead,
+    },
+  ];
+}
+
+export function getSyntacticDocumentHighlights(node: Node, sourceFile: SourceFile): DocumentHighlight[] {
+  switch (node.kind) {
+    case Kind.IfKeyword:
+    case Kind.ElseKeyword: {
+      const parent = parentOf(node);
+      return parent !== undefined && isIfStatement(parent) ? getIfElseOccurrences(parent, sourceFile) : [];
+    }
+    case Kind.ReturnKeyword:
+      return useParent(parentOf(node), isReturnStatement, getReturnOccurrences, sourceFile);
+    case Kind.ThrowKeyword:
+      return useParent(parentOf(node), isThrowStatement, getThrowOccurrences, sourceFile);
+    case Kind.TryKeyword:
+    case Kind.CatchKeyword:
+    case Kind.FinallyKeyword: {
+      const tryStatement = node.kind === Kind.CatchKeyword ? parentOf(parentOf(node)) : parentOf(node);
+      return useParent(tryStatement, isTryStatement, getTryCatchFinallyOccurrences, sourceFile);
+    }
+    case Kind.SwitchKeyword:
+      return useParent(parentOf(node), isSwitchStatement, (candidate, file) => getSwitchCaseDefaultOccurrences(candidate as SwitchStatement, file), sourceFile);
+    case Kind.CaseKeyword:
+    case Kind.DefaultKeyword: {
+      const clause = parentOf(node);
+      if (clause !== undefined && (isDefaultClause(clause) || isCaseClause(clause))) {
+        return useParent(
+          parentOf(parentOf(parentOf(node))),
+          isSwitchStatement,
+          (candidate, file) => getSwitchCaseDefaultOccurrences(candidate as SwitchStatement, file),
+          sourceFile,
+        );
+      }
+      return [];
+    }
+    case Kind.BreakKeyword:
+    case Kind.ContinueKeyword:
+      return useParent(
+        parentOf(node),
+        isBreakOrContinueStatement,
+        (candidate, file) => getBreakOrContinueStatementOccurrences(candidate as BreakOrContinueStatement, file),
+        sourceFile,
+      );
+    case Kind.ForKeyword:
+    case Kind.WhileKeyword:
+    case Kind.DoKeyword:
+      return useParent(parentOf(node), (candidate) => isIterationStatement(candidate, true), getLoopBreakContinueOccurrences, sourceFile);
+    case Kind.ConstructorKeyword:
+      return getFromAllDeclarations(isConstructorDeclaration, [Kind.ConstructorKeyword], node, sourceFile);
+    case Kind.GetKeyword:
+    case Kind.SetKeyword:
+      return getFromAllDeclarations(isAccessorDeclaration, [Kind.GetKeyword, Kind.SetKeyword], node, sourceFile);
+    case Kind.AwaitKeyword:
+      return useParent(parentOf(node), isAwaitExpression, getAsyncAndAwaitOccurrences, sourceFile);
+    case Kind.AsyncKeyword:
+      return highlightSpans(getAsyncAndAwaitOccurrences(node, sourceFile), sourceFile);
+    case Kind.YieldKeyword:
+      return highlightSpans(getYieldOccurrences(node, sourceFile), sourceFile);
+    case Kind.InKeyword:
+    case Kind.OutKeyword:
+      return [];
+    default:
+      if (isModifierKindLocal(node.kind)) {
+        const parent = parentOf(node);
+        if (parent !== undefined && (isDeclaration(parent) || isVariableStatement(parent))) {
+          return highlightSpans(getModifierOccurrences(node.kind, parent, sourceFile), sourceFile);
+        }
+      }
+      return [];
+  }
+}
+
+export function useParent(
+  node: Node | undefined,
+  nodeTest: (node: Node) => boolean,
+  getNodes: (node: Node, sourceFile: SourceFile) => readonly Node[],
+  sourceFile: SourceFile,
+): DocumentHighlight[] {
+  return node !== undefined && nodeTest(node) ? highlightSpans(getNodes(node, sourceFile), sourceFile) : [];
+}
+
+export function highlightSpans(nodes: readonly (Node | undefined)[], sourceFile: SourceFile): DocumentHighlight[] {
+  const highlights: DocumentHighlight[] = [];
+  for (const node of nodes) {
+    if (node !== undefined) {
+      highlights.push({
+        range: createLspRangeFromNode(node, sourceFile),
+        kind: DocumentHighlightKindRead,
+      });
+    }
+  }
+  return highlights;
+}
+
+export function getFromAllDeclarations<T extends Node>(
+  nodeTest: (node: Node) => node is T,
+  keywords: readonly Kind[],
+  node: Node,
+  sourceFile: SourceFile,
+): DocumentHighlight[] {
+  return useParent(parentOf(node), nodeTest, (declaration) => {
+    const declarations = nodeSymbol(declaration)?.declarations ?? [];
+    const symbolDeclarations: Node[] = [];
+    for (const candidate of declarations) {
+      if (!nodeTest(candidate)) continue;
+      for (const child of getChildrenFromNonJSDocNode(candidate, sourceFile)) {
+        if (keywords.includes(child.kind)) {
+          symbolDeclarations.push(child);
+          break;
+        }
+      }
+    }
+    return symbolDeclarations;
+  }, sourceFile);
+}
+
+export function getIfElseOccurrences(ifStatement: IfStatement, sourceFile: SourceFile): DocumentHighlight[] {
+  const keywords = getIfElseKeywords(ifStatement, sourceFile);
+  const highlights: DocumentHighlight[] = [];
+  for (let index = 0; index < keywords.length; index += 1) {
+    const keyword = keywords[index]!;
+    if (keyword.kind === Kind.ElseKeyword && index < keywords.length - 1) {
+      const ifKeyword = keywords[index + 1]!;
+      if (ifKeyword.kind === Kind.IfKeyword && onlySingleLineWhitespace(sourceFile.text, keyword.end, ifKeyword.pos)) {
+        highlights.push({
+          range: createLspRangeFromBounds(skipTrivia(sourceFile.text, keyword.pos), ifKeyword.end, sourceFile),
+          kind: DocumentHighlightKindRead,
+        });
+        index += 1;
+        continue;
+      }
+    }
+    highlights.push({
+      range: createLspRangeFromNode(keyword, sourceFile),
+      kind: DocumentHighlightKindRead,
+    });
+  }
+  return highlights;
+}
+
+export function getIfElseKeywords(ifStatement: IfStatement, sourceFile: SourceFile): Node[] {
+  let current: IfStatement = ifStatement;
+  let parent = parentOf(current);
+  while (parent !== undefined && isIfStatement(parent)) {
+    if (parent.elseStatement !== current) break;
+    current = parent;
+    parent = parentOf(current);
+  }
+
+  const keywords: Node[] = [];
+  for (;;) {
+    const children = getChildrenFromNonJSDocNode(current, sourceFile);
+    const firstChild = children[0];
+    if (firstChild?.kind === Kind.IfKeyword) keywords.push(firstChild);
+    for (let index = children.length - 1; index >= 0; index -= 1) {
+      if (children[index]!.kind === Kind.ElseKeyword) {
+        keywords.push(children[index]!);
+        break;
+      }
+    }
+    const elseStatement = current.elseStatement;
+    if (elseStatement === undefined || !isIfStatement(elseStatement)) break;
+    current = elseStatement;
+  }
+  return keywords;
+}
+
+export function getReturnOccurrences(node: Node, sourceFile: SourceFile): Node[] {
+  const functionNode = findAncestor(parentOf(node), isFunctionLike);
+  const body = functionNode === undefined ? undefined : nodeBody(functionNode);
+  if (body === undefined) return [];
+
+  const keywords: Node[] = [];
+  forEachDescendant(body, (candidate) => {
+    if (isReturnStatement(candidate)) pushFirstToken(candidate, Kind.ReturnKeyword, sourceFile, keywords);
+  }, shouldCrossFunctionBoundary);
+  for (const throwStatement of aggregateOwnedThrowStatements(body, sourceFile)) {
+    pushFirstToken(throwStatement, Kind.ThrowKeyword, sourceFile, keywords);
+  }
+  return keywords;
+}
+
+export function aggregateOwnedThrowStatements(node: Node, sourceFile: SourceFile): Node[] {
+  if (isThrowStatement(node)) return [node];
+  if (isTryStatement(node)) {
+    const result: Node[] = [];
+    if (node.catchClause !== undefined) result.push(...aggregateOwnedThrowStatements(node.catchClause, sourceFile));
+    else result.push(...aggregateOwnedThrowStatements(node.tryBlock, sourceFile));
+    if (node.finallyBlock !== undefined) result.push(...aggregateOwnedThrowStatements(node.finallyBlock, sourceFile));
+    return result;
+  }
+  if (isFunctionLike(node)) return [];
+  return flatMapChildren(node, sourceFile, aggregateOwnedThrowStatements);
+}
+
+export function flatMapChildren<T>(
+  node: Node,
+  sourceFile: SourceFile,
+  callback: (child: Node, sourceFile: SourceFile) => readonly T[],
+): T[] {
+  const result: T[] = [];
+  node.forEachChild((child) => {
+    result.push(...callback(child, sourceFile));
+    return undefined;
+  });
+  return result;
+}
+
+export function getThrowOccurrences(node: Node, sourceFile: SourceFile): Node[] {
+  const owner = getThrowStatementOwner(node);
+  if (owner === undefined) return [];
+
+  const keywords: Node[] = [];
+  for (const throwStatement of aggregateOwnedThrowStatements(owner, sourceFile)) {
+    pushFirstToken(throwStatement, Kind.ThrowKeyword, sourceFile, keywords);
+  }
+  if (isFunctionBlock(owner)) {
+    forEachDescendant(owner, (candidate) => {
+      if (isReturnStatement(candidate)) pushFirstToken(candidate, Kind.ReturnKeyword, sourceFile, keywords);
+    }, shouldCrossFunctionBoundary);
+  }
+  return keywords;
+}
+
+export function getThrowStatementOwner(throwStatement: Node): Node | undefined {
+  let child: Node | undefined = throwStatement;
+  while (parentOf(child) !== undefined) {
+    const parentNode: Node = parentOf(child)!;
+    if (isFunctionBlock(parentNode) || parentNode.kind === Kind.SourceFile) return parentNode;
+    if (isTryStatement(parentNode) && parentNode.tryBlock === child && parentNode.catchClause !== undefined) return child;
+    child = parentNode;
+  }
+  return undefined;
+}
+
+export function getTryCatchFinallyOccurrences(node: Node, sourceFile: SourceFile): Node[] {
+  if (!isTryStatement(node)) return [];
+  const keywords: Node[] = [];
+  pushFirstToken(node, Kind.TryKeyword, sourceFile, keywords);
+  if (node.catchClause !== undefined) pushFirstToken(node.catchClause, Kind.CatchKeyword, sourceFile, keywords);
+  if (node.finallyBlock !== undefined) pushFirstToken(node, Kind.FinallyKeyword, sourceFile, keywords);
+  return keywords;
+}
+
+export function getSwitchCaseDefaultOccurrences(node: SwitchStatement, sourceFile: SourceFile): Node[] {
+  const keywords: Node[] = [];
+  pushFirstToken(node, Kind.SwitchKeyword, sourceFile, keywords);
+  for (const clause of node.caseBlock.clauses) {
+    pushFirstToken(clause, clause.kind === Kind.CaseClause ? Kind.CaseKeyword : Kind.DefaultKeyword, sourceFile, keywords);
+    for (const statement of aggregateAllBreakAndContinueStatements(clause, sourceFile)) {
+      if (statement.kind === Kind.BreakStatement && ownsBreakOrContinueStatement(node, statement)) {
+        pushFirstToken(statement, Kind.BreakKeyword, sourceFile, keywords);
+      }
+    }
+  }
+  return keywords;
+}
+
+export function aggregateAllBreakAndContinueStatements(node: Node, sourceFile: SourceFile): Node[] {
+  if (isBreakOrContinueStatement(node)) return [node];
+  if (isFunctionLike(node)) return [];
+  return flatMapChildren(node, sourceFile, aggregateAllBreakAndContinueStatements);
+}
+
+export function ownsBreakOrContinueStatement(owner: Node, statement: Node): boolean {
+  return getBreakOrContinueOwner(statement) === owner;
+}
+
+export function getBreakOrContinueOwner(statement: Node): Node | undefined {
+  let current = parentOf(statement);
+  while (current !== undefined) {
+    switch (current.kind) {
+      case Kind.SwitchStatement:
+        if (statement.kind === Kind.ContinueStatement) return undefined;
+        return isLabeledBreakOrContinueOwnedBy(current, statement) ? current : undefined;
+      case Kind.ForStatement:
+      case Kind.ForInStatement:
+      case Kind.ForOfStatement:
+      case Kind.WhileStatement:
+      case Kind.DoStatement:
+        return isLabeledBreakOrContinueOwnedBy(current, statement) ? current : undefined;
+      default:
+        if (isFunctionLike(current)) return undefined;
+        current = parentOf(current);
+    }
+  }
+  return undefined;
+}
+
+export function isLabeledBy(node: Node, labelName: string): boolean {
+  let owner = parentOf(node);
+  while (owner !== undefined) {
+    if (owner.kind !== Kind.LabeledStatement) return false;
+    if (nodeNameText(owner) === labelName) return true;
+    owner = parentOf(owner);
+  }
+  return false;
+}
+
+export function getBreakOrContinueStatementOccurrences(node: BreakOrContinueStatement, sourceFile: SourceFile): Node[] {
+  const owner = getBreakOrContinueOwner(node);
+  if (owner === undefined) return [];
+  if (isIterationStatement(owner, false)) return getLoopBreakContinueOccurrences(owner, sourceFile);
+  if (isSwitchStatement(owner)) return getSwitchCaseDefaultOccurrences(owner, sourceFile);
+  return [];
+}
+
+export function getLoopBreakContinueOccurrences(node: Node, sourceFile: SourceFile): Node[] {
+  const keywords: Node[] = [];
+  const firstToken = getFirstTokenOfKind(node, [Kind.ForKeyword, Kind.DoKeyword, Kind.WhileKeyword], sourceFile);
+  if (firstToken !== undefined) {
+    keywords.push(firstToken);
+    if (node.kind === Kind.DoStatement) {
+      const loopTokens = getChildrenFromNonJSDocNode(node, sourceFile);
+      for (let index = loopTokens.length - 1; index >= 0; index -= 1) {
+        if (loopTokens[index]!.kind === Kind.WhileKeyword) {
+          keywords.push(loopTokens[index]!);
+          break;
+        }
+      }
+    }
+  }
+
+  for (const statement of aggregateAllBreakAndContinueStatements(node, sourceFile)) {
+    const tokenKind = statement.kind === Kind.BreakStatement ? Kind.BreakKeyword : Kind.ContinueKeyword;
+    if (ownsBreakOrContinueStatement(node, statement)) pushFirstToken(statement, tokenKind, sourceFile, keywords);
+  }
+  return keywords;
+}
+
+export function getAsyncAndAwaitOccurrences(node: Node, sourceFile: SourceFile): Node[] {
+  const functionNode = getContainingFunction(node);
+  if (functionNode === undefined) return [];
+
+  const keywords: Node[] = [];
+  for (const modifier of nodeModifiers(functionNode)) {
+    if (modifier.kind === Kind.AsyncKeyword) keywords.push(modifier);
+  }
+  forEachDescendant(functionNode, (child) => {
+    if (child !== functionNode && isAwaitExpression(child)) pushFirstToken(child, Kind.AwaitKeyword, sourceFile, keywords);
+  }, (child) => child === functionNode || shouldCrossFunctionBoundary(child));
+  return keywords;
+}
+
+export function getYieldOccurrences(node: Node, sourceFile: SourceFile): Node[] {
+  const parentFunction = findAncestor(parentOf(node), isFunctionLike);
+  if (parentFunction === undefined) return [];
+
+  const keywords: Node[] = [];
+  forEachDescendant(parentFunction, (child) => {
+    if (child !== parentFunction && isYieldExpression(child)) pushFirstToken(child, Kind.YieldKeyword, sourceFile, keywords);
+  }, (child) => child === parentFunction || shouldCrossFunctionBoundary(child));
+  return keywords;
+}
+
+export function traverseWithoutCrossingFunction(
+  node: Node,
+  sourceFile: SourceFile,
+  callback: (node: Node, sourceFile: SourceFile) => void,
+): void {
+  callback(node, sourceFile);
+  if (!shouldCrossFunctionBoundary(node)) return;
+  node.forEachChild((child) => {
+    traverseWithoutCrossingFunction(child, sourceFile, callback);
+    return undefined;
+  });
+}
+
+export function getModifierOccurrences(kind: Kind, node: Node, sourceFile: SourceFile): Node[] {
+  const result: Node[] = [];
+  for (const candidate of getNodesToSearchForModifier(node, modifierToFlag(kind))) {
+    const modifier = findModifier(candidate, kind);
+    if (modifier !== undefined) result.push(modifier);
+  }
+  return result;
+}
+
+export function getNodesToSearchForModifier(declaration: Node, modifierFlag: ModifierFlags): Node[] {
+  const container = parentOf(declaration);
+  if (container === undefined) return [];
+
+  switch (container.kind) {
+    case Kind.ModuleBlock:
+    case Kind.SourceFile:
+    case Kind.Block:
+    case Kind.CaseClause:
+    case Kind.DefaultClause:
+      if ((modifierFlag & ModifierFlags.Abstract) !== 0 && declaration.kind === Kind.ClassDeclaration) {
+        return [...nodeMembers(declaration), declaration];
+      }
+      return nodeStatements(container);
+    case Kind.Constructor:
+    case Kind.MethodDeclaration:
+    case Kind.FunctionDeclaration: {
+      const result = [...nodeParameters(container)];
+      const containerParent = parentOf(container);
+      if (containerParent !== undefined && isClassLikeDeclaration(containerParent)) result.push(...nodeMembers(containerParent));
+      return result;
+    }
+    case Kind.ClassDeclaration:
+    case Kind.ClassExpression:
+    case Kind.InterfaceDeclaration:
+    case Kind.TypeLiteral: {
+      const members = nodeMembers(container);
+      if ((modifierFlag & (ModifierFlags.AccessibilityModifier | ModifierFlags.Readonly)) !== 0) {
+        const constructor = members.find(isConstructorDeclaration);
+        return constructor === undefined ? members : [...members, ...nodeParameters(constructor)];
+      }
+      if ((modifierFlag & ModifierFlags.Abstract) !== 0) return [...members, container];
+      return members;
+    }
+    default:
+      return [];
+  }
+}
+
+export function findModifier(node: Node, kind: Kind): Node | undefined {
+  return nodeModifiers(node).find((modifier) => modifier.kind === kind);
+}
+
+function getChildrenFromNonJSDocNode(node: Node, _sourceFile: SourceFile): Node[] {
+  const childNodes: Node[] = [];
+  node.forEachChild((child) => {
+    childNodes.push(child);
+    return undefined;
+  }, (children) => {
+    childNodes.push(...children);
+    return undefined;
+  });
+  return childNodes.sort((left, right) => left.pos - right.pos);
+}
+
+function createLspRangeFromNode(node: Node, sourceFile: SourceFile): Range {
+  return createLspRangeFromBounds(node.pos, node.end, sourceFile);
+}
+
+function createLspRangeFromBounds(start: number, end: number, sourceFile: SourceFile): Range {
+  return {
+    start: positionToLineAndCharacter(sourceFile, start),
+    end: positionToLineAndCharacter(sourceFile, end),
+  };
+}
+
+function positionToLineAndCharacter(sourceFile: SourceFile, position: number): Range["start"] {
+  const lineStarts = sourceFileTextLineStarts(sourceFile.text);
+  let line = 0;
+  for (let index = 0; index < lineStarts.length; index += 1) {
+    if (lineStarts[index]! <= position) line = index;
+    else break;
+  }
+  return { line, character: position - lineStarts[line]! };
+}
+
+function sourceFileTextLineStarts(text: string): number[] {
+  const starts = [0];
+  for (let index = 0; index < text.length; index += 1) {
+    const ch = text.charCodeAt(index);
+    if (ch === 13) {
+      if (text.charCodeAt(index + 1) === 10) index += 1;
+      starts.push(index + 1);
+    } else if (ch === 10) {
+      starts.push(index + 1);
+    }
+  }
+  return starts;
+}
+
+function emptyRange(): Range {
+  const position = { line: 0, character: 0 };
+  return { start: position, end: position };
+}
+
+function pushFirstToken(node: Node, kind: Kind, sourceFile: SourceFile, output: Node[]): void {
+  const token = findChildOfKind(node, kind, sourceFile);
+  if (token !== undefined) output.push(token);
+}
+
+function getFirstTokenOfKind(node: Node, kinds: readonly Kind[], sourceFile: SourceFile): Node | undefined {
+  for (const kind of kinds) {
+    const token = findChildOfKind(node, kind, sourceFile);
+    if (token !== undefined) return token;
+  }
+  return undefined;
+}
+
+function skipTrivia(text: string, start: number): number {
+  let index = start;
+  while (index < text.length) {
+    const ch = text[index];
+    if (ch === " " || ch === "\t" || ch === "\r" || ch === "\n" || ch === "\v" || ch === "\f") {
+      index += 1;
+      continue;
+    }
+    if (ch === "/" && text[index + 1] === "/") {
+      index += 2;
+      while (index < text.length && text[index] !== "\n" && text[index] !== "\r") index += 1;
+      continue;
+    }
+    if (ch === "/" && text[index + 1] === "*") {
+      index += 2;
+      while (index + 1 < text.length && !(text[index] === "*" && text[index + 1] === "/")) index += 1;
+      index = Math.min(index + 2, text.length);
+      continue;
+    }
+    break;
+  }
+  return index;
+}
+
+function onlySingleLineWhitespace(text: string, start: number, end: number): boolean {
+  for (let index = start; index < end; index += 1) {
+    const ch = text.charCodeAt(index);
+    if (ch === 10 || ch === 13) return false;
+    if (ch !== 9 && ch !== 11 && ch !== 12 && ch !== 32) return false;
+  }
+  return true;
+}
+
+function parentOf(node: Node | undefined): Node | undefined {
+  return node?.parent;
+}
+
+function nodeBody(node: Node): Node | undefined {
+  return (node as { readonly body?: Node }).body;
+}
+
+function nodeStatements(node: Node): Node[] {
+  return [...((node as { readonly statements?: readonly Statement[] }).statements ?? [])];
+}
+
+function nodeMembers(node: Node): Node[] {
+  return [...((node as { readonly members?: readonly Node[] }).members ?? [])];
+}
+
+function nodeParameters(node: Node): Node[] {
+  return [...((node as { readonly parameters?: readonly Node[] }).parameters ?? [])];
+}
+
+function nodeModifiers(node: Node): readonly Modifier[] {
+  return (node as { readonly modifiers?: readonly Modifier[] }).modifiers ?? [];
+}
+
+function nodeNameText(node: Node): string {
+  const name = (node as { readonly label?: Node; readonly name?: Node }).label ?? (node as { readonly name?: Node }).name;
+  return name !== undefined && "text" in name && typeof name.text === "string" ? name.text : "";
+}
+
+function getContainingFunction(node: Node): Node | undefined {
+  return findAncestor(node, isFunctionLike);
+}
+
+function forEachDescendant(
+  node: Node,
+  callback: (node: Node) => void,
+  shouldDescend: (node: Node) => boolean = () => true,
+): void {
+  callback(node);
+  if (!shouldDescend(node)) return;
+  node.forEachChild((child) => {
+    forEachDescendant(child, callback, shouldDescend);
+    return undefined;
+  });
+}
+
+function shouldCrossFunctionBoundary(node: Node): boolean {
+  return !isFunctionLike(node)
+    && !isClassLikeDeclaration(node)
+    && !isInterfaceDeclaration(node)
+    && !isModuleDeclaration(node)
+    && !isTypeAliasDeclaration(node)
+    && !isTypeNode(node);
+}
+
+function isLabeledBreakOrContinueOwnedBy(owner: Node, statement: Node): boolean {
+  const label = (statement as { readonly label?: Node }).label;
+  return label === undefined || isLabeledBy(owner, nodeNameText(label));
+}
+
+function isWriteAccessForReference(node: Node): boolean {
+  return parentOf(node)?.kind === Kind.BinaryExpression;
+}
+
+function isModifierKindLocal(kind: Kind): boolean {
+  return modifierToFlag(kind) !== ModifierFlags.None;
+}
+
 // Language-service parity map: internal/ls/documenthighlights.go
 /**
  * Language-service parity map for TS-Go `ls/documenthighlights.go`.
