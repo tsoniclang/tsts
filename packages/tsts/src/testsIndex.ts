@@ -30,6 +30,7 @@ import "./program/program.test.js";
 import "./scanner/scanner.test.js";
 import "./scanner/regexp.test.js";
 import "./json/json.test.js";
+import "./ls/diagnostics.test.js";
 import "./ls/lsconv/lineMap.test.js";
 
 // === Still disabled (TSTS source incompleteness; not tsonic blockers) ===

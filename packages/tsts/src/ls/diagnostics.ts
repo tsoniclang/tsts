@@ -1,84 +1,135 @@
 /**
- * Language-service parity map for TS-Go `ls/diagnostics.go`.
+ * Language-service diagnostics.
  *
- * This file preserves the upstream declaration and algorithm-line shape
- * for the TypeScript port. Runtime behavior is implemented by the
- * concrete modules that consume these exact parity maps.
+ * Port of TS-Go `internal/ls/diagnostics.go`. The collection order is
+ * syntactic, semantic, suggestion, then declaration diagnostics when
+ * declaration emit is enabled.
  */
 
-export interface UpstreamSourceLine {
-  readonly line: number;
-  readonly text: string;
+import type { Diagnostic as CompilerDiagnostic, SourceFileSlim } from "../diagnostics/types.js";
+import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
+import {
+  DiagnosticSeverityError,
+  DiagnosticSeverityHint,
+  DiagnosticSeverityInformation,
+  DiagnosticSeverityWarning,
+  type Diagnostic as LSPDiagnostic,
+  type DocumentDiagnosticResponse,
+  type DocumentUri,
+  type Range,
+} from "../lsp/lsproto/index.js";
+import { computeLSPLineStarts, LSPLineMap } from "./lsconv/index.js";
+
+export interface DiagnosticProgramOptions {
+  getEmitDeclarations(): boolean;
 }
 
-export interface UpstreamDeclaration {
-  readonly kind: "type" | "func" | "const" | "var";
-  readonly line: number;
-  readonly name: string;
-  readonly receiver?: string;
+export interface DiagnosticProgram<TFile extends SourceFileSlim = SourceFileSlim> {
+  getSyntacticDiagnostics(file: TFile): readonly CompilerDiagnostic[];
+  getSemanticDiagnostics(file: TFile): readonly CompilerDiagnostic[];
+  getSuggestionDiagnostics(file: TFile): readonly CompilerDiagnostic[];
+  getDeclarationDiagnostics(file: TFile): readonly CompilerDiagnostic[];
+  options(): DiagnosticProgramOptions;
 }
 
-export const lsDiagnosticsUpstreamPath = "ls/diagnostics.go";
-
-export const lsDiagnosticsDeclarations: readonly UpstreamDeclaration[] = [
-  {"line":14,"kind":"func","name":"getAllDiagnostics"},
-  {"line":25,"kind":"func","name":"ProvideDiagnostics","receiver":"l *LanguageService"},
-  {"line":37,"kind":"func","name":"toLSPDiagnostics","receiver":"l *LanguageService"},
-];
-
-export const lsDiagnosticsSourceLines: readonly UpstreamSourceLine[] = [
-  {"line":1,"text":"package ls"},
-  {"line":3,"text":"import ("},
-  {"line":4,"text":"\t\"context\""},
-  {"line":6,"text":"\t\"github.com/microsoft/typescript-go/internal/ast\""},
-  {"line":7,"text":"\t\"github.com/microsoft/typescript-go/internal/compiler\""},
-  {"line":8,"text":"\t\"github.com/microsoft/typescript-go/internal/ls/lsconv\""},
-  {"line":9,"text":"\t\"github.com/microsoft/typescript-go/internal/lsp/lsproto\""},
-  {"line":10,"text":")"},
-  {"line":14,"text":"func getAllDiagnostics(ctx context.Context, program *compiler.Program, file *ast.SourceFile) []*ast.Diagnostic {"},
-  {"line":15,"text":"\tvar diags []*ast.Diagnostic"},
-  {"line":16,"text":"\tdiags = append(diags, program.GetSyntacticDiagnostics(ctx, file)...)"},
-  {"line":17,"text":"\tdiags = append(diags, program.GetSemanticDiagnostics(ctx, file)...)"},
-  {"line":18,"text":"\tdiags = append(diags, program.GetSuggestionDiagnostics(ctx, file)...)"},
-  {"line":19,"text":"\tif program.Options().GetEmitDeclarations() {"},
-  {"line":20,"text":"\t\tdiags = append(diags, program.GetDeclarationDiagnostics(ctx, file)...)"},
-  {"line":21,"text":"\t}"},
-  {"line":22,"text":"\treturn diags"},
-  {"line":23,"text":"}"},
-  {"line":25,"text":"func (l *LanguageService) ProvideDiagnostics(ctx context.Context, uri lsproto.DocumentUri) (lsproto.DocumentDiagnosticResponse, error) {"},
-  {"line":26,"text":"\tprogram, file := l.getProgramAndFile(uri)"},
-  {"line":28,"text":"\tdiagnostics := getAllDiagnostics(ctx, program, file)"},
-  {"line":30,"text":"\treturn lsproto.RelatedFullDocumentDiagnosticReportOrUnchangedDocumentDiagnosticReport{"},
-  {"line":31,"text":"\t\tFullDocumentDiagnosticReport: &lsproto.RelatedFullDocumentDiagnosticReport{"},
-  {"line":32,"text":"\t\t\tItems: l.toLSPDiagnostics(ctx, diagnostics),"},
-  {"line":33,"text":"\t\t},"},
-  {"line":34,"text":"\t}, nil"},
-  {"line":35,"text":"}"},
-  {"line":37,"text":"func (l *LanguageService) toLSPDiagnostics(ctx context.Context, diagnostics ...[]*ast.Diagnostic) []*lsproto.Diagnostic {"},
-  {"line":38,"text":"\tsize := 0"},
-  {"line":39,"text":"\tfor _, diagSlice := range diagnostics {"},
-  {"line":40,"text":"\t\tsize += len(diagSlice)"},
-  {"line":41,"text":"\t}"},
-  {"line":42,"text":"\tlspDiagnostics := make([]*lsproto.Diagnostic, 0, size)"},
-  {"line":43,"text":"\tfor _, diagSlice := range diagnostics {"},
-  {"line":44,"text":"\t\tfor _, diag := range diagSlice {"},
-  {"line":45,"text":"\t\t\tlspDiagnostics = append(lspDiagnostics, lsconv.DiagnosticToLSPPull(ctx, l.converters, diag, l.UserPreferences().ReportStyleChecksAsWarnings.IsTrue()))"},
-  {"line":46,"text":"\t\t}"},
-  {"line":47,"text":"\t}"},
-  {"line":48,"text":"\treturn lspDiagnostics"},
-  {"line":49,"text":"}"},
-];
-
-export function findLsDiagnosticsDeclaration(name: string): UpstreamDeclaration | undefined {
-  return lsDiagnosticsDeclarations.find((declaration) => declaration.name === name);
+export interface DiagnosticLanguageService<TFile extends SourceFileSlim = SourceFileSlim> {
+  getProgramAndFile(uri: DocumentUri): readonly [DiagnosticProgram<TFile>, TFile];
+  reportStyleChecksAsWarnings(): boolean;
 }
 
-export function requireLsDiagnosticsDeclaration(name: string): UpstreamDeclaration {
-  const declaration = findLsDiagnosticsDeclaration(name);
-  if (declaration === undefined) throw new Error(`Missing upstream declaration: ${name}`);
-  return declaration;
+export function getAllDiagnostics<TFile extends SourceFileSlim>(
+  program: DiagnosticProgram<TFile>,
+  file: TFile,
+): readonly CompilerDiagnostic[] {
+  const diagnostics: CompilerDiagnostic[] = [];
+  diagnostics.push(...program.getSyntacticDiagnostics(file));
+  diagnostics.push(...program.getSemanticDiagnostics(file));
+  diagnostics.push(...program.getSuggestionDiagnostics(file));
+  if (program.options().getEmitDeclarations()) {
+    diagnostics.push(...program.getDeclarationDiagnostics(file));
+  }
+  return diagnostics;
 }
 
-export function lsDiagnosticsLineText(line: number): string | undefined {
-  return lsDiagnosticsSourceLines.find((entry) => entry.line === line)?.text;
+export function provideDiagnostics<TFile extends SourceFileSlim>(
+  service: DiagnosticLanguageService<TFile>,
+  uri: DocumentUri,
+): DocumentDiagnosticResponse {
+  const [program, file] = service.getProgramAndFile(uri);
+  const diagnostics = getAllDiagnostics(program, file);
+  return {
+    fullDocumentDiagnosticReport: {
+      kind: "full",
+      items: toLSPDiagnostics(service, diagnostics),
+    },
+  };
+}
+
+export function toLSPDiagnostics(
+  service: Pick<DiagnosticLanguageService, "reportStyleChecksAsWarnings">,
+  ...diagnosticGroups: readonly (readonly CompilerDiagnostic[])[]
+): readonly LSPDiagnostic[] {
+  const diagnostics: LSPDiagnostic[] = [];
+  for (const group of diagnosticGroups) {
+    for (const diagnostic of group) {
+      diagnostics.push(diagnosticToLSPPull(diagnostic, service.reportStyleChecksAsWarnings()));
+    }
+  }
+  return diagnostics;
+}
+
+export function diagnosticToLSPPull(diagnostic: CompilerDiagnostic, reportStyleChecksAsWarnings: boolean): LSPDiagnostic {
+  const file = diagnostic.file;
+  const range = file === undefined
+    ? emptyRange()
+    : diagnosticRange(file, diagnostic.start ?? 0, diagnostic.length ?? 0);
+  const result: LSPDiagnostic = {
+    range,
+    severity: diagnosticSeverity(diagnostic, reportStyleChecksAsWarnings),
+    code: { integer: diagnostic.code },
+    source: "ts",
+    message: diagnostic.text,
+  };
+  if (diagnostic.relatedInformation !== undefined) {
+    return {
+      ...result,
+      relatedInformation: diagnostic.relatedInformation.map((related) => ({
+      location: {
+        uri: related.file?.fileName ?? "",
+        range: related.file === undefined ? emptyRange() : diagnosticRange(related.file, related.start ?? 0, related.length ?? 0),
+      },
+      message: related.text,
+      })),
+    };
+  }
+  return result;
+}
+
+export function diagnosticSeverity(diagnostic: CompilerDiagnostic, reportStyleChecksAsWarnings: boolean): number {
+  if (diagnostic.category === DiagnosticCategory.Error) return DiagnosticSeverityError;
+  if (diagnostic.category === DiagnosticCategory.Warning) return DiagnosticSeverityWarning;
+  if (diagnostic.category === DiagnosticCategory.Suggestion) {
+    return reportStyleChecksAsWarnings ? DiagnosticSeverityWarning : DiagnosticSeverityHint;
+  }
+  return DiagnosticSeverityInformation;
+}
+
+export function diagnosticRange(file: SourceFileSlim, start: number, length: number): Range {
+  const lineMap = computeLSPLineStarts(file.text);
+  return {
+    start: positionAt(lineMap, start),
+    end: positionAt(lineMap, start + length),
+  };
+}
+
+function positionAt(lineMap: LSPLineMap, position: number): { readonly line: number; readonly character: number } {
+  const line = lineMap.computeIndexOfLineStart(position);
+  return { line, character: position - (lineMap.lineStarts[line] ?? 0) };
+}
+
+function emptyRange(): Range {
+  return {
+    start: { line: 0, character: 0 },
+    end: { line: 0, character: 0 },
+  };
 }
