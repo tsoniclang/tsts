@@ -24,9 +24,11 @@ import {
   type Symbol,
   type TextRange,
 } from "../ast/index.js";
+import { LanguageVariant } from "../core/languageVariant.js";
+import { isIdentifierPartCodePoint } from "../scanner/index.js";
 import type { DocumentUri, Location, LocationLink, Range } from "../lsp/lsproto/index.js";
 import { compareRanges } from "../lsp/lsproto/util.js";
-import { getStartOfNode } from "../astnav/index.js";
+import { getStartOfNode, getTouchingPropertyName } from "../astnav/index.js";
 import { fileNameToDocumentURI } from "./lsconv/index.js";
 import { isExpressionOfExternalModuleImportEqualsDeclaration, isLiteralNameOfPropertyDeclarationOrIndexAccess, isNameOfModuleDeclaration } from "./utilities.js";
 
@@ -300,6 +302,64 @@ export function isValidReferencePosition(node: Node, searchSymbolName: string): 
 
 export function isForRenameWithPrefixAndSuffixText(options: RefOptions): boolean {
   return options.use === ReferenceUse.Rename && options.useAliasesForRename;
+}
+
+export function getPossibleSymbolReferenceNodes(sourceFile: SourceFile, symbolName: string, container?: Node): readonly Node[] {
+  return getPossibleSymbolReferencePositions(sourceFile, symbolName, container).flatMap(position => {
+    const referenceLocation = getTouchingPropertyName(sourceFile, position);
+    return referenceLocation === undefined || referenceLocation === sourceFile ? [] : [referenceLocation];
+  });
+}
+
+export function getPossibleSymbolReferencePositions(sourceFile: SourceFile, symbolName: string, container?: Node): readonly number[] {
+  const positions: number[] = [];
+  if (symbolName === "") return positions;
+
+  const text = sourceFile.text;
+  const sourceLength = text.length;
+  const symbolNameLength = symbolName.length;
+  const searchContainer = container ?? sourceFile;
+  const searchStart = Math.max(0, searchContainer.pos);
+  const searchEnd = Math.min(sourceLength, searchContainer.end);
+
+  let position = text.indexOf(symbolName, searchStart);
+  while (position >= 0 && position < searchEnd) {
+    const endPosition = position + symbolNameLength;
+    if ((position === 0 || !isIdentifierPartAt(text, position - 1))
+      && (endPosition === sourceLength || !isIdentifierPartAt(text, endPosition))) {
+      positions.push(position);
+    }
+    const startIndex = position + symbolNameLength + 1;
+    if (startIndex > sourceLength) break;
+    position = text.indexOf(symbolName, startIndex);
+  }
+  return positions;
+}
+
+export function getAllReferencesForKeyword(sourceFiles: readonly SourceFile[], keywordKind: Kind, filterReadOnlyTypeOperator: boolean): readonly SymbolAndEntries[] {
+  const keywordText = tokenText(keywordKind);
+  if (keywordText === "") return [];
+  const references = sourceFiles.flatMap(sourceFile =>
+    getPossibleSymbolReferenceNodes(sourceFile, keywordText, sourceFile)
+      .filter(referenceLocation => referenceLocation.kind === keywordKind && (!filterReadOnlyTypeOperator || isReadonlyTypeOperator(referenceLocation)))
+      .map(referenceLocation => newNodeEntry(referenceLocation)));
+  return references.length === 0
+    ? []
+    : [newSymbolAndEntries(DefinitionKind.Keyword, references[0]!.node, undefined, references)];
+}
+
+export function findFirstJsxNode(root: Node): Node | undefined {
+  let result: Node | undefined;
+  const visit = (node: Node): boolean | undefined => {
+    if (node.kind === Kind.JsxElement || node.kind === Kind.JsxSelfClosingElement || node.kind === Kind.JsxFragment) {
+      result = node;
+      return true;
+    }
+    node.forEachChild(visit);
+    return result !== undefined;
+  };
+  visit(root);
+  return result;
 }
 
 export interface ReferenceChecker {
@@ -595,6 +655,24 @@ function findAncestor(node: Node | undefined, predicate: (node: Node) => boolean
 
 function findAncestorKind(node: Node | undefined, kind: Kind): Node | undefined {
   return findAncestor(node, current => current.kind === kind);
+}
+
+function tokenText(kind: Kind): string {
+  if (kind === Kind.ThisKeyword) return "this";
+  if (kind === Kind.SuperKeyword) return "super";
+  if (kind === Kind.ImportKeyword) return "import";
+  if (kind === Kind.ReadonlyKeyword) return "readonly";
+  const name = Kind[kind];
+  return name !== undefined && name.endsWith("Keyword") ? name.slice(0, -"Keyword".length).toLowerCase() : "";
+}
+
+function isIdentifierPartAt(text: string, index: number): boolean {
+  const codePoint = text.codePointAt(index);
+  return codePoint !== undefined && isIdentifierPartCodePoint(codePoint, LanguageVariant.Standard);
+}
+
+function isReadonlyTypeOperator(node: Node): boolean {
+  return node.kind === Kind.ReadonlyKeyword && node.parent?.kind === Kind.TypeOperator;
 }
 
 function tryGetImportFromModuleSpecifier(node: Node): Node | undefined {
