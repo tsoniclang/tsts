@@ -381,7 +381,6 @@ function generateFourslashMaps() {
     ["baselineutil.go", "baselineutil.ts"],
     ["fourslash.go", "fourslash.ts"],
     ["statebaseline.go", "statebaseline.ts"],
-    ["test_parser.go", "testParser.ts"],
     ["tests/util/util.go", "tests/util/util.ts"],
   ]);
   for (const [goFile, tsFile] of mappings) {
