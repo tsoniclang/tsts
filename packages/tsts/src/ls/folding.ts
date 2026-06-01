@@ -4,14 +4,69 @@
  * Porting surface for TS-Go `internal/ls/folding.go`.
  */
 
-import type { FoldingRange, FoldingRangeKind, Range } from "../lsp/lsproto/index.js";
+import {
+  findChildOfKind,
+  getStartOfNode,
+  getTokenAtPositionPublic,
+} from "../astnav/index.js";
+import {
+  Kind,
+  NodeFlags,
+  isAnyImportSyntax,
+  isArrowFunction,
+  isArrayLiteralExpression,
+  isBinaryExpression,
+  isBlock,
+  isCallExpression,
+  isCallOrNewExpression,
+  isClassLikeDeclaration,
+  isDeclaration,
+  isFunctionLikeDeclaration,
+  isIfStatement,
+  isImportAttributes,
+  isInterfaceDeclaration,
+  isJsxElement,
+  isJsxFragment,
+  isJsxOpeningElement,
+  isJsxSelfClosingElement,
+  isJsxText,
+  isModuleBlock,
+  isNamedExports,
+  isNamedImports,
+  isNoSubstitutionTemplateLiteral,
+  isParenthesizedExpression,
+  isReturnStatement,
+  isTupleTypeNode,
+  isVariableStatement,
+  type Node,
+  type NodeArray,
+  type SourceFile,
+} from "../ast/index.js";
+import type {
+  DocumentUri,
+  FoldingRange,
+  FoldingRangeKind,
+  FoldingRangeResponse,
+  Position,
+  Range,
+} from "../lsp/lsproto/index.js";
+import {
+  FoldingRangeKindComment,
+  FoldingRangeKindImports,
+  FoldingRangeKindRegion,
+} from "../lsp/lsproto/index.js";
+import { scanCommentAt } from "../printer/comments.js";
+import { positionsAreOnSameLine } from "../printer/utilities.js";
+import { getTextOfNode } from "../scanner/utilities.js";
+import { isInComment } from "./format.js";
 
-export interface FoldingLineMapCarrier {
-  readonly lineStarts: readonly number[];
+export interface FoldingClientCapabilities {
+  readonly collapsedText?: boolean;
+  readonly lineFoldingOnly?: boolean;
 }
 
-export interface FoldingSourceFile extends FoldingLineMapCarrier {
-  text(): string;
+export interface FoldingLanguageService {
+  getProgramAndFile(documentURI: DocumentUri): readonly [unknown, SourceFile];
 }
 
 export interface RegionDelimiterResult {
@@ -19,16 +74,27 @@ export interface RegionDelimiterResult {
   readonly name: string;
 }
 
-export interface FoldingClientCapabilities {
-  readonly collapsedText?: boolean;
+export function provideFoldingRange(
+  service: FoldingLanguageService,
+  documentURI: DocumentUri,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRangeResponse {
+  const [, sourceFile] = service.getProgramAndFile(documentURI);
+  let ranges = addNodeOutliningSpans(sourceFile, capabilities);
+  ranges = [...ranges, ...addRegionOutliningSpans(sourceFile, capabilities)];
+  if (capabilities.lineFoldingOnly === true) {
+    ranges = adjustFoldingEnd(ranges, sourceFile);
+  }
+  ranges.sort((left, right) => left.startLine - right.startLine || (left.startCharacter ?? 0) - (right.startCharacter ?? 0));
+  return { foldingRanges: ranges };
 }
 
-export function adjustFoldingEnd(ranges: readonly FoldingRange[], sourceFile: FoldingSourceFile): readonly FoldingRange[] {
-  const sourceText = sourceFile.text();
+export function adjustFoldingEnd(ranges: readonly FoldingRange[], sourceFile: SourceFile): FoldingRange[] {
+  const sourceText = sourceFile.text;
   const result: FoldingRange[] = [];
   for (const range of ranges) {
     if (range.endCharacter !== undefined && range.endCharacter > 0) {
-      const endOffset = lineAndCharacterToPosition(sourceFile, range.endLine, range.endCharacter);
+      const endOffset = lineAndCharacterToPosition(sourceFile, { line: range.endLine, character: range.endCharacter });
       if (endOffset > 0 && endOffset <= sourceText.length) {
         const foldEndCharacter = sourceText[endOffset - 1];
         if (foldEndCharacter === "}" || foldEndCharacter === "]" || foldEndCharacter === ")" || foldEndCharacter === "`" || foldEndCharacter === ">") {
@@ -42,8 +108,198 @@ export function adjustFoldingEnd(ranges: readonly FoldingRange[], sourceFile: Fo
   return result;
 }
 
+export function addNodeOutliningSpans(sourceFile: SourceFile, capabilities: FoldingClientCapabilities = {}): FoldingRange[] {
+  const depthRemaining = 40;
+  let current = 0;
+  const statements = sourceFile.statements;
+  const foldingRanges: FoldingRange[] = [];
+
+  while (current < statements.length) {
+    while (current < statements.length && !isAnyImportSyntax(statements[current]!)) {
+      foldingRanges.push(...visitNode(statements[current]!, depthRemaining, sourceFile, capabilities));
+      current += 1;
+    }
+    if (current === statements.length) break;
+
+    const firstImport = current;
+    while (current < statements.length && isAnyImportSyntax(statements[current]!)) {
+      foldingRanges.push(...visitNode(statements[current]!, depthRemaining, sourceFile, capabilities));
+      current += 1;
+    }
+    const lastImport = current - 1;
+    if (lastImport !== firstImport) {
+      const importKeyword = findChildOfKind(statements[firstImport]!, Kind.ImportKeyword, sourceFile);
+      foldingRanges.push(createFoldingRangeFromBounds(
+        importKeyword === undefined ? getStartOfNode(statements[firstImport]!, sourceFile, false) : getStartOfNode(importKeyword, sourceFile, false),
+        statements[lastImport]!.end,
+        FoldingRangeKindImports,
+        sourceFile,
+        capabilities,
+      ));
+    }
+  }
+
+  foldingRanges.push(...visitNode(sourceFile.endOfFileToken, depthRemaining, sourceFile, capabilities));
+  return foldingRanges;
+}
+
+export function addRegionOutliningSpans(sourceFile: SourceFile, capabilities: FoldingClientCapabilities = {}): FoldingRange[] {
+  const regions: FoldingRange[] = [];
+  const out: FoldingRange[] = [];
+  const lineStarts = lineStartsOf(sourceFile);
+  const text = sourceFile.text;
+
+  for (const currentLineStart of lineStarts) {
+    const lineEnd = getLineEndOfPosition(sourceFile, currentLineStart);
+    const lineText = text.slice(currentLineStart, lineEnd);
+    const result = parseRegionDelimiter(lineText);
+    if (result === undefined || isInComment(sourceFile, currentLineStart, getTokenAtPositionPublic(sourceFile, currentLineStart)) !== undefined) {
+      continue;
+    }
+
+    if (result.isStart) {
+      const slashIndex = lineText.indexOf("//");
+      const commentStart = positionToLineAndCharacter(sourceFile, slashIndex < 0 ? currentLineStart : currentLineStart + slashIndex);
+      const region: FoldingRange = {
+        startLine: commentStart.line,
+        startCharacter: commentStart.character,
+        endLine: commentStart.line,
+        endCharacter: commentStart.character,
+        kind: FoldingRangeKindRegion,
+      };
+      if (supportsCollapsedText(capabilities)) {
+        regionMutable(region).collapsedText = result.name === "" ? "#region" : result.name;
+      }
+      regions.push(region);
+    } else if (regions.length > 0) {
+      const region = regions.pop()!;
+      const endingPosition = positionToLineAndCharacter(sourceFile, lineEnd);
+      out.push({
+        ...region,
+        endLine: endingPosition.line,
+        endCharacter: endingPosition.character,
+      });
+    }
+  }
+  return out;
+}
+
+function visitNode(
+  node: Node,
+  depthRemaining: number,
+  sourceFile: SourceFile,
+  capabilities: FoldingClientCapabilities,
+): FoldingRange[] {
+  if ((node.flags & NodeFlags.Reparsed) !== 0 || depthRemaining === 0) return [];
+  const foldingRanges: FoldingRange[] = [];
+
+  if ((!isBinaryExpression(node) && isDeclaration(node)) || isVariableStatement(node) || isReturnStatement(node) || isCallOrNewExpression(node) || node.kind === Kind.EndOfFile) {
+    foldingRanges.push(...addOutliningForLeadingCommentsForNode(node, sourceFile, capabilities));
+  }
+
+  if (isFunctionLikeDeclaration(node) && node.parent !== undefined && isBinaryExpression(node.parent)) {
+    const left = node.parent.left;
+    if (left?.kind === Kind.PropertyAccessExpression) {
+      foldingRanges.push(...addOutliningForLeadingCommentsForNode(left, sourceFile, capabilities));
+    }
+  }
+
+  if (isBlock(node)) {
+    foldingRanges.push(...addOutliningForLeadingCommentsForPos(node.statements.end, sourceFile, capabilities));
+  } else if (isModuleBlock(node)) {
+    foldingRanges.push(...addOutliningForLeadingCommentsForPos(node.statements.end, sourceFile, capabilities));
+  } else if (isClassLikeDeclaration(node) || isInterfaceDeclaration(node)) {
+    foldingRanges.push(...addOutliningForLeadingCommentsForPos(node.members.end, sourceFile, capabilities));
+  }
+
+  const span = getOutliningSpanForNode(node, sourceFile, capabilities);
+  if (span !== undefined) foldingRanges.push(span);
+
+  let nextDepth = depthRemaining - 1;
+  if (isCallExpression(node)) {
+    nextDepth += 1;
+    foldingRanges.push(...visitNode(node.expression, nextDepth, sourceFile, capabilities));
+    nextDepth -= 1;
+    for (const argument of node.arguments) {
+      foldingRanges.push(...visitNode(argument, nextDepth, sourceFile, capabilities));
+    }
+    for (const typeArgument of node.typeArguments ?? []) {
+      foldingRanges.push(...visitNode(typeArgument, nextDepth, sourceFile, capabilities));
+    }
+  } else if (isIfStatement(node) && node.elseStatement !== undefined && isIfStatement(node.elseStatement)) {
+    foldingRanges.push(...visitNode(node.expression, nextDepth, sourceFile, capabilities));
+    foldingRanges.push(...visitNode(node.thenStatement, nextDepth, sourceFile, capabilities));
+    foldingRanges.push(...visitNode(node.elseStatement, nextDepth + 1, sourceFile, capabilities));
+  } else {
+    node.forEachChild(child => {
+      foldingRanges.push(...visitNode(child, nextDepth, sourceFile, capabilities));
+      return undefined;
+    });
+  }
+
+  return foldingRanges;
+}
+
+export function addOutliningForLeadingCommentsForNode(
+  node: Node,
+  sourceFile: SourceFile,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRange[] {
+  if (isJsxText(node)) return [];
+  return addOutliningForLeadingCommentsForPos(node.pos, sourceFile, capabilities);
+}
+
+export function addOutliningForLeadingCommentsForPos(
+  pos: number,
+  sourceFile: SourceFile,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRange[] {
+  const foldingRanges: FoldingRange[] = [];
+  let firstSingleLineCommentStart = -1;
+  let lastSingleLineCommentEnd = -1;
+  let singleLineCommentCount = 0;
+  const text = sourceFile.text;
+
+  const combineAndAddMultipleSingleLineComments = (): FoldingRange | undefined => {
+    if (singleLineCommentCount > 1) {
+      return createFoldingRangeFromBounds(firstSingleLineCommentStart, lastSingleLineCommentEnd, FoldingRangeKindComment, sourceFile, capabilities);
+    }
+    return undefined;
+  };
+
+  for (const comment of getLeadingCommentRangesFromPosition(text, pos)) {
+    if (comment.kind === Kind.SingleLineCommentTrivia) {
+      const commentText = text.slice(comment.pos, comment.end);
+      if (parseRegionDelimiter(commentText) !== undefined) {
+        const combined = combineAndAddMultipleSingleLineComments();
+        if (combined !== undefined) foldingRanges.push(combined);
+        singleLineCommentCount = 0;
+        continue;
+      }
+      if (singleLineCommentCount === 0) firstSingleLineCommentStart = comment.pos;
+      lastSingleLineCommentEnd = comment.end;
+      singleLineCommentCount += 1;
+      continue;
+    }
+
+    if (comment.kind === Kind.MultiLineCommentTrivia) {
+      const combined = combineAndAddMultipleSingleLineComments();
+      if (combined !== undefined) foldingRanges.push(combined);
+      foldingRanges.push(createFoldingRangeFromBounds(comment.pos, comment.end, FoldingRangeKindComment, sourceFile, capabilities));
+      singleLineCommentCount = 0;
+      continue;
+    }
+
+    throw new Error(`Unexpected comment kind: ${String(comment.kind)}`);
+  }
+
+  const combined = combineAndAddMultipleSingleLineComments();
+  if (combined !== undefined) foldingRanges.push(combined);
+  return foldingRanges;
+}
+
 export function parseRegionDelimiter(lineText: string): RegionDelimiterResult | undefined {
-  let text = trimLeftUnicodeSpace(lineText);
+  let text = lineText.replace(/^\s+/u, "");
   if (!text.startsWith("//")) return undefined;
   text = text.slice(2).trim().replace(/\r$/u, "");
   if (!text.startsWith("#")) return undefined;
@@ -58,13 +314,229 @@ export function parseRegionDelimiter(lineText: string): RegionDelimiterResult | 
   return { isStart, name: text.slice(6).trim() };
 }
 
+export function getOutliningSpanForNode(
+  node: Node,
+  sourceFile: SourceFile,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRange | undefined {
+  switch (node.kind) {
+    case Kind.Block: {
+      if (node.parent !== undefined && isFunctionLikeDeclaration(node.parent)) {
+        return functionSpan(node.parent, node, sourceFile, capabilities);
+      }
+      switch (node.parent?.kind) {
+        case Kind.DoStatement:
+        case Kind.ForInStatement:
+        case Kind.ForOfStatement:
+        case Kind.ForStatement:
+        case Kind.IfStatement:
+        case Kind.WhileStatement:
+        case Kind.WithStatement:
+        case Kind.CatchClause:
+          return spanForNode(node, Kind.OpenBraceToken, true, sourceFile, capabilities);
+        case Kind.TryStatement: {
+          const tryStatement = node.parent;
+          if (nodeProperty<Node>(tryStatement, "tryBlock") === node) return spanForNode(node, Kind.OpenBraceToken, true, sourceFile, capabilities);
+          if (nodeProperty<Node>(tryStatement, "finallyBlock") === node) {
+            return spanForNode(node, Kind.OpenBraceToken, true, sourceFile, capabilities);
+          }
+          return createFoldingRange(createLspRangeFromNode(node, sourceFile), "", "", capabilities);
+        }
+        default:
+          return createFoldingRange(createLspRangeFromNode(node, sourceFile), "", "", capabilities);
+      }
+    }
+    case Kind.ModuleBlock:
+      return spanForNode(node, Kind.OpenBraceToken, true, sourceFile, capabilities);
+    case Kind.ClassDeclaration:
+    case Kind.ClassExpression:
+    case Kind.InterfaceDeclaration:
+    case Kind.EnumDeclaration:
+    case Kind.CaseBlock:
+    case Kind.TypeLiteral:
+    case Kind.ObjectBindingPattern:
+      return spanForNode(node, Kind.OpenBraceToken, true, sourceFile, capabilities);
+    case Kind.TupleType:
+      return spanForNode(node, Kind.OpenBracketToken, !(node.parent !== undefined && isTupleTypeNode(node.parent)), sourceFile, capabilities);
+    case Kind.CaseClause:
+    case Kind.DefaultClause:
+      return spanForNodeArray(nodeProperty<NodeArray>(node, "statements"), sourceFile, capabilities);
+    case Kind.ObjectLiteralExpression:
+      return spanForNode(node, Kind.OpenBraceToken, !(node.parent !== undefined && (isArrayLiteralExpression(node.parent) || isCallExpression(node.parent))), sourceFile, capabilities);
+    case Kind.ArrayLiteralExpression:
+      return spanForNode(node, Kind.OpenBracketToken, !(node.parent !== undefined && (isArrayLiteralExpression(node.parent) || isCallExpression(node.parent))), sourceFile, capabilities);
+    case Kind.JsxElement:
+    case Kind.JsxFragment:
+      return spanForJSXElement(node, sourceFile, capabilities);
+    case Kind.JsxSelfClosingElement:
+    case Kind.JsxOpeningElement:
+      return spanForJSXAttributes(node, sourceFile, capabilities);
+    case Kind.TemplateExpression:
+    case Kind.NoSubstitutionTemplateLiteral:
+      return spanForTemplateLiteral(node, sourceFile, capabilities);
+    case Kind.ArrayBindingPattern:
+      return spanForNode(node, Kind.OpenBracketToken, !(node.parent !== undefined && node.parent.kind === Kind.BindingElement), sourceFile, capabilities);
+    case Kind.ArrowFunction:
+      return spanForArrowFunction(node, sourceFile, capabilities);
+    case Kind.CallExpression:
+      return spanForCallExpression(node, sourceFile, capabilities);
+    case Kind.ParenthesizedExpression:
+      return spanForParenthesizedExpression(node, sourceFile, capabilities);
+    case Kind.NamedImports:
+    case Kind.NamedExports:
+    case Kind.ImportAttributes:
+      return spanForImportExportElements(node, sourceFile, capabilities);
+    default:
+      return undefined;
+  }
+}
+
+export function spanForImportExportElements(
+  node: Node,
+  sourceFile: SourceFile,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRange | undefined {
+  const elements = isNamedImports(node)
+    ? node.elements
+    : isNamedExports(node)
+      ? node.elements
+      : isImportAttributes(node)
+        ? node.attributes
+        : undefined;
+  if (elements === undefined || elements.length === 0) return undefined;
+  const openToken = findChildOfKind(node, Kind.OpenBraceToken, sourceFile);
+  const closeToken = findChildOfKind(node, Kind.CloseBraceToken, sourceFile);
+  if (openToken === undefined || closeToken === undefined || positionsAreOnSameLine(openToken.pos, closeToken.pos, sourceFile)) return undefined;
+  return rangeBetweenTokens(openToken, closeToken, sourceFile, false, capabilities);
+}
+
+export function spanForParenthesizedExpression(
+  node: Node,
+  sourceFile: SourceFile,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRange | undefined {
+  const start = getStartOfNode(node, sourceFile, false);
+  if (positionsAreOnSameLine(start, node.end, sourceFile)) return undefined;
+  return createFoldingRange(createLspRangeFromBounds(start, node.end, sourceFile), "", "", capabilities);
+}
+
+export function spanForCallExpression(
+  node: Node,
+  sourceFile: SourceFile,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRange | undefined {
+  if (!isCallExpression(node) || node.arguments.length === 0) return undefined;
+  const openToken = findChildOfKind(node, Kind.OpenParenToken, sourceFile);
+  const closeToken = findChildOfKind(node, Kind.CloseParenToken, sourceFile);
+  if (openToken === undefined || closeToken === undefined || positionsAreOnSameLine(openToken.pos, closeToken.pos, sourceFile)) return undefined;
+  return rangeBetweenTokens(openToken, closeToken, sourceFile, true, capabilities);
+}
+
+export function spanForArrowFunction(
+  node: Node,
+  sourceFile: SourceFile,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRange | undefined {
+  if (!isArrowFunction(node)) return undefined;
+  if (isBlock(node.body) || isParenthesizedExpression(node.body) || positionsAreOnSameLine(node.body.pos, node.body.end, sourceFile)) return undefined;
+  return createFoldingRange(createLspRangeFromBounds(node.body.pos, node.body.end, sourceFile), "", "", capabilities);
+}
+
+export function spanForTemplateLiteral(
+  node: Node,
+  sourceFile: SourceFile,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRange | undefined {
+  if (isNoSubstitutionTemplateLiteral(node) && node.text.length === 0) return undefined;
+  return createFoldingRangeFromBounds(getStartOfNode(node, sourceFile, false), node.end, "", sourceFile, capabilities);
+}
+
+export function spanForJSXElement(
+  node: Node,
+  sourceFile: SourceFile,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRange | undefined {
+  if (isJsxElement(node)) {
+    const textRange = createLspRangeFromBounds(getStartOfNode(node.openingElement, sourceFile, false), node.closingElement.end, sourceFile);
+    const tagName = getTextOfNode(node.openingElement.tagName);
+    return createFoldingRange(textRange, "", `<${tagName}>...</${tagName}>`, capabilities);
+  }
+  if (isJsxFragment(node)) {
+    return createFoldingRange(
+      createLspRangeFromBounds(getStartOfNode(node.openingFragment, sourceFile, false), node.closingFragment.end, sourceFile),
+      "",
+      "<>...</>",
+      capabilities,
+    );
+  }
+  return undefined;
+}
+
+export function spanForJSXAttributes(
+  node: Node,
+  sourceFile: SourceFile,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRange | undefined {
+  const attributes = isJsxSelfClosingElement(node)
+    ? node.attributes
+    : isJsxOpeningElement(node)
+      ? node.attributes
+      : undefined;
+  if (attributes === undefined || attributes.properties.length === 0) return undefined;
+  return createFoldingRangeFromBounds(getStartOfNode(node, sourceFile, false), node.end, "", sourceFile, capabilities);
+}
+
+export function spanForNodeArray(
+  statements: NodeArray | undefined,
+  sourceFile: SourceFile,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRange | undefined {
+  if (statements !== undefined && statements.length !== 0) {
+    return createFoldingRange(createLspRangeFromBounds(statements.pos, statements.end, sourceFile), "", "", capabilities);
+  }
+  return undefined;
+}
+
+export function spanForNode(
+  node: Node,
+  open: Kind,
+  useFullStart: boolean,
+  sourceFile: SourceFile,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRange | undefined {
+  const closeBrace = open === Kind.OpenBraceToken ? Kind.CloseBraceToken : Kind.CloseBracketToken;
+  const openToken = findChildOfKind(node, open, sourceFile);
+  const closeToken = findChildOfKind(node, closeBrace, sourceFile);
+  if (openToken !== undefined && closeToken !== undefined) {
+    return rangeBetweenTokens(openToken, closeToken, sourceFile, useFullStart, capabilities);
+  }
+  return undefined;
+}
+
+export function rangeBetweenTokens(
+  openToken: Node,
+  closeToken: Node,
+  sourceFile: SourceFile,
+  useFullStart: boolean,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRange {
+  const textRange = useFullStart
+    ? createLspRangeFromBounds(openToken.pos, closeToken.end, sourceFile)
+    : createLspRangeFromBounds(getStartOfNode(openToken, sourceFile, false), closeToken.end, sourceFile);
+  return createFoldingRange(textRange, "", "", capabilities);
+}
+
+export function supportsCollapsedText(capabilities: FoldingClientCapabilities): boolean {
+  return capabilities.collapsedText === true;
+}
+
 export function createFoldingRange(
   textRange: Range,
   foldingRangeKind: FoldingRangeKind | "",
   collapsedText: string,
   capabilities: FoldingClientCapabilities = {},
 ): FoldingRange {
-  const range: FoldingRange = {
+  return {
     startLine: textRange.start.line,
     startCharacter: textRange.start.character,
     endLine: textRange.end.line,
@@ -72,54 +544,139 @@ export function createFoldingRange(
     ...(foldingRangeKind === "" ? {} : { kind: foldingRangeKind }),
     ...(collapsedText !== "" && supportsCollapsedText(capabilities) ? { collapsedText } : {}),
   };
-  return range;
 }
 
 export function createFoldingRangeFromBounds(
   pos: number,
   end: number,
   foldingRangeKind: FoldingRangeKind | "",
-  sourceFile: FoldingLineMapCarrier,
+  sourceFile: SourceFile,
   capabilities: FoldingClientCapabilities = {},
 ): FoldingRange {
-  return createFoldingRange(
-    {
-      start: positionToLineAndCharacter(sourceFile, pos),
-      end: positionToLineAndCharacter(sourceFile, end),
-    },
-    foldingRangeKind,
-    "",
-    capabilities,
-  );
+  return createFoldingRange(createLspRangeFromBounds(pos, end, sourceFile), foldingRangeKind, "", capabilities);
 }
 
-export function supportsCollapsedText(capabilities: FoldingClientCapabilities): boolean {
-  return capabilities.collapsedText === true;
+export function functionSpan(
+  node: Node,
+  body: Node,
+  sourceFile: SourceFile,
+  capabilities: FoldingClientCapabilities = {},
+): FoldingRange | undefined {
+  const openToken = tryGetFunctionOpenToken(node, body, sourceFile);
+  const closeToken = findChildOfKind(body, Kind.CloseBraceToken, sourceFile);
+  if (openToken !== undefined && closeToken !== undefined) {
+    return rangeBetweenTokens(openToken, closeToken, sourceFile, true, capabilities);
+  }
+  return undefined;
 }
 
-function positionToLineAndCharacter(sourceFile: FoldingLineMapCarrier, position: number): { readonly line: number; readonly character: number } {
-  const starts = sourceFile.lineStarts;
+export function tryGetFunctionOpenToken(node: Node, body: Node, sourceFile: SourceFile): Node | undefined {
+  const parameters = nodeArray(node, "parameters");
+  if (isNodeArrayMultiLine(parameters, sourceFile)) {
+    const openParenToken = findChildOfKind(node, Kind.OpenParenToken, sourceFile);
+    if (openParenToken !== undefined) return openParenToken;
+  }
+  return findChildOfKind(body, Kind.OpenBraceToken, sourceFile);
+}
+
+export function isNodeArrayMultiLine(list: readonly Node[], sourceFile: SourceFile): boolean {
+  if (list.length === 0) return false;
+  return !positionsAreOnSameLine(list[0]!.pos, list[list.length - 1]!.end, sourceFile);
+}
+
+function createLspRangeFromNode(node: Node, sourceFile: SourceFile): Range {
+  return createLspRangeFromBounds(node.pos, node.end, sourceFile);
+}
+
+function createLspRangeFromBounds(start: number, end: number, sourceFile: SourceFile): Range {
+  return {
+    start: positionToLineAndCharacter(sourceFile, start),
+    end: positionToLineAndCharacter(sourceFile, end),
+  };
+}
+
+function positionToLineAndCharacter(sourceFile: SourceFile, position: number): Position {
+  const starts = lineStartsOf(sourceFile);
   let low = 0;
   let high = starts.length - 1;
   while (low <= high) {
     const middle = (low + high) >> 1;
     const start = starts[middle] ?? 0;
-    if (start <= position) {
-      low = middle + 1;
-    } else {
-      high = middle - 1;
-    }
+    if (start <= position) low = middle + 1;
+    else high = middle - 1;
   }
   const line = Math.max(0, high);
   return { line, character: position - (starts[line] ?? 0) };
 }
 
-function lineAndCharacterToPosition(sourceFile: FoldingLineMapCarrier, line: number, character: number): number {
-  return (sourceFile.lineStarts[line] ?? 0) + character;
+function lineAndCharacterToPosition(sourceFile: SourceFile, position: Position): number {
+  const starts = lineStartsOf(sourceFile);
+  return (starts[position.line] ?? sourceFile.text.length) + position.character;
 }
 
-function trimLeftUnicodeSpace(text: string): string {
-  return text.replace(/^\s+/u, "");
+function getLineEndOfPosition(sourceFile: SourceFile, position: number): number {
+  const lineStarts = lineStartsOf(sourceFile);
+  const line = positionToLineAndCharacter(sourceFile, position).line;
+  let lastCharacterPosition = line + 1 >= lineStarts.length ? sourceFile.end : lineStarts[line + 1]! - 1;
+  if (
+    lastCharacterPosition > 0
+    && lastCharacterPosition < sourceFile.text.length
+    && sourceFile.text.charCodeAt(lastCharacterPosition) === 10
+    && sourceFile.text.charCodeAt(lastCharacterPosition - 1) === 13
+  ) {
+    lastCharacterPosition -= 1;
+  }
+  return lastCharacterPosition;
+}
+
+function lineStartsOf(sourceFile: SourceFile): readonly number[] {
+  const lineStarts = (sourceFile as { readonly lineStarts?: readonly number[] }).lineStarts;
+  return lineStarts !== undefined && lineStarts.length > 0 ? lineStarts : computeLineStarts(sourceFile.text);
+}
+
+function computeLineStarts(text: string): readonly number[] {
+  const starts = [0];
+  for (let index = 0; index < text.length; index += 1) {
+    const ch = text.charCodeAt(index);
+    if (ch === 13 || ch === 10) {
+      if (ch === 13 && text.charCodeAt(index + 1) === 10) index += 1;
+      starts.push(index + 1);
+    }
+  }
+  return starts;
+}
+
+function getLeadingCommentRangesFromPosition(text: string, pos: number): readonly { readonly pos: number; readonly end: number; readonly kind: number }[] {
+  const ranges: { readonly pos: number; readonly end: number; readonly kind: number }[] = [];
+  let current = Math.max(0, pos);
+  while (current < text.length) {
+    const ch = text.charCodeAt(current);
+    if (isWhiteSpaceOrLineBreak(ch)) {
+      current += 1;
+      continue;
+    }
+    const comment = scanCommentAt(text, current);
+    if (comment === undefined) break;
+    ranges.push({ pos: comment.pos, end: comment.end, kind: comment.kind });
+    current = comment.end;
+  }
+  return ranges;
+}
+
+function isWhiteSpaceOrLineBreak(ch: number): boolean {
+  return ch === 32 || ch === 9 || ch === 11 || ch === 12 || ch === 160 || ch === 10 || ch === 13 || ch === 0x2028 || ch === 0x2029;
+}
+
+function nodeProperty<T>(node: Node, key: string): T | undefined {
+  return (node as unknown as Record<string, T | undefined>)[key];
+}
+
+function nodeArray(node: Node, key: string): readonly Node[] {
+  return nodeProperty<readonly Node[]>(node, key) ?? [];
+}
+
+function regionMutable(range: FoldingRange): { collapsedText?: string } {
+  return range as { collapsedText?: string };
 }
 
 // Language-service parity map: internal/ls/folding.go
