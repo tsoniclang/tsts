@@ -91,6 +91,7 @@ import {
   ScriptElementKindIndexSignatureElement,
   ScriptElementKindInterfaceElement,
   ScriptElementKindKeyword,
+  ScriptElementKindLabel,
   ScriptElementKindLetElement,
   ScriptElementKindLocalFunctionElement,
   ScriptElementKindLocalVariableElement,
@@ -1415,6 +1416,71 @@ export function createCompletionItem(
   );
 }
 
+export function getLabelCompletionsAtPosition(
+  service: CompletionService,
+  node: Node,
+  file: SourceFile,
+  position: number,
+  optionalReplacementSpan: Range | undefined,
+): CompletionList | undefined {
+  const items = getLabelStatementCompletions(service, node, file, position);
+  if (items.length === 0) return undefined;
+  const defaultCommitCharacters = getDefaultCommitCharacters(false);
+  const itemDefaults = setItemDefaults(
+    service,
+    service.clientCapabilities?.(),
+    position,
+    file,
+    items,
+    defaultCommitCharacters,
+    optionalReplacementSpan,
+  );
+  return {
+    isIncomplete: false,
+    ...(itemDefaults === undefined ? {} : { itemDefaults }),
+    items,
+  };
+}
+
+export function getLabelStatementCompletions(
+  _service: CompletionService,
+  node: Node,
+  file: SourceFile,
+  position: number,
+): readonly CompletionItem[] {
+  const uniqueNames = new Set<string>();
+  const items: CompletionItem[] = [];
+  for (let current: Node | undefined = node; current !== undefined; current = current.parent) {
+    if (isFunctionLike(current)) break;
+    if (current.kind !== Kind.LabeledStatement) continue;
+    const label = nodeProperty<Node>(current, "label");
+    const name = label === undefined ? "" : nodeText(label);
+    if (name === "" || uniqueNames.has(name)) continue;
+    uniqueNames.add(name);
+    items.push(createLSPCompletionItem(
+      name,
+      "",
+      "",
+      SortTextLocationPriority,
+      ScriptElementKindLabel,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      file,
+      position,
+      false,
+      false,
+      false,
+      false,
+      "",
+      undefined,
+      undefined,
+    ));
+  }
+  return items;
+}
+
 function completionElementKindForSymbol(symbol: CompletionSymbol, isMemberCompletion: boolean): ScriptElementKind {
   const flags = symbol.flags ?? 0;
   if ((flags & SymbolFlags.Method) !== 0) return ScriptElementKindMemberFunctionElement;
@@ -2035,6 +2101,49 @@ export function isValidTrigger(file: SourceFile, triggerCharacter: CompletionsTr
     default:
       return false;
   }
+}
+
+export function isCompletionListBlocker(
+  contextToken: Node | undefined,
+  previousToken: Node | undefined,
+  location: Node | undefined,
+  file: SourceFile,
+  position: number,
+): boolean {
+  return contextToken !== undefined
+    && (isInStringOrRegularExpressionOrTemplateLiteral(contextToken, position)
+      || isSolelyIdentifierDefinitionLocation(contextToken, file, position)
+      || isDotOfNumericLiteral(contextToken, file)
+      || isInJsxText(contextToken, location)
+      || contextToken.kind === Kind.BigIntLiteral
+      || previousToken?.kind === Kind.BigIntLiteral);
+}
+
+export function isInStringOrRegularExpressionOrTemplateLiteral(contextToken: Node, position: number): boolean {
+  const isLiteral = contextToken.kind === Kind.RegularExpressionLiteral
+    || contextToken.kind === Kind.StringLiteral
+    || contextToken.kind === Kind.NoSubstitutionTemplateLiteral
+    || contextToken.kind === Kind.TemplateHead
+    || contextToken.kind === Kind.TemplateMiddle
+    || contextToken.kind === Kind.TemplateTail;
+  if (!isLiteral) return false;
+  return contextToken.pos < position && position < contextToken.end
+    || position === contextToken.end && isUnterminatedLiteralLike(contextToken);
+}
+
+export function isDotOfNumericLiteral(contextToken: Node | undefined, file: SourceFile): boolean {
+  return contextToken?.kind === Kind.DotToken
+    && contextToken.pos > 0
+    && /\d/.test(file.text[contextToken.pos - 1] ?? "");
+}
+
+export function isInJsxText(contextToken: Node | undefined, location: Node | undefined): boolean {
+  if (contextToken?.kind === Kind.JsxText || location?.kind === Kind.JsxText) return true;
+  for (let current = location; current !== undefined; current = current.parent) {
+    if (current.kind === Kind.JsxText) return true;
+    if (current.kind === Kind.JsxOpeningElement || current.kind === Kind.JsxSelfClosingElement || current.kind === Kind.JsxClosingElement) return false;
+  }
+  return false;
 }
 
 function quotePropertyName(file: SourceFile, preferences: UserPreferences, name: string): string {
@@ -2842,6 +2951,11 @@ function findChildOfKind(node: Node, kind: Kind): Node | undefined {
 
 function isExpressionLike(node: Node | undefined): node is Node {
   return node !== undefined && isExpression(node);
+}
+
+function isUnterminatedLiteralLike(node: Node): boolean {
+  const literal = node as unknown as { readonly isUnterminated?: boolean; readonly unterminated?: boolean };
+  return literal.isUnterminated === true || literal.unterminated === true;
 }
 
 function nodeKindOf(node: Node | undefined): Kind | undefined {
