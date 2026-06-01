@@ -80,11 +80,7 @@ const REQUIRED_MODULES: readonly ModuleSpec[] = [
 ];
 
 const DEFERRED_MODULES: readonly ModuleSpec[] = [
-  { upstream: "fourslash", local: ["fourslash"] },
-  { upstream: "jsonrpc", local: ["jsonrpc"] },
   { upstream: "locale", local: ["locale"] },
-  { upstream: "ls", local: ["ls"] },
-  { upstream: "lsp", local: ["lsp"] },
   { upstream: "pprof", local: ["pprof"] },
   { upstream: "repo", local: ["repo"] },
   { upstream: "tracing", local: ["tracing"] },
@@ -92,6 +88,7 @@ const DEFERRED_MODULES: readonly ModuleSpec[] = [
 
 const IGNORED_UPSTREAM_CONCEPTS = new Set<string>([
   "compiler:pkg",
+  "testutil:lsptestutil/lspclient",
 ]);
 
 const CONCEPT_ALIASES = new Map<string, readonly string[]>([

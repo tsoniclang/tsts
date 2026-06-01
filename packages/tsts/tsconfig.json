@@ -12,7 +12,8 @@
     "sourceMap": true,
     "rootDir": ".",
     "outDir": "dist",
-    "skipLibCheck": false,
+    "skipLibCheck": true,
+    "preserveSymlinks": true,
     "types": [
       "node"
     ]

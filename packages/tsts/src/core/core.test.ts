@@ -16,6 +16,7 @@ import {
   map,
   mapNonNil,
   newTextRange,
+  orElse,
   same,
   sameMap,
   singleOrUndefined,
@@ -137,6 +138,12 @@ export class ArrayUtilitiesTests {
     Assert.Equal<readonly number[]>([2], mapNonNil([1, 2, 3], (n) => (n % 2 === 0 ? n : undefined)));
   }
 
+  map_non_nil_drops_zero_values(): void {
+    Assert.Equal<readonly number[]>([1, 2], mapNonNil([0, 1, 2], (n) => n));
+    Assert.Equal<readonly string[]>(["value"], mapNonNil(["", "value"], (value) => value));
+    Assert.Equal<readonly boolean[]>([true], mapNonNil([false, true], (value) => value));
+  }
+
   flat_map(): void {
     Assert.Equal<readonly number[]>([1, 10, 2, 20], flatMap([1, 2], (n) => [n, n * 10]));
   }
@@ -171,6 +178,9 @@ export class ArrayUtilitiesTests {
 
   if_else_coalesce_single_last(): void {
     Assert.Equal("a", ifElse(true, "a", "b"));
+    Assert.Equal("fallback", orElse("", "fallback"));
+    Assert.Equal(10, orElse(0, 10));
+    Assert.Equal(true, orElse(false, true));
     Assert.Equal("x", coalesce(undefined, "x", "y"));
     Assert.Equal(42, singleOrUndefined([42]));
     Assert.Null(singleOrUndefined([1, 2]));
@@ -195,6 +205,7 @@ A<VersionTests>().method((t) => t.version_major_minor_returns_major_dot_minor).a
 A<ArrayUtilitiesTests>().method((t) => t.filter_keeps_matching_elements).add(FactAttribute);
 A<ArrayUtilitiesTests>().method((t) => t.map_applies_transform).add(FactAttribute);
 A<ArrayUtilitiesTests>().method((t) => t.map_non_nil_drops_undefined).add(FactAttribute);
+A<ArrayUtilitiesTests>().method((t) => t.map_non_nil_drops_zero_values).add(FactAttribute);
 A<ArrayUtilitiesTests>().method((t) => t.flat_map).add(FactAttribute);
 A<ArrayUtilitiesTests>().method((t) => t.same_map_returns_original_when_no_change).add(FactAttribute);
 A<ArrayUtilitiesTests>().method((t) => t.same_map_returns_new_array_when_changed).add(FactAttribute);

@@ -8,6 +8,7 @@
  */
 
 import type { EmitTextWriter } from "./textWriter.js";
+import type { Symbol as AstSymbol } from "../ast/index.js";
 
 export class SingleLineStringWriter implements EmitTextWriter {
   buffer = "";
@@ -22,7 +23,7 @@ export class SingleLineStringWriter implements EmitTextWriter {
   writeSpace(text: string): void { this.writeText(text); }
   writeStringLiteral(text: string): void { this.writeText(text); }
   writeLiteral(text: string): void { this.writeText(text); }
-  writeSymbol(text: string, _symbol: unknown): void { this.writeText(text); }
+  writeSymbol(text: string, _symbol: AstSymbol | undefined): void { this.writeText(text); }
   writeProperty(text: string): void { this.writeText(text); }
   writeComment(text: string): void { this.writeText(text); }
   writeLine(): void { this.writeText(" "); }

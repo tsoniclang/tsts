@@ -64,7 +64,7 @@ export function mapNonNil<T, U>(slice: readonly T[], f: (item: T) => U | undefin
   const out: U[] = [];
   for (const item of slice) {
     const mapped = f(item);
-    if (mapped !== undefined && mapped !== null) out.push(mapped);
+    if (!isZeroValue(mapped)) out.push(mapped as U);
   }
   return out;
 }
@@ -203,9 +203,7 @@ export function firstNonNil<T, U>(slice: readonly T[], f: (item: T) => U | undef
 
 export function firstNonZero<T>(...values: readonly T[]): T | undefined {
   for (const value of values) {
-    if (value !== undefined && value !== null && value !== 0 && value !== "" && value !== false) {
-      return value;
-    }
+    if (!isZeroValue(value)) return value;
   }
   return values[0];
 }
@@ -219,8 +217,8 @@ export function ifElse<T>(cond: boolean, whenTrue: T, whenFalse: T): T {
 }
 
 export function orElse<T>(value: T | undefined | null, defaultValue: T): T {
-  if (value === undefined || value === null) return defaultValue;
-  return value;
+  if (isZeroValue(value)) return defaultValue;
+  return value as T;
 }
 
 export function coalesce<T>(...values: readonly (T | undefined | null)[]): T | undefined {
@@ -235,6 +233,14 @@ export function firstTruthy<T>(...values: readonly T[]): T | undefined {
     if (v) return v;
   }
   return undefined;
+}
+
+function isZeroValue(value: unknown): boolean {
+  if (value === undefined || value === null) return true;
+  if (value === false) return true;
+  if (value === 0) return true;
+  if (value === "") return true;
+  return false;
 }
 
 // ---------------------------------------------------------------------------

@@ -51,11 +51,11 @@ This document records the structural correspondence between TS-Go (`microsoft/ty
 | `pseudochecker/` | — | skip per scope |
 | `format/` | — | skip per scope (formatter) |
 | `api/` | — | skip per scope (IPC API to Go binary) |
-| `ls/` | — | skip per scope (Language Service) |
-| `lsp/` | — | skip per scope (LSP server) |
+| `ls/` | — | unsupported; removed from compiler/embedding scope (Language Service) |
+| `lsp/` | — | unsupported; removed from compiler/embedding scope (LSP server) |
 | `project/` | — | skip per scope (IDE project mgmt) |
-| `fourslash/` | — | skip per scope (IDE-feature tests) |
-| `jsonrpc/` | — | skip per scope (LSP-related) |
+| `fourslash/` | — | unsupported; removed from compiler/embedding scope (IDE-feature tests) |
+| `jsonrpc/` | — | unsupported; removed from compiler/embedding scope (LSP-related) |
 | `locale/` | — | skip per scope (i18n) |
 | `tracing/` | — | skip per scope |
 | `pprof/` | — | skip per scope (Go profiling) |
