@@ -380,7 +380,6 @@ function generateFourslashMaps() {
   const mappings = new Map([
     ["baselineutil.go", "baselineutil.ts"],
     ["fourslash.go", "fourslash.ts"],
-    ["semantictokens.go", "semantictokens.ts"],
     ["statebaseline.go", "statebaseline.ts"],
     ["test_parser.go", "testParser.ts"],
     ["tests/util/util.go", "tests/util/util.ts"],
