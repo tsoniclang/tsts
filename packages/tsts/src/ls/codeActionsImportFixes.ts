@@ -1,3 +1,601 @@
+/**
+ * Import-related code fixes.
+ *
+ * Porting surface for TS-Go `internal/ls/codeactions_importfixes.go`.
+ */
+
+import {
+  Kind,
+  SymbolFlags,
+  type Node as AstNode,
+  type SourceFile,
+  type Symbol as AstSymbol,
+} from "../ast/index.js";
+import {
+  isIdentifier,
+  isJsxClosingElement,
+  isJsxOpeningFragment,
+  isJsxOpeningLikeElement,
+} from "../ast/index.js";
+import { getTokenAtPositionPublic } from "../astnav/tokens.js";
+import { TextRange } from "../core/index.js";
+import { JsxEmit, type JsxEmit as JsxEmitValue } from "../core/index.js";
+import { Diagnostics } from "../diagnostics/diagnostics.generated.js";
+import type { Diagnostic as CompilerDiagnostic } from "../diagnostics/types.js";
+import {
+  AddAsTypeOnlyNotAllowed,
+  AutoImportFixKindPromoteTypeOnly,
+  ImportKindNamed,
+  type Position,
+  type TextEdit,
+} from "../lsp/lsproto/index.js";
+import { ResultKind } from "../modulespecifiers/index.js";
+import { isIntrinsicJsxName } from "../scanner/utilities.js";
+import { isDynamicFileName } from "../tspath/index.js";
+import {
+  type CodeAction,
+  type CodeActionLanguageService,
+  type CodeActionProgram,
+  type CodeActionSourceFile,
+  type CodeFixContext,
+  type CodeFixProvider,
+  type CombinedCodeActions,
+  containsErrorCode,
+} from "./codeActions.js";
+import { getAllDiagnostics } from "./diagnostics.js";
+import { isTypeOnlyImportOrExportDeclaration } from "../checker/exports.js";
+import {
+  QueryKind,
+  View,
+  type ExportEntry,
+} from "./autoimport/index.js";
+import {
+  newImportAdder,
+  type ImportAdder,
+} from "./autoimport/importAdder.js";
+import type { Fix } from "./autoimport/fix.js";
+
+export const importFixErrorCodes: readonly number[] = [
+  Diagnostics.Cannot_find_name_0.code,
+  Diagnostics.Cannot_find_name_0_Did_you_mean_1.code,
+  Diagnostics.Cannot_find_name_0_Did_you_mean_the_instance_member_this_0.code,
+  Diagnostics.Cannot_find_name_0_Did_you_mean_the_static_member_1_0.code,
+  Diagnostics.Cannot_find_namespace_0.code,
+  Diagnostics.X_0_refers_to_a_UMD_global_but_the_current_file_is_a_module_Consider_adding_an_import_instead.code,
+  Diagnostics.X_0_only_refers_to_a_type_but_is_being_used_as_a_value_here.code,
+  Diagnostics.No_value_exists_in_scope_for_the_shorthand_property_0_Either_declare_one_or_provide_an_initializer.code,
+  Diagnostics.X_0_cannot_be_used_as_a_value_because_it_was_imported_using_import_type.code,
+  Diagnostics.Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_jQuery_Try_npm_i_save_dev_types_Slashjquery.code,
+  Diagnostics.Cannot_find_name_0_Do_you_need_to_change_your_target_library_Try_changing_the_lib_compiler_option_to_1_or_later.code,
+  Diagnostics.Cannot_find_name_0_Do_you_need_to_change_your_target_library_Try_changing_the_lib_compiler_option_to_include_dom.code,
+  Diagnostics.Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_a_test_runner_Try_npm_i_save_dev_types_Slashjest_or_npm_i_save_dev_types_Slashmocha_and_then_add_jest_or_mocha_to_the_types_field_in_your_tsconfig.code,
+  Diagnostics.Cannot_find_name_0_Did_you_mean_to_write_this_in_an_async_function.code,
+  Diagnostics.Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_jQuery_Try_npm_i_save_dev_types_Slashjquery_and_then_add_jquery_to_the_types_field_in_your_tsconfig.code,
+  Diagnostics.Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_a_test_runner_Try_npm_i_save_dev_types_Slashjest_or_npm_i_save_dev_types_Slashmocha.code,
+  Diagnostics.Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_node_Try_npm_i_save_dev_types_Slashnode.code,
+  Diagnostics.Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_node_Try_npm_i_save_dev_types_Slashnode_and_then_add_node_to_the_types_field_in_your_tsconfig.code,
+  Diagnostics.Cannot_find_namespace_0_Did_you_mean_1.code,
+  Diagnostics.Cannot_extend_an_interface_0_Did_you_mean_implements.code,
+  Diagnostics.This_JSX_tag_requires_0_to_be_in_scope_but_it_could_not_be_found.code,
+];
+
+export const importFixID = "fixMissingImport";
+
+export interface ImportFixSourceFile extends CodeActionSourceFile {
+  readonly kind?: Kind;
+  readonly statements?: unknown;
+  readonly root?: SourceFile;
+}
+
+export interface ImportFixCompilerOptions {
+  readonly jsx?: JsxEmitValue;
+  getEmitDeclarations(): boolean;
+}
+
+export interface ImportFixChecker {
+  getResolvedSymbol?(node: AstNode): AstSymbol | undefined;
+  resolveName?(name: string, location: AstNode, meaning: SymbolFlags, excludeGlobals: boolean): AstSymbol | undefined;
+  getJsxNamespace?(location: AstNode): string;
+  getTypeOnlyAliasDeclaration?(symbol: AstSymbol): AstNode | undefined;
+}
+
+export interface ImportFixProgram extends CodeActionProgram<ImportFixSourceFile> {
+  options(): ImportFixCompilerOptions;
+  getTypeChecker?(): ImportFixChecker | [ImportFixChecker, () => void];
+}
+
+export interface ImportFixLanguageService extends CodeActionLanguageService<ImportFixProgram, ImportFixSourceFile> {
+  getPreparedAutoImportView?(sourceFile: ImportFixSourceFile): View | undefined;
+  getCurrentAutoImportView?(sourceFile: ImportFixSourceFile): View | undefined;
+  formatOptions?(): unknown;
+  userPreferences?(): unknown;
+}
+
+export type ImportFixContext = CodeFixContext<ImportFixProgram, ImportFixSourceFile> & {
+  readonly languageService: ImportFixLanguageService;
+};
+
+export interface FixInfo {
+  readonly fix: Fix;
+  readonly symbolName: string;
+  readonly errorIdentifierText: string;
+  readonly isJsxNamespaceFix: boolean;
+}
+
+export const ImportFixProvider: CodeFixProvider<ImportFixProgram, ImportFixSourceFile> = {
+  errorCodes: importFixErrorCodes,
+  getCodeActions: getImportCodeActions,
+  fixIds: [importFixID],
+  getAllCodeActions: getAllImportCodeActions,
+};
+
+export function getImportCodeActions(fixContext: ImportFixContext): readonly CodeAction[] {
+  const info = getFixInfos(fixContext, fixContext.errorCode ?? 0, fixContext.span?.pos ?? 0);
+  if (info.length === 0) return [];
+
+  const actions: CodeAction[] = [];
+  for (const fixInfo of info) {
+    const editResult = editsForFix(fixInfo.fix);
+    actions.push({
+      description: editResult.description,
+      changes: editResult.changes,
+      fixId: importFixID,
+      fixAllDescription: Diagnostics.Add_all_missing_imports.message,
+    });
+  }
+  return actions;
+}
+
+export function getAllImportCodeActions(fixContext: ImportFixContext): CombinedCodeActions | undefined {
+  if (isDynamicFileName(fixContext.sourceFile.fileName)) return undefined;
+
+  const importDiagnostics = getAllDiagnostics(fixContext.program, fixContext.sourceFile)
+    .filter((diagnostic) => containsErrorCode(importFixErrorCodes, diagnostic.code));
+  if (importDiagnostics.length === 0) return undefined;
+
+  const view = fixContext.languageService.getPreparedAutoImportView?.(fixContext.sourceFile)
+    ?? fixContext.languageService.getCurrentAutoImportView?.(fixContext.sourceFile);
+  if (view === undefined) return undefined;
+
+  const importAdderOptions = {
+    view: viewForImportAdder(view),
+  };
+  const checker = checkerForImportAdder(fixContext.program);
+  const importAdder = checker === undefined
+    ? newImportAdder(importAdderOptions)
+    : newImportAdder({ ...importAdderOptions, checker });
+
+  for (const diagnostic of importDiagnostics) {
+    addImportFromDiagnostic(importAdder, diagnostic, fixContext);
+  }
+
+  if (!importAdder.hasFixes()) return undefined;
+  return {
+    description: Diagnostics.Add_all_missing_imports.message,
+    changes: importAdder.edits(),
+  };
+}
+
+export function addImportFromDiagnostic(
+  importAdder: ImportAdder,
+  diagnostic: CompilerDiagnostic,
+  fixContext: ImportFixContext,
+): void {
+  const start = diagnostic.start ?? 0;
+  const length = diagnostic.length ?? 0;
+  const diagnosticContext: ImportFixContext = {
+    ...fixContext,
+    span: new TextRange(start, start + length),
+    errorCode: diagnostic.code,
+  };
+  const infos = getFixInfos(diagnosticContext, diagnostic.code, start);
+  if (infos.length > 0) importAdder.addImportFix(infos[0]!.fix);
+}
+
+export function getFixInfos(fixContext: ImportFixContext, errorCode: number, position: number): readonly FixInfo[] {
+  if (isDynamicFileName(fixContext.sourceFile.fileName)) return [];
+
+  const astSourceFile = sourceFileForAst(fixContext.sourceFile);
+  if (astSourceFile === undefined) return [];
+
+  const symbolToken = getTokenAtPositionPublic(astSourceFile, position);
+  if (symbolToken === undefined) return [];
+
+  let view: View | undefined;
+  let info: readonly FixInfo[] = [];
+
+  if (errorCode === Diagnostics.X_0_refers_to_a_UMD_global_but_the_current_file_is_a_module_Consider_adding_an_import_instead.code) {
+    view = fixContext.languageService.getCurrentAutoImportView?.(fixContext.sourceFile);
+    info = view === undefined ? [] : getFixesInfoForUMDImport(fixContext, symbolToken, view);
+  } else if (!isIdentifier(symbolToken)) {
+    return [];
+  } else if (errorCode === Diagnostics.X_0_cannot_be_used_as_a_value_because_it_was_imported_using_import_type.code) {
+    const checker = getChecker(fixContext.program);
+    if (checker === undefined) return [];
+    const symbolNames = getSymbolNamesToImport(astSourceFile, checker, symbolToken, fixContext.program.options());
+    const allTypeOnlyFixes: FixInfo[] = [];
+
+    for (const symbolName of symbolNames) {
+      if (!symbolName.isTypeOnly) continue;
+      const fix = getTypeOnlyPromotionFix(astSourceFile, symbolToken, symbolName.name, fixContext.program);
+      if (fix !== undefined) {
+        allTypeOnlyFixes.push({
+          fix,
+          symbolName: symbolName.name,
+          errorIdentifierText: symbolToken.text,
+          isJsxNamespaceFix: false,
+        });
+      }
+    }
+
+    const diagnosticMessage = fixContext.diagnostic?.message ?? "";
+    if (allTypeOnlyFixes.length > 1 && diagnosticMessage !== "") {
+      const matching = allTypeOnlyFixes.filter((fix) => diagnosticMessage.includes("'" + fix.symbolName + "'"));
+      if (matching.length > 0) return matching;
+    }
+    return allTypeOnlyFixes;
+  } else {
+    view = fixContext.languageService.getPreparedAutoImportView?.(fixContext.sourceFile);
+    if (view !== undefined) {
+      info = getFixesInfoForNonUMDImport(fixContext, symbolToken, view);
+    }
+  }
+
+  view ??= fixContext.languageService.getCurrentAutoImportView?.(fixContext.sourceFile);
+  return view === undefined ? info : sortFixInfo(info, view);
+}
+
+export function getFixesInfoForUMDImport(
+  fixContext: ImportFixContext,
+  token: AstNode,
+  view: View,
+): readonly FixInfo[] {
+  const checker = getChecker(fixContext.program);
+  if (checker === undefined) return [];
+
+  const umdSymbol = getUmdSymbol(token, checker);
+  if (umdSymbol === undefined) return [];
+
+  const symbolName = symbolNameOf(umdSymbol);
+  if (symbolName === "") return [];
+
+  const isValidTypeOnlyUseSite = isValidTypeOnlyAliasUseSite(token);
+  const result: FixInfo[] = [];
+  for (const exportEntry of view.search(symbolName, QueryKind.ExactMatch)) {
+    for (const fix of viewFixes(view, exportEntry, false, isValidTypeOnlyUseSite, undefined)) {
+      result.push({
+        fix,
+        symbolName,
+        errorIdentifierText: isIdentifier(token) ? token.text : "",
+        isJsxNamespaceFix: false,
+      });
+    }
+  }
+  return result;
+}
+
+export function getUmdSymbol(token: AstNode, checker: ImportFixChecker): AstSymbol | undefined {
+  let umdSymbol: AstSymbol | undefined;
+  if (isIdentifier(token)) umdSymbol = checker.getResolvedSymbol?.(token);
+  if (isUMDExportSymbol(umdSymbol)) return umdSymbol;
+
+  const parent = token.parent;
+  if (
+    (parent !== undefined && isJsxOpeningLikeElement(parent) && parent.tagName === token)
+    || (parent !== undefined && isJsxOpeningFragment(parent))
+  ) {
+    const location = isJsxOpeningLikeElement(parent) ? token : parent;
+    const jsxNamespace = checker.getJsxNamespace?.(parent) ?? "";
+    const parentSymbol = jsxNamespace === ""
+      ? undefined
+      : checker.resolveName?.(jsxNamespace, location, SymbolFlags.Value, false);
+    if (isUMDExportSymbol(parentSymbol)) return parentSymbol;
+  }
+  return undefined;
+}
+
+export function isUMDExportSymbol(symbol: AstSymbol | undefined): boolean {
+  return symbol !== undefined
+    && symbol.declarations.length > 0
+    && symbol.declarations[0] !== undefined
+    && symbol.declarations[0]!.kind === Kind.NamespaceExportDeclaration;
+}
+
+export function getFixesInfoForNonUMDImport(
+  fixContext: ImportFixContext,
+  symbolToken: AstNode,
+  view: View,
+): readonly FixInfo[] {
+  if (!isIdentifier(symbolToken)) return [];
+
+  const astSourceFile = sourceFileForAst(fixContext.sourceFile);
+  const checker = getChecker(fixContext.program);
+  if (astSourceFile === undefined || checker === undefined) return [];
+
+  const isValidTypeOnlyUseSite = isValidTypeOnlyAliasUseSite(symbolToken);
+  const symbolNames = getSymbolNamesToImport(astSourceFile, checker, symbolToken, fixContext.program.options());
+  const usagePosition = positionAt(fixContext.sourceFile, symbolToken.pos);
+  const allInfo: FixInfo[] = [];
+
+  for (const symbolNameInfo of symbolNames) {
+    if (symbolNameInfo.isTypeOnly) continue;
+
+    const symbolName = symbolNameInfo.name;
+    if (symbolName === "default") continue;
+
+    const isJSXTagName = symbolName === symbolToken.text && isJsxTagName(symbolToken);
+    const queryKind = isJSXTagName ? QueryKind.CaseInsensitiveMatch : QueryKind.ExactMatch;
+
+    for (const exportEntry of view.search(symbolName, queryKind)) {
+      const exportName = exportNameOf(exportEntry);
+      if (isJSXTagName && !(exportName === symbolName || exportIsRenameable(exportEntry))) continue;
+
+      for (const fix of viewFixes(view, exportEntry, isJSXTagName, isValidTypeOnlyUseSite, usagePosition)) {
+        allInfo.push({
+          fix,
+          symbolName,
+          errorIdentifierText: "",
+          isJsxNamespaceFix: symbolName !== symbolToken.text,
+        });
+      }
+    }
+  }
+
+  return allInfo;
+}
+
+export function getTypeOnlyPromotionFix(
+  sourceFile: SourceFile,
+  symbolToken: AstNode,
+  symbolName: string,
+  program: ImportFixProgram,
+): Fix | undefined {
+  const checker = getChecker(program);
+  const symbol = checker?.resolveName?.(symbolName, symbolToken, SymbolFlags.Value, true);
+  if (symbol === undefined) return undefined;
+
+  const typeOnlyAliasDeclaration = checker?.getTypeOnlyAliasDeclaration?.(symbol);
+  if (typeOnlyAliasDeclaration === undefined || getSourceFileOfNode(typeOnlyAliasDeclaration) !== sourceFile) {
+    return undefined;
+  }
+
+  return {
+    kind: AutoImportFixKindPromoteTypeOnly,
+    name: symbolName,
+    importKind: ImportKindNamed,
+    addAsTypeOnly: AddAsTypeOnlyNotAllowed,
+    importIndex: -1,
+    moduleSpecifierKind: ResultKind.Ambient,
+    isReExport: false,
+    moduleFileName: sourceFile.fileName,
+    typeOnlyAliasDeclaration,
+  };
+}
+
+export interface SymbolNameInfo {
+  readonly name: string;
+  readonly isTypeOnly: boolean;
+}
+
+export function getSymbolNamesToImport(
+  sourceFile: SourceFile,
+  checker: ImportFixChecker,
+  symbolToken: AstNode,
+  compilerOptions: ImportFixCompilerOptions,
+): readonly SymbolNameInfo[] {
+  if (!isIdentifier(symbolToken)) return [];
+
+  const parent = symbolToken.parent;
+  if (
+    parent !== undefined
+    && (isJsxOpeningLikeElement(parent) || isJsxClosingElement(parent))
+    && tagNameOf(parent) === symbolToken
+    && jsxModeNeedsExplicitImport(compilerOptions.jsx ?? JsxEmit.None)
+  ) {
+    const jsxNamespace = checker.getJsxNamespace?.(sourceFile) ?? "";
+    if (needsJsxNamespaceFix(jsxNamespace, symbolToken, checker)) {
+      const result: SymbolNameInfo[] = [];
+      if (!isIntrinsicJsxName(symbolToken.text)) {
+        const componentSymbol = checker.resolveName?.(symbolToken.text, symbolToken, SymbolFlags.Value, false);
+        if (componentSymbol === undefined) {
+          result.push({ name: symbolToken.text, isTypeOnly: false });
+        } else if (checker.getTypeOnlyAliasDeclaration?.(componentSymbol) !== undefined) {
+          result.push({ name: symbolToken.text, isTypeOnly: true });
+        }
+      }
+      const namespaceSymbol = checker.resolveName?.(jsxNamespace, symbolToken, SymbolFlags.Value, true);
+      const namespaceIsTypeOnly = namespaceSymbol === undefined ? false : checker.getTypeOnlyAliasDeclaration?.(namespaceSymbol) !== undefined;
+      result.push({ name: jsxNamespace, isTypeOnly: namespaceIsTypeOnly });
+      return result;
+    }
+  }
+
+  const tokenSymbol = checker.resolveName?.(symbolToken.text, symbolToken, SymbolFlags.Value, true);
+  const tokenIsTypeOnly = tokenSymbol === undefined ? false : checker.getTypeOnlyAliasDeclaration?.(tokenSymbol) !== undefined;
+  return [{ name: symbolToken.text, isTypeOnly: tokenIsTypeOnly }];
+}
+
+export function needsJsxNamespaceFix(jsxNamespace: string, symbolToken: AstNode, checker: ImportFixChecker): boolean {
+  if (isIdentifier(symbolToken) && isIntrinsicJsxName(symbolToken.text)) return true;
+
+  const namespaceSymbol = jsxNamespace === ""
+    ? undefined
+    : checker.resolveName?.(jsxNamespace, symbolToken, SymbolFlags.Value, true);
+  if (namespaceSymbol === undefined) return true;
+
+  if (namespaceSymbol.declarations.some(isTypeOnlyImportOrExportDeclaration)) {
+    return ((namespaceSymbol.flags ?? 0) & SymbolFlags.Value) === 0;
+  }
+  return false;
+}
+
+export function jsxModeNeedsExplicitImport(jsx: JsxEmitValue): boolean {
+  return jsx === JsxEmit.React || jsx === JsxEmit.ReactNative;
+}
+
+export function sortFixInfo(fixes: readonly FixInfo[], view: View): readonly FixInfo[] {
+  if (fixes.length === 0) return fixes;
+  return [...fixes].sort((left, right) =>
+    compareBooleans(left.isJsxNamespaceFix, right.isJsxNamespaceFix)
+    || compareFixesForSorting(view, left.fix, right.fix));
+}
+
+function getChecker(program: ImportFixProgram): ImportFixChecker | undefined {
+  const checkerResult = program.getTypeChecker?.();
+  if (checkerResult === undefined) return undefined;
+  return Array.isArray(checkerResult) ? checkerResult[0] as ImportFixChecker : checkerResult;
+}
+
+function checkerForImportAdder(program: ImportFixProgram): { getMergedSymbol(symbol: AstSymbol): AstSymbol; skipAlias(symbol: AstSymbol): AstSymbol } | undefined {
+  const checker = getChecker(program);
+  if (checker === undefined) return undefined;
+  return {
+    getMergedSymbol: (symbol) => symbol,
+    skipAlias: (symbol) => symbol,
+  };
+}
+
+function viewForImportAdder(view: View): { getFixes(exportEntry: ExportEntry, forJsx: boolean, isTypeOnlyLocation: boolean, usagePosition: unknown): readonly Fix[]; compareFixesForRanking(left: Fix, right: Fix): number } {
+  return {
+    getFixes: (exportEntry, forJsx, isTypeOnlyLocation, usagePosition) =>
+      viewFixes(view, exportEntry, forJsx, isTypeOnlyLocation, usagePosition as Position | undefined),
+    compareFixesForRanking: (left, right) => compareFixesForRanking(view, left, right),
+  };
+}
+
+function viewFixes(
+  view: View,
+  exportEntry: ExportEntry,
+  forJsx: boolean,
+  isTypeOnlyLocation: boolean,
+  usagePosition: Position | undefined,
+): readonly Fix[] {
+  const provider = view.fixProvider;
+  if (provider === undefined) return [];
+  return provider.getFixes(
+    view,
+    exportEntry,
+    forJsx,
+    isTypeOnlyLocation,
+    usagePosition ?? { line: 0, character: 0 },
+  ).map(toFix);
+}
+
+function compareFixesForRanking(view: View, left: Fix, right: Fix): number {
+  return view.fixProvider?.compareFixesForRanking(view, left, right) ?? 0;
+}
+
+function compareFixesForSorting(view: View, left: Fix, right: Fix): number {
+  return view.fixProvider?.compareFixesForSorting(view, left, right) ?? compareFixesForRanking(view, left, right);
+}
+
+function editsForFix(fix: Fix): { readonly changes: readonly TextEdit[]; readonly description: string } {
+  if (fix.kind === AutoImportFixKindPromoteTypeOnly) {
+    return {
+      changes: [],
+      description: Diagnostics.Use_import_type.message,
+    };
+  }
+  const moduleSpecifier = fix.moduleSpecifier === undefined || fix.moduleSpecifier === "" ? "" : ` from '${fix.moduleSpecifier}'`;
+  return {
+    changes: [],
+    description: `Add import for '${fix.name ?? ""}'${moduleSpecifier}`,
+  };
+}
+
+function sourceFileForAst(sourceFile: ImportFixSourceFile): SourceFile | undefined {
+  if (sourceFile.root !== undefined) return sourceFile.root;
+  if (sourceFile.kind === Kind.SourceFile && sourceFile.statements !== undefined) return sourceFile as unknown as SourceFile;
+  return undefined;
+}
+
+function getSourceFileOfNode(node: AstNode): SourceFile | undefined {
+  let current: AstNode | undefined = node;
+  while (current !== undefined) {
+    if (current.kind === Kind.SourceFile) return current as SourceFile;
+    current = current.parent;
+  }
+  return undefined;
+}
+
+function isValidTypeOnlyAliasUseSite(node: AstNode): boolean {
+  return findAncestor(node, current => current.kind === Kind.TypeQuery || current.kind === Kind.ImportType || current.kind === Kind.TypeReference) !== undefined;
+}
+
+function findAncestor(node: AstNode | undefined, predicate: (node: AstNode) => boolean): AstNode | undefined {
+  let current = node;
+  while (current !== undefined) {
+    if (predicate(current)) return current;
+    current = current.parent;
+  }
+  return undefined;
+}
+
+function isJsxTagName(node: AstNode): boolean {
+  const parent = node.parent;
+  return parent !== undefined
+    && (isJsxOpeningLikeElement(parent) || isJsxClosingElement(parent))
+    && tagNameOf(parent) === node;
+}
+
+function tagNameOf(node: AstNode): AstNode | undefined {
+  return (node as { readonly tagName?: AstNode }).tagName;
+}
+
+function symbolNameOf(symbol: AstSymbol): string {
+  return symbol.name ?? symbol.escapedName ?? "";
+}
+
+function exportNameOf(entry: ExportEntry): string {
+  return entry.localName ?? entry.exportName;
+}
+
+function exportIsRenameable(entry: ExportEntry): boolean {
+  return entry.exportName === "export=" || entry.exportName === "default";
+}
+
+function toFix(autoImportFix: import("../lsp/lsproto/index.js").AutoImportFix): Fix {
+  return {
+    ...autoImportFix,
+    kind: autoImportFix.kind ?? 0,
+    moduleSpecifierKind: ResultKind.Ambient,
+    isReExport: false,
+    moduleFileName: "",
+  };
+}
+
+function positionAt(file: CodeActionSourceFile, offset: number): Position {
+  const lineStarts = file.lineStarts.length > 0 ? file.lineStarts : computeLineStarts(file.text);
+  let low = 0;
+  let high = lineStarts.length - 1;
+  while (low <= high) {
+    const middle = (low + high) >> 1;
+    const start = lineStarts[middle]!;
+    const next = middle + 1 < lineStarts.length ? lineStarts[middle + 1]! : file.text.length + 1;
+    if (offset < start) high = middle - 1;
+    else if (offset >= next) low = middle + 1;
+    else return { line: middle, character: offset - start };
+  }
+  return { line: 0, character: Math.max(0, offset) };
+}
+
+function computeLineStarts(text: string): readonly number[] {
+  const starts: number[] = [0];
+  for (let index = 0; index < text.length; index += 1) {
+    const charCode = text.charCodeAt(index);
+    if (charCode === 13 || charCode === 10) {
+      if (charCode === 13 && text.charCodeAt(index + 1) === 10) index += 1;
+      starts.push(index + 1);
+    }
+  }
+  return starts;
+}
+
+function compareBooleans(left: boolean, right: boolean): number {
+  if (left === right) return 0;
+  return left ? 1 : -1;
+}
+
 // Language-service parity map: internal/ls/codeactions_importfixes.go
 /**
  * Language-service parity map for TS-Go `ls/codeactions_importfixes.go`.
