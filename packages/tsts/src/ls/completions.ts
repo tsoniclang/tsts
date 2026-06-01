@@ -2,9 +2,15 @@ import {
   Kind,
   KindNames,
   SymbolFlags,
+  findAncestor,
   isAsExpression,
   isBinaryExpression,
+  isBreakOrContinueStatement,
   isFunctionLike,
+  isJSDoc,
+  isJSDocImportTag,
+  isJSDocParameterTag,
+  isJSDocTag,
   isJsxClosingElement,
   isParameterDeclaration,
   isPropertyDeclaration,
@@ -21,6 +27,7 @@ import {
   type SourceFile,
   type Symbol,
 } from "../ast/index.js";
+import { tristateIsTrue, type CompilerOptions } from "../core/index.js";
 import { LanguageVariant } from "../core/languageVariant.js";
 import { isIdentifierPartCodePoint, isIdentifierStartCodePoint } from "../scanner/index.js";
 import { compareStringsCaseInsensitiveThenSensitive, ComparisonEqual } from "../stringutil/index.js";
@@ -41,8 +48,10 @@ import {
   CompletionItemKindText,
   CompletionItemKindVariable,
 } from "../lsp/lsproto/index.js";
-import type { CompletionItem, CompletionItemData, CompletionItemKind, CompletionItemLabelDetails, CompletionList, Range } from "../lsp/lsproto/index.js";
-import { findPrecedingToken } from "../astnav/index.js";
+import type { CompletionContext, CompletionItem, CompletionItemData, CompletionItemKind, CompletionItemLabelDetails, CompletionItemsOrListOrNull, CompletionList, DocumentUri, Position, Range } from "../lsp/lsproto/index.js";
+import { findPrecedingToken, getStartOfNode, getTokenAtPositionPublic, getTouchingPropertyName } from "../astnav/index.js";
+import { isInComment } from "./format.js";
+import { getStringLiteralCompletions, type StringCompletionChecker, type StringCompletionProgram, type StringLiteralCompletionService } from "./stringCompletions.js";
 import {
   ScriptElementKindAlias,
   ScriptElementKindCallSignatureElement,
@@ -75,7 +84,7 @@ import {
   type ScriptElementKind,
   type UserPreferences,
 } from "./lsutil/index.js";
-import { quote } from "./utilities.js";
+import { createLspRangeFromBounds, isInString, quote, type LspRangeService } from "./utilities.js";
 
 /**
  * Completion constants and ordering helpers.
@@ -123,9 +132,13 @@ export interface CompletionDataKeyword {
   readonly isNewIdentifierLocation: boolean;
 }
 
-export interface CompletionDataJSDocTagName {}
+export interface CompletionDataJSDocTagName {
+  readonly jsDocCompletionKind: "tagName";
+}
 
-export interface CompletionDataJSDocTag {}
+export interface CompletionDataJSDocTag {
+  readonly jsDocCompletionKind: "tag";
+}
 
 export interface CompletionDataJSDocParameterName {
   readonly tag: unknown;
@@ -665,6 +678,231 @@ export function getDefaultCommitCharacters(isNewIdentifierLocation: boolean): re
 export interface CompletionInfoHost {
   readonly userPreferences?: UserPreferences;
   readonly createCompletionItem?: (input: CompletionItemCreateInput) => CompletionItem | undefined;
+}
+
+export interface CompletionProgram extends StringCompletionProgram {
+  options?(): CompilerOptions;
+  getTypeCheckerForFile?(context: unknown, sourceFile: SourceFile): CompletionCheckerLease | undefined;
+}
+
+export interface CompletionChecker extends StringCompletionChecker {}
+
+export type CompletionCheckerLease =
+  | readonly [CompletionChecker, () => void]
+  | { readonly checker: CompletionChecker; readonly release: () => void };
+
+export interface CompletionService extends LspRangeService {
+  readonly converters: LspRangeService["converters"] & {
+    lineAndCharacterToPosition(file: SourceFile, position: Position): number;
+  };
+  getProgramAndFile(documentURI: DocumentUri): readonly [CompletionProgram, SourceFile];
+  getProgram?(): CompletionProgram | undefined;
+  userPreferences(): UserPreferences;
+  readonly createCompletionItem?: CompletionInfoHost["createCompletionItem"];
+  readonly getTripleSlashReferenceCompletions?: StringLiteralCompletionService["getTripleSlashReferenceCompletions"];
+  readonly getStringLiteralCompletionsFromModuleNamesWorker?: StringLiteralCompletionService["getStringLiteralCompletionsFromModuleNamesWorker"];
+  readonly getArgumentInfoForCompletions?: StringLiteralCompletionService["getArgumentInfoForCompletions"];
+  readonly createRangeFromStringLiteralLikeContent?: StringLiteralCompletionService["createRangeFromStringLiteralLikeContent"];
+  getLabelCompletionsAtPosition?(
+    statement: Node,
+    file: SourceFile,
+    position: number,
+    replacementSpan: Range | undefined,
+  ): CompletionList | undefined;
+  getCompletionDataAtPosition?(request: CompletionDataRequest): CompletionData | undefined;
+}
+
+export interface CompletionDataRequest {
+  readonly checker: CompletionChecker;
+  readonly file: SourceFile;
+  readonly position: number;
+  readonly preferences: UserPreferences;
+  readonly forItemResolve: boolean;
+  readonly currentToken: Node | undefined;
+  readonly contextToken: Node | undefined;
+  readonly previousToken: Node | undefined;
+  readonly location: Node | undefined;
+  readonly keywordFilters: KeywordCompletionFilters;
+  readonly insideJSDocTagTypeExpression: boolean;
+  readonly insideJSDocImportTag: boolean;
+  readonly isTypeOnlyLocation: boolean;
+  readonly isNewIdentifierLocation: boolean;
+}
+
+export function provideCompletion(
+  service: CompletionService,
+  documentURI: DocumentUri,
+  position: Position,
+  context: CompletionContext | undefined,
+): CompletionItemsOrListOrNull {
+  const [, file] = service.getProgramAndFile(documentURI);
+  const triggerCharacter = asCompletionsTriggerCharacter(context?.triggerCharacter);
+  const offset = service.converters.lineAndCharacterToPosition(file, position);
+  const completionList = getCompletionsAtPosition(service, file, offset, triggerCharacter);
+  const list = ensureItemData(file.fileName, offset, completionList);
+  return list === undefined ? {} : { list };
+}
+
+export function getCompletionsAtPosition(
+  service: CompletionService,
+  file: SourceFile,
+  position: number,
+  triggerCharacter: CompletionsTriggerCharacter | undefined,
+): CompletionList | undefined {
+  const { previousToken } = getRelevantTokens(position, file);
+  if (triggerCharacter !== undefined && !isInString(file, position, previousToken) && !isValidTrigger(file, triggerCharacter, previousToken, position)) {
+    return undefined;
+  }
+
+  const preferences = service.userPreferences();
+  if (triggerCharacter === " ") {
+    return tristateIsTrue(preferences.includeCompletionsForImportStatements)
+      ? { isIncomplete: true, items: [] }
+      : undefined;
+  }
+
+  const program = service.getProgram?.();
+  const compilerOptions = program?.options?.() ?? {};
+  const checkerLease = program?.getTypeCheckerForFile?.(undefined, file);
+  const normalizedLease = checkerLease === undefined ? undefined : normalizeCompletionCheckerLease(checkerLease);
+  const checker = normalizedLease?.checker ?? {};
+  try {
+    const stringCompletions = getStringLiteralCompletions(
+      completionStringService(service),
+      file,
+      position,
+      previousToken,
+      checker,
+      compilerOptions,
+    );
+    if (stringCompletions !== undefined) return stringCompletions;
+
+    if (previousToken !== undefined
+      && (previousToken.kind === Kind.BreakKeyword || previousToken.kind === Kind.ContinueKeyword || previousToken.kind === Kind.Identifier)
+      && previousToken.parent !== undefined
+      && isBreakOrContinueStatement(previousToken.parent)) {
+      return service.getLabelCompletionsAtPosition?.(
+        previousToken.parent,
+        file,
+        position,
+        getOptionalReplacementSpan(service, previousToken, file),
+      );
+    }
+
+    const data = getCompletionData(service, checker, file, position, preferences, false);
+    if (data === undefined) return undefined;
+    if (isCompletionDataData(data)) {
+      return completionInfoFromData(
+        completionInfoHost(service, preferences),
+        file,
+        data,
+        position,
+        getOptionalReplacementSpan(service, data.location as Node | undefined, file),
+      );
+    }
+    if (isCompletionDataKeyword(data)) {
+      return specificKeywordCompletionInfo(
+        file,
+        position,
+        data.keywordCompletions,
+        data.isNewIdentifierLocation,
+        getOptionalReplacementSpan(service, previousToken, file),
+      );
+    }
+    if (isCompletionDataJSDocTagName(data)) {
+      return jsDocCompletionInfo(position, file, [
+        ...getJSDocTagNameCompletions(),
+        ...getJSDocParameterCompletionsForPosition(file, position, checker, compilerOptions, preferences, true),
+      ]);
+    }
+    if (isCompletionDataJSDocTag(data)) {
+      return jsDocCompletionInfo(position, file, [
+        ...getJSDocTagCompletions(),
+        ...getJSDocParameterCompletionsForPosition(file, position, checker, compilerOptions, preferences, false),
+      ]);
+    }
+    if (isCompletionDataJSDocParameterName(data)) {
+      return jsDocCompletionInfo(position, file, getJSDocParameterNameCompletions(data.tag as Node));
+    }
+    throw new Error(`getCompletionData returned unexpected shape`);
+  } finally {
+    normalizedLease?.release();
+  }
+}
+
+export function getCompletionData(
+  service: CompletionService,
+  checker: CompletionChecker,
+  file: SourceFile,
+  position: number,
+  preferences: UserPreferences,
+  forItemResolve: boolean,
+): CompletionData | undefined {
+  const currentToken = getTokenAtPositionPublic(file, position);
+  const insideComment = isInComment(file, position, currentToken);
+  let insideJSDocTagTypeExpression = false;
+  let insideJSDocImportTag = false;
+
+  if (insideComment !== undefined) {
+    if (hasDocComment(file, position)) {
+      if (position > 0 && file.text[position - 1] === "@") {
+        return { jsDocCompletionKind: "tagName" };
+      }
+      if (commentPrefixPermitsJSDocTagCompletion(file, position)) {
+        return { jsDocCompletionKind: "tag" };
+      }
+    }
+
+    const tag = getJSDocTagAtPosition(currentToken, position);
+    if (tag !== undefined) {
+      const tagName = nodeName(tag);
+      if (tagName !== undefined && tagName.pos <= position && position <= tagName.end) {
+        return { jsDocCompletionKind: "tagName" };
+      }
+      if (isJSDocImportTag(tag)) {
+        insideJSDocImportTag = true;
+      } else {
+        insideJSDocTagTypeExpression = isCurrentlyEditingJSDocTypeExpression(tag, position);
+        if (!insideJSDocTagTypeExpression && isJSDocParameterTag(tag)) {
+          const name = nodeName(tag);
+          if (name === undefined || name.pos <= position && position <= name.end) {
+            return { tag };
+          }
+        }
+      }
+    }
+
+    if (!insideJSDocTagTypeExpression && !insideJSDocImportTag) return undefined;
+  }
+
+  const { contextToken, previousToken } = getRelevantTokens(position, file);
+  const location = getTouchingPropertyName(file, position);
+  const keywordFilters = keywordFiltersForCompletionContext(contextToken, location, insideJSDocTagTypeExpression, insideJSDocImportTag);
+  const isTypeOnlyLocation = insideJSDocTagTypeExpression || insideJSDocImportTag
+    || (location !== undefined && (isContextTokenTypeLocation(location) || isTypeLocationNode(location)));
+  const isNewIdentifierLocation = isNewIdentifierCompletionLocation(contextToken, previousToken, location);
+
+  const serviceData = service.getCompletionDataAtPosition?.({
+    checker,
+    file,
+    position,
+    preferences,
+    forItemResolve,
+    currentToken,
+    contextToken,
+    previousToken,
+    location,
+    keywordFilters,
+    insideJSDocTagTypeExpression,
+    insideJSDocImportTag,
+    isTypeOnlyLocation,
+    isNewIdentifierLocation,
+  });
+  if (serviceData !== undefined) return serviceData;
+  if (keywordFilters !== KeywordCompletionFilters.None) {
+    return keywordCompletionData(keywordFilters, !insideJSDocTagTypeExpression && isJavaScriptSourceFile(file), isNewIdentifierLocation);
+  }
+  return undefined;
 }
 
 export interface CompletionItemCreateInput {
@@ -1376,6 +1614,185 @@ export function isValidTrigger(file: SourceFile, triggerCharacter: CompletionsTr
 
 function quotePropertyName(file: SourceFile, preferences: UserPreferences, name: string): string {
   return quote(file, preferences, name);
+}
+
+function normalizeCompletionCheckerLease(lease: CompletionCheckerLease): { readonly checker: CompletionChecker; readonly release: () => void } {
+  if ("checker" in lease) return { checker: lease.checker, release: lease.release };
+  return { checker: lease[0], release: lease[1] };
+}
+
+function completionInfoHost(service: CompletionService, preferences: UserPreferences): CompletionInfoHost {
+  return {
+    userPreferences: preferences,
+    ...(service.createCompletionItem === undefined ? {} : { createCompletionItem: service.createCompletionItem }),
+  };
+}
+
+function completionStringService(service: CompletionService): StringLiteralCompletionService {
+  return {
+    ...completionInfoHost(service, service.userPreferences()),
+    ...(service.getProgram === undefined ? {} : { getProgram: service.getProgram }),
+    ...(service.getTripleSlashReferenceCompletions === undefined ? {} : { getTripleSlashReferenceCompletions: service.getTripleSlashReferenceCompletions }),
+    ...(service.getStringLiteralCompletionsFromModuleNamesWorker === undefined ? {} : { getStringLiteralCompletionsFromModuleNamesWorker: service.getStringLiteralCompletionsFromModuleNamesWorker }),
+    ...(service.getArgumentInfoForCompletions === undefined ? {} : { getArgumentInfoForCompletions: service.getArgumentInfoForCompletions }),
+    ...(service.createRangeFromStringLiteralLikeContent === undefined ? {} : { createRangeFromStringLiteralLikeContent: service.createRangeFromStringLiteralLikeContent }),
+  };
+}
+
+function asCompletionsTriggerCharacter(triggerCharacter: string | undefined): CompletionsTriggerCharacter | undefined {
+  return triggerCharacter !== undefined && (TriggerCharacters as readonly string[]).includes(triggerCharacter)
+    ? triggerCharacter as CompletionsTriggerCharacter
+    : undefined;
+}
+
+function isCompletionDataData(data: CompletionData): data is CompletionDataData {
+  return "completionKind" in data && "symbols" in data;
+}
+
+function isCompletionDataKeyword(data: CompletionData): data is CompletionDataKeyword {
+  return "keywordCompletions" in data;
+}
+
+function isCompletionDataJSDocTagName(data: CompletionData): data is CompletionDataJSDocTagName {
+  return "jsDocCompletionKind" in data && data.jsDocCompletionKind === "tagName";
+}
+
+function isCompletionDataJSDocTag(data: CompletionData): data is CompletionDataJSDocTag {
+  return "jsDocCompletionKind" in data && data.jsDocCompletionKind === "tag";
+}
+
+function isCompletionDataJSDocParameterName(data: CompletionData): data is CompletionDataJSDocParameterName {
+  return "tag" in data;
+}
+
+function specificKeywordCompletionInfo(
+  _file: SourceFile,
+  _position: number,
+  keywordCompletions: readonly CompletionItem[],
+  isNewIdentifierLocation: boolean,
+  optionalReplacementSpan: Range | undefined,
+): CompletionList {
+  const commitCharacters = getDefaultCommitCharacters(isNewIdentifierLocation);
+  return {
+    isIncomplete: false,
+    ...(optionalReplacementSpan === undefined ? {} : { itemDefaults: { editRange: { range: optionalReplacementSpan } } }),
+    items: keywordCompletions.map((item) => ({
+      ...item,
+      ...(commitCharacters.length === 0 ? { commitCharacters: [] } : {}),
+    })),
+  };
+}
+
+function jsDocCompletionInfo(_position: number, _file: SourceFile, items: readonly CompletionItem[]): CompletionList {
+  return {
+    isIncomplete: false,
+    items,
+  };
+}
+
+function getOptionalReplacementSpan(service: CompletionService, location: Node | undefined, file: SourceFile): Range | undefined {
+  if (location === undefined || service.converters.positionToLineAndCharacter === undefined) return undefined;
+  const start = getStartOfNode(location, file, false);
+  if (start < location.end) {
+    return createLspRangeFromBounds(service, start, location.end, file);
+  }
+  return undefined;
+}
+
+function getJSDocParameterCompletionsForPosition(
+  file: SourceFile,
+  position: number,
+  _checker: CompletionChecker,
+  _compilerOptions: CompilerOptions,
+  _preferences: UserPreferences,
+  tagNameOnly: boolean,
+): readonly CompletionItem[] {
+  const token = getTokenAtPositionPublic(file, position);
+  const tag = getJSDocTagAtPosition(token, position);
+  const jsDoc = tag === undefined ? findAncestor(token, isJSDoc) : findAncestor(tag, isJSDoc);
+  const functionLike = jsDoc?.parent;
+  if (jsDoc === undefined || functionLike === undefined) return [];
+  return getJSDocParameterCompletions(jsDoc, functionLike, {
+    isJavaScript: isJavaScriptSourceFile(file),
+    tagNameOnly,
+  });
+}
+
+function hasDocComment(file: SourceFile, position: number): boolean {
+  const token = getTokenAtPositionPublic(file, position);
+  return findAncestor(token, isJSDoc) !== undefined;
+}
+
+function getJSDocTagAtPosition(node: Node | undefined, position: number): Node | undefined {
+  for (let current = node; current !== undefined; current = current.parent) {
+    if (isJSDocTag(current) && current.pos <= position && position <= current.end) return current;
+    if (isJSDoc(current)) return undefined;
+  }
+  return undefined;
+}
+
+function isCurrentlyEditingJSDocTypeExpression(tag: Node, position: number): boolean {
+  const typeExpression = nodeProperty<Node>(tag, "typeExpression")
+    ?? nodeProperty<Node>(tag, "type")
+    ?? nodeProperty<Node>(tag, "constraint");
+  return typeExpression !== undefined && typeExpression.pos <= position && position <= typeExpression.end;
+}
+
+function commentPrefixPermitsJSDocTagCompletion(file: SourceFile, position: number): boolean {
+  const lineStart = lineStartPosition(file.text, position);
+  for (const character of file.text.slice(lineStart, position)) {
+    if (character !== " " && character !== "\t" && character !== "*" && character !== "/" && character !== "(" && character !== ")" && character !== "|") {
+      return false;
+    }
+  }
+  return true;
+}
+
+function lineStartPosition(text: string, position: number): number {
+  let index = Math.max(0, Math.min(position, text.length));
+  while (index > 0) {
+    const previous = text[index - 1];
+    if (previous === "\n" || previous === "\r") return index;
+    index -= 1;
+  }
+  return 0;
+}
+
+function keywordFiltersForCompletionContext(
+  contextToken: Node | undefined,
+  location: Node | undefined,
+  insideJSDocTagTypeExpression: boolean,
+  insideJSDocImportTag: boolean,
+): KeywordCompletionFilters {
+  if (insideJSDocTagTypeExpression || insideJSDocImportTag) return KeywordCompletionFilters.TypeKeywords;
+  if (contextToken === undefined) return KeywordCompletionFilters.All;
+  if (isContextTokenTypeLocation(contextToken) || isTypeLocationNode(location)) return KeywordCompletionFilters.TypeKeywords;
+  if (contextToken.parent?.kind === Kind.ClassDeclaration || contextToken.parent?.kind === Kind.ClassExpression) {
+    return KeywordCompletionFilters.ClassElementKeywords;
+  }
+  if (contextToken.parent?.kind === Kind.InterfaceDeclaration || contextToken.parent?.kind === Kind.TypeLiteral) {
+    return KeywordCompletionFilters.InterfaceElementKeywords;
+  }
+  return KeywordCompletionFilters.FunctionLikeBodyKeywords;
+}
+
+function isNewIdentifierCompletionLocation(contextToken: Node | undefined, previousToken: Node | undefined, location: Node | undefined): boolean {
+  if (location === undefined) return true;
+  if (contextToken === undefined || previousToken === undefined) return true;
+  return contextToken.end < previousToken.pos || previousToken.kind === Kind.OpenBraceToken || previousToken.kind === Kind.CommaToken;
+}
+
+function isTypeLocationNode(node: Node | undefined): boolean {
+  if (node === undefined) return false;
+  return isTypeQueryNode(node)
+    || isTypeReferenceNode(node)
+    || node.kind === Kind.TypeLiteral
+    || node.kind === Kind.TypeAliasDeclaration
+    || node.kind === Kind.InterfaceDeclaration;
+}
+
+function isJavaScriptSourceFile(file: SourceFile): boolean {
+  return Boolean((file as { readonly isJavaScriptFile?: boolean }).isJavaScriptFile);
 }
 
 function computeLineStarts(text: string): readonly number[] {
