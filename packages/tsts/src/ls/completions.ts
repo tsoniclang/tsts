@@ -1,3 +1,44 @@
+/**
+ * Completion constants and ordering helpers.
+ *
+ * Porting surface for TS-Go `internal/ls/completions.go`.
+ */
+
+export enum CompletionKind {
+  None = 0,
+  ObjectPropertyDeclaration = 1,
+  Global = 2,
+  PropertyAccess = 3,
+  MemberLike = 4,
+  String = 5,
+}
+
+export const TriggerCharacters: readonly string[] = [".", "\"", "'", "`", "/", "@", "<", "#", " "];
+
+export const allCommitCharacters: readonly string[] = [".", ",", ";"];
+export const noCommaCommitCharacters: readonly string[] = [".", ";"];
+export const emptyCommitCharacters: readonly string[] = [];
+
+export type SortText = string;
+
+export const SortTextLocalDeclarationPriority: SortText = "10";
+export const SortTextLocationPriority: SortText = "11";
+export const SortTextOptionalMember: SortText = "12";
+export const SortTextMemberDeclaredBySpreadAssignment: SortText = "13";
+export const SortTextSuggestedClassMembers: SortText = "14";
+export const SortTextGlobalsOrKeywords: SortText = "15";
+export const SortTextAutoImportSuggestions: SortText = "16";
+export const SortTextClassMemberSnippets: SortText = "17";
+export const SortTextJavascriptIdentifiers: SortText = "18";
+
+export function DeprecateSortText(original: SortText): SortText {
+  return `z${original}`;
+}
+
+export function sortBelow(original: SortText): SortText {
+  return `${original}1`;
+}
+
 // Language-service parity map: internal/ls/completions.go
 /**
  * Language-service parity map for TS-Go `ls/completions.go`.
