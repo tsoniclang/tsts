@@ -34,6 +34,7 @@ import "./ls/diagnostics.test.js";
 import "./ls/autoInsert.test.js";
 import "./ls/autoimport/export.test.js";
 import "./ls/autoimport/specifiers.test.js";
+import "./ls/format.test.js";
 import "./ls/lsconv/lineMap.test.js";
 import "./ls/lsutil/asi.test.js";
 import "./ls/lsutil/completedNode.test.js";

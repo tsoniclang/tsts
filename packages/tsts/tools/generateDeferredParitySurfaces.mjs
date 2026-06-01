@@ -360,7 +360,7 @@ function generateLsMaps() {
     "codeactions_fixclassincorrectlyimplementsinterface.go", "codeactions_fixmissingtypeannotation.go",
     "codeactions_importfixes.go", "codeactions_missingmemberfixer.go", "codelens.go", "completions.go",
     "crossproject.go", "definition.go", "displaypartswriter.go", "documenthighlights.go",
-    "file_rename.go", "findallreferences.go", "folding.go", "format.go", "hover.go", "importTracker.go",
+    "file_rename.go", "findallreferences.go", "folding.go", "hover.go", "importTracker.go",
     "inlay_hints.go",
     "lsutil/organizeimports.go",
     "lsutil/symbol_display.go", "organizeimports.go", "rename.go",
