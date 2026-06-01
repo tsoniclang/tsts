@@ -2002,6 +2002,143 @@ export function isStaticProperty(symbol: CompletionSymbol): boolean {
   return declaration !== undefined && nodeArray(declaration, "modifiers").some(modifier => modifier.kind === Kind.StaticKeyword);
 }
 
+export type CompletionTypeLike = {
+  readonly flags?: () => number;
+  readonly isUnion?: () => boolean;
+  readonly types?: () => readonly CompletionTypeLike[];
+  readonly symbol?: () => CompletionSymbol | undefined;
+  readonly isStringLiteral?: () => boolean;
+  readonly isNumberLiteral?: () => boolean;
+  readonly isBigIntLiteral?: () => boolean;
+};
+
+export interface ContextualCompletionChecker {
+  readonly getContextualType?: (node: Node, flags?: number) => CompletionTypeLike | undefined;
+  readonly getContextualTypeForArgumentAtIndex?: (node: Node, argumentIndex: number) => CompletionTypeLike | undefined;
+  readonly getContextualTypeForJsxAttribute?: (node: Node) => CompletionTypeLike | undefined;
+  readonly getTypeAtLocation?: (node: Node) => CompletionTypeLike | undefined;
+  readonly isDeprecatedDeclaration?: (node: Node) => boolean;
+}
+
+export function getContextualTypeForConditionalExpression(
+  conditionalExpression: Node,
+  position: number,
+  file: SourceFile,
+  checker: ContextualCompletionChecker,
+): CompletionTypeLike | undefined {
+  const argumentInfo = getArgumentInfoForCompletionContext(conditionalExpression, position, file);
+  if (argumentInfo !== undefined) {
+    return checker.getContextualTypeForArgumentAtIndex?.(argumentInfo.invocation, argumentInfo.argumentIndex);
+  }
+  return checker.getContextualType?.(conditionalExpression, 1) ?? checker.getContextualType?.(conditionalExpression, 0);
+}
+
+export function getContextualType(
+  previousToken: Node,
+  position: number,
+  file: SourceFile,
+  checker: ContextualCompletionChecker,
+): CompletionTypeLike | undefined {
+  const parent = previousToken.parent;
+  if (parent === undefined) return undefined;
+  switch (previousToken.kind) {
+    case Kind.Identifier:
+      return checker.getContextualType?.(parent, 0);
+    case Kind.EqualsToken:
+      if (parent.kind === Kind.VariableDeclaration) return checker.getContextualType?.(nodeProperty<Node>(parent, "initializer") ?? parent, 0);
+      if (parent.kind === Kind.BinaryExpression) return checker.getTypeAtLocation?.(nodeProperty<Node>(parent, "left") ?? parent);
+      if (parent.kind === Kind.JsxAttribute) return checker.getContextualTypeForJsxAttribute?.(parent);
+      return undefined;
+    case Kind.NewKeyword:
+      return checker.getContextualType?.(parent, 0);
+    case Kind.CaseKeyword:
+      return parent.kind === Kind.CaseClause ? getSwitchedType(parent, checker) : undefined;
+    case Kind.OpenBraceToken:
+      return parent.kind === Kind.JsxExpression
+        ? checker.getContextualTypeForJsxAttribute?.(parent.parent ?? parent)
+        : undefined;
+    case Kind.OpenBracketToken:
+    case Kind.CommaToken:
+      return parent.kind === Kind.ArrayLiteralExpression ? checker.getContextualType?.(parent, 0) : undefined;
+    case Kind.CloseBracketToken:
+      return undefined;
+    case Kind.QuestionToken:
+    case Kind.ColonToken:
+      return parent.kind === Kind.ConditionalExpression
+        ? getContextualTypeForConditionalExpression(parent, position, file, checker)
+        : undefined;
+    default:
+      break;
+  }
+  const argumentInfo = getArgumentInfoForCompletionContext(previousToken, position, file);
+  if (argumentInfo !== undefined) {
+    return checker.getContextualTypeForArgumentAtIndex?.(argumentInfo.invocation, argumentInfo.argumentIndex);
+  }
+  if (isEqualityOperatorKind(previousToken.kind) && parent.kind === Kind.BinaryExpression) {
+    return checker.getTypeAtLocation?.(nodeProperty<Node>(parent, "left") ?? parent);
+  }
+  return checker.getContextualType?.(previousToken, 1) ?? checker.getContextualType?.(previousToken, 0);
+}
+
+export function getSwitchedType(caseClause: Node, checker: ContextualCompletionChecker): CompletionTypeLike | undefined {
+  const caseBlock = caseClause.parent;
+  const switchStatement = caseBlock?.parent;
+  const expression = nodeProperty<Node>(switchStatement, "expression");
+  return expression === undefined ? undefined : checker.getTypeAtLocation?.(expression);
+}
+
+export function isLiteral(type: CompletionTypeLike): boolean {
+  return type.isStringLiteral?.() === true || type.isNumberLiteral?.() === true || type.isBigIntLiteral?.() === true;
+}
+
+export function getRecommendedCompletion(
+  previousToken: Node,
+  contextualType: CompletionTypeLike,
+  checker: CompletionChecker,
+): CompletionSymbol | undefined {
+  const types = contextualType.isUnion?.() === true ? contextualType.types?.() ?? [] : [contextualType];
+  for (const type of types) {
+    const symbol = type.symbol?.();
+    if (symbol === undefined) continue;
+    const flags = symbol.flags ?? 0;
+    if ((flags & (SymbolFlags.EnumMember | SymbolFlags.Enum | SymbolFlags.Class)) !== 0 && !isAbstractConstructorSymbol(symbol)) {
+      return getFirstSymbolInChain(symbol, previousToken, checker);
+    }
+  }
+  return undefined;
+}
+
+export function getClosestSymbolDeclaration(contextToken: Node | undefined, location: Node | undefined): Node | undefined {
+  return closestDeclarationInInitializer(contextToken) ?? closestDeclarationInInitializer(location);
+}
+
+export function isArrowFunctionBody(node: Node): boolean {
+  const parent = node.parent;
+  return parent?.kind === Kind.ArrowFunction && (nodeProperty<Node>(parent, "body") === node || node.kind === Kind.EqualsGreaterThanToken);
+}
+
+export function isInTypeParameterDefault(contextToken: Node | undefined): boolean {
+  let node = contextToken;
+  for (let parent = contextToken?.parent; parent !== undefined; parent = parent.parent) {
+    if (parent.kind === Kind.TypeParameter) {
+      return nodeProperty<Node>(parent, "defaultType") === node
+        || nodeProperty<Node>(parent, "default") === node
+        || node?.kind === Kind.EqualsToken;
+    }
+    node = parent;
+  }
+  return false;
+}
+
+export function isDeprecated(symbol: CompletionSymbol, checker: ContextualCompletionChecker): boolean {
+  return symbol.declarations.length > 0
+    && symbol.declarations.every(declaration => checker.isDeprecatedDeclaration?.(declaration) === true);
+}
+
+export function isNamedImportsOrExports(node: Node | undefined): boolean {
+  return node?.kind === Kind.NamedImports || node?.kind === Kind.NamedExports;
+}
+
 function isIdentifierText(text: string, variant: LanguageVariant): boolean {
   if (text.length === 0) return false;
   const first = text.codePointAt(0);
@@ -2062,6 +2199,35 @@ function nodeName(node: Node | undefined): Node | undefined {
 function nodeProperty<T>(node: Node | undefined, propertyName: string): T | undefined {
   if (node === undefined) return undefined;
   return (node as unknown as Record<string, T | undefined>)[propertyName];
+}
+
+interface ArgumentInfoForCompletionContext {
+  readonly invocation: Node;
+  readonly argumentIndex: number;
+}
+
+function getArgumentInfoForCompletionContext(node: Node, position: number, _file: SourceFile): ArgumentInfoForCompletionContext | undefined {
+  for (let current: Node | undefined = node; current !== undefined; current = current.parent) {
+    const argumentsList = nodeArray(current, "arguments");
+    if (argumentsList.length === 0) continue;
+    const first = argumentsList[0];
+    const last = argumentsList[argumentsList.length - 1];
+    if (first === undefined || last === undefined || position < first.pos || position > Math.max(last.end, current.end)) continue;
+    const index = argumentsList.findIndex(argument => argument.pos <= position && position <= argument.end);
+    if (index >= 0) return { invocation: current, argumentIndex: index };
+    return { invocation: current, argumentIndex: argumentsList.length };
+  }
+  return undefined;
+}
+
+function closestDeclarationInInitializer(node: Node | undefined): Node | undefined {
+  for (let current = node; current !== undefined; current = current.parent) {
+    if (current.kind === Kind.Block || isArrowFunctionBody(current) || current.kind === Kind.ObjectBindingPattern || current.kind === Kind.ArrayBindingPattern) {
+      return undefined;
+    }
+    if (current.kind === Kind.Parameter || current.kind === Kind.TypeParameter || current.kind === Kind.VariableDeclaration) return current;
+  }
+  return undefined;
 }
 
 function nodeTextOf(node: Node | undefined): string {
