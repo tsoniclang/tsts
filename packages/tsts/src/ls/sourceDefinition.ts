@@ -13,7 +13,10 @@ import {
   isFunctionDeclaration,
   isGetAccessorDeclaration,
   isIdentifier,
+  isImportCall,
   isImportClause,
+  isImportDeclaration,
+  isImportEqualsDeclaration,
   isImportSpecifier,
   isMethodDeclaration,
   isMethodSignatureDeclaration,
@@ -26,6 +29,7 @@ import {
   isPropertySignatureDeclaration,
   isSetAccessorDeclaration,
   isShorthandPropertyAssignment,
+  isStringLiteralLike,
   isTypeParameterDeclaration,
   Kind,
   type Node,
@@ -34,6 +38,9 @@ import {
 import { getTouchingPropertyName } from "../astnav/index.js";
 import { ModifierFlags } from "../enums/index.js";
 import { getTextOfNode } from "../scanner/utilities.js";
+import { getPackageNameFromTypesPackageName, unmangleScopedPackageName } from "../module/index.js";
+import { getNodeModulePathParts } from "../modulespecifiers/index.js";
+import { changeExtension, isDeclarationFileName, removeFileExtension } from "../tspath/index.js";
 
 export function isDefaultImportName(node: Node): boolean {
   const parent = node.parent;
@@ -46,6 +53,172 @@ export function getSourceDefinitionEntryNode(sourceFile: SourceFile): Node {
 
 export function getSourceDefinitionEntryDeclarations(sourceFile: SourceFile): readonly Node[] {
   return [getSourceDefinitionEntryNode(sourceFile)];
+}
+
+export interface SourceDefinitionProgram {
+  getSourceFile(fileName: string): SourceFile | undefined;
+  readFile?(fileName: string): string | undefined;
+  fileExists?(fileName: string): boolean;
+}
+
+export interface SourceDefinitionResolverHost {
+  readonly program: SourceDefinitionProgram;
+  readonly resolveFrom: string;
+  tryGetSourcePosition?(fileName: string, position: number): { readonly fileName: string; readonly pos: number } | undefined;
+  resolveModuleName?(moduleName: string, resolveFromFile: string, preferredMode: ResolutionMode): string | undefined;
+  parseSourceFile?(fileName: string, text: string): SourceFile;
+  inferImpliedNodeFormat?(fileName: string): ResolutionMode;
+}
+
+export type ResolutionMode = "esnext" | "commonjs" | "preserve";
+
+export class SourceDefResolver {
+  readonly host: SourceDefinitionResolverHost;
+  readonly parsedFiles = new Map<string, SourceFile | undefined>();
+
+  constructor(host: SourceDefinitionResolverHost) {
+    this.host = host;
+  }
+
+  resolveFromCheckerInfo(
+    node: Node,
+    resolvedImplFile: string,
+    checkerDeclarations: readonly Node[],
+    moduleSpecifier: string,
+  ): readonly Node[] {
+    let implementationFile = resolvedImplFile;
+    if (implementationFile === "" && moduleSpecifier !== "") {
+      implementationFile = this.resolveImplementation(moduleSpecifier, this.inferImpliedNodeFormat(this.host.resolveFrom));
+    }
+    if (checkerDeclarations.length === 0 && implementationFile !== "") {
+      const results = this.searchImplementationFile(node, implementationFile, getCandidateSourceDeclarationNames(node, undefined));
+      if (results.length !== 0) return uniqueDeclarationNodes(results);
+    }
+    const declarations = uniqueDeclarationNodes(checkerDeclarations.flatMap(declaration => this.mapDeclarationToSource(node, declaration, implementationFile)));
+    return hasConcreteSourceDeclarations(declarations) ? declarations : [];
+  }
+
+  resolveTripleSlashReference(
+    file: SourceFile,
+    position: number,
+    getReferenceAtPosition: (file: SourceFile, position: number) => readonly [SourceFile, Node] | undefined,
+  ): readonly [readonly Node[], Node] | undefined {
+    const resolvedReference = getReferenceAtPosition(file, position);
+    if (resolvedReference === undefined) return undefined;
+    const [referencedFile, reference] = resolvedReference;
+    if (!referencedFile.isDeclarationFile) return [getSourceDefinitionEntryDeclarations(referencedFile), reference];
+    const implementationFile = this.findImplementationFileFromDtsFileName(referencedFile.fileName, this.inferImpliedNodeFormat(referencedFile.fileName));
+    if (implementationFile === "") return undefined;
+    const sourceFile = this.getOrParseSourceFile(implementationFile);
+    return sourceFile === undefined ? undefined : [getSourceDefinitionEntryDeclarations(sourceFile), reference];
+  }
+
+  searchImplementationFile(originalNode: Node, implementationFile: string, names: readonly string[]): readonly Node[] {
+    if (implementationFile === "" || names.length === 0) return [];
+    const sourceFile = this.getOrParseSourceFile(implementationFile);
+    if (sourceFile === undefined) return [];
+    if (isDefaultImportName(originalNode)) {
+      const defaultDeclarations = this.findDeclarationsInFile(implementationFile, ["default"], new Set<string>());
+      return defaultDeclarations.length !== 0 ? filterPreferredSourceDeclarations(originalNode, defaultDeclarations) : getSourceDefinitionEntryDeclarations(sourceFile);
+    }
+    const declarations = this.findDeclarationsInFile(implementationFile, names, new Set<string>());
+    return declarations.length === 0 ? [] : filterPreferredSourceDeclarations(originalNode, declarations);
+  }
+
+  mapDeclarationToSource(originalNode: Node, declaration: Node, resolvedImplFile: string): readonly Node[] {
+    const [file, startPos] = getFileAndStartPosFromDeclarationLocal(declaration);
+    const mapped = this.host.tryGetSourcePosition?.(file.fileName, startPos);
+    if (mapped !== undefined) {
+      const sourceFile = this.getOrParseSourceFile(mapped.fileName);
+      if (sourceFile !== undefined) return [findClosestDeclarationNode(sourceFile, mapped.pos)];
+    }
+    if (!isDeclarationFileName(file.fileName)) return [declaration];
+    const implementationFile = resolvedImplFile === ""
+      ? this.findImplementationFileFromDtsFileName(file.fileName, this.inferImpliedNodeFormat(file.fileName))
+      : resolvedImplFile;
+    return this.searchImplementationFile(originalNode, implementationFile, getCandidateSourceDeclarationNames(originalNode, declaration));
+  }
+
+  findImplementationFileFromDtsFileName(dtsFileName: string, preferredMode: ResolutionMode): string {
+    for (const jsExt of [".js", ".jsx", ".mjs", ".cjs"]) {
+      const candidate = changeExtension(dtsFileName, jsExt);
+      if (this.host.program.fileExists?.(candidate) === true) return candidate;
+    }
+    const parts = getNodeModulePathParts(dtsFileName);
+    if (parts === undefined) return "";
+    if (dtsFileName.lastIndexOf("/node_modules/") !== parts.topLevelNodeModulesIndex) return "";
+    const packageNamePathPart = dtsFileName.slice(parts.topLevelPackageNameIndex + 1, parts.packageRootIndex);
+    const packageName = getPackageNameFromTypesPackageName(unmangleScopedPackageName(packageNamePathPart));
+    if (packageName === "") return "";
+    const pathToFileInPackage = dtsFileName.slice(parts.packageRootIndex + 1);
+    if (pathToFileInPackage !== "") {
+      const specifier = `${packageName}/${removeFileExtension(pathToFileInPackage)}`;
+      const implementationFile = this.resolveImplementation(specifier, preferredMode);
+      if (implementationFile !== "") return implementationFile;
+    }
+    return this.resolveImplementation(packageName, preferredMode);
+  }
+
+  resolveImplementation(moduleName: string, preferredMode: ResolutionMode): string {
+    return this.resolveImplementationFrom(moduleName, this.host.resolveFrom, preferredMode);
+  }
+
+  resolveImplementationFrom(moduleName: string, resolveFromFile: string, preferredMode: ResolutionMode): string {
+    const modes: ResolutionMode[] = [preferredMode];
+    if (preferredMode !== "esnext") modes.push("esnext");
+    if (preferredMode !== "commonjs") modes.push("commonjs");
+    for (const mode of modes) {
+      const resolved = this.host.resolveModuleName?.(moduleName, resolveFromFile, mode);
+      if (resolved !== undefined && resolved !== "" && !isDeclarationFileName(resolved)) return resolved;
+    }
+    return "";
+  }
+
+  getOrParseSourceFile(fileName: string): SourceFile | undefined {
+    const existing = this.host.program.getSourceFile(fileName);
+    if (existing !== undefined) return existing;
+    if (this.parsedFiles.has(fileName)) return this.parsedFiles.get(fileName);
+    const text = this.host.program.readFile?.(fileName);
+    const sourceFile = text === undefined ? undefined : this.host.parseSourceFile?.(fileName, text);
+    this.parsedFiles.set(fileName, sourceFile);
+    return sourceFile;
+  }
+
+  inferImpliedNodeFormat(fileName: string): ResolutionMode {
+    return this.host.inferImpliedNodeFormat?.(fileName) ?? (fileName.endsWith(".cts") || fileName.endsWith(".cjs") ? "commonjs" : "esnext");
+  }
+
+  findDeclarationsInFile(fileName: string, names: readonly string[], seen: Set<string>): readonly Node[] {
+    if (fileName === "" || names.length === 0 || seen.has(fileName)) return [];
+    seen.add(fileName);
+    const sourceFile = this.getOrParseSourceFile(fileName);
+    if (sourceFile === undefined) return [];
+    const declarations = findDeclarationNodesByName(sourceFile, names);
+    if (declarations.length !== 0 && hasConcreteSourceDeclarations(declarations)) return declarations;
+    const forwarded = this.getForwardedImplementationFiles(sourceFile).flatMap(forwardedFile => this.findDeclarationsInFile(forwardedFile, names, seen));
+    if (forwarded.length === 0) return declarations;
+    return uniqueDeclarationNodes(hasConcreteSourceDeclarations(forwarded) ? forwarded : [...declarations, ...forwarded]);
+  }
+
+  getForwardedImplementationFiles(sourceFile: SourceFile): readonly string[] {
+    const preferredMode = this.inferImpliedNodeFormat(sourceFile.fileName);
+    const files = sourceFile.imports
+      .map(imp => getExternalModuleNameText(imp))
+      .filter((moduleName): moduleName is string => moduleName !== undefined)
+      .map(moduleName => this.resolveImplementationFrom(moduleName, sourceFile.fileName, preferredMode))
+      .filter(fileName => fileName !== "");
+    return [...new Set(files)];
+  }
+}
+
+export function findContainingModuleSpecifier(node: Node): Node | undefined {
+  for (let current: Node | undefined = node; current !== undefined; current = current.parent) {
+    if (isAnyImportOrReExport(current) || isRequireCallLike(current) || isImportCall(current)) {
+      const moduleSpecifier = getExternalModuleName(current);
+      if (moduleSpecifier !== undefined && isStringLiteralLike(moduleSpecifier)) return moduleSpecifier;
+    }
+  }
+  return undefined;
 }
 
 export function getCandidateSourceDeclarationNames(originalNode: Node | undefined, declaration: Node | undefined): readonly string[] {
@@ -229,6 +402,45 @@ function accessExpressionName(node: Node): Node | undefined {
 function hasJavaScriptAssignmentDeclarationKind(node: Node): boolean {
   return (node as { readonly jsDeclarationKind?: number }).jsDeclarationKind !== undefined
     && (node as { readonly jsDeclarationKind?: number }).jsDeclarationKind !== 0;
+}
+
+function getFileAndStartPosFromDeclarationLocal(declaration: Node): readonly [SourceFile, number] {
+  const file = declaration.getSourceFile();
+  const name = getNameOfDeclaration(declaration) ?? declaration;
+  return [file, name.pos];
+}
+
+function getExternalModuleNameText(node: Node): string | undefined {
+  const moduleName = getExternalModuleName(node);
+  return moduleName === undefined ? undefined : getTextOfPropertyName(moduleName);
+}
+
+function getExternalModuleName(node: Node): Node | undefined {
+  switch (node.kind) {
+    case Kind.ImportDeclaration:
+    case Kind.ExportDeclaration:
+    case Kind.JSImportDeclaration:
+      return (node as { readonly moduleSpecifier?: Node }).moduleSpecifier;
+    case Kind.ExternalModuleReference:
+      return (node as { readonly expression?: Node }).expression;
+    case Kind.CallExpression: {
+      const args = (node as { readonly arguments?: readonly Node[] }).arguments ?? [];
+      return args[0];
+    }
+    default:
+      return undefined;
+  }
+}
+
+function isAnyImportOrReExport(node: Node): boolean {
+  return isImportDeclaration(node) || node.kind === Kind.JSImportDeclaration || node.kind === Kind.ExportDeclaration || isImportEqualsDeclaration(node);
+}
+
+function isRequireCallLike(node: Node): boolean {
+  if (!isCallExpression(node)) return false;
+  const expression = (node as { readonly expression?: Node }).expression;
+  const args = (node as { readonly arguments?: readonly Node[] }).arguments ?? [];
+  return expression !== undefined && isIdentifier(expression) && expression.text === "require" && args.length > 0 && isStringLiteralLike(args[0]);
 }
 
 // Language-service parity map: internal/ls/sourcedefinition.go
