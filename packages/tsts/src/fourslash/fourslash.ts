@@ -9,6 +9,7 @@
 
 import { TextRange } from "../core/index.js";
 import {
+  DiagnosticSeverityHint,
   DiagnosticTagDeprecated,
   DiagnosticTagUnnecessary,
   FoldingRangeKindComment,
@@ -222,6 +223,7 @@ export interface FourslashLanguageProvider {
   getImportFixes?(request: FourslashLanguageRequest, diagnostics: readonly Diagnostic[]): readonly CodeAction[];
   getReferences?(request: FourslashLanguageRequest, includeDeclaration: boolean): readonly Location[];
   getDefinition?(request: FourslashLanguageRequest): readonly Location[];
+  getImplementation?(request: FourslashLanguageRequest): readonly Location[];
   getTypeDefinition?(request: FourslashLanguageRequest): readonly Location[];
   getSourceDefinition?(request: FourslashLanguageRequest): readonly Location[];
   getWorkspaceSymbols?(query: string): readonly SymbolInformation[];
@@ -1082,6 +1084,10 @@ export class FourslashTest {
     this.verifyBaselineDefinitionWorker("goToDefinition", "/*GOTO DEF*/", provider => provider.getDefinition, includeOriginalSelectionRange, markers);
   }
 
+  verifyBaselineGoToImplementation(...markers: readonly string[]): void {
+    this.verifyBaselineDefinitionWorker("goToImplementation", "/*GOTO IMPL*/", provider => provider.getImplementation, false, markers);
+  }
+
   verifyBaselineGoToTypeDefinition(...markers: readonly string[]): void {
     this.verifyBaselineDefinitionWorker("goToTypeDefinition", "/*GOTO TYPE*/", provider => provider.getTypeDefinition, false, markers);
   }
@@ -1218,6 +1224,28 @@ export class FourslashTest {
     this.baseline({ name: "signatureHelp", arguments: [] }, rows.join("\n\n"));
   }
 
+  verifyJsxClosingTag(markersToNewText: Readonly<Record<string, string | undefined>>): void {
+    const provider = this.languageProviderRequired("JSX closing tag");
+    for (const [markerName, expected] of Object.entries(markersToNewText)) {
+      this.goToMarker(markerName);
+      const actual = provider.getJsxClosingTag?.(this.languageRequest());
+      if (actual !== expected) {
+        fail(`JSX closing tag mismatch at ${markerName}: actual=${JSON.stringify(actual)} expected=${JSON.stringify(expected)}`);
+      }
+    }
+  }
+
+  verifyBaselineClosingTags(): void {
+    const provider = this.languageProviderRequired("JSX closing tag");
+    const rows = this.markers()
+      .filter(marker => marker.getName() !== undefined)
+      .map(marker => {
+        const tag = provider.getJsxClosingTag?.(this.languageRequestAt(marker.fileName(), marker.lsPos()));
+        return `${marker.getName() ?? ""}: ${tag ?? "<none>"}`;
+      });
+    this.baseline({ name: "closingTags", arguments: [] }, rows.join("\n"));
+  }
+
   verifySignatureHelp(expected: VerifySignatureHelpOptions): void {
     const help = this.getSignatureHelpAtCurrentPosition();
     if (help === undefined) fail("Expected signature help but got none.");
@@ -1330,7 +1358,63 @@ export class FourslashTest {
   }
 
   verifyNoErrors(): void {
-    this.verifyNumberOfErrorsInCurrentFile(0);
+    const errors = [...this.openFiles].flatMap(fileName => this.getDiagnostics(fileName).filter(diagnostic => !isSuggestionDiagnostic(diagnostic)));
+    if (errors.length !== 0) fail(`Expected no errors but found ${errors.length}: ${errors.map(formatDiagnostic).join("; ")}`);
+  }
+
+  verifyErrorExistsAtRange(rangeMarker: RangeMarker, code: number, message = ""): void {
+    const diagnostics = this.getDiagnostics(rangeMarker.fileName());
+    for (const diagnostic of diagnostics) {
+      if (diagnosticCode(diagnostic) !== code) continue;
+      if (!rangesEqual(diagnostic.range, rangeMarker.lsRange)) continue;
+      if (message !== "" && diagnostic.message !== message) {
+        fail(`Error at range has code ${code} but message mismatch. Expected: ${JSON.stringify(message)}, Got: ${JSON.stringify(diagnostic.message)}`);
+      }
+      return;
+    }
+    fail(`Expected error with code ${code} at range ${formatRange(rangeMarker.lsRange)} but it was not found`);
+  }
+
+  verifyErrorExistsBetweenMarkers(startMarkerName: string, endMarkerName: string): void {
+    const startMarker = this.marker(startMarkerName);
+    const endMarker = this.marker(endMarkerName);
+    if (startMarker.fileName() !== endMarker.fileName()) {
+      fail(`Markers '${startMarkerName}' and '${endMarkerName}' are in different files`);
+    }
+    const start = startMarker.position;
+    const end = endMarker.position;
+    const script = this.getScriptInfo(startMarker.fileName());
+    for (const diagnostic of this.getDiagnostics(startMarker.fileName())) {
+      if (isSuggestionDiagnostic(diagnostic)) continue;
+      const diagnosticStart = offsetFromPosition(script, diagnostic.range.start);
+      const diagnosticEnd = offsetFromPosition(script, diagnostic.range.end);
+      if (diagnosticStart >= start && diagnosticEnd <= end) return;
+    }
+    fail(`Expected error between markers '${startMarkerName}' and '${endMarkerName}' but none was found`);
+  }
+
+  verifyErrorExistsAfterMarker(markerName = ""): void {
+    const [fileName, markerPosition] = markerName === ""
+      ? [this.activeFilename, offsetFromPosition(this.getScriptInfo(this.activeFilename), this.currentCaretPosition)] as const
+      : [this.marker(markerName).fileName(), this.marker(markerName).position] as const;
+    const script = this.getScriptInfo(fileName);
+    for (const diagnostic of this.getDiagnostics(fileName)) {
+      if (isSuggestionDiagnostic(diagnostic)) continue;
+      if (offsetFromPosition(script, diagnostic.range.start) >= markerPosition) return;
+    }
+    fail(`Expected error after marker '${markerName}' but none was found`);
+  }
+
+  verifyErrorExistsBeforeMarker(markerName = ""): void {
+    const [fileName, markerPosition] = markerName === ""
+      ? [this.activeFilename, offsetFromPosition(this.getScriptInfo(this.activeFilename), this.currentCaretPosition)] as const
+      : [this.marker(markerName).fileName(), this.marker(markerName).position] as const;
+    const script = this.getScriptInfo(fileName);
+    for (const diagnostic of this.getDiagnostics(fileName)) {
+      if (isSuggestionDiagnostic(diagnostic)) continue;
+      if (offsetFromPosition(script, diagnostic.range.end) <= markerPosition) return;
+    }
+    fail(`Expected error before marker '${markerName}' but none was found`);
   }
 
   verifyQuickInfoAt(marker: string, expectedText: string, expectedDocumentation = ""): void {
@@ -2301,6 +2385,10 @@ function comparePositions(left: Position, right: Position): number {
   return left.line - right.line || left.character - right.character;
 }
 
+function rangesEqual(left: Range, right: Range): boolean {
+  return comparePositions(left.start, right.start) === 0 && comparePositions(left.end, right.end) === 0;
+}
+
 function formatPosition(position: Position): string {
   return `${position.line + 1}:${position.character + 1}`;
 }
@@ -2568,6 +2656,22 @@ function formatSelectionRangeChain(range: SelectionRange): string {
 function formatDiagnostic(diagnostic: Diagnostic): string {
   const code = diagnostic.code === undefined ? "" : ` TS${stableStringify(diagnostic.code)}`;
   return `${formatRange(diagnostic.range)}${code}: ${diagnostic.message}`;
+}
+
+function diagnosticCode(diagnostic: Diagnostic): number | undefined {
+  const code = diagnostic.code;
+  if (code === undefined) return undefined;
+  if (typeof code === "number") return code;
+  if (typeof code.integer === "number") return code.integer;
+  if (typeof code.string === "string") {
+    const parsed = Number(code.string);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function isSuggestionDiagnostic(diagnostic: Diagnostic): boolean {
+  return diagnostic.severity === DiagnosticSeverityHint;
 }
 
 function formatDocumentSymbols(symbols: readonly DocumentSymbol[] | readonly SymbolInformation[]): string {
