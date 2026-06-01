@@ -1,3 +1,4 @@
+// Language-service parity map: internal/ls/lsutil/organizeimports.go
 /**
  * Language-service parity map for TS-Go `ls/lsutil/organizeimports.go`.
  *

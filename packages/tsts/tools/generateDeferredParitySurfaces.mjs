@@ -350,6 +350,17 @@ function parityMapFile(upstreamPath, localPath, heading) {
   return `${lines.join("\n")}\n`;
 }
 
+function implementationPrefix(text) {
+  const withoutBlockComments = text.replace(/\/\*[\s\S]*?\*\//gu, "");
+  const hasCode = withoutBlockComments
+    .split("\n")
+    .some((line) => {
+      const trimmed = line.trim();
+      return trimmed !== "" && !trimmed.startsWith("//");
+    });
+  return hasCode ? text.trimEnd() : "";
+}
+
 function generateLsMaps() {
   const lsRoot = join(tsgoInternal, "ls");
   const localRoot = join(tstsSrc, "ls");
@@ -371,7 +382,18 @@ function generateLsMaps() {
     const stem = parts.pop().replace(/\.go$/u, "");
     const local = join(localRoot, ...parts, `${camelFileStem(stem)}.ts`);
     mkdirSync(dirname(local), { recursive: true });
-    writeFileSync(local, parityMapFile(join(lsRoot, file), local, "Language-service parity map"));
+    const marker = `// Language-service parity map: internal/ls/${file}`;
+    const current = readFileSync(local, "utf8");
+    const existingMarker = current.indexOf(marker);
+    const sourceLineMarker = current.indexOf("\nexport interface UpstreamSourceLine");
+    const prefix = existingMarker >= 0
+      ? implementationPrefix(current.slice(0, existingMarker))
+      : sourceLineMarker >= 0
+        ? implementationPrefix(current.slice(0, sourceLineMarker))
+        : implementationPrefix(current);
+    const map = parityMapFile(join(lsRoot, file), local, "Language-service parity map")
+      .replace("/**", marker + "\n/**");
+    writeFileSync(local, prefix === "" ? map : `${prefix}\n\n${map}`);
   }
 }
 

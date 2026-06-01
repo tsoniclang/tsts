@@ -1,3 +1,4 @@
+// Language-service parity map: internal/ls/autoimport/fix.go
 /**
  * Language-service parity map for TS-Go `ls/autoimport/fix.go`.
  *

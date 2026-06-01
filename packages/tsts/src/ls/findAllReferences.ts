@@ -1,3 +1,4 @@
+// Language-service parity map: internal/ls/findallreferences.go
 /**
  * Language-service parity map for TS-Go `ls/findallreferences.go`.
  *

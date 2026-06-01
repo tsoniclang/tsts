@@ -1,3 +1,4 @@
+// Language-service parity map: internal/ls/autoimport/import_adder.go
 /**
  * Language-service parity map for TS-Go `ls/autoimport/import_adder.go`.
  *

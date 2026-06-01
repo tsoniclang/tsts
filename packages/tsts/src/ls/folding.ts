@@ -122,6 +122,15 @@ function trimLeftUnicodeSpace(text: string): string {
   return text.replace(/^\s+/u, "");
 }
 
+// Language-service parity map: internal/ls/folding.go
+/**
+ * Language-service parity map for TS-Go `ls/folding.go`.
+ *
+ * This file preserves the upstream declaration and algorithm-line shape
+ * for the TypeScript port. Runtime behavior is implemented by the
+ * concrete modules that consume these exact parity maps.
+ */
+
 export interface UpstreamSourceLine {
   readonly line: number;
   readonly text: string;

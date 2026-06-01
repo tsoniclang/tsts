@@ -1,3 +1,4 @@
+// Language-service parity map: internal/ls/inlay_hints.go
 /**
  * Language-service parity map for TS-Go `ls/inlay_hints.go`.
  *

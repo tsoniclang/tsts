@@ -1,3 +1,4 @@
+// Language-service parity map: internal/ls/callhierarchy.go
 /**
  * Language-service parity map for TS-Go `ls/callhierarchy.go`.
  *

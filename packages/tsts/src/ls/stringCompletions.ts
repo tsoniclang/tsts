@@ -1,3 +1,4 @@
+// Language-service parity map: internal/ls/string_completions.go
 /**
  * Language-service parity map for TS-Go `ls/string_completions.go`.
  *

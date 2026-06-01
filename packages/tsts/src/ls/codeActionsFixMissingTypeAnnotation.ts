@@ -1,3 +1,4 @@
+// Language-service parity map: internal/ls/codeactions_fixmissingtypeannotation.go
 /**
  * Language-service parity map for TS-Go `ls/codeactions_fixmissingtypeannotation.go`.
  *
