@@ -33,6 +33,7 @@ import "./json/json.test.js";
 import "./ls/diagnostics.test.js";
 import "./ls/lsconv/lineMap.test.js";
 import "./ls/lsutil/asi.test.js";
+import "./ls/lsutil/formatCodeOptions.test.js";
 
 // === Still disabled (TSTS source incompleteness; not tsonic blockers) ===
 

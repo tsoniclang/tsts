@@ -362,7 +362,7 @@ function generateLsMaps() {
     "crossproject.go", "definition.go", "displaypartswriter.go", "documenthighlights.go",
     "file_rename.go", "findallreferences.go", "folding.go", "format.go", "hover.go", "importTracker.go",
     "inlay_hints.go", "linkedediting.go",
-    "lsutil/completednode.go", "lsutil/formatcodeoptions.go", "lsutil/organizeimports.go",
+    "lsutil/completednode.go", "lsutil/organizeimports.go",
     "lsutil/symbol_display.go", "lsutil/utilities.go", "organizeimports.go", "rename.go",
     "selectionranges.go", "semantictokens.go", "signaturehelp.go", "source_map.go", "sourcedefinition.go",
     "string_completions.go", "symbols.go", "utilities.go",
