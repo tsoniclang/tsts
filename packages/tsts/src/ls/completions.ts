@@ -1,14 +1,113 @@
-import type { SourceFile } from "../ast/index.js";
+import { Kind, type SourceFile } from "../ast/index.js";
 import { LanguageVariant } from "../core/languageVariant.js";
 import { isIdentifierPartCodePoint, isIdentifierStartCodePoint } from "../scanner/index.js";
 import { compareStringsCaseInsensitiveThenSensitive, ComparisonEqual } from "../stringutil/index.js";
-import type { CompletionItem, CompletionItemLabelDetails } from "../lsp/lsproto/index.js";
+import type { CompletionItem, CompletionItemData, CompletionItemLabelDetails, CompletionList, Range } from "../lsp/lsproto/index.js";
 
 /**
  * Completion constants and ordering helpers.
  *
  * Porting surface for TS-Go `internal/ls/completions.go`.
  */
+
+export const ErrNeedsAutoImports = new Error("completion list needs auto imports");
+
+export type CompletionData =
+  | CompletionDataData
+  | CompletionDataKeyword
+  | CompletionDataJSDocTagName
+  | CompletionDataJSDocTag
+  | CompletionDataJSDocParameterName;
+
+export interface CompletionDataData {
+  readonly symbols: readonly unknown[];
+  readonly autoImports: readonly unknown[];
+  readonly completionKind: CompletionKind;
+  readonly isInSnippetScope: boolean;
+  readonly propertyAccessToConvert?: unknown;
+  readonly isNewIdentifierLocation: boolean;
+  readonly location?: unknown;
+  readonly keywordFilters: KeywordCompletionFilters;
+  readonly literals: readonly LiteralValue[];
+  readonly symbolToOriginInfoMap: ReadonlyMap<number, SymbolOriginInfo>;
+  readonly symbolToSortTextMap: ReadonlyMap<number, SortText>;
+  readonly recommendedCompletion?: unknown;
+  readonly previousToken?: unknown;
+  readonly contextToken?: unknown;
+  readonly jsxInitializer: JsxInitializer;
+  readonly insideJSDocTagTypeExpression: boolean;
+  readonly isTypeOnlyLocation: boolean;
+  readonly isJsxIdentifierExpected: boolean;
+  readonly isRightOfOpenTag: boolean;
+  readonly isRightOfDotOrQuestionDot: boolean;
+  readonly importStatementCompletion?: ImportStatementCompletionInfo;
+  readonly hasUnresolvedAutoImports: boolean;
+  readonly defaultCommitCharacters: readonly string[];
+}
+
+export interface CompletionDataKeyword {
+  readonly keywordCompletions: readonly CompletionItem[];
+  readonly isNewIdentifierLocation: boolean;
+}
+
+export interface CompletionDataJSDocTagName {}
+
+export interface CompletionDataJSDocTag {}
+
+export interface CompletionDataJSDocParameterName {
+  readonly tag: unknown;
+}
+
+export interface ImportStatementCompletionInfo {
+  readonly isKeywordOnlyCompletion: boolean;
+  readonly keywordCompletion: Kind;
+  readonly isNewIdentifierLocation: boolean;
+  readonly isTopLevelTypeOnly: boolean;
+  readonly couldBeTypeOnlyImportSpecifier: boolean;
+  readonly replacementSpan?: Range;
+}
+
+export interface JsxInitializer {
+  readonly isInitializer: boolean;
+  readonly initializer?: unknown;
+}
+
+export enum KeywordCompletionFilters {
+  None = 0,
+  All = 1,
+  ClassElementKeywords = 2,
+  InterfaceElementKeywords = 3,
+  ConstructorParameterKeywords = 4,
+  FunctionLikeBodyKeywords = 5,
+  TypeAssertionKeywords = 6,
+  TypeKeywords = 7,
+  TypeKeyword = 8,
+}
+
+export const KeywordCompletionFiltersLast = KeywordCompletionFilters.TypeKeyword;
+
+export function keywordFiltersFromSyntaxKind(keywordCompletion: Kind): KeywordCompletionFilters {
+  switch (keywordCompletion) {
+    case Kind.TypeKeyword:
+      return KeywordCompletionFilters.TypeKeyword;
+    default:
+      throw new Error(`Unknown mapping from ast.Kind '${Kind[keywordCompletion] ?? keywordCompletion}' to KeywordCompletionFilters`);
+  }
+}
+
+export function ensureItemData(fileName: string, position: number, list: CompletionList | undefined): CompletionList | undefined {
+  if (list === undefined) return undefined;
+  return {
+    ...list,
+    items: list.items.map((item): CompletionItem => item.data === undefined
+      ? { ...item, data: completionItemData(fileName, position, item.label) }
+      : item),
+  };
+}
+
+function completionItemData(fileName: string, position: number, name: string): CompletionItemData {
+  return { fileName, position, name };
+}
 
 export enum CompletionKind {
   None = 0,
