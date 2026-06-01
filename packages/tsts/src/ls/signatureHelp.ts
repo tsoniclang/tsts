@@ -1,3 +1,120 @@
+import { Kind, type Identifier, type Node, type Symbol } from "../ast/index.js";
+import type { Signature, Type } from "../checker/types.js";
+import type { TextRange } from "../core/index.js";
+import type { ClassifiedTextRun, ParameterInformation } from "../lsp/lsproto/index.js";
+
+export interface CallInvocation {
+  readonly node: Node;
+}
+
+export interface TypeArgsInvocation {
+  readonly called: Identifier;
+}
+
+export interface ContextualInvocation {
+  readonly signature: Signature;
+  readonly node: Node;
+  readonly symbol: Symbol;
+}
+
+export interface Invocation {
+  readonly callInvocation?: CallInvocation;
+  readonly typeArgsInvocation?: TypeArgsInvocation;
+  readonly contextualInvocation?: ContextualInvocation;
+}
+
+export interface SignatureHelpInformation {
+  readonly label: string;
+  readonly documentation?: string;
+  readonly parameters: readonly SignatureHelpParameter[];
+  readonly isVariadic: boolean;
+  readonly colorizedRuns: readonly ClassifiedTextRun[];
+}
+
+export interface SignatureHelpItemInfo {
+  readonly isVariadic: boolean;
+  readonly parameters: readonly SignatureHelpParameter[];
+  readonly writer: unknown;
+}
+
+export interface SignatureHelpParameter {
+  readonly parameterInfo: ParameterInformation;
+  readonly isRest: boolean;
+  readonly isOptional: boolean;
+}
+
+export interface CandidateInfo {
+  readonly candidates: readonly Signature[];
+  readonly resolvedSignature?: Signature;
+}
+
+export interface CandidateOrTypeInfo {
+  readonly candidateInfo?: CandidateInfo;
+  readonly typeInfo?: Symbol;
+}
+
+export interface ArgumentListInfo {
+  readonly isTypeParameterList: boolean;
+  readonly invocation: Invocation;
+  readonly argumentsSpan: TextRange;
+  readonly argumentIndex: number;
+  readonly argumentCount: number;
+}
+
+export interface ContextualSignatureLocationInfo {
+  readonly contextualType: Type;
+  readonly argumentIndex: number;
+  readonly argumentCount: number;
+  readonly argumentsSpan: TextRange;
+}
+
+export interface ArgumentOrParameterListInfo {
+  readonly list: readonly Node[];
+  readonly argumentIndex: number;
+  readonly argumentCount: number;
+  readonly argumentsSpan: TextRange;
+}
+
+export interface ArgumentOrParameterListAndIndex {
+  readonly list: readonly Node[];
+  readonly argumentIndex: number;
+}
+
+export function ensureMinimumSpanSize(start: number, end: number): number {
+  if (end <= start) return start + 1;
+  return end;
+}
+
+export function getArgumentIndexOrCount(argumentsList: readonly Node[], node: Node | undefined, spreadElementCounter: (node: Node) => number): number {
+  let argumentIndex = 0;
+  let skipComma = false;
+  for (const argument of argumentsList) {
+    if (node !== undefined && argument === node) {
+      if (!skipComma && argument.kind === Kind.CommaToken) argumentIndex += 1;
+      return argumentIndex;
+    }
+    if (argument.kind === Kind.SpreadElement) {
+      argumentIndex += spreadElementCounter(argument);
+      skipComma = true;
+      continue;
+    }
+    if (argument.kind !== Kind.CommaToken) {
+      argumentIndex += 1;
+      skipComma = true;
+      continue;
+    }
+    if (skipComma) {
+      skipComma = false;
+      continue;
+    }
+    argumentIndex += 1;
+  }
+  if (node !== undefined) return argumentIndex;
+  return argumentsList.length > 0 && argumentsList[argumentsList.length - 1]!.kind === Kind.CommaToken
+    ? argumentIndex + 1
+    : argumentIndex;
+}
+
 // Language-service parity map: internal/ls/signaturehelp.go
 /**
  * Language-service parity map for TS-Go `ls/signaturehelp.go`.
