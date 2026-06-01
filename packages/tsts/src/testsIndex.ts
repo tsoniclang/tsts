@@ -38,6 +38,7 @@ import "./ls/lsconv/lineMap.test.js";
 import "./ls/lsutil/asi.test.js";
 import "./ls/lsutil/formatCodeOptions.test.js";
 import "./ls/lsutil/utilities.test.js";
+import "./ls/linkedEditing.test.js";
 import "./ls/sourceMap.test.js";
 
 // === Still disabled (TSTS source incompleteness; not tsonic blockers) ===
