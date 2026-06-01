@@ -309,6 +309,76 @@ export interface AutoImportRegistryCloneHost {
   resolveEntrypoints?(fileName: string): readonly unknown[];
 }
 
+export interface AutoImportProgramFile {
+  readonly path: Path;
+  readonly fileName: string;
+}
+
+export interface AutoImportRegistryProgram {
+  sourceFiles(): readonly AutoImportProgramFile[];
+  isSourceFileDefaultLibrary(path: Path): boolean;
+  isGlobalTypingsFile(fileName: string): boolean;
+}
+
+export interface KnownSymlinkMap {
+  readonly entries: ReadonlyMap<Path, readonly Path[]>;
+}
+
+export interface KnownSymlinks {
+  filesByRealpath?(): KnownSymlinkMap | undefined;
+  directoriesByRealpath?(): KnownSymlinkMap | undefined;
+}
+
+export interface FailedAmbientModuleLookupSource {
+  readonly fileName: string;
+  readonly packageName: string;
+}
+
+export interface BucketBuildResult {
+  readonly bucket?: AutoImportRegistryBucket;
+  readonly error?: Error;
+  readonly entrypoints?: ReadonlyMap<Path, readonly unknown[]>;
+  readonly removedEntrypointPaths?: readonly Path[];
+  readonly possibleFailedAmbientModuleLookupSources?: SyncMap<Path, FailedAmbientModuleLookupSource>;
+  readonly possibleFailedAmbientModuleLookupTargets?: SetCollection<string>;
+}
+
+export interface DiscoveredPackage {
+  readonly packageName: string;
+  readonly packageJson?: PackageJsonCacheEntry;
+  readonly realpath: string;
+  readonly typesPackageJson?: PackageJsonCacheEntry;
+  readonly typesRealpath: string;
+  readonly dirPath: Path;
+  readonly isLocal: boolean;
+}
+
+export interface PerPackageExtractionResult {
+  readonly packageFiles: ReadonlyMap<Path, string>;
+  readonly entrypoints: readonly unknown[];
+  readonly exports: ReadonlyMap<Path, readonly AutoImportExport[]>;
+  readonly ambientModules: ReadonlyMap<string, readonly string[]>;
+  readonly statsExports: number;
+  readonly statsUsedChecker: number;
+  readonly skippedEntrypoints: number;
+  readonly isSymlinked: boolean;
+  readonly failedAmbientModuleLookupSources: ReadonlyMap<Path, FailedAmbientModuleLookupSource>;
+  readonly failedAmbientModuleLookupTargets: SetCollection<string>;
+}
+
+export interface PackageExtractionResult {
+  readonly exports: ReadonlyMap<Path, readonly AutoImportExport[]>;
+  readonly packageFiles: ReadonlyMap<string, ReadonlyMap<Path, string>>;
+  readonly ambientModuleNames: ReadonlyMap<string, readonly string[]>;
+  readonly entrypoints: readonly (readonly unknown[])[];
+  readonly workspacePackages: SetCollection<string>;
+  readonly possibleFailedAmbientModuleLookupSources: SyncMap<Path, FailedAmbientModuleLookupSource>;
+  readonly possibleFailedAmbientModuleLookupTargets: SetCollection<string>;
+  readonly statsExports: number;
+  readonly statsUsedChecker: number;
+  readonly skippedEntrypointsCount: number;
+}
+
 export interface RegistryCloneLogger {
   log(message: string): void;
 }
@@ -477,6 +547,61 @@ class RegistryBuilder {
     this.uniquePackageCount = countUniquePackages(this.nodeModules);
   }
 
+  computeDependenciesForNodeModulesDirectory(
+    change: RegistryChange,
+    allResolvedPackageNames: ReadonlyMap<Path, SetCollection<string>>,
+    dirName: string,
+    dirPath: Path,
+  ): SetCollection<string> | undefined {
+    const openFiles = mapEntries(change.openFiles);
+    for (const path of openFiles.keys()) {
+      if (isPathUnderDirectory(path, dirPath) && this.getNearestAncestorDirectoryWithPackageJson(path) === undefined) {
+        return undefined;
+      }
+    }
+
+    const dependencies = new SetCollection<string>();
+    for (const [directoryPath, directory] of this.directories) {
+      if (directory.packageJson !== undefined && isPathUnderDirectory(directoryPath, dirPath)) {
+        addPackageJsonDependencies(directory.packageJson, dependencies);
+      }
+    }
+
+    for (const resolvedPackageNames of allResolvedPackageNames.values()) {
+      for (const name of resolvedPackageNames.keys()) dependencies.add(name);
+    }
+
+    void dirName;
+    return dependencies;
+  }
+
+  discoverBucketPackages(
+    packageNames: SetCollection<string>,
+    dirName: string,
+    dirPath: Path,
+  ): readonly DiscoveredPackage[] {
+    const result: DiscoveredPackage[] = [];
+    for (const packageName of packageNames.keys()) {
+      const typesPackageName = getTypesPackageName(packageName);
+      const packageJson = this.host.getPackageJson?.(`${dirName}/node_modules/${packageName}/package.json`);
+      const typesPackageJson = packageName === typesPackageName
+        ? undefined
+        : this.host.getPackageJson?.(`${dirName}/node_modules/${typesPackageName}/package.json`);
+      const realpath = packageJson?.fileName === undefined ? "" : getDirectoryPath(packageJson.fileName);
+      const typesRealpath = typesPackageJson?.fileName === undefined ? "" : getDirectoryPath(typesPackageJson.fileName);
+      result.push({
+        packageName,
+        ...(packageJson === undefined ? {} : { packageJson }),
+        realpath,
+        ...(typesPackageJson === undefined ? {} : { typesPackageJson }),
+        typesRealpath,
+        dirPath,
+        isLocal: realpath !== "" && !realpath.includes("/node_modules/"),
+      });
+    }
+    return result;
+  }
+
   private ensureDirectoryChain(path: Path, fileName: string): void {
     let directoryPath = getDirectoryPath(path);
     let directoryName = getDirectoryPath(fileName);
@@ -493,6 +618,14 @@ class RegistryBuilder {
 
   private ensureSpecifierCache(path: Path): void {
     if (!this.specifierCache.has(path)) this.specifierCache.set(path, new SyncMap<Path, string>());
+  }
+
+  private getNearestAncestorDirectoryWithPackageJson(filePath: Path): Directory | undefined {
+    for (let directoryPath = getDirectoryPath(filePath); directoryPath !== getDirectoryPath(directoryPath); directoryPath = getDirectoryPath(directoryPath)) {
+      const directory = this.directories.get(directoryPath);
+      if (directory?.packageJson !== undefined) return directory;
+    }
+    return undefined;
   }
 }
 
@@ -636,6 +769,33 @@ export class Registry {
   }
 }
 
+export function hasNewNonNodeModulesFiles(program: AutoImportRegistryProgram, bucket: AutoImportRegistryBucket): boolean {
+  if (bucket.state.newProgramStructure !== NewProgramStructureDifferentFileNames) return false;
+  for (const file of program.sourceFiles()) {
+    if (file.fileName.includes("/node_modules/") || isIgnoredFile(program, file)) continue;
+    if (!bucket.paths.has(file.path)) return true;
+  }
+  return false;
+}
+
+export function isIgnoredFile(program: AutoImportRegistryProgram, file: AutoImportProgramFile): boolean {
+  return program.isSourceFileDefaultLibrary(file.path) || program.isGlobalTypingsFile(file.fileName);
+}
+
+export function hasSymlinkToNodeModules(filePath: Path, symlinkCache: KnownSymlinks | undefined): boolean {
+  if (symlinkCache === undefined) return false;
+  const fileSymlinks = symlinkCache.filesByRealpath?.()?.entries.get(filePath);
+  if (fileSymlinks !== undefined && fileSymlinks.some(path => path.includes("/node_modules/"))) return true;
+
+  const directorySymlinks = symlinkCache.directoriesByRealpath?.()?.entries;
+  if (directorySymlinks === undefined) return false;
+  for (let directoryPath = filePath; directoryPath !== getDirectoryPath(directoryPath); directoryPath = getDirectoryPath(directoryPath)) {
+    const symlinkPaths = directorySymlinks.get(ensureTrailingDirectorySeparator(directoryPath));
+    if (symlinkPaths !== undefined && symlinkPaths.some(path => path.includes("/node_modules/"))) return true;
+  }
+  return false;
+}
+
 function cloneDirectoryMap(source: ReadonlyMap<Path, Directory>): Map<Path, Directory> {
   const result = new Map<Path, Directory>();
   for (const [path, directory] of source) result.set(path, cloneDirectory(directory));
@@ -674,6 +834,31 @@ function preferenceArray(preferences: UserPreferences, key: string): readonly st
 
 function isPathUnderDirectory(path: Path, directory: Path): boolean {
   return path === directory || path.startsWith(`${directory}/`);
+}
+
+function ensureTrailingDirectorySeparator(path: Path): Path {
+  return path.endsWith("/") ? path : `${path}/`;
+}
+
+function addPackageJsonDependencies(packageJson: PackageJsonCacheEntry, dependencies: SetCollection<string>): void {
+  const record = packageJson as unknown as Readonly<Record<string, unknown>>;
+  const contents = typeof record["contents"] === "object" && record["contents"] !== null
+    ? record["contents"] as Readonly<Record<string, unknown>>
+    : record;
+  for (const field of ["dependencies", "devDependencies", "optionalDependencies", "peerDependencies"]) {
+    const dependencyMap = contents[field];
+    if (dependencyMap === undefined || dependencyMap === null || typeof dependencyMap !== "object") continue;
+    for (const name of Object.keys(dependencyMap)) dependencies.add(name);
+  }
+  if (packageJson.packageName !== undefined && packageJson.packageName !== "") dependencies.add(packageJson.packageName);
+}
+
+function getTypesPackageName(packageName: string): string {
+  if (packageName.startsWith("@")) {
+    const [scope, name] = packageName.split("/");
+    if (scope !== undefined && name !== undefined) return `@types/${scope.slice(1)}__${name}`;
+  }
+  return `@types/${packageName}`;
 }
 
 function exportIndexFromExports(exports: readonly AutoImportExport[]): ExportIndex {
