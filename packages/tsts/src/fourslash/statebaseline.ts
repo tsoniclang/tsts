@@ -5,6 +5,7 @@
  */
 
 import type { FourslashTest } from "./fourslash.js";
+import { testDataStateBaseliningEnabled, type TestData } from "./testParser.js";
 
 export interface StateBaselineWriter {
   writeLine(text?: string): void;
@@ -20,8 +21,64 @@ export interface StateBaselineEntry {
   readonly openFiles: readonly string[];
 }
 
+export interface RequestOrMessage {
+  readonly method: string;
+  readonly params?: unknown;
+}
+
+export interface ProjectInfo {
+  readonly projectName?: string;
+  readonly currentDirectory?: string;
+  readonly rootFiles?: readonly string[];
+  readonly options?: Readonly<Record<string, unknown>>;
+}
+
+export interface OpenFileInfo {
+  readonly defaultProjectName: string;
+  readonly allProjects: readonly string[];
+}
+
+export interface ConfigFileRegistryInfo {
+  readonly configFiles?: Iterable<string>;
+  readonly configFileExistenceInfoCache?: Iterable<string>;
+}
+
+export interface StateBaselineSnapshot {
+  readonly projects?: ReadonlyMap<string, ProjectInfo> | Readonly<Record<string, ProjectInfo>>;
+  readonly openFiles?: ReadonlyMap<string, OpenFileInfo> | Readonly<Record<string, OpenFileInfo>>;
+  readonly configFileRegistry?: ConfigFileRegistryInfo;
+}
+
+export interface StateBaselineClient {
+  snapshot?(): StateBaselineSnapshot;
+  server?: {
+    session?: {
+      snapshot?(): StateBaselineSnapshot;
+    };
+  };
+}
+
+export interface StateBaselineHost {
+  readonly testData: TestData;
+  readonly stateBaseline: StateBaseline;
+  readonly client?: StateBaselineClient;
+}
+
 export class StateBaseline {
   private readonly entries: StateBaselineEntry[] = [];
+  private readonly baselineParts: string[] = [];
+  private readonly serializedProjects = new Map<string, ProjectInfo>();
+  private readonly serializedOpenFiles = new Map<string, OpenFileInfo>();
+  private serializedConfigFileRegistry: ConfigFileRegistryInfo | undefined;
+  isInitialized = false;
+
+  append(text: string): void {
+    this.baselineParts.push(text);
+  }
+
+  appendLine(text = ""): void {
+    this.baselineParts.push(`${text}\n`);
+  }
 
   record(label: string, state: FourslashTest): void {
     const entry: StateBaselineEntry = {
@@ -45,7 +102,36 @@ export class StateBaseline {
   }
 
   text(): string {
-    return this.entries.map(formatStateBaselineEntry).join("\n\n");
+    return [
+      this.baselineParts.join(""),
+      this.entries.map(formatStateBaselineEntry).join("\n\n"),
+    ].filter(part => part !== "").join("\n\n");
+  }
+
+  projectsSnapshot(): ReadonlyMap<string, ProjectInfo> {
+    return this.serializedProjects;
+  }
+
+  openFilesSnapshot(): ReadonlyMap<string, OpenFileInfo> {
+    return this.serializedOpenFiles;
+  }
+
+  configFileRegistrySnapshot(): ConfigFileRegistryInfo | undefined {
+    return this.serializedConfigFileRegistry;
+  }
+
+  replaceProjects(projects: ReadonlyMap<string, ProjectInfo>): void {
+    this.serializedProjects.clear();
+    for (const [name, project] of projects) this.serializedProjects.set(name, project);
+  }
+
+  replaceOpenFiles(openFiles: ReadonlyMap<string, OpenFileInfo>): void {
+    this.serializedOpenFiles.clear();
+    for (const [name, openFile] of openFiles) this.serializedOpenFiles.set(name, openFile);
+  }
+
+  replaceConfigFileRegistry(registry: ConfigFileRegistryInfo | undefined): void {
+    this.serializedConfigFileRegistry = registry;
   }
 }
 
@@ -63,6 +149,170 @@ export function formatStateBaselineEntry(entry: StateBaselineEntry): string {
     `caret=${entry.caretLine + 1}:${entry.caretCharacter + 1}${selection}`,
     `open=${entry.openFiles.join(", ")}`,
   ].join("\n");
+}
+
+export function baselineRequestOrNotification(
+  state: StateBaselineHost,
+  method: string,
+  params: unknown,
+): void {
+  if (!testDataStateBaseliningEnabled(state.testData)) return;
+  state.stateBaseline.appendLine();
+  state.stateBaseline.appendLine(JSON.stringify(requestOrMessage(method, params), undefined, 2));
+  state.stateBaseline.isInitialized = true;
+}
+
+export function baselineProjectsAfterNotification(
+  state: StateBaselineHost,
+  _fileName: string,
+): void {
+  if (!testDataStateBaseliningEnabled(state.testData)) return;
+  baselineState(state);
+}
+
+export function baselineState(state: StateBaselineHost): void {
+  if (!testDataStateBaseliningEnabled(state.testData)) return;
+  const serialized = serializedState(state);
+  if (serialized !== "") {
+    state.stateBaseline.appendLine();
+    state.stateBaseline.append(serialized);
+  }
+}
+
+export function serializedState(state: StateBaselineHost): string {
+  const writer = new StringBaselineWriter();
+  printStateDiff(state, writer);
+  return writer.text().trim() === "" ? "" : writer.text();
+}
+
+export function printStateDiff(state: StateBaselineHost, writer: StateBaselineWriter): void {
+  if (!state.stateBaseline.isInitialized) return;
+  const snapshot = getStateBaselineSnapshot(state);
+  printProjectsDiff(state, snapshot, writer);
+  printOpenFilesDiff(state, snapshot, writer);
+  printConfigFileRegistryDiff(state, snapshot, writer);
+}
+
+export function printProjectsDiff(
+  state: StateBaselineHost,
+  snapshot: StateBaselineSnapshot,
+  writer: StateBaselineWriter,
+): void {
+  const currentProjects = mapFromRecord(snapshot.projects);
+  const previousProjects = state.stateBaseline.projectsSnapshot();
+  const table = new DiffTableWriter("Projects");
+  for (const [projectName, project] of currentProjects) {
+    const previous = previousProjects.get(projectName);
+    if (JSON.stringify(project) !== JSON.stringify(previous)) {
+      table.setHasChange();
+      table.add(projectName, (out) => {
+        const diff = new DiffTable({ indent: "  ", sortKeys: true });
+        diff.add("project", project.projectName ?? projectName);
+        if (project.currentDirectory !== undefined) diff.add("currentDirectory", project.currentDirectory);
+        if (project.rootFiles !== undefined) diff.add("rootFiles", project.rootFiles.join(", "));
+        if (project.options !== undefined) diff.add("options", JSON.stringify(project.options));
+        diff.print(out, projectName);
+      });
+    }
+  }
+  for (const projectName of previousProjects.keys()) {
+    if (!currentProjects.has(projectName)) {
+      table.setHasChange();
+      table.add(projectName, (out) => out.writeLine(`  ${projectName} *deleted*`));
+    }
+  }
+  table.print(writer);
+  state.stateBaseline.replaceProjects(currentProjects);
+}
+
+export function printOpenFilesDiff(
+  state: StateBaselineHost,
+  snapshot: StateBaselineSnapshot,
+  writer: StateBaselineWriter,
+): void {
+  const currentOpenFiles = mapFromRecord(snapshot.openFiles);
+  const previousOpenFiles = state.stateBaseline.openFilesSnapshot();
+  const table = new DiffTableWriter("Open Files");
+  for (const [fileName, info] of currentOpenFiles) {
+    const previous = previousOpenFiles.get(fileName);
+    if (JSON.stringify(info) !== JSON.stringify(previous)) {
+      table.setHasChange();
+      table.add(fileName, (out) => {
+        const diff = new DiffTable({ indent: "  ", sortKeys: true });
+        diff.add("defaultProjectName", info.defaultProjectName);
+        diff.add("allProjects", info.allProjects.join(", "));
+        diff.print(out, fileName);
+      });
+    }
+  }
+  for (const fileName of previousOpenFiles.keys()) {
+    if (!currentOpenFiles.has(fileName)) {
+      table.setHasChange();
+      table.add(fileName, (out) => out.writeLine(`  ${fileName} *deleted*`));
+    }
+  }
+  table.print(writer);
+  state.stateBaseline.replaceOpenFiles(currentOpenFiles);
+}
+
+export function printConfigFileRegistryDiff(
+  state: StateBaselineHost,
+  snapshot: StateBaselineSnapshot,
+  writer: StateBaselineWriter,
+): void {
+  const currentRegistry = snapshot.configFileRegistry;
+  const previousRegistry = state.stateBaseline.configFileRegistrySnapshot();
+  if (JSON.stringify(configFileRegistryRecord(currentRegistry)) === JSON.stringify(configFileRegistryRecord(previousRegistry))) return;
+  const table = new DiffTable({ indent: "  ", sortKeys: true });
+  for (const path of currentRegistry?.configFiles ?? []) table.add(path, "");
+  for (const path of previousRegistry?.configFiles ?? []) {
+    if (!iterableIncludes(currentRegistry?.configFiles, path)) table.add(path, "*deleted*");
+  }
+  table.print(writer, "Config File Registry");
+  state.stateBaseline.replaceConfigFileRegistry(currentRegistry);
+}
+
+function requestOrMessage(method: string, params: unknown): RequestOrMessage {
+  return params === undefined ? { method } : { method, params };
+}
+
+function getStateBaselineSnapshot(state: StateBaselineHost): StateBaselineSnapshot {
+  return state.client?.snapshot?.()
+    ?? state.client?.server?.session?.snapshot?.()
+    ?? {};
+}
+
+function mapFromRecord<T>(value: ReadonlyMap<string, T> | Readonly<Record<string, T>> | undefined): Map<string, T> {
+  if (value === undefined) return new Map();
+  if (value instanceof Map) return new Map(value);
+  return new Map(Object.entries(value));
+}
+
+function configFileRegistryRecord(registry: ConfigFileRegistryInfo | undefined): Record<string, readonly string[]> {
+  return {
+    configFiles: [...(registry?.configFiles ?? [])].sort(),
+    configFileExistenceInfoCache: [...(registry?.configFileExistenceInfoCache ?? [])].sort(),
+  };
+}
+
+function iterableIncludes(sequence: Iterable<string> | undefined, value: string): boolean {
+  if (sequence === undefined) return false;
+  for (const entry of sequence) {
+    if (entry === value) return true;
+  }
+  return false;
+}
+
+class StringBaselineWriter implements StateBaselineWriter {
+  private readonly parts: string[] = [];
+
+  writeLine(text = ""): void {
+    this.parts.push(`${text}\n`);
+  }
+
+  text(): string {
+    return this.parts.join("");
+  }
 }
 
 export interface DiffTableOptions {
