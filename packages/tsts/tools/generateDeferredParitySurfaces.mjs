@@ -356,7 +356,7 @@ function generateLsMaps() {
   const files = [
     "autoimport/extract.go", "autoimport/fix.go", "autoimport/import_adder.go",
     "callhierarchy.go",
-    "codeactions_fixclassincorrectlyimplementsinterface.go", "codeactions_fixmissingtypeannotation.go",
+    "codeactions_fixmissingtypeannotation.go",
     "codeactions_importfixes.go", "codeactions_missingmemberfixer.go", "completions.go",
     "definition.go", "documenthighlights.go",
     "file_rename.go", "findallreferences.go", "folding.go", "hover.go", "importTracker.go",
