@@ -35,6 +35,13 @@ import { ParsedCommandLine } from "../tsoptions/parsedCommandLine.js";
 import type { CompilerOptions } from "../core/compilerOptions.js";
 import { getDirectoryPath, toPath as toCanonicalPath } from "../tspath/index.js";
 import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
+import {
+  createExtensionHost,
+  type CompilerExtension,
+  type ExtensionFacts,
+  type ExtensionHost,
+  type ExtensionProgram,
+} from "../extensions/index.js";
 
 // ---------------------------------------------------------------------------
 // ProgramOptions
@@ -47,11 +54,25 @@ export interface ProgramOptions {
   singleThreaded?: boolean;
   jsdocParsingMode?: number;
   canUseProjectReferenceSource?: boolean;
+  /**
+   * Optional compiler extensions. When omitted or empty the program builds a
+   * no-op extension host so behavior is byte-identical to the un-extended
+   * compiler (HARD INVARIANT).
+   */
+  extensions?: readonly CompilerExtension[];
+  /**
+   * Per-extension configuration: extensionId -> (optionName -> value). Consumed
+   * by the `configure` hook. Defaults to an empty map.
+   */
+  extensionOptions?: ReadonlyMap<string, ReadonlyMap<string, unknown>>;
 }
 
 export function canUseProjectReferenceSource(opts: ProgramOptions): boolean {
   return opts.canUseProjectReferenceSource ?? false;
 }
+
+/** Shared empty per-extension options map (no allocation per program). */
+const EMPTY_EXTENSION_OPTIONS: ReadonlyMap<string, ReadonlyMap<string, unknown>> = new Map();
 
 // ---------------------------------------------------------------------------
 // LazyValue helper
@@ -134,6 +155,13 @@ export class Program {
   filesByPath: Map<string, SourceFile> = new Map();
   emitBlockingDiagnostics: Set<string> = new Set();
   programDiagnostics: Diagnostic[] = [];
+  /**
+   * The per-Program extension fact store. Always present; empty and inert when
+   * no extensions are registered. Consumers read facts via this surface.
+   */
+  readonly extensionFacts: ExtensionFacts;
+  private readonly extensionHost: ExtensionHost;
+  private wholeProgramExtensionPhasesRan = false;
   private commonSourceDirectoryValue = "";
   private commonSourceDirectoryComputed = false;
   private sourceFilesToEmitValue: SourceFile[] | undefined;
@@ -142,6 +170,11 @@ export class Program {
 
   constructor(opts: ProgramOptions) {
     this.opts = opts;
+    // Build the extension host up front: it owns the single per-Program fact
+    // store. With zero extensions the host is inert (no facts, no diagnostics),
+    // preserving the HARD INVARIANT of byte-identical behavior.
+    this.extensionHost = createExtensionHost(opts.extensions ?? []);
+    this.extensionFacts = this.extensionHost.facts;
     const rootFileNames = opts.config.parsedConfig.fileNames;
     const loaded = processAllProgramFiles(
       opts.config.parsedConfig.compilerOptions as unknown as CompilerOptions,
@@ -174,6 +207,20 @@ export class Program {
       packagesMap: new Map(),
     };
     this.verifyCompilerOptions();
+    // Run the parse-phase extension lifecycle: configure (program-level) then
+    // afterParseSourceFile over every parsed file. No-op when no extensions are
+    // registered. Idempotency is enforced inside the host.
+    this.extensionHost.runConfigure(this.asExtensionProgram(), opts.extensionOptions ?? EMPTY_EXTENSION_OPTIONS);
+    this.extensionHost.runAfterParse(this.files, this.asExtensionProgram());
+  }
+
+  /**
+   * View this Program through the minimal `ExtensionProgram` surface handed to
+   * extension hooks. Exposes only the fact store; the host never touches
+   * compiler internals.
+   */
+  private asExtensionProgram(): ExtensionProgram {
+    return this;
   }
 
   toPath(file: string): string {
@@ -367,7 +414,12 @@ export class Program {
   // -------------------------------------------------------------------------
 
   bindSourceFiles(): void {
-    for (const file of this.files) bindSourceFile(file);
+    for (const file of this.files) {
+      bindSourceFile(file);
+      // afterBindSourceFile is idempotent per (file, extension) inside the
+      // host, so re-binding never appends duplicate facts.
+      this.extensionHost.runAfterBind(file, this.asExtensionProgram());
+    }
   }
 
   getTypeChecker(ctx: Context): { checker: Checker; release: () => void } {
@@ -500,9 +552,47 @@ export class Program {
   }
 
   getSemanticDiagnostics(ctx: Context, sourceFile: SourceFile | undefined): readonly Diagnostic[] {
-    return this.collectCheckerDiagnostics(ctx, sourceFile, (diagnosticContext, checker, file) => {
+    const base = this.collectCheckerDiagnostics(ctx, sourceFile, (diagnosticContext, checker, file) => {
       return this.getSemanticDiagnosticsWithChecker(diagnosticContext, checker, file);
     });
+    // A whole-program semantic pass (no target file) has now checked every
+    // file. Run the whole-program extension phases exactly once, then surface
+    // extension diagnostics through the normal semantic-diagnostic output.
+    if (sourceFile === undefined) this.runWholeProgramExtensionPhases(ctx);
+    return this.withExtensionDiagnostics(base);
+  }
+
+  /**
+   * Run `afterCheckProgram` then `validateProgram` over a whole-program checker,
+   * exactly once per Program. No-op when no extensions are registered. The
+   * checker is wrapped in the read-only facade inside the host.
+   */
+  private runWholeProgramExtensionPhases(ctx: Context): void {
+    if (this.wholeProgramExtensionPhasesRan) return;
+    if (this.extensionHost.extensions.length === 0) {
+      // Nothing to dispatch; mark done so we never acquire a checker needlessly.
+      this.wholeProgramExtensionPhasesRan = true;
+      return;
+    }
+    this.wholeProgramExtensionPhasesRan = true;
+    const { checker, release } = this.getTypeChecker(ctx);
+    try {
+      this.extensionHost.runAfterCheckProgram(this.asExtensionProgram(), checker);
+      this.extensionHost.runValidateProgram(this.asExtensionProgram(), checker);
+    } finally {
+      release();
+    }
+  }
+
+  /**
+   * Append extension diagnostics (registration fatals + hook/validate output)
+   * to `base`. Returns `base` unchanged when there are none, preserving
+   * byte-identical behavior with zero extensions.
+   */
+  private withExtensionDiagnostics(base: readonly Diagnostic[]): readonly Diagnostic[] {
+    const extensionDiagnostics = this.extensionFacts.diagnostics();
+    if (extensionDiagnostics.length === 0) return base;
+    return [...base, ...extensionDiagnostics];
   }
 
   getSemanticDiagnosticsWithChecker(ctx: Context, checker: Checker, file: SourceFile): readonly Diagnostic[] {
@@ -518,7 +608,12 @@ export class Program {
     void ctx;
     if (this.skipTypeChecking(file, false)) return [];
     const bindDiagnostics = bindSourceFile(file).map(diagnostic => diagnosticFromText(diagnostic.message, file));
+    // Bind phase complete for this file: run afterBindSourceFile (idempotent).
+    this.extensionHost.runAfterBind(file, this.asExtensionProgram());
     const result = checker.checkSourceFile(file);
+    // Check phase complete: run afterCheckSourceFile with the checker wrapped in
+    // the read-only extension facade (idempotent per file+extension).
+    this.extensionHost.runAfterCheck(file, checker, this.asExtensionProgram());
     const checkDiagnostics = result.diagnostics.map(diagnostic => diagnosticFromText(diagnostic.message, file));
     const diagnostics = [...bindDiagnostics, ...checkDiagnostics];
     if (isPlainJSFile(file, this.options())) {
