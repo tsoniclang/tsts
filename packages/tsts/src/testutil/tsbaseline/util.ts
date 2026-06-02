@@ -1,13 +1,24 @@
+import { rootPath, tsgoTestdataRoot } from "../../repo/paths.js";
 import { normalizeBaselinePath } from "../harnessutil/harnessutil.js";
 
 export const harnessNewLine = "\r\n";
 export const noContent = "<no content>";
 
+function withTrailingSlash(path: string): string {
+  const normalized = path.replace(/\\/g, "/");
+  return normalized.endsWith("/") ? normalized : `${normalized}/`;
+}
+
+/**
+ * Strip the machine-specific path prefixes (workspace root and TS-Go corpus
+ * root) so baselines stay portable. Prefixes are derived from the resolved
+ * repo roots, never hard-coded absolute paths.
+ */
 export function removeTestPathPrefixes(text: string, retainTrailingDirectorySeparator = false): string {
   const normalized = text.replace(/\\/g, "/");
   const withoutWorkspace = normalized
-    .replaceAll("/home/jeswin/repos/tsoniclang/tsts/", "")
-    .replaceAll("/home/jeswin/temp/typescript-go/", "");
+    .replaceAll(withTrailingSlash(rootPath()), "")
+    .replaceAll(withTrailingSlash(tsgoTestdataRoot()), "");
   return retainTrailingDirectorySeparator ? withoutWorkspace : withoutWorkspace.replace(/\/(?=[\r\n]|$)/g, "");
 }
 

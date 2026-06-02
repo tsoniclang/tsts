@@ -1,0 +1,16 @@
+//// [simpleTestSingleFile.ts] ////
+
+//// [/.src/simpleTestSingleFile.ts] ////
+const x: number = "";
+
+//// [simpleTestSingleFile.js]
+const x: number = "";
+
+//// [Diagnostics]
+
+error TS0: Type 'string' is not assignable to type 'number'.
+
+==== /.src/simpleTestSingleFile.ts (1 errors) ====
+    const x: number = "";
+    ~
+!!! error TS0: Type 'string' is not assignable to type 'number'.

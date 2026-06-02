@@ -404,7 +404,11 @@ export function setOptionsFromTestConfig(
   for (const [key, value] of testConfig) {
     const harnessOption = getHarnessOption(key);
     if (harnessOption !== undefined || key === "typescriptVersion") {
-      parseHarnessOption(key, value, harnessOptions);
+      // `getHarnessOption` resolves the canonical option name case-insensitively
+      // (corpus config keys are lowercased), but `parseHarnessOption` switches on
+      // the exact name. Feed it the canonical name so e.g. `filename` maps to the
+      // `fileName` case instead of falling through to the unknown-option throw.
+      parseHarnessOption(harnessOption?.name ?? key, value, harnessOptions);
       continue;
     }
     const compilerOption = getCommandLineOption(key);
