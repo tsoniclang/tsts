@@ -1,5 +1,5 @@
-import { attributes as A } from "@tsonic/core/lang.js";
-import { Assert, FactAttribute } from "xunit-types/Xunit.js";
+import test from "node:test";
+import assert from "node:assert/strict";
 
 import {
   Kind,
@@ -30,99 +30,89 @@ import {
   type VariableDeclaration,
 } from "./index.js";
 
-export class GeneratedAstRuntimeTests {
-  creates_and_updates_schema_generated_nodes_through_typed_factories(): void {
-    const identifier = createIdentifier("answer");
+test("creates and updates schema generated nodes through typed factories", () => {
+  const identifier = createIdentifier("answer");
 
-    Assert.Equal(Kind.Identifier, identifier.kind);
-    Assert.Equal("answer", identifier.text);
-    Assert.True(isIdentifier(identifier));
-    Assert.True(isExpression(identifier));
-    Assert.Equal(identifier, updateIdentifier(identifier, "answer"));
+  assert.strictEqual(identifier.kind, Kind.Identifier);
+  assert.strictEqual(identifier.text, "answer");
+  assert.ok(isIdentifier(identifier));
+  assert.ok(isExpression(identifier));
+  assert.strictEqual(updateIdentifier(identifier, "answer"), identifier);
 
-    const renamed = updateIdentifier(identifier, "total");
-    Assert.NotEqual(identifier, renamed);
-    Assert.Equal("total", renamed.text);
-  }
+  const renamed = updateIdentifier(identifier, "total");
+  assert.notStrictEqual(renamed, identifier);
+  assert.strictEqual(renamed.text, "total");
+});
 
-  creates_instantiation_alias_token_nodes_with_exact_guards(): void {
-    const plusToken = createToken(Kind.PlusToken) as BinaryOperatorToken;
+test("creates instantiation alias token nodes with exact guards", () => {
+  const plusToken = createToken(Kind.PlusToken) as BinaryOperatorToken;
 
-    Assert.Equal(Kind.PlusToken, plusToken.kind);
-    Assert.True(isBinaryOperatorToken(plusToken));
-  }
+  assert.strictEqual(plusToken.kind, Kind.PlusToken);
+  assert.ok(isBinaryOperatorToken(plusToken));
+});
 
-  visits_schema_child_members_in_ts_go_member_order(): void {
-    const left = createIdentifier("left");
-    const operatorToken = createToken(Kind.PlusToken) as BinaryOperatorToken;
-    const right = createNumericLiteral("1", 0);
-    const expression = createBinaryExpression(undefined, left, undefined, operatorToken, right);
-    const visitedKinds: Kind[] = [];
+test("visits schema child members in ts go member order", () => {
+  const left = createIdentifier("left");
+  const operatorToken = createToken(Kind.PlusToken) as BinaryOperatorToken;
+  const right = createNumericLiteral("1", 0);
+  const expression = createBinaryExpression(undefined, left, undefined, operatorToken, right);
+  const visitedKinds: Kind[] = [];
 
-    forEachChild(expression, (node) => {
-      visitedKinds.push(node.kind);
-      return undefined;
-    });
+  forEachChild(expression, (node) => {
+    visitedKinds.push(node.kind);
+    return undefined;
+  });
 
-    Assert.Equal<readonly Kind[]>([Kind.Identifier, Kind.PlusToken, Kind.NumericLiteral], visitedKinds);
-  }
+  assert.deepStrictEqual(visitedKinds, [Kind.Identifier, Kind.PlusToken, Kind.NumericLiteral]);
+});
 
-  models_handwritten_source_file_with_generated_node_array_storage(): void {
-    const expression = createExpressionStatement(createIdentifier("x"));
-    const endOfFileToken = createToken(Kind.EndOfFile) as EndOfFile;
-    const sourceFile = createSourceFile("input.ts", "input.ts" as never, "x;", createNodeArray([expression]) as NodeArray<Statement>, endOfFileToken, [], 0, 0);
-    const visited: Node[] = [];
+test("models handwritten source file with generated node array storage", () => {
+  const expression = createExpressionStatement(createIdentifier("x"));
+  const endOfFileToken = createToken(Kind.EndOfFile) as EndOfFile;
+  const sourceFile = createSourceFile("input.ts", "input.ts" as never, "x;", createNodeArray([expression]) as NodeArray<Statement>, endOfFileToken, [], 0, 0);
+  const visited: Node[] = [];
 
-    Assert.Equal(Kind.SourceFile, sourceFile.kind);
-    Assert.True(isSourceFile(sourceFile));
+  assert.strictEqual(sourceFile.kind, Kind.SourceFile);
+  assert.ok(isSourceFile(sourceFile));
 
-    forEachChild(sourceFile, (node) => {
-      visited.push(node);
-      return undefined;
-    });
+  forEachChild(sourceFile, (node) => {
+    visited.push(node);
+    return undefined;
+  });
 
-    Assert.Equal<readonly Node[]>([expression, endOfFileToken], visited);
-  }
+  assert.deepStrictEqual(visited, [expression, endOfFileToken]);
+});
 
-  preserves_ts_go_node_and_symbol_flag_values(): void {
-    Assert.Equal(1, NodeFlags.Let);
-    Assert.Equal(2, NodeFlags.Const);
-    Assert.Equal(7, NodeFlags.BlockScoped);
-    Assert.Equal(6, NodeFlags.AwaitUsing);
-    Assert.Equal(25_263_104, NodeFlags.ContextFlags);
-    Assert.Equal(1, SymbolFlags.FunctionScopedVariable);
-    Assert.Equal(2, SymbolFlags.BlockScopedVariable);
-    Assert.Equal(111_551, SymbolFlags.Value);
-    Assert.Equal(788_968, SymbolFlags.Type);
-    Assert.Equal(1_073_741_823, SymbolFlags.All);
-  }
+test("preserves ts go node and symbol flag values", () => {
+  assert.strictEqual(NodeFlags.Let, 1);
+  assert.strictEqual(NodeFlags.Const, 2);
+  assert.strictEqual(NodeFlags.BlockScoped, 7);
+  assert.strictEqual(NodeFlags.AwaitUsing, 6);
+  assert.strictEqual(NodeFlags.ContextFlags, 25_263_104);
+  assert.strictEqual(SymbolFlags.FunctionScopedVariable, 1);
+  assert.strictEqual(SymbolFlags.BlockScopedVariable, 2);
+  assert.strictEqual(SymbolFlags.Value, 111_551);
+  assert.strictEqual(SymbolFlags.Type, 788_968);
+  assert.strictEqual(SymbolFlags.All, 1_073_741_823);
+});
 
-  maps_schema_flags_members_onto_node_flags_and_wires_parent_links_generically(): void {
-    const name = createIdentifier("answer");
-    const declaration = createVariableDeclaration(name, undefined, undefined, createNumericLiteral("42", 0));
-    const declarations = createNodeArray([declaration]) as NodeArray<VariableDeclaration>;
-    const list = createVariableDeclarationList(declarations, NodeFlags.Const);
+test("maps schema flags members onto node flags and wires parent links generically", () => {
+  const name = createIdentifier("answer");
+  const declaration = createVariableDeclaration(name, undefined, undefined, createNumericLiteral("42", 0));
+  const declarations = createNodeArray([declaration]) as NodeArray<VariableDeclaration>;
+  const list = createVariableDeclarationList(declarations, NodeFlags.Const);
 
-    Assert.Equal(NodeFlags.Const, list.flags);
-    Assert.Equal(list, declaration.parent);
-    Assert.Equal(declaration, name.parent);
-    Assert.Equal(declaration, declaration.initializer?.parent);
-  }
+  assert.strictEqual(list.flags, NodeFlags.Const);
+  assert.strictEqual(declaration.parent, list);
+  assert.strictEqual(name.parent, declaration);
+  assert.strictEqual(declaration.initializer?.parent, declaration);
+});
 
-  generates_separate_factories_for_ts_go_multi_kind_node_definitions(): void {
-    const moduleSpecifier = createStringLiteral("./dep", 0);
-    const importDeclaration = createJSImportDeclaration(undefined, undefined, moduleSpecifier, undefined);
+test("generates separate factories for ts go multi kind node definitions", () => {
+  const moduleSpecifier = createStringLiteral("./dep", 0);
+  const importDeclaration = createJSImportDeclaration(undefined, undefined, moduleSpecifier, undefined);
 
-    Assert.Equal(Kind.JSImportDeclaration, importDeclaration.kind);
-    Assert.Equal(moduleSpecifier, importDeclaration.moduleSpecifier);
-    Assert.Equal(importDeclaration, moduleSpecifier.parent);
-  }
-}
-
-A<GeneratedAstRuntimeTests>().method((t) => t.creates_and_updates_schema_generated_nodes_through_typed_factories).add(FactAttribute);
-A<GeneratedAstRuntimeTests>().method((t) => t.creates_instantiation_alias_token_nodes_with_exact_guards).add(FactAttribute);
-A<GeneratedAstRuntimeTests>().method((t) => t.visits_schema_child_members_in_ts_go_member_order).add(FactAttribute);
-A<GeneratedAstRuntimeTests>().method((t) => t.models_handwritten_source_file_with_generated_node_array_storage).add(FactAttribute);
-A<GeneratedAstRuntimeTests>().method((t) => t.preserves_ts_go_node_and_symbol_flag_values).add(FactAttribute);
-A<GeneratedAstRuntimeTests>().method((t) => t.maps_schema_flags_members_onto_node_flags_and_wires_parent_links_generically).add(FactAttribute);
-A<GeneratedAstRuntimeTests>().method((t) => t.generates_separate_factories_for_ts_go_multi_kind_node_definitions).add(FactAttribute);
+  assert.strictEqual(importDeclaration.kind, Kind.JSImportDeclaration);
+  assert.strictEqual(importDeclaration.moduleSpecifier, moduleSpecifier);
+  assert.strictEqual(moduleSpecifier.parent, importDeclaration);
+});

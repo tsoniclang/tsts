@@ -1,5 +1,5 @@
-import { attributes as A } from "@tsonic/core/lang.js";
-import { Assert, FactAttribute } from "xunit-types/Xunit.js";
+import test from "node:test";
+import assert from "node:assert/strict";
 
 import {
   findBestPatternMatch,
@@ -9,91 +9,72 @@ import {
   tryParsePattern,
 } from "./index.js";
 
-export class PatternParseTests {
-  exact_patterns_no_star(): void {
-    const p = tryParsePattern("foo");
-    Assert.Equal("foo", p.text);
-    Assert.Equal(-1, p.starIndex);
-    Assert.True(patternIsValid(p));
-  }
+test("exact patterns no star", () => {
+  const p = tryParsePattern("foo");
+  assert.strictEqual(p.text, "foo");
+  assert.strictEqual(p.starIndex, -1);
+  assert.ok(patternIsValid(p));
+});
 
-  single_star_patterns(): void {
-    const p = tryParsePattern("foo/*");
-    Assert.Equal("foo/*", p.text);
-    Assert.Equal(4, p.starIndex);
-    Assert.True(patternIsValid(p));
-  }
+test("single star patterns", () => {
+  const p = tryParsePattern("foo/*");
+  assert.strictEqual(p.text, "foo/*");
+  assert.strictEqual(p.starIndex, 4);
+  assert.ok(patternIsValid(p));
+});
 
-  multi_star_patterns_invalid(): void {
-    const p = tryParsePattern("foo/*/bar/*");
-    Assert.False(patternIsValid(p));
-  }
-}
+test("multi star patterns invalid", () => {
+  const p = tryParsePattern("foo/*/bar/*");
+  assert.ok(!patternIsValid(p));
+});
 
-export class PatternMatchTests {
-  exact_match(): void {
-    const p = tryParsePattern("foo");
-    Assert.True(patternMatches(p, "foo"));
-    Assert.False(patternMatches(p, "bar"));
-  }
+test("exact match", () => {
+  const p = tryParsePattern("foo");
+  assert.ok(patternMatches(p, "foo"));
+  assert.ok(!patternMatches(p, "bar"));
+});
 
-  prefix_star_match(): void {
-    const p = tryParsePattern("foo/*");
-    Assert.True(patternMatches(p, "foo/bar"));
-    Assert.True(patternMatches(p, "foo/bar/baz"));
-    Assert.False(patternMatches(p, "qux/bar"));
-  }
+test("prefix star match", () => {
+  const p = tryParsePattern("foo/*");
+  assert.ok(patternMatches(p, "foo/bar"));
+  assert.ok(patternMatches(p, "foo/bar/baz"));
+  assert.ok(!patternMatches(p, "qux/bar"));
+});
 
-  prefix_star_suffix_match(): void {
-    const p = tryParsePattern("foo/*/bar");
-    Assert.True(patternMatches(p, "foo/x/bar"));
-    Assert.True(patternMatches(p, "foo/x/y/bar"));
-  }
-}
+test("prefix star suffix match", () => {
+  const p = tryParsePattern("foo/*/bar");
+  assert.ok(patternMatches(p, "foo/x/bar"));
+  assert.ok(patternMatches(p, "foo/x/y/bar"));
+});
 
-export class PatternMatchedTextTests {
-  returns_wildcard_part(): void {
-    const p = tryParsePattern("foo/*/bar");
-    Assert.Equal("hello", patternMatchedText(p, "foo/hello/bar"));
-  }
+test("returns wildcard part", () => {
+  const p = tryParsePattern("foo/*/bar");
+  assert.strictEqual(patternMatchedText(p, "foo/hello/bar"), "hello");
+});
 
-  empty_string_for_exact(): void {
-    const p = tryParsePattern("foo");
-    Assert.Equal("", patternMatchedText(p, "foo"));
-  }
-}
+test("empty string for exact", () => {
+  const p = tryParsePattern("foo");
+  assert.strictEqual(patternMatchedText(p, "foo"), "");
+});
 
 interface NamedPattern {
   readonly name: string;
   readonly pattern: string;
 }
 
-export class FindBestPatternMatchTests {
-  returns_longest_prefix(): void {
-    const values: readonly NamedPattern[] = [
-      { name: "fallback", pattern: "*" },
-      { name: "specific", pattern: "foo/*" },
-      { name: "generic", pattern: "f*" },
-    ];
-    const best = findBestPatternMatch(values, (v) => tryParsePattern(v.pattern), "foo/bar");
-    Assert.NotNull(best);
-    Assert.Equal("specific", best!.name);
-  }
+test("returns longest prefix", () => {
+  const values: readonly NamedPattern[] = [
+    { name: "fallback", pattern: "*" },
+    { name: "specific", pattern: "foo/*" },
+    { name: "generic", pattern: "f*" },
+  ];
+  const best = findBestPatternMatch(values, (v) => tryParsePattern(v.pattern), "foo/bar");
+  assert.notStrictEqual(best, undefined);
+  assert.strictEqual(best!.name, "specific");
+});
 
-  returns_undefined_if_nothing_matches(): void {
-    const values: readonly NamedPattern[] = [{ name: "only", pattern: "foo/*" }];
-    const best = findBestPatternMatch(values, (v) => tryParsePattern(v.pattern), "bar/baz");
-    Assert.Null(best);
-  }
-}
-
-A<PatternParseTests>().method((t) => t.exact_patterns_no_star).add(FactAttribute);
-A<PatternParseTests>().method((t) => t.single_star_patterns).add(FactAttribute);
-A<PatternParseTests>().method((t) => t.multi_star_patterns_invalid).add(FactAttribute);
-A<PatternMatchTests>().method((t) => t.exact_match).add(FactAttribute);
-A<PatternMatchTests>().method((t) => t.prefix_star_match).add(FactAttribute);
-A<PatternMatchTests>().method((t) => t.prefix_star_suffix_match).add(FactAttribute);
-A<PatternMatchedTextTests>().method((t) => t.returns_wildcard_part).add(FactAttribute);
-A<PatternMatchedTextTests>().method((t) => t.empty_string_for_exact).add(FactAttribute);
-A<FindBestPatternMatchTests>().method((t) => t.returns_longest_prefix).add(FactAttribute);
-A<FindBestPatternMatchTests>().method((t) => t.returns_undefined_if_nothing_matches).add(FactAttribute);
+test("returns undefined if nothing matches", () => {
+  const values: readonly NamedPattern[] = [{ name: "only", pattern: "foo/*" }];
+  const best = findBestPatternMatch(values, (v) => tryParsePattern(v.pattern), "bar/baz");
+  assert.strictEqual(best, undefined);
+});

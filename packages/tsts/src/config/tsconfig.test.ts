@@ -1,108 +1,99 @@
-import { attributes as A } from "@tsonic/core/lang.js";
-import { Assert, FactAttribute } from "xunit-types/Xunit.js";
+import test from "node:test";
+import assert from "node:assert/strict";
 
 import { loadTsConfig, parseTsConfigText } from "./index.js";
 import type { CompilerHost } from "../program/index.js";
 
-export class TsConfigGroundworkTests {
-  parses_jsonc_files_and_outdir(): void {
-    const result = parseTsConfigText(
-      "project/tsconfig.json",
-      "{\n" +
-        "  // deterministic JSONC support\n" +
-        "  \"compilerOptions\": {\n" +
-        "    \"outDir\": \"dist\",\n" +
-        "  },\n" +
-        "  \"files\": [\n" +
-        "    \"src/add.ts\",\n" +
-        "    \"src/value.ts\",\n" +
-        "  ],\n" +
-        "}",
-    );
+test("parses jsonc files and outdir", () => {
+  const result = parseTsConfigText(
+    "project/tsconfig.json",
+    "{\n" +
+      "  // deterministic JSONC support\n" +
+      "  \"compilerOptions\": {\n" +
+      "    \"outDir\": \"dist\",\n" +
+      "  },\n" +
+      "  \"files\": [\n" +
+      "    \"src/add.ts\",\n" +
+      "    \"src/value.ts\",\n" +
+      "  ],\n" +
+      "}",
+  );
 
-    Assert.Equal(0, result.diagnostics.length);
-    Assert.NotNull(result.config);
-    Assert.Equal<readonly string[]>(["project/src/add.ts", "project/src/value.ts"], result.config!.rootNames);
-    Assert.Equal("dist", result.config!.options.outDir);
+  assert.strictEqual(result.diagnostics.length, 0);
+  assert.ok(result.config != null);
+  assert.deepStrictEqual(result.config!.rootNames, ["project/src/add.ts", "project/src/value.ts"]);
+  assert.strictEqual(result.config!.options.outDir, "dist");
+});
+
+test("loads configs through host", () => {
+  const host: Pick<CompilerHost, "readFile"> = {
+    readFile: (fileName) => (fileName === "tsconfig.json" ? "{\"files\":[\"src/index.ts\"]}" : undefined),
+  };
+
+  const result = loadTsConfig("tsconfig.json", host);
+
+  assert.strictEqual(result.diagnostics.length, 0);
+  assert.ok(result.config != null);
+  assert.deepStrictEqual(result.config!.rootNames, ["src/index.ts"]);
+});
+
+test("expands include through host", () => {
+  interface ReadDirCall {
+    readonly rootDir: string;
+    readonly extensions: readonly string[];
+    readonly excludes: readonly string[];
+    readonly includes: readonly string[];
   }
+  const calls: ReadDirCall[] = [];
+  const host: Pick<CompilerHost, "readDirectory"> = {
+    readDirectory: (rootDir, extensions, excludes, includes) => {
+      calls.push({ rootDir, extensions, excludes, includes });
+      return ["project/src/index.ts", "project/src/util.ts"];
+    },
+  };
 
-  loads_configs_through_host(): void {
-    const host: Pick<CompilerHost, "readFile"> = {
-      readFile: (fileName) => (fileName === "tsconfig.json" ? "{\"files\":[\"src/index.ts\"]}" : undefined),
-    };
+  const result = parseTsConfigText(
+    "project/tsconfig.json",
+    "{\"compilerOptions\":{\"outDir\":\"dist\"},\"include\":[\"src/**/*.ts\"],\"exclude\":[\"src/**/*.test.ts\"]}",
+    host,
+  );
 
-    const result = loadTsConfig("tsconfig.json", host);
+  assert.strictEqual(result.diagnostics.length, 0);
+  assert.ok(result.config != null);
+  assert.deepStrictEqual(result.config!.rootNames, ["project/src/index.ts", "project/src/util.ts"]);
+  assert.strictEqual(calls.length, 1);
+  assert.strictEqual(calls[0]!.rootDir, "project");
+  assert.deepStrictEqual(calls[0]!.extensions, [".ts", ".tsx", ".d.ts"]);
+  assert.deepStrictEqual(calls[0]!.excludes, ["node_modules", "bower_components", "jspm_packages", "dist", "src/**/*.test.ts"]);
+  assert.deepStrictEqual(calls[0]!.includes, ["src/**/*.ts"]);
+});
 
-    Assert.Equal(0, result.diagnostics.length);
-    Assert.NotNull(result.config);
-    Assert.Equal<readonly string[]>(["src/index.ts"], result.config!.rootNames);
-  }
+test("requires directory support", () => {
+  const result = parseTsConfigText("tsconfig.json", "{\"include\":[\"src/**/*.ts\"]}");
 
-  expands_include_through_host(): void {
-    interface ReadDirCall {
-      readonly rootDir: string;
-      readonly extensions: readonly string[];
-      readonly excludes: readonly string[];
-      readonly includes: readonly string[];
-    }
-    const calls: ReadDirCall[] = [];
-    const host: Pick<CompilerHost, "readDirectory"> = {
-      readDirectory: (rootDir, extensions, excludes, includes) => {
-        calls.push({ rootDir, extensions, excludes, includes });
-        return ["project/src/index.ts", "project/src/util.ts"];
-      },
-    };
+  assert.strictEqual(result.diagnostics.length, 1);
+  assert.strictEqual(result.diagnostics[0]!.message, "include/exclude expansion requires CompilerHost.readDirectory");
+});
 
-    const result = parseTsConfigText(
-      "project/tsconfig.json",
-      "{\"compilerOptions\":{\"outDir\":\"dist\"},\"include\":[\"src/**/*.ts\"],\"exclude\":[\"src/**/*.test.ts\"]}",
-      host,
-    );
+test("uses default include exclude when files omitted", () => {
+  const host: Pick<CompilerHost, "readDirectory"> = {
+    readDirectory: (_rootDir, _extensions, _excludes, _includes) => ["src/index.ts"],
+  };
 
-    Assert.Equal(0, result.diagnostics.length);
-    Assert.NotNull(result.config);
-    Assert.Equal<readonly string[]>(["project/src/index.ts", "project/src/util.ts"], result.config!.rootNames);
-    Assert.Equal(1, calls.length);
-    Assert.Equal("project", calls[0]!.rootDir);
-    Assert.Equal<readonly string[]>([".ts", ".tsx", ".d.ts"], calls[0]!.extensions);
-    Assert.Equal<readonly string[]>(["node_modules", "bower_components", "jspm_packages", "dist", "src/**/*.test.ts"], calls[0]!.excludes);
-    Assert.Equal<readonly string[]>(["src/**/*.ts"], calls[0]!.includes);
-  }
+  const result = parseTsConfigText("tsconfig.json", "{}", host);
 
-  requires_directory_support(): void {
-    const result = parseTsConfigText("tsconfig.json", "{\"include\":[\"src/**/*.ts\"]}");
+  assert.strictEqual(result.diagnostics.length, 0);
+  assert.ok(result.config != null);
+  assert.deepStrictEqual(result.config!.rootNames, ["src/index.ts"]);
+});
 
-    Assert.Equal(1, result.diagnostics.length);
-    Assert.Equal("include/exclude expansion requires CompilerHost.readDirectory", result.diagnostics[0]!.message);
-  }
+test("rejects invalid option shapes", () => {
+  const result = parseTsConfigText(
+    "tsconfig.json",
+    "{\"compilerOptions\":{\"outDir\":false},\"files\":\"src/index.ts\",\"include\":\"src\"}",
+  );
 
-  uses_default_include_exclude_when_files_omitted(): void {
-    const host: Pick<CompilerHost, "readDirectory"> = {
-      readDirectory: (_rootDir, _extensions, _excludes, _includes) => ["src/index.ts"],
-    };
-
-    const result = parseTsConfigText("tsconfig.json", "{}", host);
-
-    Assert.Equal(0, result.diagnostics.length);
-    Assert.NotNull(result.config);
-    Assert.Equal<readonly string[]>(["src/index.ts"], result.config!.rootNames);
-  }
-
-  rejects_invalid_option_shapes(): void {
-    const result = parseTsConfigText(
-      "tsconfig.json",
-      "{\"compilerOptions\":{\"outDir\":false},\"files\":\"src/index.ts\",\"include\":\"src\"}",
-    );
-
-    Assert.Equal(2, result.diagnostics.length);
-    Assert.Equal("compilerOptions.outDir must be a string", result.diagnostics[0]!.message);
-    Assert.Equal("files must be an array of strings", result.diagnostics[1]!.message);
-  }
-}
-
-A<TsConfigGroundworkTests>().method((t) => t.parses_jsonc_files_and_outdir).add(FactAttribute);
-A<TsConfigGroundworkTests>().method((t) => t.loads_configs_through_host).add(FactAttribute);
-A<TsConfigGroundworkTests>().method((t) => t.expands_include_through_host).add(FactAttribute);
-A<TsConfigGroundworkTests>().method((t) => t.requires_directory_support).add(FactAttribute);
-A<TsConfigGroundworkTests>().method((t) => t.uses_default_include_exclude_when_files_omitted).add(FactAttribute);
-A<TsConfigGroundworkTests>().method((t) => t.rejects_invalid_option_shapes).add(FactAttribute);
+  assert.strictEqual(result.diagnostics.length, 2);
+  assert.strictEqual(result.diagnostics[0]!.message, "compilerOptions.outDir must be a string");
+  assert.strictEqual(result.diagnostics[1]!.message, "files must be an array of strings");
+});

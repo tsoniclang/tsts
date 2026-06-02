@@ -1,12 +1,6 @@
-import { attributes as A } from "@tsonic/core/lang.js";
-import { Assert, FactAttribute } from "xunit-types/Xunit.js";
+import test from "node:test";
+import assert from "node:assert/strict";
 
-export class SmokeTests {
-  one_plus_one_is_two(): void {
-    Assert.Equal(2, 1 + 1);
-  }
-}
-
-A<SmokeTests>()
-  .method((t) => t.one_plus_one_is_two)
-  .add(FactAttribute);
+test("one plus one is two", () => {
+  assert.strictEqual(1 + 1, 2);
+});

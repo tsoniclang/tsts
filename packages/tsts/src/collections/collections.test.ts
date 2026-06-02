@@ -1,120 +1,103 @@
-import { attributes as A } from "@tsonic/core/lang.js";
-import { Assert, FactAttribute } from "xunit-types/Xunit.js";
+import test from "node:test";
+import assert from "node:assert/strict";
 
 import { CopyOnWriteMap, CopyOnWriteSet, MultiMap } from "./index.js";
 
-export class MultiMapTests {
-  add_get_has(): void {
-    const m = new MultiMap<string, number>();
-    m.add("a", 1);
-    m.add("a", 2);
-    m.add("b", 3);
-    Assert.Equal<readonly number[]>([1, 2], [...m.get("a")]);
-    Assert.Equal<readonly number[]>([3], [...m.get("b")]);
-    Assert.Equal<readonly number[]>([], [...m.get("c")]);
-    Assert.True(m.has("a"));
-    Assert.False(m.has("c"));
-    Assert.Equal(2, m.size);
-  }
+test("add get has", () => {
+  const m = new MultiMap<string, number>();
+  m.add("a", 1);
+  m.add("a", 2);
+  m.add("b", 3);
+  assert.deepStrictEqual([...m.get("a")], [1, 2]);
+  assert.deepStrictEqual([...m.get("b")], [3]);
+  assert.deepStrictEqual([...m.get("c")], []);
+  assert.ok(m.has("a"));
+  assert.ok(!m.has("c"));
+  assert.strictEqual(m.size, 2);
+});
 
-  remove_one_occurrence_then_key_gone(): void {
-    const m = new MultiMap<string, number>();
-    m.add("a", 1);
-    m.add("a", 2);
-    m.remove("a", 1);
-    Assert.Equal<readonly number[]>([2], [...m.get("a")]);
-    m.remove("a", 2);
-    Assert.False(m.has("a"));
-  }
+test("remove one occurrence then key gone", () => {
+  const m = new MultiMap<string, number>();
+  m.add("a", 1);
+  m.add("a", 2);
+  m.remove("a", 1);
+  assert.deepStrictEqual([...m.get("a")], [2]);
+  m.remove("a", 2);
+  assert.ok(!m.has("a"));
+});
 
-  remove_all(): void {
-    const m = new MultiMap<string, number>();
-    m.add("a", 1);
-    m.add("a", 2);
-    m.removeAll("a");
-    Assert.False(m.has("a"));
-  }
+test("remove all", () => {
+  const m = new MultiMap<string, number>();
+  m.add("a", 1);
+  m.add("a", 2);
+  m.removeAll("a");
+  assert.ok(!m.has("a"));
+});
 
-  group_by_factory(): void {
-    const items = [1, 2, 3, 4, 5, 6];
-    const m = MultiMap.groupBy(items, (n) => (n % 2 === 0 ? "even" : "odd"));
-    Assert.Equal<readonly number[]>([2, 4, 6], [...m.get("even")]);
-    Assert.Equal<readonly number[]>([1, 3, 5], [...m.get("odd")]);
-  }
+test("group by factory", () => {
+  const items = [1, 2, 3, 4, 5, 6];
+  const m = MultiMap.groupBy(items, (n) => (n % 2 === 0 ? "even" : "odd"));
+  assert.deepStrictEqual([...m.get("even")], [2, 4, 6]);
+  assert.deepStrictEqual([...m.get("odd")], [1, 3, 5]);
+});
 
-  clear(): void {
-    const m = new MultiMap<string, number>();
-    m.add("a", 1);
-    m.clear();
-    Assert.Equal(0, m.size);
-  }
-}
+test("clear", () => {
+  const m = new MultiMap<string, number>();
+  m.add("a", 1);
+  m.clear();
+  assert.strictEqual(m.size, 0);
+});
 
-export class CopyOnWriteMapTests {
-  basic_get_set_has(): void {
-    const m = new CopyOnWriteMap<string, number>();
-    m.set("a", 1);
-    Assert.Equal(1, m.get("a"));
-    Assert.True(m.has("a"));
-    Assert.False(m.has("b"));
-  }
+test("basic get set has", () => {
+  const m = new CopyOnWriteMap<string, number>();
+  m.set("a", 1);
+  assert.strictEqual(m.get("a"), 1);
+  assert.ok(m.has("a"));
+  assert.ok(!m.has("b"));
+});
 
-  nested_scope_isolates_writes(): void {
-    const m = new CopyOnWriteMap<string, number>();
-    m.set("a", 1);
+test("nested scope isolates writes", () => {
+  const m = new CopyOnWriteMap<string, number>();
+  m.set("a", 1);
 
-    const restore = m.enterScope();
-    m.set("a", 99);
-    m.set("b", 2);
-    Assert.Equal(99, m.get("a"));
-    Assert.Equal(2, m.get("b"));
+  const restore = m.enterScope();
+  m.set("a", 99);
+  m.set("b", 2);
+  assert.strictEqual(m.get("a"), 99);
+  assert.strictEqual(m.get("b"), 2);
 
-    restore();
-    Assert.Equal(1, m.get("a"));
-    Assert.False(m.has("b"));
-  }
+  restore();
+  assert.strictEqual(m.get("a"), 1);
+  assert.ok(!m.has("b"));
+});
 
-  nested_scope_read_only_reuse_if_no_writes(): void {
-    const m = new CopyOnWriteMap<string, number>();
-    m.set("a", 1);
+test("nested scope read only reuse if no writes", () => {
+  const m = new CopyOnWriteMap<string, number>();
+  m.set("a", 1);
 
-    const restore = m.enterScope();
-    Assert.Equal(1, m.get("a"));
-    restore();
+  const restore = m.enterScope();
+  assert.strictEqual(m.get("a"), 1);
+  restore();
 
-    Assert.Equal(1, m.get("a"));
-  }
-}
+  assert.strictEqual(m.get("a"), 1);
+});
 
-export class CopyOnWriteSetTests {
-  basic(): void {
-    const s = new CopyOnWriteSet<string>();
-    s.add("x");
-    Assert.True(s.has("x"));
-    Assert.False(s.has("y"));
-  }
+test("basic", () => {
+  const s = new CopyOnWriteSet<string>();
+  s.add("x");
+  assert.ok(s.has("x"));
+  assert.ok(!s.has("y"));
+});
 
-  nested_scope_isolation(): void {
-    const s = new CopyOnWriteSet<string>();
-    s.add("a");
+test("nested scope isolation", () => {
+  const s = new CopyOnWriteSet<string>();
+  s.add("a");
 
-    const restore = s.enterScope();
-    s.add("b");
-    Assert.True(s.has("b"));
+  const restore = s.enterScope();
+  s.add("b");
+  assert.ok(s.has("b"));
 
-    restore();
-    Assert.True(s.has("a"));
-    Assert.False(s.has("b"));
-  }
-}
-
-A<MultiMapTests>().method((t) => t.add_get_has).add(FactAttribute);
-A<MultiMapTests>().method((t) => t.remove_one_occurrence_then_key_gone).add(FactAttribute);
-A<MultiMapTests>().method((t) => t.remove_all).add(FactAttribute);
-A<MultiMapTests>().method((t) => t.group_by_factory).add(FactAttribute);
-A<MultiMapTests>().method((t) => t.clear).add(FactAttribute);
-A<CopyOnWriteMapTests>().method((t) => t.basic_get_set_has).add(FactAttribute);
-A<CopyOnWriteMapTests>().method((t) => t.nested_scope_isolates_writes).add(FactAttribute);
-A<CopyOnWriteMapTests>().method((t) => t.nested_scope_read_only_reuse_if_no_writes).add(FactAttribute);
-A<CopyOnWriteSetTests>().method((t) => t.basic).add(FactAttribute);
-A<CopyOnWriteSetTests>().method((t) => t.nested_scope_isolation).add(FactAttribute);
+  restore();
+  assert.ok(s.has("a"));
+  assert.ok(!s.has("b"));
+});

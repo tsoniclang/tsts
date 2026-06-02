@@ -23,8 +23,8 @@
 // factory path does not derive; the faithful predicates read `modifierFlags`
 // exactly like TS-Go's n.ModifierFlags().
 
-import { attributes as A } from "@tsonic/core/lang.js";
-import { Assert, FactAttribute } from "xunit-types/Xunit.js";
+import test from "node:test";
+import assert from "node:assert/strict";
 
 import {
   Kind,
@@ -66,123 +66,111 @@ function makeParameterWithModifiers(modifierKinds: readonly ModifierSyntaxKind[]
   });
 }
 
-export class AstUtilitiesParityTests {
-  // canHaveModifiers stub used to `return true` for every node; faithful
-  // version is a kind-switch.
-  can_have_modifiers_is_a_kind_switch_not_always_true(): void {
-    Assert.False(canHaveModifiers(createIdentifier("ident")));
-    Assert.True(canHaveModifiers(new NodeObject(Kind.PropertyDeclaration, { name: createIdentifier("p") })));
-    Assert.True(canHaveModifiers(new NodeObject(Kind.Parameter, { name: createIdentifier("q") })));
-    Assert.False(canHaveModifiers(new NodeObject(Kind.NumericLiteral, { text: "1" })));
-  }
+// canHaveModifiers stub used to `return true` for every node; faithful
+// version is a kind-switch.
+test("can have modifiers is a kind switch not always true", () => {
+  assert.ok(!canHaveModifiers(createIdentifier("ident")));
+  assert.ok(canHaveModifiers(new NodeObject(Kind.PropertyDeclaration, { name: createIdentifier("p") })));
+  assert.ok(canHaveModifiers(new NodeObject(Kind.Parameter, { name: createIdentifier("q") })));
+  assert.ok(!canHaveModifiers(new NodeObject(Kind.NumericLiteral, { text: "1" })));
+});
 
-  // The most-important parity probe: the accessors stub returned false
-  // unconditionally, making the type-eraser's parameter-property branch dead.
-  parameter_property_declaration_honours_modifier_and_constructor_parent(): void {
-    const param = makeParameterWithModifiers([Kind.PublicKeyword, Kind.ReadonlyKeyword], "x");
-    const ctor = new NodeObject(Kind.Constructor, { parameters: createNodeArray([param]) });
+// The most-important parity probe: the accessors stub returned false
+// unconditionally, making the type-eraser's parameter-property branch dead.
+test("parameter property declaration honours modifier and constructor parent", () => {
+  const param = makeParameterWithModifiers([Kind.PublicKeyword, Kind.ReadonlyKeyword], "x");
+  const ctor = new NodeObject(Kind.Constructor, { parameters: createNodeArray([param]) });
 
-    // Live path: public/readonly on a constructor parameter is a parameter property.
-    Assert.True(isParameterPropertyDeclaration(param, ctor));
+  // Live path: public/readonly on a constructor parameter is a parameter property.
+  assert.ok(isParameterPropertyDeclaration(param, ctor));
 
-    // Parent is not a Constructor -> not a parameter property (e.g. a method).
-    const methodLike = new NodeObject(Kind.MethodDeclaration, { parameters: createNodeArray([param]) });
-    Assert.False(isParameterPropertyDeclaration(param, methodLike));
+  // Parent is not a Constructor -> not a parameter property (e.g. a method).
+  const methodLike = new NodeObject(Kind.MethodDeclaration, { parameters: createNodeArray([param]) });
+  assert.ok(!isParameterPropertyDeclaration(param, methodLike));
 
-    // No accessibility/readonly modifier -> not a parameter property even under a Constructor.
-    const plainParam = new NodeObject(Kind.Parameter, { name: createIdentifier("x") });
-    Assert.False(isParameterPropertyDeclaration(plainParam, ctor));
-  }
+  // No accessibility/readonly modifier -> not a parameter property even under a Constructor.
+  const plainParam = new NodeObject(Kind.Parameter, { name: createIdentifier("x") });
+  assert.ok(!isParameterPropertyDeclaration(plainParam, ctor));
+});
 
-  has_syntactic_modifier_reads_membership_in_modifier_flags(): void {
-    const param = makeParameterWithModifiers([Kind.PublicKeyword, Kind.ReadonlyKeyword], "x");
-    Assert.True(hasSyntacticModifier(param, ModifierFlags.ParameterPropertyModifier));
-    Assert.True(hasSyntacticModifier(param, ModifierFlags.Public));
-    Assert.True(hasSyntacticModifier(param, ModifierFlags.Readonly));
-    Assert.False(hasSyntacticModifier(param, ModifierFlags.Static));
-    // A node with no modifierFlags field reports ModifierFlags.None.
-    Assert.False(hasSyntacticModifier(createIdentifier("x"), ModifierFlags.Public));
-  }
+test("has syntactic modifier reads membership in modifier flags", () => {
+  const param = makeParameterWithModifiers([Kind.PublicKeyword, Kind.ReadonlyKeyword], "x");
+  assert.ok(hasSyntacticModifier(param, ModifierFlags.ParameterPropertyModifier));
+  assert.ok(hasSyntacticModifier(param, ModifierFlags.Public));
+  assert.ok(hasSyntacticModifier(param, ModifierFlags.Readonly));
+  assert.ok(!hasSyntacticModifier(param, ModifierFlags.Static));
+  // A node with no modifierFlags field reports ModifierFlags.None.
+  assert.ok(!hasSyntacticModifier(createIdentifier("x"), ModifierFlags.Public));
+});
 
-  has_static_modifier_distinguishes_static_from_instance_members(): void {
-    const staticProp = new NodeObject(Kind.PropertyDeclaration, { name: createIdentifier("s"), modifierFlags: ModifierFlags.Static });
-    const instanceProp = new NodeObject(Kind.PropertyDeclaration, { name: createIdentifier("i"), modifierFlags: ModifierFlags.None });
-    Assert.True(hasStaticModifier(staticProp));
-    Assert.False(hasStaticModifier(instanceProp));
-  }
+test("has static modifier distinguishes static from instance members", () => {
+  const staticProp = new NodeObject(Kind.PropertyDeclaration, { name: createIdentifier("s"), modifierFlags: ModifierFlags.Static });
+  const instanceProp = new NodeObject(Kind.PropertyDeclaration, { name: createIdentifier("i"), modifierFlags: ModifierFlags.None });
+  assert.ok(hasStaticModifier(staticProp));
+  assert.ok(!hasStaticModifier(instanceProp));
+});
 
-  // isAssignmentExpression: compound-vs-equals branch + LHS guard, using the
-  // Kind enum rather than the stub's hardcoded numbers (226/64/79).
-  is_assignment_expression_branches_on_compound_and_lhs_guard(): void {
-    const lhs = createIdentifier("a");
-    const eq = createBinaryExpression(undefined, lhs, undefined, createToken(Kind.EqualsToken) as BinaryOperatorToken, createNumericLiteral("1", 0));
-    const plusEq = createBinaryExpression(undefined, createIdentifier("a"), undefined, createToken(Kind.PlusEqualsToken) as BinaryOperatorToken, createNumericLiteral("1", 0));
+// isAssignmentExpression: compound-vs-equals branch + LHS guard, using the
+// Kind enum rather than the stub's hardcoded numbers (226/64/79).
+test("is assignment expression branches on compound and lhs guard", () => {
+  const lhs = createIdentifier("a");
+  const eq = createBinaryExpression(undefined, lhs, undefined, createToken(Kind.EqualsToken) as BinaryOperatorToken, createNumericLiteral("1", 0));
+  const plusEq = createBinaryExpression(undefined, createIdentifier("a"), undefined, createToken(Kind.PlusEqualsToken) as BinaryOperatorToken, createNumericLiteral("1", 0));
 
-    // `=` is an assignment under either excludeCompoundAssignment value.
-    Assert.True(isAssignmentExpression(eq, /*excludeCompoundAssignment*/ true));
-    Assert.True(isAssignmentExpression(eq, /*excludeCompoundAssignment*/ false));
+  // `=` is an assignment under either excludeCompoundAssignment value.
+  assert.ok(isAssignmentExpression(eq, /*excludeCompoundAssignment*/ true));
+  assert.ok(isAssignmentExpression(eq, /*excludeCompoundAssignment*/ false));
 
-    // `+=` is excluded when excludeCompoundAssignment is true, included otherwise.
-    Assert.False(isAssignmentExpression(plusEq, /*excludeCompoundAssignment*/ true));
-    Assert.True(isAssignmentExpression(plusEq, /*excludeCompoundAssignment*/ false));
+  // `+=` is excluded when excludeCompoundAssignment is true, included otherwise.
+  assert.ok(!isAssignmentExpression(plusEq, /*excludeCompoundAssignment*/ true));
+  assert.ok(isAssignmentExpression(plusEq, /*excludeCompoundAssignment*/ false));
 
-    // LHS guard: left must be a LeftHandSideExpression. `(a + b)` is not.
-    const innerSum = createBinaryExpression(undefined, createIdentifier("a"), undefined, createToken(Kind.PlusToken) as BinaryOperatorToken, createIdentifier("b"));
-    Assert.False(isLeftHandSideExpression(innerSum));
-    const badLhs = createBinaryExpression(undefined, innerSum, undefined, createToken(Kind.EqualsToken) as BinaryOperatorToken, createNumericLiteral("2", 0));
-    Assert.False(isAssignmentExpression(badLhs, /*excludeCompoundAssignment*/ false));
+  // LHS guard: left must be a LeftHandSideExpression. `(a + b)` is not.
+  const innerSum = createBinaryExpression(undefined, createIdentifier("a"), undefined, createToken(Kind.PlusToken) as BinaryOperatorToken, createIdentifier("b"));
+  assert.ok(!isLeftHandSideExpression(innerSum));
+  const badLhs = createBinaryExpression(undefined, innerSum, undefined, createToken(Kind.EqualsToken) as BinaryOperatorToken, createNumericLiteral("2", 0));
+  assert.ok(!isAssignmentExpression(badLhs, /*excludeCompoundAssignment*/ false));
 
-    // Not a BinaryExpression at all.
-    Assert.False(isAssignmentExpression(createIdentifier("a"), /*excludeCompoundAssignment*/ false));
-  }
+  // Not a BinaryExpression at all.
+  assert.ok(!isAssignmentExpression(createIdentifier("a"), /*excludeCompoundAssignment*/ false));
+});
 
-  is_comma_expression_matches_only_comma_operator(): void {
-    const comma = createBinaryExpression(undefined, createIdentifier("a"), undefined, createToken(Kind.CommaToken) as BinaryOperatorToken, createIdentifier("b"));
-    const eq = createBinaryExpression(undefined, createIdentifier("a"), undefined, createToken(Kind.EqualsToken) as BinaryOperatorToken, createIdentifier("b"));
-    Assert.True(isCommaExpression(comma));
-    Assert.False(isCommaExpression(eq));
-    Assert.False(isCommaExpression(createIdentifier("a")));
-  }
+test("is comma expression matches only comma operator", () => {
+  const comma = createBinaryExpression(undefined, createIdentifier("a"), undefined, createToken(Kind.CommaToken) as BinaryOperatorToken, createIdentifier("b"));
+  const eq = createBinaryExpression(undefined, createIdentifier("a"), undefined, createToken(Kind.EqualsToken) as BinaryOperatorToken, createIdentifier("b"));
+  assert.ok(isCommaExpression(comma));
+  assert.ok(!isCommaExpression(eq));
+  assert.ok(!isCommaExpression(createIdentifier("a")));
+});
 
-  is_prologue_directive_matches_string_literal_expression_statements(): void {
-    const sourceFile = parseSourceFile("\"use strict\"; x;");
-    Assert.True(isPrologueDirective(sourceFile.statements[0]!));
-    Assert.False(isPrologueDirective(sourceFile.statements[1]!));
-  }
+test("is prologue directive matches string literal expression statements", () => {
+  const sourceFile = parseSourceFile("\"use strict\"; x;");
+  assert.ok(isPrologueDirective(sourceFile.statements[0]!));
+  assert.ok(!isPrologueDirective(sourceFile.statements[1]!));
+});
 
-  // nodeIsMissing: pos==end>=0 means "missing" EXCEPT EndOfFile, which the
-  // faithful version excludes via `&& kind !== Kind.EndOfFile`.
-  node_is_missing_excludes_end_of_file_and_handles_undefined(): void {
-    Assert.True(nodeIsMissing(undefined));
+// nodeIsMissing: pos==end>=0 means "missing" EXCEPT EndOfFile, which the
+// faithful version excludes via `&& kind !== Kind.EndOfFile`.
+test("node is missing excludes end of file and handles undefined", () => {
+  assert.ok(nodeIsMissing(undefined));
 
-    const missing = new NodeObject(Kind.Identifier, {}, 5, 5);
-    Assert.True(nodeIsMissing(missing));
-    Assert.False(nodeIsPresent(missing));
+  const missing = new NodeObject(Kind.Identifier, {}, 5, 5);
+  assert.ok(nodeIsMissing(missing));
+  assert.ok(!nodeIsPresent(missing));
 
-    // EndOfFile with pos==end is NOT missing (the branch the stub omitted).
-    const eof = new NodeObject(Kind.EndOfFile, {}, 5, 5);
-    Assert.False(nodeIsMissing(eof));
+  // EndOfFile with pos==end is NOT missing (the branch the stub omitted).
+  const eof = new NodeObject(Kind.EndOfFile, {}, 5, 5);
+  assert.ok(!nodeIsMissing(eof));
 
-    const present = new NodeObject(Kind.Identifier, {}, 5, 8);
-    Assert.False(nodeIsMissing(present));
-    Assert.True(nodeIsPresent(present));
-  }
+  const present = new NodeObject(Kind.Identifier, {}, 5, 8);
+  assert.ok(!nodeIsMissing(present));
+  assert.ok(nodeIsPresent(present));
+});
 
-  // nodeIsSynthesized: pos<0 OR end<0 (positionIsSynthesized on either edge).
-  node_is_synthesized_tests_either_position_edge(): void {
-    Assert.True(nodeIsSynthesized(new NodeObject(Kind.Identifier, {}, -1, -1)));
-    Assert.True(nodeIsSynthesized(new NodeObject(Kind.Identifier, {}, 0, -1)));
-    Assert.True(nodeIsSynthesized(new NodeObject(Kind.Identifier, {}, -1, 5)));
-    Assert.False(nodeIsSynthesized(new NodeObject(Kind.Identifier, {}, 0, 5)));
-  }
-}
-
-A<AstUtilitiesParityTests>().method((t) => t.can_have_modifiers_is_a_kind_switch_not_always_true).add(FactAttribute);
-A<AstUtilitiesParityTests>().method((t) => t.parameter_property_declaration_honours_modifier_and_constructor_parent).add(FactAttribute);
-A<AstUtilitiesParityTests>().method((t) => t.has_syntactic_modifier_reads_membership_in_modifier_flags).add(FactAttribute);
-A<AstUtilitiesParityTests>().method((t) => t.has_static_modifier_distinguishes_static_from_instance_members).add(FactAttribute);
-A<AstUtilitiesParityTests>().method((t) => t.is_assignment_expression_branches_on_compound_and_lhs_guard).add(FactAttribute);
-A<AstUtilitiesParityTests>().method((t) => t.is_comma_expression_matches_only_comma_operator).add(FactAttribute);
-A<AstUtilitiesParityTests>().method((t) => t.is_prologue_directive_matches_string_literal_expression_statements).add(FactAttribute);
-A<AstUtilitiesParityTests>().method((t) => t.node_is_missing_excludes_end_of_file_and_handles_undefined).add(FactAttribute);
-A<AstUtilitiesParityTests>().method((t) => t.node_is_synthesized_tests_either_position_edge).add(FactAttribute);
+// nodeIsSynthesized: pos<0 OR end<0 (positionIsSynthesized on either edge).
+test("node is synthesized tests either position edge", () => {
+  assert.ok(nodeIsSynthesized(new NodeObject(Kind.Identifier, {}, -1, -1)));
+  assert.ok(nodeIsSynthesized(new NodeObject(Kind.Identifier, {}, 0, -1)));
+  assert.ok(nodeIsSynthesized(new NodeObject(Kind.Identifier, {}, -1, 5)));
+  assert.ok(!nodeIsSynthesized(new NodeObject(Kind.Identifier, {}, 0, 5)));
+});

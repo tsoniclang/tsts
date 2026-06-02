@@ -8,8 +8,5 @@
   "output": {
     "type": "library",
     "nativeAot": false
-  },
-  "tests": {
-    "entryPoint": "src/testsIndex.ts"
   }
 }

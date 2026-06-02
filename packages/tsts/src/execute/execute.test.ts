@@ -1,5 +1,5 @@
-import { attributes as A } from "@tsonic/core/lang.js";
-import { Assert, FactAttribute } from "xunit-types/Xunit.js";
+import test from "node:test";
+import assert from "node:assert/strict";
 
 import {
   createHost,
@@ -47,193 +47,6 @@ interface TestParsedCommandLine {
 
 interface TestBuildInfo {
   readonly name: string;
-}
-
-export class ExecuteBuildStatusTests {
-  error_and_pseudo_status_classification_matches_tsgo(): void {
-    Assert.True(new UpToDateStatus(UpToDateStatusType.ConfigFileNotFound).isError());
-    Assert.True(new UpToDateStatus(UpToDateStatusType.BuildErrors).isError());
-    Assert.True(new UpToDateStatus(UpToDateStatusType.UpstreamErrors).isError());
-    Assert.False(new UpToDateStatus(UpToDateStatusType.UpToDate).isError());
-
-    Assert.True(new UpToDateStatus(UpToDateStatusType.UpToDateWithUpstreamTypes).isPseudoBuild());
-    Assert.True(new UpToDateStatus(UpToDateStatusType.UpToDateWithInputFileText).isPseudoBuild());
-    Assert.False(new UpToDateStatus(UpToDateStatusType.InputFileNewer).isPseudoBuild());
-  }
-
-  oldest_output_name_uses_the_same_payload_precedence_as_tsgo(): void {
-    const byFileTime = new UpToDateStatus(
-      UpToDateStatusType.UpToDateWithUpstreamTypes,
-      new InputOutputFileAndTime(
-        new FileAndTime("src/a.ts", new Date(10)),
-        new FileAndTime("lib/a.d.ts", new Date(20)),
-        "tsconfig.tsbuildinfo",
-      ),
-    );
-    Assert.Equal("lib/a.d.ts", byFileTime.oldestOutputFileName());
-
-    const byName = new UpToDateStatus(
-      UpToDateStatusType.UpToDateWithInputFileText,
-      new InputOutputName("src/b.ts", "lib/b.js"),
-    );
-    Assert.Equal("lib/b.js", byName.oldestOutputFileName());
-
-    const byString = new UpToDateStatus(UpToDateStatusType.UpToDate, "lib/index.js");
-    Assert.Equal("lib/index.js", byString.oldestOutputFileName());
-  }
-
-  upstream_error_payload_is_available_on_upstream_error_status(): void {
-    const status = new UpToDateStatus(
-      UpToDateStatusType.UpstreamErrors,
-      new UpstreamErrors("../core/tsconfig.json", true),
-    );
-    const errors = status.upstreamErrors();
-    Assert.Equal("../core/tsconfig.json", errors.ref);
-    Assert.True(errors.refHasUpstreamErrors);
-  }
-}
-
-export class ExecuteParseCacheTests {
-  load_or_store_reuses_non_zero_entries(): void {
-    let parses = 0;
-    const cache = new ParseCache<string, string | undefined>();
-    const first = cache.loadOrStore("a", () => {
-      parses += 1;
-      return "A";
-    }, false);
-    const second = cache.loadOrStore("a", () => {
-      parses += 1;
-      return "B";
-    }, false);
-
-    Assert.Equal("A", first);
-    Assert.Equal("A", second);
-    Assert.Equal(1, parses);
-  }
-
-  load_or_store_reparses_zero_entries_unless_zero_is_allowed(): void {
-    let parses = 0;
-    const cache = new ParseCache<string, string | undefined>();
-    cache.loadOrStore("a", () => {
-      parses += 1;
-      return undefined;
-    }, false);
-    const reparsed = cache.loadOrStore("a", () => {
-      parses += 1;
-      return "A";
-    }, false);
-
-    Assert.Equal("A", reparsed);
-    Assert.Equal(2, parses);
-
-    cache.store("b", undefined);
-    const zero = cache.loadOrStore("b", () => "B", true);
-    Assert.Null(zero);
-  }
-
-  delete_and_reset_match_tsgo_cache_lifecycle(): void {
-    const cache = new ParseCache<string, number>((value) => value === 0);
-    cache.store("a", 1);
-    cache.store("b", 2);
-    Assert.Equal(2, cache.size);
-    cache.delete("a");
-    Assert.Equal(1, cache.size);
-    cache.reset();
-    Assert.Equal(0, cache.size);
-  }
-}
-
-export class ExecuteIncrementalTests {
-  reference_map_derives_reverse_references_lazily(): void {
-    const map = new ReferenceMap();
-    map.storeReferences("/src/a.ts", new Set(["/src/b.ts", "/src/c.ts"]));
-    map.storeReferences("/src/d.ts", new Set(["/src/b.ts"]));
-
-    const refs = map.getReferences("/src/a.ts");
-    Assert.True(refs.ok);
-    Assert.Equal<readonly string[]>(["/src/b.ts", "/src/c.ts"], [...refs.refs!]);
-    Assert.Equal<readonly string[]>(["/src/a.ts", "/src/d.ts"], [...map.getReferencedBy("/src/b.ts")]);
-    Assert.Equal<readonly string[]>([], [...map.getReferencedBy("/src/missing.ts")]);
-  }
-
-  reference_map_invalidates_reverse_index_when_edges_change(): void {
-    const map = new ReferenceMap();
-    map.storeReferences("/src/a.ts", new Set(["/src/b.ts"]));
-    Assert.Equal<readonly string[]>(["/src/a.ts"], [...map.getReferencedBy("/src/b.ts")]);
-
-    map.storeReferences("/src/a.ts", new Set(["/src/c.ts"]));
-    Assert.Equal<readonly string[]>([], [...map.getReferencedBy("/src/b.ts")]);
-    Assert.Equal<readonly string[]>(["/src/a.ts"], [...map.getReferencedBy("/src/c.ts")]);
-  }
-
-  incremental_host_reads_and_writes_file_mtimes_through_vfs(): void {
-    const fs = new MemoryFS();
-    fs.writeFile("/src/a.ts", "export const a = 1;");
-    const host = createHost({ fs: () => fs });
-    const nextTime = new Date(123456);
-    host.setMTime("/src/a.ts", nextTime);
-
-    Assert.Equal(nextTime.getTime(), host.getMTime("/src/a.ts")!.getTime());
-    Assert.Null(host.getMTime("/src/missing.ts"));
-  }
-
-  build_info_json_shapes_match_tsgo_compact_forms(): void {
-    Assert.Equal(1, new BuildInfoRoot(1).toJSON());
-    Assert.Equal<readonly number[]>([1, 3], new BuildInfoRoot(1, 3).toJSON() as readonly number[]);
-    Assert.Equal("src/index.ts", new BuildInfoRoot(0, 0, "src/index.ts").toJSON());
-    Assert.Equal(3, BuildInfoRoot.fromJSON([1, 3]).end);
-
-    const sameSignature = BuildInfoFileInfo.fromFileInfo({ version: "abc", signature: "abc" });
-    Assert.Equal("abc", sameSignature.toJSON());
-    Assert.True(sameSignature.hasSignature());
-    Assert.Equal("abc", sameSignature.getFileInfo().signature);
-
-    const noSignature = BuildInfoFileInfo.fromFileInfo({ version: "abc", signature: "" });
-    Assert.Equal("", noSignature.getFileInfo().signature);
-    Assert.Equal("abc", noSignature.getFileInfo().version);
-
-    Assert.Equal<readonly number[]>([2, 4], new BuildInfoReferenceMapEntry(2, 4).toJSON());
-    Assert.Equal(4, BuildInfoReferenceMapEntry.fromJSON([2, 4]).fileIdListId);
-    Assert.Equal<readonly unknown[]>([1, [{ code: 100 }]], new BuildInfoDiagnosticsOfFile(1, [{ code: 100 }]).toJSON());
-    Assert.Equal(1, BuildInfoSemanticDiagnostic.fromJSON(1).fileId);
-  }
-
-  build_info_pending_emit_and_signature_encoding_match_tsgo(): void {
-    Assert.Equal(1, new BuildInfoFilePendingEmit(1).toJSON());
-    Assert.Equal<readonly number[]>([1], new BuildInfoFilePendingEmit(1, FileEmitKind.Dts).toJSON() as readonly number[]);
-    Assert.Equal<readonly number[]>([1, FileEmitKind.Js], new BuildInfoFilePendingEmit(1, FileEmitKind.Js).toJSON() as readonly number[]);
-    Assert.Equal(FileEmitKind.Dts, BuildInfoFilePendingEmit.fromJSON([1]).emitKind);
-
-    Assert.Equal(1, new BuildInfoEmitSignature(1).toJSON());
-    Assert.Equal<readonly unknown[]>([1, "sig"], new BuildInfoEmitSignature(1, "sig").toJSON() as readonly unknown[]);
-    Assert.Equal<readonly unknown[]>([1, []], new BuildInfoEmitSignature(1, "", true, false).toJSON() as readonly unknown[]);
-    Assert.Equal<readonly unknown[]>([1, ["sig"]], new BuildInfoEmitSignature(1, "sig", false, true).toJSON() as readonly unknown[]);
-    Assert.True(new BuildInfoEmitSignature(1).noEmitSignature());
-    Assert.Equal("sig", BuildInfoEmitSignature.fromJSON([1, ["sig"]]).signature);
-    Assert.Equal<readonly number[]>([2, 1], new BuildInfoResolvedRoot(2, 1).toJSON());
-  }
-
-  build_info_root_reader_maps_roots_to_resolved_files(): void {
-    const fileInfo = BuildInfoFileInfo.fromFileInfo({ version: "v", signature: "v" });
-    const buildInfo = new BuildInfo({
-      version: "not-current",
-      root: [new BuildInfoRoot(1), new BuildInfoRoot(3), new BuildInfoRoot(0, 0, "generated.ts")],
-      fileNames: ["src/a.ts", "src/b.ts", "real/b.ts"],
-      fileInfos: [fileInfo, fileInfo, fileInfo],
-      resolvedRoot: [new BuildInfoResolvedRoot(3, 2)],
-    });
-
-    const reader = buildInfo.getBuildInfoRootInfoReader("/repo", true);
-    const direct = reader.getBuildInfoFileInfo("/repo/src/a.ts");
-    const resolved = reader.getBuildInfoFileInfo("/repo/src/b.ts");
-
-    Assert.False(buildInfo.isValidVersion());
-    Assert.True(buildInfo.isIncremental());
-    Assert.Equal("src/a.ts", buildInfo.fileName(1));
-    Assert.Equal("/repo/src/a.ts", direct.resolved);
-    Assert.Equal("/repo/real/b.ts", resolved.resolved);
-    Assert.Equal<readonly string[]>(["/repo/src/a.ts", "/repo/src/b.ts", "/repo/generated.ts"], [...reader.roots()]);
-  }
 }
 
 class StringWriter implements TextWriter {
@@ -288,210 +101,364 @@ class TestSystem {
   }
 }
 
-export class ExecuteBuildHostTests {
-  build_host_caches_declaration_and_json_source_files_only(): void {
-    const fs = new MemoryFS();
-    let sourceParses = 0;
-    const host = new BuildHost<TestSourceFile, TestParsedCommandLine, TestBuildInfo>(
-      {
-        now: () => new Date(0),
-        toPath: (fileName) => fileName,
-        getTask: () => undefined,
+test("error and pseudo status classification matches tsgo", () => {
+  assert.ok(new UpToDateStatus(UpToDateStatusType.ConfigFileNotFound).isError());
+  assert.ok(new UpToDateStatus(UpToDateStatusType.BuildErrors).isError());
+  assert.ok(new UpToDateStatus(UpToDateStatusType.UpstreamErrors).isError());
+  assert.ok(!new UpToDateStatus(UpToDateStatusType.UpToDate).isError());
+
+  assert.ok(new UpToDateStatus(UpToDateStatusType.UpToDateWithUpstreamTypes).isPseudoBuild());
+  assert.ok(new UpToDateStatus(UpToDateStatusType.UpToDateWithInputFileText).isPseudoBuild());
+  assert.ok(!new UpToDateStatus(UpToDateStatusType.InputFileNewer).isPseudoBuild());
+});
+
+test("oldest output name uses the same payload precedence as tsgo", () => {
+  const byFileTime = new UpToDateStatus(
+    UpToDateStatusType.UpToDateWithUpstreamTypes,
+    new InputOutputFileAndTime(
+      new FileAndTime("src/a.ts", new Date(10)),
+      new FileAndTime("lib/a.d.ts", new Date(20)),
+      "tsconfig.tsbuildinfo",
+    ),
+  );
+  assert.strictEqual(byFileTime.oldestOutputFileName(), "lib/a.d.ts");
+
+  const byName = new UpToDateStatus(
+    UpToDateStatusType.UpToDateWithInputFileText,
+    new InputOutputName("src/b.ts", "lib/b.js"),
+  );
+  assert.strictEqual(byName.oldestOutputFileName(), "lib/b.js");
+
+  const byString = new UpToDateStatus(UpToDateStatusType.UpToDate, "lib/index.js");
+  assert.strictEqual(byString.oldestOutputFileName(), "lib/index.js");
+});
+
+test("upstream error payload is available on upstream error status", () => {
+  const status = new UpToDateStatus(
+    UpToDateStatusType.UpstreamErrors,
+    new UpstreamErrors("../core/tsconfig.json", true),
+  );
+  const errors = status.upstreamErrors();
+  assert.strictEqual(errors.ref, "../core/tsconfig.json");
+  assert.ok(errors.refHasUpstreamErrors);
+});
+
+test("load or store reuses non zero entries", () => {
+  let parses = 0;
+  const cache = new ParseCache<string, string | undefined>();
+  const first = cache.loadOrStore("a", () => {
+    parses += 1;
+    return "A";
+  }, false);
+  const second = cache.loadOrStore("a", () => {
+    parses += 1;
+    return "B";
+  }, false);
+
+  assert.strictEqual(first, "A");
+  assert.strictEqual(second, "A");
+  assert.strictEqual(parses, 1);
+});
+
+test("load or store reparses zero entries unless zero is allowed", () => {
+  let parses = 0;
+  const cache = new ParseCache<string, string | undefined>();
+  cache.loadOrStore("a", () => {
+    parses += 1;
+    return undefined;
+  }, false);
+  const reparsed = cache.loadOrStore("a", () => {
+    parses += 1;
+    return "A";
+  }, false);
+
+  assert.strictEqual(reparsed, "A");
+  assert.strictEqual(parses, 2);
+
+  cache.store("b", undefined);
+  const zero = cache.loadOrStore("b", () => "B", true);
+  assert.strictEqual(zero, undefined);
+});
+
+test("delete and reset match tsgo cache lifecycle", () => {
+  const cache = new ParseCache<string, number>((value) => value === 0);
+  cache.store("a", 1);
+  cache.store("b", 2);
+  assert.strictEqual(cache.size, 2);
+  cache.delete("a");
+  assert.strictEqual(cache.size, 1);
+  cache.reset();
+  assert.strictEqual(cache.size, 0);
+});
+
+test("reference map derives reverse references lazily", () => {
+  const map = new ReferenceMap();
+  map.storeReferences("/src/a.ts", new Set(["/src/b.ts", "/src/c.ts"]));
+  map.storeReferences("/src/d.ts", new Set(["/src/b.ts"]));
+
+  const refs = map.getReferences("/src/a.ts");
+  assert.ok(refs.ok);
+  assert.deepStrictEqual([...refs.refs!], ["/src/b.ts", "/src/c.ts"]);
+  assert.deepStrictEqual([...map.getReferencedBy("/src/b.ts")], ["/src/a.ts", "/src/d.ts"]);
+  assert.deepStrictEqual([...map.getReferencedBy("/src/missing.ts")], []);
+});
+
+test("reference map invalidates reverse index when edges change", () => {
+  const map = new ReferenceMap();
+  map.storeReferences("/src/a.ts", new Set(["/src/b.ts"]));
+  assert.deepStrictEqual([...map.getReferencedBy("/src/b.ts")], ["/src/a.ts"]);
+
+  map.storeReferences("/src/a.ts", new Set(["/src/c.ts"]));
+  assert.deepStrictEqual([...map.getReferencedBy("/src/b.ts")], []);
+  assert.deepStrictEqual([...map.getReferencedBy("/src/c.ts")], ["/src/a.ts"]);
+});
+
+test("incremental host reads and writes file mtimes through vfs", () => {
+  const fs = new MemoryFS();
+  fs.writeFile("/src/a.ts", "export const a = 1;");
+  const host = createHost({ fs: () => fs });
+  const nextTime = new Date(123456);
+  host.setMTime("/src/a.ts", nextTime);
+
+  assert.strictEqual(host.getMTime("/src/a.ts")!.getTime(), nextTime.getTime());
+  assert.strictEqual(host.getMTime("/src/missing.ts"), undefined);
+});
+
+test("build info json shapes match tsgo compact forms", () => {
+  assert.strictEqual(new BuildInfoRoot(1).toJSON(), 1);
+  assert.deepStrictEqual(new BuildInfoRoot(1, 3).toJSON() as readonly number[], [1, 3]);
+  assert.strictEqual(new BuildInfoRoot(0, 0, "src/index.ts").toJSON(), "src/index.ts");
+  assert.strictEqual(BuildInfoRoot.fromJSON([1, 3]).end, 3);
+
+  const sameSignature = BuildInfoFileInfo.fromFileInfo({ version: "abc", signature: "abc" });
+  assert.strictEqual(sameSignature.toJSON(), "abc");
+  assert.ok(sameSignature.hasSignature());
+  assert.strictEqual(sameSignature.getFileInfo().signature, "abc");
+
+  const noSignature = BuildInfoFileInfo.fromFileInfo({ version: "abc", signature: "" });
+  assert.strictEqual(noSignature.getFileInfo().signature, "");
+  assert.strictEqual(noSignature.getFileInfo().version, "abc");
+
+  assert.deepStrictEqual(new BuildInfoReferenceMapEntry(2, 4).toJSON(), [2, 4]);
+  assert.strictEqual(BuildInfoReferenceMapEntry.fromJSON([2, 4]).fileIdListId, 4);
+  assert.deepStrictEqual(new BuildInfoDiagnosticsOfFile(1, [{ code: 100 }]).toJSON(), [1, [{ code: 100 }]]);
+  assert.strictEqual(BuildInfoSemanticDiagnostic.fromJSON(1).fileId, 1);
+});
+
+test("build info pending emit and signature encoding match tsgo", () => {
+  assert.strictEqual(new BuildInfoFilePendingEmit(1).toJSON(), 1);
+  assert.deepStrictEqual(new BuildInfoFilePendingEmit(1, FileEmitKind.Dts).toJSON() as readonly number[], [1]);
+  assert.deepStrictEqual(new BuildInfoFilePendingEmit(1, FileEmitKind.Js).toJSON() as readonly number[], [1, FileEmitKind.Js]);
+  assert.strictEqual(BuildInfoFilePendingEmit.fromJSON([1]).emitKind, FileEmitKind.Dts);
+
+  assert.strictEqual(new BuildInfoEmitSignature(1).toJSON(), 1);
+  assert.deepStrictEqual(new BuildInfoEmitSignature(1, "sig").toJSON() as readonly unknown[], [1, "sig"]);
+  assert.deepStrictEqual(new BuildInfoEmitSignature(1, "", true, false).toJSON() as readonly unknown[], [1, []]);
+  assert.deepStrictEqual(new BuildInfoEmitSignature(1, "sig", false, true).toJSON() as readonly unknown[], [1, ["sig"]]);
+  assert.ok(new BuildInfoEmitSignature(1).noEmitSignature());
+  assert.strictEqual(BuildInfoEmitSignature.fromJSON([1, ["sig"]]).signature, "sig");
+  assert.deepStrictEqual(new BuildInfoResolvedRoot(2, 1).toJSON(), [2, 1]);
+});
+
+test("build info root reader maps roots to resolved files", () => {
+  const fileInfo = BuildInfoFileInfo.fromFileInfo({ version: "v", signature: "v" });
+  const buildInfo = new BuildInfo({
+    version: "not-current",
+    root: [new BuildInfoRoot(1), new BuildInfoRoot(3), new BuildInfoRoot(0, 0, "generated.ts")],
+    fileNames: ["src/a.ts", "src/b.ts", "real/b.ts"],
+    fileInfos: [fileInfo, fileInfo, fileInfo],
+    resolvedRoot: [new BuildInfoResolvedRoot(3, 2)],
+  });
+
+  const reader = buildInfo.getBuildInfoRootInfoReader("/repo", true);
+  const direct = reader.getBuildInfoFileInfo("/repo/src/a.ts");
+  const resolved = reader.getBuildInfoFileInfo("/repo/src/b.ts");
+
+  assert.ok(!buildInfo.isValidVersion());
+  assert.ok(buildInfo.isIncremental());
+  assert.strictEqual(buildInfo.fileName(1), "src/a.ts");
+  assert.strictEqual(direct.resolved, "/repo/src/a.ts");
+  assert.strictEqual(resolved.resolved, "/repo/real/b.ts");
+  assert.deepStrictEqual([...reader.roots()], ["/repo/src/a.ts", "/repo/src/b.ts", "/repo/generated.ts"]);
+});
+
+test("build host caches declaration and json source files only", () => {
+  const fs = new MemoryFS();
+  let sourceParses = 0;
+  const host = new BuildHost<TestSourceFile, TestParsedCommandLine, TestBuildInfo>(
+    {
+      now: () => new Date(0),
+      toPath: (fileName) => fileName,
+      getTask: () => undefined,
+    },
+    {
+      fs: () => fs,
+      defaultLibraryPath: () => "/lib",
+      getCurrentDirectory: () => "/repo",
+      getSourceFile: (opts) => {
+        sourceParses += 1;
+        return { fileName: opts.fileName };
       },
-      {
-        fs: () => fs,
-        defaultLibraryPath: () => "/lib",
-        getCurrentDirectory: () => "/repo",
-        getSourceFile: (opts) => {
-          sourceParses += 1;
-          return { fileName: opts.fileName };
-        },
-        getResolvedProjectReference: () => undefined,
+      getResolvedProjectReference: () => undefined,
+    },
+  );
+
+  host.getSourceFile({ fileName: "/types/a.d.ts", path: "/types/a.d.ts" });
+  host.getSourceFile({ fileName: "/types/a.d.ts", path: "/types/a.d.ts" });
+  host.getSourceFile({ fileName: "/src/a.ts", path: "/src/a.ts" });
+  host.getSourceFile({ fileName: "/src/a.ts", path: "/src/a.ts" });
+
+  assert.strictEqual(sourceParses, 3);
+});
+
+test("build host tracks config parse time and build info lookup", () => {
+  const fs = new MemoryFS();
+  let now = 10;
+  const host = new BuildHost<TestSourceFile, TestParsedCommandLine, TestBuildInfo>(
+    {
+      now: () => {
+        now += 5;
+        return new Date(now);
       },
-    );
+      toPath: (fileName) => fileName.toLowerCase(),
+      getTask: () => ({
+        loadOrStoreBuildInfo: (_configPath: string, buildInfoFileName: string): TestBuildInfo => ({ name: buildInfoFileName }),
+      }),
+    },
+    {
+      fs: () => fs,
+      defaultLibraryPath: () => "/lib",
+      getCurrentDirectory: () => "/repo",
+      getSourceFile: () => undefined,
+      getResolvedProjectReference: (_fileName, path) => ({ configFileName: path }),
+    },
+  );
 
-    host.getSourceFile({ fileName: "/types/a.d.ts", path: "/types/a.d.ts" });
-    host.getSourceFile({ fileName: "/types/a.d.ts", path: "/types/a.d.ts" });
-    host.getSourceFile({ fileName: "/src/a.ts", path: "/src/a.ts" });
-    host.getSourceFile({ fileName: "/src/a.ts", path: "/src/a.ts" });
+  const resolved = host.getResolvedProjectReference("/Repo/Tsconfig.json", "/repo/tsconfig.json");
+  const buildInfo = host.readBuildInfo({ configFileName: "/Repo/Tsconfig.json" }, ".tsbuildinfo");
 
-    Assert.Equal(3, sourceParses);
-  }
+  assert.strictEqual(resolved!.configFileName, "/repo/tsconfig.json");
+  assert.strictEqual(host.getConfigTime("/repo/tsconfig.json"), 5);
+  assert.strictEqual(buildInfo!.name, ".tsbuildinfo");
+});
 
-  build_host_tracks_config_parse_time_and_build_info_lookup(): void {
-    const fs = new MemoryFS();
-    let now = 10;
-    const host = new BuildHost<TestSourceFile, TestParsedCommandLine, TestBuildInfo>(
-      {
-        now: () => {
-          now += 5;
-          return new Date(now);
-        },
-        toPath: (fileName) => fileName.toLowerCase(),
-        getTask: () => ({
-          loadOrStoreBuildInfo: (_configPath: string, buildInfoFileName: string): TestBuildInfo => ({ name: buildInfoFileName }),
-        }),
-      },
-      {
-        fs: () => fs,
-        defaultLibraryPath: () => "/lib",
-        getCurrentDirectory: () => "/repo",
-        getSourceFile: () => undefined,
-        getResolvedProjectReference: (_fileName, path) => ({ configFileName: path }),
-      },
-    );
+test("extended config cache parses each path once", () => {
+  let parses = 0;
+  const cache = new ExtendedConfigCache((fileName, path) => {
+    parses += 1;
+    return { configFileName: fileName, path, value: "parsed" };
+  });
 
-    const resolved = host.getResolvedProjectReference("/Repo/Tsconfig.json", "/repo/tsconfig.json");
-    const buildInfo = host.readBuildInfo({ configFileName: "/Repo/Tsconfig.json" }, ".tsbuildinfo");
+  const host: ExtendedConfigHost = {};
+  const first = cache.getExtendedConfig("a.json", "/a.json", [], host);
+  const second = cache.getExtendedConfig("a.json", "/a.json", [], host);
 
-    Assert.Equal("/repo/tsconfig.json", resolved!.configFileName);
-    Assert.Equal(5, host.getConfigTime("/repo/tsconfig.json"));
-    Assert.Equal(".tsbuildinfo", buildInfo!.name);
-  }
-}
+  assert.strictEqual(first, second);
+  assert.strictEqual(parses, 1);
+  assert.strictEqual(cache.size, 1);
+});
 
-export class ExecuteTscSupportTests {
-  extended_config_cache_parses_each_path_once(): void {
-    let parses = 0;
-    const cache = new ExtendedConfigCache((fileName, path) => {
-      parses += 1;
-      return { configFileName: fileName, path, value: "parsed" };
-    });
+test("pretty detection matches environment precedence", () => {
+  const sys = new TestSystem();
+  sys.tty = true;
+  assert.ok(defaultIsPretty(sys));
+  sys.env.set("NO_COLOR", "1");
+  assert.ok(!defaultIsPretty(sys));
+  sys.env.delete("NO_COLOR");
+  sys.env.set("FORCE_COLOR", "1");
+  sys.tty = false;
+  assert.ok(defaultIsPretty(sys));
+});
 
-    const host: ExtendedConfigHost = {};
-    const first = cache.getExtendedConfig("a.json", "/a.json", [], host);
-    const second = cache.getExtendedConfig("a.json", "/a.json", [], host);
+test("color helpers follow tsgo ansi shapes", () => {
+  const plain = new Colors(false, false, false, false, false);
+  assert.strictEqual(plain.bold("x"), "x");
 
-    Assert.Same(first, second);
-    Assert.Equal(1, parses);
-    Assert.Equal(1, cache.size);
-  }
+  const colors = new Colors(true, false, false, false, true);
+  assert.strictEqual(colors.bold("x"), "\x1b[1mx\x1b[22m");
+  assert.strictEqual(colors.blue("x"), "\x1b[94mx\x1b[39m");
+  assert.strictEqual(colors.blueBackground("x"), "\x1B[48;5;68mx\x1B[39;49m");
 
-  pretty_detection_matches_environment_precedence(): void {
-    const sys = new TestSystem();
-    sys.tty = true;
-    Assert.True(defaultIsPretty(sys));
-    sys.env.set("NO_COLOR", "1");
-    Assert.False(defaultIsPretty(sys));
-    sys.env.delete("NO_COLOR");
-    sys.env.set("FORCE_COLOR", "1");
-    sys.tty = false;
-    Assert.True(defaultIsPretty(sys));
-  }
+  const windows = new Colors(true, true, false, false, false);
+  assert.strictEqual(windows.blue("x"), "\x1b[97mx\x1b[39m");
+});
 
-  color_helpers_follow_tsgo_ansi_shapes(): void {
-    const plain = new Colors(false, false, false, false, false);
-    Assert.Equal("x", plain.bold("x"));
+test("diagnostic reporters respect quiet pretty and summary options", () => {
+  const sys = new TestSystem();
+  const writer = new StringWriter();
+  const reportOptions: CompilerOptionsLike = { pretty: false };
+  const report = createDiagnosticReporter(sys, writer, reportOptions);
+  report({ message: "boom" });
+  assert.strictEqual(writer.text, "boom\n");
 
-    const colors = new Colors(true, false, false, false, true);
-    Assert.Equal("\x1b[1mx\x1b[22m", colors.bold("x"));
-    Assert.Equal("\x1b[94mx\x1b[39m", colors.blue("x"));
-    Assert.Equal("\x1B[48;5;68mx\x1B[39;49m", colors.blueBackground("x"));
+  const quietWriter = new StringWriter();
+  const quietOptions: CompilerOptionsLike = { quiet: true };
+  createDiagnosticReporter(sys, quietWriter, quietOptions)({ message: "hidden" });
+  assert.strictEqual(quietWriter.text, "");
 
-    const windows = new Colors(true, true, false, false, false);
-    Assert.Equal("\x1b[97mx\x1b[39m", windows.blue("x"));
-  }
+  const summaryWriter = new StringWriter();
+  const summaryOptions: CompilerOptionsLike = { pretty: true };
+  const summary = createReportErrorSummary(sys, summaryWriter, summaryOptions);
+  summary([{ message: "a" }, { message: "b" }]);
+  assert.strictEqual(summaryWriter.text, "Found 2 errors.\n");
 
-  diagnostic_reporters_respect_quiet_pretty_and_summary_options(): void {
-    const sys = new TestSystem();
-    const writer = new StringWriter();
-    const reportOptions: CompilerOptionsLike = { pretty: false };
-    const report = createDiagnosticReporter(sys, writer, reportOptions);
-    report({ message: "boom" });
-    Assert.Equal("boom\n", writer.text);
+  sys.env.set("FORCE_COLOR", "1");
+  const envColors = createColors(sys);
+  assert.ok(envColors.showColors);
+  assert.strictEqual(ExitStatus.Success, 0);
+});
 
-    const quietWriter = new StringWriter();
-    const quietOptions: CompilerOptionsLike = { quiet: true };
-    createDiagnosticReporter(sys, quietWriter, quietOptions)({ message: "hidden" });
-    Assert.Equal("", quietWriter.text);
+test("statistics report matches tsgo table shape", () => {
+  const stats = new Statistics();
+  stats.files = 3;
+  stats.lines = 40;
+  stats.identifiers = 20;
+  stats.symbols = 10;
+  stats.types = 8;
+  stats.instantiations = 2;
+  stats.memoryUsed = 2048;
+  stats.memoryAllocs = 17;
+  stats.compileTimes = {
+    configTime: 100,
+    parseTime: 200,
+    bindTime: 300,
+    totalTime: 600,
+  };
 
-    const summaryWriter = new StringWriter();
-    const summaryOptions: CompilerOptionsLike = { pretty: true };
-    const summary = createReportErrorSummary(sys, summaryWriter, summaryOptions);
-    summary([{ message: "a" }, { message: "b" }]);
-    Assert.Equal("Found 2 errors.\n", summaryWriter.text);
+  const writer = new StringWriter();
+  stats.report(writer);
 
-    sys.env.set("FORCE_COLOR", "1");
-    const envColors = createColors(sys);
-    Assert.True(envColors.showColors);
-    Assert.Equal(ExitStatus.Success, 0);
-  }
-}
+  assert.ok(writer.text.includes("Files:"));
+  assert.ok(writer.text.includes("3"));
+  assert.ok(writer.text.includes("Memory used:"));
+  assert.ok(writer.text.includes("2K"));
+  assert.ok(writer.text.includes("Config time:"));
+  assert.ok(writer.text.includes("0.100s"));
+  assert.ok(writer.text.includes("Total time:"));
+  assert.ok(writer.text.includes("0.600s"));
+});
 
-export class ExecuteStatisticsTests {
-  statistics_report_matches_tsgo_table_shape(): void {
-    const stats = new Statistics();
-    stats.files = 3;
-    stats.lines = 40;
-    stats.identifiers = 20;
-    stats.symbols = 10;
-    stats.types = 8;
-    stats.instantiations = 2;
-    stats.memoryUsed = 2048;
-    stats.memoryAllocs = 17;
-    stats.compileTimes = {
-      configTime: 100,
-      parseTime: 200,
-      bindTime: 300,
-      totalTime: 600,
-    };
+test("aggregate accumulates counts and compile times", () => {
+  const first = new Statistics();
+  first.files = 1;
+  first.lines = 10;
+  first.compileTimes = { parseTime: 100, checkTime: 200, totalTime: 300 };
 
-    const writer = new StringWriter();
-    stats.report(writer);
+  const second = new Statistics();
+  second.files = 2;
+  second.lines = 20;
+  second.compileTimes = { parseTime: 300, checkTime: 400, totalTime: 700 };
 
-    Assert.True(writer.text.includes("Files:"));
-    Assert.True(writer.text.includes("3"));
-    Assert.True(writer.text.includes("Memory used:"));
-    Assert.True(writer.text.includes("2K"));
-    Assert.True(writer.text.includes("Config time:"));
-    Assert.True(writer.text.includes("0.100s"));
-    Assert.True(writer.text.includes("Total time:"));
-    Assert.True(writer.text.includes("0.600s"));
-  }
+  const aggregate = new Statistics();
+  aggregate.aggregate(first);
+  aggregate.aggregate(second);
+  aggregate.setTotalTime(1000);
 
-  aggregate_accumulates_counts_and_compile_times(): void {
-    const first = new Statistics();
-    first.files = 1;
-    first.lines = 10;
-    first.compileTimes = { parseTime: 100, checkTime: 200, totalTime: 300 };
-
-    const second = new Statistics();
-    second.files = 2;
-    second.lines = 20;
-    second.compileTimes = { parseTime: 300, checkTime: 400, totalTime: 700 };
-
-    const aggregate = new Statistics();
-    aggregate.aggregate(first);
-    aggregate.aggregate(second);
-    aggregate.setTotalTime(1000);
-
-    Assert.True(aggregate.isAggregate);
-    Assert.Equal(3, aggregate.files);
-    Assert.Equal(30, aggregate.lines);
-    Assert.Equal(400, aggregate.compileTimes.parseTime);
-    Assert.Equal(600, aggregate.compileTimes.checkTime);
-    Assert.Equal(1000, aggregate.compileTimes.totalTime);
-    Assert.Equal("1.250s", formatDuration(1250));
-  }
-}
-
-A<ExecuteBuildStatusTests>().method((t) => t.error_and_pseudo_status_classification_matches_tsgo).add(FactAttribute);
-A<ExecuteBuildStatusTests>().method((t) => t.oldest_output_name_uses_the_same_payload_precedence_as_tsgo).add(FactAttribute);
-A<ExecuteBuildStatusTests>().method((t) => t.upstream_error_payload_is_available_on_upstream_error_status).add(FactAttribute);
-A<ExecuteParseCacheTests>().method((t) => t.load_or_store_reuses_non_zero_entries).add(FactAttribute);
-A<ExecuteParseCacheTests>().method((t) => t.load_or_store_reparses_zero_entries_unless_zero_is_allowed).add(FactAttribute);
-A<ExecuteParseCacheTests>().method((t) => t.delete_and_reset_match_tsgo_cache_lifecycle).add(FactAttribute);
-A<ExecuteIncrementalTests>().method((t) => t.reference_map_derives_reverse_references_lazily).add(FactAttribute);
-A<ExecuteIncrementalTests>().method((t) => t.reference_map_invalidates_reverse_index_when_edges_change).add(FactAttribute);
-A<ExecuteIncrementalTests>().method((t) => t.incremental_host_reads_and_writes_file_mtimes_through_vfs).add(FactAttribute);
-A<ExecuteIncrementalTests>().method((t) => t.build_info_json_shapes_match_tsgo_compact_forms).add(FactAttribute);
-A<ExecuteIncrementalTests>().method((t) => t.build_info_pending_emit_and_signature_encoding_match_tsgo).add(FactAttribute);
-A<ExecuteIncrementalTests>().method((t) => t.build_info_root_reader_maps_roots_to_resolved_files).add(FactAttribute);
-A<ExecuteBuildHostTests>().method((t) => t.build_host_caches_declaration_and_json_source_files_only).add(FactAttribute);
-A<ExecuteBuildHostTests>().method((t) => t.build_host_tracks_config_parse_time_and_build_info_lookup).add(FactAttribute);
-A<ExecuteTscSupportTests>().method((t) => t.extended_config_cache_parses_each_path_once).add(FactAttribute);
-A<ExecuteTscSupportTests>().method((t) => t.pretty_detection_matches_environment_precedence).add(FactAttribute);
-A<ExecuteTscSupportTests>().method((t) => t.color_helpers_follow_tsgo_ansi_shapes).add(FactAttribute);
-A<ExecuteTscSupportTests>().method((t) => t.diagnostic_reporters_respect_quiet_pretty_and_summary_options).add(FactAttribute);
-A<ExecuteStatisticsTests>().method((t) => t.statistics_report_matches_tsgo_table_shape).add(FactAttribute);
-A<ExecuteStatisticsTests>().method((t) => t.aggregate_accumulates_counts_and_compile_times).add(FactAttribute);
+  assert.ok(aggregate.isAggregate);
+  assert.strictEqual(aggregate.files, 3);
+  assert.strictEqual(aggregate.lines, 30);
+  assert.strictEqual(aggregate.compileTimes.parseTime, 400);
+  assert.strictEqual(aggregate.compileTimes.checkTime, 600);
+  assert.strictEqual(aggregate.compileTimes.totalTime, 1000);
+  assert.strictEqual(formatDuration(1250), "1.250s");
+});

@@ -30,9 +30,8 @@
 // with reScanGreaterThanToken. These divergence probes are grouped + commented as
 // "TSGO-DIVERGENCE (fails on current parser)".
 
-import { attributes as A } from "@tsonic/core/lang.js";
-import { Assert, FactAttribute } from "xunit-types/Xunit.js";
-import { Exception } from "@tsonic/dotnet/System.js";
+import test from "node:test";
+import assert from "node:assert/strict";
 
 import type { Expression, SourceFile, TypeNode } from "../ast/index.js";
 import {
@@ -96,1310 +95,1326 @@ import { parseSourceFile } from "./index.js";
 import { ScriptKind, getScriptKindFromFileName } from "../core/core.js";
 import { LanguageVariant } from "./utilities.js";
 
-export class ParserParityTests {
-  // ── Helpers ──────────────────────────────────────────────────────────────
-
-  // Returns the single ExpressionStatement's expression for `<expr>;` snippets.
-  #soleExpression(src: string): { sourceFile: SourceFile; expression: Expression } {
-    const sourceFile = parseSourceFile(src);
-    const statement = sourceFile.statements[0]!;
-    if (!isExpressionStatement(statement)) throw new Exception("Expected expression statement");
-    return { sourceFile, expression: statement.expression };
-  }
-
-  // Returns the single TypeAliasDeclaration's type for `type X=<type>;` snippets.
-  #soleType(src: string): { sourceFile: SourceFile; type: TypeNode } {
-    const sourceFile = parseSourceFile(src);
-    const statement = sourceFile.statements[0]!;
-    if (!isTypeAliasDeclaration(statement)) throw new Exception("Expected type alias declaration");
-    return { sourceFile, type: statement.type };
-  }
-
-  #raw(sourceFile: SourceFile, node: { pos: number; end: number }): string {
-    return sourceFile.text.slice(node.pos, node.end);
-  }
-
-  // ── Category 1: shift / relational operators ──────────────────────────────
-  // The scanner pre-combines `>>`/`>>>`/`>=`/etc., so operatorToken is synthesized
-  // ([-1,-1)); assert the BinaryExpression parent span + operand ranges + op KIND.
-
-  shift_right_shift_a_rsh_b(): void {
-    const { sourceFile, expression } = this.#soleExpression("a>>b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(Kind.BinaryExpression, expression.kind);
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(4, expression.end);
-    Assert.Equal("a>>b", this.#raw(sourceFile, expression));
-    Assert.Equal(expression.left.pos, expression.pos);
-    Assert.Equal(expression.right.end, expression.end);
-    Assert.Equal(Kind.GreaterThanGreaterThanToken, expression.operatorToken.kind);
-    if (!isIdentifier(expression.left)) throw new Exception("Expected left identifier");
-    Assert.Equal(0, expression.left.pos);
-    Assert.Equal(1, expression.left.end);
-    if (!isIdentifier(expression.right)) throw new Exception("Expected right identifier");
-    Assert.Equal(3, expression.right.pos);
-    Assert.Equal(4, expression.right.end);
-  }
-
-  shift_unsigned_right_shift_a_ursh_b(): void {
-    const { sourceFile, expression } = this.#soleExpression("a>>>b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(5, expression.end);
-    Assert.Equal("a>>>b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.GreaterThanGreaterThanGreaterThanToken, expression.operatorToken.kind);
-    Assert.Equal(4, expression.right.pos);
-    Assert.Equal(5, expression.right.end);
-  }
-
-  relational_greater_equals_a_ge_b(): void {
-    const { sourceFile, expression } = this.#soleExpression("a>=b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(4, expression.end);
-    Assert.Equal("a>=b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.GreaterThanEqualsToken, expression.operatorToken.kind);
-    Assert.Equal(3, expression.right.pos);
-    Assert.Equal(4, expression.right.end);
-  }
-
-  relational_greater_than_a_gt_b(): void {
-    const { sourceFile, expression } = this.#soleExpression("a>b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(3, expression.end);
-    Assert.Equal("a>b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.GreaterThanToken, expression.operatorToken.kind);
-    Assert.Equal(2, expression.right.pos);
-    Assert.Equal(3, expression.right.end);
-  }
-
-  assign_right_shift_a_rsh_eq_b(): void {
-    const { sourceFile, expression } = this.#soleExpression("a>>=b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(5, expression.end);
-    Assert.Equal("a>>=b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.GreaterThanGreaterThanEqualsToken, expression.operatorToken.kind);
-    Assert.Equal(4, expression.right.pos);
-    Assert.Equal(5, expression.right.end);
-  }
-
-  assign_unsigned_right_shift_a_ursh_eq_b(): void {
-    const { sourceFile, expression } = this.#soleExpression("a>>>=b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(6, expression.end);
-    Assert.Equal("a>>>=b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.GreaterThanGreaterThanGreaterThanEqualsToken, expression.operatorToken.kind);
-    Assert.Equal(5, expression.right.pos);
-    Assert.Equal(6, expression.right.end);
-  }
-
-  // ── Category 2: nested generic closers (TSGO-DIVERGENCE: fails on current parser)
-  // `type X = A<B<C>>;` — the inner B<C> end is off-by-one in the current pre-scan
-  // parser ([11,14) raw "B<C"). TSGO-CORRECT = [11,15) raw "B<C>". This probe FAILS
-  // against the current parser and FLIPS GREEN once 4b-swap fixes #expectGreaterThan.
-  nested_generic_double_closer_tsgo_correct(): void {
-    const { sourceFile, type } = this.#soleType("type X = A<B<C>>;");
-    if (!isTypeReferenceNode(type)) throw new Exception("Expected outer type reference");
-    // M3 4c: type.pos is the trivia-inclusive full-start = end of `=` (8); the
-    // leading space after `=` is the type's leading trivia, so #raw([8,16)) now
-    // includes it. end stays token-tight at 16.
-    Assert.Equal(8, type.pos);
-    Assert.Equal(16, type.end);
-    Assert.Equal(" A<B<C>>", this.#raw(sourceFile, type));
-    const inner = type.typeArguments![0]!;
-    if (!isTypeReferenceNode(inner)) throw new Exception("Expected inner type reference");
-    // TSGO-CORRECT: inner B<C> ends AFTER the first '>' (index 15), raw "B<C>".
-    Assert.Equal(11, inner.pos);
-    Assert.Equal(15, inner.end);
-    Assert.Equal("B<C>", this.#raw(sourceFile, inner));
-    const innermost = inner.typeArguments![0]!;
-    if (!isTypeReferenceNode(innermost)) throw new Exception("Expected innermost type reference");
-    Assert.Equal(13, innermost.pos);
-    Assert.Equal(14, innermost.end);
-    Assert.Equal("C", this.#raw(sourceFile, innermost));
-  }
-
-  // `type X=A<B<C<D>>>;` — triple closer. TSGO-CORRECT: mid B<C<D> = [9,16) "B<C<D>>",
-  // inner C<D> = [11,15) "C<D>". Current parser gives [9,14)/[11,14). (TSGO-DIVERGENCE)
-  nested_generic_triple_closer_tsgo_correct(): void {
-    const { sourceFile, type } = this.#soleType("type X=A<B<C<D>>>;");
-    if (!isTypeReferenceNode(type)) throw new Exception("Expected outer type reference");
-    Assert.Equal(7, type.pos);
-    Assert.Equal(17, type.end);
-    Assert.Equal("A<B<C<D>>>", this.#raw(sourceFile, type));
-    const mid = type.typeArguments![0]!;
-    if (!isTypeReferenceNode(mid)) throw new Exception("Expected mid type reference");
-    Assert.Equal(9, mid.pos);
-    Assert.Equal(16, mid.end);
-    Assert.Equal("B<C<D>>", this.#raw(sourceFile, mid));
-    const inner = mid.typeArguments![0]!;
-    if (!isTypeReferenceNode(inner)) throw new Exception("Expected inner type reference");
-    Assert.Equal(11, inner.pos);
-    Assert.Equal(15, inner.end);
-    Assert.Equal("C<D>", this.#raw(sourceFile, inner));
-    const innermost = inner.typeArguments![0]!;
-    if (!isTypeReferenceNode(innermost)) throw new Exception("Expected innermost type reference");
-    Assert.Equal(13, innermost.pos);
-    Assert.Equal(14, innermost.end);
-    Assert.Equal("D", this.#raw(sourceFile, innermost));
-  }
-
-  // ── Category 3: binary-precedence rungs ───────────────────────────────────
-  // One probe per rung; operator leaves are synthesized so we assert the parent
-  // BinaryExpression span (left.pos..right.end) + the operator KIND.
-
-  // TSGO-DIVERGENCE (fails on current parser): `**` (precedence 14) is the only
-  // RIGHT-associative binary operator, so `a**b**c` must parse as `a**(b**c)` with
-  // the inner `b**c` binary in the `.right` slot. The current parser's binary loop
-  // (parser.ts ~1519) uses `operatorPrecedence <= precedence` for ALL operators, so
-  // it parses `(a**b)**c` (left-assoc) instead. This probe encodes the TSGO-CORRECT
-  // right-assoc shape and FLIPS GREEN once the `**` right-associativity is fixed.
-  precedence_exponent_right_assoc(): void {
-    // `**` (14, right-assoc): a**b**c -> a**(b**c).
-    const { sourceFile, expression } = this.#soleExpression("a**b**c;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected outer binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(7, expression.end);
-    Assert.Equal("a**b**c", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.AsteriskAsteriskToken, expression.operatorToken.kind);
-    const right = expression.right;
-    if (!isBinaryExpression(right)) throw new Exception("Expected right-assoc inner binary");
-    Assert.Equal(3, right.pos);
-    Assert.Equal(7, right.end);
-    Assert.Equal("b**c", this.#raw(sourceFile, right));
-  }
-
-  precedence_multiplicative(): void {
-    // `*` (13).
-    const { sourceFile, expression } = this.#soleExpression("a*b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(3, expression.end);
-    Assert.Equal("a*b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.AsteriskToken, expression.operatorToken.kind);
-  }
-
-  precedence_additive(): void {
-    // `+` (12).
-    const { sourceFile, expression } = this.#soleExpression("a+b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(3, expression.end);
-    Assert.Equal("a+b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.PlusToken, expression.operatorToken.kind);
-  }
-
-  precedence_shift_left(): void {
-    // `<<` (11).
-    const { sourceFile, expression } = this.#soleExpression("a<<b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(4, expression.end);
-    Assert.Equal("a<<b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.LessThanLessThanToken, expression.operatorToken.kind);
-  }
-
-  precedence_relational_less_than(): void {
-    // `<` (10).
-    const { sourceFile, expression } = this.#soleExpression("a<b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(3, expression.end);
-    Assert.Equal("a<b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.LessThanToken, expression.operatorToken.kind);
-  }
-
-  precedence_relational_in(): void {
-    // `in` (10).
-    const { sourceFile, expression } = this.#soleExpression("a in b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(6, expression.end);
-    Assert.Equal("a in b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.InKeyword, expression.operatorToken.kind);
-  }
-
-  precedence_relational_instanceof(): void {
-    // `instanceof` (10).
-    const { sourceFile, expression } = this.#soleExpression("a instanceof b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(14, expression.end);
-    Assert.Equal("a instanceof b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.InstanceOfKeyword, expression.operatorToken.kind);
-  }
-
-  precedence_equality_loose(): void {
-    // `==` (9).
-    const { sourceFile, expression } = this.#soleExpression("a==b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(4, expression.end);
-    Assert.Equal("a==b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.EqualsEqualsToken, expression.operatorToken.kind);
-  }
-
-  precedence_equality_strict(): void {
-    // `===` (9).
-    const { sourceFile, expression } = this.#soleExpression("a===b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(5, expression.end);
-    Assert.Equal("a===b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.EqualsEqualsEqualsToken, expression.operatorToken.kind);
-  }
-
-  precedence_bitwise_and(): void {
-    // `&` (8).
-    const { sourceFile, expression } = this.#soleExpression("a&b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(3, expression.end);
-    Assert.Equal("a&b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.AmpersandToken, expression.operatorToken.kind);
-  }
-
-  precedence_bitwise_xor(): void {
-    // `^` (7).
-    const { sourceFile, expression } = this.#soleExpression("a^b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(3, expression.end);
-    Assert.Equal("a^b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.CaretToken, expression.operatorToken.kind);
-  }
-
-  precedence_bitwise_or(): void {
-    // `|` (6).
-    const { sourceFile, expression } = this.#soleExpression("a|b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(3, expression.end);
-    Assert.Equal("a|b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.BarToken, expression.operatorToken.kind);
-  }
-
-  precedence_logical_and(): void {
-    // `&&` (5).
-    const { sourceFile, expression } = this.#soleExpression("a&&b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(4, expression.end);
-    Assert.Equal("a&&b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.AmpersandAmpersandToken, expression.operatorToken.kind);
-  }
-
-  precedence_logical_or(): void {
-    // `||` (4).
-    const { sourceFile, expression } = this.#soleExpression("a||b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(4, expression.end);
-    Assert.Equal("a||b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.BarBarToken, expression.operatorToken.kind);
-  }
-
-  precedence_nullish_coalescing(): void {
-    // `??` (4).
-    const { sourceFile, expression } = this.#soleExpression("a??b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(4, expression.end);
-    Assert.Equal("a??b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.QuestionQuestionToken, expression.operatorToken.kind);
-  }
-
-  precedence_assignment(): void {
-    // assignment rung (3): `=` is FirstAssignment.
-    const { sourceFile, expression } = this.#soleExpression("a=b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(3, expression.end);
-    Assert.Equal("a=b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.EqualsToken, expression.operatorToken.kind);
-  }
-
-  precedence_compound_assignment(): void {
-    // compound assignment `+=` (3).
-    const { sourceFile, expression } = this.#soleExpression("a+=b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected binary expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(4, expression.end);
-    Assert.Equal("a+=b", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.PlusEqualsToken, expression.operatorToken.kind);
-  }
-
-  // ── Category 4: arrow vs parenthesized-expression disambiguation ───────────
-  // NOTE coverage gap: bare `(a,b);` has no sequence/comma-expression production, so
-  // after `a` the parser now RECORDS X_0_expected[1005] (')' expected) and recovers
-  // instead of throwing (Stage-3b throw->diagnostics flip). The corpus uses the arrow
-  // forms `((a,b)=>a)` and `((a):T=>a)` which DO parse; `(a,b)` is the recovery probe.
-
-  arrow_in_parens_two_params(): void {
-    const { sourceFile, expression } = this.#soleExpression("((a,b)=>a);");
-    if (!isParenthesizedExpression(expression)) throw new Exception("Expected parenthesized expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(10, expression.end);
-    const arrow = expression.expression;
-    if (!isArrowFunction(arrow)) throw new Exception("Expected arrow function");
-    Assert.Equal(1, arrow.pos);
-    Assert.Equal(9, arrow.end);
-    Assert.Equal("(a,b)=>a", this.#raw(sourceFile, arrow));
-    const paramA = arrow.parameters[0]!;
-    if (!isParameterDeclaration(paramA)) throw new Exception("Expected parameter a");
-    Assert.Equal(2, paramA.pos);
-    Assert.Equal(3, paramA.end);
-    const paramB = arrow.parameters[1]!;
-    if (!isParameterDeclaration(paramB)) throw new Exception("Expected parameter b");
-    Assert.Equal(4, paramB.pos);
-    Assert.Equal(5, paramB.end);
-    Assert.Equal(Kind.EqualsGreaterThanToken, arrow.equalsGreaterThanToken.kind);
-    const body = arrow.body;
-    if (!isIdentifier(body)) throw new Exception("Expected identifier body");
-    Assert.Equal(8, body.pos);
-    Assert.Equal(9, body.end);
-  }
-
-  arrow_in_parens_with_return_type(): void {
-    const { sourceFile, expression } = this.#soleExpression("((a):T=>a);");
-    if (!isParenthesizedExpression(expression)) throw new Exception("Expected parenthesized expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(10, expression.end);
-    const arrow = expression.expression;
-    if (!isArrowFunction(arrow)) throw new Exception("Expected arrow function");
-    Assert.Equal(1, arrow.pos);
-    Assert.Equal(9, arrow.end);
-    Assert.Equal("(a):T=>a", this.#raw(sourceFile, arrow));
-    const paramA = arrow.parameters[0]!;
-    if (!isParameterDeclaration(paramA)) throw new Exception("Expected parameter a");
-    Assert.Equal(2, paramA.pos);
-    Assert.Equal(3, paramA.end);
-    const returnType = arrow.type!;
-    if (!isTypeReferenceNode(returnType)) throw new Exception("Expected return type reference");
-    Assert.Equal(5, returnType.pos);
-    Assert.Equal(6, returnType.end);
-    Assert.Equal("T", this.#raw(sourceFile, returnType));
-    const body = arrow.body;
-    if (!isIdentifier(body)) throw new Exception("Expected identifier body");
-    Assert.Equal(8, body.pos);
-    Assert.Equal(9, body.end);
-  }
-
-  // Coverage gap: bare `(a,b);` (sequence/comma expression) is UNIMPLEMENTED. Stage-3b
-  // throw->diagnostics flip: the parser no longer throws — after `a` it RECORDS
-  // X_0_expected[1005] (')' expected, the comma is unexpected inside the parenthesized
-  // expression) and recovers. This probe pins that recovery (no throw, diagnostic
-  // recorded). It also serves as recovery probe #1 (recover_sequence_paren).
-  sequence_expression_is_known_gap(): void {
-    const sourceFile = parseSourceFile("(a,b);");
-    Assert.True(sourceFile.parseDiagnostics.length > 0, "(a,b) should record a parse diagnostic, not throw");
-    Assert.True(sourceFile.parseDiagnostics.some((d) => d.code === 1005), "expected X_0_expected (')' expected) at the comma");
-  }
-
-  // ── Category 5: call type-args vs relational ──────────────────────────────
-
-  call_with_type_arguments(): void {
-    // `x<T>(y)` -> CallExpression with one typeArgument (NOT relational).
-    const { sourceFile, expression } = this.#soleExpression("x<T>(y);");
-    if (!isCallExpression(expression)) throw new Exception("Expected call expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(7, expression.end);
-    Assert.Equal("x<T>(y)", this.#raw(sourceFile, expression));
-    const callee = expression.expression;
-    if (!isIdentifier(callee)) throw new Exception("Expected identifier callee");
-    Assert.Equal(0, callee.pos);
-    Assert.Equal(1, callee.end);
-    const typeArg = expression.typeArguments![0]!;
-    if (!isTypeReferenceNode(typeArg)) throw new Exception("Expected type argument reference");
-    Assert.Equal(2, typeArg.pos);
-    Assert.Equal(3, typeArg.end);
-    Assert.Equal("T", this.#raw(sourceFile, typeArg));
-    const arg = expression.arguments[0]!;
-    if (!isIdentifier(arg)) throw new Exception("Expected identifier argument");
-    Assert.Equal(5, arg.pos);
-    Assert.Equal(6, arg.end);
-  }
-
-  paren_relational_not_type_args(): void {
-    // `(x<y)` -> ParenExpr wrapping a relational BinaryExpression (NOT call/type-args).
-    const { sourceFile, expression } = this.#soleExpression("(x<y);");
-    if (!isParenthesizedExpression(expression)) throw new Exception("Expected parenthesized expression");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(5, expression.end);
-    const binary = expression.expression;
-    if (!isBinaryExpression(binary)) throw new Exception("Expected relational binary expression");
-    Assert.Equal(1, binary.pos);
-    Assert.Equal(4, binary.end);
-    Assert.Equal("x<y", this.#raw(sourceFile, binary));
-    Assert.Equal(Kind.LessThanToken, binary.operatorToken.kind);
-    Assert.Equal(1, binary.left.pos);
-    Assert.Equal(2, binary.left.end);
-    Assert.Equal(3, binary.right.pos);
-    Assert.Equal(4, binary.right.end);
-  }
-
-  // ── Category 6: infer constraints ─────────────────────────────────────────
-
-  infer_with_extends_constraint(): void {
-    const { sourceFile, type } = this.#soleType("type T=A extends infer U extends string?U:never;");
-    if (!isConditionalTypeNode(type)) throw new Exception("Expected conditional type");
-    Assert.Equal(7, type.pos);
-    Assert.Equal(47, type.end);
-    Assert.Equal("A extends infer U extends string?U:never", this.#raw(sourceFile, type));
-    const checkType = type.checkType;
-    if (!isTypeReferenceNode(checkType)) throw new Exception("Expected check type reference");
-    Assert.Equal(7, checkType.pos);
-    Assert.Equal(8, checkType.end);
-    const extendsType = type.extendsType;
-    if (!isInferTypeNode(extendsType)) throw new Exception("Expected infer extends type");
-    // M3 4c: extendsType.pos is its full-start = end of the first `extends` (16);
-    // the space after `extends` is its leading trivia, so #raw includes it. end
-    // stays token-tight at 39.
-    Assert.Equal(16, extendsType.pos);
-    Assert.Equal(39, extendsType.end);
-    Assert.Equal(" infer U extends string", this.#raw(sourceFile, extendsType));
-    const tp = extendsType.typeParameter;
-    if (!isTypeParameterDeclaration(tp)) throw new Exception("Expected type parameter");
-    // M3 4c: tp `U`'s pos is its full-start = end of `infer` (22); the space is
-    // its leading trivia, so #raw includes it. end stays token-tight at 39.
-    Assert.Equal(22, tp.pos);
-    Assert.Equal(39, tp.end);
-    Assert.Equal(" U extends string", this.#raw(sourceFile, tp));
-    const constraint = tp.constraint!;
-    if (!isKeywordTypeNode(constraint)) throw new Exception("Expected keyword constraint");
-    Assert.Equal(Kind.StringKeyword, constraint.kind);
-    // M3 4c: constraint `string`'s pos is its full-start = end of the second
-    // `extends` (32); the space is its leading trivia. end stays token-tight at 39.
-    Assert.Equal(32, constraint.pos);
-    Assert.Equal(39, constraint.end);
-    const trueType = type.trueType;
-    if (!isTypeReferenceNode(trueType)) throw new Exception("Expected true type reference");
-    Assert.Equal(40, trueType.pos);
-    Assert.Equal(41, trueType.end);
-    const falseType = type.falseType;
-    if (!isKeywordTypeNode(falseType)) throw new Exception("Expected never false type");
-    Assert.Equal(Kind.NeverKeyword, falseType.kind);
-    Assert.Equal(42, falseType.pos);
-    Assert.Equal(47, falseType.end);
-  }
-
-  // ── Category 7: function + constructor types ──────────────────────────────
-
-  function_type_with_param_and_void_return(): void {
-    const { sourceFile, type } = this.#soleType("type F=(a:number)=>void;");
-    if (!isFunctionTypeNode(type)) throw new Exception("Expected function type");
-    Assert.Equal(7, type.pos);
-    Assert.Equal(23, type.end);
-    Assert.Equal("(a:number)=>void", this.#raw(sourceFile, type));
-    const param = type.parameters[0]!;
-    if (!isParameterDeclaration(param)) throw new Exception("Expected parameter");
-    Assert.Equal(8, param.pos);
-    Assert.Equal(16, param.end);
-    Assert.Equal("a:number", this.#raw(sourceFile, param));
-    const paramType = param.type!;
-    if (!isKeywordTypeNode(paramType)) throw new Exception("Expected number param type");
-    Assert.Equal(Kind.NumberKeyword, paramType.kind);
-    Assert.Equal(10, paramType.pos);
-    Assert.Equal(16, paramType.end);
-    const returnType = type.type!;
-    if (!isKeywordTypeNode(returnType)) throw new Exception("Expected void return type");
-    Assert.Equal(Kind.VoidKeyword, returnType.kind);
-    Assert.Equal(19, returnType.pos);
-    Assert.Equal(23, returnType.end);
-  }
-
-  constructor_type_no_params(): void {
-    const { sourceFile, type } = this.#soleType("type C=new()=>X;");
-    if (!isConstructorTypeNode(type)) throw new Exception("Expected constructor type");
-    Assert.Equal(7, type.pos);
-    Assert.Equal(15, type.end);
-    Assert.Equal("new()=>X", this.#raw(sourceFile, type));
-    const returnType = type.type!;
-    if (!isTypeReferenceNode(returnType)) throw new Exception("Expected X return type reference");
-    Assert.Equal(14, returnType.pos);
-    Assert.Equal(15, returnType.end);
-    Assert.Equal("X", this.#raw(sourceFile, returnType));
-  }
-
-  // ── Category 8: mapped types ──────────────────────────────────────────────
-
-  mapped_type_keyof_indexed_access(): void {
-    const { sourceFile, type } = this.#soleType("type M={[K in keyof T]:T[K]};");
-    if (!isMappedTypeNode(type)) throw new Exception("Expected mapped type");
-    Assert.Equal(7, type.pos);
-    Assert.Equal(28, type.end);
-    Assert.Equal("{[K in keyof T]:T[K]}", this.#raw(sourceFile, type));
-    const tp = type.typeParameter;
-    if (!isTypeParameterDeclaration(tp)) throw new Exception("Expected mapped type parameter");
-    Assert.Equal(9, tp.pos);
-    Assert.Equal(21, tp.end);
-    Assert.Equal("K in keyof T", this.#raw(sourceFile, tp));
-    const constraint = tp.constraint!;
-    if (!isTypeOperatorNode(constraint)) throw new Exception("Expected keyof type operator constraint");
-    // M3 4c: constraint.pos is its full-start = end of `in` (13); the space after
-    // `in` is its leading trivia, so #raw includes it. end stays token-tight at 21.
-    Assert.Equal(13, constraint.pos);
-    Assert.Equal(21, constraint.end);
-    Assert.Equal(" keyof T", this.#raw(sourceFile, constraint));
-    const valueType = type.type!;
-    if (!isIndexedAccessTypeNode(valueType)) throw new Exception("Expected indexed access value type");
-    Assert.Equal(23, valueType.pos);
-    Assert.Equal(27, valueType.end);
-    Assert.Equal("T[K]", this.#raw(sourceFile, valueType));
-    const objectType = valueType.objectType;
-    if (!isTypeReferenceNode(objectType)) throw new Exception("Expected object type reference");
-    Assert.Equal(23, objectType.pos);
-    Assert.Equal(24, objectType.end);
-    const indexType = valueType.indexType;
-    if (!isTypeReferenceNode(indexType)) throw new Exception("Expected index type reference");
-    Assert.Equal(25, indexType.pos);
-    Assert.Equal(26, indexType.end);
-  }
-
-  // ── Category 9: named tuples ──────────────────────────────────────────────
-
-  named_tuple_with_optional_member(): void {
-    const { sourceFile, type } = this.#soleType("type T=[a:number,b?:string];");
-    if (!isTupleTypeNode(type)) throw new Exception("Expected tuple type");
-    Assert.Equal(7, type.pos);
-    Assert.Equal(27, type.end);
-    Assert.Equal("[a:number,b?:string]", this.#raw(sourceFile, type));
-    const first = type.elements[0]!;
-    if (!isNamedTupleMember(first)) throw new Exception("Expected first named tuple member");
-    Assert.Equal(8, first.pos);
-    Assert.Equal(16, first.end);
-    Assert.Equal("a:number", this.#raw(sourceFile, first));
-    if (!isIdentifier(first.name)) throw new Exception("Expected first member name");
-    Assert.Equal(8, first.name.pos);
-    Assert.Equal(9, first.name.end);
-    if (!isKeywordTypeNode(first.type)) throw new Exception("Expected first member number type");
-    Assert.Equal(Kind.NumberKeyword, first.type.kind);
-    Assert.Equal(10, first.type.pos);
-    Assert.Equal(16, first.type.end);
-    const second = type.elements[1]!;
-    if (!isNamedTupleMember(second)) throw new Exception("Expected second named tuple member");
-    Assert.Equal(17, second.pos);
-    Assert.Equal(26, second.end);
-    Assert.Equal("b?:string", this.#raw(sourceFile, second));
-    Assert.Equal(Kind.QuestionToken, second.questionToken!.kind);
-    if (!isKeywordTypeNode(second.type)) throw new Exception("Expected second member string type");
-    Assert.Equal(Kind.StringKeyword, second.type.kind);
-    Assert.Equal(20, second.type.pos);
-    Assert.Equal(26, second.type.end);
-  }
-
-  // ── Category 10: index signatures ─────────────────────────────────────────
-
-  index_signature_in_type_literal(): void {
-    const { sourceFile, type } = this.#soleType("type D={[k:string]:number};");
-    if (!isTypeLiteralNode(type)) throw new Exception("Expected type literal");
-    Assert.Equal(7, type.pos);
-    Assert.Equal(26, type.end);
-    const member = type.members[0]!;
-    if (!isIndexSignatureDeclaration(member)) throw new Exception("Expected index signature");
-    Assert.Equal(8, member.pos);
-    Assert.Equal(25, member.end);
-    Assert.Equal("[k:string]:number", this.#raw(sourceFile, member));
-    const param = member.parameters[0]!;
-    if (!isParameterDeclaration(param)) throw new Exception("Expected index parameter");
-    Assert.Equal(9, param.pos);
-    Assert.Equal(17, param.end);
-    Assert.Equal("k:string", this.#raw(sourceFile, param));
-    if (!isKeywordTypeNode(param.type!)) throw new Exception("Expected string key type");
-    Assert.Equal(Kind.StringKeyword, param.type!.kind);
-    Assert.Equal(11, param.type!.pos);
-    Assert.Equal(17, param.type!.end);
-    const valueType = member.type!;
-    if (!isKeywordTypeNode(valueType)) throw new Exception("Expected number value type");
-    Assert.Equal(Kind.NumberKeyword, valueType.kind);
-    Assert.Equal(19, valueType.pos);
-    Assert.Equal(25, valueType.end);
-  }
-
-  // ── Category 11: template literal expression ──────────────────────────────
-
-  template_expression_head_span_tail(): void {
-    const { sourceFile, expression } = this.#soleExpression("x=`a${b}c`;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected assignment binary");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(10, expression.end);
-    Assert.Equal(Kind.EqualsToken, expression.operatorToken.kind);
-    const template = expression.right;
-    if (!isTemplateExpression(template)) throw new Exception("Expected template expression");
-    Assert.Equal(2, template.pos);
-    Assert.Equal(10, template.end);
-    Assert.Equal("`a${b}c`", this.#raw(sourceFile, template));
-    Assert.Equal(Kind.TemplateHead, template.head.kind);
-    Assert.Equal(2, template.head.pos);
-    Assert.Equal(6, template.head.end);
-    Assert.Equal("`a${", this.#raw(sourceFile, template.head));
-    const span = template.templateSpans[0]!;
-    if (!isTemplateSpan(span)) throw new Exception("Expected template span");
-    Assert.Equal(6, span.pos);
-    Assert.Equal(10, span.end);
-    Assert.Equal("b}c`", this.#raw(sourceFile, span));
-    if (!isIdentifier(span.expression)) throw new Exception("Expected span expression identifier");
-    Assert.Equal(6, span.expression.pos);
-    Assert.Equal(7, span.expression.end);
-    Assert.Equal(Kind.TemplateTail, span.literal.kind);
-    Assert.Equal(7, span.literal.pos);
-    Assert.Equal(10, span.literal.end);
-    Assert.Equal("}c`", this.#raw(sourceFile, span.literal));
-  }
-
-  // ── Category 12: template literal type ────────────────────────────────────
-
-  template_literal_type_head_span_tail(): void {
-    const { sourceFile, type } = this.#soleType("type T=`a${B}c`;");
-    if (!isTemplateLiteralTypeNode(type)) throw new Exception("Expected template literal type");
-    Assert.Equal(7, type.pos);
-    Assert.Equal(15, type.end);
-    Assert.Equal("`a${B}c`", this.#raw(sourceFile, type));
-    Assert.Equal(Kind.TemplateHead, type.head.kind);
-    Assert.Equal(7, type.head.pos);
-    Assert.Equal(11, type.head.end);
-    Assert.Equal("`a${", this.#raw(sourceFile, type.head));
-    const span = type.templateSpans[0]!;
-    if (!isTemplateLiteralTypeSpan(span)) throw new Exception("Expected template literal type span");
-    Assert.Equal(11, span.pos);
-    Assert.Equal(15, span.end);
-    Assert.Equal("B}c`", this.#raw(sourceFile, span));
-    if (!isTypeReferenceNode(span.type)) throw new Exception("Expected span type reference");
-    Assert.Equal(11, span.type.pos);
-    Assert.Equal(12, span.type.end);
-    Assert.Equal(Kind.TemplateTail, span.literal.kind);
-    Assert.Equal(12, span.literal.pos);
-    Assert.Equal(15, span.literal.end);
-    Assert.Equal("}c`", this.#raw(sourceFile, span.literal));
-  }
-
-  // ── Category 13a: regex vs divide ─────────────────────────────────────────
-
-  regex_literal_after_assignment(): void {
-    const { sourceFile, expression } = this.#soleExpression("x=/ab+/g;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected assignment binary");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(8, expression.end);
-    Assert.Equal(Kind.EqualsToken, expression.operatorToken.kind);
-    const regex = expression.right;
-    if (!isRegularExpressionLiteral(regex)) throw new Exception("Expected regex literal");
-    Assert.Equal(2, regex.pos);
-    Assert.Equal(8, regex.end);
-    Assert.Equal("/ab+/g", this.#raw(sourceFile, regex));
-  }
-
-  divide_not_regex(): void {
-    const { sourceFile, expression } = this.#soleExpression("x=a/b;");
-    if (!isBinaryExpression(expression)) throw new Exception("Expected outer assignment binary");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(5, expression.end);
-    Assert.Equal(Kind.EqualsToken, expression.operatorToken.kind);
-    const inner = expression.right;
-    if (!isBinaryExpression(inner)) throw new Exception("Expected inner divide binary");
-    Assert.Equal(2, inner.pos);
-    Assert.Equal(5, inner.end);
-    Assert.Equal("a/b", this.#raw(sourceFile, inner));
-    Assert.Equal(Kind.SlashToken, inner.operatorToken.kind);
-    Assert.Equal(2, inner.left.pos);
-    Assert.Equal(3, inner.left.end);
-    Assert.Equal(4, inner.right.pos);
-    Assert.Equal(5, inner.right.end);
-  }
-
-  // ── Category 13b: decorators ──────────────────────────────────────────────
-
-  decorator_identifier_on_class(): void {
-    const sourceFile = parseSourceFile("@dec class C{}");
-    const statement = sourceFile.statements[0]!;
-    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
-    Assert.Equal(0, statement.pos);
-    Assert.Equal(14, statement.end);
-    const decorator = statement.modifiers![0]!;
-    if (!isDecorator(decorator)) throw new Exception("Expected decorator");
-    Assert.Equal(0, decorator.pos);
-    Assert.Equal(4, decorator.end);
-    Assert.Equal("@dec", this.#raw(sourceFile, decorator));
-    const expression = decorator.expression;
-    if (!isIdentifier(expression)) throw new Exception("Expected identifier decorator expression");
-    Assert.Equal(1, expression.pos);
-    Assert.Equal(4, expression.end);
-    Assert.Equal("dec", this.#raw(sourceFile, expression));
-    const name = statement.name!;
-    if (!isIdentifier(name)) throw new Exception("Expected class name identifier");
-    // M3 4c: the class name `C`'s pos is its full-start = end of `class` (10); the
-    // space after `class` is its leading trivia. end stays token-tight at 12.
-    Assert.Equal(10, name.pos);
-    Assert.Equal(12, name.end);
-  }
-
-  decorator_property_access_on_class(): void {
-    const sourceFile = parseSourceFile("@ns.x class C{}");
-    const statement = sourceFile.statements[0]!;
-    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
-    const decorator = statement.modifiers![0]!;
-    if (!isDecorator(decorator)) throw new Exception("Expected decorator");
-    Assert.Equal(0, decorator.pos);
-    Assert.Equal(5, decorator.end);
-    Assert.Equal("@ns.x", this.#raw(sourceFile, decorator));
-    const expression = decorator.expression;
-    if (!isPropertyAccessExpression(expression)) throw new Exception("Expected property access decorator expression");
-    Assert.Equal(1, expression.pos);
-    Assert.Equal(5, expression.end);
-    Assert.Equal("ns.x", this.#raw(sourceFile, expression));
-  }
-
-  decorator_call_on_class(): void {
-    const sourceFile = parseSourceFile("@dec() class C{}");
-    const statement = sourceFile.statements[0]!;
-    if (!isClassDeclaration(statement)) throw new Exception("Expected class declaration");
-    const decorator = statement.modifiers![0]!;
-    if (!isDecorator(decorator)) throw new Exception("Expected decorator");
-    Assert.Equal(0, decorator.pos);
-    Assert.Equal(6, decorator.end);
-    Assert.Equal("@dec()", this.#raw(sourceFile, decorator));
-    const expression = decorator.expression;
-    if (!isCallExpression(expression)) throw new Exception("Expected call decorator expression");
-    Assert.Equal(1, expression.pos);
-    Assert.Equal(6, expression.end);
-    Assert.Equal("dec()", this.#raw(sourceFile, expression));
-  }
-
-  // ── Extra: already-supported type forms (lock ranges) ─────────────────────
-
-  optional_type_in_tuple(): void {
-    const { sourceFile, type } = this.#soleType("type T=[number?];");
-    if (!isTupleTypeNode(type)) throw new Exception("Expected tuple type");
-    const element = type.elements[0]!;
-    if (!isOptionalTypeNode(element)) throw new Exception("Expected optional type");
-    Assert.Equal(8, element.pos);
-    Assert.Equal(15, element.end);
-    Assert.Equal("number?", this.#raw(sourceFile, element));
-    if (!isKeywordTypeNode(element.type)) throw new Exception("Expected number element type");
-    Assert.Equal(Kind.NumberKeyword, element.type.kind);
-    Assert.Equal(8, element.type.pos);
-    Assert.Equal(14, element.type.end);
-  }
-
-  rest_type_in_tuple(): void {
-    const { sourceFile, type } = this.#soleType("type T=[...number[]];");
-    if (!isTupleTypeNode(type)) throw new Exception("Expected tuple type");
-    const element = type.elements[0]!;
-    if (!isRestTypeNode(element)) throw new Exception("Expected rest type");
-    Assert.Equal(8, element.pos);
-    Assert.Equal(19, element.end);
-    Assert.Equal("...number[]", this.#raw(sourceFile, element));
-    if (!isArrayTypeNode(element.type)) throw new Exception("Expected array element type");
-    Assert.Equal(11, element.type.pos);
-    Assert.Equal(19, element.type.end);
-    Assert.Equal("number[]", this.#raw(sourceFile, element.type));
-  }
-
-  import_type_with_qualifier(): void {
-    const { sourceFile, type } = this.#soleType("type T=import(\"m\").X;");
-    if (!isImportTypeNode(type)) throw new Exception("Expected import type");
-    Assert.Equal(7, type.pos);
-    Assert.Equal(20, type.end);
-    Assert.Equal("import(\"m\").X", this.#raw(sourceFile, type));
-    const argument = type.argument;
-    if (!isLiteralTypeNode(argument)) throw new Exception("Expected literal module specifier");
-    Assert.Equal(14, argument.pos);
-    Assert.Equal(17, argument.end);
-    if (!isStringLiteral(argument.literal)) throw new Exception("Expected string literal in module specifier");
-    Assert.Equal("\"m\"", this.#raw(sourceFile, argument.literal));
-    const qualifier = type.qualifier!;
-    if (!isIdentifier(qualifier)) throw new Exception("Expected identifier qualifier");
-    Assert.Equal(19, qualifier.pos);
-    Assert.Equal(20, qualifier.end);
-    Assert.Equal("X", this.#raw(sourceFile, qualifier));
-  }
-
-  // ── M3 Stage-5 pre-wave: scriptKind/languageVariant plumbing ────────────────
-  // These probes prove ONLY the plumbing (ScriptKind -> getLanguageVariant ->
-  // parser/scanner variant + SourceFile stamp), NOT JSX parsing (5a adds that).
-
-  // (a) A .ts/ScriptKindTS parse stays Standard, and `let x = <T>y;` now parses to a
-  // TypeAssertionExpression. CAPTURE-CORRECTION: pre-5a this probe asserted the (then-
-  // unimplemented) LessThanToken arm fell through to Expression_expected[1109] + a
-  // BinaryExpression. M3 Stage 5a implements parseTypeAssertion (tsgo 5117-5125), the
-  // Standard-variant arm of the fused LessThanToken handling, so `< Type > expr` is now
-  // the faithful TypeAssertion. No diagnostics; the initializer is a TypeAssertion.
-  prewave_ts_is_standard_variant_unchanged(): void {
-    const sourceFile = parseSourceFile("let x = <T>y;", { fileName: "a.ts" });
-    Assert.Equal(LanguageVariant.Standard, sourceFile.languageVariant);
-    Assert.Equal(ScriptKind.TS, sourceFile.scriptKind);
-    // 5a: the LessThanToken arm now builds a TypeAssertion — no Expression_expected[1109].
-    Assert.Equal(0, sourceFile.parseDiagnostics.length);
-    const statement = sourceFile.statements[0]!;
-    if (!isVariableStatement(statement)) throw new Exception("Expected variable statement");
-    const declaration = statement.declarationList.declarations[0]!;
-    const initializer = declaration.initializer!;
-    // 5a: `<T>y` is now a faithful TypeAssertionExpression (not a binary recovery).
-    Assert.Equal(Kind.TypeAssertionExpression, initializer.kind);
-    if (!isTypeAssertion(initializer)) throw new Exception("Expected type assertion");
-    if (!isTypeReferenceNode(initializer.type)) throw new Exception("Expected type reference (T)");
-    if (!isIdentifier(initializer.expression)) throw new Exception("Expected identifier operand (y)");
-    Assert.Equal("y", initializer.expression.text);
-    // .pos is the trivia-inclusive full-start (the space after `=`), so the raw slice
-    // includes that leading trivia — tsts node.pos = TokenFullStart (M3 4c).
-    Assert.Equal(" <T>y", this.#raw(sourceFile, initializer));
-  }
-
-  // (b) A .tsx/ScriptKindTSX parse (via the new options) reaches JSX mode: the
-  // SourceFile is stamped LanguageVariant.JSX + ScriptKind.TSX (tsgo NewSourceFile
-  // carries scriptKind + languageVariant). Explicit option wins over fileName.
-  prewave_tsx_reaches_jsx_variant(): void {
-    const sourceFile = parseSourceFile("const a = 1;", { fileName: "a.tsx", scriptKind: ScriptKind.TSX });
-    Assert.Equal(LanguageVariant.JSX, sourceFile.languageVariant);
-    Assert.Equal(ScriptKind.TSX, sourceFile.scriptKind);
-  }
-
-  // (b') The same JSX variant is reached when ScriptKind is INFERRED from a .tsx
-  // fileName (no explicit scriptKind option) via getScriptKindFromFileName — the
-  // shared helper is the single source of truth, no text heuristic.
-  prewave_tsx_inferred_from_filename(): void {
-    const sourceFile = parseSourceFile("const a = 1;", { fileName: "a.tsx" });
-    Assert.Equal(LanguageVariant.JSX, sourceFile.languageVariant);
-    Assert.Equal(ScriptKind.TSX, sourceFile.scriptKind);
-  }
-
-  // (c) getScriptKindFromFileName maps .tsx -> TSX and .ts -> TS (tsgo
-  // core.GetScriptKindFromFileName, core/core.go:512).
-  prewave_get_script_kind_from_file_name(): void {
-    Assert.Equal(ScriptKind.TSX, getScriptKindFromFileName("a.tsx"));
-    Assert.Equal(ScriptKind.TS, getScriptKindFromFileName("a.ts"));
-  }
-
-  // ── M3 Stage-5a: JSX element / attribute layer ──────────────────────────────
-  // All parse in JSX mode (scriptKind: ScriptKind.TSX); assert tsgo-correct Kind +
-  // full-start .pos + token-tight .end + raw source slices. Children content is 5b,
-  // so these are self-closing / empty-element / empty-fragment inputs.
-
-  // Returns the single ExpressionStatement's JSX expression for a `<...>;` snippet,
-  // parsed in JSX mode.
-  #soleJsx(src: string): { sourceFile: SourceFile; expression: Expression } {
-    const sourceFile = parseSourceFile(src, { fileName: "a.tsx", scriptKind: ScriptKind.TSX });
-    Assert.Equal(0, sourceFile.parseDiagnostics.length);
-    const statement = sourceFile.statements[0]!;
-    if (!isExpressionStatement(statement)) throw new Exception("Expected expression statement");
-    return { sourceFile, expression: statement.expression };
-  }
-
-  // `<div/>` => JsxSelfClosingElement (tagName Identifier, no attributes).
-  jsx_self_closing_identifier(): void {
-    const { sourceFile, expression } = this.#soleJsx("<div/>;");
-    if (!isJsxSelfClosingElement(expression)) throw new Exception("Expected self-closing element");
-    Assert.Equal(Kind.JsxSelfClosingElement, expression.kind);
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(6, expression.end);
-    Assert.Equal("<div/>", this.#raw(sourceFile, expression));
-    if (!isIdentifier(expression.tagName)) throw new Exception("Expected identifier tag name");
-    Assert.Equal("div", expression.tagName.text);
-    Assert.Equal(0, expression.attributes.properties.length);
-  }
-
-  // `<A.B.C/>` => self-closing, tagName = PropertyAccess chain (structural).
-  jsx_self_closing_property_access_chain(): void {
-    const { sourceFile, expression } = this.#soleJsx("<A.B.C/>;");
-    if (!isJsxSelfClosingElement(expression)) throw new Exception("Expected self-closing element");
-    Assert.Equal("<A.B.C/>", this.#raw(sourceFile, expression));
-    const tagName = expression.tagName;
-    if (!isPropertyAccessExpression(tagName)) throw new Exception("Expected property access tag name (A.B.C)");
-    Assert.Equal("C", tagName.name.text);
-    if (!isPropertyAccessExpression(tagName.expression)) throw new Exception("Expected A.B inner property access");
-    Assert.Equal("B", tagName.expression.name.text);
-    if (!isIdentifier(tagName.expression.expression)) throw new Exception("Expected A identifier base");
-    Assert.Equal("A", tagName.expression.expression.text);
-  }
-
-  // `<ns:tag/>` => self-closing, tagName = JsxNamespacedName.
-  jsx_self_closing_namespaced_name(): void {
-    const { sourceFile, expression } = this.#soleJsx("<ns:tag/>;");
-    if (!isJsxSelfClosingElement(expression)) throw new Exception("Expected self-closing element");
-    Assert.Equal("<ns:tag/>", this.#raw(sourceFile, expression));
-    const tagName = expression.tagName;
-    if (!isJsxNamespacedName(tagName)) throw new Exception("Expected namespaced name tag");
-    Assert.Equal("ns", tagName.namespace.text);
-    Assert.Equal("tag", tagName.name.text);
-  }
-
-  // `<div {...props}/>` => self-closing with a JsxSpreadAttribute.
-  jsx_self_closing_spread_attribute(): void {
-    const { sourceFile, expression } = this.#soleJsx("<div {...props}/>;");
-    if (!isJsxSelfClosingElement(expression)) throw new Exception("Expected self-closing element");
-    Assert.Equal("<div {...props}/>", this.#raw(sourceFile, expression));
-    Assert.Equal(1, expression.attributes.properties.length);
-    const attr = expression.attributes.properties[0]!;
-    if (!isJsxSpreadAttribute(attr)) throw new Exception("Expected spread attribute");
-    if (!isIdentifier(attr.expression)) throw new Exception("Expected identifier spread expression");
-    Assert.Equal("props", attr.expression.text);
-  }
-
-  // `<div a="x" b={1}/>` => self-closing with JsxAttribute(string) + JsxAttribute(JsxExpression).
-  jsx_self_closing_attributes(): void {
-    const { sourceFile, expression } = this.#soleJsx("<div a=\"x\" b={1}/>;");
-    if (!isJsxSelfClosingElement(expression)) throw new Exception("Expected self-closing element");
-    Assert.Equal("<div a=\"x\" b={1}/>", this.#raw(sourceFile, expression));
-    Assert.Equal(2, expression.attributes.properties.length);
-    const a = expression.attributes.properties[0]!;
-    if (!isJsxAttribute(a)) throw new Exception("Expected jsx attribute a");
-    if (!isIdentifier(a.name)) throw new Exception("Expected identifier attribute name a");
-    Assert.Equal("a", a.name.text);
-    if (a.initializer === undefined || !isStringLiteral(a.initializer)) throw new Exception("Expected string-literal value for a");
-    Assert.Equal("x", a.initializer.text);
-    const b = expression.attributes.properties[1]!;
-    if (!isJsxAttribute(b)) throw new Exception("Expected jsx attribute b");
-    if (!isIdentifier(b.name)) throw new Exception("Expected identifier attribute name b");
-    Assert.Equal("b", b.name.text);
-    if (b.initializer === undefined || !isJsxExpression(b.initializer)) throw new Exception("Expected jsx-expression value for b");
-    if (b.initializer.expression === undefined || !isNumericLiteral(b.initializer.expression)) throw new Exception("Expected numeric expression in b={1}");
-    Assert.Equal("1", b.initializer.expression.text);
-  }
-
-  // `<></>` => JsxFragment with JsxOpeningFragment + empty children + JsxClosingFragment.
-  jsx_empty_fragment(): void {
-    const { sourceFile, expression } = this.#soleJsx("<></>;");
-    if (!isJsxFragment(expression)) throw new Exception("Expected jsx fragment");
-    Assert.Equal(Kind.JsxFragment, expression.kind);
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(5, expression.end);
-    Assert.Equal("<></>", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.JsxOpeningFragment, expression.openingFragment.kind);
-    Assert.Equal(0, expression.children.length);
-    Assert.Equal(Kind.JsxClosingFragment, expression.closingFragment.kind);
-  }
-
-  // `<div></div>` => JsxElement with empty children + JsxClosingElement (tag match).
-  jsx_empty_element(): void {
-    const { sourceFile, expression } = this.#soleJsx("<div></div>;");
-    if (!isJsxElement(expression)) throw new Exception("Expected jsx element");
-    Assert.Equal(Kind.JsxElement, expression.kind);
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(11, expression.end);
-    Assert.Equal("<div></div>", this.#raw(sourceFile, expression));
-    Assert.Equal(Kind.JsxOpeningElement, expression.openingElement.kind);
-    if (!isIdentifier(expression.openingElement.tagName)) throw new Exception("Expected identifier opening tag name");
-    Assert.Equal("div", expression.openingElement.tagName.text);
-    Assert.Equal(0, expression.children.length);
-    Assert.Equal(Kind.JsxClosingElement, expression.closingElement.kind);
-    if (!isIdentifier(expression.closingElement.tagName)) throw new Exception("Expected identifier closing tag name");
-    Assert.Equal("div", expression.closingElement.tagName.text);
-  }
-
-  // ── M3 Stage-5b: JSX children (JsxText / {expr} / nested element) ────────────
-
-  // `<div>text</div>` => JsxElement with one JsxText child "text".
-  jsx_element_text_child(): void {
-    const { sourceFile, expression } = this.#soleJsx("<div>text</div>;");
-    if (!isJsxElement(expression)) throw new Exception("Expected jsx element");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(15, expression.end);
-    Assert.Equal("<div>text</div>", this.#raw(sourceFile, expression));
-    Assert.Equal(1, expression.children.length);
-    const child = expression.children[0]!;
-    if (!isJsxText(child)) throw new Exception("Expected JsxText child");
-    Assert.Equal(Kind.JsxText, child.kind);
-    Assert.Equal(5, child.pos);
-    Assert.Equal(9, child.end);
-    Assert.Equal("text", this.#raw(sourceFile, child));
-    Assert.Equal("text", child.text);
-    Assert.Equal(false, child.containsOnlyTriviaWhiteSpaces);
-    // The closing tag still matches structurally (tagNamesAreEquivalent).
-    if (!isIdentifier(expression.closingElement.tagName)) throw new Exception("Expected identifier closing tag");
-    Assert.Equal("div", expression.closingElement.tagName.text);
-  }
-
-  // `<div>{expr}</div>` => JsxElement with one JsxExpression child.
-  jsx_element_expression_child(): void {
-    const { sourceFile, expression } = this.#soleJsx("<div>{expr}</div>;");
-    if (!isJsxElement(expression)) throw new Exception("Expected jsx element");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(17, expression.end);
-    Assert.Equal("<div>{expr}</div>", this.#raw(sourceFile, expression));
-    Assert.Equal(1, expression.children.length);
-    const child = expression.children[0]!;
-    if (!isJsxExpression(child)) throw new Exception("Expected JsxExpression child");
-    Assert.Equal(Kind.JsxExpression, child.kind);
-    Assert.Equal(5, child.pos);
-    Assert.Equal(11, child.end);
-    Assert.Equal("{expr}", this.#raw(sourceFile, child));
-    Assert.Equal(undefined, child.dotDotDotToken);
-    if (child.expression === undefined || !isIdentifier(child.expression)) throw new Exception("Expected identifier expression in {expr}");
-    Assert.Equal("expr", child.expression.text);
-  }
-
-  // `<><span/></>` => JsxFragment with a nested JsxSelfClosingElement child.
-  jsx_fragment_nested_self_closing_child(): void {
-    const { sourceFile, expression } = this.#soleJsx("<><span/></>;");
-    if (!isJsxFragment(expression)) throw new Exception("Expected jsx fragment");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(12, expression.end);
-    Assert.Equal("<><span/></>", this.#raw(sourceFile, expression));
-    Assert.Equal(1, expression.children.length);
-    const child = expression.children[0]!;
-    if (!isJsxSelfClosingElement(child)) throw new Exception("Expected JsxSelfClosingElement child");
-    Assert.Equal(2, child.pos);
-    Assert.Equal(9, child.end);
-    Assert.Equal("<span/>", this.#raw(sourceFile, child));
-    if (!isIdentifier(child.tagName)) throw new Exception("Expected identifier tag name span");
-    Assert.Equal("span", child.tagName.text);
-  }
-
-  // `<a><b/></a>` => nested JsxElement whose child is JsxSelfClosingElement b.
-  jsx_element_nested_element_child(): void {
-    const { sourceFile, expression } = this.#soleJsx("<a><b/></a>;");
-    if (!isJsxElement(expression)) throw new Exception("Expected jsx element");
-    Assert.Equal(0, expression.pos);
-    Assert.Equal(11, expression.end);
-    Assert.Equal("<a><b/></a>", this.#raw(sourceFile, expression));
-    if (!isIdentifier(expression.openingElement.tagName)) throw new Exception("Expected identifier opening tag a");
-    Assert.Equal("a", expression.openingElement.tagName.text);
-    Assert.Equal(1, expression.children.length);
-    const child = expression.children[0]!;
-    if (!isJsxSelfClosingElement(child)) throw new Exception("Expected JsxSelfClosingElement child b");
-    Assert.Equal(3, child.pos);
-    Assert.Equal(7, child.end);
-    Assert.Equal("<b/>", this.#raw(sourceFile, child));
-    if (!isIdentifier(child.tagName)) throw new Exception("Expected identifier tag name b");
-    Assert.Equal("b", child.tagName.text);
-    if (!isIdentifier(expression.closingElement.tagName)) throw new Exception("Expected identifier closing tag a");
-    Assert.Equal("a", expression.closingElement.tagName.text);
-  }
-
-  // Whitespace-only JsxText (with a line break) between elements =>
-  // containsOnlyTriviaWhiteSpaces JsxText (scanner produces JsxTextAllWhiteSpaces,
-  // the node carries Kind.JsxText + containsOnlyTriviaWhiteSpaces=true).
-  jsx_element_whitespace_only_text_child(): void {
-    const { sourceFile, expression } = this.#soleJsx("<a>\n<b/>\n</a>;");
-    if (!isJsxElement(expression)) throw new Exception("Expected jsx element");
-    Assert.Equal("<a>\n<b/>\n</a>", this.#raw(sourceFile, expression));
-    Assert.Equal(3, expression.children.length);
-    const first = expression.children[0]!;
-    if (!isJsxText(first)) throw new Exception("Expected leading JsxText child");
-    Assert.Equal(Kind.JsxText, first.kind);
-    Assert.Equal(true, first.containsOnlyTriviaWhiteSpaces);
-    Assert.Equal(3, first.pos);
-    Assert.Equal(4, first.end);
-    Assert.Equal("\n", this.#raw(sourceFile, first));
-    const middle = expression.children[1]!;
-    if (!isJsxSelfClosingElement(middle)) throw new Exception("Expected middle JsxSelfClosingElement b");
-    Assert.Equal("<b/>", this.#raw(sourceFile, middle));
-    const last = expression.children[2]!;
-    if (!isJsxText(last)) throw new Exception("Expected trailing JsxText child");
-    Assert.Equal(true, last.containsOnlyTriviaWhiteSpaces);
-    Assert.Equal("\n", this.#raw(sourceFile, last));
-  }
-
-  // Tag-mismatch `<a></b>` => the 5a mismatch diagnostic path (recovery, NOT a throw):
-  // Expected_corresponding_JSX_closing_tag_for_0 (17002), and a recovered JsxElement.
-  jsx_element_tag_mismatch_recovers(): void {
-    const sourceFile = parseSourceFile("<a></b>;", { fileName: "a.tsx", scriptKind: ScriptKind.TSX });
-    Assert.True(
-      sourceFile.parseDiagnostics.some((d) => d.code === 17002),
-      "expected Expected_corresponding_JSX_closing_tag_for_0 (17002) on <a></b>",
-    );
-    const statement = sourceFile.statements[0]!;
-    if (!isExpressionStatement(statement)) throw new Exception("Expected expression statement");
-    const expression = statement.expression;
-    if (!isJsxElement(expression)) throw new Exception("Expected recovered jsx element");
-    Assert.Equal("<a></b>", this.#raw(sourceFile, expression));
-    if (!isIdentifier(expression.openingElement.tagName)) throw new Exception("Expected identifier opening tag a");
-    Assert.Equal("a", expression.openingElement.tagName.text);
-    if (!isIdentifier(expression.closingElement.tagName)) throw new Exception("Expected identifier closing tag b");
-    Assert.Equal("b", expression.closingElement.tagName.text);
-    Assert.Equal(0, expression.children.length);
-  }
-
-  // codex concrete case: `<div a="x">hi {name}<span /></div>` => mixed children:
-  // JsxText "hi ", JsxExpression {name}, nested JsxSelfClosingElement span; closing
-  // tag matches via tagNamesAreEquivalent (no diagnostic).
-  jsx_element_mixed_children(): void {
-    const { sourceFile, expression } = this.#soleJsx("<div a=\"x\">hi {name}<span /></div>;");
-    if (!isJsxElement(expression)) throw new Exception("Expected jsx element");
-    Assert.Equal("<div a=\"x\">hi {name}<span /></div>", this.#raw(sourceFile, expression));
-    Assert.Equal(1, expression.openingElement.attributes.properties.length);
-    Assert.Equal(3, expression.children.length);
-    const text = expression.children[0]!;
-    if (!isJsxText(text)) throw new Exception("Expected JsxText child 'hi '");
-    Assert.Equal("hi ", this.#raw(sourceFile, text));
-    Assert.Equal("hi ", text.text);
-    Assert.Equal(false, text.containsOnlyTriviaWhiteSpaces);
-    const expr = expression.children[1]!;
-    if (!isJsxExpression(expr)) throw new Exception("Expected JsxExpression child {name}");
-    Assert.Equal("{name}", this.#raw(sourceFile, expr));
-    if (expr.expression === undefined || !isIdentifier(expr.expression)) throw new Exception("Expected identifier in {name}");
-    Assert.Equal("name", expr.expression.text);
-    const span = expression.children[2]!;
-    if (!isJsxSelfClosingElement(span)) throw new Exception("Expected JsxSelfClosingElement child span");
-    Assert.Equal("<span />", this.#raw(sourceFile, span));
-    if (!isIdentifier(span.tagName)) throw new Exception("Expected identifier tag name span");
-    Assert.Equal("span", span.tagName.text);
-    if (!isIdentifier(expression.closingElement.tagName)) throw new Exception("Expected identifier closing tag div");
-    Assert.Equal("div", expression.closingElement.tagName.text);
-  }
-
-  // ── M3 6a: withJSDoc flag-stamp (tsgo jsdoc.go:56-74, TS/TSX slice) ──────────
-  // For a TS file the parser stamps NodeFlags.HasJSDoc onto a declaration preceded
-  // by a JSDoc comment (no eager JSDoc child node — lazy/checker-owned). The stamp
-  // is RANGE-NEUTRAL: the leading JSDoc stays in the host node's leading trivia
-  // [node.pos, firstTokenStart), so node.pos is the trivia-inclusive full-start and
-  // node.end stays token-tight; the host span is NOT widened by the comment.
-
-  // `/** Adds one. */\nexport function inc(...) {...}` followed by a sibling decl
-  // with NO JSDoc. The first FunctionDeclaration carries HasJSDoc; its pos is the
-  // trivia-inclusive full-start (0, covering the JSDoc) and its end is token-tight
-  // (the `}`). The sibling carries NO HasJSDoc and an unchanged token-tight range.
-  jsdoc_hasjsdoc_on_function_declaration(): void {
-    const src = "/** Adds one. */\nexport function inc(x: number): number { return x + 1; }\nfunction plain(): void {}";
-    const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
-    Assert.Equal(ScriptKind.TS, sourceFile.scriptKind);
-    const withDoc = sourceFile.statements[0]!;
-    if (!isFunctionDeclaration(withDoc)) throw new Exception("Expected first function declaration");
-    // HasJSDoc is stamped.
-    Assert.Equal(NodeFlags.HasJSDoc, withDoc.flags & NodeFlags.HasJSDoc);
-    // No @deprecated => PossiblyContainsDeprecatedTag stays clear.
-    Assert.Equal(0, withDoc.flags & NodeFlags.PossiblyContainsDeprecatedTag);
-    // pos is the trivia-inclusive full-start = 0 (the JSDoc is leading trivia of the host).
-    Assert.Equal(0, withDoc.pos);
-    // end is token-tight at the closing `}` of the body (NOT widened by the JSDoc).
-    const incEnd = src.indexOf("}") + 1;
-    Assert.Equal(incEnd, withDoc.end);
-    Assert.Equal("return x + 1; }", src.slice(withDoc.end - "return x + 1; }".length, withDoc.end));
-    // The leading JSDoc lives in [withDoc.pos, firstTokenStart) trivia; the first
-    // real token is `export`, so the host span starts at 0 but the source slice
-    // begins with the comment (proving the comment is inside the trivia, not a child).
-    Assert.Equal("/**", src.slice(withDoc.pos, withDoc.pos + 3));
-
-    // Sibling with NO JSDoc: no HasJSDoc flag, range unaffected by the earlier stamp.
-    const plain = sourceFile.statements[1]!;
-    if (!isFunctionDeclaration(plain)) throw new Exception("Expected second function declaration");
-    Assert.Equal(0, plain.flags & NodeFlags.HasJSDoc);
-    Assert.Equal(0, plain.flags & NodeFlags.PossiblyContainsDeprecatedTag);
-    const plainEnd = src.length;
-    Assert.Equal(plainEnd, plain.end);
-    Assert.Equal("function plain(): void {}", src.slice(plain.end - "function plain(): void {}".length, plain.end));
-  }
-
-  // `/** @deprecated */\nexport function old(): void {}` — the preceding JSDoc has an
-  // @deprecated tag, so BOTH HasJSDoc and PossiblyContainsDeprecatedTag are stamped.
-  jsdoc_deprecated_sets_possibly_contains_deprecated_tag(): void {
-    const src = "/** @deprecated */\nexport function old(): void {}";
-    const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
-    Assert.Equal(ScriptKind.TS, sourceFile.scriptKind);
-    const decl = sourceFile.statements[0]!;
-    if (!isFunctionDeclaration(decl)) throw new Exception("Expected function declaration");
-    Assert.Equal(NodeFlags.HasJSDoc, decl.flags & NodeFlags.HasJSDoc);
-    Assert.Equal(NodeFlags.PossiblyContainsDeprecatedTag, decl.flags & NodeFlags.PossiblyContainsDeprecatedTag);
-    // Range-neutral: pos is the trivia-inclusive full-start (0), end token-tight (`}`).
-    Assert.Equal(0, decl.pos);
-    Assert.Equal(src.length, decl.end);
-    Assert.Equal("/**", src.slice(decl.pos, decl.pos + 3));
-  }
-
-  // ── M3 6b: top-level-await reparse ────────────────────────────────────────────
-  //
-  // SetExternalModuleIndicator is STRUCTURAL: a SourceFile is an external module iff a
-  // top-level statement is an export/import/export-assignment/export-declaration (no
-  // filename/package heuristics). The reparse fires only for a non-declaration external
-  // module with recorded possibleAwaitSpans. A leading `await` followed by `(`/`[`/etc.
-  // (NOT an identifier/keyword/literal on the same line) is FIRST parsed as an `await`
-  // IDENTIFIER (isAwaitExpression's lookahead heuristic fails), which records a span;
-  // the reparse re-runs the statement with AwaitContext forced on, promoting it to a
-  // real AwaitExpression carrying NodeFlags.AwaitContext.
-
-  // TLA module (allowed): `await (load());\nexport const ready = true;` (scriptKind TS).
-  // The `export const` makes the file an external module (indicator SET); statement 0's
-  // leading `await (` mis-parses as an `await` identifier first-pass → span → reparse →
-  // a real AwaitExpression carrying AwaitContext. Statement 1 (the export) is unchanged.
-  tla_module_reparses_await_paren_to_await_expression(): void {
-    const src = "await (load());\nexport const ready = true;";
-    const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
-    Assert.Equal(ScriptKind.TS, sourceFile.scriptKind);
-    // Structural module decision: the export makes externalModuleIndicator defined.
-    Assert.Equal(true, sourceFile.externalModuleIndicator !== undefined);
-    // Statement 0: ExpressionStatement whose expression is a (reparsed) AwaitExpression
-    // carrying AwaitContext.
-    const stmt0 = sourceFile.statements[0]!;
-    if (!isExpressionStatement(stmt0)) throw new Exception("Expected expression statement");
-    const expr = stmt0.expression;
-    if (!isAwaitExpression(expr)) throw new Exception("Expected await expression after reparse");
-    Assert.Equal(Kind.AwaitExpression, expr.kind);
-    Assert.Equal(NodeFlags.AwaitContext, expr.flags & NodeFlags.AwaitContext);
-    // Statement 1: the export const, unchanged (a VariableStatement carrying ExportKeyword).
-    // M3 4c: stmt1.pos is the trivia-inclusive full-start, so it begins at the `\n` after
-    // statement 0; the raw slice therefore leads with that newline.
-    const stmt1 = sourceFile.statements[1]!;
-    if (!isVariableStatement(stmt1)) throw new Exception("Expected variable statement");
-    Assert.Equal("\nexport const ready = true;", this.#raw(sourceFile, stmt1));
-  }
-
-  // First-pass heuristic (no reparse): `await load();\nexport const ready = true;`. After
-  // `await`, the next token `load` IS an identifier on the same line, so isAwaitExpression's
-  // lookahead succeeds and `await load()` is parsed DIRECTLY as an AwaitExpression on the
-  // first pass — no `await` identifier, no span, no reparse. tsgo-faithful: the expression
-  // is an AwaitExpression but does NOT carry AwaitContext (it was built outside one).
-  tla_module_await_identifier_followed_parses_directly_no_await_context(): void {
-    const src = "await load();\nexport const ready = true;";
-    const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
-    Assert.Equal(true, sourceFile.externalModuleIndicator !== undefined);
-    const stmt0 = sourceFile.statements[0]!;
-    if (!isExpressionStatement(stmt0)) throw new Exception("Expected expression statement");
-    const expr = stmt0.expression;
-    if (!isAwaitExpression(expr)) throw new Exception("Expected await expression (first-pass heuristic)");
-    // No reparse occurred, so it carries NO AwaitContext (built with AwaitContext off).
-    Assert.Equal(0, expr.flags & NodeFlags.AwaitContext);
-  }
-
-  // TLA non-module (rejected): `await (load());` with NO import/export. externalModule-
-  // Indicator is undefined, so the reparse gate fails — statement 0 keeps its first-pass
-  // await-as-identifier shape (a CallExpression `await(load())`, NOT an AwaitExpression),
-  // matching tsgo (no reparse for a non-module).
-  tla_non_module_no_reparse(): void {
-    const src = "await (load());";
-    const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
-    Assert.Equal(true, sourceFile.externalModuleIndicator === undefined);
-    const stmt0 = sourceFile.statements[0]!;
-    if (!isExpressionStatement(stmt0)) throw new Exception("Expected expression statement");
-    // No reparse: `await (load())` was parsed as `await(load())` — a CallExpression on the
-    // `await` identifier, NOT an AwaitExpression.
-    Assert.Equal(false, isAwaitExpression(stmt0.expression));
-    Assert.Equal(Kind.CallExpression, stmt0.expression.kind);
-  }
-
-  // import.meta module detection: CLASSIFIED NOT-APPLICABLE. tsts does NOT parse
-  // `import.meta` (the parser never builds a MetaProperty for it — #parsePrimaryExpression
-  // has no ImportKeyword arm), so getImportMetaIfNecessary / the PossiblyContainsImportMeta
-  // indicator branch can never fire (there is no node to find). This probe is therefore
-  // intentionally OMITTED — the import.meta indicator depends on syntax tsts does not parse.
-
-  // Range / parent integrity: the reparsed AwaitExpression statement has 4c-faithful
-  // pos/end (full-start pos, token-tight end) and its parent points to the (rebuilt)
-  // SourceFile. Uses a leading blank/space so the full-start (trivia-inclusive) is exercised.
-  tla_reparse_range_and_parent_integrity(): void {
-    const src = "await (x);\nexport {};";
-    const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
-    Assert.Equal(true, sourceFile.externalModuleIndicator !== undefined);
-    const stmt0 = sourceFile.statements[0]!;
-    if (!isExpressionStatement(stmt0)) throw new Exception("Expected expression statement");
-    const expr = stmt0.expression;
-    if (!isAwaitExpression(expr)) throw new Exception("Expected reparsed await expression");
-    // 4c-faithful ranges: ExpressionStatement starts at full-start 0, ends token-tight at
-    // the `;` after `await (x)` (index 10). The AwaitExpression starts at the `await` (0).
-    Assert.Equal(0, stmt0.pos);
-    Assert.Equal(10, stmt0.end);
-    Assert.Equal("await (x);", this.#raw(sourceFile, stmt0));
-    Assert.Equal(0, expr.pos);
-    Assert.Equal("await (x)", this.#raw(sourceFile, expr));
-    // Parent of the reparsed statement is the REBUILT SourceFile (the very node returned).
-    Assert.Equal(Kind.SourceFile, stmt0.parent.kind);
-    Assert.Equal(true, stmt0.parent === sourceFile);
-    // The untouched copied statement (the export) also reparents to the rebuilt file.
-    const stmt1 = sourceFile.statements[1]!;
-    Assert.Equal(true, stmt1.parent === sourceFile);
-  }
+// ── Helpers ──────────────────────────────────────────────────────────────
+
+// Returns the single ExpressionStatement's expression for `<expr>;` snippets.
+function soleExpression(src: string): { sourceFile: SourceFile; expression: Expression } {
+  const sourceFile = parseSourceFile(src);
+  const statement = sourceFile.statements[0]!;
+  if (!isExpressionStatement(statement)) throw new Error("Expected expression statement");
+  return { sourceFile, expression: statement.expression };
 }
+
+// Returns the single TypeAliasDeclaration's type for `type X=<type>;` snippets.
+function soleType(src: string): { sourceFile: SourceFile; type: TypeNode } {
+  const sourceFile = parseSourceFile(src);
+  const statement = sourceFile.statements[0]!;
+  if (!isTypeAliasDeclaration(statement)) throw new Error("Expected type alias declaration");
+  return { sourceFile, type: statement.type };
+}
+
+function raw(sourceFile: SourceFile, node: { pos: number; end: number }): string {
+  return sourceFile.text.slice(node.pos, node.end);
+}
+
+// Returns the single ExpressionStatement's JSX expression for a `<...>;` snippet,
+// parsed in JSX mode.
+function soleJsx(src: string): { sourceFile: SourceFile; expression: Expression } {
+  const sourceFile = parseSourceFile(src, { fileName: "a.tsx", scriptKind: ScriptKind.TSX });
+  assert.strictEqual(sourceFile.parseDiagnostics.length, 0);
+  const statement = sourceFile.statements[0]!;
+  if (!isExpressionStatement(statement)) throw new Error("Expected expression statement");
+  return { sourceFile, expression: statement.expression };
+}
+
+// Parse `src` asserting NO throw; return the SourceFile for diagnostic/shape checks.
+function parseNoThrow(src: string): SourceFile {
+  let threw = false;
+  let sourceFile: SourceFile | undefined;
+  try {
+    sourceFile = parseSourceFile(src);
+  } catch {
+    threw = true;
+  }
+  assert.ok(!threw, "parser should recover (record a diagnostic), not throw, for: " + src);
+  if (sourceFile === undefined) throw new Error("no source file produced");
+  return sourceFile;
+}
+
+function hasCode(sourceFile: SourceFile, code: number): boolean {
+  return sourceFile.parseDiagnostics.some((d) => d.code === code);
+}
+
+// ── Category 1: shift / relational operators ──────────────────────────────
+// The scanner pre-combines `>>`/`>>>`/`>=`/etc., so operatorToken is synthesized
+// ([-1,-1)); assert the BinaryExpression parent span + operand ranges + op KIND.
+
+test("shift right shift a rsh b", () => {
+  const { sourceFile, expression } = soleExpression("a>>b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.kind, Kind.BinaryExpression);
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 4);
+  assert.strictEqual(raw(sourceFile, expression), "a>>b");
+  assert.strictEqual(expression.pos, expression.left.pos);
+  assert.strictEqual(expression.end, expression.right.end);
+  assert.strictEqual(expression.operatorToken.kind, Kind.GreaterThanGreaterThanToken);
+  if (!isIdentifier(expression.left)) throw new Error("Expected left identifier");
+  assert.strictEqual(expression.left.pos, 0);
+  assert.strictEqual(expression.left.end, 1);
+  if (!isIdentifier(expression.right)) throw new Error("Expected right identifier");
+  assert.strictEqual(expression.right.pos, 3);
+  assert.strictEqual(expression.right.end, 4);
+});
+
+test("shift unsigned right shift a ursh b", () => {
+  const { sourceFile, expression } = soleExpression("a>>>b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 5);
+  assert.strictEqual(raw(sourceFile, expression), "a>>>b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.GreaterThanGreaterThanGreaterThanToken);
+  assert.strictEqual(expression.right.pos, 4);
+  assert.strictEqual(expression.right.end, 5);
+});
+
+test("relational greater equals a ge b", () => {
+  const { sourceFile, expression } = soleExpression("a>=b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 4);
+  assert.strictEqual(raw(sourceFile, expression), "a>=b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.GreaterThanEqualsToken);
+  assert.strictEqual(expression.right.pos, 3);
+  assert.strictEqual(expression.right.end, 4);
+});
+
+test("relational greater than a gt b", () => {
+  const { sourceFile, expression } = soleExpression("a>b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 3);
+  assert.strictEqual(raw(sourceFile, expression), "a>b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.GreaterThanToken);
+  assert.strictEqual(expression.right.pos, 2);
+  assert.strictEqual(expression.right.end, 3);
+});
+
+test("assign right shift a rsh eq b", () => {
+  const { sourceFile, expression } = soleExpression("a>>=b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 5);
+  assert.strictEqual(raw(sourceFile, expression), "a>>=b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.GreaterThanGreaterThanEqualsToken);
+  assert.strictEqual(expression.right.pos, 4);
+  assert.strictEqual(expression.right.end, 5);
+});
+
+test("assign unsigned right shift a ursh eq b", () => {
+  const { sourceFile, expression } = soleExpression("a>>>=b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 6);
+  assert.strictEqual(raw(sourceFile, expression), "a>>>=b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.GreaterThanGreaterThanGreaterThanEqualsToken);
+  assert.strictEqual(expression.right.pos, 5);
+  assert.strictEqual(expression.right.end, 6);
+});
+
+// ── Category 2: nested generic closers (TSGO-DIVERGENCE: fails on current parser)
+// `type X = A<B<C>>;` — the inner B<C> end is off-by-one in the current pre-scan
+// parser ([11,14) raw "B<C"). TSGO-CORRECT = [11,15) raw "B<C>". This probe FAILS
+// against the current parser and FLIPS GREEN once 4b-swap fixes #expectGreaterThan.
+test("nested generic double closer tsgo correct", () => {
+  const { sourceFile, type } = soleType("type X = A<B<C>>;");
+  if (!isTypeReferenceNode(type)) throw new Error("Expected outer type reference");
+  // M3 4c: type.pos is the trivia-inclusive full-start = end of `=` (8); the
+  // leading space after `=` is the type's leading trivia, so raw([8,16)) now
+  // includes it. end stays token-tight at 16.
+  assert.strictEqual(type.pos, 8);
+  assert.strictEqual(type.end, 16);
+  assert.strictEqual(raw(sourceFile, type), " A<B<C>>");
+  const inner = type.typeArguments![0]!;
+  if (!isTypeReferenceNode(inner)) throw new Error("Expected inner type reference");
+  // TSGO-CORRECT: inner B<C> ends AFTER the first '>' (index 15), raw "B<C>".
+  assert.strictEqual(inner.pos, 11);
+  assert.strictEqual(inner.end, 15);
+  assert.strictEqual(raw(sourceFile, inner), "B<C>");
+  const innermost = inner.typeArguments![0]!;
+  if (!isTypeReferenceNode(innermost)) throw new Error("Expected innermost type reference");
+  assert.strictEqual(innermost.pos, 13);
+  assert.strictEqual(innermost.end, 14);
+  assert.strictEqual(raw(sourceFile, innermost), "C");
+});
+
+// `type X=A<B<C<D>>>;` — triple closer. TSGO-CORRECT: mid B<C<D> = [9,16) "B<C<D>>",
+// inner C<D> = [11,15) "C<D>". Current parser gives [9,14)/[11,14). (TSGO-DIVERGENCE)
+test("nested generic triple closer tsgo correct", () => {
+  const { sourceFile, type } = soleType("type X=A<B<C<D>>>;");
+  if (!isTypeReferenceNode(type)) throw new Error("Expected outer type reference");
+  assert.strictEqual(type.pos, 7);
+  assert.strictEqual(type.end, 17);
+  assert.strictEqual(raw(sourceFile, type), "A<B<C<D>>>");
+  const mid = type.typeArguments![0]!;
+  if (!isTypeReferenceNode(mid)) throw new Error("Expected mid type reference");
+  assert.strictEqual(mid.pos, 9);
+  assert.strictEqual(mid.end, 16);
+  assert.strictEqual(raw(sourceFile, mid), "B<C<D>>");
+  const inner = mid.typeArguments![0]!;
+  if (!isTypeReferenceNode(inner)) throw new Error("Expected inner type reference");
+  assert.strictEqual(inner.pos, 11);
+  assert.strictEqual(inner.end, 15);
+  assert.strictEqual(raw(sourceFile, inner), "C<D>");
+  const innermost = inner.typeArguments![0]!;
+  if (!isTypeReferenceNode(innermost)) throw new Error("Expected innermost type reference");
+  assert.strictEqual(innermost.pos, 13);
+  assert.strictEqual(innermost.end, 14);
+  assert.strictEqual(raw(sourceFile, innermost), "D");
+});
+
+// ── Category 3: binary-precedence rungs ───────────────────────────────────
+// One probe per rung; operator leaves are synthesized so we assert the parent
+// BinaryExpression span (left.pos..right.end) + the operator KIND.
+
+// TSGO-DIVERGENCE (fails on current parser): `**` (precedence 14) is the only
+// RIGHT-associative binary operator, so `a**b**c` must parse as `a**(b**c)` with
+// the inner `b**c` binary in the `.right` slot. The current parser's binary loop
+// (parser.ts ~1519) uses `operatorPrecedence <= precedence` for ALL operators, so
+// it parses `(a**b)**c` (left-assoc) instead. This probe encodes the TSGO-CORRECT
+// right-assoc shape and FLIPS GREEN once the `**` right-associativity is fixed.
+test("precedence exponent right assoc", () => {
+  // `**` (14, right-assoc): a**b**c -> a**(b**c).
+  const { sourceFile, expression } = soleExpression("a**b**c;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected outer binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 7);
+  assert.strictEqual(raw(sourceFile, expression), "a**b**c");
+  assert.strictEqual(expression.operatorToken.kind, Kind.AsteriskAsteriskToken);
+  const right = expression.right;
+  if (!isBinaryExpression(right)) throw new Error("Expected right-assoc inner binary");
+  assert.strictEqual(right.pos, 3);
+  assert.strictEqual(right.end, 7);
+  assert.strictEqual(raw(sourceFile, right), "b**c");
+});
+
+test("precedence multiplicative", () => {
+  // `*` (13).
+  const { sourceFile, expression } = soleExpression("a*b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 3);
+  assert.strictEqual(raw(sourceFile, expression), "a*b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.AsteriskToken);
+});
+
+test("precedence additive", () => {
+  // `+` (12).
+  const { sourceFile, expression } = soleExpression("a+b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 3);
+  assert.strictEqual(raw(sourceFile, expression), "a+b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.PlusToken);
+});
+
+test("precedence shift left", () => {
+  // `<<` (11).
+  const { sourceFile, expression } = soleExpression("a<<b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 4);
+  assert.strictEqual(raw(sourceFile, expression), "a<<b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.LessThanLessThanToken);
+});
+
+test("precedence relational less than", () => {
+  // `<` (10).
+  const { sourceFile, expression } = soleExpression("a<b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 3);
+  assert.strictEqual(raw(sourceFile, expression), "a<b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.LessThanToken);
+});
+
+test("precedence relational in", () => {
+  // `in` (10).
+  const { sourceFile, expression } = soleExpression("a in b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 6);
+  assert.strictEqual(raw(sourceFile, expression), "a in b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.InKeyword);
+});
+
+test("precedence relational instanceof", () => {
+  // `instanceof` (10).
+  const { sourceFile, expression } = soleExpression("a instanceof b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 14);
+  assert.strictEqual(raw(sourceFile, expression), "a instanceof b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.InstanceOfKeyword);
+});
+
+test("precedence equality loose", () => {
+  // `==` (9).
+  const { sourceFile, expression } = soleExpression("a==b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 4);
+  assert.strictEqual(raw(sourceFile, expression), "a==b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.EqualsEqualsToken);
+});
+
+test("precedence equality strict", () => {
+  // `===` (9).
+  const { sourceFile, expression } = soleExpression("a===b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 5);
+  assert.strictEqual(raw(sourceFile, expression), "a===b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.EqualsEqualsEqualsToken);
+});
+
+test("precedence bitwise and", () => {
+  // `&` (8).
+  const { sourceFile, expression } = soleExpression("a&b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 3);
+  assert.strictEqual(raw(sourceFile, expression), "a&b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.AmpersandToken);
+});
+
+test("precedence bitwise xor", () => {
+  // `^` (7).
+  const { sourceFile, expression } = soleExpression("a^b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 3);
+  assert.strictEqual(raw(sourceFile, expression), "a^b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.CaretToken);
+});
+
+test("precedence bitwise or", () => {
+  // `|` (6).
+  const { sourceFile, expression } = soleExpression("a|b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 3);
+  assert.strictEqual(raw(sourceFile, expression), "a|b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.BarToken);
+});
+
+test("precedence logical and", () => {
+  // `&&` (5).
+  const { sourceFile, expression } = soleExpression("a&&b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 4);
+  assert.strictEqual(raw(sourceFile, expression), "a&&b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.AmpersandAmpersandToken);
+});
+
+test("precedence logical or", () => {
+  // `||` (4).
+  const { sourceFile, expression } = soleExpression("a||b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 4);
+  assert.strictEqual(raw(sourceFile, expression), "a||b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.BarBarToken);
+});
+
+test("precedence nullish coalescing", () => {
+  // `??` (4).
+  const { sourceFile, expression } = soleExpression("a??b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 4);
+  assert.strictEqual(raw(sourceFile, expression), "a??b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.QuestionQuestionToken);
+});
+
+test("precedence assignment", () => {
+  // assignment rung (3): `=` is FirstAssignment.
+  const { sourceFile, expression } = soleExpression("a=b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 3);
+  assert.strictEqual(raw(sourceFile, expression), "a=b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.EqualsToken);
+});
+
+test("precedence compound assignment", () => {
+  // compound assignment `+=` (3).
+  const { sourceFile, expression } = soleExpression("a+=b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected binary expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 4);
+  assert.strictEqual(raw(sourceFile, expression), "a+=b");
+  assert.strictEqual(expression.operatorToken.kind, Kind.PlusEqualsToken);
+});
+
+// ── Category 4: arrow vs parenthesized-expression disambiguation ───────────
+// NOTE coverage gap: bare `(a,b);` has no sequence/comma-expression production, so
+// after `a` the parser now RECORDS X_0_expected[1005] (')' expected) and recovers
+// instead of throwing (Stage-3b throw->diagnostics flip). The corpus uses the arrow
+// forms `((a,b)=>a)` and `((a):T=>a)` which DO parse; `(a,b)` is the recovery probe.
+
+test("arrow in parens two params", () => {
+  const { sourceFile, expression } = soleExpression("((a,b)=>a);");
+  if (!isParenthesizedExpression(expression)) throw new Error("Expected parenthesized expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 10);
+  const arrow = expression.expression;
+  if (!isArrowFunction(arrow)) throw new Error("Expected arrow function");
+  assert.strictEqual(arrow.pos, 1);
+  assert.strictEqual(arrow.end, 9);
+  assert.strictEqual(raw(sourceFile, arrow), "(a,b)=>a");
+  const paramA = arrow.parameters[0]!;
+  if (!isParameterDeclaration(paramA)) throw new Error("Expected parameter a");
+  assert.strictEqual(paramA.pos, 2);
+  assert.strictEqual(paramA.end, 3);
+  const paramB = arrow.parameters[1]!;
+  if (!isParameterDeclaration(paramB)) throw new Error("Expected parameter b");
+  assert.strictEqual(paramB.pos, 4);
+  assert.strictEqual(paramB.end, 5);
+  assert.strictEqual(arrow.equalsGreaterThanToken.kind, Kind.EqualsGreaterThanToken);
+  const body = arrow.body;
+  if (!isIdentifier(body)) throw new Error("Expected identifier body");
+  assert.strictEqual(body.pos, 8);
+  assert.strictEqual(body.end, 9);
+});
+
+test("arrow in parens with return type", () => {
+  const { sourceFile, expression } = soleExpression("((a):T=>a);");
+  if (!isParenthesizedExpression(expression)) throw new Error("Expected parenthesized expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 10);
+  const arrow = expression.expression;
+  if (!isArrowFunction(arrow)) throw new Error("Expected arrow function");
+  assert.strictEqual(arrow.pos, 1);
+  assert.strictEqual(arrow.end, 9);
+  assert.strictEqual(raw(sourceFile, arrow), "(a):T=>a");
+  const paramA = arrow.parameters[0]!;
+  if (!isParameterDeclaration(paramA)) throw new Error("Expected parameter a");
+  assert.strictEqual(paramA.pos, 2);
+  assert.strictEqual(paramA.end, 3);
+  const returnType = arrow.type!;
+  if (!isTypeReferenceNode(returnType)) throw new Error("Expected return type reference");
+  assert.strictEqual(returnType.pos, 5);
+  assert.strictEqual(returnType.end, 6);
+  assert.strictEqual(raw(sourceFile, returnType), "T");
+  const body = arrow.body;
+  if (!isIdentifier(body)) throw new Error("Expected identifier body");
+  assert.strictEqual(body.pos, 8);
+  assert.strictEqual(body.end, 9);
+});
+
+// Coverage gap: bare `(a,b);` (sequence/comma expression) is UNIMPLEMENTED. Stage-3b
+// throw->diagnostics flip: the parser no longer throws — after `a` it RECORDS
+// X_0_expected[1005] (')' expected, the comma is unexpected inside the parenthesized
+// expression) and recovers. This probe pins that recovery (no throw, diagnostic
+// recorded). It also serves as recovery probe #1 (recover_sequence_paren).
+test("sequence expression is known gap", () => {
+  const sourceFile = parseSourceFile("(a,b);");
+  assert.ok(sourceFile.parseDiagnostics.length > 0, "(a,b) should record a parse diagnostic, not throw");
+  assert.ok(sourceFile.parseDiagnostics.some((d) => d.code === 1005), "expected X_0_expected (')' expected) at the comma");
+});
+
+// ── Category 5: call type-args vs relational ──────────────────────────────
+
+test("call with type arguments", () => {
+  // `x<T>(y)` -> CallExpression with one typeArgument (NOT relational).
+  const { sourceFile, expression } = soleExpression("x<T>(y);");
+  if (!isCallExpression(expression)) throw new Error("Expected call expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 7);
+  assert.strictEqual(raw(sourceFile, expression), "x<T>(y)");
+  const callee = expression.expression;
+  if (!isIdentifier(callee)) throw new Error("Expected identifier callee");
+  assert.strictEqual(callee.pos, 0);
+  assert.strictEqual(callee.end, 1);
+  const typeArg = expression.typeArguments![0]!;
+  if (!isTypeReferenceNode(typeArg)) throw new Error("Expected type argument reference");
+  assert.strictEqual(typeArg.pos, 2);
+  assert.strictEqual(typeArg.end, 3);
+  assert.strictEqual(raw(sourceFile, typeArg), "T");
+  const arg = expression.arguments[0]!;
+  if (!isIdentifier(arg)) throw new Error("Expected identifier argument");
+  assert.strictEqual(arg.pos, 5);
+  assert.strictEqual(arg.end, 6);
+});
+
+test("paren relational not type args", () => {
+  // `(x<y)` -> ParenExpr wrapping a relational BinaryExpression (NOT call/type-args).
+  const { sourceFile, expression } = soleExpression("(x<y);");
+  if (!isParenthesizedExpression(expression)) throw new Error("Expected parenthesized expression");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 5);
+  const binary = expression.expression;
+  if (!isBinaryExpression(binary)) throw new Error("Expected relational binary expression");
+  assert.strictEqual(binary.pos, 1);
+  assert.strictEqual(binary.end, 4);
+  assert.strictEqual(raw(sourceFile, binary), "x<y");
+  assert.strictEqual(binary.operatorToken.kind, Kind.LessThanToken);
+  assert.strictEqual(binary.left.pos, 1);
+  assert.strictEqual(binary.left.end, 2);
+  assert.strictEqual(binary.right.pos, 3);
+  assert.strictEqual(binary.right.end, 4);
+});
+
+// ── Category 6: infer constraints ─────────────────────────────────────────
+
+test("infer with extends constraint", () => {
+  const { sourceFile, type } = soleType("type T=A extends infer U extends string?U:never;");
+  if (!isConditionalTypeNode(type)) throw new Error("Expected conditional type");
+  assert.strictEqual(type.pos, 7);
+  assert.strictEqual(type.end, 47);
+  assert.strictEqual(raw(sourceFile, type), "A extends infer U extends string?U:never");
+  const checkType = type.checkType;
+  if (!isTypeReferenceNode(checkType)) throw new Error("Expected check type reference");
+  assert.strictEqual(checkType.pos, 7);
+  assert.strictEqual(checkType.end, 8);
+  const extendsType = type.extendsType;
+  if (!isInferTypeNode(extendsType)) throw new Error("Expected infer extends type");
+  // M3 4c: extendsType.pos is its full-start = end of the first `extends` (16);
+  // the space after `extends` is its leading trivia, so raw includes it. end
+  // stays token-tight at 39.
+  assert.strictEqual(extendsType.pos, 16);
+  assert.strictEqual(extendsType.end, 39);
+  assert.strictEqual(raw(sourceFile, extendsType), " infer U extends string");
+  const tp = extendsType.typeParameter;
+  if (!isTypeParameterDeclaration(tp)) throw new Error("Expected type parameter");
+  // M3 4c: tp `U`'s pos is its full-start = end of `infer` (22); the space is
+  // its leading trivia, so raw includes it. end stays token-tight at 39.
+  assert.strictEqual(tp.pos, 22);
+  assert.strictEqual(tp.end, 39);
+  assert.strictEqual(raw(sourceFile, tp), " U extends string");
+  const constraint = tp.constraint!;
+  if (!isKeywordTypeNode(constraint)) throw new Error("Expected keyword constraint");
+  assert.strictEqual(constraint.kind, Kind.StringKeyword);
+  // M3 4c: constraint `string`'s pos is its full-start = end of the second
+  // `extends` (32); the space is its leading trivia. end stays token-tight at 39.
+  assert.strictEqual(constraint.pos, 32);
+  assert.strictEqual(constraint.end, 39);
+  const trueType = type.trueType;
+  if (!isTypeReferenceNode(trueType)) throw new Error("Expected true type reference");
+  assert.strictEqual(trueType.pos, 40);
+  assert.strictEqual(trueType.end, 41);
+  const falseType = type.falseType;
+  if (!isKeywordTypeNode(falseType)) throw new Error("Expected never false type");
+  assert.strictEqual(falseType.kind, Kind.NeverKeyword);
+  assert.strictEqual(falseType.pos, 42);
+  assert.strictEqual(falseType.end, 47);
+});
+
+// ── Category 7: function + constructor types ──────────────────────────────
+
+test("function type with param and void return", () => {
+  const { sourceFile, type } = soleType("type F=(a:number)=>void;");
+  if (!isFunctionTypeNode(type)) throw new Error("Expected function type");
+  assert.strictEqual(type.pos, 7);
+  assert.strictEqual(type.end, 23);
+  assert.strictEqual(raw(sourceFile, type), "(a:number)=>void");
+  const param = type.parameters[0]!;
+  if (!isParameterDeclaration(param)) throw new Error("Expected parameter");
+  assert.strictEqual(param.pos, 8);
+  assert.strictEqual(param.end, 16);
+  assert.strictEqual(raw(sourceFile, param), "a:number");
+  const paramType = param.type!;
+  if (!isKeywordTypeNode(paramType)) throw new Error("Expected number param type");
+  assert.strictEqual(paramType.kind, Kind.NumberKeyword);
+  assert.strictEqual(paramType.pos, 10);
+  assert.strictEqual(paramType.end, 16);
+  const returnType = type.type!;
+  if (!isKeywordTypeNode(returnType)) throw new Error("Expected void return type");
+  assert.strictEqual(returnType.kind, Kind.VoidKeyword);
+  assert.strictEqual(returnType.pos, 19);
+  assert.strictEqual(returnType.end, 23);
+});
+
+test("constructor type no params", () => {
+  const { sourceFile, type } = soleType("type C=new()=>X;");
+  if (!isConstructorTypeNode(type)) throw new Error("Expected constructor type");
+  assert.strictEqual(type.pos, 7);
+  assert.strictEqual(type.end, 15);
+  assert.strictEqual(raw(sourceFile, type), "new()=>X");
+  const returnType = type.type!;
+  if (!isTypeReferenceNode(returnType)) throw new Error("Expected X return type reference");
+  assert.strictEqual(returnType.pos, 14);
+  assert.strictEqual(returnType.end, 15);
+  assert.strictEqual(raw(sourceFile, returnType), "X");
+});
+
+// ── Category 8: mapped types ──────────────────────────────────────────────
+
+test("mapped type keyof indexed access", () => {
+  const { sourceFile, type } = soleType("type M={[K in keyof T]:T[K]};");
+  if (!isMappedTypeNode(type)) throw new Error("Expected mapped type");
+  assert.strictEqual(type.pos, 7);
+  assert.strictEqual(type.end, 28);
+  assert.strictEqual(raw(sourceFile, type), "{[K in keyof T]:T[K]}");
+  const tp = type.typeParameter;
+  if (!isTypeParameterDeclaration(tp)) throw new Error("Expected mapped type parameter");
+  assert.strictEqual(tp.pos, 9);
+  assert.strictEqual(tp.end, 21);
+  assert.strictEqual(raw(sourceFile, tp), "K in keyof T");
+  const constraint = tp.constraint!;
+  if (!isTypeOperatorNode(constraint)) throw new Error("Expected keyof type operator constraint");
+  // M3 4c: constraint.pos is its full-start = end of `in` (13); the space after
+  // `in` is its leading trivia, so raw includes it. end stays token-tight at 21.
+  assert.strictEqual(constraint.pos, 13);
+  assert.strictEqual(constraint.end, 21);
+  assert.strictEqual(raw(sourceFile, constraint), " keyof T");
+  const valueType = type.type!;
+  if (!isIndexedAccessTypeNode(valueType)) throw new Error("Expected indexed access value type");
+  assert.strictEqual(valueType.pos, 23);
+  assert.strictEqual(valueType.end, 27);
+  assert.strictEqual(raw(sourceFile, valueType), "T[K]");
+  const objectType = valueType.objectType;
+  if (!isTypeReferenceNode(objectType)) throw new Error("Expected object type reference");
+  assert.strictEqual(objectType.pos, 23);
+  assert.strictEqual(objectType.end, 24);
+  const indexType = valueType.indexType;
+  if (!isTypeReferenceNode(indexType)) throw new Error("Expected index type reference");
+  assert.strictEqual(indexType.pos, 25);
+  assert.strictEqual(indexType.end, 26);
+});
+
+// ── Category 9: named tuples ──────────────────────────────────────────────
+
+test("named tuple with optional member", () => {
+  const { sourceFile, type } = soleType("type T=[a:number,b?:string];");
+  if (!isTupleTypeNode(type)) throw new Error("Expected tuple type");
+  assert.strictEqual(type.pos, 7);
+  assert.strictEqual(type.end, 27);
+  assert.strictEqual(raw(sourceFile, type), "[a:number,b?:string]");
+  const first = type.elements[0]!;
+  if (!isNamedTupleMember(first)) throw new Error("Expected first named tuple member");
+  assert.strictEqual(first.pos, 8);
+  assert.strictEqual(first.end, 16);
+  assert.strictEqual(raw(sourceFile, first), "a:number");
+  if (!isIdentifier(first.name)) throw new Error("Expected first member name");
+  assert.strictEqual(first.name.pos, 8);
+  assert.strictEqual(first.name.end, 9);
+  if (!isKeywordTypeNode(first.type)) throw new Error("Expected first member number type");
+  assert.strictEqual(first.type.kind, Kind.NumberKeyword);
+  assert.strictEqual(first.type.pos, 10);
+  assert.strictEqual(first.type.end, 16);
+  const second = type.elements[1]!;
+  if (!isNamedTupleMember(second)) throw new Error("Expected second named tuple member");
+  assert.strictEqual(second.pos, 17);
+  assert.strictEqual(second.end, 26);
+  assert.strictEqual(raw(sourceFile, second), "b?:string");
+  assert.strictEqual(second.questionToken!.kind, Kind.QuestionToken);
+  if (!isKeywordTypeNode(second.type)) throw new Error("Expected second member string type");
+  assert.strictEqual(second.type.kind, Kind.StringKeyword);
+  assert.strictEqual(second.type.pos, 20);
+  assert.strictEqual(second.type.end, 26);
+});
+
+// ── Category 10: index signatures ─────────────────────────────────────────
+
+test("index signature in type literal", () => {
+  const { sourceFile, type } = soleType("type D={[k:string]:number};");
+  if (!isTypeLiteralNode(type)) throw new Error("Expected type literal");
+  assert.strictEqual(type.pos, 7);
+  assert.strictEqual(type.end, 26);
+  const member = type.members[0]!;
+  if (!isIndexSignatureDeclaration(member)) throw new Error("Expected index signature");
+  assert.strictEqual(member.pos, 8);
+  assert.strictEqual(member.end, 25);
+  assert.strictEqual(raw(sourceFile, member), "[k:string]:number");
+  const param = member.parameters[0]!;
+  if (!isParameterDeclaration(param)) throw new Error("Expected index parameter");
+  assert.strictEqual(param.pos, 9);
+  assert.strictEqual(param.end, 17);
+  assert.strictEqual(raw(sourceFile, param), "k:string");
+  if (!isKeywordTypeNode(param.type!)) throw new Error("Expected string key type");
+  assert.strictEqual(param.type!.kind, Kind.StringKeyword);
+  assert.strictEqual(param.type!.pos, 11);
+  assert.strictEqual(param.type!.end, 17);
+  const valueType = member.type!;
+  if (!isKeywordTypeNode(valueType)) throw new Error("Expected number value type");
+  assert.strictEqual(valueType.kind, Kind.NumberKeyword);
+  assert.strictEqual(valueType.pos, 19);
+  assert.strictEqual(valueType.end, 25);
+});
+
+// ── Category 11: template literal expression ──────────────────────────────
+
+test("template expression head span tail", () => {
+  const { sourceFile, expression } = soleExpression("x=`a${b}c`;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected assignment binary");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 10);
+  assert.strictEqual(expression.operatorToken.kind, Kind.EqualsToken);
+  const template = expression.right;
+  if (!isTemplateExpression(template)) throw new Error("Expected template expression");
+  assert.strictEqual(template.pos, 2);
+  assert.strictEqual(template.end, 10);
+  assert.strictEqual(raw(sourceFile, template), "`a${b}c`");
+  assert.strictEqual(template.head.kind, Kind.TemplateHead);
+  assert.strictEqual(template.head.pos, 2);
+  assert.strictEqual(template.head.end, 6);
+  assert.strictEqual(raw(sourceFile, template.head), "`a${");
+  const span = template.templateSpans[0]!;
+  if (!isTemplateSpan(span)) throw new Error("Expected template span");
+  assert.strictEqual(span.pos, 6);
+  assert.strictEqual(span.end, 10);
+  assert.strictEqual(raw(sourceFile, span), "b}c`");
+  if (!isIdentifier(span.expression)) throw new Error("Expected span expression identifier");
+  assert.strictEqual(span.expression.pos, 6);
+  assert.strictEqual(span.expression.end, 7);
+  assert.strictEqual(span.literal.kind, Kind.TemplateTail);
+  assert.strictEqual(span.literal.pos, 7);
+  assert.strictEqual(span.literal.end, 10);
+  assert.strictEqual(raw(sourceFile, span.literal), "}c`");
+});
+
+// ── Category 12: template literal type ────────────────────────────────────
+
+test("template literal type head span tail", () => {
+  const { sourceFile, type } = soleType("type T=`a${B}c`;");
+  if (!isTemplateLiteralTypeNode(type)) throw new Error("Expected template literal type");
+  assert.strictEqual(type.pos, 7);
+  assert.strictEqual(type.end, 15);
+  assert.strictEqual(raw(sourceFile, type), "`a${B}c`");
+  assert.strictEqual(type.head.kind, Kind.TemplateHead);
+  assert.strictEqual(type.head.pos, 7);
+  assert.strictEqual(type.head.end, 11);
+  assert.strictEqual(raw(sourceFile, type.head), "`a${");
+  const span = type.templateSpans[0]!;
+  if (!isTemplateLiteralTypeSpan(span)) throw new Error("Expected template literal type span");
+  assert.strictEqual(span.pos, 11);
+  assert.strictEqual(span.end, 15);
+  assert.strictEqual(raw(sourceFile, span), "B}c`");
+  if (!isTypeReferenceNode(span.type)) throw new Error("Expected span type reference");
+  assert.strictEqual(span.type.pos, 11);
+  assert.strictEqual(span.type.end, 12);
+  assert.strictEqual(span.literal.kind, Kind.TemplateTail);
+  assert.strictEqual(span.literal.pos, 12);
+  assert.strictEqual(span.literal.end, 15);
+  assert.strictEqual(raw(sourceFile, span.literal), "}c`");
+});
+
+// ── Category 13a: regex vs divide ─────────────────────────────────────────
+
+test("regex literal after assignment", () => {
+  const { sourceFile, expression } = soleExpression("x=/ab+/g;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected assignment binary");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 8);
+  assert.strictEqual(expression.operatorToken.kind, Kind.EqualsToken);
+  const regex = expression.right;
+  if (!isRegularExpressionLiteral(regex)) throw new Error("Expected regex literal");
+  assert.strictEqual(regex.pos, 2);
+  assert.strictEqual(regex.end, 8);
+  assert.strictEqual(raw(sourceFile, regex), "/ab+/g");
+});
+
+test("divide not regex", () => {
+  const { sourceFile, expression } = soleExpression("x=a/b;");
+  if (!isBinaryExpression(expression)) throw new Error("Expected outer assignment binary");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 5);
+  assert.strictEqual(expression.operatorToken.kind, Kind.EqualsToken);
+  const inner = expression.right;
+  if (!isBinaryExpression(inner)) throw new Error("Expected inner divide binary");
+  assert.strictEqual(inner.pos, 2);
+  assert.strictEqual(inner.end, 5);
+  assert.strictEqual(raw(sourceFile, inner), "a/b");
+  assert.strictEqual(inner.operatorToken.kind, Kind.SlashToken);
+  assert.strictEqual(inner.left.pos, 2);
+  assert.strictEqual(inner.left.end, 3);
+  assert.strictEqual(inner.right.pos, 4);
+  assert.strictEqual(inner.right.end, 5);
+});
+
+// ── Category 13b: decorators ──────────────────────────────────────────────
+
+test("decorator identifier on class", () => {
+  const sourceFile = parseSourceFile("@dec class C{}");
+  const statement = sourceFile.statements[0]!;
+  if (!isClassDeclaration(statement)) throw new Error("Expected class declaration");
+  assert.strictEqual(statement.pos, 0);
+  assert.strictEqual(statement.end, 14);
+  const decorator = statement.modifiers![0]!;
+  if (!isDecorator(decorator)) throw new Error("Expected decorator");
+  assert.strictEqual(decorator.pos, 0);
+  assert.strictEqual(decorator.end, 4);
+  assert.strictEqual(raw(sourceFile, decorator), "@dec");
+  const expression = decorator.expression;
+  if (!isIdentifier(expression)) throw new Error("Expected identifier decorator expression");
+  assert.strictEqual(expression.pos, 1);
+  assert.strictEqual(expression.end, 4);
+  assert.strictEqual(raw(sourceFile, expression), "dec");
+  const name = statement.name!;
+  if (!isIdentifier(name)) throw new Error("Expected class name identifier");
+  // M3 4c: the class name `C`'s pos is its full-start = end of `class` (10); the
+  // space after `class` is its leading trivia. end stays token-tight at 12.
+  assert.strictEqual(name.pos, 10);
+  assert.strictEqual(name.end, 12);
+});
+
+test("decorator property access on class", () => {
+  const sourceFile = parseSourceFile("@ns.x class C{}");
+  const statement = sourceFile.statements[0]!;
+  if (!isClassDeclaration(statement)) throw new Error("Expected class declaration");
+  const decorator = statement.modifiers![0]!;
+  if (!isDecorator(decorator)) throw new Error("Expected decorator");
+  assert.strictEqual(decorator.pos, 0);
+  assert.strictEqual(decorator.end, 5);
+  assert.strictEqual(raw(sourceFile, decorator), "@ns.x");
+  const expression = decorator.expression;
+  if (!isPropertyAccessExpression(expression)) throw new Error("Expected property access decorator expression");
+  assert.strictEqual(expression.pos, 1);
+  assert.strictEqual(expression.end, 5);
+  assert.strictEqual(raw(sourceFile, expression), "ns.x");
+});
+
+test("decorator call on class", () => {
+  const sourceFile = parseSourceFile("@dec() class C{}");
+  const statement = sourceFile.statements[0]!;
+  if (!isClassDeclaration(statement)) throw new Error("Expected class declaration");
+  const decorator = statement.modifiers![0]!;
+  if (!isDecorator(decorator)) throw new Error("Expected decorator");
+  assert.strictEqual(decorator.pos, 0);
+  assert.strictEqual(decorator.end, 6);
+  assert.strictEqual(raw(sourceFile, decorator), "@dec()");
+  const expression = decorator.expression;
+  if (!isCallExpression(expression)) throw new Error("Expected call decorator expression");
+  assert.strictEqual(expression.pos, 1);
+  assert.strictEqual(expression.end, 6);
+  assert.strictEqual(raw(sourceFile, expression), "dec()");
+});
+
+// ── Extra: already-supported type forms (lock ranges) ─────────────────────
+
+test("optional type in tuple", () => {
+  const { sourceFile, type } = soleType("type T=[number?];");
+  if (!isTupleTypeNode(type)) throw new Error("Expected tuple type");
+  const element = type.elements[0]!;
+  if (!isOptionalTypeNode(element)) throw new Error("Expected optional type");
+  assert.strictEqual(element.pos, 8);
+  assert.strictEqual(element.end, 15);
+  assert.strictEqual(raw(sourceFile, element), "number?");
+  if (!isKeywordTypeNode(element.type)) throw new Error("Expected number element type");
+  assert.strictEqual(element.type.kind, Kind.NumberKeyword);
+  assert.strictEqual(element.type.pos, 8);
+  assert.strictEqual(element.type.end, 14);
+});
+
+test("rest type in tuple", () => {
+  const { sourceFile, type } = soleType("type T=[...number[]];");
+  if (!isTupleTypeNode(type)) throw new Error("Expected tuple type");
+  const element = type.elements[0]!;
+  if (!isRestTypeNode(element)) throw new Error("Expected rest type");
+  assert.strictEqual(element.pos, 8);
+  assert.strictEqual(element.end, 19);
+  assert.strictEqual(raw(sourceFile, element), "...number[]");
+  if (!isArrayTypeNode(element.type)) throw new Error("Expected array element type");
+  assert.strictEqual(element.type.pos, 11);
+  assert.strictEqual(element.type.end, 19);
+  assert.strictEqual(raw(sourceFile, element.type), "number[]");
+});
+
+test("import type with qualifier", () => {
+  const { sourceFile, type } = soleType("type T=import(\"m\").X;");
+  if (!isImportTypeNode(type)) throw new Error("Expected import type");
+  assert.strictEqual(type.pos, 7);
+  assert.strictEqual(type.end, 20);
+  assert.strictEqual(raw(sourceFile, type), "import(\"m\").X");
+  const argument = type.argument;
+  if (!isLiteralTypeNode(argument)) throw new Error("Expected literal module specifier");
+  assert.strictEqual(argument.pos, 14);
+  assert.strictEqual(argument.end, 17);
+  if (!isStringLiteral(argument.literal)) throw new Error("Expected string literal in module specifier");
+  assert.strictEqual(raw(sourceFile, argument.literal), "\"m\"");
+  const qualifier = type.qualifier!;
+  if (!isIdentifier(qualifier)) throw new Error("Expected identifier qualifier");
+  assert.strictEqual(qualifier.pos, 19);
+  assert.strictEqual(qualifier.end, 20);
+  assert.strictEqual(raw(sourceFile, qualifier), "X");
+});
+
+// ── M3 Stage-5 pre-wave: scriptKind/languageVariant plumbing ────────────────
+// These probes prove ONLY the plumbing (ScriptKind -> getLanguageVariant ->
+// parser/scanner variant + SourceFile stamp), NOT JSX parsing (5a adds that).
+
+// (a) A .ts/ScriptKindTS parse stays Standard, and `let x = <T>y;` now parses to a
+// TypeAssertionExpression. CAPTURE-CORRECTION: pre-5a this probe asserted the (then-
+// unimplemented) LessThanToken arm fell through to Expression_expected[1109] + a
+// BinaryExpression. M3 Stage 5a implements parseTypeAssertion (tsgo 5117-5125), the
+// Standard-variant arm of the fused LessThanToken handling, so `< Type > expr` is now
+// the faithful TypeAssertion. No diagnostics; the initializer is a TypeAssertion.
+test("prewave ts is standard variant unchanged", () => {
+  const sourceFile = parseSourceFile("let x = <T>y;", { fileName: "a.ts" });
+  assert.strictEqual(sourceFile.languageVariant, LanguageVariant.Standard);
+  assert.strictEqual(sourceFile.scriptKind, ScriptKind.TS);
+  // 5a: the LessThanToken arm now builds a TypeAssertion — no Expression_expected[1109].
+  assert.strictEqual(sourceFile.parseDiagnostics.length, 0);
+  const statement = sourceFile.statements[0]!;
+  if (!isVariableStatement(statement)) throw new Error("Expected variable statement");
+  const declaration = statement.declarationList.declarations[0]!;
+  const initializer = declaration.initializer!;
+  // 5a: `<T>y` is now a faithful TypeAssertionExpression (not a binary recovery).
+  assert.strictEqual(initializer.kind, Kind.TypeAssertionExpression);
+  if (!isTypeAssertion(initializer)) throw new Error("Expected type assertion");
+  if (!isTypeReferenceNode(initializer.type)) throw new Error("Expected type reference (T)");
+  if (!isIdentifier(initializer.expression)) throw new Error("Expected identifier operand (y)");
+  assert.strictEqual(initializer.expression.text, "y");
+  // .pos is the trivia-inclusive full-start (the space after `=`), so the raw slice
+  // includes that leading trivia — tsts node.pos = TokenFullStart (M3 4c).
+  assert.strictEqual(raw(sourceFile, initializer), " <T>y");
+});
+
+// (b) A .tsx/ScriptKindTSX parse (via the new options) reaches JSX mode: the
+// SourceFile is stamped LanguageVariant.JSX + ScriptKind.TSX (tsgo NewSourceFile
+// carries scriptKind + languageVariant). Explicit option wins over fileName.
+test("prewave tsx reaches jsx variant", () => {
+  const sourceFile = parseSourceFile("const a = 1;", { fileName: "a.tsx", scriptKind: ScriptKind.TSX });
+  assert.strictEqual(sourceFile.languageVariant, LanguageVariant.JSX);
+  assert.strictEqual(sourceFile.scriptKind, ScriptKind.TSX);
+});
+
+// (b') The same JSX variant is reached when ScriptKind is INFERRED from a .tsx
+// fileName (no explicit scriptKind option) via getScriptKindFromFileName — the
+// shared helper is the single source of truth, no text heuristic.
+test("prewave tsx inferred from filename", () => {
+  const sourceFile = parseSourceFile("const a = 1;", { fileName: "a.tsx" });
+  assert.strictEqual(sourceFile.languageVariant, LanguageVariant.JSX);
+  assert.strictEqual(sourceFile.scriptKind, ScriptKind.TSX);
+});
+
+// (c) getScriptKindFromFileName maps .tsx -> TSX and .ts -> TS (tsgo
+// core.GetScriptKindFromFileName, core/core.go:512).
+test("prewave get script kind from file name", () => {
+  assert.strictEqual(getScriptKindFromFileName("a.tsx"), ScriptKind.TSX);
+  assert.strictEqual(getScriptKindFromFileName("a.ts"), ScriptKind.TS);
+});
+
+// ── M3 Stage-5a: JSX element / attribute layer ──────────────────────────────
+// All parse in JSX mode (scriptKind: ScriptKind.TSX); assert tsgo-correct Kind +
+// full-start .pos + token-tight .end + raw source slices. Children content is 5b,
+// so these are self-closing / empty-element / empty-fragment inputs.
+
+// `<div/>` => JsxSelfClosingElement (tagName Identifier, no attributes).
+test("jsx self closing identifier", () => {
+  const { sourceFile, expression } = soleJsx("<div/>;");
+  if (!isJsxSelfClosingElement(expression)) throw new Error("Expected self-closing element");
+  assert.strictEqual(expression.kind, Kind.JsxSelfClosingElement);
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 6);
+  assert.strictEqual(raw(sourceFile, expression), "<div/>");
+  if (!isIdentifier(expression.tagName)) throw new Error("Expected identifier tag name");
+  assert.strictEqual(expression.tagName.text, "div");
+  assert.strictEqual(expression.attributes.properties.length, 0);
+});
+
+// `<A.B.C/>` => self-closing, tagName = PropertyAccess chain (structural).
+test("jsx self closing property access chain", () => {
+  const { sourceFile, expression } = soleJsx("<A.B.C/>;");
+  if (!isJsxSelfClosingElement(expression)) throw new Error("Expected self-closing element");
+  assert.strictEqual(raw(sourceFile, expression), "<A.B.C/>");
+  const tagName = expression.tagName;
+  if (!isPropertyAccessExpression(tagName)) throw new Error("Expected property access tag name (A.B.C)");
+  assert.strictEqual(tagName.name.text, "C");
+  if (!isPropertyAccessExpression(tagName.expression)) throw new Error("Expected A.B inner property access");
+  assert.strictEqual(tagName.expression.name.text, "B");
+  if (!isIdentifier(tagName.expression.expression)) throw new Error("Expected A identifier base");
+  assert.strictEqual(tagName.expression.expression.text, "A");
+});
+
+// `<ns:tag/>` => self-closing, tagName = JsxNamespacedName.
+test("jsx self closing namespaced name", () => {
+  const { sourceFile, expression } = soleJsx("<ns:tag/>;");
+  if (!isJsxSelfClosingElement(expression)) throw new Error("Expected self-closing element");
+  assert.strictEqual(raw(sourceFile, expression), "<ns:tag/>");
+  const tagName = expression.tagName;
+  if (!isJsxNamespacedName(tagName)) throw new Error("Expected namespaced name tag");
+  assert.strictEqual(tagName.namespace.text, "ns");
+  assert.strictEqual(tagName.name.text, "tag");
+});
+
+// `<div {...props}/>` => self-closing with a JsxSpreadAttribute.
+test("jsx self closing spread attribute", () => {
+  const { sourceFile, expression } = soleJsx("<div {...props}/>;");
+  if (!isJsxSelfClosingElement(expression)) throw new Error("Expected self-closing element");
+  assert.strictEqual(raw(sourceFile, expression), "<div {...props}/>");
+  assert.strictEqual(expression.attributes.properties.length, 1);
+  const attr = expression.attributes.properties[0]!;
+  if (!isJsxSpreadAttribute(attr)) throw new Error("Expected spread attribute");
+  if (!isIdentifier(attr.expression)) throw new Error("Expected identifier spread expression");
+  assert.strictEqual(attr.expression.text, "props");
+});
+
+// `<div a="x" b={1}/>` => self-closing with JsxAttribute(string) + JsxAttribute(JsxExpression).
+test("jsx self closing attributes", () => {
+  const { sourceFile, expression } = soleJsx("<div a=\"x\" b={1}/>;");
+  if (!isJsxSelfClosingElement(expression)) throw new Error("Expected self-closing element");
+  assert.strictEqual(raw(sourceFile, expression), "<div a=\"x\" b={1}/>");
+  assert.strictEqual(expression.attributes.properties.length, 2);
+  const a = expression.attributes.properties[0]!;
+  if (!isJsxAttribute(a)) throw new Error("Expected jsx attribute a");
+  if (!isIdentifier(a.name)) throw new Error("Expected identifier attribute name a");
+  assert.strictEqual(a.name.text, "a");
+  if (a.initializer === undefined || !isStringLiteral(a.initializer)) throw new Error("Expected string-literal value for a");
+  assert.strictEqual(a.initializer.text, "x");
+  const b = expression.attributes.properties[1]!;
+  if (!isJsxAttribute(b)) throw new Error("Expected jsx attribute b");
+  if (!isIdentifier(b.name)) throw new Error("Expected identifier attribute name b");
+  assert.strictEqual(b.name.text, "b");
+  if (b.initializer === undefined || !isJsxExpression(b.initializer)) throw new Error("Expected jsx-expression value for b");
+  if (b.initializer.expression === undefined || !isNumericLiteral(b.initializer.expression)) throw new Error("Expected numeric expression in b={1}");
+  assert.strictEqual(b.initializer.expression.text, "1");
+});
+
+// `<></>` => JsxFragment with JsxOpeningFragment + empty children + JsxClosingFragment.
+test("jsx empty fragment", () => {
+  const { sourceFile, expression } = soleJsx("<></>;");
+  if (!isJsxFragment(expression)) throw new Error("Expected jsx fragment");
+  assert.strictEqual(expression.kind, Kind.JsxFragment);
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 5);
+  assert.strictEqual(raw(sourceFile, expression), "<></>");
+  assert.strictEqual(expression.openingFragment.kind, Kind.JsxOpeningFragment);
+  assert.strictEqual(expression.children.length, 0);
+  assert.strictEqual(expression.closingFragment.kind, Kind.JsxClosingFragment);
+});
+
+// `<div></div>` => JsxElement with empty children + JsxClosingElement (tag match).
+test("jsx empty element", () => {
+  const { sourceFile, expression } = soleJsx("<div></div>;");
+  if (!isJsxElement(expression)) throw new Error("Expected jsx element");
+  assert.strictEqual(expression.kind, Kind.JsxElement);
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 11);
+  assert.strictEqual(raw(sourceFile, expression), "<div></div>");
+  assert.strictEqual(expression.openingElement.kind, Kind.JsxOpeningElement);
+  if (!isIdentifier(expression.openingElement.tagName)) throw new Error("Expected identifier opening tag name");
+  assert.strictEqual(expression.openingElement.tagName.text, "div");
+  assert.strictEqual(expression.children.length, 0);
+  assert.strictEqual(expression.closingElement.kind, Kind.JsxClosingElement);
+  if (!isIdentifier(expression.closingElement.tagName)) throw new Error("Expected identifier closing tag name");
+  assert.strictEqual(expression.closingElement.tagName.text, "div");
+});
+
+// ── M3 Stage-5b: JSX children (JsxText / {expr} / nested element) ────────────
+
+// `<div>text</div>` => JsxElement with one JsxText child "text".
+test("jsx element text child", () => {
+  const { sourceFile, expression } = soleJsx("<div>text</div>;");
+  if (!isJsxElement(expression)) throw new Error("Expected jsx element");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 15);
+  assert.strictEqual(raw(sourceFile, expression), "<div>text</div>");
+  assert.strictEqual(expression.children.length, 1);
+  const child = expression.children[0]!;
+  if (!isJsxText(child)) throw new Error("Expected JsxText child");
+  assert.strictEqual(child.kind, Kind.JsxText);
+  assert.strictEqual(child.pos, 5);
+  assert.strictEqual(child.end, 9);
+  assert.strictEqual(raw(sourceFile, child), "text");
+  assert.strictEqual(child.text, "text");
+  assert.strictEqual(child.containsOnlyTriviaWhiteSpaces, false);
+  // The closing tag still matches structurally (tagNamesAreEquivalent).
+  if (!isIdentifier(expression.closingElement.tagName)) throw new Error("Expected identifier closing tag");
+  assert.strictEqual(expression.closingElement.tagName.text, "div");
+});
+
+// `<div>{expr}</div>` => JsxElement with one JsxExpression child.
+test("jsx element expression child", () => {
+  const { sourceFile, expression } = soleJsx("<div>{expr}</div>;");
+  if (!isJsxElement(expression)) throw new Error("Expected jsx element");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 17);
+  assert.strictEqual(raw(sourceFile, expression), "<div>{expr}</div>");
+  assert.strictEqual(expression.children.length, 1);
+  const child = expression.children[0]!;
+  if (!isJsxExpression(child)) throw new Error("Expected JsxExpression child");
+  assert.strictEqual(child.kind, Kind.JsxExpression);
+  assert.strictEqual(child.pos, 5);
+  assert.strictEqual(child.end, 11);
+  assert.strictEqual(raw(sourceFile, child), "{expr}");
+  assert.strictEqual(child.dotDotDotToken, undefined);
+  if (child.expression === undefined || !isIdentifier(child.expression)) throw new Error("Expected identifier expression in {expr}");
+  assert.strictEqual(child.expression.text, "expr");
+});
+
+// `<><span/></>` => JsxFragment with a nested JsxSelfClosingElement child.
+test("jsx fragment nested self closing child", () => {
+  const { sourceFile, expression } = soleJsx("<><span/></>;");
+  if (!isJsxFragment(expression)) throw new Error("Expected jsx fragment");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 12);
+  assert.strictEqual(raw(sourceFile, expression), "<><span/></>");
+  assert.strictEqual(expression.children.length, 1);
+  const child = expression.children[0]!;
+  if (!isJsxSelfClosingElement(child)) throw new Error("Expected JsxSelfClosingElement child");
+  assert.strictEqual(child.pos, 2);
+  assert.strictEqual(child.end, 9);
+  assert.strictEqual(raw(sourceFile, child), "<span/>");
+  if (!isIdentifier(child.tagName)) throw new Error("Expected identifier tag name span");
+  assert.strictEqual(child.tagName.text, "span");
+});
+
+// `<a><b/></a>` => nested JsxElement whose child is JsxSelfClosingElement b.
+test("jsx element nested element child", () => {
+  const { sourceFile, expression } = soleJsx("<a><b/></a>;");
+  if (!isJsxElement(expression)) throw new Error("Expected jsx element");
+  assert.strictEqual(expression.pos, 0);
+  assert.strictEqual(expression.end, 11);
+  assert.strictEqual(raw(sourceFile, expression), "<a><b/></a>");
+  if (!isIdentifier(expression.openingElement.tagName)) throw new Error("Expected identifier opening tag a");
+  assert.strictEqual(expression.openingElement.tagName.text, "a");
+  assert.strictEqual(expression.children.length, 1);
+  const child = expression.children[0]!;
+  if (!isJsxSelfClosingElement(child)) throw new Error("Expected JsxSelfClosingElement child b");
+  assert.strictEqual(child.pos, 3);
+  assert.strictEqual(child.end, 7);
+  assert.strictEqual(raw(sourceFile, child), "<b/>");
+  if (!isIdentifier(child.tagName)) throw new Error("Expected identifier tag name b");
+  assert.strictEqual(child.tagName.text, "b");
+  if (!isIdentifier(expression.closingElement.tagName)) throw new Error("Expected identifier closing tag a");
+  assert.strictEqual(expression.closingElement.tagName.text, "a");
+});
+
+// Whitespace-only JsxText (with a line break) between elements =>
+// containsOnlyTriviaWhiteSpaces JsxText (scanner produces JsxTextAllWhiteSpaces,
+// the node carries Kind.JsxText + containsOnlyTriviaWhiteSpaces=true).
+test("jsx element whitespace only text child", () => {
+  const { sourceFile, expression } = soleJsx("<a>\n<b/>\n</a>;");
+  if (!isJsxElement(expression)) throw new Error("Expected jsx element");
+  assert.strictEqual(raw(sourceFile, expression), "<a>\n<b/>\n</a>");
+  assert.strictEqual(expression.children.length, 3);
+  const first = expression.children[0]!;
+  if (!isJsxText(first)) throw new Error("Expected leading JsxText child");
+  assert.strictEqual(first.kind, Kind.JsxText);
+  assert.strictEqual(first.containsOnlyTriviaWhiteSpaces, true);
+  assert.strictEqual(first.pos, 3);
+  assert.strictEqual(first.end, 4);
+  assert.strictEqual(raw(sourceFile, first), "\n");
+  const middle = expression.children[1]!;
+  if (!isJsxSelfClosingElement(middle)) throw new Error("Expected middle JsxSelfClosingElement b");
+  assert.strictEqual(raw(sourceFile, middle), "<b/>");
+  const last = expression.children[2]!;
+  if (!isJsxText(last)) throw new Error("Expected trailing JsxText child");
+  assert.strictEqual(last.containsOnlyTriviaWhiteSpaces, true);
+  assert.strictEqual(raw(sourceFile, last), "\n");
+});
+
+// Tag-mismatch `<a></b>` => the 5a mismatch diagnostic path (recovery, NOT a throw):
+// Expected_corresponding_JSX_closing_tag_for_0 (17002), and a recovered JsxElement.
+test("jsx element tag mismatch recovers", () => {
+  const sourceFile = parseSourceFile("<a></b>;", { fileName: "a.tsx", scriptKind: ScriptKind.TSX });
+  assert.ok(
+    sourceFile.parseDiagnostics.some((d) => d.code === 17002),
+    "expected Expected_corresponding_JSX_closing_tag_for_0 (17002) on <a></b>",
+  );
+  const statement = sourceFile.statements[0]!;
+  if (!isExpressionStatement(statement)) throw new Error("Expected expression statement");
+  const expression = statement.expression;
+  if (!isJsxElement(expression)) throw new Error("Expected recovered jsx element");
+  assert.strictEqual(raw(sourceFile, expression), "<a></b>");
+  if (!isIdentifier(expression.openingElement.tagName)) throw new Error("Expected identifier opening tag a");
+  assert.strictEqual(expression.openingElement.tagName.text, "a");
+  if (!isIdentifier(expression.closingElement.tagName)) throw new Error("Expected identifier closing tag b");
+  assert.strictEqual(expression.closingElement.tagName.text, "b");
+  assert.strictEqual(expression.children.length, 0);
+});
+
+// codex concrete case: `<div a="x">hi {name}<span /></div>` => mixed children:
+// JsxText "hi ", JsxExpression {name}, nested JsxSelfClosingElement span; closing
+// tag matches via tagNamesAreEquivalent (no diagnostic).
+test("jsx element mixed children", () => {
+  const { sourceFile, expression } = soleJsx("<div a=\"x\">hi {name}<span /></div>;");
+  if (!isJsxElement(expression)) throw new Error("Expected jsx element");
+  assert.strictEqual(raw(sourceFile, expression), "<div a=\"x\">hi {name}<span /></div>");
+  assert.strictEqual(expression.openingElement.attributes.properties.length, 1);
+  assert.strictEqual(expression.children.length, 3);
+  const text = expression.children[0]!;
+  if (!isJsxText(text)) throw new Error("Expected JsxText child 'hi '");
+  assert.strictEqual(raw(sourceFile, text), "hi ");
+  assert.strictEqual(text.text, "hi ");
+  assert.strictEqual(text.containsOnlyTriviaWhiteSpaces, false);
+  const expr = expression.children[1]!;
+  if (!isJsxExpression(expr)) throw new Error("Expected JsxExpression child {name}");
+  assert.strictEqual(raw(sourceFile, expr), "{name}");
+  if (expr.expression === undefined || !isIdentifier(expr.expression)) throw new Error("Expected identifier in {name}");
+  assert.strictEqual(expr.expression.text, "name");
+  const span = expression.children[2]!;
+  if (!isJsxSelfClosingElement(span)) throw new Error("Expected JsxSelfClosingElement child span");
+  assert.strictEqual(raw(sourceFile, span), "<span />");
+  if (!isIdentifier(span.tagName)) throw new Error("Expected identifier tag name span");
+  assert.strictEqual(span.tagName.text, "span");
+  if (!isIdentifier(expression.closingElement.tagName)) throw new Error("Expected identifier closing tag div");
+  assert.strictEqual(expression.closingElement.tagName.text, "div");
+});
+
+// ── M3 6a: withJSDoc flag-stamp (tsgo jsdoc.go:56-74, TS/TSX slice) ──────────
+// For a TS file the parser stamps NodeFlags.HasJSDoc onto a declaration preceded
+// by a JSDoc comment (no eager JSDoc child node — lazy/checker-owned). The stamp
+// is RANGE-NEUTRAL: the leading JSDoc stays in the host node's leading trivia
+// [node.pos, firstTokenStart), so node.pos is the trivia-inclusive full-start and
+// node.end stays token-tight; the host span is NOT widened by the comment.
+
+// `/** Adds one. */\nexport function inc(...) {...}` followed by a sibling decl
+// with NO JSDoc. The first FunctionDeclaration carries HasJSDoc; its pos is the
+// trivia-inclusive full-start (0, covering the JSDoc) and its end is token-tight
+// (the `}`). The sibling carries NO HasJSDoc and an unchanged token-tight range.
+test("jsdoc hasjsdoc on function declaration", () => {
+  const src = "/** Adds one. */\nexport function inc(x: number): number { return x + 1; }\nfunction plain(): void {}";
+  const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
+  assert.strictEqual(sourceFile.scriptKind, ScriptKind.TS);
+  const withDoc = sourceFile.statements[0]!;
+  if (!isFunctionDeclaration(withDoc)) throw new Error("Expected first function declaration");
+  // HasJSDoc is stamped.
+  assert.strictEqual(withDoc.flags & NodeFlags.HasJSDoc, NodeFlags.HasJSDoc);
+  // No @deprecated => PossiblyContainsDeprecatedTag stays clear.
+  assert.strictEqual(withDoc.flags & NodeFlags.PossiblyContainsDeprecatedTag, 0);
+  // pos is the trivia-inclusive full-start = 0 (the JSDoc is leading trivia of the host).
+  assert.strictEqual(withDoc.pos, 0);
+  // end is token-tight at the closing `}` of the body (NOT widened by the JSDoc).
+  const incEnd = src.indexOf("}") + 1;
+  assert.strictEqual(withDoc.end, incEnd);
+  assert.strictEqual(src.slice(withDoc.end - "return x + 1; }".length, withDoc.end), "return x + 1; }");
+  // The leading JSDoc lives in [withDoc.pos, firstTokenStart) trivia; the first
+  // real token is `export`, so the host span starts at 0 but the source slice
+  // begins with the comment (proving the comment is inside the trivia, not a child).
+  assert.strictEqual(src.slice(withDoc.pos, withDoc.pos + 3), "/**");
+
+  // Sibling with NO JSDoc: no HasJSDoc flag, range unaffected by the earlier stamp.
+  const plain = sourceFile.statements[1]!;
+  if (!isFunctionDeclaration(plain)) throw new Error("Expected second function declaration");
+  assert.strictEqual(plain.flags & NodeFlags.HasJSDoc, 0);
+  assert.strictEqual(plain.flags & NodeFlags.PossiblyContainsDeprecatedTag, 0);
+  const plainEnd = src.length;
+  assert.strictEqual(plain.end, plainEnd);
+  assert.strictEqual(src.slice(plain.end - "function plain(): void {}".length, plain.end), "function plain(): void {}");
+});
+
+// `/** @deprecated */\nexport function old(): void {}` — the preceding JSDoc has an
+// @deprecated tag, so BOTH HasJSDoc and PossiblyContainsDeprecatedTag are stamped.
+test("jsdoc deprecated sets possibly contains deprecated tag", () => {
+  const src = "/** @deprecated */\nexport function old(): void {}";
+  const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
+  assert.strictEqual(sourceFile.scriptKind, ScriptKind.TS);
+  const decl = sourceFile.statements[0]!;
+  if (!isFunctionDeclaration(decl)) throw new Error("Expected function declaration");
+  assert.strictEqual(decl.flags & NodeFlags.HasJSDoc, NodeFlags.HasJSDoc);
+  assert.strictEqual(decl.flags & NodeFlags.PossiblyContainsDeprecatedTag, NodeFlags.PossiblyContainsDeprecatedTag);
+  // Range-neutral: pos is the trivia-inclusive full-start (0), end token-tight (`}`).
+  assert.strictEqual(decl.pos, 0);
+  assert.strictEqual(decl.end, src.length);
+  assert.strictEqual(src.slice(decl.pos, decl.pos + 3), "/**");
+});
+
+// ── M3 6b: top-level-await reparse ────────────────────────────────────────────
+//
+// SetExternalModuleIndicator is STRUCTURAL: a SourceFile is an external module iff a
+// top-level statement is an export/import/export-assignment/export-declaration (no
+// filename/package heuristics). The reparse fires only for a non-declaration external
+// module with recorded possibleAwaitSpans. A leading `await` followed by `(`/`[`/etc.
+// (NOT an identifier/keyword/literal on the same line) is FIRST parsed as an `await`
+// IDENTIFIER (isAwaitExpression's lookahead heuristic fails), which records a span;
+// the reparse re-runs the statement with AwaitContext forced on, promoting it to a
+// real AwaitExpression carrying NodeFlags.AwaitContext.
+
+// TLA module (allowed): `await (load());\nexport const ready = true;` (scriptKind TS).
+// The `export const` makes the file an external module (indicator SET); statement 0's
+// leading `await (` mis-parses as an `await` identifier first-pass → span → reparse →
+// a real AwaitExpression carrying AwaitContext. Statement 1 (the export) is unchanged.
+test("tla module reparses await paren to await expression", () => {
+  const src = "await (load());\nexport const ready = true;";
+  const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
+  assert.strictEqual(sourceFile.scriptKind, ScriptKind.TS);
+  // Structural module decision: the export makes externalModuleIndicator defined.
+  assert.strictEqual(sourceFile.externalModuleIndicator !== undefined, true);
+  // Statement 0: ExpressionStatement whose expression is a (reparsed) AwaitExpression
+  // carrying AwaitContext.
+  const stmt0 = sourceFile.statements[0]!;
+  if (!isExpressionStatement(stmt0)) throw new Error("Expected expression statement");
+  const expr = stmt0.expression;
+  if (!isAwaitExpression(expr)) throw new Error("Expected await expression after reparse");
+  assert.strictEqual(expr.kind, Kind.AwaitExpression);
+  assert.strictEqual(expr.flags & NodeFlags.AwaitContext, NodeFlags.AwaitContext);
+  // Statement 1: the export const, unchanged (a VariableStatement carrying ExportKeyword).
+  // M3 4c: stmt1.pos is the trivia-inclusive full-start, so it begins at the `\n` after
+  // statement 0; the raw slice therefore leads with that newline.
+  const stmt1 = sourceFile.statements[1]!;
+  if (!isVariableStatement(stmt1)) throw new Error("Expected variable statement");
+  assert.strictEqual(raw(sourceFile, stmt1), "\nexport const ready = true;");
+});
+
+// First-pass heuristic (no reparse): `await load();\nexport const ready = true;`. After
+// `await`, the next token `load` IS an identifier on the same line, so isAwaitExpression's
+// lookahead succeeds and `await load()` is parsed DIRECTLY as an AwaitExpression on the
+// first pass — no `await` identifier, no span, no reparse. tsgo-faithful: the expression
+// is an AwaitExpression but does NOT carry AwaitContext (it was built outside one).
+test("tla module await identifier followed parses directly no await context", () => {
+  const src = "await load();\nexport const ready = true;";
+  const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
+  assert.strictEqual(sourceFile.externalModuleIndicator !== undefined, true);
+  const stmt0 = sourceFile.statements[0]!;
+  if (!isExpressionStatement(stmt0)) throw new Error("Expected expression statement");
+  const expr = stmt0.expression;
+  if (!isAwaitExpression(expr)) throw new Error("Expected await expression (first-pass heuristic)");
+  // No reparse occurred, so it carries NO AwaitContext (built with AwaitContext off).
+  assert.strictEqual(expr.flags & NodeFlags.AwaitContext, 0);
+});
+
+// TLA non-module (rejected): `await (load());` with NO import/export. externalModule-
+// Indicator is undefined, so the reparse gate fails — statement 0 keeps its first-pass
+// await-as-identifier shape (a CallExpression `await(load())`, NOT an AwaitExpression),
+// matching tsgo (no reparse for a non-module).
+test("tla non module no reparse", () => {
+  const src = "await (load());";
+  const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
+  assert.strictEqual(sourceFile.externalModuleIndicator === undefined, true);
+  const stmt0 = sourceFile.statements[0]!;
+  if (!isExpressionStatement(stmt0)) throw new Error("Expected expression statement");
+  // No reparse: `await (load())` was parsed as `await(load())` — a CallExpression on the
+  // `await` identifier, NOT an AwaitExpression.
+  assert.strictEqual(isAwaitExpression(stmt0.expression), false);
+  assert.strictEqual(stmt0.expression.kind, Kind.CallExpression);
+});
+
+// import.meta module detection: CLASSIFIED NOT-APPLICABLE. tsts does NOT parse
+// `import.meta` (the parser never builds a MetaProperty for it — #parsePrimaryExpression
+// has no ImportKeyword arm), so getImportMetaIfNecessary / the PossiblyContainsImportMeta
+// indicator branch can never fire (there is no node to find). This probe is therefore
+// intentionally OMITTED — the import.meta indicator depends on syntax tsts does not parse.
+
+// Range / parent integrity: the reparsed AwaitExpression statement has 4c-faithful
+// pos/end (full-start pos, token-tight end) and its parent points to the (rebuilt)
+// SourceFile. Uses a leading blank/space so the full-start (trivia-inclusive) is exercised.
+test("tla reparse range and parent integrity", () => {
+  const src = "await (x);\nexport {};";
+  const sourceFile = parseSourceFile(src, { fileName: "a.ts" });
+  assert.strictEqual(sourceFile.externalModuleIndicator !== undefined, true);
+  const stmt0 = sourceFile.statements[0]!;
+  if (!isExpressionStatement(stmt0)) throw new Error("Expected expression statement");
+  const expr = stmt0.expression;
+  if (!isAwaitExpression(expr)) throw new Error("Expected reparsed await expression");
+  // 4c-faithful ranges: ExpressionStatement starts at full-start 0, ends token-tight at
+  // the `;` after `await (x)` (index 10). The AwaitExpression starts at the `await` (0).
+  assert.strictEqual(stmt0.pos, 0);
+  assert.strictEqual(stmt0.end, 10);
+  assert.strictEqual(raw(sourceFile, stmt0), "await (x);");
+  assert.strictEqual(expr.pos, 0);
+  assert.strictEqual(raw(sourceFile, expr), "await (x)");
+  // Parent of the reparsed statement is the REBUILT SourceFile (the very node returned).
+  assert.strictEqual(stmt0.parent.kind, Kind.SourceFile);
+  assert.strictEqual(stmt0.parent === sourceFile, true);
+  // The untouched copied statement (the export) also reparents to the rebuilt file.
+  const stmt1 = sourceFile.statements[1]!;
+  assert.strictEqual(stmt1.parent === sourceFile, true);
+});
 
 // ── Stage-3b throw->diagnostics FLIP: recovery probes ──────────────────────────
 // Each probe parses a MALFORMED input that previously THREW a ParseError. After the
@@ -1407,255 +1422,153 @@ export class ParserParityTests {
 // and recovers (no throw, terminates). Probes assert the tsgo-faithful diagnostic
 // code (and/or recovered AST shape) AND that no throw occurred. Termination is
 // guaranteed by the 3b-list-model parseList progress guards. The recover_sequence_paren
-// probe (`(a,b);` -> X_0_expected[1005]) lives in ParserParityTests.
-// sequence_expression_is_known_gap to avoid duplication.
-export class ParserRecoveryTests {
-  // Parse `src` asserting NO throw; return the SourceFile for diagnostic/shape checks.
-  #parseNoThrow(src: string): SourceFile {
-    let threw = false;
-    let sourceFile: SourceFile | undefined;
-    try {
-      sourceFile = parseSourceFile(src);
-    } catch {
-      threw = true;
-    }
-    Assert.False(threw, "parser should recover (record a diagnostic), not throw, for: " + src);
-    if (sourceFile === undefined) throw new Exception("no source file produced");
-    return sourceFile;
-  }
+// probe (`(a,b);` -> X_0_expected[1005]) lives in the
+// "sequence expression is known gap" test above to avoid duplication.
 
-  #hasCode(sourceFile: SourceFile, code: number): boolean {
-    return sourceFile.parseDiagnostics.some((d) => d.code === code);
-  }
+// #2: `let x =` (no initializer) -> Expression_expected[1109].
+test("recover let no initializer", () => {
+  const sourceFile = parseNoThrow("let x =");
+  assert.ok(hasCode(sourceFile, 1109), "expected Expression_expected[1109]");
+});
 
-  // #2: `let x =` (no initializer) -> Expression_expected[1109].
-  recover_let_no_initializer(): void {
-    const sourceFile = this.#parseNoThrow("let x =");
-    Assert.True(this.#hasCode(sourceFile, 1109), "expected Expression_expected[1109]");
-  }
+// #3: `function f( {` (unclosed param list) -> X_0_expected[1005] (the `)`/`}`).
+test("recover function unclosed paren", () => {
+  const sourceFile = parseNoThrow("function f( {");
+  assert.ok(hasCode(sourceFile, 1005), "expected X_0_expected[1005]");
+});
 
-  // #3: `function f( {` (unclosed param list) -> X_0_expected[1005] (the `)`/`}`).
-  recover_function_unclosed_paren(): void {
-    const sourceFile = this.#parseNoThrow("function f( {");
-    Assert.True(this.#hasCode(sourceFile, 1005), "expected X_0_expected[1005]");
-  }
+// #4: `type T = ;` (empty type) -> Type_expected[1110].
+test("recover type alias empty", () => {
+  const sourceFile = parseNoThrow("type T = ;");
+  assert.ok(hasCode(sourceFile, 1110), "expected Type_expected[1110]");
+});
 
-  // #4: `type T = ;` (empty type) -> Type_expected[1110].
-  recover_type_alias_empty(): void {
-    const sourceFile = this.#parseNoThrow("type T = ;");
-    Assert.True(this.#hasCode(sourceFile, 1110), "expected Type_expected[1110]");
-  }
+// #5: `f<T>(x);` parses as a CallExpression with one typeArgument; no diagnostics.
+test("keep call type args", () => {
+  const sourceFile = parseNoThrow("f<T>(x);");
+  assert.strictEqual(sourceFile.parseDiagnostics.length, 0);
+  const statement = sourceFile.statements[0]!;
+  if (!isExpressionStatement(statement)) throw new Error("expected expression statement");
+  const expression = statement.expression;
+  if (!isCallExpression(expression)) throw new Error("expected call expression");
+  assert.strictEqual(expression.typeArguments!.length, 1);
+});
 
-  // #5: `f<T>(x);` parses as a CallExpression with one typeArgument; no diagnostics.
-  keep_call_type_args(): void {
-    const sourceFile = this.#parseNoThrow("f<T>(x);");
-    Assert.Equal(0, sourceFile.parseDiagnostics.length);
-    const statement = sourceFile.statements[0]!;
-    if (!isExpressionStatement(statement)) throw new Exception("expected expression statement");
-    const expression = statement.expression;
-    if (!isCallExpression(expression)) throw new Exception("expected call expression");
-    Assert.Equal(1, expression.typeArguments!.length);
-  }
+// #6: `x<y>z;` is relational (BinaryExpression), NOT a type-argument call;
+// canFollowTypeArgumentsInExpression returns false on identifier `z`. No diagnostics.
+test("relational not type args", () => {
+  const sourceFile = parseNoThrow("x<y>z;");
+  assert.strictEqual(sourceFile.parseDiagnostics.length, 0);
+  const statement = sourceFile.statements[0]!;
+  if (!isExpressionStatement(statement)) throw new Error("expected expression statement");
+  const expression = statement.expression;
+  if (!isBinaryExpression(expression)) throw new Error("expected binary (relational) expression");
+  assert.strictEqual(isCallExpression(expression), false);
+});
 
-  // #6: `x<y>z;` is relational (BinaryExpression), NOT a type-argument call;
-  // canFollowTypeArgumentsInExpression returns false on identifier `z`. No diagnostics.
-  relational_not_type_args(): void {
-    const sourceFile = this.#parseNoThrow("x<y>z;");
-    Assert.Equal(0, sourceFile.parseDiagnostics.length);
-    const statement = sourceFile.statements[0]!;
-    if (!isExpressionStatement(statement)) throw new Exception("expected expression statement");
-    const expression = statement.expression;
-    if (!isBinaryExpression(expression)) throw new Exception("expected binary (relational) expression");
-    Assert.Equal(false, isCallExpression(expression));
-  }
+// #7: `(a: number) => x` as a FunctionType still parses; binding/type contexts
+// preserved. No diagnostics.
+test("arrow vs paren functiontype", () => {
+  const sourceFile = parseNoThrow("type F=(a: number) => x;");
+  assert.strictEqual(sourceFile.parseDiagnostics.length, 0);
+  const statement = sourceFile.statements[0]!;
+  if (!isTypeAliasDeclaration(statement)) throw new Error("expected type alias");
+  if (!isFunctionTypeNode(statement.type)) throw new Error("expected function type");
+  assert.strictEqual(statement.type.parameters.length, 1);
+});
 
-  // #7: `(a: number) => x` as a FunctionType still parses; binding/type contexts
-  // preserved. No diagnostics.
-  arrow_vs_paren_functiontype(): void {
-    const sourceFile = this.#parseNoThrow("type F=(a: number) => x;");
-    Assert.Equal(0, sourceFile.parseDiagnostics.length);
-    const statement = sourceFile.statements[0]!;
-    if (!isTypeAliasDeclaration(statement)) throw new Exception("expected type alias");
-    if (!isFunctionTypeNode(statement.type)) throw new Exception("expected function type");
-    Assert.Equal(1, statement.type.parameters.length);
-  }
+// #8: `*;` (a token that is not start-of-expression in expr position) ->
+// Expression_expected[1109]; a missing identifier is built.
+test("recover primary unexpected", () => {
+  const sourceFile = parseNoThrow("*;");
+  assert.ok(hasCode(sourceFile, 1109), "expected Expression_expected[1109]");
+});
 
-  // #8: `*;` (a token that is not start-of-expression in expr position) ->
-  // Expression_expected[1109]; a missing identifier is built.
-  recover_primary_unexpected(): void {
-    const sourceFile = this.#parseNoThrow("*;");
-    Assert.True(this.#hasCode(sourceFile, 1109), "expected Expression_expected[1109]");
-  }
+// #9: `try {}` (no catch/finally) -> X_catch_or_finally_expected[1472];
+// statements[0] is a recovered TryStatement.
+test("recover try no catch finally", () => {
+  const sourceFile = parseNoThrow("try {}");
+  assert.ok(hasCode(sourceFile, 1472), "expected X_catch_or_finally_expected[1472]");
+  if (!isTryStatement(sourceFile.statements[0]!)) throw new Error("expected try statement");
+});
 
-  // #9: `try {}` (no catch/finally) -> X_catch_or_finally_expected[1472];
-  // statements[0] is a recovered TryStatement.
-  recover_try_no_catch_finally(): void {
-    const sourceFile = this.#parseNoThrow("try {}");
-    Assert.True(this.#hasCode(sourceFile, 1472), "expected X_catch_or_finally_expected[1472]");
-    if (!isTryStatement(sourceFile.statements[0]!)) throw new Exception("expected try statement");
-  }
+// #10: "`a${b`" (head+expr, no middle/tail close) -> X_0_expected[1005].
+test("recover template unterminated span", () => {
+  const sourceFile = parseNoThrow("`a${b`");
+  assert.ok(hasCode(sourceFile, 1005), "expected X_0_expected[1005]");
+});
 
-  // #10: "`a${b`" (head+expr, no middle/tail close) -> X_0_expected[1005].
-  recover_template_unterminated_span(): void {
-    const sourceFile = this.#parseNoThrow("`a${b`");
-    Assert.True(this.#hasCode(sourceFile, 1005), "expected X_0_expected[1005]");
-  }
+// #11: `const {1} = x;` (numeric prop, no colon) -> Identifier_expected[1003].
+test("recover object binding shorthand", () => {
+  const sourceFile = parseNoThrow("const {1} = x;");
+  assert.ok(hasCode(sourceFile, 1003), "expected Identifier_expected[1003]");
+});
 
-  // #11: `const {1} = x;` (numeric prop, no colon) -> Identifier_expected[1003].
-  recover_object_binding_shorthand(): void {
-    const sourceFile = this.#parseNoThrow("const {1} = x;");
-    Assert.True(this.#hasCode(sourceFile, 1003), "expected Identifier_expected[1003]");
-  }
+// #12: `a?.;` -> Identifier_expected[1003]; the expression is a
+// PropertyAccessExpression with a missing (zero-width, empty-text) member name.
+test("recover optional chain no member", () => {
+  const sourceFile = parseNoThrow("a?.;");
+  assert.ok(hasCode(sourceFile, 1003), "expected Identifier_expected[1003]");
+  const statement = sourceFile.statements[0]!;
+  if (!isExpressionStatement(statement)) throw new Error("expected expression statement");
+  if (!isPropertyAccessExpression(statement.expression)) throw new Error("expected property access expression");
+  assert.strictEqual(statement.expression.name.text, "");
+});
 
-  // #12: `a?.;` -> Identifier_expected[1003]; the expression is a
-  // PropertyAccessExpression with a missing (zero-width, empty-text) member name.
-  recover_optional_chain_no_member(): void {
-    const sourceFile = this.#parseNoThrow("a?.;");
-    Assert.True(this.#hasCode(sourceFile, 1003), "expected Identifier_expected[1003]");
-    const statement = sourceFile.statements[0]!;
-    if (!isExpressionStatement(statement)) throw new Exception("expected expression statement");
-    if (!isPropertyAccessExpression(statement.expression)) throw new Exception("expected property access expression");
-    Assert.Equal("", statement.expression.name.text);
-  }
+// #13: `type T = import("x", { bad: {} });` (bad attributes keyword) ->
+// X_0_expected[1005] ("with" expected).
+test("recover import attributes bad keyword", () => {
+  const sourceFile = parseNoThrow("type T = import(\"x\", { bad: {} });");
+  assert.ok(hasCode(sourceFile, 1005), "expected X_0_expected[1005] (\"with\")");
+});
 
-  // #13: `type T = import("x", { bad: {} });` (bad attributes keyword) ->
-  // X_0_expected[1005] ("with" expected).
-  recover_import_attributes_bad_keyword(): void {
-    const sourceFile = this.#parseNoThrow("type T = import(\"x\", { bad: {} });");
-    Assert.True(this.#hasCode(sourceFile, 1005), "expected X_0_expected[1005] (\"with\")");
-  }
+// #14a: `export {}` stays an ExportDeclaration (NOT MissingDeclaration); no diagnostics.
+test("recover modifiers on block export", () => {
+  const sourceFile = parseNoThrow("export {}");
+  assert.strictEqual(sourceFile.parseDiagnostics.length, 0);
+  if (!isExportDeclaration(sourceFile.statements[0]!)) throw new Error("expected export declaration");
+});
 
-  // #14a: `export {}` stays an ExportDeclaration (NOT MissingDeclaration); no diagnostics.
-  recover_modifiers_on_block_export(): void {
-    const sourceFile = this.#parseNoThrow("export {}");
-    Assert.Equal(0, sourceFile.parseDiagnostics.length);
-    if (!isExportDeclaration(sourceFile.statements[0]!)) throw new Exception("expected export declaration");
-  }
+// #14b: `abstract {}` (non-export modifier + block) -> Declaration_expected[1146];
+// statements[0] is a MissingDeclaration (the block fall-through Group-A site).
+test("recover modifiers on block", () => {
+  const sourceFile = parseNoThrow("abstract {}");
+  assert.ok(hasCode(sourceFile, 1146), "expected Declaration_expected[1146]");
+  if (!isMissingDeclaration(sourceFile.statements[0]!)) throw new Error("expected missing declaration");
+});
 
-  // #14b: `abstract {}` (non-export modifier + block) -> Declaration_expected[1146];
-  // statements[0] is a MissingDeclaration (the block fall-through Group-A site).
-  recover_modifiers_on_block(): void {
-    const sourceFile = this.#parseNoThrow("abstract {}");
-    Assert.True(this.#hasCode(sourceFile, 1146), "expected Declaration_expected[1146]");
-    if (!isMissingDeclaration(sourceFile.statements[0]!)) throw new Exception("expected missing declaration");
-  }
+// #15: `abstract x;` (modifier before a non-keyword expression) ->
+// Declaration_expected[1146]; statements[0] is a MissingDeclaration carrying the
+// modifier (the expression-statement fall-through Group-A site). NOTE: `public a;`
+// does NOT reach this path — tsgo isStartOfStatement(PublicKeyword) is false when an
+// identifier follows on the same line (parser.go:6041), so it is handled by
+// source-element abort recovery (Declaration_or_statement_expected[1128]), not the
+// modifier fall-through. `abstract` (followed by a non-decl token) is the faithful
+// input that consumes the modifier and reaches the expr-stmt MissingDeclaration.
+test("recover modifiers expr stmt", () => {
+  const sourceFile = parseNoThrow("abstract x;");
+  assert.ok(hasCode(sourceFile, 1146), "expected Declaration_expected[1146]");
+  const statement = sourceFile.statements[0]!;
+  if (!isMissingDeclaration(statement)) throw new Error("expected missing declaration");
+  assert.strictEqual(statement.modifiers!.length, 1);
+});
 
-  // #15: `abstract x;` (modifier before a non-keyword expression) ->
-  // Declaration_expected[1146]; statements[0] is a MissingDeclaration carrying the
-  // modifier (the expression-statement fall-through Group-A site). NOTE: `public a;`
-  // does NOT reach this path — tsgo isStartOfStatement(PublicKeyword) is false when an
-  // identifier follows on the same line (parser.go:6041), so it is handled by
-  // source-element abort recovery (Declaration_or_statement_expected[1128]), not the
-  // modifier fall-through. `abstract` (followed by a non-decl token) is the faithful
-  // input that consumes the modifier and reaches the expr-stmt MissingDeclaration.
-  recover_modifiers_expr_stmt(): void {
-    const sourceFile = this.#parseNoThrow("abstract x;");
-    Assert.True(this.#hasCode(sourceFile, 1146), "expected Declaration_expected[1146]");
-    const statement = sourceFile.statements[0]!;
-    if (!isMissingDeclaration(statement)) throw new Exception("expected missing declaration");
-    Assert.Equal(1, statement.modifiers!.length);
-  }
+// #16: `type T = X extends infer U extends string ? U : never;` -> the conditional
+// + infer-constraint parses (context-flag rewind in #tryParseConstraintOfInferType
+// still works under the diagnostics-truncating #rewind). No diagnostics.
+test("infer constraint context preserved", () => {
+  const sourceFile = parseNoThrow("type T = X extends infer U extends string ? U : never;");
+  assert.strictEqual(sourceFile.parseDiagnostics.length, 0);
+  const statement = sourceFile.statements[0]!;
+  if (!isTypeAliasDeclaration(statement)) throw new Error("expected type alias");
+  if (!isConditionalTypeNode(statement.type)) throw new Error("expected conditional type");
+});
 
-  // #16: `type T = X extends infer U extends string ? U : never;` -> the conditional
-  // + infer-constraint parses (context-flag rewind in #tryParseConstraintOfInferType
-  // still works under the diagnostics-truncating #rewind). No diagnostics.
-  infer_constraint_context_preserved(): void {
-    const sourceFile = this.#parseNoThrow("type T = X extends infer U extends string ? U : never;");
-    Assert.Equal(0, sourceFile.parseDiagnostics.length);
-    const statement = sourceFile.statements[0]!;
-    if (!isTypeAliasDeclaration(statement)) throw new Exception("expected type alias");
-    if (!isConditionalTypeNode(statement.type)) throw new Exception("expected conditional type");
-  }
-
-  // #17 (sanity): `}}}};` terminates via the parseList abort path (no throw, no hang).
-  terminates_on_garbage(): void {
-    const sourceFile = this.#parseNoThrow("}}}};");
-    // The abort path records Declaration_or_statement_expected[1128] for the leading
-    // close-braces; the only assertion that matters here is that it TERMINATED without
-    // throwing (already checked by #parseNoThrow) and produced diagnostics.
-    Assert.True(sourceFile.parseDiagnostics.length > 0, "garbage should record diagnostics");
-  }
-}
-
-// ── xunit registration (side-effect imports, mirroring position.test.ts) ─────
-A<ParserParityTests>().method((t) => t.shift_right_shift_a_rsh_b).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.shift_unsigned_right_shift_a_ursh_b).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.relational_greater_equals_a_ge_b).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.relational_greater_than_a_gt_b).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.assign_right_shift_a_rsh_eq_b).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.assign_unsigned_right_shift_a_ursh_eq_b).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.nested_generic_double_closer_tsgo_correct).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.nested_generic_triple_closer_tsgo_correct).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_exponent_right_assoc).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_multiplicative).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_additive).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_shift_left).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_relational_less_than).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_relational_in).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_relational_instanceof).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_equality_loose).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_equality_strict).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_bitwise_and).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_bitwise_xor).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_bitwise_or).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_logical_and).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_logical_or).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_nullish_coalescing).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_assignment).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.precedence_compound_assignment).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.arrow_in_parens_two_params).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.arrow_in_parens_with_return_type).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.sequence_expression_is_known_gap).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.call_with_type_arguments).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.paren_relational_not_type_args).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.infer_with_extends_constraint).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.function_type_with_param_and_void_return).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.constructor_type_no_params).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.mapped_type_keyof_indexed_access).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.named_tuple_with_optional_member).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.index_signature_in_type_literal).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.template_expression_head_span_tail).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.template_literal_type_head_span_tail).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.regex_literal_after_assignment).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.divide_not_regex).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.decorator_identifier_on_class).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.decorator_property_access_on_class).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.decorator_call_on_class).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.optional_type_in_tuple).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.rest_type_in_tuple).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.import_type_with_qualifier).add(FactAttribute);
-// M3 Stage-5 pre-wave: scriptKind/languageVariant plumbing probes.
-A<ParserParityTests>().method((t) => t.prewave_ts_is_standard_variant_unchanged).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.prewave_tsx_reaches_jsx_variant).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.prewave_tsx_inferred_from_filename).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.prewave_get_script_kind_from_file_name).add(FactAttribute);
-// M3 Stage-5a: JSX element / attribute layer probes.
-A<ParserParityTests>().method((t) => t.jsx_self_closing_identifier).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.jsx_self_closing_property_access_chain).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.jsx_self_closing_namespaced_name).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.jsx_self_closing_spread_attribute).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.jsx_self_closing_attributes).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.jsx_empty_fragment).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.jsx_empty_element).add(FactAttribute);
-// M3 6a: withJSDoc flag-stamp probes.
-A<ParserParityTests>().method((t) => t.jsdoc_hasjsdoc_on_function_declaration).add(FactAttribute);
-A<ParserParityTests>().method((t) => t.jsdoc_deprecated_sets_possibly_contains_deprecated_tag).add(FactAttribute);
-
-// Stage-3b throw->diagnostics FLIP recovery probes.
-A<ParserRecoveryTests>().method((t) => t.recover_let_no_initializer).add(FactAttribute);
-A<ParserRecoveryTests>().method((t) => t.recover_function_unclosed_paren).add(FactAttribute);
-A<ParserRecoveryTests>().method((t) => t.recover_type_alias_empty).add(FactAttribute);
-A<ParserRecoveryTests>().method((t) => t.keep_call_type_args).add(FactAttribute);
-A<ParserRecoveryTests>().method((t) => t.relational_not_type_args).add(FactAttribute);
-A<ParserRecoveryTests>().method((t) => t.arrow_vs_paren_functiontype).add(FactAttribute);
-A<ParserRecoveryTests>().method((t) => t.recover_primary_unexpected).add(FactAttribute);
-A<ParserRecoveryTests>().method((t) => t.recover_try_no_catch_finally).add(FactAttribute);
-A<ParserRecoveryTests>().method((t) => t.recover_template_unterminated_span).add(FactAttribute);
-A<ParserRecoveryTests>().method((t) => t.recover_object_binding_shorthand).add(FactAttribute);
-A<ParserRecoveryTests>().method((t) => t.recover_optional_chain_no_member).add(FactAttribute);
-A<ParserRecoveryTests>().method((t) => t.recover_import_attributes_bad_keyword).add(FactAttribute);
-A<ParserRecoveryTests>().method((t) => t.recover_modifiers_on_block_export).add(FactAttribute);
-A<ParserRecoveryTests>().method((t) => t.recover_modifiers_on_block).add(FactAttribute);
-A<ParserRecoveryTests>().method((t) => t.recover_modifiers_expr_stmt).add(FactAttribute);
-A<ParserRecoveryTests>().method((t) => t.infer_constraint_context_preserved).add(FactAttribute);
-A<ParserRecoveryTests>().method((t) => t.terminates_on_garbage).add(FactAttribute);
+// #17 (sanity): `}}}};` terminates via the parseList abort path (no throw, no hang).
+test("terminates on garbage", () => {
+  const sourceFile = parseNoThrow("}}}};");
+  // The abort path records Declaration_or_statement_expected[1128] for the leading
+  // close-braces; the only assertion that matters here is that it TERMINATED without
+  // throwing (already checked by parseNoThrow) and produced diagnostics.
+  assert.ok(sourceFile.parseDiagnostics.length > 0, "garbage should record diagnostics");
+});

@@ -1,58 +1,50 @@
-import { attributes as A } from "@tsonic/core/lang.js";
-import { Assert, FactAttribute } from "xunit-types/Xunit.js";
+import test from "node:test";
+import assert from "node:assert/strict";
 
 import { KnownSymlinks } from "./index.js";
 import { toPath } from "../tspath/index.js";
 
-export class KnownSymlinksTests {
-  starts_empty(): void {
-    const s = new KnownSymlinks("/cwd", true);
-    Assert.Equal(0, s.getDirectories().size);
-    Assert.Equal(0, s.getFiles().size);
-  }
+test("starts empty", () => {
+  const s = new KnownSymlinks("/cwd", true);
+  assert.strictEqual(s.getDirectories().size, 0);
+  assert.strictEqual(s.getFiles().size, 0);
+});
 
-  set_file_records_symlink_to_realpath_and_realpath_to_symlink_set(): void {
-    const s = new KnownSymlinks("/cwd", true);
-    const symlinkPath = toPath("/cwd/link.ts", "/cwd", true);
-    s.setFile("/cwd/link.ts", symlinkPath, "/cwd/real/file.ts");
+test("set file records symlink to realpath and realpath to symlink set", () => {
+  const s = new KnownSymlinks("/cwd", true);
+  const symlinkPath = toPath("/cwd/link.ts", "/cwd", true);
+  s.setFile("/cwd/link.ts", symlinkPath, "/cwd/real/file.ts");
 
-    Assert.Equal("/cwd/real/file.ts", s.getFiles().get(symlinkPath));
-    const realPath = toPath("/cwd/real/file.ts", "/cwd", true);
-    const symlinks = s.getFilesByRealpath().get(realPath);
-    Assert.NotNull(symlinks);
-    Assert.True(symlinks!.has("/cwd/link.ts"));
-  }
+  assert.strictEqual(s.getFiles().get(symlinkPath), "/cwd/real/file.ts");
+  const realPath = toPath("/cwd/real/file.ts", "/cwd", true);
+  const symlinks = s.getFilesByRealpath().get(realPath);
+  assert.notEqual(symlinks, null);
+  assert.ok(symlinks!.has("/cwd/link.ts"));
+});
 
-  process_resolution_infers_directory_symlink_from_filename_suffix_match(): void {
-    const s = new KnownSymlinks("/cwd", true);
-    s.processResolution("/cwd/link/foo.ts", "/cwd/real/foo.ts");
+test("process resolution infers directory symlink from filename suffix match", () => {
+  const s = new KnownSymlinks("/cwd", true);
+  s.processResolution("/cwd/link/foo.ts", "/cwd/real/foo.ts");
 
-    const linkFilePath = toPath("/cwd/link/foo.ts", "/cwd", true);
-    Assert.Equal("/cwd/real/foo.ts", s.getFiles().get(linkFilePath));
+  const linkFilePath = toPath("/cwd/link/foo.ts", "/cwd", true);
+  assert.strictEqual(s.getFiles().get(linkFilePath), "/cwd/real/foo.ts");
 
-    const linkDirPath = toPath("/cwd/link", "/cwd", true) + "/";
-    const dirLink = s.getDirectories().get(linkDirPath as ReturnType<typeof toPath>);
-    Assert.NotNull(dirLink);
-    Assert.Equal("/cwd/real/", dirLink!.real);
-  }
+  const linkDirPath = toPath("/cwd/link", "/cwd", true) + "/";
+  const dirLink = s.getDirectories().get(linkDirPath as ReturnType<typeof toPath>);
+  assert.notEqual(dirLink, null);
+  assert.strictEqual(dirLink!.real, "/cwd/real/");
+});
 
-  process_resolution_ignores_empty_paths(): void {
-    const s = new KnownSymlinks("/cwd", true);
-    s.processResolution("", "/cwd/real/foo.ts");
-    s.processResolution("/cwd/link/foo.ts", "");
-    Assert.Equal(0, s.getFiles().size);
-  }
+test("process resolution ignores empty paths", () => {
+  const s = new KnownSymlinks("/cwd", true);
+  s.processResolution("", "/cwd/real/foo.ts");
+  s.processResolution("/cwd/link/foo.ts", "");
+  assert.strictEqual(s.getFiles().size, 0);
+});
 
-  does_not_infer_a_symlink_when_filenames_differ(): void {
-    const s = new KnownSymlinks("/cwd", true);
-    s.processResolution("/cwd/link/foo.ts", "/cwd/real/bar.ts");
-    Assert.Equal(1, s.getFiles().size);
-    Assert.Equal(0, s.getDirectories().size);
-  }
-}
-
-A<KnownSymlinksTests>().method((t) => t.starts_empty).add(FactAttribute);
-A<KnownSymlinksTests>().method((t) => t.set_file_records_symlink_to_realpath_and_realpath_to_symlink_set).add(FactAttribute);
-A<KnownSymlinksTests>().method((t) => t.process_resolution_infers_directory_symlink_from_filename_suffix_match).add(FactAttribute);
-A<KnownSymlinksTests>().method((t) => t.process_resolution_ignores_empty_paths).add(FactAttribute);
-A<KnownSymlinksTests>().method((t) => t.does_not_infer_a_symlink_when_filenames_differ).add(FactAttribute);
+test("does not infer a symlink when filenames differ", () => {
+  const s = new KnownSymlinks("/cwd", true);
+  s.processResolution("/cwd/link/foo.ts", "/cwd/real/bar.ts");
+  assert.strictEqual(s.getFiles().size, 1);
+  assert.strictEqual(s.getDirectories().size, 0);
+});

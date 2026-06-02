@@ -1,65 +1,53 @@
-import { attributes as A } from "@tsonic/core/lang.js";
-import { Assert, FactAttribute } from "xunit-types/Xunit.js";
-import { Exception } from "@tsonic/dotnet/System.js";
+import test from "node:test";
+import assert from "node:assert/strict";
 
-import { assert, assertNever, fail } from "./debug.js";
+import { assert as debugAssert, assertNever, fail } from "./debug.js";
 
-export class DebugFailTests {
-  throws_with_default_message(): void {
-    Assert.ThrowsAny<Exception>(() => {
-      fail();
-    });
-  }
-
-  throws_with_custom_reason(): void {
-    const ex = Assert.ThrowsAny<Exception>(() => {
-      fail("something broke");
-    });
-    Assert.Contains("something broke", ex.Message);
-  }
+function throwsContaining(fn: () => void, substring: string): void {
+  assert.throws(fn, (err: unknown) => {
+    assert.ok(err instanceof Error);
+    assert.ok(err.message.includes(substring));
+    return true;
+  });
 }
 
-export class DebugAssertTests {
-  returns_silently_for_true(): void {
-    assert(true);
-    assert(true, "fine");
-  }
+test("fail throws with default message", () => {
+  assert.throws(() => {
+    fail();
+  });
+});
 
-  throws_for_false_without_context(): void {
-    const ex = Assert.ThrowsAny<Exception>(() => {
-      assert(false);
-    });
-    Assert.Contains("False expression", ex.Message);
-  }
+test("fail throws with custom reason", () => {
+  throwsContaining(() => {
+    fail("something broke");
+  }, "something broke");
+});
 
-  throws_for_false_with_context(): void {
-    const ex = Assert.ThrowsAny<Exception>(() => {
-      assert(false, "context");
-    });
-    Assert.Contains("False expression: context", ex.Message);
-  }
-}
+test("assert returns silently for true", () => {
+  debugAssert(true);
+  debugAssert(true, "fine");
+});
 
-export class DebugAssertNeverTests {
-  throws_with_default_message(): void {
-    const ex = Assert.ThrowsAny<Exception>(() => {
-      assertNever("unreachable" as never);
-    });
-    Assert.Contains("Illegal value", ex.Message);
-  }
+test("assert throws for false without context", () => {
+  throwsContaining(() => {
+    debugAssert(false);
+  }, "False expression");
+});
 
-  includes_member_detail(): void {
-    const ex = Assert.ThrowsAny<Exception>(() => {
-      assertNever("xyz" as never);
-    });
-    Assert.Contains("xyz", ex.Message);
-  }
-}
+test("assert throws for false with context", () => {
+  throwsContaining(() => {
+    debugAssert(false, "context");
+  }, "False expression: context");
+});
 
-A<DebugFailTests>().method((t) => t.throws_with_default_message).add(FactAttribute);
-A<DebugFailTests>().method((t) => t.throws_with_custom_reason).add(FactAttribute);
-A<DebugAssertTests>().method((t) => t.returns_silently_for_true).add(FactAttribute);
-A<DebugAssertTests>().method((t) => t.throws_for_false_without_context).add(FactAttribute);
-A<DebugAssertTests>().method((t) => t.throws_for_false_with_context).add(FactAttribute);
-A<DebugAssertNeverTests>().method((t) => t.throws_with_default_message).add(FactAttribute);
-A<DebugAssertNeverTests>().method((t) => t.includes_member_detail).add(FactAttribute);
+test("assertNever throws with default message", () => {
+  throwsContaining(() => {
+    assertNever("unreachable" as never);
+  }, "Illegal value");
+});
+
+test("assertNever includes member detail", () => {
+  throwsContaining(() => {
+    assertNever("xyz" as never);
+  }, "xyz");
+});
