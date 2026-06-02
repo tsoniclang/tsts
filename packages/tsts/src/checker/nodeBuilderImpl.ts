@@ -1,3 +1,4 @@
+import type { int } from "@tsonic/core/types.js";
 import {
   createElementAccessExpression,
   createExpressionWithTypeArguments,
@@ -5,6 +6,7 @@ import {
   createIndexedAccessTypeNode,
   createKeywordTypeNode,
   createLiteralTypeNode,
+  cloneNode as cloneAstNode,
   createNodeArray,
   createParenthesizedTypeNode,
   createPropertyAccessExpression,
@@ -88,7 +90,7 @@ export interface NodeBuilderImplContext extends NodeBuilderContext {
   visitedTypes: Set<TypeId>;
   symbolDepth: Map<string, number>;
   trackedSymbols: TrackedSymbolArgs[];
-  mapper?: TypeMapper;
+  mapper?: TypeMapper | undefined;
   reverseMappedStack: AstSymbol[];
   enclosingSymbolTypes: Map<number, Type>;
   suppressReportInferenceFallback: boolean;
@@ -97,6 +99,14 @@ export interface NodeBuilderImplContext extends NodeBuilderContext {
   typeParameterNamesByText: Set<string>;
   typeParameterNamesByTextNextNameCount: Map<string, number>;
   typeParameterSymbolList: Set<number>;
+}
+
+interface NodeBuilderIdentifierCarrier extends AstNode {
+  symbol?: AstSymbol;
+}
+
+interface SyntheticCommentCarrier extends AstNode {
+  syntheticLeadingComments?: readonly SyntheticLeadingComment[];
 }
 
 export const defaultMaximumTruncationLength = 160;
@@ -245,7 +255,7 @@ export class NodeBuilderImpl {
   getLinks(node: AstNode): NodeBuilderLinks {
     let links = this.links.get(node);
     if (links === undefined) {
-      links = { serializedTypes: new Map() };
+      links = { serializedTypes: new Map<string, SerializedTypeEntry>() };
       this.links.set(node, links);
     }
     return links;
@@ -254,7 +264,7 @@ export class NodeBuilderImpl {
   getSymbolLinks(symbol: AstSymbol): NodeBuilderSymbolLinks {
     let links = this.symbolLinks.get(symbol);
     if (links === undefined) {
-      links = { specifierCache: new Map() };
+      links = { specifierCache: new Map<string, string>() };
       this.symbolLinks.set(symbol, links);
     }
     return links;
@@ -354,7 +364,7 @@ export class NodeBuilderImpl {
     }
 
     const mayHaveNameCollisions = (this.ctx.flags & NodeBuilderFlags.UseFullyQualifiedType) === 0;
-    const seenNames = new Map<string, { type: Type; index: number }[]>();
+    const seenNames = new Map<string, { type: Type; index: int }[]>();
     const result: TypeNode[] = [];
     for (let index = 0; index < list.length; index += 1) {
       const type = list[index]!;
@@ -488,7 +498,7 @@ export class NodeBuilderImpl {
     return this.createEntityNameFromSymbolChain(chain, chain.length - 1);
   }
 
-  createEntityNameFromSymbolChain(chain: readonly AstSymbol[], index: number): AstNode | undefined {
+  createEntityNameFromSymbolChain(chain: readonly AstSymbol[], index: int): AstNode | undefined {
     if (index < 0 || index >= chain.length) return undefined;
     const symbol = chain[index]!;
     const enteringInitial = index === 0;
@@ -527,7 +537,7 @@ export class NodeBuilderImpl {
 
   createAccessFromSymbolChain(
     chain: readonly AstSymbol[],
-    index: number,
+    index: int,
     stopper: number,
     overrideTypeArguments: NodeArray<TypeNode> | undefined,
   ): AstNode | undefined {
@@ -564,7 +574,7 @@ export class NodeBuilderImpl {
     return identifier;
   }
 
-  createExpressionFromSymbolChain(chain: readonly AstSymbol[], index: number): AstNode | undefined {
+  createExpressionFromSymbolChain(chain: readonly AstSymbol[], index: int): AstNode | undefined {
     if (index < 0 || index >= chain.length) return undefined;
     const symbol = chain[index]!;
     const typeParameterNodes = this.lookupExpressionChainTypeArgumentNodes(chain, index);
@@ -645,7 +655,7 @@ export class NodeBuilderImpl {
     ];
   }
 
-  lookupTypeParameterNodes(chain: readonly AstSymbol[], index: number): NodeArray<TypeNode> | undefined {
+  lookupTypeParameterNodes(chain: readonly AstSymbol[], index: int): NodeArray<TypeNode> | undefined {
     const symbol = chain[index];
     if (symbol === undefined) return undefined;
     const nodes = this.getTypeParametersOfClassOrInterface(symbol)
@@ -654,7 +664,7 @@ export class NodeBuilderImpl {
     return nodes.length === 0 ? undefined : createNodeArray(nodes);
   }
 
-  lookupExpressionChainTypeArgumentNodes(chain: readonly AstSymbol[], index: number): NodeArray<TypeNode> | undefined {
+  lookupExpressionChainTypeArgumentNodes(chain: readonly AstSymbol[], index: int): NodeArray<TypeNode> | undefined {
     return this.lookupTypeParameterNodes(chain, index);
   }
 
@@ -672,7 +682,7 @@ export class NodeBuilderImpl {
   }
 
   newIdentifier(text: string, symbol?: AstSymbol): AstNode {
-    const identifier = createIdentifier(text.length === 0 ? "__missing" : text) as unknown as AstNode & { symbol?: AstSymbol };
+    const identifier = createIdentifier(text.length === 0 ? "__missing" : text) as NodeBuilderIdentifierCarrier;
     if (symbol !== undefined) {
       identifier.symbol = symbol;
       this.associateIdentifierWithSymbol(identifier, symbol);
@@ -875,14 +885,20 @@ function getSymbolType(symbol: AstSymbol): Type | undefined {
 }
 
 function cloneNode<T extends AstNode>(node: T): T {
-  return { ...(node as unknown as Record<string, unknown>) } as unknown as T;
+  return cloneAstNode(node) as T;
 }
 
 function withSyntheticComment<T extends AstNode>(node: T, comment: string): T {
-  return {
-    ...(node as unknown as Record<string, unknown>),
-    syntheticLeadingComments: [{ kind: Kind.MultiLineCommentTrivia, text: comment, hasTrailingNewLine: false }],
-  } as unknown as T;
+  const clone = cloneAstNode(node);
+  const carrier = clone as SyntheticCommentCarrier;
+  carrier.syntheticLeadingComments = [{ kind: Kind.MultiLineCommentTrivia, text: comment, hasTrailingNewLine: false }];
+  return clone as T;
+}
+
+interface SyntheticLeadingComment {
+  readonly kind: Kind;
+  readonly text: string;
+  readonly hasTrailingNewLine: boolean;
 }
 
 function isOptionalDeclaration(node: AstNode): boolean {

@@ -509,17 +509,24 @@ export function getImmediateAliasedSymbol(host: Pick<NameResolutionHost, "resolv
   return target;
 }
 
-export function addTypeOnlyDeclarationRelatedInfo<T extends { relatedInfo?: unknown[] }>(
+export interface TypeOnlyDeclarationRelatedInfo {
+  readonly node: AstNode;
+  readonly message: string;
+  readonly args: readonly string[];
+}
+
+export function addTypeOnlyDeclarationRelatedInfo<T extends { relatedInfo?: TypeOnlyDeclarationRelatedInfo[] }>(
   diagnostic: T,
   typeOnlyDeclaration: AstNode | undefined,
   name: string,
 ): T {
   if (typeOnlyDeclaration === undefined) return diagnostic;
-  diagnostic.relatedInfo = [...(diagnostic.relatedInfo ?? []), {
+  const relatedInfo: TypeOnlyDeclarationRelatedInfo = {
     node: typeOnlyDeclaration,
     message: isExportTypeOnlyDeclaration(typeOnlyDeclaration) ? "X_0_was_exported_here" : "X_0_was_imported_here",
     args: [name],
-  }];
+  };
+  diagnostic.relatedInfo = [...(diagnostic.relatedInfo ?? []), relatedInfo];
   return diagnostic;
 }
 

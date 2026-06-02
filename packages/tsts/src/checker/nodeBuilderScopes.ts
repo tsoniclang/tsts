@@ -59,8 +59,7 @@ export function cloneNodeBuilderContext(context: NodeBuilderImplContext): () => 
     context.enclosingSymbolTypes = enclosingSymbolTypes;
     context.trackedSymbols = trackedSymbols;
     context.enclosingDeclaration = enclosingDeclaration;
-    if (mapper === undefined) delete context.mapper;
-    else context.mapper = mapper;
+    context.mapper = mapper;
   };
 }
 

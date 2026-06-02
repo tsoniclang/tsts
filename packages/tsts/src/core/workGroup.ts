@@ -88,7 +88,7 @@ export class ThrottleGroup {
 
   go(fn: () => Promise<void>): void {
     const slot = new Promise<void>((resolve) => {
-      const run = async () => {
+      const run: () => Promise<void> = async (): Promise<void> => {
         this.active += 1;
         try {
           await fn();
@@ -101,7 +101,7 @@ export class ThrottleGroup {
         }
       };
       if (this.active < this.concurrency) {
-        run();
+        void run();
       } else {
         this.queue.push(run);
       }

@@ -6,6 +6,7 @@
  * (`checkClassDeclaration`, `checkFunctionDeclaration`, members).
  */
 
+import type { int } from "@tsonic/core/types.js";
 import {
   Kind,
   SymbolFlags,
@@ -180,7 +181,10 @@ export function inferFromAnnotatedParametersAndReturn(node: AstNode, state: Chec
 }
 
 export function assignContextualParameterTypes(node: AstNode, contextualTypes: readonly Type[], state: CheckState): void {
-  parametersOf(node).forEach((parameter, index) => assignParameterType(parameter, contextualTypes[index], state));
+  parametersOf(node).forEach((parameter, index) => {
+    const parameterIndex: int = index | 0;
+    assignParameterType(parameter, contextualTypes[parameterIndex], state);
+  });
 }
 
 export function assignNonContextualParameterTypes(node: AstNode, state: CheckState): void {
@@ -455,7 +459,8 @@ export function isImplementationCompatibleWithOverload(
   if (overloadParameters.length < minimumImplementationParameters || overloadParameters.length > maximumImplementationParameters) return false;
   for (let index = 0; index < overloadParameters.length; index++) {
     const overloadType = parameterType(overloadParameters[index]!, state);
-    const implementationType = parameterType(implementationParameters[Math.min(index, implementationParameters.length - 1)]!, state);
+    const implementationIndex: int = Math.min(index, implementationParameters.length - 1) | 0;
+    const implementationType = parameterType(implementationParameters[implementationIndex]!, state);
     if (overloadType !== undefined && implementationType !== undefined) checkAssignable(overloadType, implementationType, state);
   }
   const overloadReturn = returnTypeOfSignatureNode(overload, state);
@@ -671,7 +676,7 @@ export function checkPropertyAccessibility(node: AstNode, isSuper: boolean, writ
   return checkPropertyAccessibilityEx(node, isSuper, writing, type, prop, state, true);
 }
 
-export function checkPropertyAccessibilityEx(node: AstNode, isSuper: boolean, writing: boolean, type: Type, prop: AstSymbolLike, state: CheckState, reportError = true): boolean {
+export function checkPropertyAccessibilityEx(node: AstNode, isSuper: boolean, writing: boolean, type: Type, prop: AstSymbolLike, state: CheckState, reportError: boolean = true): boolean {
   return checkPropertyAccessibilityAtLocation(node, isSuper, writing, type, prop, reportError ? node : undefined, state);
 }
 
@@ -931,7 +936,10 @@ export function isPropertyIdenticalTo(left: AstSymbolLike, right: AstSymbolLike)
   const leftDeclarations = left.declarations ?? [];
   const rightDeclarations = right.declarations ?? [];
   if (leftDeclarations.length !== rightDeclarations.length) return false;
-  return leftDeclarations.every((declaration, index) => memberKind(declaration) === memberKind(rightDeclarations[index]!));
+  return leftDeclarations.every((declaration, index) => {
+    const declarationIndex: int = index | 0;
+    return memberKind(declaration) === memberKind(rightDeclarations[declarationIndex]!);
+  });
 }
 
 interface AstSymbolLike {

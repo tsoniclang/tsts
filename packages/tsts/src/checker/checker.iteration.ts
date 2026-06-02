@@ -92,7 +92,8 @@ export function getIterationTypeOfGeneratorFunctionReturnType(
   state: CheckState,
   resolver: IterationTypesResolver,
 ): Type {
-  return getIterationTypesOfGeneratorFunctionReturnType(returnType, errorNode, state, resolver)?.[iterationTypeProperty(kind)] ?? unknownType;
+  const iterationTypes = getIterationTypesOfGeneratorFunctionReturnType(returnType, errorNode, state, resolver);
+  return iterationTypes === undefined ? unknownType : getType(iterationTypes, kind);
 }
 
 export function getIterationTypesOfGeneratorFunctionReturnType(
@@ -112,7 +113,8 @@ export function getIterationTypeOfIterable(
   state: CheckState,
   resolver: IterationTypesResolver,
 ): Type | undefined {
-  return getIterationTypesOfIterable(type, IterationUse.Element, errorNode, state, resolver)?.[iterationTypeProperty(kind)];
+  const iterationTypes = getIterationTypesOfIterable(type, IterationUse.Element, errorNode, state, resolver);
+  return iterationTypes === undefined ? undefined : getType(iterationTypes, kind);
 }
 
 export function getIterationTypesOfIterable(
@@ -195,7 +197,9 @@ export function hasTypes(iterationTypes: IterationTypes | undefined): boolean {
 }
 
 export function getType(iterationTypes: IterationTypes, kind: IterationTypeKind): Type {
-  return iterationTypes[iterationTypeProperty(kind)];
+  if (kind === IterationTypeKind.Return) return iterationTypes.returnType;
+  if (kind === IterationTypeKind.Next) return iterationTypes.nextType;
+  return iterationTypes.yieldType;
 }
 
 export function combineIterationTypes(
@@ -340,12 +344,6 @@ export function isES2015OrLaterIterable(type: Type, resolver: IterationTypesReso
 
 function createIterationTypes(yieldType: Type, returnType: Type, nextType: Type): IterationTypes {
   return { yieldType, returnType, nextType };
-}
-
-function iterationTypeProperty(kind: IterationTypeKind): keyof IterationTypes {
-  if (kind === IterationTypeKind.Return) return "returnType";
-  if (kind === IterationTypeKind.Next) return "nextType";
-  return "yieldType";
 }
 
 function neverIterationType(): Type {

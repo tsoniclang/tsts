@@ -2,14 +2,14 @@ import type { CommentRange, Node } from "../ast/index.js";
 import { getJSDocCommentRanges, isJSDocLikeText } from "./utilities.js";
 
 export interface ParsedJSDocTag {
-  readonly name: string;
-  readonly text: string;
-  readonly pos?: number;
-  readonly end?: number;
-  readonly typeExpression?: string;
-  readonly parameterName?: string;
-  readonly optional?: boolean;
-  readonly defaultValue?: string;
+  name: string;
+  text: string;
+  pos?: number;
+  end?: number;
+  typeExpression?: string;
+  parameterName?: string;
+  optional?: boolean;
+  defaultValue?: string;
 }
 
 export interface ParsedJSDocComment {

@@ -76,9 +76,9 @@ export interface RegularExpressionDiagnostic {
 }
 
 export interface RegularExpressionScanOptions {
-  readonly languageVersion?: number;
-  readonly annexB?: boolean;
-  readonly reportDiagnostic?: (diagnostic: RegularExpressionDiagnostic) => void;
+  languageVersion?: number;
+  annexB?: boolean;
+  reportDiagnostic?: (diagnostic: RegularExpressionDiagnostic) => void;
 }
 
 export interface RegularExpressionScanResult {
@@ -274,7 +274,11 @@ function checkRegularExpressionFlagAvailability(
 }
 
 class RegExpParser {
+  private readonly text: string;
   private readonly state: ParserState;
+  private readonly end: number;
+  private readonly regExpFlags: RegularExpressionFlags;
+  private readonly options: RegularExpressionScanOptions;
   private readonly anyUnicodeMode: boolean;
   private readonly unicodeSetsMode: boolean;
   private readonly annexB: boolean;
@@ -289,12 +293,16 @@ class RegExpParser {
   private pendingLowSurrogate = 0;
 
   constructor(
-    private readonly text: string,
+    text: string,
     start: number,
-    private readonly end: number,
-    private readonly regExpFlags: RegularExpressionFlags,
-    private readonly options: RegularExpressionScanOptions,
+    end: number,
+    regExpFlags: RegularExpressionFlags,
+    options: RegularExpressionScanOptions,
   ) {
+    this.text = text;
+    this.end = end;
+    this.regExpFlags = regExpFlags;
+    this.options = options;
     this.state = { pos: start, tokenValue: "", tokenStart: start, tokenFlags: 0 };
     this.anyUnicodeMode = (regExpFlags & RegularExpressionFlags.AnyUnicodeMode) !== 0;
     this.unicodeSetsMode = (regExpFlags & RegularExpressionFlags.UnicodeSets) !== 0;

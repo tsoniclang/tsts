@@ -6,10 +6,10 @@ import type { Signature, Type, TypeFormatFlags } from "./types.js";
 export type HoverExpansionKind = "enum" | "class" | "module" | "interface" | "value";
 
 export interface HoverExpansionDeclaration {
-  readonly kind: HoverExpansionKind;
-  readonly name: string;
-  readonly memberNames: readonly string[];
-  readonly truncated: boolean;
+  kind: HoverExpansionKind;
+  name: string;
+  memberNames: readonly string[];
+  truncated: boolean;
 }
 
 export interface NodeBuilderHoverOptions {
@@ -30,7 +30,7 @@ export class NodeBuilderHover {
   private readonly maxMemberCount: number;
   private readonly maxExpansionDepth: number;
 
-  constructor(builder = new NodeBuilder(), options: NodeBuilderHoverOptions = {}) {
+  constructor(builder: NodeBuilder = new NodeBuilder(), options: NodeBuilderHoverOptions = {}) {
     this.builder = builder;
     this.maxMemberCount = options.maxMemberCount ?? 32;
     this.maxExpansionDepth = options.maxExpansionDepth ?? -1;

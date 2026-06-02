@@ -12,9 +12,13 @@ export interface CancellationToken {
   throwIfCancelled(): void;
 }
 
+export interface CancellationSignal {
+  readonly aborted: boolean;
+}
+
 export class AbortControllerToken implements CancellationToken {
-  readonly signal: AbortSignal;
-  constructor(signal: AbortSignal) {
+  readonly signal: CancellationSignal;
+  constructor(signal: CancellationSignal) {
     this.signal = signal;
   }
   isCancelled(): boolean {
@@ -22,7 +26,7 @@ export class AbortControllerToken implements CancellationToken {
   }
   throwIfCancelled(): void {
     if (this.signal.aborted) {
-      throw new DOMException("Cancelled", "AbortError");
+      throw new Error("Cancelled");
     }
   }
 }

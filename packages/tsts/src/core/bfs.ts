@@ -28,6 +28,10 @@ interface BreadthFirstSearchJob<N> {
   parent: BreadthFirstSearchJob<N> | undefined;
 }
 
+type BreadthFirstSearchLevelResult<K, N> =
+  | { readonly stop: true; readonly job: BreadthFirstSearchJob<N> }
+  | { readonly stop: false; readonly next: Map<K, BreadthFirstSearchJob<N>> };
+
 export interface BreadthFirstSearchLevel<K, N> {
   has(key: K): boolean;
   delete(key: K): void;
@@ -73,29 +77,24 @@ export function breadthFirstSearchParallel<N>(
   neighbors: (node: N) => readonly N[],
   visit: (node: N) => { isResult: boolean; stop: boolean },
 ): BreadthFirstSearchResult<N> {
-  return breadthFirstSearchParallelEx<N, N>(start, neighbors, visit, {}, identity);
+  return breadthFirstSearchParallelEx<N, N>(start, neighbors, visit, undefined, identity);
 }
 
 export function breadthFirstSearchParallelEx<K, N>(
   start: N,
   neighbors: (node: N) => readonly N[],
   visit: (node: N) => { isResult: boolean; stop: boolean },
-  options: BreadthFirstSearchOptions<K, N>,
+  options: BreadthFirstSearchOptions<K, N> | undefined,
   getKey: (node: N) => K,
 ): BreadthFirstSearchResult<N> {
-  const visited = options.visited ?? new Set<K>();
+  const visited = options?.visited ?? new Set<K>();
 
   let fallback: BreadthFirstSearchJob<N> | undefined;
 
-  // processLevel walks every job in the current level.
-  // Returns either {stop: true, job} when a stop-result was found, or
-  // {next} carrying the deduplicated next level.
-  type LevelResult =
-    | { stop: true; job: BreadthFirstSearchJob<N> }
-    | { stop: false; next: Map<K, BreadthFirstSearchJob<N>> };
-
-  const processLevel = (jobs: Map<K, BreadthFirstSearchJob<N>>): LevelResult => {
-    if (options.preprocessLevel !== undefined) {
+  const processLevel = (
+    jobs: Map<K, BreadthFirstSearchJob<N>>
+  ): BreadthFirstSearchLevelResult<K, N> => {
+    if (options?.preprocessLevel !== undefined) {
       options.preprocessLevel(new LevelView(jobs));
     }
 

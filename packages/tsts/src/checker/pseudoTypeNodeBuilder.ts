@@ -84,7 +84,7 @@ export class PseudoTypeNodeBuilder {
   private readonly enclosingDeclaration: AstNode | undefined;
   private readonly flags: NodeBuilderFlags;
 
-  constructor(builder = new NodeBuilder(), enclosingDeclaration?: AstNode, flags: NodeBuilderFlags = NodeBuilderFlags.None) {
+  constructor(builder: NodeBuilder = new NodeBuilder(), enclosingDeclaration?: AstNode, flags: NodeBuilderFlags = NodeBuilderFlags.None) {
     this.builder = builder;
     this.enclosingDeclaration = enclosingDeclaration;
     this.flags = flags;

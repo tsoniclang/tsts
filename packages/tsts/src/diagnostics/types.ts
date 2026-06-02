@@ -37,15 +37,15 @@ export interface DiagnosticMessage {
  * filled.
  */
 export interface Diagnostic {
-  readonly message: DiagnosticMessage;
-  readonly file?: SourceFileSlim;
-  readonly start?: number;
-  readonly length?: number;
-  readonly category: DiagnosticCategory;
-  readonly code: number;
-  readonly text: string;
-  readonly relatedInformation?: readonly Diagnostic[];
-  readonly chainedDiagnostics?: readonly Diagnostic[];
+  message: DiagnosticMessage;
+  file?: SourceFileSlim;
+  start?: number;
+  length?: number;
+  category: DiagnosticCategory;
+  code: number;
+  text: string;
+  relatedInformation?: readonly Diagnostic[];
+  chainedDiagnostics?: readonly Diagnostic[];
 }
 
 /**

@@ -1041,7 +1041,30 @@ export function indexInfoKeyType(info: IndexInfo): Type { return info.keyType; }
 export function indexInfoValueType(info: IndexInfo): Type { return info.valueType; }
 export function indexInfoIsReadonly(info: IndexInfo): boolean { return info.isReadonly === true; }
 
-export const LanguageFeatureMinimumTarget = {
+export interface LanguageFeatureMinimumTargetMap {
+  readonly Exponentiation: ScriptTarget;
+  readonly AsyncFunctions: ScriptTarget;
+  readonly ForAwaitOf: ScriptTarget;
+  readonly AsyncGenerators: ScriptTarget;
+  readonly AsyncIteration: ScriptTarget;
+  readonly ObjectSpreadRest: ScriptTarget;
+  readonly RegularExpressionFlagsDotAll: ScriptTarget;
+  readonly BindinglessCatch: ScriptTarget;
+  readonly BigInt: ScriptTarget;
+  readonly NullishCoalesce: ScriptTarget;
+  readonly OptionalChaining: ScriptTarget;
+  readonly LogicalAssignment: ScriptTarget;
+  readonly TopLevelAwait: ScriptTarget;
+  readonly ClassFields: ScriptTarget;
+  readonly PrivateNamesAndClassStaticBlocks: ScriptTarget;
+  readonly RegularExpressionFlagsHasIndices: ScriptTarget;
+  readonly ShebangComments: ScriptTarget;
+  readonly UsingAndAwaitUsing: ScriptTarget;
+  readonly ClassAndClassElementDecorators: ScriptTarget;
+  readonly RegularExpressionFlagsUnicodeSets: ScriptTarget;
+}
+
+export const LanguageFeatureMinimumTarget: LanguageFeatureMinimumTargetMap = {
   Exponentiation: ScriptTarget.ES2016,
   AsyncFunctions: ScriptTarget.ES2017,
   ForAwaitOf: ScriptTarget.ES2018,
@@ -1062,4 +1085,4 @@ export const LanguageFeatureMinimumTarget = {
   UsingAndAwaitUsing: ScriptTarget.ESNext,
   ClassAndClassElementDecorators: ScriptTarget.ESNext,
   RegularExpressionFlagsUnicodeSets: ScriptTarget.ESNext,
-} as const;
+};

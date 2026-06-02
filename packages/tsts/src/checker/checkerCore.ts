@@ -9,9 +9,11 @@
  * checker algorithm waves.
  */
 
+import type { int } from "@tsonic/core/types.js";
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
 import { Kind } from "../ast/index.js";
 import { SymbolFlags } from "../ast/flags.js";
+import type { CompilerOptions } from "../core/compilerOptions.js";
 import type { Type, Signature, TypeMapper } from "./types.js";
 
 export type TypeComparer = (source: Type, target: Type) => boolean;
@@ -426,7 +428,7 @@ export interface IterationTypes {
   readonly nextType: Type;
 }
 
-export type IterationTypeKind = number;
+export type IterationTypeKind = int;
 export const IterationTypeKind = {
   Yield: 0 as IterationTypeKind,
   Return: 1 as IterationTypeKind,
@@ -464,7 +466,7 @@ export interface CheckerHost {
 }
 
 export interface CheckerProgram extends CheckerHost {
-  readonly options: () => unknown;
+  readonly options: () => CompilerOptions;
   readonly sourceFiles: () => readonly AstNode[];
   readonly bindSourceFiles: () => void;
   readonly fileExists: (fileName: string) => boolean;
@@ -489,7 +491,7 @@ export interface CheckerProgram extends CheckerHost {
 export interface CheckerCoreState {
   readonly id: number;
   readonly program: CheckerProgram | undefined;
-  readonly compilerOptions: unknown;
+  readonly compilerOptions: CompilerOptions;
   readonly files: readonly AstNode[];
   readonly fileIndexMap: ReadonlyMap<AstNode, number>;
   readonly compareSymbols: (left: AstSymbol, right: AstSymbol) => number;
@@ -561,35 +563,35 @@ export interface CheckerCoreState {
   unionOfUnionTypes: Map<string, Type>;
   intersectionTypes: Map<CacheHashKey, Type>;
   propertiesTypes: Map<string, Type>;
-  diagnostics: readonly unknown[];
-  suggestionDiagnostics: readonly unknown[];
+  diagnostics: object[];
+  suggestionDiagnostics: object[];
   mergedSymbols: Map<AstSymbol, AstSymbol>;
-  nodeLinks: Map<AstNode, unknown>;
-  signatureLinks: Map<AstNode, unknown>;
-  symbolNodeLinks: Map<AstNode, unknown>;
-  typeNodeLinks: Map<AstNode, unknown>;
-  enumMemberLinks: Map<AstNode, unknown>;
-  assertionLinks: Map<AstNode, unknown>;
-  arrayLiteralLinks: Map<AstNode, unknown>;
-  switchStatementLinks: Map<AstNode, unknown>;
-  jsxElementLinks: Map<AstNode, unknown>;
-  symbolReferenceLinks: Map<AstSymbol, unknown>;
-  valueSymbolLinks: Map<AstSymbol, unknown>;
-  mappedSymbolLinks: Map<AstSymbol, unknown>;
-  deferredSymbolLinks: Map<AstSymbol, unknown>;
-  aliasSymbolLinks: Map<AstSymbol, unknown>;
-  moduleSymbolLinks: Map<AstSymbol, unknown>;
-  lateBoundLinks: Map<AstSymbol, unknown>;
-  exportTypeLinks: Map<AstSymbol, unknown>;
-  membersAndExportsLinks: Map<AstSymbol, unknown>;
-  typeAliasLinks: Map<AstSymbol, unknown>;
-  declaredTypeLinks: Map<AstSymbol, unknown>;
-  spreadLinks: Map<AstSymbol, unknown>;
-  varianceLinks: Map<AstSymbol, unknown>;
-  reverseMappedSymbolLinks: Map<AstSymbol, unknown>;
-  markedAssignmentSymbolLinks: Map<AstSymbol, unknown>;
-  symbolContainerLinks: Map<AstSymbol, unknown>;
-  sourceFileLinks: Map<AstNode, unknown>;
+  nodeLinks: Map<AstNode, object>;
+  signatureLinks: Map<AstNode, object>;
+  symbolNodeLinks: Map<AstNode, object>;
+  typeNodeLinks: Map<AstNode, object>;
+  enumMemberLinks: Map<AstNode, object>;
+  assertionLinks: Map<AstNode, object>;
+  arrayLiteralLinks: Map<AstNode, object>;
+  switchStatementLinks: Map<AstNode, object>;
+  jsxElementLinks: Map<AstNode, object>;
+  symbolReferenceLinks: Map<AstSymbol, object>;
+  valueSymbolLinks: Map<AstSymbol, object>;
+  mappedSymbolLinks: Map<AstSymbol, object>;
+  deferredSymbolLinks: Map<AstSymbol, object>;
+  aliasSymbolLinks: Map<AstSymbol, object>;
+  moduleSymbolLinks: Map<AstSymbol, object>;
+  lateBoundLinks: Map<AstSymbol, object>;
+  exportTypeLinks: Map<AstSymbol, object>;
+  membersAndExportsLinks: Map<AstSymbol, object>;
+  typeAliasLinks: Map<AstSymbol, object>;
+  declaredTypeLinks: Map<AstSymbol, object>;
+  spreadLinks: Map<AstSymbol, object>;
+  varianceLinks: Map<AstSymbol, object>;
+  reverseMappedSymbolLinks: Map<AstSymbol, object>;
+  markedAssignmentSymbolLinks: Map<AstSymbol, object>;
+  symbolContainerLinks: Map<AstSymbol, object>;
+  sourceFileLinks: Map<AstNode, object>;
   patternForType: Map<Type, AstNode>;
   contextFreeTypes: Map<AstNode, Type>;
   anyType: Type;
@@ -915,22 +917,22 @@ function symbolName(symbol: AstSymbol): string {
 }
 
 export interface IterationResolverFactoryState {
-  readonly getGlobalIteratorType: () => Type;
-  readonly getGlobalIterableType: () => Type;
-  readonly getGlobalIterableTypeChecked: () => Type;
-  readonly getGlobalIterableIteratorType: () => Type;
-  readonly getGlobalIterableIteratorTypeChecked: () => Type;
-  readonly getGlobalIteratorObjectType: () => Type;
-  readonly getGlobalGeneratorType: () => Type;
-  readonly getGlobalAsyncIteratorType: () => Type;
-  readonly getGlobalAsyncIterableType: () => Type;
-  readonly getGlobalAsyncIterableTypeChecked: () => Type;
-  readonly getGlobalAsyncIterableIteratorType: () => Type;
-  readonly getGlobalAsyncIterableIteratorTypeChecked: () => Type;
-  readonly getGlobalAsyncIteratorObjectType: () => Type;
-  readonly getGlobalAsyncGeneratorType: () => Type;
-  readonly getGlobalTypesResolver: (names: readonly string[], arity: number, reportErrors: boolean) => () => readonly Type[];
-  readonly getAwaitedType: (type: Type, errorNode: AstNode | undefined, diagnostic: string) => Type;
+  getGlobalIteratorType: () => Type;
+  getGlobalIterableType: () => Type;
+  getGlobalIterableTypeChecked: () => Type;
+  getGlobalIterableIteratorType: () => Type;
+  getGlobalIterableIteratorTypeChecked: () => Type;
+  getGlobalIteratorObjectType: () => Type;
+  getGlobalGeneratorType: () => Type;
+  getGlobalAsyncIteratorType: () => Type;
+  getGlobalAsyncIterableType: () => Type;
+  getGlobalAsyncIterableTypeChecked: () => Type;
+  getGlobalAsyncIterableIteratorType: () => Type;
+  getGlobalAsyncIterableIteratorTypeChecked: () => Type;
+  getGlobalAsyncIteratorObjectType: () => Type;
+  getGlobalAsyncGeneratorType: () => Type;
+  getGlobalTypesResolver: (names: readonly string[], arity: number, reportErrors: boolean) => () => readonly Type[];
+  getAwaitedType: (type: Type, errorNode: AstNode | undefined, diagnostic: string) => Type;
 }
 
 export function createSyncIterationTypesResolver(state: IterationResolverFactoryState): IterationTypesResolver {

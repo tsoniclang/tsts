@@ -1,3 +1,4 @@
+import type { int } from "@tsonic/core/types.js";
 import type { Node } from "../ast/index.js";
 import { Kind } from "../ast/index.js";
 
@@ -156,8 +157,8 @@ export function entityNameText(node: Node | undefined): string {
   return "";
 }
 
-export function countTypeNodes(node: Node): number {
-  let count = 1;
+export function countTypeNodes(node: Node): int {
+  let count: int = 1;
   for (const child of typeChildren(node)) count += countTypeNodes(child);
   return count;
 }

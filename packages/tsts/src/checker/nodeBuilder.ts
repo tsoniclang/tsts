@@ -14,6 +14,7 @@
  * tuple, array, and type-parameter serialization.
  */
 
+import type { int } from "@tsonic/core/types.js";
 import type {
   Node as AstNode,
   KeywordTypeSyntaxKind,
@@ -33,6 +34,7 @@ import {
   createConstructorTypeNode,
   createFunctionTypeNode,
   createIndexSignatureDeclaration,
+  createIndexedAccessTypeNode,
   createIntersectionTypeNode,
   createLiteralTypeNode,
   createMethodSignatureDeclaration,
@@ -44,9 +46,11 @@ import {
   createTupleTypeNode,
   createTypeOperatorNode,
   createTypeParameterDeclaration,
+  createTypeLiteralNode,
   createTypeReferenceNode,
   createUnionTypeNode,
   Kind,
+  type TypeElement,
 } from "../ast/index.js";
 import type { Type, Signature, SymbolFormatFlags, TypeFormatFlags, ObjectType, IndexInfo, TupleType, TypeParameter } from "./types.js";
 import { AccessFlags, ObjectFlags, SignatureKind, getTypeOfSymbol, TypeFlags } from "./types.js";
@@ -296,18 +300,17 @@ function typeToTypeNodeWorker(type: Type): TypeNode | undefined {
     const data = type.data as { objectType?: Type; indexType?: Type } | undefined;
     const objectType = data?.objectType === undefined ? undefined : typeToTypeNodeWorker(data.objectType);
     const indexType = data?.indexType === undefined ? undefined : typeToTypeNodeWorker(data.indexType);
-    return objectType === undefined || indexType === undefined ? undefined : {
-      kind: Kind.IndexedAccessType,
-      objectType,
-      indexType,
-    } as unknown as TypeNode;
+    return objectType === undefined || indexType === undefined ? undefined : createIndexedAccessTypeNode(objectType, indexType);
   }
   if ((type.flags & TypeFlags.Object) !== 0) {
     const object = type.data as ObjectType | TupleType | undefined;
     if ((object?.objectFlags ?? 0) & ObjectFlags.Tuple) {
       const tuple = object as TupleType;
       const elements = tuple.elementInfo
-        .map((_, index) => tupleElementType(type, index))
+        .map((_, index) => {
+          const elementIndex: int = index | 0;
+          return tupleElementType(type, elementIndex);
+        })
         .filter((element): element is Type => element !== undefined)
         .map(typeToTypeNodeWorker)
         .filter(isTypeNode);
@@ -320,10 +323,7 @@ function typeToTypeNodeWorker(type: Type): TypeNode | undefined {
     }
     const members = objectTypeMembersToTypeElements(type);
     if (members.length > 0) {
-      return {
-        kind: Kind.TypeLiteral,
-        members: createNodeArray(members),
-      } as unknown as TypeNode;
+      return createTypeLiteralNode(createNodeArray(members));
     }
   }
   if ((type.flags & TypeFlags.TypeParameter) !== 0) {
@@ -415,13 +415,13 @@ function arrayElementType(type: Type): Type | undefined {
     ?? typeArgumentsOf(type)[0];
 }
 
-function tupleElementType(type: Type, index: number): Type | undefined {
+function tupleElementType(type: Type, index: int): Type | undefined {
   return typeArgumentsOf(type)[index];
 }
 
-function objectTypeMembersToTypeElements(type: Type): readonly AstNode[] {
+function objectTypeMembersToTypeElements(type: Type): readonly TypeElement[] {
   const data = type.data as ObjectType | undefined;
-  const members: AstNode[] = [];
+  const members: TypeElement[] = [];
   for (const property of data?.declaredProperties ?? []) {
     const propertyType = getTypeOfSymbol(property);
     const propertyTypeNode = propertyType === undefined ? undefined : typeToTypeNodeWorker(propertyType);
@@ -437,15 +437,15 @@ function objectTypeMembersToTypeElements(type: Type): readonly AstNode[] {
   }
   for (const signature of data?.declaredCallSignatures ?? []) {
     const node = signatureToTypeElement(signature, SignatureKind.Call);
-    if (node !== undefined) members.push(node);
+    if (node !== undefined) members.push(node as TypeElement);
   }
   for (const signature of data?.declaredConstructSignatures ?? []) {
     const node = signatureToTypeElement(signature, SignatureKind.Construct);
-    if (node !== undefined) members.push(node);
+    if (node !== undefined) members.push(node as TypeElement);
   }
   for (const indexInfo of data?.indexInfos ?? []) {
     const node = indexInfoToTypeElement(indexInfo);
-    if (node !== undefined) members.push(node);
+    if (node !== undefined) members.push(node as TypeElement);
   }
   return members;
 }

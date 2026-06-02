@@ -10,6 +10,7 @@
  * conformance tests drive incremental fill-in.
  */
 
+import type { int } from "@tsonic/core/types.js";
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
 import { Kind, SymbolFlags } from "../ast/index.js";
 import type { Type, Signature, UnionOrIntersectionType, LiteralType, ObjectType, IndexInfo, InterfaceType, TypeParameter, TypeReference, IndexedAccessType, TypePredicate } from "./types.js";
@@ -704,7 +705,21 @@ export class Relater {
     return Ternary.True;
   }
   compareTypePredicateRelatedTo(source: unknown, target: unknown): Ternary {
-    return JSON.stringify(source) === JSON.stringify(target) ? Ternary.True : Ternary.False;
+    const sourcePredicate = source as TypePredicate | undefined;
+    const targetPredicate = target as TypePredicate | undefined;
+    if (sourcePredicate === targetPredicate) return Ternary.True;
+    if (sourcePredicate === undefined || targetPredicate === undefined) return Ternary.False;
+    if (
+      sourcePredicate.kind !== targetPredicate.kind ||
+      sourcePredicate.parameterIndex !== targetPredicate.parameterIndex ||
+      sourcePredicate.parameterName !== targetPredicate.parameterName
+    ) {
+      return Ternary.False;
+    }
+    if (sourcePredicate.type === undefined || targetPredicate.type === undefined) {
+      return sourcePredicate.type === targetPredicate.type ? Ternary.True : Ternary.False;
+    }
+    return this.compareTypesIdentical(sourcePredicate.type, targetPredicate.type);
   }
   isTopSignature(signature: Signature): boolean {
     return this.getParameterCount(signature) === 0 && signature.resolvedReturnType !== undefined && (signature.resolvedReturnType.flags & TypeFlags.AnyOrUnknown) !== 0;
@@ -738,17 +753,17 @@ export class Relater {
     if (rest === undefined) return undefined;
     return this.arrayElementType(rest) === undefined ? rest : undefined;
   }
-  getTypeAtPosition(signature: Signature, position: number): Type {
+  getTypeAtPosition(signature: Signature, position: int): Type {
     return this.tryGetTypeAtPosition(signature, position) ?? this.getRestOrAnyTypeAtPosition(signature, position);
   }
-  tryGetTypeAtPosition(signature: Signature, position: number): Type | undefined {
+  tryGetTypeAtPosition(signature: Signature, position: int): Type | undefined {
     const parameter = (signature.parameters as readonly AstSymbol[] | undefined)?.[position];
     return parameter === undefined ? this.getRestTypeAtPosition(signature, position) : getTypeOfSymbol(parameter);
   }
-  getRestOrAnyTypeAtPosition(signature: Signature, position: number): Type {
+  getRestOrAnyTypeAtPosition(signature: Signature, position: int): Type {
     return this.getRestTypeAtPosition(signature, position) ?? signature.resolvedReturnType ?? { flags: TypeFlags.Any } as Type;
   }
-  getRestTypeAtPosition(signature: Signature, position: number): Type | undefined {
+  getRestTypeAtPosition(signature: Signature, position: int): Type | undefined {
     const rest = (signature as { readonly restType?: Type; readonly minArgumentCount?: number }).restType;
     const minArgumentCount = (signature as { readonly minArgumentCount?: number }).minArgumentCount ?? this.getParameterCount(signature);
     return position >= minArgumentCount ? rest : undefined;
@@ -1323,9 +1338,24 @@ function typeDisplayName(type: Type): string {
   if (intrinsic !== undefined) return intrinsic;
   const symbolName = symbolNameOf(type.symbol);
   if (symbolName.length > 0) return symbolName;
-  if ((type.flags & TypeFlags.StringLiteral) !== 0) return JSON.stringify(literalValueOf(type));
+  if ((type.flags & TypeFlags.StringLiteral) !== 0) return quoteStringLiteral(literalValueOf(type));
   if ((type.flags & TypeFlags.NumberLiteral) !== 0 || (type.flags & TypeFlags.BigIntLiteral) !== 0) return String(literalValueOf(type));
   return `type(${type.flags})`;
+}
+
+function quoteStringLiteral(value: unknown): string {
+  const text = String(value);
+  let result = "\"";
+  for (let index = 0; index < text.length; index += 1) {
+    const ch = text[index] ?? "";
+    if (ch === "\\") result += "\\\\";
+    else if (ch === "\"") result += "\\\"";
+    else if (ch === "\n") result += "\\n";
+    else if (ch === "\r") result += "\\r";
+    else if (ch === "\t") result += "\\t";
+    else result += ch;
+  }
+  return result + "\"";
 }
 
 function typeNestingDepth(type: Type, depth: number): number {

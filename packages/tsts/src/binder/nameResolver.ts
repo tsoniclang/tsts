@@ -24,6 +24,8 @@ import type {
   SymbolTable,
   IdentifierNode,
 } from "../ast/index.js";
+import type { CompilerOptions } from "../core/compilerOptions.js";
+import type { DiagnosticMessage } from "../diagnostics/types.js";
 import { Kind, nodeLocals, nodeParent, nodeSymbol } from "../ast/index.js";
 
 // ---------------------------------------------------------------------------
@@ -32,7 +34,7 @@ import { Kind, nodeLocals, nodeParent, nodeSymbol } from "../ast/index.js";
 
 export interface NameResolverHooks {
   argumentsSymbol(): AstSymbol;
-  error(location: AstNode, message: DiagnosticMessage, ...args: unknown[]): void;
+  error(location: AstNode, message: DiagnosticMessage, ...args: DiagnosticArgument[]): void;
   getSymbolOfDeclaration(node: AstNode): AstSymbol | undefined;
 }
 
@@ -126,7 +128,7 @@ export class NameResolver {
     return nodeLocals(node) !== undefined || nodeSymbol(node)?.exports !== undefined || nodeSymbol(node)?.members !== undefined;
   }
 
-  error(location: AstNode, message: DiagnosticMessage, ...args: unknown[]): void {
+  error(location: AstNode, message: DiagnosticMessage, ...args: DiagnosticArgument[]): void {
     this.hooks.error(location, message, ...args);
   }
 
@@ -220,7 +222,6 @@ export function isSelfReferenceLocation(node: AstNode, lastLocation: AstNode | u
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
-interface CompilerOptions { readonly _opts?: unknown }
-interface DiagnosticMessage { code: number; message: string }
+type DiagnosticArgument = string | number | boolean | object | null | undefined;
 // IdentifierNode reserved for caller use
 export type _Identifier = IdentifierNode;
