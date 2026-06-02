@@ -7,16 +7,16 @@ import {
 import type { CheckerCoreState } from "./checkerCore.js";
 
 export interface CheckerDiagnostic {
-  readonly file?: SourceFile;
-  readonly node?: AstNode;
-  readonly start?: number;
-  readonly length?: number;
-  readonly message: string;
-  readonly args?: readonly unknown[];
-  readonly reportsUnnecessary?: boolean;
-  readonly reportsDeprecated?: boolean;
-  readonly suggestion?: boolean;
-  readonly related?: readonly CheckerDiagnostic[];
+  file?: SourceFile;
+  node?: AstNode;
+  start?: number;
+  length?: number;
+  message: string;
+  args?: readonly unknown[];
+  reportsUnnecessary?: boolean;
+  reportsDeprecated?: boolean;
+  suggestion?: boolean;
+  related?: readonly CheckerDiagnostic[];
 }
 
 export interface DeferredDiagnostic {
@@ -34,11 +34,31 @@ export interface DiagnosticStateLike {
   wasCanceled?: boolean;
 }
 
+export interface CheckerDiagnosticMethods {
+  getDiagnostics(): readonly CheckerDiagnostic[];
+  getSuggestionDiagnostics(): readonly CheckerDiagnostic[];
+  getGlobalDiagnostics(): readonly CheckerDiagnostic[];
+}
+
+export interface CheckerDiagnosticInstallTarget {
+  readonly core: CheckerCoreState;
+  getDiagnostics?: () => readonly CheckerDiagnostic[];
+  getSuggestionDiagnostics?: () => readonly CheckerDiagnostic[];
+  getGlobalDiagnostics?: () => readonly CheckerDiagnostic[];
+}
+
+interface CheckerDiagnosticWithMutableLocation extends CheckerDiagnostic {
+  file?: SourceFile;
+  node?: AstNode;
+  start?: number;
+  length?: number;
+}
+
 export interface DeprecatedDiagnosticTarget {
-  readonly symbol?: AstSymbol;
-  readonly declaration?: AstNode;
-  readonly node: AstNode;
-  readonly message?: string;
+  symbol?: AstSymbol;
+  declaration?: AstNode;
+  node: AstNode;
+  message?: string;
 }
 
 export function getDiagnostics(state: DiagnosticStateLike): readonly CheckerDiagnostic[] {
@@ -68,7 +88,7 @@ export function addDeferredDiagnostic(
   node: AstNode | undefined,
   callback: () => CheckerDiagnostic | readonly CheckerDiagnostic[] | undefined,
 ): void {
-  const run = () => {
+  const run: () => void = (): void => {
     const result = callback();
     if (result === undefined) return;
     if (Array.isArray(result)) {
@@ -159,7 +179,7 @@ export function addDeprecatedSuggestion(
   state: DiagnosticStateLike,
   node: AstNode,
   symbol: AstSymbol | undefined,
-  message = "Deprecated_symbol_0",
+  message: string = "Deprecated_symbol_0",
 ): CheckerDiagnostic | undefined {
   const declaration = symbol?.declarations.find(isDeprecatedDeclaration);
   if (declaration === undefined) return undefined;
@@ -260,20 +280,13 @@ export function hasErrors(state: DiagnosticStateLike): boolean {
   return diagnosticArray(state.diagnostics).length > 0;
 }
 
-export function installCheckerDiagnosticMethods<T extends { core: CheckerCoreState }>(checker: T): T & {
-  getDiagnostics(): readonly CheckerDiagnostic[];
-  getSuggestionDiagnostics(): readonly CheckerDiagnostic[];
-  getGlobalDiagnostics(): readonly CheckerDiagnostic[];
-} {
-  const withMethods = checker as T & {
-    getDiagnostics(): readonly CheckerDiagnostic[];
-    getSuggestionDiagnostics(): readonly CheckerDiagnostic[];
-    getGlobalDiagnostics(): readonly CheckerDiagnostic[];
-  };
-  withMethods.getDiagnostics = () => getDiagnostics(checker.core);
-  withMethods.getSuggestionDiagnostics = () => getSuggestionDiagnostics(checker.core);
-  withMethods.getGlobalDiagnostics = () => getGlobalDiagnostics(checker.core);
-  return withMethods;
+export function installCheckerDiagnosticMethods(
+  checker: CheckerDiagnosticInstallTarget
+): CheckerDiagnosticMethods {
+  checker.getDiagnostics = (): readonly CheckerDiagnostic[] => getDiagnostics(checker.core);
+  checker.getSuggestionDiagnostics = (): readonly CheckerDiagnostic[] => getSuggestionDiagnostics(checker.core);
+  checker.getGlobalDiagnostics = (): readonly CheckerDiagnostic[] => getGlobalDiagnostics(checker.core);
+  return checker as CheckerDiagnosticMethods;
 }
 
 function createCheckerDiagnostic(
@@ -310,12 +323,7 @@ function withDefaultLocation(
 ): CheckerDiagnostic {
   if (diagnostic.file !== undefined || diagnostic.node !== undefined) return diagnostic;
   const range = node === undefined ? undefined : nodeRange(node);
-  const withLocation: {
-    file?: SourceFile;
-    node?: AstNode;
-    start?: number;
-    length?: number;
-  } & CheckerDiagnostic = { ...diagnostic };
+  const withLocation: CheckerDiagnosticWithMutableLocation = { ...diagnostic };
   if (file !== undefined) withLocation.file = file;
   if (node !== undefined) withLocation.node = node;
   if (range !== undefined) {
@@ -339,8 +347,8 @@ function canSuggestAwait(node: AstNode): boolean {
 }
 
 function sourceFileOf(node: AstNode): SourceFile | undefined {
-  const getSourceFile = (node as unknown as { getSourceFile?: () => SourceFile }).getSourceFile;
-  if (getSourceFile !== undefined) return getSourceFile.call(node);
+  const getSourceFile = (node as { getSourceFile?: () => SourceFile }).getSourceFile;
+  if (getSourceFile !== undefined) return node.getSourceFile();
   let current: AstNode | undefined = node;
   while (current !== undefined) {
     if (current.kind === Kind.SourceFile) return current as unknown as SourceFile;

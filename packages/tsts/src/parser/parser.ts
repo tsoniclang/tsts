@@ -301,18 +301,18 @@ interface JSDocScannerInfo {
 // parser.go:349-372). Bundles the live-scanner state with the parser cursor
 // (#token), #prevTokenEnd, and #contextFlags so #rewind can restore all of them.
 interface ParserMark {
-  readonly scannerState: ScannerState;
-  readonly token: TokenSnapshot;
-  readonly prevTokenEnd: number;
-  readonly contextFlags: NodeFlags;
+  scannerState: ScannerState;
+  token: TokenSnapshot;
+  prevTokenEnd: number;
+  contextFlags: NodeFlags;
   // codex Stage-3a: snapshot of #diagnostics.length so #rewind can discard any
   // diagnostics pushed during a speculative probe (tsgo ParserState.diagnosticsLen,
   // parser.go:353/366). Inert in 3a (no throw flipped => #diagnostics stays empty).
-  readonly diagnosticsLen: int;
+  diagnosticsLen: int;
   // M3 6b: tsgo ParserState.statementHasAwaitIdentifier (parser.go:345/357/370) — a
   // speculative probe that builds an `await` identifier must not leak the flag into
   // the rewound cursor, so it is snapshot here and restored by #rewind.
-  readonly statementHasAwaitIdentifier: boolean;
+  statementHasAwaitIdentifier: boolean;
 }
 
 const binaryPrecedence = new Map<Kind, number>([

@@ -7,11 +7,16 @@
  */
 
 import type { int } from "@tsonic/core/types.js";
+import { process } from "@tsonic/nodejs/process.js";
 import type { TextPos } from "./text.js";
 import { isLineBreak } from "../stringutil/util.js";
 
+export interface DebugRuntimeEnvironment {
+  readonly TS_GO_DEBUG_STACK_LIMIT?: string | undefined;
+}
+
 export function applyDebugStackLimit(
-  env: Readonly<Record<string, string | undefined>> = runtimeEnvironment(),
+  env: DebugRuntimeEnvironment = runtimeEnvironment(),
 ): number | undefined {
   const value = env["TS_GO_DEBUG_STACK_LIMIT"];
   if (value === undefined || value === "") return undefined;
@@ -20,9 +25,10 @@ export function applyDebugStackLimit(
   return limit;
 }
 
-function runtimeEnvironment(): Readonly<Record<string, string | undefined>> {
-  const processLike = (globalThis as { readonly process?: { readonly env?: Record<string, string | undefined> } }).process;
-  return processLike?.env ?? {};
+function runtimeEnvironment(): DebugRuntimeEnvironment {
+  return {
+    TS_GO_DEBUG_STACK_LIMIT: process.env.get("TS_GO_DEBUG_STACK_LIMIT"),
+  };
 }
 
 // ---------------------------------------------------------------------------

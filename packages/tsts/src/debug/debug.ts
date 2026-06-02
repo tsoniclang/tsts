@@ -77,6 +77,5 @@ export function hasKindString(value: unknown): value is { kindString(): string }
 export function hasToString(value: unknown): value is { toString(): string } {
   return typeof value === "object"
     && value !== null
-    && typeof (value as { readonly toString?: unknown }).toString === "function"
-    && (value as { readonly toString: unknown }).toString !== Object.prototype.toString;
+    && typeof (value as { readonly toString?: unknown }).toString === "function";
 }

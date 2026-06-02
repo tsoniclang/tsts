@@ -4,6 +4,8 @@
  * Port of TS-Go internal/stringutil/util.go.
  */
 
+import type { int } from "@tsonic/core/types.js";
+
 /** Unicode whitespace (single-line + line-break). */
 export function isWhiteSpaceLike(ch: number): boolean {
   return isWhiteSpaceSingleLine(ch) || isLineBreak(ch);
@@ -175,7 +177,7 @@ function shouldEscapeForEncodeURI(ch: number): boolean {
   }
 }
 
-export function isUriUnescapedByte(byte: number): boolean {
+export function isUriUnescapedByte(byte: int): boolean {
   return !shouldEscapeForEncodeURI(byte);
 }
 
@@ -199,7 +201,7 @@ export function encodeUri(text: string): string {
   return encodeURIBytes(text);
 }
 
-export function percentEncodeByte(byte: number): string {
+export function percentEncodeByte(byte: int): string {
   return "%" + UPPER_HEX[(byte >> 4) & 0xF] + UPPER_HEX[byte & 0xF];
 }
 

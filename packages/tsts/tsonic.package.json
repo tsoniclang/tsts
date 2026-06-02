@@ -8,7 +8,7 @@
     "csharp"
   ],
   "source": {
-    "namespace": "tsts",
+    "namespace": "Tsts",
     "exports": {
       ".": "./src/index.ts",
       "./index.js": "./src/index.ts"

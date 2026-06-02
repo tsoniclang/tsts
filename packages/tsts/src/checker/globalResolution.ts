@@ -190,7 +190,7 @@ export function mergeGlobalSymbol(globals: SymbolTable, symbol: AstSymbol): AstS
 export function mergeModuleAugmentation(globals: SymbolTable, moduleName: string, augmentation: SymbolTable): AstSymbol {
   let moduleSymbol = globals.get(moduleName);
   if (moduleSymbol === undefined) {
-    moduleSymbol = { name: moduleName, escapedName: moduleName, flags: SymbolFlags.Module, declarations: [], exports: new Map() };
+    moduleSymbol = { name: moduleName, escapedName: moduleName, flags: SymbolFlags.Module, declarations: [], exports: new Map<string, AstSymbol>() };
     globals.set(moduleName, moduleSymbol);
   }
   moduleSymbol.exports = mergeSymbolTables(moduleSymbol.exports, augmentation);

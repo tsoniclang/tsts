@@ -260,7 +260,7 @@ function childrenOf(node: Node): readonly Node[] {
 }
 
 function isNode(value: unknown): value is Node {
-  return typeof value === "object" && value !== null && "kind" in value && typeof (value as { kind?: unknown }).kind === "number";
+  return typeof value === "object" && value !== null && typeof (value as { kind?: unknown }).kind === "number";
 }
 
 function identifierText(node: Node): string {

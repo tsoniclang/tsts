@@ -18,6 +18,16 @@ import {
   voidType,
 } from "./checker.checkedtype.js";
 import {
+  emptyCompilerOptions,
+  getEmitModuleKind,
+  getEmitScriptTarget,
+  getEmitStandardClassFields,
+  getModuleResolutionKind,
+  getStrictOptionValue,
+  type CompilerOptions,
+} from "../core/compilerOptions.js";
+import { tristateIsTrue, type Tristate } from "../core/tristate.js";
+import {
   createAsyncIterationTypesResolver,
   createFileIndexMap,
   createSyncIterationTypesResolver,
@@ -25,20 +35,37 @@ import {
   getGlobalTypesResolver,
   type CheckerCoreState,
   type CheckerProgram,
+  type IterationTypesResolver,
+  type IterationResolverFactoryState,
 } from "./checkerCore.js";
 import { ObjectFlags, TypeFlags, type Signature, type Type, type TypeMapper } from "./types.js";
 import { addUndefinedToGlobalsOrErrorOnRedeclaration, mergeGlobalSymbol } from "./globalResolution.js";
 
 let nextCheckerId = 1;
 
+interface CheckerInitializationDiagnostic {
+  readonly file: string;
+  readonly message: string;
+  readonly args: string[];
+}
+
+type CheckerInitializationDiagnosticArgument =
+  | string
+  | number
+  | boolean
+  | object
+  | null
+  | undefined;
+
 export function createCheckerCoreState(program: CheckerProgram | undefined): CheckerCoreState {
   program?.bindSourceFiles();
   const files = program?.sourceFiles() ?? [];
-  const compilerOptions = program?.options();
+  const compilerOptions = program?.options() ?? emptyCompilerOptions;
   const missingSymbol = createMissingSymbol();
   const identityMapper: TypeMapper = { kind: 0, map: type => type };
   const fallbackSignature: Signature = makeCallSignature(unknownType);
-  const state = {
+  const uninitializedIterationTypesResolver = createUninitializedIterationTypesResolver();
+  const state: CheckerCoreState = {
     id: nextCheckerId++,
     program,
     compilerOptions,
@@ -54,21 +81,21 @@ export function createCheckerCoreState(program: CheckerProgram | undefined): Che
     inlineLevel: 0,
     currentNode: undefined,
     varianceTypeParameter: undefined,
-    languageVersion: optionNumber(compilerOptions, "languageVersion"),
-    moduleKind: optionNumber(compilerOptions, "moduleKind"),
-    moduleResolutionKind: optionNumber(compilerOptions, "moduleResolutionKind"),
+    languageVersion: getEmitScriptTarget(compilerOptions),
+    moduleKind: getEmitModuleKind(compilerOptions),
+    moduleResolutionKind: getModuleResolutionKind(compilerOptions),
     isInferencePartiallyBlocked: false,
-    legacyDecorators: optionBool(compilerOptions, "experimentalDecorators"),
-    emitStandardClassFields: optionBool(compilerOptions, "emitStandardClassFields"),
-    strictNullChecks: strictOption(compilerOptions, "strictNullChecks"),
-    strictFunctionTypes: strictOption(compilerOptions, "strictFunctionTypes"),
-    strictBindCallApply: strictOption(compilerOptions, "strictBindCallApply"),
-    strictPropertyInitialization: strictOption(compilerOptions, "strictPropertyInitialization"),
-    strictBuiltinIteratorReturn: strictOption(compilerOptions, "strictBuiltinIteratorReturn"),
-    noImplicitAny: strictOption(compilerOptions, "noImplicitAny"),
-    noImplicitThis: strictOption(compilerOptions, "noImplicitThis"),
-    useUnknownInCatchVariables: strictOption(compilerOptions, "useUnknownInCatchVariables"),
-    exactOptionalPropertyTypes: optionBool(compilerOptions, "exactOptionalPropertyTypes"),
+    legacyDecorators: tristateIsTrue(compilerOptions.experimentalDecorators),
+    emitStandardClassFields: getEmitStandardClassFields(compilerOptions),
+    strictNullChecks: strictOption(compilerOptions, compilerOptions.strictNullChecks),
+    strictFunctionTypes: strictOption(compilerOptions, compilerOptions.strictFunctionTypes),
+    strictBindCallApply: strictOption(compilerOptions, compilerOptions.strictBindCallApply),
+    strictPropertyInitialization: strictOption(compilerOptions, compilerOptions.strictPropertyInitialization),
+    strictBuiltinIteratorReturn: strictOption(compilerOptions, compilerOptions.strictBuiltinIteratorReturn),
+    noImplicitAny: strictOption(compilerOptions, compilerOptions.noImplicitAny),
+    noImplicitThis: strictOption(compilerOptions, compilerOptions.noImplicitThis),
+    useUnknownInCatchVariables: strictOption(compilerOptions, compilerOptions.useUnknownInCatchVariables),
+    exactOptionalPropertyTypes: tristateIsTrue(compilerOptions.exactOptionalPropertyTypes),
     canCollectSymbolAliasAccessibilityData: false,
     wasCanceled: false,
     saveDeferredDiagnostics: false,
@@ -116,32 +143,32 @@ export function createCheckerCoreState(program: CheckerProgram | undefined): Che
     diagnostics: [],
     suggestionDiagnostics: [],
     mergedSymbols: new Map<AstSymbol, AstSymbol>(),
-    nodeLinks: new Map<AstNode, unknown>(),
-    signatureLinks: new Map<AstNode, unknown>(),
-    symbolNodeLinks: new Map<AstNode, unknown>(),
-    typeNodeLinks: new Map<AstNode, unknown>(),
-    enumMemberLinks: new Map<AstNode, unknown>(),
-    assertionLinks: new Map<AstNode, unknown>(),
-    arrayLiteralLinks: new Map<AstNode, unknown>(),
-    switchStatementLinks: new Map<AstNode, unknown>(),
-    jsxElementLinks: new Map<AstNode, unknown>(),
-    symbolReferenceLinks: new Map<AstSymbol, unknown>(),
-    valueSymbolLinks: new Map<AstSymbol, unknown>(),
-    mappedSymbolLinks: new Map<AstSymbol, unknown>(),
-    deferredSymbolLinks: new Map<AstSymbol, unknown>(),
-    aliasSymbolLinks: new Map<AstSymbol, unknown>(),
-    moduleSymbolLinks: new Map<AstSymbol, unknown>(),
-    lateBoundLinks: new Map<AstSymbol, unknown>(),
-    exportTypeLinks: new Map<AstSymbol, unknown>(),
-    membersAndExportsLinks: new Map<AstSymbol, unknown>(),
-    typeAliasLinks: new Map<AstSymbol, unknown>(),
-    declaredTypeLinks: new Map<AstSymbol, unknown>(),
-    spreadLinks: new Map<AstSymbol, unknown>(),
-    varianceLinks: new Map<AstSymbol, unknown>(),
-    reverseMappedSymbolLinks: new Map<AstSymbol, unknown>(),
-    markedAssignmentSymbolLinks: new Map<AstSymbol, unknown>(),
-    symbolContainerLinks: new Map<AstSymbol, unknown>(),
-    sourceFileLinks: new Map<AstNode, unknown>(),
+    nodeLinks: new Map<AstNode, object>(),
+    signatureLinks: new Map<AstNode, object>(),
+    symbolNodeLinks: new Map<AstNode, object>(),
+    typeNodeLinks: new Map<AstNode, object>(),
+    enumMemberLinks: new Map<AstNode, object>(),
+    assertionLinks: new Map<AstNode, object>(),
+    arrayLiteralLinks: new Map<AstNode, object>(),
+    switchStatementLinks: new Map<AstNode, object>(),
+    jsxElementLinks: new Map<AstNode, object>(),
+    symbolReferenceLinks: new Map<AstSymbol, object>(),
+    valueSymbolLinks: new Map<AstSymbol, object>(),
+    mappedSymbolLinks: new Map<AstSymbol, object>(),
+    deferredSymbolLinks: new Map<AstSymbol, object>(),
+    aliasSymbolLinks: new Map<AstSymbol, object>(),
+    moduleSymbolLinks: new Map<AstSymbol, object>(),
+    lateBoundLinks: new Map<AstSymbol, object>(),
+    exportTypeLinks: new Map<AstSymbol, object>(),
+    membersAndExportsLinks: new Map<AstSymbol, object>(),
+    typeAliasLinks: new Map<AstSymbol, object>(),
+    declaredTypeLinks: new Map<AstSymbol, object>(),
+    spreadLinks: new Map<AstSymbol, object>(),
+    varianceLinks: new Map<AstSymbol, object>(),
+    reverseMappedSymbolLinks: new Map<AstSymbol, object>(),
+    markedAssignmentSymbolLinks: new Map<AstSymbol, object>(),
+    symbolContainerLinks: new Map<AstSymbol, object>(),
+    sourceFileLinks: new Map<AstNode, object>(),
     patternForType: new Map<Type, AstNode>(),
     contextFreeTypes: new Map<AstNode, Type>(),
     anyType,
@@ -317,8 +344,8 @@ export function createCheckerCoreState(program: CheckerProgram | undefined): Che
     getGlobalClassAccessorDecoratorTargetType: () => unknownType,
     getGlobalClassAccessorDecoratorResultType: () => unknownType,
     getGlobalClassFieldDecoratorContextType: () => unknownType,
-    syncIterationTypesResolver: undefined,
-    asyncIterationTypesResolver: undefined,
+    syncIterationTypesResolver: uninitializedIterationTypesResolver,
+    asyncIterationTypesResolver: uninitializedIterationTypesResolver,
     isPrimitiveOrObjectOrEmptyType: (type: Type) => type === unknownType || type === anyType,
     containsMissingType: (type: Type) => type === undefinedType,
     couldContainTypeVariables: () => false,
@@ -339,7 +366,7 @@ export function createCheckerCoreState(program: CheckerProgram | undefined): Che
     deferredDiagnosticCallbacks: [],
     typeToStringNodebuilder: undefined,
     tracer: undefined,
-  } as unknown as CheckerCoreState;
+  };
   initializeClosures(state);
   initializeIterationResolvers(state);
   initializeChecker(state);
@@ -365,9 +392,9 @@ export function getTypeAliasTypeParameters(symbol: AstSymbol, state: CheckerCore
 }
 
 export function initializeClosures(state: CheckerCoreState): void {
-  state.isPrimitiveOrObjectOrEmptyType = (type) =>
+  state.isPrimitiveOrObjectOrEmptyType = (type: Type): boolean =>
     (type.flags & (TypeFlags.Primitive | TypeFlags.NonPrimitive)) !== 0 || isEmptyAnonymousObjectType(type);
-  state.containsMissingType = (type) =>
+  state.containsMissingType = (type: Type): boolean =>
     type === state.missingType || ((type.flags & TypeFlags.Union) !== 0 && firstConstituent(type) === state.missingType);
   state.couldContainTypeVariables = couldContainTypeVariablesWorker;
   state.isStringIndexSignatureOnlyType = isStringIndexSignatureOnlyTypeWorker;
@@ -376,11 +403,11 @@ export function initializeClosures(state: CheckerCoreState): void {
 }
 
 export function initializeIterationResolvers(state: CheckerCoreState): void {
-  const resolverState = {
+  const resolverState: IterationResolverFactoryState = {
     ...state,
-    getGlobalTypesResolver: (names: readonly string[], arity: number, reportErrors: boolean) =>
+    getGlobalTypesResolver: (names: readonly string[], arity: number, reportErrors: boolean): (() => readonly Type[]) =>
       getGlobalTypesResolver(createGlobalResolverHost(state), names, arity, reportErrors),
-    getAwaitedType: (type: Type) => type,
+    getAwaitedType: (type: Type): Type => type,
   };
   state.syncIterationTypesResolver = createSyncIterationTypesResolver(resolverState);
   state.asyncIterationTypesResolver = createAsyncIterationTypesResolver(resolverState);
@@ -405,7 +432,7 @@ export function createNameResolver(state: CheckerCoreState): NameResolver {
   return new NameResolver({
     argumentsSymbol: () => state.argumentsSymbol ?? createSyntheticSymbol("arguments", SymbolFlags.FunctionScopedVariable),
     error: (location, message, ...args) => {
-      (state.diagnostics as unknown[]).push({ file: location, message, args });
+      pushDiagnostic(state, location, message.message, ...args);
     },
     getSymbolOfDeclaration: (node) => nodeSymbol(node),
   }, state.compilerOptions ?? {});
@@ -415,7 +442,7 @@ export function createNameResolverForSuggestion(state: CheckerCoreState): NameRe
   return new NameResolver({
     argumentsSymbol: () => state.argumentsSymbol ?? createSyntheticSymbol("arguments", SymbolFlags.FunctionScopedVariable),
     error: (location, message, ...args) => {
-      (state.suggestionDiagnostics as unknown[]).push({ file: location, message, args });
+      pushSuggestionDiagnostic(state, location, message.message, ...args);
     },
     getSymbolOfDeclaration: (node) => nodeSymbol(node),
   }, state.compilerOptions ?? {});
@@ -439,11 +466,13 @@ export function checkAndReportErrorForInvalidInitializer(
   if (state.emitStandardClassFields) return false;
   if (errorLocation !== undefined && result === undefined && checkMissingThisPrefix(state, errorLocation, name)) return true;
   const propertyName = declarationName((propertyWithInvalidInitializer as { readonly name?: AstNode }).name);
-  (state.diagnostics as unknown[]).push({
-    file: errorLocation ?? propertyWithInvalidInitializer,
-    message: "Initializer_of_instance_member_variable_0_cannot_reference_identifier_1_declared_in_the_constructor",
-    args: [propertyName, name],
-  });
+  pushDiagnostic(
+    state,
+    errorLocation ?? propertyWithInvalidInitializer,
+    "Initializer_of_instance_member_variable_0_cannot_reference_identifier_1_declared_in_the_constructor",
+    propertyName,
+    name,
+  );
   return true;
 }
 
@@ -453,9 +482,9 @@ export function initializeGlobalSymbols(state: CheckerCoreState): void {
   for (const file of state.files) {
     if (!isExternalOrCommonJSModule(file)) {
       const locals = symbolTableOf(file, "locals");
-      const globalThis = locals.get("globalThis");
-      if (globalThis !== undefined) {
-        for (const declaration of globalThis.declarations ?? []) {
+      const globalThisSymbol = locals.get("globalThis");
+      if (globalThisSymbol !== undefined) {
+        for (const declaration of globalThisSymbol.declarations ?? []) {
           pushDiagnostic(state, declaration, "Declaration_name_conflicts_with_built_in_global_identifier_0", "globalThis");
         }
       }
@@ -487,7 +516,25 @@ export function initializeGlobalSymbols(state: CheckerCoreState): void {
 }
 
 function createMissingSymbol(): AstSymbol {
-  return { name: "__missing", escapedName: "__missing", flags: 0, declarations: [] } as unknown as AstSymbol;
+  return { name: "__missing", escapedName: "__missing", flags: 0, declarations: [] };
+}
+
+function createUninitializedIterationTypesResolver(): IterationTypesResolver {
+  const fail = (): never => {
+    throw new Error("Iteration types resolver used before checker initialization completed.");
+  };
+  return {
+    iteratorSymbolName: "",
+    getGlobalIteratorType: fail,
+    getGlobalIterableType: fail,
+    getGlobalIterableTypeChecked: fail,
+    getGlobalIterableIteratorType: fail,
+    getGlobalIterableIteratorTypeChecked: fail,
+    getGlobalIteratorObjectType: fail,
+    getGlobalGeneratorType: fail,
+    getGlobalBuiltinIteratorTypes: fail,
+    resolveIterationType: fail,
+  };
 }
 
 function isExternalOrCommonJSModule(file: AstNode): boolean {
@@ -581,9 +628,9 @@ function createSyntheticSymbol(name: string, flags: SymbolFlags): AstSymbol {
   return { name, escapedName: name, flags, declarations: [] } as AstSymbol;
 }
 
-function getOrCreateLink<T extends object>(links: Map<object, unknown>, key: object): T {
+function getOrCreateLink<T extends object>(links: Map<object, object>, key: object): T {
   const existing = links.get(key);
-  if (existing !== undefined && typeof existing === "object") return existing as T;
+  if (existing !== undefined) return existing as T;
   const created = {} as T;
   links.set(key, created);
   return created;
@@ -651,11 +698,7 @@ function checkMissingThisPrefix(state: CheckerCoreState, errorLocation: AstNode,
   const container = enclosingClassLike(errorLocation);
   const members = nodeSymbol(container)?.members;
   if (members?.has(name) !== true) return false;
-  (state.diagnostics as unknown[]).push({
-    file: errorLocation,
-    message: "Cannot_find_name_0_Did_you_mean_the_instance_member_this_0",
-    args: [name],
-  });
+  pushDiagnostic(state, errorLocation, "Cannot_find_name_0_Did_you_mean_the_instance_member_this_0", name);
   return true;
 }
 
@@ -671,8 +714,46 @@ function declarationName(node: AstNode | undefined): string {
   return named?.text ?? named?.escapedText ?? "<unknown>";
 }
 
-function pushDiagnostic(state: CheckerCoreState, node: AstNode, message: string, ...args: readonly unknown[]): void {
-  (state.diagnostics as unknown[]).push({ file: node, message, args });
+function pushDiagnostic(
+  state: CheckerCoreState,
+  node: AstNode | undefined,
+  message: string,
+  ...args: readonly CheckerInitializationDiagnosticArgument[]
+): void {
+  const diagnostic: CheckerInitializationDiagnostic = {
+    file: diagnosticFileOf(node),
+    message,
+    args: diagnosticArgumentsOf(args),
+  };
+  (state.diagnostics as object[]).push(diagnostic);
+}
+
+function pushSuggestionDiagnostic(
+  state: CheckerCoreState,
+  node: AstNode | undefined,
+  message: string,
+  ...args: readonly CheckerInitializationDiagnosticArgument[]
+): void {
+  const diagnostic: CheckerInitializationDiagnostic = {
+    file: diagnosticFileOf(node),
+    message,
+    args: diagnosticArgumentsOf(args),
+  };
+  (state.suggestionDiagnostics as object[]).push(diagnostic);
+}
+
+function diagnosticArgumentOf(value: CheckerInitializationDiagnosticArgument): string {
+  return String(value);
+}
+
+function diagnosticArgumentsOf(args: readonly CheckerInitializationDiagnosticArgument[]): string[] {
+  return args.map(diagnosticArgumentOf);
+}
+
+function diagnosticFileOf(node: AstNode | undefined): string {
+  if (node === undefined) return "";
+  const file = (node as { readonly fileName?: string }).fileName;
+  return typeof file === "string" ? file : "";
 }
 
 function compareSymbolsBySourceOrder(left: AstSymbol, right: AstSymbol): number {
@@ -710,23 +791,6 @@ function nodePos(node: AstNode): number {
   return (node as { pos?: number }).pos ?? 0;
 }
 
-function optionBool(options: unknown, key: string): boolean {
-  const value = (options as Record<string, unknown> | undefined)?.[key];
-  if (typeof value === "function") return value() === true;
-  return value === true;
-}
-
-function strictOption(options: unknown, key: string): boolean {
-  const strict = optionBool(options, "strict");
-  const value = (options as Record<string, unknown> | undefined)?.[key];
-  return value === undefined ? strict : value === true;
-}
-
-function optionNumber(options: unknown, key: string): number {
-  const value = (options as Record<string, unknown> | undefined)?.[key];
-  if (typeof value === "function") {
-    const called = value();
-    return typeof called === "number" ? called : 0;
-  }
-  return typeof value === "number" ? value : 0;
+function strictOption(options: CompilerOptions, value: Tristate | undefined): boolean {
+  return getStrictOptionValue(options, value);
 }

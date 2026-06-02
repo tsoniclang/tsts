@@ -1,4 +1,4 @@
-import { Kind, NodeFlags, nodeParent, type ModifierList, type Node, type NodeArray } from "../ast/index.js";
+import { createNode, Kind, NodeFlags, nodeParent, type ModifierList, type Node, type NodeArray } from "../ast/index.js";
 
 export interface ReparseClone {
   readonly original: Node;
@@ -18,13 +18,36 @@ export interface ReparseState {
   readonly contextFlags: number;
 }
 
-export function newReparseState(contextFlags = 0): ReparseState {
+interface MutableReparseNode extends Node {
+  flags: number;
+  pos: number;
+  end: number;
+  parent: Node;
+}
+
+interface NodeWithPhaseModifier extends Node {
+  phaseModifier?: Kind;
+}
+
+interface NodeWithConstraint extends Node {
+  constraint?: Node;
+}
+
+interface NodeWithType extends Node {
+  type?: Node;
+}
+
+interface NodeWithQuestionToken extends Node {
+  questionToken?: Node;
+}
+
+export function newReparseState(contextFlags: number = 0): ReparseState {
   return { clones: [], syntheticNodes: [], reparseList: [], jsDocInfos: [], contextFlags };
 }
 
 export function finishReparsedNode<T extends Node>(node: T, locationNode: Node): T {
-  const mutable = node as Node & { flags?: number; pos?: number; end?: number; parent?: Node };
-  const location = locationNode as Node & { pos?: number; end?: number };
+  const mutable = node as MutableReparseNode;
+  const location = locationNode as MutableReparseNode;
   mutable.pos = location.pos;
   mutable.end = location.end;
   mutable.flags = ((mutable.flags ?? 0) | NodeFlags.Reparsed);
@@ -62,11 +85,11 @@ export function reparseUnhosted(state: ReparseState, parent: Node, tag: Node, js
       const typeExpression = typeExpressionOf(tag);
       if (typeExpression === undefined) return;
       const name = addDeepCloneReparse(state, nameOf(tag) ?? tag);
-      const typeAlias = syntheticNode(Kind.JSTypeAliasDeclaration, tag, {
+      const typeAlias = syntheticNode(Kind.JSTypeAliasDeclaration, tag, typeAliasFields(
         name,
-        typeParameters: gatherTypeParameters(state, owningDoc, tag),
-        type: reparseJSDocTypeExpressionOrLiteral(state, typeExpression),
-      });
+        gatherTypeParameters(state, owningDoc, tag),
+        reparseJSDocTypeExpressionOrLiteral(state, typeExpression),
+      ));
       finishReparsedNode(typeAlias, tag);
       state.jsDocInfos.push({ parent: typeAlias, jsDocs: [owningDoc] });
       markHasJSDoc(typeAlias);
@@ -78,11 +101,11 @@ export function reparseUnhosted(state: ReparseState, parent: Node, tag: Node, js
       const fullName = (tag as unknown as { fullName?: Node }).fullName ?? nameOf(tag);
       if (typeExpression === undefined || fullName === undefined) return;
       const functionType = reparseJSDocSignature(state, typeExpression, tag, owningDoc, tag, undefined);
-      const typeAlias = syntheticNode(Kind.JSTypeAliasDeclaration, tag, {
-        name: addDeepCloneReparse(state, fullName),
-        typeParameters: gatherTypeParameters(state, owningDoc, tag),
-        type: functionType,
-      });
+      const typeAlias = syntheticNode(Kind.JSTypeAliasDeclaration, tag, typeAliasFields(
+        addDeepCloneReparse(state, fullName),
+        gatherTypeParameters(state, owningDoc, tag),
+        functionType,
+      ));
       finishReparsedNode(typeAlias, tag);
       state.jsDocInfos.push({ parent: typeAlias, jsDocs: [owningDoc] });
       markHasJSDoc(typeAlias);
@@ -93,14 +116,14 @@ export function reparseUnhosted(state: ReparseState, parent: Node, tag: Node, js
       const importClause = (tag as unknown as { importClause?: Node }).importClause;
       const moduleSpecifier = (tag as unknown as { moduleSpecifier?: Node }).moduleSpecifier;
       if (importClause === undefined || moduleSpecifier === undefined) return;
-      const clonedImportClause = addDeepCloneReparse(state, importClause) as Node & { phaseModifier?: Kind };
+      const clonedImportClause = addDeepCloneReparse(state, importClause) as NodeWithPhaseModifier;
       clonedImportClause.phaseModifier = Kind.TypeKeyword;
-      const declaration = syntheticNode(Kind.JSImportDeclaration, tag, {
-        modifiers: deepCloneModifiers((tag as unknown as { modifiers?: ModifierList }).modifiers),
-        importClause: clonedImportClause,
-        moduleSpecifier: addDeepCloneReparse(state, moduleSpecifier),
-        attributes: maybeClone(state, (tag as unknown as { attributes?: Node }).attributes),
-      });
+      const declaration = syntheticNode(Kind.JSImportDeclaration, tag, importDeclarationFields(
+        deepCloneModifiers((tag as unknown as { modifiers?: ModifierList }).modifiers),
+        clonedImportClause,
+        addDeepCloneReparse(state, moduleSpecifier),
+        maybeClone(state, (tag as unknown as { attributes?: Node }).attributes),
+      ));
       finishReparsedNode(declaration, tag);
       state.reparseList.push(declaration);
       break;
@@ -159,19 +182,19 @@ export function reparseJSDocTypeLiteral(state: ReparseState, typeNode: Node | un
     if (prop.kind !== Kind.JSDocPropertyTag && prop.kind !== Kind.JSDocParameterTag) continue;
     const propName = propertyTagName(prop);
     if (propName === undefined) continue;
-    const property = syntheticNode(Kind.PropertySignature, prop, {
-      name: addDeepCloneReparse(state, rightmostQualifiedName(propName)),
-      questionToken: makeQuestionIfOptional(prop),
-      type: reparseJSDocTypeLiteral(state, typeExpressionType(prop)),
-    });
+    const property = syntheticNode(Kind.PropertySignature, prop, propertySignatureFields(
+      addDeepCloneReparse(state, rightmostQualifiedName(propName)),
+      makeQuestionIfOptional(prop),
+      reparseJSDocTypeLiteral(state, typeExpressionType(prop)),
+    ));
     finishReparsedNode(property, prop);
     properties.push(property);
     reparseJSDocComment(state, property, prop);
   }
-  let literal = syntheticNode(Kind.TypeLiteral, typeNode, { members: newNodeList(properties) });
+  let literal = syntheticNode(Kind.TypeLiteral, typeNode, membersFields(newNodeList(properties)));
   finishReparsedNode(literal, typeNode);
   if ((typeNode as unknown as { isArrayType?: boolean }).isArrayType === true) {
-    literal = syntheticNode(Kind.ArrayType, typeNode, { elementType: literal });
+    literal = syntheticNode(Kind.ArrayType, typeNode, elementTypeFields(literal));
     finishReparsedNode(literal, typeNode);
   }
   return literal;
@@ -182,9 +205,9 @@ export function reparseJSDocComment(state: ReparseState, node: Node, tag: Node):
     ?? (tag as unknown as { commentList?: NodeListLike<Node> }).commentList;
   const comments = nodeListElements(comment).map((entry) => addDeepCloneReparse(state, entry));
   if (comments.length === 0) return;
-  const propJSDoc = syntheticNode(Kind.JSDoc, tag, { comment: newNodeList(comments) });
+  const propJSDoc = syntheticNode(Kind.JSDoc, tag, commentFields(newNodeList(comments)));
   finishReparsedNode(propJSDoc, tag);
-  (propJSDoc as Node & { parent?: Node }).parent = node;
+  (propJSDoc as MutableReparseNode).parent = node;
   state.jsDocInfos.push({ parent: node, jsDocs: [propJSDoc] });
   markHasJSDoc(node);
 }
@@ -207,7 +230,7 @@ export function gatherTypeParameters(state: ReparseState, jsDoc: Node, tagWithTy
     const constraint = (tag as unknown as { constraint?: Node }).constraint;
     let first = true;
     for (const typeParameter of nodeListElements((tag as unknown as { typeParameters?: NodeListLike<Node> }).typeParameters)) {
-      const cloned = addDeepCloneReparse(state, typeParameter) as Node & { constraint?: Node };
+      const cloned = addDeepCloneReparse(state, typeParameter) as NodeWithConstraint;
       if (constraint !== undefined && first) cloned.constraint = addDeepCloneReparse(state, constraint);
       first = false;
       finishReparsedNode(cloned, typeParameter);
@@ -224,16 +247,16 @@ export function reparseHosted(state: ReparseState, parent: Node, tag: Node, jsDo
     if (match !== undefined) {
       const parameterType = typeExpressionType(tag);
       const reparsedType = parameterType === undefined ? undefined : reparseJSDocTypeLiteral(state, parameterType);
-      if (reparsedType !== undefined) (match as Node & { type?: Node }).type = reparsedType;
+      if (reparsedType !== undefined) (match as NodeWithType).type = reparsedType;
       const questionToken = makeQuestionIfOptional(tag);
-      if (questionToken !== undefined) (match as Node & { questionToken?: Node }).questionToken = questionToken;
+      if (questionToken !== undefined) (match as NodeWithQuestionToken).questionToken = questionToken;
       reparseJSDocComment(state, match, tag);
       finishMutatedNode(match);
     }
   } else if (tag.kind === Kind.JSDocReturnTag) {
     const returnType = typeExpressionType(tag);
     if (returnType !== undefined && isFunctionMethodOrConstructor(parent)) {
-      (parent as Node & { type?: Node }).type = addDeepCloneReparse(state, returnType);
+      (parent as NodeWithType).type = addDeepCloneReparse(state, returnType);
       finishMutatedNode(parent);
     }
   }
@@ -242,7 +265,7 @@ export function reparseHosted(state: ReparseState, parent: Node, tag: Node, jsDo
 export function makeQuestionIfOptional(parameter: Node): Node | undefined {
   const isBracketed = (parameter as unknown as { isBracketed?: boolean }).isBracketed === true;
   const isOptional = (parameter as unknown as { isOptional?: boolean }).isOptional === true;
-  return isBracketed || isOptional ? syntheticNode(Kind.QuestionToken, parameter, {}) : undefined;
+  return isBracketed || isOptional ? syntheticNode(Kind.QuestionToken, parameter) : undefined;
 }
 
 export function findMatchingParameter(fun: Node, parameterTag: Node, _jsDoc: Node): Node | undefined {
@@ -271,7 +294,7 @@ export function getFunctionLikeHost(host: Node): Node {
 
 export function makeNewCast(state: ReparseState, typeNode: Node | undefined, expression: Node, isAssertion: boolean): Node {
   const kind = isAssertion ? Kind.TypeAssertionExpression : Kind.AsExpression;
-  const cast = syntheticNode(kind, expression, { type: typeNode, expression });
+  const cast = syntheticNode(kind, expression, castFields(typeNode, expression));
   return finishReparsedNode(cast, expression);
 }
 
@@ -285,6 +308,114 @@ interface NodeListLike<T extends Node> {
   readonly end?: number;
 }
 
+interface TypeAliasFields {
+  readonly name: Node;
+  readonly typeParameters: NodeArray<Node> | undefined;
+  readonly type: Node | undefined;
+}
+
+interface ImportDeclarationFields {
+  readonly modifiers: ModifierList | undefined;
+  readonly importClause: Node | undefined;
+  readonly moduleSpecifier: Node;
+  readonly attributes: Node | undefined;
+}
+
+interface PropertySignatureFields {
+  readonly name: Node;
+  readonly questionToken: Node | undefined;
+  readonly type: Node | undefined;
+}
+
+interface MembersFields {
+  readonly members: NodeArray<Node>;
+}
+
+interface ElementTypeFields {
+  readonly elementType: Node;
+}
+
+interface CommentFields {
+  readonly comment: NodeArray<Node>;
+}
+
+interface CastFields {
+  readonly type: Node | undefined;
+  readonly expression: Node;
+}
+
+interface IdentifierFields {
+  readonly text: string;
+}
+
+interface ParameterFields {
+  readonly dotDotDotToken: Node | undefined;
+  readonly name: Node;
+  readonly questionToken: Node | undefined;
+  readonly type: Node | undefined;
+}
+
+interface SignatureFields {
+  readonly modifiers: ModifierList | undefined;
+  readonly name: Node | undefined;
+}
+
+interface ConstructorFields {
+  readonly modifiers: ModifierList | undefined;
+}
+
+interface FunctionTypeFields {
+  readonly type: Node;
+}
+
+function typeAliasFields(name: Node, typeParameters: NodeArray<Node> | undefined, type: Node | undefined): TypeAliasFields {
+  return { name, typeParameters, type };
+}
+
+function importDeclarationFields(modifiers: ModifierList | undefined, importClause: Node | undefined, moduleSpecifier: Node, attributes: Node | undefined): ImportDeclarationFields {
+  return { modifiers, importClause, moduleSpecifier, attributes };
+}
+
+function propertySignatureFields(name: Node, questionToken: Node | undefined, type: Node | undefined): PropertySignatureFields {
+  return { name, questionToken, type };
+}
+
+function membersFields(members: NodeArray<Node>): MembersFields {
+  return { members };
+}
+
+function elementTypeFields(elementType: Node): ElementTypeFields {
+  return { elementType };
+}
+
+function commentFields(comment: NodeArray<Node>): CommentFields {
+  return { comment };
+}
+
+function castFields(type: Node | undefined, expression: Node): CastFields {
+  return { type, expression };
+}
+
+function identifierFields(text: string): IdentifierFields {
+  return { text };
+}
+
+function parameterFields(dotDotDotToken: Node | undefined, name: Node, questionToken: Node | undefined, type: Node | undefined): ParameterFields {
+  return { dotDotDotToken, name, questionToken, type };
+}
+
+function signatureFields(modifiers: ModifierList | undefined, name: Node | undefined): SignatureFields {
+  return { modifiers, name };
+}
+
+function constructorFields(modifiers: ModifierList | undefined): ConstructorFields {
+  return { modifiers };
+}
+
+function functionTypeFields(type: Node): FunctionTypeFields {
+  return { type };
+}
+
 function reparseJSDocTypeExpressionOrLiteral(state: ReparseState, typeExpression: Node): Node | undefined {
   const type = typeNodeOfExpression(typeExpression);
   return reparseJSDocTypeLiteral(state, type);
@@ -292,8 +423,8 @@ function reparseJSDocTypeExpressionOrLiteral(state: ReparseState, typeExpression
 
 function reparseJSDocParameter(state: ReparseState, param: Node): Node | undefined {
   if (param.kind === Kind.JSDocThisTag) {
-    const thisIdent = syntheticNode(Kind.Identifier, param, { text: "this" });
-    const parameter = syntheticNode(Kind.Parameter, param, { name: thisIdent, type: typeExpressionType(param) });
+    const thisIdent = syntheticNode(Kind.Identifier, param, identifierFields("this"));
+    const parameter = syntheticNode(Kind.Parameter, param, parameterFields(undefined, thisIdent, undefined, typeExpressionType(param)));
     return parameter;
   }
   if (param.kind !== Kind.JSDocParameterTag && param.kind !== Kind.JSDocPropertyTag) return undefined;
@@ -302,32 +433,32 @@ function reparseJSDocParameter(state: ReparseState, param: Node): Node | undefin
   let paramType = typeExpressionType(param);
   let dotDotDotToken: Node | undefined;
   if (paramType?.kind === Kind.JSDocVariadicType) {
-    dotDotDotToken = syntheticNode(Kind.DotDotDotToken, param, {});
+    dotDotDotToken = syntheticNode(Kind.DotDotDotToken, param);
     paramType = reparseJSDocTypeLiteral(state, typeNodeOfExpression(paramType));
   } else {
     paramType = reparseJSDocTypeLiteral(state, paramType);
   }
-  return syntheticNode(Kind.Parameter, param, {
+  return syntheticNode(Kind.Parameter, param, parameterFields(
     dotDotDotToken,
-    name: addDeepCloneReparse(state, name),
-    questionToken: makeQuestionIfOptional(param),
-    type: paramType,
-  });
+    addDeepCloneReparse(state, name),
+    makeQuestionIfOptional(param),
+    paramType,
+  ));
 }
 
 function createSignatureShell(state: ReparseState, fun: Node, tag: Node, modifiers: ModifierList | undefined): Node {
-  const common = { modifiers: deepCloneModifiers(modifiers), name: maybeClone(state, nameOf(fun)) };
+  const common = signatureFields(deepCloneModifiers(modifiers), maybeClone(state, nameOf(fun)));
   switch (fun.kind) {
     case Kind.FunctionDeclaration:
       return syntheticNode(Kind.FunctionDeclaration, tag, common);
     case Kind.MethodDeclaration:
       return syntheticNode(Kind.MethodDeclaration, tag, common);
     case Kind.Constructor:
-      return syntheticNode(Kind.Constructor, tag, { modifiers: deepCloneModifiers(modifiers) });
+      return syntheticNode(Kind.Constructor, tag, constructorFields(deepCloneModifiers(modifiers)));
     case Kind.JSDocCallbackTag:
-      return syntheticNode(Kind.FunctionType, tag, { type: syntheticNode(Kind.AnyKeyword, tag, {}) });
+      return syntheticNode(Kind.FunctionType, tag, functionTypeFields(syntheticNode(Kind.AnyKeyword, tag)));
     default:
-      return syntheticNode(Kind.FunctionType, tag, { type: syntheticNode(Kind.AnyKeyword, tag, {}) });
+      return syntheticNode(Kind.FunctionType, tag, functionTypeFields(syntheticNode(Kind.AnyKeyword, tag)));
   }
 }
 
@@ -355,16 +486,15 @@ function cloneObjectGraph(value: unknown, seen: Map<object, unknown>): unknown {
   return out;
 }
 
-function syntheticNode<T extends Node>(kind: Kind, location: Node, fields: Record<string, unknown>): T {
-  const node = {
-    kind,
-    flags: ((location.flags ?? 0) | NodeFlags.Reparsed),
-    pos: (location as unknown as { pos?: number }).pos,
-    end: (location as unknown as { end?: number }).end,
-    ...fields,
-  } as unknown as T;
+function syntheticNode<T extends Node, TFields extends object>(kind: Kind, location: Node, fields?: TFields): T {
+  const locationSpan = location as { readonly pos?: number; readonly end?: number };
+  const node = fields === undefined
+    ? createNode(kind, undefined, locationSpan.pos ?? -1, locationSpan.end ?? -1)
+    : createNode(kind, fields as Record<string, unknown>, locationSpan.pos ?? -1, locationSpan.end ?? -1);
+  const mutable = node as MutableReparseNode;
+  mutable.flags = ((location.flags ?? 0) | NodeFlags.Reparsed);
   overrideParentInImmediateChildren(node);
-  return node;
+  return node as T;
 }
 
 function newNodeList<T extends Node>(nodes: readonly T[]): NodeArray<T> {
@@ -382,11 +512,11 @@ function nodeListElements<T extends Node>(list: NodeListLike<T> | readonly T[] |
 function overrideParentInImmediateChildren(node: Node): void {
   for (const value of Object.values(node as unknown as Record<string, unknown>)) {
     if (isNode(value)) {
-      (value as Node & { parent?: Node }).parent = node;
+      (value as MutableReparseNode).parent = node;
     } else if (Array.isArray(value)) {
-      for (const item of value) if (isNode(item)) (item as Node & { parent?: Node }).parent = node;
+      for (const item of value) if (isNode(item)) (item as MutableReparseNode).parent = node;
     } else if (isNodeList(value)) {
-      for (const item of value.nodes) (item as Node & { parent?: Node }).parent = node;
+      for (const item of value.nodes) (item as MutableReparseNode).parent = node;
     }
   }
 }
@@ -408,7 +538,7 @@ function deepCloneModifiers(modifiers: ModifierList | undefined): ModifierList |
 }
 
 function markHasJSDoc(node: Node): void {
-  (node as Node & { flags?: number }).flags = ((node.flags ?? 0) | NodeFlags.HasJSDoc);
+  (node as MutableReparseNode).flags = ((node.flags ?? 0) | NodeFlags.HasJSDoc);
 }
 
 function typeExpressionOf(node: Node): Node | undefined {

@@ -88,15 +88,20 @@ export interface SourceFile extends Node {
 }
 
 export interface FlowNode {
-  readonly flags: int;
-  readonly node?: Node;
-  readonly antecedent?: FlowNode;
-  readonly antecedents?: unknown;
+  // TS-Go flow nodes are compiler-state records. Binder/checker flow construction
+  // mutates flags and links while wiring the graph, so these slots are central
+  // mutable flow-state fields rather than readonly syntax data.
+  flags: int;
+  node?: Node;
+  antecedent?: FlowNode;
+  antecedents?: unknown;
+  clauseStart?: int;
+  clauseEnd?: int;
 }
 
 export interface Symbol {
-  readonly name?: string;
-  readonly escapedName?: string;
+  name?: string;
+  escapedName?: string;
   // codex-021307 M4a Fork A: flags is a mutable binder slot — addDeclarationToSymbol
   // does `symbol.Flags |= symbolFlags` (binder.go:2531).
   flags?: int;
@@ -108,7 +113,7 @@ export interface Symbol {
   valueDeclaration?: Node;
   members?: Map<string, Symbol>;
   exports?: Map<string, Symbol>;
-  readonly globalExports?: Map<string, Symbol>;
+  globalExports?: Map<string, Symbol>;
   // codex-021307 M4a Fork A: parent is mutable — declareSymbolEx writes the
   // symbol's owning-container parent during the bind walk (binder.go).
   parent?: Symbol;

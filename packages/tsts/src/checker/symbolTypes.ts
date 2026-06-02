@@ -1,3 +1,4 @@
+import type { int } from "@tsonic/core/types.js";
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
 import { Kind, NodeFlags, SymbolFlags, getCombinedNodeFlags, hasSyntacticModifier, nodeParent } from "../ast/index.js";
 import { ModifierFlags } from "../enums/modifierFlags.enum.js";
@@ -281,7 +282,7 @@ export function getTypeParametersForTypeAndSymbol(type: Type | undefined, symbol
     ?? [];
 }
 
-export function getEffectiveTypeArgumentAtIndex(type: Type | undefined, index: number): Type | undefined {
+export function getEffectiveTypeArgumentAtIndex(type: Type | undefined, index: int): Type | undefined {
   const data = type?.data as TypeReference | undefined;
   return data?.resolvedTypeArguments?.[index] ?? data?.resolvedTypeArguments_?.[index];
 }

@@ -119,7 +119,7 @@ import { checkBlock } from "./checker.statements.js";
 import { getPropertyNameFromType, isTypeUsableAsPropertyName } from "./utilities.js";
 import { SignatureFlags, SignatureKind, TypeFlags, type IndexInfo, type Signature } from "./types.js";
 
-type SignatureKindValue = typeof SignatureKind.Call | typeof SignatureKind.Construct;
+type SignatureKindValue = SignatureKind;
 const SignatureKindCall = SignatureKind.Call;
 const SignatureKindConstruct = SignatureKind.Construct;
 
@@ -1422,7 +1422,7 @@ export function chooseOverload(
   return undefined;
 }
 
-export function hasCorrectArity(signature: Signature, argumentCount: number): boolean {
+export function hasCorrectArity(signature: Signature, argumentCount: int): boolean {
   const hasRest = tryGetRestTypeOfSignature(signature) !== undefined;
   return argumentCount >= signature.minArgumentCount && (hasRest || argumentCount <= signature.parameters.length);
 }
@@ -1460,7 +1460,8 @@ export function checkTypeArguments(typeArguments: readonly AstNode[] | undefined
 export function isSignatureApplicable(signature: Signature, arguments_: readonly Expression[], state: CheckState): boolean {
   if (!hasCorrectArity(signature, arguments_.length)) return false;
   for (let index = 0; index < arguments_.length; index += 1) {
-    const parameter = signature.parameters[Math.min(index, signature.parameters.length - 1)];
+    const parameterIndex: int = Math.min(index, signature.parameters.length - 1) | 0;
+    const parameter = signature.parameters[parameterIndex];
     const parameterType = parameter === undefined ? undefined : getTypeOfSymbol(parameter);
     if (parameterType === undefined) continue;
     const argumentType = inferExpression(arguments_[index]!, state, parameterType);
@@ -1497,13 +1498,13 @@ export function getCandidateForOverloadFailure(candidates: readonly Signature[],
   return pickLongestCandidateSignature(candidates, arguments_.length);
 }
 
-export function pickLongestCandidateSignature(candidates: readonly Signature[], argumentCount: number): Signature | undefined {
+export function pickLongestCandidateSignature(candidates: readonly Signature[], argumentCount: int): Signature | undefined {
   const index = getLongestCandidateIndex(candidates, argumentCount);
   return index < 0 ? undefined : candidates[index];
 }
 
-export function getLongestCandidateIndex(candidates: readonly Signature[], argumentCount: number): number {
-  let bestIndex = -1;
+export function getLongestCandidateIndex(candidates: readonly Signature[], argumentCount: int): int {
+  let bestIndex: int = -1;
   let bestDistance = Number.POSITIVE_INFINITY;
   for (let index = 0; index < candidates.length; index += 1) {
     const distance = Math.abs(candidates[index]!.parameters.length - argumentCount);
@@ -1587,7 +1588,7 @@ export function addImplementationSuccessElaboration(
   }
 }
 
-export function getArgumentArityError(candidates: readonly Signature[], argumentCount: number): string | undefined {
+export function getArgumentArityError(candidates: readonly Signature[], argumentCount: int): string | undefined {
   if (candidates.length === 0) return undefined;
   if (candidates.some(signature => hasCorrectArity(signature, argumentCount))) return undefined;
   const min = Math.min(...candidates.map(signature => signature.minArgumentCount));
@@ -1601,7 +1602,7 @@ export function getArgumentArityError(candidates: readonly Signature[], argument
       : `Expected ${min}-${max} arguments, but got ${argumentCount}.`;
 }
 
-export function isPromiseResolveArityError(signature: Signature, argumentCount: number): boolean {
+export function isPromiseResolveArityError(signature: Signature, argumentCount: int): boolean {
   const declarationName = (signature.declaration as { readonly name?: { readonly text?: string } } | undefined)?.name?.text;
   return declarationName === "resolve" && argumentCount > signature.parameters.length;
 }

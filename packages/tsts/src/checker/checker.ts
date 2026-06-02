@@ -17,6 +17,7 @@
  * call sites in `program/program.ts` and the checker tests.
  */
 
+import type { int } from "@tsonic/core/types.js";
 import {
   Kind,
   isExpression,
@@ -155,7 +156,7 @@ export class Checker {
     return getWidenedType(type, this.state);
   }
 
-  getTypeAtPosition(signature: Signature, position: number): Type | undefined {
+  getTypeAtPosition(signature: Signature, position: int): Type | undefined {
     const parameter = signature.parameters[position];
     return getTypeOfSymbol(parameter);
   }
@@ -249,7 +250,12 @@ export class Checker {
     symbols: Iterable<AstSymbol>,
     meaning: number,
   ): AstSymbol | undefined {
-    return getSpellingSuggestionForName(name, symbols, meaning, this.compareSymbols.bind(this));
+    return getSpellingSuggestionForName(
+      name,
+      symbols,
+      meaning,
+      (left: AstSymbol, right: AstSymbol): number => this.compareSymbols(left, right),
+    );
   }
 
   compareSymbols(left: AstSymbol, right: AstSymbol): number {

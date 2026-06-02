@@ -1,3 +1,4 @@
+import type { int } from "@tsonic/core/types.js";
 import type { FlowLabel, FlowList, FlowNode, Node } from "../ast/index.js";
 import {
   FlowFlags,
@@ -30,17 +31,26 @@ export interface FlowBinderState {
   activeLabels: readonly ActiveLabel[];
 }
 
+interface MutableFlowNode extends FlowNode {
+  flags: int;
+  node?: Node;
+  antecedent?: FlowNode;
+  antecedents?: FlowList | undefined;
+  clauseStart?: int;
+  clauseEnd?: int;
+}
+
 export function createFlowStart(): FlowNode {
   return { flags: FlowFlags.Start };
 }
 
-export function newFlowNode(flags: number): FlowNode {
+export function newFlowNode(flags: int): FlowNode {
   return { flags };
 }
 
-export function newFlowNodeEx(flags: number, node: Node | undefined, antecedent: FlowNode | undefined): FlowNode {
+export function newFlowNodeEx(flags: int, node: Node | undefined, antecedent: FlowNode | undefined): FlowNode {
   const result: FlowNode = { flags };
-  const mutable = result as FlowNode & { node?: Node; antecedent?: FlowNode };
+  const mutable = result as MutableFlowNode;
   if (node !== undefined) mutable.node = node;
   if (antecedent !== undefined) mutable.antecedent = antecedent;
   return result;
@@ -60,10 +70,12 @@ export function createReduceLabel(
   antecedent: FlowNode | undefined,
 ): FlowNode {
   const reduced = newFlowNodeEx(FlowFlags.ReduceLabel, undefined, antecedent);
-  return { ...reduced, antecedents: antecedents ?? target.antecedents };
+  const mutable = reduced as MutableFlowNode;
+  mutable.antecedents = antecedents ?? target.antecedents;
+  return reduced;
 }
 
-export function createFlowCondition(flags: number, antecedent: FlowNode | undefined, expression: Node | undefined): FlowNode | undefined {
+export function createFlowCondition(flags: int, antecedent: FlowNode | undefined, expression: Node | undefined): FlowNode | undefined {
   if (antecedent === undefined || isUnreachableFlow(antecedent)) return antecedent;
   if (expression === undefined) return antecedent;
   if ((flags & FlowFlags.TrueCondition) !== 0 && expression.kind === Kind.TrueKeyword) return antecedent;
@@ -75,7 +87,7 @@ export function createFlowCondition(flags: number, antecedent: FlowNode | undefi
   return newFlowNodeEx(flags, expression, antecedent);
 }
 
-export function createFlowMutation(flags: number, antecedent: FlowNode | undefined, node: Node | undefined): FlowNode | undefined {
+export function createFlowMutation(flags: int, antecedent: FlowNode | undefined, node: Node | undefined): FlowNode | undefined {
   if (antecedent === undefined || isUnreachableFlow(antecedent)) return antecedent;
   if (node === undefined) return antecedent;
   setFlowNodeReferenced(antecedent);
@@ -90,8 +102,11 @@ export function createFlowSwitchClause(
 ): FlowNode | undefined {
   if (antecedent === undefined || isUnreachableFlow(antecedent)) return antecedent;
   setFlowNodeReferenced(antecedent);
-  const node = withFlowRange(switchStatement, clauseStart, clauseEnd);
-  return newFlowNodeEx(FlowFlags.SwitchClause, node, antecedent);
+  const flow = newFlowNodeEx(FlowFlags.SwitchClause, switchStatement, antecedent);
+  const mutable = flow as MutableFlowNode;
+  mutable.clauseStart = clauseStart | 0;
+  mutable.clauseEnd = clauseEnd | 0;
+  return flow;
 }
 
 export function createFlowCall(antecedent: FlowNode | undefined, node: Node | undefined): FlowNode | undefined {
@@ -129,11 +144,13 @@ export function finishFlowLabel(label: FlowLabel): FlowNode {
   const antecedents = label.antecedents;
   if (antecedents === undefined) return unreachableFlow();
   if (antecedents.tail === undefined) return antecedents.head;
-  return { flags: label.flags, antecedents };
+  const flow = newFlowNode(label.flags);
+  (flow as MutableFlowNode).antecedents = antecedents;
+  return flow;
 }
 
 export function setFlowNodeReferenced(flow: FlowNode): void {
-  const mutable = flow as FlowNode & { flags: number };
+  const mutable = flow as MutableFlowNode;
   if ((mutable.flags & FlowFlags.Referenced) === 0) {
     mutable.flags |= FlowFlags.Referenced;
   } else {
@@ -404,10 +421,6 @@ function isStringLiteralLike(node: Node | undefined): boolean {
     node.kind === Kind.StringLiteral ||
     node.kind === Kind.NoSubstitutionTemplateLiteral
   );
-}
-
-function withFlowRange(node: Node, clauseStart: number, clauseEnd: number): Node {
-  return { ...node, clauseStart, clauseEnd } as Node;
 }
 
 function field<T>(node: Node | undefined, key: string): T | undefined {

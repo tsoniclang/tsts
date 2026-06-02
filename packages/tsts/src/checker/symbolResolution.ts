@@ -9,6 +9,7 @@ import {
   type Symbol as AstSymbol,
   type SymbolTable,
 } from "../ast/index.js";
+import type { int } from "@tsonic/core/types.js";
 
 export interface CheckerDiagnosticSink {
   readonly diagnostics: { message: string; node?: AstNode; args?: readonly unknown[] }[];
@@ -34,13 +35,21 @@ export interface SymbolLinks {
   referencedKinds?: number;
 }
 
+interface SyntheticSymbolIdCarrier extends AstSymbol {
+  id?: number;
+}
+
+interface SymbolLinksCarrier extends AstSymbol {
+  checkerLinks?: SymbolLinks;
+}
+
 let nextSyntheticSymbolId = 1;
 
-export function newSymbol(flags: number, name: string): AstSymbol {
+export function newSymbol(flags: int, name: string): AstSymbol {
   return newSymbolEx(flags, name, undefined);
 }
 
-export function newSymbolEx(flags: number, name: string, declaration: AstNode | undefined): AstSymbol {
+export function newSymbolEx(flags: int, name: string, declaration: AstNode | undefined): AstSymbol {
   const symbol: AstSymbol = {
     name,
     escapedName: name,
@@ -61,7 +70,7 @@ export function newProperty(name: string, declaration: AstNode | undefined): Ast
 }
 
 export function setSyntheticSymbolId(symbol: AstSymbol): void {
-  const carrier = symbol as AstSymbol & { id?: number };
+  const carrier = symbol as SyntheticSymbolIdCarrier;
   if (carrier.id === undefined) {
     carrier.id = nextSyntheticSymbolId;
     nextSyntheticSymbolId += 1;
@@ -390,7 +399,7 @@ export function symbolReferenced(host: SymbolResolutionHost | undefined, symbol:
 function getSymbolLinks(host: SymbolResolutionHost | undefined, symbol: AstSymbol): SymbolLinks {
   let links = host?.symbolLinks?.get(symbol);
   if (links !== undefined) return links;
-  const carrier = symbol as AstSymbol & { checkerLinks?: SymbolLinks };
+  const carrier = symbol as SymbolLinksCarrier;
   if (carrier.checkerLinks === undefined) carrier.checkerLinks = {};
   links = carrier.checkerLinks;
   host?.symbolLinks?.set(symbol, links);
