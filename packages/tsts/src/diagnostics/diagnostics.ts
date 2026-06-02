@@ -10,7 +10,7 @@
  * that consume the generated catalog.
  */
 
-import type { int, JsValue } from "@tsonic/core/types.js";
+import type { int } from "@tsonic/core/types.js";
 
 import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
 import type { DiagnosticMessage } from "./types.js";
@@ -136,7 +136,7 @@ function replaceInvalidUtf8(s: string): string {
  *
  * Mirrors TS-Go `StringifyArgs`.
  */
-export function stringifyArgs(args: readonly JsValue[]): readonly string[] {
+export function stringifyArgs(args: readonly unknown[]): readonly string[] {
   if (args.length === 0) return [];
   return args.map((arg) => (typeof arg === "string" ? arg : String(arg)));
 }

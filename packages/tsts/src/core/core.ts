@@ -7,7 +7,8 @@
  */
 
 import type { int } from "@tsonic/core/types.js";
-import { process } from "@tsonic/nodejs/process.js";
+// Interim Node boundary: per spec section J, use Node's process directly here.
+import process from "node:process";
 import type { TextPos } from "./text.js";
 import { isLineBreak } from "../stringutil/util.js";
 
@@ -27,7 +28,7 @@ export function applyDebugStackLimit(
 
 function runtimeEnvironment(): DebugRuntimeEnvironment {
   return {
-    TS_GO_DEBUG_STACK_LIMIT: process.env.get("TS_GO_DEBUG_STACK_LIMIT"),
+    TS_GO_DEBUG_STACK_LIMIT: process.env["TS_GO_DEBUG_STACK_LIMIT"],
   };
 }
 

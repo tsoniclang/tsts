@@ -1,8 +1,18 @@
 import { dirname, join } from "node:path";
 
-import type { JsValue } from "@tsonic/core/types.js";
-
 import type { CompilerHost, CompilerOptions } from "../program/index.js";
+
+export type JsonValue =
+  | null
+  | boolean
+  | number
+  | string
+  | readonly JsonValue[]
+  | { readonly [k: string]: JsonValue };
+
+export function isJsonObject(value: JsonValue): value is { readonly [k: string]: JsonValue } {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 export interface TsConfig {
   readonly fileName: string;
@@ -21,10 +31,10 @@ export interface TsConfigParseResult {
 }
 
 interface RawTsConfig {
-  readonly compilerOptions?: JsValue;
-  readonly files?: JsValue;
-  readonly include?: JsValue;
-  readonly exclude?: JsValue;
+  readonly compilerOptions?: JsonValue;
+  readonly files?: JsonValue;
+  readonly include?: JsonValue;
+  readonly exclude?: JsonValue;
 }
 
 const supportedRootExtensions = [".ts", ".tsx", ".d.ts"] as const;
@@ -42,7 +52,7 @@ export function loadTsConfig(fileName: string, host: Pick<CompilerHost, "readFil
 
 export function parseTsConfigText(fileName: string, text: string, host?: Pick<CompilerHost, "readDirectory">): TsConfigParseResult {
   const diagnostics: TsConfigDiagnostic[] = [];
-  let raw: JsValue;
+  let raw: JsonValue;
   try {
     raw = JSON.parse(stripJsonCommentsAndTrailingCommas(text));
   } catch (error) {
@@ -52,7 +62,7 @@ export function parseTsConfigText(fileName: string, text: string, host?: Pick<Co
     });
     return { diagnostics };
   }
-  if (!isRecord(raw)) {
+  if (!isJsonObject(raw)) {
     return {
       diagnostics: [{ fileName, message: "tsconfig root must be an object" }],
     };
@@ -74,11 +84,11 @@ export function parseTsConfigText(fileName: string, text: string, host?: Pick<Co
   };
 }
 
-function parseCompilerOptions(fileName: string, value: JsValue | undefined, diagnostics: TsConfigDiagnostic[]): CompilerOptions {
+function parseCompilerOptions(fileName: string, value: JsonValue | undefined, diagnostics: TsConfigDiagnostic[]): CompilerOptions {
   if (value === undefined) {
     return {};
   }
-  if (!isRecord(value)) {
+  if (!isJsonObject(value)) {
     diagnostics.push({ fileName, message: "compilerOptions must be an object" });
     return {};
   }
@@ -122,7 +132,7 @@ function parseRootNames(
 function parseStringArrayOption(
   fileName: string,
   optionName: "include" | "exclude",
-  value: JsValue | undefined,
+  value: JsonValue | undefined,
   diagnostics: TsConfigDiagnostic[],
 ): readonly string[] | undefined {
   if (value === undefined) {
@@ -226,6 +236,3 @@ function removeTrailingCommas(text: string): string {
   return output;
 }
 
-function isRecord(value: JsValue): value is Record<string, JsValue> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
