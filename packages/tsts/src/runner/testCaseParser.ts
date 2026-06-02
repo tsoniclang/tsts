@@ -162,7 +162,8 @@ export function parseTestFilesAndSymlinksWithOptions<T>(
       continue;
     }
 
-    const metadataName = metadata[1]!.toLowerCase();
+    const metadataRawName = metadata[1]!;
+    const metadataName = metadataRawName.toLowerCase();
     const metadataValue = metadata[2]!.trim();
     if (metadataName === "currentdirectory") {
       currentDirectory = metadataValue;
@@ -176,8 +177,10 @@ export function parseTestFilesAndSymlinksWithOptions<T>(
         }
       } else if (fourslashDirectives.includes(metadataName)) {
         currentFileOptions.set(metadataName, metadataValue);
-      } else {
-        globalOptions.set(metadataName, trimTrailingSemicolon(metadataValue));
+      } else if (!hasGlobalOption(globalOptions, metadataRawName)) {
+        // First occurrence wins: a repeated directive does not overwrite the
+        // earlier value. The directive name keeps its original casing.
+        globalOptions.set(metadataRawName, trimTrailingSemicolon(metadataValue));
       }
       continue;
     }
@@ -212,17 +215,28 @@ export function parseTestFilesAndSymlinksWithOptions<T>(
   };
 }
 
+function hasGlobalOption(options: ReadonlyMap<string, string>, name: string): boolean {
+  const lowered = name.toLowerCase();
+  for (const key of options.keys()) {
+    if (key.toLowerCase() === lowered) return true;
+  }
+  return false;
+}
+
 function normalizeDirectives(options: ReadonlyMap<string, string>): TestCaseDirectives {
   const unknown = new Map<string, string>();
   const result: TestCaseDirectives = {};
   for (const [key, value] of options) {
-    if (key === "target") {
+    // Known directive names are matched case-insensitively; unknown directives
+    // are surfaced under their original casing.
+    const knownKey = key.toLowerCase();
+    if (knownKey === "target") {
       result.target = value;
-    } else if (key === "strict") {
+    } else if (knownKey === "strict") {
       result.strict = parseBoolean(value);
-    } else if (key === "noemit") {
+    } else if (knownKey === "noemit") {
       result.noEmit = parseBoolean(value);
-    } else if (key === "lib") {
+    } else if (knownKey === "lib") {
       result.lib = value.split(",").map((item) => item.trim()).filter((item) => item !== "");
     } else {
       unknown.set(key, value);
