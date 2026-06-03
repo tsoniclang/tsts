@@ -33,13 +33,15 @@ import {
 import { Tristate, tristateIsTrue } from "../core/tristate.js";
 import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
 
-export type EmitOnly = 0 | 1 | 2 | 3;
-export const EmitOnly = {
-  All: 0 as EmitOnly,
-  Js: 1 as EmitOnly,
-  Dts: 2 as EmitOnly,
-  ForcedDts: 3 as EmitOnly,
-} as const;
+// Port of TS-Go `internal/compiler/emitter.go` `type EmitOnly byte` + iota
+// const block (EmitAll / EmitOnlyJs / EmitOnlyDts / EmitOnlyForcedDts). The
+// TS-convention member names strip the `EmitOnly` prefix.
+export enum EmitOnly {
+  All = 0,
+  Js = 1,
+  Dts = 2,
+  ForcedDts = 3,
+}
 
 export interface WriteFileData {
   sourceMapUrlPos?: number;

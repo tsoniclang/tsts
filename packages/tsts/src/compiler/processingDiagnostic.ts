@@ -9,11 +9,15 @@
 import type { Diagnostic } from "../ast/index.js";
 import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
 
-export type ProcessingDiagnosticKind = 0 | 1;
-export const ProcessingDiagnosticKind = {
-  UnknownReference: 0 as ProcessingDiagnosticKind,
-  ExplainingFileInclude: 1 as ProcessingDiagnosticKind,
-} as const;
+// Port of TS-Go `internal/compiler/processingDiagnostic.go`
+// `type processingDiagnosticKind int` + iota const block
+// (processingDiagnosticKindUnknownReference /
+// processingDiagnosticKindExplainingFileInclude). The TS-convention member
+// names strip the `processingDiagnosticKind` prefix.
+export enum ProcessingDiagnosticKind {
+  UnknownReference = 0,
+  ExplainingFileInclude = 1,
+}
 
 export interface ProcessingDiagnostic {
   kind: ProcessingDiagnosticKind;
