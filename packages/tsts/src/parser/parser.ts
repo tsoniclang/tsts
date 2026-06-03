@@ -3770,28 +3770,68 @@ export class Parser {
   }
 
   #parseIdentifier(): Identifier {
-    // codex Stage-3b 3b-flip: faithful subset of tsgo createIdentifierWithDiagnostic
-    // (parser.go:5833-5879). On a valid identifier name: build it from the token text
-    // and advance. On a PrivateIdentifier: record Private_identifiers_are_not_allowed_
-    // outside_class_bodies (18016) then build the identifier from the token text and
-    // advance (tsgo's `return createIdentifier(true)` path consumes the token). On any
-    // other non-identifier token (the corpus has no reserved-word special arm wired):
-    // record Identifier_expected (1003) and return a zero-width MISSING identifier at
-    // the current pos WITHOUT advancing (tsgo createMissingIdentifier, parser.go:2976).
+    // tsgo parseIdentifier (parser.go:5823-5825) -> parseIdentifierWithDiagnostic(nil,
+    // nil) -> createIdentifierWithDiagnostic(p.isIdentifier(), nil, nil). This is the
+    // generic identifier helper; the diagnosticMessage / privateIdentifierDiagnosticMessage
+    // arms are nil here, so it routes through #createIdentifierWithDiagnostic with both
+    // messages undefined. The acceptance gate stays isIdentifierNameKind (the existing
+    // corpus-validated gate that mirrors tsgo's isIdentifier acceptance for the tokens
+    // the corpus exercises); the error path below is the faithful decomposition.
+    return this.#createIdentifierWithDiagnostic(isIdentifierNameKind(this.#current().kind), undefined, undefined);
+  }
+
+  // tsgo createIdentifierWithDiagnostic (parser.go:5835-5880). On a valid identifier:
+  // build it from the token text and advance. On a PrivateIdentifier: record the
+  // private-identifier diagnostic (caller-supplied or Private_identifiers_are_not_
+  // allowed_outside_class_bodies) then build the identifier from the token text and
+  // advance (tsgo's `return p.createIdentifier(true)` path consumes the token). Otherwise
+  // pick the error message: a caller-supplied diagnosticMessage wins; else if the token is
+  // a reserved word, report Identifier_expected_0_is_a_reserved_word_that_cannot_be_used_
+  // here with the token text; else the generic Identifier_expected. The EOF token reports
+  // at the token full-start (reportAtCurrentPosition). Finally return a zero-width MISSING
+  // identifier at the current pos WITHOUT advancing (tsgo createMissingIdentifier).
+  #createIdentifierWithDiagnostic(isIdentifier: boolean, diagnosticMessage: DiagnosticMessage | undefined, privateIdentifierDiagnosticMessage: DiagnosticMessage | undefined): Identifier {
     const token = this.#current();
-    if (isIdentifierNameKind(token.kind)) {
+    if (isIdentifier) {
       const pos = this.#nodePos();
       this.#advance();
       return this.#finishNode(this.#newIdentifier(token.text), pos);
     }
     if (token.kind === Kind.PrivateIdentifier) {
-      this.#parseErrorAtCurrentToken(Diagnostics.Private_identifiers_are_not_allowed_outside_class_bodies);
-      const pos = this.#nodePos();
-      this.#advance();
-      return this.#finishNode(this.#newIdentifier(token.text), pos);
+      this.#parseErrorAtCurrentToken(privateIdentifierDiagnosticMessage ?? Diagnostics.Private_identifiers_are_not_allowed_outside_class_bodies);
+      return this.#createIdentifier(true);
     }
-    this.#parseErrorAtCurrentToken(Diagnostics.Identifier_expected);
-    return this.#finishNode(this.#newIdentifier(""), this.#nodePos());
+    // Only for end of file because the error gets reported incorrectly on embedded script tags.
+    const reportAtCurrentPosition = token.kind === Kind.EndOfFile;
+    if (diagnosticMessage !== undefined) {
+      if (reportAtCurrentPosition) {
+        const pos = this.#token.fullStart;
+        this.#parseErrorAt(pos, pos, diagnosticMessage);
+      } else {
+        this.#parseErrorAtCurrentToken(diagnosticMessage);
+      }
+    } else if (isReservedWord(token.kind)) {
+      if (reportAtCurrentPosition) {
+        const pos = this.#token.fullStart;
+        this.#parseErrorAt(pos, pos, Diagnostics.Identifier_expected_0_is_a_reserved_word_that_cannot_be_used_here, [token.text]);
+      } else {
+        this.#parseErrorAtCurrentToken(Diagnostics.Identifier_expected_0_is_a_reserved_word_that_cannot_be_used_here, [token.text]);
+      }
+    } else {
+      if (reportAtCurrentPosition) {
+        const pos = this.#token.fullStart;
+        this.#parseErrorAt(pos, pos, Diagnostics.Identifier_expected);
+      } else {
+        this.#parseErrorAtCurrentToken(Diagnostics.Identifier_expected);
+      }
+    }
+    return this.#createMissingIdentifier();
+  }
+
+  // tsgo createIdentifier (parser.go:5831-5833): createIdentifierWithDiagnostic with both
+  // diagnostic messages nil.
+  #createIdentifier(isIdentifier: boolean): Identifier {
+    return this.#createIdentifierWithDiagnostic(isIdentifier, undefined, undefined);
   }
 
   #parseOptionalTypeAnnotation(): TypeNode | undefined {
@@ -5833,6 +5873,11 @@ function modifierListHasAsync(modifiers: NodeArray<ModifierLike> | undefined): b
 
 function isIdentifierNameKind(kind: Kind): boolean {
   return kind === Kind.Identifier || (kind >= Kind.FirstKeyword && kind <= Kind.LastKeyword);
+}
+
+// tsgo isReservedWord (parser.go:6394-6396): FirstReservedWord..LastReservedWord inclusive.
+function isReservedWord(token: Kind): boolean {
+  return Kind.FirstReservedWord <= token && token <= Kind.LastReservedWord;
 }
 
 // M3 3b-list-model: faithful 1:1 port of tsgo ast.IsModifierKind
