@@ -72,6 +72,8 @@ import {
   isVoidExpression,
   isWhileStatement,
   isArrayBindingPattern,
+  isExternalModuleReference,
+  isImportEqualsDeclaration,
   hasSyntacticModifier,
   type BindingElement,
   type BinaryOperatorToken,
@@ -89,6 +91,7 @@ import {
   type IfStatement,
   type ImportClause,
   type ImportDeclaration,
+  type ImportEqualsDeclaration,
   type ImportSpecifier,
   type MethodDeclaration,
   type ModifierLike,
@@ -231,6 +234,9 @@ function printStatement(statement: Statement, context: PrintContext, depth: numb
   if (isImportDeclaration(statement)) {
     return printImportDeclaration(statement);
   }
+  if (isImportEqualsDeclaration(statement)) {
+    return printImportEqualsDeclaration(statement);
+  }
   if (isExportDeclaration(statement)) {
     return printExportDeclaration(statement);
   }
@@ -310,6 +316,53 @@ function printImportDeclaration(importDeclaration: ImportDeclaration): string | 
   }
   const importClause = printImportClause(importDeclaration.importClause);
   return importClause === undefined ? undefined : `import ${importClause} from ${moduleSpecifier};`;
+}
+
+/**
+ * Print an `ImportEqualsDeclaration` node (SyntaxKind 272), i.e. an
+ * `import <name> = <moduleReference>` declaration.
+ *
+ * Bounded scope (matches TS-Go's CommonJS lowering exactly):
+ *
+ *   - A type-only declaration (`import type a = require("m")`) carries no value
+ *     and is erased (TS-Go's typeEraser elides it), so it produces no JS.
+ *   - A plain (non-`export`) external-module form `import a = require("m")`
+ *     lowers to the CommonJS `const a = require("m");` (TS-Go's
+ *     `visitTopLevelImportEqualsDeclaration` emits a `const` variable statement
+ *     whose initializer is `require(<specifier>)` — see e.g.
+ *     `exportAssignmentMerging1` → `b.js`: `const a = require("./a");`). The
+ *     module specifier string literal is reproduced verbatim.
+ *
+ * Honestly out of scope (rejected via the unsupported-statement error so no
+ * malformed output is produced):
+ *
+ *   - The `export import a = require("m")` form, whose lowering is
+ *     `exports.a = require("m");` plus re-export wiring — module-target `exports`
+ *     work (the same category as `export namespace`).
+ *   - The entity-name (alias) form `import a = N.B`, whose emit-vs-elide
+ *     decision and `var a = N.B;` lowering are symbol/alias-reference driven
+ *     (TS-Go's `isReferencedAliasDeclaration` /
+ *     `isTopLevelValueImportEqualsWithEntityName`), which cannot be decided
+ *     syntactically.
+ */
+function printImportEqualsDeclaration(importEquals: ImportEqualsDeclaration): string | undefined {
+  // A type-only `import type a = …` is type-space only: no JS emit.
+  if (importEquals.isTypeOnly) {
+    return undefined;
+  }
+  // The entity-name (alias) form `import a = N.B` requires alias-reference
+  // resolution to decide emit-vs-elide and its `var a = N.B;` lowering; out of
+  // scope (rejected so no malformed output is produced).
+  if (!isExternalModuleReference(importEquals.moduleReference)) {
+    throw new Error(`Unsupported statement kind ${kindDebugName(importEquals.kind)}`);
+  }
+  // `export import a = require("m")` lowers to `exports.a = require("m");`,
+  // which needs module-target `exports` wiring; out of scope.
+  if (hasModifier(importEquals.modifiers, Kind.ExportKeyword)) {
+    throw new Error(`Unsupported statement kind ${kindDebugName(importEquals.kind)}`);
+  }
+  const moduleSpecifier = printExpression(importEquals.moduleReference.expression, undefined);
+  return `const ${importEquals.name.text} = require(${moduleSpecifier});`;
 }
 
 function printImportClause(importClause: ImportClause): string | undefined {
