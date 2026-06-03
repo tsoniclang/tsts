@@ -20,11 +20,12 @@
  * only extraDiagnosticMessages.json is consumable.
  */
 
-export type { Diagnostic, DiagnosticMessage, SourceFileSlim } from "./types.js";
+export type { Diagnostic, DiagnosticMessage, Key, SourceFileSlim } from "./types.js";
 export {
   categoryName,
   format,
   localize,
+  localizeMessage,
   stringifyArgs,
   type Locale,
   type LocaleMessages,

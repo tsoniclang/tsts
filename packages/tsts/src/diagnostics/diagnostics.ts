@@ -13,11 +13,13 @@
 import type { int } from "@tsonic/core/types.js";
 
 import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
-import type { DiagnosticMessage } from "./types.js";
+import type { DiagnosticMessage, Key } from "./types.js";
 
 /**
- * Returns the canonical lowercase name of a category. Mirrors the
- * stringer-generated `Category.String()` / `Category.Name()` in TS-Go.
+ * Returns the canonical lowercase name of a category.
+ *
+ * Mirrors TS-Go `func (category Category) Name() string` in
+ * `internal/diagnostics/diagnostics.go`.
  */
 export function categoryName(category: DiagnosticCategory): string {
   switch (category) {
@@ -29,9 +31,8 @@ export function categoryName(category: DiagnosticCategory): string {
       return "suggestion";
     case DiagnosticCategory.Message:
       return "message";
-    default:
-      throw new Error("Unhandled diagnostic category");
   }
+  throw new Error("Unhandled diagnostic category");
 }
 
 /**
@@ -45,53 +46,86 @@ export type Locale = string;
  * (keyed by `DiagnosticMessage.key`) for the matched locale, or `undefined`
  * if no localization is available.
  *
- * Mirrors TS-Go's `localeFuncs` table — the generator emits one entry per
- * supported locale; runtime matches the requested locale tag against the
- * table.
+ * This is the TSTS dependency-injection seam standing in for TS-Go's
+ * module-level `localizedMessagesCache` / `getLocalizedMessages`
+ * (which negotiate the locale tag against `matcher` and `localeFuncs` in
+ * `loc_generated.go`). The control flow of `localize` mirrors upstream's
+ * `Localize`; the resolver is threaded as a parameter rather than read from
+ * package state.
  */
-export type LocaleMessages = ReadonlyMap<string, string>;
+export type LocaleMessages = ReadonlyMap<Key, string>;
 export type LocaleProvider = (loc: Locale) => LocaleMessages | undefined;
 
 /**
- * Returns the localized text for a message in a locale, with argument
- * placeholders filled. If `message` is `null`/`undefined`, the catalog
- * is consulted via `lookupByKey(key)`. If no localization is available,
- * the English (default) text is used.
+ * Localizes a single message, stringifying its arguments first.
  *
- * Mirrors TS-Go `Localize`.
+ * Mirrors TS-Go `func (m *Message) Localize(locale locale.Locale, args ...any) string`.
+ */
+export function localizeMessage(
+  message: DiagnosticMessage,
+  loc: Locale,
+  args: readonly unknown[],
+  localeProvider: LocaleProvider,
+): string {
+  return localize(loc, message, "", stringifyArgs(args), keyToMessageEmpty, localeProvider);
+}
+
+// Reverse lookup is only consulted when `message` is undefined; `localizeMessage`
+// always passes a concrete message, so it supplies a resolver that never matches.
+function keyToMessageEmpty(_key: Key): DiagnosticMessage | undefined {
+  return undefined;
+}
+
+/**
+ * Returns the localized text for a message in a locale, with argument
+ * placeholders filled. If `message` is `undefined`, the catalog is consulted
+ * via `lookupByKey(key)`. If no localization is available, the English
+ * (default) text is used.
+ *
+ * Mirrors TS-Go `func Localize(locale locale.Locale, message *Message, key Key, args ...string) string`.
  */
 export function localize(
   loc: Locale,
   message: DiagnosticMessage | undefined,
-  key: string,
+  key: Key,
   args: readonly string[],
-  lookupByKey: (key: string) => DiagnosticMessage | undefined,
+  lookupByKey: (key: Key) => DiagnosticMessage | undefined,
   localeProvider: LocaleProvider,
 ): string {
-  const resolved = message ?? lookupByKey(key);
-  if (resolved === undefined) {
+  if (message === undefined) {
+    message = lookupByKey(key);
+  }
+  if (message === undefined) {
     throw new Error("Unknown diagnostic message: " + key);
   }
 
-  const localized = localeProvider(loc);
-  const text = localized?.get(resolved.key) ?? resolved.message;
+  let text = message.message;
+  const localized = localeProvider(loc)?.get(message.key);
+  if (localized !== undefined) {
+    text = localized;
+  }
 
   return format(text, args);
 }
 
-const placeholderPattern = /\{(\d+)\}/g;
+const placeholderRegexp = /\{(\d+)\}/g;
 
 /**
  * Replaces `{N}` placeholders in `text` with `args[N]`. Invalid UTF-8 in
  * args is replaced with U+FFFD (matches TS-Go's `core.SameMap` over
  * `strings.ToValidUTF8`).
  *
- * Mirrors TS-Go `Format`.
+ * Mirrors TS-Go `func Format(text string, args []string) string`.
  */
 export function format(text: string, args: readonly string[]): string {
-  if (args.length === 0) return text;
+  if (args.length === 0) {
+    return text;
+  }
+
+  // Replace invalid UTF-8 with Unicode replacement character.
   const sanitized = args.map(replaceInvalidUtf8);
-  return text.replace(placeholderPattern, (match: string, indexStr: string): string => {
+
+  return text.replace(placeholderRegexp, (match: string, indexStr: string): string => {
     const index: int = Number.parseInt(indexStr, 10) | 0;
     if (!Number.isFinite(index) || index >= sanitized.length) {
       throw new Error("Invalid formatting placeholder");
@@ -132,11 +166,21 @@ function replaceInvalidUtf8(s: string): string {
 
 /**
  * Converts an arbitrary argument list to strings: strings pass through,
- * other values go through default formatting (`String(arg)`).
+ * other values go through default formatting (`fmt.Sprintf("%v", arg)`,
+ * whose TS counterpart is `String(arg)`).
  *
- * Mirrors TS-Go `StringifyArgs`.
+ * Mirrors TS-Go `func StringifyArgs(args []any) []string`.
  */
 export function stringifyArgs(args: readonly unknown[]): readonly string[] {
-  if (args.length === 0) return [];
-  return args.map((arg) => (typeof arg === "string" ? arg : String(arg)));
+  if (args.length === 0) {
+    return [];
+  }
+
+  const result: string[] = args.map((arg) => {
+    if (typeof arg === "string") {
+      return arg;
+    }
+    return String(arg);
+  });
+  return result;
 }
