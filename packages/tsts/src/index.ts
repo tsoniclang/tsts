@@ -25,3 +25,34 @@ export {
 // (the faithful tokenflags.go port). The scanner owns the canonical values, so
 // disambiguate the package root in its favor.
 export { TokenFlags } from "./scanner/index.js";
+
+// `Program`, `CompilerHost`, and `EmitResult` are exported by BOTH the canonical
+// compiler pipeline (`./compiler/index.js` -> compiler/program.ts) and the
+// throwaway `./program/index.js` scaffold. The standalone compiler product is
+// built on the canonical pipeline, so disambiguate the package root in its
+// favor with explicit named re-exports (which take precedence over the colliding
+// `export *` stars). The scaffold's own names remain reachable via its module
+// path (`./program/index.js`) for the internal call sites still using it.
+export {
+  newProgram,
+  Program,
+  type ProgramOptions,
+  type CompilerHost,
+  type EmitOptions,
+  type EmitResult,
+  type SourceMapEmitResult,
+  type WriteFile,
+  type WriteFileData,
+  newNodeCompilerHost,
+  newNodeParseConfigHost,
+} from "./compiler/index.js";
+
+// The stable standalone-compiler API. `CompileOptions`/`CompileResult` here
+// are the canonical product surface; the throwaway scaffold's colliding names
+// are no longer star-exported from `./compiler/index.js`, so this is the only
+// `CompileOptions`/`CompileResult` reachable from the package root.
+export {
+  compileProject,
+  type CompileOptions,
+  type CompileResult,
+} from "./compiler/index.js";
