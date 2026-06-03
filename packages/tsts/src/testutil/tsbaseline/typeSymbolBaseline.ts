@@ -387,13 +387,88 @@ function shouldSkipTypeNode(node: Node): boolean {
     && (nodeType(node) !== undefined && (nodeFlags(nodeType(node)) & NodeFlags.Reparsed) !== 0)) {
     return true;
   }
+  // Mirror TS-Go's writeTypeOrSymbol type-skip: an identifier is skipped only
+  // when its parent declaration carries NO value meaning (e.g. an interface or
+  // type-parameter name), with an exception that keeps the NAME identifier of a
+  // (JS)type-alias declaration so `type T = ...` still prints `>T : <type>`.
+  // The previous predicate skipped EVERY declaration name (`name === node`),
+  // which dropped value-meaning names like function/method/parameter/variable
+  // names that TS-Go emits. Now we test the parent's semantic meaning exactly.
   if (isIdentifier(node)
     && parent !== undefined
-    && declarationName(parent) === node
-    && !isTypeOrJSTypeAliasDeclaration(parent)) {
+    && (getMeaningFromDeclaration(parent) & SemanticMeaningValue) === 0
+    && !(isTypeOrJSTypeAliasDeclaration(parent) && declarationName(parent) === node)) {
     return true;
   }
   return false;
+}
+
+/** Bit flags mirroring TS-Go's `ast.SemanticMeaning` (utilities.go). */
+const SemanticMeaningValue = 1 << 0;
+const SemanticMeaningType = 1 << 1;
+const SemanticMeaningNamespace = 1 << 2;
+const SemanticMeaningAll = SemanticMeaningValue | SemanticMeaningType | SemanticMeaningNamespace;
+
+/**
+ * Port of TS-Go's `ast.GetMeaningFromDeclaration` (internal/ast/utilities.go).
+ * Returns the bitset of semantic meanings a declaration node introduces. Only
+ * the `Value` bit is consulted by the type walker's skip test, but the full
+ * switch is reproduced to stay faithful to the reference node coverage.
+ *
+ * For `ModuleDeclaration`, TS-Go distinguishes ambient/instantiated modules
+ * (Namespace|Value) from a pure non-instantiated namespace (Namespace only).
+ * Computing the precise module-instance state requires the binder, which the
+ * testutil deliberately does not depend on; we treat module/namespace names as
+ * carrying value meaning (the common case), matching ambient and instantiated
+ * modules. A pure type-only namespace name is the only residual divergence.
+ */
+function getMeaningFromDeclaration(node: Node): number {
+  switch (node.kind) {
+    case Kind.VariableDeclaration:
+      return SemanticMeaningValue;
+    case Kind.Parameter:
+    case Kind.BindingElement:
+    case Kind.PropertyDeclaration:
+    case Kind.PropertySignature:
+    case Kind.PropertyAssignment:
+    case Kind.ShorthandPropertyAssignment:
+    case Kind.MethodDeclaration:
+    case Kind.MethodSignature:
+    case Kind.Constructor:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.ArrowFunction:
+    case Kind.CatchClause:
+    case Kind.JsxAttribute:
+      return SemanticMeaningValue;
+    case Kind.TypeParameter:
+    case Kind.InterfaceDeclaration:
+    case Kind.TypeAliasDeclaration:
+    case Kind.JSTypeAliasDeclaration:
+    case Kind.TypeLiteral:
+      return SemanticMeaningType;
+    case Kind.EnumMember:
+    case Kind.ClassDeclaration:
+      return SemanticMeaningValue | SemanticMeaningType;
+    case Kind.ModuleDeclaration:
+      // See note above: namespace name treated as value-bearing.
+      return SemanticMeaningNamespace | SemanticMeaningValue;
+    case Kind.EnumDeclaration:
+    case Kind.NamedImports:
+    case Kind.ImportSpecifier:
+    case Kind.ImportEqualsDeclaration:
+    case Kind.ImportDeclaration:
+    case Kind.JSImportDeclaration:
+    case Kind.ExportAssignment:
+    case Kind.ExportDeclaration:
+      return SemanticMeaningAll;
+    case Kind.SourceFile:
+      return SemanticMeaningNamespace | SemanticMeaningValue;
+    default:
+      return SemanticMeaningAll;
+  }
 }
 
 function shouldPrintAnyType(node: Node, sourceFile: SourceFile): boolean {

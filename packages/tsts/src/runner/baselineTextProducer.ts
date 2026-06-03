@@ -160,7 +160,12 @@ function produceOutputBaseline(baseline: CompilerBaseline, result: HarnessCompil
     : buildJSEmitBaseline(
       {
         baselinePath: baseline.testName,
-        header: baseline.testName,
+        // The `//// [<path>] ////` header line TS-Go writes at the top of a `.js`
+        // output baseline is the corpus test file path made portable (e.g.
+        // `tests/cases/compiler/foo.ts`), NOT the per-config basename. Use the
+        // same `baselineHeader` helper as the `.types`/`.symbols` channels so the
+        // output channel header matches the TS-Go reference exactly.
+        header: baselineHeader(baseline),
         result: { js, dts, diagnostics },
         toBeCompiled: toNamedSources(baseline.files),
         options: { baselineRoot: "" },
@@ -186,7 +191,7 @@ function produceOutputBaseline(baseline: CompilerBaseline, result: HarnessCompil
  */
 function produceTypesAndSymbolsBaseline(baseline: CompilerBaseline, result: HarnessCompilationResult): readonly GeneratedBaseline[] {
   const files = toNamedSources(baseline.files);
-  const header = typesAndSymbolsHeader(baseline, result);
+  const header = baselineHeader(baseline);
   const hadErrorBaseline = result.diagnostics.length > 0;
   const writerProgram = newTypeWriterProgram(result.program);
   const walker = newTypeWriterWalker(writerProgram, hadErrorBaseline);
@@ -200,14 +205,16 @@ function produceTypesAndSymbolsBaseline(baseline: CompilerBaseline, result: Harn
 
 /**
  * The baseline header is the corpus test path made portable, matching the
- * `//// [<path>] ////` line TS-Go writes at the top of a `.types`/`.symbols`
+ * `//// [<path>] ////` line TS-Go writes at the top of a `.types`/`.symbols`/`.js`
  * baseline (e.g. `tests/cases/conformance/simpleTest.ts`). TS-Go uses the test
  * file path here — NOT the per-config test name and NOT the virtual `/.src/`
  * unit name — so we render `baseline.testPath` through `removeTestPathPrefixes`.
  * Falls back to the configured test name when no test path is available.
+ *
+ * Shared by the `.types`/`.symbols` and the `.js` output channels so every
+ * channel's header line is identical to the TS-Go reference.
  */
-function typesAndSymbolsHeader(baseline: CompilerBaseline, result: HarnessCompilationResult): string {
-  void result;
+function baselineHeader(baseline: CompilerBaseline): string {
   if (baseline.testPath.length > 0) return removeTestPathPrefixes(baseline.testPath, false);
   return baseline.testName;
 }
