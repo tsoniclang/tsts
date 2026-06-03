@@ -12,18 +12,6 @@ class Derived extends BaseFactory {
 }
 
 
-//// [checkInheritedProperty.js]
-class Base {
-}
-
-declare const BaseFactory: new() => Base & { c: string }
-
-class Derived extends BaseFactory {
-    a = this.b
-    b = "abc"
-}
-
-
 //// [Diagnostics]
 
 error TS0: Cannot find name 'BaseFactory'.

@@ -4,50 +4,23 @@
  * `compileProject` is the embeddable entry point for compiling a real
  * TypeScript project end-to-end: parse config / root names, build a
  * `Program` (compiler/program.ts), collect diagnostics, and emit real
- * JavaScript via the `Emitter` (compiler/emitter.ts). It mirrors the
- * proven sequence in `testutil/harnessutil/harnessutil.ts`
- * (`compileFilesEx`), swapping the in-memory harness host for the
- * real-disk node host (`nodeCompilerHost.ts`) and adding the config-file
- * path.
+ * JavaScript through `Program.emit()`. It mirrors the proven sequence in
+ * `testutil/harnessutil/harnessutil.ts` (`compileFilesEx`), swapping the
+ * in-memory harness host for the real-disk node host
+ * (`nodeCompilerHost.ts`) and adding the config-file path.
  *
- * EMIT NOTE: emission does NOT go through `Program.emit()`.
- * `Program.emit()` (compiler/program.ts ~964) is currently broken — it
- * writes the SOURCE text rather than compiled JS. Centrally fixing it
- * would shift the conformance/regression baselines, so that fix is
- * deferred to the later Option-A gap work and is intentionally not touched
- * here.
+ * EMIT NOTE: emission goes through `Program.emit()` — the single product JS
+ * emit path. `Program.emit()` delegates to the shared `emitProgramJs`
+ * helper (compiler/jsEmit.ts), which composes the canonical source-file
+ * selection + output pathing with the working `emit-js` printer and writes
+ * through the program emit host. `noEmit` and `noEmitOnError` are enforced
+ * inside that path, so `compileProject` no longer maintains its own emit
+ * loop.
  *
- * Real JavaScript is produced by composing three existing, tested pieces
- * (no shared printer/emitter surgery, which would move baselines):
- *
- *   1. `getSourceFilesToEmit` (compiler/emitter.ts) selects the emittable
- *      source files (honoring the same exclusions as the canonical
- *      `Emitter`: declaration files, external-library files, JSON, etc.).
- *   2. `getOutputJSFileNameWorker` (outputpaths) computes each output JS
- *      path from the (override-merged) compiler options, honoring `outDir`
- *      and the common source directory exactly like the canonical Emitter.
- *   3. `printSourceFile` (emit-js/printer.ts) renders the parser's
- *      array-shaped AST to real JavaScript with type annotations erased.
- *      This is the project's working JS printer and is covered by
- *      `emit-js/printer.test.ts`.
- *
- * Writes are routed through `newProgramEmitHost(program).writeFile`, which
- * forwards to `program.host().writeFile`, i.e. the node host's real-disk
- * write — the same write surface the canonical Emitter uses. `noEmit` /
- * `noEmitOnError` are enforced by the caller (`compileProject`) before this
- * loop runs.
- *
- * Why not the canonical `Emitter` (compiler/emitter.ts)? Its orchestration
- * (file selection, path computation, host write) is correct and reused
- * above, but its *text* comes from `printer/printer.ts` `printFile`, which
- * reads `sourceFile.statements.nodes` (a `NodeList` wrapper). The canonical
- * parser produces `statements` as a plain array whose `.nodes` is
- * `undefined`, so `printFile` would print an empty body. That printer is
- * the TS-Go-faithful declaration/baseline printer and is shared with the
- * conformance harness; reconciling its `NodeList` expectation with the
- * parser's array shape is deferred to the same Option-A bucket as the
- * broken `Program.emit`. Using the `emit-js` printer here yields real JS
- * today without touching that shared, baseline-bearing code.
+ * HONEST SCOPE: only `.js` is real. Declaration (`.d.ts`) and source-map
+ * (`.js.map`) emit are NOT produced by this path; when the caller requests
+ * them, `compileProject` surfaces an honest unsupported-feature warning
+ * rather than silently claiming success.
  */
 
 import type { Diagnostic } from "../ast/index.js";
@@ -57,10 +30,6 @@ import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
 import { ParsedCommandLine } from "../tsoptions/parsedCommandLine.js";
 import { getParsedCommandLineOfConfigFile } from "../tsoptions/tsconfigParsing.js";
 import { getNormalizedAbsolutePath, normalizePath } from "../tspath/index.js";
-import { printSourceFile } from "../emit-js/index.js";
-import { getOutputJSFileNameWorker } from "../outputpaths/index.js";
-import { getSourceFilesToEmit } from "./emitter.js";
-import { newProgramEmitHost } from "./emitHost.js";
 import { newProgram, type Program } from "./program.js";
 import { newNodeCompilerHost, newNodeParseConfigHost } from "./nodeCompilerHost.js";
 
@@ -216,13 +185,12 @@ export function compileProject(options: CompileOptions): CompileResult {
 
   const hasErrors = collected.some(isError);
 
-  // 5. Emit real JS unless noEmit is set, or noEmitOnError is active with
-  //    blocking errors. NOT Program.emit (broken — see file header).
-  const noEmit = programOptions.noEmit === Tristate.True;
-  const noEmitOnError = programOptions.noEmitOnError === Tristate.True;
-  const emitSuppressedByErrors = noEmitOnError && hasErrors;
-  const willEmit = !noEmit && !emitSuppressedByErrors;
-  const emittedFiles: string[] = willEmit ? [...emitReal(program)] : [];
+  // 5. Emit real JS through the single product emit path, `Program.emit()`.
+  //    The program enforces `noEmit` and `noEmitOnError` (the latter via the
+  //    shared `handleNoEmitOnError`); we therefore do not re-check them here.
+  const emitResult = program.emit(ctx);
+  const emittedFiles: readonly string[] = emitResult.emittedFiles;
+  const willEmit = emittedFiles.length > 0;
 
   // When emit actually runs, honestly warn about requested-but-unsupported
   // emit features (.d.ts / .js.map) rather than silently dropping them.
@@ -287,29 +255,4 @@ function configFileReadError(configFileName: string): Diagnostic {
     code: 5083,
     text,
   };
-}
-
-/**
- * Emit real JavaScript for every emittable source file and return the JS
- * paths actually written. Composes the canonical file-selection +
- * output-path machinery with the working `emit-js` printer (see the file
- * header for why this does NOT use `Program.emit` or the canonical
- * `Emitter`'s text path). The caller has already enforced `noEmit` /
- * `noEmitOnError`, so this unconditionally emits the selected files.
- */
-function emitReal(program: Program): readonly string[] {
-  const emitHost = newProgramEmitHost(program);
-  const options = program.options();
-  const files = getSourceFilesToEmit(emitHost, undefined, false);
-  return files.flatMap((file) => {
-    const jsFilePath = getOutputJSFileNameWorker(file.fileName, options, emitHost);
-    // An empty path means there is no JS output for this file (e.g.
-    // declaration-only emit). Skip it without recording a write.
-    if (jsFilePath === "") return [];
-    const text = printSourceFile(file);
-    // The printer omits the trailing newline; tsc-style output ends each
-    // emitted file with one, matching the canonical Emitter's behavior.
-    emitHost.writeFile(jsFilePath, text === "" ? "\n" : `${text}\n`, false);
-    return [jsFilePath];
-  });
 }
