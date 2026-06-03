@@ -139,6 +139,19 @@ function produceErrorBaseline(baseline: CompilerBaseline, result: HarnessCompila
 }
 
 function produceOutputBaseline(baseline: CompilerBaseline, result: HarnessCompilationResult): GeneratedBaseline {
+  // JS emit is attempted separately from the checker (see `compileFilesEx`). When
+  // it throws (e.g. an unsupported statement kind the JS printer does not yet
+  // handle), only this js/output channel records the failure; the errors/types/
+  // symbols channels above still produce real comparisons. We mark it with the
+  // ` (compile-failed)` channel suffix so the divergence report attributes the
+  // failure to the js channel honestly instead of fabricating emit output.
+  if (result.emitFailure !== undefined) {
+    return {
+      kind: "output (compile-failed)",
+      extension: ".js",
+      text: `${compileFailurePrefix}${result.emitFailure}`,
+    };
+  }
   const js = mapToNamedSources(result.js);
   const dts = mapToNamedSources(result.dts);
   const diagnostics = result.diagnostics.map(toBaselineDiagnostic);

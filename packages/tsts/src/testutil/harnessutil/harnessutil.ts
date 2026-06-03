@@ -114,6 +114,15 @@ export interface CompilationResult {
   readonly harnessOptions: HarnessOptions;
   readonly compilerOptions: CompilerOptions;
   readonly result: EmitResult;
+  /**
+   * Honest record of a JS-emit failure. The checker (errors/types/symbols) runs
+   * to completion regardless of emit, and the JS emit is attempted separately so
+   * an emit throw (e.g. an unsupported statement kind that JS emit does not yet
+   * handle) only poisons the js/output channel. `undefined` means JS emit either
+   * succeeded or was skipped (`noEmit`); a non-empty message means the JS emit
+   * threw and the js channel records that failure instead of fabricated output.
+   */
+  readonly emitFailure: string | undefined;
   readonly currentDirectory: string;
   readonly files: ReadonlyMap<string, string>;
   readonly js: ReadonlyMap<string, TestFile>;
@@ -235,9 +244,14 @@ export function compileFilesEx(options: {
   if (options.harnessOptions.captureSuggestions) {
     diagnostics.push(...program.getSuggestionDiagnostics(compilerContext, undefined));
   }
-  const emitResult = program.emit(compilerContext, {
-    writeFile: (fileName, text) => host.writeFile(fileName, text),
-  });
+  // The checker (errors/types/symbols) has already run above, independent of
+  // emit. Attempt JS emit SEPARATELY and contain any throw at this harness
+  // boundary so an unsupported emit kind only poisons the js/output channel; the
+  // errors/types/symbols channels are still produced and compared honestly. We
+  // never change emit behavior here — we only catch the error it raises.
+  const emit = tryEmit(program, compilerContext, host);
+  const emitResult = emit.result;
+  const emitFailure = emit.failure;
   diagnostics.push(...emitResult.diagnostics);
   const fileSnapshot = host.snapshotFiles();
   const outputRecord = collectCompilationOutputs(fileSnapshot, program, options.currentDirectory);
@@ -248,6 +262,7 @@ export function compileFilesEx(options: {
     harnessOptions: options.harnessOptions,
     compilerOptions: options.compilerOptions,
     result: emitResult,
+    emitFailure,
     currentDirectory: options.currentDirectory,
     files: fileSnapshot,
     js: outputRecord.js,
@@ -280,6 +295,36 @@ export function compileFilesEx(options: {
       return compileFiles(repeatOptions);
     },
   };
+}
+
+/**
+ * Run JS emit, containing any throw at the harness boundary.
+ *
+ * The checker channels (errors/types/symbols) are produced by the caller before
+ * emit and do not depend on it. JS emit, however, may throw on a statement kind
+ * its printer does not yet support. Catching here keeps that failure scoped to
+ * the js/output channel: on success the real `EmitResult` flows through; on
+ * throw we return an honest `emitSkipped` result plus the failure message so the
+ * js channel records `<compile failed> …` instead of fabricated output. Emit
+ * behavior itself is unchanged — only the error is contained.
+ */
+function tryEmit(
+  program: Program,
+  compilerContext: Parameters<Program["emit"]>[0],
+  host: HarnessCompilerHost,
+): { readonly result: EmitResult; readonly failure: string | undefined } {
+  try {
+    const result = program.emit(compilerContext, {
+      writeFile: (fileName, text) => host.writeFile(fileName, text),
+    });
+    return { result, failure: undefined };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      result: { emitSkipped: true, diagnostics: [], emittedFiles: [], sourceMaps: [] },
+      failure: message,
+    };
+  }
 }
 
 export function getOptionValue(testConfig: TestConfiguration, name: string): string | undefined {
@@ -992,8 +1037,16 @@ function requireStringOption(key: string, value: unknown): string {
 }
 
 function requireBooleanOption(key: string, value: unknown): boolean {
-  if (typeof value !== "boolean") throw new Error(`Value for option '${key}' must be a boolean.`);
-  return value;
+  if (typeof value === "boolean") return value;
+  // Corpus directive values arrive as strings (e.g. `// @noTypesAndSymbols: true`),
+  // mirroring TS-Go which reads the raw directive text. Accept only clean
+  // case-insensitive `true`/`false` (trimmed); never coerce arbitrary junk.
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true") return true;
+    if (normalized === "false") return false;
+  }
+  throw new Error(`Value for option '${key}' must be a boolean.`);
 }
 
 function requireStringListOption(key: string, value: unknown): readonly string[] {
