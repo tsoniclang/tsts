@@ -865,37 +865,14 @@ export class Parser {
     // so a leading `@` is parsed as a decorator (otherwise it would fall through to
     // #parseExpression and throw); the existing ClassKeyword/FunctionKeyword switch cases then
     // build the decorated declaration with the combined modifiers list.
-    const modifiers = this.#parseModifiers(true);
-    // tsgo parseDeclarationWorker KindExportKeyword case (parser.go:1169-1178): after the
-    // `export` keyword, the FOLLOWING token decides the production. Unlike tsgo (where the
-    // bare `export` is consumed inside parseDeclarationWorker), tsts's #parseModifiers has
-    // already consumed `export` into `modifiers`, so the deciding token is the CURRENT token.
-    // Mirror tsgo's split: `default`(+expr) | `=` -> ExportAssignment; `as` -> namespace
-    // export; `default`(+function/class) stays a declaration carrying a DefaultKeyword
-    // modifier (tsgo absorbs `default` as a modifier only when followed by class/function).
-    if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword)) {
-      if (this.#current().kind === Kind.DefaultKeyword) {
-        // tsgo nextTokenCanFollowDefaultKeyword (parser.go:3986): `export default class`/
-        // `export default function` are declarations with a DefaultKeyword modifier; any
-        // other follower is an ExportAssignment(isExportEquals=false).
-        const followerKind = this.#peekKind();
-        if (followerKind === Kind.FunctionKeyword || followerKind === Kind.ClassKeyword) {
-          this.#advance();
-          const defaultModifiers = createNodeArray([...modifiers, createToken(Kind.DefaultKeyword) as ModifierLike]) as NodeArray<ModifierLike>;
-          if (this.#current().kind === Kind.FunctionKeyword) {
-            return this.#parseFunctionDeclaration(pos, jsdoc, defaultModifiers);
-          }
-          return this.#parseClassDeclaration(pos, jsdoc, defaultModifiers);
-        }
-        return this.#parseExportAssignment(pos, jsdoc, modifiers);
-      }
-      if (this.#current().kind === Kind.EqualsToken) {
-        return this.#parseExportAssignment(pos, jsdoc, modifiers);
-      }
-      if (this.#current().kind === Kind.AsKeyword) {
-        return this.#parseNamespaceExportDeclaration(pos, jsdoc, modifiers);
-      }
-    }
+    // tsgo parseDeclarationWorker (parser.go:1126): parseModifiersEx(true, false, false).
+    // After the faithful modifier port, `export` is absorbed into `modifiers` ONLY when a
+    // declaration follows (e.g. `export class`/`export const`/`export default class`, via
+    // canFollowExportModifier / nextTokenCanFollowDefaultKeyword). For `export {`, `export *`,
+    // `export =`, `export default <expr>`, `export as`, `export type {`, canFollowExportModifier
+    // rejects, so `export` stays the CURRENT token and is dispatched by the KindExportKeyword
+    // switch case below (tsgo parseDeclarationWorker parser.go:1169-1178).
+    const modifiers = this.#parseModifiersEx(true, false, false);
     switch (this.#current().kind) {
       case Kind.SemicolonToken:
         // tsgo parseStatement KindSemicolonToken (parser.go:1061): a bare `;` is an
@@ -912,6 +889,23 @@ export class Parser {
         return this.#parseWithStatement();
       case Kind.ImportKeyword:
         return this.#parseImportDeclaration(pos, jsdoc, modifiers);
+      case Kind.ExportKeyword: {
+        // tsgo parseDeclarationWorker KindExportKeyword (parser.go:1169-1178): consume the
+        // `export` keyword, then the FOLLOWING token decides the production.
+        //   default | = -> ExportAssignment
+        //   as          -> NamespaceExportDeclaration
+        //   default     -> ExportDeclaration (named/star/`export {}`)
+        this.#nextToken();
+        switch (this.#current().kind) {
+          case Kind.DefaultKeyword:
+          case Kind.EqualsToken:
+            return this.#parseExportAssignment(pos, jsdoc, modifiers);
+          case Kind.AsKeyword:
+            return this.#parseNamespaceExportDeclaration(pos, jsdoc, modifiers);
+          default:
+            return this.#parseExportDeclaration(pos, jsdoc, modifiers);
+        }
+      }
       case Kind.ClassKeyword:
         return this.#parseClassDeclaration(pos, jsdoc, modifiers);
       case Kind.InterfaceKeyword:
@@ -953,23 +947,15 @@ export class Parser {
       case Kind.SwitchKeyword:
         return this.#parseSwitchStatement();
       case Kind.OpenBraceToken:
-        if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword)) {
-          return this.#parseExportDeclaration(pos, jsdoc, modifiers);
+        // tsgo parseStatement KindOpenBraceToken (parser.go:1059) -> parseBlock; this is a
+        // statement-level Block, reached only when no leading modifier was consumed (a
+        // modifier preceding `{` falls through to the terminal Declaration_expected recovery
+        // below, matching parseDeclarationWorker parser.go:1180-1185). `export {` is NOT
+        // reached here — it is dispatched by the KindExportKeyword case above.
+        if (modifiers === undefined) {
+          return this.#parseBlock();
         }
-        // codex Stage-3b 3b-flip: tsgo parseDeclarationWorker terminal fall-through
-        // (parser.go:1180-1185): a leftover modifier with no valid declaration ->
-        // parseErrorAt(nodePos, nodePos, Declaration_expected) + finishNode(
-        // NewMissingDeclaration(modifiers)). Here a non-export modifier precedes a
-        // block; build the MissingDeclaration carrying the modifiers (zero-width at
-        // nodePos, no token consumed). On non-modifier input this builds a Block.
-        if (modifiers !== undefined) {
-          this.#parseErrorAt(this.#nodePos(), this.#nodePos(), Diagnostics.Declaration_expected);
-          return this.#finishNode(createMissingDeclaration(modifiers), pos);
-        }
-        return this.#parseBlock();
-    }
-    if (modifiers !== undefined && hasModifier(modifiers, Kind.ExportKeyword) && this.#current().kind === Kind.AsteriskToken) {
-      return this.#parseExportDeclaration(pos, jsdoc, modifiers);
+        break;
     }
     if (modifiers !== undefined) {
       // codex Stage-3b 3b-flip: tsgo parseDeclarationWorker terminal fall-through
@@ -1185,7 +1171,7 @@ export class Parser {
     return this.#finishNode(createExportSpecifier(false, propertyName, name), specifierPos);
   }
 
-  #parseExportDeclaration(pos: number, jsdoc: JSDocScannerInfo, modifiers: NodeArray<ModifierLike>): Statement {
+  #parseExportDeclaration(pos: number, jsdoc: JSDocScannerInfo, modifiers: NodeArray<ModifierLike> | undefined): Statement {
     // tsgo parseExportDeclaration (parser.go:2539): ExportDeclaration start is the
     // #parseStatement-top pos (covering modifiers); finishNode runs after the trailing
     // semicolon. After a module specifier, an optional import-attributes clause
@@ -1220,7 +1206,7 @@ export class Parser {
     return this.#withJSDoc(this.#finishNode(createExportDeclaration(modifiers, false, namedExports, moduleSpecifier, attributes), pos), jsdoc);
   }
 
-  #parseExportAssignment(pos: number, jsdoc: JSDocScannerInfo, modifiers: NodeArray<ModifierLike>): Statement {
+  #parseExportAssignment(pos: number, jsdoc: JSDocScannerInfo, modifiers: NodeArray<ModifierLike> | undefined): Statement {
     // tsgo parseExportAssignment (parser.go:2506): `export = <expr> ;` (isExportEquals=true)
     // or `export default <expr> ;` (isExportEquals=false). Start pos is the #parseStatement-top
     // pos (covering the `export` modifier); finishNode after the trailing semicolon. tsgo
@@ -1248,7 +1234,7 @@ export class Parser {
     return this.#withJSDoc(this.#finishNode(createExportAssignment(modifiers, isExportEquals, undefined as never, expression), pos), jsdoc);
   }
 
-  #parseNamespaceExportDeclaration(pos: number, jsdoc: JSDocScannerInfo, modifiers: NodeArray<ModifierLike>): Statement {
+  #parseNamespaceExportDeclaration(pos: number, jsdoc: JSDocScannerInfo, modifiers: NodeArray<ModifierLike> | undefined): Statement {
     // tsgo parseNamespaceExportDeclaration (parser.go:2526): `export as namespace Id ;`. The
     // `export` modifier was already consumed into `modifiers`; here we consume `as`,
     // `namespace`, the identifier, then the trailing semicolon. Start pos is the
@@ -1313,28 +1299,81 @@ export class Parser {
     return this.#finishNode(createImportAttribute(name, value), pos);
   }
 
-  // tsgo parseModifiers / parseModifiersEx (parser.go:3854-3896): a single loop that, when
-  // `allowDecorators` is set, accepts EITHER a decorator (`@expr` -> parseDecorator) OR a
-  // keyword modifier, appending both into ONE list (ModifierLike already includes Decorator,
-  // nodes.ts:1019). tsts keeps the existing keyword-modifier branch and adds the AtToken
-  // branch in front. `allowDecorators` defaults to false so decorator-forbidding sites
-  // (#parseTypeElement et al.) never mis-consume a stray `@`, mirroring tsgo's parseModifiers
-  // (allowDecorators=false) vs parseModifiersEx(true). The grammar-level legality of
-  // interleavings/orderings is deferred to the checker, exactly as tsgo does.
-  #parseModifiers(allowDecorators: boolean = false): NodeArray<ModifierLike> | undefined {
-    const modifiers: ModifierLike[] = [];
-    while (true) {
-      if (allowDecorators && this.#current().kind === Kind.AtToken) {
-        modifiers.push(this.#parseDecorator());
-        continue;
-      }
-      if (!this.#isModifierAtCurrentPosition()) {
-        break;
-      }
-      modifiers.push(createToken(this.#current().kind as ModifierSyntaxKind) as ModifierLike);
-      this.#advance();
+  // tsgo parseModifiers (parser.go:3856-3858): parseModifiersEx(false, false, false).
+  #parseModifiers(): NodeArray<ModifierLike> | undefined {
+    return this.#parseModifiersEx(false, false, false);
+  }
+
+  // tsgo parseModifiersEx (parser.go:3860-3898): a single loop that, when `allowDecorators`
+  // is set, accepts EITHER a decorator (`@expr` -> parseDecorator) OR a keyword modifier
+  // (tryParseModifier), appending both into ONE list (ModifierLike already includes
+  // Decorator). The hasLeadingModifier/hasTrailingDecorator/hasTrailingModifier/
+  // hasStaticModifier flags thread through exactly as tsgo: decorators are contiguous but may
+  // appear in two places (leading + trailing); grammar-level legality of interleavings is
+  // deferred to the checker. The functional-state requirement is satisfied with a recursive
+  // worker carrying the flags + accumulated list instead of mutable locals.
+  #parseModifiersEx(
+    allowDecorators: boolean,
+    permitConstAsModifier: boolean,
+    stopOnStartOfClassStaticBlock: boolean,
+  ): NodeArray<ModifierLike> | undefined {
+    const pos = this.#nodePos();
+    const list = this.#parseModifiersLoop(
+      allowDecorators,
+      permitConstAsModifier,
+      stopOnStartOfClassStaticBlock,
+      [],
+      false,
+      false,
+      false,
+      false,
+    );
+    if (list.length !== 0) {
+      // tsgo newModifierList(NewTextRange(pos, p.nodePos()), ...) (parser.go:3895): the
+      // modifier list carries the [pos, current-pos) text range.
+      return createNodeArray([...list], pos, this.#nodePos()) as NodeArray<ModifierLike>;
     }
-    return modifiers.length === 0 ? undefined : createNodeArray(modifiers) as NodeArray<ModifierLike>;
+    return undefined;
+  }
+
+  #parseModifiersLoop(
+    allowDecorators: boolean,
+    permitConstAsModifier: boolean,
+    stopOnStartOfClassStaticBlock: boolean,
+    list: readonly ModifierLike[],
+    hasLeadingModifier: boolean,
+    hasTrailingDecorator: boolean,
+    hasTrailingModifier: boolean,
+    hasStaticModifier: boolean,
+  ): readonly ModifierLike[] {
+    if (allowDecorators && this.#current().kind === Kind.AtToken && !hasTrailingModifier) {
+      const decorator = this.#parseDecorator();
+      return this.#parseModifiersLoop(
+        allowDecorators,
+        permitConstAsModifier,
+        stopOnStartOfClassStaticBlock,
+        [...list, decorator],
+        hasLeadingModifier,
+        hasLeadingModifier ? true : hasTrailingDecorator,
+        hasTrailingModifier,
+        hasStaticModifier,
+      );
+    }
+    const modifier = this.#tryParseModifier(hasStaticModifier, permitConstAsModifier, stopOnStartOfClassStaticBlock);
+    if (modifier === undefined) {
+      return list;
+    }
+    const nextHasStaticModifier = modifier.kind === Kind.StaticKeyword ? true : hasStaticModifier;
+    return this.#parseModifiersLoop(
+      allowDecorators,
+      permitConstAsModifier,
+      stopOnStartOfClassStaticBlock,
+      [...list, modifier as ModifierLike],
+      hasTrailingDecorator ? hasLeadingModifier : true,
+      hasTrailingDecorator,
+      hasTrailingDecorator ? true : hasTrailingModifier,
+      nextHasStaticModifier,
+    );
   }
 
   // tsgo parseDecorator (parser.go:3898): pos at the `@`, consume it, then parse the
@@ -1356,24 +1395,162 @@ export class Parser {
     return this.#finishNode(createDecorator(expression), pos);
   }
 
-  #isModifierAtCurrentPosition(): boolean {
-    if (!modifierKinds.has(this.#current().kind)) {
+  // tsgo tryParseModifier (parser.go:3920-3941): capture pos+kind, then decide whether the
+  // current token is a modifier. `const` is only a modifier with permitConstAsModifier AND a
+  // following modifier on the same line; a `static {` start is rejected when
+  // stopOnStartOfClassStaticBlock; a repeated `static` after one already seen is rejected;
+  // otherwise parseAnyContextualModifier decides. On success build a Modifier node finished at
+  // pos.
+  #tryParseModifier(
+    hasSeenStaticModifier: boolean,
+    permitConstAsModifier: boolean,
+    stopOnStartOfClassStaticBlock: boolean,
+  ): ModifierLike | undefined {
+    const pos = this.#nodePos();
+    const kind = this.#current().kind;
+    if (this.#current().kind === Kind.ConstKeyword && permitConstAsModifier) {
+      // We need to ensure that any subsequent modifiers appear on the same line
+      // so that when 'const' is a standalone declaration, we don't issue an error.
+      if (!this.#lookAhead(() => this.#nextTokenIsOnSameLineAndCanFollowModifier())) {
+        return undefined;
+      } else {
+        this.#nextToken();
+      }
+    } else if (stopOnStartOfClassStaticBlock && this.#current().kind === Kind.StaticKeyword && this.#lookAhead(() => this.#nextTokenIsOpenBrace())) {
+      return undefined;
+    } else if (hasSeenStaticModifier && this.#current().kind === Kind.StaticKeyword) {
+      return undefined;
+    } else {
+      if (!this.#parseAnyContextualModifier()) {
+        return undefined;
+      }
+    }
+    return this.#finishNode(createToken(kind as ModifierSyntaxKind) as ModifierLike, pos);
+  }
+
+  // tsgo parseContextualModifier (parser.go:3943-3950): speculatively accept `t` as a
+  // modifier if it is the current token and the next token can follow a modifier.
+  #parseContextualModifier(t: Kind): boolean {
+    const state = this.#mark();
+    if (this.#current().kind === t && this.#nextTokenCanFollowModifier()) {
+      return true;
+    }
+    this.#rewind(state);
+    return false;
+  }
+
+  // tsgo parseAnyContextualModifier (parser.go:3952-3959): speculatively accept any modifier
+  // kind if the next token can follow a modifier.
+  #parseAnyContextualModifier(): boolean {
+    const state = this.#mark();
+    if (isModifierKind(this.#current().kind) && this.#nextTokenCanFollowModifier()) {
+      return true;
+    }
+    this.#rewind(state);
+    return false;
+  }
+
+  // tsgo nextTokenCanFollowModifier (parser.go:3961-3986).
+  #nextTokenCanFollowModifier(): boolean {
+    switch (this.#current().kind) {
+      case Kind.ConstKeyword:
+        // 'const' is only a modifier if followed by 'enum'.
+        this.#nextToken();
+        return this.#current().kind === Kind.EnumKeyword;
+      case Kind.ExportKeyword:
+        this.#nextToken();
+        if (this.#current().kind === Kind.DefaultKeyword) {
+          return this.#lookAhead(() => this.#nextTokenCanFollowDefaultKeyword());
+        }
+        if (this.#current().kind === Kind.TypeKeyword) {
+          return this.#lookAhead(() => this.#nextTokenCanFollowExportModifier());
+        }
+        return this.#canFollowExportModifier();
+      case Kind.DefaultKeyword:
+        return this.#nextTokenCanFollowDefaultKeyword();
+      case Kind.StaticKeyword:
+        this.#nextToken();
+        return this.#canFollowModifier();
+      case Kind.GetKeyword:
+      case Kind.SetKeyword:
+        this.#nextToken();
+        return this.#canFollowGetOrSetKeyword();
+      default:
+        return this.#nextTokenIsOnSameLineAndCanFollowModifier();
+    }
+  }
+
+  // tsgo canFollowExportModifier (parser.go:4029-4031).
+  #canFollowExportModifier(): boolean {
+    return this.#current().kind === Kind.AtToken
+      || (this.#current().kind !== Kind.AsteriskToken
+        && this.#current().kind !== Kind.AsKeyword
+        && this.#current().kind !== Kind.OpenBraceToken
+        && this.#canFollowModifier());
+  }
+
+  // tsgo canFollowModifier (parser.go:4033-4035).
+  #canFollowModifier(): boolean {
+    return this.#current().kind === Kind.OpenBracketToken
+      || this.#current().kind === Kind.OpenBraceToken
+      || this.#current().kind === Kind.AsteriskToken
+      || this.#current().kind === Kind.DotDotDotToken
+      || this.#isLiteralPropertyName();
+  }
+
+  // tsgo canFollowGetOrSetKeyword (parser.go:4037-4039).
+  #canFollowGetOrSetKeyword(): boolean {
+    return this.#current().kind === Kind.OpenBracketToken || this.#isLiteralPropertyName();
+  }
+
+  // tsgo nextTokenIsOnSameLineAndCanFollowModifier (parser.go:4041-4047).
+  #nextTokenIsOnSameLineAndCanFollowModifier(): boolean {
+    this.#nextToken();
+    if (this.#hasPrecedingLineBreak()) {
       return false;
     }
-    const nextKind = this.#peekKind();
-    // tsgo tryParseModifier stopOnStartOfClassStaticBlock (parser.go:3929-3930): a `static`
-    // immediately followed by `{` is NOT a modifier — it begins a class static block, which
-    // is dispatched by #parseClassElement. Without this guard #parseModifiers would eat the
-    // `static` and misparse the `{`.
-    if (this.#current().kind === Kind.StaticKeyword && nextKind === Kind.OpenBraceToken) {
-      return false;
+    return this.#canFollowModifier();
+  }
+
+  // tsgo nextTokenIsOpenBrace (parser.go:4049-4051).
+  #nextTokenIsOpenBrace(): boolean {
+    this.#nextToken();
+    return this.#current().kind === Kind.OpenBraceToken;
+  }
+
+  // tsgo nextTokenCanFollowExportModifier (parser.go:4024-4027).
+  #nextTokenCanFollowExportModifier(): boolean {
+    this.#nextToken();
+    return this.#canFollowExportModifier();
+  }
+
+  // tsgo nextTokenCanFollowDefaultKeyword (parser.go:3988-3998).
+  #nextTokenCanFollowDefaultKeyword(): boolean {
+    this.#nextToken();
+    switch (this.#current().kind) {
+      case Kind.ClassKeyword:
+      case Kind.FunctionKeyword:
+      case Kind.InterfaceKeyword:
+      case Kind.AtToken:
+        return true;
+      case Kind.AbstractKeyword:
+        return this.#lookAhead(() => this.#nextTokenIsClassKeywordOnSameLine());
+      case Kind.AsyncKeyword:
+        return this.#lookAhead(() => this.#nextTokenIsFunctionKeywordOnSameLine());
     }
-    return nextKind !== Kind.QuestionToken
-      && nextKind !== Kind.ColonToken
-      && nextKind !== Kind.OpenParenToken
-      && nextKind !== Kind.SemicolonToken
-      && nextKind !== Kind.CommaToken
-      && nextKind !== Kind.CloseBraceToken;
+    return false;
+  }
+
+  // tsgo nextTokenIsClassKeywordOnSameLine (parser.go:4016-4018).
+  #nextTokenIsClassKeywordOnSameLine(): boolean {
+    this.#nextToken();
+    return this.#current().kind === Kind.ClassKeyword && !this.#hasPrecedingLineBreak();
+  }
+
+  // tsgo nextTokenIsFunctionKeywordOnSameLine (parser.go:4020-4022).
+  #nextTokenIsFunctionKeywordOnSameLine(): boolean {
+    this.#nextToken();
+    return this.#current().kind === Kind.FunctionKeyword && !this.#hasPrecedingLineBreak();
   }
 
   #parseClassDeclaration(pos: number, jsdoc: JSDocScannerInfo, modifiers: NodeArray<ModifierLike> | undefined): Statement {
@@ -1620,9 +1797,10 @@ export class Parser {
       return this.#withJSDoc(this.#finishNode(createSemicolonClassElement(), pos), jsdoc);
     }
     // tsgo parseClassElement (parser.go:1853): parseModifiersEx(allowDecorators=true,
-    // stopOnStartOfClassStaticBlock=true) — decorators on members are consumed here, and a
-    // `static {` is left UNconsumed (the static-block guard lives in #isModifierAtCurrentPosition).
-    const modifiers = this.#parseModifiers(true);
+    // permitConstAsModifier=true, stopOnStartOfClassStaticBlock=true) — decorators on members
+    // are consumed here, and a `static {` is left UNconsumed (the static-block guard lives in
+    // #tryParseModifier, gated by stopOnStartOfClassStaticBlock).
+    const modifiers = this.#parseModifiersEx(true, true, true);
     // tsgo parseClassElement static-block dispatch (parser.go:1854-1856): the static-block
     // check runs AFTER parseModifiers and BEFORE the get/set/constructor branches, on the
     // still-unconsumed `static` token. `static {` -> parseClassStaticBlockDeclaration.
@@ -1699,7 +1877,8 @@ export class Parser {
       // already consumed into `modifiers`. The worker wraps params and body (body also clears
       // DecoratorContext).
       const isGenerator = false;
-      const isAsync = modifiers !== undefined && hasModifier(modifiers, Kind.AsyncKeyword);
+      // tsgo parseMethodDeclaration (parser.go:1950): IfElse(modifierListHasAsync(modifiers), Await).
+      const isAsync = modifierListHasAsync(modifiers);
       const typeParameters = this.#parseOptionalTypeParameters();
       this.#expect(Kind.OpenParenToken);
       const parameters = this.#withSignatureContext(isGenerator, isAsync, () => this.#parseParameterList());
@@ -1984,7 +2163,8 @@ export class Parser {
     // contextFlags. tsts derives the same booleans from the asterisk token and the async
     // modifier and wraps the parameter list AND the body via #withSignatureContext.
     const isGenerator = asteriskToken !== undefined;
-    const isAsync = modifiers !== undefined && hasModifier(modifiers, Kind.AsyncKeyword);
+    // tsgo (parser.go:1719): IfElse(modifierListHasAsync(modifiers), Await).
+    const isAsync = modifierListHasAsync(modifiers);
     // tsgo additionally sets AwaitContext=true for an EXPORTED function declaration
     // (parser.go:1722-1723) — an exported function is in module-await context — applied as
     // the OUTER context around params + body. For a non-exported function tsgo leaves the
@@ -2031,7 +2211,8 @@ export class Parser {
     // parameter decorators (`@dec p`) and parameter-property accessibility modifiers
     // (public/private/protected/readonly) into the ParameterDeclaration's modifiers list
     // (previously hard-coded undefined, silently dropping them).
-    const modifiers = this.#parseModifiers(true);
+    // tsgo parseParameterEx (parser.go:3323): parseModifiersEx(true, false, false).
+    const modifiers = this.#parseModifiersEx(true, false, false);
     const dotDotDotToken = this.#consumeOptional(Kind.DotDotDotToken) ? createToken(Kind.DotDotDotToken) as DotDotDotToken : undefined;
     const name = this.#parseBindingName();
     const questionToken = this.#consumeOptional(Kind.QuestionToken) ? createToken(Kind.QuestionToken) as QuestionToken : undefined;
@@ -3664,7 +3845,10 @@ export class Parser {
     while (this.#consumeOptional(Kind.BarToken)) {
       types.push(this.#parseIntersectionType());
     }
-    return !hasLeadingBar && types.length === 1 ? types[0]! : this.#finishNode(createUnionTypeNode(createNodeArray(types) as NodeArray<TypeNode>), pos);
+    if (!hasLeadingBar && types.length === 1) {
+      return types[0]!;
+    }
+    return this.#finishNode(this.#createUnionOrIntersectionTypeNode(Kind.BarToken, createNodeArray(types) as NodeArray<TypeNode>), pos);
   }
 
   #parseIntersectionType(): TypeNode {
@@ -3675,7 +3859,23 @@ export class Parser {
     while (this.#consumeOptional(Kind.AmpersandToken)) {
       types.push(this.#parsePostfixType());
     }
-    return types.length === 1 ? types[0]! : this.#finishNode(createIntersectionTypeNode(createNodeArray(types) as NodeArray<TypeNode>), pos);
+    if (types.length === 1) {
+      return types[0]!;
+    }
+    return this.#finishNode(this.#createUnionOrIntersectionTypeNode(Kind.AmpersandToken, createNodeArray(types) as NodeArray<TypeNode>), pos);
+  }
+
+  // tsgo createUnionOrIntersectionTypeNode (parser.go:2661-2670): BarToken -> union,
+  // AmpersandToken -> intersection; any other operator is unreachable (tsgo panics).
+  #createUnionOrIntersectionTypeNode(operator: Kind, types: NodeArray<TypeNode>): TypeNode {
+    switch (operator) {
+      case Kind.BarToken:
+        return createUnionTypeNode(types);
+      case Kind.AmpersandToken:
+        return createIntersectionTypeNode(types);
+      default:
+        throw new Error("Unhandled case in createUnionOrIntersectionType");
+    }
   }
 
   #parsePostfixType(): TypeNode {
@@ -5619,6 +5819,16 @@ function templateTailText(text: string): string {
 
 function hasModifier(modifiers: NodeArray<ModifierLike>, kind: Kind): boolean {
   return modifiers.some(modifier => modifier.kind === kind);
+}
+
+// tsgo isAsyncModifier (parser.go:1813-1815).
+function isAsyncModifier(modifier: ModifierLike): boolean {
+  return modifier.kind === Kind.AsyncKeyword;
+}
+
+// tsgo modifierListHasAsync (parser.go:1961-1963): modifiers != nil && Some(isAsyncModifier).
+function modifierListHasAsync(modifiers: NodeArray<ModifierLike> | undefined): boolean {
+  return modifiers !== undefined && modifiers.some(isAsyncModifier);
 }
 
 function isIdentifierNameKind(kind: Kind): boolean {
