@@ -601,6 +601,7 @@ function linkSharedOwnership(
     for (let j = i + 1; j < packets.length; j += 1) {
       const a = packets[i];
       const b = packets[j];
+      if (a === undefined || b === undefined) continue;
       const shared = a.ownedFiles.some((file) => b.ownedFiles.includes(file));
       if (!shared) continue;
       const wa = weights.get(a.id) ?? 0;

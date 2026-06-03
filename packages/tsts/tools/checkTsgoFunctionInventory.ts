@@ -278,11 +278,13 @@ function extractGoSymbols(files: readonly SourceFile[]): readonly GoSymbol[] {
       if (method !== null) {
         const receiver = method[1];
         const name = method[2];
-        const symbol = `${receiver}.${name}`;
-        const key = `${file.path}#${symbol}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          symbols.push({ file: file.path, symbol, receiver, name });
+        if (receiver !== undefined && name !== undefined) {
+          const symbol = `${receiver}.${name}`;
+          const key = `${file.path}#${symbol}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            symbols.push({ file: file.path, symbol, receiver, name });
+          }
         }
         continue;
       }
@@ -290,10 +292,12 @@ function extractGoSymbols(files: readonly SourceFile[]): readonly GoSymbol[] {
       const free = /^func\s+([A-Za-z_]\w*)\s*(?:\[|\()/.exec(line);
       if (free !== null) {
         const name = free[1];
-        const key = `${file.path}#${name}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          symbols.push({ file: file.path, symbol: name, receiver: undefined, name });
+        if (name !== undefined) {
+          const key = `${file.path}#${name}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            symbols.push({ file: file.path, symbol: name, receiver: undefined, name });
+          }
         }
       }
     }
@@ -316,21 +320,30 @@ function extractLocalSymbols(files: readonly SourceFile[]): readonly LocalSymbol
 
       const fn = /^\s*(?:export\s+)?(?:declare\s+)?(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)\b/.exec(line);
       if (fn !== null) {
-        symbols.push({ file: file.path, name: fn[1], kind: "function" });
+        const name = fn[1];
+        if (name !== undefined) {
+          symbols.push({ file: file.path, name, kind: "function" });
+        }
         continue;
       }
 
       const arrow = /^\s*(?:export\s+)?(?:declare\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::[^=]+)?=\s*(?:async\s+)?(?:<[^>]*>\s*)?\([^)]*\)\s*(?::[^=]+)?=>/.exec(line);
       if (arrow !== null) {
-        symbols.push({ file: file.path, name: arrow[1], kind: "arrow" });
+        const name = arrow[1];
+        if (name !== undefined) {
+          symbols.push({ file: file.path, name, kind: "arrow" });
+        }
         continue;
       }
 
       const method = /^\s*(?:public\s+|private\s+|protected\s+|static\s+|override\s+|abstract\s+|async\s+|readonly\s+)*(?:get\s+|set\s+)?(#?[A-Za-z_$][\w$]*)\s*(?:<[^>{}]*>)?\([^;{}]*\)\s*(?::[^=>{}]*)?\{/.exec(line);
       if (method !== null) {
-        const name = method[1].replace(/^#/, "");
-        if (!TS_NON_METHOD_WORDS.has(name)) {
-          symbols.push({ file: file.path, name: method[1], kind: "method" });
+        const raw = method[1];
+        if (raw !== undefined) {
+          const name = raw.replace(/^#/, "");
+          if (!TS_NON_METHOD_WORDS.has(name)) {
+            symbols.push({ file: file.path, name: raw, kind: "method" });
+          }
         }
       }
     }

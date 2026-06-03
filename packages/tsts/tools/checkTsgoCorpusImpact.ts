@@ -302,13 +302,16 @@ function parseInventoryGaps(records: readonly Record<string, unknown>[]): readon
     if (!INVENTORY_GAP_STATUSES.has(status)) continue;
     const module = moduleOf(record);
     if (module === undefined) continue;
+    const symbol = asString(record.upstreamSymbol) ?? asString(record.symbol);
+    const upstreamFile = asString(record.upstreamFile) ?? asString(record.upstream);
+    const localCandidate = firstLocalCandidate(record);
     gaps.push({
       source: "function-inventory",
       module,
       status,
-      symbol: asString(record.upstreamSymbol) ?? asString(record.symbol),
-      upstreamFile: asString(record.upstreamFile) ?? asString(record.upstream),
-      localCandidate: firstLocalCandidate(record),
+      ...(symbol !== undefined ? { symbol } : {}),
+      ...(upstreamFile !== undefined ? { upstreamFile } : {}),
+      ...(localCandidate !== undefined ? { localCandidate } : {}),
     });
   }
   return gaps;
@@ -322,18 +325,22 @@ function parseSkeletonGaps(records: readonly Record<string, unknown>[]): readonl
     if (!SKELETON_GAP_STATUSES.has(status)) continue;
     const module = moduleOf(record);
     if (module === undefined) continue;
+    const symbol =
+      asString(record.upstreamSymbol) ??
+      asString(record.symbol) ??
+      asString(record.function) ??
+      asString(record.name);
+    const upstreamFile = asString(record.upstreamFile) ?? asString(record.upstream);
+    const localCandidate = firstLocalCandidate(record);
+    const detail = asString(record.detail) ?? asString(record.note);
     gaps.push({
       source: "control-skeleton",
       module,
       status,
-      symbol:
-        asString(record.upstreamSymbol) ??
-        asString(record.symbol) ??
-        asString(record.function) ??
-        asString(record.name),
-      upstreamFile: asString(record.upstreamFile) ?? asString(record.upstream),
-      localCandidate: firstLocalCandidate(record),
-      detail: asString(record.detail) ?? asString(record.note),
+      ...(symbol !== undefined ? { symbol } : {}),
+      ...(upstreamFile !== undefined ? { upstreamFile } : {}),
+      ...(localCandidate !== undefined ? { localCandidate } : {}),
+      ...(detail !== undefined ? { detail } : {}),
     });
   }
   return gaps;
@@ -498,31 +505,47 @@ function buildReport(): CorpusImpactReport {
 
   const moduleImpacts = joinImpacts(allGaps, observations);
 
+  const makeInputStatus = (
+    name: string,
+    path: string,
+    present: boolean,
+    parsed: boolean,
+    recordCount: number | undefined,
+    error: string | undefined,
+  ): InputStatus => ({
+    name,
+    path,
+    present,
+    parsed,
+    ...(recordCount !== undefined ? { recordCount } : {}),
+    ...(error !== undefined ? { error } : {}),
+  });
+
   const inputs: readonly InputStatus[] = [
-    {
-      name: "divergence",
-      path: DIVERGENCE_PATH,
-      present: divergence.present,
-      parsed: divergence.parsed,
-      recordCount: divergence.value?.cases?.length,
-      error: divergence.error,
-    },
-    {
-      name: "function-inventory",
-      path: FUNCTION_INVENTORY_PATH,
-      present: inventory.present,
-      parsed: inventory.parsed,
-      recordCount: inventory.parsed ? inventoryRecords.length : undefined,
-      error: inventory.error,
-    },
-    {
-      name: "control-skeleton",
-      path: CONTROL_SKELETON_PATH,
-      present: skeleton.present,
-      parsed: skeleton.parsed,
-      recordCount: skeleton.parsed ? skeletonRecords.length : undefined,
-      error: skeleton.error,
-    },
+    makeInputStatus(
+      "divergence",
+      DIVERGENCE_PATH,
+      divergence.present,
+      divergence.parsed,
+      divergence.value?.cases?.length,
+      divergence.error,
+    ),
+    makeInputStatus(
+      "function-inventory",
+      FUNCTION_INVENTORY_PATH,
+      inventory.present,
+      inventory.parsed,
+      inventory.parsed ? inventoryRecords.length : undefined,
+      inventory.error,
+    ),
+    makeInputStatus(
+      "control-skeleton",
+      CONTROL_SKELETON_PATH,
+      skeleton.present,
+      skeleton.parsed,
+      skeleton.parsed ? skeletonRecords.length : undefined,
+      skeleton.error,
+    ),
   ];
 
   return {

@@ -292,7 +292,8 @@ function stripCommentsAndStrings(text: string): string {
   let state: "code" | "line" | "block" | "dquote" | "squote" | "backtick" = "code";
   while (i < n) {
     const c = text[i];
-    const next = i + 1 < n ? text[i + 1] : "";
+    if (c === undefined) break;
+    const next = i + 1 < n ? text[i + 1] ?? "" : "";
     if (state === "code") {
       if (c === "/" && next === "/") { state = "line"; out.push("  "); i += 2; continue; }
       if (c === "/" && next === "*") { state = "block"; out.push("  "); i += 2; continue; }
@@ -416,7 +417,7 @@ function extractGoFunctions(files: readonly SourceFile[]): readonly RawFunction[
         const name = match[1];
         // Find the body open at-or-after the start of this declaration line.
         const open = findBodyOpen(stripped, offset);
-        if (open >= 0) {
+        if (name !== undefined && open >= 0) {
           const { body } = extractBalancedBody(stripped, open);
           out.push({ file: file.path, name, body });
         }
@@ -449,6 +450,7 @@ function extractTsFunctions(files: readonly SourceFile[]): readonly RawFunction[
             const m = TS_METHOD.exec(line);
             if (m === null) return undefined;
             const candidate = m[1];
+            if (candidate === undefined) return undefined;
             const bare = candidate.replace(/^#/, "");
             if (TS_METHOD_BANNED.has(bare)) return undefined;
             // Require the line to actually open a body block (ends with `{` after
@@ -488,7 +490,9 @@ function extractCallees(body: string): readonly string[] {
   const callPattern = /(?:[A-Za-z_$][\w$]*\s*[.?]?\.?\s*)?([A-Za-z_$][\w$]*)\s*(?:<[^>;{}()]*>)?\s*\(/g;
   const names = new Set<string>();
   for (const m of body.matchAll(callPattern)) {
-    const normalized = normalizeName(m[1]);
+    const captured = m[1];
+    if (captured === undefined) continue;
+    const normalized = normalizeName(captured);
     if (normalized === "" || NOISE_CALLEES.has(normalized)) continue;
     names.add(normalized);
   }
@@ -662,6 +666,19 @@ function classify(upstream: ExtractedFunction, candidates: readonly ExtractedFun
     .map((candidate) => ({ candidate, drift: computeDrift(upstream.skeleton, candidate.skeleton, upstream.callees, candidate.callees) }))
     .sort((a, b) => a.drift.score - b.drift.score);
   const best = scored[0];
+  if (best === undefined) {
+    return {
+      module: "",
+      upstreamFile: upstream.file,
+      upstreamSymbol: upstream.name,
+      localCandidates: [],
+      status: "missing-local",
+      upstreamSkeleton: upstream.skeleton,
+      localSkeleton: undefined,
+      drift: [],
+      driftScore: Number.POSITIVE_INFINITY,
+    };
+  }
   const status: FunctionStatus =
     best.drift.score <= minor ? "match"
       : best.drift.score <= major ? "minor-shape-drift"
