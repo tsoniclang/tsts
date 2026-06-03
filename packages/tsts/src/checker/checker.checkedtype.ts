@@ -47,8 +47,10 @@ import {
   isParenthesizedTypeNode,
   isPrefixUnaryExpression,
   isPropertyAccessExpression,
+  isPropertyAssignment,
   isPropertyDeclaration,
   isPropertySignatureDeclaration,
+  isShorthandPropertyAssignment,
   isQualifiedName,
   isReturnStatement,
   isPrivateIdentifier,
@@ -1869,6 +1871,25 @@ function getTypeOfVariableOrParameterOrProperty(symbol: AstSymbol, state: CheckS
     // (matching TS-Go, e.g. catchClauseRestProperties.ts `>rest : any`).
     return anyType;
   }
+  // An object-literal member symbol (`{ bar: 42 }`) — its value declaration is the
+  // PropertyAssignment / ShorthandPropertyAssignment. TS-Go computes the member
+  // type from the member's value expression and widens it like a property
+  // (getWidenedType: a fresh primitive literal collapses to its base, e.g.
+  // `{ bar: 42 }` → `bar : number`, mirroring the widened member shown inside the
+  // object-type display `{ bar: number; }`). A contextual/`as const` member that
+  // keeps the fresh literal needs the parent object's contextual type threaded to
+  // the symbol resolution (a later slice), so this un-contextual widening is the
+  // honest common case. Without it the property-NAME reference resolves to
+  // `unknown` (awaitObjectLiteral.ts `>bar : number`, importAttributesWithValueComments.ts `>a : string`).
+  if (isPropertyAssignment(declaration) && inferInitializerType !== undefined) {
+    if (declaration.type !== undefined) return typeFromTypeNode(declaration.type, state);
+    return resolveObjectLiteralMemberType(symbol, state, () => getWidenedType(inferInitializerType!(declaration.initializer, state), state));
+  }
+  if (isShorthandPropertyAssignment(declaration) && inferInitializerType !== undefined) {
+    const reference = declaration.objectAssignmentInitializer ?? declaration.name;
+    if (reference === undefined) return undefined;
+    return resolveObjectLiteralMemberType(symbol, state, () => getWidenedType(inferInitializerType!(reference as Expression, state), state));
+  }
   // A destructured binding element resolves through its annotated parent for now
   // (pattern element typing is a later slice). The prior model bound the whole
   // pattern's type to each name; return that so a `{ value }: T` parameter still
@@ -1877,6 +1898,25 @@ function getTypeOfVariableOrParameterOrProperty(symbol: AstSymbol, state: CheckS
     return getTypeOfDestructuredBindingElement(declaration, state);
   }
   return undefined;
+}
+
+// Resolve an object-literal member symbol's type under the per-check
+// re-entrancy guard. A shorthand `{ a }` (and, transitively, a self-referential
+// property initializer) resolves the member's value through the binder, whose
+// name node can resolve back to this very member symbol — re-entering this
+// resolver in an unbounded cycle. Mirroring TS-Go's resolution-in-progress
+// handling (a symbol caught mid-resolution yields the any/error type rather
+// than recursing forever), a member already on the shared typeResolutionStack
+// short-circuits to `any`. The stack is the same per-CheckState set used for
+// type-alias cycle detection, so it is naturally empty between queries.
+function resolveObjectLiteralMemberType(symbol: AstSymbol, state: CheckState, compute: () => Type): Type {
+  if (state.typeResolutionStack.has(symbol)) return anyType;
+  state.typeResolutionStack.add(symbol);
+  try {
+    return compute();
+  } finally {
+    state.typeResolutionStack.delete(symbol);
+  }
 }
 
 // Mirrors TS-Go getWidenedTypeForVariableLikeDeclaration's two-stage widening of

@@ -1154,6 +1154,37 @@ test("getTypeAtLocation keeps a const initialized from another const widening-li
   assert.strictEqual(typeStringByIdentifier('const c1 = "hello"; const c2 = c1; c2;', "c2"), "\"hello\"");
 });
 
+// An object-literal member symbol (a PropertyAssignment name) resolves to its
+// value's WIDENED type — a fresh primitive literal collapses to its base, just
+// like the widened member shown inside the object-type display
+// `{ bar: number; }`. This is what makes a property-NAME reference in the type
+// walker print its real type instead of `unknown` (awaitObjectLiteral.ts
+// `>bar : number`, importAttributesWithValueComments.ts `>a : string`).
+test("getTypeAtLocation resolves an object-literal property name to its widened value type", () => {
+  assert.strictEqual(typeStringByIdentifier("const o = { bar: 42 };", "bar"), "number");
+  assert.strictEqual(typeStringByIdentifier('const o = { foo: "x" };', "foo"), "string");
+  assert.strictEqual(typeStringByIdentifier("const o = { flag: true };", "flag"), "boolean");
+});
+
+// A nested object-literal member resolves to its own (widened) anonymous object
+// type, and the inner primitive member widens to its base — confirming member
+// resolution reuses the same initializer inference + widening recursively.
+test("getTypeAtLocation resolves a nested object-literal property name to its widened object type", () => {
+  assert.strictEqual(typeStringByIdentifier("const o = { inner: { count: 1 } };", "inner"), "{ count: number; }");
+  assert.strictEqual(typeStringByIdentifier("const o = { inner: { count: 1 } };", "count"), "number");
+});
+
+// A shorthand property `{ a }` resolves the member through its reference node.
+// The binder resolves that node to the member symbol itself, so the
+// resolution-in-progress guard must break the self-cycle and surface `any`
+// rather than recursing forever (mirroring TS-Go's circularly-resolved
+// shorthand, circularDestructuring.types `>f : any`). The whole-object type
+// stays well-formed: `{ a }` → `{ a: any; }`.
+test("getTypeAtLocation resolves a shorthand object-literal property name without recursing", () => {
+  assert.doesNotThrow(() => typeStringByIdentifier("const o = { a };", "o"));
+  assert.strictEqual(typeStringByIdentifier("const o = { a };", "o"), "{ a: any; }");
+});
+
 // G2 (signature display) — a callable displays as its real `(p: T) => R`
 // signature (not the literal token "function"), matching TS-Go signatureToString
 // (e.g. `() => void`, `(_condition: boolean) => ...`, `(...data: any[]) => void`).
