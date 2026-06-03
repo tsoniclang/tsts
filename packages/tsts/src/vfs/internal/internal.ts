@@ -34,6 +34,48 @@ export function getBOM(text: string): string {
 }
 
 /**
+ * Decodes a freshly-read byte string, stripping any leading BOM and
+ * transcoding UTF-16LE/BE content to a JS string. Mirrors TS-Go
+ * `decodeBytes`: returns `[contents, ok]` where `ok` is false only when
+ * a declared UTF-16 stream fails to decode.
+ *
+ * `s` carries one byte per code unit (charCodeAt 0..255), matching the
+ * raw bytes Go reads from the underlying filesystem.
+ */
+export function decodeBytes(s: string): readonly [contents: string, ok: boolean] {
+  if (s.length >= 2) {
+    const b0 = s.charCodeAt(0);
+    const b1 = s.charCodeAt(1);
+    if (b0 === 0xff && b1 === 0xfe) {
+      return [decodeUtf16Bytes(s.slice(2), true), true];
+    }
+    if (b0 === 0xfe && b1 === 0xff) {
+      return [decodeUtf16Bytes(s.slice(2), false), true];
+    }
+  }
+  if (s.length >= 3 && s.charCodeAt(0) === 0xef && s.charCodeAt(1) === 0xbb && s.charCodeAt(2) === 0xbf) {
+    return [s.slice(3), true];
+  }
+  return [s, true];
+}
+
+/**
+ * Mirrors TS-Go `decodeUtf16`: reads `s` (one byte per code unit) as a
+ * sequence of UTF-16 units in the given byte order and decodes to a JS
+ * string. Returns "" if the byte count is odd (binary.Read failure).
+ */
+function decodeUtf16Bytes(s: string, littleEndian: boolean): string {
+  if (s.length % 2 !== 0) return "";
+  let result = "";
+  for (let i = 0; i + 1 < s.length; i += 2) {
+    const a = s.charCodeAt(i);
+    const b = s.charCodeAt(i + 1);
+    result += String.fromCharCode(littleEndian ? a | (b << 8) : (a << 8) | b);
+  }
+  return result;
+}
+
+/**
  * Decodes UTF-16-encoded text from a byte buffer. Used when a file
  * read returns raw bytes rather than a string.
  */
