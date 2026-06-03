@@ -20,15 +20,23 @@ import type {
 } from "./generated/types.js";
 import type {
   AccessorDeclaration,
+  AsExpression,
   BinaryExpression,
   BindingElement,
+  BreakOrContinueStatement,
+  ClassDeclaration,
+  ClassExpression,
+  ClassLikeDeclaration,
   ExpressionStatement,
   ForInStatement,
   ForOfStatement,
   GetAccessorDeclaration,
+  HeritageClause,
   Identifier,
   ImportSpecifier,
+  InterfaceDeclaration,
   JsxNamespacedName,
+  JsxText,
   LabeledStatement,
   LiteralTypeNode,
   MetaProperty,
@@ -44,24 +52,32 @@ import type {
   QualifiedName,
   SetAccessorDeclaration,
   ShorthandPropertyAssignment,
+  TypeAssertion,
+  TypeReferenceNode,
 } from "./generated/nodes.js";
 import {
   isArrowFunction,
   isBinaryExpression,
+  isBindingElement,
+  isBreakOrContinueStatement,
   isCallExpression,
   isCatchClause,
   isClassStaticBlockDeclaration,
   isClassElement,
+  isComputedPropertyName,
+  isConstructorDeclaration,
   isElementAccessExpression,
   isExportSpecifier,
   isForInStatement,
   isForOfStatement,
   isFunctionExpression,
   isFunctionLikeDeclaration,
+  isHeritageClause,
   isIdentifier,
   isImportSpecifier,
   isImportTypeNode,
   isJsxNamespacedName,
+  isLabeledStatement,
   isLeftHandSideExpression,
   isLiteralTypeNode,
   isModuleDeclaration,
@@ -71,18 +87,33 @@ import {
   isParenthesizedTypeNode,
   isPartiallyEmittedExpression,
   isPrivateIdentifier,
+  isQualifiedName,
   isExpressionStatement,
   isPropertyAccessExpression,
   isPropertyDeclaration,
   isSourceFile,
   isStringLiteral,
+  isTypeReferenceNode,
   isVariableDeclaration,
+  isVariableStatement,
   isVoidExpression,
 } from "./generated/is.js";
 // `isStringOrNumericLiteralLike` (utilities.go:331 IsStringOrNumericLiteralLike)
 // and `isExternalModule` (utilities.go:1626 IsExternalModule) live in
 // accessors.ts as the single owners; imported here for faithful reuse.
-import { isExternalModule, isStringOrNumericLiteralLike, nodeName, tagName } from "./accessors.js";
+import {
+  findAncestor,
+  isExternalModule,
+  isExternalOrCommonJSModule,
+  isStringOrNumericLiteralLike,
+  nodeBody,
+  nodeExpression,
+  nodeName,
+  nodeText,
+  tagName,
+} from "./accessors.js";
+import type { Symbol } from "./generated/types.js";
+import { forEachChild } from "./generated/visitor.js";
 
 function sameReference(left: unknown, right: unknown): boolean {
   return left === right;
@@ -1525,4 +1556,380 @@ export function isModuleAugmentationExternal(node: Node): boolean {
 // IsExternalModuleAugmentation (utilities.go:3533).
 export function isExternalModuleAugmentation(node: Node): boolean {
   return isAmbientModule(node) && isModuleAugmentationExternal(node);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Ancestor walking (utilities.go:896-954)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// FindAncestor (utilities.go:896) is the canonical owner in ./accessors.ts;
+// imported above and reused here so this module hosts the kind/result variants.
+
+// Walks up the parents of a node to find the ancestor that matches the kind.
+// FindAncestorKind (utilities.go:907).
+export function findAncestorKind(node: Node | undefined, kind: Kind): Node | undefined {
+  while (node !== undefined) {
+    if (node.kind === kind) {
+      return node;
+    }
+    node = node.parent;
+  }
+  return undefined;
+}
+
+// FindAncestorResult (utilities.go:917-923).
+export type FindAncestorResult = number;
+
+export const FindAncestorResult = {
+  False: 0,
+  True: 1,
+  Quit: 2,
+} as const;
+
+// ToFindAncestorResult (utilities.go:925).
+export function toFindAncestorResult(b: boolean): FindAncestorResult {
+  if (b) {
+    return FindAncestorResult.True;
+  }
+  return FindAncestorResult.False;
+}
+
+// Walks up the parents of a node to find the ancestor that matches the callback.
+// FindAncestorOrQuit (utilities.go:933).
+export function findAncestorOrQuit(node: Node | undefined, callback: (node: Node) => FindAncestorResult): Node | undefined {
+  while (node !== undefined) {
+    switch (callback(node)) {
+      case FindAncestorResult.Quit:
+        return undefined;
+      case FindAncestorResult.True:
+        return node;
+    }
+    node = node.parent;
+  }
+  return undefined;
+}
+
+// IsNodeDescendantOf (utilities.go:946).
+export function isNodeDescendantOf(node: Node | undefined, ancestor: Node | undefined): boolean {
+  while (node !== undefined) {
+    if (node === ancestor) {
+      return true;
+    }
+    node = node.parent;
+  }
+  return false;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Block / statement helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Determines whether a node is a BlockStatement. If parents are available, this
+// ensures the Block is not part of a `try` statement, `catch` clause, or the
+// Block-like body of a function.
+// isBlockStatement (utilities.go:702).
+export function isBlockStatement(node: Node): boolean {
+  if (node.kind !== Kind.Block) {
+    return false;
+  }
+  if (node.parent !== undefined && (node.parent.kind === Kind.TryStatement || node.parent.kind === Kind.CatchClause)) {
+    return false;
+  }
+  return !isFunctionBlock(node);
+}
+
+// ForEachReturnStatement (utilities.go:1123).
+export function forEachReturnStatement(body: Node, visitor: (stmt: Node) => boolean): boolean {
+  const traverse = (node: Node): boolean | undefined => {
+    switch (node.kind) {
+      case Kind.ReturnStatement:
+        return visitor(node);
+      case Kind.CaseBlock:
+      case Kind.Block:
+      case Kind.IfStatement:
+      case Kind.DoStatement:
+      case Kind.WhileStatement:
+      case Kind.ForStatement:
+      case Kind.ForInStatement:
+      case Kind.ForOfStatement:
+      case Kind.WithStatement:
+      case Kind.SwitchStatement:
+      case Kind.CaseClause:
+      case Kind.DefaultClause:
+      case Kind.LabeledStatement:
+      case Kind.TryStatement:
+      case Kind.CatchClause:
+        return forEachChild(node, traverse);
+    }
+    return false;
+  };
+  return traverse(body) ?? false;
+}
+
+// WalkUpBindingElementsAndPatterns (utilities.go:1248).
+export function walkUpBindingElementsAndPatterns(binding: Node): Node {
+  let node = binding.parent;
+  while (isBindingElement(node.parent)) {
+    node = node.parent.parent;
+  }
+  return node.parent;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Class / heritage helpers (utilities.go:1678-1724)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GetContainingClass (utilities.go:1678).
+export function getContainingClass(node: Node): Node | undefined {
+  return findAncestor(node.parent, isClassLike);
+}
+
+// GetExtendsHeritageClauseElement (utilities.go:1682).
+export function getExtendsHeritageClauseElement(node: Node): Node | undefined {
+  const elements = getExtendsHeritageClauseElements(node);
+  return elements.length > 0 ? elements[0] : undefined;
+}
+
+// GetExtendsHeritageClauseElements (utilities.go:1686).
+export function getExtendsHeritageClauseElements(node: Node): readonly Node[] {
+  return getHeritageElements(node, Kind.ExtendsKeyword);
+}
+
+// GetImplementsHeritageClauseElements (utilities.go:1690).
+export function getImplementsHeritageClauseElements(node: Node): readonly Node[] {
+  return getHeritageElements(node, Kind.ImplementsKeyword);
+}
+
+// GetHeritageElements (utilities.go:1694).
+export function getHeritageElements(node: Node, kind: Kind): readonly Node[] {
+  const clause = getHeritageClause(node, kind);
+  if (clause !== undefined) {
+    return (clause as HeritageClause).types;
+  }
+  return [];
+}
+
+// GetHeritageClause (utilities.go:1702).
+export function getHeritageClause(node: Node, kind: Kind): Node | undefined {
+  const clauses = getHeritageClauses(node);
+  if (clauses !== undefined) {
+    for (const clause of clauses) {
+      if ((clause as HeritageClause).token === kind) {
+        return clause;
+      }
+    }
+  }
+  return undefined;
+}
+
+// getHeritageClauses (utilities.go:1714).
+function getHeritageClauses(node: Node): readonly HeritageClause[] | undefined {
+  switch (node.kind) {
+    case Kind.ClassDeclaration:
+      return (node as ClassDeclaration).heritageClauses;
+    case Kind.ClassExpression:
+      return (node as ClassExpression).heritageClauses;
+    case Kind.InterfaceDeclaration:
+      return (node as InterfaceDeclaration).heritageClauses;
+  }
+  return undefined;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Type-query / property-name / label helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+// IsPartOfTypeQuery (utilities.go:1726).
+export function isPartOfTypeQuery(node: Node): boolean {
+  while (node.kind === Kind.QualifiedName || node.kind === Kind.Identifier) {
+    node = node.parent;
+  }
+  return node.kind === Kind.TypeQuery;
+}
+
+// IsComputedNonLiteralName (utilities.go:2067).
+export function isComputedNonLiteralName(name: Node): boolean {
+  return isComputedPropertyName(name) && !isStringOrNumericLiteralLike(nodeExpression(name));
+}
+
+// EntityNameToString (utilities.go:2075).
+export function entityNameToString(name: Node, getTextOfNode?: (node: Node) => string): string {
+  switch (name.kind) {
+    case Kind.ThisKeyword:
+      return "this";
+    case Kind.Identifier:
+    case Kind.PrivateIdentifier:
+      if (nodeIsSynthesized(name) || getTextOfNode === undefined) {
+        return nodeText(name);
+      }
+      return getTextOfNode(name);
+    case Kind.QualifiedName:
+      return entityNameToString((name as QualifiedName).left, getTextOfNode) + "." + entityNameToString((name as QualifiedName).right, getTextOfNode);
+    case Kind.PropertyAccessExpression:
+      return entityNameToString(nodeExpression(name), getTextOfNode) + "." + entityNameToString((name as PropertyAccessExpression).name, getTextOfNode);
+    case Kind.JsxNamespacedName:
+      return entityNameToString((name as JsxNamespacedName).namespace, getTextOfNode) + ":" + entityNameToString((name as JsxNamespacedName).name, getTextOfNode);
+  }
+  throw new Error("Unhandled case in entityNameToString");
+}
+
+// GetTextOfPropertyName (utilities.go:2094).
+export function getTextOfPropertyName(name: Node): string {
+  const [text] = tryGetTextOfPropertyName(name);
+  return text;
+}
+
+// TryGetTextOfPropertyName (utilities.go:2099).
+export function tryGetTextOfPropertyName(name: Node): [string, boolean] {
+  switch (name.kind) {
+    case Kind.Identifier:
+    case Kind.PrivateIdentifier:
+    case Kind.StringLiteral:
+    case Kind.NumericLiteral:
+    case Kind.BigIntLiteral:
+    case Kind.NoSubstitutionTemplateLiteral:
+      return [nodeText(name), true];
+    case Kind.ComputedPropertyName:
+      if (isStringOrNumericLiteralLike(nodeExpression(name))) {
+        return [nodeText(nodeExpression(name)), true];
+      }
+      break;
+    case Kind.JsxNamespacedName:
+      return [nodeText((name as JsxNamespacedName).namespace) + ":" + nodeText((name as JsxNamespacedName).name), true];
+  }
+  return ["", false];
+}
+
+// IsWhitespaceOnlyJsxText (utilities.go:2122).
+export function isWhitespaceOnlyJsxText(node: Node): boolean {
+  return node.kind === Kind.JsxText && (node as JsxText).containsOnlyTriviaWhiteSpaces;
+}
+
+// IsPropertyAccessOrQualifiedName (utilities.go:2225).
+export function isPropertyAccessOrQualifiedName(node: Node): boolean {
+  return node.kind === Kind.PropertyAccessExpression || node.kind === Kind.QualifiedName;
+}
+
+// IsLabelName (utilities.go:2229).
+export function isLabelName(node: Node): boolean {
+  return isLabelOfLabeledStatement(node) || isJumpStatementTarget(node);
+}
+
+// IsLabelOfLabeledStatement (utilities.go:2233).
+export function isLabelOfLabeledStatement(node: Node): boolean {
+  if (!isIdentifier(node)) {
+    return false;
+  }
+  if (!isLabeledStatement(node.parent)) {
+    return false;
+  }
+  return node === (node.parent as LabeledStatement).label;
+}
+
+// IsJumpStatementTarget (utilities.go:2243).
+export function isJumpStatementTarget(node: Node): boolean {
+  if (!isIdentifier(node)) {
+    return false;
+  }
+  if (!isBreakOrContinueStatement(node.parent)) {
+    return false;
+  }
+  return node === (node.parent as BreakOrContinueStatement).label;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Declaration / name helpers (utilities.go:2415-2483)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// NodeHasName (utilities.go:2415).
+export function nodeHasName(statement: Node, id: Node): boolean {
+  const name = nodeName(statement);
+  if (name !== undefined) {
+    return isIdentifier(name) && nodeText(name) === nodeText(id);
+  }
+  if (isVariableStatement(statement)) {
+    const declarations = statement.declarationList.declarations;
+    return declarations.some(d => nodeHasName(d, id));
+  }
+  return false;
+}
+
+// IsConstAssertion (utilities.go:2431).
+export function isConstAssertion(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.AsExpression:
+      return isConstTypeReference((node as AsExpression).type);
+    case Kind.TypeAssertionExpression:
+      return isConstTypeReference((node as TypeAssertion).type);
+  }
+  return false;
+}
+
+// IsConstTypeReference (utilities.go:2439).
+export function isConstTypeReference(node: Node): boolean {
+  return isTypeReferenceNode(node)
+    && ((node as TypeReferenceNode).typeArguments?.length ?? 0) === 0
+    && isIdentifier((node as TypeReferenceNode).typeName)
+    && nodeText((node as TypeReferenceNode).typeName) === "const";
+}
+
+// IsGlobalSourceFile (utilities.go:2443).
+export function isGlobalSourceFile(node: Node): boolean {
+  return node.kind === Kind.SourceFile && !isExternalOrCommonJSModule(node);
+}
+
+// IsParameterLike (utilities.go:2447).
+export function isParameterLike(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.Parameter:
+    case Kind.TypeParameter:
+      return true;
+  }
+  return false;
+}
+
+// GetDeclarationOfKind (utilities.go:2455).
+export function getDeclarationOfKind(symbol: Symbol, kind: Kind): Node | undefined {
+  for (const declaration of symbol.declarations) {
+    if (declaration.kind === kind) {
+      return declaration;
+    }
+  }
+  return undefined;
+}
+
+// FindConstructorDeclaration (utilities.go:2464).
+export function findConstructorDeclaration(node: ClassLikeDeclaration): Node | undefined {
+  for (const member of node.members) {
+    if (isConstructorDeclaration(member) && nodeIsPresent(nodeBody(member))) {
+      return member;
+    }
+  }
+  return undefined;
+}
+
+// GetFirstIdentifier (utilities.go:2473).
+export function getFirstIdentifier(node: Node): Node {
+  switch (node.kind) {
+    case Kind.Identifier:
+      return node;
+    case Kind.QualifiedName:
+      return getFirstIdentifier((node as QualifiedName).left);
+    case Kind.PropertyAccessExpression:
+      return getFirstIdentifier(nodeExpression(node));
+  }
+  throw new Error("Unhandled case in getFirstIdentifier");
+}
+
+// NodeHasKind (utilities.go:2938).
+export function nodeHasKind(node: Node | undefined, kind: Kind): boolean {
+  if (node === undefined) {
+    return false;
+  }
+  return node.kind === kind;
+}
+
+// IsContextualKeyword (utilities.go:2945).
+export function isContextualKeyword(token: Kind): boolean {
+  return Kind.FirstContextualKeyword <= token && token <= Kind.LastContextualKeyword;
 }
