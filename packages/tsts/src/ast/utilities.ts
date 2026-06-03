@@ -21,47 +21,68 @@ import type {
 import type {
   AccessorDeclaration,
   BinaryExpression,
+  BindingElement,
   ExpressionStatement,
   ForInStatement,
   ForOfStatement,
   GetAccessorDeclaration,
   Identifier,
+  ImportSpecifier,
   JsxNamespacedName,
   LabeledStatement,
+  LiteralTypeNode,
+  MetaProperty,
   ModifiersBase,
   ParenthesizedExpression,
   ParenthesizedTypeNode,
+  PartiallyEmittedExpression,
   PostfixUnaryExpression,
   PrefixUnaryExpression,
   ModifierLike,
   PropertyAccessExpression,
   PropertyAssignment,
+  QualifiedName,
   SetAccessorDeclaration,
   ShorthandPropertyAssignment,
 } from "./generated/nodes.js";
 import {
+  isArrowFunction,
   isBinaryExpression,
   isCallExpression,
   isCatchClause,
   isClassStaticBlockDeclaration,
   isClassElement,
   isElementAccessExpression,
+  isExportSpecifier,
   isForInStatement,
   isForOfStatement,
+  isFunctionExpression,
   isFunctionLikeDeclaration,
   isIdentifier,
+  isImportSpecifier,
+  isImportTypeNode,
   isJsxNamespacedName,
   isLeftHandSideExpression,
+  isLiteralTypeNode,
+  isModuleDeclaration,
   isNonNullExpression,
   isNumericLiteral,
   isParameterDeclaration,
   isParenthesizedTypeNode,
+  isPartiallyEmittedExpression,
+  isPrivateIdentifier,
   isExpressionStatement,
   isPropertyAccessExpression,
   isPropertyDeclaration,
   isSourceFile,
+  isStringLiteral,
   isVariableDeclaration,
+  isVoidExpression,
 } from "./generated/is.js";
+// `isStringOrNumericLiteralLike` (utilities.go:331 IsStringOrNumericLiteralLike)
+// and `isExternalModule` (utilities.go:1626 IsExternalModule) live in
+// accessors.ts as the single owners; imported here for faithful reuse.
+import { isExternalModule, isStringOrNumericLiteralLike } from "./accessors.js";
 
 function sameReference(left: unknown, right: unknown): boolean {
   return left === right;
@@ -323,6 +344,22 @@ export function isLogicalOrCoalescingBinaryOperator(token: Kind): boolean {
 
 function isLogicalOrCoalescingBinaryExpression(expr: Node): boolean {
   return isBinaryExpression(expr) && isLogicalOrCoalescingBinaryOperator(expr.operatorToken.kind);
+}
+
+// IsLogicalOrCoalescingAssignmentOperator (ast_generated.go:9878).
+export function isLogicalOrCoalescingAssignmentOperator(token: Kind): boolean {
+  switch (token) {
+    case Kind.AmpersandAmpersandEqualsToken:
+    case Kind.BarBarEqualsToken:
+    case Kind.QuestionQuestionEqualsToken:
+      return true;
+  }
+  return false;
+}
+
+// IsLogicalOrCoalescingAssignmentExpression (utilities.go:240).
+export function isLogicalOrCoalescingAssignmentExpression(expr: Node): boolean {
+  return isBinaryExpression(expr) && isLogicalOrCoalescingAssignmentOperator(expr.operatorToken.kind);
 }
 
 export function isLogicalExpression(node: Node): boolean {
@@ -808,20 +845,61 @@ export function getCombinedModifierFlags(node: Node): ModifierFlags {
   return flags;
 }
 
-// IsEntityNameExpression (utilities.go:1580) — non-JS form: an identifier or a
-// property-access chain whose name is an identifier and whose head is itself an
-// entity-name expression. Used by ExpressionIsAlias (binder bindExportAssignment).
+// IsEntityNameExpression (utilities.go:1580) — an identifier or a property-access
+// chain whose name is an identifier and whose head is itself an entity-name
+// expression. Used by ExpressionIsAlias (binder bindExportAssignment).
 export function isEntityNameExpression(node: Node): boolean {
-  return isIdentifier(node) || isPropertyAccessEntityNameExpression(node);
+  return isEntityNameExpressionEx(node, /*allowJS*/ false);
 }
 
-// IsPropertyAccessEntityNameExpression (utilities.go:1590), non-JS form.
-function isPropertyAccessEntityNameExpression(node: Node): boolean {
-  if (!isPropertyAccessExpression(node)) {
-    return false;
+// IsEntityNameExpressionEx (utilities.go:1584).
+export function isEntityNameExpressionEx(node: Node, allowJS: boolean): boolean {
+  return isIdentifier(node)
+    || isPropertyAccessEntityNameExpression(node, allowJS)
+    || allowJS && (node.kind === Kind.ThisKeyword || isElementAccessEntityNameExpression(node, allowJS));
+}
+
+// IsPropertyAccessEntityNameExpression (utilities.go:1590).
+function isPropertyAccessEntityNameExpression(node: Node, allowJS: boolean): boolean {
+  return isPropertyAccessExpression(node)
+    && isIdentifier(node.name)
+    && isEntityNameExpressionEx(node.expression, allowJS);
+}
+
+// isElementAccessEntityNameExpression (utilities.go:1594).
+function isElementAccessEntityNameExpression(node: Node, allowJS: boolean): boolean {
+  return isElementAccessExpression(node)
+    && isStringOrNumericLiteralLike(node.argumentExpression)
+    && isEntityNameExpressionEx(node.expression, allowJS);
+}
+
+// IsDottedName (utilities.go:1598).
+export function isDottedName(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.Identifier:
+    case Kind.ThisKeyword:
+    case Kind.SuperKeyword:
+    case Kind.MetaProperty:
+      return true;
+    case Kind.PropertyAccessExpression:
+      return isDottedName((node as PropertyAccessExpression).expression);
+    case Kind.ParenthesizedExpression:
+      return isDottedName((node as ParenthesizedExpression).expression);
   }
-  const access = node as PropertyAccessExpression;
-  return access.name.kind === Kind.Identifier && isEntityNameExpression(access.expression);
+  return false;
+}
+
+// HasSamePropertyAccessName (utilities.go:1608).
+export function hasSamePropertyAccessName(node1: Node, node2: Node): boolean {
+  if (node1.kind === Kind.Identifier && node2.kind === Kind.Identifier) {
+    return (node1 as Identifier).text === (node2 as Identifier).text;
+  } else if (node1.kind === Kind.PropertyAccessExpression && node2.kind === Kind.PropertyAccessExpression) {
+    const a = node1 as PropertyAccessExpression;
+    const b = node2 as PropertyAccessExpression;
+    return (a.name as Identifier).text === (b.name as Identifier).text
+      && hasSamePropertyAccessName(a.expression, b.expression);
+  }
+  return false;
 }
 
 // IsCatchClauseVariableDeclarationOrBindingElement (utilities.go:721).
@@ -1040,4 +1118,410 @@ export interface AllAccessorDeclarations {
   secondAccessor: AccessorDeclaration | undefined;
   setAccessor: SetAccessorDeclaration | undefined;
   getAccessor: GetAccessorDeclaration | undefined;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Identifier classification
+// ─────────────────────────────────────────────────────────────────────────────
+
+// IsIdentifierName (utilities.go:292) — true if the given identifier is
+// classified as an IdentifierName by inspecting the parent of the node.
+export function isIdentifierName(node: Node): boolean {
+  const parent = node.parent;
+  switch (parent.kind) {
+    case Kind.PropertyDeclaration:
+    case Kind.PropertySignature:
+    case Kind.MethodDeclaration:
+    case Kind.MethodSignature:
+    case Kind.GetAccessor:
+    case Kind.SetAccessor:
+    case Kind.EnumMember:
+    case Kind.PropertyAssignment:
+    case Kind.PropertyAccessExpression:
+      return (parent as unknown as { name?: Node }).name === node;
+    case Kind.QualifiedName:
+      return (parent as QualifiedName).right === node;
+    case Kind.BindingElement:
+      return (parent as BindingElement).propertyName === node;
+    case Kind.ImportSpecifier:
+      return (parent as ImportSpecifier).propertyName === node;
+    case Kind.ExportSpecifier:
+    case Kind.JsxAttribute:
+    case Kind.JsxSelfClosingElement:
+    case Kind.JsxOpeningElement:
+    case Kind.JsxClosingElement:
+      return true;
+  }
+  return false;
+}
+
+// IsPushOrUnshiftIdentifier (utilities.go:310).
+export function isPushOrUnshiftIdentifier(node: Node): boolean {
+  const text = (node as Identifier).text;
+  return text === "push" || text === "unshift";
+}
+
+// IsExportsIdentifier (utilities.go:1321).
+export function isExportsIdentifier(node: Node): boolean {
+  return isIdentifier(node) && node.text === "exports";
+}
+
+// IsModuleIdentifier (utilities.go:1325).
+export function isModuleIdentifier(node: Node): boolean {
+  return isIdentifier(node) && node.text === "module";
+}
+
+// IsThisIdentifier (utilities.go:1329).
+export function isThisIdentifier(node: Node): boolean {
+  return isIdentifier(node) && node.text === "this";
+}
+
+// IsImportMeta (utilities.go:1241).
+export function isImportMeta(node: Node): boolean {
+  if (node.kind === Kind.MetaProperty) {
+    const meta = node as MetaProperty;
+    return meta.keywordToken === Kind.ImportKeyword && meta.name.text === "meta";
+  }
+  return false;
+}
+
+// IsVoidZero (utilities.go:1317).
+export function isVoidZero(node: Node): boolean {
+  return isVoidExpression(node) && isNumericLiteral(node.expression) && node.expression.text === "0";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Expression / unary / left-hand-side classification (by kind)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function isLeftHandSideExpressionKind(kind: Kind): boolean {
+  switch (kind) {
+    case Kind.PropertyAccessExpression:
+    case Kind.ElementAccessExpression:
+    case Kind.NewExpression:
+    case Kind.CallExpression:
+    case Kind.JsxElement:
+    case Kind.JsxSelfClosingElement:
+    case Kind.JsxFragment:
+    case Kind.TaggedTemplateExpression:
+    case Kind.ArrayLiteralExpression:
+    case Kind.ParenthesizedExpression:
+    case Kind.ObjectLiteralExpression:
+    case Kind.ClassExpression:
+    case Kind.FunctionExpression:
+    case Kind.Identifier:
+    case Kind.PrivateIdentifier:
+    case Kind.RegularExpressionLiteral:
+    case Kind.NumericLiteral:
+    case Kind.BigIntLiteral:
+    case Kind.StringLiteral:
+    case Kind.NoSubstitutionTemplateLiteral:
+    case Kind.TemplateExpression:
+    case Kind.FalseKeyword:
+    case Kind.NullKeyword:
+    case Kind.ThisKeyword:
+    case Kind.TrueKeyword:
+    case Kind.SuperKeyword:
+    case Kind.NonNullExpression:
+    case Kind.ExpressionWithTypeArguments:
+    case Kind.MetaProperty:
+    case Kind.ImportKeyword:
+    case Kind.MissingDeclaration:
+      return true;
+  }
+  return false;
+}
+
+function isUnaryExpressionKind(kind: Kind): boolean {
+  switch (kind) {
+    case Kind.PrefixUnaryExpression:
+    case Kind.PostfixUnaryExpression:
+    case Kind.DeleteExpression:
+    case Kind.TypeOfExpression:
+    case Kind.VoidExpression:
+    case Kind.AwaitExpression:
+    case Kind.TypeAssertionExpression:
+      return true;
+  }
+  return isLeftHandSideExpressionKind(kind);
+}
+
+// Determines whether a node is a UnaryExpression based only on its kind.
+export function isUnaryExpression(node: Node): boolean {
+  return isUnaryExpressionKind(skipPartiallyEmittedExpressions(node).kind);
+}
+
+function isExpressionKind(kind: Kind): boolean {
+  switch (kind) {
+    case Kind.ConditionalExpression:
+    case Kind.YieldExpression:
+    case Kind.ArrowFunction:
+    case Kind.BinaryExpression:
+    case Kind.SpreadElement:
+    case Kind.AsExpression:
+    case Kind.OmittedExpression:
+    case Kind.PartiallyEmittedExpression:
+    case Kind.SatisfiesExpression:
+      return true;
+  }
+  return isUnaryExpressionKind(kind);
+}
+
+// Determines whether a node is an expression based only on its kind.
+// (utilities.go:451 IsExpression). Named distinctly from the generated
+// `isExpression` type guard to avoid a duplicate barrel export.
+export function isExpressionNode(node: Node): boolean {
+  return isExpressionKind(skipPartiallyEmittedExpressions(node).kind);
+}
+
+// SkipPartiallyEmittedExpressions (utilities.go:825).
+export function skipPartiallyEmittedExpressions(node: Node): Node {
+  let current = node;
+  while (isPartiallyEmittedExpression(current)) {
+    current = (current as PartiallyEmittedExpression).expression;
+  }
+  return current;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Function- / class- / object-literal members (continued)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// IsFunctionLikeOrClassStaticBlockDeclaration (utilities.go:523).
+export function isFunctionLikeOrClassStaticBlockDeclaration(node: Node | undefined): boolean {
+  return node !== undefined && (isFunctionLike(node) || isClassStaticBlockDeclaration(node));
+}
+
+// IsClassLike (utilities.go:531).
+export function isClassLike(node: Node): boolean {
+  return node.kind === Kind.ClassDeclaration || node.kind === Kind.ClassExpression;
+}
+
+// IsPrivateIdentifierClassElementDeclaration (utilities.go:562).
+export function isPrivateIdentifierClassElementDeclaration(node: Node): boolean {
+  return (isPropertyDeclaration(node) || isMethodOrAccessor(node))
+    && isPrivateIdentifier((node as unknown as { name: Node }).name);
+}
+
+// IsObjectLiteralMethod (utilities.go:600).
+export function isObjectLiteralMethod(node: Node | undefined): boolean {
+  return node !== undefined && node.kind === Kind.MethodDeclaration && node.parent.kind === Kind.ObjectLiteralExpression;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Statement / declaration classification (by kind)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function isDeclarationStatementKind(kind: Kind): boolean {
+  switch (kind) {
+    case Kind.FunctionDeclaration:
+    case Kind.MissingDeclaration:
+    case Kind.ClassDeclaration:
+    case Kind.InterfaceDeclaration:
+    case Kind.TypeAliasDeclaration:
+    case Kind.JSTypeAliasDeclaration:
+    case Kind.EnumDeclaration:
+    case Kind.ModuleDeclaration:
+    case Kind.ImportDeclaration:
+    case Kind.JSImportDeclaration:
+    case Kind.ImportEqualsDeclaration:
+    case Kind.ExportDeclaration:
+    case Kind.ExportAssignment:
+    case Kind.NamespaceExportDeclaration:
+      return true;
+  }
+  return false;
+}
+
+// IsDeclarationStatement (utilities.go:653) — determines whether a node is a
+// DeclarationStatement. (ECMA262 would call this a Declaration.)
+export function isDeclarationStatement(node: Node): boolean {
+  return isDeclarationStatementKind(node.kind);
+}
+
+function isStatementKindButNotDeclarationKind(kind: Kind): boolean {
+  switch (kind) {
+    case Kind.BreakStatement:
+    case Kind.ContinueStatement:
+    case Kind.DebuggerStatement:
+    case Kind.DoStatement:
+    case Kind.ExpressionStatement:
+    case Kind.EmptyStatement:
+    case Kind.ForInStatement:
+    case Kind.ForOfStatement:
+    case Kind.ForStatement:
+    case Kind.IfStatement:
+    case Kind.LabeledStatement:
+    case Kind.ReturnStatement:
+    case Kind.SwitchStatement:
+    case Kind.ThrowStatement:
+    case Kind.TryStatement:
+    case Kind.VariableStatement:
+    case Kind.WhileStatement:
+    case Kind.WithStatement:
+    case Kind.NotEmittedStatement:
+      return true;
+  }
+  return false;
+}
+
+// IsStatementButNotDeclaration (utilities.go:687) — a Statement that is not also
+// a Declaration. (ECMA262 would call this a Statement.)
+export function isStatementButNotDeclaration(node: Node): boolean {
+  return isStatementKindButNotDeclarationKind(node.kind);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Type-node / JSDoc classification (by kind)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// IsTypeNodeKind (utilities.go:726).
+export function isTypeNodeKind(kind: Kind): boolean {
+  switch (kind) {
+    case Kind.AnyKeyword:
+    case Kind.UnknownKeyword:
+    case Kind.NumberKeyword:
+    case Kind.BigIntKeyword:
+    case Kind.ObjectKeyword:
+    case Kind.BooleanKeyword:
+    case Kind.StringKeyword:
+    case Kind.SymbolKeyword:
+    case Kind.VoidKeyword:
+    case Kind.UndefinedKeyword:
+    case Kind.NeverKeyword:
+    case Kind.IntrinsicKeyword:
+    case Kind.ExpressionWithTypeArguments:
+    case Kind.JSDocAllType:
+    case Kind.JSDocNullableType:
+    case Kind.JSDocNonNullableType:
+    case Kind.JSDocOptionalType:
+    case Kind.JSDocVariadicType:
+      return true;
+  }
+  return kind >= Kind.FirstTypeNode && kind <= Kind.LastTypeNode;
+}
+
+// IsJSDocKind (utilities.go:755).
+export function isJSDocKind(kind: Kind): boolean {
+  return Kind.FirstJSDocNode <= kind && kind <= Kind.LastJSDocNode;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Variable-declaration flavor (const / let / using) via combined node flags
+// ─────────────────────────────────────────────────────────────────────────────
+
+// IsVarAwaitUsing (utilities.go:1175) — whether a bound `VariableDeclaration` or
+// `VariableDeclarationList` is part of an `await using` declaration.
+export function isVarAwaitUsing(node: Node): boolean {
+  return (getCombinedNodeFlags(node) & NodeFlags.BlockScoped) === NodeFlags.AwaitUsing;
+}
+
+// IsVarUsing (utilities.go:1180) — whether a bound declaration is part of a `using` declaration.
+export function isVarUsing(node: Node): boolean {
+  return (getCombinedNodeFlags(node) & NodeFlags.BlockScoped) === NodeFlags.Using;
+}
+
+// IsVarConst (utilities.go:1223) — whether a bound declaration is part of a `const` declaration.
+export function isVarConst(node: Node): boolean {
+  return (getCombinedNodeFlags(node) & NodeFlags.BlockScoped) === NodeFlags.Const;
+}
+
+// IsVarConstLike (utilities.go:1228) — whether a bound declaration is part of a
+// `const`, `using`, or `await using` declaration.
+export function isVarConstLike(node: Node): boolean {
+  switch (getCombinedNodeFlags(node) & NodeFlags.BlockScoped) {
+    case NodeFlags.Const:
+    case NodeFlags.Using:
+    case NodeFlags.AwaitUsing:
+      return true;
+  }
+  return false;
+}
+
+// IsVarLet (utilities.go:1237) — whether a bound declaration is part of a `let` declaration.
+export function isVarLet(node: Node): boolean {
+  return (getCombinedNodeFlags(node) & NodeFlags.BlockScoped) === NodeFlags.Let;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Module / import / jsx structural predicates
+// ─────────────────────────────────────────────────────────────────────────────
+
+// IsFunctionExpressionOrArrowFunction (utilities.go:1117).
+export function isFunctionExpressionOrArrowFunction(node: Node): boolean {
+  return isFunctionExpression(node) || isArrowFunction(node);
+}
+
+// IsModuleOrEnumDeclaration (utilities.go:1296).
+export function isModuleOrEnumDeclaration(node: Node): boolean {
+  return node.kind === Kind.ModuleDeclaration || node.kind === Kind.EnumDeclaration;
+}
+
+// IsLiteralImportTypeNode (utilities.go:1300).
+export function isLiteralImportTypeNode(node: Node): boolean {
+  return isImportTypeNode(node)
+    && isLiteralTypeNode(node.argument)
+    && isStringLiteral((node.argument as LiteralTypeNode).literal);
+}
+
+// IsJsxTagName (utilities.go:1304).
+export function isJsxTagName(node: Node): boolean {
+  const parent = node.parent;
+  switch (parent.kind) {
+    case Kind.JsxOpeningElement:
+    case Kind.JsxClosingElement:
+    case Kind.JsxSelfClosingElement:
+      return (parent as unknown as { tagName: Node }).tagName === node;
+  }
+  return false;
+}
+
+// IsImportOrExportSpecifier (utilities.go:1313).
+export function isImportOrExportSpecifier(node: Node): boolean {
+  return isImportSpecifier(node) || isExportSpecifier(node);
+}
+
+// IsModuleWithStringLiteralName (utilities.go:1674).
+export function isModuleWithStringLiteralName(node: Node): boolean {
+  return isModuleDeclaration(node) && node.name.kind === Kind.StringLiteral;
+}
+
+// IsGlobalScopeAugmentation (utilities.go:1656).
+export function isGlobalScopeAugmentation(node: Node): boolean {
+  return isModuleDeclaration(node) && node.keyword === Kind.GlobalKeyword;
+}
+
+// IsAmbientModule (utilities.go:1618).
+export function isAmbientModule(node: Node): boolean {
+  return isModuleDeclaration(node)
+    && (node.name.kind === Kind.StringLiteral || isGlobalScopeAugmentation(node));
+}
+
+// IsAmbientModuleSymbolName (utilities.go:1622).
+export function isAmbientModuleSymbolName(s: string): boolean {
+  return s.startsWith("\"") && s.endsWith("\"");
+}
+
+// IsModuleAugmentationExternal (utilities.go:1660) — an external module
+// augmentation is an ambient module declaration that is either:
+//   - defined in the top level scope and source file is an external module, or
+//   - defined inside an ambient module declaration located in the top level
+//     scope and source file is not an external module.
+export function isModuleAugmentationExternal(node: Node): boolean {
+  switch (node.parent.kind) {
+    case Kind.SourceFile:
+      return isExternalModule(node.parent);
+    case Kind.ModuleBlock: {
+      const grandParent = node.parent.parent;
+      return isAmbientModule(grandParent)
+        && isSourceFile(grandParent.parent)
+        && !isExternalModule(grandParent.parent);
+    }
+  }
+  return false;
+}
+
+// IsExternalModuleAugmentation (utilities.go:3533).
+export function isExternalModuleAugmentation(node: Node): boolean {
+  return isAmbientModule(node) && isModuleAugmentationExternal(node);
 }
