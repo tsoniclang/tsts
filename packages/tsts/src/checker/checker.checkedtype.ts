@@ -1603,10 +1603,11 @@ function getTypeOfVariableOrParameterOrProperty(symbol: AstSymbol, state: CheckS
         ? widenedVariableType(initializerType, declaration, state)
         : getWidenedType(initializerType, state);
     }
-    // A parameter with neither annotation nor initializer is an implicit-any
-    // position the checker does not yet model precisely — the error type keeps
-    // it from cascading (matching the prior unresolvedType binding).
-    return isParameterDeclaration(declaration) ? unresolvedType : anyType;
+    // A parameter (or variable) with neither annotation nor initializer is an
+    // implicit-any position: getWidenedTypeForVariableLikeDeclaration falls back
+    // to `any` (checker.go), which the type walker then emits as `>x : any`
+    // (matching TS-Go, e.g. catchClauseRestProperties.ts `>rest : any`).
+    return anyType;
   }
   // A destructured binding element resolves through its annotated parent for now
   // (pattern element typing is a later slice). The prior model bound the whole
@@ -1658,7 +1659,10 @@ function getTypeOfBindingPattern(pattern: AstNode, state: CheckState): Type | un
     if (owner.initializer !== undefined && inferInitializerType !== undefined) {
       return getWidenedType(inferInitializerType(owner.initializer, state), state);
     }
-    return isParameterDeclaration(owner) ? unresolvedType : anyType;
+    // An un-annotated, un-initialized binding pattern owner is implicit-any
+    // (getWidenedTypeForVariableLikeDeclaration), so its elements resolve to
+    // `any` rather than the error type.
+    return anyType;
   }
   if (isBindingElement(owner)) {
     return getTypeOfDestructuredBindingElement(owner, state);

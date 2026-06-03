@@ -29,6 +29,7 @@ import {
   isImportExpression,
   createNode,
   forEachChild,
+  isIdentifier,
   nodeParent,
   nodeSymbol,
   Kind,
@@ -1083,6 +1084,43 @@ test("symbolToString leaves top-level module exports bare (module symbol dropped
   // but TS-Go drops it from the chain ("prefer `x` vs `\"foo\".x`").
   assert.strictEqual(symbolStringByName("export class K { m() {} }", "K"), "K");
   assert.strictEqual(symbolStringByName("export class K { m() {} }", "m"), "K.m");
+});
+
+// G6 (implicit-any) — an annotation-less, initializer-less parameter or variable
+// is an implicit-`any` position: getTypeOfVariableOrParameterOrProperty returns
+// `anyType` (not the error type), so the type walker emits `>x : any` exactly as
+// TS-Go does (e.g. catchClauseRestProperties.ts `>rest : any`). Locate the FIRST
+// reference identifier with the given name and format its resolved type via the
+// checker, mirroring the baseline walker's getTypeAtLocation/typeToString path.
+function typeStringByIdentifier(source: string, name: string): string {
+  const sourceFile = parseSourceFile(source);
+  checkSourceFile(sourceFile);
+  const checker = newChecker();
+  const found: { node: Node | undefined } = { node: undefined };
+  const walk = (node: Node): undefined => {
+    if (found.node === undefined && isIdentifier(node) && node.text === name) {
+      found.node = node;
+    }
+    forEachChild(node, walk);
+    return undefined;
+  };
+  walk(sourceFile);
+  assert.ok(found.node !== undefined, `no identifier named ${name} found`);
+  const type = checker.getTypeAtLocation(found.node);
+  assert.ok(type !== undefined, `no type for identifier ${name}`);
+  return checker.typeToString(type);
+}
+
+test("getTypeAtLocation reports an un-annotated parameter as implicit any", () => {
+  assert.strictEqual(typeStringByIdentifier("function f(x) { return x; }", "x"), "any");
+});
+
+test("getTypeAtLocation reports an un-annotated arrow parameter as implicit any", () => {
+  assert.strictEqual(typeStringByIdentifier("const g = (p) => p;", "p"), "any");
+});
+
+test("getTypeAtLocation reports an un-annotated un-initialized variable as implicit any", () => {
+  assert.strictEqual(typeStringByIdentifier("var v; v;", "v"), "any");
 });
 
 // The checker's NameResolver wiring (mirrors the shared resolver in
