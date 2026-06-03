@@ -1644,7 +1644,12 @@ export class Parser {
     const name = this.#parseIdentifier();
     const typeParameters = this.#parseOptionalTypeParameters();
     this.#expect(Kind.EqualsToken);
-    const type = this.#parseType();
+    // tsgo parseTypeAliasDeclaration (parser.go:2100-2104): `type X = intrinsic` is a
+    // KeywordTypeNode only when `intrinsic` is NOT followed by `.` (else it is a plain
+    // type reference, e.g. `intrinsic.Foo`).
+    const type = this.#current().kind === Kind.IntrinsicKeyword && this.#lookAhead(() => this.#nextIsNotDot())
+      ? this.#parseKeywordTypeNode()
+      : this.#parseType();
     this.#consumeOptional(Kind.SemicolonToken);
     // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:2599).
     return this.#withJSDoc(this.#finishNode(createTypeAliasDeclaration(modifiers, name, typeParameters, type), pos), jsdoc);
@@ -4017,6 +4022,21 @@ export class Parser {
     return type;
   }
 
+  // tsgo parseKeywordTypeNode (parser.go:2821-2826): KeywordTypeNode at the current
+  // keyword token, advancing past it.
+  #parseKeywordTypeNode(): TypeNode {
+    const pos = this.#nodePos();
+    const kind = this.#current().kind;
+    this.#advance();
+    return this.#finishNode(createKeywordTypeNode(kind as KeywordTypeSyntaxKind), pos);
+  }
+
+  // tsgo nextIsNotDot (parser.go:2113-2115): advance and report the new token is not `.`.
+  #nextIsNotDot(): boolean {
+    this.#nextToken();
+    return this.#current().kind !== Kind.DotToken;
+  }
+
   #parsePrimaryType(): TypeNode {
     // tsgo: each non-array type production captures pos := nodePos() at its start
     // (before its first token). None of the branches below consume a token before
@@ -4097,8 +4117,7 @@ export class Parser {
       return this.#finishNode(createTypeLiteralNode(members), pos);
     }
     if (keywordTypeKinds.has(token.kind)) {
-      this.#advance();
-      return this.#finishNode(createKeywordTypeNode(token.kind as KeywordTypeSyntaxKind), pos);
+      return this.#parseKeywordTypeNode();
     }
     if (token.kind === Kind.StringLiteral) {
       // The inner string-literal leaf is stamped via #parseStringLiteralExpression;
@@ -4874,26 +4893,39 @@ export class Parser {
 
   // tsgo isHeritageClauseExtendsOrImplementsKeyword (parser.go:6305-6307).
   #isHeritageClauseExtendsOrImplementsKeyword(): boolean {
-    return this.#isHeritageClause() && this.#lookAhead(() => {
-      this.#nextToken();
-      return this.#isStartOfExpression();
-    });
+    return this.#isHeritageClause() && this.#lookAhead(() => this.#nextIsStartOfExpression());
   }
 
-  // tsgo isValidHeritageClauseObjectLiteral (parser.go:6282-6299).
+  // tsgo nextIsStartOfExpression (parser.go:6309-6312).
+  #nextIsStartOfExpression(): boolean {
+    this.#nextToken();
+    return this.#isStartOfExpression();
+  }
+
+  // tsgo isValidHeritageClauseObjectLiteral (parser.go:6282-6284).
   #isValidHeritageClauseObjectLiteral(): boolean {
-    return this.#lookAhead(() => {
+    return this.#lookAhead(() => this.#nextIsValidHeritageClauseObjectLiteral());
+  }
+
+  // tsgo nextIsValidHeritageClauseObjectLiteral (parser.go:6286-6299).
+  #nextIsValidHeritageClauseObjectLiteral(): boolean {
+    this.#nextToken();
+    if (this.#current().kind === Kind.CloseBraceToken) {
+      // if we see "extends {}" then only treat the {} as what we're extending (and not
+      // the class body) if we have:
+      //
+      //      extends {} {
+      //      extends {},
+      //      extends {} extends
+      //      extends {} implements
       this.#nextToken();
-      if (this.#current().kind === Kind.CloseBraceToken) {
-        this.#nextToken();
-        const next = this.#current().kind;
-        return next === Kind.CommaToken
-          || next === Kind.OpenBraceToken
-          || next === Kind.ExtendsKeyword
-          || next === Kind.ImplementsKeyword;
-      }
-      return true;
-    });
+      const next = this.#current().kind;
+      return next === Kind.CommaToken
+        || next === Kind.OpenBraceToken
+        || next === Kind.ExtendsKeyword
+        || next === Kind.ImplementsKeyword;
+    }
+    return true;
   }
 
   // tsgo isStartOfStatement (parser.go:6041-6068).
@@ -5220,23 +5252,29 @@ export class Parser {
   #nextTokenIsBindingIdentifierOrStartOfDestructuringOnSameLine(disallowOf: boolean): boolean {
     this.#nextToken();
     if (disallowOf && this.#current().kind === Kind.OfKeyword) {
-      return this.#lookAhead(() => {
-        this.#nextToken();
-        const t = this.#current().kind;
-        return t === Kind.EqualsToken || t === Kind.SemicolonToken || t === Kind.ColonToken;
-      });
+      return this.#lookAhead(() => this.#nextTokenIsEqualsOrSemicolonOrColonToken());
     }
     return this.#isBindingIdentifier()
       || (this.#current().kind === Kind.OpenBraceToken && !this.#hasPrecedingLineBreak());
   }
 
-  // tsgo isAwaitUsingDeclaration (parser.go:6340-6346).
+  // tsgo nextTokenIsEqualsOrSemicolonOrColonToken (parser.go:6323-6326).
+  #nextTokenIsEqualsOrSemicolonOrColonToken(): boolean {
+    this.#nextToken();
+    const t = this.#current().kind;
+    return t === Kind.EqualsToken || t === Kind.SemicolonToken || t === Kind.ColonToken;
+  }
+
+  // tsgo isAwaitUsingDeclaration (parser.go:6340-6342).
   #isAwaitUsingDeclaration(): boolean {
-    return this.#lookAhead(() => {
-      this.#nextToken();
-      return this.#current().kind === Kind.UsingKeyword
-        && this.#nextTokenIsBindingIdentifierOrStartOfDestructuringOnSameLine(false);
-    });
+    return this.#lookAhead(() => this.#nextIsUsingKeywordThenBindingIdentifierOrStartOfObjectDestructuringOnSameLine());
+  }
+
+  // tsgo nextIsUsingKeywordThenBindingIdentifierOrStartOfObjectDestructuringOnSameLine (parser.go:6344-6346).
+  #nextIsUsingKeywordThenBindingIdentifierOrStartOfObjectDestructuringOnSameLine(): boolean {
+    this.#nextToken();
+    return this.#current().kind === Kind.UsingKeyword
+      && this.#nextTokenIsBindingIdentifierOrStartOfDestructuringOnSameLine(false);
   }
 
   // tsgo scanTypeMemberStart (parser.go:5929-5955). Runs inside #lookAhead.
