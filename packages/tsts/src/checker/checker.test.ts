@@ -1211,6 +1211,53 @@ test("displays a rest parameter with a leading ellipsis", () => {
   assert.strictEqual(typeStringByIdentifier("function f(...data: number): void { }", "f"), "(...data: number) => void");
 });
 
+// Value-return inference (getReturnTypeFromBody) — an un-annotated function/
+// method/getter/arrow infers its return type from the body: the union (subtype-
+// reduced) of the expression-bearing `return <expr>` types, then widened
+// (a fresh primitive literal collapses to its base). A body with no value-return
+// is `void`. An annotation always wins.
+test("infers a function declaration's return type from a single value return (widened)", () => {
+  assert.strictEqual(typeStringByIdentifier("function f() { return 1; }", "f"), "() => number");
+  assert.strictEqual(typeStringByIdentifier("function f() { return \"x\"; }", "f"), "() => string");
+  assert.strictEqual(typeStringByIdentifier("function f() { return true; }", "f"), "() => boolean");
+});
+
+test("keeps an `as const` value return as its literal type (no widening)", () => {
+  assert.strictEqual(typeStringByIdentifier("function f() { return 1 as const; }", "f"), "() => 1");
+});
+
+test("infers a function declaration's return type as the union of its value returns", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("function f(b: boolean) { if (b) { return 1; } return \"x\"; }", "f"),
+    "(b: boolean) => number | string",
+  );
+});
+
+test("infers `void` for an un-annotated function with no value return", () => {
+  assert.strictEqual(typeStringByIdentifier("function f() { return; }", "f"), "() => void");
+  assert.strictEqual(typeStringByIdentifier("function f() { }", "f"), "() => void");
+});
+
+test("does not let a nested function's return leak into the outer inferred type", () => {
+  assert.strictEqual(typeStringByIdentifier("function f() { const g = () => 1; }", "f"), "() => void");
+});
+
+test("infers a method declaration's return type from its body", () => {
+  // The method-NAME identifier resolves to the method symbol, whose type is the
+  // inferred signature (instance member-access typing is a separate slice).
+  assert.strictEqual(typeStringByIdentifier("class C { m() { return 1; } } C;", "m"), "() => number");
+});
+
+test("infers a concise arrow's return type from the body expression (widened)", () => {
+  assert.strictEqual(typeStringByIdentifier("const g = () => 1; g;", "g"), "() => number");
+  assert.strictEqual(typeStringByIdentifier("const g = () => \"x\"; g;", "g"), "() => string");
+});
+
+test("infers `void` for a block-body arrow with no value return", () => {
+  assert.strictEqual(typeStringByIdentifier("const g = () => { return; }; g;", "g"), "() => void");
+  assert.strictEqual(typeStringByIdentifier("const g = () => { }; g;", "g"), "() => void");
+});
+
 // G9 (type-predicate / asserts display) — a predicate return annotation displaces
 // the return type in the signature display, matching TS-Go (e.g.
 // `(value: unknown) => value is string`, `(_condition: boolean) => asserts condition`).

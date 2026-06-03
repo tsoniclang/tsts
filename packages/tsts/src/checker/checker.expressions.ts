@@ -73,6 +73,7 @@ import {
   stringType,
   undefinedType,
   unresolvedType,
+  voidType,
   isAnyType,
   isNumberType,
   isStringType,
@@ -115,6 +116,7 @@ import {
   typeFromTypeNode,
   getResolvedSymbol,
   setInitializerInferrer,
+  inferredBlockReturnType,
 } from "./checker.checkedtype.js";
 import { checkBlock } from "./checker.statements.js";
 import { getPropertyNameFromType, isConstTypeReference, isTypeUsableAsPropertyName } from "./utilities.js";
@@ -1730,7 +1732,7 @@ export function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckSta
   // reference inside the body resolves through them (no checker-side parameter
   // environment). The checker only infers the body + assembles the function type.
   const declaredReturnType = arrowFunction.type === undefined ? undefined : typeFromTypeNode(arrowFunction.type, state);
-  const inferredReturnType = inferConciseBody(arrowFunction.body, state, declaredReturnType);
+  const inferredReturnType = inferConciseBody(arrowFunction, arrowFunction.body, state, declaredReturnType);
   const parameters: FunctionParameter[] = arrowFunction.parameters
     .filter((parameter) => isIdentifier(parameter.name))
     .map((parameter) => ({
@@ -1742,16 +1744,29 @@ export function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckSta
   return makeFunctionType(declaredReturnType ?? inferredReturnType, state, parameters);
 }
 
-export function inferConciseBody(body: ConciseBody, state: CheckState, expectedReturnType: Type | undefined): Type {
+export function inferConciseBody(functionNode: AstNode, body: ConciseBody, state: CheckState, expectedReturnType: Type | undefined): Type {
   if (isBlock(body)) {
     checkBlock(body, state, expectedReturnType);
-    return expectedReturnType ?? unresolvedType;
+    if (expectedReturnType !== undefined) return expectedReturnType;
+    // No annotation: infer the return type from the block's `return <expr>`
+    // statements (getReturnTypeFromBody), the same mechanism free functions use.
+    // A VALUE-returning arrow block, however, is held back to the permissive
+    // `unresolvedType`: an inferred concrete callback type flows into call-argument
+    // assignability against still-uninstantiated generic parameters (generic
+    // inference is a recorded DEFER), where it would surface a spurious mismatch.
+    // The no-value-return `void` arm is safe (no callback shape) and IS inferred,
+    // so a `const fn = () => { ...; }` still types as `() => void`.
+    const inferred = inferredBlockReturnType(functionNode, state);
+    return inferred === voidType ? inferred : unresolvedType;
   }
   const bodyType = inferExpression(body, state);
   if (expectedReturnType !== undefined) {
     checkAssignable(getWidenedLiteralLikeTypeForContextualType(bodyType, expectedReturnType, state), expectedReturnType, state);
+    return expectedReturnType;
   }
-  return bodyType;
+  // No annotation: the inferred return type is the body expression's type,
+  // widened (getReturnTypeFromBody's `!IsBlock` arm).
+  return getWidenedType(bodyType, state);
 }
 
 function checkSignatureArguments(arguments_: readonly Expression[], signature: Signature, state: CheckState): void {

@@ -1595,16 +1595,28 @@ function collectTypeMembers(
       const name = propertyNameText(member.name, state);
       if (name === undefined) continue;
       const parameters = functionParametersFromNode(member.parameters, state);
-      const { returnType, predicate } = signatureReturnFromTypeNode(member.type, parameters, state);
+      const annotated = signatureReturnFromTypeNode(member.type, parameters, state);
+      // A method DECLARATION (which has a body) with no return annotation infers
+      // its return type from the body (getReturnTypeFromBody), just like a
+      // free function; a method SIGNATURE has no body and stays `any`. An
+      // annotation or predicate always wins.
+      const returnType = member.type === undefined && annotated.predicate === undefined && isMethodDeclaration(member)
+        ? inferredBlockReturnType(member, state) ?? annotated.returnType
+        : annotated.returnType;
       properties.push({
         name,
-        type: makeFunctionType(returnType, state, parameters, predicate),
+        type: makeFunctionType(returnType, state, parameters, annotated.predicate),
         optional: member.postfixToken?.kind === Kind.QuestionToken,
       });
     } else if (isGetAccessorDeclaration(member)) {
       const name = propertyNameText(member.name, state);
       if (name === undefined) continue;
-      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
+      // A getter's property type IS its return type: the annotation when present,
+      // else inferred from the body (getReturnTypeFromBody), matching how TS-Go
+      // types `get x()`-derived members. With neither, it is `any`.
+      const returnType = member.type !== undefined
+        ? typeFromTypeNode(member.type, state)
+        : inferredBlockReturnType(member, state) ?? anyType;
       properties.push({ name, type: returnType });
     } else if (isSetAccessorDeclaration(member)) {
       const name = propertyNameText(member.name, state);
@@ -1983,36 +1995,54 @@ function getTypeOfBindingPattern(pattern: AstNode, state: CheckState): Type | un
 // is a later slice, so these resolve to `any` value placeholders (NOT the error
 // type — a class name IS a known value), with functions kept callable so a
 // direct `f()` call still type-checks.
-// Mirror the bounded `void` arm of getReturnTypeFromBody (checker.go:20032):
-// for a function/method with a BLOCK body that is neither async nor a generator
-// and whose body has NO `return <expr>` (only bare `return;` or no return at
-// all), the inferred return type is `void`. A body that returns a value needs
-// full body expression inference (not yet wired), so this returns undefined and
-// the caller keeps its placeholder. Walks statements directly rather than
-// crossing into nested function bodies (a `return` inside an inner function
-// belongs to that function, mirroring ast.ForEachReturnStatement).
-function inferredBlockReturnType(declaration: AstNode): Type | undefined {
+// Mirror the non-async/non-generator arms of getReturnTypeFromBody
+// (checker.go:20032). For a function/method/getter with a BLOCK body that is
+// neither async nor a generator, the inferred return type is the union of every
+// expression-bearing `return <expr>` type (UnionReductionSubtype), then widened
+// (getWidenedType); a body with NO `return <expr>` (only bare `return;` or none)
+// falls back to `void` (the `len(types) == 0` branch). An expression (concise)
+// body infers directly from the body expression. Async/generator bodies still
+// need Promise/Generator wrapping (deferred), so they keep the `any` placeholder.
+// Strict-null `| undefined` from a bare `return;` mixed with value-returns is a
+// recorded fork (strictNullChecks) and intentionally not added here.
+export function inferredBlockReturnType(declaration: AstNode, state: CheckState): Type | undefined {
   const body = (declaration as { readonly body?: AstNode }).body;
-  if (body === undefined || !isBlock(body)) return undefined;
+  if (body === undefined || inferInitializerType === undefined) return undefined;
   const functionFlags = getFunctionFlags(declaration);
   if ((functionFlags & (FunctionFlags.Async | FunctionFlags.Generator)) !== 0) return undefined;
-  return bodyHasReturnWithExpression(body) ? undefined : voidType;
+  if (!isBlock(body)) {
+    // Concise arrow-style body (an expression): the return type IS that
+    // expression's type, widened (getReturnTypeFromBody's `!IsBlock` arm).
+    return getWidenedType(inferInitializerType(body as Expression, state), state);
+  }
+  const returnTypes = collectReturnExpressionTypes(body, state);
+  if (returnTypes.length === 0) return voidType;
+  return getWidenedType(getUnionTypeEx(returnTypes, UnionReduction.Subtype, state), state);
 }
 
-// True if any `return <expr>` (an expression-bearing return) appears in the
-// statement subtree, WITHOUT descending into nested function-like declarations
-// whose own returns bind to them (mirrors ast.ForEachReturnStatement's pruning).
-// Traversal uses the generated forEachChild so every statement form is covered
-// faithfully; the visitor short-circuits on the first expression-bearing return.
-function bodyHasReturnWithExpression(node: AstNode): boolean {
-  return forEachChild(node, (child): boolean | undefined => {
+// Collect the types of every expression-bearing `return <expr>` in the block,
+// WITHOUT descending into nested function-like declarations whose own returns
+// bind to them (mirrors ast.ForEachReturnStatement's pruning at function-like
+// boundaries). Mirrors checkAndAggregateReturnExpressionTypes' aggregation; each
+// return expression is inferred with the injected inferExpression. Traversal
+// uses the generated forEachChild so every statement form is covered faithfully.
+function collectReturnExpressionTypes(node: AstNode, state: CheckState): Type[] {
+  const collected: Type[] = [];
+  const visit = (child: AstNode): undefined => {
     if (isReturnStatement(child)) {
-      return (child as { readonly expression?: AstNode }).expression !== undefined ? true : undefined;
+      const expression = (child as { readonly expression?: AstNode }).expression;
+      if (expression !== undefined && inferInitializerType !== undefined) {
+        collected.push(inferInitializerType(expression as Expression, state));
+      }
+      return undefined;
     }
     // A nested function/class scope owns its own returns — do not descend.
     if (startsNewReturnScope(child)) return undefined;
-    return bodyHasReturnWithExpression(child) ? true : undefined;
-  }) === true;
+    forEachChild(child, visit);
+    return undefined;
+  };
+  forEachChild(node, visit);
+  return collected;
 }
 
 // A node that begins a fresh return scope (its `return` statements belong to it,
@@ -2039,13 +2069,13 @@ function getTypeOfFuncClassEnumModule(symbol: AstSymbol, state: CheckState): Typ
       const parameters = functionParametersFromNode(declaration.parameters, state);
       const annotated = signatureReturnFromTypeNode(declaration.type, parameters, state);
       // With no return-type annotation, TS-Go infers the return type from the
-      // body (getReturnTypeFromBody). The bounded case implemented here mirrors
-      // the `len(types) == 0` non-async/non-generator branch: a block body that
-      // contains no `return <expr>` infers `void` (checker.go:20032-20045).
-      // A body that does return a value still needs full expression inference,
-      // so it keeps the `any` placeholder; an annotation always wins.
+      // body (getReturnTypeFromBody): the union (subtype-reduced, widened) of the
+      // expression-bearing `return <expr>` types, or `void` when the body returns
+      // no value (checker.go:20032). Async/generator bodies keep the `any`
+      // placeholder (Promise/Generator wrapping is deferred); an annotation always
+      // wins.
       const returnType = declaration.type === undefined && annotated.predicate === undefined
-        ? inferredBlockReturnType(declaration) ?? annotated.returnType
+        ? inferredBlockReturnType(declaration, state) ?? annotated.returnType
         : annotated.returnType;
       return makeFunctionType(returnType, state, parameters, annotated.predicate);
     }
