@@ -355,7 +355,7 @@ export function forEachAstNode(node: Node): readonly Node[] {
       if (shouldRecordReparsedNode(current)) result.push(current);
       forEachChild(current, child => {
         children.push(child);
-        return false;
+        return undefined;
       });
       children.reverse();
       work.push(...children);
