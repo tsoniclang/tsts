@@ -1577,17 +1577,25 @@ export class Parser {
   }
 
   #parseClassDeclaration(pos: number, jsdoc: JSDocScannerInfo, modifiers: NodeArray<ModifierLike> | undefined): Statement {
-    // tsgo parseClassDeclaration: declaration start is the #parseStatement-top pos
-    // (covering modifiers). Members/heritage/type-params are Stage 1e (left unstamped).
-    this.#expect(Kind.ClassKeyword);
-    // M3 6b: tsgo parseClassDeclarationOrExpression (parser.go:1797-1799) saves/restores
-    // statementHasAwaitIdentifier around the class NAME binding identifier — a class named
-    // `await` is a declaration name, not a top-level await expression. (Member names are
-    // covered by #parsePropertyName's own save/restore.)
+    // tsgo parseClassDeclaration -> parseClassDeclarationOrExpression (parser.go:1797).
+    // declaration start is the #parseStatement-top pos (covering modifiers).
+    // tsgo saves contextFlags + statementHasAwaitIdentifier at entry; the
+    // statementHasAwaitIdentifier save also covers the class NAME binding identifier
+    // (parser.go:1797-1799) — a class named `await` is a declaration name, not a
+    // top-level await expression. (Member names are covered by #parsePropertyName's
+    // own save/restore.)
+    const saveContextFlags = this.#contextFlags;
     const saveHasAwaitIdentifier = this.#statementHasAwaitIdentifier;
+    this.#expect(Kind.ClassKeyword);
     const name = this.#parseNameOfClassDeclarationOrExpression();
     this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
     const typeParameters = this.#parseOptionalTypeParameters();
+    // tsgo parseClassDeclarationOrExpression (parser.go:1750-1752): an EXPORTED class is
+    // in module-await context, so AwaitContext is set true around the heritage clauses and
+    // members (but NOT the name/type-parameters parsed above), then restored below.
+    if (modifiers !== undefined && modifiers.some(isExportModifier)) {
+      this.#setContextFlags(NodeFlags.AwaitContext, true);
+    }
     const heritageClauses = this.#parseHeritageClauses();
     this.#expect(Kind.OpenBraceToken);
     // M3 3b-list-model retrofit (loop #8): tsgo parseClassMembers uses
@@ -1597,6 +1605,13 @@ export class Parser {
     // #parseClassElement, matching tsgo.
     const members = this.#parseList(PCClassMembers, () => this.#parseClassElement());
     this.#expect(Kind.CloseBraceToken);
+    // tsgo restores contextFlags after the members (parser.go:1763), then for an AMBIENT
+    // class also restores statementHasAwaitIdentifier (parser.go:1765-1767): a `declare
+    // class` body never marks the enclosing statement for top-level-await reparse.
+    this.#contextFlags = saveContextFlags;
+    if (modifiers !== undefined && (modifiersToFlags(modifiers) & ModifierFlags.Ambient) !== 0) {
+      this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
+    }
     // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:1774).
     return this.#withJSDoc(this.#finishNode(createClassDeclaration(modifiers, name, typeParameters, heritageClauses, members), pos), jsdoc);
   }
@@ -6098,6 +6113,11 @@ function templateTailText(text: string): string {
 
 function hasModifier(modifiers: NodeArray<ModifierLike>, kind: Kind): boolean {
   return modifiers.some(modifier => modifier.kind === kind);
+}
+
+// tsgo isExportModifier (parser.go:1809-1811).
+function isExportModifier(modifier: ModifierLike): boolean {
+  return modifier.kind === Kind.ExportKeyword;
 }
 
 // tsgo isAsyncModifier (parser.go:1813-1815).
