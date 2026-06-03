@@ -22,6 +22,7 @@ import type {
   NodeList,
   ModifierList,
 } from "../ast/index.js";
+import { createNodeArray } from "../ast/index.js";
 
 /**
  * The emit-context surface transformers need. The full
@@ -430,10 +431,7 @@ export class Transformer {
    *
    * Mirrors TS-Go `(tx *Transformer) NewTransformer(...)`.
    */
-  newTransformer(
-    visit: (node: AstNode) => AstNode | undefined,
-    emitContext: EmitContext | undefined,
-  ): this {
+  newTransformer(visit: (node: AstNode) => AstNode | undefined, emitContext: EmitContext | undefined): this {
     if (this.#emitContext !== undefined) {
       throw new Error("Transformer already initialized");
     }
@@ -445,10 +443,7 @@ export class Transformer {
   }
 
   /** Alias for `newTransformer`, kept for ports that use the newer name. */
-  initTransformer(
-    visit: (node: AstNode) => AstNode | undefined,
-    emitContext: EmitContext | undefined,
-  ): this {
+  initTransformer(visit: (node: AstNode) => AstNode | undefined, emitContext: EmitContext | undefined): this {
     return this.newTransformer(visit, emitContext);
   }
 
@@ -575,11 +570,11 @@ function createDefaultEmitContext(): EmitContext {
       const hoisted = hoistedFunctionStack.pop() ?? [];
       variableStack.pop();
       const arr = statements === undefined ? [] : [...hoisted, ...(statements as readonly AstNode[])];
-      return arr as unknown as NodeList;
+      return createNodeArray(arr);
     },
     mergeEnvironmentList(statements, declarations) {
       const arr = statements === undefined ? [...declarations] : [...declarations, ...(statements as readonly AstNode[])];
-      return arr as unknown as NodeList;
+      return createNodeArray(arr);
     },
     addInitializationStatement(node) {
       const top = hoistedFunctionStack[hoistedFunctionStack.length - 1];
@@ -606,7 +601,7 @@ function createDefaultEmitContext(): EmitContext {
     mergeEnvironment(statements, declarations) {
       return [...declarations, ...statements];
     },
-    visitParameters(parameters) { return (parameters ?? []) as unknown as NodeList; },
+    visitParameters(parameters) { return createNodeArray(parameters ?? []); },
     visitFunctionBody(body) { return body; },
     visitIterationBody(body) { return (body ?? ({} as AstNode)); },
     visitEmbeddedStatement(statement) { return (statement ?? ({} as AstNode)); },
@@ -662,7 +657,7 @@ function createStubNodeVisitor(visit: (node: AstNode) => AstNode | undefined): N
     visitSlice(nodes) { return { items: nodes, changed: false }; },
     visitSourceFile(file) { return file; },
     visitModifiers(modifiers) { return modifiers; },
-    visitParameters(parameters) { return (parameters ?? []) as unknown as NodeList; },
+    visitParameters(parameters) { return parameters ?? []; },
     visitFunctionBody(body) { return body; },
     visitIterationBody(body) { return (body ?? ({} as AstNode)); },
     visitEmbeddedStatement(statement) { return (statement ?? ({} as AstNode)); },
