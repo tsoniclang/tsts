@@ -36,6 +36,53 @@ export function categoryName(category: DiagnosticCategory): string {
 }
 
 /**
+ * Accessors mirroring TS-Go's `Message` getter methods. The Go struct keeps its
+ * fields unexported and exposes them through these getters; in TSTS the fields
+ * are directly readable on `DiagnosticMessage`, so each getter collapses to a
+ * field read. The boolean accessors coerce the optional flag to a concrete
+ * `bool` (Go's zero value is `false`), matching the upstream getter signature.
+ *
+ * Mirrors TS-Go `func (m *Message) Code() int32` and siblings in
+ * `internal/diagnostics/diagnostics.go`.
+ */
+export function messageCode(message: DiagnosticMessage): number {
+  return message.code;
+}
+
+/** Mirrors TS-Go `func (m *Message) Category() Category`. */
+export function messageCategory(message: DiagnosticMessage): DiagnosticCategory {
+  return message.category;
+}
+
+/** Mirrors TS-Go `func (m *Message) Key() Key`. */
+export function messageKey(message: DiagnosticMessage): Key {
+  return message.key;
+}
+
+/** Mirrors TS-Go `func (m *Message) ReportsUnnecessary() bool`. */
+export function messageReportsUnnecessary(message: DiagnosticMessage): boolean {
+  return message.reportsUnnecessary === true;
+}
+
+/** Mirrors TS-Go `func (m *Message) ElidedInCompatibilityPyramid() bool`. */
+export function messageElidedInCompatibilityPyramid(message: DiagnosticMessage): boolean {
+  return message.elidedInCompatibilityPyramid === true;
+}
+
+/** Mirrors TS-Go `func (m *Message) ReportsDeprecated() bool`. */
+export function messageReportsDeprecated(message: DiagnosticMessage): boolean {
+  return message.reportsDeprecated === true;
+}
+
+/**
+ * For debugging only. Mirrors TS-Go `func (m *Message) String() string`, which
+ * returns the message `text` (the TSTS analogue is the `message` field).
+ */
+export function messageString(message: DiagnosticMessage): string {
+  return message.message;
+}
+
+/**
  * Locale tag — an IETF BCP 47 language tag (e.g. "en", "de-DE", "zh-CN").
  * The empty string represents the "undetermined" locale (TS-Go's `language.Und`).
  */
@@ -176,11 +223,14 @@ export function stringifyArgs(args: readonly unknown[]): readonly string[] {
     return [];
   }
 
-  const result: string[] = args.map((arg) => {
+  const result: string[] = new Array<string>(args.length);
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
     if (typeof arg === "string") {
-      return arg;
+      result[i] = arg;
+    } else {
+      result[i] = String(arg);
     }
-    return String(arg);
-  });
+  }
   return result;
 }
